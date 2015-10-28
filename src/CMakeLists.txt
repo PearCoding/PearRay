@@ -4,6 +4,10 @@ SET(PR_Main_Src
   ${PR_Root}/FileLogListener.cpp
   ${PR_Root}/Logger.cpp
   ${PR_Root}/main.cpp)
+SET(PR_Entity_Src
+  ${PR_Root}/entity/Entity.cpp
+  ${PR_Root}/entity/MeshEntity.cpp)
+SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
   ${PR_Root}/geometry/Face.cpp
   ${PR_Root}/geometry/Mesh.cpp
@@ -14,7 +18,7 @@ SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Loader_Src
   ${PR_Root}/loader/WavefrontLoader.cpp)
 SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
-SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
+SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src} ${PR_Entity_Src}
 )
 
 SET(PR_Main_Hdr
@@ -22,6 +26,10 @@ SET(PR_Main_Hdr
   ${PR_Root}/FileLogListener.h
   ${PR_Root}/Logger.h
   ${PR_Root}/LogListener.h)
+SET(PR_Entity_Hdr
+  ${PR_Root}/entity/Entity.h
+  ${PR_Root}/entity/MeshEntity.h)
+SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
 SET(PR_Geometry_Hdr
   ${PR_Root}/geometry/Face.h
   ${PR_Root}/geometry/Mesh.h
@@ -33,7 +41,7 @@ SET(PR_Loader_Hdr
   ${PR_Root}/loader/MeshLoader.h
   ${PR_Root}/loader/WavefrontLoader.h)
 SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
-SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
+SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr} ${PR_Entity_Hdr}
 )
 
 SET(PR_TARGET pearray)
