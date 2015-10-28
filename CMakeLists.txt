@@ -37,7 +37,7 @@ IF(CYGWIN)
 ENDIF()
 
 #DEFINITIONS AND FLAGS
-include_directories(${PR_LIBRARY})
+include_directories(${PR_Root})
 link_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 IF(MSVC)

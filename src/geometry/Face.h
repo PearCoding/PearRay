@@ -5,6 +5,8 @@
 
 namespace PR
 {
+	class Normal;
+	class UV;
 	class Vertex;
 	class Face
 	{
@@ -12,10 +14,18 @@ namespace PR
 		Face();
 		~Face();
 
-		void add(Vertex* v);
-		Vertex* get(size_t i) const;
+		void addVertex(Vertex* v);
+		Vertex* getVertex(size_t i) const;
+
+		void addNormal(Normal* v);
+		Normal* getNormal(size_t i) const;
+
+		void addUV(UV* v);
+		UV* getUV(size_t i) const;
 
 	private:
 		std::vector<Vertex*> mVertices;
+		std::vector<Normal*> mNormals;
+		std::vector<UV*> mUVs;
 	};
 }
