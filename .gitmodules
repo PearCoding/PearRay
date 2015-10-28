@@ -1,0 +1,9 @@
+[submodule "datalisp"]
+	path = datalisp
+	url = git@github.com:PearCoding/DataLisp.git
+[submodule "pearmath"]
+	path = pearmath
+	url = git@github.com:PearCoding/PearMath.git
+[submodule "pearpic"]
+	path = pearpic
+	url = git@github.com:PearCoding/PearPic.git
