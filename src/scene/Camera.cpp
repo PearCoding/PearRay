@@ -2,8 +2,8 @@
 
 namespace PR
 {
-	Camera::Camera(uint32 width, uint32 height, float vangle, float hangle) :
-		mWidth(width), mHeight(height), mVAngle(vangle), mHAngle(hangle)
+	Camera::Camera(float width, float height, float vangle, float hangle, const std::string& name, Entity* parent) :
+		Entity(name, parent), mWidth(width), mHeight(height), mVAngle(vangle), mHAngle(hangle)
 	{
 	}
 
@@ -11,22 +11,22 @@ namespace PR
 	{
 	}
 
-	void Camera::setWidth(uint32 w)
+	void Camera::setWidth(float w)
 	{
 		mWidth = w;
 	}
 
-	uint32 Camera::width() const
+	float Camera::width() const
 	{
 		return mWidth;
 	}
 
-	void Camera::setHeight(uint32 h)
+	void Camera::setHeight(float h)
 	{
 		mHeight = h;
 	}
 
-	uint32 Camera::height() const
+	float Camera::height() const
 	{
 		return mHeight;
 	}

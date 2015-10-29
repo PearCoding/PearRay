@@ -43,4 +43,18 @@ namespace PR
 		}
 		mEntities.clear();
 	}
+
+	// Really bad implementation!
+	Entity* Scene::checkCollision(const Ray& ray, PM::vec3& collisionPoint) const
+	{
+		for (Entity* e : mEntities)
+		{
+			if (e->checkCollision(ray, collisionPoint))
+			{
+				return e;
+			}
+		}
+
+		return nullptr;
+	}
 }

@@ -1,23 +1,22 @@
 #pragma once
 
-#include "Config.h"
+#include "entity/Entity.h"
 
-#include <string>
 #include <list>
 
 namespace PR
 {
-	class Camera
+	class Camera : public Entity
 	{
 	public:
-		Camera(uint32 width, uint32 height, float vangle, float hangle);
+		Camera(float width, float height, float vangle, float hangle, const std::string& name, Entity* parent = nullptr);
 		virtual ~Camera();
 
-		void setWidth(uint32 w);
-		uint32 width() const;
+		void setWidth(float w);
+		float width() const;
 
-		void setHeight(uint32 h);
-		uint32 height() const;
+		void setHeight(float h);
+		float height() const;
 
 		void setVerticalAngle(float angle);
 		float verticalAngle() const;
@@ -25,8 +24,8 @@ namespace PR
 		void setHorizontalAngle(float angle);
 		float horizontalAngle() const;
 	private:
-		uint32 mWidth;
-		uint32 mHeight;
+		float mWidth;
+		float mHeight;
 		float mVAngle;
 		float mHAngle;
 	};

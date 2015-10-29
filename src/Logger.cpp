@@ -82,7 +82,7 @@ namespace PR
 			return;
 		}
 
-		//Unsecure
+		//Unsecured
 		char buffer[1024];
 		va_list vl;
 		va_start(vl, fmt);
