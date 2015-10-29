@@ -7,6 +7,7 @@
 
 namespace PR
 {
+	class Ray;
 	class Entity
 	{
 	public:
@@ -29,6 +30,8 @@ namespace PR
 		PM::quat rotation() const;
 
 		PM::mat4 matrix() const;
+
+		virtual bool checkCollision(const Ray& ray, PM::vec3& collisionPoint);
 
 	private:
 		std::string mName;

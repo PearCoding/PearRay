@@ -6,7 +6,8 @@ SET(PR_Main_Src
   ${PR_Root}/main.cpp)
 SET(PR_Entity_Src
   ${PR_Root}/entity/Entity.cpp
-  ${PR_Root}/entity/MeshEntity.cpp)
+  ${PR_Root}/entity/MeshEntity.cpp
+  ${PR_Root}/entity/SphereEntity.cpp)
 SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
   ${PR_Root}/geometry/Face.cpp
@@ -18,7 +19,20 @@ SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Loader_Src
   ${PR_Root}/loader/WavefrontLoader.cpp)
 SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
-SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src} ${PR_Entity_Src}
+SET(PR_Ray_Src
+  ${PR_Root}/ray/Ray.cpp)
+SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
+SET(PR_Renderer_Src
+  ${PR_Root}/renderer/RenderResult.cpp
+  ${PR_Root}/renderer/Renderer.cpp)
+SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
+SET(PR_Scene_Src
+  ${PR_Root}/scene/Camera.cpp
+  ${PR_Root}/scene/Scene.cpp)
+SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
+SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
+  ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
+  ${PR_Renderer_Src}
 )
 
 SET(PR_Main_Hdr
@@ -28,7 +42,8 @@ SET(PR_Main_Hdr
   ${PR_Root}/LogListener.h)
 SET(PR_Entity_Hdr
   ${PR_Root}/entity/Entity.h
-  ${PR_Root}/entity/MeshEntity.h)
+  ${PR_Root}/entity/MeshEntity.h
+  ${PR_Root}/entity/SphereEntity.h)
 SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
 SET(PR_Geometry_Hdr
   ${PR_Root}/geometry/Face.h
@@ -41,7 +56,20 @@ SET(PR_Loader_Hdr
   ${PR_Root}/loader/MeshLoader.h
   ${PR_Root}/loader/WavefrontLoader.h)
 SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
-SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr} ${PR_Entity_Hdr}
+SET(PR_Ray_Hdr
+  ${PR_Root}/ray/Ray.h)
+SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
+SET(PR_Renderer_Hdr
+  ${PR_Root}/renderer/RenderResult.h
+  ${PR_Root}/renderer/Renderer.h)
+SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
+SET(PR_Scene_Hdr
+  ${PR_Root}/scene/Camera.h
+  ${PR_Root}/scene/Scene.h)
+SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
+SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
+  ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
+  ${PR_Renderer_Hdr}
 )
 
 SET(PR_TARGET pearray)

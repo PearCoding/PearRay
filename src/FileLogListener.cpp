@@ -12,6 +12,10 @@ namespace PR
 
 	FileLogListener::~FileLogListener()
 	{
+		if (mStream.is_open())
+		{
+			mStream.close();
+		}
 	}
 
 	void FileLogListener::open(const std::string& file)

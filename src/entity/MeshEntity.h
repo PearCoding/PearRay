@@ -23,5 +23,3 @@ namespace PR
 		Material* mMaterial;
 	};
 }
-
-#define PR_LOGGER (PR::Logger::instance())

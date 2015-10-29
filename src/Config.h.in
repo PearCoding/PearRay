@@ -31,7 +31,7 @@
 # error Your operating system is currently not supported
 #endif
 
-//Compilier
+//Compiler
 #if defined(__CYGWIN__)
 # define PR_CC_CYGWIN
 # define PR_CC_NAME "Cygwin"
@@ -81,7 +81,7 @@
 #ifdef PR_CC_MSC
 # define PR_DEBUG_BREAK() __debugbreak()
 # define PR_ALIGN(x) __declspec(align(x))
-#else//FIXME: Really use cpu dependet assembler?
+#else//FIXME: Really use cpu dependent assembler?
 # define PR_DEBUG_BREAK() __asm__ __volatile__ ("int $0x03")
 # define PR_ALIGN(x) __attribute__((aligned(x)))
 #endif

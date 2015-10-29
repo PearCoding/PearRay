@@ -96,4 +96,9 @@ namespace PR
 			return m;
 		}
 	}
+
+	bool Entity::checkCollision(const Ray& ray, PM::vec3& collisionPoint)
+	{
+		return false;
+	}
 }
