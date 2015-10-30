@@ -13,8 +13,19 @@
 #include "PearPic.h"
 #include "Image.h"
 
+#ifdef PR_OS_WINDOWS
+# define _CRTDBG_MAP_ALLOC
+# include <stdlib.h>
+# include <crtdbg.h>
+#endif
+
 int main(int argc, char** argv)
 {
+#ifdef PR_OS_WINDOWS
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
+	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+#endif
+
 	// Init logging system
 	PR::FileLogListener fileLog;
 
@@ -36,7 +47,7 @@ int main(int argc, char** argv)
 	PR::Scene scene("Test");
 	PR::Renderer renderer(500, 500);
 
-	PR::Entity* e = new PR::SphereEntity("Sphere", 2);
+	PR::SphereEntity* e = new PR::SphereEntity("Sphere", 2);
 	e->setPosition(PM::pm_Set(0, 0, 5));
 	scene.addEntity(e);
 
@@ -51,13 +62,12 @@ int main(int argc, char** argv)
 		{
 			size_t index = y * result.width() * 3 + x * 3;
 			imageData[index] = result.point(x, y) * 255;
-			imageData[index+1] = result.point(x, y) * 255;
-			imageData[index+2] = result.point(x, y) * 255;
+			imageData[index + 1] = result.point(x, y) * 255;
+			imageData[index + 2] = result.point(x, y) * 255;
 		}
 	}
 
-	PP::Image image(imageData, 3 * result.width() * result.height(),
-		result.width(), result.height(), 8, 3, PP::CF_RGB);
+	PP::Image image(imageData, result.width(), result.height(), PP::CF_RGB);
 	image.make_external();
 
 	pearpic.write("test.png", image);
