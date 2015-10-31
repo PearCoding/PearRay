@@ -3,8 +3,7 @@
 namespace PR
 {
 	Ray::Ray(const PM::vec3& pos, const PM::vec3& dir) :
-		mStartPosition(pos), mDirection(dir),
-		mIntensity(0)
+		mStartPosition(pos), mDirection(dir)
 	{
 	}
 
@@ -32,13 +31,13 @@ namespace PR
 		return mDirection;
 	}
 
-	void Ray::setIntensity(float f)
+	void Ray::setSpectrum(const Spectrum& s)
 	{
-		mIntensity = f;
+		mSpectrum = s;
 	}
 
-	float Ray::intensity() const
+	Spectrum Ray::spectrum() const
 	{
-		return mIntensity;
+		return mSpectrum;
 	}
 }

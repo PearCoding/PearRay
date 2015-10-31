@@ -50,19 +50,34 @@ namespace PR
 				float sx = cam->width() * x / (float) mWidth - cam->width() / 2.0f;
 				float sy = cam->height() * y / (float) mHeight - cam->height() / 2.0f;
 
+				PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(PM::pm_Set(sx,sy,0), PM::pm_Set(0,0, -cam->lensDistance())));
+
 				Ray ray(PM::pm_Multiply(cam->matrix(), PM::pm_Set(sx, sy, 0)),
-					PM::pm_Multiply(PM::pm_Rotation(cam->rotation()), PM::pm_Set(0, 0, 1)));
+					PM::pm_Multiply(PM::pm_Rotation(cam->rotation()), dir));
 
 				PM::vec3 collisionPoint;
 				Entity* entity = scene->checkCollision(ray, collisionPoint);
 
 				if (!entity)
 				{
-					result.setPoint(x, y, 0);
+					result.setPoint(x, y, Spectrum());
 				}
 				else
 				{
-					result.setPoint(x, y, 1);
+					float depth = result.depth(x, y);
+					float newDepth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint, ray.startPosition()));
+
+					if (depth == -1 || newDepth < depth)
+					{
+						Spectrum s;
+						for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+						{
+							s.setValue(i, 1);
+						}
+
+						result.setDepth(x, y, newDepth);
+						result.setPoint(x, y, s);
+					}
 				}
 
 				mRayCount++;

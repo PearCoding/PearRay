@@ -9,10 +9,14 @@ namespace PR
 		mData = new InternalData;
 		mData->Width = w;
 		mData->Height = h;
-		mData->Data = new float[mData->Width*mData->Height];
+		mData->Data = new Spectrum[mData->Width*mData->Height];
+		mData->Depth = new float[mData->Width*mData->Height];
 		mData->RefCounter = 1;
 
-		memset(mData->Data, 0, mData->Width * mData->Height * sizeof(float));
+		for (size_t i = 0; i < mData->Width*mData->Height; ++i)
+		{
+			mData->Depth[i] = -1;
+		}
 	}
 
 	RenderResult::RenderResult(const RenderResult& res)
@@ -28,6 +32,7 @@ namespace PR
 		if (mData->RefCounter == 0)
 		{
 			delete[] mData->Data;
+			delete[] mData->Depth;
 			delete mData;
 			mData = nullptr;
 		}
@@ -40,6 +45,7 @@ namespace PR
 		if (mData->RefCounter == 0)
 		{
 			delete[] mData->Data;
+			delete[] mData->Depth;
 			delete mData;
 			mData = nullptr;
 		}
@@ -60,13 +66,37 @@ namespace PR
 		return mData->Height;
 	}
 
-	void RenderResult::setPoint(uint32 x, uint32 y, float f)
+	void RenderResult::setPoint(uint32 x, uint32 y, const Spectrum& s)
 	{
-		mData->Data[y*mData->Width + x] = f;
+		mData->Data[y*mData->Width + x] = s;
 	}
 
-	float RenderResult::point(uint32 x, uint32 y) const
+	Spectrum RenderResult::point(uint32 x, uint32 y) const
 	{
 		return mData->Data[y*mData->Width + x];
+	}
+
+	void RenderResult::setDepth(uint32 x, uint32 y, float f)
+	{
+		mData->Depth[y*mData->Width + x] = f;
+	}
+
+	float RenderResult::depth(uint32 x, uint32 y) const
+	{
+		return mData->Depth[y*mData->Width + x];
+	}
+
+	float RenderResult::maxDepth() const
+	{
+		float d = 0;
+		for (size_t i = 0; i < mData->Width * mData->Height; ++i)
+		{
+			if (d < mData->Depth[i])
+			{
+				d = mData->Depth[i];
+			}
+		}
+
+		return d;
 	}
 }

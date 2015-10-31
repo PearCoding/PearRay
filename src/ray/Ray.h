@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "PearMath.h"
+#include "spectral/Spectrum.h"
 
 namespace PR
 {
@@ -17,13 +18,13 @@ namespace PR
 		void setDirection(const PM::vec3& p);
 		PM::vec3 direction() const;
 
-		void setIntensity(float f);
-		float intensity() const;
+		void setSpectrum(const Spectrum& s);
+		Spectrum spectrum() const;
 
 	private:
 		PM::vec3 mStartPosition;
 		PM::vec3 mDirection;
 
-		float mIntensity;
+		Spectrum mSpectrum;
 	};
 }

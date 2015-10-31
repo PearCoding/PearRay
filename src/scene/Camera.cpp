@@ -2,8 +2,8 @@
 
 namespace PR
 {
-	Camera::Camera(float width, float height, float vangle, float hangle, const std::string& name, Entity* parent) :
-		Entity(name, parent), mWidth(width), mHeight(height), mVAngle(vangle), mHAngle(hangle)
+	Camera::Camera(float width, float height, float lens, const std::string& name, Entity* parent) :
+		Entity(name, parent), mWidth(width), mHeight(height), mLensDistance(lens)
 	{
 	}
 
@@ -31,23 +31,13 @@ namespace PR
 		return mHeight;
 	}
 
-	void Camera::setVerticalAngle(float angle)
+	void Camera::setLensDistance(float f)
 	{
-		mVAngle = angle;
+		mLensDistance = f;
 	}
 
-	float Camera::verticalAngle() const
+	float Camera::lensDistance() const
 	{
-		return mVAngle;
-	}
-
-	void Camera::setHorizontalAngle(float angle)
-	{
-		mHAngle = angle;
-	}
-
-	float Camera::horizontalAngle() const
-	{
-		return mHAngle;
+		return mLensDistance;
 	}
 }

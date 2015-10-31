@@ -9,7 +9,7 @@ namespace PR
 	class Camera : public Entity
 	{
 	public:
-		Camera(float width, float height, float vangle, float hangle, const std::string& name, Entity* parent = nullptr);
+		Camera(float width, float height, float lensDistance, const std::string& name, Entity* parent = nullptr);
 		virtual ~Camera();
 
 		void setWidth(float w);
@@ -18,15 +18,11 @@ namespace PR
 		void setHeight(float h);
 		float height() const;
 
-		void setVerticalAngle(float angle);
-		float verticalAngle() const;
-
-		void setHorizontalAngle(float angle);
-		float horizontalAngle() const;
+		void setLensDistance(float d);
+		float lensDistance() const;
 	private:
 		float mWidth;
 		float mHeight;
-		float mVAngle;
-		float mHAngle;
+		float mLensDistance;
 	};
 }

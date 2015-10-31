@@ -30,9 +30,14 @@ SET(PR_Scene_Src
   ${PR_Root}/scene/Camera.cpp
   ${PR_Root}/scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
+SET(PR_Spectral_Src
+  ${PR_Root}/spectral/IntensityConverter.cpp
+  ${PR_Root}/spectral/RGBConverter.cpp
+  ${PR_Root}/spectral/Spectrum.cpp)
+SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
-  ${PR_Renderer_Src}
+  ${PR_Renderer_Src} ${PR_Spectral_Src} 
 )
 
 SET(PR_Main_Hdr
@@ -67,9 +72,15 @@ SET(PR_Scene_Hdr
   ${PR_Root}/scene/Camera.h
   ${PR_Root}/scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
+SET(PR_Spectral_Hdr
+  ${PR_Root}/spectral/ColorSpaceConverter.h
+  ${PR_Root}/spectral/IntensityConverter.h
+  ${PR_Root}/spectral/RGBConverter.h
+  ${PR_Root}/spectral/Spectrum.h)
+SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
-  ${PR_Renderer_Hdr}
+  ${PR_Renderer_Hdr} ${PR_Spectral_Hdr}
 )
 
 SET(PR_TARGET pearray)

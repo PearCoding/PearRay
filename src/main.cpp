@@ -9,6 +9,8 @@
 
 #include "renderer/Renderer.h"
 
+#include "spectral/IntensityConverter.h"
+
 // PearPic
 #include "PearPic.h"
 #include "Image.h"
@@ -43,7 +45,7 @@ int main(int argc, char** argv)
 	PP::PearPic pearpic;
 	pearpic.init();
 
-	PR::Camera camera(10, 10, PM::pm_DegToRad(60), PM::pm_DegToRad(60), "Test_Cam");
+	PR::Camera camera(10, 10, 1, "Test_Cam");
 	PR::Scene scene("Test");
 	PR::Renderer renderer(500, 500);
 
@@ -51,28 +53,48 @@ int main(int argc, char** argv)
 	e->setPosition(PM::pm_Set(0, 0, 5));
 	scene.addEntity(e);
 
+	PR::SphereEntity* e2 = new PR::SphereEntity("Sphere2", 2);
+	e2->setPosition(PM::pm_Set(0, 1, 3));
+	scene.addEntity(e2);
+
 	PR::RenderResult result = renderer.render(&camera, &scene);
+	float maxDepth = result.maxDepth();
 	scene.clear();
 
 	// TODO: Save png
+	PR::IntensityConverter converter;
+
 	PP::uint8* imageData = new PP::uint8[3 * result.width() * result.height()];
+	PP::uint8* imageData2 = new PP::uint8[3 * result.width() * result.height()];
 	for (PP::uint32 y = 0; y < result.height(); ++y)
 	{
 		for (PP::uint32 x = 0; x < result.width(); ++x)
 		{
 			size_t index = y * result.width() * 3 + x * 3;
-			imageData[index] = result.point(x, y) * 255;
-			imageData[index + 1] = result.point(x, y) * 255;
-			imageData[index + 2] = result.point(x, y) * 255;
+			float r;
+			float g;
+			float b;
+
+			converter.convert(result.point(x, y), r, g, b);
+
+			imageData[index] = r * 255;
+			imageData[index + 1] = g * 255;
+			imageData[index + 2] = b * 255;
+
+			float d = result.depth(x, y)/maxDepth;
+			d = d < 0 ? 0 : 1-d;
+
+			imageData2[index] = d * 255;
+			imageData2[index + 1] = d * 255;
+			imageData2[index + 2] = d * 255;
 		}
 	}
 
 	PP::Image image(imageData, result.width(), result.height(), PP::CF_RGB);
-	image.make_external();
+	PP::Image image2(imageData2, result.width(), result.height(), PP::CF_RGB);
 
-	pearpic.write("test.png", image);
-
-	delete[] imageData;
+	pearpic.write("test.tga", image);
+	pearpic.write("test_depth.tga", image2);
 
 	// Release PearPic extensions
 	pearpic.exit();
