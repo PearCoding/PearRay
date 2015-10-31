@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include "FileLogListener.h"
 
 #include "scene/Camera.h"
@@ -20,6 +18,8 @@
 # include <stdlib.h>
 # include <crtdbg.h>
 #endif
+#include <sstream>
+#include <iostream>
 
 int main(int argc, char** argv)
 {
@@ -45,19 +45,22 @@ int main(int argc, char** argv)
 	PP::PearPic pearpic;
 	pearpic.init();
 
-	PR::Camera camera(10, 10, 1, "Test_Cam");
+	PR::Camera camera(1, 1, 0.2f, "Test_Cam");
 	PR::Scene scene("Test");
 	PR::Renderer renderer(500, 500);
 
-	PR::SphereEntity* e = new PR::SphereEntity("Sphere", 2);
-	e->setPosition(PM::pm_Set(0, 0, 5));
-	scene.addEntity(e);
-
-	PR::SphereEntity* e2 = new PR::SphereEntity("Sphere2", 2);
-	e2->setPosition(PM::pm_Set(0, 1, 3));
-	scene.addEntity(e2);
+	for (int x = 0; x <= 5; ++x)
+	{
+		for (int y = 0; y <= 5; ++y)
+		{
+			PR::SphereEntity* e = new PR::SphereEntity("Sphere", 2);
+			e->setPosition(PM::pm_Set(x*4-10, y*4-10, 5));
+			scene.addEntity(e);
+		}
+	}
 
 	PR::RenderResult result = renderer.render(&camera, &scene);
+	std::cout << "Rays: " << renderer.rayCount() << std::endl;
 	float maxDepth = result.maxDepth();
 	scene.clear();
 
@@ -98,5 +101,9 @@ int main(int argc, char** argv)
 
 	// Release PearPic extensions
 	pearpic.exit();
+
+#ifdef PR_OS_WINDOWS
+	system("pause");
+#endif
 	return 0;
 }

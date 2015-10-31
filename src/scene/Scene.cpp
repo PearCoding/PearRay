@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "entity/Entity.h"
+#include "ray/Ray.h"
 
 namespace PR
 {
@@ -47,14 +48,24 @@ namespace PR
 	// Really bad implementation!
 	Entity* Scene::checkCollision(const Ray& ray, PM::vec3& collisionPoint) const
 	{
+		Entity* res = nullptr;
+		float n = -1;
+		PM::vec3 tmpCollisionPoint;
 		for (Entity* e : mEntities)
 		{
-			if (e->checkCollision(ray, collisionPoint))
+			if (e->checkCollision(ray, tmpCollisionPoint))
 			{
-				return e;
+				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint, ray.startPosition()));
+
+				if (n == -1 || l < n)
+				{
+					n = l;
+					res = e;
+					collisionPoint = tmpCollisionPoint;
+				}
 			}
 		}
 
-		return nullptr;
+		return res;
 	}
 }
