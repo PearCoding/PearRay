@@ -10,6 +10,7 @@ SET(PR_Entity_Src
   ${PR_Root}/entity/SphereEntity.cpp)
 SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
+  ${PR_Root}/geometry/BoundingBox.cpp
   ${PR_Root}/geometry/Face.cpp
   ${PR_Root}/geometry/Mesh.cpp
   ${PR_Root}/geometry/Normal.cpp
@@ -51,6 +52,7 @@ SET(PR_Entity_Hdr
   ${PR_Root}/entity/SphereEntity.h)
 SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
 SET(PR_Geometry_Hdr
+  ${PR_Root}/geometry/BoundingBox.h
   ${PR_Root}/geometry/Face.h
   ${PR_Root}/geometry/Mesh.h
   ${PR_Root}/geometry/Normal.h

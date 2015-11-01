@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Config.h"
-#include "PearMath.h"
+#include "geometry/BoundingBox.h"
 
 #include <string>
 
@@ -31,6 +31,8 @@ namespace PR
 
 		PM::mat4 matrix() const;
 
+		virtual bool isCollidable() const;
+		virtual BoundingBox boundingBox() const;
 		virtual bool checkCollision(const Ray& ray, PM::vec3& collisionPoint);
 
 	private:

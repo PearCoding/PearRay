@@ -17,6 +17,8 @@ namespace PR
 		void setMaterial(Material* m);
 		Material* material() const;
 
+		virtual bool isCollidable() const;
+		virtual BoundingBox boundingBox() const;
 		virtual bool checkCollision(const Ray& ray, PM::vec3& collisionPoint);
 
 	private:

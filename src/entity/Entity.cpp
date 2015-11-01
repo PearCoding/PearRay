@@ -97,6 +97,16 @@ namespace PR
 		}
 	}
 
+	bool Entity::isCollidable() const
+	{
+		return false;
+	}
+
+	BoundingBox Entity::boundingBox() const
+	{
+		return BoundingBox(PM::pm_Set(0, 0, 0), PM::pm_Set(0, 0, 0));
+	}
+
 	bool Entity::checkCollision(const Ray& ray, PM::vec3& collisionPoint)
 	{
 		return false;
