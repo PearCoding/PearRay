@@ -52,10 +52,11 @@ int main(int argc, char** argv)
 	PR::Renderer renderer(500, 500);
 
 	PR::Spectrum diffSpec;
-	for (size_t i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
+	/*for (size_t i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
 	{
 		diffSpec.setValue(i, i / (float)PR::Spectrum::SAMPLING_COUNT);
-	}
+	}*/
+	diffSpec.setValueAtWavelength(600, 1);
 
 	PR::DiffuseMaterial material(diffSpec);
 
@@ -90,6 +91,9 @@ int main(int argc, char** argv)
 			float b;
 
 			converter.convert(result.point(x, y), r, g, b);
+			r = PM::pm_MinT<float>(1, r);
+			g = PM::pm_MinT<float>(1, g);
+			b = PM::pm_MinT<float>(1, b);
 
 			imageData[index] = r * 255;
 			imageData[index + 1] = g * 255;

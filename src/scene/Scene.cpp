@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "entity/Entity.h"
 #include "ray/Ray.h"
+#include "geometry/FacePoint.h"
 
 namespace PR
 {
@@ -46,16 +47,16 @@ namespace PR
 	}
 
 	// Really bad implementation!
-	Entity* Scene::checkCollision(const Ray& ray, PM::vec3& collisionPoint) const
+	Entity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
 	{
 		Entity* res = nullptr;
 		float n = -1;
-		PM::vec3 tmpCollisionPoint;
+		FacePoint tmpCollisionPoint;
 		for (Entity* e : mEntities)
 		{
 			if (e->checkCollision(ray, tmpCollisionPoint))
 			{
-				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint, ray.startPosition()));
+				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
 
 				if (n == -1 || l < n)
 				{

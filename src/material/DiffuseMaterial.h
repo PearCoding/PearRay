@@ -13,7 +13,7 @@ namespace PR
 		Spectrum spectrum() const;
 		void setSpectrum(const Spectrum& diffSpec);
 
-		void apply(Ray& in, Entity* entity, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer);
+		void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer);
 	private:
 		Spectrum mDiffSpectrum;
 	};

@@ -22,8 +22,24 @@ namespace PR
 		return mValues[index];
 	}
 
+	void Spectrum::setValueAtWavelength(float wavelength, float value)
+	{
+		if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
+		{
+			return;
+		}
+
+		uint32 i = (wavelength - WAVELENGTH_START) / WAVELENGTH_STEP;
+		mValues[i] = value;
+	}
+
 	float Spectrum::approx(float wavelength, InterpolationType interpolation) const
 	{
+		if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
+		{
+			return -1;
+		}
+
 		float st = wavelength - WAVELENGTH_START;
 		uint32 c = st / WAVELENGTH_STEP;
 		uint32 m = fmodf(st, WAVELENGTH_STEP);

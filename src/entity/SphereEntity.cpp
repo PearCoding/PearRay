@@ -1,6 +1,7 @@
 #include "SphereEntity.h"
 #include "ray/Ray.h"
 #include "material/Material.h"
+#include "geometry/FacePoint.h"
 
 namespace PR
 {
@@ -44,7 +45,7 @@ namespace PR
 	}
 
 	// TODO: Should handle ray.startpoint as well!
-	bool SphereEntity::checkCollision(const Ray& ray, PM::vec3& collisionPoint)
+	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		const PM::vec3 sc = PM::pm_Subtract(ray.startPosition(), position()); // S - C
 
@@ -78,15 +79,19 @@ namespace PR
 			t = t0 < t1 ? t0 : t1;
 		}
 
-		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+		collisionPoint.setVertex(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t)));
+
+		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
+		collisionPoint.setNormal(norm);
+
 		return true;
 	}
 
-	void SphereEntity::apply(Ray& in, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer)
+	void SphereEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
 	{
 		if (mMaterial)
 		{
-			mMaterial->apply(in, this, point, normal, renderer);
+			mMaterial->apply(in, this, point, renderer);
 		}
 	}
 }

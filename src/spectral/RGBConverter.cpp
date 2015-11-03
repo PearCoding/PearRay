@@ -3,14 +3,16 @@
 
 #include "PearMath.h"
 
+#include <iostream>
+
 namespace PR
 {
 	/* Source: https://en.wikipedia.org/wiki/File:CIE1931_RGBCMF.svg */
-	float NM_TO_RGB[Spectrum::SAMPLING_COUNT*3] =
-	{
+	float NM_TO_RGB[Spectrum::SAMPLING_COUNT*3] = 
+	{/* Red		Green	Blue */
 		0,		0,		0,		// 380 nm
 		0,		0,		0,		// 390 nm
-		0,		0,		0.01f,	// 400 nm [BLUE START] -> 2
+		0,		0,		0.01f,	// 400 nm [BLUE START]
 		0,		0,		0.04f,	// 410 nm 
 		0,		0,		0.105f,	// 420 nm
 		0,		0,		0.230f,	// 430 nm
@@ -53,23 +55,20 @@ namespace PR
 
 	void RGBConverter::convert(const Spectrum& s, float &x, float &y, float &z)
 	{
-		Spectrum spec = s;
-		spec.normalize();
-
 		x = 0;
 		y = 0;
 		z = 0;
 
 		for (size_t i = 2; i < Spectrum::SAMPLING_COUNT - 8; ++i)
 		{
-			x += spec.value(i)*NM_TO_RGB[3 * i] * Spectrum::WAVELENGTH_STEP;
-			y += spec.value(i)*NM_TO_RGB[3 * i + 1] * Spectrum::WAVELENGTH_STEP;
-			z += spec.value(i)*NM_TO_RGB[3 * i + 2] * Spectrum::WAVELENGTH_STEP;
+			x += s.value(i) * NM_TO_RGB[3 * i] * Spectrum::WAVELENGTH_STEP;
+			y += s.value(i) * NM_TO_RGB[3 * i + 1] * Spectrum::WAVELENGTH_STEP;
+			z += s.value(i) * NM_TO_RGB[3 * i + 2] * Spectrum::WAVELENGTH_STEP;
 		}
 
-		const float avg = s.avg();
-		x = PM::pm_MaxT<float>(0, x*avg);
-		y = PM::pm_MaxT<float>(0, y*avg);
-		z = PM::pm_MaxT<float>(0, z*avg);
+		//std::cout << x << " " << y << " " << z << std::endl;
+		x = PM::pm_MaxT<float>(0, x);
+		y = PM::pm_MaxT<float>(0, y);
+		z = PM::pm_MaxT<float>(0, z);
 	}
 }

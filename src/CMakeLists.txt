@@ -12,6 +12,7 @@ SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
   ${PR_Root}/geometry/BoundingBox.cpp
   ${PR_Root}/geometry/Face.cpp
+  ${PR_Root}/geometry/FacePoint.cpp
   ${PR_Root}/geometry/Mesh.cpp
   ${PR_Root}/geometry/Normal.cpp
   ${PR_Root}/geometry/UV.cpp
@@ -57,6 +58,7 @@ SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
 SET(PR_Geometry_Hdr
   ${PR_Root}/geometry/BoundingBox.h
   ${PR_Root}/geometry/Face.h
+  ${PR_Root}/geometry/FacePoint.h
   ${PR_Root}/geometry/Mesh.h
   ${PR_Root}/geometry/Normal.h
   ${PR_Root}/geometry/UV.h

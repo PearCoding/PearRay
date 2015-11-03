@@ -107,12 +107,12 @@ namespace PR
 		return BoundingBox(PM::pm_Set(0, 0, 0), PM::pm_Set(0, 0, 0));
 	}
 
-	bool Entity::checkCollision(const Ray& ray, PM::vec3& collisionPoint)
+	bool Entity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		return false;
 	}
 
-	void Entity::apply(Ray& in, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer)
+	void Entity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
 	{
 	}
 }

@@ -9,6 +9,7 @@
 namespace PR
 {
 	class Entity;
+	class FacePoint;
 	class Ray;
 	class Scene
 	{
@@ -24,7 +25,7 @@ namespace PR
 
 		void clear();
 
-		Entity* checkCollision(const Ray& ray, PM::vec3& collisionPoint) const;
+		Entity* checkCollision(const Ray& ray, FacePoint& collisionPoint) const;
 
 	private:
 		std::string mName;

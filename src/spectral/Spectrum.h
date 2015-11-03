@@ -24,6 +24,7 @@ namespace PR
 		void setValue(uint32 index, float v);
 		float value(uint32 index) const;
 
+		void setValueAtWavelength(float wavelength, float value);
 		float approx(float wavelength, InterpolationType interpolation = IT_Linear) const;
 
 		float max() const;// Amplitude

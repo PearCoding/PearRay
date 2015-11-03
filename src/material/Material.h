@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ray/Ray.h"
-
 namespace PR
 {
 	class Entity;
+	class FacePoint;
+	class Ray;
 	class Renderer;
 	class Material
 	{
 	public:
-		virtual void apply(Ray& in, Entity* entity, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer) = 0;
+		virtual void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer) = 0;
 	};
 }

@@ -2,6 +2,7 @@
 #include "scene/Camera.h"
 #include "scene/Scene.h"
 #include "ray/Ray.h"
+#include "geometry/FacePoint.h"
 
 namespace PR
 {
@@ -61,7 +62,7 @@ namespace PR
 				Ray ray(PM::pm_Multiply(cam->matrix(), PM::pm_Set(sx, sy, 0)),
 					PM::pm_Multiply(PM::pm_Rotation(cam->rotation()), dir));
 
-				PM::vec3 collisionPoint;
+				FacePoint collisionPoint;
 				Entity* entity = scene->checkCollision(ray, collisionPoint);
 
 				if (!entity)
@@ -71,9 +72,9 @@ namespace PR
 				else
 				{
 					ray.setSpectrum(identity);
-					entity->apply(ray, collisionPoint, PM::pm_Set(0, 0, 0), this);
+					entity->apply(ray, collisionPoint, this);
 
-					float newDepth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint, ray.startPosition()));
+					float newDepth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.vertex(), ray.startPosition()));
 					result.setDepth(x, y, newDepth);
 					result.setPoint(x, y, ray.spectrum());
 				}
