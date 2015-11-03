@@ -20,6 +20,9 @@ SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Loader_Src
   ${PR_Root}/loader/WavefrontLoader.cpp)
 SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
+SET(PR_Material_Src
+  ${PR_Root}/material/DiffuseMaterial.cpp)
+SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Ray_Src
   ${PR_Root}/ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
@@ -38,7 +41,7 @@ SET(PR_Spectral_Src
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
-  ${PR_Renderer_Src} ${PR_Spectral_Src} 
+  ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
 )
 
 SET(PR_Main_Hdr
@@ -63,6 +66,10 @@ SET(PR_Loader_Hdr
   ${PR_Root}/loader/MeshLoader.h
   ${PR_Root}/loader/WavefrontLoader.h)
 SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
+SET(PR_Material_Hdr
+  ${PR_Root}/material/DiffuseMaterial.h
+  ${PR_Root}/material/Material.h)
+SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Ray_Hdr
   ${PR_Root}/ray/Ray.h)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
@@ -82,7 +89,7 @@ SET(PR_Spectral_Hdr
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
-  ${PR_Renderer_Hdr} ${PR_Spectral_Hdr}
+  ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
 )
 
 SET(PR_TARGET pearray)
