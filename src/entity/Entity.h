@@ -8,6 +8,7 @@
 namespace PR
 {
 	class Ray;
+	class Renderer;
 	class Entity
 	{
 	public:
@@ -34,6 +35,8 @@ namespace PR
 		virtual bool isCollidable() const;
 		virtual BoundingBox boundingBox() const;
 		virtual bool checkCollision(const Ray& ray, PM::vec3& collisionPoint);
+
+		virtual void apply(Ray& in, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer);
 
 	private:
 		std::string mName;

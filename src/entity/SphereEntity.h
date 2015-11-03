@@ -21,6 +21,7 @@ namespace PR
 		virtual BoundingBox boundingBox() const;
 		virtual bool checkCollision(const Ray& ray, PM::vec3& collisionPoint);
 
+		virtual void apply(Ray& in, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer);
 	private:
 		float mRadius;
 		Material* mMaterial;

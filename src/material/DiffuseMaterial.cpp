@@ -4,7 +4,7 @@
 namespace PR
 {
 	DiffuseMaterial::DiffuseMaterial(const Spectrum& diffSpec) :
-		mDiffSpectrum(diffSpec)
+		Material(), mDiffSpectrum(diffSpec)
 	{
 	}
 

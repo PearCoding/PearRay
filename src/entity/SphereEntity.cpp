@@ -1,5 +1,6 @@
 #include "SphereEntity.h"
 #include "ray/Ray.h"
+#include "material/Material.h"
 
 namespace PR
 {
@@ -79,5 +80,13 @@ namespace PR
 
 		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 		return true;
+	}
+
+	void SphereEntity::apply(Ray& in, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer)
+	{
+		if (mMaterial)
+		{
+			mMaterial->apply(in, this, point, normal, renderer);
+		}
 	}
 }

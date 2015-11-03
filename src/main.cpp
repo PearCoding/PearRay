@@ -7,7 +7,9 @@
 
 #include "renderer/Renderer.h"
 
-#include "spectral/IntensityConverter.h"
+#include "spectral/RGBConverter.h"
+
+#include "material/DiffuseMaterial.h"
 
 // PearPic
 #include "PearPic.h"
@@ -49,12 +51,21 @@ int main(int argc, char** argv)
 	PR::Scene scene("Test");
 	PR::Renderer renderer(500, 500);
 
+	PR::Spectrum diffSpec;
+	for (size_t i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
+	{
+		diffSpec.setValue(i, i / (float)PR::Spectrum::SAMPLING_COUNT);
+	}
+
+	PR::DiffuseMaterial material(diffSpec);
+
 	for (int x = 0; x <= 5; ++x)
 	{
 		for (int y = 0; y <= 5; ++y)
 		{
 			PR::SphereEntity* e = new PR::SphereEntity("Sphere", 2);
 			e->setPosition(PM::pm_Set(x*4-10, y*4-10, 5));
+			e->setMaterial(&material);
 			scene.addEntity(e);
 		}
 	}
@@ -65,7 +76,7 @@ int main(int argc, char** argv)
 	scene.clear();
 
 	// TODO: Save png
-	PR::IntensityConverter converter;
+	PR::RGBConverter converter;
 
 	PP::uint8* imageData = new PP::uint8[3 * result.width() * result.height()];
 	PP::uint8* imageData2 = new PP::uint8[3 * result.width() * result.height()];

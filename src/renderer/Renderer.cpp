@@ -43,6 +43,12 @@ namespace PR
 
 		RenderResult result(mWidth, mHeight);
 
+		Spectrum identity;
+		for (size_t i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		{
+			identity.setValue(i, 1);
+		}
+
 		for (uint32 y = 0; y < mHeight; ++y)
 		{
 			for (uint32 x = 0; x < mWidth; ++x)
@@ -64,6 +70,9 @@ namespace PR
 				}
 				else
 				{
+					ray.setSpectrum(identity);
+					entity->apply(ray, collisionPoint, PM::pm_Set(0, 0, 0), this);
+
 					float newDepth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint, ray.startPosition()));
 					result.setDepth(x, y, newDepth);
 					result.setPoint(x, y, ray.spectrum());

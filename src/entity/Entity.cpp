@@ -111,4 +111,8 @@ namespace PR
 	{
 		return false;
 	}
+
+	void Entity::apply(Ray& in, const PM::vec3& point, const PM::vec3& normal, Renderer* renderer)
+	{
+	}
 }

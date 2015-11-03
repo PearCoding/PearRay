@@ -5,7 +5,7 @@
 
 namespace PR
 {
-	class DiffuseMaterial
+	class DiffuseMaterial : public Material
 	{
 	public:
 		DiffuseMaterial(const Spectrum& diffSpec);

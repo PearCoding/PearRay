@@ -16,7 +16,7 @@ namespace PR
 		static const uint32 WAVELENGTH_START = 380;// nm
 		static const uint32 WAVELENGTH_END = 780;// nm
 		static const uint32 WAVELENGTH_STEP = 10;// nm
-		static const uint32 SAMPLING_COUNT = (WAVELENGTH_END - WAVELENGTH_START) / WAVELENGTH_STEP;
+		static const uint32 SAMPLING_COUNT = (WAVELENGTH_END - WAVELENGTH_START) / WAVELENGTH_STEP + 1;
 		
 		Spectrum();
 		virtual ~Spectrum();
