@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "scene/Camera.h"
 #include "scene/Scene.h"
+#include "entity/GeometryEntity.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 
@@ -63,7 +64,7 @@ namespace PR
 					PM::pm_Multiply(PM::pm_Rotation(cam->rotation()), dir));
 
 				FacePoint collisionPoint;
-				Entity* entity = scene->checkCollision(ray, collisionPoint);
+				GeometryEntity* entity = scene->checkCollision(ray, collisionPoint);
 
 				if (!entity)
 				{

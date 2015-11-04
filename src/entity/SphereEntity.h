@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Entity.h"
+#include "GeometryEntity.h"
 
 namespace PR
 {
 	class Material;
-	class SphereEntity : public Entity
+	class SphereEntity : public GeometryEntity
 	{
 	public:
 		SphereEntity(const std::string& name, float r, Entity* parent = nullptr);

@@ -6,7 +6,7 @@
 namespace PR
 {
 	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
-		Entity(name, parent), mRadius(r)
+		GeometryEntity(name, parent), mRadius(r)
 	{
 	}
 
@@ -41,7 +41,8 @@ namespace PR
 
 	BoundingBox SphereEntity::boundingBox() const
 	{
-		return BoundingBox(PM::pm_Set(mRadius, mRadius, mRadius), PM::pm_Set(-mRadius, -mRadius, -mRadius));
+		return BoundingBox(PM::pm_Add(position(), PM::pm_Set(mRadius, mRadius, mRadius)),
+			PM::pm_Add(position(), PM::pm_Set(-mRadius, -mRadius, -mRadius)));
 	}
 
 	// TODO: Should handle ray.startpoint as well!

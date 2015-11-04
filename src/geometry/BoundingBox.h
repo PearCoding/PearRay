@@ -13,6 +13,7 @@ namespace PR
 		PM::vec3 UpperBound;
 		PM::vec3 LowerBound;
 
+		BoundingBox();
 		BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound);
 
 		float width() const;

@@ -3,7 +3,7 @@
 namespace PR
 {
 	MeshEntity::MeshEntity(const std::string& name, Entity* parent) :
-		Entity(name, parent)
+		GeometryEntity(name, parent)
 	{
 	}
 

@@ -52,10 +52,10 @@ int main(int argc, char** argv)
 	PR::Renderer renderer(500, 500);
 
 	PR::Spectrum diffSpec;
-	/*for (size_t i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
+	for (size_t i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
 	{
 		diffSpec.setValue(i, i / (float)PR::Spectrum::SAMPLING_COUNT);
-	}*/
+	}
 	diffSpec.setValueAtWavelength(600, 1);
 
 	PR::DiffuseMaterial material(diffSpec);
@@ -70,6 +70,9 @@ int main(int argc, char** argv)
 			scene.addEntity(e);
 		}
 	}
+
+	PR_LOGGER.log(PR::L_Info, PR::M_Scene, "Starting rendering...");
+	scene.buildTree();
 
 	PR::RenderResult result = renderer.render(&camera, &scene);
 	std::cout << "Rays: " << renderer.rayCount() << std::endl;

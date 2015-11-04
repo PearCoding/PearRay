@@ -1,12 +1,16 @@
 #include "Scene.h"
+#include "kdTree.h"
 #include "entity/Entity.h"
+#include "entity/GeometryEntity.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
+
+#include "Logger.h"
 
 namespace PR
 {
 	Scene::Scene(const std::string& name) :
-		mName(name)
+		mName(name), mKDTree(nullptr)
 	{
 	}
 
@@ -23,6 +27,20 @@ namespace PR
 	std::string Scene::name() const
 	{
 		return mName;
+	}
+
+	void Scene::addEntity(GeometryEntity* e)
+	{
+		PR_ASSERT(e);
+		mEntities.push_back(e);
+		mGeometryEntities.push_back(e);
+	}
+
+	void Scene::removeEntity(GeometryEntity* e)
+	{
+		PR_ASSERT(e);
+		mEntities.remove(e);
+		mGeometryEntities.remove(e);
 	}
 
 	void Scene::addEntity(Entity* e)
@@ -44,15 +62,35 @@ namespace PR
 			delete e;
 		}
 		mEntities.clear();
+		mGeometryEntities.clear();
+
+		if (mKDTree)
+		{
+			delete mKDTree;
+			mKDTree = nullptr;
+		}
+	}
+
+	void Scene::buildTree()
+	{
+		if (mKDTree)
+		{
+			PR_LOGGER.log(L_Info, M_Scene, "kdTree already exists, deleting old one.");
+			delete mKDTree;
+			mKDTree = nullptr;
+		}
+
+		mKDTree = new kdTree;
+		mKDTree->build(mGeometryEntities);
 	}
 
 	// Really bad implementation!
-	Entity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
+	GeometryEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
 	{
-		Entity* res = nullptr;
+		GeometryEntity* res = nullptr;
 		float n = -1;
 		FacePoint tmpCollisionPoint;
-		for (Entity* e : mEntities)
+		for (GeometryEntity* e : mGeometryEntities)
 		{
 			if (e->checkCollision(ray, tmpCollisionPoint))
 			{

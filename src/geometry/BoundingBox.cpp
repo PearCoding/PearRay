@@ -2,6 +2,11 @@
 
 namespace PR
 {
+	BoundingBox::BoundingBox() :
+		UpperBound(PM::pm_Set(0,0,0)), LowerBound(PM::pm_Set(0, 0, 0))
+	{
+
+	}
 	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound) :
 		UpperBound(upperbound), LowerBound(lowerbound)
 	{
@@ -46,9 +51,9 @@ namespace PR
 			PM::pm_SetY(UpperBound, PM::pm_GetY(point));
 		}
 
-		if (PM::pm_GetY(point) > PM::pm_GetY(UpperBound))
+		if (PM::pm_GetZ(point) > PM::pm_GetZ(UpperBound))
 		{
-			PM::pm_SetY(UpperBound, PM::pm_GetY(point));
+			PM::pm_SetZ(UpperBound, PM::pm_GetZ(point));
 		}
 
 		// LowerBound
@@ -62,9 +67,9 @@ namespace PR
 			PM::pm_SetY(LowerBound, PM::pm_GetY(point));
 		}
 
-		if (PM::pm_GetY(point) < PM::pm_GetY(LowerBound))
+		if (PM::pm_GetZ(point) < PM::pm_GetZ(LowerBound))
 		{
-			PM::pm_SetY(LowerBound, PM::pm_GetY(point));
+			PM::pm_SetZ(LowerBound, PM::pm_GetZ(point));
 		}
 	}
 

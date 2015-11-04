@@ -6,6 +6,7 @@ SET(PR_Main_Src
   ${PR_Root}/main.cpp)
 SET(PR_Entity_Src
   ${PR_Root}/entity/Entity.cpp
+  ${PR_Root}/entity/GeometryEntity.cpp
   ${PR_Root}/entity/MeshEntity.cpp
   ${PR_Root}/entity/SphereEntity.cpp)
 SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
@@ -33,6 +34,7 @@ SET(PR_Renderer_Src
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Scene_Src
   ${PR_Root}/scene/Camera.cpp
+  ${PR_Root}/scene/kdTree.cpp
   ${PR_Root}/scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
 SET(PR_Spectral_Src
@@ -52,6 +54,7 @@ SET(PR_Main_Hdr
   ${PR_Root}/LogListener.h)
 SET(PR_Entity_Hdr
   ${PR_Root}/entity/Entity.h
+  ${PR_Root}/entity/GeometryEntity.h
   ${PR_Root}/entity/MeshEntity.h
   ${PR_Root}/entity/SphereEntity.h)
 SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
@@ -81,6 +84,7 @@ SET(PR_Renderer_Hdr
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Scene_Hdr
   ${PR_Root}/scene/Camera.h
+  ${PR_Root}/scene/kdTree.h
   ${PR_Root}/scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
 SET(PR_Spectral_Hdr

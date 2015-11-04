@@ -1,15 +1,12 @@
 #pragma once
 
 #include "Config.h"
-#include "geometry/BoundingBox.h"
+#include "PearMath.h"
 
 #include <string>
 
 namespace PR
 {
-	class FacePoint;
-	class Ray;
-	class Renderer;
 	class Entity
 	{
 	public:
@@ -32,13 +29,6 @@ namespace PR
 		PM::quat rotation() const;
 
 		PM::mat4 matrix() const;
-
-		virtual bool isCollidable() const;
-		virtual BoundingBox boundingBox() const;
-		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint);
-
-		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer);
-
 	private:
 		std::string mName;
 		Entity* mParent;
