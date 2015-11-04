@@ -46,7 +46,7 @@ namespace PR
 		RenderResult result(mWidth, mHeight);
 
 		Spectrum identity;
-		for (size_t i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
 			identity.setValue(i, 1);
 		}

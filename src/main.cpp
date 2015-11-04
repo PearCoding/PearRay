@@ -52,10 +52,10 @@ int main(int argc, char** argv)
 	PR::Renderer renderer(500, 500);
 
 	PR::Spectrum diffSpec;
-	for (size_t i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
+	/*for (PR::uint32 i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
 	{
 		diffSpec.setValue(i, i / (float)PR::Spectrum::SAMPLING_COUNT);
-	}
+	}*/
 	diffSpec.setValueAtWavelength(600, 1);
 
 	PR::DiffuseMaterial material(diffSpec);
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 		for (int y = 0; y <= 5; ++y)
 		{
 			PR::SphereEntity* e = new PR::SphereEntity("Sphere", 2);
-			e->setPosition(PM::pm_Set(x*4-10, y*4-10, 5));
+			e->setPosition(PM::pm_Set((float)x*4-10, (float)y*4-10, 5));
 			e->setMaterial(&material);
 			scene.addEntity(e);
 		}

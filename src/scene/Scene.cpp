@@ -2,8 +2,6 @@
 #include "kdTree.h"
 #include "entity/Entity.h"
 #include "entity/GeometryEntity.h"
-#include "ray/Ray.h"
-#include "geometry/FacePoint.h"
 
 #include "Logger.h"
 
@@ -84,27 +82,9 @@ namespace PR
 		mKDTree->build(mGeometryEntities);
 	}
 
-	// Really bad implementation!
 	GeometryEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
 	{
-		GeometryEntity* res = nullptr;
-		float n = -1;
-		FacePoint tmpCollisionPoint;
-		for (GeometryEntity* e : mGeometryEntities)
-		{
-			if (e->checkCollision(ray, tmpCollisionPoint))
-			{
-				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
-
-				if (n == -1 || l < n)
-				{
-					n = l;
-					res = e;
-					collisionPoint = tmpCollisionPoint;
-				}
-			}
-		}
-
-		return res;
+		PR_ASSERT(mKDTree);
+		return mKDTree->checkCollision(ray, collisionPoint);
 	}
 }

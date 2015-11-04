@@ -17,11 +17,11 @@ namespace PR
 		void setMaterial(Material* m);
 		Material* material() const;
 
-		virtual bool isCollidable() const;
-		virtual BoundingBox boundingBox() const;
-		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint);
+		virtual bool isCollidable() const override;
+		virtual BoundingBox boundingBox() const override;
+		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
 
-		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer);
+		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
 	private:
 		float mRadius;
 		Material* mMaterial;

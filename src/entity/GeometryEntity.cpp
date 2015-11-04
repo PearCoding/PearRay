@@ -18,7 +18,7 @@ namespace PR
 
 	BoundingBox GeometryEntity::boundingBox() const
 	{
-		return BoundingBox(PM::pm_Set(0, 0, 0), PM::pm_Set(0, 0, 0));
+		return BoundingBox();
 	}
 
 	bool GeometryEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)

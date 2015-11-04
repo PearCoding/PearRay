@@ -1,5 +1,8 @@
 #include "kdTree.h"
 #include "entity/GeometryEntity.h"
+#include "ray/Ray.h"
+#include "geometry/BoundingBox.h"
+#include "geometry/FacePoint.h"
 
 #include "Logger.h"
 
@@ -24,7 +27,7 @@ namespace PR
 	{
 		PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
 
-		mRoot = buildNode(0, entities);
+		mRoot = buildNode(0, entities, 0);
 	}
 
 	void kdTree::deleteNode(kdNode* node)
@@ -38,19 +41,21 @@ namespace PR
 		}
 	}
 
-	kdTree::kdNode* kdTree::buildNode(size_t depth, const std::list<GeometryEntity*>& entities)
+	kdTree::kdNode* kdTree::buildNode(size_t depth, const std::list<GeometryEntity*>& entities, size_t retryDepth)
 	{
 		const uint8 axis = depth % 3;
 
-		if (entities.empty())
+		if (entities.empty() || retryDepth > 3)
 		{
 			return nullptr;
 		}
 		else if (entities.size() == 1)
 		{
-			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Leaf", depth, axis);
 			GeometryEntity* entity = entities.front();
-			return new kdNode(nullptr, nullptr, entity, entity->boundingBox());
+			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Leaf | Volume %f", depth, axis, entity->boundingBox().volume());
+			PR_LOGGER.logf(L_Debug, M_Scene, "       -> Object: %s", entity->toString().c_str());
+
+			return new kdNode(nullptr, nullptr, entities, entity->boundingBox());
 		}
 		else
 		{
@@ -60,38 +65,44 @@ namespace PR
 				box.combine(entity->boundingBox());
 			}
 
+			if (depth >= PR_KDTREE_MAX_DEPTH)
+			{
+				PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Max Depth reached! | Volume %f", depth, axis, box.volume());
+				return new kdNode(nullptr, nullptr, entities, box);
+			}
+
 			// Construct next sides
 			std::list<GeometryEntity*> leftList;
 			std::list<GeometryEntity*> rightList;
+			std::list<GeometryEntity*> midList;
 			GeometryEntity* midEntity = nullptr;
 
-			float mid = PM::pm_GetX(box.LowerBound) + box.width() / 2;
-
+			float mid = PM::pm_GetX(box.center());
 			if (axis == 1)
 			{
-				mid = PM::pm_GetY(box.LowerBound) + box.height() / 2;
+				mid = PM::pm_GetY(box.center());
 			}
 			else if (axis == 2)
 			{
-				mid = PM::pm_GetZ(box.LowerBound) + box.depth() / 2;
+				mid = PM::pm_GetZ(box.center());
 			}
 
 			// Find nearest entity to median
 			float near = 0;
 			for (GeometryEntity* e : entities)
 			{
-				float dist = std::fabsf(mid - PM::pm_GetX(e->boundingBox().UpperBound));
-				float dist2 = std::fabsf(mid - PM::pm_GetX(e->boundingBox().LowerBound));
+				float dist = std::fabsf(mid - PM::pm_GetX(e->boundingBox().upperBound()));
+				float dist2 = std::fabsf(mid - PM::pm_GetX(e->boundingBox().lowerBound()));
 
 				if (axis == 1)
 				{
-					dist = std::fabsf(mid - PM::pm_GetY(e->boundingBox().UpperBound));
-					dist2 = std::fabsf(mid - PM::pm_GetY(e->boundingBox().LowerBound));
+					dist = std::fabsf(mid - PM::pm_GetY(e->boundingBox().upperBound()));
+					dist2 = std::fabsf(mid - PM::pm_GetY(e->boundingBox().lowerBound()));
 				}
 				else if (axis == 2)
 				{
-					dist = std::fabsf(mid - PM::pm_GetZ(e->boundingBox().UpperBound));
-					dist2 = std::fabsf(mid - PM::pm_GetZ(e->boundingBox().LowerBound));
+					dist = std::fabsf(mid - PM::pm_GetZ(e->boundingBox().upperBound()));
+					dist2 = std::fabsf(mid - PM::pm_GetZ(e->boundingBox().lowerBound()));
 				}
 
 				if (dist > dist2)
@@ -106,9 +117,11 @@ namespace PR
 				}
 			}
 
+			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Volume %f | Near %f | Mid %f", depth, axis, box.volume(), near, mid);
+			PR_LOGGER.logf(L_Debug, M_Scene, "       -> Mid Object: %s", midEntity->toString().c_str());
+			midList.push_back(midEntity);
+
 			// Split entities into two parts.
-			// Left part can overlap the right part!
-			// This algorithm has a left desired tree.
 			for (GeometryEntity* e : entities)
 			{
 				if (e == midEntity)//Ignore mid entity
@@ -116,18 +129,18 @@ namespace PR
 					continue;
 				}
 
-				float dist = mid - PM::pm_GetX(e->boundingBox().UpperBound);
-				float dist2 = mid - PM::pm_GetX(e->boundingBox().LowerBound);
+				float dist = mid - PM::pm_GetX(e->boundingBox().upperBound());
+				float dist2 = mid - PM::pm_GetX(e->boundingBox().lowerBound());
 
 				if (axis == 1)
 				{
-					dist = mid - PM::pm_GetY(e->boundingBox().UpperBound);
-					dist2 = mid - PM::pm_GetY(e->boundingBox().LowerBound);
+					dist = mid - PM::pm_GetY(e->boundingBox().upperBound());
+					dist2 = mid - PM::pm_GetY(e->boundingBox().lowerBound());
 				}
 				else if (axis == 2)
 				{
-					dist = mid - PM::pm_GetZ(e->boundingBox().UpperBound);
-					dist2 = mid - PM::pm_GetZ(e->boundingBox().LowerBound);
+					dist = mid - PM::pm_GetZ(e->boundingBox().upperBound());
+					dist2 = mid - PM::pm_GetZ(e->boundingBox().lowerBound());
 				}
 
 				if (dist * dist2 >= 0)//Both are positive, or negative
@@ -141,14 +154,96 @@ namespace PR
 						rightList.push_back(e);
 					}
 				}
-				else // A entity which is over stretching to the right side
+				else // A entity which is split by the plane.
 				{
-					leftList.push_back(e);// Ignore it and put it into the left side.
+					PR_LOGGER.logf(L_Debug, M_Scene, "       -> Split Object: %s", e->toString().c_str());
+					midList.push_back(e);
 				}
 			}		
 
-			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Volume %f | Near %f | Mid %f", depth, axis, box.volume(), near, mid);
-			return new kdNode(buildNode(depth+1, leftList), buildNode(depth+1, rightList), midEntity, box);
+			if (midList.size() == entities.size())// Seems this axis is to plane and useless to cut with
+			{
+				PR_LOGGER.log(L_Debug, M_Scene, "       -> Ignoring Axis.");
+				kdNode* node = buildNode(depth + 1, entities, retryDepth);
+
+				if (!node)// Retrying did not work, now we have to accept our fate...
+				{
+					return new kdNode(nullptr, nullptr, midList, box);
+				}
+				else
+				{
+					return node;
+				}
+			}
+			else
+			{
+				return new kdNode(buildNode(depth + 1, leftList, 0), buildNode(depth + 1, rightList, 0), midList, box);
+			}
+		}
+	}
+
+	GeometryEntity* kdTree::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
+	{
+		return checkCollisionAtNode(root(), ray, collisionPoint);
+	}
+
+	GeometryEntity* kdTree::checkCollisionAtNode(const kdNode* node, const Ray& ray, FacePoint& collisionPoint) const
+	{
+		if (node && node->boundingBox.intersects(ray))
+		{
+			GeometryEntity* res = nullptr;
+			float n = std::numeric_limits<float>::max();
+			FacePoint tmpCollisionPoint;
+
+			// First the mid elements one by one
+			for (GeometryEntity* e : node->splitObjects)
+			{
+				if (e->checkCollision(ray, tmpCollisionPoint))
+				{
+					float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
+
+					if (l < n)
+					{
+						n = l;
+						res = e;
+						collisionPoint = tmpCollisionPoint;
+					}
+				}
+			}
+
+			// Now check left with recursion
+			GeometryEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint);
+			if (left)
+			{
+				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
+
+				if (l < n)
+				{
+					n = l;
+					res = left;
+					collisionPoint = tmpCollisionPoint;
+				}
+			}
+
+			// And of course check the right one with recursion as well
+			GeometryEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint);
+			if (right)
+			{
+				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
+
+				if (l < n)
+				{
+					n = l;
+					res = right;
+					collisionPoint = tmpCollisionPoint;
+				}
+			}
+
+			return res;
+		}
+		else
+		{
+			return nullptr;
 		}
 	}
 }

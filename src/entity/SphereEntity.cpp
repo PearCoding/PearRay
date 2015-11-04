@@ -45,42 +45,29 @@ namespace PR
 			PM::pm_Add(position(), PM::pm_Set(-mRadius, -mRadius, -mRadius)));
 	}
 
-	// TODO: Should handle ray.startpoint as well!
 	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
-		const PM::vec3 sc = PM::pm_Subtract(ray.startPosition(), position()); // S - C
+		const PM::vec3 L = PM::pm_Subtract(position(), ray.startPosition()); // C - O
+		const float S = PM::pm_Dot3D(L, ray.direction()); // L . D
+		const float L2 = PM::pm_MagnitudeSqr3D(L); // L . L
+		const float R2 = mRadius*mRadius; // R^2
 
-		// const float A = PM::pm_MagnitudeSqr3D(ray.direction());		// D^2 -> ASSUME 1, for normalization
-		const float B = 2 * PM::pm_Dot3D(ray.direction(), sc);		// D . (S - C)
-		const float C = PM::pm_MagnitudeSqr3D(sc) - mRadius*mRadius;// (S - C)^2 - R^2
-		
-		const float d = B*B - 4 * C;
-
-		if (d < 0)
+		if (S < 0 && // when object behind ray
+			L2 > R2) 
 		{
 			return false;
 		}
 
-		const float s = sqrtf(B*B - 4 * C);
-		const float t0 = (-B - s) / 2;
-		const float t1 = (-B + s) / 2;
+		const float M2 = L2 - S*S; // L . L - S^2
 
-		if (t0 < 0 && t1 < 0)
+		if (M2 > R2)
 		{
 			return false;
 		}
 		
-		float t = t0;
-		if (t0 < 0 && t1 >= 0)
-		{
-			t = t1;
-		}
-		else if (t0 > 0 && t1 >= 0)
-		{
-			t = t0 < t1 ? t0 : t1;
-		}
-
-		collisionPoint.setVertex(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t)));
+		const float Q = sqrtf(R2 - M2);
+		
+		collisionPoint.setVertex(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), L2 > R2 ? S - Q : S + Q)));
 
 		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
 		collisionPoint.setNormal(norm);

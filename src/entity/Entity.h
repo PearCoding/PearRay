@@ -29,6 +29,8 @@ namespace PR
 		PM::quat rotation() const;
 
 		PM::mat4 matrix() const;
+
+		virtual std::string toString() const;
 	private:
 		std::string mName;
 		Entity* mParent;

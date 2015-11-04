@@ -1,5 +1,7 @@
 #include "Entity.h"
 
+#include <sstream>
+
 namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
@@ -95,5 +97,16 @@ namespace PR
 		{
 			return m;
 		}
+	}
+
+	std::string Entity::toString() const
+	{
+		std::stringstream stream;
+		PM::vec3 pos = position();
+		stream << name()
+			<< "{" << PM::pm_GetX(pos) 
+			<< "|" << PM::pm_GetY(pos) 
+			<< "|" << PM::pm_GetZ(pos) << "}";
+		return stream.str();
 	}
 }
