@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
 	PR::Camera camera(1, 1, 0.2f, "Test_Cam");
 	PR::Scene scene("Test");
-	PR::Renderer renderer(500, 500);
+	PR::Renderer renderer(500, 500, &camera, &scene);
 
 	PR::Spectrum diffSpec;
 	/*for (PR::uint32 i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
@@ -71,10 +71,32 @@ int main(int argc, char** argv)
 		}
 	}
 
-	PR_LOGGER.log(PR::L_Info, PR::M_Scene, "Starting rendering...");
 	scene.buildTree();
 
-	PR::RenderResult result = renderer.render(&camera, &scene);
+	PR_LOGGER.log(PR::L_Info, PR::M_Scene, "Starting rendering...");
+	PR::TimePoint renderStart = std::chrono::high_resolution_clock::now();
+	renderer.render();
+
+	PR::TimePoint pt = renderStart;
+	while (!renderer.isFinished())
+	{
+		PR::TimePoint newT = std::chrono::high_resolution_clock::now();
+		std::chrono::milliseconds dur =
+			std::chrono::duration_cast<std::chrono::milliseconds>(newT - pt);
+
+		if (dur.count() > 500)
+		{
+			pt = newT;
+			std::cout << ".";
+		}
+	}
+	std::cout << std::endl;
+
+	PR::TimePoint renderEnd = std::chrono::high_resolution_clock::now();
+	PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "Rendering finished [%f sec]...",
+		std::chrono::duration_cast<std::chrono::milliseconds>(renderEnd - renderStart).count() / 1000.0f);
+
+	PR::RenderResult result = renderer.result();
 	std::cout << "Rays: " << renderer.rayCount() << std::endl;
 	float maxDepth = result.maxDepth();
 	scene.clear();

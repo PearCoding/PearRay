@@ -30,7 +30,8 @@ SET(PR_Ray_Src
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
   ${PR_Root}/renderer/RenderResult.cpp
-  ${PR_Root}/renderer/Renderer.cpp)
+  ${PR_Root}/renderer/Renderer.cpp
+  ${PR_Root}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Scene_Src
   ${PR_Root}/scene/Camera.cpp
@@ -42,9 +43,13 @@ SET(PR_Spectral_Src
   ${PR_Root}/spectral/RGBConverter.cpp
   ${PR_Root}/spectral/Spectrum.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
+SET(PR_Thread_Src
+  ${PR_Root}/thread/Thread.cpp)
+SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
+  ${PR_Thread_Src}
 )
 
 SET(PR_Main_Hdr
@@ -80,7 +85,8 @@ SET(PR_Ray_Hdr
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
   ${PR_Root}/renderer/RenderResult.h
-  ${PR_Root}/renderer/Renderer.h)
+  ${PR_Root}/renderer/Renderer.h
+  ${PR_Root}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Scene_Hdr
   ${PR_Root}/scene/Camera.h
@@ -93,9 +99,14 @@ SET(PR_Spectral_Hdr
   ${PR_Root}/spectral/RGBConverter.h
   ${PR_Root}/spectral/Spectrum.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
+SET(PR_Thread_Hdr
+  ${PR_Root}/thread/Thread.h
+  ${PR_Root}/thread/Thread.inl)
+SOURCE_GROUP("Header Files\\Thread" FILES ${PR_Thread_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
+  ${PR_Thread_Hdr}
 )
 
 SET(PR_TARGET pearray)
