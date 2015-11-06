@@ -9,6 +9,10 @@ SET(VERSION_MINOR 4)
 SET(VERSION_HEX 0x0004)
 SET(PR_Version ${VERSION_MAJOR}.${VERSION_MINOR})
 
+IF(NOT DEFINED PR_TARGET)
+	SET(PR_TARGET pr_lib)
+ENDIF()
+
 SET(PR_Root ${CMAKE_CURRENT_SOURCE_DIR}/src)
 SET(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 
@@ -36,8 +40,11 @@ IF(CYGWIN)
 	MESSAGE(WARNING "Please don't use CYGWIN with PearRay, use the MSVC version instead")
 ENDIF()
 
+#PACKAGES
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+find_package(Qt5Widgets)
+
 #DEFINITIONS AND FLAGS
-include_directories(${PR_Root})
 link_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 IF(MSVC)
@@ -54,7 +61,6 @@ ELSE()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ENDIF()
 
-SET(DEFS "${DEFS};BOOST_ALL_NO_LIB")#We don't need auto linking!
 SET(DEFS_DEBUG "${DEFS_DEBUG};PR_DEBUG")
 
 #CONFIGURE
@@ -65,9 +71,15 @@ add_subdirectory(pearmath)
 add_subdirectory(datalisp)
 add_subdirectory(pearpic)
 
-configure_file(${PR_Root}/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
+configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
-			pearpic/src ${CMAKE_CURRENT_BINARY_DIR}/pearpic)
+			pearpic/src ${CMAKE_CURRENT_BINARY_DIR}/pearpic
+			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console)
 
-add_subdirectory(${PR_Root})
+add_subdirectory(${PR_Root}/library)
+add_subdirectory(${PR_Root}/console)
+
+IF(${Qt5Widgets_FOUND})
+	add_subdirectory(${PR_Root}/viewer)
+ENDIF()
