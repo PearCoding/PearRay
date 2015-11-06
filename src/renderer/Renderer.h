@@ -9,7 +9,10 @@
 namespace PR
 {
 	class Camera;
+	class FacePoint;
+	class GeometryEntity;
 	class Scene;
+	class Ray;
 	class RenderThread;
 	class Renderer
 	{
@@ -25,6 +28,8 @@ namespace PR
 		
 		void render();
 		void render(uint32 x, uint32 y);
+
+		GeometryEntity* shoot(Ray& ray, FacePoint& collisionPoint);
 
 		bool isFinished();
 		void waitForFinish();

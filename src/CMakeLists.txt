@@ -16,6 +16,7 @@ SET(PR_Geometry_Src
   ${PR_Root}/geometry/FacePoint.cpp
   ${PR_Root}/geometry/Mesh.cpp
   ${PR_Root}/geometry/Normal.cpp
+  ${PR_Root}/geometry/RandomRotationSphere.cpp
   ${PR_Root}/geometry/UV.cpp
   ${PR_Root}/geometry/Vertex.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
@@ -69,6 +70,7 @@ SET(PR_Geometry_Hdr
   ${PR_Root}/geometry/FacePoint.h
   ${PR_Root}/geometry/Mesh.h
   ${PR_Root}/geometry/Normal.h
+  ${PR_Root}/geometry/RandomRotationSphere.h
   ${PR_Root}/geometry/UV.h
   ${PR_Root}/geometry/Vertex.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})

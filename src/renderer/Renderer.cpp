@@ -94,25 +94,31 @@ namespace PR
 			PM::pm_Multiply(PM::pm_Rotation(mCamera->rotation()), dir));
 
 		FacePoint collisionPoint;
-		GeometryEntity* entity = mScene->checkCollision(ray, collisionPoint);
+		GeometryEntity* entity = shoot(ray, collisionPoint);
 
-		if (!entity)
+		if (entity)
 		{
-			mResult.setPoint(x, y, Spectrum());
-		}
-		else
-		{
-			ray.setSpectrum(mIdentitySpectrum);
-			entity->apply(ray, collisionPoint, this);
-
 			float newDepth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.vertex(), ray.startPosition()));
 			mResult.setDepth(x, y, newDepth);
 			mResult.setPoint(x, y, ray.spectrum());
+		}
+	}
+
+	GeometryEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint)
+	{
+		GeometryEntity* entity = mScene->checkCollision(ray, collisionPoint);
+
+		if (entity)
+		{
+			//ray.setSpectrum(mIdentitySpectrum);
+			entity->apply(ray, collisionPoint, this);
 		}
 
 		mStatisticMutex.lock();
 		mRayCount++;
 		mStatisticMutex.unlock();
+
+		return entity;
 	}
 
 	bool Renderer::isFinished()

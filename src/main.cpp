@@ -52,13 +52,17 @@ int main(int argc, char** argv)
 	PR::Renderer renderer(500, 500, &camera, &scene);
 
 	PR::Spectrum diffSpec;
-	/*for (PR::uint32 i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
-	{
-		diffSpec.setValue(i, i / (float)PR::Spectrum::SAMPLING_COUNT);
-	}*/
 	diffSpec.setValueAtWavelength(600, 1);
 
+	PR::Spectrum emitSpec;
+	emitSpec.setValueAtWavelength(600, 0.5f);
+	emitSpec.setValueAtWavelength(540, 1);
+
 	PR::DiffuseMaterial material(diffSpec);
+	material.setGlossyness(0.5f);
+
+	PR::DiffuseMaterial material2(diffSpec);
+	material2.setEmission(emitSpec);
 
 	for (int x = 0; x <= 5; ++x)
 	{
@@ -70,6 +74,12 @@ int main(int argc, char** argv)
 			scene.addEntity(e);
 		}
 	}
+
+	// Light
+	PR::SphereEntity* e = new PR::SphereEntity("LightSphere", 1);
+	e->setPosition(PM::pm_Set(0, 0, 2));
+	e->setMaterial(&material2);
+	scene.addEntity(e);
 
 	scene.buildTree();
 

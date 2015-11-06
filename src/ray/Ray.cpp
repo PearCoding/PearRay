@@ -2,8 +2,8 @@
 
 namespace PR
 {
-	Ray::Ray(const PM::vec3& pos, const PM::vec3& dir) :
-		mStartPosition(pos), mDirection(dir)
+	Ray::Ray(const PM::vec3& pos, const PM::vec3& dir, size_t depth) :
+		mStartPosition(pos), mDirection(dir), mDepth(depth)
 	{
 	}
 
@@ -29,6 +29,11 @@ namespace PR
 	PM::vec3 Ray::direction() const
 	{
 		return mDirection;
+	}
+
+	size_t Ray::depth() const
+	{
+		return mDepth;
 	}
 
 	void Ray::setSpectrum(const Spectrum& s)
