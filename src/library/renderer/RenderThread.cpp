@@ -12,12 +12,19 @@ namespace PR
 
 	void RenderThread::main()
 	{
-		for (uint32 y = mStartY; y < mEndY; ++y)
+		mPixelsRendered = 0;
+		for (uint32 y = mStartY; y < mEndY && !shouldStop(); ++y)
 		{
-			for (uint32 x = mStartX; x < mEndX; ++x)
+			for (uint32 x = mStartX; x < mEndX && !shouldStop(); ++x)
 			{
 				mRenderer->render(x, y);
+				mPixelsRendered++;
 			}
 		}
+	}
+
+	size_t RenderThread::pixelsRendered() const
+	{
+		return mPixelsRendered;
 	}
 }

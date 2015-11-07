@@ -3,11 +3,15 @@
 #include <QMainWindow>
 #include "ui_MainWindow.h"
 
-#include <QFutureWatcher>
-#include <QSignalMapper>
-#include <QLabel>
+#include <QTimer>
 
-#include "Config.h"
+namespace PR
+{
+	class Camera;
+	class DiffuseMaterial;
+	class Scene;
+	class Renderer;
+}
 
 class MainWindow : public QMainWindow
 {
@@ -29,9 +33,21 @@ private slots:
 
 	void about();
 	void openWebsite();
+
+	void updateView();
+
 private:
 	void readSettings();
 	void writeSettings();
 	
 	Ui::MainWindowClass ui;
+
+	PR::Camera* mCamera;
+	PR::Scene* mScene;
+	PR::Renderer* mRenderer;
+
+	PR::DiffuseMaterial* mObjectMaterial;
+	PR::DiffuseMaterial* mLightMaterial;
+
+	QTimer mTimer;
 };

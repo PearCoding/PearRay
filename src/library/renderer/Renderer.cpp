@@ -56,6 +56,7 @@ namespace PR
 		PR_ASSERT(mThreads.empty());
 
 		mRayCount = 0;
+		mPixelsRendered = 0;
 
 		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
 		uint32 t = PM::pm_MaxT<uint32>(1, threadCount / 2);
@@ -102,6 +103,15 @@ namespace PR
 			mResult.setDepth(x, y, newDepth);
 			mResult.setPoint(x, y, ray.spectrum());
 		}
+
+		mStatisticMutex.lock();
+		mPixelsRendered++;
+		mStatisticMutex.unlock();
+	}
+
+	size_t Renderer::pixelsRendered() const
+	{
+		return mPixelsRendered;
 	}
 
 	GeometryEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint)
@@ -139,6 +149,14 @@ namespace PR
 		while (!isFinished())
 		{
 			std::this_thread::yield();
+		}
+	}
+
+	void Renderer::stop()
+	{
+		for (RenderThread* thread : mThreads)
+		{
+			thread->stop();
 		}
 	}
 

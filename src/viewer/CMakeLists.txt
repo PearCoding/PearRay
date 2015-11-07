@@ -14,7 +14,10 @@ SET(PR_Dialogs_Src
 	${PR_Viewer}/dialogs/MainWindow.cpp
 )
 SOURCE_GROUP("Source Files\\Dialogs" FILES ${PR_Dialogs_Src})
-SET(PR_Src ${PR_Main_Src} ${PR_Dialogs_Src}
+SET(PR_Widgets_Src
+  ${PR_Viewer}/widgets/ViewWidget.cpp)
+SOURCE_GROUP("Source Files\\Widgets" FILES ${PR_Widgets_Src})
+SET(PR_Src ${PR_Main_Src} ${PR_Dialogs_Src} ${PR_Widgets_Src}
 )
 
 SET(PR_Main_Hdr
@@ -22,7 +25,10 @@ SET(PR_Main_Hdr
 SET(PR_Dialogs_Hdr
   ${PR_Viewer}/dialogs/MainWindow.h)
 SOURCE_GROUP("Header Files\\Dialogs" FILES ${PR_Dialogs_Hdr})
-SET(PR_Hdr ${PR_Main_Hdr} ${PR_Dialogs_Hdr}
+SET(PR_Widgets_Hdr
+  ${PR_Viewer}/widgets/ViewWidget.h)
+SOURCE_GROUP("Header Files\\Widgets" FILES ${PR_Widgets_Hdr})
+SET(PR_Hdr ${PR_Main_Hdr} ${PR_Dialogs_Hdr} ${PR_Widgets_Hdr}
 )
 
 SET(PR_Fms

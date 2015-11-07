@@ -1,5 +1,7 @@
 #include "dialogs/MainWindow.h"
 
+#include "Config.h"
+
 #include <QApplication>
 
 int main(int argc, char *argv[])

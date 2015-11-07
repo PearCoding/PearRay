@@ -29,10 +29,13 @@ namespace PR
 		void render(uint32 threads = 0);
 		void render(uint32 x, uint32 y);
 
+		size_t pixelsRendered() const;
+
 		GeometryEntity* shoot(Ray& ray, FacePoint& collisionPoint);
 
 		bool isFinished();
 		void waitForFinish();
+		void stop();
 
 		RenderResult& result();
 
@@ -50,6 +53,7 @@ namespace PR
 		Spectrum mIdentitySpectrum;
 
 		std::mutex mStatisticMutex;
+		size_t mPixelsRendered;
 		size_t mRayCount;
 	};
 }

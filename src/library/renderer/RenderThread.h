@@ -10,6 +10,8 @@ namespace PR
 	public:
 		RenderThread(size_t sx, size_t sy, size_t ex, size_t ey, Renderer* renderer);
 
+		size_t pixelsRendered() const;
+
 	protected:
 		virtual void main();
 
@@ -19,5 +21,7 @@ namespace PR
 		size_t mEndX;
 		size_t mEndY;
 		Renderer* mRenderer;
+
+		size_t mPixelsRendered;
 	};
 }

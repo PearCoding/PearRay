@@ -11,9 +11,9 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Writing Studio</string>
+   <string>PearRay Viewer</string>
   </property>
-  <widget class="QWidget" name="viewWidget"/>
+  <widget class="ViewWidget" name="viewWidget"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -104,10 +104,6 @@
    </widget>
   </widget>
   <action name="actionQuit">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/icons/door-open-in.png</normaloff>:/icons/door-open-in.png</iconset>
-   </property>
    <property name="text">
     <string>Quit</string>
    </property>
@@ -132,10 +128,6 @@
    </property>
   </action>
   <action name="actionManual">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/icons/question-frame.png</normaloff>:/icons/question-frame.png</iconset>
-   </property>
    <property name="text">
     <string>Manual</string>
    </property>
@@ -144,10 +136,6 @@
    </property>
   </action>
   <action name="actionQuickGuide">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/icons/palette.png</normaloff>:/icons/palette.png</iconset>
-   </property>
    <property name="text">
     <string>Quick Guide</string>
    </property>
@@ -156,10 +144,6 @@
    </property>
   </action>
   <action name="actionShortcuts">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/icons/shortcut.png</normaloff>:/icons/shortcut.png</iconset>
-   </property>
    <property name="text">
     <string>Shortcuts</string>
    </property>
@@ -168,10 +152,6 @@
    </property>
   </action>
   <action name="actionWebsite">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/icons/home.png</normaloff>:/icons/home.png</iconset>
-   </property>
    <property name="text">
     <string>Website</string>
    </property>
@@ -201,8 +181,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="../../../resources/icons.qrc"/>
- </resources>
+ <customwidgets>
+  <customwidget>
+   <class>ViewWidget</class>
+   <extends>QWidget</extends>
+   <header>widgets/viewwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <connections/>
 </ui>
