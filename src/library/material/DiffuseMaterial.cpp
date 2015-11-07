@@ -7,7 +7,7 @@
 namespace PR
 {
 	DiffuseMaterial::DiffuseMaterial(const Spectrum& diffSpec) :
-		Material(), mDiffSpectrum(diffSpec), mRoughness(1)
+		Material(), mDiffSpectrum(diffSpec), mRoughness(1), mCanBeShaded(true)
 	{
 	}
 
@@ -41,19 +41,31 @@ namespace PR
 		mRoughness = f;
 	}
 
+	bool DiffuseMaterial::canBeShaded() const
+	{
+		return mCanBeShaded;
+	}
+
+	void DiffuseMaterial::enableShading(bool b)
+	{
+		mCanBeShaded = b;
+	}
+
 	void DiffuseMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
 	{
 		Spectrum spec;
 
-		if (in.depth() < 2)// TODO
+		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)// TODO
 		{
 			float delta = mRoughness*PM_PI_F;
+
+			// r = d - n*(d . n)
+			float dot =/* PM::pm_MinT<float>(0, */PM::pm_Dot3D(in.direction(), point.normal())/*)*/;
+			PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
+				PM::pm_Scale(point.normal(), dot)));
+
 			if (delta == 0) // Mirror
 			{
-				// r = d - 2*n*(d . n)
-				PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
-					PM::pm_Scale(point.normal(), 2 * PM::pm_Dot3D(in.direction(), point.normal()))));
-
 				FacePoint collisionPoint;
 				Ray ray(point.vertex(), reflection, in.depth()+1);
 				renderer->shoot(ray, collisionPoint);
@@ -61,37 +73,25 @@ namespace PR
 			}
 			else //
 			{
-				const int RAY_COUNT = 50;
+				const int RAY_COUNT = renderer->maxRayBounceCount();
 				for (int i = 0; i < RAY_COUNT; ++i)
 				{
-					PM::vec3 norm2 = RandomRotationSphere::create(point.normal(), -delta, delta, -delta, delta);
-
-					// r = d - 2*n*(d . n)
-					PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
-						PM::pm_Scale(point.normal(), 2 * PM::pm_Dot3D(in.direction(), point.normal()))));
-
+					PM::vec3 norm2 = RandomRotationSphere::create(reflection, -delta, delta, -delta, delta);
+					
 					FacePoint collisionPoint;
-					Ray ray(point.vertex(), reflection, in.depth() + 1);
+					Ray ray(point.vertex(), norm2, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 					
-					Spectrum tmp = ray.spectrum();
-					for (int j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
-					{
-						spec.setValue(j, spec.value(j) + tmp.value(j));
-					}
+					float dot2 = std::fabsf(PM::pm_Dot3D(norm2, point.normal()));
+
+					spec += dot2*ray.spectrum();
 				}
 
-				for (int j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
-				{
-					spec.setValue(j, spec.value(j) / RAY_COUNT);
-				}
+				spec /= RAY_COUNT;
 			}
 		}
 		
-		for (size_t i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		{
-			spec.setValue(i, spec.value(i)*mDiffSpectrum.value(i) + mEmitSpectrum.value(i));
-		}
+		spec = spec*mDiffSpectrum + mEmitSpectrum;
 
 		in.setSpectrum(spec);
 	}

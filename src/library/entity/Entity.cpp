@@ -6,7 +6,7 @@ namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
 		mName(name), mParent(parent),
-		mPosition(PM::pm_Set(0,0,0)), mScale(PM::pm_Set(1,1,1)), mRotation(PM::pm_IdentityQuat())
+		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat())
 	{
 	}
 

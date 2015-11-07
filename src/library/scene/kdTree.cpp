@@ -45,24 +45,24 @@ namespace PR
 	{
 		const uint8 axis = depth % 3;
 
-		if (entities.empty() || retryDepth > 3)
+		if (entities.empty() || retryDepth >= 3)
 		{
 			return nullptr;
 		}
 		else if (entities.size() == 1)
 		{
 			GeometryEntity* entity = entities.front();
-			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Leaf | Volume %f", depth, axis, entity->boundingBox().volume());
+			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Leaf | Volume %f", depth, axis, entity->worldBoundingBox().volume());
 			PR_LOGGER.logf(L_Debug, M_Scene, "       -> Object: %s", entity->toString().c_str());
 
-			return new kdNode(nullptr, nullptr, entities, entity->boundingBox());
+			return new kdNode(nullptr, nullptr, entities, entity->worldBoundingBox());
 		}
 		else
 		{
 			BoundingBox box;
 			for (GeometryEntity* entity : entities)
 			{
-				box.combine(entity->boundingBox());
+				box.combine(entity->worldBoundingBox());
 			}
 
 			if (depth >= PR_KDTREE_MAX_DEPTH)
@@ -91,18 +91,20 @@ namespace PR
 			float near = 0;
 			for (GeometryEntity* e : entities)
 			{
-				float dist = std::fabsf(mid - PM::pm_GetX(e->boundingBox().upperBound()));
-				float dist2 = std::fabsf(mid - PM::pm_GetX(e->boundingBox().lowerBound()));
+				BoundingBox bx = e->worldBoundingBox();
+
+				float dist = std::fabsf(mid - PM::pm_GetX(bx.upperBound()));
+				float dist2 = std::fabsf(mid - PM::pm_GetX(bx.lowerBound()));
 
 				if (axis == 1)
 				{
-					dist = std::fabsf(mid - PM::pm_GetY(e->boundingBox().upperBound()));
-					dist2 = std::fabsf(mid - PM::pm_GetY(e->boundingBox().lowerBound()));
+					dist = std::fabsf(mid - PM::pm_GetY(bx.upperBound()));
+					dist2 = std::fabsf(mid - PM::pm_GetY(bx.lowerBound()));
 				}
 				else if (axis == 2)
 				{
-					dist = std::fabsf(mid - PM::pm_GetZ(e->boundingBox().upperBound()));
-					dist2 = std::fabsf(mid - PM::pm_GetZ(e->boundingBox().lowerBound()));
+					dist = std::fabsf(mid - PM::pm_GetZ(bx.upperBound()));
+					dist2 = std::fabsf(mid - PM::pm_GetZ(bx.lowerBound()));
 				}
 
 				if (dist > dist2)
@@ -129,18 +131,19 @@ namespace PR
 					continue;
 				}
 
-				float dist = mid - PM::pm_GetX(e->boundingBox().upperBound());
-				float dist2 = mid - PM::pm_GetX(e->boundingBox().lowerBound());
+				BoundingBox bx = e->worldBoundingBox();
+				float dist = mid - PM::pm_GetX(bx.upperBound());
+				float dist2 = mid - PM::pm_GetX(bx.lowerBound());
 
 				if (axis == 1)
 				{
-					dist = mid - PM::pm_GetY(e->boundingBox().upperBound());
-					dist2 = mid - PM::pm_GetY(e->boundingBox().lowerBound());
+					dist = mid - PM::pm_GetY(bx.upperBound());
+					dist2 = mid - PM::pm_GetY(bx.lowerBound());
 				}
 				else if (axis == 2)
 				{
-					dist = mid - PM::pm_GetZ(e->boundingBox().upperBound());
-					dist2 = mid - PM::pm_GetZ(e->boundingBox().lowerBound());
+					dist = mid - PM::pm_GetZ(bx.upperBound());
+					dist2 = mid - PM::pm_GetZ(bx.lowerBound());
 				}
 
 				if (dist * dist2 >= 0)//Both are positive, or negative
@@ -164,7 +167,7 @@ namespace PR
 			if (midList.size() == entities.size())// Seems this axis is to plane and useless to cut with
 			{
 				PR_LOGGER.log(L_Debug, M_Scene, "       -> Ignoring Axis.");
-				kdNode* node = buildNode(depth + 1, entities, retryDepth);
+				kdNode* node = buildNode(depth + 1, entities, retryDepth+1);
 
 				if (!node)// Retrying did not work, now we have to accept our fate...
 				{

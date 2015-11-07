@@ -19,6 +19,8 @@ public:
 	void setRenderer(PR::Renderer* renderer);
 
 public slots:
+	void enableScale(bool b);
+
 	void refreshView();
 
 protected:
@@ -27,5 +29,6 @@ protected:
 private:
 	PR::Renderer* mRenderer;
 
+	bool mScale;
 	QImage mRenderImage;
 };

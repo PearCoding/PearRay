@@ -18,7 +18,7 @@ namespace PR
 		Material* material() const;
 
 		virtual bool isCollidable() const override;
-		virtual BoundingBox boundingBox() const override;
+		virtual BoundingBox localBoundingBox() const override;
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;

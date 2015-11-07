@@ -3,8 +3,7 @@
 
 namespace PR
 {
-	RenderThread::RenderThread(size_t sx, size_t sy, size_t ex, size_t ey, Renderer* renderer) :
-		mStartX(sx), mStartY(sy), mEndX(ex), mEndY(ey),
+	RenderThread::RenderThread(Renderer* renderer) :
 		mRenderer(renderer)
 	{
 		PR_ASSERT(renderer);
@@ -13,12 +12,20 @@ namespace PR
 	void RenderThread::main()
 	{
 		mPixelsRendered = 0;
-		for (uint32 y = mStartY; y < mEndY && !shouldStop(); ++y)
+		uint32 sx;
+		uint32 sy;
+		uint32 ex; 
+		uint32 ey;
+
+		while (mRenderer->getNextTile(sx, sy, ex, ey) && !shouldStop())
 		{
-			for (uint32 x = mStartX; x < mEndX && !shouldStop(); ++x)
+			for (uint32 y = sy; y < ey && !shouldStop(); ++y)
 			{
-				mRenderer->render(x, y);
-				mPixelsRendered++;
+				for (uint32 x = sx; x < ex && !shouldStop(); ++x)
+				{
+					mRenderer->render(x, y);
+					mPixelsRendered++;
+				}
 			}
 		}
 	}

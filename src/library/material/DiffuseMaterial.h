@@ -19,10 +19,14 @@ namespace PR
 		float roughness() const;
 		void setRoughness(float f);
 
+		bool canBeShaded() const;
+		void enableShading(bool b);
+
 		void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer);
 	private:
 		Spectrum mDiffSpectrum;
 		Spectrum mEmitSpectrum;
 		float mRoughness;
+		bool mCanBeShaded;
 	};
 }

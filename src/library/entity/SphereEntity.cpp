@@ -39,10 +39,10 @@ namespace PR
 		return true;
 	}
 
-	BoundingBox SphereEntity::boundingBox() const
+	BoundingBox SphereEntity::localBoundingBox() const
 	{
-		return BoundingBox(PM::pm_Add(position(), PM::pm_Set(mRadius, mRadius, mRadius)),
-			PM::pm_Add(position(), PM::pm_Set(-mRadius, -mRadius, -mRadius)));
+		return BoundingBox(PM::pm_Set(mRadius, mRadius, mRadius, 1),
+			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
 	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)

@@ -12,7 +12,8 @@ namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
-		mResult(w,h)
+		mResult(w,h), mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
+		mMaxRayDepth(3), mMaxRayBounceCount(50)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -28,6 +29,11 @@ namespace PR
 		for (RenderThread* thread : mThreads)
 		{
 			delete thread;
+		}
+
+		if (mTileMap)
+		{
+			delete[] mTileMap;
 		}
 	}
 
@@ -51,30 +57,29 @@ namespace PR
 		return mHeight;
 	}
 
-	void Renderer::render(uint32 threads)
+	void Renderer::render(uint32 tcx, uint32 tcy, uint32 threads)
 	{
 		PR_ASSERT(mThreads.empty());
 
 		mRayCount = 0;
 		mPixelsRendered = 0;
 
-		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
-		uint32 t = PM::pm_MaxT<uint32>(1, threadCount / 2);
-		uint32 sliceW = mWidth / t;
-		uint32 sliceH = mHeight / t;
-
-		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", t*t);
-
-		for (uint32 x = 0; x < t; ++x)
+		mTileWidth = width()/tcx;
+		mTileHeight = height()/tcy;
+		mTileMap = new bool[tcx*tcy];
+		for (uint32 i = 0; i < tcx*tcy; ++i)
 		{
-			for (uint32 y = 0; y < t; ++y)
-			{
-				uint32 sx = x*sliceW;
-				uint32 sy = y*sliceH;
+			mTileMap[i] = false;
+		}
 
-				RenderThread* thread = new RenderThread(sx, sy, sx + sliceW, sy + sliceH, this);
-				mThreads.push_back(thread);
-			}
+		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
+
+		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
+
+		for (uint32 i = 0; i < threadCount; ++i)
+		{
+			RenderThread* thread = new RenderThread(this);
+			mThreads.push_back(thread);
 		}
 
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
@@ -160,6 +165,34 @@ namespace PR
 		}
 	}
 
+	bool Renderer::getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey)
+	{
+		uint32 sliceW = mWidth / mTileWidth;
+		uint32 sliceH = mHeight / mTileHeight;
+
+		mTileMutex.lock();
+		for (uint32 i = 0; i < sliceH; ++i)
+		{
+			for (uint32 j = 0; j < sliceW; ++j)
+			{
+				if (!mTileMap[i*sliceW + j])
+				{
+					sx = j*mTileWidth;
+					sy = i*mTileHeight;
+					ex = sx + mTileWidth;
+					ey = sy + mTileHeight;
+
+					mTileMap[i*sliceW + j] = true;
+					mTileMutex.unlock();
+
+					return true;
+				}
+			}
+		}
+		mTileMutex.unlock();
+		return false;
+	}
+
 	RenderResult& Renderer::result()
 	{
 		return mResult;
@@ -168,5 +201,25 @@ namespace PR
 	size_t Renderer::rayCount() const
 	{
 		return mRayCount;
+	}
+
+	void Renderer::setMaxRayDepth(uint32 i)
+	{
+		mMaxRayDepth = i;
+	}
+
+	uint32 Renderer::maxRayDepth() const
+	{
+		return mMaxRayDepth;
+	}
+
+	void Renderer::setMaxRayBounceCount(uint32 i)
+	{
+		mMaxRayBounceCount = i;
+	}
+
+	uint32 Renderer::maxRayBounceCount() const
+	{
+		return mMaxRayBounceCount;
 	}
 }

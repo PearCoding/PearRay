@@ -46,19 +46,23 @@ MainWindow::MainWindow(QWidget *parent)
 	mCamera = new PR::Camera(1, 1, 0.2f, "Camera");
 	mScene = new PR::Scene("Test");
 	mRenderer = new PR::Renderer(500, 500, mCamera, mScene);
+	mRenderer->setMaxRayDepth(2);
+	mRenderer->setMaxRayBounceCount(100);
 
 	PR::Spectrum diffSpec;
+	diffSpec += 0.1f;
 	diffSpec.setValueAtWavelength(600, 1);
 
 	PR::Spectrum emitSpec;
-	emitSpec.setValueAtWavelength(600, 0.5f);
-	emitSpec.setValueAtWavelength(540, 1);
+	emitSpec.setValueAtWavelength(600, 4.0f);
+	//emitSpec.setValueAtWavelength(540, 0.5f);
 
 	mObjectMaterial = new PR::DiffuseMaterial(diffSpec);
 	mObjectMaterial->setRoughness(0.8f);
 
 	mLightMaterial = new PR::DiffuseMaterial(diffSpec);
 	mLightMaterial->setEmission(emitSpec);
+	mLightMaterial->enableShading(false);// Only emission
 
 	mScene->addEntity(mCamera);
 
@@ -74,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	ui.viewWidget->setRenderer(mRenderer);
 	mScene->buildTree();
-	mRenderer->render(4);
+	mRenderer->render(10, 10, 4);
 }
 
 MainWindow::~MainWindow()

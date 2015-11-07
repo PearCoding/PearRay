@@ -15,7 +15,8 @@ namespace PR
 		virtual ~GeometryEntity();
 
 		virtual bool isCollidable() const;
-		virtual BoundingBox boundingBox() const;
+		virtual BoundingBox localBoundingBox() const;
+		virtual BoundingBox worldBoundingBox() const;
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint);
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer);

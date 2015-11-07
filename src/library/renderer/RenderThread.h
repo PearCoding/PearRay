@@ -8,7 +8,7 @@ namespace PR
 	class PR_LIB RenderThread : public Thread
 	{
 	public:
-		RenderThread(size_t sx, size_t sy, size_t ex, size_t ey, Renderer* renderer);
+		RenderThread(Renderer* renderer);
 
 		size_t pixelsRendered() const;
 
@@ -16,10 +16,6 @@ namespace PR
 		virtual void main();
 
 	private:
-		size_t mStartX;
-		size_t mStartY;
-		size_t mEndX;
-		size_t mEndY;
 		Renderer* mRenderer;
 
 		size_t mPixelsRendered;

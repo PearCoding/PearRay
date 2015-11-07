@@ -5,7 +5,7 @@
 namespace PR
 {
 	BoundingBox::BoundingBox() :
-		mUpperBound(PM::pm_Set(0,0,0)), mLowerBound(PM::pm_Set(0, 0, 0))
+		mUpperBound(PM::pm_Set(0, 0, 0, 1)), mLowerBound(PM::pm_Set(0, 0, 0, 1))
 	{
 	}
 

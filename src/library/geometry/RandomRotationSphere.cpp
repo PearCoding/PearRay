@@ -25,7 +25,7 @@ namespace PR
 		float dz = sz + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (ez - sz)));
 
 		return PM::pm_Normalize3D(PM::pm_Set(
-			PM::pm_GetX(normal)+dx,
+			PM::pm_GetX(normal) + dx,
 			PM::pm_GetY(normal) + dy,
 			PM::pm_GetZ(normal) + dz));
 	}

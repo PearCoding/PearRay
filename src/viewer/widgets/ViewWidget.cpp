@@ -10,7 +10,7 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr)
+	mRenderer(nullptr), mScale(false)
 {
 
 }
@@ -23,6 +23,12 @@ void ViewWidget::setRenderer(PR::Renderer* renderer)
 {
 	mRenderer = renderer;
 	refreshView();
+}
+
+void ViewWidget::enableScale(bool b)
+{
+	mScale = b;
+	repaint();
 }
 
 void ViewWidget::refreshView()
@@ -69,7 +75,16 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 	QPainter painter(this);
 	painter.fillRect(rect(), Qt::magenta);
 
-	QImage img = mRenderImage.scaled(size(), Qt::KeepAspectRatio);
+	QImage img;
+	if (mScale)
+	{
+		img = mRenderImage.scaled(size(), Qt::KeepAspectRatio);
+	}
+	else
+	{
+		img = mRenderImage;
+	}
+
 	int x = width() / 2 - img.width() / 2;
 	int y = height() / 2 - img.height() / 2;
 	painter.drawImage(x, y, img);
