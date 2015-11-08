@@ -17,6 +17,8 @@
 #include "properties/GroupProperty.h"
 #include "properties/IntProperty.h"
 #include "properties/ButtonProperty.h"
+#include "properties/BoolProperty.h"
+#include "properties/SelectionProperty.h"
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
@@ -34,6 +36,35 @@ MainWindow::MainWindow(QWidget *parent)
 	// Setup properties
 	mRendererGroupProp = new GroupProperty();
 	mRendererGroupProp->setPropertyName(tr("Renderer"));
+
+	mRendererTileXProp = new IntProperty();
+	mRendererTileXProp->setPropertyName(tr("Tile X Count"));
+	((IntProperty*)mRendererTileXProp)->setMinValue(1);
+	((IntProperty*)mRendererTileXProp)->setMaxValue(128);
+	((IntProperty*)mRendererTileXProp)->setDefaultValue(5);
+	((IntProperty*)mRendererTileXProp)->setValue(5);
+	mRendererGroupProp->addChild(mRendererTileXProp);
+
+	mRendererTileYProp = new IntProperty();
+	mRendererTileYProp->setPropertyName(tr("Tile Y Count"));
+	((IntProperty*)mRendererTileYProp)->setMinValue(1);
+	((IntProperty*)mRendererTileYProp)->setMaxValue(128);
+	((IntProperty*)mRendererTileYProp)->setDefaultValue(5);
+	((IntProperty*)mRendererTileYProp)->setValue(5);
+	mRendererGroupProp->addChild(mRendererTileYProp);
+
+	mRendererThreadsProp = new IntProperty();
+	mRendererThreadsProp->setPropertyName(tr("Threads"));
+	mRendererThreadsProp->setToolTip(tr("0 = Automatic"));
+	((IntProperty*)mRendererThreadsProp)->setMinValue(0);
+	((IntProperty*)mRendererThreadsProp)->setMaxValue(64);
+	((IntProperty*)mRendererThreadsProp)->setDefaultValue(0);
+	((IntProperty*)mRendererThreadsProp)->setValue(0);
+	mRendererGroupProp->addChild(mRendererThreadsProp);
+
+	mRendererSubPixelsProp = new BoolProperty();
+	mRendererSubPixelsProp->setPropertyName(tr("SubPixel Rendering"));
+	mRendererGroupProp->addChild(mRendererSubPixelsProp);
 
 	mRendererMaxRayDepthProp = new IntProperty();
 	mRendererMaxRayDepthProp->setPropertyName(tr("Max Ray Depth"));
@@ -78,9 +109,11 @@ MainWindow::MainWindow(QWidget *parent)
 	readSettings();
 
 	// Test env
-	mCamera = new PR::Camera(1, 1, 0.2f, "Camera");
+	mCamera = new PR::Camera("Camera");
+	mCamera->setWithAngle(PM::pm_DegToRad(90), PM::pm_DegToRad(60), 0.5f);
+
 	mScene = new PR::Scene("Test");
-	mRenderer = new PR::Renderer(500, 500, mCamera, mScene);
+	mRenderer = new PR::Renderer(1920, 1080, mCamera, mScene);
 	mRenderer->setMaxRayDepth(2);
 	mRenderer->setMaxRayBounceCount(100);
 	//mRenderer->enableSubPixels(true);
@@ -143,6 +176,10 @@ MainWindow::~MainWindow()
 	if (mRendererGroupProp)
 	{
 		delete mRendererGroupProp;
+		delete mRendererTileXProp;
+		delete mRendererTileYProp;
+		delete mRendererThreadsProp;
+		delete mRendererSubPixelsProp;
 		delete mRendererMaxRayDepthProp;
 		delete mRendererMaxBounceRayCountProp;
 	}
@@ -152,20 +189,19 @@ void MainWindow::updateView()
 {
 	if (mRenderer)
 	{
+		float percent = 100 * mRenderer->pixelsRendered() / (float)(mRenderer->width()*mRenderer->height());
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4")
 			.arg(mRenderer->pixelsRendered())
 			.arg(mRenderer->width()*mRenderer->height())
-			.arg(100 * mRenderer->pixelsRendered() / (float)(mRenderer->width()*mRenderer->height()), 4)
+			.arg(percent, 4)
 			.arg(mRenderer->rayCount()));
+
+		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)percent));
 
 		if (mRenderer->isFinished())
 		{
-			mTimer.stop();
-			
-			mRendererMaxBounceRayCountProp->setEnabled(true);
-			mRendererMaxRayDepthProp->setEnabled(true);
-			mRendererStartProp->setPropertyName(tr("Start"));
+			stopRendering();
 		}
 	}
 	else
@@ -249,29 +285,62 @@ void MainWindow::propertyValueChanged(IProperty* prop)
 	{
 		mRenderer->setMaxRayBounceCount(((IntProperty*)mRendererMaxBounceRayCountProp)->value());
 	}
+	else if (prop == mRendererSubPixelsProp)
+	{
+		mRenderer->enableSubPixels(((BoolProperty*)mRendererSubPixelsProp)->value());
+	}
 	else if (prop == mRendererStartProp)
 	{
 		if (mRenderer->isFinished())
 		{
-			mRendererMaxBounceRayCountProp->setEnabled(false);
-			mRendererMaxRayDepthProp->setEnabled(false);
-			mRendererStartProp->setPropertyName(tr("Stop"));
-
-			mTimer.start(200);
-			mRenderer->start(10, 10);
+			startRendering();
 		}
 		else
 		{
-			mTimer.stop();
-
-			mRenderer->stop();
-			mRenderer->waitForFinish();
-
-			ui.statusBar->showMessage(tr("Rendering stopped."));
-
-			mRendererMaxBounceRayCountProp->setEnabled(true);
-			mRendererMaxRayDepthProp->setEnabled(true);
-			mRendererStartProp->setPropertyName(tr("Start"));
+			stopRendering();
 		}
 	}
+}
+
+void MainWindow::startRendering()
+{
+	if (!mRenderer->isFinished())
+	{
+		return;
+	}
+
+	mRendererTileXProp->setEnabled(false);
+	mRendererTileYProp->setEnabled(false);
+	mRendererThreadsProp->setEnabled(false);
+	mRendererSubPixelsProp->setEnabled(false);
+	mRendererMaxBounceRayCountProp->setEnabled(false);
+	mRendererMaxRayDepthProp->setEnabled(false);
+	mRendererStartProp->setPropertyName(tr("Stop"));
+
+	mTimer.start(200);
+	mRenderer->start(((IntProperty*)mRendererTileXProp)->value(),
+		((IntProperty*)mRendererTileYProp)->value(),
+		((IntProperty*)mRendererThreadsProp)->value());
+}
+
+void MainWindow::stopRendering()
+{
+	mTimer.stop();
+
+	if (!mRenderer->isFinished())
+	{
+		mRenderer->stop();
+		mRenderer->waitForFinish();
+		ui.statusBar->showMessage(tr("Rendering stopped."));
+	}
+
+	mRendererTileXProp->setEnabled(true);
+	mRendererTileYProp->setEnabled(true);
+	mRendererThreadsProp->setEnabled(true);
+	mRendererSubPixelsProp->setEnabled(true);
+	mRendererMaxBounceRayCountProp->setEnabled(true);
+	mRendererMaxRayDepthProp->setEnabled(true);
+	mRendererStartProp->setPropertyName(tr("Start"));
+
+	setWindowTitle(tr("PearRay Viewer"));
 }

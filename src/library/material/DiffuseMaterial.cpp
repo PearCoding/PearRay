@@ -55,7 +55,7 @@ namespace PR
 	{
 		Spectrum spec;
 
-		float dot =/* PM::pm_MinT<float>(0, */PM::pm_Dot3D(in.direction(), point.normal())/*)*/;
+		float dot = PM::pm_Dot3D(in.direction(), point.normal());
 		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)
 		{
 			float delta = mRoughness*PM_PI_F;
@@ -81,7 +81,7 @@ namespace PR
 
 				for (int i = 0; i < RAY_COUNT; ++i)
 				{
-					PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta, delta, -delta, delta);
+					PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta, delta, -delta, delta, renderer->random());
 					
 					FacePoint collisionPoint;
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
@@ -95,14 +95,14 @@ namespace PR
 					//PR_DEBUG_ASSERT(!spec.hasInf());
 				}
 
-				spec /= RAY_COUNT;
+				spec /= (float)RAY_COUNT;
 			}
 		}
 		
 		spec = spec*mDiffSpectrum + mEmitSpectrum * fabsf(dot);//Really dot?
 
-		PR_DEBUG_ASSERT(!spec.hasNaN());
-		PR_DEBUG_ASSERT(!spec.hasInf());
+		//PR_DEBUG_ASSERT(!spec.hasNaN());
+		//PR_DEBUG_ASSERT(!spec.hasInf());
 
 		in.setSpectrum(spec);
 	}

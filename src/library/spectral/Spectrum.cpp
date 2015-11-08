@@ -164,7 +164,7 @@ namespace PR
 			return;
 		}
 
-		uint32 i = (wavelength - WAVELENGTH_START) / WAVELENGTH_STEP;
+		uint32 i = (uint32)((wavelength - WAVELENGTH_START) / WAVELENGTH_STEP);
 		mValues[i] = value;
 	}
 
@@ -176,8 +176,8 @@ namespace PR
 		}
 
 		float st = wavelength - WAVELENGTH_START;
-		uint32 c = st / WAVELENGTH_STEP;
-		uint32 m = fmodf(st, WAVELENGTH_STEP);
+		uint32 c = (uint32)(st / WAVELENGTH_STEP);
+		uint32 m = (uint32)fmodf(st, (float)WAVELENGTH_STEP);
 
 		if (st < 0 || c > SAMPLING_COUNT)
 		{

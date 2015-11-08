@@ -58,7 +58,8 @@ SET(PR_Main_Hdr
   ${PR_LIB}/Config.h.in
   ${PR_LIB}/FileLogListener.h
   ${PR_LIB}/Logger.h
-  ${PR_LIB}/LogListener.h)
+  ${PR_LIB}/LogListener.h
+  ${PR_LIB}/Random.h)
 SET(PR_Entity_Hdr
   ${PR_LIB}/entity/Entity.h
   ${PR_LIB}/entity/GeometryEntity.h

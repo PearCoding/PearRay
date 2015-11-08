@@ -10,8 +10,11 @@ namespace PR
 	class PR_LIB Camera : public Entity
 	{
 	public:
-		Camera(float width, float height, float lensDistance, const std::string& name, Entity* parent = nullptr);
+		Camera(const std::string& name, Entity* parent = nullptr);
 		virtual ~Camera();
+
+		void setWithAngle(float foh, float fov, float lensdist);
+		void setWithSize(float width, float height, float lensdist);
 
 		void setWidth(float w);
 		float width() const;

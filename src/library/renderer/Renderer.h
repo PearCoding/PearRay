@@ -2,6 +2,7 @@
 
 #include "RenderResult.h"
 #include "spectral/Spectrum.h"
+#include "Random.h"
 
 #include <list>
 #include <mutex>
@@ -39,6 +40,11 @@ namespace PR
 
 		RenderResult& result();
 
+		inline Random& random()
+		{
+			return mRandom;
+		}
+
 		// Statistics
 		size_t rayCount() const;
 		size_t pixelsRendered() const;
@@ -68,6 +74,8 @@ namespace PR
 		Camera* mCamera;
 		Scene* mScene;
 		RenderResult mResult;
+
+		Random mRandom;
 
 		std::mutex mTileMutex;
 		uint32 mTileWidth;

@@ -12,7 +12,8 @@ namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
-		mResult(w,h), mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
+		mResult(w, h), mRandom((uint32)time(NULL)),
+		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
 		mMaxRayDepth(3), mMaxRayBounceCount(50), mEnableSubPixels(false)
 	{
 		PR_ASSERT(cam);
@@ -69,13 +70,17 @@ namespace PR
 		reset();
 		mResult.clear();
 
-		srand(time(NULL));
+		// Warm up the randomizer
+		for (uint32 i = 0; i < 100000; ++i)
+		{
+			mRandom.generate();
+		}
 
 		mRayCount = 0;
 		mPixelsRendered = 0;
 
-		mTileWidth = width()/tcx;
-		mTileHeight = height()/tcy;
+		mTileWidth = (uint32)std::ceil(mWidth / (float)tcx);
+		mTileHeight = (uint32)std::ceil(mHeight / (float)tcy);
 		mTileMap = new bool[tcx*tcy];
 		for (uint32 i = 0; i < tcx*tcy; ++i)
 		{
@@ -104,23 +109,23 @@ namespace PR
 		if (mEnableSubPixels)
 		{
 			float depth1;
-			Ray ray1 = renderSubPixels(x, y, depth1);
+			Ray ray1 = renderSubPixels((float)x, (float)y, depth1);
 
 			// Left Sub
 			float depth2;
-			Ray ray2 = renderSubPixels(x - 0.50, y, depth2);
+			Ray ray2 = renderSubPixels(x - 0.333f, (float)y, depth2);
 
 			// Right Sub
 			float depth3;
-			Ray ray3 = renderSubPixels(x + 0.5, y, depth3);
+			Ray ray3 = renderSubPixels(x + 0.333f, (float)y, depth3);
 
 			// Top Sub
 			float depth4;
-			Ray ray4 = renderSubPixels(x, y - 0.5, depth4);
+			Ray ray4 = renderSubPixels((float)x, y - 0.333f, depth4);
 
 			// Bottom Sub
 			float depth5;
-			Ray ray5 = renderSubPixels(x, y + 0.5, depth5);
+			Ray ray5 = renderSubPixels((float)x, y + 0.333f, depth5);
 
 			if (depth1 >= 0 || depth2 >= 0 || depth3 >= 0 || depth4 >= 0 || depth5 >= 0)
 			{
@@ -159,7 +164,7 @@ namespace PR
 		else
 		{
 			float depth;
-			Ray ray = renderSubPixels(x, y, depth);
+			Ray ray = renderSubPixels((float)x, (float)y, depth);
 			if (depth >= 0)
 			{
 				mResult.setDepth(x, y, depth);
@@ -247,8 +252,8 @@ namespace PR
 
 	bool Renderer::getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey)
 	{
-		uint32 sliceW = mWidth / mTileWidth;
-		uint32 sliceH = mHeight / mTileHeight;
+		uint32 sliceW = (uint32)std::ceil(mWidth / (float)mTileWidth);
+		uint32 sliceH = (uint32)std::ceil(mHeight / (float)mTileHeight);
 
 		mTileMutex.lock();
 		for (uint32 i = 0; i < sliceH; ++i)
@@ -259,8 +264,8 @@ namespace PR
 				{
 					sx = j*mTileWidth;
 					sy = i*mTileHeight;
-					ex = sx + mTileWidth;
-					ey = sy + mTileHeight;
+					ex = PM::pm_MinT<uint32>(mWidth, sx + mTileWidth);
+					ey = PM::pm_MinT<uint32>(mHeight, sy + mTileHeight);
 
 					mTileMap[i*sliceW + j] = true;
 					mTileMutex.unlock();

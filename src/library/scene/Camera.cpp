@@ -3,13 +3,27 @@
 
 namespace PR
 {
-	Camera::Camera(float width, float height, float lens, const std::string& name, Entity* parent) :
-		Entity(name, parent), mWidth(width), mHeight(height), mLensDistance(lens)
+	Camera::Camera(const std::string& name, Entity* parent) :
+		Entity(name, parent), mWidth(1), mHeight(1), mLensDistance(0.1f)
 	{
 	}
 
 	Camera::~Camera()
 	{
+	}
+
+	void Camera::setWithAngle(float foh, float fov, float lensdist)
+	{
+		mWidth = 2 * sin(foh / 2) / lensdist;
+		mHeight = 2 * sin(fov / 2) / lensdist;
+		mLensDistance = lensdist;
+	}
+
+	void Camera::setWithSize(float width, float height, float lensdist)
+	{
+		mWidth = width;
+		mHeight = height;
+		mLensDistance = lensdist;
 	}
 
 	void Camera::setWidth(float w)

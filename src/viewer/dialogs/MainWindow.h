@@ -43,6 +43,9 @@ private slots:
 private:
 	void readSettings();
 	void writeSettings();
+
+	void startRendering();
+	void stopRendering();
 	
 	Ui::MainWindowClass ui;
 
@@ -55,8 +58,12 @@ private:
 
 	PropertyTable mProperties;
 	IProperty* mRendererGroupProp;
+	IProperty* mRendererTileXProp;
+	IProperty* mRendererTileYProp;
+	IProperty* mRendererThreadsProp;
 	IProperty* mRendererMaxRayDepthProp;
 	IProperty* mRendererMaxBounceRayCountProp;
+	IProperty* mRendererSubPixelsProp;
 	IProperty* mRendererStartProp;// Button
 
 	QTimer mTimer;

@@ -2,7 +2,7 @@
 
 IProperty::IProperty() :
 QObject(),
-mIsReadOnly(false), mIsEnabled(true), mIsModified(false), mIsHeader(false)
+mIsReadOnly(false), mIsEnabled(true), mIsModified(false), mIsHeader(false), mHasNoName(false)
 {
 }
 

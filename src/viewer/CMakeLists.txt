@@ -15,6 +15,7 @@ SET(PR_Dialogs_Src
 )
 SOURCE_GROUP("Source Files\\Dialogs" FILES ${PR_Dialogs_Src})
 SET(PR_Properties_Src
+  ${PR_Viewer}/properties/BoolProperty.cpp
   ${PR_Viewer}/properties/ButtonProperty.cpp
   ${PR_Viewer}/properties/ColorProperty.cpp
   ${PR_Viewer}/properties/DoubleProperty.cpp
@@ -40,6 +41,7 @@ SET(PR_Dialogs_Hdr
   ${PR_Viewer}/dialogs/MainWindow.h)
 SOURCE_GROUP("Header Files\\Dialogs" FILES ${PR_Dialogs_Hdr})
 SET(PR_Properties_Hdr
+  ${PR_Viewer}/properties/BoolProperty.h
   ${PR_Viewer}/properties/ButtonProperty.h
   ${PR_Viewer}/properties/ColorProperty.h
   ${PR_Viewer}/properties/DoubleProperty.h

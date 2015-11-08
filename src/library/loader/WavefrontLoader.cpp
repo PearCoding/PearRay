@@ -253,7 +253,7 @@ namespace PR
 						}
 						else
 						{
-							uv.ID = uniqueVertices.size();
+							uv.ID = (uint32)uniqueVertices.size();
 							uniqueVertices.push_back(uv);
 						}
 
