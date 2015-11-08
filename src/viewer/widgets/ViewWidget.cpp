@@ -45,7 +45,6 @@ void ViewWidget::refreshView()
 		{
 			for (PR::uint32 x = 0; x < result.width(); ++x)
 			{
-				size_t index = y * result.width() * 3 + x * 3;
 				float r;
 				float g;
 				float b;
@@ -55,7 +54,7 @@ void ViewWidget::refreshView()
 				g = PM::pm_MinT<float>(1, g);
 				b = PM::pm_MinT<float>(1, b);
 
-				mRenderImage.setPixel(x, y, qRgb(r*255, g*255, b*255));
+				mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
 				//float d = result.depth(x, y) / maxDepth;
 				//d = d < 0 ? 0 : 1 - d;
 
@@ -67,6 +66,7 @@ void ViewWidget::refreshView()
 	{
 		mRenderImage = QImage();
 	}
+
 	repaint();
 }
 

@@ -23,6 +23,8 @@ namespace PR
 		void setDepth(uint32 x, uint32 y, float f);
 		float depth(uint32 x, uint32 y) const;
 
+		void clear();
+
 		// Should be cached!
 		float maxDepth() const;
 

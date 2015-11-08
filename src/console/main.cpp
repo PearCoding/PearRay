@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 
 	PR_LOGGER.log(PR::L_Info, PR::M_Scene, "Starting rendering...");
 	PR::TimePoint renderStart = std::chrono::high_resolution_clock::now();
-	renderer.render(2);
+	renderer.render(5,5,2);
 
 	PR::TimePoint pt = renderStart;
 	while (!renderer.isFinished())

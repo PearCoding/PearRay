@@ -13,7 +13,7 @@ namespace PR
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
 		mResult(w,h), mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
-		mMaxRayDepth(3), mMaxRayBounceCount(50)
+		mMaxRayDepth(3), mMaxRayBounceCount(50), mEnableSubPixels(false)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -26,10 +26,17 @@ namespace PR
 
 	Renderer::~Renderer()
 	{
+		reset();
+	}
+
+	void Renderer::reset()
+	{
 		for (RenderThread* thread : mThreads)
 		{
 			delete thread;
 		}
+
+		mThreads.clear();
 
 		if (mTileMap)
 		{
@@ -57,9 +64,12 @@ namespace PR
 		return mHeight;
 	}
 
-	void Renderer::render(uint32 tcx, uint32 tcy, uint32 threads)
+	void Renderer::start(uint32 tcx, uint32 tcy, uint32 threads)
 	{
-		PR_ASSERT(mThreads.empty());
+		reset();
+		mResult.clear();
+
+		srand(time(NULL));
 
 		mRayCount = 0;
 		mPixelsRendered = 0;
@@ -91,27 +101,97 @@ namespace PR
 
 	void Renderer::render(uint32 x, uint32 y)
 	{
+		if (mEnableSubPixels)
+		{
+			float depth1;
+			Ray ray1 = renderSubPixels(x, y, depth1);
+
+			// Left Sub
+			float depth2;
+			Ray ray2 = renderSubPixels(x - 0.50, y, depth2);
+
+			// Right Sub
+			float depth3;
+			Ray ray3 = renderSubPixels(x + 0.5, y, depth3);
+
+			// Top Sub
+			float depth4;
+			Ray ray4 = renderSubPixels(x, y - 0.5, depth4);
+
+			// Bottom Sub
+			float depth5;
+			Ray ray5 = renderSubPixels(x, y + 0.5, depth5);
+
+			if (depth1 >= 0 || depth2 >= 0 || depth3 >= 0 || depth4 >= 0 || depth5 >= 0)
+			{
+				float newDepth = (depth1 >= 0 ? depth1*0.333f : 0)
+					+ (depth2 >= 0 ? depth2*0.166f : 0)
+					+ (depth3 >= 0 ? depth3*0.166f : 0)
+					+ (depth4 >= 0 ? depth4*0.166f : 0)
+					+ (depth5 >= 0 ? depth5*0.166f : 0);
+
+				Spectrum newSpec;
+				if (depth1)
+				{
+					newSpec += ray1.spectrum()*0.333f;
+				}
+				if (depth2)
+				{
+					newSpec += ray2.spectrum()*0.166f;
+				}
+				if (depth3)
+				{
+					newSpec += ray3.spectrum()*0.166f;
+				}
+				if (depth4)
+				{
+					newSpec += ray4.spectrum()*0.166f;
+				}
+				if (depth5)
+				{
+					newSpec += ray5.spectrum()*0.166f;
+				}
+
+				mResult.setDepth(x, y, newDepth);
+				mResult.setPoint(x, y, newSpec);
+			}
+		}
+		else
+		{
+			float depth;
+			Ray ray = renderSubPixels(x, y, depth);
+			if (depth >= 0)
+			{
+				mResult.setDepth(x, y, depth);
+				mResult.setPoint(x, y, ray.spectrum());
+			}
+		}
+
+		mStatisticMutex.lock();
+		mPixelsRendered++;
+		mStatisticMutex.unlock();
+	}
+
+	Ray Renderer::renderSubPixels(float x, float y, float& depth)
+	{
 		float sx = mCamera->width() * x / (float)mWidth - mCamera->width() / 2.0f;
 		float sy = mCamera->height() * y / (float)mHeight - mCamera->height() / 2.0f;
 
-		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Set(sx, sy, mCamera->lensDistance()));
-
-		Ray ray(PM::pm_Multiply(mCamera->matrix(), PM::pm_Set(sx, sy, 0)),
-			PM::pm_Multiply(PM::pm_Rotation(mCamera->rotation()), dir));
+		Ray ray = mCamera->constructRay(sx, sy);
 
 		FacePoint collisionPoint;
 		GeometryEntity* entity = shoot(ray, collisionPoint);
 
 		if (entity)
 		{
-			float newDepth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.vertex(), ray.startPosition()));
-			mResult.setDepth(x, y, newDepth);
-			mResult.setPoint(x, y, ray.spectrum());
+			depth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.vertex(), ray.startPosition()));
+		}
+		else
+		{
+			depth = -1;
 		}
 
-		mStatisticMutex.lock();
-		mPixelsRendered++;
-		mStatisticMutex.unlock();
+		return ray;
 	}
 
 	size_t Renderer::pixelsRendered() const
@@ -221,5 +301,15 @@ namespace PR
 	uint32 Renderer::maxRayBounceCount() const
 	{
 		return mMaxRayBounceCount;
+	}
+
+	void Renderer::enableSubPixels(bool b)
+	{
+		mEnableSubPixels = b;
+	}
+
+	bool Renderer::isSubPixelsEnalbed() const
+	{
+		return mEnableSubPixels;
 	}
 }

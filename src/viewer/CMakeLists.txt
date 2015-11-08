@@ -14,10 +14,24 @@ SET(PR_Dialogs_Src
 	${PR_Viewer}/dialogs/MainWindow.cpp
 )
 SOURCE_GROUP("Source Files\\Dialogs" FILES ${PR_Dialogs_Src})
+SET(PR_Properties_Src
+  ${PR_Viewer}/properties/ButtonProperty.cpp
+  ${PR_Viewer}/properties/ColorProperty.cpp
+  ${PR_Viewer}/properties/DoubleProperty.cpp
+  ${PR_Viewer}/properties/GroupProperty.cpp
+  ${PR_Viewer}/properties/IntProperty.cpp
+  ${PR_Viewer}/properties/IProperty.cpp
+  ${PR_Viewer}/properties/PropertyTable.cpp
+  ${PR_Viewer}/properties/SelectionProperty.cpp
+  ${PR_Viewer}/properties/TextProperty.cpp)
+SOURCE_GROUP("Source Files\\Properties" FILES ${PR_Properties_Src})
 SET(PR_Widgets_Src
+  ${PR_Viewer}/widgets/ColorButton.cpp
+  ${PR_Viewer}/widgets/PropertyView.cpp
   ${PR_Viewer}/widgets/ViewWidget.cpp)
 SOURCE_GROUP("Source Files\\Widgets" FILES ${PR_Widgets_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Dialogs_Src} ${PR_Widgets_Src}
+  ${PR_Properties_Src}
 )
 
 SET(PR_Main_Hdr
@@ -25,10 +39,24 @@ SET(PR_Main_Hdr
 SET(PR_Dialogs_Hdr
   ${PR_Viewer}/dialogs/MainWindow.h)
 SOURCE_GROUP("Header Files\\Dialogs" FILES ${PR_Dialogs_Hdr})
+SET(PR_Properties_Hdr
+  ${PR_Viewer}/properties/ButtonProperty.h
+  ${PR_Viewer}/properties/ColorProperty.h
+  ${PR_Viewer}/properties/DoubleProperty.h
+  ${PR_Viewer}/properties/GroupProperty.h
+  ${PR_Viewer}/properties/IntProperty.h
+  ${PR_Viewer}/properties/IProperty.h
+  ${PR_Viewer}/properties/PropertyTable.h
+  ${PR_Viewer}/properties/SelectionProperty.h
+  ${PR_Viewer}/properties/TextProperty.h)
+SOURCE_GROUP("Header Files\\Properties" FILES ${PR_Properties_Hdr})
 SET(PR_Widgets_Hdr
+  ${PR_Viewer}/widgets/ColorButton.h
+  ${PR_Viewer}/widgets/PropertyView.h
   ${PR_Viewer}/widgets/ViewWidget.h)
 SOURCE_GROUP("Header Files\\Widgets" FILES ${PR_Widgets_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Dialogs_Hdr} ${PR_Widgets_Hdr}
+  ${PR_Properties_Hdr}
 )
 
 SET(PR_Fms

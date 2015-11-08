@@ -14,9 +14,15 @@
 #include "material/DiffuseMaterial.h"
 #include "spectral/Spectrum.h"
 
+#include "properties/GroupProperty.h"
+#include "properties/IntProperty.h"
+#include "properties/ButtonProperty.h"
+
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
-	mCamera(nullptr), mScene(nullptr), mRenderer(nullptr)
+	mCamera(nullptr), mScene(nullptr), mRenderer(nullptr),
+	mRendererGroupProp(nullptr), mRendererMaxRayDepthProp(nullptr),
+	mRendererMaxBounceRayCountProp(nullptr), mRendererStartProp(nullptr)
 {
 	ui.setupUi(this);
 
@@ -24,6 +30,34 @@ MainWindow::MainWindow(QWidget *parent)
 
 	//Add dock widgets to menu
 	ui.menuDockWidgets->addAction(ui.propertyDockWidget->toggleViewAction());
+
+	// Setup properties
+	mRendererGroupProp = new GroupProperty();
+	mRendererGroupProp->setPropertyName(tr("Renderer"));
+
+	mRendererMaxRayDepthProp = new IntProperty();
+	mRendererMaxRayDepthProp->setPropertyName(tr("Max Ray Depth"));
+	((IntProperty*)mRendererMaxRayDepthProp)->setMinValue(1);
+	((IntProperty*)mRendererMaxRayDepthProp)->setMaxValue(128);
+	((IntProperty*)mRendererMaxRayDepthProp)->setDefaultValue(2);
+	((IntProperty*)mRendererMaxRayDepthProp)->setValue(2);
+	mRendererGroupProp->addChild(mRendererMaxRayDepthProp);
+
+	mRendererMaxBounceRayCountProp = new IntProperty();
+	mRendererMaxBounceRayCountProp->setPropertyName(tr("Max Bounce Ray Count"));
+	((IntProperty*)mRendererMaxBounceRayCountProp)->setMinValue(1);
+	((IntProperty*)mRendererMaxBounceRayCountProp)->setMaxValue(999999);
+	((IntProperty*)mRendererMaxBounceRayCountProp)->setDefaultValue(100);
+	((IntProperty*)mRendererMaxBounceRayCountProp)->setValue(100);
+	mRendererGroupProp->addChild(mRendererMaxBounceRayCountProp);
+
+	mRendererStartProp = new ButtonProperty();
+	mRendererStartProp->setPropertyName(tr("Start"));
+	mRendererGroupProp->addChild(mRendererStartProp);
+
+	mProperties.add(mRendererGroupProp);
+	ui.propertyView->setPropertyTable(&mProperties);
+	ui.propertyView->expandToDepth(1);
 
 	//Connect all signal and slots
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
@@ -36,9 +70,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.actionShowDockWidgets, SIGNAL(triggered()), this, SLOT(showAllDocks()));
 	connect(ui.actionHideDockWidgets, SIGNAL(triggered()), this, SLOT(hideAllDocks()));
 
+	connect(&mProperties, SIGNAL(valueChanged(IProperty*)), this, SLOT(propertyValueChanged(IProperty*)));
+
 	connect(&mTimer, SIGNAL(timeout()), this, SLOT(updateView()));
 	mTimer.setSingleShot(false);
-	mTimer.start(200);
 
 	readSettings();
 
@@ -48,6 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
 	mRenderer = new PR::Renderer(500, 500, mCamera, mScene);
 	mRenderer->setMaxRayDepth(2);
 	mRenderer->setMaxRayBounceCount(100);
+	//mRenderer->enableSubPixels(true);
 
 	PR::Spectrum diffSpec;
 	diffSpec += 0.1f;
@@ -58,7 +94,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//emitSpec.setValueAtWavelength(540, 0.5f);
 
 	mObjectMaterial = new PR::DiffuseMaterial(diffSpec);
-	mObjectMaterial->setRoughness(0.8f);
+	mObjectMaterial->setRoughness(0.5f);
 
 	mLightMaterial = new PR::DiffuseMaterial(diffSpec);
 	mLightMaterial->setEmission(emitSpec);
@@ -78,7 +114,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 	ui.viewWidget->setRenderer(mRenderer);
 	mScene->buildTree();
-	mRenderer->render(10, 10, 4);
 }
 
 MainWindow::~MainWindow()
@@ -104,6 +139,13 @@ MainWindow::~MainWindow()
 	{
 		delete mLightMaterial;
 	}
+
+	if (mRendererGroupProp)
+	{
+		delete mRendererGroupProp;
+		delete mRendererMaxRayDepthProp;
+		delete mRendererMaxBounceRayCountProp;
+	}
 }
 
 void MainWindow::updateView()
@@ -120,6 +162,10 @@ void MainWindow::updateView()
 		if (mRenderer->isFinished())
 		{
 			mTimer.stop();
+			
+			mRendererMaxBounceRayCountProp->setEnabled(true);
+			mRendererMaxRayDepthProp->setEnabled(true);
+			mRendererStartProp->setPropertyName(tr("Start"));
 		}
 	}
 	else
@@ -191,4 +237,41 @@ void MainWindow::showAllDocks()
 void MainWindow::hideAllDocks()
 {
 	ui.propertyDockWidget->hide();
+}
+
+void MainWindow::propertyValueChanged(IProperty* prop)
+{
+	if (prop == mRendererMaxRayDepthProp)
+	{
+		mRenderer->setMaxRayDepth(((IntProperty*)mRendererMaxRayDepthProp)->value());
+	}
+	else if (prop == mRendererMaxRayDepthProp)
+	{
+		mRenderer->setMaxRayBounceCount(((IntProperty*)mRendererMaxBounceRayCountProp)->value());
+	}
+	else if (prop == mRendererStartProp)
+	{
+		if (mRenderer->isFinished())
+		{
+			mRendererMaxBounceRayCountProp->setEnabled(false);
+			mRendererMaxRayDepthProp->setEnabled(false);
+			mRendererStartProp->setPropertyName(tr("Stop"));
+
+			mTimer.start(200);
+			mRenderer->start(10, 10);
+		}
+		else
+		{
+			mTimer.stop();
+
+			mRenderer->stop();
+			mRenderer->waitForFinish();
+
+			ui.statusBar->showMessage(tr("Rendering stopped."));
+
+			mRendererMaxBounceRayCountProp->setEnabled(true);
+			mRendererMaxRayDepthProp->setEnabled(true);
+			mRendererStartProp->setPropertyName(tr("Start"));
+		}
+	}
 }

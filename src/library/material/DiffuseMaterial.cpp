@@ -55,12 +55,12 @@ namespace PR
 	{
 		Spectrum spec;
 
-		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)// TODO
+		float dot =/* PM::pm_MinT<float>(0, */PM::pm_Dot3D(in.direction(), point.normal())/*)*/;
+		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)
 		{
 			float delta = mRoughness*PM_PI_F;
 
 			// r = d - n*(d . n)
-			float dot =/* PM::pm_MinT<float>(0, */PM::pm_Dot3D(in.direction(), point.normal())/*)*/;
 			PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
 				PM::pm_Scale(point.normal(), dot)));
 
@@ -74,9 +74,14 @@ namespace PR
 			else //
 			{
 				const int RAY_COUNT = renderer->maxRayBounceCount();
+
+				float rph = std::acosf(
+					PM::pm_MaxT<float>(-1, PM::pm_MinT<float>(1, PM::pm_GetZ(reflection))));
+				float rrh = PM::pm_GetX(reflection) != 0 ? std::atan2f(PM::pm_GetY(reflection), PM::pm_GetX(reflection)) : 0;
+
 				for (int i = 0; i < RAY_COUNT; ++i)
 				{
-					PM::vec3 norm2 = RandomRotationSphere::create(reflection, -delta, delta, -delta, delta);
+					PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta, delta, -delta, delta);
 					
 					FacePoint collisionPoint;
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
@@ -85,13 +90,19 @@ namespace PR
 					float dot2 = std::fabsf(PM::pm_Dot3D(norm2, point.normal()));
 
 					spec += dot2*ray.spectrum();
+
+					//PR_DEBUG_ASSERT(!spec.hasNaN());
+					//PR_DEBUG_ASSERT(!spec.hasInf());
 				}
 
 				spec /= RAY_COUNT;
 			}
 		}
 		
-		spec = spec*mDiffSpectrum + mEmitSpectrum;
+		spec = spec*mDiffSpectrum + mEmitSpectrum * fabsf(dot);//Really dot?
+
+		PR_DEBUG_ASSERT(!spec.hasNaN());
+		PR_DEBUG_ASSERT(!spec.hasInf());
 
 		in.setSpectrum(spec);
 	}

@@ -3,6 +3,8 @@
 #include <QMainWindow>
 #include "ui_MainWindow.h"
 
+#include "properties/propertytable.h"
+
 #include <QTimer>
 
 namespace PR
@@ -13,6 +15,7 @@ namespace PR
 	class Renderer;
 }
 
+class IProperty;
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -36,6 +39,7 @@ private slots:
 
 	void updateView();
 
+	void propertyValueChanged(IProperty* prop);
 private:
 	void readSettings();
 	void writeSettings();
@@ -48,6 +52,12 @@ private:
 
 	PR::DiffuseMaterial* mObjectMaterial;
 	PR::DiffuseMaterial* mLightMaterial;
+
+	PropertyTable mProperties;
+	IProperty* mRendererGroupProp;
+	IProperty* mRendererMaxRayDepthProp;
+	IProperty* mRendererMaxBounceRayCountProp;
+	IProperty* mRendererStartProp;// Button
 
 	QTimer mTimer;
 };

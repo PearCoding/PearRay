@@ -99,7 +99,7 @@
 # define PR_ASSERT(cond)
 #endif
 
-#if defined(TGJ_DEBUG)
+#if defined(PR_DEBUG)
 # define PR_DEBUG_ASSERT(cond) PR_ASSERT(cond)
 #else
 # define PR_DEBUG_ASSERT(cond) PR::pr_Noop()

@@ -53,22 +53,31 @@ namespace PR
 		0,		0,		0,		// 780 nm
 	};
 
+	const int RGB_SAMPLE_RATE = 2;
+
 	void RGBConverter::convert(const Spectrum& s, float &x, float &y, float &z)
 	{
 		x = 0;
 		y = 0;
 		z = 0;
 
-		for (size_t i = 2; i < Spectrum::SAMPLING_COUNT - 8; ++i)
+		for (uint32 w = 400 - Spectrum::WAVELENGTH_START - Spectrum::WAVELENGTH_STEP;
+			w <= 700 - Spectrum::WAVELENGTH_START + Spectrum::WAVELENGTH_STEP;
+				w += RGB_SAMPLE_RATE)// Works without checks because 700 < Spectrum::WAVELENGTH_END
 		{
-			x += s.value(i) * NM_TO_RGB[3 * i] * Spectrum::WAVELENGTH_STEP;
-			y += s.value(i) * NM_TO_RGB[3 * i + 1] * Spectrum::WAVELENGTH_STEP;
-			z += s.value(i) * NM_TO_RGB[3 * i + 2] * Spectrum::WAVELENGTH_STEP;
+			size_t i = w / Spectrum::WAVELENGTH_STEP;
+			float t = (w % Spectrum::WAVELENGTH_STEP) / (float) Spectrum::WAVELENGTH_STEP;
+
+			float val = s.value(i)*(1 - t) + s.value(i + 1)*t;
+
+			x += val * (NM_TO_RGB[3 * i] * (1 - t) + NM_TO_RGB[3 * (i + 1)] * t);
+			y += val * (NM_TO_RGB[3 * i + 1] * (1 - t) + NM_TO_RGB[3 * (i + 1) + 1] * t);
+			z += val * (NM_TO_RGB[3 * i + 2] * (1 - t) + NM_TO_RGB[3 * (i + 1) + 2] * t);
 		}
 
 		//std::cout << x << " " << y << " " << z << std::endl;
-		x = PM::pm_MaxT<float>(0, x);
-		y = PM::pm_MaxT<float>(0, y);
-		z = PM::pm_MaxT<float>(0, z);
+		x = PM::pm_MaxT<float>(0, x) * RGB_SAMPLE_RATE;
+		y = PM::pm_MaxT<float>(0, y) * RGB_SAMPLE_RATE;
+		z = PM::pm_MaxT<float>(0, z) * RGB_SAMPLE_RATE;
 	}
 }

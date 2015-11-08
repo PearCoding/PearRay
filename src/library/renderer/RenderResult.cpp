@@ -56,6 +56,15 @@ namespace PR
 		return *this;
 	}
 
+	void RenderResult::clear()
+	{
+		for (size_t i = 0; i < mData->Width*mData->Height; ++i)
+		{
+			mData->Data[i] = Spectrum();
+			mData->Depth[i] = -1;
+		}
+	}
+
 	uint32 RenderResult::width() const
 	{
 		return mData->Width;

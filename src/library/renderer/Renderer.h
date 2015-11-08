@@ -29,12 +29,13 @@ namespace PR
 		// tcx = tile count x
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
-		void render(uint32 tcx, uint32 tcy, uint32 threads);
-		void render(uint32 x, uint32 y);
+		void start(uint32 tcx, uint32 tcy, uint32 threads = 0);
+		void stop();
 
 		bool isFinished();
 		void waitForFinish();
-		void stop();
+
+		void render(uint32 x, uint32 y);
 
 		RenderResult& result();
 
@@ -52,7 +53,15 @@ namespace PR
 
 		void setMaxRayBounceCount(uint32 i);
 		uint32 maxRayBounceCount() const;
+
+		void enableSubPixels(bool b);
+		bool isSubPixelsEnalbed() const;
+
 	private:
+		void reset();
+
+		Ray renderSubPixels(float x, float y, float& depth);
+
 		uint32 mWidth;
 		uint32 mHeight;
 
@@ -75,5 +84,6 @@ namespace PR
 		// Settings
 		uint32 mMaxRayDepth;
 		uint32 mMaxRayBounceCount;
+		bool mEnableSubPixels;
 	};
 }

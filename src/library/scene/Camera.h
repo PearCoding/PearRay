@@ -6,6 +6,7 @@
 
 namespace PR
 {
+	class Ray;
 	class PR_LIB Camera : public Entity
 	{
 	public:
@@ -20,6 +21,8 @@ namespace PR
 
 		void setLensDistance(float d);
 		float lensDistance() const;
+
+		Ray constructRay(float sx, float sy) const;
 	private:
 		float mWidth;
 		float mHeight;
