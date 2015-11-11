@@ -14,7 +14,8 @@
 #include <cctype>
 
 // Slow implementation, and needs more protections and error messages!
-namespace PR
+using namespace PR;
+namespace PRU
 {
 	// Utils
 

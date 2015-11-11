@@ -10,7 +10,7 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr), mScale(false)
+	mRenderer(nullptr), mViewMode(VM_Color), mScale(false)
 {
 
 }
@@ -40,25 +40,41 @@ void ViewWidget::refreshView()
 
 		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);
 
-		//float maxDepth = result.maxDepth();
-		for (PR::uint32 y = 0; y < result.height(); ++y)
+		if (mViewMode == VM_Color)
 		{
-			for (PR::uint32 x = 0; x < result.width(); ++x)
+			//float maxDepth = result.maxDepth();
+			for (PR::uint32 y = 0; y < result.height(); ++y)
 			{
-				float r;
-				float g;
-				float b;
+				for (PR::uint32 x = 0; x < result.width(); ++x)
+				{
+					float r;
+					float g;
+					float b;
 
-				converter.convert(result.point(x, y), r, g, b);
-				r = PM::pm_MinT<float>(1, r);
-				g = PM::pm_MinT<float>(1, g);
-				b = PM::pm_MinT<float>(1, b);
+					converter.convert(result.point(x, y), r, g, b);
+					r = PM::pm_MinT<float>(1, r);
+					g = PM::pm_MinT<float>(1, g);
+					b = PM::pm_MinT<float>(1, b);
 
-				mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-				//float d = result.depth(x, y) / maxDepth;
-				//d = d < 0 ? 0 : 1 - d;
+					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
+					//float d = result.depth(x, y) / maxDepth;
+					//d = d < 0 ? 0 : 1 - d;
 
-				//mRenderImage.setPixel(x, y, qRgb(d*255, d*255, d*255));
+					//mRenderImage.setPixel(x, y, qRgb(d*255, d*255, d*255));
+				}
+			}
+		}
+		else if (mViewMode == VM_Depth)
+		{
+			float maxDepth = result.maxDepth();
+			for (PR::uint32 y = 0; y < result.height(); ++y)
+			{
+				for (PR::uint32 x = 0; x < result.width(); ++x)
+				{
+					float d = result.depth(x, y) / maxDepth;
+					d = d < 0 ? 0 : 1 - d;
+					mRenderImage.setPixel(x, y, qRgb(d*255, d*255, d*255));
+				}
 			}
 		}
 	}

@@ -21,6 +21,9 @@ public:
 	void setIndex(int i);
 	int index() const;
 
+	QVariant currentData() const;
+	QVariant data(int i) const;
+
 	void setDefaultIndex(int i);
 	int defaultIndex() const;
 

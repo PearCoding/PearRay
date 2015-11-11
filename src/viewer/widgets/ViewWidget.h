@@ -8,6 +8,11 @@ namespace PR
 	class Renderer;
 }
 
+enum ViewMode
+{
+	VM_Color,
+	VM_Depth
+};
 class ViewWidget : public QWidget
 {
 	Q_OBJECT
@@ -17,6 +22,17 @@ public:
 	~ViewWidget();
 
 	void setRenderer(PR::Renderer* renderer);
+
+	inline void setViewMode(ViewMode vm)
+	{
+		mViewMode = vm;
+		refreshView();
+	}
+
+	inline ViewMode viewMode() const
+	{
+		return mViewMode;
+	}
 
 public slots:
 	void enableScale(bool b);
@@ -29,6 +45,7 @@ protected:
 private:
 	PR::Renderer* mRenderer;
 
+	ViewMode mViewMode;
 	bool mScale;
 	QImage mRenderImage;
 };

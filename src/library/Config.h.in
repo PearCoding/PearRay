@@ -138,6 +138,13 @@
 #endif
 #define PR_LIB_INLINE
 
+#if defined(PR_LIB_UTILS_BUILD)
+# define PR_LIB_UTILS PR_EXPORT
+#else
+# define PR_LIB_UTILS PR_IMPORT
+#endif
+#define PR_LIB_UTILS_INLINE
+
 #include <chrono>
 
 namespace PR

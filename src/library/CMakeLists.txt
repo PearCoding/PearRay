@@ -6,6 +6,7 @@ SET(PR_Main_Src
   ${PR_LIB}/FileLogListener.cpp
   ${PR_LIB}/Logger.cpp)
 SET(PR_Entity_Src
+  ${PR_LIB}/entity/BoundaryEntity.cpp
   ${PR_LIB}/entity/Entity.cpp
   ${PR_LIB}/entity/GeometryEntity.cpp
   ${PR_LIB}/entity/MeshEntity.cpp
@@ -21,9 +22,6 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/UV.cpp
   ${PR_LIB}/geometry/Vertex.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
-SET(PR_Loader_Src
-  ${PR_LIB}/loader/WavefrontLoader.cpp)
-SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/DiffuseMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
@@ -61,6 +59,7 @@ SET(PR_Main_Hdr
   ${PR_LIB}/LogListener.h
   ${PR_LIB}/Random.h)
 SET(PR_Entity_Hdr
+  ${PR_LIB}/entity/BoundaryEntity.h
   ${PR_LIB}/entity/Entity.h
   ${PR_LIB}/entity/GeometryEntity.h
   ${PR_LIB}/entity/MeshEntity.h
@@ -73,13 +72,10 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/Mesh.h
   ${PR_LIB}/geometry/Normal.h
   ${PR_LIB}/geometry/RandomRotationSphere.h
+  ${PR_LIB}/geometry/Triangle.h
   ${PR_LIB}/geometry/UV.h
   ${PR_LIB}/geometry/Vertex.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
-SET(PR_Loader_Hdr
-  ${PR_LIB}/loader/MeshLoader.h
-  ${PR_LIB}/loader/WavefrontLoader.h)
-SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
 SET(PR_Material_Hdr
   ${PR_LIB}/material/DiffuseMaterial.h
   ${PR_LIB}/material/Material.h)

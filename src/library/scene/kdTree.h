@@ -38,7 +38,7 @@ namespace PR
 	private:
 		static void deleteNode(kdNode* node);
 		static kdNode* buildNode(size_t depth, const std::list<GeometryEntity*>& entities, size_t retryDepth);
-		GeometryEntity* checkCollisionAtNode(const kdNode* node, const Ray& ray, FacePoint& collisionPoint) const;
+		GeometryEntity* checkCollisionAtNode(const kdNode* node, const Ray& ray, FacePoint& collisionPoint, float& n) const;
 
 		kdNode* mRoot;
 	};

@@ -36,16 +36,18 @@ QWidget* SelectionProperty::editorWidget(QWidget* parent)
 	{
 		mWidget = new QComboBox(parent);
 
+		typedef QPair<QString, QVariant> VData;
+		foreach(VData pair, mData)
+		{
+			mWidget->addItem(pair.first, pair.second);
+		}
+
 		connect(mWidget, SIGNAL(currentIndexChanged(int)), this, SLOT(comboChanged(int)));
 	}
 
 	mWidget->setEnabled(isEnabled());
 
-	typedef QPair<QString, QVariant> VData;
-	foreach(VData pair, mData)
-	{
-		mWidget->addItem(pair.first, pair.second);
-	}
+	// TODO: changes in list?
 
 	mWidget->setCurrentIndex(mIndex);
 
@@ -92,6 +94,16 @@ void SelectionProperty::setIndex(int val)
 int SelectionProperty::index() const
 {
 	return mIndex;
+}
+
+QVariant SelectionProperty::currentData() const
+{
+	return mData.at(mIndex).second;
+}
+
+QVariant SelectionProperty::data(int i) const
+{
+	return mData.at(i).second;
 }
 
 void SelectionProperty::setDefaultIndex(int val)

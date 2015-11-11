@@ -65,6 +65,8 @@ private:
 	IProperty* mRendererMaxBounceRayCountProp;
 	IProperty* mRendererSubPixelsProp;
 	IProperty* mRendererStartProp;// Button
+	IProperty* mViewGroupProp;
+	IProperty* mViewModeProp;
 
 	QTimer mTimer;
 };

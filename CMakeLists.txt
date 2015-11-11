@@ -78,6 +78,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console)
 
 add_subdirectory(${PR_Root}/library)
+add_subdirectory(${PR_Root}/utils)
 add_subdirectory(${PR_Root}/console)
 
 IF(${Qt5Widgets_FOUND})

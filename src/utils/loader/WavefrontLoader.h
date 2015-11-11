@@ -2,9 +2,9 @@
 
 #include "MeshLoader.h"
 
-namespace PR
+namespace PRU
 {
-	class PR_LIB WavefrontLoader : public MeshLoader
+	class PR_LIB_UTILS WavefrontLoader : public MeshLoader
 	{
 	public:
 		WavefrontLoader();
@@ -20,7 +20,7 @@ namespace PR
 			mScale = f;
 		}
 
-		void load(const std::string& file, Mesh* mesh);
+		void load(const std::string& file, PR::Mesh* mesh);
 
 	private:
 		float mScale;

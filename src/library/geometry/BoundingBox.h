@@ -14,6 +14,7 @@ namespace PR
 	public:
 		BoundingBox();
 		BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound);
+		BoundingBox(float width, float height, float depth);
 
 		BoundingBox(const BoundingBox& other);
 		BoundingBox& operator = (const BoundingBox& other);
@@ -35,6 +36,7 @@ namespace PR
 
 		bool contains(const PM::vec3& point) const;
 		bool intersects(const Ray& ray) const;
+		bool intersects(const Ray& ray, PM::vec3& collisionPoint) const;
 
 		void put(const PM::vec3& point);
 		void combine(const BoundingBox& other);

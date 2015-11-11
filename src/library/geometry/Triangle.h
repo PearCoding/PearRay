@@ -1,0 +1,51 @@
+#pragma once
+
+#include "Config.h"
+#include "PearMath.h"
+
+#include "ray/Ray.h"
+
+#define PR_TRIANGLE_INTERSECT_EPSILON (1e-5f)
+
+namespace PR
+{
+	class PR_LIB_INLINE Triangle
+	{
+	public:
+		// Better use with normals!
+		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
+			float& u, float& v, PM::vec3& point)
+		{
+			PM::vec3 e12 = PM::pm_Subtract(p2, p1);
+			PM::vec3 e13 = PM::pm_Subtract(p3, p1);
+			PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
+			float a = PM::pm_Dot3D(e12, q);
+
+			if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
+			{
+				return false;
+			}
+
+			float f = 1 / a;
+			PM::vec3 s = PM::pm_Subtract(ray.startPosition(), p1);
+			u = f*PM::pm_Dot3D(s, q);
+
+			if (u < 0)
+			{
+				return false;
+			}
+
+			PM::vec3 r = PM::pm_Cross3D(s, e12);
+			v = f*PM::pm_Dot3D(ray.direction(), r);
+
+			if (v < 0 || u + v > 1)
+			{
+				return false;
+			}
+			
+			float t = f*PM::pm_Dot3D(e13, r);
+			point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+			return true;
+		}
+	};
+}

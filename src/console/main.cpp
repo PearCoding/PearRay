@@ -49,7 +49,9 @@ int main(int argc, char** argv)
 	PP::PearPic pearpic;
 	pearpic.init();
 
-	PR::Camera camera(1, 1, 0.2f, "Test_Cam");
+	PR::Camera camera("Test_Cam");
+	camera.setWithSize(1, 1, 0.2f);
+
 	PR::Scene scene("Test");
 	PR::Renderer renderer(500, 500, &camera, &scene);
 

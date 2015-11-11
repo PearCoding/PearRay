@@ -14,6 +14,12 @@ namespace PR
 	{
 	}
 
+	BoundingBox::BoundingBox(float width, float height, float depth) :
+		mUpperBound(PM::pm_Set(width/2, height/2, depth/2, 1)),
+		mLowerBound(PM::pm_Set(-width/2, -height/2, -depth/2, 1))
+	{
+	}
+
 	BoundingBox::BoundingBox(const BoundingBox& other)
 	{
 		PM::pm_Copy(mUpperBound, other.upperBound());
@@ -85,6 +91,12 @@ namespace PR
 	}
 
 	bool BoundingBox::intersects(const Ray& ray) const
+	{
+		PM::vec3 tmp = PM::pm_Set(0,0,0,1);
+		return intersects(ray, tmp);
+	}
+
+	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint) const
 	{
 		float tmin = -std::numeric_limits<float>::max();
 		float tmax = std::numeric_limits<float>::max();
@@ -193,6 +205,9 @@ namespace PR
 		{
 			return false;
 		}
+
+		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(),
+			tmin <= 0 ? tmax : tmin));
 
 		return true;
 	}

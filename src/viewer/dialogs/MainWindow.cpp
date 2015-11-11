@@ -10,6 +10,7 @@
 #include "renderer/Renderer.h"
 
 #include "entity/SphereEntity.h"
+#include "entity/BoundaryEntity.h"
 
 #include "material/DiffuseMaterial.h"
 #include "spectral/Spectrum.h"
@@ -24,7 +25,8 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
 	mCamera(nullptr), mScene(nullptr), mRenderer(nullptr),
 	mRendererGroupProp(nullptr), mRendererMaxRayDepthProp(nullptr),
-	mRendererMaxBounceRayCountProp(nullptr), mRendererStartProp(nullptr)
+	mRendererMaxBounceRayCountProp(nullptr), mRendererStartProp(nullptr),
+	mViewGroupProp(nullptr), mViewModeProp(nullptr)
 {
 	ui.setupUi(this);
 
@@ -87,6 +89,19 @@ MainWindow::MainWindow(QWidget *parent)
 	mRendererGroupProp->addChild(mRendererStartProp);
 
 	mProperties.add(mRendererGroupProp);
+
+	mViewGroupProp = new GroupProperty();
+	mViewGroupProp->setPropertyName(tr("View"));
+	
+	mViewModeProp = new SelectionProperty();
+	mViewModeProp->setPropertyName(tr("Display"));
+	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
+	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);
+	((SelectionProperty*)mViewModeProp)->setDefaultIndex(0);
+	mViewGroupProp->addChild(mViewModeProp);
+
+	mProperties.add(mViewGroupProp);
+
 	ui.propertyView->setPropertyTable(&mProperties);
 	ui.propertyView->expandToDepth(1);
 
@@ -113,7 +128,7 @@ MainWindow::MainWindow(QWidget *parent)
 	mCamera->setWithAngle(PM::pm_DegToRad(90), PM::pm_DegToRad(60), 0.5f);
 
 	mScene = new PR::Scene("Test");
-	mRenderer = new PR::Renderer(1920, 1080, mCamera, mScene);
+	mRenderer = new PR::Renderer(500, 500, mCamera, mScene);
 	mRenderer->setMaxRayDepth(2);
 	mRenderer->setMaxRayBounceCount(100);
 	//mRenderer->enableSubPixels(true);
@@ -136,14 +151,20 @@ MainWindow::MainWindow(QWidget *parent)
 	mScene->addEntity(mCamera);
 
 	PR::SphereEntity* e = new PR::SphereEntity("Sphere 1", 2);
-	e->setPosition(PM::pm_Set(4, 0, 5));
+	e->setPosition(PM::pm_Set(4, 0, 5, 1));
 	e->setMaterial(mObjectMaterial);
 	mScene->addEntity(e);
 
 	PR::SphereEntity* e2 = new PR::SphereEntity("Sphere 2", 2);
-	e2->setPosition(PM::pm_Set(-4, 0, 5));
+	e2->setPosition(PM::pm_Set(-4, 0, 5, 1));
 	e2->setMaterial(mLightMaterial);
 	mScene->addEntity(e2);
+
+	PR::BoundaryEntity* e3 = new PR::BoundaryEntity("Wall Back",
+		PR::BoundingBox(20,10,2));
+	e3->setPosition(PM::pm_Set(0, 0, 10, 1));
+	e3->setMaterial(mObjectMaterial);
+	mScene->addEntity(e3);
 
 	ui.viewWidget->setRenderer(mRenderer);
 	mScene->buildTree();
@@ -182,6 +203,8 @@ MainWindow::~MainWindow()
 		delete mRendererSubPixelsProp;
 		delete mRendererMaxRayDepthProp;
 		delete mRendererMaxBounceRayCountProp;
+		delete mViewGroupProp;
+		delete mViewModeProp;
 	}
 }
 
@@ -299,6 +322,10 @@ void MainWindow::propertyValueChanged(IProperty* prop)
 		{
 			stopRendering();
 		}
+	}
+	else if (prop == mViewModeProp)
+	{
+		ui.viewWidget->setViewMode((ViewMode) ((SelectionProperty*)mViewModeProp)->currentData().toInt());
 	}
 }
 

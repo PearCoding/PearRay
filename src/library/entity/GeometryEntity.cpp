@@ -30,7 +30,7 @@ namespace PR
 		PM::vec3 lower = PM::pm_Multiply(m, bx.lowerBound());
 
 		// Really this way?
-		if (PM::pm_IsGreaterOrEqual(upper, lower))
+		if (!PM::pm_IsLess(upper, lower))
 		{
 			return BoundingBox(upper, lower);
 		}

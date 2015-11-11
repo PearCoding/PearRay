@@ -187,15 +187,15 @@ namespace PR
 
 	GeometryEntity* kdTree::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
 	{
-		return checkCollisionAtNode(root(), ray, collisionPoint);
+		float n = std::numeric_limits<float>::max();
+		return checkCollisionAtNode(root(), ray, collisionPoint, n);
 	}
 
-	GeometryEntity* kdTree::checkCollisionAtNode(const kdNode* node, const Ray& ray, FacePoint& collisionPoint) const
+	GeometryEntity* kdTree::checkCollisionAtNode(const kdNode* node, const Ray& ray, FacePoint& collisionPoint, float& near) const
 	{
 		if (node && node->boundingBox.intersects(ray))
 		{
 			GeometryEntity* res = nullptr;
-			float n = std::numeric_limits<float>::max();
 			FacePoint tmpCollisionPoint;
 
 			// First the mid elements one by one
@@ -205,9 +205,9 @@ namespace PR
 				{
 					float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
 
-					if (l < n)
+					if (l < near)
 					{
-						n = l;
+						near = l;
 						res = e;
 						collisionPoint = tmpCollisionPoint;
 					}
@@ -215,31 +215,19 @@ namespace PR
 			}
 
 			// Now check left with recursion
-			GeometryEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint);
+			GeometryEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint, near);
 			if (left)
 			{
-				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
-
-				if (l < n)
-				{
-					n = l;
-					res = left;
-					collisionPoint = tmpCollisionPoint;
-				}
+				res = left;
+				collisionPoint = tmpCollisionPoint;
 			}
 
 			// And of course check the right one with recursion as well
-			GeometryEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint);
+			GeometryEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint, near);
 			if (right)
 			{
-				float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
-
-				if (l < n)
-				{
-					n = l;
-					res = right;
-					collisionPoint = tmpCollisionPoint;
-				}
+				res = right;
+				collisionPoint = tmpCollisionPoint;
 			}
 
 			return res;
