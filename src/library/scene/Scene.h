@@ -27,6 +27,7 @@ namespace PR
 
 		void addEntity(Entity* e);
 		void removeEntity(Entity* e);
+		Entity* getEntity(const std::string& name, const std::string& type) const;
 
 		void clear();
 

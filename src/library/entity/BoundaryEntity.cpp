@@ -14,6 +14,11 @@ namespace PR
 	{
 	}
 
+	std::string BoundaryEntity::type() const
+	{
+		return "boundary";
+	}
+
 	void BoundaryEntity::setBoundingBox(const BoundingBox& box)
 	{
 		mBoundingBox = box;

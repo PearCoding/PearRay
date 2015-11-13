@@ -71,10 +71,10 @@ namespace PR
 		mResult.clear();
 
 		// Warm up the randomizer
-		for (uint32 i = 0; i < 100000; ++i)
+		/*for (uint32 i = 0; i < 800000; ++i)
 		{
 			mRandom.generate();
-		}
+		}*/
 
 		mRayCount = 0;
 		mPixelsRendered = 0;

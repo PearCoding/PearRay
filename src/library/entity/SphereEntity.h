@@ -11,6 +11,8 @@ namespace PR
 		SphereEntity(const std::string& name, float r, Entity* parent = nullptr);
 		virtual ~SphereEntity();
 
+		virtual std::string type() const;
+
 		void setRadius(float f);
 		float radius() const;
 

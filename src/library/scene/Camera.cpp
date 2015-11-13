@@ -12,6 +12,11 @@ namespace PR
 	{
 	}
 
+	std::string Camera::type() const
+	{
+		return "camera";
+	}
+
 	void Camera::setWithAngle(float foh, float fov, float lensdist)
 	{
 		mWidth = 2 * sin(foh / 2) / lensdist;

@@ -13,6 +13,8 @@ namespace PR
 		Camera(const std::string& name, Entity* parent = nullptr);
 		virtual ~Camera();
 
+		virtual std::string type() const;
+
 		void setWithAngle(float foh, float fov, float lensdist);
 		void setWithSize(float width, float height, float lensdist);
 

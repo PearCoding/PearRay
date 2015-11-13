@@ -75,7 +75,7 @@ configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
 			pearpic/src ${CMAKE_CURRENT_BINARY_DIR}/pearpic
-			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console)
+			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
 
 add_subdirectory(${PR_Root}/library)
 add_subdirectory(${PR_Root}/utils)

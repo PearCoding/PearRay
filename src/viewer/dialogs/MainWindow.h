@@ -9,10 +9,12 @@
 
 namespace PR
 {
-	class Camera;
-	class DiffuseMaterial;
-	class Scene;
 	class Renderer;
+}
+
+namespace PRU
+{
+	class Environment;
 }
 
 class IProperty;
@@ -49,12 +51,8 @@ private:
 	
 	Ui::MainWindowClass ui;
 
-	PR::Camera* mCamera;
-	PR::Scene* mScene;
+	PRU::Environment* mEnvironment;
 	PR::Renderer* mRenderer;
-
-	PR::DiffuseMaterial* mObjectMaterial;
-	PR::DiffuseMaterial* mLightMaterial;
 
 	PropertyTable mProperties;
 	IProperty* mRendererGroupProp;

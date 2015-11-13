@@ -9,11 +9,8 @@
 #include "scene/Camera.h"
 #include "renderer/Renderer.h"
 
-#include "entity/SphereEntity.h"
-#include "entity/BoundaryEntity.h"
-
-#include "material/DiffuseMaterial.h"
-#include "spectral/Spectrum.h"
+#include "Environment.h"
+#include "SceneLoader.h"
 
 #include "properties/GroupProperty.h"
 #include "properties/IntProperty.h"
@@ -23,7 +20,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
-	mCamera(nullptr), mScene(nullptr), mRenderer(nullptr),
+	mEnvironment(nullptr), mRenderer(nullptr),
 	mRendererGroupProp(nullptr), mRendererMaxRayDepthProp(nullptr),
 	mRendererMaxBounceRayCountProp(nullptr), mRendererStartProp(nullptr),
 	mViewGroupProp(nullptr), mViewModeProp(nullptr)
@@ -124,50 +121,18 @@ MainWindow::MainWindow(QWidget *parent)
 	readSettings();
 
 	// Test env
-	mCamera = new PR::Camera("Camera");
-	mCamera->setWithAngle(PM::pm_DegToRad(90), PM::pm_DegToRad(60), 0.5f);
+	PRU::SceneLoader loader;
+	mEnvironment = loader.loadFromFile("test.prc");
 
-	mScene = new PR::Scene("Test");
-	mRenderer = new PR::Renderer(500, 500, mCamera, mScene);
-	mRenderer->setMaxRayDepth(2);
-	mRenderer->setMaxRayBounceCount(100);
-	//mRenderer->enableSubPixels(true);
+	if (mEnvironment)
+	{
+		mRenderer = new PR::Renderer(500, 500, mEnvironment->camera(), mEnvironment->scene());
+		mRenderer->setMaxRayDepth(2);
+		mRenderer->setMaxRayBounceCount(100);
 
-	PR::Spectrum diffSpec;
-	diffSpec += 0.1f;
-	diffSpec.setValueAtWavelength(600, 1);
-
-	PR::Spectrum emitSpec;
-	emitSpec.setValueAtWavelength(600, 4.0f);
-	//emitSpec.setValueAtWavelength(540, 0.5f);
-
-	mObjectMaterial = new PR::DiffuseMaterial(diffSpec);
-	mObjectMaterial->setRoughness(0.5f);
-
-	mLightMaterial = new PR::DiffuseMaterial(diffSpec);
-	mLightMaterial->setEmission(emitSpec);
-	mLightMaterial->enableShading(false);// Only emission
-
-	mScene->addEntity(mCamera);
-
-	PR::SphereEntity* e = new PR::SphereEntity("Sphere 1", 2);
-	e->setPosition(PM::pm_Set(4, 0, 5, 1));
-	e->setMaterial(mObjectMaterial);
-	mScene->addEntity(e);
-
-	PR::SphereEntity* e2 = new PR::SphereEntity("Sphere 2", 2);
-	e2->setPosition(PM::pm_Set(-4, 0, 5, 1));
-	e2->setMaterial(mLightMaterial);
-	mScene->addEntity(e2);
-
-	PR::BoundaryEntity* e3 = new PR::BoundaryEntity("Wall Back",
-		PR::BoundingBox(20,10,2));
-	e3->setPosition(PM::pm_Set(0, 0, 10, 1));
-	e3->setMaterial(mObjectMaterial);
-	mScene->addEntity(e3);
-
-	ui.viewWidget->setRenderer(mRenderer);
-	mScene->buildTree();
+		ui.viewWidget->setRenderer(mRenderer);
+		mEnvironment->scene()->buildTree();
+	}
 }
 
 MainWindow::~MainWindow()
@@ -179,19 +144,9 @@ MainWindow::~MainWindow()
 		delete mRenderer;
 	}
 
-	if (mScene)
+	if (mEnvironment)
 	{
-		delete mScene;
-	}
-
-	if (mObjectMaterial)
-	{
-		delete mObjectMaterial;
-	}
-
-	if (mLightMaterial)
-	{
-		delete mLightMaterial;
+		delete mEnvironment;
 	}
 
 	if (mRendererGroupProp)

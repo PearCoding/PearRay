@@ -7,6 +7,7 @@
 
 namespace PR
 {
+	class Camera;
 	class Material;
 	class Mesh;
 }
@@ -19,9 +20,9 @@ namespace PRU
 		Environment(const std::string& name);
 		virtual ~Environment();
 
-		inline PR::Scene& scene()
+		inline PR::Scene* scene()
 		{
-			return mScene;
+			return &mScene;
 		}
 
 		inline PR::Spectrum getSpectrum(const std::string& name) const
@@ -70,8 +71,19 @@ namespace PRU
 			PR_ASSERT(m && !hasMesh(name));
 			mMeshes[name] = m;
 		}
+
+		inline PR::Camera* camera() const
+		{
+			return mCamera;
+		}
+
+		inline void setCamera(PR::Camera* cam)
+		{
+			mCamera = cam;
+		}
 	private:
 		PR::Scene mScene;
+		PR::Camera* mCamera;
 		std::map<std::string, PR::Spectrum> mSpectrums;
 		std::map<std::string, PR::Material*> mMaterials;
 		std::map<std::string, PR::Mesh*> mMeshes;

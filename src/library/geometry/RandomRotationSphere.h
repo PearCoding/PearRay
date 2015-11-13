@@ -19,8 +19,8 @@ namespace PR
 
 		static inline PM::vec3 create(float nph, float nrh, float sph, float eph, float srh, float erh, Random& rand)
 		{
-			float phi = sph + static_cast <float> (rand.generate()) / (static_cast <float> (Random::MAX / (eph - sph)));
-			float rho = srh + static_cast <float> (rand.generate()) / (static_cast <float> (Random::MAX / (erh - srh)));
+			float phi = sph + rand.getFloat() * (eph - sph);
+			float rho = srh + rand.getFloat() * (erh - srh);
 
 			nph += phi;
 			nrh += rho;
@@ -35,9 +35,9 @@ namespace PR
 		static inline PM::vec3 createFast(const PM::vec3& normal,
 			float sx, float ex, float sy, float ey, float sz, float ez, Random& rand)
 		{
-			float dx = sx + static_cast <float> (rand.generate()) / (static_cast <float> (Random::MAX / (ex - sx)));
-			float dy = sy + static_cast <float> (rand.generate()) / (static_cast <float> (Random::MAX / (ey - sy)));
-			float dz = sz + static_cast <float> (rand.generate()) / (static_cast <float> (Random::MAX / (ez - sz)));
+			float dx = sx + rand.getFloat() * (ex - sx);
+			float dy = sy + rand.getFloat() * (ey - sy);
+			float dz = sz + rand.getFloat() * (ez - sz);
 
 			return PM::pm_Normalize3D(PM::pm_Set(
 				PM::pm_GetX(normal) + dx,

@@ -11,6 +11,11 @@ namespace PR
 	{
 	}
 
+	std::string MeshEntity::type() const
+	{
+		return "mesh";
+	}
+
 	void MeshEntity::setMesh(Mesh* mesh)
 	{
 		mMesh = mesh;

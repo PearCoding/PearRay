@@ -16,6 +16,8 @@ namespace PR
 		void setName(const std::string& name);
 		std::string name() const;
 
+		virtual std::string type() const;
+
 		void setParent(Entity* parent);
 		Entity* parent() const;
 

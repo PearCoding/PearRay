@@ -2,78 +2,59 @@
 
 #include "Config.h"
 
+#include <math.h>
+
 namespace PR
 {
 	class PR_LIB_INLINE Random
 	{
 	private:
-		static const uint32_t N  = 624;
-		static const uint32_t M  = 397;
-		static const uint32_t HI = 0x80000000;
-		static const uint32_t LO = 0x7fffffff;
-
-		const uint32_t A[2] = { 0, 0x9908b0df };
-		uint32_t seed = 126943UL;//5489UL;
-
-		uint32_t index = N + 1;
-		uint32_t y[N];
+		uint64_t mState;
+		uint64_t mInc;
 
 	public:
-		static const uint32 MAX = 0xFFFFFFFF;
-		Random(uint32 s = 126943UL) :
-			seed(s)
+		Random(uint64_t s = 126943) :
+			mState(s), mInc(static_cast<uint64_t>((uintptr_t)this))//Address
 		{
 		}
 
-		inline uint32 generate() {
-			uint32_t  e;
+		inline uint32_t get32()
+		{
+			uint64_t oldstate = mState;
 
-			if (index > N)
-			{
-				uint32_t i;
-				/* Init y with seed */
-				y[0] = seed;
+			// Advance internal state
+			mState = oldstate * (uint64_t)6364136223846793005ULL + (mInc | 1);
 
-				for (i = 1; i < N; ++i)
-				{
-					y[i] = (1812433253UL * (y[i - 1] ^ (y[i - 1] >> 30)) + i);
-					/* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
-					/* In the previous versions, MSBs of the seed affect   */
-					/* only MSBs of the array mt[].                        */
-					/* 2002/01/09 modified by Makoto Matsumoto             */
-				}
-			}
+			// Calculate output function (XSH RR), uses old state for max ILP
+			uint32_t xorshifted = (uint32_t)(((oldstate >> 18u) ^ oldstate) >> 27u);
+			uint32_t rot = (uint32_t)(oldstate >> 59u);
 
-			if (index >= N)
-			{
-				uint32_t i;
-				/* Calculate new vector */
-				uint32_t h;
+			return (xorshifted >> rot) | (xorshifted << ((~rot + 1u) & 31));
+		}
 
-				for (i = 0; i < N - M; ++i) {
-					h = (y[i] & HI) | (y[i + 1] & LO);
-					y[i] = y[i + M] ^ (h >> 1) ^ A[h & 1];
-				}
+		inline uint32_t get32(uint32_t start, uint32_t end)
+		{
+			return get32() % (end - start) + start;
+		}
 
-				for (; i < N - 1; ++i) {
-					h = (y[i] & HI) | (y[i + 1] & LO);
-					y[i] = y[i + (M - N)] ^ (h >> 1) ^ A[h & 1];
-				}
+		inline uint64_t get64()
+		{
+			return  (((uint64_t)get32()) << 32) | (uint64_t)get32();
+		}
 
-				h = (y[N - 1] & HI) | (y[0] & LO);
-				y[N - 1] = y[M - 1] ^ (h >> 1) ^ A[h & 1];
-				index = 0;
-			}
+		inline uint64_t get64(uint64_t start, uint64_t end)
+		{
+			return get64() % (end - start) + start;
+		}
 
-			e = y[index++];
+		inline float getFloat()//[0, 1)
+		{
+			return std::fmin(0.9999999403953552f, get32() * 2.3283064365386963e-10f);
+		}
 
-			/* Tempering */
-			e ^= (e >> 11);
-			e ^= (e << 7) & 0x9d2c5680;
-			e ^= (e << 15) & 0xefc60000;
-			e ^= (e >> 18);
-
-			return e;
+		inline double getDouble()//[0, 1)
+		{
+			return (double)getFloat();//TODO
 		}
 	};
 }

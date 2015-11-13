@@ -11,6 +11,8 @@ namespace PR
 		BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent = nullptr);
 		virtual ~BoundaryEntity();
 
+		virtual std::string type() const;
+
 		void setBoundingBox(const BoundingBox& box);
 
 		void setMaterial(Material* m);

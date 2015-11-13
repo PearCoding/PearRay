@@ -14,6 +14,11 @@ namespace PR
 	{
 	}
 
+	std::string SphereEntity::type() const
+	{
+		return "sphere";
+	}
+
 	void SphereEntity::setRadius(float f)
 	{
 		mRadius = f;

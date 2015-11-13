@@ -1,8 +1,10 @@
 #include "dialogs/MainWindow.h"
 
-#include "Config.h"
+#include "FileLogListener.h"
 
 #include <QApplication>
+
+#include <sstream>
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +16,19 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 #endif
+
+	// Init logging system
+	PR::FileLogListener fileLog;
+
+	time_t t = time(NULL);
+	std::stringstream sstream;
+#ifdef PR_DEBUG
+	sstream << "prv_" << t << "_d.log";
+#else
+	sstream << "prv_" << t << ".log";
+#endif
+	fileLog.open(sstream.str());
+	PR_LOGGER.addListener(&fileLog);
 
 	QApplication a(argc, argv);
 

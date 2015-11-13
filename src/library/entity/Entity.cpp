@@ -24,6 +24,11 @@ namespace PR
 		return mName;
 	}
 
+	std::string Entity::type() const
+	{
+		return "null";
+	}
+
 	void Entity::setParent(Entity* parent)
 	{
 		mParent = parent;

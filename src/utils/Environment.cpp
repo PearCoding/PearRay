@@ -6,7 +6,7 @@
 namespace PRU
 {
 	Environment::Environment(const std::string& name) :
-		mScene(name)
+		mScene(name), mCamera(nullptr)
 	{
 	}
 

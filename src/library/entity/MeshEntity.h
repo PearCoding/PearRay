@@ -12,6 +12,8 @@ namespace PR
 		MeshEntity(const std::string& name, Entity* parent = nullptr);
 		virtual ~MeshEntity();
 
+		virtual std::string type() const;
+
 		void setMesh(Mesh* mesh);
 		Mesh* mesh() const;
 

@@ -53,6 +53,19 @@ namespace PR
 		mEntities.remove(e);
 	}
 
+	Entity* Scene::getEntity(const std::string& name, const std::string& type) const
+	{
+		for (Entity* entity : mEntities)
+		{
+			if (entity->name() == name && entity->type() == type)
+			{
+				return entity;
+			}
+		}
+
+		return nullptr;
+	}
+
 	void Scene::clear()
 	{
 		for (Entity* e : mEntities)

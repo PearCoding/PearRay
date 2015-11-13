@@ -81,7 +81,7 @@ namespace PR
 
 				for (int i = 0; i < RAY_COUNT; ++i)
 				{
-					PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta, delta, -delta, delta, renderer->random());
+					PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta/2, delta/2, -delta, delta, renderer->random());
 					
 					FacePoint collisionPoint;
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
