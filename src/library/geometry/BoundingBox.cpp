@@ -214,12 +214,12 @@ namespace PR
 
 	void BoundingBox::put(const PM::vec3& point)
 	{
-		if (!isValid())
+		/*if (!isValid())
 		{
 			PM::pm_Copy(mUpperBound, point);
 			PM::pm_Copy(mLowerBound, point);
 			return;
-		}
+		}*/
 
 		// UpperBound
 		if (PM::pm_GetX(point) > PM::pm_GetX(mUpperBound))

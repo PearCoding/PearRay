@@ -6,7 +6,8 @@ namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
 		mName(name), mParent(parent),
-		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat())
+		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat()),
+		mReCache(true)
 	{
 	}
 
@@ -32,6 +33,7 @@ namespace PR
 	void Entity::setParent(Entity* parent)
 	{
 		mParent = parent;
+		mReCache = true;
 	}
 
 	Entity* Entity::parent() const
@@ -42,6 +44,7 @@ namespace PR
 	void Entity::setPosition(const PM::vec3& pos)
 	{
 		mPosition = pos;
+		mReCache = true;
 	}
 
 	PM::vec3 Entity::position() const
@@ -59,6 +62,7 @@ namespace PR
 	void Entity::setScale(const PM::vec3& scale)
 	{
 		mScale = scale;
+		mReCache = true;
 	}
 
 	PM::vec3 Entity::scale() const
@@ -76,6 +80,7 @@ namespace PR
 	void Entity::setRotation(const PM::quat& quat)
 	{
 		mRotation = quat;
+		mReCache = true;
 	}
 
 	PM::quat Entity::rotation() const
@@ -90,28 +95,36 @@ namespace PR
 		}
 	}
 
-	PM::mat4 Entity::matrix() const //TODO: CHECK!
+	PM::mat4 Entity::matrix() const
 	{
-		PM::mat4 m = PM::pm_Multiply(PM::pm_Translation(mPosition),
-			PM::pm_Multiply(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
-		if (mParent)
+		if (mReCache)
 		{
-			return PM::pm_Multiply(mParent->matrix(), m);
+			mReCache = false;
+
+			PM::mat4 m = PM::pm_Multiply(PM::pm_Translation(mPosition),
+				PM::pm_Multiply(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
+			if (mParent)
+			{
+				mMatrixCache = PM::pm_Multiply(mParent->matrix(), m);
+			}
+			else
+			{
+				mMatrixCache = m;
+			}
 		}
-		else
-		{
-			return m;
-		}
+
+		return mMatrixCache;
 	}
 
 	std::string Entity::toString() const
 	{
 		std::stringstream stream;
 		PM::vec3 pos = position();
-		stream << name()
-			<< "{" << PM::pm_GetX(pos) 
+		stream << name() << "[" << type()
+			<< "]{" << PM::pm_GetX(pos) 
 			<< "|" << PM::pm_GetY(pos) 
 			<< "|" << PM::pm_GetZ(pos) << "}";
+
 		return stream.str();
 	}
 }

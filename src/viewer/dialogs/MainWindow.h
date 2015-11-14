@@ -61,7 +61,8 @@ private:
 	IProperty* mRendererThreadsProp;
 	IProperty* mRendererMaxRayDepthProp;
 	IProperty* mRendererMaxBounceRayCountProp;
-	IProperty* mRendererSubPixelsProp;
+	IProperty* mRendererSamplingProp;
+	IProperty* mRendererSamplesPerRayProp;
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;
 	IProperty* mViewModeProp;

@@ -60,13 +60,23 @@ namespace PR
 		void setMaxRayBounceCount(uint32 i);
 		uint32 maxRayBounceCount() const;
 
-		void enableSubPixels(bool b);
-		bool isSubPixelsEnalbed() const;
+		void enableSampling(bool b);
+		bool isSamplingEnalbed() const;
+
+		void setSamplePerRayCount(uint32 i)
+		{
+			mSamplePerRayCount = i;
+		}
+
+		inline uint32 samplePerRayCount() const
+		{
+			return mSamplePerRayCount;
+		}
 
 	private:
 		void reset();
 
-		Ray renderSubPixels(float x, float y, float& depth);
+		Ray renderSample(float x, float y, float& depth);
 
 		uint32 mWidth;
 		uint32 mHeight;
@@ -92,6 +102,7 @@ namespace PR
 		// Settings
 		uint32 mMaxRayDepth;
 		uint32 mMaxRayBounceCount;
-		bool mEnableSubPixels;
+		bool mEnableSampling;
+		uint32 mSamplePerRayCount;
 	};
 }

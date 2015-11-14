@@ -5,6 +5,8 @@
 namespace PR
 {
 	class Material;
+
+	/* Does not support scale! */
 	class PR_LIB SphereEntity : public GeometryEntity
 	{
 	public:

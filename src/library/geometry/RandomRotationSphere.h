@@ -39,7 +39,7 @@ namespace PR
 			float dx = sx + rand.getFloat() * (ex - sx);
 			float dy = sy + rand.getFloat() * (ey - sy);
 			float dz = sz + rand.getFloat() * (ez - sz);
-#
+
 			PM::vec n = PM::pm_Normalize3D(PM::pm_Set(dx, dy, dz, 1));
 
 			return PM::pm_Dot3D(normal, n) <= 0 ? PM::pm_Negate(n) : n;

@@ -2,44 +2,14 @@
 
 namespace PR
 {
-	Face::Face()
+	Face::Face() :
+		V1(PM::pm_Set(0, 0, 0, 1)), V2(PM::pm_Set(0, 0, 0, 1)), V3(PM::pm_Set(0, 0, 0, 1)),
+		N1(PM::pm_Set(0, 0, 0, 1)), N2(PM::pm_Set(0, 0, 0, 1)), N3(PM::pm_Set(0, 0, 0, 1)),
+		UV1(PM::pm_Set(0, 0)), UV2(PM::pm_Set(0, 0)), UV3(PM::pm_Set(0, 0))
 	{
 	}
 
 	Face::~Face()
 	{
-	}
-
-	void Face::addVertex(Vertex* v)
-	{
-		PR_ASSERT(v);
-		mVertices.push_back(v);
-	}
-
-	Vertex* Face::getVertex(size_t i) const
-	{
-		return mVertices.at(i);
-	}
-
-	void Face::addNormal(Normal* v)
-	{
-		PR_ASSERT(v);
-		mNormals.push_back(v);
-	}
-
-	Normal* Face::getNormal(size_t i) const
-	{
-		return mNormals.at(i);
-	}
-
-	void Face::addUV(UV* v)
-	{
-		PR_ASSERT(v);
-		mUVs.push_back(v);
-	}
-
-	UV* Face::getUV(size_t i) const
-	{
-		return mUVs.at(i);
 	}
 }

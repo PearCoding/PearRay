@@ -79,16 +79,16 @@ namespace PR
 				//	PM::pm_MaxT<float>(-1, PM::pm_MinT<float>(1, PM::pm_GetZ(reflection))));
 				//float rrh = PM::pm_GetX(reflection) != 0 ? std::atan2f(PM::pm_GetY(reflection), PM::pm_GetX(reflection)) : 0;
 
+				FacePoint collisionPoint;
 				for (int i = 0; i < RAY_COUNT; ++i)
 				{
 					//PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta/2, delta/2, -delta, delta, renderer->random());
-					PM::vec3 norm2 = RandomRotationSphere::createFast(reflection, -1, 1, -1, 1, -1, 1, renderer->random());
+					PM::vec3 norm2 = RandomRotationSphere::createFast(point.normal(), -1, 1, -1, 1, -1, 1, renderer->random());
 
-					FacePoint collisionPoint;
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 					
-					float dot2 = std::fabsf(PM::pm_Dot3D(norm2, point.normal()));
+					float dot2 = (1 - std::fabsf(PM::pm_Dot3D(norm2, reflection))) * (1 - mRoughness) + 1 * mRoughness;
 
 					spec += dot2*ray.spectrum();
 

@@ -1,9 +1,8 @@
 #include "WavefrontLoader.h"
 #include "geometry/Mesh.h"
-#include "geometry/Normal.h"
-#include "geometry/UV.h"
-#include "geometry/Vertex.h"
 #include "geometry/Face.h"
+
+#include "Logger.h"
 
 #include <sstream>
 #include <fstream>
@@ -137,7 +136,7 @@ namespace PRU
 
 		int lnr = 1;
 		std::string line;
-		while (!std::getline(input, line))
+		while (std::getline(input, line))
 		{
 			line = trim(line);
 			if (line.empty())
@@ -183,19 +182,15 @@ namespace PRU
 			{
 				commands.pop_front();
 
-				Vertex* v = new Vertex;
-				v->X = pr_to<float>(commands.front());
+				PM::vec3 v = PM::pm_Set(0, 0, 0, 1);
+				v = PM::pm_SetX(v, pr_to<float>(commands.front()));
 				commands.pop_front();
-				v->Y = pr_to<float>(commands.front());
+				v = PM::pm_SetY(v, pr_to<float>(commands.front()));
 				commands.pop_front();
 
-				if (commands.empty())
+				if (!commands.empty())
 				{
-					v->Z = 0;
-				}
-				else
-				{
-					v->Z = pr_to<float>(commands.front());
+					v = PM::pm_SetZ(v, pr_to<float>(commands.front()));
 				}
 
 				mesh->addVertex(v);
@@ -204,10 +199,10 @@ namespace PRU
 			{
 				commands.pop_front();
 
-				UV* t = new UV;
-				t->U = pr_to<float>(commands.front());
+				PM::vec2 t = PM::pm_Set(0, 0);
+				t = PM::pm_SetX(t, pr_to<float>(commands.front()));
 				commands.pop_front();
-				t->V = pr_to<float>(commands.front());
+				t = PM::pm_SetY(t, pr_to<float>(commands.front()));
 				commands.pop_front();
 
 				mesh->addUV(t);
@@ -216,22 +211,18 @@ namespace PRU
 			{
 				commands.pop_front();
 
-				Normal* n = new Normal;
-				n->X = pr_to<float>(commands.front());
+				PM::vec3 n = PM::pm_Set(0, 0, 0, 1);
+				n = PM::pm_SetX(n, pr_to<float>(commands.front()));
 				commands.pop_front();
-				n->Y = pr_to<float>(commands.front());
+				n = PM::pm_SetY(n, pr_to<float>(commands.front()));
 				commands.pop_front();
 
-				if (commands.empty())
+				if (!commands.empty())
 				{
-					n->Z = 0;
-				}
-				else
-				{
-					n->Z = pr_to<float>(commands.front());
+					n = PM::pm_SetZ(n, pr_to<float>(commands.front()));
 				}
 
-				mesh->addNormal(n);
+				mesh->addNormal(PM::pm_Normalize3D(n));
 			}
 			else if (commands.front() == "f")//Face
 			{
@@ -269,21 +260,72 @@ namespace PRU
 			++lnr;
 		}
 
+		// TODO: Only triangles or quads!
 		for (ProxyFace f : proxyFaces)
 		{
-			Face* face = new Face;
-			for (uint32 i : f.uniqueIDs)
+			if (f.uniqueIDs.size() == 3)
 			{
-				UniqueVertex v = uniqueVertices.at(i);
-				
-				Vertex* vert = mesh->getVertex(v.VIn);
-				Normal* norm = mesh->getNormal(v.NIn);
-				UV* uv = mesh->getUV(v.TIn);
+				Face* face = new Face;
+				UniqueVertex v1 = uniqueVertices.at(f.uniqueIDs.at(0));
+				UniqueVertex v2 = uniqueVertices.at(f.uniqueIDs.at(1));
+				UniqueVertex v3 = uniqueVertices.at(f.uniqueIDs.at(2));
 
-				face->addVertex(vert);
-				face->addNormal(norm);
-				face->addUV(uv);
+				face->V1 = mesh->getVertex(v1.VIn);
+				face->V2 = mesh->getVertex(v2.VIn);
+				face->V3 = mesh->getVertex(v3.VIn);
+
+				face->N1 = mesh->getNormal(v1.NIn);
+				face->N2 = mesh->getNormal(v2.NIn);
+				face->N3 = mesh->getNormal(v3.NIn);
+
+				face->UV1 = mesh->getUV(v1.TIn);
+				face->UV2 = mesh->getUV(v2.TIn);
+				face->UV3 = mesh->getUV(v3.TIn);
+
+				mesh->addFace(face);
 			}
+			else if (f.uniqueIDs.size() == 4)
+			{
+				UniqueVertex v1 = uniqueVertices.at(f.uniqueIDs.at(0));
+				UniqueVertex v2 = uniqueVertices.at(f.uniqueIDs.at(1));
+				UniqueVertex v3 = uniqueVertices.at(f.uniqueIDs.at(2));
+				UniqueVertex v4 = uniqueVertices.at(f.uniqueIDs.at(3));
+
+				// First triangle
+				Face* face = new Face;
+				face->V1 = mesh->getVertex(v1.VIn);
+				face->V2 = mesh->getVertex(v2.VIn);
+				face->V3 = mesh->getVertex(v4.VIn);
+
+				face->N1 = mesh->getNormal(v1.NIn);
+				face->N2 = mesh->getNormal(v2.NIn);
+				face->N3 = mesh->getNormal(v4.NIn);
+
+				face->UV1 = mesh->getUV(v1.TIn);
+				face->UV2 = mesh->getUV(v2.TIn);
+				face->UV3 = mesh->getUV(v4.TIn);
+				mesh->addFace(face);
+
+				// Second triangle
+				face = new Face;
+				face->V1 = mesh->getVertex(v4.VIn);
+				face->V2 = mesh->getVertex(v2.VIn);
+				face->V3 = mesh->getVertex(v3.VIn);
+
+				face->N1 = mesh->getNormal(v4.NIn);
+				face->N2 = mesh->getNormal(v2.NIn);
+				face->N3 = mesh->getNormal(v3.NIn);
+
+				face->UV1 = mesh->getUV(v4.TIn);
+				face->UV2 = mesh->getUV(v2.TIn);
+				face->UV3 = mesh->getUV(v3.TIn);
+				mesh->addFace(face);
+			}
+			else
+			{
+				PR_LOGGER.log(L_Error, M_Internal, "Couldn't add face. Only triangles or quads allowed.");
+			}
+
 		}
 	}
 }

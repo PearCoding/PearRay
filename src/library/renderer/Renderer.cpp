@@ -14,7 +14,8 @@ namespace PR
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
 		mResult(w, h), mRandom((uint64)time(NULL)),
 		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
-		mMaxRayDepth(3), mMaxRayBounceCount(50), mEnableSubPixels(false)
+		mMaxRayDepth(3), mMaxRayBounceCount(50),
+		mEnableSampling(false), mSamplePerRayCount(8)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -106,65 +107,37 @@ namespace PR
 
 	void Renderer::render(uint32 x, uint32 y)
 	{
-		if (mEnableSubPixels)
+		if (mEnableSampling)
 		{
-			float depth1;
-			Ray ray1 = renderSubPixels((float)x, (float)y, depth1);
+			uint32 successfulSamples = 0;
+			float newDepth = 0;
+			Spectrum newSpec;
 
-			// Left Sub
-			float depth2;
-			Ray ray2 = renderSubPixels(x - 0.333f, (float)y, depth2);
-
-			// Right Sub
-			float depth3;
-			Ray ray3 = renderSubPixels(x + 0.333f, (float)y, depth3);
-
-			// Top Sub
-			float depth4;
-			Ray ray4 = renderSubPixels((float)x, y - 0.333f, depth4);
-
-			// Bottom Sub
-			float depth5;
-			Ray ray5 = renderSubPixels((float)x, y + 0.333f, depth5);
-
-			if (depth1 >= 0 || depth2 >= 0 || depth3 >= 0 || depth4 >= 0 || depth5 >= 0)
+			for (uint32 i = 0; i < mSamplePerRayCount; ++i)
 			{
-				float newDepth = (depth1 >= 0 ? depth1*0.333f : 0)
-					+ (depth2 >= 0 ? depth2*0.166f : 0)
-					+ (depth3 >= 0 ? depth3*0.166f : 0)
-					+ (depth4 >= 0 ? depth4*0.166f : 0)
-					+ (depth5 >= 0 ? depth5*0.166f : 0);
+				float depth;
+				Ray ray = renderSample((float)x + (mRandom.getFloat() - 0.5f),
+					(float)y + (mRandom.getFloat() - 0.5f),
+					depth);
 
-				Spectrum newSpec;
-				if (depth1)
+				if (depth >= 0)
 				{
-					newSpec += ray1.spectrum()*0.333f;
+					newDepth += depth;
+					newSpec += ray.spectrum();
+					++successfulSamples;
 				}
-				if (depth2)
-				{
-					newSpec += ray2.spectrum()*0.166f;
-				}
-				if (depth3)
-				{
-					newSpec += ray3.spectrum()*0.166f;
-				}
-				if (depth4)
-				{
-					newSpec += ray4.spectrum()*0.166f;
-				}
-				if (depth5)
-				{
-					newSpec += ray5.spectrum()*0.166f;
-				}
+			}
 
-				mResult.setDepth(x, y, newDepth);
-				mResult.setPoint(x, y, newSpec);
+			if (successfulSamples > 0)
+			{
+				mResult.setDepth(x, y, newDepth / successfulSamples);
+				mResult.setPoint(x, y, newSpec / successfulSamples);
 			}
 		}
 		else
 		{
 			float depth;
-			Ray ray = renderSubPixels((float)x, (float)y, depth);
+			Ray ray = renderSample((float)x, (float)y, depth);
 			if (depth >= 0)
 			{
 				mResult.setDepth(x, y, depth);
@@ -177,7 +150,7 @@ namespace PR
 		mStatisticMutex.unlock();
 	}
 
-	Ray Renderer::renderSubPixels(float x, float y, float& depth)
+	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
 		float sx = mCamera->width() * x / (float)mWidth - mCamera->width() / 2.0f;
 		float sy = mCamera->height() * y / (float)mHeight - mCamera->height() / 2.0f;
@@ -308,13 +281,13 @@ namespace PR
 		return mMaxRayBounceCount;
 	}
 
-	void Renderer::enableSubPixels(bool b)
+	void Renderer::enableSampling(bool b)
 	{
-		mEnableSubPixels = b;
+		mEnableSampling = b;
 	}
 
-	bool Renderer::isSubPixelsEnalbed() const
+	bool Renderer::isSamplingEnalbed() const
 	{
-		return mEnableSubPixels;
+		return mEnableSampling;
 	}
 }

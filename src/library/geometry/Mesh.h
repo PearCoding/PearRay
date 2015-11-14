@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Config.h"
+#include "BoundingBox.h"
+
 #include <vector>
 
 namespace PR
@@ -17,23 +18,46 @@ namespace PR
 		Mesh();
 		~Mesh();
 
-		void addVertex(Vertex* v);
-		Vertex* getVertex(size_t i) const;
+		inline BoundingBox boundingBox() const
+		{
+			return mBoundingBox;
+		}
 
-		void addNormal(Normal* v);
-		Normal* getNormal(size_t i) const;
+		void addVertex(const PM::vec3& v);
+		PM::vec3 getVertex(size_t i) const;
+		inline const std::vector<PM::vec3>& vertices() const
+		{
+			return mVertices;
+		}
 
-		void addUV(UV* v);
-		UV* getUV(size_t i) const;
+		void addNormal(const PM::vec3& v);
+		PM::vec3 getNormal(size_t i) const;
+		inline const std::vector<PM::vec3>& normals() const
+		{
+			return mNormals;
+		}
+
+		void addUV(const PM::vec2& v);
+		PM::vec2 getUV(size_t i) const;
+		inline const std::vector<PM::vec2>& uvs() const
+		{
+			return mUVs;
+		}
 
 		void addFace(Face* f);
 		Face* getFace(size_t i) const;
+		inline const std::vector<Face*>& faces() const
+		{
+			return mFaces;
+		}
 
 		void clear();
 	private:
-		std::vector<Vertex*> mVertices;
-		std::vector<Normal*> mNormals;
-		std::vector<UV*> mUVs;
+		BoundingBox mBoundingBox;
+
+		std::vector<PM::vec3> mVertices;
+		std::vector<PM::vec3> mNormals;
+		std::vector<PM::vec2> mUVs;
 		std::vector<Face*> mFaces;
 	};
 }

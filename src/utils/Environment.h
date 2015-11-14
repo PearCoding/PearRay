@@ -32,7 +32,7 @@ namespace PRU
 
 		inline bool hasSpectrum(const std::string& name) const
 		{
-			return mSpectrums.count(name);
+			return mSpectrums.count(name) != 0;
 		}
 
 		inline void addSpectrum(const std::string& name, const PR::Spectrum& spec)
@@ -47,7 +47,7 @@ namespace PRU
 
 		inline bool hasMaterial(const std::string& name) const
 		{
-			return mMaterials.count(name);
+			return mMaterials.count(name) != 0;
 		}
 
 		inline void addMaterial(const std::string& name, PR::Material* mat)
@@ -63,7 +63,7 @@ namespace PRU
 
 		inline bool hasMesh(const std::string& name) const
 		{
-			return mMeshes.count(name);
+			return mMeshes.count(name) != 0;
 		}
 
 		inline void addMesh(const std::string& name, PR::Mesh* m)

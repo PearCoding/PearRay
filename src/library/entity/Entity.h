@@ -40,5 +40,8 @@ namespace PR
 		PM::vec3 mPosition;
 		PM::vec3 mScale;
 		PM::quat mRotation;
+
+		mutable bool mReCache;
+		mutable PM::mat mMatrixCache;
 	};
 }

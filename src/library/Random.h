@@ -2,7 +2,9 @@
 
 #include "Config.h"
 
-#ifdef PR_USE_STANDARD_RANDOM
+// #define PR_USE_STL_RANDOM
+
+#ifdef PR_USE_STL_RANDOM
 # include <random>
 #endif
 
@@ -11,7 +13,7 @@ namespace PR
 	class PR_LIB_INLINE Random
 	{
 	private:
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 		std::default_random_engine mGenerator;
 		std::uniform_real_distribution<float> mDistributionFloat;
 		std::uniform_real_distribution<double> mDistributionDouble;
@@ -25,7 +27,7 @@ namespace PR
 #endif
 	public:
 		inline explicit Random(uint64_t s = 0x64326ae2f48fe6dbULL) :
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			mGenerator(s), mDistributionFloat(0.0f, 1.0f), mDistributionDouble(0.0,1.0),
 			mDistributionUInt32(), mDistributionUInt64()
 #else
@@ -36,7 +38,7 @@ namespace PR
 
 		inline uint32_t get32()
 		{
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			return mDistributionUInt32(mGenerator);
 #else
 			uint64_t oldstate = mState;
@@ -54,7 +56,7 @@ namespace PR
 
 		inline uint32_t get32(uint32_t start, uint32_t end)
 		{
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			return std::uniform_int_distribution<uint32>(start, end)(mGenerator);
 #else
 			return get32() % (end - start) + start;
@@ -63,7 +65,7 @@ namespace PR
 
 		inline uint64_t get64()
 		{
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			return mDistributionUInt64(mGenerator);
 #else
 			return  (((uint64_t)get32()) << 32) | (uint64_t)get32();
@@ -72,7 +74,7 @@ namespace PR
 
 		inline uint64_t get64(uint64_t start, uint64_t end)
 		{
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			return std::uniform_int_distribution<uint64>(start, end)(mGenerator);
 #else
 			return get64() % (end - start) + start;
@@ -81,7 +83,7 @@ namespace PR
 
 		inline float getFloat()//[0, 1]
 		{
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			return mDistributionFloat(mGenerator);
 #else
 			// FIXME: Really that good?
@@ -91,7 +93,7 @@ namespace PR
 
 		inline double getDouble()//[0, 1]
 		{
-#ifdef PR_USE_STANDARD_RANDOM
+#ifdef PR_USE_STL_RANDOM
 			return mDistributionDouble(mGenerator);
 #else
 			return getFloat();//TODO

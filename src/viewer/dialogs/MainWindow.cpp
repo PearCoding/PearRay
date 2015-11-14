@@ -61,9 +61,17 @@ MainWindow::MainWindow(QWidget *parent)
 	((IntProperty*)mRendererThreadsProp)->setValue(0);
 	mRendererGroupProp->addChild(mRendererThreadsProp);
 
-	mRendererSubPixelsProp = new BoolProperty();
-	mRendererSubPixelsProp->setPropertyName(tr("SubPixel Rendering"));
-	mRendererGroupProp->addChild(mRendererSubPixelsProp);
+	mRendererSamplingProp = new BoolProperty();
+	mRendererSamplingProp->setPropertyName(tr("Sampling"));
+	mRendererGroupProp->addChild(mRendererSamplingProp);
+
+	mRendererSamplesPerRayProp = new IntProperty();
+	mRendererSamplesPerRayProp->setPropertyName(tr("Samples per Ray"));
+	((IntProperty*)mRendererSamplesPerRayProp)->setMinValue(1);
+	((IntProperty*)mRendererSamplesPerRayProp)->setMaxValue(1024);
+	((IntProperty*)mRendererSamplesPerRayProp)->setDefaultValue(8);
+	((IntProperty*)mRendererSamplesPerRayProp)->setValue(8);
+	mRendererGroupProp->addChild(mRendererSamplesPerRayProp);
 
 	mRendererMaxRayDepthProp = new IntProperty();
 	mRendererMaxRayDepthProp->setPropertyName(tr("Max Ray Depth"));
@@ -155,7 +163,8 @@ MainWindow::~MainWindow()
 		delete mRendererTileXProp;
 		delete mRendererTileYProp;
 		delete mRendererThreadsProp;
-		delete mRendererSubPixelsProp;
+		delete mRendererSamplingProp;
+		delete mRendererSamplesPerRayProp;
 		delete mRendererMaxRayDepthProp;
 		delete mRendererMaxBounceRayCountProp;
 		delete mViewGroupProp;
@@ -263,9 +272,13 @@ void MainWindow::propertyValueChanged(IProperty* prop)
 	{
 		mRenderer->setMaxRayBounceCount(((IntProperty*)mRendererMaxBounceRayCountProp)->value());
 	}
-	else if (prop == mRendererSubPixelsProp)
+	else if (prop == mRendererSamplingProp)
 	{
-		mRenderer->enableSubPixels(((BoolProperty*)mRendererSubPixelsProp)->value());
+		mRenderer->enableSampling(((BoolProperty*)mRendererSamplingProp)->value());
+	}
+	else if (prop == mRendererSamplesPerRayProp)
+	{
+		mRenderer->setSamplePerRayCount(((IntProperty*)mRendererSamplesPerRayProp)->value());
 	}
 	else if (prop == mRendererStartProp)
 	{
@@ -294,7 +307,8 @@ void MainWindow::startRendering()
 	mRendererTileXProp->setEnabled(false);
 	mRendererTileYProp->setEnabled(false);
 	mRendererThreadsProp->setEnabled(false);
-	mRendererSubPixelsProp->setEnabled(false);
+	mRendererSamplingProp->setEnabled(false);
+	mRendererSamplesPerRayProp->setEnabled(false);
 	mRendererMaxBounceRayCountProp->setEnabled(false);
 	mRendererMaxRayDepthProp->setEnabled(false);
 	mRendererStartProp->setPropertyName(tr("Stop"));
@@ -319,7 +333,8 @@ void MainWindow::stopRendering()
 	mRendererTileXProp->setEnabled(true);
 	mRendererTileYProp->setEnabled(true);
 	mRendererThreadsProp->setEnabled(true);
-	mRendererSubPixelsProp->setEnabled(true);
+	mRendererSamplingProp->setEnabled(true);
+	mRendererSamplesPerRayProp->setEnabled(true);
 	mRendererMaxBounceRayCountProp->setEnabled(true);
 	mRendererMaxRayDepthProp->setEnabled(true);
 	mRendererStartProp->setPropertyName(tr("Start"));

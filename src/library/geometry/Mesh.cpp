@@ -1,7 +1,4 @@
 #include "Mesh.h"
-#include "Normal.h"
-#include "UV.h"
-#include "Vertex.h"
 #include "Face.h"
 
 namespace PR
@@ -15,35 +12,33 @@ namespace PR
 		clear();
 	}
 
-	void Mesh::addVertex(Vertex* v)
+	void Mesh::addVertex(const PM::vec3& v)
 	{
-		PR_ASSERT(v);
+		mBoundingBox.put(v);// FIXME: 0 is already in :/
 		mVertices.push_back(v);
 	}
 
-	Vertex* Mesh::getVertex(size_t i) const
+	PM::vec3 Mesh::getVertex(size_t i) const
 	{
 		return mVertices.at(i);
 	}
 
-	void Mesh::addNormal(Normal* v)
+	void Mesh::addNormal(const PM::vec3& v)
 	{
-		PR_ASSERT(v);
 		mNormals.push_back(v);
 	}
 
-	Normal* Mesh::getNormal(size_t i) const
+	PM::vec3 Mesh::getNormal(size_t i) const
 	{
 		return mNormals.at(i);
 	}
 
-	void Mesh::addUV(UV* v)
+	void Mesh::addUV(const PM::vec2& v)
 	{
-		PR_ASSERT(v);
 		mUVs.push_back(v);
 	}
 
-	UV* Mesh::getUV(size_t i) const
+	PM::vec2 Mesh::getUV(size_t i) const
 	{
 		return mUVs.at(i);
 	}
@@ -62,22 +57,8 @@ namespace PR
 
 	void Mesh::clear()
 	{
-		for (Vertex* v : mVertices)
-		{
-			delete v;
-		}
 		mVertices.clear();
-
-		for (Normal* v : mNormals)
-		{
-			delete v;
-		}
 		mNormals.clear();
-
-		for (UV* v : mUVs)
-		{
-			delete v;
-		}
 		mUVs.clear();
 
 		for (Face* f : mFaces)

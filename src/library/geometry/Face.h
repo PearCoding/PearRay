@@ -1,31 +1,26 @@
 #pragma once
 
 #include "Config.h"
-#include <vector>
+#include "PearMath.h"
 
 namespace PR
 {
-	class Normal;
-	class UV;
-	class Vertex;
 	class PR_LIB Face
 	{
 	public:
 		Face();
 		~Face();
 
-		void addVertex(Vertex* v);
-		Vertex* getVertex(size_t i) const;
+		PM::vec3 V1;
+		PM::vec3 V2;
+		PM::vec3 V3;
 
-		void addNormal(Normal* v);
-		Normal* getNormal(size_t i) const;
+		PM::vec3 N1;
+		PM::vec3 N2;
+		PM::vec3 N3;
 
-		void addUV(UV* v);
-		UV* getUV(size_t i) const;
-
-	private:
-		std::vector<Vertex*> mVertices;
-		std::vector<Normal*> mNormals;
-		std::vector<UV*> mUVs;
+		PM::vec2 UV1;
+		PM::vec2 UV2;
+		PM::vec2 UV3;
 	};
 }

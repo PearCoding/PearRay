@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Config.h"
-#include "PearMath.h"
+#include "Face.h"
 
 #include "ray/Ray.h"
 
@@ -12,6 +12,12 @@ namespace PR
 	class PR_LIB_INLINE Triangle
 	{
 	public:
+		inline static bool intersect(const Ray& ray, const Face& face,
+			float& u, float& v, PM::vec3& point)
+		{
+			return intersect(ray, face.V1, face.V2, face.V3, u, v, point);
+		}
+
 		// Better use with normals!
 		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
 			float& u, float& v, PM::vec3& point)

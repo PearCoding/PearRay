@@ -9,6 +9,10 @@
 #include "scene/Camera.h"
 
 #include "material/DiffuseMaterial.h"
+#include "material/DebugMaterial.h"
+
+#include "geometry/Mesh.h"
+#include "loader/WavefrontLoader.h"
 
 // DataLisp
 #include "DataLisp.h"
@@ -344,7 +348,7 @@ namespace PRU
 		if (rotD && rotD->isType() == DL::Data::T_Array)
 		{
 			bool ok;
-			PM::quat rot = getVector(rotD->getArray(), ok);
+			PM::quat rot = PM::pm_Normalize4D(getVector(rotD->getArray(), ok));
 
 			if (!ok)
 			{
@@ -480,6 +484,10 @@ namespace PRU
 
 			mat = diff;
 		}
+		else if (type == "debug")
+		{
+			mat = new DebugMaterial();
+		}
 		else
 		{
 			PR_LOGGER.logf(L_Error, M_Scene, "Unknown material type '%s'", type.c_str());
@@ -514,7 +522,7 @@ namespace PRU
 			{
 				if (arr->at(i)->isNumber())
 				{
-					spec.setValue(i, arr->at(i)->getFloatConverted());
+					spec.setValue((uint32)i, arr->at(i)->getFloatConverted());
 				}
 				else
 				{
@@ -528,7 +536,56 @@ namespace PRU
 
 	void SceneLoader::addMesh(DL::DataGroup* group, Environment* env)
 	{
+		DL::Data* nameD = group->getFromKey("name");
+		DL::Data* loaderD = group->getFromKey("loader");
+		DL::Data* fileD = group->getFromKey("file");
 
+		std::string name;
+		if (nameD && nameD->isType() == DL::Data::T_String)
+		{
+			name = nameD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get name for mesh entry.");
+			return;
+		}
+		
+		std::string file;
+		if (fileD && fileD->isType() == DL::Data::T_String)
+		{
+			file = fileD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get file for mesh entry.");
+			return;
+		}
+
+		std::string loader;
+		if (loaderD && loaderD->isType() == DL::Data::T_String)
+		{
+			loader = loaderD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Warning, M_Scene, "No valid loader set. Assuming 'obj'.");
+			loader = "obj";
+		}
+
+		if (loader == "obj")
+		{
+			Mesh* mesh = new Mesh;
+
+			WavefrontLoader loader;
+			loader.load(file, mesh);
+
+			env->addMesh(name, mesh);
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Unknown '%s' loader.", loader.c_str());
+		}
 	}
 
 	PM::vec3 SceneLoader::getVector(DL::DataArray* arr, bool& ok) const
