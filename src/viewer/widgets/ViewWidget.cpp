@@ -36,13 +36,12 @@ void ViewWidget::refreshView()
 	if (mRenderer)
 	{
 		PR::RenderResult result = mRenderer->result();
-		PR::RGBConverter converter;
 
 		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);
 
 		if (mViewMode == VM_Color)
 		{
-			//float maxDepth = result.maxDepth();
+			PR::RGBConverter converter;
 			for (PR::uint32 y = 0; y < result.height(); ++y)
 			{
 				for (PR::uint32 x = 0; x < result.width(); ++x)
@@ -57,10 +56,6 @@ void ViewWidget::refreshView()
 					b = PM::pm_MinT<float>(1, b);
 
 					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-					//float d = result.depth(x, y) / maxDepth;
-					//d = d < 0 ? 0 : 1 - d;
-
-					//mRenderImage.setPixel(x, y, qRgb(d*255, d*255, d*255));
 				}
 			}
 		}
@@ -74,6 +69,23 @@ void ViewWidget::refreshView()
 					float d = result.depth(x, y) / maxDepth;
 					d = d < 0 ? 0 : 1 - d;
 					mRenderImage.setPixel(x, y, qRgb(d*255, d*255, d*255));
+				}
+			}
+		}
+		else if (mViewMode == VM_NORM_XYZ)
+		{
+			PR::XYZConverter converter;
+			for (PR::uint32 y = 0; y < result.height(); ++y)
+			{
+				for (PR::uint32 x = 0; x < result.width(); ++x)
+				{
+					float r;
+					float g;
+					float b;
+
+					converter.convert(result.point(x, y), r, g, b);
+
+					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
 				}
 			}
 		}

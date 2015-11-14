@@ -1,12 +1,13 @@
 #pragma once
 
-#include "ColorSpaceConverter.h"
+#include "Config.h"
 
 namespace PR
 {
-	class PR_LIB IntensityConverter : public ColorSpaceConverter
+	class Spectrum;
+	class PR_LIB IntensityConverter
 	{
 	public:
-		virtual void convert(const Spectrum& s, float &x, float &y, float &z);
+		void convert(const Spectrum& s, float &x, float &y, float &z);
 	};
 }

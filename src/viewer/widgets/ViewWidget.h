@@ -11,7 +11,8 @@ namespace PR
 enum ViewMode
 {
 	VM_Color,
-	VM_Depth
+	VM_Depth,
+	VM_NORM_XYZ// Different color space (CIE XYZ)
 };
 class ViewWidget : public QWidget
 {

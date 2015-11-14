@@ -55,23 +55,28 @@ namespace PR
 
 	void RGBConverter::convert(const Spectrum& s, float &x, float &y, float &z)
 	{
-		x = 0;
-		y = 0;
-		z = 0;
+		float X, Y, Z;
+		convertXYZ(s, X, Y, Z);
+
+		/*x = 0.41847f * X - 0.15866f * Y - 0.082835f * Z;
+		y = -0.091169f * X + 0.25243f * Y + 0.015708f * Z;
+		z = 0.0009209f * X - 0.0025498f * Y + 0.17860f * Z;*/
+
+		x = 3.240479f * X - 1.537150f * Y - 0.498535f * Z;
+		y = -0.969256f * X + 1.875991f * Y + 0.041556f * Z;
+		z = 0.055648f * X - 0.204043f * Y + 1.057311f * Z;
+	}
+
+	Spectrum RGBConverter::toSpec(float r, float g, float b)
+	{
+		Spectrum spec;
 
 		for (uint32 i = 1; i < Spectrum::SAMPLING_COUNT - 7; ++i)
 		{
-			float val1 = s.value(i);
-			float val2 = s.value(i+1);
-
-			x += val1 * NM_TO_RGB[3 * i] + val2 * NM_TO_RGB[3 * (i + 1)];
-			y += val1 * NM_TO_RGB[3 * i + 1] + val2 * NM_TO_RGB[3 * (i + 1) + 1];
-			z += val1 * NM_TO_RGB[3 * i + 2] + val2 * NM_TO_RGB[3 * (i + 1) + 2];
+			spec.setValue(i,
+				r*NM_TO_RGB[3 * i] + g*NM_TO_RGB[3 * i + 1] + b*NM_TO_RGB[3 * i + 2]);
 		}
 
-		//std::cout << x << " " << y << " " << z << std::endl;
-		x = 0.5f * PM::pm_MaxT<float>(0, x) * Spectrum::SAMPLING_COUNT;
-		y = 0.5f * PM::pm_MaxT<float>(0, y) * Spectrum::SAMPLING_COUNT;
-		z = 0.5f * PM::pm_MaxT<float>(0, z) * Spectrum::SAMPLING_COUNT;
+		return spec;
 	}
 }

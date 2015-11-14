@@ -102,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
 	mViewModeProp->setPropertyName(tr("Display"));
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);
+	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE Norm XYZ"), VM_NORM_XYZ);
 	((SelectionProperty*)mViewModeProp)->setDefaultIndex(0);
 	mViewGroupProp->addChild(mViewModeProp);
 
