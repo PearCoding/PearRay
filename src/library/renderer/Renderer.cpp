@@ -12,7 +12,7 @@ namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
-		mResult(w, h), mRandom((uint32)time(NULL)),
+		mResult(w, h), mRandom((uint64)time(NULL)),
 		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
 		mMaxRayDepth(3), mMaxRayBounceCount(50), mEnableSubPixels(false)
 	{
