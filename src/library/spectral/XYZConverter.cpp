@@ -101,20 +101,27 @@ namespace PR
 			float val1 = s.value(i);
 
 #ifdef PR_XYZ_LINEAR_INTERP
-			float val2 = s.value(i + 1);
+			if (i < Spectrum::SAMPLING_COUNT - 1)
+			{
+				float val2 = s.value(i + 1);
 
-			X += val1 * NM_TO_X[i] + val2 * NM_TO_X[i + 1];
-			Y += val1 * NM_TO_Y[i] + val2 * NM_TO_Y[i + 1];
-			Z += val1 * NM_TO_Z[i] + val2 * NM_TO_Z[i + 1];
-#else
-			X += val1 * NM_TO_X[i];
-			Y += val1 * NM_TO_Y[i];
-			Z += val1 * NM_TO_Z[i];
+				X += val1 * NM_TO_X[i] + val2 * NM_TO_X[i + 1];
+				Y += val1 * NM_TO_Y[i] + val2 * NM_TO_Y[i + 1];
+				Z += val1 * NM_TO_Z[i] + val2 * NM_TO_Z[i + 1];
+			}
+			else
+			{
+#endif
+				X += val1 * NM_TO_X[i];
+				Y += val1 * NM_TO_Y[i];
+				Z += val1 * NM_TO_Z[i];
+#ifdef PR_XYZ_LINEAR_INTERP
+			}
 #endif
 		}
 
-		constexpr float scale = (Spectrum::WAVELENGTH_END - Spectrum::WAVELENGTH_START) 
-			/ (float)(Spectrum::SAMPLING_COUNT);// Nearly Spectrum::WAVELENGTH_STEP
+		constexpr float scale = Spectrum::WAVELENGTH_STEP;//(Spectrum::WAVELENGTH_END - Spectrum::WAVELENGTH_START) 
+			// (float)(Spectrum::SAMPLING_COUNT);// Nearly Spectrum::WAVELENGTH_STEP
 		X *= scale;
 		Y *= scale;
 		Z *= scale;

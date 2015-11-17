@@ -15,7 +15,12 @@ namespace PR
 
 	void DebugMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		in.setSpectrum(RGBConverter::Red);
+		//in.setSpectrum(RGBConverter::Red);
+		//in.setSpectrum(RGBConverter::toSpec(0.5f, 0.5f, 0.5f));
+
+		Spectrum spec;
+		spec.setValueAtWavelength(430, 1);
+		in.setSpectrum(spec);
 
 		//if (PM::pm_GetX(point.normal()) < 0)
 		//{

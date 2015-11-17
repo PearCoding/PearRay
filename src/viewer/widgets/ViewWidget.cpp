@@ -72,6 +72,30 @@ void ViewWidget::refreshView()
 				}
 			}
 		}
+		else if (mViewMode == VM_XYZ)
+		{
+			for (PR::uint32 y = 0; y < result.height(); ++y)
+			{
+				for (PR::uint32 x = 0; x < result.width(); ++x)
+				{
+					float r;
+					float g;
+					float b;
+
+					PR::XYZConverter::convertXYZ(result.point(x, y), r, g, b);
+
+					float m = PM::pm_MaxT<float>(1, PM::pm_MaxT<float>(r, PM::pm_MaxT<float>(g, b)));
+					if (m != 0)
+					{
+						r /= m;
+						g /= m;
+						b /= m;
+					}
+
+					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
+				}
+			}
+		}
 		else if (mViewMode == VM_NORM_XYZ)
 		{
 			for (PR::uint32 y = 0; y < result.height(); ++y)
