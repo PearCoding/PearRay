@@ -7,10 +7,10 @@ namespace PR
 	class Spectrum;
 	class PR_LIB XYZConverter
 	{
-	public:
-		virtual void convert(const Spectrum& s, float &x, float &y, float &z);
+		PR_CLASS_NON_COPYABLE(XYZConverter);
 
-	protected:
-		void convertXYZ(const Spectrum& s, float &X, float &Y, float &Z);
+	public:
+		static void convert(const Spectrum& s, float &x, float &y, float &z);
+		static void convertXYZ(const Spectrum& s, float &X, float &Y, float &Z);
 	};
 }

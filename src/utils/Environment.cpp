@@ -3,11 +3,14 @@
 #include "geometry/Mesh.h"
 #include "material/Material.h"
 
+#include "spectral/RGBConverter.h"
+
 namespace PRU
 {
 	Environment::Environment(const std::string& name) :
 		mScene(name), mCamera(nullptr)
 	{
+		PR::RGBConverter::init();
 	}
 
 	Environment::~Environment()

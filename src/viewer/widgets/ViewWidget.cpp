@@ -4,6 +4,7 @@
 #include "renderer/RenderResult.h"
 
 #include "spectral/RGBConverter.h"
+#include "spectral/XYZConverter.h"
 #include "PearMath.h"
 
 #include <QPainter>
@@ -41,7 +42,6 @@ void ViewWidget::refreshView()
 
 		if (mViewMode == VM_Color)
 		{
-			PR::RGBConverter converter;
 			for (PR::uint32 y = 0; y < result.height(); ++y)
 			{
 				for (PR::uint32 x = 0; x < result.width(); ++x)
@@ -50,7 +50,7 @@ void ViewWidget::refreshView()
 					float g;
 					float b;
 
-					converter.convert(result.point(x, y), r, g, b);
+					PR::RGBConverter::convert(result.point(x, y), r, g, b);
 					r = PM::pm_MinT<float>(1, r);
 					g = PM::pm_MinT<float>(1, g);
 					b = PM::pm_MinT<float>(1, b);
@@ -74,7 +74,6 @@ void ViewWidget::refreshView()
 		}
 		else if (mViewMode == VM_NORM_XYZ)
 		{
-			PR::XYZConverter converter;
 			for (PR::uint32 y = 0; y < result.height(); ++y)
 			{
 				for (PR::uint32 x = 0; x < result.width(); ++x)
@@ -83,7 +82,7 @@ void ViewWidget::refreshView()
 					float g;
 					float b;
 
-					converter.convert(result.point(x, y), r, g, b);
+					PR::XYZConverter::convert(result.point(x, y), r, g, b);
 
 					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
 				}

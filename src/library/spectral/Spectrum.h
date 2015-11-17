@@ -13,9 +13,9 @@ namespace PR
 	class PR_LIB Spectrum
 	{
 	public:
-		static constexpr uint32 WAVELENGTH_START = 380;// nm
-		static constexpr uint32 WAVELENGTH_END = 780;// nm
-		static constexpr uint32 WAVELENGTH_STEP = 10;// nm
+		static constexpr uint32 WAVELENGTH_START = 360;// nm [old 380]
+		static constexpr uint32 WAVELENGTH_END = 800;// nm [old 780]
+		static constexpr uint32 WAVELENGTH_STEP = 5;// nm [old 10]
 		static constexpr uint32 SAMPLING_COUNT = (WAVELENGTH_END - WAVELENGTH_START) / WAVELENGTH_STEP + 1;
 		
 		Spectrum();
@@ -57,8 +57,8 @@ namespace PR
 		Spectrum& normalize();
 		Spectrum normalized() const;
 
-		Spectrum& clamp(float start, float end);
-		Spectrum clamped(float start, float end) const;
+		Spectrum& clamp(float start = 0, float end = 1);
+		Spectrum clamped(float start = 0, float end = 1) const;
 
 		Spectrum& lerp(const Spectrum& spec, float t);
 		static Spectrum lerp(const Spectrum& spec1, const Spectrum& spec2, float t);
