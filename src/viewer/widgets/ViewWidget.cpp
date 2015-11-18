@@ -50,10 +50,10 @@ void ViewWidget::refreshView()
 					float g;
 					float b;
 
-					PR::RGBConverter::convert(result.point(x, y), r, g, b);
-					r = PM::pm_MinT<float>(1, r);
-					g = PM::pm_MinT<float>(1, g);
-					b = PM::pm_MinT<float>(1, b);
+					PR::RGBConverter::convertGAMMA(result.point(x, y), r, g, b);
+					r = PM::pm_ClampT<float>(r, 0, 1);
+					g = PM::pm_ClampT<float>(g, 0, 1);
+					b = PM::pm_ClampT<float>(b, 0, 1);
 
 					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
 				}

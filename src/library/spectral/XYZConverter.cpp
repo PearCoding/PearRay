@@ -90,6 +90,10 @@ namespace PR
 	//	0,		0,		0,		// 780 nm
 	//};
 
+
+	constexpr float ILL_SCALE = (Spectrum::WAVELENGTH_END - Spectrum::WAVELENGTH_START)
+		/ (float)(Spectrum::SAMPLING_COUNT);// Nearly Spectrum::WAVELENGTH_STEP
+
 	void XYZConverter::convertXYZ(const Spectrum& s, float &X, float &Y, float &Z)
 	{
 		X = 0;
@@ -120,11 +124,12 @@ namespace PR
 #endif
 		}
 
-		constexpr float scale = Spectrum::WAVELENGTH_STEP;//(Spectrum::WAVELENGTH_END - Spectrum::WAVELENGTH_START) 
-			// (float)(Spectrum::SAMPLING_COUNT);// Nearly Spectrum::WAVELENGTH_STEP
-		X *= scale;
-		Y *= scale;
-		Z *= scale;
+		X *= ILL_SCALE;
+		Y *= ILL_SCALE;
+		Z *= ILL_SCALE;
+		X /= N;
+		Y /= N;
+		Z /= N;
 
 #ifdef PR_XYZ_LINEAR_INTERP
 		X *= 0.5f;
@@ -149,5 +154,17 @@ namespace PR
 		{
 			x = 0; y = 0; z = 1;
 		}
+	}
+	
+	float XYZConverter::N = 0;
+	void XYZConverter::init()
+	{
+		N = 0;
+		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		{
+			N += NM_TO_Y[i];
+		}
+
+		N *= ILL_SCALE;
 	}
 }

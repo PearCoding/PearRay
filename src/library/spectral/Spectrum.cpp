@@ -179,14 +179,14 @@ namespace PR
 		uint32 c = (uint32)(st / WAVELENGTH_STEP);
 		uint32 m = (uint32)fmodf(st, (float)WAVELENGTH_STEP);
 
-		if (st < 0 || c > SAMPLING_COUNT)
+		if (st < 0 || c >= SAMPLING_COUNT)
 		{
 			return 0;
 		}
 
 		if(interpolation == IT_Const)
 		{ 
-			if (m >= WAVELENGTH_STEP / 2 && c != SAMPLING_COUNT)
+			if (m >= WAVELENGTH_STEP / 2 && c < SAMPLING_COUNT - 1)
 			{
 				return mValues[c+1];
 			}
@@ -197,9 +197,9 @@ namespace PR
 		}
 		else
 		{
-			if (c == SAMPLING_COUNT)
+			if (c >= SAMPLING_COUNT - 1)
 			{
-				return mValues[c];
+				return mValues[SAMPLING_COUNT - 1];
 			}
 			else
 			{

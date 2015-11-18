@@ -84,3 +84,5 @@ add_subdirectory(${PR_Root}/console)
 IF(${Qt5Widgets_FOUND})
 	add_subdirectory(${PR_Root}/viewer)
 ENDIF()
+
+add_subdirectory(${PR_Root}/tests)
