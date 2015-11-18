@@ -29,6 +29,7 @@ SOURCE_GROUP("Source Files\\Properties" FILES ${PR_Properties_Src})
 SET(PR_Widgets_Src
   ${PR_Viewer}/widgets/ColorButton.cpp
   ${PR_Viewer}/widgets/PropertyView.cpp
+  ${PR_Viewer}/widgets/SpectrumWidget.cpp
   ${PR_Viewer}/widgets/ViewWidget.cpp)
 SOURCE_GROUP("Source Files\\Widgets" FILES ${PR_Widgets_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Dialogs_Src} ${PR_Widgets_Src}
@@ -55,6 +56,7 @@ SOURCE_GROUP("Header Files\\Properties" FILES ${PR_Properties_Hdr})
 SET(PR_Widgets_Hdr
   ${PR_Viewer}/widgets/ColorButton.h
   ${PR_Viewer}/widgets/PropertyView.h
+  ${PR_Viewer}/widgets/SpectrumWidget.h
   ${PR_Viewer}/widgets/ViewWidget.h)
 SOURCE_GROUP("Header Files\\Widgets" FILES ${PR_Widgets_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Dialogs_Hdr} ${PR_Widgets_Hdr}

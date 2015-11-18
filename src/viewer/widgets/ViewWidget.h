@@ -6,14 +6,16 @@
 namespace PR
 {
 	class Renderer;
+	class Spectrum;
 }
 
 enum ViewMode
 {
-	VM_Color,
+	VM_Color,// sRGB
+	VM_ColorLinear,// sRGB Linear
 	VM_Depth,
-	VM_XYZ,// Different color space (CIE XYZ)
-	VM_NORM_XYZ// Different color space (CIE XYZ)
+	VM_XYZ,// Color space (CIE XYZ)
+	VM_NORM_XYZ// Color space (CIE XYZ)
 };
 class ViewWidget : public QWidget
 {
@@ -38,11 +40,14 @@ public:
 
 public slots:
 	void enableScale(bool b);
-
 	void refreshView();
 
+signals:
+	void spectrumSelected(const PR::Spectrum& spec);
+
 protected:
-	virtual void paintEvent(QPaintEvent* event);
+	virtual void paintEvent(QPaintEvent* event) override;
+	virtual void mousePressEvent(QMouseEvent * event) override;
 
 private:
 	PR::Renderer* mRenderer;

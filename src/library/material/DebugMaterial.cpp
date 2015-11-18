@@ -15,8 +15,8 @@ namespace PR
 
 	void DebugMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		in.setSpectrum(RGBConverter::toSpec(0.5f*PM::pm_GetX(point.normal()) + 0.5f,
-			0.5f*PM::pm_GetY(point.normal()) + 0.5f,
-			0.5f*PM::pm_GetZ(point.normal()) + 0.5f));
+		in.setSpectrum(RGBConverter::toSpec(std::fabsf(PM::pm_GetX(point.normal())),
+			std::fabsf(PM::pm_GetY(point.normal())),
+			std::fabsf(PM::pm_GetZ(point.normal()))));
 	}
 }

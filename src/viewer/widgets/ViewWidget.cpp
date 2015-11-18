@@ -8,6 +8,7 @@
 #include "PearMath.h"
 
 #include <QPainter>
+#include <QMouseEvent>
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
@@ -51,6 +52,25 @@ void ViewWidget::refreshView()
 					float b;
 
 					PR::RGBConverter::convertGAMMA(result.point(x, y), r, g, b);
+					r = PM::pm_ClampT<float>(r, 0, 1);
+					g = PM::pm_ClampT<float>(g, 0, 1);
+					b = PM::pm_ClampT<float>(b, 0, 1);
+
+					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
+				}
+			}
+		}
+		else if (mViewMode == VM_ColorLinear)
+		{
+			for (PR::uint32 y = 0; y < result.height(); ++y)
+			{
+				for (PR::uint32 x = 0; x < result.width(); ++x)
+				{
+					float r;
+					float g;
+					float b;
+
+					PR::RGBConverter::convert(result.point(x, y), r, g, b);
 					r = PM::pm_ClampT<float>(r, 0, 1);
 					g = PM::pm_ClampT<float>(g, 0, 1);
 					b = PM::pm_ClampT<float>(b, 0, 1);
@@ -139,4 +159,17 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 	int x = width() / 2 - img.width() / 2;
 	int y = height() / 2 - img.height() / 2;
 	painter.drawImage(x, y, img);
+}
+
+void ViewWidget::mousePressEvent(QMouseEvent * event)
+{
+	int x = width() / 2 - mRenderImage.width() / 2;
+	int y = height() / 2 - mRenderImage.height() / 2;
+
+	QRect rect(x, y, mRenderImage.width(), mRenderImage.height());
+	if (rect.contains(event->pos()))
+	{
+		PR::RenderResult result = mRenderer->result();
+		emit spectrumSelected(result.point(event->pos().x() - x, event->pos().y() - y));
+	}
 }

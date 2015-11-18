@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	//Add dock widgets to menu
 	ui.menuDockWidgets->addAction(ui.propertyDockWidget->toggleViewAction());
+	ui.menuDockWidgets->addAction(ui.spectrumDockWidget->toggleViewAction());
 
 	// Setup properties
 	mRendererGroupProp = new GroupProperty();
@@ -101,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
 	mViewModeProp = new SelectionProperty();
 	mViewModeProp->setPropertyName(tr("Display"));
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
+	((SelectionProperty*)mViewModeProp)->addItem(tr("Color Linear"), VM_ColorLinear);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE XYZ"), VM_XYZ);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE Norm XYZ"), VM_NORM_XYZ);
@@ -127,6 +129,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(&mTimer, SIGNAL(timeout()), this, SLOT(updateView()));
 	mTimer.setSingleShot(false);
+
+	connect(ui.viewWidget, SIGNAL(spectrumSelected(const PR::Spectrum&)), ui.spectrumWidget, SLOT(setSpectrum(const PR::Spectrum)));
 
 	readSettings();
 
