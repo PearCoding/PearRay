@@ -99,11 +99,6 @@
      </property>
      <item>
       <widget class="PropertyView" name="propertyView">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
       </widget>
      </item>
     </layout>
@@ -218,7 +213,7 @@
   <customwidget>
    <class>ViewWidget</class>
    <extends>QWidget</extends>
-   <header>widgets/viewwidget.h</header>
+   <header>widgets/ViewWidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

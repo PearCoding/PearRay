@@ -23,12 +23,24 @@ public slots:
 	inline void setSpectrum(const PR::Spectrum& spec)
 	{
 		mSpectrum = spec;
+		cache();
 		repaint();
 	}
 
 protected:
-	virtual void paintEvent(QPaintEvent* event);
+	virtual void paintEvent(QPaintEvent* event) override;
+	virtual void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
+	void cache();
+
 	PR::Spectrum mSpectrum;
+	float mCurrentNM;
+
+	// Cache
+	float mSpecMax;
+	QColor mSpecRGB;
+	QColor mSpecRGBLinear;
+	QColor mSpecXYZ;
+	QColor mSpecXYZNorm;
 };
