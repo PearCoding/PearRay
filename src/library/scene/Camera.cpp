@@ -69,7 +69,7 @@ namespace PR
 
 	Ray Camera::constructRay(float sx, float sy) const
 	{
-		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Set(sx, sy, lensDistance()));
+		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Set(sx, sy, 1));
 
 		return Ray(PM::pm_Multiply(mMatrix, PM::pm_Multiply(matrix(), PM::pm_Set(sx, sy, 0, 1))),
 			PM::pm_Multiply(PM::pm_Rotation(rotation()), dir));
@@ -77,6 +77,6 @@ namespace PR
 
 	void Camera::cache()
 	{
-		mMatrix = PM::pm_Perspective(width(), height(), 0.1, 100);// TODO
+		mMatrix = PM::pm_Perspective(width(), height(), lensDistance(), 100);// TODO
 	}
 }
