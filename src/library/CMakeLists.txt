@@ -94,6 +94,7 @@ SET(PR_Spectral_Hdr
   ${PR_LIB}/spectral/IntensityConverter.h
   ${PR_LIB}/spectral/RGBConverter.h
   ${PR_LIB}/spectral/Spectrum.h
+  ${PR_LIB}/spectral/Spectrum.inl
   ${PR_LIB}/spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Thread_Hdr

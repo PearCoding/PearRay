@@ -96,7 +96,7 @@ namespace PR
 					//PR_DEBUG_ASSERT(!spec.hasInf());
 				}
 
-				spec /= (float)RAY_COUNT;
+				spec *= PM_PI_F/(float)RAY_COUNT;
 			}
 		}
 		

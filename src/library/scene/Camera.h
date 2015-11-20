@@ -27,10 +27,19 @@ namespace PR
 		void setLensDistance(float d);
 		float lensDistance() const;
 
+		inline PM::mat projectionMatrix() const
+		{
+			return mMatrix;
+		}
+
 		Ray constructRay(float sx, float sy) const;
 	private:
+		void cache();
+
 		float mWidth;
 		float mHeight;
 		float mLensDistance;
+
+		PM::mat mMatrix;
 	};
 }

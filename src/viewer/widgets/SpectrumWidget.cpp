@@ -99,6 +99,8 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 	painter.drawLine(PADDING, mh + h, PADDING * 3, mh + h);
 	painter.drawLine(PADDING, mh - h, PADDING * 3, mh - h);
 
+	painter.drawText(PADDING * 4, mh - h + 10, QString::number(mSpecMax));
+
 	painter.drawLine(PADDING * 2 + w, mh - h, PADDING * 2 + w, mh + h);
 	painter.drawLine(PADDING + w, mh + h, w + PADDING * 3, mh + h);
 	painter.drawLine(PADDING + w, mh - h, w + PADDING * 3, mh - h);
@@ -123,7 +125,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 	if (mCurrentNM != -1)
 	{
 		const float val = mSpectrum.approx(
-			PR::Spectrum::WAVELENGTH_START + (PR::Spectrum::WAVELENGTH_END - PR::Spectrum::WAVELENGTH_START)*mCurrentNM) / mSpecMax;
+			PR::Spectrum::WAVELENGTH_START + PR::Spectrum::WAVELENGTH_AREA_SIZE*mCurrentNM) / mSpecMax;
 
 		painter.setPen(QPen(Qt::blue, 1, Qt::DashLine));
 
@@ -145,7 +147,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 				mh + 40, QString::number(val*mSpecMax));
 			painter.drawText(PADDING * 2 + dx + mCurrentNM*w,
 				mh + 50, QString("%1 nm").arg(
-					PR::Spectrum::WAVELENGTH_START + mCurrentNM*(PR::Spectrum::WAVELENGTH_END - PR::Spectrum::WAVELENGTH_START)));
+					PR::Spectrum::WAVELENGTH_START + mCurrentNM*PR::Spectrum::WAVELENGTH_AREA_SIZE));
 		}
 		else
 		{
@@ -153,14 +155,14 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 				mh - 50, QString::number(val*mSpecMax));
 			painter.drawText(PADDING * 2 + dx + mCurrentNM*w,
 				mh - 40, QString("%1 nm").arg(
-					PR::Spectrum::WAVELENGTH_START + mCurrentNM*(PR::Spectrum::WAVELENGTH_END - PR::Spectrum::WAVELENGTH_START)));
+					PR::Spectrum::WAVELENGTH_START + mCurrentNM*PR::Spectrum::WAVELENGTH_AREA_SIZE));
 		}
 	}
 
 	// Draw Labels
 	painter.setPen(Qt::black);
 
-	painter.drawText(PADDING * 3 + w, PADDING * 4, tr("Y: Power/Reflectance"));
+	painter.drawText(PADDING * 3 + w, PADDING * 4, mSpectrum.isEmissive() ? tr("Y: Power") : tr("Y: Reflectance"));
 	painter.drawText(PADDING * 3 + w, PADDING * 6, tr("X: Wavelength [nm]"));
 
 	// Color

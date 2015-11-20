@@ -127,9 +127,13 @@ namespace PR
 		X *= ILL_SCALE;
 		Y *= ILL_SCALE;
 		Z *= ILL_SCALE;
-		X /= N;
-		Y /= N;
-		Z /= N;
+
+		if (!s.isEmissive())
+		{
+			X /= N;
+			Y /= N;
+			Z /= N;
+		}
 
 #ifdef PR_XYZ_LINEAR_INTERP
 		X *= 0.5f;

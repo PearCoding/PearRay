@@ -23,6 +23,7 @@
 #include "SourceLogger.h"
 
 #include <fstream>
+#include <sstream>
 
 using namespace PR;
 namespace PRU
@@ -500,6 +501,7 @@ namespace PRU
 	void SceneLoader::addSpectrum(DL::DataGroup* group, Environment* env)
 	{
 		DL::Data* nameD = group->getFromKey("name");
+		DL::Data* emissiveD = group->getFromKey("emissive");
 		DL::Data* dataD = group->getFromKey("data");
 
 		std::string name;
@@ -515,18 +517,46 @@ namespace PRU
 
 		Spectrum spec;
 		
-		if (dataD && dataD->isType() == DL::Data::T_Array)
+		if (emissiveD && emissiveD->isType() == DL::Data::T_Bool)
 		{
-			DL::DataArray* arr = dataD->getArray();
-			for (size_t i = 0; i < arr->size() && i < Spectrum::SAMPLING_COUNT; ++i)
+			spec.setEmissive(emissiveD->getBool());
+		}
+
+		if (dataD)
+		{
+			if (dataD->isType() == DL::Data::T_Array)
 			{
-				if (arr->at(i)->isNumber())
+				DL::DataArray* arr = dataD->getArray();
+				for (size_t i = 0; i < arr->size() && i < Spectrum::SAMPLING_COUNT; ++i)
 				{
-					spec.setValue((uint32)i, arr->at(i)->getFloatConverted());
+					if (arr->at(i)->isNumber())
+					{
+						spec.setValue((uint32)i, arr->at(i)->getFloatConverted());
+					}
+					else
+					{
+						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectral entry at index %i.", i);
+					}
 				}
-				else
+			}
+			else if (dataD->isType() == DL::Data::T_Group)
+			{
+				DL::DataGroup* grp = dataD->getGroup();
+
+				if (grp->id() == "field")
 				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectral entry at index %i.", i);
+					for (uint32 i = 0; i <= PR::Spectrum::WAVELENGTH_AREA_SIZE; ++i)
+					{
+						std::stringstream stream;
+						stream << (i*PR::Spectrum::WAVELENGTH_STEP + PR::Spectrum::WAVELENGTH_START);
+
+						DL::Data* fieldD = grp->getFromKey(stream.str());
+
+						if (fieldD && fieldD->isNumber())
+						{
+							spec.setValue(i, fieldD->getFloatConverted());
+						}
+					}
 				}
 			}
 		}
