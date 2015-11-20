@@ -47,12 +47,17 @@ signals:
 
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
+	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void mousePressEvent(QMouseEvent * event) override;
 
 private:
+	void cache();
+
 	PR::Renderer* mRenderer;
 
 	ViewMode mViewMode;
 	bool mScale;
 	QImage mRenderImage;
+
+	QPixmap mBackgroundImage;
 };

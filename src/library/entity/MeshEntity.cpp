@@ -77,12 +77,12 @@ namespace PR
 
 				if (near > mag)
 				{
-					PM::vec3 n = PM::pm_Add(PM::pm_Scale(face->N1, u),
-						PM::pm_Add(PM::pm_Scale(face->N2, v), PM::pm_Scale(face->N3, 1 - (u + v))));
+					PM::vec3 n = PM::pm_Add(PM::pm_Scale(face->N2, u),
+						PM::pm_Add(PM::pm_Scale(face->N3, v), PM::pm_Scale(face->N1, 1 - u - v)));
 					n = PM::pm_Multiply(rot, n);
 
-					PM::vec2 uv = PM::pm_Add(PM::pm_Scale(face->UV1, u),
-						PM::pm_Add(PM::pm_Scale(face->UV2, v), PM::pm_Scale(face->UV3, 1 - (u + v))));
+					PM::vec2 uv = PM::pm_Add(PM::pm_Scale(face->UV2, u),
+						PM::pm_Add(PM::pm_Scale(face->UV3, v), PM::pm_Scale(face->UV1, 1 - u - v)));
 
 					collisionPoint.setVertex(point);
 					collisionPoint.setNormal(n);

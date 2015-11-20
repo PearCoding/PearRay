@@ -131,7 +131,7 @@ namespace PR
 			if (successfulSamples > 0)
 			{
 				mResult.setDepth(x, y, newDepth / successfulSamples);
-				mResult.setPoint(x, y, newSpec / successfulSamples);
+				mResult.setPoint(x, y, newSpec / (float)successfulSamples);
 			}
 		}
 		else

@@ -116,8 +116,6 @@ int main(int argc, char** argv)
 	scene.clear();
 
 	// TODO: Save png
-	PR::RGBConverter converter;
-
 	PP::uint8* imageData = new PP::uint8[3 * result.width() * result.height()];
 	PP::uint8* imageData2 = new PP::uint8[3 * result.width() * result.height()];
 	for (PP::uint32 y = 0; y < result.height(); ++y)
@@ -129,7 +127,7 @@ int main(int argc, char** argv)
 			float g;
 			float b;
 
-			converter.convert(result.point(x, y), r, g, b);
+			PR::RGBConverter::convertGAMMA(result.point(x, y), r, g, b);
 			r = PM::pm_MinT<float>(1, r);
 			g = PM::pm_MinT<float>(1, g);
 			b = PM::pm_MinT<float>(1, b);

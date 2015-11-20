@@ -6,17 +6,17 @@
 
 namespace PR
 {
-	DiffuseMaterial::DiffuseMaterial(const Spectrum& diffSpec) :
-		Material(), mDiffSpectrum(diffSpec), mRoughness(1), mCanBeShaded(true)
+	DiffuseMaterial::DiffuseMaterial() :
+		Material(), mDiffSpectrum(), mRoughness(1), mCanBeShaded(true)
 	{
 	}
 
-	Spectrum DiffuseMaterial::spectrum() const
+	Spectrum DiffuseMaterial::reflectance() const
 	{
 		return mDiffSpectrum;
 	}
 
-	void DiffuseMaterial::setSpectrum(const Spectrum& diffSpec)
+	void DiffuseMaterial::setReflectance(const Spectrum& diffSpec)
 	{
 		mDiffSpectrum = diffSpec;
 	}
@@ -53,34 +53,30 @@ namespace PR
 
 	void DiffuseMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
 	{
+		FacePoint collisionPoint;
 		Spectrum spec;
 
 		float dot = PM::pm_Dot3D(in.direction(), point.normal());
 		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)
 		{
-			float delta = mRoughness*PM_PI_F;
-
-			// r = d - n*(d . n)
+			// r = d - 2*n*(d . n)
 			PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
-				PM::pm_Scale(point.normal(), dot)));
+				PM::pm_Scale(point.normal(), 2*dot)));
 
-			if (delta == 0) // Mirror
+			if (mRoughness == 0) // Mirror
 			{
-				FacePoint collisionPoint;
 				Ray ray(point.vertex(), reflection, in.depth()+1);
 				renderer->shoot(ray, collisionPoint);
 				spec = ray.spectrum();
 			}
-			else //
-			{
-				const int RAY_COUNT = renderer->maxRayBounceCount();
-
+			else // Diffuse
+			{ // TODO: Add roughness factor
 				//float rph = std::acosf(
 				//	PM::pm_MaxT<float>(-1, PM::pm_MinT<float>(1, PM::pm_GetZ(reflection))));
 				//float rrh = PM::pm_GetX(reflection) != 0 ? std::atan2f(PM::pm_GetY(reflection), PM::pm_GetX(reflection)) : 0;
 
-				FacePoint collisionPoint;
-				for (int i = 0; i < RAY_COUNT; ++i)
+
+				for (int i = 0; i < renderer->maxRayBounceCount(); ++i)
 				{
 					//PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta/2, delta/2, -delta, delta, renderer->random());
 					PM::vec3 norm2 = RandomRotationSphere::createFast(point.normal(), -1, 1, -1, 1, -1, 1, renderer->random());
@@ -88,22 +84,20 @@ namespace PR
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 					
-					float dot2 = (1 - std::fabsf(PM::pm_Dot3D(norm2, reflection))) * (1 - mRoughness) + 1 * mRoughness;
-
-					spec += dot2*ray.spectrum();
+					spec += ray.spectrum();
 
 					//PR_DEBUG_ASSERT(!spec.hasNaN());
 					//PR_DEBUG_ASSERT(!spec.hasInf());
 				}
 
-				spec *= PM_PI_F/(float)RAY_COUNT;
+				spec *= PM_PI_F/(float)renderer->maxRayBounceCount();
 			}
 		}
 		
-		spec = spec*mDiffSpectrum + mEmitSpectrum * fabsf(dot);//Really dot?
+		spec = spec * mDiffSpectrum + mEmitSpectrum;//Really dot?
 
-		//PR_DEBUG_ASSERT(!spec.hasNaN());
-		//PR_DEBUG_ASSERT(!spec.hasInf());
+		/*PR_DEBUG_ASSERT(!spec.hasNaN());
+		PR_DEBUG_ASSERT(!spec.hasInf());*/
 
 		in.setSpectrum(spec);
 	}

@@ -14,7 +14,7 @@ ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
 	mRenderer(nullptr), mViewMode(VM_Color), mScale(false)
 {
-
+	cache();
 }
 
 ViewWidget::~ViewWidget()
@@ -144,7 +144,7 @@ void ViewWidget::refreshView()
 void ViewWidget::paintEvent(QPaintEvent* event)
 {
 	QPainter painter(this);
-	painter.fillRect(rect(), Qt::magenta);
+	painter.drawPixmap(0, 0, mBackgroundImage);
 
 	QImage img;
 	if (mScale)
@@ -172,4 +172,58 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 		PR::RenderResult result = mRenderer->result();
 		emit spectrumSelected(result.point(event->pos().x() - x, event->pos().y() - y));
 	}
+}
+
+void ViewWidget::resizeEvent(QResizeEvent* event)
+{
+	cache();
+}
+
+constexpr int RECT_SIZE = 16;
+
+void ViewWidget::cache()
+{
+	QImage image = QImage(width(), height(), QImage::Format_RGB888);
+
+	QPainter painter(&image);
+	painter.setPen(Qt::NoPen);
+
+	int xc = width() / RECT_SIZE + 1;
+	int yc = height() / RECT_SIZE + 1;
+
+	for (uint32_t y = 0; y < yc; ++y)
+	{
+		for (uint32_t x = 0; x < xc; ++x)
+		{
+			QColor color;
+
+			if (y % 2)
+			{
+				if (x % 2)
+				{
+					color = Qt::gray;
+				}
+				else
+				{
+					color = Qt::lightGray;
+				}
+			}
+			else
+			{
+				if (x % 2)
+				{
+					color = Qt::lightGray;
+				}
+				else
+				{
+					color = Qt::gray;
+				}
+			}
+
+			painter.setBrush(color);
+			painter.drawRect(x*RECT_SIZE, y*RECT_SIZE, RECT_SIZE, RECT_SIZE);
+		}
+	}
+
+	mBackgroundImage.convertFromImage(image);
 }

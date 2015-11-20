@@ -24,20 +24,25 @@ public slots:
 	{
 		mSpectrum = spec;
 		cache();
+		cacheImage();
 		repaint();
 	}
 
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
+	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
 	void cache();
+	void cacheImage();
 
 	PR::Spectrum mSpectrum;
 	float mCurrentNM;
 
 	// Cache
+	QPixmap mCache;
+
 	float mSpecMax;
 	QColor mSpecRGB;
 	QColor mSpecRGBLinear;

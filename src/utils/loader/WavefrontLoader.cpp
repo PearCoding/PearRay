@@ -119,8 +119,8 @@ namespace PRU
 
 		UniqueVertex v;
 		v.VIn = pr_to<int>(Vert) - 1;
-		v.TIn = pr_to<int>(Vert) - 1;
-		v.NIn = pr_to<int>(Vert) - 1;
+		v.TIn = pr_to<int>(Tex) - 1;
+		v.NIn = pr_to<int>(Norm) - 1;
 		v.ID = 0;
 
 		return v;
@@ -274,13 +274,19 @@ namespace PRU
 				face->V2 = mesh->getVertex(v2.VIn);
 				face->V3 = mesh->getVertex(v3.VIn);
 
-				face->N1 = mesh->getNormal(v1.NIn);
-				face->N2 = mesh->getNormal(v2.NIn);
-				face->N3 = mesh->getNormal(v3.NIn);
+				if (!mesh->normals().empty())
+				{
+					face->N1 = mesh->getNormal(v1.NIn);
+					face->N2 = mesh->getNormal(v2.NIn);
+					face->N3 = mesh->getNormal(v3.NIn);
+				}
 
-				face->UV1 = mesh->getUV(v1.TIn);
-				face->UV2 = mesh->getUV(v2.TIn);
-				face->UV3 = mesh->getUV(v3.TIn);
+				if (!mesh->uvs().empty())
+				{
+					face->UV1 = mesh->getUV(v1.TIn);
+					face->UV2 = mesh->getUV(v2.TIn);
+					face->UV3 = mesh->getUV(v3.TIn);
+				}
 
 				mesh->addFace(face);
 			}
@@ -297,13 +303,19 @@ namespace PRU
 				face->V2 = mesh->getVertex(v2.VIn);
 				face->V3 = mesh->getVertex(v4.VIn);
 
-				face->N1 = mesh->getNormal(v1.NIn);
-				face->N2 = mesh->getNormal(v2.NIn);
-				face->N3 = mesh->getNormal(v4.NIn);
+				if (!mesh->normals().empty())
+				{
+					face->N1 = mesh->getNormal(v1.NIn);
+					face->N2 = mesh->getNormal(v2.NIn);
+					face->N3 = mesh->getNormal(v4.NIn);
+				}
 
-				face->UV1 = mesh->getUV(v1.TIn);
-				face->UV2 = mesh->getUV(v2.TIn);
-				face->UV3 = mesh->getUV(v4.TIn);
+				if (!mesh->uvs().empty())
+				{
+					face->UV1 = mesh->getUV(v1.TIn);
+					face->UV2 = mesh->getUV(v2.TIn);
+					face->UV3 = mesh->getUV(v4.TIn);
+				}
 				mesh->addFace(face);
 
 				// Second triangle
@@ -312,13 +324,19 @@ namespace PRU
 				face->V2 = mesh->getVertex(v2.VIn);
 				face->V3 = mesh->getVertex(v3.VIn);
 
-				face->N1 = mesh->getNormal(v4.NIn);
-				face->N2 = mesh->getNormal(v2.NIn);
-				face->N3 = mesh->getNormal(v3.NIn);
+				if (!mesh->normals().empty())
+				{
+					face->N1 = mesh->getNormal(v4.NIn);
+					face->N2 = mesh->getNormal(v2.NIn);
+					face->N3 = mesh->getNormal(v3.NIn);
+				}
 
-				face->UV1 = mesh->getUV(v4.TIn);
-				face->UV2 = mesh->getUV(v2.TIn);
-				face->UV3 = mesh->getUV(v3.TIn);
+				if (!mesh->uvs().empty())
+				{
+					face->UV1 = mesh->getUV(v4.TIn);
+					face->UV2 = mesh->getUV(v2.TIn);
+					face->UV3 = mesh->getUV(v3.TIn);
+				}
 				mesh->addFace(face);
 			}
 			else

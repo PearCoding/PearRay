@@ -8,10 +8,10 @@ namespace PR
 	class PR_LIB DiffuseMaterial : public Material
 	{
 	public:
-		DiffuseMaterial(const Spectrum& diffSpec);
+		DiffuseMaterial();
 
-		Spectrum spectrum() const;
-		void setSpectrum(const Spectrum& diffSpec);
+		Spectrum reflectance() const;
+		void setReflectance(const Spectrum& diffSpec);
 
 		Spectrum emission() const;
 		void setEmission(const Spectrum& spec);

@@ -14,6 +14,9 @@
 #include "geometry/Mesh.h"
 #include "loader/WavefrontLoader.h"
 
+#include "spectral/XYZConverter.h"
+#include "spectral/RGBConverter.h"
+
 // DataLisp
 #include "DataLisp.h"
 #include "DataContainer.h"
@@ -265,6 +268,7 @@ namespace PRU
 			DL::Data* fovHD = group->getFromKey("fovH");
 			DL::Data* fovVD = group->getFromKey("fovV");
 			DL::Data* lensDistD = group->getFromKey("lensDistance");
+			DL::Data* orthoD = group->getFromKey("orthographic");
 
 			float fovH = 60;
 			float fovV = 45;
@@ -287,6 +291,11 @@ namespace PRU
 
 			Camera* camera = new Camera(name, parent);
 			camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+
+			if (orthoD && orthoD->isType() == DL::Data::T_Bool)
+			{
+				camera->setOrthographic(orthoD->getBool());
+			}
 
 			entity = camera;
 		}
@@ -438,12 +447,13 @@ namespace PRU
 			DL::Data* roughnessD = group->getFromKey("roughness");
 			DL::Data* shadingD = group->getFromKey("enableShading");
 
-			Spectrum spec;
+			DiffuseMaterial* diff = new DiffuseMaterial;
+
 			if (spectrumD && spectrumD->isType() == DL::Data::T_String)
 			{
 				if (env->hasSpectrum(spectrumD->getString()))
 				{
-					spec = env->getSpectrum(spectrumD->getString());
+					diff->setReflectance(env->getSpectrum(spectrumD->getString()));
 				}
 				else
 				{
@@ -452,13 +462,6 @@ namespace PRU
 					return;
 				}
 			}
-			else
-			{
-				PR_LOGGER.logf(L_Error, M_Scene, "No spectrum given for material");
-				return;
-			}
-
-			DiffuseMaterial* diff = new DiffuseMaterial(spec);
 
 			if (emissionD && emissionD->isType() == DL::Data::T_String)
 			{
@@ -535,7 +538,7 @@ namespace PRU
 					}
 					else
 					{
-						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectral entry at index %i.", i);
+						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at index %i.", i);
 					}
 				}
 			}
@@ -545,7 +548,17 @@ namespace PRU
 
 				if (grp->id() == "field")
 				{
-					for (uint32 i = 0; i <= PR::Spectrum::WAVELENGTH_AREA_SIZE; ++i)
+					DL::Data* defaultD = grp->getFromKey("default");
+
+					if (defaultD && defaultD->isNumber())
+					{
+						for (uint32 i = 0; i <= PR::Spectrum::SAMPLING_COUNT; ++i)
+						{
+							spec.setValue(i, defaultD->getFloatConverted());
+						}
+					}
+
+					for (uint32 i = 0; i <= PR::Spectrum::SAMPLING_COUNT; ++i)
 					{
 						std::stringstream stream;
 						stream << (i*PR::Spectrum::WAVELENGTH_STEP + PR::Spectrum::WAVELENGTH_START);
@@ -556,7 +569,31 @@ namespace PRU
 						{
 							spec.setValue(i, fieldD->getFloatConverted());
 						}
+						/*else
+						{
+							PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at %s.",
+								stream.str().c_str());
+						}*/
 					}
+				}
+				else if (grp->id() == "rgb")
+				{
+					if (grp->unnamedCount() == 3 &&
+						grp->at(0)->isNumber() &&
+						grp->at(1)->isNumber() &&
+						grp->at(2)->isNumber())
+					{
+						bool em = spec.isEmissive();
+
+						spec = RGBConverter::toSpec(grp->at(0)->getFloatConverted(),
+							grp->at(1)->getFloatConverted(),
+							grp->at(2)->getFloatConverted());
+						spec.setEmissive(em);
+					}
+				}
+				else if (grp->id() == "xyz")
+				{
+					// TODO
 				}
 			}
 		}
