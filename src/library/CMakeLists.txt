@@ -5,6 +5,11 @@ SET(PR_LIB ${PR_Root}/library)
 SET(PR_Main_Src
   ${PR_LIB}/FileLogListener.cpp
   ${PR_LIB}/Logger.cpp)
+SET(PR_Camera_Src
+  ${PR_LIB}/camera/Camera.cpp
+  ${PR_LIB}/camera/OrthographicCamera.cpp
+  ${PR_LIB}/camera/PerspectiveCamera.cpp)
+SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Entity_Src
   ${PR_LIB}/entity/BoundaryEntity.cpp
   ${PR_LIB}/entity/Entity.cpp
@@ -32,7 +37,6 @@ SET(PR_Renderer_Src
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Scene_Src
-  ${PR_LIB}/scene/Camera.cpp
   ${PR_LIB}/scene/kdTree.cpp
   ${PR_LIB}/scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
@@ -48,7 +52,7 @@ SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
-  ${PR_Thread_Src}
+  ${PR_Thread_Src} ${PR_Camera_Src}
 )
 
 SET(PR_Main_Hdr
@@ -57,6 +61,11 @@ SET(PR_Main_Hdr
   ${PR_LIB}/Logger.h
   ${PR_LIB}/LogListener.h
   ${PR_LIB}/Random.h)
+SET(PR_Camera_Hdr
+  ${PR_LIB}/camera/Camera.h
+  ${PR_LIB}/camera/OrthographicCamera.h
+  ${PR_LIB}/camera/PerspectiveCamera.h)
+SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Entity_Hdr
   ${PR_LIB}/entity/BoundaryEntity.h
   ${PR_LIB}/entity/Entity.h
@@ -86,7 +95,6 @@ SET(PR_Renderer_Hdr
   ${PR_LIB}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Scene_Hdr
-  ${PR_LIB}/scene/Camera.h
   ${PR_LIB}/scene/kdTree.h
   ${PR_LIB}/scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
@@ -104,7 +112,7 @@ SOURCE_GROUP("Header Files\\Thread" FILES ${PR_Thread_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
-  ${PR_Thread_Hdr}
+  ${PR_Thread_Hdr} ${PR_Camera_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

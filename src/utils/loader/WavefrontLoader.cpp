@@ -211,7 +211,7 @@ namespace PRU
 			{
 				commands.pop_front();
 
-				PM::vec3 n = PM::pm_Set(0, 0, 0, 1);
+				PM::vec3 n = PM::pm_Set(0, 0, 0);
 				n = PM::pm_SetX(n, pr_to<float>(commands.front()));
 				commands.pop_front();
 				n = PM::pm_SetY(n, pr_to<float>(commands.front()));

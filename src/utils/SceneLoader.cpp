@@ -6,7 +6,8 @@
 #include "entity/SphereEntity.h"
 #include "entity/MeshEntity.h"
 
-#include "scene/Camera.h"
+#include "camera/OrthographicCamera.h"
+#include "camera/PerspectiveCamera.h"
 
 #include "material/DiffuseMaterial.h"
 #include "material/DebugMaterial.h"
@@ -145,7 +146,13 @@ namespace PRU
 				DL::Data* cameraD = top->getFromKey("camera");
 				if (cameraD && cameraD->isType() == DL::Data::T_String)
 				{
-					env->setCamera((Camera*)env->scene()->getEntity(cameraD->getString(), "camera"));
+					Camera* cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "orthographicCamera");
+					if (!cam)
+					{
+						cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "perspectiveCamera");
+					}
+
+					env->setCamera(cam);
 				}
 
 				return env;
@@ -265,39 +272,79 @@ namespace PRU
 		}
 		else if (typeD->getString() == "camera")
 		{
-			DL::Data* fovHD = group->getFromKey("fovH");
-			DL::Data* fovVD = group->getFromKey("fovV");
-			DL::Data* lensDistD = group->getFromKey("lensDistance");
-			DL::Data* orthoD = group->getFromKey("orthographic");
+			DL::Data* projectionD = group->getFromKey("projection");
 
-			float fovH = 60;
-			float fovV = 45;
-			float lensDist = 0.1f;
-
-			if (fovHD && fovHD->isNumber())
+			if (projectionD && projectionD->isType() == DL::Data::T_String)
 			{
-				fovH = fovHD->getFloatConverted();
-			}
+				if (projectionD->getString() == "perspective")
+				{
+					DL::Data* fovHD = group->getFromKey("fovH");
+					DL::Data* fovVD = group->getFromKey("fovV");
+					DL::Data* lensDistD = group->getFromKey("lensDistance");
 
-			if (fovVD && fovVD->isNumber())
+					float fovH = 60;
+					float fovV = 45;
+					float lensDist = 0.1f;
+
+					if (fovHD && fovHD->isNumber())
+					{
+						fovH = fovHD->getFloatConverted();
+					}
+
+					if (fovVD && fovVD->isNumber())
+					{
+						fovV = fovVD->getFloatConverted();
+					}
+
+					if (lensDistD && lensDistD->isNumber())
+					{
+						lensDist = lensDistD->getFloatConverted();
+					}
+
+					PerspectiveCamera* camera = new PerspectiveCamera(name, parent);
+					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+					entity = camera;
+				}
+				else if (projectionD->getString() == "orthographic")
+				{
+					DL::Data* fovHD = group->getFromKey("fovH");
+					DL::Data* fovVD = group->getFromKey("fovV");
+					DL::Data* lensDistD = group->getFromKey("lensDistance");
+
+					float fovH = 60;
+					float fovV = 45;
+					float lensDist = 0.1f;
+
+					if (fovHD && fovHD->isNumber())
+					{
+						fovH = fovHD->getFloatConverted();
+					}
+
+					if (fovVD && fovVD->isNumber())
+					{
+						fovV = fovVD->getFloatConverted();
+					}
+
+					if (lensDistD && lensDistD->isNumber())
+					{
+						lensDist = lensDistD->getFloatConverted();
+					}
+
+					OrthographicCamera* camera = new OrthographicCamera(name, parent);
+					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+					entity = camera;
+				}
+				else
+				{
+					PR_LOGGER.logf(L_Error, M_Scene, "Unknown camera projection for entity %s given.", name.c_str());
+					return;
+				}
+			}
+			else
 			{
-				fovV = fovVD->getFloatConverted();
+				PR_LOGGER.logf(L_Error, M_Scene, "No valid camera projection for entity %s given.", name.c_str());
+				return;
 			}
-			
-			if (lensDistD && lensDistD->isNumber())
-			{
-				lensDist = lensDistD->getFloatConverted();
-			}
-
-			Camera* camera = new Camera(name, parent);
-			camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
-
-			if (orthoD && orthoD->isType() == DL::Data::T_Bool)
-			{
-				camera->setOrthographic(orthoD->getBool());
-			}
-
-			entity = camera;
 		}
 		else if (typeD->getString() == "mesh")
 		{

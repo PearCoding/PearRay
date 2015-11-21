@@ -3,7 +3,7 @@
 namespace PR
 {
 	FacePoint::FacePoint() :
-		mVertex(PM::pm_Set(0,0,0)), mNormal(PM::pm_Set(0,0,0)), mUV(PM::pm_Set(0,0))
+		mVertex(PM::pm_Set(0,0,0,1)), mNormal(PM::pm_Set(0,0,0)), mUV(PM::pm_Set(0,0))
 	{
 	}
 

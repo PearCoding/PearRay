@@ -6,7 +6,7 @@
 #include <QCloseEvent>
 
 #include "scene/Scene.h"
-#include "scene/Camera.h"
+#include "camera/Camera.h"
 #include "renderer/Renderer.h"
 
 #include "Environment.h"

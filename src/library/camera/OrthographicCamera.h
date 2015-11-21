@@ -1,17 +1,14 @@
 #pragma once
 
-#include "entity/Entity.h"
-
-#include <list>
+#include "Camera.h"
 
 namespace PR
 {
-	class Ray;
-	class PR_LIB Camera : public Entity
+	class PR_LIB OrthographicCamera : public Camera
 	{
 	public:
-		Camera(const std::string& name, Entity* parent = nullptr);
-		virtual ~Camera();
+		OrthographicCamera(const std::string& name, Entity* parent = nullptr);
+		virtual ~OrthographicCamera();
 
 		virtual std::string type() const;
 
@@ -27,12 +24,8 @@ namespace PR
 		void setLensDistance(float d);
 		float lensDistance() const;
 
-		void setOrthographic(bool b);
-		bool isOrthographic() const;
-
-		Ray constructRay(float sx, float sy) const;
+		Ray constructRay(float nx, float ny) const;
 	private:
-		bool mOrthographic;
 		float mWidth;
 		float mHeight;
 		float mLensDistance;

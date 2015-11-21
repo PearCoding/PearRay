@@ -1,6 +1,6 @@
 #include "Renderer.h"
 #include "RenderThread.h"
-#include "scene/Camera.h"
+#include "camera/Camera.h"
 #include "scene/Scene.h"
 #include "entity/GeometryEntity.h"
 #include "ray/Ray.h"
@@ -152,10 +152,7 @@ namespace PR
 
 	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
-		float sx = mCamera->width() * x / (float)mWidth - mCamera->width() / 2.0f;
-		float sy = mCamera->height() * y / (float)mHeight - mCamera->height() / 2.0f;
-
-		Ray ray = mCamera->constructRay(sx, sy);
+		Ray ray = mCamera->constructRay(x / (float)mWidth, y / (float)mHeight);
 
 		FacePoint collisionPoint;
 		GeometryEntity* entity = shoot(ray, collisionPoint);

@@ -56,9 +56,9 @@ namespace PR
 		FacePoint collisionPoint;
 		Spectrum spec;
 
-		float dot = PM::pm_Dot3D(in.direction(), point.normal());
 		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)
 		{
+			float dot = PM::pm_Dot3D(in.direction(), point.normal());
 			// r = d - 2*n*(d . n)
 			PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
 				PM::pm_Scale(point.normal(), 2*dot)));
@@ -83,8 +83,10 @@ namespace PR
 
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
-					
-					spec += ray.spectrum();
+
+					float dot2 = std::fabsf(PM::pm_Dot3D(norm2, point.normal()));
+
+					spec += dot2 * ray.spectrum();
 
 					//PR_DEBUG_ASSERT(!spec.hasNaN());
 					//PR_DEBUG_ASSERT(!spec.hasInf());

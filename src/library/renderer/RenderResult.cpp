@@ -1,5 +1,4 @@
 #include "RenderResult.h"
-#include "scene/Camera.h"
 
 namespace PR
 {

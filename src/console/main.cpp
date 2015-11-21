@@ -1,6 +1,6 @@
 #include "FileLogListener.h"
 
-#include "scene/Camera.h"
+#include "camera/Camera.h"
 #include "scene/Scene.h"
 
 #include "entity/SphereEntity.h"
@@ -62,10 +62,12 @@ int main(int argc, char** argv)
 	emitSpec.setValueAtWavelength(600, 0.5f);
 	emitSpec.setValueAtWavelength(540, 1);
 
-	PR::DiffuseMaterial material(diffSpec);
+	PR::DiffuseMaterial material;
+	material.setReflectance(diffSpec);
 	material.setRoughness(0.8f);
 
-	PR::DiffuseMaterial material2(diffSpec);
+	PR::DiffuseMaterial material2;
+	material2.setReflectance(diffSpec);
 	material2.setEmission(emitSpec);
 
 	for (int x = 0; x <= 5; ++x)
