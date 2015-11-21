@@ -12,5 +12,6 @@ namespace PR
 	{
 	public:
 		virtual void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer) = 0;
+		virtual bool isLight() const = 0;
 	};
 }

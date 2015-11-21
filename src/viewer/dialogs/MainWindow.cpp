@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
 	mEnvironment(nullptr), mRenderer(nullptr),
 	mRendererGroupProp(nullptr), mRendererMaxRayDepthProp(nullptr),
-	mRendererMaxBounceRayCountProp(nullptr), mRendererStartProp(nullptr),
+	mRendererMaxDirectRayCountProp(nullptr), mRendererMaxIndirectRayCountProp(nullptr), mRendererStartProp(nullptr),
 	mViewGroupProp(nullptr), mViewModeProp(nullptr)
 {
 	ui.setupUi(this);
@@ -82,13 +82,21 @@ MainWindow::MainWindow(QWidget *parent)
 	((IntProperty*)mRendererMaxRayDepthProp)->setValue(2);
 	mRendererGroupProp->addChild(mRendererMaxRayDepthProp);
 
-	mRendererMaxBounceRayCountProp = new IntProperty();
-	mRendererMaxBounceRayCountProp->setPropertyName(tr("Max Bounce Ray Count"));
-	((IntProperty*)mRendererMaxBounceRayCountProp)->setMinValue(1);
-	((IntProperty*)mRendererMaxBounceRayCountProp)->setMaxValue(999999);
-	((IntProperty*)mRendererMaxBounceRayCountProp)->setDefaultValue(100);
-	((IntProperty*)mRendererMaxBounceRayCountProp)->setValue(100);
-	mRendererGroupProp->addChild(mRendererMaxBounceRayCountProp);
+	mRendererMaxDirectRayCountProp = new IntProperty();
+	mRendererMaxDirectRayCountProp->setPropertyName(tr("Max Direct Ray Count"));
+	((IntProperty*)mRendererMaxDirectRayCountProp)->setMinValue(0);
+	((IntProperty*)mRendererMaxDirectRayCountProp)->setMaxValue(999999);
+	((IntProperty*)mRendererMaxDirectRayCountProp)->setDefaultValue(50);
+	((IntProperty*)mRendererMaxDirectRayCountProp)->setValue(50);
+	mRendererGroupProp->addChild(mRendererMaxDirectRayCountProp);
+
+	mRendererMaxIndirectRayCountProp = new IntProperty();
+	mRendererMaxIndirectRayCountProp->setPropertyName(tr("Max Indirect Ray Count"));
+	((IntProperty*)mRendererMaxIndirectRayCountProp)->setMinValue(0);
+	((IntProperty*)mRendererMaxIndirectRayCountProp)->setMaxValue(999999);
+	((IntProperty*)mRendererMaxIndirectRayCountProp)->setDefaultValue(100);
+	((IntProperty*)mRendererMaxIndirectRayCountProp)->setValue(100);
+	mRendererGroupProp->addChild(mRendererMaxIndirectRayCountProp);
 
 	mRendererStartProp = new ButtonProperty();
 	mRendererStartProp->setPropertyName(tr("Start"));
@@ -142,7 +150,8 @@ MainWindow::MainWindow(QWidget *parent)
 	{
 		mRenderer = new PR::Renderer(500, 500, mEnvironment->camera(), mEnvironment->scene());
 		mRenderer->setMaxRayDepth(2);
-		mRenderer->setMaxRayBounceCount(100);
+		mRenderer->setMaxDirectRayCount(100);
+		mRenderer->setMaxIndirectRayCount(100);
 
 		ui.viewWidget->setRenderer(mRenderer);
 		mEnvironment->scene()->buildTree();
@@ -172,7 +181,8 @@ MainWindow::~MainWindow()
 		delete mRendererSamplingProp;
 		delete mRendererSamplesPerRayProp;
 		delete mRendererMaxRayDepthProp;
-		delete mRendererMaxBounceRayCountProp;
+		delete mRendererMaxDirectRayCountProp;
+		delete mRendererMaxIndirectRayCountProp;
 		delete mViewGroupProp;
 		delete mViewModeProp;
 	}
@@ -274,9 +284,13 @@ void MainWindow::propertyValueChanged(IProperty* prop)
 	{
 		mRenderer->setMaxRayDepth(((IntProperty*)mRendererMaxRayDepthProp)->value());
 	}
-	else if (prop == mRendererMaxRayDepthProp)
+	else if (prop == mRendererMaxDirectRayCountProp)
 	{
-		mRenderer->setMaxRayBounceCount(((IntProperty*)mRendererMaxBounceRayCountProp)->value());
+		mRenderer->setMaxDirectRayCount(((IntProperty*)mRendererMaxDirectRayCountProp)->value());
+	}
+	else if (prop == mRendererMaxIndirectRayCountProp)
+	{
+		mRenderer->setMaxIndirectRayCount(((IntProperty*)mRendererMaxIndirectRayCountProp)->value());
 	}
 	else if (prop == mRendererSamplingProp)
 	{
@@ -315,7 +329,8 @@ void MainWindow::startRendering()
 	mRendererThreadsProp->setEnabled(false);
 	mRendererSamplingProp->setEnabled(false);
 	mRendererSamplesPerRayProp->setEnabled(false);
-	mRendererMaxBounceRayCountProp->setEnabled(false);
+	mRendererMaxDirectRayCountProp->setEnabled(false);
+	mRendererMaxIndirectRayCountProp->setEnabled(false);
 	mRendererMaxRayDepthProp->setEnabled(false);
 	mRendererStartProp->setPropertyName(tr("Stop"));
 
@@ -349,7 +364,8 @@ void MainWindow::stopRendering()
 	mRendererThreadsProp->setEnabled(true);
 	mRendererSamplingProp->setEnabled(true);
 	mRendererSamplesPerRayProp->setEnabled(true);
-	mRendererMaxBounceRayCountProp->setEnabled(true);
+	mRendererMaxDirectRayCountProp->setEnabled(true);
+	mRendererMaxIndirectRayCountProp->setEnabled(true);
 	mRendererMaxRayDepthProp->setEnabled(true);
 	mRendererStartProp->setPropertyName(tr("Start"));
 

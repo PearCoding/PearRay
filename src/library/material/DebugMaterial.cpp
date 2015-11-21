@@ -19,4 +19,9 @@ namespace PR
 			std::fabsf(PM::pm_GetY(point.normal())),
 			std::fabsf(PM::pm_GetZ(point.normal()))));
 	}
+
+	bool DebugMaterial::isLight() const
+	{
+		return false;
+	}
 }

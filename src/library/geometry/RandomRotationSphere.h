@@ -36,13 +36,20 @@ namespace PR
 		static inline PM::vec3 createFast(const PM::vec3& normal,
 			float sx, float ex, float sy, float ey, float sz, float ez, Random& rand)
 		{
+			PM::vec n = createFast(sx,ex,sy,ey,sz,ez, rand);
+
+			return PM::pm_Dot3D(normal, n) <= 0 ? PM::pm_Negate(n) : n;
+		}
+
+		static inline PM::vec3 createFast(float sx, float ex, float sy, float ey, float sz, float ez, Random& rand)
+		{
 			float dx = sx + rand.getFloat() * (ex - sx);
 			float dy = sy + rand.getFloat() * (ey - sy);
 			float dz = sz + rand.getFloat() * (ez - sz);
 
 			PM::vec n = PM::pm_Normalize3D(PM::pm_Set(dx, dy, dz, 1));
 
-			return PM::pm_Dot3D(normal, n) <= 0 ? PM::pm_Negate(n) : n;
+			return n;
 		}
 	};
 }

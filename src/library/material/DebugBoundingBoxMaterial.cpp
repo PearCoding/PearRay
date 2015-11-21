@@ -21,6 +21,11 @@ namespace PR
 		in.setSpectrum(ray.spectrum()*(1 - mDensity) + mColor*mDensity);
 	}
 
+	bool DebugBoundingBoxMaterial::isLight() const
+	{
+		return false;
+	}
+
 	void DebugBoundingBoxMaterial::setColor(const Spectrum& spec)
 	{
 		mColor = spec;

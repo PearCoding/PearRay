@@ -14,15 +14,18 @@ namespace PR
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
 		mResult(w, h), mRandom((uint64)time(NULL)),
 		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
-		mMaxRayDepth(3), mMaxRayBounceCount(50),
+		mMaxRayDepth(3), mMaxDirectRayCount(10), mMaxIndirectRayCount(50),
 		mEnableSampling(false), mSamplePerRayCount(8)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
 
-		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		for (GeometryEntity* e : scene->geometryEntities())
 		{
-			mIdentitySpectrum.setValue(i, 1);
+			if (e->isLight())
+			{
+				mLights.push_back(e);
+			}
 		}
 	}
 
@@ -152,8 +155,8 @@ namespace PR
 
 	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
-		Ray ray = mCamera->constructRay(2 * x / (float)mWidth - 1,
-			2 * y / (float)mHeight - 1);
+		Ray ray = mCamera->constructRay(- 2 * x / (float)mWidth + 1,
+			- 2 * y / (float)mHeight + 1);
 
 		FacePoint collisionPoint;
 		GeometryEntity* entity = shoot(ray, collisionPoint);
@@ -268,14 +271,24 @@ namespace PR
 		return mMaxRayDepth;
 	}
 
-	void Renderer::setMaxRayBounceCount(uint32 i)
+	void Renderer::setMaxDirectRayCount(uint32 i)
 	{
-		mMaxRayBounceCount = i;
+		mMaxDirectRayCount = i;
 	}
 
-	uint32 Renderer::maxRayBounceCount() const
+	uint32 Renderer::maxDirectRayCount() const
 	{
-		return mMaxRayBounceCount;
+		return mMaxDirectRayCount;
+	}
+
+	void Renderer::setMaxIndirectRayCount(uint32 i)
+	{
+		mMaxIndirectRayCount = i;
+	}
+
+	uint32 Renderer::maxIndirectRayCount() const
+	{
+		return mMaxIndirectRayCount;
 	}
 
 	void Renderer::enableSampling(bool b)
@@ -286,5 +299,10 @@ namespace PR
 	bool Renderer::isSamplingEnalbed() const
 	{
 		return mEnableSampling;
+	}
+
+	const std::list<GeometryEntity*>& Renderer::lights() const
+	{
+		return mLights;
 	}
 }

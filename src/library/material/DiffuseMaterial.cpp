@@ -3,12 +3,24 @@
 #include "geometry/FacePoint.h"
 #include "geometry/RandomRotationSphere.h"
 #include "renderer/Renderer.h"
+#include "entity/GeometryEntity.h"
 
 namespace PR
 {
 	DiffuseMaterial::DiffuseMaterial() :
-		Material(), mDiffSpectrum(), mRoughness(1), mCanBeShaded(true)
+		Material(), mDiffSpectrum(), mRoughness(1), mCanBeShaded(true),
+		mLight(false), mSelfShadow(true)
 	{
+	}
+
+	void DiffuseMaterial::enableLight(bool b)
+	{
+		mLight = b;
+	}
+
+	bool DiffuseMaterial::isLight() const
+	{
+		return mLight;
 	}
 
 	Spectrum DiffuseMaterial::reflectance() const
@@ -51,12 +63,33 @@ namespace PR
 		mCanBeShaded = b;
 	}
 
+	void DiffuseMaterial::enableSelfShadow(bool b)
+	{
+		mSelfShadow = b;
+	}
+
+	bool DiffuseMaterial::canBeSelfShadowed() const
+	{
+		return mSelfShadow;
+	}
+
+	void DiffuseMaterial::enableCameraVisibility(bool b)
+	{
+		mCameraVisible = b;
+	}
+
+	bool DiffuseMaterial::isCameraVisible() const
+	{
+		return mCameraVisible;
+	}
+
 	void DiffuseMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
 	{
 		FacePoint collisionPoint;
 		Spectrum spec;
 
-		if (in.depth() < renderer->maxRayDepth() && mCanBeShaded)
+		if (in.depth() < (in.maxDepth() == 0 ? renderer->maxRayDepth() : in.maxDepth()) &&
+			mCanBeShaded)
 		{
 			float dot = PM::pm_Dot3D(in.direction(), point.normal());
 			// r = d - 2*n*(d . n)
@@ -70,13 +103,42 @@ namespace PR
 				spec = ray.spectrum();
 			}
 			else // Diffuse
-			{ // TODO: Add roughness factor
+			{ 
+				// Direct Illumination
+				uint32 lightSampleCounter = 0;
+				for (GeometryEntity* light : renderer->lights())
+				{
+					for (uint32 i = 0; i < renderer->maxDirectRayCount(); ++i)
+					{
+						FacePoint p = light->getRandomFacePoint(renderer->random());
+
+						PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
+
+						Ray ray(point.vertex(), dir, in.depth()+1);// Bounce only once!
+						ray.setMaxDepth(in.depth() + 1);
+
+						GeometryEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
+
+						if (ent == light)// Full light!!
+						{
+							float dot2 = PM::pm_Dot3D(dir, point.normal());
+							if (dot2 > 0)
+							{
+								spec += dot2 * ray.spectrum();
+							}
+						}
+
+						lightSampleCounter++;
+					}
+				}
+
+				// Indirect Illumination
+				// TODO: Add roughness factor
 				//float rph = std::acosf(
 				//	PM::pm_MaxT<float>(-1, PM::pm_MinT<float>(1, PM::pm_GetZ(reflection))));
 				//float rrh = PM::pm_GetX(reflection) != 0 ? std::atan2f(PM::pm_GetY(reflection), PM::pm_GetX(reflection)) : 0;
-
-
-				for (int i = 0; i < renderer->maxRayBounceCount(); ++i)
+				uint32 indirectSampleCounter = 0;
+				for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
 				{
 					//PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta/2, delta/2, -delta, delta, renderer->random());
 					PM::vec3 norm2 = RandomRotationSphere::createFast(point.normal(), -1, 1, -1, 1, -1, 1, renderer->random());
@@ -90,13 +152,21 @@ namespace PR
 
 					//PR_DEBUG_ASSERT(!spec.hasNaN());
 					//PR_DEBUG_ASSERT(!spec.hasInf());
+					indirectSampleCounter++;
 				}
 
-				spec *= PM_PI_F/(float)renderer->maxRayBounceCount();
+				if (indirectSampleCounter + lightSampleCounter != 0)
+				{
+					spec *= PM_PI_F / (indirectSampleCounter + lightSampleCounter);
+				}
 			}
 		}
 		
-		spec = spec * mDiffSpectrum + mEmitSpectrum;//Really dot?
+		spec = spec * mDiffSpectrum;
+		if (mCameraVisible || in.depth() > 0)
+		{
+			spec += mEmitSpectrum;
+		}
 
 		/*PR_DEBUG_ASSERT(!spec.hasNaN());
 		PR_DEBUG_ASSERT(!spec.hasInf());*/

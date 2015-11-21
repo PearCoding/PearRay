@@ -41,6 +41,7 @@ namespace PR
 		Entity* mParent;
 
 		bool mDebug;
+
 		PM::vec3 mPosition;
 		PM::vec3 mScale;
 		PM::quat mRotation;

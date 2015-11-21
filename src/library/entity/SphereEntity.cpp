@@ -2,6 +2,7 @@
 #include "ray/Ray.h"
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
+#include "geometry/RandomRotationSphere.h"
 
 namespace PR
 {
@@ -27,6 +28,11 @@ namespace PR
 	float SphereEntity::radius() const
 	{
 		return mRadius;
+	}
+
+	bool SphereEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
 	}
 
 	void SphereEntity::setMaterial(Material* m)
@@ -86,5 +92,18 @@ namespace PR
 		{
 			mMaterial->apply(in, this, point, renderer);
 		}
+	}
+
+	FacePoint SphereEntity::getRandomFacePoint(Random& random) const
+	{
+		FacePoint p;
+
+		// Not really uniform...
+		// UVs missing.
+		PM::vec3 n = RandomRotationSphere::createFast(-1, 1, -1, 1, -1, 1, random);
+		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
+		p.setVertex(PM::pm_Multiply(matrix(), n));
+
+		return p;
 	}
 }

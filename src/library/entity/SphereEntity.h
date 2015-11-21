@@ -18,6 +18,7 @@ namespace PR
 		void setRadius(float f);
 		float radius() const;
 
+		bool isLight() const;
 		void setMaterial(Material* m);
 		Material* material() const;
 
@@ -26,6 +27,8 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
+
+		virtual FacePoint getRandomFacePoint(Random& random) const;
 	private:
 		float mRadius;
 		Material* mMaterial;

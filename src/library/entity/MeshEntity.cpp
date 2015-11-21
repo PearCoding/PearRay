@@ -6,6 +6,8 @@
 #include "geometry/Triangle.h"
 #include "geometry/FacePoint.h"
 
+#include "Random.h"
+
 #include "Logger.h"
 
 namespace PR
@@ -32,6 +34,11 @@ namespace PR
 	Mesh* MeshEntity::mesh() const
 	{
 		return mMesh;
+	}
+
+	bool MeshEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
 	}
 
 	void MeshEntity::setMaterial(Material* m)
@@ -82,12 +89,11 @@ namespace PR
 
 				if (near > mag)
 				{
-					PM::vec3 n = PM::pm_Add(PM::pm_Scale(face->N2, u),
-						PM::pm_Add(PM::pm_Scale(face->N3, v), PM::pm_Scale(face->N1, 1 - u - v)));
-					n = PM::pm_Multiply(rot, n);
-
-					PM::vec2 uv = PM::pm_Add(PM::pm_Scale(face->UV2, u),
-						PM::pm_Add(PM::pm_Scale(face->UV3, v), PM::pm_Scale(face->UV1, 1 - u - v)));
+					PM::vec3 vec;
+					PM::vec3 n;
+					PM::vec2 uv;
+					face->interpolate(u, v, vec, n, uv);
+					n = PM::pm_RotateWithQuat(rotation(), n);
 
 					collisionPoint.setVertex(point);
 					collisionPoint.setNormal(n);
@@ -108,5 +114,31 @@ namespace PR
 		{
 			mMaterial->apply(in, this, point, renderer);
 		}
+	}
+
+	FacePoint MeshEntity::getRandomFacePoint(Random& random) const
+	{
+		uint32 fi = random.get32(0, mMesh->faces().size());
+
+		Face* face = mMesh->getFace(fi);
+
+		float u = random.getFloat();
+		float v = random.getFloat();
+
+		PM::vec3 vec;
+		PM::vec3 n;
+		PM::vec2 uv;
+		face->interpolate(u, v, vec, n, uv);
+		
+		vec = PM::pm_Multiply(matrix(), vec);
+		n = PM::pm_RotateWithQuat(rotation(), n);
+
+
+		FacePoint fp;
+		fp.setVertex(vec);
+		fp.setNormal(n);
+		fp.setUV(uv);
+
+		return fp;
 	}
 }

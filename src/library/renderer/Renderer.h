@@ -58,8 +58,11 @@ namespace PR
 		void setMaxRayDepth(uint32 i);
 		uint32 maxRayDepth() const;
 
-		void setMaxRayBounceCount(uint32 i);
-		uint32 maxRayBounceCount() const;
+		void setMaxDirectRayCount(uint32 i);
+		uint32 maxDirectRayCount() const;
+
+		void setMaxIndirectRayCount(uint32 i);
+		uint32 maxIndirectRayCount() const;
 
 		void enableSampling(bool b);
 		bool isSamplingEnalbed() const;
@@ -74,6 +77,9 @@ namespace PR
 			return mSamplePerRayCount;
 		}
 
+		// Light
+		const std::list<GeometryEntity*>& lights() const;
+
 	private:
 		void reset();
 
@@ -87,6 +93,7 @@ namespace PR
 		RenderResult mResult;
 
 		Random mRandom;
+		std::list<GeometryEntity*> mLights;
 
 		std::mutex mTileMutex;
 		uint32 mTileWidth;
@@ -102,7 +109,8 @@ namespace PR
 
 		// Settings
 		uint32 mMaxRayDepth;
-		uint32 mMaxRayBounceCount;
+		uint32 mMaxDirectRayCount;
+		uint32 mMaxIndirectRayCount;
 		bool mEnableSampling;
 		uint32 mSamplePerRayCount;
 	};

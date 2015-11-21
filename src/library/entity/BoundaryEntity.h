@@ -14,7 +14,8 @@ namespace PR
 		virtual std::string type() const;
 
 		void setBoundingBox(const BoundingBox& box);
-
+		
+		bool isLight() const;
 		void setMaterial(Material* m);
 		Material* material() const;
 
@@ -23,6 +24,8 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
+
+		virtual FacePoint getRandomFacePoint(Random& random) const;
 	private:
 		BoundingBox mBoundingBox;
 		Material* mMaterial;

@@ -24,6 +24,11 @@ namespace PR
 		mBoundingBox = box;
 	}
 
+	bool BoundaryEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
+	}
+
 	void BoundaryEntity::setMaterial(Material* m)
 	{
 		mMaterial = m;
@@ -100,5 +105,11 @@ namespace PR
 		{
 			mMaterial->apply(in, this, point, renderer);
 		}
+	}
+
+	// TODO
+	FacePoint BoundaryEntity::getRandomFacePoint(Random& random) const
+	{
+		return FacePoint();
 	}
 }

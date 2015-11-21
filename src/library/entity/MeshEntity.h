@@ -17,6 +17,7 @@ namespace PR
 		void setMesh(Mesh* mesh);
 		Mesh* mesh() const;
 
+		bool isLight() const;
 		void setMaterial(Material* m);
 		Material* material() const;
 
@@ -25,6 +26,8 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
+
+		virtual FacePoint getRandomFacePoint(Random& random) const;
 	private:
 		Mesh* mMesh;
 		Material* mMaterial;

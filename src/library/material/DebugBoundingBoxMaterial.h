@@ -11,6 +11,7 @@ namespace PR
 		DebugBoundingBoxMaterial();
 
 		void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer);
+		bool isLight() const;
 
 		void setColor(const Spectrum& spec);
 		Spectrum color() const;

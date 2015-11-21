@@ -10,5 +10,6 @@ namespace PR
 		DebugMaterial();
 
 		void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer);
+		bool isLight() const;
 	};
 }

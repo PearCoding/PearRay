@@ -24,11 +24,13 @@ namespace PR
 
 		void addEntity(GeometryEntity* e);
 		void removeEntity(GeometryEntity* e);
+		const std::list<GeometryEntity*>& geometryEntities() const;
 
 		void addEntity(Entity* e);
 		void removeEntity(Entity* e);
 		Entity* getEntity(const std::string& name, const std::string& type) const;
-
+		const std::list<Entity*>& entities() const;
+		
 		void clear();
 
 		void buildTree();
@@ -39,6 +41,7 @@ namespace PR
 		std::string mName;
 		std::list<Entity*> mEntities;
 		std::list<GeometryEntity*> mGeometryEntities;
+
 		kdTree* mKDTree;
 	};
 }

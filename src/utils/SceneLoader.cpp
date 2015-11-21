@@ -534,7 +534,10 @@ namespace PRU
 			DL::Data* reflectanceD = group->getFromKey("reflectance");
 			DL::Data* emissionD = group->getFromKey("emission");
 			DL::Data* roughnessD = group->getFromKey("roughness");
-			DL::Data* shadingD = group->getFromKey("enableShading");
+			DL::Data* shadingD = group->getFromKey("shading");
+			DL::Data* lightD = group->getFromKey("light");
+			DL::Data* selfShadowD = group->getFromKey("selfShadow");
+			DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
 
 			DiffuseMaterial* diff = new DiffuseMaterial;
 
@@ -572,6 +575,21 @@ namespace PRU
 			if (shadingD && shadingD->isType() == DL::Data::T_Bool)
 			{
 				diff->enableShading(shadingD->getBool());
+			}
+
+			if (lightD && lightD->isType() == DL::Data::T_Bool)
+			{
+				diff->enableLight(lightD->getBool());
+			}
+
+			if (selfShadowD && selfShadowD->isType() == DL::Data::T_Bool)
+			{
+				diff->enableSelfShadow(selfShadowD->getBool());
+			}
+
+			if (cameraVisibleD && cameraVisibleD->isType() == DL::Data::T_Bool)
+			{
+				diff->enableCameraVisibility(cameraVisibleD->getBool());
 			}
 
 			mat = diff;

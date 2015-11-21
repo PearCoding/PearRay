@@ -79,7 +79,7 @@ namespace PR
 
 		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position()));
 		PM::vec3 right = PM::pm_Cross3D(dir,
-			PM::pm_Multiply(PM::pm_Rotation(rotation()), PM::pm_Set(0, 1, 0)));
+			PM::pm_RotateWithQuat(rotation(), PM::pm_Set(0, 1, 0)));
 		PM::vec3 up = PM::pm_Cross3D(right, dir);
 
 		PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(right, sx),

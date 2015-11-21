@@ -66,6 +66,16 @@ namespace PR
 		return nullptr;
 	}
 
+	const std::list<Entity*>& Scene::entities() const
+	{
+		return mEntities;
+	}
+
+	const std::list<GeometryEntity*>& Scene::geometryEntities() const
+	{
+		return mGeometryEntities;
+	}
+
 	void Scene::clear()
 	{
 		for (Entity* e : mEntities)

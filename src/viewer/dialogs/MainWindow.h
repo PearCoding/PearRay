@@ -60,7 +60,8 @@ private:
 	IProperty* mRendererTileYProp;
 	IProperty* mRendererThreadsProp;
 	IProperty* mRendererMaxRayDepthProp;
-	IProperty* mRendererMaxBounceRayCountProp;
+	IProperty* mRendererMaxDirectRayCountProp;
+	IProperty* mRendererMaxIndirectRayCountProp;
 	IProperty* mRendererSamplingProp;
 	IProperty* mRendererSamplesPerRayProp;
 	IProperty* mRendererStartProp;// Button

@@ -3,7 +3,7 @@
 namespace PR
 {
 	Ray::Ray(const PM::vec3& pos, const PM::vec3& dir, size_t depth) :
-		mStartPosition(pos), mDirection(dir), mDepth(depth)
+		mStartPosition(pos), mDirection(dir), mDepth(depth), mMaxDepth(0)
 	{
 	}
 
@@ -44,5 +44,15 @@ namespace PR
 	Spectrum Ray::spectrum() const
 	{
 		return mSpectrum;
+	}
+
+	size_t Ray::maxDepth() const
+	{
+		return mMaxDepth;
+	}
+
+	void Ray::setMaxDepth(size_t i)
+	{
+		mMaxDepth = i;
 	}
 }

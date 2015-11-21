@@ -23,10 +23,13 @@ namespace PR
 		void setSpectrum(const Spectrum& s);
 		Spectrum spectrum() const;
 
+		size_t maxDepth() const;
+		void setMaxDepth(size_t i);
 	private:
 		PM::vec3 mStartPosition;
 		PM::vec3 mDirection;
 		size_t mDepth;// Recursion depth!
+		size_t mMaxDepth;// If 0 -> renderer->MaxDepth!
 
 		Spectrum mSpectrum;
 	};
