@@ -5,7 +5,7 @@
 namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
-		mName(name), mParent(parent),
+		mName(name), mParent(parent), mDebug(false),
 		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat()),
 		mReCache(true)
 	{
@@ -39,6 +39,16 @@ namespace PR
 	Entity* Entity::parent() const
 	{
 		return mParent;
+	}
+
+	void Entity::enableDebug(bool b)
+	{
+		mDebug = b;
+	}
+
+	bool Entity::isDebug() const
+	{
+		return mDebug;
 	}
 
 	void Entity::setPosition(const PM::vec3& pos)

@@ -185,13 +185,14 @@ namespace PR
 		}
 	}
 
-	GeometryEntity* kdTree::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
+	GeometryEntity* kdTree::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
 	{
 		float n = std::numeric_limits<float>::max();
-		return checkCollisionAtNode(root(), ray, collisionPoint, n);
+		return checkCollisionAtNode(root(), ray, collisionPoint, n, ignore);
 	}
 
-	GeometryEntity* kdTree::checkCollisionAtNode(const kdNode* node, const Ray& ray, FacePoint& collisionPoint, float& near) const
+	GeometryEntity* kdTree::checkCollisionAtNode(
+		const kdNode* node, const Ray& ray, FacePoint& collisionPoint, float& near, Entity* ignore) const
 	{
 		if (node && node->boundingBox.intersects(ray))
 		{
@@ -201,7 +202,7 @@ namespace PR
 			// First the mid elements one by one
 			for (GeometryEntity* e : node->splitObjects)
 			{
-				if (e->checkCollision(ray, tmpCollisionPoint))
+				if ((Entity*)e != ignore && e->checkCollision(ray, tmpCollisionPoint))
 				{
 					float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
 
@@ -215,7 +216,7 @@ namespace PR
 			}
 
 			// Now check left with recursion
-			GeometryEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint, near);
+			GeometryEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint, near, ignore);
 			if (left)
 			{
 				res = left;
@@ -223,7 +224,7 @@ namespace PR
 			}
 
 			// And of course check the right one with recursion as well
-			GeometryEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint, near);
+			GeometryEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint, near, ignore);
 			if (right)
 			{
 				res = right;

@@ -6,6 +6,7 @@
 namespace PR
 {
 	class FacePoint;
+	class Material;
 	class Ray;
 	class Renderer;
 	class PR_LIB GeometryEntity : public Entity

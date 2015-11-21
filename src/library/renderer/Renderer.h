@@ -10,6 +10,7 @@
 namespace PR
 {
 	class Camera;
+	class Entity;
 	class FacePoint;
 	class GeometryEntity;
 	class Scene;
@@ -50,7 +51,7 @@ namespace PR
 		size_t pixelsRendered() const;
 
 		// RenderThread things
-		GeometryEntity* shoot(Ray& ray, FacePoint& collisionPoint);
+		GeometryEntity* shoot(Ray& ray, FacePoint& collisionPoint, Entity* ignore = nullptr);
 		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
 
 		// Settings

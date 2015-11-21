@@ -11,6 +11,7 @@
 
 #include "material/DiffuseMaterial.h"
 #include "material/DebugMaterial.h"
+#include "material/DebugBoundingBoxMaterial.h"
 
 #include "geometry/Mesh.h"
 #include "loader/WavefrontLoader.h"
@@ -167,7 +168,9 @@ namespace PRU
 		DL::Data* posD = group->getFromKey("position");
 		DL::Data* rotD = group->getFromKey("rotation");
 		DL::Data* scaleD = group->getFromKey("scale");
+		DL::Data* debugD = group->getFromKey("debug");
 		DL::Data* materialD = group->getFromKey("material");
+		DL::Data* materialDebugBoundingBoxD = group->getFromKey("materialDebugBoundingBox");
 
 		std::string name;
 		if (nameD && nameD->isType() == DL::Data::T_String)
@@ -281,6 +284,7 @@ namespace PRU
 					DL::Data* fovHD = group->getFromKey("fovH");
 					DL::Data* fovVD = group->getFromKey("fovV");
 					DL::Data* lensDistD = group->getFromKey("lensDistance");
+					DL::Data* lookAtD = group->getFromKey("lookAt");
 
 					float fovH = 60;
 					float fovV = 45;
@@ -303,6 +307,17 @@ namespace PRU
 
 					PerspectiveCamera* camera = new PerspectiveCamera(name, parent);
 					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+
+					if (lookAtD && lookAtD->isType() == DL::Data::T_Array)
+					{
+						bool ok;
+						PM::vec3 look = getVector(lookAtD->getArray(), ok);
+
+						if (ok)
+						{
+							camera->lookAt(look);
+						}
+					}
 					entity = camera;
 				}
 				else if (projectionD->getString() == "orthographic")
@@ -402,10 +417,10 @@ namespace PRU
 		}
 
 		// Set rotation
-		if (rotD && rotD->isType() == DL::Data::T_Array)
+		if (rotD)
 		{
 			bool ok;
-			PM::quat rot = PM::pm_Normalize4D(getVector(rotD->getArray(), ok));
+			PM::quat rot = getRotation(rotD, ok);
 
 			if (!ok)
 			{
@@ -432,6 +447,33 @@ namespace PRU
 		{
 			entity->setScale(PM::pm_Set(
 				scaleD->getFloatConverted(), scaleD->getFloatConverted(), scaleD->getFloatConverted(), 1));
+		}
+
+		// Debug
+		if (debugD && debugD->isType() == DL::Data::T_Bool)
+		{
+			entity->enableDebug(debugD->getBool());
+
+			if (typeD->getString() != "null" && typeD->getString() != "camera")
+			{
+				BoundaryEntity* bent = new BoundaryEntity("_debug_entity_",
+					((GeometryEntity*)entity)->localBoundingBox(), entity);
+
+				if (materialDebugBoundingBoxD && materialDebugBoundingBoxD->isType() == DL::Data::T_String)
+				{
+					if (env->hasMaterial(materialDebugBoundingBoxD->getString()))
+					{
+						bent->setMaterial(env->getMaterial(materialDebugBoundingBoxD->getString()));
+					}
+					else
+					{
+						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialDebugBoundingBoxD->getString().c_str());
+					}
+				}
+
+				//bent->setScale(entity->scale());
+				env->scene()->addEntity((GeometryEntity*)bent);
+			}
 		}
 
 		// Add to scene
@@ -489,24 +531,23 @@ namespace PRU
 		Material* mat = nullptr;
 		if (type == "standard")
 		{
-			DL::Data* spectrumD = group->getFromKey("spectrum");
+			DL::Data* reflectanceD = group->getFromKey("reflectance");
 			DL::Data* emissionD = group->getFromKey("emission");
 			DL::Data* roughnessD = group->getFromKey("roughness");
 			DL::Data* shadingD = group->getFromKey("enableShading");
 
 			DiffuseMaterial* diff = new DiffuseMaterial;
 
-			if (spectrumD && spectrumD->isType() == DL::Data::T_String)
+			if (reflectanceD && reflectanceD->isType() == DL::Data::T_String)
 			{
-				if (env->hasSpectrum(spectrumD->getString()))
+				if (env->hasSpectrum(reflectanceD->getString()))
 				{
-					diff->setReflectance(env->getSpectrum(spectrumD->getString()));
+					diff->setReflectance(env->getSpectrum(reflectanceD->getString()));
 				}
 				else
 				{
-					PR_LOGGER.logf(L_Error, M_Scene, "Couldn't find spectrum '%s' for material",
-						spectrumD->getString().c_str());
-					return;
+					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
+						reflectanceD->getString().c_str());
 				}
 			}
 
@@ -538,6 +579,33 @@ namespace PRU
 		else if (type == "debug")
 		{
 			mat = new DebugMaterial();
+		}
+		else if (type == "debugBoundingBox")
+		{
+			DL::Data* colorD = group->getFromKey("color");
+			DL::Data* densityD = group->getFromKey("density");
+
+			DebugBoundingBoxMaterial* dbbm = new DebugBoundingBoxMaterial();
+
+			if (colorD && colorD->isType() == DL::Data::T_String)
+			{
+				if (env->hasSpectrum(colorD->getString()))
+				{
+					dbbm->setColor(env->getSpectrum(colorD->getString()));
+				}
+				else
+				{
+					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
+						colorD->getString().c_str());
+				}
+			}
+
+			if (densityD && densityD->isNumber())
+			{
+				dbbm->setDensity(densityD->getFloatConverted());
+			}
+
+			mat = dbbm;
 		}
 		else
 		{
@@ -768,5 +836,29 @@ namespace PRU
 		}
 
 		return res;
+	}
+	
+	PM::quat SceneLoader::getRotation(DL::Data* data, bool& ok) const
+	{
+		if (data->isType() == DL::Data::T_Array)
+		{
+			return PM::pm_Normalize4D(getVector(data->getArray(), ok));
+		}
+		else if (data->isType() == DL::Data::T_Group)
+		{
+			DL::DataGroup* grp = data->getGroup();
+			if (grp->id() == "euler" && grp->unnamedCount() == 3 &&
+				grp->at(0)->isNumber() && grp->at(1)->isNumber() && grp->at(2)->isNumber())
+			{
+				float x = PM::pm_DegToRad(grp->at(0)->getFloatConverted());
+				float y = PM::pm_DegToRad(grp->at(1)->getFloatConverted());
+				float z = PM::pm_DegToRad(grp->at(2)->getFloatConverted());
+
+				ok = true;
+				return PM::pm_Normalize4D(PM::pm_RotationQuatRollPitchYaw(x, y, z));
+			}
+		}
+
+		return PM::pm_IdentityQuat();
 	}
 }

@@ -1,6 +1,6 @@
 #include "FileLogListener.h"
 
-#include "camera/Camera.h"
+#include "camera/PerspectiveCamera.h"
 #include "scene/Scene.h"
 
 #include "entity/SphereEntity.h"
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 	PP::PearPic pearpic;
 	pearpic.init();
 
-	PR::Camera camera("Test_Cam");
+	PR::PerspectiveCamera camera("Test_Cam");
 	camera.setWithSize(1, 1, 0.2f);
 
 	PR::Scene scene("Test");

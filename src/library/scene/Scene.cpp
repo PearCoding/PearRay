@@ -95,9 +95,9 @@ namespace PR
 		mKDTree->build(mGeometryEntities);
 	}
 
-	GeometryEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint) const
+	GeometryEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
 	{
 		PR_ASSERT(mKDTree);
-		return mKDTree->checkCollision(ray, collisionPoint);
+		return mKDTree->checkCollision(ray, collisionPoint, ignore);
 	}
 }

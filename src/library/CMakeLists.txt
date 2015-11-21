@@ -25,6 +25,7 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/RandomRotationSphere.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Material_Src
+  ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
   ${PR_LIB}/material/DebugMaterial.cpp
   ${PR_LIB}/material/DiffuseMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
@@ -82,6 +83,7 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/Triangle.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Material_Hdr
+  ${PR_LIB}/material/DebugBoundingBoxMaterial.h
   ${PR_LIB}/material/DebugMaterial.h
   ${PR_LIB}/material/DiffuseMaterial.h
   ${PR_LIB}/material/Material.h)

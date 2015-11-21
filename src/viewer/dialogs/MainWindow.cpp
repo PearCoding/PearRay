@@ -335,6 +335,14 @@ void MainWindow::stopRendering()
 		mRenderer->waitForFinish();
 		ui.statusBar->showMessage(tr("Rendering stopped."));
 	}
+	else
+	{
+		ui.viewWidget->refreshView();
+		ui.statusBar->showMessage(QString("Pixels: %1/%2 | Rays: %3")
+			.arg(mRenderer->pixelsRendered())
+			.arg(mRenderer->width()*mRenderer->height())
+			.arg(mRenderer->rayCount()));
+	}
 
 	mRendererTileXProp->setEnabled(true);
 	mRendererTileYProp->setEnabled(true);

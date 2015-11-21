@@ -5,7 +5,7 @@ namespace PR
 {
 	PerspectiveCamera::PerspectiveCamera(const std::string& name, Entity* parent) :
 		Camera(name, parent), mWidth(1), mHeight(1),
-		mLensDistance(1)
+		mLensDistance(1), mLookAt(PM::pm_Set(0,0,1,1))
 	{
 	}
 
@@ -20,8 +20,8 @@ namespace PR
 
 	void PerspectiveCamera::setWithAngle(float foh, float fov, float lensdist)
 	{
-		mWidth = 2 * sin(foh / 2) / lensdist;
-		mHeight = 2 * sin(fov / 2) / lensdist;
+		mWidth = 2 * tan(foh / 2) / lensdist;
+		mHeight = 2 * tan(fov / 2) / lensdist;
 		mLensDistance = lensdist;
 	}
 
@@ -62,14 +62,29 @@ namespace PR
 		return mLensDistance;
 	}
 
+	void PerspectiveCamera::lookAt(const PM::vec3& v)
+	{
+		mLookAt = v;
+	}
+
+	PM::vec3 PerspectiveCamera::lookAtPosition() const
+	{
+		return mLookAt;
+	}
+
 	Ray PerspectiveCamera::constructRay(float nx, float ny) const
 	{
-		float sx = mWidth * (nx - 0.5f);
-		float sy = mHeight * (ny - 0.5f);
+		float sx = mWidth * nx;
+		float sy = mHeight * ny;
 
-		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Set(sx, sy, lensDistance()));
+		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position()));
+		PM::vec3 right = PM::pm_Cross3D(dir,
+			PM::pm_Multiply(PM::pm_Rotation(rotation()), PM::pm_Set(0, 1, 0)));
+		PM::vec3 up = PM::pm_Cross3D(right, dir);
 
-		return Ray(PM::pm_Multiply(matrix(), PM::pm_Set(0,0,0,1)),
-				PM::pm_Multiply(PM::pm_Rotation(rotation()), dir));
+		PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(right, sx),
+		PM::pm_Add(PM::pm_Scale(up, sy), dir)));
+
+		return Ray(position(), rayDir);
 	}
 }

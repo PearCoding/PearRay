@@ -343,7 +343,10 @@ namespace PRU
 			{
 				PR_LOGGER.log(L_Error, M_Internal, "Couldn't add face. Only triangles or quads allowed.");
 			}
-
 		}
+
+		PR_LOGGER.logf(L_Debug, M_Internal, "V: %d, N: %d, U: %d, F: %d, V: %f",
+			mesh->vertices().size(), mesh->normals().size(), mesh->uvs().size(), mesh->faces().size(),
+			mesh->boundingBox().volume());
 	}
 }

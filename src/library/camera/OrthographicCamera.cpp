@@ -20,8 +20,8 @@ namespace PR
 
 	void OrthographicCamera::setWithAngle(float foh, float fov, float lensdist)
 	{
-		mWidth = 2 * sin(foh / 2) / lensdist;
-		mHeight = 2 * sin(fov / 2) / lensdist;
+		mWidth = 2 * tan(foh / 2) / lensdist;
+		mHeight = 2 * tan(fov / 2) / lensdist;
 		mLensDistance = lensdist;
 	}
 
@@ -64,8 +64,8 @@ namespace PR
 
 	Ray OrthographicCamera::constructRay(float nx, float ny) const
 	{
-		float sx = mWidth * (nx - 0.5f);
-		float sy = mHeight * (ny - 0.5f);
+		float sx = mWidth * nx;
+		float sy = mHeight * ny;
 
 		PM::vec3 dir = PM::pm_Set(0, 0, 1, 0);
 		return Ray(PM::pm_Multiply(matrix(), PM::pm_Set(sx, sy, 0, 1)),

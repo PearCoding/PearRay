@@ -57,6 +57,11 @@ namespace PR
 
 	bool MeshEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
+		if (!worldBoundingBox().intersects(ray))
+		{
+			return false;
+		}
+
 		float near = std::numeric_limits<float>::max();
 		bool found = false;
 

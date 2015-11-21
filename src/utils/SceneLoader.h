@@ -7,6 +7,7 @@
 
 namespace DL
 {
+	class Data;
 	class DataArray;
 	class DataGroup;
 }
@@ -35,5 +36,6 @@ namespace PRU
 		void addMesh(DL::DataGroup* group, Environment* env);
 
 		PM::vec3 getVector(DL::DataArray* arr, bool& ok) const;
+		PM::quat getRotation(DL::Data* data, bool& ok) const;
 	};
 }

@@ -21,6 +21,9 @@ namespace PR
 		void setParent(Entity* parent);
 		Entity* parent() const;
 
+		void enableDebug(bool b);
+		bool isDebug() const;
+
 		void setPosition(const PM::vec3& pos);
 		PM::vec3 position() const;
 
@@ -37,6 +40,7 @@ namespace PR
 		std::string mName;
 		Entity* mParent;
 
+		bool mDebug;
 		PM::vec3 mPosition;
 		PM::vec3 mScale;
 		PM::quat mRotation;

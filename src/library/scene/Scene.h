@@ -33,7 +33,7 @@ namespace PR
 
 		void buildTree();
 
-		GeometryEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint) const;
+		GeometryEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const;
 
 	private:
 		std::string mName;

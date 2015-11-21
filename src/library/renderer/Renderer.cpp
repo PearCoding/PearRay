@@ -152,7 +152,8 @@ namespace PR
 
 	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
-		Ray ray = mCamera->constructRay(x / (float)mWidth, y / (float)mHeight);
+		Ray ray = mCamera->constructRay(2 * x / (float)mWidth - 1,
+			2 * y / (float)mHeight - 1);
 
 		FacePoint collisionPoint;
 		GeometryEntity* entity = shoot(ray, collisionPoint);
@@ -174,13 +175,12 @@ namespace PR
 		return mPixelsRendered;
 	}
 
-	GeometryEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint)
+	GeometryEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, Entity* ignore)
 	{
-		GeometryEntity* entity = mScene->checkCollision(ray, collisionPoint);
+		GeometryEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
 
 		if (entity)
 		{
-			//ray.setSpectrum(mIdentitySpectrum);
 			entity->apply(ray, collisionPoint, this);
 		}
 
