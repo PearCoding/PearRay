@@ -74,6 +74,15 @@ MainWindow::MainWindow(QWidget *parent)
 	((IntProperty*)mRendererSamplesPerRayProp)->setValue(8);
 	mRendererGroupProp->addChild(mRendererSamplesPerRayProp);
 
+	mRendererSamplerProp = new SelectionProperty();
+	mRendererSamplerProp->setPropertyName(tr("Sampler"));
+	((SelectionProperty*)mRendererSamplerProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mRendererSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mRendererSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	((SelectionProperty*)mRendererSamplerProp)->setDefaultIndex(2);
+	((SelectionProperty*)mRendererSamplerProp)->setIndex(2);
+	mRendererGroupProp->addChild(mRendererSamplerProp);
+
 	mRendererMaxRayDepthProp = new IntProperty();
 	mRendererMaxRayDepthProp->setPropertyName(tr("Max Ray Depth"));
 	((IntProperty*)mRendererMaxRayDepthProp)->setMinValue(1);
@@ -180,6 +189,7 @@ MainWindow::~MainWindow()
 		delete mRendererThreadsProp;
 		delete mRendererSamplingProp;
 		delete mRendererSamplesPerRayProp;
+		delete mRendererSamplerProp;
 		delete mRendererMaxRayDepthProp;
 		delete mRendererMaxDirectRayCountProp;
 		delete mRendererMaxIndirectRayCountProp;
@@ -300,6 +310,10 @@ void MainWindow::propertyValueChanged(IProperty* prop)
 	{
 		mRenderer->setSamplePerRayCount(((IntProperty*)mRendererSamplesPerRayProp)->value());
 	}
+	else if (prop == mRendererSamplerProp)
+	{
+		mRenderer->setSamplerMode((PR::SamplerMode)((SelectionProperty*)mRendererSamplerProp)->currentData().toInt());
+	}
 	else if (prop == mRendererStartProp)
 	{
 		if (mRenderer->isFinished())
@@ -329,6 +343,7 @@ void MainWindow::startRendering()
 	mRendererThreadsProp->setEnabled(false);
 	mRendererSamplingProp->setEnabled(false);
 	mRendererSamplesPerRayProp->setEnabled(false);
+	mRendererSamplerProp->setEnabled(false);
 	mRendererMaxDirectRayCountProp->setEnabled(false);
 	mRendererMaxIndirectRayCountProp->setEnabled(false);
 	mRendererMaxRayDepthProp->setEnabled(false);
@@ -364,6 +379,7 @@ void MainWindow::stopRendering()
 	mRendererThreadsProp->setEnabled(true);
 	mRendererSamplingProp->setEnabled(true);
 	mRendererSamplesPerRayProp->setEnabled(true);
+	mRendererSamplerProp->setEnabled(true);
 	mRendererMaxDirectRayCountProp->setEnabled(true);
 	mRendererMaxIndirectRayCountProp->setEnabled(true);
 	mRendererMaxRayDepthProp->setEnabled(true);

@@ -6,6 +6,8 @@
 #include "entity/SphereEntity.h"
 #include "entity/MeshEntity.h"
 
+#include "lights/PointLight.h"
+
 #include "camera/OrthographicCamera.h"
 #include "camera/PerspectiveCamera.h"
 
@@ -183,10 +185,7 @@ namespace PRU
 		}
 
 		Entity* entity = nullptr;
-		if (!typeD || typeD->isType() != DL::Data::T_String || 
-			(typeD->getString() != "null" && typeD->getString() != "sphere" &&
-				typeD->getString() != "boundary" && typeD->getString() != "camera" &&
-				typeD->getString() != "mesh"))
+		if (!typeD || typeD->isType() != DL::Data::T_String)
 		{
 			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. No valid type given.", name.c_str());
 			return;
@@ -272,6 +271,24 @@ namespace PRU
 			}
 
 			entity = bnd;
+		}
+		else if (typeD->getString() == "pointLight")
+		{
+			PointLight* l = new PointLight(name, parent);
+
+			if (materialD && materialD->isType() == DL::Data::T_String)
+			{
+				if (env->hasMaterial(materialD->getString()))
+				{
+					l->setMaterial(env->getMaterial(materialD->getString()));
+				}
+				else
+				{
+					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD->getString().c_str());
+				}
+			}
+
+			entity = l;
 		}
 		else if (typeD->getString() == "camera")
 		{
@@ -401,6 +418,11 @@ namespace PRU
 		{
 			entity = new Entity(name, parent);
 		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. Unknown type given.", name.c_str());
+			return;
+		}
 
 		PR_ASSERT(entity);// After here it shouldn't be null
 
@@ -457,7 +479,7 @@ namespace PRU
 			if (typeD->getString() != "null" && typeD->getString() != "camera")
 			{
 				BoundaryEntity* bent = new BoundaryEntity("_debug_entity_",
-					((GeometryEntity*)entity)->localBoundingBox(), entity);
+					((RenderEntity*)entity)->localBoundingBox(), entity);
 
 				if (materialDebugBoundingBoxD && materialDebugBoundingBoxD->isType() == DL::Data::T_String)
 				{
@@ -472,7 +494,7 @@ namespace PRU
 				}
 
 				//bent->setScale(entity->scale());
-				env->scene()->addEntity((GeometryEntity*)bent);
+				env->scene()->addEntity((RenderEntity*)bent);
 			}
 		}
 
@@ -483,7 +505,7 @@ namespace PRU
 		}
 		else
 		{
-			env->scene()->addEntity((GeometryEntity*)entity);
+			env->scene()->addEntity((RenderEntity*)entity);
 		}
 
 		for (size_t i = 0; i < group->unnamedCount(); ++i)

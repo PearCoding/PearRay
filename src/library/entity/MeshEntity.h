@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GeometryEntity.h"
+#include "RenderEntity.h"
 
 namespace PR
 {
 	class Mesh;
 	class Material;
-	class PR_LIB MeshEntity : public GeometryEntity
+	class PR_LIB MeshEntity : public RenderEntity
 	{
 	public:
 		MeshEntity(const std::string& name, Entity* parent = nullptr);

@@ -1,5 +1,5 @@
 #include "kdTree.h"
-#include "entity/GeometryEntity.h"
+#include "entity/RenderEntity.h"
 #include "ray/Ray.h"
 #include "geometry/BoundingBox.h"
 #include "geometry/FacePoint.h"
@@ -23,7 +23,7 @@ namespace PR
 		return mRoot;
 	}
 
-	void kdTree::build(const std::list<GeometryEntity*>& entities)
+	void kdTree::build(const std::list<RenderEntity*>& entities)
 	{
 		PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
 
@@ -41,7 +41,7 @@ namespace PR
 		}
 	}
 
-	kdTree::kdNode* kdTree::buildNode(size_t depth, const std::list<GeometryEntity*>& entities, size_t retryDepth)
+	kdTree::kdNode* kdTree::buildNode(size_t depth, const std::list<RenderEntity*>& entities, size_t retryDepth)
 	{
 		const uint8 axis = depth % 3;
 
@@ -51,7 +51,7 @@ namespace PR
 		}
 		else if (entities.size() == 1)
 		{
-			GeometryEntity* entity = entities.front();
+			RenderEntity* entity = entities.front();
 			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Leaf | Volume %f", depth, axis, entity->worldBoundingBox().volume());
 			PR_LOGGER.logf(L_Debug, M_Scene, "       -> Object: %s", entity->toString().c_str());
 
@@ -60,7 +60,7 @@ namespace PR
 		else
 		{
 			BoundingBox box;
-			for (GeometryEntity* entity : entities)
+			for (RenderEntity* entity : entities)
 			{
 				box.combine(entity->worldBoundingBox());
 			}
@@ -72,10 +72,10 @@ namespace PR
 			}
 
 			// Construct next sides
-			std::list<GeometryEntity*> leftList;
-			std::list<GeometryEntity*> rightList;
-			std::list<GeometryEntity*> midList;
-			GeometryEntity* midEntity = nullptr;
+			std::list<RenderEntity*> leftList;
+			std::list<RenderEntity*> rightList;
+			std::list<RenderEntity*> midList;
+			RenderEntity* midEntity = nullptr;
 
 			float mid = PM::pm_GetX(box.center());
 			if (axis == 1)
@@ -89,7 +89,7 @@ namespace PR
 
 			// Find nearest entity to median
 			float near = 0;
-			for (GeometryEntity* e : entities)
+			for (RenderEntity* e : entities)
 			{
 				BoundingBox bx = e->worldBoundingBox();
 
@@ -124,7 +124,7 @@ namespace PR
 			midList.push_back(midEntity);
 
 			// Split entities into two parts.
-			for (GeometryEntity* e : entities)
+			for (RenderEntity* e : entities)
 			{
 				if (e == midEntity)//Ignore mid entity
 				{
@@ -185,22 +185,22 @@ namespace PR
 		}
 	}
 
-	GeometryEntity* kdTree::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
+	RenderEntity* kdTree::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
 	{
 		float n = std::numeric_limits<float>::max();
 		return checkCollisionAtNode(root(), ray, collisionPoint, n, ignore);
 	}
 
-	GeometryEntity* kdTree::checkCollisionAtNode(
+	RenderEntity* kdTree::checkCollisionAtNode(
 		const kdNode* node, const Ray& ray, FacePoint& collisionPoint, float& near, Entity* ignore) const
 	{
 		if (node && node->boundingBox.intersects(ray))
 		{
-			GeometryEntity* res = nullptr;
+			RenderEntity* res = nullptr;
 			FacePoint tmpCollisionPoint;
 
 			// First the mid elements one by one
-			for (GeometryEntity* e : node->splitObjects)
+			for (RenderEntity* e : node->splitObjects)
 			{
 				if ((Entity*)e != ignore && e->checkCollision(ray, tmpCollisionPoint))
 				{
@@ -216,7 +216,7 @@ namespace PR
 			}
 
 			// Now check left with recursion
-			GeometryEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint, near, ignore);
+			RenderEntity* left = checkCollisionAtNode(node->left, ray, tmpCollisionPoint, near, ignore);
 			if (left)
 			{
 				res = left;
@@ -224,7 +224,7 @@ namespace PR
 			}
 
 			// And of course check the right one with recursion as well
-			GeometryEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint, near, ignore);
+			RenderEntity* right = checkCollisionAtNode(node->right, ray, tmpCollisionPoint, near, ignore);
 			if (right)
 			{
 				res = right;

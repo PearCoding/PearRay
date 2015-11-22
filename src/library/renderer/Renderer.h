@@ -9,10 +9,17 @@
 
 namespace PR
 {
+	enum SamplerMode
+	{
+		SM_Random,
+		SM_Uniform,
+		SM_Jitter
+	};
+
 	class Camera;
 	class Entity;
 	class FacePoint;
-	class GeometryEntity;
+	class RenderEntity;
 	class Scene;
 	class Ray;
 	class RenderThread;
@@ -51,7 +58,7 @@ namespace PR
 		size_t pixelsRendered() const;
 
 		// RenderThread things
-		GeometryEntity* shoot(Ray& ray, FacePoint& collisionPoint, Entity* ignore = nullptr);
+		RenderEntity* shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
 		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
 
 		// Settings
@@ -77,8 +84,18 @@ namespace PR
 			return mSamplePerRayCount;
 		}
 
+		void setSamplerMode(SamplerMode mode)
+		{
+			mSamplerMode = mode;
+		}
+
+		inline SamplerMode samplerMode() const
+		{
+			return mSamplerMode;
+		}
+
 		// Light
-		const std::list<GeometryEntity*>& lights() const;
+		const std::list<RenderEntity*>& lights() const;
 
 	private:
 		void reset();
@@ -93,7 +110,7 @@ namespace PR
 		RenderResult mResult;
 
 		Random mRandom;
-		std::list<GeometryEntity*> mLights;
+		std::list<RenderEntity*> mLights;
 
 		std::mutex mTileMutex;
 		uint32 mTileWidth;
@@ -113,5 +130,6 @@ namespace PR
 		uint32 mMaxIndirectRayCount;
 		bool mEnableSampling;
 		uint32 mSamplePerRayCount;
+		SamplerMode mSamplerMode;
 	};
 }

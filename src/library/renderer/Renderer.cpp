@@ -2,7 +2,7 @@
 #include "RenderThread.h"
 #include "camera/Camera.h"
 #include "scene/Scene.h"
-#include "entity/GeometryEntity.h"
+#include "entity/RenderEntity.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 
@@ -15,12 +15,12 @@ namespace PR
 		mResult(w, h), mRandom((uint64)time(NULL)),
 		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
 		mMaxRayDepth(3), mMaxDirectRayCount(10), mMaxIndirectRayCount(50),
-		mEnableSampling(false), mSamplePerRayCount(8)
+		mEnableSampling(false), mSamplePerRayCount(8), mSamplerMode(SM_Jitter)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
 
-		for (GeometryEntity* e : scene->geometryEntities())
+		for (RenderEntity* e : scene->renderEntities())
 		{
 			if (e->isLight())
 			{
@@ -116,12 +116,40 @@ namespace PR
 			float newDepth = 0;
 			Spectrum newSpec;
 
+			const uint32 xSamples = mSamplePerRayCount / 2;
+			const uint32 ySamples = mSamplePerRayCount - xSamples;
+			const float xSampleMid = 1 / (2.0f * xSamples);
+			const float ySampleMid = 1 / (2.0f * ySamples);
+
 			for (uint32 i = 0; i < mSamplePerRayCount; ++i)
 			{
+				float sx;
+				float sy;
+
+				if (mSamplerMode == SM_Random)
+				{
+					sx = x + mRandom.getFloat() - 0.5f;
+					sy = y + mRandom.getFloat() - 0.5f;
+				}
+				else if (mSamplerMode == SM_Uniform)
+				{
+					int tx = i % xSamples;
+					int ty = i / xSamples;
+
+					sx = x + tx / (float)xSamples - 0.5f;
+					sy = y + ty / (float)ySamples - 0.5f;
+				}
+				else //SM_Jitter
+				{
+					int tx = i % xSamples;
+					int ty = i / xSamples;
+
+					sx = x + (tx + mRandom.getFloat()) / (float)xSamples - 0.5f;
+					sy = y + (ty + mRandom.getFloat()) / (float)ySamples - 0.5f;
+				}
+
 				float depth;
-				Ray ray = renderSample((float)x + (mRandom.getFloat() - 0.5f),
-					(float)y + (mRandom.getFloat() - 0.5f),
-					depth);
+				Ray ray = renderSample(sx, sy, depth);
 
 				if (depth >= 0)
 				{
@@ -155,11 +183,11 @@ namespace PR
 
 	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
-		Ray ray = mCamera->constructRay(- 2 * x / (float)mWidth + 1,
-			- 2 * y / (float)mHeight + 1);
+		Ray ray = mCamera->constructRay(2 * x / (float)mWidth - 1,
+			2 * y / (float)mHeight - 1);
 
 		FacePoint collisionPoint;
-		GeometryEntity* entity = shoot(ray, collisionPoint);
+		RenderEntity* entity = shoot(ray, collisionPoint);
 
 		if (entity)
 		{
@@ -178,9 +206,9 @@ namespace PR
 		return mPixelsRendered;
 	}
 
-	GeometryEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, Entity* ignore)
+	RenderEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
 	{
-		GeometryEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
+		RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
 
 		if (entity)
 		{
@@ -301,7 +329,7 @@ namespace PR
 		return mEnableSampling;
 	}
 
-	const std::list<GeometryEntity*>& Renderer::lights() const
+	const std::list<RenderEntity*>& Renderer::lights() const
 	{
 		return mLights;
 	}

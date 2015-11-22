@@ -7,7 +7,7 @@
 namespace PR
 {
 	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
-		GeometryEntity(name, parent), mRadius(r)
+		RenderEntity(name, parent), mRadius(r)
 	{
 	}
 

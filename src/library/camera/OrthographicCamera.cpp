@@ -65,10 +65,10 @@ namespace PR
 	Ray OrthographicCamera::constructRay(float nx, float ny) const
 	{
 		float sx = mWidth * nx;
-		float sy = mHeight * ny;
+		float sy = - mHeight * ny;
 
 		PM::vec3 dir = PM::pm_Set(0, 0, 1, 0);
 		return Ray(PM::pm_Multiply(matrix(), PM::pm_Set(sx, sy, 0, 1)),
-			PM::pm_Multiply(PM::pm_Rotation(rotation()), dir));
+			PM::pm_RotateWithQuat(rotation(), dir));
 	}
 }

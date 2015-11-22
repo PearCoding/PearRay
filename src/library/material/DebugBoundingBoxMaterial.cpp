@@ -10,7 +10,7 @@ namespace PR
 	{
 	}
 
-	void DebugBoundingBoxMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
+	void DebugBoundingBoxMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
 		Ray ray = in;// Don't increase depth!
 		ray.setStartPosition(point.vertex());

@@ -74,8 +74,8 @@ namespace PR
 
 	Ray PerspectiveCamera::constructRay(float nx, float ny) const
 	{
-		float sx = mWidth * nx;
-		float sy = mHeight * ny;
+		float sx = - mWidth * nx;
+		float sy = - mHeight * ny;
 
 		PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position()));
 		PM::vec3 right = PM::pm_Cross3D(dir,

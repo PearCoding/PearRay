@@ -1,13 +1,13 @@
 #pragma once
 
-#include "GeometryEntity.h"
+#include "RenderEntity.h"
 
 namespace PR
 {
 	class Material;
 
 	/* Does not support scale! */
-	class PR_LIB SphereEntity : public GeometryEntity
+	class PR_LIB SphereEntity : public RenderEntity
 	{
 	public:
 		SphereEntity(const std::string& name, float r, Entity* parent = nullptr);

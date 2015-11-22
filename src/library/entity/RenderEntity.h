@@ -10,13 +10,14 @@ namespace PR
 	class Random;
 	class Ray;
 	class Renderer;
-	class PR_LIB GeometryEntity : public Entity
+	class PR_LIB RenderEntity : public Entity
 	{
 	public:
-		GeometryEntity(const std::string& name, Entity* parent = nullptr);
-		virtual ~GeometryEntity();
+		RenderEntity(const std::string& name, Entity* parent = nullptr);
+		virtual ~RenderEntity();
 
 		virtual bool isLight() const = 0;
+		virtual uint32 maxLightSamples() const;// 0 == Unbounded
 
 		virtual bool isCollidable() const;
 		virtual BoundingBox localBoundingBox() const;

@@ -13,7 +13,7 @@
 namespace PR
 {
 	MeshEntity::MeshEntity(const std::string& name, Entity* parent) :
-		GeometryEntity(name, parent), mMesh(nullptr)
+		RenderEntity(name, parent), mMesh(nullptr)
 	{
 	}
 

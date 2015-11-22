@@ -31,7 +31,7 @@ namespace PR
 		void enableCameraVisibility(bool b);
 		bool isCameraVisible() const;
 
-		void apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer);
+		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
 	private:
 		Spectrum mDiffSpectrum;
 		Spectrum mEmitSpectrum;

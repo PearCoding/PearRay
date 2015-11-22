@@ -3,7 +3,7 @@
 #include "geometry/FacePoint.h"
 #include "geometry/RandomRotationSphere.h"
 #include "renderer/Renderer.h"
-#include "entity/GeometryEntity.h"
+#include "entity/RenderEntity.h"
 
 namespace PR
 {
@@ -83,7 +83,7 @@ namespace PR
 		return mCameraVisible;
 	}
 
-	void DiffuseMaterial::apply(Ray& in, Entity* entity, const FacePoint& point, Renderer* renderer)
+	void DiffuseMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
 		FacePoint collisionPoint;
 		Spectrum spec;
@@ -106,9 +106,12 @@ namespace PR
 			{ 
 				// Direct Illumination
 				uint32 lightSampleCounter = 0;
-				for (GeometryEntity* light : renderer->lights())
+				for (RenderEntity* light : renderer->lights())
 				{
-					for (uint32 i = 0; i < renderer->maxDirectRayCount(); ++i)
+					uint32 max = renderer->maxDirectRayCount();
+					max = light->maxLightSamples() != 0 ? PM::pm_MinT(max, light->maxLightSamples()) : max;
+
+					for (uint32 i = 0; i < max; ++i)
 					{
 						FacePoint p = light->getRandomFacePoint(renderer->random());
 
@@ -117,11 +120,12 @@ namespace PR
 						Ray ray(point.vertex(), dir, in.depth()+1);// Bounce only once!
 						ray.setMaxDepth(in.depth() + 1);
 
-						GeometryEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
+						RenderEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
 
 						if (ent == light)// Full light!!
 						{
 							float dot2 = PM::pm_Dot3D(dir, point.normal());
+
 							if (dot2 > 0)
 							{
 								spec += dot2 * ray.spectrum();

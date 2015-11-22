@@ -6,7 +6,7 @@
 namespace PR
 {
 	BoundaryEntity::BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent) :
-		GeometryEntity(name, parent), mBoundingBox(box)
+		RenderEntity(name, parent), mBoundingBox(box)
 	{
 	}
 

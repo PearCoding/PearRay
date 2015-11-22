@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "kdTree.h"
 #include "entity/Entity.h"
-#include "entity/GeometryEntity.h"
+#include "entity/RenderEntity.h"
 
 #include "Logger.h"
 
@@ -27,18 +27,18 @@ namespace PR
 		return mName;
 	}
 
-	void Scene::addEntity(GeometryEntity* e)
+	void Scene::addEntity(RenderEntity* e)
 	{
 		PR_ASSERT(e);
 		mEntities.push_back(e);
-		mGeometryEntities.push_back(e);
+		mRenderEntities.push_back(e);
 	}
 
-	void Scene::removeEntity(GeometryEntity* e)
+	void Scene::removeEntity(RenderEntity* e)
 	{
 		PR_ASSERT(e);
 		mEntities.remove(e);
-		mGeometryEntities.remove(e);
+		mRenderEntities.remove(e);
 	}
 
 	void Scene::addEntity(Entity* e)
@@ -71,9 +71,9 @@ namespace PR
 		return mEntities;
 	}
 
-	const std::list<GeometryEntity*>& Scene::geometryEntities() const
+	const std::list<RenderEntity*>& Scene::renderEntities() const
 	{
-		return mGeometryEntities;
+		return mRenderEntities;
 	}
 
 	void Scene::clear()
@@ -83,7 +83,7 @@ namespace PR
 			delete e;
 		}
 		mEntities.clear();
-		mGeometryEntities.clear();
+		mRenderEntities.clear();
 
 		if (mKDTree)
 		{
@@ -102,10 +102,10 @@ namespace PR
 		}
 
 		mKDTree = new kdTree;
-		mKDTree->build(mGeometryEntities);
+		mKDTree->build(mRenderEntities);
 	}
 
-	GeometryEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
+	RenderEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
 	{
 		PR_ASSERT(mKDTree);
 		return mKDTree->checkCollision(ray, collisionPoint, ignore);

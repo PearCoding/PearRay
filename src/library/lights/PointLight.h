@@ -1,21 +1,21 @@
 #pragma once
 
-#include "RenderEntity.h"
+#include "entity/RenderEntity.h"
 
 namespace PR
 {
 	class Material;
-	class PR_LIB BoundaryEntity : public RenderEntity
+	class PR_LIB PointLight : public RenderEntity
 	{
 	public:
-		BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent = nullptr);
-		virtual ~BoundaryEntity();
+		PointLight(const std::string& name, Entity* parent = nullptr);
+		virtual ~PointLight();
 
 		virtual std::string type() const;
 
-		void setBoundingBox(const BoundingBox& box);
-		
 		bool isLight() const;
+		uint32 maxLightSamples() const override;
+
 		void setMaterial(Material* m);
 		Material* material() const;
 
@@ -26,8 +26,8 @@ namespace PR
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
 
 		virtual FacePoint getRandomFacePoint(Random& random) const;
+
 	private:
-		BoundingBox mBoundingBox;
 		Material* mMaterial;
 	};
 }

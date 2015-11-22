@@ -10,7 +10,7 @@ namespace PR
 {
 	class Entity;
 	class FacePoint;
-	class GeometryEntity;
+	class RenderEntity;
 	class kdTree;
 	class Ray;
 	class PR_LIB Scene
@@ -22,9 +22,9 @@ namespace PR
 		void setName(const std::string& name);
 		std::string name() const;
 
-		void addEntity(GeometryEntity* e);
-		void removeEntity(GeometryEntity* e);
-		const std::list<GeometryEntity*>& geometryEntities() const;
+		void addEntity(RenderEntity* e);
+		void removeEntity(RenderEntity* e);
+		const std::list<RenderEntity*>& renderEntities() const;
 
 		void addEntity(Entity* e);
 		void removeEntity(Entity* e);
@@ -35,12 +35,12 @@ namespace PR
 
 		void buildTree();
 
-		GeometryEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const;
+		RenderEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const;
 
 	private:
 		std::string mName;
 		std::list<Entity*> mEntities;
-		std::list<GeometryEntity*> mGeometryEntities;
+		std::list<RenderEntity*> mRenderEntities;
 
 		kdTree* mKDTree;
 	};

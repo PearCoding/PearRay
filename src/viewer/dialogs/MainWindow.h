@@ -64,6 +64,7 @@ private:
 	IProperty* mRendererMaxIndirectRayCountProp;
 	IProperty* mRendererSamplingProp;
 	IProperty* mRendererSamplesPerRayProp;
+	IProperty* mRendererSamplerProp;
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;
 	IProperty* mViewModeProp;
