@@ -38,6 +38,11 @@ public:
 		return mViewMode;
 	}
 
+	inline QImage image() const
+	{
+		return mRenderImage;
+	}
+
 public slots:
 	void enableScale(bool b);
 	void refreshView();

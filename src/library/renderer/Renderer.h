@@ -74,14 +74,24 @@ namespace PR
 		void enableSampling(bool b);
 		bool isSamplingEnalbed() const;
 
-		void setSamplePerRayCount(uint32 i)
+		void setXSampleCount(uint32 i)
 		{
-			mSamplePerRayCount = i;
+			mXSampleCount = i;
 		}
 
-		inline uint32 samplePerRayCount() const
+		inline uint32 xSampleCount() const
 		{
-			return mSamplePerRayCount;
+			return mXSampleCount;
+		}
+
+		void setYSampleCount(uint32 i)
+		{
+			mYSampleCount = i;
+		}
+
+		inline uint32 ySampleCount() const
+		{
+			return mYSampleCount;
 		}
 
 		void setSamplerMode(SamplerMode mode)
@@ -129,7 +139,8 @@ namespace PR
 		uint32 mMaxDirectRayCount;
 		uint32 mMaxIndirectRayCount;
 		bool mEnableSampling;
-		uint32 mSamplePerRayCount;
+		uint32 mXSampleCount;
+		uint32 mYSampleCount;
 		SamplerMode mSamplerMode;
 	};
 }

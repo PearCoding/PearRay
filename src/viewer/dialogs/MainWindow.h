@@ -30,6 +30,8 @@ protected:
 	void closeEvent(QCloseEvent* event);
 
 private slots:
+	void exportImage();
+
 	void showAllToolbars();
 	void hideAllToolbars();
 
@@ -63,7 +65,8 @@ private:
 	IProperty* mRendererMaxDirectRayCountProp;
 	IProperty* mRendererMaxIndirectRayCountProp;
 	IProperty* mRendererSamplingProp;
-	IProperty* mRendererSamplesPerRayProp;
+	IProperty* mRendererXSamplesProp;
+	IProperty* mRendererYSamplesProp;
 	IProperty* mRendererSamplerProp;
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;

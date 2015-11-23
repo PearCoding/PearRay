@@ -61,8 +61,6 @@ ELSE()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ENDIF()
 
-SET(DEFS_DEBUG "${DEFS_DEBUG};PR_DEBUG")
-
 #CONFIGURE
 SET(PP_TARGET "pearpic")
 SET(DL_TARGET "datalisp")
@@ -70,6 +68,9 @@ SET(DL_TARGET "datalisp")
 add_subdirectory(pearmath)
 add_subdirectory(datalisp)
 add_subdirectory(pearpic)
+
+SET(DEFS "${DEFS};${PM_DEFS}")
+SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
 configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src

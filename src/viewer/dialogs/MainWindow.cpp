@@ -4,6 +4,8 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QCloseEvent>
+#include <QFileDialog>
+#include <QImageWriter>
 
 #include "scene/Scene.h"
 #include "camera/Camera.h"
@@ -66,13 +68,21 @@ MainWindow::MainWindow(QWidget *parent)
 	mRendererSamplingProp->setPropertyName(tr("Sampling"));
 	mRendererGroupProp->addChild(mRendererSamplingProp);
 
-	mRendererSamplesPerRayProp = new IntProperty();
-	mRendererSamplesPerRayProp->setPropertyName(tr("Samples per Ray"));
-	((IntProperty*)mRendererSamplesPerRayProp)->setMinValue(1);
-	((IntProperty*)mRendererSamplesPerRayProp)->setMaxValue(1024);
-	((IntProperty*)mRendererSamplesPerRayProp)->setDefaultValue(8);
-	((IntProperty*)mRendererSamplesPerRayProp)->setValue(8);
-	mRendererGroupProp->addChild(mRendererSamplesPerRayProp);
+	mRendererXSamplesProp = new IntProperty();
+	mRendererXSamplesProp->setPropertyName(tr("X Samples"));
+	((IntProperty*)mRendererXSamplesProp)->setMinValue(1);
+	((IntProperty*)mRendererXSamplesProp)->setMaxValue(1024);
+	((IntProperty*)mRendererXSamplesProp)->setDefaultValue(8);
+	((IntProperty*)mRendererXSamplesProp)->setValue(8);
+	mRendererGroupProp->addChild(mRendererXSamplesProp);
+
+	mRendererYSamplesProp = new IntProperty();
+	mRendererYSamplesProp->setPropertyName(tr("Y Samples"));
+	((IntProperty*)mRendererYSamplesProp)->setMinValue(1);
+	((IntProperty*)mRendererYSamplesProp)->setMaxValue(1024);
+	((IntProperty*)mRendererYSamplesProp)->setDefaultValue(8);
+	((IntProperty*)mRendererYSamplesProp)->setValue(8);
+	mRendererGroupProp->addChild(mRendererYSamplesProp);
 
 	mRendererSamplerProp = new SelectionProperty();
 	mRendererSamplerProp->setPropertyName(tr("Sampler"));
@@ -132,6 +142,7 @@ MainWindow::MainWindow(QWidget *parent)
 	ui.propertyView->expandToDepth(1);
 
 	//Connect all signal and slots
+	connect(ui.actionExportImage, SIGNAL(triggered()), this, SLOT(exportImage()));
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 	connect(ui.actionWebsite, SIGNAL(triggered()), this, SLOT(openWebsite()));
@@ -188,13 +199,49 @@ MainWindow::~MainWindow()
 		delete mRendererTileYProp;
 		delete mRendererThreadsProp;
 		delete mRendererSamplingProp;
-		delete mRendererSamplesPerRayProp;
+		delete mRendererXSamplesProp;
+		delete mRendererYSamplesProp;
 		delete mRendererSamplerProp;
 		delete mRendererMaxRayDepthProp;
 		delete mRendererMaxDirectRayCountProp;
 		delete mRendererMaxIndirectRayCountProp;
 		delete mViewGroupProp;
 		delete mViewModeProp;
+	}
+}
+
+void MainWindow::exportImage()
+{
+	QStringList mimeTypeFilters;
+	foreach(const QByteArray &mimeTypeName, QImageWriter::supportedMimeTypes())
+	{
+		mimeTypeFilters.append(mimeTypeName);
+	}
+
+	mimeTypeFilters.sort();
+
+	const QStringList picturesLocations = QStandardPaths::standardLocations(QStandardPaths::PicturesLocation);
+
+	QFileDialog dialog(this, tr("Export Image"),
+		picturesLocations.isEmpty() ? QDir::currentPath() : picturesLocations.last());
+	dialog.setAcceptMode(QFileDialog::AcceptSave);
+	dialog.setFileMode(QFileDialog::AnyFile);
+	dialog.setMimeTypeFilters(mimeTypeFilters);
+	dialog.selectMimeTypeFilter("image/png");
+	dialog.setDefaultSuffix("png");
+
+	dialog.show();
+	if (dialog.exec() == QDialog::Accepted &&
+		!dialog.selectedFiles().isEmpty())
+	{
+		QImageWriter writer(dialog.selectedFiles().first());
+		if(!writer.write(ui.viewWidget->image()))
+		{
+			QMessageBox::critical(this, tr("Error"),
+				tr("Couldn't write image to %1:\n%2")
+				.arg(dialog.selectedFiles().first())
+				.arg(writer.errorString()));
+		}
 	}
 }
 
@@ -306,9 +353,13 @@ void MainWindow::propertyValueChanged(IProperty* prop)
 	{
 		mRenderer->enableSampling(((BoolProperty*)mRendererSamplingProp)->value());
 	}
-	else if (prop == mRendererSamplesPerRayProp)
+	else if (prop == mRendererXSamplesProp)
 	{
-		mRenderer->setSamplePerRayCount(((IntProperty*)mRendererSamplesPerRayProp)->value());
+		mRenderer->setXSampleCount(((IntProperty*)mRendererXSamplesProp)->value());
+	}
+	else if (prop == mRendererYSamplesProp)
+	{
+		mRenderer->setYSampleCount(((IntProperty*)mRendererYSamplesProp)->value());
 	}
 	else if (prop == mRendererSamplerProp)
 	{
@@ -342,7 +393,8 @@ void MainWindow::startRendering()
 	mRendererTileYProp->setEnabled(false);
 	mRendererThreadsProp->setEnabled(false);
 	mRendererSamplingProp->setEnabled(false);
-	mRendererSamplesPerRayProp->setEnabled(false);
+	mRendererXSamplesProp->setEnabled(false);
+	mRendererYSamplesProp->setEnabled(false);
 	mRendererSamplerProp->setEnabled(false);
 	mRendererMaxDirectRayCountProp->setEnabled(false);
 	mRendererMaxIndirectRayCountProp->setEnabled(false);
@@ -378,7 +430,8 @@ void MainWindow::stopRendering()
 	mRendererTileYProp->setEnabled(true);
 	mRendererThreadsProp->setEnabled(true);
 	mRendererSamplingProp->setEnabled(true);
-	mRendererSamplesPerRayProp->setEnabled(true);
+	mRendererXSamplesProp->setEnabled(true);
+	mRendererYSamplesProp->setEnabled(true);
 	mRendererSamplerProp->setEnabled(true);
 	mRendererMaxDirectRayCountProp->setEnabled(true);
 	mRendererMaxIndirectRayCountProp->setEnabled(true);

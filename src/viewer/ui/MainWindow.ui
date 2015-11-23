@@ -50,6 +50,8 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionExportImage"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -98,8 +100,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="PropertyView" name="propertyView">
-      </widget>
+      <widget class="PropertyView" name="propertyView"/>
      </item>
     </layout>
    </widget>
@@ -205,6 +206,11 @@
   <action name="actionHideToolbars">
    <property name="text">
     <string>Hide all</string>
+   </property>
+  </action>
+  <action name="actionExportImage">
+   <property name="text">
+    <string>Export Image</string>
    </property>
   </action>
  </widget>

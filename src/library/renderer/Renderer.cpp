@@ -15,7 +15,7 @@ namespace PR
 		mResult(w, h), mRandom((uint64)time(NULL)),
 		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
 		mMaxRayDepth(3), mMaxDirectRayCount(10), mMaxIndirectRayCount(50),
-		mEnableSampling(false), mSamplePerRayCount(8), mSamplerMode(SM_Jitter)
+		mEnableSampling(false), mXSampleCount(8), mYSampleCount(8), mSamplerMode(SM_Jitter)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -116,45 +116,38 @@ namespace PR
 			float newDepth = 0;
 			Spectrum newSpec;
 
-			const uint32 xSamples = mSamplePerRayCount / 2;
-			const uint32 ySamples = mSamplePerRayCount - xSamples;
-			const float xSampleMid = 1 / (2.0f * xSamples);
-			const float ySampleMid = 1 / (2.0f * ySamples);
-
-			for (uint32 i = 0; i < mSamplePerRayCount; ++i)
+			for (uint32 yi = 0; yi < mYSampleCount; ++yi)
 			{
-				float sx;
-				float sy;
-
-				if (mSamplerMode == SM_Random)
+				for (uint32 xi = 0; xi < mXSampleCount; ++xi)
 				{
-					sx = x + mRandom.getFloat() - 0.5f;
-					sy = y + mRandom.getFloat() - 0.5f;
-				}
-				else if (mSamplerMode == SM_Uniform)
-				{
-					int tx = i % xSamples;
-					int ty = i / xSamples;
+					float sx;
+					float sy;
 
-					sx = x + tx / (float)xSamples - 0.5f;
-					sy = y + ty / (float)ySamples - 0.5f;
-				}
-				else //SM_Jitter
-				{
-					int tx = i % xSamples;
-					int ty = i / xSamples;
+					if (mSamplerMode == SM_Random)
+					{
+						sx = x + mRandom.getFloat() - 0.5f;
+						sy = y + mRandom.getFloat() - 0.5f;
+					}
+					else if (mSamplerMode == SM_Uniform)
+					{
+						sx = x + xi / (float)mXSampleCount - 0.5f;
+						sy = y + yi / (float)mYSampleCount - 0.5f;
+					}
+					else //SM_Jitter
+					{
+						sx = x + (xi + mRandom.getFloat()) / (float)mXSampleCount - 0.5f;
+						sy = y + (yi + mRandom.getFloat()) / (float)mYSampleCount - 0.5f;
+					}
 
-					sx = x + (tx + mRandom.getFloat()) / (float)xSamples - 0.5f;
-					sy = y + (ty + mRandom.getFloat()) / (float)ySamples - 0.5f;
-				}
+					float depth;
+					Ray ray = renderSample(sx, sy, depth);
 
-				float depth;
-				Ray ray = renderSample(sx, sy, depth);
+					if (depth >= 0)
+					{
+						newDepth += depth;
+						newSpec += ray.spectrum();
+					}
 
-				if (depth >= 0)
-				{
-					newDepth += depth;
-					newSpec += ray.spectrum();
 					++successfulSamples;
 				}
 			}
@@ -168,7 +161,10 @@ namespace PR
 		else
 		{
 			float depth;
-			Ray ray = renderSample((float)x, (float)y, depth);
+			Ray ray = renderSample(x /*+ mRandom.getFloat() - 0.5f*/,
+				y /*+ mRandom.getFloat() - 0.5f*/,
+				depth);
+
 			if (depth >= 0)
 			{
 				mResult.setDepth(x, y, depth);
