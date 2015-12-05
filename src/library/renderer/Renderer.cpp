@@ -161,8 +161,8 @@ namespace PR
 		else
 		{
 			float depth;
-			Ray ray = renderSample(x /*+ mRandom.getFloat() - 0.5f*/,
-				y /*+ mRandom.getFloat() - 0.5f*/,
+			Ray ray = renderSample(x + mRandom.getFloat() - 0.5f,
+				y + mRandom.getFloat() - 0.5f,
 				depth);
 
 			if (depth >= 0)
