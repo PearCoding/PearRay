@@ -20,6 +20,8 @@
 #include "properties/BoolProperty.h"
 #include "properties/SelectionProperty.h"
 
+#include "models/EntityTreeModel.h"
+
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
 	mEnvironment(nullptr), mRenderer(nullptr),
@@ -34,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//Add dock widgets to menu
 	ui.menuDockWidgets->addAction(ui.propertyDockWidget->toggleViewAction());
 	ui.menuDockWidgets->addAction(ui.spectrumDockWidget->toggleViewAction());
+	ui.menuDockWidgets->addAction(ui.outlinerDockWidget->toggleViewAction());
 
 	// Setup properties
 	mRendererGroupProp = new GroupProperty();
@@ -175,6 +178,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 		ui.viewWidget->setRenderer(mRenderer);
 		mEnvironment->scene()->buildTree();
+
+		ui.outlinerView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
 	}
 }
 
@@ -328,11 +333,15 @@ void MainWindow::hideAllToolbars()
 void MainWindow::showAllDocks()
 {
 	ui.propertyDockWidget->show();
+	ui.spectrumDockWidget->show();
+	ui.outlinerDockWidget->show();
 }
 
 void MainWindow::hideAllDocks()
 {
 	ui.propertyDockWidget->hide();
+	ui.spectrumDockWidget->hide();
+	ui.outlinerDockWidget->hide();
 }
 
 void MainWindow::propertyValueChanged(IProperty* prop)
