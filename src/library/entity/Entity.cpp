@@ -57,9 +57,9 @@ namespace PR
 		mReCache = true;
 	}
 
-	PM::vec3 Entity::position() const
+	PM::vec3 Entity::position(bool local) const
 	{
-		if (mParent)
+		if (mParent && !local)
 		{
 			return PM::pm_Multiply(mParent->matrix(), mPosition);
 		}
@@ -75,9 +75,9 @@ namespace PR
 		mReCache = true;
 	}
 
-	PM::vec3 Entity::scale() const
+	PM::vec3 Entity::scale(bool local) const
 	{
-		if (mParent)
+		if (mParent && !local)
 		{
 			return PM::pm_Multiply(mParent->scale(), mScale);
 		}
@@ -93,9 +93,9 @@ namespace PR
 		mReCache = true;
 	}
 
-	PM::quat Entity::rotation() const
+	PM::quat Entity::rotation(bool local) const
 	{
-		if (mParent)
+		if (mParent && !local)
 		{
 			return PM::pm_MultiplyQuat(mParent->rotation(), mRotation);
 		}

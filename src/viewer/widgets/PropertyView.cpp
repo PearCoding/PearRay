@@ -38,11 +38,12 @@ void PropertyView::setPropertyTable(PropertyTable* table)
 {
 	if (mProperties)
 	{
-		disconnect(mProperties, SIGNAL(propertyStructureChanged(IProperty*)),
+		mProperties->disconnect();
+		/*disconnect(mProperties, SIGNAL(propertyStructureChanged(IProperty*)),
 			this, SLOT(propertyStructureWasChanged(IProperty*)));
 		disconnect(mProperties, SIGNAL(propertyChanged(IProperty*)),
-			this, SLOT(propertyStructureWasChanged(IProperty*)));
-		reset();
+			this, SLOT(propertyStructureWasChanged(IProperty*)));*/
+		resetContent();
 	}
 
 	mProperties = table;
@@ -136,7 +137,7 @@ PropertyTable* PropertyView::propertyTable() const
 	return mProperties;
 }
 
-void PropertyView::reset()
+void PropertyView::resetContent()
 {
 	mProperties = nullptr;
 	clear();

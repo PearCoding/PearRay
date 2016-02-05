@@ -17,6 +17,7 @@ enum ViewMode
 	VM_XYZ,// Color space (CIE XYZ)
 	VM_NORM_XYZ// Color space (CIE XYZ)
 };
+
 class ViewWidget : public QWidget
 {
 	Q_OBJECT
@@ -26,12 +27,6 @@ public:
 	~ViewWidget();
 
 	void setRenderer(PR::Renderer* renderer);
-
-	inline void setViewMode(ViewMode vm)
-	{
-		mViewMode = vm;
-		refreshView();
-	}
 
 	inline ViewMode viewMode() const
 	{
@@ -44,6 +39,11 @@ public:
 	}
 
 public slots:
+	inline void setViewMode(ViewMode vm)
+	{
+		mViewMode = vm;
+		refreshView();
+	}
 	void enableScale(bool b);
 	void refreshView();
 

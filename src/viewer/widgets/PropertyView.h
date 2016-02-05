@@ -15,7 +15,7 @@ public:
 	PropertyTable* propertyTable() const;
 
 public slots:
-	void reset();
+	void resetContent();
 
 protected:
 	void drawRow(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;

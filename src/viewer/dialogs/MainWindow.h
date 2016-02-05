@@ -43,34 +43,18 @@ private slots:
 
 	void updateView();
 
-	void propertyValueChanged(IProperty* prop);
+	void startRendering();
+	void stopRendering();
+
+	void entitySelected(QModelIndex index);
 private:
 	void readSettings();
 	void writeSettings();
-
-	void startRendering();
-	void stopRendering();
 	
 	Ui::MainWindowClass ui;
 
 	PRU::Environment* mEnvironment;
 	PR::Renderer* mRenderer;
-
-	PropertyTable mProperties;
-	IProperty* mRendererGroupProp;
-	IProperty* mRendererTileXProp;
-	IProperty* mRendererTileYProp;
-	IProperty* mRendererThreadsProp;
-	IProperty* mRendererMaxRayDepthProp;
-	IProperty* mRendererMaxDirectRayCountProp;
-	IProperty* mRendererMaxIndirectRayCountProp;
-	IProperty* mRendererSamplingProp;
-	IProperty* mRendererXSamplesProp;
-	IProperty* mRendererYSamplesProp;
-	IProperty* mRendererSamplerProp;
-	IProperty* mRendererStartProp;// Button
-	IProperty* mViewGroupProp;
-	IProperty* mViewModeProp;
 
 	QTimer mTimer;
 };

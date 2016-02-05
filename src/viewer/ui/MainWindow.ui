@@ -78,9 +78,9 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QDockWidget" name="propertyDockWidget">
+  <widget class="QDockWidget" name="systemPropertyDockWidget">
    <property name="windowTitle">
-    <string>Properties</string>
+    <string>System Properties</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -100,13 +100,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="PropertyView" name="propertyView">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
-      </widget>
+      <widget class="SystemPropertyView" name="systemPropertyView" native="true"/>
      </item>
     </layout>
    </widget>
@@ -138,9 +132,9 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="outlinerDockWidget">
+  <widget class="QDockWidget" name="outlineDockWidget">
    <property name="windowTitle">
-    <string>Outliner</string>
+    <string>Outline</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -160,7 +154,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeView" name="outlinerView">
+      <widget class="QTreeView" name="outlineView">
        <property name="alternatingRowColors">
         <bool>true</bool>
        </property>
@@ -168,6 +162,33 @@
         <bool>true</bool>
        </property>
       </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="entityDetailsDockWidget">
+   <property name="windowTitle">
+    <string>Entity Details</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="EntityDetailsView" name="entityDetailsView" native="true"/>
      </item>
     </layout>
    </widget>
@@ -263,14 +284,21 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PropertyView</class>
-   <extends>QTreeWidget</extends>
-   <header>widgets/PropertyView.h</header>
-  </customwidget>
-  <customwidget>
    <class>SpectrumWidget</class>
    <extends>QWidget</extends>
    <header>widgets/SpectrumWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>EntityDetailsView</class>
+   <extends>QWidget</extends>
+   <header>widgets/EntityDetailsView.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SystemPropertyView</class>
+   <extends>QWidget</extends>
+   <header>widgets/SystemPropertyView.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
