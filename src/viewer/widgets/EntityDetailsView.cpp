@@ -51,6 +51,7 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 	{
 		mView->setPropertyTable(nullptr);
 
+		mPropertyTable->disconnect();
 		delete mPropertyTable;
 		mPropertyTable = nullptr;
 
@@ -138,6 +139,8 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		{
 			addMesh();
 		}
+
+		connect(mPropertyTable, SIGNAL(valueChanged(IProperty*)), this, SLOT(propertyValueChanged(IProperty*)));
 	}
 
 	mView->setPropertyTable(mPropertyTable);
@@ -267,4 +270,72 @@ void EntityDetailsView::addMesh()
 	mProperties.append(group);
 
 	mPropertyTable->add(group);
+}
+
+// FIXME: Really using Strings as identification is not that good.
+void EntityDetailsView::propertyValueChanged(IProperty* prop)
+{
+	Q_ASSERT(mEntity);
+
+	if (prop->propertyName() == tr("Position"))
+	{
+		VectorProperty* p = (VectorProperty*)prop;
+		mEntity->setPosition(PM::pm_Set(p->value(1), p->value(2), p->value(3)));
+	}
+	else if (prop->propertyName() == tr("Rotation"))
+	{
+		VectorProperty* p = (VectorProperty*)prop;
+		mEntity->setRotation(PM::pm_Set(p->value(1), p->value(2), p->value(3), p->value(4)));
+	}
+	else if (prop->propertyName() == tr("Scale"))
+	{
+		VectorProperty* p = (VectorProperty*)prop;
+		mEntity->setScale(PM::pm_Set(p->value(1), p->value(2), p->value(3)));
+	}
+	// Sphere
+	else if (prop->propertyName() == tr("Radius"))
+	{
+		DoubleProperty* p = (DoubleProperty*)prop;
+		((PR::SphereEntity*)mEntity)->setRadius(p->value());
+	}
+	// Camera
+	else if (prop->propertyName() == tr("Width"))
+	{
+		DoubleProperty* p = (DoubleProperty*)prop;
+
+		if (mEntity->type() == "orthographicCamera")
+		{
+			((PR::OrthographicCamera*)mEntity)->setWidth(p->value());
+		}
+		else if (mEntity->type() == "perspectiveCamera")
+		{
+			((PR::PerspectiveCamera*)mEntity)->setWidth(p->value());
+		}
+	}
+	else if (prop->propertyName() == tr("Height"))
+	{
+		DoubleProperty* p = (DoubleProperty*)prop;
+
+		if (mEntity->type() == "orthographicCamera")
+		{
+			((PR::OrthographicCamera*)mEntity)->setHeight(p->value());
+		}
+		else if (mEntity->type() == "perspectiveCamera")
+		{
+			((PR::PerspectiveCamera*)mEntity)->setHeight(p->value());
+		}
+	}
+	else if (prop->propertyName() == tr("Lens Distance"))
+	{
+		DoubleProperty* p = (DoubleProperty*)prop;
+
+		if (mEntity->type() == "orthographicCamera")
+		{
+			((PR::OrthographicCamera*)mEntity)->setLensDistance(p->value());
+		}
+		else if (mEntity->type() == "perspectiveCamera")
+		{
+			((PR::PerspectiveCamera*)mEntity)->setLensDistance(p->value());
+		}
+	}
 }

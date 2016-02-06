@@ -9,7 +9,7 @@ namespace PR
 {
 	DiffuseMaterial::DiffuseMaterial() :
 		Material(), mDiffSpectrum(), mRoughness(1), mCanBeShaded(true),
-		mLight(false), mSelfShadow(true)
+		mLight(false), mSelfShadow(true), mCameraVisible(true)
 	{
 	}
 

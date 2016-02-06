@@ -41,6 +41,8 @@ IF(CYGWIN)
 ENDIF()
 
 #PACKAGES
+option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library" ON)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
 
@@ -72,6 +74,10 @@ add_subdirectory(pearpic)
 SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
+IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
+	SET(DEFS "${DEFS};PR_WITH_VIEWER")
+ENDIF()
+
 configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
@@ -82,7 +88,7 @@ add_subdirectory(${PR_Root}/library)
 add_subdirectory(${PR_Root}/utils)
 add_subdirectory(${PR_Root}/console)
 
-IF(${Qt5Widgets_FOUND})
+IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
 	add_subdirectory(${PR_Root}/viewer)
 ENDIF()
 

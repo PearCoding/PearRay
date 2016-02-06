@@ -36,6 +36,7 @@ signals:
 	void startRendering();
 	void stopRendering();
 	void viewModeChanged(ViewMode);
+	void viewScaleChanged(bool);
 
 private slots:
 	void propertyValueChanged(IProperty* prop);
@@ -58,4 +59,5 @@ private:
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;
 	IProperty* mViewModeProp;
+	IProperty* mViewScaleProp;
 };

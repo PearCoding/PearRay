@@ -112,7 +112,6 @@ namespace PR
 	{
 		if (mEnableSampling)
 		{
-			uint32 successfulSamples = 0;
 			float newDepth = 0;
 			Spectrum newSpec;
 
@@ -148,19 +147,15 @@ namespace PR
 						newSpec += ray.spectrum();
 					}
 
-					++successfulSamples;
 				}
 			}
 
-			if (successfulSamples > 0)
-			{
-				mResult.setDepth(x, y, newDepth / successfulSamples);
-				mResult.setPoint(x, y, newSpec / (float)successfulSamples);
-			}
+			mResult.setDepth(x, y, newDepth / 8);
+			mResult.setPoint(x, y, newSpec / 8);
 		}
 		else
 		{
-			float depth;
+			float depth;// Random sampling
 			Ray ray = renderSample(x + mRandom.getFloat() - 0.5f,
 				y + mRandom.getFloat() - 0.5f,
 				depth);
@@ -179,8 +174,8 @@ namespace PR
 
 	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
-		Ray ray = mCamera->constructRay(2 * x / (float)mWidth - 1,
-			2 * y / (float)mHeight - 1);
+		Ray ray = mCamera->constructRay(2 * x / (float)mWidth - 1.0f,
+			2 * y / (float)mHeight - 1.0f);
 
 		FacePoint collisionPoint;
 		RenderEntity* entity = shoot(ray, collisionPoint);

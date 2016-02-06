@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.systemPropertyView, SIGNAL(startRendering()), this, SLOT(startRendering()));
 	connect(ui.systemPropertyView, SIGNAL(stopRendering()), this, SLOT(stopRendering()));
 	connect(ui.systemPropertyView, SIGNAL(viewModeChanged(ViewMode)), ui.viewWidget, SLOT(setViewMode(ViewMode)));
+	connect(ui.systemPropertyView, SIGNAL(viewScaleChanged(bool)), ui.viewWidget, SLOT(enableScale(bool)));
 
 	connect(ui.outlineView, SIGNAL(activated(QModelIndex)), this, SLOT(entitySelected(QModelIndex)));
 
@@ -61,13 +62,12 @@ MainWindow::MainWindow(QWidget *parent)
 
 	if (mEnvironment)
 	{
-		mRenderer = new PR::Renderer(500, 500, mEnvironment->camera(), mEnvironment->scene());
+		mRenderer = new PR::Renderer(800, 600, mEnvironment->camera(), mEnvironment->scene());
 		mRenderer->setMaxRayDepth(2);
 		mRenderer->setMaxDirectRayCount(100);
 		mRenderer->setMaxIndirectRayCount(100);
 
 		ui.viewWidget->setRenderer(mRenderer);
-		mEnvironment->scene()->buildTree();
 
 		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
 	}
@@ -227,6 +227,7 @@ void MainWindow::startRendering()
 	}
 
 	ui.systemPropertyView->enableRendering();
+	ui.entityDetailsView->setDisabled(true);
 
 	mRenderer->setMaxRayDepth(ui.systemPropertyView->getMaxRayDepth());
 	mRenderer->setMaxDirectRayCount(ui.systemPropertyView->getMaxDirectRayCount());
@@ -235,6 +236,8 @@ void MainWindow::startRendering()
 	mRenderer->setSamplerMode((PR::SamplerMode)ui.systemPropertyView->getSampler());
 	mRenderer->setXSampleCount(ui.systemPropertyView->getXSamples());
 	mRenderer->setYSampleCount(ui.systemPropertyView->getYSamples());
+
+	mEnvironment->scene()->buildTree();
 
 	mTimer.start(200);
 	mRenderer->start(ui.systemPropertyView->getTileX(),
@@ -262,6 +265,7 @@ void MainWindow::stopRendering()
 	}
 
 	ui.systemPropertyView->disableRendering();
+	ui.entityDetailsView->setDisabled(false);
 
 	setWindowTitle(tr("PearRay Viewer"));
 }

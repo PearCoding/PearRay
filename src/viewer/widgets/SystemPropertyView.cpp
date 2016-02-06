@@ -126,6 +126,10 @@ QWidget(parent)
 	((SelectionProperty*)mViewModeProp)->setDefaultIndex(0);
 	mViewGroupProp->addChild(mViewModeProp);
 
+	mViewScaleProp = new BoolProperty();
+	mViewScaleProp->setPropertyName(tr("Scale to View"));
+	mViewGroupProp->addChild(mViewScaleProp);
+
 	mProperties.add(mViewGroupProp);
 
 	mView->setPropertyTable(&mProperties);
@@ -149,6 +153,7 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererMaxIndirectRayCountProp;
 	delete mViewGroupProp;
 	delete mViewModeProp;
+	delete mViewScaleProp;
 }
 
 void SystemPropertyView::propertyValueChanged(IProperty* prop)
@@ -167,6 +172,10 @@ void SystemPropertyView::propertyValueChanged(IProperty* prop)
 	else if (prop == mViewModeProp)
 	{
 		emit viewModeChanged((ViewMode)((SelectionProperty*)mViewModeProp)->currentData().toInt());
+	}
+	else if (prop == mViewScaleProp)
+	{
+		emit viewScaleChanged(((BoolProperty*)mViewScaleProp)->value());
 	}
 }
 

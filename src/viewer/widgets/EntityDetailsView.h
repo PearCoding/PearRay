@@ -20,6 +20,9 @@ public:
 public slots:
 	void setEntity(PR::Entity* entity);
 
+private slots:
+	void propertyValueChanged(IProperty* prop);
+
 private:
 	void addRenderEntity();
 	void addSphere();
