@@ -16,6 +16,8 @@ namespace PR
 		RenderEntity(const std::string& name, Entity* parent = nullptr);
 		virtual ~RenderEntity();
 
+		bool isRenderable() const override;
+
 		virtual bool isLight() const = 0;
 		virtual uint32 maxLightSamples() const;// 0 == Unbounded
 

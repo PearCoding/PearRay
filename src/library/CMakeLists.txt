@@ -13,6 +13,7 @@ SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Entity_Src
   ${PR_LIB}/entity/BoundaryEntity.cpp
   ${PR_LIB}/entity/Entity.cpp
+  ${PR_LIB}/entity/GridEntity.cpp
   ${PR_LIB}/entity/MeshEntity.cpp
   ${PR_LIB}/entity/RenderEntity.cpp
   ${PR_LIB}/entity/SphereEntity.cpp)
@@ -22,7 +23,9 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/Face.cpp
   ${PR_LIB}/geometry/FacePoint.cpp
   ${PR_LIB}/geometry/Mesh.cpp
-  ${PR_LIB}/geometry/RandomRotationSphere.cpp)
+  ${PR_LIB}/geometry/Plane.cpp
+  ${PR_LIB}/geometry/RandomRotationSphere.cpp
+  ${PR_LIB}/geometry/Sphere.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Lights_Src
   ${PR_LIB}/lights/PointLight.cpp)
@@ -73,6 +76,7 @@ SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Entity_Hdr
   ${PR_LIB}/entity/BoundaryEntity.h
   ${PR_LIB}/entity/Entity.h
+  ${PR_LIB}/entity/GridEntity.h
   ${PR_LIB}/entity/MeshEntity.h
   ${PR_LIB}/entity/RenderEntity.h
   ${PR_LIB}/entity/SphereEntity.h)
@@ -82,7 +86,9 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/Face.h
   ${PR_LIB}/geometry/FacePoint.h
   ${PR_LIB}/geometry/Mesh.h
+  ${PR_LIB}/geometry/Plane.h
   ${PR_LIB}/geometry/RandomRotationSphere.h
+  ${PR_LIB}/geometry/Sphere.h
   ${PR_LIB}/geometry/Triangle.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Lights_Hdr
@@ -95,7 +101,8 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/Material.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Ray_Hdr
-  ${PR_LIB}/ray/Ray.h)
+  ${PR_LIB}/ray/Ray.h
+  ${PR_LIB}/ray/Ray.inl)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
   ${PR_LIB}/renderer/RenderResult.h

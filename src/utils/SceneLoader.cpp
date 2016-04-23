@@ -2,14 +2,16 @@
 #include "Environment.h"
 #include "Logger.h"
 
-#include "entity/BoundaryEntity.h"
-#include "entity/SphereEntity.h"
-#include "entity/MeshEntity.h"
+#include "entity/Entity.h"
+#include "entity/BoundaryEntity.h"// For debug
 
-#include "lights/PointLight.h"
-
-#include "camera/OrthographicCamera.h"
-#include "camera/PerspectiveCamera.h"
+#include "parser/BoundaryParser.h"
+#include "parser/CameraParser.h"
+#include "parser/GridParser.h"
+#include "parser/LightParser.h"
+#include "parser/MeshParser.h"
+#include "parser/PlaneParser.h"
+#include "parser/SphereParser.h"
 
 #include "material/DiffuseMaterial.h"
 #include "material/DebugMaterial.h"
@@ -163,6 +165,23 @@ namespace PRU
 		}
 	}
 
+	struct
+	{
+		const char* Name;
+		EntityParser& Parser;
+	} ParserEntries[] =
+	{
+		{ "boundary", BoundaryParser() },
+		{ "camera", CameraParser() },
+		{ "grid", GridParser() },
+		{ "mesh", MeshParser() },
+		{ "plane", PlaneParser() },
+		{ "pointLight", LightParser() },
+		{ "sphere", SphereParser() },
+
+		{ nullptr, BoundaryParser() },//Just for the end
+	};
+
 	void SceneLoader::addEntity(DL::DataGroup* group, PR::Entity* parent, Environment* env)
 	{
 		DL::Data* nameD = group->getFromKey("name");
@@ -171,7 +190,6 @@ namespace PRU
 		DL::Data* rotD = group->getFromKey("rotation");
 		DL::Data* scaleD = group->getFromKey("scale");
 		DL::Data* debugD = group->getFromKey("debug");
-		DL::Data* materialD = group->getFromKey("material");
 		DL::Data* materialDebugBoundingBoxD = group->getFromKey("materialDebugBoundingBox");
 
 		std::string name;
@@ -190,238 +208,38 @@ namespace PRU
 			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. No valid type given.", name.c_str());
 			return;
 		}
-		else if (typeD->getString() == "sphere")
-		{
-			DL::Data* radiusD = group->getFromKey("radius");
-
-			float r = 1;
-			if (radiusD && radiusD->isNumber())
-			{
-				r = radiusD->getFloatConverted();
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no radius. Assuming 1.", name.c_str());
-			}
-
-			SphereEntity* sphere = new SphereEntity(name, r, parent);
-
-			if (materialD && materialD->isType() == DL::Data::T_String)
-			{
-				if (env->hasMaterial(materialD->getString()))
-				{
-					sphere->setMaterial(env->getMaterial(materialD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD->getString().c_str());
-				}
-			}
-
-			entity = sphere;
-		}
-		else if (typeD->getString() == "boundary")
-		{
-			DL::Data* sizeD = group->getFromKey("size");
-
-			PM::vec3 size = PM::pm_Set(1, 1, 1, 1);
-
-			if (sizeD && (sizeD->isType() == DL::Data::T_Array || sizeD->isNumber()))
-			{
-				if (sizeD->isType() == DL::Data::T_Array)
-				{
-					DL::DataArray* arr = sizeD->getArray();
-
-					bool ok;
-					size = getVector(arr, ok);
-
-					if (!ok)
-					{
-						size = PM::pm_Set(1, 1, 1, 1);
-						PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid size. Assuming unit cube.", name.c_str());
-					}
-				}
-				else
-				{
-					size = PM::pm_Set(sizeD->getFloatConverted(),
-						sizeD->getFloatConverted(),
-						sizeD->getFloatConverted(),
-						1);
-				}
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no size. Assuming unit cube.", name.c_str());
-			}
-
-			BoundaryEntity* bnd = new BoundaryEntity(name,
-				BoundingBox(PM::pm_GetX(size), PM::pm_GetY(size), PM::pm_GetZ(size)),
-				parent);
-
-			if (materialD && materialD->isType() == DL::Data::T_String)
-			{
-				if (env->hasMaterial(materialD->getString()))
-				{
-					bnd->setMaterial(env->getMaterial(materialD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD->getString().c_str());
-				}
-			}
-
-			entity = bnd;
-		}
-		else if (typeD->getString() == "pointLight")
-		{
-			PointLight* l = new PointLight(name, parent);
-
-			if (materialD && materialD->isType() == DL::Data::T_String)
-			{
-				if (env->hasMaterial(materialD->getString()))
-				{
-					l->setMaterial(env->getMaterial(materialD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD->getString().c_str());
-				}
-			}
-
-			entity = l;
-		}
-		else if (typeD->getString() == "camera")
-		{
-			DL::Data* projectionD = group->getFromKey("projection");
-
-			if (projectionD && projectionD->isType() == DL::Data::T_String)
-			{
-				if (projectionD->getString() == "perspective")
-				{
-					DL::Data* fovHD = group->getFromKey("fovH");
-					DL::Data* fovVD = group->getFromKey("fovV");
-					DL::Data* lensDistD = group->getFromKey("lensDistance");
-					DL::Data* lookAtD = group->getFromKey("lookAt");
-
-					float fovH = 60;
-					float fovV = 45;
-					float lensDist = 0.1f;
-
-					if (fovHD && fovHD->isNumber())
-					{
-						fovH = fovHD->getFloatConverted();
-					}
-
-					if (fovVD && fovVD->isNumber())
-					{
-						fovV = fovVD->getFloatConverted();
-					}
-
-					if (lensDistD && lensDistD->isNumber())
-					{
-						lensDist = lensDistD->getFloatConverted();
-					}
-
-					PerspectiveCamera* camera = new PerspectiveCamera(name, parent);
-					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
-
-					if (lookAtD && lookAtD->isType() == DL::Data::T_Array)
-					{
-						bool ok;
-						PM::vec3 look = getVector(lookAtD->getArray(), ok);
-
-						if (ok)
-						{
-							camera->lookAt(look);
-						}
-					}
-					entity = camera;
-				}
-				else if (projectionD->getString() == "orthographic")
-				{
-					DL::Data* fovHD = group->getFromKey("fovH");
-					DL::Data* fovVD = group->getFromKey("fovV");
-					DL::Data* lensDistD = group->getFromKey("lensDistance");
-
-					float fovH = 60;
-					float fovV = 45;
-					float lensDist = 0.1f;
-
-					if (fovHD && fovHD->isNumber())
-					{
-						fovH = fovHD->getFloatConverted();
-					}
-
-					if (fovVD && fovVD->isNumber())
-					{
-						fovV = fovVD->getFloatConverted();
-					}
-
-					if (lensDistD && lensDistD->isNumber())
-					{
-						lensDist = lensDistD->getFloatConverted();
-					}
-
-					OrthographicCamera* camera = new OrthographicCamera(name, parent);
-					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
-					entity = camera;
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Error, M_Scene, "Unknown camera projection for entity %s given.", name.c_str());
-					return;
-				}
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Error, M_Scene, "No valid camera projection for entity %s given.", name.c_str());
-				return;
-			}
-		}
-		else if (typeD->getString() == "mesh")
-		{
-			DL::Data* meshD = group->getFromKey("mesh");
-
-			MeshEntity* me = new MeshEntity(name, parent);
-
-			if (meshD && meshD->isType() == DL::Data::T_String)
-			{
-				if (env->hasMesh(meshD->getString()))
-				{
-					me->setMesh(env->getMesh(meshD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find mesh %s.", meshD->getString().c_str());
-				}
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid mesh entry found.");
-			}
-
-			if (materialD && materialD->isType() == DL::Data::T_String)
-			{
-				if (env->hasMaterial(materialD->getString()))
-				{
-					me->setMaterial(env->getMaterial(materialD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD->getString().c_str());
-				}
-			}
-
-			entity = me;
-		}
 		else if (typeD->getString() == "null")
 		{
 			entity = new Entity(name, parent);
 		}
 		else
 		{
-			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. Unknown type given.", name.c_str());
-			return;
+			EntityParser* parser = nullptr;
+			for (int i = 0; ParserEntries[i].Name; ++i)
+			{
+				if (typeD->getString() == ParserEntries[i].Name)
+				{
+					parser = &ParserEntries[i].Parser;
+					break;
+				}
+			}
+
+			if (parser)
+			{
+				entity = parser->parse(this, env, name, parent, typeD->getString(), group);
+
+				if (!entity)
+				{
+					PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. Error in '%s' type parser.",
+						name.c_str(), typeD->getString().c_str());
+					return;
+				}
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. Unknown type given.", name.c_str());
+				return;
+			}
 		}
 
 		PR_ASSERT(entity);// After here it shouldn't be null
@@ -499,14 +317,7 @@ namespace PRU
 		}
 
 		// Add to scene
-		if (typeD->getString() == "null" || typeD->getString() == "camera")
-		{
-			env->scene()->addEntity(entity);
-		}
-		else
-		{
-			env->scene()->addEntity((RenderEntity*)entity);
-		}
+		env->scene()->addEntity(entity);
 
 		for (size_t i = 0; i < group->unnamedCount(); ++i)
 		{

@@ -22,8 +22,6 @@ namespace PR
 		void setName(const std::string& name);
 		std::string name() const;
 
-		void addEntity(RenderEntity* e);
-		void removeEntity(RenderEntity* e);
 		const std::list<RenderEntity*>& renderEntities() const;
 
 		void addEntity(Entity* e);

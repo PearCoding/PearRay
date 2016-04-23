@@ -5,6 +5,7 @@
 #include "entity/RenderEntity.h"
 #include "entity/SphereEntity.h"
 #include "entity/MeshEntity.h"
+#include "entity/GridEntity.h"
 
 #include "camera/OrthographicCamera.h"
 #include "camera/PerspectiveCamera.h"
@@ -134,6 +135,10 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		else if (entity->type() == "pointLight")
 		{
 			addPointLight();
+		}
+		else if (entity->type() == "grid")
+		{
+			addGrid();
 		}
 		else if (entity->type() == "mesh")
 		{
@@ -272,7 +277,50 @@ void EntityDetailsView::addMesh()
 	mPropertyTable->add(group);
 }
 
-// FIXME: Really using Strings as identification is not that good.
+void EntityDetailsView::addGrid()
+{
+	Q_ASSERT(mEntity);
+
+	GroupProperty* group = new GroupProperty();
+	group->setPropertyName(tr("Grid"));
+	mProperties.append(group);
+
+	PR::GridEntity* ent = (PR::GridEntity*)mEntity;
+
+	VectorProperty* xAxis = new VectorProperty();
+	xAxis->setPropertyName(tr("XAxis"));
+	xAxis->setDefaultValue(PM::pm_GetX(ent->plane().xAxis()), 1);
+	xAxis->setDefaultValue(PM::pm_GetY(ent->plane().xAxis()), 2);
+	xAxis->setDefaultValue(PM::pm_GetZ(ent->plane().xAxis()), 3);
+	xAxis->setValue(PM::pm_GetX(ent->plane().xAxis()), 1);
+	xAxis->setValue(PM::pm_GetY(ent->plane().xAxis()), 2);
+	xAxis->setValue(PM::pm_GetZ(ent->plane().xAxis()), 3);
+	group->addChild(xAxis);
+	mProperties.append(xAxis);
+
+	VectorProperty* yAxis = new VectorProperty();
+	yAxis->setPropertyName(tr("YAxis"));
+	yAxis->setDefaultValue(PM::pm_GetX(ent->plane().yAxis()), 1);
+	yAxis->setDefaultValue(PM::pm_GetY(ent->plane().yAxis()), 2);
+	yAxis->setDefaultValue(PM::pm_GetZ(ent->plane().yAxis()), 3);
+	yAxis->setValue(PM::pm_GetX(ent->plane().yAxis()), 1);
+	yAxis->setValue(PM::pm_GetY(ent->plane().yAxis()), 2);
+	yAxis->setValue(PM::pm_GetZ(ent->plane().yAxis()), 3);
+	group->addChild(yAxis);
+	mProperties.append(yAxis);
+
+	IntProperty* gridCount = new IntProperty();
+	gridCount->setPropertyName(tr("Grid Count"));
+	gridCount->setDefaultValue(ent->gridCount());
+	gridCount->setValue(ent->gridCount());
+	gridCount->setMinValue(1);
+	group->addChild(gridCount);
+	mProperties.append(gridCount);
+
+	mPropertyTable->add(group);
+}
+
+// FIXME: Using strings as identification is not that good.
 void EntityDetailsView::propertyValueChanged(IProperty* prop)
 {
 	Q_ASSERT(mEntity);

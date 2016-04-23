@@ -4,10 +4,12 @@ message(STATUS "Enabling Testing")
 enable_testing()
 
 set(PRT_Root ${PR_Root}/tests)
+set(PRT_Pre ${PRT_Root}/Test.h)
 
 set(LIBS ${PR_TARGET})
 
 FUNCTION(PUSH_TEST name files)
+	list(APPEND files ${PRT_Pre})
 	add_executable(pr_test_${name} ${files})
 	target_link_libraries(pr_test_${name} ${LIBS})
 	set_target_properties(pr_test_${name} PROPERTIES VERSION ${PR_Version})
@@ -16,3 +18,4 @@ FUNCTION(PUSH_TEST name files)
 ENDFUNCTION(PUSH_TEST)
 
 PUSH_TEST(spectrum spectrum.cpp)
+PUSH_TEST(plane plane.cpp)

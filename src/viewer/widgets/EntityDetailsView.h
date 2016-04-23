@@ -30,6 +30,7 @@ private:
 	void addPersCamera();
 	void addMesh();
 	void addPointLight();
+	void addGrid();
 
 	PropertyView* mView;
 

@@ -29,13 +29,13 @@ namespace PRU
 		Environment* loadFromFile(const std::string& path);
 		Environment* load(const std::string& source);
 
+		PM::vec3 getVector(DL::DataArray* arr, bool& ok) const;
+		PM::quat getRotation(DL::Data* data, bool& ok) const;
+
 	private:
 		void addEntity(DL::DataGroup* group, PR::Entity* parent, Environment* env);
 		void addMaterial(DL::DataGroup* group, Environment* env);
 		void addSpectrum(DL::DataGroup* group, Environment* env);
 		void addMesh(DL::DataGroup* group, Environment* env);
-
-		PM::vec3 getVector(DL::DataArray* arr, bool& ok) const;
-		PM::quat getRotation(DL::Data* data, bool& ok) const;
 	};
 }

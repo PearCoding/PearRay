@@ -29,6 +29,11 @@ namespace PR
 	{
 		return "null";
 	}
+	
+	bool Entity::isRenderable() const
+	{
+		return false;
+	}
 
 	void Entity::setParent(Entity* parent)
 	{

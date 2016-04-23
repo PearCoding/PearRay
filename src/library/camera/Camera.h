@@ -14,7 +14,7 @@ namespace PR
 		virtual ~Camera();
 
 		/**
-		 * nx and ny are normalized coordinates [0 1]
+		 * nx and ny are screen coordinates [-1 1]
 		 */
 		virtual Ray constructRay(float nx, float ny) const = 0;
 	};

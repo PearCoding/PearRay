@@ -174,8 +174,8 @@ namespace PR
 
 	Ray Renderer::renderSample(float x, float y, float& depth)
 	{
-		Ray ray = mCamera->constructRay(2 * x / (float)mWidth - 1.0f,
-			2 * y / (float)mHeight - 1.0f);
+		Ray ray = mCamera->constructRay(2 * (x + 0.5f) / (float)mWidth - 1.0f,
+			2 * (y + 0.5f) / (float)mHeight - 1.0f);// To camera coordinates [-1,1]
 
 		FacePoint collisionPoint;
 		RenderEntity* entity = shoot(ray, collisionPoint);

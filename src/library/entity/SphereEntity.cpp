@@ -2,12 +2,13 @@
 #include "ray/Ray.h"
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
+#include "geometry/Sphere.h"
 #include "geometry/RandomRotationSphere.h"
 
 namespace PR
 {
 	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
-		RenderEntity(name, parent), mRadius(r)
+		RenderEntity(name, parent), mRadius(r), mMaterial(nullptr)
 	{
 	}
 
@@ -58,30 +59,28 @@ namespace PR
 
 	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
-		const PM::vec3 L = PM::pm_Subtract(position(), ray.startPosition()); // C - O
-		const float S = PM::pm_Dot3D(L, ray.direction()); // L . D
-		const float L2 = PM::pm_MagnitudeSqr3D(L); // L . L
-		const float R2 = mRadius*mRadius; // R^2
-
-		if (S < 0 && // when object behind ray
-			L2 > R2) 
+		Sphere sphere(position(), mRadius);
+		PM::vec3 collisionPos;
+		if (!sphere.intersects(ray, collisionPos))
 		{
 			return false;
 		}
 
-		const float M2 = L2 - S*S; // L . L - S^2
+		collisionPoint.setVertex(collisionPos);
 
-		if (M2 > R2)
+		if (ray.flags() & RF_NeedCollisionNormal || ray.flags() & RF_NeedCollisionUV)
 		{
-			return false;
-		}
-		
-		const float Q = sqrtf(R2 - M2);
-		
-		collisionPoint.setVertex(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), L2 > R2 ? S - Q : S + Q)));
+			PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
+			collisionPoint.setNormal(norm);
 
-		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
-		collisionPoint.setNormal(norm);
+			if (ray.flags() & RF_NeedCollisionUV)
+			{
+				PM::vec3 rotNorm = PM::pm_RotateWithQuat(rotation(), norm);
+				float u = std::acos(PM::pm_GetZ(rotNorm));
+				float v = std::atan2(PM::pm_GetY(rotNorm), PM::pm_GetX(rotNorm));
+				collisionPoint.setUV(PM::pm_Set(u, v));
+			}
+		}
 
 		return true;
 	}
@@ -99,10 +98,12 @@ namespace PR
 		FacePoint p;
 
 		// Not really uniform...
-		// UVs missing.
 		PM::vec3 n = RandomRotationSphere::createFast(-1, 1, -1, 1, -1, 1, random);
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Multiply(matrix(), n));
+		float u = std::acos(PM::pm_GetZ(p.normal()));
+		float v = std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal()));
+		p.setUV(PM::pm_Set(u, v));
 
 		return p;
 	}

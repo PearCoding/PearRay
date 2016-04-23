@@ -11,6 +11,11 @@ namespace PR
 	{
 	}
 
+	bool RenderEntity::isRenderable() const
+	{
+		return true;
+	}
+
 	uint32 RenderEntity::maxLightSamples() const
 	{
 		return 0;

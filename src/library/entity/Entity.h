@@ -17,6 +17,7 @@ namespace PR
 		std::string name() const;
 
 		virtual std::string type() const;
+		virtual bool isRenderable() const;
 
 		void setParent(Entity* parent);
 		Entity* parent() const;

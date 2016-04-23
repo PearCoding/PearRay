@@ -27,30 +27,25 @@ namespace PR
 		return mName;
 	}
 
-	void Scene::addEntity(RenderEntity* e)
-	{
-		PR_ASSERT(e);
-		mEntities.push_back(e);
-		mRenderEntities.push_back(e);
-	}
-
-	void Scene::removeEntity(RenderEntity* e)
-	{
-		PR_ASSERT(e);
-		mEntities.remove(e);
-		mRenderEntities.remove(e);
-	}
-
 	void Scene::addEntity(Entity* e)
 	{
 		PR_ASSERT(e);
 		mEntities.push_back(e);
+		if (e->isRenderable())
+		{
+			mRenderEntities.push_back((RenderEntity*)e);
+		}
 	}
 
 	void Scene::removeEntity(Entity* e)
 	{
 		PR_ASSERT(e);
 		mEntities.remove(e);
+
+		if (e->isRenderable())
+		{
+			mRenderEntities.remove((RenderEntity*)e);
+		}
 	}
 
 	Entity* Scene::getEntity(const std::string& name, const std::string& type) const
