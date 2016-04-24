@@ -52,5 +52,8 @@ namespace PR
 		PM::vec3 mNormal;
 		float mWidth;
 		float mHeight;
+
+		float mWidth2;
+		float mHeight2;
 	};
 }

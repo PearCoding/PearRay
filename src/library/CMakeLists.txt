@@ -15,6 +15,7 @@ SET(PR_Entity_Src
   ${PR_LIB}/entity/Entity.cpp
   ${PR_LIB}/entity/GridEntity.cpp
   ${PR_LIB}/entity/MeshEntity.cpp
+  ${PR_LIB}/entity/PlaneEntity.cpp
   ${PR_LIB}/entity/RenderEntity.cpp
   ${PR_LIB}/entity/SphereEntity.cpp)
 SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
@@ -77,6 +78,7 @@ SET(PR_Entity_Hdr
   ${PR_LIB}/entity/BoundaryEntity.h
   ${PR_LIB}/entity/Entity.h
   ${PR_LIB}/entity/GridEntity.h
+  ${PR_LIB}/entity/PlaneEntity.h
   ${PR_LIB}/entity/MeshEntity.h
   ${PR_LIB}/entity/RenderEntity.h
   ${PR_LIB}/entity/SphereEntity.h)

@@ -6,7 +6,7 @@ namespace PR
 {
 	Plane::Plane() :
 		mPosition(PM::pm_Set(0, 0, 0, 1)), mXAxis(PM::pm_Set(1, 0, 0, 1)), mYAxis(PM::pm_Set(0, 1, 0, 1)),
-		mNormal(PM::pm_Set(0,0,1,1)), mWidth(1), mHeight(1)
+		mNormal(PM::pm_Set(0,0,1,1)), mWidth(1), mHeight(1), mWidth2(1), mHeight2(1)
 	{
 	}
 
@@ -16,6 +16,9 @@ namespace PR
 		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
 		mWidth = PM::pm_Magnitude3D(mXAxis);
 		mHeight = PM::pm_Magnitude3D(mYAxis);
+
+		mWidth2 = mWidth*mWidth;
+		mHeight2 = mHeight*mHeight;
 	}
 
 	Plane::Plane(float width, float height) :
@@ -27,6 +30,9 @@ namespace PR
 	{
 		PR_ASSERT(width > 0);
 		PR_ASSERT(height > 0);
+
+		mWidth2 = mWidth*mWidth;
+		mHeight2 = mHeight*mHeight;
 	}
 
 	Plane::Plane(const Plane& other)
@@ -37,6 +43,8 @@ namespace PR
 		PM::pm_Copy(mNormal, other.normal());
 		mWidth = other.mWidth;
 		mHeight = other.mHeight;
+		mWidth2 = other.mWidth2;
+		mHeight2 = other.mHeight2;
 	}
 
 	Plane& Plane::operator = (const Plane& other)
@@ -47,6 +55,8 @@ namespace PR
 		PM::pm_Copy(mNormal, other.normal());
 		mWidth = other.mWidth;
 		mHeight = other.mHeight;
+		mWidth2 = other.mWidth2;
+		mHeight2 = other.mHeight2;
 		return *this;
 	}
 
@@ -129,8 +139,8 @@ namespace PR
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
 		if (PM::pm_Dot3D(p, mNormal) <= std::numeric_limits<float>::epsilon())// Is on the plane
 		{			
-			float u = PM::pm_Dot3D(mXAxis, p)/(width()*width());
-			float v = PM::pm_Dot3D(mYAxis, p)/(height()*height());
+			float u = PM::pm_Dot3D(mXAxis, p) / mWidth2;
+			float v = PM::pm_Dot3D(mYAxis, p) / mHeight2;
 
 			if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 				return true;
@@ -175,8 +185,8 @@ namespace PR
 			{
 				collisionPoint = PM::pm_SetW(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t)), 1);
 				PM::vec3 p = PM::pm_Subtract(collisionPoint, mPosition);
-				u = PM::pm_Dot3D(mXAxis, p) / (width() * width());
-				v = PM::pm_Dot3D(mYAxis, p) / (height() * height());
+				u = PM::pm_Dot3D(mXAxis, p) / mWidth2;
+				v = PM::pm_Dot3D(mYAxis, p) / mHeight2;
 
 				if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 					return true;

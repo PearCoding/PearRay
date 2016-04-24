@@ -4,6 +4,7 @@
 #include "geometry/FacePoint.h"
 
 #include "Logger.h"
+#include "Random.h"
 
 namespace PR
 {
@@ -120,8 +121,13 @@ namespace PR
 
 	FacePoint GridEntity::getRandomFacePoint(Random& random) const
 	{
-		//TODO
+		float u = random.getFloat();
+		float v = random.getFloat();
+
 		FacePoint fp;
+		fp.setVertex(PM::pm_Add(position(), PM::pm_Add(PM::pm_Scale(mPlane.xAxis(), u), PM::pm_Scale(mPlane.yAxis(), v))));
+		fp.setNormal(mPlane.normal());
+		fp.setUV(PM::pm_Set(u, v));
 		return fp;
 	}
 }
