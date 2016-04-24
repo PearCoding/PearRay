@@ -128,15 +128,11 @@ namespace PR
 	{
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
 		if (PM::pm_Dot3D(p, mNormal) <= std::numeric_limits<float>::epsilon())// Is on the plane
-		{
-			//Now check if it is in the width and height area
-			if (PM::pm_IsLess(p, PM::pm_Zero()))
-				return false;
-			
-			float u = PM::pm_Dot3D(mXAxis, p);
-			float v = PM::pm_Dot3D(mYAxis, p);
+		{			
+			float u = PM::pm_Dot3D(mXAxis, p)/(width()*width());
+			float v = PM::pm_Dot3D(mYAxis, p)/(height()*height());
 
-			if (v <= 1 && u <= 1)
+			if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 				return true;
 		}
 		return false;
@@ -179,8 +175,8 @@ namespace PR
 			{
 				collisionPoint = PM::pm_SetW(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t)), 1);
 				PM::vec3 p = PM::pm_Subtract(collisionPoint, mPosition);
-				u = PM::pm_Dot3D(mXAxis, p) / width();
-				v = PM::pm_Dot3D(mYAxis, p) / height();
+				u = PM::pm_Dot3D(mXAxis, p) / (width() * width());
+				v = PM::pm_Dot3D(mYAxis, p) / (height() * height());
 
 				if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 					return true;
