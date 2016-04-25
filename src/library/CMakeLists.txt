@@ -32,9 +32,10 @@ SET(PR_Lights_Src
 SOURCE_GROUP("Source Files\\Lights" FILES ${PR_Lights_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
-  ${PR_LIB}/material/DebugMaterial.cpp
   ${PR_LIB}/material/DiffuseMaterial.cpp
-  ${PR_LIB}/material/GridMaterial.cpp)
+  ${PR_LIB}/material/GridMaterial.cpp
+  ${PR_LIB}/material/NormalDebugMaterial.cpp
+  ${PR_LIB}/material/UVDebugMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Ray_Src
   ${PR_LIB}/ray/Ray.cpp)
@@ -97,10 +98,11 @@ SET(PR_Lights_Hdr
 SOURCE_GROUP("Header Files\\Lights" FILES ${PR_Lights_Hdr})
 SET(PR_Material_Hdr
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
-  ${PR_LIB}/material/DebugMaterial.h
   ${PR_LIB}/material/DiffuseMaterial.h
   ${PR_LIB}/material/GridMaterial.h
-  ${PR_LIB}/material/Material.h)
+  ${PR_LIB}/material/Material.h
+  ${PR_LIB}/material/NormalDebugMaterial.h
+  ${PR_LIB}/material/UVDebugMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Ray_Hdr
   ${PR_LIB}/ray/Ray.h

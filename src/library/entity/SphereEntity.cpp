@@ -76,7 +76,7 @@ namespace PR
 			if (ray.flags() & RF_NeedCollisionUV)
 			{
 				PM::vec3 rotNorm = PM::pm_RotateWithQuat(rotation(), norm);
-				float u = (std::acos(PM::pm_GetZ(rotNorm)) * PM_INV_PI * 0.5f + 1) * 0.5f;
+				float u = (std::acos(PM::pm_GetZ(rotNorm)) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
 				float v = (std::atan2(PM::pm_GetY(rotNorm), PM::pm_GetX(rotNorm)) * PM_INV_PI_F + 1) * 0.5f;
 				collisionPoint.setUV(PM::pm_Set(u, v));
 			}
@@ -101,7 +101,7 @@ namespace PR
 		PM::vec3 n = RandomRotationSphere::createFast(-1, 1, -1, 1, -1, 1, random);
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Multiply(matrix(), n));
-		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI * 0.5f + 1) * 0.5f;
+		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
 		float v = (std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal())) * PM_INV_PI_F + 1) * 0.5f;
 		p.setUV(PM::pm_Set(u, v));
 

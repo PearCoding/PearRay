@@ -1,4 +1,4 @@
-#include "DebugMaterial.h"
+#include "NormalDebugMaterial.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 #include "geometry/RandomRotationSphere.h"
@@ -8,19 +8,19 @@
 
 namespace PR
 {
-	DebugMaterial::DebugMaterial() :
+	NormalDebugMaterial::NormalDebugMaterial() :
 		Material()
 	{
 	}
 
-	void DebugMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	void NormalDebugMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
 		in.setSpectrum(RGBConverter::toSpec(std::fabsf(PM::pm_GetX(point.normal())),
 			std::fabsf(PM::pm_GetY(point.normal())),
 			std::fabsf(PM::pm_GetZ(point.normal()))));
 	}
 
-	bool DebugMaterial::isLight() const
+	bool NormalDebugMaterial::isLight() const
 	{
 		return false;
 	}

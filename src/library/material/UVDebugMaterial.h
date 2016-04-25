@@ -4,10 +4,10 @@
 
 namespace PR
 {
-	class PR_LIB DebugMaterial : public Material
+	class PR_LIB UVDebugMaterial : public Material
 	{
 	public:
-		DebugMaterial();
+		UVDebugMaterial();
 
 		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
 		bool isLight() const;
