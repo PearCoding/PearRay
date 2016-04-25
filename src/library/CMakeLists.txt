@@ -13,7 +13,6 @@ SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Entity_Src
   ${PR_LIB}/entity/BoundaryEntity.cpp
   ${PR_LIB}/entity/Entity.cpp
-  ${PR_LIB}/entity/GridEntity.cpp
   ${PR_LIB}/entity/MeshEntity.cpp
   ${PR_LIB}/entity/PlaneEntity.cpp
   ${PR_LIB}/entity/RenderEntity.cpp
@@ -34,7 +33,8 @@ SOURCE_GROUP("Source Files\\Lights" FILES ${PR_Lights_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
   ${PR_LIB}/material/DebugMaterial.cpp
-  ${PR_LIB}/material/DiffuseMaterial.cpp)
+  ${PR_LIB}/material/DiffuseMaterial.cpp
+  ${PR_LIB}/material/GridMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Ray_Src
   ${PR_LIB}/ray/Ray.cpp)
@@ -77,7 +77,6 @@ SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Entity_Hdr
   ${PR_LIB}/entity/BoundaryEntity.h
   ${PR_LIB}/entity/Entity.h
-  ${PR_LIB}/entity/GridEntity.h
   ${PR_LIB}/entity/PlaneEntity.h
   ${PR_LIB}/entity/MeshEntity.h
   ${PR_LIB}/entity/RenderEntity.h
@@ -100,6 +99,7 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
   ${PR_LIB}/material/DebugMaterial.h
   ${PR_LIB}/material/DiffuseMaterial.h
+  ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Ray_Hdr

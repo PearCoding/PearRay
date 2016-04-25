@@ -5,7 +5,7 @@
 #include "entity/RenderEntity.h"
 #include "entity/SphereEntity.h"
 #include "entity/MeshEntity.h"
-#include "entity/GridEntity.h"
+#include "entity/PlaneEntity.h"
 
 #include "camera/OrthographicCamera.h"
 #include "camera/PerspectiveCamera.h"
@@ -136,9 +136,9 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		{
 			addPointLight();
 		}
-		else if (entity->type() == "grid")
+		else if (entity->type() == "plane")
 		{
-			addGrid();
+			addPlane();
 		}
 		else if (entity->type() == "mesh")
 		{
@@ -277,7 +277,7 @@ void EntityDetailsView::addMesh()
 	mPropertyTable->add(group);
 }
 
-void EntityDetailsView::addGrid()
+void EntityDetailsView::addPlane()
 {
 	Q_ASSERT(mEntity);
 
@@ -285,7 +285,7 @@ void EntityDetailsView::addGrid()
 	group->setPropertyName(tr("Grid"));
 	mProperties.append(group);
 
-	PR::GridEntity* ent = (PR::GridEntity*)mEntity;
+	PR::PlaneEntity* ent = (PR::PlaneEntity*)mEntity;
 
 	VectorProperty* xAxis = new VectorProperty();
 	xAxis->setPropertyName(tr("XAxis"));
@@ -308,14 +308,6 @@ void EntityDetailsView::addGrid()
 	yAxis->setValue(PM::pm_GetZ(ent->plane().yAxis()), 3);
 	group->addChild(yAxis);
 	mProperties.append(yAxis);
-
-	IntProperty* gridCount = new IntProperty();
-	gridCount->setPropertyName(tr("Grid Count"));
-	gridCount->setDefaultValue(ent->gridCount());
-	gridCount->setValue(ent->gridCount());
-	gridCount->setMinValue(1);
-	group->addChild(gridCount);
-	mProperties.append(gridCount);
 
 	mPropertyTable->add(group);
 }

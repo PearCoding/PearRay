@@ -5,17 +5,17 @@
 #include "entity/Entity.h"
 #include "entity/BoundaryEntity.h"// For debug
 
-#include "parser/BoundaryParser.h"
-#include "parser/CameraParser.h"
-#include "parser/GridParser.h"
-#include "parser/LightParser.h"
-#include "parser/MeshParser.h"
-#include "parser/PlaneParser.h"
-#include "parser/SphereParser.h"
+#include "parser/entity/BoundaryParser.h"
+#include "parser/entity/CameraParser.h"
+#include "parser/entity/LightParser.h"
+#include "parser/entity/MeshParser.h"
+#include "parser/entity/PlaneParser.h"
+#include "parser/entity/SphereParser.h"
 
-#include "material/DiffuseMaterial.h"
-#include "material/DebugMaterial.h"
-#include "material/DebugBoundingBoxMaterial.h"
+#include "parser/material/DebugBoundingBoxMaterialParser.h"
+#include "parser/material/DebugMaterialParser.h"
+#include "parser/material/DiffuseMaterialParser.h"
+#include "parser/material/GridMaterialParser.h"
 
 #include "geometry/Mesh.h"
 #include "loader/WavefrontLoader.h"
@@ -169,11 +169,11 @@ namespace PRU
 	{
 		const char* Name;
 		EntityParser& Parser;
-	} ParserEntries[] =
+	} EntityParserEntries[] =
 	{
 		{ "boundary", BoundaryParser() },
+		{ "box", BoundaryParser() },
 		{ "camera", CameraParser() },
-		{ "grid", GridParser() },
 		{ "mesh", MeshParser() },
 		{ "plane", PlaneParser() },
 		{ "pointLight", LightParser() },
@@ -215,11 +215,11 @@ namespace PRU
 		else
 		{
 			EntityParser* parser = nullptr;
-			for (int i = 0; ParserEntries[i].Name; ++i)
+			for (int i = 0; EntityParserEntries[i].Name; ++i)
 			{
-				if (typeD->getString() == ParserEntries[i].Name)
+				if (typeD->getString() == EntityParserEntries[i].Name)
 				{
-					parser = &ParserEntries[i].Parser;
+					parser = &EntityParserEntries[i].Parser;
 					break;
 				}
 			}
@@ -333,6 +333,20 @@ namespace PRU
 		}
 	}
 
+	struct
+	{
+		const char* Name;
+		MaterialParser& Parser;
+	} MaterialParserEntries[] =
+	{
+		{ "diffuse", DiffuseMaterialParser() },
+		{ "standard", DiffuseMaterialParser() },
+		{ "debug", DebugMaterialParser() },
+		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
+		{ "grid", GridMaterialParser() },
+
+		{ nullptr, DebugMaterialParser() },//Just for the end
+	};
 	void SceneLoader::addMaterial(DL::DataGroup* group, Environment* env)
 	{
 		DL::Data* nameD = group->getFromKey("name");
@@ -362,107 +376,34 @@ namespace PRU
 		}
 
 		Material* mat = nullptr;
-		if (type == "standard")
+		MaterialParser* parser = nullptr;
+		for (int i = 0; MaterialParserEntries[i].Name; ++i)
 		{
-			DL::Data* reflectanceD = group->getFromKey("reflectance");
-			DL::Data* emissionD = group->getFromKey("emission");
-			DL::Data* roughnessD = group->getFromKey("roughness");
-			DL::Data* shadingD = group->getFromKey("shading");
-			DL::Data* lightD = group->getFromKey("light");
-			DL::Data* selfShadowD = group->getFromKey("selfShadow");
-			DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
-
-			DiffuseMaterial* diff = new DiffuseMaterial;
-
-			if (reflectanceD && reflectanceD->isType() == DL::Data::T_String)
+			if (typeD->getString() == MaterialParserEntries[i].Name)
 			{
-				if (env->hasSpectrum(reflectanceD->getString()))
-				{
-					diff->setReflectance(env->getSpectrum(reflectanceD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-						reflectanceD->getString().c_str());
-				}
+				parser = &MaterialParserEntries[i].Parser;
+				break;
 			}
-
-			if (emissionD && emissionD->isType() == DL::Data::T_String)
-			{
-				if (env->hasSpectrum(emissionD->getString()))
-				{
-					diff->setEmission(env->getSpectrum(emissionD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-						emissionD->getString().c_str());
-				}
-			}
-
-			if (roughnessD && roughnessD->isNumber())
-			{
-				diff->setRoughness(roughnessD->getFloatConverted());
-			}
-
-			if (shadingD && shadingD->isType() == DL::Data::T_Bool)
-			{
-				diff->enableShading(shadingD->getBool());
-			}
-
-			if (lightD && lightD->isType() == DL::Data::T_Bool)
-			{
-				diff->enableLight(lightD->getBool());
-			}
-
-			if (selfShadowD && selfShadowD->isType() == DL::Data::T_Bool)
-			{
-				diff->enableSelfShadow(selfShadowD->getBool());
-			}
-
-			if (cameraVisibleD && cameraVisibleD->isType() == DL::Data::T_Bool)
-			{
-				diff->enableCameraVisibility(cameraVisibleD->getBool());
-			}
-
-			mat = diff;
 		}
-		else if (type == "debug")
+
+		if (parser)
 		{
-			mat = new DebugMaterial();
-		}
-		else if (type == "debugBoundingBox")
-		{
-			DL::Data* colorD = group->getFromKey("color");
-			DL::Data* densityD = group->getFromKey("density");
+			mat = parser->parse(this, env, typeD->getString(), group);
 
-			DebugBoundingBoxMaterial* dbbm = new DebugBoundingBoxMaterial();
-
-			if (colorD && colorD->isType() == DL::Data::T_String)
+			if (!mat)
 			{
-				if (env->hasSpectrum(colorD->getString()))
-				{
-					dbbm->setColor(env->getSpectrum(colorD->getString()));
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-						colorD->getString().c_str());
-				}
+				PR_LOGGER.logf(L_Error, M_Scene, "Material %s couldn't be load. Error in '%s' type parser.",
+					name.c_str(), typeD->getString().c_str());
+				return;
 			}
-
-			if (densityD && densityD->isNumber())
-			{
-				dbbm->setDensity(densityD->getFloatConverted());
-			}
-
-			mat = dbbm;
 		}
 		else
 		{
-			PR_LOGGER.logf(L_Error, M_Scene, "Unknown material type '%s'", type.c_str());
+			PR_LOGGER.logf(L_Error, M_Scene, "Material %s couldn't be load. Unknown type given.", name.c_str());
 			return;
 		}
+
+		PR_ASSERT(mat);// After here it shouldn't be null
 
 		env->addMaterial(name, mat);
 	}
