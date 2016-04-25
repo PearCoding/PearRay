@@ -33,6 +33,7 @@ SOURCE_GROUP("Source Files\\Lights" FILES ${PR_Lights_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
   ${PR_LIB}/material/DiffuseMaterial.cpp
+  ${PR_LIB}/material/DirectLightDebugMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
   ${PR_LIB}/material/NormalDebugMaterial.cpp
   ${PR_LIB}/material/UVDebugMaterial.cpp)
@@ -99,6 +100,7 @@ SOURCE_GROUP("Header Files\\Lights" FILES ${PR_Lights_Hdr})
 SET(PR_Material_Hdr
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
   ${PR_LIB}/material/DiffuseMaterial.h
+  ${PR_LIB}/material/DirectLightDebugMaterial.h
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h
   ${PR_LIB}/material/NormalDebugMaterial.h

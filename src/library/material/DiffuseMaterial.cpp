@@ -96,9 +96,9 @@ namespace PR
 			PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
 				PM::pm_Scale(point.normal(), 2*dot)));
 
-			if (mRoughness == 0) // Mirror
+			if (mRoughness <= std::numeric_limits<float>::epsilon()) // Mirror
 			{
-				Ray ray(point.vertex(), reflection, in.depth()+1);
+				Ray ray(point.vertex(), reflection, in.depth() + 1);
 				renderer->shoot(ray, collisionPoint);
 				spec = ray.spectrum();
 			}
@@ -118,6 +118,7 @@ namespace PR
 						PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
 
 						Ray ray(point.vertex(), dir, in.depth()+1);// Bounce only once!
+						ray.setFlags(0);
 						ray.setMaxDepth(in.depth() + 1);
 
 						RenderEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
@@ -166,7 +167,7 @@ namespace PR
 			}
 		}
 		
-		spec = spec * mDiffSpectrum;
+		spec *= mDiffSpectrum;
 		if (mCameraVisible || in.depth() > 0)
 		{
 			spec += mEmitSpectrum;

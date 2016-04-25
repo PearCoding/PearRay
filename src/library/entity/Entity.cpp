@@ -116,19 +116,35 @@ namespace PR
 		{
 			mReCache = false;
 
-			PM::mat4 m = PM::pm_Multiply(PM::pm_Translation(mPosition),
-				PM::pm_Multiply(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
-			if (mParent)
-			{
-				mMatrixCache = PM::pm_Multiply(mParent->matrix(), m);
-			}
-			else
-			{
-				mMatrixCache = m;
-			}
+			PM::mat4 m = PM::pm_Multiply(PM::pm_Multiply(PM::pm_Translation(mPosition),	PM::pm_Rotation(mRotation)), PM::pm_Scaling(mScale));
+			mInvMatrixCache = PM::pm_Inverse(m);
 		}
 
-		return mMatrixCache;
+		if (mParent)
+		{
+			return PM::pm_Multiply(mParent->matrix(), mMatrixCache);
+		}
+		else
+		{
+			return mMatrixCache;
+		}
+	}
+
+	PM::mat4 Entity::invMatrix() const
+	{
+		if (mReCache)
+		{
+			matrix();
+		}
+
+		if (mParent)
+		{
+			return PM::pm_Multiply(mInvMatrixCache, mParent->invMatrix());
+		}
+		else
+		{
+			return mInvMatrixCache;
+		}
 	}
 
 	std::string Entity::toString() const

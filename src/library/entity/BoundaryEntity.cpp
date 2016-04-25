@@ -49,10 +49,11 @@ namespace PR
 		return mBoundingBox;
 	}
 
+	// Localspace
 	bool BoundaryEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
-		BoundingBox world = worldBoundingBox();
+		BoundingBox world = localBoundingBox();
 		if (world.intersects(ray, vertex))
 		{
 			collisionPoint.setVertex(vertex);

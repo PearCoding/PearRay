@@ -26,6 +26,9 @@ public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
 	
+	void openProject(const QString& str);
+	void closeProject();
+
 protected:
 	void closeEvent(QCloseEvent* event);
 
@@ -47,6 +50,7 @@ private slots:
 	void stopRendering();
 
 	void entitySelected(QModelIndex index);
+
 private:
 	void readSettings();
 	void writeSettings();

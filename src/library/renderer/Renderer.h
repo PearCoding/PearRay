@@ -72,7 +72,7 @@ namespace PR
 		uint32 maxIndirectRayCount() const;
 
 		void enableSampling(bool b);
-		bool isSamplingEnalbed() const;
+		bool isSamplingEnabled() const;
 
 		void setXSampleCount(uint32 i)
 		{

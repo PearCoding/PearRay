@@ -57,11 +57,9 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	// TODO: Handle rotation etc.
+	// Localspace
 	bool PlaneEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
-		mPlane.setPosition(position());// Update
-
 		PM::vec3 pos;
 		float u, v;
 
@@ -85,14 +83,17 @@ namespace PR
 		}
 	}
 
+	// Worldspace
 	FacePoint PlaneEntity::getRandomFacePoint(Random& random) const
 	{
 		float u = random.getFloat();
 		float v = random.getFloat();
 
 		FacePoint fp;
-		fp.setVertex(PM::pm_Add(position(), PM::pm_Add(PM::pm_Scale(mPlane.xAxis(), u), PM::pm_Scale(mPlane.xAxis(), v))));
-		fp.setNormal(mPlane.normal());
+		fp.setVertex(PM::pm_Add(position(),
+			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.xAxis())), u),
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.yAxis())), v))));
+		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 		fp.setUV(PM::pm_Set(u, v));
 		return fp;
 	}

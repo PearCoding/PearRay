@@ -315,7 +315,7 @@ namespace PR
 		mEnableSampling = b;
 	}
 
-	bool Renderer::isSamplingEnalbed() const
+	bool Renderer::isSamplingEnabled() const
 	{
 		return mEnableSampling;
 	}

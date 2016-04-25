@@ -1,6 +1,7 @@
 #include "DebugMaterialParser.h"
 #include "material/NormalDebugMaterial.h"
 #include "material/UVDebugMaterial.h"
+#include "material/DirectLightDebugMaterial.h"
 
 #include "Logger.h"
 
@@ -31,6 +32,10 @@ namespace PRU
 			else if (show == "uv")
 			{
 				return new UVDebugMaterial();
+			}
+			else if (show == "directLight")
+			{
+				return new DirectLightDebugMaterial();
 			}
 		}
 

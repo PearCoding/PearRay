@@ -22,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	closeProject();// Initial
+
 	//Add tool-bars to menu
 
 	//Add dock widgets to menu
@@ -55,36 +57,66 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.viewWidget, SIGNAL(spectrumSelected(const PR::Spectrum&)), ui.spectrumWidget, SLOT(setSpectrum(const PR::Spectrum)));
 
 	readSettings();
-
-	// Test env
-	PRU::SceneLoader loader;
-	mEnvironment = loader.loadFromFile("test.prc");
-
-	if (mEnvironment)
-	{
-		mRenderer = new PR::Renderer(800, 600, mEnvironment->camera(), mEnvironment->scene());
-		mRenderer->setMaxRayDepth(2);
-		mRenderer->setMaxDirectRayCount(100);
-		mRenderer->setMaxIndirectRayCount(100);
-
-		ui.viewWidget->setRenderer(mRenderer);
-
-		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
-	}
 }
 
 MainWindow::~MainWindow()
 {
+	closeProject();
+}
+
+void MainWindow::closeProject()
+{
+	ui.outlineView->setEnabled(false);
+	ui.viewWidget->setEnabled(false);
+	ui.entityDetailsView->setEnabled(false);
+	ui.systemPropertyView->setEnabled(false);
+
+	ui.outlineView->setModel(nullptr);
+	ui.viewWidget->setRenderer(nullptr);
+	ui.entityDetailsView->setEntity(nullptr);
+
 	if (mRenderer)
 	{
 		mRenderer->stop();
 		mRenderer->waitForFinish();
 		delete mRenderer;
+		mRenderer = nullptr;
 	}
 
 	if (mEnvironment)
 	{
 		delete mEnvironment;
+		mEnvironment = nullptr;
+	}
+}
+
+void MainWindow::openProject(const QString& str)
+{
+	if (mEnvironment)
+	{
+		closeProject();
+	}
+
+	PRU::SceneLoader loader;
+	mEnvironment = loader.loadFromFile(str.toStdString());
+
+	if (mEnvironment)
+	{
+		mRenderer = new PR::Renderer(800, 600, mEnvironment->camera(), mEnvironment->scene());
+
+		ui.viewWidget->setRenderer(mRenderer);
+		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
+
+		ui.systemPropertyView->fillContent(mRenderer);
+
+		ui.outlineView->setEnabled(true);
+		ui.viewWidget->setEnabled(true);
+		ui.entityDetailsView->setEnabled(true);
+		ui.systemPropertyView->setEnabled(true);
+	}
+	else
+	{
+		QMessageBox::warning(this, tr("Couldn't load project."), tr("Couldn't load project file:\n%1").arg(str));
 	}
 }
 
@@ -179,8 +211,8 @@ void MainWindow::about()
 	QMessageBox::about(this, tr("About PearRay Viewer"),
 		tr("<h2>About PearRay Viewer " PR_VERSION_STRING "</h2>"
 		"<p>A viewer for PearRay render results.</p>"
-		"<p>Author: &Ouml;mercan Yazici &lt;<a href='mailto:pearcoding@gmail.com?subject=\"PearRay\"'>pearcoding@gmail.com</a>&gt;<br/>"
-		"Copyright &copy; 2015-2016 PearStudios, &Ouml;mercan Yazici<br/>"
+		"<p>Author: &Ouml;mercan Yazici &lt;<a href='mailto:omercan@pearcoding.eu?subject=\"PearRay\"'>pearcoding@gmail.com</a>&gt;<br/>"
+		"Copyright &copy; 2015-2016 &Ouml;mercan Yazici<br/>"
 		"Website: <a href='http://pearcoding.eu/projects/pearray'>http://pearcoding.eu/projects/pearray</a></p>"
 #ifdef PR_DEBUG
 		"<hr /><h4>Development Information:</h4><p>"

@@ -27,6 +27,8 @@ namespace PR
 		PM::vec3 yAxis() const;
 		void setYAxis(const PM::vec3& yAxis);
 
+		void setAxis(const PM::vec3& xAxis, const PM::vec3& yAxis);
+
 		PM::vec3 normal() const;
 		PM::vec3 center() const;
 

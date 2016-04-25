@@ -94,6 +94,15 @@ namespace PR
 		mHeight = PM::pm_Magnitude3D(mYAxis);
 	}
 
+	void Plane::setAxis(const PM::vec3& xAxis, const PM::vec3& yAxis)
+	{
+		PM::pm_Copy(mXAxis, xAxis);
+		PM::pm_Copy(mYAxis, yAxis);
+		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
+		mWidth = PM::pm_Magnitude3D(mXAxis);
+		mHeight = PM::pm_Magnitude3D(mYAxis);
+	}
+
 	PM::vec3 Plane::normal() const
 	{
 		return mNormal;

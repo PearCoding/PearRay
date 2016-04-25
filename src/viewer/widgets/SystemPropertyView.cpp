@@ -258,3 +258,28 @@ int SystemPropertyView::getSampler() const
 {
 	return reinterpret_cast<SelectionProperty*>(mRendererSamplerProp)->index();
 }
+
+void SystemPropertyView::fillContent(PR::Renderer* renderer)
+{
+	reinterpret_cast<IntProperty*>(mRendererTileXProp)->setValue(8);
+	reinterpret_cast<IntProperty*>(mRendererTileXProp)->setDefaultValue(8);
+	reinterpret_cast<IntProperty*>(mRendererTileYProp)->setValue(8);
+	reinterpret_cast<IntProperty*>(mRendererTileYProp)->setDefaultValue(8);
+	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setValue(0);
+	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setDefaultValue(0);
+
+	reinterpret_cast<BoolProperty*>(mRendererSamplingProp)->setValue(renderer->isSamplingEnabled());
+	reinterpret_cast<BoolProperty*>(mRendererSamplingProp)->setDefaultValue(renderer->isSamplingEnabled());
+	reinterpret_cast<IntProperty*>(mRendererXSamplesProp)->setValue(renderer->xSampleCount());
+	reinterpret_cast<IntProperty*>(mRendererXSamplesProp)->setDefaultValue(renderer->xSampleCount());
+	reinterpret_cast<IntProperty*>(mRendererYSamplesProp)->setValue(renderer->ySampleCount());
+	reinterpret_cast<IntProperty*>(mRendererYSamplesProp)->setDefaultValue(renderer->ySampleCount());
+	reinterpret_cast<SelectionProperty*>(mRendererSamplerProp)->setIndex(renderer->samplerMode());
+	reinterpret_cast<SelectionProperty*>(mRendererSamplerProp)->setDefaultIndex(renderer->samplerMode());
+	reinterpret_cast<IntProperty*>(mRendererMaxDirectRayCountProp)->setValue(renderer->maxDirectRayCount());
+	reinterpret_cast<IntProperty*>(mRendererMaxDirectRayCountProp)->setDefaultValue(renderer->maxDirectRayCount());
+	reinterpret_cast<IntProperty*>(mRendererMaxIndirectRayCountProp)->setValue(renderer->maxIndirectRayCount());
+	reinterpret_cast<IntProperty*>(mRendererMaxIndirectRayCountProp)->setDefaultValue(renderer->maxIndirectRayCount());
+	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setValue(renderer->maxRayDepth());
+	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setDefaultValue(renderer->maxRayDepth());
+}

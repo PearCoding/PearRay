@@ -4,6 +4,7 @@ SET(PR_UTILS ${PR_Root}/utils)
 
 SET(PR_Main_Src
   ${PR_UTILS}/Environment.cpp
+  ${PR_UTILS}/RenderLoader.cpp
   ${PR_UTILS}/SceneLoader.cpp)
 SET(PR_GSL_Src
   ${PR_UTILS}/gsl/GSLMaterial.cpp)
@@ -30,6 +31,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_GSL_Src} ${PR_Parser_Entity_Src}
 
 SET(PR_Main_Hdr
   ${PR_UTILS}/Environment.h
+  ${PR_UTILS}/RenderLoader.h
   ${PR_UTILS}/SceneLoader.h)
 SET(PR_GSL_Hdr
   ${PR_UTILS}/gsl/GSLNode.h

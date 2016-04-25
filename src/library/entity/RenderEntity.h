@@ -24,10 +24,13 @@ namespace PR
 		virtual bool isCollidable() const;
 		virtual BoundingBox localBoundingBox() const;
 		virtual BoundingBox worldBoundingBox() const;
+
+		// In local coords
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint);
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer);
 
+		// In world coords
 		virtual FacePoint getRandomFacePoint(Random& random) const = 0;
 	};
 }

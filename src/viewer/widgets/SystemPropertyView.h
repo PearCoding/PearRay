@@ -6,7 +6,7 @@
 
 namespace PR
 {
-	class Entity;
+	class Renderer;
 }
 
 class IProperty;
@@ -32,6 +32,7 @@ public:
 	int getYSamples() const;
 	int getSampler() const;
 
+	void fillContent(PR::Renderer* renderer);
 signals:
 	void startRendering();
 	void stopRendering();

@@ -35,8 +35,10 @@ namespace PR
 		PM::quat rotation(bool local = false) const;
 
 		PM::mat4 matrix() const;
+		PM::mat4 invMatrix() const;
 
 		virtual std::string toString() const;
+
 	private:
 		std::string mName;
 		Entity* mParent;
@@ -49,5 +51,6 @@ namespace PR
 
 		mutable bool mReCache;
 		mutable PM::mat mMatrixCache;
+		mutable PM::mat mInvMatrixCache;
 	};
 }

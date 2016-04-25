@@ -38,5 +38,11 @@ int main(int argc, char *argv[])
 
 	MainWindow w;
 	w.show();
+
+	if (argc == 2)
+	{
+		w.openProject(argv[1]);
+	}
+
 	return a.exec();
 }
