@@ -3,6 +3,7 @@
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
 #include "geometry/RandomRotationSphere.h"
+#include "geometry/Sphere.h"
 
 namespace PR
 {
@@ -55,6 +56,7 @@ namespace PR
 	bool PointLight::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		PM::vec3 v;
+		//bool found = Sphere(position(), BOUNDARY_WIDTH).intersects(ray, v);
 		bool found = worldBoundingBox().intersects(ray, v);
 		collisionPoint.setVertex(v);
 		return found;

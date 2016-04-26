@@ -49,53 +49,61 @@ namespace PR
 		return mBoundingBox;
 	}
 
-	// Localspace
 	bool BoundaryEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
-		BoundingBox world = localBoundingBox();
-		if (world.intersects(ray, vertex))
-		{
-			collisionPoint.setVertex(vertex);
 
-			PM::vec3 lv = PM::pm_Subtract(vertex, world.lowerBound());
+		Ray local = ray;
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
+
+		BoundingBox box = localBoundingBox();
+		if (box.intersects(local, vertex))
+		{
+			bool found = false;
+
+			PM::vec3 lv = PM::pm_Subtract(vertex, box.lowerBound());
 			if (PM::pm_GetX(lv) < std::numeric_limits<float>::epsilon() &&
 				PM::pm_GetX(lv) > -std::numeric_limits<float>::epsilon())
 			{
 				collisionPoint.setNormal(PM::pm_Set(-1, 0, 0, 1));
-				return true;
+				found = true;
 			}
 			else if (PM::pm_GetY(lv) < std::numeric_limits<float>::epsilon() &&
 				PM::pm_GetY(lv) > -std::numeric_limits<float>::epsilon())
 			{
 				collisionPoint.setNormal(PM::pm_Set(0, -1, 0, 1));
-				return true;
+				found = true;
 			}
 			else if (PM::pm_GetZ(lv) < std::numeric_limits<float>::epsilon() &&
 				PM::pm_GetZ(lv) > -std::numeric_limits<float>::epsilon())
 			{
 				collisionPoint.setNormal(PM::pm_Set(0, 0, -1, 1));
-				return true;
+				found = true;
 			}
 
-			PM::vec3 uv = PM::pm_Subtract(vertex, world.upperBound());
-			if (PM::pm_GetX(uv) < std::numeric_limits<float>::epsilon() &&
-				PM::pm_GetX(uv) > -std::numeric_limits<float>::epsilon())
+			if (!found)
 			{
-				collisionPoint.setNormal(PM::pm_Set(1, 0, 0, 1));
-				return true;
+				PM::vec3 uv = PM::pm_Subtract(vertex, box.upperBound());
+				if (PM::pm_GetX(uv) < std::numeric_limits<float>::epsilon() &&
+					PM::pm_GetX(uv) > -std::numeric_limits<float>::epsilon())
+				{
+					collisionPoint.setNormal(PM::pm_Set(1, 0, 0, 1));
+				}
+				else if (PM::pm_GetY(uv) < std::numeric_limits<float>::epsilon() &&
+					PM::pm_GetY(uv) > -std::numeric_limits<float>::epsilon())
+				{
+					collisionPoint.setNormal(PM::pm_Set(0, 1, 0, 1));
+				}
+				else
+				{
+					collisionPoint.setNormal(PM::pm_Set(0, 0, 1, 1));
+				}
 			}
-			else if (PM::pm_GetY(uv) < std::numeric_limits<float>::epsilon() &&
-				PM::pm_GetY(uv) > -std::numeric_limits<float>::epsilon())
-			{
-				collisionPoint.setNormal(PM::pm_Set(0, 1, 0, 1));
-				return true;
-			}
-			else
-			{
-				collisionPoint.setNormal(PM::pm_Set(0, 0, 1, 1));
-				return true;
-			}
+
+			collisionPoint.setVertex(PM::pm_Multiply(matrix(), vertex));
+			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
+			return true;
 		}
 		return false;
 	}

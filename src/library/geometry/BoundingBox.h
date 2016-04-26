@@ -40,9 +40,11 @@ namespace PR
 
 		void put(const PM::vec3& point);
 		void combine(const BoundingBox& other);
+		void shift(const PM::vec3& point);
 
 		BoundingBox putted(const PM::vec3& point) const;
 		BoundingBox combined(const BoundingBox& other) const;
+		BoundingBox shifted(const PM::vec3& point) const;
 
 	private:
 		PM::vec3 mUpperBound;

@@ -28,16 +28,15 @@ namespace PR
 			for (uint32 i = 0; i < max; ++i)
 			{
 				FacePoint p = light->getRandomFacePoint(renderer->random());
-
 				PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
 
 				Ray ray(point.vertex(), dir, in.depth() + 1);// Bounce only once!
 				ray.setFlags(0);
 				ray.setMaxDepth(in.depth() + 1);
 
-				RenderEntity* ent = renderer->shoot(ray, collisionPoint, entity);
+				RenderEntity* collidedEntity = renderer->shoot(ray, collisionPoint, entity);
 
-				if (ent == light)// Full light!!
+				if (collidedEntity == light)// Full light!!
 				{
 					float dot2 = PM::pm_Dot3D(dir, point.normal());
 

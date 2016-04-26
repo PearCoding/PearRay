@@ -33,6 +33,7 @@ protected:
 	void closeEvent(QCloseEvent* event);
 
 private slots:
+	void openScene();
 	void exportImage();
 
 	void showAllToolbars();

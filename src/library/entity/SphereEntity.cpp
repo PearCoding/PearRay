@@ -57,10 +57,10 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	// Checks are in local space
+	// No non-uniform scale!
 	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
-		Sphere sphere(PM::pm_Set(0, 0, 0, 1), mRadius);
+		Sphere sphere(position(), mRadius);
 		PM::vec3 collisionPos;
 		if (!sphere.intersects(ray, collisionPos))
 		{
@@ -71,12 +71,12 @@ namespace PR
 
 		if (ray.flags() & RF_NeedCollisionNormal || ray.flags() & RF_NeedCollisionUV)
 		{
-			PM::vec3 norm = PM::pm_Normalize3D(collisionPoint.vertex());
+			PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(position(), collisionPoint.vertex()));
 			collisionPoint.setNormal(norm);
 
 			if (ray.flags() & RF_NeedCollisionUV)
 			{
-				PM::vec3 rotNorm = norm;
+				PM::vec3 rotNorm = PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm);
 				float u = (std::acos(PM::pm_GetZ(rotNorm)) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
 				float v = (std::atan2(PM::pm_GetY(rotNorm), PM::pm_GetX(rotNorm)) * PM_INV_PI_F + 1) * 0.5f;
 				collisionPoint.setUV(PM::pm_Set(u, v));

@@ -266,6 +266,12 @@ namespace PR
 		put(other.lowerBound());
 	}
 
+	void BoundingBox::shift(const PM::vec3& point)
+	{
+		mLowerBound = PM::pm_Add(mLowerBound, point);
+		mUpperBound = PM::pm_Add(mUpperBound, point);
+	}
+
 	BoundingBox BoundingBox::putted(const PM::vec3& point) const
 	{
 		BoundingBox tmp = *this;
@@ -277,6 +283,13 @@ namespace PR
 	{
 		BoundingBox tmp = *this;
 		tmp.combine(other);
+		return tmp;
+	}
+
+	BoundingBox BoundingBox::shifted(const PM::vec3& point) const
+	{
+		BoundingBox tmp = *this;
+		tmp.shift(point);
 		return tmp;
 	}
 }

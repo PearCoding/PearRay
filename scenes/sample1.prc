@@ -33,41 +33,36 @@
 		:material		"DebugDirectLight"
 		:position		[0,0,0]
 	)
+	
+	(entity
+		:name			"Ground"
+		:type			"box"
+		:position		[0, -1, 0]
+		:size			[10, 0.5, 10]
+		:material		"DebugDirectLight"
+	)
 
 	(entity
-		:name			"Plane1"
-		:type			"plane"
-		:position		[-5, -0.5, 5]
-		:xAxis			10
-		:yAxis			10
+		:name			"Background"
+		:type			"box"
+		:position		[0, 4.5, 5]
+		:size			[10, 10, 1]
 		:material		"DebugDirectLight"
 	)
 	
 	(entity
-		:name			"Plane2"
-		:type			"plane"
-		:position		[-5, -0.5, -5]
-		:xAxis			10
-		:yAxis			[0, 0, 10]
+		:name			"Left"
+		:type			"box"
+		:position		[-5, 4.5, 0]
+		:size			[1, 10, 10]
 		:material		"DebugDirectLight"
 	)
 	
 	(entity
-		:name			"Plane3"
-		:type			"plane"
-		:position		[-5, -0.5, 5]
-		:rotation		(euler 0 45 0)
-		:xAxis			[0, 0, -10]
-		:yAxis			10
-		:material		"DebugDirectLight"
-	)
-	
-	(entity
-		:name			"Plane4"
-		:type			"plane"
-		:position		[5, -0.5, 5]
-		:xAxis			[0, 0, -10]
-		:yAxis			10
+		:name			"Right"
+		:type			"box"
+		:position		[5, 4.5, 0]
+		:size			[1, 10, 10]
 		:material		"DebugDirectLight"
 	)
 	

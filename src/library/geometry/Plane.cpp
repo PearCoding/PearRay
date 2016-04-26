@@ -4,6 +4,8 @@
 
 namespace PR
 {
+	constexpr float EPSILON_BOUND = 0.00001f;
+
 	Plane::Plane() :
 		mPosition(PM::pm_Set(0, 0, 0, 1)), mXAxis(PM::pm_Set(1, 0, 0, 1)), mYAxis(PM::pm_Set(0, 1, 0, 1)),
 		mNormal(PM::pm_Set(0,0,1,1)), mWidth(1), mHeight(1), mWidth2(1), mHeight2(1)
@@ -135,12 +137,36 @@ namespace PR
 
 	BoundingBox Plane::toBoundingBox() const
 	{
-		return BoundingBox(PM::pm_Add(mPosition, PM::pm_Add(mXAxis, mYAxis)), mPosition);
+		BoundingBox box = toLocalBoundingBox();
+		box.shift(mPosition);
+		return box;
 	}
 
 	BoundingBox Plane::toLocalBoundingBox() const
 	{
-		return BoundingBox(PM::pm_Add(mXAxis, mYAxis), PM::pm_Set(0,0,0,1));
+		BoundingBox box(PM::pm_Add(mXAxis, mYAxis), PM::pm_Set(0, 0, 0, 1));
+		PM::vec3 diff = PM::pm_Subtract(mXAxis, mYAxis);
+
+		if (std::abs(PM::pm_GetX(diff)) <= std::numeric_limits<float>::epsilon())
+		{
+			if (std::abs(PM::pm_GetY(diff)) <= std::numeric_limits<float>::epsilon())
+			{
+				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, EPSILON_BOUND, 0)));
+			}
+			else if (std::abs(PM::pm_GetZ(diff)) <= std::numeric_limits<float>::epsilon())
+			{
+				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, 0, EPSILON_BOUND)));
+			}
+		}
+		else if (std::abs(PM::pm_GetY(diff)) <= std::numeric_limits<float>::epsilon())
+		{
+			if (std::abs(PM::pm_GetZ(diff)) <= std::numeric_limits<float>::epsilon())
+			{
+				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, 0, EPSILON_BOUND)));
+			}
+		}
+
+		return box;
 	}
 
 	bool Plane::contains(const PM::vec3& point) const

@@ -1,5 +1,6 @@
 #include "PlaneEntity.h"
 
+#include "ray/Ray.h"
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
 
@@ -57,17 +58,21 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	// Localspace
 	bool PlaneEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		PM::vec3 pos;
 		float u, v;
 
-		if (mPlane.intersects(ray, pos, u, v))
+		// Local space
+		Ray local = ray;
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
+
+		if (mPlane.intersects(local, pos, u, v))
 		{
-			collisionPoint.setVertex(pos);
+			collisionPoint.setVertex(PM::pm_Multiply(matrix(), pos));
 			// Do not check flags... calculation is easy anyway.
-			collisionPoint.setNormal(mPlane.normal());
+			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 			collisionPoint.setUV(PM::pm_Set(u, v));
 			return true;
 		}
@@ -83,7 +88,7 @@ namespace PR
 		}
 	}
 
-	// Worldspace
+	// World space
 	FacePoint PlaneEntity::getRandomFacePoint(Random& random) const
 	{
 		float u = random.getFloat();

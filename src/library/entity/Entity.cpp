@@ -46,6 +46,19 @@ namespace PR
 		return mParent;
 	}
 
+	bool Entity::isParent(Entity* entity) const
+	{
+		if (!entity)
+			return true;
+
+		if (mParent == entity)
+		{
+			return true;
+		}
+
+		return mParent ? mParent->isParent(entity) : false;
+	}
+
 	void Entity::enableDebug(bool b)
 	{
 		mDebug = b;

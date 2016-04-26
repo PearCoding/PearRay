@@ -202,15 +202,8 @@ namespace PR
 			// First the mid elements one by one
 			for (RenderEntity* e : node->splitObjects)
 			{
-				Ray local = ray;
-				local.setStartPosition(PM::pm_Multiply(e->invMatrix(), ray.startPosition()));
-				local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(e->rotation()), ray.direction()));
-
-				if ((Entity*)e != ignore && e->checkCollision(local, tmpCollisionPoint))
+				if ((!ignore || ((Entity*)e != ignore && !e->isParent(ignore))) && e->checkCollision(ray, tmpCollisionPoint))
 				{
-					tmpCollisionPoint.setVertex(PM::pm_Multiply(e->matrix(), tmpCollisionPoint.vertex()));
-					tmpCollisionPoint.setNormal(PM::pm_RotateWithQuat(e->rotation(), tmpCollisionPoint.normal()));
-
 					float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
 
 					if (l < near)

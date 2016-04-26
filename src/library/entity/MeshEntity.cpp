@@ -69,23 +69,22 @@ namespace PR
 			return false;
 		}
 
+		// Local space
+		Ray local = ray;
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
+
 		float near = std::numeric_limits<float>::max();
 		bool found = false;
 
-		PM::mat rot = PM::pm_Rotation(rotation());
-		PM::mat mat = matrix();
 		for (Face* face : mMesh->faces())// TODO: For bigger meshes use voxel technique!
 		{
 			float u, v;
 			PM::vec3 point;
-
-			PM::vec3 p1 = PM::pm_Multiply(mat, face->V1);
-			PM::vec3 p2 = PM::pm_Multiply(mat, face->V2);
-			PM::vec3 p3 = PM::pm_Multiply(mat, face->V3);
-
-			if (Triangle::intersect(ray, p1, p2, p3, u, v, point))
+			
+			if (Triangle::intersect(local, face->V1, face->V2, face->V3, u, v, point))
 			{
-				float mag = PM::pm_Magnitude3D(PM::pm_Subtract(point, ray.startPosition()));
+				float mag = PM::pm_Magnitude3D(PM::pm_Subtract(point, local.startPosition()));
 
 				if (near > mag)
 				{
@@ -93,7 +92,6 @@ namespace PR
 					PM::vec3 n;
 					PM::vec2 uv;
 					face->interpolate(u, v, vec, n, uv);
-					n = PM::pm_RotateWithQuat(rotation(), n);
 
 					collisionPoint.setVertex(point);
 					collisionPoint.setNormal(n);
@@ -104,6 +102,9 @@ namespace PR
 				}
 			}
 		}
+
+		collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
+		collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
 
 		return found;
 	}

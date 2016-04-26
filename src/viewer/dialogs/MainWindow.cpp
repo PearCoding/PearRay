@@ -33,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
 	ui.menuDockWidgets->addAction(ui.entityDetailsDockWidget->toggleViewAction());
 
 	//Connect all signal and slots
+	connect(ui.actionOpenScene, SIGNAL(triggered()), this, SLOT(openScene()));
 	connect(ui.actionExportImage, SIGNAL(triggered()), this, SLOT(exportImage()));
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
@@ -117,6 +118,24 @@ void MainWindow::openProject(const QString& str)
 	else
 	{
 		QMessageBox::warning(this, tr("Couldn't load project."), tr("Couldn't load project file:\n%1").arg(str));
+	}
+}
+
+void MainWindow::openScene()
+{
+	if (mEnvironment && mRenderer && !mRenderer->isFinished())
+	{
+		if (QMessageBox::question(this, tr("Abort render?"), tr("A rendering is currently running.\nShould it be aborted?")) != QMessageBox::Yes)
+		{
+			return;
+		}
+	}
+
+	QString file = QFileDialog::getOpenFileName(this, tr("Open Scene"));
+
+	if (!file.isEmpty())
+	{
+		openProject(file);
 	}
 }
 

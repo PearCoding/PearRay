@@ -21,6 +21,7 @@ namespace PR
 
 		void setParent(Entity* parent);
 		Entity* parent() const;
+		bool isParent(Entity* entity) const;
 
 		void enableDebug(bool b);
 		bool isDebug() const;

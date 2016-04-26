@@ -50,6 +50,8 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpenScene"/>
+    <addaction name="separator"/>
     <addaction name="actionExportImage"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
@@ -272,6 +274,17 @@
   <action name="actionExportImage">
    <property name="text">
     <string>Export Image</string>
+   </property>
+   <property name="shortcut">
+    <string>F11</string>
+   </property>
+  </action>
+  <action name="actionOpenScene">
+   <property name="text">
+    <string>Open scene</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
  </widget>
