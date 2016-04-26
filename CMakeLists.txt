@@ -41,6 +41,8 @@ IF(CYGWIN)
 ENDIF()
 
 #PACKAGES
+option(PR_ONLY_LIBRARY "Compile only the main and util library" OFF)
+option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library" ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -75,6 +77,12 @@ ELSE()
 ENDIF()
 
 #CONFIGURE
+IF(NOT PR_ONLY_LIBRARY_SUBS)
+	SET(PM_ONLY_LIBRARY ON)
+	SET(PP_ONLY_LIBRARY ON)
+	SET(DL_ONLY_LIBRARY ON)
+ENDIF(NOT PR_ONLY_LIBRARY_SUBS)
+
 SET(PP_TARGET "pearpic")
 SET(DL_TARGET "datalisp")
 
@@ -97,10 +105,12 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 
 add_subdirectory(${PR_Root}/library)
 add_subdirectory(${PR_Root}/utils)
-add_subdirectory(${PR_Root}/console)
+
+IF(NOT PR_ONLY_LIBRARY)
+	add_subdirectory(${PR_Root}/console)
+	add_subdirectory(${PR_Root}/tests)
+ENDIF()
 
 IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
 	add_subdirectory(${PR_Root}/viewer)
 ENDIF()
-
-add_subdirectory(${PR_Root}/tests)

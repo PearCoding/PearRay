@@ -116,8 +116,8 @@ namespace PR
 		{
 			mReCache = false;
 
-			PM::mat4 m = PM::pm_Multiply(PM::pm_Multiply(PM::pm_Translation(mPosition),	PM::pm_Rotation(mRotation)), PM::pm_Scaling(mScale));
-			mInvMatrixCache = PM::pm_Inverse(m);
+			mMatrixCache = PM::pm_Multiply(PM::pm_Multiply(PM::pm_Translation(mPosition), PM::pm_Rotation(mRotation)), PM::pm_Scaling(mScale));
+			mInvMatrixCache = PM::pm_Inverse(mMatrixCache);
 		}
 
 		if (mParent)

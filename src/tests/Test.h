@@ -103,7 +103,7 @@ namespace PRT
 }
 
 #ifndef PRT_EPSILON
-# define PRT_EPSILON std::numeric_limits<float>::epsilon()
+# define PRT_EPSILON (std::numeric_limits<float>::epsilon() * 2)
 #endif
 
 #define PR_BEGIN_TESTCASE(name) \

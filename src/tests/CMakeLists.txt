@@ -19,3 +19,4 @@ ENDFUNCTION(PUSH_TEST)
 
 PUSH_TEST(spectrum spectrum.cpp)
 PUSH_TEST(plane plane.cpp)
+PUSH_TEST(entity entity.cpp)
