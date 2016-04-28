@@ -11,9 +11,9 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(RandomRotationSphere);
 	public:
 		static inline PM::vec3 create(const PM::vec3& normal, float sph, float eph, float srh, float erh, Random& rand) {
-			float nph = std::acosf(
+			float nph = std::acos(
 				PM::pm_MaxT<float>(-1, PM::pm_MinT<float>(1, PM::pm_GetZ(normal))));
-			float nrh = PM::pm_GetX(normal) != 0 ? std::atan2f(PM::pm_GetY(normal), PM::pm_GetX(normal)) : 0;
+			float nrh = PM::pm_GetX(normal) != 0 ? std::atan2(PM::pm_GetY(normal), PM::pm_GetX(normal)) : 0;
 
 			return create(nph, nrh, sph, eph, srh, erh, rand);
 		}
@@ -26,7 +26,7 @@ namespace PR
 			nph += phi;
 			nrh += rho;
 
-			float sinphi = std::sinf(nph);
+			float sinphi = std::sin(nph);
 			return PM::pm_Set(
 				sinphi*std::cos(nrh),
 				sinphi*std::sin(nrh),

@@ -95,7 +95,7 @@ namespace PR
 			return false;
 		}
 
-		const float Q = sqrtf(R2 - M2);
+		const float Q = std::sqrt(R2 - M2);
 
 		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), L2 > R2 ? S - Q : S + Q));
 		return true;

@@ -21,7 +21,7 @@ before_script:
   - cmake --version
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DPR_ONLY_LIBRARY_SUBS=ON ..
 script:
   - make
   - bin/pr_test_boundingbox
