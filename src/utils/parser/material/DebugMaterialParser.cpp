@@ -17,7 +17,7 @@ using namespace PR;
 namespace PRU
 {
 	Material* DebugMaterialParser::parse(SceneLoader* loader, Environment* env,
-		const std::string& obj, DL::DataGroup* group)
+		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data* showD = group->getFromKey("show");
 

@@ -18,7 +18,7 @@ using namespace PR;
 namespace PRU
 {
 	Material* GridMaterialParser::parse(SceneLoader* loader, Environment* env,
-		const std::string& obj, DL::DataGroup* group)
+		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data* firstD = group->getFromKey("first");
 		DL::Data* secondD = group->getFromKey("second");

@@ -17,7 +17,7 @@ using namespace PR;
 namespace PRU
 {
 	Entity* LightParser::parse(SceneLoader* loader, Environment* env, const std::string& name, Entity* parent,
-		const std::string& obj, DL::DataGroup* group)
+		const std::string& obj, DL::DataGroup* group) const
 	{
 		if (obj == "pointLight")
 		{

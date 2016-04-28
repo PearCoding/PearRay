@@ -169,7 +169,7 @@ namespace PRU
 	struct
 	{
 		const char* Name;
-		EntityParser& Parser;
+		const EntityParser& Parser;
 	} EntityParserEntries[] =
 	{
 		{ "boundary", BoundaryParser() },
@@ -215,7 +215,7 @@ namespace PRU
 		}
 		else
 		{
-			EntityParser* parser = nullptr;
+			const EntityParser* parser = nullptr;
 			for (int i = 0; EntityParserEntries[i].Name; ++i)
 			{
 				if (typeD->getString() == EntityParserEntries[i].Name)
@@ -337,7 +337,7 @@ namespace PRU
 	struct
 	{
 		const char* Name;
-		MaterialParser& Parser;
+		const MaterialParser& Parser;
 	} MaterialParserEntries[] =
 	{
 		{ "standard", BRDFMaterialParser() },
@@ -380,7 +380,7 @@ namespace PRU
 		}
 
 		Material* mat = nullptr;
-		MaterialParser* parser = nullptr;
+		const MaterialParser* parser = nullptr;
 		for (int i = 0; MaterialParserEntries[i].Name; ++i)
 		{
 			if (typeD->getString() == MaterialParserEntries[i].Name)

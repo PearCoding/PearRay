@@ -17,7 +17,7 @@ using namespace PR;
 namespace PRU
 {
 	Entity* PlaneParser::parse(SceneLoader* loader, Environment* env, const std::string& name, Entity* parent,
-		const std::string& obj, DL::DataGroup* group)
+		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data* materialD = group->getFromKey("material");
 
