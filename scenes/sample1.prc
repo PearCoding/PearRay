@@ -30,16 +30,16 @@
 		:name 			"Test"
 		:type			"sphere"
 		:radius			0.5
-		:material		"DebugDirectLight"
+		:material		"Mirror"
 		:position		[0,0,0]
 	)
 	
 	(entity
 		:name			"Ground"
 		:type			"box"
-		:position		[0, -1, 0]
+		:position		[0, -0.75, 0]
 		:size			[10, 0.5, 10]
-		:material		"DebugDirectLight"
+		:material		"Grid"
 	)
 
 	(entity
@@ -47,7 +47,7 @@
 		:type			"box"
 		:position		[0, 4.5, 5]
 		:size			[10, 10, 1]
-		:material		"DebugDirectLight"
+		:material		"Grid"
 	)
 	
 	(entity
@@ -55,7 +55,7 @@
 		:type			"box"
 		:position		[-5, 4.5, 0]
 		:size			[1, 10, 10]
-		:material		"DebugDirectLight"
+		:material		"Grid"
 	)
 	
 	(entity
@@ -63,7 +63,7 @@
 		:type			"box"
 		:position		[5, 4.5, 0]
 		:size			[1, 10, 10]
-		:material		"DebugDirectLight"
+		:material		"Grid"
 	)
 	
 	;; ------------------------------------------------ Meshes

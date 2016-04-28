@@ -80,6 +80,13 @@ namespace PR
 			mRandom.generate();
 		}*/
 
+		/* Setup entities */
+		for (Entity* entity : mScene->entities())
+		{
+			entity->onPreRender();
+		}
+
+		// Calculate tile sizes, etc.
 		mRayCount = 0;
 		mPixelsRendered = 0;
 
@@ -150,8 +157,9 @@ namespace PR
 				}
 			}
 
-			mResult.setDepth(x, y, newDepth / 8);
-			mResult.setPoint(x, y, newSpec / 8);
+			const int SampleCount = mXSampleCount * mYSampleCount;
+			mResult.setDepth(x, y, newDepth / SampleCount);
+			mResult.setPoint(x, y, newSpec / SampleCount);
 		}
 		else
 		{

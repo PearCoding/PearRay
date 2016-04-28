@@ -115,25 +115,23 @@ namespace PR
 					{
 						FacePoint p = light->getRandomFacePoint(renderer->random());
 
-						PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
+						PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
+						float dot2 = std::fabsf(PM::pm_Dot3D(dir, point.normal()));
 
-						Ray ray(point.vertex(), dir, in.depth()+1);// Bounce only once!
-						ray.setFlags(0);
-						ray.setMaxDepth(in.depth() + 1);
-
-						RenderEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
-
-						if (ent == light)// Full light!!
+						if (dot2 > std::numeric_limits<float>::epsilon())
 						{
-							float dot2 = PM::pm_Dot3D(dir, point.normal());
+							Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(dir, 0.00001f)), dir, in.depth() + 1);// Bounce only once!
+							//ray.setFlags(0);
+							ray.setMaxDepth(in.depth() + 1);
 
-							if (dot2 > 0)
+							RenderEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
+
+							if (ent == light)// Full light!!
 							{
 								spec += dot2 * ray.spectrum();
+								lightSampleCounter++;
 							}
 						}
-
-						lightSampleCounter++;
 					}
 				}
 

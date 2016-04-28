@@ -1,4 +1,5 @@
 #include "BoundingBox.h"
+#include "Plane.h"
 
 #include "ray/Ray.h"
 
@@ -291,5 +292,37 @@ namespace PR
 		BoundingBox tmp = *this;
 		tmp.shift(point);
 		return tmp;
+	}
+
+	Plane BoundingBox::getFace(FaceSide side) const
+	{
+		PM::vec3 diff = PM::pm_Subtract(mUpperBound, mLowerBound);
+
+		switch (side)
+		{
+		default:
+		case FS_Front:
+			return Plane(mLowerBound, PM::pm_Set(PM::pm_GetX(diff), 0, 0), PM::pm_Set(0, PM::pm_GetY(diff), 0));
+		case FS_Back:
+			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mUpperBound), 1),
+				PM::pm_Set(-PM::pm_GetX(diff), 0, 0),
+				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+		case FS_Left:
+			return Plane(PM::pm_Set(PM::pm_GetX(mLowerBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mUpperBound), 1),
+				PM::pm_Set(0, 0, -PM::pm_GetZ(diff)),
+				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+		case FS_Right:
+			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mLowerBound), 1),
+				PM::pm_Set(0, 0, PM::pm_GetZ(diff)),
+				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+		case FS_Top:
+			return Plane(PM::pm_Set(PM::pm_GetX(mLowerBound), PM::pm_GetY(mUpperBound), PM::pm_GetZ(mLowerBound), 1),
+				PM::pm_Set(PM::pm_GetX(diff), 0),
+				PM::pm_Set(0, 0, PM::pm_GetZ(diff)));
+		case FS_Bottom:
+			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mLowerBound), 1),
+				PM::pm_Set(-PM::pm_GetX(diff), 0),
+				PM::pm_Set(0, 0, PM::pm_GetZ(diff)));
+		}
 	}
 }

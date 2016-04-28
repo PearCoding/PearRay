@@ -229,4 +229,11 @@ namespace PR
 			return false;
 		}
 	}
+
+	void Plane::project(const PM::vec3& point, float& u, float& v) const
+	{
+		PM::vec3 p = PM::pm_Subtract(point, mPosition);
+		u = PM::pm_Dot3D(mXAxis, p) / mWidth2;
+		v = PM::pm_Dot3D(mYAxis, p) / mHeight2;
+	}
 }

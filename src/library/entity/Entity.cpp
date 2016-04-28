@@ -171,4 +171,8 @@ namespace PR
 
 		return stream.str();
 	}
+
+	void Entity::onPreRender()
+	{
+	}
 }

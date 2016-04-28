@@ -40,6 +40,11 @@ namespace PR
 
 		virtual std::string toString() const;
 
+
+		// Events:
+		/* The entity will not be changed after this. */
+		virtual void onPreRender();
+
 	private:
 		std::string mName;
 		Entity* mParent;

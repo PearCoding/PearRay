@@ -67,11 +67,11 @@ namespace PR
 			return false;
 		}
 
-		collisionPoint.setVertex(collisionPos);
+		collisionPoint.setVertex(PM::pm_SetW(collisionPos, 1));
 
 		if (ray.flags() & RF_NeedCollisionNormal || ray.flags() & RF_NeedCollisionUV)
 		{
-			PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(position(), collisionPoint.vertex()));
+			PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
 			collisionPoint.setNormal(norm);
 
 			if (ray.flags() & RF_NeedCollisionUV)

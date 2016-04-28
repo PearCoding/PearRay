@@ -1,7 +1,9 @@
 #include "BoundaryEntity.h"
+#include "Random.h"
 #include "ray/Ray.h"
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
+#include "geometry/Plane.h"
 
 namespace PR
 {
@@ -61,24 +63,25 @@ namespace PR
 		if (box.intersects(local, vertex))
 		{
 			bool found = false;
+			BoundingBox::FaceSide side;
 
 			PM::vec3 lv = PM::pm_Subtract(vertex, box.lowerBound());
 			if (PM::pm_GetX(lv) < std::numeric_limits<float>::epsilon() &&
 				PM::pm_GetX(lv) > -std::numeric_limits<float>::epsilon())
 			{
-				collisionPoint.setNormal(PM::pm_Set(-1, 0, 0, 1));
+				side = BoundingBox::FS_Left;
 				found = true;
 			}
 			else if (PM::pm_GetY(lv) < std::numeric_limits<float>::epsilon() &&
 				PM::pm_GetY(lv) > -std::numeric_limits<float>::epsilon())
 			{
-				collisionPoint.setNormal(PM::pm_Set(0, -1, 0, 1));
+				side = BoundingBox::FS_Bottom;
 				found = true;
 			}
 			else if (PM::pm_GetZ(lv) < std::numeric_limits<float>::epsilon() &&
 				PM::pm_GetZ(lv) > -std::numeric_limits<float>::epsilon())
 			{
-				collisionPoint.setNormal(PM::pm_Set(0, 0, -1, 1));
+				side = BoundingBox::FS_Front;
 				found = true;
 			}
 
@@ -88,21 +91,30 @@ namespace PR
 				if (PM::pm_GetX(uv) < std::numeric_limits<float>::epsilon() &&
 					PM::pm_GetX(uv) > -std::numeric_limits<float>::epsilon())
 				{
-					collisionPoint.setNormal(PM::pm_Set(1, 0, 0, 1));
+					side = BoundingBox::FS_Right;
 				}
 				else if (PM::pm_GetY(uv) < std::numeric_limits<float>::epsilon() &&
 					PM::pm_GetY(uv) > -std::numeric_limits<float>::epsilon())
 				{
-					collisionPoint.setNormal(PM::pm_Set(0, 1, 0, 1));
+					side = BoundingBox::FS_Top;
 				}
 				else
 				{
-					collisionPoint.setNormal(PM::pm_Set(0, 0, 1, 1));
+					side = BoundingBox::FS_Back;
 				}
 			}
 
-			collisionPoint.setVertex(PM::pm_Multiply(matrix(), vertex));
-			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
+			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), vertex), 1));
+
+			Plane plane = box.getFace(side);
+			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
+
+			if (ray.flags() & RF_NeedCollisionUV)
+			{
+				float u, v;
+				plane.project(vertex, u, v);
+				collisionPoint.setUV(PM::pm_Set(u, v));
+			}
 			return true;
 		}
 		return false;
@@ -116,9 +128,20 @@ namespace PR
 		}
 	}
 
-	// TODO
 	FacePoint BoundaryEntity::getRandomFacePoint(Random& random) const
 	{
-		return FacePoint();
+		BoundingBox::FaceSide side = (BoundingBox::FaceSide)random.get32(0, 5);// Get randomly a face
+		float u = random.getFloat();
+		float v = random.getFloat();
+
+		Plane plane = localBoundingBox().getFace(side);
+
+		FacePoint fp;
+		fp.setVertex(PM::pm_Add(position(),
+			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), plane.xAxis())), u),
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), plane.yAxis())), v))));
+		fp.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
+		fp.setUV(PM::pm_Set(u, v));
+		return fp;
 	}
 }

@@ -6,6 +6,8 @@
 namespace PR
 {
 	class Ray;
+	class Plane;
+
 	/**
 	 * A axis aligned bounding box (AABB)
 	 */
@@ -46,6 +48,17 @@ namespace PR
 		BoundingBox combined(const BoundingBox& other) const;
 		BoundingBox shifted(const PM::vec3& point) const;
 
+		enum FaceSide
+		{
+			FS_Left,
+			FS_Right,
+			FS_Top,
+			FS_Bottom,
+			FS_Front,
+			FS_Back
+		};
+
+		Plane getFace(FaceSide side) const;
 	private:
 		PM::vec3 mUpperBound;
 		PM::vec3 mLowerBound;

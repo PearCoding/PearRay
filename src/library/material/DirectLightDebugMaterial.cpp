@@ -17,9 +17,15 @@ namespace PR
 
 	void DirectLightDebugMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		bool found = false;
+		if (entity->isLight())
+		{
+			in.setSpectrum(RGBConverter::toSpec(1, 1, 0));
+			return;
+		}
 
 		FacePoint collisionPoint;
+		int lightSamples = 0;
+		float intensity = 0;
 		for (RenderEntity* light : renderer->lights())
 		{
 			uint32 max = renderer->maxDirectRayCount();
@@ -28,37 +34,35 @@ namespace PR
 			for (uint32 i = 0; i < max; ++i)
 			{
 				FacePoint p = light->getRandomFacePoint(renderer->random());
-				PM::vec3 dir = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
+				PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
 
-				Ray ray(point.vertex(), dir, in.depth() + 1);// Bounce only once!
-				ray.setFlags(0);
-				ray.setMaxDepth(in.depth() + 1);
-
-				RenderEntity* collidedEntity = renderer->shoot(ray, collisionPoint, entity);
-
-				if (collidedEntity == light)// Full light!!
+				float dot = PM::pm_Dot3D(dir, point.normal());
+				if (std::abs(dot) > std::numeric_limits<float>::epsilon())
 				{
-					float dot2 = PM::pm_Dot3D(dir, point.normal());
+					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(dir, 0.00001f)), dir, in.depth() + 1);// Bounce only once!
+					//ray.setFlags(0);
+					ray.setMaxDepth(in.depth() + 1);
 
-					if (dot2 > 0)
+					RenderEntity* collidedEntity = renderer->shoot(ray, collisionPoint);
+
+					if (collidedEntity == light)// Full light!!
 					{
-						found = true;
+						intensity += std::abs(dot);
+						lightSamples++;
 						break;
 					}
 				}
 			}
-
-			if (found)
-				break;
 		}
 
-		if (!found)
+		if (lightSamples == 0)
 		{
 			in.setSpectrum(RGBConverter::toSpec(0,0,0));
 		}
 		else
 		{
-			in.setSpectrum(RGBConverter::toSpec(1,1,1));
+			intensity /= lightSamples;
+			in.setSpectrum(RGBConverter::toSpec(intensity, intensity, intensity));
 		}
 	}
 

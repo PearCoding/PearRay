@@ -43,6 +43,8 @@ namespace PR
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& u, float& v) const;
 
+		void project(const PM::vec3& point, float& u, float& v) const;
+
 		BoundingBox toBoundingBox() const;
 		BoundingBox toLocalBoundingBox() const;
 	private:

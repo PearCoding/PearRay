@@ -70,7 +70,7 @@ namespace PR
 
 		if (mPlane.intersects(local, pos, u, v))
 		{
-			collisionPoint.setVertex(PM::pm_Multiply(matrix(), pos));
+			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), pos), 1));
 			// Do not check flags... calculation is easy anyway.
 			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 			collisionPoint.setUV(PM::pm_Set(u, v));
