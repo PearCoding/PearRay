@@ -7,7 +7,7 @@ include_directories(${Qt5Widgets_INCLUDE_DIRS})
 add_definitions(${Qt5Widgets_DEFINITIONS})
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-add_compile_options(-fPIC)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 ENDIF()
 
 SET(PR_Viewer ${PR_Root}/viewer)
