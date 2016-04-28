@@ -21,6 +21,7 @@ SET(PR_Parser_Entity_Src
   ${PR_UTILS}/parser/entity/SphereParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Src})
 SET(PR_Parser_Material_Src
+  ${PR_UTILS}/parser/material/BRDFMaterialParser.cpp
   ${PR_UTILS}/parser/material/DebugBoundingBoxMaterialParser.cpp
   ${PR_UTILS}/parser/material/DebugMaterialParser.cpp
   ${PR_UTILS}/parser/material/DiffuseMaterialParser.cpp
@@ -51,6 +52,7 @@ SET(PR_Parser_Entity_Hdr
   ${PR_UTILS}/parser/entity/SphereParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Hdr})
 SET(PR_Parser_Material_Hdr
+  ${PR_UTILS}/parser/material/BRDFMaterialParser.h
   ${PR_UTILS}/parser/material/DebugBoundingBoxMaterialParser.h
   ${PR_UTILS}/parser/material/DebugMaterialParser.h
   ${PR_UTILS}/parser/material/DiffuseMaterialParser.h

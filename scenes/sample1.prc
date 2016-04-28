@@ -30,7 +30,7 @@
 		:name 			"Test"
 		:type			"sphere"
 		:radius			0.5
-		:material		"Mirror"
+		:material		"BlinnTest"
 		:position		[0,0,0]
 	)
 	
@@ -89,7 +89,7 @@
 		:name			"Gray1"
 		:type			"standard"
 		
-		:reflectance	"Gray1"
+		:albedo			"Gray1"
 		:roughness		1
 	)
 	
@@ -97,16 +97,16 @@
 		:name			"Gray2"
 		:type			"standard"
 		
-		:reflectance	"Gray2"
-		:roughness		1
+		:albedo			"Gray2"
+		:roughness		0
 	)
 	
 	(material
 		:name			"White"
 		:type			"standard"
 		
-		:reflectance	"White"
-		:roughness		1
+		:albedo			"White"
+		:roughness		0
 	)
 	
 	(material
@@ -119,7 +119,7 @@
 	
 	(material
 		:name			"Light"
-		:type			"standard"
+		:type			"light"
 
 		:emission		"White_E"
 		:shading		false
@@ -130,7 +130,7 @@
 	
 	(material
 		:name			"Light2"
-		:type			"standard"
+		:type			"light"
 
 		:emission		"Blue_E"
 		:shading		false
@@ -139,19 +139,20 @@
 	)
 	
 	(material
-		:name			"Env"
+		:name			"BlinnTest"
 		:type			"standard"
-
-		:reflectance	"Mirror"
-		:roughness		0
-		:emission		"Blue_E"
+		:albedo			"Blue"
+		:roughness		1
+		:reflectivity	0.55
+		:fresnel		1.45
+		:specularity	"White"
 	)
 	
 	(material
 		:name			"Mirror"
 		:type			"standard"
 		
-		:reflectance	"Mirror"
+		:albedo			"Mirror"
 		:roughness		0
 	)
 	
@@ -228,6 +229,6 @@
 	(spectrum			;; Emissive
 		:name			"White_E"
 		:emissive		true
-		:data			(rgb 2 2 2)
+		:data			(rgb 1 1 1)
 	)
 )

@@ -12,6 +12,7 @@
 #include "parser/entity/PlaneParser.h"
 #include "parser/entity/SphereParser.h"
 
+#include "parser/material/BRDFMaterialParser.h"
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
 #include "parser/material/DebugMaterialParser.h"
 #include "parser/material/DiffuseMaterialParser.h"
@@ -339,8 +340,11 @@ namespace PRU
 		MaterialParser& Parser;
 	} MaterialParserEntries[] =
 	{
+		{ "standard", BRDFMaterialParser() },
+		{ "light", DiffuseMaterialParser() },
+
 		{ "diffuse", DiffuseMaterialParser() },
-		{ "standard", DiffuseMaterialParser() },
+		{ "brdf", BRDFMaterialParser() },
 		{ "debug", DebugMaterialParser() },
 		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
 		{ "grid", GridMaterialParser() },
