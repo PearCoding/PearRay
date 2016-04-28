@@ -1,0 +1,35 @@
+language: cpp
+compiler: gcc
+sudo: false
+cache:
+  - apt
+addons:
+ apt:
+   sources:
+   - ubuntu-toolchain-r-test
+   packages:
+   - cmake
+   - gcc-4.8
+   - g++-4.8
+   - qtbase5-dev
+   - qt5-default
+   - qttools5-dev-tools
+before_script:
+  - export CXX=g++-4.8 CC=gcc-4.8
+  - $CXX --version
+  - cmake --version
+  - mkdir build
+  - cd build
+  - cmake ..
+script:
+  - make
+  - bin/pr_test_boundingbox
+  - bin/pr_test_entity
+  - bin/pr_test_plane
+  - bin/pr_test_spectrum
+
+branches:
+  only:
+  - master
+notifications:
+  email: false
