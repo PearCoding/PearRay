@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Material.h"
+#include "PearMath.h"
 #include "spectral/Spectrum.h"
 
 namespace PR
@@ -37,7 +38,11 @@ namespace PR
 		bool isCameraVisible() const;
 
 		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
+
 	private:
+		void applyOnRay(const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V, const Spectrum& E0,
+			Spectrum& diff, Spectrum& spec);
+
 		Spectrum mAlbedoSpectrum;
 		Spectrum mSpecularitySpectrum;
 		float mRoughness;

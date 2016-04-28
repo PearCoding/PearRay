@@ -6,7 +6,7 @@ namespace PR
 
 	float BRDF::fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N)
 	{
-		return f0 + (1 - f0)*powf(1 - (PM::pm_Dot3D(L, N)), 5);// N = H here
+		return f0 + (1 - f0)*powf(1 - PM::pm_Dot3D(L, N), 5);
 	}
 
 	//float BRDF::fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);
@@ -68,12 +68,13 @@ namespace PR
 
 	// Optimized groups:
 
-	// Fresnel: Schlick, NDF: Blinn, Geometry: Neumann
+	// Fresnel: Schlick, NDF: Blinn, Geometry: Implicit
 	float BRDF::standard(float f0, float alpha, const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V)
 	{
 		// Only optimizing is in the geometry
 		float fresnel = fresnel_schlick(f0, L, H);
-		float geometry = 1 / PM::pm_MaxT(PM::pm_Dot3D(N, L), PM::pm_Dot3D(N, V));
+		float term = PM::pm_MaxT(PM::pm_Dot3D(N, L), PM::pm_Dot3D(N, V));
+		float geometry = std::abs(term) < std::numeric_limits<float>::epsilon() ? 0 : 1 / term;
 		float ndf = ndf_blinn(H, N, alpha);
 
 		return fresnel * geometry * ndf * 0.25f;

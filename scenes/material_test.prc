@@ -6,15 +6,15 @@
 	(entity
 		:name			"Camera"
 		:type			"camera"
-		;:projection		"orthographic"
-		:projection		"perspective"
+		:projection		"orthographic"
+		;:projection		"perspective"
 		
 		:width			1.33333
 		:height			1
 		:lensDistance	1
 		
-		:lookAt			[0,0,1]
-		:position		[0,0,-2]
+		:lookAt			[0,0,0]
+		:position		[0,10,-3]
 	)
 	
 	(entity
@@ -23,23 +23,79 @@
 		
 		:material		"Light"
 		
-		:position		[0,3,0]
+		:position		[0,10,0]
 	)
 	
 	(entity
-		:name 			"Left"
+		:name 			"1"
 		:type			"sphere"
 		:radius			0.5
-		:material		"OrenTest"
-		:position		[-0.8,0,0]
+		:material		"Mat1"
+		:position		[-1,0,-1]
 	)
 	
 	(entity
-		:name 			"Right"
+		:name 			"2"
 		:type			"sphere"
 		:radius			0.5
-		:material		"LambTest"
-		:position		[0.8,0,0]
+		:material		"Mat2"
+		:position		[0,0,-1]
+	)
+	
+	(entity
+		:name 			"3"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat3"
+		:position		[1,0,-1]
+	)
+	
+	(entity
+		:name 			"4"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat4"
+		:position		[-1,0,0]
+	)
+	
+	(entity
+		:name 			"5"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat5"
+		:position		[0,0,0]
+	)
+	
+	(entity
+		:name 			"6"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat6"
+		:position		[1,0,0]
+	)
+	
+	(entity
+		:name 			"7"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat7"
+		:position		[-1,0,1]
+	)
+	
+	(entity
+		:name 			"8"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat8"
+		:position		[0,0,1]
+	)
+	
+	(entity
+		:name 			"9"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mat9"
+		:position		[1,0,1]
 	)
 	
 	(entity
@@ -77,21 +133,6 @@
 	;; ------------------------------------------------ Meshes
 	
 	;; ------------------------------------------------ Materials
-	(material
-		:name			"Red"
-		:type			"standard"
-		
-		:reflectance	"Red"
-		:roughness		0.3
-	)
-	
-	(material
-		:name			"Blue"
-		:type			"standard"
-		
-		:reflectance	"Blue"
-		:roughness		0.3
-	)
 	
 	(material
 		:name			"Gray1"
@@ -106,14 +147,6 @@
 		:type			"standard"
 		
 		:albedo			"Gray2"
-		:roughness		0
-	)
-	
-	(material
-		:name			"White"
-		:type			"standard"
-		
-		:albedo			"White"
 		:roughness		0
 	)
 	
@@ -137,41 +170,84 @@
 	)
 	
 	(material
-		:name			"Light2"
-		:type			"light"
-
-		:emission		"Blue_E"
-		:shading		false
-		:light			true
-		:selfShadow		false
+		:name			"Mat1"
+		:type			"standard"
+		:albedo			"Blue"
+		:roughness		0
+		:reflectivity	0
+		:specularity	"White"
 	)
 	
 	(material
-		:name			"OrenTest"
+		:name			"Mat2"
+		:type			"standard"
+		:albedo			"Blue"
+		:roughness		0.5
+		:reflectivity	0
+		:specularity	"White"
+	)
+	
+	(material
+		:name			"Mat3"
 		:type			"standard"
 		:albedo			"Blue"
 		:roughness		1
 		:reflectivity	0
-		:fresnel		1
 		:specularity	"White"
 	)
 	
 	(material
-		:name			"LambTest"
+		:name			"Mat4"
 		:type			"standard"
 		:albedo			"Blue"
 		:roughness		0
-		:reflectivity	0
-		:fresnel		1
+		:reflectivity	0.5
 		:specularity	"White"
 	)
 	
 	(material
-		:name			"Mirror"
+		:name			"Mat5"
 		:type			"standard"
-		
-		:albedo			"Mirror"
+		:albedo			"Blue"
+		:roughness		0.5
+		:reflectivity	0.5
+		:specularity	"White"
+	)
+	
+	(material
+		:name			"Mat6"
+		:type			"standard"
+		:albedo			"Blue"
+		:roughness		1
+		:reflectivity	0.5
+		:specularity	"White"
+	)
+	
+	(material
+		:name			"Mat7"
+		:type			"standard"
+		:albedo			"Blue"
 		:roughness		0
+		:reflectivity	1
+		:specularity	"White"
+	)
+	
+	(material
+		:name			"Mat8"
+		:type			"standard"
+		:albedo			"Blue"
+		:roughness		0.5
+		:reflectivity	1
+		:specularity	"White"
+	)
+	
+	(material
+		:name			"Mat9"
+		:type			"standard"
+		:albedo			"Blue"
+		:roughness		1
+		:reflectivity	1
+		:specularity	"White"
 	)
 	
 	(material

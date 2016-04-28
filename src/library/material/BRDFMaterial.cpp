@@ -100,20 +100,16 @@ namespace PR
 		return mCameraVisible;
 	}
 
-	// Use a better normalization approach.
-	constexpr float AlphaMax = 100000;
+	constexpr float NormalOffset = 0.0001f;
 	void BRDFMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		const float alpha = mRoughness * mRoughness;
-
-		FacePoint collisionPoint;
-		Spectrum diffuseTerm;
-		Spectrum specTerm;
-		Spectrum indirectTerm;// Ambient
-
 		if (in.depth() < (in.maxDepth() == 0 ? renderer->maxRayDepth() : in.maxDepth()) &&
 			mCanBeShaded)
 		{
+			FacePoint collisionPoint;
+			Spectrum diffuse;
+			Spectrum spec;
+
 			const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
 
 			if ((1 - mReflectivity) <= std::numeric_limits<float>::epsilon() &&
@@ -126,12 +122,13 @@ namespace PR
 
 				Ray ray(point.vertex(), reflection, in.depth() + 1);
 				renderer->shoot(ray, collisionPoint);
-				diffuseTerm = ray.spectrum();
+				diffuse = ray.spectrum();
 			}
 			else // Diffuse
-			{ 
+			{
+				uint32 sampleCounter = 0;
+
 				// Direct Illumination
-				uint32 lightSampleCounter = 0;
 				for (RenderEntity* light : renderer->lights())
 				{
 					uint32 max = renderer->maxDirectRayCount();
@@ -146,7 +143,7 @@ namespace PR
 
 						if (NdotL > std::numeric_limits<float>::epsilon())
 						{
-							Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, 0.00001f)), L, in.depth() + 1);// Bounce only once!
+							Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);// Bounce only once!
 							//ray.setFlags(0);
 							ray.setMaxDepth(in.depth() + 1);
 
@@ -156,72 +153,73 @@ namespace PR
 							{
 								const PM::vec3 V = PM::pm_SetW(PM::pm_Negate(in.direction()), 0);
 								const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
-
-								if (alpha <= std::numeric_limits<float>::epsilon()) // Lambert
-								{
-									diffuseTerm += PM_INV_PI_F * NdotL * ray.spectrum();// Simple Lambert
-								}
-								else//Oren-Nayar
-								{
-									const float NdotV = PM::pm_Dot3D(N, V);
-									const float angleVN = acosf(NdotL);
-									const float angleLN = acosf(NdotV);
-									const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
-									const float or_beta = PM::pm_MinT(angleLN, angleVN);
-									
-									const float A = 1 - 0.5f * alpha / (alpha + 0.57f);
-									const float B = 0.45f * alpha / (alpha + 0.09f);
-									const float C = sinf(or_alpha) * tanf(or_beta);
-
-									const float gamma = PM::pm_Dot3D(PM::pm_Subtract(V, PM::pm_Scale(N, NdotV)),
-										PM::pm_Subtract(L, PM::pm_Scale(N, NdotL)));
-
-									const float L1 = NdotL * (A + B * C * PM::pm_MaxT(0.0f, gamma));
-
-									diffuseTerm += L1 * ray.spectrum();
-								}
-
-								specTerm += mReflectivity *
-									BRDF::standard(mFresnel, alpha, L, N, H, V) * ray.spectrum();
-
-								lightSampleCounter++;
+								applyOnRay(L, N, H, V, ray.spectrum(), diffuse, spec);
+								sampleCounter++;
 							}
 						}
 					}
 				}
 
-				if (lightSampleCounter != 0)
-				{
-					diffuseTerm /= lightSampleCounter;
-					specTerm /= lightSampleCounter;
-				}
-
-				// Indirect Illumination
-				// TODO: Add roughness factor
-				//float rph = std::acosf(
-				//	PM::pm_MaxT<float>(-1, PM::pm_MinT<float>(1, PM::pm_GetZ(reflection))));
-				//float rrh = PM::pm_GetX(reflection) != 0 ? std::atan2f(PM::pm_GetY(reflection), PM::pm_GetX(reflection)) : 0;
-				uint32 indirectSampleCounter = 0;
+				// Simple indirect solution
 				for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
 				{
-					//PM::vec3 norm2 = RandomRotationSphere::create(rph, rrh, -delta/2, delta/2, -delta, delta, renderer->random());
-					PM::vec3 norm2 = RandomRotationSphere::createFast(point.normal(), -1, 1, -1, 1, -1, 1, renderer->random());
-					Ray ray(point.vertex(), norm2, in.depth() + 1);
+					PM::vec3 L = PM::pm_SetW(
+						RandomRotationSphere::createFast(point.normal(), -1, 1, -1, 1, -1, 1, renderer->random()), 0);
+					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 
-					float dot = std::abs(PM::pm_Dot3D(norm2, point.normal()));
-					indirectTerm += dot * ray.spectrum();
-					indirectSampleCounter++;
+					const PM::vec3 V = PM::pm_SetW(PM::pm_Negate(in.direction()), 0);
+					const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
+					applyOnRay(L, N, H, V, ray.spectrum(), diffuse, spec);
+					sampleCounter++;
 				}
 
-				if (indirectSampleCounter != 0)
+				if (sampleCounter != 0)
 				{
-					indirectTerm /= indirectSampleCounter;
+					diffuse *= PM_PI_F / sampleCounter;
+					spec *= PM_PI_F / sampleCounter;
 				}
 			}
+
+			// Normalize spec term?
+			in.setSpectrum(diffuse * mAlbedoSpectrum + spec * mSpecularitySpectrum);
+		}
+	}
+
+	void BRDFMaterial::applyOnRay(const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V,
+		const Spectrum& E0, Spectrum& diff, Spectrum& spec)
+	{
+		const float alpha = mRoughness * mRoughness;
+		const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, N));
+
+		if (alpha <= std::numeric_limits<float>::epsilon()) // Lambert
+		{
+			diff += PM_INV_PI_F * NdotL * E0;// Simple Lambert
+		}
+		else//Oren-Nayar
+		{
+			const float NdotV = PM::pm_Dot3D(N, V);
+			const float angleVN = acosf(NdotL);
+			const float angleLN = acosf(NdotV);
+			const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
+			const float or_beta = PM::pm_MinT(angleLN, angleVN);
+
+			const float A = 1 - 0.5f * alpha / (alpha + 0.57f);
+			const float B = 0.45f * alpha / (alpha + 0.09f);
+			const float C = sinf(or_alpha) * tanf(or_beta);
+
+			const float gamma = PM::pm_Dot3D(PM::pm_Subtract(V, PM::pm_Scale(N, NdotV)),
+				PM::pm_Subtract(L, PM::pm_Scale(N, NdotL)));
+
+			const float L1 = NdotL * (A + B * C * PM::pm_MaxT(0.0f, gamma));
+
+			diff += L1 * E0;
 		}
 
-		// Normalize spec term?
-		in.setSpectrum((indirectTerm + diffuseTerm) * mAlbedoSpectrum + specTerm * mSpecularitySpectrum);
+		if (mReflectivity > std::numeric_limits<float>::epsilon())
+		{
+			spec += mReflectivity *
+				BRDF::standard(mFresnel, alpha, L, N, H, V) * E0;
+		}
 	}
 }
