@@ -6,6 +6,10 @@ MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 add_definitions(${Qt5Widgets_DEFINITIONS})
 
+IF(CMAKE_COMPILER_IS_GNUCXX)
+add_compile_options(-fPIC)
+ENDIF()
+
 SET(PR_Viewer ${PR_Root}/viewer)
 SET(PR_Main_Src
 	${PR_Viewer}/main.cpp
