@@ -15,8 +15,8 @@ namespace PR
 
 	void UVDebugMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		in.setSpectrum(RGBConverter::toSpec(std::fabsf(PM::pm_GetX(point.uv())),
-			std::fabsf(PM::pm_GetY(point.uv())),
+		in.setSpectrum(RGBConverter::toSpec(std::abs(PM::pm_GetX(point.uv())),
+			std::abs(PM::pm_GetY(point.uv())),
 			0));
 	}
 

@@ -209,7 +209,7 @@ namespace PR
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 
-					float dot = std::fabsf(PM::pm_Dot3D(norm2, point.normal()));
+					float dot = std::abs(PM::pm_Dot3D(norm2, point.normal()));
 					indirectTerm += dot * ray.spectrum();
 					indirectSampleCounter++;
 				}

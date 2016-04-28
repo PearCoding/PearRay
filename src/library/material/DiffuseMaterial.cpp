@@ -116,7 +116,7 @@ namespace PR
 						FacePoint p = light->getRandomFacePoint(renderer->random());
 
 						PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
-						float dot2 = std::fabsf(PM::pm_Dot3D(dir, point.normal()));
+						float dot2 = std::abs(PM::pm_Dot3D(dir, point.normal()));
 
 						if (dot2 > std::numeric_limits<float>::epsilon())
 						{
@@ -149,7 +149,7 @@ namespace PR
 					Ray ray(point.vertex(), norm2, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 
-					float dot2 = std::fabsf(PM::pm_Dot3D(norm2, point.normal()));
+					float dot2 = std::abs(PM::pm_Dot3D(norm2, point.normal()));
 
 					spec += dot2 * ray.spectrum();
 

@@ -62,17 +62,17 @@ namespace PR
 
 	float BoundingBox::width() const
 	{
-		return std::fabsf(PM::pm_GetX(mUpperBound) - PM::pm_GetX(mLowerBound));
+		return std::abs(PM::pm_GetX(mUpperBound) - PM::pm_GetX(mLowerBound));
 	}
 
 	float BoundingBox::height() const
 	{
-		return std::fabsf(PM::pm_GetY(mUpperBound) - PM::pm_GetY(mLowerBound));
+		return std::abs(PM::pm_GetY(mUpperBound) - PM::pm_GetY(mLowerBound));
 	}
 
 	float BoundingBox::depth() const
 	{
-		return std::fabsf(PM::pm_GetZ(mUpperBound) - PM::pm_GetZ(mLowerBound));
+		return std::abs(PM::pm_GetZ(mUpperBound) - PM::pm_GetZ(mLowerBound));
 	}
 
 	float BoundingBox::volume() const
@@ -109,7 +109,7 @@ namespace PR
 		PM::vec3 p = PM::pm_Subtract(center(), ray.startPosition());
 
 		// X
-		if (std::fabsf(PM::pm_GetX(ray.direction())) > std::numeric_limits<float>::epsilon())
+		if (std::abs(PM::pm_GetX(ray.direction())) > std::numeric_limits<float>::epsilon())
 		{
 			float t1 = (PM::pm_GetX(p) + hx) / PM::pm_GetX(ray.direction());
 			float t2 = (PM::pm_GetX(p) - hx) / PM::pm_GetX(ray.direction());
@@ -142,7 +142,7 @@ namespace PR
 		}
 
 		// Y
-		if (std::fabsf(PM::pm_GetY(ray.direction())) > std::numeric_limits<float>::epsilon())
+		if (std::abs(PM::pm_GetY(ray.direction())) > std::numeric_limits<float>::epsilon())
 		{
 			float t1 = (PM::pm_GetY(p) + hy) / PM::pm_GetY(ray.direction());
 			float t2 = (PM::pm_GetY(p) - hy) / PM::pm_GetY(ray.direction());
@@ -175,7 +175,7 @@ namespace PR
 		}
 
 		// Z
-		if (std::fabsf(PM::pm_GetZ(ray.direction())) > std::numeric_limits<float>::epsilon())
+		if (std::abs(PM::pm_GetZ(ray.direction())) > std::numeric_limits<float>::epsilon())
 		{
 			float t1 = (PM::pm_GetZ(p) + hz) / PM::pm_GetZ(ray.direction());
 			float t2 = (PM::pm_GetZ(p) - hz) / PM::pm_GetZ(ray.direction());

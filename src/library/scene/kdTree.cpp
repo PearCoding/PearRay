@@ -93,18 +93,18 @@ namespace PR
 			{
 				BoundingBox bx = e->worldBoundingBox();
 
-				float dist = std::fabsf(mid - PM::pm_GetX(bx.upperBound()));
-				float dist2 = std::fabsf(mid - PM::pm_GetX(bx.lowerBound()));
+				float dist = std::abs(mid - PM::pm_GetX(bx.upperBound()));
+				float dist2 = std::abs(mid - PM::pm_GetX(bx.lowerBound()));
 
 				if (axis == 1)
 				{
-					dist = std::fabsf(mid - PM::pm_GetY(bx.upperBound()));
-					dist2 = std::fabsf(mid - PM::pm_GetY(bx.lowerBound()));
+					dist = std::abs(mid - PM::pm_GetY(bx.upperBound()));
+					dist2 = std::abs(mid - PM::pm_GetY(bx.lowerBound()));
 				}
 				else if (axis == 2)
 				{
-					dist = std::fabsf(mid - PM::pm_GetZ(bx.upperBound()));
-					dist2 = std::fabsf(mid - PM::pm_GetZ(bx.lowerBound()));
+					dist = std::abs(mid - PM::pm_GetZ(bx.upperBound()));
+					dist2 = std::abs(mid - PM::pm_GetZ(bx.lowerBound()));
 				}
 
 				if (dist > dist2)

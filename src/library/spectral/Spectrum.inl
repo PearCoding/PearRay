@@ -180,9 +180,9 @@ namespace PR
 
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			if (h < fabsf(mValues[i]))
+			if (h < std::abs(mValues[i]))
 			{
-				h = fabsf(mValues[i]);
+				h = std::abs(mValues[i]);
 			}
 		}
 
@@ -195,9 +195,9 @@ namespace PR
 
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			if (h > fabsf(mValues[i]))
+			if (h > std::abs(mValues[i]))
 			{
-				h = fabsf(mValues[i]);
+				h = std::abs(mValues[i]);
 			}
 		}
 
@@ -270,7 +270,7 @@ namespace PR
 	{
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			mValues[i] = std::sqrtf(mValues[i]);
+			mValues[i] = std::sqrt(mValues[i]);
 		}
 
 		return *this;
