@@ -137,7 +137,7 @@ void SelectionProperty::addItem(const QString& text, const QVariant& userData)
 
 void SelectionProperty::removeItem(int index)
 {
-	mData.removeAt(index);
+	mData.remove(index);
 
 	if (mWidget)
 	{
