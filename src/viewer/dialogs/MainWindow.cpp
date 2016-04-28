@@ -141,34 +141,20 @@ void MainWindow::openScene()
 
 void MainWindow::exportImage()
 {
-	QStringList mimeTypeFilters;
-	foreach(const QByteArray &mimeTypeName, QImageWriter::supportedMimeTypes())
-	{
-		mimeTypeFilters.append(mimeTypeName);
-	}
-
-	mimeTypeFilters.sort();
-
 	const QStringList picturesLocations = QStandardPaths::standardLocations(QStandardPaths::PicturesLocation);
 
-	QFileDialog dialog(this, tr("Export Image"),
-		picturesLocations.isEmpty() ? QDir::currentPath() : picturesLocations.last());
-	dialog.setAcceptMode(QFileDialog::AcceptSave);
-	dialog.setFileMode(QFileDialog::AnyFile);
-	dialog.setMimeTypeFilters(mimeTypeFilters);
-	dialog.selectMimeTypeFilter("image/png");
-	dialog.setDefaultSuffix("png");
+	QString filename = QFileDialog::getSaveFileName(this, tr("Export Image"),
+		picturesLocations.isEmpty() ? QDir::currentPath() : picturesLocations.last(),
+		tr("Images (*.png *.xpm *.jpg)"));
 
-	dialog.show();
-	if (dialog.exec() == QDialog::Accepted &&
-		!dialog.selectedFiles().isEmpty())
+	if (!filename.isEmpty())
 	{
-		QImageWriter writer(dialog.selectedFiles().first());
+		QImageWriter writer(filename);
 		if(!writer.write(ui.viewWidget->image()))
 		{
 			QMessageBox::critical(this, tr("Error"),
 				tr("Couldn't write image to %1:\n%2")
-				.arg(dialog.selectedFiles().first())
+				.arg(filename)
 				.arg(writer.errorString()));
 		}
 	}
@@ -329,6 +315,6 @@ void MainWindow::entitySelected(QModelIndex index)
 	}
 	else
 	{
-		ui.entityDetailsView->setEntity(false);
+		ui.entityDetailsView->setEntity(nullptr);
 	}
 }
