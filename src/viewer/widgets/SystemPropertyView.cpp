@@ -1,7 +1,7 @@
 #include "SystemPropertyView.h"
 #include "PropertyView.h"
 
-#include "properties/propertytable.h"
+#include "properties/PropertyTable.h"
 
 #include "properties/GroupProperty.h"
 #include "properties/IntProperty.h"

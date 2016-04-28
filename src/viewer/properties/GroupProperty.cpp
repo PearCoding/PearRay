@@ -1,4 +1,4 @@
-#include "groupproperty.h"
+#include "GroupProperty.h"
 
 GroupProperty::GroupProperty() :
 IProperty()

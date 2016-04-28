@@ -1,4 +1,4 @@
-#include "textproperty.h"
+#include "TextProperty.h"
 
 #include <QLineEdit>
 

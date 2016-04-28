@@ -1,4 +1,4 @@
-#include "boolproperty.h"
+#include "BoolProperty.h"
 
 #include <QCheckBox>
 

@@ -1,4 +1,4 @@
-#include "colorbutton.h"
+#include "ColorButton.h"
 
 #include <QApplication>
 #include <QtEvents>

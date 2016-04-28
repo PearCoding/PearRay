@@ -3,7 +3,7 @@
 #include <QMainWindow>
 #include "ui_MainWindow.h"
 
-#include "properties/propertytable.h"
+#include "properties/PropertyTable.h"
 
 #include <QTimer>
 

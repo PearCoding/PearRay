@@ -1,4 +1,4 @@
-#include "doubleproperty.h"
+#include "DoubleProperty.h"
 
 #include <QDoubleSpinBox>
 

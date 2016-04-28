@@ -10,7 +10,7 @@
 #include "camera/OrthographicCamera.h"
 #include "camera/PerspectiveCamera.h"
 
-#include "properties/propertytable.h"
+#include "properties/PropertyTable.h"
 
 #include "properties/GroupProperty.h"
 #include "properties/IntProperty.h"

@@ -1,4 +1,4 @@
-#include "selectionproperty.h"
+#include "SelectionProperty.h"
 
 #include <QComboBox>
 

@@ -1,4 +1,4 @@
-#include "iproperty.h"
+#include "IProperty.h"
 
 IProperty::IProperty() :
 QObject(),

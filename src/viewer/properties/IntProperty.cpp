@@ -1,4 +1,4 @@
-#include "intproperty.h"
+#include "IntProperty.h"
 
 #include <QSpinBox>
 

@@ -1,6 +1,6 @@
-#include "propertyview.h"
+#include "PropertyView.h"
 
-#include "properties/propertytable.h"
+#include "properties/PropertyTable.h"
 
 #include <QHeaderView>
 #include <QPainter>

@@ -1,4 +1,4 @@
-#include "propertytable.h"
+#include "PropertyTable.h"
 
 PropertyTable::PropertyTable()
 {
