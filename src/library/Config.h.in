@@ -146,6 +146,8 @@
 #define PR_LIB_UTILS_INLINE
 
 #include <chrono>
+#include <cmath>
+#include <cstring>
 
 namespace PR
 {

@@ -3,7 +3,7 @@ namespace PR
 	inline Spectrum::Spectrum() :
 		mEmissive(false)
 	{
-		memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
+		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
 	inline Spectrum::~Spectrum()
@@ -12,13 +12,13 @@ namespace PR
 
 	inline Spectrum::Spectrum(const Spectrum& spec)
 	{
-		memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
+		std::memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
 		mEmissive = spec.mEmissive;
 	}
 
 	inline Spectrum& Spectrum::operator = (const Spectrum& spec)
 	{
-		memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
+		std::memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
 		mEmissive = spec.mEmissive;
 		return *this;
 	}
