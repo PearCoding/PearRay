@@ -11,6 +11,7 @@ namespace PR
 
 enum ViewMode
 {
+	VM_ToneMapped,// sRGB
 	VM_Color,// sRGB
 	VM_ColorLinear,// sRGB Linear
 	VM_Depth,

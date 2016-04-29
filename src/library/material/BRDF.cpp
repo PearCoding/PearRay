@@ -68,14 +68,14 @@ namespace PR
 
 	// Optimized groups:
 
-	// Fresnel: Schlick, NDF: Blinn, Geometry: Implicit
+	// Fresnel: Schlick, NDF: Beckmann
+	// See http://blog.selfshadow.com/publications/s2013-shading-course/ for more information.
 	float BRDF::standard(float f0, float alpha, const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V)
 	{
 		// Only optimizing is in the geometry
 		float fresnel = fresnel_schlick(f0, L, H);
-		float term = PM::pm_MaxT(PM::pm_Dot3D(N, L), PM::pm_Dot3D(N, V));
-		float geometry = std::abs(term) < std::numeric_limits<float>::epsilon() ? 0 : 1 / term;
-		float ndf = ndf_blinn(H, N, alpha);
+		float geometry = PM::pm_Dot3D(N, H) / (PM::pm_Dot3D(N, L)*PM::pm_Dot3D(V, H));
+		float ndf = ndf_beckmann(H, N, alpha + 0.0001f);
 
 		return fresnel * geometry * ndf * 0.25f;
 	}

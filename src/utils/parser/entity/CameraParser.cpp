@@ -70,6 +70,7 @@ namespace PRU
 				DL::Data* fovHD = group->getFromKey("fovH");
 				DL::Data* fovVD = group->getFromKey("fovV");
 				DL::Data* lensDistD = group->getFromKey("lensDistance");
+				DL::Data* lookAtD = group->getFromKey("lookAt");
 
 				float fovH = 60;
 				float fovV = 45;
@@ -92,6 +93,18 @@ namespace PRU
 
 				OrthographicCamera* camera = new OrthographicCamera(name, parent);
 				camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+
+				if (lookAtD && lookAtD->isType() == DL::Data::T_Array)
+				{
+					bool ok;
+					PM::vec3 look = loader->getVector(lookAtD->getArray(), ok);
+
+					if (ok)
+					{
+						camera->lookAt(look);
+					}
+				}
+
 				return camera;
 			}
 			else

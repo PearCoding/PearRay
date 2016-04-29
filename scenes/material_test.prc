@@ -6,15 +6,15 @@
 	(entity
 		:name			"Camera"
 		:type			"camera"
-		:projection		"orthographic"
-		;:projection		"perspective"
+		;:projection		"orthographic"
+		:projection		"perspective"
 		
 		:width			1.33333
 		:height			1
 		:lensDistance	1
 		
 		:lookAt			[0,0,0]
-		:position		[0,10,-3]
+		:position		[0,10,-5]
 	)
 	
 	(entity
@@ -140,6 +140,7 @@
 		
 		:albedo			"Gray1"
 		:roughness		1
+		:reflectivity 	0
 	)
 	
 	(material
@@ -147,7 +148,8 @@
 		:type			"standard"
 		
 		:albedo			"Gray2"
-		:roughness		0
+		:roughness		1
+		:reflectivity 	0
 	)
 	
 	(material

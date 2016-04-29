@@ -74,11 +74,16 @@ namespace PR
 
 	Ray PerspectiveCamera::constructRay(float nx, float ny) const
 	{
-		float cx = nx * mWidth;
+		float cx = -nx * mWidth;
 		float cy = -ny * mHeight;
-		
-		PM::vec3 camPos = PM::pm_RotateWithQuat(rotation(), PM::pm_Set(cx, cy, -mLensDistance));
-		PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Subtract(camPos, position()));
+
+		PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position())), 0);
+		PM::vec3 right = PM::pm_Cross3D(dir, PM::pm_Set(0, 1, 0));
+		PM::vec3 up = PM::pm_Cross3D(right, dir);
+
+		PM::vec3 off = PM::pm_Add(PM::pm_Scale(right, cx), PM::pm_Scale(up, cy));
+		PM::vec3 camPos = PM::pm_Add(off, PM::pm_Scale(dir, mLensDistance));
+		PM::vec3 rayDir = PM::pm_SetW(PM::pm_Normalize3D(camPos), 0);
 
 		return Ray(position(), rayDir);
 	}

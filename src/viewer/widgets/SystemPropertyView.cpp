@@ -118,6 +118,7 @@ QWidget(parent)
 
 	mViewModeProp = new SelectionProperty();
 	mViewModeProp->setPropertyName(tr("Display"));
+	((SelectionProperty*)mViewModeProp)->addItem(tr("Tone Mapped"), VM_ToneMapped);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color Linear"), VM_ColorLinear);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);

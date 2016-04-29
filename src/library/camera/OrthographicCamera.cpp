@@ -5,7 +5,7 @@ namespace PR
 {
 	OrthographicCamera::OrthographicCamera(const std::string& name, Entity* parent) :
 		Camera(name, parent), mWidth(1), mHeight(1),
-		mLensDistance(1)
+		mLensDistance(1), mLookAt(PM::pm_Set(0,0,0,1))
 	{
 	}
 
@@ -62,12 +62,22 @@ namespace PR
 		return mLensDistance;
 	}
 
+	void OrthographicCamera::lookAt(const PM::vec3& v)
+	{
+		mLookAt = v;
+	}
+
+	PM::vec3 OrthographicCamera::lookAtPosition() const
+	{
+		return mLookAt;
+	}
+
 	Ray OrthographicCamera::constructRay(float nx, float ny) const
 	{
 		float sx = mWidth * nx;
 		float sy = - mHeight * ny;
 
-		PM::vec3 dir = PM::pm_Set(0, 0, 1, 0);
+		PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position())), 0);
 		return Ray(PM::pm_Multiply(matrix(), PM::pm_Set(sx, sy, 0, 1)),
 			PM::pm_RotateWithQuat(rotation(), dir));
 	}

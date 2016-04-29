@@ -131,7 +131,9 @@ void MainWindow::openScene()
 		}
 	}
 
-	QString file = QFileDialog::getOpenFileName(this, tr("Open Scene"));
+	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+	QString file = QFileDialog::getOpenFileName(this, tr("Open Scene"),
+		docLoc.isEmpty() ? QDir::currentPath() : docLoc.last());
 
 	if (!file.isEmpty())
 	{

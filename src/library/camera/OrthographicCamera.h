@@ -24,10 +24,16 @@ namespace PR
 		void setLensDistance(float d);
 		float lensDistance() const;
 
+		// World coords
+		void lookAt(const PM::vec3& v);
+		PM::vec3 lookAtPosition() const;
+
 		Ray constructRay(float nx, float ny) const;
 	private:
 		float mWidth;
 		float mHeight;
 		float mLensDistance;
+
+		PM::vec3 mLookAt;
 	};
 }

@@ -12,7 +12,7 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr), mViewMode(VM_Color), mScale(false)
+	mRenderer(nullptr), mViewMode(VM_ToneMapped), mScale(false)
 {
 	cache();
 }
@@ -37,11 +37,131 @@ void ViewWidget::refreshView()
 {
 	if (mRenderer)
 	{
-		PR::RenderResult result = mRenderer->result();
+		const PR::RenderResult& result = mRenderer->result();
 
 		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);
 
-		if (mViewMode == VM_Color)
+		if (mViewMode == VM_ToneMapped)// Very simple tone mapper...
+		{
+			constexpr float STRENGTH = 1 / 9.0f;
+			/*constexpr float FILTER[] = { STRENGTH, STRENGTH, STRENGTH,
+				STRENGTH, STRENGTH, STRENGTH,
+				STRENGTH, STRENGTH, STRENGTH
+			};*/
+			/*constexpr float FILTER[] = { -STRENGTH, -STRENGTH, -STRENGTH,
+				-STRENGTH, 8*STRENGTH, -STRENGTH,
+				-STRENGTH, -STRENGTH, -STRENGTH
+			};*/
+			constexpr int MEDIAN_RADIUS = 3;
+			constexpr int MEDIAN_WIDTH = 2 * MEDIAN_RADIUS + 1;
+			constexpr int MEDIAN_SIZE = MEDIAN_WIDTH * MEDIAN_WIDTH;
+
+			constexpr float RHO = 0.45f;
+			constexpr float RHO2 = RHO * RHO;
+
+			// Gaussian
+			float FILTER[MEDIAN_SIZE];
+			for (int i = 0; i < MEDIAN_WIDTH; ++i)
+			{
+				for (int j = 0; j < MEDIAN_WIDTH; ++j)
+				{
+					float rx = i - MEDIAN_RADIUS;
+					float ry = j - MEDIAN_RADIUS;
+					FILTER[j * MEDIAN_WIDTH + i] = (0.5f * PM_INV_PI_F / RHO2) * std::exp(-0.5f*(rx*rx + ry*ry) / RHO2);
+				}
+			}
+
+			/*PR::Spectrum window[MEDIAN_SIZE];
+			float maxes[MEDIAN_SIZE];*/
+
+			PR::RenderResult tmp(result.width(), result.height());
+			float max = 0;
+			for (PR::uint32 y = 0; y < result.height(); ++y)
+			{
+				for (PR::uint32 x = 0; x < result.width(); ++x)
+				{
+					if (x >= MEDIAN_RADIUS && x < result.width() - MEDIAN_RADIUS &&
+						y >= MEDIAN_RADIUS && y < result.height() - MEDIAN_RADIUS)
+					{
+						PR::Spectrum spec;
+						for (int i = 0; i < MEDIAN_WIDTH; ++i)
+						{
+							for (int j = 0; j < MEDIAN_WIDTH; ++j)
+							{
+								spec += result.point(x + i - MEDIAN_RADIUS, y + j - MEDIAN_RADIUS) * FILTER[j * MEDIAN_WIDTH + i];
+							}
+						}
+
+						max = PM::pm_MaxT(max, spec.max());
+						tmp.setPoint(x, y, spec);
+
+						// Median Filter
+						/*for (int i = 0; i < MEDIAN_WIDTH; ++i)
+						{
+							for (int j = 0; j < MEDIAN_WIDTH; ++j)
+							{
+								auto in = result.point(x + i - MEDIAN_RADIUS, y + j - MEDIAN_RADIUS);
+
+								int index = j * MEDIAN_WIDTH + i;
+
+								if (index == 0)
+								{
+									window[index] = in;
+									maxes[index] = in.max();
+								}
+								else
+								{
+									float inMax = in.max();
+									int insertIndex;
+									for (insertIndex = 0; insertIndex < index; ++insertIndex)
+									{
+										if (maxes[index] > inMax)
+											break;
+									}
+
+									for (int k = index - 1; k >= insertIndex; --k)
+									{
+										maxes[k + 1] = maxes[k];
+										window[k + 1] = window[k];
+									}
+
+									maxes[insertIndex] = inMax;
+									window[insertIndex] = in;
+								}
+							}
+						}
+
+						max = PM::pm_MaxT(max, maxes[MEDIAN_SIZE / 2]);
+						tmp.setPoint(x, y, window[MEDIAN_SIZE / 2]);*/
+					}
+					else
+					{
+						PR::Spectrum spec = result.point(x, y);
+						max = PM::pm_MaxT(max, spec.max());
+						tmp.setPoint(x, y, spec);
+					}
+				}
+			}
+
+			float factor = 1;/*(max <= 0.8f) ? 1 : 1 / max;*/
+			for (PR::uint32 y = 0; y < tmp.height(); ++y)
+			{
+				for (PR::uint32 x = 0; x < tmp.width(); ++x)
+				{
+					float r;
+					float g;
+					float b;
+
+					PR::RGBConverter::convertGAMMA(tmp.point(x, y)*factor, r, g, b);
+					r = PM::pm_ClampT<float>(r, 0, 1);
+					g = PM::pm_ClampT<float>(g, 0, 1);
+					b = PM::pm_ClampT<float>(b, 0, 1);
+
+					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
+				}
+			}
+		}
+		else if (mViewMode == VM_Color)
 		{
 			for (PR::uint32 y = 0; y < result.height(); ++y)
 			{
