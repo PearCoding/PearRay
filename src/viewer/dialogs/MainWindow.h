@@ -6,6 +6,7 @@
 #include "properties/PropertyTable.h"
 
 #include <QTimer>
+#include <QElapsedTimer>
 
 namespace PR
 {
@@ -62,4 +63,5 @@ private:
 	PR::Renderer* mRenderer;
 
 	QTimer mTimer;
+	QElapsedTimer mElapsedTime;
 };

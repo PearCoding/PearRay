@@ -162,17 +162,82 @@ void MainWindow::exportImage()
 	}
 }
 
+static QString friendlyTime(quint64 ms)
+{
+	quint64 s = ms / 1000;
+	quint64 m = s / 60;
+	quint64 h = m / 60;
+	quint64 d = h / 24;
+
+	s %= 60;
+	m %= 60;
+	h %= 24;
+
+	if (d >= 2 || (d == 1 && h == 0))
+	{
+		return QString("%1 %2").arg(d).arg(d == 1 ? "day" : "days");
+	}
+	else if (d == 1)
+	{
+		return QString("%1 day %2 %3").arg(d).arg(h).arg(h == 1 ? "hour" : "hours");
+	}
+	else
+	{
+		if (h > 0)
+		{
+			if (m == 0)
+			{
+				return QString("%1 %2").arg(h).arg(h == 1 ? "hour" : "hours");
+			}
+			else
+			{
+				return QString("%1 %2 %3 %4").arg(h).arg(h == 1 ? "hour" : "hours").arg(m).arg(m == 1 ? "min" : "mins");
+			}
+		}
+		else
+		{
+			if (m > 0)
+			{
+				if (s == 0)
+				{
+					return QString("%1 %2").arg(m).arg(m == 1 ? "min" : "mins");
+				}
+				else
+				{
+					return QString("%1 %2 %3 %4").arg(m).arg(m == 1 ? "min" : "mins").arg(s).arg(s == 1 ? "sec" : "secs");
+				}
+			}
+			else
+			{
+				if (s > 0)
+				{
+					return QString("%1 %2").arg(s).arg(s == 1 ? "sec" : "secs");
+				}
+				else
+				{
+					return QString("less then 1 sec");
+				}
+			}
+		}
+	}
+}
+
 void MainWindow::updateView()
 {
 	if (mRenderer)
 	{
 		float percent = 100 * mRenderer->pixelsRendered() / (float)(mRenderer->width()*mRenderer->height());
+
+		quint64 timeLeft = mElapsedTime.elapsed() * (100 - percent) / percent;
+
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4")
+		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
 			.arg(mRenderer->pixelsRendered())
 			.arg(mRenderer->width()*mRenderer->height())
 			.arg(percent, 4)
-			.arg(mRenderer->rayCount()));
+			.arg(mRenderer->rayCount())
+			.arg(friendlyTime(mElapsedTime.elapsed()))
+			.arg(friendlyTime(timeLeft)));
 
 		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)percent));
 
@@ -279,6 +344,7 @@ void MainWindow::startRendering()
 	mEnvironment->scene()->buildTree();
 
 	mTimer.start(200);
+	mElapsedTime.restart();
 	mRenderer->start(ui.systemPropertyView->getTileX(),
 		ui.systemPropertyView->getTileY(),
 		ui.systemPropertyView->getThreadCount());
@@ -297,10 +363,11 @@ void MainWindow::stopRendering()
 	else
 	{
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Pixels: %1/%2 | Rays: %3")
+		ui.statusBar->showMessage(QString("Pixels: %1/%2 | Rays: %3 | Render time: %4")
 			.arg(mRenderer->pixelsRendered())
 			.arg(mRenderer->width()*mRenderer->height())
-			.arg(mRenderer->rayCount()));
+			.arg(mRenderer->rayCount())
+			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}
 
 	ui.systemPropertyView->disableRendering();
