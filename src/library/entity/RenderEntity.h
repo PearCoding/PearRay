@@ -10,6 +10,7 @@ namespace PR
 	class Random;
 	class Ray;
 	class Renderer;
+	class Sampler;
 	class PR_LIB RenderEntity : public Entity
 	{
 	public:
@@ -31,6 +32,6 @@ namespace PR
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer);
 
 		// In world coords
-		virtual FacePoint getRandomFacePoint(Random& random) const = 0;
+		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const = 0;
 	};
 }

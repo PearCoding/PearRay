@@ -47,7 +47,9 @@ SET(PR_Renderer_Src
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
-  ${PR_LIB}/sampler/Sampler.cpp)
+  ${PR_LIB}/sampler/Stratified1DSampler.cpp
+  ${PR_LIB}/sampler/Stratified2DSampler.cpp
+  ${PR_LIB}/sampler/Stratified3DSampler.cpp)
 SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
   ${PR_LIB}/scene/kdTree.cpp
@@ -119,7 +121,11 @@ SET(PR_Renderer_Hdr
   ${PR_LIB}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
-  ${PR_LIB}/sampler/Sampler.h)
+  ${PR_LIB}/sampler/Projection.h
+  ${PR_LIB}/sampler/Sampler.h
+  ${PR_LIB}/sampler/Stratified1DSampler.h
+  ${PR_LIB}/sampler/Stratified2DSampler.h
+  ${PR_LIB}/sampler/Stratified3DSampler.h)
 SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
 SET(PR_Scene_Hdr
   ${PR_LIB}/scene/kdTree.h

@@ -330,7 +330,6 @@ namespace PRT
 		_errors += PR_TESTCASE(name) ? 0 : 1
 
 #define PRT_END_MAIN \
-		if (_errors > 0) \
-			PR_DEBUG_BREAK(); \
+		PR_DEBUG_ASSERT(_errors == 0); \
 		return -_errors; \
 	}

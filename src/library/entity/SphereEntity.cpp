@@ -3,6 +3,8 @@
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
 #include "geometry/Sphere.h"
+
+#include "sampler/Projection.h"
 #include "sampler/Sampler.h"
 
 namespace PR
@@ -94,12 +96,14 @@ namespace PR
 		}
 	}
 
-	FacePoint SphereEntity::getRandomFacePoint(Random& random) const
+	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
+		auto sample = sampler.generate(random);
+
 		FacePoint p;
 
 		// Not really uniform...
-		PM::vec3 n = Sampler::sphereFast(random.getFloat(), random.getFloat(), random.getFloat());
+		PM::vec3 n = Projection::sphereFast(PM::pm_GetX(sample), PM::pm_GetY(sample), PM::pm_GetZ(sample));
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Multiply(matrix(), n));
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;

@@ -1,7 +1,9 @@
 #include "BRDFMaterial.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "sampler/Sampler.h"
+#include "sampler/Stratified2DSampler.h"
+#include "sampler/Stratified3DSampler.h"
+#include "sampler/Projection.h"
 #include "renderer/Renderer.h"
 #include "entity/RenderEntity.h"
 
@@ -134,9 +136,13 @@ namespace PR
 					uint32 max = renderer->maxDirectRayCount();
 					max = light->maxLightSamples() != 0 ? PM::pm_MinT(max, light->maxLightSamples()) : max;
 
+					Stratified3DSampler sampler(renderer->maxDirectRayCount_3DSample(),
+						renderer->maxDirectRayCount_3DSample(),
+						renderer->maxDirectRayCount_3DSample());
+
 					for (uint32 i = 0; i < max; ++i)
 					{
-						FacePoint p = light->getRandomFacePoint(renderer->random());
+						FacePoint p = light->getRandomFacePoint(sampler, renderer->random());
 
 						const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
 						const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, N));
@@ -159,18 +165,22 @@ namespace PR
 					}
 				}
 
-				// Simple indirect solution
+				// Simple stratified indirect solution
+				Stratified2DSampler stratifiedSampler(renderer->maxIndirectRayCount_2DSample(), renderer->maxIndirectRayCount_2DSample());
 				for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
 				{
-					PM::vec3 L = PM::pm_SetW(
-						Sampler::align(N, Sampler::hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
-					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
-					renderer->shoot(ray, collisionPoint);
+					const auto uv = stratifiedSampler.generate(renderer->random());
 
-					const PM::vec3 V = PM::pm_SetW(PM::pm_Negate(in.direction()), 0);
-					const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
-					applyOnRay(L, N, H, V, ray.spectrum(), diffuse, spec);
-					sampleCounter++;
+					PM::vec3 L = PM::pm_SetW(
+						Projection::align(N, Projection::hemi(PM::pm_GetX(uv), PM::pm_GetY(uv))), 0);
+					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
+					if (renderer->shoot(ray, collisionPoint))
+					{
+						const PM::vec3 V = PM::pm_SetW(in.direction(), 0);
+						const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
+						applyOnRay(L, N, H, V, ray.spectrum(), diffuse, spec);
+						sampleCounter++;
+					}
 				}
 
 				if (sampleCounter != 0)

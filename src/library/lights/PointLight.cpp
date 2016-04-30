@@ -69,7 +69,7 @@ namespace PR
 		}
 	}
 
-	FacePoint PointLight::getRandomFacePoint(Random& random) const
+	FacePoint PointLight::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
 		FacePoint p;
 		p.setVertex(position());

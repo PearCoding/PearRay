@@ -7,6 +7,8 @@
 
 #include "spectral/RGBConverter.h"
 
+#include "sampler/Stratified3DSampler.h"
+
 namespace PR
 {
 	DirectLightDebugMaterial::DirectLightDebugMaterial() :
@@ -30,9 +32,13 @@ namespace PR
 			uint32 max = renderer->maxDirectRayCount();
 			max = light->maxLightSamples() != 0 ? PM::pm_MinT(max, light->maxLightSamples()) : max;
 
+			Stratified3DSampler sampler(renderer->maxDirectRayCount_3DSample(),
+				renderer->maxDirectRayCount_3DSample(),
+				renderer->maxDirectRayCount_3DSample());
+
 			for (uint32 i = 0; i < max; ++i)
 			{
-				FacePoint p = light->getRandomFacePoint(renderer->random());
+				FacePoint p = light->getRandomFacePoint(sampler, renderer->random());
 				PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
 
 				float dot = PM::pm_Dot3D(dir, point.normal());

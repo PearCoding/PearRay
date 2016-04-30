@@ -211,7 +211,7 @@ void SpectrumWidget::cacheImage()
 	painter.drawLine(PADDING, mh + h, PADDING * 3, mh + h);
 	painter.drawLine(PADDING, mh - h, PADDING * 3, mh - h);
 
-	painter.drawText(PADDING * 4, mh - h + 10, QString::number(mSpecMax));
+	painter.drawText(PADDING * 4, mh - h + 10, std::isnan(mSpecMax) ? "NAN" : QString::number(mSpecMax));
 
 	painter.drawLine(PADDING * 2 + w, mh - h, PADDING * 2 + w, mh + h);
 	painter.drawLine(PADDING + w, mh + h, w + PADDING * 3, mh + h);

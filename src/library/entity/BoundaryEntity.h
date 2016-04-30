@@ -25,7 +25,7 @@ namespace PR
 
 		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
 
-		virtual FacePoint getRandomFacePoint(Random& random) const;
+		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const;
 	private:
 		BoundingBox mBoundingBox;
 		Material* mMaterial;

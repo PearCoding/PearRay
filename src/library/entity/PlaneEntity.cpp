@@ -6,6 +6,7 @@
 
 #include "Logger.h"
 #include "Random.h"
+#include "sampler/Sampler.h"
 
 namespace PR
 {
@@ -89,17 +90,16 @@ namespace PR
 	}
 
 	// World space
-	FacePoint PlaneEntity::getRandomFacePoint(Random& random) const
+	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		float u = random.getFloat();
-		float v = random.getFloat();
+		auto sample = sampler.generate(random);
 
 		FacePoint fp;
 		fp.setVertex(PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.xAxis())), u),
-				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.yAxis())), v))));
+			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.xAxis())), PM::pm_GetX(sample)),
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.yAxis())), PM::pm_GetY(sample)))));
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
-		fp.setUV(PM::pm_Set(u, v));
+		fp.setUV(PM::pm_SetZ(sample, 0));
 		return fp;
 	}
 }

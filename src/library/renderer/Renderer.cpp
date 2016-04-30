@@ -17,6 +17,9 @@ namespace PR
 		mMaxRayDepth(3), mMaxDirectRayCount(10), mMaxIndirectRayCount(50),
 		mEnableSampling(false), mXSampleCount(8), mYSampleCount(8), mSamplerMode(SM_Jitter)
 	{
+		setMaxDirectRayCount(10);
+		setMaxIndirectRayCount(50);
+
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
 
@@ -301,6 +304,8 @@ namespace PR
 	void Renderer::setMaxDirectRayCount(uint32 i)
 	{
 		mMaxDirectRayCount = i;
+		mMaxDirectRayCount_2DSample = std::ceil(std::sqrt(i));
+		mMaxDirectRayCount_3DSample = std::ceil(std::cbrt(i));
 	}
 
 	uint32 Renderer::maxDirectRayCount() const
@@ -308,14 +313,36 @@ namespace PR
 		return mMaxDirectRayCount;
 	}
 
+	uint32 Renderer::maxDirectRayCount_2DSample() const
+	{
+		return mMaxDirectRayCount_2DSample;
+	}
+
+	uint32 Renderer::maxDirectRayCount_3DSample() const
+	{
+		return mMaxDirectRayCount_3DSample;
+	}
+
 	void Renderer::setMaxIndirectRayCount(uint32 i)
 	{
 		mMaxIndirectRayCount = i;
+		mMaxIndirectRayCount_2DSample = std::ceil(std::sqrt(i));
+		mMaxIndirectRayCount_3DSample = std::ceil(std::cbrt(i));
 	}
 
 	uint32 Renderer::maxIndirectRayCount() const
 	{
 		return mMaxIndirectRayCount;
+	}
+
+	uint32 Renderer::maxIndirectRayCount_2DSample() const
+	{
+		return mMaxIndirectRayCount_2DSample;
+	}
+
+	uint32 Renderer::maxIndirectRayCount_3DSample() const
+	{
+		return mMaxIndirectRayCount_3DSample;
 	}
 
 	void Renderer::enableSampling(bool b)

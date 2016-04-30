@@ -67,9 +67,13 @@ namespace PR
 
 		void setMaxDirectRayCount(uint32 i);
 		uint32 maxDirectRayCount() const;
+		uint32 maxDirectRayCount_2DSample() const;
+		uint32 maxDirectRayCount_3DSample() const;
 
 		void setMaxIndirectRayCount(uint32 i);
 		uint32 maxIndirectRayCount() const;
+		uint32 maxIndirectRayCount_2DSample() const;
+		uint32 maxIndirectRayCount_3DSample() const;
 
 		void enableSampling(bool b);
 		bool isSamplingEnabled() const;
@@ -142,5 +146,11 @@ namespace PR
 		uint32 mXSampleCount;
 		uint32 mYSampleCount;
 		SamplerMode mSamplerMode;
+
+		// Cache
+		uint32 mMaxDirectRayCount_2DSample;
+		uint32 mMaxDirectRayCount_3DSample;
+		uint32 mMaxIndirectRayCount_2DSample;
+		uint32 mMaxIndirectRayCount_3DSample;
 	};
 }

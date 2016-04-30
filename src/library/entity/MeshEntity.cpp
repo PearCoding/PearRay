@@ -7,6 +7,8 @@
 #include "geometry/FacePoint.h"
 
 #include "Random.h"
+#include "sampler/Sampler.h"
+#include "sampler/Projection.h"
 
 #include "Logger.h"
 
@@ -117,19 +119,17 @@ namespace PR
 		}
 	}
 
-	FacePoint MeshEntity::getRandomFacePoint(Random& random) const
+	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		uint32 fi = random.get32(0, mMesh->faces().size());
+		auto ret = sampler.generate(random);
+		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, mMesh->faces().size() - 1);
 
 		Face* face = mMesh->getFace(fi);
-
-		float u = random.getFloat();
-		float v = random.getFloat();
 
 		PM::vec3 vec;
 		PM::vec3 n;
 		PM::vec2 uv;
-		face->interpolate(u, v, vec, n, uv);
+		face->interpolate(PM::pm_GetY(ret), PM::pm_GetZ(ret), vec, n, uv);
 		
 		vec = PM::pm_Multiply(matrix(), vec);
 		n = PM::pm_RotateWithQuat(rotation(), n);

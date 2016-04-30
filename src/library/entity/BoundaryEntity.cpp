@@ -5,6 +5,9 @@
 #include "geometry/FacePoint.h"
 #include "geometry/Plane.h"
 
+#include "sampler/Sampler.h"
+#include "sampler/Projection.h"
+
 namespace PR
 {
 	BoundaryEntity::BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent) :
@@ -128,20 +131,20 @@ namespace PR
 		}
 	}
 
-	FacePoint BoundaryEntity::getRandomFacePoint(Random& random) const
+	FacePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		BoundingBox::FaceSide side = (BoundingBox::FaceSide)random.get32(0, 5);// Get randomly a face
-		float u = random.getFloat();
-		float v = random.getFloat();
+		auto ret = sampler.generate(random);
+
+		BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(PM::pm_GetX(ret), 0, 5);// Get randomly a face
 
 		Plane plane = localBoundingBox().getFace(side);
 
 		FacePoint fp;
 		fp.setVertex(PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), plane.xAxis())), u),
-				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), plane.yAxis())), v))));
+			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), plane.xAxis())), PM::pm_GetY(ret)),
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), plane.yAxis())), PM::pm_GetZ(ret)))));
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
-		fp.setUV(PM::pm_Set(u, v));
+		fp.setUV(PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret)));
 		return fp;
 	}
 }
