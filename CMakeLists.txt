@@ -107,7 +107,6 @@ add_subdirectory(${PR_Root}/library)
 add_subdirectory(${PR_Root}/utils)
 
 IF(NOT PR_ONLY_LIBRARY)
-	add_subdirectory(${PR_Root}/console)
 	add_subdirectory(${PR_Root}/tests)
 ENDIF()
 
