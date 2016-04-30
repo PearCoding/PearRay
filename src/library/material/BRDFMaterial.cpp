@@ -162,7 +162,8 @@ namespace PR
 				// Simple indirect solution
 				for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
 				{
-					PM::vec3 L = PM::pm_SetW(Sampler::hemi(N, renderer->random().getFloat(), renderer->random().getFloat()), 0);
+					PM::vec3 L = PM::pm_SetW(
+						Sampler::align(N, Sampler::hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
 					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 

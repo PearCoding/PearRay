@@ -99,7 +99,7 @@ namespace PR
 		FacePoint p;
 
 		// Not really uniform...
-		PM::vec3 n = Sampler::sphereFast(-1, 1, -1, 1, -1, 1, random);
+		PM::vec3 n = Sampler::sphereFast(random.getFloat(), random.getFloat(), random.getFloat());
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Multiply(matrix(), n));
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
