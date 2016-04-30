@@ -3,7 +3,7 @@
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
 #include "geometry/Sphere.h"
-#include "geometry/RandomRotationSphere.h"
+#include "sampler/Sampler.h"
 
 namespace PR
 {
@@ -99,7 +99,7 @@ namespace PR
 		FacePoint p;
 
 		// Not really uniform...
-		PM::vec3 n = RandomRotationSphere::createFast(-1, 1, -1, 1, -1, 1, random);
+		PM::vec3 n = Sampler::sphereFast(-1, 1, -1, 1, -1, 1, random);
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Multiply(matrix(), n));
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;

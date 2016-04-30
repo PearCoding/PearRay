@@ -23,8 +23,8 @@
 		
 		:material		"Light"
 		:xAxis			1
-		:yAxis			[0, 0, 1]
-		:position		[-0.5,3.65,-0.5]
+		:yAxis			[0, 0, -1]
+		:position		[-0.5,3.65,0.5]
 	)
 	
 	(entity

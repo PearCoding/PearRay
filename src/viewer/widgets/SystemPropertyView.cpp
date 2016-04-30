@@ -124,7 +124,8 @@ QWidget(parent)
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE XYZ"), VM_XYZ);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE Norm XYZ"), VM_NORM_XYZ);
-	((SelectionProperty*)mViewModeProp)->setDefaultIndex(0);
+	((SelectionProperty*)mViewModeProp)->setIndex(1);
+	((SelectionProperty*)mViewModeProp)->setDefaultIndex(1);
 	mViewGroupProp->addChild(mViewModeProp);
 
 	mViewScaleProp = new BoolProperty();
@@ -237,7 +238,7 @@ int SystemPropertyView::getMaxDirectRayCount() const
 
 int SystemPropertyView::getMaxIndirectRayCount() const
 {
-	return reinterpret_cast<IntProperty*>(mRendererTileXProp)->value();
+	return reinterpret_cast<IntProperty*>(mRendererMaxIndirectRayCountProp)->value();
 }
 
 bool SystemPropertyView::getSampling() const

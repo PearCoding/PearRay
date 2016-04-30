@@ -1,7 +1,7 @@
 #include "BRDFMaterial.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "geometry/RandomRotationSphere.h"
+#include "sampler/Sampler.h"
 #include "renderer/Renderer.h"
 #include "entity/RenderEntity.h"
 
@@ -10,14 +10,15 @@
 namespace PR
 {
 	BRDFMaterial::BRDFMaterial() :
-		Material(), mAlbedoSpectrum(), mSpecularitySpectrum(), mRoughness(1), mReflectivity(0), mFresnel(1),
-		mCanBeShaded(true), mSelfShadow(true), mCameraVisible(true)
+		Material(), mAlbedoSpectrum(), mSpecularitySpectrum(), mEmissionSpectrum(),
+		mRoughness(1), mReflectivity(0), mFresnel(1),
+		mCanBeShaded(true), mSelfShadow(true), mCameraVisible(true), mIsLight(false)
 	{
 	}
 
 	bool BRDFMaterial::isLight() const
 	{
-		return false;
+		return mIsLight;
 	}
 
 	Spectrum BRDFMaterial::albedo() const
@@ -38,6 +39,17 @@ namespace PR
 	void BRDFMaterial::setSpecularity(const Spectrum& spec)
 	{
 		mSpecularitySpectrum = spec;
+	}
+
+	Spectrum BRDFMaterial::emission() const
+	{
+		return mEmissionSpectrum;
+	}
+
+	void BRDFMaterial::setEmission(const Spectrum& spec)
+	{
+		mEmissionSpectrum = spec;
+		mIsLight = !mEmissionSpectrum.isOnlyZero();
 	}
 
 	float BRDFMaterial::roughness() const
@@ -103,29 +115,17 @@ namespace PR
 	constexpr float NormalOffset = 0.0001f;
 	void BRDFMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		if (in.depth() < (in.maxDepth() == 0 ? renderer->maxRayDepth() : in.maxDepth()) &&
-			mCanBeShaded)
+		const uint32 maxDepth = in.maxDepth() == 0 ? renderer->maxRayDepth() : in.maxDepth();
+		if (in.depth() < maxDepth && (mCameraVisible || in.depth() > 0))
 		{
-			FacePoint collisionPoint;
-			Spectrum diffuse;
-			Spectrum spec;
-
-			const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
-
-			if ((1 - mReflectivity) <= std::numeric_limits<float>::epsilon() &&
-				mRoughness <= std::numeric_limits<float>::epsilon()) // Mirror
+			PR::Spectrum tmp;
+			if (mCanBeShaded)
 			{
-				float dot = PM::pm_Dot3D(in.direction(), point.normal());
-				// r = d - 2*n*(d . n)
-				PM::vec3 reflection = PM::pm_Normalize3D(PM::pm_Subtract(in.direction(),
-					PM::pm_Scale(N, 2 * dot)));
+				FacePoint collisionPoint;
+				Spectrum diffuse;
+				Spectrum spec;
 
-				Ray ray(point.vertex(), reflection, in.depth() + 1);
-				renderer->shoot(ray, collisionPoint);
-				diffuse = ray.spectrum();
-			}
-			else // Diffuse
-			{
+				const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
 				uint32 sampleCounter = 0;
 
 				// Direct Illumination
@@ -144,8 +144,7 @@ namespace PR
 						if (NdotL > std::numeric_limits<float>::epsilon())
 						{
 							Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);// Bounce only once!
-							//ray.setFlags(0);
-							ray.setMaxDepth(in.depth() + 1);
+							ray.setMaxDepth(in.depth() + 2);
 
 							RenderEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
 
@@ -163,8 +162,7 @@ namespace PR
 				// Simple indirect solution
 				for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
 				{
-					PM::vec3 L = PM::pm_SetW(
-						RandomRotationSphere::createFast(point.normal(), -1, 1, -1, 1, -1, 1, renderer->random()), 0);
+					PM::vec3 L = PM::pm_SetW(Sampler::hemi(N, renderer->random().getFloat(), renderer->random().getFloat()), 0);
 					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 					renderer->shoot(ray, collisionPoint);
 
@@ -179,10 +177,16 @@ namespace PR
 					diffuse *= PM_PI_F / sampleCounter;
 					spec *= PM_PI_F / sampleCounter;
 				}
+
+				tmp = diffuse * mAlbedoSpectrum + spec * mSpecularitySpectrum;
 			}
 
-			// Normalize spec term?
-			in.setSpectrum(diffuse * mAlbedoSpectrum + spec * mSpecularitySpectrum);
+			if (mIsLight)
+			{
+				tmp += PM::pm_MaxT(0.0f, -PM::pm_Dot3D(in.direction(), point.normal())) * mEmissionSpectrum;
+			}
+
+			in.setSpectrum(tmp);
 		}
 	}
 

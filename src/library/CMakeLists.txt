@@ -24,7 +24,6 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/FacePoint.cpp
   ${PR_LIB}/geometry/Mesh.cpp
   ${PR_LIB}/geometry/Plane.cpp
-  ${PR_LIB}/geometry/RandomRotationSphere.cpp
   ${PR_LIB}/geometry/Sphere.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Lights_Src
@@ -34,7 +33,6 @@ SET(PR_Material_Src
   ${PR_LIB}/material/BRDF.cpp
   ${PR_LIB}/material/BRDFMaterial.cpp
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
-  ${PR_LIB}/material/DiffuseMaterial.cpp
   ${PR_LIB}/material/DirectLightDebugMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
   ${PR_LIB}/material/NormalDebugMaterial.cpp
@@ -48,6 +46,9 @@ SET(PR_Renderer_Src
   ${PR_LIB}/renderer/Renderer.cpp
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
+SET(PR_Sampler_Src
+  ${PR_LIB}/sampler/Sampler.cpp)
+SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
   ${PR_LIB}/scene/kdTree.cpp
   ${PR_LIB}/scene/Scene.cpp)
@@ -64,7 +65,7 @@ SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
-  ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Lights_Src}
+  ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Lights_Src} ${PR_Sampler_Src}
 )
 
 SET(PR_Main_Hdr
@@ -92,7 +93,6 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/FacePoint.h
   ${PR_LIB}/geometry/Mesh.h
   ${PR_LIB}/geometry/Plane.h
-  ${PR_LIB}/geometry/RandomRotationSphere.h
   ${PR_LIB}/geometry/Sphere.h
   ${PR_LIB}/geometry/Triangle.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
@@ -103,7 +103,6 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/BRDF.h
   ${PR_LIB}/material/BRDFMaterial.h
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
-  ${PR_LIB}/material/DiffuseMaterial.h
   ${PR_LIB}/material/DirectLightDebugMaterial.h
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h
@@ -119,6 +118,9 @@ SET(PR_Renderer_Hdr
   ${PR_LIB}/renderer/Renderer.h
   ${PR_LIB}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
+SET(PR_Sampler_Hdr
+  ${PR_LIB}/sampler/Sampler.h)
+SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
 SET(PR_Scene_Hdr
   ${PR_LIB}/scene/kdTree.h
   ${PR_LIB}/scene/Scene.h)
@@ -137,7 +139,7 @@ SOURCE_GROUP("Header Files\\Thread" FILES ${PR_Thread_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
-  ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Lights_Hdr}
+  ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Lights_Hdr} ${PR_Sampler_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

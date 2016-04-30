@@ -23,6 +23,7 @@ namespace PRU
 
 		DL::Data* albedoD = group->getFromKey("albedo");
 		DL::Data* specD = group->getFromKey("specularity");
+		DL::Data* emissionD = group->getFromKey("emission");
 		DL::Data* roughnessD = group->getFromKey("roughness");
 		DL::Data* reflectivityD = group->getFromKey("reflectivity");
 		DL::Data* fresnelD = group->getFromKey("fresnel");
@@ -55,6 +56,19 @@ namespace PRU
 			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
 					specD->getString().c_str());
+			}
+		}
+
+		if (emissionD && emissionD->isType() == DL::Data::T_String)
+		{
+			if (env->hasSpectrum(emissionD->getString()))
+			{
+				diff->setEmission(env->getSpectrum(emissionD->getString()));
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
+					emissionD->getString().c_str());
 			}
 		}
 

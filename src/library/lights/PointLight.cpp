@@ -2,7 +2,6 @@
 #include "ray/Ray.h"
 #include "material/Material.h"
 #include "geometry/FacePoint.h"
-#include "geometry/RandomRotationSphere.h"
 #include "geometry/Sphere.h"
 
 namespace PR

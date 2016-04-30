@@ -12,7 +12,7 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr), mViewMode(VM_ToneMapped), mScale(false)
+	mRenderer(nullptr), mViewMode(VM_Color), mScale(false)
 {
 	cache();
 }

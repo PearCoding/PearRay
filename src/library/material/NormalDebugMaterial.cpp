@@ -1,7 +1,6 @@
 #include "NormalDebugMaterial.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "geometry/RandomRotationSphere.h"
 #include "renderer/Renderer.h"
 
 #include "spectral/RGBConverter.h"

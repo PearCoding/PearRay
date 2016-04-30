@@ -19,6 +19,9 @@ namespace PR
 		Spectrum specularity() const;
 		void setSpecularity(const Spectrum& specSpec);
 
+		Spectrum emission() const;
+		void setEmission(const Spectrum& spec);
+
 		float roughness() const;
 		void setRoughness(float f);
 
@@ -45,6 +48,8 @@ namespace PR
 
 		Spectrum mAlbedoSpectrum;
 		Spectrum mSpecularitySpectrum;
+		Spectrum mEmissionSpectrum;
+
 		float mRoughness;
 		float mReflectivity;
 		float mFresnel;
@@ -52,5 +57,6 @@ namespace PR
 		bool mCanBeShaded;
 		bool mSelfShadow;
 		bool mCameraVisible;
+		bool mIsLight;
 	};
 }
