@@ -103,9 +103,10 @@ namespace PR
 		FacePoint p;
 
 		// Not really uniform...
-		PM::vec3 n = Projection::sphereFast(PM::pm_GetX(sample), PM::pm_GetY(sample), PM::pm_GetZ(sample));
-		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
-		p.setVertex(PM::pm_Multiply(matrix(), n));
+		//PM::vec3 n = Projection::sphereFast(PM::pm_GetX(sample), PM::pm_GetY(sample), PM::pm_GetZ(sample));
+		PM::vec3 n = Projection::sphere(PM::pm_GetX(sample), PM::pm_GetY(sample));
+		//p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
+		p.setVertex(PM::pm_Multiply(matrix(), PM::pm_Scale(n, mRadius)));
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
 		float v = (std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal())) * PM_INV_PI_F + 1) * 0.5f;
 		p.setUV(PM::pm_Set(u, v));

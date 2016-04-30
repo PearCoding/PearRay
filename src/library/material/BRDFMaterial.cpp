@@ -172,7 +172,7 @@ namespace PR
 					const auto uv = stratifiedSampler.generate(renderer->random());
 
 					PM::vec3 L = PM::pm_SetW(
-						Projection::align(N, Projection::hemi(PM::pm_GetX(uv), PM::pm_GetY(uv))), 0);
+						Projection::align(N, Projection::cos_hemi(PM::pm_GetX(uv), PM::pm_GetY(uv))), 0);
 					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 					if (renderer->shoot(ray, collisionPoint))
 					{
