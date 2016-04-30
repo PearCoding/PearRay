@@ -117,7 +117,8 @@ namespace PR
 	constexpr float NormalOffset = 0.0001f;
 	void BRDFMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		const uint32 maxDepth = in.maxDepth() == 0 ? renderer->maxRayDepth() : in.maxDepth();
+		const uint32 maxDepth = in.maxDepth() == 0 ?
+			renderer->maxRayDepth() : PM::pm_MinT<uint32>(renderer->maxRayDepth() + 1, in.maxDepth());
 		if (in.depth() < maxDepth && (mCameraVisible || in.depth() > 0))
 		{
 			PR::Spectrum tmp;

@@ -92,7 +92,7 @@ namespace PR
 			const float x = r * thCos;
 			const float y = r * thSin;
 
-			return PM::pm_Normalize3D(PM::pm_Set(x, y, std::sqrt(PM::pm_MaxT(0.0f, 1 - u1))));
+			return PM::pm_Normalize3D(PM::pm_Set(x, y, std::sqrt(1 - u1)));
 		}
 	};
 }

@@ -13,8 +13,8 @@
 		:height			1
 		:lensDistance	1
 		
-		:lookAt			[0,2,0]
-		:position		[0,2,-2.5]
+		:lookAt			[0,1,0]
+		:position		[0,1,-3.5]
 	)
 	
 	(entity
@@ -28,11 +28,28 @@
 	)
 	
 	(entity
-		:name 			"Content"
+		:name 			"Content1"
 		:type			"sphere"
 		:radius			0.5
+		:material		"Mirror"
+		:position		[-1,0.5,0.5]
+	)
+	
+	(entity
+		:name 			"Content2"
+		:type			"sphere"
+		:radius			0.5
+		:material		"Mirror"
+		:position		[1,0.5,-0.5]
+	)
+	
+	(entity
+		:name 			"Block1"
+		:type			"box"
+		:size			[1, 2, 1]
+		:position		[0.5,1,1]
+		:rotation		(euler 0 45 0)
 		:material		"Mat1"
-		:position		[0,2,0]
 	)
 	
 	(entity
@@ -59,13 +76,13 @@
 		:material		"White"
 	)
 
-	(entity
-		:name			"Front"
-		:type			"box"
-		:position		[0, 2, -3]
-		:size			[6, 4, 0.5]
-		:material		"Grid"
-	)
+	; (entity
+		; :name			"Front"
+		; :type			"box"
+		; :position		[0, 2, -3]
+		; :size			[6, 4, 0.5]
+		; :material		"Grid"
+	; )
 	
 	(entity
 		:name			"Left"
@@ -92,7 +109,7 @@
 		:type			"standard"
 		
 		:albedo			"Gray1"
-		:roughness		1
+		:roughness		0
 		:reflectivity 	0
 	)
 	
@@ -101,7 +118,7 @@
 		:type			"standard"
 		
 		:albedo			"Gray2"
-		:roughness		1
+		:roughness		0
 		:reflectivity 	0
 	)
 	
@@ -118,7 +135,25 @@
 		:type			"standard"
 		
 		:albedo			"White"
-		:roughness		1
+		:roughness		0
+		:reflectivity 	0
+	)
+	
+	(material
+		:name			"Red"
+		:type			"standard"
+		
+		:albedo			"Red"
+		:roughness		0
+		:reflectivity 	0
+	)
+	
+	(material
+		:name			"Green"
+		:type			"standard"
+		
+		:albedo			"Green"
+		:roughness		0
 		:reflectivity 	0
 	)
 	
@@ -134,11 +169,20 @@
 	)
 	
 	(material
-		:name			"Mat1"
+		:name			"Mirror"
 		:type			"standard"
 		:albedo			"White"
 		:roughness		0
 		:reflectivity	1
+		:specularity	"White"
+	)
+	
+	(material
+		:name			"Mat1"
+		:type			"standard"
+		:albedo			"White"
+		:roughness		0
+		:reflectivity	0
 		:specularity	"White"
 	)
 	
