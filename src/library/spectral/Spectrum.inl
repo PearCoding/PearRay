@@ -149,8 +149,11 @@ namespace PR
 
 	inline Spectrum& Spectrum::operator /= (float f)
 	{
-		float sf = 1 / f;
-		return (*this *= sf);
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+		{
+			mValues[i] /= f;
+		}
+		return *this;
 	}
 
 	inline void Spectrum::setValue(uint32 index, float v)

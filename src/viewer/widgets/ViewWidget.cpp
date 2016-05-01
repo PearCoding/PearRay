@@ -143,7 +143,7 @@ void ViewWidget::refreshView()
 				}
 			}
 
-			float factor = 1;/*(max <= 0.8f) ? 1 : 1 / max;*/
+			float factor = (!std::isnormal(max) || max <= 0.9f) ? 1 : 1 / max;
 			for (PR::uint32 y = 0; y < tmp.height(); ++y)
 			{
 				for (PR::uint32 x = 0; x < tmp.width(); ++x)

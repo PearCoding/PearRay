@@ -31,6 +31,8 @@ int main(int argc, char** argv)
 	std::cout << "R " << R << " G " << G << " B " << B << std::endl;
 	std::cout << "gR " << gR << " gG " << gG << " gB " << gB << std::endl;
 
+	std::cout << (PR::Spectrum::fromBlackbody(5500).hasNaN() ? "Blackbody is invalid!" : "Blackbody ok.") << std::endl;
+	std::cout << (PR::Spectrum::fromBlackbodyNorm(5500).max() > 1 ? "Blackbody is not normalized!" : "Blackbody Norm ok.") << std::endl;
 #if defined(PR_OS_WINDOWS) && defined(PR_DEBUG)
 	system("pause");
 #endif

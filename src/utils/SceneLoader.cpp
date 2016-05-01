@@ -506,6 +506,30 @@ namespace PRU
 				{
 					// TODO
 				}
+				else if (grp->id() == "temperature" || grp->id() == "blackbody")
+				{
+					if (grp->unnamedCount() == 1 &&
+						grp->at(0)->isNumber())
+					{
+						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec.setEmissive(true);
+					}
+				}
+				else if (grp->id() == "temperature_norm" || grp->id() == "blackbody_norm")
+				{
+					if (grp->unnamedCount() >= 1 &&
+						grp->at(0)->isNumber())
+					{
+						spec = Spectrum::fromBlackbodyNorm(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec.setEmissive(true);
+					}
+
+					if (grp->unnamedCount() >= 2 &&
+						grp->at(1)->isNumber())
+					{
+						spec *= grp->at(1)->getFloatConverted();
+					}
+				}
 			}
 		}
 

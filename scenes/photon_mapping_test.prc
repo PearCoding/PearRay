@@ -161,7 +161,7 @@
 		:name			"Light"
 		:type			"light"
 
-		:emission		"White_E"
+		:emission		"Sun"
 		:shading		false
 		:light			true
 		:selfShadow		false
@@ -181,7 +181,7 @@
 		:name			"Mat1"
 		:type			"standard"
 		:albedo			"White"
-		:roughness		0
+		:roughness		1
 		:reflectivity	0
 		:specularity	"White"
 	)
@@ -264,6 +264,11 @@
 	(spectrum			;; Emissive
 		:name			"White_E"
 		:emissive		true
-		:data			(rgb 1 1 1)
+		:data			(rgb 2 2 2)
+	)
+	
+	(spectrum			;; Emissive
+		:name			"Sun"
+		:data			(temperature_norm 5500 4)
 	)
 )

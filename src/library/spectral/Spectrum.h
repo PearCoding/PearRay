@@ -73,6 +73,9 @@ namespace PR
 
 		inline bool isEmissive() const;
 		inline void setEmissive(bool b);
+
+		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K)
+		static Spectrum fromBlackbodyNorm(float temp);
 	private:
 		float mValues[SAMPLING_COUNT];
 		bool mEmissive;

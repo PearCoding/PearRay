@@ -42,4 +42,42 @@ namespace PR
 			}
 		}
 	}
+
+	// Has to be in double!
+	inline double blackbody_eq(double temp, double lambda)
+	{
+		constexpr double c = 299792458;
+		constexpr double h = 6.62606957e-34f;
+		constexpr double kb = 1.3806488e-23f;
+
+		const double lambda5 = lambda * (lambda * lambda) * (lambda * lambda);
+		return (2 * h * c * c) / (lambda5 * (std::exp((h * c) / (lambda * kb * temp)) - 1));
+	}
+
+	Spectrum Spectrum::fromBlackbody(float temp)
+	{
+		Spectrum spec;
+		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		{
+			float lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9f;
+			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda));
+		}
+
+		return spec;
+	}
+
+	Spectrum Spectrum::fromBlackbodyNorm(float temp)
+	{
+		const double maxLambda = 2.897772917e-3f / temp;
+		const double norm = 1/blackbody_eq(temp, maxLambda);
+
+		Spectrum spec;
+		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		{
+			float lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9f;
+			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda) * norm);
+		}
+
+		return spec;
+	}
 }
