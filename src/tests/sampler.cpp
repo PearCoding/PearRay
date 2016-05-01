@@ -21,7 +21,7 @@ PR_TEST("Align 2");
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0, 0, -1));
+	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0, 0, 1));
 }
 
 PR_TEST("Align 3");
@@ -31,7 +31,7 @@ PR_TEST("Align 3");
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Normalize3D(PM::pm_Set(0, 0.5f, -0.5f)));
+	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Normalize3D(PM::pm_Set(0, 0.5f, 0.5f)));
 }
 
 PR_TEST("Align 4");

@@ -151,6 +151,7 @@ namespace PR
 						if (NdotL > std::numeric_limits<float>::epsilon())
 						{
 							Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);// Bounce only once!
+							ray.setFlags(ray.flags() & RF_NoIndirect);
 							ray.setMaxDepth(in.depth() + 2);
 
 							RenderEntity* ent = renderer->shoot(ray, collisionPoint, mSelfShadow ? nullptr : entity);
@@ -166,21 +167,26 @@ namespace PR
 					}
 				}
 
-				// Simple stratified indirect solution
-				Stratified2DSampler stratifiedSampler(renderer->maxIndirectRayCount_2DSample(), renderer->maxIndirectRayCount_2DSample());
-				for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
+				if (!(in.flags() & RF_NoIndirect))
 				{
-					const auto uv = stratifiedSampler.generate(renderer->random());
-
-					PM::vec3 L = PM::pm_SetW(
-						Projection::align(N, Projection::cos_hemi(PM::pm_GetX(uv), PM::pm_GetY(uv))), 0);
-					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
-					if (renderer->shoot(ray, collisionPoint))
+					// Simple stratified indirect solution
+					Stratified2DSampler stratifiedSampler(renderer->maxIndirectRayCount_2DSample(), renderer->maxIndirectRayCount_2DSample());
+					for (int i = 0; i < renderer->maxIndirectRayCount(); ++i)
 					{
-						const PM::vec3 V = PM::pm_SetW(in.direction(), 0);
-						const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
-						applyOnRay(L, N, H, V, ray.spectrum(), diffuse, spec);
-						sampleCounter++;
+						const auto uv = stratifiedSampler.generate(renderer->random());
+
+						PM::vec3 L = PM::pm_SetW(
+							Projection::align(N, Projection::cos_hemi(PM::pm_GetX(uv), PM::pm_GetY(uv))), 0);
+						Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)),
+							L, in.depth() + 1);
+						if (renderer->shoot(ray, collisionPoint))
+						{
+							const PM::vec3 V = PM::pm_SetW(PM::pm_Negate(in.direction()), 0);
+							const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
+							applyOnRay(L, N, H, V, ray.spectrum(), diffuse, spec);
+							//diffuse += ray.spectrum() * PM::pm_Dot3D(L, V);
+							sampleCounter++;
+						}
 					}
 				}
 

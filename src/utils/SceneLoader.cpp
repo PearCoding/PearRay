@@ -16,6 +16,7 @@
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
 #include "parser/material/DebugMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
+#include "parser/material/MirrorMaterialParser.h"
 
 #include "geometry/Mesh.h"
 #include "loader/WavefrontLoader.h"
@@ -347,7 +348,9 @@ namespace PRU
 
 		{ "debug", DebugMaterialParser() },
 		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
+
 		{ "grid", GridMaterialParser() },
+		{ "mirror", MirrorMaterialParser() },
 
 		{ nullptr, DebugMaterialParser() },//Just for the end
 	};

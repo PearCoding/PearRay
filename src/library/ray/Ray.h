@@ -12,6 +12,8 @@ namespace PR
 		RF_NeedCollisionUV = 0x2,
 
 		RF_DefaultCollision = RF_NeedCollisionNormal | RF_NeedCollisionUV,
+
+		RF_NoIndirect = 0x10,
 	};
 
 	class PR_LIB Ray

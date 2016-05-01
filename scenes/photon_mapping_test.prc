@@ -170,11 +170,7 @@
 	
 	(material
 		:name			"Mirror"
-		:type			"standard"
-		:albedo			"White"
-		:roughness		0
-		:reflectivity	1
-		:specularity	"White"
+		:type			"mirror"
 	)
 	
 	(material

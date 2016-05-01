@@ -31,10 +31,9 @@ namespace PR
 		static inline PM::vec3 align(const PM::vec3& N, const PM::vec3& V, const PM::vec3& axis)
 		{
 			float angle = std::acos(PM::pm_Dot3D(N, axis));
-			if (std::abs(angle) > std::numeric_limits<float>::epsilon())
+			if (std::abs(angle) > PM_EPSILON)
 			{
-				PM::vec3 rot_axis = PM::pm_Scale(PM::pm_Normalize3D(PM::pm_Cross3D(N, axis)), -angle);
-				return PM::pm_RotateWithQuat(PM::pm_RotationQuatXYZ(rot_axis), V);
+				return PM::pm_RotateWithQuat(PM::pm_RotateFromTo(N, axis), V);
 			}
 
 			return V;
@@ -48,7 +47,7 @@ namespace PR
 			float sinPhi, cosPhi;
 			float sinRho, cosRho;
 
-			PM::pm_SinCosT(PM_2_PI_F * phi, sinPhi, cosPhi);
+			PM::pm_SinCosT(PM_PI_F * phi, sinPhi, cosPhi);
 			PM::pm_SinCosT(PM_2_PI_F * rho, sinRho, cosRho);
 
 			return PM::pm_Set(
