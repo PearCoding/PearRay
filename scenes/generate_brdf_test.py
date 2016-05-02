@@ -38,7 +38,7 @@ FOOTER = """
 		:name			"Light"
 		:type			"light"
 
-		:emission		"White_E"
+		:emission		"Light"
 		:shading		false
 		:light			true
 		:selfShadow		false
@@ -95,10 +95,17 @@ FOOTER = """
 		:emissive		true
 		:data			(rgb 1 1 1)
 	)
+
+	(spectrum			;; Emissive
+		:name			"Light"
+		:data			(temperature_norm 5500 2)
+	)
 )"""
 
 LIGHT_POS = [0, 4, 0]
-CAMERA_POS = [0, 20, -10]
+LIGHT_PADDING = 2
+
+CAMERA_POS = [0, 15, 0]
 CAMERA_TARGET = [0, 0, 0]
 CAMERA_PERS = True
 
@@ -111,6 +118,10 @@ REFLECTIVITY_SIZE = 10
 GRID_PADDING = 5
 
 if __name__ == '__main__':
+    entity_size = (SPHERE_RADIUS * 2 + ENTITY_PADDING)
+    width = ROUGHNESS_SIZE*entity_size
+    height = REFLECTIVITY_SIZE*entity_size
+
     output = HEADER
     output += """
         (entity
@@ -128,8 +139,9 @@ if __name__ == '__main__':
 
 	(entity
 		:name			"Light1"
-		:type			"pointLight"
-
+		:type			"plane"
+        :xAxis          {4}
+        :yAxis          [0 , 0, {5}]
 		:material		"Light"
 
 		:position		{3}
@@ -137,11 +149,11 @@ if __name__ == '__main__':
     """.format( "perspective" if CAMERA_PERS else "orthographic",
         "[{0},{1},{2}]".format(CAMERA_TARGET[0], CAMERA_TARGET[1], CAMERA_TARGET[2]),
         "[{0},{1},{2}]".format(CAMERA_POS[0], CAMERA_POS[1], CAMERA_POS[2]),
-        "[{0},{1},{2}]".format(LIGHT_POS[0], LIGHT_POS[1], LIGHT_POS[2]),
+        "[{0},{1},{2}]".format(LIGHT_POS[0] - width / 2 - LIGHT_PADDING, LIGHT_POS[1], LIGHT_POS[2] + height / 2 + LIGHT_PADDING),
+        width + 2*LIGHT_PADDING, -height - 2*LIGHT_PADDING
     )
 
     output += ";; Spheres:"
-    entity_size = (SPHERE_RADIUS * 2 + ENTITY_PADDING)
 
     for i in range(0, ROUGHNESS_SIZE + 1):
         for j in range(0, REFLECTIVITY_SIZE + 1):
@@ -182,7 +194,7 @@ if __name__ == '__main__':
 		:size			[{0}, 0.5, {1}]
 		:material		"Grid"
 	)
-    """.format(ROUGHNESS_SIZE*entity_size + GRID_PADDING * 2, REFLECTIVITY_SIZE*entity_size + GRID_PADDING * 2)
+    """.format(width + GRID_PADDING * 2, height + GRID_PADDING * 2)
 
     output += FOOTER
 

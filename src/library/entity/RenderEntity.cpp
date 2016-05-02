@@ -1,9 +1,11 @@
 #include "RenderEntity.h"
 
+#include "material/Material.h"
+
 namespace PR
 {
 	RenderEntity::RenderEntity(const std::string& name, Entity* parent) :
-		Entity(name, parent)
+		Entity(name, parent), mMaterial(nullptr)
 	{
 	}
 
@@ -14,6 +16,21 @@ namespace PR
 	bool RenderEntity::isRenderable() const
 	{
 		return true;
+	}
+
+	bool RenderEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
+	}
+
+	void RenderEntity::setMaterial(Material* m)
+	{
+		mMaterial = m;
+	}
+
+	Material* RenderEntity::material() const
+	{
+		return mMaterial;
 	}
 
 	uint32 RenderEntity::maxLightSamples() const
@@ -56,5 +73,6 @@ namespace PR
 
 	void RenderEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
 	{
+		mMaterial->apply(in, this, point, renderer);
 	}
 }

@@ -55,8 +55,8 @@ namespace PR
 	bool PointLight::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
 		PM::vec3 v;
-		//bool found = Sphere(position(), BOUNDARY_WIDTH).intersects(ray, v);
-		bool found = worldBoundingBox().intersects(ray, v);
+		bool found = Sphere(position(), BOUNDARY_WIDTH).intersects(ray, v);
+		//bool found = worldBoundingBox().intersects(ray, v);
 		collisionPoint.setVertex(v);
 		return found;
 	}

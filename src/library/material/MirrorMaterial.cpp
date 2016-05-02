@@ -32,22 +32,22 @@ namespace PR
 		return mCameraVisible;
 	}
 
+	bool MirrorMaterial::shouldIgnore_Simple(const Ray& in, RenderEntity* entity)
+	{
+		return !mCameraVisible && in.depth() == 0;
+	}
+
 	constexpr float NormalOffset = 0.0001f;
 	void MirrorMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
-		const uint32 maxDepth = in.maxDepth() == 0 ?
-			renderer->maxRayDepth() : PM::pm_MinT<uint32>(renderer->maxRayDepth() + 1, in.maxDepth());
-		if (in.depth() < maxDepth && (mCameraVisible || in.depth() > 0))
-		{
-			PM::vec3 reflect = PM::pm_Subtract(in.direction(),
-				PM::pm_Scale(point.normal(), 2 * PM::pm_Dot3D(in.direction(), point.normal())));
-			Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflect, NormalOffset)), reflect, in.depth() + 1);
+		PM::vec3 reflect = PM::pm_Subtract(in.direction(),
+			PM::pm_Scale(point.normal(), 2 * PM::pm_Dot3D(in.direction(), point.normal())));
+		Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflect, NormalOffset)), reflect, in.depth() + 1);
 
-			FacePoint collisionPoint;
-			if (renderer->shoot(ray, collisionPoint))
-			{
-				in.setSpectrum(ray.spectrum());
-			}
+		FacePoint collisionPoint;
+		if (renderer->shoot(ray, collisionPoint))
+		{
+			in.setSpectrum(ray.spectrum());
 		}
 	}
 }

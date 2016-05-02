@@ -1,6 +1,7 @@
 #include "kdTree.h"
 #include "entity/RenderEntity.h"
 #include "ray/Ray.h"
+#include "material/Material.h"
 #include "geometry/BoundingBox.h"
 #include "geometry/FacePoint.h"
 
@@ -202,15 +203,20 @@ namespace PR
 			// First the mid elements one by one
 			for (RenderEntity* e : node->splitObjects)
 			{
-				if ((!ignore || ((Entity*)e != ignore && !e->isParent(ignore))) && e->checkCollision(ray, tmpCollisionPoint))
+				if ((!ignore || ((Entity*)e != ignore && !e->isParent(ignore))) &&
+					e->material() && !e->material()->shouldIgnore_Simple(ray, e) &&
+					e->checkCollision(ray, tmpCollisionPoint))
 				{
-					float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
-
-					if (l < near)
+					if (!e->material()->shouldIgnore_Complex(ray, e, tmpCollisionPoint))
 					{
-						near = l;
-						res = e;
-						collisionPoint = tmpCollisionPoint;
+						float l = PM::pm_Magnitude3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
+
+						if (l < near)
+						{
+							near = l;
+							res = e;
+							collisionPoint = tmpCollisionPoint;
+						}
 					}
 				}
 			}

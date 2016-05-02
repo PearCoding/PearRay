@@ -15,7 +15,7 @@
 namespace PR
 {
 	MeshEntity::MeshEntity(const std::string& name, Entity* parent) :
-		RenderEntity(name, parent), mMesh(nullptr), mMaterial(nullptr)
+		RenderEntity(name, parent), mMesh(nullptr)
 	{
 	}
 
@@ -38,21 +38,6 @@ namespace PR
 		return mMesh;
 	}
 
-	bool MeshEntity::isLight() const
-	{
-		return mMaterial ? mMaterial->isLight() : false;
-	}
-
-	void MeshEntity::setMaterial(Material* m)
-	{
-		mMaterial = m;
-	}
-
-	Material* MeshEntity::material() const
-	{
-		return mMaterial;
-	}
-
 	bool MeshEntity::isCollidable() const
 	{
 		return mMesh != nullptr;
@@ -66,11 +51,6 @@ namespace PR
 
 	bool MeshEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
-		if (!worldBoundingBox().intersects(ray))
-		{
-			return false;
-		}
-
 		// Local space
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
@@ -108,15 +88,7 @@ namespace PR
 		collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
 		collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
 
-		return found;
-	}
-
-	void MeshEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
-	{
-		if (mMaterial)
-		{
-			mMaterial->apply(in, this, point, renderer);
-		}
+		return true;
 	}
 
 	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, Random& random) const

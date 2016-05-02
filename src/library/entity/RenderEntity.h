@@ -19,8 +19,11 @@ namespace PR
 
 		bool isRenderable() const override;
 
-		virtual bool isLight() const = 0;
+		virtual bool isLight() const;
 		virtual uint32 maxLightSamples() const;// 0 == Unbounded
+
+		void setMaterial(Material* m);
+		Material* material() const;
 
 		virtual bool isCollidable() const;
 		virtual BoundingBox localBoundingBox() const;
@@ -33,5 +36,8 @@ namespace PR
 
 		// In world coords
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const = 0;
+
+	private:
+		Material* mMaterial;
 	};
 }

@@ -1,7 +1,6 @@
 #include "BoundaryEntity.h"
 #include "Random.h"
 #include "ray/Ray.h"
-#include "material/Material.h"
 #include "geometry/FacePoint.h"
 #include "geometry/Plane.h"
 
@@ -11,7 +10,7 @@
 namespace PR
 {
 	BoundaryEntity::BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent) :
-		RenderEntity(name, parent), mBoundingBox(box), mMaterial(nullptr)
+		RenderEntity(name, parent), mBoundingBox(box)
 	{
 	}
 
@@ -27,21 +26,6 @@ namespace PR
 	void BoundaryEntity::setBoundingBox(const BoundingBox& box)
 	{
 		mBoundingBox = box;
-	}
-
-	bool BoundaryEntity::isLight() const
-	{
-		return mMaterial ? mMaterial->isLight() : false;
-	}
-
-	void BoundaryEntity::setMaterial(Material* m)
-	{
-		mMaterial = m;
-	}
-
-	Material* BoundaryEntity::material() const
-	{
-		return mMaterial;
 	}
 
 	bool BoundaryEntity::isCollidable() const
@@ -118,17 +102,10 @@ namespace PR
 				plane.project(vertex, u, v);
 				collisionPoint.setUV(PM::pm_Set(u, v));
 			}
+
 			return true;
 		}
 		return false;
-	}
-
-	void BoundaryEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
-	{
-		if (mMaterial)
-		{
-			mMaterial->apply(in, this, point, renderer);
-		}
 	}
 
 	FacePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, Random& random) const

@@ -210,18 +210,27 @@ namespace PR
 
 	RenderEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
 	{
-		RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
-
-		if (entity)
+		const uint32 maxDepth = ray.maxDepth() == 0 ?
+			maxRayDepth() : PM::pm_MinT<uint32>(maxRayDepth() + 1, ray.maxDepth());
+		if (ray.depth() < maxDepth)
 		{
-			entity->apply(ray, collisionPoint, this);
+			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
+
+			if (entity)
+			{
+				entity->apply(ray, collisionPoint, this);
+			}
+
+			mStatisticMutex.lock();
+			mRayCount++;
+			mStatisticMutex.unlock();
+
+			return entity;
 		}
-
-		mStatisticMutex.lock();
-		mRayCount++;
-		mStatisticMutex.unlock();
-
-		return entity;
+		else
+		{
+			return nullptr;
+		}
 	}
 
 	bool Renderer::isFinished()

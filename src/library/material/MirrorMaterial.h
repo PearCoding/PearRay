@@ -16,6 +16,7 @@ namespace PR
 
 		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
 
+		bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity) override;
 	private:
 		bool mCameraVisible;
 	};

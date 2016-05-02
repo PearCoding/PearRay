@@ -11,7 +11,7 @@
 namespace PR
 {
 	PlaneEntity::PlaneEntity(const std::string& name, const Plane& plane, Entity* parent) :
-		RenderEntity(name, parent), mPlane(plane), mMaterial(nullptr)
+		RenderEntity(name, parent), mPlane(plane)
 	{
 	}
 
@@ -32,21 +32,6 @@ namespace PR
 	Plane PlaneEntity::plane() const
 	{
 		return mPlane;
-	}
-
-	bool PlaneEntity::isLight() const
-	{
-		return mMaterial ? mMaterial->isLight() : false;
-	}
-
-	void PlaneEntity::setMaterial(Material* m)
-	{
-		mMaterial = m;
-	}
-
-	Material* PlaneEntity::material() const
-	{
-		return mMaterial;
 	}
 
 	bool PlaneEntity::isCollidable() const
@@ -75,18 +60,11 @@ namespace PR
 			// Do not check flags... calculation is easy anyway.
 			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 			collisionPoint.setUV(PM::pm_Set(u, v));
+
 			return true;
 		}
 
 		return false;
-	}
-
-	void PlaneEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
-	{
-		if (mMaterial)
-		{
-			mMaterial->apply(in, this, point, renderer);
-		}
 	}
 
 	// World space

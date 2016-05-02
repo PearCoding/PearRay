@@ -42,6 +42,7 @@ namespace PR
 
 		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
 
+		bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity) override;
 	private:
 		void applyOnRay(const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V, const Spectrum& E0,
 			Spectrum& diff, Spectrum& spec);

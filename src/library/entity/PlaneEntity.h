@@ -17,19 +17,12 @@ namespace PR
 		void setPlane(const Plane& plane);
 		Plane plane() const;
 
-		bool isLight() const;
-		void setMaterial(Material* m);
-		Material* material() const;
-
 		virtual bool isCollidable() const override;
 		virtual BoundingBox localBoundingBox() const override;
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
 
-		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer) override;
-
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const;
 	private:
 		Plane mPlane;
-		Material* mMaterial;
 	};
 }

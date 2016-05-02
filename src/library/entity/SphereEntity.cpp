@@ -1,6 +1,5 @@
 #include "SphereEntity.h"
 #include "ray/Ray.h"
-#include "material/Material.h"
 #include "geometry/FacePoint.h"
 #include "geometry/Sphere.h"
 
@@ -10,7 +9,7 @@
 namespace PR
 {
 	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
-		RenderEntity(name, parent), mRadius(r), mMaterial(nullptr)
+		RenderEntity(name, parent), mRadius(r)
 	{
 	}
 
@@ -33,21 +32,6 @@ namespace PR
 		return mRadius;
 	}
 
-	bool SphereEntity::isLight() const
-	{
-		return mMaterial ? mMaterial->isLight() : false;
-	}
-
-	void SphereEntity::setMaterial(Material* m)
-	{
-		mMaterial = m;
-	}
-
-	Material* SphereEntity::material() const
-	{
-		return mMaterial;
-	}
-
 	bool SphereEntity::isCollidable() const
 	{
 		return true;
@@ -65,9 +49,7 @@ namespace PR
 		Sphere sphere(position(), mRadius);
 		PM::vec3 collisionPos;
 		if (!sphere.intersects(ray, collisionPos))
-		{
 			return false;
-		}
 
 		collisionPoint.setVertex(PM::pm_SetW(collisionPos, 1));
 
@@ -86,14 +68,6 @@ namespace PR
 		}
 
 		return true;
-	}
-
-	void SphereEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
-	{
-		if (mMaterial)
-		{
-			mMaterial->apply(in, this, point, renderer);
-		}
 	}
 
 	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
