@@ -29,11 +29,19 @@ namespace PR
 		PM::vec3 lookAtPosition() const;
 
 		Ray constructRay(float nx, float ny) const;
+
+		// Entity
+		void onPreRender() override;// Cache
 	private:
 		float mWidth;
 		float mHeight;
 		float mLensDistance;
 
 		PM::vec3 mLookAt;
+
+		// Cache:
+		PM::vec3 mRight_Cache;
+		PM::vec3 mUp_Cache;
+		PM::vec3 mDirection_Cache;
 	};
 }

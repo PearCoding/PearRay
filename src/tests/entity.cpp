@@ -21,12 +21,7 @@ PR_TEST("Parent");
 	PR_CHECK_NEARLY_EQ_3(root->position(), PM::pm_Set(0, 1, 0, 1));
 	PR_CHECK_NEARLY_EQ_3(child->position(true), PM::pm_Set(0, 2, 0, 1));
 
-	root->setScale(PM::pm_Set(1, 2, 1));
-	PR_CHECK_NEARLY_EQ_3(child->position(), PM::pm_Set(0, 1, 4, 1));
-	PR_CHECK_NEARLY_EQ_3(root->position(), PM::pm_Set(0, 1, 0, 1));
-	PR_CHECK_NEARLY_EQ_3(child->position(true), PM::pm_Set(0, 2, 0, 1));
-
-	root->setScale(PM::pm_Set(2, 2, 2));
+	root->setScale(2);
 	PR_CHECK_NEARLY_EQ_3(child->position(), PM::pm_Set(0, 1, 4, 1));
 
 	root->setRotation(PM::pm_RotationQuatRollPitchYaw(PM::pm_Set(0, PM::pm_DegToRad(90), 0)));

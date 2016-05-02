@@ -274,20 +274,9 @@ namespace PRU
 		}
 
 		// Set scale
-		if (scaleD && scaleD->isType() == DL::Data::T_Array)
+		if (scaleD && scaleD->isNumber())
 		{
-			bool ok;
-			entity->setScale(getVector(scaleD->getArray(), ok));
-
-			if (!ok)
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());
-			}
-		}
-		else if (scaleD && scaleD->isNumber())
-		{
-			entity->setScale(PM::pm_Set(
-				scaleD->getFloatConverted(), scaleD->getFloatConverted(), scaleD->getFloatConverted(), 1));
+			entity->setScale(scaleD->getFloatConverted());
 		}
 
 		// Debug

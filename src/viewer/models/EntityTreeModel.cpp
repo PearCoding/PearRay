@@ -28,10 +28,10 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 	PR::Entity *item = static_cast<PR::Entity*>(index.internalPointer());
 	if (role == Qt::ToolTipRole)
 	{
-		return QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t[%8, %9, %10]")
+		return QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t%8")
 			.arg(PM::pm_GetX(item->position())).arg(PM::pm_GetY(item->position())).arg(PM::pm_GetZ(item->position()))
 			.arg(PM::pm_GetX(item->rotation())).arg(PM::pm_GetY(item->rotation())).arg(PM::pm_GetZ(item->rotation())).arg(PM::pm_GetW(item->rotation()))
-			.arg(PM::pm_GetX(item->scale())).arg(PM::pm_GetY(item->scale())).arg(PM::pm_GetZ(item->scale()));
+			.arg(item->scale());
 	}
 	else
 	{

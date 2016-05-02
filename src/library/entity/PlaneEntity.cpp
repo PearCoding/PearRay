@@ -74,8 +74,8 @@ namespace PR
 
 		FacePoint fp;
 		fp.setVertex(PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.xAxis())), PM::pm_GetX(sample)),
-				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Multiply(scale(), mPlane.yAxis())), PM::pm_GetY(sample)))));
+			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.xAxis(), scale())), PM::pm_GetX(sample)),
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), scale())), PM::pm_GetY(sample)))));
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 		fp.setUV(PM::pm_SetZ(sample, 0));
 		return fp;

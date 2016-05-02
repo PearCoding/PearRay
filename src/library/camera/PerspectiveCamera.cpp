@@ -74,27 +74,32 @@ namespace PR
 
 	Ray PerspectiveCamera::constructRay(float nx, float ny) const
 	{
-		float cx = -nx * mWidth;
-		float cy = -ny * mHeight;
+		float cx = - scale() * nx * mWidth;
+		float cy = - scale() * ny * mHeight;
 
-		// Could be cached!
-		PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position())), 0);
-
-		float dot = PM::pm_Dot3D(dir, PM::pm_Set(0, 1, 0));
-		PM::vec3 right;
-		if (dot >= 1)
-			right = PM::pm_Set(1, 0, 0);
-		else if (dot <= -1)
-			right = PM::pm_Set(-1, 0, 0);
-		else
-			right = PM::pm_Cross3D(dir, PM::pm_Set(0, 1, 0));
-
-		PM::vec3 up = PM::pm_Cross3D(right, dir);
-
-		PM::vec3 off = PM::pm_Add(PM::pm_Scale(right, cx), PM::pm_Scale(up, cy));
-		PM::vec3 camPos = PM::pm_Add(off, PM::pm_Scale(dir, mLensDistance));
+		PM::vec3 off = PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy));
+		PM::vec3 camPos = PM::pm_Add(off, PM::pm_Scale(mDirection_Cache, mLensDistance));
 		PM::vec3 rayDir = PM::pm_SetW(PM::pm_Normalize3D(camPos), 0);
 
 		return Ray(position(), rayDir);
+	}
+
+	// Cache
+	void PerspectiveCamera::onPreRender()
+	{
+		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position())), 0);
+		if (PM::pm_MagnitudeSqr3D(mDirection_Cache) < PM_EPSILON)
+			mDirection_Cache = PM::pm_Set(0, 0, 1);
+
+		float dot = PM::pm_Dot3D(mDirection_Cache, PM::pm_Set(0, 1, 0));
+
+		if (dot >= 1)
+			mRight_Cache = PM::pm_Set(1, 0, 0);
+		else if (dot <= -1)
+			mRight_Cache = PM::pm_Set(-1, 0, 0);
+		else
+			mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0))), 0);
+
+		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache)), 0);
 	}
 }

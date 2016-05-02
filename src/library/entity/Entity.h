@@ -29,8 +29,8 @@ namespace PR
 		void setPosition(const PM::vec3& pos);
 		PM::vec3 position(bool local = false) const;
 
-		void setScale(const PM::vec3& scale);
-		PM::vec3 scale(bool local = false) const;
+		void setScale(float scale);
+		float scale(bool local = false) const;
 
 		void setRotation(const PM::quat& quat);
 		PM::quat rotation(bool local = false) const;
@@ -52,7 +52,7 @@ namespace PR
 		bool mDebug;
 
 		PM::vec3 mPosition;
-		PM::vec3 mScale;
+		float mScale;//Only uniform scale!
 		PM::quat mRotation;
 
 		mutable bool mReCache;

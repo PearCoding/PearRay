@@ -74,11 +74,30 @@ namespace PR
 
 	Ray OrthographicCamera::constructRay(float nx, float ny) const
 	{
-		float sx = mWidth * nx;
-		float sy = - mHeight * ny;
+		float sx = - scale() * mWidth * nx;
+		float sy = - scale() * mHeight * ny;
 
-		PM::vec3 dir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position())), 0);
-		return Ray(PM::pm_Multiply(matrix(), PM::pm_Set(sx, sy, 0, 1)),
-			PM::pm_RotateWithQuat(rotation(), dir));
+		return Ray(PM::pm_Add(position(), PM::pm_Add(PM::pm_Scale(mRight_Cache, sx), PM::pm_Scale(mUp_Cache, sy))),
+			mDirection_Cache);
+	}
+
+	// Cache
+	void OrthographicCamera::onPreRender()
+	{
+		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(mLookAt, position())), 0);
+
+		if (PM::pm_MagnitudeSqr3D(mDirection_Cache) < PM_EPSILON)
+			mDirection_Cache = PM::pm_Set(0, 0, 1);
+
+		float dot = PM::pm_Dot3D(mDirection_Cache, PM::pm_Set(0, 1, 0));
+
+		if (dot >= 1)
+			mRight_Cache = PM::pm_Set(1, 0, 0);
+		else if (dot <= -1)
+			mRight_Cache = PM::pm_Set(-1, 0, 0);
+		else
+			mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0))), 0);
+
+		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache)), 0);
 	}
 }

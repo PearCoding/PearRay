@@ -6,7 +6,7 @@ namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
 		mName(name), mParent(parent), mDebug(false),
-		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat()),
+		mPosition(PM::pm_Set(0,0,0,1)), mScale(1), mRotation(PM::pm_IdentityQuat()),
 		mReCache(true)
 	{
 	}
@@ -87,17 +87,17 @@ namespace PR
 		}
 	}
 
-	void Entity::setScale(const PM::vec3& scale)
+	void Entity::setScale(float scale)
 	{
 		mScale = scale;
 		mReCache = true;
 	}
 
-	PM::vec3 Entity::scale(bool local) const
+	float Entity::scale(bool local) const
 	{
 		if (mParent && !local)
 		{
-			return PM::pm_Multiply(mParent->scale(), mScale);
+			return mParent->scale() * mScale;
 		}
 		else
 		{
@@ -129,7 +129,7 @@ namespace PR
 		{
 			mReCache = false;
 
-			mMatrixCache = PM::pm_Multiply(PM::pm_Multiply(PM::pm_Translation(mPosition), PM::pm_Rotation(mRotation)), PM::pm_Scaling(mScale));
+			mMatrixCache = PM::pm_Multiply(PM::pm_Multiply(PM::pm_Translation(mPosition), PM::pm_Rotation(mRotation)), PM::pm_Scaling(PM::pm_Set(mScale, mScale, mScale)));
 			mInvMatrixCache = PM::pm_Inverse(mMatrixCache);
 		}
 
