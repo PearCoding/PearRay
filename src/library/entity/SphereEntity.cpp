@@ -43,10 +43,9 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	// No non-uniform scale!
 	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
-		Sphere sphere(position(), mRadius);
+		Sphere sphere(position(), scale() * mRadius);
 		PM::vec3 collisionPos;
 		if (!sphere.intersects(ray, collisionPos))
 			return false;
@@ -80,7 +79,7 @@ namespace PR
 		PM::vec3 n = Projection::sphere(PM::pm_GetX(sample), PM::pm_GetY(sample));
 		//p.setNormal(n);
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
-		p.setVertex(PM::pm_Add(position(), PM::pm_Scale(n, mRadius)));
+		p.setVertex(PM::pm_Add(position(), PM::pm_Scale(n, scale() * mRadius)));
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
 		float v = (std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal())) * PM_INV_PI_F + 1) * 0.5f;
 		p.setUV(PM::pm_Set(u, v));
