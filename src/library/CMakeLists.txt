@@ -40,6 +40,9 @@ SET(PR_Material_Src
   ${PR_LIB}/material/NormalDebugMaterial.cpp
   ${PR_LIB}/material/UVDebugMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
+SET(PR_Photon_Src
+  ${PR_LIB}/photon/PhotonMap.cpp)
+SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
 SET(PR_Ray_Src
   ${PR_LIB}/ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
@@ -70,6 +73,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Lights_Src} ${PR_Sampler_Src}
+  ${PR_Photon_Src}
 )
 
 SET(PR_Main_Hdr
@@ -115,6 +119,10 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/NormalDebugMaterial.h
   ${PR_LIB}/material/UVDebugMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
+SET(PR_Photon_Hdr
+  ${PR_LIB}/photon/Photon.h
+  ${PR_LIB}/photon/PhotonMap.h)
+SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
 SET(PR_Ray_Hdr
   ${PR_LIB}/ray/Ray.h
   ${PR_LIB}/ray/Ray.inl)
@@ -150,6 +158,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Lights_Hdr} ${PR_Sampler_Hdr}
+  ${PR_Photon_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

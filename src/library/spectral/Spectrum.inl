@@ -6,6 +6,12 @@ namespace PR
 		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
+	inline Spectrum::Spectrum(const float* data) :
+		mEmissive(false)
+	{
+		std::memcpy(mValues, data, sizeof(float)*SAMPLING_COUNT);
+	}
+
 	inline Spectrum::~Spectrum()
 	{
 	}
