@@ -24,6 +24,26 @@ PR_TEST("Bounds");
 	PR_CHECK_EQ_3(box.center(), PM::pm_Set(0, 0, 0));
 }
 
+PR_TEST("Intersects");
+{
+	Ray ray(PM::pm_Set(-2, 0, 0), PM::pm_Set(1, 0, 0));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	box.intersects(ray, collisionPoint);
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(-1, 0, 0));
+}
+
+PR_TEST("Intersects Inside");
+{
+	Ray ray(PM::pm_Set(0, 0, 0), PM::pm_Set(1, 0, 0));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	box.intersects(ray, collisionPoint);
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
+}
+
 PR_TEST("Face Front");
 {
 	BoundingBox box(1, 2, 3);

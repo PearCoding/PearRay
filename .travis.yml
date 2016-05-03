@@ -30,6 +30,7 @@ script:
   - bin/pr_test_plane
   - bin/pr_test_projection
   - bin/pr_test_spectrum
+  - bin/pr_test_sphere
 
 branches:
   only:
