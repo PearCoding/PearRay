@@ -6,7 +6,8 @@ namespace PR
 
 	float BRDF::fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N)
 	{
-		return f0 + (1 - f0)*powf(1 - PM::pm_Dot3D(L, N), 5);
+		const float t = 1 - std::abs(PM::pm_Dot3D(L, N));
+		return f0 + (1 - f0)*(t*t*t*t*t);
 	}
 
 	//float BRDF::fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);

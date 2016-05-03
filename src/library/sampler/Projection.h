@@ -62,6 +62,21 @@ namespace PR
 			return PM::pm_Normalize3D(PM::pm_Set(2 * dx - 1, 2 * dy - 1, 2 * dz - 1, 1));
 		}
 
+		static inline PM::vec3 sphereReject(Random& random)
+		{
+			float dx = 2 * random.getFloat() - 1;
+			float dy = 2 * random.getFloat() - 1;
+			float dz = 2 * random.getFloat() - 1;
+			for (int i = 0; i < 1000000 && (dx*dx + dy*dy + dz*dz) > 1; ++i)
+			{
+				dx = 2 * random.getFloat() - 1;
+				dy = 2 * random.getFloat() - 1;
+				dz = 2 * random.getFloat() - 1;
+			}
+
+			return PM::pm_Normalize3D(PM::pm_Set(dx, dy, dz));
+		}
+
 		// Uniform
 		// Orientation +Z
 		static inline PM::vec3 hemi(float u1, float u2)

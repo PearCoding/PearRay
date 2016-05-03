@@ -39,7 +39,7 @@
 		:name 			"Content2"
 		:type			"sphere"
 		:radius			0.5
-		:material		"Mirror"
+		:material		"Glass"
 		:position		[1,0.5,-0.5]
 	)
 	
@@ -171,6 +171,13 @@
 	(material
 		:name			"Mirror"
 		:type			"mirror"
+	)
+	
+	(material
+		:name			"Glass"
+		:type			"glass"
+		:specularity	"White"
+		:index			1
 	)
 	
 	(material

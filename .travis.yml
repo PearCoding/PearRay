@@ -25,9 +25,10 @@ before_script:
 script:
   - make
   - bin/pr_test_boundingbox
+  - bin/pr_test_brdf
   - bin/pr_test_entity
   - bin/pr_test_plane
-  - bin/pr_test_sampler
+  - bin/pr_test_projection
   - bin/pr_test_spectrum
 
 branches:

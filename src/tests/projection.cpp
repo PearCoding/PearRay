@@ -3,7 +3,7 @@
 
 using namespace PR;
 
-PR_BEGIN_TESTCASE(Sampler)
+PR_BEGIN_TESTCASE(Projection)
 PR_TEST("Align 1");
 {
 	auto N = PM::pm_Set(0, 0, 1);
@@ -48,5 +48,5 @@ PR_END_TESTCASE()
 
 // MAIN
 PRT_BEGIN_MAIN
-PRT_TESTCASE(Sampler);
+PRT_TESTCASE(Projection);
 PRT_END_MAIN

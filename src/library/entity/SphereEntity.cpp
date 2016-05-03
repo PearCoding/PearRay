@@ -71,12 +71,13 @@ namespace PR
 
 	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		auto sample = sampler.generate(random);
+		//auto sample = sampler.generate(random);
 
 		FacePoint p;
 		// Not really uniform...
 		//PM::vec3 n = Projection::sphereFast(PM::pm_GetX(sample), PM::pm_GetY(sample), PM::pm_GetZ(sample));
-		PM::vec3 n = Projection::sphere(PM::pm_GetX(sample), PM::pm_GetY(sample));
+		//PM::vec3 n = Projection::sphere(PM::pm_GetX(sample), PM::pm_GetY(sample));
+		PM::vec3 n = Projection::sphereReject(random);
 		//p.setNormal(n);
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Add(position(), PM::pm_Scale(n, scale() * mRadius)));

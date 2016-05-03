@@ -15,6 +15,7 @@
 #include "parser/material/BRDFMaterialParser.h"
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
 #include "parser/material/DebugMaterialParser.h"
+#include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
 #include "parser/material/MirrorMaterialParser.h"
 
@@ -340,6 +341,7 @@ namespace PRU
 
 		{ "grid", GridMaterialParser() },
 		{ "mirror", MirrorMaterialParser() },
+		{ "glass", GlassMaterialParser() },
 
 		{ nullptr, DebugMaterialParser() },//Just for the end
 	};

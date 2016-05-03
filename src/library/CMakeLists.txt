@@ -34,6 +34,7 @@ SET(PR_Material_Src
   ${PR_LIB}/material/BRDFMaterial.cpp
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
   ${PR_LIB}/material/DirectLightDebugMaterial.cpp
+  ${PR_LIB}/material/GlassMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
   ${PR_LIB}/material/MirrorMaterial.cpp
   ${PR_LIB}/material/NormalDebugMaterial.cpp
@@ -107,6 +108,7 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/BRDFMaterial.h
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
   ${PR_LIB}/material/DirectLightDebugMaterial.h
+  ${PR_LIB}/material/GlassMaterial.h
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h
   ${PR_LIB}/material/MirrorMaterial.h

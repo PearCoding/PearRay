@@ -11,6 +11,20 @@ namespace PR
 	class PR_LIB BRDF
 	{
 	public:
+		inline static PM::vec3 reflect(const PM::vec3& N, const PM::vec3& L)
+		{
+			return PM::pm_Subtract(L, PM::pm_Scale(N, 2 * PM::pm_Dot3D(L, N)));
+		}
+
+		inline static PM::vec3 refract(float f, const PM::vec3& N, const PM::vec3& L)
+		{
+			const float invF = 1 / f;
+			const float dot = PM::pm_Dot3D(L, N);
+			const float t = invF * dot - std::sqrt(1 - invF*invF*(1 - dot*dot));
+
+			return PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(L, invF), PM::pm_Scale(N, t)));
+		}
+
 		// Fresnel
 		static float fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N);
 		//static float fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);
