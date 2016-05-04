@@ -1,7 +1,5 @@
 #include "UVDebugMaterial.h"
-#include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "renderer/Renderer.h"
 
 #include "spectral/RGBConverter.h"
 
@@ -12,15 +10,26 @@ namespace PR
 	{
 	}
 
-	void UVDebugMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	void UVDebugMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+		Spectrum& diff, Spectrum& spec)
 	{
-		in.setSpectrum(RGBConverter::toSpec(std::abs(PM::pm_GetX(point.uv())),
+		diff = RGBConverter::toSpec(std::abs(PM::pm_GetX(point.uv())),
 			std::abs(PM::pm_GetY(point.uv())),
-			0));
+			0);
 	}
 
-	bool UVDebugMaterial::isLight() const
+	float UVDebugMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		return false;
+		return 0;
+	}
+
+	float UVDebugMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
+	{
+		return 0;
+	}
+
+	float UVDebugMaterial::roughness() const
+	{
+		return 1;
 	}
 }

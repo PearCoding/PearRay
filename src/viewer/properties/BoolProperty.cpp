@@ -2,10 +2,10 @@
 
 #include <QCheckBox>
 
-BoolProperty::BoolProperty() :
-IProperty(),
+BoolProperty::BoolProperty(const QString& name, bool value) :
+IProperty(name),
 mCheckBox(nullptr),
-mValue(false), mOldValue(false)
+mValue(value), mOldValue(value)
 {
 }
 

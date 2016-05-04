@@ -22,6 +22,16 @@ namespace PR
 		return mDirection;
 	}
 
+	inline void Ray::setTarget(const PM::vec3& p)
+	{
+		mTarget = p;
+	}
+
+	inline PM::vec3 Ray::target() const
+	{
+		return mTarget;
+	}
+
 	inline size_t Ray::depth() const
 	{
 		return mDepth;
@@ -37,12 +47,12 @@ namespace PR
 		return mSpectrum;
 	}
 
-	inline size_t Ray::maxDepth() const
+	inline uint32 Ray::maxDepth() const
 	{
 		return mMaxDepth;
 	}
 
-	inline void Ray::setMaxDepth(size_t i)
+	inline void Ray::setMaxDepth(uint32 i)
 	{
 		mMaxDepth = i;
 	}

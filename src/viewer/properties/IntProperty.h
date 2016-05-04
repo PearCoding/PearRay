@@ -7,7 +7,7 @@ class IntProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	IntProperty();
+	IntProperty(const QString& name, int value, int min = 0, int max = 1000000, int stepsize = 1);
 	virtual ~IntProperty();
 
 	QString valueText() const;

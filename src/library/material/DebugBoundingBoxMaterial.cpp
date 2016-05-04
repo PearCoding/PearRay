@@ -1,6 +1,5 @@
 #include "DebugBoundingBoxMaterial.h"
 #include "ray/Ray.h"
-#include "renderer/Renderer.h"
 #include "geometry/FacePoint.h"
 
 namespace PR
@@ -10,20 +9,32 @@ namespace PR
 	{
 	}
 
-	void DebugBoundingBoxMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	void DebugBoundingBoxMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+		Spectrum& diff, Spectrum& spec)
 	{
-		Ray ray = in;// Don't increase depth!
-		ray.setStartPosition(point.vertex());
+		//Ray ray = in;// Don't increase depth!
+		//ray.setStartPosition(point.vertex());
 
-		FacePoint pt;
-		renderer->shoot(ray, pt, entity);
+		//FacePoint pt;
+		//renderer->shoot(ray, pt, entity);
 
-		in.setSpectrum(ray.spectrum()*(1 - mDensity) + mColor*mDensity);
+		spec = Li*(1 - mDensity) + mColor*mDensity;
+	}
+	
+	float DebugBoundingBoxMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
+	{
+		return 0;
 	}
 
-	bool DebugBoundingBoxMaterial::isLight() const
+	float DebugBoundingBoxMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		return false;
+		dir = V;
+		return 1;
+	}
+	
+	float DebugBoundingBoxMaterial::roughness() const
+	{
+		return 0;
 	}
 
 	void DebugBoundingBoxMaterial::setColor(const Spectrum& spec)

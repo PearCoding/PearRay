@@ -3,8 +3,8 @@
 #include <QDoubleSpinBox>
 #include <QBoxLayout>
 
-VectorProperty::VectorProperty(int dimension) :
-IProperty(), mDimension(dimension)
+VectorProperty::VectorProperty(const QString& name, int dimension) :
+IProperty(name), mDimension(dimension)
 {
 	Q_ASSERT(dimension > 0 && dimension <= MAX_DIM);
 

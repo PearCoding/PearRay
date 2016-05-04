@@ -6,6 +6,9 @@
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 
+#include "integrator/DirectIntegrator.h"
+#include "integrator/PhotonIntegrator.h"
+
 #include "Logger.h"
 
 namespace PR
@@ -13,13 +16,8 @@ namespace PR
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
 		mResult(w, h), mRandom((uint64)time(NULL)),
-		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr),
-		mMaxRayDepth(3), mMaxDirectRayCount(10), mMaxIndirectRayCount(50),
-		mEnableSampling(false), mXSampleCount(8), mYSampleCount(8), mSamplerMode(SM_Jitter)
+		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr)
 	{
-		setMaxDirectRayCount(10);
-		setMaxIndirectRayCount(50);
-
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
 
@@ -89,6 +87,16 @@ namespace PR
 			entity->onPreRender();
 		}
 
+		/* Setup integrators */
+		if (mRenderSettings.maxLightSamples() > 0)
+			mIntegrators.push_back(new DirectIntegrator(this, mRenderSettings.maxLightSamples()));
+		
+		//if (mRenderSettings.maxPhotons() > 0)
+			//mIntegrators.push_back(new PhotonIntegrator(this));
+
+		for (Integrator* integrator : mIntegrators)
+			integrator->init(this);
+
 		// Calculate tile sizes, etc.
 		mRayCount = 0;
 		mPixelsRendered = 0;
@@ -120,32 +128,32 @@ namespace PR
 
 	void Renderer::render(uint32 x, uint32 y)
 	{
-		if (mEnableSampling)
+		if (mRenderSettings.samplerMode() != SM_None)
 		{
 			float newDepth = 0;
 			Spectrum newSpec;
 
-			for (uint32 yi = 0; yi < mYSampleCount; ++yi)
+			for (uint32 yi = 0; yi < mRenderSettings.ySamplerCount(); ++yi)
 			{
-				for (uint32 xi = 0; xi < mXSampleCount; ++xi)
+				for (uint32 xi = 0; xi < mRenderSettings.xSamplerCount(); ++xi)
 				{
 					float sx;
 					float sy;
 
-					if (mSamplerMode == SM_Random)
+					switch (mRenderSettings.samplerMode())
 					{
+					case SM_Random:
 						sx = x + mRandom.getFloat() - 0.5f;
 						sy = y + mRandom.getFloat() - 0.5f;
-					}
-					else if (mSamplerMode == SM_Uniform)
-					{
-						sx = x + xi / (float)mXSampleCount - 0.5f;
-						sy = y + yi / (float)mYSampleCount - 0.5f;
-					}
-					else //SM_Jitter
-					{
-						sx = x + (xi + mRandom.getFloat()) / (float)mXSampleCount - 0.5f;
-						sy = y + (yi + mRandom.getFloat()) / (float)mYSampleCount - 0.5f;
+						break;
+					case SM_Uniform:
+						sx = x + xi / (float)mRenderSettings.xSamplerCount() - 0.5f;
+						sy = y + yi / (float)mRenderSettings.ySamplerCount() - 0.5f;
+						break;
+					case SM_Jitter:
+						sx = x + (xi + mRandom.getFloat()) / (float)mRenderSettings.xSamplerCount() - 0.5f;
+						sy = y + (yi + mRandom.getFloat()) / (float)mRenderSettings.ySamplerCount() - 0.5f;
+						break;
 					}
 
 					float depth;
@@ -160,7 +168,7 @@ namespace PR
 				}
 			}
 
-			const int SampleCount = mXSampleCount * mYSampleCount;
+			const int SampleCount = mRenderSettings.xSamplerCount() * mRenderSettings.ySamplerCount();
 			mResult.setDepth(x, y, newDepth / SampleCount);
 			mResult.setPoint(x, y, newSpec / SampleCount);
 		}
@@ -211,14 +219,19 @@ namespace PR
 	RenderEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
 	{
 		const uint32 maxDepth = ray.maxDepth() == 0 ?
-			maxRayDepth() : PM::pm_MinT<uint32>(maxRayDepth() + 1, ray.maxDepth());
+			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
 			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
 
 			if (entity)
 			{
-				entity->apply(ray, collisionPoint, this);
+				Spectrum spec;
+				for (Integrator* integrator : mIntegrators)
+				{
+					spec += integrator->apply(ray, entity, collisionPoint, this);
+				}
+				ray.setSpectrum(spec);
 			}
 
 			mStatisticMutex.lock();
@@ -298,70 +311,6 @@ namespace PR
 	size_t Renderer::rayCount() const
 	{
 		return mRayCount;
-	}
-
-	void Renderer::setMaxRayDepth(uint32 i)
-	{
-		mMaxRayDepth = i;
-	}
-
-	uint32 Renderer::maxRayDepth() const
-	{
-		return mMaxRayDepth;
-	}
-
-	void Renderer::setMaxDirectRayCount(uint32 i)
-	{
-		mMaxDirectRayCount = i;
-		mMaxDirectRayCount_2DSample = std::ceil(std::sqrt(i));
-		mMaxDirectRayCount_3DSample = std::ceil(std::cbrt(i));
-	}
-
-	uint32 Renderer::maxDirectRayCount() const
-	{
-		return mMaxDirectRayCount;
-	}
-
-	uint32 Renderer::maxDirectRayCount_2DSample() const
-	{
-		return mMaxDirectRayCount_2DSample;
-	}
-
-	uint32 Renderer::maxDirectRayCount_3DSample() const
-	{
-		return mMaxDirectRayCount_3DSample;
-	}
-
-	void Renderer::setMaxIndirectRayCount(uint32 i)
-	{
-		mMaxIndirectRayCount = i;
-		mMaxIndirectRayCount_2DSample = std::ceil(std::sqrt(i));
-		mMaxIndirectRayCount_3DSample = std::ceil(std::cbrt(i));
-	}
-
-	uint32 Renderer::maxIndirectRayCount() const
-	{
-		return mMaxIndirectRayCount;
-	}
-
-	uint32 Renderer::maxIndirectRayCount_2DSample() const
-	{
-		return mMaxIndirectRayCount_2DSample;
-	}
-
-	uint32 Renderer::maxIndirectRayCount_3DSample() const
-	{
-		return mMaxIndirectRayCount_3DSample;
-	}
-
-	void Renderer::enableSampling(bool b)
-	{
-		mEnableSampling = b;
-	}
-
-	bool Renderer::isSamplingEnabled() const
-	{
-		return mEnableSampling;
 	}
 
 	const std::list<RenderEntity*>& Renderer::lights() const

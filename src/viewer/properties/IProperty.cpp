@@ -1,8 +1,8 @@
 #include "IProperty.h"
 
-IProperty::IProperty() :
+IProperty::IProperty(const QString& name) :
 QObject(),
-mIsReadOnly(false), mIsEnabled(true), mIsModified(false), mIsHeader(false), mHasNoName(false)
+mPropertyName(name), mIsReadOnly(false), mIsEnabled(true), mIsModified(false), mIsHeader(false), mHasNoName(false)
 {
 }
 

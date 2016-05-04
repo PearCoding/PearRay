@@ -110,7 +110,7 @@ namespace PR
 
 	FacePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		auto ret = sampler.generate(random);
+		auto ret = sampler.generate3D();
 
 		BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(PM::pm_GetX(ret), 0, 5);// Get randomly a face
 

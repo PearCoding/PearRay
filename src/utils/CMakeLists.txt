@@ -6,16 +6,12 @@ SET(PR_Main_Src
   ${PR_UTILS}/Environment.cpp
   ${PR_UTILS}/RenderLoader.cpp
   ${PR_UTILS}/SceneLoader.cpp)
-SET(PR_GSL_Src
-  ${PR_UTILS}/gsl/GSLMaterial.cpp)
-SOURCE_GROUP("Source Files\\GSL" FILES ${PR_GSL_Src})
 SET(PR_Loader_Src
   ${PR_UTILS}/loader/WavefrontLoader.cpp)
 SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
 SET(PR_Parser_Entity_Src
   ${PR_UTILS}/parser/entity/BoundaryParser.cpp
   ${PR_UTILS}/parser/entity/CameraParser.cpp
-  ${PR_UTILS}/parser/entity/LightParser.cpp
   ${PR_UTILS}/parser/entity/MeshParser.cpp
   ${PR_UTILS}/parser/entity/PlaneParser.cpp
   ${PR_UTILS}/parser/entity/SphereParser.cpp)
@@ -28,17 +24,13 @@ SET(PR_Parser_Material_Src
   ${PR_UTILS}/parser/material/GridMaterialParser.cpp
   ${PR_UTILS}/parser/material/MirrorMaterialParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
-SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_GSL_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
+SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
 )
 
 SET(PR_Main_Hdr
   ${PR_UTILS}/Environment.h
   ${PR_UTILS}/RenderLoader.h
   ${PR_UTILS}/SceneLoader.h)
-SET(PR_GSL_Hdr
-  ${PR_UTILS}/gsl/GSLNode.h
-  ${PR_UTILS}/gsl/GSLMaterial.h)
-SOURCE_GROUP("Header Files\\GSL" FILES ${PR_GSL_Hdr})
 SET(PR_Loader_Hdr
   ${PR_UTILS}/loader/MeshLoader.h
   ${PR_UTILS}/loader/WavefrontLoader.h)
@@ -47,7 +39,6 @@ SET(PR_Parser_Entity_Hdr
   ${PR_UTILS}/parser/entity/BoundaryParser.h
   ${PR_UTILS}/parser/entity/CameraParser.h
   ${PR_UTILS}/parser/entity/EntityParser.h
-  ${PR_UTILS}/parser/entity/LightParser.h
   ${PR_UTILS}/parser/entity/MeshParser.h
   ${PR_UTILS}/parser/entity/PlaneParser.h
   ${PR_UTILS}/parser/entity/SphereParser.h)
@@ -61,7 +52,7 @@ SET(PR_Parser_Material_Hdr
   ${PR_UTILS}/parser/material/MaterialParser.h
   ${PR_UTILS}/parser/material/MirrorMaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
-SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_GSL_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
+SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
 )
 	
 add_library(pr_lib_utils SHARED ${PR_Src} ${PR_Hdr})

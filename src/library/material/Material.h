@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Config.h"
+#include "spectral/Spectrum.h"
+#include "PearMath.h"
 
 namespace PR
 {
@@ -8,20 +9,48 @@ namespace PR
 	class FacePoint;
 	class Ray;
 	class Renderer;
-	class PR_LIB_INLINE Material
+	class PR_LIB Material
 	{
 	public:
-		virtual void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer) = 0;
-		virtual bool isLight() const = 0;
+		Material();
 
-		inline virtual bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity)
-		{
-			return false;
-		}
+		virtual void apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+			Spectrum& diff, Spectrum& spec) = 0;
+
+		// Parameter 'dir' is an output!
+		// Return value is weight of vector
+		virtual float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) = 0;
+		virtual float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) = 0;
+
+		virtual bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity);
 
 		inline virtual bool shouldIgnore_Complex(const Ray& in, RenderEntity* entity, const FacePoint& point)
 		{
 			return false;
 		}
+
+		virtual float roughness() const = 0;// How much specular!
+
+		bool isLight() const;
+
+		Spectrum emission() const;
+		void setEmission(const Spectrum& spec);
+
+		bool canBeShaded() const;
+		void enableShading(bool b);
+
+		void enableSelfShadow(bool b);
+		bool canBeSelfShadowed() const;
+
+		void enableCameraVisibility(bool b);
+		bool isCameraVisible() const;
+
+	private:
+		Spectrum mEmission;
+
+		bool mIsLight;
+		bool mCanBeShaded;
+		bool mSelfShadow;
+		bool mCameraVisible;
 	};
 }

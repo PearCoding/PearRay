@@ -29,10 +29,8 @@ namespace PR
 		virtual BoundingBox localBoundingBox() const;
 		virtual BoundingBox worldBoundingBox() const;
 
-		// In local coords
+		// In world coords
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint);
-
-		virtual void apply(Ray& in, const FacePoint& point, Renderer* renderer);
 
 		// In world coords
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const = 0;

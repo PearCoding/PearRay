@@ -93,7 +93,7 @@ namespace PR
 
 	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		auto ret = sampler.generate(random);
+		auto ret = sampler.generate3D();
 		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, mMesh->faces().size() - 1);
 
 		Face* face = mMesh->getFace(fi);

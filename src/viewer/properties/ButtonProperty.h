@@ -9,7 +9,7 @@ class ButtonProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	ButtonProperty();
+	ButtonProperty(const QString& name);
 	virtual ~ButtonProperty();
 
 	QString valueText() const;

@@ -202,12 +202,6 @@
 	)
 	
 	(material
-		:name			"DebugDirectLight"
-		:type			"debug"
-		:show			"directLight"
-	)
-	
-	(material
 		:name			"DebugBoundingBox"
 		:type			"debugBoundingBox"
 		:color			"Red"

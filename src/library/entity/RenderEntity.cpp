@@ -70,9 +70,4 @@ namespace PR
 	{
 		return false;
 	}
-
-	void RenderEntity::apply(Ray& in, const FacePoint& point, Renderer* renderer)
-	{
-		mMaterial->apply(in, this, point, renderer);
-	}
 }

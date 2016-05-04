@@ -10,7 +10,7 @@ namespace PR
 {
 	GlassMaterial::GlassMaterial() :
 		Material(), 
-		mCameraVisible(true), mSpecularitySpectrum(), mIndex(1), mFresnel(0)
+		mSpecularitySpectrum(), mIndex(1), mFresnel(0)
 	{
 	}
 
@@ -36,57 +36,42 @@ namespace PR
 		mFresnel = tmp * tmp;
 	}
 
-	bool GlassMaterial::isLight() const
+	void GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+		Spectrum& diff, Spectrum& spec)
 	{
-		return false;
+		// TODO
+		spec = mSpecularitySpectrum;
 	}
 
-	void GlassMaterial::enableCameraVisibility(bool b)
+	float GlassMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		mCameraVisible = b;
-	}
+		const float reflection = BRDF::fresnel_schlick(mFresnel, V, point.normal()) / 4;
 
-	bool GlassMaterial::isCameraVisible() const
-	{
-		return mCameraVisible;
-	}
-
-	bool GlassMaterial::shouldIgnore_Simple(const Ray& in, RenderEntity* entity)
-	{
-		return !mCameraVisible && in.depth() == 0;
-	}
-
-	constexpr float NormalOffset = 0.0001f;
-	void GlassMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
-	{
-		float reflection = BRDF::fresnel_schlick(mFresnel, in.direction(), point.normal()) / 4;
-
-		Spectrum spec;
 		if (reflection > PM_EPSILON)
 		{
-			PM::vec3 reflect = BRDF::reflect(point.normal(), in.direction());
-			Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflect, NormalOffset)), reflect, in.depth() + 1);
-
-			FacePoint collisionPoint;
-			if (renderer->shoot(ray, collisionPoint))
-			{
-				spec += reflection * ray.spectrum();
-			}
+			dir = BRDF::reflect(point.normal(), V);
+			return reflection;
 		}
+		return 0;
+	}
+
+	float GlassMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
+	{
+		const float reflection = BRDF::fresnel_schlick(mFresnel, V, point.normal()) / 4;
+		const float NdotV = PM::pm_Dot3D(V, point.normal());
+		const bool inside = NdotV < 0;
 
 		if (1 - reflection > PM_EPSILON)
 		{
-			PM::vec3 refract = BRDF::refract(mIndex, point.normal(), in.direction());
-
-			Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(refract, NormalOffset)), refract, in.depth() + 1);
-
-			FacePoint collisionPoint;
-			if (renderer->shoot(ray, collisionPoint))
-			{
-				spec += (1 - reflection) * ray.spectrum();
-			}
+			dir = BRDF::refract(inside ? mIndex : 1, inside ? 1 : mIndex, point.normal(), V);
+			return 1 - reflection;
 		}
 
-		in.setSpectrum(spec);
+		return 0;
+	}
+
+	float GlassMaterial::roughness() const
+	{
+		return 0;
 	}
 }

@@ -10,7 +10,7 @@ class ColorProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	ColorProperty();
+	ColorProperty(const QString& name, const QColor& color = Qt::black);
 	virtual ~ColorProperty();
 
 	QString valueText() const;

@@ -2,10 +2,10 @@
 
 #include <QLineEdit>
 
-TextProperty::TextProperty() :
-IProperty(),
+TextProperty::TextProperty(const QString& name, const QString& text) :
+IProperty(name),
 mWidget(nullptr),
-mText(), mDefaultText()
+mText(text), mDefaultText(text)
 {
 }
 

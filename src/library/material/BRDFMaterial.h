@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Material.h"
-#include "PearMath.h"
-#include "spectral/Spectrum.h"
 
 namespace PR
 {
@@ -11,18 +9,13 @@ namespace PR
 	public:
 		BRDFMaterial();
 
-		bool isLight() const;
-
 		Spectrum albedo() const;
 		void setAlbedo(const Spectrum& diffSpec);
 
 		Spectrum specularity() const;
 		void setSpecularity(const Spectrum& specSpec);
 
-		Spectrum emission() const;
-		void setEmission(const Spectrum& spec);
-
-		float roughness() const;
+		float roughness() const override;
 		void setRoughness(float f);
 
 		float reflectivity() const;
@@ -31,33 +24,18 @@ namespace PR
 		float fresnel() const;
 		void setFresnel(float f);
 
-		bool canBeShaded() const;
-		void enableShading(bool b);
+		void apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+			Spectrum& diff, Spectrum& spec) override;
 
-		void enableSelfShadow(bool b);
-		bool canBeSelfShadowed() const;
+		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
+		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 
-		void enableCameraVisibility(bool b);
-		bool isCameraVisible() const;
-
-		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
-
-		bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity) override;
 	private:
-		void applyOnRay(const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V, const Spectrum& E0,
-			Spectrum& diff, Spectrum& spec);
-
 		Spectrum mAlbedoSpectrum;
 		Spectrum mSpecularitySpectrum;
-		Spectrum mEmissionSpectrum;
 
 		float mRoughness;
 		float mReflectivity;
 		float mFresnel;
-
-		bool mCanBeShaded;
-		bool mSelfShadow;
-		bool mCameraVisible;
-		bool mIsLight;
 	};
 }

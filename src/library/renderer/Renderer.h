@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RenderResult.h"
+#include "RenderSettings.h"
 #include "spectral/Spectrum.h"
 #include "Random.h"
 
@@ -9,16 +10,10 @@
 
 namespace PR
 {
-	enum SamplerMode
-	{
-		SM_Random,
-		SM_Uniform,
-		SM_Jitter
-	};
-
 	class Camera;
 	class Entity;
 	class FacePoint;
+	class Integrator;
 	class RenderEntity;
 	class Scene;
 	class Ray;
@@ -62,50 +57,9 @@ namespace PR
 		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
 
 		// Settings
-		void setMaxRayDepth(uint32 i);
-		uint32 maxRayDepth() const;
-
-		void setMaxDirectRayCount(uint32 i);
-		uint32 maxDirectRayCount() const;
-		uint32 maxDirectRayCount_2DSample() const;
-		uint32 maxDirectRayCount_3DSample() const;
-
-		void setMaxIndirectRayCount(uint32 i);
-		uint32 maxIndirectRayCount() const;
-		uint32 maxIndirectRayCount_2DSample() const;
-		uint32 maxIndirectRayCount_3DSample() const;
-
-		void enableSampling(bool b);
-		bool isSamplingEnabled() const;
-
-		void setXSampleCount(uint32 i)
+		inline RenderSettings& settings()
 		{
-			mXSampleCount = i;
-		}
-
-		inline uint32 xSampleCount() const
-		{
-			return mXSampleCount;
-		}
-
-		void setYSampleCount(uint32 i)
-		{
-			mYSampleCount = i;
-		}
-
-		inline uint32 ySampleCount() const
-		{
-			return mYSampleCount;
-		}
-
-		void setSamplerMode(SamplerMode mode)
-		{
-			mSamplerMode = mode;
-		}
-
-		inline SamplerMode samplerMode() const
-		{
-			return mSamplerMode;
+			return mRenderSettings;
 		}
 
 		// Light
@@ -134,23 +88,12 @@ namespace PR
 
 		Spectrum mIdentitySpectrum;
 
+		RenderSettings mRenderSettings;
+
 		std::mutex mStatisticMutex;
 		size_t mPixelsRendered;
 		size_t mRayCount;
 
-		// Settings
-		uint32 mMaxRayDepth;
-		uint32 mMaxDirectRayCount;
-		uint32 mMaxIndirectRayCount;
-		bool mEnableSampling;
-		uint32 mXSampleCount;
-		uint32 mYSampleCount;
-		SamplerMode mSamplerMode;
-
-		// Cache
-		uint32 mMaxDirectRayCount_2DSample;
-		uint32 mMaxDirectRayCount_3DSample;
-		uint32 mMaxIndirectRayCount_2DSample;
-		uint32 mMaxIndirectRayCount_3DSample;
+		std::list<Integrator*> mIntegrators;
 	};
 }

@@ -10,11 +10,6 @@ namespace PR
 	public:
 		GridMaterial();
 
-		bool isLight() const override;
-
-		void enableCameraVisibility(bool b);
-		bool isCameraVisible() const;
-
 		void setFirstMaterial(Material* mat);
 		Material* firstMaterial() const;
 
@@ -24,12 +19,17 @@ namespace PR
 		void setGridCount(int i);
 		int gridCount() const;
 
-		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer) override;
+		void apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+			Spectrum& diff, Spectrum& spec) override;
+		
+		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
+		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
+
+		float roughness() const override;
 	private:
 		Material* mFirst;
 		Material* mSecond;
 
 		int mGridCount;
-		bool mCameraVisible;
 	};
 }

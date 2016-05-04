@@ -16,9 +16,9 @@ namespace PR
 			return PM::pm_Subtract(L, PM::pm_Scale(N, 2 * PM::pm_Dot3D(L, N)));
 		}
 
-		inline static PM::vec3 refract(float f, const PM::vec3& N, const PM::vec3& L)
+		inline static PM::vec3 refract(float n1, float n2, const PM::vec3& N, const PM::vec3& L)
 		{
-			const float invF = 1 / f;
+			const float invF = n1 / n2;
 			const float dot = PM::pm_Dot3D(L, N);
 			const float t = invF * dot - std::sqrt(1 - invF*invF*(1 - dot*dot));
 

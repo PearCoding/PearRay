@@ -16,17 +16,14 @@ namespace PR
 		float index() const;
 		void setIndex(float f);
 
-		bool isLight() const;
+		void apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+			Spectrum& diff, Spectrum& spec) override;
 
-		void enableCameraVisibility(bool b);
-		bool isCameraVisible() const;
+		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
+		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 
-		void apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer);
-
-		bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity) override;
+		float roughness() const override;
 	private:
-		bool mCameraVisible;
-
 		Spectrum mSpecularitySpectrum;
 
 		float mIndex;

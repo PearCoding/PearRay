@@ -7,14 +7,13 @@ class BoolProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	BoolProperty();
+	BoolProperty(const QString& name, bool value = false);
 	virtual ~BoolProperty();
 
 	QString valueText() const;
 	void undo();
 	void save();
 	QWidget* editorWidget(QWidget* parent);
-
 
 	void setValue(bool val);
 	bool value() const;

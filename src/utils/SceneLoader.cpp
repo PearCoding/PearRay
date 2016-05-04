@@ -7,7 +7,6 @@
 
 #include "parser/entity/BoundaryParser.h"
 #include "parser/entity/CameraParser.h"
-#include "parser/entity/LightParser.h"
 #include "parser/entity/MeshParser.h"
 #include "parser/entity/PlaneParser.h"
 #include "parser/entity/SphereParser.h"
@@ -178,7 +177,6 @@ namespace PRU
 		{ "camera", CameraParser() },
 		{ "mesh", MeshParser() },
 		{ "plane", PlaneParser() },
-		{ "pointLight", LightParser() },
 		{ "sphere", SphereParser() },
 
 		{ nullptr, BoundaryParser() },//Just for the end

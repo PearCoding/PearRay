@@ -2,10 +2,10 @@
 
 #include <QComboBox>
 
-SelectionProperty::SelectionProperty() :
-IProperty(),
+SelectionProperty::SelectionProperty(const QString& name, int index) :
+IProperty(name),
 mWidget(nullptr),
-mIndex(0), mDefaultIndex(0)
+mIndex(index), mDefaultIndex(index)
 {
 }
 

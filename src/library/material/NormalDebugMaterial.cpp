@@ -1,7 +1,5 @@
 #include "NormalDebugMaterial.h"
-#include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "renderer/Renderer.h"
 
 #include "spectral/RGBConverter.h"
 
@@ -12,15 +10,26 @@ namespace PR
 	{
 	}
 
-	void NormalDebugMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	void NormalDebugMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+		Spectrum& diff, Spectrum& spec)
 	{
-		in.setSpectrum(RGBConverter::toSpec(std::abs(PM::pm_GetX(point.normal())),
+		diff = RGBConverter::toSpec(std::abs(PM::pm_GetX(point.normal())),
 			std::abs(PM::pm_GetY(point.normal())),
-			std::abs(PM::pm_GetZ(point.normal()))));
+			std::abs(PM::pm_GetZ(point.normal())));
 	}
 
-	bool NormalDebugMaterial::isLight() const
+	float NormalDebugMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		return false;
+		return 0;
+	}
+
+	float NormalDebugMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
+	{
+		return 0;
+	}
+
+	float NormalDebugMaterial::roughness() const
+	{
+		return 1;
 	}
 }

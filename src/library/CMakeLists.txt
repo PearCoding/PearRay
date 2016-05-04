@@ -26,16 +26,17 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/Plane.cpp
   ${PR_LIB}/geometry/Sphere.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
-SET(PR_Lights_Src
-  ${PR_LIB}/lights/PointLight.cpp)
-SOURCE_GROUP("Source Files\\Lights" FILES ${PR_Lights_Src})
+SET(PR_Integrator_Src
+  ${PR_LIB}/integrator/DirectIntegrator.cpp
+  ${PR_LIB}/integrator/PhotonIntegrator.cpp)
+SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/BRDF.cpp
   ${PR_LIB}/material/BRDFMaterial.cpp
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
-  ${PR_LIB}/material/DirectLightDebugMaterial.cpp
   ${PR_LIB}/material/GlassMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
+  ${PR_LIB}/material/Material.cpp
   ${PR_LIB}/material/MirrorMaterial.cpp
   ${PR_LIB}/material/NormalDebugMaterial.cpp
   ${PR_LIB}/material/UVDebugMaterial.cpp)
@@ -47,14 +48,13 @@ SET(PR_Ray_Src
   ${PR_LIB}/ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
-  ${PR_LIB}/renderer/RenderResult.cpp
   ${PR_LIB}/renderer/Renderer.cpp
+  ${PR_LIB}/renderer/RenderResult.cpp
+  ${PR_LIB}/renderer/RenderSettings.cpp
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
-  ${PR_LIB}/sampler/Stratified1DSampler.cpp
-  ${PR_LIB}/sampler/Stratified2DSampler.cpp
-  ${PR_LIB}/sampler/Stratified3DSampler.cpp)
+  ${PR_LIB}/sampler/StratifiedSampler.cpp)
 SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
   ${PR_LIB}/scene/kdTree.cpp
@@ -72,8 +72,8 @@ SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
-  ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Lights_Src} ${PR_Sampler_Src}
-  ${PR_Photon_Src}
+  ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
+  ${PR_Photon_Src} ${PR_Integrator_Src}
 )
 
 SET(PR_Main_Hdr
@@ -104,14 +104,15 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/Sphere.h
   ${PR_LIB}/geometry/Triangle.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
-SET(PR_Lights_Hdr
-  ${PR_LIB}/lights/PointLight.h)
-SOURCE_GROUP("Header Files\\Lights" FILES ${PR_Lights_Hdr})
+SET(PR_Integrator_Hdr
+  ${PR_LIB}/integrator/DirectIntegrator.h
+  ${PR_LIB}/integrator/Integrator.h
+  ${PR_LIB}/integrator/PhotonIntegrator.h)
+SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_Material_Hdr
   ${PR_LIB}/material/BRDF.h
   ${PR_LIB}/material/BRDFMaterial.h
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
-  ${PR_LIB}/material/DirectLightDebugMaterial.h
   ${PR_LIB}/material/GlassMaterial.h
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h
@@ -128,16 +129,15 @@ SET(PR_Ray_Hdr
   ${PR_LIB}/ray/Ray.inl)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
-  ${PR_LIB}/renderer/RenderResult.h
   ${PR_LIB}/renderer/Renderer.h
+  ${PR_LIB}/renderer/RenderResult.h
+  ${PR_LIB}/renderer/RenderSettings.h
   ${PR_LIB}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
   ${PR_LIB}/sampler/Projection.h
   ${PR_LIB}/sampler/Sampler.h
-  ${PR_LIB}/sampler/Stratified1DSampler.h
-  ${PR_LIB}/sampler/Stratified2DSampler.h
-  ${PR_LIB}/sampler/Stratified3DSampler.h)
+  ${PR_LIB}/sampler/StratifiedSampler.h)
 SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
 SET(PR_Scene_Hdr
   ${PR_LIB}/scene/kdTree.h
@@ -157,8 +157,8 @@ SOURCE_GROUP("Header Files\\Thread" FILES ${PR_Thread_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
-  ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Lights_Hdr} ${PR_Sampler_Hdr}
-  ${PR_Photon_Hdr}
+  ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
+  ${PR_Photon_Hdr} ${PR_Integrator_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

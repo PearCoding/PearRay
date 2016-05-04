@@ -13,13 +13,18 @@ namespace PR
 
 		RF_DefaultCollision = RF_NeedCollisionNormal | RF_NeedCollisionUV,
 
-		RF_NoIndirect = 0x10,
+		RF_NoDirectShading = 0x10,
+		RF_NoIndirectShading = 0x11,
+
+		RF_HasTarget = 0x20,
+
+		RF_ShadowRay = /*RF_NoDirectShading |*/ RF_NoIndirectShading | RF_HasTarget,
 	};
 
 	class PR_LIB Ray
 	{
 	public:
-		Ray(const PM::vec3& pos, const PM::vec3& dir, size_t depth = 0);
+		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0);
 		virtual ~Ray();
 
 		inline void setStartPosition(const PM::vec3& p);
@@ -33,18 +38,21 @@ namespace PR
 		inline void setSpectrum(const Spectrum& s);
 		inline Spectrum spectrum() const;
 
-		inline size_t maxDepth() const;
-		inline void setMaxDepth(size_t i);
+		inline uint32 maxDepth() const;
+		inline void setMaxDepth(uint32 i);
 
 		inline int flags() const;
 		inline void setFlags(int flags);
 
+		inline void setTarget(const PM::vec3& p);
+		inline PM::vec3 target() const;
 	private:
 		PM::vec3 mStartPosition;
 		PM::vec3 mDirection;
-		size_t mDepth;// Recursion depth!
-		size_t mMaxDepth;// If 0 -> renderer->MaxDepth!
-		int mFlags;
+		PM::vec3 mTarget;
+		uint32 mDepth;// Recursion depth!
+		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
+		uint8 mFlags;
 
 		Spectrum mSpectrum;
 	};

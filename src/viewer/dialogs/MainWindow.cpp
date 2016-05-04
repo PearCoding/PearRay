@@ -333,13 +333,7 @@ void MainWindow::startRendering()
 	ui.systemPropertyView->enableRendering();
 	ui.entityDetailsView->setDisabled(true);
 
-	mRenderer->setMaxRayDepth(ui.systemPropertyView->getMaxRayDepth());
-	mRenderer->setMaxDirectRayCount(ui.systemPropertyView->getMaxDirectRayCount());
-	mRenderer->setMaxIndirectRayCount(ui.systemPropertyView->getMaxIndirectRayCount());
-	mRenderer->enableSampling(ui.systemPropertyView->getSampling());
-	mRenderer->setSamplerMode((PR::SamplerMode)ui.systemPropertyView->getSampler());
-	mRenderer->setXSampleCount(ui.systemPropertyView->getXSamples());
-	mRenderer->setYSampleCount(ui.systemPropertyView->getYSamples());
+	ui.systemPropertyView->setupRenderer(mRenderer);
 
 	mEnvironment->scene()->buildTree();
 

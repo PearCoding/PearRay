@@ -10,7 +10,7 @@ class SelectionProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	SelectionProperty();
+	SelectionProperty(const QString& name, int index = 0);
 	virtual ~SelectionProperty();
 
 	QString valueText() const;

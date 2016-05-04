@@ -8,7 +8,7 @@ class IProperty : public QObject
 {
 	Q_OBJECT
 public:
-	IProperty();
+	IProperty(const QString& name);
 	virtual ~IProperty();
 
 	QString toolTip() const;

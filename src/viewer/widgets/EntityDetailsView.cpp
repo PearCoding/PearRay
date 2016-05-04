@@ -65,26 +65,20 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 	{
 		mPropertyTable = new PropertyTable;
 
-		GroupProperty* group = new GroupProperty();
-		group->setPropertyName(tr("Entity"));
+		GroupProperty* group = new GroupProperty(tr("Entity"));
 		mProperties.append(group);
 
-		TextProperty* name = new TextProperty();
-		name->setPropertyName(tr("Name"));
-		name->setText(entity->name().c_str());
+		TextProperty* name = new TextProperty(tr("Name"), entity->name().c_str());
 		name->setReadOnly(true);
 		group->addChild(name);
 		mProperties.append(name);
 
-		TextProperty* type = new TextProperty();
-		type->setPropertyName(tr("Type"));
-		type->setText(QString(entity->type().c_str()).toUpper());
+		TextProperty* type = new TextProperty(tr("Type"), QString(entity->type().c_str()).toUpper());
 		type->setReadOnly(true);
 		group->addChild(type);
 		mProperties.append(type);
 
-		VectorProperty* pos = new VectorProperty();
-		pos->setPropertyName(tr("Position"));
+		VectorProperty* pos = new VectorProperty(tr("Position"));
 		pos->setDefaultValue(PM::pm_GetX(entity->position(true)), 1);
 		pos->setDefaultValue(PM::pm_GetY(entity->position(true)), 2);
 		pos->setDefaultValue(PM::pm_GetZ(entity->position(true)), 3);
@@ -94,8 +88,7 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		group->addChild(pos);
 		mProperties.append(pos);
 
-		VectorProperty* rot = new VectorProperty(4);
-		rot->setPropertyName(tr("Rotation"));
+		VectorProperty* rot = new VectorProperty(tr("Rotation"), 4);
 		rot->setDefaultValue(PM::pm_GetX(entity->rotation(true)), 1);
 		rot->setDefaultValue(PM::pm_GetY(entity->rotation(true)), 2);
 		rot->setDefaultValue(PM::pm_GetZ(entity->rotation(true)), 3);
@@ -107,10 +100,7 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		group->addChild(rot);
 		mProperties.append(rot);
 
-		DoubleProperty* sca = new DoubleProperty();
-		sca->setPropertyName(tr("Scale"));
-		sca->setDefaultValue(entity->scale(true));
-		sca->setValue(entity->scale(true));
+		DoubleProperty* sca = new DoubleProperty(tr("Scale"), entity->scale(true));
 		group->addChild(sca);
 		mProperties.append(sca);
 
@@ -162,15 +152,10 @@ void EntityDetailsView::addSphere()
 
 	PR::SphereEntity* e = (PR::SphereEntity*)mEntity;
 
-	GroupProperty* group = new GroupProperty();
-	group->setPropertyName(tr("Sphere"));
+	GroupProperty* group = new GroupProperty(tr("Sphere"));
 	mProperties.append(group);
 
-	DoubleProperty* rad = new DoubleProperty();
-	rad->setPropertyName(tr("Radius"));
-	rad->setDefaultValue(e->radius());
-	rad->setValue(e->radius());
-	rad->setMinValue(0);
+	DoubleProperty* rad = new DoubleProperty(tr("Radius"), e->radius(), 0);
 	group->addChild(rad);
 	mProperties.append(rad);
 
@@ -183,31 +168,18 @@ void EntityDetailsView::addOrthoCamera()
 
 	PR::OrthographicCamera* cam = (PR::OrthographicCamera*)mEntity;
 
-	GroupProperty* group = new GroupProperty();
-	group->setPropertyName(tr("Orthographic Camera"));
+	GroupProperty* group = new GroupProperty(tr("Orthographic Camera"));
 	mProperties.append(group);
 
-	DoubleProperty* w = new DoubleProperty();
-	w->setPropertyName(tr("Width"));
-	w->setDefaultValue(cam->width());
-	w->setValue(cam->width());
-	w->setMinValue(0);
+	DoubleProperty* w = new DoubleProperty(tr("Width"), cam->width(), 0);
 	group->addChild(w);
 	mProperties.append(w);
 
-	DoubleProperty* h = new DoubleProperty();
-	h->setPropertyName(tr("Height"));
-	h->setDefaultValue(cam->height());
-	h->setValue(cam->height());
-	h->setMinValue(0);
+	DoubleProperty* h = new DoubleProperty(tr("Height"), cam->height(), 0);
 	group->addChild(h);
 	mProperties.append(h);
 
-	DoubleProperty* l = new DoubleProperty();
-	l->setPropertyName(tr("Lens Distance"));
-	l->setDefaultValue(cam->lensDistance());
-	l->setValue(cam->lensDistance());
-	l->setMinValue(0);
+	DoubleProperty* l = new DoubleProperty(tr("Lens Distance"), cam->lensDistance(), 0);
 	group->addChild(l);
 	mProperties.append(l);
 
@@ -220,31 +192,18 @@ void EntityDetailsView::addPersCamera()
 
 	PR::PerspectiveCamera* cam = (PR::PerspectiveCamera*)mEntity;
 
-	GroupProperty* group = new GroupProperty();
-	group->setPropertyName(tr("Perspective Camera"));
+	GroupProperty* group = new GroupProperty(tr("Perspective Camera"));
 	mProperties.append(group);
 
-	DoubleProperty* w = new DoubleProperty();
-	w->setPropertyName(tr("Width"));
-	w->setDefaultValue(cam->width());
-	w->setValue(cam->width());
-	w->setMinValue(0);
+	DoubleProperty* w = new DoubleProperty(tr("Width"), cam->width(), 0);
 	group->addChild(w);
 	mProperties.append(w);
 
-	DoubleProperty* h = new DoubleProperty();
-	h->setPropertyName(tr("Height"));
-	h->setDefaultValue(cam->height());
-	h->setValue(cam->height());
-	h->setMinValue(0);
+	DoubleProperty* h = new DoubleProperty(tr("Height"), cam->height(), 0);
 	group->addChild(h);
 	mProperties.append(h);
 
-	DoubleProperty* l = new DoubleProperty();
-	l->setPropertyName(tr("Lens Distance"));
-	l->setDefaultValue(cam->lensDistance());
-	l->setValue(cam->lensDistance());
-	l->setMinValue(0);
+	DoubleProperty* l = new DoubleProperty(tr("Lens Distance"), cam->lensDistance(), 0);
 	group->addChild(l);
 	mProperties.append(l);
 
@@ -255,8 +214,7 @@ void EntityDetailsView::addPointLight()
 {
 	Q_ASSERT(mEntity);
 	
-	GroupProperty* group = new GroupProperty();
-	group->setPropertyName(tr("Point Light"));
+	GroupProperty* group = new GroupProperty(tr("Point Light"));
 	mProperties.append(group);
 
 	mPropertyTable->add(group);
@@ -266,8 +224,7 @@ void EntityDetailsView::addMesh()
 {
 	Q_ASSERT(mEntity);
 
-	GroupProperty* group = new GroupProperty();
-	group->setPropertyName(tr("Mesh"));
+	GroupProperty* group = new GroupProperty(tr("Mesh"));
 	mProperties.append(group);
 
 	mPropertyTable->add(group);
@@ -277,14 +234,12 @@ void EntityDetailsView::addPlane()
 {
 	Q_ASSERT(mEntity);
 
-	GroupProperty* group = new GroupProperty();
-	group->setPropertyName(tr("Grid"));
+	GroupProperty* group = new GroupProperty(tr("Grid"));
 	mProperties.append(group);
 
 	PR::PlaneEntity* ent = (PR::PlaneEntity*)mEntity;
 
-	VectorProperty* xAxis = new VectorProperty();
-	xAxis->setPropertyName(tr("XAxis"));
+	VectorProperty* xAxis = new VectorProperty(tr("XAxis"));
 	xAxis->setDefaultValue(PM::pm_GetX(ent->plane().xAxis()), 1);
 	xAxis->setDefaultValue(PM::pm_GetY(ent->plane().xAxis()), 2);
 	xAxis->setDefaultValue(PM::pm_GetZ(ent->plane().xAxis()), 3);
@@ -294,8 +249,7 @@ void EntityDetailsView::addPlane()
 	group->addChild(xAxis);
 	mProperties.append(xAxis);
 
-	VectorProperty* yAxis = new VectorProperty();
-	yAxis->setPropertyName(tr("YAxis"));
+	VectorProperty* yAxis = new VectorProperty(tr("YAxis"));
 	yAxis->setDefaultValue(PM::pm_GetX(ent->plane().yAxis()), 1);
 	yAxis->setDefaultValue(PM::pm_GetY(ent->plane().yAxis()), 2);
 	yAxis->setDefaultValue(PM::pm_GetZ(ent->plane().yAxis()), 3);

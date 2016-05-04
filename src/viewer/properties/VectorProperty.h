@@ -9,7 +9,7 @@ class VectorProperty : public IProperty
 public:
 	static constexpr int MAX_DIM = 4;
 
-	VectorProperty(int dimension = 3);
+	VectorProperty(const QString& name, int dimension = 3);
 	virtual ~VectorProperty();
 
 	QString valueText() const;

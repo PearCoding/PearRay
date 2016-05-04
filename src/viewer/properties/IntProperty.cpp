@@ -2,11 +2,11 @@
 
 #include <QSpinBox>
 
-IntProperty::IntProperty() :
-IProperty(),
+IntProperty::IntProperty(const QString& name, int value, int min, int max, int stepsize) :
+IProperty(name),
 mSpinBox(nullptr),
-mValue(0), mOldValue(0),
-mMaxValue(100000), mMinValue(-100000), mStepSize(1)
+mValue(value), mOldValue(value),
+mMaxValue(max), mMinValue(min), mStepSize(stepsize)
 {
 }
 

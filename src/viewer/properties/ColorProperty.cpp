@@ -3,27 +3,18 @@
 
 #include "widgets/ColorButton.h"
 
-ColorProperty::ColorProperty() :
-IProperty(),
+ColorProperty::ColorProperty(const QString& name, const QColor& color) :
+IProperty(name),
 mWidget(nullptr),
-mColor(Qt::white), mDefaultColor(Qt::white)
+mColor(color), mDefaultColor(color)
 {
-	mRedProperty = new IntProperty;
-	mRedProperty->setMinValue(0);
-	mRedProperty->setMaxValue(255);
-	mRedProperty->setPropertyName(tr("Red"));
+	mRedProperty = new IntProperty(tr("Red"), mColor.red(), 0, 255);
 	addChild(mRedProperty);
 
-	mGreenProperty = new IntProperty;
-	mGreenProperty->setMinValue(0);
-	mGreenProperty->setMaxValue(255);
-	mGreenProperty->setPropertyName(tr("Green"));
+	mGreenProperty = new IntProperty(tr("Green"), mColor.green(), 0, 255);
 	addChild(mGreenProperty);
 
-	mBlueProperty = new IntProperty;
-	mBlueProperty->setMinValue(0);
-	mBlueProperty->setMaxValue(255);
-	mBlueProperty->setPropertyName(tr("Blue"));
+	mBlueProperty = new IntProperty(tr("Blue"), mColor.blue(), 0, 255);
 	addChild(mBlueProperty);
 
 	connect(mRedProperty, SIGNAL(valueChanged()), this, SLOT(dataChanged()));

@@ -1,7 +1,7 @@
 #include "GroupProperty.h"
 
-GroupProperty::GroupProperty() :
-IProperty()
+GroupProperty::GroupProperty(const QString& name) :
+IProperty(name)
 {
 	makeHeader(true);
 }

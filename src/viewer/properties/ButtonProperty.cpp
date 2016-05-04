@@ -1,7 +1,7 @@
 #include "ButtonProperty.h"
 
-ButtonProperty::ButtonProperty() :
-	IProperty(),
+ButtonProperty::ButtonProperty(const QString& name) :
+	IProperty(name),
 	mWidget(nullptr)
 {
 	makeNoName(true);

@@ -2,11 +2,11 @@
 
 #include <QDoubleSpinBox>
 
-DoubleProperty::DoubleProperty() :
-IProperty(),
+DoubleProperty::DoubleProperty(const QString& name, double value, double min, double max, double stepsize, int decimals) :
+IProperty(name),
 mSpinBox(nullptr),
-mValue(0), mOldValue(0),
-mMaxValue(100000), mMinValue(-100000), mStepSize(1), mDecimals(8)
+mValue(value), mOldValue(value),
+mMaxValue(max), mMinValue(min), mStepSize(stepsize), mDecimals(decimals)
 {
 }
 

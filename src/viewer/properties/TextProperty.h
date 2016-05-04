@@ -7,7 +7,7 @@ class TextProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	TextProperty();
+	TextProperty(const QString& name, const QString& text = "");
 	virtual ~TextProperty();
 
 	QString valueText() const;

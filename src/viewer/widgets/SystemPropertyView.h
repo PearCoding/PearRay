@@ -24,15 +24,9 @@ public:
 	int getTileX() const;
 	int getTileY() const;
 	int getThreadCount() const;
-	int getMaxRayDepth() const;
-	int getMaxDirectRayCount() const;
-	int getMaxIndirectRayCount() const;
-	bool getSampling() const;
-	int getXSamples() const;
-	int getYSamples() const;
-	int getSampler() const;
 
 	void fillContent(PR::Renderer* renderer);
+	void setupRenderer(PR::Renderer* renderer);
 signals:
 	void startRendering();
 	void stopRendering();
@@ -51,12 +45,20 @@ private:
 	IProperty* mRendererTileYProp;
 	IProperty* mRendererThreadsProp;
 	IProperty* mRendererMaxRayDepthProp;
-	IProperty* mRendererMaxDirectRayCountProp;
-	IProperty* mRendererMaxIndirectRayCountProp;
-	IProperty* mRendererSamplingProp;
-	IProperty* mRendererXSamplesProp;
-	IProperty* mRendererYSamplesProp;
-	IProperty* mRendererSamplerProp;
+
+	IProperty* mSamplerGroupProp;
+	IProperty* mSamplerProp;
+	IProperty* mXSamplesProp;
+	IProperty* mYSamplesProp;
+
+	IProperty* mDirectLightningGroupProp;
+	IProperty* mMaxLightSamplesProp;
+
+	IProperty* mPhotonMappingGroupProp;
+	IProperty* mMaxPhotonsProp;
+	IProperty* mMaxPhotonGatherRadiusProp;
+	IProperty* mMaxPhotonGatherCountProp;
+
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;
 	IProperty* mViewModeProp;

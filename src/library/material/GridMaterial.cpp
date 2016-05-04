@@ -4,13 +4,8 @@
 namespace PR
 {
 	GridMaterial::GridMaterial() :
-		Material(), mFirst(nullptr), mSecond(nullptr), mGridCount(10), mCameraVisible(true)
+		Material(), mFirst(nullptr), mSecond(nullptr), mGridCount(10)
 	{
-	}
-	
-	bool GridMaterial::isLight() const
-	{
-		return (mFirst ? mFirst->isLight() : false) || (mSecond ? mSecond->isLight() : false);
 	}
 
 	void GridMaterial::setFirstMaterial(Material* mat)
@@ -43,28 +38,58 @@ namespace PR
 		return mGridCount;
 	}
 
-	void GridMaterial::enableCameraVisibility(bool b)
-	{
-		mCameraVisible = b;
-	}
-
-	bool GridMaterial::isCameraVisible() const
-	{
-		return mCameraVisible;
-	}
-
-	void GridMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	void GridMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+		Spectrum& diff, Spectrum& spec)
 	{
 		int u = PM::pm_GetX(point.uv()) * mGridCount;
 		int v = PM::pm_GetY(point.uv()) * mGridCount;
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			mFirst->apply(in, entity, point, renderer);
+			mFirst->apply(point, V, L, Li, diff, spec);
 		}
 		else if (mSecond)
 		{
-			mSecond->apply(in, entity, point, renderer);
+			mSecond->apply(point, V, L, Li, diff, spec);
 		}
+	}
+
+	float GridMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
+	{
+		int u = PM::pm_GetX(point.uv()) * mGridCount;
+		int v = PM::pm_GetY(point.uv()) * mGridCount;
+
+		if (mFirst && (u % 2) == (v % 2))
+		{
+			return mFirst->emitReflectionVector(point, V, dir);
+		}
+		else if (mSecond)
+		{
+			return mSecond->emitReflectionVector(point, V, dir);
+		}
+
+		return false;
+	}
+
+	float GridMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
+	{
+		int u = PM::pm_GetX(point.uv()) * mGridCount;
+		int v = PM::pm_GetY(point.uv()) * mGridCount;
+
+		if (mFirst && (u % 2) == (v % 2))
+		{
+			return mFirst->emitTransmissionVector(point, V, dir);
+		}
+		else if (mSecond)
+		{
+			return mSecond->emitTransmissionVector(point, V, dir);
+		}
+
+		return false;
+	}
+
+	float GridMaterial::roughness() const
+	{
+		return PM::pm_MaxT(mFirst ? mFirst->roughness() : 0, mSecond ? mSecond->roughness() : 0);
 	}
 }

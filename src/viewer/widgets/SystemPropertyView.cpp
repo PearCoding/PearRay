@@ -5,11 +5,13 @@
 
 #include "properties/GroupProperty.h"
 #include "properties/IntProperty.h"
+#include "properties/DoubleProperty.h"
 #include "properties/ButtonProperty.h"
 #include "properties/BoolProperty.h"
 #include "properties/SelectionProperty.h"
 
 #include "renderer/Renderer.h"
+#include "renderer/RenderSettings.h"
 
 #include <QBoxLayout>
 
@@ -26,112 +28,72 @@ QWidget(parent)
 	setLayout(layout);
 
 	// Setup properties
-	mRendererGroupProp = new GroupProperty();
-	mRendererGroupProp->setPropertyName(tr("Renderer"));
+	mRendererGroupProp = new GroupProperty(tr("Renderer"));
 
-	mRendererTileXProp = new IntProperty();
-	mRendererTileXProp->setPropertyName(tr("Tile X Count"));
-	((IntProperty*)mRendererTileXProp)->setMinValue(1);
-	((IntProperty*)mRendererTileXProp)->setMaxValue(128);
-	((IntProperty*)mRendererTileXProp)->setDefaultValue(5);
-	((IntProperty*)mRendererTileXProp)->setValue(5);
+	mRendererTileXProp = new IntProperty(tr("Tile X Count"), 5, 1, 128);
 	mRendererGroupProp->addChild(mRendererTileXProp);
 
-	mRendererTileYProp = new IntProperty();
-	mRendererTileYProp->setPropertyName(tr("Tile Y Count"));
-	((IntProperty*)mRendererTileYProp)->setMinValue(1);
-	((IntProperty*)mRendererTileYProp)->setMaxValue(128);
-	((IntProperty*)mRendererTileYProp)->setDefaultValue(5);
-	((IntProperty*)mRendererTileYProp)->setValue(5);
+	mRendererTileYProp = new IntProperty(tr("Tile Y Count"), 5, 1, 128);
 	mRendererGroupProp->addChild(mRendererTileYProp);
 
-	mRendererThreadsProp = new IntProperty();
-	mRendererThreadsProp->setPropertyName(tr("Threads"));
+	mRendererThreadsProp = new IntProperty(tr("Threads"), 0, 0, 64);
 	mRendererThreadsProp->setToolTip(tr("0 = Automatic"));
-	((IntProperty*)mRendererThreadsProp)->setMinValue(0);
-	((IntProperty*)mRendererThreadsProp)->setMaxValue(64);
-	((IntProperty*)mRendererThreadsProp)->setDefaultValue(0);
-	((IntProperty*)mRendererThreadsProp)->setValue(0);
 	mRendererGroupProp->addChild(mRendererThreadsProp);
 
-	mRendererSamplingProp = new BoolProperty();
-	mRendererSamplingProp->setPropertyName(tr("Sampling"));
-	mRendererGroupProp->addChild(mRendererSamplingProp);
-
-	mRendererXSamplesProp = new IntProperty();
-	mRendererXSamplesProp->setPropertyName(tr("X Samples"));
-	((IntProperty*)mRendererXSamplesProp)->setMinValue(1);
-	((IntProperty*)mRendererXSamplesProp)->setMaxValue(1024);
-	((IntProperty*)mRendererXSamplesProp)->setDefaultValue(8);
-	((IntProperty*)mRendererXSamplesProp)->setValue(8);
-	mRendererGroupProp->addChild(mRendererXSamplesProp);
-
-	mRendererYSamplesProp = new IntProperty();
-	mRendererYSamplesProp->setPropertyName(tr("Y Samples"));
-	((IntProperty*)mRendererYSamplesProp)->setMinValue(1);
-	((IntProperty*)mRendererYSamplesProp)->setMaxValue(1024);
-	((IntProperty*)mRendererYSamplesProp)->setDefaultValue(8);
-	((IntProperty*)mRendererYSamplesProp)->setValue(8);
-	mRendererGroupProp->addChild(mRendererYSamplesProp);
-
-	mRendererSamplerProp = new SelectionProperty();
-	mRendererSamplerProp->setPropertyName(tr("Sampler"));
-	((SelectionProperty*)mRendererSamplerProp)->addItem(tr("Random"), PR::SM_Random);
-	((SelectionProperty*)mRendererSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
-	((SelectionProperty*)mRendererSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
-	((SelectionProperty*)mRendererSamplerProp)->setDefaultIndex(2);
-	((SelectionProperty*)mRendererSamplerProp)->setIndex(2);
-	mRendererGroupProp->addChild(mRendererSamplerProp);
-
-	mRendererMaxRayDepthProp = new IntProperty();
-	mRendererMaxRayDepthProp->setPropertyName(tr("Max Ray Depth"));
-	((IntProperty*)mRendererMaxRayDepthProp)->setMinValue(1);
-	((IntProperty*)mRendererMaxRayDepthProp)->setMaxValue(128);
-	((IntProperty*)mRendererMaxRayDepthProp)->setDefaultValue(2);
-	((IntProperty*)mRendererMaxRayDepthProp)->setValue(2);
+	mRendererMaxRayDepthProp = new IntProperty(tr("Max Ray Depth"), 10, 1, 4096);
 	mRendererGroupProp->addChild(mRendererMaxRayDepthProp);
 
-	mRendererMaxDirectRayCountProp = new IntProperty();
-	mRendererMaxDirectRayCountProp->setPropertyName(tr("Max Direct Ray Count"));
-	((IntProperty*)mRendererMaxDirectRayCountProp)->setMinValue(0);
-	((IntProperty*)mRendererMaxDirectRayCountProp)->setMaxValue(999999);
-	((IntProperty*)mRendererMaxDirectRayCountProp)->setDefaultValue(50);
-	((IntProperty*)mRendererMaxDirectRayCountProp)->setValue(50);
-	mRendererGroupProp->addChild(mRendererMaxDirectRayCountProp);
-
-	mRendererMaxIndirectRayCountProp = new IntProperty();
-	mRendererMaxIndirectRayCountProp->setPropertyName(tr("Max Indirect Ray Count"));
-	((IntProperty*)mRendererMaxIndirectRayCountProp)->setMinValue(0);
-	((IntProperty*)mRendererMaxIndirectRayCountProp)->setMaxValue(999999);
-	((IntProperty*)mRendererMaxIndirectRayCountProp)->setDefaultValue(100);
-	((IntProperty*)mRendererMaxIndirectRayCountProp)->setValue(100);
-	mRendererGroupProp->addChild(mRendererMaxIndirectRayCountProp);
-
-	mRendererStartProp = new ButtonProperty();
-	mRendererStartProp->setPropertyName(tr("Start"));
+	mRendererStartProp = new ButtonProperty(tr("Start"));
 	mRendererGroupProp->addChild(mRendererStartProp);
 
 	mProperties.add(mRendererGroupProp);
 
-	mViewGroupProp = new GroupProperty();
-	mViewGroupProp->setPropertyName(tr("View"));
+	// Sampler
+	mSamplerGroupProp = new GroupProperty(tr("Sampler"));
 
-	mViewModeProp = new SelectionProperty();
-	mViewModeProp->setPropertyName(tr("Display"));
+	mSamplerProp = new SelectionProperty(tr("Mode"), PR::SM_Jitter);
+	((SelectionProperty*)mSamplerProp)->addItem(tr("None"), PR::SM_None);
+	((SelectionProperty*)mSamplerProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	mSamplerGroupProp->addChild(mSamplerProp);
+
+	mXSamplesProp = new IntProperty(tr("X Samples"), 8, 1, 1024);
+	mSamplerGroupProp->addChild(mXSamplesProp);
+
+	mYSamplesProp = new IntProperty(tr("Y Samples"), 8, 1, 1024);
+	mSamplerGroupProp->addChild(mYSamplesProp);
+	mProperties.add(mSamplerGroupProp);
+
+	// Direct Lightning
+	mDirectLightningGroupProp = new GroupProperty(tr("Direct Lightning"));
+	mMaxLightSamplesProp = new IntProperty(tr("Max Light Samples"), 2);
+	mDirectLightningGroupProp->addChild(mMaxLightSamplesProp);
+	mProperties.add(mDirectLightningGroupProp);
+
+	// Photon Mapping
+	mPhotonMappingGroupProp = new GroupProperty(tr("Photon Mapping"));
+	mMaxPhotonsProp = new IntProperty(tr("Max Photons"), 1000, 0, 10000000);
+	mPhotonMappingGroupProp->addChild(mMaxPhotonsProp);
+	mMaxPhotonGatherCountProp = new IntProperty(tr("Max Photon Gather Count"), 500, 0);
+	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherCountProp);
+	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Photon Gather Radius"), 0.1, 0);
+	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherRadiusProp);
+	mProperties.add(mPhotonMappingGroupProp);
+
+	// View
+	mViewGroupProp = new GroupProperty(tr("View"));
+	mViewModeProp = new SelectionProperty(tr("Display"), VM_Color);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Tone Mapped"), VM_ToneMapped);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color Linear"), VM_ColorLinear);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE XYZ"), VM_XYZ);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE Norm XYZ"), VM_NORM_XYZ);
-	((SelectionProperty*)mViewModeProp)->setIndex(1);
-	((SelectionProperty*)mViewModeProp)->setDefaultIndex(1);
 	mViewGroupProp->addChild(mViewModeProp);
 
-	mViewScaleProp = new BoolProperty();
-	mViewScaleProp->setPropertyName(tr("Scale to View"));
+	mViewScaleProp = new BoolProperty(tr("Scale to View"));
 	mViewGroupProp->addChild(mViewScaleProp);
-
 	mProperties.add(mViewGroupProp);
 
 	mView->setPropertyTable(&mProperties);
@@ -146,16 +108,32 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererTileXProp;
 	delete mRendererTileYProp;
 	delete mRendererThreadsProp;
-	delete mRendererSamplingProp;
-	delete mRendererXSamplesProp;
-	delete mRendererYSamplesProp;
-	delete mRendererSamplerProp;
+	delete mXSamplesProp;
+	delete mYSamplesProp;
+	delete mSamplerProp;
 	delete mRendererMaxRayDepthProp;
-	delete mRendererMaxDirectRayCountProp;
-	delete mRendererMaxIndirectRayCountProp;
+	delete mMaxLightSamplesProp;
+	delete mMaxPhotonsProp;
+	delete mMaxPhotonGatherCountProp;
+	delete mMaxPhotonGatherRadiusProp;
 	delete mViewGroupProp;
 	delete mViewModeProp;
 	delete mViewScaleProp;
+}
+
+int SystemPropertyView::getTileX() const
+{
+	return reinterpret_cast<IntProperty*>(mRendererTileXProp)->value();
+}
+
+int SystemPropertyView::getTileY() const
+{
+	return reinterpret_cast<IntProperty*>(mRendererTileYProp)->value();
+}
+
+int SystemPropertyView::getThreadCount() const
+{
+	return reinterpret_cast<IntProperty*>(mRendererThreadsProp)->value();
 }
 
 void SystemPropertyView::propertyValueChanged(IProperty* prop)
@@ -186,13 +164,17 @@ void SystemPropertyView::enableRendering()
 	mRendererTileXProp->setEnabled(false);
 	mRendererTileYProp->setEnabled(false);
 	mRendererThreadsProp->setEnabled(false);
-	mRendererSamplingProp->setEnabled(false);
-	mRendererXSamplesProp->setEnabled(false);
-	mRendererYSamplesProp->setEnabled(false);
-	mRendererSamplerProp->setEnabled(false);
-	mRendererMaxDirectRayCountProp->setEnabled(false);
-	mRendererMaxIndirectRayCountProp->setEnabled(false);
 	mRendererMaxRayDepthProp->setEnabled(false);
+
+	mMaxLightSamplesProp->setEnabled(false);
+
+	mMaxPhotonsProp->setEnabled(false);
+	mMaxPhotonGatherRadiusProp->setEnabled(false);
+	mMaxPhotonGatherCountProp->setEnabled(false);
+
+	mXSamplesProp->setEnabled(false);
+	mYSamplesProp->setEnabled(false);
+	mSamplerProp->setEnabled(false);
 	mRendererStartProp->setPropertyName(tr("Stop"));
 }
 
@@ -201,64 +183,19 @@ void SystemPropertyView::disableRendering()
 	mRendererTileXProp->setEnabled(true);
 	mRendererTileYProp->setEnabled(true);
 	mRendererThreadsProp->setEnabled(true);
-	mRendererSamplingProp->setEnabled(true);
-	mRendererXSamplesProp->setEnabled(true);
-	mRendererYSamplesProp->setEnabled(true);
-	mRendererSamplerProp->setEnabled(true);
-	mRendererMaxDirectRayCountProp->setEnabled(true);
-	mRendererMaxIndirectRayCountProp->setEnabled(true);
 	mRendererMaxRayDepthProp->setEnabled(true);
+
+	mMaxLightSamplesProp->setEnabled(false);
+
+	mMaxPhotonsProp->setEnabled(false);
+	mMaxPhotonGatherRadiusProp->setEnabled(false);
+	mMaxPhotonGatherCountProp->setEnabled(false);
+
+	mXSamplesProp->setEnabled(true);
+	mYSamplesProp->setEnabled(true);
+	mSamplerProp->setEnabled(true);
+
 	mRendererStartProp->setPropertyName(tr("Start"));
-}
-
-int SystemPropertyView::getTileX() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererTileXProp)->value();
-}
-
-int SystemPropertyView::getTileY() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererTileYProp)->value();
-}
-
-int SystemPropertyView::getThreadCount() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererThreadsProp)->value();
-}
-
-int SystemPropertyView::getMaxRayDepth() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value();
-}
-
-int SystemPropertyView::getMaxDirectRayCount() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererMaxDirectRayCountProp)->value();
-}
-
-int SystemPropertyView::getMaxIndirectRayCount() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererMaxIndirectRayCountProp)->value();
-}
-
-bool SystemPropertyView::getSampling() const
-{
-	return reinterpret_cast<BoolProperty*>(mRendererSamplingProp)->value();
-}
-
-int SystemPropertyView::getXSamples() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererXSamplesProp)->value();
-}
-
-int SystemPropertyView::getYSamples() const
-{
-	return reinterpret_cast<IntProperty*>(mRendererYSamplesProp)->value();
-}
-
-int SystemPropertyView::getSampler() const
-{
-	return reinterpret_cast<SelectionProperty*>(mRendererSamplerProp)->index();
 }
 
 void SystemPropertyView::fillContent(PR::Renderer* renderer)
@@ -270,18 +207,41 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setValue(0);
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setDefaultValue(0);
 
-	reinterpret_cast<BoolProperty*>(mRendererSamplingProp)->setValue(renderer->isSamplingEnabled());
-	reinterpret_cast<BoolProperty*>(mRendererSamplingProp)->setDefaultValue(renderer->isSamplingEnabled());
-	reinterpret_cast<IntProperty*>(mRendererXSamplesProp)->setValue(renderer->xSampleCount());
-	reinterpret_cast<IntProperty*>(mRendererXSamplesProp)->setDefaultValue(renderer->xSampleCount());
-	reinterpret_cast<IntProperty*>(mRendererYSamplesProp)->setValue(renderer->ySampleCount());
-	reinterpret_cast<IntProperty*>(mRendererYSamplesProp)->setDefaultValue(renderer->ySampleCount());
-	reinterpret_cast<SelectionProperty*>(mRendererSamplerProp)->setIndex(renderer->samplerMode());
-	reinterpret_cast<SelectionProperty*>(mRendererSamplerProp)->setDefaultIndex(renderer->samplerMode());
-	reinterpret_cast<IntProperty*>(mRendererMaxDirectRayCountProp)->setValue(renderer->maxDirectRayCount());
-	reinterpret_cast<IntProperty*>(mRendererMaxDirectRayCountProp)->setDefaultValue(renderer->maxDirectRayCount());
-	reinterpret_cast<IntProperty*>(mRendererMaxIndirectRayCountProp)->setValue(renderer->maxIndirectRayCount());
-	reinterpret_cast<IntProperty*>(mRendererMaxIndirectRayCountProp)->setDefaultValue(renderer->maxIndirectRayCount());
-	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setValue(renderer->maxRayDepth());
-	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setDefaultValue(renderer->maxRayDepth());
+	reinterpret_cast<IntProperty*>(mXSamplesProp)->setValue(renderer->settings().xSamplerCount());
+	reinterpret_cast<IntProperty*>(mXSamplesProp)->setDefaultValue(renderer->settings().xSamplerCount());
+	reinterpret_cast<IntProperty*>(mYSamplesProp)->setValue(renderer->settings().ySamplerCount());
+	reinterpret_cast<IntProperty*>(mYSamplesProp)->setDefaultValue(renderer->settings().ySamplerCount());
+	reinterpret_cast<SelectionProperty*>(mSamplerProp)->setIndex(renderer->settings().samplerMode());
+	reinterpret_cast<SelectionProperty*>(mSamplerProp)->setDefaultIndex(renderer->settings().samplerMode());
+
+	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setValue(renderer->settings().maxRayDepth());
+	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setDefaultValue(renderer->settings().maxRayDepth());
+
+	reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->setValue(renderer->settings().maxLightSamples());
+	reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->setDefaultValue(renderer->settings().maxLightSamples());
+
+	reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->setValue(renderer->settings().maxPhotons());
+	reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->setDefaultValue(renderer->settings().maxPhotons());
+	reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->setValue(
+		renderer->settings().maxPhotonGatherRadius());
+	reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->setDefaultValue(
+		renderer->settings().maxPhotonGatherRadius());
+	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setValue(renderer->settings().maxPhotonGatherCount());
+	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setDefaultValue(renderer->settings().maxPhotonGatherCount());
 }
+
+void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
+{
+	renderer->settings().setMaxRayDepth(reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value());
+
+	renderer->settings().setSamplerMode((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mSamplerProp)->index());
+	renderer->settings().setXSamplerCount(reinterpret_cast<IntProperty*>(mXSamplesProp)->value());
+	renderer->settings().setYSamplerCount(reinterpret_cast<IntProperty*>(mYSamplesProp)->value());
+
+	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
+
+	renderer->settings().setMaxPhotons(reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->value());
+	renderer->settings().setMaxPhotonGatherCount(reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->value());
+	renderer->settings().setMaxPhotonGatherRadius(reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->value());
+}
+

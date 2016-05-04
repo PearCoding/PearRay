@@ -6,7 +6,7 @@ class GroupProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	GroupProperty();
+	GroupProperty(const QString& name);
 	virtual ~GroupProperty();
 
 	QString valueText() const;

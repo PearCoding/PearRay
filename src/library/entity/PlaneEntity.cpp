@@ -70,7 +70,7 @@ namespace PR
 	// World space
 	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
 	{
-		auto sample = sampler.generate(random);
+		auto sample = sampler.generate2D();
 
 		FacePoint fp;
 		fp.setVertex(PM::pm_Add(position(),

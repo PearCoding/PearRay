@@ -1,53 +1,35 @@
 #include "MirrorMaterial.h"
-#include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "sampler/Stratified2DSampler.h"
-#include "sampler/Stratified3DSampler.h"
-#include "sampler/Projection.h"
-#include "renderer/Renderer.h"
-#include "entity/RenderEntity.h"
 
 #include "BRDF.h"
 
 namespace PR
 {
 	MirrorMaterial::MirrorMaterial() :
-		Material(), 
-		mCameraVisible(true)
+		Material()
 	{
 	}
 
-	bool MirrorMaterial::isLight() const
+	void MirrorMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
+		Spectrum& diff, Spectrum& spec)
 	{
-		return false;
+		// TODO
+		spec = Li;
 	}
 
-	void MirrorMaterial::enableCameraVisibility(bool b)
+	float MirrorMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		mCameraVisible = b;
+		dir = BRDF::reflect(point.normal(), V);
+		return 1;
 	}
 
-	bool MirrorMaterial::isCameraVisible() const
+	float MirrorMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		return mCameraVisible;
+		return 0;
 	}
 
-	bool MirrorMaterial::shouldIgnore_Simple(const Ray& in, RenderEntity* entity)
+	float MirrorMaterial::roughness() const
 	{
-		return !mCameraVisible && in.depth() == 0;
-	}
-
-	constexpr float NormalOffset = 0.0001f;
-	void MirrorMaterial::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
-	{
-		PM::vec3 reflect = PM::pm_Subtract(in.direction(),
-			PM::pm_Scale(point.normal(), 2 * PM::pm_Dot3D(in.direction(), point.normal())));
-		Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflect, NormalOffset)), reflect, in.depth() + 1);
-
-		FacePoint collisionPoint;
-		if (renderer->shoot(ray, collisionPoint))
-		{
-			in.setSpectrum(ray.spectrum());
-		}
+		return 0;
 	}
 }
