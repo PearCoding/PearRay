@@ -3,6 +3,7 @@
 #include "geometry/FacePoint.h"
 #include "sampler/Projection.h"
 #include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
 #include "sampler/StratifiedSampler.h"
 #include "material/Material.h"
@@ -19,7 +20,7 @@ namespace PR
 	}
 
 	constexpr float NormalOffset = 0.0001f;
-	Spectrum DirectIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	Spectrum DirectIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
 		if (!entity->material()->canBeShaded())
 			return Spectrum();
@@ -47,11 +48,11 @@ namespace PR
 			uint32 sampleCounter = 0;
 			const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
 
-			for (RenderEntity* light : renderer->lights())
+			for (RenderEntity* light : context->renderer()->lights())
 			{
 				const uint32 max = light->maxLightSamples() != 0 ? PM::pm_MinT(mLightSamples, light->maxLightSamples()) : mLightSamples;
 
-				FacePoint p = light->getRandomFacePoint(mLightSampler, renderer->random());
+				FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
 
 				const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
 				const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, N));
@@ -61,11 +62,8 @@ namespace PR
 					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 					ray.setFlags(ray.flags() & RF_ShadowRay);
 					ray.setTarget(p.vertex());
-
-					RenderEntity* ent = renderer->shoot(ray, collisionPoint,
-						entity->material()->canBeSelfShadowed() ? nullptr : entity);
-
-					if (ent)// Full light!!
+					
+					if (context->shootWithApply(ray, collisionPoint))// Full light!!
 					{
 						entity->material()->apply(point, in.direction(), L, ray.spectrum(), diffuse, spec);
 						sampleCounter++;
@@ -86,11 +84,8 @@ namespace PR
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflectionVector, NormalOffset)),
 					reflectionVector, in.depth() + 1);
 
-				RenderEntity* ent = renderer->shoot(ray, collisionPoint);
-
-
-				if (renderer->shoot(ray, collisionPoint))
-				{
+				if (context->shootWithApply(ray, collisionPoint))
+				{			
 					entity->material()->apply(point, in.direction(), reflectionVector, ray.spectrum(), diffuse, spec);
 
 					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(reflectionVector, point.normal()));
@@ -105,9 +100,7 @@ namespace PR
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(transmissionVector, NormalOffset)),
 					transmissionVector, in.depth() + 1);
 
-				RenderEntity* ent = renderer->shoot(ray, collisionPoint);
-
-				if (renderer->shoot(ray, collisionPoint))
+				if (context->shootWithApply(ray, collisionPoint))
 				{
 					Spectrum diffuse2;
 					Spectrum spec2;

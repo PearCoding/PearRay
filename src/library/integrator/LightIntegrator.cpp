@@ -17,7 +17,7 @@ namespace PR
 	{
 	}
 
-	Spectrum LightIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
+	Spectrum LightIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
 		if (entity->material()->isLight())
 			return entity->material()->applyEmission(point, in.direction());

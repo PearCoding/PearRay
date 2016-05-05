@@ -3,8 +3,8 @@
 
 namespace PR
 {
-	RenderThread::RenderThread(Renderer* renderer) :
-		mRenderer(renderer)
+	RenderThread::RenderThread(Renderer* renderer, uint32 index) :
+		mRenderer(renderer), mContext(renderer, this, index)
 	{
 		PR_ASSERT(renderer);
 	}
@@ -23,7 +23,7 @@ namespace PR
 			{
 				for (uint32 x = sx; x < ex && !shouldStop(); ++x)
 				{
-					mRenderer->render(x, y);
+					mRenderer->render(&mContext, x, y);
 					mPixelsRendered++;
 				}
 			}

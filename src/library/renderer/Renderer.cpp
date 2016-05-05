@@ -97,10 +97,17 @@ namespace PR
 		if (mRenderSettings.maxLightSamples() > 0)
 			mIntegrators.push_back(new DirectIntegrator(this, mRenderSettings.maxLightSamples()));
 		
-		//if (mRenderSettings.maxPhotons() > 0)
-			//mIntegrators.push_back(new PhotonIntegrator(this));
+		if (mRenderSettings.maxPhotons() > 0)
+			mIntegrators.push_back(new PhotonIntegrator());
 
 		mIntegrators.push_back(new LightIntegrator());
+
+		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
+		for (uint32 i = 0; i < threadCount; ++i)
+		{
+			RenderThread* thread = new RenderThread(this, i);
+			mThreads.push_back(thread);
+		}
 
 		for (Integrator* integrator : mIntegrators)
 			integrator->init(this);
@@ -117,16 +124,7 @@ namespace PR
 			mTileMap[i] = false;
 		}
 
-		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
-
 		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
-
-		for (uint32 i = 0; i < threadCount; ++i)
-		{
-			RenderThread* thread = new RenderThread(this);
-			mThreads.push_back(thread);
-		}
-
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
 		for (RenderThread* thread : mThreads)
 		{
@@ -134,7 +132,7 @@ namespace PR
 		}
 	}
 
-	void Renderer::render(uint32 x, uint32 y)
+	void Renderer::render(RenderContext* context, uint32 x, uint32 y)
 	{
 		if (mRenderSettings.samplerMode() != SM_None)
 		{
@@ -165,7 +163,7 @@ namespace PR
 					}
 
 					float depth;
-					Ray ray = renderSample(sx, sy, depth);
+					Ray ray = renderSample(context, sx, sy, depth);
 
 					if (depth >= 0)
 					{
@@ -183,7 +181,7 @@ namespace PR
 		else
 		{
 			float depth;// Random sampling
-			Ray ray = renderSample(x + mRandom.getFloat() - 0.5f,
+			Ray ray = renderSample(context, x + mRandom.getFloat() - 0.5f,
 				y + mRandom.getFloat() - 0.5f,
 				depth);
 
@@ -199,14 +197,14 @@ namespace PR
 		mStatisticMutex.unlock();
 	}
 
-	Ray Renderer::renderSample(float x, float y, float& depth)
+	Ray Renderer::renderSample(RenderContext* context, float x, float y, float& depth)
 	{
 		Ray ray = mCamera->constructRay(2 * (x + 0.5f) / (float)mWidth - 1.0f,
 			2 * (y + 0.5f) / (float)mHeight - 1.0f);// To camera coordinates [-1,1]
 
 		FacePoint collisionPoint;
-		RenderEntity* entity = shoot(ray, collisionPoint);
 
+		RenderEntity* entity = shootWithApply(ray, collisionPoint, context, nullptr);
 		if (entity)
 		{
 			depth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.vertex(), ray.startPosition()));
@@ -224,24 +222,13 @@ namespace PR
 		return mPixelsRendered;
 	}
 
-	RenderEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
+	RenderEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		const uint32 maxDepth = ray.maxDepth() == 0 ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
 			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
-
-			if (entity && entity->material())
-			{
-				Spectrum spec;
-				for (Integrator* integrator : mIntegrators)
-				{
-					spec += integrator->apply(ray, entity, collisionPoint, this);
-				}
-
-				ray.setSpectrum(spec);
-			}
 
 			mStatisticMutex.lock();
 			mRayCount++;
@@ -253,6 +240,27 @@ namespace PR
 		{
 			return nullptr;
 		}
+	}
+
+	RenderEntity* Renderer::shootWithApply(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	{
+		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
+		if (entity && entity->material())
+		{
+			Spectrum spec;
+			for (Integrator* integrator : mIntegrators)
+			{
+				spec += integrator->apply(ray, entity, collisionPoint, context);
+			}
+
+			ray.setSpectrum(spec);
+		}
+		return entity;
+	}
+
+	uint32 Renderer::threads() const
+	{
+		return mThreads.size();
 	}
 
 	bool Renderer::isFinished()

@@ -18,6 +18,7 @@ namespace PR
 	class Scene;
 	class Ray;
 	class RenderThread;
+	class RenderContext;
 	class PR_LIB Renderer
 	{
 	public:
@@ -39,7 +40,7 @@ namespace PR
 		bool isFinished();
 		void waitForFinish();
 
-		void render(uint32 x, uint32 y);
+		void render(RenderContext* context, uint32 x, uint32 y);
 
 		RenderResult& result();
 
@@ -53,8 +54,11 @@ namespace PR
 		size_t pixelsRendered() const;
 
 		// RenderThread things
-		RenderEntity* shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		RenderEntity* shoot(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithApply(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
+
+		uint32 threads() const;
 
 		// Settings
 		inline RenderSettings& settings()
@@ -68,7 +72,7 @@ namespace PR
 	private:
 		void reset();
 
-		Ray renderSample(float x, float y, float& depth);
+		Ray renderSample(RenderContext* context, float x, float y, float& depth);
 
 		uint32 mWidth;
 		uint32 mHeight;

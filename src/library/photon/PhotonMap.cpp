@@ -38,6 +38,111 @@ namespace PR
 			return mStoredPhotons >= mMaxPhotons;
 		}
 
+		bool PhotonMap::isEmpty() const
+		{
+			return mStoredPhotons == 0;
+		}
+
+		void PhotonMap::locate(PhotonSphere& sphere, uint64 index)
+		{
+			Photon* photon = &mPhotons[index];
+			float dist1;
+
+			if (index < mHalfStoredPhotons)
+			{
+				dist1 = PM::pm_GetIndex(sphere.Center, photon->KDFlags) - photon->Position[photon->KDFlags];
+				if (dist1 > 0) // Right search
+				{
+					locate(sphere, 2 * index + 1);
+
+					if (dist1 * dist1 < sphere.Distances2[0])
+						locate(sphere, 2 * index);
+				}
+				else // Left search
+				{
+					locate(sphere, 2 * index);
+
+					if (dist1 * dist1 < sphere.Distances2[0])
+						locate(sphere, 2 * index + 1);
+				}
+			}
+
+			// compute distance
+			float dist2 = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(
+				PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2]),
+				sphere.Center));
+
+			if (dist2 < sphere.Distances2[0])// Found a photon!
+			{
+				if (sphere.Found < sphere.Max)
+				{
+					sphere.Found++;
+					sphere.Distances2[sphere.Found] = dist2;
+					sphere.Index[sphere.Found] = photon;
+				}
+				else
+				{
+					uint64 j, parent;
+
+					if (!sphere.GotHeap)
+					{
+						float distTmp;
+						const Photon* photon2;
+						uint64 halfFound = sphere.Found >> 1;
+						for (uint64 k = halfFound; k >= 1; --k)
+						{
+							parent = k;
+							photon2 = sphere.Index[k];
+							distTmp = sphere.Distances2[k];
+
+							while (parent <= halfFound)
+							{
+								j = parent * 2;
+
+								if (j < sphere.Found && sphere.Distances2[j] < sphere.Distances2[j + 1])
+									j++;
+
+								if (distTmp >= sphere.Distances2[j])
+									break;
+
+								sphere.Distances2[parent] = sphere.Distances2[j];
+								sphere.Index[parent] = sphere.Index[j];
+								parent = j;
+							}
+
+							sphere.Distances2[parent] = distTmp;
+							sphere.Index[parent] = photon2;
+						}
+						sphere.GotHeap = true;
+					}
+
+					parent = 1;
+					j = 2;
+					while (j <= sphere.Found)
+					{
+						if (j < sphere.Found && sphere.Distances2[j] < sphere.Distances2[j + 1])
+							j++;
+
+						if (dist2 > sphere.Distances2[j])
+							break;
+
+						sphere.Distances2[parent] = sphere.Distances2[j];
+						sphere.Index[parent] = sphere.Index[j];
+						parent = j;
+						j += j;
+					}
+
+					if (dist2 < sphere.Distances2[parent])
+					{
+						sphere.Distances2[parent] = dist2;
+						sphere.Index[parent] = photon;
+					}
+
+					sphere.Distances2[0] = sphere.Distances2[1];
+				}
+			}
+		}
+
 		void PhotonMap::store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir)
 		{
 			if (isFull())
@@ -62,6 +167,9 @@ namespace PR
 				node->Phi = 255;
 			else
 				node->Phi = (uint8)phi;
+
+			for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+				node->Power[i] = spec.value(i);
 		}
 
 		void PhotonMap::scalePhotonPower(float scale)
@@ -69,7 +177,7 @@ namespace PR
 			for (uint64 i = mPreviousScaleIndex; i <= mStoredPhotons; ++i)
 			{
 				Photon* node = &mPhotons[i];
-				for (int j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
+				for (uint32 j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
 				{
 					node->Power[j] *= scale;
 				}
@@ -82,9 +190,7 @@ namespace PR
 			mHalfStoredPhotons = mStoredPhotons / 2 - 1;
 
 			if(mStoredPhotons < 1)
-			{
 				return;
-			}
 
 			Photon** pTmp1 = new Photon*[mStoredPhotons + 1];
 			Photon** pTmp2 = new Photon*[mStoredPhotons + 1];
@@ -93,9 +199,7 @@ namespace PR
 			PR_ASSERT(pTmp2);
 
 			for (uint64 i = 0; i <= mStoredPhotons; ++i)
-			{
 				pTmp2[i] = &mPhotons[i];
-			}
 
 			balanceSegment(pTmp1, pTmp2, 1, 1, mStoredPhotons);
 			delete[] pTmp2;
@@ -105,12 +209,12 @@ namespace PR
 			uint64 d, j = 1, h = 1;
 			Photon h_photon = mPhotons[j];
 
-			for (uint64 i = 0; i <= mStoredPhotons; ++i)
+			for (uint64 i = 1; i <= mStoredPhotons; ++i)
 			{
 				d = pTmp1[j] - mPhotons;
 				pTmp1[j] = nullptr;
 
-				if (d == h)
+				if (d != h)
 				{
 					mPhotons[j] = mPhotons[d];
 					j = d;
@@ -151,12 +255,12 @@ namespace PR
 				median = end - median + 1;
 
 			// Find axis
-			int axis = 0;// X axis
-			if (mBox.height() > mBox.width() &&
-				mBox.height() > mBox.depth())
+			int axis = 2;// Z axis
+			if (mBox.width() > mBox.height() &&
+				mBox.width() > mBox.depth())
+				axis = 0;// X axis
+			else if (mBox.height() > mBox.depth())
 				axis = 1;// Y axis
-			else if (mBox.depth() > mBox.width())
-				axis = 2;// Z axis
 
 			// Partition
 			medianSplit(original, start, end, median, axis);

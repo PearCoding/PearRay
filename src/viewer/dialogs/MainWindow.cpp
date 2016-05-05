@@ -240,7 +240,7 @@ void MainWindow::updateView()
 		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
 			.arg(mRenderer->pixelsRendered())
 			.arg(mRenderer->width()*mRenderer->height())
-			.arg(percent, 4)
+			.arg(100*percent, 4)
 			.arg(mRenderer->rayCount())
 			.arg(friendlyTime(time))
 			.arg(friendlyTime((1 - lerp)*timeLeft1 + lerp*timeLeft2)));

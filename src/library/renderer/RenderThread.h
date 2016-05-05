@@ -1,6 +1,7 @@
 #pragma once
 
 #include "thread/Thread.h"
+#include "RenderContext.h"
 
 namespace PR
 {
@@ -8,7 +9,7 @@ namespace PR
 	class PR_LIB RenderThread : public Thread
 	{
 	public:
-		RenderThread(Renderer* renderer);
+		RenderThread(Renderer* renderer, uint32 index);
 
 		size_t pixelsRendered() const;
 
@@ -17,6 +18,7 @@ namespace PR
 
 	private:
 		Renderer* mRenderer;
+		RenderContext mContext;
 
 		size_t mPixelsRendered;
 	};

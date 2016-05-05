@@ -23,8 +23,8 @@
 		
 		:material		"Light"
 		:xAxis			1.5
-		:yAxis			[0, 0, -1.5]
-		:position		[-0.75,3.65,0.75]
+		:yAxis			[0, 0, 1.5]
+		:position		[-0.75,3.65,-0.75]
 	)
 	
 	(entity
@@ -165,7 +165,7 @@
 		:shading		false
 		:light			true
 		:selfShadow		false
-		:cameraVisible	true
+		:cameraVisible	false
 	)
 	
 	(material
@@ -266,6 +266,6 @@
 	
 	(spectrum			;; Emissive
 		:name			"Sun"
-		:data			(temperature_norm 5500 1)
+		:data			(temperature_norm 5500 2)
 	)
 )

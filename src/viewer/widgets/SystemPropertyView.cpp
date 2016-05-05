@@ -77,7 +77,7 @@ QWidget(parent)
 	mPhotonMappingGroupProp->addChild(mMaxPhotonsProp);
 	mMaxPhotonGatherCountProp = new IntProperty(tr("Max Photon Gather Count"), 500, 0);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherCountProp);
-	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Photon Gather Radius"), 0.1, 0);
+	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Photon Gather Radius"), 0.1, 0, 10000);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherRadiusProp);
 	mProperties.add(mPhotonMappingGroupProp);
 

@@ -19,9 +19,13 @@ namespace PR
 			PhotonMap(uint64 max_photons);
 			~PhotonMap();
 
+			bool isFull() const;
+			bool isEmpty() const;
+
 			PM::vec3 photonDirection(const Photon* p);
 
-			bool isFull() const;
+			void locate(PhotonSphere& sphere, uint64 index);
+
 			void store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir);
 			void scalePhotonPower(float scale);
 
