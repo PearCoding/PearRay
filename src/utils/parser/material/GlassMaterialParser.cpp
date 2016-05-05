@@ -22,7 +22,6 @@ namespace PRU
 	{
 		DL::Data* specD = group->getFromKey("specularity");
 		DL::Data* indexD = group->getFromKey("index");
-		DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
 
 		GlassMaterial* diff = new GlassMaterial;
 
@@ -42,11 +41,6 @@ namespace PRU
 		if (indexD && indexD->isNumber())
 		{
 			diff->setIndex(indexD->getFloatConverted());
-		}
-
-		if (cameraVisibleD && cameraVisibleD->isType() == DL::Data::T_Bool)
-		{
-			diff->enableCameraVisibility(cameraVisibleD->getBool());
 		}
 
 		return diff;

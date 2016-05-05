@@ -59,4 +59,9 @@ namespace PR
 	{
 		return !mCameraVisible && in.depth() == 0;
 	}
+	
+	Spectrum Material::applyEmission(const FacePoint& point, const PM::vec3& V)
+	{
+		return mEmission;
+	}
 }

@@ -32,7 +32,7 @@ namespace PR
 		return mTarget;
 	}
 
-	inline size_t Ray::depth() const
+	inline uint32 Ray::depth() const
 	{
 		return mDepth;
 	}

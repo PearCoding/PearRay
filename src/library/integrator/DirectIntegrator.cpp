@@ -21,6 +21,9 @@ namespace PR
 	constexpr float NormalOffset = 0.0001f;
 	Spectrum DirectIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer)
 	{
+		if (!entity->material()->canBeShaded())
+			return Spectrum();
+
 		FacePoint collisionPoint;
 		Spectrum diffuse;
 		Spectrum spec;
@@ -59,9 +62,10 @@ namespace PR
 					ray.setFlags(ray.flags() & RF_ShadowRay);
 					ray.setTarget(p.vertex());
 
-					RenderEntity* ent = renderer->shoot(ray, collisionPoint);
+					RenderEntity* ent = renderer->shoot(ray, collisionPoint,
+						entity->material()->canBeSelfShadowed() ? nullptr : entity);
 
-					if (ent && !(in.flags() & RF_NoDirectShading))// Full light!!
+					if (ent)// Full light!!
 					{
 						entity->material()->apply(point, in.direction(), L, ray.spectrum(), diffuse, spec);
 						sampleCounter++;
@@ -84,15 +88,19 @@ namespace PR
 
 				RenderEntity* ent = renderer->shoot(ray, collisionPoint);
 
+
 				if (renderer->shoot(ray, collisionPoint))
 				{
 					entity->material()->apply(point, in.direction(), reflectionVector, ray.spectrum(), diffuse, spec);
-					diffuse *= refWeight;
-					spec *= refWeight;
+
+					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(reflectionVector, point.normal()));
+					diffuse *= NdotL * refWeight;
+					spec *= NdotL * refWeight;
 				}
 			}
 
-			if (transWeight > 0)
+			const float NdotL_trans = std::abs(PM::pm_Dot3D(transmissionVector, point.normal()));
+			if (transWeight > 0 && NdotL_trans > PM_EPSILON)
 			{
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(transmissionVector, NormalOffset)),
 					transmissionVector, in.depth() + 1);
@@ -105,8 +113,8 @@ namespace PR
 					Spectrum spec2;
 
 					entity->material()->apply(point, in.direction(), transmissionVector, ray.spectrum(), diffuse2, spec2);
-					diffuse += transWeight;
-					spec += transWeight;
+					diffuse += diffuse2 * (transWeight * NdotL_trans);
+					spec += spec2 * (transWeight * NdotL_trans);
 				}
 			}
 		}

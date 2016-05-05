@@ -14,7 +14,7 @@ namespace PR
 		Spectrum& diff, Spectrum& spec)
 	{
 		// TODO
-		spec = Li;
+		spec += Li;
 	}
 
 	float MirrorMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)

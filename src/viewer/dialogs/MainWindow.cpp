@@ -226,9 +226,15 @@ void MainWindow::updateView()
 {
 	if (mRenderer)
 	{
-		float percent = 100 * mRenderer->pixelsRendered() / (float)(mRenderer->width()*mRenderer->height());
+		quint64 time = mElapsedTime.elapsed();
 
-		quint64 timeLeft = mElapsedTime.elapsed() * (100 - percent) / percent;
+		float percent = mRenderer->pixelsRendered() / (float)(mRenderer->width()*mRenderer->height());
+		float lerp = percent*percent;
+
+		quint64 timeLeft1 = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
+		quint64 timeLeft2 = ((1 - percent) / PM::pm_MaxT(0.0001f, (percent - mLastPercent))) * mFrameTime.elapsed();
+
+		mLastPercent = percent;
 
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
@@ -236,10 +242,12 @@ void MainWindow::updateView()
 			.arg(mRenderer->width()*mRenderer->height())
 			.arg(percent, 4)
 			.arg(mRenderer->rayCount())
-			.arg(friendlyTime(mElapsedTime.elapsed()))
-			.arg(friendlyTime(timeLeft)));
+			.arg(friendlyTime(time))
+			.arg(friendlyTime((1 - lerp)*timeLeft1 + lerp*timeLeft2)));
 
 		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)percent));
+
+		mFrameTime.restart();
 
 		if (mRenderer->isFinished())
 		{
@@ -339,6 +347,7 @@ void MainWindow::startRendering()
 
 	mTimer.start(200);
 	mElapsedTime.restart();
+	mFrameTime.restart();
 	mRenderer->start(ui.systemPropertyView->getTileX(),
 		ui.systemPropertyView->getTileY(),
 		ui.systemPropertyView->getThreadCount());

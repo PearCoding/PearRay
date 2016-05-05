@@ -33,7 +33,7 @@ namespace PR
 		inline void setDirection(const PM::vec3& p);
 		inline PM::vec3 direction() const;
 
-		inline size_t depth() const;
+		inline uint32 depth() const;
 
 		inline void setSpectrum(const Spectrum& s);
 		inline Spectrum spectrum() const;

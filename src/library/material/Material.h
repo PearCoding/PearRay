@@ -17,6 +17,8 @@ namespace PR
 		virtual void apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
 			Spectrum& diff, Spectrum& spec) = 0;
 
+		virtual Spectrum applyEmission(const FacePoint& point, const PM::vec3& V);
+
 		// Parameter 'dir' is an output!
 		// Return value is weight of vector
 		virtual float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) = 0;

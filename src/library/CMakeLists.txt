@@ -28,6 +28,7 @@ SET(PR_Geometry_Src
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Integrator_Src
   ${PR_LIB}/integrator/DirectIntegrator.cpp
+  ${PR_LIB}/integrator/LightIntegrator.cpp
   ${PR_LIB}/integrator/PhotonIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
@@ -107,6 +108,7 @@ SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Integrator_Hdr
   ${PR_LIB}/integrator/DirectIntegrator.h
   ${PR_LIB}/integrator/Integrator.h
+  ${PR_LIB}/integrator/LightIntegrator.h
   ${PR_LIB}/integrator/PhotonIntegrator.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_Material_Hdr

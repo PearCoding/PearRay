@@ -185,11 +185,11 @@ void SystemPropertyView::disableRendering()
 	mRendererThreadsProp->setEnabled(true);
 	mRendererMaxRayDepthProp->setEnabled(true);
 
-	mMaxLightSamplesProp->setEnabled(false);
+	mMaxLightSamplesProp->setEnabled(true);
 
-	mMaxPhotonsProp->setEnabled(false);
-	mMaxPhotonGatherRadiusProp->setEnabled(false);
-	mMaxPhotonGatherCountProp->setEnabled(false);
+	mMaxPhotonsProp->setEnabled(true);
+	mMaxPhotonGatherRadiusProp->setEnabled(true);
+	mMaxPhotonGatherCountProp->setEnabled(true);
 
 	mXSamplesProp->setEnabled(true);
 	mYSamplesProp->setEnabled(true);

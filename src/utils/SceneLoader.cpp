@@ -24,6 +24,8 @@
 #include "spectral/XYZConverter.h"
 #include "spectral/RGBConverter.h"
 
+#include "material/Material.h"
+
 // DataLisp
 #include "DataLisp.h"
 #include "DataContainer.h"
@@ -348,6 +350,11 @@ namespace PRU
 		DL::Data* nameD = group->getFromKey("name");
 		DL::Data* typeD = group->getFromKey("type");
 
+		DL::Data* selfShadowD = group->getFromKey("selfShadow");
+		DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
+		DL::Data* shadeableD = group->getFromKey("shadeable");
+		DL::Data* emissionD = group->getFromKey("emission");
+
 		std::string name;
 		std::string type;
 
@@ -400,6 +407,34 @@ namespace PRU
 		}
 
 		PR_ASSERT(mat);// After here it shouldn't be null
+
+		if (emissionD && emissionD->isType() == DL::Data::T_String)
+		{
+			if (env->hasSpectrum(emissionD->getString()))
+			{
+				mat->setEmission(env->getSpectrum(emissionD->getString()));
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
+					emissionD->getString().c_str());
+			}
+		}
+
+		if (shadeableD && shadeableD->isType() == DL::Data::T_Bool)
+		{
+			mat->enableShading(shadeableD->getBool());
+		}
+
+		if (selfShadowD && selfShadowD->isType() == DL::Data::T_Bool)
+		{
+			mat->enableSelfShadow(selfShadowD->getBool());
+		}
+
+		if (cameraVisibleD && cameraVisibleD->isType() == DL::Data::T_Bool)
+		{
+			mat->enableCameraVisibility(cameraVisibleD->getBool());
+		}
 
 		env->addMaterial(name, mat);
 	}

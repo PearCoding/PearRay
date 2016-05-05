@@ -40,7 +40,7 @@ namespace PR
 		Spectrum& diff, Spectrum& spec)
 	{
 		// TODO
-		spec = mSpecularitySpectrum;
+		spec += Li * mSpecularitySpectrum;
 	}
 
 	float GlassMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)

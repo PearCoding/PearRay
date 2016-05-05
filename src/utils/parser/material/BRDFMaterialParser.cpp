@@ -23,13 +23,9 @@ namespace PRU
 
 		DL::Data* albedoD = group->getFromKey("albedo");
 		DL::Data* specD = group->getFromKey("specularity");
-		DL::Data* emissionD = group->getFromKey("emission");
 		DL::Data* roughnessD = group->getFromKey("roughness");
 		DL::Data* reflectivityD = group->getFromKey("reflectivity");
 		DL::Data* fresnelD = group->getFromKey("fresnel");
-		DL::Data* shadingD = group->getFromKey("shading");
-		DL::Data* selfShadowD = group->getFromKey("selfShadow");
-		DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
 
 		BRDFMaterial* diff = new BRDFMaterial;
 
@@ -59,19 +55,6 @@ namespace PRU
 			}
 		}
 
-		if (emissionD && emissionD->isType() == DL::Data::T_String)
-		{
-			if (env->hasSpectrum(emissionD->getString()))
-			{
-				diff->setEmission(env->getSpectrum(emissionD->getString()));
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-					emissionD->getString().c_str());
-			}
-		}
-
 		if (roughnessD && roughnessD->isNumber())
 		{
 			diff->setRoughness(roughnessD->getFloatConverted());
@@ -85,21 +68,6 @@ namespace PRU
 		if (fresnelD && fresnelD->isNumber())
 		{
 			diff->setFresnel(fresnelD->getFloatConverted());
-		}
-
-		if (shadingD && shadingD->isType() == DL::Data::T_Bool)
-		{
-			diff->enableShading(shadingD->getBool());
-		}
-
-		if (selfShadowD && selfShadowD->isType() == DL::Data::T_Bool)
-		{
-			diff->enableSelfShadow(selfShadowD->getBool());
-		}
-
-		if (cameraVisibleD && cameraVisibleD->isType() == DL::Data::T_Bool)
-		{
-			diff->enableCameraVisibility(cameraVisibleD->getBool());
 		}
 
 		return diff;

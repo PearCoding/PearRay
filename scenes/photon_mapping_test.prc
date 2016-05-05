@@ -109,7 +109,7 @@
 		:type			"standard"
 		
 		:albedo			"Gray1"
-		:roughness		0
+		:roughness		1
 		:reflectivity 	0
 	)
 	
@@ -118,7 +118,7 @@
 		:type			"standard"
 		
 		:albedo			"Gray2"
-		:roughness		0
+		:roughness		1
 		:reflectivity 	0
 	)
 	
@@ -135,7 +135,7 @@
 		:type			"standard"
 		
 		:albedo			"White"
-		:roughness		0
+		:roughness		1
 		:reflectivity 	0
 	)
 	
@@ -144,7 +144,7 @@
 		:type			"standard"
 		
 		:albedo			"Red"
-		:roughness		0
+		:roughness		1
 		:reflectivity 	0
 	)
 	
@@ -153,7 +153,7 @@
 		:type			"standard"
 		
 		:albedo			"Green"
-		:roughness		0
+		:roughness		1
 		:reflectivity 	0
 	)
 	
@@ -266,6 +266,6 @@
 	
 	(spectrum			;; Emissive
 		:name			"Sun"
-		:data			(temperature_norm 5500 4)
+		:data			(temperature_norm 5500 1)
 	)
 )

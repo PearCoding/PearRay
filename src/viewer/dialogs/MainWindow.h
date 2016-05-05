@@ -64,4 +64,6 @@ private:
 
 	QTimer mTimer;
 	QElapsedTimer mElapsedTime;
+	QElapsedTimer mFrameTime;
+	float mLastPercent;
 };

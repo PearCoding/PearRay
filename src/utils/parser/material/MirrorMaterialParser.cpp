@@ -20,15 +20,7 @@ namespace PRU
 	Material* MirrorMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-		DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
-
 		MirrorMaterial* diff = new MirrorMaterial;
-
-		if (cameraVisibleD && cameraVisibleD->isType() == DL::Data::T_Bool)
-		{
-			diff->enableCameraVisibility(cameraVisibleD->getBool());
-		}
-
 		return diff;
 	}
 }

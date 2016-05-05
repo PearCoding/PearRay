@@ -71,7 +71,7 @@ namespace PR
 
 		if (alpha >= 1) // Lambert
 		{
-			diff += PM_INV_PI_F * NdotL * Li;// Simple Lambert
+			diff += mAlbedoSpectrum * Li * (PM_INV_PI_F * NdotL);// Simple Lambert
 		}
 		else//Oren-Nayar
 		{
@@ -90,13 +90,13 @@ namespace PR
 
 			const float L1 = NdotL * (A + B * C * PM::pm_MaxT(0.0f, gamma));
 
-			diff += PM_INV_PI_F * L1 * Li;
+			diff += (PM_INV_PI_F * L1) * Li * mAlbedoSpectrum;
 		}
 
 		if (mReflectivity > std::numeric_limits<float>::epsilon())
 		{
-			spec += mReflectivity *
-				BRDF::standard(mFresnel, alpha, L, point.normal(), H, V) * Li;
+			spec += (mReflectivity *
+				BRDF::standard(mFresnel, alpha, L, point.normal(), H, V)) * Li * mSpecularitySpectrum;
 		}
 	}
 

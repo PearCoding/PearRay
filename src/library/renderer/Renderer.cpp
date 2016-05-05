@@ -8,6 +8,7 @@
 
 #include "integrator/DirectIntegrator.h"
 #include "integrator/PhotonIntegrator.h"
+#include "integrator/LightIntegrator.h"
 
 #include "Logger.h"
 
@@ -48,6 +49,11 @@ namespace PR
 		{
 			delete[] mTileMap;
 		}
+
+		for (Integrator* integrator : mIntegrators)
+			delete integrator;
+
+		mIntegrators.clear();
 	}
 
 	void Renderer::setWidth(uint32 w)
@@ -93,6 +99,8 @@ namespace PR
 		
 		//if (mRenderSettings.maxPhotons() > 0)
 			//mIntegrators.push_back(new PhotonIntegrator(this));
+
+		mIntegrators.push_back(new LightIntegrator());
 
 		for (Integrator* integrator : mIntegrators)
 			integrator->init(this);
@@ -224,13 +232,14 @@ namespace PR
 		{
 			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
 
-			if (entity)
+			if (entity && entity->material())
 			{
 				Spectrum spec;
 				for (Integrator* integrator : mIntegrators)
 				{
 					spec += integrator->apply(ray, entity, collisionPoint, this);
 				}
+
 				ray.setSpectrum(spec);
 			}
 
