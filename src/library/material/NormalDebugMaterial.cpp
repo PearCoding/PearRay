@@ -10,10 +10,9 @@ namespace PR
 	{
 	}
 
-	void NormalDebugMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-		Spectrum& diff, Spectrum& spec)
+	Spectrum NormalDebugMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
-		diff = RGBConverter::toSpec(std::abs(PM::pm_GetX(point.normal())),
+		return RGBConverter::toSpec(std::abs(PM::pm_GetX(point.normal())),
 			std::abs(PM::pm_GetY(point.normal())),
 			std::abs(PM::pm_GetZ(point.normal())));
 	}

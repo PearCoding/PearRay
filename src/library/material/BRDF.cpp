@@ -76,7 +76,7 @@ namespace PR
 		// Only optimizing is in the geometry
 		float fresnel = fresnel_schlick(f0, L, H);
 		float geometry = PM::pm_Dot3D(N, H) / (PM::pm_Dot3D(N, L)*PM::pm_Dot3D(V, H));
-		float ndf = ndf_beckmann(H, N, alpha + 0.0001f);
+		float ndf = ndf_beckmann(H, N, alpha);
 
 		return fresnel * geometry * ndf * 0.25f;
 	}

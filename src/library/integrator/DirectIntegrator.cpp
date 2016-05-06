@@ -25,8 +25,8 @@ namespace PR
 		if (!entity->material()->canBeShaded())
 			return Spectrum();
 
+		const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
 		FacePoint collisionPoint;
-		Spectrum diffuse;
 		Spectrum spec;
 
 		bool onlySpecular = entity->material()->roughness() <= PM_EPSILON;
@@ -40,78 +40,71 @@ namespace PR
 			refWeight = entity->material()->emitReflectionVector(point, in.direction(), reflectionVector);
 			transWeight = entity->material()->emitTransmissionVector(point, in.direction(), transmissionVector);
 
-			onlySpecular = (refWeight + transWeight) > 0;
+			onlySpecular = (refWeight + transWeight) > PM_EPSILON;
 		}
 
 		if (!onlySpecular)
 		{
 			uint32 sampleCounter = 0;
-			const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
 
 			for (RenderEntity* light : context->renderer()->lights())
 			{
 				const uint32 max = light->maxLightSamples() != 0 ? PM::pm_MinT(mLightSamples, light->maxLightSamples()) : mLightSamples;
-
-				FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
-
-				const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
-				const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, N));
-
-				if (NdotL > std::numeric_limits<float>::epsilon())
+				
+				for (uint32 i = 0; i < max; ++i)
 				{
-					Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
-					ray.setFlags(ray.flags() & RF_ShadowRay);
-					ray.setTarget(p.vertex());
-					
-					if (context->shootWithApply(ray, collisionPoint))// Full light!!
+					FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
+
+					const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
+					const float NdotL = std::abs(PM::pm_Dot3D(L, N));
+
+					if (NdotL > PM_EPSILON)
 					{
-						entity->material()->apply(point, in.direction(), L, ray.spectrum(), diffuse, spec);
-						sampleCounter++;
+						Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
+						ray.setFlags(ray.flags() & RF_ShadowRay);
+
+						if (context->shootWithApply(ray, collisionPoint))// Full light!!
+						{
+							spec += entity->material()->apply(point, in.direction(), L, ray.spectrum())*NdotL;
+							sampleCounter++;
+						}
 					}
 				}
 			}
 
 			if (sampleCounter != 0)
 			{
-				diffuse *= PM_PI_F / sampleCounter;
 				spec *= PM_PI_F / sampleCounter;
 			}
 		}
 		else
 		{
-			if (refWeight > 0)
+			if (refWeight > PM_EPSILON)
 			{
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflectionVector, NormalOffset)),
 					reflectionVector, in.depth() + 1);
 
 				if (context->shootWithApply(ray, collisionPoint))
-				{			
-					entity->material()->apply(point, in.direction(), reflectionVector, ray.spectrum(), diffuse, spec);
-
-					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(reflectionVector, point.normal()));
-					diffuse *= NdotL * refWeight;
-					spec *= NdotL * refWeight;
+				{
+					const float NdotL = std::abs(PM::pm_Dot3D(reflectionVector, N));
+					spec = entity->material()->apply(point, in.direction(), reflectionVector, ray.spectrum()) * NdotL * refWeight;
 				}
 			}
 
-			const float NdotL_trans = std::abs(PM::pm_Dot3D(transmissionVector, point.normal()));
-			if (transWeight > 0 && NdotL_trans > PM_EPSILON)
+			const float NdotL_trans = std::abs(PM::pm_Dot3D(transmissionVector, N));
+			if (transWeight > PM_EPSILON && NdotL_trans > PM_EPSILON)
 			{
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(transmissionVector, NormalOffset)),
 					transmissionVector, in.depth() + 1);
 
 				if (context->shootWithApply(ray, collisionPoint))
 				{
-					Spectrum diffuse2;
-					Spectrum spec2;
-
-					entity->material()->apply(point, in.direction(), transmissionVector, ray.spectrum(), diffuse2, spec2);
-					diffuse += diffuse2 * (transWeight * NdotL_trans);
-					spec += spec2 * (transWeight * NdotL_trans);
+					spec += entity->material()->apply(point, in.direction(), transmissionVector, ray.spectrum()) *
+						(transWeight * NdotL_trans);
 				}
 			}
 		}
 		
-		return diffuse + spec;
+		return spec;
 	}
 }

@@ -10,10 +10,9 @@ namespace PR
 	{
 	}
 
-	void UVDebugMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-		Spectrum& diff, Spectrum& spec)
+	Spectrum UVDebugMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
-		diff = RGBConverter::toSpec(std::abs(PM::pm_GetX(point.uv())),
+		return RGBConverter::toSpec(std::abs(PM::pm_GetX(point.uv())),
 			std::abs(PM::pm_GetY(point.uv())),
 			0);
 	}

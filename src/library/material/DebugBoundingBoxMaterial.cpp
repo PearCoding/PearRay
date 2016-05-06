@@ -9,16 +9,9 @@ namespace PR
 	{
 	}
 
-	void DebugBoundingBoxMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-		Spectrum& diff, Spectrum& spec)
+	Spectrum DebugBoundingBoxMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
-		//Ray ray = in;// Don't increase depth!
-		//ray.setStartPosition(point.vertex());
-
-		//FacePoint pt;
-		//renderer->shoot(ray, pt, entity);
-
-		spec = Li*(1 - mDensity) + mColor*mDensity;
+		return Li*(1 - mDensity) + mColor*mDensity;
 	}
 	
 	float DebugBoundingBoxMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)

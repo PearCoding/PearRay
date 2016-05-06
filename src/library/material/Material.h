@@ -14,9 +14,7 @@ namespace PR
 	public:
 		Material();
 
-		virtual void apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-			Spectrum& diff, Spectrum& spec) = 0;
-
+		virtual Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li) = 0;
 		virtual Spectrum applyEmission(const FacePoint& point, const PM::vec3& V);
 
 		// Parameter 'dir' is an output!

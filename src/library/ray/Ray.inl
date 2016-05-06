@@ -22,16 +22,6 @@ namespace PR
 		return mDirection;
 	}
 
-	inline void Ray::setTarget(const PM::vec3& p)
-	{
-		mTarget = p;
-	}
-
-	inline PM::vec3 Ray::target() const
-	{
-		return mTarget;
-	}
-
 	inline uint32 Ray::depth() const
 	{
 		return mDepth;

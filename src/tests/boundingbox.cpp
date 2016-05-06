@@ -24,24 +24,76 @@ PR_TEST("Bounds");
 	PR_CHECK_EQ_3(box.center(), PM::pm_Set(0, 0, 0));
 }
 
-PR_TEST("Intersects");
+PR_TEST("Intersects Left");
 {
 	Ray ray(PM::pm_Set(-2, 0, 0), PM::pm_Set(1, 0, 0));
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
-	box.intersects(ray, collisionPoint);
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(-1, 0, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Left);
 }
 
-PR_TEST("Intersects Inside");
+PR_TEST("Intersects Right Inside");
 {
 	Ray ray(PM::pm_Set(0, 0, 0), PM::pm_Set(1, 0, 0));
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
-	box.intersects(ray, collisionPoint);
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Right);
+}
+
+PR_TEST("Intersects Front");
+{
+	Ray ray(PM::pm_Set(0, 0, -2), PM::pm_Set(0, 0, 1));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, -1));
+	PR_CHECK_EQ(side, BoundingBox::FS_Front);
+}
+
+PR_TEST("Intersects Back Inside");
+{
+	Ray ray(PM::pm_Set(0, 0, 0), PM::pm_Set(0, 0, 1));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, 1));
+	PR_CHECK_EQ(side, BoundingBox::FS_Back);
+}
+
+PR_TEST("Intersects Bottom");
+{
+	Ray ray(PM::pm_Set(0, -2, 0), PM::pm_Set(0, 2, 0));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, -1, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Bottom);
+}
+
+PR_TEST("Intersects Top Inside");
+{
+	Ray ray(PM::pm_Set(0, 0, 0), PM::pm_Set(0, 1, 0));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
 PR_TEST("Face Front");
@@ -49,6 +101,7 @@ PR_TEST("Face Front");
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Front);
 	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, 0, -1));
+	PR_CHECK_NEARLY_EQ(PM::pm_GetZ(plane.position()), -3 / 2.0f);
 	PR_CHECK_EQ(plane.width(), 1);
 	PR_CHECK_EQ(plane.height(), 2);
 }
@@ -58,6 +111,7 @@ PR_TEST("Face Back");
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Back);
 	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, 0, 1));
+	PR_CHECK_NEARLY_EQ(PM::pm_GetZ(plane.position()), 3 / 2.0f);
 	PR_CHECK_EQ(plane.width(), 1);
 	PR_CHECK_EQ(plane.height(), 2);
 }
@@ -67,6 +121,7 @@ PR_TEST("Face Left");
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Left);
 	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(-1, 0, 0));
+	PR_CHECK_NEARLY_EQ(PM::pm_GetX(plane.position()), -1 / 2.0f);
 	PR_CHECK_EQ(plane.width(), 3);
 	PR_CHECK_EQ(plane.height(), 2);
 }
@@ -76,6 +131,7 @@ PR_TEST("Face Right");
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Right);
 	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(1, 0, 0));
+	PR_CHECK_NEARLY_EQ(PM::pm_GetX(plane.position()), 1 / 2.0f);
 	PR_CHECK_EQ(plane.width(), 3);
 	PR_CHECK_EQ(plane.height(), 2);
 }
@@ -85,6 +141,7 @@ PR_TEST("Face Top");
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Top);
 	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, 1, 0));
+	PR_CHECK_NEARLY_EQ(PM::pm_GetY(plane.position()), 1);
 	PR_CHECK_EQ(plane.width(), 1);
 	PR_CHECK_EQ(plane.height(), 3);
 }
@@ -94,6 +151,7 @@ PR_TEST("Face Bottom");
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Bottom);
 	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, -1, 0));
+	PR_CHECK_NEARLY_EQ(PM::pm_GetY(plane.position()), -1);
 	PR_CHECK_EQ(plane.width(), 1);
 	PR_CHECK_EQ(plane.height(), 3);
 }

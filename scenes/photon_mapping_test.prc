@@ -165,12 +165,16 @@
 		:shading		false
 		:light			true
 		:selfShadow		false
-		:cameraVisible	false
+		:cameraVisible	true
 	)
 	
 	(material
 		:name			"Mirror"
-		:type			"mirror"
+		:type			"standard"
+		:albedo			"Black"
+		:roughness		0
+		:reflectivity	1
+		:specularity	"White"
 	)
 	
 	(material
@@ -240,10 +244,8 @@
 	)
 	
 	(spectrum			;; Reflexive
-		:name			"Mirror"
-		:data			(field
-			:default	1
-			)
+		:name			"Black"
+		:data			(rgb 0 0 0)
 	)
 	
 	(spectrum			;; Emissive
@@ -266,6 +268,6 @@
 	
 	(spectrum			;; Emissive
 		:name			"Sun"
-		:data			(temperature_norm 5500 2)
+		:data			(temperature_norm 5500 1)
 	)
 )

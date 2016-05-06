@@ -62,18 +62,18 @@ namespace PR
 		mFresnel = f;
 	}
 
-	void BRDFMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-		Spectrum& diff, Spectrum& spec)
+	Spectrum BRDFMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
 		const float alpha = mRoughness * mRoughness;
-		const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, point.normal()));
+		const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 		const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
 
+		Spectrum spec;
 		if (alpha >= 1) // Lambert
 		{
-			diff += mAlbedoSpectrum * Li * (PM_INV_PI_F * NdotL);// Simple Lambert
+			spec = mAlbedoSpectrum * Li * (PM_INV_PI_F);// Simple Lambert
 		}
-		else//Oren-Nayar
+		else if (alpha >= PM_EPSILON)//Oren-Nayar
 		{
 			const float NdotV = PM::pm_Dot3D(point.normal(), V);
 			const float angleVN = acosf(NdotL);
@@ -88,29 +88,31 @@ namespace PR
 			const float gamma = PM::pm_Dot3D(PM::pm_Subtract(V, PM::pm_Scale(point.normal(), NdotV)),
 				PM::pm_Subtract(L, PM::pm_Scale(point.normal(), NdotL)));
 
-			const float L1 = NdotL * (A + B * C * PM::pm_MaxT(0.0f, gamma));
+			const float L1 = (A + B * C * PM::pm_MaxT(0.0f, gamma));
 
-			diff += (PM_INV_PI_F * L1) * Li * mAlbedoSpectrum;
+			spec = (PM_INV_PI_F * L1) * Li * mAlbedoSpectrum;
 		}
 
-		if (mReflectivity > std::numeric_limits<float>::epsilon())
+		if (mReflectivity > PM_EPSILON && mRoughness > PM_EPSILON)
 		{
-			spec += (mReflectivity *
-				BRDF::standard(mFresnel, alpha, L, point.normal(), H, V)) * Li * mSpecularitySpectrum;
+			spec += BRDF::standard(mFresnel, alpha, L, point.normal(), H, V) * Li * mSpecularitySpectrum;
 		}
+		else if (mReflectivity > PM_EPSILON)
+		{
+			spec += BRDF::fresnel_schlick(mFresnel, L, H) * Li * mSpecularitySpectrum;
+		}
+
+		return spec;
 	}
 
 	float BRDFMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		if (mReflectivity > std::numeric_limits<float>::epsilon())
-		{
-			dir = BRDF::reflect(point.normal(), V);
-		}
-		return 1;
+		dir = BRDF::reflect(point.normal(), V);
+		return mReflectivity;
 	}
 
 	float BRDFMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		return false;
+		return 0;
 	}
 }

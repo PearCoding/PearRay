@@ -10,11 +10,10 @@ namespace PR
 	{
 	}
 
-	void MirrorMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-		Spectrum& diff, Spectrum& spec)
+	Spectrum MirrorMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
 		// TODO
-		spec += Li;
+		return Li;
 	}
 
 	float MirrorMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)

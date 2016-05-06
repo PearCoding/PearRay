@@ -183,18 +183,6 @@ namespace PR
 		return false;
 	}
 
-	bool Plane::intersects(const Ray& ray) const
-	{
-		PM::vec3 tmp = PM::pm_Set(0,0,0,1);
-		return intersects(ray, tmp);
-	}
-
-	bool Plane::intersects(const Ray& ray, PM::vec3& collisionPoint) const
-	{
-		float u, v;
-		return intersects(ray, collisionPoint, u, v);
-	}
-
 	bool Plane::intersects(const Ray& ray, PM::vec3& collisionPoint, float& u, float& v) const
 	{
 		float ln = PM::pm_Dot3D(ray.direction(), mNormal);

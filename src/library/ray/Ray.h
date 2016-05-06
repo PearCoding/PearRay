@@ -13,12 +13,7 @@ namespace PR
 
 		RF_DefaultCollision = RF_NeedCollisionNormal | RF_NeedCollisionUV,
 
-		RF_NoDirectShading = 0x10,
-		RF_NoIndirectShading = 0x11,
-
-		RF_HasTarget = 0x20,
-
-		RF_ShadowRay = /*RF_NoDirectShading |*/ RF_NoIndirectShading | RF_HasTarget,
+		RF_ShadowRay = 0x10,
 	};
 
 	class PR_LIB Ray
@@ -43,13 +38,9 @@ namespace PR
 
 		inline int flags() const;
 		inline void setFlags(int flags);
-
-		inline void setTarget(const PM::vec3& p);
-		inline PM::vec3 target() const;
 	private:
 		PM::vec3 mStartPosition;
 		PM::vec3 mDirection;
-		PM::vec3 mTarget;
 		uint32 mDepth;// Recursion depth!
 		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
 		uint8 mFlags;

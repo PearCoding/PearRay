@@ -91,13 +91,7 @@ namespace PR
 			PM::pm_IsGreaterOrEqual(mLowerBound, point);
 	}
 
-	bool BoundingBox::intersects(const Ray& ray) const
-	{
-		PM::vec3 tmp = PM::pm_Set(0,0,0,1);
-		return intersects(ray, tmp);
-	}
-
-	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint) const
+	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, FaceSide& side) const
 	{
 		float tmin = -std::numeric_limits<float>::max();
 		float tmax = std::numeric_limits<float>::max();
@@ -107,6 +101,9 @@ namespace PR
 		float hz = depth() / 2;
 
 		PM::vec3 p = PM::pm_Subtract(center(), ray.startPosition());
+
+		FaceSide minSide = FS_Left;
+		FaceSide maxSide = FS_Right;
 
 		// X
 		if (std::abs(PM::pm_GetX(ray.direction())) > std::numeric_limits<float>::epsilon())
@@ -123,11 +120,13 @@ namespace PR
 			if (t1 > tmin)
 			{
 				tmin = t1;
+				minSide = FS_Left;
 			}
 
 			if (t2 < tmax)
 			{
 				tmax = t2;
+				maxSide = FS_Right;
 			}
 
 			if (tmin > tmax || tmax < 0)
@@ -156,11 +155,13 @@ namespace PR
 			if (t1 > tmin)
 			{
 				tmin = t1;
+				minSide = FS_Bottom;
 			}
 
 			if (t2 < tmax)
 			{
 				tmax = t2;
+				maxSide = FS_Top;
 			}
 
 			if (tmin > tmax || tmax < 0)
@@ -189,11 +190,13 @@ namespace PR
 			if (t1 > tmin)
 			{
 				tmin = t1;
+				minSide = FS_Front;
 			}
 
 			if (t2 < tmax)
 			{
 				tmax = t2;
+				maxSide = FS_Back;
 			}
 
 			if (tmin > tmax || tmax < 0)
@@ -209,6 +212,7 @@ namespace PR
 
 		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(),
 			tmin <= 0 ? tmax : tmin));
+		side = tmin <= 0 ? maxSide : minSide;
 
 		return true;
 	}

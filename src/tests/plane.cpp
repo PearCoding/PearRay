@@ -77,7 +77,9 @@ PR_TEST("Intersects 2");
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(1, 0, 0, 1), PM::pm_Set(0, 1, 0, 1));
 	Ray ray(PM::pm_Set(0.5, 0.5, -1, 1), PM::pm_Set(0, 1, 0, 0));
 
-	PR_CHECK_FALSE(plane.intersects(ray));
+	PM::vec3 point;
+	float u, v;
+	PR_CHECK_FALSE(plane.intersects(ray, point, u, v));
 }
 
 PR_TEST("Intersects 3");

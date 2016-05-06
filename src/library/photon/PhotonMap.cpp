@@ -178,9 +178,7 @@ namespace PR
 			{
 				Photon* node = &mPhotons[i];
 				for (uint32 j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
-				{
 					node->Power[j] *= scale;
-				}
 			}
 			mPreviousScaleIndex = mStoredPhotons + 1;
 		}

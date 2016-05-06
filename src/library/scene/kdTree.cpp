@@ -195,7 +195,9 @@ namespace PR
 	RenderEntity* kdTree::checkCollisionAtNode(
 		const kdNode* node, const Ray& ray, FacePoint& collisionPoint, float& near, Entity* ignore) const
 	{
-		if (node && node->boundingBox.intersects(ray))
+		PM::vec3 collisionPos;
+		BoundingBox::FaceSide side;
+		if (node && node->boundingBox.intersects(ray, collisionPos, side))
 		{
 			RenderEntity* res = nullptr;
 			FacePoint tmpCollisionPoint;

@@ -69,12 +69,6 @@ namespace PR
 		return PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, point)) <= mRadius*mRadius;
 	}
 
-	bool Sphere::intersects(const Ray& ray) const
-	{
-		PM::vec3 tmp = PM::pm_Set(0,0,0,1);
-		return intersects(ray, tmp);
-	}
-
 	bool Sphere::intersects(const Ray& ray, PM::vec3& collisionPoint) const
 	{
 		const PM::vec3 L = PM::pm_Subtract(mPosition, ray.startPosition()); // C - O

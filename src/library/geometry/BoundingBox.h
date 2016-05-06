@@ -14,6 +14,16 @@ namespace PR
 	class PR_LIB BoundingBox
 	{
 	public:
+		enum FaceSide
+		{
+			FS_Left,
+			FS_Right,
+			FS_Top,
+			FS_Bottom,
+			FS_Front,
+			FS_Back
+		};
+
 		BoundingBox();
 		BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound);
 		BoundingBox(float width, float height, float depth);
@@ -37,8 +47,7 @@ namespace PR
 		bool isValid() const;
 
 		bool contains(const PM::vec3& point) const;
-		bool intersects(const Ray& ray) const;
-		bool intersects(const Ray& ray, PM::vec3& collisionPoint) const;
+		bool intersects(const Ray& ray, PM::vec3& collisionPoint, FaceSide& side) const;
 
 		void put(const PM::vec3& point);
 		void combine(const BoundingBox& other);
@@ -47,16 +56,6 @@ namespace PR
 		BoundingBox putted(const PM::vec3& point) const;
 		BoundingBox combined(const BoundingBox& other) const;
 		BoundingBox shifted(const PM::vec3& point) const;
-
-		enum FaceSide
-		{
-			FS_Left,
-			FS_Right,
-			FS_Top,
-			FS_Bottom,
-			FS_Front,
-			FS_Back
-		};
 
 		Plane getFace(FaceSide side) const;
 	private:

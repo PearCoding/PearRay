@@ -47,50 +47,9 @@ namespace PR
 		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
 
 		BoundingBox box = localBoundingBox();
-		if (box.intersects(local, vertex))
+		BoundingBox::FaceSide side;
+		if (box.intersects(local, vertex, side))
 		{
-			bool found = false;
-			BoundingBox::FaceSide side;
-
-			PM::vec3 lv = PM::pm_Subtract(vertex, box.lowerBound());
-			if (PM::pm_GetX(lv) < std::numeric_limits<float>::epsilon() &&
-				PM::pm_GetX(lv) > -std::numeric_limits<float>::epsilon())
-			{
-				side = BoundingBox::FS_Left;
-				found = true;
-			}
-			else if (PM::pm_GetY(lv) < std::numeric_limits<float>::epsilon() &&
-				PM::pm_GetY(lv) > -std::numeric_limits<float>::epsilon())
-			{
-				side = BoundingBox::FS_Bottom;
-				found = true;
-			}
-			else if (PM::pm_GetZ(lv) < std::numeric_limits<float>::epsilon() &&
-				PM::pm_GetZ(lv) > -std::numeric_limits<float>::epsilon())
-			{
-				side = BoundingBox::FS_Front;
-				found = true;
-			}
-
-			if (!found)
-			{
-				PM::vec3 uv = PM::pm_Subtract(vertex, box.upperBound());
-				if (PM::pm_GetX(uv) < std::numeric_limits<float>::epsilon() &&
-					PM::pm_GetX(uv) > -std::numeric_limits<float>::epsilon())
-				{
-					side = BoundingBox::FS_Right;
-				}
-				else if (PM::pm_GetY(uv) < std::numeric_limits<float>::epsilon() &&
-					PM::pm_GetY(uv) > -std::numeric_limits<float>::epsilon())
-				{
-					side = BoundingBox::FS_Top;
-				}
-				else
-				{
-					side = BoundingBox::FS_Back;
-				}
-			}
-
 			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), vertex), 1));
 
 			Plane plane = box.getFace(side);

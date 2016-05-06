@@ -36,11 +36,10 @@ namespace PR
 		mFresnel = tmp * tmp;
 	}
 
-	void GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li,
-		Spectrum& diff, Spectrum& spec)
+	Spectrum GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
 		// TODO
-		spec += Li * mSpecularitySpectrum;
+		return Li * mSpecularitySpectrum;
 	}
 
 	float GlassMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
