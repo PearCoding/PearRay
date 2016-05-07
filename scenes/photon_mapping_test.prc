@@ -9,9 +9,11 @@
 		;:projection		"orthographic"
 		:projection		"perspective"
 		
-		:width			1.33333
+		;:width			1.33333
+		;:height			1
+		:width			1.777777
 		:height			1
-		:lensDistance	1
+		:lensDistance	1.3
 		
 		:lookAt			[0,1,0]
 		:position		[0,1,-3.5]

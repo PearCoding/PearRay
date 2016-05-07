@@ -74,8 +74,8 @@ namespace PR
 
 	Ray PerspectiveCamera::constructRay(float nx, float ny) const
 	{
-		float cx = - scale() * nx * mWidth;
-		float cy = - scale() * ny * mHeight;
+		float cx = - scale() * nx;
+		float cy = - scale() * ny;
 
 		PM::vec3 off = PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy));
 		PM::vec3 camPos = PM::pm_Add(off, PM::pm_Scale(mDirection_Cache, mLensDistance));
@@ -94,12 +94,14 @@ namespace PR
 		float dot = PM::pm_Dot3D(mDirection_Cache, PM::pm_Set(0, 1, 0));
 
 		if (dot >= 1)
-			mRight_Cache = PM::pm_Set(1, 0, 0);
+			mRight_Cache = PM::pm_Set(mWidth, 0, 0);
 		else if (dot <= -1)
-			mRight_Cache = PM::pm_Set(-1, 0, 0);
+			mRight_Cache = PM::pm_Set(-mWidth, 0, 0);
 		else
-			mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0))), 0);
+			mRight_Cache = PM::pm_Scale(
+				PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0))), 0),
+				mWidth);
 
-		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache)), 0);
+		mUp_Cache = PM::pm_Scale(PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache)), 0), mHeight);
 	}
 }

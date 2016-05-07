@@ -14,7 +14,8 @@ namespace PR
 		// Photon Mapping
 		mMaxPhotons(100000),
 		mMaxPhotonGatherRadius(0.02f),
-		mMaxPhotonGatherCount(500)
+		mMaxPhotonGatherCount(500),
+		mMaxPhotonDiffuseBounces(4)
 	{
 	}
 }

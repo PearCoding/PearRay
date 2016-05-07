@@ -103,7 +103,7 @@ void MainWindow::openProject(const QString& str)
 
 	if (mEnvironment)
 	{
-		mRenderer = new PR::Renderer(800, 600, mEnvironment->camera(), mEnvironment->scene());
+		mRenderer = new PR::Renderer(1920, 1080, mEnvironment->camera(), mEnvironment->scene());
 
 		ui.viewWidget->setRenderer(mRenderer);
 		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));

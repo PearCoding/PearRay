@@ -7,7 +7,7 @@ class DoubleProperty : public IProperty
 {
 	Q_OBJECT
 public:
-	DoubleProperty(const QString& name, double value, double min = 0, double max = 1, double stepsize = 0.1, int decimals = 4);
+	DoubleProperty(const QString& name, double value, double min = 0, double max = 1000000, double stepsize = 0.1, int decimals = 8);
 	virtual ~DoubleProperty();
 
 	QString valueText() const;

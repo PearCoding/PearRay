@@ -120,6 +120,9 @@ namespace PR
 				}
 			}
 
+			if (!midEntity)
+				return nullptr;//Nothing available
+
 			PR_LOGGER.logf(L_Debug, M_Scene, "[%d|%d] Volume %f | Near %f | Mid %f", depth, axis, box.volume(), near, mid);
 			PR_LOGGER.logf(L_Debug, M_Scene, "       -> Mid Object: %s", midEntity->toString().c_str());
 			midList.push_back(midEntity);

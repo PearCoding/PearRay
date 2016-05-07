@@ -39,16 +39,12 @@ namespace PR
 	void Renderer::reset()
 	{
 		for (RenderThread* thread : mThreads)
-		{
 			delete thread;
-		}
 
 		mThreads.clear();
 
 		if (mTileMap)
-		{
 			delete[] mTileMap;
-		}
 
 		for (Integrator* integrator : mIntegrators)
 			delete integrator;
@@ -89,9 +85,7 @@ namespace PR
 
 		/* Setup entities */
 		for (Entity* entity : mScene->entities())
-		{
 			entity->onPreRender();
-		}
 
 		/* Setup integrators */
 		if (mRenderSettings.maxLightSamples() > 0)
@@ -156,6 +150,7 @@ namespace PR
 						sx = x + xi / (float)mRenderSettings.xSamplerCount() - 0.5f;
 						sy = y + yi / (float)mRenderSettings.ySamplerCount() - 0.5f;
 						break;
+					default:
 					case SM_Jitter:
 						sx = x + (xi + mRandom.getFloat()) / (float)mRenderSettings.xSamplerCount() - 0.5f;
 						sy = y + (yi + mRandom.getFloat()) / (float)mRenderSettings.ySamplerCount() - 0.5f;

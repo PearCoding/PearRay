@@ -28,30 +28,59 @@ namespace PRU
 			{
 				DL::Data* fovHD = group->getFromKey("fovH");
 				DL::Data* fovVD = group->getFromKey("fovV");
+				DL::Data* widthD = group->getFromKey("width");
+				DL::Data* heightD = group->getFromKey("height");
 				DL::Data* lensDistD = group->getFromKey("lensDistance");
 				DL::Data* lookAtD = group->getFromKey("lookAt");
 
-				float fovH = 60;
-				float fovV = 45;
-				float lensDist = 0.1f;
-
-				if (fovHD && fovHD->isNumber())
-				{
-					fovH = fovHD->getFloatConverted();
-				}
-
-				if (fovVD && fovVD->isNumber())
-				{
-					fovV = fovVD->getFloatConverted();
-				}
-
-				if (lensDistD && lensDistD->isNumber())
-				{
-					lensDist = lensDistD->getFloatConverted();
-				}
-
 				PerspectiveCamera* camera = new PerspectiveCamera(name, parent);
-				camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+
+				if (fovVD || fovHD)
+				{
+					float fovH = 60;
+					float fovV = 45;
+					float lensDist = 0.1f;
+
+					if (fovHD && fovHD->isNumber())
+					{
+						fovH = fovHD->getFloatConverted();
+					}
+
+					if (fovVD && fovVD->isNumber())
+					{
+						fovV = fovVD->getFloatConverted();
+					}
+
+					if (lensDistD && lensDistD->isNumber())
+					{
+						lensDist = lensDistD->getFloatConverted();
+					}
+
+					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+				}
+				else
+				{
+					float width = 1;
+					float height = 1;
+					float lensDist = 0.1f;
+
+					if (widthD && widthD->isNumber())
+					{
+						width = widthD->getFloatConverted();
+					}
+
+					if (heightD && heightD->isNumber())
+					{
+						height = heightD->getFloatConverted();
+					}
+
+					if (lensDistD && lensDistD->isNumber())
+					{
+						lensDist = lensDistD->getFloatConverted();
+					}
+
+					camera->setWithSize(width, height, lensDist);
+				}
 
 				if (lookAtD && lookAtD->isType() == DL::Data::T_Array)
 				{
@@ -69,30 +98,59 @@ namespace PRU
 			{
 				DL::Data* fovHD = group->getFromKey("fovH");
 				DL::Data* fovVD = group->getFromKey("fovV");
+				DL::Data* widthD = group->getFromKey("width");
+				DL::Data* heightD = group->getFromKey("height");
 				DL::Data* lensDistD = group->getFromKey("lensDistance");
 				DL::Data* lookAtD = group->getFromKey("lookAt");
 
-				float fovH = 60;
-				float fovV = 45;
-				float lensDist = 0.1f;
-
-				if (fovHD && fovHD->isNumber())
-				{
-					fovH = fovHD->getFloatConverted();
-				}
-
-				if (fovVD && fovVD->isNumber())
-				{
-					fovV = fovVD->getFloatConverted();
-				}
-
-				if (lensDistD && lensDistD->isNumber())
-				{
-					lensDist = lensDistD->getFloatConverted();
-				}
-
 				OrthographicCamera* camera = new OrthographicCamera(name, parent);
-				camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+
+				if (fovVD || fovHD)
+				{
+					float fovH = 60;
+					float fovV = 45;
+					float lensDist = 0.1f;
+
+					if (fovHD && fovHD->isNumber())
+					{
+						fovH = fovHD->getFloatConverted();
+					}
+
+					if (fovVD && fovVD->isNumber())
+					{
+						fovV = fovVD->getFloatConverted();
+					}
+
+					if (lensDistD && lensDistD->isNumber())
+					{
+						lensDist = lensDistD->getFloatConverted();
+					}
+
+					camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV), lensDist);
+				}
+				else
+				{
+					float width = 1;
+					float height = 1;
+					float lensDist = 0.1f;
+
+					if (widthD && widthD->isNumber())
+					{
+						width = widthD->getFloatConverted();
+					}
+
+					if (heightD && heightD->isNumber())
+					{
+						height = heightD->getFloatConverted();
+					}
+
+					if (lensDistD && lensDistD->isNumber())
+					{
+						lensDist = lensDistD->getFloatConverted();
+					}
+
+					camera->setWithSize(width, height, lensDist);
+				}
 
 				if (lookAtD && lookAtD->isType() == DL::Data::T_Array)
 				{

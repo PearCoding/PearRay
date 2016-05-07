@@ -79,6 +79,8 @@ QWidget(parent)
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherCountProp);
 	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Photon Gather Radius"), 0.1, 0, 10000);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherRadiusProp);
+	mMaxPhotonDiffuseBouncesProp = new IntProperty(tr("Max Photon Diffuse Bounces"), 4, 0);
+	mPhotonMappingGroupProp->addChild(mMaxPhotonDiffuseBouncesProp);
 	mProperties.add(mPhotonMappingGroupProp);
 
 	// View
@@ -116,6 +118,7 @@ SystemPropertyView::~SystemPropertyView()
 	delete mMaxPhotonsProp;
 	delete mMaxPhotonGatherCountProp;
 	delete mMaxPhotonGatherRadiusProp;
+	delete mMaxPhotonDiffuseBouncesProp;
 	delete mViewGroupProp;
 	delete mViewModeProp;
 	delete mViewScaleProp;
@@ -171,6 +174,7 @@ void SystemPropertyView::enableRendering()
 	mMaxPhotonsProp->setEnabled(false);
 	mMaxPhotonGatherRadiusProp->setEnabled(false);
 	mMaxPhotonGatherCountProp->setEnabled(false);
+	mMaxPhotonDiffuseBouncesProp->setEnabled(false);
 
 	mXSamplesProp->setEnabled(false);
 	mYSamplesProp->setEnabled(false);
@@ -190,6 +194,7 @@ void SystemPropertyView::disableRendering()
 	mMaxPhotonsProp->setEnabled(true);
 	mMaxPhotonGatherRadiusProp->setEnabled(true);
 	mMaxPhotonGatherCountProp->setEnabled(true);
+	mMaxPhotonDiffuseBouncesProp->setEnabled(true);
 
 	mXSamplesProp->setEnabled(true);
 	mYSamplesProp->setEnabled(true);
@@ -228,6 +233,8 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 		renderer->settings().maxPhotonGatherRadius());
 	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setValue(renderer->settings().maxPhotonGatherCount());
 	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setDefaultValue(renderer->settings().maxPhotonGatherCount());
+	reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->setValue(renderer->settings().maxPhotonDiffuseBounces());
+	reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxPhotonDiffuseBounces());
 }
 
 void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
@@ -243,5 +250,6 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 	renderer->settings().setMaxPhotons(reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->value());
 	renderer->settings().setMaxPhotonGatherCount(reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->value());
 	renderer->settings().setMaxPhotonGatherRadius(reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->value());
+	renderer->settings().setMaxPhotonDiffuseBounces(reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->value());
 }
 

@@ -55,6 +55,9 @@ namespace PR
 
 		mMap = new Photon::PhotonMap(renderer->settings().maxPhotons());
 
+		if (!mMap)
+			return;
+
 		// We should sample lights differently... not like this.
 		auto lightList = renderer->lights();
 		const size_t sampleSize = renderer->settings().maxPhotons() / lightList.size();
@@ -73,6 +76,7 @@ namespace PR
 					lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
 				ray.setSpectrum(light->material()->applyEmission(lightSample, lightSample.normal()));
 
+				uint32 diffuseBouces = 0;
 				for (uint32 j = 0; j < renderer->settings().maxRayDepth(); ++j)
 				{
 					if (ray.spectrum().isOnlyZero())
@@ -97,16 +101,18 @@ namespace PR
 							mMap->store(ray.spectrum(), collision.vertex(), ray.direction());
 							photonsShoot++;
 
-							//rnd = renderer->random().getFloat();
-							//if (rnd < entity->material()->roughness())// Shoot
-							//{
-							//	nextDir = PM::pm_SetW(Projection::align(collision.normal(),
-							//		Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
-							//}
-							//else
-							//{
+							rnd = renderer->random().getFloat();
+							if (diffuseBouces < renderer->settings().maxPhotonDiffuseBounces() &&
+								rnd < entity->material()->roughness())// Shoot
+							{
+								nextDir = PM::pm_SetW(Projection::align(collision.normal(),
+									Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
+								diffuseBouces++;
+							}
+							else
+							{
 								break;// Absorb
-							//}
+							}
 						}
 						else// Reflect
 						{
@@ -150,8 +156,8 @@ namespace PR
 		mMap->balanceTree();
 
 		mSphereCount = renderer->threads();
-		mPhotonSpheres = new Photon::PhotonSphere[renderer->threads()];
-		for (uint32 i = 0; i < renderer->threads(); ++i)
+		mPhotonSpheres = new Photon::PhotonSphere[mSphereCount];
+		for (uint32 i = 0; i < mSphereCount; ++i)
 		{
 			mPhotonSpheres[i].Distances2 = new float[renderer->settings().maxPhotonGatherCount() + 1];
 			mPhotonSpheres[i].Index = new const Photon::Photon*[renderer->settings().maxPhotonGatherCount() + 1];
@@ -162,7 +168,7 @@ namespace PR
 	constexpr float K = 1.1;
 	Spectrum PhotonIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
-		if (mMap->isEmpty())
+		if (!mMap || mMap->isEmpty())
 			return Spectrum();
 
 		Photon::PhotonSphere* sphere = &mPhotonSpheres[context->threadNumber()];

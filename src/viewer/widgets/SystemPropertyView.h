@@ -58,6 +58,7 @@ private:
 	IProperty* mMaxPhotonsProp;
 	IProperty* mMaxPhotonGatherRadiusProp;
 	IProperty* mMaxPhotonGatherCountProp;
+	IProperty* mMaxPhotonDiffuseBouncesProp;
 
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;

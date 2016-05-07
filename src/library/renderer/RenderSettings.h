@@ -42,6 +42,9 @@ namespace PR
 
 		inline uint32 maxPhotonGatherCount() const { return mMaxPhotonGatherCount; }
 		inline void setMaxPhotonGatherCount(uint32 v) { mMaxPhotonGatherCount = v; }
+
+		inline uint32 maxPhotonDiffuseBounces() const { return mMaxPhotonDiffuseBounces; }
+		inline void setMaxPhotonDiffuseBounces(uint32 v) { mMaxPhotonDiffuseBounces = v; }
 	private:
 		SamplerMode mSamplerMode;
 		uint32 mXSamplerCount;
@@ -56,5 +59,6 @@ namespace PR
 		uint32 mMaxPhotons;
 		float mMaxPhotonGatherRadius;
 		uint32 mMaxPhotonGatherCount;
+		uint32 mMaxPhotonDiffuseBounces;
 	};
 }
