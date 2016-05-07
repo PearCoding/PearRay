@@ -5,7 +5,7 @@ namespace PR
 {
 	Material::Material() :
 		mEmission(), 
-		mCanBeShaded(true), mSelfShadow(true), mCameraVisible(true), mIsLight(false)
+		mIsLight(false), mCanBeShaded(true), mSelfShadow(true), mCameraVisible(true)
 	{
 	}
 

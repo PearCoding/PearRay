@@ -12,9 +12,9 @@ namespace PR
 		// Based on the implementation in the book:
 		// Realistic Image Synthesis Using Photon Mapping (2nd Edition: 2001)
 		// from Henrik Wann Jensen
-		// TODO: This is just the starting point to implement progressive photon mapping later
 		class PhotonMap
 		{
+			PR_CLASS_NON_COPYABLE(PhotonMap);
 		public:
 			PhotonMap(uint64 max_photons);
 			~PhotonMap();
@@ -31,12 +31,10 @@ namespace PR
 
 			void balanceTree();// Balance the KD-tree before using
 
-			//TODO: Add estimation
-
 		private:
 			// KD-tree utils
 			void balanceSegment(Photon** balance, Photon** original, uint64 index, uint64 start, uint64 end);
-			void medianSplit(Photon** photon, uint64 start, uint64 end, uint64 median, int axis);
+			static void medianSplit(Photon** photon, uint64 start, uint64 end, uint64 median, int axis);
 
 			Photon* mPhotons;
 			uint64 mStoredPhotons;

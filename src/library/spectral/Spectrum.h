@@ -20,7 +20,7 @@ namespace PR
 		static constexpr uint32 SAMPLING_COUNT = WAVELENGTH_AREA_SIZE / WAVELENGTH_STEP + 1;
 		
 		inline Spectrum();
-		inline Spectrum(const float* data);// Be cautious!
+		inline explicit Spectrum(const float* data);// Be cautious!
 		inline ~Spectrum();
 
 		inline Spectrum(const Spectrum& spec);

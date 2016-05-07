@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "PearMath.h"
 
 #include <iostream>
 #include <list>
@@ -25,13 +26,13 @@ namespace PRT
 		std::string mName;
 
 	public:
-		Test(const std::string& name) :
+		inline explicit Test(const std::string& name) :
 			mName(name)
 		{
 			mCount = 0;
 		}
 
-		void assert(bool cond, const std::string& msg, const std::string& func, int line)
+		inline void assert(bool cond, const std::string& msg, const std::string& func, int line)
 		{
 			if (!cond)
 			{
@@ -40,7 +41,7 @@ namespace PRT
 			mCount++;
 		}
 
-		bool end()
+		inline bool end() const 
 		{
 			std::cout << "Test '" << mName << "':" << std::endl;
 			int i = 1;
@@ -56,7 +57,7 @@ namespace PRT
 			return mErrors.size() == 0;
 		}
 	private:
-		void add_error(const std::string& msg, const std::string& func, int line)
+		inline void add_error(const std::string& msg, const std::string& func, int line)
 		{
 			mErrors.push_back({ msg, func, line });
 		}
@@ -65,18 +66,18 @@ namespace PRT
 	class TestCase
 	{
 	public:
-		TestCase(const std::string& name) :
-			mErrors(0), mCount(0)
+		inline explicit TestCase(const std::string& name) :
+			mCount(0), mErrors(0)
 		{
 			std::cout << "Test case: " << name << std::endl;
 		}
 
-		Test* begin(const std::string& name)
+		inline Test* begin(const std::string& name)
 		{
 			return new Test(name);
 		}
 
-		void end(Test* test)
+		inline void end(Test* test)
 		{
 			mCount++;
 			std::cout << "######################" << std::endl;
@@ -88,7 +89,7 @@ namespace PRT
 			delete test;
 		}
 
-		bool end()
+		inline bool end()
 		{
 			std::cout << "######################" << std::endl;
 			std::cout << "Result: " << (mCount - mErrors) << "/" << mCount << " successful." << std::endl;
@@ -103,7 +104,7 @@ namespace PRT
 }
 
 #ifndef PRT_EPSILON
-# define PRT_EPSILON (std::numeric_limits<float>::epsilon() * 2)
+# define PRT_EPSILON (PM_EPSILON * 2)
 #endif
 
 #define PR_BEGIN_TESTCASE(name) \

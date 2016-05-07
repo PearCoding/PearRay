@@ -175,8 +175,8 @@ namespace PR
 			}
 
 			const int SampleCount = mRenderSettings.xSamplerCount() * mRenderSettings.ySamplerCount();
-			mResult.setDepth(x, y, newDepth / SampleCount);
-			mResult.setPoint(x, y, newSpec / SampleCount);
+			mResult.setDepth(x, y, newDepth / (float)SampleCount);
+			mResult.setPoint(x, y, newSpec / (float)SampleCount);
 		}
 		else
 		{
@@ -260,7 +260,7 @@ namespace PR
 
 	uint32 Renderer::threads() const
 	{
-		return mThreads.size();
+		return (uint32)mThreads.size();
 	}
 
 	bool Renderer::isFinished()

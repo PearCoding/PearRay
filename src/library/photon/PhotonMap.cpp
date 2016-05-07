@@ -6,7 +6,7 @@ namespace PR
 	namespace Photon
 	{
 		PhotonMap::PhotonMap(uint64 max_photons) :
-			mPhotons(nullptr), mStoredPhotons(0), mHalfStoredPhotons(0), mPreviousScaleIndex(1), mMaxPhotons(max_photons)
+			mPhotons(nullptr), mStoredPhotons(0), mHalfStoredPhotons(0), mMaxPhotons(max_photons), mPreviousScaleIndex(1)
 		{
 			mPhotons = new Photon[max_photons + 1];
 			PR_ASSERT(mPhotons);
@@ -46,11 +46,10 @@ namespace PR
 		void PhotonMap::locate(PhotonSphere& sphere, uint64 index)
 		{
 			Photon* photon = &mPhotons[index];
-			float dist1;
 
 			if (index < mHalfStoredPhotons)
 			{
-				dist1 = PM::pm_GetIndex(sphere.Center, photon->KDFlags) - photon->Position[photon->KDFlags];
+				float dist1 = PM::pm_GetIndex(sphere.Center, photon->KDFlags) - photon->Position[photon->KDFlags];
 				if (dist1 > 0) // Right search
 				{
 					locate(sphere, 2 * index + 1);
@@ -86,14 +85,13 @@ namespace PR
 
 					if (!sphere.GotHeap)
 					{
-						float distTmp;
 						const Photon* photon2;
 						uint64 halfFound = sphere.Found >> 1;
 						for (uint64 k = halfFound; k >= 1; --k)
 						{
 							parent = k;
 							photon2 = sphere.Index[k];
-							distTmp = sphere.Distances2[k];
+							float distTmp = sphere.Distances2[k];
 
 							while (parent <= halfFound)
 							{
@@ -209,7 +207,7 @@ namespace PR
 
 			for (uint64 i = 1; i <= mStoredPhotons; ++i)
 			{
-				d = pTmp1[j] - mPhotons;
+				d = (uint64)(pTmp1[j] - mPhotons);
 				pTmp1[j] = nullptr;
 
 				if (d != h)

@@ -146,7 +146,7 @@ namespace PR
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
 			float findex = i*Q;
-			int index = std::floor(findex);
+			int index = (int)std::floor(findex);
 
 			if (index < RGB_TO_SPEC_SAMPLING_COUNT - 1)
 			{

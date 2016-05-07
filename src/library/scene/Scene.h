@@ -16,7 +16,7 @@ namespace PR
 	class PR_LIB Scene
 	{
 	public:
-		Scene(const std::string& name);
+		explicit Scene(const std::string& name);
 		virtual ~Scene();
 
 		void setName(const std::string& name);

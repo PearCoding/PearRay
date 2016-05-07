@@ -5,7 +5,7 @@
 namespace PR
 {
 	DebugBoundingBoxMaterial::DebugBoundingBoxMaterial() :
-		Material()
+		Material(), mDensity(0.5f)
 	{
 	}
 

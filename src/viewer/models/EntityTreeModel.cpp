@@ -125,7 +125,6 @@ QModelIndex EntityTreeModel::parent(const QModelIndex &index) const
 
 int EntityTreeModel::rowCount(const QModelIndex &parent) const
 {
-	PR::Entity *parentItem;
 	if (parent.column() > 0)
 	{
 		return 0;

@@ -308,8 +308,8 @@ void ViewWidget::cache()
 	QPainter painter(&image);
 	painter.setPen(Qt::NoPen);
 
-	int xc = width() / RECT_SIZE + 1;
-	int yc = height() / RECT_SIZE + 1;
+	uint32_t xc = width() / RECT_SIZE + 1;
+	uint32_t yc = height() / RECT_SIZE + 1;
 
 	for (uint32_t y = 0; y < yc; ++y)
 	{

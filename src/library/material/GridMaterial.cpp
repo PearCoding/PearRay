@@ -40,8 +40,8 @@ namespace PR
 
 	Spectrum GridMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
-		int u = PM::pm_GetX(point.uv()) * mGridCount;
-		int v = PM::pm_GetY(point.uv()) * mGridCount;
+		int u = (int)PM::pm_GetX(point.uv()) * mGridCount;
+		int v = (int)PM::pm_GetY(point.uv()) * mGridCount;
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
@@ -57,8 +57,8 @@ namespace PR
 
 	float GridMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		int u = PM::pm_GetX(point.uv()) * mGridCount;
-		int v = PM::pm_GetY(point.uv()) * mGridCount;
+		int u = (int)PM::pm_GetX(point.uv()) * mGridCount;
+		int v = (int)PM::pm_GetY(point.uv()) * mGridCount;
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
@@ -74,8 +74,8 @@ namespace PR
 
 	float GridMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		int u = PM::pm_GetX(point.uv()) * mGridCount;
-		int v = PM::pm_GetY(point.uv()) * mGridCount;
+		int u = (int)PM::pm_GetX(point.uv()) * mGridCount;
+		int v = (int)PM::pm_GetY(point.uv()) * mGridCount;
 
 		if (mFirst && (u % 2) == (v % 2))
 		{

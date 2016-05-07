@@ -17,7 +17,7 @@ namespace PRU
 	class PR_LIB_UTILS Environment
 	{
 	public:
-		Environment(const std::string& name);
+		explicit Environment(const std::string& name);
 		virtual ~Environment();
 
 		inline PR::Scene* scene()
