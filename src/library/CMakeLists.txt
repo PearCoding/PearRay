@@ -68,6 +68,17 @@ SET(PR_Spectral_Src
   ${PR_LIB}/spectral/Spectrum.cpp
   ${PR_LIB}/spectral/XYZConverter.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
+SET(PR_Texture_Src
+  ${PR_LIB}/texture/ConstTexture1D.cpp
+  ${PR_LIB}/texture/ConstTexture2D.cpp
+  ${PR_LIB}/texture/RGBTexture1D.cpp
+  ${PR_LIB}/texture/RGBTexture2D.cpp
+  ${PR_LIB}/texture/SpecTexture1D.cpp
+  ${PR_LIB}/texture/SpecTexture2D.cpp
+  ${PR_LIB}/texture/Texture1D.cpp
+  ${PR_LIB}/texture/Texture2D.cpp
+  ${PR_LIB}/texture/Texture3D.cpp)
+SOURCE_GROUP("Source Files\\Texture" FILES ${PR_Texture_Src})
 SET(PR_Thread_Src
   ${PR_LIB}/thread/Thread.cpp)
 SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
@@ -75,7 +86,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
-  ${PR_Photon_Src} ${PR_Integrator_Src}
+  ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Texture_Src}
 )
 
 SET(PR_Main_Hdr
@@ -154,6 +165,17 @@ SET(PR_Spectral_Hdr
   ${PR_LIB}/spectral/Spectrum.inl
   ${PR_LIB}/spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
+SET(PR_Texture_Hdr
+  ${PR_LIB}/texture/ConstTexture1D.h
+  ${PR_LIB}/texture/ConstTexture2D.h
+  ${PR_LIB}/texture/RGBTexture1D.h
+  ${PR_LIB}/texture/RGBTexture2D.h
+  ${PR_LIB}/texture/SpecTexture1D.h
+  ${PR_LIB}/texture/SpecTexture2D.h
+  ${PR_LIB}/texture/Texture1D.h
+  ${PR_LIB}/texture/Texture2D.h
+  ${PR_LIB}/texture/Texture3D.h)
+SOURCE_GROUP("Header Files\\Texture" FILES ${PR_Texture_Hdr})
 SET(PR_Thread_Hdr
   ${PR_LIB}/thread/Thread.h
   ${PR_LIB}/thread/Thread.inl)
@@ -162,7 +184,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
-  ${PR_Photon_Hdr} ${PR_Integrator_Hdr}
+  ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Texture_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

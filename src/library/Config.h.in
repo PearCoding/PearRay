@@ -175,4 +175,19 @@ namespace PR
 	typedef std::chrono::high_resolution_clock::time_point TimePoint;
 	typedef uint32 EntityID;
 	typedef uint32 DataRefID;
+
+	enum TextureWrapMode
+	{
+		TWM_Clamp,
+		TWM_Repeat,
+		TWM_MirroredRepeat
+	};
+
+	enum TextureInterpolationMode
+	{
+		TIM_NearestNeighbor,
+		TIM_Bilinear,
+		TIM_Trilinear,
+		TIM_Anisotropic
+	};
 }
