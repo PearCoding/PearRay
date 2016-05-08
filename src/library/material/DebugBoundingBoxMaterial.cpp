@@ -25,7 +25,7 @@ namespace PR
 		return 1;
 	}
 	
-	float DebugBoundingBoxMaterial::roughness() const
+	float DebugBoundingBoxMaterial::roughness(const FacePoint& point) const
 	{
 		return 0;
 	}

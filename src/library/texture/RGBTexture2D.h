@@ -8,6 +8,7 @@ namespace PR
 	{
 	public:
 		RGBTexture2D(float* rgba, uint32 width, uint32 height);
+		~RGBTexture2D();
 
 		uint32 width() const;
 		uint32 height() const;

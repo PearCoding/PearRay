@@ -10,6 +10,12 @@ namespace PR
 		PR_ASSERT(width > 0);
 	}
 
+	RGBTexture1D::~RGBTexture1D()
+	{
+		// NO REFERENCE COUNTING!
+		delete[] mRGBA;
+	}
+
 	uint32 RGBTexture1D::width() const
 	{
 		return mWidth;

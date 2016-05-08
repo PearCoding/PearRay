@@ -89,8 +89,8 @@ namespace PR
 		return false;
 	}
 
-	float GridMaterial::roughness() const
+	float GridMaterial::roughness(const FacePoint& point) const
 	{
-		return PM::pm_MaxT(mFirst ? mFirst->roughness() : 0, mSecond ? mSecond->roughness() : 0);
+		return PM::pm_MaxT(mFirst ? mFirst->roughness(point) : 0, mSecond ? mSecond->roughness(point) : 0);
 	}
 }

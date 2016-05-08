@@ -10,6 +10,12 @@ namespace PR
 		PR_ASSERT(height > 0);
 	}
 
+	SpecTexture2D::~SpecTexture2D()
+	{
+		// NO REFERENCE COUNTING!
+		delete[] mSpectrums;
+	}
+
 	uint32 SpecTexture2D::width() const
 	{
 		return mWidth;

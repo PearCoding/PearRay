@@ -1,10 +1,11 @@
 #include "Material.h"
 #include "ray/Ray.h"
+#include "geometry/FacePoint.h"
 
 namespace PR
 {
 	Material::Material() :
-		mEmission(), 
+		mEmission(nullptr), 
 		mIsLight(false), mCanBeShaded(true), mSelfShadow(true), mCameraVisible(true)
 	{
 	}
@@ -14,15 +15,15 @@ namespace PR
 		return mIsLight;
 	}
 
-	Spectrum Material::emission() const
+	Texture2D* Material::emission() const
 	{
 		return mEmission;
 	}
 
-	void Material::setEmission(const Spectrum& spec)
+	void Material::setEmission(Texture2D* spec)
 	{
 		mEmission = spec;
-		mIsLight = !mEmission.isOnlyZero();
+		mIsLight = mEmission != nullptr;
 	}
 
 	bool Material::canBeShaded() const
@@ -62,6 +63,9 @@ namespace PR
 	
 	Spectrum Material::applyEmission(const FacePoint& point, const PM::vec3& V)
 	{
-		return mEmission;
+		if (mEmission)
+			return mEmission->eval(point.uv());
+		else
+			return Spectrum();
 	}
 }

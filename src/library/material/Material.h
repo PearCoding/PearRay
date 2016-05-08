@@ -1,7 +1,6 @@
 #pragma once
 
-#include "spectral/Spectrum.h"
-#include "PearMath.h"
+#include "texture/Texture2D.h"
 
 namespace PR
 {
@@ -29,12 +28,12 @@ namespace PR
 			return false;
 		}
 
-		virtual float roughness() const = 0;// How much specular!
+		virtual float roughness(const FacePoint& point) const = 0;// How much specular!
 
 		bool isLight() const;
 
-		Spectrum emission() const;
-		void setEmission(const Spectrum& spec);
+		Texture2D* emission() const;
+		void setEmission(Texture2D* spec);
 
 		bool canBeShaded() const;
 		void enableShading(bool b);
@@ -46,7 +45,7 @@ namespace PR
 		bool isCameraVisible() const;
 
 	private:
-		Spectrum mEmission;
+		Texture2D* mEmission;
 
 		bool mIsLight;
 		bool mCanBeShaded;

@@ -27,7 +27,7 @@ namespace PR
 		return 0;
 	}
 
-	float UVDebugMaterial::roughness() const
+	float UVDebugMaterial::roughness(const FacePoint& point) const
 	{
 		return 1;
 	}

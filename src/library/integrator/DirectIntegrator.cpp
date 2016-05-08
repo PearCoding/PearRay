@@ -29,7 +29,7 @@ namespace PR
 		FacePoint collisionPoint;
 		Spectrum spec;
 
-		bool onlySpecular = entity->material()->roughness() <= PM_EPSILON;
+		bool onlySpecular = entity->material()->roughness(point) <= PM_EPSILON;
 
 		PM::vec3 reflectionVector;
 		PM::vec3 transmissionVector;

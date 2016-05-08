@@ -10,8 +10,8 @@ namespace PR
 	public:
 		GlassMaterial();
 
-		Spectrum specularity() const;
-		void setSpecularity(const Spectrum& spec);
+		Texture2D* specularity() const;
+		void setSpecularity(Texture2D* spec);
 
 		float index() const;
 		void setIndex(float f);
@@ -21,9 +21,9 @@ namespace PR
 		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 
-		float roughness() const override;
+		float roughness(const FacePoint& point) const override;
 	private:
-		Spectrum mSpecularitySpectrum;
+		Texture2D* mSpecularity;
 
 		float mIndex;
 		float mFresnel;

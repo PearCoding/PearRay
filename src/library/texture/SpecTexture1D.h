@@ -8,6 +8,7 @@ namespace PR
 	{
 	public:
 		SpecTexture1D(Spectrum* specs, uint32 width);
+		~SpecTexture1D();
 
 		uint32 width() const;
 

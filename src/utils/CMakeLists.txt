@@ -21,8 +21,7 @@ SET(PR_Parser_Material_Src
   ${PR_UTILS}/parser/material/DebugBoundingBoxMaterialParser.cpp
   ${PR_UTILS}/parser/material/DebugMaterialParser.cpp
   ${PR_UTILS}/parser/material/GlassMaterialParser.cpp
-  ${PR_UTILS}/parser/material/GridMaterialParser.cpp
-  ${PR_UTILS}/parser/material/MirrorMaterialParser.cpp)
+  ${PR_UTILS}/parser/material/GridMaterialParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
 )
@@ -49,8 +48,7 @@ SET(PR_Parser_Material_Hdr
   ${PR_UTILS}/parser/material/DebugMaterialParser.h
   ${PR_UTILS}/parser/material/GlassMaterialParser.h
   ${PR_UTILS}/parser/material/GridMaterialParser.h
-  ${PR_UTILS}/parser/material/MaterialParser.h
-  ${PR_UTILS}/parser/material/MirrorMaterialParser.h)
+  ${PR_UTILS}/parser/material/MaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
 )
@@ -58,5 +56,6 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_M
 add_library(pr_lib_utils SHARED ${PR_Src} ${PR_Hdr})
 target_link_libraries(pr_lib_utils ${PR_TARGET})
 target_link_libraries(pr_lib_utils ${DL_TARGET})
+target_link_libraries(pr_lib_utils ${PP_TARGET})
 set_target_properties(pr_lib_utils PROPERTIES VERSION ${PR_Version})
 set_target_properties(pr_lib_utils PROPERTIES COMPILE_DEFINITIONS "${DEFS};PR_LIB_UTILS_BUILD;" COMPILE_DEFINITIONS_DEBUG "${DEFS_DEBUG}")

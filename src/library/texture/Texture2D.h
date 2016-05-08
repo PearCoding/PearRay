@@ -5,20 +5,64 @@
 
 namespace PR
 {
-	class PR_LIB Texture2D
+	template<typename T>
+	class PR_LIB_INLINE GenericTexture2D
 	{
+		PR_CLASS_NON_COPYABLE(GenericTexture2D<T>);
 	public:
-		Texture2D();
+		inline GenericTexture2D() :
+			mWrapMode(TWM_Clamp)
+		{
+		}
 
-		Spectrum eval(const PM::vec2& uv);
+		inline virtual ~GenericTexture2D()
+		{
+		}
 
-		TextureWrapMode wrapMode() const;
-		void setWrapMode(TextureWrapMode mode);
+		inline T eval(const PM::vec2& uv)
+		{
+			switch (mWrapMode)
+			{
+			default:
+			case TWM_Clamp:
+				return getValue(PM::pm_Clamp(uv, PM::pm_Set(0, 0), PM::pm_Set(1, 1)));
+			case TWM_Repeat:
+				return getValue(PM::pm_Set(
+					PM::pm_GetX(uv) - (int)PM::pm_GetX(uv),
+					PM::pm_GetY(uv) - (int)PM::pm_GetY(uv)));
+			case TWM_MirroredRepeat:
+			{
+				int tx = (int)PM::pm_GetX(uv);
+				int ty = (int)PM::pm_GetY(uv);
+				float u = PM::pm_GetX(uv) - tx;
+				float v = PM::pm_GetY(uv) - tx;
+				if (tx % 2 == 1)
+					u = 1 - u;
+				if (ty % 2 == 1)
+					v = 1 - v;
+
+				return getValue(PM::pm_Set(u, v));
+			}
+			}
+		}
+
+		inline TextureWrapMode wrapMode() const
+		{
+			return mWrapMode;
+		}
+
+		inline void setWrapMode(TextureWrapMode mode)
+		{
+			mWrapMode = mode;
+		}
 
 	protected:
-		virtual Spectrum getValue(const PM::vec2& uv) = 0;
+		virtual T getValue(const PM::vec2& uv) = 0;
 
 	private:
 		TextureWrapMode mWrapMode;
 	};
+
+	typedef GenericTexture2D<float> Data2D;
+	typedef GenericTexture2D<Spectrum> Texture2D;
 }

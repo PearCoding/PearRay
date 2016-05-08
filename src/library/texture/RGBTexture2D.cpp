@@ -11,6 +11,12 @@ namespace PR
 		PR_ASSERT(height > 0);
 	}
 
+	RGBTexture2D::~RGBTexture2D()
+	{
+		// NO REFERENCE COUNTING!
+		delete[] mRGBA;
+	}
+
 	uint32 RGBTexture2D::width() const
 	{
 		return mWidth;

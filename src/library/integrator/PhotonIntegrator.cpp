@@ -95,7 +95,8 @@ namespace PR
 
 						// Russian Roulette
 						float rnd = renderer->random().getFloat();
-						if (rnd < entity->material()->roughness())// Diffuse
+						const float roughness = entity->material()->roughness(collision);
+						if (rnd < roughness)// Diffuse
 						{
 							// Always store when diffuse
 							mMap->store(ray.spectrum(), collision.vertex(), ray.direction());
@@ -103,7 +104,7 @@ namespace PR
 
 							rnd = renderer->random().getFloat();
 							if (diffuseBouces < renderer->settings().maxPhotonDiffuseBounces() &&
-								rnd < entity->material()->roughness())// Shoot
+								rnd < roughness)// Shoot
 							{
 								nextDir = PM::pm_SetW(Projection::align(collision.normal(),
 									Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);

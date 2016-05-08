@@ -14,6 +14,6 @@ namespace PR
 		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 
-		float roughness() const override;
+		float roughness(const FacePoint& point) const override;
 	};
 }

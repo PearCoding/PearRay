@@ -27,7 +27,7 @@ namespace PR
 		return 0;
 	}
 
-	float NormalDebugMaterial::roughness() const
+	float NormalDebugMaterial::roughness(const FacePoint& point) const
 	{
 		return 1;
 	}

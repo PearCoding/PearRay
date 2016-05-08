@@ -9,6 +9,12 @@ namespace PR
 		PR_ASSERT(width > 0);
 	}
 
+	SpecTexture1D::~SpecTexture1D()
+	{
+		// NO REFERENCE COUNTING!
+		delete[] mSpectrums;
+	}
+
 	uint32 SpecTexture1D::width() const
 	{
 		return mWidth;

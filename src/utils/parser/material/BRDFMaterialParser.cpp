@@ -29,46 +29,12 @@ namespace PRU
 
 		BRDFMaterial* diff = new BRDFMaterial;
 
-		if (albedoD && albedoD->isType() == DL::Data::T_String)
-		{
-			if (env->hasSpectrum(albedoD->getString()))
-			{
-				diff->setAlbedo(env->getSpectrum(albedoD->getString()));
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-					albedoD->getString().c_str());
-			}
-		}
-
-		if (specD && specD->isType() == DL::Data::T_String)
-		{
-			if (env->hasSpectrum(specD->getString()))
-			{
-				diff->setSpecularity(env->getSpectrum(specD->getString()));
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-					specD->getString().c_str());
-			}
-		}
-
-		if (roughnessD && roughnessD->isNumber())
-		{
-			diff->setRoughness(roughnessD->getFloatConverted());
-		}
-
-		if (reflectivityD && reflectivityD->isNumber())
-		{
-			diff->setReflectivity(reflectivityD->getFloatConverted());
-		}
-
-		if (fresnelD && fresnelD->isNumber())
-		{
-			diff->setFresnel(fresnelD->getFloatConverted());
-		}
+		diff->setAlbedo(loader->getTexture2D(env, albedoD));		
+		diff->setSpecularity(loader->getTexture2D(env, specD));
+		
+		diff->setRoughnessData(loader->getData2D(env, roughnessD));
+		diff->setReflectivityData(loader->getData2D(env, reflectivityD));
+		diff->setFresnelData(loader->getData1D(env, fresnelD));
 
 		return diff;
 	}

@@ -27,5 +27,25 @@ namespace PRU
 		{
 			delete p.second;
 		}
+
+		for (PR::Texture1D* tex : mTexture1D)
+		{
+			delete tex;
+		}
+
+		for (PR::Texture2D* tex : mTexture2D)
+		{
+			delete tex;
+		}
+
+		for (PR::Data1D* tex : mData1D)
+		{
+			delete tex;
+		}
+
+		for (PR::Data2D* tex : mData2D)
+		{
+			delete tex;
+		}
 	}
 }

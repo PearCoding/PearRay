@@ -10,18 +10,18 @@ namespace PR
 {
 	GlassMaterial::GlassMaterial() :
 		Material(), 
-		mSpecularitySpectrum(), mIndex(1), mFresnel(0)
+		mSpecularity(nullptr), mIndex(1), mFresnel(0)
 	{
 	}
 
-	Spectrum GlassMaterial::specularity() const
+	Texture2D* GlassMaterial::specularity() const
 	{
-		return mSpecularitySpectrum;
+		return mSpecularity;
 	}
 
-	void GlassMaterial::setSpecularity(const Spectrum& spec)
+	void GlassMaterial::setSpecularity(Texture2D* spec)
 	{
-		mSpecularitySpectrum = spec;
+		mSpecularity = spec;
 	}
 
 	float GlassMaterial::index() const
@@ -39,7 +39,10 @@ namespace PR
 	Spectrum GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
 	{
 		// TODO
-		return Li * mSpecularitySpectrum;
+		if (mSpecularity)
+			return Li * mSpecularity->eval(point.uv());
+		else
+			return Spectrum();
 	}
 
 	float GlassMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
@@ -69,7 +72,7 @@ namespace PR
 		return 0;
 	}
 
-	float GlassMaterial::roughness() const
+	float GlassMaterial::roughness(const FacePoint& point) const
 	{
 		return 0;
 	}

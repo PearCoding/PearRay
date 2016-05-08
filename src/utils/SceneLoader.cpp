@@ -16,7 +16,17 @@
 #include "parser/material/DebugMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
-#include "parser/material/MirrorMaterialParser.h"
+
+#include "texture/ConstData1D.h"
+#include "texture/ConstData2D.h"
+#include "texture/ConstTexture1D.h"
+#include "texture/ConstTexture2D.h"
+#include "texture/MapData1D.h"
+#include "texture/MapData2D.h"
+#include "texture/RGBTexture1D.h"
+#include "texture/RGBTexture2D.h"
+#include "texture/SpecTexture1D.h"
+#include "texture/SpecTexture2D.h"
 
 #include "geometry/Mesh.h"
 #include "loader/WavefrontLoader.h"
@@ -340,7 +350,6 @@ namespace PRU
 		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
 
 		{ "grid", GridMaterialParser() },
-		{ "mirror", MirrorMaterialParser() },
 		{ "glass", GlassMaterialParser() },
 
 		{ nullptr, DebugMaterialParser() },//Just for the end
@@ -408,18 +417,7 @@ namespace PRU
 
 		PR_ASSERT(mat);// After here it shouldn't be null
 
-		if (emissionD && emissionD->isType() == DL::Data::T_String)
-		{
-			if (env->hasSpectrum(emissionD->getString()))
-			{
-				mat->setEmission(env->getSpectrum(emissionD->getString()));
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-					emissionD->getString().c_str());
-			}
-		}
+		mat->setEmission(getTexture2D(env, emissionD));
 
 		if (shadeableD && shadeableD->isType() == DL::Data::T_Bool)
 		{
@@ -707,5 +705,97 @@ namespace PRU
 		}
 
 		return PM::pm_IdentityQuat();
+	}
+
+	Texture2D* SceneLoader::getTexture2D(Environment* env, DL::Data* dataD) const
+	{
+		if (!dataD)
+			return nullptr;
+
+		if (dataD->isType() == DL::Data::T_String)
+		{
+			if (env->hasSpectrum(dataD->getString()))
+			{
+				ConstTexture2D* tex = new ConstTexture2D(env->getSpectrum(dataD->getString()));
+				env->addTexture2D(tex);
+				return tex;
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
+					dataD->getString().c_str());
+			}
+		}
+		else if (dataD->isType() == DL::Data::T_Group)
+		{
+			std::string name = dataD->getGroup()->id();
+
+			if (name == "file")
+			{
+				//TODO
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
+			}
+		}
+
+		return nullptr;
+	}
+
+	Data1D* SceneLoader::getData1D(Environment* env, DL::Data* dataD) const
+	{
+		if (!dataD)
+			return nullptr;
+
+		if (dataD->isNumber())
+		{
+			ConstData1D* data = new ConstData1D(dataD->getFloatConverted());
+			env->addData1D(data);
+			return data;
+		}
+		else if (dataD->isType() == DL::Data::T_Group)
+		{
+			std::string name = dataD->getGroup()->id();
+
+			if (name == "file")
+			{
+				//TODO
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+			}
+		}
+
+		return nullptr;
+	}
+
+	Data2D* SceneLoader::getData2D(Environment* env, DL::Data* dataD) const
+	{
+		if (!dataD)
+			return nullptr;
+
+		if (dataD->isNumber())
+		{
+			ConstData2D* data = new ConstData2D(dataD->getFloatConverted());
+			env->addData2D(data);
+			return data;
+		}
+		else if (dataD->isType() == DL::Data::T_Group)
+		{
+			std::string name = dataD->getGroup()->id();
+
+			if (name == "file")
+			{
+				//TODO
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+			}
+		}
+
+		return nullptr;
 	}
 }

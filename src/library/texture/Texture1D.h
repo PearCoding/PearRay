@@ -5,20 +5,58 @@
 
 namespace PR
 {
-	class PR_LIB Texture1D
+	template<typename T>
+	class PR_LIB_INLINE GenericTexture1D
 	{
+		PR_CLASS_NON_COPYABLE(GenericTexture1D<T>);
 	public:
-		Texture1D();
+		inline GenericTexture1D() :
+			mWrapMode(TWM_Clamp)
+		{
+		}
 
-		Spectrum eval(float u);
+		inline virtual ~GenericTexture1D()
+		{
+		}
 
-		TextureWrapMode wrapMode() const;
-		void setWrapMode(TextureWrapMode mode);
+		inline T eval(float u)
+		{
+			switch (mWrapMode)
+			{
+			default:
+			case TWM_Clamp:
+				return getValue(PM::pm_ClampT(u, 0.0f, 1.0f));
+			case TWM_Repeat:
+				return getValue(u - (int)u);
+			case TWM_MirroredRepeat:
+			{
+				int tx = (int)u;
+				float tu = u - tx;
+				if (tx % 2 == 1)
+					tu = 1 - tu;
+
+				return getValue(tu);
+			}
+			}
+		}
+
+		inline TextureWrapMode wrapMode() const
+		{
+			return mWrapMode;
+		}
+
+		inline void setWrapMode(TextureWrapMode mode)
+		{
+			mWrapMode = mode;
+		}
 
 	protected:
-		virtual Spectrum getValue(float u) = 0;
+		virtual T getValue(float u) = 0;
 
 	private:
 		TextureWrapMode mWrapMode;
 	};
+
+	typedef GenericTexture1D<float> Data1D;
+	typedef GenericTexture1D<Spectrum> Texture1D;
 }

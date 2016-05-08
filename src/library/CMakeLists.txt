@@ -38,7 +38,6 @@ SET(PR_Material_Src
   ${PR_LIB}/material/GlassMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
   ${PR_LIB}/material/Material.cpp
-  ${PR_LIB}/material/MirrorMaterial.cpp
   ${PR_LIB}/material/NormalDebugMaterial.cpp
   ${PR_LIB}/material/UVDebugMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
@@ -69,15 +68,16 @@ SET(PR_Spectral_Src
   ${PR_LIB}/spectral/XYZConverter.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
 SET(PR_Texture_Src
+  ${PR_LIB}/texture/ConstData1D.cpp
+  ${PR_LIB}/texture/ConstData2D.cpp
   ${PR_LIB}/texture/ConstTexture1D.cpp
   ${PR_LIB}/texture/ConstTexture2D.cpp
+  ${PR_LIB}/texture/MapData1D.cpp
+  ${PR_LIB}/texture/MapData2D.cpp
   ${PR_LIB}/texture/RGBTexture1D.cpp
   ${PR_LIB}/texture/RGBTexture2D.cpp
   ${PR_LIB}/texture/SpecTexture1D.cpp
-  ${PR_LIB}/texture/SpecTexture2D.cpp
-  ${PR_LIB}/texture/Texture1D.cpp
-  ${PR_LIB}/texture/Texture2D.cpp
-  ${PR_LIB}/texture/Texture3D.cpp)
+  ${PR_LIB}/texture/SpecTexture2D.cpp)
 SOURCE_GROUP("Source Files\\Texture" FILES ${PR_Texture_Src})
 SET(PR_Thread_Src
   ${PR_LIB}/thread/Thread.cpp)
@@ -130,7 +130,6 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/GlassMaterial.h
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h
-  ${PR_LIB}/material/MirrorMaterial.h
   ${PR_LIB}/material/NormalDebugMaterial.h
   ${PR_LIB}/material/UVDebugMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
@@ -166,8 +165,12 @@ SET(PR_Spectral_Hdr
   ${PR_LIB}/spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Texture_Hdr
+  ${PR_LIB}/texture/ConstData1D.h
+  ${PR_LIB}/texture/ConstData2D.h
   ${PR_LIB}/texture/ConstTexture1D.h
   ${PR_LIB}/texture/ConstTexture2D.h
+  ${PR_LIB}/texture/MapData1D.h
+  ${PR_LIB}/texture/MapData2D.h
   ${PR_LIB}/texture/RGBTexture1D.h
   ${PR_LIB}/texture/RGBTexture2D.h
   ${PR_LIB}/texture/SpecTexture1D.h
