@@ -90,7 +90,6 @@ namespace PR
 	{
 		const float rough = roughness(point);
 		const float alpha = rough * rough;
-		const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 		const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
 
 		Spectrum spec;
@@ -102,7 +101,8 @@ namespace PR
 			}
 			else if (alpha >= PM_EPSILON)//Oren-Nayar
 			{
-				const float NdotV = PM::pm_Dot3D(point.normal(), V);
+				const float NdotV = std::abs(PM::pm_Dot3D(point.normal(), V));
+				const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 				const float angleVN = acosf(NdotL);
 				const float angleLN = acosf(NdotV);
 				const float or_alpha = PM::pm_MaxT(angleLN, angleVN);

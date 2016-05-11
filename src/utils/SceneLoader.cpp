@@ -732,7 +732,24 @@ namespace PRU
 
 			if (name == "file")
 			{
-				//TODO
+				if (dataD->getGroup()->unnamedCount() == 1)
+				{
+					DL::Data* filenameD = dataD->getGroup()->at(0);
+					if (filenameD->isType() == DL::Data::T_String)
+					{
+						if (!env->hasTexture2D(filenameD->getString()))
+						{
+							Texture2D* tex = mImageLoader.load(filenameD->getString());
+							if (tex)
+								env->addTexture2D(filenameD->getString(), tex);
+							return tex;
+						}
+						else
+						{
+							return env->getTexture2D(filenameD->getString());
+						}
+					}
+				}
 			}
 			else
 			{
@@ -788,7 +805,7 @@ namespace PRU
 
 			if (name == "file")
 			{
-				//TODO
+				// TODO:
 			}
 			else
 			{

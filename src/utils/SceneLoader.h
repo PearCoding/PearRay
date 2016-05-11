@@ -6,6 +6,8 @@
 #include "texture/Texture1D.h"
 #include "texture/Texture2D.h"
 
+#include "loader/ImageLoader.h"
+
 #include <string>
 
 namespace DL
@@ -44,5 +46,7 @@ namespace PRU
 		void addMaterial(DL::DataGroup* group, Environment* env);
 		void addSpectrum(DL::DataGroup* group, Environment* env);
 		void addMesh(DL::DataGroup* group, Environment* env);
+
+		ImageLoader mImageLoader;
 	};
 }

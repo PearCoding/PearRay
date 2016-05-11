@@ -9,6 +9,19 @@ namespace PR
 		PR_ASSERT(rgba);
 		PR_ASSERT(width > 0);
 		PR_ASSERT(height > 0);
+
+		// To linear
+		// TODO: Should be optional
+		for (uint32 i = 0; i < width; ++i)
+		{
+			for (uint32 j = 0; j < height; ++j)
+			{
+				for (uint32 e = 0; e < 3; ++e)
+				{
+					mRGBA[j * width * 4 + i * 4 + e] = std::pow(mRGBA[j * width * 4 + i * 4 + e], 2.2f);
+				}
+			}
+		}
 	}
 
 	RGBTexture2D::~RGBTexture2D()

@@ -7,6 +7,7 @@ SET(PR_Main_Src
   ${PR_UTILS}/RenderLoader.cpp
   ${PR_UTILS}/SceneLoader.cpp)
 SET(PR_Loader_Src
+  ${PR_UTILS}/loader/ImageLoader.cpp
   ${PR_UTILS}/loader/WavefrontLoader.cpp)
 SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
 SET(PR_Parser_Entity_Src
@@ -31,6 +32,7 @@ SET(PR_Main_Hdr
   ${PR_UTILS}/RenderLoader.h
   ${PR_UTILS}/SceneLoader.h)
 SET(PR_Loader_Hdr
+  ${PR_UTILS}/loader/ImageLoader.h
   ${PR_UTILS}/loader/MeshLoader.h
   ${PR_UTILS}/loader/WavefrontLoader.h)
 SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
