@@ -245,7 +245,7 @@ void MainWindow::updateView()
 			.arg(friendlyTime(time))
 			.arg(friendlyTime((1 - lerp)*timeLeft1 + lerp*timeLeft2)));
 
-		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)percent));
+		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)(percent*100)));
 
 		mFrameTime.restart();
 

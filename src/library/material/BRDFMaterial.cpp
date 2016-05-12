@@ -131,7 +131,8 @@ namespace PR
 			}
 			else if (refl > PM_EPSILON)
 			{
-				spec += BRDF::fresnel_schlick(fres, L, H) * Li * mSpecularity->eval(point.uv());
+				const float d = 1 - BRDF::fresnel_schlick(fres, L, point.normal());
+				spec +=  d * Li * mSpecularity->eval(point.uv());
 			}
 		}
 

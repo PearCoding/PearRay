@@ -23,6 +23,7 @@ namespace PRU
 		DL::Data* firstD = group->getFromKey("first");
 		DL::Data* secondD = group->getFromKey("second");
 		DL::Data* gridCountD = group->getFromKey("gridCount");
+		DL::Data* tileUVD = group->getFromKey("tileUV");
 
 		GridMaterial* bnd = new GridMaterial();
 
@@ -53,6 +54,11 @@ namespace PRU
 		if (gridCountD && gridCountD->isType() == DL::Data::T_Integer)
 		{
 			bnd->setGridCount(gridCountD->getInt());
+		}
+
+		if (tileUVD && tileUVD->isType() == DL::Data::T_Bool)
+		{
+			bnd->setTileUV(tileUVD->getBool());
 		}
 
 		return bnd;

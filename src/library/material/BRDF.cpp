@@ -74,7 +74,7 @@ namespace PR
 	float BRDF::standard(float f0, float alpha, const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V)
 	{
 		// Only optimizing is in the geometry
-		float fresnel = fresnel_schlick(f0, L, H);
+		float fresnel = 1-fresnel_schlick(f0, L, H);
 		float geometry = PM::pm_Dot3D(N, H) / (PM::pm_Dot3D(N, L)*PM::pm_Dot3D(V, H));
 		float ndf = ndf_beckmann(H, N, alpha);
 
