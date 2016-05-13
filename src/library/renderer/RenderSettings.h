@@ -12,10 +12,26 @@ namespace PR
 		SM_Jitter
 	};
 
+	enum DebugMode
+	{
+		DM_None,
+		DM_Normal_Both,
+		DM_Normal_Positive,
+		DM_Normal_Negative,
+		DM_Normal_Spherical,
+		DM_UV,
+		DM_Roughness,
+		DM_Reflectivity,
+		DM_Transmission
+	};
+
 	class PR_LIB RenderSettings
 	{
 	public:
 		RenderSettings();
+
+		inline DebugMode debugMode() const { return mDebugMode; }
+		inline void setDebugMode(DebugMode mode) { mDebugMode = mode; }
 
 		inline SamplerMode samplerMode() const { return mSamplerMode; }
 		inline void setSamplerMode(SamplerMode mode) { mSamplerMode = mode; }
@@ -32,6 +48,9 @@ namespace PR
 		// Direct Lightning
 		inline uint32 maxLightSamples() const { return mMaxLightSamples; }
 		inline void setMaxLightSamples(uint32 v) { mMaxLightSamples = v; }
+
+		inline bool isBiDirect() const { return mUseBiDirect; }
+		inline void enableBiDirect(bool v) { mUseBiDirect = v; }
 
 		// Photon Mapping
 		inline uint32 maxPhotons() const { return mMaxPhotons; }
@@ -52,8 +71,11 @@ namespace PR
 
 		uint32 mMaxRayDepth;
 
+		DebugMode mDebugMode;
+
 		// Direct Lightning
 		uint32 mMaxLightSamples;
+		bool mUseBiDirect;
 
 		// Photon Mapping
 		uint32 mMaxPhotons;

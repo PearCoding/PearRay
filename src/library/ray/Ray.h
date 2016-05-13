@@ -19,6 +19,7 @@ namespace PR
 	class PR_LIB Ray
 	{
 	public:
+		Ray();
 		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0);
 		virtual ~Ray();
 
@@ -28,6 +29,7 @@ namespace PR
 		inline void setDirection(const PM::vec3& p);
 		inline PM::vec3 direction() const;
 
+		inline void setDepth(uint32 depth);
 		inline uint32 depth() const;
 
 		inline void setSpectrum(const Spectrum& s);

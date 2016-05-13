@@ -48,6 +48,18 @@ PR_TEST("Intersects Right Inside");
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
 
+PR_TEST("Intersects Right");
+{
+	Ray ray(PM::pm_Set(2, 0, 0), PM::pm_Set(-1, 0, 0));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Right);
+}
+
 PR_TEST("Intersects Front");
 {
 	Ray ray(PM::pm_Set(0, 0, -2), PM::pm_Set(0, 0, 1));
@@ -72,9 +84,21 @@ PR_TEST("Intersects Back Inside");
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
 
+PR_TEST("Intersects Back");
+{
+	Ray ray(PM::pm_Set(0, 0, 2), PM::pm_Set(0, 0, -1));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, 1));
+	PR_CHECK_EQ(side, BoundingBox::FS_Back);
+}
+
 PR_TEST("Intersects Bottom");
 {
-	Ray ray(PM::pm_Set(0, -2, 0), PM::pm_Set(0, 2, 0));
+	Ray ray(PM::pm_Set(0, -2, 0), PM::pm_Set(0, 1, 0));
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
@@ -93,6 +117,31 @@ PR_TEST("Intersects Top Inside");
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Top);
+}
+
+PR_TEST("Intersects Top");
+{
+	Ray ray(PM::pm_Set(0, 2, 0), PM::pm_Set(0, -1, 0));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
+	PR_CHECK_EQ(side, BoundingBox::FS_Top);
+}
+
+PR_TEST("Intersects Complex");
+{
+	PM::vec3 point = PM::pm_Set(0, 1, 0);
+	Ray ray(PM::pm_Set(1, 2, 0), PM::pm_Normalize3D(PM::pm_Set(-1, -1, 0)));
+	BoundingBox box(2, 2, 2);
+
+	PM::vec3 collisionPoint;
+	BoundingBox::FaceSide side;
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_NEARLY_EQ_3(collisionPoint, point);
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 

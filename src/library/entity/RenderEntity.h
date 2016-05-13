@@ -20,7 +20,6 @@ namespace PR
 		bool isRenderable() const override;
 
 		virtual bool isLight() const;
-		virtual uint32 maxLightSamples() const;// 0 == Unbounded
 
 		void setMaterial(Material* m);
 		Material* material() const;

@@ -48,10 +48,8 @@ namespace PR
 			uint32 sampleCounter = 0;
 
 			for (RenderEntity* light : context->renderer()->lights())
-			{
-				const uint32 max = light->maxLightSamples() != 0 ? PM::pm_MinT(mLightSamples, light->maxLightSamples()) : mLightSamples;
-				
-				for (uint32 i = 0; i < max; ++i)
+			{				
+				for (uint32 i = 0; i < mLightSamples; ++i)
 				{
 					FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
 
@@ -63,11 +61,12 @@ namespace PR
 						Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 						ray.setFlags(ray.flags() & RF_ShadowRay);
 
-						if (context->shootWithApply(ray, collisionPoint))// Full light!!
+						if (context->shootWithApply(ray, collisionPoint) == light)// Full light!!
 						{
 							spec += entity->material()->apply(point, in.direction(), L, ray.spectrum())*NdotL;
-							sampleCounter++;
 						}
+							
+						sampleCounter++;
 					}
 				}
 			}

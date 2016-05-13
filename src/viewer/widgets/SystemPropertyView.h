@@ -45,6 +45,7 @@ private:
 	IProperty* mRendererTileYProp;
 	IProperty* mRendererThreadsProp;
 	IProperty* mRendererMaxRayDepthProp;
+	IProperty* mDebugVisualizationProp;
 
 	IProperty* mSamplerGroupProp;
 	IProperty* mSamplerProp;
@@ -53,6 +54,7 @@ private:
 
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;
+	IProperty* mUseBiDirectProp;
 
 	IProperty* mPhotonMappingGroupProp;
 	IProperty* mMaxPhotonsProp;

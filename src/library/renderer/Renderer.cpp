@@ -6,9 +6,11 @@
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 
+#include "integrator/BiDirectIntegrator.h"
 #include "integrator/DirectIntegrator.h"
 #include "integrator/PhotonIntegrator.h"
 #include "integrator/LightIntegrator.h"
+#include "integrator/DebugIntegrator.h"
 
 #include "Logger.h"
 
@@ -88,13 +90,25 @@ namespace PR
 			entity->onPreRender();
 
 		/* Setup integrators */
-		if (mRenderSettings.maxLightSamples() > 0)
-			mIntegrators.push_back(new DirectIntegrator(this, mRenderSettings.maxLightSamples()));
-		
-		if (mRenderSettings.maxPhotons() > 0)
-			mIntegrators.push_back(new PhotonIntegrator());
+		if (mRenderSettings.debugMode() != DM_None)
+		{
+			mIntegrators.push_back(new DebugIntegrator());
+		}
+		else
+		{
+			if (mRenderSettings.maxLightSamples() > 0)
+			{
+				if (mRenderSettings.isBiDirect())
+					mIntegrators.push_back(new BiDirectIntegrator());
+				else
+					mIntegrators.push_back(new DirectIntegrator(this, mRenderSettings.maxLightSamples()));
+			}
 
-		mIntegrators.push_back(new LightIntegrator());
+			if (mRenderSettings.maxPhotons() > 0)
+				mIntegrators.push_back(new PhotonIntegrator());
+
+			mIntegrators.push_back(new LightIntegrator());
+		}
 
 		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
 		for (uint32 i = 0; i < threadCount; ++i)

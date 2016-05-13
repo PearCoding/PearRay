@@ -13,7 +13,6 @@
 
 #include "parser/material/BRDFMaterialParser.h"
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
-#include "parser/material/DebugMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
 
@@ -346,13 +345,12 @@ namespace PRU
 		{ "diffuse", BRDFMaterialParser() },
 		{ "brdf", BRDFMaterialParser() },
 
-		{ "debug", DebugMaterialParser() },
 		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
 
 		{ "grid", GridMaterialParser() },
 		{ "glass", GlassMaterialParser() },
 
-		{ nullptr, DebugMaterialParser() },//Just for the end
+		{ nullptr, BRDFMaterialParser() },//Just for the end
 	};
 	void SceneLoader::addMaterial(DL::DataGroup* group, Environment* env)
 	{

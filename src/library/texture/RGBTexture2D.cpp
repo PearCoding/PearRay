@@ -63,8 +63,8 @@ namespace PR
 	Spectrum RGBTexture2D::getValue(const PM::vec2& uv)
 	{
 		// TODO: Use interpolation!
-		uint32 px = PM::pm_GetX(uv) * mWidth;
-		uint32 py = PM::pm_GetY(uv) * mHeight;
+		uint32 px = PM::pm_GetX(uv) * (mWidth - 1);
+		uint32 py = PM::pm_GetY(uv) * (mHeight - 1);
 
 		auto color = pixel(px, py);
 		return RGBConverter::toSpec(PM::pm_GetR(color), PM::pm_GetG(color), PM::pm_GetB(color));

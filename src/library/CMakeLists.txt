@@ -27,6 +27,8 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/Sphere.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Integrator_Src
+  ${PR_LIB}/integrator/BiDirectIntegrator.cpp
+  ${PR_LIB}/integrator/DebugIntegrator.cpp
   ${PR_LIB}/integrator/DirectIntegrator.cpp
   ${PR_LIB}/integrator/LightIntegrator.cpp
   ${PR_LIB}/integrator/PhotonIntegrator.cpp)
@@ -37,9 +39,7 @@ SET(PR_Material_Src
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
   ${PR_LIB}/material/GlassMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
-  ${PR_LIB}/material/Material.cpp
-  ${PR_LIB}/material/NormalDebugMaterial.cpp
-  ${PR_LIB}/material/UVDebugMaterial.cpp)
+  ${PR_LIB}/material/Material.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Photon_Src
   ${PR_LIB}/photon/PhotonMap.cpp)
@@ -55,6 +55,7 @@ SET(PR_Renderer_Src
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
+  ${PR_LIB}/sampler/RandomSampler.cpp
   ${PR_LIB}/sampler/StratifiedSampler.cpp)
 SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
@@ -118,6 +119,8 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/Triangle.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Integrator_Hdr
+  ${PR_LIB}/integrator/BiDirectIntegrator.h
+  ${PR_LIB}/integrator/DebugIntegrator.h
   ${PR_LIB}/integrator/DirectIntegrator.h
   ${PR_LIB}/integrator/Integrator.h
   ${PR_LIB}/integrator/LightIntegrator.h
@@ -129,9 +132,7 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
   ${PR_LIB}/material/GlassMaterial.h
   ${PR_LIB}/material/GridMaterial.h
-  ${PR_LIB}/material/Material.h
-  ${PR_LIB}/material/NormalDebugMaterial.h
-  ${PR_LIB}/material/UVDebugMaterial.h)
+  ${PR_LIB}/material/Material.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Photon_Hdr
   ${PR_LIB}/photon/Photon.h
@@ -150,6 +151,7 @@ SET(PR_Renderer_Hdr
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
   ${PR_LIB}/sampler/Projection.h
+  ${PR_LIB}/sampler/RandomSampler.h
   ${PR_LIB}/sampler/Sampler.h
   ${PR_LIB}/sampler/StratifiedSampler.h)
 SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})

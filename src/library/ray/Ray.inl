@@ -22,6 +22,11 @@ namespace PR
 		return mDirection;
 	}
 
+	inline void Ray::setDepth(uint32 depth)
+	{
+		mDepth = depth;
+	}
+
 	inline uint32 Ray::depth() const
 	{
 		return mDepth;

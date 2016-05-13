@@ -30,11 +30,11 @@ namespace PR
 
 		static inline PM::vec3 align(const PM::vec3& N, const PM::vec3& V, const PM::vec3& axis)
 		{
-			float angle = std::acos(PM::pm_Dot3D(N, axis));
-			if (std::abs(angle) > PM_EPSILON)
-			{
-				return PM::pm_RotateWithQuat(PM::pm_RotateFromTo(N, axis), V);
-			}
+			const float dot = PM::pm_Dot3D(N, axis);
+			if (dot + 1 < PM_EPSILON)
+				return PM::pm_Negate(V);
+			else if (dot < 1)
+				return PM::pm_RotateWithQuat(PM::pm_RotateFromTo(axis, N), V);
 
 			return V;
 		}
@@ -97,16 +97,32 @@ namespace PR
 		// Orientation +Z
 		static inline PM::vec3 cos_hemi(float u1, float u2)
 		{
-			const float r = std::sqrt(u1);
+			const float cosPhi = std::sqrt(1 - u1);
+			const float sinPhi = std::sin(std::acos(cosPhi));// Faster?
 			const float theta = PM_2_PI_F * u2;
 
 			float thCos, thSin;
 			PM::pm_SinCosT(theta, thSin, thCos);
 
-			const float x = r * thCos;
-			const float y = r * thSin;
+			const float x = sinPhi * thCos;
+			const float y = sinPhi * thSin;
 
-			return PM::pm_Normalize3D(PM::pm_Set(x, y, std::sqrt(1 - u1)));
+			return PM::pm_Set(x, y, cosPhi);
+		}
+
+		static inline PM::vec3 cos_hemi(float u1, float u2, int m)
+		{
+			const float cosPhi = std::pow(1 - u1, 1 / (m + 1.0f));
+			const float sinPhi = std::sin(std::acos(cosPhi));// Faster?
+			const float theta = PM_2_PI_F * u2;
+
+			float thCos, thSin;
+			PM::pm_SinCosT(theta, thSin, thCos);
+
+			const float x = sinPhi * thCos;
+			const float y = sinPhi * thSin;
+
+			return PM::pm_Set(x, y, cosPhi);
 		}
 	};
 }

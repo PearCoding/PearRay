@@ -53,7 +53,7 @@ namespace PR
 			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), vertex), 1));
 
 			Plane plane = box.getFace(side);
-			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
+			collisionPoint.setNormal(PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), plane.normal())));// Have to normalize again?
 
 			if (ray.flags() & RF_NeedCollisionUV)
 			{

@@ -33,10 +33,6 @@ namespace PR
 		return mMaterial;
 	}
 
-	uint32 RenderEntity::maxLightSamples() const
-	{
-		return 0;
-	}
 	bool RenderEntity::isCollidable() const
 	{
 		return false;

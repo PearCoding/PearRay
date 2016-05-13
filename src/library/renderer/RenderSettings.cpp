@@ -3,6 +3,7 @@
 namespace PR
 {
 	RenderSettings::RenderSettings() :
+		mDebugMode(DM_None),
 		mSamplerMode(SM_Jitter),
 		mXSamplerCount(8), mYSamplerCount(8),
 
@@ -10,6 +11,8 @@ namespace PR
 
 		// Direct Lightning
 		mMaxLightSamples(1),
+		mUseBiDirect(true),
+
 
 		// Photon Mapping
 		mMaxPhotons(100000),

@@ -47,6 +47,7 @@ namespace PR
 		bool isValid() const;
 
 		bool contains(const PM::vec3& point) const;
+		bool intersects(const Ray& ray, PM::vec3& collisionPoint) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, FaceSide& side) const;
 
 		void put(const PM::vec3& point);
