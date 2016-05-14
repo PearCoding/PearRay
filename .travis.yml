@@ -1,27 +1,25 @@
 language: cpp
 compiler: gcc
-sudo: true
+sudo: false
 cache:
   - apt
-#addons:
- #apt:
-   #sources:
-   #- ubuntu-toolchain-r-test
+addons:
+ apt:
+   sources:
+   - ubuntu-toolchain-r-test
    #- ubuntu-sdk-team
-   #- beineri/opt-qt521
-   #packages:
-   #- cmake
-   #- gcc-4.8
-   #- g++-4.8
-   #- qt52base
-   #- qt52-meta
+   - beineri/opt-qt521
+   packages:
+   - cmake
+   - gcc-4.8
+   - g++-4.8
+   - qt52base
+   - qt52-meta
    #- qtbase5-dev
    #- qt5-default
    #- qttools5-dev-tools
 before_script:
-  - sudo apt-add-repository ppa:ubuntu-toolchain-r-test
-  - sudo apt-add-repository ppa:beineri/opt-qt551
-  - sudo apt-get install cmake gcc-4.8 g++-4.4 qt52base qt52-meta
+  - bin/travis-add-source ubuntu.json qt521 ppa:beineri/opt-qt521-trusty '' -i
   - export CXX=g++-4.8 CC=gcc-4.8
   - $CXX --version
   - cmake --version
