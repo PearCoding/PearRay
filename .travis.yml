@@ -19,10 +19,10 @@ cache:
    #- qt5-default
    #- qttools5-dev-tools
 before_script:
-  - sudo apt-add-repository ppa:beineri/opt-qt521
-  - sudo apt-add-repository ppa:ubuntu-toolchain-r-test/ppa
-  - sudo apt-get update
-  - sudo apt-get install cmake gcc-4.8 g++-4.8 qt52base qt52-meta qt52tools
+  - sudo apt-add-repository ppa:beineri/opt-qt521 -y
+  - sudo apt-add-repository ppa:ubuntu-toolchain-r-test/ppa -y
+  - sudo apt-get update -q
+  - sudo apt-get install cmake gcc-4.8 g++-4.8 qt52base qt52-meta qt52tools -y
   - export CXX=g++-4.8 CC=gcc-4.8
   - $CXX --version
   - cmake --version
