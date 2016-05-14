@@ -199,19 +199,6 @@ void ViewWidget::refreshView()
 				}
 			}
 		}
-		else if (mViewMode == VM_Depth)
-		{
-			float maxDepth = result.maxDepth();
-			for (PR::uint32 y = 0; y < result.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < result.width(); ++x)
-				{
-					float d = result.depth(x, y) / maxDepth;
-					d = d < 0 ? 0 : 1 - d;
-					mRenderImage.setPixel(x, y, qRgb(d * 255, d * 255, d * 255));
-				}
-			}
-		}
 		else if (mViewMode == VM_XYZ)
 		{
 			for (PR::uint32 y = 0; y < result.height(); ++y)

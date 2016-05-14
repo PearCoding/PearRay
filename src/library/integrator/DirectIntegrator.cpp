@@ -10,8 +10,8 @@
 
 namespace PR
 {
-	DirectIntegrator::DirectIntegrator(Renderer* renderer, uint32 lightSamples) : Integrator(),
-		mLightSamples(lightSamples), mLightSampler(renderer->random(), lightSamples)
+	DirectIntegrator::DirectIntegrator(Renderer* renderer) : Integrator(),
+		mLightSampler(renderer->random(), renderer->settings().maxLightSamples())
 	{
 	}
 
@@ -20,90 +20,100 @@ namespace PR
 	}
 
 	constexpr float NormalOffset = 0.0001f;
-	Spectrum DirectIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
+	Spectrum DirectIntegrator::apply(Ray& in, RenderContext* context)
 	{
-		if (!entity->material()->canBeShaded())
+		FacePoint point;
+		Spectrum applied;
+		RenderEntity* entity = context->shootWithApply(applied, in, point);
+
+		if (!entity || !entity->material() || !entity->material()->canBeShaded())
+			return applied;
+		
+		return applied + applyRay(in, point, entity, context);
+	}
+
+	Spectrum DirectIntegrator::applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context)
+	{
+		if (in.depth() >= context->renderer()->settings().maxRayDepth() ||
+			!entity->material()->canBeShaded())
 			return Spectrum();
 
-		const PM::vec3 N = PM::pm_SetW(point.normal(), 0);
-		FacePoint collisionPoint;
-		Spectrum spec;
+		float rnd = context->renderer()->random().getFloat();
 
-		bool onlySpecular = entity->material()->roughness(point) <= PM_EPSILON;
-
-		PM::vec3 reflectionVector;
-		PM::vec3 transmissionVector;
-		float refWeight, transWeight;
-		
-		if (onlySpecular)
-		{
-			refWeight = entity->material()->emitReflectionVector(point, in.direction(), reflectionVector);
-			transWeight = entity->material()->emitTransmissionVector(point, in.direction(), transmissionVector);
-
-			onlySpecular = (refWeight + transWeight) > PM_EPSILON;
-		}
-
-		if (!onlySpecular)
+		if (rnd < entity->material()->roughness(point))// Diffuse
 		{
 			uint32 sampleCounter = 0;
 
+			Spectrum spec;
 			for (RenderEntity* light : context->renderer()->lights())
-			{				
-				for (uint32 i = 0; i < mLightSamples; ++i)
+			{
+				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 				{
 					FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
 
 					const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
-					const float NdotL = std::abs(PM::pm_Dot3D(L, N));
+					const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 
 					if (NdotL > PM_EPSILON)
 					{
+						FacePoint tmpPoint;
+						Spectrum applied;
 						Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
 						ray.setFlags(ray.flags() & RF_ShadowRay);
 
-						if (context->shootWithApply(ray, collisionPoint) == light)// Full light!!
+						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{
-							spec += entity->material()->apply(point, in.direction(), L, ray.spectrum())*NdotL;
+							spec += entity->material()->apply(point, in.direction(), L, applied)*NdotL;
 						}
-							
+
 						sampleCounter++;
 					}
 				}
 			}
 
-			if (sampleCounter != 0)
-			{
-				spec *= PM_PI_F / sampleCounter;
-			}
+			return spec * (PM_PI_F / sampleCounter);
 		}
-		else
+		else // Specular
 		{
-			if (refWeight > PM_EPSILON)
+			PM::vec3 reflectionVector;
+			PM::vec3 transmissionVector;
+			float refWeight = entity->material()->emitReflectionVector(point, in.direction(), reflectionVector);
+			float transWeight = entity->material()->emitTransmissionVector(point, in.direction(), transmissionVector);
+
+			rnd = context->renderer()->random().getFloat();
+
+			if (rnd < refWeight)
 			{
+				FacePoint tmpPoint;
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflectionVector, NormalOffset)),
 					reflectionVector, in.depth() + 1);
 
-				if (context->shootWithApply(ray, collisionPoint))
+				Spectrum applied;
+				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
+				if (newEntity && newEntity->material())
 				{
-					const float NdotL = std::abs(PM::pm_Dot3D(reflectionVector, N));
-					spec = entity->material()->apply(point, in.direction(), reflectionVector, ray.spectrum()) * NdotL * refWeight;
+					const float NdotL = std::abs(PM::pm_Dot3D(reflectionVector, point.normal()));
+					return applied + entity->material()->apply(point, in.direction(), reflectionVector,
+						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
 				}
 			}
-
-			const float NdotL_trans = std::abs(PM::pm_Dot3D(transmissionVector, N));
-			if (transWeight > PM_EPSILON && NdotL_trans > PM_EPSILON)
+			else if( rnd < refWeight + transWeight)
 			{
+				FacePoint tmpPoint;
 				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(transmissionVector, NormalOffset)),
 					transmissionVector, in.depth() + 1);
 
-				if (context->shootWithApply(ray, collisionPoint))
+				Spectrum applied;
+				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
+				if (newEntity && newEntity->material())
 				{
-					spec += entity->material()->apply(point, in.direction(), transmissionVector, ray.spectrum()) *
-						(transWeight * NdotL_trans);
+					const float NdotL = std::abs(PM::pm_Dot3D(transmissionVector, point.normal()));
+					return applied + entity->material()->apply(point, in.direction(), transmissionVector,
+						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
 				}
 			}
+
+			return Spectrum();
 		}
-		
-		return spec;
 	}
 }

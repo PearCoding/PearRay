@@ -14,7 +14,6 @@ enum ViewMode
 	VM_ToneMapped,// sRGB
 	VM_Color,// sRGB
 	VM_ColorLinear,// sRGB Linear
-	VM_Depth,
 	VM_XYZ,// Color space (CIE XYZ)
 	VM_NORM_XYZ// Color space (CIE XYZ)
 };

@@ -67,4 +67,26 @@ namespace PR
 		}
 		mFaces.clear();
 	}
+
+	void Mesh::fix()
+	{
+		if (mNormals.empty())// Calculate normals
+		{
+			for (Face* f : mFaces)
+			{
+				PM::vec3 U = PM::pm_Subtract(f->V2, f->V1);
+				PM::vec3 V = PM::pm_Subtract(f->V3, f->V1);
+				PM::vec3 N = PM::pm_Normalize3D(PM::pm_Cross3D(U, V));
+
+				f->N1 = N;
+				f->N2 = N;
+				f->N3 = N;
+			}
+		}
+
+		if (mUVs.empty())// Calculate uvs
+		{
+			//TODO
+		}
+	}
 }

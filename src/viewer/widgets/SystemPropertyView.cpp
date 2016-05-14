@@ -45,11 +45,13 @@ QWidget(parent)
 
 	mDebugVisualizationProp = new SelectionProperty(tr("Debug"), PR::DM_None);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("None"), PR::DM_None);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Depth"), PR::DM_Depth);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Both"), PR::DM_Normal_Both);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Positive"), PR::DM_Normal_Positive);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Negative"), PR::DM_Normal_Negative);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Spherical"), PR::DM_Normal_Spherical);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UV"), PR::DM_UV);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF (On Normal)"), PR::DM_PDF);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Roughness"), PR::DM_Roughness);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Reflectivity"), PR::DM_Reflectivity);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Transmission"), PR::DM_Transmission);
@@ -103,7 +105,6 @@ QWidget(parent)
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Tone Mapped"), VM_ToneMapped);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("Color Linear"), VM_ColorLinear);
-	((SelectionProperty*)mViewModeProp)->addItem(tr("Depth"), VM_Depth);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE XYZ"), VM_XYZ);
 	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE Norm XYZ"), VM_NORM_XYZ);
 	mViewGroupProp->addChild(mViewModeProp);

@@ -8,13 +8,14 @@ namespace PR
 	class PR_LIB DirectIntegrator : public Integrator
 	{
 	public:
-		DirectIntegrator(Renderer* renderer, uint32 lightSamples);
+		DirectIntegrator(Renderer* renderer);
 
 		void init(Renderer* renderer) override;
-		Spectrum apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) override;
+		Spectrum apply(Ray& in, RenderContext* context) override;
 
 	private:
-		uint32 mLightSamples;
+		Spectrum applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context);
+
 		StratifiedSampler mLightSampler;
 	};
 }

@@ -10,6 +10,7 @@ namespace PR
 		DebugBoundingBoxMaterial();
 
 		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li) override;
+		float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
 
 		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
 		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;

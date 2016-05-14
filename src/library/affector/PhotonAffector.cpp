@@ -1,4 +1,4 @@
-#include "PhotonIntegrator.h"
+#include "PhotonAffector.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 #include "renderer/Renderer.h"
@@ -14,13 +14,13 @@
 
 namespace PR
 {
-	PhotonIntegrator::PhotonIntegrator() :
-		Integrator(), mMap(nullptr), mPhotonSpheres(nullptr), mSphereCount(0)
+	PhotonAffector::PhotonAffector() :
+		Affector(), mMap(nullptr), mPhotonSpheres(nullptr), mSphereCount(0)
 	{
 
 	}
 
-	PhotonIntegrator::~PhotonIntegrator()
+	PhotonAffector::~PhotonAffector()
 	{
 		if (mMap)
 		{
@@ -37,7 +37,7 @@ namespace PR
 
 	constexpr float NormalOffset = 0.001f;
 	constexpr float ScaleFactor = 10.0f;// How much scale should be used for lights.
-	void PhotonIntegrator::init(Renderer* renderer)
+	void PhotonAffector::init(Renderer* renderer)
 	{
 		PR_ASSERT(renderer);
 
@@ -74,12 +74,13 @@ namespace PR
 				
 				Ray ray(PM::pm_Add(lightSample.vertex(), PM::pm_Scale(lightSample.normal(), NormalOffset)),
 					lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
-				ray.setSpectrum(light->material()->applyEmission(lightSample, lightSample.normal()));
+
+				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal());
 
 				uint32 diffuseBouces = 0;
 				for (uint32 j = 0; j < renderer->settings().maxRayDepth(); ++j)
 				{
-					if (ray.spectrum().isOnlyZero())
+					if (flux.isOnlyZero())
 						break;
 
 					FacePoint collision;
@@ -99,7 +100,7 @@ namespace PR
 						if (rnd < roughness)// Diffuse
 						{
 							// Always store when diffuse
-							mMap->store(ray.spectrum(), collision.vertex(), ray.direction());
+							mMap->store(flux, collision.vertex(), ray.direction());
 							photonsShoot++;
 
 							rnd = renderer->random().getFloat();
@@ -139,7 +140,7 @@ namespace PR
 							}
 						}
 
-						ray.setSpectrum(entity->material()->apply(collision, nextDir, ray.direction(), ray.spectrum())*NdotL);
+						flux = entity->material()->apply(collision, nextDir, ray.direction(), flux)*NdotL;
 						ray.setDirection(nextDir);
 						ray.setStartPosition(PM::pm_Add(collision.vertex(), PM::pm_Scale(nextDir, NormalOffset)));
 					}
@@ -167,7 +168,7 @@ namespace PR
 	}
 
 	constexpr float K = 1.1;
-	Spectrum PhotonIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
+	Spectrum PhotonAffector::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
 		if (!mMap || mMap->isEmpty())
 			return Spectrum();

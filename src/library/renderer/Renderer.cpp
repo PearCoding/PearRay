@@ -6,10 +6,11 @@
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
 
+#include "affector/PhotonAffector.h"
+#include "affector/LightAffector.h"
+
 #include "integrator/BiDirectIntegrator.h"
 #include "integrator/DirectIntegrator.h"
-#include "integrator/PhotonIntegrator.h"
-#include "integrator/LightIntegrator.h"
 #include "integrator/DebugIntegrator.h"
 
 #include "Logger.h"
@@ -47,6 +48,11 @@ namespace PR
 
 		if (mTileMap)
 			delete[] mTileMap;
+
+		for (Affector* aff : mAffectors)
+			delete aff;
+
+		mAffectors.clear();
 
 		for (Integrator* integrator : mIntegrators)
 			delete integrator;
@@ -101,13 +107,13 @@ namespace PR
 				if (mRenderSettings.isBiDirect())
 					mIntegrators.push_back(new BiDirectIntegrator());
 				else
-					mIntegrators.push_back(new DirectIntegrator(this, mRenderSettings.maxLightSamples()));
+					mIntegrators.push_back(new DirectIntegrator(this));
 			}
 
 			if (mRenderSettings.maxPhotons() > 0)
-				mIntegrators.push_back(new PhotonIntegrator());
+				mAffectors.push_back(new PhotonAffector());
 
-			mIntegrators.push_back(new LightIntegrator());
+			mAffectors.push_back(new LightAffector());
 		}
 
 		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
@@ -116,6 +122,9 @@ namespace PR
 			RenderThread* thread = new RenderThread(this, i);
 			mThreads.push_back(thread);
 		}
+
+		for (Affector* affector : mAffectors)
+			affector->init(this);
 
 		for (Integrator* integrator : mIntegrators)
 			integrator->init(this);
@@ -171,34 +180,21 @@ namespace PR
 						break;
 					}
 
-					float depth;
-					Ray ray = renderSample(context, sx, sy, depth);
+					Spectrum spec = renderSample(context, sx, sy);
 
-					if (depth >= 0)
-					{
-						newDepth += depth;
-						newSpec += ray.spectrum();
-					}
-
+					newSpec += spec;
 				}
 			}
 
 			const int SampleCount = mRenderSettings.xSamplerCount() * mRenderSettings.ySamplerCount();
-			mResult.setDepth(x, y, newDepth / (float)SampleCount);
 			mResult.setPoint(x, y, newSpec / (float)SampleCount);
 		}
 		else
 		{
-			float depth;// Random sampling
-			Ray ray = renderSample(context, x + mRandom.getFloat() - 0.5f,
-				y + mRandom.getFloat() - 0.5f,
-				depth);
+			Spectrum spec = renderSample(context, x + mRandom.getFloat() - 0.5f,
+				y + mRandom.getFloat() - 0.5f);
 
-			if (depth >= 0)
-			{
-				mResult.setDepth(x, y, depth);
-				mResult.setPoint(x, y, ray.spectrum());
-			}
+			mResult.setPoint(x, y,spec);
 		}
 
 		mStatisticMutex.lock();
@@ -206,24 +202,18 @@ namespace PR
 		mStatisticMutex.unlock();
 	}
 
-	Ray Renderer::renderSample(RenderContext* context, float x, float y, float& depth)
+	Spectrum Renderer::renderSample(RenderContext* context, float x, float y)
 	{
 		Ray ray = mCamera->constructRay(2 * (x + 0.5f) / (float)mWidth - 1.0f,
 			2 * (y + 0.5f) / (float)mHeight - 1.0f);// To camera coordinates [-1,1]
 
-		FacePoint collisionPoint;
-
-		RenderEntity* entity = shootWithApply(ray, collisionPoint, context, nullptr);
-		if (entity)
+		Spectrum spec;
+		for (Integrator* integrator : mIntegrators)
 		{
-			depth = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.vertex(), ray.startPosition()));
-		}
-		else
-		{
-			depth = -1;
+			spec += integrator->apply(ray, context);
 		}
 
-		return ray;
+		return spec;
 	}
 
 	size_t Renderer::pixelsRendered() const
@@ -251,18 +241,15 @@ namespace PR
 		}
 	}
 
-	RenderEntity* Renderer::shootWithApply(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
 		if (entity && entity->material())
 		{
-			Spectrum spec;
-			for (Integrator* integrator : mIntegrators)
+			for (Affector* affector : mAffectors)
 			{
-				spec += integrator->apply(ray, entity, collisionPoint, context);
+				appliedSpec += affector->apply(ray, entity, collisionPoint, context);
 			}
-
-			ray.setSpectrum(spec);
 		}
 		return entity;
 	}

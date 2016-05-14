@@ -88,7 +88,7 @@ namespace PR
 		collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
 		collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
 
-		return true;
+		return found;
 	}
 
 	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, Random& random) const

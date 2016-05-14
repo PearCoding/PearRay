@@ -231,6 +231,7 @@ namespace PR
 
 		//spec *= 0.94f;
 		//spec *= 0.8f;
-		return spec.clamp();
+		//return spec.clamp();
+		return spec;
 	}
 }

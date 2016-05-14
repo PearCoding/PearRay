@@ -15,6 +15,8 @@ namespace PR
 
 		virtual Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li) = 0;
 		virtual Spectrum applyEmission(const FacePoint& point, const PM::vec3& V);
+		
+		virtual float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) = 0;
 
 		// Parameter 'dir' is an output!
 		// Return value is weight of vector

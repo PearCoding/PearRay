@@ -76,4 +76,9 @@ namespace PR
 	{
 		return 0;
 	}
+
+	float GlassMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	{
+		return 1;
+	}
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Integrator.h"
+#include "Affector.h"
 
 namespace PR
 {
@@ -10,11 +10,11 @@ namespace PR
 		struct PhotonSphere;
 	}
 
-	class PR_LIB PhotonIntegrator : public Integrator
+	class PR_LIB PhotonAffector : public Affector
 	{
 	public:
-		PhotonIntegrator();
-		~PhotonIntegrator();
+		PhotonAffector();
+		~PhotonAffector();
 
 		void init(Renderer* renderer) override;
 		Spectrum apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) override;

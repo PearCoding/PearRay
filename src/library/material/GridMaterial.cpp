@@ -122,4 +122,21 @@ namespace PR
 			return point;
 		}
 	}
+
+	float GridMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	{
+		int u, v;
+		auto pointN = applyGrid(point, u, v);
+
+		if (mFirst && (u % 2) == (v % 2))
+		{
+			return mFirst->pdf(pointN, V, L);
+		}
+		else if (mSecond)
+		{
+			return mSecond->pdf(pointN, V, L);
+		}
+
+		return 0;
+	}
 }

@@ -17,13 +17,24 @@ namespace PR
 	{
 	}
 
-	Spectrum DebugIntegrator::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
+	Spectrum DebugIntegrator::apply(Ray& in, RenderContext* context)
 	{
+		FacePoint point;
+		RenderEntity* entity = context->shoot(in, point);
+
+		if (!entity || !entity->material())
+			return Spectrum();
+
 		switch (context->renderer()->settings().debugMode())
 		{
 		default:
 		case DM_None:
 			return Spectrum();
+		case DM_Depth:
+		{
+			float depth = PM::pm_Magnitude3D(PM::pm_Subtract(in.startPosition(), point.vertex()));
+			return RGBConverter::toSpec(depth, depth, depth);
+		}
 		case DM_Normal_Spherical:
 		{
 			float phi = std::acos(PM::pm_GetZ(point.normal()));
@@ -45,6 +56,11 @@ namespace PR
 				PM::pm_MaxT(0.0f, -PM::pm_GetZ(point.normal())));
 		case DM_UV:
 			return RGBConverter::toSpec(PM::pm_GetX(point.uv()), PM::pm_GetY(point.uv()), 0);
+		case DM_PDF:
+		{
+			float pdf = entity->material()->pdf(point, in.direction(), point.normal());
+			return RGBConverter::toSpec(pdf, pdf, pdf);
+		}
 		case DM_Roughness:
 		{
 			float roughness = entity->material()->roughness(point);

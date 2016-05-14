@@ -10,6 +10,7 @@
 
 namespace PR
 {
+	class Affector;
 	class Camera;
 	class Entity;
 	class FacePoint;
@@ -55,7 +56,7 @@ namespace PR
 
 		// RenderThread things
 		RenderEntity* shoot(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithApply(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithApply(Spectrum& appliedSpec, Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
 
 		uint32 threads() const;
@@ -72,7 +73,7 @@ namespace PR
 	private:
 		void reset();
 
-		Ray renderSample(RenderContext* context, float x, float y, float& depth);
+		Spectrum renderSample(RenderContext* context, float x, float y);
 
 		uint32 mWidth;
 		uint32 mHeight;
@@ -98,6 +99,7 @@ namespace PR
 		size_t mPixelsRendered;
 		size_t mRayCount;
 
-		std::list<Integrator*> mIntegrators;
+		std::list<Affector*> mAffectors;// Per Ray apply
+		std::list<Integrator*> mIntegrators;// Per Pixel sample
 	};
 }

@@ -15,11 +15,13 @@ namespace PR
 	enum DebugMode
 	{
 		DM_None,
+		DM_Depth,
 		DM_Normal_Both,
 		DM_Normal_Positive,
 		DM_Normal_Negative,
 		DM_Normal_Spherical,
 		DM_UV,
+		DM_PDF,
 		DM_Roughness,
 		DM_Reflectivity,
 		DM_Transmission

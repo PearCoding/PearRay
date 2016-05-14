@@ -52,6 +52,8 @@ namespace PR
 		}
 
 		void clear();
+
+		void fix();// Produce Normals and UV coords if needed.
 	private:
 		BoundingBox mBoundingBox;
 

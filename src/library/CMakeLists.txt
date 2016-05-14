@@ -5,6 +5,10 @@ SET(PR_LIB ${PR_Root}/library)
 SET(PR_Main_Src
   ${PR_LIB}/FileLogListener.cpp
   ${PR_LIB}/Logger.cpp)
+SET(PR_Affector_Src
+  ${PR_LIB}/affector/LightAffector.cpp
+  ${PR_LIB}/affector/PhotonAffector.cpp)
+SOURCE_GROUP("Source Files\\Affector" FILES ${PR_Affector_Src})
 SET(PR_Camera_Src
   ${PR_LIB}/camera/Camera.cpp
   ${PR_LIB}/camera/OrthographicCamera.cpp
@@ -29,9 +33,7 @@ SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Integrator_Src
   ${PR_LIB}/integrator/BiDirectIntegrator.cpp
   ${PR_LIB}/integrator/DebugIntegrator.cpp
-  ${PR_LIB}/integrator/DirectIntegrator.cpp
-  ${PR_LIB}/integrator/LightIntegrator.cpp
-  ${PR_LIB}/integrator/PhotonIntegrator.cpp)
+  ${PR_LIB}/integrator/DirectIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/BRDF.cpp
@@ -87,7 +89,8 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
-  ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Texture_Src}
+  ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Texture_Src} 
+  ${PR_Affector_Src}
 )
 
 SET(PR_Main_Hdr
@@ -96,6 +99,11 @@ SET(PR_Main_Hdr
   ${PR_LIB}/Logger.h
   ${PR_LIB}/LogListener.h
   ${PR_LIB}/Random.h)
+SET(PR_Affector_Hdr
+  ${PR_LIB}/affector/Affector.h
+  ${PR_LIB}/affector/LightAffector.h
+  ${PR_LIB}/affector/PhotonAffector.h)
+SOURCE_GROUP("Header Files\\Affector" FILES ${PR_Affector_Hdr})
 SET(PR_Camera_Hdr
   ${PR_LIB}/camera/Camera.h
   ${PR_LIB}/camera/OrthographicCamera.h
@@ -122,9 +130,7 @@ SET(PR_Integrator_Hdr
   ${PR_LIB}/integrator/BiDirectIntegrator.h
   ${PR_LIB}/integrator/DebugIntegrator.h
   ${PR_LIB}/integrator/DirectIntegrator.h
-  ${PR_LIB}/integrator/Integrator.h
-  ${PR_LIB}/integrator/LightIntegrator.h
-  ${PR_LIB}/integrator/PhotonIntegrator.h)
+  ${PR_LIB}/integrator/Integrator.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_Material_Hdr
   ${PR_LIB}/material/BRDF.h
@@ -190,6 +196,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Texture_Hdr}
+  ${PR_Affector_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

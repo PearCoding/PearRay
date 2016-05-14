@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Config.h"
 #include "spectral/Spectrum.h"
 
 namespace PR
@@ -20,13 +19,7 @@ namespace PR
 		void setPoint(uint32 x, uint32 y, const Spectrum& s);
 		Spectrum point(uint32 x, uint32 y) const;
 
-		void setDepth(uint32 x, uint32 y, float f);
-		float depth(uint32 x, uint32 y) const;
-
 		void clear();
-
-		// Should be cached!
-		float maxDepth() const;
 
 	private:
 		struct InternalData
@@ -34,7 +27,6 @@ namespace PR
 			uint32 Width;
 			uint32 Height;
 			Spectrum* Data;
-			float* Depth;
 			uint32 RefCounter;
 		};
 

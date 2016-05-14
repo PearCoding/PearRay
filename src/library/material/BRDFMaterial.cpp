@@ -149,4 +149,11 @@ namespace PR
 	{
 		return 0;
 	}
+
+	float BRDFMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	{
+		// TODO:
+		return 1
+			;
+	}
 }

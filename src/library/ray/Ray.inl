@@ -32,16 +32,6 @@ namespace PR
 		return mDepth;
 	}
 
-	inline void Ray::setSpectrum(const Spectrum& s)
-	{
-		mSpectrum = s;
-	}
-
-	inline Spectrum Ray::spectrum() const
-	{
-		return mSpectrum;
-	}
-
 	inline uint32 Ray::maxDepth() const
 	{
 		return mMaxDepth;

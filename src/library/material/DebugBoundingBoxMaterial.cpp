@@ -49,4 +49,9 @@ namespace PR
 	{
 		return mDensity;
 	}
+
+	float DebugBoundingBoxMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	{
+		return 1;
+	}
 }

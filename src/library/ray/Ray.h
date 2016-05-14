@@ -2,7 +2,6 @@
 
 #include "Config.h"
 #include "PearMath.h"
-#include "spectral/Spectrum.h"
 
 namespace PR
 {
@@ -32,9 +31,6 @@ namespace PR
 		inline void setDepth(uint32 depth);
 		inline uint32 depth() const;
 
-		inline void setSpectrum(const Spectrum& s);
-		inline Spectrum spectrum() const;
-
 		inline uint32 maxDepth() const;
 		inline void setMaxDepth(uint32 i);
 
@@ -46,8 +42,6 @@ namespace PR
 		uint32 mDepth;// Recursion depth!
 		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
 		uint8 mFlags;
-
-		Spectrum mSpectrum;
 	};
 }
 

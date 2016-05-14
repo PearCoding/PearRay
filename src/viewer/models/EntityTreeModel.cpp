@@ -3,6 +3,7 @@
 
 #include "scene/Scene.h"
 #include "entity/Entity.h"
+#include "entity/RenderEntity.h"
 
 EntityTreeModel::EntityTreeModel(PR::Scene* scene, QObject  *parent)
 	: QAbstractItemModel(parent), mScene(scene)
@@ -28,10 +29,18 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 	PR::Entity *item = static_cast<PR::Entity*>(index.internalPointer());
 	if (role == Qt::ToolTipRole)
 	{
-		return QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t%8")
+		QString tooltip = QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t%8")
 			.arg(PM::pm_GetX(item->position())).arg(PM::pm_GetY(item->position())).arg(PM::pm_GetZ(item->position()))
 			.arg(PM::pm_GetX(item->rotation())).arg(PM::pm_GetY(item->rotation())).arg(PM::pm_GetZ(item->rotation())).arg(PM::pm_GetW(item->rotation()))
 			.arg(item->scale());
+
+		PR::RenderEntity* entity = dynamic_cast<PR::RenderEntity*>(item);
+		if (entity)
+		{
+			auto box = entity->worldBoundingBox();
+			tooltip += QString("\nBoundingBox\t[%1, %2, %3]").arg(box.width()).arg(box.height()).arg(box.depth());
+		}
+		return tooltip;
 	}
 	else
 	{
