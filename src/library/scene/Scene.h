@@ -11,7 +11,6 @@ namespace PR
 	class Entity;
 	class FacePoint;
 	class RenderEntity;
-	class kdTree;
 	class Ray;
 	class PR_LIB Scene
 	{
@@ -33,13 +32,13 @@ namespace PR
 
 		void buildTree();
 
-		RenderEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const;
+		RenderEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore) const;
 
 	private:
 		std::string mName;
 		std::list<Entity*> mEntities;
 		std::list<RenderEntity*> mRenderEntities;
 
-		kdTree* mKDTree;
+		void* mKDTree;
 	};
 }

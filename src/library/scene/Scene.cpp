@@ -2,6 +2,7 @@
 #include "kdTree.h"
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
+#include "material/Material.h"
 
 #include "Logger.h"
 
@@ -82,7 +83,7 @@ namespace PR
 
 		if (mKDTree)
 		{
-			delete mKDTree;
+			delete (kdTree<RenderEntity>*)mKDTree;
 			mKDTree = nullptr;
 		}
 	}
@@ -96,13 +97,19 @@ namespace PR
 			mKDTree = nullptr;
 		}
 
-		mKDTree = new kdTree;
-		mKDTree->build(mRenderEntities);
+		mKDTree = new kdTree<RenderEntity>([](RenderEntity* e) {return e->worldBoundingBox();},
+			[](const Ray& ray, FacePoint& point, RenderEntity* e, RenderEntity* ignore) {
+			return (!ignore || !e->isParent(ignore)) &&
+				e->material() && !e->material()->shouldIgnore_Simple(ray, e) &&
+				e->checkCollision(ray, point) &&
+				!e->material()->shouldIgnore_Complex(ray, e, point);
+		});
+		((kdTree<RenderEntity>*)mKDTree)->build(mRenderEntities);
 	}
 
-	RenderEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, Entity* ignore) const
+	RenderEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore) const
 	{
 		PR_ASSERT(mKDTree);
-		return mKDTree->checkCollision(ray, collisionPoint, ignore);
+		return ((kdTree<RenderEntity>*)mKDTree)->checkCollision(ray, collisionPoint, ignore);
 	}
 }

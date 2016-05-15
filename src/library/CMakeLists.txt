@@ -61,7 +61,6 @@ SET(PR_Sampler_Src
   ${PR_LIB}/sampler/StratifiedSampler.cpp)
 SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
-  ${PR_LIB}/scene/kdTree.cpp
   ${PR_LIB}/scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
 SET(PR_Spectral_Src

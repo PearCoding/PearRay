@@ -1,9 +1,14 @@
 #include "Mesh.h"
 #include "Face.h"
+#include "Triangle.h"
+#include "scene/kdTree.h"
+
+#include <iterator>
 
 namespace PR
 {
-	Mesh::Mesh()
+	Mesh::Mesh() :
+		mKDTree(nullptr)
 	{
 	}
 
@@ -14,7 +19,7 @@ namespace PR
 
 	void Mesh::addVertex(const PM::vec3& v)
 	{
-		mBoundingBox.put(v);// FIXME: 0 is already in :/
+		mBoundingBox.put(v);
 		mVertices.push_back(v);
 	}
 
@@ -57,6 +62,12 @@ namespace PR
 
 	void Mesh::clear()
 	{
+		if (mKDTree)
+		{
+			delete (PR::kdTree<Face>*)mKDTree;
+			mKDTree = nullptr;
+		}
+
 		mVertices.clear();
 		mNormals.clear();
 		mUVs.clear();
@@ -88,5 +99,26 @@ namespace PR
 		{
 			//TODO
 		}
+	}
+
+	void Mesh::build()
+	{
+		if (mKDTree)
+		{
+			delete (PR::kdTree<Face>*)mKDTree;
+			mKDTree = nullptr;
+		}
+
+		mKDTree = new PR::kdTree<Face>(
+		[](Face* f) {
+			return Triangle::getBoundingBox(f->V1, f->V2, f->V3);
+		},
+		[](const Ray& ray, FacePoint& point, Face* f, Face*) {
+			return Triangle::intersect(ray, *f, point);
+		});
+
+		std::list<Face*> list;
+		std::copy(mFaces.begin(), mFaces.end(), std::back_inserter(list));
+		((PR::kdTree<Face>*)mKDTree)->build(list);
 	}
 }

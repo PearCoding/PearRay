@@ -6,6 +6,8 @@
 #include "geometry/Triangle.h"
 #include "geometry/FacePoint.h"
 
+#include "scene/kdTree.h"
+
 #include "Random.h"
 #include "sampler/Sampler.h"
 #include "sampler/Projection.h"
@@ -51,44 +53,27 @@ namespace PR
 
 	bool MeshEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
 	{
+		PR_DEBUG_ASSERT(mMesh->kdTree());
+
 		// Local space
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
 
-		float near = std::numeric_limits<float>::max();
-		bool found = false;
+		kdTree<Face>* tree = (kdTree<Face>*)mMesh->kdTree();
+		auto face = tree->checkCollision(local, collisionPoint);
 
-		for (Face* face : mMesh->faces())// TODO: For bigger meshes use voxel technique!
+		if (face)
 		{
-			float u, v;
-			PM::vec3 point;
-			
-			if (Triangle::intersect(local, face->V1, face->V2, face->V3, u, v, point))
-			{
-				float mag = PM::pm_Magnitude3D(PM::pm_Subtract(point, local.startPosition()));
+			collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
+			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
 
-				if (near > mag)
-				{
-					PM::vec3 vec;
-					PM::vec3 n;
-					PM::vec2 uv;
-					face->interpolate(u, v, vec, n, uv);
-
-					collisionPoint.setVertex(point);
-					collisionPoint.setNormal(n);
-					collisionPoint.setUV(uv);
-
-					near = mag;
-					found = true;
-				}
-			}
+			return true;
 		}
-
-		collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
-		collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
-
-		return found;
+		else
+		{
+			return false;
+		}
 	}
 
 	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, Random& random) const

@@ -23,7 +23,7 @@ namespace PR
 		PM::vec2 UV2;
 		PM::vec2 UV3;
 
-		inline void interpolate(float u, float v, PM::vec3& vec, PM::vec3& norm, PM::vec2& uv)
+		inline void interpolate(float u, float v, PM::vec3& vec, PM::vec3& norm, PM::vec2& uv) const
 		{
 			vec = PM::pm_Add(PM::pm_Scale(V2, u),
 				PM::pm_Add(PM::pm_Scale(V3, v), PM::pm_Scale(V1, 1 - u - v)));

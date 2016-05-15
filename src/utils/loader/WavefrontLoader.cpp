@@ -346,6 +346,7 @@ namespace PRU
 		}
 
 		mesh->fix();
+		mesh->build();
 
 		PR_LOGGER.logf(L_Debug, M_Internal, "V: %d, N: %d, U: %d, F: %d, V: %f",
 			mesh->vertices().size(), mesh->normals().size(), mesh->uvs().size(), mesh->faces().size(),

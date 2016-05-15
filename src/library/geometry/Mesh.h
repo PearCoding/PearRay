@@ -53,9 +53,16 @@ namespace PR
 
 		void clear();
 
+		void build();
+		inline void* kdTree() const
+		{
+			return mKDTree;
+		}
+
 		void fix();// Produce Normals and UV coords if needed.
 	private:
 		BoundingBox mBoundingBox;
+		void* mKDTree;
 
 		std::vector<PM::vec3> mVertices;
 		std::vector<PM::vec3> mNormals;

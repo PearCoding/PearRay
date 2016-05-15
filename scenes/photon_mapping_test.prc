@@ -25,8 +25,8 @@
 		
 		:material		"Light"
 		:xAxis			1.5
-		:yAxis			[0, 0, 1.5]
-		:position		[-0.75,3.65,-0.75]
+		:yAxis			[0, 0, -1.5]
+		:position		[-0.75,3.65,0.75]
 	)
 	
 	(entity
@@ -193,18 +193,6 @@
 		:roughness		1
 		:reflectivity	0
 		:specularity	"White"
-	)
-	
-	(material
-		:name			"DebugNormal"
-		:type			"debug"
-		:show			"normal"
-	)
-	
-	(material
-		:name			"DebugUV"
-		:type			"debug"
-		:show			"uv"
 	)
 	
 	(material
