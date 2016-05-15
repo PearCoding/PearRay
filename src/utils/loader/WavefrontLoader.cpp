@@ -45,7 +45,7 @@ namespace PRU
 	}
 
 	WavefrontLoader::WavefrontLoader() :
-		mScale(1)
+		mScale(1), mFlipNormal(false)
 	{
 	}
 
@@ -221,6 +221,9 @@ namespace PRU
 				{
 					n = PM::pm_SetZ(n, pr_to<float>(commands.front()));
 				}
+
+				if (mFlipNormal)
+					n = PM::pm_Negate(n);
 
 				mesh->addNormal(PM::pm_Normalize3D(n));
 			}

@@ -600,9 +600,17 @@ namespace PRU
 
 		if (loader == "obj")
 		{
+			DL::Data* flipNormalD = group->getFromKey("flipNormal");
+
 			Mesh* mesh = new Mesh;
 
 			WavefrontLoader loader;
+
+			if (flipNormalD && flipNormalD->isType() == DL::Data::T_Bool)
+			{
+				loader.flipNormal(flipNormalD->getBool());
+			}
+
 			loader.load(file, mesh);
 
 			env->addMesh(name, mesh);

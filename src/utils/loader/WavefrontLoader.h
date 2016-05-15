@@ -20,9 +20,15 @@ namespace PRU
 			mScale = f;
 		}
 
+		inline void flipNormal(bool b)
+		{
+			mFlipNormal = b;
+		}
+
 		void load(const std::string& file, PR::Mesh* mesh);
 
 	private:
 		float mScale;
+		bool mFlipNormal;
 	};
 }

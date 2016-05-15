@@ -97,7 +97,12 @@ namespace PR
 
 		if (mUVs.empty())// Calculate uvs
 		{
-			//TODO
+			for (Face* f : mFaces)
+			{
+				f->UV1 = PM::pm_Set(0, 0);
+				f->UV2 = PM::pm_Set(0, 0);
+				f->UV3 = PM::pm_Set(0, 0);
+			}
 		}
 	}
 

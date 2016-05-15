@@ -13,6 +13,15 @@ namespace PR
 	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound) :
 		mUpperBound(upperbound), mLowerBound(lowerbound)
 	{
+		for (int i = 0; i < 3; ++i)
+		{
+			if (PM::pm_GetIndex(mUpperBound, i) < PM::pm_GetIndex(mLowerBound, i))
+			{
+				float t = PM::pm_GetIndex(upperbound, i);
+				mUpperBound = PM::pm_SetIndex(mUpperBound, i, PM::pm_GetIndex(mLowerBound, i));
+				mLowerBound = PM::pm_SetIndex(mLowerBound, i, t);
+			}
+		}
 	}
 
 	BoundingBox::BoundingBox(float width, float height, float depth) :

@@ -25,7 +25,7 @@ namespace PR
 				PM::vec2 uv;
 				PM::vec3 n;
 
-				face.interpolate(u, v, p, uv, n);
+				face.interpolate(u, v, p, n, uv);
 				point.setVertex(p);
 				point.setUV(uv);
 				point.setNormal(n);
@@ -79,7 +79,21 @@ namespace PR
 
 		inline BoundingBox static getBoundingBox(const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3)
 		{
-			return BoundingBox(p1, p2).putted(p3);
+			constexpr float VertexOffset = 0.00001f;
+
+			BoundingBox box(p1, p2);
+			box.put(p3);
+
+			if (box.width() < PM_EPSILON)
+				box.put(PM::pm_SetX(p1, PM::pm_GetX(p1) + VertexOffset));
+
+			if (box.height() < PM_EPSILON)
+				box.put(PM::pm_SetY(p1, PM::pm_GetY(p1) + VertexOffset));
+
+			if (box.depth() < PM_EPSILON)
+				box.put(PM::pm_SetZ(p1, PM::pm_GetZ(p1) + VertexOffset));
+
+			return box;
 		}
 	};
 }
