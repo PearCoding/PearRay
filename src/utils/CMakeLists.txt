@@ -32,7 +32,7 @@ SET(PR_Main_Hdr
   ${PR_UTILS}/SceneLoader.h)
 SET(PR_Loader_Hdr
   ${PR_UTILS}/loader/ImageLoader.h
-  ${PR_UTILS}/loader/MeshLoader.h
+  ${PR_UTILS}/loader/SubGraphLoader.h
   ${PR_UTILS}/loader/WavefrontLoader.h)
 SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
 SET(PR_Parser_Entity_Hdr

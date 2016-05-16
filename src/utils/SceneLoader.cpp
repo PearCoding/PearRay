@@ -27,7 +27,7 @@
 #include "texture/SpecTexture1D.h"
 #include "texture/SpecTexture2D.h"
 
-#include "geometry/Mesh.h"
+#include "geometry/IMesh.h"
 #include "loader/WavefrontLoader.h"
 
 #include "spectral/XYZConverter.h"
@@ -121,9 +121,9 @@ namespace PRU
 						{
 							//addTexture(entry, env);
 						}
-						else if (entry->id() == "mesh")
+						else if (entry->id() == "graph")
 						{
-							addMesh(entry, env);
+							addSubGraph(entry, env);
 						}
 					}
 				}
@@ -559,16 +559,16 @@ namespace PRU
 		env->addSpectrum(name, spec);
 	}
 
-	void SceneLoader::addMesh(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addSubGraph(DL::DataGroup* group, Environment* env)
 	{
-		DL::Data* nameD = group->getFromKey("name");
+		DL::Data* namesD = group->getFromKey("names");
 		DL::Data* loaderD = group->getFromKey("loader");
 		DL::Data* fileD = group->getFromKey("file");
 
-		std::string name;
-		if (nameD && nameD->isType() == DL::Data::T_String)
+		std::map<std::string, std::string> names;
+		if (namesD && namesD->isType() == DL::Data::T_String)
 		{
-			name = nameD->getString();
+			names[""] = namesD->getString();
 		}
 		else
 		{
@@ -601,19 +601,15 @@ namespace PRU
 		if (loader == "obj")
 		{
 			DL::Data* flipNormalD = group->getFromKey("flipNormal");
-
-			Mesh* mesh = new Mesh;
-
-			WavefrontLoader loader;
+			
+			WavefrontLoader loader(names);
 
 			if (flipNormalD && flipNormalD->isType() == DL::Data::T_Bool)
 			{
 				loader.flipNormal(flipNormalD->getBool());
 			}
 
-			loader.load(file, mesh);
-
-			env->addMesh(name, mesh);
+			loader.load(file, env);
 		}
 		else
 		{

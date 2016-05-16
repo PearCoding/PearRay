@@ -1,13 +1,14 @@
 #pragma once
 
-#include "MeshLoader.h"
+#include "SubGraphLoader.h"
+#include <map>
 
 namespace PRU
 {
-	class PR_LIB_UTILS WavefrontLoader : public MeshLoader
+	class PR_LIB_UTILS WavefrontLoader : public SubGraphLoader
 	{
 	public:
-		WavefrontLoader();
+		WavefrontLoader(const std::map<std::string, std::string>& overrides);
 		~WavefrontLoader();
 
 		inline float scale() const
@@ -25,9 +26,10 @@ namespace PRU
 			mFlipNormal = b;
 		}
 
-		void load(const std::string& file, PR::Mesh* mesh);
+		void load(const std::string& file, Environment* env) override;
 
 	private:
+		std::map<std::string, std::string> mOverrides;
 		float mScale;
 		bool mFlipNormal;
 	};

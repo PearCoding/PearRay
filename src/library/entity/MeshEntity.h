@@ -4,7 +4,7 @@
 
 namespace PR
 {
-	class Mesh;
+	class IMesh;
 	class Material;
 	class PR_LIB MeshEntity : public RenderEntity
 	{
@@ -14,8 +14,8 @@ namespace PR
 
 		virtual std::string type() const;
 
-		void setMesh(Mesh* mesh);
-		Mesh* mesh() const;
+		void setMesh(IMesh* mesh);
+		IMesh* mesh() const;
 
 		virtual bool isCollidable() const override;
 		virtual BoundingBox localBoundingBox() const override;
@@ -23,6 +23,6 @@ namespace PR
 
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const;
 	private:
-		Mesh* mMesh;
+		IMesh* mMesh;
 	};
 }

@@ -1,51 +1,20 @@
 #include "WavefrontLoader.h"
-#include "geometry/Mesh.h"
+#include "geometry/IMesh.h"
+#include "geometry/TriMesh.h"
 #include "geometry/Face.h"
 
+#include "Environment.h"
 #include "Logger.h"
 
-#include <sstream>
-#include <fstream>
-#include <vector>
-#include <list>
-#include <algorithm>
-#include <functional>
-#include <cctype>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "external/tiny_obj_loader.h"
 
 // Slow implementation, and needs more protections and error messages!
 using namespace PR;
 namespace PRU
 {
-	// Utils
-
-	template<typename T>
-	T pr_to(const std::string& str)
-	{
-		T i;
-		std::stringstream stream(str);
-		stream >> i;
-		return i;
-	}
-
-	// trim from start
-	static inline std::string &ltrim(std::string &s) {
-		s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-		return s;
-	}
-
-	// trim from end
-	static inline std::string &rtrim(std::string &s) {
-		s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-		return s;
-	}
-
-	// trim from both ends
-	static inline std::string &trim(std::string &s) {
-		return ltrim(rtrim(s));
-	}
-
-	WavefrontLoader::WavefrontLoader() :
-		mScale(1), mFlipNormal(false)
+	WavefrontLoader::WavefrontLoader(const std::map<std::string, std::string>& overrides) :
+		mOverrides(overrides), mScale(1), mFlipNormal(false)
 	{
 	}
 
@@ -53,306 +22,68 @@ namespace PRU
 	{
 	}
 
-	struct UniqueVertex
+	void WavefrontLoader::load(const std::string& file, Environment* env)
 	{
-		int VIn;
-		int TIn;
-		int NIn;
-		uint32 ID;//Will be set later
-	};
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;// We ignore materials for now
+		std::string err;
 
-	struct ProxyFace
-	{
-		std::vector<uint32> uniqueIDs;
-	};
-
-	inline bool operator == (const UniqueVertex& f1, const UniqueVertex& f2)
-	{
-		return f1.VIn == f2.VIn && f1.TIn == f2.TIn && f1.NIn == f2.NIn;
-	}
-
-	UniqueVertex unpackFaceVertex(const std::string& str)
-	{
-		std::string Vert;
-		std::string Tex;
-		std::string Norm;
-
-		int part = 0;
-
-		for(char c : str)
+		if (!tinyobj::LoadObj(shapes, materials, err, file.c_str()))
 		{
-			if (c == '/')
-			{
-				part++;
-
-				if (part > 2)
-				{
-					break;
-				}
-			}
-			else
-			{
-				switch (part)
-				{
-				case 0:
-					Vert += c;
-					break;
-				case 1:
-					Tex += c;
-					break;
-				case 2:
-					Norm += c;
-					break;
-				}
-			}
+			PR_LOGGER.instance().logf(L_Error, M_Scene, "Error reading Wavefront file: %s", err.c_str());
 		}
-
-		if (Tex.empty())
+		else
 		{
-			Tex = Vert;
-		}
-
-		if (Norm.empty())
-		{
-			Norm = Vert;
-		}
-
-		UniqueVertex v;
-		v.VIn = pr_to<int>(Vert) - 1;
-		v.TIn = pr_to<int>(Tex) - 1;
-		v.NIn = pr_to<int>(Norm) - 1;
-		v.ID = 0;
-
-		return v;
-	}
-
-	void WavefrontLoader::load(const std::string& file, Mesh* mesh)
-	{
-		PR_ASSERT(mesh);
-
-		std::ifstream input(file, std::ifstream::in);
-		std::vector<UniqueVertex> uniqueVertices;
-		std::vector<ProxyFace> proxyFaces;
-
-		int lnr = 1;
-		std::string line;
-		while (std::getline(input, line))
-		{
-			line = trim(line);
-			if (line.empty())
+			for (tinyobj::shape_t shape : shapes)
 			{
-				continue;
-			}
+				PR::TriMesh* mesh = new PR::TriMesh();
+				mesh->reserve(shape.mesh.indices.size() / 3);
 
-			// Parse line
-			std::list<std::string> commands;
-			std::string tmp;
-			for(char c : line)
-			{
-				if (c == ' ' || c == '\t' || c == '\r')
+				bool hasNorm = shape.mesh.normals.size() > 0;
+				bool hasUV = shape.mesh.texcoords.size() > 0;
+				float inv = mFlipNormal ? -1.0f : 1.0f;
+
+				for (size_t i = 0; i < shape.mesh.indices.size() / 3; ++i)
 				{
-					if (!tmp.empty())
+					Face* face = new Face;
+					for (int j = 0; j < 3; j++)
 					{
-						commands.push_back(tmp);
-						tmp = "";
-					}
-				}
-				else if (c == '#')//Comment
-				{
-					break;
-				}
-				else
-				{
-					tmp += c;
-				}
-			}
+						int idx = shape.mesh.indices[3 * i + j];
+						face->V[j] = PM::pm_Set(mScale * shape.mesh.positions[3 * idx],
+							mScale * shape.mesh.positions[3 * idx + 1],
+							mScale * shape.mesh.positions[3 * idx + 2],
+							1);
 
-			if (!tmp.empty())
-			{
-				commands.push_back(tmp);
-			}
-
-			if (commands.empty())
-			{
-				continue;
-			}
-
-			// Parse Command
-			if (commands.front() == "v")//Vertex
-			{
-				commands.pop_front();
-
-				PM::vec3 v = PM::pm_Set(0, 0, 0, 1);
-				v = PM::pm_SetX(v, pr_to<float>(commands.front()));
-				commands.pop_front();
-				v = PM::pm_SetY(v, pr_to<float>(commands.front()));
-				commands.pop_front();
-
-				if (!commands.empty())
-				{
-					v = PM::pm_SetZ(v, pr_to<float>(commands.front()));
-				}
-
-				mesh->addVertex(v);
-			}
-			else if (commands.front() == "vt")//Texture
-			{
-				commands.pop_front();
-
-				PM::vec2 t = PM::pm_Set(0, 0);
-				t = PM::pm_SetX(t, pr_to<float>(commands.front()));
-				commands.pop_front();
-				t = PM::pm_SetY(t, pr_to<float>(commands.front()));
-				commands.pop_front();
-
-				mesh->addUV(t);
-			}
-			else if (commands.front() == "vn")//Normal
-			{
-				commands.pop_front();
-
-				PM::vec3 n = PM::pm_Set(0, 0, 0);
-				n = PM::pm_SetX(n, pr_to<float>(commands.front()));
-				commands.pop_front();
-				n = PM::pm_SetY(n, pr_to<float>(commands.front()));
-				commands.pop_front();
-
-				if (!commands.empty())
-				{
-					n = PM::pm_SetZ(n, pr_to<float>(commands.front()));
-				}
-
-				if (mFlipNormal)
-					n = PM::pm_Negate(n);
-
-				mesh->addNormal(PM::pm_Normalize3D(n));
-			}
-			else if (commands.front() == "f")//Face
-			{
-				commands.pop_front();
-
-				if (commands.size() >= 3)//Triangles or quads
-				{
-					ProxyFace face;
-
-					const size_t oldSize = commands.size();
-					for (size_t i = 0; i < oldSize; ++i)
-					{
-						UniqueVertex uv = unpackFaceVertex(commands.front());
-						commands.pop_front();
-
-						auto it = std::find(uniqueVertices.begin(), uniqueVertices.end(), uv);
-						if (it != uniqueVertices.end())
+						if (hasNorm)
 						{
-							uv = *it;
-						}
-						else
-						{
-							uv.ID = (uint32)uniqueVertices.size();
-							uniqueVertices.push_back(uv);
+							face->N[j] = PM::pm_Normalize3D(PM::pm_Set(inv * shape.mesh.normals[3 * idx],
+								inv * shape.mesh.normals[3 * idx + 1],
+								inv * shape.mesh.normals[3 * idx + 2],
+								0));
 						}
 
-						face.uniqueIDs.push_back(uv.ID);
+						if (hasUV)
+						{
+							face->UV[j] = PM::pm_Set(shape.mesh.texcoords[2 * idx],
+								shape.mesh.texcoords[2 * idx + 1],
+								0, 0);
+						}
 					}
 
-					proxyFaces.push_back(face);
-				}
-			}
-			//Everything else is ignored
-
-			++lnr;
-		}
-
-		// TODO: Only triangles or quads!
-		for (ProxyFace f : proxyFaces)
-		{
-			if (f.uniqueIDs.size() == 3)
-			{
-				Face* face = new Face;
-				UniqueVertex v1 = uniqueVertices.at(f.uniqueIDs.at(0));
-				UniqueVertex v2 = uniqueVertices.at(f.uniqueIDs.at(1));
-				UniqueVertex v3 = uniqueVertices.at(f.uniqueIDs.at(2));
-
-				face->V1 = mesh->getVertex(v1.VIn);
-				face->V2 = mesh->getVertex(v2.VIn);
-				face->V3 = mesh->getVertex(v3.VIn);
-
-				if (!mesh->normals().empty())
-				{
-					face->N1 = mesh->getNormal(v1.NIn);
-					face->N2 = mesh->getNormal(v2.NIn);
-					face->N3 = mesh->getNormal(v3.NIn);
+					mesh->addFace(face);
 				}
 
-				if (!mesh->uvs().empty())
-				{
-					face->UV1 = mesh->getUV(v1.TIn);
-					face->UV2 = mesh->getUV(v2.TIn);
-					face->UV3 = mesh->getUV(v3.TIn);
-				}
+				if (!hasNorm)
+					mesh->calcNormals();
 
-				mesh->addFace(face);
-			}
-			else if (f.uniqueIDs.size() == 4)
-			{
-				UniqueVertex v1 = uniqueVertices.at(f.uniqueIDs.at(0));
-				UniqueVertex v2 = uniqueVertices.at(f.uniqueIDs.at(1));
-				UniqueVertex v3 = uniqueVertices.at(f.uniqueIDs.at(2));
-				UniqueVertex v4 = uniqueVertices.at(f.uniqueIDs.at(3));
+				mesh->build();
 
-				// First triangle
-				Face* face = new Face;
-				face->V1 = mesh->getVertex(v1.VIn);
-				face->V2 = mesh->getVertex(v2.VIn);
-				face->V3 = mesh->getVertex(v4.VIn);
+				std::string name = shape.name;
+				if (mOverrides.count(shape.name))
+					name = mOverrides[shape.name];
 
-				if (!mesh->normals().empty())
-				{
-					face->N1 = mesh->getNormal(v1.NIn);
-					face->N2 = mesh->getNormal(v2.NIn);
-					face->N3 = mesh->getNormal(v4.NIn);
-				}
-
-				if (!mesh->uvs().empty())
-				{
-					face->UV1 = mesh->getUV(v1.TIn);
-					face->UV2 = mesh->getUV(v2.TIn);
-					face->UV3 = mesh->getUV(v4.TIn);
-				}
-				mesh->addFace(face);
-
-				// Second triangle
-				face = new Face;
-				face->V1 = mesh->getVertex(v4.VIn);
-				face->V2 = mesh->getVertex(v2.VIn);
-				face->V3 = mesh->getVertex(v3.VIn);
-
-				if (!mesh->normals().empty())
-				{
-					face->N1 = mesh->getNormal(v4.NIn);
-					face->N2 = mesh->getNormal(v2.NIn);
-					face->N3 = mesh->getNormal(v3.NIn);
-				}
-
-				if (!mesh->uvs().empty())
-				{
-					face->UV1 = mesh->getUV(v4.TIn);
-					face->UV2 = mesh->getUV(v2.TIn);
-					face->UV3 = mesh->getUV(v3.TIn);
-				}
-				mesh->addFace(face);
-			}
-			else
-			{
-				PR_LOGGER.log(L_Error, M_Internal, "Couldn't add face. Only triangles or quads allowed.");
+				env->addMesh(name, mesh);
 			}
 		}
-
-		mesh->fix();
-		mesh->build();
-
-		PR_LOGGER.logf(L_Debug, M_Internal, "V: %d, N: %d, U: %d, F: %d, V: %f",
-			mesh->vertices().size(), mesh->normals().size(), mesh->uvs().size(), mesh->faces().size(),
-			mesh->boundingBox().volume());
 	}
 }

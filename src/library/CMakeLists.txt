@@ -26,9 +26,9 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/BoundingBox.cpp
   ${PR_LIB}/geometry/Face.cpp
   ${PR_LIB}/geometry/FacePoint.cpp
-  ${PR_LIB}/geometry/Mesh.cpp
   ${PR_LIB}/geometry/Plane.cpp
-  ${PR_LIB}/geometry/Sphere.cpp)
+  ${PR_LIB}/geometry/Sphere.cpp
+  ${PR_LIB}/geometry/TriMesh.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Integrator_Src
   ${PR_LIB}/integrator/BiDirectIntegrator.cpp
@@ -120,10 +120,11 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/BoundingBox.h
   ${PR_LIB}/geometry/Face.h
   ${PR_LIB}/geometry/FacePoint.h
-  ${PR_LIB}/geometry/Mesh.h
+  ${PR_LIB}/geometry/IMesh.h
   ${PR_LIB}/geometry/Plane.h
   ${PR_LIB}/geometry/Sphere.h
-  ${PR_LIB}/geometry/Triangle.h)
+  ${PR_LIB}/geometry/Triangle.h
+  ${PR_LIB}/geometry/TriMesh.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Integrator_Hdr
   ${PR_LIB}/integrator/BiDirectIntegrator.h

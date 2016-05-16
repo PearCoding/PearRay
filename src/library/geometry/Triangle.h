@@ -19,7 +19,7 @@ namespace PR
 			float u, v;
 			PM::vec3 pos;
 
-			if (intersect(ray, face.V1, face.V2, face.V3, u, v, pos))
+			if (intersect(ray, face.V[0], face.V[1], face.V[2], u, v, pos))
 			{
 				PM::vec3 p;
 				PM::vec2 uv;
@@ -38,7 +38,7 @@ namespace PR
 		inline static bool intersect(const Ray& ray, const Face& face,
 			float& u, float& v, PM::vec3& point)
 		{
-			return intersect(ray, face.V1, face.V2, face.V3, u, v, point);
+			return intersect(ray, face.V[0], face.V[1], face.V[2], u, v, point);
 		}
 
 		// Better use with normals!
