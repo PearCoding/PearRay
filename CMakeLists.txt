@@ -47,6 +47,7 @@ option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT li
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
+find_package(FreeImage)
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -79,16 +80,13 @@ ENDIF()
 #CONFIGURE
 IF(PR_ONLY_LIBRARY_SUBS)
 	SET(PM_ONLY_LIBRARY ON)
-	SET(PP_ONLY_LIBRARY ON)
 	SET(DL_ONLY_LIBRARY ON)
 ENDIF(PR_ONLY_LIBRARY_SUBS)
 
-SET(PP_TARGET "pearpic")
 SET(DL_TARGET "datalisp")
 
 add_subdirectory(pearmath)
 add_subdirectory(datalisp)
-add_subdirectory(pearpic)
 
 SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
@@ -100,7 +98,7 @@ ENDIF()
 configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
-			pearpic/src ${CMAKE_CURRENT_BINARY_DIR}/pearpic
+			${FREEIMAGE_INCLUDE_DIR}
 			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
 
 add_subdirectory(${PR_Root}/library)

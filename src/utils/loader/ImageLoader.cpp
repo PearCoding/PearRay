@@ -1,53 +1,100 @@
 #include "ImageLoader.h"
-#include "PearPic.h"
-#include "Image.h"
 
 #include "Logger.h"
 
 #include "texture/RGBTexture2D.h"
 #include "texture/SpecTexture2D.h"
 
-// Slow implementation, and needs more protections and error messages!
+#include <FreeImage.h>
+
 using namespace PR;
 namespace PRU
 {
+	void FreeImage_ErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) {
+		std::string str = "FreeImage: ";
+		str += message;
+		PR_LOGGER.log(L_Error, M_Internal, str);
+	}
+
 	ImageLoader::ImageLoader()
 	{
-		mPearPic = new PP::PearPic();
-		mPearPic->init();
+#ifdef FREEIMAGE_LIB
+		FreeImage_Initialise();// Only when linking static
+#endif
+		FreeImage_SetOutputMessage(FreeImage_ErrorHandler);
 	}
 
 	ImageLoader::~ImageLoader()
 	{
-		if (mPearPic)
-		{
-			mPearPic->exit();
-			delete mPearPic;
-		}
+#ifdef FREEIMAGE_LIB
+		FreeImage_DeInitialise();
+#endif
 	}
 
 	Texture2D* ImageLoader::load(const std::string& filename) const
 	{
-		PP::Image image = mPearPic->load(filename);
-		if (image.isValid())
-		{
-			image = image.convertTo(PP::CF_RGBA, PP::CP_Byte);
 
-			if (image.isValid())
+		FREE_IMAGE_FORMAT format = FreeImage_GetFileType(filename.c_str());
+
+		if (format == FIF_UNKNOWN)
+			format = FreeImage_GetFIFFromFilename(filename.c_str());
+
+		if (format != FIF_UNKNOWN)
+		{
+			if (FreeImage_FIFSupportsReading(format))
 			{
-				float* data = new float[image.width()*image.height() * 4];
-				for (uint32 i = 0; i < image.width(); ++i)
+				FIBITMAP* image = FreeImage_Load(format, filename.c_str(), 0);
+				
+				if (image)
 				{
-					for (uint32 j = 0; j < image.height(); ++j)
+					if (FreeImage_GetBPP(image) != 32)
 					{
-						data[j * image.width() * 4 + i * 4] = image.data()[j * image.width() * 4 + i * 4] / 255.0f;
-						data[j * image.width() * 4 + i * 4 + 1] = image.data()[j * image.width() * 4 + i * 4 + 1] / 255.0f;
-						data[j * image.width() * 4 + i * 4 + 2] = image.data()[j * image.width() * 4 + i * 4 + 2] / 255.0f;
-						data[j * image.width() * 4 + i * 4 + 3] = image.data()[j * image.width() * 4 + i * 4 + 3] / 255.0f;
+						FIBITMAP* dst = FreeImage_ConvertTo32Bits(image);
+						FreeImage_Unload(image);
+						image = dst;
+					}
+
+					if (image)
+					{
+						PR_ASSERT(FreeImage_GetBPP(image) == 32);
+
+						uint32 width = FreeImage_GetWidth(image);
+						uint32 height = FreeImage_GetHeight(image);
+						uint32 pitch = FreeImage_GetPitch(image);
+						BYTE* bits = FreeImage_GetBits(image);
+							 
+						if (width == 0 || height == 0 || bits == nullptr)
+						{
+							PR_LOGGER.logf(PR::L_Error, PR::M_Scene, "Invalid file '%'", filename.c_str());
+							return nullptr;
+						}
+
+						float* data = new float[width*height * 4];
+						
+						constexpr float inv = 1 / 255.0f;
+
+						for (uint32 j = 0; j < height; ++j)
+						{
+							BYTE* pixel = bits;
+							for (uint32 i = 0; i < width; ++i)
+							{
+								data[j * width * 4 + i * 4] = pixel[FI_RGBA_RED] * inv;
+								data[j * width * 4 + i * 4 + 1] = pixel[FI_RGBA_GREEN] * inv;
+								data[j * width * 4 + i * 4 + 2] = pixel[FI_RGBA_BLUE] * inv;
+								data[j * width * 4 + i * 4 + 3] = pixel[FI_RGBA_ALPHA] * inv;
+								pixel += 4;
+							}
+							bits += pitch;
+						}
+
+						return new RGBTexture2D(data, width, height);
 					}
 				}
-
-				return new RGBTexture2D(data, image.width(), image.height());
+			}
+			else
+			{
+				PR_LOGGER.logf(PR::L_Error, PR::M_Scene, "FreeImage doesn't support reading '%s'",
+					FreeImage_GetFIFMimeType(format));
 			}
 		}
 		else
