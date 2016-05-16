@@ -2,3 +2,9 @@
 
 # PearRay
 Experimental ray and path tracing application.
+
+
+# Dependencies
+ - OpenCL https://www.khronos.org/opencl/
+ - tinyobjloader https://github.com/syoyo/tinyobjloader
+ - FreeImage http://freeimage.sourceforge.net
