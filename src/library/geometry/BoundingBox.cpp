@@ -91,7 +91,7 @@ namespace PR
 
 	bool BoundingBox::isValid() const
 	{
-		return volume() != 0;
+		return volume() > PM_EPSILON;
 	}
 
 	bool BoundingBox::contains(const PM::vec3& point) const

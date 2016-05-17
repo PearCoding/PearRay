@@ -45,21 +45,21 @@ namespace PR
 
 	BoundingBox RenderEntity::worldBoundingBox() const
 	{
+		float sc = scale();
+		const PM::quat rot = rotation();
+		const PM::vec3 pos = position();
+
 		BoundingBox bx = localBoundingBox();
 
-		PM::mat m = matrix();
-		PM::vec3 upper = PM::pm_Multiply(m, bx.upperBound());
-		PM::vec3 lower = PM::pm_Multiply(m, bx.lowerBound());
+		if (!PM::pm_IsNearlyEqual(PM::pm_IdentityQuat(), rot, PM::pm_FillVector(PM_EPSILON)))
+			sc *= 1.41421356f;
 
-		// Really this way?
-		if (!PM::pm_IsLess(upper, lower))
-		{
-			return BoundingBox(upper, lower);
-		}
-		else
-		{
-			return BoundingBox(lower, upper);
-		}
+		PM::vec3 upper = PM::pm_Add(pos, PM::pm_Scale(bx.upperBound(), sc));
+		PM::vec3 lower = PM::pm_Add(pos, PM::pm_Scale(bx.lowerBound(), sc));
+
+		PM::mat m = matrix();
+
+		return BoundingBox(upper, lower);
 	}
 
 	bool RenderEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)

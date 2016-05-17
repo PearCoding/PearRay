@@ -8,16 +8,13 @@
 #include <list>
 #include <functional>
 
-#ifndef PR_KDTREE_MAX_DEPTH
-# define PR_KDTREE_MAX_DEPTH (4096)
-#endif
-
 #ifndef PR_KDTREE_MAX_STACK
 # define PR_KDTREE_MAX_STACK (4096)
 #endif
 
 namespace PR
 {
+	// TODO: Add balancing methods
 	template<class T>
 	class PR_LIB_INLINE kdTree
 	{
@@ -178,7 +175,16 @@ namespace PR
 					// DO NOT USE content AFTER THIS LINE
 
 					//leftList.insert(leftList.end(), midList.begin(), midList.end());
-					rightList.insert(rightList.end(), midList.begin(), midList.end());
+					//rightList.insert(rightList.end(), midList.begin(), midList.end());
+					uint32 c = 0;
+					for (T* e : midList)
+					{
+						if (c % 2 == 0)
+							leftList.push_back(e);
+						else
+							rightList.push_back(e);
+						c++;
+					}
 
 					auto node = new kdNode(nullptr, nullptr, midEntity, box);
 					if (!leftList.empty())
@@ -236,8 +242,8 @@ namespace PR
 					stackPos--;
 					kdNode* node = stack[stackPos];
 
-					if (near[stackPos] > n)
-						continue;
+					/*if (near[stackPos] > n)
+						continue;*/
 
 					if (node->object != ignore &&
 						mCheckCollision(ray, tmpCollisionPoint, node->object, ignore))
