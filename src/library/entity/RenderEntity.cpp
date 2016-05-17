@@ -57,8 +57,6 @@ namespace PR
 		PM::vec3 upper = PM::pm_Add(pos, PM::pm_Scale(bx.upperBound(), sc));
 		PM::vec3 lower = PM::pm_Add(pos, PM::pm_Scale(bx.lowerBound(), sc));
 
-		PM::mat m = matrix();
-
 		return BoundingBox(upper, lower);
 	}
 

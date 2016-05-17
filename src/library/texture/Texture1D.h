@@ -11,7 +11,7 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(GenericTexture1D<T>);
 	public:
 		inline GenericTexture1D() :
-			mWrapMode(TWM_Clamp)
+			mWrapMode(TWM_Repeat)
 		{
 		}
 

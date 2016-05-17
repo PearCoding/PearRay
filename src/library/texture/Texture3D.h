@@ -11,7 +11,7 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(GenericTexture3D<T>);
 	public:
 		inline GenericTexture3D() :
-			mWrapMode(TWM_Clamp)
+			mWrapMode(TWM_Repeat)
 		{
 		}
 
@@ -27,10 +27,11 @@ namespace PR
 			case TWM_Clamp:
 				return getValue(PM::pm_Clamp(uv, PM::pm_Set(0, 0, 0), PM::pm_Set(1, 1, 1)));
 			case TWM_Repeat:
-				return getValue(PM::pm_Set(
+				return getValue(PM::pm_Clamp(PM::pm_Set(
 					PM::pm_GetX(uv) - (int)PM::pm_GetX(uv),
 					PM::pm_GetY(uv) - (int)PM::pm_GetY(uv),
-					PM::pm_GetZ(uv) - (int)PM::pm_GetZ(uv)));
+					PM::pm_GetZ(uv) - (int)PM::pm_GetZ(uv)),
+					PM::pm_Set(0, 0, 0), PM::pm_Set(1, 1, 1)));
 			case TWM_MirroredRepeat:
 			{
 				int tx = (int)PM::pm_GetX(uv);
@@ -46,7 +47,8 @@ namespace PR
 				if (tz % 2 == 1)
 					w = 1 - w;
 
-				return getValue(PM::pm_Set(u, v, w));
+				return getValue(PM::pm_Clamp(PM::pm_Set(u, v, w)
+					PM::pm_Set(0, 0, 0), PM::pm_Set(1, 1, 1)));
 			}
 			}
 		}

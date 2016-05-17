@@ -11,7 +11,7 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(GenericTexture2D<T>);
 	public:
 		inline GenericTexture2D() :
-			mWrapMode(TWM_Clamp)
+			mWrapMode(TWM_Repeat)
 		{
 		}
 
@@ -21,6 +21,7 @@ namespace PR
 
 		inline T eval(const PM::vec2& uv)
 		{
+			float tmp;
 			switch (mWrapMode)
 			{
 			default:
@@ -28,8 +29,8 @@ namespace PR
 				return getValue(PM::pm_Clamp(uv, PM::pm_Set(0, 0), PM::pm_Set(1, 1)));
 			case TWM_Repeat:
 				return getValue(PM::pm_Set(
-					PM::pm_GetX(uv) - (int)PM::pm_GetX(uv),
-					PM::pm_GetY(uv) - (int)PM::pm_GetY(uv)));
+					std::abs(std::modf(PM::pm_GetX(uv), &tmp)),
+					std::abs(std::modf(PM::pm_GetY(uv), &tmp))));
 			case TWM_MirroredRepeat:
 			{
 				int tx = (int)PM::pm_GetX(uv);

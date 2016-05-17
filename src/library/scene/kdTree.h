@@ -242,8 +242,8 @@ namespace PR
 					stackPos--;
 					kdNode* node = stack[stackPos];
 
-					/*if (near[stackPos] > n)
-						continue;*/
+					if (near[stackPos] > n)
+						continue;
 
 					if (node->object != ignore &&
 						mCheckCollision(ray, tmpCollisionPoint, node->object, ignore))
