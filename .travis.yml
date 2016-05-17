@@ -22,13 +22,13 @@ before_script:
   - sudo -E apt-add-repository -y "ppa:beineri/opt-qt521"
   - sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
   - sudo -E apt-get update -qq
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake gcc-4.8 g++-4.8 qt52base qt52tools libfreeimage-dev
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake gcc-4.8 g++-4.8 qt52base qt52tools libfreeimage-dev libfreeimage3
   - export CXX=g++-4.8 CC=gcc-4.8
   - $CXX --version
   - cmake --version
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DPP_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
+  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make
   - bin/pr_test_boundingbox

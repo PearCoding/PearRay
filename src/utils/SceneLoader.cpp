@@ -561,20 +561,27 @@ namespace PRU
 
 	void SceneLoader::addSubGraph(DL::DataGroup* group, Environment* env)
 	{
-		DL::Data* namesD = group->getFromKey("names");
+		DL::Data* nameD = group->getFromKey("name");
+		DL::Data* overridesD = group->getFromKey("overrides");
 		DL::Data* loaderD = group->getFromKey("loader");
 		DL::Data* fileD = group->getFromKey("file");
 
-		std::map<std::string, std::string> names;
-		if (namesD && namesD->isType() == DL::Data::T_String)
+		std::string name;
+		if (nameD && nameD->isType() == DL::Data::T_String)
 		{
-			names[""] = namesD->getString();
+			name = nameD->getString();
 		}
-		else
+
+		std::map<std::string, std::string> overrides;
+		if (overridesD && overridesD->isType() == DL::Data::T_String)
 		{
-			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get name for mesh entry.");
+			overrides[""] = overridesD->getString();
+		}
+		/*else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get names for subgraph entry.");
 			return;
-		}
+		}*/
 		
 		std::string file;
 		if (fileD && fileD->isType() == DL::Data::T_String)
@@ -583,7 +590,7 @@ namespace PRU
 		}
 		else
 		{
-			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get file for mesh entry.");
+			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get file for subgraph entry.");
 			return;
 		}
 
@@ -602,7 +609,7 @@ namespace PRU
 		{
 			DL::Data* flipNormalD = group->getFromKey("flipNormal");
 			
-			WavefrontLoader loader(names);
+			WavefrontLoader loader(overrides);
 
 			if (flipNormalD && flipNormalD->isType() == DL::Data::T_Bool)
 			{

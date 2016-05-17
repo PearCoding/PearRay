@@ -8,6 +8,7 @@
 
 #include "loader/ImageLoader.h"
 
+#include <map>
 #include <string>
 
 namespace DL
@@ -20,6 +21,7 @@ namespace DL
 namespace PR
 {
 	class Entity;
+	class IMesh;
 }
 
 namespace PRU
