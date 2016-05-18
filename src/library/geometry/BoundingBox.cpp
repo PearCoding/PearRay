@@ -10,16 +10,22 @@ namespace PR
 	{
 	}
 
+	constexpr float BIAS = 0.00001f;
 	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound) :
 		mUpperBound(upperbound), mLowerBound(lowerbound)
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			if (PM::pm_GetIndex(mUpperBound, i) < PM::pm_GetIndex(mLowerBound, i))
+			float ui = PM::pm_GetIndex(mUpperBound, i);
+			float li = PM::pm_GetIndex(mLowerBound, i);
+			if (ui < li)
 			{
-				float t = PM::pm_GetIndex(upperbound, i);
-				mUpperBound = PM::pm_SetIndex(mUpperBound, i, PM::pm_GetIndex(mLowerBound, i));
-				mLowerBound = PM::pm_SetIndex(mLowerBound, i, t);
+				mUpperBound = PM::pm_SetIndex(mUpperBound, i, li);
+				mLowerBound = PM::pm_SetIndex(mLowerBound, i, ui);
+			}
+			else if (std::abs(ui-li) < PM_EPSILON)
+			{
+				mUpperBound = PM::pm_SetIndex(mUpperBound, i, ui + BIAS);
 			}
 		}
 	}
@@ -28,6 +34,9 @@ namespace PR
 		mUpperBound(PM::pm_Set(width/2, height/2, depth/2, 1)),
 		mLowerBound(PM::pm_Set(-width/2, -height/2, -depth/2, 1))
 	{
+		PR_ASSERT(width > PM_EPSILON);
+		PR_ASSERT(height > PM_EPSILON);
+		PR_ASSERT(depth > PM_EPSILON);
 	}
 
 	BoundingBox::BoundingBox(const BoundingBox& other)

@@ -79,8 +79,10 @@ namespace PR
 				if (content.Entities.size() == 1)
 				{
 					T* entity = content.Entities.front();
+
+#ifdef PR_DEBUG
 					PR_LOGGER.logf(L_Debug, M_Scene, "[%d] Leaf | Volume %f", stackPos, mGetBoundingBox(entity).volume());
-					//PR_LOGGER.logf(L_Debug, M_Scene, "       -> Object: %s", entity->toString().c_str());
+#endif
 
 					auto node = new kdNode(nullptr, nullptr, entity, mGetBoundingBox(entity));
 					if (parent)
@@ -117,7 +119,6 @@ namespace PR
 					// Construct next sides
 					std::list<T*> leftList;
 					std::list<T*> rightList;
-					std::list<T*> midList;
 					T* midEntity = nullptr;
 
 					float mid = PM::pm_GetIndex(box.center(), axis);
@@ -128,7 +129,7 @@ namespace PR
 					{
 						BoundingBox bx = mGetBoundingBox(e);
 
-						float dist = PM::pm_MinT(std::abs(mid - PM::pm_GetIndex(bx.upperBound(), axis)),
+						const float dist = PM::pm_MinT(std::abs(mid - PM::pm_GetIndex(bx.upperBound(), axis)),
 							std::abs(mid - PM::pm_GetIndex(bx.lowerBound(), axis)));
 
 						if (!midEntity || near > dist)
@@ -141,50 +142,41 @@ namespace PR
 					if (!midEntity)
 						continue;//Nothing available
 
+#ifdef PR_DEBUG
 					PR_LOGGER.logf(L_Debug, M_Scene, "[%d, %d] Volume %f | Near %f | Mid %f | Side %d", stackPos, axis, box.volume(), near, mid, content.Side);
+#endif
 
 					// Split entities into two parts.
+					uint8 c = 0;
 					for (T* e : content.Entities)
 					{
 						if (e == midEntity)//Ignore mid entity
-						{
 							continue;
-						}
 
 						BoundingBox bx = mGetBoundingBox(e);
-						float dist = mid - PM::pm_GetIndex(bx.upperBound(), axis);
-						float dist2 = mid - PM::pm_GetIndex(bx.lowerBound(), axis);
+						const float dist = mid - PM::pm_GetIndex(bx.upperBound(), axis);
+						const float dist2 = mid - PM::pm_GetIndex(bx.lowerBound(), axis);
+						const float midDist = 0.5f* (dist + dist2);
 
-						if (dist * dist2 >= 0)//Both are positive, or negative
+						if (std::abs(midDist) >= PM_EPSILON)//Both are positive, or negative
 						{
-							if (dist < 0)
-							{
+							if (midDist < 0)
 								leftList.push_back(e);
-							}
 							else
-							{
 								rightList.push_back(e);
-							}
 						}
 						else // A entity which is split by the plane.
 						{
-							midList.push_back(e);
+							if (c == 0)
+								leftList.push_back(e);
+							else
+								rightList.push_back(e);
+
+							c = (c + 1) % 2;
 						}
 					}
 
 					// DO NOT USE content AFTER THIS LINE
-
-					//leftList.insert(leftList.end(), midList.begin(), midList.end());
-					//rightList.insert(rightList.end(), midList.begin(), midList.end());
-					uint32 c = 0;
-					for (T* e : midList)
-					{
-						if (c % 2 == 0)
-							leftList.push_back(e);
-						else
-							rightList.push_back(e);
-						c++;
-					}
 
 					auto node = new kdNode(nullptr, nullptr, midEntity, box);
 					if (!leftList.empty())
@@ -229,11 +221,11 @@ namespace PR
 			float n = std::numeric_limits<float>::max();
 			float l = 0;// Temporary variable.
 			kdNode* stack[PR_KDTREE_MAX_STACK];
-			float near[PR_KDTREE_MAX_STACK];
+			//float near[PR_KDTREE_MAX_STACK];
 			uint32 stackPos = 1;
 
 			stack[0] = root();
-			near[0] = 0;
+			//near[0] = 0;
 
 			if (root() && root()->boundingBox.intersects(ray, collisionPos))
 			{
@@ -242,15 +234,15 @@ namespace PR
 					stackPos--;
 					kdNode* node = stack[stackPos];
 
-					if (near[stackPos] > n)
-						continue;
+					/*if (near[stackPos] > n)
+						continue;*/
 
 					if (node->object != ignore &&
 						mCheckCollision(ray, tmpCollisionPoint, node->object, ignore))
 					{
 						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
 
-						if (l < n)
+						if (l <= n)
 						{
 							n = l;
 							res = node->object;
@@ -261,27 +253,27 @@ namespace PR
 					if (node->left && node->left->boundingBox.intersects(ray, collisionPos))
 					{
 						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collisionPos, ray.startPosition()));
-						if (l <= n)
-						{
+						/*if (l <= n)
+						{*/
 							stack[stackPos] = node->left;
-							near[stackPos] = l;
+							//near[stackPos] = l;
 							stackPos++;
 
 							PR_ASSERT(stackPos < PR_KDTREE_MAX_STACK);
-						}
+						//}
 					}
 
 					if (node->right && node->right->boundingBox.intersects(ray, collisionPos))
 					{
 						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collisionPos, ray.startPosition()));
-						if (l <= n)
-						{
+						/*if (l <= n)
+						{*/
 							stack[stackPos] = node->right;
-							near[stackPos] = l;
+							//near[stackPos] = l;
 							stackPos++;
 
 							PR_ASSERT(stackPos < PR_KDTREE_MAX_STACK);
-						}
+						//}
 					}
 				}
 			}

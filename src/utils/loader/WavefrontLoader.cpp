@@ -9,7 +9,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "external/tiny_obj_loader.h"
 
-// Slow implementation, and needs more protections and error messages!
 using namespace PR;
 namespace PRU
 {
@@ -82,7 +81,21 @@ namespace PRU
 				if (mOverrides.count(shape.name))
 					name = mOverrides[shape.name];
 
-				env->addMesh(name, mesh);
+				int i = 1;
+				std::string next = name;
+				while (env->hasMesh(next) && i < 1000)
+				{
+					std::stringstream stream;
+					stream << name << "_" << i;
+					next = stream.str();
+					i++;
+				}
+
+				if(env->hasMesh(next))
+					PR_LOGGER.logf(L_Error, M_Scene, "Mesh '%s' already in use.", next.c_str());
+
+				env->addMesh(next, mesh);
+				PR_LOGGER.logf(L_Info, M_Scene, "Adding mesh '%s'", next.c_str());
 			}
 		}
 	}
