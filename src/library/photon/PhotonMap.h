@@ -5,6 +5,8 @@
 #include "PearMath.h"
 #include "geometry/BoundingBox.h"
 
+#include <functional>
+
 namespace PR
 {
 	namespace Photon
@@ -24,10 +26,14 @@ namespace PR
 
 			PM::vec3 photonDirection(const Photon* p);
 
-			void locate(PhotonSphere& sphere, uint64 index);
+			void locateSphere(PhotonSphere& sphere, uint64 index);
+			void locateDome(PhotonSphere& sphere, uint64 index);
+
+			typedef std::function<bool(const Photon*, const PhotonSphere&, float&)> CheckFunction;
+			void locate(PhotonSphere& sphere, uint64 index, CheckFunction checkFunc);
 
 			void store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir);
-			void scalePhotonPower(float scale);
+			void scalePhotonPower(double scale);
 
 			void balanceTree();// Balance the KD-tree before using
 

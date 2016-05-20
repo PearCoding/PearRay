@@ -30,8 +30,7 @@ namespace PR
 	enum PhotonGatheringMode
 	{
 		PGM_Sphere,
-		PGM_Dome,
-		PGM_Disk
+		PGM_Dome
 	};
 
 	class PR_LIB RenderSettings
@@ -82,6 +81,9 @@ namespace PR
 
 		inline PhotonGatheringMode photonGatheringMode() const { return mPhotonGatheringMode; }
 		inline void setPhotonGatheringMode(PhotonGatheringMode v) { mPhotonGatheringMode = v; }
+
+		inline float photonSqueezeWeight() const { return mPhotonSqueezeWeight; }
+		inline void setPhotonSqueezeWeight(float v) { mPhotonSqueezeWeight = v; }
 	private:
 		SamplerMode mSamplerMode;
 		uint32 mXSamplerCount;
@@ -103,5 +105,6 @@ namespace PR
 		uint32 mMaxPhotonDiffuseBounces;
 		uint32 mMinPhotonSpecularBounces;
 		PhotonGatheringMode mPhotonGatheringMode;
+		float mPhotonSqueezeWeight;
 	};
 }

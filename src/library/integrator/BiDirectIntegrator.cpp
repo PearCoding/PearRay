@@ -97,11 +97,15 @@ namespace PR
 		Renderer* renderer = context->renderer();
 		ThreadData& data = mThreadData[context->threadNumber()];
 
+		const uint32 maxDepth = renderer->settings().maxRayDepth();
+		const uint32 maxDiffBounces = renderer->settings().maxDiffuseBounces();
+
 		Ray current = in;
 		uint32 depth = 0;
+		uint32 diffBounces = 0;
 
 		// First let the camera ray travel!
-		for (depth = 0; depth < renderer->settings().maxRayDepth(); ++depth)
+		for (depth = 0; depth < maxDepth && diffBounces <= maxDiffBounces; ++depth)
 		{
 			FacePoint collision;
 			Spectrum applied;
@@ -119,6 +123,9 @@ namespace PR
 					data.CameraAffection[depth] = applied;
 					data.CameraPath[depth] = current;
 					data.CameraDiff[depth] = store;
+
+					if (store)
+						diffBounces++;
 				}
 				else// If not shadeable, then get the affect spec and stop
 				{
@@ -149,8 +156,8 @@ namespace PR
 		{
 			for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
 			{
-				Ray* lightRays = &data.LightPath[lightNr * renderer->settings().maxRayDepth()];
-				Spectrum* lightFlux = &data.LightFlux[lightNr * renderer->settings().maxRayDepth()];
+				Ray* lightRays = &data.LightPath[lightNr * maxDepth];
+				Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
 				//RenderEntity** lightEntities = &data.LightEntities[lightNr * renderer->settings().maxRayDepth()];
 
 				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
@@ -170,7 +177,8 @@ namespace PR
 				lightFlux[lightDepth] = flux;
 
 				//lightEntities[lightDepth] = light;
-				for (uint32 k = 1; k < renderer->settings().maxRayDepth(); ++k)
+				diffBounces = 0;
+				for (uint32 k = 1; k < maxDepth && diffBounces <= maxDiffBounces; ++k)
 				{
 					FacePoint collision;
 					RenderEntity* entity = context->shoot(current, collision);
@@ -194,6 +202,7 @@ namespace PR
 							//lightEntities[lightDepth] = entity;
 							lightFlux[lightDepth] = flux;
 							lightRays[lightDepth] = current;
+							diffBounces++;
 						}
 					}
 					else
@@ -224,8 +233,8 @@ namespace PR
 				{
 					for (uint32 s = 0; s < data.LightMaxDepth[j]; ++s)
 					{
-						const Ray& lightVertex = data.LightPath[j * renderer->settings().maxRayDepth() + s];
-						const Spectrum& lightFlux = data.LightFlux[j * renderer->settings().maxRayDepth() + s];
+						const Ray& lightVertex = data.LightPath[j * maxDepth + s];
+						const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
 
 						Ray shootRay(lightVertex.startPosition(),
 							PM::pm_Normalize3D(PM::pm_Subtract(cameraVertex.startPosition(), lightVertex.startPosition())));

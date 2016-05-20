@@ -65,6 +65,7 @@ private:
 	IProperty* mMaxPhotonDiffuseBouncesProp;
 	IProperty* mMinPhotonSpecularBouncesProp;
 	IProperty* mPhotonGatheringModeProp;
+	IProperty* mPhotonSqueezeWeightProp;
 
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;

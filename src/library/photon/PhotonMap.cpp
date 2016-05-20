@@ -46,7 +46,31 @@ namespace PR
 			return mStoredPhotons == 0;
 		}
 
-		void PhotonMap::locate(PhotonSphere& sphere, uint64 index)
+		void PhotonMap::locateSphere(PhotonSphere& sphere, uint64 index)
+		{
+			locate(sphere, index, [](const Photon* pht, const PhotonSphere& sph, float& dist2)
+			{
+				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
+				dist2 = PM::pm_MagnitudeSqr3D(V);
+				const float d = PM::pm_Dot3D(V, sph.Normal);
+				const float r = sph.Distances2[0] * (1 - std::abs(d)) + sph.Distances2[0] * std::abs(d) *(1 - sph.SqueezeWeight);
+				return dist2 <= r;
+			});
+		}
+
+		void PhotonMap::locateDome(PhotonSphere& sphere, uint64 index)
+		{
+			locate(sphere, index, [](const Photon* pht, const PhotonSphere& sph, float& dist2)
+			{
+				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
+				dist2 = PM::pm_MagnitudeSqr3D(V);
+				const float d = PM::pm_Dot3D(V, sph.Normal);
+				const float r = sph.Distances2[0] * (1 - std::abs(d)) + sph.Distances2[0] * std::abs(d) *(1 - sph.SqueezeWeight);
+				return d >= 0 && dist2 < r;
+			});
+		}
+
+		void PhotonMap::locate(PhotonSphere& sphere, uint64 index, CheckFunction checkFunc)
 		{
 			Photon* photon = &mPhotons[index];
 
@@ -55,26 +79,23 @@ namespace PR
 				float dist1 = PM::pm_GetIndex(sphere.Center, photon->KDFlags) - photon->Position[photon->KDFlags];
 				if (dist1 > 0) // Right search
 				{
-					locate(sphere, 2 * index + 1);
+					locate(sphere, 2 * index + 1, checkFunc);
 
 					if (dist1 * dist1 < sphere.Distances2[0])
-						locate(sphere, 2 * index);
+						locate(sphere, 2 * index, checkFunc);
 				}
 				else // Left search
 				{
-					locate(sphere, 2 * index);
+					locate(sphere, 2 * index, checkFunc);
 
 					if (dist1 * dist1 < sphere.Distances2[0])
-						locate(sphere, 2 * index + 1);
+						locate(sphere, 2 * index + 1, checkFunc);
 				}
 			}
 
 			// compute distance
-			float dist2 = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(
-				PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2]),
-				sphere.Center));
-
-			if (dist2 < sphere.Distances2[0])// Found a photon!
+			float dist2;
+			if (checkFunc(photon, sphere, dist2))// Found a photon!
 			{
 				if (sphere.Found < sphere.Max)
 				{
@@ -182,7 +203,7 @@ namespace PR
 #endif
 		}
 
-		void PhotonMap::scalePhotonPower(float scale)
+		void PhotonMap::scalePhotonPower(double scale)
 		{
 			for (uint64 i = mPreviousScaleIndex; i <= mStoredPhotons; ++i)
 			{

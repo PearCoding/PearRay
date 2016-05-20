@@ -21,7 +21,8 @@ namespace PR
 		mMaxPhotonGatherCount(500),
 		mMaxPhotonDiffuseBounces(4),
 		mMinPhotonSpecularBounces(1),
-		mPhotonGatheringMode(PGM_Sphere)
+		mPhotonGatheringMode(PGM_Sphere),
+		mPhotonSqueezeWeight(0)
 	{
 	}
 }

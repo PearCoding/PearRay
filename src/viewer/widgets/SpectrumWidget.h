@@ -43,6 +43,8 @@ private:
 	// Cache
 	QPixmap mCache;
 
+	bool mSpecInf;
+	bool mSpecNaN;
 	float mSpecMax;
 	QColor mSpecRGB;
 	QColor mSpecRGBLinear;

@@ -105,8 +105,9 @@ QWidget(parent)
 	mPhotonGatheringModeProp = new SelectionProperty(tr("Gathering Mode"), PR::PGM_Sphere);
 	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Sphere"), PR::PGM_Sphere);
 	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Dome"), PR::PGM_Dome);
-	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Disk"), PR::PGM_Disk);
 	mPhotonMappingGroupProp->addChild(mPhotonGatheringModeProp);
+	mPhotonSqueezeWeightProp = new DoubleProperty(tr("Squeeze Weight"), 0, 0, 1);
+	mPhotonMappingGroupProp->addChild(mPhotonSqueezeWeightProp);
 	mProperties.add(mPhotonMappingGroupProp);
 
 	// View
@@ -149,6 +150,7 @@ SystemPropertyView::~SystemPropertyView()
 	delete mMaxPhotonDiffuseBouncesProp;
 	delete mMinPhotonSpecularBouncesProp;
 	delete mPhotonGatheringModeProp;
+	delete mPhotonSqueezeWeightProp;
 	delete mPhotonMappingGroupProp;
 	delete mViewGroupProp;
 	delete mViewModeProp;
@@ -211,6 +213,7 @@ void SystemPropertyView::enableRendering()
 	mMaxPhotonDiffuseBouncesProp->setEnabled(false);
 	mMinPhotonSpecularBouncesProp->setEnabled(false);
 	mPhotonGatheringModeProp->setEnabled(false);
+	mPhotonSqueezeWeightProp->setEnabled(false);
 
 	mXSamplesProp->setEnabled(false);
 	mYSamplesProp->setEnabled(false);
@@ -236,6 +239,7 @@ void SystemPropertyView::disableRendering()
 	mMaxPhotonDiffuseBouncesProp->setEnabled(true);
 	mMinPhotonSpecularBouncesProp->setEnabled(true);
 	mPhotonGatheringModeProp->setEnabled(true);
+	mPhotonSqueezeWeightProp->setEnabled(true);
 
 	mXSamplesProp->setEnabled(true);
 	mYSamplesProp->setEnabled(true);
@@ -286,6 +290,8 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->setDefaultValue(renderer->settings().minPhotonSpecularBounces());
 	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setIndex(renderer->settings().photonGatheringMode());
 	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setDefaultIndex(renderer->settings().photonGatheringMode());
+	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setValue(renderer->settings().photonSqueezeWeight());
+	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setDefaultValue(renderer->settings().photonSqueezeWeight());
 }
 
 void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
@@ -307,5 +313,6 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 	renderer->settings().setMaxPhotonDiffuseBounces(reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->value());
 	renderer->settings().setMinPhotonSpecularBounces(reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->value());
 	renderer->settings().setPhotonGatheringMode((PR::PhotonGatheringMode)reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->index());
+	renderer->settings().setPhotonSqueezeWeight(reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->value());
 }
 

@@ -8,7 +8,7 @@
 SpectrumWidget::SpectrumWidget(QWidget *parent)
 	: QWidget(parent),
 	mSpectrum(), mCurrentNM(-1),
-	mSpecMax(1)
+	mSpecInf(false), mSpecNaN(false), mSpecMax(1)
 {
 	cache();
 	cacheImage();
@@ -38,6 +38,12 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 {
 	QPainter painter(this);
 	painter.fillRect(rect(), Qt::white);
+
+	if (mSpecInf || mSpecNaN)
+	{
+		painter.setOpacity(0.25f);
+	}
+
 	painter.drawPixmap(0, 0, mCache);
 
 	const int mx = width() / 2;
@@ -46,7 +52,6 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 	const float xspacing = qMax<float>(SAMPLE_SPACING,
 		(width() - PADDING * 4 - TEXT_AREA_W) / (float)PR::Spectrum::SAMPLING_COUNT);
 	const float yspacing = qMax<float>(UNIT_HEIGHT, mh - PADDING);
-
 
 	const int w = (PR::Spectrum::SAMPLING_COUNT - 1)*xspacing;
 	const int h = yspacing;
@@ -65,7 +70,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 		painter.setPen(QPen(Qt::darkRed, 1, Qt::SolidLine));
 		painter.setBrush(Qt::red);
 		painter.drawEllipse(QPointF(PADDING * 2 + mCurrentNM*w,
-			mh - val*yspacing),
+			mh - (std::isnormal(val) ? val : 0)*yspacing),
 			3, 3);
 
 		painter.setPen(Qt::black);
@@ -74,7 +79,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 		if (val > 0)
 		{
 			painter.drawText(PADDING * 2 + dx + mCurrentNM*w,
-				mh + 40, QString::number(val*mSpecMax));
+				mh + 40, std::isnormal(val) ? QString::number(val*mSpecMax): tr("NaN"));
 			painter.drawText(PADDING * 2 + dx + mCurrentNM*w,
 				mh + 50, QString("%1 nm").arg(
 					PR::Spectrum::WAVELENGTH_START + mCurrentNM*PR::Spectrum::WAVELENGTH_AREA_SIZE));
@@ -82,10 +87,28 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 		else
 		{
 			painter.drawText(PADDING * 2 + dx + mCurrentNM*w,
-				mh - 50, QString::number(val*mSpecMax));
+				mh - 50, std::isnormal(val) ? QString::number(val*mSpecMax) : tr("NaN"));
 			painter.drawText(PADDING * 2 + dx + mCurrentNM*w,
 				mh - 40, QString("%1 nm").arg(
 					PR::Spectrum::WAVELENGTH_START + mCurrentNM*PR::Spectrum::WAVELENGTH_AREA_SIZE));
+		}
+	}
+
+	if (mSpecInf || mSpecNaN)
+	{
+		painter.setOpacity(1);
+		painter.setPen(Qt::red);
+		QFont font = painter.font();
+		font.setWeight(6);
+		painter.setFont(font);
+
+		if (mSpecInf)
+		{
+			painter.drawText(rect(), Qt::AlignCenter, tr("Has Inf values!"));
+		}
+		else if (mSpecNaN)
+		{
+			painter.drawText(rect(), Qt::AlignCenter, tr("Has NaN values!"));
 		}
 	}
 }
@@ -118,6 +141,9 @@ void SpectrumWidget::resizeEvent(QResizeEvent* event)
 
 void SpectrumWidget::cache()
 {
+	mSpecInf = mSpectrum.hasInf();
+	mSpecNaN = mSpectrum.hasNaN();
+
 	mSpecMax = qMax(1.0f, qMax(mSpectrum.max(), -mSpectrum.min()));
 
 	float R, G, B;
@@ -211,7 +237,7 @@ void SpectrumWidget::cacheImage()
 	painter.drawLine(PADDING, mh + h, PADDING * 3, mh + h);
 	painter.drawLine(PADDING, mh - h, PADDING * 3, mh - h);
 
-	painter.drawText(PADDING * 4, mh - h + 10, std::isnan(mSpecMax) ? "NAN" : QString::number(mSpecMax));
+	painter.drawText(PADDING * 4, mh - h + 10, std::isnan(mSpecMax) ? tr("NaN") : QString::number(mSpecMax));
 
 	painter.drawLine(PADDING * 2 + w, mh - h, PADDING * 2 + w, mh + h);
 	painter.drawLine(PADDING + w, mh + h, w + PADDING * 3, mh + h);

@@ -68,8 +68,8 @@ namespace PR
 		StratifiedSampler sampler(renderer->random(), 200);
 		for (RenderEntity* light : lightList)
 		{
-			uint32 photonsShoot = 0;
-			for (size_t i = 0; i < sampleSize; ++i)
+			size_t photonsShoot = 0;
+			for (size_t i = 0; i < sampleSize*6 && photonsShoot < sampleSize; ++i)
 			{
 				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
 				lightSample.setNormal(
@@ -161,7 +161,7 @@ namespace PR
 			}
 
 			if (photonsShoot != 0)
-				mMap->scalePhotonPower(ScaleFactor/photonsShoot);
+				mMap->scalePhotonPower(ScaleFactor/(double)photonsShoot);
 		}
 
 		mMap->balanceTree();
@@ -186,11 +186,22 @@ namespace PR
 		
 		sphere->Found = 0;
 		sphere->Center = point.vertex();
+		sphere->Normal = point.normal();
+		sphere->SqueezeWeight = context->renderer()->settings().photonSqueezeWeight();
 		sphere->GotHeap = false;
 		sphere->Distances2[0] =
 			context->renderer()->settings().maxPhotonGatherRadius() * context->renderer()->settings().maxPhotonGatherRadius();
 
-		mMap->locate(*sphere, 1);
+		switch (context->renderer()->settings().photonGatheringMode())
+		{
+		default:
+		case PGM_Sphere:
+			mMap->locateSphere(*sphere, 1);
+			break;
+		case PGM_Dome:
+			mMap->locateDome(*sphere, 1);
+			break;
+		}
 
 		Spectrum full;
 		if (sphere->Found >= 8)
