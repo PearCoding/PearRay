@@ -13,7 +13,7 @@ namespace PR
 	public:
 		inline static PM::vec3 reflect(const PM::vec3& N, const PM::vec3& L)
 		{
-			return PM::pm_Subtract(L, PM::pm_Scale(N, 2 * PM::pm_Dot3D(L, N)));
+			return PM::pm_Normalize3D(PM::pm_Subtract(L, PM::pm_Scale(N, 2 * PM::pm_Dot3D(L, N))));
 		}
 
 		inline static PM::vec3 refract(float n1, float n2, const PM::vec3& N, const PM::vec3& L)
@@ -27,6 +27,7 @@ namespace PR
 
 		// Fresnel
 		static float fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N);
+		static float fresnel_schlick_term(const PM::vec3& L, const PM::vec3& N);// Only the cos term
 		//static float fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);
 
 		// NDF

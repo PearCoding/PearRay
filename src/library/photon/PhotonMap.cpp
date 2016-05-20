@@ -1,5 +1,8 @@
 #include "PhotonMap.h"
 
+#ifdef PR_USE_PHOTON_RGB
+# include "spectral/RGBConverter.h"
+#endif
 
 namespace PR
 {
@@ -166,8 +169,17 @@ namespace PR
 			else
 				node->Phi = (uint8)phi;
 
+#ifdef PR_USE_PHOTON_RGB
+			/*float r, g, b;
+			RGBConverter::convert(spec, r, g, b);
+			node->Power[0] = PM::pm_ClampT(r, 0.0f, 1.0f) * 255;
+			node->Power[1] = PM::pm_ClampT(g, 0.0f, 1.0f) * 255;
+			node->Power[2] = PM::pm_ClampT(b, 0.0f, 1.0f) * 255;*/
+			RGBConverter::convert(spec, node->Power[0], node->Power[1], node->Power[2]);
+#else
 			for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 				node->Power[i] = spec.value(i);
+#endif
 		}
 
 		void PhotonMap::scalePhotonPower(float scale)
@@ -175,8 +187,13 @@ namespace PR
 			for (uint64 i = mPreviousScaleIndex; i <= mStoredPhotons; ++i)
 			{
 				Photon* node = &mPhotons[i];
+#ifdef PR_USE_PHOTON_RGB
+				for (uint32 j = 0; j < 3; ++j)
+					node->Power[j] *= scale;
+#else
 				for (uint32 j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
 					node->Power[j] *= scale;
+#endif
 			}
 			mPreviousScaleIndex = mStoredPhotons + 1;
 		}

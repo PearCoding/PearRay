@@ -40,6 +40,9 @@ QWidget(parent)
 	mRendererThreadsProp->setToolTip(tr("0 = Automatic"));
 	mRendererGroupProp->addChild(mRendererThreadsProp);
 
+	mRendererMaxDiffuseBouncesProp = new IntProperty(tr("Max Diffuse Bounces"), 4, 0, 4096);
+	mRendererGroupProp->addChild(mRendererMaxDiffuseBouncesProp);
+
 	mRendererMaxRayDepthProp = new IntProperty(tr("Max Ray Depth"), 10, 1, 4096);
 	mRendererGroupProp->addChild(mRendererMaxRayDepthProp);
 
@@ -97,6 +100,13 @@ QWidget(parent)
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherRadiusProp);
 	mMaxPhotonDiffuseBouncesProp = new IntProperty(tr("Max Photon Diffuse Bounces"), 4, 0);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonDiffuseBouncesProp);
+	mMinPhotonSpecularBouncesProp = new IntProperty(tr("Min Photon Specular Bounces"), 1, 0);
+	mPhotonMappingGroupProp->addChild(mMinPhotonSpecularBouncesProp);
+	mPhotonGatheringModeProp = new SelectionProperty(tr("Gathering Mode"), PR::PGM_Sphere);
+	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Sphere"), PR::PGM_Sphere);
+	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Dome"), PR::PGM_Dome);
+	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Disk"), PR::PGM_Disk);
+	mPhotonMappingGroupProp->addChild(mPhotonGatheringModeProp);
 	mProperties.add(mPhotonMappingGroupProp);
 
 	// View
@@ -128,6 +138,7 @@ SystemPropertyView::~SystemPropertyView()
 	delete mXSamplesProp;
 	delete mYSamplesProp;
 	delete mSamplerProp;
+	delete mRendererMaxDiffuseBouncesProp;
 	delete mRendererMaxRayDepthProp;
 	delete mDebugVisualizationProp;
 	delete mMaxLightSamplesProp;
@@ -136,6 +147,9 @@ SystemPropertyView::~SystemPropertyView()
 	delete mMaxPhotonGatherCountProp;
 	delete mMaxPhotonGatherRadiusProp;
 	delete mMaxPhotonDiffuseBouncesProp;
+	delete mMinPhotonSpecularBouncesProp;
+	delete mPhotonGatheringModeProp;
+	delete mPhotonMappingGroupProp;
 	delete mViewGroupProp;
 	delete mViewModeProp;
 	delete mViewScaleProp;
@@ -184,6 +198,7 @@ void SystemPropertyView::enableRendering()
 	mRendererTileXProp->setEnabled(false);
 	mRendererTileYProp->setEnabled(false);
 	mRendererThreadsProp->setEnabled(false);
+	mRendererMaxDiffuseBouncesProp->setEnabled(false);
 	mRendererMaxRayDepthProp->setEnabled(false);
 	mDebugVisualizationProp->setEnabled(false);
 
@@ -194,6 +209,8 @@ void SystemPropertyView::enableRendering()
 	mMaxPhotonGatherRadiusProp->setEnabled(false);
 	mMaxPhotonGatherCountProp->setEnabled(false);
 	mMaxPhotonDiffuseBouncesProp->setEnabled(false);
+	mMinPhotonSpecularBouncesProp->setEnabled(false);
+	mPhotonGatheringModeProp->setEnabled(false);
 
 	mXSamplesProp->setEnabled(false);
 	mYSamplesProp->setEnabled(false);
@@ -206,6 +223,7 @@ void SystemPropertyView::disableRendering()
 	mRendererTileXProp->setEnabled(true);
 	mRendererTileYProp->setEnabled(true);
 	mRendererThreadsProp->setEnabled(true);
+	mRendererMaxDiffuseBouncesProp->setEnabled(true);
 	mRendererMaxRayDepthProp->setEnabled(true);
 	mDebugVisualizationProp->setEnabled(true);
 
@@ -216,6 +234,8 @@ void SystemPropertyView::disableRendering()
 	mMaxPhotonGatherRadiusProp->setEnabled(true);
 	mMaxPhotonGatherCountProp->setEnabled(true);
 	mMaxPhotonDiffuseBouncesProp->setEnabled(true);
+	mMinPhotonSpecularBouncesProp->setEnabled(true);
+	mPhotonGatheringModeProp->setEnabled(true);
 
 	mXSamplesProp->setEnabled(true);
 	mYSamplesProp->setEnabled(true);
@@ -240,6 +260,8 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<SelectionProperty*>(mSamplerProp)->setIndex(renderer->settings().samplerMode());
 	reinterpret_cast<SelectionProperty*>(mSamplerProp)->setDefaultIndex(renderer->settings().samplerMode());
 
+	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setValue(renderer->settings().maxDiffuseBounces());
+	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxDiffuseBounces());
 	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setValue(renderer->settings().maxRayDepth());
 	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setDefaultValue(renderer->settings().maxRayDepth());
 	reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->setIndex(renderer->settings().debugMode());
@@ -260,10 +282,15 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setDefaultValue(renderer->settings().maxPhotonGatherCount());
 	reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->setValue(renderer->settings().maxPhotonDiffuseBounces());
 	reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxPhotonDiffuseBounces());
+	reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->setValue(renderer->settings().minPhotonSpecularBounces());
+	reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->setDefaultValue(renderer->settings().minPhotonSpecularBounces());
+	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setIndex(renderer->settings().photonGatheringMode());
+	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setDefaultIndex(renderer->settings().photonGatheringMode());
 }
 
 void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 {
+	renderer->settings().setMaxDiffuseBounces(reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->value());
 	renderer->settings().setMaxRayDepth(reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value());
 	renderer->settings().setDebugMode((PR::DebugMode)reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->index());
 
@@ -278,5 +305,7 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 	renderer->settings().setMaxPhotonGatherCount(reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->value());
 	renderer->settings().setMaxPhotonGatherRadius(reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->value());
 	renderer->settings().setMaxPhotonDiffuseBounces(reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->value());
+	renderer->settings().setMinPhotonSpecularBounces(reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->value());
+	renderer->settings().setPhotonGatheringMode((PR::PhotonGatheringMode)reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->index());
 }
 

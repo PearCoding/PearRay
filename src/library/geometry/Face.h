@@ -20,8 +20,8 @@ namespace PR
 			vec = PM::pm_Add(PM::pm_Scale(V[1], u),
 				PM::pm_Add(PM::pm_Scale(V[2], v), PM::pm_Scale(V[0], 1 - u - v)));
 
-			norm = PM::pm_Add(PM::pm_Scale(N[1], u),
-				PM::pm_Add(PM::pm_Scale(N[2], v), PM::pm_Scale(N[0], 1 - u - v)));
+			norm = PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(N[1], u),
+				PM::pm_Add(PM::pm_Scale(N[2], v), PM::pm_Scale(N[0], 1 - u - v))));
 
 			uv = PM::pm_Add(PM::pm_Scale(UV[1], u),
 				PM::pm_Add(PM::pm_Scale(UV[2], v), PM::pm_Scale(UV[0], 1 - u - v)));

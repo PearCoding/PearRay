@@ -19,7 +19,7 @@ namespace PR
 	{
 	}
 
-	constexpr float NormalOffset = 0.0001f;
+	constexpr float NormalOffset = 0.00001f;
 	Spectrum DirectIntegrator::apply(Ray& in, RenderContext* context)
 	{
 		FacePoint point;
@@ -59,7 +59,7 @@ namespace PR
 						FacePoint tmpPoint;
 						Spectrum applied;
 						Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
-						ray.setFlags(ray.flags() & RF_ShadowRay);
+						ray.setFlags(ray.flags() | RF_ShadowRay);
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{

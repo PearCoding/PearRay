@@ -27,6 +27,13 @@ namespace PR
 		DM_Transmission
 	};
 
+	enum PhotonGatheringMode
+	{
+		PGM_Sphere,
+		PGM_Dome,
+		PGM_Disk
+	};
+
 	class PR_LIB RenderSettings
 	{
 	public:
@@ -43,6 +50,9 @@ namespace PR
 
 		inline uint32 ySamplerCount() const { return mYSamplerCount; }
 		inline void setYSamplerCount(uint32 v) { mYSamplerCount = v; }
+
+		inline uint32 maxDiffuseBounces() const { return mMaxDiffuseBounces; }
+		inline void setMaxDiffuseBounces(uint32 v) { mMaxDiffuseBounces = v; }
 
 		inline uint32 maxRayDepth() const { return mMaxRayDepth; }
 		inline void setMaxRayDepth(uint32 v) { mMaxRayDepth = v; }
@@ -66,11 +76,18 @@ namespace PR
 
 		inline uint32 maxPhotonDiffuseBounces() const { return mMaxPhotonDiffuseBounces; }
 		inline void setMaxPhotonDiffuseBounces(uint32 v) { mMaxPhotonDiffuseBounces = v; }
+
+		inline uint32 minPhotonSpecularBounces() const { return mMinPhotonSpecularBounces; }
+		inline void setMinPhotonSpecularBounces(uint32 v) { mMinPhotonSpecularBounces = v; }
+
+		inline PhotonGatheringMode photonGatheringMode() const { return mPhotonGatheringMode; }
+		inline void setPhotonGatheringMode(PhotonGatheringMode v) { mPhotonGatheringMode = v; }
 	private:
 		SamplerMode mSamplerMode;
 		uint32 mXSamplerCount;
 		uint32 mYSamplerCount;
 
+		uint32 mMaxDiffuseBounces;
 		uint32 mMaxRayDepth;
 
 		DebugMode mDebugMode;
@@ -84,5 +101,7 @@ namespace PR
 		float mMaxPhotonGatherRadius;
 		uint32 mMaxPhotonGatherCount;
 		uint32 mMaxPhotonDiffuseBounces;
+		uint32 mMinPhotonSpecularBounces;
+		PhotonGatheringMode mPhotonGatheringMode;
 	};
 }

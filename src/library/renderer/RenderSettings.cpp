@@ -7,6 +7,7 @@ namespace PR
 		mSamplerMode(SM_Jitter),
 		mXSamplerCount(8), mYSamplerCount(8),
 
+		mMaxDiffuseBounces(2),
 		mMaxRayDepth(10),
 
 		// Direct Lightning
@@ -16,9 +17,11 @@ namespace PR
 
 		// Photon Mapping
 		mMaxPhotons(100000),
-		mMaxPhotonGatherRadius(0.02f),
+		mMaxPhotonGatherRadius(0.1f),
 		mMaxPhotonGatherCount(500),
-		mMaxPhotonDiffuseBounces(4)
+		mMaxPhotonDiffuseBounces(4),
+		mMinPhotonSpecularBounces(1),
+		mPhotonGatheringMode(PGM_Sphere)
 	{
 	}
 }

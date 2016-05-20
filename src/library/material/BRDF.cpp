@@ -6,8 +6,13 @@ namespace PR
 
 	float BRDF::fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N)
 	{
+		return f0 + (1 - f0)*fresnel_schlick_term(L, N);
+	}
+
+	float BRDF::fresnel_schlick_term(const PM::vec3& L, const PM::vec3& N)
+	{
 		const float t = 1 - std::abs(PM::pm_Dot3D(L, N));
-		return f0 + (1 - f0)*(t*t*t*t*t);
+		return t*t*t*t*t;
 	}
 
 	//float BRDF::fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);
@@ -74,7 +79,7 @@ namespace PR
 	float BRDF::standard(float f0, float alpha, const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V)
 	{
 		// Only optimizing is in the geometry
-		float fresnel = 1-fresnel_schlick(f0, L, H);
+		float fresnel = fresnel_schlick(f0, L, H);
 		float geometry = PM::pm_Dot3D(N, H) / (PM::pm_Dot3D(N, L)*PM::pm_Dot3D(V, H));
 		float ndf = ndf_beckmann(H, N, alpha);
 

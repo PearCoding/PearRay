@@ -12,6 +12,10 @@
 
 #include "photon/PhotonMap.h"
 
+#ifdef PR_USE_PHOTON_RGB
+# include "spectral/RGBConverter.h"
+#endif
+
 namespace PR
 {
 	PhotonAffector::PhotonAffector() :
@@ -36,7 +40,7 @@ namespace PR
 	}
 
 	constexpr float NormalOffset = 0.001f;
-	constexpr float ScaleFactor = 10.0f;// How much scale should be used for lights.
+	constexpr float ScaleFactor = 1.0f;// How much scale should be used for lights.
 	void PhotonAffector::init(Renderer* renderer)
 	{
 		PR_ASSERT(renderer);
@@ -77,7 +81,8 @@ namespace PR
 
 				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal());
 
-				uint32 diffuseBouces = 0;
+				uint32 diffuseBounces = 0;
+				uint32 specBounces = 0;
 				for (uint32 j = 0; j < renderer->settings().maxRayDepth(); ++j)
 				{
 					if (flux.isOnlyZero())
@@ -99,17 +104,20 @@ namespace PR
 						const float roughness = entity->material()->roughness(collision);
 						if (rnd < roughness)// Diffuse
 						{
-							// Always store when diffuse
-							mMap->store(flux, collision.vertex(), ray.direction());
-							photonsShoot++;
+							if (specBounces >= renderer->settings().minPhotonSpecularBounces())// Never calculate direct lightning
+							{
+								// Always store when diffuse
+								mMap->store(flux, collision.vertex(), ray.direction());
+								photonsShoot++;
+							}
 
 							rnd = renderer->random().getFloat();
-							if (diffuseBouces < renderer->settings().maxPhotonDiffuseBounces() &&
+							if (diffuseBounces < renderer->settings().maxPhotonDiffuseBounces() &&
 								rnd < roughness)// Shoot
 							{
 								nextDir = PM::pm_SetW(Projection::align(collision.normal(),
 									Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
-								diffuseBouces++;
+								diffuseBounces++;
 							}
 							else
 							{
@@ -138,6 +146,7 @@ namespace PR
 							{
 								break;
 							}
+							specBounces++;
 						}
 
 						flux = entity->material()->apply(collision, nextDir, ray.direction(), flux)*NdotL;
@@ -193,12 +202,20 @@ namespace PR
 
 				const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
 
-				const float d = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.vertex(), pos));
-				const float w = 1 - d / (K*sphere->Distances2[0]);
+				const float d = std::sqrt(sphere->Distances2[i]/sphere->Distances2[0]);
+				const float w = 1 - d / K;
 
 				if (w >= PM_EPSILON)
+				{
+#ifdef PR_USE_PHOTON_RGB
+					full += entity->material()->apply(point, in.direction(), dir,
+						//RGBConverter::toSpec(photon->Power[0]/255.0f, photon->Power[1] / 255.0f, photon->Power[2] / 255.0f))*w;
+						RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]))*w;
+#else
 					full += entity->material()->apply(point, in.direction(), dir, Spectrum(photon->Power))*w;
-				//full += entity->material()->apply(point, in.direction(), dir, Spectrum(photon->Power));
+					//full += entity->material()->apply(point, in.direction(), dir, Spectrum(photon->Power));
+#endif
+				}
 			}
 		}
 

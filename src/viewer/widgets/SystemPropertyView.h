@@ -44,6 +44,8 @@ private:
 	IProperty* mRendererTileXProp;
 	IProperty* mRendererTileYProp;
 	IProperty* mRendererThreadsProp;
+
+	IProperty* mRendererMaxDiffuseBouncesProp;
 	IProperty* mRendererMaxRayDepthProp;
 	IProperty* mDebugVisualizationProp;
 
@@ -61,6 +63,8 @@ private:
 	IProperty* mMaxPhotonGatherRadiusProp;
 	IProperty* mMaxPhotonGatherCountProp;
 	IProperty* mMaxPhotonDiffuseBouncesProp;
+	IProperty* mMinPhotonSpecularBouncesProp;
+	IProperty* mPhotonGatheringModeProp;
 
 	IProperty* mRendererStartProp;// Button
 	IProperty* mViewGroupProp;

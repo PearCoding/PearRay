@@ -67,7 +67,8 @@ namespace PR
 		if (!mThreadData || renderer->lights().empty() || renderer->settings().maxLightSamples() == 0)
 			return;
 
-		size_t lightSampleSize = renderer->settings().maxRayDepth() * renderer->lights().size() * renderer->settings().maxLightSamples();
+		size_t lightSampleSize = renderer->settings().maxRayDepth() *
+			renderer->lights().size() * renderer->settings().maxLightSamples();
 		for (uint32 i = 0; i < mThreadCount; ++i)
 		{
 			mThreadData[i].CameraPath = new Ray[renderer->settings().maxRayDepth()];
@@ -85,8 +86,8 @@ namespace PR
 	/* Attention: Don't use shootWithApply... it will call this again and destroy the thread data! */
 	/* This integrator should only be called from top */
 
-	constexpr float NormalOffset = 0.001f;
-	constexpr float LightEpsilon = 0.0001f;
+	constexpr float NormalOffset = 0.00001f;
+	constexpr float LightEpsilon = 0.00001f;
 	Spectrum BiDirectIntegrator::apply(Ray& in, RenderContext* context)
 	{
 		if (!mThreadData || context->renderer()->lights().empty() || context->renderer()->settings().maxLightSamples() == 0)
@@ -176,16 +177,16 @@ namespace PR
 					if (entity && entity->material())
 					{
 						PM::vec3 before = current.direction();
+
+						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), before));
+						if (NdotL < PM_EPSILON)
+							break;
+
 						bool store;
 						if (!handleObject(current, entity, collision, renderer, store))
 							break;
 
-						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), current.direction()));
-
-						if (NdotL < PM_EPSILON)
-							break;
-
-						flux = entity->material()->apply(collision, before, current.direction(), flux);
+						flux = entity->material()->apply(collision, current.direction(), before, flux);
 
 						if (store)
 						{

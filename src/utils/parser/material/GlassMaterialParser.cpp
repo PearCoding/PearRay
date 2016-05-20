@@ -26,11 +26,7 @@ namespace PRU
 		GlassMaterial* diff = new GlassMaterial;
 
 		diff->setSpecularity(loader->getTexture2D(env, specD));
-
-		if (indexD && indexD->isNumber())
-		{
-			diff->setIndex(indexD->getFloatConverted());
-		}
+		diff->setIndexData(loader->getData1D(env, indexD));
 
 		return diff;
 	}

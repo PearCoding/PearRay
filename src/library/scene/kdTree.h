@@ -242,7 +242,7 @@ namespace PR
 					{
 						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
 
-						if (l <= n)
+						if (l < n)
 						{
 							n = l;
 							res = node->object;

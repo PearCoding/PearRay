@@ -4,13 +4,15 @@
 #include "renderer/Renderer.h"
 #include "entity/RenderEntity.h"
 
+#include "texture/Texture1D.h"
+
 #include "BRDF.h"
 
 namespace PR
 {
 	GlassMaterial::GlassMaterial() :
 		Material(), 
-		mSpecularity(nullptr), mIndex(1), mFresnel(0)
+		mSpecularity(nullptr), mIndex(nullptr)
 	{
 	}
 
@@ -24,16 +26,22 @@ namespace PR
 		mSpecularity = spec;
 	}
 
-	float GlassMaterial::index() const
+	float GlassMaterial::index(float lambda) const
+	{
+		if (mIndex)
+			return mIndex->eval(lambda);
+		else
+			return 0;
+	}
+
+	Data1D* GlassMaterial::indexData() const
 	{
 		return mIndex;
 	}
 
-	void GlassMaterial::setIndex(float f)
+	void GlassMaterial::setIndexData(Data1D* data)
 	{
-		mIndex = f;
-		const float tmp = (1 - mIndex) / (1 + mIndex);
-		mFresnel = tmp * tmp;
+		mIndex = data;
 	}
 
 	Spectrum GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
@@ -47,29 +55,33 @@ namespace PR
 
 	float GlassMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		const float reflection = BRDF::fresnel_schlick(mFresnel, V, point.normal()) / 4;
+		const float NdotV = PM::pm_Dot3D(V, point.normal());
+		const bool inside = NdotV < 0;
 
-		if (reflection > PM_EPSILON)
-		{
-			dir = BRDF::reflect(point.normal(), V);
-			return reflection;
-		}
-		return 0;
+		const PM::vec3 N = inside ? PM::pm_Negate(point.normal()) : point.normal();
+		dir = BRDF::reflect(N, V);
+
+		const float ind = index(0);// TODO: Average?
+		const float tmp = inside ? (ind - 1) / (ind + 1) : (1 - ind) / (1 + ind);
+		const float f0 = tmp*tmp;
+
+		return BRDF::fresnel_schlick(f0, dir, N);
 	}
 
 	float GlassMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		const float reflection = BRDF::fresnel_schlick(mFresnel, V, point.normal()) / 4;
 		const float NdotV = PM::pm_Dot3D(V, point.normal());
 		const bool inside = NdotV < 0;
 
-		if (1 - reflection > PM_EPSILON)
-		{
-			dir = BRDF::refract(inside ? mIndex : 1, inside ? 1 : mIndex, point.normal(), V);
-			return 1 - reflection;
-		}
+		const float ind = index(0);// TODO: Average?
 
-		return 0;
+		const PM::vec3 N = !inside ? PM::pm_Negate(point.normal()) : point.normal();
+		dir = BRDF::refract(inside ? ind : 1, inside ? 1 : ind, N, V);
+
+		const float tmp = inside ? (ind - 1) / (ind + 1) : (1 - ind) / (1 + ind);
+		const float f0 = tmp*tmp;
+
+		return 1 - BRDF::fresnel_schlick(f0, dir, N);
 	}
 
 	float GlassMaterial::roughness(const FacePoint& point) const
