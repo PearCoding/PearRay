@@ -40,9 +40,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 	painter.fillRect(rect(), Qt::white);
 
 	if (mSpecInf || mSpecNaN)
-	{
 		painter.setOpacity(0.25f);
-	}
 
 	painter.drawPixmap(0, 0, mCache);
 

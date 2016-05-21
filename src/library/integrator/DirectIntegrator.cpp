@@ -19,7 +19,6 @@ namespace PR
 	{
 	}
 
-	constexpr float NormalOffset = 0.00001f;
 	Spectrum DirectIntegrator::apply(Ray& in, RenderContext* context)
 	{
 		FacePoint point;
@@ -54,11 +53,11 @@ namespace PR
 					const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
 					const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 
-					if (NdotL > PM_EPSILON)
+					if (NdotL >= PM_EPSILON)
 					{
 						FacePoint tmpPoint;
 						Spectrum applied;
-						Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(L, NormalOffset)), L, in.depth() + 1);
+						Ray ray(point.vertex(), L, in.depth() + 1);
 						ray.setFlags(ray.flags() | RF_ShadowRay);
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
@@ -66,8 +65,8 @@ namespace PR
 							spec += entity->material()->apply(point, in.direction(), L, applied)*NdotL;
 						}
 
-						sampleCounter++;
 					}
+					sampleCounter++;
 				}
 			}
 
@@ -80,13 +79,14 @@ namespace PR
 			float refWeight = entity->material()->emitReflectionVector(point, in.direction(), reflectionVector);
 			float transWeight = entity->material()->emitTransmissionVector(point, in.direction(), transmissionVector);
 
+			PR_DEBUG_ASSERT(refWeight >= 0 && transWeight >= 0 && refWeight + transWeight <= 1);
+
 			rnd = context->renderer()->random().getFloat();
 
 			if (rnd < refWeight)
 			{
 				FacePoint tmpPoint;
-				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(reflectionVector, NormalOffset)),
-					reflectionVector, in.depth() + 1);
+				Ray ray(point.vertex(),	reflectionVector, in.depth() + 1);
 
 				Spectrum applied;
 				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
@@ -97,11 +97,10 @@ namespace PR
 						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
 				}
 			}
-			else if( rnd < refWeight + transWeight)
+			else if(rnd < refWeight + transWeight)
 			{
 				FacePoint tmpPoint;
-				Ray ray(PM::pm_Add(point.vertex(), PM::pm_Scale(transmissionVector, NormalOffset)),
-					transmissionVector, in.depth() + 1);
+				Ray ray(point.vertex(),	transmissionVector, in.depth() + 1);
 
 				Spectrum applied;
 				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);

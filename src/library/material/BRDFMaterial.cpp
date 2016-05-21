@@ -90,8 +90,8 @@ namespace PR
 	{
 		const float rough = roughness(point);
 		const float alpha = rough * rough;
-		const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Add(L, V));
-		const float NdotV = PM::pm_Dot3D(point.normal(), V);
+		const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, V));
+		const float NdotV = -PM::pm_Dot3D(point.normal(), V);
 		const PM::vec3 N = NdotV < 0 ? PM::pm_Negate(point.normal()) : point.normal();
 
 		Spectrum spec;
@@ -113,7 +113,7 @@ namespace PR
 				const float B = 0.45f * alpha / (alpha + 0.09f);
 				const float C = sinf(or_alpha) * tanf(or_beta);
 
-				const float gamma = PM::pm_Dot3D(PM::pm_Subtract(V, PM::pm_Scale(N, NdotV)),
+				const float gamma = PM::pm_Dot3D(PM::pm_Add(V, PM::pm_Scale(N, NdotV)),
 					PM::pm_Subtract(L, PM::pm_Scale(N, NdotL)));
 
 				const float L1 = (A + B * C * PM::pm_MaxT(0.0f, gamma));
@@ -128,11 +128,13 @@ namespace PR
 
 			Spectrum specular = mSpecularity->eval(point.uv());
 
-			float geometry = 1 / PM::pm_MaxT(0.00001f, PM::pm_MaxT(PM::pm_Dot3D(N, L), PM::pm_Dot3D(N, V)));// Neumann
+			float geometry = 1 / PM::pm_MaxT(0.00001f, PM::pm_MaxT(PM::pm_Dot3D(N, L), -PM::pm_Dot3D(N, V)));// Neumann
 			float ndf = BRDF::ndf_beckmann(H, N, alpha);
-			float term = BRDF::fresnel_schlick_term(L, H);
+			float term = BRDF::fresnel_schlick_term(V, H);
 			if (refl > PM_EPSILON && alpha < PM_EPSILON)
-				term = BRDF::fresnel_schlick_term(L, N);
+				term = BRDF::fresnel_schlick_term(V, N);
+
+			PR_DEBUG_ASSERT(term >= 0 && term <= 1);
 
 			for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 			{

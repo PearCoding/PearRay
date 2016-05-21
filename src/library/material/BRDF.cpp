@@ -4,14 +4,15 @@ namespace PR
 {
 	// http://graphicrants.blogspot.de/2013/08/specular-brdf-reference.html
 
-	float BRDF::fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N)
+	float BRDF::fresnel_schlick(float f0, const PM::vec3& V, const PM::vec3& N)
 	{
-		return f0 + (1 - f0)*fresnel_schlick_term(L, N);
+		return f0 + (1 - f0)*fresnel_schlick_term(V, N);
 	}
 
-	float BRDF::fresnel_schlick_term(const PM::vec3& L, const PM::vec3& N)
+	float BRDF::fresnel_schlick_term(const PM::vec3& V, const PM::vec3& N)
 	{
-		const float t = 1 - std::abs(PM::pm_Dot3D(L, N));
+		const float t = 1 + PM::pm_Dot3D(N, V);
+
 		return t*t*t*t*t;
 	}
 

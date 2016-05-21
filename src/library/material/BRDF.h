@@ -11,23 +11,40 @@ namespace PR
 	class PR_LIB BRDF
 	{
 	public:
-		inline static PM::vec3 reflect(const PM::vec3& N, const PM::vec3& L)
+		/**
+		 * Reflects the viewing vector through the surface normal.
+		 * L = V - 2(N*V)N
+		 *
+		 * @param N Normal of the surface point.
+		 * @param V Unit vector pointing TO the surface point.
+		 * @return Unit vector pointing FROM the surface point outwards.
+		 */
+		inline static PM::vec3 reflect(const PM::vec3& N, const PM::vec3& V)
 		{
-			return PM::pm_Normalize3D(PM::pm_Subtract(L, PM::pm_Scale(N, 2 * PM::pm_Dot3D(L, N))));
+			return PM::pm_Subtract(V, PM::pm_Scale(N, 2 * PM::pm_Dot3D(V, N)));
 		}
 
-		inline static PM::vec3 refract(float n1, float n2, const PM::vec3& N, const PM::vec3& L)
+		/**
+		 * Refracts the ray based on the r parameter (r = n1/n2)
+		 *
+		 * @param r Index ratio (n1/n2) between the two mediums.
+		 * @param N Normal of the surface point.
+		 * @param V Unit vector pointing TO the surface point.
+		 * @return Unit vector pointing FROM the surface point outwards.
+		 */
+		inline static PM::vec3 refract(float r, const PM::vec3& N, const PM::vec3& V)
 		{
-			const float invF = n1 / n2;
-			const float dot = PM::pm_Dot3D(L, N);
-			const float t = invF * dot - std::sqrt(1 - invF*invF*(1 - dot*dot));
+			const float c = -PM::pm_Dot3D(V, N);
+			const float t = r * std::abs(c) - std::sqrt(1 - r*r*(1 - c*c));
 
-			return PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(L, invF), PM::pm_Scale(N, t)));
+			PR_DEBUG_ASSERT(c >= 0);// Should be handled by upper code.
+
+			return PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(V, r), PM::pm_Scale(N, t)));
 		}
 
 		// Fresnel
-		static float fresnel_schlick(float f0, const PM::vec3& L, const PM::vec3& N);
-		static float fresnel_schlick_term(const PM::vec3& L, const PM::vec3& N);// Only the cos term
+		static float fresnel_schlick(float f0, const PM::vec3& V, const PM::vec3& N);
+		static float fresnel_schlick_term(const PM::vec3& V, const PM::vec3& N);// Only the cos term
 		//static float fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);
 
 		// NDF

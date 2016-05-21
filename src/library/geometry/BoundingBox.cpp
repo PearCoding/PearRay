@@ -114,114 +114,48 @@ namespace PR
 		float tmin = -std::numeric_limits<float>::max();
 		float tmax = std::numeric_limits<float>::max();
 
-		float hx = width() / 2;
-		float hy = height() / 2;
-		float hz = depth() / 2;
-
+		PM::vec3 d = PM::pm_Scale(PM::pm_Subtract(mUpperBound, mLowerBound), 0.5f);
 		PM::vec3 p = PM::pm_Subtract(center(), ray.startPosition());
 
-		// X
-		if (std::abs(PM::pm_GetX(ray.direction())) > PM_EPSILON)
+		PM::vec3 t1 = PM::pm_Divide(PM::pm_Add(p, d), PM::pm_SetW(ray.direction(), 1));
+		PM::vec3 t2 = PM::pm_Divide(PM::pm_Subtract(p, d), PM::pm_SetW(ray.direction(), 1));
+
+		for (int i = 0; i < 3; ++i)
 		{
-			float t1 = (PM::pm_GetX(p) + hx) / PM::pm_GetX(ray.direction());
-			float t2 = (PM::pm_GetX(p) - hx) / PM::pm_GetX(ray.direction());
-
-			if (t1 > t2)
+			if (std::abs(PM::pm_GetIndex(ray.direction(), i)) > PM_EPSILON)
 			{
-				float tmp = t1;
-				t1 = t2; t2 = tmp;
-			}
+				float ft1 = PM::pm_GetIndex(t1, i);
+				float ft2 = PM::pm_GetIndex(t2, i);
 
-			if (t1 > tmin)
-			{
-				tmin = t1;
-			}
+				if (ft1 > ft2)
+					std::swap(ft1, ft2);
 
-			if (t2 < tmax)
-			{
-				tmax = t2;
-			}
+				if (ft1 > tmin)
+					tmin = ft1;
 
-			if (tmin > tmax || tmax < 0)
+				if (ft2 < tmax)
+					tmax = ft2;
+
+				if (tmin > tmax || tmax < 0)
+					return false;
+			}
+			else if (-PM::pm_GetIndex(p, i) - PM::pm_GetIndex(d, i) > 0 ||
+				-PM::pm_GetIndex(p, i) + PM::pm_GetIndex(d, i) < 0)
 			{
 				return false;
 			}
 		}
-		else if (-PM::pm_GetX(p) - hx > 0 ||
-			-PM::pm_GetX(p) + hx < 0)
+
+		const float t = tmin <= 0 ? tmax : tmin;
+		if (t >= PM_EPSILON)
+		{
+			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+			return true;
+		}
+		else
 		{
 			return false;
 		}
-
-		// Y
-		if (std::abs(PM::pm_GetY(ray.direction())) > PM_EPSILON)
-		{
-			float t1 = (PM::pm_GetY(p) + hy) / PM::pm_GetY(ray.direction());
-			float t2 = (PM::pm_GetY(p) - hy) / PM::pm_GetY(ray.direction());
-
-			if (t1 > t2)
-			{
-				float tmp = t1;
-				t1 = t2; t2 = tmp;
-			}
-
-			if (t1 > tmin)
-			{
-				tmin = t1;
-			}
-
-			if (t2 < tmax)
-			{
-				tmax = t2;
-			}
-
-			if (tmin > tmax || tmax < 0)
-			{
-				return false;
-			}
-		}
-		else if (-PM::pm_GetY(p) - hy > 0 ||
-			-PM::pm_GetY(p) + hy < 0)
-		{
-			return false;
-		}
-
-		// Z
-		if (std::abs(PM::pm_GetZ(ray.direction())) > PM_EPSILON)
-		{
-			float t1 = (PM::pm_GetZ(p) + hz) / PM::pm_GetZ(ray.direction());
-			float t2 = (PM::pm_GetZ(p) - hz) / PM::pm_GetZ(ray.direction());
-
-			if (t1 > t2)
-			{
-				float tmp = t1;
-				t1 = t2; t2 = tmp;
-			}
-
-			if (t1 > tmin)
-			{
-				tmin = t1;
-			}
-
-			if (t2 < tmax)
-			{
-				tmax = t2;
-			}
-
-			if (tmin > tmax || tmax < 0)
-			{
-				return false;
-			}
-		}
-		else if (-PM::pm_GetZ(p) - hz > 0 ||
-			-PM::pm_GetZ(p) + hz < 0)
-		{
-			return false;
-		}
-
-		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(),
-			tmin <= 0 ? tmax : tmin));
-		return true;
 	}
 
 
@@ -274,43 +208,16 @@ namespace PR
 
 	void BoundingBox::put(const PM::vec3& point)
 	{
-		/*if (!isValid())
+		for (int i = 0; i < 3; ++i)
 		{
-			PM::pm_Copy(mUpperBound, point);
-			PM::pm_Copy(mLowerBound, point);
-			return;
-		}*/
-
-		// UpperBound
-		if (PM::pm_GetX(point) > PM::pm_GetX(mUpperBound))
-		{
-			mUpperBound = PM::pm_SetX(mUpperBound, PM::pm_GetX(point));
-		}
-
-		if (PM::pm_GetY(point) > PM::pm_GetY(mUpperBound))
-		{
-			mUpperBound = PM::pm_SetY(mUpperBound, PM::pm_GetY(point));
-		}
-
-		if (PM::pm_GetZ(point) > PM::pm_GetZ(mUpperBound))
-		{
-			mUpperBound = PM::pm_SetZ(mUpperBound, PM::pm_GetZ(point));
-		}
-
-		// LowerBound
-		if (PM::pm_GetX(point) < PM::pm_GetX(mLowerBound))
-		{
-			mLowerBound = PM::pm_SetX(mLowerBound, PM::pm_GetX(point));
-		}
-
-		if (PM::pm_GetY(point) < PM::pm_GetY(mLowerBound))
-		{
-			mLowerBound = PM::pm_SetY(mLowerBound, PM::pm_GetY(point));
-		}
-
-		if (PM::pm_GetZ(point) < PM::pm_GetZ(mLowerBound))
-		{
-			mLowerBound = PM::pm_SetZ(mLowerBound, PM::pm_GetZ(point));
+			if (PM::pm_GetIndex(point, i) > PM::pm_GetIndex(mUpperBound, i))
+			{
+				mUpperBound = PM::pm_SetIndex(mUpperBound, i, PM::pm_GetIndex(point, i));
+			}
+			else if (PM::pm_GetIndex(point, i) < PM::pm_GetIndex(mLowerBound, i))
+			{
+				mLowerBound = PM::pm_SetIndex(mLowerBound, i, PM::pm_GetIndex(point, i));
+			}
 		}
 	}
 

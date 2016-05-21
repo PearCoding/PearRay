@@ -86,7 +86,6 @@ namespace PR
 	/* Attention: Don't use shootWithApply... it will call this again and destroy the thread data! */
 	/* This integrator should only be called from top */
 
-	constexpr float NormalOffset = 0.00001f;
 	constexpr float LightEpsilon = 0.00001f;
 	Spectrum BiDirectIntegrator::apply(Ray& in, RenderContext* context)
 	{
@@ -165,7 +164,7 @@ namespace PR
 					Projection::align(lightSample.normal(),
 						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));
 
-				current.setStartPosition(PM::pm_Add(lightSample.vertex(), PM::pm_Scale(lightSample.normal(), NormalOffset)));
+				current.setStartPosition(lightSample.vertex());
 				current.setDirection(lightSample.normal());
 				current.setDepth(1);
 
@@ -314,7 +313,7 @@ namespace PR
 		}
 
 		in.setDirection(nextDir);
-		in.setStartPosition(PM::pm_Add(point.vertex(), PM::pm_Scale(nextDir, NormalOffset)));
+		in.setStartPosition(point.vertex());
 		in.setDepth(in.depth() + 1);
 		return true;
 	}

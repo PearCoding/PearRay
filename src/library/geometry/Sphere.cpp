@@ -2,6 +2,7 @@
 
 #include "ray/Ray.h"
 
+#define PR_SPHERE_INTERSECT_EPSILON (1e-5)
 namespace PR
 {
 	Sphere::Sphere() :
@@ -78,30 +79,39 @@ namespace PR
 
 		if (S < 0 && // when object behind ray
 			L2 > R2)
-		{
 			return false;
-		}
 
 		const float M2 = L2 - S*S; // L . L - S^2
 
 		if (M2 > R2)
+			return false;
+
+		const float Q = std::sqrt(R2 - M2);
+		
+		float t0 = S - Q;
+		float t1 = S + Q;
+		if (t0 > t1)
+			std::swap(t0, t1);
+
+		if (t0 < PR_SPHERE_INTERSECT_EPSILON)
+			t0 = t1;
+
+		if (t0 >= PR_SPHERE_INTERSECT_EPSILON)
+		{
+			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t0));
+			return true;
+		}
+		else
 		{
 			return false;
 		}
-
-		const float Q = std::sqrt(R2 - M2);
-
-		collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), L2 > R2 ? S - Q : S + Q));
-		return true;
 	}
 
 	void Sphere::put(const PM::vec3& point)
 	{
 		float f = PM::pm_Magnitude3D(PM::pm_Subtract(mPosition, point));
 		if (f > mRadius)
-		{
 			mRadius = f;
-		}
 	}
 
 	void Sphere::combine(const Sphere& other)
@@ -114,9 +124,7 @@ namespace PR
 
 		float f = PM::pm_Magnitude3D(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
 		if (f > mRadius)
-		{
 			mRadius = f;
-		}
 	}
 
 	Sphere Sphere::putted(const PM::vec3& point) const

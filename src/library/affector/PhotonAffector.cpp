@@ -39,7 +39,6 @@ namespace PR
 		}
 	}
 
-	constexpr float NormalOffset = 0.001f;
 	constexpr float ScaleFactor = 1.0f;// How much scale should be used for lights.
 	void PhotonAffector::init(Renderer* renderer)
 	{
@@ -76,8 +75,7 @@ namespace PR
 					Projection::align(lightSample.normal(),
 						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));
 				
-				Ray ray(PM::pm_Add(lightSample.vertex(), PM::pm_Scale(lightSample.normal(), NormalOffset)),
-					lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
+				Ray ray(lightSample.vertex(), lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
 
 				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal());
 
@@ -151,7 +149,7 @@ namespace PR
 
 						flux = entity->material()->apply(collision, nextDir, ray.direction(), flux)*NdotL;
 						ray.setDirection(nextDir);
-						ray.setStartPosition(PM::pm_Add(collision.vertex(), PM::pm_Scale(nextDir, NormalOffset)));
+						ray.setStartPosition(collision.vertex());
 					}
 					else // Nothing found, abort
 					{
