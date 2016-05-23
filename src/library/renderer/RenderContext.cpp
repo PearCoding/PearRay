@@ -9,12 +9,12 @@ namespace PR
 
 	}
 
-	RenderEntity* RenderContext::shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
+	RenderEntity* RenderContext::shoot(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
 	{
 		return mRenderer->shoot(ray, collisionPoint, this, ignore);
 	}
 
-	RenderEntity* RenderContext::shootWithApply(Spectrum& appliedSpec, Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
+	RenderEntity* RenderContext::shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore)
 	{
 		return mRenderer->shootWithApply(appliedSpec, ray, collisionPoint, this, ignore);
 	}

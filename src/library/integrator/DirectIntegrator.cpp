@@ -19,7 +19,7 @@ namespace PR
 	{
 	}
 
-	Spectrum DirectIntegrator::apply(Ray& in, RenderContext* context)
+	Spectrum DirectIntegrator::apply(const Ray& in, RenderContext* context)
 	{
 		FacePoint point;
 		Spectrum applied;

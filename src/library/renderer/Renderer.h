@@ -55,8 +55,8 @@ namespace PR
 		size_t pixelsRendered() const;
 
 		// RenderThread things
-		RenderEntity* shoot(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithApply(Spectrum& appliedSpec, Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
 
 		uint32 threads() const;

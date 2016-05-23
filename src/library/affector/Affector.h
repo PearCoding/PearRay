@@ -20,6 +20,6 @@ namespace PR
 	public:
 		virtual void init(Renderer* renderer) = 0;
 
-		virtual Spectrum apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) = 0;
+		virtual Spectrum apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) = 0;
 	};
 }

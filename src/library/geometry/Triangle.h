@@ -10,7 +10,7 @@
 #define PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION
 
 #ifndef PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION
-# define PR_TRIANGLE_INTERSECT_EPSILON (1e-5)
+# define PR_TRIANGLE_INTERSECT_EPSILON (1e-6)
 #else
 # define PR_TRIANGLE_INTERSECT_EPSILON (PM_EPSILON)
 #endif
@@ -98,7 +98,7 @@ namespace PR
 			for (uint32 i = 0; i < 3; ++i)
 			{
 				const float f = std::abs(PM::pm_GetIndex(ray.direction(), i));
-				if (maxVal > f)
+				if (maxVal < f)
 				{
 					kz = i;
 					maxVal = f;
@@ -123,9 +123,10 @@ namespace PR
 			const float sy = dY / dZ;
 			const float sz = 1.0f / dZ;
 
-			PM::vec3 A = PM::pm_Subtract(p1, ray.startPosition());
-			PM::vec3 B = PM::pm_Subtract(p2, ray.startPosition());
-			PM::vec3 C = PM::pm_Subtract(p3, ray.startPosition());
+			// We use (1-u-v)*P1 + u*P2 + v*P3 convention
+			PM::vec3 A = PM::pm_Subtract(p2, ray.startPosition());
+			PM::vec3 B = PM::pm_Subtract(p3, ray.startPosition());
+			PM::vec3 C = PM::pm_Subtract(p1, ray.startPosition());
 
 			// Shear
 			const float Ax = PM::pm_GetIndex(A, kx) - sx*PM::pm_GetIndex(A, kz);
@@ -173,6 +174,7 @@ namespace PR
 				const float invDet = 1.0f / det;
 				u *= invDet;
 				v *= invDet;
+				//w *= invDet;
 				t *= invDet;
 
 				point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));

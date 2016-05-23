@@ -17,7 +17,7 @@ namespace PR
 	{
 	}
 
-	Spectrum LightAffector::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
+	Spectrum LightAffector::apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
 		if (entity->material()->isLight())
 			return entity->material()->applyEmission(point, in.direction());

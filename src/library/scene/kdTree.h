@@ -250,8 +250,10 @@ namespace PR
 						}
 					}
 
+					bool leftIntersect = false;
 					if (node->left && node->left->boundingBox.intersects(ray, collisionPos))
 					{
+						leftIntersect = true;
 						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collisionPos, ray.startPosition()));
 						/*if (l <= n)
 						{*/
@@ -263,7 +265,7 @@ namespace PR
 						//}
 					}
 
-					if (node->right && node->right->boundingBox.intersects(ray, collisionPos))
+					if (node->right && (!leftIntersect || node->right->boundingBox.intersects(ray, collisionPos)))
 					{
 						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collisionPos, ray.startPosition()));
 						/*if (l <= n)

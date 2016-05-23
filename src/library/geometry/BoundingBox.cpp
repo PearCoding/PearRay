@@ -3,6 +3,8 @@
 
 #include "ray/Ray.h"
 
+#include <utility>
+
 namespace PR
 {
 	BoundingBox::BoundingBox() :

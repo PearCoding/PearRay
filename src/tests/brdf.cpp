@@ -19,7 +19,7 @@ PR_TEST("Refraction");
 	auto N = PM::pm_Set(0, 1, 0);
 	auto V = PM::pm_Normalize3D(PM::pm_Set(1, 1, 0));
 
-	auto R = BRDF::refract(1, 1, N, V);
+	auto R = BRDF::refract(1, N, V);
 
 	PR_CHECK_NEARLY_EQ_3(R, V);
 }

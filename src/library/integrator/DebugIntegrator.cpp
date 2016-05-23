@@ -17,7 +17,7 @@ namespace PR
 	{
 	}
 
-	Spectrum DebugIntegrator::apply(Ray& in, RenderContext* context)
+	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context)
 	{
 		FacePoint point;
 		RenderEntity* entity = context->shoot(in, point);

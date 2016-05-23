@@ -37,8 +37,8 @@ namespace PR
 		inline int flags() const;
 		inline void setFlags(int flags);
 	private:
-		PM::vec3 mStartPosition;
-		PM::vec3 mDirection;
+		alignas(16) PM::vec3 mStartPosition;
+		alignas(16) PM::vec3 mDirection;
 		uint32 mDepth;// Recursion depth!
 		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
 		uint8 mFlags;

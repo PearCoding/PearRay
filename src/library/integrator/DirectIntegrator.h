@@ -11,7 +11,7 @@ namespace PR
 		DirectIntegrator(Renderer* renderer);
 
 		void init(Renderer* renderer) override;
-		Spectrum apply(Ray& in, RenderContext* context) override;
+		Spectrum apply(const Ray& in, RenderContext* context) override;
 
 	private:
 		Spectrum applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context);

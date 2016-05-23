@@ -10,6 +10,6 @@ namespace PR
 		LightAffector();
 
 		void init(Renderer* renderer) override;
-		Spectrum apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) override;
+		Spectrum apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) override;
 	};
 }

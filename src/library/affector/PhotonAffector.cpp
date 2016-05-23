@@ -175,7 +175,7 @@ namespace PR
 	}
 
 	constexpr float K = 1.1;
-	Spectrum PhotonAffector::apply(Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
+	Spectrum PhotonAffector::apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
 		if (!mMap || mMap->isEmpty())
 			return Spectrum();

@@ -221,7 +221,7 @@ namespace PR
 		return mPixelsRendered;
 	}
 
-	RenderEntity* Renderer::shoot(Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		const uint32 maxDepth = ray.maxDepth() == 0 ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
@@ -241,7 +241,7 @@ namespace PR
 		}
 	}
 
-	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
 		if (entity && entity->material())

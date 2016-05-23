@@ -22,8 +22,8 @@ namespace PR
 		PM::vec2 uv() const;
 
 	private:
-		PM::vec3 mVertex;
-		PM::vec3 mNormal;
-		PM::vec2 mUV;
+		alignas(16) PM::vec3 mVertex;
+		alignas(16) PM::vec3 mNormal;
+		alignas(16) PM::vec2 mUV;
 	};
 }

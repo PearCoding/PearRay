@@ -11,20 +11,15 @@ namespace PR
 		~BiDirectIntegrator();
 
 		void init(Renderer* renderer) override;
-		Spectrum apply(Ray& in, RenderContext* context) override;
+		Spectrum apply(const Ray& in, RenderContext* context) override;
 
 	private:
-		static bool handleObject(Ray& in, RenderEntity* entity, const FacePoint& point, Renderer* renderer, bool& store);
+		Spectrum applyRay(const Ray& in, RenderContext* context, uint32 diffBounces);
+		static bool handleObject(const Ray& in, Ray& out, RenderEntity* entity, const FacePoint& point, Renderer* renderer, bool& store);
 
 		struct ThreadData
 		{
-			Ray* CameraPath;
-			RenderEntity** CameraEntities;
-			Spectrum* CameraAffection;
-			FacePoint* CameraFacePoints;
-			bool* CameraDiff;
-
-			Ray* LightPath;// For every light a path (LightCount * MaxLightSamples * MaxPathCount)
+			float* LightPos;// For every light a path (LightCount * MaxLightSamples * MaxPathCount * 3)
 			//RenderEntity** LightEntities;
 			Spectrum* LightFlux;
 			uint32* LightMaxDepth;

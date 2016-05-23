@@ -15,6 +15,6 @@ namespace PR
 	public:
 		virtual void init(Renderer* renderer) = 0;
 
-		virtual Spectrum apply(Ray& in, RenderContext* context) = 0;
+		virtual Spectrum apply(const Ray& in, RenderContext* context) = 0;
 	};
 }

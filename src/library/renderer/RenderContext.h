@@ -15,8 +15,8 @@ namespace PR
 	public:
 		RenderContext(Renderer* renderer, RenderThread* thread, uint32 index);
 
-		RenderEntity* shoot(Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
-		RenderEntity* shootWithApply(Spectrum& appliedSpec, Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		RenderEntity* shoot(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
 
 		inline Renderer* renderer() const
 		{
