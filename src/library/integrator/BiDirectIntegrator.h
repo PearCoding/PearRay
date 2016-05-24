@@ -20,7 +20,6 @@ namespace PR
 		struct ThreadData
 		{
 			float* LightPos;// For every light a path (LightCount * MaxLightSamples * MaxPathCount * 3)
-			//RenderEntity** LightEntities;
 			Spectrum* LightFlux;
 			uint32* LightMaxDepth;
 		};

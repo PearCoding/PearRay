@@ -90,11 +90,15 @@ namespace PR
 
 				Spectrum applied;
 				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
-				if (newEntity && newEntity->material())
+				if (newEntity && newEntity->material() && newEntity->material()->canBeShaded())
 				{
 					const float NdotL = std::abs(PM::pm_Dot3D(reflectionVector, point.normal()));
 					return applied + entity->material()->apply(point, in.direction(), reflectionVector,
 						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
+				}
+				else
+				{
+					return applied;
 				}
 			}
 			else if(rnd < refWeight + transWeight)
@@ -104,11 +108,15 @@ namespace PR
 
 				Spectrum applied;
 				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
-				if (newEntity && newEntity->material())
+				if (newEntity && newEntity->material() && newEntity->material()->canBeShaded())
 				{
 					const float NdotL = std::abs(PM::pm_Dot3D(transmissionVector, point.normal()));
 					return applied + entity->material()->apply(point, in.direction(), transmissionVector,
 						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
+				}
+				else
+				{
+					return applied;
 				}
 			}
 

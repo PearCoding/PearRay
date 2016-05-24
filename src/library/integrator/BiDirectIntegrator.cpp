@@ -74,7 +74,6 @@ namespace PR
 		if (!mThreadData || context->renderer()->lights().empty() || context->renderer()->settings().maxLightSamples() == 0)
 			return Spectrum();
 
-
 		Renderer* renderer = context->renderer();
 		ThreadData& data = mThreadData[context->threadNumber()];
 
@@ -88,9 +87,8 @@ namespace PR
 		{
 			for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
 			{
-				float* lightPos = &data.LightPos[lightNr * maxDepth];
+				float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
 				Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
-				//RenderEntity** lightEntities = &data.LightEntities[lightNr * renderer->settings().maxRayDepth()];
 
 				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
 				lightSample.setNormal(
@@ -108,7 +106,6 @@ namespace PR
 				PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth*3]);
 				lightFlux[lightDepth] = flux;
 
-				//lightEntities[lightDepth] = light;
 				for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 				{
 					FacePoint collision;
@@ -130,7 +127,7 @@ namespace PR
 						if (store)
 						{
 							lightDepth++;
-							//lightEntities[lightDepth] = entity;
+
 							lightFlux[lightDepth] = flux;
 							PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
 						}
@@ -195,7 +192,7 @@ namespace PR
 									spec += entity->material()->apply(tmpCollision,
 										in.direction(), shootRay.direction(),
 										lightFlux)* NdotL;
-									PR_DEBUG_ASSERT(!newSpec.hasNaN());
+									PR_DEBUG_ASSERT(!spec.hasNaN());
 								}
 							}
 							samples++;
@@ -212,7 +209,7 @@ namespace PR
 						spec += entity->material()->apply(collision, in.direction(),
 							out.direction(),
 							applyRay(out, context, diff ? diffBounces + 1 : diffBounces)) * NdotL;
-						PR_DEBUG_ASSERT(!newSpec.hasNaN());
+						PR_DEBUG_ASSERT(!spec.hasNaN());
 					}
 					samples++;
 				}

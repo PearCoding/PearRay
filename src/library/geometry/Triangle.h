@@ -7,6 +7,8 @@
 
 #include "ray/Ray.h"
 
+#include <utility>
+
 #define PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION
 
 #ifndef PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION

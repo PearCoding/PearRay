@@ -2,6 +2,8 @@
 
 #include "ray/Ray.h"
 
+#include <utility>
+
 #define PR_SPHERE_INTERSECT_EPSILON (1e-5)
 namespace PR
 {
