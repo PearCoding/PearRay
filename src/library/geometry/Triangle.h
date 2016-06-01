@@ -9,12 +9,19 @@
 
 #include <utility>
 
-#define PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION
+// 0 -> Trumbore
+// 1 -> Watertight
+// 2 -> Double Watertight
+#define PR_TRIANGLE_INTERSECTION_TECHNIQUE (1)
 
-#ifndef PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION
-# define PR_TRIANGLE_INTERSECT_EPSILON (1e-6)
+#if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 0
+# define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
+#elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
+# define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
+#elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 2// Not useful
+# define PR_TRIANGLE_INTERSECT_EPSILON (1e-4)
 #else
-# define PR_TRIANGLE_INTERSECT_EPSILON (PM_EPSILON)
+# error Unknown Triangle intersection technique.
 #endif
 
 
@@ -24,12 +31,12 @@ namespace PR
 	{
 	public:
 		inline static bool intersect(const Ray& ray, const Face& face,
-			FacePoint& point)
+			FacePoint& point, float& t)
 		{
 			float u, v;
 			PM::vec3 pos;
 
-			if (intersect(ray, face.V[0], face.V[1], face.V[2], u, v, pos))
+			if (intersect(ray, face.V[0], face.V[1], face.V[2], u, v, pos, t))
 			{
 				PM::vec3 p;
 				PM::vec2 uv;
@@ -46,15 +53,15 @@ namespace PR
 		}
 
 		inline static bool intersect(const Ray& ray, const Face& face,
-			float& u, float& v, PM::vec3& point)
+			float& u, float& v, PM::vec3& point, float& t)
 		{
-			return intersect(ray, face.V[0], face.V[1], face.V[2], u, v, point);
+			return intersect(ray, face.V[0], face.V[1], face.V[2], u, v, point, t);
 		}
 
-#ifndef PR_USE_WATERTIGHT_TRIANGLE_INTERSECTION
+#if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 0
 		// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
-			float& u, float& v, PM::vec3& point)
+			float& u, float& v, PM::vec3& point, float& t)
 		{
 			PM::vec3 e12 = PM::pm_Subtract(p2, p1);
 			PM::vec3 e13 = PM::pm_Subtract(p3, p1);
@@ -77,7 +84,7 @@ namespace PR
 			if (v < 0 || u + v > 1)
 				return false;
 			
-			float t = f*PM::pm_Dot3D(e13, r);
+			t = f*PM::pm_Dot3D(e13, r);
 
 			if (t >= PR_TRIANGLE_INTERSECT_EPSILON)
 			{
@@ -89,11 +96,11 @@ namespace PR
 				return false;
 			}
 		}
-#else
+#elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 		// Watertight
 		// http://jcgt.org/published/0002/01/05/paper.pdf
 		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
-			float& u, float& v, PM::vec3& point)
+			float& u, float& v, PM::vec3& point, float& t)
 		{
 			int kz = 0;
 			float maxVal = 0;
@@ -169,7 +176,7 @@ namespace PR
 			const float Bz = sz*PM::pm_GetIndex(B, kz);
 			const float Cz = sz*PM::pm_GetIndex(C, kz);
 
-			float t = u*Az + v*Bz + w*Cz;
+			t = u*Az + v*Bz + w*Cz;
 			if (std::abs(t) >= PR_TRIANGLE_INTERSECT_EPSILON && 
 				std::signbit(t) == std::signbit(det))
 			{
@@ -178,6 +185,84 @@ namespace PR
 				v *= invDet;
 				//w *= invDet;
 				t *= invDet;
+
+				point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+				return true;
+			}
+
+			return false;
+		}
+#elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 2
+		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
+			float& u, float& v, PM::vec3& point, float& t)
+		{
+			int kz = 0;
+			float maxVal = 0;
+			for (uint32 i = 0; i < 3; ++i)
+			{
+				const float f = std::abs(PM::pm_GetIndex(ray.direction(), i));
+				if (maxVal < f)
+				{
+					kz = i;
+					maxVal = f;
+				}
+			}
+
+			int kx = kz + 1;
+			if (kx == 3)
+				kx = 0;
+			int ky = kx + 1;
+			if (ky == 3)
+				ky = 0;
+
+			if (PM::pm_GetIndex(ray.direction(), kz) < 0)
+				std::swap(kx, ky);
+
+			const float dX = PM::pm_GetIndex(ray.direction(), kx);
+			const float dY = PM::pm_GetIndex(ray.direction(), ky);
+			const float dZ = PM::pm_GetIndex(ray.direction(), kz);
+
+			const double sx = dX / (double)dZ;
+			const double sy = dY / (double)dZ;
+			const double sz = 1.0 / dZ;
+
+			// We use (1-u-v)*P1 + u*P2 + v*P3 convention
+			PM::vec3 A = PM::pm_Subtract(p2, ray.startPosition());
+			PM::vec3 B = PM::pm_Subtract(p3, ray.startPosition());
+			PM::vec3 C = PM::pm_Subtract(p1, ray.startPosition());
+
+			// Shear
+			const double Ax = PM::pm_GetIndex(A, kx) - sx*PM::pm_GetIndex(A, kz);
+			const double Ay = PM::pm_GetIndex(A, ky) - sy*PM::pm_GetIndex(A, kz);
+			const double Bx = PM::pm_GetIndex(B, kx) - sx*PM::pm_GetIndex(B, kz);
+			const double By = PM::pm_GetIndex(B, ky) - sy*PM::pm_GetIndex(B, kz);
+			const double Cx = PM::pm_GetIndex(C, kx) - sx*PM::pm_GetIndex(C, kz);
+			const double Cy = PM::pm_GetIndex(C, ky) - sy*PM::pm_GetIndex(C, kz);
+
+			double du = Cx * By - Cy * Bx;
+			double dv = Ax * Cy - Ay * Cx;
+			double dw = Bx * Ay - By * Ax;
+
+			if ((du < 0 || dv < 0 || dw < 0) && (du > 0 || dv > 0 || dw > 0))
+				return false;
+
+			const double det = du + dv + dw;
+			if (std::abs(det) < PR_TRIANGLE_INTERSECT_EPSILON)
+				return false;
+
+			const double Az = sz*PM::pm_GetIndex(A, kz);
+			const double Bz = sz*PM::pm_GetIndex(B, kz);
+			const double Cz = sz*PM::pm_GetIndex(C, kz);
+
+			double dt = du*Az + dv*Bz + dw*Cz;
+			if (std::abs(dt) >= PR_TRIANGLE_INTERSECT_EPSILON &&
+				std::signbit(dt) == std::signbit(det))
+			{
+				const double invDet = 1.0 / det;
+				u = du*invDet;
+				v = dv*invDet;
+				//w = dw*invDet;
+				t = dt*invDet;
 
 				point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 				return true;

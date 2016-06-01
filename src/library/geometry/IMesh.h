@@ -12,7 +12,7 @@ namespace PR
 	{
 	public:
 		virtual BoundingBox boundingBox() const = 0;
-		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) = 0;
+		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) = 0;
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const = 0;
 	};
 }

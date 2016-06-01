@@ -20,7 +20,7 @@ namespace PR
 		
 		virtual bool isCollidable() const override;
 		virtual BoundingBox localBoundingBox() const override;
-		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
+		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) override;
 
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const;
 	private:

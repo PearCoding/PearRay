@@ -111,7 +111,7 @@ namespace PR
 			PM::pm_IsGreaterOrEqual(mLowerBound, point);
 	}
 
-	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint) const
+	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
 	{
 		float tmin = -std::numeric_limits<float>::max();
 		float tmax = std::numeric_limits<float>::max();
@@ -148,7 +148,7 @@ namespace PR
 			}
 		}
 
-		const float t = tmin <= 0 ? tmax : tmin;
+		t = tmin <= 0 ? tmax : tmin;
 		if (t >= PM_EPSILON)
 		{
 			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
@@ -161,9 +161,9 @@ namespace PR
 	}
 
 
-	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, FaceSide& side) const
+	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, FaceSide& side) const
 	{
-		if (!intersects(ray, collisionPoint))
+		if (!intersects(ray, collisionPoint, t))
 			return false;
 
 		PM::vec3 minDist = PM::pm_Subtract(collisionPoint, mLowerBound);

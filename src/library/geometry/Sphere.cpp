@@ -72,7 +72,7 @@ namespace PR
 		return PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, point)) <= mRadius*mRadius;
 	}
 
-	bool Sphere::intersects(const Ray& ray, PM::vec3& collisionPoint) const
+	bool Sphere::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
 	{
 		const PM::vec3 L = PM::pm_Subtract(mPosition, ray.startPosition()); // C - O
 		const float S = PM::pm_Dot3D(L, ray.direction()); // L . D
@@ -100,6 +100,7 @@ namespace PR
 
 		if (t0 >= PR_SPHERE_INTERSECT_EPSILON)
 		{
+			t = t0;
 			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t0));
 			return true;
 		}

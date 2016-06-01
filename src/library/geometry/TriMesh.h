@@ -39,7 +39,7 @@ namespace PR
 			return mBoundingBox;
 		}
 
-		bool checkCollision(const Ray& ray, FacePoint& collisionPoint) override;
+		bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) override;
 		FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const override;
 	private:
 		BoundingBox mBoundingBox;

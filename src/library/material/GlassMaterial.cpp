@@ -67,7 +67,6 @@ namespace PR
 
 		const PM::vec3 N = inside ? PM::pm_Negate(point.normal()) : point.normal();
 		dir = BRDF::refract(inside ? ind : 1/ind, N, V);
-
 		return 1;
 	}
 

@@ -53,7 +53,7 @@ namespace PR
 					const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
 					const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 
-					if (NdotL >= PM_EPSILON)
+					if (NdotL > PM_EPSILON)
 					{
 						FacePoint tmpPoint;
 						Spectrum applied;
@@ -74,6 +74,7 @@ namespace PR
 		}
 		else // Specular
 		{
+			Spectrum applied;
 			PM::vec3 reflectionVector;
 			PM::vec3 transmissionVector;
 			float refWeight = entity->material()->emitReflectionVector(point, in.direction(), reflectionVector);
@@ -88,7 +89,6 @@ namespace PR
 				FacePoint tmpPoint;
 				Ray ray(point.vertex(),	reflectionVector, in.depth() + 1);
 
-				Spectrum applied;
 				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
 				if (newEntity && newEntity->material() && newEntity->material()->canBeShaded())
 				{
@@ -96,17 +96,12 @@ namespace PR
 					return applied + entity->material()->apply(point, in.direction(), reflectionVector,
 						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
 				}
-				else
-				{
-					return applied;
-				}
 			}
 			else if(rnd < refWeight + transWeight)
 			{
 				FacePoint tmpPoint;
 				Ray ray(point.vertex(),	transmissionVector, in.depth() + 1);
 
-				Spectrum applied;
 				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
 				if (newEntity && newEntity->material() && newEntity->material()->canBeShaded())
 				{
@@ -114,13 +109,9 @@ namespace PR
 					return applied + entity->material()->apply(point, in.direction(), transmissionVector,
 						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
 				}
-				else
-				{
-					return applied;
-				}
 			}
 
-			return Spectrum();
+			return applied;
 		}
 	}
 }

@@ -38,7 +38,7 @@ namespace PR
 		return mBoundingBox;
 	}
 
-	bool BoundaryEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
+	bool BoundaryEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
 
@@ -48,7 +48,7 @@ namespace PR
 
 		BoundingBox box = localBoundingBox();
 		BoundingBox::FaceSide side;
-		if (box.intersects(local, vertex, side))
+		if (box.intersects(local, vertex, t, side))
 		{
 			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), vertex), 1));
 

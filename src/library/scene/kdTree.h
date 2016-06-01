@@ -20,7 +20,7 @@ namespace PR
 	{
 	public:
 		typedef std::function<BoundingBox(T*)> GetBoundingBoxCallback;
-		typedef std::function<bool(const Ray&, FacePoint&, T*, T*)> CheckCollisionCallback;
+		typedef std::function<bool(const Ray&, FacePoint&, float&, T*, T*)> CheckCollisionCallback;
 
 		struct kdNode
 		{
@@ -212,22 +212,20 @@ namespace PR
 			}
 		}
 
-		inline T* checkCollision(const Ray& ray, FacePoint& collisionPoint, T* ignore = nullptr) const {
+		inline T* checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t, T* ignore = nullptr) const {
 			PM::vec3 collisionPos;
 
 			T* res = nullptr;
 			FacePoint tmpCollisionPoint;
 
-			float n = std::numeric_limits<float>::max();
+			t = std::numeric_limits<float>::max();
 			float l = 0;// Temporary variable.
 			kdNode* stack[PR_KDTREE_MAX_STACK];
-			//float near[PR_KDTREE_MAX_STACK];
 			uint32 stackPos = 1;
 
 			stack[0] = root();
-			//near[0] = 0;
 
-			if (root() && root()->boundingBox.intersects(ray, collisionPos))
+			if (root() && root()->boundingBox.intersects(ray, collisionPos, l))
 			{
 				while (stackPos > 0)
 				{
@@ -238,23 +236,18 @@ namespace PR
 						continue;*/
 
 					if (node->object != ignore &&
-						mCheckCollision(ray, tmpCollisionPoint, node->object, ignore))
+						mCheckCollision(ray, tmpCollisionPoint, l, node->object, ignore) &&
+						/*l > PM_EPSILON &&*/ l < t)
 					{
-						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(tmpCollisionPoint.vertex(), ray.startPosition()));
-
-						if (l < n)
-						{
-							n = l;
-							res = node->object;
-							collisionPoint = tmpCollisionPoint;
-						}
+						t = l;
+						res = node->object;
+						collisionPoint = tmpCollisionPoint;
 					}
 
 					bool leftIntersect = false;
-					if (node->left && node->left->boundingBox.intersects(ray, collisionPos))
+					if (node->left && node->left->boundingBox.intersects(ray, collisionPos, l))
 					{
 						leftIntersect = true;
-						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collisionPos, ray.startPosition()));
 						/*if (l <= n)
 						{*/
 							stack[stackPos] = node->left;
@@ -265,9 +258,8 @@ namespace PR
 						//}
 					}
 
-					if (node->right && (!leftIntersect || node->right->boundingBox.intersects(ray, collisionPos)))
+					if (node->right && (!leftIntersect || node->right->boundingBox.intersects(ray, collisionPos, l)))
 					{
-						l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collisionPos, ray.startPosition()));
 						/*if (l <= n)
 						{*/
 							stack[stackPos] = node->right;

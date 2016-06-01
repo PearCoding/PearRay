@@ -29,7 +29,7 @@ namespace PR
 		virtual BoundingBox worldBoundingBox() const;
 
 		// In world coords
-		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint);
+		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t);
 
 		// In world coords
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const = 0;

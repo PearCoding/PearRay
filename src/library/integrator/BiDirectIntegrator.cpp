@@ -91,16 +91,17 @@ namespace PR
 				Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
 
 				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
-				lightSample.setNormal(
+				const PM::vec3 lightDir = 
 					Projection::align(lightSample.normal(),
-						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));
+						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat()));
 
 				current.setStartPosition(lightSample.vertex());
-				current.setDirection(lightSample.normal());
+				current.setDirection(lightDir);
 				current.setDepth(1);
 
 				// Initiate with power
-				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal());
+				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal())
+					/** std::abs(PM::pm_Dot3D(lightSample.normal(), lightDir))*/;
 
 				uint32 lightDepth = 0;// Counts diff bounces
 				PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth*3]);
@@ -115,6 +116,8 @@ namespace PR
 						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), current.direction()));
 						if (NdotL < PM_EPSILON)
 							break;
+
+						PR_DEBUG_ASSERT(NdotL <= 1);
 
 						bool store;
 						Ray out;
@@ -160,71 +163,69 @@ namespace PR
 		uint32 samples = 0;
 
 		RenderEntity* entity = context->shootWithApply(applied, in, collision);
-		if (entity && entity->material())
+		if (entity && entity->material() && entity->material()->canBeShaded())
 		{
-			if (entity->material()->canBeShaded())
+			Ray out;
+			bool diff;
+			if (!handleObject(in, out, entity, collision, context->renderer(), diff))
+				return applied;
+
+			if (diff)
 			{
-				Ray out;
-				bool diff;
-				if (!handleObject(in, out, entity, collision, context->renderer(), diff))
-					return applied;
-
-				if (diff)
+				for (uint32 j = 0; j < maxLights; ++j)// Each light
 				{
-					for (uint32 j = 0; j < maxLights; ++j)// Each light
+					for (uint32 s = 0; s < data.LightMaxDepth[j]; ++s)
 					{
-						for (uint32 s = 0; s < data.LightMaxDepth[j]; ++s)
+						const float* lightPosP = &data.LightPos[(j * maxDepth + s)*3];
+						PM::vec3 lightPos = PM::pm_Set(lightPosP[0], lightPosP[1], lightPosP[2], 1);
+						const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
+
+						Ray shootRay(lightPos,
+							PM::pm_Normalize3D(PM::pm_Subtract(collision.vertex(), lightPos)));
+
+						FacePoint tmpCollision;
+						if (context->shoot(shootRay, tmpCollision) == entity &&
+							PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collision.vertex(), tmpCollision.vertex())) <= LightEpsilon)
 						{
-							const float* lightPosP = &data.LightPos[(j * maxDepth + s)*3];
-							PM::vec3 lightPos = PM::pm_Set(lightPosP[0], lightPosP[1], lightPosP[2], 1);
-							const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
-
-							Ray shootRay(lightPos,
-								PM::pm_Normalize3D(PM::pm_Subtract(collision.vertex(), lightPos)));
-
-							FacePoint tmpCollision;
-							if (context->shoot(shootRay, tmpCollision) == entity &&
-								PM::pm_MagnitudeSqr3D(PM::pm_Subtract(collision.vertex(), tmpCollision.vertex())) <= LightEpsilon)
+							const float NdotL = std::abs(PM::pm_Dot3D(tmpCollision.normal(), shootRay.direction()));
+							if (NdotL > PM_EPSILON)
 							{
-								const float NdotL = std::abs(PM::pm_Dot3D(tmpCollision.normal(), shootRay.direction()));
-								if (NdotL > PM_EPSILON)
-								{
-									spec += entity->material()->apply(tmpCollision,
-										in.direction(), shootRay.direction(),
-										lightFlux)* NdotL;
-									PR_DEBUG_ASSERT(!spec.hasNaN());
-								}
+								spec += entity->material()->apply(tmpCollision,
+									in.direction(), shootRay.direction(),
+									lightFlux)* NdotL;
+								PR_DEBUG_ASSERT(!spec.hasNaN());
 							}
-							samples++;
 						}
+						samples++;
 					}
 				}
-
-				if (in.depth() < maxDepth && 
-					(!diff || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
-				{
-					const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), out.direction()));
-					if (NdotL > PM_EPSILON)
-					{
-						spec += entity->material()->apply(collision, in.direction(),
-							out.direction(),
-							applyRay(out, context, diff ? diffBounces + 1 : diffBounces)) * NdotL;
-						PR_DEBUG_ASSERT(!spec.hasNaN());
-					}
-					samples++;
-				}
-
-				if (samples > 0)
-					return applied + (PM_PI_F / (float)samples) * spec;
-				else
-					return applied;
 			}
+
+			if (in.depth() < maxDepth && 
+				(!diff || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
+			{
+				const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), out.direction()));
+				if (NdotL > PM_EPSILON)
+				{
+					spec += entity->material()->apply(collision, in.direction(),
+						out.direction(),
+						applyRay(out, context, diff ? diffBounces + 1 : diffBounces)) * NdotL;
+					PR_DEBUG_ASSERT(!spec.hasNaN());
+				}
+				samples++;
+			}
+
+			if (samples > 0)
+				return applied + (PM_PI_F / (float)samples) * spec;
+			else
+				return applied;
 		}
 
 		return applied;
 	}
 
-	bool BiDirectIntegrator::handleObject(const Ray& in, Ray& out, RenderEntity* entity, const FacePoint& point, Renderer* renderer, bool& store)
+	bool BiDirectIntegrator::handleObject(const Ray& in, Ray& out, RenderEntity* entity,
+		const FacePoint& point, Renderer* renderer, bool& store)
 	{
 		PM::vec3 nextDir;
 
@@ -233,8 +234,8 @@ namespace PR
 		const float roughness = entity->material()->roughness(point);
 		if (rnd < roughness)// Diffuse
 		{
-			nextDir = PM::pm_SetW(Projection::align(point.normal(),
-				Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
+			nextDir = Projection::align(point.normal(),
+				Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat()));
 			store = true;
 		}
 		else// Reflect

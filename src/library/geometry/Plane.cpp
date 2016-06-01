@@ -183,7 +183,7 @@ namespace PR
 		return false;
 	}
 
-	bool Plane::intersects(const Ray& ray, PM::vec3& collisionPoint, float& u, float& v) const
+	bool Plane::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, float& u, float& v) const
 	{
 		float ln = PM::pm_Dot3D(ray.direction(), mNormal);
 		float pn = PM::pm_Dot3D(PM::pm_Subtract(mPosition, ray.startPosition()), mNormal);
@@ -198,7 +198,7 @@ namespace PR
 		}
 		else
 		{
-			float t = pn / ln;
+			t = pn / ln;
 
 			if (t < PM_EPSILON)
 			{

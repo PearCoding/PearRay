@@ -44,7 +44,7 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	bool PlaneEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
+	bool PlaneEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		PM::vec3 pos;
 		float u, v;
@@ -54,12 +54,13 @@ namespace PR
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
 
-		if (mPlane.intersects(local, pos, u, v))
+		if (mPlane.intersects(local, pos, t, u, v))
 		{
 			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), pos), 1));
 			// Do not check flags... calculation is easy anyway.
 			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 			collisionPoint.setUV(PM::pm_Set(u, v));
+			t *= scale();
 
 			return true;
 		}

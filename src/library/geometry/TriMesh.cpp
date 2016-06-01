@@ -77,8 +77,8 @@ namespace PR
 		[](Face* f) {
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
-		[](const Ray& ray, FacePoint& point, Face* f, Face*) {
-			return Triangle::intersect(ray, *f, point);
+		[](const Ray& ray, FacePoint& point, float& t, Face* f, Face*) {
+			return Triangle::intersect(ray, *f, point, t);
 		});
 
 		std::list<Face*> list;
@@ -88,10 +88,10 @@ namespace PR
 		mBoundingBox = ((PR::kdTree<Face>*)mKDTree)->root()->boundingBox;
 	}
 
-	bool TriMesh::checkCollision(const Ray& ray, FacePoint& collisionPoint)
+	bool TriMesh::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		PR_DEBUG_ASSERT(mKDTree);
-		return ((PR::kdTree<Face>*)mKDTree)->checkCollision(ray, collisionPoint) != nullptr;
+		return ((PR::kdTree<Face>*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
 	}
 
 	FacePoint TriMesh::getRandomFacePoint(Sampler& sampler, Random& random) const

@@ -45,17 +45,18 @@ namespace PR
 		return mMesh->boundingBox();
 	}
 
-	bool MeshEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
+	bool MeshEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		// Local space
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction())));
 		
-		if (mMesh->checkCollision(local, collisionPoint))
+		if (mMesh->checkCollision(local, collisionPoint, t))
 		{
 			collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
-			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal()));
+			collisionPoint.setNormal(PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal())));
+			t *= scale();
 
 			return true;
 		}

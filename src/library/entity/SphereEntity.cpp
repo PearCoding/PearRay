@@ -43,11 +43,11 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint)
+	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		Sphere sphere(position(), scale() * mRadius);
 		PM::vec3 collisionPos;
-		if (!sphere.intersects(ray, collisionPos))
+		if (!sphere.intersects(ray, collisionPos, t))
 			return false;
 
 		collisionPoint.setVertex(PM::pm_SetW(collisionPos, 1));
