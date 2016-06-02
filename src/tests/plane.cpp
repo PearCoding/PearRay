@@ -66,7 +66,8 @@ PR_TEST("Intersects 1");
 
 	PM::vec3 point;
 	float u, v;
-	PR_CHECK_TRUE(plane.intersects(ray, point, u, v));
+	float t;
+	PR_CHECK_TRUE(plane.intersects(ray, point, t, u, v));
 	PR_CHECK_NEARLY_EQ_3(point, PM::pm_Set(0.5, 0.5, 0));
 	PR_CHECK_NEARLY_EQ(u, 0.5);
 	PR_CHECK_NEARLY_EQ(v, 0.5);
@@ -78,8 +79,8 @@ PR_TEST("Intersects 2");
 	Ray ray(PM::pm_Set(0.5, 0.5, -1, 1), PM::pm_Set(0, 1, 0, 0));
 
 	PM::vec3 point;
-	float u, v;
-	PR_CHECK_FALSE(plane.intersects(ray, point, u, v));
+	float u, v, t;
+	PR_CHECK_FALSE(plane.intersects(ray, point, t, u, v));
 }
 
 PR_TEST("Intersects 3");
@@ -88,8 +89,8 @@ PR_TEST("Intersects 3");
 	Ray ray(PM::pm_Set(5, 5, -1, 1), PM::pm_Set(0, 0, 1, 0));
 
 	PM::vec3 point;
-	float u, v;
-	PR_CHECK_TRUE(plane.intersects(ray, point, u, v));
+	float u, v, t;
+	PR_CHECK_TRUE(plane.intersects(ray, point, t, u, v));
 	PR_CHECK_NEARLY_EQ_3(point, PM::pm_Set(5, 5, 0));
 	PR_CHECK_NEARLY_EQ(u, 0.5);
 	PR_CHECK_NEARLY_EQ(v, 0.5);
@@ -101,8 +102,8 @@ PR_TEST("Intersects 4");
 	Ray ray(PM::pm_Set(5, 10, -1, 1), PM::pm_Set(0, 0, 1, 0));
 
 	PM::vec3 point;
-	float u, v;
-	PR_CHECK_TRUE(plane.intersects(ray, point, u, v));
+	float u, v, t;
+	PR_CHECK_TRUE(plane.intersects(ray, point, t, u, v));
 	PR_CHECK_NEARLY_EQ_3(point, PM::pm_Set(5, 10, 0));
 	PR_CHECK_NEARLY_EQ(u, 0.5);
 	PR_CHECK_NEARLY_EQ(v, 0.5);

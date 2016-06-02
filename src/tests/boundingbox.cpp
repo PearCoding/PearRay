@@ -30,8 +30,9 @@ PR_TEST("Intersects Left");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(-1, 0, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Left);
 }
@@ -42,8 +43,9 @@ PR_TEST("Intersects Right Inside");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
@@ -54,8 +56,9 @@ PR_TEST("Intersects Right");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
@@ -66,8 +69,9 @@ PR_TEST("Intersects Front");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, -1));
 	PR_CHECK_EQ(side, BoundingBox::FS_Front);
 }
@@ -78,8 +82,9 @@ PR_TEST("Intersects Back Inside");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, 1));
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
@@ -90,8 +95,9 @@ PR_TEST("Intersects Back");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, 1));
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
@@ -102,8 +108,9 @@ PR_TEST("Intersects Bottom");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, -1, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Bottom);
 }
@@ -114,8 +121,9 @@ PR_TEST("Intersects Top Inside");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
@@ -126,8 +134,9 @@ PR_TEST("Intersects Top");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
@@ -139,8 +148,9 @@ PR_TEST("Intersects Complex");
 	BoundingBox box(2, 2, 2);
 
 	PM::vec3 collisionPoint;
+	float t;
 	BoundingBox::FaceSide side;
-	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, side));
+	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
 	PR_CHECK_NEARLY_EQ_3(collisionPoint, point);
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }

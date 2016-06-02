@@ -19,7 +19,8 @@ PR_TEST("Intersects");
 	Sphere sphere(PM::pm_Set(0, 0, 0), 1);
 
 	PM::vec3 collisionPoint;
-	sphere.intersects(ray, collisionPoint);
+	float t;
+	sphere.intersects(ray, collisionPoint, t);
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(-1, 0, 0));
 }
 
@@ -29,7 +30,8 @@ PR_TEST("Intersects Inside");
 	Sphere sphere(PM::pm_Set(0, 0, 0), 1);
 
 	PM::vec3 collisionPoint;
-	sphere.intersects(ray, collisionPoint);
+	float t;
+	sphere.intersects(ray, collisionPoint, t);
 	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
 }
 
