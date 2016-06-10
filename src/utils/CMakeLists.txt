@@ -4,7 +4,6 @@ SET(PR_UTILS ${PR_Root}/utils)
 
 SET(PR_Main_Src
   ${PR_UTILS}/Environment.cpp
-  ${PR_UTILS}/RenderLoader.cpp
   ${PR_UTILS}/SceneLoader.cpp)
 SET(PR_Loader_Src
   ${PR_UTILS}/loader/ImageLoader.cpp
@@ -28,7 +27,6 @@ SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_M
 
 SET(PR_Main_Hdr
   ${PR_UTILS}/Environment.h
-  ${PR_UTILS}/RenderLoader.h
   ${PR_UTILS}/SceneLoader.h)
 SET(PR_Loader_Hdr
   ${PR_UTILS}/loader/ImageLoader.h

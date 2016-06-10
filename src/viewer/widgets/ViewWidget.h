@@ -18,6 +18,13 @@ enum ViewMode
 	VM_NORM_XYZ// Color space (CIE XYZ)
 };
 
+enum ToolMode
+{
+	TM_Selection,
+	TM_Pan,
+	TM_Zoom
+};
+
 class ViewWidget : public QWidget
 {
 	Q_OBJECT
@@ -33,6 +40,11 @@ public:
 		return mViewMode;
 	}
 
+	inline ToolMode toolMode() const
+	{
+		return mToolMode;
+	}
+
 	inline QImage image() const
 	{
 		return mRenderImage;
@@ -44,8 +56,16 @@ public slots:
 		mViewMode = vm;
 		refreshView();
 	}
-	void enableScale(bool b);
+
+	void setToolMode(ToolMode tm);
+	
+	void resetZoomPan();
+	void fitIntoWindow();
+
 	void refreshView();
+
+	void zoomIn();
+	void zoomOut();
 
 signals:
 	void spectrumSelected(const PR::Spectrum& spec);
@@ -54,15 +74,33 @@ protected:
 	virtual void paintEvent(QPaintEvent* event) override;
 	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void mousePressEvent(QMouseEvent * event) override;
+	virtual void mouseReleaseEvent(QMouseEvent * event) override;
+	virtual void mouseMoveEvent(QMouseEvent * event) override;
+	virtual void wheelEvent(QWheelEvent * event) override;
 
 private:
 	void cache();
+	void cacheScale();
 
 	PR::Renderer* mRenderer;
 
 	ViewMode mViewMode;
-	bool mScale;
+	ToolMode mToolMode;
+
 	QImage mRenderImage;
+	QImage mScaledImage;
 
 	QPixmap mBackgroundImage;
+
+	float mZoom;
+	float mPanX;
+	float mPanY;
+
+	float mLastPanX;
+	float mLastPanY;
+
+	QPoint mStartPos;
+	QPoint mLastPos;
+
+	bool mPressing;
 };

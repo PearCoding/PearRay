@@ -19,8 +19,14 @@ namespace PR
 
 	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context)
 	{
+		Spectrum applied;
 		FacePoint point;
-		RenderEntity* entity = context->shoot(in, point);
+		RenderEntity* entity;
+		
+		if (context->renderer()->settings().debugMode() == DM_Applied)
+			entity = context->shootWithApply(applied, in, point);
+		else
+			entity = context->shoot(in, point);
 
 		if (!entity || !entity->material())
 			return Spectrum();
@@ -78,6 +84,8 @@ namespace PR
 			float weight = entity->material()->emitTransmissionVector(point, in.direction(), tmp);
 			return RGBConverter::toSpec(weight, weight, weight);
 		}
+		case DM_Applied:
+			return applied;
 		}
 	}
 }

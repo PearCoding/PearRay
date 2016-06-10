@@ -95,6 +95,13 @@ namespace PR
 		for (Entity* entity : mScene->entities())
 			entity->onPreRender();
 
+		if (mRenderSettings.maxPhotons() > 0 &&
+			mRenderSettings.maxPhotonGatherRadius() > PM_EPSILON &&
+			mRenderSettings.maxPhotonGatherCount() > 0)
+			mAffectors.push_back(new PhotonAffector());
+
+		mAffectors.push_back(new LightAffector());
+
 		/* Setup integrators */
 		if (mRenderSettings.debugMode() != DM_None)
 		{
@@ -109,11 +116,6 @@ namespace PR
 				else
 					mIntegrators.push_back(new DirectIntegrator(this));
 			}
-
-			if (mRenderSettings.maxPhotons() > 0)
-				mAffectors.push_back(new PhotonAffector());
-
-			mAffectors.push_back(new LightAffector());
 		}
 
 		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;

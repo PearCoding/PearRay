@@ -53,6 +53,10 @@ private slots:
 
 	void entitySelected(QModelIndex index);
 
+	void selectSelectionTool(bool b);
+	void selectPanTool(bool b);
+	void selectZoomTool(bool b);
+
 private:
 	void readSettings();
 	void writeSettings();

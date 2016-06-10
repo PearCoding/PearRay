@@ -17,9 +17,7 @@
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 0
 # define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
 #elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
-# define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
-#elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 2// Not useful
-# define PR_TRIANGLE_INTERSECT_EPSILON (1e-4)
+# define PR_TRIANGLE_INTERSECT_EPSILON (1e-8f)
 #else
 # error Unknown Triangle intersection technique.
 #endif
@@ -185,84 +183,6 @@ namespace PR
 				v *= invDet;
 				//w *= invDet;
 				t *= invDet;
-
-				point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
-				return true;
-			}
-
-			return false;
-		}
-#elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 2
-		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
-			float& u, float& v, PM::vec3& point, float& t)
-		{
-			int kz = 0;
-			float maxVal = 0;
-			for (uint32 i = 0; i < 3; ++i)
-			{
-				const float f = std::abs(PM::pm_GetIndex(ray.direction(), i));
-				if (maxVal < f)
-				{
-					kz = i;
-					maxVal = f;
-				}
-			}
-
-			int kx = kz + 1;
-			if (kx == 3)
-				kx = 0;
-			int ky = kx + 1;
-			if (ky == 3)
-				ky = 0;
-
-			if (PM::pm_GetIndex(ray.direction(), kz) < 0)
-				std::swap(kx, ky);
-
-			const float dX = PM::pm_GetIndex(ray.direction(), kx);
-			const float dY = PM::pm_GetIndex(ray.direction(), ky);
-			const float dZ = PM::pm_GetIndex(ray.direction(), kz);
-
-			const double sx = dX / (double)dZ;
-			const double sy = dY / (double)dZ;
-			const double sz = 1.0 / dZ;
-
-			// We use (1-u-v)*P1 + u*P2 + v*P3 convention
-			PM::vec3 A = PM::pm_Subtract(p2, ray.startPosition());
-			PM::vec3 B = PM::pm_Subtract(p3, ray.startPosition());
-			PM::vec3 C = PM::pm_Subtract(p1, ray.startPosition());
-
-			// Shear
-			const double Ax = PM::pm_GetIndex(A, kx) - sx*PM::pm_GetIndex(A, kz);
-			const double Ay = PM::pm_GetIndex(A, ky) - sy*PM::pm_GetIndex(A, kz);
-			const double Bx = PM::pm_GetIndex(B, kx) - sx*PM::pm_GetIndex(B, kz);
-			const double By = PM::pm_GetIndex(B, ky) - sy*PM::pm_GetIndex(B, kz);
-			const double Cx = PM::pm_GetIndex(C, kx) - sx*PM::pm_GetIndex(C, kz);
-			const double Cy = PM::pm_GetIndex(C, ky) - sy*PM::pm_GetIndex(C, kz);
-
-			double du = Cx * By - Cy * Bx;
-			double dv = Ax * Cy - Ay * Cx;
-			double dw = Bx * Ay - By * Ax;
-
-			if ((du < 0 || dv < 0 || dw < 0) && (du > 0 || dv > 0 || dw > 0))
-				return false;
-
-			const double det = du + dv + dw;
-			if (std::abs(det) < PR_TRIANGLE_INTERSECT_EPSILON)
-				return false;
-
-			const double Az = sz*PM::pm_GetIndex(A, kz);
-			const double Bz = sz*PM::pm_GetIndex(B, kz);
-			const double Cz = sz*PM::pm_GetIndex(C, kz);
-
-			double dt = du*Az + dv*Bz + dw*Cz;
-			if (std::abs(dt) >= PR_TRIANGLE_INTERSECT_EPSILON &&
-				std::signbit(dt) == std::signbit(det))
-			{
-				const double invDet = 1.0 / det;
-				u = du*invDet;
-				v = dv*invDet;
-				//w = dw*invDet;
-				t = dt*invDet;
 
 				point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 				return true;

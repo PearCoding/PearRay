@@ -83,13 +83,13 @@ namespace PR
 				uint32 specBounces = 0;
 				for (uint32 j = 0; j < renderer->settings().maxRayDepth(); ++j)
 				{
-					if (flux.isOnlyZero())
-						break;
+					/*if (flux.isOnlyZero())
+						break;*/
 
 					FacePoint collision;
 					RenderEntity* entity = renderer->shoot(ray, collision, nullptr, nullptr);
 
-					if (entity && entity->material())
+					if (entity && entity->material() && entity->material()->canBeShaded())
 					{
 						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), ray.direction()));
 						PM::vec3 nextDir;
@@ -109,9 +109,7 @@ namespace PR
 								photonsShoot++;
 							}
 
-							rnd = renderer->random().getFloat();
-							if (diffuseBounces < renderer->settings().maxPhotonDiffuseBounces() &&
-								rnd < roughness)// Shoot
+							if (diffuseBounces < renderer->settings().maxPhotonDiffuseBounces())// Shoot
 							{
 								nextDir = PM::pm_SetW(Projection::align(collision.normal(),
 									Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
@@ -185,7 +183,8 @@ namespace PR
 		sphere->Found = 0;
 		sphere->Center = point.vertex();
 		sphere->Normal = point.normal();
-		sphere->SqueezeWeight = context->renderer()->settings().photonSqueezeWeight();
+		sphere->SqueezeWeight =
+			context->renderer()->settings().photonSqueezeWeight() * context->renderer()->settings().photonSqueezeWeight();
 		sphere->GotHeap = false;
 		sphere->Distances2[0] =
 			context->renderer()->settings().maxPhotonGatherRadius() * context->renderer()->settings().maxPhotonGatherRadius();
@@ -218,17 +217,14 @@ namespace PR
 				{
 #ifdef PR_USE_PHOTON_RGB
 					full += entity->material()->apply(point, in.direction(), dir,
-						//RGBConverter::toSpec(photon->Power[0]/255.0f, photon->Power[1] / 255.0f, photon->Power[2] / 255.0f))*w;
 						RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]))*w;
 #else
 					full += entity->material()->apply(point, in.direction(), dir, Spectrum(photon->Power))*w;
-					//full += entity->material()->apply(point, in.direction(), dir, Spectrum(photon->Power));
 #endif
 				}
 			}
 		}
 
 		return full * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere->Distances2[0]));
-		//return full * PM_INV_PI_F / sphere->Distances2[0];
 	}
 }

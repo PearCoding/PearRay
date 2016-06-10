@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>PearRay Viewer</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../resources/icons.qrc">
+    <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
+  </property>
   <widget class="ViewWidget" name="viewWidget"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -43,6 +47,16 @@
      <addaction name="actionHideToolbars"/>
      <addaction name="separator"/>
     </widget>
+    <addaction name="actionSelection_Tool"/>
+    <addaction name="actionPan_Tool"/>
+    <addaction name="actionZoom_Tool"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset_Zoom"/>
+    <addaction name="actionFit_Image_into_Area"/>
+    <addaction name="separator"/>
+    <addaction name="actionZoom_In"/>
+    <addaction name="actionZoom_Out"/>
+    <addaction name="separator"/>
     <addaction name="menuToolbars"/>
     <addaction name="menuDockWidgets"/>
    </widget>
@@ -75,7 +89,16 @@
     <addaction name="actionAbout"/>
     <addaction name="actionAboutQt"/>
    </widget>
+   <widget class="QMenu" name="menuImage">
+    <property name="title">
+     <string>Image</string>
+    </property>
+    <addaction name="actionStartRender"/>
+    <addaction name="actionCancelRender"/>
+    <addaction name="separator"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuImage"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -129,7 +152,38 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="SpectrumWidget" name="spectrumWidget" native="true"/>
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>778</width>
+          <height>69</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="SpectrumWidget" name="spectrumWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -195,6 +249,29 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionOpenScene"/>
+   <addaction name="actionExportImage"/>
+   <addaction name="separator"/>
+   <addaction name="actionStartRender"/>
+   <addaction name="actionCancelRender"/>
+   <addaction name="separator"/>
+   <addaction name="actionSelection_Tool"/>
+   <addaction name="actionPan_Tool"/>
+   <addaction name="actionZoom_Tool"/>
+   <addaction name="separator"/>
+   <addaction name="actionReset_Zoom"/>
+   <addaction name="actionFit_Image_into_Area"/>
+  </widget>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -244,6 +321,10 @@
    </property>
   </action>
   <action name="actionWebsite">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_home_black_24dp_2x.png</normaloff>:/ic_home_black_24dp_2x.png</iconset>
+   </property>
    <property name="text">
     <string>Website</string>
    </property>
@@ -272,6 +353,10 @@
    </property>
   </action>
   <action name="actionExportImage">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_file_download_black_24dp_2x.png</normaloff>:/ic_file_download_black_24dp_2x.png</iconset>
+   </property>
    <property name="text">
     <string>Export Image</string>
    </property>
@@ -280,11 +365,138 @@
    </property>
   </action>
   <action name="actionOpenScene">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_nature_people_black_24dp_2x.png</normaloff>:/ic_nature_people_black_24dp_2x.png</iconset>
+   </property>
    <property name="text">
     <string>Open scene</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionStartRender">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_play_arrow_black_24dp_2x.png</normaloff>:/ic_play_arrow_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Start Render</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionCancelRender">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_stop_black_24dp_2x.png</normaloff>:/ic_stop_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Cancel Render</string>
+   </property>
+   <property name="shortcut">
+    <string>Esc</string>
+   </property>
+  </action>
+  <action name="actionReset_Zoom">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_aspect_ratio_black_24dp_2x.png</normaloff>:/ic_aspect_ratio_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reset Zoom/Pan</string>
+   </property>
+   <property name="shortcut">
+    <string>T</string>
+   </property>
+  </action>
+  <action name="actionFit_Image_into_Area">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_settings_overscan_black_24dp_2x.png</normaloff>:/ic_settings_overscan_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Fit Image into Window</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionZoom_In">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_zoom_in_black_24dp_2x.png</normaloff>:/ic_zoom_in_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+   <property name="shortcut">
+    <string>Z</string>
+   </property>
+  </action>
+  <action name="actionZoom_Out">
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_zoom_out_black_24dp_2x.png</normaloff>:/ic_zoom_out_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionPan_Tool">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_pan_tool_black_24dp_2x.png</normaloff>:/ic_pan_tool_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Pan Tool</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
+   </property>
+  </action>
+  <action name="actionSelection_Tool">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_colorize_black_24dp_2x.png</normaloff>:/ic_colorize_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Selection Tool</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="actionZoom_Tool">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/icons.qrc">
+     <normaloff>:/ic_search_black_24dp_2x.png</normaloff>:/ic_search_black_24dp_2x.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Tool</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
    </property>
   </action>
  </widget>
@@ -315,6 +527,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources/icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

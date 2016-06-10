@@ -58,10 +58,8 @@ QWidget(parent)
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Roughness"), PR::DM_Roughness);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Reflectivity"), PR::DM_Reflectivity);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Transmission"), PR::DM_Transmission);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Applied"), PR::DM_Applied);
 	mRendererGroupProp->addChild(mDebugVisualizationProp);
-
-	mRendererStartProp = new ButtonProperty(tr("Start"));
-	mRendererGroupProp->addChild(mRendererStartProp);
 
 	mProperties.add(mRendererGroupProp);
 
@@ -94,13 +92,13 @@ QWidget(parent)
 	mPhotonMappingGroupProp = new GroupProperty(tr("Photon Mapping"));
 	mMaxPhotonsProp = new IntProperty(tr("Max Photons"), 1000, 0, 10000000);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonsProp);
-	mMaxPhotonGatherCountProp = new IntProperty(tr("Max Photon Gather Count"), 500, 0);
+	mMaxPhotonGatherCountProp = new IntProperty(tr("Max Gather Count"), 500, 0);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherCountProp);
-	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Photon Gather Radius"), 0.1, 0, 10000);
+	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Gather Radius"), 0.1, 0, 10000);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherRadiusProp);
-	mMaxPhotonDiffuseBouncesProp = new IntProperty(tr("Max Photon Diffuse Bounces"), 4, 0);
+	mMaxPhotonDiffuseBouncesProp = new IntProperty(tr("Max Diffuse Bounces"), 4, 0);
 	mPhotonMappingGroupProp->addChild(mMaxPhotonDiffuseBouncesProp);
-	mMinPhotonSpecularBouncesProp = new IntProperty(tr("Min Photon Specular Bounces"), 1, 0);
+	mMinPhotonSpecularBouncesProp = new IntProperty(tr("Min Specular Bounces"), 1, 0);
 	mPhotonMappingGroupProp->addChild(mMinPhotonSpecularBouncesProp);
 	mPhotonGatheringModeProp = new SelectionProperty(tr("Gathering Mode"), PR::PGM_Sphere);
 	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Sphere"), PR::PGM_Sphere);
@@ -109,20 +107,6 @@ QWidget(parent)
 	mPhotonSqueezeWeightProp = new DoubleProperty(tr("Squeeze Weight"), 0, 0, 1);
 	mPhotonMappingGroupProp->addChild(mPhotonSqueezeWeightProp);
 	mProperties.add(mPhotonMappingGroupProp);
-
-	// View
-	mViewGroupProp = new GroupProperty(tr("View"));
-	mViewModeProp = new SelectionProperty(tr("Display"), VM_Color);
-	((SelectionProperty*)mViewModeProp)->addItem(tr("Tone Mapped"), VM_ToneMapped);
-	((SelectionProperty*)mViewModeProp)->addItem(tr("Color"), VM_Color);
-	((SelectionProperty*)mViewModeProp)->addItem(tr("Color Linear"), VM_ColorLinear);
-	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE XYZ"), VM_XYZ);
-	((SelectionProperty*)mViewModeProp)->addItem(tr("CIE Norm XYZ"), VM_NORM_XYZ);
-	mViewGroupProp->addChild(mViewModeProp);
-
-	mViewScaleProp = new BoolProperty(tr("Scale to View"));
-	mViewGroupProp->addChild(mViewScaleProp);
-	mProperties.add(mViewGroupProp);
 
 	mView->setPropertyTable(&mProperties);
 	mView->expandToDepth(1);
@@ -152,9 +136,6 @@ SystemPropertyView::~SystemPropertyView()
 	delete mPhotonGatheringModeProp;
 	delete mPhotonSqueezeWeightProp;
 	delete mPhotonMappingGroupProp;
-	delete mViewGroupProp;
-	delete mViewModeProp;
-	delete mViewScaleProp;
 }
 
 int SystemPropertyView::getTileX() const
@@ -174,78 +155,6 @@ int SystemPropertyView::getThreadCount() const
 
 void SystemPropertyView::propertyValueChanged(IProperty* prop)
 {
-	if (prop == mRendererStartProp)
-	{
-		if (mRendererStartProp->propertyName() == tr("Stop"))
-		{
-			emit stopRendering();
-		}
-		else
-		{
-			emit startRendering();
-		}
-	}
-	else if (prop == mViewModeProp)
-	{
-		emit viewModeChanged((ViewMode)((SelectionProperty*)mViewModeProp)->currentData().toInt());
-	}
-	else if (prop == mViewScaleProp)
-	{
-		emit viewScaleChanged(((BoolProperty*)mViewScaleProp)->value());
-	}
-}
-
-void SystemPropertyView::enableRendering()
-{
-	mRendererTileXProp->setEnabled(false);
-	mRendererTileYProp->setEnabled(false);
-	mRendererThreadsProp->setEnabled(false);
-	mRendererMaxDiffuseBouncesProp->setEnabled(false);
-	mRendererMaxRayDepthProp->setEnabled(false);
-	mDebugVisualizationProp->setEnabled(false);
-
-	mMaxLightSamplesProp->setEnabled(false);
-	mUseBiDirectProp->setEnabled(false);
-
-	mMaxPhotonsProp->setEnabled(false);
-	mMaxPhotonGatherRadiusProp->setEnabled(false);
-	mMaxPhotonGatherCountProp->setEnabled(false);
-	mMaxPhotonDiffuseBouncesProp->setEnabled(false);
-	mMinPhotonSpecularBouncesProp->setEnabled(false);
-	mPhotonGatheringModeProp->setEnabled(false);
-	mPhotonSqueezeWeightProp->setEnabled(false);
-
-	mXSamplesProp->setEnabled(false);
-	mYSamplesProp->setEnabled(false);
-	mSamplerProp->setEnabled(false);
-	mRendererStartProp->setPropertyName(tr("Stop"));
-}
-
-void SystemPropertyView::disableRendering()
-{
-	mRendererTileXProp->setEnabled(true);
-	mRendererTileYProp->setEnabled(true);
-	mRendererThreadsProp->setEnabled(true);
-	mRendererMaxDiffuseBouncesProp->setEnabled(true);
-	mRendererMaxRayDepthProp->setEnabled(true);
-	mDebugVisualizationProp->setEnabled(true);
-
-	mMaxLightSamplesProp->setEnabled(true);
-	mUseBiDirectProp->setEnabled(true);
-
-	mMaxPhotonsProp->setEnabled(true);
-	mMaxPhotonGatherRadiusProp->setEnabled(true);
-	mMaxPhotonGatherCountProp->setEnabled(true);
-	mMaxPhotonDiffuseBouncesProp->setEnabled(true);
-	mMinPhotonSpecularBouncesProp->setEnabled(true);
-	mPhotonGatheringModeProp->setEnabled(true);
-	mPhotonSqueezeWeightProp->setEnabled(true);
-
-	mXSamplesProp->setEnabled(true);
-	mYSamplesProp->setEnabled(true);
-	mSamplerProp->setEnabled(true);
-
-	mRendererStartProp->setPropertyName(tr("Start"));
 }
 
 void SystemPropertyView::fillContent(PR::Renderer* renderer)

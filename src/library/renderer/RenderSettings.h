@@ -24,7 +24,8 @@ namespace PR
 		DM_PDF,
 		DM_Roughness,
 		DM_Reflectivity,
-		DM_Transmission
+		DM_Transmission,
+		DM_Applied
 	};
 
 	enum PhotonGatheringMode

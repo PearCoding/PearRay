@@ -83,13 +83,17 @@ SET(PR_Fms
   ${PR_Viewer}/ui/MainWindow.ui)
 SOURCE_GROUP("Form Files" FILES ${PR_Fms})
 
+SET(PR_Res
+  ${PR_Viewer}/resources/icons.qrc)
+SOURCE_GROUP("Resource Files" FILES ${PR_Res})
+
 QT5_WRAP_CPP(PR_Hdr_Moc ${PR_Hdr})
 QT5_WRAP_UI(PR_Fms_Hdr ${PR_Fms})
-#QT5_ADD_RESOURCES(PR_Res_Rcc ${PR_Res})
+QT5_ADD_RESOURCES(PR_Res_Rcc ${PR_Res})
 
 SOURCE_GROUP("Generated Files" FILES ${PR_Hdr_Moc} ${PR_Fms_Hdr} ${PR_Res_Rcc})
 
-add_executable(rayview ${PR_Src} ${PR_Hdr} ${PR_Fms}
+add_executable(rayview ${PR_Src} ${PR_Hdr} ${PR_Fms} ${PR_Res}
 	${PR_Hdr_Moc} ${PR_Fms_Hdr} ${PR_Res_Rcc})
 target_link_libraries(rayview ${PR_TARGET})
 target_link_libraries(rayview pr_lib_utils)

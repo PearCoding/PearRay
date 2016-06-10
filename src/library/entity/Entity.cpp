@@ -174,5 +174,6 @@ namespace PR
 
 	void Entity::onPreRender()
 	{
+		matrix();//Cache if needed
 	}
 }

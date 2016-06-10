@@ -17,7 +17,7 @@ public:
 		return mSpectrum;
 	}
 
-	QSize sizeHint() const override;
+	QSize minimumSizeHint() const override;
 
 public slots:
 	inline void setSpectrum(const PR::Spectrum& spec)

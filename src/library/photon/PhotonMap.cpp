@@ -53,7 +53,8 @@ namespace PR
 				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
 				dist2 = PM::pm_MagnitudeSqr3D(V);
 				const float d = PM::pm_Dot3D(V, sph.Normal);
-				const float r = sph.Distances2[0] * (1 - std::abs(d)) + sph.Distances2[0] * std::abs(d) *(1 - sph.SqueezeWeight);
+				const float r = sph.Distances2[0] * (1 - std::abs(d)) +
+					sph.Distances2[0] * std::abs(d) * (1 - sph.SqueezeWeight);
 				return dist2 <= r;
 			});
 		}
@@ -65,8 +66,9 @@ namespace PR
 				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
 				dist2 = PM::pm_MagnitudeSqr3D(V);
 				const float d = PM::pm_Dot3D(V, sph.Normal);
-				const float r = sph.Distances2[0] * (1 - std::abs(d)) + sph.Distances2[0] * std::abs(d) *(1 - sph.SqueezeWeight);
-				return d >= 0 && dist2 < r;
+				const float r = sph.Distances2[0] * (1 - std::abs(d)) +
+					sph.Distances2[0] * std::abs(d) * (1 - sph.SqueezeWeight);
+				return d <= -PM_EPSILON && dist2 <= r;
 			});
 		}
 

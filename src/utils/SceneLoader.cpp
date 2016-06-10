@@ -95,6 +95,9 @@ namespace PRU
 			{
 				Environment* env;
 				DL::Data* nameD = top->getFromKey("name");
+				DL::Data* renderWidthD = top->getFromKey("renderWidth");
+				DL::Data* renderHeightD = top->getFromKey("renderHeight");
+
 				if (!nameD || nameD->isType() != DL::Data::T_String)
 				{
 					env = new Environment("UNKNOWN");
@@ -102,6 +105,24 @@ namespace PRU
 				else
 				{
 					env = new Environment(nameD->getString());
+				}
+
+				if (renderWidthD && renderWidthD->isType() == DL::Data::T_Integer)
+				{
+					env->setRenderWidth(renderWidthD->getInt());
+				}
+				else
+				{
+					env->setRenderWidth(1920);
+				}
+
+				if (renderHeightD && renderHeightD->isType() == DL::Data::T_Integer)
+				{
+					env->setRenderHeight(renderHeightD->getInt());
+				}
+				else
+				{
+					env->setRenderHeight(1080);
 				}
 
 				// First independent information

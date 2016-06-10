@@ -142,9 +142,33 @@ namespace PRU
 		{
 			mCamera = cam;
 		}
+
+		inline PR::uint32 renderWidth() const
+		{
+			return mRenderWidth;
+		}
+
+		inline void setRenderWidth(PR::uint32 i)
+		{
+			mRenderWidth = i;
+		}
+
+		inline PR::uint32 renderHeight() const
+		{
+			return mRenderHeight;
+		}
+
+		inline void setRenderHeight(PR::uint32 i)
+		{
+			mRenderHeight = i;
+		}
+
 	private:
 		PR::Scene mScene;
 		PR::Camera* mCamera;
+		PR::uint32 mRenderWidth;
+		PR::uint32 mRenderHeight;
+
 		std::map<std::string, PR::Spectrum> mSpectrums;
 		std::map<std::string, PR::Material*> mMaterials;
 

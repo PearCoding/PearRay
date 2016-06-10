@@ -39,16 +39,24 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 	connect(ui.actionWebsite, SIGNAL(triggered()), this, SLOT(openWebsite()));
 	connect(ui.actionQuit, SIGNAL(triggered()), this, SLOT(close()));
+
+	connect(ui.actionStartRender, SIGNAL(triggered()), this, SLOT(startRendering()));
+	connect(ui.actionCancelRender, SIGNAL(triggered()), this, SLOT(stopRendering()));
 	
 	connect(ui.actionShowToolbars, SIGNAL(triggered()), this, SLOT(showAllToolbars()));
 	connect(ui.actionHideToolbars, SIGNAL(triggered()), this, SLOT(hideAllToolbars()));
 	connect(ui.actionShowDockWidgets, SIGNAL(triggered()), this, SLOT(showAllDocks()));
 	connect(ui.actionHideDockWidgets, SIGNAL(triggered()), this, SLOT(hideAllDocks()));
 
-	connect(ui.systemPropertyView, SIGNAL(startRendering()), this, SLOT(startRendering()));
-	connect(ui.systemPropertyView, SIGNAL(stopRendering()), this, SLOT(stopRendering()));
 	connect(ui.systemPropertyView, SIGNAL(viewModeChanged(ViewMode)), ui.viewWidget, SLOT(setViewMode(ViewMode)));
-	connect(ui.systemPropertyView, SIGNAL(viewScaleChanged(bool)), ui.viewWidget, SLOT(enableScale(bool)));
+	connect(ui.actionReset_Zoom, SIGNAL(triggered()), ui.viewWidget, SLOT(resetZoomPan()));
+	connect(ui.actionFit_Image_into_Area, SIGNAL(triggered()), ui.viewWidget, SLOT(fitIntoWindow()));
+	connect(ui.actionZoom_In, SIGNAL(triggered()), ui.viewWidget, SLOT(zoomIn()));
+	connect(ui.actionZoom_Out, SIGNAL(triggered()), ui.viewWidget, SLOT(zoomOut()));
+
+	connect(ui.actionSelection_Tool, SIGNAL(triggered(bool)), this, SLOT(selectSelectionTool(bool)));
+	connect(ui.actionPan_Tool, SIGNAL(triggered(bool)), this, SLOT(selectPanTool(bool)));
+	connect(ui.actionZoom_Tool, SIGNAL(triggered(bool)), this, SLOT(selectZoomTool(bool)));
 
 	connect(ui.outlineView, SIGNAL(activated(QModelIndex)), this, SLOT(entitySelected(QModelIndex)));
 
@@ -103,7 +111,8 @@ void MainWindow::openProject(const QString& str)
 
 	if (mEnvironment)
 	{
-		mRenderer = new PR::Renderer(1920, 1080, mEnvironment->camera(), mEnvironment->scene());
+		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
+			mEnvironment->camera(), mEnvironment->scene());
 
 		ui.viewWidget->setRenderer(mRenderer);
 		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
@@ -222,6 +231,25 @@ static QString friendlyTime(quint64 ms)
 	}
 }
 
+inline QString friendlyHugeNumber(quint64 nm)
+{
+	const QLocale& def = QLocale::c();
+
+	QString s = QString::number(nm);
+	QString output;
+	int i;
+
+	for (i = s.length(); i > 3; i -= 3)
+	{
+		output = def.groupSeparator() + s.mid(i - 3, 3) + output;
+	}
+
+	if (i > 0)
+		output = s.mid(0, i) + output;
+
+	return output;
+}
+
 void MainWindow::updateView()
 {
 	if (mRenderer)
@@ -241,7 +269,7 @@ void MainWindow::updateView()
 			.arg(mRenderer->pixelsRendered())
 			.arg(mRenderer->width()*mRenderer->height())
 			.arg(100*percent, 4)
-			.arg(mRenderer->rayCount())
+			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(time))
 			.arg(friendlyTime((1 - lerp)*timeLeft1 + lerp*timeLeft2)));
 
@@ -291,13 +319,14 @@ void MainWindow::about()
 	QMessageBox::about(this, tr("About PearRay Viewer"),
 		tr("<h2>About PearRay Viewer " PR_VERSION_STRING "</h2>"
 		"<p>A viewer for PearRay render results.</p>"
-		"<p>Author: &Ouml;mercan Yazici &lt;<a href='mailto:omercan@pearcoding.eu?subject=\"PearRay\"'>pearcoding@gmail.com</a>&gt;<br/>"
+		"<p>Author: &Ouml;mercan Yazici &lt;<a href='mailto:omercan@pearcoding.eu?subject=\"PearRay\"'>omercan@pearcoding.eu</a>&gt;<br/>"
 		"Copyright &copy; 2015-2016 &Ouml;mercan Yazici<br/>"
 		"Website: <a href='http://pearcoding.eu/projects/pearray'>http://pearcoding.eu/projects/pearray</a></p>"
+			"<hr /><p>Icon Set: <a href='https://design.google.com/icons/'>https://design.google.com/icons/</a></p>"
 #ifdef PR_DEBUG
 		"<hr /><h4>Development Information:</h4><p>"
 		"Version: " PR_VERSION_STRING "<br />"
-		"Compiled: " __DATE__ " " __TIME__ "<br />"
+		"Compiled: " __DATE__ " " __TIME__ "<br /></p>"
 #endif
 		));
 }
@@ -338,8 +367,11 @@ void MainWindow::startRendering()
 		return;
 	}
 
-	ui.systemPropertyView->enableRendering();
-	ui.entityDetailsView->setDisabled(true);
+	ui.actionStartRender->setEnabled(false);
+	ui.actionCancelRender->setEnabled(true);
+
+	ui.systemPropertyView->setEnabled(false);
+	ui.entityDetailsView->setEnabled(false);
 
 	ui.systemPropertyView->setupRenderer(mRenderer);
 
@@ -369,12 +401,15 @@ void MainWindow::stopRendering()
 		ui.statusBar->showMessage(QString("Pixels: %1/%2 | Rays: %3 | Render time: %4")
 			.arg(mRenderer->pixelsRendered())
 			.arg(mRenderer->width()*mRenderer->height())
-			.arg(mRenderer->rayCount())
+			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}
 
-	ui.systemPropertyView->disableRendering();
-	ui.entityDetailsView->setDisabled(false);
+	ui.actionStartRender->setEnabled(true);
+	ui.actionCancelRender->setEnabled(false);
+
+	ui.systemPropertyView->setEnabled(true);
+	ui.entityDetailsView->setEnabled(true);
 
 	setWindowTitle(tr("PearRay Viewer"));
 }
@@ -389,4 +424,28 @@ void MainWindow::entitySelected(QModelIndex index)
 	{
 		ui.entityDetailsView->setEntity(nullptr);
 	}
+}
+
+void MainWindow::selectSelectionTool(bool b)
+{
+	ui.actionSelection_Tool->setChecked(true);
+	ui.actionPan_Tool->setChecked(false);
+	ui.actionZoom_Tool->setChecked(false);
+	ui.viewWidget->setToolMode(TM_Selection);
+}
+
+void MainWindow::selectPanTool(bool b)
+{
+	ui.actionSelection_Tool->setChecked(false);
+	ui.actionPan_Tool->setChecked(true);
+	ui.actionZoom_Tool->setChecked(false);
+	ui.viewWidget->setToolMode(TM_Pan);
+}
+
+void MainWindow::selectZoomTool(bool b)
+{
+	ui.actionSelection_Tool->setChecked(false);
+	ui.actionPan_Tool->setChecked(false);
+	ui.actionZoom_Tool->setChecked(true);
+	ui.viewWidget->setToolMode(TM_Zoom);
 }

@@ -28,9 +28,9 @@ constexpr int COLOR_RECT_W = 80;
 constexpr int COLOR_RECT_H = 30;
 constexpr int STEP_PER_SAMPLE = 4;
 
-QSize SpectrumWidget::sizeHint() const
+QSize SpectrumWidget::minimumSizeHint() const
 {
-	return QSize(PADDING*2 + PR::Spectrum::SAMPLING_COUNT * SAMPLE_SPACING,
+	return QSize(PADDING*4 + PR::Spectrum::SAMPLING_COUNT * SAMPLE_SPACING + COLOR_RECT_W,
 		PADDING*2 + UNIT_HEIGHT * 2);
 }
 

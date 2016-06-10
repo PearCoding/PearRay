@@ -18,9 +18,6 @@ public:
 	explicit SystemPropertyView(QWidget* parent = nullptr);
 	virtual ~SystemPropertyView();
 
-	void enableRendering();
-	void disableRendering();
-
 	int getTileX() const;
 	int getTileY() const;
 	int getThreadCount() const;
@@ -66,9 +63,4 @@ private:
 	IProperty* mMinPhotonSpecularBouncesProp;
 	IProperty* mPhotonGatheringModeProp;
 	IProperty* mPhotonSqueezeWeightProp;
-
-	IProperty* mRendererStartProp;// Button
-	IProperty* mViewGroupProp;
-	IProperty* mViewModeProp;
-	IProperty* mViewScaleProp;
 };
