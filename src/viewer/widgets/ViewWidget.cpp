@@ -88,20 +88,22 @@ void ViewWidget::setToolMode(ToolMode tm)
 	}
 }
 
+QPoint ViewWidget::convertToLocal(const QPoint& p)
+{
+	return(p - QPoint(width() / 2, height() / 2) + QPoint(mPanX, mPanY))/mZoom + QPoint(mRenderImage.width()/2, mRenderImage.height()/2);
+}
+
 void ViewWidget::mousePressEvent(QMouseEvent * event)
 {
 	if (event->button() == Qt::LeftButton)
 	{
 		if (mToolMode == TM_Selection)
 		{
-			int x = width() / 2 - mZoom * mRenderImage.width() / 2 - mPanX;
-			int y = height() / 2 - mZoom * mRenderImage.height() / 2 - mPanY;
-
-			QRect rect(x, y, mRenderImage.width(), mRenderImage.height());
-			if (rect.contains(event->pos()))
+			QPoint p = convertToLocal(event->pos());
+			if (QRect(QPoint(0, 0), mRenderImage.size()).contains(p))
 			{
 				PR::RenderResult result = mRenderer->result();
-				emit spectrumSelected(result.point(event->pos().x() - x, event->pos().y() - y));
+				emit spectrumSelected(result.point(p.x(), p.y()));
 			}
 		}
 		else if (mToolMode == TM_Pan)
@@ -144,6 +146,7 @@ void ViewWidget::mouseReleaseEvent(QMouseEvent * event)
 			//TODO: Add pan!
 			QSize oldSize = mRenderImage.size();
 			QSize newSize = oldSize.scaled(QRect(mStartPos, mLastPos).size(), Qt::KeepAspectRatio);
+			QPoint pan = convertToLocal(mStartPos) - QPoint(mScaledImage.width() / 2, mScaledImage.height() / 2) + QPoint(width() / 2, height() / 2) - QPoint(mPanX, mPanY);
 
 			float zoom;
 			if (newSize.width() > newSize.height())
@@ -151,7 +154,10 @@ void ViewWidget::mouseReleaseEvent(QMouseEvent * event)
 			else
 				zoom = oldSize.height() / (float)newSize.height();
 
-			mZoom = qMin(qMax(zoom*mZoom, 0.001f), 50.0f);
+			//mZoom = qMin(qMax(zoom*mZoom, 0.001f), 50.0f);
+
+			mPanX = pan.x();
+			mPanY = pan.y();
 
 			mLastPos = event->pos();
 			cacheScale();
@@ -500,5 +506,6 @@ void ViewWidget::cache()
 void ViewWidget::cacheScale()
 {
 	if(!mRenderImage.isNull())
-		mScaledImage = mRenderImage.scaled(mRenderImage.width()*mZoom, mRenderImage.height()*mZoom);
+		mScaledImage = mRenderImage.scaled(mRenderImage.width()*mZoom, mRenderImage.height()*mZoom,
+			Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }

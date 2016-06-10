@@ -79,6 +79,8 @@ protected:
 	virtual void wheelEvent(QWheelEvent * event) override;
 
 private:
+	QPoint convertToLocal(const QPoint& p);
+
 	void cache();
 	void cacheScale();
 
