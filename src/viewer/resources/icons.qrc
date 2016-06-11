@@ -12,6 +12,8 @@
         <file>ic_nature_people_black_24dp_2x.png</file>
         <file>ic_search_black_24dp_2x.png</file>
         <file>ic_settings_overscan_black_24dp_2x.png</file>
+        <file>ic_crop_black_24dp_2x.png</file>
+        <file>ic_replay_black_24dp_2x.png</file>
         <file>zoom_cursor.png</file>
         <file>icon.png</file>
     </qresource>

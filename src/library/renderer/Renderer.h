@@ -28,14 +28,18 @@ namespace PR
 
 		void setWidth(uint32 w);
 		uint32 width() const;
+		uint32 renderWidth() const; // Depends on crop
 
 		void setHeight(uint32 h);
 		uint32 height() const;
+		uint32 renderHeight() const; // Depends on crop
+
+		void crop(float xmin, float xmax, float ymin, float ymax);
 		
 		// tcx = tile count x
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
-		void start(uint32 tcx, uint32 tcy, uint32 threads = 0);
+		void start(uint32 tcx, uint32 tcy, uint32 threads = 0, bool clear = true);
 		void stop();
 
 		bool isFinished();
@@ -77,6 +81,11 @@ namespace PR
 
 		uint32 mWidth;
 		uint32 mHeight;
+
+		float mMinX;
+		float mMaxX;
+		float mMinY;
+		float mMaxY;
 
 		Camera* mCamera;
 		Scene* mScene;

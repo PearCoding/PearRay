@@ -163,11 +163,44 @@ namespace PRU
 			mRenderHeight = i;
 		}
 
+		inline void setCrop(float xmin, float xmax, float ymin, float ymax)
+		{
+			mCropMinX = xmin;
+			mCropMaxX = xmax;
+			mCropMinY = ymin;
+			mCropMaxY = ymax;
+		}
+
+		inline float cropMinX() const
+		{
+			return mCropMinX;
+		}
+
+		inline float cropMaxX() const
+		{
+			return mCropMaxX;
+		}
+
+		inline float cropMinY() const
+		{
+			return mCropMinY;
+		}
+
+		inline float cropMaxY() const
+		{
+			return mCropMaxY;
+		}
+
 	private:
 		PR::Scene mScene;
 		PR::Camera* mCamera;
 		PR::uint32 mRenderWidth;
 		PR::uint32 mRenderHeight;
+
+		float mCropMinX;
+		float mCropMaxX;
+		float mCropMinY;
+		float mCropMaxY;
 
 		std::map<std::string, PR::Spectrum> mSpectrums;
 		std::map<std::string, PR::Material*> mMaterials;

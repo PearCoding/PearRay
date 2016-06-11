@@ -86,11 +86,38 @@ void ViewWidget::setToolMode(ToolMode tm)
 	{
 		setCursor(QCursor(QPixmap(":/zoom_cursor.png")));
 	}
+	else if (mToolMode == TM_Crop)
+	{
+		setCursor(QCursor(Qt::CrossCursor));
+	}
+
+	repaint();
+}
+
+void ViewWidget::setCropSelection(const QPoint& start, const QPoint& end)
+{
+	mCropStart = start;
+	mCropEnd = end;
+
+	if(mToolMode == TM_Crop)
+		repaint();
+}
+
+QRect ViewWidget::selectedCropRect() const
+{
+	return QRect(mCropStart, mCropEnd).normalized();
 }
 
 QPoint ViewWidget::convertToLocal(const QPoint& p)
 {
-	return(p - QPoint(width() / 2, height() / 2) + QPoint(mPanX, mPanY))/mZoom + QPoint(mRenderImage.width()/2, mRenderImage.height()/2);
+	return (p - QPoint(width() / 2, height() / 2) + QPoint(mPanX, mPanY))/mZoom +
+		QPoint(mRenderImage.width()/2, mRenderImage.height()/2);
+}
+
+QPoint ViewWidget::convertToGlobal(const QPoint& p)
+{
+	return p*mZoom + QPoint(width() / 2, height() / 2) - QPoint(mPanX, mPanY) -
+		QPoint(mScaledImage.width() / 2, mScaledImage.height() / 2);
 }
 
 void ViewWidget::mousePressEvent(QMouseEvent * event)
@@ -120,6 +147,13 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 			mPressing = true;
 			mLastPos = event->pos();
 			mStartPos = mLastPos;
+			event->accept();
+		}
+		else if (mToolMode == TM_Crop)
+		{
+			mPressing = true;
+			mCropEnd = convertToLocal(event->pos());
+			mCropStart = mCropEnd;
 			event->accept();
 		}
 
@@ -163,6 +197,11 @@ void ViewWidget::mouseReleaseEvent(QMouseEvent * event)
 			cacheScale();
 			event->accept();
 		}
+		else if (mToolMode == TM_Crop)
+		{
+			mCropEnd = convertToLocal(event->pos());
+			event->accept();
+		}
 		repaint();
 	}
 }
@@ -185,8 +224,14 @@ void ViewWidget::mouseMoveEvent(QMouseEvent * event)
 		}
 		else if (mToolMode == TM_Zoom)
 		{
-			repaint();
 			mLastPos = event->pos();
+			repaint();
+			event->accept();
+		}
+		else if (mToolMode == TM_Crop)
+		{
+			mCropEnd = convertToLocal(event->pos());
+			repaint();
 			event->accept();
 		}
 	}
@@ -231,6 +276,16 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 
 		painter.drawRect(QRect(mStartPos, mLastPos));
 	}
+
+	QRect cropRect = QRect(convertToGlobal(mCropStart), convertToGlobal(mCropEnd)).normalized();
+	if (mToolMode == TM_Crop &&
+		cropRect.isValid() && cropRect.width() > 2 && cropRect.height() > 2)
+	{
+		painter.setBrush(QColor(255, 255, 0, 150));
+		painter.setPen(Qt::darkYellow);
+
+		painter.drawRect(cropRect);
+	}
 }
 
 void ViewWidget::resizeEvent(QResizeEvent* event)
@@ -246,127 +301,7 @@ void ViewWidget::refreshView()
 
 		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);
 
-		if (mViewMode == VM_ToneMapped)// Very simple tone mapper...
-		{
-			constexpr float STRENGTH = 1 / 9.0f;
-			/*constexpr float FILTER[] = { STRENGTH, STRENGTH, STRENGTH,
-				STRENGTH, STRENGTH, STRENGTH,
-				STRENGTH, STRENGTH, STRENGTH
-			};*/
-			/*constexpr float FILTER[] = { -STRENGTH, -STRENGTH, -STRENGTH,
-				-STRENGTH, 8*STRENGTH, -STRENGTH,
-				-STRENGTH, -STRENGTH, -STRENGTH
-			};*/
-			constexpr int MEDIAN_RADIUS = 3;
-			constexpr int MEDIAN_WIDTH = 2 * MEDIAN_RADIUS + 1;
-			constexpr int MEDIAN_SIZE = MEDIAN_WIDTH * MEDIAN_WIDTH;
-
-			constexpr float RHO = 0.45f;
-			constexpr float RHO2 = RHO * RHO;
-
-			// Gaussian
-			float FILTER[MEDIAN_SIZE];
-			for (int i = 0; i < MEDIAN_WIDTH; ++i)
-			{
-				for (int j = 0; j < MEDIAN_WIDTH; ++j)
-				{
-					float rx = i - MEDIAN_RADIUS;
-					float ry = j - MEDIAN_RADIUS;
-					FILTER[j * MEDIAN_WIDTH + i] = (0.5f * PM_INV_PI_F / RHO2) * std::exp(-0.5f*(rx*rx + ry*ry) / RHO2);
-				}
-			}
-
-			/*PR::Spectrum window[MEDIAN_SIZE];
-			float maxes[MEDIAN_SIZE];*/
-
-			PR::RenderResult tmp(result.width(), result.height());
-			float max = 0;
-			for (PR::uint32 y = 0; y < result.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < result.width(); ++x)
-				{
-					if (x >= MEDIAN_RADIUS && x < result.width() - MEDIAN_RADIUS &&
-						y >= MEDIAN_RADIUS && y < result.height() - MEDIAN_RADIUS)
-					{
-						PR::Spectrum spec;
-						for (int i = 0; i < MEDIAN_WIDTH; ++i)
-						{
-							for (int j = 0; j < MEDIAN_WIDTH; ++j)
-							{
-								spec += result.point(x + i - MEDIAN_RADIUS, y + j - MEDIAN_RADIUS) * FILTER[j * MEDIAN_WIDTH + i];
-							}
-						}
-
-						max = PM::pm_MaxT(max, spec.max());
-						tmp.setPoint(x, y, spec);
-
-						// Median Filter
-						/*for (int i = 0; i < MEDIAN_WIDTH; ++i)
-						{
-							for (int j = 0; j < MEDIAN_WIDTH; ++j)
-							{
-								auto in = result.point(x + i - MEDIAN_RADIUS, y + j - MEDIAN_RADIUS);
-
-								int index = j * MEDIAN_WIDTH + i;
-
-								if (index == 0)
-								{
-									window[index] = in;
-									maxes[index] = in.max();
-								}
-								else
-								{
-									float inMax = in.max();
-									int insertIndex;
-									for (insertIndex = 0; insertIndex < index; ++insertIndex)
-									{
-										if (maxes[index] > inMax)
-											break;
-									}
-
-									for (int k = index - 1; k >= insertIndex; --k)
-									{
-										maxes[k + 1] = maxes[k];
-										window[k + 1] = window[k];
-									}
-
-									maxes[insertIndex] = inMax;
-									window[insertIndex] = in;
-								}
-							}
-						}
-
-						max = PM::pm_MaxT(max, maxes[MEDIAN_SIZE / 2]);
-						tmp.setPoint(x, y, window[MEDIAN_SIZE / 2]);*/
-					}
-					else
-					{
-						PR::Spectrum spec = result.point(x, y);
-						max = PM::pm_MaxT(max, spec.max());
-						tmp.setPoint(x, y, spec);
-					}
-				}
-			}
-
-			float factor = (!std::isnormal(max) || max <= 0.9f) ? 1 : 1 / max;
-			for (PR::uint32 y = 0; y < tmp.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < tmp.width(); ++x)
-				{
-					float r;
-					float g;
-					float b;
-
-					PR::RGBConverter::convertGAMMA(tmp.point(x, y)*factor, r, g, b);
-					r = PM::pm_ClampT<float>(r, 0, 1);
-					g = PM::pm_ClampT<float>(g, 0, 1);
-					b = PM::pm_ClampT<float>(b, 0, 1);
-
-					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-				}
-			}
-		}
-		else if (mViewMode == VM_Color)
+		if (mViewMode == VM_Color)
 		{
 			for (PR::uint32 y = 0; y < result.height(); ++y)
 			{

@@ -49,15 +49,19 @@ private slots:
 	void updateView();
 
 	void startRendering();
+	void restartRendering();
 	void stopRendering();
 
 	void entitySelected(QModelIndex index);
 
+	void setViewMode(int);
 	void selectSelectionTool(bool b);
 	void selectPanTool(bool b);
 	void selectZoomTool(bool b);
+	void selectCropTool(bool b);
 
 private:
+	void startRendering(bool clear);
 	void readSettings();
 	void writeSettings();
 	

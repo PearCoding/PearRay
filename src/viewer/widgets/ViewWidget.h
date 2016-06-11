@@ -11,7 +11,6 @@ namespace PR
 
 enum ViewMode
 {
-	VM_ToneMapped,// sRGB
 	VM_Color,// sRGB
 	VM_ColorLinear,// sRGB Linear
 	VM_XYZ,// Color space (CIE XYZ)
@@ -22,7 +21,8 @@ enum ToolMode
 {
 	TM_Selection,
 	TM_Pan,
-	TM_Zoom
+	TM_Zoom,
+	TM_Crop
 };
 
 class ViewWidget : public QWidget
@@ -49,6 +49,9 @@ public:
 	{
 		return mRenderImage;
 	}
+
+	void setCropSelection(const QPoint& start, const QPoint& end);
+	QRect selectedCropRect() const;
 
 public slots:
 	inline void setViewMode(ViewMode vm)
@@ -80,6 +83,7 @@ protected:
 
 private:
 	QPoint convertToLocal(const QPoint& p);
+	QPoint convertToGlobal(const QPoint& p);
 
 	void cache();
 	void cacheScale();
@@ -105,4 +109,7 @@ private:
 	QPoint mLastPos;
 
 	bool mPressing;
+
+	QPoint mCropStart;
+	QPoint mCropEnd;
 };

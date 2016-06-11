@@ -6,6 +6,7 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QImageWriter>
+#include <QComboBox>
 
 #include "scene/Scene.h"
 #include "camera/Camera.h"
@@ -25,12 +26,23 @@ MainWindow::MainWindow(QWidget *parent)
 	closeProject();// Initial
 
 	//Add tool-bars to menu
+	ui.menuToolbars->addAction(ui.mainToolBar->toggleViewAction());
 
 	//Add dock widgets to menu
 	ui.menuDockWidgets->addAction(ui.systemPropertyDockWidget->toggleViewAction());
 	ui.menuDockWidgets->addAction(ui.spectrumDockWidget->toggleViewAction());
 	ui.menuDockWidgets->addAction(ui.outlineDockWidget->toggleViewAction());
 	ui.menuDockWidgets->addAction(ui.entityDetailsDockWidget->toggleViewAction());
+
+	// Add view combobox
+	QComboBox* viewCombo = new QComboBox(this);
+	viewCombo->addItem(tr("sRGB"));
+	viewCombo->addItem(tr("sRGB linear"));
+	viewCombo->addItem(tr("CIE XYZ"));
+	viewCombo->addItem(tr("CIE norm XYZ"));
+	ui.mainToolBar->addSeparator();
+	ui.mainToolBar->addWidget(viewCombo);
+	connect(viewCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewMode(int)));
 
 	//Connect all signal and slots
 	connect(ui.actionOpenScene, SIGNAL(triggered()), this, SLOT(openScene()));
@@ -41,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.actionQuit, SIGNAL(triggered()), this, SLOT(close()));
 
 	connect(ui.actionStartRender, SIGNAL(triggered()), this, SLOT(startRendering()));
+	connect(ui.actionRestartRender, SIGNAL(triggered()), this, SLOT(restartRendering()));
 	connect(ui.actionCancelRender, SIGNAL(triggered()), this, SLOT(stopRendering()));
 	
 	connect(ui.actionShowToolbars, SIGNAL(triggered()), this, SLOT(showAllToolbars()));
@@ -57,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.actionSelection_Tool, SIGNAL(triggered(bool)), this, SLOT(selectSelectionTool(bool)));
 	connect(ui.actionPan_Tool, SIGNAL(triggered(bool)), this, SLOT(selectPanTool(bool)));
 	connect(ui.actionZoom_Tool, SIGNAL(triggered(bool)), this, SLOT(selectZoomTool(bool)));
+	connect(ui.actionCrop_Tool, SIGNAL(triggered(bool)), this, SLOT(selectCropTool(bool)));
 
 	connect(ui.outlineView, SIGNAL(activated(QModelIndex)), this, SLOT(entitySelected(QModelIndex)));
 
@@ -113,8 +127,15 @@ void MainWindow::openProject(const QString& str)
 	{
 		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
 			mEnvironment->camera(), mEnvironment->scene());
+		mRenderer->crop(mEnvironment->cropMinX(), mEnvironment->cropMaxX(),
+			mEnvironment->cropMinY(), mEnvironment->cropMaxY());
 
 		ui.viewWidget->setRenderer(mRenderer);
+
+		ui.viewWidget->setCropSelection(
+			QPoint(mEnvironment->cropMinX()*mRenderer->width(), mEnvironment->cropMinY()*mRenderer->height()),
+			QPoint(mEnvironment->cropMaxX()*mRenderer->width(), mEnvironment->cropMaxY()*mRenderer->height()));
+
 		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
 
 		ui.systemPropertyView->fillContent(mRenderer);
@@ -256,7 +277,7 @@ void MainWindow::updateView()
 	{
 		quint64 time = mElapsedTime.elapsed();
 
-		float percent = mRenderer->pixelsRendered() / (float)(mRenderer->width()*mRenderer->height());
+		float percent = mRenderer->pixelsRendered() / (float)(mRenderer->renderWidth()*mRenderer->renderHeight());
 		float lerp = percent*percent;
 
 		quint64 timeLeft1 = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
@@ -267,7 +288,7 @@ void MainWindow::updateView()
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
 			.arg(mRenderer->pixelsRendered())
-			.arg(mRenderer->width()*mRenderer->height())
+			.arg(mRenderer->renderWidth()*mRenderer->renderHeight())
 			.arg(100*percent, 4)
 			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(time))
@@ -338,10 +359,12 @@ void MainWindow::openWebsite()
 
 void MainWindow::showAllToolbars()
 {
+	ui.mainToolBar->show();
 }
 
 void MainWindow::hideAllToolbars()
 {
+	ui.mainToolBar->hide();
 }
 
 void MainWindow::showAllDocks()
@@ -362,12 +385,23 @@ void MainWindow::hideAllDocks()
 
 void MainWindow::startRendering()
 {
+	startRendering(true);
+}
+
+void MainWindow::restartRendering()
+{
+	startRendering(false);
+}
+
+void MainWindow::startRendering(bool clear)
+{
 	if (!mRenderer->isFinished())
 	{
 		return;
 	}
 
 	ui.actionStartRender->setEnabled(false);
+	ui.actionRestartRender->setEnabled(false);
 	ui.actionCancelRender->setEnabled(true);
 
 	ui.systemPropertyView->setEnabled(false);
@@ -377,12 +411,27 @@ void MainWindow::startRendering()
 
 	mEnvironment->scene()->buildTree();
 
+	QRect cropRect = ui.viewWidget->selectedCropRect();
+	if (cropRect.isValid() && cropRect.width() > 2 && cropRect.height() > 2)
+	{
+		float xmin = qMin(qMax(cropRect.left() / (float)mRenderer->width(), 0.0f), 1.0f);
+		float xmax = qMin(qMax(cropRect.right() / (float)mRenderer->width(), 0.0f), 1.0f);
+		float ymin = qMin(qMax(cropRect.top() / (float)mRenderer->height(), 0.0f), 1.0f);
+		float ymax = qMin(qMax(cropRect.bottom() / (float)mRenderer->height(), 0.0f), 1.0f);
+		mRenderer->crop(xmin, xmax, ymin, ymax);
+	}
+	else
+	{
+		mRenderer->crop(0, 1, 0, 1);
+	}
+
 	mTimer.start(200);
 	mElapsedTime.restart();
 	mFrameTime.restart();
 	mRenderer->start(ui.systemPropertyView->getTileX(),
 		ui.systemPropertyView->getTileY(),
-		ui.systemPropertyView->getThreadCount());
+		ui.systemPropertyView->getThreadCount(),
+		clear);
 }
 
 void MainWindow::stopRendering()
@@ -398,14 +447,14 @@ void MainWindow::stopRendering()
 	else
 	{
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Pixels: %1/%2 | Rays: %3 | Render time: %4")
+		ui.statusBar->showMessage(QString("Pixels: %1 | Rays: %2 | Render time: %3")
 			.arg(mRenderer->pixelsRendered())
-			.arg(mRenderer->width()*mRenderer->height())
 			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}
 
 	ui.actionStartRender->setEnabled(true);
+	ui.actionRestartRender->setEnabled(true);
 	ui.actionCancelRender->setEnabled(false);
 
 	ui.systemPropertyView->setEnabled(true);
@@ -431,6 +480,7 @@ void MainWindow::selectSelectionTool(bool b)
 	ui.actionSelection_Tool->setChecked(true);
 	ui.actionPan_Tool->setChecked(false);
 	ui.actionZoom_Tool->setChecked(false);
+	ui.actionCrop_Tool->setChecked(false);
 	ui.viewWidget->setToolMode(TM_Selection);
 }
 
@@ -439,6 +489,7 @@ void MainWindow::selectPanTool(bool b)
 	ui.actionSelection_Tool->setChecked(false);
 	ui.actionPan_Tool->setChecked(true);
 	ui.actionZoom_Tool->setChecked(false);
+	ui.actionCrop_Tool->setChecked(false);
 	ui.viewWidget->setToolMode(TM_Pan);
 }
 
@@ -447,5 +498,20 @@ void MainWindow::selectZoomTool(bool b)
 	ui.actionSelection_Tool->setChecked(false);
 	ui.actionPan_Tool->setChecked(false);
 	ui.actionZoom_Tool->setChecked(true);
+	ui.actionCrop_Tool->setChecked(false);
 	ui.viewWidget->setToolMode(TM_Zoom);
+}
+
+void MainWindow::selectCropTool(bool b)
+{
+	ui.actionSelection_Tool->setChecked(false);
+	ui.actionPan_Tool->setChecked(false);
+	ui.actionZoom_Tool->setChecked(false);
+	ui.actionCrop_Tool->setChecked(true);
+	ui.viewWidget->setToolMode(TM_Crop);
+}
+
+void MainWindow::setViewMode(int i)
+{
+	ui.viewWidget->setViewMode((ViewMode)i);
 }

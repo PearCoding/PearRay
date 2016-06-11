@@ -9,7 +9,8 @@
 namespace PRU
 {
 	Environment::Environment(const std::string& name) :
-		mScene(name), mCamera(nullptr), mRenderWidth(1920), mRenderHeight(1080)
+		mScene(name), mCamera(nullptr), mRenderWidth(1920), mRenderHeight(1080),
+		mCropMinX(0), mCropMaxX(1), mCropMinY(0), mCropMaxY(1)
 	{
 		PR::XYZConverter::init();
 		PR::RGBConverter::init();

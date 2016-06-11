@@ -18,7 +18,8 @@
 namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
-		mWidth(w), mHeight(h), mCamera(cam), mScene(scene),
+		mWidth(w), mHeight(h), mMinX(0), mMaxX(1), mMinY(0), mMaxY(1),
+		mCamera(cam), mScene(scene),
 		mResult(w, h), mRandom((uint64)time(NULL)),
 		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr)
 	{
@@ -70,6 +71,11 @@ namespace PR
 		return mWidth;
 	}
 
+	uint32 Renderer::renderWidth() const
+	{
+		return (mMaxX - mMinX) * mWidth;
+	}
+
 	void Renderer::setHeight(uint32 h)
 	{
 		mHeight = h;
@@ -80,10 +86,31 @@ namespace PR
 		return mHeight;
 	}
 
-	void Renderer::start(uint32 tcx, uint32 tcy, uint32 threads)
+	uint32 Renderer::renderHeight() const
+	{
+		return (mMaxY - mMinY) * mHeight;
+	}
+
+	void Renderer::crop(float xmin, float xmax, float ymin, float ymax)
+	{
+		mMinX = PM::pm_ClampT(xmin, 0.0f, 1.0f);
+		mMaxX = PM::pm_ClampT(xmax, 0.0f, 1.0f);
+		mMinY = PM::pm_ClampT(ymin, 0.0f, 1.0f);
+		mMaxY = PM::pm_ClampT(ymax, 0.0f, 1.0f);
+
+		if (mMinX > mMaxX)
+			std::swap(mMinX, mMaxX);
+
+		if (mMinY > mMaxY)
+			std::swap(mMinY, mMaxY);
+	}
+
+	void Renderer::start(uint32 tcx, uint32 tcy, uint32 threads, bool clear)
 	{
 		reset();
-		mResult.clear();
+
+		if(clear)
+			mResult.clear();
 
 		// Warm up the randomizer
 		/*for (uint32 i = 0; i < 800000; ++i)
@@ -135,8 +162,8 @@ namespace PR
 		mRayCount = 0;
 		mPixelsRendered = 0;
 
-		mTileWidth = (uint32)std::ceil(mWidth / (float)tcx);
-		mTileHeight = (uint32)std::ceil(mHeight / (float)tcy);
+		mTileWidth = (uint32)std::ceil(renderWidth() / (float)tcx);
+		mTileHeight = (uint32)std::ceil(renderHeight() / (float)tcy);
 		mTileMap = new bool[tcx*tcy];
 		for (uint32 i = 0; i < tcx*tcy; ++i)
 		{
@@ -292,8 +319,8 @@ namespace PR
 
 	bool Renderer::getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey)
 	{
-		uint32 sliceW = (uint32)std::ceil(mWidth / (float)mTileWidth);
-		uint32 sliceH = (uint32)std::ceil(mHeight / (float)mTileHeight);
+		uint32 sliceW = (uint32)std::ceil(renderWidth() / (float)mTileWidth);
+		uint32 sliceH = (uint32)std::ceil(renderHeight() / (float)mTileHeight);
 
 		mTileMutex.lock();
 		for (uint32 i = 0; i < sliceH; ++i)
@@ -302,10 +329,10 @@ namespace PR
 			{
 				if (!mTileMap[i*sliceW + j])
 				{
-					sx = j*mTileWidth;
-					sy = i*mTileHeight;
-					ex = PM::pm_MinT<uint32>(mWidth, sx + mTileWidth);
-					ey = PM::pm_MinT<uint32>(mHeight, sy + mTileHeight);
+					sx = mMinX*mWidth + j*mTileWidth;
+					sy = mMinY*mHeight + i*mTileHeight;
+					ex = PM::pm_MinT<uint32>(mMaxX*mWidth, sx + mTileWidth);
+					ey = PM::pm_MinT<uint32>(mMaxY*mHeight, sy + mTileHeight);
 
 					mTileMap[i*sliceW + j] = true;
 					mTileMutex.unlock();

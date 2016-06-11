@@ -97,6 +97,7 @@ namespace PRU
 				DL::Data* nameD = top->getFromKey("name");
 				DL::Data* renderWidthD = top->getFromKey("renderWidth");
 				DL::Data* renderHeightD = top->getFromKey("renderHeight");
+				DL::Data* cropD = top->getFromKey("crop");
 
 				if (!nameD || nameD->isType() != DL::Data::T_String)
 				{
@@ -123,6 +124,19 @@ namespace PRU
 				else
 				{
 					env->setRenderHeight(1080);
+				}
+
+				if (cropD && cropD->isType() == DL::Data::T_Array)
+				{
+					DL::DataArray* arr = cropD->getArray();
+					if (arr->size() == 4)
+					{
+						if (arr->isAllNumber())
+						{
+							env->setCrop(arr->at(0)->getFloatConverted(), arr->at(1)->getFloatConverted(),
+								arr->at(2)->getFloatConverted(), arr->at(3)->getFloatConverted());
+						}
+					}
 				}
 
 				// First independent information
