@@ -14,6 +14,7 @@
 #include "integrator/DebugIntegrator.h"
 
 #include "Logger.h"
+#include "MathUtils.h"
 
 namespace PR
 {
@@ -257,6 +258,11 @@ namespace PR
 		if (ray.depth() < maxDepth)
 		{
 			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
+
+			const float NdotV = PM::pm_Dot3D(ray.direction(), collisionPoint.normal());
+			collisionPoint.setNormal(
+				faceforward(NdotV, collisionPoint.normal()));
+			collisionPoint.setInside(NdotV > 0);
 
 			mStatisticMutex.lock();
 			mRayCount++;

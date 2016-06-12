@@ -32,6 +32,16 @@ namespace PR
 		return mDepth;
 	}
 
+	inline float Ray::time() const
+	{
+		return mTime;
+	}
+
+	inline void Ray::setTime(float t)
+	{
+		mTime = t;
+	}
+
 	inline uint32 Ray::maxDepth() const
 	{
 		return mMaxDepth;

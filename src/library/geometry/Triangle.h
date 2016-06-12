@@ -184,8 +184,15 @@ namespace PR
 				//w *= invDet;
 				t *= invDet;
 
-				point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
-				return true;
+				if (t >= PR_TRIANGLE_INTERSECT_EPSILON)
+				{
+					point = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+					return true;
+				}
+				else
+				{
+					return false;
+				}
 			}
 
 			return false;

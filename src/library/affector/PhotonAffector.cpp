@@ -21,7 +21,6 @@ namespace PR
 	PhotonAffector::PhotonAffector() :
 		Affector(), mMap(nullptr), mPhotonSpheres(nullptr), mSphereCount(0)
 	{
-
 	}
 
 	PhotonAffector::~PhotonAffector()
@@ -68,7 +67,7 @@ namespace PR
 		for (RenderEntity* light : lightList)
 		{
 			size_t photonsShoot = 0;
-			for (size_t i = 0; i < sampleSize*6 && photonsShoot < sampleSize; ++i)
+			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
 				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
 				lightSample.setNormal(
@@ -201,7 +200,7 @@ namespace PR
 		}
 
 		Spectrum full;
-		if (sphere->Found >= 8)
+		if (sphere->Found >= 1)
 		{
 			for (uint64 i = 1; i <= sphere->Found; ++i)
 			{

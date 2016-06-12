@@ -7,6 +7,7 @@
 #include "texture/Texture1D.h"
 
 #include "BRDF.h"
+#include "MathUtils.h"
 
 namespace PR
 {
@@ -60,13 +61,9 @@ namespace PR
 
 	float GlassMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
 	{
-		const float NdotV = PM::pm_Dot3D(V, point.normal());
-		const bool inside = NdotV > 0;
-
 		const float ind = index(0);// TODO: Average?
 
-		const PM::vec3 N = inside ? PM::pm_Negate(point.normal()) : point.normal();
-		dir = BRDF::refract(inside ? ind : 1/ind, N, V);
+		dir = refract(point.isInside() ? ind : 1/ind, PM::pm_Dot3D(V, point.normal()), point.normal(), V);
 		return 1;
 	}
 

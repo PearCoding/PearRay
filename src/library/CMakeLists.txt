@@ -97,6 +97,7 @@ SET(PR_Main_Hdr
   ${PR_LIB}/FileLogListener.h
   ${PR_LIB}/Logger.h
   ${PR_LIB}/LogListener.h
+  ${PR_LIB}/MathUtils.h
   ${PR_LIB}/Random.h)
 SET(PR_Affector_Hdr
   ${PR_LIB}/affector/Affector.h

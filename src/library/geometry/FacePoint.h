@@ -21,9 +21,13 @@ namespace PR
 		void setUV(const PM::vec2& v);
 		PM::vec2 uv() const;
 
+		void setInside(bool b);
+		bool isInside() const;
+
 	private:
 		alignas(16) PM::vec3 mVertex;
 		alignas(16) PM::vec3 mNormal;
 		alignas(16) PM::vec2 mUV;
+		bool mInside;
 	};
 }
