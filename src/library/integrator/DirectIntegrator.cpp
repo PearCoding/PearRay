@@ -33,8 +33,7 @@ namespace PR
 
 	Spectrum DirectIntegrator::applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context)
 	{
-		if (in.depth() >= context->renderer()->settings().maxRayDepth() ||
-			!entity->material()->canBeShaded())
+		if (!entity->material()->canBeShaded())
 			return Spectrum();
 
 		float rnd = context->renderer()->random().getFloat();
@@ -50,8 +49,8 @@ namespace PR
 				{
 					FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
 
-					const PM::vec3 L = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex())), 0);
-					const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
+					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
+					const float NdotL = PM::pm_Dot3D(L, point.normal());
 
 					if (NdotL > PM_EPSILON)
 					{
@@ -62,7 +61,7 @@ namespace PR
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{
-							spec += entity->material()->apply(point, in.direction(), L, applied)*NdotL;
+							spec += entity->material()->apply(point, in.direction(), L, applied) * NdotL;
 						}
 
 					}
@@ -111,7 +110,7 @@ namespace PR
 				}
 			}
 
-			return applied;
+			return Spectrum();
 		}
 	}
 }

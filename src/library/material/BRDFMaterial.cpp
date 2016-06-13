@@ -92,7 +92,8 @@ namespace PR
 		const float rough = roughness(point);
 		const float alpha = rough * rough;
 		const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, V));
-		const float NdotV = PM::pm_Dot3D(point.normal(), V);
+		const float NdotV = -PM::pm_Dot3D(V, point.normal());
+		const float NdotL = PM::pm_Dot3D(L, point.normal());
 
 		Spectrum spec;
 		if (mAlbedo && mRoughness)
@@ -103,9 +104,8 @@ namespace PR
 			}
 			else if (alpha >= PM_EPSILON)//Oren-Nayar
 			{
-				const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
-				const float angleVN = acosf(NdotL);
-				const float angleLN = acosf(NdotV);
+				const float angleVN = acosf(NdotV);
+				const float angleLN = acosf(NdotL);
 				const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
 				const float or_beta = PM::pm_MinT(angleLN, angleVN);
 
@@ -129,7 +129,7 @@ namespace PR
 			Spectrum specular = mSpecularity->eval(point.uv());
 
 			float geometry = 1 / PM::pm_MaxT(0.00001f,
-				PM::pm_MaxT(PM::pm_Dot3D(point.normal(), L), -PM::pm_Dot3D(point.normal(), V)));// Neumann
+				PM::pm_MaxT(NdotL, NdotV));// Neumann
 			float ndf = BRDF::ndf_beckmann(H, point.normal(), alpha);
 			float term = BRDF::fresnel_schlick_term(V, H);
 			if (refl > PM_EPSILON && alpha < PM_EPSILON)
@@ -140,7 +140,7 @@ namespace PR
 			for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 			{
 				const float fres = fresnel(i/(float)Spectrum::SAMPLING_COUNT);
-				const float tmp = NdotV < 0 ? (fres - 1) / (fres + 1) : (1 - fres) / (1 + fres);
+				const float tmp = !point.isInside() ? (fres - 1) / (fres + 1) : (1 - fres) / (1 + fres);
 				const float f0 = tmp*tmp;
 				const float d = f0 + (1 - f0)*term;
 

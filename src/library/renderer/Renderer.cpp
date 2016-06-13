@@ -253,7 +253,7 @@ namespace PR
 
 	RenderEntity* Renderer::shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
-		const uint32 maxDepth = ray.maxDepth() == 0 ?
+		const uint32 maxDepth = (ray.maxDepth() == 0) ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
