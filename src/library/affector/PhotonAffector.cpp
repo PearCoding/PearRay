@@ -7,7 +7,7 @@
 
 #include "material/Material.h"
 
-#include "sampler/StratifiedSampler.h"
+#include "sampler/MultiJitteredSampler.h"
 #include "sampler/Projection.h"
 
 #include "photon/PhotonMap.h"
@@ -62,14 +62,15 @@ namespace PR
 
 		// We should sample lights differently... not like this.
 		auto lightList = renderer->lights();
-		const size_t sampleSize = renderer->settings().maxPhotons() / lightList.size();
-		StratifiedSampler sampler(renderer->random(), 200);
 		for (RenderEntity* light : lightList)
 		{
+			const size_t sampleSize = renderer->settings().maxPhotons() / lightList.size();
+			MultiJitteredSampler sampler(renderer->random(), sampleSize);
+
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(), i);
+				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(), i % sampleSize);
 				lightSample.setNormal(
 					Projection::align(lightSample.normal(),
 						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));

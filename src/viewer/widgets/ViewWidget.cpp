@@ -2,6 +2,7 @@
 
 #include "renderer/Renderer.h"
 #include "renderer/RenderResult.h"
+#include "renderer/RenderTile.h"
 
 #include "spectral/RGBConverter.h"
 #include "spectral/XYZConverter.h"
@@ -293,7 +294,7 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 		painter.setBrush(Qt::transparent);
 		painter.setPen(Qt::darkRed);
 
-		for(PR::RenderTile tile : mProgressTiles)
+		for(PR::RenderTile tile : mRenderer->currentTiles())
 		{
 			QRect rect = QRect(convertToGlobal(QPoint(tile.sx(), tile.sy())),
 				convertToGlobal(QPoint(tile.ex(), tile.ey())));
@@ -311,8 +312,6 @@ void ViewWidget::refreshView()
 {
 	if (mRenderer)
 	{
-		mProgressTiles = mRenderer->currentTiles();
-
 		const PR::RenderResult& result = mRenderer->result();
 
 		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);

@@ -3,8 +3,6 @@
 #include <QWidget>
 #include <QImage>
 
-#include "renderer/RenderTile.h"
-
 namespace PR
 {
 	class Renderer;
@@ -96,7 +94,6 @@ private:
 	ToolMode mToolMode;
 
 	bool mShowProgress;
-	std::list<PR::RenderTile> mProgressTiles;
 
 	QImage mRenderImage;
 	QImage mScaledImage;

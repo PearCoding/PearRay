@@ -463,6 +463,8 @@ void MainWindow::stopRendering()
 	ui.systemPropertyView->setEnabled(true);
 	ui.entityDetailsView->setEnabled(true);
 
+	ui.viewWidget->repaint();
+
 	setWindowTitle(tr("PearRay Viewer"));
 }
 

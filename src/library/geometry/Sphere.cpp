@@ -4,7 +4,7 @@
 
 #include <utility>
 
-#define PR_SPHERE_INTERSECT_EPSILON (1e-5)
+#define PR_SPHERE_INTERSECT_EPSILON (1e-6)
 namespace PR
 {
 	Sphere::Sphere() :
@@ -83,15 +83,15 @@ namespace PR
 			L2 > R2)
 			return false;
 
-		const float M2 = L2 - S*S; // L . L - S^2
+		const double M2 = L2 - (double)S*S; // L . L - S^2
 
 		if (M2 > R2)
 			return false;
 
-		const float Q = std::sqrt(R2 - M2);
+		const double Q = std::sqrt(R2 - M2);
 		
-		float t0 = S - Q;
-		float t1 = S + Q;
+		double t0 = S - Q;
+		double t1 = S + Q;
 		if (t0 > t1)
 			std::swap(t0, t1);
 
@@ -100,8 +100,8 @@ namespace PR
 
 		if (t0 >= PR_SPHERE_INTERSECT_EPSILON)
 		{
-			t = t0;
-			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t0));
+			t = (float)t0;
+			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 			return true;
 		}
 		else
