@@ -43,6 +43,8 @@ SET(PR_Material_Src
   ${PR_LIB}/material/GridMaterial.cpp
   ${PR_LIB}/material/Material.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
+SET(PR_Math_Src ) 
+SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
 SET(PR_Photon_Src
   ${PR_LIB}/photon/PhotonMap.cpp)
 SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
@@ -57,8 +59,10 @@ SET(PR_Renderer_Src
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
+  ${PR_LIB}/sampler/MultiJitteredSampler.cpp
   ${PR_LIB}/sampler/RandomSampler.cpp
-  ${PR_LIB}/sampler/StratifiedSampler.cpp)
+  ${PR_LIB}/sampler/StratifiedSampler.cpp
+  ${PR_LIB}/sampler/UniformSampler.cpp)
 SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
   ${PR_LIB}/scene/Scene.cpp)
@@ -89,7 +93,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Texture_Src} 
-  ${PR_Affector_Src}
+  ${PR_Affector_Src} ${PR_Math_Src}
 )
 
 SET(PR_Main_Hdr
@@ -97,7 +101,6 @@ SET(PR_Main_Hdr
   ${PR_LIB}/FileLogListener.h
   ${PR_LIB}/Logger.h
   ${PR_LIB}/LogListener.h
-  ${PR_LIB}/MathUtils.h
   ${PR_LIB}/Random.h)
 SET(PR_Affector_Hdr
   ${PR_LIB}/affector/Affector.h
@@ -141,6 +144,9 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
+SET(PR_Math_Hdr
+  ${PR_LIB}/math/Reflection.h)
+SOURCE_GROUP("Header Files\\Math" FILES ${PR_Math_Hdr})
 SET(PR_Photon_Hdr
   ${PR_LIB}/photon/Photon.h
   ${PR_LIB}/photon/PhotonMap.h)
@@ -157,10 +163,12 @@ SET(PR_Renderer_Hdr
   ${PR_LIB}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
+  ${PR_LIB}/sampler/MultiJitteredSampler.h
   ${PR_LIB}/sampler/Projection.h
   ${PR_LIB}/sampler/RandomSampler.h
   ${PR_LIB}/sampler/Sampler.h
-  ${PR_LIB}/sampler/StratifiedSampler.h)
+  ${PR_LIB}/sampler/StratifiedSampler.h
+  ${PR_LIB}/sampler/UniformSampler.h)
 SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
 SET(PR_Scene_Hdr
   ${PR_LIB}/scene/kdTree.h
@@ -197,7 +205,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Texture_Hdr}
-  ${PR_Affector_Hdr}
+  ${PR_Affector_Hdr} ${PR_Math_Hdr}
 )
 	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})

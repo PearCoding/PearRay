@@ -1,5 +1,7 @@
 #include "Renderer.h"
 #include "RenderThread.h"
+#include "RenderContext.h"
+
 #include "camera/Camera.h"
 #include "scene/Scene.h"
 #include "entity/RenderEntity.h"
@@ -13,8 +15,10 @@
 #include "integrator/DirectIntegrator.h"
 #include "integrator/DebugIntegrator.h"
 
+#include "sampler/Sampler.h"
+
 #include "Logger.h"
-#include "MathUtils.h"
+#include "math/Reflection.h"
 
 namespace PR
 {
@@ -146,6 +150,7 @@ namespace PR
 			}
 		}
 
+		/* Setup threads */
 		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
 		for (uint32 i = 0; i < threadCount; ++i)
 		{
@@ -181,42 +186,22 @@ namespace PR
 
 	void Renderer::render(RenderContext* context, uint32 x, uint32 y)
 	{
-		if (mRenderSettings.samplerMode() != SM_None)
+		if (mRenderSettings.pixelSampler() != SM_None)
 		{
+			context->pixelSampler()->reset();
+
+			const int SampleCount = mRenderSettings.maxPixelSampleCount();
+
 			float newDepth = 0;
 			Spectrum newSpec;
 
-			for (uint32 yi = 0; yi < mRenderSettings.ySamplerCount(); ++yi)
+			for (uint32 i = 0; i < SampleCount; ++i)
 			{
-				for (uint32 xi = 0; xi < mRenderSettings.xSamplerCount(); ++xi)
-				{
-					float sx;
-					float sy;
-
-					switch (mRenderSettings.samplerMode())
-					{
-					case SM_Random:
-						sx = x + mRandom.getFloat() - 0.5f;
-						sy = y + mRandom.getFloat() - 0.5f;
-						break;
-					case SM_Uniform:
-						sx = x + xi / (float)mRenderSettings.xSamplerCount() - 0.5f;
-						sy = y + yi / (float)mRenderSettings.ySamplerCount() - 0.5f;
-						break;
-					default:
-					case SM_Jitter:
-						sx = x + (xi + mRandom.getFloat()) / (float)mRenderSettings.xSamplerCount() - 0.5f;
-						sy = y + (yi + mRandom.getFloat()) / (float)mRenderSettings.ySamplerCount() - 0.5f;
-						break;
-					}
-
-					Spectrum spec = renderSample(context, sx, sy);
-
-					newSpec += spec;
-				}
+				auto sample = context->pixelSampler()->generate2D();
+				Spectrum spec = renderSample(context, x + PM::pm_GetX(sample) - 0.5f, y + PM::pm_GetY(sample) - 0.5f);
+				newSpec += spec;
 			}
 
-			const int SampleCount = mRenderSettings.xSamplerCount() * mRenderSettings.ySamplerCount();
 			mResult.setPoint(x, y, newSpec / (float)SampleCount);
 		}
 		else

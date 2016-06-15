@@ -9,11 +9,13 @@ namespace PR
 	class RenderEntity;
 	class FacePoint;
 	class Ray;
+	class Sampler;
 	class Spectrum;
 	class PR_LIB RenderContext
 	{
 	public:
 		RenderContext(Renderer* renderer, RenderThread* thread, uint32 index);
+		~RenderContext();
 
 		RenderEntity* shoot(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
 		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
@@ -28,6 +30,11 @@ namespace PR
 			return mThread;
 		}
 
+		inline Sampler* pixelSampler() const
+		{
+			return mPixelSampler;
+		}
+
 		inline uint32 threadNumber() const
 		{
 			return mIndex;
@@ -36,6 +43,7 @@ namespace PR
 	private:
 		Renderer* mRenderer;
 		RenderThread* mThread;
+		Sampler* mPixelSampler;
 		uint32 mIndex;
 	};
 }

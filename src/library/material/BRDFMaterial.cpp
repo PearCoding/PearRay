@@ -3,7 +3,7 @@
 #include "geometry/FacePoint.h"
 
 #include "BRDF.h"
-#include "MathUtils.h"
+#include "math/Reflection.h"
 
 namespace PR
 {

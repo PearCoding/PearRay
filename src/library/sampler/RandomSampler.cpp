@@ -25,4 +25,8 @@ namespace PR
 	{
 		return PM::pm_Set(mRandom.getFloat(), mRandom.getFloat(), mRandom.getFloat());
 	}
+
+	void RandomSampler::reset()
+	{
+	}
 }

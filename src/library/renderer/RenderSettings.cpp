@@ -4,8 +4,8 @@ namespace PR
 {
 	RenderSettings::RenderSettings() :
 		mDebugMode(DM_None),
-		mSamplerMode(SM_Jitter),
-		mXSamplerCount(8), mYSamplerCount(8),
+		mPixelSampler(SM_MultiJitter),
+		mMaxPixelSampleCount(64),
 
 		mMaxDiffuseBounces(2),
 		mMaxRayDepth(10),

@@ -53,4 +53,11 @@ namespace PR
 
 		return PM::pm_Set(x, y, z);
 	}
+
+	void StratifiedSampler::reset()
+	{
+		mCurrent1DIndex = 0;
+		mCurrent2DIndex = 0;
+		mCurrent3DIndex = 0;
+	}
 }

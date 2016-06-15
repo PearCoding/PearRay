@@ -64,21 +64,19 @@ QWidget(parent)
 	mProperties.add(mRendererGroupProp);
 
 	// Sampler
-	mSamplerGroupProp = new GroupProperty(tr("Sampler"));
+	mPixelSamplerGroupProp = new GroupProperty(tr("Pixel Sampler"));
 
-	mSamplerProp = new SelectionProperty(tr("Mode"), PR::SM_Jitter);
-	((SelectionProperty*)mSamplerProp)->addItem(tr("None"), PR::SM_None);
-	((SelectionProperty*)mSamplerProp)->addItem(tr("Random"), PR::SM_Random);
-	((SelectionProperty*)mSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
-	((SelectionProperty*)mSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
-	mSamplerGroupProp->addChild(mSamplerProp);
+	mPixelSamplerProp = new SelectionProperty(tr("Mode"), PR::SM_MultiJitter);
+	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("None"), PR::SM_None);
+	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
+	mPixelSamplerGroupProp->addChild(mPixelSamplerProp);
 
-	mXSamplesProp = new IntProperty(tr("X Samples"), 8, 1, 1024);
-	mSamplerGroupProp->addChild(mXSamplesProp);
-
-	mYSamplesProp = new IntProperty(tr("Y Samples"), 8, 1, 1024);
-	mSamplerGroupProp->addChild(mYSamplesProp);
-	mProperties.add(mSamplerGroupProp);
+	mPixelSamplesProp = new IntProperty(tr("Max Samples"), 8, 1, 1024);
+	mPixelSamplerGroupProp->addChild(mPixelSamplesProp);
+	mProperties.add(mPixelSamplerGroupProp);
 
 	// Direct Lightning
 	mDirectLightningGroupProp = new GroupProperty(tr("Direct Lightning"));
@@ -120,9 +118,8 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererTileXProp;
 	delete mRendererTileYProp;
 	delete mRendererThreadsProp;
-	delete mXSamplesProp;
-	delete mYSamplesProp;
-	delete mSamplerProp;
+	delete mPixelSamplesProp;
+	delete mPixelSamplerProp;
 	delete mRendererMaxDiffuseBouncesProp;
 	delete mRendererMaxRayDepthProp;
 	delete mDebugVisualizationProp;
@@ -166,12 +163,10 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setValue(0);
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setDefaultValue(0);
 
-	reinterpret_cast<IntProperty*>(mXSamplesProp)->setValue(renderer->settings().xSamplerCount());
-	reinterpret_cast<IntProperty*>(mXSamplesProp)->setDefaultValue(renderer->settings().xSamplerCount());
-	reinterpret_cast<IntProperty*>(mYSamplesProp)->setValue(renderer->settings().ySamplerCount());
-	reinterpret_cast<IntProperty*>(mYSamplesProp)->setDefaultValue(renderer->settings().ySamplerCount());
-	reinterpret_cast<SelectionProperty*>(mSamplerProp)->setIndex(renderer->settings().samplerMode());
-	reinterpret_cast<SelectionProperty*>(mSamplerProp)->setDefaultIndex(renderer->settings().samplerMode());
+	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setValue(renderer->settings().maxPixelSampleCount());
+	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setDefaultValue(renderer->settings().maxPixelSampleCount());
+	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setIndex(renderer->settings().pixelSampler());
+	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setDefaultIndex(renderer->settings().pixelSampler());
 
 	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setValue(renderer->settings().maxDiffuseBounces());
 	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxDiffuseBounces());
@@ -209,9 +204,8 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 	renderer->settings().setMaxRayDepth(reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value());
 	renderer->settings().setDebugMode((PR::DebugMode)reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->index());
 
-	renderer->settings().setSamplerMode((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mSamplerProp)->index());
-	renderer->settings().setXSamplerCount(reinterpret_cast<IntProperty*>(mXSamplesProp)->value());
-	renderer->settings().setYSamplerCount(reinterpret_cast<IntProperty*>(mYSamplesProp)->value());
+	renderer->settings().setPixelSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->index());
+	renderer->settings().setMaxPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelSamplesProp)->value());
 
 	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
 	renderer->settings().enableBiDirect(reinterpret_cast<BoolProperty*>(mUseBiDirectProp)->value());

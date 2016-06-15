@@ -20,12 +20,15 @@ namespace PR
 		{
 			float ui = PM::pm_GetIndex(mUpperBound, i);
 			float li = PM::pm_GetIndex(mLowerBound, i);
-			if (ui < li)
+			float d = ui - li;
+
+			if (std::signbit(d))//Negative
 			{
 				mUpperBound = PM::pm_SetIndex(mUpperBound, i, li);
 				mLowerBound = PM::pm_SetIndex(mLowerBound, i, ui);
 			}
-			else if (std::abs(ui-li) < PM_EPSILON)
+
+			if (std::abs(d) < PM_EPSILON)
 			{
 				mUpperBound = PM::pm_SetIndex(mUpperBound, i, ui + BIAS);
 			}
@@ -149,7 +152,7 @@ namespace PR
 		}
 
 		t = tmin <= 0 ? tmax : tmin;
-		if (t >= PM_EPSILON)
+		if (t > PM_EPSILON)
 		{
 			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 			return true;

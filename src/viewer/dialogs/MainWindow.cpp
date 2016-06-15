@@ -144,6 +144,8 @@ void MainWindow::openProject(const QString& str)
 		ui.viewWidget->setEnabled(true);
 		ui.entityDetailsView->setEnabled(true);
 		ui.systemPropertyView->setEnabled(true);
+
+		ui.viewWidget->fitIntoWindow();
 	}
 	else
 	{

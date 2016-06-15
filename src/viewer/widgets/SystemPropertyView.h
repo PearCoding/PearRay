@@ -46,10 +46,9 @@ private:
 	IProperty* mRendererMaxRayDepthProp;
 	IProperty* mDebugVisualizationProp;
 
-	IProperty* mSamplerGroupProp;
-	IProperty* mSamplerProp;
-	IProperty* mXSamplesProp;
-	IProperty* mYSamplesProp;
+	IProperty* mPixelSamplerGroupProp;
+	IProperty* mPixelSamplerProp;
+	IProperty* mPixelSamplesProp;
 
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;

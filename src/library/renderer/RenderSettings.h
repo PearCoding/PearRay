@@ -9,7 +9,8 @@ namespace PR
 		SM_None,
 		SM_Random,
 		SM_Uniform,
-		SM_Jitter
+		SM_Jitter,
+		SM_MultiJitter
 	};
 
 	enum DebugMode
@@ -42,14 +43,11 @@ namespace PR
 		inline DebugMode debugMode() const { return mDebugMode; }
 		inline void setDebugMode(DebugMode mode) { mDebugMode = mode; }
 
-		inline SamplerMode samplerMode() const { return mSamplerMode; }
-		inline void setSamplerMode(SamplerMode mode) { mSamplerMode = mode; }
+		inline SamplerMode pixelSampler() const { return mPixelSampler; }
+		inline void setPixelSampler(SamplerMode mode) { mPixelSampler = mode; }
 
-		inline uint32 xSamplerCount() const { return mXSamplerCount; }
-		inline void setXSamplerCount(uint32 v) { mXSamplerCount = v; }
-
-		inline uint32 ySamplerCount() const { return mYSamplerCount; }
-		inline void setYSamplerCount(uint32 v) { mYSamplerCount = v; }
+		inline uint32 maxPixelSampleCount() const { return mMaxPixelSampleCount; }
+		inline void setMaxPixelSampleCount(uint32 v) { mMaxPixelSampleCount = v; }
 
 		inline uint32 maxDiffuseBounces() const { return mMaxDiffuseBounces; }
 		inline void setMaxDiffuseBounces(uint32 v) { mMaxDiffuseBounces = v; }
@@ -86,9 +84,8 @@ namespace PR
 		inline float photonSqueezeWeight() const { return mPhotonSqueezeWeight; }
 		inline void setPhotonSqueezeWeight(float v) { mPhotonSqueezeWeight = v; }
 	private:
-		SamplerMode mSamplerMode;
-		uint32 mXSamplerCount;
-		uint32 mYSamplerCount;
+		SamplerMode mPixelSampler;
+		uint32 mMaxPixelSampleCount;
 
 		uint32 mMaxDiffuseBounces;
 		uint32 mMaxRayDepth;

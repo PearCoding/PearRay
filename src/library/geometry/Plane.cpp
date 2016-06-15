@@ -160,9 +160,24 @@ namespace PR
 		}
 		else if (std::abs(PM::pm_GetY(diff)) <= PM_EPSILON)
 		{
-			if (std::abs(PM::pm_GetZ(diff)) <= PM_EPSILON)
+			if (std::abs(PM::pm_GetX(diff)) <= PM_EPSILON)
+			{
+				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(EPSILON_BOUND, 0, 0)));
+			}
+			else if (std::abs(PM::pm_GetZ(diff)) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, 0, EPSILON_BOUND)));
+			}
+		}
+		else if (std::abs(PM::pm_GetZ(diff)) <= PM_EPSILON)
+		{
+			if (std::abs(PM::pm_GetX(diff)) <= PM_EPSILON)
+			{
+				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(EPSILON_BOUND, 0, 0)));
+			}
+			else if (std::abs(PM::pm_GetY(diff)) <= PM_EPSILON)
+			{
+				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, EPSILON_BOUND, 0)));
 			}
 		}
 

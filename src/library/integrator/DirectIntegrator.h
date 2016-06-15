@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Integrator.h"
-#include "sampler/StratifiedSampler.h"
 
 namespace PR
 {
@@ -15,7 +14,5 @@ namespace PR
 
 	private:
 		Spectrum applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context);
-
-		StratifiedSampler mLightSampler;
 	};
 }

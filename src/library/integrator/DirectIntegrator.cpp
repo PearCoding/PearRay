@@ -5,13 +5,12 @@
 #include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
-#include "sampler/StratifiedSampler.h"
+#include "sampler/MultiJitteredSampler.h"
 #include "material/Material.h"
 
 namespace PR
 {
-	DirectIntegrator::DirectIntegrator(Renderer* renderer) : Integrator(),
-		mLightSampler(renderer->random(), renderer->settings().maxLightSamples())
+	DirectIntegrator::DirectIntegrator(Renderer* renderer) : Integrator()
 	{
 	}
 
@@ -45,9 +44,10 @@ namespace PR
 			Spectrum spec;
 			for (RenderEntity* light : context->renderer()->lights())
 			{
+				MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
 				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 				{
-					FacePoint p = light->getRandomFacePoint(mLightSampler, context->renderer()->random());
+					FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random());
 
 					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
 					const float NdotL = PM::pm_Dot3D(L, point.normal());

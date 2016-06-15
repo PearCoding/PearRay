@@ -10,6 +10,8 @@ namespace PR
 		StratifiedSampler(Random& random, uint32 samples);
 		~StratifiedSampler();
 
+		void reset() override;
+
 		float generate1D() override;
 		PM::vec2 generate2D() override;
 		PM::vec3 generate3D() override;

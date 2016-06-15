@@ -29,7 +29,7 @@ namespace PR
 	{
 		const float k = 1 - eta*eta*(1 - NdotV*NdotV);
 
-		if (k < 0)//TOTAL REFLECTION
+		if (k < 0.0f)//TOTAL REFLECTION
 			return reflect(NdotV, N, V);
 
 		const float t = eta * NdotV + std::sqrt(k);
@@ -42,6 +42,6 @@ namespace PR
 	*/
 	inline static PM::vec3 faceforward(float NdotV, const PM::vec3& N)
 	{
-		return (NdotV < 0) ? N : PM::pm_Negate(N);
+		return (NdotV < 0.0f) ? N : PM::pm_Negate(N);
 	}
 }

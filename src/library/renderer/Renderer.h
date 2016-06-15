@@ -100,8 +100,6 @@ namespace PR
 		bool* mTileMap;
 		std::list<RenderThread*> mThreads;
 
-		Spectrum mIdentitySpectrum;
-
 		RenderSettings mRenderSettings;
 
 		std::mutex mStatisticMutex;
