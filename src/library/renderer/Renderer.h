@@ -16,9 +16,11 @@ namespace PR
 	class FacePoint;
 	class Integrator;
 	class RenderEntity;
+	class Sampler;
 	class Scene;
 	class Ray;
 	class RenderThread;
+	class RenderTile;
 	class RenderContext;
 	class PR_LIB Renderer
 	{
@@ -45,7 +47,7 @@ namespace PR
 		bool isFinished();
 		void waitForFinish();
 
-		void render(RenderContext* context, uint32 x, uint32 y);
+		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample);
 
 		RenderResult& result();
 
@@ -56,14 +58,18 @@ namespace PR
 
 		// Statistics
 		size_t rayCount() const;
-		size_t pixelsRendered() const;
+		size_t samplesRendered() const;
 
 		// RenderThread things
 		RenderEntity* shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		bool getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey);
+
+		RenderTile* getNextTile();
 
 		uint32 threads() const;
+
+		// Slow and only copies!
+		std::list<RenderTile> currentTiles() const;
 
 		// Settings
 		inline RenderSettings& settings()
@@ -97,13 +103,16 @@ namespace PR
 		std::mutex mTileMutex;
 		uint32 mTileWidth;
 		uint32 mTileHeight;
-		bool* mTileMap;
+		uint32 mTileXCount;
+		uint32 mTileYCount;
+		RenderTile** mTileMap;
+		uint32 mProgressiveCurrentSample;
 		std::list<RenderThread*> mThreads;
 
 		RenderSettings mRenderSettings;
+		Sampler* mPixelSampler;
 
 		std::mutex mStatisticMutex;
-		size_t mPixelsRendered;
 		size_t mRayCount;
 
 		std::list<Affector*> mAffectors;// Per Ray apply

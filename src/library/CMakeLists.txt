@@ -56,6 +56,7 @@ SET(PR_Renderer_Src
   ${PR_LIB}/renderer/RenderContext.cpp
   ${PR_LIB}/renderer/RenderResult.cpp
   ${PR_LIB}/renderer/RenderSettings.cpp
+  ${PR_LIB}/renderer/RenderTile.cpp
   ${PR_LIB}/renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
@@ -160,6 +161,7 @@ SET(PR_Renderer_Hdr
   ${PR_LIB}/renderer/RenderContext.h
   ${PR_LIB}/renderer/RenderResult.h
   ${PR_LIB}/renderer/RenderSettings.h
+  ${PR_LIB}/renderer/RenderTile.h
   ${PR_LIB}/renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr

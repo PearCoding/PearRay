@@ -4,8 +4,7 @@
 namespace PR
 {
 	UniformSampler::UniformSampler(Random& random, uint32 samples) :
-		Sampler(), mRandom(random), mSamples(samples),
-		mIndex(0)
+		Sampler(), mRandom(random), mSamples(samples)
 	{
 		m2D_X = std::sqrt(samples);
 		m2D_Y = (mSamples + m2D_X - 1) / m2D_X;
@@ -19,33 +18,25 @@ namespace PR
 	{
 	}
 
-	float UniformSampler::generate1D()
+	float UniformSampler::generate1D(uint32 index)
 	{
-		float r = (mIndex % mSamples + 0.5f) / mSamples;
-		mIndex++;
+		float r = (index % mSamples + 0.5f) / mSamples;
 		return r;
 	}
 
-	PM::vec2 UniformSampler::generate2D()
+	PM::vec2 UniformSampler::generate2D(uint32 index)
 	{
-		auto r = PM::pm_Set((mIndex % m2D_X + 0.5f) / m2D_X,
-			(mIndex / m2D_X + 0.5f) / m2D_Y);
-		mIndex++;
+		auto r = PM::pm_Set((index % m2D_X + 0.5f) / m2D_X,
+			(index / m2D_X + 0.5f) / m2D_Y);
 		return r;
 	}
 
 	// TODO: Fix this! Not finished.
-	PM::vec3 UniformSampler::generate3D()
+	PM::vec3 UniformSampler::generate3D(uint32 index)
 	{
-		auto r = PM::pm_Set((mIndex % (m3D_X*m3D_Y) + 0.5f) / (m3D_X*m3D_Y),
-			(mIndex % (m3D_Y*m3D_Z) + 0.5f) /m3D_Y,
-			(mIndex / (m3D_X*m3D_Y) + 0.5f) / m3D_Z);
-		mIndex++;
+		auto r = PM::pm_Set((index % (m3D_X*m3D_Y) + 0.5f) / (m3D_X*m3D_Y),
+			(index % (m3D_Y*m3D_Z) + 0.5f) /m3D_Y,
+			(index / (m3D_X*m3D_Y) + 0.5f) / m3D_Z);
 		return r;
-	}
-
-	void UniformSampler::reset()
-	{
-		mIndex = 0;
 	}
 }

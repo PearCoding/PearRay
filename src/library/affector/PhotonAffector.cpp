@@ -69,7 +69,7 @@ namespace PR
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
+				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(), i);
 				lightSample.setNormal(
 					Projection::align(lightSample.normal(),
 						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));

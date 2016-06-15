@@ -4,8 +4,7 @@
 namespace PR
 {
 	MultiJitteredSampler::MultiJitteredSampler(Random& random, uint32 samples) :
-		Sampler(), mRandom(random), mSamples(samples),
-		mIndex(0)
+		Sampler(), mRandom(random), mSamples(samples)
 	{
 		mM = std::sqrt(samples);
 		mN = (mSamples + mM - 1) / mM;
@@ -15,34 +14,32 @@ namespace PR
 	{
 	}
 
-	float MultiJitteredSampler::generate1D()
+	float MultiJitteredSampler::generate1D(uint32 index)
 	{
 		uint32 p = mRandom.get32();
-		uint32 s = permute(mIndex % mSamples, mSamples, p * 0xa511e9b3);
-		float j = randfloat(mIndex, p * 0xa399d265);
-		float r = (mIndex % mSamples + j) / mSamples;
-		mIndex++;
+		uint32 s = permute(index % mSamples, mSamples, p * 0xa511e9b3);
+		float j = randfloat(index, p * 0xa399d265);
+		float r = (index % mSamples + j) / mSamples;
 		return r;
 	}
 
-	PM::vec2 MultiJitteredSampler::generate2D()
+	PM::vec2 MultiJitteredSampler::generate2D(uint32 index)
 	{
 		uint32 p = mRandom.get32();
-		uint32 sx = permute(mIndex % mM, mM, p * 0xa511e9b3);
-		uint32 sy = permute(mIndex / mM, mN, p * 0x63d83595);
-		float jx = randfloat(mIndex, p * 0xa399d265);
-		float jy = randfloat(mIndex, p * 0x711ad6a5);
-		auto r = PM::pm_Set((mIndex % mM + (sy + jx) / mN) / mM,
-			(mIndex / mM + (sx + jy) / mM) / mN);
-		mIndex++;
+		uint32 sx = permute(index % mM, mM, p * 0xa511e9b3);
+		uint32 sy = permute(index / mM, mN, p * 0x63d83595);
+		float jx = randfloat(index, p * 0xa399d265);
+		float jy = randfloat(index, p * 0x711ad6a5);
+		auto r = PM::pm_Set((index % mM + (sy + jx) / mN) / mM,
+			(index / mM + (sx + jy) / mM) / mN);
 		return r;
 	}
 
 	// Not really uniform!
-	PM::vec3 MultiJitteredSampler::generate3D()
+	PM::vec3 MultiJitteredSampler::generate3D(uint32 index)
 	{
-		auto x = generate1D();
-		auto yz = generate2D();
+		auto x = generate1D(index);
+		auto yz = generate2D(index);
 		return PM::pm_Set(x, PM::pm_GetX(yz), PM::pm_GetY(yz));
 	}
 
@@ -117,10 +114,5 @@ namespace PR
 		i ^= 0xdf6e307f;
 		i ^= i >> 17; i *= 1 | p >> 18;
 		return i * (1.0f / 4294967808.0f);
-	}
-
-	void MultiJitteredSampler::reset()
-	{
-		mIndex = 0;
 	}
 }

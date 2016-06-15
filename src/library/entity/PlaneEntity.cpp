@@ -69,16 +69,16 @@ namespace PR
 	}
 
 	// World space
-	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
+	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
 	{
-		auto sample = sampler.generate2D();
+		auto s = sampler.generate2D(sample);
 
 		FacePoint fp;
 		fp.setVertex(PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.xAxis(), scale())), PM::pm_GetX(sample)),
-				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), scale())), PM::pm_GetY(sample)))));
+			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.xAxis(), scale())), PM::pm_GetX(s)),
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), scale())), PM::pm_GetY(s)))));
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
-		fp.setUV(PM::pm_SetZ(sample, 0));
+		fp.setUV(PM::pm_SetZ(s, 0));
 		return fp;
 	}
 }

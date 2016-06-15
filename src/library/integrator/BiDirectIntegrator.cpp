@@ -90,7 +90,7 @@ namespace PR
 				float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
 				Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
 
-				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random());
+				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(), i);
 				const PM::vec3 lightDir = 
 					Projection::align(lightSample.normal(),
 						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat()));

@@ -40,7 +40,7 @@ namespace PR
 		}
 
 		bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) override;
-		FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const override;
+		FacePoint getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const override;
 	private:
 		BoundingBox mBoundingBox;
 		void* mKDTree;

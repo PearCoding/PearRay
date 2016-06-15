@@ -32,7 +32,7 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t);
 
 		// In world coords
-		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random) const = 0;
+		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const = 0;
 
 	private:
 		Material* mMaterial;

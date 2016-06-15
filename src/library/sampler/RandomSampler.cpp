@@ -11,22 +11,18 @@ namespace PR
 	{
 	}
 
-	float RandomSampler::generate1D()
+	float RandomSampler::generate1D(uint32 index)
 	{
 		return mRandom.getFloat();
 	}
 
-	PM::vec2 RandomSampler::generate2D()
+	PM::vec2 RandomSampler::generate2D(uint32 index)
 	{
 		return PM::pm_Set(mRandom.getFloat(), mRandom.getFloat());
 	}
 
-	PM::vec3 RandomSampler::generate3D()
+	PM::vec3 RandomSampler::generate3D(uint32 index)
 	{
 		return PM::pm_Set(mRandom.getFloat(), mRandom.getFloat(), mRandom.getFloat());
-	}
-
-	void RandomSampler::reset()
-	{
 	}
 }

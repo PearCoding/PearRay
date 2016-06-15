@@ -12,7 +12,7 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr), mViewMode(VM_Color), mToolMode(TM_Selection),
+	mRenderer(nullptr), mViewMode(VM_Color), mToolMode(TM_Selection), mShowProgress(true),
 	mZoom(1), mPanX(0), mPanY(0), mLastPanX(0), mLastPanY(0), mPressing(false)
 {
 	cache();
@@ -259,6 +259,7 @@ void ViewWidget::wheelEvent(QWheelEvent * event)
 
 void ViewWidget::paintEvent(QPaintEvent* event)
 {
+
 	QPainter painter(this);
 	painter.drawPixmap(0, 0, mBackgroundImage);
 	
@@ -286,6 +287,19 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 
 		painter.drawRect(cropRect);
 	}
+
+	if (mShowProgress && !mRenderer->isFinished())
+	{
+		painter.setBrush(Qt::transparent);
+		painter.setPen(Qt::darkRed);
+
+		for(PR::RenderTile tile : mProgressTiles)
+		{
+			QRect rect = QRect(convertToGlobal(QPoint(tile.sx(), tile.sy())),
+				convertToGlobal(QPoint(tile.ex(), tile.ey())));
+			painter.drawRect(rect);
+		}
+	}
 }
 
 void ViewWidget::resizeEvent(QResizeEvent* event)
@@ -297,6 +311,8 @@ void ViewWidget::refreshView()
 {
 	if (mRenderer)
 	{
+		mProgressTiles = mRenderer->currentTiles();
+
 		const PR::RenderResult& result = mRenderer->result();
 
 		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);

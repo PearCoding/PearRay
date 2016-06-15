@@ -4,60 +4,37 @@
 namespace PR
 {
 	StratifiedSampler::StratifiedSampler(Random& random, uint32 samples) :
-		Sampler(), mRandom(random), mSamples(samples),
-		mCurrent1DIndex(0), mCurrent2DIndex(0), mCurrent3DIndex(0)
+		Sampler(), mRandom(random), mSamples(samples)
 	{
-		/*m2DBitmask = new uint8[samples];
-		m3DBitmask = new uint8[samples * samples];*/
+		m2D_X = std::sqrt(samples);
+		m2D_Y = (mSamples + m2D_X - 1) / m2D_X;
 	}
 
 	StratifiedSampler::~StratifiedSampler()
 	{
-		/*delete[] m2DBitmask;
-		delete[] m3DBitmask;*/
 	}
 
-	float StratifiedSampler::generate1D()
+	float StratifiedSampler::generate1D(uint32 index)
 	{
-		auto ret = Projection::stratified(mRandom.getFloat(), mCurrent1DIndex, mSamples);
-
-		mCurrent1DIndex++;
-		if (mCurrent1DIndex >= mSamples)
-			mCurrent1DIndex = 0;
-
+		auto ret = Projection::stratified(mRandom.getFloat(), index, mSamples);
 		return ret;
 	}
 
 	// Need better strategy for 2D and 3D
-	PM::vec2 StratifiedSampler::generate2D()
+	PM::vec2 StratifiedSampler::generate2D(uint32 index)
 	{
-		auto x = Projection::stratified(mRandom.getFloat(), mCurrent2DIndex, mSamples);
-		auto y = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
-
-		mCurrent2DIndex++;
-		if (mCurrent2DIndex >= mSamples)
-			mCurrent2DIndex = 0;
+		auto x = Projection::stratified(mRandom.getFloat(), index % m2D_X, mSamples);
+		auto y = Projection::stratified(mRandom.getFloat(), index / m2D_X, mSamples);
 
 		return PM::pm_Set(x, y);
 	}
 
-	PM::vec3 StratifiedSampler::generate3D()
+	PM::vec3 StratifiedSampler::generate3D(uint32 index)
 	{
-		auto x = Projection::stratified(mRandom.getFloat(), mCurrent2DIndex, mSamples);
+		auto x = Projection::stratified(mRandom.getFloat(), index, mSamples);
 		auto y = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
 		auto z = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
 
-		mCurrent3DIndex++;
-		if (mCurrent3DIndex >= mSamples)
-			mCurrent3DIndex = 0;
-
 		return PM::pm_Set(x, y, z);
-	}
-
-	void StratifiedSampler::reset()
-	{
-		mCurrent1DIndex = 0;
-		mCurrent2DIndex = 0;
-		mCurrent3DIndex = 0;
 	}
 }

@@ -1,37 +1,44 @@
 #include "RenderThread.h"
 #include "Renderer.h"
+#include "RenderTile.h"
 
 namespace PR
 {
 	RenderThread::RenderThread(Renderer* renderer, uint32 index) :
-		mRenderer(renderer), mContext(renderer, this, index)
+		mRenderer(renderer), mTile(nullptr), mContext(renderer, this, index)
 	{
 		PR_ASSERT(renderer);
 	}
 
 	void RenderThread::main()
 	{
-		mPixelsRendered = 0;
-		uint32 sx;
-		uint32 sy;
-		uint32 ex; 
-		uint32 ey;
+		mSamplesRendered = 0;
+		mTile = mRenderer->getNextTile();
 
-		while (mRenderer->getNextTile(sx, sy, ex, ey) && !shouldStop())
+		while (mTile && !shouldStop())
 		{
-			for (uint32 y = sy; y < ey && !shouldStop(); ++y)
+			for (uint32 y = mTile->sy(); y < mTile->ey() && !shouldStop(); ++y)
 			{
-				for (uint32 x = sx; x < ex && !shouldStop(); ++x)
+				for (uint32 x = mTile->sx(); x < mTile->ex() && !shouldStop(); ++x)
 				{
-					mRenderer->render(&mContext, x, y);
-					mPixelsRendered++;
+					mRenderer->render(&mContext, x, y, mTile->samplesRendered());
+					if (mRenderer->settings().isProgressive())
+						mSamplesRendered++;
+					else
+						mSamplesRendered += mRenderer->settings().maxPixelSampleCount();
 				}
 			}
+
+			if(mRenderer->settings().isProgressive())
+				mTile->inc();
+
+			mTile->setWorking(false);
+			mTile = mRenderer->getNextTile();
 		}
 	}
 
-	size_t RenderThread::pixelsRendered() const
+	size_t RenderThread::samplesRendered() const
 	{
-		return mPixelsRendered;
+		return mSamplesRendered;
 	}
 }

@@ -47,7 +47,7 @@ namespace PR
 				MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
 				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 				{
-					FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random());
+					FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random(), i);
 
 					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
 					const float NdotL = PM::pm_Dot3D(L, point.normal());

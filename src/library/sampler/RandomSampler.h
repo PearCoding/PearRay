@@ -9,12 +9,10 @@ namespace PR
 	public:
 		RandomSampler(Random& random);
 		~RandomSampler();
-
-		void reset() override;
-
-		float generate1D() override;
-		PM::vec2 generate2D() override;
-		PM::vec3 generate3D() override;
+		
+		float generate1D(uint32 index) override;
+		PM::vec2 generate2D(uint32 index) override;
+		PM::vec3 generate3D(uint32 index) override;
 
 	private:
 		Random& mRandom;

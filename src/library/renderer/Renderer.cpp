@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "RenderThread.h"
 #include "RenderContext.h"
+#include "RenderTile.h"
 
 #include "camera/Camera.h"
 #include "scene/Scene.h"
@@ -15,7 +16,10 @@
 #include "integrator/DirectIntegrator.h"
 #include "integrator/DebugIntegrator.h"
 
-#include "sampler/Sampler.h"
+#include "sampler/RandomSampler.h"
+#include "sampler/StratifiedSampler.h"
+#include "sampler/MultiJitteredSampler.h"
+#include "sampler/UniformSampler.h"
 
 #include "Logger.h"
 #include "math/Reflection.h"
@@ -26,7 +30,8 @@ namespace PR
 		mWidth(w), mHeight(h), mMinX(0), mMaxX(1), mMinY(0), mMaxY(1),
 		mCamera(cam), mScene(scene),
 		mResult(w, h), mRandom((uint64)time(NULL)),
-		mTileWidth(w/8), mTileHeight(h/8), mTileMap(nullptr)
+		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mProgressiveCurrentSample(0), mTileMap(nullptr),
+		mPixelSampler(nullptr)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -53,7 +58,15 @@ namespace PR
 		mThreads.clear();
 
 		if (mTileMap)
+		{
+			for (uint32 i = 0; i < mTileXCount*mTileYCount; ++i)
+			{
+				delete mTileMap[i];
+			}
+
 			delete[] mTileMap;
+			mTileMap = nullptr;
+		}
 
 		for (Affector* aff : mAffectors)
 			delete aff;
@@ -64,6 +77,12 @@ namespace PR
 			delete integrator;
 
 		mIntegrators.clear();
+
+		if (mPixelSampler)
+		{
+			delete mPixelSampler;
+			mPixelSampler = nullptr;
+		}
 	}
 
 	void Renderer::setWidth(uint32 w)
@@ -123,6 +142,24 @@ namespace PR
 			mRandom.generate();
 		}*/
 
+		/* Setup samplers */
+		switch (mRenderSettings.pixelSampler())
+		{
+		case SM_Random:
+			mPixelSampler = new RandomSampler(mRandom);
+			break;
+		case SM_Uniform:
+			mPixelSampler = new UniformSampler(mRandom, mRenderSettings.maxPixelSampleCount());
+			break;
+		default:
+		case SM_Jitter:
+			mPixelSampler = new StratifiedSampler(mRandom, mRenderSettings.maxPixelSampleCount());
+			break;
+		case SM_MultiJitter:
+			mPixelSampler = new MultiJitteredSampler(mRandom, mRenderSettings.maxPixelSampleCount());
+			break;
+		}
+
 		/* Setup entities */
 		for (Entity* entity : mScene->entities())
 			entity->onPreRender();
@@ -166,15 +203,26 @@ namespace PR
 
 		// Calculate tile sizes, etc.
 		mRayCount = 0;
-		mPixelsRendered = 0;
 
+		mTileXCount = tcx;
+		mTileYCount = tcy;
 		mTileWidth = (uint32)std::ceil(renderWidth() / (float)tcx);
 		mTileHeight = (uint32)std::ceil(renderHeight() / (float)tcy);
-		mTileMap = new bool[tcx*tcy];
-		for (uint32 i = 0; i < tcx*tcy; ++i)
+		mTileMap = new RenderTile*[tcx*tcy];
+		for (uint32 i = 0; i < tcy; ++i)
 		{
-			mTileMap[i] = false;
+			for (uint32 j = 0; j < tcx; ++j)
+			{
+				uint32 sx = mMinX*mWidth + j*mTileWidth;
+				uint32 sy = mMinY*mHeight + i*mTileHeight;
+				mTileMap[i*tcx + j] = new RenderTile(
+					sx,
+					sy,
+					PM::pm_MinT<uint32>(mMaxX*mWidth, sx + mTileWidth),
+					PM::pm_MinT<uint32>(mMaxY*mHeight, sy + mTileHeight));
+			}
 		}
+		mProgressiveCurrentSample = 0;
 
 		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
@@ -184,37 +232,43 @@ namespace PR
 		}
 	}
 
-	void Renderer::render(RenderContext* context, uint32 x, uint32 y)
+	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample)
 	{
-		if (mRenderSettings.pixelSampler() != SM_None)
+		if (mRenderSettings.isProgressive())// Only one sample a time!
 		{
-			context->pixelSampler()->reset();
+			Spectrum oldSpec;
+			if (sample > 0)
+			{
+				oldSpec = mResult.point(x, y);
+			}
 
+			auto s = mPixelSampler->generate2D(sample);
+			Spectrum newSpec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f);
+
+			if (sample > 0)
+			{
+				mResult.setPoint(x, y,
+					oldSpec * (sample / (sample + 1.0f)) + newSpec * (1.0f / (sample + 1.0f)));
+			}
+			else
+			{
+				mResult.setPoint(x, y, newSpec);
+			}
+		}
+		else// Everything
+		{
 			const int SampleCount = mRenderSettings.maxPixelSampleCount();
-
-			float newDepth = 0;
 			Spectrum newSpec;
 
-			for (uint32 i = 0; i < SampleCount; ++i)
+			for (uint32 i = sample; i < SampleCount; ++i)
 			{
-				auto sample = context->pixelSampler()->generate2D();
-				Spectrum spec = renderSample(context, x + PM::pm_GetX(sample) - 0.5f, y + PM::pm_GetY(sample) - 0.5f);
+				auto s = mPixelSampler->generate2D(i);
+				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f);
 				newSpec += spec;
 			}
 
 			mResult.setPoint(x, y, newSpec / (float)SampleCount);
 		}
-		else
-		{
-			Spectrum spec = renderSample(context, x + mRandom.getFloat() - 0.5f,
-				y + mRandom.getFloat() - 0.5f);
-
-			mResult.setPoint(x, y,spec);
-		}
-
-		mStatisticMutex.lock();
-		mPixelsRendered++;
-		mStatisticMutex.unlock();
 	}
 
 	Spectrum Renderer::renderSample(RenderContext* context, float x, float y)
@@ -231,9 +285,27 @@ namespace PR
 		return spec;
 	}
 
-	size_t Renderer::pixelsRendered() const
+	size_t Renderer::samplesRendered() const
 	{
-		return mPixelsRendered;
+		size_t s = 0;
+		for(RenderThread* thread : mThreads)
+		{
+			s += thread->samplesRendered();
+		}
+
+		return s;
+	}
+	
+	std::list<RenderTile> Renderer::currentTiles() const
+	{
+		std::list<RenderTile> list;
+		for (RenderThread* thread : mThreads)
+		{
+			RenderTile* tile = thread->currentTile();
+			if (tile)
+				list.push_back(*tile);
+		}
+		return list;
 	}
 
 	RenderEntity* Renderer::shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
@@ -308,32 +380,53 @@ namespace PR
 		}
 	}
 
-	bool Renderer::getNextTile(uint32& sx, uint32& sy, uint32& ex, uint32& ey)
+	RenderTile* Renderer::getNextTile()
 	{
-		uint32 sliceW = (uint32)std::ceil(renderWidth() / (float)mTileWidth);
-		uint32 sliceH = (uint32)std::ceil(renderHeight() / (float)mTileHeight);
-
 		mTileMutex.lock();
-		for (uint32 i = 0; i < sliceH; ++i)
+		if (mRenderSettings.isProgressive())
 		{
-			for (uint32 j = 0; j < sliceW; ++j)
+			for (uint32 i = 0; i < mTileYCount; ++i)
 			{
-				if (!mTileMap[i*sliceW + j])
+				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
-					sx = mMinX*mWidth + j*mTileWidth;
-					sy = mMinY*mHeight + i*mTileHeight;
-					ex = PM::pm_MinT<uint32>(mMaxX*mWidth, sx + mTileWidth);
-					ey = PM::pm_MinT<uint32>(mMaxY*mHeight, sy + mTileHeight);
+					if ((mRenderSettings.isProgressive() || mTileMap[i*mTileXCount + j]->samplesRendered() == 0) &&
+						mTileMap[i*mTileXCount + j]->samplesRendered() <= mProgressiveCurrentSample &&
+						!mTileMap[i*mTileXCount + j]->isWorking())
+					{
+						mTileMap[i*mTileXCount + j]->setWorking(true);
+						mTileMutex.unlock();
 
-					mTileMap[i*sliceW + j] = true;
-					mTileMutex.unlock();
+						return mTileMap[i*mTileXCount + j];
+					}
+				}
+			}
 
-					return true;
+			if (mProgressiveCurrentSample < mRenderSettings.maxPixelSampleCount())// Try again
+			{
+				mProgressiveCurrentSample++;
+				mTileMutex.unlock();
+				return getNextTile();
+			}
+		}
+		else
+		{
+			for (uint32 i = 0; i < mTileYCount; ++i)
+			{
+				for (uint32 j = 0; j < mTileXCount; ++j)
+				{
+					if (mTileMap[i*mTileXCount + j]->samplesRendered() != 0 &&
+						!mTileMap[i*mTileXCount + j]->isWorking())
+					{
+						mTileMap[i*mTileXCount + j]->setWorking(true);
+						mTileMutex.unlock();
+
+						return mTileMap[i*mTileXCount + j];
+					}
 				}
 			}
 		}
 		mTileMutex.unlock();
-		return false;
+		return nullptr;
 	}
 
 	RenderResult& Renderer::result()

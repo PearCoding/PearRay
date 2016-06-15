@@ -69,10 +69,8 @@ namespace PR
 		return true;
 	}
 
-	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, Random& random) const
+	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
 	{
-		//auto sample = sampler.generate(random);
-
 		FacePoint p;
 		// Not really uniform...
 		//PM::vec3 n = Projection::sphereFast(PM::pm_GetX(sample), PM::pm_GetY(sample), PM::pm_GetZ(sample));

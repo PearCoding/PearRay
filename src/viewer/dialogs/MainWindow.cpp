@@ -279,7 +279,8 @@ void MainWindow::updateView()
 	{
 		quint64 time = mElapsedTime.elapsed();
 
-		float percent = mRenderer->pixelsRendered() / (float)(mRenderer->renderWidth()*mRenderer->renderHeight());
+		float percent = mRenderer->samplesRendered() /
+			(float)(mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount());
 		float lerp = percent*percent;
 
 		quint64 timeLeft1 = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
@@ -288,9 +289,9 @@ void MainWindow::updateView()
 		mLastPercent = percent;
 
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Pixels: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
-			.arg(mRenderer->pixelsRendered())
-			.arg(mRenderer->renderWidth()*mRenderer->renderHeight())
+		ui.statusBar->showMessage(QString("Samples: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
+			.arg(mRenderer->samplesRendered())
+			.arg(mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount())
 			.arg(100*percent, 4)
 			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(time))
@@ -449,8 +450,8 @@ void MainWindow::stopRendering()
 	else
 	{
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Pixels: %1 | Rays: %2 | Render time: %3")
-			.arg(mRenderer->pixelsRendered())
+		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | Render time: %3")
+			.arg(mRenderer->samplesRendered())
 			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}

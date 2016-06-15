@@ -6,7 +6,6 @@ namespace PR
 {
 	enum SamplerMode
 	{
-		SM_None,
 		SM_Random,
 		SM_Uniform,
 		SM_Jitter,
@@ -39,6 +38,9 @@ namespace PR
 	{
 	public:
 		RenderSettings();
+
+		inline bool isProgressive() const { return mProgressive; }
+		inline void setProgressive(bool b) { mProgressive = b; }
 
 		inline DebugMode debugMode() const { return mDebugMode; }
 		inline void setDebugMode(DebugMode mode) { mDebugMode = mode; }
@@ -84,6 +86,7 @@ namespace PR
 		inline float photonSqueezeWeight() const { return mPhotonSqueezeWeight; }
 		inline void setPhotonSqueezeWeight(float v) { mPhotonSqueezeWeight = v; }
 	private:
+		bool mProgressive;
 		SamplerMode mPixelSampler;
 		uint32 mMaxPixelSampleCount;
 
