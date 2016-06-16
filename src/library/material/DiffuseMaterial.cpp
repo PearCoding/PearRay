@@ -30,7 +30,7 @@ namespace PR
 
 	float DiffuseMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
-		return 1;
+		return PM_INV_PI_F*PM_INV_PI_F;
 	}
 
 	PM::vec3 DiffuseMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)

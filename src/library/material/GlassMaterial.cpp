@@ -61,7 +61,7 @@ namespace PR
 
 	PM::vec3 GlassMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
 	{
-		const float ind = index(0);// TODO: Average?
+		const float ind = index(PM::pm_GetX(rnd));
 		auto dir = refract(point.isInside() ? ind : 1 / ind, PM::pm_Dot3D(V, point.normal()), point.normal(), V);
 
 		pdf = GlassMaterial::pdf(point, V, dir);
