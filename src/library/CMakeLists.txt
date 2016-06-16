@@ -39,9 +39,11 @@ SET(PR_Material_Src
   ${PR_LIB}/material/BRDF.cpp
   ${PR_LIB}/material/BRDFMaterial.cpp
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
+  ${PR_LIB}/material/DiffuseMaterial.cpp
   ${PR_LIB}/material/GlassMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
-  ${PR_LIB}/material/Material.cpp)
+  ${PR_LIB}/material/Material.cpp
+  ${PR_LIB}/material/MirrorMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Math_Src ) 
 SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
@@ -141,11 +143,14 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/BRDF.h
   ${PR_LIB}/material/BRDFMaterial.h
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
+  ${PR_LIB}/material/DiffuseMaterial.h
   ${PR_LIB}/material/GlassMaterial.h
   ${PR_LIB}/material/GridMaterial.h
-  ${PR_LIB}/material/Material.h)
+  ${PR_LIB}/material/Material.h
+  ${PR_LIB}/material/MirrorMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
+  ${PR_LIB}/math/Projection.h
   ${PR_LIB}/math/Reflection.h)
 SOURCE_GROUP("Header Files\\Math" FILES ${PR_Math_Hdr})
 SET(PR_Photon_Hdr
@@ -166,7 +171,6 @@ SET(PR_Renderer_Hdr
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
   ${PR_LIB}/sampler/MultiJitteredSampler.h
-  ${PR_LIB}/sampler/Projection.h
   ${PR_LIB}/sampler/RandomSampler.h
   ${PR_LIB}/sampler/Sampler.h
   ${PR_LIB}/sampler/StratifiedSampler.h

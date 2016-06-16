@@ -8,7 +8,7 @@
 #include "material/Material.h"
 
 #include "sampler/RandomSampler.h"
-#include "sampler/Projection.h"
+#include "math/Projection.h"
 
 #include "photon/PhotonMap.h"
 
@@ -100,8 +100,7 @@ namespace PR
 				current.setDepth(1);
 
 				// Initiate with power
-				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal())
-					/** std::abs(PM::pm_Dot3D(lightSample.normal(), lightDir))*/;
+				Spectrum flux = lightSample.material()->applyEmission(lightSample, lightSample.normal());
 
 				uint32 lightDepth = 0;// Counts diff bounces
 				PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth*3]);
@@ -111,7 +110,7 @@ namespace PR
 				{
 					FacePoint collision;
 					RenderEntity* entity = context->shoot(current, collision);
-					if (entity && entity->material() && entity->material()->canBeShaded())
+					if (entity && collision.material() && collision.material()->canBeShaded())
 					{
 						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), current.direction()));
 						if (NdotL < PM_EPSILON)
@@ -119,20 +118,33 @@ namespace PR
 
 						PR_DEBUG_ASSERT(NdotL <= 1);
 
-						bool store;
 						Ray out;
-						if (!handleObject(current, out, entity, collision, renderer, store))
-							break;
+						float pdf;
+						PM::vec3 s = PM::pm_Set(renderer->random().getFloat(),
+							renderer->random().getFloat(),
+							renderer->random().getFloat());
+						out.setDirection(collision.material()->sample(collision, s, current.direction(), pdf));
+						out.setDepth(in.depth() + 1);
+						out.setStartPosition(collision.vertex());
 
-						flux = entity->material()->apply(collision, out.direction(), current.direction(), flux) * NdotL;
-						current = out;
-
-						if (store)
+						if (pdf < PM_EPSILON)
 						{
-							lightDepth++;
+							flux *= 0;
+							break;
+						}
+						else
+						{
+							flux *= collision.material()->apply(collision, out.direction(), current.direction()) *
+								(NdotL / (std::isinf(pdf) ? 1 : pdf));
+							current = out;
 
-							lightFlux[lightDepth] = flux;
-							PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
+							if (!std::isinf(pdf))
+							{
+								lightDepth++;
+
+								lightFlux[lightDepth] = flux;
+								PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
+							}
 						}
 					}
 					else
@@ -163,14 +175,18 @@ namespace PR
 		uint32 samples = 0;
 
 		RenderEntity* entity = context->shootWithApply(applied, in, collision);
-		if (entity && entity->material() && entity->material()->canBeShaded())
+		if (entity && collision.material() && collision.material()->canBeShaded())
 		{
 			Ray out;
-			bool diff;
-			if (!handleObject(in, out, entity, collision, context->renderer(), diff))
-				return applied;
+			float pdf;
+			PM::vec3 s = PM::pm_Set(context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat());
+			out.setDirection(collision.material()->sample(collision, s, in.direction(), pdf));
+			out.setDepth(in.depth() + 1);
+			out.setStartPosition(collision.vertex());
 
-			if (diff)
+			if (pdf > PM_EPSILON && !std::isinf(pdf))
 			{
 				for (uint32 j = 0; j < maxLights; ++j)// Each light
 				{
@@ -190,9 +206,8 @@ namespace PR
 							const float NdotL = std::abs(PM::pm_Dot3D(tmpCollision.normal(), shootRay.direction()));
 							if (NdotL > PM_EPSILON)
 							{
-								spec += entity->material()->apply(tmpCollision,
-									in.direction(), shootRay.direction(),
-									lightFlux)* NdotL;
+								spec += collision.material()->apply(tmpCollision,
+									in.direction(), shootRay.direction()) * lightFlux * NdotL;
 								PR_DEBUG_ASSERT(!spec.hasNaN());
 							}
 						}
@@ -202,14 +217,13 @@ namespace PR
 			}
 
 			if (in.depth() < maxDepth && 
-				(!diff || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
+				(!std::isinf(pdf) || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
 			{
 				const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), out.direction()));
 				if (NdotL > PM_EPSILON)
 				{
-					spec += entity->material()->apply(collision, in.direction(),
-						out.direction(),
-						applyRay(out, context, diff ? diffBounces + 1 : diffBounces)) * NdotL;
+					spec += collision.material()->apply(collision, in.direction(), out.direction()) *
+						applyRay(out, context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces) * NdotL;
 					PR_DEBUG_ASSERT(!spec.hasNaN());
 				}
 				samples++;
@@ -222,51 +236,5 @@ namespace PR
 		}
 
 		return applied;
-	}
-
-	bool BiDirectIntegrator::handleObject(const Ray& in, Ray& out, RenderEntity* entity,
-		const FacePoint& point, Renderer* renderer, bool& store)
-	{
-		PM::vec3 nextDir;
-
-		// Russian Roulette
-		float rnd = renderer->random().getFloat();
-		const float roughness = entity->material()->roughness(point);
-		if (rnd < roughness)// Diffuse
-		{
-			nextDir = Projection::align(point.normal(),
-				Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat()));
-			store = true;
-		}
-		else// Reflect
-		{
-			store = false;
-
-			PM::vec3 traV;
-			PM::vec3 reflV;
-
-			float reflWeight = entity->material()->emitReflectionVector(point, in.direction(), reflV);
-			float traWeight = entity->material()->emitTransmissionVector(point, in.direction(), traV);
-
-			rnd = renderer->random().getFloat();
-
-			if (rnd < reflWeight)
-			{
-				nextDir = reflV;
-			}
-			else if (rnd < reflWeight + traWeight)
-			{
-				nextDir = traV;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		out.setDirection(nextDir);
-		out.setStartPosition(point.vertex());
-		out.setDepth(in.depth() + 1);
-		return true;
 	}
 }

@@ -22,10 +22,8 @@ namespace PR
 		DM_Normal_Spherical,
 		DM_UV,
 		DM_PDF,
-		DM_Roughness,
-		DM_Reflectivity,
-		DM_Transmission,
-		DM_Applied
+		DM_Applied, 
+		DM_Validity
 	};
 
 	enum PhotonGatheringMode

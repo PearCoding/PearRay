@@ -6,10 +6,10 @@
 
 namespace PR
 {
-	class PR_LIB GlassMaterial : public Material
+	class PR_LIB MirrorMaterial : public Material
 	{
 	public:
-		GlassMaterial();
+		MirrorMaterial();
 
 		Texture2D* specularity() const;
 		void setSpecularity(Texture2D* spec);

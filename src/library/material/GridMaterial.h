@@ -22,13 +22,10 @@ namespace PR
 		void setTileUV(bool b);
 		bool tileUV() const;
 
-		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li) override;
+		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
 		float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
-		
-		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
-		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
+		PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) override;
 
-		float roughness(const FacePoint& point) const override;
 	private:
 		FacePoint applyGrid(const FacePoint& point, int& u, int& v) const;
 

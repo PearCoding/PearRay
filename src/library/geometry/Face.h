@@ -5,6 +5,7 @@
 
 namespace PR
 {
+	class Material;
 	class PR_LIB Face
 	{
 	public:
@@ -26,5 +27,7 @@ namespace PR
 			uv = PM::pm_Add(PM::pm_Scale(UV[1], u),
 				PM::pm_Add(PM::pm_Scale(UV[2], v), PM::pm_Scale(UV[0], 1 - u - v)));
 		}
+
+		Material* Mat;
 	};
 }

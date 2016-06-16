@@ -56,10 +56,8 @@ QWidget(parent)
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Negative"), PR::DM_Normal_Negative);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Spherical"), PR::DM_Normal_Spherical);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UV"), PR::DM_UV);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF (On Normal)"), PR::DM_PDF);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Roughness"), PR::DM_Roughness);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Reflectivity"), PR::DM_Reflectivity);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Transmission"), PR::DM_Transmission);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF"), PR::DM_PDF);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Validity"), PR::DM_Validity);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Applied"), PR::DM_Applied);
 	mRendererGroupProp->addChild(mDebugVisualizationProp);
 

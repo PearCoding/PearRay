@@ -44,6 +44,7 @@ namespace PR
 				point.setVertex(p);
 				point.setUV(uv);
 				point.setNormal(n);
+				point.setMaterial(face.Mat);
 				return true;
 			}
 			else

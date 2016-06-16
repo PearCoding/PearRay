@@ -1,5 +1,5 @@
 #include "MultiJitteredSampler.h"
-#include "Projection.h"
+#include "math/Projection.h"
 
 namespace PR
 {

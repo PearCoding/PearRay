@@ -48,60 +48,21 @@ namespace PR
 		return mTiledUV;
 	}
 
-	Spectrum GridMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
+	Spectrum GridMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			return mFirst->apply(pointN, V, L, Li);
+			return mFirst->apply(pointN, V, L);
 		}
 		else if (mSecond)
 		{
-			return mSecond->apply(pointN, V, L, Li);
+			return mSecond->apply(pointN, V, L);
 		}
 	
 		return Spectrum();
-	}
-
-	float GridMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		int u, v;
-		auto pointN = applyGrid(point, u, v);
-
-		if (mFirst && (u % 2) == (v % 2))
-		{
-			return mFirst->emitReflectionVector(pointN, V, dir);
-		}
-		else if (mSecond)
-		{
-			return mSecond->emitReflectionVector(pointN, V, dir);
-		}
-
-		return false;
-	}
-
-	float GridMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		int u, v;
-		auto pointN = applyGrid(point, u, v);
-
-		if (mFirst && (u % 2) == (v % 2))
-		{
-			return mFirst->emitTransmissionVector(pointN, V, dir);
-		}
-		else if (mSecond)
-		{
-			return mSecond->emitTransmissionVector(pointN, V, dir);
-		}
-
-		return false;
-	}
-
-	float GridMaterial::roughness(const FacePoint& point) const
-	{
-		return PM::pm_MaxT(mFirst ? mFirst->roughness(point) : 0, mSecond ? mSecond->roughness(point) : 0);
 	}
 
 	FacePoint GridMaterial::applyGrid(const FacePoint& point, int& u, int& v) const
@@ -138,5 +99,23 @@ namespace PR
 		}
 
 		return 0;
+	}
+
+	PM::vec3 GridMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	{
+		int u, v;
+		auto pointN = applyGrid(point, u, v);
+
+		if (mFirst && (u % 2) == (v % 2))
+		{
+			return mFirst->sample(pointN, rnd, V, pdf);
+		}
+		else if (mSecond)
+		{
+			return mSecond->sample(pointN, rnd, V, pdf);
+		}
+
+		pdf = 0;
+		return PM::pm_Zero();
 	}
 }

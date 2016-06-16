@@ -28,7 +28,8 @@ namespace PR
 		else
 			entity = context->shoot(in, point);
 
-		if (!entity || !entity->material())
+		if (!entity || 
+			(context->renderer()->settings().debugMode() != DM_Validity && !point.material()))
 			return Spectrum();
 
 		switch (context->renderer()->settings().debugMode())
@@ -64,25 +65,26 @@ namespace PR
 			return RGBConverter::toSpec(PM::pm_GetX(point.uv()), PM::pm_GetY(point.uv()), 0);
 		case DM_PDF:
 		{
-			float pdf = entity->material()->pdf(point, in.direction(), point.normal());
-			return RGBConverter::toSpec(pdf, pdf, pdf);
+			float pdf;
+			PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat());
+			PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
+
+			return std::isinf(pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(pdf, pdf, pdf);
 		}
-		case DM_Roughness:
+		case DM_Validity:
 		{
-			float roughness = entity->material()->roughness(point);
-			return RGBConverter::toSpec(roughness, roughness, roughness);
-		}
-		case DM_Reflectivity:
-		{
-			PM::vec3 tmp;
-			float weight = entity->material()->emitReflectionVector(point, in.direction(), tmp);
-			return RGBConverter::toSpec(weight, weight, weight);
-		}
-		case DM_Transmission:
-		{
-			PM::vec3 tmp;
-			float weight = entity->material()->emitTransmissionVector(point, in.direction(), tmp);
-			return RGBConverter::toSpec(weight, weight, weight);
+			if (!point.material())
+				return RGBConverter::toSpec(1, 0, 0);
+
+			float pdf;
+			PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat());
+			PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
+			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?
+				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 		}
 		case DM_Applied:
 			return applied;

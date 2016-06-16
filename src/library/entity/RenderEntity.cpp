@@ -5,7 +5,7 @@
 namespace PR
 {
 	RenderEntity::RenderEntity(const std::string& name, Entity* parent) :
-		Entity(name, parent), mMaterial(nullptr)
+		Entity(name, parent)
 	{
 	}
 
@@ -16,21 +16,6 @@ namespace PR
 	bool RenderEntity::isRenderable() const
 	{
 		return true;
-	}
-
-	bool RenderEntity::isLight() const
-	{
-		return mMaterial ? mMaterial->isLight() : false;
-	}
-
-	void RenderEntity::setMaterial(Material* m)
-	{
-		mMaterial = m;
-	}
-
-	Material* RenderEntity::material() const
-	{
-		return mMaterial;
 	}
 
 	bool RenderEntity::isCollidable() const

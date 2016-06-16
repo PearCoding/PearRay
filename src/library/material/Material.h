@@ -13,24 +13,20 @@ namespace PR
 	public:
 		Material();
 
-		virtual Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li) = 0;
+		virtual Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) = 0;
 		virtual Spectrum applyEmission(const FacePoint& point, const PM::vec3& V);
 		
+		/*
+		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
+		*/
 		virtual float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) = 0;
 
-		// Parameter 'dir' is an output!
-		// Return value is weight of vector
-		virtual float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) = 0;
-		virtual float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) = 0;
+		/*
+		 Sample a direction based on the uniform rnd value.
+		*/
+		virtual PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) = 0;
 
-		virtual bool shouldIgnore_Simple(const Ray& in, RenderEntity* entity);
-
-		inline virtual bool shouldIgnore_Complex(const Ray& in, RenderEntity* entity, const FacePoint& point)
-		{
-			return false;
-		}
-
-		virtual float roughness(const FacePoint& point) const = 0;// How much specular!
+		inline virtual bool shouldIgnore(const Ray& in,const FacePoint& point);
 
 		bool isLight() const;
 

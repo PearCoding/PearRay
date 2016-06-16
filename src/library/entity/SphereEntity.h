@@ -5,8 +5,6 @@
 namespace PR
 {
 	class Material;
-
-	/* Does not support scale! */
 	class PR_LIB SphereEntity : public RenderEntity
 	{
 	public:
@@ -14,6 +12,11 @@ namespace PR
 		virtual ~SphereEntity();
 
 		virtual std::string type() const;
+
+		virtual bool isLight() const override;
+
+		void setMaterial(Material* m);
+		Material* material() const;
 
 		void setRadius(float f);
 		float radius() const;
@@ -25,5 +28,6 @@ namespace PR
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const;
 	private:
 		float mRadius;
+		Material* mMaterial;
 	};
 }

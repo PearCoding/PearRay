@@ -9,25 +9,9 @@ namespace PR
 	{
 	}
 
-	Spectrum DebugBoundingBoxMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
+	Spectrum DebugBoundingBoxMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
-		return Li*(1 - mDensity) + mColor*mDensity;
-	}
-	
-	float DebugBoundingBoxMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		return 0;
-	}
-
-	float DebugBoundingBoxMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		dir = V;
-		return 1;
-	}
-	
-	float DebugBoundingBoxMaterial::roughness(const FacePoint& point) const
-	{
-		return 0;
+		return mColor*mDensity;
 	}
 
 	void DebugBoundingBoxMaterial::setColor(const Spectrum& spec)
@@ -52,6 +36,12 @@ namespace PR
 
 	float DebugBoundingBoxMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
-		return 1;
+		return std::numeric_limits<float>::infinity();
+	}
+
+	PM::vec3 DebugBoundingBoxMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	{
+		pdf = DebugBoundingBoxMaterial::pdf(point, V, V);
+		return V;
 	}
 }

@@ -14,6 +14,11 @@ namespace PR
 
 		virtual std::string type() const;
 
+		virtual bool isLight() const override;
+
+		void setMaterial(Material* m);
+		Material* material() const;
+
 		void setPlane(const Plane& plane);
 		Plane plane() const;
 
@@ -24,5 +29,6 @@ namespace PR
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const;
 	private:
 		Plane mPlane;
+		Material* mMaterial;
 	};
 }

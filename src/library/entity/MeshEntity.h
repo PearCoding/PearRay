@@ -14,6 +14,8 @@ namespace PR
 
 		virtual std::string type() const;
 
+		virtual bool isLight() const override;
+
 		void setMesh(IMesh* mesh);
 		IMesh* mesh() const;
 

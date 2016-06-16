@@ -13,8 +13,10 @@
 
 #include "parser/material/BRDFMaterialParser.h"
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
+#include "parser/material/DiffuseMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
+#include "parser/material/MirrorMaterialParser.h"
 
 #include "texture/ConstData1D.h"
 #include "texture/ConstData2D.h"
@@ -375,15 +377,16 @@ namespace PRU
 	} MaterialParserEntries[] =
 	{
 		{ "standard", BRDFMaterialParser() },
-		{ "light", BRDFMaterialParser() },
+		{ "light", DiffuseMaterialParser() },
 
-		{ "diffuse", BRDFMaterialParser() },
+		{ "diffuse", DiffuseMaterialParser() },
 		{ "brdf", BRDFMaterialParser() },
 
 		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
 
 		{ "grid", GridMaterialParser() },
 		{ "glass", GlassMaterialParser() },
+		{ "mirror", MirrorMaterialParser() },
 
 		{ nullptr, BRDFMaterialParser() },//Just for the end
 	};

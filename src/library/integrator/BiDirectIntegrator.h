@@ -15,7 +15,6 @@ namespace PR
 
 	private:
 		Spectrum applyRay(const Ray& in, RenderContext* context, uint32 diffBounces);
-		static bool handleObject(const Ray& in, Ray& out, RenderEntity* entity, const FacePoint& point, Renderer* renderer, bool& store);
 
 		struct ThreadData
 		{

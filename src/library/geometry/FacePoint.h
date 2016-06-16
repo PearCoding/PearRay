@@ -5,6 +5,7 @@
 
 namespace PR
 {
+	class Material;
 	class PR_LIB FacePoint
 	{
 	public:
@@ -24,10 +25,15 @@ namespace PR
 		void setInside(bool b);
 		bool isInside() const;
 
+		void setMaterial(Material* m);
+		Material* material() const;
+
 	private:
 		alignas(16) PM::vec3 mVertex;
 		alignas(16) PM::vec3 mNormal;
 		alignas(16) PM::vec2 mUV;
 		bool mInside;
+
+		Material* mMaterial;
 	};
 }

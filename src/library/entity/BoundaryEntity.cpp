@@ -5,12 +5,13 @@
 #include "geometry/Plane.h"
 
 #include "sampler/Sampler.h"
-#include "sampler/Projection.h"
+#include "math/Projection.h"
+#include "material/Material.h"
 
 namespace PR
 {
 	BoundaryEntity::BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent) :
-		RenderEntity(name, parent), mBoundingBox(box)
+		RenderEntity(name, parent), mBoundingBox(box), mMaterial(nullptr)
 	{
 	}
 
@@ -21,6 +22,21 @@ namespace PR
 	std::string BoundaryEntity::type() const
 	{
 		return "boundary";
+	}
+
+	bool BoundaryEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
+	}
+
+	void BoundaryEntity::setMaterial(Material* m)
+	{
+		mMaterial = m;
+	}
+
+	Material* BoundaryEntity::material() const
+	{
+		return mMaterial;
 	}
 
 	void BoundaryEntity::setBoundingBox(const BoundingBox& box)
@@ -62,6 +78,7 @@ namespace PR
 				collisionPoint.setUV(PM::pm_Set(u, v));
 			}
 
+			collisionPoint.setMaterial(material());
 			return true;
 		}
 		return false;
@@ -83,6 +100,8 @@ namespace PR
 			)));
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
 		fp.setUV(PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret)));
+		fp.setMaterial(material());
+
 		return fp;
 	}
 }

@@ -11,7 +11,7 @@
 namespace PR
 {
 	PlaneEntity::PlaneEntity(const std::string& name, const Plane& plane, Entity* parent) :
-		RenderEntity(name, parent), mPlane(plane)
+		RenderEntity(name, parent), mPlane(plane), mMaterial(nullptr)
 	{
 	}
 
@@ -22,6 +22,21 @@ namespace PR
 	std::string PlaneEntity::type() const
 	{
 		return "plane";
+	}
+
+	bool PlaneEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
+	}
+
+	void PlaneEntity::setMaterial(Material* m)
+	{
+		mMaterial = m;
+	}
+
+	Material* PlaneEntity::material() const
+	{
+		return mMaterial;
 	}
 
 	void PlaneEntity::setPlane(const Plane& plane)
@@ -60,6 +75,7 @@ namespace PR
 			// Do not check flags... calculation is easy anyway.
 			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 			collisionPoint.setUV(PM::pm_Set(u, v));
+			collisionPoint.setMaterial(material());
 			t *= scale();
 
 			return true;
@@ -79,6 +95,7 @@ namespace PR
 				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), scale())), PM::pm_GetY(s)))));
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 		fp.setUV(PM::pm_SetZ(s, 0));
+		fp.setMaterial(material());
 		return fp;
 	}
 }

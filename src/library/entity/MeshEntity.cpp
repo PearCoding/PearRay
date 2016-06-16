@@ -24,6 +24,11 @@ namespace PR
 		return "mesh";
 	}
 
+	bool MeshEntity::isLight() const
+	{
+		return mMesh->isLight();
+	}
+
 	void MeshEntity::setMesh(IMesh* mesh)
 	{
 		mMesh = mesh;

@@ -1,4 +1,4 @@
-#include "sampler/Projection.h"
+#include "math/Projection.h"
 #include "Test.h"
 
 using namespace PR;

@@ -4,6 +4,7 @@
 
 #include "BRDF.h"
 #include "math/Reflection.h"
+#include "math/Projection.h"
 
 namespace PR
 {
@@ -87,7 +88,7 @@ namespace PR
 		mFresnel = data;
 	}
 
-	Spectrum BRDFMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
+	Spectrum BRDFMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
 		const float rough = roughness(point);
 		const float alpha = rough * rough;
@@ -100,7 +101,7 @@ namespace PR
 		{
 			if (alpha >= 1) // Lambert
 			{
-				spec = mAlbedo->eval(point.uv()) * Li * (PM_INV_PI_F);// Simple Lambert
+				spec = mAlbedo->eval(point.uv()) * (PM_INV_PI_F);// Simple Lambert
 			}
 			else if (alpha >= PM_EPSILON)//Oren-Nayar
 			{
@@ -118,7 +119,7 @@ namespace PR
 
 				const float L1 = (A + B * C * PM::pm_MaxT(0.0f, gamma));
 
-				spec = (PM_INV_PI_F * L1) * Li * mAlbedo->eval(point.uv());
+				spec = (PM_INV_PI_F * L1) * mAlbedo->eval(point.uv());
 			}
 		}
 
@@ -146,27 +147,16 @@ namespace PR
 
 				if (refl > PM_EPSILON && alpha > PM_EPSILON)
 				{
-					spec.setValue(i, spec.value(i) + (d * geometry * ndf * 0.25f) * Li.value(i) * specular.value(i));
+					spec.setValue(i, spec.value(i) + (d * geometry * ndf * 0.25f) * specular.value(i));
 				}
 				else if (refl > PM_EPSILON)
 				{
-					spec.setValue(i, spec.value(i) + d * Li.value(i) * specular.value(i));
+					spec.setValue(i, spec.value(i) + d * specular.value(i));
 				}
 			}
 		}
 
 		return spec;
-	}
-
-	float BRDFMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		dir = reflect(PM::pm_Dot3D(point.normal(), V), point.normal(), V);
-		return reflectivity(point);
-	}
-
-	float BRDFMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		return 0;
 	}
 
 	float BRDFMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
@@ -191,5 +181,13 @@ namespace PR
 		}
 
 		return ret < PM_EPSILON ? 0.000001f : ret;// Shouldn't be zero
+	}
+
+	// TODO: Need a better sampler!
+	PM::vec3 BRDFMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	{
+		auto dir = Projection::align(point.normal(), Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
+		pdf = BRDFMaterial::pdf(point, V, dir);
+		return dir;
 	}
 }

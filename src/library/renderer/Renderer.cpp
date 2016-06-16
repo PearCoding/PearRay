@@ -336,7 +336,7 @@ namespace PR
 	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
-		if (entity && entity->material())
+		if (entity)
 		{
 			for (Affector* affector : mAffectors)
 			{

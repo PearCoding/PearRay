@@ -11,7 +11,12 @@ namespace PR
 		BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent = nullptr);
 		virtual ~BoundaryEntity();
 
-		virtual std::string type() const;
+		virtual std::string type() const override;
+
+		virtual bool isLight() const override;
+
+		void setMaterial(Material* m);
+		Material* material() const;
 
 		void setBoundingBox(const BoundingBox& box);
 
@@ -22,5 +27,6 @@ namespace PR
 		virtual FacePoint getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const;
 	private:
 		BoundingBox mBoundingBox;
+		Material* mMaterial;
 	};
 }

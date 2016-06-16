@@ -1,7 +1,6 @@
 #include "DirectIntegrator.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "sampler/Projection.h"
 #include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
@@ -24,7 +23,7 @@ namespace PR
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithApply(applied, in, point);
 
-		if (!entity || !entity->material() || !entity->material()->canBeShaded())
+		if (!entity || !point.material() || !point.material()->canBeShaded())
 			return applied;
 		
 		return applied + applyRay(in, point, entity, context);
@@ -32,27 +31,26 @@ namespace PR
 
 	Spectrum DirectIntegrator::applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context)
 	{
-		if (!entity->material()->canBeShaded())
+		if (!point.material()->canBeShaded())
 			return Spectrum();
 
-		float rnd = context->renderer()->random().getFloat();
+		uint32 sampleCounter = 0;
 
-		if (rnd < entity->material()->roughness(point))// Diffuse
+		Spectrum spec;
+		for (RenderEntity* light : context->renderer()->lights())
 		{
-			uint32 sampleCounter = 0;
-
-			Spectrum spec;
-			for (RenderEntity* light : context->renderer()->lights())
+			MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
+			for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 			{
-				MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
-				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
+				FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random(), i);
+
+				const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
+				const float NdotL = PM::pm_Dot3D(L, point.normal());
+
+				float pdf = point.material()->pdf(point, in.direction(), L);
+				if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 				{
-					FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random(), i);
-
-					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
-					const float NdotL = PM::pm_Dot3D(L, point.normal());
-
-					if (NdotL > PM_EPSILON)
+					if (!std::isinf(pdf))
 					{
 						FacePoint tmpPoint;
 						Spectrum applied;
@@ -61,56 +59,37 @@ namespace PR
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{
-							spec += entity->material()->apply(point, in.direction(), L, applied) * NdotL;
+							spec += point.material()->apply(point, in.direction(), L) * applied *
+								(NdotL / pdf);
 						}
-
 					}
-					sampleCounter++;
-				}
-			}
+					else// Specular
+					{
+						PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
+							context->renderer()->random().getFloat(),
+							context->renderer()->random().getFloat());
+						PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
+						Ray out;
+						out.setDepth(in.depth() + 1);
+						out.setDirection(dir);
+						out.setStartPosition(point.vertex());
 
-			return spec * (PM_PI_F / sampleCounter);
+						PR_ASSERT(std::isinf(pdf));
+
+						FacePoint point2;
+						Spectrum applied;
+						RenderEntity* entity2 = context->shootWithApply(applied, out, point2);
+
+						if (!entity2 || !point2.material() || !point2.material()->canBeShaded())
+							return applied;
+
+						return applied + point.material()->apply(point, in.direction(), out.direction()) * applyRay(out, point2, entity2, context) * std::abs(PM::pm_Dot3D(point.normal(), out.direction()));
+					}
+				}
+				sampleCounter++;
+			}
 		}
-		else // Specular
-		{
-			Spectrum applied;
-			PM::vec3 reflectionVector;
-			PM::vec3 transmissionVector;
-			float refWeight = entity->material()->emitReflectionVector(point, in.direction(), reflectionVector);
-			float transWeight = entity->material()->emitTransmissionVector(point, in.direction(), transmissionVector);
 
-			PR_DEBUG_ASSERT(refWeight >= 0 && transWeight >= 0 && refWeight + transWeight <= 1);
-
-			rnd = context->renderer()->random().getFloat();
-
-			if (rnd < refWeight)
-			{
-				FacePoint tmpPoint;
-				Ray ray(point.vertex(),	reflectionVector, in.depth() + 1);
-
-				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
-				if (newEntity && newEntity->material() && newEntity->material()->canBeShaded())
-				{
-					const float NdotL = std::abs(PM::pm_Dot3D(reflectionVector, point.normal()));
-					return applied + entity->material()->apply(point, in.direction(), reflectionVector,
-						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
-				}
-			}
-			else if(rnd < refWeight + transWeight)
-			{
-				FacePoint tmpPoint;
-				Ray ray(point.vertex(),	transmissionVector, in.depth() + 1);
-
-				RenderEntity* newEntity = context->shootWithApply(applied, ray, tmpPoint);
-				if (newEntity && newEntity->material() && newEntity->material()->canBeShaded())
-				{
-					const float NdotL = std::abs(PM::pm_Dot3D(transmissionVector, point.normal()));
-					return applied + entity->material()->apply(point, in.direction(), transmissionVector,
-						applyRay(ray, tmpPoint, newEntity, context)) * NdotL;
-				}
-			}
-
-			return Spectrum();
-		}
+		return spec * (PM_PI_F / sampleCounter);
 	}
 }

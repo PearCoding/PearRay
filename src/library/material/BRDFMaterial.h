@@ -16,7 +16,7 @@ namespace PR
 		Texture2D* specularity() const;
 		void setSpecularity(Texture2D* specSpec);
 
-		float roughness(const FacePoint& point) const override;
+		float roughness(const FacePoint& point) const;
 		Data2D* roughnessData() const;
 		void setRoughnessData(Data2D* data);
 
@@ -28,11 +28,9 @@ namespace PR
 		Data1D* fresnelData() const;
 		void setFresnelData(Data1D* data);
 
-		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li) override;
+		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
 		float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
-
-		float emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
-		float emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir) override;
+		PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) override;
 
 	private:
 		Texture2D* mAlbedo;

@@ -3,12 +3,12 @@
 namespace PR
 {
 	FacePoint::FacePoint() :
-		mVertex(PM::pm_Set(0,0,0,1)), mNormal(PM::pm_Set(0,0,0)), mUV(PM::pm_Set(0,0)), mInside(false)
+		mVertex(PM::pm_Set(0,0,0,1)), mNormal(PM::pm_Set(0,0,0)), mUV(PM::pm_Set(0,0)), mInside(false), mMaterial(nullptr)
 	{
 	}
 
 	FacePoint::FacePoint(const PM::vec3& v, const PM::vec3& n, const PM::vec2& u) :
-		mVertex(v), mNormal(n), mUV(u), mInside(false)
+		mVertex(v), mNormal(n), mUV(u), mInside(false), mMaterial(nullptr)
 	{
 	}
 
@@ -54,5 +54,15 @@ namespace PR
 	bool FacePoint::isInside() const
 	{
 		return mInside;
+	}
+
+	void FacePoint::setMaterial(Material* m)
+	{
+		mMaterial = m;
+	}
+
+	Material* FacePoint::material() const
+	{
+		return mMaterial;
 	}
 }

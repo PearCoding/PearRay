@@ -1,7 +1,6 @@
 #include "LightAffector.h"
 #include "ray/Ray.h"
 #include "geometry/FacePoint.h"
-#include "sampler/Projection.h"
 #include "renderer/Renderer.h"
 #include "entity/RenderEntity.h"
 #include "sampler/StratifiedSampler.h"
@@ -19,8 +18,8 @@ namespace PR
 
 	Spectrum LightAffector::apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
 	{
-		if (entity->material()->isLight())
-			return entity->material()->applyEmission(point, in.direction());
+		if (point.material()->isLight())
+			return point.material()->applyEmission(point, in.direction());
 		else
 			return Spectrum();
 	}

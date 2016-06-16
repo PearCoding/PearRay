@@ -4,7 +4,8 @@
 #include "scene/kdTree.h"
 #include "Random.h"
 #include "sampler/Sampler.h"
-#include "sampler/Projection.h"
+#include "math/Projection.h"
+#include "material/Material.h"
 
 #include <iterator>
 
@@ -88,6 +89,24 @@ namespace PR
 		mBoundingBox = ((PR::kdTree<Face>*)mKDTree)->root()->boundingBox;
 	}
 
+	bool TriMesh::isLight() const
+	{
+		for (Face* f : mFaces)
+		{
+			if (f && f->Mat->isLight())
+				return true;
+		}
+		return false;
+	}
+
+	void TriMesh::replaceMaterial(Material* mat)
+	{
+		for (Face* f : mFaces)
+		{
+			f->Mat = mat;
+		}
+	}
+
 	bool TriMesh::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		PR_DEBUG_ASSERT(mKDTree);
@@ -110,6 +129,7 @@ namespace PR
 		fp.setVertex(vec);
 		fp.setNormal(n);
 		fp.setUV(uv);
+		fp.setMaterial(face->Mat);
 
 		return fp;
 	}

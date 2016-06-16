@@ -45,35 +45,26 @@ namespace PR
 		mIndex = data;
 	}
 
-	Spectrum GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L, const Spectrum& Li)
+	Spectrum GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
 		// TODO
 		if (mSpecularity)
-			return Li * mSpecularity->eval(point.uv());
+			return mSpecularity->eval(point.uv());
 		else
 			return Spectrum();
 	}
 
-	float GlassMaterial::emitReflectionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		return 0;
-	}
-
-	float GlassMaterial::emitTransmissionVector(const FacePoint& point, const PM::vec3& V, PM::vec3& dir)
-	{
-		const float ind = index(0);// TODO: Average?
-
-		dir = refract(point.isInside() ? ind : 1/ind, PM::pm_Dot3D(V, point.normal()), point.normal(), V);
-		return 1;
-	}
-
-	float GlassMaterial::roughness(const FacePoint& point) const
-	{
-		return 0;
-	}
-
 	float GlassMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
-		return 1;
+		return std::numeric_limits<float>::infinity();
+	}
+
+	PM::vec3 GlassMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	{
+		const float ind = index(0);// TODO: Average?
+		auto dir = refract(point.isInside() ? ind : 1 / ind, PM::pm_Dot3D(V, point.normal()), point.normal(), V);
+
+		pdf = GlassMaterial::pdf(point, V, dir);
+		return dir;
 	}
 }

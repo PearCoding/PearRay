@@ -4,6 +4,7 @@
 #include "Logger.h"
 
 #include "entity/MeshEntity.h"
+#include "geometry/IMesh.h"
 
 // DataLisp
 #include "DataLisp.h"
@@ -39,12 +40,12 @@ namespace PRU
 		{
 			PR_LOGGER.logf(L_Warning, M_Scene, "Invalid mesh entry found.");
 		}
-
+		
 		if (materialD && materialD->isType() == DL::Data::T_String)
 		{
 			if (env->hasMaterial(materialD->getString()))
 			{
-				me->setMaterial(env->getMaterial(materialD->getString()));
+				me->mesh()->replaceMaterial(env->getMaterial(materialD->getString()));
 			}
 			else
 			{

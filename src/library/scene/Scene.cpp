@@ -100,9 +100,8 @@ namespace PR
 		mKDTree = new kdTree<RenderEntity>([](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FacePoint& point, float& t, RenderEntity* e, RenderEntity* ignore) {
 			return (!ignore || !e->isParent(ignore)) &&
-				e->material() && !e->material()->shouldIgnore_Simple(ray, e) &&
 				e->checkCollision(ray, point, t) &&
-				!e->material()->shouldIgnore_Complex(ray, e, point);
+				point.material() && !point.material()->shouldIgnore(ray, point);
 		});
 		((kdTree<RenderEntity>*)mKDTree)->build(mRenderEntities);
 	}

@@ -3,13 +3,14 @@
 #include "geometry/FacePoint.h"
 #include "geometry/Sphere.h"
 
-#include "sampler/Projection.h"
+#include "math/Projection.h"
 #include "sampler/Sampler.h"
+#include "material/Material.h"
 
 namespace PR
 {
 	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
-		RenderEntity(name, parent), mRadius(r)
+		RenderEntity(name, parent), mRadius(r), mMaterial(nullptr)
 	{
 	}
 
@@ -20,6 +21,21 @@ namespace PR
 	std::string SphereEntity::type() const
 	{
 		return "sphere";
+	}
+
+	bool SphereEntity::isLight() const
+	{
+		return mMaterial ? mMaterial->isLight() : false;
+	}
+
+	void SphereEntity::setMaterial(Material* m)
+	{
+		mMaterial = m;
+	}
+
+	Material* SphereEntity::material() const
+	{
+		return mMaterial;
 	}
 
 	void SphereEntity::setRadius(float f)
@@ -66,6 +82,7 @@ namespace PR
 			}
 		}
 
+		collisionPoint.setMaterial(material());
 		return true;
 	}
 
@@ -82,6 +99,7 @@ namespace PR
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
 		float v = (std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal())) * PM_INV_PI_F + 1) * 0.5f;
 		p.setUV(PM::pm_Set(u, v));
+		p.setMaterial(material());
 
 		return p;
 	}

@@ -18,7 +18,6 @@ namespace PR
 		TriMesh();
 		~TriMesh();
 
-
 		void reserve(size_t count);
 		void addFace(Face* f);
 		Face* getFace(size_t i) const;
@@ -34,6 +33,7 @@ namespace PR
 		void calcNormals();
 
 		// IMesh
+		virtual bool isLight() const override;
 		inline BoundingBox boundingBox() const override
 		{
 			return mBoundingBox;
@@ -41,6 +41,8 @@ namespace PR
 
 		bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) override;
 		FacePoint getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const override;
+
+		virtual void replaceMaterial(Material* mat) override;
 	private:
 		BoundingBox mBoundingBox;
 		void* mKDTree;

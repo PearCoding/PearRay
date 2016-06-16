@@ -56,7 +56,7 @@ namespace PR
 		return mCameraVisible;
 	}
 
-	bool Material::shouldIgnore_Simple(const Ray& in, RenderEntity* entity)
+	bool Material::shouldIgnore(const Ray& in, const FacePoint& point)
 	{
 		return !mCameraVisible && in.depth() == 0;
 	}

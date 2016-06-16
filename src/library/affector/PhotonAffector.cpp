@@ -8,7 +8,7 @@
 #include "material/Material.h"
 
 #include "sampler/MultiJitteredSampler.h"
-#include "sampler/Projection.h"
+#include "math/Projection.h"
 
 #include "photon/PhotonMap.h"
 
@@ -77,7 +77,7 @@ namespace PR
 				
 				Ray ray(lightSample.vertex(), lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
 
-				Spectrum flux = light->material()->applyEmission(lightSample, lightSample.normal());
+				Spectrum flux = lightSample.material()->applyEmission(lightSample, lightSample.normal());
 
 				uint32 diffuseBounces = 0;
 				uint32 specBounces = 0;
@@ -89,7 +89,7 @@ namespace PR
 					FacePoint collision;
 					RenderEntity* entity = renderer->shoot(ray, collision, nullptr, nullptr);
 
-					if (entity && entity->material() && entity->material()->canBeShaded())
+					if (entity && collision.material() && collision.material()->canBeShaded())
 					{
 						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), ray.direction()));
 						PM::vec3 nextDir;
@@ -97,10 +97,13 @@ namespace PR
 						if (NdotL < PM_EPSILON)
 							break;
 
-						// Russian Roulette
-						float rnd = renderer->random().getFloat();
-						const float roughness = entity->material()->roughness(collision);
-						if (rnd < roughness)// Diffuse
+						float pdf;
+						PM::vec3 s = PM::pm_Set(renderer->random().getFloat(),
+							renderer->random().getFloat(),
+							renderer->random().getFloat());
+						nextDir = collision.material()->sample(collision, s, ray.direction(), pdf);
+
+						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse
 						{
 							if (specBounces >= renderer->settings().minPhotonSpecularBounces())// Never calculate direct lightning
 							{
@@ -109,43 +112,24 @@ namespace PR
 								photonsShoot++;
 							}
 
-							if (diffuseBounces < renderer->settings().maxPhotonDiffuseBounces())// Shoot
-							{
-								nextDir = PM::pm_SetW(Projection::align(collision.normal(),
-									Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())), 0);
-								diffuseBounces++;
-							}
-							else
+							diffuseBounces++;
+
+							if (diffuseBounces > renderer->settings().maxPhotonDiffuseBounces())// Shoot
 							{
 								break;// Absorb
 							}
 						}
-						else// Reflect
+						else if(pdf > PM_EPSILON)// Reflect
 						{
-							PM::vec3 traV;
-							PM::vec3 reflV;
-
-							float reflWeight = entity->material()->emitReflectionVector(collision, ray.direction(), reflV);
-							float traWeight = entity->material()->emitTransmissionVector(collision, ray.direction(), traV);
-
-							rnd = renderer->random().getFloat();
-
-							if (rnd < reflWeight)
-							{
-								nextDir = reflV;
-							}
-							else if (rnd < reflWeight + traWeight)
-							{
-								nextDir = traV;
-							}
-							else //Ignore?
-							{
-								break;
-							}
 							specBounces++;
 						}
+						else
+						{
+							break;
+						}
 
-						flux = entity->material()->apply(collision, nextDir, ray.direction(), flux)*NdotL;
+						flux *= collision.material()->apply(collision, nextDir, ray.direction()) * 
+							(NdotL / (std::isinf(pdf) ? 1 : pdf));
 						ray.setDirection(nextDir);
 						ray.setStartPosition(collision.vertex());
 					}
@@ -216,10 +200,10 @@ namespace PR
 				if (w >= PM_EPSILON)
 				{
 #ifdef PR_USE_PHOTON_RGB
-					full += entity->material()->apply(point, in.direction(), dir,
-						RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]))*w;
+					full += point.material()->apply(point, in.direction(), dir) *
+						RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2])*w;
 #else
-					full += entity->material()->apply(point, in.direction(), dir, Spectrum(photon->Power))*w;
+					full += point.material()->apply(point, in.direction(), dir) * Spectrum(photon->Power)*w;
 #endif
 				}
 			}
