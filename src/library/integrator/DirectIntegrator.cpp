@@ -24,37 +24,69 @@ namespace PR
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithApply(applied, in, point);
 
-		if (!entity || !point.material() || !point.material()->canBeShaded())
+		if (!entity || !point.material() || !point.material()->canBeShaded() ||
+			context->renderer()->settings().maxLightSamples() == 0)
 			return applied;
 		
-		return applied + applyRay(in, point, entity, context);
+		return applied + applyRay(in, point, context);
 	}
 
-	Spectrum DirectIntegrator::applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context)
+	Spectrum DirectIntegrator::applyRay(const Ray& in, const FacePoint& point, RenderContext* context)
 	{
 		if (!point.material()->canBeShaded())
 			return Spectrum();
 
-		uint32 sampleCounter = 0;
+		float full_pdf = 0;
+		Spectrum full_weight;
 
-		Spectrum spec;
-		for (RenderEntity* light : context->renderer()->lights())
+		// Hemisphere sampling
+		for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 		{
-			// TODO: Put hemisphere sampling here!
-			MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
-			for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
+			float pdf;
+			Spectrum weight;
+			PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat(),
+				context->renderer()->random().getFloat());
+			PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
+			const float NdotL = std::abs(PM::pm_Dot3D(dir, point.normal()));
+
+			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 			{
-				// Area sampling!
-				FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random(), i);
+				Ray ray(point.vertex(), dir, in.depth() + 1);
 
-				const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
-				const float NdotL = PM::pm_Dot3D(L, point.normal());
-
-				Spectrum weight1;
-				float pdf1 = point.material()->pdf(point, in.direction(), L);
-				if (NdotL > PM_EPSILON && pdf1 > PM_EPSILON)
+				FacePoint point2;
+				Spectrum applied;
+				if (context->shootWithApply(applied, ray, point2) && point2.material() && std::isinf(pdf))
 				{
-					if (!std::isinf(pdf1))
+					applied += applyRay(ray, point2, context);
+				}
+
+				weight = point.material()->apply(point, in.direction(), ray.direction()) * applied * NdotL;
+			}
+			else
+			{
+				pdf = 0;
+			}
+
+			MSI::balance(full_weight, full_pdf, weight, pdf);
+		}
+
+		if (!std::isinf(full_pdf))
+		{
+			// Area sampling!
+			for (RenderEntity* light : context->renderer()->lights())
+			{
+				MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
+				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
+				{
+					FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random(), i);
+
+					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
+					const float NdotL = PM::pm_Dot3D(L, point.normal());
+
+					Spectrum weight;
+					float pdf = point.material()->pdf(point, in.direction(), L);
+					if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 					{
 						FacePoint tmpPoint;
 						Spectrum applied;
@@ -63,72 +95,15 @@ namespace PR
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{
-							spec += point.material()->apply(point, in.direction(), L) * applied * NdotL;
+							weight = point.material()->apply(point, in.direction(), L) * applied * NdotL;
 						}
 					}
-					else// Specular, breaking weights. No other positions possible.
-					{
-						PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
-							context->renderer()->random().getFloat(),
-							context->renderer()->random().getFloat());
-						PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf1);
-						Ray out;
-						out.setDepth(in.depth() + 1);
-						out.setDirection(dir);
-						out.setStartPosition(point.vertex());
 
-						PR_ASSERT(std::isinf(pdf1));
-
-						FacePoint point2;
-						Spectrum applied;
-						RenderEntity* entity2 = context->shootWithApply(applied, out, point2);
-
-						if (!entity2 || !point2.material() || !point2.material()->canBeShaded())
-							return applied;
-
-						return applied + point.material()->apply(point, in.direction(), out.direction()) * applyRay(out, point2, entity2, context) * std::abs(PM::pm_Dot3D(point.normal(), out.direction()));
-					}
+					MSI::balance(full_weight, full_pdf, weight, pdf);
 				}
-				else
-				{
-					pdf1 = 0;
-				}
-
-				float full_pdf = 0;
-				Spectrum weight;
-				MSI::balance(weight, full_pdf, weight1, pdf1, 0.5f);
-
-				// Hemisphere sampling
-				float pdf2;
-				Spectrum weight2;
-				PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
-					context->renderer()->random().getFloat(),
-					context->renderer()->random().getFloat());
-				PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf2);
-				Ray out;
-				out.setDepth(in.depth() + 1);
-				out.setDirection(dir);
-				out.setStartPosition(point.vertex());
-
-				FacePoint point2;
-				Spectrum applied;
-				RenderEntity* entity2 = context->shootWithApply(applied, out, point2);
-
-				if (entity2 && point2.material() && point2.material()->canBeShaded())
-				{
-					weight2 = point.material()->apply(point, in.direction(), out.direction()) * applied * std::abs(PM::pm_Dot3D(point.normal(), out.direction()));
-				}
-				else
-				{
-					pdf2 = 0;
-				}
-				MSI::balance(weight, full_pdf, weight2, pdf2, 0.5f);
-
-				spec += 0.5f * weight;
-				sampleCounter++;
 			}
 		}
 
-		return spec * (PM_PI_F / sampleCounter);
+		return full_weight;
 	}
 }

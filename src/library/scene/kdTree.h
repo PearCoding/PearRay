@@ -231,13 +231,10 @@ namespace PR
 				{
 					stackPos--;
 					kdNode* node = stack[stackPos];
-
-					/*if (near[stackPos] > n)
-						continue;*/
-
+					
 					if (node->object != ignore &&
 						mCheckCollision(ray, tmpCollisionPoint, l, node->object, ignore) &&
-						/*l > PM_EPSILON &&*/ l < t)
+						l < t)
 					{
 						t = l;
 						res = node->object;
@@ -247,27 +244,25 @@ namespace PR
 					bool leftIntersect = false;
 					if (node->left && node->left->boundingBox.intersects(ray, collisionPos, l))
 					{
-						leftIntersect = true;
-						/*if (l <= n)
-						{*/
-							stack[stackPos] = node->left;
-							//near[stackPos] = l;
-							stackPos++;
+						if (stackPos >= PR_KDTREE_MAX_STACK)
+						{
+							return nullptr;
+						}
 
-							PR_ASSERT(stackPos < PR_KDTREE_MAX_STACK);
-						//}
+						leftIntersect = true;
+						stack[stackPos] = node->left;
+						stackPos++;
 					}
 
 					if (node->right && (!leftIntersect || node->right->boundingBox.intersects(ray, collisionPos, l)))
 					{
-						/*if (l <= n)
-						{*/
-							stack[stackPos] = node->right;
-							//near[stackPos] = l;
-							stackPos++;
+						if (stackPos >= PR_KDTREE_MAX_STACK)
+						{
+							return nullptr;
+						}
 
-							PR_ASSERT(stackPos < PR_KDTREE_MAX_STACK);
-						//}
+						stack[stackPos] = node->right;
+						stackPos++;
 					}
 				}
 			}

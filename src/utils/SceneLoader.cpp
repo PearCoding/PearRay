@@ -181,6 +181,23 @@ namespace PRU
 					}
 				}
 
+				DL::Data* backgroundD = top->getFromKey("background");
+				if (backgroundD && backgroundD->isType() == DL::Data::T_String)
+				{
+					if (env->hasMaterial(backgroundD->getString()))
+					{
+						env->setBackgroundMaterial(env->getMaterial(backgroundD->getString()));
+					}
+					else
+					{
+						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", backgroundD->getString().c_str());
+					}
+				}
+				else
+				{
+					PR_LOGGER.log(L_Warning, M_Scene, "Invalid background entry.");
+				}
+
 				// Now entities.
 				for (size_t i = 0; i < top->unnamedCount(); ++i)
 				{

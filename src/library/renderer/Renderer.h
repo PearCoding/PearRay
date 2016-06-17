@@ -15,10 +15,11 @@ namespace PR
 	class Entity;
 	class FacePoint;
 	class Integrator;
-	class RenderEntity;
+	class Material;
 	class Sampler;
 	class Scene;
 	class Ray;
+	class RenderEntity;
 	class RenderThread;
 	class RenderTile;
 	class RenderContext;
@@ -35,6 +36,9 @@ namespace PR
 		void setHeight(uint32 h);
 		uint32 height() const;
 		uint32 renderHeight() const; // Depends on crop
+
+		void setBackgroundMaterial(Material* m);
+		Material* backgroundMaterial() const;
 
 		void crop(float xmin, float xmax, float ymin, float ymax);
 		
@@ -99,6 +103,7 @@ namespace PR
 
 		Random mRandom;
 		std::list<RenderEntity*> mLights;
+		Material* mBackgroundMaterial;
 
 		std::mutex mTileMutex;
 		uint32 mTileWidth;

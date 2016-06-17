@@ -4,6 +4,7 @@
 
 namespace PR
 {
+	#define PR_PLANE_INTERSECT_EPSILON (PM_EPSILON)
 	constexpr float EPSILON_BOUND = 0.00001f;
 
 	Plane::Plane() :
@@ -203,7 +204,7 @@ namespace PR
 		float ln = PM::pm_Dot3D(ray.direction(), mNormal);
 		float pn = PM::pm_Dot3D(PM::pm_Subtract(mPosition, ray.startPosition()), mNormal);
 
-		if (std::abs(ln) <= PM_EPSILON)//Parallel or on the plane
+		if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON)//Parallel or on the plane
 		{
 			return false;
 			//if (pn <= std::numeric_limits<float>::epsilon())// Is on the plane!
@@ -215,7 +216,7 @@ namespace PR
 		{
 			t = pn / ln;
 
-			if (t < PM_EPSILON)
+			if (t < PR_PLANE_INTERSECT_EPSILON)
 			{
 				return false;
 			}

@@ -18,7 +18,7 @@ namespace PR
 		}
 
 		// Sums both weights together based on the pdf.
-		static inline void balance(Spectrum& out_weight, float& out_pdf, Spectrum in_weight, float in_pdf, float balance)
+		static inline void balance(Spectrum& out_weight, float& out_pdf, Spectrum in_weight, float in_pdf, float balance = 1)
 		{
 			PR_ASSERT(out_pdf >= 0);
 			PR_ASSERT(in_pdf >= 0);

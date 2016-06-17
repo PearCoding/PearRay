@@ -8,6 +8,7 @@
 
 #include "BRDF.h"
 #include "math/Reflection.h"
+#include "math/Fresnel.h"
 
 namespace PR
 {
@@ -47,11 +48,14 @@ namespace PR
 
 	Spectrum MirrorMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
-		// TODO
 		if (mSpecularity)
+		{
 			return mSpecularity->eval(point.uv());
+		}
 		else
+		{
 			return Spectrum();
+		}
 	}
 
 	float MirrorMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)

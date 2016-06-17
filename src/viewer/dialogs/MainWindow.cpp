@@ -129,6 +129,7 @@ void MainWindow::openProject(const QString& str)
 			mEnvironment->camera(), mEnvironment->scene());
 		mRenderer->crop(mEnvironment->cropMinX(), mEnvironment->cropMaxX(),
 			mEnvironment->cropMinY(), mEnvironment->cropMaxY());
+		mRenderer->setBackgroundMaterial(mEnvironment->backgroundMaterial());
 
 		ui.viewWidget->setRenderer(mRenderer);
 

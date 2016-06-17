@@ -24,12 +24,14 @@
 #include "Logger.h"
 #include "math/Reflection.h"
 
+#include "material/Material.h"
+
 namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mMinX(0), mMaxX(1), mMinY(0), mMaxY(1),
 		mCamera(cam), mScene(scene),
-		mResult(w, h), mRandom((uint64)time(NULL)),
+		mResult(w, h), mRandom((uint64)time(NULL)), mBackgroundMaterial(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mProgressiveCurrentSample(0), mTileMap(nullptr),
 		mPixelSampler(nullptr)
 	{
@@ -127,6 +129,16 @@ namespace PR
 
 		if (mMinY > mMaxY)
 			std::swap(mMinY, mMaxY);
+	}
+
+	void Renderer::setBackgroundMaterial(Material* m)
+	{
+		mBackgroundMaterial = m;
+	}
+
+	Material* Renderer::backgroundMaterial() const
+	{
+		return mBackgroundMaterial;
 	}
 
 	void Renderer::start(uint32 tcx, uint32 tcy, uint32 threads, bool clear)
@@ -343,6 +355,24 @@ namespace PR
 				appliedSpec += affector->apply(ray, entity, collisionPoint, context);
 			}
 		}
+		else if (mBackgroundMaterial)
+		{
+			FacePoint point;
+			point.setMaterial(mBackgroundMaterial);
+			point.setInside(true);
+			point.setNormal(PM::pm_Negate(ray.direction()));
+			point.setVertex(ray.direction());//Radius?
+
+			float u = 0.5f + std::atan2(PM::pm_GetZ(ray.direction()), PM::pm_GetX(ray.direction())) * PM_INV_PI_F * 0.5f;
+			float v = 0.5f - std::asin(-PM::pm_GetY(ray.direction())) * PM_INV_PI_F;
+			point.setUV(PM::pm_Set(u, v));
+
+			PR_DEBUG_ASSERT(u >= 0 && u <= 1);
+			PR_DEBUG_ASSERT(v >= 0 && v <= 1);
+
+			appliedSpec += mBackgroundMaterial->applyEmission(point, ray.direction()) /** (4*PM_INV_PI_F)*/;
+		}
+
 		return entity;
 	}
 

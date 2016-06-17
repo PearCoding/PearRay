@@ -150,6 +150,7 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/MirrorMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
+  ${PR_LIB}/math/Fresnel.h
   ${PR_LIB}/math/MSI.h
   ${PR_LIB}/math/Projection.h
   ${PR_LIB}/math/Reflection.h)

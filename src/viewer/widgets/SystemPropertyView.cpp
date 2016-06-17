@@ -57,8 +57,8 @@ QWidget(parent)
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Spherical"), PR::DM_Normal_Spherical);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UV"), PR::DM_UV);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF"), PR::DM_PDF);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Validity"), PR::DM_Validity);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Applied"), PR::DM_Applied);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Validity"), PR::DM_Validity);
 	mRendererGroupProp->addChild(mDebugVisualizationProp);
 
 	mProperties.add(mRendererGroupProp);

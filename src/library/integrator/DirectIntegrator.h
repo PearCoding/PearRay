@@ -13,6 +13,6 @@ namespace PR
 		Spectrum apply(const Ray& in, RenderContext* context) override;
 
 	private:
-		Spectrum applyRay(const Ray& in, const FacePoint& point, RenderEntity* entity, RenderContext* context);
+		Spectrum applyRay(const Ray& in, const FacePoint& point, RenderContext* context);
 	};
 }
