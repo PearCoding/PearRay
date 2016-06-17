@@ -33,7 +33,7 @@ namespace PR
 			void locate(PhotonSphere& sphere, uint64 index, CheckFunction checkFunc);
 
 			void store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir);
-			void scalePhotonPower(double scale);
+			void scalePhotonPower(float scale);
 
 			void balanceTree();// Balance the KD-tree before using
 

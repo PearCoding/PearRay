@@ -26,7 +26,7 @@ namespace PR
 		*/
 		virtual PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) = 0;
 
-		inline virtual bool shouldIgnore(const Ray& in,const FacePoint& point);
+		virtual bool shouldIgnore(const Ray& in,const FacePoint& point) const;
 
 		bool isLight() const;
 

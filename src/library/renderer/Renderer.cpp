@@ -99,7 +99,7 @@ namespace PR
 
 	uint32 Renderer::renderWidth() const
 	{
-		return (mMaxX - mMinX) * mWidth;
+		return (uint32)std::ceil((mMaxX - mMinX) * mWidth);
 	}
 
 	void Renderer::setHeight(uint32 h)
@@ -114,7 +114,7 @@ namespace PR
 
 	uint32 Renderer::renderHeight() const
 	{
-		return (mMaxY - mMinY) * mHeight;
+		return (uint32)std::ceil((mMaxY - mMinY) * mHeight);
 	}
 
 	void Renderer::crop(float xmin, float xmax, float ymin, float ymax)
@@ -225,13 +225,13 @@ namespace PR
 		{
 			for (uint32 j = 0; j < tcx; ++j)
 			{
-				uint32 sx = mMinX*mWidth + j*mTileWidth;
-				uint32 sy = mMinY*mHeight + i*mTileHeight;
+				uint32 sx = (uint32)std::ceil(mMinX*mWidth + j*mTileWidth);
+				uint32 sy = (uint32)std::ceil(mMinY*mHeight + i*mTileHeight);
 				mTileMap[i*tcx + j] = new RenderTile(
 					sx,
 					sy,
-					PM::pm_MinT<uint32>(mMaxX*mWidth, sx + mTileWidth),
-					PM::pm_MinT<uint32>(mMaxY*mHeight, sy + mTileHeight));
+					PM::pm_MinT((uint32)std::ceil(mMaxX*mWidth), sx + mTileWidth),
+					PM::pm_MinT((uint32)std::ceil(mMaxY*mHeight), sy + mTileHeight));
 			}
 		}
 		mProgressiveCurrentSample = 0;
@@ -269,7 +269,7 @@ namespace PR
 		}
 		else// Everything
 		{
-			const int SampleCount = mRenderSettings.maxPixelSampleCount();
+			const uint32 SampleCount = mRenderSettings.maxPixelSampleCount();
 			Spectrum newSpec;
 
 			for (uint32 i = sample; i < SampleCount; ++i)

@@ -56,7 +56,7 @@ namespace PR
 		return mCameraVisible;
 	}
 
-	bool Material::shouldIgnore(const Ray& in, const FacePoint& point)
+	bool Material::shouldIgnore(const Ray& in, const FacePoint& point) const
 	{
 		return !mCameraVisible && in.depth() == 0;
 	}

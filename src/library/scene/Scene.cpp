@@ -93,7 +93,7 @@ namespace PR
 		if (mKDTree)
 		{
 			PR_LOGGER.log(L_Info, M_Scene, "kdTree already exists, deleting old one.");
-			delete mKDTree;
+			delete (kdTree<RenderEntity>*)mKDTree;
 			mKDTree = nullptr;
 		}
 

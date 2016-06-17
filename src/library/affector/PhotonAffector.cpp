@@ -65,12 +65,12 @@ namespace PR
 		for (RenderEntity* light : lightList)
 		{
 			const size_t sampleSize = renderer->settings().maxPhotons() / lightList.size();
-			MultiJitteredSampler sampler(renderer->random(), sampleSize);
+			MultiJitteredSampler sampler(renderer->random(), (uint32)sampleSize);
 
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(), i % sampleSize);
+				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(),(uint32) i % sampleSize);
 				lightSample.setNormal(
 					Projection::align(lightSample.normal(),
 						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));
@@ -141,7 +141,7 @@ namespace PR
 			}
 
 			if (photonsShoot != 0)
-				mMap->scalePhotonPower(ScaleFactor/(double)photonsShoot);
+				mMap->scalePhotonPower(ScaleFactor/photonsShoot);
 		}
 
 		mMap->balanceTree();

@@ -164,7 +164,7 @@ namespace PR
 
 	Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderContext* context, uint32 diffBounces)
 	{
-		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*context->renderer()->lights().size();
+		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*(uint32)context->renderer()->lights().size();
 		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();
 
 		const ThreadData& data = mThreadData[context->threadNumber()];

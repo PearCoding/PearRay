@@ -205,7 +205,7 @@ namespace PR
 #endif
 		}
 
-		void PhotonMap::scalePhotonPower(double scale)
+		void PhotonMap::scalePhotonPower(float scale)
 		{
 			for (uint64 i = mPreviousScaleIndex; i <= mStoredPhotons; ++i)
 			{
