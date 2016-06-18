@@ -3,7 +3,6 @@
 #include "RenderResult.h"
 #include "RenderSettings.h"
 #include "spectral/Spectrum.h"
-#include "Random.h"
 
 #include <list>
 #include <mutex>
@@ -55,11 +54,6 @@ namespace PR
 
 		RenderResult& result();
 
-		inline Random& random()
-		{
-			return mRandom;
-		}
-
 		// Statistics
 		size_t rayCount() const;
 		size_t samplesRendered() const;
@@ -101,7 +95,6 @@ namespace PR
 		Scene* mScene;
 		RenderResult mResult;
 
-		Random mRandom;
 		std::list<RenderEntity*> mLights;
 		Material* mBackgroundMaterial;
 
@@ -111,11 +104,10 @@ namespace PR
 		uint32 mTileXCount;
 		uint32 mTileYCount;
 		RenderTile** mTileMap;
-		uint32 mProgressiveCurrentSample;
+		uint32 mIncrementalCurrentSample;
 		std::list<RenderThread*> mThreads;
 
 		RenderSettings mRenderSettings;
-		Sampler* mPixelSampler;
 
 		std::mutex mStatisticMutex;
 		size_t mRayCount;

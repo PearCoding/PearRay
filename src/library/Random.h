@@ -2,7 +2,7 @@
 
 #include "Config.h"
 
-// #define PR_USE_STL_RANDOM
+//#define PR_USE_STL_RANDOM
 
 #ifdef PR_USE_STL_RANDOM
 # include <random>
@@ -22,16 +22,17 @@ namespace PR
 #else
 		uint64_t mState;
 		uint64_t mInc;
+		uint64_t mSeed;
 
 		static constexpr uint64_t MULT = 0x5851f42d4c957f2dULL;//6364136223846793005ULL
 #endif
 	public:
-		inline explicit Random(uint64_t s = 0x64326ae2f48fe6dbULL) :
+		inline explicit Random(uint64_t seed = (uint64_t)time(NULL)) :
 #ifdef PR_USE_STL_RANDOM
-			mGenerator(s), mDistributionFloat(0.0f, 1.0f), mDistributionDouble(0.0,1.0),
+			mGenerator(seed), mDistributionFloat(0.0f, 1.0f), mDistributionDouble(0.0,1.0),
 			mDistributionUInt32(), mDistributionUInt64()
 #else
-			mState(s), mInc(0xf13e39cbe9a35bdbULL)
+			mState(0x64326ae2f48fe6dbULL), mInc(0xf13e39cbe9a35bdbULL), mSeed(seed)
 #endif
 		{
 		}
@@ -50,7 +51,7 @@ namespace PR
 			uint32_t xorshifted = (uint32_t)(((oldstate >> 18u) ^ oldstate) >> 27u);
 			uint32_t rot = (uint32_t)(oldstate >> 59u);
 
-			return (xorshifted >> rot) | (xorshifted << ((~rot + 1u) & 31));
+			return ((xorshifted >> rot) | (xorshifted << ((~rot + 1u) & 31))) ^ (uint32)mSeed;
 #endif
 		}
 

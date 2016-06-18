@@ -47,7 +47,7 @@ option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT li
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
-find_package(FreeImage)
+find_package(FreeImage REQUIRED)
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -55,7 +55,7 @@ link_directories(${CMAKE_CURRENT_BINARY_DIR})
 IF(MSVC)
 	#SET(DEFS "_UNICODE;UNICODE;_MT;_USRDLL")
 	#SET(DEFS_DEBUG "_DEBUG")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Oi /fp:fast /EHsc")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Oi /fp:fast /EHsc /W3")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ob2 /Ot /GL")
 	#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /MDd")
 	#set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG")

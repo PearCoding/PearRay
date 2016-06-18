@@ -60,20 +60,21 @@ namespace PR
 		if (!mMap)
 			return;
 
+		Random random;
 		// We should sample lights differently... not like this.
 		auto lightList = renderer->lights();
 		for (RenderEntity* light : lightList)
 		{
 			const size_t sampleSize = renderer->settings().maxPhotons() / lightList.size();
-			MultiJitteredSampler sampler(renderer->random(), (uint32)sampleSize);
+			MultiJitteredSampler sampler(random, (uint32)sampleSize);
 
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				FacePoint lightSample = light->getRandomFacePoint(sampler, renderer->random(),(uint32) i % sampleSize);
+				FacePoint lightSample = light->getRandomFacePoint(sampler,(uint32) i % sampleSize);
 				lightSample.setNormal(
 					Projection::align(lightSample.normal(),
-						Projection::cos_hemi(renderer->random().getFloat(), renderer->random().getFloat())));
+						Projection::cos_hemi(random.getFloat(), random.getFloat())));
 				
 				Ray ray(lightSample.vertex(), lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
 
@@ -98,9 +99,9 @@ namespace PR
 							break;
 
 						float pdf;
-						PM::vec3 s = PM::pm_Set(renderer->random().getFloat(),
-							renderer->random().getFloat(),
-							renderer->random().getFloat());
+						PM::vec3 s = PM::pm_Set(random.getFloat(),
+							random.getFloat(),
+							random.getFloat());
 						nextDir = collision.material()->sample(collision, s, ray.direction(), pdf);
 
 						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse

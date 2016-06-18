@@ -38,9 +38,10 @@ QWidget(parent)
 
 	mRendererThreadsProp = new IntProperty(tr("Threads"), 0, 0, 64);
 	mRendererThreadsProp->setToolTip(tr("0 = Automatic"));
+	mRendererGroupProp->addChild(mRendererThreadsProp);
 
-	mRendererProgressive = new BoolProperty(tr("Progressive"), true);
-	mRendererGroupProp->addChild(mRendererProgressive);
+	mRendererIncremental = new BoolProperty(tr("Incremental"), true);
+	mRendererGroupProp->addChild(mRendererIncremental);
 
 	mRendererMaxDiffuseBouncesProp = new IntProperty(tr("Max Diffuse Bounces"), 4, 0, 4096);
 	mRendererGroupProp->addChild(mRendererMaxDiffuseBouncesProp);
@@ -117,7 +118,7 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererTileXProp;
 	delete mRendererTileYProp;
 	delete mRendererThreadsProp;
-	delete mRendererProgressive;
+	delete mRendererIncremental;
 	delete mPixelSamplesProp;
 	delete mPixelSamplerProp;
 	delete mRendererMaxDiffuseBouncesProp;
@@ -163,8 +164,8 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setValue(0);
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setDefaultValue(0);
 
-	reinterpret_cast<BoolProperty*>(mRendererProgressive)->setValue(renderer->settings().isProgressive());
-	reinterpret_cast<BoolProperty*>(mRendererProgressive)->setDefaultValue(renderer->settings().isProgressive());
+	reinterpret_cast<BoolProperty*>(mRendererIncremental)->setValue(renderer->settings().isIncremental());
+	reinterpret_cast<BoolProperty*>(mRendererIncremental)->setDefaultValue(renderer->settings().isIncremental());
 
 	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setValue(renderer->settings().maxPixelSampleCount());
 	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setDefaultValue(renderer->settings().maxPixelSampleCount());
@@ -206,7 +207,7 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 	renderer->settings().setMaxDiffuseBounces(reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->value());
 	renderer->settings().setMaxRayDepth(reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value());
 	renderer->settings().setDebugMode((PR::DebugMode)reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->index());
-	renderer->settings().setProgressive(reinterpret_cast<BoolProperty*>(mRendererProgressive)->value());
+	renderer->settings().setIncremental(reinterpret_cast<BoolProperty*>(mRendererIncremental)->value());
 
 	renderer->settings().setPixelSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->index());
 	renderer->settings().setMaxPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelSamplesProp)->value());

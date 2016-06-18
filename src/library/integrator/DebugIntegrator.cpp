@@ -66,9 +66,9 @@ namespace PR
 		case DM_PDF:
 		{
 			float pdf;
-			PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
-				context->renderer()->random().getFloat(),
-				context->renderer()->random().getFloat());
+			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
+				context->random().getFloat(),
+				context->random().getFloat());
 			PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
 
 			return std::isinf(pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(pdf, pdf, pdf);
@@ -79,9 +79,9 @@ namespace PR
 				return RGBConverter::toSpec(1, 0, 0);
 
 			float pdf;
-			PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
-				context->renderer()->random().getFloat(),
-				context->renderer()->random().getFloat());
+			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
+				context->random().getFloat(),
+				context->random().getFloat());
 			PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
 			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?
 				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);

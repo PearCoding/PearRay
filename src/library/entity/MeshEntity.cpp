@@ -71,9 +71,9 @@ namespace PR
 		}
 	}
 
-	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
+	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
-		FacePoint point = mMesh->getRandomFacePoint(sampler, random, sample);
+		FacePoint point = mMesh->getRandomFacePoint(sampler, sample);
 		point.setNormal(PM::pm_RotateWithQuat(rotation(), point.normal()));
 		point.setVertex(PM::pm_Multiply(matrix(), point.vertex()));
 		return point;

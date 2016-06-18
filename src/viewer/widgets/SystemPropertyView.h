@@ -41,7 +41,7 @@ private:
 	IProperty* mRendererTileXProp;
 	IProperty* mRendererTileYProp;
 	IProperty* mRendererThreadsProp;
-	IProperty* mRendererProgressive;
+	IProperty* mRendererIncremental;
 
 	IProperty* mRendererMaxDiffuseBouncesProp;
 	IProperty* mRendererMaxRayDepthProp;

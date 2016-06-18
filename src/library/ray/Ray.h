@@ -37,8 +37,8 @@ namespace PR
 		inline uint32 maxDepth() const;
 		inline void setMaxDepth(uint32 i);
 
-		inline int flags() const;
-		inline void setFlags(int flags);
+		inline uint8 flags() const;
+		inline void setFlags(uint8 flags);
 	private:
 		alignas(16) PM::vec3 mStartPosition;
 		alignas(16) PM::vec3 mDirection;

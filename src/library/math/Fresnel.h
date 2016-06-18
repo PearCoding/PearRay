@@ -23,8 +23,7 @@ namespace PR
 			const float perp = (n1 * dotT + n2 * dot) / (n1 * dotT - n2 * dot);
 
 			const float R = (para * para + perp * perp) / 2;
-			PR_ASSERT(R >= 0 && R <= 1);
-			return R;
+			return PM::pm_ClampT(R, 0.0f, 1.0f);
 		}
 	};
 }

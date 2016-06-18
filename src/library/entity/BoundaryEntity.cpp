@@ -84,7 +84,7 @@ namespace PR
 		return false;
 	}
 
-	FacePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
+	FacePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		auto ret = sampler.generate3D(sample);
 

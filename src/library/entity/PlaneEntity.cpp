@@ -85,7 +85,7 @@ namespace PR
 	}
 
 	// World space
-	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
+	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		auto s = sampler.generate2D(sample);
 

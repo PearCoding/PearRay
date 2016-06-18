@@ -40,13 +40,12 @@ namespace PR
 		Spectrum full_weight;
 
 		// Hemisphere sampling
-		for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
+		MultiJitteredSampler hemiSampler(context->random(), context->renderer()->settings().maxLightSamples());
+		for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf); ++i)
 		{
 			float pdf;
 			Spectrum weight;
-			PM::vec3 rnd = PM::pm_Set(context->renderer()->random().getFloat(),
-				context->renderer()->random().getFloat(),
-				context->renderer()->random().getFloat());
+			PM::vec3 rnd = hemiSampler.generate3D(i);
 			PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
 			const float NdotL = std::abs(PM::pm_Dot3D(dir, point.normal()));
 
@@ -76,10 +75,10 @@ namespace PR
 			// Area sampling!
 			for (RenderEntity* light : context->renderer()->lights())
 			{
-				MultiJitteredSampler sampler(context->renderer()->random(), context->renderer()->settings().maxLightSamples());
+				MultiJitteredSampler sampler(context->random(), context->renderer()->settings().maxLightSamples());
 				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 				{
-					FacePoint p = light->getRandomFacePoint(sampler, context->renderer()->random(), i);
+					FacePoint p = light->getRandomFacePoint(sampler, i);
 
 					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
 					const float NdotL = PM::pm_Dot3D(L, point.normal());

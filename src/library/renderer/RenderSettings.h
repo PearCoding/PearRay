@@ -37,8 +37,8 @@ namespace PR
 	public:
 		RenderSettings();
 
-		inline bool isProgressive() const { return mProgressive; }
-		inline void setProgressive(bool b) { mProgressive = b; }
+		inline bool isIncremental() const { return mIncremental; }
+		inline void setIncremental(bool b) { mIncremental = b; }
 
 		inline DebugMode debugMode() const { return mDebugMode; }
 		inline void setDebugMode(DebugMode mode) { mDebugMode = mode; }
@@ -84,7 +84,7 @@ namespace PR
 		inline float photonSqueezeWeight() const { return mPhotonSqueezeWeight; }
 		inline void setPhotonSqueezeWeight(float v) { mPhotonSqueezeWeight = v; }
 	private:
-		bool mProgressive;
+		bool mIncremental;
 		SamplerMode mPixelSampler;
 		uint32 mMaxPixelSampleCount;
 

@@ -86,14 +86,13 @@ namespace PR
 		return true;
 	}
 
-	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
+	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		FacePoint p;
-		// Not really uniform...
-		//PM::vec3 n = Projection::sphereFast(PM::pm_GetX(sample), PM::pm_GetY(sample), PM::pm_GetZ(sample));
-		//PM::vec3 n = Projection::sphere(PM::pm_GetX(sample), PM::pm_GetY(sample));
-		PM::vec3 n = Projection::sphereReject(random);
-		//p.setNormal(n);
+
+		PM::vec2 s = sampler.generate2D(sample);
+		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s));
+
 		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
 		p.setVertex(PM::pm_Add(position(), PM::pm_Scale(n, scale() * mRadius)));
 		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;

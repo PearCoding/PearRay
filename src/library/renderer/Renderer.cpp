@@ -31,9 +31,8 @@ namespace PR
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mMinX(0), mMaxX(1), mMinY(0), mMaxY(1),
 		mCamera(cam), mScene(scene),
-		mResult(w, h), mRandom((uint64)time(NULL)), mBackgroundMaterial(nullptr),
-		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mProgressiveCurrentSample(0), mTileMap(nullptr),
-		mPixelSampler(nullptr)
+		mResult(w, h), mBackgroundMaterial(nullptr),
+		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mIncrementalCurrentSample(0), mTileMap(nullptr)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -79,12 +78,6 @@ namespace PR
 			delete integrator;
 
 		mIntegrators.clear();
-
-		if (mPixelSampler)
-		{
-			delete mPixelSampler;
-			mPixelSampler = nullptr;
-		}
 	}
 
 	void Renderer::setWidth(uint32 w)
@@ -154,24 +147,6 @@ namespace PR
 			mRandom.generate();
 		}*/
 
-		/* Setup samplers */
-		switch (mRenderSettings.pixelSampler())
-		{
-		case SM_Random:
-			mPixelSampler = new RandomSampler(mRandom);
-			break;
-		case SM_Uniform:
-			mPixelSampler = new UniformSampler(mRandom, mRenderSettings.maxPixelSampleCount());
-			break;
-		default:
-		case SM_Jitter:
-			mPixelSampler = new StratifiedSampler(mRandom, mRenderSettings.maxPixelSampleCount());
-			break;
-		case SM_MultiJitter:
-			mPixelSampler = new MultiJitteredSampler(mRandom, mRenderSettings.maxPixelSampleCount());
-			break;
-		}
-
 		/* Setup entities */
 		for (Entity* entity : mScene->entities())
 			entity->onPreRender();
@@ -205,6 +180,26 @@ namespace PR
 		{
 			RenderThread* thread = new RenderThread(this, i);
 			mThreads.push_back(thread);
+
+			RenderContext& context = thread->context();
+
+			/* Setup samplers */
+			switch (mRenderSettings.pixelSampler())
+			{
+			case SM_Random:
+				context.setPixelSampler(new RandomSampler(context.random()));
+				break;
+			case SM_Uniform:
+				context.setPixelSampler(new UniformSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
+				break;
+			default:
+			case SM_Jitter:
+				context.setPixelSampler(new StratifiedSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
+				break;
+			case SM_MultiJitter:
+				context.setPixelSampler(new MultiJitteredSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
+				break;
+			}
 		}
 
 		for (Affector* affector : mAffectors)
@@ -234,7 +229,7 @@ namespace PR
 					PM::pm_MinT((uint32)std::ceil(mMaxY*mHeight), sy + mTileHeight));
 			}
 		}
-		mProgressiveCurrentSample = 0;
+		mIncrementalCurrentSample = 0;
 
 		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
@@ -246,7 +241,7 @@ namespace PR
 
 	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample)
 	{
-		if (mRenderSettings.isProgressive())// Only one sample a time!
+		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
 			Spectrum oldSpec;
 			if (sample > 0)
@@ -254,7 +249,7 @@ namespace PR
 				oldSpec = mResult.point(x, y);
 			}
 
-			auto s = mPixelSampler->generate2D(sample);
+			auto s = context->pixelSampler()->generate2D(sample);
 			Spectrum newSpec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f);
 
 			if (sample > 0)
@@ -274,7 +269,7 @@ namespace PR
 
 			for (uint32 i = sample; i < SampleCount; ++i)
 			{
-				auto s = mPixelSampler->generate2D(i);
+				auto s = context->pixelSampler()->generate2D(i);
 				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f);
 				newSpec += spec;
 			}
@@ -413,14 +408,13 @@ namespace PR
 	RenderTile* Renderer::getNextTile()
 	{
 		mTileMutex.lock();
-		if (mRenderSettings.isProgressive())
+		if (mRenderSettings.isIncremental())
 		{
 			for (uint32 i = 0; i < mTileYCount; ++i)
 			{
 				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
-					if ((mRenderSettings.isProgressive() || mTileMap[i*mTileXCount + j]->samplesRendered() == 0) &&
-						mTileMap[i*mTileXCount + j]->samplesRendered() <= mProgressiveCurrentSample &&
+					if ( mTileMap[i*mTileXCount + j]->samplesRendered() <= mIncrementalCurrentSample &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
 					{
 						mTileMap[i*mTileXCount + j]->setWorking(true);
@@ -431,9 +425,9 @@ namespace PR
 				}
 			}
 
-			if (mProgressiveCurrentSample < mRenderSettings.maxPixelSampleCount())// Try again
+			if (mIncrementalCurrentSample < mRenderSettings.maxPixelSampleCount())// Try again
 			{
-				mProgressiveCurrentSample++;
+				mIncrementalCurrentSample++;
 				mTileMutex.unlock();
 				return getNextTile();
 			}
@@ -444,7 +438,7 @@ namespace PR
 			{
 				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
-					if (mTileMap[i*mTileXCount + j]->samplesRendered() != 0 &&
+					if (mTileMap[i*mTileXCount + j]->samplesRendered() == 0 &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
 					{
 						mTileMap[i*mTileXCount + j]->setWorking(true);

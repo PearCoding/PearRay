@@ -19,6 +19,11 @@ namespace PR
 			return mTile;
 		}
 
+		inline RenderContext& context()
+		{
+			return mContext;
+		}
+
 	protected:
 		virtual void main();
 

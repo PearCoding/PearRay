@@ -3,7 +3,7 @@
 namespace PR
 {
 	RenderSettings::RenderSettings() :
-		mProgressive(true),
+		mIncremental(true),
 		mDebugMode(DM_None),
 		mPixelSampler(SM_MultiJitter),
 		mMaxPixelSampleCount(64),

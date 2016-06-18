@@ -278,25 +278,23 @@ void MainWindow::updateView()
 {
 	if (mRenderer)
 	{
+		const quint64 maxSamples = mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount();
 		quint64 time = mElapsedTime.elapsed();
 
-		float percent = mRenderer->samplesRendered() /
-			(float)(mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount());
-		float lerp = percent*percent;
+		const float percent = mRenderer->samplesRendered() / (float)maxSamples;
 
-		quint64 timeLeft1 = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
-		quint64 timeLeft2 = ((1 - percent) / PM::pm_MaxT(0.0001f, (percent - mLastPercent))) * mFrameTime.elapsed();
+		quint64 timeLeft = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
 
 		mLastPercent = percent;
 
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Samples: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
-			.arg(mRenderer->samplesRendered())
-			.arg(mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount())
+			.arg(friendlyHugeNumber(mRenderer->samplesRendered()))
+			.arg(friendlyHugeNumber(maxSamples))
 			.arg(100*percent, 4)
 			.arg(friendlyHugeNumber(mRenderer->rayCount()))
 			.arg(friendlyTime(time))
-			.arg(friendlyTime((1 - lerp)*timeLeft1 + lerp*timeLeft2)));
+			.arg(friendlyTime(timeLeft)));
 
 		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)(percent*100)));
 

@@ -2,7 +2,7 @@
 
 #include "Config.h"
 #include "PearMath.h"
-#include "Random.h"
+#include "sampler/Sampler.h"
 
 namespace PR
 {
@@ -62,19 +62,17 @@ namespace PR
 			return PM::pm_Normalize3D(PM::pm_Set(2 * dx - 1, 2 * dy - 1, 2 * dz - 1, 1));
 		}
 
-		static inline PM::vec3 sphereReject(Random& random)
+		static inline PM::vec3 sphereReject(Sampler& sampler)
 		{
-			float dx = 2 * random.getFloat() - 1;
-			float dy = 2 * random.getFloat() - 1;
-			float dz = 2 * random.getFloat() - 1;
-			for (int i = 0; i < 1000000 && (dx*dx + dy*dy + dz*dz) > 1; ++i)
+			for (uint32 i = 0; i < 1000000; ++i)
 			{
-				dx = 2 * random.getFloat() - 1;
-				dy = 2 * random.getFloat() - 1;
-				dz = 2 * random.getFloat() - 1;
+				PM::vec3 d = PM::pm_Subtract(PM::pm_Scale(sampler.generate3D(i), 2.0f), PM::pm_Set(1,1,1));
+
+				if (PM::pm_MagnitudeSqr3D(d) <= 1)
+					return PM::pm_Normalize3D(d);
 			}
 
-			return PM::pm_Normalize3D(PM::pm_Set(dx, dy, dz));
+			return PM::pm_Set(0,0,1);
 		}
 
 		// Uniform

@@ -22,15 +22,15 @@ namespace PR
 				for (uint32 x = mTile->sx(); x < mTile->ex() && !shouldStop(); ++x)
 				{
 					mRenderer->render(&mContext, x, y, mTile->samplesRendered());
-					if (mRenderer->settings().isProgressive())
+
+					if (mRenderer->settings().isIncremental())
 						mSamplesRendered++;
 					else
 						mSamplesRendered += mRenderer->settings().maxPixelSampleCount();
 				}
 			}
 
-			if(mRenderer->settings().isProgressive())
-				mTile->inc();
+			mTile->inc();
 
 			mTile->setWorking(false);
 			mTile = mRenderer->getNextTile();

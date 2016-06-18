@@ -113,7 +113,7 @@ namespace PR
 		return ((PR::kdTree<Face>*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
 	}
 
-	FacePoint TriMesh::getRandomFacePoint(Sampler& sampler, Random& random, uint32 sample) const
+	FacePoint TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		auto ret = sampler.generate3D(sample);
 		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, (int)mFaces.size() - 1);

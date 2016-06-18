@@ -1,6 +1,8 @@
 #include "MultiJitteredSampler.h"
 #include "math/Projection.h"
 
+#define PR_MJS_USE_RANDOM
+
 namespace PR
 {
 	MultiJitteredSampler::MultiJitteredSampler(Random& random, uint32 samples) :
@@ -17,8 +19,14 @@ namespace PR
 	float MultiJitteredSampler::generate1D(uint32 index)
 	{
 		uint32 p = mRandom.get32();
-		uint32 s = permute(index % mSamples, mSamples, p * 0xa511e9b3);
-		float j = randfloat(index, p * 0xa399d265);
+		uint32 s = permute(index % mSamples, mSamples, p * 0xa399d265);
+
+#ifndef PR_MJS_USE_RANDOM
+		float j = randfloat(index, p * 0x711ad6a5);
+#else
+		float j = mRandom.getFloat();
+#endif
+
 		float r = (index % mSamples + j) / mSamples;
 		return r;
 	}
@@ -28,8 +36,15 @@ namespace PR
 		uint32 p = mRandom.get32();
 		uint32 sx = permute(index % mM, mM, p * 0xa511e9b3);
 		uint32 sy = permute(index / mM, mN, p * 0x63d83595);
+
+#ifndef PR_MJS_USE_RANDOM
 		float jx = randfloat(index, p * 0xa399d265);
 		float jy = randfloat(index, p * 0x711ad6a5);
+#else
+		float jx = mRandom.getFloat();
+		float jy = mRandom.getFloat();
+#endif
+
 		auto r = PM::pm_Set((index % mM + (sy + jx) / mN) / mM,
 			(index / mM + (sx + jy) / mM) / mN);
 		return r;
@@ -103,16 +118,19 @@ namespace PR
 			return (i + p) % l;
 		}
 	}
-	
+
 	float MultiJitteredSampler::randfloat(uint32 i, uint32 p)
 	{
 		i ^= p;
 		i ^= i >> 17;
-		i ^= i >> 10; i *= 0xb36534e5;
+		i ^= i >> 10;
+		i *= 0xb36534e5;
 		i ^= i >> 12;
-		i ^= i >> 21; i *= 0x93fc4795;
+		i ^= i >> 21;
+		i *= 0x93fc4795;
 		i ^= 0xdf6e307f;
-		i ^= i >> 17; i *= 1 | p >> 18;
+		i ^= i >> 17; 
+		i *= 1 | p >> 18;
 		return i * (1.0f / 4294967808.0f);
 	}
 }

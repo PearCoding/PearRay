@@ -1,6 +1,7 @@
 #pragma once
 
 #include "thread/Thread.h"
+#include "Random.h"
 
 namespace PR
 {
@@ -9,6 +10,7 @@ namespace PR
 	class RenderEntity;
 	class FacePoint;
 	class Ray;
+	class Sampler;
 	class Spectrum;
 	class PR_LIB RenderContext
 	{
@@ -34,9 +36,26 @@ namespace PR
 			return mIndex;
 		}
 
+		inline Random& random()
+		{
+			return mRandom;
+		}
+
+		inline Sampler* pixelSampler() const
+		{
+			return mPixelSampler;
+		}
+
+		inline void setPixelSampler(Sampler* sampler)
+		{
+			mPixelSampler = sampler;
+		}
+
 	private:
 		Renderer* mRenderer;
 		RenderThread* mThread;
 		uint32 mIndex;
+		Random mRandom;
+		Sampler* mPixelSampler;
 	};
 }
