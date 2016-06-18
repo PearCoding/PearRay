@@ -25,7 +25,7 @@ namespace PR
 	{
 		if (mThreadData)
 		{
-			for (uint32 i = 0; i < mThreadCount && mThreadData[i].LightPos; ++i)
+			for (uint32 i = 0; i < mThreadCount; ++i)
 			{
 				delete[] mThreadData[i].LightPos;
 				delete[] mThreadData[i].LightFlux;
@@ -43,7 +43,7 @@ namespace PR
 
 		if (mThreadData)
 		{
-			for (uint32 i = 0; i < mThreadCount && mThreadData[i].LightPos; ++i)
+			for (uint32 i = 0; i < mThreadCount; ++i)
 			{
 				delete[] mThreadData[i].LightPos;
 				delete[] mThreadData[i].LightFlux;
@@ -52,14 +52,19 @@ namespace PR
 				delete[] mThreadData[i].LightMaxDepth;
 			}
 			delete[] mThreadData;
+
+			mThreadData = nullptr;
 		}
+
+		if (renderer->lights().empty())
+			return;
 
 		mThreadCount = renderer->threads();
 		mThreadData = new ThreadData[renderer->threads()];
 		size_t maxlightsamples = renderer->settings().maxRayDepth() *
 			renderer->lights().size() * renderer->settings().maxLightSamples();
 
-		if (!mThreadData || renderer->lights().empty() || renderer->settings().maxLightSamples() == 0)
+		if (!mThreadData || renderer->settings().maxLightSamples() == 0)
 			return;
 
 		for (uint32 i = 0; i < mThreadCount; ++i)
@@ -75,94 +80,96 @@ namespace PR
 	constexpr float LightEpsilon = 0.00001f;
 	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderContext* context)
 	{
-		if (!mThreadData || context->renderer()->settings().maxLightSamples() == 0)
+		if (context->renderer()->settings().maxLightSamples() == 0)
 			return Spectrum();
 
 		Renderer* renderer = context->renderer();
-		ThreadData& data = mThreadData[context->threadNumber()];
-
-		const uint32 maxDepth = renderer->settings().maxRayDepth();
-		const uint32 maxDiffBounces = renderer->settings().maxDiffuseBounces();
-
-		Ray current = in;
-		uint32 lightNr = 0;
-		for (RenderEntity* light : renderer->lights())
+		if (mThreadData && !renderer->lights().empty())
 		{
-			MultiJitteredSampler sampler(context->random(), renderer->settings().maxLightSamples());
-			for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
+			ThreadData& data = mThreadData[context->threadNumber()];
+
+			const uint32 maxDepth = renderer->settings().maxRayDepth();
+			const uint32 maxDiffBounces = renderer->settings().maxDiffuseBounces();
+
+			Ray current = in;
+			uint32 lightNr = 0;
+			for (RenderEntity* light : renderer->lights())
 			{
-				float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
-				Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
-				float* lightPDF = &data.LightPDF[lightNr * maxDepth];
-
-				FacePoint lightSample = light->getRandomFacePoint(sampler, i);
-				const PM::vec3 lightDir = 
-					Projection::align(lightSample.normal(),
-						Projection::cos_hemi(context->random().getFloat(), context->random().getFloat()));
-
-				current.setStartPosition(lightSample.vertex());
-				current.setDirection(lightDir);
-				current.setDepth(1);
-
-				// Initiate with power
-				Spectrum flux = lightSample.material()->applyEmission(lightSample, lightSample.normal());
-
-				uint32 lightDepth = 0;// Counts diff bounces
-				PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth*3]);
-				lightFlux[lightDepth] = flux;
-				lightPDF[lightDepth] = 1;
-
-				for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
+				MultiJitteredSampler sampler(context->random(), renderer->settings().maxLightSamples());
+				for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
 				{
-					FacePoint collision;
-					RenderEntity* entity = context->shoot(current, collision);
-					if (entity && collision.material() && collision.material()->canBeShaded())
+					float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
+					Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
+					float* lightPDF = &data.LightPDF[lightNr * maxDepth];
+
+					FacePoint lightSample = light->getRandomFacePoint(sampler, i);
+					const PM::vec3 lightDir =
+						Projection::align(lightSample.normal(),
+							Projection::cos_hemi(context->random().getFloat(), context->random().getFloat()));
+
+					current.setStartPosition(lightSample.vertex());
+					current.setDirection(lightDir);
+					current.setDepth(1);
+
+					// Initiate with power
+					Spectrum flux = lightSample.material()->applyEmission(lightSample, lightSample.normal());
+
+					uint32 lightDepth = 0;// Counts diff bounces
+					PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
+					lightFlux[lightDepth] = flux;
+					lightPDF[lightDepth] = 1;
+
+					for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 					{
-						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), current.direction()));
-						if (NdotL < PM_EPSILON)
-							break;
-
-						PR_DEBUG_ASSERT(NdotL <= 1);
-
-						Ray out;
-						float pdf;
-						PM::vec3 s = PM::pm_Set(context->random().getFloat(),
-							context->random().getFloat(),
-							context->random().getFloat());
-						out.setDirection(collision.material()->sample(collision, s, current.direction(), pdf));
-						out.setDepth(in.depth() + 1);
-						out.setStartPosition(collision.vertex());
-
-						if (pdf < PM_EPSILON)
+						FacePoint collision;
+						RenderEntity* entity = context->shoot(current, collision);
+						if (entity && collision.material() && collision.material()->canBeShaded())
 						{
-							flux *= 0;
-							break;
+							const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), current.direction()));
+							if (NdotL < PM_EPSILON)
+								break;
+
+							PR_DEBUG_ASSERT(NdotL <= 1);
+
+							Ray out;
+							float pdf;
+							PM::vec3 s = PM::pm_Set(context->random().getFloat(),
+								context->random().getFloat(),
+								context->random().getFloat());
+							out.setDirection(collision.material()->sample(collision, s, current.direction(), pdf));
+							out.setDepth(in.depth() + 1);
+							out.setStartPosition(collision.vertex());
+
+							if (pdf <= PM_EPSILON)
+							{
+								flux *= 0;
+								break;
+							}
+							else
+							{
+								flux *= collision.material()->apply(collision, out.direction(), current.direction()) *
+									(NdotL / (std::isinf(pdf) ? 1 : pdf));
+								current = out;
+
+								if (!std::isinf(pdf))
+								{
+									lightDepth++;
+
+									lightFlux[lightDepth] = flux;
+									lightPDF[lightDepth] = pdf;
+									PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
+								}
+							}
 						}
 						else
 						{
-							flux *= collision.material()->apply(collision, out.direction(), current.direction()) *
-								(NdotL / (std::isinf(pdf) ? 1 : pdf));
-							current = out;
-
-							if (!std::isinf(pdf))
-							{
-								lightDepth++;
-
-								lightFlux[lightDepth] = flux;
-								lightPDF[lightDepth] = pdf;
-								PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
-							}
+							break;
 						}
 					}
-					else
-					{
-						break;
-					}
 
+					data.LightMaxDepth[lightNr] = lightDepth;
+					lightNr++;
 				}
-
-				data.LightMaxDepth[lightNr] = lightDepth;
-				lightNr++;
 			}
 		}
 
@@ -173,8 +180,6 @@ namespace PR
 	{
 		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*(uint32)context->renderer()->lights().size();
 		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();
-
-		const ThreadData& data = mThreadData[context->threadNumber()];
 
 		FacePoint point;
 		Spectrum applied;
@@ -205,8 +210,10 @@ namespace PR
 				MSI::balance(full_weight, full_pdf, weight, pdf);
 			}
 
-			if (!std::isinf(full_pdf))
+			if (!std::isinf(full_pdf) && maxLights > 0 && mThreadData)
 			{
+				const ThreadData& data = mThreadData[context->threadNumber()];
+
 				for (uint32 j = 0; j < maxLights; ++j)// Each light
 				{
 					for (uint32 s = 0; s < data.LightMaxDepth[j]; ++s)

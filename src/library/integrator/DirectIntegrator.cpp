@@ -62,10 +62,6 @@ namespace PR
 
 				weight = point.material()->apply(point, in.direction(), ray.direction()) * applied * NdotL;
 			}
-			else
-			{
-				pdf = 0;
-			}
 
 			MSI::balance(full_weight, full_pdf, weight, pdf);
 		}
