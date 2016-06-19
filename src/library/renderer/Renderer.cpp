@@ -209,7 +209,7 @@ namespace PR
 			integrator->init(this);
 
 		// Calculate tile sizes, etc.
-		mRayCount = 0;
+		mRayCount = ATOMIC_VAR_INIT(0);
 
 		mTileXCount = tcx;
 		mTileYCount = tcy;
@@ -328,9 +328,7 @@ namespace PR
 				faceforward(NdotV, collisionPoint.normal()));
 			collisionPoint.setInside(NdotV > 0);
 
-			mStatisticMutex.lock();
 			mRayCount++;
-			mStatisticMutex.unlock();
 
 			return entity;
 		}
@@ -415,6 +413,7 @@ namespace PR
 				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
 					if ( mTileMap[i*mTileXCount + j]->samplesRendered() <= mIncrementalCurrentSample &&
+						mTileMap[i*mTileXCount + j]->samplesRendered() < mRenderSettings.maxPixelSampleCount() &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
 					{
 						mTileMap[i*mTileXCount + j]->setWorking(true);
@@ -439,6 +438,7 @@ namespace PR
 				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
 					if (mTileMap[i*mTileXCount + j]->samplesRendered() == 0 &&
+						mTileMap[i*mTileXCount + j]->samplesRendered() < mRenderSettings.maxPixelSampleCount() &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
 					{
 						mTileMap[i*mTileXCount + j]->setWorking(true);

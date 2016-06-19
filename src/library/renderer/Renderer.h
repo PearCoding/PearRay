@@ -6,6 +6,7 @@
 
 #include <list>
 #include <mutex>
+#include <atomic>
 
 namespace PR
 {
@@ -109,8 +110,8 @@ namespace PR
 
 		RenderSettings mRenderSettings;
 
-		std::mutex mStatisticMutex;
-		size_t mRayCount;
+		// Statistics
+		std::atomic<size_t> mRayCount;
 
 		std::list<Affector*> mAffectors;// Per Ray apply
 		std::list<Integrator*> mIntegrators;// Per Pixel sample
