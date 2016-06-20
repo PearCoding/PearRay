@@ -10,10 +10,26 @@ namespace PRU
 {
 	Environment::Environment(const std::string& name) :
 		mScene(name), mCamera(nullptr), mRenderWidth(1920), mRenderHeight(1080),
-		mCropMinX(0), mCropMaxX(1), mCropMinY(0), mCropMaxY(1), mBackgroundMaterial(nullptr)
+		mCropMinX(0), mCropMaxX(0), mCropMinY(0), mCropMaxY(0), mBackgroundMaterial(nullptr)
 	{
 		PR::XYZConverter::init();
 		PR::RGBConverter::init();
+
+		//Defaults
+		mSpectrums["black"] = PR::RGBConverter::toSpec(0, 0, 0);
+		mSpectrums["white"] = PR::RGBConverter::toSpec(1, 1, 1);
+		mSpectrums["red"] = PR::RGBConverter::toSpec(1, 0, 0);
+		mSpectrums["green"] = PR::RGBConverter::toSpec(0, 1, 0);
+		mSpectrums["blue"] = PR::RGBConverter::toSpec(0, 0, 1);
+		mSpectrums["magenta"] = PR::RGBConverter::toSpec(1, 0, 1);
+		mSpectrums["yellow"] = PR::RGBConverter::toSpec(1, 1, 0);
+		mSpectrums["cyan"] = PR::RGBConverter::toSpec(0, 1, 1);
+		mSpectrums["gray"] = PR::RGBConverter::toSpec(0.5f, 0.5f, 0.5f);
+		mSpectrums["lightGray"] = PR::RGBConverter::toSpec(0.666f, 0.666f, 0.666f);
+		mSpectrums["darkGray"] = PR::RGBConverter::toSpec(0.333f, 0.333f, 0.333f);
+
+		mSpectrums["sun_norm"] = PR::Spectrum::fromBlackbodyNorm(5500);
+		mSpectrums["candle_norm"] = PR::Spectrum::fromBlackbodyNorm(1000);
 	}
 
 	Environment::~Environment()
