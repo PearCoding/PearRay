@@ -26,8 +26,7 @@ private slots:
 private:
 	void addRenderEntity();
 	void addSphere();
-	void addOrthoCamera();
-	void addPersCamera();
+	void addStdCamera();
 	void addMesh();
 	void addPointLight();
 	void addPlane();

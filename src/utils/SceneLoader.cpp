@@ -217,12 +217,7 @@ namespace PRU
 				DL::Data* cameraD = top->getFromKey("camera");
 				if (cameraD && cameraD->isType() == DL::Data::T_String)
 				{
-					Camera* cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "orthographicCamera");
-					if (!cam)
-					{
-						cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "perspectiveCamera");
-					}
-
+					Camera* cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "standardCamera");
 					env->setCamera(cam);
 				}
 

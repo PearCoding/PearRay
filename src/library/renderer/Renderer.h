@@ -82,7 +82,7 @@ namespace PR
 	private:
 		void reset();
 
-		Spectrum renderSample(RenderContext* context, float x, float y);
+		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t);
 
 		uint32 mWidth;
 		uint32 mHeight;

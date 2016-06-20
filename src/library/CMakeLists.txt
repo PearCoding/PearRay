@@ -11,8 +11,7 @@ SET(PR_Affector_Src
 SOURCE_GROUP("Source Files\\Affector" FILES ${PR_Affector_Src})
 SET(PR_Camera_Src
   ${PR_LIB}/camera/Camera.cpp
-  ${PR_LIB}/camera/OrthographicCamera.cpp
-  ${PR_LIB}/camera/PerspectiveCamera.cpp)
+  ${PR_LIB}/camera/StandardCamera.cpp)
 SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Entity_Src
   ${PR_LIB}/entity/BoundaryEntity.cpp
@@ -112,8 +111,7 @@ SET(PR_Affector_Hdr
 SOURCE_GROUP("Header Files\\Affector" FILES ${PR_Affector_Hdr})
 SET(PR_Camera_Hdr
   ${PR_LIB}/camera/Camera.h
-  ${PR_LIB}/camera/OrthographicCamera.h
-  ${PR_LIB}/camera/PerspectiveCamera.h)
+  ${PR_LIB}/camera/StandardCamera.h)
 SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Entity_Hdr
   ${PR_LIB}/entity/BoundaryEntity.h

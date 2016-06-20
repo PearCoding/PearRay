@@ -7,8 +7,7 @@
 #include "entity/MeshEntity.h"
 #include "entity/PlaneEntity.h"
 
-#include "camera/OrthographicCamera.h"
-#include "camera/PerspectiveCamera.h"
+#include "camera/StandardCamera.h"
 
 #include "properties/PropertyTable.h"
 
@@ -110,13 +109,9 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		{
 			addSphere();
 		}
-		else if (entity->type() == "orthographicCamera")
+		else if (entity->type() == "standardCamera")
 		{
-			addOrthoCamera();
-		}
-		else if (entity->type() == "perspectiveCamera")
-		{
-			addPersCamera();
+			addStdCamera();
 		}
 		else if (entity->type() == "pointLight")
 		{
@@ -162,13 +157,13 @@ void EntityDetailsView::addSphere()
 	mPropertyTable->add(group);
 }
 
-void EntityDetailsView::addOrthoCamera()
+void EntityDetailsView::addStdCamera()
 {
 	Q_ASSERT(mEntity);
 
-	PR::OrthographicCamera* cam = (PR::OrthographicCamera*)mEntity;
+	PR::StandardCamera* cam = (PR::StandardCamera*)mEntity;
 
-	GroupProperty* group = new GroupProperty(tr("Orthographic Camera"));
+	GroupProperty* group = new GroupProperty(tr("Standard Camera"));
 	mProperties.append(group);
 
 	DoubleProperty* w = new DoubleProperty(tr("Width"), cam->width(), 0);
@@ -179,33 +174,17 @@ void EntityDetailsView::addOrthoCamera()
 	group->addChild(h);
 	mProperties.append(h);
 
-	DoubleProperty* l = new DoubleProperty(tr("Lens Distance"), cam->lensDistance(), 0);
-	group->addChild(l);
-	mProperties.append(l);
+	BoolProperty* o = new BoolProperty(tr("Orthographic"), cam->isOrthographic());
+	group->addChild(o);
+	mProperties.append(o);
 
-	mPropertyTable->add(group);
-}
+	DoubleProperty* f = new DoubleProperty(tr("FStop"), cam->fstop(), 0);
+	group->addChild(f);
+	mProperties.append(f);
 
-void EntityDetailsView::addPersCamera()
-{
-	Q_ASSERT(mEntity);
-
-	PR::PerspectiveCamera* cam = (PR::PerspectiveCamera*)mEntity;
-
-	GroupProperty* group = new GroupProperty(tr("Perspective Camera"));
-	mProperties.append(group);
-
-	DoubleProperty* w = new DoubleProperty(tr("Width"), cam->width(), 0);
-	group->addChild(w);
-	mProperties.append(w);
-
-	DoubleProperty* h = new DoubleProperty(tr("Height"), cam->height(), 0);
-	group->addChild(h);
-	mProperties.append(h);
-
-	DoubleProperty* l = new DoubleProperty(tr("Lens Distance"), cam->lensDistance(), 0);
-	group->addChild(l);
-	mProperties.append(l);
+	DoubleProperty* a = new DoubleProperty(tr("Aperture Radius"), cam->apertureRadius(), 0);
+	group->addChild(a);
+	mProperties.append(a);
 
 	mPropertyTable->add(group);
 }
@@ -293,39 +272,30 @@ void EntityDetailsView::propertyValueChanged(IProperty* prop)
 	{
 		DoubleProperty* p = (DoubleProperty*)prop;
 
-		if (mEntity->type() == "orthographicCamera")
-		{
-			((PR::OrthographicCamera*)mEntity)->setWidth(p->value());
-		}
-		else if (mEntity->type() == "perspectiveCamera")
-		{
-			((PR::PerspectiveCamera*)mEntity)->setWidth(p->value());
-		}
+		((PR::StandardCamera*)mEntity)->setWidth(p->value());
 	}
 	else if (prop->propertyName() == tr("Height"))
 	{
 		DoubleProperty* p = (DoubleProperty*)prop;
 
-		if (mEntity->type() == "orthographicCamera")
-		{
-			((PR::OrthographicCamera*)mEntity)->setHeight(p->value());
-		}
-		else if (mEntity->type() == "perspectiveCamera")
-		{
-			((PR::PerspectiveCamera*)mEntity)->setHeight(p->value());
-		}
+		((PR::StandardCamera*)mEntity)->setHeight(p->value());
 	}
-	else if (prop->propertyName() == tr("Lens Distance"))
+	else if (prop->propertyName() == tr("Orthographic"))
+	{
+		BoolProperty* p = (BoolProperty*)prop;
+
+		((PR::StandardCamera*)mEntity)->setOrthographic(p->value());
+	}
+	else if (prop->propertyName() == tr("FStop"))
 	{
 		DoubleProperty* p = (DoubleProperty*)prop;
 
-		if (mEntity->type() == "orthographicCamera")
-		{
-			((PR::OrthographicCamera*)mEntity)->setLensDistance(p->value());
-		}
-		else if (mEntity->type() == "perspectiveCamera")
-		{
-			((PR::PerspectiveCamera*)mEntity)->setLensDistance(p->value());
-		}
+		((PR::StandardCamera*)mEntity)->setFStop(p->value());
+	}
+	else if (prop->propertyName() == tr("Aperture Radius"))
+	{
+		DoubleProperty* p = (DoubleProperty*)prop;
+
+		((PR::StandardCamera*)mEntity)->setApertureRadius(p->value());
 	}
 }

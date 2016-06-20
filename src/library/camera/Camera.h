@@ -16,6 +16,6 @@ namespace PR
 		/**
 		 * nx and ny are screen coordinates [-1 1]
 		 */
-		virtual Ray constructRay(float nx, float ny) const = 0;
+		virtual Ray constructRay(float nx, float ny, float rx, float ry, float t) const = 0;
 	};
 }

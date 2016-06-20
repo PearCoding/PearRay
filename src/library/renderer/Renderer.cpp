@@ -250,7 +250,10 @@ namespace PR
 			}
 
 			auto s = context->pixelSampler()->generate2D(sample);
-			Spectrum newSpec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f);
+			
+			Spectrum newSpec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
+				PM::pm_GetX(s), PM::pm_GetY(s),//TODO
+				0.0f);//TODO
 
 			if (sample > 0)
 			{
@@ -270,7 +273,9 @@ namespace PR
 			for (uint32 i = sample; i < SampleCount; ++i)
 			{
 				auto s = context->pixelSampler()->generate2D(i);
-				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f);
+				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
+					PM::pm_GetX(s), PM::pm_GetY(s),//TODO
+					0.0f);
 				newSpec += spec;
 			}
 
@@ -278,10 +283,11 @@ namespace PR
 		}
 	}
 
-	Spectrum Renderer::renderSample(RenderContext* context, float x, float y)
+	Spectrum Renderer::renderSample(RenderContext* context, float x, float y, float rx, float ry, float t)
 	{
 		Ray ray = mCamera->constructRay(2 * (x + 0.5f) / (float)mWidth - 1.0f,
-			2 * (y + 0.5f) / (float)mHeight - 1.0f);// To camera coordinates [-1,1]
+			2 * (y + 0.5f) / (float)mHeight - 1.0f,// To camera coordinates [-1,1]
+			rx, ry, t);
 
 		Spectrum spec;
 		for (Integrator* integrator : mIntegrators)
