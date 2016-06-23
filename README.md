@@ -6,6 +6,8 @@ Experimental ray and path tracing application.
 
 # Dependencies
  - Boost http://www.boost.org/
- - OpenCL https://www.khronos.org/opencl/
  - tinyobjloader https://github.com/syoyo/tinyobjloader (included into source)
  - FreeImage http://freeimage.sourceforge.net
+
+### Optional
+ - OpenCL https://www.khronos.org/opencl/

@@ -93,7 +93,7 @@ add_subdirectory(datalisp)
 SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
-IF(NOT OPENCL_FOUND)
+IF(NOT OpenCL_FOUND)
 	SET(DEFS "${DEFS};PR_NO_GPU")
 ELSE()
 	MESSAGE(STATUS "Using OpenCL")
@@ -109,8 +109,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			${FREEIMAGE_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
 			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
 
-IF(OPENCL_FOUND)
-include_directories(${OPENCL_INCLUDE_DIR})
+IF(OpenCL_FOUND)
+include_directories(${OpenCL_INCLUDE_DIRS})
 ENDIF()
 
 add_subdirectory(${PR_Root}/library)

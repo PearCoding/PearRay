@@ -229,7 +229,7 @@ add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
 target_link_libraries(${PR_TARGET} ${Boost_LIBRARIES})
 
 IF(OPENCL_FOUND)
-	target_link_libraries(${PR_TARGET} ${OPENCL_LIBRARY})
+	target_link_libraries(${PR_TARGET} ${OpenCL_LIBRARIES})
 ENDIF()
 
 set_target_properties(${PR_TARGET} PROPERTIES VERSION ${PR_Version})
