@@ -22,7 +22,7 @@ before_script:
   - sudo -E apt-add-repository -y "ppa:beineri/opt-qt521"
   - sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
   - sudo -E apt-get update -qq
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake gcc-4.8 g++-4.8 qt52base qt52tools libfreeimage-dev libfreeimage3 libboost-filesystem1.58-dev libboost-program-options1.58-dev libboost-system1.58-dev libboost-iostreams1.58-dev
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake gcc-4.8 g++-4.8 qt52base qt52tools libfreeimage-dev libfreeimage3 libboost-filesystem1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-iostreams1.55-dev
   - export CXX=g++-4.8 CC=gcc-4.8
   - $CXX --version
   - cmake --version
