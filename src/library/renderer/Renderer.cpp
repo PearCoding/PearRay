@@ -26,13 +26,18 @@
 
 #include "material/Material.h"
 
+#ifndef PR_NO_GPU
+# include "gpu/GPU.h"
+#endif
+
 namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
 		mWidth(w), mHeight(h), mMinX(0), mMaxX(1), mMinY(0), mMaxY(1),
 		mCamera(cam), mScene(scene),
 		mResult(w, h), mBackgroundMaterial(nullptr),
-		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mIncrementalCurrentSample(0), mTileMap(nullptr)
+		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mIncrementalCurrentSample(0), mTileMap(nullptr),
+		mGPU(nullptr)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -44,11 +49,28 @@ namespace PR
 				mLights.push_back(e);
 			}
 		}
+
+		// Setup GPU
+#ifndef PR_NO_GPU
+		mGPU = new GPU();
+		if (!mGPU->init("", "../src/library/cl"))
+		{
+			delete mGPU;
+			mGPU = nullptr;
+		}
+#endif
 	}
 
 	Renderer::~Renderer()
 	{
 		reset();
+
+#ifndef PR_NO_GPU
+		if (mGPU)
+		{
+			delete mGPU;
+		}
+#endif
 	}
 
 	void Renderer::reset()

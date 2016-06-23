@@ -7,6 +7,8 @@ namespace PR
 {
 	class Renderer;
 	class Spectrum;
+	class RGBConverter;
+	class XYZConverter;
 }
 
 enum ViewMode
@@ -95,8 +97,12 @@ private:
 
 	bool mShowProgress;
 
+	uchar* mRenderData;
 	QImage mRenderImage;
 	QImage mScaledImage;
+
+	PR::RGBConverter* mRGBConverter;
+	PR::XYZConverter* mXYZConverter;
 
 	QPixmap mBackgroundImage;
 

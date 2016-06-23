@@ -8,6 +8,10 @@
 #include <list>
 #include <functional>
 
+#ifdef PR_DEBUG
+//# define PR_KDTREE_DEBUG
+#endif
+
 #ifndef PR_KDTREE_MAX_STACK
 # define PR_KDTREE_MAX_STACK (4096)
 #endif
@@ -80,7 +84,7 @@ namespace PR
 				{
 					T* entity = content.Entities.front();
 
-#ifdef PR_DEBUG
+#ifdef PR_KDTREE_DEBUG
 					PR_LOGGER.logf(L_Debug, M_Scene, "[%d] Leaf | Volume %f", stackPos, mGetBoundingBox(entity).volume());
 #endif
 
@@ -142,7 +146,7 @@ namespace PR
 					if (!midEntity)
 						continue;//Nothing available
 
-#ifdef PR_DEBUG
+#ifdef PR_KDTREE_DEBUG
 					PR_LOGGER.logf(L_Debug, M_Scene, "[%d, %d] Volume %f | Near %f | Mid %f | Side %d", stackPos, axis, box.volume(), near, mid, content.Side);
 #endif
 

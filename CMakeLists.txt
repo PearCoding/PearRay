@@ -47,10 +47,12 @@ option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT li
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
+find_package(OpenCL)
 find_package(FreeImage REQUIRED)
+find_package(Boost 1.36 COMPONENTS filesystem system iostreams program_options REQUIRED)
 
 #DEFINITIONS AND FLAGS
-link_directories(${CMAKE_CURRENT_BINARY_DIR})
+link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 IF(MSVC)
 	#SET(DEFS "_UNICODE;UNICODE;_MT;_USRDLL")
@@ -91,6 +93,12 @@ add_subdirectory(datalisp)
 SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
+IF(NOT OPENCL_FOUND)
+	SET(DEFS "${DEFS};PR_NO_GPU")
+ELSE()
+	MESSAGE(STATUS "Using OpenCL")
+ENDIF()
+
 IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
 	SET(DEFS "${DEFS};PR_WITH_VIEWER")
 ENDIF()
@@ -98,8 +106,12 @@ ENDIF()
 configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
-			${FREEIMAGE_INCLUDE_DIR}
+			${FREEIMAGE_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
 			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
+
+IF(OPENCL_FOUND)
+include_directories(${OPENCL_INCLUDE_DIR})
+ENDIF()
 
 add_subdirectory(${PR_Root}/library)
 add_subdirectory(${PR_Root}/utils)

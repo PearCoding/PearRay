@@ -2,6 +2,8 @@
 #include "Spectrum.h"
 
 #include "PearMath.h"
+#include "gpu/GPU.h"
+#include "Logger.h"
 
 //#define PR_XYZ_LINEAR_INTERP
 
@@ -170,5 +172,146 @@ namespace PR
 		}
 
 		N *= ILL_SCALE;
+	}
+
+	XYZConverter::XYZConverter(GPU* gpu, size_t size, bool byte) :
+		mGPU(gpu), mSize(size), mByte(byte)
+	{
+#ifndef PR_NO_GPU
+		if (!mGPU)
+			return;
+
+		mProgram = gpu->program("rgbconvert");
+
+		size_t fullSize = gpu->device().getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
+		size_t maxSize = (0.4f * fullSize) /
+			(PR::Spectrum::SAMPLING_COUNT * sizeof(float));
+
+		mRunSize = PM::pm_MinT(maxSize, size);
+		try
+		{
+			mInput = cl::Buffer(gpu->context(),
+				CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
+				mRunSize * PR::Spectrum::SAMPLING_COUNT * sizeof(float)
+			);
+
+			mOutput = cl::Buffer(gpu->context(),
+				CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY,
+				mRunSize * 3 * (mByte ? sizeof(uint8) : sizeof(float))
+			);
+		}
+		catch (const cl::Error& error)
+		{
+			PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Error: %s (%s)", GPU::error(error.err()), error.what());
+		}
+#endif
+	}
+
+	void XYZConverter::convert(float* input, void* output, bool norm)
+	{
+#ifndef PR_NO_GPU
+		if (mSize > 100)
+		{
+			try
+			{
+				cl::Kernel kernel(mProgram, norm ?
+					(!mByte ? "m_xyz_norm" : "m_xyz_norm_byte") :
+					(!mByte ? "m_xyz" : "m_xyz_byte"));
+				kernel.setArg(0, mInput);
+				kernel.setArg(1, mOutput);
+
+				cl::CommandQueue queue(mGPU->context(), mGPU->device(), 0);
+
+				for (size_t off = 0; off < mSize; off += mRunSize)
+				{
+					cl::Event event;
+					size_t current = PM::pm_MinT(mSize - off, mRunSize);
+
+					queue.enqueueWriteBuffer(mInput, CL_TRUE,
+						0,
+						current * PR::Spectrum::SAMPLING_COUNT * sizeof(float),
+						&input[off * PR::Spectrum::SAMPLING_COUNT]);
+
+					queue.enqueueNDRangeKernel(
+						kernel,
+						cl::NullRange,
+						cl::NDRange(current),
+						cl::NullRange,
+						nullptr,
+						&event);
+
+					std::vector<cl::Event> events;
+					events.push_back(event);
+
+					queue.enqueueReadBuffer(mOutput, CL_TRUE,
+						0,
+						current * 3 * (mByte ? sizeof(uint8) : sizeof(float)),
+						mByte ?
+						(void*)&reinterpret_cast<uint8*>(output)[off * 3] :
+						(void*)&reinterpret_cast<float*>(output)[off * 3],
+						&events);
+				}
+			}
+			catch (const cl::Error& error)
+			{
+				PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Error: %s (%s)", GPU::error(error.err()), error.what());
+			}
+		}
+		else
+		{
+#endif
+			if (norm)
+			{
+				if (mByte)
+				{
+					for (size_t i = 0; i < mSize; ++i)
+					{
+						float r, g, b;
+						convert(Spectrum(&input[i*Spectrum::SAMPLING_COUNT]), r, g, b);
+
+						reinterpret_cast<uint8*>(output)[i * 3] = PM::pm_ClampT(r, 0.0f, 1.0f) * 255;
+						reinterpret_cast<uint8*>(output)[i * 3 + 1] = PM::pm_ClampT(g, 0.0f, 1.0f) * 255;
+						reinterpret_cast<uint8*>(output)[i * 3 + 2] = PM::pm_ClampT(b, 0.0f, 1.0f) * 255;
+					}
+				}
+				else
+				{
+					for (size_t i = 0; i < mSize; ++i)
+					{
+						convert(Spectrum(&input[i*Spectrum::SAMPLING_COUNT]),
+							reinterpret_cast<float*>(output)[i * 3],
+							reinterpret_cast<float*>(output)[i * 3 + 1],
+							reinterpret_cast<float*>(output)[i * 3 + 2]);
+					}
+				}
+			}
+			else
+			{
+				if (mByte)
+				{
+					for (size_t i = 0; i < mSize; ++i)
+					{
+						float r, g, b;
+						convertXYZ(Spectrum(&input[i*Spectrum::SAMPLING_COUNT]), r, g, b);
+
+						reinterpret_cast<uint8*>(output)[i * 3] = PM::pm_ClampT(r, 0.0f, 1.0f) * 255;
+						reinterpret_cast<uint8*>(output)[i * 3 + 1] = PM::pm_ClampT(g, 0.0f, 1.0f) * 255;
+						reinterpret_cast<uint8*>(output)[i * 3 + 2] = PM::pm_ClampT(b, 0.0f, 1.0f) * 255;
+					}
+				}
+				else
+				{
+					for (size_t i = 0; i < mSize; ++i)
+					{
+						convertXYZ(Spectrum(&input[i*Spectrum::SAMPLING_COUNT]),
+							reinterpret_cast<float*>(output)[i * 3],
+							reinterpret_cast<float*>(output)[i * 3 + 1],
+							reinterpret_cast<float*>(output)[i * 3 + 2]);
+					}
+				}
+			}
+#ifndef PR_NO_GPU
+		}
+#endif
 	}
 }

@@ -25,6 +25,7 @@ namespace PR
 		M_Ray,
 		M_Entity,
 		M_World,
+		M_GPU,
 	};
 
 	class LogListener;

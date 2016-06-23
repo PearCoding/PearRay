@@ -8,12 +8,16 @@
 #include "spectral/XYZConverter.h"
 #include "PearMath.h"
 
+#include "Logger.h"
+
 #include <QPainter>
 #include <QMouseEvent>
+#include <QDebug>
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
 	mRenderer(nullptr), mViewMode(VM_Color), mToolMode(TM_Selection), mShowProgress(true),
+	mRenderData(nullptr), mRGBConverter(nullptr), mXYZConverter(nullptr),
 	mZoom(1), mPanX(0), mPanY(0), mLastPanX(0), mLastPanY(0), mPressing(false)
 {
 	cache();
@@ -23,11 +27,38 @@ ViewWidget::ViewWidget(QWidget *parent)
 
 ViewWidget::~ViewWidget()
 {
+	if (mRenderData)
+	{
+		delete mRGBConverter;
+		delete mXYZConverter;
+		delete[] mRenderData;
+	}
 }
 
 void ViewWidget::setRenderer(PR::Renderer* renderer)
 {
 	mRenderer = renderer;
+	if (mRenderData)
+	{
+		delete mRGBConverter;
+		mRGBConverter = nullptr;
+
+		delete mXYZConverter;
+		mXYZConverter = nullptr;
+
+		delete[] mRenderData;
+		mRenderData = nullptr;
+	}
+
+	if (mRenderer)
+	{
+		mRenderData = new uchar[mRenderer->result().width()*mRenderer->result().height()*3];
+		std::memset(mRenderData, 0, mRenderer->result().width()*mRenderer->result().height() * 3 * sizeof(uchar));
+
+		mRGBConverter = new PR::RGBConverter(mRenderer->gpu(), mRenderer->result().width()*mRenderer->result().height(), true);
+		mXYZConverter = new PR::XYZConverter(mRenderer->gpu(), mRenderer->result().width()*mRenderer->result().height(), true);
+	}
+
 	refreshView();
 }
 
@@ -313,86 +344,26 @@ void ViewWidget::refreshView()
 	if (mRenderer)
 	{
 		const PR::RenderResult& result = mRenderer->result();
-
-		mRenderImage = QImage(result.width(), result.height(), QImage::Format_RGB888);
-
+		
 		if (mViewMode == VM_Color)
 		{
-			for (PR::uint32 y = 0; y < result.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < result.width(); ++x)
-				{
-					float r;
-					float g;
-					float b;
-
-					PR::RGBConverter::convertGAMMA(result.point(x, y), r, g, b);
-					r = PM::pm_ClampT<float>(r, 0, 1);
-					g = PM::pm_ClampT<float>(g, 0, 1);
-					b = PM::pm_ClampT<float>(b, 0, 1);
-
-					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-				}
-			}
+			mRGBConverter->convert(result.ptr(), mRenderData);
+			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
 		}
 		else if (mViewMode == VM_ColorLinear)
 		{
-			for (PR::uint32 y = 0; y < result.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < result.width(); ++x)
-				{
-					float r;
-					float g;
-					float b;
-
-					PR::RGBConverter::convert(result.point(x, y), r, g, b);
-					r = PM::pm_ClampT<float>(r, 0, 1);
-					g = PM::pm_ClampT<float>(g, 0, 1);
-					b = PM::pm_ClampT<float>(b, 0, 1);
-
-					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-				}
-			}
+			mRGBConverter->convert(result.ptr(), mRenderData, true);
+			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
 		}
 		else if (mViewMode == VM_XYZ)
 		{
-			for (PR::uint32 y = 0; y < result.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < result.width(); ++x)
-				{
-					float r;
-					float g;
-					float b;
-
-					PR::XYZConverter::convertXYZ(result.point(x, y), r, g, b);
-
-					float m = PM::pm_MaxT<float>(1, PM::pm_MaxT<float>(r, PM::pm_MaxT<float>(g, b)));
-					if (m != 0)
-					{
-						r /= m;
-						g /= m;
-						b /= m;
-					}
-
-					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-				}
-			}
+			mXYZConverter->convert(result.ptr(), mRenderData);
+			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
 		}
 		else if (mViewMode == VM_NORM_XYZ)
 		{
-			for (PR::uint32 y = 0; y < result.height(); ++y)
-			{
-				for (PR::uint32 x = 0; x < result.width(); ++x)
-				{
-					float r;
-					float g;
-					float b;
-
-					PR::XYZConverter::convert(result.point(x, y), r, g, b);
-
-					mRenderImage.setPixel(x, y, qRgb(r * 255, g * 255, b * 255));
-				}
-			}
+			mXYZConverter->convert(result.ptr(), mRenderData, true);
+			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
 		}
 	}
 	else

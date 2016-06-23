@@ -14,6 +14,7 @@ namespace PR
 	class Camera;
 	class Entity;
 	class FacePoint;
+	class GPU;
 	class Integrator;
 	class Material;
 	class Sampler;
@@ -70,6 +71,11 @@ namespace PR
 		// Slow and only copies!
 		std::list<RenderTile> currentTiles() const;
 
+		inline GPU* gpu() const
+		{
+			return mGPU;
+		}
+
 		// Settings
 		inline RenderSettings& settings()
 		{
@@ -109,6 +115,8 @@ namespace PR
 		std::list<RenderThread*> mThreads;
 
 		RenderSettings mRenderSettings;
+
+		GPU* mGPU;
 
 		// Statistics
 		std::atomic<size_t> mRayCount;

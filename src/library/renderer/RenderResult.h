@@ -19,6 +19,8 @@ namespace PR
 		void setPoint(uint32 x, uint32 y, const Spectrum& s);
 		Spectrum point(uint32 x, uint32 y) const;
 
+		float* ptr() const;
+
 		void clear();
 
 	private:
@@ -26,7 +28,7 @@ namespace PR
 		{
 			uint32 Width;
 			uint32 Height;
-			Spectrum* Data;
+			float* Data;
 			uint32 RefCounter;
 		};
 

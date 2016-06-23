@@ -29,6 +29,9 @@ SET(PR_Geometry_Src
   ${PR_LIB}/geometry/Sphere.cpp
   ${PR_LIB}/geometry/TriMesh.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
+SET(PR_GPU_Src
+  ${PR_LIB}/gpu/GPU.cpp)
+SOURCE_GROUP("Source Files\\GPU" FILES ${PR_GPU_Src})
 SET(PR_Integrator_Src
   ${PR_LIB}/integrator/BiDirectIntegrator.cpp
   ${PR_LIB}/integrator/DebugIntegrator.cpp
@@ -95,7 +98,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Texture_Src} 
-  ${PR_Affector_Src} ${PR_Math_Src}
+  ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src}
 )
 
 SET(PR_Main_Hdr
@@ -131,6 +134,9 @@ SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/Triangle.h
   ${PR_LIB}/geometry/TriMesh.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
+SET(PR_GPU_Hdr
+  ${PR_LIB}/gpu/GPU.h)
+SOURCE_GROUP("Header Files\\GPU" FILES ${PR_GPU_Hdr})
 SET(PR_Integrator_Hdr
   ${PR_LIB}/integrator/BiDirectIntegrator.h
   ${PR_LIB}/integrator/DebugIntegrator.h
@@ -211,9 +217,20 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Texture_Hdr}
-  ${PR_Affector_Hdr} ${PR_Math_Hdr}
+  ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_GPU_Hdr}
 )
-	
-add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr})
+
+SET(PR_CL
+  ${PR_LIB}/cl/rgbconvert.cl
+  ${PR_LIB}/cl/xyzconvert.cl)
+SOURCE_GROUP("CL Files" FILES ${PR_CL})
+  	
+add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
+target_link_libraries(${PR_TARGET} ${Boost_LIBRARIES})
+
+IF(OPENCL_FOUND)
+	target_link_libraries(${PR_TARGET} ${OPENCL_LIBRARY})
+ENDIF()
+
 set_target_properties(${PR_TARGET} PROPERTIES VERSION ${PR_Version})
-set_target_properties(${PR_TARGET} PROPERTIES COMPILE_DEFINITIONS "${DEFS};PR_LIB_BUILD;" COMPILE_DEFINITIONS_DEBUG "${DEFS_DEBUG}")
+set_target_properties(${PR_TARGET} PROPERTIES COMPILE_DEFINITIONS "${DEFS};PR_LIB_BUILD" COMPILE_DEFINITIONS_DEBUG "${DEFS_DEBUG}")

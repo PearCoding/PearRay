@@ -8,8 +8,10 @@ namespace PR
 		mData = new InternalData;
 		mData->Width = w;
 		mData->Height = h;
-		mData->Data = new Spectrum[mData->Width*mData->Height];
+		mData->Data = new float[mData->Width*mData->Height*Spectrum::SAMPLING_COUNT];
 		mData->RefCounter = 1;
+
+		clear();
 	}
 
 	RenderResult::RenderResult(const RenderResult& res)
@@ -49,10 +51,7 @@ namespace PR
 
 	void RenderResult::clear()
 	{
-		for (size_t i = 0; i < mData->Width*mData->Height; ++i)
-		{
-			mData->Data[i] = Spectrum();
-		}
+		std::memset(mData->Data, 0, mData->Width*mData->Height*Spectrum::SAMPLING_COUNT * sizeof(float));
 	}
 
 	uint32 RenderResult::width() const
@@ -67,11 +66,20 @@ namespace PR
 
 	void RenderResult::setPoint(uint32 x, uint32 y, const Spectrum& s)
 	{
-		mData->Data[y*mData->Width + x] = s;
+		const uint32 index = y*mData->Width*Spectrum::SAMPLING_COUNT + x*Spectrum::SAMPLING_COUNT;
+		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		{
+			mData->Data[index + i] = s.value(i);
+		}
 	}
 
 	Spectrum RenderResult::point(uint32 x, uint32 y) const
 	{
-		return mData->Data[y*mData->Width + x];
+		return Spectrum(&mData->Data[y*mData->Width*Spectrum::SAMPLING_COUNT + x*Spectrum::SAMPLING_COUNT]);
+	}
+
+	float* RenderResult::ptr() const
+	{
+		return mData->Data;
 	}
 }
