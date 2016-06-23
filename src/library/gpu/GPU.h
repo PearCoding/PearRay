@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include <string>
 
 #ifndef PR_NO_GPU
 # define __CL_ENABLE_EXCEPTIONS
