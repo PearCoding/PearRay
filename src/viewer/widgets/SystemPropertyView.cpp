@@ -36,7 +36,7 @@ QWidget(parent)
 	mRendererTileYProp = new IntProperty(tr("Tile Y Count"), 5, 1, 128);
 	mRendererGroupProp->addChild(mRendererTileYProp);
 
-	mRendererThreadsProp = new IntProperty(tr("Threads"), 0, 0, 64);
+	mRendererThreadsProp = new IntProperty(tr("Threads"), 0, -10000, 10000);
 	mRendererThreadsProp->setToolTip(tr("0 = Automatic"));
 	mRendererGroupProp->addChild(mRendererThreadsProp);
 

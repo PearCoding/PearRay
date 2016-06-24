@@ -41,9 +41,10 @@ IF(CYGWIN)
 ENDIF()
 
 #PACKAGES
-option(PR_ONLY_LIBRARY "Compile only the main and util library" OFF)
+option(PR_ONLY_LIBRARY "Compile only the main and util library." OFF)
 option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
-option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library" ON)
+option(PR_NO_GPU "Build framework with only CPU support." OFF)
+option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
@@ -93,7 +94,7 @@ add_subdirectory(datalisp)
 SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
-IF(NOT OpenCL_FOUND)
+IF((NOT OpenCL_FOUND) OR PR_NO_GPU)
 	SET(DEFS "${DEFS};PR_NO_GPU")
 ELSE()
 	MESSAGE(STATUS "Using OpenCL")
@@ -109,7 +110,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			${FREEIMAGE_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
 			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
 
-IF(OpenCL_FOUND)
+IF(OpenCL_FOUND AND NOT PR_NO_GPU)
 include_directories(${OpenCL_INCLUDE_DIRS})
 ENDIF()
 

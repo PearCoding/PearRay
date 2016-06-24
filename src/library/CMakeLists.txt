@@ -228,7 +228,7 @@ SOURCE_GROUP("CL Files" FILES ${PR_CL})
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
 target_link_libraries(${PR_TARGET} ${Boost_LIBRARIES})
 
-IF(OPENCL_FOUND)
+IF(OPENCL_FOUND AND NOT PR_NO_GPU)
 	target_link_libraries(${PR_TARGET} ${OpenCL_LIBRARIES})
 ENDIF()
 

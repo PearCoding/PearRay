@@ -156,7 +156,7 @@ namespace PR
 		return mBackgroundMaterial;
 	}
 
-	void Renderer::start(uint32 tcx, uint32 tcy, uint32 threads, bool clear)
+	void Renderer::start(uint32 tcx, uint32 tcy, int32 threads, bool clear)
 	{
 		reset();
 
@@ -197,7 +197,16 @@ namespace PR
 		}
 
 		/* Setup threads */
-		uint32 threadCount = threads == 0 ? Thread::hardwareThreadCount() : threads;
+		uint32 threadCount = Thread::hardwareThreadCount();
+		if (threads < 0)
+		{
+			threadCount = PM::pm_MaxT(1, (int32)threadCount + threads);
+		}
+		else if(threads > 0)
+		{
+			threadCount = threads;
+		}
+
 		for (uint32 i = 0; i < threadCount; ++i)
 		{
 			RenderThread* thread = new RenderThread(this, i);
@@ -214,10 +223,10 @@ namespace PR
 			case SM_Uniform:
 				context.setPixelSampler(new UniformSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
 				break;
-			default:
 			case SM_Jitter:
 				context.setPixelSampler(new StratifiedSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
 				break;
+			default:
 			case SM_MultiJitter:
 				context.setPixelSampler(new MultiJitteredSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
 				break;
@@ -272,9 +281,12 @@ namespace PR
 			}
 
 			auto s = context->pixelSampler()->generate2D(sample);
+
+			float rx = context->random().getFloat();// Random sampling
+			float ry = context->random().getFloat();
 			
 			Spectrum newSpec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
-				PM::pm_GetX(s), PM::pm_GetY(s),//TODO
+				rx, ry,//TODO
 				0.0f);//TODO
 
 			if (sample > 0)
@@ -295,8 +307,12 @@ namespace PR
 			for (uint32 i = sample; i < SampleCount; ++i)
 			{
 				auto s = context->pixelSampler()->generate2D(i);
+
+				float rx = context->random().getFloat();// Random sampling
+				float ry = context->random().getFloat();
+
 				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
-					PM::pm_GetX(s), PM::pm_GetY(s),//TODO
+					rx, ry,//TODO
 					0.0f);
 				newSpec += spec;
 			}

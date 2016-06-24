@@ -46,7 +46,8 @@ namespace PR
 		// tcx = tile count x
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
-		void start(uint32 tcx, uint32 tcy, uint32 threads = 0, bool clear = true);
+		// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
+		void start(uint32 tcx, uint32 tcy, int32 threads = 0, bool clear = true);
 		void stop();
 
 		bool isFinished();
