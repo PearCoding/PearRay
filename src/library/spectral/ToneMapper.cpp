@@ -5,11 +5,14 @@
 #include "gpu/GPU.h"
 #include "Logger.h"
 
+#include "RGBConverter.h"
+#include "XYZConverter.h"
 
+constexpr float REINHARD_RATIO = 0.32f;
 namespace PR
 {
 	ToneMapper::ToneMapper(GPU* gpu, size_t size, bool byte) :
-		mColorMode(PR::TCM_SRGB), mGammaMode(PR::TGM_SRGB), mMapperMode(PR::TMM_Reinhard),
+		mColorMode(PR::TCM_SRGB), mGammaMode(PR::TGM_SRGB), mMapperMode(PR::TMM_Simple_Reinhard),
 		mGPU(gpu), mSize(size), mByte(byte)
 	{
 #ifndef PR_NO_GPU
@@ -19,8 +22,8 @@ namespace PR
 		mProgram = gpu->program("tonemapper");
 
 		size_t fullSize = gpu->device().getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
-		size_t maxSize = (0.4f * fullSize) /
-			(PR::Spectrum::SAMPLING_COUNT * sizeof(float));
+		size_t maxSize = (size_t)std::ceil((0.4f * fullSize) /
+			(PR::Spectrum::SAMPLING_COUNT * sizeof(float)));
 
 		mRunSize = PM::pm_MinT(maxSize, size);
 		try
@@ -101,12 +104,24 @@ namespace PR
 				}
 
 				// Map 2: Tone Mapping
-				if (mMapperMode != TMM_None)
+				switch (mMapperMode)
 				{
-					// TODO
+				case TMM_None:
+					break;
+				case TMM_Simple_Reinhard:
+				{
+					cl::Kernel toneKernel(mProgram, "k_tone_reinhard_simple");
+					toneKernel.setArg(0, mInbetweenBuffer);
+					toneKernel.setArg(1, (cl_ulong)mSize);
+					toneKernel.setArg(2, REINHARD_RATIO);
+
+					queue.enqueueNDRangeKernel(
+						toneKernel,
+						cl::NullRange,
+						cl::NDRange(mSize),
+						cl::NullRange);
 				}
-				else
-				{
+				break;
 				}
 
 				// Map 3: Gamma Correction
@@ -158,8 +173,65 @@ namespace PR
 		else
 		{
 #endif
-			
-			// TODO
+			for (uint32 i = 0; i < mSize; ++i)
+			{
+				float r, g, b;
+				// Map 1: Spec to RGB
+				switch (mColorMode)
+				{
+				case TCM_SRGB:
+					RGBConverter::convert(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
+						r, g, b);
+					break;
+				case TCM_XYZ:
+					XYZConverter::convertXYZ(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
+						r, g, b);
+					break;
+				case TCM_XYZ_NORM:
+					XYZConverter::convert(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
+						r, g, b);
+					break;
+				case TCM_LUMINANCE:
+					RGBConverter::convert(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
+						r, g, b);
+					r = RGBConverter::luminance(r, g, b);
+					g = r; b = r;
+					break;
+				}
+
+				// Map 2: Tone Mapping
+				switch (mMapperMode)
+				{
+				case TMM_None:
+					break;
+				case TMM_Simple_Reinhard:
+					{
+						float Ld = 1 / (1 + RGBConverter::luminance(r, g, b) * REINHARD_RATIO);
+						r *= Ld; g *= Ld; b *= Ld;
+					}
+					break;
+				}
+
+				// Map 3: Gamma Correction
+				if (mGammaMode != TGM_None)
+				{
+					RGBConverter::gamma(r, g, b);
+				}
+
+				// Map 4: Float to Byte
+				if (mByte)
+				{
+					reinterpret_cast<uint8*>(out)[i * 3] = (uint8)(PM::pm_ClampT(r, 0.0f, 1.0f) * 255);
+					reinterpret_cast<uint8*>(out)[i * 3 + 1] = (uint8)(PM::pm_ClampT(g, 0.0f, 1.0f) * 255);
+					reinterpret_cast<uint8*>(out)[i * 3 + 2] = (uint8)(PM::pm_ClampT(b, 0.0f, 1.0f) * 255);
+				}
+				else
+				{
+					reinterpret_cast<float*>(out)[i * 3] = r;
+					reinterpret_cast<float*>(out)[i * 3 + 1] = g;
+					reinterpret_cast<float*>(out)[i * 3 + 2] = b;
+				}
+			}
 #ifndef PR_NO_GPU
 		}
 #endif

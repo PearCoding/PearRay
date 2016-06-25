@@ -24,7 +24,7 @@ namespace PR
 	enum ToneMapperMode
 	{
 		TMM_None,
-		TMM_Reinhard
+		TMM_Simple_Reinhard
 	};
 	class PR_LIB ToneMapper
 	{

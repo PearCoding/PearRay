@@ -223,11 +223,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
 )
 
 SET(PR_CL
-  ${PR_LIB}/cl/rgb.cl
-  ${PR_LIB}/cl/rgbconvert.cl
-  ${PR_LIB}/cl/tone_reinhard.cl
   ${PR_LIB}/cl/tonemapper.cl
-  ${PR_LIB}/cl/xyzconvert.cl
   ${PR_LIB}/cl/xyztable.cl)
 SOURCE_GROUP("CL Files" FILES ${PR_CL})
   	

@@ -8,7 +8,7 @@
 SpectrumWidget::SpectrumWidget(QWidget *parent)
 	: QWidget(parent),
 	mSpectrum(), mCurrentNM(-1),
-	mSpecInf(false), mSpecNaN(false), mSpecMax(1)
+	mSpecInf(false), mSpecNaN(false), mSpecMax(1), mSpecLuminance(0)
 {
 	cache();
 	cacheImage();
@@ -145,13 +145,15 @@ void SpectrumWidget::cache()
 	mSpecMax = qMax(1.0f, qMax(mSpectrum.max(), -mSpectrum.min()));
 
 	float R, G, B;
-	PR::RGBConverter::convertGAMMA(mSpectrum, R, G, B);
-	mSpecRGB = QColor(qBound<int>(0, R * 255, 255),
+	PR::RGBConverter::convert(mSpectrum, R, G, B);
+	mSpecRGBLinear = QColor(qBound<int>(0, R * 255, 255),
 		qBound<int>(0, G * 255, 255),
 		qBound<int>(0, B * 255, 255));
 
-	PR::RGBConverter::convert(mSpectrum, R, G, B);
-	mSpecRGBLinear = QColor(qBound<int>(0, R * 255, 255),
+	mSpecLuminance = PR::RGBConverter::luminance(R, G, B);
+
+	PR::RGBConverter::gamma(R, G, B);
+	mSpecRGB = QColor(qBound<int>(0, R * 255, 255),
 		qBound<int>(0, G * 255, 255),
 		qBound<int>(0, B * 255, 255));
 

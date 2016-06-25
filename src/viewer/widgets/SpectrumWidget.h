@@ -50,4 +50,5 @@ private:
 	QColor mSpecRGBLinear;
 	QColor mSpecXYZ;
 	QColor mSpecXYZNorm;
+	float mSpecLuminance;
 };

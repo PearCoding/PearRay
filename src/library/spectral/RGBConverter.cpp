@@ -84,9 +84,13 @@ namespace PR
 		z =  0.000573063005776f * X - 0.002101231021178f * Y + 0.010888197109740f * Z;*/
 	}
 
-	void RGBConverter::convertGAMMA(const Spectrum& s, float &x, float &y, float &z)
+	float RGBConverter::luminance(float r, float g, float b)
 	{
-		convert(s, x, y, z);
+		return 0.2126f*r + 0.7152f*g + 0.0722f*b;
+	}
+
+	void RGBConverter::gamma(float &x, float &y, float &z)
+	{
 		x = (x <= 0.0031308f) ? 12.92f*x : (1.055f*pow(x, 0.4166666f) - 0.055f);
 		y = (y <= 0.0031308f) ? 12.92f*y : (1.055f*pow(y, 0.4166666f) - 0.055f);
 		z = (z <= 0.0031308f) ? 12.92f*z : (1.055f*pow(z, 0.4166666f) - 0.055f);

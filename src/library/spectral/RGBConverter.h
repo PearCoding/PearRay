@@ -15,8 +15,8 @@ namespace PR
 		/* D65 sRGB (linear) */
 		static void convert(const Spectrum& s, float &x, float &y, float &z);
 
-		/* D65 sRGB (sRGB gamma) */
-		static void convertGAMMA(const Spectrum& s, float &x, float &y, float &z);
+		static float luminance(float r, float g, float b);
+		static void gamma(float &x, float &y, float &z);
 
 		static Spectrum toSpec(float x, float y, float z);
 		static void init();
