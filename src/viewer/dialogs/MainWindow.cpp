@@ -35,14 +35,31 @@ MainWindow::MainWindow(QWidget *parent)
 	ui.menuDockWidgets->addAction(ui.entityDetailsDockWidget->toggleViewAction());
 
 	// Add view combobox
-	QComboBox* viewCombo = new QComboBox(this);
-	viewCombo->addItem(tr("sRGB"));
-	viewCombo->addItem(tr("sRGB linear"));
-	viewCombo->addItem(tr("CIE XYZ"));
-	viewCombo->addItem(tr("CIE norm XYZ"));
+	QComboBox* viewColorCombo = new QComboBox(this);
+	viewColorCombo->addItem(tr("sRGB"));
+	viewColorCombo->addItem(tr("CIE XYZ"));
+	viewColorCombo->addItem(tr("CIE norm XYZ"));
+	viewColorCombo->addItem(tr("Luminance"));
+	viewColorCombo->setToolTip(tr("Color Mode"));
 	ui.mainToolBar->addSeparator();
-	ui.mainToolBar->addWidget(viewCombo);
-	connect(viewCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewMode(int)));
+	ui.mainToolBar->addWidget(viewColorCombo);
+	connect(viewColorCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewColorMode(int)));
+
+	QComboBox* viewGammaCombo = new QComboBox(this);
+	viewGammaCombo->addItem(tr("None"));
+	viewGammaCombo->addItem(tr("2.2 sRGB"));
+	viewGammaCombo->setCurrentIndex(1);
+	viewGammaCombo->setToolTip(tr("Gamma Mode"));
+	ui.mainToolBar->addWidget(viewGammaCombo);
+	connect(viewGammaCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewGammaMode(int)));
+
+	QComboBox* viewMapperCombo = new QComboBox(this);
+	viewMapperCombo->addItem(tr("None"));
+	viewMapperCombo->addItem(tr("Reinhard"));
+	viewMapperCombo->setCurrentIndex(1);
+	viewMapperCombo->setToolTip(tr("Tone Mapper"));
+	ui.mainToolBar->addWidget(viewMapperCombo);
+	connect(viewMapperCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewMapperMode(int)));
 
 	//Connect all signal and slots
 	connect(ui.actionOpenScene, SIGNAL(triggered()), this, SLOT(openScene()));
@@ -61,7 +78,6 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.actionShowDockWidgets, SIGNAL(triggered()), this, SLOT(showAllDocks()));
 	connect(ui.actionHideDockWidgets, SIGNAL(triggered()), this, SLOT(hideAllDocks()));
 
-	connect(ui.systemPropertyView, SIGNAL(viewModeChanged(ViewMode)), ui.viewWidget, SLOT(setViewMode(ViewMode)));
 	connect(ui.actionReset_Zoom, SIGNAL(triggered()), ui.viewWidget, SLOT(resetZoomPan()));
 	connect(ui.actionFit_Image_into_Area, SIGNAL(triggered()), ui.viewWidget, SLOT(fitIntoWindow()));
 	connect(ui.actionZoom_In, SIGNAL(triggered()), ui.viewWidget, SLOT(zoomIn()));
@@ -515,7 +531,17 @@ void MainWindow::selectCropTool(bool b)
 	ui.viewWidget->setToolMode(TM_Crop);
 }
 
-void MainWindow::setViewMode(int i)
+void MainWindow::setViewColorMode(int i)
 {
-	ui.viewWidget->setViewMode((ViewMode)i);
+	ui.viewWidget->setColorMode((PR::ToneColorMode)i);
+}
+
+void MainWindow::setViewGammaMode(int i)
+{
+	ui.viewWidget->setGammaMode((PR::ToneGammaMode)i);
+}
+
+void MainWindow::setViewMapperMode(int i)
+{
+	ui.viewWidget->setMapperMode((PR::ToneMapperMode)i);
 }

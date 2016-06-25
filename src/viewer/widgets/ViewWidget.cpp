@@ -4,8 +4,7 @@
 #include "renderer/RenderResult.h"
 #include "renderer/RenderTile.h"
 
-#include "spectral/RGBConverter.h"
-#include "spectral/XYZConverter.h"
+#include "spectral/ToneMapper.h"
 #include "PearMath.h"
 
 #include "Logger.h"
@@ -16,8 +15,8 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr), mViewMode(VM_Color), mToolMode(TM_Selection), mShowProgress(true),
-	mRenderData(nullptr), mRGBConverter(nullptr), mXYZConverter(nullptr),
+	mRenderer(nullptr), mToolMode(TM_Selection), mShowProgress(true),
+	mRenderData(nullptr), mToneMapper(nullptr),
 	mZoom(1), mPanX(0), mPanY(0), mLastPanX(0), mLastPanY(0), mPressing(false)
 {
 	cache();
@@ -29,8 +28,7 @@ ViewWidget::~ViewWidget()
 {
 	if (mRenderData)
 	{
-		delete mRGBConverter;
-		delete mXYZConverter;
+		delete mToneMapper;
 		delete[] mRenderData;
 	}
 }
@@ -40,11 +38,8 @@ void ViewWidget::setRenderer(PR::Renderer* renderer)
 	mRenderer = renderer;
 	if (mRenderData)
 	{
-		delete mRGBConverter;
-		mRGBConverter = nullptr;
-
-		delete mXYZConverter;
-		mXYZConverter = nullptr;
+		delete mToneMapper;
+		mToneMapper = nullptr;
 
 		delete[] mRenderData;
 		mRenderData = nullptr;
@@ -55,8 +50,7 @@ void ViewWidget::setRenderer(PR::Renderer* renderer)
 		mRenderData = new uchar[mRenderer->result().width()*mRenderer->result().height()*3];
 		std::memset(mRenderData, 0, mRenderer->result().width()*mRenderer->result().height() * 3 * sizeof(uchar));
 
-		mRGBConverter = new PR::RGBConverter(mRenderer->gpu(), mRenderer->result().width()*mRenderer->result().height(), true);
-		mXYZConverter = new PR::XYZConverter(mRenderer->gpu(), mRenderer->result().width()*mRenderer->result().height(), true);
+		mToneMapper = new PR::ToneMapper(mRenderer->gpu(), mRenderer->result().width()*mRenderer->result().height(), true);
 	}
 
 	refreshView();
@@ -344,27 +338,8 @@ void ViewWidget::refreshView()
 	if (mRenderer)
 	{
 		const PR::RenderResult& result = mRenderer->result();
-		
-		if (mViewMode == VM_Color)
-		{
-			mRGBConverter->convert(result.ptr(), mRenderData);
-			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
-		}
-		else if (mViewMode == VM_ColorLinear)
-		{
-			mRGBConverter->convert(result.ptr(), mRenderData, true);
-			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
-		}
-		else if (mViewMode == VM_XYZ)
-		{
-			mXYZConverter->convert(result.ptr(), mRenderData);
-			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
-		}
-		else if (mViewMode == VM_NORM_XYZ)
-		{
-			mXYZConverter->convert(result.ptr(), mRenderData, true);
-			mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
-		}
+		mToneMapper->exec(result.ptr(), mRenderData);
+		mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
 	}
 	else
 	{

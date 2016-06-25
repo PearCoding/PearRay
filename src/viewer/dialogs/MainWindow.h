@@ -54,7 +54,10 @@ private slots:
 
 	void entitySelected(QModelIndex index);
 
-	void setViewMode(int);
+	void setViewColorMode(int);
+	void setViewGammaMode(int);
+	void setViewMapperMode(int);
+
 	void selectSelectionTool(bool b);
 	void selectPanTool(bool b);
 	void selectZoomTool(bool b);

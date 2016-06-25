@@ -2,7 +2,6 @@
 
 #include <QWidget>
 #include "properties/PropertyTable.h"
-#include "ViewWidget.h"
 
 namespace PR
 {
@@ -27,8 +26,6 @@ public:
 signals:
 	void startRendering();
 	void stopRendering();
-	void viewModeChanged(ViewMode);
-	void viewScaleChanged(bool);
 
 private slots:
 	void propertyValueChanged(IProperty* prop);

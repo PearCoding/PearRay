@@ -76,6 +76,7 @@ SET(PR_Spectral_Src
   ${PR_LIB}/spectral/IntensityConverter.cpp
   ${PR_LIB}/spectral/RGBConverter.cpp
   ${PR_LIB}/spectral/Spectrum.cpp
+  ${PR_LIB}/spectral/ToneMapper.cpp
   ${PR_LIB}/spectral/XYZConverter.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
 SET(PR_Texture_Src
@@ -191,6 +192,7 @@ SET(PR_Spectral_Hdr
   ${PR_LIB}/spectral/RGBConverter.h
   ${PR_LIB}/spectral/Spectrum.h
   ${PR_LIB}/spectral/Spectrum.inl
+  ${PR_LIB}/spectral/ToneMapper.h
   ${PR_LIB}/spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Texture_Hdr
@@ -221,8 +223,12 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
 )
 
 SET(PR_CL
+  ${PR_LIB}/cl/rgb.cl
   ${PR_LIB}/cl/rgbconvert.cl
-  ${PR_LIB}/cl/xyzconvert.cl)
+  ${PR_LIB}/cl/tone_reinhard.cl
+  ${PR_LIB}/cl/tonemapper.cl
+  ${PR_LIB}/cl/xyzconvert.cl
+  ${PR_LIB}/cl/xyztable.cl)
 SOURCE_GROUP("CL Files" FILES ${PR_CL})
   	
 add_library(${PR_TARGET} SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})

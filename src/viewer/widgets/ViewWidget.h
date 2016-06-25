@@ -3,21 +3,14 @@
 #include <QWidget>
 #include <QImage>
 
+#include "spectral/ToneMapper.h"
+
 namespace PR
 {
 	class Renderer;
 	class Spectrum;
-	class RGBConverter;
-	class XYZConverter;
+	class ToneMapper;
 }
-
-enum ViewMode
-{
-	VM_Color,// sRGB
-	VM_ColorLinear,// sRGB Linear
-	VM_XYZ,// Color space (CIE XYZ)
-	VM_NORM_XYZ// Color space (CIE XYZ)
-};
 
 enum ToolMode
 {
@@ -37,9 +30,19 @@ public:
 
 	void setRenderer(PR::Renderer* renderer);
 
-	inline ViewMode viewMode() const
+	inline PR::ToneColorMode colorMode() const
 	{
-		return mViewMode;
+		return mToneMapper->colorMode();
+	}
+
+	inline PR::ToneGammaMode gammaMode() const
+	{
+		return mToneMapper->gammaMode();
+	}
+
+	inline PR::ToneMapperMode mapperMode() const
+	{
+		return mToneMapper->mapperMode();
 	}
 
 	inline ToolMode toolMode() const
@@ -56,9 +59,21 @@ public:
 	QRect selectedCropRect() const;
 
 public slots:
-	inline void setViewMode(ViewMode vm)
+	inline void setColorMode(PR::ToneColorMode mode)
 	{
-		mViewMode = vm;
+		mToneMapper->setColorMode(mode);
+		refreshView();
+	}
+
+	inline void setGammaMode(PR::ToneGammaMode mode)
+	{
+		mToneMapper->setGammaMode(mode);
+		refreshView();
+	}
+
+	inline void setMapperMode(PR::ToneMapperMode mode)
+	{
+		mToneMapper->setMapperMode(mode);
 		refreshView();
 	}
 
@@ -92,7 +107,6 @@ private:
 
 	PR::Renderer* mRenderer;
 
-	ViewMode mViewMode;
 	ToolMode mToolMode;
 
 	bool mShowProgress;
@@ -101,8 +115,7 @@ private:
 	QImage mRenderImage;
 	QImage mScaledImage;
 
-	PR::RGBConverter* mRGBConverter;
-	PR::XYZConverter* mXYZConverter;
+	PR::ToneMapper* mToneMapper;
 
 	QPixmap mBackgroundImage;
 

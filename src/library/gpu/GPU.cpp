@@ -265,8 +265,7 @@ namespace PR
 			std::stringstream sstream;
 			sstream << "-D SAMPLING_COUNT=" << Spectrum::SAMPLING_COUNT;
 
-			addSource("rgbconvert", "rgbconvert.cl", cl_dir, sstream.str());
-			addSource("xyzconvert", "xyzconvert.cl", cl_dir, sstream.str());
+			addSource("tonemapper", "tonemapper.cl", cl_dir, sstream.str());
 		}
 
 		return true;
