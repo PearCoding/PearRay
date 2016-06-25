@@ -24,7 +24,9 @@ int main(int argc, char** argv)
 	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
 	PR::XYZConverter::convert(spec, x, y, z);
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR::RGBConverter::convertGAMMA(spec, gR, gG, gB);
+	
+	PR::RGBConverter::convert(spec, gR, gG, gB);
+	PR::RGBConverter::gamma(gR, gG, gB);
 
 	std::cout << "X " << X << " Y " << Y << " Z " << Z << std::endl;
 	std::cout << "x " << x << " y " << y << " z " << z << std::endl;
