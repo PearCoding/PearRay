@@ -51,14 +51,4 @@ namespace PR
 	{
 		mMaxDepth = i;
 	}
-
-	inline uint8 Ray::flags() const
-	{
-		return mFlags;
-	}
-
-	inline void Ray::setFlags(uint8 flags)
-	{
-		mFlags = flags;
-	}
 }

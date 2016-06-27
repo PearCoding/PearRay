@@ -68,19 +68,13 @@ namespace PR
 
 		collisionPoint.setVertex(PM::pm_SetW(collisionPos, 1));
 
-		if (ray.flags() & RF_NeedCollisionNormal || ray.flags() & RF_NeedCollisionUV)
-		{
-			PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
-			collisionPoint.setNormal(norm);
+		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
+		collisionPoint.setNormal(norm);
 
-			if (ray.flags() & RF_NeedCollisionUV)
-			{
-				PM::vec3 rotNorm = PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm);
-				float u = (std::acos(PM::pm_GetZ(rotNorm)) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
-				float v = (std::atan2(PM::pm_GetY(rotNorm), PM::pm_GetX(rotNorm)) * PM_INV_PI_F + 1) * 0.5f;
-				collisionPoint.setUV(PM::pm_Set(u, v));
-			}
-		}
+		PM::vec3 rotNorm = PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm);
+		float u = 0.5f + std::atan2(PM::pm_GetZ(rotNorm), PM::pm_GetX(rotNorm)) * PM_INV_PI_F * 0.5f;
+		float v = 0.5f - std::asin(-PM::pm_GetY(rotNorm)) * PM_INV_PI_F;
+		collisionPoint.setUV(PM::pm_Set(u, v));
 
 		collisionPoint.setMaterial(material());
 		return true;

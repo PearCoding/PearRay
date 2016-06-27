@@ -443,7 +443,7 @@ void MainWindow::startRendering(bool clear)
 		mRenderer->crop(0, 1, 0, 1);
 	}
 
-	mTimer.start(200);
+	mTimer.start(500);
 	mElapsedTime.restart();
 	mFrameTime.restart();
 	mRenderer->start(ui.systemPropertyView->getTileX(),

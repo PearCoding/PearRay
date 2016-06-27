@@ -36,7 +36,7 @@ namespace PR
 	PM::vec3 DiffuseMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
 	{
 		auto dir = Projection::align(point.normal(), Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
-		pdf = DiffuseMaterial::pdf(point, V, dir);
+		pdf = PM_INV_PI_F*PM_INV_PI_F;
 		return dir;
 	}
 }

@@ -81,7 +81,7 @@ namespace PR
 			dir = refract(!point.isInside() ? 1/ind : ind, NdotV, point.normal(), V);
 		}
 
-		pdf = GlassMaterial::pdf(point, V, dir);
+		pdf = std::numeric_limits<float>::infinity();
 		return dir;
 	}
 }

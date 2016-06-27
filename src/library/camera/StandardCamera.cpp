@@ -157,8 +157,8 @@ namespace PR
 			mFocalDistance_Cache = mFStop * PM::pm_Magnitude3D(L);
 			mXApertureRadius_Cache = PM::pm_Scale(mRight_Cache, mApertureRadius);
 			mYApertureRadius_Cache = PM::pm_Scale(mUp_Cache, mApertureRadius);
-			mRight_Cache = PM::pm_Scale(mRight_Cache, mWidth * mFocalDistance_Cache);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, mHeight * mFocalDistance_Cache);
+			mRight_Cache = PM::pm_Scale(mRight_Cache, mWidth);
+			mUp_Cache = PM::pm_Scale(mUp_Cache, mHeight);
 		}
 	}
 }

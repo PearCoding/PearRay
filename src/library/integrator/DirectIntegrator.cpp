@@ -86,7 +86,6 @@ namespace PR
 						FacePoint tmpPoint;
 						Spectrum applied;
 						Ray ray(point.vertex(), L, in.depth() + 1);
-						ray.setFlags(ray.flags() | RF_ShadowRay);
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{

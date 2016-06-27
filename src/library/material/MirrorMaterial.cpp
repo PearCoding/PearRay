@@ -68,7 +68,7 @@ namespace PR
 		const float ind = index(PM::pm_GetX(rnd));
 		auto dir = reflect(PM::pm_Dot3D(point.normal(), V), point.normal(), V);
 
-		pdf = MirrorMaterial::pdf(point, V, dir);
+		pdf = std::numeric_limits<float>::infinity();
 		return dir;
 	}
 }

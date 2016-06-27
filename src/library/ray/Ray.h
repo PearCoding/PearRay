@@ -5,21 +5,11 @@
 
 namespace PR
 {
-	enum RayFlags
-	{
-		RF_NeedCollisionNormal = 0x1,
-		RF_NeedCollisionUV = 0x2,
-
-		RF_DefaultCollision = RF_NeedCollisionNormal | RF_NeedCollisionUV,
-
-		RF_ShadowRay = 0x10,
-	};
-
 	class PR_LIB Ray
 	{
 	public:
 		Ray();
-		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0);
+		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint32 maxDepth = 0);
 		virtual ~Ray();
 
 		inline void setStartPosition(const PM::vec3& p);
@@ -36,16 +26,12 @@ namespace PR
 
 		inline uint32 maxDepth() const;
 		inline void setMaxDepth(uint32 i);
-
-		inline uint8 flags() const;
-		inline void setFlags(uint8 flags);
 	private:
 		alignas(16) PM::vec3 mStartPosition;
 		alignas(16) PM::vec3 mDirection;
 		uint32 mDepth;// Recursion depth!
 		float mTime;
 		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
-		uint8 mFlags;
 	};
 }
 

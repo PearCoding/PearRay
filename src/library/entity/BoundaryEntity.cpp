@@ -66,18 +66,14 @@ namespace PR
 		BoundingBox::FaceSide side;
 		if (box.intersects(local, vertex, t, side))
 		{
-			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), vertex), 1));
+			collisionPoint.setVertex(PM::pm_Multiply(matrix(), vertex));
 
 			Plane plane = box.getFace(side);
-			collisionPoint.setNormal(PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), plane.normal())));// Have to normalize again?
+			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));// Have to normalize again?
 
-			if (ray.flags() & RF_NeedCollisionUV)
-			{
-				float u, v;
-				plane.project(vertex, u, v);
-				collisionPoint.setUV(PM::pm_Set(u, v));
-			}
-
+			float u, v;
+			plane.project(vertex, u, v);
+			collisionPoint.setUV(PM::pm_Set(u, v));
 			collisionPoint.setMaterial(material());
 			return true;
 		}
