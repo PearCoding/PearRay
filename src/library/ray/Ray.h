@@ -5,6 +5,7 @@
 
 namespace PR
 {
+	constexpr float RayOffsetEpsilon = 0.000001f;
 	class PR_LIB Ray
 	{
 	public:
@@ -26,6 +27,8 @@ namespace PR
 
 		inline uint32 maxDepth() const;
 		inline void setMaxDepth(uint32 i);
+
+		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
 	private:
 		alignas(16) PM::vec3 mStartPosition;
 		alignas(16) PM::vec3 mDirection;

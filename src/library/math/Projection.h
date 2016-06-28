@@ -39,6 +39,22 @@ namespace PR
 			return V;
 		}
 
+		// N Orientation Z+
+		static inline void tangent_frame(const PM::vec3& N, PM::vec3& X, PM::vec3& Y)
+		{
+			PM::vec3 t = std::abs(PM::pm_GetX(N)) > 0.99f ? PM::pm_Set(0, 1, 0) : PM::pm_Set(1, 0, 0);
+			Y = PM::pm_Normalize3D(PM::pm_Cross3D(N, t));
+			X = PM::pm_Cross3D(Y, N);
+		}
+
+		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& V)
+		{
+			PM::vec3 X, Y;
+			tangent_frame(N, X, Y);
+			return PM::pm_Add(PM::pm_Add(PM::pm_Scale(N, PM::pm_GetZ(V)), PM::pm_Scale(Y, PM::pm_GetY(V))),
+				PM::pm_Scale(X, PM::pm_GetX(V)));
+		}
+
 		// Projections 
 		
 		// Uniform [0, 1]
@@ -96,7 +112,7 @@ namespace PR
 		static inline PM::vec3 cos_hemi(float u1, float u2)
 		{
 			const float cosPhi = std::sqrt(1 - u1);
-			const float sinPhi = std::sin(std::acos(cosPhi));// Faster?
+			const float sinPhi = std::sqrt(1 - cosPhi*cosPhi);// Faster?
 			const float theta = PM_2_PI_F * u2;
 
 			float thCos, thSin;
@@ -111,7 +127,7 @@ namespace PR
 		static inline PM::vec3 cos_hemi(float u1, float u2, int m)
 		{
 			const float cosPhi = std::pow(1 - u1, 1 / (m + 1.0f));
-			const float sinPhi = std::sin(std::acos(cosPhi));// Faster?
+			const float sinPhi = std::sqrt(1 - cosPhi*cosPhi);// Faster?
 			const float theta = PM_2_PI_F * u2;
 
 			float thCos, thSin;

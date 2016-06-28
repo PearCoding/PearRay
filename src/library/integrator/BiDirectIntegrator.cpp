@@ -107,8 +107,7 @@ namespace PR
 						Projection::align(lightSample.normal(),
 							Projection::cos_hemi(context->random().getFloat(), context->random().getFloat()));
 
-					current.setStartPosition(lightSample.vertex());
-					current.setDirection(lightDir);
+					current = current.next(lightSample.vertex(), lightDir);
 					current.setDepth(1);
 
 					// Initiate with power
@@ -131,14 +130,11 @@ namespace PR
 
 							PR_DEBUG_ASSERT(NdotL <= 1);
 
-							Ray out;
 							float pdf;
 							PM::vec3 s = PM::pm_Set(context->random().getFloat(),
 								context->random().getFloat(),
 								context->random().getFloat());
-							out.setDirection(collision.material()->sample(collision, s, current.direction(), pdf));
-							out.setDepth(in.depth() + 1);
-							out.setStartPosition(collision.vertex());
+							Ray out = current.next(collision.vertex(), collision.material()->sample(collision, s, current.direction(), pdf));
 
 							if (pdf <= PM_EPSILON)
 							{
@@ -201,7 +197,7 @@ namespace PR
 				if (NdotL > PM_EPSILON &&
 					(std::isinf(pdf) || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
 				{
-					Spectrum applied = applyRay(Ray(point.vertex(), dir, in.depth() + 1),
+					Spectrum applied = applyRay(in.next(point.vertex(), dir),
 						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
 
 					weight = point.material()->apply(point, in.direction(), dir) * applied * NdotL;
@@ -223,7 +219,7 @@ namespace PR
 						const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
 
 						Spectrum weight;
-						Ray shootRay(lightPos,
+						Ray shootRay = in.next(lightPos,
 							PM::pm_Normalize3D(PM::pm_Subtract(point.vertex(), lightPos)));
 
 						float pdf = point.material()->pdf(point, in.direction(), shootRay.direction());

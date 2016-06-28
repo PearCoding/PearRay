@@ -103,6 +103,11 @@ namespace PR
 		return width()*height()*depth();
 	}
 
+	float BoundingBox::surfaceArea() const
+	{
+		return 2 * (width()*height() + width()*depth() + height()*depth());
+	}
+
 	bool BoundingBox::isValid() const
 	{
 		return volume() > PM_EPSILON;

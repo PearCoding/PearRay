@@ -51,7 +51,7 @@ namespace PR
 
 			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 			{
-				Ray ray(point.vertex(), dir, in.depth() + 1);
+				Ray ray = in.next(point.vertex(), dir);
 
 				FacePoint point2;
 				Spectrum applied;
@@ -77,7 +77,7 @@ namespace PR
 					FacePoint p = light->getRandomFacePoint(sampler, i);
 
 					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.vertex(), point.vertex()));
-					const float NdotL = PM::pm_Dot3D(L, point.normal());
+					const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
 
 					Spectrum weight;
 					float pdf = point.material()->pdf(point, in.direction(), L);
@@ -85,7 +85,7 @@ namespace PR
 					{
 						FacePoint tmpPoint;
 						Spectrum applied;
-						Ray ray(point.vertex(), L, in.depth() + 1);
+						Ray ray = in.next(point.vertex(), L);
 
 						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
 						{

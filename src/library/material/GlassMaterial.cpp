@@ -49,13 +49,9 @@ namespace PR
 	Spectrum GlassMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
 		if (mSpecularity)
-		{
 			return mSpecularity->eval(point.uv());
-		}
 		else
-		{
 			return Spectrum();
-		}
 	}
 
 	float GlassMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
@@ -73,13 +69,9 @@ namespace PR
 
 		PM::vec3 dir;
 		if (PM::pm_GetY(rnd) < d)
-		{
 			dir = reflect(NdotV, point.normal(), V);
-		}
 		else
-		{
 			dir = refract(!point.isInside() ? 1/ind : ind, NdotV, point.normal(), V);
-		}
 
 		pdf = std::numeric_limits<float>::infinity();
 		return dir;

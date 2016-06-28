@@ -29,6 +29,7 @@ namespace PRU
 		DL::Data* lookAtD = group->getFromKey("lookAt");
 		DL::Data* fstopD = group->getFromKey("fstop");
 		DL::Data* apertureRadiusD = group->getFromKey("apertureRadius");
+		DL::Data* zoomD = group->getFromKey("zoom");
 
 		StandardCamera* camera = new StandardCamera(name, parent);
 
@@ -67,6 +68,17 @@ namespace PRU
 			}
 
 			camera->setWithSize(width, height);
+		}
+
+		if (zoomD && zoomD->isNumber())
+		{
+			float zoom = zoomD->getFloatConverted();
+
+			if (zoom > PM_EPSILON)
+			{
+				camera->setWidth(camera->width() / zoom);
+				camera->setHeight(camera->height() / zoom);
+			}
 		}
 
 		if (lookAtD && lookAtD->isType() == DL::Data::T_Array)
