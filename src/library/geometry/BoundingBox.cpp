@@ -28,10 +28,10 @@ namespace PR
 				mLowerBound = PM::pm_SetIndex(mLowerBound, i, ui);
 			}
 
-			if (std::abs(d) < PM_EPSILON)
+			/*if (std::abs(d) < PM_EPSILON)
 			{
 				mUpperBound = PM::pm_SetIndex(mUpperBound, i, ui + BIAS);
-			}
+			}*/
 		}
 	}
 
@@ -110,7 +110,12 @@ namespace PR
 
 	bool BoundingBox::isValid() const
 	{
-		return volume() > PM_EPSILON;
+		return surfaceArea() > PM_EPSILON;
+	}
+
+	bool BoundingBox::isPlanar() const
+	{
+		return width() <= PM_EPSILON || height() <= PM_EPSILON || depth() <= PM_EPSILON;
 	}
 
 	bool BoundingBox::contains(const PM::vec3& point) const

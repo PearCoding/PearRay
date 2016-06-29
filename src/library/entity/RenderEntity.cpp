@@ -22,6 +22,11 @@ namespace PR
 	{
 		return false;
 	}
+	
+	uint64 RenderEntity::collisionCost() const
+	{
+		return 1;
+	}
 
 	BoundingBox RenderEntity::localBoundingBox() const
 	{

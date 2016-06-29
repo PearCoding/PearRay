@@ -22,6 +22,8 @@ namespace PR
 		virtual bool isLight() const = 0;
 
 		virtual bool isCollidable() const;
+		virtual uint64 collisionCost() const;
+
 		virtual BoundingBox localBoundingBox() const;
 		virtual BoundingBox worldBoundingBox() const;
 

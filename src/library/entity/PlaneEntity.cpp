@@ -54,6 +54,11 @@ namespace PR
 		return true;
 	}
 
+	uint64 PlaneEntity::collisionCost() const
+	{
+		return 2;
+	}
+
 	BoundingBox PlaneEntity::localBoundingBox() const
 	{
 		return mPlane.toLocalBoundingBox();

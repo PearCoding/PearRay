@@ -95,7 +95,7 @@ namespace PRU
 					PR_LOGGER.logf(L_Error, M_Scene, "Mesh '%s' already in use.", next.c_str());
 
 				env->addMesh(next, mesh);
-				PR_LOGGER.logf(L_Info, M_Scene, "Adding mesh '%s'", next.c_str());
+				PR_LOGGER.logf(L_Info, M_Scene, "Added mesh '%s'", next.c_str());
 			}
 		}
 	}

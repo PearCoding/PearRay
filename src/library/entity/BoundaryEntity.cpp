@@ -49,6 +49,11 @@ namespace PR
 		return true;
 	}
 
+	uint64 BoundaryEntity::collisionCost() const
+	{
+		return 2;
+	}
+
 	BoundingBox BoundaryEntity::localBoundingBox() const
 	{
 		return mBoundingBox;

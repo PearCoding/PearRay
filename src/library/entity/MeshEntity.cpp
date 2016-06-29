@@ -44,6 +44,11 @@ namespace PR
 		return mMesh != nullptr;
 	}
 
+	uint64 MeshEntity::collisionCost() const
+	{
+		return mMesh->collisionCost();
+	}
+
 	BoundingBox MeshEntity::localBoundingBox() const
 	{
 		PR_DEBUG_ASSERT(mMesh);

@@ -113,6 +113,11 @@ namespace PR
 		return ((PR::kdTree<Face>*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
 	}
 
+	uint64 TriMesh::collisionCost() const
+	{
+		return 2 * ((PR::kdTree<Face>*)mKDTree)->depth();
+	}
+
 	FacePoint TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		auto ret = sampler.generate3D(sample);

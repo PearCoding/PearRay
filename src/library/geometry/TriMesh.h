@@ -39,6 +39,8 @@ namespace PR
 			return mBoundingBox;
 		}
 
+		virtual uint64 collisionCost() const override;
+
 		bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) override;
 		FacePoint getRandomFacePoint(Sampler& sampler, uint32 sample) const override;
 

@@ -53,6 +53,11 @@ namespace PR
 		return true;
 	}
 
+	uint64 SphereEntity::collisionCost() const
+	{
+		return 1;
+	}
+
 	BoundingBox SphereEntity::localBoundingBox() const
 	{
 		return BoundingBox(PM::pm_Set(mRadius, mRadius, mRadius, 1),

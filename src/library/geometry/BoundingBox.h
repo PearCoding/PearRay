@@ -46,6 +46,7 @@ namespace PR
 		float surfaceArea() const;
 
 		bool isValid() const;
+		bool isPlanar() const;
 
 		bool contains(const PM::vec3& point) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const;
