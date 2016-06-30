@@ -23,7 +23,7 @@ namespace PR
 		return false;
 	}
 	
-	uint64 RenderEntity::collisionCost() const
+	float RenderEntity::collisionCost() const
 	{
 		return 1;
 	}

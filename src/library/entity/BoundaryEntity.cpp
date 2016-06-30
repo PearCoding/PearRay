@@ -49,7 +49,7 @@ namespace PR
 		return true;
 	}
 
-	uint64 BoundaryEntity::collisionCost() const
+	float BoundaryEntity::collisionCost() const
 	{
 		return 2;
 	}

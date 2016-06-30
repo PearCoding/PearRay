@@ -8,6 +8,8 @@
 
 namespace PR
 {
+	typedef kdTree<RenderEntity, true> SceneKDTree;
+
 	Scene::Scene(const std::string& name) :
 		mName(name), mKDTree(nullptr)
 	{
@@ -83,7 +85,7 @@ namespace PR
 
 		if (mKDTree)
 		{
-			delete (kdTree<RenderEntity>*)mKDTree;
+			delete (SceneKDTree*)mKDTree;
 			mKDTree = nullptr;
 		}
 	}
@@ -93,23 +95,26 @@ namespace PR
 		if (mKDTree)
 		{
 			PR_LOGGER.log(L_Info, M_Scene, "kdTree already exists, deleting old one.");
-			delete (kdTree<RenderEntity>*)mKDTree;
+			delete (SceneKDTree*)mKDTree;
 			mKDTree = nullptr;
 		}
 
-		mKDTree = new kdTree<RenderEntity>([](RenderEntity* e) {return e->worldBoundingBox();},
+		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FacePoint& point, float& t, RenderEntity* e, RenderEntity* ignore) {
 			return (!ignore || !e->isParent(ignore)) &&
 				e->checkCollision(ray, point, t) &&
 				point.material() && !point.material()->shouldIgnore(ray, point);
+		},
+		[](RenderEntity* e) {
+			return (float)e->collisionCost();
 		});
-		((kdTree<RenderEntity>*)mKDTree)->build(mRenderEntities);
+		((SceneKDTree*)mKDTree)->build(mRenderEntities);
 	}
 
 	RenderEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore) const
 	{
 		float t;
 		PR_ASSERT(mKDTree);
-		return ((kdTree<RenderEntity>*)mKDTree)->checkCollision(ray, collisionPoint, t, ignore);
+		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t, ignore);
 	}
 }

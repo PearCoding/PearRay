@@ -11,6 +11,7 @@
 
 namespace PR
 {
+	typedef PR::kdTree<Face, false> TriKDTree;
 	TriMesh::TriMesh() :
 		mKDTree(nullptr)
 	{
@@ -41,7 +42,7 @@ namespace PR
 	{
 		if (mKDTree)
 		{
-			delete (PR::kdTree<Face>*)mKDTree;
+			delete (TriKDTree*)mKDTree;
 			mKDTree = nullptr;
 		}
 
@@ -66,27 +67,31 @@ namespace PR
 		}
 	}
 
+	constexpr float TriangleTestCost = 4.0f;
 	void TriMesh::build()
 	{
 		if (mKDTree)
 		{
-			delete (PR::kdTree<Face>*)mKDTree;
+			delete (TriKDTree*)mKDTree;
 			mKDTree = nullptr;
 		}
 
-		mKDTree = new PR::kdTree<Face>(
+		mKDTree = new TriKDTree(
 		[](Face* f) {
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
 		[](const Ray& ray, FacePoint& point, float& t, Face* f, Face*) {
 			return Triangle::intersect(ray, *f, point, t);
+		},
+		[](Face* f) {
+			return TriangleTestCost;
 		});
 
 		std::list<Face*> list;
 		std::copy(mFaces.begin(), mFaces.end(), std::back_inserter(list));
-		((PR::kdTree<Face>*)mKDTree)->build(list);
+		((TriKDTree*)mKDTree)->build(list);
 
-		mBoundingBox = ((PR::kdTree<Face>*)mKDTree)->root()->boundingBox;
+		mBoundingBox = ((TriKDTree*)mKDTree)->root()->boundingBox;
 	}
 
 	bool TriMesh::isLight() const
@@ -110,12 +115,12 @@ namespace PR
 	bool TriMesh::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
 	{
 		PR_DEBUG_ASSERT(mKDTree);
-		return ((PR::kdTree<Face>*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
+		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
 	}
 
-	uint64 TriMesh::collisionCost() const
+	float TriMesh::collisionCost() const
 	{
-		return 2 * ((PR::kdTree<Face>*)mKDTree)->depth();
+		return TriangleTestCost * ((TriKDTree*)mKDTree)->depth();
 	}
 
 	FacePoint TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample) const

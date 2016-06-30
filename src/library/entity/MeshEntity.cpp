@@ -44,7 +44,7 @@ namespace PR
 		return mMesh != nullptr;
 	}
 
-	uint64 MeshEntity::collisionCost() const
+	float MeshEntity::collisionCost() const
 	{
 		return mMesh->collisionCost();
 	}

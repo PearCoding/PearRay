@@ -31,7 +31,7 @@
 */
 namespace PR
 {
-	template<class T>
+	template<class T, bool elementWise = false>
 	class PR_LIB_INLINE kdTree
 	{
 	private:
@@ -40,9 +40,11 @@ namespace PR
 			SP_Left = 0,
 			SP_Right
 		};
+
 	public:
 		typedef std::function<BoundingBox(T*)> GetBoundingBoxCallback;
 		typedef std::function<bool(const Ray&, FacePoint&, float&, T*, T*)> CheckCollisionCallback;
+		typedef std::function<float(T*)> CostCallback;
 
 		struct kdNode
 		{
@@ -76,8 +78,8 @@ namespace PR
 			std::list<T*> objects;
 		};
 
-		inline kdTree(GetBoundingBoxCallback getBoundingBox, CheckCollisionCallback checkCollision) :
-			mRoot(nullptr), mGetBoundingBox(getBoundingBox), mCheckCollision(checkCollision), mDepth(0)
+		inline kdTree(GetBoundingBoxCallback getBoundingBox, CheckCollisionCallback checkCollision, CostCallback cost) :
+			mRoot(nullptr), mGetBoundingBox(getBoundingBox), mCheckCollision(checkCollision), mCost(cost), mDepth(0)
 		{
 		}
 
@@ -109,7 +111,7 @@ namespace PR
 			}
 
 			PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
-			mRoot = build(entities, box, 0, 0, 0);
+			mRoot = build(entities, box, 0, -1, 0);
 			PR_LOGGER.logf(L_Info, M_Scene, "-> KD-tree has %d depth.", mDepth);
 		}
 
@@ -120,7 +122,7 @@ namespace PR
 			FacePoint tmpCollisionPoint;
 
 			t = std::numeric_limits<float>::infinity();
-			float l = 0;// Temporary variable.
+			float l = t;// Temporary variable.
 
 			if (mRoot && mRoot->boundingBox.intersects(ray, collisionPos, l))
 			{
@@ -151,17 +153,20 @@ namespace PR
 					}
 					else
 					{
+						bool leftIntersected = false;
 						kdInnerNode* inner = (kdInnerNode*)node;
 						if (inner->left && inner->left->boundingBox.intersects(ray, collisionPos, l))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return nullptr;
 
+							leftIntersected = true;
 							stack[stackPos] = inner->left;
 							stackPos++;
 						}
 
-						if (inner->right && inner->right->boundingBox.intersects(ray, collisionPos, l))
+						if (inner->right &&
+							(!leftIntersected || inner->right->boundingBox.intersects(ray, collisionPos, l)))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return nullptr;
@@ -218,7 +223,7 @@ namespace PR
 			}
 		}
 
-		inline void SAH(const BoundingBox& V, int dim, float v, size_t nl, size_t nr, size_t np, 
+		inline void SAH(float costIntersection, const BoundingBox& V, int dim, float v, size_t nl, size_t nr, size_t np,
 			float& c, SplitPlane& side, BoundingBox& vl, BoundingBox& vr)
 		{
 			c = std::numeric_limits<float>::infinity();
@@ -233,8 +238,8 @@ namespace PR
 			if (pl <= PM_EPSILON || pr <= PM_EPSILON)
 				return;
 
-			float cl = cost(pl, pr, nl + np, nr);
-			float cr = cost(pl, pr, nl, nr + np);
+			float cl = cost(costIntersection, pl, pr, nl + np, nr);
+			float cr = cost(costIntersection, pl, pr, nl, nr + np);
 
 			if (cl < cr)
 			{
@@ -252,9 +257,9 @@ namespace PR
 		 Normally all primitives/objects have their own 'cost',
 		 but we approximate it. Everything else decreases performances.
 		 */
-		inline float cost(float PL, float PR, size_t NL, size_t NR) const
+		inline float cost(float costIntersection, float PL, float PR, size_t NL, size_t NR) const
 		{
-			return ((NL == 0 || NR == 0 ) ? 0.8f : 1)*(CostTraversal + CostIntersection*(PL*NL + PR*NR));
+			return ((NL == 0 || NR == 0) ? 0.8f : 1)*(CostTraversal + costIntersection*(PL*NL + PR*NR));
 		}
 
 		enum EventType
@@ -271,7 +276,7 @@ namespace PR
 			EventType type;
 
 			Event() :
-				dim(0), v(0), type(ET_OnPlane)
+				dim(0), v(0), type(ET_EndOnPlane)
 			{
 			}
 
@@ -283,12 +288,12 @@ namespace PR
 			inline bool operator<(const Event& other) const
 			{
 				return ((v < other.v) ||
-					(std::abs(v - other.v) < PM_EPSILON && type < other.type));
+					(std::abs(v - other.v) <= PM_EPSILON && type < other.type));
 			}
 		};
 
 		// TODO: Implement O(n) search, without sorting in every dimension
-		inline void findSplit(const std::list<T*>& objs, const BoundingBox& V,
+		inline void findSplit(float costIntersection, const std::list<T*>& objs, const BoundingBox& V,
 			int& dim_out, float& v_out, float& c_out, SplitPlane& side_out,
 			BoundingBox& vl_out, BoundingBox& vr_out)
 		{
@@ -351,7 +356,7 @@ namespace PR
 					SplitPlane side;
 					BoundingBox vl;
 					BoundingBox vr;
-					SAH(V, i, v, nl, nr, np, c, side, vl, vr);
+					SAH(costIntersection, V, i, v, nl, nr, np, c, side, vl, vr);
 
 					if (c < c_out)
 					{
@@ -405,36 +410,52 @@ namespace PR
 			if (depth > mDepth)
 				mDepth = depth;
 
+			float costIntersection;
+			if (!elementWise)
+			{
+				costIntersection = mCost(nullptr);
+			}
+			else
+			{
+				costIntersection = 0;
+				for (T* obj : objs)
+				{
+					costIntersection += mCost(obj);
+				}
+				costIntersection /= objs.size();
+			}
+
 			int dim;
 			float v;
 			float c;
 			SplitPlane side;
 			BoundingBox vl, vr;
 
-			findSplit(objs, V, dim, v, c, side, vl, vr);
+			findSplit(costIntersection, objs, V, dim, v, c, side, vl, vr);
 
 			PR_LOGGER.logf(L_Debug, M_Scene, "%d: N=%d, V=%f, Dim=%d, val=%f, C=%f, Side=%s, VL=%f, VR=%f",
 				depth, objs.size(), V.volume(), dim, v, c, side == SP_Left ? "L" : "R", vl.volume(), vr.volume());
 
-			if (c > objs.size()*CostIntersection ||
+			if (c > objs.size()*costIntersection ||
 				depth > PR_KDTREE_MAX_DEPTH ||
 				(prev_dim == dim && std::abs(prev_v - v) <= PM_EPSILON))
 				return new kdLeafNode(objs, V);
 
 			std::list<T*> left, right;
 			distributeObjects(objs, dim, v, side, left, right);
-			return new kdInnerNode(build(left, vl, depth + 1, dim, v),
+			return new kdInnerNode(
+				build(left, vl, depth + 1, dim, v),
 				build(right, vr, depth + 1, dim, v),
 				V);
 		}
 	private:
 		float CostTraversal = 1;
-		float CostIntersection = 1.5f;
 
 		kdNode* mRoot;
 
 		GetBoundingBoxCallback mGetBoundingBox;
 		CheckCollisionCallback mCheckCollision;
+		CostCallback mCost;
 
 		uint32 mDepth;
 	};

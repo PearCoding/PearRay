@@ -20,7 +20,7 @@ namespace PR
 		IMesh* mesh() const;
 
 		virtual bool isCollidable() const override;
-		virtual uint64 collisionCost() const override;
+		virtual float collisionCost() const override;
 		virtual BoundingBox localBoundingBox() const override;
 		virtual bool checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t) override;
 

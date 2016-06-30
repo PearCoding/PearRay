@@ -54,7 +54,7 @@ namespace PR
 		return true;
 	}
 
-	uint64 PlaneEntity::collisionCost() const
+	float PlaneEntity::collisionCost() const
 	{
 		return 2;
 	}

@@ -53,7 +53,7 @@ namespace PR
 		return true;
 	}
 
-	uint64 SphereEntity::collisionCost() const
+	float SphereEntity::collisionCost() const
 	{
 		return 1;
 	}
