@@ -268,7 +268,7 @@ namespace PRU
 			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. No valid type given.", name.c_str());
 			return;
 		}
-		else if (typeD->getString() == "null")
+		else if (typeD->getString() == "null" || typeD->getString() == "empty")
 		{
 			entity = new Entity(name, parent);
 		}

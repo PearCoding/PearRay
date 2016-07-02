@@ -314,7 +314,7 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 		painter.drawRect(cropRect);
 	}
 
-	if (mShowProgress && !mRenderer->isFinished())
+	if (mShowProgress && mRenderer && !mRenderer->isFinished())
 	{
 		painter.setBrush(Qt::transparent);
 		painter.setPen(Qt::darkRed);

@@ -326,7 +326,7 @@ namespace PR
 			inline bool operator<(const Event& other) const
 			{
 				return ((v < other.v) ||
-					(std::abs(v - other.v) <= PM_EPSILON && type < other.type));
+					(v == other.v && type < other.type));
 			}
 		};
 
@@ -499,8 +499,10 @@ namespace PR
 
 			findSplit(costIntersection, events, objs, V, dim, v, c, side, vl, vr);
 
+#ifdef PR_KDTREE_DEBUG
 			PR_LOGGER.logf(L_Debug, M_Scene, "%d: N=%d, V=%f, Dim=%d, val=%f, C=%f, Side=%s, VL=%f, VR=%f",
 				depth, objs.size(), V.volume(), dim, v, c, side == SP_Left ? "L" : "R", vl.volume(), vr.volume());
+#endif
 
 			if (c > objs.size()*costIntersection ||
 				depth > PR_KDTREE_MAX_DEPTH ||

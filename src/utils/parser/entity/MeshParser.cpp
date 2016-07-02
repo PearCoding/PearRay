@@ -34,11 +34,15 @@ namespace PRU
 			else
 			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find mesh %s.", meshD->getString().c_str());
+				delete me;
+				return nullptr;
 			}
 		}
 		else
 		{
 			PR_LOGGER.logf(L_Warning, M_Scene, "Invalid mesh entry found.");
+			delete me;
+			return nullptr;
 		}
 		
 		if (materialD && materialD->isType() == DL::Data::T_String)
