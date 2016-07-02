@@ -91,7 +91,7 @@ namespace PR
 		std::copy(mFaces.begin(), mFaces.end(), std::back_inserter(list));
 		((TriKDTree*)mKDTree)->build(list);
 
-		mBoundingBox = ((TriKDTree*)mKDTree)->root()->boundingBox;
+		mBoundingBox = ((TriKDTree*)mKDTree)->boundingBox();
 	}
 
 	bool TriMesh::isLight() const

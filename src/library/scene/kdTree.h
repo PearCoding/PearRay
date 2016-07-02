@@ -9,6 +9,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <iterator>
 
 #ifdef PR_DEBUG
 //# define PR_KDTREE_DEBUG
@@ -41,10 +42,12 @@ namespace PR
 			SP_Right
 		};
 
-	public:
-		typedef std::function<BoundingBox(T*)> GetBoundingBoxCallback;
-		typedef std::function<bool(const Ray&, FacePoint&, float&, T*, T*)> CheckCollisionCallback;
-		typedef std::function<float(T*)> CostCallback;
+		enum Side
+		{
+			S_Left = 0,
+			S_Right,
+			S_Both
+		};
 
 		struct kdNode
 		{
@@ -70,13 +73,30 @@ namespace PR
 
 		struct kdLeafNode : public kdNode
 		{
-			kdLeafNode(const std::list<T*>& obj, const BoundingBox& b) :
-				kdNode(1, b), objects(obj)
+			kdLeafNode(const BoundingBox& b) :
+				kdNode(1, b)
 			{
 			}
 
 			std::list<T*> objects;
 		};
+
+		struct Primitive
+		{
+			Primitive(T* data, const BoundingBox& box) :
+				data(data), side(S_Both), box(box)
+			{
+				PR_ASSERT(data);
+			}
+
+			T* data;
+			Side side;
+			BoundingBox box;
+		};
+	public:
+		typedef std::function<BoundingBox(T*)> GetBoundingBoxCallback;
+		typedef std::function<bool(const Ray&, FacePoint&, float&, T*, T*)> CheckCollisionCallback;
+		typedef std::function<float(T*)> CostCallback;
 
 		inline kdTree(GetBoundingBoxCallback getBoundingBox, CheckCollisionCallback checkCollision, CostCallback cost) :
 			mRoot(nullptr), mGetBoundingBox(getBoundingBox), mCheckCollision(checkCollision), mCost(cost), mDepth(0)
@@ -88,14 +108,15 @@ namespace PR
 			deleteNode(mRoot);
 		}
 
-		inline kdNode* root() const
-		{
-			return mRoot;
-		}
-
 		inline uint32 depth() const
 		{
 			return mDepth;
+		}
+
+		inline const BoundingBox& boundingBox() const
+		{
+			PR_ASSERT(mRoot);
+			return mRoot->boundingBox;
 		}
 
 		inline void build(const std::list<T*>& entities)
@@ -104,15 +125,35 @@ namespace PR
 			if (entities.empty())
 				return;
 
-			BoundingBox box;
+			std::vector<Primitive*> primitives;// Will be cleared to save memory
+			std::vector<Primitive*> primitivesCopy;// Copy for delete later
+
+			BoundingBox V;
 			for (T* obj : entities)
 			{
-				box.combine(mGetBoundingBox(obj));
+				auto prim = new Primitive(obj, mGetBoundingBox(obj));
+				primitives.push_back(prim);
+				primitivesCopy.push_back(prim);
+				V.combine(prim->box);
 			}
 
 			PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
-			mRoot = build(entities, box, 0, -1, 0);
+
+			std::vector<Event> events;
+			events.reserve(entities.size() * 2);
+			for (auto obj : primitives)
+			{
+				generateEvents(obj, V, events);
+			}
+			std::sort(events.begin(), events.end());
+
+			mRoot = build(events, primitives, V, 0, -1, 0);
 			PR_LOGGER.logf(L_Info, M_Scene, "-> KD-tree has %d depth.", mDepth);
+
+			for (auto obj : primitivesCopy)
+			{
+				delete obj;
+			}
 		}
 
 		inline T* checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t, T* ignore = nullptr) const {
@@ -253,10 +294,6 @@ namespace PR
 			}
 		}
 
-		/*
-		 Normally all primitives/objects have their own 'cost',
-		 but we approximate it. Everything else decreases performances.
-		 */
 		inline float cost(float costIntersection, float PL, float PR, size_t NL, size_t NR) const
 		{
 			return ((NL == 0 || NR == 0) ? 0.8f : 1)*(CostTraversal + costIntersection*(PL*NL + PR*NR));
@@ -271,17 +308,18 @@ namespace PR
 
 		struct Event
 		{
+			Primitive* primitive;
 			int dim;
 			float v;
 			EventType type;
 
 			Event() :
-				dim(0), v(0), type(ET_EndOnPlane)
+				primitive(),dim(0), v(0), type(ET_EndOnPlane)
 			{
 			}
 
-			Event(int dim, float v, EventType t) :
-				dim(dim), v(v), type(t)
+			Event(Primitive* prim, int dim, float v, EventType t) :
+				primitive(prim), dim(dim), v(v), type(t)
 			{
 			}
 
@@ -292,94 +330,97 @@ namespace PR
 			}
 		};
 
-		// TODO: Implement O(n) search, without sorting in every dimension
-		inline void findSplit(float costIntersection, const std::list<T*>& objs, const BoundingBox& V,
+		inline void generateEvents(Primitive* p, const BoundingBox& V, std::vector<Event>& events)
+		{
+			BoundingBox box = p->box;
+			clipBox(box, V);
+			if (box.isPlanar())
+			{
+				events.push_back(Event(p, 0, PM::pm_GetIndex(box.lowerBound(), 0), ET_OnPlane));
+				events.push_back(Event(p, 1, PM::pm_GetIndex(box.lowerBound(), 1), ET_OnPlane));
+				events.push_back(Event(p, 2, PM::pm_GetIndex(box.lowerBound(), 2), ET_OnPlane));
+			}
+			else
+			{
+				events.push_back(Event(p, 0, PM::pm_GetIndex(box.lowerBound(), 0), ET_StartOnPlane));
+				events.push_back(Event(p, 1, PM::pm_GetIndex(box.lowerBound(), 1), ET_StartOnPlane));
+				events.push_back(Event(p, 2, PM::pm_GetIndex(box.lowerBound(), 2), ET_StartOnPlane));
+				events.push_back(Event(p, 0, PM::pm_GetIndex(box.upperBound(), 0), ET_EndOnPlane));
+				events.push_back(Event(p, 1, PM::pm_GetIndex(box.upperBound(), 1), ET_EndOnPlane));
+				events.push_back(Event(p, 2, PM::pm_GetIndex(box.upperBound(), 2), ET_EndOnPlane));
+			}
+		}
+
+		inline void findSplit(float costIntersection, const std::vector<Event>& events,
+			const std::vector<Primitive*>& objs, const BoundingBox& V,
 			int& dim_out, float& v_out, float& c_out, SplitPlane& side_out,
 			BoundingBox& vl_out, BoundingBox& vr_out)
 		{
 			c_out = std::numeric_limits<float>::infinity();
-			for (int i = 0; i < 3; ++i)
+
+			size_t nl[3] = { 0, 0, 0 };
+			size_t nr[3] = { objs.size(), objs.size(), objs.size() };
+			size_t np[3] = { 0, 0, 0 };
+
+			for (size_t j = 0; j < events.size(); ++j)
 			{
-				std::vector<Event> events;
-				events.reserve(objs.size() * 2);
+				float v = events[j].v;
+				int dim = events[j].dim;
+				size_t onPlane = 0;
+				size_t startOnPlane = 0;
+				size_t endOnPlane = 0;
 
-				for (T* obj : objs)
+				while (j < events.size() && events[j].dim == dim &&
+					std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_EndOnPlane)
 				{
-					BoundingBox box = mGetBoundingBox(obj);
-					clipBox(box, V);
-					if (box.isPlanar())
-					{
-						events.push_back(Event(i, PM::pm_GetIndex(box.lowerBound(), i), ET_OnPlane));
-					}
-					else
-					{
-						events.push_back(Event(i, PM::pm_GetIndex(box.lowerBound(), i), ET_StartOnPlane));
-						events.push_back(Event(i, PM::pm_GetIndex(box.upperBound(), i), ET_EndOnPlane));
-					}
+					++endOnPlane;
+					++j;
 				}
 
-				std::sort(events.begin(), events.end());
-
-				size_t nl = 0;
-				size_t nr = objs.size();
-				size_t np = 0;
-
-				for (size_t j = 0; j < events.size(); ++j)
+				while (j < events.size() && events[j].dim == dim &&
+					std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_OnPlane)
 				{
-					float v = events[j].v;
-					size_t onPlane = 0;
-					size_t startOnPlane = 0;
-					size_t endOnPlane = 0;
-
-					while (j < events.size() && std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_EndOnPlane)
-					{
-						endOnPlane++;
-						j++;
-					}
-
-					while (j < events.size() && std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_OnPlane)
-					{
-						onPlane++;
-						j++;
-					}
-
-					while (j < events.size() && std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_StartOnPlane)
-					{
-						startOnPlane++;
-						j++;
-					}
-
-					np = onPlane;
-					nr -= onPlane + endOnPlane;
-
-					float c;
-					SplitPlane side;
-					BoundingBox vl;
-					BoundingBox vr;
-					SAH(costIntersection, V, i, v, nl, nr, np, c, side, vl, vr);
-
-					if (c < c_out)
-					{
-						c_out = c;
-						dim_out = i;
-						v_out = v;
-						side_out = side;
-						vl_out = vl;
-						vr_out = vr;
-					}
-
-					nl += startOnPlane + onPlane;
-					np = 0;
+					++onPlane;
+					++j;
 				}
+
+				while (j < events.size() && events[j].dim == dim &&
+					std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_StartOnPlane)
+				{
+					++startOnPlane;
+					++j;
+				}
+
+				np[dim] = onPlane;
+				nr[dim] -= onPlane + endOnPlane;
+
+				float c;
+				SplitPlane side;
+				BoundingBox vl;
+				BoundingBox vr;
+				SAH(costIntersection, V, dim, v, nl[dim], nr[dim], np[dim], c, side, vl, vr);
+
+				if (c < c_out)
+				{
+					c_out = c;
+					dim_out = dim;
+					v_out = v;
+					side_out = side;
+					vl_out = vl;
+					vr_out = vr;
+				}
+
+				nl[dim] += startOnPlane + onPlane;
+				np[dim] = 0;
 			}
 		}
 
-		inline void distributeObjects(const std::list<T*>& objs, int dim, float v, SplitPlane side,
-			std::list<T*>& left, std::list<T*>& right)
+		inline void distributeObjects(const std::vector<Primitive*>& objs, int dim, float v, SplitPlane side,
+			std::vector<Primitive*>& left, std::vector<Primitive*>& right)
 		{
-			for (T* obj : objs)
+			for (auto obj : objs)
 			{
-				BoundingBox box = mGetBoundingBox(obj);
+				BoundingBox box = obj->box;
 				float low = PM::pm_GetIndex(box.lowerBound(), dim);
 				float up = PM::pm_GetIndex(box.upperBound(), dim);
 				if (std::abs(low - v) <= PM_EPSILON &&
@@ -401,7 +442,32 @@ namespace PR
 			}
 		}
 
-		inline kdNode* build(const std::list<T*>& objs, const BoundingBox& V, uint32 depth,
+		inline void classify(const std::vector<Event>& events, const std::vector<Primitive*>& objs,
+			int dim, float v, SplitPlane side)
+		{
+			for (auto obj : objs)
+			{
+				obj->side = S_Both;
+			}
+
+			for (const Event& e : events)
+			{
+				if (e.type == ET_EndOnPlane && e.dim == dim && e.v <= v)
+					e.primitive->side = S_Left;
+				else if (e.type == ET_StartOnPlane && e.dim == dim && e.v >= v)
+					e.primitive->side = S_Right;
+				else if (e.type == ET_OnPlane && e.dim == dim)
+				{
+					if (e.v < v || (std::abs(e.v - v) <= PM_EPSILON && side == SP_Left))
+						e.primitive->side = S_Left;
+					if (e.v > v || (std::abs(e.v - v) <= PM_EPSILON && side == SP_Right))
+						e.primitive->side = S_Right;
+				}
+			}
+		}
+
+		inline kdNode* build(std::vector<Event>& events, std::vector<Primitive*>& objs,
+			const BoundingBox& V, uint32 depth,
 			int prev_dim, float prev_v)
 		{
 			if (objs.size() == 0)
@@ -418,9 +484,9 @@ namespace PR
 			else
 			{
 				costIntersection = 0;
-				for (T* obj : objs)
+				for (auto obj : objs)
 				{
-					costIntersection += mCost(obj);
+					costIntersection += mCost(obj->data);
 				}
 				costIntersection /= objs.size();
 			}
@@ -431,7 +497,7 @@ namespace PR
 			SplitPlane side;
 			BoundingBox vl, vr;
 
-			findSplit(costIntersection, objs, V, dim, v, c, side, vl, vr);
+			findSplit(costIntersection, events, objs, V, dim, v, c, side, vl, vr);
 
 			PR_LOGGER.logf(L_Debug, M_Scene, "%d: N=%d, V=%f, Dim=%d, val=%f, C=%f, Side=%s, VL=%f, VR=%f",
 				depth, objs.size(), V.volume(), dim, v, c, side == SP_Left ? "L" : "R", vl.volume(), vr.volume());
@@ -439,13 +505,56 @@ namespace PR
 			if (c > objs.size()*costIntersection ||
 				depth > PR_KDTREE_MAX_DEPTH ||
 				(prev_dim == dim && std::abs(prev_v - v) <= PM_EPSILON))
-				return new kdLeafNode(objs, V);
+			{
+				auto leaf = new kdLeafNode(V);
+				for (auto obj : objs)
+				{
+					leaf->objects.push_back(obj->data);
+				}
+				return leaf;
+			}
 
-			std::list<T*> left, right;
+			classify(events, objs, dim, v, side);
+
+			// Splice E int ELO and ERO,
+			// and generate events for ELB and ERB
+			std::vector<Event> leftOnlyEvents, rightOnlyEvents;
+			std::vector<Event> leftBothEvents, rightBothEvents;
+			for (const Event& e : events)
+			{
+				if (e.primitive->side == S_Left)
+					leftOnlyEvents.push_back(e);
+				else if (e.primitive->side == S_Right)
+					rightOnlyEvents.push_back(e);
+				else
+				{
+					generateEvents(e.primitive, vl, leftBothEvents);
+					generateEvents(e.primitive, vr, rightBothEvents);
+				}
+			}
+
+			// Sort 'both' lists ~ O(sqrt(n))
+			std::sort(leftBothEvents.begin(), leftBothEvents.end());
+			std::sort(rightBothEvents.begin(), rightBothEvents.end());
+
+			// Merge O(n)
+			std::vector<Event> leftEvents, rightEvents;
+			std::merge(leftOnlyEvents.begin(), leftOnlyEvents.end(), leftBothEvents.begin(), leftBothEvents.end(), std::back_inserter(leftEvents));
+			std::merge(rightOnlyEvents.begin(), rightOnlyEvents.end(), rightBothEvents.begin(), rightBothEvents.end(), std::back_inserter(rightEvents));
+
+			// Distribute
+			std::vector<Primitive*> left, right;
 			distributeObjects(objs, dim, v, side, left, right);
+
+			// Cleanup for memory
+			std::vector<Event>().swap(leftOnlyEvents); std::vector<Event>().swap(leftBothEvents);
+			std::vector<Event>().swap(rightOnlyEvents); std::vector<Event>().swap(rightBothEvents);
+			std::vector<Event>().swap(events);
+			std::vector<Primitive*>().swap(objs);
+
 			return new kdInnerNode(
-				build(left, vl, depth + 1, dim, v),
-				build(right, vr, depth + 1, dim, v),
+				build(leftEvents, left, vl, depth + 1, dim, v),
+				build(rightEvents, right, vr, depth + 1, dim, v),
 				V);
 		}
 	private:
