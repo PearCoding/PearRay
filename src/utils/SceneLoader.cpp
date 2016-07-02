@@ -193,8 +193,8 @@ namespace PRU
 						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", backgroundD->getString().c_str());
 					}
 				}
-				else
-				{
+				else if(backgroundD)
+				{ 
 					PR_LOGGER.log(L_Warning, M_Scene, "Invalid background entry.");
 				}
 
