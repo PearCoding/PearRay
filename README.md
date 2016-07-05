@@ -11,3 +11,6 @@ Experimental ray and path tracing application.
 
 ### Optional
  - OpenCL https://www.khronos.org/opencl/
+
+# Wiki
+See [Wiki](https://github.com/PearCoding/PearRay/wiki) for more information, examples and tutorials.
