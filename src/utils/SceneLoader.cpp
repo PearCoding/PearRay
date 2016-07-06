@@ -11,12 +11,15 @@
 #include "parser/entity/PlaneParser.h"
 #include "parser/entity/SphereParser.h"
 
+#include "parser/material/BlinnPhongMaterialParser.h"
 #include "parser/material/BRDFMaterialParser.h"
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
 #include "parser/material/DiffuseMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
 #include "parser/material/MirrorMaterialParser.h"
+#include "parser/material/OrenNayarMaterialParser.h"
+#include "parser/material/WardMaterialParser.h"
 
 #include "texture/ConstData1D.h"
 #include "texture/ConstData2D.h"
@@ -393,6 +396,9 @@ namespace PRU
 
 		{ "diffuse", DiffuseMaterialParser() },
 		{ "brdf", BRDFMaterialParser() },
+		{ "orennayar", OrenNayarMaterialParser() },
+		{ "blinnphong", BlinnPhongMaterialParser() },
+		{ "ward", WardMaterialParser() },
 
 		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
 

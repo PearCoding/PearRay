@@ -10,7 +10,7 @@ namespace PR
 	{
 	public:
 		FacePoint();
-		FacePoint(const PM::vec3& v, const PM::vec3& n, const PM::vec2& u);
+		FacePoint(const PM::vec3& v, const PM::vec3& n, const PM::vec3& t, const PM::vec3& b, const PM::vec2& u);
 		~FacePoint();
 
 		void setVertex(const PM::vec3& v);
@@ -18,6 +18,14 @@ namespace PR
 
 		void setNormal(const PM::vec3& v);
 		PM::vec3 normal() const;
+
+		void setTangent(const PM::vec3& v);
+		PM::vec3 tangent() const;
+
+		void setBinormal(const PM::vec3& v);
+		PM::vec3 binormal() const;
+
+		void calculateTangentFrame();
 
 		void setUV(const PM::vec2& v);
 		PM::vec2 uv() const;
@@ -31,6 +39,8 @@ namespace PR
 	private:
 		alignas(16) PM::vec3 mVertex;
 		alignas(16) PM::vec3 mNormal;
+		alignas(16) PM::vec3 mTangent;
+		alignas(16) PM::vec3 mBinormal;
 		alignas(16) PM::vec2 mUV;
 		bool mInside;
 

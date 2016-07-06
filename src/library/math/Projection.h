@@ -40,31 +40,42 @@ namespace PR
 		}
 
 		// N Orientation Z+
-		static inline void tangent_frame(const PM::vec3& N, PM::vec3& X, PM::vec3& Y)
+		static inline void tangent_frame(const PM::vec3& N, PM::vec3& T, PM::vec3& B)
 		{
 			PM::vec3 t = std::abs(PM::pm_GetX(N)) > 0.99f ? PM::pm_Set(0, 1, 0) : PM::pm_Set(1, 0, 0);
-			Y = PM::pm_Normalize3D(PM::pm_Cross3D(N, t));
-			X = PM::pm_Cross3D(Y, N);
+			T = PM::pm_Normalize3D(PM::pm_Cross3D(N, t));
+			B = PM::pm_Cross3D(N, T);
 		}
 
 		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& V)
 		{
 			PM::vec3 X, Y;
 			tangent_frame(N, X, Y);
-			return PM::pm_Add(PM::pm_Add(PM::pm_Scale(N, PM::pm_GetZ(V)), PM::pm_Scale(Y, PM::pm_GetY(V))),
-				PM::pm_Scale(X, PM::pm_GetX(V)));
+			return tangent_align(N, X, Y, V);
+		}
+
+		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& T, const PM::vec3& B, const PM::vec3& V)
+		{
+			return PM::pm_Add(PM::pm_Add(PM::pm_Scale(N, PM::pm_GetZ(V)), PM::pm_Scale(T, PM::pm_GetY(V))),
+				PM::pm_Scale(B, PM::pm_GetX(V)));
 		}
 
 		// Projections 
-		
+
 		// Uniform [0, 1]
 		static inline PM::vec3 sphere(float phi, float rho)
+		{
+			return sphereRAD(PM_PI_F * phi, PM_2_PI_F * rho);
+		}
+		
+		// Uniform [0, PI], [0, 2PI]
+		static inline PM::vec3 sphereRAD(float phi, float rho)
 		{
 			float sinPhi, cosPhi;
 			float sinRho, cosRho;
 
-			PM::pm_SinCosT(PM_PI_F * phi, sinPhi, cosPhi);
-			PM::pm_SinCosT(PM_2_PI_F * rho, sinRho, cosRho);
+			PM::pm_SinCosT(phi, sinPhi, cosPhi);
+			PM::pm_SinCosT(rho, sinRho, cosRho);
 
 			return PM::pm_Set(
 				sinPhi*cosRho,

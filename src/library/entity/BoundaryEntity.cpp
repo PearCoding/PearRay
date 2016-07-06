@@ -75,6 +75,7 @@ namespace PR
 
 			Plane plane = box.getFace(side);
 			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));// Have to normalize again?
+			collisionPoint.calculateTangentFrame();
 
 			float u, v;
 			plane.project(vertex, u, v);
@@ -102,6 +103,7 @@ namespace PR
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
 		fp.setUV(PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret)));
 		fp.setMaterial(material());
+		fp.calculateTangentFrame();
 
 		return fp;
 	}

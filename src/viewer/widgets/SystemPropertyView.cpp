@@ -56,6 +56,14 @@ QWidget(parent)
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Positive"), PR::DM_Normal_Positive);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Negative"), PR::DM_Normal_Negative);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Normal Spherical"), PR::DM_Normal_Spherical);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Tangent Both"), PR::DM_Tangent_Both);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Tangent Positive"), PR::DM_Tangent_Positive);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Tangent Negative"), PR::DM_Tangent_Negative);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Tangent Spherical"), PR::DM_Tangent_Spherical);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Both"), PR::DM_Binormal_Both);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Positive"), PR::DM_Binormal_Positive);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Negative"), PR::DM_Binormal_Negative);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Spherical"), PR::DM_Binormal_Spherical);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UV"), PR::DM_UV);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF"), PR::DM_PDF);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Applied"), PR::DM_Applied);

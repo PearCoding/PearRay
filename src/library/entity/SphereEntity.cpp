@@ -75,6 +75,7 @@ namespace PR
 
 		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
 		collisionPoint.setNormal(norm);
+		collisionPoint.calculateTangentFrame();
 
 		PM::vec3 rotNorm = PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm);
 		float u = 0.5f + std::atan2(PM::pm_GetZ(rotNorm), PM::pm_GetX(rotNorm)) * PM_INV_PI_F * 0.5f;
@@ -98,6 +99,7 @@ namespace PR
 		float v = (std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal())) * PM_INV_PI_F + 1) * 0.5f;
 		p.setUV(PM::pm_Set(u, v));
 		p.setMaterial(material());
+		p.calculateTangentFrame();
 
 		return p;
 	}

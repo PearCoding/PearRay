@@ -369,7 +369,7 @@ namespace PR
 
 			const float NdotV = PM::pm_Dot3D(ray.direction(), collisionPoint.normal());
 			collisionPoint.setNormal(
-				faceforward(NdotV, collisionPoint.normal()));
+				Reflection::faceforward(NdotV, collisionPoint.normal()));
 			collisionPoint.setInside(NdotV > 0);
 
 			mRayCount++;

@@ -7,6 +7,7 @@
 #include "Logger.h"
 #include "Random.h"
 #include "sampler/Sampler.h"
+#include "math/Projection.h"
 
 namespace PR
 {
@@ -77,8 +78,10 @@ namespace PR
 		if (mPlane.intersects(local, pos, t, u, v))
 		{
 			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), pos), 1));
-			// Do not check flags... calculation is easy anyway.
+
 			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
+			collisionPoint.calculateTangentFrame();
+
 			collisionPoint.setUV(PM::pm_Set(u, v));
 			collisionPoint.setMaterial(material());
 			t *= scale();
@@ -101,6 +104,7 @@ namespace PR
 		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
 		fp.setUV(PM::pm_SetZ(s, 0));
 		fp.setMaterial(material());
+		fp.calculateTangentFrame();
 		return fp;
 	}
 }

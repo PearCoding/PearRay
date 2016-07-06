@@ -6,6 +6,8 @@
 #include "geometry/Triangle.h"
 #include "geometry/FacePoint.h"
 
+#include "math/Projection.h"
+
 #include "Logger.h"
 
 namespace PR
@@ -66,6 +68,8 @@ namespace PR
 		{
 			collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
 			collisionPoint.setNormal(PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal())));
+			collisionPoint.calculateTangentFrame();
+
 			t *= scale();
 
 			return true;
@@ -81,6 +85,7 @@ namespace PR
 		FacePoint point = mMesh->getRandomFacePoint(sampler, sample);
 		point.setNormal(PM::pm_RotateWithQuat(rotation(), point.normal()));
 		point.setVertex(PM::pm_Multiply(matrix(), point.vertex()));
+		point.calculateTangentFrame();
 		return point;
 	}
 }

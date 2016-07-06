@@ -42,6 +42,7 @@ namespace PR
 			float depth = PM::pm_Magnitude3D(PM::pm_Subtract(in.startPosition(), point.vertex()));
 			return RGBConverter::toSpec(depth, depth, depth);
 		}
+		// NORMAL
 		case DM_Normal_Spherical:
 		{
 			float phi = std::acos(PM::pm_GetZ(point.normal()));
@@ -61,6 +62,47 @@ namespace PR
 			return RGBConverter::toSpec(PM::pm_MaxT(0.0f, -PM::pm_GetX(point.normal())),
 				PM::pm_MaxT(0.0f, -PM::pm_GetY(point.normal())),
 				PM::pm_MaxT(0.0f, -PM::pm_GetZ(point.normal())));
+		// TANGENT
+		case DM_Tangent_Spherical:
+		{
+			float phi = std::acos(PM::pm_GetZ(point.tangent()));
+			float rho = std::atan2(PM::pm_GetY(point.tangent()), PM::pm_GetX(point.tangent()));
+
+			return RGBConverter::toSpec(phi * PM_INV_PI_F, rho * PM_INV_PI_F * 0.5f, 0);
+		}
+		case DM_Tangent_Both:
+			return RGBConverter::toSpec(std::abs(PM::pm_GetX(point.tangent())),
+				std::abs(PM::pm_GetY(point.tangent())),
+				std::abs(PM::pm_GetZ(point.tangent())));
+		case DM_Tangent_Positive:
+			return RGBConverter::toSpec(PM::pm_MaxT(0.0f, PM::pm_GetX(point.tangent())),
+				PM::pm_MaxT(0.0f, PM::pm_GetY(point.tangent())),
+				PM::pm_MaxT(0.0f, PM::pm_GetZ(point.tangent())));
+		case DM_Tangent_Negative:
+			return RGBConverter::toSpec(PM::pm_MaxT(0.0f, -PM::pm_GetX(point.tangent())),
+				PM::pm_MaxT(0.0f, -PM::pm_GetY(point.tangent())),
+				PM::pm_MaxT(0.0f, -PM::pm_GetZ(point.tangent())));
+		// BINORMAL
+		case DM_Binormal_Spherical:
+		{
+			float phi = std::acos(PM::pm_GetZ(point.binormal()));
+			float rho = std::atan2(PM::pm_GetY(point.binormal()), PM::pm_GetX(point.binormal()));
+
+			return RGBConverter::toSpec(phi * PM_INV_PI_F, rho * PM_INV_PI_F * 0.5f, 0);
+		}
+		case DM_Binormal_Both:
+			return RGBConverter::toSpec(std::abs(PM::pm_GetX(point.binormal())),
+				std::abs(PM::pm_GetY(point.binormal())),
+				std::abs(PM::pm_GetZ(point.binormal())));
+		case DM_Binormal_Positive:
+			return RGBConverter::toSpec(PM::pm_MaxT(0.0f, PM::pm_GetX(point.binormal())),
+				PM::pm_MaxT(0.0f, PM::pm_GetY(point.binormal())),
+				PM::pm_MaxT(0.0f, PM::pm_GetZ(point.binormal())));
+		case DM_Binormal_Negative:
+			return RGBConverter::toSpec(PM::pm_MaxT(0.0f, -PM::pm_GetX(point.binormal())),
+				PM::pm_MaxT(0.0f, -PM::pm_GetY(point.binormal())),
+				PM::pm_MaxT(0.0f, -PM::pm_GetZ(point.binormal())));
+
 		case DM_UV:
 			return RGBConverter::toSpec(PM::pm_GetX(point.uv()), PM::pm_GetY(point.uv()), 0);
 		case DM_PDF:

@@ -62,7 +62,7 @@ namespace PR
 	PM::vec3 MirrorMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
 	{
 		const float ind = index(PM::pm_GetX(rnd));
-		auto dir = reflect(PM::pm_Dot3D(point.normal(), V), point.normal(), V);
+		auto dir = Reflection::reflect(PM::pm_Dot3D(point.normal(), V), point.normal(), V);
 
 		pdf = std::numeric_limits<float>::infinity();
 		return dir;

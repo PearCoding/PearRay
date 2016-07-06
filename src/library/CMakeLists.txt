@@ -38,6 +38,7 @@ SET(PR_Integrator_Src
   ${PR_LIB}/integrator/DirectIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
+  ${PR_LIB}/material/BlinnPhongMaterial.cpp
   ${PR_LIB}/material/BRDF.cpp
   ${PR_LIB}/material/BRDFMaterial.cpp
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
@@ -45,7 +46,9 @@ SET(PR_Material_Src
   ${PR_LIB}/material/GlassMaterial.cpp
   ${PR_LIB}/material/GridMaterial.cpp
   ${PR_LIB}/material/Material.cpp
-  ${PR_LIB}/material/MirrorMaterial.cpp)
+  ${PR_LIB}/material/MirrorMaterial.cpp
+  ${PR_LIB}/material/OrenNayarMaterial.cpp
+  ${PR_LIB}/material/WardMaterial.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Math_Src ) 
 SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
@@ -144,7 +147,8 @@ SET(PR_Integrator_Hdr
   ${PR_LIB}/integrator/DirectIntegrator.h
   ${PR_LIB}/integrator/Integrator.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
-SET(PR_Material_Hdr
+SET(PR_Material_Hdr 
+  ${PR_LIB}/material/BlinnPhongMaterial.h
   ${PR_LIB}/material/BRDF.h
   ${PR_LIB}/material/BRDFMaterial.h
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
@@ -152,7 +156,9 @@ SET(PR_Material_Hdr
   ${PR_LIB}/material/GlassMaterial.h
   ${PR_LIB}/material/GridMaterial.h
   ${PR_LIB}/material/Material.h
-  ${PR_LIB}/material/MirrorMaterial.h)
+  ${PR_LIB}/material/MirrorMaterial.h
+  ${PR_LIB}/material/OrenNayarMaterial.h
+  ${PR_LIB}/material/WardMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
   ${PR_LIB}/math/Fresnel.h

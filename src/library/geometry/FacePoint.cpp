@@ -1,14 +1,17 @@
 #include "FacePoint.h"
+#include "math/Projection.h"
 
 namespace PR
 {
 	FacePoint::FacePoint() :
-		mVertex(PM::pm_Set(0,0,0,1)), mNormal(PM::pm_Set(0,0,0)), mUV(PM::pm_Set(0,0)), mInside(false), mMaterial(nullptr)
+		mVertex(PM::pm_Set(0,0,0,1)),
+		mNormal(PM::pm_Set(0,0,0)), mTangent(PM::pm_Set(0, 0, 0)), mBinormal(PM::pm_Set(0, 0, 0)),
+		mUV(PM::pm_Set(0,0)), mInside(false), mMaterial(nullptr)
 	{
 	}
 
-	FacePoint::FacePoint(const PM::vec3& v, const PM::vec3& n, const PM::vec2& u) :
-		mVertex(v), mNormal(n), mUV(u), mInside(false), mMaterial(nullptr)
+	FacePoint::FacePoint(const PM::vec3& v, const PM::vec3& n, const PM::vec3& t, const PM::vec3& b, const PM::vec2& u) :
+		mVertex(v), mNormal(n), mTangent(t), mBinormal(b), mUV(u), mInside(false), mMaterial(nullptr)
 	{
 	}
 
@@ -34,6 +37,31 @@ namespace PR
 	PM::vec3 FacePoint::normal() const
 	{
 		return mNormal;
+	}
+
+	void FacePoint::setTangent(const PM::vec3& n)
+	{
+		mTangent = n;
+	}
+
+	PM::vec3 FacePoint::tangent() const
+	{
+		return mTangent;
+	}
+
+	void FacePoint::setBinormal(const PM::vec3& n)
+	{
+		mBinormal = n;
+	}
+
+	PM::vec3 FacePoint::binormal() const
+	{
+		return mBinormal;
+	}
+
+	void FacePoint::calculateTangentFrame()
+	{
+		Projection::tangent_frame(mNormal, mTangent, mBinormal);
 	}
 
 	void FacePoint::setUV(const PM::vec2& u)

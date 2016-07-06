@@ -17,12 +17,15 @@ SET(PR_Parser_Entity_Src
   ${PR_UTILS}/parser/entity/SphereParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Src})
 SET(PR_Parser_Material_Src
+  ${PR_UTILS}/parser/material/BlinnPhongMaterialParser.cpp
   ${PR_UTILS}/parser/material/BRDFMaterialParser.cpp
   ${PR_UTILS}/parser/material/DebugBoundingBoxMaterialParser.cpp
   ${PR_UTILS}/parser/material/DiffuseMaterialParser.cpp
   ${PR_UTILS}/parser/material/GlassMaterialParser.cpp
   ${PR_UTILS}/parser/material/GridMaterialParser.cpp
-  ${PR_UTILS}/parser/material/MirrorMaterialParser.cpp)
+  ${PR_UTILS}/parser/material/MirrorMaterialParser.cpp
+  ${PR_UTILS}/parser/material/OrenNayarMaterialParser.cpp
+  ${PR_UTILS}/parser/material/WardMaterialParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
 )
@@ -44,13 +47,16 @@ SET(PR_Parser_Entity_Hdr
   ${PR_UTILS}/parser/entity/SphereParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Hdr})
 SET(PR_Parser_Material_Hdr
+  ${PR_UTILS}/parser/material/BlinnPhongMaterialParser.h
   ${PR_UTILS}/parser/material/BRDFMaterialParser.h
   ${PR_UTILS}/parser/material/DebugBoundingBoxMaterialParser.h
   ${PR_UTILS}/parser/material/DiffuseMaterialParser.h
   ${PR_UTILS}/parser/material/GlassMaterialParser.h
   ${PR_UTILS}/parser/material/GridMaterialParser.h
   ${PR_UTILS}/parser/material/MaterialParser.h
-  ${PR_UTILS}/parser/material/MirrorMaterialParser.h)
+  ${PR_UTILS}/parser/material/MirrorMaterialParser.h
+  ${PR_UTILS}/parser/material/OrenNayarMaterialParser.h
+  ${PR_UTILS}/parser/material/WardMaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
 )
