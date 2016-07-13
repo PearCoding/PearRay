@@ -56,9 +56,6 @@ namespace PR
 	constexpr float MinRoughness = 0.001f;
 	Spectrum WardMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
-		const float NdotV = std::abs(PM::pm_Dot3D(point.normal(), V));
-		const float NdotL = std::abs(PM::pm_Dot3D(point.normal(), L));
-
 		Spectrum albedo;
 		if (mAlbedo)
 		{
@@ -66,27 +63,35 @@ namespace PR
 		}
 
 		Spectrum spec;
-		if (mSpecularity && mRoughnessX && mRoughnessY &&
-			NdotV >= PM_EPSILON && NdotL >= PM_EPSILON)
+		if (mSpecularity && mRoughnessX && mRoughnessY)
 		{
 			const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point.uv()) : 0);
 			const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point.uv()) : 0);
 
+			const float NdotV = std::abs(PM::pm_Dot3D(point.normal(), V));
+			const float NdotL = std::abs(PM::pm_Dot3D(point.normal(), L));
+
 			// Since H appears to equal powers in both the numerator and denominator of the exponent, no normalization is needed.
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, V));
-			const float NdotH = std::abs(PM::pm_Dot3D(point.normal(), H));
+			const PM::vec3 H = PM::pm_Subtract(L, V);
+			const float NdotH = PM::pm_Dot3D(point.normal(), H);
 
-			const float HdotX = PM::pm_Dot3D(H, point.tangent());
-			const float HdotY = PM::pm_Dot3D(H, point.binormal());
-			
-			const float NdotH2 = NdotH * NdotH;
-			const float fx = HdotX / m1;
-			const float fy = HdotY / m2;
-			const float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (4 * m1 * m2 * NdotH2 * NdotH2);
+			if (NdotV > PM_EPSILON && NdotL > PM_EPSILON && NdotH > PM_EPSILON)
+			{
+				const float HdotX = PM::pm_Dot3D(H, point.tangent());
+				const float HdotY = PM::pm_Dot3D(H, point.binormal());
 
-			PR_ASSERT(!std::isnan(r) && !std::isinf(r)/* && r >= 0 && r <= 1*/);
+				const float NdotH2 = 0.5f + 0.5f * NdotH;
+				const float fx = HdotX / m1;
+				const float fy = HdotY / m2;
+				float r = PM::pm_MagnitudeSqr3D(H) * std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (m1 * m2 * std::sqrt(NdotL*NdotV));
 
-			spec = mSpecularity->eval(point.uv()) * r;
+				PR_ASSERT(!std::isnan(r)/* && r >= 0 && r <= 1*/);
+
+				if (std::isinf(r))
+					r = 1;
+
+				spec = mSpecularity->eval(point.uv()) * r;
+			}
 		}
 
 		return albedo + spec;
@@ -94,33 +99,36 @@ namespace PR
 
 	float WardMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
 	{
+		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point.uv()) : 0);
+		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point.uv()) : 0);
+
 		const float NdotV = std::abs(PM::pm_Dot3D(point.normal(), V));
 		const float NdotL = std::abs(PM::pm_Dot3D(point.normal(), L));
 
-		if (NdotL <= PM_EPSILON || NdotV <= PM_EPSILON)
-		{
-			return 0;
-		}
+		if (NdotV <= PM_EPSILON || NdotL <= PM_EPSILON)
+			return PM_INV_PI_F;
+
+		const PM::vec3 H = PM::pm_Subtract(L, V);
+
+		const float NdotH = std::abs(PM::pm_Dot3D(point.normal(), H));
+
+		if (NdotH <= PM_EPSILON)
+			return PM_INV_PI_F;
+
+		const float HdotX = PM::pm_Dot3D(H, point.tangent());
+		const float HdotY = PM::pm_Dot3D(H, point.binormal());
+
+		const float NdotH2 = 0.5f + 0.5f * NdotH;
+		const float fx = HdotX / m1;
+		const float fy = HdotY / m2;
+
+		const float r = PM::pm_MagnitudeSqr3D(H) * std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (m1 * m2 * std::sqrt(NdotL*NdotV));
+
+		PR_ASSERT(!std::isnan(r));
+		if (std::isinf(r))
+			return PM_INV_PI_F;
 		else
-		{
-			const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point.uv()) : 0);
-			const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point.uv()) : 0);
-
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, V));
-
-			const float NdotH = PM::pm_Dot3D(point.normal(), H);
-
-			const float HdotX = PM::pm_Dot3D(H, point.tangent());
-			const float HdotY = PM::pm_Dot3D(H, point.binormal());
-
-			const float NdotH2 = NdotH * NdotH;
-			const float fx = HdotX / m1;
-			const float fy = HdotY / m2;
-
-			const float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (4 * m1 * m2 * NdotH2 * NdotH2);
-			PR_ASSERT(!std::isnan(r) && !std::isinf(r));
-			return r;
-		}
+			return PM::pm_MaxT(PM_INV_PI_F, r);
 	}
 
 	PM::vec3 WardMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
