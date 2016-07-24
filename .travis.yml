@@ -22,13 +22,12 @@ install:
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libboost-filesystem1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-iostreams1.55-dev libboost-thread1.55-dev
 # OpenEXR
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenexr-dev libilmbase-dev
-# OpenImageIO (for some reason, freetype is not recognized)
+# OpenImageIO
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenjpeg-dev libtiff-dev libjpeg-dev libpng-dev
   - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
   - tar zxf /tmp/OpenImageIO-1.6.11.tar.gz > /dev/null 2>&1
   - cd oiio-Release-1.6.11
   - make $MAKEFLAGS USE_QT=0 USE_TBB=0 USE_PYTHON=0 USE_PYTHON3=0 USE_FIELD3D=0 USE_FFMPEG=0 USE_OPENJPEG=1 USE_OCIO=0 USE_OPENCV=0 USE_OPENSSL=0 USE_FREETYPE=0 USE_GIF=0 USE_PTEX=0 USE_LIBRAW=0 OIIO_BUILD_TESTS=0 OIIO_BUILD_TOOLS=0 INSTALLDIR=/opt/oiio dist_dir=. cmake
-  - sudo make $MAKEFLAGS install dist_dir=.
   - cd ..
 before_script:
 # Stats
@@ -36,8 +35,8 @@ before_script:
   - cmake --version
   - mkdir build
   - cd build
-  - env OIIO_DIR=/opt/oiio
-  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
+  - export OIIO_DIR=/opt/oiio
+  - cmake -DOIIO_DIR=/opt/oiio -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make $MAKEFLAGS 
   - bin/pr_test_boundingbox
