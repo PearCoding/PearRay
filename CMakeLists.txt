@@ -114,16 +114,20 @@ ENDIF()
 configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
-			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OSL_INCLUDE_DIR}
-			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils ${PR_Root}/osl)
+			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
+			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
 
 IF(OpenCL_FOUND AND NOT PR_NO_GPU)
-include_directories(${OpenCL_INCLUDE_DIRS})
+	include_directories(${OpenCL_INCLUDE_DIRS})
 ENDIF()
 
 add_subdirectory(${PR_Root}/library)
-#add_subdirectory(${PR_Root}/osl)
 add_subdirectory(${PR_Root}/utils)
+
+IF(OSL_FOUND)
+	include_directories(${OSL_INCLUDE_DIR} ${PR_Root}/osl)
+	#add_subdirectory(${PR_Root}/osl)
+ENDIF()
 
 IF(NOT PR_ONLY_LIBRARY)
 	add_subdirectory(${PR_Root}/tests)
