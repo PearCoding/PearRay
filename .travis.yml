@@ -27,16 +27,15 @@ install:
   - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
   - tar zxf /tmp/OpenImageIO-1.6.11.tar.gz > /dev/null 2>&1
   - cd oiio-Release-1.6.11
-  - make $MAKEFLAGS USE_QT=0 USE_TBB=0 USE_PYTHON=0 USE_PYTHON3=0 USE_FIELD3D=0 USE_FFMPEG=0 USE_OPENJPEG=1 USE_OCIO=0 USE_OPENCV=0 USE_OPENSSL=0 USE_FREETYPE=0 USE_GIF=0 USE_PTEX=0 USE_LIBRAW=0 OIIO_BUILD_TESTS=0 OIIO_BUILD_TOOLS=0 INSTALLDIR=/opt/oiio dist_dir=. cmake
+  - make $MAKEFLAGS USE_QT=0 USE_TBB=0 USE_PYTHON=0 USE_PYTHON3=0 USE_FIELD3D=0 USE_FFMPEG=0 USE_OPENJPEG=1 USE_OCIO=0 USE_OPENCV=0 USE_OPENSSL=0 USE_FREETYPE=0 USE_GIF=0 USE_PTEX=0 USE_LIBRAW=0 OIIO_BUILD_TESTS=0 OIIO_BUILD_TOOLS=0 cmake
+  - sudo make install
   - cd ..
 before_script:
-# Stats
   - $CXX --version
   - cmake --version
   - mkdir build
   - cd build
-  - export OIIO_HOME=./oiio-Release-1.6.11
-  - cmake -DOIIO_DIR=./oiio-Release-1.6.11 -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
+  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make $MAKEFLAGS 
   - bin/pr_test_boundingbox
