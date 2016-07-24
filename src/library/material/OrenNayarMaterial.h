@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Material.h"
-#include "texture/Texture2D.h"
 
 namespace PR
 {
@@ -10,18 +9,18 @@ namespace PR
 	public:
 		OrenNayarMaterial();
 
-		Texture2D* albedo() const;
-		void setAlbedo(Texture2D* diffSpec);
+		SpectralShaderOutput* albedo() const;
+		void setAlbedo(SpectralShaderOutput* diffSpec);
 
-		Data2D* roughness() const;
-		void setRoughness(Data2D* data);
+		ScalarShaderOutput* roughness() const;
+		void setRoughness(ScalarShaderOutput* data);
 		
-		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
-		float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
-		PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) override;
+		Spectrum apply(const SamplePoint& point, const PM::vec3& L) override;
+		float pdf(const SamplePoint& point, const PM::vec3& L) override;
+		PM::vec3 sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf) override;
 
 	private:
-		Texture2D* mAlbedo;
-		Data2D* mRoughness;
+		SpectralShaderOutput* mAlbedo;
+		ScalarShaderOutput* mRoughness;
 	};
 }

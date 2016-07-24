@@ -100,10 +100,10 @@ namespace PR
 		}
 
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
-			[](const Ray& ray, FacePoint& point, float& t, RenderEntity* e, RenderEntity* ignore) {
+			[](const Ray& ray, SamplePoint& point, float& t, RenderEntity* e, RenderEntity* ignore) {
 			return (!ignore || !e->isParent(ignore)) &&
 				e->checkCollision(ray, point, t) &&
-				point.material() && !point.material()->shouldIgnore(ray, point);
+				point.Material && !point.Material->shouldIgnore(ray, point);
 		},
 		[](RenderEntity* e) {
 			return (float)e->collisionCost();
@@ -111,7 +111,7 @@ namespace PR
 		((SceneKDTree*)mKDTree)->build(mRenderEntities);
 	}
 
-	RenderEntity* Scene::checkCollision(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore) const
+	RenderEntity* Scene::checkCollision(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore) const
 	{
 		float t;
 		PR_ASSERT(mKDTree);

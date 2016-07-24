@@ -8,7 +8,7 @@ namespace PR
 	class Renderer;
 	class RenderThread;
 	class RenderEntity;
-	class FacePoint;
+	struct SamplePoint;
 	class Ray;
 	class Sampler;
 	class Spectrum;
@@ -18,8 +18,8 @@ namespace PR
 		RenderContext(Renderer* renderer, RenderThread* thread, uint32 index);
 		~RenderContext();
 
-		RenderEntity* shoot(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
-		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
 
 		inline Renderer* renderer() const
 		{

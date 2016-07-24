@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
 
 PROJECT(PearRay)
 
@@ -46,17 +46,20 @@ option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects.
 option(PR_NO_GPU "Build framework with only CPU support." OFF)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
 
+option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" ON)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Widgets)
 find_package(OpenCL)
-find_package(FreeImage REQUIRED)
+find_package(OpenImageIO REQUIRED)
+find_package(OSL REQUIRED)
 find_package(Boost 1.36 COMPONENTS filesystem system iostreams program_options REQUIRED)
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 IF(MSVC)
-	#SET(DEFS "_UNICODE;UNICODE;_MT;_USRDLL")
+	SET(DEFS "${DEFS};_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE")
 	#SET(DEFS_DEBUG "_DEBUG")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Oi /fp:fast /EHsc /W3")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ob2 /Ot /GL")
@@ -100,6 +103,10 @@ ELSE()
 	MESSAGE(STATUS "Using OpenCL")
 ENDIF()
 
+IF(OIIO_LINK_STATIC)
+	SET(DEFS "${DEFS};OIIO_STATIC_BUILD")
+ENDIF()
+
 IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
 	SET(DEFS "${DEFS};PR_WITH_VIEWER")
 ENDIF()
@@ -107,14 +114,15 @@ ENDIF()
 configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
-			${FREEIMAGE_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
-			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
+			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OSL_INCLUDE_DIR}
+			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils ${PR_Root}/osl)
 
 IF(OpenCL_FOUND AND NOT PR_NO_GPU)
 include_directories(${OpenCL_INCLUDE_DIRS})
 ENDIF()
 
 add_subdirectory(${PR_Root}/library)
+#add_subdirectory(${PR_Root}/osl)
 add_subdirectory(${PR_Root}/utils)
 
 IF(NOT PR_ONLY_LIBRARY)

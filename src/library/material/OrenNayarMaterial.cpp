@@ -1,6 +1,6 @@
 #include "OrenNayarMaterial.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 #include "math/Projection.h"
 
@@ -11,42 +11,41 @@ namespace PR
 	{
 	}
 
-	Texture2D* OrenNayarMaterial::albedo() const
+	SpectralShaderOutput* OrenNayarMaterial::albedo() const
 	{
 		return mAlbedo;
 	}
 
-	void OrenNayarMaterial::setAlbedo(Texture2D* diffSpec)
+	void OrenNayarMaterial::setAlbedo(SpectralShaderOutput* diffSpec)
 	{
 		mAlbedo = diffSpec;
 	}
 
-	Data2D* OrenNayarMaterial::roughness() const
+	ScalarShaderOutput* OrenNayarMaterial::roughness() const
 	{
 		return mRoughness;
 	}
 
-	void OrenNayarMaterial::setRoughness(Data2D* d)
+	void OrenNayarMaterial::setRoughness(ScalarShaderOutput* d)
 	{
 		mRoughness = d;
 	}
 
-	Spectrum OrenNayarMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	Spectrum OrenNayarMaterial::apply(const SamplePoint& point, const PM::vec3& L)
 	{
 		if (mAlbedo)
 		{
 			float val = PM_INV_PI_F;
 			if (mRoughness)
 			{
-				float roughness = mRoughness->eval(point.uv());
+				float roughness = mRoughness->eval(point);
 				roughness *= roughness;// Square
 
 				if (roughness > PM_EPSILON)// Oren Nayar
 				{
-					const float NdotV = std::abs(PM::pm_Dot3D(V, point.normal()));
-					const float NdotL = std::abs(PM::pm_Dot3D(L, point.normal()));
+					const float NdotL = std::abs(PM::pm_Dot3D(L, point.N));
 
-					const float angleVN = std::acos(NdotV);
+					const float angleVN = std::acos(point.NdotV);
 					const float angleLN = std::acos(NdotL);
 					const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
 					const float or_beta = PM::pm_MinT(angleLN, angleVN);
@@ -55,8 +54,8 @@ namespace PR
 					const float B = 0.45f * roughness / (roughness + 0.09f);
 					const float C = std::sin(or_alpha) * std::tan(or_beta);
 
-					const float gamma = PM::pm_Dot3D(PM::pm_Add(V, PM::pm_Scale(point.normal(), NdotV)),
-						PM::pm_Subtract(L, PM::pm_Scale(point.normal(), NdotL)));
+					const float gamma = PM::pm_Dot3D(PM::pm_Add(point.V, PM::pm_Scale(point.N, point.NdotV)),
+						PM::pm_Subtract(L, PM::pm_Scale(point.N, NdotL)));
 
 					const float L1 = (A + B * C * PM::pm_MaxT(0.0f, gamma));
 
@@ -64,20 +63,20 @@ namespace PR
 				}
 			}// else lambert
 
-			return mAlbedo->eval(point.uv()) * val;
+			return mAlbedo->eval(point) * val;
 		}
 		else
 			return Spectrum();
 	}
 
-	float OrenNayarMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	float OrenNayarMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
 	{
 		return PM_INV_PI_F;
 	}
 
-	PM::vec3 OrenNayarMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	PM::vec3 OrenNayarMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
 	{
-		auto dir = Projection::tangent_align(point.normal(), Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
+		auto dir = Projection::tangent_align(point.N, Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
 		pdf = PM_INV_PI_F;
 		return dir;
 	}

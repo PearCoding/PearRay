@@ -30,6 +30,8 @@ namespace PRU
 
 		mSpectrums["sun_norm"] = PR::Spectrum::fromBlackbodyNorm(5500);
 		mSpectrums["candle_norm"] = PR::Spectrum::fromBlackbodyNorm(1000);
+
+		mTextureSystem = OIIO::TextureSystem::create();
 	}
 
 	Environment::~Environment()
@@ -45,24 +47,22 @@ namespace PRU
 			delete p.second;
 		}
 
-		for (PR::Texture1D* tex : mTexture1D)
+		// TODO: Destructor virtual?
+		for (PR::ScalarShaderOutput* s : mScalarShaderOutputs)
 		{
-			delete tex;
+			delete s;
 		}
 
-		for (PR::Texture2D* tex : mTexture2D)
+		for (PR::SpectralShaderOutput* s : mSpectralShaderOutputs)
 		{
-			delete tex;
+			delete s;
 		}
 
-		for (PR::Data1D* tex : mData1D)
+		for (PR::VectorShaderOutput* s : mVectorShaderOutputs)
 		{
-			delete tex;
+			delete s;
 		}
 
-		for (PR::Data2D* tex : mData2D)
-		{
-			delete tex;
-		}
+		OIIO::TextureSystem::destroy(mTextureSystem);
 	}
 }

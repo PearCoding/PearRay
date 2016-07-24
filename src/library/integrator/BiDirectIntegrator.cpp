@@ -1,6 +1,6 @@
 #include "BiDirectIntegrator.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 #include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
@@ -102,16 +102,16 @@ namespace PR
 					Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
 					float* lightPDF = &data.LightPDF[lightNr * maxDepth];
 
-					FacePoint lightSample = light->getRandomFacePoint(sampler, i);
+					SamplePoint lightSample = light->getRandomFacePoint(sampler, i);
 					const PM::vec3 lightDir =
-						Projection::align(lightSample.normal(),
+						Projection::align(lightSample.N,
 							Projection::cos_hemi(context->random().getFloat(), context->random().getFloat()));
 
-					current = current.next(lightSample.vertex(), lightDir);
+					current = current.next(lightSample.P, lightDir);
 					current.setDepth(1);
 
 					// Initiate with power
-					Spectrum flux = lightSample.material()->applyEmission(lightSample, lightSample.normal());
+					Spectrum flux = lightSample.Material->applyEmission(lightSample);
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
@@ -120,11 +120,11 @@ namespace PR
 
 					for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 					{
-						FacePoint collision;
+						SamplePoint collision;
 						RenderEntity* entity = context->shoot(current, collision);
-						if (entity && collision.material() && collision.material()->canBeShaded())
+						if (entity && collision.Material && collision.Material->canBeShaded())
 						{
-							const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), current.direction()));
+							const float NdotL = std::abs(PM::pm_Dot3D(collision.N, current.direction()));
 							if (NdotL < PM_EPSILON)
 								break;
 
@@ -134,7 +134,7 @@ namespace PR
 							PM::vec3 s = PM::pm_Set(context->random().getFloat(),
 								context->random().getFloat(),
 								context->random().getFloat());
-							Ray out = current.next(collision.vertex(), collision.material()->sample(collision, s, current.direction(), pdf));
+							Ray out = current.next(collision.P, collision.Material->sample(collision, s, pdf));
 
 							if (pdf <= PM_EPSILON)
 							{
@@ -143,7 +143,7 @@ namespace PR
 							}
 							else
 							{
-								flux *= collision.material()->apply(collision, out.direction(), current.direction()) *
+								flux *= collision.Material->apply(collision, current.direction()) *
 									(NdotL / (std::isinf(pdf) ? 1 : pdf));
 								current = out;
 
@@ -177,13 +177,13 @@ namespace PR
 		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*(uint32)context->renderer()->lights().size();
 		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();
 
-		FacePoint point;
+		SamplePoint point;
 		Spectrum applied;
 		Spectrum full_weight;
 		float full_pdf = 0;
 
 		RenderEntity* entity = context->shootWithApply(applied, in, point);
-		if (entity && point.material() && point.material()->canBeShaded())
+		if (entity && point.Material && point.Material->canBeShaded())
 		{
 			MultiJitteredSampler sampler(context->random(), context->renderer()->settings().maxLightSamples());
 			for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
@@ -191,16 +191,16 @@ namespace PR
 				float pdf;
 				Spectrum weight;
 				PM::vec3 rnd = sampler.generate3D(i);
-				PM::vec3 dir = point.material()->sample(point, rnd, in.direction(), pdf);
-				const float NdotL = std::abs(PM::pm_Dot3D(dir, point.normal()));
+				PM::vec3 dir = point.Material->sample(point, rnd, pdf);
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, point.N));
 
 				if (NdotL > PM_EPSILON &&
 					(std::isinf(pdf) || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
 				{
-					Spectrum applied = applyRay(in.next(point.vertex(), dir),
+					Spectrum applied = applyRay(in.next(point.P, dir),
 						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
 
-					weight = point.material()->apply(point, in.direction(), dir) * applied * NdotL;
+					weight = point.Material->apply(point, dir) * applied * NdotL;
 				}
 
 				MSI::balance(full_weight, full_pdf, weight, pdf);
@@ -220,19 +220,18 @@ namespace PR
 
 						Spectrum weight;
 						Ray shootRay = in.next(lightPos,
-							PM::pm_Normalize3D(PM::pm_Subtract(point.vertex(), lightPos)));
+							PM::pm_Normalize3D(PM::pm_Subtract(point.P, lightPos)));
 
-						float pdf = point.material()->pdf(point, in.direction(), shootRay.direction());
+						float pdf = point.Material->pdf(point, shootRay.direction());
 
-						FacePoint tmpCollision;
+						SamplePoint tmpCollision;
 						if (context->shoot(shootRay, tmpCollision) == entity &&
-							PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.vertex(), tmpCollision.vertex())) <= LightEpsilon)
+							PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.P, tmpCollision.P)) <= LightEpsilon)
 						{
-							const float NdotL = std::abs(PM::pm_Dot3D(tmpCollision.normal(), shootRay.direction()));
+							const float NdotL = std::abs(PM::pm_Dot3D(tmpCollision.N, shootRay.direction()));
 							if (NdotL > PM_EPSILON)
 							{
-								weight = point.material()->apply(point,
-									in.direction(), shootRay.direction()) * lightFlux * NdotL;
+								weight = point.Material->apply(point, shootRay.direction()) * lightFlux * NdotL;
 								PR_DEBUG_ASSERT(!weight.hasNaN());
 							}
 						}

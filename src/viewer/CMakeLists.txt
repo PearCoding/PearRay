@@ -93,11 +93,13 @@ QT5_ADD_RESOURCES(PR_Res_Rcc ${PR_Res})
 
 SOURCE_GROUP("Generated Files" FILES ${PR_Hdr_Moc} ${PR_Fms_Hdr} ${PR_Res_Rcc})
 
+# disable autolinking to qtmain
+cmake_policy(SET CMP0020 OLD)
+
 add_executable(rayview ${PR_Src} ${PR_Hdr} ${PR_Fms} ${PR_Res}
 	${PR_Hdr_Moc} ${PR_Fms_Hdr} ${PR_Res_Rcc})
 target_link_libraries(rayview ${PR_TARGET})
 target_link_libraries(rayview pr_lib_utils)
 target_link_libraries(rayview Qt5::Widgets)
-target_link_libraries(rayview ${PP_TARGET})
 set_target_properties(rayview PROPERTIES VERSION ${PR_Version})
-set_target_properties(rayview PROPERTIES COMPILE_DEFINITIONS "${DEFS};" COMPILE_DEFINITIONS_DEBUG "${DEFS_DEBUG}")
+target_compile_definitions(rayview PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

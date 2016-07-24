@@ -50,7 +50,7 @@ namespace PR
 		return BoundingBox(upper, lower);
 	}
 
-	bool RenderEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
+	bool RenderEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
 	{
 		return false;
 	}

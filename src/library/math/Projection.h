@@ -60,8 +60,14 @@ namespace PR
 				PM::pm_Scale(B, PM::pm_GetX(V)));
 		}
 
-		// Projections 
+		static inline PM::vec2 sphereUV(const PM::vec3& V)
+		{
+			float u = 0.5f + std::atan2(PM::pm_GetZ(V), PM::pm_GetX(V)) * PM_INV_PI_F * 0.5f;
+			float v = 0.5f - std::asin(-PM::pm_GetY(V)) * PM_INV_PI_F;
+			return PM::pm_Set(u, v);
+		}
 
+		// Projections 
 		// Uniform [0, 1]
 		static inline PM::vec3 sphere(float phi, float rho)
 		{

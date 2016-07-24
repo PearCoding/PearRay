@@ -1,6 +1,6 @@
 #include "WardMaterial.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 #include "math/Projection.h"
 #include "math/Reflection.h"
@@ -13,116 +13,114 @@ namespace PR
 	{
 	}
 
-	Texture2D* WardMaterial::albedo() const
+	SpectralShaderOutput* WardMaterial::albedo() const
 	{
 		return mAlbedo;
 	}
 
-	void WardMaterial::setAlbedo(Texture2D* diffSpec)
+	void WardMaterial::setAlbedo(SpectralShaderOutput* diffSpec)
 	{
 		mAlbedo = diffSpec;
 	}
 
-	Texture2D* WardMaterial::specularity() const
+	SpectralShaderOutput* WardMaterial::specularity() const
 	{
 		return mSpecularity;
 	}
 
-	void WardMaterial::setSpecularity(Texture2D* spec)
+	void WardMaterial::setSpecularity(SpectralShaderOutput* spec)
 	{
 		mSpecularity = spec;
 	}
 
-	Data2D* WardMaterial::roughnessX() const
+	ScalarShaderOutput* WardMaterial::roughnessX() const
 	{
 		return mRoughnessX;
 	}
 
-	void WardMaterial::setRoughnessX(Data2D* d)
+	void WardMaterial::setRoughnessX(ScalarShaderOutput* d)
 	{
 		mRoughnessX = d;
 	}
 
-	Data2D* WardMaterial::roughnessY() const
+	ScalarShaderOutput* WardMaterial::roughnessY() const
 	{
 		return mRoughnessY;
 	}
 
-	void WardMaterial::setRoughnessY(Data2D* d)
+	void WardMaterial::setRoughnessY(ScalarShaderOutput* d)
 	{
 		mRoughnessY = d;
 	}
 
 	constexpr float MinRoughness = 0.001f;
-	Spectrum WardMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	Spectrum WardMaterial::apply(const SamplePoint& point, const PM::vec3& L)
 	{
 		Spectrum albedo;
 		if (mAlbedo)
 		{
-			albedo = mAlbedo->eval(point.uv()) * PM_INV_PI_F;
+			albedo = mAlbedo->eval(point) * PM_INV_PI_F;
 		}
 
 		Spectrum spec;
 		if (mSpecularity && mRoughnessX && mRoughnessY)
 		{
-			const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point.uv()) : 0);
-			const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point.uv()) : 0);
+			const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
+			const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-			const float NdotV = std::abs(PM::pm_Dot3D(point.normal(), V));
-			const float NdotL = std::abs(PM::pm_Dot3D(point.normal(), L));
+			const float NdotL = std::abs(PM::pm_Dot3D(point.N, L));
 
 			// Since H appears to equal powers in both the numerator and denominator of the exponent, no normalization is needed.
-			const PM::vec3 H = PM::pm_Subtract(L, V);
-			const float NdotH = PM::pm_Dot3D(point.normal(), H);
+			const PM::vec3 H = PM::pm_Subtract(L, point.V);
+			const float NdotH = PM::pm_Dot3D(point.N, H);
 
-			if (NdotV > PM_EPSILON && NdotL > PM_EPSILON && NdotH > PM_EPSILON)
+			if (point.NdotV > PM_EPSILON && NdotL > PM_EPSILON && NdotH > PM_EPSILON)
 			{
-				const float HdotX = PM::pm_Dot3D(H, point.tangent());
-				const float HdotY = PM::pm_Dot3D(H, point.binormal());
+				const float HdotX = PM::pm_Dot3D(H, point.Nx);
+				const float HdotY = PM::pm_Dot3D(H, point.Ny);
 
 				const float NdotH2 = 0.5f + 0.5f * NdotH;
 				const float fx = HdotX / m1;
 				const float fy = HdotY / m2;
-				float r = PM::pm_MagnitudeSqr3D(H) * std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (m1 * m2 * std::sqrt(NdotL*NdotV));
+				float r = PM::pm_MagnitudeSqr3D(H) * std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (m1 * m2 * std::sqrt(NdotL*point.NdotV));
 
 				PR_ASSERT(!std::isnan(r)/* && r >= 0 && r <= 1*/);
 
 				if (std::isinf(r))
 					r = 1;
 
-				spec = mSpecularity->eval(point.uv()) * r;
+				spec = mSpecularity->eval(point) * r;
 			}
 		}
 
 		return albedo + spec;
 	}
 
-	float WardMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	float WardMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
 	{
-		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point.uv()) : 0);
-		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point.uv()) : 0);
+		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
+		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-		const float NdotV = std::abs(PM::pm_Dot3D(point.normal(), V));
-		const float NdotL = std::abs(PM::pm_Dot3D(point.normal(), L));
+		const float NdotL = std::abs(PM::pm_Dot3D(point.N, L));
 
-		if (NdotV <= PM_EPSILON || NdotL <= PM_EPSILON)
+		if (point.NdotV <= PM_EPSILON || NdotL <= PM_EPSILON)
 			return PM_INV_PI_F;
 
-		const PM::vec3 H = PM::pm_Subtract(L, V);
+		const PM::vec3 H = PM::pm_Subtract(L, point.V);
 
-		const float NdotH = std::abs(PM::pm_Dot3D(point.normal(), H));
+		const float NdotH = std::abs(PM::pm_Dot3D(point.N, H));
 
 		if (NdotH <= PM_EPSILON)
 			return PM_INV_PI_F;
 
-		const float HdotX = PM::pm_Dot3D(H, point.tangent());
-		const float HdotY = PM::pm_Dot3D(H, point.binormal());
+		const float HdotX = PM::pm_Dot3D(H, point.Nx);
+		const float HdotY = PM::pm_Dot3D(H, point.Ny);
 
 		const float NdotH2 = 0.5f + 0.5f * NdotH;
 		const float fx = HdotX / m1;
 		const float fy = HdotY / m2;
 
-		const float r = PM::pm_MagnitudeSqr3D(H) * std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (m1 * m2 * std::sqrt(NdotL*NdotV));
+		const float r = PM::pm_MagnitudeSqr3D(H) * std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (m1 * m2 * std::sqrt(NdotL*point.NdotV));
 
 		PR_ASSERT(!std::isnan(r));
 		if (std::isinf(r))
@@ -131,10 +129,10 @@ namespace PR
 			return PM::pm_MaxT(PM_INV_PI_F, r);
 	}
 
-	PM::vec3 WardMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	PM::vec3 WardMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
 	{
-		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point.uv()) : 0);
-		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point.uv()) : 0);
+		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
+		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
 		float px, py;
 		if (m1 == m2)// Isotropic
@@ -152,10 +150,10 @@ namespace PR
 			py = std::atan2(m2*s, m1*c);
 		}
 
-		auto H = Projection::tangent_align(point.normal(), point.tangent(), point.binormal(),
+		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			Projection::sphereRAD(px, py));
-		auto dir = Reflection::reflect(PM::pm_Dot3D(H, V), H, V);
-		pdf = WardMaterial::pdf(point, V, dir);
+		auto dir = Reflection::reflect(PM::pm_Dot3D(H, point.V), H, point.V);
+		pdf = WardMaterial::pdf(point, dir);
 		return dir;
 	}
 }

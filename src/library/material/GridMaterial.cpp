@@ -1,5 +1,5 @@
 #include "GridMaterial.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 namespace PR
 {
@@ -48,33 +48,33 @@ namespace PR
 		return mTiledUV;
 	}
 
-	Spectrum GridMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	Spectrum GridMaterial::apply(const SamplePoint& point, const PM::vec3& L)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			return mFirst->apply(pointN, V, L);
+			return mFirst->apply(pointN, L);
 		}
 		else if (mSecond)
 		{
-			return mSecond->apply(pointN, V, L);
+			return mSecond->apply(pointN, L);
 		}
 	
 		return Spectrum();
 	}
 
-	FacePoint GridMaterial::applyGrid(const FacePoint& point, int& u, int& v) const
+	SamplePoint GridMaterial::applyGrid(const SamplePoint& point, int& u, int& v) const
 	{
-		u = (int)(PM::pm_GetX(point.uv()) * mGridCount);
-		v = (int)(PM::pm_GetY(point.uv()) * mGridCount);
+		u = (int)(PM::pm_GetX(point.UV) * mGridCount);
+		v = (int)(PM::pm_GetY(point.UV) * mGridCount);
 
 		if (mTiledUV)
 		{
-			FacePoint pointN = point;
-			pointN.setUV(PM::pm_Set(PM::pm_GetX(point.uv())*mGridCount - u,
-				PM::pm_GetY(point.uv())*mGridCount - v
+			SamplePoint pointN = point;
+			pointN.UV = (PM::pm_Set(PM::pm_GetX(point.UV)*mGridCount - u,
+				PM::pm_GetY(point.UV)*mGridCount - v
 			));
 			return pointN;
 		}
@@ -84,35 +84,35 @@ namespace PR
 		}
 	}
 
-	float GridMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	float GridMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			return mFirst->pdf(pointN, V, L);
+			return mFirst->pdf(pointN, L);
 		}
 		else if (mSecond)
 		{
-			return mSecond->pdf(pointN, V, L);
+			return mSecond->pdf(pointN, L);
 		}
 
 		return 0;
 	}
 
-	PM::vec3 GridMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	PM::vec3 GridMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			return mFirst->sample(pointN, rnd, V, pdf);
+			return mFirst->sample(pointN, rnd, pdf);
 		}
 		else if (mSecond)
 		{
-			return mSecond->sample(pointN, rnd, V, pdf);
+			return mSecond->sample(pointN, rnd, pdf);
 		}
 
 		pdf = 0;

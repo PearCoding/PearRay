@@ -26,8 +26,8 @@ namespace PRU
 
 		OrenNayarMaterial* diff = new OrenNayarMaterial;
 
-		diff->setAlbedo(loader->getTexture2D(env, albedoD));
-		diff->setRoughness(loader->getData2D(env, roughnessD));
+		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
+		diff->setRoughness(loader->getScalarOutput(env, roughnessD));
 		return diff;
 	}
 }

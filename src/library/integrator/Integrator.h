@@ -5,7 +5,7 @@
 namespace PR
 {
 	class RenderEntity;
-	class FacePoint;
+	struct SamplePoint;
 	class Ray;
 	class Renderer;
 	class RenderContext;

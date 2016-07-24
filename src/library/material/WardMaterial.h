@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Material.h"
-#include "texture/Texture2D.h"
 
 namespace PR
 {
@@ -10,26 +9,26 @@ namespace PR
 	public:
 		WardMaterial();
 
-		Texture2D* albedo() const;
-		void setAlbedo(Texture2D* diffSpec);
+		SpectralShaderOutput* albedo() const;
+		void setAlbedo(SpectralShaderOutput* diffSpec);
 
-		Texture2D* specularity() const;
-		void setSpecularity(Texture2D* spec);
+		SpectralShaderOutput* specularity() const;
+		void setSpecularity(SpectralShaderOutput* spec);
 
-		Data2D* roughnessX() const;
-		void setRoughnessX(Data2D* data);
+		ScalarShaderOutput* roughnessX() const;
+		void setRoughnessX(ScalarShaderOutput* data);
 
-		Data2D* roughnessY() const;
-		void setRoughnessY(Data2D* data);
+		ScalarShaderOutput* roughnessY() const;
+		void setRoughnessY(ScalarShaderOutput* data);
 
-		Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
-		float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) override;
-		PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) override;
+		Spectrum apply(const SamplePoint& point, const PM::vec3& L) override;
+		float pdf(const SamplePoint& point, const PM::vec3& L) override;
+		PM::vec3 sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf) override;
 
 	private:
-		Texture2D* mAlbedo;
-		Texture2D* mSpecularity;
-		Data2D* mRoughnessX;
-		Data2D* mRoughnessY;
+		SpectralShaderOutput* mAlbedo;
+		SpectralShaderOutput* mSpecularity;
+		ScalarShaderOutput* mRoughnessX;
+		ScalarShaderOutput* mRoughnessY;
 	};
 }

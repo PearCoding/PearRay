@@ -9,7 +9,7 @@
 namespace PR
 {
 	class Entity;
-	class FacePoint;
+	struct SamplePoint;
 	class RenderEntity;
 	class Ray;
 	class PR_LIB Scene
@@ -32,7 +32,7 @@ namespace PR
 
 		void buildTree();
 
-		RenderEntity* checkCollision(const Ray& ray, FacePoint& collisionPoint, RenderEntity* ignore) const;
+		RenderEntity* checkCollision(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore) const;
 
 	private:
 		std::string mName;

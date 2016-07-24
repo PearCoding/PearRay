@@ -2,7 +2,7 @@
 
 #include "ray/Ray.h"
 #include "material/Material.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 #include "Logger.h"
 #include "Random.h"
@@ -65,7 +65,7 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	bool PlaneEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
+	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
 	{
 		PM::vec3 pos;
 		float u, v;
@@ -77,13 +77,13 @@ namespace PR
 
 		if (mPlane.intersects(local, pos, t, u, v))
 		{
-			collisionPoint.setVertex(PM::pm_SetW(PM::pm_Multiply(matrix(), pos), 1));
+			collisionPoint.P = PM::pm_SetW(PM::pm_Multiply(matrix(), pos), 1);
 
-			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
-			collisionPoint.calculateTangentFrame();
+			collisionPoint.Ng = PM::pm_RotateWithQuat(rotation(), mPlane.normal());
+			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-			collisionPoint.setUV(PM::pm_Set(u, v));
-			collisionPoint.setMaterial(material());
+			collisionPoint.UV = PM::pm_Set(u, v);
+			collisionPoint.Material = material();
 			t *= scale();
 
 			return true;
@@ -93,18 +93,21 @@ namespace PR
 	}
 
 	// World space
-	FacePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		auto s = sampler.generate2D(sample);
 
-		FacePoint fp;
-		fp.setVertex(PM::pm_Add(position(),
+		SamplePoint fp;
+		fp.P = PM::pm_Add(position(),
 			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.xAxis(), scale())), PM::pm_GetX(s)),
-				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), scale())), PM::pm_GetY(s)))));
-		fp.setNormal(PM::pm_RotateWithQuat(rotation(), mPlane.normal()));
-		fp.setUV(PM::pm_SetZ(s, 0));
-		fp.setMaterial(material());
-		fp.calculateTangentFrame();
+				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), scale())), PM::pm_GetY(s))));
+		fp.Ng = PM::pm_RotateWithQuat(rotation(), mPlane.normal());
+		fp.N = fp.Ng;
+		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
+
+		fp.UV = PM::pm_SetZ(s, 0);
+		fp.Material = material();
+
 		return fp;
 	}
 }

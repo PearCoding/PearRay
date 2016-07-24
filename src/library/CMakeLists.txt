@@ -24,7 +24,6 @@ SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
   ${PR_LIB}/geometry/BoundingBox.cpp
   ${PR_LIB}/geometry/Face.cpp
-  ${PR_LIB}/geometry/FacePoint.cpp
   ${PR_LIB}/geometry/Plane.cpp
   ${PR_LIB}/geometry/Sphere.cpp
   ${PR_LIB}/geometry/TriMesh.cpp)
@@ -40,7 +39,6 @@ SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
   ${PR_LIB}/material/BlinnPhongMaterial.cpp
   ${PR_LIB}/material/BRDF.cpp
-  ${PR_LIB}/material/BRDFMaterial.cpp
   ${PR_LIB}/material/DebugBoundingBoxMaterial.cpp
   ${PR_LIB}/material/DiffuseMaterial.cpp
   ${PR_LIB}/material/GlassMaterial.cpp
@@ -82,18 +80,9 @@ SET(PR_Spectral_Src
   ${PR_LIB}/spectral/ToneMapper.cpp
   ${PR_LIB}/spectral/XYZConverter.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
-SET(PR_Texture_Src
-  ${PR_LIB}/texture/ConstData1D.cpp
-  ${PR_LIB}/texture/ConstData2D.cpp
-  ${PR_LIB}/texture/ConstTexture1D.cpp
-  ${PR_LIB}/texture/ConstTexture2D.cpp
-  ${PR_LIB}/texture/MapData1D.cpp
-  ${PR_LIB}/texture/MapData2D.cpp
-  ${PR_LIB}/texture/RGBTexture1D.cpp
-  ${PR_LIB}/texture/RGBTexture2D.cpp
-  ${PR_LIB}/texture/SpecTexture1D.cpp
-  ${PR_LIB}/texture/SpecTexture2D.cpp)
-SOURCE_GROUP("Source Files\\Texture" FILES ${PR_Texture_Src})
+SET(PR_Shader_Src
+)
+SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Thread_Src
   ${PR_LIB}/thread/Thread.cpp)
 SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
@@ -101,7 +90,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
-  ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Texture_Src} 
+  ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src}
 )
 
@@ -131,7 +120,6 @@ SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
 SET(PR_Geometry_Hdr
   ${PR_LIB}/geometry/BoundingBox.h
   ${PR_LIB}/geometry/Face.h
-  ${PR_LIB}/geometry/FacePoint.h
   ${PR_LIB}/geometry/IMesh.h
   ${PR_LIB}/geometry/Plane.h
   ${PR_LIB}/geometry/Sphere.h
@@ -150,7 +138,6 @@ SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_Material_Hdr 
   ${PR_LIB}/material/BlinnPhongMaterial.h
   ${PR_LIB}/material/BRDF.h
-  ${PR_LIB}/material/BRDFMaterial.h
   ${PR_LIB}/material/DebugBoundingBoxMaterial.h
   ${PR_LIB}/material/DiffuseMaterial.h
   ${PR_LIB}/material/GlassMaterial.h
@@ -201,21 +188,10 @@ SET(PR_Spectral_Hdr
   ${PR_LIB}/spectral/ToneMapper.h
   ${PR_LIB}/spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
-SET(PR_Texture_Hdr
-  ${PR_LIB}/texture/ConstData1D.h
-  ${PR_LIB}/texture/ConstData2D.h
-  ${PR_LIB}/texture/ConstTexture1D.h
-  ${PR_LIB}/texture/ConstTexture2D.h
-  ${PR_LIB}/texture/MapData1D.h
-  ${PR_LIB}/texture/MapData2D.h
-  ${PR_LIB}/texture/RGBTexture1D.h
-  ${PR_LIB}/texture/RGBTexture2D.h
-  ${PR_LIB}/texture/SpecTexture1D.h
-  ${PR_LIB}/texture/SpecTexture2D.h
-  ${PR_LIB}/texture/Texture1D.h
-  ${PR_LIB}/texture/Texture2D.h
-  ${PR_LIB}/texture/Texture3D.h)
-SOURCE_GROUP("Header Files\\Texture" FILES ${PR_Texture_Hdr})
+SET(PR_Shader_Hdr
+  ${PR_LIB}/shader/ShaderOutput.h
+  ${PR_LIB}/shader/SamplePoint.h)
+SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Thread_Hdr
   ${PR_LIB}/thread/Thread.h
   ${PR_LIB}/thread/Thread.inl)
@@ -224,7 +200,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
   ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
-  ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Texture_Hdr}
+  ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_GPU_Hdr}
 )
 
@@ -241,4 +217,4 @@ IF(OPENCL_FOUND AND NOT PR_NO_GPU)
 ENDIF()
 
 set_target_properties(${PR_TARGET} PROPERTIES VERSION ${PR_Version})
-set_target_properties(${PR_TARGET} PROPERTIES COMPILE_DEFINITIONS "${DEFS};PR_LIB_BUILD" COMPILE_DEFINITIONS_DEBUG "${DEFS_DEBUG}")
+target_compile_definitions(${PR_TARGET} PRIVATE "${DEFS};PR_LIB_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

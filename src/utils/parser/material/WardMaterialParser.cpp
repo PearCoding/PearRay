@@ -29,19 +29,19 @@ namespace PRU
 
 		WardMaterial* diff = new WardMaterial;
 
-		diff->setAlbedo(loader->getTexture2D(env, albedoD));
-		diff->setSpecularity(loader->getTexture2D(env, specularityD));
+		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
+		diff->setSpecularity(loader->getSpectralOutput(env, specularityD));
 
 		if (roughnessD && !roughnessXD && !roughnessYD)
 		{
-			auto roughness = loader->getData2D(env, roughnessD);
+			auto roughness = loader->getScalarOutput(env, roughnessD);
 			diff->setRoughnessX(roughness);
 			diff->setRoughnessY(roughness);
 		}
 		else if (!roughnessD && roughnessXD && roughnessYD)
 		{
-			diff->setRoughnessX(loader->getData2D(env, roughnessXD));
-			diff->setRoughnessY(loader->getData2D(env, roughnessYD));
+			diff->setRoughnessX(loader->getScalarOutput(env, roughnessXD));
+			diff->setRoughnessY(loader->getScalarOutput(env, roughnessYD));
 		}
 		else if (roughnessD || roughnessXD || roughnessYD)
 		{

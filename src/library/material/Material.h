@@ -1,11 +1,11 @@
 #pragma once
 
-#include "texture/Texture2D.h"
+#include "shader/ShaderOutput.h"
 
 namespace PR
 {
 	class RenderEntity;
-	class FacePoint;
+	struct SamplePoint;
 	class Ray;
 	class Renderer;
 	class PR_LIB Material
@@ -13,25 +13,25 @@ namespace PR
 	public:
 		Material();
 
-		virtual Spectrum apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) = 0;
-		virtual Spectrum applyEmission(const FacePoint& point, const PM::vec3& V);
+		virtual Spectrum apply(const SamplePoint& point, const PM::vec3& L) = 0;
+		virtual Spectrum applyEmission(const SamplePoint& point);
 		
 		/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
-		virtual float pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L) = 0;
+		virtual float pdf(const SamplePoint& point, const PM::vec3& L) = 0;
 
 		/*
 		 Sample a direction based on the uniform rnd value.
 		*/
-		virtual PM::vec3 sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf) = 0;
+		virtual PM::vec3 sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf) = 0;
 
-		virtual bool shouldIgnore(const Ray& in,const FacePoint& point) const;
+		virtual bool shouldIgnore(const Ray& in, const SamplePoint& point) const;
 
 		bool isLight() const;
 
-		Texture2D* emission() const;
-		void setEmission(Texture2D* spec);
+		SpectralShaderOutput* emission() const;
+		void setEmission(SpectralShaderOutput* spec);
 
 		bool canBeShaded() const;
 		void enableShading(bool b);
@@ -43,7 +43,7 @@ namespace PR
 		bool isCameraVisible() const;
 
 	private:
-		Texture2D* mEmission;
+		SpectralShaderOutput* mEmission;
 
 		bool mIsLight;
 		bool mCanBeShaded;

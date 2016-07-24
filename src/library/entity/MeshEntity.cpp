@@ -4,7 +4,7 @@
 #include "geometry/IMesh.h"
 #include "geometry/Face.h"
 #include "geometry/Triangle.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 #include "math/Projection.h"
 
@@ -57,7 +57,7 @@ namespace PR
 		return mMesh->boundingBox();
 	}
 
-	bool MeshEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
+	bool MeshEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
 	{
 		// Local space
 		Ray local = ray;
@@ -66,9 +66,9 @@ namespace PR
 		
 		if (mMesh->checkCollision(local, collisionPoint, t))
 		{
-			collisionPoint.setVertex(PM::pm_Multiply(matrix(), collisionPoint.vertex()));
-			collisionPoint.setNormal(PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), collisionPoint.normal())));
-			collisionPoint.calculateTangentFrame();
+			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
+			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), collisionPoint.Ng));
+			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			t *= scale();
 
@@ -80,12 +80,13 @@ namespace PR
 		}
 	}
 
-	FacePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
-		FacePoint point = mMesh->getRandomFacePoint(sampler, sample);
-		point.setNormal(PM::pm_RotateWithQuat(rotation(), point.normal()));
-		point.setVertex(PM::pm_Multiply(matrix(), point.vertex()));
-		point.calculateTangentFrame();
+		SamplePoint point = mMesh->getRandomFacePoint(sampler, sample);
+		point.Ng = PM::pm_RotateWithQuat(rotation(), point.Ng);
+		point.P = PM::pm_Multiply(matrix(), point.P);
+		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
+
 		return point;
 	}
 }

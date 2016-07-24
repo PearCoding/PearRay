@@ -1,7 +1,7 @@
 #include "BoundaryEntity.h"
 #include "Random.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 #include "geometry/Plane.h"
 
 #include "sampler/Sampler.h"
@@ -59,7 +59,7 @@ namespace PR
 		return mBoundingBox;
 	}
 
-	bool BoundaryEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
+	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
 	{
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
 
@@ -71,22 +71,22 @@ namespace PR
 		BoundingBox::FaceSide side;
 		if (box.intersects(local, vertex, t, side))
 		{
-			collisionPoint.setVertex(PM::pm_Multiply(matrix(), vertex));
+			collisionPoint.P = PM::pm_Multiply(matrix(), vertex);
 
 			Plane plane = box.getFace(side);
-			collisionPoint.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));// Have to normalize again?
-			collisionPoint.calculateTangentFrame();
+			collisionPoint.Ng = PM::pm_RotateWithQuat(rotation(), plane.normal());// Have to normalize again?
+			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			float u, v;
 			plane.project(vertex, u, v);
-			collisionPoint.setUV(PM::pm_Set(u, v));
-			collisionPoint.setMaterial(material());
+			collisionPoint.UV = PM::pm_Set(u, v);
+			collisionPoint.Material = material();
 			return true;
 		}
 		return false;
 	}
 
-	FacePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		auto ret = sampler.generate3D(sample);
 
@@ -94,16 +94,17 @@ namespace PR
 
 		Plane plane = localBoundingBox().getFace(side);
 
-		FacePoint fp;
-		fp.setVertex(PM::pm_Add(position(),
+		SamplePoint fp;
+		fp.P = PM::pm_Add(position(),
 			PM::pm_Add(
 				PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(PM::pm_Scale(plane.xAxis(), scale()), PM::pm_GetY(ret))),
 				PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(PM::pm_Scale(plane.yAxis(), scale()), PM::pm_GetZ(ret)))
-			)));
-		fp.setNormal(PM::pm_RotateWithQuat(rotation(), plane.normal()));
-		fp.setUV(PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret)));
-		fp.setMaterial(material());
-		fp.calculateTangentFrame();
+			));
+		fp.Ng = PM::pm_RotateWithQuat(rotation(), plane.normal());
+		fp.N = fp.Ng;
+		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
+		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
+		fp.Material = material();
 
 		return fp;
 	}

@@ -27,9 +27,9 @@ namespace PRU
 
 		BlinnPhongMaterial* diff = new BlinnPhongMaterial;
 
-		diff->setAlbedo(loader->getTexture2D(env, albedoD));
-		diff->setShininess(loader->getData2D(env, shininessD));
-		diff->setFresnelIndex(loader->getData1D(env, indexD));
+		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
+		diff->setShininess(loader->getScalarOutput(env, shininessD));
+		diff->setFresnelIndex(loader->getSpectralOutput(env, indexD));
 		return diff;
 	}
 }

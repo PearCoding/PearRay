@@ -7,7 +7,6 @@
 #include "scene/Scene.h"
 #include "entity/RenderEntity.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
 
 #include "affector/PhotonAffector.h"
 #include "affector/LightAffector.h"
@@ -21,8 +20,11 @@
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/UniformSampler.h"
 
+#include "shader/SamplePoint.h"
+
 #include "Logger.h"
 #include "math/Reflection.h"
+#include "math/Projection.h"
 
 #include "material/Material.h"
 
@@ -359,18 +361,26 @@ namespace PR
 		return list;
 	}
 
-	RenderEntity* Renderer::shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
+			collisionPoint.Flags = 0;
+
 			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
 
-			const float NdotV = PM::pm_Dot3D(ray.direction(), collisionPoint.normal());
-			collisionPoint.setNormal(
-				Reflection::faceforward(NdotV, collisionPoint.normal()));
-			collisionPoint.setInside(NdotV > 0);
+			const float NdotV = PM::pm_Dot3D(ray.direction(), collisionPoint.Ng);
+			collisionPoint.N = Reflection::faceforward(NdotV, collisionPoint.Ng);
+			collisionPoint.Flags |= (NdotV > 0) ? SPF_Inside : 0;
+			collisionPoint.NdotV = std::abs(NdotV);
+			collisionPoint.V = ray.direction();
+
+			if (collisionPoint.Flags & SPF_Inside)
+			{
+				collisionPoint.Nx = PM::pm_Negate(collisionPoint.Nx);
+			}
 
 			mRayCount++;
 
@@ -382,7 +392,7 @@ namespace PR
 		}
 	}
 
-	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
 		if (entity)
@@ -394,20 +404,18 @@ namespace PR
 		}
 		else if (mBackgroundMaterial)
 		{
-			FacePoint point;
-			point.setMaterial(mBackgroundMaterial);
-			point.setInside(true);
-			point.setNormal(PM::pm_Negate(ray.direction()));
-			point.setVertex(ray.direction());//Radius?
+			SamplePoint point;
+			point.Material = mBackgroundMaterial;
+			point.Flags = SPF_Inside;
+			point.V = ray.direction();
+			point.Ng = ray.direction();
+			point.N = PM::pm_Negate(ray.direction());
+			point.P = ray.direction();//Radius?
 
-			float u = 0.5f + std::atan2(PM::pm_GetZ(ray.direction()), PM::pm_GetX(ray.direction())) * PM_INV_PI_F * 0.5f;
-			float v = 0.5f - std::asin(-PM::pm_GetY(ray.direction())) * PM_INV_PI_F;
-			point.setUV(PM::pm_Set(u, v));
+			Projection::tangent_frame(point.N, point.Nx, point.Ny);
+			point.UV = Projection::sphereUV(ray.direction());
 
-			PR_DEBUG_ASSERT(u >= 0 && u <= 1);
-			PR_DEBUG_ASSERT(v >= 0 && v <= 1);
-
-			appliedSpec += mBackgroundMaterial->applyEmission(point, ray.direction()) /** (4*PM_INV_PI_F)*/;
+			appliedSpec += mBackgroundMaterial->applyEmission(point) /** (4*PM_INV_PI_F)*/;
 		}
 
 		return entity;

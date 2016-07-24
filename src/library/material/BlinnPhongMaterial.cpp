@@ -1,9 +1,9 @@
 #include "BlinnPhongMaterial.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
 
 #include "math/Projection.h"
 #include "math/Fresnel.h"
+#include "shader/SamplePoint.h"
 
 namespace PR
 {
@@ -12,59 +12,60 @@ namespace PR
 	{
 	}
 
-	Texture2D* BlinnPhongMaterial::albedo() const
+	SpectralShaderOutput* BlinnPhongMaterial::albedo() const
 	{
 		return mAlbedo;
 	}
 
-	void BlinnPhongMaterial::setAlbedo(Texture2D* diffSpec)
+	void BlinnPhongMaterial::setAlbedo(SpectralShaderOutput* diffSpec)
 	{
 		mAlbedo = diffSpec;
 	}
 
-	Data2D* BlinnPhongMaterial::shininess() const
+	ScalarShaderOutput* BlinnPhongMaterial::shininess() const
 	{
 		return mShininess;
 	}
 
-	void BlinnPhongMaterial::setShininess(Data2D* d)
+	void BlinnPhongMaterial::setShininess(ScalarShaderOutput* d)
 	{
 		mShininess = d;
 	}
 
-	Data1D* BlinnPhongMaterial::fresnelIndex() const
+	SpectralShaderOutput* BlinnPhongMaterial::fresnelIndex() const
 	{
 		return mIndex;
 	}
 
-	void BlinnPhongMaterial::setFresnelIndex(Data1D* data)
+	void BlinnPhongMaterial::setFresnelIndex(SpectralShaderOutput* data)
 	{
 		mIndex = data;
 	}
 
 	// TODO: Should be normalized better.
-	Spectrum BlinnPhongMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	Spectrum BlinnPhongMaterial::apply(const SamplePoint& point, const PM::vec3& L)
 	{
 		Spectrum albedo;
 		if(mAlbedo)
 		{
-			albedo = mAlbedo->eval(point.uv()) * PM_INV_PI_F;
+			albedo = mAlbedo->eval(point) * PM_INV_PI_F;
 		}
 		
 		Spectrum spec;
 		if (mIndex && mShininess)
 		{
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, V));
-			const float NdotH = std::abs(PM::pm_Dot3D(point.normal(), H));
-			const float VdotH = std::abs(PM::pm_Dot3D(V, H));
-			const float n = mShininess->eval(point.uv());
+			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, point.V));
+			const float NdotH = std::abs(PM::pm_Dot3D(point.N, H));
+			const float VdotH = std::abs(PM::pm_Dot3D(point.V, H));
+			const float n = mShininess->eval(point);
+			Spectrum index = mIndex->eval(point);
 
 			for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 			{
-				const float n2 = mIndex->eval(i / (float)Spectrum::SAMPLING_COUNT);
+				const float n2 = index.value(i);
 				const float f = Fresnel::dielectric(VdotH,
-					!point.isInside() ? 1 : n2,
-					!point.isInside() ? n2 : 1);
+					!(point.Flags & SPF_Inside) ? 1 : n2,
+					!(point.Flags & SPF_Inside) ? n2 : 1);
 
 				spec.setValue(i, f);
 			}
@@ -75,13 +76,13 @@ namespace PR
 		return albedo + spec;
 	}
 
-	float BlinnPhongMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	float BlinnPhongMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
 	{
 		if (mIndex)
 		{
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, V));
-			const float NdotH = std::abs(PM::pm_Dot3D(point.normal(), H));
-			const float n = mShininess->eval(point.uv());
+			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, point.V));
+			const float NdotH = std::abs(PM::pm_Dot3D(point.N, H));
+			const float n = mShininess->eval(point);
 			return PM_INV_PI_F + std::pow(NdotH, n);
 		}
 		else
@@ -90,10 +91,10 @@ namespace PR
 		}
 	}
 
-	PM::vec3 BlinnPhongMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	PM::vec3 BlinnPhongMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
 	{
-		auto dir = Projection::tangent_align(point.normal(), Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
-		pdf = BlinnPhongMaterial::pdf(point, V, dir);
+		auto dir = Projection::tangent_align(point.N, Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
+		pdf = BlinnPhongMaterial::pdf(point, dir);
 		return dir;
 	}
 }

@@ -2,9 +2,9 @@
 
 #include "Config.h"
 #include "Face.h"
-#include "FacePoint.h"
 #include "BoundingBox.h"
 
+#include "shader/SamplePoint.h"
 #include "ray/Ray.h"
 
 #include <utility>
@@ -29,7 +29,7 @@ namespace PR
 	{
 	public:
 		inline static bool intersect(const Ray& ray, const Face& face,
-			FacePoint& point, float& t)
+			SamplePoint& point, float& t)
 		{
 			float u, v;
 			PM::vec3 pos;
@@ -41,10 +41,10 @@ namespace PR
 				PM::vec3 n;
 
 				face.interpolate(u, v, p, n, uv);
-				point.setVertex(p);
-				point.setUV(uv);
-				point.setNormal(n);
-				point.setMaterial(face.Mat);
+				point.P = p;
+				point.UV = uv;
+				point.Ng = n;
+				point.Material = face.Mat;
 				return true;
 			}
 			else

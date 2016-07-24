@@ -25,7 +25,7 @@ namespace PRU
 
 		DiffuseMaterial* diff = new DiffuseMaterial;
 
-		diff->setAlbedo(loader->getTexture2D(env, albedoD));
+		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		return diff;
 	}
 }

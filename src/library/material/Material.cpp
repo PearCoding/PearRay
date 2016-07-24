@@ -1,6 +1,6 @@
 #include "Material.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 namespace PR
 {
@@ -15,12 +15,12 @@ namespace PR
 		return mIsLight;
 	}
 
-	Texture2D* Material::emission() const
+	SpectralShaderOutput* Material::emission() const
 	{
 		return mEmission;
 	}
 
-	void Material::setEmission(Texture2D* spec)
+	void Material::setEmission(SpectralShaderOutput* spec)
 	{
 		mEmission = spec;
 		mIsLight = mEmission != nullptr;
@@ -56,15 +56,15 @@ namespace PR
 		return mCameraVisible;
 	}
 
-	bool Material::shouldIgnore(const Ray& in, const FacePoint& point) const
+	bool Material::shouldIgnore(const Ray& in, const SamplePoint& point) const
 	{
 		return !mCameraVisible && in.depth() == 0;
 	}
 	
-	Spectrum Material::applyEmission(const FacePoint& point, const PM::vec3& V)
+	Spectrum Material::applyEmission(const SamplePoint& point)
 	{
 		if (mEmission)
-			return mEmission->eval(point.uv());
+			return mEmission->eval(point);
 		else
 			return Spectrum();
 	}

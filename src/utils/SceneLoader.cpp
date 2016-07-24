@@ -12,7 +12,6 @@
 #include "parser/entity/SphereParser.h"
 
 #include "parser/material/BlinnPhongMaterialParser.h"
-#include "parser/material/BRDFMaterialParser.h"
 #include "parser/material/DebugBoundingBoxMaterialParser.h"
 #include "parser/material/DiffuseMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
@@ -21,16 +20,12 @@
 #include "parser/material/OrenNayarMaterialParser.h"
 #include "parser/material/WardMaterialParser.h"
 
-#include "texture/ConstData1D.h"
-#include "texture/ConstData2D.h"
-#include "texture/ConstTexture1D.h"
-#include "texture/ConstTexture2D.h"
-#include "texture/MapData1D.h"
-#include "texture/MapData2D.h"
-#include "texture/RGBTexture1D.h"
-#include "texture/RGBTexture2D.h"
-#include "texture/SpecTexture1D.h"
-#include "texture/SpecTexture2D.h"
+#include "shader/ConstScalarOutput.h"
+#include "shader/ConstSpectralOutput.h"
+#include "shader/ConstVectorOutput.h"
+#include "shader/ImageScalarOutput.h"
+#include "shader/ImageSpectralOutput.h"
+#include "shader/ImageVectorOutput.h"
 
 #include "geometry/IMesh.h"
 #include "loader/WavefrontLoader.h"
@@ -391,11 +386,10 @@ namespace PRU
 		const MaterialParser& Parser;
 	} MaterialParserEntries[] =
 	{
-		{ "standard", BRDFMaterialParser() },
+		{ "standard", WardMaterialParser() },
 		{ "light", DiffuseMaterialParser() },
 
 		{ "diffuse", DiffuseMaterialParser() },
-		{ "brdf", BRDFMaterialParser() },
 		{ "orennayar", OrenNayarMaterialParser() },
 		{ "blinnphong", BlinnPhongMaterialParser() },
 		{ "ward", WardMaterialParser() },
@@ -406,7 +400,7 @@ namespace PRU
 		{ "glass", GlassMaterialParser() },
 		{ "mirror", MirrorMaterialParser() },
 
-		{ nullptr, BRDFMaterialParser() },//Just for the end
+		{ nullptr, DiffuseMaterialParser() },//Just for the end
 	};
 	void SceneLoader::addMaterial(DL::DataGroup* group, Environment* env)
 	{
@@ -471,7 +465,7 @@ namespace PRU
 
 		PR_ASSERT(mat);// After here it shouldn't be null
 
-		mat->setEmission(getTexture2D(env, emissionD));
+		mat->setEmission(getSpectralOutput(env, emissionD));
 
 		if (shadeableD && shadeableD->isType() == DL::Data::T_Bool)
 		{
@@ -772,7 +766,7 @@ namespace PRU
 		return PM::pm_IdentityQuat();
 	}
 
-	Texture2D* SceneLoader::getTexture2D(Environment* env, DL::Data* dataD) const
+	SpectralShaderOutput* SceneLoader::getSpectralOutput(Environment* env, DL::Data* dataD) const
 	{
 		if (!dataD)
 			return nullptr;
@@ -781,8 +775,8 @@ namespace PRU
 		{
 			if (env->hasSpectrum(dataD->getString()))
 			{
-				ConstTexture2D* tex = new ConstTexture2D(env->getSpectrum(dataD->getString()));
-				env->addTexture2D(tex);
+				auto* tex = new ConstSpectralShaderOutput(env->getSpectrum(dataD->getString()));
+				env->addShaderOutput(tex);
 				return tex;
 			}
 			else
@@ -802,17 +796,11 @@ namespace PRU
 					DL::Data* filenameD = dataD->getGroup()->at(0);
 					if (filenameD->isType() == DL::Data::T_String)
 					{
-						if (!env->hasTexture2D(filenameD->getString()))
-						{
-							Texture2D* tex = mImageLoader.load(filenameD->getString());
-							if (tex)
-								env->addTexture2D(filenameD->getString(), tex);
-							return tex;
-						}
-						else
-						{
-							return env->getTexture2D(filenameD->getString());
-						}
+						OIIO::TextureOpt opts;
+						//TODO: Add options
+						auto* tex = new ImageSpectralShaderOutput(env->textureSystem(), opts, filenameD->getString());
+						env->addShaderOutput(tex);
+						return tex;
 					}
 				}
 			}
@@ -825,16 +813,16 @@ namespace PRU
 		return nullptr;
 	}
 
-	Data1D* SceneLoader::getData1D(Environment* env, DL::Data* dataD) const
+	ScalarShaderOutput* SceneLoader::getScalarOutput(Environment* env, DL::Data* dataD) const
 	{
 		if (!dataD)
 			return nullptr;
 
 		if (dataD->isNumber())
 		{
-			ConstData1D* data = new ConstData1D(dataD->getFloatConverted());
-			env->addData1D(data);
-			return data;
+			auto* tex = new ConstScalarShaderOutput(dataD->getFloatConverted());
+			env->addShaderOutput(tex);
+			return tex;
 		}
 		else if (dataD->isType() == DL::Data::T_Group)
 		{
@@ -842,7 +830,18 @@ namespace PRU
 
 			if (name == "file")
 			{
-				//TODO
+				if (dataD->getGroup()->unnamedCount() == 1)
+				{
+					DL::Data* filenameD = dataD->getGroup()->at(0);
+					if (filenameD->isType() == DL::Data::T_String)
+					{
+						OIIO::TextureOpt opts;
+						//TODO: Add options
+						auto* tex = new ImageScalarShaderOutput(env->textureSystem(), opts, filenameD->getString());
+						env->addShaderOutput(tex);
+						return tex;
+					}
+				}
 			}
 			else
 			{
@@ -853,30 +852,12 @@ namespace PRU
 		return nullptr;
 	}
 
-	Data2D* SceneLoader::getData2D(Environment* env, DL::Data* dataD) const
+	VectorShaderOutput* SceneLoader::getVectorOutput(Environment* env, DL::Data* dataD) const
 	{
 		if (!dataD)
 			return nullptr;
 
-		if (dataD->isNumber())
-		{
-			ConstData2D* data = new ConstData2D(dataD->getFloatConverted());
-			env->addData2D(data);
-			return data;
-		}
-		else if (dataD->isType() == DL::Data::T_Group)
-		{
-			std::string name = dataD->getGroup()->id();
-
-			if (name == "file")
-			{
-				// TODO:
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
-			}
-		}
+		// TODO:
 
 		return nullptr;
 	}

@@ -5,7 +5,7 @@
 namespace PR
 {
 	class RenderEntity;
-	class FacePoint;
+	struct SamplePoint;
 	class Ray;
 	class Renderer;
 	class RenderContext;
@@ -20,6 +20,6 @@ namespace PR
 	public:
 		virtual void init(Renderer* renderer) = 0;
 
-		virtual Spectrum apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context) = 0;
+		virtual Spectrum apply(const Ray& in, RenderEntity* entity, const SamplePoint& point, RenderContext* context) = 0;
 	};
 }

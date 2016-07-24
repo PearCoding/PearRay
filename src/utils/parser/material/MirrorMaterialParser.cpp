@@ -25,8 +25,8 @@ namespace PRU
 
 		MirrorMaterial* diff = new MirrorMaterial;
 
-		diff->setSpecularity(loader->getTexture2D(env, specD));
-		diff->setIndexData(loader->getData1D(env, indexD));
+		diff->setSpecularity(loader->getSpectralOutput(env, specD));
+		diff->setIndexData(loader->getSpectralOutput(env, indexD));
 
 		return diff;
 	}

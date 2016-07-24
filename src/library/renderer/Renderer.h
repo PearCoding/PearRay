@@ -13,7 +13,7 @@ namespace PR
 	class Affector;
 	class Camera;
 	class Entity;
-	class FacePoint;
+	struct SamplePoint;
 	class GPU;
 	class Integrator;
 	class Material;
@@ -62,8 +62,8 @@ namespace PR
 		size_t samplesRendered() const;
 
 		// RenderThread things
-		RenderEntity* shoot(const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, FacePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 
 		RenderTile* getNextTile();
 

@@ -1,6 +1,6 @@
 #include "DebugBoundingBoxMaterial.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 
 namespace PR
 {
@@ -9,7 +9,7 @@ namespace PR
 	{
 	}
 
-	Spectrum DebugBoundingBoxMaterial::apply(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	Spectrum DebugBoundingBoxMaterial::apply(const SamplePoint& point, const PM::vec3& L)
 	{
 		return mColor*mDensity;
 	}
@@ -34,14 +34,14 @@ namespace PR
 		return mDensity;
 	}
 
-	float DebugBoundingBoxMaterial::pdf(const FacePoint& point, const PM::vec3& V, const PM::vec3& L)
+	float DebugBoundingBoxMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
 	{
 		return std::numeric_limits<float>::infinity();
 	}
 
-	PM::vec3 DebugBoundingBoxMaterial::sample(const FacePoint& point, const PM::vec3& rnd, const PM::vec3& V, float& pdf)
+	PM::vec3 DebugBoundingBoxMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
 	{
-		pdf = DebugBoundingBoxMaterial::pdf(point, V, V);
-		return V;
+		pdf = DebugBoundingBoxMaterial::pdf(point, point.V);
+		return point.V;
 	}
 }

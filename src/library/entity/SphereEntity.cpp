@@ -1,6 +1,6 @@
 #include "SphereEntity.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 #include "geometry/Sphere.h"
 
 #include "math/Projection.h"
@@ -64,42 +64,40 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	bool SphereEntity::checkCollision(const Ray& ray, FacePoint& collisionPoint, float& t)
+	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
 	{
 		Sphere sphere(position(), scale() * mRadius);
 		PM::vec3 collisionPos;
 		if (!sphere.intersects(ray, collisionPos, t))
 			return false;
 
-		collisionPoint.setVertex(PM::pm_SetW(collisionPos, 1));
+		collisionPoint.P = PM::pm_SetW(collisionPos, 1);
 
-		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.vertex(), position()));
-		collisionPoint.setNormal(norm);
-		collisionPoint.calculateTangentFrame();
+		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.P, position()));
+		collisionPoint.Ng = norm;
+		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 		PM::vec3 rotNorm = PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm);
-		float u = 0.5f + std::atan2(PM::pm_GetZ(rotNorm), PM::pm_GetX(rotNorm)) * PM_INV_PI_F * 0.5f;
-		float v = 0.5f - std::asin(-PM::pm_GetY(rotNorm)) * PM_INV_PI_F;
-		collisionPoint.setUV(PM::pm_Set(u, v));
+		collisionPoint.UV = Projection::sphereUV(rotNorm);
 
-		collisionPoint.setMaterial(material());
+		collisionPoint.Material = material();
 		return true;
 	}
 
-	FacePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
-		FacePoint p;
+		SamplePoint p;
 
 		PM::vec2 s = sampler.generate2D(sample);
 		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s));
 
-		p.setNormal(PM::pm_RotateWithQuat(rotation(), n));
-		p.setVertex(PM::pm_Add(position(), PM::pm_Scale(n, scale() * mRadius)));
-		float u = (std::acos(PM::pm_GetZ(p.normal())) * PM_INV_PI_F * 0.5f + 1) * 0.5f;
-		float v = (std::atan2(PM::pm_GetY(p.normal()), PM::pm_GetX(p.normal())) * PM_INV_PI_F + 1) * 0.5f;
-		p.setUV(PM::pm_Set(u, v));
-		p.setMaterial(material());
-		p.calculateTangentFrame();
+		p.Ng = PM::pm_RotateWithQuat(rotation(), n);
+		p.N = p.Ng;
+		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
+
+		p.P = PM::pm_Add(position(), PM::pm_Scale(n, scale() * mRadius));
+		p.UV = Projection::sphereUV(p.Ng);
+		p.Material = material();
 
 		return p;
 	}

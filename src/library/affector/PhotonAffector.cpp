@@ -1,6 +1,6 @@
 #include "PhotonAffector.h"
 #include "ray/Ray.h"
-#include "geometry/FacePoint.h"
+#include "shader/SamplePoint.h"
 #include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
@@ -71,14 +71,13 @@ namespace PR
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				FacePoint lightSample = light->getRandomFacePoint(sampler,(uint32) i % sampleSize);
-				lightSample.setNormal(
-					Projection::align(lightSample.normal(),
-						Projection::cos_hemi(random.getFloat(), random.getFloat())));
+				SamplePoint lightSample = light->getRandomFacePoint(sampler,(uint32) i % sampleSize);
+				lightSample.N = Projection::align(lightSample.N,
+						Projection::cos_hemi(random.getFloat(), random.getFloat()));
 				
-				Ray ray(lightSample.vertex(), lightSample.normal(), 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
+				Ray ray(lightSample.P, lightSample.N, 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
 
-				Spectrum flux = lightSample.material()->applyEmission(lightSample, lightSample.normal());
+				Spectrum flux = lightSample.Material->applyEmission(lightSample);
 
 				uint32 diffuseBounces = 0;
 				uint32 specBounces = 0;
@@ -87,12 +86,12 @@ namespace PR
 					/*if (flux.isOnlyZero())
 						break;*/
 
-					FacePoint collision;
+					SamplePoint collision;
 					RenderEntity* entity = renderer->shoot(ray, collision, nullptr, nullptr);
 
-					if (entity && collision.material() && collision.material()->canBeShaded())
+					if (entity && collision.Material && collision.Material->canBeShaded())
 					{
-						const float NdotL = std::abs(PM::pm_Dot3D(collision.normal(), ray.direction()));
+						const float NdotL = std::abs(PM::pm_Dot3D(collision.N, ray.direction()));
 						PM::vec3 nextDir;
 
 						if (NdotL < PM_EPSILON)
@@ -102,14 +101,14 @@ namespace PR
 						PM::vec3 s = PM::pm_Set(random.getFloat(),
 							random.getFloat(),
 							random.getFloat());
-						nextDir = collision.material()->sample(collision, s, ray.direction(), pdf);
+						nextDir = collision.Material->sample(collision, s, pdf);
 
 						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse
 						{
 							if (specBounces >= renderer->settings().minPhotonSpecularBounces())// Never calculate direct lightning
 							{
 								// Always store when diffuse
-								mMap->store(flux, collision.vertex(), ray.direction());
+								mMap->store(flux, collision.P, ray.direction());
 								photonsShoot++;
 							}
 
@@ -129,10 +128,10 @@ namespace PR
 							break;
 						}
 
-						flux *= collision.material()->apply(collision, nextDir, ray.direction()) * 
+						flux *= collision.Material->apply(collision, nextDir) * 
 							(NdotL / (std::isinf(pdf) ? 1 : pdf));
 						ray.setDirection(nextDir);
-						ray.setStartPosition(collision.vertex());
+						ray.setStartPosition(collision.P);
 					}
 					else // Nothing found, abort
 					{
@@ -158,7 +157,7 @@ namespace PR
 	}
 
 	constexpr float K = 1.1;
-	Spectrum PhotonAffector::apply(const Ray& in, RenderEntity* entity, const FacePoint& point, RenderContext* context)
+	Spectrum PhotonAffector::apply(const Ray& in, RenderEntity* entity, const SamplePoint& point, RenderContext* context)
 	{
 		if (!mMap || mMap->isEmpty())
 			return Spectrum();
@@ -166,8 +165,8 @@ namespace PR
 		Photon::PhotonSphere* sphere = &mPhotonSpheres[context->threadNumber()];
 		
 		sphere->Found = 0;
-		sphere->Center = point.vertex();
-		sphere->Normal = point.normal();
+		sphere->Center = point.P;
+		sphere->Normal = point.N;
 		sphere->SqueezeWeight =
 			context->renderer()->settings().photonSqueezeWeight() * context->renderer()->settings().photonSqueezeWeight();
 		sphere->GotHeap = false;
@@ -201,10 +200,10 @@ namespace PR
 				if (w >= PM_EPSILON)
 				{
 #ifdef PR_USE_PHOTON_RGB
-					full += point.material()->apply(point, in.direction(), dir) *
+					full += point.Material->apply(point, dir) *
 						RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2])*w;
 #else
-					full += point.material()->apply(point, in.direction(), dir) * Spectrum(photon->Power)*w;
+					full += point.Material->apply(point, dir) * Spectrum(photon->Power)*w;
 #endif
 				}
 			}

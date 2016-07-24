@@ -13,7 +13,7 @@ FUNCTION(PUSH_TEST name files)
 	add_executable(pr_test_${name} ${files})
 	target_link_libraries(pr_test_${name} ${LIBS})
 	set_target_properties(pr_test_${name} PROPERTIES VERSION ${PR_Version})
-	set_target_properties(pr_test_${name} PROPERTIES COMPILE_DEFINITIONS "${DEFS};" COMPILE_DEFINITIONS_DEBUG "${DEFS_DEBUG}")
+	target_compile_definitions(pr_test_${name} PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 	add_test(NAME ${name} COMMAND pr_test_${name})
 ENDFUNCTION(PUSH_TEST)
 
