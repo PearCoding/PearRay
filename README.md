@@ -1,3 +1,5 @@
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/PearCoding/PearRay/master/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/issues)
 [![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
 
 # PearRay
