@@ -14,7 +14,8 @@ function(OIIO_FIND_LIB setname names)
 find_library(${setname}
   NAMES ${names}
   HINTS
-    ENV OIIO_DIR
+    ${OIIO_DIR}
+    ENV OIIO_HOME
   PATH_SUFFIXES lib
   PATHS
   ~/Library/Frameworks
@@ -30,7 +31,8 @@ endfunction()
 
 find_path(OIIO_INCLUDE_DIR OpenImageIO/version.h
   HINTS
-    ENV OIIO_DIR
+    ${OIIO_DIR}
+    ENV OIIO_HOME
   PATH_SUFFIXES include local/include 
   PATHS
   ~/Library/Frameworks
