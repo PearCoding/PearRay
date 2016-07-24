@@ -30,7 +30,7 @@ install:
 # Qt
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
 # Boost
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libboost-filesystem1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-iostreams1.55-dev
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libboost-filesystem1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-iostreams1.55-dev libboost-thread1.55-dev
 # OpenEXR
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenexr-dev libilmbase-dev
 # OpenImageIO (for some reason, freetype is not recognized)
