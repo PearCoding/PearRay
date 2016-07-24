@@ -1,29 +1,18 @@
 language: cpp
 compiler: gcc
 sudo: true
+env:
+  global:
+    - MAKEFLAGS="-j 2"
 cache:
   - apt
-#addons:
- #apt:
-   #sources:
-   #- ubuntu-toolchain-r-test
-   #- ubuntu-sdk-team
-   #- beineri/opt-qt521
-   #packages:
-   #- cmake
-   #- gcc-4.8
-   #- g++-4.8
-   #- qt52base
-   #- qt52-meta
-   #- qtbase5-dev
-   #- qt5-default
-   #- qttools5-dev-tools
-install:
+before_install:
   - sudo -E apt-add-repository -y "ppa:beineri/opt-qt521"
   - sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
   - sudo -E apt-add-repository -y "ppa:boost-latest/ppa"
   - sudo -E apt-add-repository -y "ppa:george-edison55/precise-backports"
   - sudo -E apt-get update -qq
+install:
 # CMake and GCC
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
@@ -38,8 +27,8 @@ install:
   - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
   - tar zxf /tmp/OpenImageIO-1.6.11.tar.gz > /dev/null 2>&1
   - cd oiio-Release-1.6.11
-  - make USE_QT=0 USE_TBB=0 USE_PYTHON=0 USE_PYTHON3=0 USE_FIELD3D=0 USE_FFMPEG=0 USE_OPENJPEG=1 USE_OCIO=0 USE_OPENCV=0 USE_OPENSSL=0 USE_FREETYPE=0 USE_GIF=0 USE_PTEX=0 USE_LIBRAW=0 OIIO_BUILD_TESTS=0 OIIO_BUILD_TOOLS=0 INSTALLDIR=/opt/oiio dist_dir=. cmake
-  - sudo make dist_dir=.
+  - make $MAKEFLAGS USE_QT=0 USE_TBB=0 USE_PYTHON=0 USE_PYTHON3=0 USE_FIELD3D=0 USE_FFMPEG=0 USE_OPENJPEG=1 USE_OCIO=0 USE_OPENCV=0 USE_OPENSSL=0 USE_FREETYPE=0 USE_GIF=0 USE_PTEX=0 USE_LIBRAW=0 OIIO_BUILD_TESTS=0 OIIO_BUILD_TOOLS=0 INSTALLDIR=/opt/oiio dist_dir=. cmake
+  - sudo make $MAKEFLAGS dist_dir=.
   - cd ..
 before_script:
 # Stats
@@ -47,9 +36,10 @@ before_script:
   - cmake --version
   - mkdir build
   - cd build
-  - cmake -DOIIO_DIR=../oiio-Release-1.6.11 -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
+  - env OIIO_DIR=/opt/oiio
+  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
-  - make
+  - make $MAKEFLAGS 
   - bin/pr_test_boundingbox
   - bin/pr_test_brdf
   - bin/pr_test_entity
