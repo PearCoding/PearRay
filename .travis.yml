@@ -25,7 +25,7 @@ install:
   - sudo -E apt-add-repository -y "ppa:george-edison55/precise-backports"
   - sudo -E apt-get update -qq
 # CMake and GCC
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake gcc-4.8 g++-4.8 
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
 # Qt
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
