@@ -27,10 +27,12 @@ install:
   - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
   - tar zxf /tmp/OpenImageIO-1.6.11.tar.gz > /dev/null 2>&1
   - cd oiio-Release-1.6.11
-  - cmake -DUSE_QT=0 -DUSE_TBB=0 -DUSE_PYTHON=0 -DUSE_PYTHON3=0 -DUSE_FIELD3D=0 -DUSE_FFMPEG=0 -DUSE_OPENJPEG=1 -DUSE_OCIO=0 -DUSE_OPENCV=0 -DUSE_OPENSSL=0 -DUSE_FREETYPE=0 -DUSE_GIF=0 -DUSE_PTEX=0 -DUSE_LIBRAW=0 -DOIIO_BUILD_TESTS=0 -DOIIO_BUILD_TOOLS=0 ./
+  - mkdir build
+  - cd build
+  - cmake -DUSE_QT=0 -DUSE_TBB=0 -DUSE_PYTHON=0 -DUSE_PYTHON3=0 -DUSE_FIELD3D=0 -DUSE_FFMPEG=0 -DUSE_OPENJPEG=1 -DUSE_OCIO=0 -DUSE_OPENCV=0 -DUSE_OPENSSL=0 -DUSE_FREETYPE=0 -DUSE_GIF=0 -DUSE_PTEX=0 -DUSE_LIBRAW=0 -DOIIO_BUILD_TESTS=0 -DOIIO_BUILD_TOOLS=0 ../
   - make $MAKEFLAGS 
   - sudo make install
-  - cd ..
+  - cd ../../
 before_script:
   - $CXX --version
   - cmake --version
