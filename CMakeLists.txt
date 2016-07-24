@@ -49,11 +49,11 @@ option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT li
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+find_package(Boost 1.36 COMPONENTS filesystem system iostreams program_options REQUIRED)
 find_package(Qt5Widgets)
 find_package(OpenCL)
 find_package(OpenImageIO REQUIRED)
-find_package(OSL REQUIRED)
-find_package(Boost 1.36 COMPONENTS filesystem system iostreams program_options REQUIRED)
+find_package(OSL)
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
