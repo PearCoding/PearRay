@@ -35,7 +35,7 @@ before_script:
   - cmake --version
   - mkdir build
   - cd build
-  - export OIIO_DIR=../oiio-Release-1.6.11
+  - export OIIO_HOME=../oiio-Release-1.6.11
   - cmake -DOIIO_DIR=../oiio-Release-1.6.11 -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make $MAKEFLAGS 

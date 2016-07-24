@@ -14,7 +14,6 @@ function(OIIO_FIND_LIB setname names)
 find_library(${setname}
   NAMES ${names}
   HINTS
-    ${OIIO_DIR}
     ENV OIIO_HOME
   PATH_SUFFIXES lib
   PATHS
@@ -26,12 +25,12 @@ find_library(${setname}
   /opt
   /usr
   ${CMAKE_LIBRARY_PATH}
+  ${OIIO_DIR}
 )
 endfunction()
 
 find_path(OIIO_INCLUDE_DIR OpenImageIO/version.h
   HINTS
-    ${OIIO_DIR}
     ENV OIIO_HOME
   PATH_SUFFIXES include local/include 
   PATHS
@@ -42,6 +41,7 @@ find_path(OIIO_INCLUDE_DIR OpenImageIO/version.h
   /opt
   /usr
   ${CMAKE_LIBRARY_PATH}
+  ${OIIO_DIR}
 )
 IF(OIIO_INCLUDE_DIR)
 	SET(OIIO_INCLUDE_DIRS ${OIIO_INCLUDE_DIR})
