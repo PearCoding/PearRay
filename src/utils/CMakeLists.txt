@@ -74,10 +74,19 @@ SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
   ${PR_Shader_Hdr}
 )
+
+if(OSL_FOUND)
+	set(DEFS "${DEFS};WITH_OSL")
+endif()
 	
 add_library(pr_lib_utils SHARED ${PR_Src} ${PR_Hdr})
 target_link_libraries(pr_lib_utils ${PR_TARGET})
 target_link_libraries(pr_lib_utils ${DL_TARGET})
 target_link_libraries(pr_lib_utils ${OIIO_LIBRARIES})
+
+if(OSL_FOUND)
+	target_link_libraries(pr_lib_utils pr_lib_osl)
+endif()
+
 set_target_properties(pr_lib_utils PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(pr_lib_utils PRIVATE "${DEFS};PR_LIB_UTILS_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

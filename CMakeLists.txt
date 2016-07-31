@@ -126,7 +126,7 @@ add_subdirectory(${PR_Root}/utils)
 
 IF(OSL_FOUND)
 	include_directories(${OSL_INCLUDE_DIR} ${PR_Root}/osl)
-	#add_subdirectory(${PR_Root}/osl)
+	add_subdirectory(${PR_Root}/osl)
 ENDIF()
 
 IF(NOT PR_ONLY_LIBRARY)
