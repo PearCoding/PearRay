@@ -12,7 +12,7 @@ namespace PRU
 		float eval(const PR::SamplePoint& point) override;
 
 	private:
-		OIIO::TextureSystem::TextureHandle* mTexture;
+		OIIO::ustring mFilename;
 		OIIO::TextureOpt mTextureOptions;
 		OIIO::TextureSystem* mTextureSystem;
 	};

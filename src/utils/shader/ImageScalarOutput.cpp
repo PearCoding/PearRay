@@ -7,24 +7,23 @@ using namespace PR;
 namespace PRU
 {
 	ImageScalarShaderOutput::ImageScalarShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename) :
-		ScalarShaderOutput(), mTexture(nullptr), mTextureOptions(options), mTextureSystem(tsys)
+		ScalarShaderOutput(), mFilename(filename), mTextureOptions(options), mTextureSystem(tsys)
 	{
 		PR_ASSERT(tsys);
-		PR_ASSERT(!filename.empty());
-
-		mTexture = mTextureSystem->get_texture_handle(OIIO::ustring(filename));
+		PR_ASSERT(!mFilename.empty());
 	}
 
 	float ImageScalarShaderOutput::eval(const PR::SamplePoint& point)
 	{
 		float res = 0;
-		if (!mTextureSystem->texture(mTexture, nullptr, mTextureOptions,
-			PM::pm_GetX(point.UV), PM::pm_GetY(point.UV),
+		if (!mTextureSystem->texture(mFilename, mTextureOptions,
+			PM::pm_GetX(point.UV), 1 - PM::pm_GetY(point.UV),
 			0, 0, 0, 0,
 			1, &res))
 		{
-			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]",
-				PM::pm_GetX(point.UV), PM::pm_GetY(point.UV));
+			std::string err = mTextureSystem->geterror();
+			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]: %s",
+				PM::pm_GetX(point.UV), 1 - PM::pm_GetY(point.UV), err.c_str());
 		}
 
 		return res;

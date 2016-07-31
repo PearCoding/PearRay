@@ -94,7 +94,7 @@ SET(DL_TARGET "datalisp")
 add_subdirectory(pearmath)
 add_subdirectory(datalisp)
 
-SET(DEFS "${DEFS};${PM_DEFS}")
+SET(DEFS "${DEFS};${PM_DEFS};OPENEXR_DLL")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
 IF((NOT OpenCL_FOUND) OR PR_NO_GPU)
