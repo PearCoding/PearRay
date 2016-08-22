@@ -53,7 +53,15 @@ find_package(Boost 1.36 COMPONENTS filesystem system iostreams program_options R
 find_package(Qt5Widgets)
 find_package(OpenCL)
 find_package(OpenImageIO REQUIRED)
-find_package(OSL)
+#find_package(OSL)
+
+IF(OIIO_LINK_STATIC)# If static, the dependencies of OIIO has to be included aswell.
+find_package(PNG REQUIRED)
+find_package(JPEG REQUIRED)
+find_package(TIFF REQUIRED)
+find_package(OpenEXR REQUIRED)
+SET(OIIO_LIBRARIES ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${OIIO_LIBRARIES})
+ENDIF()
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})

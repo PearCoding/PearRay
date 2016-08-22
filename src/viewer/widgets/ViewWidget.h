@@ -12,6 +12,11 @@ namespace PR
 	class ToneMapper;
 }
 
+namespace PRU
+{
+	class DisplayBuffer;
+}
+
 enum ToolMode
 {
 	TM_Selection,
@@ -28,7 +33,7 @@ public:
 	ViewWidget(QWidget *parent);
 	~ViewWidget();
 
-	void setRenderer(PR::Renderer* renderer);
+	void setRenderer(PR::Renderer* renderer, PRU::DisplayBuffer* buffer);
 
 	inline PR::ToneColorMode colorMode() const
 	{
@@ -106,6 +111,7 @@ private:
 	void cacheScale();
 
 	PR::Renderer* mRenderer;
+	PRU::DisplayBuffer* mDisplayBuffer;
 
 	ToolMode mToolMode;
 

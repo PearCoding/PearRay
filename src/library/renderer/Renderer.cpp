@@ -2,6 +2,7 @@
 #include "RenderThread.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "DisplayDriver.h"
 
 #include "camera/Camera.h"
 #include "scene/Scene.h"
@@ -35,9 +36,9 @@
 namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
-		mWidth(w), mHeight(h), mMinX(0), mMaxX(1), mMinY(0), mMaxY(1),
+		mWidth(w), mHeight(h),
 		mCamera(cam), mScene(scene),
-		mResult(w, h), mBackgroundMaterial(nullptr),
+		mResult(nullptr), mBackgroundMaterial(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mIncrementalCurrentSample(0), mTileMap(nullptr),
 		mGPU(nullptr)
 	{
@@ -116,7 +117,7 @@ namespace PR
 
 	uint32 Renderer::renderWidth() const
 	{
-		return (uint32)std::ceil((mMaxX - mMinX) * mWidth);
+		return (uint32)std::ceil((mRenderSettings.cropMaxX() - mRenderSettings.cropMinX()) * mWidth);
 	}
 
 	void Renderer::setHeight(uint32 h)
@@ -131,21 +132,17 @@ namespace PR
 
 	uint32 Renderer::renderHeight() const
 	{
-		return (uint32)std::ceil((mMaxY - mMinY) * mHeight);
+		return (uint32)std::ceil((mRenderSettings.cropMaxY() - mRenderSettings.cropMinY()) * mHeight);
 	}
 
-	void Renderer::crop(float xmin, float xmax, float ymin, float ymax)
+	uint32 Renderer::cropPixelOffsetX() const
 	{
-		mMinX = PM::pm_ClampT(xmin, 0.0f, 1.0f);
-		mMaxX = PM::pm_ClampT(xmax, 0.0f, 1.0f);
-		mMinY = PM::pm_ClampT(ymin, 0.0f, 1.0f);
-		mMaxY = PM::pm_ClampT(ymax, 0.0f, 1.0f);
+		return std::ceil(mRenderSettings.cropMinX() * mWidth);
+	}
 
-		if (mMinX > mMaxX)
-			std::swap(mMinX, mMaxX);
-
-		if (mMinY > mMaxY)
-			std::swap(mMinY, mMaxY);
+	uint32 Renderer::cropPixelOffsetY() const
+	{
+		return std::ceil(mRenderSettings.cropMinY() * mHeight);
 	}
 
 	void Renderer::setBackgroundMaterial(Material* m)
@@ -158,18 +155,14 @@ namespace PR
 		return mBackgroundMaterial;
 	}
 
-	void Renderer::start(uint32 tcx, uint32 tcy, int32 threads, bool clear)
+	void Renderer::start(DisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads)
 	{
+		PR_ASSERT(display);
+
 		reset();
 
-		if(clear)
-			mResult.clear();
-
-		// Warm up the randomizer
-		/*for (uint32 i = 0; i < 800000; ++i)
-		{
-			mRandom.generate();
-		}*/
+		mResult = display;
+		mResult->init(this);// TODO: Where deinit?
 
 		/* Setup entities */
 		for (Entity* entity : mScene->entities())
@@ -253,13 +246,13 @@ namespace PR
 		{
 			for (uint32 j = 0; j < tcx; ++j)
 			{
-				uint32 sx = (uint32)std::ceil(mMinX*mWidth + j*mTileWidth);
-				uint32 sy = (uint32)std::ceil(mMinY*mHeight + i*mTileHeight);
+				uint32 sx = cropPixelOffsetX()*mWidth + j*mTileWidth;
+				uint32 sy = cropPixelOffsetY()*mHeight + i*mTileHeight;
 				mTileMap[i*tcx + j] = new RenderTile(
 					sx,
 					sy,
-					PM::pm_MinT((uint32)std::ceil(mMaxX*mWidth), sx + mTileWidth),
-					PM::pm_MinT((uint32)std::ceil(mMaxY*mHeight), sy + mTileHeight));
+					PM::pm_MinT((uint32)std::ceil(mRenderSettings.cropMaxX()*mWidth), sx + mTileWidth),
+					PM::pm_MinT((uint32)std::ceil(mRenderSettings.cropMaxY()*mHeight), sy + mTileHeight));
 			}
 		}
 		mIncrementalCurrentSample = 0;
@@ -274,32 +267,21 @@ namespace PR
 
 	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample)
 	{
+		PR_ASSERT(mResult);
+		PR_ASSERT(context);
+
 		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
-			Spectrum oldSpec;
-			if (sample > 0)
-			{
-				oldSpec = mResult.point(x, y);
-			}
-
 			auto s = context->pixelSampler()->generate2D(sample);
 
 			float rx = context->random().getFloat();// Random sampling
 			float ry = context->random().getFloat();
 			
-			Spectrum newSpec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
+			Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 				rx, ry,//TODO
 				0.0f);//TODO
 
-			if (sample > 0)
-			{
-				mResult.setPoint(x, y,
-					oldSpec * (sample / (sample + 1.0f)) + newSpec * (1.0f / (sample + 1.0f)));
-			}
-			else
-			{
-				mResult.setPoint(x, y, newSpec);
-			}
+			mResult->pushFragment(x, y, 0, sample, spec);
 		}
 		else// Everything
 		{
@@ -319,7 +301,7 @@ namespace PR
 				newSpec += spec;
 			}
 
-			mResult.setPoint(x, y, newSpec / (float)SampleCount);
+			mResult->pushFragment(x, y, 0, 0, newSpec / (float)SampleCount);
 		}
 	}
 
@@ -503,11 +485,6 @@ namespace PR
 		}
 		mTileMutex.unlock();
 		return nullptr;
-	}
-
-	RenderResult& Renderer::result()
-	{
-		return mResult;
 	}
 
 	size_t Renderer::rayCount() const

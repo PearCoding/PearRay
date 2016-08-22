@@ -15,6 +15,7 @@ namespace PR
 
 namespace PRU
 {
+	class DisplayBuffer;
 	class Environment;
 }
 
@@ -72,6 +73,7 @@ private:
 
 	PRU::Environment* mEnvironment;
 	PR::Renderer* mRenderer;
+	PRU::DisplayBuffer* mDisplayBuffer;
 
 	QTimer mTimer;
 	QElapsedTimer mElapsedTime;

@@ -1,4 +1,4 @@
-# Locate OpenShadingLanguage
+# Locate OpenImageIO
 # This module defines
 #  OIIO_FOUND, if false, do not try to link to OSL
 #  OIIO_LIBRARIES

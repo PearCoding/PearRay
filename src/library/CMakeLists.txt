@@ -59,7 +59,6 @@ SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
   ${PR_LIB}/renderer/Renderer.cpp
   ${PR_LIB}/renderer/RenderContext.cpp
-  ${PR_LIB}/renderer/RenderResult.cpp
   ${PR_LIB}/renderer/RenderSettings.cpp
   ${PR_LIB}/renderer/RenderTile.cpp
   ${PR_LIB}/renderer/RenderThread.cpp)
@@ -162,9 +161,9 @@ SET(PR_Ray_Hdr
   ${PR_LIB}/ray/Ray.inl)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
+  ${PR_LIB}/renderer/DisplayDriver.h
   ${PR_LIB}/renderer/Renderer.h
   ${PR_LIB}/renderer/RenderContext.h
-  ${PR_LIB}/renderer/RenderResult.h
   ${PR_LIB}/renderer/RenderSettings.h
   ${PR_LIB}/renderer/RenderTile.h
   ${PR_LIB}/renderer/RenderThread.h)

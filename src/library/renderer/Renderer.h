@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RenderResult.h"
 #include "RenderSettings.h"
 #include "spectral/Spectrum.h"
 
@@ -12,6 +11,7 @@ namespace PR
 {
 	class Affector;
 	class Camera;
+	class DisplayDriver;
 	class Entity;
 	struct SamplePoint;
 	class GPU;
@@ -38,24 +38,23 @@ namespace PR
 		uint32 height() const;
 		uint32 renderHeight() const; // Depends on crop
 
+		uint32 cropPixelOffsetX() const;
+		uint32 cropPixelOffsetY() const;
+
 		void setBackgroundMaterial(Material* m);
 		Material* backgroundMaterial() const;
-
-		void crop(float xmin, float xmax, float ymin, float ymax);
 		
 		// tcx = tile count x
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
 		// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
-		void start(uint32 tcx, uint32 tcy, int32 threads = 0, bool clear = true);
+		void start(DisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
 		void stop();
 
 		bool isFinished();
 		void waitForFinish();
 
 		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample);
-
-		RenderResult& result();
 
 		// Statistics
 		size_t rayCount() const;
@@ -94,14 +93,9 @@ namespace PR
 		uint32 mWidth;
 		uint32 mHeight;
 
-		float mMinX;
-		float mMaxX;
-		float mMinY;
-		float mMaxY;
-
 		Camera* mCamera;
 		Scene* mScene;
-		RenderResult mResult;
+		DisplayDriver* mResult;
 
 		std::list<RenderEntity*> mLights;
 		Material* mBackgroundMaterial;

@@ -1,8 +1,8 @@
 #include "ViewWidget.h"
 
 #include "renderer/Renderer.h"
-#include "renderer/RenderResult.h"
 #include "renderer/RenderTile.h"
+#include "renderer/DisplayBuffer.h"
 
 #include "spectral/ToneMapper.h"
 #include "PearMath.h"
@@ -33,9 +33,11 @@ ViewWidget::~ViewWidget()
 	}
 }
 
-void ViewWidget::setRenderer(PR::Renderer* renderer)
+void ViewWidget::setRenderer(PR::Renderer* renderer, PRU::DisplayBuffer* buffer)
 {
 	mRenderer = renderer;
+	mDisplayBuffer = buffer;
+
 	if (mRenderData)
 	{
 		delete mToneMapper;
@@ -47,10 +49,10 @@ void ViewWidget::setRenderer(PR::Renderer* renderer)
 
 	if (mRenderer)
 	{
-		mRenderData = new uchar[mRenderer->result().width()*mRenderer->result().height()*3];
-		std::memset(mRenderData, 0, mRenderer->result().width()*mRenderer->result().height() * 3 * sizeof(uchar));
+		mRenderData = new uchar[mRenderer->width()*mRenderer->height()*3];
+		std::memset(mRenderData, 0, mRenderer->width()*mRenderer->height() * 3 * sizeof(uchar));
 
-		mToneMapper = new PR::ToneMapper(mRenderer->gpu(), mRenderer->result().width()*mRenderer->result().height(), true);
+		mToneMapper = new PR::ToneMapper(mRenderer->gpu(), mRenderer->width()*mRenderer->height(), true);
 	}
 
 	refreshView();
@@ -155,8 +157,7 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 			QPoint p = convertToLocal(event->pos());
 			if (QRect(QPoint(0, 0), mRenderImage.size()).contains(p))
 			{
-				PR::RenderResult result = mRenderer->result();
-				emit spectrumSelected(result.point(p.x(), p.y()));
+				emit spectrumSelected(mDisplayBuffer->fragment(p.x(), p.y(), 0));
 			}
 		}
 		else if (mToolMode == TM_Pan)
@@ -337,9 +338,8 @@ void ViewWidget::refreshView()
 {
 	if (mRenderer)
 	{
-		const PR::RenderResult& result = mRenderer->result();
-		mToneMapper->exec(result.ptr(), mRenderData);
-		mRenderImage = QImage(mRenderData, result.width(), result.height(), QImage::Format_RGB888);
+		mToneMapper->exec(mDisplayBuffer->ptr(), mRenderData);
+		mRenderImage = QImage(mRenderData, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
 	}
 	else
 	{

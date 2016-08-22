@@ -25,6 +25,9 @@ SET(PR_Parser_Material_Src
   ${PR_UTILS}/parser/material/OrenNayarMaterialParser.cpp
   ${PR_UTILS}/parser/material/WardMaterialParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
+SET(PR_Renderer_Src
+  ${PR_UTILS}/renderer/DisplayBuffer.cpp)
+SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Shader_Src
   ${PR_UTILS}/shader/ConstScalarOutput.cpp
   ${PR_UTILS}/shader/ConstSpectralOutput.cpp
@@ -34,7 +37,7 @@ SET(PR_Shader_Src
   ${PR_UTILS}/shader/ImageVectorOutput.cpp)
 SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
-  ${PR_Shader_Src}
+  ${PR_Shader_Src} ${PR_Renderer_Src}
 )
 
 SET(PR_Main_Hdr
@@ -63,6 +66,9 @@ SET(PR_Parser_Material_Hdr
   ${PR_UTILS}/parser/material/OrenNayarMaterialParser.h
   ${PR_UTILS}/parser/material/WardMaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
+SET(PR_Renderer_Hdr
+  ${PR_UTILS}/renderer/DisplayBuffer.h)
+SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Shader_Hdr
   ${PR_UTILS}/shader/ConstScalarOutput.h
   ${PR_UTILS}/shader/ConstSpectralOutput.h
@@ -72,7 +78,7 @@ SET(PR_Shader_Hdr
   ${PR_UTILS}/shader/ImageVectorOutput.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
-  ${PR_Shader_Hdr}
+  ${PR_Shader_Hdr} ${PR_Renderer_Hdr}
 )
 
 if(OSL_FOUND)

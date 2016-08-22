@@ -14,12 +14,13 @@
 
 #include "Environment.h"
 #include "SceneLoader.h"
+#include "renderer/DisplayBuffer.h"
 
 #include "models/EntityTreeModel.h"
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
-	mEnvironment(nullptr), mRenderer(nullptr)
+	mEnvironment(nullptr), mRenderer(nullptr), mDisplayBuffer(nullptr)
 {
 	ui.setupUi(this);
 
@@ -111,7 +112,7 @@ void MainWindow::closeProject()
 	ui.systemPropertyView->setEnabled(false);
 
 	ui.outlineView->setModel(nullptr);
-	ui.viewWidget->setRenderer(nullptr);
+	ui.viewWidget->setRenderer(nullptr, nullptr);
 	ui.entityDetailsView->setEntity(nullptr);
 
 	if (mRenderer)
@@ -126,6 +127,12 @@ void MainWindow::closeProject()
 	{
 		delete mEnvironment;
 		mEnvironment = nullptr;
+	}
+
+	if (mDisplayBuffer)
+	{
+		delete mDisplayBuffer;
+		mDisplayBuffer = nullptr;
 	}
 }
 
@@ -143,11 +150,15 @@ void MainWindow::openProject(const QString& str)
 	{
 		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
 			mEnvironment->camera(), mEnvironment->scene());
-		mRenderer->crop(mEnvironment->cropMinX(), mEnvironment->cropMaxX(),
-			mEnvironment->cropMinY(), mEnvironment->cropMaxY());
 		mRenderer->setBackgroundMaterial(mEnvironment->backgroundMaterial());
+		mRenderer->settings().setCropMaxX(mEnvironment->cropMaxX());
+		mRenderer->settings().setCropMinX(mEnvironment->cropMinX());
+		mRenderer->settings().setCropMaxY(mEnvironment->cropMaxY());
+		mRenderer->settings().setCropMinY(mEnvironment->cropMinY());
 
-		ui.viewWidget->setRenderer(mRenderer);
+		mDisplayBuffer = new PRU::DisplayBuffer();
+
+		ui.viewWidget->setRenderer(mRenderer, mDisplayBuffer);
 
 		ui.viewWidget->setCropSelection(
 			QPoint(mEnvironment->cropMinX()*mRenderer->width(), mEnvironment->cropMinY()*mRenderer->height()),
@@ -436,20 +447,30 @@ void MainWindow::startRendering(bool clear)
 		float xmax = qMin(qMax(cropRect.right() / (float)mRenderer->width(), 0.0f), 1.0f);
 		float ymin = qMin(qMax(cropRect.top() / (float)mRenderer->height(), 0.0f), 1.0f);
 		float ymax = qMin(qMax(cropRect.bottom() / (float)mRenderer->height(), 0.0f), 1.0f);
-		mRenderer->crop(xmin, xmax, ymin, ymax);
+		mRenderer->settings().setCropMaxX(xmax);
+		mRenderer->settings().setCropMinX(xmin);
+		mRenderer->settings().setCropMaxY(ymax);
+		mRenderer->settings().setCropMinY(ymin);
 	}
 	else
 	{
-		mRenderer->crop(0, 1, 0, 1);
+		mRenderer->settings().setCropMaxX(1);
+		mRenderer->settings().setCropMinX(0);
+		mRenderer->settings().setCropMaxY(1);
+		mRenderer->settings().setCropMinY(0);
+	}
+
+	if (clear)
+	{
+		mDisplayBuffer->clear();
 	}
 
 	mTimer.start(500);
 	mElapsedTime.restart();
 	mFrameTime.restart();
-	mRenderer->start(ui.systemPropertyView->getTileX(),
+	mRenderer->start(mDisplayBuffer, ui.systemPropertyView->getTileX(),
 		ui.systemPropertyView->getTileY(),
-		ui.systemPropertyView->getThreadCount(),
-		clear);
+		ui.systemPropertyView->getThreadCount());
 }
 
 void MainWindow::stopRendering()

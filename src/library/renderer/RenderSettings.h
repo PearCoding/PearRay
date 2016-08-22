@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "PearMath.h"
 
 namespace PR
 {
@@ -63,6 +64,19 @@ namespace PR
 		inline uint32 maxRayDepth() const { return mMaxRayDepth; }
 		inline void setMaxRayDepth(uint32 v) { mMaxRayDepth = v; }
 
+		// Crop
+		inline float cropMaxX() const { return mCropMaxX; }
+		inline void setCropMaxX(float v) { mCropMaxX = PM::pm_ClampT(v, mCropMinX, 1.0f); }
+
+		inline float cropMinX() const { return mCropMinX; }
+		inline void setCropMinX(float v) { mCropMinX = PM::pm_ClampT(v, 0.0f, mCropMaxX); }
+
+		inline float cropMaxY() const { return mCropMaxY; }
+		inline void setCropMaxY(float v) { mCropMaxY = PM::pm_ClampT(v, mCropMinY, 1.0f); }
+
+		inline float cropMinY() const { return mCropMinY; }
+		inline void setCropMinY(float v) { mCropMinY = PM::pm_ClampT(v, 0.0f, mCropMaxY); }
+
 		// Direct Lightning
 		inline uint32 maxLightSamples() const { return mMaxLightSamples; }
 		inline void setMaxLightSamples(uint32 v) { mMaxLightSamples = v; }
@@ -100,6 +114,12 @@ namespace PR
 		uint32 mMaxRayDepth;
 
 		DebugMode mDebugMode;
+
+		//Crop
+		float mCropMinX;
+		float mCropMaxX;
+		float mCropMinY;
+		float mCropMaxY;
 
 		// Direct Lightning
 		uint32 mMaxLightSamples;

@@ -11,10 +11,13 @@ namespace PR
 		mMaxDiffuseBounces(2),
 		mMaxRayDepth(10),
 
+		// Crop
+		mCropMaxX(1), mCropMinX(0),
+		mCropMaxY(1), mCropMinY(0),
+
 		// Direct Lightning
 		mMaxLightSamples(1),
 		mUseBiDirect(true),
-
 
 		// Photon Mapping
 		mMaxPhotons(100000),
