@@ -70,12 +70,19 @@ void ViewWidget::resetZoomPan()
 
 void ViewWidget::fitIntoWindow()
 {
-	QSize newSize = mRenderImage.size().scaled(size(), Qt::KeepAspectRatio);
-
-	if(newSize.width() > newSize.height())
-		mZoom = newSize.width() / (float)mRenderImage.width();
+	if(mRenderImage.isNull())
+	{
+		mZoom = 1;
+	}
 	else
-		mZoom = newSize.height() / (float)mRenderImage.height();
+	{
+		QSize newSize = mRenderImage.size().scaled(size(), Qt::KeepAspectRatio);
+
+		if(newSize.width() > newSize.height())
+			mZoom = newSize.width() / (float)mRenderImage.width();
+		else
+			mZoom = newSize.height() / (float)mRenderImage.height();
+	}
 
 	mPanX = 0;
 	mPanY = 0;
@@ -336,7 +343,7 @@ void ViewWidget::resizeEvent(QResizeEvent* event)
 
 void ViewWidget::refreshView()
 {
-	if (mRenderer)
+	if (mRenderer && mDisplayBuffer->ptr())
 	{
 		mToneMapper->exec(mDisplayBuffer->ptr(), mRenderData);
 		mRenderImage = QImage(mRenderData, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);

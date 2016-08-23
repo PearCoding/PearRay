@@ -1,7 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-message(STATUS "Enabling Testing")
-enable_testing()
+if(VERBOSE)
+	message(STATUS "Enabling Testing")
+endif()
 
 set(PRT_Root ${PR_Root}/tests)
 set(PRT_Pre ${PRT_Root}/Test.h)

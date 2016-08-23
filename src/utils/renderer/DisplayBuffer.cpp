@@ -18,10 +18,21 @@ namespace PRU
 	void DisplayBuffer::init(Renderer* renderer)
 	{
 		PR_ASSERT(renderer);
-		PR_ASSERT(!mData);
+
+		// Delete if resolution changed.
+		if(mRenderer && mData &&
+			(mRenderer->width() != renderer->width() || mRenderer->height() != renderer->height()))
+		{
+			delete[] mData;
+			mData = nullptr;
+		}
 
 		mRenderer = renderer;
-		mData = new float[renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT];
+
+		if(!mData)
+		{
+			mData = new float[renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT];
+		}
 
 		clear();
 	}

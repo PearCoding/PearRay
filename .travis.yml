@@ -41,13 +41,7 @@ before_script:
   - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make $MAKEFLAGS 
-  - bin/pr_test_boundingbox
-  - bin/pr_test_brdf
-  - bin/pr_test_entity
-  - bin/pr_test_plane
-  - bin/pr_test_projection
-  - bin/pr_test_spectrum
-  - bin/pr_test_sphere
+  - make test
 
 branches:
   only:

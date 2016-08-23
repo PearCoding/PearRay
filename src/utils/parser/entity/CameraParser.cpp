@@ -37,7 +37,6 @@ namespace PRU
 		{
 			float fovH = 60;
 			float fovV = 45;
-			float lensDist = 0.1f;
 
 			if (fovHD && fovHD->isNumber())
 			{
@@ -55,7 +54,6 @@ namespace PRU
 		{
 			float width = 1;
 			float height = 1;
-			float lensDist = 0.1f;
 
 			if (widthD && widthD->isNumber())
 			{

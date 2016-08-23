@@ -148,6 +148,22 @@ void MainWindow::openProject(const QString& str)
 
 	if (mEnvironment)
 	{
+		if(!mEnvironment->scene())
+		{
+			QMessageBox::warning(this, tr("No scene"), tr("No scene was found in file."));
+			delete mEnvironment;
+			mEnvironment = nullptr;
+			return;
+		}
+
+		if(!mEnvironment->camera())
+		{
+			QMessageBox::warning(this, tr("No camera"), tr("No camera was set in given scene."));
+			delete mEnvironment;
+			mEnvironment = nullptr;
+			return;
+		}
+		
 		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
 			mEnvironment->camera(), mEnvironment->scene());
 		mRenderer->setBackgroundMaterial(mEnvironment->backgroundMaterial());

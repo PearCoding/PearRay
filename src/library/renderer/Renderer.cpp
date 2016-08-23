@@ -161,8 +161,10 @@ namespace PR
 
 		reset();
 
+		if(mResult != display)
+			display->init(this);
+		
 		mResult = display;
-		mResult->init(this);// TODO: Where deinit?
 
 		/* Setup entities */
 		for (Entity* entity : mScene->entities())
