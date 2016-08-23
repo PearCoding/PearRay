@@ -29,4 +29,5 @@
 
 # Directories
 build
-/res
+res
+.vscode
