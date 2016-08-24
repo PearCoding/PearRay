@@ -5,7 +5,7 @@
 namespace PR
 {
 	class Renderer;
-	class PR_LIB_INLINE DisplayDriver
+	class PR_LIB_INLINE IDisplayDriver
 	{
 	public:
 		virtual void init(Renderer* renderer) = 0;

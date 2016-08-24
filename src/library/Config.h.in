@@ -152,6 +152,13 @@
 #endif
 #define PR_LIB_OSL_INLINE
 
+#if defined(PR_LIB_NETWORK_BUILD)
+# define PR_LIB_NETWORK PR_EXPORT
+#else
+# define PR_LIB_NETWORK PR_IMPORT
+#endif
+#define PR_LIB_NETWORK_INLINE
+
 #include <chrono>
 #include <cmath>
 #include <cstring>

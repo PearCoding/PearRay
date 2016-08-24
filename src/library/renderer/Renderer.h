@@ -11,10 +11,10 @@ namespace PR
 {
 	class Affector;
 	class Camera;
-	class DisplayDriver;
 	class Entity;
 	struct SamplePoint;
 	class GPU;
+	class IDisplayDriver;
 	class Integrator;
 	class Material;
 	class Sampler;
@@ -48,7 +48,7 @@ namespace PR
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
 		// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
-		void start(DisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
+		void start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
 		void stop();
 
 		bool isFinished();
@@ -95,7 +95,7 @@ namespace PR
 
 		Camera* mCamera;
 		Scene* mScene;
-		DisplayDriver* mResult;
+		IDisplayDriver* mResult;
 
 		std::list<RenderEntity*> mLights;
 		Material* mBackgroundMaterial;

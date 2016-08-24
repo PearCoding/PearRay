@@ -1,6 +1,12 @@
 #include "DisplayBuffer.h"
 #include "renderer/Renderer.h"
 
+#include "spectral/RGBConverter.h"
+
+#include <OpenImageIO/imageio.h>
+
+OIIO_NAMESPACE_USING;
+
 namespace PRU
 {
 	using namespace PR;
@@ -88,5 +94,43 @@ namespace PRU
 	float* DisplayBuffer::ptr() const
 	{
 		return mData;
+	}
+
+	bool DisplayBuffer::save(const std::string& file) const
+	{
+		unsigned char* rgb = new unsigned char[mRenderer->width() * mRenderer->height() * 3];
+		std::memset(rgb, 0, mRenderer->width() * mRenderer->height() * 3);
+
+		for(uint32 y = mRenderer->cropPixelOffsetY();
+			y < mRenderer->cropPixelOffsetY() + mRenderer->renderHeight();
+			++y)
+		{
+			for(uint32 x = mRenderer->cropPixelOffsetX();
+				x < mRenderer->cropPixelOffsetX() + mRenderer->renderWidth();
+				++x)
+			{
+				float r, g, b;
+				PR::RGBConverter::convert(fragment(x,y,0), r,g,b);
+				//PR::RGBConverter::gamma(r,g,b);
+
+				rgb[y*mRenderer->width()*3 + x*3] = static_cast<PR::uint8>(r*255);
+				rgb[y*mRenderer->width()*3 + x*3 + 1] = static_cast<PR::uint8>(g*255);
+				rgb[y*mRenderer->width()*3 + x*3 + 2] = static_cast<PR::uint8>(b*255);
+			}
+		}
+
+		ImageOutput* out = ImageOutput::create(file);
+		if(!out)
+			return false;
+		
+		ImageSpec spec(mRenderer->width(), mRenderer->height(), 3, TypeDesc::UINT8);
+		out->open(file, spec);
+		out->write_image(TypeDesc::UINT8, rgb);
+		out->close();
+		ImageOutput::destroy(out);
+
+		delete[] rgb;
+
+		return true;
 	}
 }

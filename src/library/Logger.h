@@ -26,6 +26,7 @@ namespace PR
 		M_Entity,
 		M_World,
 		M_GPU,
+		M_Network,
 	};
 
 	class LogListener;
@@ -54,6 +55,16 @@ namespace PR
 			return mVerbose;
 		}
 
+		inline void setQuiet(bool b)
+		{
+			mQuiet = b;
+		}
+
+		inline bool isQuiet() const
+		{
+			return mQuiet;
+		}
+
 		static inline Logger& instance()
 		{
 			static Logger log;
@@ -63,6 +74,7 @@ namespace PR
 	private:
 		std::list<LogListener*> mListener;
 		bool mVerbose;
+		bool mQuiet;
 	};
 }
 

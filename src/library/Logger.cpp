@@ -8,11 +8,7 @@
 namespace PR
 {
 	Logger::Logger() :
-#ifdef PR_DEBUG
-		mVerbose(true)
-#else
-		mVerbose(false)
-#endif
+		mVerbose(false), mQuiet(false)
 	{
 	}
 
@@ -40,6 +36,7 @@ namespace PR
 		"Entity  ",
 		"World   ",
 		"GPU     ",
+		"Network ",
 	};
 
 	const char* Logger::levelString(Level l)
@@ -59,7 +56,8 @@ namespace PR
 			return;
 		}
 				
-		printf("[%s] (%s) %s", levelStr[level], moduleStr[m], str.c_str());
+		if(!mQuiet)
+			printf("[%s] (%s) %s\n", levelStr[level], moduleStr[m], str.c_str());
 
 		for (std::list<LogListener*>::iterator it = mListener.begin();
 			it != mListener.end();
@@ -67,8 +65,6 @@ namespace PR
 		{
 			(*it)->newEntry(level, m, str);
 		}
-
-		printf("\n");
 
 		if (level == L_Fatal)
 		{
@@ -90,7 +86,8 @@ namespace PR
 		vsnprintf(buffer, 1024, fmt, vl);
 		va_end(vl);
 
-		printf("[%s] (%s) %s", levelStr[level], moduleStr[m], buffer);
+		if(!mQuiet)
+			printf("[%s] (%s) %s\n", levelStr[level], moduleStr[m], buffer);
 
 		for (std::list<LogListener*>::iterator it = mListener.begin();
 			it != mListener.end();
@@ -98,8 +95,6 @@ namespace PR
 		{
 			(*it)->newEntry(level, m, buffer);
 		}
-
-		printf("\n");
 
 		if (level == L_Fatal)
 		{

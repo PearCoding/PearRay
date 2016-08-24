@@ -9,13 +9,6 @@ SET(VERSION_MINOR 9)
 SET(VERSION_HEX 0x0009)
 SET(PR_Version ${VERSION_MAJOR}.${VERSION_MINOR})
 
-IF(NOT DEFINED PR_TARGET)
-	SET(PR_TARGET pr_lib)
-ENDIF()
-
-SET(PR_Root ${CMAKE_CURRENT_SOURCE_DIR}/src)
-SET(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
-
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
    SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 endif(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
@@ -26,7 +19,6 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
 
 #CHECKS
 MESSAGE(STATUS "Building PearRay ${PR_Version}")
-MESSAGE(STATUS "Root: ${PR_Root}")
 
 IF(MINGW)
 	MESSAGE(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
@@ -44,26 +36,34 @@ ENDIF()
 option(PR_ONLY_LIBRARY "Compile only the main and util library." OFF)
 option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
 option(PR_NO_GPU "Build framework with only CPU support." OFF)
+option(PR_NO_NETWORK "Disable network support." OFF)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
-
-option(VERBOSE "Show debug information." OFF)
 option(PR_BUILD_TESTS "Build tests." ON)
 
-option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" ON)
+option(VERBOSE "Show debug information." OFF)
+option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-find_package(Boost 1.36 COMPONENTS filesystem system iostreams program_options REQUIRED)
+
+set(Boost_USE_MULTITHREADED ON)
+#set(BOOST_ALL_DYN_LINK ON)
+
+IF(NOT PR_NO_NETWORK)
+	find_package(Asio)
+ENDIF()
+
+find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
 find_package(Qt5Widgets)
 find_package(OpenCL)
 find_package(OpenImageIO REQUIRED)
 #find_package(OSL)
 
 IF(OIIO_LINK_STATIC)# If static, the dependencies of OIIO has to be included aswell.
-find_package(PNG REQUIRED)
-find_package(JPEG REQUIRED)
-find_package(TIFF REQUIRED)
-find_package(OpenEXR REQUIRED)
-SET(OIIO_LIBRARIES ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${OIIO_LIBRARIES})
+	find_package(PNG REQUIRED)
+	find_package(JPEG REQUIRED)
+	find_package(TIFF REQUIRED)
+	find_package(OpenEXR REQUIRED)
+	SET(OIIO_LIBRARIES ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${OIIO_LIBRARIES})
 ENDIF()
 
 #DEFINITIONS AND FLAGS
@@ -79,11 +79,12 @@ IF(MSVC)
 	IF(CMAKE_CL_64)
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 	ENDIF()
+	add_definitions( -DBOOST_ALL_NO_LIB )
 ELSEIF(CMAKE_COMPILER_IS_GNUCXX)
 	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 	IF (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
 		if(VERBOSE)
-        	message(STATUS "C++11 activated.")
+        		message(STATUS "C++11 activated.")
 		endif()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     ELSEIF (GCC_VERSION VERSION_GREATER 4.3 OR GCC_VERSION VERSION_EQUAL 4.3)
@@ -117,7 +118,7 @@ SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
 
 IF(WIN32)
-SET(DEFS ${DEFS} OPENEXR_DLL)
+	SET(DEFS ${DEFS} OPENEXR_DLL)
 ENDIF()
 
 IF((NOT OpenCL_FOUND) OR PR_NO_GPU)
@@ -134,29 +135,43 @@ IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
 	SET(DEFS "${DEFS};PR_WITH_VIEWER")
 ENDIF()
 
-configure_file(${PR_Root}/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
+IF(ASIO_FOUND)
+	SET(DEFS "${DEFS};PR_WITH_NETWORK")
+ENDIF()
+
+configure_file(src/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
-			${PR_Root}/library ${PR_Root}/viewer ${PR_Root}/console ${PR_Root}/utils)
+			src/library)
 
 IF(OpenCL_FOUND AND NOT PR_NO_GPU)
 	include_directories(${OpenCL_INCLUDE_DIRS})
 ENDIF()
 
-add_subdirectory(${PR_Root}/library)
-add_subdirectory(${PR_Root}/utils)
+# Libraries
+add_subdirectory(src/library)
+add_subdirectory(src/utils)
+
+IF(ASIO_FOUND)
+	include_directories(${ASIO_INCLUDE_DIR})
+	add_subdirectory(src/network)
+ENDIF()
 
 IF(OSL_FOUND)
-	include_directories(${OSL_INCLUDE_DIR} ${PR_Root}/osl)
-	add_subdirectory(${PR_Root}/osl)
+	include_directories(${OSL_INCLUDE_DIR})
+	add_subdirectory(src/osl)
 ENDIF()
 
-IF(NOT PR_ONLY_LIBRARY AND PR_BUILD_TESTS)
-	enable_testing()
-	add_subdirectory(${PR_Root}/tests)
-ENDIF()
+# Executables
+add_subdirectory(src/client)
 
 IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
-	add_subdirectory(${PR_Root}/viewer)
+	add_subdirectory(src/viewer)
+ENDIF()
+
+# Tests
+IF(NOT PR_ONLY_LIBRARY AND PR_BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(src/tests)
 ENDIF()

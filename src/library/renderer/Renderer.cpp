@@ -155,7 +155,7 @@ namespace PR
 		return mBackgroundMaterial;
 	}
 
-	void Renderer::start(DisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads)
+	void Renderer::start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads)
 	{
 		PR_ASSERT(display);
 
@@ -239,18 +239,18 @@ namespace PR
 		// Calculate tile sizes, etc.
 		mRayCount = ATOMIC_VAR_INIT(0);
 
-		mTileXCount = tcx;
-		mTileYCount = tcy;
-		mTileWidth = (uint32)std::ceil(renderWidth() / (float)tcx);
-		mTileHeight = (uint32)std::ceil(renderHeight() / (float)tcy);
-		mTileMap = new RenderTile*[tcx*tcy];
-		for (uint32 i = 0; i < tcy; ++i)
+		mTileXCount = std::max<uint32>(1,tcx);
+		mTileYCount = std::max<uint32>(1,tcy);
+		mTileWidth = (uint32)std::ceil(renderWidth() / (float)mTileXCount);
+		mTileHeight = (uint32)std::ceil(renderHeight() / (float)mTileYCount);
+		mTileMap = new RenderTile*[mTileXCount*mTileYCount];
+		for (uint32 i = 0; i < mTileYCount; ++i)
 		{
-			for (uint32 j = 0; j < tcx; ++j)
+			for (uint32 j = 0; j < mTileXCount; ++j)
 			{
 				uint32 sx = cropPixelOffsetX()*mWidth + j*mTileWidth;
 				uint32 sy = cropPixelOffsetY()*mHeight + i*mTileHeight;
-				mTileMap[i*tcx + j] = new RenderTile(
+				mTileMap[i*mTileXCount + j] = new RenderTile(
 					sx,
 					sy,
 					PM::pm_MinT((uint32)std::ceil(mRenderSettings.cropMaxX()*mWidth), sx + mTileWidth),

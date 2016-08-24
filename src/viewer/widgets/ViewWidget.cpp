@@ -293,7 +293,6 @@ void ViewWidget::wheelEvent(QWheelEvent * event)
 
 void ViewWidget::paintEvent(QPaintEvent* event)
 {
-
 	QPainter painter(this);
 	painter.drawPixmap(0, 0, mBackgroundImage);
 	
@@ -343,10 +342,18 @@ void ViewWidget::resizeEvent(QResizeEvent* event)
 
 void ViewWidget::refreshView()
 {
-	if (mRenderer && mDisplayBuffer->ptr())
+	if (mRenderer)
 	{
-		mToneMapper->exec(mDisplayBuffer->ptr(), mRenderData);
-		mRenderImage = QImage(mRenderData, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
+		if(mDisplayBuffer->ptr())
+		{
+			mToneMapper->exec(mDisplayBuffer->ptr(), mRenderData);
+			mRenderImage = QImage(mRenderData, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
+		}
+		else
+		{
+			mRenderImage = QImage(mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
+			mRenderImage.fill(Qt::black);
+		}
 	}
 	else
 	{

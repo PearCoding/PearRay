@@ -4,10 +4,9 @@ if(VERBOSE)
 	message(STATUS "Enabling Testing")
 endif()
 
-set(PRT_Root ${PR_Root}/tests)
-set(PRT_Pre ${PRT_Root}/Test.h)
+set(PRT_Pre Test.h)
 
-set(LIBS ${PR_TARGET})
+set(LIBS pr_lib)
 
 FUNCTION(PUSH_TEST name files)
 	list(APPEND files ${PRT_Pre})
