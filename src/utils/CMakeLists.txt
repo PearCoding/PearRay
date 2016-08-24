@@ -24,7 +24,8 @@ SET(PR_Parser_Material_Src
   parser/material/WardMaterialParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
 SET(PR_Renderer_Src
-  renderer/DisplayBuffer.cpp)
+  renderer/DisplayBuffer.cpp
+  renderer/IPDisplayDriver.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Shader_Src
   shader/ConstScalarOutput.cpp
@@ -65,7 +66,8 @@ SET(PR_Parser_Material_Hdr
   parser/material/WardMaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
 SET(PR_Renderer_Hdr
-  renderer/DisplayBuffer.h)
+  renderer/DisplayBuffer.h
+  renderer/IPDisplayDriver.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Shader_Hdr
   shader/ConstScalarOutput.h

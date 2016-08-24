@@ -4,6 +4,7 @@
 
 #include "renderer/Renderer.h"
 #include "renderer/DisplayBuffer.h"
+#include "renderer/IPDisplayDriver.h"
 
 #ifdef PR_WITH_NETWORK
 # include "NetworkDisplayDriver.h"
@@ -26,6 +27,52 @@ namespace po = boost::program_options;
 namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
+enum DisplayDriverOption
+{
+	DDO_Image,
+	DDO_IPC,
+	DDO_Network
+};
+
+std::ostream& operator << (std::ostream& stream, const DisplayDriverOption& ddo)
+{
+	switch(ddo)
+	{
+		case DDO_Image:
+			stream << "image";
+			break;
+		case DDO_IPC:
+			stream << "ipc";
+			break;
+		case DDO_Network:
+			stream << "net";
+			break;
+	}
+	return stream;
+}
+void validate(boost::any& v, 
+              const std::vector<std::string>& values,
+              DisplayDriverOption* target_type, int)
+{
+    po::validators::check_first_occurrence(v);
+    std::string s = po::validators::get_single_string(values);
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+
+    if(s == "image") {
+        v = boost::any(DDO_Image);
+    }
+	else if(s == "ipc") {
+        v = boost::any(DDO_IPC);
+    }
+#ifdef PR_WITH_NETWORK
+	else if(s == "net") {
+        v = boost::any(DDO_Network);
+    }
+#endif
+	else {
+        throw po::validation_error(po::validation_error::invalid_option_value);
+    }        
+}
 int main(int argc, char** argv)
 {
 	po::options_description general_d("General");
@@ -39,16 +86,26 @@ int main(int argc, char** argv)
 		("output,o", po::value<std::string>()->default_value("./scene"), "output directory")
 		("scene", po::value<std::string>(), "a specific scene from file, if not specified, first one will be used")
 		("camera", po::value<std::string>(), "if specified, use this camera instead of the camera set in the scene")
+		("display", po::value<DisplayDriverOption>()->default_value(DDO_Image), "Display Driver Mode ["
+		"Image, IPC"
+	#ifdef PR_WITH_NETWORK
+		",Net"
+	#endif
+		"]")
 	;
 
 #ifdef PR_WITH_NETWORK
 	po::options_description network_d("Network");
 	network_d.add_options()
-		("net", "use network interface instead of image output")
-		("net-ip", po::value<std::string>()->default_value("localhost"), "ip address for network interface")
-		("net-port", po::value<short>()->default_value(4242), "port for network interface")
+		("net-ip", po::value<std::string>()->default_value("localhost"), "IP address for network interface when network mode is used.")
+		("net-port", po::value<short>()->default_value(4242), "Port for network interface when network mode is used.")
 	;
 #endif
+
+	po::options_description ipc_d("InterProcess");
+	ipc_d.add_options()
+		("ipc-name", po::value<std::string>()->default_value("pearray_image"), "Name of shared memory region when IPC mode is used. Will be truncated.")
+	;
 
 	po::options_description thread_d("Threading");
 	thread_d.add_options()
@@ -62,6 +119,7 @@ int main(int argc, char** argv)
 #ifdef PR_WITH_NETWORK
 	all_d.add(network_d);
 #endif
+	all_d.add(ipc_d);
 	all_d.add(thread_d);
 
 	po::positional_options_description p;
@@ -156,17 +214,21 @@ int main(int argc, char** argv)
 	renderer->settings().setCropMinY(env->cropMinY());
 
 	PR::IDisplayDriver* display = nullptr;
+	DisplayDriverOption displayMode = vm["display"].as<DisplayDriverOption>();
 
 #ifdef PR_WITH_NETWORK
 	asio::io_service* io_service = nullptr;
-	if(!vm.count("net"))
-	{
 #endif
-		display = new PRU::DisplayBuffer();
-#ifdef PR_WITH_NETWORK
-	}
-	else
+	switch(displayMode)
 	{
+	case DDO_Image:
+		display = new PRU::DisplayBuffer();
+		break;
+	case DDO_IPC:
+		display = new PRU::IPDisplayDriver(vm["ipc-name"].as<std::string>());
+		break;
+#ifdef PR_WITH_NETWORK
+	case DDO_Network:
 		try
 		{
 			io_service = new asio::io_service();
@@ -181,8 +243,9 @@ int main(int argc, char** argv)
 			PR_LOGGER.logf(PR::L_Fatal, PR::M_Network, "Exception while initializing network: %s", e.what());
 			return -3;
 		}
-	}
+		break;
 #endif
+	}
 
 	env->scene()->buildTree();
 
@@ -235,21 +298,35 @@ int main(int argc, char** argv)
 	}
 
 	// Save images if needed
-#ifdef PR_WITH_NETWORK
-	if(!io_service)
+	switch(displayMode)
 	{
-#endif
-		bf::path imagePath = directoryPath;
-		imagePath += "/image.png";
-
-		if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(imagePath.native()))
+	case DDO_Image:
 		{
-			PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
-		}
+			bf::path imagePath = directoryPath;
+			imagePath += "/image.png";
 
+			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(imagePath.native()))
+			{
+				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
+			}
+		}
+		break;
+	case DDO_IPC:
+		{
+			bf::path imagePath = directoryPath;
+			imagePath += "/image.png";
+
+			if(!reinterpret_cast<PRU::IPDisplayDriver*>(display)->save(imagePath.native()))
+			{
+				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
+			}
+		}
+		break;
 #ifdef PR_WITH_NETWORK
-	}
+	case DDO_Network:
+		break;
 #endif
+	}
 
 	// Close everything
 	delete renderer;
