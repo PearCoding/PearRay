@@ -112,6 +112,8 @@ po::options_description setup_options()
 	image_d.add_options()
 		("img-update", po::value<float>()->default_value(0.0f),
 			"Update interval in seconds where image will be saved. 0 disables it.")
+		("img-ext", po::value<std::string>()->default_value("png"),
+			"File extension for image output. Has to be a type supported by OpenImageIO.")
 	;
 
 	po::options_description ipc_d("InterProcess");
@@ -151,14 +153,14 @@ po::options_description setup_options()
 }
 
 void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
-	const PR::ToneMapper& toneMapper, const bf::path& directoryPath)
+	const PR::ToneMapper& toneMapper, const bf::path& directoryPath, const std::string& ext)
 {
 	switch(displayMode)
 	{
 	case DDO_Image:
 		{
 			bf::path imagePath = directoryPath;
-			imagePath += "/image.png";
+			imagePath += "/image." + ext;
 
 			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(toneMapper, imagePath.native()))
 			{
@@ -169,7 +171,7 @@ void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
 	case DDO_IPC:
 		{
 			bf::path imagePath = directoryPath;
-			imagePath += "/image.png";
+			imagePath += "/image." + ext;
 
 			if(!reinterpret_cast<PRU::IPDisplayDriver*>(display)->save(toneMapper, imagePath.native()))
 			{
@@ -238,6 +240,7 @@ int main(int argc, char** argv)
 	const bool beQuiet = (vm.count("quiet") != 0);
 	const bool showProgress = (vm.count("progress") != 0);
 	const float updateImageInterval = vm["img-update"].as<float>();
+	const std::string imageExt = vm["img-ext"].as<std::string>();
 
 	if(!beQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) "  << PR_VENDOR_STRING << std::endl;
@@ -364,7 +367,7 @@ int main(int argc, char** argv)
 		if(displayMode == DDO_Image && updateImageInterval > 0 &&
 			span_img.count() > updateImageInterval*1000)
 		{
-			saveImage(displayMode, display, toneMapper, directoryPath);
+			saveImage(displayMode, display, toneMapper, directoryPath, imageExt);
 			start_img = end;
 		}
 	}
@@ -387,7 +390,7 @@ int main(int argc, char** argv)
 	}
 
 	// Save images if needed
-	saveImage(displayMode, display, toneMapper, directoryPath);
+	saveImage(displayMode, display, toneMapper, directoryPath, imageExt);
 
 	// Close everything
 	delete renderer;

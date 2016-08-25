@@ -113,6 +113,7 @@ namespace PRU
 	{
 		PR_ASSERT(toneMapper.isByteMode());
 		
+		ImageSpec spec(mRenderer->width(), mRenderer->height(), 3, TypeDesc::UINT8);
 		std::memset(mSaveData, 0, mRenderer->width() * mRenderer->height() * 3);
 		toneMapper.exec(mData, mSaveData);
 		
@@ -120,9 +121,9 @@ namespace PRU
 		if(!out)
 			return false;
 		
-		ImageSpec spec(mRenderer->width(), mRenderer->height(), 3, TypeDesc::UINT8);
 		out->open(file, spec);
-		out->write_image(TypeDesc::UINT8, mSaveData);
+		for (uint32 y = 0; y < mRenderer->height(); ++y)
+			out->write_scanline(y,0, TypeDesc::UINT8, &mSaveData[y*mRenderer->width()]);
 		out->close();
 		ImageOutput::destroy(out);
 
