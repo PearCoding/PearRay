@@ -27,7 +27,7 @@ namespace PR
 	class PR_LIB Renderer
 	{
 	public:
-		Renderer(uint32 width, uint32 height, Camera* cam, Scene* scene);
+		Renderer(uint32 width, uint32 height, Camera* cam, Scene* scene, bool useGPU = true);
 		virtual ~Renderer();
 
 		void setWidth(uint32 w);

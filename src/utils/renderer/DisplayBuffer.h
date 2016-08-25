@@ -3,6 +3,11 @@
 #include "renderer/DisplayDriver.h"
 #include <string>
 
+namespace PR
+{
+	class ToneMapper;
+}
+
 namespace PRU
 {
 	class PR_LIB_UTILS DisplayBuffer : public PR::IDisplayDriver
@@ -20,9 +25,10 @@ namespace PRU
 		float* ptr() const;
 		void clear();
 
-		bool save(const std::string& file) const;
+		bool save(const PR::ToneMapper& toneMapper, const std::string& file) const;
 	private:
 		float* mData;
+		PR::uint8* mSaveData;
 		PR::Renderer* mRenderer;
 	};
 }

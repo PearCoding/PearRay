@@ -35,7 +35,7 @@
 
 namespace PR
 {
-	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene) :
+	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene, bool useGPU) :
 		mWidth(w), mHeight(h),
 		mCamera(cam), mScene(scene),
 		mResult(nullptr), mBackgroundMaterial(nullptr),
@@ -55,11 +55,14 @@ namespace PR
 
 		// Setup GPU
 #ifndef PR_NO_GPU
-		mGPU = new GPU();
-		if (!mGPU->init("", "../src/library/cl"))
+		if(useGPU)
 		{
-			delete mGPU;
-			mGPU = nullptr;
+			mGPU = new GPU();
+			if (!mGPU->init("", "../src/library/cl"))// TODO
+			{
+				delete mGPU;
+				mGPU = nullptr;
+			}
 		}
 #endif
 	}

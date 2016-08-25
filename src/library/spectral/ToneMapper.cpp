@@ -54,10 +54,10 @@ namespace PR
 #endif
 	}
 
-	void ToneMapper::exec(float* in, void* out)
+	void ToneMapper::exec(const float* in, void* out) const
 	{
 #ifndef PR_NO_GPU
-		if (mSize > 100)
+		if (mGPU && mSize > 100)
 		{
 			try
 			{

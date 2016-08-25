@@ -6,6 +6,11 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
+namespace PR
+{
+	class ToneMapper;
+}
+
 namespace PRU
 {
 	/* Interprocess Display Driver */
@@ -24,11 +29,12 @@ namespace PRU
 		float* ptr() const;
 		void clear();
 
-		bool save(const std::string& file) const;
+		bool save(const PR::ToneMapper& toneMapper, const std::string& file) const;
 	private:
 		std::string mMapName;
 		boost::interprocess::shared_memory_object* mSharedMemory;
 		boost::interprocess::mapped_region* mMappedRegion;
+		PR::uint8* mSaveData;
 		PR::Renderer* mRenderer;
 	};
 }

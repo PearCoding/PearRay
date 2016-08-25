@@ -31,10 +31,16 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(ToneMapper);
 
 	public:
+		/**
+		 * @brief Constructs a ToneMapper
+		 * @param gpu GPU instance to be used, nullptr if no gpu support.
+		 * @param size Size of buffer (without component count -> only width*height but no rgb [3])
+		 * @param byte Sets if result will be in range [0,255](byte) or in [0,inf)(float)
+		 */
 		ToneMapper(GPU* gpu, size_t size, bool byte = false);
 
 		// in -> size * SAMPLING_COUNT
-		void exec(float* in, void* out);
+		void exec(const float* in, void* out) const;
 
 		// Not thread safe!
 		inline ToneColorMode colorMode() const
@@ -66,6 +72,12 @@ namespace PR
 		{
 			mMapperMode = mode;
 		}
+
+		inline bool isByteMode() const
+		{
+			return mByte;
+		}
+
 	private:
 		ToneColorMode mColorMode;
 		ToneGammaMode mGammaMode;

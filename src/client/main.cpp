@@ -6,9 +6,13 @@
 #include "renderer/DisplayBuffer.h"
 #include "renderer/IPDisplayDriver.h"
 
+#include "spectral/ToneMapper.h"
+
 #ifdef PR_WITH_NETWORK
 # include "NetworkDisplayDriver.h"
 #endif
+
+#include "gpu/GPU.h"
 
 #include "FileLogListener.h"
 
@@ -50,6 +54,7 @@ std::ostream& operator << (std::ostream& stream, const DisplayDriverOption& ddo)
 	}
 	return stream;
 }
+
 void validate(boost::any& v, 
               const std::vector<std::string>& values,
               DisplayDriverOption* target_type, int)
@@ -73,14 +78,15 @@ void validate(boost::any& v,
         throw po::validation_error(po::validation_error::invalid_option_value);
     }        
 }
-int main(int argc, char** argv)
+
+po::options_description setup_options()
 {
 	po::options_description general_d("General");
 	general_d.add_options()
-		("help,h", "produce help message")
+		("help,h", "Produce this help message")
 		("quiet,q", "Do not print messages into console")
 		("verbose,v", "Print detailled information into log file (and perhabs into console)")
-		("progress,p", "Show progress")
+		("progress,p", "Show progress (regardless if quiet or not)")
 
 		("input,i", po::value<std::string>(), "input file")
 		("output,o", po::value<std::string>()->default_value("./scene"), "output directory")
@@ -94,34 +100,93 @@ int main(int argc, char** argv)
 		"]")
 	;
 
-#ifdef PR_WITH_NETWORK
 	po::options_description network_d("Network");
 	network_d.add_options()
-		("net-ip", po::value<std::string>()->default_value("localhost"), "IP address for network interface when network mode is used.")
-		("net-port", po::value<short>()->default_value(4242), "Port for network interface when network mode is used.")
+		("net-ip", po::value<std::string>()->default_value("localhost"),
+			"IP address for network interface when network mode is used.")
+		("net-port", po::value<short>()->default_value(4242),
+			"Port for network interface when network mode is used.")
 	;
-#endif
+
+	po::options_description image_d("Image");
+	image_d.add_options()
+		("img-update", po::value<float>()->default_value(0.0f),
+			"Update interval in seconds where image will be saved. 0 disables it.")
+	;
 
 	po::options_description ipc_d("InterProcess");
 	ipc_d.add_options()
-		("ipc-name", po::value<std::string>()->default_value("pearray_image"), "Name of shared memory region when IPC mode is used. Will be truncated.")
+		("ipc-name", po::value<std::string>()->default_value("pearray_image"),
+			"Name of shared memory region when IPC mode is used. Will be truncated.")
 	;
 
 	po::options_description thread_d("Threading");
 	thread_d.add_options()
-		("threads,t", po::value<unsigned int>()->default_value(0), "Amount of threads used for processing. Set 0 for automatic detection.")
-		("tile_x", po::value<unsigned int>()->default_value(8), "Amount of horizontal tiles used in threading")
-		("tile_y", po::value<unsigned int>()->default_value(8), "Amount of vertical tiles used in threading")
+		("threads,t", po::value<unsigned int>()->default_value(0),
+			"Amount of threads used for processing. Set 0 for automatic detection.")
+		("tile_x", po::value<unsigned int>()->default_value(8), 
+			"Amount of horizontal tiles used in threading")
+		("tile_y", po::value<unsigned int>()->default_value(8), 
+			"Amount of vertical tiles used in threading")
 	;
 
+	po::options_description gpu_d("GPU");
+	gpu_d.add_options()
+		("gpu",
+			"Use GPU when possible.")
+		("gpu-shader-dir", po::value<std::string>(),
+			"Directory containing all important shaders.")
+	;
+
+	/* TODO: Add tone mapper settings and other render related settings */
 	po::options_description all_d("Allowed options");
 	all_d.add(general_d);
-#ifdef PR_WITH_NETWORK
-	all_d.add(network_d);
-#endif
+	all_d.add(image_d);
 	all_d.add(ipc_d);
+	all_d.add(network_d);
 	all_d.add(thread_d);
+	all_d.add(gpu_d);
 
+	return all_d;
+}
+
+void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
+	const PR::ToneMapper& toneMapper, const bf::path& directoryPath)
+{
+	switch(displayMode)
+	{
+	case DDO_Image:
+		{
+			bf::path imagePath = directoryPath;
+			imagePath += "/image.png";
+
+			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(toneMapper, imagePath.native()))
+			{
+				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
+			}
+		}
+		break;
+	case DDO_IPC:
+		{
+			bf::path imagePath = directoryPath;
+			imagePath += "/image.png";
+
+			if(!reinterpret_cast<PRU::IPDisplayDriver*>(display)->save(toneMapper, imagePath.native()))
+			{
+				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
+			}
+		}
+		break;
+#ifdef PR_WITH_NETWORK
+	case DDO_Network:
+		break;
+#endif
+	}
+}
+
+int main(int argc, char** argv)
+{
+	po::options_description all_d = setup_options();
 	po::positional_options_description p;
 	p.add("input", 1).add("output", 2);
 
@@ -134,7 +199,7 @@ int main(int argc, char** argv)
 	catch(std::exception& e)
 	{
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
-		return -4;
+		return -1;
 	}    
 
 	// Setup working directory
@@ -144,15 +209,16 @@ int main(int argc, char** argv)
 		if(!bf::create_directory(relativePath))
 		{
 			std::cout << "Coulnd't create directory '" << relativePath << "'" << std::endl;
-			return -5;
+			return -2;
 		}
 	}
 
-	const bf::path directoryPath = bf::canonical(relativePath, bf::current_path());
+	const bf::path directoryPath = relativePath.is_relative() ?
+		bf::canonical(relativePath, bf::current_path()) : relativePath;
 	if(!bf::is_directory(directoryPath))
 	{
 		std::cout << "Invalid output path given." << std::endl;
-		return -6;
+		return -3;
 	}
 
 	time_t t = time(NULL);
@@ -171,6 +237,7 @@ int main(int argc, char** argv)
 	
 	const bool beQuiet = (vm.count("quiet") != 0);
 	const bool showProgress = (vm.count("progress") != 0);
+	const float updateImageInterval = vm["img-update"].as<float>();
 
 	if(!beQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) "  << PR_VENDOR_STRING << std::endl;
@@ -190,7 +257,7 @@ int main(int argc, char** argv)
 	{
 		if(beQuiet)
 			std::cout << "Input and Output have to be set." << std::endl;
-		return -1;
+		return -4;
 	}
 
 	PRU::SceneLoader loader;
@@ -201,17 +268,25 @@ int main(int argc, char** argv)
 		if(beQuiet)
 			std::cout << "Error while parsing input." << std::endl;
 		
-		return -2;
+		return -5;
 	} 
 
 	// Setup renderer
+#ifdef PR_WITH_GPU
+	const bool useGPU = (vm.count("gpu") != 0);
+#else
+	constexpr bool useGPU = false;
+#endif
+
 	PR::Renderer* renderer = new PR::Renderer(env->renderWidth(), env->renderHeight(),
-		env->camera(), env->scene());
+		env->camera(), env->scene(), useGPU);
 	renderer->setBackgroundMaterial(env->backgroundMaterial());
 	renderer->settings().setCropMaxX(env->cropMaxX());
 	renderer->settings().setCropMinX(env->cropMinX());
 	renderer->settings().setCropMaxY(env->cropMaxY());
 	renderer->settings().setCropMinY(env->cropMinY());
+
+	PR::ToneMapper toneMapper(renderer->gpu(), renderer->width()*renderer->height(), true);
 
 	PR::IDisplayDriver* display = nullptr;
 	DisplayDriverOption displayMode = vm["display"].as<DisplayDriverOption>();
@@ -241,22 +316,27 @@ int main(int argc, char** argv)
 		catch(std::exception& e)
 		{
 			PR_LOGGER.logf(PR::L_Fatal, PR::M_Network, "Exception while initializing network: %s", e.what());
-			return -3;
+			return -6;
 		}
 		break;
 #endif
 	}
 
 	env->scene()->buildTree();
+	if(showProgress)
+		std::cout << "preprocess" << std::endl;
 
 	renderer->start(display,
 		vm["tile_x"].as<unsigned int>(),
 		vm["tile_y"].as<unsigned int>(),
 		vm["threads"].as<unsigned int>());
 
+	const PR::uint64 maxSamples =
+		renderer->renderWidth()*renderer->renderHeight()*renderer->settings().maxPixelSampleCount();
 	auto start = sc::high_resolution_clock::now();
 	auto start_io = start;
 	auto start_prog = start;
+	auto start_img = start;
 	while(!renderer->isFinished())
 	{
 		auto end = sc::high_resolution_clock::now();
@@ -273,10 +353,19 @@ int main(int argc, char** argv)
 #endif
 
   		auto span_prog = sc::duration_cast<sc::milliseconds>(end - start_prog);
-		if(showProgress && !beQuiet && span_prog.count() > 1000)
+		if(showProgress && span_prog.count() > 1000)
 		{
-			std::cout << "." << std::flush;
+			const float percent = renderer->samplesRendered() / (float)maxSamples;
+			std::cout << percent << std::endl;
 			start_prog = end;
+		}
+
+  		auto span_img = sc::duration_cast<sc::milliseconds>(end - start_img);
+		if(displayMode == DDO_Image && updateImageInterval > 0 &&
+			span_img.count() > updateImageInterval*1000)
+		{
+			saveImage(displayMode, display, toneMapper, directoryPath);
+			start_img = end;
 		}
 	}
 
@@ -298,35 +387,7 @@ int main(int argc, char** argv)
 	}
 
 	// Save images if needed
-	switch(displayMode)
-	{
-	case DDO_Image:
-		{
-			bf::path imagePath = directoryPath;
-			imagePath += "/image.png";
-
-			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(imagePath.native()))
-			{
-				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
-			}
-		}
-		break;
-	case DDO_IPC:
-		{
-			bf::path imagePath = directoryPath;
-			imagePath += "/image.png";
-
-			if(!reinterpret_cast<PRU::IPDisplayDriver*>(display)->save(imagePath.native()))
-			{
-				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
-			}
-		}
-		break;
-#ifdef PR_WITH_NETWORK
-	case DDO_Network:
-		break;
-#endif
-	}
+	saveImage(displayMode, display, toneMapper, directoryPath);
 
 	// Close everything
 	delete renderer;

@@ -2,7 +2,7 @@
 #include "renderer/Renderer.h"
 #include "Logger.h"
 
-#include "spectral/RGBConverter.h"
+#include "spectral/ToneMapper.h"
 
 #include <OpenImageIO/imageio.h>
 
@@ -14,7 +14,7 @@ namespace PRU
 	using namespace PR;
 
 	IPDisplayDriver::IPDisplayDriver(const std::string& name) :
-		mMapName(name), mSharedMemory(nullptr), mMappedRegion(nullptr), mRenderer(nullptr)
+		mMapName(name), mSharedMemory(nullptr), mMappedRegion(nullptr), mRenderer(nullptr), mSaveData(nullptr)
 	{
 		PR_ASSERT(!name.empty());
 	}
@@ -31,7 +31,8 @@ namespace PRU
 
 		try
 		{
-			const size_t shm_size = renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT*sizeof(float);
+			const size_t shm_size =
+				renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT*sizeof(float);
 
 			mRenderer = renderer;
 
@@ -54,6 +55,8 @@ namespace PRU
 			return;
 		}
 
+		mSaveData = new PR::uint8[renderer->width()*renderer->height()*3];
+
 		clear();
 	}
 
@@ -64,16 +67,25 @@ namespace PRU
 			delete mSharedMemory;
 			mSharedMemory = nullptr;	
 		}
+
 		if(mMappedRegion)
 		{
 			delete mMappedRegion;
 			mMappedRegion = nullptr;	
 		}
+
 		ip::shared_memory_object::remove(mMapName.c_str());
+
+		if(mSaveData)
+		{
+			delete[] mSaveData;
+			mSaveData = nullptr;
+		}
 	}
 
 	// TODO: No layer support
-	void IPDisplayDriver::pushFragment(uint32 x, uint32 y, uint32 layer, uint32 sample, const Spectrum& s)
+	void IPDisplayDriver::pushFragment(uint32 x, uint32 y, uint32 layer,
+		uint32 sample, const Spectrum& s)
 	{
 		if (!mMappedRegion)
 			return;
@@ -112,7 +124,8 @@ namespace PRU
 	void IPDisplayDriver::clear()
 	{
 		if(mMappedRegion)
-			std::memset(mMappedRegion->get_address(), 0, mRenderer->width()*mRenderer->height()*Spectrum::SAMPLING_COUNT * sizeof(float));
+			std::memset(mMappedRegion->get_address(), 0,
+			 mRenderer->width()*mRenderer->height()*Spectrum::SAMPLING_COUNT * sizeof(float));
 	}
 
 	float* IPDisplayDriver::ptr() const
@@ -120,28 +133,15 @@ namespace PRU
 		return mMappedRegion ? (float*)mMappedRegion->get_address() : nullptr;
 	}
 
-	bool IPDisplayDriver::save(const std::string& file) const
+	bool IPDisplayDriver::save(const PR::ToneMapper& toneMapper, const std::string& file) const
 	{
-		unsigned char* rgb = new unsigned char[mRenderer->width() * mRenderer->height() * 3];
-		std::memset(rgb, 0, mRenderer->width() * mRenderer->height() * 3);
+		PR_ASSERT(toneMapper.isByteMode());
+		
+		if(!mMappedRegion)
+			return false;
 
-		for(uint32 y = mRenderer->cropPixelOffsetY();
-			y < mRenderer->cropPixelOffsetY() + mRenderer->renderHeight();
-			++y)
-		{
-			for(uint32 x = mRenderer->cropPixelOffsetX();
-				x < mRenderer->cropPixelOffsetX() + mRenderer->renderWidth();
-				++x)
-			{
-				float r, g, b;
-				PR::RGBConverter::convert(fragment(x,y,0), r,g,b);
-				//PR::RGBConverter::gamma(r,g,b);
-
-				rgb[y*mRenderer->width()*3 + x*3] = static_cast<PR::uint8>(r*255);
-				rgb[y*mRenderer->width()*3 + x*3 + 1] = static_cast<PR::uint8>(g*255);
-				rgb[y*mRenderer->width()*3 + x*3 + 2] = static_cast<PR::uint8>(b*255);
-			}
-		}
+		std::memset(mSaveData, 0, mRenderer->width() * mRenderer->height() * 3);
+		toneMapper.exec((float*)mMappedRegion->get_address(), mSaveData);
 
 		ImageOutput* out = ImageOutput::create(file);
 		if(!out)
@@ -149,11 +149,9 @@ namespace PRU
 		
 		ImageSpec spec(mRenderer->width(), mRenderer->height(), 3, TypeDesc::UINT8);
 		out->open(file, spec);
-		out->write_image(TypeDesc::UINT8, rgb);
+		out->write_image(TypeDesc::UINT8, mSaveData);
 		out->close();
 		ImageOutput::destroy(out);
-
-		delete[] rgb;
 
 		return true;
 	}
