@@ -4,7 +4,7 @@
 
 namespace PRU
 {
-	class DebugBoundingBoxMaterialParser : public MaterialParser
+	class DebugBoundingBoxMaterialParser : public IMaterialParser
 	{
 	public:
 		PR::Material* parse(SceneLoader* loader, Environment* env,

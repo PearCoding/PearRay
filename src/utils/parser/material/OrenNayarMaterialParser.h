@@ -4,7 +4,7 @@
 
 namespace PRU
 {
-	class OrenNayarMaterialParser : public MaterialParser
+	class OrenNayarMaterialParser : public IMaterialParser
 	{
 	public:
 		PR::Material* parse(SceneLoader* loader, Environment* env,

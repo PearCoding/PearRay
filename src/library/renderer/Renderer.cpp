@@ -39,7 +39,8 @@ namespace PR
 		mWidth(w), mHeight(h),
 		mCamera(cam), mScene(scene),
 		mResult(nullptr), mBackgroundMaterial(nullptr),
-		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8), mIncrementalCurrentSample(0), mTileMap(nullptr),
+		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
+		mIncrementalCurrentSample(0), mTileMap(nullptr),
 		mGPU(nullptr)
 	{
 		PR_ASSERT(cam);
@@ -251,8 +252,8 @@ namespace PR
 		{
 			for (uint32 j = 0; j < mTileXCount; ++j)
 			{
-				uint32 sx = cropPixelOffsetX()*mWidth + j*mTileWidth;
-				uint32 sy = cropPixelOffsetY()*mHeight + i*mTileHeight;
+				uint32 sx = cropPixelOffsetX() + j*mTileWidth;
+				uint32 sy = cropPixelOffsetY() + i*mTileHeight;
 				mTileMap[i*mTileXCount + j] = new RenderTile(
 					sx,
 					sy,

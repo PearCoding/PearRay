@@ -19,6 +19,7 @@ namespace PR
 		~TriMesh();
 
 		void reserve(size_t count);
+		void setFaces(const std::vector<Face*>& f);
 		void addFace(Face* f);
 		Face* getFace(size_t i) const;
 		inline const std::vector<Face*> faces() const

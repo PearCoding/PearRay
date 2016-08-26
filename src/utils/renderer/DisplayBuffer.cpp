@@ -122,8 +122,9 @@ namespace PRU
 			return false;
 		
 		out->open(file, spec);
-		for (uint32 y = 0; y < mRenderer->height(); ++y)
-			out->write_scanline(y,0, TypeDesc::UINT8, &mSaveData[y*mRenderer->width()]);
+		out->write_image(TypeDesc::UINT8, mSaveData);
+		/*for (uint32 y = 0; y < mRenderer->height(); ++y)
+			out->write_scanline(y,0, TypeDesc::UINT8, &mSaveData[y*mRenderer->width()*3]);*/
 		out->close();
 		ImageOutput::destroy(out);
 

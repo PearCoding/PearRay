@@ -4,7 +4,7 @@
 
 namespace PRU
 {
-	class MirrorMaterialParser : public MaterialParser
+	class MirrorMaterialParser : public IMaterialParser
 	{
 	public:
 		PR::Material* parse(SceneLoader* loader, Environment* env,

@@ -23,9 +23,11 @@ SET(PR_Parser_Material_Src
   parser/material/OrenNayarMaterialParser.cpp
   parser/material/WardMaterialParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
+SET(PR_Parser_Mesh_Src
+  parser/mesh/TriMeshInlineParser.cpp)
+SOURCE_GROUP("Source Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Src})
 SET(PR_Renderer_Src
-  renderer/DisplayBuffer.cpp
-  renderer/IPDisplayDriver.cpp)
+  renderer/DisplayBuffer.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Shader_Src
   shader/ConstScalarOutput.cpp
@@ -36,7 +38,7 @@ SET(PR_Shader_Src
   shader/ImageVectorOutput.cpp)
 SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
-  ${PR_Shader_Src} ${PR_Renderer_Src}
+  ${PR_Shader_Src} ${PR_Renderer_Src} ${PR_Parser_Mesh_Src}
 )
 
 SET(PR_Main_Hdr
@@ -65,9 +67,12 @@ SET(PR_Parser_Material_Hdr
   parser/material/OrenNayarMaterialParser.h
   parser/material/WardMaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
+SET(PR_Parser_Mesh_Hdr
+  parser/mesh/MeshInlineParser.h
+  parser/mesh/TriMeshInlineParser.h)
+SOURCE_GROUP("Header Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Hdr})
 SET(PR_Renderer_Hdr
-  renderer/DisplayBuffer.h
-  renderer/IPDisplayDriver.h)
+  renderer/DisplayBuffer.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Shader_Hdr
   shader/ConstScalarOutput.h
@@ -78,7 +83,7 @@ SET(PR_Shader_Hdr
   shader/ImageVectorOutput.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
-  ${PR_Shader_Hdr} ${PR_Renderer_Hdr}
+  ${PR_Shader_Hdr} ${PR_Renderer_Hdr} ${PR_Parser_Mesh_Hdr}
 )
 
 if(OSL_FOUND)

@@ -27,6 +27,11 @@ namespace PR
 		mFaces.reserve(count);
 	}
 
+	void TriMesh::setFaces(const std::vector<Face*>& f)
+	{
+		mFaces = f;
+	}
+
 	void TriMesh::addFace(Face* f)
 	{
 		PR_ASSERT(f);
@@ -98,7 +103,7 @@ namespace PR
 	{
 		for (Face* f : mFaces)
 		{
-			if (f && f->Mat->isLight())
+			if (f && f->Mat && f->Mat->isLight())
 				return true;
 		}
 		return false;

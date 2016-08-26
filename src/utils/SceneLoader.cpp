@@ -20,6 +20,8 @@
 #include "parser/material/OrenNayarMaterialParser.h"
 #include "parser/material/WardMaterialParser.h"
 
+#include "parser/mesh/TriMeshInlineParser.h"
+
 #include "shader/ConstScalarOutput.h"
 #include "shader/ConstSpectralOutput.h"
 #include "shader/ConstVectorOutput.h"
@@ -74,6 +76,8 @@ namespace PRU
 
 		dataLisp.parse(source);
 		dataLisp.build(&container);
+
+		//PR_LOGGER.log(L_Info, M_Scene, dataLisp.dump());
 
 		std::list<DL::DataGroup*> entries = container.getTopGroups();
 
@@ -160,6 +164,10 @@ namespace PRU
 						{
 							addSubGraph(entry, env);
 						}
+						else if (entry->id() == "mesh")
+						{
+							addMesh(entry, env);
+						}
 					}
 				}
 
@@ -227,7 +235,7 @@ namespace PRU
 	struct
 	{
 		const char* Name;
-		const EntityParser& Parser;
+		const IEntityParser& Parser;
 	} EntityParserEntries[] =
 	{
 		{ "boundary", BoundaryParser() },
@@ -272,7 +280,7 @@ namespace PRU
 		}
 		else
 		{
-			const EntityParser* parser = nullptr;
+			const IEntityParser* parser = nullptr;
 			for (int i = 0; EntityParserEntries[i].Name; ++i)
 			{
 				if (typeD->getString() == EntityParserEntries[i].Name)
@@ -383,7 +391,7 @@ namespace PRU
 	struct
 	{
 		const char* Name;
-		const MaterialParser& Parser;
+		const IMaterialParser& Parser;
 	} MaterialParserEntries[] =
 	{
 		{ "standard", WardMaterialParser() },
@@ -436,7 +444,7 @@ namespace PRU
 		}
 
 		Material* mat = nullptr;
-		const MaterialParser* parser = nullptr;
+		const IMaterialParser* parser = nullptr;
 		for (int i = 0; MaterialParserEntries[i].Name; ++i)
 		{
 			if (typeD->getString() == MaterialParserEntries[i].Name)
@@ -483,6 +491,75 @@ namespace PRU
 		}
 
 		env->addMaterial(name, mat);
+	}
+
+	struct
+	{
+		const char* Name;
+		const IMeshInlineParser& Parser;
+	} MeshInlineParserEntries[] =
+	{
+		{ "triangles", TriMeshInlineParser() },
+		{ nullptr, TriMeshInlineParser() },//Just for the end
+	};
+	void SceneLoader::addMesh(DL::DataGroup* group, Environment* env)
+	{
+		DL::Data* nameD = group->getFromKey("name");
+		DL::Data* typeD = group->getFromKey("type");
+
+		std::string name;
+		std::string type;
+
+		if (nameD && nameD->isType() == DL::Data::T_String)
+		{
+			name = nameD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "No mesh name set");
+			return;
+		}
+
+		if (typeD && typeD->isType() == DL::Data::T_String)
+		{
+			type = typeD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "No mesh type set");
+			return;
+		}
+
+		IMesh* mesh = nullptr;
+		const IMeshInlineParser* parser = nullptr;
+		for (int i = 0; MeshInlineParserEntries[i].Name; ++i)
+		{
+			if (typeD->getString() == MeshInlineParserEntries[i].Name)
+			{
+				parser = &MeshInlineParserEntries[i].Parser;
+				break;
+			}
+		}
+
+		if (parser)
+		{
+			mesh = parser->parse(this, env, group);
+
+			if (!mesh)
+			{
+				PR_LOGGER.logf(L_Error, M_Scene, "Mesh %s couldn't be load. Error in '%s' type parser.",
+					name.c_str(), typeD->getString().c_str());
+				return;
+			}
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Mesh %s couldn't be load. Unknown type given.", name.c_str());
+			return;
+		}
+
+		PR_ASSERT(mesh);// After here it shouldn't be null
+		env->addMesh(name, mesh);
 	}
 
 	void SceneLoader::addSpectrum(DL::DataGroup* group, Environment* env)

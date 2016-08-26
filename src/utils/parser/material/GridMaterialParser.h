@@ -4,7 +4,7 @@
 
 namespace PRU
 {
-	class GridMaterialParser : public MaterialParser
+	class GridMaterialParser : public IMaterialParser
 	{
 	public:
 		PR::Material* parse(SceneLoader* loader, Environment* env,

@@ -77,6 +77,11 @@ namespace PR
 		}
 
 		// Settings
+		inline void setSettings(const RenderSettings& s)
+		{
+			mRenderSettings = s;
+		}
+		
 		inline RenderSettings& settings()
 		{
 			return mRenderSettings;

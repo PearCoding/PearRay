@@ -1,11 +1,14 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(PR_Main_Src
-  main.cpp)
+  main.cpp
+  ProgramSettings.cpp)
 SET(PR_Src ${PR_Main_Src}
 )
 
-SET(PR_Main_Hdr)
+SET(PR_Main_Hdr
+  EnumOption.h
+  ProgramSettings.h)
 SET(PR_Hdr ${PR_Main_Hdr}
 )
 

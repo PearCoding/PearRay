@@ -18,7 +18,7 @@ namespace PRU
 {
 	class Environment;
 	class SceneLoader;
-	class PR_LIB_UTILS_INLINE EntityParser
+	class PR_LIB_UTILS_INLINE IEntityParser
 	{
 	public:
 		virtual PR::Entity* parse(SceneLoader* loader, Environment* env, const std::string& name, PR::Entity* parent,

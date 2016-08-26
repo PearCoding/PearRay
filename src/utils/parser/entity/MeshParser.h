@@ -4,7 +4,7 @@
 
 namespace PRU
 {
-	class MeshParser : public EntityParser
+	class MeshParser : public IEntityParser
 	{
 	public:
 		PR::Entity* parse(SceneLoader* loader, Environment* env, const std::string& name, PR::Entity* parent,

@@ -18,7 +18,7 @@ namespace PRU
 {
 	class Environment;
 	class SceneLoader;
-	class PR_LIB_UTILS_INLINE MaterialParser
+	class PR_LIB_UTILS_INLINE IMaterialParser
 	{
 	public:
 		virtual PR::Material* parse(SceneLoader* loader, Environment* env,

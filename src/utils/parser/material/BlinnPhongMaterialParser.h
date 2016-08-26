@@ -4,7 +4,7 @@
 
 namespace PRU
 {
-	class BlinnPhongMaterialParser : public MaterialParser
+	class BlinnPhongMaterialParser : public IMaterialParser
 	{
 	public:
 		PR::Material* parse(SceneLoader* loader, Environment* env,
