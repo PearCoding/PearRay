@@ -5,6 +5,9 @@
 
 #include <OpenImageIO/imageio.h>
 
+#include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+
 OIIO_NAMESPACE_USING;
 
 namespace PRU
@@ -117,16 +120,28 @@ namespace PRU
 		std::memset(mSaveData, 0, mRenderer->width() * mRenderer->height() * 3);
 		toneMapper.exec(mData, mSaveData);
 		
-		ImageOutput* out = ImageOutput::create(file);
-		if(!out)
-			return false;
-		
-		out->open(file, spec);
-		out->write_image(TypeDesc::UINT8, mSaveData);
-		/*for (uint32 y = 0; y < mRenderer->height(); ++y)
-			out->write_scanline(y,0, TypeDesc::UINT8, &mSaveData[y*mRenderer->width()*3]);*/
-		out->close();
-		ImageOutput::destroy(out);
+		// try
+		// {
+		// 	boost::interprocess::file_lock flock(file.c_str());
+		// 	boost::interprocess::scoped_lock<boost::interprocess::file_lock> e_lock(flock);
+
+			ImageOutput* out = ImageOutput::create(file);
+			if(!out)
+				return false;
+			
+			out->open(file, spec);
+			out->write_image(TypeDesc::UINT8, mSaveData);
+			/*for (uint32 y = 0; y < mRenderer->height(); ++y)
+				out->write_scanline(y,0, TypeDesc::UINT8, &mSaveData[y*mRenderer->width()*3]);*/
+			out->close();
+			ImageOutput::destroy(out);
+		// }
+		// catch(const boost::interprocess::interprocess_exception& e)
+		// {
+		// 	ImageOutput* out = ImageOutput::create(file);// Just create it.
+		// 	ImageOutput::destroy(out);
+		// 	return false;
+		// }
 
 		return true;
 	}

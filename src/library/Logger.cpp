@@ -51,10 +51,8 @@ namespace PR
 
 	void Logger::log(Level level, Module m, const std::string& str)
 	{
-		if (!mVerbose && level == L_Debug)
-		{
+		if (!mVerbose && (level == L_Debug || level == L_Info))
 			return;
-		}
 				
 		if(!mQuiet)
 			printf("[%s] (%s) %s\n", levelStr[level], moduleStr[m], str.c_str());
@@ -74,10 +72,8 @@ namespace PR
 
 	void Logger::logf(Level level, Module m, const char* fmt, ...)
 	{
-		if (!mVerbose && level == L_Debug)
-		{
+		if (!mVerbose && (level == L_Debug || level == L_Info))
 			return;
-		}
 
 		//Unsecured
 		char buffer[1024];

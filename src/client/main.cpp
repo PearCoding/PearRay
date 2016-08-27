@@ -36,9 +36,7 @@ void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
 			imagePath += "/image." + ext;
 
 			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(toneMapper, imagePath.native()))
-			{
 				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
-			}
 		}
 		break;
 #ifdef PR_WITH_NETWORK

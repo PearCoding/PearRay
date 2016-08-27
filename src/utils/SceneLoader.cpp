@@ -116,18 +116,10 @@ namespace PRU
 				{
 					env->setRenderWidth(renderWidthD->getInt());
 				}
-				else
-				{
-					env->setRenderWidth(1920);
-				}
 
 				if (renderHeightD && renderHeightD->isType() == DL::Data::T_Integer)
 				{
 					env->setRenderHeight(renderHeightD->getInt());
-				}
-				else
-				{
-					env->setRenderHeight(1080);
 				}
 
 				if (cropD && cropD->isType() == DL::Data::T_Array)

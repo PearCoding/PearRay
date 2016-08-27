@@ -130,7 +130,11 @@ BEGIN_ENUM_OPTION(PhotonGatheringMode)
 	{nullptr, PGM_Sphere}
 };
 
-po::options_description setup_options()
+constexpr PR::uint32 DEF_THREAD_COUNT = 0;
+constexpr PR::uint32 DEF_THREAD_TILE_X = 8;
+constexpr PR::uint32 DEF_THREAD_TILE_Y = 8;
+
+po::options_description setup_cmd_options()
 {
 	po::options_description general_d("General");
 	general_d.add_options()
@@ -141,6 +145,7 @@ po::options_description setup_options()
 
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>()->default_value("./scene"), "Output directory")
+		("config,C", po::value<std::string>(), "Optional configuration file")
 		("display",
 			po::value<EnumOption<DisplayDriverOption> >()->default_value(
 				EnumOption<DisplayDriverOption>::get_default()),
@@ -165,11 +170,11 @@ po::options_description setup_options()
 
 	po::options_description thread_d("Threading");
 	thread_d.add_options()
-		("threads,t", po::value<PR::uint32>()->default_value(0),
+		("threads,t", po::value<PR::uint32>()->default_value(DEF_THREAD_COUNT),
 			"Amount of threads used for processing. Set 0 for automatic detection.")
-		("tile_x", po::value<PR::uint32>()->default_value(8), 
+		("tile_x", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_X), 
 			"Amount of horizontal tiles used in threading")
-		("tile_y", po::value<PR::uint32>()->default_value(8), 
+		("tile_y", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_Y), 
 			"Amount of vertical tiles used in threading")
 	;
 
@@ -191,14 +196,61 @@ po::options_description setup_options()
 
 	po::options_description render_d("Render");
 	render_d.add_options()
-		("inc", po::bool_switch()->default_value(DefaultRenderSettings.isIncremental()),
+		("inc", po::value<bool>()->default_value(DefaultRenderSettings.isIncremental()),
 			"Render incremental.")
 		("debug",
 			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()),
 		 	(std::string("Debug Mode [") + EnumOption<DebugMode>::get_names() + "]").c_str())
-		("pixelSampler",
+		("depth|d", po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxRayDepth()),
+			"Render incremental.")
+	;
+
+	po::options_description pixelsampler_d("Pixel Sampler");
+	pixelsampler_d.add_options()
+		("ps_mode",
 			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.pixelSampler()),
 		 	(std::string("Pixel Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
+		("ps_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPixelSampleCount()),
+		 	"Maximum pixel sample count")
+	;
+
+	po::options_description gi_d("Global Illumination");
+	gi_d.add_options()
+		("gi_diff_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()),
+		 	"Maximum diffuse bounces")
+		("gi_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLightSamples()),
+		 	"Maximum light samples")
+		("gi_bi",
+			po::value<bool>()->default_value(DefaultRenderSettings.isBiDirect()),
+		 	"Use bidirect renderer")
+	;
+
+	po::options_description photon_d("Photon Mapping");
+	photon_d.add_options()
+		("p_count",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotons()),
+		 	"Photon count")
+		("p_radius",
+			po::value<float>()->default_value(DefaultRenderSettings.maxPhotonGatherRadius()),
+		 	"Maximum gather radius")
+		("p_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonGatherCount()),
+		 	"Maximum photons used for extimating radiance")
+		("p_diff_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonDiffuseBounces()),
+		 	"Maximum diffuse bounces")
+		("p_spec_min",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.minPhotonSpecularBounces()),
+		 	"Minimum specular bounces")
+		("p_g_mode",
+			po::value<EnumOption<PhotonGatheringMode> >()->default_value(DefaultRenderSettings.photonGatheringMode()),
+		 	(std::string("Photon Gathering Mode [") + EnumOption<PhotonGatheringMode>::get_names() + "]").c_str())
+		("p_squeeze",
+			po::value<float>()->default_value(DefaultRenderSettings.photonSqueezeWeight()),
+		 	"Squeeze Factor")
 	;
 
 	po::options_description all_d("Allowed options");
@@ -208,13 +260,65 @@ po::options_description setup_options()
 	all_d.add(thread_d);
 	all_d.add(scene_d);
 	all_d.add(render_d);
+	all_d.add(pixelsampler_d);
+	all_d.add(gi_d);
+	all_d.add(photon_d);
+
+	return all_d;
+}
+
+po::options_description setup_ini_options()
+{
+	PR::RenderSettings DefaultRenderSettings;
+
+	po::options_description all_d;
+	all_d.add_options()
+		("threads.count", po::value<PR::uint32>()->default_value(DEF_THREAD_COUNT))
+		("threads.tile_x", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_X))
+		("threads.tile_y", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_Y))
+		("scene.name", po::value<std::string>())
+		("scene.camera", po::value<std::string>())
+		("scene.width", po::value<PR::uint32>())
+		("scene.height", po::value<PR::uint32>())
+		("scene.crop", fixed_tokens_value<std::vector<float> >(4,4))
+		("renderer.incremental", po::value<bool>()->default_value(DefaultRenderSettings.isIncremental()))
+		("renderer.debug",
+			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()))
+		("renderer.max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxRayDepth()))
+		("pixelsampler.mode",
+			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.pixelSampler()))
+		("pixelsampler.max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPixelSampleCount()))
+		("globalillumination.diffuse_bounces",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()))
+		("globalillumination.light_samples",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLightSamples()))
+		("globalillumination.bidirect",
+			po::value<bool>()->default_value(DefaultRenderSettings.isBiDirect()))
+		("photon.count",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotons()))
+		("photon.radius",
+			po::value<float>()->default_value(DefaultRenderSettings.maxPhotonGatherRadius()))
+		("photon.max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonGatherCount()))
+		("photon.max_diffuse_bounces",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonDiffuseBounces()))
+		("photon.min_specular_bounces",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.minPhotonSpecularBounces()))
+		("photon.gathering_mode",
+			po::value<EnumOption<PhotonGatheringMode> >()->default_value(DefaultRenderSettings.photonGatheringMode()),
+		 	(std::string("Photon Gathering Mode [") + EnumOption<PhotonGatheringMode>::get_names() + "]").c_str())
+		("photon.squeeze",
+			po::value<float>()->default_value(DefaultRenderSettings.photonSqueezeWeight()))
+	;
 
 	return all_d;
 }
 
 bool ProgramSettings::parse(int argc, char** argv)
 {
-	po::options_description all_d = setup_options();
+	po::options_description all_d = setup_cmd_options();
 	po::positional_options_description p;
 	p.add("input", 1).add("output", 2);
 
@@ -224,7 +328,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		po::store(po::command_line_parser(argc, argv).options(all_d).positional(p).run(), vm);
 		po::notify(vm);
 	}
-	catch(std::exception& e)
+	catch(const std::exception& e)
 	{
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;
@@ -235,6 +339,79 @@ bool ProgramSettings::parse(int argc, char** argv)
 	{
 		std::cout << all_d << std::endl;
 		exit(1);
+	}
+
+	// Defaults
+	SceneName = "";
+	CameraOverride = "";
+	ResolutionXOverride = 0;
+	ResolutionYOverride = 0;
+	CropMinXOverride = -1; CropMaxXOverride = -1;
+	CropMinYOverride = -1; CropMaxYOverride = -1;
+
+	// First ini file
+	if (vm.count("config"))
+	{
+		po::options_description ini_d = setup_ini_options();
+		po::variables_map ini;
+		try
+		{
+			po::store(po::parse_config_file<char>(vm["config"].as<std::string>().c_str(), ini_d), ini);
+			po::notify(ini);
+		}
+		catch(const std::exception& e)
+		{
+			std::cout << "Error while parsing ini file: " << e.what() << std::endl;
+			return false;
+		}
+
+		TileXCount = ini["threads.tile_x"].as<PR::uint32>();
+		TileYCount = ini["threads.tile_y"].as<PR::uint32>();
+		ThreadCount = ini["threads.count"].as<PR::uint32>();
+		
+		// Scene
+		if(ini.count("scene.name"))
+			SceneName = ini["scene.name"].as<std::string>();
+		
+		if(ini.count("scene.camera"))
+			CameraOverride = ini["scene.camera"].as<std::string>();
+		
+		if(ini.count("scene.width"))
+			ResolutionXOverride = ini["scene.width"].as<PR::uint32>();
+		
+		if(ini.count("scene.height"))
+			ResolutionYOverride = ini["scene.height"].as<PR::uint32>();
+
+		if(ini.count("scene.crop"))
+		{
+			std::vector<float> crop = ini["scene.crop"].as<std::vector<float> >();
+
+			PR_ASSERT(crop.size() == 4);
+			CropMinXOverride = crop[0]; CropMaxXOverride = crop[1];
+			CropMinYOverride = crop[2]; CropMaxYOverride = crop[3];
+		}
+
+		// Renderer
+		RenderSettings.setIncremental(ini["renderer.incremental"].as<bool>());
+		RenderSettings.setDebugMode(ini["renderer.debug"].as<EnumOption<DebugMode> >());
+
+		// PixelSampler
+		RenderSettings.setPixelSampler(ini["pixelsampler.mode"].as<EnumOption<SamplerMode> >());
+		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
+
+		// Global Illumination
+		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
+		RenderSettings.setMaxLightSamples(ini["globalillumination.light_samples"].as<PR::uint32>());
+		RenderSettings.enableBiDirect(ini["globalillumination.bidirect"].as<bool>());
+
+		// Photon
+		RenderSettings.setMaxPhotons(ini["photon.count"].as<PR::uint32>());
+		RenderSettings.setMaxPhotonGatherRadius(ini["photon.radius"].as<float>());
+		RenderSettings.setMaxPhotonGatherCount(ini["photon.max"].as<PR::uint32>());
+		RenderSettings.setMaxPhotonDiffuseBounces(ini["photon.max_diffuse_bounces"].as<PR::uint32>());
+		RenderSettings.setMinPhotonSpecularBounces(ini["photon.min_specular_bounces"].as<PR::uint32>());
+		RenderSettings.setPhotonGatheringMode(ini["photon.gathering_mode"].as<EnumOption<PhotonGatheringMode> >());
+		RenderSettings.setPhotonSqueezeWeight(ini["photon.squeeze"].as<float>());
 	}
 
 	// Input file
@@ -287,23 +464,15 @@ bool ProgramSettings::parse(int argc, char** argv)
 	// Scene
 	if(vm.count("scene"))
 		SceneName = vm["scene"].as<std::string>();
-	else
-		SceneName = "";
 	
 	if(vm.count("camera"))
 		CameraOverride = vm["camera"].as<std::string>();
-	else
-		CameraOverride = "";
 	
 	if(vm.count("width"))
 		ResolutionXOverride = vm["width"].as<PR::uint32>();
-	else
-		ResolutionXOverride = 0;
 	
 	if(vm.count("height"))
 		ResolutionYOverride = vm["height"].as<PR::uint32>();
-	else
-		ResolutionYOverride = 0;
 
 	if(vm.count("crop"))
 	{
@@ -313,16 +482,28 @@ bool ProgramSettings::parse(int argc, char** argv)
 		CropMinXOverride = crop[0]; CropMaxXOverride = crop[1];
 		CropMinYOverride = crop[2]; CropMaxYOverride = crop[3];
 	}
-	else
-	{
-		CropMinXOverride = -1; CropMaxXOverride = -1;
-		CropMinYOverride = -1; CropMaxYOverride = -1;
-	}
 
 	// Renderer
 	RenderSettings.setIncremental(vm["inc"].as<bool>());
 	RenderSettings.setDebugMode(vm["debug"].as<EnumOption<DebugMode> >());
-	RenderSettings.setPixelSampler(vm["pixelSampler"].as<EnumOption<SamplerMode> >());
+
+	// PixelSampler
+	RenderSettings.setPixelSampler(vm["ps_mode"].as<EnumOption<SamplerMode> >());
+	RenderSettings.setMaxPixelSampleCount(vm["ps_max"].as<PR::uint32>());
+
+	// Global Illumination
+	RenderSettings.setMaxDiffuseBounces(vm["gi_diff_max"].as<PR::uint32>());
+	RenderSettings.setMaxLightSamples(vm["gi_max"].as<PR::uint32>());
+	RenderSettings.enableBiDirect(vm["gi_bi"].as<bool>());
+
+	// Photon
+	RenderSettings.setMaxPhotons(vm["p_count"].as<PR::uint32>());
+	RenderSettings.setMaxPhotonGatherRadius(vm["p_radius"].as<float>());
+	RenderSettings.setMaxPhotonGatherCount(vm["p_max"].as<PR::uint32>());
+	RenderSettings.setMaxPhotonDiffuseBounces(vm["p_diff_max"].as<PR::uint32>());
+	RenderSettings.setMinPhotonSpecularBounces(vm["p_spec_min"].as<PR::uint32>());
+	RenderSettings.setPhotonGatheringMode(vm["p_g_mode"].as<EnumOption<PhotonGatheringMode> >());
+	RenderSettings.setPhotonSqueezeWeight(vm["p_squeeze"].as<float>());
 	
 	return true;
 }
