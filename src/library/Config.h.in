@@ -80,11 +80,11 @@
 
 #ifdef PR_CC_MSC
 # define PR_DEBUG_BREAK() __debugbreak()
-# define PR_ALIGN(x) __declspec(align(x))
 #else//FIXME: Really use cpu dependent assembler?
 # define PR_DEBUG_BREAK() __asm__ __volatile__ ("int $0x03")
-# define PR_ALIGN(x) __attribute__((aligned(x)))
 #endif
+
+#define PR_ALIGN(x) alignas(x)
 
 #ifndef PR_NO_ASSERTS
 # define PR_ASSERT(cond) \

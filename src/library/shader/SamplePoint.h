@@ -13,8 +13,7 @@ namespace PR
 	/*
 	   Sample context - nearly the same as for OSL
 	*/
-
-	struct PR_LIB_INLINE SamplePoint 
+	struct PM_ALIGN(16) PR_LIB_INLINE SamplePoint
 	{
 	public:
 		// Point of sample
@@ -81,5 +80,5 @@ namespace PR
 			Flags(0),
 			Material(nullptr)
 			{}
-	} PM_ALIGN(16);
+	};
 }
