@@ -25,12 +25,21 @@ namespace PR
 		virtual float collisionCost() const;
 
 		virtual BoundingBox localBoundingBox() const;
-		virtual BoundingBox worldBoundingBox() const;
+		BoundingBox worldBoundingBox() const;
 
 		// In world coords
 		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t);
 
 		// In world coords
 		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample) const = 0;
+
+		// Entity
+		virtual void onPreRender() override;
+
+	private:
+		BoundingBox calcWorldBoundingBox() const;
+
+		bool mFrozen;
+		BoundingBox mWorldBoundingBox_Cache;
 	};
 }

@@ -42,10 +42,7 @@ namespace PRU
 			}
 			else
 			{
-				xAxis = PM::pm_Set(xAxisD->getFloatConverted(),
-					0,
-					0,
-					1);
+				xAxis = PM::pm_Set(xAxisD->getFloatConverted(), 0, 0, 1);
 			}
 		}
 
@@ -67,10 +64,7 @@ namespace PRU
 			}
 			else
 			{
-				yAxis = PM::pm_Set(0,
-					yAxisD->getFloatConverted(),
-					0,
-					1);
+				yAxis = PM::pm_Set(0, yAxisD->getFloatConverted(), 0, 1);
 			}
 		}
 
