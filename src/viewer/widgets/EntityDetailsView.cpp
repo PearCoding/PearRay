@@ -99,7 +99,13 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		group->addChild(rot);
 		mProperties.append(rot);
 
-		DoubleProperty* sca = new DoubleProperty(tr("Scale"), entity->scale(true));
+		VectorProperty* sca = new VectorProperty(tr("Scale"), 3);
+		sca->setDefaultValue(PM::pm_GetX(entity->scale(true)), 1);
+		sca->setDefaultValue(PM::pm_GetY(entity->scale(true)), 2);
+		sca->setDefaultValue(PM::pm_GetZ(entity->scale(true)), 3);
+		sca->setValue(PM::pm_GetX(entity->scale(true)), 1);
+		sca->setValue(PM::pm_GetY(entity->scale(true)), 2);
+		sca->setValue(PM::pm_GetZ(entity->scale(true)), 3);
 		group->addChild(sca);
 		mProperties.append(sca);
 
@@ -258,8 +264,8 @@ void EntityDetailsView::propertyValueChanged(IProperty* prop)
 	}
 	else if (prop->propertyName() == tr("Scale"))
 	{
-		DoubleProperty* p = (DoubleProperty*)prop;
-		mEntity->setScale(p->value());
+		VectorProperty* p = (VectorProperty*)prop;
+		mEntity->setScale(PM::pm_Set(p->value(1), p->value(2), p->value(3)));
 	}
 	// Sphere
 	else if (prop->propertyName() == tr("Radius"))

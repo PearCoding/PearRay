@@ -306,12 +306,12 @@ namespace PRU
 		if (posD && posD->isType() == DL::Data::T_Array)
 		{
 			bool ok;
-			entity->setPosition(getVector(posD->getArray(), ok));
+			PM::vec p = getVector(posD->getArray(), ok);
 
 			if (!ok)
-			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set position for entity %s.", name.c_str());
-			}
+			else
+				entity->setPosition(p);
 		}
 
 		// Set rotation
@@ -321,19 +321,26 @@ namespace PRU
 			PM::quat rot = getRotation(rotD, ok);
 
 			if (!ok)
-			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set rotation for entity %s.", name.c_str());
-			}
 			else
-			{
 				entity->setRotation(rot);
-			}
 		}
 
 		// Set scale
 		if (scaleD && scaleD->isNumber())
 		{
-			entity->setScale(scaleD->getFloatConverted());
+			float s = scaleD->getFloatConverted();
+			entity->setScale(PM::pm_Set(s, s, s));
+		}
+		else if(scaleD && scaleD->isType() == DL::Data::T_Array)
+		{
+			bool ok;
+			PM::vec3 s = getVector(scaleD->getArray(), ok);
+
+			if(!ok)
+				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());
+			else
+				entity->setScale(s);
 		}
 
 		// Debug

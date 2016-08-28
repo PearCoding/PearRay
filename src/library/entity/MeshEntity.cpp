@@ -62,15 +62,15 @@ namespace PR
 		// Local space
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction())));
+		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
 		
 		if (mMesh->checkCollision(local, collisionPoint, t))
 		{
 			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
-			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_RotateWithQuat(rotation(), collisionPoint.Ng));
+			collisionPoint.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), collisionPoint.Ng);
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-			t *= scale();
+			t = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.P, ray.startPosition()));
 
 			return true;
 		}

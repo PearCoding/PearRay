@@ -6,8 +6,8 @@ namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
 		mName(name), mParent(parent), mDebug(false),
-		mPosition(PM::pm_Set(0,0,0,1)), mScale(1), mRotation(PM::pm_IdentityQuat()),
-		mReCache(true)
+		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,0)), mRotation(PM::pm_IdentityQuat()),
+		mReCache(true), mFrozen(false)
 	{
 	}
 
@@ -38,7 +38,7 @@ namespace PR
 	void Entity::setParent(Entity* parent)
 	{
 		mParent = parent;
-		mReCache = true;
+		invalidateCache();
 	}
 
 	Entity* Entity::parent() const
@@ -72,14 +72,17 @@ namespace PR
 	void Entity::setPosition(const PM::vec3& pos)
 	{
 		mPosition = pos;
-		mReCache = true;
+		invalidateCache();
 	}
 
 	PM::vec3 Entity::position(bool local) const
 	{
 		if (mParent && !local)
 		{
-			return PM::pm_Multiply(mParent->matrix(), mPosition);
+			if(mFrozen)
+				return mGlobalPositionCache;
+			else
+				return PM::pm_Multiply(mParent->matrix(), mPosition);
 		}
 		else
 		{
@@ -87,17 +90,20 @@ namespace PR
 		}
 	}
 
-	void Entity::setScale(float scale)
+	void Entity::setScale(const PM::vec3& scale)
 	{
 		mScale = scale;
-		mReCache = true;
+		invalidateCache();
 	}
 
-	float Entity::scale(bool local) const
+	PM::vec3 Entity::scale(bool local) const
 	{
 		if (mParent && !local)
 		{
-			return mParent->scale() * mScale;
+			if(mFrozen)
+				return mGlobalScaleCache;
+			else
+				return PM::pm_DecomposeScale(matrix(false));
 		}
 		else
 		{
@@ -108,14 +114,17 @@ namespace PR
 	void Entity::setRotation(const PM::quat& quat)
 	{
 		mRotation = quat;
-		mReCache = true;
+		invalidateCache();
 	}
 
 	PM::quat Entity::rotation(bool local) const
 	{
 		if (mParent && !local)
 		{
-			return PM::pm_MultiplyQuat(mParent->rotation(), mRotation);
+			if(mFrozen)
+				return mGlobalRotationCache;
+			else
+				return PM::pm_DecomposeRotation(matrix(false));
 		}
 		else
 		{
@@ -123,19 +132,22 @@ namespace PR
 		}
 	}
 
-	PM::mat4 Entity::matrix() const
+	PM::mat4 Entity::matrix(bool local) const
 	{
 		if (mReCache)
 		{
 			mReCache = false;
 
-			mMatrixCache = PM::pm_Multiply(PM::pm_Multiply(PM::pm_Translation(mPosition), PM::pm_Rotation(mRotation)), PM::pm_Scaling(PM::pm_Set(mScale, mScale, mScale)));
+			mMatrixCache = PM::pm_Multiply(PM::pm_Translation(mPosition), PM::pm_Multiply(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
 			mInvMatrixCache = PM::pm_Inverse(mMatrixCache);
 		}
 
-		if (mParent)
+		if (mParent && !local)
 		{
-			return PM::pm_Multiply(mParent->matrix(), mMatrixCache);
+			if(mFrozen)
+				return mGlobalMatrixCache;
+			else
+				return PM::pm_Multiply(mParent->matrix(), mMatrixCache);
 		}
 		else
 		{
@@ -143,16 +155,19 @@ namespace PR
 		}
 	}
 
-	PM::mat4 Entity::invMatrix() const
+	PM::mat4 Entity::invMatrix(bool local) const
 	{
 		if (mReCache)
 		{
 			matrix();
 		}
 
-		if (mParent)
+		if (mParent && !local)
 		{
-			return PM::pm_Multiply(mInvMatrixCache, mParent->invMatrix());
+			if(mFrozen)
+				return mInvMatrixCache;
+			else
+				return PM::pm_Multiply(mInvMatrixCache, mParent->invMatrix());
 		}
 		else
 		{
@@ -172,8 +187,20 @@ namespace PR
 		return stream.str();
 	}
 
+	void Entity::invalidateCache()
+	{
+		mReCache = true;
+		mFrozen = false;
+	}
+
 	void Entity::onPreRender()
 	{
-		matrix();//Cache if needed
+		mGlobalMatrixCache = matrix(false);
+		mGlobalInvMatrixCache = invMatrix(false);
+		mGlobalPositionCache = position(false);
+		mGlobalScaleCache = scale(false);
+		mGlobalRotationCache = rotation(false);
+
+		mFrozen = true;
 	}
 }

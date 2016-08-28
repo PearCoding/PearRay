@@ -35,17 +35,16 @@ namespace PR
 
 	BoundingBox RenderEntity::worldBoundingBox() const
 	{
-		float sc = scale();
 		const PM::quat rot = rotation();
-		const PM::vec3 pos = position();
 
 		BoundingBox bx = localBoundingBox();
 
+		float sc = 1;
 		if (!PM::pm_IsNearlyEqual(PM::pm_IdentityQuat(), rot, PM::pm_FillVector(PM_EPSILON)))
-			sc *= 1.41421356f;
+			sc = 1.41421356f;
 
-		PM::vec3 upper = PM::pm_Add(pos, PM::pm_Scale(bx.upperBound(), sc));
-		PM::vec3 lower = PM::pm_Add(pos, PM::pm_Scale(bx.lowerBound(), sc));
+		PM::vec3 upper = PM::pm_Multiply(matrix(), PM::pm_Scale(bx.upperBound(), sc));
+		PM::vec3 lower = PM::pm_Multiply(matrix(), PM::pm_Scale(bx.lowerBound(), sc));
 
 		return BoundingBox(upper, lower);
 	}

@@ -29,21 +29,21 @@ namespace PR
 		void setPosition(const PM::vec3& pos);
 		PM::vec3 position(bool local = false) const;
 
-		void setScale(float scale);
-		float scale(bool local = false) const;
+		void setScale(const PM::vec3& s);
+		PM::vec3 scale(bool local = false) const;
 
 		void setRotation(const PM::quat& quat);
 		PM::quat rotation(bool local = false) const;
 
-		PM::mat4 matrix() const;
-		PM::mat4 invMatrix() const;
+		PM::mat4 matrix(bool local = false) const;
+		PM::mat4 invMatrix(bool local = false) const;
 
 		virtual std::string toString() const;
-
 
 		// Events:
 		/* The entity will not be changed after this. */
 		virtual void onPreRender();
+		void invalidateCache();
 
 	private:
 		std::string mName;
@@ -52,11 +52,19 @@ namespace PR
 		bool mDebug;
 
 		PM::vec3 mPosition;
-		float mScale;//Only uniform scale!
+		PM::vec3 mScale;
 		PM::quat mRotation;
+
+		bool mFrozen;
 
 		mutable bool mReCache;
 		mutable PM::mat mMatrixCache;
 		mutable PM::mat mInvMatrixCache;
+
+		PM::vec3 mGlobalPositionCache;
+		PM::vec3 mGlobalScaleCache;
+		PM::quat mGlobalRotationCache;
+		PM::mat mGlobalMatrixCache;
+		PM::mat mGlobalInvMatrixCache;
 	};
 }

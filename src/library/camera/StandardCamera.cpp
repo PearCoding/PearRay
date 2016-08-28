@@ -92,8 +92,8 @@ namespace PR
 
 	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t) const
 	{
-		float cx = - scale() * nx;
-		float cy = - scale() * ny;
+		float cx = - PM::pm_GetX(scale(true)) * nx;
+		float cy = - PM::pm_GetX(scale(true)) * ny;
 
 		if (mOrthographic)
 		{

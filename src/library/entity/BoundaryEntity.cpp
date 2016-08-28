@@ -65,7 +65,7 @@ namespace PR
 
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), ray.direction()));
+		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
 
 		BoundingBox box = localBoundingBox();
 		BoundingBox::FaceSide side;
@@ -74,13 +74,15 @@ namespace PR
 			collisionPoint.P = PM::pm_Multiply(matrix(), vertex);
 
 			Plane plane = box.getFace(side);
-			collisionPoint.Ng = PM::pm_RotateWithQuat(rotation(), plane.normal());// Have to normalize again?
+			collisionPoint.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), plane.normal());
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			float u, v;
 			plane.project(vertex, u, v);
 			collisionPoint.UV = PM::pm_Set(u, v);
 			collisionPoint.Material = material();
+
+			t = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.P, ray.startPosition()));
 			return true;
 		}
 		return false;
@@ -97,8 +99,10 @@ namespace PR
 		SamplePoint fp;
 		fp.P = PM::pm_Add(position(),
 			PM::pm_Add(
-				PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(PM::pm_Scale(plane.xAxis(), scale()), PM::pm_GetY(ret))),
-				PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(PM::pm_Scale(plane.yAxis(), scale()), PM::pm_GetZ(ret)))
+				PM::pm_RotateWithQuat(rotation(),
+					PM::pm_Scale(PM::pm_Scale(plane.xAxis(), PM::pm_GetX(scale(true))), PM::pm_GetY(ret))),
+				PM::pm_RotateWithQuat(rotation(),
+					PM::pm_Scale(PM::pm_Scale(plane.yAxis(), PM::pm_GetX(scale(true))), PM::pm_GetZ(ret)))
 			));
 		fp.Ng = PM::pm_RotateWithQuat(rotation(), plane.normal());
 		fp.N = fp.Ng;
