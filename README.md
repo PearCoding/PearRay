@@ -5,8 +5,10 @@
 # PearRay
 Experimental ray and path tracing application.
 
+## Blender Addon
+There is an open source (still experimental) blender integration addon available [here](https://github.com/PearCoding/PearRay-Blender).
 
-# Dependencies
+## Dependencies
  - Boost http://www.boost.org/
  - tinyobjloader https://github.com/syoyo/tinyobjloader (included into source)
  - OpenImageIO https://sites.google.com/site/openimageio/home
@@ -15,5 +17,5 @@ Experimental ray and path tracing application.
  - OpenCL https://www.khronos.org/opencl/
  - OSL https://github.com/imageworks/OpenShadingLanguage
 
-# Wiki
+## Wiki
 See [Wiki](https://github.com/PearCoding/PearRay/wiki) for more information, examples and tutorials.
