@@ -1,8 +1,10 @@
+R"(
+// THIS FILE CAN'T BE USED BY EXTERNAL OPENCL PARSERS.
+// DON'T REMOVE THE TAG AT THE TOP AND BOTTOM LINE.
+// THIS FILE IS TO BE INCLUDED BY C++!
 // SAMPLING_COUNT should be defined extern
 #define ILL_SCALE (4.94382f)
 #define N (105.654099f)
-
-#include "xyztable.cl"
 
 // Utils
 float luminance(float r, float g, float b)
@@ -140,3 +142,5 @@ __kernel void k_tone_reinhard_simple(__global float* rgb, ulong size, float rati
 	rgb[gid*3 + 1] *= Ld;
 	rgb[gid*3 + 2] *= Ld;
 }
+
+)";

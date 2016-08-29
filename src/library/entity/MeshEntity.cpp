@@ -57,21 +57,19 @@ namespace PR
 		return mMesh->boundingBox();
 	}
 
-	bool MeshEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
+	bool MeshEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
 	{
 		// Local space
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
 		
+		float t;
 		if (mMesh->checkCollision(local, collisionPoint, t))
 		{
 			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
 			collisionPoint.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), collisionPoint.Ng);
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
-
-			t = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.P, ray.startPosition()));
-
 			return true;
 		}
 		else
@@ -83,7 +81,7 @@ namespace PR
 	SamplePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		SamplePoint point = mMesh->getRandomFacePoint(sampler, sample);
-		point.Ng = PM::pm_RotateWithQuat(rotation(), point.Ng);
+		point.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), point.Ng);
 		point.P = PM::pm_Multiply(matrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 

@@ -10,7 +10,8 @@ namespace PR
 		SM_Random,
 		SM_Uniform,
 		SM_Jitter,
-		SM_MultiJitter
+		SM_MultiJitter,
+		SM_HaltonQMC
 	};
 
 	enum DebugMode

@@ -56,7 +56,7 @@ namespace PR
 			mThreadData = nullptr;
 		}
 
-		if (renderer->lights().empty())
+		if (renderer->lights().empty() || renderer->settings().maxLightSamples() == 0)
 			return;
 
 		mThreadCount = renderer->threads();
@@ -64,7 +64,7 @@ namespace PR
 		size_t maxlightsamples = renderer->settings().maxRayDepth() *
 			renderer->lights().size() * renderer->settings().maxLightSamples();
 
-		if (!mThreadData || renderer->settings().maxLightSamples() == 0)
+		if (!mThreadData)
 			return;
 
 		for (uint32 i = 0; i < mThreadCount; ++i)
@@ -84,6 +84,7 @@ namespace PR
 			return Spectrum();
 
 		Renderer* renderer = context->renderer();
+		MultiJitteredSampler sampler(context->random(), renderer->settings().maxLightSamples());
 		if (mThreadData && !renderer->lights().empty())
 		{
 			ThreadData& data = mThreadData[context->threadNumber()];
@@ -95,7 +96,6 @@ namespace PR
 			uint32 lightNr = 0;
 			for (RenderEntity* light : renderer->lights())
 			{
-				MultiJitteredSampler sampler(context->random(), renderer->settings().maxLightSamples());
 				for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
 				{
 					float* lightPos = &data.LightPos[lightNr * maxDepth * 3];

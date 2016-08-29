@@ -95,6 +95,7 @@ BEGIN_ENUM_OPTION(SamplerMode)
 	{"unif", SM_Uniform},
 	{"jitt", SM_Jitter},
 	{"mjitt", SM_MultiJitter},
+	{"halton", SM_HaltonQMC},
 	{nullptr, SM_MultiJitter}
 };
 

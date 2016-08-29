@@ -41,7 +41,7 @@ namespace PR
 			return calcWorldBoundingBox();
 	}
 
-	bool RenderEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
+	bool RenderEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
 	{
 		return false;
 	}

@@ -65,7 +65,7 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
+	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
 	{
 		PM::vec3 pos;
 		float u, v;
@@ -75,6 +75,7 @@ namespace PR
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
 
+		float t;
 		if (mPlane.intersects(local, pos, t, u, v))
 		{
 			collisionPoint.P = PM::pm_Multiply(matrix(), pos);
@@ -84,8 +85,6 @@ namespace PR
 
 			collisionPoint.UV = PM::pm_Set(u, v);
 			collisionPoint.Material = material();
-
-			t = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.P, ray.startPosition()));
 
 			return true;
 		}

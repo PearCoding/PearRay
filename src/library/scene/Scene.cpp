@@ -101,9 +101,14 @@ namespace PR
 
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, SamplePoint& point, float& t, RenderEntity* e, RenderEntity* ignore) {
-			return (!ignore || !e->isParent(ignore)) &&
-				e->checkCollision(ray, point, t) &&
-				point.Material && !point.Material->shouldIgnore(ray, point);
+				if((!ignore || !e->isParent(ignore)) &&
+				e->checkCollision(ray, point) &&
+				point.Material && !point.Material->shouldIgnore(ray, point)) {
+					t = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.P, ray.startPosition()));
+					return true;
+				}
+				else
+					return false;
 		},
 		[](RenderEntity* e) {
 			return (float)e->collisionCost();

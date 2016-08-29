@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 	PR::Renderer* renderer = new PR::Renderer(
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
-		env->camera(), env->scene(), false);
+		env->camera(), env->scene(), true);
 	renderer->setSettings(options.RenderSettings);
 	renderer->setBackgroundMaterial(env->backgroundMaterial());
 

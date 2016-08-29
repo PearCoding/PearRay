@@ -62,6 +62,7 @@ SET(PR_Renderer_Src
   renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
+  sampler/HaltonQMCSampler.cpp
   sampler/MultiJitteredSampler.cpp
   sampler/RandomSampler.cpp
   sampler/StratifiedSampler.cpp
@@ -167,6 +168,7 @@ SET(PR_Renderer_Hdr
   renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
+  sampler/HaltonQMCSampler.h
   sampler/MultiJitteredSampler.h
   sampler/RandomSampler.h
   sampler/Sampler.h

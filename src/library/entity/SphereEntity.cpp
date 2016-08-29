@@ -64,13 +64,14 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
+	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
 	{
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
 
 		Sphere sphere(PM::pm_Zero(), mRadius);
+		float t;
 		PM::vec3 collisionPos;
 		if (!sphere.intersects(local, collisionPos, t))
 			return false;
@@ -84,8 +85,6 @@ namespace PR
 		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm));
 
 		collisionPoint.Material = material();
-
-		t = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.P, ray.startPosition()));
 
 		return true;
 	}

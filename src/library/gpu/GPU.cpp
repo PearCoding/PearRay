@@ -11,6 +11,12 @@
 
 namespace PR
 {
+#define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
+#define constant const
+#include "cl/xyztable.cl"
+#undef SAMPLING_COUNT
+#undef constant
+
 	GPU::GPU()
 	{
 	}
@@ -129,13 +135,25 @@ namespace PR
 
 		return true;
 	}
-	bool GPU::init(const std::string& profile, const std::string& cl_dir)
+
+	const char* tonemapper_src=
+		#include "cl/tonemapper.cl"
+
+	bool GPU::init(const std::string& profile)
 	{
 #ifdef PR_NO_GPU
 		return false;
 #else
 		std::vector<cl::Platform> platforms;
-		cl::Platform::get(&platforms);
+		try
+		{
+			cl::Platform::get(&platforms);
+		}
+		catch(const cl::Error& err)
+		{
+			PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Exception: [%s] %s", err.what(), error(err.err()));
+			return false;
+		}
 
 		if (platforms.empty())
 		{
@@ -265,7 +283,24 @@ namespace PR
 			std::stringstream sstream;
 			sstream << "-D SAMPLING_COUNT=" << Spectrum::SAMPLING_COUNT;
 
-			addSource("tonemapper", "tonemapper.cl", cl_dir, sstream.str());
+			// Here we generate the constant parts on the fly...
+			std::stringstream xyztable_stream;
+			xyztable_stream << "constant float NM_TO_X[SAMPLING_COUNT] = {\n";
+			for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT-1; ++i)
+				xyztable_stream << NM_TO_X[i] << "f, ";
+			xyztable_stream << NM_TO_X[Spectrum::SAMPLING_COUNT-1] << "\n};\n";
+
+			xyztable_stream << "constant float NM_TO_Y[SAMPLING_COUNT] = {\n";
+			for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT-1; ++i)
+				xyztable_stream << NM_TO_Y[i] << "f, ";
+			xyztable_stream << NM_TO_Y[Spectrum::SAMPLING_COUNT-1] << "\n};\n";
+
+			xyztable_stream << "constant float NM_TO_Z[SAMPLING_COUNT] = {\n";
+			for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT-1; ++i)
+				xyztable_stream << NM_TO_Z[i] << "f, ";
+			xyztable_stream << NM_TO_Z[Spectrum::SAMPLING_COUNT-1] << "\n};\n";
+
+			addSource("tonemapper", xyztable_stream.str() + tonemapper_src, sstream.str());
 		}
 
 		return true;
@@ -273,60 +308,38 @@ namespace PR
 	}
 
 #ifndef PR_NO_GPU
-	void GPU::addSource(const std::string& name, const std::string& filename, const std::string& dir,
+	void GPU::addSource(const std::string& name, const std::string& source,
 		const std::string& defs)
 	{
 		using namespace boost;
 		PR_ASSERT(mPrograms.count(name) == 0);
 
-		filesystem::path fullpath = filesystem::canonical(dir + "/" + filename);
-
-		std::ifstream stream(fullpath.string());
-		if (stream.is_open())
+		cl::Program program(mMainContext, source);
+		try
 		{
-			std::string str;
-
-			stream.seekg(0, std::ios::end);
-			str.reserve(stream.tellg());
-			stream.seekg(0, std::ios::beg);
-
-			str.assign((std::istreambuf_iterator<char>(stream)),
-				std::istreambuf_iterator<char>());
-
-			cl::Program program(mMainContext, str);
-			try
-			{
-				std::string build_opts;
-				build_opts += "-cl-std=CL1.2 ";
-				build_opts += "-I " + fullpath.parent_path().generic_string() + " ";//No spaces?
-				build_opts += defs + " ";
+			std::string build_opts;
+			build_opts += "-cl-std=CL1.2 ";
+			build_opts += defs + " ";
 
 #ifdef PR_GPU_DEBUG
-				build_opts += "-g -s \"";
-				build_opts += fullpath.generic_string();
-				build_opts += "\" ";
+			build_opts += "-g ";
 #endif
 
-				program.build(build_opts.c_str());
+			program.build(build_opts.c_str());
 
-				mPrograms[name] = program;
-			}
-			catch (cl::Error err)
-			{
-				if (err.err() == CL_BUILD_PROGRAM_FAILURE)
-				{
-					std::string buildErr = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(mMainDevice);
-					PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Build Error:\n%s", buildErr.c_str());
-				}
-				else
-				{
-					PR_LOGGER.logf(L_Fatal, M_GPU, "OpenCL Error %s (%s)", err.what(), error(err.err()));
-				}
-			}
+			mPrograms[name] = program;
 		}
-		else
+		catch (cl::Error err)
 		{
-			PR_LOGGER.logf(L_Fatal, M_GPU, "Couldn't open OpenCL file '%s'", fullpath.string().c_str());
+			if (err.err() == CL_BUILD_PROGRAM_FAILURE)
+			{
+				std::string buildErr = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(mMainDevice);
+				PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Build Error:\n%s", buildErr.c_str());
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Fatal, M_GPU, "OpenCL Error %s (%s)", err.what(), error(err.err()));
+			}
 		}
 	}
 #endif//PR_NO_GPU

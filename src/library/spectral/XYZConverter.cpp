@@ -6,7 +6,7 @@
 //#define PR_XYZ_LINEAR_INTERP
 
 namespace PR
-{	
+{
 #define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
 #define constant const
 #include "cl/xyztable.cl"

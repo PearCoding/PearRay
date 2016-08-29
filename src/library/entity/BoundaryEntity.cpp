@@ -59,7 +59,7 @@ namespace PR
 		return mBoundingBox;
 	}
 
-	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
+	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
 	{
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
 
@@ -68,6 +68,7 @@ namespace PR
 		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
 
 		BoundingBox box = localBoundingBox();
+		float t;
 		BoundingBox::FaceSide side;
 		if (box.intersects(local, vertex, t, side))
 		{
@@ -81,8 +82,6 @@ namespace PR
 			plane.project(vertex, u, v);
 			collisionPoint.UV = PM::pm_Set(u, v);
 			collisionPoint.Material = material();
-
-			t = PM::pm_Magnitude3D(PM::pm_Subtract(collisionPoint.P, ray.startPosition()));
 			return true;
 		}
 		return false;

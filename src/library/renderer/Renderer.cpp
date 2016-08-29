@@ -20,6 +20,7 @@
 #include "sampler/StratifiedSampler.h"
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/UniformSampler.h"
+#include "sampler/HaltonQMCSampler.h"
 
 #include "shader/SamplePoint.h"
 
@@ -59,7 +60,7 @@ namespace PR
 		if(useGPU)
 		{
 			mGPU = new GPU();
-			if (!mGPU->init("", "../src/library/cl"))// TODO
+			if (!mGPU->init(""))
 			{
 				delete mGPU;
 				mGPU = nullptr;
@@ -107,6 +108,8 @@ namespace PR
 			delete integrator;
 
 		mIntegrators.clear();
+
+		mLights.clear();
 	}
 
 	void Renderer::setWidth(uint32 w)
@@ -174,6 +177,12 @@ namespace PR
 		for (Entity* entity : mScene->entities())
 			entity->onPreRender();
 
+		for (RenderEntity* entity : mScene->renderEntities())
+		{
+			if(entity->isLight())
+				mLights.push_back(entity);
+		}
+
 		if (mRenderSettings.maxPhotons() > 0 &&
 			mRenderSettings.maxPhotonGatherRadius() > PM_EPSILON &&
 			mRenderSettings.maxPhotonGatherCount() > 0)
@@ -230,6 +239,9 @@ namespace PR
 			default:
 			case SM_MultiJitter:
 				context.setPixelSampler(new MultiJitteredSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
+				break;
+			case SM_HaltonQMC:
+				context.setPixelSampler(new HaltonQMCSampler(mRenderSettings.maxPixelSampleCount()));
 				break;
 			}
 		}

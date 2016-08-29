@@ -17,7 +17,7 @@ namespace PR
 		GPU();
 		~GPU();
 
-		bool init(const std::string& profile, const std::string& cl_dir);
+		bool init(const std::string& profile);
 
 #ifndef PR_NO_GPU
 		inline cl::Platform& platform()
@@ -45,7 +45,7 @@ namespace PR
 
 	private:
 #ifndef PR_NO_GPU
-		void addSource(const std::string& name, const std::string& filename, const std::string& dir,
+		void addSource(const std::string& name, const std::string& source,
 			const std::string& defs);
 
 		cl::Platform mPlatform;
