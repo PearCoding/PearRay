@@ -2,11 +2,13 @@
 
 #include <sstream>
 
+#include "Logger.h"
+
 namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
 		mName(name), mParent(parent), mDebug(false),
-		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,0)), mRotation(PM::pm_IdentityQuat()),
+		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat()),
 		mReCache(true), mFrozen(false)
 	{
 	}
@@ -52,9 +54,7 @@ namespace PR
 			return true;
 
 		if (mParent == entity)
-		{
 			return true;
-		}
 
 		return mParent ? mParent->isParent(entity) : false;
 	}
@@ -75,19 +75,19 @@ namespace PR
 		invalidateCache();
 	}
 
-	PM::vec3 Entity::position(bool local) const
+	PM::vec3 Entity::position() const
 	{
-		if (mParent && !local)
-		{
-			if(mFrozen)
-				return mGlobalPositionCache;
-			else
-				return PM::pm_Multiply(mParent->matrix(), mPosition);
-		}
+		return mPosition;
+	}
+
+	PM::vec3 Entity::worldPosition() const
+	{
+		if(mFrozen)
+			return mGlobalPositionCache;
+		else if (mParent)
+			return PM::pm_DecomposeTranslation(worldMatrix());
 		else
-		{
 			return mPosition;
-		}
 	}
 
 	void Entity::setScale(const PM::vec3& scale)
@@ -96,19 +96,19 @@ namespace PR
 		invalidateCache();
 	}
 
-	PM::vec3 Entity::scale(bool local) const
+	PM::vec3 Entity::scale() const
 	{
-		if (mParent && !local)
-		{
-			if(mFrozen)
-				return mGlobalScaleCache;
-			else
-				return PM::pm_DecomposeScale(matrix(false));
-		}
+		return mScale;
+	}
+
+	PM::vec3 Entity::worldScale() const
+	{
+		if(mFrozen)
+			return mGlobalScaleCache;
+		else if (mParent)
+			return PM::pm_DecomposeScale(worldMatrix());
 		else
-		{
 			return mScale;
-		}
 	}
 
 	void Entity::setRotation(const PM::quat& quat)
@@ -117,22 +117,22 @@ namespace PR
 		invalidateCache();
 	}
 
-	PM::quat Entity::rotation(bool local) const
+	PM::quat Entity::rotation() const
 	{
-		if (mParent && !local)
-		{
-			if(mFrozen)
-				return mGlobalRotationCache;
-			else
-				return PM::pm_DecomposeRotation(matrix(false));
-		}
-		else
-		{
-			return mRotation;
-		}
+		return mRotation;
 	}
 
-	PM::mat4 Entity::matrix(bool local) const
+	PM::quat Entity::worldRotation() const
+	{
+		if(mFrozen)
+			return mGlobalRotationCache;
+		else if (mParent)
+			return PM::pm_DecomposeRotation(worldMatrix());
+		else
+			return mRotation;
+	}
+
+	PM::mat4 Entity::matrix() const
 	{
 		if (mReCache)
 		{
@@ -142,37 +142,63 @@ namespace PR
 			mInvMatrixCache = PM::pm_Inverse(mMatrixCache);
 		}
 
-		if (mParent && !local)
-		{
-			if(mFrozen)
-				return mGlobalMatrixCache;
-			else
-				return PM::pm_Multiply(mParent->matrix(), mMatrixCache);
-		}
-		else
-		{
-			return mMatrixCache;
-		}
+		return mMatrixCache;
 	}
 
-	PM::mat4 Entity::invMatrix(bool local) const
+	PM::mat4 Entity::invMatrix() const
 	{
 		if (mReCache)
-		{
 			matrix();
-		}
 
-		if (mParent && !local)
-		{
-			if(mFrozen)
-				return mInvMatrixCache;
-			else
-				return PM::pm_Multiply(mInvMatrixCache, mParent->invMatrix());
-		}
+		return mInvMatrixCache;
+	}
+
+	PM::mat4 Entity::worldMatrix() const
+	{
+		if(mFrozen)
+			return mGlobalMatrixCache;
+
+		if (mReCache)
+			matrix();
+
+		if (mParent)
+			return PM::pm_Multiply(mParent->matrix(), mMatrixCache);
 		else
-		{
+			return mMatrixCache;
+	}
+
+	PM::mat4 Entity::worldInvMatrix() const
+	{
+		if(mFrozen)
+			return mGlobalInvMatrixCache;
+
+		if (mReCache)
+			matrix();
+
+		if (mParent)
+			return PM::pm_Multiply(mInvMatrixCache, mParent->invMatrix());
+		else
 			return mInvMatrixCache;
-		}
+	}
+
+	PM::mat4 Entity::directionMatrix() const
+	{
+		return PM::pm_Transpose(invMatrix());
+	}
+
+	PM::mat4 Entity::invDirectionMatrix() const
+	{
+		return PM::pm_Transpose(matrix());
+	}
+
+	PM::mat4 Entity::worldDirectionMatrix() const
+	{
+		return PM::pm_Transpose(invMatrix());
+	}
+
+	PM::mat4 Entity::worldInvDirectionMatrix() const
+	{
+		return PM::pm_Transpose(matrix());
 	}
 
 	std::string Entity::toString() const
@@ -195,11 +221,14 @@ namespace PR
 
 	void Entity::onPreRender()
 	{
-		mGlobalMatrixCache = matrix(false);
-		mGlobalInvMatrixCache = invMatrix(false);
-		mGlobalPositionCache = position(false);
-		mGlobalScaleCache = scale(false);
-		mGlobalRotationCache = rotation(false);
+		mGlobalMatrixCache = worldMatrix();
+		mGlobalInvMatrixCache = worldInvMatrix();
+		mGlobalPositionCache = worldPosition();
+		mGlobalScaleCache = worldScale();
+		mGlobalRotationCache = worldRotation();
+
+		PR_LOGGER.logf(L_Info, M_Scene, "W %f,%f,%f,%f", PM::pm_GetX(mGlobalScaleCache), PM::pm_GetY(mGlobalScaleCache), PM::pm_GetZ(mGlobalScaleCache), PM::pm_GetW(mGlobalScaleCache));
+		PR_LOGGER.logf(L_Info, M_Scene, "M %f,%f,%f,%f", PM::pm_GetX(mScale), PM::pm_GetY(mScale), PM::pm_GetZ(mScale), PM::pm_GetW(mScale));
 
 		mFrozen = true;
 	}

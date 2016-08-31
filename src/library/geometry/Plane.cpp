@@ -8,8 +8,8 @@ namespace PR
 	constexpr float EPSILON_BOUND = 0.00001f;
 
 	Plane::Plane() :
-		mPosition(PM::pm_Set(0, 0, 0, 1)), mXAxis(PM::pm_Set(1, 0, 0, 1)), mYAxis(PM::pm_Set(0, 1, 0, 1)),
-		mNormal(PM::pm_Set(0,0,1,1)), mWidth(1), mHeight(1), mWidth2(1), mHeight2(1)
+		mPosition(PM::pm_Set(0, 0, 0, 1)), mXAxis(PM::pm_Set(1, 0, 0, 0)), mYAxis(PM::pm_Set(0, 1, 0, 0)),
+		mNormal(PM::pm_Set(0,0,1,0)), mWidth(1), mHeight(1), mWidth2(1), mHeight2(1)
 	{
 	}
 
@@ -26,9 +26,9 @@ namespace PR
 
 	Plane::Plane(float width, float height) :
 		mPosition(PM::pm_Set(0,0,0,1)),
-		mXAxis(PM::pm_Set(width, 0, 0, 1)),
-		mYAxis(PM::pm_Set(0, height, 0, 1)),
-		mNormal(PM::pm_Set(0, 0, 1, 1)),
+		mXAxis(PM::pm_Set(width, 0, 0, 0)),
+		mYAxis(PM::pm_Set(0, height, 0, 0)),
+		mNormal(PM::pm_Set(0, 0, 1, 0)),
 		mWidth(width), mHeight(height)
 	{
 		PR_ASSERT(width > 0);
@@ -145,7 +145,7 @@ namespace PR
 
 	BoundingBox Plane::toLocalBoundingBox() const
 	{
-		BoundingBox box(PM::pm_Add(mXAxis, mYAxis), PM::pm_Set(0, 0, 0, 1));
+		BoundingBox box(PM::pm_SetW(PM::pm_Add(mXAxis, mYAxis),1), PM::pm_Set(0, 0, 0, 1));
 		PM::vec3 diff = PM::pm_Subtract(mXAxis, mYAxis);
 
 		if (std::abs(PM::pm_GetX(diff)) <= PM_EPSILON)
@@ -222,7 +222,7 @@ namespace PR
 			}
 			else
 			{
-				collisionPoint = PM::pm_SetW(PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t)), 1);
+				collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 				PM::vec3 p = PM::pm_Subtract(collisionPoint, mPosition);
 				u = PM::pm_Dot3D(mXAxis, p) / mWidth2;
 				v = PM::pm_Dot3D(mYAxis, p) / mHeight2;

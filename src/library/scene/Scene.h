@@ -34,6 +34,7 @@ namespace PR
 
 		RenderEntity* checkCollision(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore) const;
 
+		void onPreRender();
 	private:
 		std::string mName;
 		std::list<Entity*> mEntities;

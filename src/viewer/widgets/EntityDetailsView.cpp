@@ -78,34 +78,34 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		mProperties.append(type);
 
 		VectorProperty* pos = new VectorProperty(tr("Position"));
-		pos->setDefaultValue(PM::pm_GetX(entity->position(true)), 1);
-		pos->setDefaultValue(PM::pm_GetY(entity->position(true)), 2);
-		pos->setDefaultValue(PM::pm_GetZ(entity->position(true)), 3);
-		pos->setValue(PM::pm_GetX(entity->position(true)), 1);
-		pos->setValue(PM::pm_GetY(entity->position(true)), 2);
-		pos->setValue(PM::pm_GetZ(entity->position(true)), 3);
+		pos->setDefaultValue(PM::pm_GetX(entity->position()), 1);
+		pos->setDefaultValue(PM::pm_GetY(entity->position()), 2);
+		pos->setDefaultValue(PM::pm_GetZ(entity->position()), 3);
+		pos->setValue(PM::pm_GetX(entity->position()), 1);
+		pos->setValue(PM::pm_GetY(entity->position()), 2);
+		pos->setValue(PM::pm_GetZ(entity->position()), 3);
 		group->addChild(pos);
 		mProperties.append(pos);
 
 		VectorProperty* rot = new VectorProperty(tr("Rotation"), 4);
-		rot->setDefaultValue(PM::pm_GetX(entity->rotation(true)), 1);
-		rot->setDefaultValue(PM::pm_GetY(entity->rotation(true)), 2);
-		rot->setDefaultValue(PM::pm_GetZ(entity->rotation(true)), 3);
-		rot->setDefaultValue(PM::pm_GetW(entity->rotation(true)), 4);
-		rot->setValue(PM::pm_GetX(entity->rotation(true)), 1);
-		rot->setValue(PM::pm_GetY(entity->rotation(true)), 2);
-		rot->setValue(PM::pm_GetZ(entity->rotation(true)), 3);
-		rot->setValue(PM::pm_GetW(entity->rotation(true)), 4);
+		rot->setDefaultValue(PM::pm_GetX(entity->rotation()), 1);
+		rot->setDefaultValue(PM::pm_GetY(entity->rotation()), 2);
+		rot->setDefaultValue(PM::pm_GetZ(entity->rotation()), 3);
+		rot->setDefaultValue(PM::pm_GetW(entity->rotation()), 4);
+		rot->setValue(PM::pm_GetX(entity->rotation()), 1);
+		rot->setValue(PM::pm_GetY(entity->rotation()), 2);
+		rot->setValue(PM::pm_GetZ(entity->rotation()), 3);
+		rot->setValue(PM::pm_GetW(entity->rotation()), 4);
 		group->addChild(rot);
 		mProperties.append(rot);
 
 		VectorProperty* sca = new VectorProperty(tr("Scale"), 3);
-		sca->setDefaultValue(PM::pm_GetX(entity->scale(true)), 1);
-		sca->setDefaultValue(PM::pm_GetY(entity->scale(true)), 2);
-		sca->setDefaultValue(PM::pm_GetZ(entity->scale(true)), 3);
-		sca->setValue(PM::pm_GetX(entity->scale(true)), 1);
-		sca->setValue(PM::pm_GetY(entity->scale(true)), 2);
-		sca->setValue(PM::pm_GetZ(entity->scale(true)), 3);
+		sca->setDefaultValue(PM::pm_GetX(entity->scale()), 1);
+		sca->setDefaultValue(PM::pm_GetY(entity->scale()), 2);
+		sca->setDefaultValue(PM::pm_GetZ(entity->scale()), 3);
+		sca->setValue(PM::pm_GetX(entity->scale()), 1);
+		sca->setValue(PM::pm_GetY(entity->scale()), 2);
+		sca->setValue(PM::pm_GetZ(entity->scale()), 3);
 		group->addChild(sca);
 		mProperties.append(sca);
 

@@ -174,9 +174,6 @@ namespace PR
 		mResult = display;
 
 		/* Setup entities */
-		for (Entity* entity : mScene->entities())
-			entity->onPreRender();
-
 		for (RenderEntity* entity : mScene->renderEntities())
 		{
 			if(entity->isLight())
@@ -380,6 +377,7 @@ namespace PR
 			if (collisionPoint.Flags & SPF_Inside)
 			{
 				collisionPoint.Nx = PM::pm_Negate(collisionPoint.Nx);
+				collisionPoint.Ny = PM::pm_Negate(collisionPoint.Ny);
 			}
 
 			mRayCount++;

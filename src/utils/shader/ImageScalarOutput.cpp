@@ -18,7 +18,8 @@ namespace PRU
 		float res = 0;
 		if (!mTextureSystem->texture(mFilename, mTextureOptions,
 			PM::pm_GetX(point.UV), 1 - PM::pm_GetY(point.UV),
-			0, 0, 0, 0,
+			PM::pm_GetX(point.dUVdX), PM::pm_GetX(point.dUVdY),
+			PM::pm_GetY(point.dUVdX), PM::pm_GetY(point.dUVdY),
 			1, &res))
 		{
 			std::string err = mTextureSystem->geterror();

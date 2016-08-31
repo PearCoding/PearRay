@@ -67,8 +67,8 @@ namespace PR
 	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
 	{
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
+		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(worldInvDirectionMatrix(), ray.direction())));
 
 		Sphere sphere(PM::pm_Zero(), mRadius);
 		float t;
@@ -76,13 +76,12 @@ namespace PR
 		if (!sphere.intersects(local, collisionPos, t))
 			return false;
 
-		collisionPoint.P = PM::pm_Multiply(matrix(), PM::pm_SetW(collisionPos, 1));
+		collisionPoint.P = PM::pm_Transform(worldMatrix(), collisionPos);
 
-		PM::vec3 norm = PM::pm_Normalize3D(PM::pm_Subtract(collisionPoint.P, position()));
-		collisionPoint.Ng = norm;
+		collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), collisionPos));
 		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), norm));
+		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(worldRotation()), collisionPoint.Ng));
 
 		collisionPoint.Material = material();
 
@@ -96,11 +95,11 @@ namespace PR
 		PM::vec2 s = sampler.generate2D(sample);
 		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s));
 
-		p.Ng = PM::pm_RotateWithQuat(rotation(), n);
+		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), n));
 		p.N = p.Ng;
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		p.P = PM::pm_Multiply(matrix(), PM::pm_Scale(n, mRadius));
+		p.P = PM::pm_Transform(worldMatrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
 		p.UV = Projection::sphereUV(p.Ng);
 		p.Material = material();
 

@@ -141,6 +141,7 @@ int main(int argc, char** argv)
 #endif
 	}
 
+	env->scene()->onPreRender();// Freeze entities
 	env->scene()->buildTree();
 	if(options.ShowProgress)
 		std::cout << "preprocess" << std::endl;

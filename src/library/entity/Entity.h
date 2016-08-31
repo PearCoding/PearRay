@@ -27,16 +27,28 @@ namespace PR
 		bool isDebug() const;
 
 		void setPosition(const PM::vec3& pos);
-		PM::vec3 position(bool local = false) const;
+		PM::vec3 position() const;
+		PM::vec3 worldPosition() const;
 
 		void setScale(const PM::vec3& s);
-		PM::vec3 scale(bool local = false) const;
+		PM::vec3 scale() const;
+		PM::vec3 worldScale() const;
 
 		void setRotation(const PM::quat& quat);
-		PM::quat rotation(bool local = false) const;
+		PM::quat rotation() const;
+		PM::quat worldRotation() const;
 
-		PM::mat4 matrix(bool local = false) const;
-		PM::mat4 invMatrix(bool local = false) const;
+		PM::mat4 matrix() const;
+		PM::mat4 invMatrix() const;
+
+		PM::mat4 worldMatrix() const;
+		PM::mat4 worldInvMatrix() const;
+
+		/* Matrix to be used by directions/normals */
+		PM::mat4 directionMatrix() const;
+		PM::mat4 invDirectionMatrix() const;
+		PM::mat4 worldDirectionMatrix() const;
+		PM::mat4 worldInvDirectionMatrix() const;
 
 		virtual std::string toString() const;
 

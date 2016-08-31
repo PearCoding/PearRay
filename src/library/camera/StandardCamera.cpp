@@ -92,12 +92,12 @@ namespace PR
 
 	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t) const
 	{
-		float cx = - PM::pm_GetX(scale(true)) * nx;
-		float cy = - PM::pm_GetX(scale(true)) * ny;
+		float cx = -nx;
+		float cy = -ny;
 
 		if (mOrthographic)
 		{
-			return Ray(PM::pm_Add(position(), PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy))),
+			return Ray(PM::pm_Add(worldPosition(), PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy))),
 				mDirection_Cache);
 		}
 		else
@@ -118,7 +118,7 @@ namespace PR
 			PM::vec3 dofOff = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, s), PM::pm_Scale(mYApertureRadius_Cache, c));
 
 			PM::vec3 viewPlane = PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy));
-			PM::vec3 eyePoint = PM::pm_Add(position(), dofOff);
+			PM::vec3 eyePoint = PM::pm_Add(worldPosition(), dofOff);
 			PM::vec3 rayDir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint)), 0);
 
 			return Ray(eyePoint, rayDir);
@@ -128,8 +128,10 @@ namespace PR
 	// Cache
 	void StandardCamera::onPreRender()
 	{
-		PM::vec3 L = PM::pm_Subtract(mLookAt, position());
-		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(L), 0);
+		Camera::onPreRender();
+
+		//PM::vec3 L = PM::pm_Subtract(mLookAt, worldPosition());
+		mDirection_Cache = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), PM::pm_Set(0,0,1)));
 		if (PM::pm_MagnitudeSqr3D(mDirection_Cache) <= PM_EPSILON)
 			mDirection_Cache = PM::pm_Set(0, 0, 1);
 
@@ -140,9 +142,9 @@ namespace PR
 		else if (dot <= -1)
 			mRight_Cache = PM::pm_Set(-1, 0, 0);
 		else
-			mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0))), 0);
+			mRight_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0)));
 
-		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache)), 0);
+		mUp_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache));
 
 		if (std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
 		{
@@ -154,7 +156,7 @@ namespace PR
 		}
 		else
 		{
-			mFocalDistance_Cache = mFStop * PM::pm_Magnitude3D(L);
+			mFocalDistance_Cache = mFStop;
 			mXApertureRadius_Cache = PM::pm_Scale(mRight_Cache, mApertureRadius);
 			mYApertureRadius_Cache = PM::pm_Scale(mUp_Cache, mApertureRadius);
 			mRight_Cache = PM::pm_Scale(mRight_Cache, mWidth);

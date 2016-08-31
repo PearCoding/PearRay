@@ -330,12 +330,12 @@ namespace PRU
 		if (scaleD && scaleD->isNumber())
 		{
 			float s = scaleD->getFloatConverted();
-			entity->setScale(PM::pm_Set(s, s, s));
+			entity->setScale(PM::pm_Set(s, s, s, 1));
 		}
 		else if(scaleD && scaleD->isType() == DL::Data::T_Array)
 		{
 			bool ok;
-			PM::vec3 s = getVector(scaleD->getArray(), ok);
+			PM::vec3 s = PM::pm_SetW(getVector(scaleD->getArray(), ok), 1);
 
 			if(!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());

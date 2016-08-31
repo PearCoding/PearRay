@@ -122,4 +122,12 @@ namespace PR
 		PR_ASSERT(mKDTree);
 		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t, ignore);
 	}
+
+	void Scene::onPreRender()
+	{
+		for (Entity* e : mEntities)
+		{
+			e->onPreRender();
+		}
+	}
 }

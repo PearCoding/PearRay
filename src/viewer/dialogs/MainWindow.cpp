@@ -454,6 +454,7 @@ void MainWindow::startRendering(bool clear)
 
 	ui.systemPropertyView->setupRenderer(mRenderer);
 
+	mEnvironment->scene()->onPreRender();
 	mEnvironment->scene()->buildTree();
 
 	QRect cropRect = ui.viewWidget->selectedCropRect();

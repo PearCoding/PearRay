@@ -415,11 +415,23 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setPhotonSqueezeWeight(ini["photon.squeeze"].as<float>());
 	}
 
+	if(!vm.count("input"))
+	{
+		std::cout << "No input given!" << std::endl;
+		return false;
+	}
+
 	// Input file
 	InputFile = vm["input"].as<std::string>();
 	if(!bf::exists(InputFile))
 	{
 		std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
+		return false;
+	}
+
+	if(!vm.count("output"))
+	{
+		std::cout << "No output given!" << std::endl;
 		return false;
 	}
 

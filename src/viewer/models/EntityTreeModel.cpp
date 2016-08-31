@@ -30,9 +30,9 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 	if (role == Qt::ToolTipRole)
 	{
 		QString tooltip = QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t[%8, %9, %10]")
-			.arg(PM::pm_GetX(item->position())).arg(PM::pm_GetY(item->position())).arg(PM::pm_GetZ(item->position()))
-			.arg(PM::pm_GetX(item->rotation())).arg(PM::pm_GetY(item->rotation())).arg(PM::pm_GetZ(item->rotation())).arg(PM::pm_GetW(item->rotation()))
-			.arg(PM::pm_GetX(item->scale())).arg(PM::pm_GetY(item->scale())).arg(PM::pm_GetZ(item->scale()));
+			.arg(PM::pm_GetX(item->worldPosition())).arg(PM::pm_GetY(item->worldPosition())).arg(PM::pm_GetZ(item->worldPosition()))
+			.arg(PM::pm_GetX(item->worldRotation())).arg(PM::pm_GetY(item->worldRotation())).arg(PM::pm_GetZ(item->worldRotation())).arg(PM::pm_GetW(item->worldRotation()))
+			.arg(PM::pm_GetX(item->worldScale())).arg(PM::pm_GetY(item->worldScale())).arg(PM::pm_GetZ(item->worldScale()));
 
 		PR::RenderEntity* entity = dynamic_cast<PR::RenderEntity*>(item);
 		if (entity)

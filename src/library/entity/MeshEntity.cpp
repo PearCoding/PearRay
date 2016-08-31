@@ -61,14 +61,14 @@ namespace PR
 	{
 		// Local space
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
+		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(worldInvDirectionMatrix(), ray.direction())));
 		
 		float t;
 		if (mMesh->checkCollision(local, collisionPoint, t))
 		{
-			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
-			collisionPoint.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), collisionPoint.Ng);
+			collisionPoint.P = PM::pm_Transform(worldMatrix(), collisionPoint.P);
+			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), collisionPoint.Ng));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 			return true;
 		}
@@ -81,8 +81,8 @@ namespace PR
 	SamplePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
 		SamplePoint point = mMesh->getRandomFacePoint(sampler, sample);
-		point.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), point.Ng);
-		point.P = PM::pm_Multiply(matrix(), point.P);
+		point.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), point.Ng));
+		point.P = PM::pm_Transform(worldMatrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 
 		return point;

@@ -72,15 +72,15 @@ namespace PR
 
 		// Local space
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Multiply(PM::pm_Transpose(matrix()), ray.direction()));
+		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(worldInvDirectionMatrix(), ray.direction())));
 
 		float t;
 		if (mPlane.intersects(local, pos, t, u, v))
 		{
-			collisionPoint.P = PM::pm_Multiply(matrix(), pos);
+			collisionPoint.P = PM::pm_Transform(worldMatrix(), pos);
 
-			collisionPoint.Ng = PM::pm_Multiply(PM::pm_Transpose(invMatrix()), mPlane.normal());
+			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), mPlane.normal()));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			collisionPoint.UV = PM::pm_Set(u, v);
@@ -97,11 +97,14 @@ namespace PR
 	{
 		auto s = sampler.generate2D(sample);
 
+		PM::vec xaxis = PM::pm_Multiply(worldDirectionMatrix(), mPlane.xAxis());
+		PM::vec yaxis = PM::pm_Multiply(worldDirectionMatrix(), mPlane.yAxis());
+
 		SamplePoint fp;
-		fp.P = PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.xAxis(), PM::pm_GetX(scale(true)))), PM::pm_GetX(s)),
-				PM::pm_Scale(PM::pm_RotateWithQuat(rotation(), PM::pm_Scale(mPlane.yAxis(), PM::pm_GetY(scale(true)))), PM::pm_GetY(s))));
-		fp.Ng = PM::pm_RotateWithQuat(rotation(), mPlane.normal());
+		fp.P = PM::pm_Add(worldPosition(),
+			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetX(s)),
+				PM::pm_Scale(yaxis, PM::pm_GetY(s))));
+		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), mPlane.normal()));
 		fp.N = fp.Ng;
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 
