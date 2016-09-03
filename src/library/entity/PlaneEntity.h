@@ -15,6 +15,7 @@ namespace PR
 		virtual std::string type() const;
 
 		virtual bool isLight() const override;
+		virtual float surfaceArea(Material* m) const override;
 
 		void setMaterial(Material* m);
 		Material* material() const;

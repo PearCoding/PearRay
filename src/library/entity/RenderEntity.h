@@ -20,6 +20,7 @@ namespace PR
 		bool isRenderable() const override;
 
 		virtual bool isLight() const = 0;
+		virtual float surfaceArea(Material* m) const = 0;
 
 		virtual bool isCollidable() const;
 		virtual float collisionCost() const;

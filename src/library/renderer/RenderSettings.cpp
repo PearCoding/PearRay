@@ -5,6 +5,7 @@ namespace PR
 	RenderSettings::RenderSettings() :
 		mIncremental(true),
 		mDebugMode(DM_None),
+		mIntegratorMode(IM_BiDirect),
 		mPixelSampler(SM_MultiJitter),
 		mMaxPixelSampleCount(64),
 
@@ -17,7 +18,6 @@ namespace PR
 
 		// Direct Lightning
 		mMaxLightSamples(1),
-		mUseBiDirect(true),
 
 		// Photon Mapping
 		mMaxPhotons(100000),

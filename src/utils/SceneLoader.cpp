@@ -247,7 +247,10 @@ namespace PRU
 		DL::Data* posD = group->getFromKey("position");
 		DL::Data* rotD = group->getFromKey("rotation");
 		DL::Data* scaleD = group->getFromKey("scale");
+
 		DL::Data* debugD = group->getFromKey("debug");
+		DL::Data* localAreaD = group->getFromKey("localArea");
+
 		DL::Data* materialDebugBoundingBoxD = group->getFromKey("materialDebugBoundingBox");
 
 		std::string name;
@@ -346,7 +349,10 @@ namespace PRU
 		// Debug
 		if (debugD && debugD->isType() == DL::Data::T_Bool)
 		{
-			entity->enableDebug(debugD->getBool());
+			if(debugD->getBool())
+				entity->setFlags(entity->flags() | EF_Debug);
+			else
+				entity->setFlags(entity->flags() & ~(uint8)EF_Debug);
 
 			if (typeD->getString() != "null" && typeD->getString() != "camera")
 			{
@@ -368,6 +374,14 @@ namespace PRU
 				//bent->setScale(entity->scale());
 				env->scene()->addEntity((RenderEntity*)bent);
 			}
+		}
+
+		if (localAreaD && localAreaD->isType() == DL::Data::T_Bool)
+		{
+			if(localAreaD->getBool())
+				entity->setFlags(entity->flags() | EF_LocalArea);
+			else
+				entity->setFlags(entity->flags() & ~(uint8)EF_LocalArea);
 		}
 
 		// Add to scene

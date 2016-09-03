@@ -29,6 +29,21 @@ namespace PR
 		return mMaterial ? mMaterial->isLight() : false;
 	}
 
+	float BoundaryEntity::surfaceArea(Material* m) const
+	{
+		if(!m || m == mMaterial)
+		{
+			if(flags() & EF_LocalArea)
+				return localBoundingBox().surfaceArea();
+			else
+				return worldBoundingBox().surfaceArea();
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	void BoundaryEntity::setMaterial(Material* m)
 	{
 		mMaterial = m;

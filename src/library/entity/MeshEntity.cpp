@@ -31,6 +31,11 @@ namespace PR
 		return mMesh->isLight();
 	}
 
+	float MeshEntity::surfaceArea(Material* m) const
+	{
+		return mMesh->surfaceArea(m, flags() & EF_LocalArea ? matrix() : worldMatrix());
+	}
+
 	void MeshEntity::setMesh(IMesh* mesh)
 	{
 		mMesh = mesh;

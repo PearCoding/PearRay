@@ -7,6 +7,12 @@
 
 namespace PR
 {
+	enum EntityFlags
+	{
+		EF_Debug = 0x1,
+		EF_LocalArea = 0x2,
+	};
+
 	class PR_LIB Entity
 	{
 	public:
@@ -23,8 +29,8 @@ namespace PR
 		Entity* parent() const;
 		bool isParent(Entity* entity) const;
 
-		void enableDebug(bool b);
-		bool isDebug() const;
+		void setFlags(uint8 f);
+		uint8 flags() const;
 
 		void setPosition(const PM::vec3& pos);
 		PM::vec3 position() const;
@@ -61,7 +67,7 @@ namespace PR
 		std::string mName;
 		Entity* mParent;
 
-		bool mDebug;
+		uint8 mFlags;
 
 		PM::vec3 mPosition;
 		PM::vec3 mScale;

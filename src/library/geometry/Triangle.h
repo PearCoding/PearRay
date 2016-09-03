@@ -207,5 +207,12 @@ namespace PR
 
 			return box;
 		}
+
+		inline static float surfaceArea(const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3)
+		{
+			PM::vec3 v1 = PM::pm_Subtract(p2, p1);
+			PM::vec3 v2 = PM::pm_Subtract(p3, p1);
+			return 0.5f * PM::pm_Magnitude3D(PM::pm_Cross3D(v1,v2));
+		}
 	};
 }

@@ -32,7 +32,7 @@ namespace PR
 		DM_Binormal_Spherical,
 		DM_UV,
 		DM_PDF,
-		DM_Applied, 
+		DM_Emission, 
 		DM_Validity
 	};
 
@@ -40,6 +40,13 @@ namespace PR
 	{
 		PGM_Sphere,
 		PGM_Dome
+	};
+
+	enum IntegratorMode
+	{
+		IM_Direct,
+		IM_BiDirect,
+		IM_PPM// Progressive Photon Mapping [TODO]
 	};
 
 	class PR_LIB RenderSettings
@@ -52,6 +59,9 @@ namespace PR
 
 		inline DebugMode debugMode() const { return mDebugMode; }
 		inline void setDebugMode(DebugMode mode) { mDebugMode = mode; }
+
+		inline IntegratorMode integratorMode() const { return mIntegratorMode; }
+		inline void setIntegratorMode(IntegratorMode mode) { mIntegratorMode = mode; }
 
 		inline SamplerMode pixelSampler() const { return mPixelSampler; }
 		inline void setPixelSampler(SamplerMode mode) { mPixelSampler = mode; }
@@ -81,9 +91,6 @@ namespace PR
 		// Direct Lightning
 		inline uint32 maxLightSamples() const { return mMaxLightSamples; }
 		inline void setMaxLightSamples(uint32 v) { mMaxLightSamples = v; }
-
-		inline bool isBiDirect() const { return mUseBiDirect; }
-		inline void enableBiDirect(bool v) { mUseBiDirect = v; }
 
 		// Photon Mapping
 		inline uint32 maxPhotons() const { return mMaxPhotons; }
@@ -115,6 +122,7 @@ namespace PR
 		uint32 mMaxRayDepth;
 
 		DebugMode mDebugMode;
+		IntegratorMode mIntegratorMode;
 
 		//Crop
 		float mCropMinX;
@@ -124,7 +132,6 @@ namespace PR
 
 		// Direct Lightning
 		uint32 mMaxLightSamples;
-		bool mUseBiDirect;
 
 		// Photon Mapping
 		uint32 mMaxPhotons;

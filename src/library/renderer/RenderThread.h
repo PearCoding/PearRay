@@ -12,8 +12,6 @@ namespace PR
 	public:
 		RenderThread(Renderer* renderer, uint32 index);
 
-		size_t samplesRendered() const;
-
 		inline RenderTile* currentTile() const
 		{
 			return mTile;
@@ -31,7 +29,5 @@ namespace PR
 		Renderer* mRenderer;
 		RenderTile* mTile;
 		RenderContext mContext;
-
-		size_t mSamplesRendered;
 	};
 }

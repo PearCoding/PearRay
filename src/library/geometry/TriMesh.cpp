@@ -108,6 +108,21 @@ namespace PR
 		}
 		return false;
 	}
+	
+	float TriMesh::surfaceArea(Material* m, const PM::mat& transform) const
+	{
+		float a = 0;
+		for (Face* f : mFaces)
+		{
+			if(!m || f->Mat == m)
+			{
+				a += Triangle::surfaceArea(	PM::pm_Transform(transform, f->V[0]),
+											PM::pm_Transform(transform, f->V[1]),
+											PM::pm_Transform(transform, f->V[2]));
+			}
+		}
+		return a;
+	}
 
 	void TriMesh::replaceMaterial(Material* mat)
 	{

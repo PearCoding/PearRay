@@ -14,7 +14,6 @@ namespace PR
 		Material();
 
 		virtual Spectrum apply(const SamplePoint& point, const PM::vec3& L) = 0;
-		virtual Spectrum applyEmission(const SamplePoint& point);
 		
 		/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)

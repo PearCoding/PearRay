@@ -118,9 +118,18 @@ BEGIN_ENUM_OPTION(DebugMode)
 	{"bino_s", DM_Binormal_Spherical},
 	{"uv", DM_UV},
 	{"pdf", DM_PDF},
-	{"applied", DM_Applied},
+	{"emission", DM_Emission},
 	{"validity", DM_Validity},
 	{nullptr, DM_None}
+};
+
+// DebugMode
+BEGIN_ENUM_OPTION(IntegratorMode)
+{
+	{"di", IM_Direct},
+	{"bidi", IM_BiDirect},
+	{"ppm", IM_PPM},
+	{nullptr, IM_BiDirect}
 };
 		
 // PhotonGatheringMode
@@ -202,6 +211,9 @@ po::options_description setup_cmd_options()
 		("debug",
 			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()),
 		 	(std::string("Debug Mode [") + EnumOption<DebugMode>::get_names() + "]").c_str())
+		("integrator",
+			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()),
+		 	(std::string("Integrator [") + EnumOption<IntegratorMode>::get_names() + "]").c_str())
 		("depth|d", po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxRayDepth()),
 			"Render incremental.")
 	;
@@ -224,9 +236,6 @@ po::options_description setup_cmd_options()
 		("gi_max",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLightSamples()),
 		 	"Maximum light samples")
-		("gi_bi",
-			po::value<bool>()->default_value(DefaultRenderSettings.isBiDirect()),
-		 	"Use bidirect renderer")
 	;
 
 	po::options_description photon_d("Photon Mapping");
@@ -283,6 +292,8 @@ po::options_description setup_ini_options()
 		("scene.height", po::value<PR::uint32>())
 		("scene.crop", fixed_tokens_value<std::vector<float> >(4,4))
 		("renderer.incremental", po::value<bool>()->default_value(DefaultRenderSettings.isIncremental()))
+		("renderer.integrator",
+			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()))
 		("renderer.debug",
 			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()))
 		("renderer.max",
@@ -295,8 +306,6 @@ po::options_description setup_ini_options()
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()))
 		("globalillumination.light_samples",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLightSamples()))
-		("globalillumination.bidirect",
-			po::value<bool>()->default_value(DefaultRenderSettings.isBiDirect()))
 		("photon.count",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotons()))
 		("photon.radius",
@@ -394,6 +403,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Renderer
 		RenderSettings.setIncremental(ini["renderer.incremental"].as<bool>());
+		RenderSettings.setIntegratorMode(ini["renderer.integrator"].as<EnumOption<IntegratorMode> >());
 		RenderSettings.setDebugMode(ini["renderer.debug"].as<EnumOption<DebugMode> >());
 
 		// PixelSampler
@@ -403,7 +413,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// Global Illumination
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
 		RenderSettings.setMaxLightSamples(ini["globalillumination.light_samples"].as<PR::uint32>());
-		RenderSettings.enableBiDirect(ini["globalillumination.bidirect"].as<bool>());
 
 		// Photon
 		RenderSettings.setMaxPhotons(ini["photon.count"].as<PR::uint32>());
@@ -498,6 +507,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 	// Renderer
 	RenderSettings.setIncremental(vm["inc"].as<bool>());
+	RenderSettings.setIntegratorMode(vm["integrator"].as<EnumOption<IntegratorMode> >());
 	RenderSettings.setDebugMode(vm["debug"].as<EnumOption<DebugMode> >());
 
 	// PixelSampler
@@ -507,7 +517,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 	// Global Illumination
 	RenderSettings.setMaxDiffuseBounces(vm["gi_diff_max"].as<PR::uint32>());
 	RenderSettings.setMaxLightSamples(vm["gi_max"].as<PR::uint32>());
-	RenderSettings.enableBiDirect(vm["gi_bi"].as<bool>());
 
 	// Photon
 	RenderSettings.setMaxPhotons(vm["p_count"].as<PR::uint32>());

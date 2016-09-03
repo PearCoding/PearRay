@@ -3,10 +3,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(PR_Main_Src
   FileLogListener.cpp
   Logger.cpp)
-SET(PR_Affector_Src
-  affector/LightAffector.cpp
-  affector/PhotonAffector.cpp)
-SOURCE_GROUP("Source Files\\Affector" FILES ${PR_Affector_Src})
 SET(PR_Camera_Src
   camera/Camera.cpp
   camera/StandardCamera.cpp)
@@ -58,6 +54,7 @@ SET(PR_Renderer_Src
   renderer/Renderer.cpp
   renderer/RenderContext.cpp
   renderer/RenderSettings.cpp
+  renderer/RenderStatistics.cpp
   renderer/RenderTile.cpp
   renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
@@ -98,11 +95,6 @@ SET(PR_Main_Hdr
   Logger.h
   LogListener.h
   Random.h)
-SET(PR_Affector_Hdr
-  affector/Affector.h
-  affector/LightAffector.h
-  affector/PhotonAffector.h)
-SOURCE_GROUP("Header Files\\Affector" FILES ${PR_Affector_Hdr})
 SET(PR_Camera_Hdr
   camera/Camera.h
   camera/StandardCamera.h)
@@ -164,6 +156,7 @@ SET(PR_Renderer_Hdr
   renderer/Renderer.h
   renderer/RenderContext.h
   renderer/RenderSettings.h
+  renderer/RenderStatistics.h
   renderer/RenderTile.h
   renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})

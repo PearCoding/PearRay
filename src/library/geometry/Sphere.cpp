@@ -57,7 +57,7 @@ namespace PR
 		return (PM_4_PI_F/3)*mRadius*mRadius*mRadius;
 	}
 
-	float Sphere::surface() const
+	float Sphere::surfaceArea() const
 	{
 		return PM_4_PI_F*mRadius*mRadius;
 	}

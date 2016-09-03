@@ -30,6 +30,14 @@ namespace PR
 		return mMaterial ? mMaterial->isLight() : false;
 	}
 
+	float PlaneEntity::surfaceArea(Material* m) const
+	{
+		if(!m || m == mMaterial)// TODO: Scale?
+			return mPlane.surfaceArea();
+		else
+			return 0;
+	}
+
 	void PlaneEntity::setMaterial(Material* m)
 	{
 		mMaterial = m;

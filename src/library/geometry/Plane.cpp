@@ -126,7 +126,7 @@ namespace PR
 		return mHeight;
 	}
 
-	float Plane::surface() const
+	float Plane::surfaceArea() const
 	{
 		return width()*height();
 	}

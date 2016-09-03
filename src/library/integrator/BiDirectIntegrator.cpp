@@ -111,7 +111,9 @@ namespace PR
 					current.setDepth(1);
 
 					// Initiate with power
-					Spectrum flux = lightSample.Material->applyEmission(lightSample);
+					Spectrum flux;
+					if(lightSample.Material->emission())
+					 	flux = lightSample.Material->emission()->eval(lightSample);
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
@@ -182,7 +184,7 @@ namespace PR
 		Spectrum full_weight;
 		float full_pdf = 0;
 
-		RenderEntity* entity = context->shootWithApply(applied, in, point);
+		RenderEntity* entity = context->shootWithEmission(applied, in, point);
 		if (entity && point.Material && point.Material->canBeShaded())
 		{
 			MultiJitteredSampler sampler(context->random(), context->renderer()->settings().maxLightSamples());

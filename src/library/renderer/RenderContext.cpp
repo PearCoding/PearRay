@@ -22,8 +22,8 @@ namespace PR
 		return mRenderer->shoot(ray, collisionPoint, this, ignore);
 	}
 
-	RenderEntity* RenderContext::shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore)
+	RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore)
 	{
-		return mRenderer->shootWithApply(appliedSpec, ray, collisionPoint, this, ignore);
+		return mRenderer->shootWithEmission(appliedSpec, ray, collisionPoint, this, ignore);
 	}
 }

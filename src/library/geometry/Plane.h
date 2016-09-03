@@ -34,7 +34,7 @@ namespace PR
 
 		float width() const;
 		float height() const;
-		float surface() const;
+		float surfaceArea() const;
 
 		bool isValid() const;
 

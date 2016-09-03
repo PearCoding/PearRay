@@ -5,7 +5,6 @@
 
 #include <list>
 #include <mutex>
-#include <atomic>
 
 namespace PR
 {
@@ -24,6 +23,7 @@ namespace PR
 	class RenderThread;
 	class RenderTile;
 	class RenderContext;
+	class RenderStatistics;
 	class PR_LIB Renderer
 	{
 	public:
@@ -56,13 +56,9 @@ namespace PR
 
 		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample);
 
-		// Statistics
-		size_t rayCount() const;
-		size_t samplesRendered() const;
-
 		// RenderThread things
 		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 
 		RenderTile* getNextTile();
 
@@ -90,6 +86,7 @@ namespace PR
 		// Light
 		const std::list<RenderEntity*>& lights() const;
 
+		RenderStatistics stats(RenderThread* thread = nullptr) const;
 	private:
 		void reset();
 
@@ -117,11 +114,6 @@ namespace PR
 		RenderSettings mRenderSettings;
 
 		GPU* mGPU;
-
-		// Statistics
-		std::atomic<size_t> mRayCount;
-
-		std::list<Affector*> mAffectors;// Per Ray apply
-		std::list<Integrator*> mIntegrators;// Per Pixel sample
+		Integrator* mIntegrator;
 	};
 }

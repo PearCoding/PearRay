@@ -19,12 +19,12 @@ namespace PR
 
 	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context)
 	{
-		Spectrum applied;
+		Spectrum emission;
 		SamplePoint point;
 		RenderEntity* entity;
 		
-		if (context->renderer()->settings().debugMode() == DM_Applied)
-			entity = context->shootWithApply(applied, in, point);
+		if (context->renderer()->settings().debugMode() == DM_Emission)
+			entity = context->shootWithEmission(emission, in, point);
 		else
 			entity = context->shoot(in, point);
 
@@ -128,8 +128,8 @@ namespace PR
 			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?
 				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 		}
-		case DM_Applied:
-			return applied;
+		case DM_Emission:
+			return emission;
 		}
 	}
 }

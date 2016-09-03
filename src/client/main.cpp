@@ -4,6 +4,7 @@
 
 #include "renderer/Renderer.h"
 #include "renderer/DisplayBuffer.h"
+#include "renderer/RenderStatistics.h"
 
 #include "spectral/ToneMapper.h"
 
@@ -172,8 +173,12 @@ int main(int argc, char** argv)
   		auto span_prog = sc::duration_cast<sc::milliseconds>(end - start_prog);
 		if(options.ShowProgress && span_prog.count() > 1000)
 		{
-			const float percent = renderer->samplesRendered() / (float)maxSamples;
-			std::cout << percent << std::endl;
+			PR::RenderStatistics stats = renderer->stats();
+			const float percent = 100 * stats.pixelSampleCount() / (float)maxSamples;
+			std::cout << percent << "% S: " << stats.pixelSampleCount() 
+				<< " R: " << stats.rayCount() 
+				<< " EH: " << stats.entityHitCount() 
+				<< " BH: " << stats.backgroundHitCount() << std::endl;
 			start_prog = end;
 		}
 

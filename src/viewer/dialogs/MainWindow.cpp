@@ -11,6 +11,7 @@
 #include "scene/Scene.h"
 #include "camera/Camera.h"
 #include "renderer/Renderer.h"
+#include "renderer/RenderStatistics.h"
 
 #include "Environment.h"
 #include "SceneLoader.h"
@@ -324,18 +325,21 @@ void MainWindow::updateView()
 		const quint64 maxSamples = mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount();
 		quint64 time = mElapsedTime.elapsed();
 
-		const float percent = mRenderer->samplesRendered() / (float)maxSamples;
+		PR::RenderStatistics stats = mRenderer->stats();
+		const float percent = stats.pixelSampleCount() / (float)maxSamples;
 
 		quint64 timeLeft = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
 
 		mLastPercent = percent;
 
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Samples: %1/%2 (%3%) | Rays: %4 | Elapsed time: %5 | Time left: %6")
-			.arg(friendlyHugeNumber(mRenderer->samplesRendered()))
+		ui.statusBar->showMessage(QString("Samples: %1/%2 (%3%) | Rays: %4 | Entity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
+			.arg(friendlyHugeNumber(stats.pixelSampleCount()))
 			.arg(friendlyHugeNumber(maxSamples))
 			.arg(100*percent, 4)
-			.arg(friendlyHugeNumber(mRenderer->rayCount()))
+			.arg(friendlyHugeNumber(stats.rayCount()))
+			.arg(friendlyHugeNumber(stats.entityHitCount()))
+			.arg(friendlyHugeNumber(stats.backgroundHitCount()))
 			.arg(friendlyTime(time))
 			.arg(friendlyTime(timeLeft)));
 
@@ -502,10 +506,14 @@ void MainWindow::stopRendering()
 	}
 	else
 	{
+		PR::RenderStatistics stats = mRenderer->stats();
+
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | Render time: %3")
-			.arg(mRenderer->samplesRendered())
-			.arg(friendlyHugeNumber(mRenderer->rayCount()))
+		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | Entity Hits: %3 | Background Hits: %4 | Render time: %5")
+			.arg(friendlyHugeNumber(stats.pixelSampleCount()))
+			.arg(friendlyHugeNumber(stats.rayCount()))
+			.arg(friendlyHugeNumber(stats.entityHitCount()))
+			.arg(friendlyHugeNumber(stats.backgroundHitCount()))
 			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}
 

@@ -35,6 +35,8 @@ namespace PR
 
 		// IMesh
 		virtual bool isLight() const override;
+		virtual float surfaceArea(Material* m, const PM::mat& transform) const override;
+
 		inline BoundingBox boundingBox() const override
 		{
 			return mBoundingBox;

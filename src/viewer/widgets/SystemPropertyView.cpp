@@ -49,6 +49,12 @@ QWidget(parent)
 	mRendererMaxRayDepthProp = new IntProperty(tr("Max Ray Depth"), 10, 1, 4096);
 	mRendererGroupProp->addChild(mRendererMaxRayDepthProp);
 
+	mIntegratorProp = new SelectionProperty(tr("Integrator"), PR::IM_BiDirect);
+	((SelectionProperty*)mIntegratorProp)->addItem(tr("Direct"), PR::IM_Direct);
+	((SelectionProperty*)mIntegratorProp)->addItem(tr("BiDirect"), PR::IM_BiDirect);
+	//((SelectionProperty*)mIntegratorProp)->addItem(tr("Progressive Photon Mapping"), PR::IM_PPM);
+	mRendererGroupProp->addChild(mIntegratorProp);
+
 	mDebugVisualizationProp = new SelectionProperty(tr("Debug"), PR::DM_None);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("None"), PR::DM_None);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Depth"), PR::DM_Depth);
@@ -66,7 +72,7 @@ QWidget(parent)
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Spherical"), PR::DM_Binormal_Spherical);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UV"), PR::DM_UV);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF"), PR::DM_PDF);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Applied"), PR::DM_Applied);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Emission"), PR::DM_Emission);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Validity"), PR::DM_Validity);
 	mRendererGroupProp->addChild(mDebugVisualizationProp);
 
@@ -90,9 +96,6 @@ QWidget(parent)
 	mDirectLightningGroupProp = new GroupProperty(tr("Direct Lightning"));
 	mMaxLightSamplesProp = new IntProperty(tr("Max Light Samples"), 2);
 	mDirectLightningGroupProp->addChild(mMaxLightSamplesProp);
-	mUseBiDirectProp = new BoolProperty(tr("Use BiDirect"), true);
-	mDirectLightningGroupProp->addChild(mUseBiDirectProp);
-	mProperties.add(mDirectLightningGroupProp);
 
 	// Photon Mapping
 	mPhotonMappingGroupProp = new GroupProperty(tr("Photon Mapping"));
@@ -131,9 +134,9 @@ SystemPropertyView::~SystemPropertyView()
 	delete mPixelSamplerProp;
 	delete mRendererMaxDiffuseBouncesProp;
 	delete mRendererMaxRayDepthProp;
+	delete mIntegratorProp;
 	delete mDebugVisualizationProp;
 	delete mMaxLightSamplesProp;
-	delete mUseBiDirectProp;
 	delete mMaxPhotonsProp;
 	delete mMaxPhotonGatherCountProp;
 	delete mMaxPhotonGatherRadiusProp;
@@ -184,13 +187,13 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxDiffuseBounces());
 	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setValue(renderer->settings().maxRayDepth());
 	reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->setDefaultValue(renderer->settings().maxRayDepth());
+	reinterpret_cast<SelectionProperty*>(mIntegratorProp)->setIndex(renderer->settings().integratorMode());
+	reinterpret_cast<SelectionProperty*>(mIntegratorProp)->setDefaultIndex(renderer->settings().integratorMode());
 	reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->setIndex(renderer->settings().debugMode());
 	reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->setDefaultIndex(renderer->settings().debugMode());
 
 	reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->setValue(renderer->settings().maxLightSamples());
 	reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->setDefaultValue(renderer->settings().maxLightSamples());
-	reinterpret_cast<BoolProperty*>(mUseBiDirectProp)->setValue(renderer->settings().isBiDirect());
-	reinterpret_cast<BoolProperty*>(mUseBiDirectProp)->setDefaultValue(renderer->settings().isBiDirect());
 
 	reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->setValue(renderer->settings().maxPhotons());
 	reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->setDefaultValue(renderer->settings().maxPhotons());
@@ -214,6 +217,7 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 {
 	renderer->settings().setMaxDiffuseBounces(reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->value());
 	renderer->settings().setMaxRayDepth(reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value());
+	renderer->settings().setIntegratorMode((PR::IntegratorMode)reinterpret_cast<SelectionProperty*>(mIntegratorProp)->index());
 	renderer->settings().setDebugMode((PR::DebugMode)reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->index());
 	renderer->settings().setIncremental(reinterpret_cast<BoolProperty*>(mRendererIncremental)->value());
 
@@ -221,7 +225,6 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 	renderer->settings().setMaxPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelSamplesProp)->value());
 
 	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
-	renderer->settings().enableBiDirect(reinterpret_cast<BoolProperty*>(mUseBiDirectProp)->value());
 
 	renderer->settings().setMaxPhotons(reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->value());
 	renderer->settings().setMaxPhotonGatherCount(reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->value());

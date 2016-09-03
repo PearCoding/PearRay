@@ -28,6 +28,25 @@ namespace PR
 		return mMaterial ? mMaterial->isLight() : false;
 	}
 
+	constexpr float P = 1.6075f;
+	float SphereEntity::surfaceArea(Material* m) const
+	{
+		if(!m || m == mMaterial)// TODO: Scale?
+		{			
+			const auto s = flags() & EF_LocalArea ? scale() : worldScale();
+			
+			const float a = PM::pm_GetX(s) * mRadius;
+			const float b = PM::pm_GetY(s) * mRadius;
+			const float c = PM::pm_GetZ(s) * mRadius;
+
+			// Knud Thomsen’s Formula
+			const float t = (std::pow(a*b,P) + std::pow(a*c,P) + std::pow(b*c,P)) / 3;
+			return PM_4_PI_F * std::pow(t, P);
+		}
+		else
+			return 0;
+	}
+
 	void SphereEntity::setMaterial(Material* m)
 	{
 		mMaterial = m;

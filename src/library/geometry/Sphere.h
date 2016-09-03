@@ -21,7 +21,7 @@ namespace PR
 		float radius() const;
 		void setRadius(float f);
 
-		float surface() const;
+		float surfaceArea() const;
 		float volume() const;
 
 		bool isValid() const;

@@ -60,12 +60,4 @@ namespace PR
 	{
 		return !mCameraVisible && in.depth() == 0;
 	}
-	
-	Spectrum Material::applyEmission(const SamplePoint& point)
-	{
-		if (mEmission)
-			return mEmission->eval(point);
-		else
-			return Spectrum();
-	}
 }

@@ -42,6 +42,7 @@ private:
 
 	IProperty* mRendererMaxDiffuseBouncesProp;
 	IProperty* mRendererMaxRayDepthProp;
+	IProperty* mIntegratorProp;
 	IProperty* mDebugVisualizationProp;
 
 	IProperty* mPixelSamplerGroupProp;
@@ -50,7 +51,6 @@ private:
 
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;
-	IProperty* mUseBiDirectProp;
 
 	IProperty* mPhotonMappingGroupProp;
 	IProperty* mMaxPhotonsProp;

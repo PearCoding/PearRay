@@ -4,7 +4,7 @@
 #include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
-#include "sampler/MultiJitteredSampler.h"
+#include "sampler/RandomSampler.h"
 #include "material/Material.h"
 #include "math/MSI.h"
 
@@ -22,10 +22,9 @@ namespace PR
 	{
 		SamplePoint point;
 		Spectrum applied;
-		RenderEntity* entity = context->shootWithApply(applied, in, point);
+		RenderEntity* entity = context->shootWithEmission(applied, in, point);
 
-		if (!entity || !point.Material || !point.Material->canBeShaded() ||
-			context->renderer()->settings().maxLightSamples() == 0)
+		if (!entity || !point.Material)
 			return applied;
 		
 		return applied + applyRay(in, point, context);
@@ -40,7 +39,7 @@ namespace PR
 		Spectrum full_weight;
 
 		// Hemisphere sampling
-		MultiJitteredSampler hemiSampler(context->random(), context->renderer()->settings().maxLightSamples());
+		RandomSampler hemiSampler(context->random());
 		for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf); ++i)
 		{
 			float pdf;
@@ -55,10 +54,8 @@ namespace PR
 
 				SamplePoint point2;
 				Spectrum applied;
-				if (context->shootWithApply(applied, ray, point2) && point2.Material && std::isinf(pdf))
-				{
+				if (context->shootWithEmission(applied, ray, point2) && point2.Material && std::isinf(pdf))
 					applied += applyRay(ray, point2, context);
-				}
 
 				weight = point.Material->apply(point, ray.direction()) * applied * NdotL;
 			}
@@ -71,7 +68,7 @@ namespace PR
 			// Area sampling!
 			for (RenderEntity* light : context->renderer()->lights())
 			{
-				MultiJitteredSampler sampler(context->random(), context->renderer()->settings().maxLightSamples());
+				RandomSampler sampler(context->random());
 				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 				{
 					SamplePoint p = light->getRandomFacePoint(sampler, i);
@@ -87,10 +84,8 @@ namespace PR
 						Spectrum applied;
 						Ray ray = in.next(point.P, L);
 
-						if (context->shootWithApply(applied, ray, tmpPoint) == light)// Full light!!
-						{
+						if (context->shootWithEmission(applied, ray, tmpPoint) == light)// Full light!!
 							weight = point.Material->apply(point, L) * applied * NdotL;
-						}
 					}
 
 					MSI::balance(full_weight, full_pdf, weight, pdf);

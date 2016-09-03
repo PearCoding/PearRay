@@ -1,6 +1,7 @@
 #pragma once
 
 #include "thread/Thread.h"
+#include "renderer/RenderStatistics.h"
 #include "Random.h"
 
 namespace PR
@@ -19,7 +20,7 @@ namespace PR
 		~RenderContext();
 
 		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
-		RenderEntity* shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
 
 		inline Renderer* renderer() const
 		{
@@ -51,11 +52,22 @@ namespace PR
 			mPixelSampler = sampler;
 		}
 
+		inline const RenderStatistics& stats() const
+		{
+			return mStatistics;
+		}
+
+		inline RenderStatistics& stats()
+		{
+			return mStatistics;
+		}
+
 	private:
 		Renderer* mRenderer;
 		RenderThread* mThread;
 		uint32 mIndex;
 		Random mRandom;
 		Sampler* mPixelSampler;
+		RenderStatistics mStatistics;
 	};
 }

@@ -13,6 +13,8 @@ namespace PR
 	{
 	public:
 		virtual bool isLight() const = 0;
+		virtual float surfaceArea(Material* m, const PM::mat& transform) const = 0;
+
 		virtual BoundingBox boundingBox() const = 0;
 		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t) = 0;
 		virtual float collisionCost() const = 0;

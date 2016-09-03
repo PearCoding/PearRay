@@ -12,7 +12,6 @@ namespace PR
 
 	void RenderThread::main()
 	{
-		mSamplesRendered = 0;
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop())
@@ -22,11 +21,6 @@ namespace PR
 				for (uint32 x = mTile->sx(); x < mTile->ex() && !shouldStop(); ++x)
 				{
 					mRenderer->render(&mContext, x, y, mTile->samplesRendered());
-
-					if (mRenderer->settings().isIncremental())
-						mSamplesRendered++;
-					else
-						mSamplesRendered += mRenderer->settings().maxPixelSampleCount();
 				}
 			}
 
@@ -35,10 +29,5 @@ namespace PR
 			mTile->setWorking(false);
 			mTile = mRenderer->getNextTile();
 		}
-	}
-
-	size_t RenderThread::samplesRendered() const
-	{
-		return mSamplesRendered;
 	}
 }

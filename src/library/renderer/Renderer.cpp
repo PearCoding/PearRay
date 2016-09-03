@@ -2,15 +2,13 @@
 #include "RenderThread.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "RenderStatistics.h"
 #include "DisplayDriver.h"
 
 #include "camera/Camera.h"
 #include "scene/Scene.h"
 #include "entity/RenderEntity.h"
 #include "ray/Ray.h"
-
-#include "affector/PhotonAffector.h"
-#include "affector/LightAffector.h"
 
 #include "integrator/BiDirectIntegrator.h"
 #include "integrator/DirectIntegrator.h"
@@ -42,18 +40,10 @@ namespace PR
 		mResult(nullptr), mBackgroundMaterial(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mIncrementalCurrentSample(0), mTileMap(nullptr),
-		mGPU(nullptr)
+		mGPU(nullptr), mIntegrator(nullptr)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
-
-		for (RenderEntity* e : scene->renderEntities())
-		{
-			if (e->isLight())
-			{
-				mLights.push_back(e);
-			}
-		}
 
 		// Setup GPU
 #ifndef PR_NO_GPU
@@ -99,15 +89,11 @@ namespace PR
 			mTileMap = nullptr;
 		}
 
-		for (Affector* aff : mAffectors)
-			delete aff;
-
-		mAffectors.clear();
-
-		for (Integrator* integrator : mIntegrators)
-			delete integrator;
-
-		mIntegrators.clear();
+		if(mIntegrator)
+		{
+			delete mIntegrator;
+			mIntegrator = nullptr;
+		}
 
 		mLights.clear();
 	}
@@ -180,29 +166,36 @@ namespace PR
 				mLights.push_back(entity);
 		}
 
-		if (mRenderSettings.maxPhotons() > 0 &&
-			mRenderSettings.maxPhotonGatherRadius() > PM_EPSILON &&
-			mRenderSettings.maxPhotonGatherCount() > 0)
-			mAffectors.push_back(new PhotonAffector());
-
-		mAffectors.push_back(new LightAffector());
-
 		/* Setup integrators */
 		if (mRenderSettings.debugMode() != DM_None)
 		{
-			mIntegrators.push_back(new DebugIntegrator());
+			mIntegrator = new DebugIntegrator();
 		}
 		else
 		{
-			if (mRenderSettings.maxLightSamples() > 0)
+			if (mRenderSettings.maxLightSamples() == 0)
 			{
-				if (mRenderSettings.isBiDirect())
-					mIntegrators.push_back(new BiDirectIntegrator());
-				else
-					mIntegrators.push_back(new DirectIntegrator(this));
+				PR_LOGGER.log(L_Warning, M_Scene, "MaxLightSamples is zero: Nothing to render");
+				return;
+			}
+
+			switch(mRenderSettings.integratorMode())
+			{
+			case IM_Direct:
+				mIntegrator = new DirectIntegrator(this);
+				break;
+			default:
+			case IM_BiDirect:
+				mIntegrator = new BiDirectIntegrator();
+				break;
+			case IM_PPM:
+				mIntegrator = nullptr;// TODO
+				break;
 			}
 		}
 
+		PR_ASSERT(mIntegrator);
+		
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
 		if (threads < 0)
@@ -243,14 +236,9 @@ namespace PR
 			}
 		}
 
-		for (Affector* affector : mAffectors)
-			affector->init(this);
-
-		for (Integrator* integrator : mIntegrators)
-			integrator->init(this);
+		mIntegrator->init(this);
 
 		// Calculate tile sizes, etc.
-		mRayCount = ATOMIC_VAR_INIT(0);
 
 		mTileXCount = std::max<uint32>(1,tcx);
 		mTileYCount = std::max<uint32>(1,tcy);
@@ -322,28 +310,13 @@ namespace PR
 
 	Spectrum Renderer::renderSample(RenderContext* context, float x, float y, float rx, float ry, float t)
 	{
+		context->stats().incPixelSampleCount();
+		
 		Ray ray = mCamera->constructRay(2 * (x + 0.5f) / (float)mWidth - 1.0f,
 			2 * (y + 0.5f) / (float)mHeight - 1.0f,// To camera coordinates [-1,1]
 			rx, ry, t);
 
-		Spectrum spec;
-		for (Integrator* integrator : mIntegrators)
-		{
-			spec += integrator->apply(ray, context);
-		}
-
-		return spec;
-	}
-
-	size_t Renderer::samplesRendered() const
-	{
-		size_t s = 0;
-		for(RenderThread* thread : mThreads)
-		{
-			s += thread->samplesRendered();
-		}
-
-		return s;
+		return mIntegrator->apply(ray, context);
 	}
 	
 	std::list<RenderTile> Renderer::currentTiles() const
@@ -380,8 +353,10 @@ namespace PR
 				collisionPoint.Ny = PM::pm_Negate(collisionPoint.Ny);
 			}
 
-			mRayCount++;
-
+			context->stats().incRayCount();
+			if(!entity)
+				context->stats().incEntityHitCount();
+			
 			return entity;
 		}
 		else
@@ -390,14 +365,16 @@ namespace PR
 		}
 	}
 
-	RenderEntity* Renderer::shootWithApply(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
+			SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
 	{
 		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
 		if (entity)
 		{
-			for (Affector* affector : mAffectors)
+			if(collisionPoint.Material && collisionPoint.Material->emission())
 			{
-				appliedSpec += affector->apply(ray, entity, collisionPoint, context);
+				//const float a = entity->surfaceArea(collisionPoint.Material);
+				appliedSpec += collisionPoint.Material->emission()->eval(collisionPoint); // TODO
 			}
 		}
 		else if (mBackgroundMaterial)
@@ -413,7 +390,9 @@ namespace PR
 			Projection::tangent_frame(point.N, point.Nx, point.Ny);
 			point.UV = Projection::sphereUV(ray.direction());
 
-			appliedSpec += mBackgroundMaterial->applyEmission(point) /** (4*PM_INV_PI_F)*/;
+			appliedSpec += mBackgroundMaterial->emission()->eval(point) /** (4*PM_INV_PI_F)*/;
+
+			context->stats().incBackgroundHitCount();
 		}
 
 		return entity;
@@ -503,13 +482,24 @@ namespace PR
 		return nullptr;
 	}
 
-	size_t Renderer::rayCount() const
-	{
-		return mRayCount;
-	}
-
 	const std::list<RenderEntity*>& Renderer::lights() const
 	{
 		return mLights;
+	}
+
+	RenderStatistics Renderer::stats(RenderThread* thread) const
+	{
+		if(thread == nullptr)// All
+		{
+			RenderStatistics s;
+			for (RenderThread* thread : mThreads)
+				s += thread->context().stats();
+
+			return s;
+		}
+		else
+		{
+			return thread->context().stats();
+		}
 	}
 }
