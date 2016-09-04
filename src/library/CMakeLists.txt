@@ -28,7 +28,8 @@ SOURCE_GROUP("Source Files\\GPU" FILES ${PR_GPU_Src})
 SET(PR_Integrator_Src
   integrator/BiDirectIntegrator.cpp
   integrator/DebugIntegrator.cpp
-  integrator/DirectIntegrator.cpp)
+  integrator/DirectIntegrator.cpp
+  integrator/OnePassIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
   material/BlinnPhongMaterial.cpp
@@ -123,7 +124,8 @@ SET(PR_Integrator_Hdr
   integrator/BiDirectIntegrator.h
   integrator/DebugIntegrator.h
   integrator/DirectIntegrator.h
-  integrator/Integrator.h)
+  integrator/Integrator.h
+  integrator/OnePassIntegrator.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_Material_Hdr 
   material/BlinnPhongMaterial.h

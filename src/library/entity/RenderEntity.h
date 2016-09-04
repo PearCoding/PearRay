@@ -25,11 +25,11 @@ namespace PR
 		virtual bool isCollidable() const;
 		virtual float collisionCost() const;
 
-		virtual BoundingBox localBoundingBox() const;
+		virtual BoundingBox localBoundingBox() const = 0;
 		BoundingBox worldBoundingBox() const;
 
 		// In world coords
-		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint);
+		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint) const = 0;
 
 		// In world coords
 		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample) const = 0;

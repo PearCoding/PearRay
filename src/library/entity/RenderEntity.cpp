@@ -28,22 +28,12 @@ namespace PR
 		return 1;
 	}
 
-	BoundingBox RenderEntity::localBoundingBox() const
-	{
-		return BoundingBox();
-	}
-
 	BoundingBox RenderEntity::worldBoundingBox() const
 	{
 		if(mFrozen)
 			return mWorldBoundingBox_Cache;
 		else
 			return calcWorldBoundingBox();
-	}
-
-	bool RenderEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
-	{
-		return false;
 	}
 
 	BoundingBox RenderEntity::calcWorldBoundingBox() const

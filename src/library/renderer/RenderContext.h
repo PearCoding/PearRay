@@ -19,6 +19,7 @@ namespace PR
 		RenderContext(Renderer* renderer, RenderThread* thread, uint32 index);
 		~RenderContext();
 
+		void render(uint32 x, uint32 y, uint32 sample);
 		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
 		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
 

@@ -175,7 +175,9 @@ int main(int argc, char** argv)
 		{
 			PR::RenderStatistics stats = renderer->stats();
 			const float percent = 100 * stats.pixelSampleCount() / (float)maxSamples;
-			std::cout << percent << "% S: " << stats.pixelSampleCount() 
+			std::cout << percent << "%"
+				<< " Pass " << renderer->currentPass() + 1 
+				<< " | S: " << stats.pixelSampleCount() 
 				<< " R: " << stats.rayCount() 
 				<< " EH: " << stats.entityHitCount() 
 				<< " BH: " << stats.backgroundHitCount() << std::endl;

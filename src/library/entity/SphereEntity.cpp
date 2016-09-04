@@ -83,7 +83,7 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
+	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));

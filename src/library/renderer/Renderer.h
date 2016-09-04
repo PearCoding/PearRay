@@ -5,6 +5,7 @@
 
 #include <list>
 #include <mutex>
+#include <condition_variable>
 
 namespace PR
 {
@@ -26,6 +27,8 @@ namespace PR
 	class RenderStatistics;
 	class PR_LIB Renderer
 	{
+		friend class RenderThread;
+		friend class RenderContext;
 	public:
 		Renderer(uint32 width, uint32 height, Camera* cam, Scene* scene, bool useGPU = true);
 		virtual ~Renderer();
@@ -54,15 +57,13 @@ namespace PR
 		bool isFinished();
 		void waitForFinish();
 
-		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample);
-
-		// RenderThread things
-		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-
-		RenderTile* getNextTile();
-
 		uint32 threads() const;
+
+		// Pass control
+		inline uint32 currentPass() const
+		{
+			return mCurrentPass;
+		}
 
 		// Slow and only copies!
 		std::list<RenderTile> currentTiles() const;
@@ -70,6 +71,11 @@ namespace PR
 		inline GPU* gpu() const
 		{
 			return mGPU;
+		}
+
+		Integrator* integrator() const
+		{
+			return mIntegrator;
 		}
 
 		// Settings
@@ -87,6 +93,17 @@ namespace PR
 		const std::list<RenderEntity*>& lights() const;
 
 		RenderStatistics stats(RenderThread* thread = nullptr) const;
+
+	protected:
+		// Render Thread specific
+		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample);
+		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+
+		RenderTile* getNextTile();
+
+		void waitForNextPass();// Never call it from main thread
+
 	private:
 		void reset();
 
@@ -115,5 +132,10 @@ namespace PR
 
 		GPU* mGPU;
 		Integrator* mIntegrator;
+
+		std::mutex mPassMutex;
+		std::condition_variable mPassCondition;
+		uint32 mThreadsWaitingForPass;
+		uint32 mCurrentPass;
 	};
 }

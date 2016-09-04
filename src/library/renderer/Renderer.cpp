@@ -45,6 +45,8 @@ namespace PR
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
 
+		reset();
+
 		// Setup GPU
 #ifndef PR_NO_GPU
 		if(useGPU)
@@ -73,6 +75,10 @@ namespace PR
 
 	void Renderer::reset()
 	{
+		mThreadsWaitingForPass = 0;
+		mCurrentPass = 0;
+		mIncrementalCurrentSample = 0;
+
 		for (RenderThread* thread : mThreads)
 			delete thread;
 
@@ -259,7 +265,10 @@ namespace PR
 					PM::pm_MinT((uint32)std::ceil(mRenderSettings.cropMaxY()*mHeight), sy + mTileHeight));
 			}
 		}
-		mIncrementalCurrentSample = 0;
+
+		mIntegrator->onStart();// TODO: onEnd?
+		if(mIntegrator->needNextPass(0))
+			mIntegrator->onNextPass(0);
 
 		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
@@ -400,6 +409,29 @@ namespace PR
 		}
 
 		return entity;
+	}
+	
+	void Renderer::waitForNextPass()
+	{
+		std::unique_lock<std::mutex> lk(mPassMutex);
+		mThreadsWaitingForPass++;
+
+		if(mThreadsWaitingForPass == threads())
+		{
+			if(mIntegrator->needNextPass(mCurrentPass + 1))
+				mIntegrator->onNextPass(mCurrentPass + 1);
+			
+			mCurrentPass++;
+			mThreadsWaitingForPass = 0;
+			lk.unlock();
+
+			mPassCondition.notify_all();
+		}
+		else
+		{
+			mPassCondition.wait(lk, [this]{ return mThreadsWaitingForPass == threads(); });
+			lk.unlock();
+		}
 	}
 
 	uint32 Renderer::threads() const

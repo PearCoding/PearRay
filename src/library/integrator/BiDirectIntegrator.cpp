@@ -16,7 +16,7 @@
 namespace PR
 {
 	BiDirectIntegrator::BiDirectIntegrator() :
-		Integrator(), mThreadData(nullptr), mThreadCount(0)
+		OnePassIntegrator(), mThreadData(nullptr), mThreadCount(0)
 	{
 
 	}

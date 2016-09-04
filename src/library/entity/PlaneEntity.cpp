@@ -73,7 +73,7 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
+	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
 		PM::vec3 pos;
 		float u, v;

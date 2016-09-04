@@ -158,13 +158,13 @@ namespace PRU
 
 		if(!normalAttr.empty() && normalAttr.size() != positionAttr.size())
 		{
-			PR_LOGGER.log(L_Error, M_Scene, "Normal attribute do not match position attribute in size.");
+			PR_LOGGER.log(L_Error, M_Scene, "Normal attribute does not match position attribute in size.");
 			return nullptr;
 		}
 
 		if(!uvAttr.empty() && uvAttr.size() != positionAttr.size())
 		{
-			PR_LOGGER.log(L_Error, M_Scene, "Texture attribute do not match position attribute in size.");
+			PR_LOGGER.log(L_Error, M_Scene, "Texture attribute does not match position attribute in size.");
 			return nullptr;
 		}
 
@@ -191,15 +191,6 @@ namespace PRU
 					face->N[0] = normalAttr[j];
 					face->N[1] = normalAttr[j+1];
 					face->N[2] = normalAttr[j+2];
-				}
-				else
-				{
-					PM::vec n = PM::pm_Cross3D(PM::pm_Subtract(face->V[1], face->V[0]),
-											   PM::pm_Subtract(face->V[2], face->V[0]));
-					n = PM::pm_Normalize3D(n);
-					face->N[0] = n;
-					face->N[1] = n;
-					face->N[2] = n;
 				}
 
 				if(!uvAttr.empty())
@@ -264,15 +255,6 @@ namespace PRU
 					face->N[1] = normalAttr[i2];
 					face->N[2] = normalAttr[i3];
 				}
-				else
-				{
-					PM::vec n = PM::pm_Cross3D(PM::pm_Subtract(face->V[1], face->V[0]),
-											   PM::pm_Subtract(face->V[2], face->V[0]));
-					n = PM::pm_Normalize3D(n);
-					face->N[0] = n;
-					face->N[1] = n;
-					face->N[2] = n;
-				}
 
 				if(!uvAttr.empty())
 				{
@@ -293,6 +275,13 @@ namespace PRU
 
 		TriMesh* me = new TriMesh();
 		me->setFaces(faces);
+
+		if(normalAttr.empty())
+		{
+			PR_LOGGER.log(L_Warning, M_Scene, "No normals given for mesh. Calculating it instead.");
+			me->calcNormals();
+		}
+		
 		me->build();
 		return me;
 	}

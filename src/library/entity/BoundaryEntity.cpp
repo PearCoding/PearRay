@@ -74,7 +74,7 @@ namespace PR
 		return mBoundingBox;
 	}
 
-	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
+	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
 

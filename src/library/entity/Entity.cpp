@@ -193,12 +193,12 @@ namespace PR
 
 	PM::mat4 Entity::worldDirectionMatrix() const
 	{
-		return PM::pm_Transpose(invMatrix());
+		return PM::pm_Transpose(worldInvMatrix());
 	}
 
 	PM::mat4 Entity::worldInvDirectionMatrix() const
 	{
-		return PM::pm_Transpose(matrix());
+		return PM::pm_Transpose(worldMatrix());
 	}
 
 	std::string Entity::toString() const

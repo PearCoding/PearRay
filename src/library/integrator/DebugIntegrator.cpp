@@ -9,7 +9,7 @@
 
 namespace PR
 {
-	DebugIntegrator::DebugIntegrator() : Integrator()
+	DebugIntegrator::DebugIntegrator() : OnePassIntegrator()
 	{
 	}
 
@@ -120,6 +120,15 @@ namespace PR
 			if (!point.Material)
 				return RGBConverter::toSpec(1, 0, 0);
 
+			if (PM::pm_MagnitudeSqr3D(point.N) - 1 > PM_EPSILON)
+				return RGBConverter::toSpec(1, 1, 0);
+
+			// if (std::abs(PM::pm_GetW(point.N)) > PM_EPSILON)
+			// 	return RGBConverter::toSpec(1, 0, 1);
+
+			if (std::abs(PM::pm_GetW(point.P)) - 1 > PM_EPSILON)
+				return RGBConverter::toSpec(0, 1, 1);
+			
 			float pdf;
 			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
 				context->random().getFloat(),

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Integrator.h"
+#include "OnePassIntegrator.h"
 
 namespace PR
 {
-	class PR_LIB DirectIntegrator : public Integrator
+	class PR_LIB DirectIntegrator : public OnePassIntegrator
 	{
 	public:
 		DirectIntegrator(Renderer* renderer);

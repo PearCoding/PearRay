@@ -62,7 +62,7 @@ namespace PR
 		return mMesh->boundingBox();
 	}
 
-	bool MeshEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint)
+	bool MeshEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
 		// Local space
 		Ray local = ray;

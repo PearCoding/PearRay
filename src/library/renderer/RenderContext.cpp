@@ -17,6 +17,11 @@ namespace PR
 		}
 	}
 
+	void RenderContext::render(uint32 x, uint32 y, uint32 sample)
+	{
+		mRenderer->render(this, x, y, sample);
+	}
+	
 	RenderEntity* RenderContext::shoot(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore)
 	{
 		return mRenderer->shoot(ray, collisionPoint, this, ignore);

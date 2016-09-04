@@ -75,18 +75,18 @@ namespace PR
 		*/
 		static inline uint32 hardwareThreadCount();
 
-	protected:
-		/**
-		* @brief The thread start point
-		*/
-		virtual void main() = 0;
-
 		/**
 		* @brief Check if a stop is requested
 		*
 		* @see Stop()
 		*/
 		inline bool shouldStop() const;
+
+	protected:
+		/**
+		* @brief The thread start point
+		*/
+		virtual void main() = 0;
 
 	private:
 		static uint32 sThreadCount;

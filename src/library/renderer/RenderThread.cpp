@@ -2,32 +2,42 @@
 #include "Renderer.h"
 #include "RenderTile.h"
 
+#include "integrator/Integrator.h"
+
 namespace PR
 {
 	RenderThread::RenderThread(Renderer* renderer, uint32 index) :
-		mRenderer(renderer), mTile(nullptr), mContext(renderer, this, index)
+		Thread(), mRenderer(renderer), mTile(nullptr), mContext(renderer, this, index)
 	{
 		PR_ASSERT(renderer);
 	}
 
 	void RenderThread::main()
 	{
-		mTile = mRenderer->getNextTile();
+		size_t pass = 0;
+		Integrator* integrator = mRenderer->integrator();
 
-		while (mTile && !shouldStop())
+		integrator->onThreadStart(&mContext);
+		while(integrator->needNextPass(pass) && !shouldStop())
 		{
-			for (uint32 y = mTile->sy(); y < mTile->ey() && !shouldStop(); ++y)
+			integrator->onPrePass(&mContext, pass);
+
+			mTile = mRenderer->getNextTile();
+
+			while (mTile && !shouldStop())
 			{
-				for (uint32 x = mTile->sx(); x < mTile->ex() && !shouldStop(); ++x)
-				{
-					mRenderer->render(&mContext, x, y, mTile->samplesRendered());
-				}
+				integrator->onPass(mTile, &mContext, pass);
+				mTile->inc();
+
+				mTile->setWorking(false);
+				mTile = mRenderer->getNextTile();
 			}
 
-			mTile->inc();
+			integrator->onPostPass(&mContext, pass);
+			mRenderer->waitForNextPass();
 
-			mTile->setWorking(false);
-			mTile = mRenderer->getNextTile();
+			pass++;
 		}
+		integrator->onThreadEnd(&mContext);
 	}
 }

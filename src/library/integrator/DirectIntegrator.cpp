@@ -10,7 +10,7 @@
 
 namespace PR
 {
-	DirectIntegrator::DirectIntegrator(Renderer* renderer) : Integrator()
+	DirectIntegrator::DirectIntegrator(Renderer* renderer) : OnePassIntegrator()
 	{
 	}
 
