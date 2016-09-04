@@ -27,16 +27,21 @@ namespace PR
 
 	const char* moduleStr[] =
 	{
-		"Internal",
-		"Test    ",
-		"System  ",
-		"Scene   ",
-		"Volume  ",
-		"Ray     ",
-		"Entity  ",
-		"World   ",
-		"GPU     ",
-		"Network ",
+		"Internal  ",
+		"Test      ",
+		"Camera    ",
+		"GPU       ",
+		"Entity    ",
+		"Math      ",
+		"Integrator",
+		"Material  ",
+		"System    ",
+		"Scene     ",
+		"Volume    ",
+		"Network   ",
+		"Loader    ",
+		"Shader    ",
+		"Main      "
 	};
 
 	const char* Logger::levelString(Level l)

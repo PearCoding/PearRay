@@ -23,12 +23,12 @@ namespace PR
 
 		// Per thread
 		virtual void onThreadStart(RenderContext* context) = 0;
-		virtual void onPrePass(RenderContext* context, uint32 i) = 0;
-		virtual void onPass(RenderTile* tile, RenderContext* context, uint32 i) = 0;
-		virtual void onPostPass(RenderContext* context, uint32 i) = 0;
+		virtual void onPrePass(RenderContext* context, uint32 pass) = 0;
+		virtual void onPass(RenderTile* tile, RenderContext* context, uint32 pass) = 0;
+		virtual void onPostPass(RenderContext* context, uint32 pass) = 0;
 		virtual void onThreadEnd(RenderContext* context) = 0;
 
-
-		virtual Spectrum apply(const Ray& in, RenderContext* context) = 0;
+		virtual uint64 maxSamples(const Renderer* renderer) const = 0;
+		virtual Spectrum apply(const Ray& in, RenderContext* context, uint32 pass) = 0;
 	};
 }

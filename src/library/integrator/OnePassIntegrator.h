@@ -18,5 +18,7 @@ namespace PR
 		virtual void onThreadEnd(RenderContext* context) override;
 
 		virtual bool needNextPass(uint32 i) const override;
+
+		virtual uint64 maxSamples(const Renderer* renderer) const override;
 	};
 }

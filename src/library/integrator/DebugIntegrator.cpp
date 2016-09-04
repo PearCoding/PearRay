@@ -17,7 +17,7 @@ namespace PR
 	{
 	}
 
-	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context)
+	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
 	{
 		Spectrum emission;
 		SamplePoint point;

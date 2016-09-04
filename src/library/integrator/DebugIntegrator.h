@@ -10,6 +10,6 @@ namespace PR
 		DebugIntegrator();
 
 		void init(Renderer* renderer) override;
-		Spectrum apply(const Ray& in, RenderContext* context) override;
+		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass) override;
 	};
 }

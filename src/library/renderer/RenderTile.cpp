@@ -11,4 +11,9 @@ namespace PR
 	{
 		mSamplesRendered++;
 	}
+	
+	void RenderTile::reset()
+	{
+		mSamplesRendered = 0;
+	}
 }

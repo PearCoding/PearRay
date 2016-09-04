@@ -56,9 +56,9 @@ int main(int argc, char** argv)
 	time_t t = time(NULL);
 	std::stringstream sstream;
 #ifdef PR_DEBUG
-	sstream << "prc_" << t << "_d.log";
+	sstream << "pr_" << t << "_d.log";
 #else
-	sstream << "prc_" << t << ".log";
+	sstream << "pr_" << t << ".log";
 #endif
 	const bf::path logFile = options.OutputDir + "/" + sstream.str();
 
@@ -149,8 +149,7 @@ int main(int argc, char** argv)
 
 	renderer->start(display, options.TileXCount, options.TileYCount, options.ThreadCount);
 
-	const PR::uint64 maxSamples =
-		renderer->renderWidth()*renderer->renderHeight()*renderer->settings().maxPixelSampleCount();
+	const PR::uint64 maxSamples = renderer->maxSamples();
 	auto start = sc::high_resolution_clock::now();
 	auto start_io = start;
 	auto start_prog = start;
@@ -174,7 +173,8 @@ int main(int argc, char** argv)
 		if(options.ShowProgress && span_prog.count() > 1000)
 		{
 			PR::RenderStatistics stats = renderer->stats();
-			const float percent = 100 * stats.pixelSampleCount() / (float)maxSamples;
+			float percent = 100 * stats.pixelSampleCount() / (float)maxSamples;
+
 			std::cout << percent << "%"
 				<< " Pass " << renderer->currentPass() + 1 
 				<< " | S: " << stats.pixelSampleCount() 

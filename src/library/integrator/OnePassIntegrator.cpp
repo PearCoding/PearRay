@@ -33,7 +33,7 @@ namespace PR
 		{
 			for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
 			{
-				context->render(x, y, tile->samplesRendered());
+				context->render(x, y, tile->samplesRendered(), pass);
 			}
 		}
 	}
@@ -49,5 +49,10 @@ namespace PR
 	bool OnePassIntegrator::needNextPass(uint32 i) const
 	{
 		return i == 0;
+	}
+		
+	uint64 OnePassIntegrator::maxSamples(const Renderer* renderer) const
+	{
+		return renderer->renderWidth() * renderer->renderHeight() * renderer->settings().maxPixelSampleCount();
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RenderSettings.h"
+#include "RenderStatistics.h"
 #include "spectral/Spectrum.h"
 
 #include <list>
@@ -24,7 +25,6 @@ namespace PR
 	class RenderThread;
 	class RenderTile;
 	class RenderContext;
-	class RenderStatistics;
 	class PR_LIB Renderer
 	{
 		friend class RenderThread;
@@ -53,6 +53,9 @@ namespace PR
 		// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
 		void start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
 		void stop();
+
+		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
 
 		bool isFinished();
 		void waitForFinish();
@@ -84,21 +87,18 @@ namespace PR
 			mRenderSettings = s;
 		}
 		
-		inline RenderSettings& settings()
-		{
-			return mRenderSettings;
-		}
+		inline RenderSettings& settings() { return mRenderSettings; }
+		inline const RenderSettings& settings() const { return mRenderSettings; }
 
 		// Light
 		const std::list<RenderEntity*>& lights() const;
 
 		RenderStatistics stats(RenderThread* thread = nullptr) const;
+		uint64 maxSamples() const;
 
 	protected:
 		// Render Thread specific
-		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample);
-		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);
 
 		RenderTile* getNextTile();
 
@@ -107,7 +107,7 @@ namespace PR
 	private:
 		void reset();
 
-		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t);
+		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass);
 
 		uint32 mWidth;
 		uint32 mHeight;
@@ -129,6 +129,7 @@ namespace PR
 		std::list<RenderThread*> mThreads;
 
 		RenderSettings mRenderSettings;
+		RenderStatistics mGlobalStatistics;
 
 		GPU* mGPU;
 		Integrator* mIntegrator;

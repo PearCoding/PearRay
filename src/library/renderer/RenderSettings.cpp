@@ -21,14 +21,8 @@ namespace PR
 		// Direct Lightning
 		mMaxLightSamples(1),
 
-		// Photon Mapping
-		mMaxPhotons(100000),
-		mMaxPhotonGatherRadius(0.1f),
-		mMaxPhotonGatherCount(500),
-		mMaxPhotonDiffuseBounces(4),
-		mMinPhotonSpecularBounces(1),
-		mPhotonGatheringMode(PGM_Sphere),
-		mPhotonSqueezeWeight(0)
+		// PPM
+		mPPM()
 	{
 	}
 }

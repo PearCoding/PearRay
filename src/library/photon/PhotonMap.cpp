@@ -29,6 +29,13 @@ namespace PR
 			delete[] mPhotons;
 		}
 
+		void PhotonMap::reset()
+		{
+			mStoredPhotons = 0;
+			mHalfStoredPhotons = 0;
+			mPreviousScaleIndex = 1;
+		}
+
 		PM::vec3 PhotonMap::photonDirection(const Photon* p)// Standard spherical coordinates
 		{
 			return PM::pm_Set(mSinTheta[p->Theta] * mCosPhi[p->Phi],
@@ -167,7 +174,7 @@ namespace PR
 			}
 		}
 
-		void PhotonMap::store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir)
+		void PhotonMap::store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir, float pdf)
 		{
 			if (isFull())
 				return;
@@ -193,16 +200,13 @@ namespace PR
 				node->Phi = (uint8)phi;
 
 #ifdef PR_USE_PHOTON_RGB
-			/*float r, g, b;
-			RGBConverter::convert(spec, r, g, b);
-			node->Power[0] = PM::pm_ClampT(r, 0.0f, 1.0f) * 255;
-			node->Power[1] = PM::pm_ClampT(g, 0.0f, 1.0f) * 255;
-			node->Power[2] = PM::pm_ClampT(b, 0.0f, 1.0f) * 255;*/
 			RGBConverter::convert(spec, node->Power[0], node->Power[1], node->Power[2]);
 #else
 			for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 				node->Power[i] = spec.value(i);
 #endif
+
+			node->PDF = pdf;
 		}
 
 		void PhotonMap::scalePhotonPower(float scale)
@@ -223,7 +227,10 @@ namespace PR
 
 		void PhotonMap::balanceTree()
 		{
-			mHalfStoredPhotons = mStoredPhotons / 2 - 1;
+			if(mStoredPhotons > 1)
+				mHalfStoredPhotons = mStoredPhotons / 2 - 1;
+			else
+				mHalfStoredPhotons = 0;
 
 			if(mStoredPhotons < 1)
 				return;

@@ -97,25 +97,23 @@ QWidget(parent)
 	mMaxLightSamplesProp = new IntProperty(tr("Max Light Samples"), 2);
 	mDirectLightningGroupProp->addChild(mMaxLightSamplesProp);
 
-	// Photon Mapping
-	mPhotonMappingGroupProp = new GroupProperty(tr("Photon Mapping"));
-	mMaxPhotonsProp = new IntProperty(tr("Max Photons"), 1000, 0, 10000000);
-	mPhotonMappingGroupProp->addChild(mMaxPhotonsProp);
+	// PPM
+	mPPMGroupProp = new GroupProperty(tr("Progressive Photon Mapping (PPM)"));
+	mMaxPhotonsPerPassProp = new IntProperty(tr("Max Photons per Pass"), 1000, 1, 10000000);
+	mPPMGroupProp->addChild(mMaxPhotonsPerPassProp);
+	mMaxPhotonPassCountProp = new IntProperty(tr("Max Pass Count"), 50, 1, 10000000);
+	mPPMGroupProp->addChild(mMaxPhotonPassCountProp);
 	mMaxPhotonGatherCountProp = new IntProperty(tr("Max Gather Count"), 500, 0);
-	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherCountProp);
+	mPPMGroupProp->addChild(mMaxPhotonGatherCountProp);
 	mMaxPhotonGatherRadiusProp = new DoubleProperty(tr("Max Gather Radius"), 0.1, 0, 10000);
-	mPhotonMappingGroupProp->addChild(mMaxPhotonGatherRadiusProp);
-	mMaxPhotonDiffuseBouncesProp = new IntProperty(tr("Max Diffuse Bounces"), 4, 0);
-	mPhotonMappingGroupProp->addChild(mMaxPhotonDiffuseBouncesProp);
-	mMinPhotonSpecularBouncesProp = new IntProperty(tr("Min Specular Bounces"), 1, 0);
-	mPhotonMappingGroupProp->addChild(mMinPhotonSpecularBouncesProp);
+	mPPMGroupProp->addChild(mMaxPhotonGatherRadiusProp);
 	mPhotonGatheringModeProp = new SelectionProperty(tr("Gathering Mode"), PR::PGM_Sphere);
 	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Sphere"), PR::PGM_Sphere);
 	((SelectionProperty*)mPhotonGatheringModeProp)->addItem(tr("Dome"), PR::PGM_Dome);
-	mPhotonMappingGroupProp->addChild(mPhotonGatheringModeProp);
+	mPPMGroupProp->addChild(mPhotonGatheringModeProp);
 	mPhotonSqueezeWeightProp = new DoubleProperty(tr("Squeeze Weight"), 0, 0, 1);
-	mPhotonMappingGroupProp->addChild(mPhotonSqueezeWeightProp);
-	mProperties.add(mPhotonMappingGroupProp);
+	mPPMGroupProp->addChild(mPhotonSqueezeWeightProp);
+	mProperties.add(mPPMGroupProp);
 
 	mView->setPropertyTable(&mProperties);
 	mView->expandToDepth(1);
@@ -137,14 +135,13 @@ SystemPropertyView::~SystemPropertyView()
 	delete mIntegratorProp;
 	delete mDebugVisualizationProp;
 	delete mMaxLightSamplesProp;
-	delete mMaxPhotonsProp;
+	delete mMaxPhotonsPerPassProp;
+	delete mMaxPhotonPassCountProp;
 	delete mMaxPhotonGatherCountProp;
 	delete mMaxPhotonGatherRadiusProp;
-	delete mMaxPhotonDiffuseBouncesProp;
-	delete mMinPhotonSpecularBouncesProp;
 	delete mPhotonGatheringModeProp;
 	delete mPhotonSqueezeWeightProp;
-	delete mPhotonMappingGroupProp;
+	delete mPPMGroupProp;
 }
 
 int SystemPropertyView::getTileX() const
@@ -195,22 +192,18 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->setValue(renderer->settings().maxLightSamples());
 	reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->setDefaultValue(renderer->settings().maxLightSamples());
 
-	reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->setValue(renderer->settings().maxPhotons());
-	reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->setDefaultValue(renderer->settings().maxPhotons());
-	reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->setValue(
-		renderer->settings().maxPhotonGatherRadius());
-	reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->setDefaultValue(
-		renderer->settings().maxPhotonGatherRadius());
-	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setValue(renderer->settings().maxPhotonGatherCount());
-	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setDefaultValue(renderer->settings().maxPhotonGatherCount());
-	reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->setValue(renderer->settings().maxPhotonDiffuseBounces());
-	reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxPhotonDiffuseBounces());
-	reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->setValue(renderer->settings().minPhotonSpecularBounces());
-	reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->setDefaultValue(renderer->settings().minPhotonSpecularBounces());
-	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setIndex(renderer->settings().photonGatheringMode());
-	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setDefaultIndex(renderer->settings().photonGatheringMode());
-	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setValue(renderer->settings().photonSqueezeWeight());
-	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setDefaultValue(renderer->settings().photonSqueezeWeight());
+	reinterpret_cast<IntProperty*>(mMaxPhotonsPerPassProp)->setValue(renderer->settings().ppm().maxPhotonsPerPass());
+	reinterpret_cast<IntProperty*>(mMaxPhotonsPerPassProp)->setDefaultValue(renderer->settings().ppm().maxPhotonsPerPass());
+	reinterpret_cast<IntProperty*>(mMaxPhotonPassCountProp)->setValue(renderer->settings().ppm().maxPassCount());
+	reinterpret_cast<IntProperty*>(mMaxPhotonPassCountProp)->setDefaultValue(renderer->settings().ppm().maxPassCount());
+	reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->setValue(renderer->settings().ppm().maxGatherRadius());
+	reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->setDefaultValue(renderer->settings().ppm().maxGatherRadius());
+	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setValue(renderer->settings().ppm().maxGatherCount());
+	reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->setDefaultValue(renderer->settings().ppm().maxGatherCount());
+	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setIndex(renderer->settings().ppm().gatheringMode());
+	reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->setDefaultIndex(renderer->settings().ppm().gatheringMode());
+	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setValue(renderer->settings().ppm().squeezeWeight());
+	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setDefaultValue(renderer->settings().ppm().squeezeWeight());
 }
 
 void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
@@ -226,12 +219,11 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 
 	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
 
-	renderer->settings().setMaxPhotons(reinterpret_cast<IntProperty*>(mMaxPhotonsProp)->value());
-	renderer->settings().setMaxPhotonGatherCount(reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->value());
-	renderer->settings().setMaxPhotonGatherRadius(reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->value());
-	renderer->settings().setMaxPhotonDiffuseBounces(reinterpret_cast<IntProperty*>(mMaxPhotonDiffuseBouncesProp)->value());
-	renderer->settings().setMinPhotonSpecularBounces(reinterpret_cast<IntProperty*>(mMinPhotonSpecularBouncesProp)->value());
-	renderer->settings().setPhotonGatheringMode((PR::PhotonGatheringMode)reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->index());
-	renderer->settings().setPhotonSqueezeWeight(reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->value());
+	renderer->settings().ppm().setMaxPhotonsPerPass(reinterpret_cast<IntProperty*>(mMaxPhotonsPerPassProp)->value());
+	renderer->settings().ppm().setMaxPassCount(reinterpret_cast<IntProperty*>(mMaxPhotonPassCountProp)->value());
+	renderer->settings().ppm().setMaxGatherCount(reinterpret_cast<IntProperty*>(mMaxPhotonGatherCountProp)->value());
+	renderer->settings().ppm().setMaxGatherRadius(reinterpret_cast<DoubleProperty*>(mMaxPhotonGatherRadiusProp)->value());
+	renderer->settings().ppm().setGatheringMode((PR::PPMGatheringMode)reinterpret_cast<SelectionProperty*>(mPhotonGatheringModeProp)->index());
+	renderer->settings().ppm().setSqueezeWeight(reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->value());
 }
 

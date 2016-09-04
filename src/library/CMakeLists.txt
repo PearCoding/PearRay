@@ -29,7 +29,8 @@ SET(PR_Integrator_Src
   integrator/BiDirectIntegrator.cpp
   integrator/DebugIntegrator.cpp
   integrator/DirectIntegrator.cpp
-  integrator/OnePassIntegrator.cpp)
+  integrator/OnePassIntegrator.cpp
+  integrator/PPMIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
   material/BlinnPhongMaterial.cpp
@@ -52,6 +53,7 @@ SET(PR_Ray_Src
   ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
+  renderer/PPMSettings.cpp
   renderer/Renderer.cpp
   renderer/RenderContext.cpp
   renderer/RenderSettings.cpp
@@ -125,7 +127,8 @@ SET(PR_Integrator_Hdr
   integrator/DebugIntegrator.h
   integrator/DirectIntegrator.h
   integrator/Integrator.h
-  integrator/OnePassIntegrator.h)
+  integrator/OnePassIntegrator.h
+  integrator/PPMIntegrator.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_Material_Hdr 
   material/BlinnPhongMaterial.h
@@ -155,6 +158,7 @@ SET(PR_Ray_Hdr
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
   renderer/DisplayDriver.h
+  renderer/PPMSettings.h
   renderer/Renderer.h
   renderer/RenderContext.h
   renderer/RenderSettings.h

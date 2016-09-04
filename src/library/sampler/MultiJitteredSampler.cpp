@@ -33,20 +33,22 @@ namespace PR
 
 	PM::vec2 MultiJitteredSampler::generate2D(uint32 index)
 	{
+		uint32 newIndex = index % mSamples;
+
 		uint32 p = mRandom.get32();
-		uint32 sx = permute(index % mM, mM, p * 0xa511e9b3);
-		uint32 sy = permute(index / mM, mN, p * 0x63d83595);
+		uint32 sx = permute(newIndex % mM, mM, p * 0xa511e9b3);
+		uint32 sy = permute(newIndex / mM, mN, p * 0x63d83595);
 
 #ifndef PR_MJS_USE_RANDOM
-		float jx = randfloat(index, p * 0xa399d265);
-		float jy = randfloat(index, p * 0x711ad6a5);
+		float jx = randfloat(newIndex, p * 0xa399d265);
+		float jy = randfloat(newIndex, p * 0x711ad6a5);
 #else
 		float jx = mRandom.getFloat();
 		float jy = mRandom.getFloat();
 #endif
 
-		auto r = PM::pm_Set((index % mM + (sy + jx) / mN) / mM,
-			(index / mM + (sx + jy) / mM) / mN);
+		auto r = PM::pm_Set((newIndex % mM + (sy + jx) / mN) / mM,
+			(newIndex / mM + (sx + jy) / mM) / mN);
 		return r;
 	}
 

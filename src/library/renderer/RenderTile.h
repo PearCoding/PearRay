@@ -9,7 +9,8 @@ namespace PR
 	public:
 		RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey);
 		void inc();
-
+		void reset();
+		
 		inline bool isWorking() const
 		{
 			return mWorking;

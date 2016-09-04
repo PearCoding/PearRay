@@ -14,13 +14,14 @@ namespace PR
 			float Position[3]; // Non compressed positions
 			uint8 Phi, Theta; // Support of 65536 possible directions is enough
 			uint8 KDFlags;// Flags for the KD-Tree
+			float PDF;
 #ifdef PR_USE_PHOTON_RGB
 			float Power[3];
-			uint8 _Padding;
+			uint8 _Padding;// Approx: 20 bytes?
 #else
-			float Power[Spectrum::SAMPLING_COUNT];
+			float Power[Spectrum::SAMPLING_COUNT];// Approx: 370 bytes
 #endif
-		};// Approx: 370 bytes
+		};
 
 		struct PhotonSphere // Contains the photons in radius around the center
 		{

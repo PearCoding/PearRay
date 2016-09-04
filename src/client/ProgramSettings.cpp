@@ -80,7 +80,6 @@ void validate(boost::any& v,
         throw po::validation_error(po::validation_error::invalid_option_value);
 }
 
-// DisplayDriverOption
 BEGIN_ENUM_OPTION(DisplayDriverOption)
 {
 	{"image", DDO_Image},
@@ -88,7 +87,6 @@ BEGIN_ENUM_OPTION(DisplayDriverOption)
 	{nullptr, DDO_Image}
 };
 
-// SamplerMode
 BEGIN_ENUM_OPTION(SamplerMode)
 {
 	{"rand", SM_Random},
@@ -99,7 +97,6 @@ BEGIN_ENUM_OPTION(SamplerMode)
 	{nullptr, SM_MultiJitter}
 };
 
-// DebugMode
 BEGIN_ENUM_OPTION(DebugMode)
 {
 	{"none", DM_None},
@@ -123,7 +120,6 @@ BEGIN_ENUM_OPTION(DebugMode)
 	{nullptr, DM_None}
 };
 
-// DebugMode
 BEGIN_ENUM_OPTION(IntegratorMode)
 {
 	{"di", IM_Direct},
@@ -131,9 +127,8 @@ BEGIN_ENUM_OPTION(IntegratorMode)
 	{"ppm", IM_PPM},
 	{nullptr, IM_BiDirect}
 };
-		
-// PhotonGatheringMode
-BEGIN_ENUM_OPTION(PhotonGatheringMode)
+
+BEGIN_ENUM_OPTION(PPMGatheringMode)
 {
 	{"dome", PGM_Dome},
 	{"sphere", PGM_Sphere},
@@ -180,11 +175,11 @@ po::options_description setup_cmd_options()
 
 	po::options_description thread_d("Threading");
 	thread_d.add_options()
-		("threads,t", po::value<PR::uint32>()->default_value(DEF_THREAD_COUNT),
+		("threads,t", po::value<PR::uint32>(),
 			"Amount of threads used for processing. Set 0 for automatic detection.")
-		("tile_x", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_X), 
+		("tile_x", po::value<PR::uint32>(), 
 			"Amount of horizontal tiles used in threading")
-		("tile_y", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_Y), 
+		("tile_y", po::value<PR::uint32>(),
 			"Amount of vertical tiles used in threading")
 	;
 
@@ -206,60 +201,57 @@ po::options_description setup_cmd_options()
 
 	po::options_description render_d("Render");
 	render_d.add_options()
-		("inc", po::value<bool>()->default_value(DefaultRenderSettings.isIncremental()),
+		("inc", po::value<bool>(),
 			"Render incremental.")
 		("debug",
-			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()),
+			po::value<EnumOption<DebugMode> >(),
 		 	(std::string("Debug Mode [") + EnumOption<DebugMode>::get_names() + "]").c_str())
 		("integrator",
-			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()),
+			po::value<EnumOption<IntegratorMode> >(),
 		 	(std::string("Integrator [") + EnumOption<IntegratorMode>::get_names() + "]").c_str())
-		("depth|d", po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxRayDepth()),
+		("depth|d", po::value<PR::uint32>(),
 			"Render incremental.")
 	;
 
 	po::options_description pixelsampler_d("Pixel Sampler");
 	pixelsampler_d.add_options()
 		("ps_mode",
-			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.pixelSampler()),
+			po::value<EnumOption<SamplerMode> >(),
 		 	(std::string("Pixel Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
 		("ps_max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPixelSampleCount()),
+			po::value<PR::uint32>(),
 		 	"Maximum pixel sample count")
 	;
 
 	po::options_description gi_d("Global Illumination");
 	gi_d.add_options()
 		("gi_diff_max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()),
+			po::value<PR::uint32>(),
 		 	"Maximum diffuse bounces")
 		("gi_max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLightSamples()),
+			po::value<PR::uint32>(),
 		 	"Maximum light samples")
 	;
 
-	po::options_description photon_d("Photon Mapping");
+	po::options_description photon_d("Progressive Photon Mapping (PPM)");
 	photon_d.add_options()
 		("p_count",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotons()),
-		 	"Photon count")
+			po::value<PR::uint32>(),
+		 	"Photons per pass")
+		("p_passes",
+			po::value<PR::uint32>(),
+		 	"Max passes")
 		("p_radius",
-			po::value<float>()->default_value(DefaultRenderSettings.maxPhotonGatherRadius()),
+			po::value<float>(),
 		 	"Maximum gather radius")
 		("p_max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonGatherCount()),
-		 	"Maximum photons used for extimating radiance")
-		("p_diff_max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonDiffuseBounces()),
-		 	"Maximum diffuse bounces")
-		("p_spec_min",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.minPhotonSpecularBounces()),
-		 	"Minimum specular bounces")
+			po::value<PR::uint32>(),
+		 	"Maximum photons used for estimating radiance")
 		("p_g_mode",
-			po::value<EnumOption<PhotonGatheringMode> >()->default_value(DefaultRenderSettings.photonGatheringMode()),
-		 	(std::string("Photon Gathering Mode [") + EnumOption<PhotonGatheringMode>::get_names() + "]").c_str())
+			po::value<EnumOption<PPMGatheringMode> >(),
+		 	(std::string("Photon Gathering Mode [") + EnumOption<PPMGatheringMode>::get_names() + "]").c_str())
 		("p_squeeze",
-			po::value<float>()->default_value(DefaultRenderSettings.photonSqueezeWeight()),
+			po::value<float>(),
 		 	"Squeeze Factor")
 	;
 
@@ -306,21 +298,18 @@ po::options_description setup_ini_options()
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()))
 		("globalillumination.light_samples",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLightSamples()))
-		("photon.count",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotons()))
-		("photon.radius",
-			po::value<float>()->default_value(DefaultRenderSettings.maxPhotonGatherRadius()))
-		("photon.max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonGatherCount()))
-		("photon.max_diffuse_bounces",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPhotonDiffuseBounces()))
-		("photon.min_specular_bounces",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.minPhotonSpecularBounces()))
-		("photon.gathering_mode",
-			po::value<EnumOption<PhotonGatheringMode> >()->default_value(DefaultRenderSettings.photonGatheringMode()),
-		 	(std::string("Photon Gathering Mode [") + EnumOption<PhotonGatheringMode>::get_names() + "]").c_str())
-		("photon.squeeze",
-			po::value<float>()->default_value(DefaultRenderSettings.photonSqueezeWeight()))
+		("ppm.count",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.ppm().maxPhotonsPerPass()))
+		("ppm.passes",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.ppm().maxPassCount()))
+		("ppm.radius",
+			po::value<float>()->default_value(DefaultRenderSettings.ppm().maxGatherRadius()))
+		("ppm.max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.ppm().maxGatherCount()))
+		("ppm.gathering_mode",
+			po::value<EnumOption<PPMGatheringMode> >()->default_value(DefaultRenderSettings.ppm().gatheringMode()))
+		("ppm.squeeze",
+			po::value<float>()->default_value(DefaultRenderSettings.ppm().squeezeWeight()))
 	;
 
 	return all_d;
@@ -414,14 +403,13 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
 		RenderSettings.setMaxLightSamples(ini["globalillumination.light_samples"].as<PR::uint32>());
 
-		// Photon
-		RenderSettings.setMaxPhotons(ini["photon.count"].as<PR::uint32>());
-		RenderSettings.setMaxPhotonGatherRadius(ini["photon.radius"].as<float>());
-		RenderSettings.setMaxPhotonGatherCount(ini["photon.max"].as<PR::uint32>());
-		RenderSettings.setMaxPhotonDiffuseBounces(ini["photon.max_diffuse_bounces"].as<PR::uint32>());
-		RenderSettings.setMinPhotonSpecularBounces(ini["photon.min_specular_bounces"].as<PR::uint32>());
-		RenderSettings.setPhotonGatheringMode(ini["photon.gathering_mode"].as<EnumOption<PhotonGatheringMode> >());
-		RenderSettings.setPhotonSqueezeWeight(ini["photon.squeeze"].as<float>());
+		// PPM
+		RenderSettings.ppm().setMaxPhotonsPerPass(ini["ppm.count"].as<PR::uint32>());
+		RenderSettings.ppm().setMaxPassCount(ini["ppm.passes"].as<PR::uint32>());
+		RenderSettings.ppm().setMaxGatherRadius(ini["ppm.radius"].as<float>());
+		RenderSettings.ppm().setMaxGatherCount(ini["ppm.max"].as<PR::uint32>());
+		RenderSettings.ppm().setGatheringMode(ini["ppm.gathering_mode"].as<EnumOption<PPMGatheringMode> >());
+		RenderSettings.ppm().setSqueezeWeight(ini["ppm.squeeze"].as<float>());
 	}
 
 	if(!vm.count("input"))
@@ -479,9 +467,20 @@ bool ProgramSettings::parse(int argc, char** argv)
 	ImgExt = vm["img-ext"].as<std::string>();
 
 	// Thread
-	TileXCount = vm["tile_x"].as<PR::uint32>();
-	TileYCount = vm["tile_y"].as<PR::uint32>();
-	ThreadCount = vm["threads"].as<PR::uint32>();
+	if (vm.count("tile_x"))
+		TileXCount = vm["tile_x"].as<PR::uint32>();
+	else if(!vm.count("config"))
+		TileXCount = DEF_THREAD_TILE_X;
+
+	if (vm.count("tile_y"))
+		TileYCount = vm["tile_y"].as<PR::uint32>();
+	else if(!vm.count("config"))
+		TileXCount = DEF_THREAD_TILE_Y;
+
+	if (vm.count("threads"))
+		ThreadCount = vm["threads"].as<PR::uint32>();
+	else if(!vm.count("config"))
+		TileXCount = DEF_THREAD_COUNT;
 	
 	// Scene
 	if(vm.count("scene"))
@@ -506,26 +505,38 @@ bool ProgramSettings::parse(int argc, char** argv)
 	}
 
 	// Renderer
-	RenderSettings.setIncremental(vm["inc"].as<bool>());
-	RenderSettings.setIntegratorMode(vm["integrator"].as<EnumOption<IntegratorMode> >());
-	RenderSettings.setDebugMode(vm["debug"].as<EnumOption<DebugMode> >());
+	if(vm.count("inc"))
+		RenderSettings.setIncremental(vm["inc"].as<bool>());
+	if(vm.count("integrator"))
+		RenderSettings.setIntegratorMode(vm["integrator"].as<EnumOption<IntegratorMode> >());
+	if(vm.count("debug"))
+		RenderSettings.setDebugMode(vm["debug"].as<EnumOption<DebugMode> >());
 
 	// PixelSampler
-	RenderSettings.setPixelSampler(vm["ps_mode"].as<EnumOption<SamplerMode> >());
-	RenderSettings.setMaxPixelSampleCount(vm["ps_max"].as<PR::uint32>());
+	if(vm.count("ps_mode"))
+		RenderSettings.setPixelSampler(vm["ps_mode"].as<EnumOption<SamplerMode> >());
+	if(vm.count("ps_max"))
+		RenderSettings.setMaxPixelSampleCount(vm["ps_max"].as<PR::uint32>());
 
 	// Global Illumination
-	RenderSettings.setMaxDiffuseBounces(vm["gi_diff_max"].as<PR::uint32>());
-	RenderSettings.setMaxLightSamples(vm["gi_max"].as<PR::uint32>());
+	if(vm.count("gi_diff_max"))
+		RenderSettings.setMaxDiffuseBounces(vm["gi_diff_max"].as<PR::uint32>());
+	if(vm.count("gi_max"))
+		RenderSettings.setMaxLightSamples(vm["gi_max"].as<PR::uint32>());
 
-	// Photon
-	RenderSettings.setMaxPhotons(vm["p_count"].as<PR::uint32>());
-	RenderSettings.setMaxPhotonGatherRadius(vm["p_radius"].as<float>());
-	RenderSettings.setMaxPhotonGatherCount(vm["p_max"].as<PR::uint32>());
-	RenderSettings.setMaxPhotonDiffuseBounces(vm["p_diff_max"].as<PR::uint32>());
-	RenderSettings.setMinPhotonSpecularBounces(vm["p_spec_min"].as<PR::uint32>());
-	RenderSettings.setPhotonGatheringMode(vm["p_g_mode"].as<EnumOption<PhotonGatheringMode> >());
-	RenderSettings.setPhotonSqueezeWeight(vm["p_squeeze"].as<float>());
+	// PPM
+	if(vm.count("p_count"))
+		RenderSettings.ppm().setMaxPhotonsPerPass(vm["p_count"].as<PR::uint32>());
+	if(vm.count("p_passes"))
+		RenderSettings.ppm().setMaxPassCount(vm["p_passes"].as<PR::uint32>());
+	if(vm.count("p_radius"))
+		RenderSettings.ppm().setMaxGatherRadius(vm["p_radius"].as<float>());
+	if(vm.count("p_max"))
+		RenderSettings.ppm().setMaxGatherCount(vm["p_max"].as<PR::uint32>());
+	if(vm.count("p_g_mode"))
+		RenderSettings.ppm().setGatheringMode(vm["p_g_mode"].as<EnumOption<PPMGatheringMode> >());
+	if(vm.count("p_squeeze"))
+		RenderSettings.ppm().setSqueezeWeight(vm["p_squeeze"].as<float>());
 	
 	return true;
 }

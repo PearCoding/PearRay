@@ -3,6 +3,8 @@
 #include "Config.h"
 #include "PearMath.h"
 
+#include "PPMSettings.h"
+
 namespace PR
 {
 	enum SamplerMode
@@ -34,12 +36,6 @@ namespace PR
 		DM_PDF,
 		DM_Emission, 
 		DM_Validity
-	};
-
-	enum PhotonGatheringMode
-	{
-		PGM_Sphere,
-		PGM_Dome
 	};
 
 	enum IntegratorMode
@@ -96,27 +92,10 @@ namespace PR
 		inline uint32 maxLightSamples() const { return mMaxLightSamples; }
 		inline void setMaxLightSamples(uint32 v) { mMaxLightSamples = v; }
 
-		// Photon Mapping
-		inline uint32 maxPhotons() const { return mMaxPhotons; }
-		inline void setMaxPhotons(uint32 v) { mMaxPhotons = v; }
-
-		inline float maxPhotonGatherRadius() const { return mMaxPhotonGatherRadius; }
-		inline void setMaxPhotonGatherRadius(float v) { mMaxPhotonGatherRadius = v; }
-
-		inline uint32 maxPhotonGatherCount() const { return mMaxPhotonGatherCount; }
-		inline void setMaxPhotonGatherCount(uint32 v) { mMaxPhotonGatherCount = v; }
-
-		inline uint32 maxPhotonDiffuseBounces() const { return mMaxPhotonDiffuseBounces; }
-		inline void setMaxPhotonDiffuseBounces(uint32 v) { mMaxPhotonDiffuseBounces = v; }
-
-		inline uint32 minPhotonSpecularBounces() const { return mMinPhotonSpecularBounces; }
-		inline void setMinPhotonSpecularBounces(uint32 v) { mMinPhotonSpecularBounces = v; }
-
-		inline PhotonGatheringMode photonGatheringMode() const { return mPhotonGatheringMode; }
-		inline void setPhotonGatheringMode(PhotonGatheringMode v) { mPhotonGatheringMode = v; }
-
-		inline float photonSqueezeWeight() const { return mPhotonSqueezeWeight; }
-		inline void setPhotonSqueezeWeight(float v) { mPhotonSqueezeWeight = v; }
+		// PPM
+		inline const PPMSettings& ppm() const { return mPPM; }
+		inline PPMSettings& ppm() { return mPPM; }
+		
 	private:
 		bool mIncremental;
 		SamplerMode mPixelSampler;
@@ -139,13 +118,7 @@ namespace PR
 		// Direct Lightning
 		uint32 mMaxLightSamples;
 
-		// Photon Mapping
-		uint32 mMaxPhotons;
-		float mMaxPhotonGatherRadius;
-		uint32 mMaxPhotonGatherCount;
-		uint32 mMaxPhotonDiffuseBounces;
-		uint32 mMinPhotonSpecularBounces;
-		PhotonGatheringMode mPhotonGatheringMode;
-		float mPhotonSqueezeWeight;
+		// PPM
+		PPMSettings mPPM;
 	};
 }

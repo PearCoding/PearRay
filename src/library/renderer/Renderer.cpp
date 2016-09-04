@@ -2,7 +2,6 @@
 #include "RenderThread.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
-#include "RenderStatistics.h"
 #include "DisplayDriver.h"
 
 #include "camera/Camera.h"
@@ -13,6 +12,7 @@
 #include "integrator/BiDirectIntegrator.h"
 #include "integrator/DirectIntegrator.h"
 #include "integrator/DebugIntegrator.h"
+#include "integrator/PPMIntegrator.h"
 
 #include "sampler/RandomSampler.h"
 #include "sampler/StratifiedSampler.h"
@@ -79,6 +79,12 @@ namespace PR
 		mCurrentPass = 0;
 		mIncrementalCurrentSample = 0;
 
+		if(mIntegrator)
+		{
+			delete mIntegrator;
+			mIntegrator = nullptr;
+		}
+
 		for (RenderThread* thread : mThreads)
 			delete thread;
 
@@ -93,12 +99,6 @@ namespace PR
 
 			delete[] mTileMap;
 			mTileMap = nullptr;
-		}
-
-		if(mIntegrator)
-		{
-			delete mIntegrator;
-			mIntegrator = nullptr;
 		}
 
 		mLights.clear();
@@ -196,7 +196,7 @@ namespace PR
 				mIntegrator = new BiDirectIntegrator();
 				break;
 			case IM_PPM:
-				mIntegrator = nullptr;// TODO
+				mIntegrator = new PPMIntegrator();// TODO
 				break;
 			}
 		}
@@ -278,7 +278,7 @@ namespace PR
 		}
 	}
 
-	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample)
+	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
 	{
 		PR_ASSERT(mResult);
 		PR_ASSERT(context);
@@ -292,9 +292,10 @@ namespace PR
 			
 			Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 				rx, ry,//TODO
-				0.0f);//TODO
+				0.0f,
+				pass);//TODO
 
-			mResult->pushFragment(x, y, 0, sample, spec);
+			mResult->pushFragment(x, y, 0, sample + mRenderSettings.maxPixelSampleCount() * pass, spec);
 		}
 		else// Everything
 		{
@@ -310,15 +311,16 @@ namespace PR
 
 				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
-					0.0f);
+					0.0f,
+					pass);
 				newSpec += spec;
 			}
 
-			mResult->pushFragment(x, y, 0, 0, newSpec / (float)SampleCount);
+			mResult->pushFragment(x, y, 0, pass, newSpec / (float)SampleCount);
 		}
 	}
 
-	Spectrum Renderer::renderSample(RenderContext* context, float x, float y, float rx, float ry, float t)
+	Spectrum Renderer::renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass)
 	{
 		context->stats().incPixelSampleCount();
 		
@@ -326,7 +328,7 @@ namespace PR
 			2 * (y + 0.5f) / (float)mHeight - 1.0f,// To camera coordinates [-1,1]
 			rx, ry, t);
 
-		return mIntegrator->apply(ray, context);
+		return mIntegrator->apply(ray, context, pass);
 	}
 	
 	std::list<RenderTile> Renderer::currentTiles() const
@@ -363,9 +365,18 @@ namespace PR
 				collisionPoint.Ny = PM::pm_Negate(collisionPoint.Ny);
 			}
 
-			context->stats().incRayCount();
-			if(!entity)
-				context->stats().incEntityHitCount();
+			if(context)
+			{
+				context->stats().incRayCount();
+				if(!entity)
+					context->stats().incEntityHitCount();
+			}
+			else
+			{
+				mGlobalStatistics.incRayCount();
+				if(!entity)
+					mGlobalStatistics.incEntityHitCount();
+			}
 			
 			return entity;
 		}
@@ -405,7 +416,10 @@ namespace PR
 
 			appliedSpec += mBackgroundMaterial->emission()->eval(point) /** (4*PM_INV_PI_F)*/;
 
-			context->stats().incBackgroundHitCount();
+			if(context)
+				context->stats().incBackgroundHitCount();
+			else
+				mGlobalStatistics.incBackgroundHitCount();
 		}
 
 		return entity;
@@ -419,7 +433,17 @@ namespace PR
 		if(mThreadsWaitingForPass == threads())
 		{
 			if(mIntegrator->needNextPass(mCurrentPass + 1))
+			{
+				for (uint32 i = 0; i < mTileYCount; ++i)
+				{
+					for (uint32 j = 0; j < mTileXCount; ++j)
+					{
+						mTileMap[i*mTileXCount + j]->reset();
+					}
+				}
+
 				mIntegrator->onNextPass(mCurrentPass + 1);
+			}
 			
 			mCurrentPass++;
 			mThreadsWaitingForPass = 0;
@@ -429,7 +453,7 @@ namespace PR
 		}
 		else
 		{
-			mPassCondition.wait(lk, [this]{ return mThreadsWaitingForPass == threads(); });
+			mPassCondition.wait(lk, [this]{ return mThreadsWaitingForPass == 0; });
 			lk.unlock();
 		}
 	}
@@ -527,7 +551,7 @@ namespace PR
 	{
 		if(thread == nullptr)// All
 		{
-			RenderStatistics s;
+			RenderStatistics s = mGlobalStatistics;
 			for (RenderThread* thread : mThreads)
 				s += thread->context().stats();
 
@@ -537,5 +561,10 @@ namespace PR
 		{
 			return thread->context().stats();
 		}
+	}
+	
+	uint64 Renderer::maxSamples() const
+	{
+		return mIntegrator ? mIntegrator->maxSamples(this) : 0;
 	}
 }

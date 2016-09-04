@@ -19,14 +19,19 @@ namespace PR
 	{
 		M_Internal = 0,
 		M_Test,
+		M_Camera,
+		M_GPU,
+		M_Entity,
+		M_Math,
+		M_Integrator,
+		M_Material,
 		M_System,
 		M_Scene,
 		M_Volume,
-		M_Ray,
-		M_Entity,
-		M_World,
-		M_GPU,
 		M_Network,
+		M_Loader,
+		M_Shader,
+		M_Main
 	};
 
 	class LogListener;

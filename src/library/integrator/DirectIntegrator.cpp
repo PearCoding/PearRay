@@ -18,7 +18,7 @@ namespace PR
 	{
 	}
 
-	Spectrum DirectIntegrator::apply(const Ray& in, RenderContext* context)
+	Spectrum DirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
 	{
 		SamplePoint point;
 		Spectrum applied;

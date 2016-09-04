@@ -21,6 +21,8 @@ namespace PR
 			PhotonMap(uint64 max_photons);
 			~PhotonMap();
 
+			void reset();
+
 			bool isFull() const;
 			bool isEmpty() const;
 
@@ -32,7 +34,7 @@ namespace PR
 			typedef std::function<bool(const Photon*, const PhotonSphere&, float&)> CheckFunction;
 			void locate(PhotonSphere& sphere, uint64 index, CheckFunction checkFunc);
 
-			void store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir);
+			void store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir, float pdf);
 			void scalePhotonPower(float scale);
 
 			void balanceTree();// Balance the KD-tree before using
@@ -45,7 +47,7 @@ namespace PR
 			Photon* mPhotons;
 			uint64 mStoredPhotons;
 			uint64 mHalfStoredPhotons;
-			uint64 mMaxPhotons;
+			const uint64 mMaxPhotons;
 			uint64 mPreviousScaleIndex;// Contains the end index of the last scale
 
 			// Cache:

@@ -52,12 +52,11 @@ private:
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;
 
-	IProperty* mPhotonMappingGroupProp;
-	IProperty* mMaxPhotonsProp;
+	IProperty* mPPMGroupProp;
+	IProperty* mMaxPhotonsPerPassProp;
+	IProperty* mMaxPhotonPassCountProp;
 	IProperty* mMaxPhotonGatherRadiusProp;
 	IProperty* mMaxPhotonGatherCountProp;
-	IProperty* mMaxPhotonDiffuseBouncesProp;
-	IProperty* mMinPhotonSpecularBouncesProp;
 	IProperty* mPhotonGatheringModeProp;
 	IProperty* mPhotonSqueezeWeightProp;
 };

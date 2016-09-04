@@ -322,11 +322,10 @@ void MainWindow::updateView()
 {
 	if (mRenderer)
 	{
-		const quint64 maxSamples = mRenderer->renderWidth()*mRenderer->renderHeight()*mRenderer->settings().maxPixelSampleCount();
 		quint64 time = mElapsedTime.elapsed();
 
 		PR::RenderStatistics stats = mRenderer->stats();
-		const float percent = stats.pixelSampleCount() / (float)maxSamples;
+		const float percent = stats.pixelSampleCount() / (float)mRenderer->maxSamples();
 
 		quint64 timeLeft = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
 
@@ -335,7 +334,7 @@ void MainWindow::updateView()
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Samples: %1/%2 (%3%) | Rays: %4 | Entity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
 			.arg(friendlyHugeNumber(stats.pixelSampleCount()))
-			.arg(friendlyHugeNumber(maxSamples))
+			.arg(friendlyHugeNumber(mRenderer->maxSamples()))
 			.arg(100*percent, 4)
 			.arg(friendlyHugeNumber(stats.rayCount()))
 			.arg(friendlyHugeNumber(stats.entityHitCount()))
