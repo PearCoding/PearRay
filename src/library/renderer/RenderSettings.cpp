@@ -12,6 +12,8 @@ namespace PR
 		mMaxDiffuseBounces(2),
 		mMaxRayDepth(10),
 
+		mUnitScale(0.01f),// For future use
+
 		// Crop
 		mCropMaxX(1), mCropMinX(0),
 		mCropMaxY(1), mCropMinY(0),

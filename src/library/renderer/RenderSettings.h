@@ -63,6 +63,10 @@ namespace PR
 		inline IntegratorMode integratorMode() const { return mIntegratorMode; }
 		inline void setIntegratorMode(IntegratorMode mode) { mIntegratorMode = mode; }
 
+		inline float unitScale() const { return mUnitScale; }
+		inline void setUnitScale(float f) { mUnitScale = f; }
+
+		// Pixel
 		inline SamplerMode pixelSampler() const { return mPixelSampler; }
 		inline void setPixelSampler(SamplerMode mode) { mPixelSampler = mode; }
 
@@ -124,6 +128,8 @@ namespace PR
 		DebugMode mDebugMode;
 		IntegratorMode mIntegratorMode;
 
+		float mUnitScale;
+		
 		//Crop
 		float mCropMinX;
 		float mCropMaxX;

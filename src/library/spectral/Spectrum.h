@@ -77,6 +77,9 @@ namespace PR
 
 		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K)
 		static Spectrum fromBlackbodyNorm(float temp);
+
+		static Spectrum fromBlackbodyHemi(float temp);
+		static Spectrum fromBlackbodySphere(float temp);
 	private:
 		float mValues[SAMPLING_COUNT];
 		bool mEmissive;

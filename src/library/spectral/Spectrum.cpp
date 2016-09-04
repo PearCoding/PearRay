@@ -1,5 +1,7 @@
 #include "Spectrum.h"
 
+#include "PearMath.h"
+
 namespace PR
 {
 	float Spectrum::approx(float wavelength, InterpolationType interpolation) const
@@ -79,5 +81,15 @@ namespace PR
 		}
 
 		return spec;
+	}
+
+	Spectrum Spectrum::fromBlackbodyHemi(float temp)
+	{
+		return fromBlackbody(temp) * PM_2_PI_F;
+	}
+
+	Spectrum Spectrum::fromBlackbodySphere(float temp)
+	{
+		return fromBlackbody(temp) * PM_4_PI_F;
 	}
 }

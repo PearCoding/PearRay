@@ -7,7 +7,7 @@
 namespace PR
 {
 	Entity::Entity(const std::string& name, Entity* parent) :
-		mName(name), mParent(parent), mFlags(0),
+		mName(name), mParent(parent), mFlags(EF_ScaleLight),
 		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat()),
 		mReCache(true), mFrozen(false)
 	{

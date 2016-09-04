@@ -170,6 +170,7 @@ namespace PR
 		if (mRenderSettings.debugMode() != DM_None)
 		{
 			mIntegrator = new DebugIntegrator();
+			mRenderSettings.setMaxPixelSampleCount(2);// Not that much needed for debug
 		}
 		else
 		{
@@ -373,8 +374,11 @@ namespace PR
 		{
 			if(collisionPoint.Material && collisionPoint.Material->emission())
 			{
-				//const float a = entity->surfaceArea(collisionPoint.Material);
-				appliedSpec += collisionPoint.Material->emission()->eval(collisionPoint); // TODO
+				float a = 1;
+				// if(entity->flags() & EF_ScaleLight)// Scale lightning to match 
+				// 	a *= entity->surfaceArea(collisionPoint.Material);
+				
+				appliedSpec += collisionPoint.Material->emission()->eval(collisionPoint) * a;
 			}
 		}
 		else if (mBackgroundMaterial)
