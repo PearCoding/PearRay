@@ -5,7 +5,7 @@ namespace PR
 {
 	StandardCamera::StandardCamera(const std::string& name, Entity* parent) :
 		Camera(name, parent), mOrthographic(false), mWidth(1), mHeight(1),
-		mLookAt(PM::pm_Set(0,0,1,1)), mFStop(0), mApertureRadius(0.1f)
+		mFStop(0), mApertureRadius(0.1f), mLookAt(PM::pm_Set(0,0,1,1))
 	{
 	}
 

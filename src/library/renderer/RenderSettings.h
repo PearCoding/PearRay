@@ -98,22 +98,22 @@ namespace PR
 		
 	private:
 		bool mIncremental;
+		DebugMode mDebugMode;
+		IntegratorMode mIntegratorMode;
+
 		SamplerMode mPixelSampler;
 		uint32 mMaxPixelSampleCount;
 
 		uint32 mMaxDiffuseBounces;
 		uint32 mMaxRayDepth;
 
-		DebugMode mDebugMode;
-		IntegratorMode mIntegratorMode;
-
 		float mUnitScale;
 		
 		//Crop
-		float mCropMinX;
 		float mCropMaxX;
-		float mCropMinY;
+		float mCropMinX;
 		float mCropMaxY;
+		float mCropMinY;
 
 		// Direct Lightning
 		uint32 mMaxLightSamples;

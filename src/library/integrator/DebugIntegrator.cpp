@@ -111,7 +111,7 @@ namespace PR
 			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
 				context->random().getFloat(),
 				context->random().getFloat());
-			PM::vec3 dir = point.Material->sample(point, rnd, pdf);
+			point.Material->sample(point, rnd, pdf);
 
 			return std::isinf(pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(pdf, pdf, pdf);
 		}
@@ -133,7 +133,7 @@ namespace PR
 			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
 				context->random().getFloat(),
 				context->random().getFloat());
-			PM::vec3 dir = point.Material->sample(point, rnd, pdf);
+			point.Material->sample(point, rnd, pdf);
 			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?
 				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 		}

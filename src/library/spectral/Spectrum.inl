@@ -340,6 +340,16 @@ namespace PR
 		mEmissive = b;
 	}
 
+	inline Spectrum Spectrum::fromBlackbodyHemi(float temp)
+	{
+		return fromBlackbody(temp) * PM_2_PI_F;
+	}
+
+	inline Spectrum Spectrum::fromBlackbodySphere(float temp)
+	{
+		return fromBlackbody(temp) * PM_4_PI_F;
+	}
+
 	// Global
 	inline Spectrum operator + (float f, const Spectrum& spec)
 	{

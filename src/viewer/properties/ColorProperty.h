@@ -30,8 +30,8 @@ private slots:
 
 private: 
 	ColorButton* mWidget;
-	QColor mDefaultColor;
 	QColor mColor;
+	QColor mDefaultColor;
 
 	IntProperty* mRedProperty;
 	IntProperty* mGreenProperty;

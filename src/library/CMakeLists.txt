@@ -17,7 +17,6 @@ SET(PR_Entity_Src
 SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
   geometry/BoundingBox.cpp
-  geometry/Face.cpp
   geometry/Plane.cpp
   geometry/Sphere.cpp
   geometry/TriMesh.cpp)
@@ -105,6 +104,7 @@ SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Entity_Hdr
   entity/BoundaryEntity.h
   entity/Entity.h
+  entity/Entity.inl
   entity/PlaneEntity.h
   entity/MeshEntity.h
   entity/RenderEntity.h

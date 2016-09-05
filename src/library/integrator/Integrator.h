@@ -11,9 +11,11 @@ namespace PR
 	class RenderContext;
 	class RenderTile;
 	class Spectrum;
-	class Integrator
+	class PR_LIB Integrator
 	{
 	public:
+		virtual ~Integrator() {}
+
 		virtual void init(Renderer* renderer) = 0;
 
 		virtual void onStart() = 0;

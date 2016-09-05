@@ -13,6 +13,7 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(ShaderOutput<T>);
 	public:
 		ShaderOutput<T>() = default;
+		virtual ~ShaderOutput<T>() {}
 
 		virtual T eval(const SamplePoint& point) = 0;
 	};

@@ -39,7 +39,7 @@ namespace PR
 		mCamera(cam), mScene(scene),
 		mResult(nullptr), mBackgroundMaterial(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
-		mIncrementalCurrentSample(0), mTileMap(nullptr),
+		mTileMap(nullptr), mIncrementalCurrentSample(0),
 		mGPU(nullptr), mIntegrator(nullptr)
 	{
 		PR_ASSERT(cam);
@@ -293,7 +293,7 @@ namespace PR
 			Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 				rx, ry,//TODO
 				0.0f,
-				pass);//TODO
+				pass);
 
 			mResult->pushFragment(x, y, 0, sample + mRenderSettings.maxPixelSampleCount() * pass, spec);
 		}

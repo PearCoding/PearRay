@@ -12,6 +12,7 @@ namespace PR
 	{
 	public:
 		Material();
+		virtual ~Material() {}
 
 		virtual Spectrum apply(const SamplePoint& point, const PM::vec3& L) = 0;
 		

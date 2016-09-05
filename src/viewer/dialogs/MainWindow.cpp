@@ -485,7 +485,11 @@ void MainWindow::startRendering(bool clear)
 		mDisplayBuffer->clear();
 	}
 
-	mTimer.start(500);
+	if(mRenderer->gpu())
+		mTimer.start(1000);
+	else
+		mTimer.start(4000);
+	
 	mElapsedTime.restart();
 	mFrameTime.restart();
 	mRenderer->start(mDisplayBuffer, ui.systemPropertyView->getTileX(),

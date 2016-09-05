@@ -20,50 +20,50 @@ namespace PR
 		Entity(const std::string& name, Entity* parent = nullptr);
 		virtual ~Entity();
 
-		void setName(const std::string& name);
-		std::string name() const;
+		inline void setName(const std::string& name);
+		inline std::string name() const;
 
 		virtual std::string type() const;
 		virtual bool isRenderable() const;
 
-		void setParent(Entity* parent);
-		Entity* parent() const;
-		bool isParent(Entity* entity) const;
+		inline void setParent(Entity* parent);
+		inline Entity* parent() const;
+		inline bool isParent(Entity* entity) const;
 
-		void setFlags(uint8 f);
-		uint8 flags() const;
+		inline void setFlags(uint8 f);
+		inline uint8 flags() const;
 
-		void setPosition(const PM::vec3& pos);
-		PM::vec3 position() const;
-		PM::vec3 worldPosition() const;
+		inline void setPosition(const PM::vec3& pos);
+		inline PM::vec3 position() const;
+		inline PM::vec3 worldPosition() const;
 
-		void setScale(const PM::vec3& s);
-		PM::vec3 scale() const;
-		PM::vec3 worldScale() const;
+		inline void setScale(const PM::vec3& s);
+		inline PM::vec3 scale() const;
+		inline PM::vec3 worldScale() const;
 
-		void setRotation(const PM::quat& quat);
-		PM::quat rotation() const;
-		PM::quat worldRotation() const;
+		inline void setRotation(const PM::quat& quat);
+		inline PM::quat rotation() const;
+		inline PM::quat worldRotation() const;
 
-		PM::mat4 matrix() const;
-		PM::mat4 invMatrix() const;
+		inline PM::mat4 matrix() const;
+		inline PM::mat4 invMatrix() const;
 
-		PM::mat4 worldMatrix() const;
-		PM::mat4 worldInvMatrix() const;
+		inline PM::mat4 worldMatrix() const;
+		inline PM::mat4 worldInvMatrix() const;
 
 		/* Matrix to be used by directions/normals */
-		PM::mat4 directionMatrix() const;
-		PM::mat4 invDirectionMatrix() const;
-		PM::mat4 worldDirectionMatrix() const;
-		PM::mat4 worldInvDirectionMatrix() const;
+		inline PM::mat4 directionMatrix() const;
+		inline PM::mat4 invDirectionMatrix() const;
+		inline PM::mat4 worldDirectionMatrix() const;
+		inline PM::mat4 worldInvDirectionMatrix() const;
 
 		virtual std::string toString() const;
 
 		// Events:
 		/* The entity will not be changed after this. */
 		virtual void onPreRender();
-		void invalidateCache();
 
+		inline void invalidateCache();
 	private:
 		std::string mName;
 		Entity* mParent;
@@ -87,3 +87,5 @@ namespace PR
 		PM::mat mGlobalInvMatrixCache;
 	};
 }
+
+#include "Entity.inl"

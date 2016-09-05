@@ -18,32 +18,45 @@ namespace PR
 		Plane(const Plane& other);
 		Plane& operator = (const Plane& other);
 
-		PM::vec3 position() const;
-		void setPosition(const PM::vec3& pos);
+		inline PM::vec3 position() const { return mPosition; }
+		inline void setPosition(const PM::vec3& pos) { PM::pm_Copy(mPosition, pos); }
 
-		PM::vec3 xAxis() const;
+		inline PM::vec3 xAxis() const { return mXAxis; }
 		void setXAxis(const PM::vec3& xAxis);
 
-		PM::vec3 yAxis() const;
+		inline PM::vec3 yAxis() const { return mYAxis; }
 		void setYAxis(const PM::vec3& yAxis);
 
 		void setAxis(const PM::vec3& xAxis, const PM::vec3& yAxis);
 
-		PM::vec3 normal() const;
-		PM::vec3 center() const;
+		inline PM::vec3 normal() const { return mNormal; }
+		inline PM::vec3 center() const
+		{
+			return PM::pm_Add(mPosition, PM::pm_Add(PM::pm_Scale(mXAxis, 0.5f), PM::pm_Scale(mYAxis, 0.5f)));
+		}
 
-		float width() const;
-		float height() const;
-		float surfaceArea() const;
+		inline float width() const { return mWidth; }
+		inline float height() const { return mHeight; }
+		inline float surfaceArea() const { return width()*height(); }
 
-		bool isValid() const;
+		inline bool isValid() const
+		{
+			return PM::pm_MagnitudeSqr3D(mXAxis)*PM::pm_MagnitudeSqr3D(mYAxis) > 0;
+		}
+
 
 		bool contains(const PM::vec3& point) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, float& u, float& v) const;
 
 		void project(const PM::vec3& point, float& u, float& v) const;
 
-		BoundingBox toBoundingBox() const;
+		inline BoundingBox toBoundingBox() const
+		{
+			BoundingBox box = toLocalBoundingBox();
+			box.shift(mPosition);
+			return box;
+		}
+		
 		BoundingBox toLocalBoundingBox() const;
 	private:
 		PM::vec3 mPosition;

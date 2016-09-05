@@ -26,6 +26,6 @@ private slots:
 
 private: 
 	QCheckBox* mCheckBox;
-	bool mOldValue;
 	bool mValue;
+	bool mOldValue;
 };

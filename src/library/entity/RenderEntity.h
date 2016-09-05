@@ -26,7 +26,7 @@ namespace PR
 		virtual float collisionCost() const;
 
 		virtual BoundingBox localBoundingBox() const = 0;
-		BoundingBox worldBoundingBox() const;
+		inline BoundingBox worldBoundingBox() const;
 
 		// In world coords
 		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint) const = 0;
@@ -44,3 +44,5 @@ namespace PR
 		BoundingBox mWorldBoundingBox_Cache;
 	};
 }
+
+#include "RenderEntity.inl"

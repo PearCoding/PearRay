@@ -236,9 +236,9 @@ namespace PRU
 				auto i2 = i2D->getInt(); 
 				auto i3 = i3D->getInt();
 
-				if (i1 < 0 || i1 >= positionAttr.size() ||
-					i2 < 0 || i2 >= positionAttr.size() ||
-					i3 < 0 || i3 >= positionAttr.size()) 
+				if (i1 < 0 || (size_t)i1 >= positionAttr.size() ||
+					i2 < 0 || (size_t)i2 >= positionAttr.size() ||
+					i3 < 0 || (size_t)i3 >= positionAttr.size()) 
 				{
 					PR_LOGGER.log(L_Error, M_Scene, "Given index range is invalid.");
 					return nullptr;

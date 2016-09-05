@@ -23,10 +23,16 @@ namespace PR
 
 			void reset();
 
-			bool isFull() const;
-			bool isEmpty() const;
+			inline PM::vec3 photonDirection(const Photon* p)// Standard spherical coordinates
+			{
+				return PM::pm_Set(mSinTheta[p->Theta] * mCosPhi[p->Phi],
+					mSinTheta[p->Theta] * mSinPhi[p->Phi],
+					mCosPhi[p->Phi]);
+			}
 
-			PM::vec3 photonDirection(const Photon* p);
+			inline bool isFull() const { return mStoredPhotons >= mMaxPhotons; }
+			inline bool isEmpty() const { return mStoredPhotons == 0; }
+			inline uint64 storedPhotons() const { return mStoredPhotons; }
 
 			void locateSphere(PhotonSphere& sphere, uint64 index);
 			void locateDome(PhotonSphere& sphere, uint64 index);

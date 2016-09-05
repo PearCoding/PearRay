@@ -44,7 +44,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 
 	painter.drawPixmap(0, 0, mCache);
 
-	const int mx = width() / 2;
+	//const int mx = width() / 2;
 	const int mh = height() / 2;
 
 	const float xspacing = qMax<float>(SAMPLE_SPACING,
@@ -177,7 +177,7 @@ void SpectrumWidget::cacheImage()
 	painter.fillRect(rect(), Qt::white);
 	//painter.setRenderHint(QPainter::Antialiasing, true);
 
-	const int mx = width() / 2;
+	//const int mx = width() / 2;
 	const int mh = height() / 2;
 
 	const float xspacing = qMax<float>(SAMPLE_SPACING,

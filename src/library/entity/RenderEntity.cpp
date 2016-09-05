@@ -13,29 +13,6 @@ namespace PR
 	{
 	}
 
-	bool RenderEntity::isRenderable() const
-	{
-		return true;
-	}
-
-	bool RenderEntity::isCollidable() const
-	{
-		return false;
-	}
-	
-	float RenderEntity::collisionCost() const
-	{
-		return 1;
-	}
-
-	BoundingBox RenderEntity::worldBoundingBox() const
-	{
-		if(mFrozen)
-			return mWorldBoundingBox_Cache;
-		else
-			return calcWorldBoundingBox();
-	}
-
 	BoundingBox RenderEntity::calcWorldBoundingBox() const
 	{
 		const BoundingBox bx = localBoundingBox();

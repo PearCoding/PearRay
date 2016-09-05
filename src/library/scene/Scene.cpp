@@ -20,16 +20,6 @@ namespace PR
 		clear();
 	}
 
-	void Scene::setName(const std::string& name)
-	{
-		mName = name;
-	}
-
-	std::string Scene::name() const
-	{
-		return mName;
-	}
-
 	void Scene::addEntity(Entity* e)
 	{
 		PR_ASSERT(e);
@@ -62,16 +52,6 @@ namespace PR
 		}
 
 		return nullptr;
-	}
-
-	const std::list<Entity*>& Scene::entities() const
-	{
-		return mEntities;
-	}
-
-	const std::list<RenderEntity*>& Scene::renderEntities() const
-	{
-		return mRenderEntities;
 	}
 
 	void Scene::clear()

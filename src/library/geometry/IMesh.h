@@ -9,9 +9,11 @@ namespace PR
 	class Random;
 	struct SamplePoint;
 	class Sampler;
-	class PR_LIB_INLINE IMesh
+	class PR_LIB IMesh
 	{
 	public:
+		virtual ~IMesh() {}
+
 		virtual bool isLight() const = 0;
 		virtual float surfaceArea(Material* m, const PM::mat& transform) const = 0;
 

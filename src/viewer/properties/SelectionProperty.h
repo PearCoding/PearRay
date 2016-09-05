@@ -35,8 +35,8 @@ private slots:
 
 private: 
 	QComboBox* mWidget;
-	int mDefaultIndex;
 	int mIndex;
+	int mDefaultIndex;
 
 	QVector<QPair<QString, QVariant> > mData;
 };

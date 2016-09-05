@@ -50,25 +50,11 @@ namespace PR
 		void addListener(LogListener* listener);
 		void removeListener(LogListener* listener);
 
-		inline void setVerbose(bool b)
-		{
-			mVerbose = b;
-		}
+		inline void setVerbose(bool b) { mVerbose = b; }
+		inline bool isVerbose() const { return mVerbose; }
 
-		inline bool isVerbose() const
-		{
-			return mVerbose;
-		}
-
-		inline void setQuiet(bool b)
-		{
-			mQuiet = b;
-		}
-
-		inline bool isQuiet() const
-		{
-			return mQuiet;
-		}
+		inline void setQuiet(bool b) { mQuiet = b; }
+		inline bool isQuiet() const { return mQuiet; }
 
 		static inline Logger& instance()
 		{

@@ -36,23 +36,6 @@ namespace PR
 			mPreviousScaleIndex = 1;
 		}
 
-		PM::vec3 PhotonMap::photonDirection(const Photon* p)// Standard spherical coordinates
-		{
-			return PM::pm_Set(mSinTheta[p->Theta] * mCosPhi[p->Phi],
-				mSinTheta[p->Theta] * mSinPhi[p->Phi],
-				mCosPhi[p->Phi]);
-		}
-
-		bool PhotonMap::isFull() const
-		{
-			return mStoredPhotons >= mMaxPhotons;
-		}
-
-		bool PhotonMap::isEmpty() const
-		{
-			return mStoredPhotons == 0;
-		}
-
 		void PhotonMap::locateSphere(PhotonSphere& sphere, uint64 index)
 		{
 			locate(sphere, index, [](const Photon* pht, const PhotonSphere& sph, float& dist2)

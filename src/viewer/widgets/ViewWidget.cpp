@@ -222,7 +222,7 @@ void ViewWidget::mouseReleaseEvent(QMouseEvent * event)
 			else
 				zoom = oldSize.height() / (float)newSize.height();
 
-			//mZoom = qMin(qMax(zoom*mZoom, 0.001f), 50.0f);
+			mZoom = qMin(qMax(zoom*mZoom, 0.001f), 50.0f);
 
 			mPanX = pan.x();
 			mPanY = pan.y();

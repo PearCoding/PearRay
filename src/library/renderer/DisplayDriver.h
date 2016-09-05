@@ -8,6 +8,8 @@ namespace PR
 	class PR_LIB_INLINE IDisplayDriver
 	{
 	public:
+		virtual ~IDisplayDriver() {}
+		
 		virtual void init(Renderer* renderer) = 0;
 		virtual void deinit() = 0;
 

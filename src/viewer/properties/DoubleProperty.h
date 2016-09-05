@@ -36,8 +36,8 @@ private slots:
 
 private: 
 	QDoubleSpinBox* mSpinBox;
-	double mOldValue;
 	double mValue;
+	double mOldValue;
 
 	double mMaxValue;
 	double mMinValue;

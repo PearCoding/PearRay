@@ -143,7 +143,7 @@ void EntityDetailsView::addRenderEntity()
 {
 	Q_ASSERT(mEntity);
 
-	PR::RenderEntity* e = (PR::RenderEntity*)mEntity;
+	//PR::RenderEntity* e = (PR::RenderEntity*)mEntity;
 	//Nothing
 }
 

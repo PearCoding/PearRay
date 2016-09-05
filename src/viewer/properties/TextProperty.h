@@ -26,6 +26,6 @@ private slots:
 
 private: 
 	QLineEdit* mWidget;
-	QString mDefaultText;
 	QString mText;
+	QString mDefaultText;
 };

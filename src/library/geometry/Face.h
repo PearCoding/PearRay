@@ -9,8 +9,13 @@ namespace PR
 	class PR_LIB Face
 	{
 	public:
-		Face();
-		~Face();
+		Face() :
+			V{PM::pm_Set(0, 0, 0, 1), PM::pm_Set(0, 0, 0, 1), PM::pm_Set(0, 0, 0, 1)},
+			N{PM::pm_Zero(), PM::pm_Zero(), PM::pm_Zero()},
+			UV{PM::pm_Zero(), PM::pm_Zero(), PM::pm_Zero()},
+			Mat(nullptr)
+		{
+		}
 
 		PM::vec3 V[3];
 		PM::vec3 N[3];

@@ -52,7 +52,7 @@ QWidget(parent)
 	mIntegratorProp = new SelectionProperty(tr("Integrator"), PR::IM_BiDirect);
 	((SelectionProperty*)mIntegratorProp)->addItem(tr("Direct"), PR::IM_Direct);
 	((SelectionProperty*)mIntegratorProp)->addItem(tr("BiDirect"), PR::IM_BiDirect);
-	//((SelectionProperty*)mIntegratorProp)->addItem(tr("Progressive Photon Mapping"), PR::IM_PPM);
+	((SelectionProperty*)mIntegratorProp)->addItem(tr("Progressive Photon Mapping"), PR::IM_PPM);
 	mRendererGroupProp->addChild(mIntegratorProp);
 
 	mDebugVisualizationProp = new SelectionProperty(tr("Debug"), PR::DM_None);
@@ -86,6 +86,7 @@ QWidget(parent)
 	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
 	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
 	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
+	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
 	mPixelSamplerGroupProp->addChild(mPixelSamplerProp);
 
 	mPixelSamplesProp = new IntProperty(tr("Max Samples"), 8, 1, 1024);

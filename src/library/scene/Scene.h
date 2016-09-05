@@ -18,15 +18,15 @@ namespace PR
 		explicit Scene(const std::string& name);
 		virtual ~Scene();
 
-		void setName(const std::string& name);
-		std::string name() const;
+		inline void setName(const std::string& name) { mName = name; }
+		inline std::string name() const { return mName; }
 
-		const std::list<RenderEntity*>& renderEntities() const;
+		inline const std::list<RenderEntity*>& renderEntities() const { return mRenderEntities; }
 
 		void addEntity(Entity* e);
 		void removeEntity(Entity* e);
 		Entity* getEntity(const std::string& name, const std::string& type) const;
-		const std::list<Entity*>& entities() const;
+		inline const std::list<Entity*>& entities() const { return mEntities; }
 		
 		void clear();
 

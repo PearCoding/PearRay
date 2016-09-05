@@ -18,11 +18,11 @@ namespace PR
 
 	float MultiJitteredSampler::generate1D(uint32 index)
 	{
-		uint32 p = mRandom.get32();
-		uint32 s = permute(index % mSamples, mSamples, p * 0xa399d265);
+		//uint32 s = permute(index % mSamples, mSamples, p * 0xa399d265);
 
 #ifndef PR_MJS_USE_RANDOM
-		float j = randfloat(index, p * 0x711ad6a5);
+		uint32 p = mRandom.get32();
+		float j = randfloat(index % mSamples, p * 0x711ad6a5);
 #else
 		float j = mRandom.getFloat();
 #endif

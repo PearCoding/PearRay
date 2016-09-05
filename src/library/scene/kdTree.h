@@ -113,6 +113,11 @@ namespace PR
 			return mDepth;
 		}
 
+		inline bool isEmpty() const
+		{
+			return mRoot == nullptr || mDepth == 0;
+		}
+
 		inline const BoundingBox& boundingBox() const
 		{
 			PR_ASSERT(mRoot);
@@ -142,18 +147,16 @@ namespace PR
 			std::vector<Event> events;
 			events.reserve(entities.size() * 2);
 			for (auto obj : primitives)
-			{
 				generateEvents(obj, V, events);
-			}
 			std::sort(events.begin(), events.end());
 
 			mRoot = build(events, primitives, V, 0, -1, 0);
 			PR_LOGGER.logf(L_Info, M_Scene, "-> KD-tree has %d depth.", mDepth);
+			if(isEmpty())
+				PR_LOGGER.log(L_Warning, M_Scene, "-> KD-tree is empty!");
 
 			for (auto obj : primitivesCopy)
-			{
 				delete obj;
-			}
 		}
 
 		inline T* checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t, T* ignore = nullptr) const {

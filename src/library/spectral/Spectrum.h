@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "PearMath.h"
 
 namespace PR
 {
@@ -13,10 +14,10 @@ namespace PR
 	class PR_LIB Spectrum
 	{
 	public:
-		static constexpr uint32 WAVELENGTH_START = 360;// nm [old 380]
-		static constexpr uint32 WAVELENGTH_END = 800;// nm [old 780]
+		static constexpr uint32 WAVELENGTH_START = 360;// nm
+		static constexpr uint32 WAVELENGTH_END = 800;// nm 
 		static constexpr uint32 WAVELENGTH_AREA_SIZE = (WAVELENGTH_END - WAVELENGTH_START);
-		static constexpr uint32 WAVELENGTH_STEP = 5;// nm [old 10]
+		static constexpr uint32 WAVELENGTH_STEP = 5;// nm
 		static constexpr uint32 SAMPLING_COUNT = WAVELENGTH_AREA_SIZE / WAVELENGTH_STEP + 1;
 		
 		inline Spectrum();
@@ -78,8 +79,8 @@ namespace PR
 		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K)
 		static Spectrum fromBlackbodyNorm(float temp);
 
-		static Spectrum fromBlackbodyHemi(float temp);
-		static Spectrum fromBlackbodySphere(float temp);
+		inline static Spectrum fromBlackbodyHemi(float temp);
+		inline static Spectrum fromBlackbodySphere(float temp);
 	private:
 		float mValues[SAMPLING_COUNT];
 		bool mEmissive;

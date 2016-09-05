@@ -31,47 +31,6 @@ namespace PR
 		return *this;
 	}
 
-	PM::vec3 Sphere::position() const
-	{
-		return mPosition;
-	}
-
-	void Sphere::setPosition(const PM::vec3& pos)
-	{
-		mPosition = pos;
-	}
-
-	float Sphere::radius() const
-	{
-		return mRadius;
-	}
-
-	void Sphere::setRadius(float f)
-	{
-		PR_ASSERT(f > 0);
-		mRadius = f;
-	}
-
-	float Sphere::volume() const
-	{
-		return (PM_4_PI_F/3)*mRadius*mRadius*mRadius;
-	}
-
-	float Sphere::surfaceArea() const
-	{
-		return PM_4_PI_F*mRadius*mRadius;
-	}
-
-	bool Sphere::isValid() const
-	{
-		return mRadius > 0;
-	}
-
-	bool Sphere::contains(const PM::vec3& point) const
-	{
-		return PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, point)) <= mRadius*mRadius;
-	}
-
 	bool Sphere::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
 	{
 		const PM::vec3 L = PM::pm_Subtract(mPosition, ray.startPosition()); // C - O
@@ -128,19 +87,5 @@ namespace PR
 		float f = PM::pm_Magnitude3D(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
 		if (f > mRadius)
 			mRadius = f;
-	}
-
-	Sphere Sphere::putted(const PM::vec3& point) const
-	{
-		Sphere tmp = *this;
-		tmp.put(point);
-		return tmp;
-	}
-
-	Sphere Sphere::combined(const Sphere& other) const
-	{
-		Sphere tmp = *this;
-		tmp.combine(other);
-		return tmp;
 	}
 }

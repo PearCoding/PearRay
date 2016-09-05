@@ -154,7 +154,7 @@ namespace PR
 					const Photon::Photon* photon = sphere->Index[i];
 					const PM::vec3 dir = mPhotonMap->photonDirection(photon);
 
-					const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
+					//const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
 
 					const float d = std::sqrt(sphere->Distances2[i]/sphere->Distances2[0]);
 					const float w = 1 - d / K;
@@ -190,7 +190,9 @@ namespace PR
 		if(pass > 0)
 			mCurrentPassRadius2 *= (pass + A) / (float)(pass + 1);
 
+#ifdef PR_DEBUG
 		PR_LOGGER.logf(L_Debug, M_Integrator, "  -> Radius2: %f", mCurrentPassRadius2);
+#endif
 
 		std::list<RenderEntity*> lightList = mRenderer->lights();
 		// Sort list from biggest to lowest -> Could be cached!
@@ -281,9 +283,24 @@ namespace PR
 
 			if (photonsShoot != 0)
 				mPhotonMap->scalePhotonPower(1.0f/photonsShoot);
+
+#ifdef PR_DEBUG
+			PR_LOGGER.logf(L_Debug, M_Integrator, "    -> Per Light Samples: %llu / %llu [%3.2f%]",
+				sampleSize, mRenderer->settings().ppm().maxPhotonsPerPass(),
+				100 * sampleSize / (double)mRenderer->settings().ppm().maxPhotonsPerPass());
+			PR_LOGGER.logf(L_Debug, M_Integrator, "      -> Shoot: %llu / %llu [%3.2f%]",
+				photonsShoot, mRenderer->settings().ppm().maxPhotonsPerPass(),
+				100 * photonsShoot / (double)mRenderer->settings().ppm().maxPhotonsPerPass());
+#endif
 		}
 
 		mPhotonMap->balanceTree();
+		
+#ifdef PR_DEBUG
+		PR_LOGGER.logf(L_Debug, M_Integrator, "  -> Photons: %llu / %llu [%3.2f%]",
+			mPhotonMap->storedPhotons(), mRenderer->settings().ppm().maxPhotonsPerPass(),
+			100 * mPhotonMap->storedPhotons() / (double)mRenderer->settings().ppm().maxPhotonsPerPass());
+#endif
 	}
 
 	void PPMIntegrator::onEnd()

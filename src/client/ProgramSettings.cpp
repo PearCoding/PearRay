@@ -20,11 +20,12 @@ namespace bf = boost::filesystem;
 template< typename T, typename charT = char >
 class fixed_tokens_typed_value : public po::typed_value< T, charT >
 {
-   	unsigned mMin, mMax;
    	typedef po::typed_value< T, charT > base;
+
+   	unsigned mMin, mMax;
 public:
    	fixed_tokens_typed_value(T * t, unsigned min, unsigned max ) :
-	   mMin(min), mMax(max), base( t )
+	   base( t ), mMin(min), mMax(max)
 	{
     	base::multitoken();
    	}
@@ -35,7 +36,7 @@ public:
        	return this;
    	}
 
-   	unsigned min_tokens() const { return mMin; }
+   	inline unsigned min_tokens() const { return mMin; }
 
    	virtual fixed_tokens_typed_value* max_tokens( unsigned max )
 	{
@@ -43,9 +44,9 @@ public:
        	return this;
    	}
 
-  	unsigned max_tokens() const { return mMax; }
+  	inline unsigned max_tokens() const { return mMax; }
 
-   	base* zero_tokens() {
+    inline base* zero_tokens() {
        	mMin = mMax = 0;
        	base::zero_tokens();
        	return *this;

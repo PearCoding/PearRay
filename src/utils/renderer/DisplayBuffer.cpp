@@ -15,7 +15,7 @@ namespace PRU
 	using namespace PR;
 
 	DisplayBuffer::DisplayBuffer() :
-		mData(nullptr), mRenderer(nullptr), mSaveData(nullptr)
+		mData(nullptr), mSaveData(nullptr), mRenderer(nullptr)
 	{
 	}
 

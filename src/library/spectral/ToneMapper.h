@@ -43,40 +43,16 @@ namespace PR
 		void exec(const float* in, void* out) const;
 
 		// Not thread safe!
-		inline ToneColorMode colorMode() const
-		{
-			return mColorMode;
-		}
+		inline ToneColorMode colorMode() const { return mColorMode; }
+		inline void setColorMode(ToneColorMode mode) { mColorMode = mode; }
 
-		inline void setColorMode(ToneColorMode mode)
-		{
-			mColorMode = mode;
-		}
+		inline ToneGammaMode gammaMode() const { return mGammaMode; }
+		inline void setGammaMode(ToneGammaMode mode) { mGammaMode = mode; }
 
-		inline ToneGammaMode gammaMode() const
-		{
-			return mGammaMode;
-		}
+		inline ToneMapperMode mapperMode() const { return mMapperMode; }
+		inline void setMapperMode(ToneMapperMode mode) { mMapperMode = mode; }
 
-		inline void setGammaMode(ToneGammaMode mode)
-		{
-			mGammaMode = mode;
-		}
-
-		inline ToneMapperMode mapperMode() const
-		{
-			return mMapperMode;
-		}
-
-		inline void setMapperMode(ToneMapperMode mode)
-		{
-			mMapperMode = mode;
-		}
-
-		inline bool isByteMode() const
-		{
-			return mByte;
-		}
+		inline bool isByteMode() const { return mByte; }
 
 	private:
 		ToneColorMode mColorMode;

@@ -56,7 +56,7 @@ namespace PR
 		class Material* Material;
 
 		// C++11 POD constructor
-		SamplePoint() noexcept :
+		inline SamplePoint() noexcept :
 			P(PM::pm_Zero()),
 			dPdX(PM::pm_Zero()),
 			dPdY(PM::pm_Zero()),

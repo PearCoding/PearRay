@@ -63,31 +63,11 @@ namespace PR
 		return *this;
 	}
 
-	PM::vec3 Plane::position() const
-	{
-		return mPosition;
-	}
-
-	void Plane::setPosition(const PM::vec3& pos)
-	{
-		PM::pm_Copy(mPosition, pos);
-	}
-
-	PM::vec3 Plane::xAxis() const
-	{
-		return mXAxis;
-	}
-
 	void Plane::setXAxis(const PM::vec3& v)
 	{
 		PM::pm_Copy(mXAxis, v);
 		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
 		mWidth = PM::pm_Magnitude3D(mXAxis);
-	}
-
-	PM::vec3 Plane::yAxis() const
-	{
-		return mYAxis;
 	}
 
 	void Plane::setYAxis(const PM::vec3& v)
@@ -104,43 +84,6 @@ namespace PR
 		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
 		mWidth = PM::pm_Magnitude3D(mXAxis);
 		mHeight = PM::pm_Magnitude3D(mYAxis);
-	}
-
-	PM::vec3 Plane::normal() const
-	{
-		return mNormal;
-	}
-
-	PM::vec3 Plane::center() const
-	{
-		return PM::pm_Add(mPosition, PM::pm_Add(PM::pm_Scale(mXAxis, 0.5f), PM::pm_Scale(mYAxis, 0.5f)));
-	}
-
-	float Plane::width() const
-	{
-		return mWidth;
-	}
-
-	float Plane::height() const
-	{
-		return mHeight;
-	}
-
-	float Plane::surfaceArea() const
-	{
-		return width()*height();
-	}
-
-	bool Plane::isValid() const
-	{
-		return PM::pm_MagnitudeSqr3D(mXAxis)*PM::pm_MagnitudeSqr3D(mYAxis) > 0;
-	}
-
-	BoundingBox Plane::toBoundingBox() const
-	{
-		BoundingBox box = toLocalBoundingBox();
-		box.shift(mPosition);
-		return box;
 	}
 
 	BoundingBox Plane::toLocalBoundingBox() const

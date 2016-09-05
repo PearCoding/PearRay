@@ -34,8 +34,8 @@ private slots:
 
 private: 
 	QSpinBox* mSpinBox;
-	int mOldValue;
 	int mValue;
+	int mOldValue;
 
 	int mMaxValue;
 	int mMinValue;

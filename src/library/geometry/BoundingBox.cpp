@@ -58,72 +58,6 @@ namespace PR
 		return *this;
 	}
 
-	PM::vec3 BoundingBox::upperBound() const
-	{
-		return mUpperBound;
-	}
-
-	void BoundingBox::setUpperBound(const PM::vec3& bound)
-	{
-		PM::pm_Copy(mUpperBound, bound);
-	}
-
-	PM::vec3 BoundingBox::lowerBound() const
-	{
-		return mLowerBound;
-	}
-
-	void BoundingBox::setLowerBound(const PM::vec3& bound)
-	{
-		PM::pm_Copy(mLowerBound, bound);
-	}
-
-	PM::vec3 BoundingBox::center() const
-	{
-		return PM::pm_Add(mLowerBound, PM::pm_Scale(PM::pm_Subtract(mUpperBound, mLowerBound), 0.5f));
-	}
-
-	float BoundingBox::width() const
-	{
-		return std::abs(PM::pm_GetX(mUpperBound) - PM::pm_GetX(mLowerBound));
-	}
-
-	float BoundingBox::height() const
-	{
-		return std::abs(PM::pm_GetY(mUpperBound) - PM::pm_GetY(mLowerBound));
-	}
-
-	float BoundingBox::depth() const
-	{
-		return std::abs(PM::pm_GetZ(mUpperBound) - PM::pm_GetZ(mLowerBound));
-	}
-
-	float BoundingBox::volume() const
-	{
-		return width()*height()*depth();
-	}
-
-	float BoundingBox::surfaceArea() const
-	{
-		return 2 * (width()*height() + width()*depth() + height()*depth());
-	}
-
-	bool BoundingBox::isValid() const
-	{
-		return surfaceArea() > PM_EPSILON;
-	}
-
-	bool BoundingBox::isPlanar() const
-	{
-		return width() <= PM_EPSILON || height() <= PM_EPSILON || depth() <= PM_EPSILON;
-	}
-
-	bool BoundingBox::contains(const PM::vec3& point) const
-	{
-		return PM::pm_IsLessOrEqual(mUpperBound, point) &&
-			PM::pm_IsGreaterOrEqual(mLowerBound, point);
-	}
-
 	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
 	{
 		float tmin = -std::numeric_limits<float>::max();
@@ -246,33 +180,6 @@ namespace PR
 
 		put(other.upperBound());
 		put(other.lowerBound());
-	}
-
-	void BoundingBox::shift(const PM::vec3& point)
-	{
-		mLowerBound = PM::pm_Add(mLowerBound, point);
-		mUpperBound = PM::pm_Add(mUpperBound, point);
-	}
-
-	BoundingBox BoundingBox::putted(const PM::vec3& point) const
-	{
-		BoundingBox tmp = *this;
-		tmp.put(point);
-		return tmp;
-	}
-
-	BoundingBox BoundingBox::combined(const BoundingBox& other) const
-	{
-		BoundingBox tmp = *this;
-		tmp.combine(other);
-		return tmp;
-	}
-
-	BoundingBox BoundingBox::shifted(const PM::vec3& point) const
-	{
-		BoundingBox tmp = *this;
-		tmp.shift(point);
-		return tmp;
 	}
 
 	Plane BoundingBox::getFace(FaceSide side) const
