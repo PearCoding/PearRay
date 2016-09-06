@@ -5,6 +5,8 @@
 
 #include <utility>
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	BoundingBox::BoundingBox() :
@@ -16,6 +18,8 @@ namespace PR
 	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound) :
 		mUpperBound(upperbound), mLowerBound(lowerbound)
 	{
+		PR_GUARD_PROFILE();
+
 		for (int i = 0; i < 3; ++i)
 		{
 			float ui = PM::pm_GetIndex(mUpperBound, i);
@@ -60,6 +64,8 @@ namespace PR
 
 	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
 	{
+		PR_GUARD_PROFILE();
+
 		float tmin = -std::numeric_limits<float>::max();
 		float tmax = std::numeric_limits<float>::max();
 
@@ -110,6 +116,8 @@ namespace PR
 
 	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, FaceSide& side) const
 	{
+		PR_GUARD_PROFILE();
+
 		if (!intersects(ray, collisionPoint, t))
 			return false;
 
@@ -157,6 +165,8 @@ namespace PR
 
 	void BoundingBox::put(const PM::vec3& point)
 	{
+		PR_GUARD_PROFILE();
+
 		for (int i = 0; i < 3; ++i)
 		{
 			if (PM::pm_GetIndex(point, i) > PM::pm_GetIndex(mUpperBound, i))
@@ -184,6 +194,8 @@ namespace PR
 
 	Plane BoundingBox::getFace(FaceSide side) const
 	{
+		PR_GUARD_PROFILE();
+		
 		PM::vec3 diff = PM::pm_Subtract(mUpperBound, mLowerBound);
 
 		switch (side)

@@ -8,6 +8,8 @@
 #include "math/Projection.h"
 #include "material/Material.h"
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	BoundaryEntity::BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent) :
@@ -31,6 +33,8 @@ namespace PR
 
 	float BoundaryEntity::surfaceArea(Material* m) const
 	{
+		PR_GUARD_PROFILE();
+
 		if(!m || m == mMaterial)
 		{
 			if(flags() & EF_LocalArea)
@@ -76,6 +80,8 @@ namespace PR
 
 	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
+		PR_GUARD_PROFILE();
+
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
 
 		Ray local = ray;
@@ -104,6 +110,8 @@ namespace PR
 
 	SamplePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
+		PR_GUARD_PROFILE();
+
 		auto ret = sampler.generate3D(sample);
 
 		BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(PM::pm_GetX(ret), 0, 5);// Get randomly a face

@@ -10,6 +10,8 @@
 
 #include "Logger.h"
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	MeshEntity::MeshEntity(const std::string& name, Entity* parent) :
@@ -64,6 +66,8 @@ namespace PR
 
 	bool MeshEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
+		PR_GUARD_PROFILE();
+
 		// Local space
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
@@ -85,6 +89,8 @@ namespace PR
 
 	SamplePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
+		PR_GUARD_PROFILE();
+
 		SamplePoint point = mMesh->getRandomFacePoint(sampler, sample);
 		point.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), point.Ng));
 		point.P = PM::pm_Transform(worldMatrix(), point.P);

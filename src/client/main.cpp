@@ -18,6 +18,11 @@
 
 #include "ProgramSettings.h"
 
+#ifdef PR_PROFILE
+# include "performance/PerformanceWriter.h"
+#endif
+#include "performance/Performance.h"
+
 #include <boost/filesystem.hpp>
 
 #include <iostream>
@@ -29,6 +34,7 @@ namespace sc = std::chrono;
 void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
 	const PR::ToneMapper& toneMapper, const bf::path& directoryPath, const std::string& ext)
 {
+	PR_GUARD_PROFILE();
 	switch(displayMode)
 	{
 	case DDO_Image:
@@ -72,8 +78,10 @@ int main(int argc, char** argv)
 	if(!options.IsQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) "  << PR_VENDOR_STRING << std::endl;
 
+	PR_BEGIN_PROFILE_ID(0);
 	PRU::SceneLoader loader;
 	PRU::Environment* env = loader.loadFromFile(options.InputFile);
+	PR_END_PROFILE_ID(0);
 
 	if(!env)
 	{
@@ -84,6 +92,7 @@ int main(int argc, char** argv)
 	} 
 
 	// Setup renderer
+	PR_BEGIN_PROFILE_ID(1);
 	PR::Renderer* renderer = new PR::Renderer(
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
@@ -141,9 +150,16 @@ int main(int argc, char** argv)
 		break;
 #endif
 	}
+	PR_END_PROFILE_ID(1);
 
+	PR_BEGIN_PROFILE_ID(2);
 	env->scene()->onPreRender();// Freeze entities
+	PR_END_PROFILE_ID(2);
+
+	PR_BEGIN_PROFILE_ID(3);
 	env->scene()->buildTree();
+	PR_END_PROFILE_ID(3);
+
 	if(options.ShowProgress)
 		std::cout << "preprocess" << std::endl;
 
@@ -169,8 +185,8 @@ int main(int argc, char** argv)
 		}
 #endif
 
-  		auto span_prog = sc::duration_cast<sc::milliseconds>(end - start_prog);
-		if(options.ShowProgress && span_prog.count() > 1000)
+  		auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
+		if(options.ShowProgress > 0 && span_prog.count() > options.ShowProgress)
 		{
 			PR::RenderStatistics stats = renderer->stats();
 			float percent = 100 * stats.pixelSampleCount() / (float)maxSamples;
@@ -221,6 +237,11 @@ int main(int argc, char** argv)
 #ifdef PR_WITH_NETWORK
 	if(io_service)
 		delete io_service;
+#endif
+
+#ifdef PR_PROFILE
+	std::string prof_file = options.OutputDir + "/profile.out";
+	PR::PerformanceWriter::write(prof_file);
 #endif
 
 	return 0;

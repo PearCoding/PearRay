@@ -131,6 +131,8 @@
 # define PR_IMPORT
 #endif
 
+#define PR_FUNCTION_NAME __func__
+
 #if defined(PR_LIB_BUILD)
 # define PR_LIB PR_EXPORT
 #else

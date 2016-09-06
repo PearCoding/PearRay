@@ -127,9 +127,6 @@ namespace PRT
 	_test = _testcase.begin(name)
 
 
-#define PR_FUNCTION_NAME __func__
-
-
 #define PR_CHECK_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \

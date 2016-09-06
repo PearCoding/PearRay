@@ -7,7 +7,6 @@
 
 #include <list>
 #include <vector>
-#include <functional>
 #include <algorithm>
 #include <iterator>
 
@@ -94,13 +93,18 @@ namespace PR
 			BoundingBox box;
 		};
 	public:
-		typedef std::function<BoundingBox(T*)> GetBoundingBoxCallback;
-		typedef std::function<bool(const Ray&, SamplePoint&, float&, T*, T*)> CheckCollisionCallback;
-		typedef std::function<float(T*)> CostCallback;
+		typedef BoundingBox (*GetBoundingBoxCallback)(T*);
+		typedef bool (*CheckCollisionCallback)(const Ray&, SamplePoint&, float&, T*, T*);
+		typedef float (*CostCallback)(T*);
 
-		inline kdTree(GetBoundingBoxCallback getBoundingBox, CheckCollisionCallback checkCollision, CostCallback cost) :
+		inline kdTree(GetBoundingBoxCallback getBoundingBox,
+			CheckCollisionCallback checkCollision,
+			CostCallback cost) :
 			mRoot(nullptr), mGetBoundingBox(getBoundingBox), mCheckCollision(checkCollision), mCost(cost), mDepth(0)
 		{
+			PR_ASSERT(getBoundingBox);
+			PR_ASSERT(checkCollision);
+			PR_ASSERT(cost);
 		}
 
 		virtual ~kdTree()

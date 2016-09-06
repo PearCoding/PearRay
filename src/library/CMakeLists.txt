@@ -45,6 +45,9 @@ SET(PR_Material_Src
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Math_Src ) 
 SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
+SET(PR_Performance_Src
+  performance/PerformanceWriter.cpp)
+SOURCE_GROUP("Source Files\\Performance" FILES ${PR_Performance_Src})
 SET(PR_Photon_Src
   photon/PhotonMap.cpp)
 SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
@@ -88,7 +91,8 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
-  ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src}
+  ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src} 
+  ${PR_Performance_Src}
 )
 
 SET(PR_Main_Hdr
@@ -148,6 +152,11 @@ SET(PR_Math_Hdr
   math/Projection.h
   math/Reflection.h)
 SOURCE_GROUP("Header Files\\Math" FILES ${PR_Math_Hdr})
+SET(PR_Performance_Hdr
+  performance/Performance.h
+  performance/Performance.inl
+  performance/PerformanceWriter.h)
+SOURCE_GROUP("Header Files\\Performance" FILES ${PR_Performance_Hdr})
 SET(PR_Photon_Hdr
   photon/Photon.h
   photon/PhotonMap.h)
@@ -200,6 +209,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_GPU_Hdr}
+  ${PR_Performance_Hdr}
 )
 
 SET(PR_CL

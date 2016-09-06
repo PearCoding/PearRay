@@ -147,7 +147,8 @@ po::options_description setup_cmd_options()
 		("help,h", "Produce this help message")
 		("quiet,q", "Do not print messages into console")
 		("verbose,v", "Print detailed information into log file (and perhabs into console)")
-		("progress,p", "Show progress (regardless if quiet or not)")
+		("progress,p", po::value<PR::uint32>()->implicit_value(1),
+			"Show progress (regardless if quiet or not)")
 
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>()->default_value("./scene"), "Output directory")
@@ -455,7 +456,10 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 	IsVerbose = (vm.count("verbose") != 0);
 	IsQuiet = (vm.count("quiet") != 0);
-	ShowProgress = (vm.count("progress") != 0);
+	if(vm.count("progress"))
+		ShowProgress = vm["progress"].as<PR::uint32>();
+	else
+		ShowProgress = 0;
 
 	DDO = vm["display"].as<EnumOption<DisplayDriverOption> >();
 

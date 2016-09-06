@@ -17,7 +17,7 @@ public:
 
 	bool IsVerbose;
 	bool IsQuiet;
-	bool ShowProgress;
+	PR::uint32 ShowProgress;
 
 	DisplayDriverOption DDO;
 

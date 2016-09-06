@@ -9,6 +9,8 @@
 #include "sampler/Sampler.h"
 #include "math/Projection.h"
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	PlaneEntity::PlaneEntity(const std::string& name, const Plane& plane, Entity* parent) :
@@ -75,6 +77,8 @@ namespace PR
 
 	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
+		PR_GUARD_PROFILE();
+
 		PM::vec3 pos;
 		float u, v;
 

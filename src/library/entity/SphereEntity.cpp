@@ -7,6 +7,8 @@
 #include "sampler/Sampler.h"
 #include "material/Material.h"
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
@@ -31,6 +33,8 @@ namespace PR
 	constexpr float P = 1.6075f;
 	float SphereEntity::surfaceArea(Material* m) const
 	{
+		PR_GUARD_PROFILE();
+
 		if(!m || m == mMaterial)// TODO: Scale?
 		{			
 			const auto s = flags() & EF_LocalArea ? scale() : worldScale();
@@ -85,6 +89,8 @@ namespace PR
 
 	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
 	{
+		PR_GUARD_PROFILE();
+
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(worldInvDirectionMatrix(), ray.direction())));
@@ -109,6 +115,8 @@ namespace PR
 
 	SamplePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
 	{
+		PR_GUARD_PROFILE();
+		
 		SamplePoint p;
 
 		PM::vec2 s = sampler.generate2D(sample);

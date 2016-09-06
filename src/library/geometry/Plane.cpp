@@ -2,6 +2,8 @@
 
 #include "ray/Ray.h"
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	#define PR_PLANE_INTERSECT_EPSILON (PM_EPSILON)
@@ -88,6 +90,8 @@ namespace PR
 
 	BoundingBox Plane::toLocalBoundingBox() const
 	{
+		PR_GUARD_PROFILE();
+
 		BoundingBox box(PM::pm_SetW(PM::pm_Add(mXAxis, mYAxis),1), PM::pm_Set(0, 0, 0, 1));
 		PM::vec3 diff = PM::pm_Subtract(mXAxis, mYAxis);
 
@@ -130,6 +134,8 @@ namespace PR
 
 	bool Plane::contains(const PM::vec3& point) const
 	{
+		PR_GUARD_PROFILE();
+
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
 		if (PM::pm_Dot3D(p, mNormal) <= std::numeric_limits<float>::epsilon())// Is on the plane
 		{			
@@ -144,6 +150,8 @@ namespace PR
 
 	bool Plane::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, float& u, float& v) const
 	{
+		PR_GUARD_PROFILE();
+
 		float ln = PM::pm_Dot3D(ray.direction(), mNormal);
 		float pn = PM::pm_Dot3D(PM::pm_Subtract(mPosition, ray.startPosition()), mNormal);
 
@@ -179,6 +187,8 @@ namespace PR
 
 	void Plane::project(const PM::vec3& point, float& u, float& v) const
 	{
+		PR_GUARD_PROFILE();
+		
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
 		u = PM::pm_Dot3D(mXAxis, p) / mWidth2;
 		v = PM::pm_Dot3D(mYAxis, p) / mHeight2;

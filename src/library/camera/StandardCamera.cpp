@@ -1,6 +1,8 @@
 #include "StandardCamera.h"
 #include "ray/Ray.h"
 
+#include "performance/Performance.h"
+
 namespace PR
 {
 	StandardCamera::StandardCamera(const std::string& name, Entity* parent) :
@@ -92,6 +94,8 @@ namespace PR
 
 	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t) const
 	{
+		PR_GUARD_PROFILE();
+
 		float cx = -nx;
 		float cy = -ny;
 
@@ -128,6 +132,8 @@ namespace PR
 	// Cache
 	void StandardCamera::onPreRender()
 	{
+		PR_GUARD_PROFILE();
+		
 		Camera::onPreRender();
 
 		//PM::vec3 L = PM::pm_Subtract(mLookAt, worldPosition());

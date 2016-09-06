@@ -86,7 +86,7 @@ namespace PR
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
 		[](const Ray& ray, SamplePoint& point, float& t, Face* f, Face*) {
-			return Triangle::intersect(ray, *f, point, t);
+			return Triangle::intersect(ray, *f, point, t);// Major bottleneck!
 		},
 		[](Face* f) {
 			return TriangleTestCost;

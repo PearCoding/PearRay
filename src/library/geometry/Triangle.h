@@ -9,6 +9,8 @@
 
 #include <utility>
 
+#include "performance/Performance.h"
+
 // 0 -> Trumbore
 // 1 -> Watertight
 // 2 -> Double Watertight
@@ -31,6 +33,8 @@ namespace PR
 		inline static bool intersect(const Ray& ray, const Face& face,
 			SamplePoint& point, float& t)
 		{
+			PR_GUARD_PROFILE();
+
 			float u, v;
 			PM::vec3 pos;
 
@@ -62,6 +66,8 @@ namespace PR
 		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
 			float& u, float& v, PM::vec3& point, float& t)
 		{
+			PR_GUARD_PROFILE();
+
 			PM::vec3 e12 = PM::pm_Subtract(p2, p1);
 			PM::vec3 e13 = PM::pm_Subtract(p3, p1);
 			PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
@@ -101,6 +107,8 @@ namespace PR
 		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
 			float& u, float& v, PM::vec3& point, float& t)
 		{
+			PR_GUARD_PROFILE();
+
 			int kz = 0;
 			float maxVal = 0;
 			for (uint32 i = 0; i < 3; ++i)
@@ -210,6 +218,8 @@ namespace PR
 
 		inline static float surfaceArea(const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3)
 		{
+			PR_GUARD_PROFILE();
+			
 			PM::vec3 v1 = PM::pm_Subtract(p2, p1);
 			PM::vec3 v2 = PM::pm_Subtract(p3, p1);
 			return 0.5f * PM::pm_Magnitude3D(PM::pm_Cross3D(v1,v2));

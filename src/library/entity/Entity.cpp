@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "Logger.h"
+#include "performance/Performance.h"
 
 namespace PR
 {
@@ -31,14 +32,16 @@ namespace PR
 
 	void Entity::onPreRender()
 	{
+		PR_GUARD_PROFILE();
+
 		mGlobalMatrixCache = worldMatrix();
 		mGlobalInvMatrixCache = worldInvMatrix();
 		mGlobalPositionCache = worldPosition();
 		mGlobalScaleCache = worldScale();
 		mGlobalRotationCache = worldRotation();
 
-		PR_LOGGER.logf(L_Info, M_Scene, "W %f,%f,%f,%f", PM::pm_GetX(mGlobalScaleCache), PM::pm_GetY(mGlobalScaleCache), PM::pm_GetZ(mGlobalScaleCache), PM::pm_GetW(mGlobalScaleCache));
-		PR_LOGGER.logf(L_Info, M_Scene, "M %f,%f,%f,%f", PM::pm_GetX(mScale), PM::pm_GetY(mScale), PM::pm_GetZ(mScale), PM::pm_GetW(mScale));
+		PR_LOGGER.logf(L_Info, M_Entity, "W S %f,%f,%f,%f", PM::pm_GetX(mGlobalScaleCache), PM::pm_GetY(mGlobalScaleCache), PM::pm_GetZ(mGlobalScaleCache), PM::pm_GetW(mGlobalScaleCache));
+		PR_LOGGER.logf(L_Info, M_Entity, "M S %f,%f,%f,%f", PM::pm_GetX(mScale), PM::pm_GetY(mScale), PM::pm_GetZ(mScale), PM::pm_GetW(mScale));
 
 		mFrozen = true;
 	}

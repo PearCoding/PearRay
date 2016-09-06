@@ -39,6 +39,7 @@ option(PR_NO_GPU "Build framework with only CPU support." OFF)
 option(PR_NO_NETWORK "Disable network support." OFF)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
 option(PR_BUILD_TESTS "Build tests." ON)
+option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -139,6 +140,10 @@ ENDIF()
 
 IF(ASIO_FOUND)
 	SET(DEFS "${DEFS};PR_WITH_NETWORK")
+ENDIF()
+
+IF(PR_BUILD_PROFILE)
+	SET(DEFS "${DEFS};PR_PROFILE")
 ENDIF()
 
 configure_file(src/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
