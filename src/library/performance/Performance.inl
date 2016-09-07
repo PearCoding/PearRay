@@ -2,7 +2,7 @@
 
 namespace PR
 {
-	inline PerformanceEntry::PerformanceEntry(uint64 hash, PerformanceEntry* parent,
+	inline PerformanceEntry::PerformanceEntry(size_t hash, PerformanceEntry* parent,
 			int line, const char* file, const char* function) :
 		mHash(hash), mParent(parent), mLine(line), mFile(file), mFunction(function),
 		mStart(), mTicks(0)
@@ -65,8 +65,8 @@ namespace PR
 	inline PerformanceManager::~PerformanceManager()
 	{
 		for(auto p : mEntries)
-			for(auto e : p.second)
-				delete e;
+			for(const auto& e : p.second)
+				delete e.Entry;
 	}
 
 	inline PerformanceEntry* PerformanceManager::add(int line, const char* file, const char* function)
@@ -74,11 +74,14 @@ namespace PR
 		auto this_id = std::this_thread::get_id();
 
 		mMutex.lock();
-		PerformanceEntry* parent = nullptr; 
+		PerformanceEntry* parent = nullptr;
+		
 		if(!mEntries.count(this_id))
-			mEntries[this_id] = std::list<PerformanceEntry*>();
+			mEntries[this_id] = Set(10, [](const SetEntry& e) { return e.Hash; });
 		else
-			parent = mParents[this_id];
+			parent = mCurrentParent;
+
+		Set& set = mEntries[this_id];
 
 		std::stringstream stream;
 		stream << function << "$" << file << "$" << line << "$" << this_id;
@@ -86,27 +89,25 @@ namespace PR
 			stream << "$" << parent->hash();
 		
 		size_t hash = std::hash<std::string>()(stream.str());
+		SetEntry hashE(hash);
 
 		PerformanceEntry* entry = nullptr;
-		for(auto e : mEntries[this_id])
+		const auto it = set.find(hashE);
+		if(it != set.end())
 		{
-			if(e->hash() == hash)
-			{
-				entry = e;
-				break;
-			}
+			entry = it->Entry;
 		}
-
-		if(!entry)
+		else
 		{
 			entry = new PerformanceEntry(hash, parent, line, file, function);
 			PR_ASSERT(entry);
 
-			mEntries[this_id].push_back(entry);
+			hashE.Entry = entry;
+			set.insert(hashE);
 		}
-
-		mParents[this_id] = entry;
 		mMutex.unlock();
+
+		mCurrentParent = entry;
 
 		if(parent)
 		{
@@ -130,17 +131,14 @@ namespace PR
 
 	inline void PerformanceManager::end(PerformanceEntry* e)
 	{
-		auto this_id = std::this_thread::get_id();
+		//auto this_id = std::this_thread::get_id();
 		e->end();
 
-		mMutex.lock();
-		PR_ASSERT(mParents.count(this_id));
-		PR_ASSERT(mParents[this_id] == e);
-		mParents[this_id] = e->parent();
-		mMutex.unlock();
+		PR_ASSERT(mCurrentParent == e);
+		mCurrentParent = e->parent();
 	}
 
-	inline const std::map<std::thread::id, std::list<PerformanceEntry*> >& PerformanceManager::entries() const
+	inline const std::map<std::thread::id, PerformanceManager::Set>& PerformanceManager::entries() const
 	{
 		return mEntries;
 	}

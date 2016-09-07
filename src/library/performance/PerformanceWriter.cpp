@@ -6,6 +6,9 @@
 
 namespace PR
 {
+	// Lets just do it here :)
+	thread_local PerformanceEntry* PerformanceManager::mCurrentParent = nullptr;
+
 	void PerformanceWriter::write(const std::string& filename)
 	{
 		std::ofstream stream(filename);
@@ -18,8 +21,10 @@ namespace PR
 
 		for(const auto& p: entries)
 		{
-			for(PerformanceEntry* e : p.second)
+			for(const auto& s : p.second)
 			{
+				PerformanceEntry* e = s.Entry;
+
 				stream  << "fl=(" << e->hash() << ") " << e->file() << std::endl
 						<< "fn=(" << e->hash() << ") " << e->function() << std::endl
 						<< e->line() << " " << e->ticks() << std::endl;

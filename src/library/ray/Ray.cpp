@@ -5,7 +5,7 @@ namespace PR
 	Ray::Ray() :
 		mStartPosition(PM::pm_Set(0,0,0,1)), mDirection(PM::pm_Set(0,0,0)),
 		mDepth(0), mTime(0), 
-		mMaxDepth(0)
+		mMaxDepth(0), mMaxDirectionIndex(0)
 	{
 	}
 
@@ -14,6 +14,7 @@ namespace PR
 		mDepth(depth), mTime(time),
 		mMaxDepth(maxDepth)
 	{
+		calcMaxDirectionElement();
 	}
 
 	Ray::~Ray()

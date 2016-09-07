@@ -7,7 +7,7 @@ namespace PR
 {
 	StandardCamera::StandardCamera(const std::string& name, Entity* parent) :
 		Camera(name, parent), mOrthographic(false), mWidth(1), mHeight(1),
-		mFStop(0), mApertureRadius(0.1f), mLookAt(PM::pm_Set(0,0,1,1))
+		mFStop(0), mApertureRadius(0.1f), mLookAt(PM::pm_Set(0,0,1,0))
 	{
 	}
 
@@ -96,12 +96,13 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		float cx = -nx;
-		float cy = -ny;
+		const float cx = -nx;
+		const float cy = -ny;
 
 		if (mOrthographic)
 		{
-			return Ray(PM::pm_Add(worldPosition(), PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy))),
+			return Ray(PM::pm_Add(worldPosition(),
+					PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy))),
 				mDirection_Cache);
 		}
 		else
@@ -136,12 +137,11 @@ namespace PR
 		
 		Camera::onPreRender();
 
-		//PM::vec3 L = PM::pm_Subtract(mLookAt, worldPosition());
-		mDirection_Cache = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), PM::pm_Set(0,0,1)));
+		mDirection_Cache = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), mLookAt));
 		if (PM::pm_MagnitudeSqr3D(mDirection_Cache) <= PM_EPSILON)
 			mDirection_Cache = PM::pm_Set(0, 0, 1);
 
-		float dot = PM::pm_Dot3D(mDirection_Cache, PM::pm_Set(0, 1, 0));
+		const float dot = PM::pm_Dot3D(mDirection_Cache, PM::pm_Set(0, 1, 0));
 
 		if (dot >= 1)
 			mRight_Cache = PM::pm_Set(1, 0, 0);
@@ -155,18 +155,18 @@ namespace PR
 		if (std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
 		{
 			mFocalDistance_Cache = 0.0f;
+			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
+			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 			mXApertureRadius_Cache = PM::pm_Zero();
 			mYApertureRadius_Cache = PM::pm_Zero();
-			mRight_Cache = PM::pm_Scale(mRight_Cache, mWidth);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, mHeight);
 		}
 		else
 		{
 			mFocalDistance_Cache = mFStop;
+			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
+			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 			mXApertureRadius_Cache = PM::pm_Scale(mRight_Cache, mApertureRadius);
 			mYApertureRadius_Cache = PM::pm_Scale(mUp_Cache, mApertureRadius);
-			mRight_Cache = PM::pm_Scale(mRight_Cache, mWidth);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, mHeight);
 		}
 	}
 }

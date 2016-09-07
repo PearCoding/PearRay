@@ -15,6 +15,7 @@ namespace PR
 	inline void Ray::setDirection(const PM::vec3& dir)
 	{
 		mDirection = dir;
+		calcMaxDirectionElement();
 	}
 
 	inline PM::vec3 Ray::direction() const
@@ -68,5 +69,25 @@ namespace PR
 		}
 
 		return Ray(posOff, dir, mDepth + 1, mTime, mMaxDepth);
+	}
+
+	inline uint32 Ray::maxDirectionIndex() const
+	{
+		return mMaxDirectionIndex;
+	}
+
+	inline void Ray::calcMaxDirectionElement()
+	{
+		mMaxDirectionIndex = 0;
+		float maxVal = 0;
+		for (uint32 i = 0; i < 3; ++i)
+		{
+			const float f = std::abs(PM::pm_GetIndex(mDirection, i));
+			if (maxVal < f)
+			{
+				mMaxDirectionIndex = i;
+				maxVal = f;
+			}
+		}
 	}
 }

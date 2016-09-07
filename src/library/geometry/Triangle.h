@@ -68,22 +68,22 @@ namespace PR
 		{
 			PR_GUARD_PROFILE();
 
-			PM::vec3 e12 = PM::pm_Subtract(p2, p1);
-			PM::vec3 e13 = PM::pm_Subtract(p3, p1);
-			PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
+			const PM::vec3 e12 = PM::pm_Subtract(p2, p1);
+			const PM::vec3 e13 = PM::pm_Subtract(p3, p1);
+			const PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
 			float a = PM::pm_Dot3D(e12, q);
 
 			if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
 				return false;
 
 			float f = 1.0f / a;
-			PM::vec3 s = PM::pm_Subtract(ray.startPosition(), p1);
+			const PM::vec3 s = PM::pm_Subtract(ray.startPosition(), p1);
 			u = f*PM::pm_Dot3D(s, q);
 
 			if (u < 0 || u > 1)
 				return false;
 
-			PM::vec3 r = PM::pm_Cross3D(s, e12);
+			const PM::vec3 r = PM::pm_Cross3D(s, e12);
 			v = f*PM::pm_Dot3D(ray.direction(), r);
 
 			if (v < 0 || u + v > 1)
@@ -109,22 +109,11 @@ namespace PR
 		{
 			PR_GUARD_PROFILE();
 
-			int kz = 0;
-			float maxVal = 0;
-			for (uint32 i = 0; i < 3; ++i)
-			{
-				const float f = std::abs(PM::pm_GetIndex(ray.direction(), i));
-				if (maxVal < f)
-				{
-					kz = i;
-					maxVal = f;
-				}
-			}
-
-			int kx = kz + 1;
+			const uint32 kz = ray.maxDirectionIndex();
+			uint32 kx = kz + 1;
 			if (kx == 3)
 				kx = 0;
-			int ky = kx + 1;
+			uint32 ky = kx + 1;
 			if (ky == 3)
 				ky = 0;
 

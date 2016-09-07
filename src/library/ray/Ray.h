@@ -28,13 +28,20 @@ namespace PR
 		inline uint32 maxDepth() const;
 		inline void setMaxDepth(uint32 i);
 
+		// Used by Triangle.h
+		inline uint32 maxDirectionIndex() const;
+
 		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
 	private:
+		inline void calcMaxDirectionElement();
+
 		alignas(16) PM::vec3 mStartPosition;
 		alignas(16) PM::vec3 mDirection;
 		uint32 mDepth;// Recursion depth!
 		float mTime;
 		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
+
+		uint32 mMaxDirectionIndex;
 	};
 }
 

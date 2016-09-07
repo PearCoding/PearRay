@@ -176,7 +176,7 @@ namespace PR
 		if (mRenderSettings.debugMode() != DM_None)
 		{
 			mIntegrator = new DebugIntegrator();
-			mRenderSettings.setMaxPixelSampleCount(2);// Not that much needed for debug
+			mRenderSettings.setMaxPixelSampleCount(1);// Not that much needed for debug
 		}
 		else
 		{
@@ -206,13 +206,9 @@ namespace PR
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
 		if (threads < 0)
-		{
 			threadCount = PM::pm_MaxT(1, (int32)threadCount + threads);
-		}
 		else if(threads > 0)
-		{
 			threadCount = threads;
-		}
 
 		for (uint32 i = 0; i < threadCount; ++i)
 		{
@@ -324,8 +320,8 @@ namespace PR
 	{
 		context->stats().incPixelSampleCount();
 		
-		Ray ray = mCamera->constructRay(2 * (x + 0.5f) / (float)mWidth - 1.0f,
-			2 * (y + 0.5f) / (float)mHeight - 1.0f,// To camera coordinates [-1,1]
+		Ray ray = mCamera->constructRay(2 * (x / mWidth - 0.5f) ,
+			2 * (y / mHeight - 0.5f),// To camera coordinates [-1,1]
 			rx, ry, t);
 
 		return mIntegrator->apply(ray, context, pass);

@@ -1,8 +1,8 @@
 [submodule "datalisp"]
 	path = datalisp
-	url = git://github.com/PearCoding/DataLisp.git
+	url = git@github.com:PearCoding/DataLisp.git
 	branch = master
 [submodule "pearmath"]
 	path = pearmath
-	url = git://github.com/PearCoding/PearMath.git
+	url = git@github.com:PearCoding/PearMath.git
 	branch = master

@@ -5,9 +5,9 @@
 #include <mutex>
 #include <chrono>
 #include <map>
-#include <list>
 #include <functional>
 #include <sstream>
+#include <unordered_set>
 
 namespace PR
 {
@@ -34,7 +34,7 @@ namespace PR
 		inline std::list<PerformanceEntry*>& children();
 		inline const std::list<PerformanceEntry*>& children() const;
 	private:
-		uint64 mHash;
+		size_t mHash;
 		PerformanceEntry* mParent;
 		std::list<PerformanceEntry*> mChildren;
 		int mLine;
@@ -45,10 +45,33 @@ namespace PR
 		uint64 mTicks;// Micro
 	};
 
+	/* Only one instance per application! */
 	class PR_LIB PerformanceManager
 	{
 		friend class PerformanceWriter;
 	public:
+		class SetEntry
+		{
+		public:
+			PerformanceEntry* Entry;
+			size_t Hash;
+
+			inline explicit SetEntry(PerformanceEntry* e) :
+				Entry(e), Hash(e->hash())
+			{}
+
+			inline explicit SetEntry(size_t hash) :
+				Entry(nullptr), Hash(hash)
+			{}
+
+			inline bool operator==(const SetEntry& o) const
+			{
+				return Hash == o.Hash;
+			}
+		};
+		typedef size_t (*hasher)(const SetEntry&);
+		typedef std::unordered_set<SetEntry, hasher> Set;
+
 		inline PerformanceManager();
 		inline ~PerformanceManager();
 
@@ -61,10 +84,11 @@ namespace PR
 			return perf;
 		}
 
-		inline const std::map<std::thread::id, std::list<PerformanceEntry*> >& entries() const;
+		inline const std::map<std::thread::id, Set>& entries() const;
+
 	private:
-		std::map<std::thread::id, std::list<PerformanceEntry*> > mEntries;
-		std::map<std::thread::id, PerformanceEntry* > mParents;
+		std::map<std::thread::id, Set>  mEntries;
+		static thread_local PerformanceEntry* mCurrentParent;
 		std::mutex mMutex; 
 	};
 
