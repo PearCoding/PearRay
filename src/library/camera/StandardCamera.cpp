@@ -96,13 +96,10 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		const float cx = -nx;
-		const float cy = -ny;
-
 		if (mOrthographic)
 		{
 			return Ray(PM::pm_Add(worldPosition(),
-					PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy))),
+					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
 				mDirection_Cache);
 		}
 		else
@@ -122,7 +119,7 @@ namespace PR
 
 			PM::vec3 dofOff = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, s), PM::pm_Scale(mYApertureRadius_Cache, c));
 
-			PM::vec3 viewPlane = PM::pm_Add(PM::pm_Scale(mRight_Cache, cx), PM::pm_Scale(mUp_Cache, cy));
+			PM::vec3 viewPlane = PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny));
 			PM::vec3 eyePoint = PM::pm_Add(worldPosition(), dofOff);
 			PM::vec3 rayDir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint)), 0);
 
@@ -150,23 +147,23 @@ namespace PR
 		else
 			mRight_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0)));
 
-		mUp_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mRight_Cache, mDirection_Cache));
+		mUp_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, mRight_Cache));
 
 		if (std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
 		{
 			mFocalDistance_Cache = 0.0f;
-			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 			mXApertureRadius_Cache = PM::pm_Zero();
 			mYApertureRadius_Cache = PM::pm_Zero();
+			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
+			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 		}
 		else
 		{
 			mFocalDistance_Cache = mFStop;
-			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 			mXApertureRadius_Cache = PM::pm_Scale(mRight_Cache, mApertureRadius);
 			mYApertureRadius_Cache = PM::pm_Scale(mUp_Cache, mApertureRadius);
+			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
+			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 		}
 	}
 }
