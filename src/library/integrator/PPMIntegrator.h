@@ -2,6 +2,8 @@
 
 #include "Integrator.h"
 
+#include <list>
+
 namespace PR
 {
 	namespace Photon
@@ -45,5 +47,12 @@ namespace PR
 		Photon::PhotonSphere* mPhotonSpheres;
 
 		float mCurrentPassRadius2;
+
+		struct Light
+		{
+			RenderEntity* Entity;
+			uint64 Photons;
+		};
+		std::list<Light*> mLights;
 	};
 }

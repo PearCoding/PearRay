@@ -46,12 +46,18 @@ namespace PR
 			}
 			delete[] mPhotonSpheres;
 		}
+
+		for(Light* l : mLights)
+			delete l;
+
+		mLights.clear();
 	}
 
 	void PPMIntegrator::init(Renderer* renderer)
 	{
 		PR_ASSERT(!mPhotonMap);
 		PR_ASSERT(!mPhotonSpheres);
+		PR_ASSERT(mLights.empty());
 		PR_ASSERT(renderer);
 
 		PR_ASSERT(renderer->settings().ppm().maxPhotonsPerPass() > 0);
@@ -70,6 +76,31 @@ namespace PR
 		}
 		
 		mCurrentPassRadius2 = renderer->settings().ppm().maxGatherRadius() * renderer->settings().ppm().maxGatherRadius();
+
+		// Assign photons to each light
+		constexpr uint64 MinPhotons = 10;
+		const std::list<RenderEntity*>& lightList = mRenderer->lights();
+
+		const uint64 k = MinPhotons * lightList.size();
+		if (k >= renderer->settings().ppm().maxPhotonsPerPass()) // Not enough photons given.
+		{
+			PR_LOGGER.logf(L_Warning, M_Integrator, "Not enough photons per pass given. At least %llu is good.", k);
+
+			for(RenderEntity* light : lightList)
+				mLights.push_back(new Light({light, MinPhotons}));
+		}
+		else
+		{
+			const uint64 d = renderer->settings().ppm().maxPhotonsPerPass() - k;
+
+			float fullArea = 0;
+			for(RenderEntity* light : lightList)
+				fullArea += light->surfaceArea(nullptr);
+
+			for(RenderEntity* light : lightList)
+				mLights.push_back(new Light({light,
+					MinPhotons + (uint64)std::ceil(d * (light->surfaceArea(nullptr) / fullArea))}));
+		}
 	}
 
 	void PPMIntegrator::onStart()
@@ -91,31 +122,19 @@ namespace PR
 		PR_LOGGER.logf(L_Debug, M_Integrator, "  -> Radius2: %f", mCurrentPassRadius2);
 #endif
 
-		std::list<RenderEntity*> lightList = mRenderer->lights();
-		// Sort list from biggest to lowest -> Could be cached!
-		lightList.sort( [](RenderEntity* a, RenderEntity* b) -> bool
-		{ 
-			return a->surfaceArea(nullptr) > b->surfaceArea(nullptr);
-		});
-
-		float fullArea = 0;
-		for(RenderEntity* light : lightList)
-			fullArea += light->surfaceArea(nullptr);
-
 		// Emit all lights
 		mPhotonMap->reset();
 
 		Random random;
-		for (RenderEntity* light : lightList)
+		for (Light* light : mLights)
 		{
-			const size_t sampleSize = PM::pm_MaxT<size_t>(1,
-				(size_t)std::floor(mRenderer->settings().ppm().maxPhotonsPerPass() * (light->surfaceArea(nullptr) / fullArea)));
+			const size_t sampleSize = light->Photons;
 			MultiJitteredSampler sampler(random, sampleSize);
 
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				SamplePoint lightSample = light->getRandomFacePoint(sampler,(uint32) i);
+				SamplePoint lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i);
 				lightSample.N = Projection::align(lightSample.Ng,
 						Projection::cos_hemi(random.getFloat(), random.getFloat()));
 				
@@ -155,9 +174,7 @@ namespace PR
 							diffuseBounces++;
 
 							if (diffuseBounces > mRenderer->settings().maxDiffuseBounces())// Shoot
-							{
 								break;// Absorb
-							}
 						}
 						else if(!std::isinf(pdf))// Absorb
 						{

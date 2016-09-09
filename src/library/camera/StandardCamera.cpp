@@ -98,8 +98,7 @@ namespace PR
 
 		if (mOrthographic)
 		{
-			return Ray(PM::pm_Add(worldPosition(),
-					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
+			return Ray(PM::pm_SetW(PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny)), 1),
 				mDirection_Cache);
 		}
 		else
@@ -119,11 +118,14 @@ namespace PR
 
 			PM::vec3 dofOff = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, s), PM::pm_Scale(mYApertureRadius_Cache, c));
 
-			PM::vec3 viewPlane = PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny));
-			PM::vec3 eyePoint = PM::pm_Add(worldPosition(), dofOff);
+			PM::vec3 viewPlane = PM::pm_Add(
+					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny)),
+					mDirection_Cache);// One unit away in z direction.
+			PM::vec3 eyePoint = PM::pm_SetW(dofOff, 1);
 			PM::vec3 rayDir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint)), 0);
 
-			return Ray(eyePoint, rayDir);
+			return Ray(PM::pm_Transform(worldMatrix(), eyePoint),
+					rayDir);
 		}
 	}
 
