@@ -7,7 +7,8 @@ namespace PR
 {
 	StandardCamera::StandardCamera(const std::string& name, Entity* parent) :
 		Camera(name, parent), mOrthographic(false), mWidth(1), mHeight(1),
-		mFStop(0), mApertureRadius(0.1f), mLookAt(PM::pm_Set(0,0,1,0))
+		mLocalDirection(PM::pm_Set(0,0,1)), mLocalRight(PM::pm_Set(1,0,0)), mLocalUp(PM::pm_Set(0,1,0)),
+		mFStop(0), mApertureRadius(0.1f)
 	{
 	}
 
@@ -62,19 +63,39 @@ namespace PR
 		return mHeight;
 	}
 
-	void StandardCamera::lookAt(const PM::vec3& v)
-	{
-		mLookAt = v;
-	}
-
-	PM::vec3 StandardCamera::lookAtPosition() const
-	{
-		return mLookAt;
-	}
-
 	void StandardCamera::setFStop(float f)
 	{
 		mFStop = f;
+	}
+
+	void StandardCamera::setLocalDirection(const PM::vec3& d)
+	{
+		mLocalDirection = d;
+	}
+
+	PM::vec3 StandardCamera::localDirection() const
+	{
+		return mLocalDirection;
+	}
+
+	void StandardCamera::setLocalRight(const PM::vec3& d)
+	{
+		mLocalRight = d;
+	}
+
+	PM::vec3 StandardCamera::localRight() const
+	{
+		return mLocalRight;
+	}
+
+	void StandardCamera::setLocalUp(const PM::vec3& d)
+	{
+		mLocalUp = d;
+	}
+
+	PM::vec3 StandardCamera::localUp() const
+	{
+		return mLocalUp;
 	}
 
 	float StandardCamera::fstop() const
@@ -98,7 +119,8 @@ namespace PR
 
 		if (mOrthographic)
 		{
-			return Ray(PM::pm_SetW(PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny)), 1),
+			return Ray(PM::pm_Add(worldPosition(),
+					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
 				mDirection_Cache);
 		}
 		else
@@ -116,15 +138,15 @@ namespace PR
 				c = 0;
 			}
 
-			PM::vec3 dofOff = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, s), PM::pm_Scale(mYApertureRadius_Cache, c));
+			PM::vec3 eyePoint = PM::pm_Add(
+				PM::pm_Scale(mXApertureRadius_Cache, s), PM::pm_Scale(mYApertureRadius_Cache, c));
 
 			PM::vec3 viewPlane = PM::pm_Add(
 					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny)),
 					mDirection_Cache);// One unit away in z direction.
-			PM::vec3 eyePoint = PM::pm_SetW(dofOff, 1);
-			PM::vec3 rayDir = PM::pm_SetW(PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint)), 0);
+			PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint));
 
-			return Ray(PM::pm_Transform(worldMatrix(), eyePoint),
+			return Ray(PM::pm_Add(worldPosition(), eyePoint),
 					rayDir);
 		}
 	}
@@ -136,20 +158,18 @@ namespace PR
 		
 		Camera::onPreRender();
 
-		mDirection_Cache = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), mLookAt));
-		if (PM::pm_MagnitudeSqr3D(mDirection_Cache) <= PM_EPSILON)
-			mDirection_Cache = PM::pm_Set(0, 0, 1);
+		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(
+			PM::pm_Transform(worldDirectionMatrix(), mLocalDirection)), 0);
+		mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(
+			PM::pm_Transform(worldDirectionMatrix(), mLocalRight)), 0);
+		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(
+			PM::pm_Transform(worldDirectionMatrix(), mLocalUp)), 0);
 
-		const float dot = PM::pm_Dot3D(mDirection_Cache, PM::pm_Set(0, 1, 0));
-
-		if (dot >= 1)
-			mRight_Cache = PM::pm_Set(1, 0, 0);
-		else if (dot <= -1)
-			mRight_Cache = PM::pm_Set(-1, 0, 0);
-		else
-			mRight_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, PM::pm_Set(0, 1, 0)));
-
-		mUp_Cache = PM::pm_Normalize3D(PM::pm_Cross3D(mDirection_Cache, mRight_Cache));
+		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
+			name().c_str(),
+			PM::pm_GetX(mDirection_Cache), PM::pm_GetY(mDirection_Cache), PM::pm_GetZ(mDirection_Cache),
+			PM::pm_GetX(mRight_Cache), PM::pm_GetY(mRight_Cache), PM::pm_GetZ(mRight_Cache),
+			PM::pm_GetX(mUp_Cache), PM::pm_GetY(mUp_Cache), PM::pm_GetZ(mUp_Cache));
 
 		if (std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
 		{

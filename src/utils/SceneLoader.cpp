@@ -849,7 +849,7 @@ namespace PRU
 				float z = PM::pm_DegToRad(grp->at(2)->getFloatConverted());
 
 				ok = true;
-				return PM::pm_Normalize4D(PM::pm_RotationQuatRollPitchYaw(x, y, z));
+				return PM::pm_Normalize4D(PM::pm_RotationQuatFromXYZ(x, y, z));
 			}
 		}
 

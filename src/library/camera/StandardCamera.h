@@ -24,16 +24,21 @@ namespace PR
 		void setHeight(float h);
 		float height() const;
 
+		void setLocalDirection(const PM::vec3& d);
+		PM::vec3 localDirection() const;
+
+		void setLocalRight(const PM::vec3& d);
+		PM::vec3 localRight() const;
+
+		void setLocalUp(const PM::vec3& d);
+		PM::vec3 localUp() const;
+
 		// Depth of Field
 		void setFStop(float f);
 		float fstop() const;
 
 		void setApertureRadius(float f);
 		float apertureRadius() const;
-
-		// World coords
-		void lookAt(const PM::vec3& v);
-		PM::vec3 lookAtPosition() const;
 
 		Ray constructRay(float nx, float ny, float rx, float ry, float t) const;
 
@@ -47,12 +52,14 @@ namespace PR
 		float mFStop;
 		float mApertureRadius;
 
-		PM::vec3 mLookAt;
+		PM::vec3 mLocalDirection;
+		PM::vec3 mLocalRight;
+		PM::vec3 mLocalUp;
 
 		// Cache:
+		PM::vec3 mDirection_Cache;
 		PM::vec3 mRight_Cache;
 		PM::vec3 mUp_Cache;
-		PM::vec3 mDirection_Cache;
 
 		float mFocalDistance_Cache;
 		PM::vec3 mXApertureRadius_Cache;
