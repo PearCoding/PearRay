@@ -87,12 +87,13 @@ namespace PR
 		}
 	}
 
-	SamplePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		PR_GUARD_PROFILE();
 
-		SamplePoint point = mMesh->getRandomFacePoint(sampler, sample);
+		SamplePoint point = mMesh->getRandomFacePoint(sampler, sample, pdf);
 		point.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), point.Ng));
+		point.N = point.Ng;
 		point.P = PM::pm_Transform(worldMatrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 

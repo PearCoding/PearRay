@@ -25,7 +25,7 @@ namespace PR
 		PM::vec3 dPdV;
 		PM::vec3 dPdT;// Velocity of P
 
-		// View vector looking to the surface
+		// View vector looking to the surface (only available if shoot)
 		PM::vec3 V;
 		PM::vec3 dVdX;
 		PM::vec3 dVdY;

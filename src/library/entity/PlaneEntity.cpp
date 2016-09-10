@@ -105,7 +105,7 @@ namespace PR
 	}
 
 	// World space
-	SamplePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		auto s = sampler.generate2D(sample);
 
@@ -123,6 +123,7 @@ namespace PR
 		fp.UV = PM::pm_SetZ(s, 0);
 		fp.Material = material();
 
+		pdf = 1;//?
 		return fp;
 	}
 }

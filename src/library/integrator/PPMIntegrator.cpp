@@ -87,7 +87,7 @@ namespace PR
 			PR_LOGGER.logf(L_Warning, M_Integrator, "Not enough photons per pass given. At least %llu is good.", k);
 
 			for(RenderEntity* light : lightList)
-				mLights.push_back(new Light({light, MinPhotons}));
+				mLights.push_back(new Light({light, MinPhotons, light->surfaceArea(nullptr)}));
 		}
 		else
 		{
@@ -98,8 +98,12 @@ namespace PR
 				fullArea += light->surfaceArea(nullptr);
 
 			for(RenderEntity* light : lightList)
+			{
+				const float surface = light->surfaceArea(nullptr);
 				mLights.push_back(new Light({light,
-					MinPhotons + (uint64)std::ceil(d * (light->surfaceArea(nullptr) / fullArea))}));
+					MinPhotons + (uint64)std::ceil(d * (surface / fullArea)),
+					surface}));
+			}
 		}
 	}
 
@@ -134,14 +138,14 @@ namespace PR
 			size_t photonsShoot = 0;
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
-				SamplePoint lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i);
+				float full_pdf;
+				SamplePoint lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, full_pdf);
 				lightSample.N = Projection::align(lightSample.Ng,
 						Projection::cos_hemi(random.getFloat(), random.getFloat()));
 				
-				Ray ray(lightSample.P, lightSample.Ng, 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
+				Ray ray(lightSample.P, lightSample.N, 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
 
 				Spectrum flux;
-				float full_pdf = 0;
 				if(lightSample.Material->emission())
 					flux = lightSample.Material->emission()->eval(lightSample);
 
@@ -153,7 +157,7 @@ namespace PR
 
 					if (entity && collision.Material && collision.Material->canBeShaded())
 					{
-						const float NdotL = std::abs(PM::pm_Dot3D(collision.Ng, ray.direction()));
+						const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(collision.N, ray.direction()));
 						PM::vec3 nextDir;
 
 						if (NdotL <= PM_EPSILON)
@@ -195,8 +199,10 @@ namespace PR
 				}
 			}
 
+			//if (photonsShoot != 0)
+			//  	mPhotonMap->scalePhotonPower(1.0f/photonsShoot);
 			if (photonsShoot != 0)
-			 	mPhotonMap->scalePhotonPower(1.0f/photonsShoot);
+			  	mPhotonMap->scalePhotonPower(light->Surface);
 
 #ifdef PR_DEBUG
 			PR_LOGGER.logf(L_Debug, M_Integrator, "    -> Per Light Samples: %llu / %llu [%3.2f%]",
@@ -291,7 +297,7 @@ namespace PR
 			Spectrum weight;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			PM::vec3 dir = point.Material->sample(point, rnd, pdf);
-			const float NdotL = std::abs(PM::pm_Dot3D(dir, point.N));
+			const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, point.N));
 
 			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 			{

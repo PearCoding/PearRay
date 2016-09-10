@@ -52,6 +52,7 @@ namespace PR
 		{
 			RenderEntity* Entity;
 			uint64 Photons;
+			float Surface;
 		};
 		std::list<Light*> mLights;
 	};

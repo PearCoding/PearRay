@@ -144,17 +144,18 @@ namespace PR
 		return TriangleTestCost * ((TriKDTree*)mKDTree)->depth();
 	}
 
-	SamplePoint TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		auto ret = sampler.generate3D(sample);
 		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, (int)mFaces.size() - 1);
+		auto bary = Projection::triangle(PM::pm_GetY(ret), PM::pm_GetZ(ret));
 
 		Face* face = mFaces.at(fi);
 
 		PM::vec3 vec;
 		PM::vec3 n;
 		PM::vec2 uv;
-		face->interpolate(PM::pm_GetY(ret), PM::pm_GetZ(ret), vec, n, uv);
+		face->interpolate(PM::pm_GetX(bary), PM::pm_GetY(bary), vec, n, uv);
 
 		SamplePoint fp;
 		fp.P = vec;
@@ -162,6 +163,7 @@ namespace PR
 		fp.UV = uv;
 		fp.Material = face->Mat;
 
+		pdf = 1;//?
 		return fp;
 	}
 }

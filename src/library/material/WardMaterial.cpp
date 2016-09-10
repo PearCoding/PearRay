@@ -151,7 +151,7 @@ namespace PR
 		}
 
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::sphereRAD(px, py));
+			Projection::sphere(px*2*PM_INV_PI_F, py*PM_INV_PI_F));
 		auto dir = Reflection::reflect(PM::pm_Dot3D(H, point.V), H, point.V);
 		pdf = WardMaterial::pdf(point, dir);
 		return dir;

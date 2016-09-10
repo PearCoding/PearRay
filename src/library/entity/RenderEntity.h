@@ -32,7 +32,7 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint) const = 0;
 
 		// In world coords
-		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample) const = 0;
+		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const = 0;
 
 		// Entity
 		virtual void onPreRender() override;

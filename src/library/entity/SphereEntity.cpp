@@ -113,18 +113,18 @@ namespace PR
 		return true;
 	}
 
-	SamplePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		PR_GUARD_PROFILE();
 		
 		SamplePoint p;
 
 		PM::vec2 s = sampler.generate2D(sample);
-		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s));
+		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s), &pdf);
 
 		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), n));
-		p.N = p.Ng;
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
+		p.N = p.Ng;
 
 		p.P = PM::pm_Transform(worldMatrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
 		p.UV = Projection::sphereUV(p.Ng);

@@ -28,7 +28,7 @@ namespace PR
 		virtual BoundingBox localBoundingBox() const override;
 		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint) const override;
 
-		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample) const override;
+		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 	private:
 		Plane mPlane;
 		Material* mMaterial;

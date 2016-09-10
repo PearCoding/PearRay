@@ -46,7 +46,7 @@ namespace PR
 			Spectrum weight;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			PM::vec3 dir = point.Material->sample(point, rnd, pdf);
-			const float NdotL = std::abs(PM::pm_Dot3D(dir, point.N));
+			const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, point.N));
 
 			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 			{
@@ -71,13 +71,17 @@ namespace PR
 				RandomSampler sampler(context->random());
 				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
 				{
-					SamplePoint p = light->getRandomFacePoint(sampler, i);
+					float pdf;
+					SamplePoint p = light->getRandomFacePoint(sampler, i, pdf);
 
-					const PM::vec3 L = PM::pm_Normalize3D(PM::pm_Subtract(p.P, point.P));
-					const float NdotL = std::abs(PM::pm_Dot3D(L, point.N));
+					const PM::vec3 PS = PM::pm_Subtract(p.P, point.P);
+					const PM::vec3 L = PM::pm_Normalize3D(PS);
+					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, point.N));
+
+					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL);
 
 					Spectrum weight;
-					float pdf = point.Material->pdf(point, L);
+					pdf += point.Material->pdf(point, L);
 					if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 					{
 						SamplePoint tmpPoint;

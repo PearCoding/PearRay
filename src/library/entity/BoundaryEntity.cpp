@@ -108,7 +108,7 @@ namespace PR
 		return false;
 	}
 
-	SamplePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample) const
+	SamplePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		PR_GUARD_PROFILE();
 
@@ -131,6 +131,7 @@ namespace PR
 		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
 		fp.Material = material();
 
+		pdf = 1;//??
 		return fp;
 	}
 }
