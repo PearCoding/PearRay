@@ -1,6 +1,6 @@
 #include "ImageVectorOutput.h"
 
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 #include "Logger.h"
 
 using namespace PR;
@@ -13,7 +13,7 @@ namespace PRU
 		PR_ASSERT(!mFilename.empty());
 	}
 
-	PM::vec ImageVectorShaderOutput::eval(const PR::SamplePoint& point)
+	PM::vec ImageVectorShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		float res[4] = { 0, 0, 0, 0 };
 		if (!mTextureSystem->texture(mFilename, mTextureOptions,

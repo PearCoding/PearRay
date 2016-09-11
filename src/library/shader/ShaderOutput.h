@@ -6,7 +6,7 @@
 namespace PR
 {
 	class Ray;
-	struct SamplePoint;
+	struct ShaderClosure;
 	template<typename T>
 	class PR_LIB_INLINE ShaderOutput
 	{
@@ -15,7 +15,7 @@ namespace PR
 		ShaderOutput<T>() = default;
 		virtual ~ShaderOutput<T>() {}
 
-		virtual T eval(const SamplePoint& point) = 0;
+		virtual T eval(const ShaderClosure& point) = 0;
 	};
 
 	typedef ShaderOutput<float> ScalarShaderOutput;

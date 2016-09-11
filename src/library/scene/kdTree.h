@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/FaceSample.h"
 #include "geometry/BoundingBox.h"
 #include "Logger.h"
 
@@ -94,7 +94,7 @@ namespace PR
 		};
 	public:
 		typedef BoundingBox (*GetBoundingBoxCallback)(T*);
-		typedef bool (*CheckCollisionCallback)(const Ray&, SamplePoint&, float&, T*, T*);
+		typedef bool (*CheckCollisionCallback)(const Ray&, FaceSample&, float&, T*, T*);
 		typedef float (*CostCallback)(T*);
 
 		inline kdTree(GetBoundingBoxCallback getBoundingBox,
@@ -163,11 +163,11 @@ namespace PR
 				delete obj;
 		}
 
-		inline T* checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t, T* ignore = nullptr) const {
+		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t, T* ignore = nullptr) const {
 			PM::vec3 collisionPos;
 
 			T* res = nullptr;
-			SamplePoint tmpCollisionPoint;
+			FaceSample tmpCollisionPoint;
 
 			t = std::numeric_limits<float>::infinity();
 			float l = t;// Temporary variable.

@@ -1,6 +1,6 @@
 #include "ImageScalarOutput.h"
 
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 #include "Logger.h"
 
 using namespace PR;
@@ -13,7 +13,7 @@ namespace PRU
 		PR_ASSERT(!mFilename.empty());
 	}
 
-	float ImageScalarShaderOutput::eval(const PR::SamplePoint& point)
+	float ImageScalarShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		float res = 0;
 		if (!mTextureSystem->texture(mFilename, mTextureOptions,

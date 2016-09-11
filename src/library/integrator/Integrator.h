@@ -4,13 +4,12 @@
 
 namespace PR
 {
-	class RenderEntity;
-	struct SamplePoint;
 	class Ray;
 	class Renderer;
 	class RenderContext;
 	class RenderTile;
 	class Spectrum;
+	struct ShaderClosure;
 	class PR_LIB Integrator
 	{
 	public:
@@ -32,5 +31,8 @@ namespace PR
 
 		virtual uint64 maxSamples(const Renderer* renderer) const = 0;
 		virtual Spectrum apply(const Ray& in, RenderContext* context, uint32 pass) = 0;
+
+	protected:
+		static Spectrum handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderContext* context, float& full_pdf);
 	};
 }

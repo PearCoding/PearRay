@@ -1,7 +1,7 @@
 #include "BoundaryEntity.h"
 #include "Random.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/FaceSample.h"
 #include "geometry/Plane.h"
 
 #include "sampler/Sampler.h"
@@ -78,7 +78,7 @@ namespace PR
 		return mBoundingBox;
 	}
 
-	bool BoundaryEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
+	bool BoundaryEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
 	{
 		PR_GUARD_PROFILE();
 
@@ -108,7 +108,7 @@ namespace PR
 		return false;
 	}
 
-	SamplePoint BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+	FaceSample BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		PR_GUARD_PROFILE();
 
@@ -121,12 +121,11 @@ namespace PR
 		PM::vec xaxis = PM::pm_Multiply(worldDirectionMatrix(), plane.xAxis());
 		PM::vec yaxis = PM::pm_Multiply(worldDirectionMatrix(), plane.yAxis());
 
-		SamplePoint fp;
+		FaceSample fp;
 		fp.P = PM::pm_Add(worldPosition(),
 			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetX(ret)),
 				PM::pm_Scale(yaxis, PM::pm_GetY(ret))));
 		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), plane.normal()));
-		fp.N = fp.Ng;
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
 		fp.Material = material();

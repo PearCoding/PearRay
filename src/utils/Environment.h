@@ -157,16 +157,6 @@ namespace PRU
 			return mCropMaxY;
 		}
 
-		inline PR::Material* backgroundMaterial() const
-		{
-			return mBackgroundMaterial;
-		}
-
-		inline void setBackgroundMaterial(PR::Material* m)
-		{
-			mBackgroundMaterial = m;
-		}
-
 	private:
 		PR::Scene mScene;
 		PR::Camera* mCamera;
@@ -177,8 +167,6 @@ namespace PRU
 		float mCropMaxX;
 		float mCropMinY;
 		float mCropMaxY;
-
-		PR::Material* mBackgroundMaterial;
 
 		std::map<std::string, PR::Spectrum> mSpectrums;
 		std::map<std::string, PR::Material*> mMaterials;

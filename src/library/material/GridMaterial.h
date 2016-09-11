@@ -22,12 +22,12 @@ namespace PR
 		void setTileUV(bool b);
 		bool tileUV() const;
 
-		Spectrum apply(const SamplePoint& point, const PM::vec3& L) override;
-		float pdf(const SamplePoint& point, const PM::vec3& L) override;
-		PM::vec3 sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf) override;
+		Spectrum apply(const ShaderClosure& point, const PM::vec3& L) override;
+		float pdf(const ShaderClosure& point, const PM::vec3& L) override;
+		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
 
 	private:
-		SamplePoint applyGrid(const SamplePoint& point, int& u, int& v) const;
+		ShaderClosure applyGrid(const ShaderClosure& point, int& u, int& v) const;
 
 		Material* mFirst;
 		Material* mSecond;

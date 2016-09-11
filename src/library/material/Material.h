@@ -5,7 +5,7 @@
 namespace PR
 {
 	class RenderEntity;
-	struct SamplePoint;
+	struct ShaderClosure;
 	class Ray;
 	class Renderer;
 	class PR_LIB Material
@@ -14,19 +14,17 @@ namespace PR
 		Material();
 		virtual ~Material() {}
 
-		virtual Spectrum apply(const SamplePoint& point, const PM::vec3& L) = 0;
+		virtual Spectrum apply(const ShaderClosure& point, const PM::vec3& L) = 0;
 		
 		/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
-		virtual float pdf(const SamplePoint& point, const PM::vec3& L) = 0;
+		virtual float pdf(const ShaderClosure& point, const PM::vec3& L) = 0;
 
 		/*
 		 Sample a direction based on the uniform rnd value.
 		*/
-		virtual PM::vec3 sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf) = 0;
-
-		virtual bool shouldIgnore(const Ray& in, const SamplePoint& point) const;
+		virtual PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) = 0;
 
 		bool isLight() const;
 

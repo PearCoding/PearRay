@@ -1,7 +1,8 @@
 #include "PPMIntegrator.h"
 
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
+#include "shader/FaceSample.h"
 #include "entity/RenderEntity.h"
 #include "material/Material.h"
 
@@ -139,25 +140,35 @@ namespace PR
 			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
 			{
 				float full_pdf;
-				SamplePoint lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, full_pdf);
-				lightSample.N = Projection::align(lightSample.Ng,
-						Projection::cos_hemi(random.getFloat(), random.getFloat()));
+				FaceSample lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, full_pdf);
+				lightSample.Ng = Projection::align(lightSample.Ng,
+						Projection::cos_hemi(random.getFloat(), random.getFloat(), full_pdf));
 				
-				Ray ray(lightSample.P, lightSample.N, 1);// Depth will not be incremented, but we use one to hack non-camera objects into the scene. 
+				Ray ray = Ray::safe(lightSample.P, lightSample.Ng, 1);
 
 				Spectrum flux;
 				if(lightSample.Material->emission())
-					flux = lightSample.Material->emission()->eval(lightSample);
+				{
+					ShaderClosure lsc;
+					lsc.P = lightSample.P;
+					lsc.Ng = lightSample.Ng;
+					lsc.N = lightSample.Ng;
+					lsc.Nx = lightSample.Nx;
+					lsc.Ny = lightSample.Ny;
+					lsc.UV = lightSample.UV;
+					lsc.Material = lightSample.Material;
+					flux = lightSample.Material->emission()->eval(lsc);
+				}
 
 				uint32 diffuseBounces = 0;
 				for (uint32 j = 0; j < mRenderer->settings().maxRayDepth(); ++j)
 				{
-					SamplePoint collision;
-					RenderEntity* entity = mRenderer->shoot(ray, collision, nullptr, nullptr);
+					ShaderClosure sc;
+					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr, nullptr);
 
-					if (entity && collision.Material && collision.Material->canBeShaded())
+					if (entity && sc.Material && sc.Material->canBeShaded())
 					{
-						const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(collision.N, ray.direction()));
+						const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(sc.N, ray.direction()));
 						PM::vec3 nextDir;
 
 						if (NdotL <= PM_EPSILON)
@@ -167,12 +178,12 @@ namespace PR
 						PM::vec3 s = PM::pm_Set(random.getFloat(),
 							random.getFloat(),
 							random.getFloat());
-						nextDir = collision.Material->sample(collision, s, pdf);
+						nextDir = sc.Material->sample(sc, s, pdf);
 
 						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse
 						{
 							// Always store when diffuse
-							mPhotonMap->store(flux, collision.P, ray.direction(), pdf);
+							mPhotonMap->store(flux, sc.P, ray.direction(), pdf);
 							photonsShoot++;
 
 							diffuseBounces++;
@@ -187,9 +198,9 @@ namespace PR
 
 						
 						MSI::balance(flux, full_pdf,
-							collision.Material->apply(collision, nextDir) * NdotL, pdf);
+							sc.Material->apply(sc, nextDir) * NdotL, pdf);
 
-						ray = ray.next(collision.P, nextDir);
+						ray = ray.next(sc.P, nextDir);
 						ray.setDepth(1);
 					}
 					else // Nothing found, abort
@@ -269,19 +280,19 @@ namespace PR
 	{
 		PR_ASSERT(mPhotonMap);
 
-		SamplePoint point;
+		ShaderClosure sc;
 		Spectrum applied;
-		RenderEntity* entity = context->shootWithEmission(applied, in, point);
+		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
 
-		if (!entity || !point.Material)
+		if (!entity || !sc.Material)
 			return applied;
 		
-		return applied + applyRay(in, point, context, pass);
+		return applied + applyRay(in, sc, context, pass);
 	}
 
-	Spectrum PPMIntegrator::applyRay(const Ray& in, const SamplePoint& point, RenderContext* context, uint32 pass)
+	Spectrum PPMIntegrator::applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 pass)
 	{
-		if (!point.Material->canBeShaded())
+		if (!sc.Material->canBeShaded())
 			return Spectrum();
 
 		float full_pdf = 0;
@@ -296,19 +307,19 @@ namespace PR
 			float pdf;
 			Spectrum weight;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
-			PM::vec3 dir = point.Material->sample(point, rnd, pdf);
-			const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, point.N));
+			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
+			const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, sc.N));
 
 			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 			{
-				Ray ray = in.next(point.P, dir);
+				Ray ray = in.next(sc.P, dir);
 
-				SamplePoint point2;
+				ShaderClosure sc2;
 				Spectrum applied;
-				if (context->shootWithEmission(applied, ray, point2) && point2.Material && std::isinf(pdf))
-					applied += applyRay(ray, point2, context, pass);
+				if (context->shootWithEmission(applied, ray, sc2) && sc2.Material && std::isinf(pdf))
+					applied += applyRay(ray, sc2, context, pass);
 
-				weight = point.Material->apply(point, ray.direction()) * applied * NdotL;
+				weight = sc.Material->apply(sc, ray.direction()) * applied * NdotL;
 			}
 
 			MSI::balance(full_weight, full_pdf, weight, pdf);
@@ -319,8 +330,8 @@ namespace PR
 			Photon::PhotonSphere* sphere = &mPhotonSpheres[context->threadNumber()];
 			
 			sphere->Found = 0;
-			sphere->Center = point.P;
-			sphere->Normal = point.N;
+			sphere->Center = sc.P;
+			sphere->Normal = sc.N;
 			sphere->SqueezeWeight =
 				context->renderer()->settings().ppm().squeezeWeight() * context->renderer()->settings().ppm().squeezeWeight();
 			sphere->GotHeap = false;
@@ -354,10 +365,10 @@ namespace PR
 					if (w > PM_EPSILON)
 					{
 	#ifdef PR_USE_PHOTON_RGB
-						weight = point.Material->apply(point, dir) *
+						weight = sc.Material->apply(sc, dir) *
 							RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2])*w;
 	#else
-						weight = point.Material->apply(point, dir) * Spectrum(photon->Power)*w;
+						weight = sc.Material->apply(sc, dir) * Spectrum(photon->Power)*w;
 	#endif
 					}
 

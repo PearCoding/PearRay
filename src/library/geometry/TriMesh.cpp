@@ -85,7 +85,7 @@ namespace PR
 		[](Face* f) {
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
-		[](const Ray& ray, SamplePoint& point, float& t, Face* f, Face*) {
+		[](const Ray& ray, FaceSample& point, float& t, Face* f, Face*) {
 			return Triangle::intersect(ray, *f, point, t);// Major bottleneck!
 		},
 		[](Face* f) {
@@ -133,7 +133,7 @@ namespace PR
 		}
 	}
 
-	bool TriMesh::checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t)
+	bool TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t)
 	{
 		PR_DEBUG_ASSERT(mKDTree);
 		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
@@ -144,7 +144,7 @@ namespace PR
 		return TriangleTestCost * ((TriKDTree*)mKDTree)->depth();
 	}
 
-	SamplePoint TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+	FaceSample TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		auto ret = sampler.generate3D(sample);
 		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, (int)mFaces.size() - 1);
@@ -157,7 +157,7 @@ namespace PR
 		PM::vec2 uv;
 		face->interpolate(PM::pm_GetX(bary), PM::pm_GetY(bary), vec, n, uv);
 
-		SamplePoint fp;
+		FaceSample fp;
 		fp.P = vec;
 		fp.Ng = n;
 		fp.UV = uv;

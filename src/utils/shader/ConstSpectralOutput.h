@@ -8,7 +8,7 @@ namespace PRU
 	{
 	public:
 		ConstSpectralShaderOutput(const PR::Spectrum& spec);
-		PR::Spectrum eval(const PR::SamplePoint& point) override;
+		PR::Spectrum eval(const PR::ShaderClosure& point) override;
 
 	private:
 		PR::Spectrum mValue;

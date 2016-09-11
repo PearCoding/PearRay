@@ -55,6 +55,11 @@ namespace PR
 
 	inline Ray Ray::next(const PM::vec3& pos, const PM::vec3& dir) const
 	{
+		return safe(pos, dir, mDepth + 1, mTime, mMaxDepth);
+	}
+
+	inline Ray Ray::safe(const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint32 maxDepth)
+	{
 		PM::vec3 off = PM::pm_Scale(dir, RayOffsetEpsilon);
 		PM::vec3 posOff = PM::pm_Add(pos, off);
 
@@ -68,7 +73,7 @@ namespace PR
 					std::nextafter(PM::pm_GetIndex(posOff, i), std::numeric_limits<float>::lowest()));
 		}
 
-		return Ray(posOff, dir, mDepth + 1, mTime, mMaxDepth);
+		return Ray(posOff, dir, depth, time, maxDepth);
 	}
 
 	inline uint32 Ray::maxDirectionIndex() const

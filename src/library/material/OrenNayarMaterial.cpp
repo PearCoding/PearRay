@@ -1,6 +1,6 @@
 #include "OrenNayarMaterial.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 
 #include "math/Projection.h"
 
@@ -31,7 +31,7 @@ namespace PR
 		mRoughness = d;
 	}
 
-	Spectrum OrenNayarMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum OrenNayarMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		if (mAlbedo)
 		{
@@ -69,15 +69,15 @@ namespace PR
 			return Spectrum();
 	}
 
-	float OrenNayarMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float OrenNayarMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
-		return PM_INV_PI_F;
+		return Projection::cos_hemi_pdf(point.N, L);
 	}
 
-	PM::vec3 OrenNayarMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 OrenNayarMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
-		auto dir = Projection::tangent_align(point.N, Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
-		pdf = PM_INV_PI_F;
+		auto dir = Projection::tangent_align(point.N,
+			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
 	}
 }

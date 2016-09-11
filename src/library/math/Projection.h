@@ -69,7 +69,7 @@ namespace PR
 
 		// Projections 
 		// Uniform [0, 1]
-		static inline PM::vec3 sphere(float u1, float u2, float* pdf = nullptr)
+		static inline PM::vec3 sphere(float u1, float u2, float& pdf)
 		{
 			const float t1 = PM_2_PI_F * u1;
 			const float t2 = 2 * std::sqrt(u2 + u2*u2);
@@ -81,8 +81,7 @@ namespace PR
 			const float y = t2 * thSin;
 			const float z = 1 - 2.0f * u2;
 
-			if(pdf)
-				*pdf = PM_INV_PI_F * 0.25f;
+			pdf = PM_INV_PI_F * 0.25f;
 			
 			return PM::pm_Set(x,y,z);
 		}
@@ -94,7 +93,7 @@ namespace PR
 
 		// Cosine weighted
 		// Orientation +Z
-		static inline PM::vec3 cos_hemi(float u1, float u2, float* pdf = nullptr)
+		static inline PM::vec3 cos_hemi(float u1, float u2, float& pdf)
 		{
 			const float cosPhi = std::sqrt(u1);
 			const float sinPhi = std::sqrt(1 - u1);// Faster?
@@ -106,13 +105,12 @@ namespace PR
 			const float x = sinPhi * thCos;
 			const float y = sinPhi * thSin;
 
-			if(pdf)
-				*pdf = cosPhi * PM_INV_PI_F;
+			pdf = cosPhi * PM_INV_PI_F;
 			
 			return PM::pm_Set(x, y, cosPhi);
 		}
 
-		static inline PM::vec3 cos_hemi(float u1, float u2, float m, float* pdf = nullptr)
+		static inline PM::vec3 cos_hemi(float u1, float u2, float m, float& pdf)
 		{
 			const float cosPhi = std::pow(u1, 1 / (m + 1.0f));
 			const float sinPhi = std::sqrt(1 - cosPhi*cosPhi);
@@ -124,8 +122,7 @@ namespace PR
 			const float x = sinPhi * thCos;
 			const float y = sinPhi * thSin;
 
-			if(pdf)
-				*pdf = (m + 1.0f) * std::pow(cosPhi, m) * 0.5f * PM_INV_PI_F;
+			pdf = (m + 1.0f) * std::pow(cosPhi, m) * 0.5f * PM_INV_PI_F;
 
 			return PM::pm_Set(x, y, cosPhi);
 		}

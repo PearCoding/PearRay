@@ -9,7 +9,7 @@ namespace PRU
 	{
 	public:
 		ImageVectorShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
-		PM::vec eval(const PR::SamplePoint& point) override;
+		PM::vec eval(const PR::ShaderClosure& point) override;
 
 	private:
 		OIIO::ustring mFilename;

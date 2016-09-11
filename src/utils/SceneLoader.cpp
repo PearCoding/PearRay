@@ -22,6 +22,9 @@
 
 #include "parser/mesh/TriMeshInlineParser.h"
 
+#include "parser/light/EnvironmentLightParser.h"
+#include "parser/light/DistantLightParser.h"
+
 #include "shader/ConstScalarOutput.h"
 #include "shader/ConstSpectralOutput.h"
 #include "shader/ConstVectorOutput.h"
@@ -179,24 +182,7 @@ namespace PRU
 					}
 				}
 
-				DL::Data* backgroundD = top->getFromKey("background");
-				if (backgroundD && backgroundD->isType() == DL::Data::T_String)
-				{
-					if (env->hasMaterial(backgroundD->getString()))
-					{
-						env->setBackgroundMaterial(env->getMaterial(backgroundD->getString()));
-					}
-					else
-					{
-						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", backgroundD->getString().c_str());
-					}
-				}
-				else if(backgroundD)
-				{ 
-					PR_LOGGER.log(L_Warning, M_Scene, "Invalid background entry.");
-				}
-
-				// Now entities.
+				// Now entities and lights
 				for (size_t i = 0; i < top->unnamedCount(); ++i)
 				{
 					DL::Data* dataD = top->at(i);
@@ -209,13 +195,17 @@ namespace PRU
 						{
 							addEntity(entry, nullptr, env);
 						}
+						else if(entry->id() == "light")
+						{
+							addLight(entry, env);
+						}
 					}
 				}
 
 				DL::Data* cameraD = top->getFromKey("camera");
 				if (cameraD && cameraD->isType() == DL::Data::T_String)
 				{
-					Camera* cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "standardCamera");
+					Camera* cam = (Camera*)env->scene()->getEntity(cameraD->getString(), "standard_camera");
 					env->setCamera(cam);
 				}
 
@@ -249,7 +239,7 @@ namespace PRU
 		DL::Data* scaleD = group->getFromKey("scale");
 
 		DL::Data* debugD = group->getFromKey("debug");
-		DL::Data* localAreaD = group->getFromKey("localArea");
+		DL::Data* localAreaD = group->getFromKey("local_area");
 
 		DL::Data* materialDebugBoundingBoxD = group->getFromKey("materialDebugBoundingBox");
 
@@ -404,6 +394,68 @@ namespace PRU
 	struct
 	{
 		const char* Name;
+		const ILightParser& Parser;
+	} LightParserEntries[] =
+	{
+		{ "env", EnvironmentLightParser() },
+		{ "environment", EnvironmentLightParser() },
+		{ "background", EnvironmentLightParser() },
+
+		{ "distant", DistantLightParser() },
+		{ "sun", DistantLightParser() },
+		{ nullptr, EnvironmentLightParser() },//Just for the end
+	};
+	void SceneLoader::addLight(DL::DataGroup* group, Environment* env)
+	{
+		DL::Data* typeD = group->getFromKey("type");
+
+		std::string type;
+
+		if (typeD && typeD->isType() == DL::Data::T_String)
+		{
+			type = typeD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "No light type set");
+			return;
+		}
+
+		IInfiniteLight* light = nullptr;
+		const ILightParser* parser = nullptr;
+		for (int i = 0; LightParserEntries[i].Name; ++i)
+		{
+			if (typeD->getString() == LightParserEntries[i].Name)
+			{
+				parser = &LightParserEntries[i].Parser;
+				break;
+			}
+		}
+
+		if (parser)
+		{
+			light = parser->parse(this, env, group);
+
+			if (!light)
+			{
+				PR_LOGGER.logf(L_Error, M_Scene, "Light couldn't be load. Error in '%s' type parser.",
+					typeD->getString().c_str());
+				return;
+			}
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "Light couldn't be load. Unknown type given.");
+			return;
+		}
+
+		PR_ASSERT(light);// After here it shouldn't be null
+		env->scene()->addInfiniteLight(light);
+	}
+
+	struct
+	{
+		const char* Name;
 		const IMaterialParser& Parser;
 	} MaterialParserEntries[] =
 	{
@@ -428,8 +480,8 @@ namespace PRU
 		DL::Data* nameD = group->getFromKey("name");
 		DL::Data* typeD = group->getFromKey("type");
 
-		DL::Data* selfShadowD = group->getFromKey("selfShadow");
-		DL::Data* cameraVisibleD = group->getFromKey("cameraVisible");
+		DL::Data* selfShadowD = group->getFromKey("self_shadow");
+		DL::Data* cameraVisibleD = group->getFromKey("camera_visible");
 		DL::Data* shadeableD = group->getFromKey("shadeable");
 		DL::Data* emissionD = group->getFromKey("emission");
 
@@ -674,7 +726,25 @@ namespace PRU
 					if (grp->unnamedCount() == 1 &&
 						grp->at(0)->isNumber())
 					{
+						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec.setEmissive(true);
+					}
+				}
+				else if (grp->id() == "temperature_hemi" || grp->id() == "blackbody_hemi")
+				{
+					if (grp->unnamedCount() == 1 &&
+						grp->at(0)->isNumber())
+					{
 						spec = Spectrum::fromBlackbodyHemi(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec.setEmissive(true);
+					}
+				}
+				else if (grp->id() == "temperature_sphere" || grp->id() == "blackbody_sphere")
+				{
+					if (grp->unnamedCount() == 1 &&
+						grp->at(0)->isNumber())
+					{
+						spec = Spectrum::fromBlackbodySphere(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
 						spec.setEmissive(true);
 					}
 				}
@@ -856,12 +926,22 @@ namespace PRU
 		return PM::pm_IdentityQuat();
 	}
 
-	SpectralShaderOutput* SceneLoader::getSpectralOutput(Environment* env, DL::Data* dataD) const
+	SpectralShaderOutput* SceneLoader::getSpectralOutput(Environment* env, DL::Data* dataD, bool allowScalar) const
 	{
 		if (!dataD)
 			return nullptr;
 
-		if (dataD->isType() == DL::Data::T_String)
+		if(allowScalar && dataD->isNumber())
+		{
+			Spectrum spec;
+			spec.fill(dataD->getFloatConverted());
+
+			auto* tex = new ConstSpectralShaderOutput(spec);
+			env->addShaderOutput(tex);
+			
+			return tex;
+		}
+		else if (dataD->isType() == DL::Data::T_String)
 		{
 			if (env->hasSpectrum(dataD->getString()))
 			{
@@ -946,8 +1026,27 @@ namespace PRU
 	{
 		if (!dataD)
 			return nullptr;
+		
+		if (dataD->isType() == DL::Data::T_Array)
+		{
+			bool ok;
+			const auto vec = getVector(dataD->getArray(), ok);
 
-		// TODO:
+			if(ok)
+			{
+				auto* tex = new ConstVectorShaderOutput(vec);
+				env->addShaderOutput(tex);
+				return tex;
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid vector entry.");
+			}
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+		}
 
 		return nullptr;
 	}

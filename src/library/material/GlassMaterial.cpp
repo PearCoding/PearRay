@@ -1,6 +1,6 @@
 #include "GlassMaterial.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 #include "renderer/Renderer.h"
 #include "entity/RenderEntity.h"
 
@@ -35,7 +35,7 @@ namespace PR
 		mIndex = data;
 	}
 
-	Spectrum GlassMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum GlassMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		if (mSpecularity)
 			return mSpecularity->eval(point);
@@ -43,22 +43,22 @@ namespace PR
 			return Spectrum();
 	}
 
-	float GlassMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float GlassMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
 		return std::numeric_limits<float>::infinity();
 	}
 
-	PM::vec3 GlassMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 GlassMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		const float ind = mIndex ? mIndex->eval(point).value(PM::pm_GetX(rnd)*Spectrum::SAMPLING_COUNT) : 1.55f;
-		const float d = !(point.Flags & SPF_Inside) ?
+		const float d = !(point.Flags & SCF_Inside) ?
 			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
 
 		PM::vec3 dir;
 		if (PM::pm_GetY(rnd) < d)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		else
-			dir = Reflection::refract(!(point.Flags & SPF_Inside) ? 1/ind : ind, point.NdotV, point.N, point.V);
+			dir = Reflection::refract(!(point.Flags & SCF_Inside) ? 1/ind : ind, point.NdotV, point.N, point.V);
 
 		pdf = std::numeric_limits<float>::infinity();
 		return dir;

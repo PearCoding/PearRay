@@ -2,7 +2,7 @@
 
 #include "ray/Ray.h"
 #include "material/Material.h"
-#include "shader/SamplePoint.h"
+#include "shader/FaceSample.h"
 
 #include "Logger.h"
 #include "Random.h"
@@ -75,7 +75,7 @@ namespace PR
 		return mPlane.toLocalBoundingBox();
 	}
 
-	bool PlaneEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
+	bool PlaneEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
 	{
 		PR_GUARD_PROFILE();
 
@@ -105,19 +105,18 @@ namespace PR
 	}
 
 	// World space
-	SamplePoint PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+	FaceSample PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		auto s = sampler.generate2D(sample);
 
 		PM::vec xaxis = PM::pm_Multiply(worldDirectionMatrix(), mPlane.xAxis());
 		PM::vec yaxis = PM::pm_Multiply(worldDirectionMatrix(), mPlane.yAxis());
 
-		SamplePoint fp;
+		FaceSample fp;
 		fp.P = PM::pm_Add(worldPosition(),
 			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetX(s)),
 				PM::pm_Scale(yaxis, PM::pm_GetY(s))));
 		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), mPlane.normal()));
-		fp.N = fp.Ng;
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 
 		fp.UV = PM::pm_SetZ(s, 0);

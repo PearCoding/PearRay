@@ -3,7 +3,7 @@
 
 #include "math/Projection.h"
 #include "math/Fresnel.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 
 namespace PR
 {
@@ -43,7 +43,7 @@ namespace PR
 	}
 
 	// TODO: Should be normalized better.
-	Spectrum BlinnPhongMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum BlinnPhongMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		Spectrum albedo;
 		if(mAlbedo)
@@ -64,8 +64,8 @@ namespace PR
 			{
 				const float n2 = index.value(i);
 				const float f = Fresnel::dielectric(VdotH,
-					!(point.Flags & SPF_Inside) ? 1 : n2,
-					!(point.Flags & SPF_Inside) ? n2 : 1);
+					!(point.Flags & SCF_Inside) ? 1 : n2,
+					!(point.Flags & SCF_Inside) ? n2 : 1);
 
 				spec.setValue(i, f);
 			}
@@ -76,7 +76,7 @@ namespace PR
 		return albedo + spec;
 	}
 
-	float BlinnPhongMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float BlinnPhongMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
 		if (mIndex)
 		{
@@ -91,10 +91,11 @@ namespace PR
 		}
 	}
 
-	PM::vec3 BlinnPhongMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 BlinnPhongMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
-		auto dir = Projection::tangent_align(point.N, Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd)));
-		pdf = BlinnPhongMaterial::pdf(point, dir);
+		auto dir = Projection::tangent_align(point.N,
+			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+		pdf += BlinnPhongMaterial::pdf(point, dir);
 		return dir;
 	}
 }

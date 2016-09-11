@@ -9,7 +9,7 @@ namespace PRU
 	{
 	public:
 		ImageScalarShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
-		float eval(const PR::SamplePoint& point) override;
+		float eval(const PR::ShaderClosure& point) override;
 
 	private:
 		OIIO::ustring mFilename;

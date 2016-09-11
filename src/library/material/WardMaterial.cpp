@@ -1,6 +1,6 @@
 #include "WardMaterial.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 
 #include "math/Projection.h"
 #include "math/Reflection.h"
@@ -54,7 +54,7 @@ namespace PR
 	}
 
 	constexpr float MinRoughness = 0.001f;
-	Spectrum WardMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum WardMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		Spectrum albedo;
 		if (mAlbedo)
@@ -96,7 +96,7 @@ namespace PR
 		return albedo + spec;
 	}
 
-	float WardMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float WardMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
 		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
@@ -129,7 +129,7 @@ namespace PR
 			return PM::pm_MaxT(PM_INV_PI_F, r);
 	}
 
-	PM::vec3 WardMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 WardMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
@@ -150,8 +150,9 @@ namespace PR
 			py = std::atan2(m2*s, m1*c);
 		}
 
+		float tmpPdf;
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::sphere(px*2*PM_INV_PI_F, py*PM_INV_PI_F));
+			Projection::sphere(px*2*PM_INV_PI_F, py*PM_INV_PI_F, tmpPdf));
 		auto dir = Reflection::reflect(PM::pm_Dot3D(H, point.V), H, point.V);
 		pdf = WardMaterial::pdf(point, dir);
 		return dir;

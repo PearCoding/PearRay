@@ -10,7 +10,7 @@ namespace PRU
 	{
 	}
 
-	float ConstScalarShaderOutput::eval(const PR::SamplePoint& point)
+	float ConstScalarShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		return mValue;
 	}

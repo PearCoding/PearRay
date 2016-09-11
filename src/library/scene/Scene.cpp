@@ -3,6 +3,7 @@
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
 #include "material/Material.h"
+#include "light/IInfiniteLight.h"
 
 #include "Logger.h"
 
@@ -54,6 +55,18 @@ namespace PR
 		return nullptr;
 	}
 
+	void Scene::addInfiniteLight(IInfiniteLight* e)
+	{
+		PR_ASSERT(e);
+		mInfiniteLights.push_back(e);
+	}
+
+	void Scene::removeInfiniteLight(IInfiniteLight* e)
+	{
+		PR_ASSERT(e);
+		mInfiniteLights.remove(e);
+	}
+
 	void Scene::clear()
 	{
 		for (Entity* e : mEntities)
@@ -62,6 +75,12 @@ namespace PR
 		}
 		mEntities.clear();
 		mRenderEntities.clear();
+
+		for (IInfiniteLight* e : mInfiniteLights)
+		{
+			delete e;
+		}
+		mInfiniteLights.clear();
 
 		if (mKDTree)
 		{
@@ -80,10 +99,10 @@ namespace PR
 		}
 
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
-			[](const Ray& ray, SamplePoint& point, float& t, RenderEntity* e, RenderEntity* ignore) {
+			[](const Ray& ray, FaceSample& point, float& t, RenderEntity* e, RenderEntity* ignore) {
 				if((!ignore || !e->isParent(ignore)) &&
 				e->checkCollision(ray, point) &&
-				point.Material && !point.Material->shouldIgnore(ray, point)) {
+				point.Material && (ray.depth() > 0 || point.Material->isCameraVisible())) {
 					t = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.P, ray.startPosition()));
 					return true;
 				}
@@ -96,7 +115,7 @@ namespace PR
 		((SceneKDTree*)mKDTree)->build(mRenderEntities);
 	}
 
-	RenderEntity* Scene::checkCollision(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore) const
+	RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint, RenderEntity* ignore) const
 	{
 		float t;
 		PR_ASSERT(mKDTree);
@@ -109,5 +128,11 @@ namespace PR
 		{
 			e->onPreRender();
 		}
+	}
+
+	BoundingBox Scene::boundingBox() const
+	{
+		PR_ASSERT(mKDTree);
+		return ((SceneKDTree*)mKDTree)->boundingBox();
 	}
 }

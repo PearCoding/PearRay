@@ -13,6 +13,10 @@ SET(PR_Parser_Entity_Src
   parser/entity/PlaneParser.cpp
   parser/entity/SphereParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Src})
+SET(PR_Parser_Light_Src
+  parser/light/DistantLightParser.cpp
+  parser/light/EnvironmentLightParser.cpp)
+SOURCE_GROUP("Source Files\\Parser\\Light" FILES ${PR_Parser_Light_Src})
 SET(PR_Parser_Material_Src
   parser/material/BlinnPhongMaterialParser.cpp
   parser/material/DebugBoundingBoxMaterialParser.cpp
@@ -38,7 +42,7 @@ SET(PR_Shader_Src
   shader/ImageVectorOutput.cpp)
 SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
-  ${PR_Shader_Src} ${PR_Renderer_Src} ${PR_Parser_Mesh_Src}
+  ${PR_Shader_Src} ${PR_Renderer_Src} ${PR_Parser_Mesh_Src} ${PR_Parser_Light_Src}
 )
 
 SET(PR_Main_Hdr
@@ -56,6 +60,10 @@ SET(PR_Parser_Entity_Hdr
   parser/entity/PlaneParser.h
   parser/entity/SphereParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Hdr})
+SET(PR_Parser_Light_Hdr
+  parser/light/DistantLightParser.h
+  parser/light/EnvironmentLightParser.h)
+SOURCE_GROUP("Header Files\\Parser\\Light" FILES ${PR_Parser_Light_Hdr})
 SET(PR_Parser_Material_Hdr
   parser/material/BlinnPhongMaterialParser.h
   parser/material/DebugBoundingBoxMaterialParser.h
@@ -83,7 +91,7 @@ SET(PR_Shader_Hdr
   shader/ImageVectorOutput.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
-  ${PR_Shader_Hdr} ${PR_Renderer_Hdr} ${PR_Parser_Mesh_Hdr}
+  ${PR_Shader_Hdr} ${PR_Renderer_Hdr} ${PR_Parser_Mesh_Hdr} ${PR_Parser_Light_Hdr}
 )
 
 if(OSL_FOUND)

@@ -8,7 +8,7 @@ namespace PRU
 	{
 	public:
 		ConstVectorShaderOutput(const PM::vec& spec);
-		PM::vec eval(const PR::SamplePoint& point) override;
+		PM::vec eval(const PR::ShaderClosure& point) override;
 
 	private:
 		PM::vec mValue;

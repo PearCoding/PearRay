@@ -183,6 +183,14 @@ namespace PR
 		mValues[i] = value;
 	}
 
+	inline void Spectrum::fill(float v)
+	{
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+		{
+			mValues[i] = v;
+		}
+	}
+
 	inline float Spectrum::max() const
 	{
 		float h = 0;

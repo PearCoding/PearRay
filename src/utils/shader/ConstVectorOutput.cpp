@@ -10,7 +10,7 @@ namespace PRU
 	{
 	}
 
-	PM::vec ConstVectorShaderOutput::eval(const PR::SamplePoint& point)
+	PM::vec ConstVectorShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		return mValue;
 	}

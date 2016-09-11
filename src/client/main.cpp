@@ -83,13 +83,21 @@ int main(int argc, char** argv)
 	PRU::Environment* env = loader.loadFromFile(options.InputFile);
 	PR_END_PROFILE_ID(0);
 
-	if(!env)
+	if(!env || !env->scene())
 	{
 		if(!options.IsQuiet)
 			std::cout << "Error while parsing input." << std::endl;
 		
 		return -2;
-	} 
+	}
+
+	if(!env->camera())
+	{
+		if(!options.IsQuiet)
+			std::cout << "Error: No camera specified." << std::endl;
+		
+		return -4;
+	}
 
 	// Setup renderer
 	PR_BEGIN_PROFILE_ID(1);
@@ -98,7 +106,6 @@ int main(int argc, char** argv)
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
 		env->camera(), env->scene(), true);
 	renderer->setSettings(options.RenderSettings);
-	renderer->setBackgroundMaterial(env->backgroundMaterial());
 
 	if(options.CropMinXOverride >= 0 &&
 		options.CropMinXOverride < options.CropMaxXOverride &&

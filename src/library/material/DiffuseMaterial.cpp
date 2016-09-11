@@ -1,6 +1,6 @@
 #include "DiffuseMaterial.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 
 #include "math/Projection.h"
 
@@ -21,7 +21,7 @@ namespace PR
 		mAlbedo = diffSpec;
 	}
 
-	Spectrum DiffuseMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum DiffuseMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		if (mAlbedo)
 			return mAlbedo->eval(point) * (PM_INV_PI_F);
@@ -29,14 +29,15 @@ namespace PR
 			return Spectrum();
 	}
 
-	float DiffuseMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float DiffuseMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
 		return Projection::cos_hemi_pdf(point.N, L);
 	}
 
-	PM::vec3 DiffuseMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 DiffuseMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
-		auto dir = Projection::tangent_align(point.N, Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), &pdf));
+		auto dir = Projection::tangent_align(point.N,
+			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
 	}
 }

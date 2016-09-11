@@ -8,7 +8,7 @@ namespace PRU
 	{
 	public:
 		ConstScalarShaderOutput(float f);
-		float eval(const PR::SamplePoint& point) override;
+		float eval(const PR::ShaderClosure& point) override;
 
 	private:
 		float mValue;

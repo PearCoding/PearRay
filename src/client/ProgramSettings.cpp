@@ -175,7 +175,7 @@ po::options_description setup_cmd_options()
 			"File extension for image output. Has to be a type supported by OpenImageIO.")
 	;
 
-	po::options_description thread_d("Threading");
+	po::options_description thread_d("Threading[*]");
 	thread_d.add_options()
 		("threads,t", po::value<PR::uint32>(),
 			"Amount of threads used for processing. Set 0 for automatic detection.")
@@ -185,7 +185,7 @@ po::options_description setup_cmd_options()
 			"Amount of vertical tiles used in threading")
 	;
 
-	po::options_description scene_d("Scene");
+	po::options_description scene_d("Scene[*]");
 	scene_d.add_options()
 		/*("scene", po::value<std::string>(),
 			"If specified, will choose specific scene from input, else, first one will be used")
@@ -201,7 +201,7 @@ po::options_description setup_cmd_options()
 
 	PR::RenderSettings DefaultRenderSettings;
 
-	po::options_description render_d("Render");
+	po::options_description render_d("Render[*]");
 	render_d.add_options()
 		("inc", po::value<bool>(),
 			"Render incremental.")
@@ -215,7 +215,7 @@ po::options_description setup_cmd_options()
 			"Render incremental.")
 	;
 
-	po::options_description pixelsampler_d("Pixel Sampler");
+	po::options_description pixelsampler_d("Pixel Sampler[*]");
 	pixelsampler_d.add_options()
 		("ps_mode",
 			po::value<EnumOption<SamplerMode> >(),
@@ -225,7 +225,7 @@ po::options_description setup_cmd_options()
 		 	"Maximum pixel sample count")
 	;
 
-	po::options_description gi_d("Global Illumination");
+	po::options_description gi_d("Global Illumination[*]");
 	gi_d.add_options()
 		("gi_diff_max",
 			po::value<PR::uint32>(),
@@ -235,7 +235,7 @@ po::options_description setup_cmd_options()
 		 	"Maximum light samples")
 	;
 
-	po::options_description photon_d("Progressive Photon Mapping (PPM)");
+	po::options_description photon_d("Progressive Photon Mapping (PPM)[*]");
 	photon_d.add_options()
 		("p_count",
 			po::value<PR::uint32>(),

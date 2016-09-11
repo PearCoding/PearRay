@@ -10,7 +10,7 @@ namespace PRU
 	{
 	}
 
-	PR::Spectrum ConstSpectralShaderOutput::eval(const PR::SamplePoint& point)
+	PR::Spectrum ConstSpectralShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		return mValue;
 	}

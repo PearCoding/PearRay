@@ -1,6 +1,6 @@
 #include "MirrorMaterial.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 #include "renderer/Renderer.h"
 #include "entity/RenderEntity.h"
 
@@ -36,7 +36,7 @@ namespace PR
 		mIndex = data;
 	}
 
-	Spectrum MirrorMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum MirrorMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		if (mSpecularity)
 			return mSpecularity->eval(point);
@@ -44,12 +44,12 @@ namespace PR
 			return Spectrum();
 	}
 
-	float MirrorMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float MirrorMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
 		return std::numeric_limits<float>::infinity();
 	}
 
-	PM::vec3 MirrorMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 MirrorMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		auto dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		pdf = std::numeric_limits<float>::infinity();

@@ -2,6 +2,7 @@
 
 #include "thread/Thread.h"
 #include "renderer/RenderStatistics.h"
+#include "renderer/Renderer.h"
 #include "Random.h"
 
 namespace PR
@@ -9,7 +10,7 @@ namespace PR
 	class Renderer;
 	class RenderThread;
 	class RenderEntity;
-	struct SamplePoint;
+	struct ShaderClosure;
 	class Ray;
 	class Sampler;
 	class Spectrum;
@@ -19,9 +20,20 @@ namespace PR
 		RenderContext(Renderer* renderer, RenderThread* thread, uint32 index);
 		~RenderContext();
 
-		void render(uint32 x, uint32 y, uint32 sample, uint32 pass);
-		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
-		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore = nullptr);
+		inline void render(uint32 x, uint32 y, uint32 sample, uint32 pass)
+		{
+			mRenderer->render(this, x, y, sample, pass);
+		}
+		
+		inline RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderEntity* ignore = nullptr)
+		{
+			return mRenderer->shoot(ray, sc, this, ignore);
+		}
+
+		inline RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderEntity* ignore = nullptr)
+		{
+			return mRenderer->shootWithEmission(appliedSpec, ray, sc, this, ignore);
+		}
 
 		inline Renderer* renderer() const
 		{

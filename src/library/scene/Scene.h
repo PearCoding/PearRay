@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
+#include "geometry/BoundingBox.h"
 
 #include <string>
 #include <list>
@@ -9,7 +8,8 @@
 namespace PR
 {
 	class Entity;
-	struct SamplePoint;
+	struct FaceSample;
+	class IInfiniteLight;
 	class RenderEntity;
 	class Ray;
 	class PR_LIB Scene
@@ -28,18 +28,25 @@ namespace PR
 		Entity* getEntity(const std::string& name, const std::string& type) const;
 		inline const std::list<Entity*>& entities() const { return mEntities; }
 		
+		void addInfiniteLight(IInfiniteLight* e);
+		void removeInfiniteLight(IInfiniteLight* e);
+		inline const std::list<IInfiniteLight*>& infiniteLights() const { return mInfiniteLights; }
+
 		void clear();
 
 		void buildTree();
 
-		RenderEntity* checkCollision(const Ray& ray, SamplePoint& collisionPoint, RenderEntity* ignore) const;
+		RenderEntity* checkCollision(const Ray& ray, FaceSample& collisionPoint, RenderEntity* ignore) const;
 
 		void onPreRender();
+
+		BoundingBox boundingBox() const;
 	private:
 		std::string mName;
 		std::list<Entity*> mEntities;
 		std::list<RenderEntity*> mRenderEntities;
+		std::list<IInfiniteLight*> mInfiniteLights;
 
-		void* mKDTree;
+		void* mKDTree;// We use a void* pointer to hide the KDTree header only implementation
 	};
 }

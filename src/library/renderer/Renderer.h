@@ -13,7 +13,7 @@ namespace PR
 	class Affector;
 	class Camera;
 	class Entity;
-	struct SamplePoint;
+	struct ShaderClosure;
 	class GPU;
 	class IDisplayDriver;
 	class Integrator;
@@ -43,9 +43,6 @@ namespace PR
 
 		uint32 cropPixelOffsetX() const;
 		uint32 cropPixelOffsetY() const;
-
-		void setBackgroundMaterial(Material* m);
-		Material* backgroundMaterial() const;
 		
 		// tcx = tile count x
 		// tcy = tile count y
@@ -54,8 +51,8 @@ namespace PR
 		void start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
 		void stop();
 
-		RenderEntity* shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore);
 
 		bool isFinished();
 		void waitForFinish();
@@ -96,6 +93,11 @@ namespace PR
 		RenderStatistics stats(RenderThread* thread = nullptr) const;
 		uint64 maxSamples() const;
 
+		inline Scene* scene() const
+		{
+			return mScene;
+		}
+		
 	protected:
 		// Render Thread specific
 		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);
@@ -117,7 +119,6 @@ namespace PR
 		IDisplayDriver* mResult;
 
 		std::list<RenderEntity*> mLights;
-		Material* mBackgroundMaterial;
 
 		std::mutex mTileMutex;
 		uint32 mTileWidth;

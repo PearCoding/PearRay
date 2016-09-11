@@ -4,7 +4,7 @@
 #include "Face.h"
 #include "BoundingBox.h"
 
-#include "shader/SamplePoint.h"
+#include "shader/FaceSample.h"
 #include "ray/Ray.h"
 
 #include <utility>
@@ -31,7 +31,7 @@ namespace PR
 	{
 	public:
 		inline static bool intersect(const Ray& ray, const Face& face,
-			SamplePoint& point, float& t)
+			FaceSample& point, float& t)
 		{
 			PR_GUARD_PROFILE();
 

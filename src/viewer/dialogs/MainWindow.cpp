@@ -167,7 +167,6 @@ void MainWindow::openProject(const QString& str)
 		
 		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
 			mEnvironment->camera(), mEnvironment->scene());
-		mRenderer->setBackgroundMaterial(mEnvironment->backgroundMaterial());
 		mRenderer->settings().setCropMaxX(mEnvironment->cropMaxX());
 		mRenderer->settings().setCropMinX(mEnvironment->cropMinX());
 		mRenderer->settings().setCropMaxY(mEnvironment->cropMaxY());

@@ -26,7 +26,7 @@ namespace PRU
 		GlassMaterial* diff = new GlassMaterial;
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
-		diff->setIndexData(loader->getSpectralOutput(env, indexD));
+		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));
 
 		return diff;
 	}

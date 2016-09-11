@@ -1,6 +1,6 @@
 #include "ImageSpectralOutput.h"
 
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 #include "Logger.h"
 
 #include "spectral/RGBConverter.h"
@@ -15,7 +15,7 @@ namespace PRU
 		PR_ASSERT(!mFilename.empty());
 	}
 
-	PR::Spectrum ImageSpectralShaderOutput::eval(const PR::SamplePoint& point)
+	PR::Spectrum ImageSpectralShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		float res[3] = { 0, 0, 0 };
 

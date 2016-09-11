@@ -53,6 +53,8 @@ namespace PR
 		inline void setValueAtWavelength(float wavelength, float value);
 		float approx(float wavelength, InterpolationType interpolation = IT_Linear) const;
 
+		inline void fill(float v);
+		
 		inline float max() const;// Amplitude
 		inline float min() const;// Amplitude
 		inline float avg() const;// General average

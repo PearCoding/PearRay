@@ -14,17 +14,21 @@
 #include "integrator/DebugIntegrator.h"
 #include "integrator/PPMIntegrator.h"
 
+#include "light/IInfiniteLight.h"
+
 #include "sampler/RandomSampler.h"
 #include "sampler/StratifiedSampler.h"
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/UniformSampler.h"
 #include "sampler/HaltonQMCSampler.h"
 
-#include "shader/SamplePoint.h"
+#include "shader/FaceSample.h"
+#include "shader/ShaderClosure.h"
 
 #include "Logger.h"
 #include "math/Reflection.h"
 #include "math/Projection.h"
+#include "math/MSI.h"
 
 #include "material/Material.h"
 
@@ -37,7 +41,7 @@ namespace PR
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene, bool useGPU) :
 		mWidth(w), mHeight(h),
 		mCamera(cam), mScene(scene),
-		mResult(nullptr), mBackgroundMaterial(nullptr),
+		mResult(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
 		mGPU(nullptr), mIntegrator(nullptr)
@@ -142,16 +146,6 @@ namespace PR
 	uint32 Renderer::cropPixelOffsetY() const
 	{
 		return std::ceil(mRenderSettings.cropMinY() * mHeight);
-	}
-
-	void Renderer::setBackgroundMaterial(Material* m)
-	{
-		mBackgroundMaterial = m;
-	}
-
-	Material* Renderer::backgroundMaterial() const
-	{
-		return mBackgroundMaterial;
 	}
 
 	void Renderer::start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads)
@@ -339,38 +333,49 @@ namespace PR
 		return list;
 	}
 
-	RenderEntity* Renderer::shoot(const Ray& ray, SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
-			collisionPoint.Flags = 0;
+			sc.Flags = 0;
 
-			RenderEntity* entity = mScene->checkCollision(ray, collisionPoint, ignore);
+			FaceSample fs;
+			RenderEntity* entity = mScene->checkCollision(ray, fs, ignore);
 
-			const float NdotV = PM::pm_Dot3D(ray.direction(), collisionPoint.Ng);
-			collisionPoint.N = Reflection::faceforward(NdotV, collisionPoint.Ng);
-			collisionPoint.Flags |= (NdotV > 0) ? SPF_Inside : 0;
-			collisionPoint.NdotV = std::abs(NdotV);
-			collisionPoint.V = ray.direction();
+			sc.P = fs.P;
+			sc.Ng = fs.Ng;
+			sc.UV = fs.UV;
+			sc.Material = fs.Material;
 
-			if (collisionPoint.Flags & SPF_Inside)
+			const float NdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
+			sc.N = Reflection::faceforward(NdotV, sc.Ng);
+			sc.Flags |= (NdotV > 0) ? SCF_Inside : 0;
+			sc.NdotV = std::abs(NdotV);
+			sc.V = ray.direction();
+
+			if (sc.Flags & SCF_Inside)
 			{
-				collisionPoint.Nx = PM::pm_Negate(collisionPoint.Nx);
-				collisionPoint.Ny = PM::pm_Negate(collisionPoint.Ny);
+				sc.Nx = PM::pm_Negate(fs.Nx);
+				sc.Ny = PM::pm_Negate(fs.Ny);
+			}
+			else
+			{
+				sc.Nx = fs.Nx;
+				sc.Ny = fs.Ny;
 			}
 
 			if(context)
 			{
 				context->stats().incRayCount();
-				if(!entity)
+				if(entity)
 					context->stats().incEntityHitCount();
 			}
 			else
 			{
 				mGlobalStatistics.incRayCount();
-				if(!entity)
+				if(entity)
 					mGlobalStatistics.incEntityHitCount();
 			}
 			
@@ -383,34 +388,24 @@ namespace PR
 	}
 
 	RenderEntity* Renderer::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
-			SamplePoint& collisionPoint, RenderContext* context, RenderEntity* ignore)
+		ShaderClosure& sc, RenderContext* context, RenderEntity* ignore)
 	{
-		RenderEntity* entity = shoot(ray, collisionPoint, context, ignore);
+		RenderEntity* entity = shoot(ray, sc, context, ignore);
 		if (entity)
 		{
-			if(collisionPoint.Material && collisionPoint.Material->emission())
+			if(sc.Material && sc.Material->emission())
 			{
-				float a = 1;
-				// if(entity->flags() & EF_ScaleLight)// Scale lightning to match 
-				// 	a *= entity->surfaceArea(collisionPoint.Material);
-				
-				appliedSpec += collisionPoint.Material->emission()->eval(collisionPoint) * a;
+				appliedSpec = sc.Material->emission()->eval(sc);
 			}
 		}
-		else if (mBackgroundMaterial)
+		else
 		{
-			SamplePoint point;
-			point.Material = mBackgroundMaterial;
-			point.Flags = SPF_Inside;
-			point.V = ray.direction();
-			point.Ng = ray.direction();
-			point.N = PM::pm_Negate(ray.direction());
-			point.P = ray.direction();//Radius?
-
-			Projection::tangent_frame(point.N, point.Nx, point.Ny);
-			point.UV = Projection::sphereUV(ray.direction());
-
-			appliedSpec += mBackgroundMaterial->emission()->eval(point) /** (4*PM_INV_PI_F)*/;
+			float full_pdf = 0;
+			for(IInfiniteLight* light : mScene->infiniteLights())
+			{
+				MSI::power(appliedSpec, full_pdf,
+					light->apply(ray.direction()), light->pdf(ray.direction()));
+			}
 
 			if(context)
 				context->stats().incBackgroundHitCount();

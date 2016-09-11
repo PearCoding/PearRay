@@ -32,6 +32,7 @@ namespace PR
 		inline uint32 maxDirectionIndex() const;
 
 		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
+		static inline Ray safe(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint32 maxDepth = 0);
 	private:
 		inline void calcMaxDirectionElement();
 

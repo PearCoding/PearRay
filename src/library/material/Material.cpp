@@ -1,6 +1,5 @@
 #include "Material.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
 
 namespace PR
 {
@@ -54,10 +53,5 @@ namespace PR
 	bool Material::isCameraVisible() const
 	{
 		return mCameraVisible;
-	}
-
-	bool Material::shouldIgnore(const Ray& in, const SamplePoint& point) const
-	{
-		return !mCameraVisible && in.depth() == 0;
 	}
 }

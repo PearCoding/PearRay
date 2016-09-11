@@ -5,15 +5,16 @@
 
 namespace PR
 {
-	enum SamplePointFlags
+	enum ShaderClosureFlags
 	{
-		SPF_Inside = 0x1
+		SCF_Inside = 0x1
 	};
 
 	/*
 	   Sample context - nearly the same as for OSL
+	   View dependent!
 	*/
-	struct PM_ALIGN(16) PR_LIB_INLINE SamplePoint
+	struct PM_ALIGN(16) PR_LIB_INLINE ShaderClosure
 	{
 	public:
 		// Point of sample
@@ -56,7 +57,7 @@ namespace PR
 		class Material* Material;
 
 		// C++11 POD constructor
-		inline SamplePoint() noexcept :
+		inline ShaderClosure() noexcept :
 			P(PM::pm_Zero()),
 			dPdX(PM::pm_Zero()),
 			dPdY(PM::pm_Zero()),

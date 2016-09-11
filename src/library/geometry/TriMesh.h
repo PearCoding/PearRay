@@ -44,8 +44,8 @@ namespace PR
 
 		virtual float collisionCost() const override;
 
-		bool checkCollision(const Ray& ray, SamplePoint& collisionPoint, float& t) override;
-		SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+		bool checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t) override;
+		FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 
 		virtual void replaceMaterial(Material* mat) override;
 	private:

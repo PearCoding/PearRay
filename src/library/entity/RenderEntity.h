@@ -9,7 +9,7 @@ namespace PR
 	class Random;
 	class Ray;
 	class Renderer;
-	struct SamplePoint;
+	struct FaceSample;
 	class Sampler;
 	class PR_LIB RenderEntity : public Entity
 	{
@@ -29,10 +29,10 @@ namespace PR
 		inline BoundingBox worldBoundingBox() const;
 
 		// In world coords
-		virtual bool checkCollision(const Ray& ray, SamplePoint& collisionPoint) const = 0;
+		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const = 0;
 
 		// In world coords
-		virtual SamplePoint getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const = 0;
+		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const = 0;
 
 		// Entity
 		virtual void onPreRender() override;

@@ -1,5 +1,5 @@
 #include "GridMaterial.h"
-#include "shader/SamplePoint.h"
+#include "shader/ShaderClosure.h"
 
 namespace PR
 {
@@ -48,7 +48,7 @@ namespace PR
 		return mTiledUV;
 	}
 
-	Spectrum GridMaterial::apply(const SamplePoint& point, const PM::vec3& L)
+	Spectrum GridMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
@@ -65,14 +65,14 @@ namespace PR
 		return Spectrum();
 	}
 
-	SamplePoint GridMaterial::applyGrid(const SamplePoint& point, int& u, int& v) const
+	ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
 	{
 		u = (int)(PM::pm_GetX(point.UV) * mGridCount);
 		v = (int)(PM::pm_GetY(point.UV) * mGridCount);
 
 		if (mTiledUV)
 		{
-			SamplePoint pointN = point;
+			ShaderClosure pointN = point;
 			pointN.UV = (PM::pm_Set(PM::pm_GetX(point.UV)*mGridCount - u,
 				PM::pm_GetY(point.UV)*mGridCount - v
 			));
@@ -84,7 +84,7 @@ namespace PR
 		}
 	}
 
-	float GridMaterial::pdf(const SamplePoint& point, const PM::vec3& L)
+	float GridMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
@@ -101,7 +101,7 @@ namespace PR
 		return 0;
 	}
 
-	PM::vec3 GridMaterial::sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf)
+	PM::vec3 GridMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);

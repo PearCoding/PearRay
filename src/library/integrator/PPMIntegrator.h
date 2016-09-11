@@ -12,6 +12,8 @@ namespace PR
 		struct PhotonSphere;
 	}
 
+	class RenderEntity;
+
 	/*
 	 * Progressive Photon Mapping: A Probabilistic Approach
 	 * by Claude Knaus and Matthias Zwicker
@@ -39,7 +41,7 @@ namespace PR
 		virtual uint64 maxSamples(const Renderer* renderer) const override;
 
 	private:
-		Spectrum applyRay(const Ray& in, const SamplePoint& point, RenderContext* context, uint32 pass);
+		Spectrum applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 pass);
 
 		Renderer* mRenderer;
 

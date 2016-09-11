@@ -15,9 +15,9 @@ namespace PR
 		ScalarShaderOutput* roughness() const;
 		void setRoughness(ScalarShaderOutput* data);
 		
-		Spectrum apply(const SamplePoint& point, const PM::vec3& L) override;
-		float pdf(const SamplePoint& point, const PM::vec3& L) override;
-		PM::vec3 sample(const SamplePoint& point, const PM::vec3& rnd, float& pdf) override;
+		Spectrum apply(const ShaderClosure& point, const PM::vec3& L) override;
+		float pdf(const ShaderClosure& point, const PM::vec3& L) override;
+		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
 
 	private:
 		SpectralShaderOutput* mAlbedo;

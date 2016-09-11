@@ -18,7 +18,7 @@ namespace PR
 
 	std::string StandardCamera::type() const
 	{
-		return "standardCamera";
+		return "standard_camera";
 	}
 
 	void StandardCamera::setOrthographic(bool b)

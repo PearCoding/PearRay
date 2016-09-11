@@ -28,9 +28,14 @@ SET(PR_Integrator_Src
   integrator/BiDirectIntegrator.cpp
   integrator/DebugIntegrator.cpp
   integrator/DirectIntegrator.cpp
+  integrator/Integrator.cpp
   integrator/OnePassIntegrator.cpp
   integrator/PPMIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
+SET(PR_Light_Src
+  light/DistantLight.cpp
+  light/EnvironmentLight.cpp)
+SOURCE_GROUP("Source Files\\Light" FILES ${PR_Light_Src})
 SET(PR_Material_Src
   material/BlinnPhongMaterial.cpp
   material/BRDF.cpp
@@ -92,7 +97,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src} 
-  ${PR_Performance_Src}
+  ${PR_Performance_Src} ${PR_Light_Src}
 )
 
 SET(PR_Main_Hdr
@@ -134,6 +139,11 @@ SET(PR_Integrator_Hdr
   integrator/OnePassIntegrator.h
   integrator/PPMIntegrator.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
+SET(PR_Light_Hdr
+  light/DistantLight.h
+  light/EnvironmentLight.h
+  light/IInfiniteLight.h)
+SOURCE_GROUP("Header Files\\Light" FILES ${PR_Light_Hdr})
 SET(PR_Material_Hdr 
   material/BlinnPhongMaterial.h
   material/BRDF.h
@@ -196,8 +206,9 @@ SET(PR_Spectral_Hdr
   spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Shader_Hdr
-  shader/ShaderOutput.h
-  shader/SamplePoint.h)
+  shader/FaceSample.h
+  shader/ShaderClosure.h
+  shader/ShaderOutput.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Thread_Hdr
   thread/Thread.h
@@ -209,7 +220,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_GPU_Hdr}
-  ${PR_Performance_Hdr}
+  ${PR_Performance_Hdr} ${PR_Light_Hdr}
 )
 
 SET(PR_CL

@@ -1,6 +1,6 @@
 #include "SphereEntity.h"
 #include "ray/Ray.h"
-#include "shader/SamplePoint.h"
+#include "shader/FaceSample.h"
 #include "geometry/Sphere.h"
 
 #include "math/Projection.h"
@@ -87,7 +87,7 @@ namespace PR
 			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
 	}
 
-	bool SphereEntity::checkCollision(const Ray& ray, SamplePoint& collisionPoint) const
+	bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
 	{
 		PR_GUARD_PROFILE();
 
@@ -113,18 +113,17 @@ namespace PR
 		return true;
 	}
 
-	SamplePoint SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+	FaceSample SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		PR_GUARD_PROFILE();
 		
-		SamplePoint p;
+		FaceSample p;
 
 		PM::vec2 s = sampler.generate2D(sample);
-		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s), &pdf);
+		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s), pdf);
 
 		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), n));
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
-		p.N = p.Ng;
 
 		p.P = PM::pm_Transform(worldMatrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
 		p.UV = Projection::sphereUV(p.Ng);
