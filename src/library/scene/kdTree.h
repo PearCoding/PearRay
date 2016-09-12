@@ -94,8 +94,9 @@ namespace PR
 		};
 	public:
 		typedef BoundingBox (*GetBoundingBoxCallback)(T*);
-		typedef bool (*CheckCollisionCallback)(const Ray&, FaceSample&, float&, T*, T*);
+		typedef bool (*CheckCollisionCallback)(const Ray&, FaceSample&, float&, T*);
 		typedef float (*CostCallback)(T*);
+		typedef bool (*IgnoreCallback)(T*);
 
 		inline kdTree(GetBoundingBoxCallback getBoundingBox,
 			CheckCollisionCallback checkCollision,
@@ -163,7 +164,7 @@ namespace PR
 				delete obj;
 		}
 
-		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t, T* ignore = nullptr) const {
+		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t, IgnoreCallback ignoreCallback = nullptr) const {
 			PM::vec3 collisionPos;
 
 			T* res = nullptr;
@@ -189,8 +190,8 @@ namespace PR
 
 						for (T* entity : leaf->objects)
 						{
-							if (entity != ignore &&
-								mCheckCollision(ray, tmpCollisionPoint, l, entity, ignore) &&
+							if ((!ignoreCallback || ignoreCallback(entity)) &&
+								mCheckCollision(ray, tmpCollisionPoint, l, entity) &&
 								l < t)
 							{
 								t = l;

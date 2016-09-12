@@ -12,7 +12,7 @@ namespace PR
 	typedef kdTree<RenderEntity, true> SceneKDTree;
 
 	Scene::Scene(const std::string& name) :
-		mName(name), mKDTree(nullptr)
+		mName(name), mBackgroundLight(nullptr), mKDTree(nullptr)
 	{
 	}
 
@@ -99,9 +99,8 @@ namespace PR
 		}
 
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
-			[](const Ray& ray, FaceSample& point, float& t, RenderEntity* e, RenderEntity* ignore) {
-				if((!ignore || !e->isParent(ignore)) &&
-				e->checkCollision(ray, point) &&
+			[](const Ray& ray, FaceSample& point, float& t, RenderEntity* e) {
+				if(e->checkCollision(ray, point) &&
 				point.Material && (ray.depth() > 0 || point.Material->isCameraVisible())) {
 					t = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.P, ray.startPosition()));
 					return true;
@@ -116,15 +115,20 @@ namespace PR
 	}
 
 	RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint, RenderEntity* ignore) const
-	{
+	{//TODO
 		float t;
 		PR_ASSERT(mKDTree);
-		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t, ignore);
+		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t);
 	}
 
 	void Scene::onPreRender()
 	{
 		for (Entity* e : mEntities)
+		{
+			e->onPreRender();
+		}
+
+		for (IInfiniteLight* e : mInfiniteLights)
 		{
 			e->onPreRender();
 		}

@@ -9,9 +9,9 @@
 
 #include "scene/Scene.h"
 
-#include "sampler/RandomSampler.h"
-
 #include "shader/ShaderClosure.h"
+
+#include "material/Material.h"
 
 #include "ray/Ray.h"
 
@@ -34,23 +34,24 @@ namespace PR
 				i < context->renderer()->settings().maxLightSamples() && !std::isinf(semi_pdf);
 				++i)
 			{
-				Spectrum weight;
 				float pdf;
 				PM::vec3 rnd = hemiSampler.generate3D(i);
 				PM::vec3 dir = e->sample(sc, rnd, pdf);
 
-				const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, sc.N));
-
-				if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
+				if(pdf > PM_EPSILON)
 				{
-					Ray ray = in.next(sc.P, dir);
+					Spectrum weight;
+					const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, sc.N));
 
-					ShaderClosure sc2;
-					if (!context->shoot(ray, sc2))
-						weight = e->apply(ray.direction()) * NdotL;
-				} 
-			
-				MSI::power(semi_weight, semi_pdf, weight, pdf);
+					if (NdotL > PM_EPSILON)
+					{
+						Ray ray = in.next(sc.P, dir);
+						if (!context->shootForDetection(ray))
+							weight = sc.Material->apply(sc, dir) * e->apply(ray.direction()) * NdotL;
+					} 
+				
+					MSI::power(semi_weight, semi_pdf, weight, std::isinf(pdf) ? 1 : pdf);
+				}
 			}
 			
 			MSI::balance(full_weight, full_pdf, semi_weight, semi_pdf);

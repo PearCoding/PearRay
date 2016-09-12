@@ -52,6 +52,7 @@ namespace PR
 		void stop();
 
 		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shootForDetection(const Ray& ray, RenderContext* context, RenderEntity* ignore);
 		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore);
 
 		bool isFinished();

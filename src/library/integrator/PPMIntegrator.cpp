@@ -322,7 +322,14 @@ namespace PR
 				weight = sc.Material->apply(sc, ray.direction()) * applied * NdotL;
 			}
 
-			MSI::balance(full_weight, full_pdf, weight, pdf);
+			MSI::power(full_weight, full_pdf, weight, pdf);
+		}
+
+		if (!std::isinf(full_pdf))
+		{
+			float inf_pdf;
+			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+			MSI::balance(full_weight, full_pdf, inf_weight, inf_pdf);
 		}
 
 		if (!std::isinf(full_pdf) && !mPhotonMap->isEmpty())
@@ -372,7 +379,7 @@ namespace PR
 	#endif
 					}
 
-					MSI::balance(full_weight, full_pdf, weight * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere->Distances2[0])), photon->PDF);
+					MSI::power(full_weight, full_pdf, weight * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere->Distances2[0])), photon->PDF);
 				}
 			}
 		}

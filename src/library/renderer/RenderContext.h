@@ -30,6 +30,11 @@ namespace PR
 			return mRenderer->shoot(ray, sc, this, ignore);
 		}
 
+		inline RenderEntity* shootForDetection(const Ray& ray, RenderEntity* ignore = nullptr)
+		{
+			return mRenderer->shootForDetection(ray, this, ignore);
+		}
+
 		inline RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderEntity* ignore = nullptr)
 		{
 			return mRenderer->shootWithEmission(appliedSpec, ray, sc, this, ignore);

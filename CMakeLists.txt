@@ -40,6 +40,7 @@ option(PR_NO_NETWORK "Disable network support." OFF)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
 option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
+option(PR_WITH_ASSERTS "Compile with asserts on. Disable only in deployment code!" ON)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -103,6 +104,10 @@ ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ELSE()
     message(WARNING "Unknown Compiler. C++11 needed. Build can fail.")   
+ENDIF()
+
+IF(NOT PR_WITH_ASSERTS)
+	SET(DEFS ${DEFS} DL_NO_ASSERTS PM_NO_ASSERTS PR_NO_ASSERTS)
 ENDIF()
 
 #CONFIGURE

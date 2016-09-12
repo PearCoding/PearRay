@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
+#include "FaceSample.h"
 
 namespace PR
 {
@@ -81,5 +80,49 @@ namespace PR
 			Flags(0),
 			Material(nullptr)
 			{}
+
+		inline ShaderClosure(const FaceSample& fs) noexcept :
+			P(fs.P),
+			dPdX(fs.dPdX),
+			dPdY(fs.dPdY),
+			dPdZ(fs.dPdZ),
+			dPdU(fs.dPdU),
+			dPdV(fs.dPdV),
+			dPdT(fs.dPdT),
+			V(PM::pm_Zero()),
+			dVdX(PM::pm_Zero()),
+			dVdY(PM::pm_Zero()),
+			N(fs.Ng),
+			Ng(fs.Ng),
+			Nx(fs.Nx),
+			Ny(fs.Ny),
+			UV(fs.UV),
+			dUVdX(fs.dUVdX),
+			dUVdY(fs.dUVdY),
+			T(0),
+			dT(0),
+			NdotV(0),
+			Flags(0),
+			Material(fs.Material)
+			{}
+
+		ShaderClosure& operator =(const FaceSample& fs)
+		{
+			P = fs.P;
+			dPdX = fs.dPdX;
+			dPdY = fs.dPdY;
+			dPdZ = fs.dPdZ;
+			dPdU = fs.dPdU;
+			dPdV = fs.dPdV;
+			dPdT = fs.dPdT;
+			N = fs.Ng;
+			Ng = fs.Ng;
+			Nx = fs.Nx;
+			Ny = fs.Ny;
+			UV = fs.UV;
+			dUVdX = fs.dUVdX;
+			dUVdY = fs.dUVdY;
+			Material = fs.Material;
+		}
 	};
 }

@@ -18,14 +18,10 @@ namespace PR
 	{
 	}
 
-	float EnvironmentLight::pdf(const PM::vec3& L)
-	{
-		return Projection::sphere_pdf();
-	}
-
 	PM::vec3 EnvironmentLight::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
-		return Projection::sphere(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf);
+		return Projection::tangent_align(point.N,
+			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 	}
 
 	Spectrum EnvironmentLight::apply(const PM::vec3& L)
@@ -35,8 +31,8 @@ namespace PR
 
 		ShaderClosure sc;
 		sc.V = L;
-		sc.Ng = PM::pm_Negate(L);
-		sc.N = sc.Ng;
+		sc.Ng = L;
+		sc.N = PM::pm_Negate(L);
 		
 		// Really do tangent?
 		Projection::tangent_frame(sc.N, sc.Nx, sc.Ny);

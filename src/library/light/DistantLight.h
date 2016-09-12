@@ -30,13 +30,17 @@ namespace PR
 		{
 			return mMaterial;
 		}
-
-		float pdf(const PM::vec3& L) override;
+		
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
 		Spectrum apply(const PM::vec3& L) override;
 
+		void onPreRender() override;
 	private:
 		PM::vec3 mDirection;
 		Material* mMaterial;
+
+		PM::vec3 mSampleDirection_Cache;
+		PM::vec3 mRight_Cache;
+		PM::vec3 mUp_Cache;
 	};
 }

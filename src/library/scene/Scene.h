@@ -32,6 +32,9 @@ namespace PR
 		void removeInfiniteLight(IInfiniteLight* e);
 		inline const std::list<IInfiniteLight*>& infiniteLights() const { return mInfiniteLights; }
 
+		inline void setBackgroundLight(IInfiniteLight* e) { mBackgroundLight = e; }
+		inline IInfiniteLight* backgroundLight() const { return mBackgroundLight; }
+
 		void clear();
 
 		void buildTree();
@@ -46,6 +49,7 @@ namespace PR
 		std::list<Entity*> mEntities;
 		std::list<RenderEntity*> mRenderEntities;
 		std::list<IInfiniteLight*> mInfiniteLights;
+		IInfiniteLight* mBackgroundLight;
 
 		void* mKDTree;// We use a void* pointer to hide the KDTree header only implementation
 	};

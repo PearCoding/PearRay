@@ -39,12 +39,15 @@ namespace PR
 		float full_pdf = 0;
 		Spectrum full_weight;
 
+		// Used temporary
+		ShaderClosure other_sc;
+		Spectrum other_weight;
+
 		// Hemisphere sampling
 		RandomSampler hemiSampler(context->random());
 		for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf); ++i)
 		{
 			float pdf;
-			Spectrum weight;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
 			const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, sc.N));
@@ -53,15 +56,13 @@ namespace PR
 			{
 				Ray ray = in.next(sc.P, dir);
 
-				ShaderClosure sc2;
-				Spectrum applied;
-				if (context->shootWithEmission(applied, ray, sc2) && sc2.Material && std::isinf(pdf))
-					applied += applyRay(ray, sc2, context);
+				if (context->shootWithEmission(other_weight, ray, other_sc) && other_sc.Material && std::isinf(pdf))
+					other_weight += applyRay(ray, other_sc, context);
 
-				weight = sc.Material->apply(sc, ray.direction()) * applied * NdotL;
+				other_weight = sc.Material->apply(sc, ray.direction()) * other_weight * NdotL;
 			}
 
-			MSI::balance(full_weight, full_pdf, weight, pdf);
+			MSI::balance(full_weight, full_pdf, other_weight, pdf);
 		}
 
 		if (!std::isinf(full_pdf))
@@ -79,26 +80,23 @@ namespace PR
 					const PM::vec3 L = PM::pm_Normalize3D(PS);
 					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, sc.N));
 
-					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL);
+					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) + sc.Material->pdf(sc, L);
 
-					Spectrum weight;
-					pdf += sc.Material->pdf(sc, L);
 					if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
 					{
-						ShaderClosure tmpPoint;
-						Spectrum applied;
 						Ray ray = in.next(sc.P, L);
 
-						if (context->shootWithEmission(applied, ray, tmpPoint) == light)// Full light!!
-							weight = sc.Material->apply(sc, L) * applied * NdotL;
+						if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
+							other_weight = sc.Material->apply(sc, L) * other_weight * NdotL;
 					}
 
-					MSI::balance(full_weight, full_pdf, weight, pdf);
+					MSI::balance(full_weight, full_pdf, other_weight, pdf);
 				}
 			}
 
 			float inf_pdf;
-			MSI::balance(full_weight, full_pdf, handleInfiniteLights(in, sc, context, inf_pdf), inf_pdf);
+			other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+			MSI::balance(full_weight, full_pdf, other_weight, inf_pdf);
 		}
 
 		return full_weight;

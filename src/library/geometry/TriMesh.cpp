@@ -85,7 +85,7 @@ namespace PR
 		[](Face* f) {
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
-		[](const Ray& ray, FaceSample& point, float& t, Face* f, Face*) {
+		[](const Ray& ray, FaceSample& point, float& t, Face* f) {
 			return Triangle::intersect(ray, *f, point, t);// Major bottleneck!
 		},
 		[](Face* f) {
@@ -128,9 +128,7 @@ namespace PR
 	void TriMesh::replaceMaterial(Material* mat)
 	{
 		for (Face* f : mFaces)
-		{
 			f->Mat = mat;
-		}
 	}
 
 	bool TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t)

@@ -201,7 +201,7 @@ namespace PRU
 						}
 					}
 				}
-
+				
 				DL::Data* cameraD = top->getFromKey("camera");
 				if (cameraD && cameraD->isType() == DL::Data::T_String)
 				{

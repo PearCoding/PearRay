@@ -18,8 +18,9 @@ namespace PR
 		IInfiniteLight() {}
 		virtual ~IInfiniteLight() {}
 
-		virtual float pdf(const PM::vec3& L) = 0;
 		virtual PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) = 0;
 		virtual Spectrum apply(const PM::vec3& L) = 0;
+
+		virtual void onPreRender() {};
 	};
 }

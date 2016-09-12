@@ -5,18 +5,14 @@ namespace PR
 	float Spectrum::approx(float wavelength, InterpolationType interpolation) const
 	{
 		if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
-		{
 			return -1;
-		}
 
 		float st = wavelength - WAVELENGTH_START;
 		uint32 c = (uint32)(st / WAVELENGTH_STEP);
 		uint32 m = (uint32)fmodf(st, (float)WAVELENGTH_STEP);
 
 		if (st < 0 || c >= SAMPLING_COUNT)
-		{
 			return 0;
-		}
 
 		if(interpolation == IT_Const)
 		{ 
@@ -59,7 +55,7 @@ namespace PR
 		Spectrum spec;
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
-			float lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9f;
+			double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9;
 			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda));
 		}
 
@@ -74,7 +70,7 @@ namespace PR
 		Spectrum spec;
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
-			float lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9f;
+			double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9;
 			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda) * norm);
 		}
 

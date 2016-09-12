@@ -28,14 +28,10 @@ namespace PR
 		inline Spectrum& operator = (const Spectrum& spec);
 
 		inline Spectrum operator + (const Spectrum& spec) const;
-		inline Spectrum operator + (float f) const;
 		inline Spectrum& operator += (const Spectrum& spec);
-		inline Spectrum& operator += (float f);
 
 		inline Spectrum operator - (const Spectrum& spec) const;
-		inline Spectrum operator - (float f) const;
 		inline Spectrum& operator -= (const Spectrum& spec);
-		inline Spectrum& operator -= (float f);
 
 		inline Spectrum operator * (const Spectrum& spec) const;// Element wise
 		inline Spectrum operator * (float f) const;
@@ -88,8 +84,6 @@ namespace PR
 		bool mEmissive;
 	};
 
-	inline Spectrum operator + (float f, const Spectrum& spec);
-	inline Spectrum operator - (float f, const Spectrum& spec);
 	inline Spectrum operator * (float f, const Spectrum& spec);
 	inline Spectrum operator / (float f, const Spectrum& spec);
 }

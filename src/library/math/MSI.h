@@ -37,8 +37,6 @@ namespace PR
 
 			out_pdf += in_pdf;
 
-			PR_ASSERT(out_pdf >= 0);
-
 			return w;
 		}
 
@@ -71,8 +69,6 @@ namespace PR
 
 			out_pdf += in_pdf;
 
-			PR_ASSERT(out_pdf >= 0);
-
 			return w;
 		}
 
@@ -96,8 +92,6 @@ namespace PR
 				w = 0.5f;
 
 			out_pdf += in_pdf;
-
-			PR_ASSERT(out_pdf >= 0);
 
 			return w;
 		}

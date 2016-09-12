@@ -4,6 +4,10 @@
 #include "spectral/Spectrum.h"
 #include "material/Material.h"
 
+#include "math/Projection.h"
+
+#include "Logger.h"
+
 namespace PR
 {
 	DistantLight::DistantLight() :
@@ -16,29 +20,36 @@ namespace PR
 	{
 	}
 
-	float DistantLight::pdf(const PM::vec3& L)
-	{
-		return std::numeric_limits<float>::infinity();
-	}
-
 	PM::vec3 DistantLight::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		pdf = std::numeric_limits<float>::infinity();
-		return mDirection;
+		return mSampleDirection_Cache;
 	}
 
 	Spectrum DistantLight::apply(const PM::vec3& L)
 	{
-		if(!mMaterial || !mMaterial->emission())
-			return Spectrum();
+		const float d = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(L, mDirection));
 
-		const float d = std::abs(PM::pm_Dot3D(L, mDirection));
+		if(d <= PM_EPSILON || !mMaterial || !mMaterial->emission())
+			return Spectrum();
 
 		ShaderClosure sc;
 		sc.V = L;
 		sc.Ng = mDirection;
 		sc.N = mDirection;
+		sc.Nx = mRight_Cache;
+		sc.Ny = mUp_Cache;
+		// UV is zero
 		
 		return mMaterial->emission()->eval(sc) * d;
+	}
+
+	void DistantLight::onPreRender()
+	{
+		mSampleDirection_Cache = PM::pm_Negate(mDirection); 
+		Projection::tangent_frame(mDirection, mRight_Cache, mUp_Cache);
+
+		PR_LOGGER.logf(L_Info, M_Camera,"DistantLight Dir[%.3f,%.3f,%.3f]",
+			PM::pm_GetX(mDirection), PM::pm_GetY(mDirection), PM::pm_GetZ(mDirection));
 	}
 }

@@ -343,11 +343,7 @@ namespace PR
 
 			FaceSample fs;
 			RenderEntity* entity = mScene->checkCollision(ray, fs, ignore);
-
-			sc.P = fs.P;
-			sc.Ng = fs.Ng;
-			sc.UV = fs.UV;
-			sc.Material = fs.Material;
+			sc = fs;
 
 			const float NdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
 			sc.N = Reflection::faceforward(NdotV, sc.Ng);
@@ -360,11 +356,36 @@ namespace PR
 				sc.Nx = PM::pm_Negate(fs.Nx);
 				sc.Ny = PM::pm_Negate(fs.Ny);
 			}
+
+			if(context)
+			{
+				context->stats().incRayCount();
+				if(entity)
+					context->stats().incEntityHitCount();
+			}
 			else
 			{
-				sc.Nx = fs.Nx;
-				sc.Ny = fs.Ny;
+				mGlobalStatistics.incRayCount();
+				if(entity)
+					mGlobalStatistics.incEntityHitCount();
 			}
+			
+			return entity;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	RenderEntity* Renderer::shootForDetection(const Ray& ray, RenderContext* context, RenderEntity* ignore)
+	{
+		const uint32 maxDepth = (ray.maxDepth() == 0) ?
+			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
+		if (ray.depth() < maxDepth)
+		{
+			FaceSample fs;
+			RenderEntity* entity = mScene->checkCollision(ray, fs, ignore);
 
 			if(context)
 			{
@@ -400,12 +421,8 @@ namespace PR
 		}
 		else
 		{
-			float full_pdf = 0;
-			for(IInfiniteLight* light : mScene->infiniteLights())
-			{
-				MSI::power(appliedSpec, full_pdf,
-					light->apply(ray.direction()), light->pdf(ray.direction()));
-			}
+			if(mScene->backgroundLight())
+				appliedSpec = mScene->backgroundLight()->apply(ray.direction());
 
 			if(context)
 				context->stats().incBackgroundHitCount();
@@ -459,9 +476,7 @@ namespace PR
 		for (RenderThread* thread : mThreads)
 		{
 			if (thread->state() != Thread::S_Stopped)
-			{
 				return false;
-			}
 		}
 
 		return true;
@@ -470,17 +485,13 @@ namespace PR
 	void Renderer::waitForFinish()
 	{
 		while (!isFinished())
-		{
 			std::this_thread::yield();
-		}
 	}
 
 	void Renderer::stop()
 	{
 		for (RenderThread* thread : mThreads)
-		{
 			thread->stop();
-		}
 	}
 
 	RenderTile* Renderer::getNextTile()

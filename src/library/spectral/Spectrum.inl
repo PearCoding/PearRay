@@ -36,28 +36,12 @@ namespace PR
 		return tmp;
 	}
 
-	inline Spectrum Spectrum::operator + (float f) const
-	{
-		Spectrum tmp = *this;
-		tmp += f;
-		return tmp;
-	}
-
 	inline Spectrum& Spectrum::operator += (const Spectrum& spec)
 	{
+		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			mValues[i] += spec.mValues[i];
-		}
-
-		return *this;
-	}
-
-	inline Spectrum& Spectrum::operator += (float f)
-	{
-		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
-			mValues[i] += f;
+			mValues[i] += o[i];
 		}
 
 		return *this;
@@ -70,28 +54,12 @@ namespace PR
 		return tmp;
 	}
 
-	inline Spectrum Spectrum::operator - (float f) const
-	{
-		Spectrum tmp = *this;
-		tmp -= f;
-		return tmp;
-	}
-
 	inline Spectrum& Spectrum::operator -= (const Spectrum& spec)
 	{
+		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			mValues[i] -= spec.mValues[i];
-		}
-
-		return *this;
-	}
-
-	inline Spectrum& Spectrum::operator -= (float f)
-	{
-		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
-			mValues[i] -= f;
+			mValues[i] -= o[i];
 		}
 
 		return *this;
@@ -113,9 +81,10 @@ namespace PR
 
 	inline Spectrum& Spectrum::operator *= (const Spectrum& spec)
 	{
+		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			mValues[i] *= spec.mValues[i];
+			mValues[i] *= o[i];
 		}
 
 		return *this;
@@ -146,9 +115,10 @@ namespace PR
 
 	inline Spectrum& Spectrum::operator /= (const Spectrum& spec)
 	{
+		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			mValues[i] /= spec.mValues[i];
+			mValues[i] /= o[i];
 		}
 		return *this;
 	}
@@ -269,9 +239,10 @@ namespace PR
 
 	inline Spectrum& Spectrum::lerp(const Spectrum& spec, float t)
 	{
+		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
-			mValues[i] = mValues[i] * (1-t) + spec.mValues[i] * t;
+			mValues[i] = mValues[i] * (1-t) + o[i] * t;
 		}
 
 		return *this;
@@ -359,18 +330,6 @@ namespace PR
 	}
 
 	// Global
-	inline Spectrum operator + (float f, const Spectrum& spec)
-	{
-		return spec + f;
-	}
-
-	inline 	Spectrum operator - (float f, const Spectrum& spec)
-	{
-		Spectrum tmp;
-		tmp.setEmissive(spec.isEmissive());
-		return (tmp - spec) + f;
-	}
-
 	inline Spectrum operator * (float f, const Spectrum& spec)
 	{
 		return spec * f;
