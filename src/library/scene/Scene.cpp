@@ -99,10 +99,9 @@ namespace PR
 		}
 
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
-			[](const Ray& ray, FaceSample& point, float& t, RenderEntity* e) {
+			[](const Ray& ray, FaceSample& point, RenderEntity* e) {
 				if(e->checkCollision(ray, point) &&
 				point.Material && (ray.depth() > 0 || point.Material->isCameraVisible())) {
-					t = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(point.P, ray.startPosition()));
 					return true;
 				}
 				else
@@ -114,11 +113,16 @@ namespace PR
 		((SceneKDTree*)mKDTree)->build(mRenderEntities);
 	}
 
-	RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint, RenderEntity* ignore) const
-	{//TODO
-		float t;
+	RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+	{
 		PR_ASSERT(mKDTree);
-		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t);
+		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint);
+	}
+
+	bool Scene::checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const
+	{
+		PR_ASSERT(mKDTree);
+		return ((SceneKDTree*)mKDTree)->checkIfCollides(ray, collisionPoint);
 	}
 
 	void Scene::onPreRender()

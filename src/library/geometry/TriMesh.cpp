@@ -85,7 +85,8 @@ namespace PR
 		[](Face* f) {
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
-		[](const Ray& ray, FaceSample& point, float& t, Face* f) {
+		[](const Ray& ray, FaceSample& point, Face* f) {
+			float t;
 			return Triangle::intersect(ray, *f, point, t);// Major bottleneck!
 		},
 		[](Face* f) {
@@ -131,10 +132,10 @@ namespace PR
 			f->Mat = mat;
 	}
 
-	bool TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t)
+	bool TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint)
 	{
 		PR_DEBUG_ASSERT(mKDTree);
-		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint, t) != nullptr;
+		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint) != nullptr;
 	}
 
 	float TriMesh::collisionCost() const

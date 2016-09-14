@@ -15,7 +15,7 @@
 namespace PR
 {
 	MeshEntity::MeshEntity(const std::string& name, Entity* parent) :
-		RenderEntity(name, parent), mMesh(nullptr)
+		RenderEntity(name, parent), mMesh(nullptr), mMaterialOverride(nullptr)
 	{
 	}
 
@@ -48,6 +48,16 @@ namespace PR
 		return mMesh;
 	}
 
+	void MeshEntity::setMaterialOverride(Material* m)
+	{
+		mMaterialOverride = m;
+	}
+
+	Material* MeshEntity::materialOverride() const
+	{
+		return mMaterialOverride;
+	}
+
 	bool MeshEntity::isCollidable() const
 	{
 		return mMesh != nullptr;
@@ -73,12 +83,15 @@ namespace PR
 		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(worldInvDirectionMatrix(), ray.direction())));
 		
-		float t;
-		if (mMesh->checkCollision(local, collisionPoint, t))
+		if (mMesh->checkCollision(local, collisionPoint))
 		{
 			collisionPoint.P = PM::pm_Transform(worldMatrix(), collisionPoint.P);
 			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), collisionPoint.Ng));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+
+			if(mMaterialOverride)
+				collisionPoint.Material = mMaterialOverride;
+
 			return true;
 		}
 		else

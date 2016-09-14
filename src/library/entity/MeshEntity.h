@@ -20,6 +20,9 @@ namespace PR
 		void setMesh(IMesh* mesh);
 		IMesh* mesh() const;
 
+		void setMaterialOverride(Material* m);
+		Material* materialOverride() const;
+
 		virtual bool isCollidable() const override;
 		virtual float collisionCost() const override;
 		virtual BoundingBox localBoundingBox() const override;
@@ -28,5 +31,6 @@ namespace PR
 		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 	private:
 		IMesh* mMesh;
+		Material* mMaterialOverride;
 	};
 }

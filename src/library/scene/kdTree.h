@@ -94,7 +94,7 @@ namespace PR
 		};
 	public:
 		typedef BoundingBox (*GetBoundingBoxCallback)(T*);
-		typedef bool (*CheckCollisionCallback)(const Ray&, FaceSample&, float&, T*);
+		typedef bool (*CheckCollisionCallback)(const Ray&, FaceSample&, T*);
 		typedef float (*CostCallback)(T*);
 		typedef bool (*IgnoreCallback)(T*);
 
@@ -164,13 +164,13 @@ namespace PR
 				delete obj;
 		}
 
-		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, float& t, IgnoreCallback ignoreCallback = nullptr) const {
+		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const {
 			PM::vec3 collisionPos;
 
 			T* res = nullptr;
 			FaceSample tmpCollisionPoint;
 
-			t = std::numeric_limits<float>::infinity();
+			float t = std::numeric_limits<float>::infinity();
 			float l = t;// Temporary variable.
 
 			if (mRoot && mRoot->boundingBox.intersects(ray, collisionPos, l))
@@ -191,12 +191,15 @@ namespace PR
 						for (T* entity : leaf->objects)
 						{
 							if ((!ignoreCallback || ignoreCallback(entity)) &&
-								mCheckCollision(ray, tmpCollisionPoint, l, entity) &&
-								l < t)
+								mCheckCollision(ray, tmpCollisionPoint, entity))
 							{
-								t = l;
-								res = entity;
-								collisionPoint = tmpCollisionPoint;
+								l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(tmpCollisionPoint.P, ray.startPosition()));
+								if(l < t)
+								{
+									t = l;
+									res = entity;
+									collisionPoint = tmpCollisionPoint;
+								}
 							}
 						}
 					}
@@ -228,6 +231,65 @@ namespace PR
 			}
 
 			return res;
+		}
+
+		// A faster variant for rays detecting the background etc.
+		inline bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const {
+			PM::vec3 collisionPos;
+
+			T* res = nullptr;
+			float t = std::numeric_limits<float>::infinity();
+
+			if (mRoot && mRoot->boundingBox.intersects(ray, collisionPos, t))
+			{
+				kdNode* stack[PR_KDTREE_MAX_STACK];
+				uint32 stackPos = 1;
+				stack[0] = mRoot;
+
+				while (stackPos > 0)
+				{
+					stackPos--;
+					kdNode* node = stack[stackPos];
+					
+					if (node->leaf == 1)
+					{
+						kdLeafNode* leaf = (kdLeafNode*)node;
+
+						for (T* entity : leaf->objects)
+						{
+							if ((!ignoreCallback || ignoreCallback(entity)) &&
+								mCheckCollision(ray, collisionPoint, entity))
+								return true;
+						}
+					}
+					else
+					{
+						bool leftIntersected = false;
+						kdInnerNode* inner = (kdInnerNode*)node;
+						if (inner->left && inner->left->boundingBox.intersects(ray, collisionPos, t))
+						{
+							if (stackPos >= PR_KDTREE_MAX_STACK)
+								return false;
+
+							leftIntersected = true;
+							stack[stackPos] = inner->left;
+							stackPos++;
+						}
+
+						if (inner->right &&
+							(!leftIntersected || inner->right->boundingBox.intersects(ray, collisionPos, t)))
+						{
+							if (stackPos >= PR_KDTREE_MAX_STACK)
+								return false;
+
+							stack[stackPos] = inner->right;
+							stackPos++;
+						}
+					}
+				}
+			}
+
+			return false;
 		}
 
 	private:

@@ -51,9 +51,9 @@ namespace PR
 		void start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
 		void stop();
 
-		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootForDetection(const Ray& ray, RenderContext* context, RenderEntity* ignore);
-		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore);
+		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context);
+		bool shootForDetection(const Ray& ray, RenderContext* context);
+		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context);
 
 		bool isFinished();
 		void waitForFinish();

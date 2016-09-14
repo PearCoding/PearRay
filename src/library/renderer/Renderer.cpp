@@ -333,7 +333,7 @@ namespace PR
 		return list;
 	}
 
-	RenderEntity* Renderer::shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context, RenderEntity* ignore)
+	RenderEntity* Renderer::shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
@@ -342,7 +342,7 @@ namespace PR
 			sc.Flags = 0;
 
 			FaceSample fs;
-			RenderEntity* entity = mScene->checkCollision(ray, fs, ignore);
+			RenderEntity* entity = mScene->checkCollision(ray, fs);
 			sc = fs;
 
 			const float NdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
@@ -378,40 +378,40 @@ namespace PR
 		}
 	}
 
-	RenderEntity* Renderer::shootForDetection(const Ray& ray, RenderContext* context, RenderEntity* ignore)
+	bool Renderer::shootForDetection(const Ray& ray, RenderContext* context)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
 			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
 			FaceSample fs;
-			RenderEntity* entity = mScene->checkCollision(ray, fs, ignore);
+			bool found = mScene->checkIfCollides(ray, fs);
 
 			if(context)
 			{
 				context->stats().incRayCount();
-				if(entity)
+				if(found)
 					context->stats().incEntityHitCount();
 			}
 			else
 			{
 				mGlobalStatistics.incRayCount();
-				if(entity)
+				if(found)
 					mGlobalStatistics.incEntityHitCount();
 			}
 			
-			return entity;
+			return found;
 		}
 		else
 		{
-			return nullptr;
+			return false;
 		}
 	}
 
 	RenderEntity* Renderer::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
-		ShaderClosure& sc, RenderContext* context, RenderEntity* ignore)
+		ShaderClosure& sc, RenderContext* context)
 	{
-		RenderEntity* entity = shoot(ray, sc, context, ignore);
+		RenderEntity* entity = shoot(ray, sc, context);
 		if (entity)
 		{
 			if(sc.Material && sc.Material->emission())

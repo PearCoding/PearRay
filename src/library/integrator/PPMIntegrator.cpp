@@ -164,7 +164,7 @@ namespace PR
 				for (uint32 j = 0; j < mRenderer->settings().maxRayDepth(); ++j)
 				{
 					ShaderClosure sc;
-					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr, nullptr);
+					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
 
 					if (entity && sc.Material && sc.Material->canBeShaded())
 					{

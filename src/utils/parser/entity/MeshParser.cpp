@@ -4,7 +4,6 @@
 #include "Logger.h"
 
 #include "entity/MeshEntity.h"
-#include "geometry/IMesh.h"
 
 // DataLisp
 #include "DataLisp.h"
@@ -49,7 +48,7 @@ namespace PRU
 		{
 			if (env->hasMaterial(materialD->getString()))
 			{
-				me->mesh()->replaceMaterial(env->getMaterial(materialD->getString()));
+				me->setMaterialOverride(env->getMaterial(materialD->getString()));
 			}
 			else
 			{

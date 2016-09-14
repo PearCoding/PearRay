@@ -39,7 +39,8 @@ namespace PR
 
 		void buildTree();
 
-		RenderEntity* checkCollision(const Ray& ray, FaceSample& collisionPoint, RenderEntity* ignore) const;
+		RenderEntity* checkCollision(const Ray& ray, FaceSample& collisionPoint) const;
+		bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const;
 
 		void onPreRender();
 

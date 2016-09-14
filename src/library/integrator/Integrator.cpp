@@ -41,7 +41,7 @@ namespace PR
 				if(pdf > PM_EPSILON)
 				{
 					Spectrum weight;
-					const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, sc.N));
+					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, sc.N));
 
 					if (NdotL > PM_EPSILON)
 					{
@@ -50,11 +50,11 @@ namespace PR
 							weight = sc.Material->apply(sc, dir) * e->apply(ray.direction()) * NdotL;
 					} 
 				
-					MSI::power(semi_weight, semi_pdf, weight, std::isinf(pdf) ? 1 : pdf);
+					MSI::power(semi_weight, semi_pdf, weight, pdf);
 				}
 			}
 			
-			MSI::balance(full_weight, full_pdf, semi_weight, semi_pdf);
+			MSI::balance(full_weight, full_pdf, semi_weight, std::isinf(semi_pdf) ? 1 : semi_pdf);
 		}
 
 		return full_weight;
