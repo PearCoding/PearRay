@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 	PR_END_PROFILE_ID(1);
 
 	PR_BEGIN_PROFILE_ID(2);
-	env->scene()->onPreRender();// Freeze entities
+	env->scene()->freeze();// Freeze entities
 	PR_END_PROFILE_ID(2);
 
 	PR_BEGIN_PROFILE_ID(3);

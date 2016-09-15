@@ -22,19 +22,23 @@ namespace PR
 
 	PM::vec3 DistantLight::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
+		PR_ASSERT(isFrozen());
+
 		pdf = std::numeric_limits<float>::infinity();
 		return mSampleDirection_Cache;
 	}
 
-	Spectrum DistantLight::apply(const PM::vec3& L)
+	Spectrum DistantLight::apply(const PM::vec3& V)
 	{
-		const float d = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(L, mDirection));
+		PR_ASSERT(isFrozen());
+
+		const float d = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(V, mDirection));
 
 		if(d <= PM_EPSILON || !mMaterial || !mMaterial->emission())
 			return Spectrum();
 
 		ShaderClosure sc;
-		sc.V = L;
+		sc.V = V;
 		sc.Ng = mDirection;
 		sc.N = mDirection;
 		sc.Nx = mRight_Cache;
@@ -44,7 +48,7 @@ namespace PR
 		return mMaterial->emission()->eval(sc) * d;
 	}
 
-	void DistantLight::onPreRender()
+	void DistantLight::onFreeze()
 	{
 		mSampleDirection_Cache = PM::pm_Negate(mDirection); 
 		Projection::tangent_frame(mDirection, mRight_Cache, mUp_Cache);

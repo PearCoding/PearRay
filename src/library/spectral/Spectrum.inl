@@ -161,6 +161,11 @@ namespace PR
 		}
 	}
 
+	inline void Spectrum::clear()
+	{
+		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
+	}
+
 	inline float Spectrum::max() const
 	{
 		float h = 0;
@@ -317,16 +322,6 @@ namespace PR
 	inline void Spectrum::setEmissive(bool b)
 	{
 		mEmissive = b;
-	}
-
-	inline Spectrum Spectrum::fromBlackbodyHemi(float temp)
-	{
-		return fromBlackbody(temp) * PM_2_PI_F;
-	}
-
-	inline Spectrum Spectrum::fromBlackbodySphere(float temp)
-	{
-		return fromBlackbody(temp) * PM_4_PI_F;
 	}
 
 	// Global

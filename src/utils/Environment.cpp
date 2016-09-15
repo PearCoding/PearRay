@@ -31,8 +31,8 @@ namespace PRU
 		mSpectrums["sun_norm"] = PR::Spectrum::fromBlackbodyNorm(5500);
 		mSpectrums["candle_norm"] = PR::Spectrum::fromBlackbodyNorm(1000);
 
-		mSpectrums["sun"] = PR::Spectrum::fromBlackbodyHemi(5500);
-		mSpectrums["candle"] = PR::Spectrum::fromBlackbodyHemi(1000);
+		mSpectrums["sun"] = PR::Spectrum::fromBlackbody(5500);
+		mSpectrums["candle"] = PR::Spectrum::fromBlackbody(1000);
 
 		mTextureSystem = OIIO::TextureSystem::create();
 	}

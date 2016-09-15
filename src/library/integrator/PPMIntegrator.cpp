@@ -212,8 +212,8 @@ namespace PR
 
 			//if (photonsShoot != 0)
 			//  	mPhotonMap->scalePhotonPower(1.0f/photonsShoot);
-			if (photonsShoot != 0)
-			  	mPhotonMap->scalePhotonPower(light->Surface);
+			//if (photonsShoot != 0)
+			//  	mPhotonMap->scalePhotonPower(light->Surface);
 
 #ifdef PR_DEBUG
 			PR_LOGGER.logf(L_Debug, M_Integrator, "    -> Per Light Samples: %llu / %llu [%3.2f%]",

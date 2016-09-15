@@ -76,10 +76,36 @@ namespace PRU
 			mMeshes[name] = m;
 		}
 
+		inline void addShaderOutput(const std::string& name, PR::ScalarShaderOutput* output)
+		{
+			PR_ASSERT(output);
+			PR_ASSERT(!hasScalarShaderOutput(name));
+			mNamedScalarShaderOutputs[name] = output;
+			mScalarShaderOutputs.push_back(output);
+		}
+
 		inline void addShaderOutput(PR::ScalarShaderOutput* output)
 		{
 			PR_ASSERT(output);
 			mScalarShaderOutputs.push_back(output);
+		}
+
+		inline PR::ScalarShaderOutput* getScalarShaderOutput(const std::string& name) const
+		{
+			return mNamedScalarShaderOutputs.at(name);
+		}
+
+		inline bool hasScalarShaderOutput(const std::string& name) const
+		{
+			return mNamedScalarShaderOutputs.count(name) != 0;
+		}
+
+		inline void addShaderOutput(const std::string& name, PR::SpectralShaderOutput* output)
+		{
+			PR_ASSERT(output);
+			PR_ASSERT(!hasSpectralShaderOutput(name));
+			mNamedSpectralShaderOutputs[name] = output;
+			mSpectralShaderOutputs.push_back(output);
 		}
 
 		inline void addShaderOutput(PR::SpectralShaderOutput* output)
@@ -88,10 +114,38 @@ namespace PRU
 			mSpectralShaderOutputs.push_back(output);
 		}
 
+		inline PR::SpectralShaderOutput* getSpectralShaderOutput(const std::string& name) const
+		{
+			return mNamedSpectralShaderOutputs.at(name);
+		}
+
+		inline bool hasSpectralShaderOutput(const std::string& name) const
+		{
+			return mNamedSpectralShaderOutputs.count(name) != 0;
+		}
+
+		inline void addShaderOutput(const std::string& name, PR::VectorShaderOutput* output)
+		{
+			PR_ASSERT(output);
+			PR_ASSERT(!hasVectorShaderOutput(name));
+			mNamedVectorShaderOutputs[name] = output;
+			mVectorShaderOutputs.push_back(output);
+		}
+
 		inline void addShaderOutput(PR::VectorShaderOutput* output)
 		{
 			PR_ASSERT(output);
 			mVectorShaderOutputs.push_back(output);
+		}
+
+		inline PR::VectorShaderOutput* getVectorShaderOutput(const std::string& name) const
+		{
+			return mNamedVectorShaderOutputs.at(name);
+		}
+
+		inline bool hasVectorShaderOutput(const std::string& name) const
+		{
+			return mNamedVectorShaderOutputs.count(name) != 0;
 		}
 
 		inline OIIO::TextureSystem* textureSystem()
@@ -176,6 +230,11 @@ namespace PRU
 		std::list<PR::ScalarShaderOutput*> mScalarShaderOutputs;
 		std::list<PR::SpectralShaderOutput*> mSpectralShaderOutputs;
 		std::list<PR::VectorShaderOutput*> mVectorShaderOutputs;
+
+		std::map<std::string, PR::ScalarShaderOutput*> mNamedScalarShaderOutputs;
+		std::map<std::string, PR::SpectralShaderOutput*> mNamedSpectralShaderOutputs;
+		std::map<std::string, PR::VectorShaderOutput*> mNamedVectorShaderOutputs;
+
 		OIIO::TextureSystem* mTextureSystem;
 	};
 }

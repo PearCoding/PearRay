@@ -24,19 +24,19 @@ namespace PR
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 	}
 
-	Spectrum EnvironmentLight::apply(const PM::vec3& L)
+	Spectrum EnvironmentLight::apply(const PM::vec3& V)
 	{
 		if(!mMaterial || !mMaterial->emission())
 			return Spectrum();
 
 		ShaderClosure sc;
-		sc.V = L;
-		sc.Ng = L;
-		sc.N = PM::pm_Negate(L);
+		sc.V = V;
+		sc.Ng = V;
+		sc.N = PM::pm_Negate(V);
 		
 		// Really do tangent?
 		Projection::tangent_frame(sc.N, sc.Nx, sc.Ny);
-		sc.UV = Projection::sphereUV(L);
+		sc.UV = Projection::sphereUV(V);
 		
 		return mMaterial->emission()->eval(sc);
 	}

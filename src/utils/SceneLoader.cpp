@@ -25,6 +25,8 @@
 #include "parser/light/EnvironmentLightParser.h"
 #include "parser/light/DistantLightParser.h"
 
+#include "parser/texture/TextureParser.h"
+
 #include "shader/ConstScalarOutput.h"
 #include "shader/ConstSpectralOutput.h"
 #include "shader/ConstVectorOutput.h"
@@ -153,7 +155,7 @@ namespace PRU
 						}
 						else if (entry->id() == "texture")
 						{
-							//addTexture(entry, env);
+							addTexture(entry, env);
 						}
 						else if (entry->id() == "graph")
 						{
@@ -414,6 +416,7 @@ namespace PRU
 		if (typeD && typeD->isType() == DL::Data::T_String)
 		{
 			type = typeD->getString();
+			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 		}
 		else
 		{
@@ -501,6 +504,7 @@ namespace PRU
 		if (typeD && typeD->isType() == DL::Data::T_String)
 		{
 			type = typeD->getString();
+			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 		}
 		else
 		{
@@ -512,7 +516,7 @@ namespace PRU
 		const IMaterialParser* parser = nullptr;
 		for (int i = 0; MaterialParserEntries[i].Name; ++i)
 		{
-			if (typeD->getString() == MaterialParserEntries[i].Name)
+			if (type == MaterialParserEntries[i].Name)
 			{
 				parser = &MaterialParserEntries[i].Parser;
 				break;
@@ -558,6 +562,26 @@ namespace PRU
 		env->addMaterial(name, mat);
 	}
 
+	void SceneLoader::addTexture(DL::DataGroup* group, Environment* env)
+	{
+		DL::Data* nameD = group->getFromKey("name");
+
+		std::string name;
+
+		if (nameD && nameD->isType() == DL::Data::T_String)
+		{
+			name = nameD->getString();
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "No texture name set");
+			return;
+		}
+
+		TextureParser parser;
+		parser.parse(this, env, name, group);// Will be added to env here
+	}
+
 	struct
 	{
 		const char* Name;
@@ -588,6 +612,7 @@ namespace PRU
 		if (typeD && typeD->isType() == DL::Data::T_String)
 		{
 			type = typeD->getString();
+			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 		}
 		else
 		{
@@ -599,7 +624,7 @@ namespace PRU
 		const IMeshInlineParser* parser = nullptr;
 		for (int i = 0; MeshInlineParserEntries[i].Name; ++i)
 		{
-			if (typeD->getString() == MeshInlineParserEntries[i].Name)
+			if (type == MeshInlineParserEntries[i].Name)
 			{
 				parser = &MeshInlineParserEntries[i].Parser;
 				break;
@@ -728,25 +753,10 @@ namespace PRU
 					{
 						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
 						spec.setEmissive(true);
+						PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Intensity %f",
+							grp->at(0)->getFloatConverted(), spec.avg());
 					}
-				}
-				else if (grp->id() == "temperature_hemi" || grp->id() == "blackbody_hemi")
-				{
-					if (grp->unnamedCount() == 1 &&
-						grp->at(0)->isNumber())
-					{
-						spec = Spectrum::fromBlackbodyHemi(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
-						spec.setEmissive(true);
-					}
-				}
-				else if (grp->id() == "temperature_sphere" || grp->id() == "blackbody_sphere")
-				{
-					if (grp->unnamedCount() == 1 &&
-						grp->at(0)->isNumber())
-					{
-						spec = Spectrum::fromBlackbodySphere(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
-						spec.setEmissive(true);
-					}
+
 				}
 				else if (grp->id() == "temperature_norm" || grp->id() == "blackbody_norm")
 				{
@@ -959,25 +969,39 @@ namespace PRU
 		{
 			std::string name = dataD->getGroup()->id();
 
-			if (name == "file")
+			if (name == "file" && dataD->getGroup()->unnamedCount() == 1)
 			{
-				if (dataD->getGroup()->unnamedCount() == 1)
+				DL::Data* filenameD = dataD->getGroup()->at(0);
+				if (filenameD->isType() == DL::Data::T_String)
 				{
-					DL::Data* filenameD = dataD->getGroup()->at(0);
-					if (filenameD->isType() == DL::Data::T_String)
-					{
-						OIIO::TextureOpt opts;
-						//TODO: Add options
-						auto* tex = new ImageSpectralShaderOutput(env->textureSystem(), opts, filenameD->getString());
-						env->addShaderOutput(tex);
-						return tex;
-					}
+					OIIO::TextureOpt opts;
+					//TODO: Add options
+					auto* tex = new ImageSpectralShaderOutput(env->textureSystem(), opts, filenameD->getString());
+					env->addShaderOutput(tex);
+					return tex;
+				}
+			}
+			else if((name == "tex" || name == "texture") &&
+				dataD->getGroup()->unnamedCount() == 1)
+			{
+				DL::Data* nameD = dataD->getGroup()->at(0);
+				if (nameD->isType() == DL::Data::T_String)
+				{
+					if(env->hasSpectralShaderOutput(nameD->getString()))
+						return env->getSpectralShaderOutput(nameD->getString());
+					else
+						PR_LOGGER.logf(L_Warning, M_Scene, "Unknown spectral texture '%s'.",
+							nameD->getString().c_str());
 				}
 			}
 			else
 			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
+				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
 			}
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
 		}
 
 		return nullptr;
@@ -998,25 +1022,39 @@ namespace PRU
 		{
 			std::string name = dataD->getGroup()->id();
 
-			if (name == "file")
+			if (name == "file" &&
+				dataD->getGroup()->unnamedCount() == 1)
 			{
-				if (dataD->getGroup()->unnamedCount() == 1)
+				DL::Data* filenameD = dataD->getGroup()->at(0);
+				if (filenameD->isType() == DL::Data::T_String)
 				{
-					DL::Data* filenameD = dataD->getGroup()->at(0);
-					if (filenameD->isType() == DL::Data::T_String)
-					{
-						OIIO::TextureOpt opts;
-						//TODO: Add options
-						auto* tex = new ImageScalarShaderOutput(env->textureSystem(), opts, filenameD->getString());
-						env->addShaderOutput(tex);
-						return tex;
-					}
+					OIIO::TextureOpt opts;
+					auto* tex = new ImageScalarShaderOutput(env->textureSystem(), opts, filenameD->getString());
+					env->addShaderOutput(tex);
+					return tex;
+				}
+			}
+			else if((name == "tex" || name == "texture") &&
+				dataD->getGroup()->unnamedCount() == 1)
+			{
+				DL::Data* nameD = dataD->getGroup()->at(0);
+				if (nameD->isType() == DL::Data::T_String)
+				{
+					if(env->hasScalarShaderOutput(nameD->getString()))
+						return env->getScalarShaderOutput(nameD->getString());
+					else
+						PR_LOGGER.logf(L_Warning, M_Scene, "Unknown scalar texture '%s'.",
+							nameD->getString().c_str());
 				}
 			}
 			else
 			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
 			}
+		}
+		else
+		{
+			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
 		}
 
 		return nullptr;
@@ -1043,9 +1081,45 @@ namespace PRU
 				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid vector entry.");
 			}
 		}
+		else if (dataD->isType() == DL::Data::T_Group)
+		{
+			std::string name = dataD->getGroup()->id();
+
+			if (name == "file")
+			{
+				if (dataD->getGroup()->unnamedCount() == 1)
+				{
+					DL::Data* filenameD = dataD->getGroup()->at(0);
+					if (filenameD->isType() == DL::Data::T_String)
+					{
+						OIIO::TextureOpt opts;
+						auto* tex = new ImageVectorShaderOutput(env->textureSystem(), opts, filenameD->getString());
+						env->addShaderOutput(tex);
+						return tex;
+					}
+				}
+			}
+			else if((name == "tex" || name == "texture") &&
+				dataD->getGroup()->unnamedCount() == 1)
+			{
+				DL::Data* nameD = dataD->getGroup()->at(0);
+				if (nameD->isType() == DL::Data::T_String)
+				{
+					if(env->hasVectorShaderOutput(nameD->getString()))
+						return env->getVectorShaderOutput(nameD->getString());
+					else
+						PR_LOGGER.logf(L_Warning, M_Scene, "Unknown vector texture '%s'.",
+							nameD->getString().c_str());
+				}
+			}
+			else
+			{
+				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+			}
+		}
 		else
 		{
-			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
 		}
 
 		return nullptr;

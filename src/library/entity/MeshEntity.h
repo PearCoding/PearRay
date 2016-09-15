@@ -29,8 +29,12 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
 		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+
+		virtual void onFreeze() override;
 	private:
 		IMesh* mMesh;
 		Material* mMaterialOverride;
+		
+		float mSurfaceArea_Cache;
 	};
 }

@@ -133,10 +133,11 @@ namespace PR
 					for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 					{
 						RenderEntity* entity = context->shoot(current, other_sc);
-						if (entity && other_sc.Material && other_sc.Material->canBeShaded())
+						if (entity &&
+							other_sc.Material && other_sc.Material->canBeShaded())
 						{
 							const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(other_sc.N, current.direction()));
-							if (NdotL < PM_EPSILON)
+							if (NdotL <= PM_EPSILON)
 								break;
 
 							PR_DEBUG_ASSERT(NdotL <= 1);
@@ -211,8 +212,11 @@ namespace PR
 							context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
 
 						other_weight *= sc.Material->apply(sc, dir) * NdotL;
-						MSI::power(full_weight, full_pdf, other_weight, pdf);
 					}
+					else
+						other_weight.clear();
+
+					MSI::power(full_weight, full_pdf, other_weight, pdf);
 				}
 			}
 
@@ -243,11 +247,11 @@ namespace PR
 							{
 								const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(other_sc.N, shootRay.direction()));
 								if (NdotL > PM_EPSILON)
-								{
 									other_weight = lightFlux * (sc.Material->apply(sc, shootRay.direction()) * NdotL);
+								else
+									other_weight.clear();
 
-									MSI::power(full_weight, full_pdf, other_weight, pdf);
-								}
+								MSI::power(full_weight, full_pdf, other_weight, pdf);
 							}
 						}
 					}

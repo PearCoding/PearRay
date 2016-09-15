@@ -115,6 +115,8 @@ namespace PR
 
 	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t) const
 	{
+		PR_ASSERT(isFrozen());
+		
 		PR_GUARD_PROFILE();
 
 		if (mOrthographic)
@@ -152,11 +154,11 @@ namespace PR
 	}
 
 	// Cache
-	void StandardCamera::onPreRender()
+	void StandardCamera::onFreeze()
 	{
 		PR_GUARD_PROFILE();
 		
-		Camera::onPreRender();
+		Camera::onFreeze();
 
 		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(
 			PM::pm_Transform(worldDirectionMatrix(), mLocalDirection)), 0);

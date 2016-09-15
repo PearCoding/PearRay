@@ -52,17 +52,23 @@ namespace PR
 			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
 			const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, sc.N));
 
-			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
+			if (pdf > PM_EPSILON)
 			{
-				Ray ray = in.next(sc.P, dir);
+				if (NdotL > PM_EPSILON)
+				{
+					Ray ray = in.next(sc.P, dir);
 
-				if (context->shootWithEmission(other_weight, ray, other_sc) && other_sc.Material && std::isinf(pdf))
-					other_weight += applyRay(ray, other_sc, context);
+					if (context->shootWithEmission(other_weight, ray, other_sc) &&
+						other_sc.Material && std::isinf(pdf))
+						other_weight += applyRay(ray, other_sc, context);
 
-				other_weight = sc.Material->apply(sc, ray.direction()) * other_weight * NdotL;
+					other_weight *= sc.Material->apply(sc, dir) * NdotL;
+				}
+				else
+					other_weight.clear();
+				
+				MSI::balance(full_weight, full_pdf, other_weight, pdf);
 			}
-
-			MSI::balance(full_weight, full_pdf, other_weight, pdf);
 		}
 
 		if (!std::isinf(full_pdf))
@@ -82,15 +88,19 @@ namespace PR
 
 					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) + sc.Material->pdf(sc, L);
 
-					if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
+					if (pdf > PM_EPSILON)
 					{
-						Ray ray = in.next(sc.P, L);
+						if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
+						{
+							Ray ray = in.next(sc.P, L);
+							if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
+								other_weight = sc.Material->apply(sc, L) * other_weight * NdotL;
+						}
+						else
+							other_weight.clear();
 
-						if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
-							other_weight = sc.Material->apply(sc, L) * other_weight * NdotL;
+						MSI::balance(full_weight, full_pdf, other_weight, pdf);
 					}
-
-					MSI::balance(full_weight, full_pdf, other_weight, pdf);
 				}
 			}
 

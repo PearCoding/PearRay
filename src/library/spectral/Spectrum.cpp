@@ -40,14 +40,17 @@ namespace PR
 	}
 
 	// Has to be in double!
-	inline double blackbody_eq(double temp, double lambda)
+	inline long double blackbody_eq(long double temp, long double lambda_nm)
 	{
-		constexpr double c = 299792458;
-		constexpr double h = 6.62606957e-34f;
-		constexpr double kb = 1.3806488e-23f;
+		constexpr long double c = 299792458l;
+		constexpr long double h = 6.62606957e-34l;
+		constexpr long double kb = 1.3806488e-23l;
+		
+		constexpr long double c1 = 3.741771525e-16l;// PM_2_PI * h * c * c
+		constexpr long double c2 = 1.43877696e-2l;// h*c/kb
 
-		const double lambda5 = lambda * (lambda * lambda) * (lambda * lambda);
-		return (2 * h * c * c) / (lambda5 * (std::exp((h * c) / (lambda * kb * temp)) - 1));
+		const long double lambda5 = lambda_nm * (lambda_nm * lambda_nm) * (lambda_nm * lambda_nm);
+		return c1 / (lambda5 * (std::exp(c2 / (lambda_nm * temp)) - 1));
 	}
 
 	Spectrum Spectrum::fromBlackbody(float temp)
@@ -55,7 +58,7 @@ namespace PR
 		Spectrum spec;
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
-			double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9;
+			long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9l;
 			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda));
 		}
 
@@ -64,13 +67,13 @@ namespace PR
 
 	Spectrum Spectrum::fromBlackbodyNorm(float temp)
 	{
-		const double maxLambda = 2.897772917e-3f / temp;
-		const double norm = 1/blackbody_eq(temp, maxLambda);
+		const long double maxLambda = 2.897772917e-3l / temp;
+		const long double norm = 1/blackbody_eq(temp, maxLambda);
 
 		Spectrum spec;
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
-			double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9;
+			long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9l;
 			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda) * norm);
 		}
 

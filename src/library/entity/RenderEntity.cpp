@@ -7,7 +7,7 @@
 namespace PR
 {
 	RenderEntity::RenderEntity(const std::string& name, Entity* parent) :
-		Entity(name, parent), mFrozen(false)
+		Entity(name, parent)
 	{
 	}
 
@@ -45,11 +45,10 @@ namespace PR
 		return w;
 	}
 
-	void RenderEntity::onPreRender()
+	void RenderEntity::onFreeze()
 	{
-		Entity::onPreRender();
+		Entity::onFreeze();
 
 		mWorldBoundingBox_Cache = calcWorldBoundingBox();
-		mFrozen = true;
 	}
 }

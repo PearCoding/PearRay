@@ -47,7 +47,7 @@ namespace PR
 					{
 						Ray ray = in.next(sc.P, dir);
 						if (!context->shootForDetection(ray))
-							weight = sc.Material->apply(sc, dir) * e->apply(ray.direction()) * NdotL;
+							weight = sc.Material->apply(sc, dir) * e->apply(dir) * NdotL;
 					} 
 				
 					MSI::power(semi_weight, semi_pdf, weight, pdf);

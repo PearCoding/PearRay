@@ -59,9 +59,12 @@ namespace PR
 
 		virtual std::string toString() const;
 
+		inline void freeze();
+		inline bool isFrozen() const;
+		
 		// Events:
 		/* The entity will not be changed after this. */
-		virtual void onPreRender();
+		virtual void onFreeze();
 
 		inline void invalidateCache();
 	private:

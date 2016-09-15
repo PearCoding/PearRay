@@ -125,16 +125,16 @@ namespace PR
 		return ((SceneKDTree*)mKDTree)->checkIfCollides(ray, collisionPoint);
 	}
 
-	void Scene::onPreRender()
+	void Scene::freeze()
 	{
 		for (Entity* e : mEntities)
 		{
-			e->onPreRender();
+			e->freeze();
 		}
 
 		for (IInfiniteLight* e : mInfiniteLights)
 		{
-			e->onPreRender();
+			e->freeze();
 		}
 	}
 

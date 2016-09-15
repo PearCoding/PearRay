@@ -35,12 +35,11 @@ namespace PR
 		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const = 0;
 
 		// Entity
-		virtual void onPreRender() override;
+		virtual void onFreeze() override;
 
 	private:
 		BoundingBox calcWorldBoundingBox() const;
 
-		bool mFrozen;
 		BoundingBox mWorldBoundingBox_Cache;
 	};
 }

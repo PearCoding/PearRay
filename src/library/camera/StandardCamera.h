@@ -43,7 +43,7 @@ namespace PR
 		Ray constructRay(float nx, float ny, float rx, float ry, float t) const;
 
 		// Entity
-		void onPreRender() override;// Cache
+		void onFreeze() override;// Cache
 	private:
 		bool mOrthographic;
 		float mWidth;

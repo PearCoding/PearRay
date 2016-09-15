@@ -415,14 +415,16 @@ namespace PR
 		if (entity)
 		{
 			if(sc.Material && sc.Material->emission())
-			{
 				appliedSpec = sc.Material->emission()->eval(sc);
-			}
+			else
+				appliedSpec.clear();
 		}
 		else
 		{
 			if(mScene->backgroundLight())
 				appliedSpec = mScene->backgroundLight()->apply(ray.direction());
+			else
+				appliedSpec.clear();
 
 			if(context)
 				context->stats().incBackgroundHitCount();

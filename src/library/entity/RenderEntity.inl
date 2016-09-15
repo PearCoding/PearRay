@@ -19,7 +19,7 @@ namespace PR
 
 	inline BoundingBox RenderEntity::worldBoundingBox() const
 	{
-		if(mFrozen)
+		if(isFrozen())
 			return mWorldBoundingBox_Cache;
 		else
 			return calcWorldBoundingBox();

@@ -30,7 +30,7 @@ namespace PR
 		return stream.str();
 	}
 
-	void Entity::onPreRender()
+	void Entity::onFreeze()
 	{
 		PR_GUARD_PROFILE();
 
@@ -54,7 +54,5 @@ namespace PR
 			PM::pm_GetX(mPosition), PM::pm_GetY(mPosition), PM::pm_GetZ(mPosition), PM::pm_GetW(mPosition),
 			PM::pm_RadToDeg(PM::pm_GetX(localAngle)), PM::pm_RadToDeg(PM::pm_GetY(localAngle)), PM::pm_RadToDeg(PM::pm_GetZ(localAngle)),
 			PM::pm_GetX(mScale), PM::pm_GetY(mScale), PM::pm_GetZ(mScale));
-
-		mFrozen = true;
 	}
 }

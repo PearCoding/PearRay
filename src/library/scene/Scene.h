@@ -42,7 +42,7 @@ namespace PR
 		RenderEntity* checkCollision(const Ray& ray, FaceSample& collisionPoint) const;
 		bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const;
 
-		void onPreRender();
+		void freeze();
 
 		BoundingBox boundingBox() const;
 	private:

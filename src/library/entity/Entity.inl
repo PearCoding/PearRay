@@ -191,4 +191,18 @@ namespace PR
 		mReCache = true;
 		mFrozen = false;
 	}
+
+	inline void Entity::freeze()
+	{
+		if(!mFrozen)
+		{
+			onFreeze();
+			mFrozen = true;
+		}
+	}
+
+	inline bool Entity::isFrozen() const
+	{
+		return mFrozen;
+	}
 }

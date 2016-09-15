@@ -44,6 +44,7 @@ namespace PRU
 		void addEntity(DL::DataGroup* group, PR::Entity* parent, Environment* env);
 		void addLight(DL::DataGroup* group, Environment* env);
 		void addMaterial(DL::DataGroup* group, Environment* env);
+		void addTexture(DL::DataGroup* group, Environment* env);
 		void addSpectrum(DL::DataGroup* group, Environment* env);
 		void addSubGraph(DL::DataGroup* group, Environment* env);
 		void addMesh(DL::DataGroup* group, Environment* env);

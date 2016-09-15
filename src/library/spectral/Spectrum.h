@@ -50,6 +50,7 @@ namespace PR
 		float approx(float wavelength, InterpolationType interpolation = IT_Linear) const;
 
 		inline void fill(float v);
+		inline void clear();
 		
 		inline float max() const;// Amplitude
 		inline float min() const;// Amplitude
@@ -76,9 +77,6 @@ namespace PR
 
 		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K)
 		static Spectrum fromBlackbodyNorm(float temp);
-
-		inline static Spectrum fromBlackbodyHemi(float temp);
-		inline static Spectrum fromBlackbodySphere(float temp);
 	private:
 		float mValues[SAMPLING_COUNT];
 		bool mEmissive;

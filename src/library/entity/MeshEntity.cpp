@@ -35,7 +35,10 @@ namespace PR
 
 	float MeshEntity::surfaceArea(Material* m) const
 	{
-		return mMesh->surfaceArea(m, flags() & EF_LocalArea ? matrix() : worldMatrix());
+		if(isFrozen() && (m == nullptr || m == mMaterialOverride))
+			return mSurfaceArea_Cache;
+		else
+			return mMesh->surfaceArea(m, flags() & EF_LocalArea ? matrix() : worldMatrix());
 	}
 
 	void MeshEntity::setMesh(IMesh* mesh)
@@ -110,5 +113,13 @@ namespace PR
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 
 		return point;
+	}
+
+	void MeshEntity::onFreeze()
+	{
+		RenderEntity::onFreeze();
+
+		mSurfaceArea_Cache = mMesh->surfaceArea(nullptr,
+				flags() & EF_LocalArea ? matrix() : worldMatrix());
 	}
 }
