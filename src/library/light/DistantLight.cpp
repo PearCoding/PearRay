@@ -32,7 +32,7 @@ namespace PR
 	{
 		PR_ASSERT(isFrozen());
 
-		const float d = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(V, mDirection));
+		const float d = PM::pm_MaxT(0.0f, PM::pm_Dot3D(V, mSampleDirection_Cache));
 
 		if(d <= PM_EPSILON || !mMaterial || !mMaterial->emission())
 			return Spectrum();

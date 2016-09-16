@@ -86,14 +86,14 @@ namespace PRN
 		}
 
 		float r, g, b;
-		PR::RGBConverter::convert(fragment(x,y,0), r,g,b);
+		PR::RGBConverter::convert(getFragment(x,y,0), r,g,b);
 
 		mMutex.lock();
 		mPackets.push(Packet({x,y,0,r,g,b}));
 		mMutex.unlock();
 	}
 
-	Spectrum NetworkDisplayDriver::fragment(uint32 x, uint32 y, uint32 layer) const
+	Spectrum NetworkDisplayDriver::getFragment(uint32 x, uint32 y, uint32 layer) const
 	{
 		PR_ASSERT(mData && mRenderer);
 		

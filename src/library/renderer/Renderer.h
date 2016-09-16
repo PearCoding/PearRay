@@ -105,9 +105,13 @@ namespace PR
 
 		RenderTile* getNextTile();
 
+		void onNextPass();
 		void waitForNextPass();// Never call it from main thread
 
 	private:
+		void setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight);
+		bool isPixelFinished(uint32 currentSample, uint32 x, uint32 y) const;
+
 		void reset();
 
 		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass);
@@ -140,5 +144,7 @@ namespace PR
 		std::condition_variable mPassCondition;
 		uint32 mThreadsWaitingForPass;
 		uint32 mCurrentPass;
+
+		float* mPixelError;
 	};
 }

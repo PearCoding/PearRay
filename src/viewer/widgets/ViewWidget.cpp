@@ -164,7 +164,7 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 			QPoint p = convertToLocal(event->pos());
 			if (QRect(QPoint(0, 0), mRenderImage.size()).contains(p))
 			{
-				emit spectrumSelected(mDisplayBuffer->fragment(p.x(), p.y(), 0));
+				emit spectrumSelected(mDisplayBuffer->getFragment(p.x(), p.y(), 0));
 			}
 		}
 		else if (mToolMode == TM_Pan)

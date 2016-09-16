@@ -470,7 +470,7 @@ namespace PRU
 		{ "blinnphong", BlinnPhongMaterialParser() },
 		{ "ward", WardMaterialParser() },
 
-		{ "debugBoundingBox", DebugBoundingBoxMaterialParser() },
+		{ "debug_bounding_box", DebugBoundingBoxMaterialParser() },
 
 		{ "grid", GridMaterialParser() },
 		{ "glass", GlassMaterialParser() },
@@ -969,19 +969,7 @@ namespace PRU
 		{
 			std::string name = dataD->getGroup()->id();
 
-			if (name == "file" && dataD->getGroup()->unnamedCount() == 1)
-			{
-				DL::Data* filenameD = dataD->getGroup()->at(0);
-				if (filenameD->isType() == DL::Data::T_String)
-				{
-					OIIO::TextureOpt opts;
-					//TODO: Add options
-					auto* tex = new ImageSpectralShaderOutput(env->textureSystem(), opts, filenameD->getString());
-					env->addShaderOutput(tex);
-					return tex;
-				}
-			}
-			else if((name == "tex" || name == "texture") &&
+			if((name == "tex" || name == "texture") &&
 				dataD->getGroup()->unnamedCount() == 1)
 			{
 				DL::Data* nameD = dataD->getGroup()->at(0);
@@ -1022,19 +1010,7 @@ namespace PRU
 		{
 			std::string name = dataD->getGroup()->id();
 
-			if (name == "file" &&
-				dataD->getGroup()->unnamedCount() == 1)
-			{
-				DL::Data* filenameD = dataD->getGroup()->at(0);
-				if (filenameD->isType() == DL::Data::T_String)
-				{
-					OIIO::TextureOpt opts;
-					auto* tex = new ImageScalarShaderOutput(env->textureSystem(), opts, filenameD->getString());
-					env->addShaderOutput(tex);
-					return tex;
-				}
-			}
-			else if((name == "tex" || name == "texture") &&
+			if((name == "tex" || name == "texture") &&
 				dataD->getGroup()->unnamedCount() == 1)
 			{
 				DL::Data* nameD = dataD->getGroup()->at(0);
@@ -1085,21 +1061,7 @@ namespace PRU
 		{
 			std::string name = dataD->getGroup()->id();
 
-			if (name == "file")
-			{
-				if (dataD->getGroup()->unnamedCount() == 1)
-				{
-					DL::Data* filenameD = dataD->getGroup()->at(0);
-					if (filenameD->isType() == DL::Data::T_String)
-					{
-						OIIO::TextureOpt opts;
-						auto* tex = new ImageVectorShaderOutput(env->textureSystem(), opts, filenameD->getString());
-						env->addShaderOutput(tex);
-						return tex;
-					}
-				}
-			}
-			else if((name == "tex" || name == "texture") &&
+			if((name == "tex" || name == "texture") &&
 				dataD->getGroup()->unnamedCount() == 1)
 			{
 				DL::Data* nameD = dataD->getGroup()->at(0);

@@ -23,7 +23,12 @@ namespace PR
 		mMaxLightSamples(1),
 
 		// PPM
-		mPPM()
+		mPPM(),
+
+		// Adaptive Sampling (AS)
+		mAdaptiveSampling(true),
+		mASMaxError(0.0001f),
+		mMinPixelSampleCount(1)
 	{
 	}
 }

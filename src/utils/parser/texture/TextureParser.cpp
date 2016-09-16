@@ -17,6 +17,8 @@
 
 #include <algorithm>
 
+#include <boost/filesystem.hpp>
+
 using namespace PR;
 namespace PRU
 {
@@ -168,6 +170,14 @@ namespace PRU
 			return;
 		}
 
+		if(!boost::filesystem::exists(filename) ||
+			!boost::filesystem::is_regular_file(filename))
+		{
+			PR_LOGGER.logf(L_Error, M_Scene, "No valid file fount for texture '%s' at '%s'",
+				name.c_str(), filename.c_str());
+			return;
+		}
+		
 		std::string type;
 		if(typeD && typeD->isType() == DL::Data::T_String)
 		{

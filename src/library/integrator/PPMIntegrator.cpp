@@ -149,14 +149,7 @@ namespace PR
 				Spectrum flux;
 				if(lightSample.Material->emission())
 				{
-					ShaderClosure lsc;
-					lsc.P = lightSample.P;
-					lsc.Ng = lightSample.Ng;
-					lsc.N = lightSample.Ng;
-					lsc.Nx = lightSample.Nx;
-					lsc.Ny = lightSample.Ny;
-					lsc.UV = lightSample.UV;
-					lsc.Material = lightSample.Material;
+					ShaderClosure lsc = lightSample;
 					flux = lightSample.Material->emission()->eval(lsc);
 				}
 

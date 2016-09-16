@@ -82,12 +82,10 @@ namespace PRU
 
 		const float t = 1.0f / (sample + 1.0f);
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		{
 			mData[index + i] = mData[index + i] * (1-t) + s.value(i) * t;
-		}
 	}
 
-	Spectrum DisplayBuffer::fragment(uint32 x, uint32 y, uint32 layer) const
+	Spectrum DisplayBuffer::getFragment(uint32 x, uint32 y, uint32 layer) const
 	{
 		if (!mData)
 			return Spectrum();

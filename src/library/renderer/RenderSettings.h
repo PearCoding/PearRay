@@ -96,6 +96,15 @@ namespace PR
 		inline const PPMSettings& ppm() const { return mPPM; }
 		inline PPMSettings& ppm() { return mPPM; }
 		
+		// Adaptive Sampling (AS)
+		inline bool isAdaptiveSampling() const { return mAdaptiveSampling; }
+		inline void setAdaptiveSampling(bool b) { mAdaptiveSampling = b; }
+
+		inline float maxASError() const { return mASMaxError; }
+		inline void setMaxASError(float f) { mASMaxError = f; }
+
+		inline uint32 minPixelSampleCount() const { return mMinPixelSampleCount; }
+		inline void setMinPixelSampleCount(uint32 v) { mMinPixelSampleCount = v; }
 	private:
 		bool mIncremental;
 		DebugMode mDebugMode;
@@ -120,5 +129,11 @@ namespace PR
 
 		// PPM
 		PPMSettings mPPM;
+
+		// Adaptive Sampling (AS)
+		bool mAdaptiveSampling;
+		float mASMaxError;
+		uint32 mMinPixelSampleCount;
+
 	};
 }

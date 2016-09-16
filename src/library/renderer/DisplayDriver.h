@@ -14,5 +14,6 @@ namespace PR
 		virtual void deinit() = 0;
 
 		virtual void pushFragment(uint32 x, uint32 y, uint32 layer, uint32 sample, const Spectrum& s) = 0;
+		virtual Spectrum getFragment(uint32 x, uint32 y, uint32 layer) const = 0;
 	};
 }

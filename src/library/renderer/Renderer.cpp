@@ -44,7 +44,7 @@ namespace PR
 		mResult(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
-		mGPU(nullptr), mIntegrator(nullptr)
+		mGPU(nullptr), mIntegrator(nullptr), mPixelError(nullptr)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -106,6 +106,12 @@ namespace PR
 		}
 
 		mLights.clear();
+
+		if(mPixelError)
+		{
+			delete[] mPixelError;
+			mPixelError = nullptr;
+		}
 	}
 
 	void Renderer::setWidth(uint32 w)
@@ -196,6 +202,13 @@ namespace PR
 		}
 
 		PR_ASSERT(mIntegrator);
+
+		/* Setup Adaptive Sampling */
+		if(mRenderSettings.isAdaptiveSampling())
+		{
+			mPixelError = new float[renderWidth()*renderHeight()];
+			std::memset(mPixelError, 1, renderHeight() * renderWidth() * sizeof(float));
+		}
 		
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
@@ -275,26 +288,33 @@ namespace PR
 
 		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
-			auto s = context->pixelSampler()->generate2D(sample);
+			if(!isPixelFinished(sample, x, y))
+			{
+				auto s = context->pixelSampler()->generate2D(sample);
 
-			float rx = context->random().getFloat();// Random sampling
-			float ry = context->random().getFloat();
-			
-			Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
-				rx, ry,//TODO
-				0.0f,
-				pass);
+				float rx = context->random().getFloat();// Random sampling
+				float ry = context->random().getFloat();
+				
+				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
+					rx, ry,//TODO
+					0.0f,
+					pass);
 
-			mResult->pushFragment(x, y, 0, sample + mRenderSettings.maxPixelSampleCount() * pass, spec);
+				mResult->pushFragment(x, y, 0, sample + mRenderSettings.maxPixelSampleCount() * pass, spec);
+
+				if(mPixelError)
+					setPixelError(x, y, mResult->getFragment(x, y, 0), spec);
+			}
 		}
 		else// Everything
 		{
 			const uint32 SampleCount = mRenderSettings.maxPixelSampleCount();
 			Spectrum newSpec;
 
-			for (uint32 i = sample; i < SampleCount; ++i)
+			uint32 currentSample = sample;
+			for (; currentSample < SampleCount && !isPixelFinished(currentSample, x, y); ++currentSample)
 			{
-				auto s = context->pixelSampler()->generate2D(i);
+				auto s = context->pixelSampler()->generate2D(currentSample);
 
 				float rx = context->random().getFloat();// Random sampling
 				float ry = context->random().getFloat();
@@ -303,10 +323,14 @@ namespace PR
 					rx, ry,//TODO
 					0.0f,
 					pass);
+
 				newSpec += spec;
+
+				if(mPixelError)
+					setPixelError(x, y, newSpec / (float)currentSample, spec);
 			}
 
-			mResult->pushFragment(x, y, 0, pass, newSpec / (float)SampleCount);
+			mResult->pushFragment(x, y, 0, pass, newSpec / (float)currentSample);
 		}
 	}
 
@@ -444,14 +468,8 @@ namespace PR
 		{
 			if(mIntegrator->needNextPass(mCurrentPass + 1))
 			{
-				for (uint32 i = 0; i < mTileYCount; ++i)
-				{
-					for (uint32 j = 0; j < mTileXCount; ++j)
-					{
-						mTileMap[i*mTileXCount + j]->reset();
-					}
-				}
-
+				onNextPass();
+				
 				mIntegrator->onNextPass(mCurrentPass + 1);
 			}
 			
@@ -570,5 +588,46 @@ namespace PR
 	uint64 Renderer::maxSamples() const
 	{
 		return mIntegrator ? mIntegrator->maxSamples(this) : 0;
+	}
+
+	void Renderer::onNextPass()
+	{
+		for (uint32 i = 0; i < mTileYCount; ++i)
+		{
+			for (uint32 j = 0; j < mTileXCount; ++j)
+			{
+				mTileMap[i*mTileXCount + j]->reset();
+			}
+		}
+
+		if(mPixelError)
+		{
+			std::memset(mPixelError, 1, renderHeight() * renderWidth() * sizeof(float));
+		}
+	}
+	
+	void Renderer::setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight)
+	{
+		PR_ASSERT(mPixelError);
+
+		uint32 dx = x - cropPixelOffsetX();
+		uint32 dy = y - cropPixelOffsetY();
+
+		const float err = std::abs((pixel - weight).max());
+		mPixelError[dy*renderWidth() + dx] = err;				
+	}
+
+	bool Renderer::isPixelFinished(uint32 currentSample, uint32 x, uint32 y) const
+	{
+		if(mPixelError &&
+			currentSample > mRenderSettings.minPixelSampleCount())
+		{
+			uint32 dx = x - cropPixelOffsetX();
+			uint32 dy = y - cropPixelOffsetY();
+
+			return mPixelError[dy*renderWidth() + dx] <= mRenderSettings.maxASError();
+		}
+
+		return false;
 	}
 }

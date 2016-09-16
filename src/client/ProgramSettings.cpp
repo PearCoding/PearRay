@@ -223,6 +223,15 @@ po::options_description setup_cmd_options()
 		("ps_max",
 			po::value<PR::uint32>(),
 		 	"Maximum pixel sample count")
+		("ps_adaptive",
+			po::value<bool>(),
+		 	"Use Adaptive Sampling")
+		("ps_min",
+			po::value<PR::uint32>(),
+		 	"Minimum pixel sample count. Only used with Adaptive Sampling")
+		("ps_max_error",
+			po::value<float>(),
+		 	"Max error allowed when using Adaptive Sampling")
 	;
 
 	po::options_description gi_d("Global Illumination[*]");
@@ -296,6 +305,12 @@ po::options_description setup_ini_options()
 			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.pixelSampler()))
 		("pixelsampler.max",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPixelSampleCount()))
+		("pixelsampler.adaptive",
+			po::value<bool>()->default_value(DefaultRenderSettings.isAdaptiveSampling()))
+		("pixelsampler.min",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.minPixelSampleCount()))
+		("pixelsampler.max_error",
+			po::value<float>()->default_value(DefaultRenderSettings.maxASError()))
 		("globalillumination.diffuse_bounces",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()))
 		("globalillumination.light_samples",
@@ -400,6 +415,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// PixelSampler
 		RenderSettings.setPixelSampler(ini["pixelsampler.mode"].as<EnumOption<SamplerMode> >());
 		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
+		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.adaptive"].as<bool>());
+		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.min"].as<PR::uint32>());
+		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max_error"].as<float>());
 
 		// Global Illumination
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
@@ -522,6 +540,12 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setPixelSampler(vm["ps_mode"].as<EnumOption<SamplerMode> >());
 	if(vm.count("ps_max"))
 		RenderSettings.setMaxPixelSampleCount(vm["ps_max"].as<PR::uint32>());
+	if(vm.count("ps_adaptive"))
+		RenderSettings.setAdaptiveSampling(vm["ps_adaptive"].as<bool>());
+	if(vm.count("ps_min"))
+		RenderSettings.setMinPixelSampleCount(vm["ps_min"].as<PR::uint32>());
+	if(vm.count("ps_max_error"))
+		RenderSettings.setMaxASError(vm["ps_max_error"].as<PR::float>());
 
 	// Global Illumination
 	if(vm.count("gi_diff_max"))
