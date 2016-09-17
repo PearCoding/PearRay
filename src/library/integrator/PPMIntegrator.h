@@ -39,6 +39,7 @@ namespace PR
 		void onThreadEnd(RenderContext* context) override;
 
 		virtual uint64 maxSamples(const Renderer* renderer) const override;
+		virtual uint64 maxPasses(const Renderer* renderer) const override;
 
 	private:
 		Spectrum applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 pass);

@@ -89,8 +89,18 @@ QWidget(parent)
 	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
 	mPixelSamplerGroupProp->addChild(mPixelSamplerProp);
 
-	mPixelSamplesProp = new IntProperty(tr("Max Samples"), 8, 1, 1024);
+	mPixelSamplesProp = new IntProperty(tr("Max Samples"), 8, 1, 4096);
 	mPixelSamplerGroupProp->addChild(mPixelSamplesProp);
+
+	mPixelMinSamplesProp = new IntProperty(tr("Min Samples"), 8, 1, 4096);
+	mPixelSamplerGroupProp->addChild(mPixelMinSamplesProp);
+
+	mPixelAdaptiveSamplingProp = new BoolProperty(tr("Adaptive Sampling"), true);
+	mPixelSamplerGroupProp->addChild(mPixelAdaptiveSamplingProp);
+
+	mPixelMaxErrorProp = new DoubleProperty(tr("Max Error"), 0.000001, 0.0000001, 1);
+	mPixelSamplerGroupProp->addChild(mPixelMaxErrorProp);
+
 	mProperties.add(mPixelSamplerGroupProp);
 
 	// Direct Lightning
@@ -130,6 +140,9 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererThreadsProp;
 	delete mRendererIncremental;
 	delete mPixelSamplesProp;
+	delete mPixelMinSamplesProp;
+	delete mPixelAdaptiveSamplingProp;
+	delete mPixelMaxErrorProp;
 	delete mPixelSamplerProp;
 	delete mRendererMaxDiffuseBouncesProp;
 	delete mRendererMaxRayDepthProp;
@@ -178,6 +191,12 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 
 	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setValue(renderer->settings().maxPixelSampleCount());
 	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setDefaultValue(renderer->settings().maxPixelSampleCount());
+	reinterpret_cast<IntProperty*>(mPixelMinSamplesProp)->setValue(renderer->settings().minPixelSampleCount());
+	reinterpret_cast<IntProperty*>(mPixelMinSamplesProp)->setDefaultValue(renderer->settings().minPixelSampleCount());
+	reinterpret_cast<BoolProperty*>(mPixelAdaptiveSamplingProp)->setValue(renderer->settings().isAdaptiveSampling());
+	reinterpret_cast<BoolProperty*>(mPixelAdaptiveSamplingProp)->setDefaultValue(renderer->settings().isAdaptiveSampling());
+	reinterpret_cast<DoubleProperty*>(mPixelMaxErrorProp)->setValue(renderer->settings().maxASError());
+	reinterpret_cast<DoubleProperty*>(mPixelMaxErrorProp)->setDefaultValue(renderer->settings().maxASError());
 	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setIndex(renderer->settings().pixelSampler());
 	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setDefaultIndex(renderer->settings().pixelSampler());
 
@@ -217,6 +236,9 @@ void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
 
 	renderer->settings().setPixelSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->index());
 	renderer->settings().setMaxPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelSamplesProp)->value());
+	renderer->settings().setMinPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelMinSamplesProp)->value());
+	renderer->settings().setAdaptiveSampling(reinterpret_cast<BoolProperty*>(mPixelAdaptiveSamplingProp)->value());
+	renderer->settings().setMaxASError(reinterpret_cast<DoubleProperty*>(mPixelMaxErrorProp)->value());
 
 	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
 

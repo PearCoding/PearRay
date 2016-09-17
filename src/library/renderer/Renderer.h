@@ -92,7 +92,7 @@ namespace PR
 		const std::list<RenderEntity*>& lights() const;
 
 		RenderStatistics stats(RenderThread* thread = nullptr) const;
-		uint64 maxSamples() const;
+		float percentFinished() const;
 
 		inline Scene* scene() const
 		{

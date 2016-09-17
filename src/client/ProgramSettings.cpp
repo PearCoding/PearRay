@@ -332,6 +332,8 @@ po::options_description setup_ini_options()
 	return all_d;
 }
 
+constexpr float MinMaxASError = 0.0000001f;
+
 bool ProgramSettings::parse(int argc, char** argv)
 {
 	po::options_description all_d = setup_cmd_options();
@@ -415,9 +417,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// PixelSampler
 		RenderSettings.setPixelSampler(ini["pixelsampler.mode"].as<EnumOption<SamplerMode> >());
 		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
-		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.adaptive"].as<bool>());
-		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.min"].as<PR::uint32>());
-		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max_error"].as<float>());
+		RenderSettings.setAdaptiveSampling(ini["pixelsampler.adaptive"].as<bool>());
+		RenderSettings.setMinPixelSampleCount(ini["pixelsampler.min"].as<PR::uint32>());
+		RenderSettings.setMaxASError(PM::pm_MaxT(MinMaxASError, ini["pixelsampler.max_error"].as<float>()));
 
 		// Global Illumination
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
@@ -545,7 +547,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("ps_min"))
 		RenderSettings.setMinPixelSampleCount(vm["ps_min"].as<PR::uint32>());
 	if(vm.count("ps_max_error"))
-		RenderSettings.setMaxASError(vm["ps_max_error"].as<PR::float>());
+		RenderSettings.setMaxASError(PM::pm_MaxT(MinMaxASError, vm["ps_max_error"].as<float>()));
 
 	// Global Illumination
 	if(vm.count("gi_diff_max"))

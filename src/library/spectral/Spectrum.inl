@@ -6,6 +6,12 @@ namespace PR
 		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
+	inline Spectrum::Spectrum(float f) :
+		mEmissive(false)
+	{
+		fill(f);
+	}
+
 	inline Spectrum::Spectrum(const float* data) :
 		mEmissive(false)
 	{
@@ -155,10 +161,7 @@ namespace PR
 
 	inline void Spectrum::fill(float v)
 	{
-		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
-			mValues[i] = v;
-		}
+		std::fill_n(mValues, SAMPLING_COUNT, v);
 	}
 
 	inline void Spectrum::clear()

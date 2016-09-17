@@ -207,7 +207,7 @@ namespace PR
 		if(mRenderSettings.isAdaptiveSampling())
 		{
 			mPixelError = new float[renderWidth()*renderHeight()];
-			std::memset(mPixelError, 1, renderHeight() * renderWidth() * sizeof(float));
+			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::max());
 		}
 		
 		/* Setup threads */
@@ -378,7 +378,7 @@ namespace PR
 			if (sc.Flags & SCF_Inside)
 			{
 				sc.Nx = PM::pm_Negate(fs.Nx);
-				sc.Ny = PM::pm_Negate(fs.Ny);
+				//sc.Ny = PM::pm_Negate(fs.Ny);
 			}
 
 			if(context)
@@ -585,9 +585,42 @@ namespace PR
 		}
 	}
 	
-	uint64 Renderer::maxSamples() const
+	float Renderer::percentFinished() const
 	{
-		return mIntegrator ? mIntegrator->maxSamples(this) : 0;
+		PR_ASSERT(mIntegrator);
+
+		if(!mPixelError)
+		{
+			const uint64 maxSamples = mIntegrator->maxSamples(this);
+			RenderStatistics s = stats();
+
+			return 100 * static_cast<float>(s.pixelSampleCount() / (double)maxSamples);
+		}
+		else
+		{
+			const uint64 maxPasses = mIntegrator->maxPasses(this);
+
+			const uint32 rw = renderWidth();
+			const uint32 rh = renderHeight();
+
+			uint32 pixelsFinished = 0;
+			if (!mRenderSettings.isIncremental() ||
+				mIncrementalCurrentSample > mRenderSettings.minPixelSampleCount())
+			{
+				for(uint32 j = 0; j < rh; ++j)
+				{
+					for(uint32 i = 0; i < rw; ++i)
+					{
+						if(mPixelError[j*rw + i] <= mRenderSettings.maxASError())
+							++pixelsFinished;
+					}
+				}
+			}
+
+			return 100 * static_cast<float>(
+				(mCurrentPass + pixelsFinished / (double)(renderWidth()*renderHeight())) 
+				/ (double)maxPasses);
+		}
 	}
 
 	void Renderer::onNextPass()
@@ -601,9 +634,7 @@ namespace PR
 		}
 
 		if(mPixelError)
-		{
-			std::memset(mPixelError, 1, renderHeight() * renderWidth() * sizeof(float));
-		}
+			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::max());
 	}
 	
 	void Renderer::setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight)

@@ -45,7 +45,9 @@ namespace PR
 
 		// Hemisphere sampling
 		RandomSampler hemiSampler(context->random());
-		for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf); ++i)
+		for (uint32 i = 0;
+			 i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
+			 ++i)
 		{
 			float pdf;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
@@ -94,19 +96,21 @@ namespace PR
 						{
 							Ray ray = in.next(sc.P, L);
 							if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
-								other_weight = sc.Material->apply(sc, L) * other_weight * NdotL;
+								other_weight *= sc.Material->apply(sc, L) * NdotL;
 						}
 						else
 							other_weight.clear();
 
-						MSI::balance(full_weight, full_pdf, other_weight, pdf);
+						MSI::balance(full_weight, full_pdf,
+							other_weight, std::isinf(pdf) ? 1 : pdf);
 					}
 				}
 			}
 
 			float inf_pdf;
 			other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::balance(full_weight, full_pdf, other_weight, inf_pdf);
+			MSI::balance(full_weight, full_pdf,
+				other_weight, std::isinf(inf_pdf) ? 1 : inf_pdf);
 		}
 
 		return full_weight;

@@ -269,6 +269,11 @@ namespace PR
 			renderer->settings().maxPixelSampleCount() * renderer->settings().ppm().maxPassCount();
 	}
 
+	uint64 PPMIntegrator::maxPasses(const Renderer* renderer) const
+	{
+		return renderer->settings().ppm().maxPassCount();
+	}
+
 	Spectrum PPMIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
 	{
 		PR_ASSERT(mPhotonMap);

@@ -3,6 +3,8 @@
 #include "Config.h"
 #include "PearMath.h"
 
+#include <algorithm>
+
 namespace PR
 {
 	enum InterpolationType
@@ -21,6 +23,7 @@ namespace PR
 		static constexpr uint32 SAMPLING_COUNT = WAVELENGTH_AREA_SIZE / WAVELENGTH_STEP + 1;
 		
 		inline Spectrum();
+		inline explicit Spectrum(float f);
 		inline explicit Spectrum(const float* data);// Be cautious!
 		inline ~Spectrum();
 

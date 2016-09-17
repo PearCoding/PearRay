@@ -55,4 +55,9 @@ namespace PR
 	{
 		return renderer->renderWidth() * renderer->renderHeight() * renderer->settings().maxPixelSampleCount();
 	}
+		
+	uint64 OnePassIntegrator::maxPasses(const Renderer* renderer) const
+	{
+		return 1;
+	}
 }

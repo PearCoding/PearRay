@@ -48,6 +48,9 @@ private:
 	IProperty* mPixelSamplerGroupProp;
 	IProperty* mPixelSamplerProp;
 	IProperty* mPixelSamplesProp;
+	IProperty* mPixelMinSamplesProp;
+	IProperty* mPixelAdaptiveSamplingProp;
+	IProperty* mPixelMaxErrorProp;
 
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;

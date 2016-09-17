@@ -7,6 +7,7 @@ namespace PR
 	class Ray;
 	class Renderer;
 	class RenderContext;
+	class RenderEntity;
 	class RenderTile;
 	class Spectrum;
 	struct ShaderClosure;
@@ -30,9 +31,12 @@ namespace PR
 		virtual void onThreadEnd(RenderContext* context) = 0;
 
 		virtual uint64 maxSamples(const Renderer* renderer) const = 0;
+		virtual uint64 maxPasses(const Renderer* renderer) const = 0;// Can change over time!
+
 		virtual Spectrum apply(const Ray& in, RenderContext* context, uint32 pass) = 0;
 
 	protected:
 		static Spectrum handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderContext* context, float& full_pdf);
+		static Spectrum handleSpecularPath(const Ray& in, const ShaderClosure& sc, RenderContext* context, RenderEntity*& lastEntity);
 	};
 }

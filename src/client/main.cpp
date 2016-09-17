@@ -26,6 +26,7 @@
 #include <boost/filesystem.hpp>
 
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 
 namespace bf = boost::filesystem;
@@ -172,7 +173,6 @@ int main(int argc, char** argv)
 
 	renderer->start(display, options.TileXCount, options.TileYCount, options.ThreadCount);
 
-	const PR::uint64 maxSamples = renderer->maxSamples();
 	auto start = sc::high_resolution_clock::now();
 	auto start_io = start;
 	auto start_prog = start;
@@ -196,9 +196,8 @@ int main(int argc, char** argv)
 		if(options.ShowProgress > 0 && span_prog.count() > options.ShowProgress)
 		{
 			PR::RenderStatistics stats = renderer->stats();
-			float percent = 100 * stats.pixelSampleCount() / (float)maxSamples;
 
-			std::cout << percent << "%"
+			std::cout << std::setprecision(6) << renderer->percentFinished() << "%"
 				<< " Pass " << renderer->currentPass() + 1 
 				<< " | S: " << stats.pixelSampleCount() 
 				<< " R: " << stats.rayCount() 
