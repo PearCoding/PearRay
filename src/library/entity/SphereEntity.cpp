@@ -35,8 +35,8 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		if(!m || m == mMaterial)// TODO: Scale?
-		{			
+		if(!m || m == mMaterial)
+		{
 			const auto s = flags() & EF_LocalArea ? scale() : worldScale();
 			
 			const float a = PM::pm_GetX(s) * mRadius;
@@ -45,7 +45,7 @@ namespace PR
 
 			// Knud Thomsen’s Formula
 			const float t = (std::pow(a*b,P) + std::pow(a*c,P) + std::pow(b*c,P)) / 3;
-			return PM_4_PI_F * std::pow(t, P);
+			return PM_4_PI_F * std::pow(t, 1/P);
 		}
 		else
 			return 0;

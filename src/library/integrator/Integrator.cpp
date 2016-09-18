@@ -46,7 +46,11 @@ namespace PR
 					if (NdotL > PM_EPSILON)
 					{
 						RenderEntity* entity;
-						weight = handleSpecularPath(in.next(sc.P, dir), sc, context, entity);
+
+						Ray ray = in.next(sc.P, dir);
+						ray.setFlags(ray.flags() | RF_FromLight);
+
+						weight = handleSpecularPath(ray, sc, context, entity);
 						if (!entity)
 							weight *= sc.Material->apply(sc, dir) * e->apply(dir) * NdotL;
 						else
@@ -67,6 +71,7 @@ namespace PR
 	{
 		ShaderClosure other_sc;
 		Ray ray = in;
+
 		lastEntity = context->shoot(ray, other_sc);
 
 		if(lastEntity && other_sc.Material)

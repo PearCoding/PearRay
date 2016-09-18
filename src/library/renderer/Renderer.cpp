@@ -207,7 +207,7 @@ namespace PR
 		if(mRenderSettings.isAdaptiveSampling())
 		{
 			mPixelError = new float[renderWidth()*renderHeight()];
-			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::max());
+			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::infinity());
 		}
 		
 		/* Setup threads */
@@ -445,10 +445,10 @@ namespace PR
 		}
 		else
 		{
-			if(mScene->backgroundLight())
-				appliedSpec = mScene->backgroundLight()->apply(ray.direction());
-			else
-				appliedSpec.clear();
+			appliedSpec.clear();
+			
+			for(IInfiniteLight* e : mScene->infiniteLights())
+				appliedSpec += e->apply(ray.direction());
 
 			if(context)
 				context->stats().incBackgroundHitCount();
@@ -469,7 +469,6 @@ namespace PR
 			if(mIntegrator->needNextPass(mCurrentPass + 1))
 			{
 				onNextPass();
-				
 				mIntegrator->onNextPass(mCurrentPass + 1);
 			}
 			
@@ -634,7 +633,7 @@ namespace PR
 		}
 
 		if(mPixelError)
-			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::max());
+			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::infinity());
 	}
 	
 	void Renderer::setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight)

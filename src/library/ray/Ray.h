@@ -5,12 +5,17 @@
 
 namespace PR
 {
+	enum RayFlags
+	{
+		RF_FromLight = 0x1
+	};
+
 	constexpr float RayOffsetEpsilon = 0.000001f;
 	class PR_LIB Ray
 	{
 	public:
 		Ray();
-		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint32 maxDepth = 0);
+		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint16 flags = 0, uint32 maxDepth = 0);
 		virtual ~Ray();
 
 		inline void setStartPosition(const PM::vec3& p);
@@ -25,6 +30,9 @@ namespace PR
 		inline float time() const;
 		inline void setTime(float t);
 
+		inline void setFlags(uint16 flags);
+		inline uint16 flags() const;
+
 		inline uint32 maxDepth() const;
 		inline void setMaxDepth(uint32 i);
 
@@ -32,7 +40,8 @@ namespace PR
 		inline uint32 maxDirectionIndex() const;
 
 		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
-		static inline Ray safe(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint32 maxDepth = 0);
+		static inline Ray safe(const PM::vec3& pos, const PM::vec3& dir,
+			uint32 depth = 0, float time = 0, uint16 flags = 0, uint32 maxDepth = 0);
 	private:
 		inline void calcMaxDirectionElement();
 
@@ -40,6 +49,7 @@ namespace PR
 		alignas(16) PM::vec3 mDirection;
 		uint32 mDepth;// Recursion depth!
 		float mTime;
+		uint16 mFlags;
 		uint32 mMaxDepth;// If 0 -> renderer->MaxDepth!
 
 		uint32 mMaxDirectionIndex;

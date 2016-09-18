@@ -43,6 +43,16 @@ namespace PR
 		mTime = t;
 	}
 
+	inline void Ray::setFlags(uint16 flags)
+	{
+		mFlags = flags;
+	}
+
+	inline uint16 Ray::flags() const
+	{
+		return mFlags;
+	}
+
 	inline uint32 Ray::maxDepth() const
 	{
 		return mMaxDepth;
@@ -55,10 +65,10 @@ namespace PR
 
 	inline Ray Ray::next(const PM::vec3& pos, const PM::vec3& dir) const
 	{
-		return safe(pos, dir, mDepth + 1, mTime, mMaxDepth);
+		return safe(pos, dir, mDepth + 1, mTime, mFlags, mMaxDepth);
 	}
 
-	inline Ray Ray::safe(const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint32 maxDepth)
+	inline Ray Ray::safe(const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags, uint32 maxDepth)
 	{
 		PM::vec3 off = PM::pm_Scale(dir, RayOffsetEpsilon);
 		PM::vec3 posOff = PM::pm_Add(pos, off);

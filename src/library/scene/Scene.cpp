@@ -12,7 +12,7 @@ namespace PR
 	typedef kdTree<RenderEntity, true> SceneKDTree;
 
 	Scene::Scene(const std::string& name) :
-		mName(name), mBackgroundLight(nullptr), mKDTree(nullptr)
+		mName(name), mKDTree(nullptr)
 	{
 	}
 
@@ -26,9 +26,7 @@ namespace PR
 		PR_ASSERT(e);
 		mEntities.push_back(e);
 		if (e->isRenderable())
-		{
 			mRenderEntities.push_back((RenderEntity*)e);
-		}
 	}
 
 	void Scene::removeEntity(Entity* e)
@@ -37,9 +35,7 @@ namespace PR
 		mEntities.remove(e);
 
 		if (e->isRenderable())
-		{
 			mRenderEntities.remove((RenderEntity*)e);
-		}
 	}
 
 	Entity* Scene::getEntity(const std::string& name, const std::string& type) const
@@ -47,9 +43,7 @@ namespace PR
 		for (Entity* entity : mEntities)
 		{
 			if (entity->name() == name && entity->type() == type)
-			{
 				return entity;
-			}
 		}
 
 		return nullptr;
@@ -70,16 +64,12 @@ namespace PR
 	void Scene::clear()
 	{
 		for (Entity* e : mEntities)
-		{
 			delete e;
-		}
 		mEntities.clear();
 		mRenderEntities.clear();
 
 		for (IInfiniteLight* e : mInfiniteLights)
-		{
 			delete e;
-		}
 		mInfiniteLights.clear();
 
 		if (mKDTree)
@@ -101,7 +91,11 @@ namespace PR
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FaceSample& point, RenderEntity* e) {
 				if(e->checkCollision(ray, point) &&
-				point.Material && (ray.depth() > 0 || point.Material->isCameraVisible())) {
+				point.Material &&
+				((ray.flags() & RF_FromLight) ?
+					point.Material->allowsShadow() :
+					(ray.depth() > 0 || point.Material->isCameraVisible())
+				)) {
 					return true;
 				}
 				else

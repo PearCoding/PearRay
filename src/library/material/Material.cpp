@@ -5,7 +5,7 @@ namespace PR
 {
 	Material::Material() :
 		mEmission(nullptr), 
-		mIsLight(false), mCanBeShaded(true), mSelfShadow(true), mCameraVisible(true)
+		mIsLight(false), mCanBeShaded(true), mShadow(true), mSelfShadow(true), mCameraVisible(true)
 	{
 	}
 
@@ -34,13 +34,23 @@ namespace PR
 	{
 		mCanBeShaded = b;
 	}
+	
+	void Material::enableShadow(bool b)
+	{
+		mShadow = b;
+	}
+
+	bool Material::allowsShadow() const
+	{
+		return mShadow;
+	}
 
 	void Material::enableSelfShadow(bool b)
 	{
 		mSelfShadow = b;
 	}
 
-	bool Material::canBeSelfShadowed() const
+	bool Material::allowsSelfShadow() const
 	{
 		return mSelfShadow;
 	}

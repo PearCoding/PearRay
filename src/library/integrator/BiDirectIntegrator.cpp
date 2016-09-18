@@ -95,10 +95,12 @@ namespace PR
 			const uint32 maxDepth = renderer->settings().maxRayDepth();
 			const uint32 maxDiffBounces = renderer->settings().maxDiffuseBounces();
 
-			Ray current = in;
 			uint32 lightNr = 0;
 			for (RenderEntity* light : renderer->lights())
 			{
+				Ray current = in;
+				current.setFlags(current.flags() | RF_FromLight);
+
 				for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
 				{
 					float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
@@ -123,7 +125,6 @@ namespace PR
 					full_pdf += pdf2;
 
 					current = current.next(lightSample.P, lightDir);
-					current.setDepth(1);
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
@@ -237,6 +238,7 @@ namespace PR
 
 							Ray shootRay = in.next(lightPos,
 								PM::pm_Normalize3D(PL));
+
 							const float pdf = MSI::toSolidAngle(data.LightPDF[(j * maxDepth + s)],
 								PM::pm_MagnitudeSqr3D(PL),
 								1)// We should use NdotL here.

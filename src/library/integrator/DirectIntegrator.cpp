@@ -60,8 +60,8 @@ namespace PR
 				{
 					Ray ray = in.next(sc.P, dir);
 
-					if (context->shootWithEmission(other_weight, ray, other_sc) &&
-						other_sc.Material && std::isinf(pdf))
+					RenderEntity* entity = context->shootWithEmission(other_weight, ray, other_sc);
+					if (entity && other_sc.Material && std::isinf(pdf))
 						other_weight += applyRay(ray, other_sc, context);
 
 					other_weight *= sc.Material->apply(sc, dir) * NdotL;
@@ -69,7 +69,7 @@ namespace PR
 				else
 					other_weight.clear();
 				
-				MSI::balance(full_weight, full_pdf, other_weight, pdf);
+				MSI::power(full_weight, full_pdf, other_weight, pdf);
 			}
 		}
 
@@ -88,11 +88,12 @@ namespace PR
 					const PM::vec3 L = PM::pm_Normalize3D(PS);
 					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, sc.N));
 
-					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) + sc.Material->pdf(sc, L);
+					//pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) + sc.Material->pdf(sc, L);
+					pdf += sc.Material->pdf(sc, L);
 
 					if (pdf > PM_EPSILON)
 					{
-						if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
+						if (NdotL > PM_EPSILON)
 						{
 							Ray ray = in.next(sc.P, L);
 							if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
@@ -101,7 +102,7 @@ namespace PR
 						else
 							other_weight.clear();
 
-						MSI::balance(full_weight, full_pdf,
+						MSI::power(full_weight, full_pdf,
 							other_weight, std::isinf(pdf) ? 1 : pdf);
 					}
 				}
@@ -109,7 +110,7 @@ namespace PR
 
 			float inf_pdf;
 			other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::balance(full_weight, full_pdf,
+			MSI::power(full_weight, full_pdf,
 				other_weight, std::isinf(inf_pdf) ? 1 : inf_pdf);
 		}
 

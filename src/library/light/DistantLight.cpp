@@ -26,16 +26,18 @@ namespace PR
 
 		pdf = std::numeric_limits<float>::infinity();
 		return mSampleDirection_Cache;
+		//return Projection::tangent_align(mSampleDirection_Cache, mRight_Cache, mUp_Cache,
+		//	Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), 32, pdf)); 
 	}
 
 	Spectrum DistantLight::apply(const PM::vec3& V)
 	{
+		if(!mMaterial || !mMaterial->emission())
+			return Spectrum();
+		
 		PR_ASSERT(isFrozen());
 
 		const float d = PM::pm_MaxT(0.0f, PM::pm_Dot3D(V, mSampleDirection_Cache));
-
-		if(d <= PM_EPSILON || !mMaterial || !mMaterial->emission())
-			return Spectrum();
 
 		ShaderClosure sc;
 		sc.V = V;

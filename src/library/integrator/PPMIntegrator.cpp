@@ -24,6 +24,8 @@
 
 #include "Logger.h"
 
+//#define PR_PPM_CONE_FILTER
+
 namespace PR
 {
 	PPMIntegrator::PPMIntegrator() :
@@ -101,9 +103,15 @@ namespace PR
 			for(RenderEntity* light : lightList)
 			{
 				const float surface = light->surfaceArea(nullptr);
-				mLights.push_back(new Light({light,
+				auto l = new Light({light,
 					MinPhotons + (uint64)std::ceil(d * (surface / fullArea)),
-					surface}));
+					surface});
+				mLights.push_back(l);
+
+#ifdef PR_DEBUG
+				PR_LOGGER.logf(L_Debug, M_Integrator, "PPM Light %s %llu photons %f m2",
+					light->name().c_str(), l->Photons, l->Surface);
+#endif
 			}
 		}
 	}
@@ -144,7 +152,7 @@ namespace PR
 				lightSample.Ng = Projection::align(lightSample.Ng,
 						Projection::cos_hemi(random.getFloat(), random.getFloat(), full_pdf));
 				
-				Ray ray = Ray::safe(lightSample.P, lightSample.Ng, 1);
+				Ray ray = Ray::safe(lightSample.P, lightSample.Ng, 0, 0, RF_FromLight);
 
 				Spectrum flux;
 				if(lightSample.Material->emission())
@@ -161,10 +169,9 @@ namespace PR
 
 					if (entity && sc.Material && sc.Material->canBeShaded())
 					{
-						const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(sc.N, ray.direction()));
 						PM::vec3 nextDir;
 
-						if (NdotL <= PM_EPSILON)
+						if (sc.NdotV <= PM_EPSILON)
 							break;
 
 						float pdf;
@@ -188,13 +195,11 @@ namespace PR
 						{
 							break;
 						}
-
 						
 						MSI::balance(flux, full_pdf,
-							sc.Material->apply(sc, nextDir) * NdotL, pdf);
+							sc.Material->apply(sc, nextDir) * sc.NdotV, pdf);
 
 						ray = ray.next(sc.P, nextDir);
-						ray.setDepth(1);
 					}
 					else // Nothing found, abort
 					{
@@ -204,9 +209,11 @@ namespace PR
 			}
 
 			//if (photonsShoot != 0)
-			//  	mPhotonMap->scalePhotonPower(1.0f/photonsShoot);
+			//  	mPhotonMap->scalePhotonPower(light->Surface/photonsShoot);
 			//if (photonsShoot != 0)
-			//  	mPhotonMap->scalePhotonPower(light->Surface);
+			//  	mPhotonMap->scalePhotonPower(1.0/photonsShoot);
+			if (photonsShoot != 0)
+			  	mPhotonMap->scalePhotonPower(light->Surface);
 
 #ifdef PR_DEBUG
 			PR_LOGGER.logf(L_Debug, M_Integrator, "    -> Per Light Samples: %llu / %llu [%3.2f%]",
@@ -233,7 +240,8 @@ namespace PR
 
 	bool PPMIntegrator::needNextPass(uint32 pass) const
 	{
-		return pass < mRenderer->settings().ppm().maxPassCount();
+		return pass < mRenderer->settings().ppm().maxPassCount() &&
+			(pass > 0 || mCurrentPassRadius2 >= 0.000001f);// mCurrentPassRadius2 is from previous pass
 	}
 
 	void PPMIntegrator::onThreadStart(RenderContext* context)
@@ -363,21 +371,29 @@ namespace PR
 
 					//const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
 
+					Spectrum weight;
 					const float d = std::sqrt(sphere->Distances2[i]/sphere->Distances2[0]);
+
+#ifdef PR_PPM_CONE_FILTER
 					const float w = 1 - d / K;
 
-					Spectrum weight;
 					if (w > PM_EPSILON)
 					{
-	#ifdef PR_USE_PHOTON_RGB
-						weight = sc.Material->apply(sc, dir) *
-							RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2])*w;
-	#else
-						weight = sc.Material->apply(sc, dir) * Spectrum(photon->Power)*w;
-	#endif
-					}
+#endif//PR_PPM_CONE_FILTER
 
-					MSI::power(full_weight, full_pdf, weight * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere->Distances2[0])), photon->PDF);
+#ifdef PR_USE_PHOTON_RGB
+						weight = sc.Material->apply(sc, dir) *
+							RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
+#else
+						weight = sc.Material->apply(sc, dir) * Spectrum(photon->Power);
+#endif//PR_USE_PHOTON_RGB
+
+#ifdef PR_PPM_CONE_FILTER 
+					}
+					MSI::power(full_weight, full_pdf, weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere->Distances2[0]))), photon->PDF);
+#else
+					MSI::power(full_weight, full_pdf, weight * ((1 - d) * PM_INV_PI_F / sphere->Distances2[0]), photon->PDF);
+#endif//PR_PPM_CONE_FILTER
 				}
 			}
 		}

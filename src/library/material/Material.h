@@ -34,8 +34,11 @@ namespace PR
 		bool canBeShaded() const;
 		void enableShading(bool b);
 
+		void enableShadow(bool b);
+		bool allowsShadow() const;
+
 		void enableSelfShadow(bool b);
-		bool canBeSelfShadowed() const;
+		bool allowsSelfShadow() const;
 
 		void enableCameraVisibility(bool b);
 		bool isCameraVisible() const;
@@ -45,6 +48,7 @@ namespace PR
 
 		bool mIsLight;
 		bool mCanBeShaded;
+		bool mShadow;
 		bool mSelfShadow;
 		bool mCameraVisible;
 	};

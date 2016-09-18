@@ -483,6 +483,7 @@ namespace PRU
 		DL::Data* nameD = group->getFromKey("name");
 		DL::Data* typeD = group->getFromKey("type");
 
+		DL::Data* shadowD = group->getFromKey("shadow");
 		DL::Data* selfShadowD = group->getFromKey("self_shadow");
 		DL::Data* cameraVisibleD = group->getFromKey("camera_visible");
 		DL::Data* shadeableD = group->getFromKey("shadeable");
@@ -547,6 +548,11 @@ namespace PRU
 		if (shadeableD && shadeableD->isType() == DL::Data::T_Bool)
 		{
 			mat->enableShading(shadeableD->getBool());
+		}
+
+		if (shadowD && shadowD->isType() == DL::Data::T_Bool)
+		{
+			mat->enableShadow(shadowD->getBool());
 		}
 
 		if (selfShadowD && selfShadowD->isType() == DL::Data::T_Bool)

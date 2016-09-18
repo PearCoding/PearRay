@@ -21,7 +21,6 @@ namespace PRU
 	PR::IInfiniteLight* EnvironmentLightParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
 	{
 		DL::Data* matD = group->getFromKey("material");
-		DL::Data* backgroundD = group->getFromKey("background");
 
 		EnvironmentLight* light = new EnvironmentLight();
 
@@ -31,14 +30,6 @@ namespace PRU
 				light->setMaterial(env->getMaterial(matD->getString()));
 			else
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", matD->getString().c_str());
-		}
-
-		if (backgroundD && backgroundD->isType() == DL::Data::T_Bool && backgroundD->getBool())
-		{
-			if(env->scene()->backgroundLight())
-				PR_LOGGER.logf(L_Warning, M_Scene, "A background is already assigned! Overriding it.");
-			
-			env->scene()->setBackgroundLight(light);
 		}
 
 		return light;

@@ -5,16 +5,9 @@
 
 namespace PR
 {
-	class MSI
+	namespace MSI
 	{
-	public:
-		static inline void power(Spectrum& out_weight, float& out_pdf, const Spectrum& in_weight, float in_pdf)
-		{
-			float w = power(out_pdf, in_pdf);
-			out_weight = out_weight * (1 - w) + in_weight * w;
-		}
-
-		static inline float power(float& out_pdf, float in_pdf)
+		inline float power(float& out_pdf, float in_pdf)
 		{
 			PR_ASSERT(out_pdf >= 0);
 			PR_ASSERT(in_pdf >= 0);
@@ -40,13 +33,13 @@ namespace PR
 			return w;
 		}
 
-		static inline void power(Spectrum& out_weight, float& out_pdf, const Spectrum& in_weight, float in_pdf, float beta)
+		inline void power(Spectrum& out_weight, float& out_pdf, const Spectrum& in_weight, float in_pdf)
 		{
-			float w = power(out_pdf, in_pdf, beta);
+			float w = power(out_pdf, in_pdf);
 			out_weight = out_weight * (1 - w) + in_weight * w;
 		}
 
-		static inline float power(float& out_pdf, float in_pdf, float beta)
+		inline float power(float& out_pdf, float in_pdf, float beta)
 		{
 			PR_ASSERT(out_pdf >= 0);
 			PR_ASSERT(in_pdf >= 0);
@@ -72,13 +65,13 @@ namespace PR
 			return w;
 		}
 
-		static inline void balance(Spectrum& out_weight, float& out_pdf, const Spectrum& in_weight, float in_pdf)
+		inline void power(Spectrum& out_weight, float& out_pdf, const Spectrum& in_weight, float in_pdf, float beta)
 		{
-			float w = balance(out_pdf, in_pdf);
+			float w = power(out_pdf, in_pdf, beta);
 			out_weight = out_weight * (1 - w) + in_weight * w;
 		}
 
-		static inline float balance(float& out_pdf, float in_pdf)
+		inline float balance(float& out_pdf, float in_pdf)
 		{
 			PR_ASSERT(out_pdf >= 0);
 			PR_ASSERT(in_pdf >= 0);
@@ -95,16 +88,22 @@ namespace PR
 
 			return w;
 		}
+		
+		inline void balance(Spectrum& out_weight, float& out_pdf, const Spectrum& in_weight, float in_pdf)
+		{
+			float w = balance(out_pdf, in_pdf);
+			out_weight = out_weight * (1 - w) + in_weight * w;
+		}
 
         // Casts
-		static inline float toSolidAngle(float pdf_area, float dist, float cosine)
+		inline float toSolidAngle(float pdf_area, float dist_sqr, float cosine)
 		{
-			return pdf_area * cosine / (dist * dist);
+			return pdf_area * cosine / dist_sqr;
 		}
 
-		static inline float toArea(float pdf_solidangle, float dist, float cosine)
+		inline float toArea(float pdf_solidangle, float dist_sqr, float cosine)
 		{
-			return pdf_solidangle * (dist * dist) / cosine;
+			return pdf_solidangle * dist_sqr / cosine;
 		}
-	};
+	}
 }
