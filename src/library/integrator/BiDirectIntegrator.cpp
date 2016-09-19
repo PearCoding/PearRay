@@ -98,9 +98,6 @@ namespace PR
 			uint32 lightNr = 0;
 			for (RenderEntity* light : renderer->lights())
 			{
-				Ray current = in;
-				current.setFlags(current.flags() | RF_FromLight);
-
 				for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
 				{
 					float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
@@ -124,7 +121,8 @@ namespace PR
 							Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), pdf2));
 					full_pdf += pdf2;
 
-					current = current.next(lightSample.P, lightDir);
+					Ray current = Ray::safe(lightSample.P, lightDir,
+						in.depth(), in.time(), in.flags() | RF_FromLight, in.maxDepth());
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
@@ -137,23 +135,21 @@ namespace PR
 						if (entity &&
 							other_sc.Material && other_sc.Material->canBeShaded())
 						{
-							const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(other_sc.N, current.direction()));
+							const float NdotL = std::abs(PM::pm_Dot3D(other_sc.N, current.direction()));
 							if (NdotL <= PM_EPSILON)
 								break;
-
-							PR_DEBUG_ASSERT(NdotL <= 1);
 
 							float pdf;
 							PM::vec3 s = PM::pm_Set(context->random().getFloat(),
 								context->random().getFloat(),
 								context->random().getFloat());
-							Ray out = current.next(other_sc.P, other_sc.Material->sample(other_sc, s, pdf));
+							PM::vec3 dir = other_sc.Material->sample(other_sc, s, pdf);
 
 							if (pdf <= PM_EPSILON)
 								break;
 							
-							flux *=	other_sc.Material->apply(other_sc, current.direction()) * NdotL;
-							current = out;
+							flux *=	other_sc.Material->apply(other_sc, PM::pm_Negate(current.direction())) * NdotL;
+							current = current.next(other_sc.P, dir);
 
 							if (!std::isinf(pdf))
 							{
@@ -193,76 +189,89 @@ namespace PR
 		Spectrum other_weight;
 
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
-		if (entity && sc.Material && sc.Material->canBeShaded())
+		if (!entity || !sc.Material || !sc.Material->canBeShaded())
+			return applied;
+
+		MultiJitteredSampler sampler(context->random(), context->renderer()->settings().maxLightSamples());
+		for (uint32 i = 0;
+			 i < context->renderer()->settings().maxLightSamples() &&
+			 	!std::isinf(full_pdf);
+			 ++i)
 		{
-			MultiJitteredSampler sampler(context->random(), context->renderer()->settings().maxLightSamples());
-			for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf); ++i)
+			float pdf;
+			PM::vec3 rnd = sampler.generate3D(i);
+			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
+
+			if(pdf > PM_EPSILON)
 			{
-				float pdf;
-				PM::vec3 rnd = sampler.generate3D(i);
-				PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
-				if(pdf > PM_EPSILON)
+				if (NdotL > PM_EPSILON &&
+					(std::isinf(pdf) || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
 				{
-					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, sc.N));
+					other_weight = applyRay(in.next(sc.P, dir),
+						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
 
-					if (NdotL > PM_EPSILON &&
-						(std::isinf(pdf) || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
-					{
-						other_weight = applyRay(in.next(sc.P, dir),
-							context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
-
-						other_weight *= sc.Material->apply(sc, dir) * NdotL;
-					}
-					else
-						other_weight.clear();
-
-					MSI::power(full_weight, full_pdf, other_weight, pdf);
+					other_weight *= sc.Material->apply(sc, dir) * NdotL;
 				}
+				else
+					other_weight.clear();
+
+				MSI::power(full_weight, full_pdf, other_weight, pdf);
 			}
+		}
 
-			if (!std::isinf(full_pdf))
+		if (!std::isinf(full_pdf))
+		{
+			if(mThreadData)
 			{
-				if(mThreadData)
-				{
-					const ThreadData& data = mThreadData[context->threadNumber()];
+				const ThreadData& data = mThreadData[context->threadNumber()];
 
-					for (uint32 j = 0; j < maxLights; ++j)// Each light
+				for (uint32 j = 0; j < maxLights; ++j)// Each light
+				{
+					for (uint32 s = 0; s < data.LightMaxDepth[j]; ++s)
 					{
-						for (uint32 s = 0; s < data.LightMaxDepth[j]; ++s)
+						const float* lightPosP = &data.LightPos[(j * maxDepth + s)*3];
+						PM::vec3 lightPos = PM::pm_Set(lightPosP[0], lightPosP[1], lightPosP[2], 1);
+						const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
+						const auto LP = PM::pm_Subtract(sc.P, lightPos);
+
+						Ray current = Ray::safe(lightPos,
+							PM::pm_Normalize3D(LP),
+							in.depth() + 1,
+							in.time(),
+							in.flags() | RF_FromLight,
+							in.maxDepth());
+
+						const PM::vec3 L = PM::pm_Negate(current.direction());
+
+						const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(sc.N, L));
+						const float pdf = MSI::toSolidAngle(
+								data.LightPDF[(j * maxDepth + s)],
+								PM::pm_MagnitudeSqr3D(LP),
+								NdotL)
+							+ sc.Material->pdf(sc, L);
+
+						if(NdotL <= PM_EPSILON)
 						{
-							const float* lightPosP = &data.LightPos[(j * maxDepth + s)*3];
-							PM::vec3 lightPos = PM::pm_Set(lightPosP[0], lightPosP[1], lightPosP[2], 1);
-							const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
-							const auto PL = PM::pm_Subtract(sc.P, lightPos);
-
-							Ray shootRay = in.next(lightPos,
-								PM::pm_Normalize3D(PL));
-
-							const float pdf = MSI::toSolidAngle(data.LightPDF[(j * maxDepth + s)],
-								PM::pm_MagnitudeSqr3D(PL),
-								1)// We should use NdotL here.
-								+ sc.Material->pdf(sc, shootRay.direction());
-
-							if (context->shoot(shootRay, other_sc) == entity &&
-								PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
-							{
-								const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(other_sc.N, shootRay.direction()));
-								if (NdotL > PM_EPSILON)
-									other_weight = lightFlux * (sc.Material->apply(sc, shootRay.direction()) * NdotL);
-								else
-									other_weight.clear();
-
-								MSI::power(full_weight, full_pdf, other_weight, pdf);
-							}
+							other_weight.clear();
 						}
+						else
+						{
+							if (context->shoot(current, other_sc) == entity &&
+									PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
+								other_weight = lightFlux * sc.Material->apply(sc, L) * NdotL;
+							else
+								other_weight.clear();
+						}
+						MSI::power(full_weight, full_pdf, other_weight, pdf);
 					}
 				}
-
-				float inf_pdf;
-				other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-				MSI::balance(full_weight, full_pdf, other_weight, inf_pdf);
 			}
+
+			float inf_pdf;
+			other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+			MSI::power(full_weight, full_pdf, other_weight, inf_pdf);
 		}
 
 		return applied + full_weight;

@@ -120,7 +120,7 @@ namespace PR
 	{
 	}
 
-	constexpr float A = 0.5;
+	constexpr float A = 0.4;
 	constexpr float K = 1.1;
 	
 	void PPMIntegrator::onNextPass(uint32 pass)
@@ -145,14 +145,17 @@ namespace PR
 			MultiJitteredSampler sampler(random, sampleSize);
 
 			size_t photonsShoot = 0;
-			for (size_t i = 0; i < sampleSize*4 && photonsShoot < sampleSize; ++i)
+			for (size_t i = 0;
+				 i < sampleSize*(mRenderer->settings().maxDiffuseBounces()+1) &&
+				 	photonsShoot < sampleSize;
+				 ++i)
 			{
-				float full_pdf;
-				FaceSample lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, full_pdf);
-				lightSample.Ng = Projection::align(lightSample.Ng,
-						Projection::cos_hemi(random.getFloat(), random.getFloat(), full_pdf));
+				float t_pdf;
+				FaceSample lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, t_pdf);
+				PM::vec3 dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
+						Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf));
 				
-				Ray ray = Ray::safe(lightSample.P, lightSample.Ng, 0, 0, RF_FromLight);
+				Ray ray = Ray::safe(lightSample.P, dir, 0, 0, RF_FromLight);
 
 				Spectrum flux;
 				if(lightSample.Material->emission())
@@ -160,21 +163,25 @@ namespace PR
 					ShaderClosure lsc = lightSample;
 					flux = lightSample.Material->emission()->eval(lsc);
 				}
+				else
+				{
+					continue;
+				}
 
 				uint32 diffuseBounces = 0;
-				for (uint32 j = 0; j < mRenderer->settings().maxRayDepth(); ++j)
+				for (uint32 j = 0;
+					 j < mRenderer->settings().maxRayDepth();
+					 ++j)
 				{
 					ShaderClosure sc;
 					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
 
-					if (entity && sc.Material && sc.Material->canBeShaded())
+					if (entity && sc.Material && sc.Material->canBeShaded() &&
+						sc.NdotV > PM_EPSILON)
 					{
 						PM::vec3 nextDir;
-
-						if (sc.NdotV <= PM_EPSILON)
-							break;
-
 						float pdf;
+
 						PM::vec3 s = PM::pm_Set(random.getFloat(),
 							random.getFloat(),
 							random.getFloat());
@@ -188,7 +195,7 @@ namespace PR
 
 							diffuseBounces++;
 
-							if (diffuseBounces > mRenderer->settings().maxDiffuseBounces())// Shoot
+							if (diffuseBounces > mRenderer->settings().maxDiffuseBounces())
 								break;// Absorb
 						}
 						else if(!std::isinf(pdf))// Absorb
@@ -196,9 +203,7 @@ namespace PR
 							break;
 						}
 						
-						MSI::balance(flux, full_pdf,
-							sc.Material->apply(sc, nextDir) * sc.NdotV, pdf);
-
+						flux *= sc.Material->apply(sc, nextDir) * sc.NdotV;
 						ray = ray.next(sc.P, nextDir);
 					}
 					else // Nothing found, abort
@@ -311,31 +316,35 @@ namespace PR
 			++i)
 		{
 			float pdf;
-			Spectrum weight;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
-			const float NdotL = PM::pm_MaxT(0.0f, -PM::pm_Dot3D(dir, sc.N));
 
-			if (NdotL > PM_EPSILON && pdf > PM_EPSILON)
+			if(pdf > PM_EPSILON)
 			{
-				Ray ray = in.next(sc.P, dir);
+				Spectrum weight;
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
-				ShaderClosure sc2;
-				Spectrum applied;
-				if (context->shootWithEmission(applied, ray, sc2) && sc2.Material && std::isinf(pdf))
-					applied += applyRay(ray, sc2, context, pass);
+				if (NdotL > PM_EPSILON)
+				{
+					Ray ray = in.next(sc.P, dir);
 
-				weight = sc.Material->apply(sc, ray.direction()) * applied * NdotL;
+					ShaderClosure sc2;
+					RenderEntity* entity = context->shootWithEmission(weight, ray, sc2);
+					if (entity && sc2.Material && std::isinf(pdf))
+						weight += applyRay(ray, sc2, context, pass);
+
+					weight *= sc.Material->apply(sc, ray.direction()) * NdotL;
+				}
+
+				MSI::power(full_weight, full_pdf, weight, pdf);
 			}
-
-			MSI::power(full_weight, full_pdf, weight, pdf);
 		}
 
 		if (!std::isinf(full_pdf))
 		{
 			float inf_pdf;
 			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::balance(full_weight, full_pdf, inf_weight, inf_pdf);
+			MSI::power(full_weight, full_pdf, inf_weight, inf_pdf);
 		}
 
 		if (!std::isinf(full_pdf) && !mPhotonMap->isEmpty())
@@ -346,7 +355,8 @@ namespace PR
 			sphere->Center = sc.P;
 			sphere->Normal = sc.N;
 			sphere->SqueezeWeight =
-				context->renderer()->settings().ppm().squeezeWeight() * context->renderer()->settings().ppm().squeezeWeight();
+				context->renderer()->settings().ppm().squeezeWeight() *
+				context->renderer()->settings().ppm().squeezeWeight();
 			sphere->GotHeap = false;
 			sphere->Distances2[0] = mCurrentPassRadius2;
 
@@ -372,7 +382,7 @@ namespace PR
 					//const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
 
 					Spectrum weight;
-					const float d = std::sqrt(sphere->Distances2[i]/sphere->Distances2[0]);
+					const float d = sphere->Distances2[i]/sphere->Distances2[0];//std::sqrt(sphere->Distances2[i]/sphere->Distances2[0]);
 
 #ifdef PR_PPM_CONE_FILTER
 					const float w = 1 - d / K;

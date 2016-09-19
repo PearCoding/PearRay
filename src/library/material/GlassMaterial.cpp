@@ -51,14 +51,14 @@ namespace PR
 	PM::vec3 GlassMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		const float ind = mIndex ? mIndex->eval(point).value(PM::pm_GetX(rnd)*Spectrum::SAMPLING_COUNT) : 1.55f;
-		const float d = !(point.Flags & SCF_Inside) ?
+		const float d = (point.Flags & SCF_Inside) == 0 ?
 			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
 
 		PM::vec3 dir;
 		if (PM::pm_GetY(rnd) < d)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		else
-			dir = Reflection::refract(!(point.Flags & SCF_Inside) ? 1/ind : ind, point.NdotV, point.N, point.V);
+			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind, point.NdotV, point.N, point.V);
 
 		pdf = std::numeric_limits<float>::infinity();
 		return dir;

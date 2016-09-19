@@ -52,7 +52,7 @@ namespace PR
 			float pdf;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
-			const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, sc.N));
+			const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
 			if (pdf > PM_EPSILON)
 			{
@@ -98,6 +98,8 @@ namespace PR
 							Ray ray = in.next(sc.P, L);
 							if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
 								other_weight *= sc.Material->apply(sc, L) * NdotL;
+							else
+								other_weight.clear();
 						}
 						else
 							other_weight.clear();
