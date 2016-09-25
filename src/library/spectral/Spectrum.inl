@@ -214,7 +214,7 @@ namespace PR
 	{
 		float h = max();
 
-		if (h != 0)
+		if (h > PM_EPSILON)
 		{
 			float sh = 1 / h;
 			*this *= sh;

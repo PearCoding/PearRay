@@ -67,16 +67,15 @@ namespace PR
 
 	Spectrum Spectrum::fromBlackbodyNorm(float temp)
 	{
-		const long double maxLambda = 2.897772917e-3l / temp;
-		const long double norm = 1/blackbody_eq(temp, maxLambda);
+		// const long double maxLambda = 2.897772917e-3l / temp;
+		// const long double norm = 1/blackbody_eq(temp, maxLambda);
 
-		Spectrum spec;
-		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		{
-			long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9l;
-			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda) * norm);
-		}
-
-		return spec;
+		// Spectrum spec;
+		// for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		// {
+		// 	long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9l;
+		// 	spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda) * norm);
+		// }
+		return fromBlackbody(temp).normalized();
 	}
 }
