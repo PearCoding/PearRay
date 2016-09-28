@@ -15,7 +15,7 @@ namespace PR
 	{
 	public:
 		Ray();
-		Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint16 flags = 0, uint32 maxDepth = 0);
+		Ray(const PM::vec3& pixel, const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint16 flags = 0, uint32 maxDepth = 0);
 		virtual ~Ray();
 
 		inline void setStartPosition(const PM::vec3& p);
@@ -23,6 +23,9 @@ namespace PR
 
 		inline void setDirection(const PM::vec3& p);
 		inline PM::vec3 direction() const;
+
+		inline void setPixel(const PM::vec2& p);
+		inline PM::vec2 pixel() const;
 
 		inline void setDepth(uint32 depth);
 		inline uint32 depth() const;
@@ -40,13 +43,14 @@ namespace PR
 		inline uint32 maxDirectionIndex() const;
 
 		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
-		static inline Ray safe(const PM::vec3& pos, const PM::vec3& dir,
+		static inline Ray safe(const PM::vec3& pixel, const PM::vec3& pos, const PM::vec3& dir,
 			uint32 depth = 0, float time = 0, uint16 flags = 0, uint32 maxDepth = 0);
 	private:
 		inline void calcMaxDirectionElement();
 
 		alignas(16) PM::vec3 mStartPosition;
 		alignas(16) PM::vec3 mDirection;
+		alignas(16) PM::vec2 mPixel;
 		uint32 mDepth;// Recursion depth!
 		float mTime;
 		uint16 mFlags;

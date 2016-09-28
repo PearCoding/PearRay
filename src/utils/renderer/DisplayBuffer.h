@@ -19,11 +19,13 @@ namespace PRU
 
 		void init(PR::Renderer* renderer) override;
 		void deinit() override;
-		void pushFragment(PR::uint32 x, PR::uint32 y, PR::uint32 layer, PR::uint32 sample, const PR::Spectrum& s) override;
+
+		void clear() override;
+
+		void pushFragment(PR::uint32 x, PR::uint32 y, PR::uint32 layer, const PR::Spectrum& s) override;
 		PR::Spectrum getFragment(PR::uint32 x, PR::uint32 y, PR::uint32 layer) const override;
 
 		float* ptr() const;
-		void clear();
 
 		bool save(const PR::ToneMapper& toneMapper, const std::string& file) const;
 	private:

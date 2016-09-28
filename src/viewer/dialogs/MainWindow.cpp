@@ -173,6 +173,7 @@ void MainWindow::openProject(const QString& str)
 		mRenderer->settings().setCropMinY(mEnvironment->cropMinY());
 
 		mDisplayBuffer = new PRU::DisplayBuffer();
+		mDisplayBuffer->init(mRenderer);
 
 		ui.viewWidget->setRenderer(mRenderer, mDisplayBuffer);
 
@@ -443,9 +444,7 @@ void MainWindow::restartRendering()
 void MainWindow::startRendering(bool clear)
 {
 	if (!mRenderer->isFinished())
-	{
 		return;
-	}
 
 	ui.actionStartRender->setEnabled(false);
 	ui.actionRestartRender->setEnabled(false);
@@ -480,9 +479,7 @@ void MainWindow::startRendering(bool clear)
 	}
 
 	if (clear)
-	{
 		mDisplayBuffer->clear();
-	}
 
 	if(mRenderer->gpu())
 		mTimer.start(1000);

@@ -12,9 +12,6 @@
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/RandomSampler.h"
 
-#include "photon/Photon.h"
-#include "photon/PhotonMap.h"
-
 #include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
@@ -29,7 +26,8 @@
 namespace PR
 {
 	PPMIntegrator::PPMIntegrator() :
-		Integrator(), mRenderer(nullptr), mPhotonMap(nullptr), mPhotonSpheres(nullptr), mCurrentPassRadius2(1)
+		Integrator(), mRenderer(nullptr),
+		mPhotonMap(nullptr), mThreadData(nullptr)
 	{
 	}
 
@@ -38,16 +36,17 @@ namespace PR
 		if(mPhotonMap)
 			delete mPhotonMap;
 		
-		if(mPhotonSpheres)
+		if(mThreadData)
 		{
 			PR_ASSERT(mRenderer);
 
 			for (uint32 i = 0; i < mRenderer->threads(); ++i)
 			{
-				delete[] mPhotonSpheres[i].Index;
-				delete[] mPhotonSpheres[i].Distances2;
+				delete[] mThreadData[i].PhotonSearchSphere.Index;
+				delete[] mThreadData[i].PhotonSearchSphere.Distances2;
+
 			}
-			delete[] mPhotonSpheres;
+			delete[] mThreadData;
 		}
 
 		for(Light* l : mLights)
@@ -59,7 +58,7 @@ namespace PR
 	void PPMIntegrator::init(Renderer* renderer)
 	{
 		PR_ASSERT(!mPhotonMap);
-		PR_ASSERT(!mPhotonSpheres);
+		PR_ASSERT(!mThreadData);
 		PR_ASSERT(mLights.empty());
 		PR_ASSERT(renderer);
 
@@ -68,19 +67,20 @@ namespace PR
 		PR_ASSERT(renderer->settings().ppm().maxGatherRadius() > PM_EPSILON);
 
 		mRenderer = renderer;
-		mPhotonMap = new Photon::PhotonMap(renderer->settings().ppm().maxPhotonsPerPass());
+		mPhotonMap = new Photon::PointMap<Photon::Photon>(renderer->settings().ppm().maxPhotonsPerPass());
 
-		mPhotonSpheres = new Photon::PhotonSphere[mRenderer->threads()];
+		mThreadData = new ThreadData[mRenderer->threads()];
 		for (uint32 i = 0; i < mRenderer->threads(); ++i)
 		{
-			mPhotonSpheres[i].Distances2 = new float[renderer->settings().ppm().maxGatherCount() + 1];
-			mPhotonSpheres[i].Index = new const Photon::Photon*[renderer->settings().ppm().maxGatherCount() + 1];
-			mPhotonSpheres[i].Max = renderer->settings().ppm().maxGatherCount();
+			mThreadData[i].PhotonSearchSphere.Distances2 = new float[renderer->settings().ppm().maxGatherCount() + 1];
+			mThreadData[i].PhotonSearchSphere.Index = new const Photon::Photon*[renderer->settings().ppm().maxGatherCount() + 1];
+			mThreadData[i].PhotonSearchSphere.Max = renderer->settings().ppm().maxGatherCount();
+			mThreadData[i].PhotonSearchSphere.SqueezeWeight =
+				renderer->settings().ppm().squeezeWeight() *
+				renderer->settings().ppm().squeezeWeight();
 		}
-		
-		mCurrentPassRadius2 = renderer->settings().ppm().maxGatherRadius() * renderer->settings().ppm().maxGatherRadius();
 
-		// Assign photons to each light
+		// Assign photon count to each light
 		constexpr uint64 MinPhotons = 10;
 		const std::list<RenderEntity*>& lightList = mRenderer->lights();
 
@@ -120,20 +120,15 @@ namespace PR
 	{
 	}
 
-	constexpr float A = 0.4;
-	constexpr float K = 1.1;
-	
-	void PPMIntegrator::onNextPass(uint32 pass)
+	constexpr float K = 1.1;// Cone filter
+	void PPMIntegrator::onNextPass(uint32 pass, bool& clean)
 	{
+		clean = true;
+
 		PR_LOGGER.logf(L_Info, M_Integrator, "Preparing PPM pass %i", pass + 1);
 
-		// Recalculate radius
-		if(pass > 0)
-			mCurrentPassRadius2 *= (pass + A) / (float)(pass + 1);
-
-#ifdef PR_DEBUG
-		PR_LOGGER.logf(L_Debug, M_Integrator, "  -> Radius2: %f", mCurrentPassRadius2);
-#endif
+		if (pass == 0)// First pass is not handled here
+			return;
 
 		// Emit all lights
 		mPhotonMap->reset();
@@ -155,13 +150,13 @@ namespace PR
 				PM::vec3 dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
 						Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf));
 				
-				Ray ray = Ray::safe(lightSample.P, dir, 0, 0, RF_FromLight);
+				Ray ray = Ray::safe(PM::pm_Zero(), lightSample.P, dir, 0, 0, RF_FromLight);
 
-				Spectrum flux;
+				Spectrum radiance;
 				if(lightSample.Material->emission())
 				{
 					ShaderClosure lsc = lightSample;
-					flux = lightSample.Material->emission()->eval(lsc);
+					radiance = lightSample.Material->emission()->eval(lsc);
 				}
 				else
 				{
@@ -190,7 +185,18 @@ namespace PR
 						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse
 						{
 							// Always store when diffuse
-							mPhotonMap->store(flux, sc.P, ray.direction(), pdf);
+							Photon::Photon photon;
+							PM::pm_Store3D(sc.P, photon.Position);
+							mPhotonMap->mapDirection(ray.direction(), photon.Theta, photon.Phi);
+#ifdef PR_USE_PHOTON_RGB
+							RGBConverter::convert(radiance, photon.Power[0], photon.Power[1], photon.Power[2]);
+#else
+							for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+								photon.Power[i] = radiance.value(i);
+#endif
+							photon.PDF = pdf;
+
+							mPhotonMap->store(sc.P, photon);
 							photonsShoot++;
 
 							diffuseBounces++;
@@ -203,7 +209,7 @@ namespace PR
 							break;
 						}
 						
-						flux *= sc.Material->apply(sc, nextDir) * sc.NdotV;
+						radiance *= sc.Material->apply(sc, nextDir) * sc.NdotV;
 						ray = ray.next(sc.P, nextDir);
 					}
 					else // Nothing found, abort
@@ -213,12 +219,20 @@ namespace PR
 				}
 			}
 
-			//if (photonsShoot != 0)
-			//  	mPhotonMap->scalePhotonPower(light->Surface/photonsShoot);
-			//if (photonsShoot != 0)
-			//  	mPhotonMap->scalePhotonPower(1.0/photonsShoot);
 			if (photonsShoot != 0)
-			  	mPhotonMap->scalePhotonPower(light->Surface);
+			{
+			  	mPhotonMap->callNewestPoints([&](Photon::Photon*p)
+				{
+					float scale = 1.0f/(photonsShoot*light->Surface);
+#ifdef PR_USE_PHOTON_RGB
+					p->Power[0] *= scale;
+					p->Power[1] *= scale;
+					p->Power[2] *= scale;
+#else
+					p->Power *= scale;
+#endif
+				});
+			}
 
 #ifdef PR_DEBUG
 			PR_LOGGER.logf(L_Debug, M_Integrator, "    -> Per Light Samples: %llu / %llu [%3.2f%]",
@@ -245,20 +259,103 @@ namespace PR
 
 	bool PPMIntegrator::needNextPass(uint32 pass) const
 	{
-		return pass < mRenderer->settings().ppm().maxPassCount() &&
-			(pass > 0 || mCurrentPassRadius2 >= 0.000001f);// mCurrentPassRadius2 is from previous pass
+		return pass < mRenderer->settings().ppm().maxPassCount() + 1;
 	}
 
 	void PPMIntegrator::onThreadStart(RenderContext* context)
 	{
 	}
 
-	void PPMIntegrator::onPrePass(RenderContext* context, uint32 i)
+	constexpr float A = 0.8f;// Fraction to keep of newest photons
+	void PPMIntegrator::onPrePass(RenderContext* context, uint32 pass)
 	{
+		if(pass > 0)
+		{
+#ifdef PR_DEBUG
+			PR_LOGGER.log(L_Debug, M_Integrator, "PrePass: Accumulating Photons");
+#endif
+
+			Photon::PointSphere<Photon::Photon>& sphere = mThreadData[context->threadNumber()].PhotonSearchSphere;
+
+			for(RayHitPoint& p : mThreadData[context->threadNumber()].HitPoints)
+			{
+				Spectrum full_weight;
+
+				sphere.Found = 0;
+				sphere.Center = p.SC.P;
+				sphere.Normal = p.SC.N;
+				sphere.GotHeap = false;
+				sphere.Distances2[0] = p.CurrentRadius;
+
+				switch (context->renderer()->settings().ppm().gatheringMode())
+				{
+				default:
+				case PGM_Sphere:
+					mPhotonMap->locateSphere(sphere, 1);
+					break;
+				case PGM_Dome:
+					mPhotonMap->locateDome(sphere, 1);
+					break;
+				}
+
+				if (sphere.Found >= 1)
+				{
+					float full_pdf = 0;
+					//PR_LOGGER.logf(L_Debug, M_Integrator, "Found %i", sphere->Found);
+					for (uint64 i = 1; i <= sphere.Found; ++i)
+					{
+						const Photon::Photon* photon = sphere.Index[i];
+						const PM::vec3 dir = mPhotonMap->evalDirection(photon->Theta, photon->Phi);
+
+						//const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
+
+						Spectrum weight;
+						const float d = sphere.Distances2[i]/sphere.Distances2[0];
+
+	#ifdef PR_PPM_CONE_FILTER
+						const float w = 1 - d / K;
+
+						if (w > PM_EPSILON)
+						{
+	#endif//PR_PPM_CONE_FILTER
+
+	#ifdef PR_USE_PHOTON_RGB
+							weight = p.SC.Material->apply(p.SC, dir) *
+								RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
+	#else
+							weight = p.SC.Material->apply(p.SC, dir) * Spectrum(photon->Power);
+	#endif//PR_USE_PHOTON_RGB
+
+	#ifdef PR_PPM_CONE_FILTER 
+						}
+						MSI::power(full_weight, full_pdf, weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere.Distances2[0]))), photon->PDF);
+	#else
+						MSI::power(full_weight, full_pdf, weight * ((1 - d) * PM_INV_PI_F / sphere.Distances2[0]), photon->PDF);
+	#endif//PR_PPM_CONE_FILTER
+					}
+				}
+
+				// Change radius, photons etc.
+				const uint64 newN = p.CurrentPhotons + std::ceil(A*sphere.Found);
+				const float fraction = newN / (float)(p.CurrentPhotons + sphere.Found);
+				p.CurrentRadius *= fraction;
+				p.CurrentPhotons = newN;
+				p.CurrentFlux += full_weight * fraction;
+
+				// Render result:
+				float f = 1.0f/context->renderer()->settings().maxPixelSampleCount();
+				context->renderer()->setPixel_Normalized(
+					context->renderer()->getPixel_Normalized(p.PixelX, p.PixelY) + f * p.Weight * p.CurrentFlux,
+					p.PixelX, p.PixelY);
+			}
+		}
 	}
 
 	void PPMIntegrator::onPass(RenderTile* tile, RenderContext* context, uint32 pass)
 	{
+		if(pass > 0)
+			return;
+
 		for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
 		{
 			for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
@@ -279,18 +376,16 @@ namespace PR
 	uint64 PPMIntegrator::maxSamples(const Renderer* renderer) const
 	{
 		return renderer->renderWidth() * renderer->renderHeight() *
-			renderer->settings().maxPixelSampleCount() * renderer->settings().ppm().maxPassCount();
+			renderer->settings().maxPixelSampleCount() * (renderer->settings().ppm().maxPassCount() + 1);
 	}
 
 	uint64 PPMIntegrator::maxPasses(const Renderer* renderer) const
 	{
-		return renderer->settings().ppm().maxPassCount();
+		return renderer->settings().ppm().maxPassCount() + 1;
 	}
 
 	Spectrum PPMIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
 	{
-		PR_ASSERT(mPhotonMap);
-
 		ShaderClosure sc;
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
@@ -298,114 +393,56 @@ namespace PR
 		if (!entity || !sc.Material)
 			return applied;
 		
-		return applied + applyRay(in, sc, context, pass);
+		return applied + firstPass(Spectrum(1), in, sc, context);
 	}
 
-	Spectrum PPMIntegrator::applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 pass)
+	Spectrum PPMIntegrator::firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderContext* context)
 	{
 		if (!sc.Material->canBeShaded())
 			return Spectrum();
 
-		float full_pdf = 0;
+		float pdf;
+		PM::vec3 dir = sc.Material->sample(sc, PM::pm_Zero(), pdf);
+
 		Spectrum full_weight;
-
-		// Hemisphere sampling
-		RandomSampler hemiSampler(context->random());
-		for (uint32 i = 0;
-			i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
-			++i)
+		if(std::isinf(pdf))// Specular
 		{
-			float pdf;
-			PM::vec3 rnd = hemiSampler.generate3D(i);
-			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
+			const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
-			if(pdf > PM_EPSILON)
+			if (NdotL > PM_EPSILON)
 			{
-				Spectrum weight;
-				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+				Spectrum app = sc.Material->apply(sc, dir)*NdotL;
 
-				if (NdotL > PM_EPSILON)
-				{
-					Ray ray = in.next(sc.P, dir);
-
-					ShaderClosure sc2;
-					RenderEntity* entity = context->shootWithEmission(weight, ray, sc2);
-					if (entity && sc2.Material && std::isinf(pdf))
-						weight += applyRay(ray, sc2, context, pass);
-
-					weight *= sc.Material->apply(sc, ray.direction()) * NdotL;
-				}
-
-				MSI::power(full_weight, full_pdf, weight, pdf);
+				Ray ray = in.next(sc.P, dir);
+				ShaderClosure sc2;
+				RenderEntity* entity = context->shootWithEmission(full_weight, ray, sc2);
+				if (entity && sc2.Material)
+					full_weight += firstPass(weight*app, ray, sc2, context);
+				full_weight *= app;
 			}
 		}
-
-		if (!std::isinf(full_pdf))
+		else
 		{
+			pdf = 0;
 			float inf_pdf;
 			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::power(full_weight, full_pdf, inf_weight, inf_pdf);
-		}
+			MSI::power(full_weight, pdf, inf_weight, inf_pdf);
+		
+#if 0 //def PR_DEBUG
+			PR_LOGGER.logf(L_Debug, M_Integrator, "  ~~ HitPoint: (%.2f,%.2f)[%.3f,%.3f,%.3f]",
+				PM::pm_GetX(in.pixel()), PM::pm_GetY(in.pixel()),
+				PM::pm_GetX(sc.P), PM::pm_GetY(sc.P), PM::pm_GetZ(sc.P));
+#endif
+			// Store it into Hitpoints
+			RayHitPoint hitpoint;
+			hitpoint.SC = sc;
+			hitpoint.PixelX = PM::pm_GetX(in.pixel()); hitpoint.PixelY = PM::pm_GetY(in.pixel());
+			hitpoint.Weight = weight;
 
-		if (!std::isinf(full_pdf) && !mPhotonMap->isEmpty())
-		{
-			Photon::PhotonSphere* sphere = &mPhotonSpheres[context->threadNumber()];
-			
-			sphere->Found = 0;
-			sphere->Center = sc.P;
-			sphere->Normal = sc.N;
-			sphere->SqueezeWeight =
-				context->renderer()->settings().ppm().squeezeWeight() *
-				context->renderer()->settings().ppm().squeezeWeight();
-			sphere->GotHeap = false;
-			sphere->Distances2[0] = mCurrentPassRadius2;
+			hitpoint.CurrentRadius = context->renderer()->settings().ppm().maxGatherRadius() * context->renderer()->settings().ppm().maxGatherRadius();
+			hitpoint.CurrentPhotons = 0;
 
-			switch (context->renderer()->settings().ppm().gatheringMode())
-			{
-			default:
-			case PGM_Sphere:
-				mPhotonMap->locateSphere(*sphere, 1);
-				break;
-			case PGM_Dome:
-				mPhotonMap->locateDome(*sphere, 1);
-				break;
-			}
-
-			if (sphere->Found >= 1)
-			{
-				//PR_LOGGER.logf(L_Debug, M_Integrator, "Found %i", sphere->Found);
-				for (uint64 i = 1; i <= sphere->Found; ++i)
-				{
-					const Photon::Photon* photon = sphere->Index[i];
-					const PM::vec3 dir = mPhotonMap->photonDirection(photon);
-
-					//const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
-
-					Spectrum weight;
-					const float d = sphere->Distances2[i]/sphere->Distances2[0];//std::sqrt(sphere->Distances2[i]/sphere->Distances2[0]);
-
-#ifdef PR_PPM_CONE_FILTER
-					const float w = 1 - d / K;
-
-					if (w > PM_EPSILON)
-					{
-#endif//PR_PPM_CONE_FILTER
-
-#ifdef PR_USE_PHOTON_RGB
-						weight = sc.Material->apply(sc, dir) *
-							RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
-#else
-						weight = sc.Material->apply(sc, dir) * Spectrum(photon->Power);
-#endif//PR_USE_PHOTON_RGB
-
-#ifdef PR_PPM_CONE_FILTER 
-					}
-					MSI::power(full_weight, full_pdf, weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere->Distances2[0]))), photon->PDF);
-#else
-					MSI::power(full_weight, full_pdf, weight * ((1 - d) * PM_INV_PI_F / sphere->Distances2[0]), photon->PDF);
-#endif//PR_PPM_CONE_FILTER
-				}
-			}
+			mThreadData[context->threadNumber()].HitPoints.push_back(hitpoint);
 		}
 
 		return full_weight;

@@ -11,8 +11,9 @@ namespace PR
 	{
 	}
 
-	void OnePassIntegrator::onNextPass(uint32)
+	void OnePassIntegrator::onNextPass(uint32, bool& clean)
 	{
+		clean = false;
 	}
 
 	void OnePassIntegrator::onEnd()

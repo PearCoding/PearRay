@@ -13,18 +13,19 @@ namespace PR
 	class Affector;
 	class Camera;
 	class Entity;
-	struct ShaderClosure;
 	class GPU;
 	class IDisplayDriver;
 	class Integrator;
 	class Material;
-	class Sampler;
-	class Scene;
+	class PixelMap;
 	class Ray;
 	class RenderEntity;
 	class RenderThread;
 	class RenderTile;
 	class RenderContext;
+	class Sampler;
+	class Scene;
+	struct ShaderClosure;
 	class PR_LIB Renderer
 	{
 		friend class RenderThread;
@@ -54,6 +55,9 @@ namespace PR
 		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context);
 		bool shootForDetection(const Ray& ray, RenderContext* context);
 		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context);
+
+		void setPixel_Normalized(const Spectrum& spec, float x, float y);
+		Spectrum getPixel_Normalized(float x, float y);
 
 		bool isFinished();
 		void waitForFinish();
@@ -109,9 +113,6 @@ namespace PR
 		void waitForNextPass();// Never call it from main thread
 
 	private:
-		void setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight);
-		bool isPixelFinished(uint32 currentSample, uint32 x, uint32 y) const;
-
 		void reset();
 
 		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass);
@@ -121,7 +122,7 @@ namespace PR
 
 		Camera* mCamera;
 		Scene* mScene;
-		IDisplayDriver* mResult;
+		PixelMap* mPixelMap;
 
 		std::list<RenderEntity*> mLights;
 
@@ -144,7 +145,5 @@ namespace PR
 		std::condition_variable mPassCondition;
 		uint32 mThreadsWaitingForPass;
 		uint32 mCurrentPass;
-
-		float* mPixelError;
 	};
 }

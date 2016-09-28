@@ -9,8 +9,8 @@ namespace PR
 	{
 	}
 
-	Ray::Ray(const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags, uint32 maxDepth) :
-		mStartPosition(pos), mDirection(dir),
+	Ray::Ray(const PM::vec3& pixel, const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags, uint32 maxDepth) :
+		mStartPosition(pos), mDirection(dir), mPixel(pixel),
 		mDepth(depth), mTime(time), mFlags(flags),
 		mMaxDepth(maxDepth)
 	{

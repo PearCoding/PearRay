@@ -13,8 +13,7 @@ namespace PR
 #undef SAMPLING_COUNT
 #undef constant
 
-	constexpr float ILL_SCALE = (Spectrum::WAVELENGTH_END - Spectrum::WAVELENGTH_START)
-		/ (float)(Spectrum::SAMPLING_COUNT);// Nearly Spectrum::WAVELENGTH_STEP
+	constexpr float N = 21.371327f * Spectrum::ILL_SCALE;
 
 	void XYZConverter::convertXYZ(const Spectrum& s, float &X, float &Y, float &Z)
 	{
@@ -46,9 +45,9 @@ namespace PR
 #endif
 		}
 
-		X *= ILL_SCALE;
-		Y *= ILL_SCALE;
-		Z *= ILL_SCALE;
+		X *= Spectrum::ILL_SCALE;
+		Y *= Spectrum::ILL_SCALE;
+		Z *= Spectrum::ILL_SCALE;
 
 		if (!s.isEmissive())
 		{
@@ -80,17 +79,5 @@ namespace PR
 		{
 			x = 0; y = 0; z = 1;
 		}
-	}
-	
-	float XYZConverter::N = 0;
-	void XYZConverter::init()
-	{
-		N = 0;
-		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		{
-			N += NM_TO_Y[i];
-		}
-
-		N *= ILL_SCALE;
 	}
 }

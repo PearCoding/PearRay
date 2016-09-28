@@ -63,8 +63,15 @@ namespace PRN
 		}
 	}
 
+	void NetworkDisplayDriver::clear()
+	{
+		std::memset(mData, 0,
+			mRenderer->renderWidth()*mRenderer->renderHeight()*Spectrum::SAMPLING_COUNT * sizeof(float));
+		// SEND PACKET
+	}
+
 	// TODO: No layer support
-	void NetworkDisplayDriver::pushFragment(uint32 x, uint32 y, uint32 layer, uint32 sample, const Spectrum& s)
+	void NetworkDisplayDriver::pushFragment(uint32 x, uint32 y, uint32 layer, const Spectrum& s)
 	{
 		PR_ASSERT(mData && mRenderer);
 
@@ -79,11 +86,8 @@ namespace PRN
 		const uint32 index = (y - mRenderer->cropPixelOffsetY())*mRenderer->renderWidth()*Spectrum::SAMPLING_COUNT 
 			+ (x - mRenderer->cropPixelOffsetX())*Spectrum::SAMPLING_COUNT;
 
-		const float t = 1.0f / (sample + 1.0f);
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		{
-			mData[index + i] = mData[index + i] * (1-t) + s.value(i) * t;
-		}
+			mData[index + i] = s.value(i);
 
 		float r, g, b;
 		PR::RGBConverter::convert(getFragment(x,y,0), r,g,b);

@@ -12,8 +12,6 @@
 #include "math/Projection.h"
 #include "math/MSI.h"
 
-#include "photon/PhotonMap.h"
-
 namespace PR
 {
 	BiDirectIntegrator::BiDirectIntegrator() :
@@ -121,7 +119,7 @@ namespace PR
 							Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), pdf2));
 					full_pdf += pdf2;
 
-					Ray current = Ray::safe(lightSample.P, lightDir,
+					Ray current = Ray::safe(in.pixel(), lightSample.P, lightDir,
 						in.depth(), in.time(), in.flags() | RF_FromLight, in.maxDepth());
 
 					uint32 lightDepth = 0;// Counts diff bounces
@@ -236,7 +234,8 @@ namespace PR
 						const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
 						const auto LP = PM::pm_Subtract(sc.P, lightPos);
 
-						Ray current = Ray::safe(lightPos,
+						Ray current = Ray::safe(in.pixel(),
+							lightPos,
 							PM::pm_Normalize3D(LP),
 							in.depth() + 1,
 							in.time(),

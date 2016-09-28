@@ -1,17 +1,16 @@
 #pragma once
 
 #include "Integrator.h"
+#include "photon/Photon.h"
+#include "photon/PointMap.h"
+#include "shader/ShaderClosure.h"
 
+#include <deque>
 #include <list>
 
 namespace PR
 {
-	namespace Photon
-	{
-		class PhotonMap;
-		struct PhotonSphere;
-	}
-
+	class Material;
 	class RenderEntity;
 
 	/*
@@ -28,13 +27,13 @@ namespace PR
 		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass) override;
 		
 		void onStart() override;
-		void onNextPass(uint32 i) override;
+		void onNextPass(uint32 pass, bool& clean) override;
 		void onEnd() override;
-		bool needNextPass(uint32 i) const override;
+		bool needNextPass(uint32 pass) const override;
 
 		void onThreadStart(RenderContext* context) override;
 		void onPrePass(RenderContext* context, uint32 i) override;
-		void onPass(RenderTile* tile, RenderContext* context, uint32 i) override;
+		void onPass(RenderTile* tile, RenderContext* context, uint32 pass) override;
 		void onPostPass(RenderContext* context, uint32 i) override;
 		void onThreadEnd(RenderContext* context) override;
 
@@ -42,14 +41,29 @@ namespace PR
 		virtual uint64 maxPasses(const Renderer* renderer) const override;
 
 	private:
-		Spectrum applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 pass);
+		Spectrum firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderContext* context);
+
+		struct RayHitPoint
+		{
+			ShaderClosure SC;
+
+			float PixelX, PixelY;
+			Spectrum Weight;
+
+			// Will be updated!
+			float CurrentRadius;
+			uint64 CurrentPhotons;
+			Spectrum CurrentFlux;
+		};
 
 		Renderer* mRenderer;
+		Photon::PointMap<Photon::Photon>* mPhotonMap;
 
-		Photon::PhotonMap* mPhotonMap;
-		Photon::PhotonSphere* mPhotonSpheres;
-
-		float mCurrentPassRadius2;
+		struct ThreadData
+		{
+			std::deque<RayHitPoint> HitPoints;
+			Photon::PointSphere<Photon::Photon> PhotonSearchSphere;
+		}* mThreadData;
 
 		struct Light
 		{

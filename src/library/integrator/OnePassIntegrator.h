@@ -8,7 +8,7 @@ namespace PR
 	{
 	public:
 		virtual void onStart() override;
-		virtual void onNextPass(uint32 i) override;
+		virtual void onNextPass(uint32 i, bool& clean) override;
 		virtual void onEnd() override;
 
 		virtual void onThreadStart(RenderContext* context) override;

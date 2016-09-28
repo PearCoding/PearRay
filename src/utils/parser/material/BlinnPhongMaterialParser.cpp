@@ -29,7 +29,7 @@ namespace PRU
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setShininess(loader->getScalarOutput(env, shininessD));
-		diff->setFresnelIndex(loader->getSpectralOutput(env, indexD));
+		diff->setFresnelIndex(loader->getSpectralOutput(env, indexD, true));
 		return diff;
 	}
 }

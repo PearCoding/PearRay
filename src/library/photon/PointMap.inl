@@ -1,17 +1,14 @@
-#include "PhotonMap.h"
-
-#ifdef PR_USE_PHOTON_RGB
-# include "spectral/RGBConverter.h"
-#endif
-
 namespace PR
 {
 	namespace Photon
 	{
-		PhotonMap::PhotonMap(uint64 max_photons) :
-			mPhotons(nullptr), mStoredPhotons(0), mHalfStoredPhotons(0), mMaxPhotons(max_photons), mPreviousScaleIndex(1)
+		template<class T>
+		PointMap<T>::PointMap(uint64 max_photons) :
+			mPhotons(nullptr),
+			mStoredPhotons(0), mHalfStoredPhotons(0), mMaxPhotons(max_photons),
+			mPreviousScaleIndex(1)
 		{
-			mPhotons = new Photon[max_photons + 1];
+			mPhotons = new T[max_photons + 1];
 			PR_ASSERT(mPhotons);
 
 			// Caching
@@ -24,21 +21,24 @@ namespace PR
 			}
 		}
 
-		PhotonMap::~PhotonMap()
+		template<class T>
+		PointMap<T>::~PointMap()
 		{
 			delete[] mPhotons;
 		}
 
-		void PhotonMap::reset()
+		template<class T>
+		void PointMap<T>::reset()
 		{
 			mStoredPhotons = 0;
 			mHalfStoredPhotons = 0;
 			mPreviousScaleIndex = 1;
 		}
 
-		void PhotonMap::locateSphere(PhotonSphere& sphere, uint64 index)
+		template<class T>
+		void PointMap<T>::locateSphere(PointSphere<T>& sphere, uint64 index)
 		{
-			locate(sphere, index, [](const Photon* pht, const PhotonSphere& sph, float& dist2)
+			locate(sphere, index, [](const T* pht, const PointSphere<T>& sph, float& dist2)
 			{
 				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
 				dist2 = PM::pm_MagnitudeSqr3D(V);
@@ -48,10 +48,11 @@ namespace PR
 				return dist2 <= r;
 			});
 		}
-
-		void PhotonMap::locateDome(PhotonSphere& sphere, uint64 index)
+	
+		template<class T>
+		void PointMap<T>::locateDome(PointSphere<T>& sphere, uint64 index)
 		{
-			locate(sphere, index, [](const Photon* pht, const PhotonSphere& sph, float& dist2)
+			locate(sphere, index, [](const T* pht, const PointSphere<T>& sph, float& dist2)
 			{
 				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
 				dist2 = PM::pm_MagnitudeSqr3D(V);
@@ -62,9 +63,10 @@ namespace PR
 			});
 		}
 
-		void PhotonMap::locate(PhotonSphere& sphere, uint64 index, CheckFunction checkFunc)
+		template<class T>
+		void PointMap<T>::locate(PointSphere<T>& sphere, uint64 index, CheckFunction checkFunc)
 		{
-			Photon* photon = &mPhotons[index];
+			T* photon = &mPhotons[index];
 
 			if (index < mHalfStoredPhotons)
 			{
@@ -101,7 +103,7 @@ namespace PR
 
 					if (!sphere.GotHeap)
 					{
-						const Photon* photon2;
+						const T* photon2;
 						uint64 halfFound = sphere.Found >> 1;
 						for (uint64 k = halfFound; k >= 1; --k)
 						{
@@ -157,58 +159,29 @@ namespace PR
 			}
 		}
 
-		void PhotonMap::store(const Spectrum& spec, const PM::vec3& pos, const PM::vec3& dir, float pdf)
+		template<class T>
+		void PointMap<T>::store(const PM::vec3& pos, const T& pht)
 		{
 			if (isFull())
 				return;
 
 			mStoredPhotons++;
-			Photon* node = &mPhotons[mStoredPhotons];
+			mPhotons[mStoredPhotons] = pht;
 
 			mBox.put(pos);
-			node->Position[0] = PM::pm_GetX(pos);
-			node->Position[1] = PM::pm_GetY(pos);
-			node->Position[2] = PM::pm_GetZ(pos);
-
-			int theta = (int)(std::acos(PM::pm_GetZ(dir)) * 256 * PM_INV_PI_F);
-			if (theta > 255)
-				node->Theta = 255;
-			else
-				node->Theta = (uint8)theta;
-
-			int phi = (int)(std::atan2(PM::pm_GetY(dir), PM::pm_GetX(dir)) * 256 * PM_INV_PI_F * 0.5f);
-			if (phi > 255)
-				node->Phi = 255;
-			else
-				node->Phi = (uint8)phi;
-
-#ifdef PR_USE_PHOTON_RGB
-			RGBConverter::convert(spec, node->Power[0], node->Power[1], node->Power[2]);
-#else
-			for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-				node->Power[i] = spec.value(i);
-#endif
-
-			node->PDF = pdf;
 		}
 
-		void PhotonMap::scalePhotonPower(float scale)
+		template<class T>
+		template<typename CallFunction>
+		void PointMap<T>::callNewestPoints(CallFunction f)
 		{
 			for (uint64 i = mPreviousScaleIndex; i <= mStoredPhotons; ++i)
-			{
-				Photon* node = &mPhotons[i];
-#ifdef PR_USE_PHOTON_RGB
-				for (uint32 j = 0; j < 3; ++j)
-					node->Power[j] *= scale;
-#else
-				for (uint32 j = 0; j < Spectrum::SAMPLING_COUNT; ++j)
-					node->Power[j] *= scale;
-#endif
-			}
+				f(&mPhotons[i]);
 			mPreviousScaleIndex = mStoredPhotons + 1;
 		}
 
-		void PhotonMap::balanceTree()
+		template<class T>
+		void PointMap<T>::balanceTree()
 		{
 			if(mStoredPhotons > 1)
 				mHalfStoredPhotons = mStoredPhotons / 2 - 1;
@@ -218,8 +191,8 @@ namespace PR
 			if(mStoredPhotons < 1)
 				return;
 
-			Photon** pTmp1 = new Photon*[mStoredPhotons + 1];
-			Photon** pTmp2 = new Photon*[mStoredPhotons + 1];
+			T** pTmp1 = new T*[mStoredPhotons + 1];
+			T** pTmp2 = new T*[mStoredPhotons + 1];
 
 			PR_ASSERT(pTmp1);
 			PR_ASSERT(pTmp2);
@@ -233,7 +206,7 @@ namespace PR
 
 			//Now reorganize balanced kd-tree to make use of the heap design
 			uint64 d, j = 1, h = 1;
-			Photon h_photon = mPhotons[j];
+			T h_photon = mPhotons[j];
 
 			for (uint64 i = 1; i <= mStoredPhotons; ++i)
 			{
@@ -268,7 +241,8 @@ namespace PR
 			delete[] pTmp1;
 		}
 
-		void PhotonMap::balanceSegment(Photon** balance, Photon** original, uint64 index, uint64 start, uint64 end)
+		template<class T>
+		void PointMap<T>::balanceSegment(T** balance, T** original, uint64 index, uint64 start, uint64 end)
 		{
 			// Calculate median
 			uint64 median = 1;
@@ -325,7 +299,8 @@ namespace PR
 			}
 		}
 
-		void PhotonMap::medianSplit(Photon** photon, uint64 start, uint64 end, uint64 median, int axis)
+		template<class T>
+		void PointMap<T>::medianSplit(T** photon, uint64 start, uint64 end, uint64 median, int axis)
 		{
 			uint64 left = start;
 			uint64 right = end;
@@ -345,9 +320,9 @@ namespace PR
 					if (i >= j)
 						break;
 
-					Photon* tmp = photon[i]; photon[i] = photon[j]; photon[j] = tmp;
+					T* tmp = photon[i]; photon[i] = photon[j]; photon[j] = tmp;
 				}
-				Photon* tmp = photon[i]; photon[i] = photon[right]; photon[right] = tmp;
+				T* tmp = photon[i]; photon[i] = photon[right]; photon[right] = tmp;
 
 				if (i >= median)
 					right = i - 1;

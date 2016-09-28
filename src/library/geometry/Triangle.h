@@ -146,7 +146,7 @@ namespace PR
 			float w = Bx * Ay - By * Ax;
 
 			// Better precision needed:
-			if (u == 0.0f || v == 0.0f || w == 0.0f)
+			if (u <= PM_EPSILON || v <= PM_EPSILON || w <= PM_EPSILON)
 			{
 				double CxBy = (double)Cx*(double)By;
 				double CyBx = (double)Cy*(double)Bx;

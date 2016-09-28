@@ -3,8 +3,8 @@ R"(
 // DON'T REMOVE THE TAG AT THE TOP AND BOTTOM LINE.
 // THIS FILE IS TO BE INCLUDED BY C++!
 // SAMPLING_COUNT should be defined extern
-#define ILL_SCALE (4.94382f)
-#define N (105.654099f)
+#define ILL_SCALE (SAMPLING_COUNT + 1)
+#define N (21.371327f * ILL_SCALE)
 
 // Utils
 float luminance(float r, float g, float b)

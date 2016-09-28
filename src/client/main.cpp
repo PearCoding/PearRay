@@ -171,6 +171,7 @@ int main(int argc, char** argv)
 	if(options.ShowProgress)
 		std::cout << "preprocess" << std::endl;
 
+	display->init(renderer);
 	renderer->start(display, options.TileXCount, options.TileYCount, options.ThreadCount);
 
 	auto start = sc::high_resolution_clock::now();

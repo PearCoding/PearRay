@@ -19,7 +19,7 @@ namespace PR
 		virtual void init(Renderer* renderer) = 0;
 
 		virtual void onStart() = 0;
-		virtual void onNextPass(uint32 i) = 0;// Not the main thread!
+		virtual void onNextPass(uint32 i, bool& clean) = 0;// Not the main thread!
 		virtual void onEnd() = 0;
 		virtual bool needNextPass(uint32 i) const = 0;
 

@@ -21,6 +21,8 @@ namespace PR
 		static constexpr uint32 WAVELENGTH_AREA_SIZE = (WAVELENGTH_END - WAVELENGTH_START);
 		static constexpr uint32 WAVELENGTH_STEP = 5;// nm
 		static constexpr uint32 SAMPLING_COUNT = WAVELENGTH_AREA_SIZE / WAVELENGTH_STEP + 1;
+
+		static constexpr float ILL_SCALE = WAVELENGTH_STEP + 1;
 		
 		inline Spectrum();
 		inline explicit Spectrum(float f);
@@ -78,8 +80,10 @@ namespace PR
 		inline bool isEmissive() const;
 		inline void setEmissive(bool b);
 
-		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K)
-		static Spectrum fromBlackbodyNorm(float temp);
+		void weightPhotometric();
+		float luminousFlux() const;
+
+		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K), Output W·sr^−1·m^−3
 	private:
 		float mValues[SAMPLING_COUNT];
 		bool mEmissive;

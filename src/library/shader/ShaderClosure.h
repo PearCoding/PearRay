@@ -123,6 +123,8 @@ namespace PR
 			dUVdX = fs.dUVdX;
 			dUVdY = fs.dUVdY;
 			Material = fs.Material;
+
+			return *this;
 		}
 	};
 }

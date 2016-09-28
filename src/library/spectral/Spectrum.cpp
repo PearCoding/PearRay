@@ -2,6 +2,12 @@
 
 namespace PR
 {
+#define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
+#define constant const
+#include "cl/xyztable.cl"
+#undef SAMPLING_COUNT
+#undef constant
+
 	float Spectrum::approx(float wavelength, InterpolationType interpolation) const
 	{
 		if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
@@ -39,18 +45,34 @@ namespace PR
 		}
 	}
 
+	constexpr float CANDELA = 683.002f;
+	void Spectrum::weightPhotometric()
+	{
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+			mValues[i] *= NM_TO_Y[i] * CANDELA;
+	}
+
+	float Spectrum::luminousFlux() const
+	{
+		float flux = 0;
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+			flux += mValues[i] * NM_TO_Y[i];
+		
+		return flux * ILL_SCALE * CANDELA;
+	}
+
 	// Has to be in double!
 	inline long double blackbody_eq(long double temp, long double lambda_nm)
 	{
 		constexpr long double c = 299792458l;
-		constexpr long double h = 6.62606957e-34l;
-		constexpr long double kb = 1.3806488e-23l;
+		constexpr long double h = 6.626070040e-34l;
+		constexpr long double kb = 1.38064852e-23l;
 		
-		constexpr long double c1 = 3.741771525e-16l;// PM_2_PI * h * c * c
-		constexpr long double c2 = 1.43877696e-2l;// h*c/kb
+		constexpr long double c1 = 2*h*c*c;
+		constexpr long double c2 = h*c/kb;
 
 		const long double lambda5 = lambda_nm * (lambda_nm * lambda_nm) * (lambda_nm * lambda_nm);
-		return c1 / (lambda5 * (std::exp(c2 / (lambda_nm * temp)) - 1));
+		return (c1 / lambda5) / (std::exp(c2 / (lambda_nm * temp)) - 1);
 	}
 
 	Spectrum Spectrum::fromBlackbody(float temp)
@@ -63,19 +85,5 @@ namespace PR
 		}
 
 		return spec;
-	}
-
-	Spectrum Spectrum::fromBlackbodyNorm(float temp)
-	{
-		// const long double maxLambda = 2.897772917e-3l / temp;
-		// const long double norm = 1/blackbody_eq(temp, maxLambda);
-
-		// Spectrum spec;
-		// for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		// {
-		// 	long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9l;
-		// 	spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda) * norm);
-		// }
-		return fromBlackbody(temp).normalized();
 	}
 }

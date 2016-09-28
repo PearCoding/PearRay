@@ -22,17 +22,5 @@ namespace PR
 			float Power[Spectrum::SAMPLING_COUNT];// Approx: 370 bytes
 #endif
 		};
-
-		struct PhotonSphere // Contains the photons in radius around the center
-		{
-			uint32 Max;
-			uint32 Found;
-			bool GotHeap;
-			PM::vec3 Normal;
-			float SqueezeWeight;
-			PM::vec3 Center;
-			float* Distances2;
-			const Photon** Index;
-		};
 	}
 }

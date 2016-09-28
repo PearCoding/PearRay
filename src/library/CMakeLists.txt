@@ -53,13 +53,13 @@ SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
 SET(PR_Performance_Src
   performance/PerformanceWriter.cpp)
 SOURCE_GROUP("Source Files\\Performance" FILES ${PR_Performance_Src})
-SET(PR_Photon_Src
-  photon/PhotonMap.cpp)
+SET(PR_Photon_Src )
 SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
 SET(PR_Ray_Src
   ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
+  renderer/PixelMap.cpp
   renderer/PPMSettings.cpp
   renderer/Renderer.cpp
   renderer/RenderContext.cpp
@@ -169,7 +169,8 @@ SET(PR_Performance_Hdr
 SOURCE_GROUP("Header Files\\Performance" FILES ${PR_Performance_Hdr})
 SET(PR_Photon_Hdr
   photon/Photon.h
-  photon/PhotonMap.h)
+  photon/PointMap.h
+  photon/PointMap.inl)
 SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
 SET(PR_Ray_Hdr
   ray/Ray.h
@@ -177,6 +178,7 @@ SET(PR_Ray_Hdr
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
   renderer/DisplayDriver.h
+  renderer/PixelMap.h
   renderer/PPMSettings.h
   renderer/Renderer.h
   renderer/RenderContext.h

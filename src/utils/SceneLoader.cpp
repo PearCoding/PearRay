@@ -759,6 +759,8 @@ namespace PRU
 					{
 						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
 						spec.setEmissive(true);
+						spec.weightPhotometric();
+
 						PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Intensity %f",
 							grp->at(0)->getFloatConverted(), spec.avg());
 					}
@@ -769,7 +771,9 @@ namespace PRU
 					if (grp->unnamedCount() >= 1 &&
 						grp->at(0)->isNumber())
 					{
-						spec = Spectrum::fromBlackbodyNorm(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec.weightPhotometric();
+						spec.normalize();
 						spec.setEmissive(true);
 					}
 

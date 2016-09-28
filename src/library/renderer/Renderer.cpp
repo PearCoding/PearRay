@@ -3,6 +3,7 @@
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "DisplayDriver.h"
+#include "PixelMap.h"
 
 #include "camera/Camera.h"
 #include "scene/Scene.h"
@@ -41,10 +42,10 @@ namespace PR
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene, bool useGPU) :
 		mWidth(w), mHeight(h),
 		mCamera(cam), mScene(scene),
-		mResult(nullptr),
+		mPixelMap(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
-		mGPU(nullptr), mIntegrator(nullptr), mPixelError(nullptr)
+		mGPU(nullptr), mIntegrator(nullptr)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -107,10 +108,10 @@ namespace PR
 
 		mLights.clear();
 
-		if(mPixelError)
+		if(mPixelMap)
 		{
-			delete[] mPixelError;
-			mPixelError = nullptr;
+			delete mPixelMap;
+			mPixelMap = nullptr;
 		}
 	}
 
@@ -160,10 +161,8 @@ namespace PR
 
 		reset();
 
-		if(mResult != display)
-			display->init(this);
-		
-		mResult = display;
+		mPixelMap = new PixelMap(this, display);
+		mPixelMap->init();
 
 		/* Setup entities */
 		for (RenderEntity* entity : mScene->renderEntities())
@@ -203,13 +202,6 @@ namespace PR
 
 		PR_ASSERT(mIntegrator);
 
-		/* Setup Adaptive Sampling */
-		if(mRenderSettings.isAdaptiveSampling())
-		{
-			mPixelError = new float[renderWidth()*renderHeight()];
-			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::infinity());
-		}
-		
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
 		if (threads < 0)
@@ -270,8 +262,9 @@ namespace PR
 		}
 
 		mIntegrator->onStart();// TODO: onEnd?
+		bool clear;// Doesn't matter, as it is already clean.
 		if(mIntegrator->needNextPass(0))
-			mIntegrator->onNextPass(0);
+			mIntegrator->onNextPass(0, clear);
 
 		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
@@ -281,14 +274,30 @@ namespace PR
 		}
 	}
 
+	void Renderer::setPixel_Normalized(const Spectrum& spec, float x, float y)
+	{
+		uint32 px = PM::pm_ClampT<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
+		uint32 py = PM::pm_ClampT<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
+
+		mPixelMap->pushFragment(px, py, 0, spec);
+	}
+
+	Spectrum Renderer::getPixel_Normalized(float x, float y)
+	{
+		uint32 px = PM::pm_ClampT<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
+		uint32 py = PM::pm_ClampT<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
+		
+		return mPixelMap->getFragment(px, py, 0);
+	}
+
 	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
 	{
-		PR_ASSERT(mResult);
+		PR_ASSERT(mPixelMap);
 		PR_ASSERT(context);
 
 		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
-			if(!isPixelFinished(sample, x, y))
+			if(!mPixelMap->isPixelFinished(x, y))
 			{
 				auto s = context->pixelSampler()->generate2D(sample);
 
@@ -300,19 +309,14 @@ namespace PR
 					0.0f,
 					pass);
 
-				mResult->pushFragment(x, y, 0, sample + mRenderSettings.maxPixelSampleCount() * pass, spec);
-
-				if(mPixelError)
-					setPixelError(x, y, mResult->getFragment(x, y, 0), spec);
+				mPixelMap->pushFragment(x,y,0,spec);
 			}
 		}
 		else// Everything
 		{
 			const uint32 SampleCount = mRenderSettings.maxPixelSampleCount();
-			Spectrum newSpec;
 
-			uint32 currentSample = sample;
-			for (; currentSample < SampleCount && !isPixelFinished(currentSample, x, y); ++currentSample)
+			for (uint32 currentSample = sample; currentSample < SampleCount && !mPixelMap->isPixelFinished(x, y); ++currentSample)
 			{
 				auto s = context->pixelSampler()->generate2D(currentSample);
 
@@ -324,13 +328,8 @@ namespace PR
 					0.0f,
 					pass);
 
-				newSpec += spec;
-
-				if(mPixelError)
-					setPixelError(x, y, newSpec / (float)currentSample, spec);
+				mPixelMap->pushFragment(x,y,0,spec);
 			}
-
-			mResult->pushFragment(x, y, 0, pass, newSpec / (float)currentSample);
 		}
 	}
 
@@ -468,8 +467,12 @@ namespace PR
 		{
 			if(mIntegrator->needNextPass(mCurrentPass + 1))
 			{
+				bool clear = false;
 				onNextPass();
-				mIntegrator->onNextPass(mCurrentPass + 1);
+				mIntegrator->onNextPass(mCurrentPass + 1, clear);
+
+				if(clear)
+					mPixelMap->clear();
 			}
 			
 			mCurrentPass++;
@@ -588,38 +591,15 @@ namespace PR
 	{
 		PR_ASSERT(mIntegrator);
 
-		if(!mPixelError)
-		{
-			const uint64 maxSamples = mIntegrator->maxSamples(this);
-			RenderStatistics s = stats();
+		const uint64 maxPasses = mIntegrator->maxPasses(this);
+		const uint64 maxSamples = mIntegrator->maxSamples(this);
+		const uint64 pixelsFinished = mPixelMap->finishedPixelCount();
+		RenderStatistics s = stats();
 
-			return 100 * static_cast<float>(s.pixelSampleCount() / (double)maxSamples);
-		}
-		else
-		{
-			const uint64 maxPasses = mIntegrator->maxPasses(this);
-
-			const uint32 rw = renderWidth();
-			const uint32 rh = renderHeight();
-
-			uint32 pixelsFinished = 0;
-			if (!mRenderSettings.isIncremental() ||
-				mIncrementalCurrentSample > mRenderSettings.minPixelSampleCount())
-			{
-				for(uint32 j = 0; j < rh; ++j)
-				{
-					for(uint32 i = 0; i < rw; ++i)
-					{
-						if(mPixelError[j*rw + i] <= mRenderSettings.maxASError())
-							++pixelsFinished;
-					}
-				}
-			}
-
-			return 100 * static_cast<float>(
-				(mCurrentPass + pixelsFinished / (double)(renderWidth()*renderHeight())) 
-				/ (double)maxPasses);
-		}
+		double finishedPercent = mRenderSettings.isIncremental() ? pixelsFinished / (double)(renderWidth()*renderHeight()) : 0;
+		double unfinishedPercent = (1-finishedPercent)*(s.pixelSampleCount() / (double)maxSamples);
+		return 100 * static_cast<float>(
+				(mCurrentPass + finishedPercent + unfinishedPercent) / (double)maxPasses);
 	}
 
 	void Renderer::onNextPass()
@@ -631,33 +611,5 @@ namespace PR
 				mTileMap[i*mTileXCount + j]->reset();
 			}
 		}
-
-		if(mPixelError)
-			std::fill_n(mPixelError, renderHeight() * renderWidth(), std::numeric_limits<float>::infinity());
-	}
-	
-	void Renderer::setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight)
-	{
-		PR_ASSERT(mPixelError);
-
-		uint32 dx = x - cropPixelOffsetX();
-		uint32 dy = y - cropPixelOffsetY();
-
-		const float err = std::abs((pixel - weight).max());
-		mPixelError[dy*renderWidth() + dx] = err;				
-	}
-
-	bool Renderer::isPixelFinished(uint32 currentSample, uint32 x, uint32 y) const
-	{
-		if(mPixelError &&
-			currentSample > mRenderSettings.minPixelSampleCount())
-		{
-			uint32 dx = x - cropPixelOffsetX();
-			uint32 dy = y - cropPixelOffsetY();
-
-			return mPixelError[dy*renderWidth() + dx] <= mRenderSettings.maxASError();
-		}
-
-		return false;
 	}
 }

@@ -23,6 +23,16 @@ namespace PR
 		return mDirection;
 	}
 
+	inline void Ray::setPixel(const PM::vec2& dir)
+	{
+		mPixel = dir;
+	}
+
+	inline PM::vec2 Ray::pixel() const
+	{
+		return mPixel;
+	}
+
 	inline void Ray::setDepth(uint32 depth)
 	{
 		mDepth = depth;
@@ -65,10 +75,10 @@ namespace PR
 
 	inline Ray Ray::next(const PM::vec3& pos, const PM::vec3& dir) const
 	{
-		return safe(pos, dir, mDepth + 1, mTime, mFlags, mMaxDepth);
+		return safe(mPixel, pos, dir, mDepth + 1, mTime, mFlags, mMaxDepth);
 	}
 
-	inline Ray Ray::safe(const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags, uint32 maxDepth)
+	inline Ray Ray::safe(const PM::vec3& pixel, const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags, uint32 maxDepth)
 	{
 		PM::vec3 off = PM::pm_Scale(dir, RayOffsetEpsilon);
 		PM::vec3 posOff = PM::pm_Add(pos, off);
@@ -83,7 +93,7 @@ namespace PR
 					std::nextafter(PM::pm_GetIndex(posOff, i), std::numeric_limits<float>::lowest()));
 		}
 
-		return Ray(posOff, dir, depth, time, maxDepth);
+		return Ray(pixel, posOff, dir, depth, time, maxDepth);
 	}
 
 	inline uint32 Ray::maxDirectionIndex() const

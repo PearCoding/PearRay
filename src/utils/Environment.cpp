@@ -12,7 +12,6 @@ namespace PRU
 		mScene(name), mCamera(nullptr), mRenderWidth(1920), mRenderHeight(1080),
 		mCropMinX(0), mCropMaxX(1), mCropMinY(0), mCropMaxY(1)
 	{
-		PR::XYZConverter::init();
 		PR::RGBConverter::init();
 
 		//Defaults
@@ -27,12 +26,6 @@ namespace PRU
 		mSpectrums["gray"] = PR::RGBConverter::toSpec(0.5f, 0.5f, 0.5f);
 		mSpectrums["lightGray"] = PR::RGBConverter::toSpec(0.666f, 0.666f, 0.666f);
 		mSpectrums["darkGray"] = PR::RGBConverter::toSpec(0.333f, 0.333f, 0.333f);
-
-		mSpectrums["sun_norm"] = PR::Spectrum::fromBlackbodyNorm(5500);
-		mSpectrums["candle_norm"] = PR::Spectrum::fromBlackbodyNorm(1000);
-
-		mSpectrums["sun"] = PR::Spectrum::fromBlackbody(5500);
-		mSpectrums["candle"] = PR::Spectrum::fromBlackbody(1000);
 
 		mTextureSystem = OIIO::TextureSystem::create();
 	}
