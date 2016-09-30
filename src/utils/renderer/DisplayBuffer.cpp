@@ -50,7 +50,7 @@ namespace PRU
 			mSaveData = new PR::uint8[renderer->width()*renderer->height()*3];
 		}
 
-		clear();
+		clear(0,0,0,0);
 	}
 
 	void DisplayBuffer::deinit()
@@ -98,10 +98,28 @@ namespace PRU
 		return Spectrum(&mData[index]);
 	}
 
-	void DisplayBuffer::clear()
+	void DisplayBuffer::clear(uint32 sx, uint32 sy, uint32 ex, uint32 ey)
 	{
-		if(mData)
+		if(!mData)
+			return;
+		
+		if(sx == 0 && sy == 0 &&
+			(ex == 0 || ex == mRenderer->width()) &&
+			(ey == 0 || ey == mRenderer->height()))// Full clear
+		{
 			std::memset(mData, 0, mRenderer->width()*mRenderer->height()*Spectrum::SAMPLING_COUNT * sizeof(float));
+		}
+		else
+		{
+			PR_ASSERT(sx < ex);
+			PR_ASSERT(sy < ey);
+
+			for(uint32 y = sy; y < ey; ++y)// Line by line
+			{
+				std::memset(&mData[y*Spectrum::SAMPLING_COUNT + sx], 0,
+					(ex - sx)*Spectrum::SAMPLING_COUNT * sizeof(float));
+			}
+		}
 	}
 
 	float* DisplayBuffer::ptr() const

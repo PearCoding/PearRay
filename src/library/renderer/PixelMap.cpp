@@ -22,9 +22,7 @@ namespace PR
 
 		/* Setup Adaptive Sampling */
 		if(mRenderer->settings().isAdaptiveSampling())
-		{
 			mPixelError = new float[mRenderer->renderWidth()*mRenderer->renderHeight()];
-		}
 
 		mSamples = new uint32[mRenderer->renderWidth()*mRenderer->renderHeight()];
 
@@ -56,19 +54,21 @@ namespace PR
 			std::fill_n(mPixelError,
 				mRenderer->renderHeight() * mRenderer->renderWidth(),
 				std::numeric_limits<float>::infinity());
+		
+		mDriver->clear(mRenderer->cropPixelOffsetX(),
+			mRenderer->cropPixelOffsetY(),
+			mRenderer->cropPixelOffsetX() + mRenderer->renderWidth(),
+			mRenderer->cropPixelOffsetY() + mRenderer->renderHeight());
 	}
 
 	void PixelMap::pushFragment(uint32 x, uint32 y, uint32 layer, const Spectrum& s)
 	{
-		if(isPixelFinished(x,y))
-			return;
-
 		uint32 dx = x - mRenderer->cropPixelOffsetX();
 		uint32 dy = y - mRenderer->cropPixelOffsetY();
 		const uint32 rw = mRenderer->renderWidth();
 		//const uint32 rh = mRenderer->renderHeight();
 
-		float t = 1.0f/(mSamples[dy*rw + dx] + 1);
+		float t = 1.0f/(mSamples[dy*rw + dx] + 1.0f);
 	
 		mDriver->pushFragment(x,y,layer, mDriver->getFragment(x,y,layer)*(1-t) + s*t);
 		mSamples[dy*rw + dx]++;
@@ -103,7 +103,7 @@ namespace PR
 		uint32 dx = x - mRenderer->cropPixelOffsetX();
 		uint32 dy = y - mRenderer->cropPixelOffsetY();
 
-		const float err = std::abs((pixel - weight).max());
+		const float err = (pixel - weight).max();
 		mPixelError[dy*mRenderer->renderWidth() + dx] = err;	
 	}
 

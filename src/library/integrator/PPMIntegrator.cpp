@@ -123,8 +123,7 @@ namespace PR
 	constexpr float K = 1.1;// Cone filter
 	void PPMIntegrator::onNextPass(uint32 pass, bool& clean)
 	{
-		clean = true;
-
+		clean = true;// Clear sample, error, etc information prior next pass.
 		PR_LOGGER.logf(L_Info, M_Integrator, "Preparing PPM pass %i", pass + 1);
 
 		if (pass == 0)// First pass is not handled here
@@ -194,8 +193,6 @@ namespace PR
 							for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 								photon.Power[i] = radiance.value(i);
 #endif
-							photon.PDF = pdf;
-
 							mPhotonMap->store(sc.P, photon);
 							photonsShoot++;
 
@@ -217,21 +214,6 @@ namespace PR
 						break;
 					}
 				}
-			}
-
-			if (photonsShoot != 0)
-			{
-			  	mPhotonMap->callNewestPoints([&](Photon::Photon*p)
-				{
-					float scale = 1.0f/(photonsShoot*light->Surface);
-#ifdef PR_USE_PHOTON_RGB
-					p->Power[0] *= scale;
-					p->Power[1] *= scale;
-					p->Power[2] *= scale;
-#else
-					p->Power *= scale;
-#endif
-				});
 			}
 
 #ifdef PR_DEBUG
@@ -298,21 +280,18 @@ namespace PR
 					break;
 				}
 
-				if (sphere.Found >= 1)
+				if (sphere.Found >= 4)
 				{
-					float full_pdf = 0;
 					//PR_LOGGER.logf(L_Debug, M_Integrator, "Found %i", sphere->Found);
 					for (uint64 i = 1; i <= sphere.Found; ++i)
 					{
 						const Photon::Photon* photon = sphere.Index[i];
 						const PM::vec3 dir = mPhotonMap->evalDirection(photon->Theta, photon->Phi);
 
-						//const PM::vec3 pos = PM::pm_Set(photon->Position[0], photon->Position[1], photon->Position[2], 1);
-
 						Spectrum weight;
-						const float d = sphere.Distances2[i]/sphere.Distances2[0];
 
 	#ifdef PR_PPM_CONE_FILTER
+						const float d = sphere.Distances2[i]/sphere.Distances2[0];
 						const float w = 1 - d / K;
 
 						if (w > PM_EPSILON)
@@ -328,24 +307,24 @@ namespace PR
 
 	#ifdef PR_PPM_CONE_FILTER 
 						}
-						MSI::power(full_weight, full_pdf, weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere.Distances2[0]))), photon->PDF);
+						full_weight += weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere.Distances2[0])));
 	#else
-						MSI::power(full_weight, full_pdf, weight * ((1 - d) * PM_INV_PI_F / sphere.Distances2[0]), photon->PDF);
+						full_weight += weight * (PM_INV_PI_F / sphere.Distances2[0]);
 	#endif//PR_PPM_CONE_FILTER
 					}
+					
+					// Change radius, photons etc.
+					const uint64 newN = p.CurrentPhotons + std::ceil(A*sphere.Found);
+					const float fraction = newN / (float)(p.CurrentPhotons + sphere.Found);
+					p.CurrentRadius *= fraction;
+					p.CurrentPhotons = newN;
+					p.CurrentFlux = (p.CurrentFlux + full_weight) * fraction;
 				}
 
-				// Change radius, photons etc.
-				const uint64 newN = p.CurrentPhotons + std::ceil(A*sphere.Found);
-				const float fraction = newN / (float)(p.CurrentPhotons + sphere.Found);
-				p.CurrentRadius *= fraction;
-				p.CurrentPhotons = newN;
-				p.CurrentFlux += full_weight * fraction;
+				const float inv = 1.0f / (context->renderer()->settings().ppm().maxPhotonsPerPass() * pass);
 
 				// Render result:
-				float f = 1.0f/context->renderer()->settings().maxPixelSampleCount();
-				context->renderer()->setPixel_Normalized(
-					context->renderer()->getPixel_Normalized(p.PixelX, p.PixelY) + f * p.Weight * p.CurrentFlux,
+				context->renderer()->pushPixel_Normalized(p.Background + p.Weight * p.CurrentFlux * inv,
 					p.PixelX, p.PixelY);
 			}
 		}
@@ -438,6 +417,7 @@ namespace PR
 			hitpoint.SC = sc;
 			hitpoint.PixelX = PM::pm_GetX(in.pixel()); hitpoint.PixelY = PM::pm_GetY(in.pixel());
 			hitpoint.Weight = weight;
+			hitpoint.Background = full_weight;
 
 			hitpoint.CurrentRadius = context->renderer()->settings().ppm().maxGatherRadius() * context->renderer()->settings().ppm().maxGatherRadius();
 			hitpoint.CurrentPhotons = 0;

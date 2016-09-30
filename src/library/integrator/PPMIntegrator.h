@@ -49,6 +49,7 @@ namespace PR
 
 			float PixelX, PixelY;
 			Spectrum Weight;
+			Spectrum Background;
 
 			// Will be updated!
 			float CurrentRadius;

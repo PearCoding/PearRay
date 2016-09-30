@@ -20,7 +20,7 @@ namespace PRN
 		void init(PR::Renderer* renderer) override;
 		void deinit() override;
 
-		void clear() override;
+		void clear(PR::uint32 sx, PR::uint32 sy, PR::uint32 ex, PR::uint32 ey) override;
 
 		void pushFragment(PR::uint32 x, PR::uint32 y, PR::uint32 layer, const PR::Spectrum& s) override;
 		PR::Spectrum getFragment(PR::uint32 x, PR::uint32 y, PR::uint32 layer) const override;

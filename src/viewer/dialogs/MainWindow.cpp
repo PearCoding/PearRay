@@ -478,8 +478,8 @@ void MainWindow::startRendering(bool clear)
 		mRenderer->settings().setCropMinY(0);
 	}
 
-	if (clear)
-		mDisplayBuffer->clear();
+	if(clear)
+		mDisplayBuffer->clear(0,0,0,0);
 
 	if(mRenderer->gpu())
 		mTimer.start(1000);

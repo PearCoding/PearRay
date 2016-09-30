@@ -274,7 +274,7 @@ namespace PR
 		}
 	}
 
-	void Renderer::setPixel_Normalized(const Spectrum& spec, float x, float y)
+	void Renderer::pushPixel_Normalized(const Spectrum& spec, float x, float y)
 	{
 		uint32 px = PM::pm_ClampT<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
 		uint32 py = PM::pm_ClampT<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
@@ -466,14 +466,7 @@ namespace PR
 		if(mThreadsWaitingForPass == threads())
 		{
 			if(mIntegrator->needNextPass(mCurrentPass + 1))
-			{
-				bool clear = false;
 				onNextPass();
-				mIntegrator->onNextPass(mCurrentPass + 1, clear);
-
-				if(clear)
-					mPixelMap->clear();
-			}
 			
 			mCurrentPass++;
 			mThreadsWaitingForPass = 0;
@@ -525,6 +518,7 @@ namespace PR
 			{
 				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
+					// TODO: Better check up for AS
 					if ( mTileMap[i*mTileXCount + j]->samplesRendered() <= mIncrementalCurrentSample &&
 						mTileMap[i*mTileXCount + j]->samplesRendered() < mRenderSettings.maxPixelSampleCount() &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
@@ -571,20 +565,12 @@ namespace PR
 		return mLights;
 	}
 
-	RenderStatistics Renderer::stats(RenderThread* thread) const
+	RenderStatistics Renderer::stats() const
 	{
-		if(thread == nullptr)// All
-		{
-			RenderStatistics s = mGlobalStatistics;
-			for (RenderThread* thread : mThreads)
-				s += thread->context().stats();
-
-			return s;
-		}
-		else
-		{
-			return thread->context().stats();
-		}
+		RenderStatistics s = mGlobalStatistics;
+		for (RenderThread* thread : mThreads)
+			s += thread->context().stats();
+		return s;
 	}
 	
 	float Renderer::percentFinished() const
@@ -611,5 +597,11 @@ namespace PR
 				mTileMap[i*mTileXCount + j]->reset();
 			}
 		}
+
+		bool clear = false;
+		mIntegrator->onNextPass(mCurrentPass + 1, clear);
+
+		if(clear)
+			mPixelMap->clear();
 	}
 }

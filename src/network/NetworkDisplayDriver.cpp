@@ -63,10 +63,35 @@ namespace PRN
 		}
 	}
 
-	void NetworkDisplayDriver::clear()
+	void NetworkDisplayDriver::clear(uint32 sx, uint32 sy, uint32 ex, uint32 ey)
 	{
-		std::memset(mData, 0,
-			mRenderer->renderWidth()*mRenderer->renderHeight()*Spectrum::SAMPLING_COUNT * sizeof(float));
+		if(!mData)
+			return;
+
+		if(sx < mRenderer->cropPixelOffsetX() && sy < mRenderer->cropPixelOffsetY() &&
+			(ex == 0 || ex >= (mRenderer->cropPixelOffsetX() + mRenderer->renderWidth())) &&
+			(ey == 0 || ey >= (mRenderer->cropPixelOffsetY() + mRenderer->renderHeight())))
+		{// Full clear
+			std::memset(mData, 0,
+				mRenderer->renderWidth()*mRenderer->renderHeight()*Spectrum::SAMPLING_COUNT * sizeof(float));
+		}
+		else
+		{
+			PR_ASSERT(sx < ex);
+			PR_ASSERT(sy < ey);
+			
+			sx = PM::pm_MaxT(sx, mRenderer->cropPixelOffsetX()) - mRenderer->cropPixelOffsetX();
+			sy = PM::pm_MaxT(sy, mRenderer->cropPixelOffsetY()) - mRenderer->cropPixelOffsetY();
+
+			ex = PM::pm_MinT(ex, mRenderer->cropPixelOffsetX() + mRenderer->renderWidth()) - mRenderer->cropPixelOffsetX();
+			ey = PM::pm_MinT(ey, mRenderer->cropPixelOffsetY() + mRenderer->renderHeight()) - mRenderer->cropPixelOffsetY();
+
+			for(uint32 y = sy; y < ey; ++y)// Line by line
+			{
+				std::memset(&mData[y*Spectrum::SAMPLING_COUNT + sx], 0,
+					(ex - sx)*Spectrum::SAMPLING_COUNT * sizeof(float));
+			}
+		}
 		// SEND PACKET
 	}
 

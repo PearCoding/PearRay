@@ -56,7 +56,7 @@ namespace PR
 		bool shootForDetection(const Ray& ray, RenderContext* context);
 		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context);
 
-		void setPixel_Normalized(const Spectrum& spec, float x, float y);
+		void pushPixel_Normalized(const Spectrum& spec, float x, float y);
 		Spectrum getPixel_Normalized(float x, float y);
 
 		bool isFinished();
@@ -95,7 +95,7 @@ namespace PR
 		// Light
 		const std::list<RenderEntity*>& lights() const;
 
-		RenderStatistics stats(RenderThread* thread = nullptr) const;
+		RenderStatistics stats() const;
 		float percentFinished() const;
 
 		inline Scene* scene() const
