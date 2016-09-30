@@ -42,6 +42,7 @@ namespace PR
 
 	private:
 		Spectrum firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderContext* context);
+		Spectrum otherPass(const Ray& in, const ShaderClosure& sc, RenderContext* context);
 
 		struct RayHitPoint
 		{
@@ -49,7 +50,6 @@ namespace PR
 
 			float PixelX, PixelY;
 			Spectrum Weight;
-			Spectrum Background;
 
 			// Will be updated!
 			float CurrentRadius;

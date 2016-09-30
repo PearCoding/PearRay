@@ -324,7 +324,7 @@ namespace PR
 				const float inv = 1.0f / (context->renderer()->settings().ppm().maxPhotonsPerPass() * pass);
 
 				// Render result:
-				context->renderer()->pushPixel_Normalized(p.Background + p.Weight * p.CurrentFlux * inv,
+				context->renderer()->pushPixel_Normalized(p.Weight * p.CurrentFlux * inv,
 					p.PixelX, p.PixelY);
 			}
 		}
@@ -332,9 +332,6 @@ namespace PR
 
 	void PPMIntegrator::onPass(RenderTile* tile, RenderContext* context, uint32 pass)
 	{
-		if(pass > 0)
-			return;
-
 		for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
 		{
 			for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
@@ -372,7 +369,10 @@ namespace PR
 		if (!entity || !sc.Material)
 			return applied;
 		
-		return applied + firstPass(Spectrum(1), in, sc, context);
+		if(pass == 0)
+			return applied + firstPass(Spectrum(1), in, sc, context);
+		else
+			return applied + otherPass(in, sc, context);
 	}
 
 	Spectrum PPMIntegrator::firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderContext* context)
@@ -417,12 +417,47 @@ namespace PR
 			hitpoint.SC = sc;
 			hitpoint.PixelX = PM::pm_GetX(in.pixel()); hitpoint.PixelY = PM::pm_GetY(in.pixel());
 			hitpoint.Weight = weight;
-			hitpoint.Background = full_weight;
 
 			hitpoint.CurrentRadius = context->renderer()->settings().ppm().maxGatherRadius() * context->renderer()->settings().ppm().maxGatherRadius();
 			hitpoint.CurrentPhotons = 0;
 
 			mThreadData[context->threadNumber()].HitPoints.push_back(hitpoint);
+		}
+
+		return full_weight;
+	}
+	
+	Spectrum PPMIntegrator::otherPass(const Ray& in, const ShaderClosure& sc, RenderContext* context)
+	{
+		if (!sc.Material->canBeShaded())
+			return Spectrum();
+
+		float pdf;
+		PM::vec3 dir = sc.Material->sample(sc, PM::pm_Zero(), pdf);
+
+		Spectrum full_weight;
+		if(std::isinf(pdf))// Specular
+		{
+			const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+
+			if (NdotL > PM_EPSILON)
+			{
+				Spectrum app = sc.Material->apply(sc, dir)*NdotL;
+
+				Ray ray = in.next(sc.P, dir);
+				ShaderClosure sc2;
+				RenderEntity* entity = context->shootWithEmission(full_weight, ray, sc2);
+				if (entity && sc2.Material)
+					full_weight += otherPass(ray, sc2, context);
+				full_weight *= app;
+			}
+		}
+		else
+		{
+			pdf = 0;
+			float inf_pdf;
+			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+			MSI::power(full_weight, pdf, inf_weight, inf_pdf);
 		}
 
 		return full_weight;
