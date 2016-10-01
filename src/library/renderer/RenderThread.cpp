@@ -34,6 +34,10 @@ namespace PR
 			}
 
 			integrator->onPostPass(&mContext, pass);
+			
+			if(shouldStop())
+				break;
+			
 			mRenderer->waitForNextPass();
 
 			pass++;

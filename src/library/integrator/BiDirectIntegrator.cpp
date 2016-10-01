@@ -28,7 +28,7 @@ namespace PR
 			{
 				delete[] mThreadData[i].LightPos;
 				delete[] mThreadData[i].LightFlux;
-				delete[] mThreadData[i].LightPDF;
+				//delete[] mThreadData[i].LightPDF;
 				//delete[] mThreadData[i].LightEntities;
 				delete[] mThreadData[i].LightMaxDepth;
 			}
@@ -46,7 +46,7 @@ namespace PR
 			{
 				delete[] mThreadData[i].LightPos;
 				delete[] mThreadData[i].LightFlux;
-				delete[] mThreadData[i].LightPDF;
+				//delete[] mThreadData[i].LightPDF;
 				//delete[] mThreadData[i].LightEntities;
 				delete[] mThreadData[i].LightMaxDepth;
 			}
@@ -70,7 +70,7 @@ namespace PR
 		{
 			mThreadData[i].LightPos = new float[maxlightsamples*3];
 			mThreadData[i].LightFlux = new Spectrum[maxlightsamples];
-			mThreadData[i].LightPDF = new float[maxlightsamples];
+			//mThreadData[i].LightPDF = new float[maxlightsamples];
 			//mThreadData[i].LightEntities = new RenderEntity*[mMaxLightSampleCount];
 			mThreadData[i].LightMaxDepth = new uint32[renderer->lights().size() * renderer->settings().maxLightSamples()];
 		}
@@ -100,35 +100,36 @@ namespace PR
 				{
 					float* lightPos = &data.LightPos[lightNr * maxDepth * 3];
 					Spectrum* lightFlux = &data.LightFlux[lightNr * maxDepth];
-					float* lightPDF = &data.LightPDF[lightNr * maxDepth];
 
-					float full_pdf;// Area to Solid Angle?
-					FaceSample lightSample = light->getRandomFacePoint(sampler, i, full_pdf);
+					float pdf;// Area to Solid Angle?
+					other_sc = light->getRandomFacePoint(sampler, i, pdf);
 
 					// Initiate with power
-					if(!lightSample.Material->emission())
+					if(!other_sc.Material->emission())
 						continue;
 
-					other_sc = lightSample;
-					Spectrum flux = lightSample.Material->emission()->eval(other_sc);
-
-					// Sample hemi sphere
-					float pdf2;
-					const PM::vec3 lightDir =
-						Projection::align(lightSample.Ng,
-							Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), pdf2));
-					full_pdf += pdf2;
-
-					Ray current = Ray::safe(in.pixel(), lightSample.P, lightDir,
-						in.depth(), in.time(), in.flags() | RF_FromLight, in.maxDepth());
+					Spectrum flux = other_sc.Material->emission()->eval(other_sc);
 
 					uint32 lightDepth = 0;// Counts diff bounces
-					PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
-					lightFlux[lightDepth] = flux;
-					lightPDF[lightDepth] = full_pdf;
+					PM::pm_Store3D(other_sc.P, &lightPos[lightDepth * 3]);
+					lightFlux[lightDepth] = flux / pdf;
+					//lightPDF[lightDepth] = pdf;
+
+					Ray current = in;
+					current.setFlags(current.flags() | RF_FromLight);
 
 					for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 					{
+						PM::vec3 s = PM::pm_Set(context->random().getFloat(),
+								context->random().getFloat(),
+								context->random().getFloat());
+						PM::vec3 dir = other_sc.Material->sample(other_sc, s, pdf);
+
+						if (pdf <= PM_EPSILON)
+							break;
+						
+						current = current.next(other_sc.P, dir);
+
 						RenderEntity* entity = context->shoot(current, other_sc);
 						if (entity &&
 							other_sc.Material && other_sc.Material->canBeShaded())
@@ -137,24 +138,13 @@ namespace PR
 							if (NdotL <= PM_EPSILON)
 								break;
 
-							float pdf;
-							PM::vec3 s = PM::pm_Set(context->random().getFloat(),
-								context->random().getFloat(),
-								context->random().getFloat());
-							PM::vec3 dir = other_sc.Material->sample(other_sc, s, pdf);
-
-							if (pdf <= PM_EPSILON)
-								break;
-							
 							flux *=	other_sc.Material->apply(other_sc, PM::pm_Negate(current.direction())) * NdotL;
-							current = current.next(other_sc.P, dir);
 
 							if (!std::isinf(pdf))
 							{
 								lightDepth++;
-								lightFlux[lightDepth] = flux;
-								lightPDF[lightDepth] = pdf;
-								PM::pm_Store3D(current.startPosition(), &lightPos[lightDepth * 3]);
+								lightFlux[lightDepth] = flux / pdf;
+								PM::pm_Store3D(other_sc.P, &lightPos[lightDepth * 3]);
 							}
 						}
 						else
@@ -205,7 +195,7 @@ namespace PR
 				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
 				if (NdotL > PM_EPSILON &&
-					(std::isinf(pdf) || diffBounces <= context->renderer()->settings().maxDiffuseBounces()))
+					(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
 				{
 					other_weight = applyRay(in.next(sc.P, dir),
 						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
@@ -245,11 +235,7 @@ namespace PR
 						const PM::vec3 L = PM::pm_Negate(current.direction());
 
 						const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(sc.N, L));
-						const float pdf = MSI::toSolidAngle(
-								data.LightPDF[(j * maxDepth + s)],
-								PM::pm_MagnitudeSqr3D(LP),
-								NdotL)
-							+ sc.Material->pdf(sc, L);
+						const float pdf = sc.Material->pdf(sc, L);
 
 						if(NdotL <= PM_EPSILON)
 						{

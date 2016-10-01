@@ -45,7 +45,7 @@ namespace PR
 		mPixelMap(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
-		mGPU(nullptr), mIntegrator(nullptr)
+		mGPU(nullptr), mIntegrator(nullptr), mShouldStop(false)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -80,6 +80,7 @@ namespace PR
 
 	void Renderer::reset()
 	{
+		mShouldStop = false;
 		mThreadsWaitingForPass = 0;
 		mCurrentPass = 0;
 		mIncrementalCurrentSample = 0;
@@ -434,6 +435,11 @@ namespace PR
 	RenderEntity* Renderer::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
 		ShaderClosure& sc, RenderContext* context)
 	{
+		const uint32 maxDepth = (ray.maxDepth() == 0) ?
+			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
+		if (ray.depth() >= maxDepth)
+			return nullptr;
+		
 		RenderEntity* entity = shoot(ray, sc, context);
 		if (entity)
 		{
@@ -476,7 +482,7 @@ namespace PR
 		}
 		else
 		{
-			mPassCondition.wait(lk, [this]{ return mThreadsWaitingForPass == 0; });
+			mPassCondition.wait(lk, [this]{ return mShouldStop || mThreadsWaitingForPass == 0; });
 			lk.unlock();
 		}
 	}
@@ -505,6 +511,8 @@ namespace PR
 
 	void Renderer::stop()
 	{
+		mShouldStop = true;
+
 		for (RenderThread* thread : mThreads)
 			thread->stop();
 	}

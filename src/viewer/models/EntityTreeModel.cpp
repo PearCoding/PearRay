@@ -5,7 +5,7 @@
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
 
-EntityTreeModel::EntityTreeModel(PR::Scene* scene, QObject  *parent)
+EntityTreeModel::EntityTreeModel(PR::Scene* scene, QObject* parent)
 	: QAbstractItemModel(parent), mScene(scene)
 {
 }
@@ -17,22 +17,15 @@ EntityTreeModel::~EntityTreeModel()
 QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 {
 	if (!index.isValid())
-	{
 		return QVariant();
-	}
-
-	if (role != Qt::DisplayRole && role != Qt::ToolTipRole)
-	{
-		return QVariant();
-	}
 
 	PR::Entity *item = static_cast<PR::Entity*>(index.internalPointer());
 	if (role == Qt::ToolTipRole)
 	{
 		QString tooltip = QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t[%8, %9, %10]")
-			.arg(PM::pm_GetX(item->worldPosition())).arg(PM::pm_GetY(item->worldPosition())).arg(PM::pm_GetZ(item->worldPosition()))
-			.arg(PM::pm_GetX(item->worldRotation())).arg(PM::pm_GetY(item->worldRotation())).arg(PM::pm_GetZ(item->worldRotation())).arg(PM::pm_GetW(item->worldRotation()))
-			.arg(PM::pm_GetX(item->worldScale())).arg(PM::pm_GetY(item->worldScale())).arg(PM::pm_GetZ(item->worldScale()));
+			.arg(PM::pm_GetX(item->position())).arg(PM::pm_GetY(item->position())).arg(PM::pm_GetZ(item->position()))
+			.arg(PM::pm_GetX(item->rotation())).arg(PM::pm_GetY(item->rotation())).arg(PM::pm_GetZ(item->rotation())).arg(PM::pm_GetW(item->rotation()))
+			.arg(PM::pm_GetX(item->scale())).arg(PM::pm_GetY(item->scale())).arg(PM::pm_GetZ(item->scale()));
 
 		PR::RenderEntity* entity = dynamic_cast<PR::RenderEntity*>(item);
 		if (entity)
@@ -42,7 +35,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 		}
 		return tooltip;
 	}
-	else
+	else if(role == Qt::DisplayRole)
 	{
 		switch (index.column())
 		{
@@ -54,14 +47,16 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 			return "";
 		}
 	}
+	else
+	{
+		return QVariant();
+	}
 }
 
 Qt::ItemFlags EntityTreeModel::flags(const QModelIndex &index) const
 {
 	if (!index.isValid())
-	{
 		return 0;
-	}
 
 	return QAbstractItemModel::flags(index);
 }
@@ -69,31 +64,17 @@ Qt::ItemFlags EntityTreeModel::flags(const QModelIndex &index) const
 QVariant EntityTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-	{
 		return section == 0 ? tr("Name") : tr("Type");
-	}
-	return QVariant();
+	else
+		return QVariant();
 }
 
 QModelIndex EntityTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
 	if (!hasIndex(row, column, parent))
-	{
 		return QModelIndex();
-	}
 
-	PR::Entity* parentItem;
-
-	if (!parent.isValid())
-	{
-		parentItem = nullptr;
-	}
-	else
-	{
-		parentItem = static_cast<PR::Entity*>(parent.internalPointer());
-	}
-
-	auto list = getChildren(parentItem);
+	auto list = getEntities();
 
 	if (list.size() > row)
 	{
@@ -108,45 +89,15 @@ QModelIndex EntityTreeModel::index(int row, int column, const QModelIndex &paren
 
 QModelIndex EntityTreeModel::parent(const QModelIndex &index) const
 {
-	if (!index.isValid())
-	{
-		return QModelIndex();
-	}
-
-	PR::Entity *childItem = static_cast<PR::Entity*>(index.internalPointer());
-	PR::Entity *parentItem = childItem->parent();
-
-	if (parentItem == nullptr)
-	{
-		return QModelIndex();
-	}
-
-	int row = 0;
-
-	if (parentItem->parent())
-	{
-		auto list = getChildren(parentItem->parent());
-		row = list.indexOf(parentItem);
-	}
-
-	return createIndex(row, 0, parentItem);
+	return QModelIndex();
 }
 
 int EntityTreeModel::rowCount(const QModelIndex &parent) const
 {
 	if (parent.column() > 0)
-	{
 		return 0;
-	}
 
-	if (!parent.isValid())
-	{
-		return getChildren(nullptr).size();
-	}
-	else
-	{
-		return getChildren(static_cast<PR::Entity*>(parent.internalPointer())).size();
-	}
+	return getEntities().size();
 }
 
 int EntityTreeModel::columnCount(const QModelIndex &parent) const
@@ -154,17 +105,7 @@ int EntityTreeModel::columnCount(const QModelIndex &parent) const
 	return 2;
 }
 
-QList<PR::Entity*> EntityTreeModel::getChildren(PR::Entity* entity) const
+QList<PR::Entity*> EntityTreeModel::getEntities() const
 {
-	QList<PR::Entity*> children;
-
-	for (PR::Entity* e : mScene->entities())
-	{
-		if (e->parent() == entity)
-		{
-			children.push_back(e);
-		}
-	}
-
-	return children;
+	return QList<PR::Entity*>::fromStdList(mScene->entities());
 }

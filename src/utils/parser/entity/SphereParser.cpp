@@ -16,7 +16,7 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* SphereParser::parse(SceneLoader* loader, Environment* env, const std::string& name, Entity* parent,
+	Entity* SphereParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data* materialD = group->getFromKey("material");
@@ -32,7 +32,7 @@ namespace PRU
 			PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no radius. Assuming 1.", name.c_str());
 		}
 
-		SphereEntity* sphere = new SphereEntity(name, r, parent);
+		SphereEntity* sphere = new SphereEntity(name, r);
 
 		if (materialD && materialD->isType() == DL::Data::T_String)
 		{

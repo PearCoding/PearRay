@@ -17,7 +17,7 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* BoundaryParser::parse(SceneLoader* loader, Environment* env, const std::string& name, Entity* parent,
+	Entity* BoundaryParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data* materialD = group->getFromKey("material");
@@ -54,19 +54,14 @@ namespace PRU
 		}
 
 		BoundaryEntity* bnd = new BoundaryEntity(name,
-			BoundingBox(PM::pm_GetX(size), PM::pm_GetY(size), PM::pm_GetZ(size)),
-			parent);
+			BoundingBox(PM::pm_GetX(size), PM::pm_GetY(size), PM::pm_GetZ(size)));
 
 		if (materialD && materialD->isType() == DL::Data::T_String)
 		{
 			if (env->hasMaterial(materialD->getString()))
-			{
 				bnd->setMaterial(env->getMaterial(materialD->getString()));
-			}
 			else
-			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD->getString().c_str());
-			}
 		}
 
 		return bnd;

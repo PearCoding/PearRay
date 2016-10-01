@@ -240,10 +240,7 @@ namespace PRU
 		DL::Data* rotD = group->getFromKey("rotation");
 		DL::Data* scaleD = group->getFromKey("scale");
 
-		DL::Data* debugD = group->getFromKey("debug");
 		DL::Data* localAreaD = group->getFromKey("local_area");
-
-		DL::Data* materialDebugBoundingBoxD = group->getFromKey("materialDebugBoundingBox");
 
 		std::string name;
 		if (nameD && nameD->isType() == DL::Data::T_String)
@@ -263,7 +260,7 @@ namespace PRU
 		}
 		else if (typeD->getString() == "null" || typeD->getString() == "empty")
 		{
-			entity = new Entity(name, parent);
+			entity = new Entity(name);
 		}
 		else
 		{
@@ -279,7 +276,7 @@ namespace PRU
 
 			if (parser)
 			{
-				entity = parser->parse(this, env, name, parent, typeD->getString(), group);
+				entity = parser->parse(this, env, name, typeD->getString(), group);
 
 				if (!entity)
 				{
@@ -297,7 +294,7 @@ namespace PRU
 
 		PR_ASSERT(entity);// After here it shouldn't be null
 
-		// Set position
+		// Set position		
 		if (posD && posD->isType() == DL::Data::T_Array)
 		{
 			bool ok;
@@ -338,34 +335,17 @@ namespace PRU
 				entity->setScale(s);
 		}
 
-		// Debug
-		if (debugD && debugD->isType() == DL::Data::T_Bool)
+		if(parent)
 		{
-			if(debugD->getBool())
-				entity->setFlags(entity->flags() | EF_Debug);
-			else
-				entity->setFlags(entity->flags() & ~(uint8)EF_Debug);
+			PM::mat m = PM::pm_Multiply(parent->matrix(), entity->matrix());
 
-			if (typeD->getString() != "null" && typeD->getString() != "camera")
-			{
-				BoundaryEntity* bent = new BoundaryEntity("_debug_entity_",
-					((RenderEntity*)entity)->localBoundingBox(), entity);
+			PM::vec3 p, s;
+			PM::quat r;
+			PM::pm_Decompose(m, p, s, r);
 
-				if (materialDebugBoundingBoxD && materialDebugBoundingBoxD->isType() == DL::Data::T_String)
-				{
-					if (env->hasMaterial(materialDebugBoundingBoxD->getString()))
-					{
-						bent->setMaterial(env->getMaterial(materialDebugBoundingBoxD->getString()));
-					}
-					else
-					{
-						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialDebugBoundingBoxD->getString().c_str());
-					}
-				}
-
-				//bent->setScale(entity->scale());
-				env->scene()->addEntity((RenderEntity*)bent);
-			}
+			entity->setPosition(p);
+			entity->setRotation(r);
+			entity->setScale(s);
 		}
 
 		if (localAreaD && localAreaD->isType() == DL::Data::T_Bool)

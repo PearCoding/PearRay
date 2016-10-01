@@ -417,5 +417,5 @@ void ViewWidget::cacheScale()
 {
 	if(!mRenderImage.isNull())
 		mScaledImage = mRenderImage.scaled(mRenderImage.width()*mZoom, mRenderImage.height()*mZoom,
-			Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+			Qt::IgnoreAspectRatio, Qt::FastTransformation);
 }

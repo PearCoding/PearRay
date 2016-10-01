@@ -6,8 +6,8 @@
 
 namespace PR
 {
-	RenderEntity::RenderEntity(const std::string& name, Entity* parent) :
-		Entity(name, parent)
+	RenderEntity::RenderEntity(const std::string& name) :
+		Entity(name)
 	{
 	}
 
@@ -20,7 +20,7 @@ namespace PR
 		PR_GUARD_PROFILE();
 		
 		const BoundingBox bx = localBoundingBox();
-		const PM::mat mat = worldMatrix();
+		const PM::mat mat = matrix();
 
 		const PM::vec3 v1 = PM::pm_Transform(mat,
 			PM::pm_Set(PM::pm_GetX(bx.upperBound()), PM::pm_GetY(bx.upperBound()), PM::pm_GetZ(bx.upperBound()), 1));

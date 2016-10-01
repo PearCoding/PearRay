@@ -5,8 +5,8 @@
 
 namespace PR
 {
-	StandardCamera::StandardCamera(const std::string& name, Entity* parent) :
-		Camera(name, parent), mOrthographic(false), mWidth(1), mHeight(1),
+	StandardCamera::StandardCamera(const std::string& name) :
+		Camera(name), mOrthographic(false), mWidth(1), mHeight(1),
 		mLocalDirection(PM::pm_Set(0,0,1)), mLocalRight(PM::pm_Set(1,0,0)), mLocalUp(PM::pm_Set(0,1,0)),
 		mFStop(0), mApertureRadius(0.1f)
 	{
@@ -125,7 +125,7 @@ namespace PR
 		if (mOrthographic)
 		{
 			return Ray(PM::pm_Set((nx + 1)*0.5f, (ny + 1)*0.5f),
-					PM::pm_Add(worldPosition(),
+					PM::pm_Add(position(),
 					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
 				mDirection_Cache);
 		}
@@ -153,7 +153,7 @@ namespace PR
 			PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint));
 
 			return Ray(PM::pm_Set((nx + 1)*0.5f, (ny + 1)*0.5f),
-					PM::pm_Add(worldPosition(), eyePoint),
+					PM::pm_Add(position(), eyePoint),
 					rayDir);
 		}
 	}
@@ -166,11 +166,11 @@ namespace PR
 		Camera::onFreeze();
 
 		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(
-			PM::pm_Transform(worldDirectionMatrix(), mLocalDirection)), 0);
+			PM::pm_Transform(directionMatrix(), mLocalDirection)), 0);
 		mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(
-			PM::pm_Transform(worldDirectionMatrix(), mLocalRight)), 0);
+			PM::pm_Transform(directionMatrix(), mLocalRight)), 0);
 		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(
-			PM::pm_Transform(worldDirectionMatrix(), mLocalUp)), 0);
+			PM::pm_Transform(directionMatrix(), mLocalUp)), 0);
 
 		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
 			name().c_str(),

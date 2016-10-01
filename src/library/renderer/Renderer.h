@@ -145,5 +145,7 @@ namespace PR
 		std::condition_variable mPassCondition;
 		uint32 mThreadsWaitingForPass;
 		uint32 mCurrentPass;
+
+		bool mShouldStop;
 	};
 }

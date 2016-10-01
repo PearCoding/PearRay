@@ -27,7 +27,7 @@ public:
 	int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
 
 private:
-	QList<PR::Entity*> getChildren(PR::Entity* entity) const;
+	QList<PR::Entity*> getEntities() const;
 
 	PR::Scene* mScene;
 };

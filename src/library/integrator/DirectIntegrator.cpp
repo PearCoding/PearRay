@@ -28,10 +28,10 @@ namespace PR
 		if (!entity || !sc.Material)
 			return applied;
 		
-		return applied + applyRay(in, sc, context);
+		return applied + applyRay(in, sc, context, 0);
 	}
 
-	Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context)
+	Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 diffbounces)
 	{
 		if (!sc.Material->canBeShaded())
 			return Spectrum();
@@ -61,8 +61,10 @@ namespace PR
 					Ray ray = in.next(sc.P, dir);
 
 					RenderEntity* entity = context->shootWithEmission(other_weight, ray, other_sc);
-					if (entity && other_sc.Material && std::isinf(pdf))
-						other_weight += applyRay(ray, other_sc, context);
+					if (entity && other_sc.Material &&
+						(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))						
+						other_weight += applyRay(ray, other_sc, context,
+							!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
 
 					other_weight *= sc.Material->apply(sc, dir) * NdotL;
 				}
@@ -88,7 +90,7 @@ namespace PR
 					const PM::vec3 L = PM::pm_Normalize3D(PS);
 					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, sc.N));
 
-					//pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) + sc.Material->pdf(sc, L);
+					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) + sc.Material->pdf(sc, L);
 					pdf += sc.Material->pdf(sc, L);
 
 					if (pdf > PM_EPSILON)
@@ -112,8 +114,7 @@ namespace PR
 
 			float inf_pdf;
 			other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::power(full_weight, full_pdf,
-				other_weight, std::isinf(inf_pdf) ? 1 : inf_pdf);
+			MSI::power(full_weight, full_pdf, other_weight, inf_pdf);
 		}
 
 		return full_weight;

@@ -9,7 +9,7 @@ namespace PR
 	class PR_LIB PlaneEntity : public RenderEntity
 	{
 	public:
-		PlaneEntity(const std::string& name, const Plane& plane, Entity* parent = nullptr);
+		PlaneEntity(const std::string& name, const Plane& plane);
 		virtual ~PlaneEntity();
 
 		virtual std::string type() const;

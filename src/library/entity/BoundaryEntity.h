@@ -8,7 +8,7 @@ namespace PR
 	class PR_LIB BoundaryEntity : public RenderEntity
 	{
 	public:
-		BoundaryEntity(const std::string& name, const BoundingBox& box, Entity* parent = nullptr);
+		BoundaryEntity(const std::string& name, const BoundingBox& box);
 		virtual ~BoundaryEntity();
 
 		virtual std::string type() const override;

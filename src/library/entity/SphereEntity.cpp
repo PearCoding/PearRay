@@ -11,8 +11,8 @@
 
 namespace PR
 {
-	SphereEntity::SphereEntity(const std::string& name, float r, Entity* parent) :
-		RenderEntity(name, parent), mRadius(r), mMaterial(nullptr)
+	SphereEntity::SphereEntity(const std::string& name, float r) :
+		RenderEntity(name), mRadius(r), mMaterial(nullptr)
 	{
 	}
 
@@ -37,7 +37,7 @@ namespace PR
 
 		if(!m || m == mMaterial)
 		{
-			const auto s = flags() & EF_LocalArea ? scale() : worldScale();
+			const auto s = flags() & EF_LocalArea ? PM::pm_Set(1,1,1) : scale();
 			
 			const float a = PM::pm_GetX(s) * mRadius;
 			const float b = PM::pm_GetY(s) * mRadius;
@@ -92,8 +92,8 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(worldInvDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
 
 		Sphere sphere(PM::pm_Zero(), mRadius);
 		float t;
@@ -101,12 +101,12 @@ namespace PR
 		if (!sphere.intersects(local, collisionPos, t))
 			return false;
 
-		collisionPoint.P = PM::pm_Transform(worldMatrix(), collisionPos);
+		collisionPoint.P = PM::pm_Transform(matrix(), collisionPos);
 
-		collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(worldDirectionMatrix(), collisionPos));
+		collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(directionMatrix(), collisionPos));
 		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(worldRotation()), collisionPoint.Ng));
+		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), collisionPoint.Ng));
 
 		collisionPoint.Material = material();
 
@@ -122,10 +122,10 @@ namespace PR
 		PM::vec2 s = sampler.generate2D(sample);
 		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s), pdf);
 
-		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), n));
+		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), n));
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		p.P = PM::pm_Transform(worldMatrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
+		p.P = PM::pm_Transform(matrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
 		p.UV = Projection::sphereUV(p.Ng);
 		p.Material = material();
 

@@ -13,8 +13,8 @@
 
 namespace PR
 {
-	PlaneEntity::PlaneEntity(const std::string& name, const Plane& plane, Entity* parent) :
-		RenderEntity(name, parent), mPlane(plane), mMaterial(nullptr)
+	PlaneEntity::PlaneEntity(const std::string& name, const Plane& plane) :
+		RenderEntity(name), mPlane(plane), mMaterial(nullptr)
 	{
 	}
 
@@ -84,15 +84,15 @@ namespace PR
 
 		// Local space
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(worldInvMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(worldInvDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
 
 		float t;
 		if (mPlane.intersects(local, pos, t, u, v))
 		{
-			collisionPoint.P = PM::pm_Transform(worldMatrix(), pos);
+			collisionPoint.P = PM::pm_Transform(matrix(), pos);
 
-			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), mPlane.normal()));
+			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), mPlane.normal()));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			collisionPoint.UV = PM::pm_Set(u, v);
@@ -109,14 +109,14 @@ namespace PR
 	{
 		auto s = sampler.generate2D(sample);
 
-		PM::vec xaxis = PM::pm_Multiply(worldDirectionMatrix(), mPlane.xAxis());
-		PM::vec yaxis = PM::pm_Multiply(worldDirectionMatrix(), mPlane.yAxis());
+		PM::vec xaxis = PM::pm_Multiply(directionMatrix(), mPlane.xAxis());
+		PM::vec yaxis = PM::pm_Multiply(directionMatrix(), mPlane.yAxis());
 
 		FaceSample fp;
-		fp.P = PM::pm_Add(worldPosition(),
+		fp.P = PM::pm_Add(position(),
 			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetX(s)),
 				PM::pm_Scale(yaxis, PM::pm_GetY(s))));
-		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(worldDirectionMatrix(), mPlane.normal()));
+		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), mPlane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 
 		fp.UV = PM::pm_SetZ(s, 0);

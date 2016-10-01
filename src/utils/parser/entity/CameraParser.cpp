@@ -18,7 +18,7 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* CameraParser::parse(SceneLoader* loader, Environment* env, const std::string& name, Entity* parent,
+	Entity* CameraParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data* projectionD = group->getFromKey("projection");
@@ -34,7 +34,7 @@ namespace PRU
 		DL::Data* localRightD = group->getFromKey("localRight");
 		DL::Data* localUpD = group->getFromKey("localUp");
 
-		StandardCamera* camera = new StandardCamera(name, parent);
+		StandardCamera* camera = new StandardCamera(name);
 
 		if (fovVD || fovHD)
 		{

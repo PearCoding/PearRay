@@ -14,7 +14,7 @@ namespace PR
 	class PR_LIB RenderEntity : public Entity
 	{
 	public:
-		RenderEntity(const std::string& name, Entity* parent = nullptr);
+		RenderEntity(const std::string& name);
 		virtual ~RenderEntity();
 
 		bool isRenderable() const override;

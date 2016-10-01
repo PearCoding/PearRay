@@ -9,7 +9,7 @@ namespace PR
 	class PR_LIB MeshEntity : public RenderEntity
 	{
 	public:
-		MeshEntity(const std::string& name, Entity* parent = nullptr);
+		MeshEntity(const std::string& name);
 		virtual ~MeshEntity();
 
 		virtual std::string type() const;
