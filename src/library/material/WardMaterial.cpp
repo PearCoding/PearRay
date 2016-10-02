@@ -54,7 +54,7 @@ namespace PR
 	}
 
 	constexpr float MinRoughness = 0.001f;
-	Spectrum WardMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
+	Spectrum WardMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		Spectrum albedo;
 		if (mAlbedo)
@@ -68,13 +68,11 @@ namespace PR
 			const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 			const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-			const float NdotL = std::abs(PM::pm_Dot3D(point.N, L));
-
 			// Since H appears to equal powers in both the numerator and denominator of the exponent, no normalization is needed.
 			const PM::vec3 H = PM::pm_Subtract(L, point.V);
 			const float NdotH = PM::pm_Dot3D(point.N, H);
 
-			if (point.NdotV > PM_EPSILON && NdotL > PM_EPSILON && NdotH > PM_EPSILON)
+			if (NdotH > PM_EPSILON)
 			{
 				const float HdotX = PM::pm_Dot3D(H, point.Nx);
 				const float HdotY = PM::pm_Dot3D(H, point.Ny);
@@ -96,14 +94,12 @@ namespace PR
 		return albedo + spec;
 	}
 
-	float WardMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
+	float WardMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		const float m1 = PM::pm_MaxT(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 		const float m2 = PM::pm_MaxT(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-		const float NdotL = std::abs(PM::pm_Dot3D(point.N, L));
-
-		if (point.NdotV <= PM_EPSILON || NdotL <= PM_EPSILON)
+		if (point.NdotV <= PM_EPSILON)
 			return PM_INV_PI_F;
 
 		const PM::vec3 H = PM::pm_Subtract(L, point.V);
@@ -154,7 +150,7 @@ namespace PR
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			Projection::sphere(px*2*PM_INV_PI_F, py*PM_INV_PI_F, tmpPdf));
 		auto dir = Reflection::reflect(PM::pm_Dot3D(H, point.V), H, point.V);
-		pdf = WardMaterial::pdf(point, dir);
+		pdf = WardMaterial::pdf(point, dir, 0);
 		return dir;
 	}
 }

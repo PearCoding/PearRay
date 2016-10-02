@@ -35,7 +35,7 @@ namespace PR
 		mIndex = data;
 	}
 
-	Spectrum GlassMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
+	Spectrum GlassMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		if (mSpecularity)
 			return mSpecularity->eval(point);
@@ -43,7 +43,7 @@ namespace PR
 			return Spectrum();
 	}
 
-	float GlassMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
+	float GlassMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		return std::numeric_limits<float>::infinity();
 	}

@@ -16,8 +16,8 @@ namespace PR
 		SpectralShaderOutput* indexData() const;
 		void setIndexData(SpectralShaderOutput* data);
 
-		Spectrum apply(const ShaderClosure& point, const PM::vec3& L) override;
-		float pdf(const ShaderClosure& point, const PM::vec3& L) override;
+		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
+		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
 	private:
 		SpectralShaderOutput* mSpecularity;

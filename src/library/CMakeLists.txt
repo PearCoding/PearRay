@@ -38,8 +38,6 @@ SET(PR_Light_Src
 SOURCE_GROUP("Source Files\\Light" FILES ${PR_Light_Src})
 SET(PR_Material_Src
   material/BlinnPhongMaterial.cpp
-  material/BRDF.cpp
-  material/DebugBoundingBoxMaterial.cpp
   material/DiffuseMaterial.cpp
   material/GlassMaterial.cpp
   material/GridMaterial.cpp
@@ -147,7 +145,7 @@ SOURCE_GROUP("Header Files\\Light" FILES ${PR_Light_Hdr})
 SET(PR_Material_Hdr 
   material/BlinnPhongMaterial.h
   material/BRDF.h
-  material/DebugBoundingBoxMaterial.h
+  material/BRDF.inl
   material/DiffuseMaterial.h
   material/GlassMaterial.h
   material/GridMaterial.h
@@ -158,9 +156,12 @@ SET(PR_Material_Hdr
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
   math/Fresnel.h
+  math/HemiMap.h
   math/MSI.h
   math/Projection.h
-  math/Reflection.h)
+  math/ProjectionMap.h
+  math/Reflection.h
+  math/SphereMap.h)
 SOURCE_GROUP("Header Files\\Math" FILES ${PR_Math_Hdr})
 SET(PR_Performance_Hdr
   performance/Performance.h

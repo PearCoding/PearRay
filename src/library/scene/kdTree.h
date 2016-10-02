@@ -164,7 +164,8 @@ namespace PR
 				delete obj;
 		}
 
-		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const {
+		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
+		{
 			PM::vec3 collisionPos;
 
 			T* res = nullptr;
@@ -234,10 +235,10 @@ namespace PR
 		}
 
 		// A faster variant for rays detecting the background etc.
-		inline bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const {
+		inline bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
+		{
 			PM::vec3 collisionPos;
 
-			T* res = nullptr;
 			float t = std::numeric_limits<float>::infinity();
 
 			if (mRoot && mRoot->boundingBox.intersects(ray, collisionPos, t))

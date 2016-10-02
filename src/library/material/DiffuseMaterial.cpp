@@ -21,7 +21,7 @@ namespace PR
 		mAlbedo = diffSpec;
 	}
 
-	Spectrum DiffuseMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
+	Spectrum DiffuseMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		if (mAlbedo)
 			return mAlbedo->eval(point) * (PM_INV_PI_F);
@@ -29,9 +29,9 @@ namespace PR
 			return Spectrum();
 	}
 
-	float DiffuseMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
+	float DiffuseMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
-		return Projection::cos_hemi_pdf(point.N, L);
+		return Projection::cos_hemi_pdf(NdotL);
 	}
 
 	PM::vec3 DiffuseMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)

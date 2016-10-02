@@ -14,12 +14,12 @@ namespace PR
 		Material();
 		virtual ~Material() {}
 
-		virtual Spectrum apply(const ShaderClosure& point, const PM::vec3& L) = 0;
+		virtual Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
 		
 		/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
-		virtual float pdf(const ShaderClosure& point, const PM::vec3& L) = 0;
+		virtual float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
 
 		/*
 		 Sample a direction based on the uniform rnd value.

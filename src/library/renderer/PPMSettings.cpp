@@ -8,7 +8,10 @@ namespace PR
 		mMaxGatherRadius(0.1f),
 		mMaxGatherCount(500),
 		mGatheringMode(PGM_Sphere),
-		mSqueezeWeight(0)
+		mSqueezeWeight(0),
+		mContractRatio(0.3f),
+		mProjectionMapWeight(0.9f),
+		mProjectionMapQuality(0.7f)
 	{
 	}
 }

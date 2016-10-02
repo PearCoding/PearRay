@@ -48,18 +48,18 @@ namespace PR
 		return mTiledUV;
 	}
 
-	Spectrum GridMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
+	Spectrum GridMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			return mFirst->apply(pointN, L);
+			return mFirst->eval(pointN, L, NdotL);
 		}
 		else if (mSecond)
 		{
-			return mSecond->apply(pointN, L);
+			return mSecond->eval(pointN, L, NdotL);
 		}
 	
 		return Spectrum();
@@ -84,18 +84,18 @@ namespace PR
 		}
 	}
 
-	float GridMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
+	float GridMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
 		{
-			return mFirst->pdf(pointN, L);
+			return mFirst->pdf(pointN, L, NdotL);
 		}
 		else if (mSecond)
 		{
-			return mSecond->pdf(pointN, L);
+			return mSecond->pdf(pointN, L, NdotL);
 		}
 
 		return 0;

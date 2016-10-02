@@ -138,7 +138,7 @@ namespace PR
 							if (NdotL <= PM_EPSILON)
 								break;
 
-							flux *=	other_sc.Material->apply(other_sc, PM::pm_Negate(current.direction())) * NdotL;
+							flux *=	other_sc.Material->eval(other_sc, PM::pm_Negate(current.direction()), NdotL) * NdotL;
 
 							if (!std::isinf(pdf))
 							{
@@ -200,7 +200,7 @@ namespace PR
 					other_weight = applyRay(in.next(sc.P, dir),
 						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
 
-					other_weight *= sc.Material->apply(sc, dir) * NdotL;
+					other_weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
 				}
 				else
 					other_weight.clear();
@@ -235,7 +235,7 @@ namespace PR
 						const PM::vec3 L = PM::pm_Negate(current.direction());
 
 						const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(sc.N, L));
-						const float pdf = sc.Material->pdf(sc, L);
+						const float pdf = sc.Material->pdf(sc, L, NdotL);
 
 						if(NdotL <= PM_EPSILON)
 						{
@@ -245,7 +245,7 @@ namespace PR
 						{
 							if (context->shoot(current, other_sc) == entity &&
 									PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
-								other_weight = lightFlux * sc.Material->apply(sc, L) * NdotL;
+								other_weight = lightFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
 							else
 								other_weight.clear();
 						}

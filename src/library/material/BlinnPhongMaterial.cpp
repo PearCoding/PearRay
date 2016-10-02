@@ -43,13 +43,11 @@ namespace PR
 	}
 
 	// TODO: Should be normalized better.
-	Spectrum BlinnPhongMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
+	Spectrum BlinnPhongMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		Spectrum albedo;
 		if(mAlbedo)
-		{
 			albedo = mAlbedo->eval(point) * PM_INV_PI_F;
-		}
 		
 		Spectrum spec;
 		if (mIndex && mShininess)
@@ -76,7 +74,7 @@ namespace PR
 		return albedo + spec;
 	}
 
-	float BlinnPhongMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
+	float BlinnPhongMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		if (mIndex)
 		{
@@ -95,7 +93,7 @@ namespace PR
 	{
 		auto dir = Projection::tangent_align(point.N,
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
-		pdf += BlinnPhongMaterial::pdf(point, dir);
+		pdf += BlinnPhongMaterial::pdf(point, dir, 0);
 		return dir;
 	}
 }

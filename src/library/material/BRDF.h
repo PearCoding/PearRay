@@ -11,27 +11,19 @@ namespace PR
 	class PR_LIB BRDF
 	{
 	public:
-		// Fresnel
-		static float fresnel_schlick(float f0, const PM::vec3& V, const PM::vec3& N);
-		static float fresnel_schlick_term(const PM::vec3& V, const PM::vec3& N);// Only the cos term
-		//static float fresnel_cocktorrance(float f0, const PM::vec3& L, const PM::vec3& N);
-
 		// NDF
-		static float ndf_blinn(const PM::vec3& H, const PM::vec3& N, float alpha);
-		static float ndf_beckmann(const PM::vec3& H, const PM::vec3& N, float alpha);
-		static float ndf_ggx(const PM::vec3& H, const PM::vec3& N, float alpha);
+		static inline float ndf_blinn(float NdotH, float alpha);
+		static inline float ndf_beckmann(float NdotH, float alpha);
+		static inline float ndf_ggx(float NdotH, float alpha);
 
 		// Geometry
-		static float g_implicit(const PM::vec3& L, const PM::vec3& V, const PM::vec3& H, const PM::vec3& N);
-		static float g_neumann(const PM::vec3& L, const PM::vec3& V, const PM::vec3& H, const PM::vec3& N);
-		static float g_cocktorrance(const PM::vec3& L, const PM::vec3& V, const PM::vec3& H, const PM::vec3& N);
-		static float g_kelemen(const PM::vec3& L, const PM::vec3& V, const PM::vec3& H, const PM::vec3& N);
+		static inline float g_implicit(float NdotV, float NdotL);
+		static inline float g_neumann(float NdotV, float NdotL);
+		static inline float g_cocktorrance(float NdotV, float NdotL, float NdotH, float VdotH);
+		static inline float g_kelemen(float NdotV, float NdotL, float VdotH);
 
 		// Smith etc
-
-		// Optimized groups:
-
-		// Fresnel: Schlick, NDF: Blinn, Geometry: Neumann
-		static float standard(float f0, float alpha, const PM::vec3& L, const PM::vec3& N, const PM::vec3& H, const PM::vec3& V);
 	};
 }
+
+#include "BRDF.inl"

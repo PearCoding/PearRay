@@ -91,6 +91,19 @@ namespace PR
 			return PM_INV_PI_F * 0.25f;
 		}
 
+		static inline PM::vec3 sphere_coord(float theta, float phi)
+		{
+			float thCos, thSin;
+			PM::pm_SinCosT(theta, thSin, thCos);
+
+			float phCos, phSin;
+			PM::pm_SinCosT(phi, phSin, phCos);
+
+			return PM::pm_Set(thSin * phCos,
+				thSin * phSin,
+				thCos);
+		}
+
 		// Cosine weighted
 		// Orientation +Z
 		static inline PM::vec3 cos_hemi(float u1, float u2, float& pdf)
@@ -127,15 +140,14 @@ namespace PR
 			return PM::pm_Set(x, y, cosPhi);
 		}
 
-		static inline float cos_hemi_pdf(const PM::vec3& N, const PM::vec3& dir)
+		static inline float cos_hemi_pdf(float NdotL)
 		{
-			return PM_INV_PI_F * std::abs(PM::pm_Dot3D(N, dir));
+			return PM_INV_PI_F * NdotL;
 		}
 
-		static inline float cos_hemi_pdf(const PM::vec3& N, const PM::vec3& dir, float m)
+		static inline float cos_hemi_pdf(float NdotL, float m)
 		{
-			auto cosPhi = std::abs(PM::pm_Dot3D(N, dir));
-			return (m + 1.0f) * std::pow(cosPhi, m) * 0.5f * PM_INV_PI_F;
+			return (m + 1.0f) * std::pow(NdotL, m) * 0.5f * PM_INV_PI_F;
 		}
 
 		// Uniform

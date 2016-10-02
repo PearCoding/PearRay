@@ -107,13 +107,20 @@ namespace PR
 			return RGBConverter::toSpec(PM::pm_GetX(sc.UV), PM::pm_GetY(sc.UV), 0);
 		case DM_PDF:
 		{
-			float pdf;
-			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
-				context->random().getFloat(),
-				context->random().getFloat());
-			sc.Material->sample(sc, rnd, pdf);
+			float full_pdf = 0;
+			for(uint32 i = 0; i < 32; ++i)
+			{
+				float pdf;
+				PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
+					context->random().getFloat(),
+					context->random().getFloat());
+				sc.Material->sample(sc, rnd, pdf);
+				full_pdf += pdf;
+			}
 
-			return std::isinf(pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(pdf, pdf, pdf);
+			full_pdf /= 32;
+
+			return std::isinf(full_pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(full_pdf, full_pdf, full_pdf);
 		}
 		case DM_Validity:
 		{

@@ -31,7 +31,7 @@ namespace PR
 		mRoughness = d;
 	}
 
-	Spectrum OrenNayarMaterial::apply(const ShaderClosure& point, const PM::vec3& L)
+	Spectrum OrenNayarMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		if (mAlbedo)
 		{
@@ -43,8 +43,6 @@ namespace PR
 
 				if (roughness > PM_EPSILON)// Oren Nayar
 				{
-					const float NdotL = std::abs(PM::pm_Dot3D(L, point.N));
-
 					const float angleVN = std::acos(point.NdotV);
 					const float angleLN = std::acos(NdotL);
 					const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
@@ -69,9 +67,9 @@ namespace PR
 			return Spectrum();
 	}
 
-	float OrenNayarMaterial::pdf(const ShaderClosure& point, const PM::vec3& L)
+	float OrenNayarMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
-		return Projection::cos_hemi_pdf(point.N, L);
+		return Projection::cos_hemi_pdf(NdotL);
 	}
 
 	PM::vec3 OrenNayarMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)

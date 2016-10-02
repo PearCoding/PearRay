@@ -12,7 +12,6 @@
 #include "parser/entity/SphereParser.h"
 
 #include "parser/material/BlinnPhongMaterialParser.h"
-#include "parser/material/DebugBoundingBoxMaterialParser.h"
 #include "parser/material/DiffuseMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
@@ -449,8 +448,6 @@ namespace PRU
 		{ "orennayar", OrenNayarMaterialParser() },
 		{ "blinnphong", BlinnPhongMaterialParser() },
 		{ "ward", WardMaterialParser() },
-
-		{ "debug_bounding_box", DebugBoundingBoxMaterialParser() },
 
 		{ "grid", GridMaterialParser() },
 		{ "glass", GlassMaterialParser() },

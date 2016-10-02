@@ -52,7 +52,7 @@ namespace PR
 
 						weight = handleSpecularPath(ray, sc, context, entity);
 						if (!entity)
-							weight *= sc.Material->apply(sc, dir) * e->apply(dir) * NdotL;
+							weight *= sc.Material->eval(sc, dir, NdotL) * e->apply(dir) * NdotL;
 						else
 							weight.clear();
 					}
@@ -76,7 +76,8 @@ namespace PR
 
 		if(lastEntity && other_sc.Material)
 		{
-			Spectrum weight = other_sc.Material->apply(other_sc, ray.direction());
+			float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
+			Spectrum weight = other_sc.Material->eval(other_sc, ray.direction(), NdotL) * NdotL;
 
 			float other_pdf;
 			for(uint32 depth = in.depth();
@@ -90,8 +91,7 @@ namespace PR
 				if(!std::isinf(other_pdf))
 					break;
 
-				const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
-
+				float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
 				if (NdotL <= PM_EPSILON)
 					break;
 				
@@ -99,7 +99,7 @@ namespace PR
 
 				lastEntity = context->shoot(ray, other_sc);
 				if(lastEntity && other_sc.Material)
-					weight *= other_sc.Material->apply(other_sc, dir) * NdotL;
+					weight *= other_sc.Material->eval(other_sc, dir, NdotL) * NdotL;
 				else
 					break;
 			}
