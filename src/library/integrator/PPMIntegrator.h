@@ -12,7 +12,7 @@ namespace PR
 {
 	class Material;
 	class RenderEntity;
-	class HemiMap;
+	class SphereMap;
 
 	/*
 	 * Progressive Photon Mapping: A Probabilistic Approach
@@ -72,8 +72,10 @@ namespace PR
 			RenderEntity* Entity;
 			uint64 Photons;
 			float Surface;
-			HemiMap* Hemi;
+			SphereMap* Proj;
 		};
 		std::list<Light*> mLights;
+		uint32 mProjMaxTheta;
+		uint32 mProjMaxPhi;
 	};
 }

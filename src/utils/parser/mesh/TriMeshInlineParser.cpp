@@ -17,7 +17,7 @@
 using namespace PR;
 namespace PRU
 {
-	IMesh* TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
+	TriMesh* TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
 	{
 		std::vector<PM::vec3> positionAttr;
 		std::vector<PM::vec3> normalAttr;

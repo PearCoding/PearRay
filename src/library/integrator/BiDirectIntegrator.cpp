@@ -112,7 +112,7 @@ namespace PR
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					PM::pm_Store3D(other_sc.P, &lightPos[lightDepth * 3]);
-					lightFlux[lightDepth] = flux / pdf;
+					lightFlux[lightDepth] = flux;
 					//lightPDF[lightDepth] = pdf;
 
 					Ray current = in;

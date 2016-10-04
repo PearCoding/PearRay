@@ -33,7 +33,6 @@
 #include "shader/ImageSpectralOutput.h"
 #include "shader/ImageVectorOutput.h"
 
-#include "geometry/IMesh.h"
 #include "loader/WavefrontLoader.h"
 
 #include "spectral/XYZConverter.h"
@@ -565,15 +564,6 @@ namespace PRU
 		parser.parse(this, env, name, group);// Will be added to env here
 	}
 
-	struct
-	{
-		const char* Name;
-		const IMeshInlineParser& Parser;
-	} MeshInlineParserEntries[] =
-	{
-		{ "triangles", TriMeshInlineParser() },
-		{ nullptr, TriMeshInlineParser() },//Just for the end
-	};
 	void SceneLoader::addMesh(DL::DataGroup* group, Environment* env)
 	{
 		DL::Data* nameD = group->getFromKey("name");
@@ -603,31 +593,13 @@ namespace PRU
 			return;
 		}
 
-		IMesh* mesh = nullptr;
-		const IMeshInlineParser* parser = nullptr;
-		for (int i = 0; MeshInlineParserEntries[i].Name; ++i)
-		{
-			if (type == MeshInlineParserEntries[i].Name)
-			{
-				parser = &MeshInlineParserEntries[i].Parser;
-				break;
-			}
-		}
+		TriMeshInlineParser parser;
+		TriMesh* mesh = parser.parse(this, env, group);
 
-		if (parser)
+		if (!mesh)
 		{
-			mesh = parser->parse(this, env, group);
-
-			if (!mesh)
-			{
-				PR_LOGGER.logf(L_Error, M_Scene, "Mesh %s couldn't be load. Error in '%s' type parser.",
-					name.c_str(), typeD->getString().c_str());
-				return;
-			}
-		}
-		else
-		{
-			PR_LOGGER.logf(L_Error, M_Scene, "Mesh %s couldn't be load. Unknown type given.", name.c_str());
+			PR_LOGGER.logf(L_Error, M_Scene, "Mesh %s couldn't be load. Error in '%s' type parser.",
+				name.c_str(), typeD->getString().c_str());
 			return;
 		}
 

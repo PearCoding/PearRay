@@ -1,12 +1,12 @@
 #include "DisplayBuffer.h"
 #include "renderer/Renderer.h"
+#include "Logger.h"
 
 #include "spectral/ToneMapper.h"
 
 #include <OpenImageIO/imageio.h>
 
-#include <boost/interprocess/sync/file_lock.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/filesystem.hpp>
 
 OIIO_NAMESPACE_USING;
 
@@ -44,6 +44,18 @@ namespace PRU
 
 		mRenderer = renderer;
 
+		if(mRenderer)
+		{
+			// Setup lock directory
+			if(!boost::filesystem::create_directory(mRenderer->workingDir() + "/.lock"))
+				PR_LOGGER.logf(L_Warning, M_System,
+					"Couldn't create lock directory '%s/.lock'. Maybe already running?", mRenderer->workingDir().c_str());
+
+			if(!boost::filesystem::remove(mRenderer->workingDir() + "/.img_lock"))// Remove it now
+				PR_LOGGER.logf(L_Error, M_System,
+					"Couldn't delete lock directory '%s/.img_lock'!", mRenderer->workingDir().c_str());
+		}
+
 		if(!mData)
 		{
 			mData = new float[renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT];
@@ -66,6 +78,13 @@ namespace PRU
 			delete[] mSaveData;
 			mSaveData = nullptr;
 		}
+
+		if(!mRenderer)
+			return;
+
+		if(!boost::filesystem::remove(mRenderer->workingDir() + "/.lock"))
+			PR_LOGGER.logf(L_Error, M_System,
+				"Couldn't delete lock directory '%s/.lock'!", mRenderer->workingDir().c_str());
 	}
 
 	// TODO: No layer support
@@ -127,7 +146,7 @@ namespace PRU
 		return mData;
 	}
 
-	bool DisplayBuffer::save(const PR::ToneMapper& toneMapper, const std::string& file) const
+	bool DisplayBuffer::save(const PR::ToneMapper& toneMapper, const std::string& file, bool force) const
 	{
 		PR_ASSERT(toneMapper.isByteMode());
 		
@@ -135,28 +154,21 @@ namespace PRU
 		std::memset(mSaveData, 0, mRenderer->width() * mRenderer->height() * 3);
 		toneMapper.exec(mData, mSaveData);
 		
-		// try
-		// {
-		// 	boost::interprocess::file_lock flock(file.c_str());
-		// 	boost::interprocess::scoped_lock<boost::interprocess::file_lock> e_lock(flock);
+		if(!force && !boost::filesystem::create_directory(mRenderer->workingDir() + "/.img_lock"))
+			return true;// Just don't produce error information
+		
+		ImageOutput* out = ImageOutput::create(file);
+		if(!out)
+			return false;
+		
+		out->open(file, spec);
+		out->write_image(TypeDesc::UINT8, mSaveData);
+		out->close();
+		ImageOutput::destroy(out);
 
-			ImageOutput* out = ImageOutput::create(file);
-			if(!out)
-				return false;
-			
-			out->open(file, spec);
-			out->write_image(TypeDesc::UINT8, mSaveData);
-			/*for (uint32 y = 0; y < mRenderer->height(); ++y)
-				out->write_scanline(y,0, TypeDesc::UINT8, &mSaveData[y*mRenderer->width()*3]);*/
-			out->close();
-			ImageOutput::destroy(out);
-		// }
-		// catch(const boost::interprocess::interprocess_exception& e)
-		// {
-		// 	ImageOutput* out = ImageOutput::create(file);// Just create it.
-		// 	ImageOutput::destroy(out);
-		// 	return false;
-		// }
+		if(!force && !boost::filesystem::remove(mRenderer->workingDir() + "/.img_lock"))// Remove it now
+			PR_LOGGER.logf(L_Error, M_System,
+				"Couldn't delete lock directory '%s/.img_lock'!", mRenderer->workingDir().c_str());
 
 		return true;
 	}

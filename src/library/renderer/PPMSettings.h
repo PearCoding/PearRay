@@ -38,10 +38,14 @@ namespace PR
 		inline void setContractRatio(float v) { mContractRatio = v; }
 
 		inline float projectionMapWeight() const { return mProjectionMapWeight; }
-		inline void setProjectioMapWeight(float v) { mProjectionMapWeight = v; }
+		inline void setProjectionMapWeight(float v) { mProjectionMapWeight = v; }
 
 		inline float projectionMapQuality() const { return mProjectionMapQuality; }
-		inline void setProjectioMapQuality(float v) { mProjectionMapQuality = v; }
+		inline void setProjectionMapQuality(float v) { mProjectionMapQuality = v; }
+
+		inline float projectionMapPreferCaustic() const { return mProjectionMapPreferCaustic; }
+		inline void setProjectionMapPreferCaustic(float v) { mProjectionMapPreferCaustic = v; }
+
 
 	private:
 		uint32 mMaxPhotonsPerPass;
@@ -51,10 +55,10 @@ namespace PR
 		uint32 mMaxGatherCount;
 		PPMGatheringMode mGatheringMode;
 		float mSqueezeWeight;
-
 		float mContractRatio;
 
 		float mProjectionMapWeight;
 		float mProjectionMapQuality;
+		float mProjectionMapPreferCaustic;
 	};
 }

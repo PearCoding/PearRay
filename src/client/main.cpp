@@ -33,7 +33,7 @@ namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
 void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
-	const PR::ToneMapper& toneMapper, const bf::path& directoryPath, const std::string& ext)
+	const PR::ToneMapper& toneMapper, const bf::path& directoryPath, const std::string& ext, bool force=false)
 {
 	PR_GUARD_PROFILE();
 	switch(displayMode)
@@ -43,7 +43,7 @@ void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
 			bf::path imagePath = directoryPath;
 			imagePath += "/image." + ext;
 
-			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(toneMapper, imagePath.native()))
+			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(toneMapper, imagePath.native(), force))
 				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
 		}
 		break;
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 	PR::Renderer* renderer = new PR::Renderer(
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
-		env->camera(), env->scene(), true);
+		env->camera(), env->scene(), options.OutputDir, true);
 	renderer->setSettings(options.RenderSettings);
 
 	if(options.CropMinXOverride >= 0 &&
@@ -234,7 +234,7 @@ int main(int argc, char** argv)
 	}
 
 	// Save images if needed
-	saveImage(options.DDO, display, toneMapper, options.OutputDir, options.ImgExt);
+	saveImage(options.DDO, display, toneMapper, options.OutputDir, options.ImgExt, true);
 
 	// Close everything
 	delete renderer;

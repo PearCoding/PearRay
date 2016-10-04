@@ -1,5 +1,4 @@
 #include "WavefrontLoader.h"
-#include "geometry/IMesh.h"
 #include "geometry/TriMesh.h"
 #include "geometry/Face.h"
 

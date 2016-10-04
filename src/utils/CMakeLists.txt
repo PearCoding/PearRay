@@ -78,7 +78,6 @@ SET(PR_Parser_Material_Hdr
   parser/material/WardMaterialParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
 SET(PR_Parser_Mesh_Hdr
-  parser/mesh/MeshInlineParser.h
   parser/mesh/TriMeshInlineParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Hdr})
 SET(PR_Parser_Texture_Hdr

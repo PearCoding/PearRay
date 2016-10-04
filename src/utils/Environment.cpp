@@ -1,6 +1,6 @@
 #include "Environment.h"
 
-#include "geometry/IMesh.h"
+#include "geometry/TriMesh.h"
 #include "material/Material.h"
 
 #include "spectral/XYZConverter.h"
@@ -38,7 +38,7 @@ namespace PRU
 			delete p.second;
 		}
 
-		for (std::pair<std::string, PR::IMesh*> p : mMeshes)
+		for (std::pair<std::string, PR::TriMesh*> p : mMeshes)
 		{
 			delete p.second;
 		}

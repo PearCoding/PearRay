@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
+#include "Sphere.h"
 
 namespace PR
 {
@@ -55,6 +54,18 @@ namespace PR
 		inline float depth() const
 		{
 			return std::abs(PM::pm_GetZ(mUpperBound) - PM::pm_GetZ(mLowerBound));
+		}
+
+		inline Sphere outerSphere()
+		{
+			return Sphere(center(),
+				PM::pm_MaxT(width(), PM::pm_MaxT(height(), depth()))*0.5f*1.73205080757f);
+		}
+
+		inline Sphere innerSphere()
+		{
+			return Sphere(center(),
+				PM::pm_MaxT(width(), PM::pm_MaxT(height(), depth()))*0.5f);
 		}
 
 		inline float volume() const { return width()*height()*depth(); }

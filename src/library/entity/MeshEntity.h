@@ -4,7 +4,7 @@
 
 namespace PR
 {
-	class IMesh;
+	class TriMesh;
 	class Material;
 	class PR_LIB MeshEntity : public RenderEntity
 	{
@@ -17,8 +17,8 @@ namespace PR
 		virtual bool isLight() const override;
 		virtual float surfaceArea(Material* m) const override;
 
-		void setMesh(IMesh* mesh);
-		IMesh* mesh() const;
+		void setMesh(TriMesh* mesh);
+		TriMesh* mesh() const;
 
 		void setMaterialOverride(Material* m);
 		Material* materialOverride() const;
@@ -32,7 +32,7 @@ namespace PR
 
 		virtual void onFreeze() override;
 	private:
-		IMesh* mMesh;
+		TriMesh* mMesh;
 		Material* mMaterialOverride;
 		
 		float mSurfaceArea_Cache;

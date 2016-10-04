@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IMesh.h"
+#include "BoundingBox.h"
 
 #include <vector>
 
@@ -10,7 +10,12 @@ namespace PR
 	class Normal;
 	class UV;
 	class Vertex;
-	class PR_LIB TriMesh : public IMesh
+	class Material;
+	class Ray;
+	class Random;
+	struct FaceSample;
+	class Sampler;
+	class PR_LIB TriMesh
 	{
 		PR_CLASS_NON_COPYABLE(TriMesh);
 
@@ -33,21 +38,20 @@ namespace PR
 
 		void calcNormals();
 
-		// IMesh
-		virtual bool isLight() const override;
-		virtual float surfaceArea(Material* m, const PM::mat& transform) const override;
+		bool isLight() const;
+		float surfaceArea(Material* m, const PM::mat& transform) const;
 
-		inline BoundingBox boundingBox() const override
+		inline BoundingBox boundingBox() const
 		{
 			return mBoundingBox;
 		}
 
-		virtual float collisionCost() const override;
+		float collisionCost() const;
 
-		bool checkCollision(const Ray& ray, FaceSample& collisionPoint) override;
-		FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+		bool checkCollision(const Ray& ray, FaceSample& collisionPoint);
+		FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const;
 
-		virtual void replaceMaterial(Material* mat) override;
+		void replaceMaterial(Material* mat);
 	private:
 		BoundingBox mBoundingBox;
 		void* mKDTree;

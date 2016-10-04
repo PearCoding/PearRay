@@ -31,7 +31,8 @@ namespace PR
 		friend class RenderThread;
 		friend class RenderContext;
 	public:
-		Renderer(uint32 width, uint32 height, Camera* cam, Scene* scene, bool useGPU = true);
+		Renderer(uint32 width, uint32 height, Camera* cam, Scene* scene,
+			const std::string& workingDir, bool useGPU = true);
 		virtual ~Renderer();
 
 		void setWidth(uint32 w);
@@ -102,6 +103,11 @@ namespace PR
 		{
 			return mScene;
 		}
+
+		inline std::string workingDir() const
+		{
+			return mWorkingDir;
+		}
 		
 	protected:
 		// Render Thread specific
@@ -119,6 +125,7 @@ namespace PR
 
 		uint32 mWidth;
 		uint32 mHeight;
+		std::string mWorkingDir;
 
 		Camera* mCamera;
 		Scene* mScene;

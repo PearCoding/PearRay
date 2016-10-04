@@ -39,8 +39,10 @@
 
 namespace PR
 {
-	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene, bool useGPU) :
+	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene,
+		const std::string& workingDir, bool useGPU) :
 		mWidth(w), mHeight(h),
+		mWorkingDir(workingDir),
 		mCamera(cam), mScene(scene),
 		mPixelMap(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),

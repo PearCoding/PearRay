@@ -11,7 +11,8 @@ namespace PR
 		mSqueezeWeight(0),
 		mContractRatio(0.3f),
 		mProjectionMapWeight(0.9f),
-		mProjectionMapQuality(0.7f)
+		mProjectionMapQuality(0.7f),
+		mProjectionMapPreferCaustic(0.2f)
 	{
 	}
 }

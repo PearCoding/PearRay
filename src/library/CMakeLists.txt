@@ -120,7 +120,6 @@ SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
 SET(PR_Geometry_Hdr
   geometry/BoundingBox.h
   geometry/Face.h
-  geometry/IMesh.h
   geometry/Plane.h
   geometry/Sphere.h
   geometry/Triangle.h

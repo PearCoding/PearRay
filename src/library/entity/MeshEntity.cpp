@@ -1,7 +1,7 @@
 #include "MeshEntity.h"
 
 #include "material/Material.h"
-#include "geometry/IMesh.h"
+#include "geometry/TriMesh.h"
 #include "geometry/Face.h"
 #include "geometry/Triangle.h"
 #include "shader/FaceSample.h"
@@ -41,12 +41,12 @@ namespace PR
 			return mMesh->surfaceArea(m, flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
 	}
 
-	void MeshEntity::setMesh(IMesh* mesh)
+	void MeshEntity::setMesh(TriMesh* mesh)
 	{
 		mMesh = mesh;
 	}
 
-	IMesh* MeshEntity::mesh() const
+	TriMesh* MeshEntity::mesh() const
 	{
 		return mMesh;
 	}

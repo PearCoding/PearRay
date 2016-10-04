@@ -12,12 +12,22 @@ namespace PR
 		{
 		}
 
+		inline void setProbabilityWithIndex(uint32 thetaI, uint32 phiI, float value)
+		{
+			mProj.setProbability(thetaI*mResPhi + phiI, value);
+		}
+
+		inline float probabilityWithIndex(uint32 thetaI, uint32 phiI) const
+		{
+			return mProj.probability(thetaI*mResPhi + phiI);
+		}
+
 		inline void setProbability(float theta, float phi, float value)
 		{
 			uint32 i = PM::pm_ClampT<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
 			uint32 j = PM::pm_ClampT<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
 
-			mProj.setProbability(i*mResPhi + j, value);
+			setProbabilityWithIndex(i, j, value);
 		}
 
 		inline float probability(float theta, float phi) const
@@ -25,7 +35,7 @@ namespace PR
 			uint32 i = PM::pm_ClampT<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
 			uint32 j = PM::pm_ClampT<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
 
-			return mProj.probability(i*mResPhi + j);
+			return probabilityWithIndex(i, j);
 		}
 
 		inline bool isSetup() const
@@ -35,6 +45,8 @@ namespace PR
 
 		inline void setup()
 		{
+			mProj.rebound();
+			mProj.scale(PM_INV_PI_F*0.25f);
 			mProj.setup();
 		}
 
@@ -61,8 +73,8 @@ namespace PR
 			uint32 phiI = i % mResPhi;
 			uint32 thetaI = i / mResPhi;
 
-			float phi = PM_2_PI_F * (phiI+u3-0.5f) / (float)mResPhi;
-			float theta = PM_PI_F * (thetaI+u4-0.5f) / (float)mResTheta;
+			float phi = PM_2_PI_F * PM::pm_ClampT((phiI+u3) / (float)mResPhi, 0.0f, 1.0f);
+			float theta = PM_PI_F * PM::pm_ClampT((thetaI+u4) / (float)mResTheta, 0.0f, 1.0f);
 
 			return Projection::sphere_coord(theta, phi);
 		}

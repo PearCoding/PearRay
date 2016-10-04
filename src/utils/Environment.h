@@ -13,7 +13,7 @@ namespace PR
 {
 	class Camera;
 	class Material;
-	class IMesh;
+	class TriMesh;
 }
 
 namespace PRU
@@ -60,7 +60,7 @@ namespace PRU
 			mMaterials[name] = mat;
 		}
 
-		inline PR::IMesh* getMesh(const std::string& name) const
+		inline PR::TriMesh* getMesh(const std::string& name) const
 		{
 			return mMeshes.at(name);
 		}
@@ -70,7 +70,7 @@ namespace PRU
 			return mMeshes.count(name) != 0;
 		}
 
-		inline void addMesh(const std::string& name, PR::IMesh* m)
+		inline void addMesh(const std::string& name, PR::TriMesh* m)
 		{
 			PR_ASSERT(m && !hasMesh(name));
 			mMeshes[name] = m;
@@ -225,7 +225,7 @@ namespace PRU
 		std::map<std::string, PR::Spectrum> mSpectrums;
 		std::map<std::string, PR::Material*> mMaterials;
 
-		std::map<std::string, PR::IMesh*> mMeshes;
+		std::map<std::string, PR::TriMesh*> mMeshes;
 
 		std::list<PR::ScalarShaderOutput*> mScalarShaderOutputs;
 		std::list<PR::SpectralShaderOutput*> mSpectralShaderOutputs;

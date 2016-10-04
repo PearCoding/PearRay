@@ -1,12 +1,26 @@
 #pragma once
 
-#include "MeshInlineParser.h"
+#include "Config.h"
+
+#include <string>
+
+namespace DL
+{
+	class DataGroup;
+}
+
+namespace PR
+{
+	class TriMesh;
+}
 
 namespace PRU
 {
-	class TriMeshInlineParser : public IMeshInlineParser
+	class SceneLoader;
+	class Environment;
+	class TriMeshInlineParser
 	{
 	public:
-		PR::IMesh* parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const override;
+		PR::TriMesh* parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const;
 	};
 }

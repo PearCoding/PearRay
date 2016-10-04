@@ -27,7 +27,7 @@ namespace PRU
 
 		float* ptr() const;
 
-		bool save(const PR::ToneMapper& toneMapper, const std::string& file) const;
+		bool save(const PR::ToneMapper& toneMapper, const std::string& file, bool force=false) const;
 	private:
 		float* mData;
 		PR::uint8* mSaveData;

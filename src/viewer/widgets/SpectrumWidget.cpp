@@ -262,8 +262,7 @@ void SpectrumWidget::cacheImage()
 	// Draw Labels
 	painter.setPen(Qt::black);
 
-	painter.drawText(PADDING * 3 + w, PADDING * 4, mSpectrum.isEmissive() ? tr("Y: Power") :
-		(mSpecMax > 1 ? tr("Y: Power(?)") : tr("Y: Reflectance")));
+	painter.drawText(PADDING * 3 + w, PADDING * 4, tr("Y: Power"));
 
 	painter.drawText(PADDING * 3 + w, PADDING * 6, tr("X: Wavelength [nm]"));
 

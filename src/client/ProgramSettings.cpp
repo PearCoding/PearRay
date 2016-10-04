@@ -264,6 +264,18 @@ po::options_description setup_cmd_options()
 		("p_squeeze",
 			po::value<float>(),
 		 	"Squeeze Factor")
+		("p_ratio",
+			po::value<float>(),
+		 	"Contract ratio")
+		("p_proj",
+			po::value<float>(),
+		 	"Projection Map weight. 0 disables it.")
+		("p_proj_qual",
+			po::value<float>(),
+		 	"Quality of projection map. 1 means highest quality, but more memory requirement.")
+		("p_proj_caustic",
+			po::value<float>(),
+		 	"Ratio of how much to prefer caustic (S*D paths) over other paths. 0 disables it.")
 	;
 
 	po::options_description all_d("Allowed options");
@@ -327,6 +339,14 @@ po::options_description setup_ini_options()
 			po::value<EnumOption<PPMGatheringMode> >()->default_value(DefaultRenderSettings.ppm().gatheringMode()))
 		("ppm.squeeze",
 			po::value<float>()->default_value(DefaultRenderSettings.ppm().squeezeWeight()))
+		("ppm.ratio",
+			po::value<float>()->default_value(DefaultRenderSettings.ppm().contractRatio()))
+		("ppm.proj",
+			po::value<float>()->default_value(DefaultRenderSettings.ppm().projectionMapWeight()))
+		("ppm.proj_qual",
+			po::value<float>()->default_value(DefaultRenderSettings.ppm().projectionMapQuality()))
+		("ppm.proj_caustic",
+			po::value<float>()->default_value(DefaultRenderSettings.ppm().projectionMapPreferCaustic()))
 	;
 
 	return all_d;
@@ -355,6 +375,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	// Handle help
 	if (vm.count("help"))
 	{
+		std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki/PearRayCLI\n" << std::endl;
 		std::cout << all_d << std::endl;
 		exit(1);
 	}
@@ -431,7 +452,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.ppm().setMaxGatherRadius(ini["ppm.radius"].as<float>());
 		RenderSettings.ppm().setMaxGatherCount(ini["ppm.max"].as<PR::uint32>());
 		RenderSettings.ppm().setGatheringMode(ini["ppm.gathering_mode"].as<EnumOption<PPMGatheringMode> >());
-		RenderSettings.ppm().setSqueezeWeight(ini["ppm.squeeze"].as<float>());
+		RenderSettings.ppm().setSqueezeWeight(PM::pm_ClampT<float>(ini["ppm.squeeze"].as<float>(), 0, 1));
+		RenderSettings.ppm().setContractRatio(PM::pm_ClampT<float>(ini["ppm.ratio"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setProjectionMapWeight(PM::pm_ClampT<float>(ini["ppm.proj"].as<float>(), 0, 1));
+		RenderSettings.ppm().setProjectionMapQuality(PM::pm_ClampT<float>(ini["ppm.proj_qual"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_MaxT<float>(ini["ppm.proj_caustic"].as<float>(), 0));
 	}
 
 	if(!vm.count("input"))
@@ -567,7 +592,15 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("p_g_mode"))
 		RenderSettings.ppm().setGatheringMode(vm["p_g_mode"].as<EnumOption<PPMGatheringMode> >());
 	if(vm.count("p_squeeze"))
-		RenderSettings.ppm().setSqueezeWeight(vm["p_squeeze"].as<float>());
+		RenderSettings.ppm().setSqueezeWeight(PM::pm_ClampT<float>(vm["p_squeeze"].as<float>(), 0, 1));
+	if(vm.count("p_ratio"))
+		RenderSettings.ppm().setContractRatio(PM::pm_ClampT<float>(vm["p_ratio"].as<float>(), 0.01f, 1));
+	if(vm.count("p_proj"))
+		RenderSettings.ppm().setProjectionMapWeight(PM::pm_ClampT<float>(vm["p_proj"].as<float>(), 0, 1));
+	if(vm.count("p_proj_qual"))
+		RenderSettings.ppm().setProjectionMapQuality(PM::pm_ClampT<float>(vm["p_proj_qual"].as<float>(), 0.01f, 1));
+	if(vm.count("p_proj_caustic"))
+		RenderSettings.ppm().setProjectionMapQuality(PM::pm_MaxT<float>(vm["p_proj_caustic"].as<float>(), 0));
 	
 	return true;
 }

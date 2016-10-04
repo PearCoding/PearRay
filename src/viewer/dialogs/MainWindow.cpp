@@ -166,7 +166,8 @@ void MainWindow::openProject(const QString& str)
 		}
 		
 		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
-			mEnvironment->camera(), mEnvironment->scene());
+			mEnvironment->camera(), mEnvironment->scene(),
+			QDir::tempPath().toStdString());
 		mRenderer->settings().setCropMaxX(mEnvironment->cropMaxX());
 		mRenderer->settings().setCropMinX(mEnvironment->cropMinX());
 		mRenderer->settings().setCropMaxY(mEnvironment->cropMaxY());

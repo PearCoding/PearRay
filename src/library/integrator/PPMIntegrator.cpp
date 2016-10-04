@@ -8,7 +8,7 @@
 
 #include "math/MSI.h"
 #include "math/Projection.h"
-#include "math/HemiMap.h"
+#include "math/SphereMap.h"
 
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/RandomSampler.h"
@@ -26,9 +26,13 @@
 
 namespace PR
 {
+	constexpr uint32 MAX_THETA_SIZE = 128;
+	constexpr uint32 MAX_PHI_SIZE = MAX_THETA_SIZE*2;
+
 	PPMIntegrator::PPMIntegrator() :
 		Integrator(), mRenderer(nullptr),
-		mPhotonMap(nullptr), mThreadData(nullptr)
+		mPhotonMap(nullptr), mThreadData(nullptr),
+		mProjMaxTheta(MAX_THETA_SIZE), mProjMaxPhi(MAX_PHI_SIZE)
 	{
 	}
 
@@ -52,17 +56,14 @@ namespace PR
 
 		for(Light* l : mLights)
 		{
-			if(l->Hemi)
-				delete l->Hemi;
+			if(l->Proj)
+				delete l->Proj;
 			
 			delete l;
 		}
 
 		mLights.clear();
 	}
-
-	constexpr uint32 THETA_SIZE = 8;
-	constexpr uint32 PHI_SIZE = 32;
 
 	void PPMIntegrator::init(Renderer* renderer)
 	{
@@ -90,6 +91,9 @@ namespace PR
 		}
 
 		// Assign photon count to each light
+		mProjMaxTheta = PM::pm_MaxT<uint32>(8, MAX_THETA_SIZE*renderer->settings().ppm().projectionMapQuality());
+		mProjMaxPhi = PM::pm_MaxT<uint32>(8, MAX_PHI_SIZE*renderer->settings().ppm().projectionMapQuality());
+
 		constexpr uint64 MinPhotons = 10;
 		const std::list<RenderEntity*>& lightList = mRenderer->lights();
 
@@ -111,15 +115,15 @@ namespace PR
 
 			for(RenderEntity* light : lightList)
 			{
-				HemiMap* hemi = nullptr;
+				SphereMap* map = nullptr;
 				if(renderer->settings().ppm().projectionMapWeight() > PM_EPSILON)
-					hemi = new HemiMap(THETA_SIZE, PHI_SIZE);
+					map = new SphereMap(mProjMaxTheta, mProjMaxPhi);
 				
 				const float surface = light->surfaceArea(nullptr);
 				auto l = new Light({light,
 					MinPhotons + (uint64)std::ceil(d * (surface / fullArea)),
 					surface,
-					hemi});
+					map});
 				mLights.push_back(l);
 
 #ifdef PR_DEBUG
@@ -130,59 +134,62 @@ namespace PR
 		}
 	}
 
+	/* When using projection maps, never set something to 0 and disable it that way.
+	 * It will get biased otherwise. Setting it to a very low value ensures consistency and convergency.
+	 */
+	constexpr float SAFE_DISTANCE = 1;
 	void PPMIntegrator::onStart()
 	{
 		// Setup Projection Maps
 		if(mRenderer->settings().ppm().projectionMapWeight() <= PM_EPSILON)
 			return;
 
-		PR_LOGGER.log(L_Info, M_Integrator, "Calculating Projection Maps");
+		PR_LOGGER.logf(L_Info, M_Integrator, "Calculating Projection Maps (%i,%i)", mProjMaxTheta, mProjMaxPhi);
 
 		const float DELTA_W = mRenderer->settings().ppm().projectionMapWeight();
-		const float MIN_W = (1-DELTA_W)*0.5f;
-		const uint32 PROJ_MAP_SAMPLES = 2 + 128*mRenderer->settings().ppm().projectionMapQuality();
+		const float CAUSTIC_PREF = mRenderer->settings().ppm().projectionMapPreferCaustic();
 
 		Random random;
 		for(Light* l : mLights)
 		{
-			if(!l->Hemi)
+			if(!l->Proj)
 				continue;
 	
-			for(uint32 thetaI = 0; thetaI < THETA_SIZE; ++thetaI)
+			const Sphere outerSphere = l->Entity->worldBoundingBox().outerSphere();
+			
+			for(uint32 thetaI = 0; thetaI < mProjMaxTheta; ++thetaI)
 			{
-				const float theta = PM_PI_2_DIV_F * thetaI / (float)THETA_SIZE;
+				const float theta = PM_PI_F * thetaI / (float)mProjMaxTheta;
 				float thCos, thSin;
 				PM::pm_SinCosT(theta, thSin, thCos);
 
-				for(uint32 phiI = 0; phiI < PHI_SIZE; ++phiI)
+				for(uint32 phiI = 0; phiI < mProjMaxPhi; ++phiI)
 				{
-					const float phi = PM_2_PI_F * phiI / (float)PHI_SIZE;
+					const float phi = PM_2_PI_F * phiI / (float)mProjMaxPhi;
 					float phCos, phSin;
 					PM::pm_SinCosT(phi, phSin, phCos);
+					PM::vec3 dir = PM::pm_Set(thSin * phCos, thSin * phSin, thCos);
 
-					float weight = 0.01f;
-					PM::vec3 locDir = PM::pm_Set(thSin * phCos, thSin * phSin, thCos);
-
-					RandomSampler sampler(random);
-					for(uint32 i = 0; i < PROJ_MAP_SAMPLES; ++i)
+					Ray ray(PM::pm_Zero(), 
+						PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
+						PM::pm_Negate(dir));
+					FaceSample lightSample;
+					float weight = 0;
+					if(l->Entity->checkCollision(ray, lightSample))
 					{
-						float pdf;
-						FaceSample lightSample = l->Entity->getRandomFacePoint(sampler,(uint32)i, pdf);
-						PM::vec3 dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-									locDir);
+						ray = Ray::safe(PM::pm_Zero(), lightSample.P, dir, 0, 0, RF_FromLight);
+						float pdf = std::abs(PM::pm_Dot3D(dir, lightSample.Ng));
 						
-						Ray ray = Ray::safe(PM::pm_Zero(), lightSample.P, dir, 0, 0, RF_FromLight);
-
-						for (uint32 j = 0;
+						uint32 j;// Calculates specular count
+						for (j = 0;
 							j < mRenderer->settings().maxRayDepth();
 							++j)
 						{
 							ShaderClosure sc;
 							RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
 
-							if (entity && sc.Material && sc.Material->canBeShaded() &&
-								sc.NdotV > PM_EPSILON)
-							{
+							if (entity && sc.Material && sc.Material->canBeShaded())
+							{							
 								PM::vec3 nextDir;
 								float l_pdf;
 
@@ -190,6 +197,19 @@ namespace PR
 									random.getFloat(),
 									random.getFloat());
 								nextDir = sc.Material->sample(sc, s, l_pdf);
+
+								const float NdotL = std::abs(PM::pm_Dot3D(nextDir, sc.N));
+								if(pdf*NdotL <= PM_EPSILON)// Drop this one.
+								{
+									if(j == 0)
+										pdf = 0;
+									else
+										j--;
+									
+									break;
+								}
+
+								pdf *= NdotL;
 
 								if (!std::isinf(l_pdf))// Diffuse
 								{
@@ -205,16 +225,14 @@ namespace PR
 								break;
 							}
 						}
-
-						weight += pdf;
+						weight = pdf*(1+(j/(float)mRenderer->settings().maxRayDepth())*CAUSTIC_PREF);
 					}
-
-					weight /= PROJ_MAP_SAMPLES;
-					l->Hemi->setProbability(theta, phi, weight * DELTA_W + MIN_W);
+					
+					l->Proj->setProbabilityWithIndex(thetaI, phiI, (weight+0.01f) * DELTA_W + (1-DELTA_W));
 				}
 			}
 
-			l->Hemi->setup();
+			l->Proj->setup();
 		}
 	}
 
@@ -233,6 +251,8 @@ namespace PR
 		Random random;
 		for (Light* light : mLights)
 		{
+			const Sphere outerSphere = light->Entity->worldBoundingBox().outerSphere();
+
 			const size_t sampleSize = light->Photons;
 			MultiJitteredSampler sampler(random, sampleSize);
 
@@ -242,12 +262,29 @@ namespace PR
 				 	photonsShoot < sampleSize;
 				 ++i)
 			{
-				float t_pdf;
-				FaceSample lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, t_pdf);
-				PM::vec3 dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-						light->Hemi ? 
-							light->Hemi->sample(random.getFloat(), random.getFloat(), random.getFloat(), random.getFloat(), t_pdf) :
-							Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf));
+				float t_pdf = 0;
+				FaceSample lightSample;
+				PM::vec3 dir;
+				
+				if(light->Proj)
+				{
+					dir = light->Proj->sample(random.getFloat(), random.getFloat(), random.getFloat(), random.getFloat(), t_pdf);
+					
+					Ray ray(PM::pm_Zero(),
+							PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
+						PM::pm_Negate(dir));
+					if(!light->Entity->checkCollision(ray, lightSample))
+						continue;
+				}
+				else
+				{
+					lightSample = light->Entity->getRandomFacePoint(sampler,(uint32) i, t_pdf);
+
+					float t_pdf2 = 0;
+					dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
+								Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf2));
+					t_pdf *= t_pdf2;
+				}
 				
 				Ray ray = Ray::safe(PM::pm_Zero(), lightSample.P, dir, 0, 0, RF_FromLight);
 
@@ -256,6 +293,7 @@ namespace PR
 				{
 					ShaderClosure lsc = lightSample;
 					radiance = lightSample.Material->emission()->eval(lsc);
+					//radiance /= t_pdf;
 				}
 				else
 				{
@@ -286,7 +324,7 @@ namespace PR
 							// Always store when diffuse
 							Photon::Photon photon;
 							PM::pm_Store3D(sc.P, photon.Position);
-							mPhotonMap->mapDirection(ray.direction(), photon.Theta, photon.Phi);
+							mPhotonMap->mapDirection(PM::pm_Negate(ray.direction()), photon.Theta, photon.Phi);
 #ifdef PR_USE_PHOTON_RGB
 							RGBConverter::convert(radiance, photon.Power[0], photon.Power[1], photon.Power[2]);
 #else
@@ -401,9 +439,9 @@ namespace PR
 							const float NdotL = std::abs(PM::pm_Dot3D(p.SC.N, dir));
 	#ifdef PR_USE_PHOTON_RGB
 							weight = p.SC.Material->eval(p.SC, dir, NdotL) *
-								RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]) * NdotL;
+								RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
 	#else
-							weight = p.SC.Material->eval(p.SC, dir, NdotL) * Spectrum(photon->Power) * NdotL;
+							weight = p.SC.Material->eval(p.SC, dir, NdotL) * Spectrum(photon->Power);
 	#endif//PR_USE_PHOTON_RGB
 
 	#ifdef PR_PPM_CONE_FILTER 
@@ -433,6 +471,10 @@ namespace PR
 
 	void PPMIntegrator::onPass(RenderTile* tile, RenderContext* context, uint32 pass)
 	{
+		// TODO: Find a solution for the background.
+		if(pass > 0)// Do we need other passes? Except for background.
+			return;
+
 		for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
 		{
 			for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)

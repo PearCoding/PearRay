@@ -5,6 +5,7 @@
 
 namespace PR
 {
+	// http://www.keithschwarz.com/darts-dice-coins/
 	class PR_LIB ProjectionMap
 	{
 	public:
@@ -38,14 +39,8 @@ namespace PR
 			return mProbability[x];
 		}
 
-		inline bool isSetup() const
+		inline void normalize()
 		{
-			return mProbTable != nullptr;
-		}
-
-		inline void setup()
-		{
-			// Normalize
 			float sum = 0;
 			for(uint32 i = 0; i < mResolution; ++i)
 				sum += mProbability[i];
@@ -54,17 +49,42 @@ namespace PR
 				return;
 
 			sum = 1/sum;
+			scale(sum);
+		}
+
+		inline void rebound()
+		{
+			float max = 0;
 			for(uint32 i = 0; i < mResolution; ++i)
-				mProbability[i] *= sum;
+				max = PM::pm_MaxT(max, mProbability[i]);
 			
-			// Setup dice table
-			float* prob = new float[mResolution];
+			if(max <= PM_EPSILON)
+				return;
+
+			max = 1/max;
+			scale(max);
+		}
+
+		inline void scale(float f)
+		{
+			for(uint32 i = 0; i < mResolution; ++i)
+				mProbability[i] *= f;
+		}
+
+		inline bool isSetup() const
+		{
+			return mProbTable != nullptr;
+		}
+
+		inline void setup()
+		{
+			// Setup tables
 			mProbTable = new float[mResolution];
 			mAliasTable = new uint32[mResolution];
-
 			std::deque<uint32> small;
 			std::deque<uint32> large;
 
+			float* prob = new float[mResolution];// Temporary ----
 			for(uint32 i = 0; i < mResolution; ++i)
 			{
 				float p = mProbability[i]*mResolution;
@@ -93,12 +113,14 @@ namespace PR
 				else
 					large.push_back(l);
 			}
+			delete[] prob;// Not needed anymore ----
 
 			while(!large.empty())
 			{
 				uint32 l = large.front();
 				large.pop_front();
 				mProbTable[l] = 1;
+				mAliasTable[l] = l;// Not really necessary, but safe is safe.
 			}
 
 			while(!small.empty())
@@ -106,22 +128,22 @@ namespace PR
 				uint32 l = small.front();
 				small.pop_front();
 				mProbTable[l] = 1;
+				mAliasTable[l] = l;
 			}
 
 			// Remap from [0,n] to [0,1]
 			for(uint32 i = 0; i < mResolution; ++i)
 				mProbTable[i] /= mResolution;
 
-			delete[] prob;
 		}
 
-		// u1, u2 in [0, 1]
+		// u1, u2 in [0, 1)
 		inline uint32 sample(float u1, float u2, float& pdf) const
 		{
-			uint32 i = (uint32)(u1*mResolution);
-			if(mProbTable[i] < u2)
+			uint32 i = PM::pm_ClampT<uint32>(u1*mResolution, 0, mResolution-1);
+			if(u2 < mProbTable[i])
 			{
-				pdf = mProbTable[i];
+				pdf = mProbability[i];
 				return i;
 			}
 			else
