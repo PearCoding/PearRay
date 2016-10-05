@@ -24,7 +24,7 @@ namespace PR
 	Spectrum DiffuseMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		if (mAlbedo)
-			return mAlbedo->eval(point) * (PM_INV_PI_F);
+			return mAlbedo->eval(point) * PM_INV_PI_F;
 		else
 			return Spectrum();
 	}

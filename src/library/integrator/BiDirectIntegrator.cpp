@@ -235,20 +235,16 @@ namespace PR
 						const PM::vec3 L = PM::pm_Negate(current.direction());
 
 						const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(sc.N, L));
+						if(NdotL <= PM_EPSILON)
+							continue;
+
 						const float pdf = sc.Material->pdf(sc, L, NdotL);
 
-						if(NdotL <= PM_EPSILON)
-						{
-							other_weight.clear();
-						}
+						if (context->shoot(current, other_sc) == entity &&
+								PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
+							other_weight = lightFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
 						else
-						{
-							if (context->shoot(current, other_sc) == entity &&
-									PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
-								other_weight = lightFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
-							else
-								other_weight.clear();
-						}
+							other_weight.clear();
 						MSI::power(full_weight, full_pdf, other_weight, pdf);
 					}
 				}

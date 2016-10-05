@@ -21,6 +21,9 @@ namespace PR
 		ScalarShaderOutput* roughnessY() const;
 		void setRoughnessY(ScalarShaderOutput* data);
 
+		ScalarShaderOutput* reflectivity() const;
+		void setReflectivity(ScalarShaderOutput* data);
+
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
@@ -30,5 +33,6 @@ namespace PR
 		SpectralShaderOutput* mSpecularity;
 		ScalarShaderOutput* mRoughnessX;
 		ScalarShaderOutput* mRoughnessY;
+		ScalarShaderOutput* mReflectivity;
 	};
 }

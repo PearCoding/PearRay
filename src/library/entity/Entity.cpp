@@ -36,7 +36,7 @@ namespace PR
 
 		PM::vec3 angle = PM::pm_RotationQuatToXYZ(mRotation);
 
-		PR_LOGGER.logf(L_Info, M_Camera,"%s: L P[%.3f,%.3f,%.3f,%.3f] R[%.3f,%.3f,%.3f] S[%.3f,%.3f,%.3f]",
+		PR_LOGGER.logf(L_Info, M_Camera,"%s: P[%.3f,%.3f,%.3f,%.3f] R[%.3f,%.3f,%.3f] S[%.3f,%.3f,%.3f]",
 			mName.c_str(),
 			PM::pm_GetX(mPosition), PM::pm_GetY(mPosition), PM::pm_GetZ(mPosition), PM::pm_GetW(mPosition),
 			PM::pm_RadToDeg(PM::pm_GetX(angle)), PM::pm_RadToDeg(PM::pm_GetY(angle)), PM::pm_RadToDeg(PM::pm_GetZ(angle)),

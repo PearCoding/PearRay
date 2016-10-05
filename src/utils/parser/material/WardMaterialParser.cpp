@@ -20,17 +20,18 @@ namespace PRU
 	Material* WardMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-
 		DL::Data* albedoD = group->getFromKey("albedo");
 		DL::Data* specularityD = group->getFromKey("specularity");
 		DL::Data* roughnessD = group->getFromKey("roughness");
 		DL::Data* roughnessXD = group->getFromKey("roughnessX");
 		DL::Data* roughnessYD = group->getFromKey("roughnessY");
+		DL::Data* reflectivityD = group->getFromKey("reflectivity");
 
 		WardMaterial* diff = new WardMaterial;
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setSpecularity(loader->getSpectralOutput(env, specularityD));
+		diff->setReflectivity(loader->getScalarOutput(env, reflectivityD));
 
 		if (roughnessD && !roughnessXD && !roughnessYD)
 		{

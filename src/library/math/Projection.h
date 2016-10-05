@@ -73,6 +73,7 @@ namespace PR
 		{
 			const float t1 = PM_2_PI_F * u1;
 			const float t2 = 2 * std::sqrt(u2 + u2*u2);
+			const float norm = 1.0f/std::sqrt(1+8*u2*u2);
 
 			float thCos, thSin;
 			PM::pm_SinCosT(t1, thSin, thCos);
@@ -83,7 +84,7 @@ namespace PR
 
 			pdf = PM_INV_PI_F * 0.25f;
 			
-			return PM::pm_Set(x,y,z);
+			return PM::pm_Set(x*norm,y*norm,z*norm);
 		}
 
 		static inline float sphere_pdf()
@@ -128,16 +129,17 @@ namespace PR
 			const float cosPhi = std::pow(u1, 1 / (m + 1.0f));
 			const float sinPhi = std::sqrt(1 - cosPhi*cosPhi);
 			const float theta = PM_2_PI_F * u2;
+			const float norm = 1.0f/std::sqrt(1-u1+cosPhi*cosPhi);
 
 			float thCos, thSin;
 			PM::pm_SinCosT(theta, thSin, thCos);
 
-			const float x = sinPhi * thCos;
-			const float y = sinPhi * thSin;
+			const float x = sinPhi * thCos * norm;
+			const float y = sinPhi * thSin * norm;
 
 			pdf = (m + 1.0f) * std::pow(cosPhi, m) * 0.5f * PM_INV_PI_F;
 
-			return PM::pm_Set(x, y, cosPhi);
+			return PM::pm_Set(x, y, cosPhi * norm);
 		}
 
 		static inline float cos_hemi_pdf(float NdotL)
