@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "PearMath.h"
 
 //#define PR_USE_STL_RANDOM
 
@@ -99,6 +100,21 @@ namespace PR
 #else
 			return getFloat();//TODO
 #endif
+		}
+
+		inline PM::vec2 get2D()
+		{
+			return PM::pm_Set(getFloat(), getFloat());
+		}
+
+		inline PM::vec3 get3D()
+		{
+			return PM::pm_Set(getFloat(), getFloat(), getFloat());
+		}
+
+		inline PM::vec4 get4D()
+		{
+			return PM::pm_Set(getFloat(), getFloat(), getFloat(), getFloat());
 		}
 	};
 }

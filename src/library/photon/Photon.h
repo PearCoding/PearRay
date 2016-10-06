@@ -3,7 +3,14 @@
 #include "spectral/Spectrum.h"
 #include "PearMath.h"
 
-#define PR_USE_PHOTON_RGB
+/*
+ 0 - Everything is spectral
+ 1 - Photon hitpoints are rgb, but camera hitpoints are spectral
+ 2 - Everything is rgb
+ */
+#ifndef PR_PHOTON_RGB_MODE
+# define PR_PHOTON_RGB_MODE 2
+#endif
 
 namespace PR
 {
@@ -14,9 +21,8 @@ namespace PR
 			float Position[3]; // Non compressed positions
 			uint8 Phi, Theta; // Support of 65536 possible directions is enough
 			uint8 KDFlags;// Flags for the KD-Tree
-#ifdef PR_USE_PHOTON_RGB
+#if PR_PHOTON_RGB_MODE >= 1
 			float Power[3];
-			uint8 _Padding;// Approx: 20 bytes?
 #else
 			float Power[Spectrum::SAMPLING_COUNT];// Approx: 370 bytes
 #endif

@@ -41,7 +41,6 @@ namespace PR
 
 		// Used temporary
 		ShaderClosure other_sc;
-		Spectrum other_weight;
 
 		// Hemisphere sampling
 		RandomSampler hemiSampler(context->random());
@@ -49,34 +48,46 @@ namespace PR
 			 i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
 			 ++i)
 		{
-			float pdf;
+			Spectrum other_weight;
+			float other_pdf = 0;
 			PM::vec3 rnd = hemiSampler.generate3D(i);
-			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
-			const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
-
-			if (pdf > PM_EPSILON)
+			for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
 			{
-				if (NdotL > PM_EPSILON)
-				{
-					Ray ray = in.next(sc.P, dir);
+				float path_weight;
+				float pdf;
 
-					RenderEntity* entity = context->shootWithEmission(other_weight, ray, other_sc);
-					if (entity && other_sc.Material &&
-						(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))						
-						other_weight += applyRay(ray, other_sc, context,
-							!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
-
-					other_weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
-				}
-				else
-					other_weight.clear();
+				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
+				if(path_weight <= PM_EPSILON)
+					continue;
 				
-				MSI::power(full_weight, full_pdf, other_weight, pdf);
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+
+				if (pdf > PM_EPSILON)
+				{
+					if (NdotL > PM_EPSILON)
+					{
+						Spectrum weight;
+						Ray ray = in.next(sc.P, dir);
+
+						RenderEntity* entity = context->shootWithEmission(weight, ray, other_sc);
+						if (entity && other_sc.Material &&
+							(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))						
+							weight += applyRay(ray, other_sc, context,
+								!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
+
+						weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
+						other_weight += path_weight*weight;
+					}					
+				}
+
+				other_pdf += path_weight * pdf;
 			}
+			MSI::power(full_weight, full_pdf, other_weight, other_pdf);
 		}
 
 		if (!std::isinf(full_pdf))
 		{
+			Spectrum other_weight;
 			// Area sampling!
 			for (RenderEntity* light : context->renderer()->lights())
 			{

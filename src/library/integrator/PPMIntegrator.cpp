@@ -325,7 +325,7 @@ namespace PR
 							Photon::Photon photon;
 							PM::pm_Store3D(sc.P, photon.Position);
 							mPhotonMap->mapDirection(PM::pm_Negate(ray.direction()), photon.Theta, photon.Phi);
-#ifdef PR_USE_PHOTON_RGB
+#if PR_PHOTON_RGB_MODE >= 1
 							RGBConverter::convert(radiance, photon.Power[0], photon.Power[1], photon.Power[2]);
 #else
 							for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
@@ -429,42 +429,58 @@ namespace PR
 
 						Spectrum weight;
 
-	#ifdef PR_PPM_CONE_FILTER
+#ifdef PR_PPM_CONE_FILTER
 						const float d = sphere.Distances2[i]/sphere.Distances2[0];
 						const float w = 1 - d / K;
 
 						if (w > PM_EPSILON)
 						{
-	#endif//PR_PPM_CONE_FILTER
+#endif//PR_PPM_CONE_FILTER
 							const float NdotL = std::abs(PM::pm_Dot3D(p.SC.N, dir));
-	#ifdef PR_USE_PHOTON_RGB
+#if PR_PHOTON_RGB_MODE >= 1
 							weight = p.SC.Material->eval(p.SC, dir, NdotL) *
 								RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
-	#else
+#else
 							weight = p.SC.Material->eval(p.SC, dir, NdotL) * Spectrum(photon->Power);
-	#endif//PR_USE_PHOTON_RGB
+#endif//PR_PHOTON_RGB_MODE
 
-	#ifdef PR_PPM_CONE_FILTER 
+#ifdef PR_PPM_CONE_FILTER 
 						}
 						full_weight += weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere.Distances2[0])));
-	#else
+#else
 						full_weight += weight * (PM_INV_PI_F / sphere.Distances2[0]);
-	#endif//PR_PPM_CONE_FILTER
+#endif//PR_PPM_CONE_FILTER
 					}
 					
 					// Change radius, photons etc.
-					const uint64 newN = p.CurrentPhotons + std::ceil(A*sphere.Found);
+					const uint64 newN = p.CurrentPhotons + std::floor(A*sphere.Found);
 					const float fraction = newN / (float)(p.CurrentPhotons + sphere.Found);
 					p.CurrentRadius *= fraction;
 					p.CurrentPhotons = newN;
+#if PR_PHOTON_RGB_MODE == 2
+					float rgb[3];
+					RGBConverter::convert(full_weight, rgb[0], rgb[1], rgb[2]);
+					p.CurrentFlux[0] = (p.CurrentFlux[0] + rgb[0]) * fraction;
+					p.CurrentFlux[1] = (p.CurrentFlux[1] + rgb[1]) * fraction;
+					p.CurrentFlux[2] = (p.CurrentFlux[2] + rgb[2]) * fraction;
+#else
 					p.CurrentFlux = (p.CurrentFlux + full_weight) * fraction;
+#endif//PR_PHOTON_RGB_MODE
 				}
 
 				const float inv = 1.0f / (context->renderer()->settings().ppm().maxPhotonsPerPass() * pass);
 
 				// Render result:
+#if PR_PHOTON_RGB_MODE == 2
+				context->renderer()->pushPixel_Normalized(
+					RGBConverter::toSpec(p.Weight[0] * p.CurrentFlux[0] * inv,
+						p.Weight[1] * p.CurrentFlux[1] * inv,
+						p.Weight[2] * p.CurrentFlux[2] * inv),
+					p.PixelX, p.PixelY);
+#else
 				context->renderer()->pushPixel_Normalized(p.Weight * p.CurrentFlux * inv,
 					p.PixelX, p.PixelY);
+#endif//PR_PHOTON_RGB_MODE
 			}
 		}
 	}
@@ -523,48 +539,65 @@ namespace PR
 		if (!sc.Material->canBeShaded())
 			return Spectrum();
 
-		float pdf;
-		PM::vec3 dir = sc.Material->sample(sc, PM::pm_Zero(), pdf);
-
 		Spectrum full_weight;
-		if(std::isinf(pdf))// Specular
+		PM::vec3 rnd = context->random().get3D();
+		for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
 		{
-			const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+			float pdf;
+			float path_weight;
+			PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 
-			if (NdotL > PM_EPSILON)
+			if(path_weight <= PM_EPSILON)
+				continue;
+			
+			Spectrum other_weight;
+			if(std::isinf(pdf))// Specular
 			{
-				Spectrum app = sc.Material->eval(sc, dir, NdotL)*NdotL;
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
-				Ray ray = in.next(sc.P, dir);
-				ShaderClosure sc2;
-				RenderEntity* entity = context->shootWithEmission(full_weight, ray, sc2);
-				if (entity && sc2.Material)
-					full_weight += firstPass(weight*app, ray, sc2, context);
-				full_weight *= app;
+				if (NdotL > PM_EPSILON)
+				{
+					Spectrum app = sc.Material->eval(sc, dir, NdotL)*NdotL;
+
+					Ray ray = in.next(sc.P, dir);
+					ShaderClosure sc2;
+					RenderEntity* entity = context->shootWithEmission(other_weight, ray, sc2);
+					if (entity && sc2.Material)
+						other_weight += firstPass(other_weight + weight*app, ray, sc2, context);
+					other_weight *= app;
+				}
 			}
-		}
-		else
-		{
-			pdf = 0;
-			float inf_pdf;
-			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::power(full_weight, pdf, inf_weight, inf_pdf);
-		
+			else
+			{
+				pdf = 0;
+				float inf_pdf;
+				Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+				MSI::power(other_weight, pdf, inf_weight, inf_pdf);
+			
 #if 0 //def PR_DEBUG
-			PR_LOGGER.logf(L_Debug, M_Integrator, "  ~~ HitPoint: (%.2f,%.2f)[%.3f,%.3f,%.3f]",
-				PM::pm_GetX(in.pixel()), PM::pm_GetY(in.pixel()),
-				PM::pm_GetX(sc.P), PM::pm_GetY(sc.P), PM::pm_GetZ(sc.P));
+				PR_LOGGER.logf(L_Debug, M_Integrator, "  ~~ HitPoint: (%.2f,%.2f)[%.3f,%.3f,%.3f]",
+					PM::pm_GetX(in.pixel()), PM::pm_GetY(in.pixel()),
+					PM::pm_GetX(sc.P), PM::pm_GetY(sc.P), PM::pm_GetZ(sc.P));
 #endif
-			// Store it into Hitpoints
-			RayHitPoint hitpoint;
-			hitpoint.SC = sc;
-			hitpoint.PixelX = PM::pm_GetX(in.pixel()); hitpoint.PixelY = PM::pm_GetY(in.pixel());
-			hitpoint.Weight = weight;
+				// Store it into Hitpoints
+				RayHitPoint hitpoint;
+				hitpoint.SC = sc;
+				hitpoint.PixelX = PM::pm_GetX(in.pixel()); hitpoint.PixelY = PM::pm_GetY(in.pixel());
 
-			hitpoint.CurrentRadius = context->renderer()->settings().ppm().maxGatherRadius() * context->renderer()->settings().ppm().maxGatherRadius();
-			hitpoint.CurrentPhotons = 0;
+#if PR_PHOTON_RGB_MODE == 2
+				RGBConverter::convert(weight, hitpoint.Weight[0], hitpoint.Weight[1], hitpoint.Weight[2]);
+				hitpoint.CurrentFlux[0] = 0; hitpoint.CurrentFlux[1] = 0; hitpoint.CurrentFlux[2] = 0;
+#else
+				hitpoint.Weight = weight;
+#endif//PR_PHOTON_RGB_MODE
 
-			mThreadData[context->threadNumber()].HitPoints.push_back(hitpoint);
+				hitpoint.CurrentRadius = context->renderer()->settings().ppm().maxGatherRadius() * context->renderer()->settings().ppm().maxGatherRadius();
+				hitpoint.CurrentPhotons = 0;
+
+				mThreadData[context->threadNumber()].HitPoints.push_back(hitpoint);
+			}
+
+			full_weight += path_weight * other_weight;
 		}
 
 		return full_weight;
@@ -576,7 +609,7 @@ namespace PR
 			return Spectrum();
 
 		float pdf;
-		PM::vec3 dir = sc.Material->sample(sc, PM::pm_Zero(), pdf);
+		PM::vec3 dir = sc.Material->sample(sc, context->random().get3D(), pdf);
 
 		Spectrum full_weight;
 		if(std::isinf(pdf))// Specular

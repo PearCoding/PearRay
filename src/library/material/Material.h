@@ -22,9 +22,26 @@ namespace PR
 		virtual float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
 
 		/*
-		 Sample a direction based on the uniform rnd value.
+		 Sample a direction based on the uniform rnd value. (Roussian Roulette)
 		*/
 		virtual PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) = 0;
+
+		/*
+		 Sample a direction based on the uniform rnd value. (Non roussian roulette)
+		*/
+		virtual PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& weight, uint32 path)
+		{
+			weight = 1;
+			return sample(point, rnd, pdf);
+		}
+
+		/*
+		 Returns amount of special paths in the material. (like reflection/refraction)
+		 */
+		virtual uint32 samplePathCount() const
+		{
+			return 1;
+		}
 
 		bool isLight() const;
 

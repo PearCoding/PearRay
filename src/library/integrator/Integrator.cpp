@@ -85,7 +85,7 @@ namespace PR
 				++depth)
 			{
 				PM::vec3 dir = other_sc.Material->sample(other_sc,
-					PM::pm_Set(context->random().getFloat(), context->random().getFloat(), context->random().getFloat()),
+					context->random().get3D(),
 					other_pdf);
 
 				if(!std::isinf(other_pdf))

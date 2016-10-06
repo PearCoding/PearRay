@@ -50,12 +50,20 @@ namespace PR
 			ShaderClosure SC;
 
 			float PixelX, PixelY;
+#if PR_PHOTON_RGB_MODE == 2
+			float Weight[3];
+#else
 			Spectrum Weight;
+#endif
 
 			// Will be updated!
 			float CurrentRadius;
 			uint64 CurrentPhotons;
+#if PR_PHOTON_RGB_MODE == 2
+			float CurrentFlux[3];
+#else
 			Spectrum CurrentFlux;
+#endif
 		};
 
 		Renderer* mRenderer;
