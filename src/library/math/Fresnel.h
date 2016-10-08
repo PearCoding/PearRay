@@ -26,6 +26,20 @@ namespace PR
 			return PM::pm_ClampT(R, 0.0f, 1.0f);
 		}
 
+		static inline float conductor(float dot, float n, float k)
+		{
+			const float dot2 = dot*dot;
+			const float f = (n*n + k*k);
+			const float d1 = f*dot2;
+			const float d2 = 2*n*dot;
+
+			const float para = (d1 - d2) / (d1 + d2);
+			const float perp = (f - d2 + dot2) / (f + d2 + dot2);
+
+			const float R = (para * para + perp * perp) / 2;
+			return PM::pm_ClampT(R, 0.0f, 1.0f);
+		}
+
 		static inline float schlick(float f0, float NdotV)
 		{
 			return f0 + (1 - f0)*schlick_term(NdotV);

@@ -144,7 +144,7 @@ namespace PR
 		float px, py;
 		if (mRoughnessX == mRoughnessY)// Isotropic
 		{
-			px = 2*PM_INV_PI_F*std::atan(m1 * std::sqrt(-std::log(PM::pm_MaxT(0.001f, PM::pm_GetX(rnd)))));
+			px = 2*PM_INV_PI_F*std::atan(m1 * std::sqrt(-std::log(PM::pm_MaxT(MinRoughness, PM::pm_GetX(rnd)))));
 			py = PM::pm_GetY(rnd);
 		}
 		else
@@ -153,7 +153,7 @@ namespace PR
 			PM::pm_SinCosT(PM_2_PI_F * PM::pm_GetY(rnd), s, c);
 			const float s2 = s*s;
 
-			px = 2*PM_INV_PI_F*std::atan(std::sqrt(-std::log(PM::pm_MaxT(0.001f, PM::pm_GetX(rnd))) * (m2*m2*s2 - m1*m1*s2 + m1*m1)));
+			px = 2*PM_INV_PI_F*std::atan(std::sqrt(-std::log(PM::pm_MaxT(MinRoughness, PM::pm_GetX(rnd))) * (m2*m2*s2 - m1*m1*s2 + m1*m1)));
 			py = 0.5f+PM_INV_PI_F*0.5f*std::atan2(m2*s, m1*c);
 		}
 

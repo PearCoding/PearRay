@@ -12,6 +12,7 @@
 #include "parser/entity/SphereParser.h"
 
 #include "parser/material/BlinnPhongMaterialParser.h"
+#include "parser/material/CookTorranceMaterialParser.h"
 #include "parser/material/DiffuseMaterialParser.h"
 #include "parser/material/GlassMaterialParser.h"
 #include "parser/material/GridMaterialParser.h"
@@ -440,13 +441,14 @@ namespace PRU
 		const IMaterialParser& Parser;
 	} MaterialParserEntries[] =
 	{
-		{ "standard", WardMaterialParser() },
+		{ "standard", CookTorranceMaterialParser() },
 		{ "light", DiffuseMaterialParser() },
 
 		{ "diffuse", DiffuseMaterialParser() },
 		{ "orennayar", OrenNayarMaterialParser() },
 		{ "blinnphong", BlinnPhongMaterialParser() },
 		{ "ward", WardMaterialParser() },
+		{ "cook_torrance", CookTorranceMaterialParser() },
 
 		{ "grid", GridMaterialParser() },
 		{ "glass", GlassMaterialParser() },

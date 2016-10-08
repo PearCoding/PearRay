@@ -23,8 +23,8 @@ namespace PRU
 		DL::Data* albedoD = group->getFromKey("albedo");
 		DL::Data* specularityD = group->getFromKey("specularity");
 		DL::Data* roughnessD = group->getFromKey("roughness");
-		DL::Data* roughnessXD = group->getFromKey("roughnessX");
-		DL::Data* roughnessYD = group->getFromKey("roughnessY");
+		DL::Data* roughnessXD = group->getFromKey("roughness_x");
+		DL::Data* roughnessYD = group->getFromKey("roughness_x");
 		DL::Data* reflectivityD = group->getFromKey("reflectivity");
 
 		WardMaterial* diff = new WardMaterial;

@@ -38,6 +38,7 @@ SET(PR_Light_Src
 SOURCE_GROUP("Source Files\\Light" FILES ${PR_Light_Src})
 SET(PR_Material_Src
   material/BlinnPhongMaterial.cpp
+  material/CookTorranceMaterial.cpp
   material/DiffuseMaterial.cpp
   material/GlassMaterial.cpp
   material/GridMaterial.cpp
@@ -145,6 +146,7 @@ SET(PR_Material_Hdr
   material/BlinnPhongMaterial.h
   material/BRDF.h
   material/BRDF.inl
+  material/CookTorranceMaterial.h
   material/DiffuseMaterial.h
   material/GlassMaterial.h
   material/GridMaterial.h

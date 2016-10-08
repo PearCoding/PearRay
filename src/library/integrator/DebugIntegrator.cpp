@@ -102,7 +102,7 @@ namespace PR
 			return RGBConverter::toSpec(PM::pm_MaxT(0.0f, -PM::pm_GetX(sc.N)),
 				PM::pm_MaxT(0.0f, -PM::pm_GetY(sc.Ny)),
 				PM::pm_MaxT(0.0f, -PM::pm_GetZ(sc.Ny)));
-
+		//OTHER STUFF
 		case DM_UV:
 			return RGBConverter::toSpec(PM::pm_GetX(sc.UV), PM::pm_GetY(sc.UV), 0);
 		case DM_PDF:
@@ -130,9 +130,6 @@ namespace PR
 			if (PM::pm_MagnitudeSqr3D(sc.N) - 1 > PM_EPSILON)
 				return RGBConverter::toSpec(1, 1, 0);
 
-			// if (std::abs(PM::pm_GetW(sc.N)) > PM_EPSILON)
-			// 	return RGBConverter::toSpec(1, 0, 1);
-
 			if (std::abs(PM::pm_GetW(sc.P)) - 1 > PM_EPSILON)
 				return RGBConverter::toSpec(0, 1, 1);
 			
@@ -140,7 +137,11 @@ namespace PR
 			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
 				context->random().getFloat(),
 				context->random().getFloat());
-			sc.Material->sample(sc, rnd, pdf);
+			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
+			
+			if (PM::pm_MagnitudeSqr3D(dir) - 1 > PM_EPSILON)
+				return RGBConverter::toSpec(1, 0, 1);
+
 			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?
 				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 		}

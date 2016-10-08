@@ -167,6 +167,9 @@ namespace PR
 		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*(uint32)context->renderer()->lights().size();
 		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();
 
+		if(in.depth() >= maxDepth)
+			return Spectrum();
+
 		ShaderClosure sc;
 		Spectrum applied;
 		Spectrum full_weight;
@@ -186,27 +189,36 @@ namespace PR
 			 	!std::isinf(full_pdf);
 			 ++i)
 		{
-			float pdf;
+			float other_pdf = 0;
+			Spectrum other_weight;
+
 			PM::vec3 rnd = sampler.generate3D(i);
-			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
-
-			if(pdf > PM_EPSILON)
+			for(uint32 path = 0; path < sc.Material->samplePathCount() && !std::isinf(other_pdf); ++path)
 			{
-				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+				Spectrum weight;
+				float pdf;
+				float path_weight;
+				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 
-				if (NdotL > PM_EPSILON &&
-					(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
+				if(pdf > PM_EPSILON && path_weight > PM_EPSILON)
 				{
-					other_weight = applyRay(in.next(sc.P, dir),
-						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
+					const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
-					other_weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
+					if (NdotL > PM_EPSILON &&
+						(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
+					{
+						weight = applyRay(in.next(sc.P, dir),
+							context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
+
+						weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
+					}
 				}
-				else
-					other_weight.clear();
 
-				MSI::power(full_weight, full_pdf, other_weight, pdf);
+				other_pdf += path_weight*pdf;
+				other_weight += path_weight*weight;
 			}
+
+			MSI::power(full_weight, full_pdf, other_weight, other_pdf);
 		}
 
 		if (!std::isinf(full_pdf))
@@ -245,6 +257,7 @@ namespace PR
 							other_weight = lightFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
 						else
 							other_weight.clear();
+
 						MSI::power(full_weight, full_pdf, other_weight, pdf);
 					}
 				}

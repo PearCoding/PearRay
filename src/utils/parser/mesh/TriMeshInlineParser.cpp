@@ -282,6 +282,7 @@ namespace PRU
 			me->calcNormals();
 		}
 		
+		PR_LOGGER.log(L_Info, M_Scene, "Mesh KDTree:");
 		me->build();
 		return me;
 	}

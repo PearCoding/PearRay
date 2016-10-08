@@ -80,7 +80,7 @@ namespace PR
 		}
 
 		pdf = std::numeric_limits<float>::infinity();
-		return dir;
+		return PM::pm_Normalize3D(dir);
 	}
 
 	uint32 GlassMaterial::samplePathCount() const

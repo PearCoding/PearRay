@@ -88,6 +88,8 @@ namespace PR
 			mKDTree = nullptr;
 		}
 
+		PR_LOGGER.logf(L_Info, M_Scene, "%i Render Entities", mRenderEntities.size());
+		
 		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FaceSample& point, RenderEntity* e) {
 				if(e->checkCollision(ray, point) &&

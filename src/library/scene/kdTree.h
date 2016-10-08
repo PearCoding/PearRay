@@ -135,6 +135,18 @@ namespace PR
 			if (entities.empty())
 				return;
 
+			PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
+			if (entities.size() == 1)
+			{
+				T* e = entities.front();
+				auto leaf = new kdLeafNode(mGetBoundingBox(e));
+				leaf->objects.push_back(e);
+
+				mDepth = 1;
+				mRoot = leaf;
+				return;
+			}
+
 			std::vector<Primitive*> primitives;// Will be cleared to save memory
 			std::vector<Primitive*> primitivesCopy;// Copy for delete later
 
@@ -146,8 +158,6 @@ namespace PR
 				primitivesCopy.push_back(prim);
 				V.combine(prim->box);
 			}
-
-			PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
 
 			std::vector<Event> events;
 			events.reserve(entities.size() * 2);

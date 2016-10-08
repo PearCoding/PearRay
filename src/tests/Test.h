@@ -207,14 +207,14 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected greater then " << (expected) << " but got " << (value); \
-		_test->assert((value) < (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->assert((value) > (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_GREAT_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected greater or equal then " << (expected) << " but got " << (value); \
-		_test->assert((value) <= (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->assert((value) >= (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NEARLY_EQ(value, expected) \

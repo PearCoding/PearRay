@@ -52,6 +52,6 @@ namespace PR
 	PM::vec3 MirrorMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		pdf = std::numeric_limits<float>::infinity();
-		return Reflection::reflect(point.NdotV, point.N, point.V);
+		return PM::pm_Normalize3D(Reflection::reflect(point.NdotV, point.N, point.V));
 	}
 }

@@ -4,6 +4,8 @@
 
 #include "math/Projection.h"
 
+#include "BRDF.h"
+
 namespace PR
 {
 	OrenNayarMaterial::OrenNayarMaterial() :
@@ -42,23 +44,7 @@ namespace PR
 				roughness *= roughness;// Square
 
 				if (roughness > PM_EPSILON)// Oren Nayar
-				{
-					const float angleVN = std::acos(point.NdotV);
-					const float angleLN = std::acos(NdotL);
-					const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
-					const float or_beta = PM::pm_MinT(angleLN, angleVN);
-
-					const float A = 1 - 0.5f * roughness / (roughness + 0.57f);
-					const float B = 0.45f * roughness / (roughness + 0.09f);
-					const float C = std::sin(or_alpha) * std::tan(or_beta);
-
-					const float gamma = PM::pm_Dot3D(PM::pm_Add(point.V, PM::pm_Scale(point.N, point.NdotV)),
-						PM::pm_Subtract(L, PM::pm_Scale(point.N, NdotL)));
-
-					const float L1 = (A + B * C * PM::pm_MaxT(0.0f, gamma));
-
-					val *= L1;
-				}
+					val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
 			}// else lambert
 
 			return mAlbedo->eval(point) * val;

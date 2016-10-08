@@ -19,6 +19,7 @@ SET(PR_Parser_Light_Src
 SOURCE_GROUP("Source Files\\Parser\\Light" FILES ${PR_Parser_Light_Src})
 SET(PR_Parser_Material_Src
   parser/material/BlinnPhongMaterialParser.cpp
+  parser/material/CookTorranceMaterialParser.cpp
   parser/material/DiffuseMaterialParser.cpp
   parser/material/GlassMaterialParser.cpp
   parser/material/GridMaterialParser.cpp
@@ -69,6 +70,7 @@ SET(PR_Parser_Light_Hdr
 SOURCE_GROUP("Header Files\\Parser\\Light" FILES ${PR_Parser_Light_Hdr})
 SET(PR_Parser_Material_Hdr
   parser/material/BlinnPhongMaterialParser.h
+  parser/material/CookTorranceMaterialParser.h
   parser/material/DiffuseMaterialParser.h
   parser/material/GlassMaterialParser.h
   parser/material/GridMaterialParser.h

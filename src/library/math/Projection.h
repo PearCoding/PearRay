@@ -92,6 +92,8 @@ namespace PR
 			return PM_INV_PI_F * 0.25f;
 		}
 
+		// theta [0, PI]
+		// phi [0, 2*PI]
 		static inline PM::vec3 sphere_coord(float theta, float phi)
 		{
 			float thCos, thSin;
