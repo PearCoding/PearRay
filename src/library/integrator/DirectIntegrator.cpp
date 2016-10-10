@@ -99,7 +99,7 @@ namespace PR
 
 					const PM::vec3 PS = PM::pm_Subtract(p.P, sc.P);
 					const PM::vec3 L = PM::pm_Normalize3D(PS);
-					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(L, sc.N));
+					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(L, sc.N));
 
 					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) 
 						+ sc.Material->pdf(sc, L, NdotL);

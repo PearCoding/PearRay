@@ -4,10 +4,10 @@ namespace PR
 		const PM::vec3 V, const PM::vec3 N, const PM::vec3 L,
 		float NdotV, float NdotL)
 	{
-		const float angleVN = std::acos(NdotV);
-		const float angleLN = std::acos(NdotL);
-		const float or_alpha = PM::pm_MaxT(angleLN, angleVN);
-		const float or_beta = PM::pm_MinT(angleLN, angleVN);
+		const float angleVN = PM::pm_SafeACos(NdotV);
+		const float angleLN = PM::pm_SafeACos(NdotL);
+		const float or_alpha = PM::pm_Max(angleLN, angleVN);
+		const float or_beta = PM::pm_Min(angleLN, angleVN);
 
 		const float A = 1 - 0.5f * roughness / (roughness + 0.57f);
 		const float B = 0.45f * roughness / (roughness + 0.09f);
@@ -16,7 +16,7 @@ namespace PR
 		const float gamma = PM::pm_Dot3D(PM::pm_Add(V, PM::pm_Scale(N, NdotV)),
 			PM::pm_Subtract(L, PM::pm_Scale(N, NdotL)));
 
-		const float L1 = (A + B * C * PM::pm_MaxT(0.0f, gamma));
+		const float L1 = (A + B * C * PM::pm_Max(0.0f, gamma));
 
 		return PM_INV_PI_F * L1;
 	}
@@ -61,12 +61,12 @@ namespace PR
 
 	inline float BRDF::g_neumann(float NdotV, float NdotL)
 	{
-		return 1/*NdotV * NdotL*/ / PM::pm_MaxT(NdotV, NdotL);
+		return 1/*NdotV * NdotL*/ / PM::pm_Max(NdotV, NdotL);
 	}
 
 	inline float BRDF::g_cooktorrance(float NdotV, float NdotL, float NdotH, float VdotH)
 	{
-		return PM::pm_ClampT(2 * PM::pm_MinT(NdotV, 2 * NdotH*NdotL) / (VdotH*NdotL*NdotV), 0.0f, 1.0f);
+		return PM::pm_Clamp(2 * PM::pm_Min(NdotV, 2 * NdotH*NdotL) / (VdotH*NdotL*NdotV), 0.0f, 1.0f);
 			//PM::pm_ClampT(PM::pm_MinT(2 * NdotV, 2 * NdotH*NdotL) / VdotH, 0.0f, 1.0f);
 	}
 

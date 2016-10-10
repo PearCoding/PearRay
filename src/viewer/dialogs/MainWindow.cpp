@@ -328,7 +328,7 @@ void MainWindow::updateView()
 		PR::RenderStatistics stats = mRenderer->stats();
 		const float percent = mRenderer->percentFinished() / 100;
 
-		quint64 timeLeft = (1 - percent) * time / PM::pm_MaxT(0.0001f, percent);
+		quint64 timeLeft = (1 - percent) * time / PM::pm_Max(0.0001f, percent);
 
 		mLastPercent = percent;
 

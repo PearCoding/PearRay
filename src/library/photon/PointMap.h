@@ -51,7 +51,7 @@ namespace PR
 
 			inline void mapDirection(const PM::vec3& dir, uint8& theta, uint8& phi) const
 			{
-				int theta2 = (int)(std::acos(PM::pm_GetZ(dir)) * 256 * PM_INV_PI_F);
+				int theta2 = (int)(PM::pm_SafeACos(PM::pm_GetZ(dir)) * 256 * PM_INV_PI_F);
 				if (theta2 > 255)
 					theta = 255;
 				else

@@ -25,7 +25,7 @@ namespace PR
 		size_t maxSize = (size_t)std::ceil((0.4f * fullSize) /
 			(PR::Spectrum::SAMPLING_COUNT * sizeof(float)));
 
-		mRunSize = PM::pm_MinT(maxSize, size);
+		mRunSize = PM::pm_Min(maxSize, size);
 		try
 		{
 			mSpecInput = cl::Buffer(gpu->context(),
@@ -87,7 +87,7 @@ namespace PR
 
 				for (size_t off = 0; off < mSize; off += mRunSize)
 				{
-					size_t current = PM::pm_MinT(mSize - off, mRunSize);
+					size_t current = PM::pm_Min(mSize - off, mRunSize);
 					specKernel.setArg(2, (cl_ulong)off);
 
 					queue.enqueueWriteBuffer(mSpecInput, CL_TRUE,
@@ -221,9 +221,9 @@ namespace PR
 				// Map 4: Float to Byte
 				if (mByte)
 				{
-					reinterpret_cast<uint8*>(out)[i * 3] = (uint8)(PM::pm_ClampT(r, 0.0f, 1.0f) * 255);
-					reinterpret_cast<uint8*>(out)[i * 3 + 1] = (uint8)(PM::pm_ClampT(g, 0.0f, 1.0f) * 255);
-					reinterpret_cast<uint8*>(out)[i * 3 + 2] = (uint8)(PM::pm_ClampT(b, 0.0f, 1.0f) * 255);
+					reinterpret_cast<uint8*>(out)[i * 3] = (uint8)(PM::pm_Clamp(r, 0.0f, 1.0f) * 255);
+					reinterpret_cast<uint8*>(out)[i * 3 + 1] = (uint8)(PM::pm_Clamp(g, 0.0f, 1.0f) * 255);
+					reinterpret_cast<uint8*>(out)[i * 3 + 2] = (uint8)(PM::pm_Clamp(b, 0.0f, 1.0f) * 255);
 				}
 				else
 				{

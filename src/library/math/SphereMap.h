@@ -24,16 +24,16 @@ namespace PR
 
 		inline void setProbability(float theta, float phi, float value)
 		{
-			uint32 i = PM::pm_ClampT<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
-			uint32 j = PM::pm_ClampT<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
+			uint32 i = PM::pm_Clamp<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
+			uint32 j = PM::pm_Clamp<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
 
 			setProbabilityWithIndex(i, j, value);
 		}
 
 		inline float probability(float theta, float phi) const
 		{
-			uint32 i = PM::pm_ClampT<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
-			uint32 j = PM::pm_ClampT<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
+			uint32 i = PM::pm_Clamp<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
+			uint32 j = PM::pm_Clamp<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
 
 			return probabilityWithIndex(i, j);
 		}
@@ -73,8 +73,8 @@ namespace PR
 			uint32 phiI = i % mResPhi;
 			uint32 thetaI = i / mResPhi;
 
-			float phi = PM_2_PI_F * PM::pm_ClampT((phiI+u3) / (float)mResPhi, 0.0f, 1.0f);
-			float theta = PM_PI_F * PM::pm_ClampT((thetaI+u4) / (float)mResTheta, 0.0f, 1.0f);
+			float phi = PM_2_PI_F * PM::pm_Clamp((phiI+u3) / (float)mResPhi, 0.0f, 1.0f);
+			float theta = PM_PI_F * PM::pm_Clamp((thetaI+u4) / (float)mResTheta, 0.0f, 1.0f);
 
 			return Projection::sphere_coord(theta, phi);
 		}

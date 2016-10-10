@@ -56,7 +56,7 @@ namespace PR
 		{
 			float max = 0;
 			for(uint32 i = 0; i < mResolution; ++i)
-				max = PM::pm_MaxT(max, mProbability[i]);
+				max = PM::pm_Max(max, mProbability[i]);
 			
 			if(max <= PM_EPSILON)
 				return;
@@ -140,7 +140,7 @@ namespace PR
 		// u1, u2 in [0, 1)
 		inline uint32 sample(float u1, float u2, float& pdf) const
 		{
-			uint32 i = PM::pm_ClampT<uint32>(u1*mResolution, 0, mResolution-1);
+			uint32 i = PM::pm_Clamp<uint32>(u1*mResolution, 0, mResolution-1);
 			if(u2 < mProbTable[i])
 			{
 				pdf = mProbability[i];

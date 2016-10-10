@@ -13,7 +13,7 @@ namespace PR
 		// Map [0, 1] uniformly to [min, max] as integers! (max is included)
 		static inline int map(float u, int min, int max)
 		{
-			return PM::pm_MinT<int>(max - min, static_cast<int>(u*(max - min + 1))) + min;
+			return PM::pm_Min<int>(max - min, static_cast<int>(u*(max - min + 1))) + min;
 		}
 
 		static inline float stratified(float u, int index, int groups, float min = 0, float max = 1)
@@ -76,7 +76,7 @@ namespace PR
 			const float norm = 1.0f/std::sqrt(1+8*u2*u2);
 
 			float thCos, thSin;
-			PM::pm_SinCosT(t1, thSin, thCos);
+			PM::pm_SinCos(t1, thSin, thCos);
 
 			const float x = t2 * thCos;
 			const float y = t2 * thSin;
@@ -97,10 +97,10 @@ namespace PR
 		static inline PM::vec3 sphere_coord(float theta, float phi)
 		{
 			float thCos, thSin;
-			PM::pm_SinCosT(theta, thSin, thCos);
+			PM::pm_SinCos(theta, thSin, thCos);
 
 			float phCos, phSin;
-			PM::pm_SinCosT(phi, phSin, phCos);
+			PM::pm_SinCos(phi, phSin, phCos);
 
 			return PM::pm_Set(thSin * phCos,
 				thSin * phSin,
@@ -116,7 +116,7 @@ namespace PR
 			const float theta = PM_2_PI_F * u2;
 
 			float thCos, thSin;
-			PM::pm_SinCosT(theta, thSin, thCos);
+			PM::pm_SinCos(theta, thSin, thCos);
 
 			const float x = sinPhi * thCos;
 			const float y = sinPhi * thSin;
@@ -134,7 +134,7 @@ namespace PR
 			const float norm = 1.0f/std::sqrt(1-u1+cosPhi*cosPhi);
 
 			float thCos, thSin;
-			PM::pm_SinCosT(theta, thSin, thCos);
+			PM::pm_SinCos(theta, thSin, thCos);
 
 			const float x = sinPhi * thCos * norm;
 			const float y = sinPhi * thSin * norm;

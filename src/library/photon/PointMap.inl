@@ -16,8 +16,8 @@ namespace PR
 			{
 				float angle = i * (1.0f / 256)*PM_PI_F;
 
-				PM::pm_SinCosT(angle, mSinTheta[i], mCosTheta[i]);
-				PM::pm_SinCosT(2 * angle, mSinPhi[i], mCosPhi[i]);
+				PM::pm_SinCos(angle, mSinTheta[i], mCosTheta[i]);
+				PM::pm_SinCos(2 * angle, mSinPhi[i], mCosPhi[i]);
 			}
 		}
 

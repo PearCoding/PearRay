@@ -708,7 +708,7 @@ namespace PRU
 					if (grp->unnamedCount() == 1 &&
 						grp->at(0)->isNumber())
 					{
-						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
 						spec.setEmissive(true);
 						spec.weightPhotometric();
 
@@ -722,7 +722,7 @@ namespace PRU
 					if (grp->unnamedCount() >= 1 &&
 						grp->at(0)->isNumber())
 					{
-						spec = Spectrum::fromBlackbody(PM::pm_MaxT(0.0f, grp->at(0)->getFloatConverted()));
+						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
 						spec.weightPhotometric();
 						spec.normalize();
 						spec.setEmissive(true);

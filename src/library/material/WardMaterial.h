@@ -28,7 +28,13 @@ namespace PR
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
 
+		PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& weight, uint32 path) override;
+		uint32 samplePathCount() const override;
+		
 	private:
+		PM::vec3 diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
+		PM::vec3 specular_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
+
 		SpectralShaderOutput* mAlbedo;
 		SpectralShaderOutput* mSpecularity;
 		ScalarShaderOutput* mRoughnessX;

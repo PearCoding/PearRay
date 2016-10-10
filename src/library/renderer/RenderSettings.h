@@ -77,16 +77,16 @@ namespace PR
 
 		// Crop
 		inline float cropMaxX() const { return mCropMaxX; }
-		inline void setCropMaxX(float v) { mCropMaxX = PM::pm_ClampT(v, mCropMinX, 1.0f); }
+		inline void setCropMaxX(float v) { mCropMaxX = PM::pm_Clamp(v, mCropMinX, 1.0f); }
 
 		inline float cropMinX() const { return mCropMinX; }
-		inline void setCropMinX(float v) { mCropMinX = PM::pm_ClampT(v, 0.0f, mCropMaxX); }
+		inline void setCropMinX(float v) { mCropMinX = PM::pm_Clamp(v, 0.0f, mCropMaxX); }
 
 		inline float cropMaxY() const { return mCropMaxY; }
-		inline void setCropMaxY(float v) { mCropMaxY = PM::pm_ClampT(v, mCropMinY, 1.0f); }
+		inline void setCropMaxY(float v) { mCropMaxY = PM::pm_Clamp(v, mCropMinY, 1.0f); }
 
 		inline float cropMinY() const { return mCropMinY; }
-		inline void setCropMinY(float v) { mCropMinY = PM::pm_ClampT(v, 0.0f, mCropMaxY); }
+		inline void setCropMinY(float v) { mCropMinY = PM::pm_Clamp(v, 0.0f, mCropMaxY); }
 
 		// Direct Lightning
 		inline uint32 maxLightSamples() const { return mMaxLightSamples; }
@@ -101,7 +101,7 @@ namespace PR
 		inline void setAdaptiveSampling(bool b) { mAdaptiveSampling = b; }
 
 		inline float maxASError() const { return mASMaxError; }
-		inline void setMaxASError(float f) { mASMaxError = f; }
+		inline void setMaxASError(float f) { mASMaxError = PM::pm_Max(f, 0.0f); }
 
 		inline uint32 minPixelSampleCount() const { return mMinPixelSampleCount; }
 		inline void setMinPixelSampleCount(uint32 v) { mMinPixelSampleCount = v; }

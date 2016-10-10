@@ -19,7 +19,7 @@ namespace PR
 		*/
 		inline static PM::vec3 reflect(float NdotV, const PM::vec3& N, const PM::vec3& V)
 		{
-			return PM::pm_Add(V, PM::pm_Scale(N, 2 * NdotV));
+			return PM::pm_Normalize3D(PM::pm_Add(V, PM::pm_Scale(N, 2 * NdotV)));
 		}
 
 		/**
@@ -70,6 +70,17 @@ namespace PR
 		inline static PM::vec3 faceforward(float NdotV, const PM::vec3& N)
 		{
 			return (NdotV < 0.0f) ? N : PM::pm_Negate(N);
+		}
+
+		/**
+		* Returns the halfway vector between V and L.
+		* @param V Unit vector pointing TO the surface point.
+		* @param L Unit vector pointing FROM the surface point outwards.
+		* @return Unit vector pointing FROM the surface point outwards. (Between L and V)
+		 */
+		inline static PM::vec3 halfway(const PM::vec3& V, const PM::vec3& L)
+		{
+			return PM::pm_Normalize3D(PM::pm_Subtract(L, V));
 		}
 	};
 }

@@ -59,13 +59,13 @@ namespace PR
 		inline Sphere outerSphere()
 		{
 			return Sphere(center(),
-				PM::pm_MaxT(width(), PM::pm_MaxT(height(), depth()))*0.5f*1.73205080757f);
+				PM::pm_Max(width(), PM::pm_Max(height(), depth()))*0.5f*1.73205080757f);
 		}
 
 		inline Sphere innerSphere()
 		{
 			return Sphere(center(),
-				PM::pm_MaxT(width(), PM::pm_MaxT(height(), depth()))*0.5f);
+				PM::pm_Max(width(), PM::pm_Max(height(), depth()))*0.5f);
 		}
 
 		inline float volume() const { return width()*height()*depth(); }

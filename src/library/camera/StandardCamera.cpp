@@ -134,7 +134,7 @@ namespace PR
 			float s, c;
 			if (std::abs(mFStop) > PM_EPSILON && mApertureRadius > PM_EPSILON)
 			{
-				PM::pm_SinCosT(PM_2_PI_F * rx, s, c);
+				PM::pm_SinCos(PM_2_PI_F * rx, s, c);
 				s *= ry;
 				c *= ry;
 			}

@@ -80,11 +80,11 @@ namespace PRN
 			PR_ASSERT(sx < ex);
 			PR_ASSERT(sy < ey);
 			
-			sx = PM::pm_MaxT(sx, mRenderer->cropPixelOffsetX()) - mRenderer->cropPixelOffsetX();
-			sy = PM::pm_MaxT(sy, mRenderer->cropPixelOffsetY()) - mRenderer->cropPixelOffsetY();
+			sx = PM::pm_Max(sx, mRenderer->cropPixelOffsetX()) - mRenderer->cropPixelOffsetX();
+			sy = PM::pm_Max(sy, mRenderer->cropPixelOffsetY()) - mRenderer->cropPixelOffsetY();
 
-			ex = PM::pm_MinT(ex, mRenderer->cropPixelOffsetX() + mRenderer->renderWidth()) - mRenderer->cropPixelOffsetX();
-			ey = PM::pm_MinT(ey, mRenderer->cropPixelOffsetY() + mRenderer->renderHeight()) - mRenderer->cropPixelOffsetY();
+			ex = PM::pm_Min(ex, mRenderer->cropPixelOffsetX() + mRenderer->renderWidth()) - mRenderer->cropPixelOffsetX();
+			ey = PM::pm_Min(ey, mRenderer->cropPixelOffsetY() + mRenderer->renderHeight()) - mRenderer->cropPixelOffsetY();
 
 			for(uint32 y = sy; y < ey; ++y)// Line by line
 			{

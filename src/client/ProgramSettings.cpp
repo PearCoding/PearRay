@@ -440,7 +440,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
 		RenderSettings.setAdaptiveSampling(ini["pixelsampler.adaptive"].as<bool>());
 		RenderSettings.setMinPixelSampleCount(ini["pixelsampler.min"].as<PR::uint32>());
-		RenderSettings.setMaxASError(PM::pm_MaxT(MinMaxASError, ini["pixelsampler.max_error"].as<float>()));
+		RenderSettings.setMaxASError(PM::pm_Max(MinMaxASError, ini["pixelsampler.max_error"].as<float>()));
 
 		// Global Illumination
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
@@ -452,11 +452,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.ppm().setMaxGatherRadius(ini["ppm.radius"].as<float>());
 		RenderSettings.ppm().setMaxGatherCount(ini["ppm.max"].as<PR::uint32>());
 		RenderSettings.ppm().setGatheringMode(ini["ppm.gathering_mode"].as<EnumOption<PPMGatheringMode> >());
-		RenderSettings.ppm().setSqueezeWeight(PM::pm_ClampT<float>(ini["ppm.squeeze"].as<float>(), 0, 1));
-		RenderSettings.ppm().setContractRatio(PM::pm_ClampT<float>(ini["ppm.ratio"].as<float>(), 0.01f, 1));
-		RenderSettings.ppm().setProjectionMapWeight(PM::pm_ClampT<float>(ini["ppm.proj"].as<float>(), 0, 1));
-		RenderSettings.ppm().setProjectionMapQuality(PM::pm_ClampT<float>(ini["ppm.proj_qual"].as<float>(), 0.01f, 1));
-		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_MaxT<float>(ini["ppm.proj_caustic"].as<float>(), 0));
+		RenderSettings.ppm().setSqueezeWeight(PM::pm_Clamp<float>(ini["ppm.squeeze"].as<float>(), 0, 1));
+		RenderSettings.ppm().setContractRatio(PM::pm_Clamp<float>(ini["ppm.ratio"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setProjectionMapWeight(PM::pm_Clamp<float>(ini["ppm.proj"].as<float>(), 0, 1));
+		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Clamp<float>(ini["ppm.proj_qual"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_Max<float>(ini["ppm.proj_caustic"].as<float>(), 0));
 	}
 
 	if(!vm.count("input"))
@@ -572,7 +572,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("ps_min"))
 		RenderSettings.setMinPixelSampleCount(vm["ps_min"].as<PR::uint32>());
 	if(vm.count("ps_max_error"))
-		RenderSettings.setMaxASError(PM::pm_MaxT(MinMaxASError, vm["ps_max_error"].as<float>()));
+		RenderSettings.setMaxASError(PM::pm_Max(MinMaxASError, vm["ps_max_error"].as<float>()));
 
 	// Global Illumination
 	if(vm.count("gi_diff_max"))
@@ -592,15 +592,15 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("p_g_mode"))
 		RenderSettings.ppm().setGatheringMode(vm["p_g_mode"].as<EnumOption<PPMGatheringMode> >());
 	if(vm.count("p_squeeze"))
-		RenderSettings.ppm().setSqueezeWeight(PM::pm_ClampT<float>(vm["p_squeeze"].as<float>(), 0, 1));
+		RenderSettings.ppm().setSqueezeWeight(PM::pm_Clamp<float>(vm["p_squeeze"].as<float>(), 0, 1));
 	if(vm.count("p_ratio"))
-		RenderSettings.ppm().setContractRatio(PM::pm_ClampT<float>(vm["p_ratio"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setContractRatio(PM::pm_Clamp<float>(vm["p_ratio"].as<float>(), 0.01f, 1));
 	if(vm.count("p_proj"))
-		RenderSettings.ppm().setProjectionMapWeight(PM::pm_ClampT<float>(vm["p_proj"].as<float>(), 0, 1));
+		RenderSettings.ppm().setProjectionMapWeight(PM::pm_Clamp<float>(vm["p_proj"].as<float>(), 0, 1));
 	if(vm.count("p_proj_qual"))
-		RenderSettings.ppm().setProjectionMapQuality(PM::pm_ClampT<float>(vm["p_proj_qual"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Clamp<float>(vm["p_proj_qual"].as<float>(), 0.01f, 1));
 	if(vm.count("p_proj_caustic"))
-		RenderSettings.ppm().setProjectionMapQuality(PM::pm_MaxT<float>(vm["p_proj_caustic"].as<float>(), 0));
+		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Max<float>(vm["p_proj_caustic"].as<float>(), 0));
 	
 	return true;
 }

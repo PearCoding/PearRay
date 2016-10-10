@@ -50,6 +50,7 @@ namespace PR
 		float dT;
 
 		// Some other utility variables
+		float NgdotV;
 		float NdotV;
 		uint8 Flags;
 
@@ -76,6 +77,7 @@ namespace PR
 			dUVdY(PM::pm_Zero()),
 			T(0),
 			dT(0),
+			NgdotV(0),
 			NdotV(0),
 			Flags(0),
 			Material(nullptr)
@@ -101,6 +103,7 @@ namespace PR
 			dUVdY(fs.dUVdY),
 			T(0),
 			dT(0),
+			NgdotV(0),
 			NdotV(0),
 			Flags(0),
 			Material(fs.Material)

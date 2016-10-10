@@ -208,7 +208,7 @@ namespace PR
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
 		if (threads < 0)
-			threadCount = PM::pm_MaxT(1, (int32)threadCount + threads);
+			threadCount = PM::pm_Max(1, (int32)threadCount + threads);
 		else if(threads > 0)
 			threadCount = threads;
 
@@ -259,8 +259,8 @@ namespace PR
 				mTileMap[i*mTileXCount + j] = new RenderTile(
 					sx,
 					sy,
-					PM::pm_MinT((uint32)std::ceil(mRenderSettings.cropMaxX()*mWidth), sx + mTileWidth),
-					PM::pm_MinT((uint32)std::ceil(mRenderSettings.cropMaxY()*mHeight), sy + mTileHeight));
+					PM::pm_Min((uint32)std::ceil(mRenderSettings.cropMaxX()*mWidth), sx + mTileWidth),
+					PM::pm_Min((uint32)std::ceil(mRenderSettings.cropMaxY()*mHeight), sy + mTileHeight));
 			}
 		}
 
@@ -279,16 +279,16 @@ namespace PR
 
 	void Renderer::pushPixel_Normalized(const Spectrum& spec, float x, float y)
 	{
-		uint32 px = PM::pm_ClampT<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
-		uint32 py = PM::pm_ClampT<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
+		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
+		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
 
 		mPixelMap->pushFragment(px, py, 0, spec);
 	}
 
 	Spectrum Renderer::getPixel_Normalized(float x, float y)
 	{
-		uint32 px = PM::pm_ClampT<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
-		uint32 py = PM::pm_ClampT<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
+		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
+		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
 		
 		return mPixelMap->getFragment(px, py, 0);
 	}
@@ -362,7 +362,7 @@ namespace PR
 	RenderEntity* Renderer::shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
-			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
+			mRenderSettings.maxRayDepth() : PM::pm_Min<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
 			sc.Flags = 0;
@@ -371,10 +371,10 @@ namespace PR
 			RenderEntity* entity = mScene->checkCollision(ray, fs);
 			sc = fs;
 
-			const float NdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
-			sc.N = Reflection::faceforward(NdotV, sc.Ng);
-			sc.Flags |= (NdotV > 0) ? SCF_Inside : 0;
-			sc.NdotV = std::abs(NdotV);
+			sc.NgdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
+			sc.N = Reflection::faceforward(sc.NgdotV, sc.Ng);
+			sc.Flags |= (sc.NgdotV > 0) ? SCF_Inside : 0;
+			sc.NdotV = std::abs(sc.NgdotV);
 			sc.V = ray.direction();
 
 			if (sc.Flags & SCF_Inside)
@@ -407,7 +407,7 @@ namespace PR
 	bool Renderer::shootForDetection(const Ray& ray, RenderContext* context)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
-			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
+			mRenderSettings.maxRayDepth() : PM::pm_Min<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() < maxDepth)
 		{
 			FaceSample fs;
@@ -438,7 +438,7 @@ namespace PR
 		ShaderClosure& sc, RenderContext* context)
 	{
 		const uint32 maxDepth = (ray.maxDepth() == 0) ?
-			mRenderSettings.maxRayDepth() : PM::pm_MinT<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
+			mRenderSettings.maxRayDepth() : PM::pm_Min<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
 		if (ray.depth() >= maxDepth)
 			return nullptr;
 		

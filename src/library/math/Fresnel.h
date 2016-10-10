@@ -23,7 +23,7 @@ namespace PR
 			const float perp = (n1 * dotT - n2 * dot) / (n1 * dotT + n2 * dot);
 
 			const float R = (para * para + perp * perp) / 2;
-			return PM::pm_ClampT(R, 0.0f, 1.0f);
+			return PM::pm_Clamp(R, 0.0f, 1.0f);
 		}
 
 		static inline float conductor(float dot, float n, float k)
@@ -37,7 +37,7 @@ namespace PR
 			const float perp = (f - d2 + dot2) / (f + d2 + dot2);
 
 			const float R = (para * para + perp * perp) / 2;
-			return PM::pm_ClampT(R, 0.0f, 1.0f);
+			return PM::pm_Clamp(R, 0.0f, 1.0f);
 		}
 
 		static inline float schlick(float f0, float NdotV)

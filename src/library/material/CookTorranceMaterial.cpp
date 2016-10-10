@@ -153,7 +153,7 @@ namespace PR
 
 		if (refl > PM_EPSILON && mSpecularity && NdotL * point.NdotV > PM_EPSILON)
 		{
-			const float m1 = PM::pm_MaxT(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+			const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
 
 			Spectrum ind = mIOR ? mIOR->eval(point) : Spectrum(1.55f);
 			Spectrum F;
@@ -177,7 +177,7 @@ namespace PR
 				break;
 			}
 
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, point.V));
+			const PM::vec3 H = Reflection::halfway(point.V, L);
 			const float NdotH = PM::pm_Dot3D(point.N, H);
 
 			if (NdotH > PM_EPSILON)
@@ -215,7 +215,7 @@ namespace PR
 							D = BRDF::ndf_ggx_iso(NdotH, m1);
 						else
 						{
-							const float m2 = PM::pm_MaxT(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+							const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
 							const float XdotH = PM::pm_Dot3D(point.Nx, H);
 							const float YdotH = PM::pm_Dot3D(point.Ny, H);
@@ -235,9 +235,9 @@ namespace PR
 	float CookTorranceMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
-		const float m1 = PM::pm_MaxT(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+		const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
 
-		const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, point.V));
+		const PM::vec3 H = Reflection::halfway(point.V, L);
 		const float NdotH = PM::pm_Dot3D(point.N, H);
 		const float prod = NdotL * point.NdotV;
 
@@ -259,7 +259,7 @@ namespace PR
 					D = BRDF::ndf_ggx_iso(NdotH, m1);
 				else
 				{
-					const float m2 = PM::pm_MaxT(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+					const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
 					const float XdotH = PM::pm_Dot3D(point.Nx, H);
 					const float YdotH = PM::pm_Dot3D(point.Ny, H);
@@ -269,7 +269,7 @@ namespace PR
 				break;
 		}
 
-		return PM::pm_ClampT(Projection::cos_hemi_pdf(NdotL) * (1-refl) + (0.25f*D/prod)*refl, 0.0f, 1.0f);
+		return PM::pm_Clamp(Projection::cos_hemi_pdf(NdotL) * (1-refl) + (0.25f*D/prod)*refl, 0.0f, 1.0f);
 	}
 
 	PM::vec3 CookTorranceMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
@@ -321,7 +321,7 @@ namespace PR
 				else
 					cosTheta = std::pow(1 - v, 1/(2*m1*m1));
 					
-				PM::pm_SinCosT(PM_2_PI_F * u, sinPhi, cosPhi);
+				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
 			}
 				break;
 			default:
@@ -329,27 +329,27 @@ namespace PR
 			{
 				float t = 1/(1-m1*m1*std::log(1-v));
 				cosTheta = std::sqrt(t);
-				PM::pm_SinCosT(PM_2_PI_F * u, sinPhi, cosPhi);
+				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
 			}
 				break;
 			case DM_GGX:
 			{
-				m1 = PM::pm_MaxT(MinRoughness, m1);
+				m1 = PM::pm_Max(MinRoughness, m1);
 				float r2;
 				float alpha2;
 				if(mSpecRoughnessX == mSpecRoughnessY)
 				{
-					PM::pm_SinCosT(PM_2_PI_F * u, sinPhi, cosPhi);
+					PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
 					alpha2 = m1*m1;
 					r2 = alpha2;
 				}
 				else
 				{
-					const float m2 = PM::pm_MaxT(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+					const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
 					float phi = std::atan(m2/m1*std::tan(PM_PI_F + PM_2_PI_F * u)) +
 						PM_PI_F * std::floor(2*u + 0.5f);
-					PM::pm_SinCosT(phi, sinPhi, cosPhi);
+					PM::pm_SinCos(phi, sinPhi, cosPhi);
 
 					float f1 = cosPhi/m1;
 					float f2 = sinPhi/m2;
@@ -358,7 +358,7 @@ namespace PR
 				}
 
 				float t2 = alpha2 * v / (1-v);
-				cosTheta = PM::pm_MaxT(0.001f, 1.0f / std::sqrt(1 + t2));
+				cosTheta = PM::pm_Max(0.001f, 1.0f / std::sqrt(1 + t2));
 
 				float s = 1+t2/alpha2;
 				pdf = PM_INV_PI_F / (r2*cosTheta*cosTheta*cosTheta*s*s);
@@ -376,7 +376,7 @@ namespace PR
 		else
 			pdf /= 4*std::abs(PM::pm_Dot3D(point.N, dir)) * point.NdotV;
 		
-		pdf = PM::pm_ClampT<float>(pdf, 0, 1);
+		pdf = PM::pm_Clamp<float>(pdf, 0, 1);
 		return dir;
 	}
 }

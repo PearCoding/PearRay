@@ -41,7 +41,7 @@ namespace PR
 				if(pdf > PM_EPSILON)
 				{
 					Spectrum weight;
-					const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(dir, sc.N));
+					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
 
 					if (NdotL > PM_EPSILON)
 					{
@@ -76,7 +76,7 @@ namespace PR
 
 		if(lastEntity && other_sc.Material)
 		{
-			float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
+			float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
 			Spectrum weight = other_sc.Material->eval(other_sc, ray.direction(), NdotL) * NdotL;
 
 			float other_pdf;
@@ -91,7 +91,7 @@ namespace PR
 				if(!std::isinf(other_pdf))
 					break;
 
-				float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
+				float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
 				if (NdotL <= PM_EPSILON)
 					break;
 				

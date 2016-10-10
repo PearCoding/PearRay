@@ -246,7 +246,7 @@ namespace PR
 
 						const PM::vec3 L = PM::pm_Negate(current.direction());
 
-						const float NdotL = PM::pm_MaxT(0.0f, PM::pm_Dot3D(sc.N, L));
+						const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(sc.N, L));
 						if(NdotL <= PM_EPSILON)
 							continue;
 

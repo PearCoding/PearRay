@@ -91,8 +91,8 @@ namespace PR
 		}
 
 		// Assign photon count to each light
-		mProjMaxTheta = PM::pm_MaxT<uint32>(8, MAX_THETA_SIZE*renderer->settings().ppm().projectionMapQuality());
-		mProjMaxPhi = PM::pm_MaxT<uint32>(8, MAX_PHI_SIZE*renderer->settings().ppm().projectionMapQuality());
+		mProjMaxTheta = PM::pm_Max<uint32>(8, MAX_THETA_SIZE*renderer->settings().ppm().projectionMapQuality());
+		mProjMaxPhi = PM::pm_Max<uint32>(8, MAX_PHI_SIZE*renderer->settings().ppm().projectionMapQuality());
 
 		constexpr uint64 MinPhotons = 10;
 		const std::list<RenderEntity*>& lightList = mRenderer->lights();
@@ -161,13 +161,13 @@ namespace PR
 			{
 				const float theta = PM_PI_F * thetaI / (float)mProjMaxTheta;
 				float thCos, thSin;
-				PM::pm_SinCosT(theta, thSin, thCos);
+				PM::pm_SinCos(theta, thSin, thCos);
 
 				for(uint32 phiI = 0; phiI < mProjMaxPhi; ++phiI)
 				{
 					const float phi = PM_2_PI_F * phiI / (float)mProjMaxPhi;
 					float phCos, phSin;
-					PM::pm_SinCosT(phi, phSin, phCos);
+					PM::pm_SinCos(phi, phSin, phCos);
 					PM::vec3 dir = PM::pm_Set(thSin * phCos, thSin * phSin, thCos);
 
 					Ray ray(PM::pm_Zero(), 
