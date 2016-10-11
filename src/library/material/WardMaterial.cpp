@@ -97,7 +97,7 @@ namespace PR
 				float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (4 * m1 * m2 * std::sqrt(prod));
 
 				if(r > PM_EPSILON)
-					spec = mSpecularity->eval(point) * r;
+					spec = mSpecularity->eval(point) * PM::pm_Min(r, 1.0f);
 			}
 		}
 
@@ -195,19 +195,23 @@ namespace PR
 			cosPhi = 1/PM::pm_SafeSqrt(1+f1*f1);
 			sinPhi = f1*cosPhi;
 
-			const float f2 = - std::log(PM::pm_Max(0.001f, v)) / (cosPhi*cosPhi/pm1 + sinPhi*sinPhi/pm2);
+			const float cosPhi2 = cosPhi * cosPhi;
+			const float tz = (cosPhi2/pm1 + sinPhi*sinPhi/pm2);
+			const float f2 = - std::log(PM::pm_Max(0.001f, v)) / tz;
 			cosTheta = 1/(1+f2);
 			sinTheta = PM::pm_SafeSqrt(f2)*cosTheta;
+
+			const float cosTheta2 = cosTheta * cosTheta;
+			const float tu = pm1*sinPhi*sinPhi + pm2*cosPhi2;
+			const float tb = 4 * PM_PI_F * m1 * m2 * (pm1*(1-cosPhi2)/cosPhi + pm2*cosPhi)*cosTheta2;
+			pdf = tu/tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
 		auto dir = Reflection::reflect(std::abs(PM::pm_Dot3D(H, point.V)), H, point.V);
 
-		if (mRoughnessX == mRoughnessY)
-			pdf /= std::abs(PM::pm_Dot3D(point.V, dir));
-		else
-			pdf = WardMaterial::pdf(point, dir, std::abs(PM::pm_Dot3D(point.N, dir)));
+		pdf = PM::pm_Clamp(pdf/std::abs(PM::pm_Dot3D(point.V, dir)), 0.0f, 1.0f);
 		
 		return dir;
 	}

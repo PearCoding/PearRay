@@ -129,6 +129,10 @@ int main(int argc, char** argv)
 	}
 
 	PR::ToneMapper toneMapper(renderer->gpu(), renderer->width()*renderer->height(), true);
+	toneMapper.setColorMode(options.TMColorMode);
+	toneMapper.setGammaMode(options.TMGammaMode);
+	toneMapper.setMapperMode(options.TMMapperMode);
+	
 	PR::IDisplayDriver* display = nullptr;
 
 #ifdef PR_WITH_NETWORK

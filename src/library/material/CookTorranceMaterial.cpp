@@ -153,8 +153,6 @@ namespace PR
 
 		if (refl > PM_EPSILON && mSpecularity && NdotL * point.NdotV > PM_EPSILON)
 		{
-			const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
-
 			Spectrum ind = mIOR ? mIOR->eval(point) : Spectrum(1.55f);
 			Spectrum F;
 			switch(mFresnelMode)
@@ -182,6 +180,8 @@ namespace PR
 
 			if (NdotH > PM_EPSILON)
 			{
+				const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+
 				float G;// Includes 1/NdotL*NdotV
 				switch(mGeometryMode)
 				{
@@ -217,14 +217,17 @@ namespace PR
 						{
 							const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-							const float XdotH = PM::pm_Dot3D(point.Nx, H);
-							const float YdotH = PM::pm_Dot3D(point.Ny, H);
+							const float XdotH = std::abs(PM::pm_Dot3D(point.Nx, H));
+							const float YdotH = std::abs(PM::pm_Dot3D(point.Ny, H));
 
 							D = BRDF::ndf_ggx_aniso(NdotH, XdotH, YdotH, m1, m2);
 						}
 						break;
 				}
 
+				// TODO: Really just clamping? A better bound would be better
+				// The max clamp value is just determined by try and error.
+				D = PM::pm_Clamp(D, 0.0f, 100.0f);
 				spec += mSpecularity->eval(point) * F * (0.25f * D * G * refl);
 			}
 		}
@@ -261,8 +264,8 @@ namespace PR
 				{
 					const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-					const float XdotH = PM::pm_Dot3D(point.Nx, H);
-					const float YdotH = PM::pm_Dot3D(point.Ny, H);
+					const float XdotH = std::abs(PM::pm_Dot3D(point.Nx, H));
+					const float YdotH = std::abs(PM::pm_Dot3D(point.Ny, H));
 
 					D = BRDF::ndf_ggx_aniso(NdotH, XdotH, YdotH, m1, m2);
 				}
@@ -322,6 +325,11 @@ namespace PR
 					cosTheta = std::pow(1 - v, 1/(2*m1*m1));
 					
 				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
+
+				if(m1 <= PM_EPSILON)
+					pdf = 1;
+				else
+					pdf = PM_4_PI_F * m1 * m1 * (1 - v)/cosTheta;
 			}
 				break;
 			default:
@@ -330,6 +338,11 @@ namespace PR
 				float t = 1/(1-m1*m1*std::log(1-v));
 				cosTheta = std::sqrt(t);
 				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
+
+				if(m1 <= PM_EPSILON)
+					pdf = 1;
+				else
+					pdf = PM_INV_PI_F / (m1 * m1 * cosTheta * cosTheta * cosTheta) * (1-v);
 			}
 				break;
 			case DM_GGX:
@@ -371,12 +384,12 @@ namespace PR
 			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
 		auto dir = PM::pm_Normalize3D(Reflection::reflect(std::abs(PM::pm_Dot3D(H, point.V)), H, point.V));
 
-		if(mDistributionMode != DM_GGX)//TODO: Calculate it!
-			pdf = CookTorranceMaterial::pdf(point, dir, std::abs(PM::pm_Dot3D(point.N, dir)));
+		float NdotL = PM::pm_Dot3D(point.N, dir);
+		if(NdotL > PM_EPSILON)
+			pdf = PM::pm_Clamp(pdf / (4 * NdotL * point.NdotV), 0.0f, 1.0f);
 		else
-			pdf /= 4*std::abs(PM::pm_Dot3D(point.N, dir)) * point.NdotV;
-		
-		pdf = PM::pm_Clamp<float>(pdf, 0, 1);
+			pdf = 0;
+
 		return dir;
 	}
 }

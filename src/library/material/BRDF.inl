@@ -34,7 +34,7 @@ namespace PR
 	{
 		const float alpha2 = 1 / (alpha*alpha);
 		const float dot2 = NdotH*NdotH;
-		return (alpha2*PM_INV_PI_F / (dot2*dot2))*expf(alpha2 * (dot2 - 1) / dot2);
+		return (alpha2*PM_INV_PI_F / (dot2*dot2))*std::exp(alpha2 * (dot2 - 1) / dot2);
 	}
 
 	inline float BRDF::ndf_ggx_iso(float NdotH, float alpha)

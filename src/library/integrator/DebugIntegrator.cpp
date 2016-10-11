@@ -124,6 +124,17 @@ namespace PR
 		}
 		case DM_Validity:
 		{
+			/*
+			 ERRORS:
+			 Red    -> No Material
+			 Yellow -> Non unit normal
+			 Cyan	-> Position non homogenous
+			 Magenta-> Sample Direction non unit
+			 Blue   -> PDF out of bounds
+			 Green  -> Everything ok
+			 Black  -> Background
+			*/
+			
 			if (!sc.Material)
 				return RGBConverter::toSpec(1, 0, 0);
 

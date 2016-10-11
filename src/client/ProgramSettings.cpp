@@ -136,6 +136,30 @@ BEGIN_ENUM_OPTION(PPMGatheringMode)
 	{nullptr, PGM_Sphere}
 };
 
+
+BEGIN_ENUM_OPTION(ToneColorMode)
+{
+	{"srgb", TCM_SRGB},
+	{"xyz", TCM_XYZ},
+	{"nxyz", TCM_XYZ_NORM},
+	{"lum", TCM_LUMINANCE},
+	{nullptr, TCM_SRGB}
+};
+
+BEGIN_ENUM_OPTION(ToneGammaMode)
+{
+	{"none", TGM_None},
+	{"srgb", TGM_SRGB},
+	{nullptr, TGM_SRGB} 
+};
+
+BEGIN_ENUM_OPTION(ToneMapperMode)
+{
+	{"none", TMM_None},
+	{"reinhard", TMM_Simple_Reinhard},
+	{nullptr, TMM_Simple_Reinhard}
+};
+
 constexpr PR::uint32 DEF_THREAD_COUNT = 0;
 constexpr PR::uint32 DEF_THREAD_TILE_X = 8;
 constexpr PR::uint32 DEF_THREAD_TILE_Y = 8;
@@ -278,6 +302,19 @@ po::options_description setup_cmd_options()
 		 	"Ratio of how much to prefer caustic (S*D paths) over other paths. 0 disables it.")
 	;
 
+	po::options_description tone_d("Tone Mapper[*]");
+	tone_d.add_options()
+		("tm_color",
+			po::value<EnumOption<ToneColorMode> >(),
+		 	(std::string("Color Mode [") + EnumOption<ToneColorMode>::get_names() + "]").c_str())
+		("tm_gamma",
+			po::value<EnumOption<ToneGammaMode> >(),
+		 	(std::string("Gamma Mode [") + EnumOption<ToneGammaMode>::get_names() + "]").c_str())
+		("tm_map",
+			po::value<EnumOption<ToneMapperMode> >(),
+		 	(std::string("Mapper Mode [") + EnumOption<ToneMapperMode>::get_names() + "]").c_str())
+	;
+
 	po::options_description all_d("Allowed options");
 	all_d.add(general_d);
 	all_d.add(image_d);
@@ -288,6 +325,7 @@ po::options_description setup_cmd_options()
 	all_d.add(pixelsampler_d);
 	all_d.add(gi_d);
 	all_d.add(photon_d);
+	all_d.add(tone_d);
 
 	return all_d;
 }
@@ -347,6 +385,12 @@ po::options_description setup_ini_options()
 			po::value<float>()->default_value(DefaultRenderSettings.ppm().projectionMapQuality()))
 		("ppm.proj_caustic",
 			po::value<float>()->default_value(DefaultRenderSettings.ppm().projectionMapPreferCaustic()))
+		("tone.color",
+			po::value<EnumOption<ToneColorMode> >()->default_value(EnumOption<ToneColorMode>::get_default()))
+		("tone.gamma",
+			po::value<EnumOption<ToneGammaMode> >()->default_value(EnumOption<ToneGammaMode>::get_default()))
+		("tone.map",
+			po::value<EnumOption<ToneMapperMode> >()->default_value(EnumOption<ToneMapperMode>::get_default()))
 	;
 
 	return all_d;
@@ -457,6 +501,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.ppm().setProjectionMapWeight(PM::pm_Clamp<float>(ini["ppm.proj"].as<float>(), 0, 1));
 		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Clamp<float>(ini["ppm.proj_qual"].as<float>(), 0.01f, 1));
 		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_Max<float>(ini["ppm.proj_caustic"].as<float>(), 0));
+
+		// Tone Mapper
+		TMColorMode = ini["tone.color"].as<EnumOption<ToneColorMode> >();
+		TMGammaMode = ini["tone.gamma"].as<EnumOption<ToneGammaMode> >();
+		TMMapperMode = ini["tone.map"].as<EnumOption<ToneMapperMode> >();
 	}
 
 	if(!vm.count("input"))
@@ -602,5 +651,13 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("p_proj_caustic"))
 		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Max<float>(vm["p_proj_caustic"].as<float>(), 0));
 	
+	// Tone Mapper
+	if(vm.count("tm_color"))
+		TMColorMode = vm["tm_color"].as<EnumOption<ToneColorMode> >();
+	if(vm.count("tm_gamma"))
+		TMGammaMode = vm["tm_gamma"].as<EnumOption<ToneGammaMode> >();
+	if(vm.count("tm_map"))
+		TMMapperMode = vm["tm_map"].as<EnumOption<ToneMapperMode> >();
+
 	return true;
 }

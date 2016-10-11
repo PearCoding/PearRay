@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/RenderSettings.h"
+#include "spectral/ToneMapper.h"
 #include <string>
 
 enum DisplayDriverOption
@@ -20,6 +21,10 @@ public:
 	PR::uint32 ShowProgress;
 
 	DisplayDriverOption DDO;
+
+	PR::ToneColorMode TMColorMode;
+	PR::ToneGammaMode TMGammaMode;
+	PR::ToneMapperMode TMMapperMode;
 
 	// Network
 	std::string NetIP;
