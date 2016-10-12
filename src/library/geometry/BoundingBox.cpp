@@ -66,43 +66,16 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		float tmin = -std::numeric_limits<float>::max();
-		float tmax = std::numeric_limits<float>::max();
+		PM::vec3 vmin = PM::pm_Divide(PM::pm_Subtract(mLowerBound, ray.startPosition()),
+						PM::pm_SetW(ray.direction(), 1));
+		PM::vec3 vmax = PM::pm_Divide(PM::pm_Subtract(mUpperBound, ray.startPosition()),
+						PM::pm_SetW(ray.direction(), 1));
 
-		PM::vec3 d = PM::pm_Scale(PM::pm_Subtract(mUpperBound, mLowerBound), 0.5f);
-		PM::vec3 p = PM::pm_Subtract(center(), ray.startPosition());
-
-		PM::vec3 t1 = PM::pm_Divide(PM::pm_Add(p, d), PM::pm_SetW(ray.direction(), 1));
-		PM::vec3 t2 = PM::pm_Divide(PM::pm_Subtract(p, d), PM::pm_SetW(ray.direction(), 1));
-
-		for (int i = 0; i < 3; ++i)
-		{
-			if (std::abs(PM::pm_GetIndex(ray.direction(), i)) > PM_EPSILON)
-			{
-				float ft1 = PM::pm_GetIndex(t1, i);
-				float ft2 = PM::pm_GetIndex(t2, i);
-
-				if (ft1 > ft2)
-					std::swap(ft1, ft2);
-
-				if (ft1 > tmin)
-					tmin = ft1;
-
-				if (ft2 < tmax)
-					tmax = ft2;
-
-				if (tmin > tmax || tmax < 0)
-					return false;
-			}
-			else if (-PM::pm_GetIndex(p, i) - PM::pm_GetIndex(d, i) > 0 ||
-				-PM::pm_GetIndex(p, i) + PM::pm_GetIndex(d, i) < 0)
-			{
-				return false;
-			}
-		}
+		float tmin = PM::pm_MaxElement3D(PM::pm_Min(vmin, vmax));
+		float tmax = PM::pm_MinElement3D(PM::pm_Max(vmin, vmax));
 
 		t = tmin <= 0 ? tmax : tmin;
-		if (t > PM_EPSILON)
+		if (tmax >= 0 && tmax >= tmin && t > PM_EPSILON)
 		{
 			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 			return true;
@@ -121,11 +94,8 @@ namespace PR
 		if (!intersects(ray, collisionPoint, t))
 			return false;
 
-		PM::vec3 minDist = PM::pm_Subtract(collisionPoint, mLowerBound);
-		PM::vec3 maxDist = PM::pm_Subtract(collisionPoint, mUpperBound);
-
-		minDist = PM::pm_Set(std::abs(PM::pm_GetX(minDist)), std::abs(PM::pm_GetY(minDist)), std::abs(PM::pm_GetZ(minDist)));
-		maxDist = PM::pm_Set(std::abs(PM::pm_GetX(maxDist)), std::abs(PM::pm_GetY(maxDist)), std::abs(PM::pm_GetZ(maxDist)));
+		PM::vec3 minDist = PM::pm_Abs(PM::pm_Subtract(collisionPoint, mLowerBound));
+		PM::vec3 maxDist = PM::pm_Abs(PM::pm_Subtract(collisionPoint, mUpperBound));
 
 		side = FS_Left;
 		float f = PM::pm_GetX(minDist);
