@@ -37,7 +37,7 @@ namespace PRU
 
 		DL::Data* reflectivityD = group->getFromKey("reflectivity");
 
-		CookTorranceMaterial* diff = new CookTorranceMaterial;
+		CookTorranceMaterial* diff = new CookTorranceMaterial(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setDiffuseRoughness(loader->getScalarOutput(env, diffRoughnessD));

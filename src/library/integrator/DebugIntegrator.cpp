@@ -17,10 +17,9 @@ namespace PR
 	{
 	}
 
-	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
+	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		Spectrum emission;
-		ShaderClosure sc;
 		RenderEntity* entity;
 		
 		if (context->renderer()->settings().debugMode() == DM_Emission)

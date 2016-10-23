@@ -5,8 +5,8 @@
 
 namespace PR
 {
-	StandardCamera::StandardCamera(const std::string& name) :
-		Camera(name), mOrthographic(false), mWidth(1), mHeight(1),
+	StandardCamera::StandardCamera(uint32 id, const std::string& name) :
+		Camera(id, name), mOrthographic(false), mWidth(1), mHeight(1),
 		mFStop(0), mApertureRadius(0.1f),
 		mLocalDirection(PM::pm_Set(0,0,1)), mLocalRight(PM::pm_Set(1,0,0)), mLocalUp(PM::pm_Set(0,1,0))
 	{

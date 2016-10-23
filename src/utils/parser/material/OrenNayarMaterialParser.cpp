@@ -24,7 +24,7 @@ namespace PRU
 		DL::Data* albedoD = group->getFromKey("albedo");
 		DL::Data* roughnessD = group->getFromKey("roughness");
 
-		OrenNayarMaterial* diff = new OrenNayarMaterial;
+		OrenNayarMaterial* diff = new OrenNayarMaterial(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setRoughness(loader->getScalarOutput(env, roughnessD));

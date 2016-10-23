@@ -25,9 +25,11 @@ __kernel void k_to_byte(__global const float* in, __global uchar* out, const ulo
 	size_t id = get_global_id(0);
 	out[id] = (uchar)clamp(255*in[id],0.0f,255.0f);
 }
+
 // XYZ
 float3 spec_to_xyz(__global const float* specs)
 {
+#ifndef NO_SPECTRAL
 	float3 col = 0;
 
 #pragma unroll SAMPLING_COUNT
@@ -37,6 +39,11 @@ float3 spec_to_xyz(__global const float* specs)
 	}
 	
 	return col * (ILL_SCALE / N);
+#else
+	return (float3)(0.4124f * specs[0] + 0.3576f * specs[1] + 0.1805f * specs[2],
+			0.2126f * specs[0] + 0.7152f * specs[1] + 0.0722f * specs[2],
+			0.0193f * specs[0] + 0.1192f * specs[1] + 0.9505f * specs[2]);
+#endif
 }
 
 __kernel void k_xyz(__global const float* specs, __global float* rgb, ulong off)
@@ -80,18 +87,29 @@ __kernel void k_srgb(__global const float* specs, __global float* rgb, ulong off
 {
 	size_t id = get_global_id(0);
 
+#ifndef NO_SPECTRAL
 	const float3 color = xyz_to_srgb(spec_to_xyz(&specs[id*SAMPLING_COUNT]));
 	id += off;
 	rgb[id*3] = color.x;
 	rgb[id*3 + 1] = color.y;
 	rgb[id*3 + 2] = color.z;
+#else
+	rgb[(id+off)*3] = specs[id];
+	rgb[(id+off)*3 + 1] = specs[id + 1];
+	rgb[(id+off)*3 + 2] = specs[id + 2];
+#endif
 }
 
 __kernel void k_lum(__global const float* specs, __global float* rgb, ulong off)
 {
 	size_t id = get_global_id(0);
+
+#ifndef NO_SPECTRAL
 	const float3 color = xyz_to_srgb(spec_to_xyz(&specs[id*SAMPLING_COUNT]));
 	const float lum = luminance(color.x, color.y, color.z);
+#else
+	const float lum = luminance(specs[id], specs[id+1], specs[id+2]);
+#endif
 
 	id += off;
 	rgb[id*3] = lum;

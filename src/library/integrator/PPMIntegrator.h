@@ -25,7 +25,7 @@ namespace PR
 		virtual ~PPMIntegrator();
 
 		void init(Renderer* renderer) override;
-		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass) override;
+		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc) override;
 		
 		void onStart() override;
 		void onNextPass(uint32 pass, bool& clean) override;

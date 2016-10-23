@@ -33,9 +33,10 @@ SOURCE_GROUP("Source Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Src})
 SET(PR_Parser_Texture_Src
   parser/texture/TextureParser.cpp)
 SOURCE_GROUP("Source Files\\Parser\\Texture" FILES ${PR_Parser_Texture_Src})
-SET(PR_Renderer_Src
-  renderer/DisplayBuffer.cpp)
-SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
+SET(PR_Output_Src
+  output/ImageWriter.cpp
+  output/OutputSpecification.cpp)
+SOURCE_GROUP("Source Files\\Output" FILES ${PR_Output_Src})
 SET(PR_Shader_Src
   shader/ConstScalarOutput.cpp
   shader/ConstSpectralOutput.cpp
@@ -45,7 +46,7 @@ SET(PR_Shader_Src
   shader/ImageVectorOutput.cpp)
 SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
-  ${PR_Shader_Src} ${PR_Renderer_Src} ${PR_Parser_Mesh_Src} ${PR_Parser_Light_Src}
+  ${PR_Shader_Src} ${PR_Output_Src} ${PR_Parser_Mesh_Src} ${PR_Parser_Light_Src}
   ${PR_Parser_Texture_Src}
 )
 
@@ -85,9 +86,10 @@ SOURCE_GROUP("Header Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Hdr})
 SET(PR_Parser_Texture_Hdr
   parser/texture/TextureParser.h)
 SOURCE_GROUP("Header Files\\Parser\\Texture" FILES ${PR_Parser_Texture_Hdr})
-SET(PR_Renderer_Hdr
-  renderer/DisplayBuffer.h)
-SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
+SET(PR_Output_Hdr
+  output/ImageWriter.h
+  output/OutputSpecification.h)
+SOURCE_GROUP("Header Files\\Output" FILES ${PR_Output_Hdr})
 SET(PR_Shader_Hdr
   shader/ConstScalarOutput.h
   shader/ConstSpectralOutput.h
@@ -97,7 +99,7 @@ SET(PR_Shader_Hdr
   shader/ImageVectorOutput.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
-  ${PR_Shader_Hdr} ${PR_Renderer_Hdr} ${PR_Parser_Mesh_Hdr} ${PR_Parser_Light_Hdr}
+  ${PR_Shader_Hdr} ${PR_Output_Hdr} ${PR_Parser_Mesh_Hdr} ${PR_Parser_Light_Hdr}
   ${PR_Parser_Texture_Hdr}
 )
 

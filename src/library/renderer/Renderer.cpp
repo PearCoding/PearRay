@@ -2,8 +2,7 @@
 #include "RenderThread.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
-#include "DisplayDriver.h"
-#include "PixelMap.h"
+#include "OutputMap.h"
 
 #include "camera/Camera.h"
 #include "scene/Scene.h"
@@ -44,7 +43,7 @@ namespace PR
 		mWidth(w), mHeight(h),
 		mWorkingDir(workingDir),
 		mCamera(cam), mScene(scene),
-		mPixelMap(nullptr),
+		mOutputMap(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
 		mGPU(nullptr), mIntegrator(nullptr), mShouldStop(false)
@@ -53,6 +52,8 @@ namespace PR
 		PR_ASSERT(scene);
 
 		reset();
+
+		mOutputMap = new OutputMap(this);
 
 		// Setup GPU
 #ifndef PR_NO_GPU
@@ -71,6 +72,8 @@ namespace PR
 	Renderer::~Renderer()
 	{
 		reset();
+
+		delete mOutputMap;
 
 #ifndef PR_NO_GPU
 		if (mGPU)
@@ -110,12 +113,6 @@ namespace PR
 		}
 
 		mLights.clear();
-
-		if(mPixelMap)
-		{
-			delete mPixelMap;
-			mPixelMap = nullptr;
-		}
 	}
 
 	void Renderer::setWidth(uint32 w)
@@ -158,14 +155,14 @@ namespace PR
 		return std::ceil(mRenderSettings.cropMinY() * mHeight);
 	}
 
-	void Renderer::start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads)
+	void Renderer::start(uint32 tcx, uint32 tcy, int32 threads)
 	{
-		PR_ASSERT(display);
-
 		reset();
 
-		mPixelMap = new PixelMap(this, display);
-		mPixelMap->init();
+		if(mRenderSettings.isAdaptiveSampling() && !mOutputMap->getChannel(OutputMap::V_Quality))
+			mOutputMap->registerChannel(OutputMap::V_Quality, new Output1D(this));
+
+		mOutputMap->init();
 
 		/* Setup entities */
 		for (RenderEntity* entity : mScene->renderEntities())
@@ -277,12 +274,12 @@ namespace PR
 		}
 	}
 
-	void Renderer::pushPixel_Normalized(const Spectrum& spec, float x, float y)
+	void Renderer::pushPixel_Normalized(float x, float y, const Spectrum& spec, const ShaderClosure& sc)
 	{
 		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
 		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
 
-		mPixelMap->pushFragment(px, py, 0, spec);
+		mOutputMap->pushFragment(px, py, spec, sc);
 	}
 
 	Spectrum Renderer::getPixel_Normalized(float x, float y)
@@ -290,17 +287,18 @@ namespace PR
 		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
 		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
 		
-		return mPixelMap->getFragment(px, py, 0);
+		return mOutputMap->getFragment(px, py);
 	}
 
 	void Renderer::render(RenderContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
 	{
-		PR_ASSERT(mPixelMap);
+		PR_ASSERT(mOutputMap);
 		PR_ASSERT(context);
 
+		ShaderClosure sc;
 		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
-			if(!mPixelMap->isPixelFinished(x, y))
+			if(!mOutputMap->isPixelFinished(x, y))
 			{
 				auto s = context->pixelSampler()->generate2D(sample);
 
@@ -310,16 +308,17 @@ namespace PR
 				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
 					0.0f,
-					pass);
+					pass,
+					sc);
 
-				mPixelMap->pushFragment(x,y,0,spec);
+				mOutputMap->pushFragment(x,y,spec,sc);
 			}
 		}
 		else// Everything
 		{
 			const uint32 SampleCount = mRenderSettings.maxPixelSampleCount();
 
-			for (uint32 currentSample = sample; currentSample < SampleCount && !mPixelMap->isPixelFinished(x, y); ++currentSample)
+			for (uint32 currentSample = sample; currentSample < SampleCount && !mOutputMap->isPixelFinished(x, y); ++currentSample)
 			{
 				auto s = context->pixelSampler()->generate2D(currentSample);
 
@@ -329,14 +328,15 @@ namespace PR
 				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
 					0.0f,
-					pass);
+					pass,
+					sc);
 
-				mPixelMap->pushFragment(x,y,0,spec);
+				mOutputMap->pushFragment(x,y,spec,sc);
 			}
 		}
 	}
 
-	Spectrum Renderer::renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass)
+	Spectrum Renderer::renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass, ShaderClosure& sc)
 	{
 		context->stats().incPixelSampleCount();
 		
@@ -344,7 +344,7 @@ namespace PR
 			2 * (y / mHeight - 0.5f),// To camera coordinates [-1,1]
 			rx, ry, t);
 
-		return mIntegrator->apply(ray, context, pass);
+		return mIntegrator->apply(ray, context, pass, sc);
 	}
 	
 	std::list<RenderTile> Renderer::currentTiles() const
@@ -376,6 +376,9 @@ namespace PR
 			sc.Flags |= (sc.NgdotV > 0) ? SCF_Inside : 0;
 			sc.NdotV = std::abs(sc.NgdotV);
 			sc.V = ray.direction();
+			
+			if(entity)
+				sc.EntityID = entity->id(); 
 
 			if (sc.Flags & SCF_Inside)
 			{
@@ -589,7 +592,7 @@ namespace PR
 
 		const uint64 maxPasses = mIntegrator->maxPasses(this);
 		const uint64 maxSamples = mIntegrator->maxSamples(this);
-		const uint64 pixelsFinished = mPixelMap->finishedPixelCount();
+		const uint64 pixelsFinished = mOutputMap->finishedPixelCount();
 		RenderStatistics s = stats();
 
 		double finishedPercent = mRenderSettings.isIncremental() ? pixelsFinished / (double)(renderWidth()*renderHeight()) : 0;
@@ -612,6 +615,7 @@ namespace PR
 		mIntegrator->onNextPass(mCurrentPass + 1, clear);
 
 		if(clear)
-			mPixelMap->clear();
+			mOutputMap->clear(cropPixelOffsetX(), cropPixelOffsetY(),
+				cropPixelOffsetX() + renderWidth(), cropPixelOffsetY() + renderHeight());
 	}
 }

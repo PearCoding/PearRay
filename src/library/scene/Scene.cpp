@@ -96,7 +96,7 @@ namespace PR
 				point.Material &&
 				((ray.flags() & RF_FromLight) ?
 					point.Material->allowsShadow() :
-					(ray.depth() > 0 || point.Material->isCameraVisible())
+					point.Material->isCameraVisible()
 				)) {
 					return true;
 				}
@@ -124,14 +124,10 @@ namespace PR
 	void Scene::freeze()
 	{
 		for (Entity* e : mEntities)
-		{
 			e->freeze();
-		}
 
 		for (IInfiniteLight* e : mInfiniteLights)
-		{
 			e->freeze();
-		}
 	}
 
 	BoundingBox Scene::boundingBox() const

@@ -34,7 +34,7 @@ namespace PRU
 		DL::Data* localRightD = group->getFromKey("localRight");
 		DL::Data* localUpD = group->getFromKey("localUp");
 
-		StandardCamera* camera = new StandardCamera(name);
+		StandardCamera* camera = new StandardCamera(env->scene()->entities().size()+1, name);
 
 		if (fovVD || fovHD)
 		{

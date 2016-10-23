@@ -138,6 +138,9 @@ namespace PRU
 						}
 					}
 				}
+				
+				// Output information
+				env->outputSpecification().parse(this, env, top);
 
 				// First independent information
 				for (size_t i = 0; i < top->unnamedCount(); ++i)
@@ -259,7 +262,7 @@ namespace PRU
 		}
 		else if (typeD->getString() == "null" || typeD->getString() == "empty")
 		{
-			entity = new Entity(name);
+			entity = new Entity(env->scene()->entities().size()+1, name);
 		}
 		else
 		{
@@ -656,6 +659,7 @@ namespace PRU
 
 				if (grp->id() == "field")
 				{
+#ifndef PR_NO_SPECTRAL // TODO: Add conversion for no spectral mode
 					DL::Data* defaultD = grp->getFromKey("default");
 
 					if (defaultD && defaultD->isNumber())
@@ -683,6 +687,7 @@ namespace PRU
 								stream.str().c_str());
 						}*/
 					}
+#endif
 				}
 				else if (grp->id() == "rgb")
 				{

@@ -11,8 +11,8 @@
 
 namespace PR
 {
-	SphereEntity::SphereEntity(const std::string& name, float r) :
-		RenderEntity(name), mRadius(r), mMaterial(nullptr)
+	SphereEntity::SphereEntity(uint32 id, const std::string& name, float r) :
+		RenderEntity(id, name), mRadius(r), mMaterial(nullptr)
 	{
 	}
 

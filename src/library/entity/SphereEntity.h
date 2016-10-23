@@ -8,7 +8,7 @@ namespace PR
 	class PR_LIB SphereEntity : public RenderEntity
 	{
 	public:
-		SphereEntity(const std::string& name, float r);
+		SphereEntity(uint32 id, const std::string& name, float r);
 		virtual ~SphereEntity();
 
 		virtual std::string type() const;

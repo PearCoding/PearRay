@@ -27,7 +27,7 @@ namespace PRU
 		DL::Data* roughnessYD = group->getFromKey("roughness_x");
 		DL::Data* reflectivityD = group->getFromKey("reflectivity");
 
-		WardMaterial* diff = new WardMaterial;
+		WardMaterial* diff = new WardMaterial(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setSpecularity(loader->getSpectralOutput(env, specularityD));

@@ -14,10 +14,9 @@ namespace PR
 	class Camera;
 	class Entity;
 	class GPU;
-	class IDisplayDriver;
 	class Integrator;
 	class Material;
-	class PixelMap;
+	class OutputMap;
 	class Ray;
 	class RenderEntity;
 	class RenderThread;
@@ -50,14 +49,14 @@ namespace PR
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
 		// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
-		void start(IDisplayDriver* display, uint32 tcx, uint32 tcy, int32 threads = 0);
+		void start(uint32 tcx, uint32 tcy, int32 threads = 0);
 		void stop();
 
 		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderContext* context);
 		bool shootForDetection(const Ray& ray, RenderContext* context);
 		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderContext* context);
 
-		void pushPixel_Normalized(const Spectrum& spec, float x, float y);
+		void pushPixel_Normalized(float x, float y, const Spectrum& spec, const ShaderClosure& sc);
 		Spectrum getPixel_Normalized(float x, float y);
 
 		bool isFinished();
@@ -109,6 +108,11 @@ namespace PR
 			return mWorkingDir;
 		}
 		
+		inline OutputMap* output() const
+		{
+			return mOutputMap;
+		}
+		
 	protected:
 		// Render Thread specific
 		void render(RenderContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);
@@ -121,7 +125,7 @@ namespace PR
 	private:
 		void reset();
 
-		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass);
+		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass, ShaderClosure& sc);
 
 		uint32 mWidth;
 		uint32 mHeight;
@@ -129,7 +133,7 @@ namespace PR
 
 		Camera* mCamera;
 		Scene* mScene;
-		PixelMap* mPixelMap;
+		OutputMap* mOutputMap;
 
 		std::list<RenderEntity*> mLights;
 

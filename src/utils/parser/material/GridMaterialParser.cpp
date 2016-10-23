@@ -25,7 +25,7 @@ namespace PRU
 		DL::Data* gridCountD = group->getFromKey("gridCount");
 		DL::Data* tileUVD = group->getFromKey("tileUV");
 
-		GridMaterial* bnd = new GridMaterial();
+		GridMaterial* bnd = new GridMaterial(env->materialCount() + 1);
 
 		if (firstD && firstD->isType() == DL::Data::T_String)
 		{

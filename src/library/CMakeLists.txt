@@ -58,7 +58,7 @@ SET(PR_Ray_Src
   ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
-  renderer/PixelMap.cpp
+  renderer/OutputMap.cpp
   renderer/PPMSettings.cpp
   renderer/Renderer.cpp
   renderer/RenderContext.cpp
@@ -179,8 +179,8 @@ SET(PR_Ray_Hdr
   ray/Ray.inl)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Renderer_Hdr
-  renderer/DisplayDriver.h
-  renderer/PixelMap.h
+  renderer/OutputChannel.h
+  renderer/OutputMap.h
   renderer/PPMSettings.h
   renderer/Renderer.h
   renderer/RenderContext.h

@@ -14,10 +14,12 @@ int main(int argc, char** argv)
 	float gR, gG, gB;
 
 	PR::Spectrum spec;
+#ifndef PR_NO_SPECTRAL
 	spec.setValueAtWavelength(640, 1);
 
 	if (spec.value(56) != 1)
 		std::cout << "FAILED" << std::endl;
+#endif
 
 	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
 	PR::XYZConverter::convert(spec, x, y, z);

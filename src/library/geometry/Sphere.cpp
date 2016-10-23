@@ -77,9 +77,9 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		float f = PM::pm_Magnitude3D(PM::pm_Subtract(mPosition, point));
-		if (f > mRadius)
-			mRadius = f;
+		float f = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, point));
+		if (f > mRadius*mRadius)
+			mRadius = std::sqrt(f);
 	}
 
 	void Sphere::combine(const Sphere& other)
@@ -92,8 +92,8 @@ namespace PR
 			return;
 		}
 
-		float f = PM::pm_Magnitude3D(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
-		if (f > mRadius)
-			mRadius = f;
+		float f = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
+		if (f > mRadius*mRadius)
+			mRadius = std::sqrt(f);
 	}
 }

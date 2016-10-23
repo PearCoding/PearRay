@@ -32,7 +32,7 @@ namespace PRU
 			PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no radius. Assuming 1.", name.c_str());
 		}
 
-		SphereEntity* sphere = new SphereEntity(name, r);
+		SphereEntity* sphere = new SphereEntity(env->scene()->entities().size()+1, name, r);
 
 		if (materialD && materialD->isType() == DL::Data::T_String)
 		{

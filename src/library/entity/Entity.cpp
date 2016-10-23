@@ -7,8 +7,8 @@
 
 namespace PR
 {
-	Entity::Entity(const std::string& name) :
-		mName(name), mFlags(EF_ScaleLight),
+	Entity::Entity(uint32 id, const std::string& name) :
+		mName(name), mID(id), mFlags(EF_ScaleLight),
 		mPosition(PM::pm_Set(0,0,0,1)), mScale(PM::pm_Set(1,1,1,1)), mRotation(PM::pm_IdentityQuat()),
 		mFrozen(false), mReCache(true)
 	{

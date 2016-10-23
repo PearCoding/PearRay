@@ -9,8 +9,8 @@
 
 namespace PR
 {
-	GlassMaterial::GlassMaterial() :
-		Material(), 
+	GlassMaterial::GlassMaterial(uint32 id) :
+		Material(id), 
 		mSpecularity(nullptr), mIndex(nullptr)
 	{
 	}

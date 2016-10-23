@@ -18,7 +18,7 @@ namespace PR
 	Plane::Plane(const PM::vec3& pos, const PM::vec3& xAxis, const PM::vec3& yAxis) :
 		mPosition(pos), mXAxis(xAxis), mYAxis(yAxis)
 	{
-		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
+		mNormal = PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis));
 		mWidth = PM::pm_Magnitude3D(mXAxis);
 		mHeight = PM::pm_Magnitude3D(mYAxis);
 
@@ -68,14 +68,14 @@ namespace PR
 	void Plane::setXAxis(const PM::vec3& v)
 	{
 		PM::pm_Copy(mXAxis, v);
-		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
+		mNormal = PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis));
 		mWidth = PM::pm_Magnitude3D(mXAxis);
 	}
 
 	void Plane::setYAxis(const PM::vec3& v)
 	{
 		PM::pm_Copy(mYAxis, v);
-		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
+		mNormal = PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis));
 		mHeight = PM::pm_Magnitude3D(mYAxis);
 	}
 
@@ -83,7 +83,7 @@ namespace PR
 	{
 		PM::pm_Copy(mXAxis, xAxis);
 		PM::pm_Copy(mYAxis, yAxis);
-		mNormal = PM::pm_Negate(PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis)));
+		mNormal = PM::pm_Normalize3D(PM::pm_Cross3D(mXAxis, mYAxis));
 		mWidth = PM::pm_Magnitude3D(mXAxis);
 		mHeight = PM::pm_Magnitude3D(mYAxis);
 	}
@@ -93,37 +93,37 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		BoundingBox box(PM::pm_SetW(PM::pm_Add(mXAxis, mYAxis),1), PM::pm_Set(0, 0, 0, 1));
-		PM::vec3 diff = PM::pm_Subtract(mXAxis, mYAxis);
+		PM::vec3 diff = PM::pm_Abs(PM::pm_Subtract(mXAxis, mYAxis));
 
-		if (std::abs(PM::pm_GetX(diff)) <= PM_EPSILON)
+		if (PM::pm_GetX(diff) <= PM_EPSILON)
 		{
-			if (std::abs(PM::pm_GetY(diff)) <= PM_EPSILON)
+			if (PM::pm_GetY(diff) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, EPSILON_BOUND, 0)));
 			}
-			else if (std::abs(PM::pm_GetZ(diff)) <= PM_EPSILON)
+			else if (PM::pm_GetZ(diff) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, 0, EPSILON_BOUND)));
 			}
 		}
-		else if (std::abs(PM::pm_GetY(diff)) <= PM_EPSILON)
+		else if (PM::pm_GetY(diff) <= PM_EPSILON)
 		{
-			if (std::abs(PM::pm_GetX(diff)) <= PM_EPSILON)
+			if (PM::pm_GetX(diff) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(EPSILON_BOUND, 0, 0)));
 			}
-			else if (std::abs(PM::pm_GetZ(diff)) <= PM_EPSILON)
+			else if (PM::pm_GetZ(diff) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, 0, EPSILON_BOUND)));
 			}
 		}
-		else if (std::abs(PM::pm_GetZ(diff)) <= PM_EPSILON)
+		else if (PM::pm_GetZ(diff) <= PM_EPSILON)
 		{
-			if (std::abs(PM::pm_GetX(diff)) <= PM_EPSILON)
+			if (PM::pm_GetX(diff) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(EPSILON_BOUND, 0, 0)));
 			}
-			else if (std::abs(PM::pm_GetY(diff)) <= PM_EPSILON)
+			else if (PM::pm_GetY(diff) <= PM_EPSILON)
 			{
 				box.setUpperBound(PM::pm_Add(box.upperBound(), PM::pm_Set(0, EPSILON_BOUND, 0)));
 			}

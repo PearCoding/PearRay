@@ -7,7 +7,7 @@ namespace PR
 	class PR_LIB OrenNayarMaterial : public Material
 	{
 	public:
-		OrenNayarMaterial();
+		OrenNayarMaterial(uint32 id);
 
 		SpectralShaderOutput* albedo() const;
 		void setAlbedo(SpectralShaderOutput* diffSpec);

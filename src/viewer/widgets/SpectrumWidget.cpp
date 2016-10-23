@@ -44,6 +44,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 
 	painter.drawPixmap(0, 0, mCache);
 
+#ifndef PR_NO_SPECTRAL
 	//const int mx = width() / 2;
 	const int mh = height() / 2;
 
@@ -109,6 +110,7 @@ void SpectrumWidget::paintEvent(QPaintEvent* event)
 			painter.drawText(rect(), Qt::AlignCenter, tr("Has NaN values!"));
 		}
 	}
+#endif
 }
 
 void SpectrumWidget::mouseMoveEvent(QMouseEvent* event)
@@ -177,13 +179,15 @@ void SpectrumWidget::cacheImage()
 	painter.fillRect(rect(), Qt::white);
 	//painter.setRenderHint(QPainter::Antialiasing, true);
 
+#ifdef PR_NO_SPECTRAL
+	painter.drawText(width()/2 - 100, height()/2-10, tr("No spectral support!"));
+#else
 	//const int mx = width() / 2;
 	const int mh = height() / 2;
 
 	const float xspacing = qMax<float>(SAMPLE_SPACING,
 		(width() - PADDING * 4 - TEXT_AREA_W) / (float)PR::Spectrum::SAMPLING_COUNT);
 	const float yspacing = qMax<float>(UNIT_HEIGHT, mh - PADDING);
-
 
 	const int w = (PR::Spectrum::SAMPLING_COUNT - 1)*xspacing;
 	const int h = yspacing;
@@ -278,6 +282,7 @@ void SpectrumWidget::cacheImage()
 
 	painter.setBrush(mSpecXYZNorm);
 	painter.drawRect(PADDING * 4 + w, PADDING * 13 + COLOR_RECT_H * 3, COLOR_RECT_W, COLOR_RECT_H);
+#endif
 
 	// To Pixmap
 	mCache.convertFromImage(image);

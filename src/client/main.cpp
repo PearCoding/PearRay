@@ -3,14 +3,9 @@
 #include "SceneLoader.h"
 
 #include "renderer/Renderer.h"
-#include "renderer/DisplayBuffer.h"
 #include "renderer/RenderStatistics.h"
 
 #include "spectral/ToneMapper.h"
-
-#ifdef PR_WITH_NETWORK
-# include "NetworkDisplayDriver.h"
-#endif
 
 #include "gpu/GPU.h"
 
@@ -31,28 +26,6 @@
 
 namespace bf = boost::filesystem;
 namespace sc = std::chrono;
-
-void saveImage(DisplayDriverOption displayMode, PR::IDisplayDriver* display,
-	const PR::ToneMapper& toneMapper, const bf::path& directoryPath, const std::string& ext, bool force=false)
-{
-	PR_GUARD_PROFILE();
-	switch(displayMode)
-	{
-	case DDO_Image:
-		{
-			bf::path imagePath = directoryPath;
-			imagePath += "/image." + ext;
-
-			if(!reinterpret_cast<PRU::DisplayBuffer*>(display)->save(toneMapper, imagePath.native(), force))
-				PR_LOGGER.logf(PR::L_Error, PR::M_Network, "Couldn't save image to '%s'.", imagePath.c_str());
-		}
-		break;
-#ifdef PR_WITH_NETWORK
-	case DDO_Network:
-		break;
-#endif
-	}
-}
 
 int main(int argc, char** argv)
 {
@@ -128,40 +101,7 @@ int main(int argc, char** argv)
 		renderer->settings().setCropMinY(env->cropMinY());
 	}
 
-	PR::ToneMapper toneMapper(renderer->gpu(), renderer->width()*renderer->height(), true);
-	toneMapper.setColorMode(options.TMColorMode);
-	toneMapper.setGammaMode(options.TMGammaMode);
-	toneMapper.setMapperMode(options.TMMapperMode);
-	
-	PR::IDisplayDriver* display = nullptr;
-
-#ifdef PR_WITH_NETWORK
-	asio::io_service* io_service = nullptr;
-#endif
-	switch(options.DDO)
-	{
-	case DDO_Image:
-		display = new PRU::DisplayBuffer();
-		break;
-#ifdef PR_WITH_NETWORK
-	case DDO_Network:
-		try
-		{
-			io_service = new asio::io_service();
-			display = new PRN::NetworkDisplayDriver(*io_service,
-				options.NetIP,
-				options.NetPort);
-			
-			io_service->run();
-		}
-		catch(std::exception& e)
-		{
-			PR_LOGGER.logf(PR::L_Fatal, PR::M_Network, "Exception while initializing network: %s", e.what());
-			return -3;
-		}
-		break;
-#endif
-	}
+	PR::ToneMapper toneMapper(renderer->gpu(), renderer->width()*renderer->height());
 	PR_END_PROFILE_ID(1);
 
 	PR_BEGIN_PROFILE_ID(2);
@@ -172,11 +112,13 @@ int main(int argc, char** argv)
 	env->scene()->buildTree();
 	PR_END_PROFILE_ID(3);
 
+	env->outputSpecification().init(renderer);
+	env->outputSpecification().setup();
+
 	if(options.ShowProgress)
 		std::cout << "preprocess" << std::endl;
 
-	display->init(renderer);
-	renderer->start(display, options.TileXCount, options.TileYCount, options.ThreadCount);
+	renderer->start(options.TileXCount, options.TileYCount, options.ThreadCount);
 
 	auto start = sc::high_resolution_clock::now();
 	auto start_io = start;
@@ -185,18 +127,6 @@ int main(int argc, char** argv)
 	while(!renderer->isFinished())
 	{
 		auto end = sc::high_resolution_clock::now();
-
-#ifdef PR_WITH_NETWORK
-  		auto span_io = sc::duration_cast<sc::milliseconds>(end - start_io);
-		if(io_service && span_io.count() > 100)
-		{
-			PRN::NetworkDisplayDriver* network = reinterpret_cast<PRN::NetworkDisplayDriver*>(display);
-			network->handleIO(false);
-
-			start_io = end;
-		}
-#endif
-
   		auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
 		if(options.ShowProgress > 0 && span_prog.count() > options.ShowProgress)
 		{
@@ -215,17 +145,10 @@ int main(int argc, char** argv)
 		if(options.DDO == DDO_Image && options.ImgUpdate > 0 &&
 			span_img.count() > options.ImgUpdate*1000)
 		{
-			saveImage(options.DDO, display, toneMapper, options.OutputDir, options.ImgExt);
+			env->outputSpecification().save(toneMapper, false);
 			start_img = end;
 		}
 	}
-
-#ifdef PR_WITH_NETWORK
-	if(io_service)// Send last packets
-	{
-		reinterpret_cast<PRN::NetworkDisplayDriver*>(display)->handleIO(true);
-	}
-#endif
 
 	{
 		auto end = sc::high_resolution_clock::now();
@@ -238,17 +161,11 @@ int main(int argc, char** argv)
 	}
 
 	// Save images if needed
-	saveImage(options.DDO, display, toneMapper, options.OutputDir, options.ImgExt, true);
+	env->outputSpecification().save(toneMapper, true);
 
 	// Close everything
 	delete renderer;
-	delete display;
 	delete env;
-
-#ifdef PR_WITH_NETWORK
-	if(io_service)
-		delete io_service;
-#endif
 
 #ifdef PR_PROFILE
 	std::string prof_file = options.OutputDir + "/profile.out";

@@ -8,7 +8,7 @@ namespace PR
 	class PR_LIB GlassMaterial : public Material
 	{
 	public:
-		GlassMaterial();
+		GlassMaterial(uint32 id);
 
 		SpectralShaderOutput* specularity() const;
 		void setSpecularity(SpectralShaderOutput* spec);

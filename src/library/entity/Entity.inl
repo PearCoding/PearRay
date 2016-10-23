@@ -2,6 +2,11 @@
 
 namespace PR
 {
+	inline uint32 Entity::id() const
+	{
+		return mID;
+	}
+	
 	inline void Entity::setName(const std::string& name)
 	{
 		mName = name;

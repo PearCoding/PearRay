@@ -22,10 +22,6 @@ public:
 
 	DisplayDriverOption DDO;
 
-	PR::ToneColorMode TMColorMode;
-	PR::ToneGammaMode TMGammaMode;
-	PR::ToneMapperMode TMMapperMode;
-
 	// Network
 	std::string NetIP;
 	PR::uint16 NetPort;

@@ -23,7 +23,7 @@ namespace PRU
 		DL::Data* specD = group->getFromKey("specularity");
 		DL::Data* indexD = group->getFromKey("index");
 
-		MirrorMaterial* diff = new MirrorMaterial;
+		MirrorMaterial* diff = new MirrorMaterial(env->materialCount() + 1);
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
 		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));

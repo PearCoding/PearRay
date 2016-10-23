@@ -11,11 +11,13 @@
 
 namespace PR
 {
-#define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
-#define constant const
-#include "cl/xyztable.cl"
-#undef SAMPLING_COUNT
-#undef constant
+#ifndef PR_NO_SPECTRAL
+# define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
+# define constant const
+# include "cl/xyztable.cl"
+# undef SAMPLING_COUNT
+# undef constant
+#endif
 
 	GPU::GPU()
 	{
@@ -283,6 +285,10 @@ namespace PR
 			std::stringstream sstream;
 			sstream << "-D SAMPLING_COUNT=" << Spectrum::SAMPLING_COUNT;
 
+#ifdef PR_NO_SPECTRAL
+			sstream << " -D NO_SPECTRAL";
+			addSource("tonemapper", tonemapper_src, sstream.str());
+#else
 			// Here we generate the constant parts on the fly...
 			std::stringstream xyztable_stream;
 			xyztable_stream << "constant float NM_TO_X[SAMPLING_COUNT] = {\n";
@@ -299,8 +305,8 @@ namespace PR
 			for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT-1; ++i)
 				xyztable_stream << NM_TO_Z[i] << "f, ";
 			xyztable_stream << NM_TO_Z[Spectrum::SAMPLING_COUNT-1] << "\n};\n";
-
 			addSource("tonemapper", xyztable_stream.str() + tonemapper_src, sstream.str());
+#endif
 		}
 
 		return true;

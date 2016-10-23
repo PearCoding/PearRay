@@ -3,6 +3,7 @@
 #include "scene/Scene.h"
 #include "spectral/Spectrum.h"
 #include "shader/ShaderOutput.h"
+#include "output/OutputSpecification.h"
 
 #include <OpenImageIO/texture.h>
 
@@ -58,6 +59,11 @@ namespace PRU
 		{
 			PR_ASSERT(mat && !hasMaterial(name));
 			mMaterials[name] = mat;
+		}
+
+		inline size_t materialCount() const
+		{
+			return mMaterials.size();
 		}
 
 		inline PR::TriMesh* getMesh(const std::string& name) const
@@ -211,6 +217,10 @@ namespace PRU
 			return mCropMaxY;
 		}
 
+		inline OutputSpecification& outputSpecification()
+		{
+			return mOutputSpecification;
+		}
 	private:
 		PR::Scene mScene;
 		PR::Camera* mCamera;
@@ -236,5 +246,6 @@ namespace PRU
 		std::map<std::string, PR::VectorShaderOutput*> mNamedVectorShaderOutputs;
 
 		OIIO::TextureSystem* mTextureSystem;
+		OutputSpecification mOutputSpecification;
 	};
 }

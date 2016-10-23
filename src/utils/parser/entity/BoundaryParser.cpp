@@ -53,7 +53,7 @@ namespace PRU
 			PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no size. Assuming unit cube.", name.c_str());
 		}
 
-		BoundaryEntity* bnd = new BoundaryEntity(name,
+		BoundaryEntity* bnd = new BoundaryEntity(env->scene()->entities().size()+1, name,
 			BoundingBox(PM::pm_GetX(size), PM::pm_GetY(size), PM::pm_GetZ(size)));
 
 		if (materialD && materialD->isType() == DL::Data::T_String)

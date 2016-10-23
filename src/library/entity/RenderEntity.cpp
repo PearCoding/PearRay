@@ -6,8 +6,8 @@
 
 namespace PR
 {
-	RenderEntity::RenderEntity(const std::string& name) :
-		Entity(name)
+	RenderEntity::RenderEntity(uint32 id, const std::string& name) :
+		Entity(id, name)
 	{
 	}
 

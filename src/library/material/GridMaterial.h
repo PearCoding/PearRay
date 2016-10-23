@@ -8,7 +8,7 @@ namespace PR
 	class PR_LIB GridMaterial : public Material
 	{
 	public:
-		GridMaterial();
+		GridMaterial(uint32 id);
 
 		void setFirstMaterial(Material* mat);
 		Material* firstMaterial() const;

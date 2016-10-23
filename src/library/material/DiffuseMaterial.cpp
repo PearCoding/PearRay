@@ -6,8 +6,8 @@
 
 namespace PR
 {
-	DiffuseMaterial::DiffuseMaterial() :
-		Material(), mAlbedo(nullptr)
+	DiffuseMaterial::DiffuseMaterial(uint32 id) :
+		Material(id), mAlbedo(nullptr)
 	{
 	}
 

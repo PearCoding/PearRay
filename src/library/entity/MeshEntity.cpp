@@ -14,8 +14,8 @@
 
 namespace PR
 {
-	MeshEntity::MeshEntity(const std::string& name) :
-		RenderEntity(name), mMesh(nullptr), mMaterialOverride(nullptr)
+	MeshEntity::MeshEntity(uint32 id, const std::string& name) :
+		RenderEntity(id, name), mMesh(nullptr), mMaterialOverride(nullptr)
 	{
 	}
 

@@ -7,7 +7,7 @@ namespace PR
 	class PR_LIB BlinnPhongMaterial : public Material
 	{
 	public:
-		BlinnPhongMaterial();
+		BlinnPhongMaterial(uint32 id);
 
 		SpectralShaderOutput* albedo() const;
 		void setAlbedo(SpectralShaderOutput* diffSpec);

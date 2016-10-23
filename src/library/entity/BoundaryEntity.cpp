@@ -12,8 +12,8 @@
 
 namespace PR
 {
-	BoundaryEntity::BoundaryEntity(const std::string& name, const BoundingBox& box) :
-		RenderEntity(name), mBoundingBox(box), mMaterial(nullptr)
+	BoundaryEntity::BoundaryEntity(uint32 id, const std::string& name, const BoundingBox& box) :
+		RenderEntity(id, name), mBoundingBox(box), mMaterial(nullptr)
 	{
 	}
 

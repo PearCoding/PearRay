@@ -17,9 +17,11 @@ namespace PR
 	class PR_LIB Entity
 	{
 	public:
-		Entity(const std::string& name);
+		Entity(uint32 id, const std::string& name);
 		virtual ~Entity();
 
+		inline uint32 id() const;
+		
 		inline void setName(const std::string& name);
 		inline std::string name() const;
 
@@ -57,6 +59,7 @@ namespace PR
 		inline void invalidateCache();
 	private:
 		std::string mName;
+		uint32 mID;
 		uint8 mFlags;
 
 		PM::vec3 mPosition;

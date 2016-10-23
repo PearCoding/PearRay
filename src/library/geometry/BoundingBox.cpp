@@ -15,28 +15,10 @@ namespace PR
 	}
 
 	constexpr float BIAS = 0.00001f;
-	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound) :
-		mUpperBound(upperbound), mLowerBound(lowerbound)
+	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound):
+		mUpperBound(PM::pm_Max(upperbound, lowerbound)),
+		mLowerBound(PM::pm_Min(upperbound, lowerbound))
 	{
-		PR_GUARD_PROFILE();
-
-		for (int i = 0; i < 3; ++i)
-		{
-			float ui = PM::pm_GetIndex(mUpperBound, i);
-			float li = PM::pm_GetIndex(mLowerBound, i);
-			float d = ui - li;
-
-			if (std::signbit(d))//Negative
-			{
-				mUpperBound = PM::pm_SetIndex(mUpperBound, i, li);
-				mLowerBound = PM::pm_SetIndex(mLowerBound, i, ui);
-			}
-
-			/*if (std::abs(d) < PM_EPSILON)
-			{
-				mUpperBound = PM::pm_SetIndex(mUpperBound, i, ui + BIAS);
-			}*/
-		}
 	}
 
 	BoundingBox::BoundingBox(float width, float height, float depth) :
@@ -75,7 +57,7 @@ namespace PR
 		float tmax = PM::pm_MinElement3D(PM::pm_Max(vmin, vmax));
 
 		t = tmin <= 0 ? tmax : tmin;
-		if (tmax >= 0 && tmax >= tmin && t > PM_EPSILON)
+		if (tmax >= tmin && t > PM_EPSILON)
 		{
 			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 			return true;
@@ -135,29 +117,12 @@ namespace PR
 
 	void BoundingBox::put(const PM::vec3& point)
 	{
-		PR_GUARD_PROFILE();
-
-		for (int i = 0; i < 3; ++i)
-		{
-			if (PM::pm_GetIndex(point, i) > PM::pm_GetIndex(mUpperBound, i))
-			{
-				mUpperBound = PM::pm_SetIndex(mUpperBound, i, PM::pm_GetIndex(point, i));
-			}
-			else if (PM::pm_GetIndex(point, i) < PM::pm_GetIndex(mLowerBound, i))
-			{
-				mLowerBound = PM::pm_SetIndex(mLowerBound, i, PM::pm_GetIndex(point, i));
-			}
-		}
+		mUpperBound = PM::pm_Max(mUpperBound, point);
+		mLowerBound = PM::pm_Min(mLowerBound, point);
 	}
 
 	void BoundingBox::combine(const BoundingBox& other)
 	{
-		if (!isValid())
-		{
-			*this = other;
-			return;
-		}
-
 		put(other.upperBound());
 		put(other.lowerBound());
 	}
@@ -172,7 +137,9 @@ namespace PR
 		{
 		default:
 		case FS_Front:
-			return Plane(mLowerBound, PM::pm_Set(PM::pm_GetX(diff), 0, 0), PM::pm_Set(0, PM::pm_GetY(diff), 0));
+			return Plane(PM::pm_SetW(mLowerBound, 1),
+				PM::pm_Set(PM::pm_GetX(diff), 0, 0),
+				PM::pm_Set(0, PM::pm_GetY(diff), 0));
 		case FS_Back:
 			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mUpperBound), 1),
 				PM::pm_Set(-PM::pm_GetX(diff), 0, 0),

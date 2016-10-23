@@ -8,8 +8,8 @@
 
 namespace PR
 {
-	WardMaterial::WardMaterial() :
-		Material(), mAlbedo(nullptr), mSpecularity(nullptr),
+	WardMaterial::WardMaterial(uint32 id) :
+		Material(id), mAlbedo(nullptr), mSpecularity(nullptr),
 		mRoughnessX(nullptr), mRoughnessY(nullptr), mReflectivity(nullptr)
 	{
 	}

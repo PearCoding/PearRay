@@ -10,8 +10,8 @@
 
 namespace PR
 {
-	MirrorMaterial::MirrorMaterial() :
-		Material(), 
+	MirrorMaterial::MirrorMaterial(uint32 id) :
+		Material(id), 
 		mSpecularity(nullptr), mIndex(nullptr)
 	{
 	}

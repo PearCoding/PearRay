@@ -8,7 +8,7 @@ namespace PR
 	class PR_LIB MirrorMaterial : public Material
 	{
 	public:
-		MirrorMaterial();
+		MirrorMaterial(uint32 id);
 
 		SpectralShaderOutput* specularity() const;
 		void setSpecularity(SpectralShaderOutput* spec);

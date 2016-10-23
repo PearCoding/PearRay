@@ -28,7 +28,7 @@ namespace PR
 			GM_Kelemen
 		};
 
-		CookTorranceMaterial();
+		CookTorranceMaterial(uint32 id);
 
 		// Modes
 		FresnelMode fresnelMode() const;

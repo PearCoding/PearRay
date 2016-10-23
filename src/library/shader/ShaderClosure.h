@@ -54,6 +54,8 @@ namespace PR
 		float NdotV;
 		uint8 Flags;
 
+		uint32 EntityID;
+
 		class Material* Material;
 
 		// C++11 POD constructor
@@ -80,6 +82,7 @@ namespace PR
 			NgdotV(0),
 			NdotV(0),
 			Flags(0),
+			EntityID(0),
 			Material(nullptr)
 			{}
 
@@ -106,6 +109,7 @@ namespace PR
 			NgdotV(0),
 			NdotV(0),
 			Flags(0),
+			EntityID(0),
 			Material(fs.Material)
 			{}
 

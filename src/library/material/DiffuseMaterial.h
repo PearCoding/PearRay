@@ -7,7 +7,7 @@ namespace PR
 	class PR_LIB DiffuseMaterial : public Material
 	{
 	public:
-		DiffuseMaterial();
+		DiffuseMaterial(uint32 id);
 
 		SpectralShaderOutput* albedo() const;
 		void setAlbedo(SpectralShaderOutput* diffSpec);

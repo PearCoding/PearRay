@@ -472,14 +472,15 @@ namespace PR
 
 				// Render result:
 #if PR_PHOTON_RGB_MODE == 2
-				context->renderer()->pushPixel_Normalized(
+				context->renderer()->pushPixel_Normalized(p.PixelX, p.PixelY,
 					RGBConverter::toSpec(p.Weight[0] * p.CurrentFlux[0] * inv,
 						p.Weight[1] * p.CurrentFlux[1] * inv,
 						p.Weight[2] * p.CurrentFlux[2] * inv),
-					p.PixelX, p.PixelY);
+					p.SC);
 #else
-				context->renderer()->pushPixel_Normalized(p.Weight * p.CurrentFlux * inv,
-					p.PixelX, p.PixelY);
+				context->renderer()->pushPixel_Normalized(p.PixelX, p.PixelY,
+					p.Weight * p.CurrentFlux * inv,
+					p.SC);
 #endif//PR_PHOTON_RGB_MODE
 			}
 		}
@@ -519,9 +520,8 @@ namespace PR
 		return renderer->settings().ppm().maxPassCount() + 1;
 	}
 
-	Spectrum PPMIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
+	Spectrum PPMIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
 	{
-		ShaderClosure sc;
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
 

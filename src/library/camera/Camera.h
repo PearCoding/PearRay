@@ -10,7 +10,7 @@ namespace PR
 	class PR_LIB Camera : public Entity
 	{
 	public:
-		Camera(const std::string& name);
+		Camera(uint32 id, const std::string& name);
 		virtual ~Camera();
 
 		/**

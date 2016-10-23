@@ -3,8 +3,8 @@
 
 namespace PR
 {
-	Material::Material() :
-		mEmission(nullptr), 
+	Material::Material(uint32 id) :
+		mEmission(nullptr), mID(id),
 		mIsLight(false), mCanBeShaded(true), mShadow(true), mSelfShadow(true), mCameraVisible(true)
 	{
 	}

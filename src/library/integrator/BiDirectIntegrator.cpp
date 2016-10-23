@@ -77,7 +77,7 @@ namespace PR
 	}
 	
 	constexpr float LightEpsilon = 0.00001f;
-	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
+	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		if (context->renderer()->settings().maxLightSamples() == 0)
 			return Spectrum();

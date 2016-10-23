@@ -8,8 +8,8 @@
 
 namespace PR
 {
-	OrenNayarMaterial::OrenNayarMaterial() :
-		Material(), mAlbedo(nullptr), mRoughness(nullptr)
+	OrenNayarMaterial::OrenNayarMaterial(uint32 id) :
+		Material(id), mAlbedo(nullptr), mRoughness(nullptr)
 	{
 	}
 

@@ -3,8 +3,8 @@
 
 namespace PR
 {
-	GridMaterial::GridMaterial() :
-		Material(), mFirst(nullptr), mSecond(nullptr), mGridCount(10), mTiledUV(true)
+	GridMaterial::GridMaterial(uint32 id) :
+		Material(id), mFirst(nullptr), mSecond(nullptr), mGridCount(10), mTiledUV(true)
 	{
 	}
 

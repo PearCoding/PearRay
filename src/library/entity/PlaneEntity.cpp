@@ -13,8 +13,8 @@
 
 namespace PR
 {
-	PlaneEntity::PlaneEntity(const std::string& name, const Plane& plane) :
-		RenderEntity(name), mPlane(plane), mMaterial(nullptr)
+	PlaneEntity::PlaneEntity(uint32 id, const std::string& name, const Plane& plane) :
+		RenderEntity(id, name), mPlane(plane), mMaterial(nullptr)
 	{
 	}
 

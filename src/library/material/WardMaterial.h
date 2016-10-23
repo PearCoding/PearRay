@@ -7,7 +7,7 @@ namespace PR
 	class PR_LIB WardMaterial : public Material
 	{
 	public:
-		WardMaterial();
+		WardMaterial(uint32 id);
 
 		SpectralShaderOutput* albedo() const;
 		void setAlbedo(SpectralShaderOutput* diffSpec);

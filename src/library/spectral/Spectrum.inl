@@ -46,9 +46,7 @@ namespace PR
 	{
 		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] += o[i];
-		}
 
 		return *this;
 	}
@@ -64,9 +62,7 @@ namespace PR
 	{
 		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] -= o[i];
-		}
 
 		return *this;
 	}
@@ -89,9 +85,7 @@ namespace PR
 	{
 		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] *= o[i];
-		}
 
 		return *this;
 	}
@@ -99,9 +93,7 @@ namespace PR
 	inline Spectrum& Spectrum::operator *= (float f)
 	{
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] *= f;
-		}
 		return *this;
 	}
 
@@ -123,18 +115,14 @@ namespace PR
 	{
 		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] /= o[i];
-		}
 		return *this;
 	}
 
 	inline Spectrum& Spectrum::operator /= (float f)
 	{
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] /= f;
-		}
 		return *this;
 	}
 
@@ -148,16 +136,16 @@ namespace PR
 		return mValues[index];
 	}
 
+#ifndef PR_NO_SPECTRAL
 	inline void Spectrum::setValueAtWavelength(float wavelength, float value)
 	{
 		if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
-		{
 			return;
-		}
 
 		uint32 i = (uint32)((wavelength - WAVELENGTH_START) / WAVELENGTH_STEP);
 		mValues[i] = value;
 	}
+#endif
 
 	inline void Spectrum::fill(float v)
 	{

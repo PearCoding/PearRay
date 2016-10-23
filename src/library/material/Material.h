@@ -11,7 +11,7 @@ namespace PR
 	class PR_LIB Material
 	{
 	public:
-		Material();
+		Material(uint32 id);
 		virtual ~Material() {}
 
 		virtual Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
@@ -43,6 +43,11 @@ namespace PR
 			return 1;
 		}
 
+		inline uint32 id() const
+		{
+			return mID;
+		}
+		
 		bool isLight() const;
 
 		SpectralShaderOutput* emission() const;
@@ -63,6 +68,7 @@ namespace PR
 	private:
 		SpectralShaderOutput* mEmission;
 
+		uint32 mID;
 		bool mIsLight;
 		bool mCanBeShaded;
 		bool mShadow;

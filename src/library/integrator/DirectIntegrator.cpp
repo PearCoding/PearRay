@@ -19,9 +19,8 @@ namespace PR
 	{
 	}
 
-	Spectrum DirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass)
+	Spectrum DirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
 	{
-		ShaderClosure sc;
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
 

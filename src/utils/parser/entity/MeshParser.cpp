@@ -22,7 +22,7 @@ namespace PRU
 		DL::Data* materialD = group->getFromKey("material");
 		DL::Data* meshD = group->getFromKey("mesh");
 
-		MeshEntity* me = new MeshEntity(name);
+		MeshEntity* me = new MeshEntity(env->scene()->entities().size()+1, name);
 
 		if (meshD && meshD->isType() == DL::Data::T_String)
 		{

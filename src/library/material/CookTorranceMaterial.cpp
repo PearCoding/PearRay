@@ -10,8 +10,8 @@
 
 namespace PR
 {
-	CookTorranceMaterial::CookTorranceMaterial() :
-		Material(),
+	CookTorranceMaterial::CookTorranceMaterial(uint32 id) :
+		Material(id),
 		mFresnelMode(FM_Dielectric), mDistributionMode(DM_GGX), mGeometryMode(GM_CookTorrance),
 		mAlbedo(nullptr), mDiffuseRoughness(nullptr),
 		mSpecularity(nullptr), mSpecRoughnessX(nullptr), mSpecRoughnessY(nullptr),

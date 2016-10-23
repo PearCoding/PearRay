@@ -53,6 +53,7 @@ namespace PR
 
 	void RGBConverter::convert(const Spectrum& s, float &x, float &y, float &z)
 	{
+#ifndef PR_NO_SPECTRAL
 		float X, Y, Z;
 		XYZConverter::convertXYZ(s, X, Y, Z);
 
@@ -82,6 +83,11 @@ namespace PR
 		/*x =  0.025187164190036f * X - 0.011947757372197f * Y - 0.003874948336929f * Z;
 		y = -0.009570175410578f * X + 0.018523039390656f * Y + 0.000410308795123f * Z;
 		z =  0.000573063005776f * X - 0.002101231021178f * Y + 0.010888197109740f * Z;*/
+#else
+		x = s.value(0);
+		y = s.value(1);
+		z = s.value(2);
+#endif
 	}
 
 	float RGBConverter::luminance(float r, float g, float b)
@@ -143,6 +149,7 @@ namespace PR
 
 	void RGBConverter::init()
 	{
+#ifndef PR_NO_SPECTRAL
 		constexpr float Q = RGB_TO_SPEC_SAMPLING_COUNT / (float)Spectrum::SAMPLING_COUNT;
 
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
@@ -181,12 +188,22 @@ namespace PR
 				Blue.setValue(i, RGB_TO_SPEC[(RGB_TO_SPEC_SAMPLING_COUNT - 1) * 7 + 6]);
 			}
 		}
+#else
+		White.setValue(0, 1); White.setValue(1, 1); White.setValue(2, 1);
+		Cyan.setValue(0, 0); Cyan.setValue(1, 1); Cyan.setValue(2, 1);
+		Magenta.setValue(0, 1); Magenta.setValue(1, 0); Magenta.setValue(2, 1);
+		Yellow.setValue(0, 1); Yellow.setValue(1, 1); Yellow.setValue(1, 0);
+		Red.setValue(0, 1);
+		Green.setValue(1, 1);
+		Blue.setValue(2, 1);
+#endif
 	}
 
 	Spectrum RGBConverter::toSpec(float r, float g, float b)
 	{
 		Spectrum spec;
 
+#ifndef PR_NO_SPECTRAL
 		if (r <= g && r <= b)
 		{
 			spec = r * White;
@@ -234,6 +251,11 @@ namespace PR
 		//spec *= 0.94f;
 		//spec *= 0.8f;
 		//return spec.clamp();
+#else
+		spec.setValue(0, r);
+		spec.setValue(1, g);
+		spec.setValue(2, b);
+#endif
 		return spec;
 	}
 }

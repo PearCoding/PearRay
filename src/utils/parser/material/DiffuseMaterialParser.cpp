@@ -23,7 +23,7 @@ namespace PRU
 
 		DL::Data* albedoD = group->getFromKey("albedo");
 
-		DiffuseMaterial* diff = new DiffuseMaterial;
+		DiffuseMaterial* diff = new DiffuseMaterial(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		return diff;

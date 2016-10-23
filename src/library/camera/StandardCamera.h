@@ -7,7 +7,7 @@ namespace PR
 	class PR_LIB StandardCamera : public Camera
 	{
 	public:
-		StandardCamera(const std::string& name);
+		StandardCamera(uint32 id, const std::string& name);
 		virtual ~StandardCamera();
 
 		virtual std::string type() const;

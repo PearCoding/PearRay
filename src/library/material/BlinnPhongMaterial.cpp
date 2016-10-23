@@ -7,8 +7,8 @@
 
 namespace PR
 {
-	BlinnPhongMaterial::BlinnPhongMaterial() :
-		Material(), mAlbedo(nullptr), mShininess(nullptr), mIndex(nullptr)
+	BlinnPhongMaterial::BlinnPhongMaterial(uint32 id) :
+		Material(id), mAlbedo(nullptr), mShininess(nullptr), mIndex(nullptr)
 	{
 	}
 

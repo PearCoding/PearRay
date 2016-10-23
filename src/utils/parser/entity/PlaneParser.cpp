@@ -68,7 +68,8 @@ namespace PRU
 			}
 		}
 
-		PlaneEntity* entity = new PlaneEntity(name, Plane(PM::pm_Set(0, 0, 0, 1), xAxis, yAxis));
+		PlaneEntity* entity = new PlaneEntity(env->scene()->entities().size()+1, name,
+			Plane(PM::pm_Set(0, 0, 0, 1), xAxis, yAxis));
 
 		if (materialD && materialD->isType() == DL::Data::T_String)
 		{

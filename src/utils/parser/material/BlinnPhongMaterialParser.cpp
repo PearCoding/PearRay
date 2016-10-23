@@ -25,7 +25,7 @@ namespace PRU
 		DL::Data* indexD = group->getFromKey("index");
 		DL::Data* shininessD = group->getFromKey("shininess");
 
-		BlinnPhongMaterial* diff = new BlinnPhongMaterial;
+		BlinnPhongMaterial* diff = new BlinnPhongMaterial(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setShininess(loader->getScalarOutput(env, shininessD));
