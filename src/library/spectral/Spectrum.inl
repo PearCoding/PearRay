@@ -157,6 +157,11 @@ namespace PR
 		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
+	inline void Spectrum::copyTo(float* data) const
+	{
+		std::memcpy(data, mValues, sizeof(float)*SAMPLING_COUNT);
+	}
+
 	inline float Spectrum::max() const
 	{
 		float h = 0;

@@ -60,9 +60,12 @@ namespace PRU
 		if(!mRenderer)
 			return;
 
-		if(!boost::filesystem::remove(mRenderer->workingDir() + "/.lock"))
+		std::string f = mRenderer->workingDir() + "/.lock";
+		if(!boost::filesystem::remove(f))
 			PR_LOGGER.logf(L_Error, M_System,
-				"Couldn't delete lock directory '%s/.lock'!", mRenderer->workingDir().c_str());
+				"Couldn't delete lock directory '%s'!", f.c_str());
+				
+		mRenderer = nullptr;
 	}
 
 	void OutputSpecification::setup()
@@ -248,6 +251,80 @@ namespace PRU
 									spec.TMM = tmm;
 									spec.Variable = var3D;
 
+									switch(var3D)
+									{
+										case OutputMap::V_Position:
+											spec.Name[0] = "p_x";
+											spec.Name[1] = "p_y";
+											spec.Name[2] = "p_z";
+											break;
+										case OutputMap::V_Normal:
+											spec.Name[0] = "n_x";
+											spec.Name[1] = "n_y";
+											spec.Name[2] = "n_z";
+											break;
+										case OutputMap::V_NormalG:
+											spec.Name[0] = "ng_x";
+											spec.Name[1] = "ng_y";
+											spec.Name[2] = "ng_z";
+											break;
+										case OutputMap::V_Tangent:
+											spec.Name[0] = "nx_x";
+											spec.Name[1] = "nx_y";
+											spec.Name[2] = "nx_z";
+											break;
+										case OutputMap::V_Bitangent:
+											spec.Name[0] = "ny_x";
+											spec.Name[1] = "ny_y";
+											spec.Name[2] = "ny_z";
+											break;
+										case OutputMap::V_View:
+											spec.Name[0] = "v_x";
+											spec.Name[1] = "v_y";
+											spec.Name[2] = "v_z";
+											break;
+										case OutputMap::V_UVW:
+											spec.Name[0] = "uv_u";
+											spec.Name[1] = "uv_v";
+											spec.Name[2] = "uv_w";
+											break;
+										case OutputMap::V_DPDU:
+											spec.Name[0] = "dpdu_x";
+											spec.Name[1] = "dpdu_y";
+											spec.Name[2] = "dpdu_z";
+											break;
+										case OutputMap::V_DPDV:
+											spec.Name[0] = "dpdv_x";
+											spec.Name[1] = "dpdv_y";
+											spec.Name[2] = "dpdv_z";
+											break;
+										case OutputMap::V_DPDW:
+											spec.Name[0] = "dpdw_x";
+											spec.Name[1] = "dpdw_y";
+											spec.Name[2] = "dpdw_z";
+											break;
+										case OutputMap::V_DPDX:
+											spec.Name[0] = "dpdx_x";
+											spec.Name[1] = "dpdx_y";
+											spec.Name[2] = "dpdx_z";
+											break;
+										case OutputMap::V_DPDY:
+											spec.Name[0] = "dpdy_x";
+											spec.Name[1] = "dpdy_y";
+											spec.Name[2] = "dpdy_z";
+											break;
+										case OutputMap::V_DPDZ:
+											spec.Name[0] = "dpdz_x";
+											spec.Name[1] = "dpdz_y";
+											spec.Name[2] = "dpdz_z";
+											break;
+										case OutputMap::V_DPDT:
+											spec.Name[0] = "dpdt_x";
+											spec.Name[1] = "dpdt_y";
+											spec.Name[2] = "dpdt_z";
+											break;
+									}
+
 									file.Settings3D.push_back(spec);
 								}
 								else
@@ -260,6 +337,27 @@ namespace PRU
 										spec.TMM = tmm;
 										spec.Variable = var1D;
 
+										switch(var1D)
+										{
+											case OutputMap::V_Depth:
+												spec.Name = "A";
+												break;
+											case OutputMap::V_Time:
+												spec.Name = "time";
+												break;
+											case OutputMap::V_Quality:
+												spec.Name = "quality";
+												break;
+											case OutputMap::V_Material:
+												spec.Name = "mat";
+												break;
+											case OutputMap::V_ID:
+												spec.Name = "id";
+												break;
+											case OutputMap::V_Samples:
+												spec.Name = "samples";
+												break;
+										}
 										file.Settings1D.push_back(spec);
 									}
 									else

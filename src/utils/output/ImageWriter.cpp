@@ -12,7 +12,7 @@ namespace PRU
 	using namespace PR;
 
 	ImageWriter::ImageWriter() :
-		mData(nullptr), mSaveData(nullptr), mRenderer(nullptr)
+		mSpectralData(nullptr), mRGBData(nullptr), mRenderer(nullptr)
 	{
 	}
 
@@ -26,40 +26,40 @@ namespace PRU
 		PR_ASSERT(renderer);
 
 		// Delete if resolution changed.
-		if(mRenderer && mData &&
+		if(mRenderer && mSpectralData &&
 			(mRenderer->width() != renderer->width() || mRenderer->height() != renderer->height()))
 		{
-			delete[] mData;
-			mData = nullptr;
+			delete[] mSpectralData;
+			mSpectralData = nullptr;
 
-			if(mSaveData)
+			if(mRGBData)
 			{
-				delete[] mSaveData;
-				mSaveData = nullptr;
+				delete[] mRGBData;
+				mRGBData = nullptr;
 			}
 		}
 
 		mRenderer = renderer;
 
-		if(!mData)
+		if(!mSpectralData)
 		{
-			mData = new float[renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT];
-			mSaveData = new PR::uint8[renderer->width()*renderer->height()*3];
+			mSpectralData = new float[renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT];
+			mRGBData = new float[renderer->width()*renderer->height()*3];
 		}
 	}
 
 	void ImageWriter::deinit()
 	{
-		if (mData)
+		if (mSpectralData)
 		{
-			delete[] mData;
-			mData = nullptr;
+			delete[] mSpectralData;
+			mSpectralData = nullptr;
 		}
 
-		if(mSaveData)
+		if(mRGBData)
 		{
-			delete[] mSaveData;
-			mSaveData = nullptr;
+			delete[] mRGBData;
+			mRGBData = nullptr;
 		}
 
 		if(!mRenderer)
@@ -86,6 +86,9 @@ namespace PRU
 			spec.channelnames.push_back("R");
 			spec.channelnames.push_back("G");
 			spec.channelnames.push_back("B");
+			
+			if(specSett->TGM == TGM_SRGB)
+				spec.attribute("oiio:ColorSpace", "srgb");
 		}
 		for(const IM_ChannelSetting3D& sett : ch3d)
 		{
@@ -100,13 +103,17 @@ namespace PRU
 		spec.attribute ("Software", "PearRay " PR_VERSION_STRING);
 
 		// Spectral
-		if(specSett)
+		if(specSett && specSett->Channel)
 		{
-			std::memset(mSaveData, 0, mRenderer->width() * mRenderer->height() * 3);
+			for(uint32 i = 0; i < mRenderer->width() * mRenderer->height(); ++i)
+			{
+				specSett->Channel->ptr()[i].copyTo(&mSpectralData[i*Spectrum::SAMPLING_COUNT]);
+			}
+			
 			toneMapper.setColorMode(specSett->TCM);
 			toneMapper.setGammaMode(specSett->TGM);
 			toneMapper.setMapperMode(specSett->TMM);
-			toneMapper.exec(mData, mSaveData);// RGB
+			toneMapper.exec(mSpectralData, mRGBData);// RGB
 		}
 		
 		ImageOutput* out = ImageOutput::create(file);
@@ -126,9 +133,9 @@ namespace PRU
 
 				if(specSett)
 				{
-					line[id] = mSaveData[id3d];
-					line[id+1] = mSaveData[id3d+1];
-					line[id+2] = mSaveData[id3d+2];
+					line[id] = mRGBData[id3d];
+					line[id+1] = mRGBData[id3d+1];
+					line[id+2] = mRGBData[id3d+2];
 					id += 3;
 				}
 

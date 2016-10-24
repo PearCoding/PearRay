@@ -162,6 +162,7 @@ int main(int argc, char** argv)
 
 	// Save images if needed
 	env->outputSpecification().save(toneMapper, true);
+	env->outputSpecification().deinit();
 
 	// Close everything
 	delete renderer;

@@ -58,8 +58,8 @@ namespace PRU
 			PR::OutputSpectral* spec) const;
 
 	private:
-		float* mData;
-		PR::uint8* mSaveData;
+		float* mSpectralData;
+		float* mRGBData;
 		PR::Renderer* mRenderer;
 	};
 }

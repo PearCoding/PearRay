@@ -61,6 +61,8 @@ namespace PR
 
 		inline void fill(float v);
 		inline void clear();
+
+		inline void copyTo(float* data) const;
 		
 		inline float max() const;// Amplitude
 		inline float min() const;// Amplitude
