@@ -121,7 +121,6 @@ int main(int argc, char** argv)
 	renderer->start(options.TileXCount, options.TileYCount, options.ThreadCount);
 
 	auto start = sc::high_resolution_clock::now();
-	auto start_io = start;
 	auto start_prog = start;
 	auto start_img = start;
 	while(!renderer->isFinished())

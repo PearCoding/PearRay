@@ -11,9 +11,9 @@
 constexpr float REINHARD_RATIO = 0.32f;
 namespace PR
 {
-	ToneMapper::ToneMapper(GPU* gpu, size_t size, bool byte) :
+	ToneMapper::ToneMapper(GPU* gpu, size_t size) :
 		mColorMode(PR::TCM_SRGB), mGammaMode(PR::TGM_SRGB), mMapperMode(PR::TMM_Simple_Reinhard),
-		mGPU(gpu), mSize(size), mByte(byte)
+		mGPU(gpu), mSize(size)
 	{
 #ifndef PR_NO_GPU
 		if (!mGPU)
@@ -38,14 +38,6 @@ namespace PR
 				CL_MEM_READ_WRITE | (!mByte ? CL_MEM_HOST_READ_ONLY : CL_MEM_HOST_NO_ACCESS),
 				size * 3 * sizeof(float)
 			);
-
-			if (mByte)
-			{
-				mByteOutput = cl::Buffer(gpu->context(),
-					CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY,
-					size * 3 * sizeof(uint8)
-				);
-			}
 		}
 		catch (const cl::Error& error)
 		{
@@ -54,7 +46,7 @@ namespace PR
 #endif
 	}
 
-	void ToneMapper::exec(const float* in, void* out) const
+	void ToneMapper::exec(const float* in, float* out) const
 	{
 #ifndef PR_NO_GPU
 		if (mGPU && mSize > 100)
@@ -103,26 +95,8 @@ namespace PR
 					queue.finish();
 				}
 
-				// Map 2: Tone Mapping
-				switch (mMapperMode)
-				{
-				case TMM_None:
-					break;
-				case TMM_Simple_Reinhard:
-				{
-					cl::Kernel toneKernel(mProgram, "k_tone_reinhard_simple");
-					toneKernel.setArg(0, mInbetweenBuffer);
-					toneKernel.setArg(1, (cl_ulong)mSize);
-					toneKernel.setArg(2, REINHARD_RATIO);
-
-					queue.enqueueNDRangeKernel(
-						toneKernel,
-						cl::NullRange,
-						cl::NDRange(mSize),
-						cl::NullRange);
-				}
-				break;
-				}
+				stage_mapper_gpu(queue);
+				queue.finish();
 
 				// Map 3: Gamma Correction
 				if (mGammaMode != TGM_None)
@@ -138,32 +112,10 @@ namespace PR
 						cl::NullRange);
 				}
 
-				// Map 4: Float to Byte
-				if (mByte)
-				{
-					cl::Kernel byteKernel(mProgram, "k_to_byte");
-					byteKernel.setArg(0, mInbetweenBuffer);
-					byteKernel.setArg(1, mByteOutput);
-					byteKernel.setArg(2, (cl_ulong)mSize*3);
-
-					queue.enqueueNDRangeKernel(
-						byteKernel,
-						cl::NullRange,
-						cl::NDRange(mSize*3),
-						cl::NullRange);
-
-					queue.finish();
-					queue.enqueueReadBuffer(mByteOutput, CL_TRUE, 0,
-						mSize * 3 * sizeof(uint8),
-						out);
-				}
-				else
-				{// No mapping needed, read float value directly
-					queue.finish();
-					queue.enqueueReadBuffer(mInbetweenBuffer, CL_TRUE, 0,
-						mSize * 3 * sizeof(float),
-						out);
-				}
+				queue.finish();
+				queue.enqueueReadBuffer(mInbetweenBuffer, CL_TRUE, 0,
+					mSize * 3 * sizeof(float),
+					out);
 			}
 			catch (const cl::Error& error)
 			{
@@ -176,6 +128,7 @@ namespace PR
 			for (uint32 i = 0; i < mSize; ++i)
 			{
 				float r, g, b;
+
 				// Map 1: Spec to RGB
 				switch (mColorMode)
 				{
@@ -199,41 +152,232 @@ namespace PR
 					break;
 				}
 
-				// Map 2: Tone Mapping
-				switch (mMapperMode)
-				{
-				case TMM_None:
-					break;
-				case TMM_Simple_Reinhard:
-					{
-						float Ld = 1 / (1 + RGBConverter::luminance(r, g, b) * REINHARD_RATIO);
-						r *= Ld; g *= Ld; b *= Ld;
-					}
-					break;
-				}
+				out[i * 3] = r;
+				out[i * 3 + 1] = g;
+				out[i * 3 + 2] = b;
+			}
+			
+			// Map 2: Tone Mapping
+			stage_mapper_non_gpu(out, out);
 
 				// Map 3: Gamma Correction
-				if (mGammaMode != TGM_None)
+			if (mGammaMode != TGM_None)
+			{
+				for (uint32 i = 0; i < mSize; ++i)
 				{
-					RGBConverter::gamma(r, g, b);
-				}
+					float r, g, b;
+					r = out[i*3];
+					g = out[i*3 + 1];
+					b = out[i*3 + 2];
 
-				// Map 4: Float to Byte
-				if (mByte)
-				{
-					reinterpret_cast<uint8*>(out)[i * 3] = (uint8)(PM::pm_Clamp(r, 0.0f, 1.0f) * 255);
-					reinterpret_cast<uint8*>(out)[i * 3 + 1] = (uint8)(PM::pm_Clamp(g, 0.0f, 1.0f) * 255);
-					reinterpret_cast<uint8*>(out)[i * 3 + 2] = (uint8)(PM::pm_Clamp(b, 0.0f, 1.0f) * 255);
-				}
-				else
-				{
-					reinterpret_cast<float*>(out)[i * 3] = r;
-					reinterpret_cast<float*>(out)[i * 3 + 1] = g;
-					reinterpret_cast<float*>(out)[i * 3 + 2] = b;
+					RGBConverter::gamma(r, g, b);
+
+					out[i * 3] = r;
+					out[i * 3 + 1] = g;
+					out[i * 3 + 2] = b;
 				}
 			}
 #ifndef PR_NO_GPU
 		}
 #endif
+	}
+
+	void ToneMapper::execMapper(const float* rgbIn, float* rgbOut) const
+	{
+#ifndef PR_NO_GPU
+		if (mGPU && mSize > 100)
+		{
+			try
+			{
+				cl::CommandQueue queue(mGPU->context(), mGPU->device(), 0);
+				queue.enqueueWriteBuffer(mInbetweenBuffer, CL_TRUE,
+						0,
+						mSize * 3 * sizeof(float),
+						in);
+				
+				stage_mapper_gpu(queue);
+
+				queue.finish();
+				queue.enqueueReadBuffer(mInbetweenBuffer, CL_TRUE, 0,
+					mSize * 3 * sizeof(float),
+					out);
+			}
+			catch (const cl::Error& error)
+			{
+				PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Error: %s (%s)", GPU::error(error.err()), error.what());
+			}
+		}
+		else
+		{
+#endif
+			stage_mapper_non_gpu(rgbIn, rgbOut);
+#ifndef PR_NO_GPU
+		}
+#endif
+	}
+
+#ifndef PR_NO_GPU
+	void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
+	{	
+		switch (mMapperMode)
+		{
+		case TMM_None:
+			break;
+		case TMM_Simple_Reinhard:
+		{
+			cl::Kernel toneKernel(mProgram, "k_tone_reinhard_simple");
+			toneKernel.setArg(0, mInbetweenBuffer);
+			toneKernel.setArg(1, (cl_ulong)mSize);
+			toneKernel.setArg(2, REINHARD_RATIO);
+
+			queue.enqueueNDRangeKernel(
+				toneKernel,
+				cl::NullRange,
+				cl::NDRange(mSize),
+				cl::NullRange);
+		}
+		break;
+		case TMM_Normalized:
+		{
+			float max = 0.0f;
+			for (uint32 i = 0; i < mSize; ++i)
+			{
+				float r, g, b;
+				r = in[i*3];
+				g = in[i*3 + 1];
+				b = in[i*3 + 2];
+
+				max = PM::pm_Max(r*r+g*g+b*b, max);
+			}
+			max = std::sqrt(max);
+
+			if(max <= PM_EPSILON)
+				break;
+			
+			cl::Kernel toneKernel(mProgram, "k_tone_normalize");
+			toneKernel.setArg(0, mInbetweenBuffer);
+			toneKernel.setArg(1, (cl_ulong)mSize);
+			toneKernel.setArg(2, 1.0f/max);
+
+			queue.enqueueNDRangeKernel(
+				toneKernel,
+				cl::NullRange,
+				cl::NDRange(mSize),
+				cl::NullRange);
+		}
+		break;
+		case TMM_Clamp:
+		case TMM_Abs:
+		case TMM_Positive:
+		case TMM_Negative:
+		case TMM_Spherical:
+		{
+			std::string kernelName = "k_tone_clamp";
+			switch(mMapperMode)
+			{
+				case TMM_Abs:
+					kernelName = "k_tone_abs";
+					break;
+				case TMM_Positive:
+					kernelName = "k_tone_positive";
+					break;
+				case TMM_Negative:
+					kernelName = "k_tone_negative";
+					break;
+				case TMM_Spherical:
+					kernelName = "k_tone_spherical";
+					break;
+				default:
+					break;
+			}
+
+			cl::Kernel toneKernel(mProgram, kernelName.c_str());
+			toneKernel.setArg(0, mInbetweenBuffer);
+			toneKernel.setArg(1, (cl_ulong)mSize);
+
+			queue.enqueueNDRangeKernel(
+				toneKernel,
+				cl::NullRange,
+				cl::NDRange(mSize),
+				cl::NullRange);
+		}
+		break;
+		}
+	}
+#endif
+	
+	void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const
+	{
+		float invMax = 0.0f;
+		if(mMapperMode == TMM_Normalized)
+		{
+			for (uint32 i = 0; i < mSize; ++i)
+			{
+				float r, g, b;
+				r = rgbIn[i*3];
+				g = rgbIn[i*3 + 1];
+				b = rgbIn[i*3 + 2];
+
+				invMax = PM::pm_Max(r*r+g*g+b*b, invMax);
+			}
+			invMax = std::sqrt(invMax);
+
+			if(invMax <= PM_EPSILON)
+				return;
+			
+			invMax = 1.0f/invMax;
+		}
+
+		for (uint32 i = 0; i < mSize; ++i)
+		{
+			float r, g, b;
+			r = rgbIn[i*3];
+			g = rgbIn[i*3 + 1];
+			b = rgbIn[i*3 + 2];
+
+			switch (mMapperMode)
+			{
+			case TMM_None:
+				break;
+			case TMM_Simple_Reinhard:
+				{
+					float Ld = 1 / (1 + RGBConverter::luminance(r, g, b) * REINHARD_RATIO);
+					r *= Ld; g *= Ld; b *= Ld;
+				}
+				break;
+			case TMM_Normalized:
+				r *= invMax; g *= invMax; b *= invMax;
+				break;
+			case TMM_Clamp:
+				r = PM::pm_Max(std::abs(r), 0.0f);
+				g = PM::pm_Max(std::abs(g), 0.0f);
+				b = PM::pm_Max(std::abs(b), 0.0f);
+				break;
+			case TMM_Abs:
+				r = std::abs(r);
+				g = std::abs(g);
+				b = std::abs(b);
+				break;
+			case TMM_Positive:
+				r = PM::pm_Max(r, 0.0f);
+				g = PM::pm_Max(g, 0.0f);
+				b = PM::pm_Max(b, 0.0f);
+				break;
+			case TMM_Negative:
+				r = PM::pm_Max(-r, 0.0f);
+				g = PM::pm_Max(-g, 0.0f);
+				b = PM::pm_Max(-b, 0.0f);
+				break;
+			case TMM_Spherical:
+				r = 0.5f + 0.5f * std::atan2(b, r) * PM_INV_PI_F;
+				g = 0.5f - std::asin(-g) * PM_INV_PI_F;
+				b = 0;
+				break;
+			}
+
+			rgbOut[i * 3] = r;
+			rgbOut[i * 3 + 1] = g;
+			rgbOut[i * 3 + 2] = b;
+		}
 	}
 }

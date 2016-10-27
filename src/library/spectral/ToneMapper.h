@@ -21,11 +21,19 @@ namespace PR
 		TGM_None,
 		TGM_SRGB // 2.2
 	};
+
 	enum ToneMapperMode
 	{
 		TMM_None,
-		TMM_Simple_Reinhard
+		TMM_Simple_Reinhard,
+		TMM_Clamp,
+		TMM_Abs,
+		TMM_Positive,
+		TMM_Negative,
+		TMM_Spherical,
+		TMM_Normalized
 	};
+
 	class PR_LIB ToneMapper
 	{
 		PR_CLASS_NON_COPYABLE(ToneMapper);
@@ -35,12 +43,13 @@ namespace PR
 		 * @brief Constructs a ToneMapper
 		 * @param gpu GPU instance to be used, nullptr if no gpu support.
 		 * @param size Size of buffer (without component count -> only width*height but no rgb [3])
-		 * @param byte Sets if result will be in range [0,255](byte) or in [0,inf)(float)
 		 */
-		ToneMapper(GPU* gpu, size_t size, bool byte = false);
+		ToneMapper(GPU* gpu, size_t size);
 
 		// in -> size * SAMPLING_COUNT
-		void exec(const float* in, void* out) const;
+		void exec(const float* specIn, float* rgbOut) const;
+
+		void execMapper(const float* rgbIn, float* rgbOut) const;
 
 		// Not thread safe!
 		inline ToneColorMode colorMode() const { return mColorMode; }
@@ -52,24 +61,22 @@ namespace PR
 		inline ToneMapperMode mapperMode() const { return mMapperMode; }
 		inline void setMapperMode(ToneMapperMode mode) { mMapperMode = mode; }
 
-		inline bool isByteMode() const { return mByte; }
-
-	private:
 		ToneColorMode mColorMode;
 		ToneGammaMode mGammaMode;
 		ToneMapperMode mMapperMode;
 
 		GPU* mGPU;
 		size_t mSize;
-		bool mByte;
 
 #ifndef PR_NO_GPU
 		cl::Buffer mSpecInput;
 		cl::Buffer mInbetweenBuffer;
 		cl::Buffer mLocalBuffer;
-		cl::Buffer mByteOutput;
 		cl::Program mProgram;
 		size_t mRunSize;
+
+		void stage_mapper_gpu(cl::CommandQueue& queue) const;
 #endif
+		void stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const;
 	};
 }

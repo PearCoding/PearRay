@@ -19,13 +19,6 @@ __kernel void k_gamma(__global float* rgb, const ulong size)
 	rgb[id] = (val <= 0.0031308f) ? 12.92f*val : (1.055f*powr(val, 0.4166666f) - 0.055f);
 } 
 
-//Really?
-__kernel void k_to_byte(__global const float* in, __global uchar* out, const ulong size)
-{ 
-	size_t id = get_global_id(0);
-	out[id] = (uchar)clamp(255*in[id],0.0f,255.0f);
-}
-
 // XYZ
 float3 spec_to_xyz(__global const float* specs)
 {
@@ -159,6 +152,58 @@ __kernel void k_tone_reinhard_simple(__global float* rgb, ulong size, float rati
 	rgb[gid*3] *= Ld;
 	rgb[gid*3 + 1] *= Ld;
 	rgb[gid*3 + 2] *= Ld;
+}
+
+__kernel void k_tone_clamp(__global float* rgb, ulong size)
+{
+	uint gid = get_global_id(0);
+	rgb[gid*3] = min(abs(rgb[gid*3]), 1.0);
+	rgb[gid*3+1] = min(abs(rgb[gid*3+1]), 1.0);
+	rgb[gid*3+2] = min(abs(rgb[gid*3+2]), 1.0);
+}
+
+__kernel void k_tone_abs(__global float* rgb, ulong size)
+{
+	uint gid = get_global_id(0);
+	rgb[gid*3] = abs(rgb[gid*3]);
+	rgb[gid*3+1] = abs(rgb[gid*3+1]);
+	rgb[gid*3+2] = abs(rgb[gid*3+2]);
+}
+
+__kernel void k_tone_positive(__global float* rgb, ulong size)
+{
+	uint gid = get_global_id(0);
+	rgb[gid*3] = max(rgb[gid*3], 0.0);
+	rgb[gid*3+1] = max(rgb[gid*3+1], 0.0);
+	rgb[gid*3+2] = max(rgb[gid*3+2], 0.0);
+}
+
+__kernel void k_tone_negative(__global float* rgb, ulong size)
+{
+	uint gid = get_global_id(0);
+	rgb[gid*3] = -min(rgb[gid*3], 0.0);
+	rgb[gid*3+1] = -min(rgb[gid*3+1], 0.0);
+	rgb[gid*3+2] = -min(rgb[gid*3+2], 0.0);
+}
+
+__kernel void k_tone_normalize(__global float* rgb, ulong size, float invMax)
+{
+	uint gid = get_global_id(0);
+	rgb[gid*3] *= invMax;
+	rgb[gid*3+1] *= invMax;
+	rgb[gid*3+2] *= invMax;
+}
+
+// Assume normalized vector
+__kernel void k_tone_spherical(__global float* rgb, ulong size)
+{
+	uint gid = get_global_id(0);
+	float rho = 0.5 + 0.5 * atan2(rgb[gid*3+2], rgb[gid*3]) / 3.141592;
+	float phi = 0.5 - asin(-rgb[gid*3+1]) / 3.141592;
+
+	rgb[gid*3] = rho;
+	rgb[gid*3+1] = phi;
+	rgb[gid*3+2] = 0;
 }
 
 )";

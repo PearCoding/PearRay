@@ -4,6 +4,10 @@
 
 #include <OpenImageIO/imageio.h>
 
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+
 
 OIIO_NAMESPACE_USING;
 
@@ -72,8 +76,6 @@ namespace PRU
 			const std::vector<IM_ChannelSetting1D>& ch1d,
 			const std::vector<IM_ChannelSetting3D>& ch3d) const
 	{
-		PR_ASSERT(!toneMapper.isByteMode());
-
 		const uint32 channelCount = (specSett ? 3 : 0) + ch1d.size() + ch3d.size()*3;
 		if(channelCount == 0)
 			return false;
@@ -167,6 +169,32 @@ namespace PRU
 	bool ImageWriter::save_spectral(const std::string& file,
 			PR::OutputSpectral* spec) const
 	{
-		return false;//TODO
+		if(!spec)
+			return false;
+		
+		namespace io = boost::iostreams;
+		io::filtering_ostream out;
+    	out.push(io::zlib_compressor());
+    	out.push(io::file_sink(file));
+
+		out.put('P').put('R').put('S').put('4').put('2');
+
+		uint32 tmp = Spectrum::SAMPLING_COUNT;
+		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
+		tmp = mRenderer->width();
+		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
+		tmp = mRenderer->height();
+		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
+
+		float buf[Spectrum::SAMPLING_COUNT];
+		for (uint32 i = 0; i < mRenderer->height() * mRenderer->width(); ++i)
+		{
+			const Spectrum& s = spec->ptr()[i];
+			s.copyTo(buf);
+			out.write(reinterpret_cast<const char*>(buf),
+				Spectrum::SAMPLING_COUNT * sizeof(float));
+		}
+
+		return true;
 	}
 }

@@ -225,7 +225,19 @@ namespace PRU
 								std::string mapper = mapperD->getString();
 								std::transform(mapper.begin(), mapper.end(), mapper.begin(), ::tolower);
 								if(mapper == "reinhard")
-									tmm = TMM_None;
+									tmm = TMM_Simple_Reinhard;
+								else if(mapper == "clamp")
+									tmm = TMM_Clamp;
+								else if(mapper == "absolute" || mapper == "abs")
+									tmm = TMM_Abs;
+								else if(mapper == "positive" || mapper == "pos")
+									tmm = TMM_Positive;
+								else if(mapper == "negative" || mapper == "neg")
+									tmm = TMM_Negative;
+								else if(mapper == "spherical")
+									tmm = TMM_Spherical;
+								else if(mapper == "normalize" || mapper == "normalized" || mapper == "norm")
+									tmm = TMM_Normalized;
 							}
 
 							if(type == "rgb" || type == "color")
@@ -253,6 +265,7 @@ namespace PRU
 
 									switch(var3D)
 									{
+										default:
 										case OutputMap::V_Position:
 											spec.Name[0] = "p_x";
 											spec.Name[1] = "p_y";
@@ -339,6 +352,7 @@ namespace PRU
 
 										switch(var1D)
 										{
+											default:
 											case OutputMap::V_Depth:
 												spec.Name = "A";
 												break;

@@ -37,8 +37,8 @@ namespace PR
 	class LogListener;
 	class PR_LIB Logger
 	{
+		PR_CLASS_NON_COPYABLE(Logger);
 	public:
-
 		Logger();
 		~Logger();
 

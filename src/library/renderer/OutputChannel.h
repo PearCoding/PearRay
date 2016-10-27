@@ -9,6 +9,7 @@ namespace PR
 	template<typename T>
 	class PR_LIB OutputChannel
 	{
+		PR_CLASS_NON_COPYABLE(OutputChannel);
 	public:
 		inline OutputChannel(Renderer* renderer) :
 			mRenderer(renderer), mData(nullptr)
