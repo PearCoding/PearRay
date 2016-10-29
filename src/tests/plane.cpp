@@ -24,14 +24,14 @@ PR_TEST("Normal");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(1, 0, 0, 1), PM::pm_Set(0, 1, 0, 1));
 	PM::vec3 norm = plane.normal();
-	PR_CHECK_NEARLY_EQ_3(norm, PM::pm_Set(0, 0, -1));
+	PR_CHECK_NEARLY_EQ_3(norm, PM::pm_Set(0, 0, 1));
 }
 
 PR_TEST("Normal 2");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(1, 0, 0, 1), PM::pm_Set(0, 0, 1, 1));
 	PM::vec3 norm = plane.normal();
-	PR_CHECK_NEARLY_EQ_3(norm, PM::pm_Set(0, 1, 0));
+	PR_CHECK_NEARLY_EQ_3(norm, PM::pm_Set(0, -1, 0));
 }
 
 PR_TEST("Center");

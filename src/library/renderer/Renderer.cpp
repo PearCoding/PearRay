@@ -305,7 +305,8 @@ namespace PR
 				float rx = context->random().getFloat();// Random sampling
 				float ry = context->random().getFloat();
 				
-				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
+				Spectrum spec = renderSample(context,
+					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
 					0.0f,
 					pass,
@@ -325,7 +326,8 @@ namespace PR
 				float rx = context->random().getFloat();// Random sampling
 				float ry = context->random().getFloat();
 
-				Spectrum spec = renderSample(context, x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
+				Spectrum spec = renderSample(context,
+					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
 					0.0f,
 					pass,
@@ -376,6 +378,8 @@ namespace PR
 			sc.Flags |= (sc.NgdotV > 0) ? SCF_Inside : 0;
 			sc.NdotV = std::abs(sc.NgdotV);
 			sc.V = ray.direction();
+			sc.T = ray.time();
+			sc.Depth2 = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(ray.startPosition(), sc.P));
 			
 			if(entity)
 				sc.EntityID = entity->id(); 

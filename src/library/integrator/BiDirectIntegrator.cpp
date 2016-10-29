@@ -159,10 +159,10 @@ namespace PR
 			}
 		}
 
-		return applyRay(in, context, 0);
+		return applyRay(in, context, 0, sc);
 	}
 
-	Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderContext* context, uint32 diffBounces)
+	Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderContext* context, uint32 diffBounces, ShaderClosure& sc)
 	{
 		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*(uint32)context->renderer()->lights().size();
 		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();
@@ -170,7 +170,6 @@ namespace PR
 		if(in.depth() >= maxDepth)
 			return Spectrum();
 
-		ShaderClosure sc;
 		Spectrum applied;
 		Spectrum full_weight;
 		float full_pdf = 0;
@@ -208,7 +207,8 @@ namespace PR
 						(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
 					{
 						weight = applyRay(in.next(sc.P, dir),
-							context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces);
+							context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces,
+							other_sc);
 
 						weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
 					}

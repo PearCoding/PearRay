@@ -14,7 +14,7 @@ namespace PR
 		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc) override;
 
 	private:
-		Spectrum applyRay(const Ray& in, RenderContext* context, uint32 diffBounces);
+		Spectrum applyRay(const Ray& in, RenderContext* context, uint32 diffBounces, ShaderClosure& sc);
 
 		struct ThreadData
 		{

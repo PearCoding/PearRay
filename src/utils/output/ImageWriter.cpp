@@ -70,7 +70,6 @@ namespace PRU
 			return;
 	}
 
-	// TODO: Implement different channel modes
 	bool ImageWriter::save(PR::ToneMapper& toneMapper, const std::string& file,
 			IM_ChannelSettingSpec* specSett,
 			const std::vector<IM_ChannelSetting1D>& ch1d,
@@ -104,6 +103,11 @@ namespace PRU
 		}
 		spec.attribute ("Software", "PearRay " PR_VERSION_STRING);
 
+		// Create file
+		ImageOutput* out = ImageOutput::create(file);
+		if(!out)
+			return false;
+
 		// Spectral
 		if(specSett && specSett->Channel)
 		{
@@ -118,10 +122,50 @@ namespace PRU
 			toneMapper.exec(mSpectralData, mRGBData);// RGB
 		}
 		
-		ImageOutput* out = ImageOutput::create(file);
-		if(!out)
-			return false;
-		
+		// Calculate maximums for some mapper techniques
+		float invMax3d[OutputMap::V_3D_COUNT];
+		std::memset(invMax3d, 0, sizeof(float)*OutputMap::V_3D_COUNT);
+		float invMax1d[OutputMap::V_1D_COUNT];
+		std::memset(invMax1d, 0, sizeof(float)*OutputMap::V_1D_COUNT);
+
+		for(const IM_ChannelSetting3D& sett : ch3d)
+		{
+			if(sett.TMM != TMM_Normalized)
+				continue;
+
+			for (uint32 y = 0; y < mRenderer->height(); ++y)
+			{
+				for(uint32 x = 0; x < mRenderer->width(); ++x)
+				{
+					invMax3d[sett.Variable] =
+						PM::pm_Max(invMax3d[sett.Variable],
+							PM::pm_MagnitudeSqr3D(sett.Channel->getFragment(x,y)));
+				}
+			}
+
+			if(invMax3d[sett.Variable] > PM_EPSILON)
+				invMax3d[sett.Variable] = 1.0f / std::sqrt(invMax3d[sett.Variable]);
+		}
+
+		for(const IM_ChannelSetting1D& sett : ch1d)
+		{
+			if(sett.TMM != TMM_Normalized)
+				continue;
+
+			for (uint32 y = 0; y < mRenderer->height(); ++y)
+			{
+				for(uint32 x = 0; x < mRenderer->width(); ++x)
+				{
+					invMax1d[sett.Variable] =
+						PM::pm_Max(invMax1d[sett.Variable], sett.Channel->getFragment(x,y));
+				}
+			}
+
+			if(invMax1d[sett.Variable] > PM_EPSILON)
+				invMax1d[sett.Variable] = 1.0f / invMax1d[sett.Variable];
+		}
+
+		// Write content		
 		float* line = new float[channelCount * mRenderer->width()];
 
 		out->open(file, spec);
@@ -143,16 +187,79 @@ namespace PRU
 
 				for(const IM_ChannelSetting3D& sett : ch3d)
 				{
-					PM::avec3 a = sett.Channel->ptr()[id1d];
-					line[id] = a[0];
-					line[id+1] = a[1];
-					line[id+2] = a[2];
+					const PM::avec3& a = sett.Channel->ptr()[id1d];
+
+					float r = a[0];
+					float g = a[1];
+					float b = a[2];
+					switch(sett.TMM)
+					{
+					case TMM_None:
+					case TMM_Simple_Reinhard:
+						break;
+					case TMM_Normalized:
+						r *= invMax3d[sett.Variable]; g *= invMax3d[sett.Variable]; b *= invMax3d[sett.Variable];
+						break;
+					case TMM_Clamp:
+						r = PM::pm_Max(std::abs(r), 0.0f);
+						g = PM::pm_Max(std::abs(g), 0.0f);
+						b = PM::pm_Max(std::abs(b), 0.0f);
+						break;
+					case TMM_Abs:
+						r = std::abs(r);
+						g = std::abs(g);
+						b = std::abs(b);
+						break;
+					case TMM_Positive:
+						r = PM::pm_Max(r, 0.0f);
+						g = PM::pm_Max(g, 0.0f);
+						b = PM::pm_Max(b, 0.0f);
+						break;
+					case TMM_Negative:
+						r = PM::pm_Max(-r, 0.0f);
+						g = PM::pm_Max(-g, 0.0f);
+						b = PM::pm_Max(-b, 0.0f);
+						break;
+					case TMM_Spherical:
+						r = 0.5f + 0.5f * std::atan2(b, r) * PM_INV_PI_F;
+						g = 0.5f - std::asin(-g) * PM_INV_PI_F;
+						b = 0;
+						break;
+					}
+
+					line[id] = r;
+					line[id+1] = g;
+					line[id+2] = b;
 					id += 3;
 				}
 
 				for(const IM_ChannelSetting1D& sett : ch1d)
 				{
-					line[id] = sett.Channel->ptr()[id1d];
+					float r = sett.Channel->ptr()[id1d];
+					switch(sett.TMM)
+					{
+					case TMM_None:
+					case TMM_Simple_Reinhard:
+					case TMM_Spherical:
+						break;
+					case TMM_Normalized:
+						r *= invMax1d[sett.Variable];
+						break;
+					case TMM_Clamp:
+						r = PM::pm_Max(std::abs(r), 0.0f);
+						break;
+					case TMM_Abs:
+						r = std::abs(r);
+						break;
+					case TMM_Positive:
+						r = PM::pm_Max(r, 0.0f);
+						break;
+					case TMM_Negative:
+						r = PM::pm_Max(-r, 0.0f);
+						break;
+					}
+
+					line[id] = r;
 					id += 1;
 				}
 			}

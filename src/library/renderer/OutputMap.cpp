@@ -162,8 +162,8 @@ namespace PR
 			mInt3D[V_DPDT]->pushFragment(x, y, PM::pm_Lerp(mInt3D[V_DPDT]->getFragment(x,y), sc.dPdT, tv));
 
 		// 1D
-		if(mInt1D[V_Depth])//TODO
-			mInt1D[V_Depth]->pushFragment(x, y, mInt1D[V_Depth]->getFragment(x,y)*(1-t) + 1*t);
+		if(mInt1D[V_Depth])
+			mInt1D[V_Depth]->pushFragment(x, y, mInt1D[V_Depth]->getFragment(x,y)*(1-t) + std::sqrt(sc.Depth2)*t);
 		if(mInt1D[V_Time])
 			mInt1D[V_Time]->pushFragment(x, y, mInt1D[V_Time]->getFragment(x,y)*(1-t) + sc.T*t);
 		if(mInt1D[V_Material])

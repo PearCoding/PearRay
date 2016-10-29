@@ -47,9 +47,10 @@ namespace PR
 
 		// Time for this sample.
 		float T;
-		float dT;
+		//float dT;
 
 		// Some other utility variables
+		float Depth2;// Squared!
 		float NgdotV;
 		float NdotV;
 		uint8 Flags;
@@ -78,7 +79,8 @@ namespace PR
 			dUVdX(PM::pm_Zero()),
 			dUVdY(PM::pm_Zero()),
 			T(0),
-			dT(0),
+			//dT(0),
+			Depth2(0),
 			NgdotV(0),
 			NdotV(0),
 			Flags(0),
@@ -105,7 +107,8 @@ namespace PR
 			dUVdX(fs.dUVdX),
 			dUVdY(fs.dUVdY),
 			T(0),
-			dT(0),
+			//dT(0),
+			Depth2(0),
 			NgdotV(0),
 			NdotV(0),
 			Flags(0),
