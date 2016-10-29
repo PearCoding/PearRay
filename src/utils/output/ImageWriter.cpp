@@ -112,9 +112,7 @@ namespace PRU
 		if(specSett && specSett->Channel)
 		{
 			for(uint32 i = 0; i < mRenderer->width() * mRenderer->height(); ++i)
-			{
 				specSett->Channel->ptr()[i].copyTo(&mSpectralData[i*Spectrum::SAMPLING_COUNT]);
-			}
 			
 			toneMapper.setColorMode(specSett->TCM);
 			toneMapper.setGammaMode(specSett->TGM);

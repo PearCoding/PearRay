@@ -4,17 +4,13 @@
 #include <QImage>
 
 #include "spectral/ToneMapper.h"
+#include "renderer/OutputMap.h"
 
 namespace PR
 {
 	class Renderer;
 	class Spectrum;
 	class ToneMapper;
-}
-
-namespace PRU
-{
-	class DisplayBuffer;
 }
 
 enum ToolMode
@@ -33,7 +29,7 @@ public:
 	ViewWidget(QWidget *parent);
 	~ViewWidget();
 
-	void setRenderer(PR::Renderer* renderer, PRU::DisplayBuffer* buffer);
+	void setRenderer(PR::Renderer* renderer);
 
 	inline PR::ToneColorMode colorMode() const
 	{
@@ -83,6 +79,7 @@ public slots:
 	}
 
 	void setToolMode(ToolMode tm);
+	void setDisplayMode(quint32 mode);
 	
 	void resetZoomPan();
 	void fitIntoWindow();
@@ -111,13 +108,14 @@ private:
 	void cacheScale();
 
 	PR::Renderer* mRenderer;
-	PRU::DisplayBuffer* mDisplayBuffer;
 
 	ToolMode mToolMode;
+	PR::OutputMap::Variable1D mDisplayMode1D;
+	PR::OutputMap::Variable3D mDisplayMode3D;
 
 	bool mShowProgress;
 
-	uchar* mRenderData;
+	float* mRenderData;
 	QImage mRenderImage;
 	QImage mScaledImage;
 

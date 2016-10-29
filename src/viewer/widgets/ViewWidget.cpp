@@ -2,7 +2,6 @@
 
 #include "renderer/Renderer.h"
 #include "renderer/RenderTile.h"
-#include "renderer/DisplayBuffer.h"
 
 #include "spectral/ToneMapper.h"
 #include "PearMath.h"
@@ -15,7 +14,9 @@
 
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
-	mRenderer(nullptr), mToolMode(TM_Selection), mShowProgress(true),
+	mRenderer(nullptr), mToolMode(TM_Selection),
+	mDisplayMode1D(PR::OutputMap::V_1D_COUNT), mDisplayMode3D(PR::OutputMap::V_3D_COUNT),
+	mShowProgress(true),
 	mRenderData(nullptr), mToneMapper(nullptr),
 	mZoom(1), mPanX(0), mPanY(0), mLastPanX(0), mLastPanY(0), mPressing(false)
 {
@@ -33,10 +34,9 @@ ViewWidget::~ViewWidget()
 	}
 }
 
-void ViewWidget::setRenderer(PR::Renderer* renderer, PRU::DisplayBuffer* buffer)
+void ViewWidget::setRenderer(PR::Renderer* renderer)
 {
 	mRenderer = renderer;
-	mDisplayBuffer = buffer;
 
 	if (mRenderData)
 	{
@@ -49,10 +49,10 @@ void ViewWidget::setRenderer(PR::Renderer* renderer, PRU::DisplayBuffer* buffer)
 
 	if (mRenderer)
 	{
-		mRenderData = new uchar[mRenderer->width()*mRenderer->height()*3];
+		mRenderData = new float[mRenderer->width()*mRenderer->height()*3];
 		std::memset(mRenderData, 0, mRenderer->width()*mRenderer->height() * 3 * sizeof(uchar));
 
-		mToneMapper = new PR::ToneMapper(mRenderer->gpu(), mRenderer->width()*mRenderer->height(), true);
+		mToneMapper = new PR::ToneMapper(mRenderer->gpu(), mRenderer->width()*mRenderer->height());
 	}
 
 	refreshView();
@@ -129,6 +129,27 @@ void ViewWidget::setToolMode(ToolMode tm)
 	repaint();
 }
 
+void ViewWidget::setDisplayMode(quint32 mode)
+{
+	if(mode == 0)// Spectral
+	{
+		mDisplayMode1D = PR::OutputMap::V_1D_COUNT;// OFF
+		mDisplayMode3D = PR::OutputMap::V_3D_COUNT;// OFF
+	}
+	else if(mode < PR::OutputMap::V_3D_COUNT + 1)
+	{
+		mDisplayMode1D = PR::OutputMap::V_1D_COUNT;// OFF
+		mDisplayMode3D = (PR::OutputMap::Variable3D)(mode - 1);
+	}
+	else
+	{
+		mDisplayMode1D = (PR::OutputMap::Variable1D)(mode - 1 - PR::OutputMap::V_3D_COUNT);
+		mDisplayMode3D = PR::OutputMap::V_3D_COUNT;// OFF
+	}
+
+	refreshView();
+}
+
 void ViewWidget::setCropSelection(const QPoint& start, const QPoint& end)
 {
 	mCropStart = start;
@@ -164,7 +185,8 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 			QPoint p = convertToLocal(event->pos());
 			if (QRect(QPoint(0, 0), mRenderImage.size()).contains(p))
 			{
-				emit spectrumSelected(mDisplayBuffer->getFragment(p.x(), p.y(), 0));
+				emit spectrumSelected(
+					mRenderer->output()->getSpectralChannel()->getFragment(p.x(), p.y()));
 			}
 		}
 		else if (mToolMode == TM_Pan)
@@ -344,12 +366,81 @@ void ViewWidget::refreshView()
 {
 	if (mRenderer)
 	{
-		if(mDisplayBuffer->ptr())
+		bool success = false;
+		PR::OutputMap* map = mRenderer->output();
+		
+		if(map)
 		{
-			mToneMapper->exec(mDisplayBuffer->ptr(), mRenderData);
-			mRenderImage = QImage(mRenderData, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
+			if(mDisplayMode1D == PR::OutputMap::V_1D_COUNT &&
+				mDisplayMode3D == PR::OutputMap::V_3D_COUNT)// Spectral
+			{
+				float* specData = new float[mRenderer->width() * mRenderer->height() * PR::Spectrum::SAMPLING_COUNT];
+				for(int i = 0; i < mRenderer->width() * mRenderer->height(); ++i)
+					map->getSpectralChannel()->ptr()[i].copyTo(&specData[i*PR::Spectrum::SAMPLING_COUNT]);
+				mToneMapper->exec(specData, mRenderData);
+				delete[] specData;
+
+				uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()*3];
+				for(int i = 0; mRenderer->width()*mRenderer->height()*3; ++i)
+					tmp[i] = static_cast<uchar>(mRenderData[i]*255);
+
+				mRenderImage = QImage(tmp, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
+				delete[] tmp;
+				success = true;
+			}
+			else if(mDisplayMode1D != PR::OutputMap::V_1D_COUNT)
+			{
+				PR::Output1D* channel = map->getChannel(mDisplayMode1D);
+
+				if(channel)
+				{
+					for(int i = 0; i < mRenderer->width() * mRenderer->height(); ++i)
+					{
+						mRenderData[i*3] = channel->ptr()[i];
+						mRenderData[i*3 + 1] = channel->ptr()[i];
+						mRenderData[i*3 + 2] = channel->ptr()[i];
+					}
+
+					mToneMapper->execMapper(mRenderData, mRenderData);
+
+					uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()];
+					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
+						tmp[i] = static_cast<uchar>(mRenderData[i*3]*255);
+
+					mRenderImage = QImage(tmp, mRenderer->width(), mRenderer->height(), QImage::Format_Grayscale8);
+					delete[] tmp;
+					success = true;
+				}
+			}
+			else
+			{
+				PR::Output3D* channel = map->getChannel(mDisplayMode3D);
+
+				if(channel)
+				{
+					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
+					{
+						const PM::avec3& a = channel->ptr()[i];
+						mRenderData[i*3] = a[0];
+						mRenderData[i*3+1] = a[1];
+						mRenderData[i*3+2] = a[2];
+					}
+
+					mToneMapper->execMapper(mRenderData, mRenderData);
+
+					uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()];
+					for(int i = 0; mRenderer->width()*mRenderer->height()*3; ++i)
+						tmp[i] = static_cast<uchar>(mRenderData[i]*255);
+
+					mRenderImage = QImage(tmp, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
+					delete[] tmp;
+					success = true;
+				}
+			}
 		}
-		else
+		
+		// Couldn't get something
+		if(!success)
 		{
 			mRenderImage = QImage(mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
 			mRenderImage.fill(Qt::black);

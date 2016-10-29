@@ -15,13 +15,13 @@
 
 #include "Environment.h"
 #include "SceneLoader.h"
-#include "renderer/DisplayBuffer.h"
+#include "renderer/OutputMap.h"
 
 #include "models/EntityTreeModel.h"
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
-	mEnvironment(nullptr), mRenderer(nullptr), mDisplayBuffer(nullptr)
+	mEnvironment(nullptr), mRenderer(nullptr)
 {
 	ui.setupUi(this);
 
@@ -58,10 +58,43 @@ MainWindow::MainWindow(QWidget *parent)
 	QComboBox* viewMapperCombo = new QComboBox(this);
 	viewMapperCombo->addItem(tr("None"));
 	viewMapperCombo->addItem(tr("Reinhard"));
+	viewMapperCombo->addItem(tr("Clamp"));
+	viewMapperCombo->addItem(tr("Absolute"));
+	viewMapperCombo->addItem(tr("Positive"));
+	viewMapperCombo->addItem(tr("Negative"));
+	viewMapperCombo->addItem(tr("Spherical"));
+	viewMapperCombo->addItem(tr("Normalized"));
 	viewMapperCombo->setCurrentIndex(1);
 	viewMapperCombo->setToolTip(tr("Tone Mapper"));
 	ui.mainToolBar->addWidget(viewMapperCombo);
 	connect(viewMapperCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewMapperMode(int)));
+
+	QComboBox* viewDisplayCombo = new QComboBox(this);
+	viewDisplayCombo->addItem(tr("RGB"));
+	viewDisplayCombo->addItem(tr("P"));
+	viewDisplayCombo->addItem(tr("N"));
+	viewDisplayCombo->addItem(tr("Ng"));
+	viewDisplayCombo->addItem(tr("Nx"));
+	viewDisplayCombo->addItem(tr("Ny"));
+	viewDisplayCombo->addItem(tr("V"));
+	viewDisplayCombo->addItem(tr("UV"));
+	viewDisplayCombo->addItem(tr("dPdU"));
+	viewDisplayCombo->addItem(tr("dPdV"));
+	viewDisplayCombo->addItem(tr("dPdW"));
+	viewDisplayCombo->addItem(tr("dPdX"));
+	viewDisplayCombo->addItem(tr("dPdY"));
+	viewDisplayCombo->addItem(tr("dPdZ"));
+	viewDisplayCombo->addItem(tr("dPdT"));
+	viewDisplayCombo->addItem(tr("D"));
+	viewDisplayCombo->addItem(tr("T"));
+	viewDisplayCombo->addItem(tr("Q"));
+	viewDisplayCombo->addItem(tr("Mat"));
+	viewDisplayCombo->addItem(tr("ID"));
+	viewDisplayCombo->addItem(tr("S"));
+	viewDisplayCombo->setCurrentIndex(0);
+	viewDisplayCombo->setToolTip(tr("Channel"));
+	ui.mainToolBar->addWidget(viewDisplayCombo);
+	connect(viewDisplayCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setViewDisplayMode(int)));
 
 	//Connect all signal and slots
 	connect(ui.actionOpenScene, SIGNAL(triggered()), this, SLOT(openScene()));
@@ -113,7 +146,7 @@ void MainWindow::closeProject()
 	ui.systemPropertyView->setEnabled(false);
 
 	ui.outlineView->setModel(nullptr);
-	ui.viewWidget->setRenderer(nullptr, nullptr);
+	ui.viewWidget->setRenderer(nullptr);
 	ui.entityDetailsView->setEntity(nullptr);
 
 	if (mRenderer)
@@ -128,12 +161,6 @@ void MainWindow::closeProject()
 	{
 		delete mEnvironment;
 		mEnvironment = nullptr;
-	}
-
-	if (mDisplayBuffer)
-	{
-		delete mDisplayBuffer;
-		mDisplayBuffer = nullptr;
 	}
 }
 
@@ -173,10 +200,7 @@ void MainWindow::openProject(const QString& str)
 		mRenderer->settings().setCropMaxY(mEnvironment->cropMaxY());
 		mRenderer->settings().setCropMinY(mEnvironment->cropMinY());
 
-		mDisplayBuffer = new PRU::DisplayBuffer();
-		mDisplayBuffer->init(mRenderer);
-
-		ui.viewWidget->setRenderer(mRenderer, mDisplayBuffer);
+		ui.viewWidget->setRenderer(mRenderer);
 
 		ui.viewWidget->setCropSelection(
 			QPoint(mEnvironment->cropMinX()*mRenderer->width(), mEnvironment->cropMinY()*mRenderer->height()),
@@ -459,6 +483,9 @@ void MainWindow::startRendering(bool clear)
 	mEnvironment->scene()->freeze();
 	mEnvironment->scene()->buildTree();
 
+	mEnvironment->outputSpecification().init(mRenderer);
+	mEnvironment->outputSpecification().setup();
+
 	QRect cropRect = ui.viewWidget->selectedCropRect();
 	if (cropRect.isValid() && cropRect.width() > 2 && cropRect.height() > 2)
 	{
@@ -479,8 +506,8 @@ void MainWindow::startRendering(bool clear)
 		mRenderer->settings().setCropMinY(0);
 	}
 
-	if(clear)
-		mDisplayBuffer->clear(0,0,0,0);
+	// if(clear)
+	// 	mDisplayBuffer->clear(0,0,0,0);
 
 	if(mRenderer->gpu())
 		mTimer.start(1000);
@@ -489,7 +516,7 @@ void MainWindow::startRendering(bool clear)
 	
 	mElapsedTime.restart();
 	mFrameTime.restart();
-	mRenderer->start(mDisplayBuffer, ui.systemPropertyView->getTileX(),
+	mRenderer->start(ui.systemPropertyView->getTileX(),
 		ui.systemPropertyView->getTileY(),
 		ui.systemPropertyView->getThreadCount());
 }
@@ -591,3 +618,9 @@ void MainWindow::setViewMapperMode(int i)
 {
 	ui.viewWidget->setMapperMode((PR::ToneMapperMode)i);
 }
+
+void MainWindow::setViewDisplayMode(int i)
+{
+	ui.viewWidget->setDisplayMode(i);
+}
+

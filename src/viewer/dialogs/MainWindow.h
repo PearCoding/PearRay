@@ -58,6 +58,7 @@ private slots:
 	void setViewColorMode(int);
 	void setViewGammaMode(int);
 	void setViewMapperMode(int);
+	void setViewDisplayMode(int);
 
 	void selectSelectionTool(bool b);
 	void selectPanTool(bool b);
@@ -73,7 +74,6 @@ private:
 
 	PRU::Environment* mEnvironment;
 	PR::Renderer* mRenderer;
-	PRU::DisplayBuffer* mDisplayBuffer;
 
 	QTimer mTimer;
 	QElapsedTimer mElapsedTime;
