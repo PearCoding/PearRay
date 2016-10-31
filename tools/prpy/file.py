@@ -1,7 +1,8 @@
 import zlib
 import math
 import numpy as np
-from spectral import Spectrum
+import rgb
+import spectral
 
 
 class SpectralFile:
@@ -35,6 +36,11 @@ class SpectralFile:
             return False
         
         self.samples = int.from_bytes(data[5:9], byteorder='little')
+        
+        if not(self.samples == spectral.SAMPLING_COUNT):
+            print('Sample count missmatch. Has to be %i!' % spectral.SAMPLING_COUNT)
+            return False
+            
         self.width = int.from_bytes(data[9:13], byteorder='little')
         self.height = int.from_bytes(data[13:17], byteorder='little')
         #print("%i %i %i" % (self.samples, self.width, self.height))
@@ -47,7 +53,7 @@ class SpectralFile:
     
    
     def get(self, x, y):
-        return Spectrum(self.spectrals[y,x,:])
+        return spectral.Spectrum(self.spectrals[y,x,:])
     
     
     def avg(self):
