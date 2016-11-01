@@ -73,6 +73,11 @@ namespace PR
 			return mData;
 		}
 
+		inline void fill(const T& v)
+		{
+			std::fill_n(mData, mRenderer->width() * mRenderer->height(), v);
+		}
+
 	private:
 		Renderer* mRenderer;
 		T* mData;

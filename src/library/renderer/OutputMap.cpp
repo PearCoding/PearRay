@@ -47,6 +47,9 @@ namespace PR
 
 		for(OutputSpectral* output: mUserSpectral)
 			output->init();
+
+		if(mInt1D[V_Quality])
+			mInt1D[V_Quality]->fill(std::numeric_limits<float>::max());
 	}
 
 	void OutputMap::deinit()
