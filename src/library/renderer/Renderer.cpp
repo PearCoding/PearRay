@@ -269,9 +269,7 @@ namespace PR
 		PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
 		PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
 		for (RenderThread* thread : mThreads)
-		{
 			thread->start();
-		}
 	}
 
 	void Renderer::pushPixel_Normalized(float x, float y, const Spectrum& spec, const ShaderClosure& sc)

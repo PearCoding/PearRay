@@ -130,7 +130,11 @@ namespace PR
 		float t = 1.0f/(oldSample + 1.0f);
 	
 		// Spectral
-		mSpectral->pushFragment(x, y, mSpectral->getFragment(x,y) * (1-t) + s*t);
+		Spectrum oldSpec = mSpectral->getFragment(x,y);
+		Spectrum newSpec = oldSpec * (1-t) + s*t;
+
+		mSpectral->pushFragment(x, y, newSpec);
+		setPixelError(x,y,oldSpec,newSpec);
 		setSampleCount(x,y,oldSample+1);
 
 		// 3D

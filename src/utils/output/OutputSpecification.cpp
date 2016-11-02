@@ -354,7 +354,7 @@ namespace PRU
 										{
 											default:
 											case OutputMap::V_Depth:
-												spec.Name = "A";
+												spec.Name = "depth";
 												break;
 											case OutputMap::V_Time:
 												spec.Name = "time";
@@ -405,9 +405,11 @@ namespace PRU
 		if(!force && !boost::filesystem::create_directory(mRenderer->workingDir() + "/.img_lock"))
 			return;
 
+		boost::filesystem::create_directory(mRenderer->workingDir() + "/results");// Doesn't matter if it works
+
 		for(const File& f: mFiles)
 		{
-			const std::string filename = mRenderer->workingDir() + "/" + f.Name + ".exr";
+			const std::string filename = mRenderer->workingDir() + "/results/" + f.Name + ".exr";
 			if(!mImageWriter.save(toneMapper, filename,
 				f.SettingsSpectral, f.Settings1D, f.Settings3D))
 				PR_LOGGER.logf(L_Error, M_System,
@@ -416,7 +418,7 @@ namespace PRU
 
 		for(const FileSpectral& f: mSpectralFiles)
 		{
-			const std::string filename = mRenderer->workingDir() + "/" + f.Name + ".spec";
+			const std::string filename = mRenderer->workingDir() + "/results/" + f.Name + ".spec";
 			if(!mImageWriter.save_spectral(filename, f.Spectral))
 				PR_LOGGER.logf(L_Error, M_System,
 					"Couldn't save spectral file '%s'!", filename.c_str());
