@@ -1,19 +1,16 @@
 namespace PR
 {
-	inline Spectrum::Spectrum() :
-		mEmissive(false)
+	inline Spectrum::Spectrum()
 	{
 		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
-	inline Spectrum::Spectrum(float f) :
-		mEmissive(false)
+	inline Spectrum::Spectrum(float f)
 	{
 		fill(f);
 	}
 
-	inline Spectrum::Spectrum(const float* data) :
-		mEmissive(false)
+	inline Spectrum::Spectrum(const float* data)
 	{
 		std::memcpy(mValues, data, sizeof(float)*SAMPLING_COUNT);
 	}
@@ -25,13 +22,11 @@ namespace PR
 	inline Spectrum::Spectrum(const Spectrum& spec)
 	{
 		std::memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
-		mEmissive = spec.mEmissive;
 	}
 
 	inline Spectrum& Spectrum::operator = (const Spectrum& spec)
 	{
 		std::memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
-		mEmissive = spec.mEmissive;
 		return *this;
 	}
 
@@ -169,9 +164,7 @@ namespace PR
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
 			if (h < std::abs(mValues[i]))
-			{
 				h = std::abs(mValues[i]);
-			}
 		}
 
 		return h;
@@ -184,9 +177,7 @@ namespace PR
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
 			if (h > std::abs(mValues[i]))
-			{
 				h = std::abs(mValues[i]);
-			}
 		}
 
 		return h;
@@ -196,9 +187,7 @@ namespace PR
 	{
 		float h = 0;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			h += mValues[i];
-		}
 
 		return h / SAMPLING_COUNT;
 	}
@@ -225,9 +214,7 @@ namespace PR
 	inline Spectrum& Spectrum::clamp(float start, float end)
 	{
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] = mValues[i] > end ? end : (mValues[i] < start ? start : mValues[i]);
-		}
 
 		return *this;
 	}
@@ -242,9 +229,7 @@ namespace PR
 	{
 		const float* o = spec.mValues;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] = mValues[i] * (1-t) + o[i] * t;
-		}
 
 		return *this;
 	}
@@ -258,9 +243,7 @@ namespace PR
 	inline Spectrum& Spectrum::sqrt()
 	{
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		{
 			mValues[i] = std::sqrt(mValues[i]);
-		}
 
 		return *this;
 	}
@@ -276,9 +259,7 @@ namespace PR
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
 			if (std::isnan(mValues[i]))
-			{
 				return true;
-			}
 		}
 
 		return false;
@@ -289,9 +270,7 @@ namespace PR
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
 			if (std::isinf(mValues[i]))
-			{
 				return true;
-			}
 		}
 
 		return false;
@@ -302,22 +281,10 @@ namespace PR
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 		{
 			if (mValues[i] != 0)
-			{
 				return false;
-			}
 		}
 
 		return true;
-	}
-
-	inline bool Spectrum::isEmissive() const
-	{
-		return mEmissive;
-	}
-
-	inline void Spectrum::setEmissive(bool b)
-	{
-		mEmissive = b;
 	}
 
 	// Global
@@ -329,12 +296,9 @@ namespace PR
 	inline Spectrum operator / (float f, const Spectrum& spec)
 	{
 		Spectrum tmp;
-		tmp.setEmissive(spec.isEmissive());
 
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		{
 			tmp.setValue(i, f / spec.value(i));
-		}
 
 		return tmp;
 	}

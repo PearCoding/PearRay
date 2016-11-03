@@ -1,4 +1,5 @@
-// http://www.cs.utah.edu/~bes/papers/color/
+// whitepoint D65 [0.9505 1.0000 1.0888]
+// Check values!
 
 constant float NM_TO_X[SAMPLING_COUNT] = {
 	0.00013f, 0.00023f, 0.00041f, 0.00074f, 0.00137f, 0.00223f, 0.00424f, 0.00765f, 0.01431f, 0.02319f,

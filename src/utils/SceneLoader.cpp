@@ -615,7 +615,6 @@ namespace PRU
 	void SceneLoader::addSpectrum(DL::DataGroup* group, Environment* env)
 	{
 		DL::Data* nameD = group->getFromKey("name");
-		DL::Data* emissiveD = group->getFromKey("emissive");
 		DL::Data* dataD = group->getFromKey("data");
 
 		std::string name;
@@ -630,12 +629,6 @@ namespace PRU
 		}
 
 		Spectrum spec;
-		
-		if (emissiveD && emissiveD->isType() == DL::Data::T_Bool)
-		{
-			spec.setEmissive(emissiveD->getBool());
-		}
-
 		if (dataD)
 		{
 			if (dataD->isType() == DL::Data::T_Array)
@@ -696,12 +689,9 @@ namespace PRU
 						grp->at(1)->isNumber() &&
 						grp->at(2)->isNumber())
 					{
-						bool em = spec.isEmissive();
-
 						spec = RGBConverter::toSpec(grp->at(0)->getFloatConverted(),
 							grp->at(1)->getFloatConverted(),
 							grp->at(2)->getFloatConverted());
-						spec.setEmissive(em);
 					}
 				}
 				else if (grp->id() == "xyz")
@@ -714,8 +704,7 @@ namespace PRU
 						grp->at(0)->isNumber())
 					{
 						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
-						spec.setEmissive(true);
-						spec.weightPhotometric();
+						//spec.weightPhotometric();
 
 						PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Intensity %f",
 							grp->at(0)->getFloatConverted(), spec.avg());
@@ -730,7 +719,6 @@ namespace PRU
 						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
 						spec.weightPhotometric();
 						spec.normalize();
-						spec.setEmissive(true);
 					}
 
 					if (grp->unnamedCount() >= 2 &&

@@ -13,7 +13,8 @@ namespace PR
 # include "cl/xyztable.cl"
 # undef SAMPLING_COUNT
 # undef constant
-	constexpr float N = 21.371327f * Spectrum::ILL_SCALE;
+	constexpr float Y_SUM = 21.371327f;
+	constexpr float N = Y_SUM * Spectrum::ILL_SCALE;
 
 #endif
 
@@ -48,16 +49,9 @@ namespace PR
 # endif
 		}
 
-		X *= Spectrum::ILL_SCALE;
-		Y *= Spectrum::ILL_SCALE;
-		Z *= Spectrum::ILL_SCALE;
-
-		if (!s.isEmissive())
-		{
-			X /= N;
-			Y /= N;
-			Z /= N;
-		}
+		X /= Y_SUM;
+		Y /= Y_SUM;
+		Z /= Y_SUM;
 
 # ifdef PR_XYZ_LINEAR_INTERP
 		X *= 0.5f;

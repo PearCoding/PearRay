@@ -1,5 +1,8 @@
 #include "Spectrum.h"
 
+#include <type_traits>
+static_assert(std::is_standard_layout<PR::Spectrum>::value, "Spectrum is not a standard layout type");
+
 namespace PR
 {
 #ifndef PR_NO_SPECTRAL

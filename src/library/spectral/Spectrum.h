@@ -84,16 +84,13 @@ namespace PR
 		inline bool hasInf() const;
 		inline bool isOnlyZero() const;
 
-		inline bool isEmissive() const;
-		inline void setEmissive(bool b);
-
 		void weightPhotometric();
 		float luminousFlux() const;
 
 		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K), Output W·sr^−1·m^−3
+
 	private:
 		float mValues[SAMPLING_COUNT];
-		bool mEmissive;
 	};
 
 	inline Spectrum operator * (float f, const Spectrum& spec);
