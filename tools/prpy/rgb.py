@@ -1,6 +1,7 @@
 import numpy as np
 import parallel
 import spectral
+import mathutils
 
 CANDELA = 683.002
 ILL_SCALE = spectral.SAMPLING_COUNT + 1
@@ -82,11 +83,8 @@ def specToEnergy(spec_data):
     return spectral.Spectrum(spec_data).energy()
 
 def specToLum(spec_data):
-    lum = 0
-    for idx, val in enumerate(spec_data):
-        lum += val * NM_TO_Y[idx]
-        
-    return lum * (ILL_SCALE * CANDELA)
+    y_data = spec_data * NM_TO_Y      
+    return mathutils.trapz(y_data, spectral.WAVELENGTH_STEP*1e-9) * CANDELA
 
 def specToXYZ(spec_data):
     rgb = np.zeros(3)

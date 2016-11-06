@@ -3,7 +3,6 @@
 #include "Logger.h"
 
 #include "entity/Entity.h"
-#include "entity/BoundaryEntity.h"// For debug
 
 #include "parser/entity/BoundaryParser.h"
 #include "parser/entity/CameraParser.h"
@@ -36,7 +35,6 @@
 
 #include "loader/WavefrontLoader.h"
 
-#include "spectral/XYZConverter.h"
 #include "spectral/RGBConverter.h"
 
 #include "material/Material.h"
@@ -698,26 +696,63 @@ namespace PRU
 				{
 					// TODO
 				}
-				else if (grp->id() == "temperature" || grp->id() == "blackbody")
-				{
-					if (grp->unnamedCount() == 1 &&
-						grp->at(0)->isNumber())
-					{
-						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
-						//spec.weightPhotometric();
-
-						PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Intensity %f",
-							grp->at(0)->getFloatConverted(), spec.avg());
-					}
-
-				}
-				else if (grp->id() == "temperature_norm" || grp->id() == "blackbody_norm")
+				else if (grp->id() == "temperature" || grp->id() == "blackbody")// Luminance
 				{
 					if (grp->unnamedCount() >= 1 &&
 						grp->at(0)->isNumber())
 					{
 						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
 						spec.weightPhotometric();
+
+						/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Luminance %f",
+							grp->at(0)->getFloatConverted(), spec.avg());*/
+					}
+
+					if (grp->unnamedCount() >= 2 &&
+						grp->at(1)->isNumber())
+					{
+						spec *= grp->at(1)->getFloatConverted();
+					}
+				}
+				else if (grp->id() == "temperature_raw" || grp->id() == "blackbody_raw")// Radiance
+				{
+					if (grp->unnamedCount() >= 1 &&
+						grp->at(0)->isNumber())
+					{
+						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
+
+						/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Radiance %f",
+							grp->at(0)->getFloatConverted(), spec.avg());*/
+					}
+
+					if (grp->unnamedCount() >= 2 &&
+						grp->at(1)->isNumber())
+					{
+						spec *= grp->at(1)->getFloatConverted();
+					}
+				}
+				else if (grp->id() == "temperature_norm" || grp->id() == "blackbody_norm")// Luminance Norm
+				{
+					if (grp->unnamedCount() >= 1 &&
+						grp->at(0)->isNumber())
+					{
+						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
+						spec.weightPhotometric();
+						spec.normalize();
+					}
+
+					if (grp->unnamedCount() >= 2 &&
+						grp->at(1)->isNumber())
+					{
+						spec *= grp->at(1)->getFloatConverted();
+					}
+				}
+				else if (grp->id() == "temperature_raw_norm" || grp->id() == "blackbody_raw_norm")// Radiance Norm
+				{
+					if (grp->unnamedCount() >= 1 &&
+						grp->at(0)->isNumber())
+					{
+						spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0)->getFloatConverted()));
 						spec.normalize();
 					}
 

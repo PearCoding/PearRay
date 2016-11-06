@@ -3,7 +3,10 @@ import math
 import numpy as np
 import rgb
 import spectral
+import struct
 
+import OpenEXR # Sadly only for python 2 :(
+import Imath
 
 class SpectralFile:
     def __init__(self):
@@ -35,14 +38,14 @@ class SpectralFile:
             print('Invalid PearRay spectral file!')
             return False
         
-        self.samples = int.from_bytes(data[5:9], byteorder='little')
+        self.samples = struct.unpack('<i', data[5:9])[0]
         
         if not(self.samples == spectral.SAMPLING_COUNT):
             print('Sample count missmatch. Has to be %i!' % spectral.SAMPLING_COUNT)
             return False
-            
-        self.width = int.from_bytes(data[9:13], byteorder='little')
-        self.height = int.from_bytes(data[13:17], byteorder='little')
+        
+        self.width = struct.unpack('<i', data[9:13])[0]
+        self.height = struct.unpack('<i', data[13:17])[0]
         #print("%i %i %i" % (self.samples, self.width, self.height))
         
         bf = np.frombuffer(data, dtype=np.dtype('<f4'), offset=17)
@@ -101,12 +104,69 @@ class SpectralFile:
         
         m = self.fmax()        
         im = 1.0/m;
-        if not math.isfinite(im):
+        if math.isnan(im) or math.isinf(im):
             return f
         
         for j in range(0, self.height):
             for i in range(0, self.width):
                 for k in range(0, self.samples):
                     f.spectrals[j,i,k] = self.spectrals[j,i,k] * im
+        return f
+    
+    
+class SingleChannelFile:
+    def __init__(self, channel):
+        self.width = 0
+        self.height = 0
+        self.data = None
+        self.channel = channel
+        
+        
+    def open(self, path):
+        f = OpenEXR.InputFile(path)
+        if not f:
+            return False
+        
+        dw = f.header()['dataWindow']
+        sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
+        
+        self.width = sz[0]
+        self.height = sz[1]
+        bf = np.frombuffer(f.channel(self.channel, Imath.PixelType(Imath.PixelType.FLOAT)), dtype=np.dtype('<f4'))
+        self.data = np.reshape(bf, newshape=(self.height, self.width), order='C')
+        
+        return True
+
+   
+    def get(self, x, y):
+        return self.data[y,x]
+    
+    
+    def avg(self):
+        return np.average(self.data)
+                
+    
+    def max(self):
+        return np.nanmax(self.data)
+                
+    
+    def min(self):
+        return np.nanmin(self.data)
+                
+    
+    def normalized(self):
+        f = SingleChannelFile(self.channel)
+        f.width = self.width
+        f.height = self.height
+        f.data = np.zeros((self.height, self.width))
+        
+        m = self.max()        
+        im = 1.0/m;
+        if math.isnan(im) or math.isinf(im):
+            return f
+        
+        for j in range(0, self.height):
+            for i in range(0, self.width):
+                f.data[j,i] = self.data[j,i] * im
         return f
         

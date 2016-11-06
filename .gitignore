@@ -16,6 +16,10 @@
 # Fortran module files
 *.mod
 
+# Python/Jupyter files
+*.ipynb
+*.pyc
+
 # Compiled Static libraries
 *.lai
 *.la

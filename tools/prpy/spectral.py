@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import mathutils
 
 WAVELENGTH_START = 360# nm
 WAVELENGTH_END = 800# nm 
@@ -17,7 +18,11 @@ def blackbody_equation(temp, wavelength):
     
     return (c1 / (wavelength**5)) / (math.exp(c2 / (wavelength * temp)) - 1)
 
+
+def irradianceToRadiantIntensity(irr, dist):
+    return irr * dist^2
         
+
 class Spectrum:
     def __init__(self, data):
         self.data = data
@@ -36,14 +41,11 @@ class Spectrum:
     
     
     def energy(self):#trapz
-        s = 0
-        for i in range(0, SAMPLING_COUNT-1):
-            s += self.data[i]+self.data[i+1]
-           
-        return s * 0.5 * WAVELENGTH_STEP / (SAMPLING_COUNT-1)
+        return mathutils.trapz(self.data, WAVELENGTH_STEP*1e-9)
     
     
     # Blackbody equation
+    @staticmethod
     def from_temperature(temp):
         spec = Spectrum(np.zeros(SAMPLING_COUNT))
 
@@ -53,7 +55,7 @@ class Spectrum:
         
         return spec
     
-    
+    @staticmethod
     def wavelength_range():
         return range(WAVELENGTH_START, WAVELENGTH_END+WAVELENGTH_STEP, WAVELENGTH_STEP)
     
