@@ -27,6 +27,9 @@ namespace PR
 		if(!mInt1D[V_Samples])
 			mInt1D[V_Samples] = new Output1D(mRenderer);
 
+		if(!mInt1D[V_Quality] && mRenderer->settings().isAdaptiveSampling())
+			mInt1D[V_Quality] = new Output1D(mRenderer);
+
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
 			if(mInt1D[i])
@@ -48,8 +51,8 @@ namespace PR
 		for(OutputSpectral* output: mUserSpectral)
 			output->init();
 
-		if(mInt1D[V_Quality])
-			mInt1D[V_Quality]->fill(std::numeric_limits<float>::max());
+		// if(mInt1D[V_Quality])
+		// 	mInt1D[V_Quality]->fill(std::numeric_limits<float>::max());
 	}
 
 	void OutputMap::deinit()
@@ -134,7 +137,7 @@ namespace PR
 		Spectrum newSpec = oldSpec * (1-t) + s*t;
 
 		mSpectral->pushFragment(x, y, newSpec);
-		setPixelError(x,y,oldSpec,newSpec);
+		setPixelError(x,y,oldSample+1,oldSpec,newSpec);
 		setSampleCount(x,y,oldSample+1);
 
 		// 3D
@@ -197,16 +200,31 @@ namespace PR
 		const uint32 sy = mRenderer->cropPixelOffsetY();
 		const float minError = mRenderer->settings().maxASError();
 		const uint32 minSamples = mRenderer->settings().minPixelSampleCount();
+		const uint32 maxSamples = mRenderer->settings().maxPixelSampleCount();
+		const bool adaptive = mRenderer->settings().isAdaptiveSampling();
 
 		uint64 pixelsFinished = 0;
-
-		for(uint32 j = 0; j < rh; ++j)
+		if(adaptive)
 		{
-			for(uint32 i = 0; i < rw; ++i)
+			for(uint32 j = 0; j < rh; ++j)
 			{
-				if(mInt1D[V_Samples]->getFragment(i+sx, j+sy) >= minSamples &&
-					(!mInt1D[V_Quality] || mInt1D[V_Quality]->getFragment(i+sx, j+sy) <= minError))
-					++pixelsFinished;
+				for(uint32 i = 0; i < rw; ++i)
+				{
+					if(mInt1D[V_Samples]->getFragment(i+sx, j+sy) >= minSamples &&
+						mInt1D[V_Quality]->getFragment(i+sx, j+sy) <= minError)
+						++pixelsFinished;
+				}
+			}
+		}
+		else
+		{
+			for(uint32 j = 0; j < rh; ++j)
+			{
+				for(uint32 i = 0; i < rw; ++i)
+				{
+					if(mInt1D[V_Samples]->getFragment(i+sx, j+sy) >= maxSamples)
+						++pixelsFinished;
+				}
 			}
 		}
 

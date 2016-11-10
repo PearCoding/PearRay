@@ -69,13 +69,19 @@ namespace PR
 			return mInt1D[V_Samples]->getFragment(x, y);
 		}
 
-		inline void setPixelError(uint32 x, uint32 y, const Spectrum& pixel, const Spectrum& weight)
+		inline void setPixelError(uint32 x, uint32 y, uint32 sample, const Spectrum& pixel, const Spectrum& weight)
 		{
 			if(!mInt1D[V_Quality])
 				return;
-
-			const float err = (pixel - weight).max();
-			mInt1D[V_Quality]->pushFragment(x, y, err);	
+			
+			// MEAN SQUARE ERROR
+			const float t = 1.0f/sample;
+			const float s1 = pixel.max();
+			const float s2 = weight.max();
+			const float ref = (s1 <= PM_EPSILON && s2 <= PM_EPSILON) ? 1 : (s1 + s2);
+			const float err = std::abs(s1 - s2) / ref;
+			mInt1D[V_Quality]->pushFragment(x, y,
+				mInt1D[V_Quality]->getFragment(x, y) * (1-t) + t * err * err);	
 		}
 
 		bool isPixelFinished(uint32 x, uint32 y) const;
