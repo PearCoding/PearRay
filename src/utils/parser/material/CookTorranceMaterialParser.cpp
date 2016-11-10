@@ -20,22 +20,22 @@ namespace PRU
 	Material* CookTorranceMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-		DL::Data* fresnelModeD = group->getFromKey("fresnel_mode");
-		DL::Data* distributionModeD = group->getFromKey("distribution_mode");
-		DL::Data* geometryModeD = group->getFromKey("geometry_mode");
+		DL::Data fresnelModeD = group->getFromKey("fresnel_mode");
+		DL::Data distributionModeD = group->getFromKey("distribution_mode");
+		DL::Data geometryModeD = group->getFromKey("geometry_mode");
 
-		DL::Data* albedoD = group->getFromKey("albedo");
-		DL::Data* diffRoughnessD = group->getFromKey("diffuse_roughness");
+		DL::Data albedoD = group->getFromKey("albedo");
+		DL::Data diffRoughnessD = group->getFromKey("diffuse_roughness");
 
-		DL::Data* specularityD = group->getFromKey("specularity");
-		DL::Data* specRoughnessD = group->getFromKey("specular_roughness");
-		DL::Data* specRoughnessXD = group->getFromKey("specular_roughness_x");
-		DL::Data* specRoughnessYD = group->getFromKey("specular_roughness_y");
+		DL::Data specularityD = group->getFromKey("specularity");
+		DL::Data specRoughnessD = group->getFromKey("specular_roughness");
+		DL::Data specRoughnessXD = group->getFromKey("specular_roughness_x");
+		DL::Data specRoughnessYD = group->getFromKey("specular_roughness_y");
 
-		DL::Data* indexD = group->getFromKey("index");
-		DL::Data* condAbsorptionD = group->getFromKey("conductor_absorption");
+		DL::Data indexD = group->getFromKey("index");
+		DL::Data condAbsorptionD = group->getFromKey("conductor_absorption");
 
-		DL::Data* reflectivityD = group->getFromKey("reflectivity");
+		DL::Data reflectivityD = group->getFromKey("reflectivity");
 
 		CookTorranceMaterial* diff = new CookTorranceMaterial(env->materialCount() + 1);
 
@@ -47,25 +47,25 @@ namespace PRU
 		diff->setConductorAbsorption(loader->getSpectralOutput(env, condAbsorptionD, true));
 		diff->setReflectivity(loader->getScalarOutput(env, reflectivityD));
 
-		if (specRoughnessD && !specRoughnessXD && !specRoughnessYD)
+		if (specRoughnessD.isValid() && !specRoughnessXD.isValid() && !specRoughnessYD.isValid())
 		{
 			auto roughness = loader->getScalarOutput(env, specRoughnessD);
 			diff->setSpecularRoughnessX(roughness);
 			diff->setSpecularRoughnessY(roughness);
 		}
-		else if (!specRoughnessD && specRoughnessXD && specRoughnessYD)
+		else if (!specRoughnessD.isValid() && specRoughnessXD.isValid() && specRoughnessYD.isValid())
 		{
 			diff->setSpecularRoughnessX(loader->getScalarOutput(env, specRoughnessXD));
 			diff->setSpecularRoughnessY(loader->getScalarOutput(env, specRoughnessYD));
 		}
-		else if (specRoughnessD || specRoughnessXD || specRoughnessYD)
+		else if (specRoughnessD.isValid() || specRoughnessXD.isValid() || specRoughnessYD.isValid())
 		{
 			PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Isotropic and Anisotropic specular roughness mismatch.");
 		}
 
-		if(fresnelModeD && fresnelModeD->isType() == DL::Data::T_String)
+		if(fresnelModeD.type() == DL::Data::T_String)
 		{
-			std::string s = fresnelModeD->getString();
+			std::string s = fresnelModeD.getString();
 			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 			if(s == "dielectric")
 				diff->setFresnelMode(CookTorranceMaterial::FM_Dielectric);
@@ -75,9 +75,9 @@ namespace PRU
 				PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Unknown fresnel mode '%s'.", s.c_str());
 		}
 
-		if(distributionModeD && distributionModeD->isType() == DL::Data::T_String)
+		if(distributionModeD.type() == DL::Data::T_String)
 		{
-			std::string s = distributionModeD->getString();
+			std::string s = distributionModeD.getString();
 			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 			if(s == "blinn")
 				diff->setDistributionMode(CookTorranceMaterial::DM_Blinn);
@@ -89,9 +89,9 @@ namespace PRU
 				PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Unknown distribution mode '%s'.", s.c_str());
 		}
 
-		if(geometryModeD && geometryModeD->isType() == DL::Data::T_String)
+		if(geometryModeD.type() == DL::Data::T_String)
 		{
-			std::string s = geometryModeD->getString();
+			std::string s = geometryModeD.getString();
 			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 			if(s == "implicit")
 				diff->setGeometryMode(CookTorranceMaterial::GM_Implicit);

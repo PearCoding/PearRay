@@ -20,10 +20,9 @@ namespace PRU
 	Material* BlinnPhongMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-
-		DL::Data* albedoD = group->getFromKey("albedo");
-		DL::Data* indexD = group->getFromKey("index");
-		DL::Data* shininessD = group->getFromKey("shininess");
+		DL::Data albedoD = group->getFromKey("albedo");
+		DL::Data indexD = group->getFromKey("index");
+		DL::Data shininessD = group->getFromKey("shininess");
 
 		BlinnPhongMaterial* diff = new BlinnPhongMaterial(env->materialCount() + 1);
 

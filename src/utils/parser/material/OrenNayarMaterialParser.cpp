@@ -21,8 +21,8 @@ namespace PRU
 		const std::string& obj, DL::DataGroup* group) const
 	{
 
-		DL::Data* albedoD = group->getFromKey("albedo");
-		DL::Data* roughnessD = group->getFromKey("roughness");
+		DL::Data albedoD = group->getFromKey("albedo");
+		DL::Data roughnessD = group->getFromKey("roughness");
 
 		OrenNayarMaterial* diff = new OrenNayarMaterial(env->materialCount() + 1);
 

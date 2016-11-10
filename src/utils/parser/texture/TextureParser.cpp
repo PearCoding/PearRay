@@ -64,33 +64,33 @@ namespace PRU
 
 	void TextureParser::parse(SceneLoader* loader, Environment* env, const std::string& name, DL::DataGroup* group) const
 	{
-		DL::Data* filenameD = group->getFromKey("file");
-		DL::Data* typeD = group->getFromKey("type");
-		//DL::Data* dimD = group->getFromKey("dimension");
-		DL::Data* wrapModeD = group->getFromKey("wrap");
-		DL::Data* mipModeD = group->getFromKey("mip");
-		DL::Data* interpolationModeD = group->getFromKey("interpolation");
-		DL::Data* blurD = group->getFromKey("blur");
-		DL::Data* anisoD = group->getFromKey("anisotropic");
+		DL::Data filenameD = group->getFromKey("file");
+		DL::Data typeD = group->getFromKey("type");
+		//DL::Data dimD = group->getFromKey("dimension");
+		DL::Data wrapModeD = group->getFromKey("wrap");
+		DL::Data mipModeD = group->getFromKey("mip");
+		DL::Data interpolationModeD = group->getFromKey("interpolation");
+		DL::Data blurD = group->getFromKey("blur");
+		DL::Data anisoD = group->getFromKey("anisotropic");
 
 		OIIO::TextureOpt opts;
-		if(wrapModeD && wrapModeD->isType() == DL::Data::T_String)
+		if(wrapModeD.type() == DL::Data::T_String)
 		{
-			std::string wrap = wrapModeD->getString();
+			std::string wrap = wrapModeD.getString();
 			std::transform(wrap.begin(), wrap.end(), wrap.begin(), ::tolower);
 			opts.swrap = parseWrap(wrap);
 			opts.twrap = parseWrap(wrap);
 			opts.rwrap = parseWrap(wrap);
 		}
-		else if(wrapModeD && wrapModeD->isType() == DL::Data::T_Array)
+		else if(wrapModeD.type() == DL::Data::T_Array)
 		{
-			DL::DataArray* arr = wrapModeD->getArray();
+			DL::DataArray* arr = wrapModeD.getArray();
 			for(uint32 i = 0; i < 3 && i < arr->size(); ++i)
 			{
-				DL::Data* dat = arr->at(i);
-				if(dat->isType() == DL::Data::T_String)
+				DL::Data dat = arr->at(i);
+				if(dat.type() == DL::Data::T_String)
 				{
-					std::string wrap = dat->getString();
+					std::string wrap = dat.getString();
 					std::transform(wrap.begin(), wrap.end(), wrap.begin(), ::tolower);
 					switch(i)
 					{
@@ -108,36 +108,36 @@ namespace PRU
 			}
 		}
 
-		if(mipModeD && mipModeD->isType() == DL::Data::T_String)
+		if(mipModeD.type() == DL::Data::T_String)
 		{
-			std::string mip = mipModeD->getString();
+			std::string mip = mipModeD.getString();
 			std::transform(mip.begin(), mip.end(), mip.begin(), ::tolower);
 			opts.mipmode = parseMIP(mip);
 		}
 
-		if(interpolationModeD && interpolationModeD->isType() == DL::Data::T_String)
+		if(interpolationModeD.type() == DL::Data::T_String)
 		{
-			std::string interp = interpolationModeD->getString();
+			std::string interp = interpolationModeD.getString();
 			std::transform(interp.begin(), interp.end(), interp.begin(), ::tolower);
 			opts.interpmode = parseInterpolation(interp);
 		}
 
-		if(blurD && blurD->isNumber())
+		if(blurD.isNumber())
 		{
-			float f = blurD->getFloatConverted();
+			float f = blurD.getNumber();
 			opts.sblur = f;
 			opts.tblur = f;
 			opts.rblur = f;
 		}
-		else if(blurD && blurD->isType() == DL::Data::T_Array)
+		else if(blurD.type() == DL::Data::T_Array)
 		{
-			DL::DataArray* arr = blurD->getArray();
+			DL::DataArray* arr = blurD.getArray();
 			for(uint32 i = 0; i < 3 && i < arr->size(); ++i)
 			{
-				DL::Data* dat = arr->at(i);
-				if(dat->isNumber())
+				DL::Data dat = arr->at(i);
+				if(dat.isNumber())
 				{
-					float f = dat->getFloatConverted();
+					float f = dat.getNumber();
 					switch(i)
 					{
 					case 0:
@@ -154,15 +154,15 @@ namespace PRU
 			}
 		}
 
-		if(anisoD && anisoD->isType() == DL::Data::T_Integer)
+		if(anisoD.type() == DL::Data::T_Integer)
 		{
-			opts.anisotropic = anisoD->getInt();
+			opts.anisotropic = anisoD.getInt();
 		}
 
 		std::string filename;
-		if(filenameD && filenameD->isType() == DL::Data::T_String)
+		if(filenameD.type() == DL::Data::T_String)
 		{
-			filename = filenameD->getString();
+			filename = filenameD.getString();
 		}
 		else
 		{
@@ -179,9 +179,9 @@ namespace PRU
 		}
 		
 		std::string type;
-		if(typeD && typeD->isType() == DL::Data::T_String)
+		if(typeD.type() == DL::Data::T_String)
 		{
-			type = typeD->getString();
+			type = typeD.getString();
 			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 		}
 		else

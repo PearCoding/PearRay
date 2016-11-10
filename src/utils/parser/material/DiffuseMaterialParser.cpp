@@ -20,8 +20,7 @@ namespace PRU
 	Material* DiffuseMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-
-		DL::Data* albedoD = group->getFromKey("albedo");
+		DL::Data albedoD = group->getFromKey("albedo");
 
 		DiffuseMaterial* diff = new DiffuseMaterial(env->materialCount() + 1);
 

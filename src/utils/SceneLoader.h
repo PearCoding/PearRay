@@ -34,11 +34,11 @@ namespace PRU
 		Environment* load(const std::string& source);
 
 		PM::vec3 getVector(DL::DataArray* arr, bool& ok) const;
-		PM::quat getRotation(DL::Data* data, bool& ok) const;
+		PM::quat getRotation(const DL::Data& data, bool& ok) const;
 
-		PR::SpectralShaderOutput* getSpectralOutput(Environment* env, DL::Data* data, bool allowScalar = false) const;
-		PR::ScalarShaderOutput* getScalarOutput(Environment* env, DL::Data* data) const;
-		PR::VectorShaderOutput* getVectorOutput(Environment* env, DL::Data* data) const;
+		PR::SpectralShaderOutput* getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false) const;
+		PR::ScalarShaderOutput* getScalarOutput(Environment* env, const DL::Data& data) const;
+		PR::VectorShaderOutput* getVectorOutput(Environment* env, const DL::Data& data) const;
 
 	private:
 		void addEntity(DL::DataGroup* group, PR::Entity* parent, Environment* env);

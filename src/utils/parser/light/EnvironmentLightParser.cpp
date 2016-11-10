@@ -20,16 +20,16 @@ namespace PRU
 {
 	PR::IInfiniteLight* EnvironmentLightParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
 	{
-		DL::Data* matD = group->getFromKey("material");
+		DL::Data matD = group->getFromKey("material");
 
 		EnvironmentLight* light = new EnvironmentLight();
 
-		if (matD && matD->isType() == DL::Data::T_String)
+		if (matD.type() == DL::Data::T_String)
 		{
-			if (env->hasMaterial(matD->getString()))
-				light->setMaterial(env->getMaterial(matD->getString()));
+			if (env->hasMaterial(matD.getString()))
+				light->setMaterial(env->getMaterial(matD.getString()));
 			else
-				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", matD->getString().c_str());
+				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", matD.getString().c_str());
 		}
 
 		return light;

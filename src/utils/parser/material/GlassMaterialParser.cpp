@@ -20,8 +20,8 @@ namespace PRU
 	Material* GlassMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-		DL::Data* specD = group->getFromKey("specularity");
-		DL::Data* indexD = group->getFromKey("index");
+		DL::Data specD = group->getFromKey("specularity");
+		DL::Data indexD = group->getFromKey("index");
 
 		GlassMaterial* diff = new GlassMaterial(env->materialCount() + 1);
 

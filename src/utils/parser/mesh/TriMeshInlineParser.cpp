@@ -26,37 +26,37 @@ namespace PRU
 
 		// First get attributes
 		DL::DataGroup* facesGrp = nullptr;
-		for(size_t i = 0; i < group->unnamedCount(); ++i)
+		for(size_t i = 0; i < group->anonymousCount(); ++i)
 		{
-			DL::Data* d = group->at(i);
-			if(d->isType() != DL::Data::T_Group)
+			DL::Data d = group->at(i);
+			if(d.type() != DL::Data::T_Group)
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Invalid entry in mesh description.");
 				return nullptr;
 			}
 
-			DL::DataGroup* grp = d->getGroup();
+			DL::DataGroup* grp = d.getGroup();
 			if(grp->id() == "attribute")
 			{
-				DL::Data* attrTypeD = grp->getFromKey("type");
-				if(!attrTypeD || attrTypeD->isType() != DL::Data::T_String)
+				DL::Data attrTypeD = grp->getFromKey("type");
+				if(attrTypeD.type() != DL::Data::T_String)
 				{
 					PR_LOGGER.log(L_Error, M_Scene, "Mesh attribute has no valid type.");
 					return nullptr;
 				}
-				else if(attrTypeD->getString() == "p")
+				else if(attrTypeD.getString() == "p")
 				{
-					for(size_t j = 0; j < grp->unnamedCount(); ++j)
+					for(size_t j = 0; j < grp->anonymousCount(); ++j)
 					{
-						DL::Data* attrValD = grp->at(j);
-						if(attrValD->isType() != DL::Data::T_Array)
+						DL::Data attrValD = grp->at(j);
+						if(attrValD.type() != DL::Data::T_Array)
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh position attribute is invalid.");
 							return nullptr;
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD->getArray(), ok);
+						PM::vec v = loader->getVector(attrValD.getArray(), ok);
 
 						if(ok)
 							positionAttr.push_back(v);
@@ -67,19 +67,19 @@ namespace PRU
 						}
 					}
 				}
-				else if(attrTypeD->getString() == "n")
+				else if(attrTypeD.getString() == "n")
 				{
-					for(size_t j = 0; j < grp->unnamedCount(); ++j)
+					for(size_t j = 0; j < grp->anonymousCount(); ++j)
 					{
-						DL::Data* attrValD = grp->at(j);
-						if(attrValD->isType() != DL::Data::T_Array)
+						DL::Data attrValD = grp->at(j);
+						if(attrValD.type() != DL::Data::T_Array)
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh normal attribute is invalid.");
 							return nullptr;
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD->getArray(), ok);
+						PM::vec v = loader->getVector(attrValD.getArray(), ok);
 
 						if(ok)
 							normalAttr.push_back(PM::pm_SetW(v, 0.0f));
@@ -90,19 +90,19 @@ namespace PRU
 						}
 					}
 				}
-				else if(attrTypeD->getString() == "t")
+				else if(attrTypeD.getString() == "t")
 				{
-					for(size_t j = 0; j < grp->unnamedCount(); ++j)
+					for(size_t j = 0; j < grp->anonymousCount(); ++j)
 					{
-						DL::Data* attrValD = grp->at(j);
-						if(attrValD->isType() != DL::Data::T_Array)
+						DL::Data attrValD = grp->at(j);
+						if(attrValD.type() != DL::Data::T_Array)
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh texture attribute is invalid.");
 							return nullptr;
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD->getArray(), ok);
+						PM::vec v = loader->getVector(attrValD.getArray(), ok);
 
 						if(ok)
 							uvAttr.push_back(PM::pm_SetZ(PM::pm_SetW(v, 0.0f), 0.0f));
@@ -113,19 +113,19 @@ namespace PRU
 						}
 					}
 				}
-				else if(attrTypeD->getString() == "dp")
+				else if(attrTypeD.getString() == "dp")
 				{
 					PR_LOGGER.log(L_Warning, M_Scene, "Velocity attributes currently not supported.");
 				}
-				else if(attrTypeD->getString() == "dn")
+				else if(attrTypeD.getString() == "dn")
 				{
 					PR_LOGGER.log(L_Warning, M_Scene, "Derived normal attributes currently not supported.");
 				}
-				else if(attrTypeD->getString() == "dt")
+				else if(attrTypeD.getString() == "dt")
 				{
 					PR_LOGGER.log(L_Warning, M_Scene, "Derived texture attributes currently not supported.");
 				}
-				else if(attrTypeD->getString() == "u")
+				else if(attrTypeD.getString() == "u")
 				{
 					PR_LOGGER.log(L_Warning, M_Scene, "User attributes currently not supported.");
 				}
@@ -211,30 +211,30 @@ namespace PRU
 		}
 		else
 		{
-			if((facesGrp->unnamedCount() % 3) != 0)
+			if((facesGrp->anonymousCount() % 3) != 0)
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Given index face count is not a multiply of 3.");
 				return nullptr;
 			}
 
-			faces.reserve(facesGrp->unnamedCount()/3);
-			for(size_t j = 0; j < facesGrp->unnamedCount(); j += 3)
+			faces.reserve(facesGrp->anonymousCount()/3);
+			for(size_t j = 0; j < facesGrp->anonymousCount(); j += 3)
 			{
-				DL::Data* i1D = facesGrp->at(j);
-				DL::Data* i2D = facesGrp->at(j+1);
-				DL::Data* i3D = facesGrp->at(j+2);
+				DL::Data i1D = facesGrp->at(j);
+				DL::Data i2D = facesGrp->at(j+1);
+				DL::Data i3D = facesGrp->at(j+2);
 
-				if(	i1D->isType() != DL::Data::T_Integer ||
-					i2D->isType() != DL::Data::T_Integer ||
-					i3D->isType() != DL::Data::T_Integer)
+				if(	i1D.type() != DL::Data::T_Integer ||
+					i2D.type() != DL::Data::T_Integer ||
+					i3D.type() != DL::Data::T_Integer)
 				{
 					PR_LOGGER.log(L_Error, M_Scene, "Given index is invalid.");
 					return nullptr;
 				}
 
-				auto i1 = i1D->getInt(); 
-				auto i2 = i2D->getInt(); 
-				auto i3 = i3D->getInt();
+				auto i1 = i1D.getInt(); 
+				auto i2 = i2D.getInt(); 
+				auto i3 = i3D.getInt();
 
 				if (i1 < 0 || (size_t)i1 >= positionAttr.size() ||
 					i2 < 0 || (size_t)i2 >= positionAttr.size() ||

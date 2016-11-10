@@ -20,8 +20,8 @@ namespace PRU
 	Material* MirrorMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, DL::DataGroup* group) const
 	{
-		DL::Data* specD = group->getFromKey("specularity");
-		DL::Data* indexD = group->getFromKey("index");
+		DL::Data specD = group->getFromKey("specularity");
+		DL::Data indexD = group->getFromKey("index");
 
 		MirrorMaterial* diff = new MirrorMaterial(env->materialCount() + 1);
 

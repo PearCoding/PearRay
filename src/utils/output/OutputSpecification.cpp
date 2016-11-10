@@ -160,47 +160,47 @@ namespace PRU
 
 	void OutputSpecification::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group)
 	{
-		for (size_t i = 0; i < group->unnamedCount(); ++i)
+		for (size_t i = 0; i < group->anonymousCount(); ++i)
 		{
-			DL::Data* dataD = group->at(i);
+			DL::Data dataD = group->at(i);
 
-			if (dataD && dataD->isType() == DL::Data::T_Group)
+			if (dataD.type() == DL::Data::T_Group)
 			{
-				DL::DataGroup* entry = dataD->getGroup();
+				DL::DataGroup* entry = dataD.getGroup();
 
 				if (entry->id() == "output")
 				{
-					DL::Data* nameD = entry->getFromKey("name");
-					if(!nameD || nameD->isType() != DL::Data::T_String)
+					DL::Data nameD = entry->getFromKey("name");
+					if(nameD.type() != DL::Data::T_String)
 						continue;
 					
 					File file;
 					file.SettingsSpectral = nullptr;
-					file.Name = nameD->getString();
+					file.Name = nameD.getString();
 					
-					for (size_t i = 0; i < entry->unnamedCount(); ++i)
+					for (size_t i = 0; i < entry->anonymousCount(); ++i)
 					{
-						DL::Data* channelD = entry->at(i);
+						DL::Data channelD = entry->at(i);
 
-						if (channelD && channelD->isType() == DL::Data::T_Group 
-							&& channelD->getGroup()->id() == "channel")
+						if (channelD.type() == DL::Data::T_Group 
+							&& channelD.getGroup()->id() == "channel")
 						{
-							DL::DataGroup* channel = channelD->getGroup();
-							DL::Data* typeD = channel->getFromKey("type");
-							DL::Data* colorD = channel->getFromKey("color");
-							DL::Data* gammaD = channel->getFromKey("gamma");
-							DL::Data* mapperD = channel->getFromKey("mapper");
+							DL::DataGroup* channel = channelD.getGroup();
+							DL::Data typeD = channel->getFromKey("type");
+							DL::Data colorD = channel->getFromKey("color");
+							DL::Data gammaD = channel->getFromKey("gamma");
+							DL::Data mapperD = channel->getFromKey("mapper");
 
-							if(!typeD || typeD->isType() != DL::Data::T_String)
+							if(typeD.type() != DL::Data::T_String)
 								continue;
 							
-							std::string type = typeD->getString();
+							std::string type = typeD.getString();
 							std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 
 							ToneColorMode tcm = TCM_SRGB;
-							if(colorD && colorD->isType() == DL::Data::T_String)
+							if(colorD.type() == DL::Data::T_String)
 							{
-								std::string color = colorD->getString();
+								std::string color = colorD.getString();
 								std::transform(color.begin(), color.end(), color.begin(), ::tolower);
 								if(color == "xyz")
 									tcm = TCM_XYZ;
@@ -211,18 +211,18 @@ namespace PRU
 							}
 
 							ToneGammaMode tgm = TGM_SRGB;
-							if(gammaD && gammaD->isType() == DL::Data::T_String)
+							if(gammaD.type() == DL::Data::T_String)
 							{
-								std::string gamma = gammaD->getString();
+								std::string gamma = gammaD.getString();
 								std::transform(gamma.begin(), gamma.end(), gamma.begin(), ::tolower);
 								if(gamma == "none")
 									tgm = TGM_None;
 							}
 
 							ToneMapperMode tmm = TMM_None;
-							if(mapperD && mapperD->isType() == DL::Data::T_String)
+							if(mapperD.type() == DL::Data::T_String)
 							{
-								std::string mapper = mapperD->getString();
+								std::string mapper = mapperD.getString();
 								std::transform(mapper.begin(), mapper.end(), mapper.begin(), ::tolower);
 								if(mapper == "reinhard")
 									tmm = TMM_Simple_Reinhard;
@@ -388,11 +388,11 @@ namespace PRU
 				}
 				else if (entry->id() == "output_spectral")
 				{
-					DL::Data* nameD = entry->getFromKey("name");
-					if(nameD && nameD->isType() == DL::Data::T_String)
+					DL::Data nameD = entry->getFromKey("name");
+					if(nameD.type() == DL::Data::T_String)
 					{
 						FileSpectral spec;
-						spec.Name = nameD->getString();
+						spec.Name = nameD.getString();
 						mSpectralFiles.push_back(spec);
 					}
 				}
