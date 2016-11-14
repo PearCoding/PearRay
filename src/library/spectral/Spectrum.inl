@@ -131,7 +131,6 @@ namespace PR
 		return mValues[index];
 	}
 
-#ifndef PR_NO_SPECTRAL
 	inline void Spectrum::setValueAtWavelength(float wavelength, float value)
 	{
 		if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
@@ -140,7 +139,6 @@ namespace PR
 		uint32 i = (uint32)((wavelength - WAVELENGTH_START) / WAVELENGTH_STEP);
 		mValues[i] = value;
 	}
-#endif
 
 	inline void Spectrum::fill(float v)
 	{

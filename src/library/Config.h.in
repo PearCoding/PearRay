@@ -161,6 +161,9 @@
 #endif
 #define PR_LIB_NETWORK_INLINE
 
+// Some other configs
+#define PR_TRIANGLE_INTERSECTION_TECHNIQUE (${TRIANGLE_TECHNIQUE})
+
 #include <chrono>
 #include <cmath>
 #include <cstring>

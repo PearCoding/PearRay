@@ -5,7 +5,10 @@ namespace PR
 	Ray::Ray() :
 		mStartPosition(PM::pm_Set(0,0,0,1)), mDirection(PM::pm_Set(0,0,0)),
 		mDepth(0), mTime(0), mFlags(0),
-		mMaxDepth(0), mMaxDirectionIndex(0)
+		mMaxDepth(0)
+#if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
+		, mMaxDirectionIndex(0)
+#endif
 	{
 	}
 
@@ -14,7 +17,9 @@ namespace PR
 		mDepth(depth), mTime(time), mFlags(flags),
 		mMaxDepth(maxDepth)
 	{
+#if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 		calcMaxDirectionElement();
+#endif
 	}
 
 	Ray::~Ray()

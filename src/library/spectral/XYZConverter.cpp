@@ -7,7 +7,6 @@
 
 namespace PR
 {
-#ifndef PR_NO_SPECTRAL
 # define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
 # define constant const
 # include "cl/xyztable.cl"
@@ -16,11 +15,8 @@ namespace PR
 	constexpr float Y_SUM = 21.371327f;
 	constexpr float N = Y_SUM * Spectrum::ILL_SCALE;
 
-#endif
-
 	void XYZConverter::convertXYZ(const Spectrum& s, float &X, float &Y, float &Z)
 	{
-#ifndef PR_NO_SPECTRAL
 		X = 0;
 		Y = 0;
 		Z = 0;
@@ -58,11 +54,6 @@ namespace PR
 		Y *= 0.5f;
 		Z *= 0.5f;
 # endif
-#else// PR_NO_SPECTRAL
-		X = 0.4124f * s.value(0) + 0.3576f * s.value(1) + 0.1805f * s.value(2);
-		Y = 0.2126f * s.value(0) + 0.7152f * s.value(1) + 0.0722f * s.value(2);
-		Z = 0.0193f * s.value(0) + 0.1192f * s.value(1) + 0.9505f * s.value(2);
-#endif
 	}
 
 	void XYZConverter::convert(const Spectrum& s, float &x, float &y, float &z)

@@ -15,7 +15,9 @@ namespace PR
 	inline void Ray::setDirection(const PM::vec3& dir)
 	{
 		mDirection = dir;
+#if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 		calcMaxDirectionElement();
+#endif
 	}
 
 	inline PM::vec3 Ray::direction() const
@@ -96,6 +98,7 @@ namespace PR
 		return Ray(pixel, posOff, dir, depth, time, maxDepth);
 	}
 
+#if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 	inline uint32 Ray::maxDirectionIndex() const
 	{
 		return mMaxDirectionIndex;
@@ -115,4 +118,5 @@ namespace PR
 			}
 		}
 	}
+#endif
 }

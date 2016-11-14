@@ -11,11 +11,6 @@
 
 #include "performance/Performance.h"
 
-// 0 -> Trumbore
-// 1 -> Watertight
-// 2 -> Double Watertight
-#define PR_TRIANGLE_INTERSECTION_TECHNIQUE (0)
-
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 0
 # define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
 #elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

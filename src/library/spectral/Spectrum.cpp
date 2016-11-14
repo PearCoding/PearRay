@@ -5,7 +5,6 @@ static_assert(std::is_standard_layout<PR::Spectrum>::value, "Spectrum is not a s
 
 namespace PR
 {
-#ifndef PR_NO_SPECTRAL
 # define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
 # define constant const
 # include "cl/xyztable.cl"
@@ -48,28 +47,21 @@ namespace PR
 			}
 		}
 	}
-#endif//PR_NO_SPECTRAL
 
 	constexpr float CANDELA = 683.002f;
 	void Spectrum::weightPhotometric()
 	{
-#ifndef PR_NO_SPECTRAL
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 			mValues[i] *= NM_TO_Y[i] * CANDELA;
-#endif
 	}
 
 	float Spectrum::luminousFlux() const
 	{
-#ifndef PR_NO_SPECTRAL
 		float flux = 0;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 			flux += mValues[i] * NM_TO_Y[i];
 		
 		return flux * ILL_SCALE * CANDELA;
-#else
-		return mValues[0] * 0.2126f + mValues[1] * 0.7152f + mValues[2] * 0.0722f;
-#endif
 	}
 
 	// Has to be in double!
@@ -89,17 +81,11 @@ namespace PR
 	Spectrum Spectrum::fromBlackbody(float temp)
 	{
 		Spectrum spec;
-#ifndef PR_NO_SPECTRAL
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
 			long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP)*1e-9l;
 			spec.mValues[i] = static_cast<float>(blackbody_eq(temp, lambda));
 		}
-#else
-		spec.mValues[0] = static_cast<float>(blackbody_eq(temp, 640*1e-9l));
-		spec.mValues[1] = static_cast<float>(blackbody_eq(temp, 550*1e-9l));
-		spec.mValues[2] = static_cast<float>(blackbody_eq(temp, 430*1e-9l));
-#endif
 
 		return spec;
 	}

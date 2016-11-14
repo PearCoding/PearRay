@@ -16,16 +16,12 @@ namespace PR
 	class PR_LIB Spectrum
 	{
 	public:
-#ifdef PR_NO_SPECTRAL
-		static constexpr uint32 SAMPLING_COUNT = 3;
-#else
-		static constexpr uint32 WAVELENGTH_START = 360;// nm
-		static constexpr uint32 WAVELENGTH_END = 800;// nm 
+		static constexpr uint32 WAVELENGTH_START = 380;// nm
+		static constexpr uint32 WAVELENGTH_END = 780;// nm 
 		static constexpr uint32 WAVELENGTH_AREA_SIZE = (WAVELENGTH_END - WAVELENGTH_START);
 		static constexpr uint32 WAVELENGTH_STEP = 5;// nm
 		static constexpr uint32 SAMPLING_COUNT = WAVELENGTH_AREA_SIZE / WAVELENGTH_STEP + 1;
 		static constexpr float ILL_SCALE = WAVELENGTH_STEP + 1;
-#endif
 		
 		inline Spectrum();
 		inline explicit Spectrum(float f);
