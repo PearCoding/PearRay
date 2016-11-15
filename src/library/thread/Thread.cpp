@@ -13,25 +13,25 @@ namespace PR
 	{
 		((Thread*)ptr)->main();
 
-		((Thread*)ptr)->mThreadMutex.lock();
+		//((Thread*)ptr)->mThreadMutex.lock();
 		((Thread*)ptr)->mState = Thread::S_Stopped;
-		((Thread*)ptr)->mThreadMutex.unlock();
+		//((Thread*)ptr)->mThreadMutex.unlock();
 
 		return 0;
 	}
 
-	uint32 Thread::sThreadCount = 0;
-	std::mutex Thread::sGeneralThreadMutex;
+	std::atomic<uint32> Thread::sThreadCount(0);
+	//std::mutex Thread::sGeneralThreadMutex;
 
 	void Thread::start()
 	{
-		mThreadMutex.lock();
+		//mThreadMutex.lock();
 		if (mState == S_Waiting && !mThread)
 		{
 			mShouldStop = false;
 			mThread = new std::thread(threadWrapper, this);
 			mState = S_Running;
 		}
-		mThreadMutex.unlock();
+		//mThreadMutex.unlock();
 	}
 }

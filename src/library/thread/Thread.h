@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include <atomic>
 #include <mutex>
 #include <thread>
 
@@ -8,8 +9,8 @@ namespace PR
 {
 	/**
 	* @brief Represent a parallel running thread
-	* @ingroup ThreadSafe
 	* @ingroup Core
+	* @attention This class should only be accessed by the created (or other managing thread) and the thread itself!
 	*/
 	class PR_LIB Thread
 	{
@@ -55,8 +56,8 @@ namespace PR
 		/**
 		* @brief Stop the running thread.
 		*
-		* @warning A thread implementation should use ShouldStop() to determine if a stop is needed.<br />There is no stop by the operating system himself!
-		* @see ShouldStop()
+		* @warning A thread implementation should use shouldStop() to determine if a stop is needed.<br />There is no stop by the operating system himself!
+		* @see shouldStop()
 		*/
 		inline void stop();
 
@@ -89,14 +90,14 @@ namespace PR
 		virtual void main() = 0;
 
 	private:
-		static uint32 sThreadCount;
-		static std::mutex sGeneralThreadMutex;
+		static std::atomic<uint32> sThreadCount;
+		//static std::mutex sGeneralThreadMutex;
 
 		_State mState;
 		std::thread* mThread;
 
 		bool mShouldStop;
-		mutable std::mutex mThreadMutex;
+		//mutable std::mutex mThreadMutex;
 	};
 }
 

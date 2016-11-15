@@ -4,18 +4,18 @@ namespace PR
 {
 	inline Thread::Thread() :
 		mState(S_Waiting), mThread(nullptr),
-		mShouldStop(false), mThreadMutex()
+		mShouldStop(false)//, mThreadMutex()
 	{
-		sGeneralThreadMutex.lock();
+		//sGeneralThreadMutex.lock();
 		sThreadCount++;
-		sGeneralThreadMutex.unlock();
+		//sGeneralThreadMutex.unlock();
 	}
 
 	inline Thread::~Thread()
 	{
-		sGeneralThreadMutex.lock();
+		//sGeneralThreadMutex.lock();
 		sThreadCount--;
-		sGeneralThreadMutex.unlock();
+		//sGeneralThreadMutex.unlock();
 
 		if (mThread)
 		{
@@ -26,57 +26,56 @@ namespace PR
 
 	inline Thread::_State Thread::state() const
 	{
-		std::lock_guard<std::mutex> guard(mThreadMutex);
+		//std::lock_guard<std::mutex> guard(mThreadMutex);
 		return mState;
 	}
 
 	inline void Thread::join()
 	{
-		mThreadMutex.lock();
+		//mThreadMutex.lock();
 		if (mState != S_Running ||
 			!mThread ||
 			mThread->get_id() == std::this_thread::get_id() ||
 			!mThread->joinable())
 		{
-			mThreadMutex.unlock();
+			//mThreadMutex.unlock();
 			return;
 		}
-		mThreadMutex.unlock();
+		//mThreadMutex.unlock();
 
-		//What about mThread == nullptr after mutex?
 		mThread->join();
 	}
 
 	inline void Thread::stop()
 	{
-		mThreadMutex.lock();
+		//mThreadMutex.lock();
 		if (mState != S_Running ||
 			!mThread)
 		{
-			mThreadMutex.unlock();
+			//mThreadMutex.unlock();
 			return;
 		}
 
 		mShouldStop = true;
-		mThreadMutex.unlock();
+		//mThreadMutex.unlock();
 
 		mThread->join();
 
-		mThreadMutex.lock();
+		//mThreadMutex.lock();
 		delete mThread;
 		mThread = nullptr;
-		mThreadMutex.unlock();
+		//mThreadMutex.unlock();
 	}
 
 	inline std::thread::id Thread::id() const
 	{
-		std::lock_guard<std::mutex> guard(mThreadMutex);
+		//std::lock_guard<std::mutex> guard(mThreadMutex);
 		return mThread->get_id();
 	}
 
 	inline uint32 Thread::threadCount()
 	{
-		std::lock_guard<std::mutex> guard(sGeneralThreadMutex);
+		//std::lock_guard<std::mutex> guard(sGeneralThreadMutex);
 		return sThreadCount;
 	}
 
@@ -87,7 +86,7 @@ namespace PR
 
 	inline bool Thread::shouldStop() const
 	{
-		std::lock_guard<std::mutex> guard(mThreadMutex);
+		//std::lock_guard<std::mutex> guard(mThreadMutex);
 		return mShouldStop;
 	}
 }
