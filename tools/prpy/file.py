@@ -34,21 +34,29 @@ class SpectralFile:
             print('Empty PearRay spectral file!')
             return False
             
-        if not(data[0:5] == b'PRS42'):
+	offset = 0
+	if data[0:4] == b'PR42':
+		offset = 4
+	elif data[0:5] == b'PRS42': # Old format --- Will be removed soon
+		offset = 5
+	else:
             print('Invalid PearRay spectral file!')
             return False
         
-        self.samples = struct.unpack('<i', data[5:9])[0]
+        self.samples = struct.unpack('<i', data[offset:(offset+4)])[0]
         
         if not(self.samples == spectral.SAMPLING_COUNT):
             print('Sample count missmatch. Has to be %i!' % spectral.SAMPLING_COUNT)
             return False
         
-        self.width = struct.unpack('<i', data[9:13])[0]
-        self.height = struct.unpack('<i', data[13:17])[0]
+	offset += 4
+        self.width = struct.unpack('<i', data[offset:(offset+4)])[0]
+	offset += 4
+        self.height = struct.unpack('<i', data[offset:(offset+4)])[0]
+	offset += 4
         #print("%i %i %i" % (self.samples, self.width, self.height))
         
-        bf = np.frombuffer(data, dtype=np.dtype('<f4'), offset=17)
+        bf = np.frombuffer(data, dtype=np.dtype('<f4'), offset=offset)
         #print("%i %i" % (len(bf), self.samples * self.width * self.height))
         self.spectrals = np.reshape(bf, newshape=(self.height, self.width, self.samples), order='C')
         

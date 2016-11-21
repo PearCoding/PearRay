@@ -282,7 +282,7 @@ namespace PRU
     	out.push(io::zlib_compressor());
     	out.push(io::file_sink(file));
 
-		out.put('P').put('R').put('S').put('4').put('2');
+		out.put('P').put('R').put('4').put('2');
 
 		uint32 tmp = Spectrum::SAMPLING_COUNT;
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
