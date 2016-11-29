@@ -31,8 +31,8 @@ namespace PRU
 
 		// Delete if resolution changed.
 		if(mRenderer && mSpectralData &&
-			(mRenderer->renderWidth() != renderer->renderWidth() ||
-			 mRenderer->renderHeight() != renderer->renderHeight()))
+			(mRenderer->cropWidth() != renderer->cropWidth() ||
+			 mRenderer->cropHeight() != renderer->cropHeight()))
 		{
 			delete[] mSpectralData;
 			mSpectralData = nullptr;
@@ -48,8 +48,8 @@ namespace PRU
 
 		if(!mSpectralData)
 		{
-			mSpectralData = new float[renderer->renderWidth()*renderer->renderHeight()*Spectrum::SAMPLING_COUNT];
-			mRGBData = new float[renderer->renderWidth()*renderer->renderHeight()*3];
+			mSpectralData = new float[renderer->cropWidth()*renderer->cropHeight()*Spectrum::SAMPLING_COUNT];
+			mRGBData = new float[renderer->cropWidth()*renderer->cropHeight()*3];
 		}
 	}
 
@@ -76,10 +76,10 @@ namespace PRU
 			const std::vector<IM_ChannelSetting1D>& ch1d,
 			const std::vector<IM_ChannelSetting3D>& ch3d) const
 	{
-		const uint32 rw = mRenderer->renderWidth();
-		const uint32 rh = mRenderer->renderHeight();
-		const uint32 cx = mRenderer->cropPixelOffsetX();
-		const uint32 cy = mRenderer->cropPixelOffsetY();
+		const uint32 rw = mRenderer->cropWidth();
+		const uint32 rh = mRenderer->cropHeight();
+		const uint32 cx = mRenderer->cropOffsetX();
+		const uint32 cy = mRenderer->cropOffsetY();
 
 		const uint32 channelCount = (specSett ? 3 : 0) + ch1d.size() + ch3d.size()*3;
 		if(channelCount == 0)
@@ -89,10 +89,10 @@ namespace PRU
 			channelCount, TypeDesc::FLOAT);
 		spec.full_x = 0;
 		spec.full_y = 0;
-		spec.full_width = mRenderer->width();
-		spec.full_height = mRenderer->height();
-		spec.x = mRenderer->cropPixelOffsetX();
-		spec.y = mRenderer->cropPixelOffsetY();
+		spec.full_width = mRenderer->fullWidth();
+		spec.full_height = mRenderer->fullHeight();
+		spec.x = cx;
+		spec.y = cy;
 
 		// Channel names
 		spec.channelnames.clear ();
@@ -103,8 +103,9 @@ namespace PRU
 			spec.channelnames.push_back("B");
 			
 			if(specSett->TGM == TGM_SRGB)
-				spec.attribute("oiio:ColorSpace", "srgb");
+				spec.attribute("oiio:ColorSpace", "sRGB");
 		}
+
 		for(const IM_ChannelSetting3D& sett : ch3d)
 		{
 			spec.channelnames.push_back(sett.Name[0]);
@@ -115,7 +116,9 @@ namespace PRU
 		{
 			spec.channelnames.push_back(sett.Name);
 		}
+		
 		spec.attribute ("Software", "PearRay " PR_VERSION_STRING);
+		spec.attribute ("IPTC:ProgramVersion", PR_VERSION_STRING);
 
 		// Create file
 		ImageOutput* out = ImageOutput::create(file);
@@ -300,13 +303,13 @@ namespace PRU
 
 		uint32 tmp = Spectrum::SAMPLING_COUNT;
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->renderWidth();
+		tmp = mRenderer->cropWidth();
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->renderHeight();
+		tmp = mRenderer->cropHeight();
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
 		float buf[Spectrum::SAMPLING_COUNT];
-		for (uint32 i = 0; i < mRenderer->renderHeight() * mRenderer->renderWidth(); ++i)
+		for (uint32 i = 0; i < mRenderer->cropHeight() * mRenderer->cropWidth(); ++i)
 		{
 			const Spectrum& s = spec->ptr()[i];
 			s.copyTo(buf);

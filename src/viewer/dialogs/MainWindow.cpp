@@ -203,8 +203,8 @@ void MainWindow::openProject(const QString& str)
 		ui.viewWidget->setRenderer(mRenderer);
 
 		ui.viewWidget->setCropSelection(
-			QPoint(mEnvironment->cropMinX()*mRenderer->width(), mEnvironment->cropMinY()*mRenderer->height()),
-			QPoint(mEnvironment->cropMaxX()*mRenderer->width(), mEnvironment->cropMaxY()*mRenderer->height()));
+			QPoint(mEnvironment->cropMinX()*mRenderer->fullWidth(), mEnvironment->cropMinY()*mRenderer->fullHeight()),
+			QPoint(mEnvironment->cropMaxX()*mRenderer->fullWidth(), mEnvironment->cropMaxY()*mRenderer->fullHeight()));
 
 		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
 
@@ -489,10 +489,10 @@ void MainWindow::startRendering(bool clear)
 	QRect cropRect = ui.viewWidget->selectedCropRect();
 	if (cropRect.isValid() && cropRect.width() > 2 && cropRect.height() > 2)
 	{
-		float xmin = qMin(qMax(cropRect.left() / (float)mRenderer->width(), 0.0f), 1.0f);
-		float xmax = qMin(qMax(cropRect.right() / (float)mRenderer->width(), 0.0f), 1.0f);
-		float ymin = qMin(qMax(cropRect.top() / (float)mRenderer->height(), 0.0f), 1.0f);
-		float ymax = qMin(qMax(cropRect.bottom() / (float)mRenderer->height(), 0.0f), 1.0f);
+		float xmin = qMin(qMax(cropRect.left() / (float)mRenderer->fullWidth(), 0.0f), 1.0f);
+		float xmax = qMin(qMax(cropRect.right() / (float)mRenderer->fullWidth(), 0.0f), 1.0f);
+		float ymin = qMin(qMax(cropRect.top() / (float)mRenderer->fullHeight(), 0.0f), 1.0f);
+		float ymax = qMin(qMax(cropRect.bottom() / (float)mRenderer->fullHeight(), 0.0f), 1.0f);
 		mRenderer->settings().setCropMaxX(xmax);
 		mRenderer->settings().setCropMinX(xmin);
 		mRenderer->settings().setCropMaxY(ymax);

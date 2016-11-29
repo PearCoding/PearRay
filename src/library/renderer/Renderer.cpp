@@ -40,13 +40,14 @@ namespace PR
 {
 	Renderer::Renderer(uint32 w, uint32 h, Camera* cam, Scene* scene,
 		const std::string& workingDir, bool useGPU) :
-		mWidth(w), mHeight(h),
+		mFullWidth(w), mFullHeight(h),
 		mWorkingDir(workingDir),
 		mCamera(cam), mScene(scene),
 		mOutputMap(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
-		mGPU(nullptr), mIntegrator(nullptr), mShouldStop(false)
+		mGPU(nullptr), mIntegrator(nullptr), mShouldStop(false),
+		mCropWidth(w), mCropHeight(h), mCropOffsetX(0), mCropOffsetY(0)
 	{
 		PR_ASSERT(cam);
 		PR_ASSERT(scene);
@@ -113,51 +114,23 @@ namespace PR
 		}
 
 		mLights.clear();
-	}
 
-	void Renderer::setWidth(uint32 w)
-	{
-		mWidth = w;
-	}
-
-	uint32 Renderer::width() const
-	{
-		return mWidth;
-	}
-
-	uint32 Renderer::renderWidth() const
-	{
-		return (uint32)std::ceil((mRenderSettings.cropMaxX() - mRenderSettings.cropMinX()) * mWidth);
-	}
-
-	void Renderer::setHeight(uint32 h)
-	{
-		mHeight = h;
-	}
-
-	uint32 Renderer::height() const
-	{
-		return mHeight;
-	}
-
-	uint32 Renderer::renderHeight() const
-	{
-		return (uint32)std::ceil((mRenderSettings.cropMaxY() - mRenderSettings.cropMinY()) * mHeight);
-	}
-
-	uint32 Renderer::cropPixelOffsetX() const
-	{
-		return std::ceil(mRenderSettings.cropMinX() * mWidth);
-	}
-
-	uint32 Renderer::cropPixelOffsetY() const
-	{
-		return std::ceil(mRenderSettings.cropMinY() * mHeight);
+		mCropWidth = mFullWidth;
+		mCropHeight = mFullHeight;
+		mCropOffsetX = 0;
+		mCropOffsetY = 0;
 	}
 
 	void Renderer::start(uint32 tcx, uint32 tcy, int32 threads)
 	{
 		reset();
+
+		mCropWidth =
+			std::ceil((mRenderSettings.cropMaxX() - mRenderSettings.cropMinX()) * mFullWidth);
+		mCropHeight =
+			std::ceil((mRenderSettings.cropMaxY() - mRenderSettings.cropMinY()) * mFullHeight);
+		mCropOffsetX = std::ceil(mRenderSettings.cropMinX() * mFullWidth);
+		mCropOffsetY = std::ceil(mRenderSettings.cropMinY() * mFullHeight);
 
 		if(mRenderSettings.isAdaptiveSampling() && !mOutputMap->getChannel(OutputMap::V_Quality))
 			mOutputMap->registerChannel(OutputMap::V_Quality, new Output1D(this));
@@ -244,20 +217,20 @@ namespace PR
 
 		mTileXCount = std::max<uint32>(1,tcx);
 		mTileYCount = std::max<uint32>(1,tcy);
-		mTileWidth = (uint32)std::ceil(renderWidth() / (float)mTileXCount);
-		mTileHeight = (uint32)std::ceil(renderHeight() / (float)mTileYCount);
+		mTileWidth = (uint32)std::ceil(mCropWidth / (float)mTileXCount);
+		mTileHeight = (uint32)std::ceil(mCropHeight / (float)mTileYCount);
 		mTileMap = new RenderTile*[mTileXCount*mTileYCount];
 		for (uint32 i = 0; i < mTileYCount; ++i)
 		{
 			for (uint32 j = 0; j < mTileXCount; ++j)
 			{
-				uint32 sx = cropPixelOffsetX() + j*mTileWidth;
-				uint32 sy = cropPixelOffsetY() + i*mTileHeight;
+				uint32 sx = mCropOffsetX + j*mTileWidth;
+				uint32 sy = mCropOffsetY + i*mTileHeight;
 				mTileMap[i*mTileXCount + j] = new RenderTile(
 					sx,
 					sy,
-					PM::pm_Min((uint32)std::ceil(mRenderSettings.cropMaxX()*mWidth), sx + mTileWidth),
-					PM::pm_Min((uint32)std::ceil(mRenderSettings.cropMaxY()*mHeight), sy + mTileHeight));
+					PM::pm_Min(mCropOffsetX + mCropWidth, sx + mTileWidth),
+					PM::pm_Min(mCropOffsetY + mCropHeight, sy + mTileHeight));
 			}
 		}
 
@@ -274,16 +247,16 @@ namespace PR
 
 	void Renderer::pushPixel_Normalized(float x, float y, const Spectrum& spec, const ShaderClosure& sc)
 	{
-		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
-		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
+		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mFullWidth-1)), 0, mFullWidth-1);
+		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mFullHeight-1)), 0, mFullHeight-1);
 
 		mOutputMap->pushFragment(px, py, spec, sc);
 	}
 
 	Spectrum Renderer::getPixel_Normalized(float x, float y)
 	{
-		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
-		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
+		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mFullWidth-1)), 0, mFullWidth-1);
+		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mFullHeight-1)), 0, mFullHeight-1);
 		
 		return mOutputMap->getFragment(px, py);
 	}
@@ -317,7 +290,9 @@ namespace PR
 		{
 			const uint32 SampleCount = mRenderSettings.maxPixelSampleCount();
 
-			for (uint32 currentSample = sample; currentSample < SampleCount && !mOutputMap->isPixelFinished(x, y); ++currentSample)
+			for (uint32 currentSample = sample;
+				currentSample < SampleCount && !mOutputMap->isPixelFinished(x, y);
+				++currentSample)
 			{
 				auto s = context->pixelSampler()->generate2D(currentSample);
 
@@ -340,8 +315,8 @@ namespace PR
 	{
 		context->stats().incPixelSampleCount();
 		
-		Ray ray = mCamera->constructRay(2 * (x / mWidth - 0.5f) ,
-			2 * (y / mHeight - 0.5f),// To camera coordinates [-1,1]
+		Ray ray = mCamera->constructRay(2 * (x / mFullWidth - 0.5f) ,
+			2 * (y / mFullHeight - 0.5f),// To camera coordinates [-1,1]
 			rx, ry, t);
 
 		return mIntegrator->apply(ray, context, pass, sc);
@@ -597,7 +572,7 @@ namespace PR
 		const uint64 pixelsFinished = mOutputMap->finishedPixelCount();
 		RenderStatistics s = stats();
 
-		double finishedPercent = mRenderSettings.isIncremental() ? pixelsFinished / (double)(renderWidth()*renderHeight()) : 0;
+		double finishedPercent = mRenderSettings.isIncremental() ? pixelsFinished / (double)(mCropWidth*mCropHeight) : 0;
 		double unfinishedPercent = (1-finishedPercent)*(s.pixelSampleCount() / (double)maxSamples);
 		return 100 * static_cast<float>(
 				(mCurrentPass + finishedPercent + unfinishedPercent) / (double)maxPasses);

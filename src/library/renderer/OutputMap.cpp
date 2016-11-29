@@ -194,10 +194,10 @@ namespace PR
 
 	uint64 OutputMap::finishedPixelCount() const
 	{
-		const uint32 rw = mRenderer->renderWidth();
-		const uint32 rh = mRenderer->renderHeight();
-		const uint32 sx = mRenderer->cropPixelOffsetX();
-		const uint32 sy = mRenderer->cropPixelOffsetY();
+		const uint32 rw = mRenderer->cropWidth();
+		const uint32 rh = mRenderer->cropHeight();
+		const uint32 sx = mRenderer->cropOffsetX();
+		const uint32 sy = mRenderer->cropOffsetY();
 		const float minError = mRenderer->settings().maxASError();
 		const uint32 minSamples = mRenderer->settings().minPixelSampleCount();
 		const uint32 maxSamples = mRenderer->settings().maxPixelSampleCount();

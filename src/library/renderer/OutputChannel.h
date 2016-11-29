@@ -25,10 +25,10 @@ namespace PR
 		inline void init()
 		{
 			PR_ASSERT(!mData);
-			mRW = mRenderer->renderWidth();
-			mRH = mRenderer->renderHeight();
-			mCX = mRenderer->cropPixelOffsetX();
-			mCY = mRenderer->cropPixelOffsetY();
+			mRW = mRenderer->cropWidth();
+			mRH = mRenderer->cropHeight();
+			mCX = mRenderer->cropOffsetX();
+			mCY = mRenderer->cropOffsetY();
 			mData = new T[mRW * mRH];
 		}
 

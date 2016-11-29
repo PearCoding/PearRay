@@ -511,7 +511,7 @@ namespace PR
 
 	uint64 PPMIntegrator::maxSamples(const Renderer* renderer) const
 	{
-		return renderer->renderWidth() * renderer->renderHeight() *
+		return renderer->cropWidth() * renderer->cropHeight() *
 			renderer->settings().maxPixelSampleCount() * (renderer->settings().ppm().maxPassCount() + 1);
 	}
 

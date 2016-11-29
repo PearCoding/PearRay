@@ -34,16 +34,16 @@ namespace PR
 			const std::string& workingDir, bool useGPU = true);
 		virtual ~Renderer();
 
-		void setWidth(uint32 w);
-		uint32 width() const;
-		uint32 renderWidth() const; // Depends on crop
+		inline void setFullWidth(uint32 w) { PR_ASSERT(isFinished()); mFullWidth = w; }
+		inline uint32 fullWidth() const { return mFullWidth; }
+		inline uint32 cropWidth() const { return mCropWidth; }
 
-		void setHeight(uint32 h);
-		uint32 height() const;
-		uint32 renderHeight() const; // Depends on crop
+		inline void setFullHeight(uint32 h) { PR_ASSERT(isFinished()); mFullHeight = h; }
+		inline uint32 fullHeight() const { return mFullHeight; }
+		inline uint32 cropHeight() const { return mCropHeight; }
 
-		uint32 cropPixelOffsetX() const;
-		uint32 cropPixelOffsetY() const;
+		inline uint32 cropOffsetX() const { return mCropOffsetX; }
+		inline uint32 cropOffsetY() const { return mCropOffsetY; }
 		
 		// tcx = tile count x
 		// tcy = tile count y
@@ -127,8 +127,8 @@ namespace PR
 
 		Spectrum renderSample(RenderContext* context, float x, float y, float rx, float ry, float t, uint32 pass, ShaderClosure& sc);
 
-		uint32 mWidth;
-		uint32 mHeight;
+		uint32 mFullWidth;
+		uint32 mFullHeight;
 		std::string mWorkingDir;
 
 		Camera* mCamera;
@@ -158,5 +158,11 @@ namespace PR
 		uint32 mCurrentPass;
 
 		bool mShouldStop;
+
+		// Cache:
+		uint32 mCropWidth;
+		uint32 mCropHeight;
+		uint32 mCropOffsetX;
+		uint32 mCropOffsetY;
 	};
 }
