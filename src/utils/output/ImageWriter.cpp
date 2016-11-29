@@ -31,7 +31,8 @@ namespace PRU
 
 		// Delete if resolution changed.
 		if(mRenderer && mSpectralData &&
-			(mRenderer->width() != renderer->width() || mRenderer->height() != renderer->height()))
+			(mRenderer->renderWidth() != renderer->renderWidth() ||
+			 mRenderer->renderHeight() != renderer->renderHeight()))
 		{
 			delete[] mSpectralData;
 			mSpectralData = nullptr;
@@ -47,8 +48,8 @@ namespace PRU
 
 		if(!mSpectralData)
 		{
-			mSpectralData = new float[renderer->width()*renderer->height()*Spectrum::SAMPLING_COUNT];
-			mRGBData = new float[renderer->width()*renderer->height()*3];
+			mSpectralData = new float[renderer->renderWidth()*renderer->renderHeight()*Spectrum::SAMPLING_COUNT];
+			mRGBData = new float[renderer->renderWidth()*renderer->renderHeight()*3];
 		}
 	}
 
@@ -75,11 +76,24 @@ namespace PRU
 			const std::vector<IM_ChannelSetting1D>& ch1d,
 			const std::vector<IM_ChannelSetting3D>& ch3d) const
 	{
+		const uint32 rw = mRenderer->renderWidth();
+		const uint32 rh = mRenderer->renderHeight();
+		const uint32 cx = mRenderer->cropPixelOffsetX();
+		const uint32 cy = mRenderer->cropPixelOffsetY();
+
 		const uint32 channelCount = (specSett ? 3 : 0) + ch1d.size() + ch3d.size()*3;
 		if(channelCount == 0)
 			return false;
 
-		ImageSpec spec(mRenderer->width(), mRenderer->height(), channelCount, TypeDesc::FLOAT);
+		ImageSpec spec(rw, rh,
+			channelCount, TypeDesc::FLOAT);
+		spec.full_x = 0;
+		spec.full_y = 0;
+		spec.full_width = mRenderer->width();
+		spec.full_height = mRenderer->height();
+		spec.x = mRenderer->cropPixelOffsetX();
+		spec.y = mRenderer->cropPixelOffsetY();
+
 		// Channel names
 		spec.channelnames.clear ();
 		if(specSett)
@@ -111,7 +125,7 @@ namespace PRU
 		// Spectral
 		if(specSett && specSett->Channel)
 		{
-			for(uint32 i = 0; i < mRenderer->width() * mRenderer->height(); ++i)
+			for(uint32 i = 0; i < rw*rh; ++i)
 				specSett->Channel->ptr()[i].copyTo(&mSpectralData[i*Spectrum::SAMPLING_COUNT]);
 			
 			toneMapper.setColorMode(specSett->TCM);
@@ -131,13 +145,13 @@ namespace PRU
 			if(sett.TMM != TMM_Normalized)
 				continue;
 
-			for (uint32 y = 0; y < mRenderer->height(); ++y)
+			for (uint32 y = 0; y < rh; ++y)
 			{
-				for(uint32 x = 0; x < mRenderer->width(); ++x)
+				for(uint32 x = 0; x < rw; ++x)
 				{
 					invMax3d[sett.Variable] =
 						PM::pm_Max(invMax3d[sett.Variable],
-							PM::pm_MagnitudeSqr3D(sett.Channel->getFragment(x,y)));
+							PM::pm_MagnitudeSqr3D(sett.Channel->getFragmentBounded(x,y)));
 				}
 			}
 
@@ -150,12 +164,12 @@ namespace PRU
 			if(sett.TMM != TMM_Normalized)
 				continue;
 
-			for (uint32 y = 0; y < mRenderer->height(); ++y)
+			for (uint32 y = 0; y < rh; ++y)
 			{
-				for(uint32 x = 0; x < mRenderer->width(); ++x)
+				for(uint32 x = 0; x < rw; ++x)
 				{
 					invMax1d[sett.Variable] =
-						PM::pm_Max(invMax1d[sett.Variable], sett.Channel->getFragment(x,y));
+						PM::pm_Max(invMax1d[sett.Variable], sett.Channel->getFragmentBounded(x,y));
 				}
 			}
 
@@ -164,15 +178,15 @@ namespace PRU
 		}
 
 		// Write content		
-		float* line = new float[channelCount * mRenderer->width()];
+		float* line = new float[channelCount * rw];
 
 		out->open(file, spec);
-		for (uint32 y = 0; y < mRenderer->height(); ++y)
+		for (uint32 y = 0; y < rh; ++y)
 		{
-			for(uint32 x = 0; x < mRenderer->width(); ++x)
+			for(uint32 x = 0; x < rw; ++x)
 			{
 				uint32 id = x*channelCount;
-				const uint32 id1d = y * mRenderer->width() + x;
+				const uint32 id1d = y * rw + x;
 				const uint32 id3d = id1d*3;
 
 				if(specSett)
@@ -261,7 +275,7 @@ namespace PRU
 					id += 1;
 				}
 			}
-			out->write_scanline(y, 0, TypeDesc::FLOAT, line);
+			out->write_scanline(y+cy, 0, TypeDesc::FLOAT, line);
 		}
 		out->close();
 
@@ -286,13 +300,13 @@ namespace PRU
 
 		uint32 tmp = Spectrum::SAMPLING_COUNT;
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->width();
+		tmp = mRenderer->renderWidth();
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->height();
+		tmp = mRenderer->renderHeight();
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
 		float buf[Spectrum::SAMPLING_COUNT];
-		for (uint32 i = 0; i < mRenderer->height() * mRenderer->width(); ++i)
+		for (uint32 i = 0; i < mRenderer->renderHeight() * mRenderer->renderWidth(); ++i)
 		{
 			const Spectrum& s = spec->ptr()[i];
 			s.copyTo(buf);

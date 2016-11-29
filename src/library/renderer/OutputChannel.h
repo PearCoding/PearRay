@@ -12,7 +12,8 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(OutputChannel);
 	public:
 		inline OutputChannel(Renderer* renderer) :
-			mRenderer(renderer), mData(nullptr)
+			mRenderer(renderer), mData(nullptr),
+			mRW(0), mRH(0), mCX(0), mCY(0)
 		{
 		}
 
@@ -24,7 +25,11 @@ namespace PR
 		inline void init()
 		{
 			PR_ASSERT(!mData);
-			mData = new T[mRenderer->width() * mRenderer->height()];
+			mRW = mRenderer->renderWidth();
+			mRH = mRenderer->renderHeight();
+			mCX = mRenderer->cropPixelOffsetX();
+			mCY = mRenderer->cropPixelOffsetY();
+			mData = new T[mRW * mRH];
 		}
 
 		inline void deinit()
@@ -36,36 +41,36 @@ namespace PR
 			}
 		}
 
-		void clear(uint32 sx = 0, uint32 sy = 0, uint32 ex = 0, uint32 ey = 0)
+		void clear()
 		{
 			if(!mData)
 				return;
-			
-			const auto w = mRenderer->width();
-			if(sx == 0 && sy == 0 &&
-				(ex == 0 || ex == w) &&
-				(ey == 0 || ey == mRenderer->height()))// Full clear
-			{
-				std::memset(mData, 0, w*mRenderer->height()*sizeof(T));
-			}
-			else
-			{
-				PR_ASSERT(sx < ex);
-				PR_ASSERT(sy < ey);
 
-				for(uint32 y = sy; y < ey; ++y)// Line by line
-					std::memset(&mData[y*w + sx], 0, (ex - sx)* sizeof(T));
-			}
+			std::memset(mData, 0, mRW*mRH*sizeof(T));
 		}
 
 		inline void pushFragment(uint32 x, uint32 y, const T& v)
 		{
-			mData[y*mRenderer->width()+x] = v;
+			PR_DEBUG_ASSERT(x >= mCX && x < mCX + mRW);
+			PR_DEBUG_ASSERT(y >= mCY && y < mCY + mRH);
+			mData[(y-mCY)*mRW+(x-mCX)] = v;
 		}
 
 		inline T getFragment(uint32 x, uint32 y) const
 		{
-			return mData[y*mRenderer->width()+x];
+			PR_DEBUG_ASSERT(x >= mCX && x < mCX + mRW);
+			PR_DEBUG_ASSERT(y >= mCY && y < mCY + mRH);
+			return mData[(y-mCY)*mRW+(x-mCX)];
+		}
+
+		inline void pushFragmentBounded(uint32 x, uint32 y, const T& v)
+		{
+			mData[y*mRW+x] = v;
+		}
+
+		inline T getFragmentBounded(uint32 x, uint32 y) const
+		{
+			return mData[y*mRW+x];
 		}
 		
 		inline T* ptr() const
@@ -75,12 +80,18 @@ namespace PR
 
 		inline void fill(const T& v)
 		{
-			std::fill_n(mData, mRenderer->width() * mRenderer->height(), v);
+			std::fill_n(mData, mRW * mRH, v);
 		}
 
 	private:
 		Renderer* mRenderer;
 		T* mData;
+
+		// Temp
+		uint32 mRW;
+		uint32 mRH;
+		uint32 mCX;
+		uint32 mCY;
 	};
 
 	typedef OutputChannel<PM::avec3> Output3D;

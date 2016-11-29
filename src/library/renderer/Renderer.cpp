@@ -617,7 +617,6 @@ namespace PR
 		mIntegrator->onNextPass(mCurrentPass + 1, clear);
 
 		if(clear)
-			mOutputMap->clear(cropPixelOffsetX(), cropPixelOffsetY(),
-				cropPixelOffsetX() + renderWidth(), cropPixelOffsetY() + renderHeight());
+			mOutputMap->clear();
 	}
 }

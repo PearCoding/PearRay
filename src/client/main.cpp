@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 		renderer->settings().setCropMinY(env->cropMinY());
 	}
 
-	PR::ToneMapper toneMapper(renderer->gpu(), renderer->width()*renderer->height());
+	PR::ToneMapper toneMapper(renderer->gpu(), renderer->renderWidth()*renderer->renderHeight());
 	PR_END_PROFILE_ID(1);
 
 	PR_BEGIN_PROFILE_ID(2);

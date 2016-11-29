@@ -50,7 +50,7 @@ namespace PR
 		void init();
 		void deinit();
 
-		void clear(uint32 sx = 0, uint32 sy = 0, uint32 ex = 0, uint32 ey = 0);
+		void clear();
 
 		void pushFragment(uint32 x, uint32 y, const Spectrum& s, const ShaderClosure& sc);
 		

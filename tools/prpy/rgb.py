@@ -8,7 +8,7 @@ SCO_K = 1699
 
 ILL_SCALE = spectral.SAMPLING_COUNT + 1
 
-# CIE 1931 standard colorimetric observer
+# CIE 1931 standard colormetric observer
 PHO_X = [
 	0.001368, 0.002236, 0.004243, 0.007650, 0.014310,
     0.023190, 0.043510, 0.077630, 0.134380, 0.214770,
@@ -116,14 +116,10 @@ def specToLum_Sco(spec_data):
     y_data = spec_data * SCO_Y      
     return mathutils.trapz(y_data, spectral.WAVELENGTH_STEP*1e-9) * SCO_K
 
-def specToXYZ(spec_data):
-    rgb = np.zeros(3)
-    for idx, val in enumerate(spec_data):
-        rgb[0] += val * PHO_X[idx]
-        rgb[1] += val * PHO_Y[idx]
-        rgb[2] += val * PHO_Z[idx]
-    
-    return rgb * (ILL_SCALE / PHO_Y_SUM)
+def specToXYZ(spec_data):    
+    return [mathutils.trapz(spec_data * PHO_X, spectral.WAVELENGTH_STEP*1e-9),
+            mathutils.trapz(spec_data * PHO_Y, spectral.WAVELENGTH_STEP*1e-9),
+            mathutils.trapz(spec_data * PHO_Z, spectral.WAVELENGTH_STEP*1e-9)]
 
 def specToRGB(spec_data):
     return specToXYZ(spec_data) * M_F_RGB

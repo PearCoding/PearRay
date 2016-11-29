@@ -101,30 +101,30 @@ namespace PR
 		mUserSpectral.clear();
 	}
 
-	void OutputMap::clear(uint32 sx, uint32 sy, uint32 ex, uint32 ey)
+	void OutputMap::clear()
 	{
-		mSpectral->clear(sx, sy, ex, ey);
+		mSpectral->clear();
 
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
 			if(mInt1D[i])
-				mInt1D[i]->clear(sx, sy, ex, ey);
+				mInt1D[i]->clear();
 		}
 
 		for(uint32 i = 0; i < V_3D_COUNT; ++i)
 		{
 			if(mInt3D[i])
-				mInt3D[i]->clear(sx, sy, ex, ey);
+				mInt3D[i]->clear();
 		}
 
 		for(Output1D* output: mUser1D)
-			output->clear(sx, sy, ex, ey);
+			output->clear();
 
 		for(Output3D* output: mUser3D)
-			output->clear(sx, sy, ex, ey);
+			output->clear();
 
 		for(OutputSpectral* output: mUserSpectral)
-			output->clear(sx, sy, ex, ey);
+			output->clear();
 	}
 
 	void OutputMap::pushFragment(uint32 x, uint32 y, const Spectrum& s, const ShaderClosure& sc)
