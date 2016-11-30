@@ -8,12 +8,12 @@ namespace PR
 	class PR_LIB DirectIntegrator : public OnePassIntegrator
 	{
 	public:
-		DirectIntegrator(Renderer* renderer);
+		DirectIntegrator(RenderContext* renderer);
 
-		void init(Renderer* renderer) override;
-		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc) override;
+		void init(RenderContext* renderer) override;
+		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
 
 	private:
-		Spectrum applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 diffbounces);
+		Spectrum applyRay(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, uint32 diffbounces);
 	};
 }

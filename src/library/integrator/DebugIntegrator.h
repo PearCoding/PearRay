@@ -9,7 +9,7 @@ namespace PR
 	public:
 		DebugIntegrator();
 
-		void init(Renderer* renderer) override;
-		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc) override;
+		void init(RenderContext* renderer) override;
+		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
 	};
 }

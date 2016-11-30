@@ -1,6 +1,6 @@
 #include "ViewWidget.h"
 
-#include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 
 #include "spectral/ToneMapper.h"
@@ -34,7 +34,7 @@ ViewWidget::~ViewWidget()
 	}
 }
 
-void ViewWidget::setRenderer(PR::Renderer* renderer)
+void ViewWidget::setRenderer(PR::RenderContext* renderer)
 {
 	mRenderer = renderer;
 
@@ -49,12 +49,12 @@ void ViewWidget::setRenderer(PR::Renderer* renderer)
 
 	if (mRenderer)
 	{
-		mRenderData = new float[mRenderer->cropWidth()*mRenderer->cropHeight()*3];
+		mRenderData = new float[mRenderer->width()*mRenderer->height()*3];
 		std::memset(mRenderData, 0,
-			mRenderer->cropWidth()*mRenderer->cropHeight() * 3 * sizeof(uchar));
+			mRenderer->width()*mRenderer->height() * 3 * sizeof(uchar));
 
 		mToneMapper = new PR::ToneMapper(mRenderer->gpu(),
-			mRenderer->cropWidth()*mRenderer->cropHeight());
+			mRenderer->width()*mRenderer->height());
 	}
 
 	refreshView();
@@ -186,8 +186,8 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 		{
 			QPoint p = convertToLocal(event->pos());
 			if (QRect(QPoint(0, 0), mRenderImage.size()).contains(p) &&
-				p.x() >= mRenderer->cropOffsetX() && p.x() < mRenderer->cropOffsetX() + mRenderer->cropWidth()&&
-				p.y() >= mRenderer->cropOffsetY() && p.y() < mRenderer->cropOffsetY() + mRenderer->cropHeight())
+				p.x() >= mRenderer->offsetX() && p.x() < mRenderer->offsetX() + mRenderer->width()&&
+				p.y() >= mRenderer->offsetY() && p.y() < mRenderer->offsetY() + mRenderer->height())
 			{
 				emit spectrumSelected(
 					mRenderer->output()->getSpectralChannel()->getFragment(p.x(), p.y()));
@@ -379,17 +379,13 @@ void ViewWidget::refreshView()
 			if(mDisplayMode1D == PR::OutputMap::V_1D_COUNT &&
 				mDisplayMode3D == PR::OutputMap::V_3D_COUNT)// Spectral
 			{
-				float* specData = new float[mRenderer->cropWidth() * mRenderer->cropHeight() * PR::Spectrum::SAMPLING_COUNT];
-				for(int i = 0; i < mRenderer->cropWidth() * mRenderer->cropHeight(); ++i)
-					map->getSpectralChannel()->ptr()[i].copyTo(&specData[i*PR::Spectrum::SAMPLING_COUNT]);
-				mToneMapper->exec(specData, mRenderData);
-				delete[] specData;
+				mToneMapper->exec(map->getSpectralChannel()->ptr(), mRenderData);
 
-				uchar* tmp = new uchar[mRenderer->cropWidth() * mRenderer->cropHeight() * 3];
-				for(int i = 0; mRenderer->cropWidth()*mRenderer->cropHeight()*3; ++i)
+				uchar* tmp = new uchar[mRenderer->width() * mRenderer->height() * 3];
+				for(int i = 0; mRenderer->width()*mRenderer->height()*3; ++i)
 					tmp[i] = static_cast<uchar>(mRenderData[i]*255);
 
-				src = QImage(tmp, mRenderer->cropWidth(), mRenderer->cropHeight(), QImage::Format_RGB888);
+				src = QImage(tmp, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
 				delete[] tmp;
 				success = true;
 			}
@@ -399,7 +395,7 @@ void ViewWidget::refreshView()
 
 				if(channel)
 				{
-					for(int i = 0; i < mRenderer->cropWidth() * mRenderer->cropHeight(); ++i)
+					for(int i = 0; i < mRenderer->width() * mRenderer->height(); ++i)
 					{
 						mRenderData[i*3] = channel->ptr()[i];
 						mRenderData[i*3 + 1] = channel->ptr()[i];
@@ -408,11 +404,11 @@ void ViewWidget::refreshView()
 
 					mToneMapper->execMapper(mRenderData, mRenderData);
 
-					uchar* tmp = new uchar[mRenderer->cropWidth()*mRenderer->cropHeight()];
-					for(int i = 0; mRenderer->cropWidth()*mRenderer->cropHeight(); ++i)
+					uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()];
+					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
 						tmp[i] = static_cast<uchar>(mRenderData[i*3]*255);
 
-					src = QImage(tmp, mRenderer->cropWidth(), mRenderer->cropHeight(), QImage::Format_Grayscale8);
+					src = QImage(tmp, mRenderer->width(), mRenderer->height(), QImage::Format_Grayscale8);
 					delete[] tmp;
 					success = true;
 				}
@@ -423,7 +419,7 @@ void ViewWidget::refreshView()
 
 				if(channel)
 				{
-					for(int i = 0; mRenderer->cropWidth()*mRenderer->cropHeight(); ++i)
+					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
 					{
 						const PM::avec3& a = channel->ptr()[i];
 						mRenderData[i*3] = a[0];
@@ -433,11 +429,11 @@ void ViewWidget::refreshView()
 
 					mToneMapper->execMapper(mRenderData, mRenderData);
 
-					uchar* tmp = new uchar[mRenderer->cropWidth()*mRenderer->cropHeight()];
-					for(int i = 0; mRenderer->cropWidth()*mRenderer->cropHeight()*3; ++i)
+					uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()];
+					for(int i = 0; mRenderer->width()*mRenderer->height()*3; ++i)
 						tmp[i] = static_cast<uchar>(mRenderData[i]*255);
 
-					src = QImage(tmp, mRenderer->cropWidth(), mRenderer->cropHeight(), QImage::Format_RGB888);
+					src = QImage(tmp, mRenderer->width(), mRenderer->height(), QImage::Format_RGB888);
 					delete[] tmp;
 					success = true;
 				}
@@ -449,7 +445,7 @@ void ViewWidget::refreshView()
 		if(success)
 		{
 			QPainter painter(&mRenderImage);
-			painter.drawImage(QPoint(mRenderer->cropOffsetX(), mRenderer->cropOffsetY()), src);
+			painter.drawImage(QPoint(mRenderer->offsetX(), mRenderer->offsetY()), src);
 			painter.end();
 		}
 	}

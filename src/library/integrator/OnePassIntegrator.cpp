@@ -1,7 +1,7 @@
 #include "OnePassIntegrator.h"
 
-#include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderThreadContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderThread.h"
 
@@ -20,15 +20,15 @@ namespace PR
 	{
 	}
 
-	void OnePassIntegrator::onThreadStart(RenderContext*)
+	void OnePassIntegrator::onThreadStart(RenderThreadContext*)
 	{
 	}
 
-	void OnePassIntegrator::onPrePass(RenderContext*, uint32)
+	void OnePassIntegrator::onPrePass(RenderThreadContext*, uint32)
 	{
 	}
 
-	void OnePassIntegrator::onPass(RenderTile* tile, RenderContext* context, uint32 pass)
+	void OnePassIntegrator::onPass(RenderTile* tile, RenderThreadContext* context, uint32 pass)
 	{
 		for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
 		{
@@ -39,11 +39,11 @@ namespace PR
 		}
 	}
 
-	void OnePassIntegrator::onPostPass(RenderContext*, uint32)
+	void OnePassIntegrator::onPostPass(RenderThreadContext*, uint32)
 	{
 	}
 
-	void OnePassIntegrator::onThreadEnd(RenderContext*)
+	void OnePassIntegrator::onThreadEnd(RenderThreadContext*)
 	{
 	}
 
@@ -52,12 +52,12 @@ namespace PR
 		return i == 0;
 	}
 		
-	uint64 OnePassIntegrator::maxSamples(const Renderer* renderer) const
+	uint64 OnePassIntegrator::maxSamples(const RenderContext* renderer) const
 	{
-		return renderer->cropWidth() * renderer->cropHeight() * renderer->settings().maxPixelSampleCount();
+		return renderer->width() * renderer->height() * renderer->settings().maxPixelSampleCount();
 	}
 		
-	uint64 OnePassIntegrator::maxPasses(const Renderer* renderer) const
+	uint64 OnePassIntegrator::maxPasses(const RenderContext* renderer) const
 	{
 		return 1;
 	}

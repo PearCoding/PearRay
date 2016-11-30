@@ -5,7 +5,7 @@
 
 #include "sampler/RandomSampler.h"
 
-#include "renderer/RenderContext.h"
+#include "renderer/RenderThreadContext.h"
 
 #include "scene/Scene.h"
 
@@ -19,7 +19,7 @@
 
 namespace PR
 {
-	Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderContext* context, float& full_pdf)
+	Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, float& full_pdf)
 	{
 		Spectrum full_weight;
 		full_pdf = 0;
@@ -67,7 +67,7 @@ namespace PR
 		return full_weight;
 	}
 
-	Spectrum Integrator::handleSpecularPath(const Ray& in, const ShaderClosure& sc, RenderContext* context, RenderEntity*& lastEntity)
+	Spectrum Integrator::handleSpecularPath(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, RenderEntity*& lastEntity)
 	{
 		ShaderClosure other_sc;
 		Ray ray = in;

@@ -1,7 +1,7 @@
 #include "GlassMaterial.h"
 #include "ray/Ray.h"
 #include "shader/ShaderClosure.h"
-#include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
 #include "entity/RenderEntity.h"
 
 #include "math/Reflection.h"

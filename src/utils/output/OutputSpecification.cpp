@@ -1,8 +1,10 @@
 #include "OutputSpecification.h"
-#include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
+#include "renderer/RenderFactory.h"
 #include "Logger.h"
 
 #include <boost/filesystem.hpp>
+#include <sstream>
 
 // DataLisp
 #include "DataLisp.h"
@@ -17,7 +19,7 @@ namespace PRU
 	using namespace PR;
 
 	OutputSpecification::OutputSpecification() :
-		mRenderer(nullptr)
+		mRenderFactory(nullptr)
 	{
 	}
 
@@ -26,22 +28,28 @@ namespace PRU
 		deinit();
 	}
 
-	void OutputSpecification::init(Renderer* renderer)
+	void OutputSpecification::init(RenderFactory* factory)
 	{
-		PR_ASSERT(renderer);
-		mRenderer = renderer;
-		mImageWriter.init(renderer);
-		
-		if(mRenderer)
+		if(mRenderFactory)
+		{
+			std::string f = mRenderFactory->workingDir() + "/.lock";
+			if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
+				PR_LOGGER.logf(L_Error, M_System,
+					"Couldn't delete lock directory '%s'!", f.c_str());
+		}
+
+		mRenderFactory = factory;
+
+		if(mRenderFactory)
 		{
 			// Setup lock directory
-			if(!boost::filesystem::create_directory(mRenderer->workingDir() + "/.lock"))
+			if(!boost::filesystem::create_directory(mRenderFactory->workingDir() + "/.lock"))
 				PR_LOGGER.logf(L_Warning, M_System,
-					"Couldn't create lock directory '%s/.lock'. Maybe already running?", mRenderer->workingDir().c_str());
+					"Couldn't create lock directory '%s/.lock'. Maybe already running?", mRenderFactory->workingDir().c_str());
 
-			if(!boost::filesystem::remove(mRenderer->workingDir() + "/.img_lock"))// Remove it now
+			if(!boost::filesystem::remove(mRenderFactory->workingDir() + "/.img_lock"))// Remove it now
 				PR_LOGGER.logf(L_Error, M_System,
-					"Couldn't delete lock directory '%s/.img_lock'!", mRenderer->workingDir().c_str());
+					"Couldn't delete lock directory '%s/.img_lock'!", mRenderFactory->workingDir().c_str());
 		}
 	}
 
@@ -54,56 +62,42 @@ namespace PRU
 			if(file.SettingsSpectral)
 				delete file.SettingsSpectral;
 		}
+
 		mFiles.clear();
 		mSpectralFiles.clear();
 
-		if(!mRenderer)
+		if(!mRenderFactory)
 			return;
 
-		std::string f = mRenderer->workingDir() + "/.lock";
-		if(!boost::filesystem::remove(f))
+		std::string f = mRenderFactory->workingDir() + "/.lock";
+		if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOGGER.logf(L_Error, M_System,
 				"Couldn't delete lock directory '%s'!", f.c_str());
 				
-		mRenderer = nullptr;
+		mRenderFactory = nullptr;
 	}
 
-	void OutputSpecification::setup()
+	void OutputSpecification::setup(RenderContext* renderer)
 	{
-		OutputMap* output = mRenderer->output();
+		PR_ASSERT(renderer);
 
-		for(File& file : mFiles)
-		{
-			if(file.SettingsSpectral)
-				file.SettingsSpectral->Channel = output->getSpectralChannel();
-			
-			for(IM_ChannelSetting3D& cs3d : file.Settings3D)
+		mImageWriter.init(renderer);
+		OutputMap* output = renderer->output();
+
+		for(const File& file : mFiles)
+		{			
+			for(const IM_ChannelSetting3D& cs3d : file.Settings3D)
 			{
-				Output3D* channel = output->getChannel(cs3d.Variable);
-				if(!channel)
-				{
-					channel = new Output3D(mRenderer);
-					output->registerChannel(cs3d.Variable, channel);
-				}
-				
-				cs3d.Channel = channel;
+				if(!output->getChannel(cs3d.Variable))
+					output->registerChannel(cs3d.Variable, new Output3D(renderer));
 			}
 			
-			for(IM_ChannelSetting1D& cs1d : file.Settings1D)
+			for(const IM_ChannelSetting1D& cs1d : file.Settings1D)
 			{
-				Output1D* channel = output->getChannel(cs1d.Variable);
-				if(!channel)
-				{
-					channel = new Output1D(mRenderer);
-					output->registerChannel(cs1d.Variable, channel);
-				}
-				
-				cs1d.Channel = channel;
+				if(!output->getChannel(cs1d.Variable))
+					output->registerChannel(cs1d.Variable, new Output1D(renderer));
 			}
 		}
-
-		for(FileSpectral& file : mSpectralFiles)
-			file.Spectral = output->getSpectralChannel();
 	}
 
 	OutputMap::Variable1D typeToVariable1D(const std::string& str)
@@ -246,7 +240,6 @@ namespace PRU
 									delete file.SettingsSpectral;
 								
 								file.SettingsSpectral = new IM_ChannelSettingSpec;
-								file.SettingsSpectral->Channel = nullptr;
 								file.SettingsSpectral->Elements = 0;//TODO
 								file.SettingsSpectral->TCM = tcm;
 								file.SettingsSpectral->TGM = tgm;
@@ -258,7 +251,6 @@ namespace PRU
 								if(var3D != OutputMap::V_3D_COUNT)
 								{
 									IM_ChannelSetting3D spec;
-									spec.Channel = nullptr;
 									spec.Elements = 0;//TODO
 									spec.TMM = tmm;
 									spec.Variable = var3D;
@@ -346,7 +338,6 @@ namespace PRU
 									if(var1D != OutputMap::V_1D_COUNT)
 									{
 										IM_ChannelSetting1D spec;
-										spec.Channel = nullptr;
 										spec.TMM = tmm;
 										spec.Variable = var1D;
 
@@ -400,32 +391,49 @@ namespace PRU
 		}
 	}
 
-	void OutputSpecification::save(ToneMapper& toneMapper, bool force) const
+	void OutputSpecification::save(PR::RenderContext* renderer, ToneMapper& toneMapper, bool force) const
 	{
-		if(!force && !boost::filesystem::create_directory(mRenderer->workingDir() + "/.img_lock"))
+		if(!force && !boost::filesystem::create_directory(mRenderFactory->workingDir() + "/.img_lock"))
 			return;
 
-		boost::filesystem::create_directory(mRenderer->workingDir() + "/results");// Doesn't matter if it works
+		std::string resultDir = "/results";
+		if(renderer->index() > 0)
+		{
+			std::stringstream stream;
+			stream << resultDir << "_" << renderer->index();
+			resultDir = stream.str();
+		}
+
+		const std::string dir = mRenderFactory->workingDir() + resultDir;
+		boost::filesystem::create_directory(dir);// Doesn't matter if it works
 
 		for(const File& f: mFiles)
 		{
-			const std::string filename = mRenderer->workingDir() + "/results/" + f.Name + ".exr";
+			const std::string filename = dir + "/" + f.Name + ".exr";
 			if(!mImageWriter.save(toneMapper, filename,
 				f.SettingsSpectral, f.Settings1D, f.Settings3D))
 				PR_LOGGER.logf(L_Error, M_System,
 					"Couldn't save image file '%s'!", filename.c_str());
+
+			if(force)
+				PR_LOGGER.logf(L_Info, M_System,
+					"Saved file '%s'.", filename.c_str());
 		}
 
 		for(const FileSpectral& f: mSpectralFiles)
 		{
-			const std::string filename = mRenderer->workingDir() + "/results/" + f.Name + ".spec";
-			if(!mImageWriter.save_spectral(filename, f.Spectral))
+			const std::string filename = dir + "/" + f.Name + ".spec";
+			if(!mImageWriter.save_spectral(filename, renderer->output()->getSpectralChannel()))
 				PR_LOGGER.logf(L_Error, M_System,
 					"Couldn't save spectral file '%s'!", filename.c_str());
+
+			if(force)
+				PR_LOGGER.logf(L_Info, M_System,
+					"Saved file '%s'.", filename.c_str());
 		}
 
-		if(!force && !boost::filesystem::remove(mRenderer->workingDir() + "/.img_lock"))// Remove it now
+		if(!force && !boost::filesystem::remove(mRenderFactory->workingDir() + "/.img_lock"))// Remove it now
 			PR_LOGGER.logf(L_Error, M_System,
-				"Couldn't delete lock directory '%s/.img_lock'!", mRenderer->workingDir().c_str());
+				"Couldn't delete lock directory '%s/.img_lock'!", mRenderFactory->workingDir().c_str());
 	}
 }

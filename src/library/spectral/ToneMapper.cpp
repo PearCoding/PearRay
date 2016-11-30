@@ -23,14 +23,14 @@ namespace PR
 
 		size_t fullSize = gpu->device().getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
 		size_t maxSize = (size_t)std::ceil((0.4f * fullSize) /
-			(PR::Spectrum::SAMPLING_COUNT * sizeof(float)));
+			(Spectrum::SAMPLING_COUNT * sizeof(float)));
 
 		mRunSize = PM::pm_Min(maxSize, size);
 		try
 		{
 			mSpecInput = cl::Buffer(gpu->context(),
 				CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
-				mRunSize * PR::Spectrum::SAMPLING_COUNT * sizeof(float)
+				mRunSize * Spectrum::SAMPLING_COUNT * sizeof(float)
 			);
 
 			// Don't use runsize. Handle everything with only one call. It is an image after all.
@@ -46,7 +46,7 @@ namespace PR
 #endif
 	}
 
-	void ToneMapper::exec(const float* in, float* out) const
+	void ToneMapper::exec(const Spectrum* specIn, float* out) const
 	{
 #ifndef PR_NO_GPU
 		if (mGPU && mSize > 100)
@@ -84,8 +84,8 @@ namespace PR
 
 					queue.enqueueWriteBuffer(mSpecInput, CL_TRUE,
 						0,
-						current * PR::Spectrum::SAMPLING_COUNT * sizeof(float),
-						&in[off * PR::Spectrum::SAMPLING_COUNT]);
+						current * Spectrum::SAMPLING_COUNT * sizeof(float),
+						&in[off * Spectrum::SAMPLING_COUNT]);
 
 					queue.enqueueNDRangeKernel(
 						specKernel,
@@ -125,7 +125,7 @@ namespace PR
 		else
 		{
 #endif
-			for (uint32 i = 0; i < mSize; ++i)
+			for (size_t i = 0; i < mSize; ++i)
 			{
 				float r, g, b;
 
@@ -133,20 +133,16 @@ namespace PR
 				switch (mColorMode)
 				{
 				case TCM_SRGB:
-					RGBConverter::convert(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
-						r, g, b);
+					RGBConverter::convert(specIn[i], r, g, b);
 					break;
 				case TCM_XYZ:
-					XYZConverter::convertXYZ(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
-						r, g, b);
+					XYZConverter::convertXYZ(specIn[i], r, g, b);
 					break;
 				case TCM_XYZ_NORM:
-					XYZConverter::convert(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
-						r, g, b);
+					XYZConverter::convert(specIn[i], r, g, b);
 					break;
 				case TCM_LUMINANCE:
-					RGBConverter::convert(Spectrum(&in[i*Spectrum::SAMPLING_COUNT]),
-						r, g, b);
+					RGBConverter::convert(specIn[i], r, g, b);
 					r = RGBConverter::luminance(r, g, b);
 					g = r; b = r;
 					break;
@@ -160,10 +156,10 @@ namespace PR
 			// Map 2: Tone Mapping
 			stage_mapper_non_gpu(out, out);
 
-				// Map 3: Gamma Correction
+			// Map 3: Gamma Correction
 			if (mGammaMode != TGM_None)
 			{
-				for (uint32 i = 0; i < mSize; ++i)
+				for (size_t i = 0; i < mSize; ++i)
 				{
 					float r, g, b;
 					r = out[i*3];
@@ -240,7 +236,7 @@ namespace PR
 		case TMM_Normalized:
 		{
 			float max = 0.0f;
-			for (uint32 i = 0; i < mSize; ++i)
+			for (size_t i = 0; i < mSize; ++i)
 			{
 				float r, g, b;
 				r = in[i*3];
@@ -311,7 +307,7 @@ namespace PR
 		float invMax = 0.0f;
 		if(mMapperMode == TMM_Normalized)
 		{
-			for (uint32 i = 0; i < mSize; ++i)
+			for (size_t i = 0; i < mSize; ++i)
 			{
 				float r, g, b;
 				r = rgbIn[i*3];
@@ -328,7 +324,7 @@ namespace PR
 			invMax = 1.0f/invMax;
 		}
 
-		for (uint32 i = 0; i < mSize; ++i)
+		for (size_t i = 0; i < mSize; ++i)
 		{
 			float r, g, b;
 			r = rgbIn[i*3];

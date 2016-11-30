@@ -10,7 +10,8 @@
 
 #include "scene/Scene.h"
 #include "camera/Camera.h"
-#include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
+#include "renderer/RenderFactory.h"
 #include "renderer/RenderStatistics.h"
 
 #include "Environment.h"
@@ -21,7 +22,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
-	mEnvironment(nullptr), mRenderer(nullptr)
+	mEnvironment(nullptr), mRenderFactory(nullptr), mRenderContext(nullptr)
 {
 	ui.setupUi(this);
 
@@ -149,12 +150,18 @@ void MainWindow::closeProject()
 	ui.viewWidget->setRenderer(nullptr);
 	ui.entityDetailsView->setEntity(nullptr);
 
-	if (mRenderer)
+	if (mRenderContext)
 	{
-		mRenderer->stop();
-		mRenderer->waitForFinish();
-		delete mRenderer;
-		mRenderer = nullptr;
+		mRenderContext->stop();
+		mRenderContext->waitForFinish();
+		delete mRenderContext;
+		mRenderContext = nullptr;
+	}
+
+	if (mRenderFactory)
+	{
+		delete mRenderFactory;
+		mRenderFactory = nullptr;
 	}
 
 	if (mEnvironment)
@@ -167,9 +174,7 @@ void MainWindow::closeProject()
 void MainWindow::openProject(const QString& str)
 {
 	if (mEnvironment)
-	{
 		closeProject();
-	}
 
 	PRU::SceneLoader loader;
 	mEnvironment = loader.loadFromFile(str.toStdString());
@@ -192,24 +197,16 @@ void MainWindow::openProject(const QString& str)
 			return;
 		}
 		
-		mRenderer = new PR::Renderer(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
+		mRenderFactory = new PR::RenderFactory(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
 			mEnvironment->camera(), mEnvironment->scene(),
 			QDir::tempPath().toStdString());
-		mRenderer->settings().setCropMaxX(mEnvironment->cropMaxX());
-		mRenderer->settings().setCropMinX(mEnvironment->cropMinX());
-		mRenderer->settings().setCropMaxY(mEnvironment->cropMaxY());
-		mRenderer->settings().setCropMinY(mEnvironment->cropMinY());
+		mRenderFactory->settings().setCropMaxX(mEnvironment->cropMaxX());
+		mRenderFactory->settings().setCropMinX(mEnvironment->cropMinX());
+		mRenderFactory->settings().setCropMaxY(mEnvironment->cropMaxY());
+		mRenderFactory->settings().setCropMinY(mEnvironment->cropMinY());
 
-		ui.viewWidget->setRenderer(mRenderer);
-
-		ui.viewWidget->setCropSelection(
-			QPoint(mEnvironment->cropMinX()*mRenderer->fullWidth(), mEnvironment->cropMinY()*mRenderer->fullHeight()),
-			QPoint(mEnvironment->cropMaxX()*mRenderer->fullWidth(), mEnvironment->cropMaxY()*mRenderer->fullHeight()));
-
+		ui.systemPropertyView->fillContent(mRenderFactory);
 		ui.outlineView->setModel(new EntityTreeModel(mEnvironment->scene(), this));
-
-		ui.systemPropertyView->fillContent(mRenderer);
-
 		ui.outlineView->setEnabled(true);
 		ui.viewWidget->setEnabled(true);
 		ui.entityDetailsView->setEnabled(true);
@@ -225,7 +222,7 @@ void MainWindow::openProject(const QString& str)
 
 void MainWindow::openScene()
 {
-	if (mEnvironment && mRenderer && !mRenderer->isFinished())
+	if (mEnvironment && mRenderContext && !mRenderContext->isFinished())
 	{
 		if (QMessageBox::question(this, tr("Abort render?"), tr("A rendering is currently running.\nShould it be aborted?")) != QMessageBox::Yes)
 		{
@@ -238,9 +235,7 @@ void MainWindow::openScene()
 		docLoc.isEmpty() ? QDir::currentPath() : docLoc.last());
 
 	if (!file.isEmpty())
-	{
 		openProject(file);
-	}
 }
 
 void MainWindow::exportImage()
@@ -345,12 +340,12 @@ inline QString friendlyHugeNumber(quint64 nm)
 
 void MainWindow::updateView()
 {
-	if (mRenderer)
+	if (mRenderContext)
 	{
 		quint64 time = mElapsedTime.elapsed();
 
-		PR::RenderStatistics stats = mRenderer->stats();
-		const float percent = mRenderer->percentFinished() / 100;
+		PR::RenderStatistics stats = mRenderContext->stats();
+		const float percent = mRenderContext->percentFinished() / 100;
 
 		quint64 timeLeft = (1 - percent) * time / PM::pm_Max(0.0001f, percent);
 
@@ -359,7 +354,7 @@ void MainWindow::updateView()
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("%1% | Pass: %2 | Samples: %3 | Rays: %4 | Entity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
 			.arg(100*percent, 4)
-			.arg(mRenderer->currentPass() + 1)
+			.arg(mRenderContext->currentPass() + 1)
 			.arg(friendlyHugeNumber(stats.pixelSampleCount()))
 			.arg(friendlyHugeNumber(stats.rayCount()))
 			.arg(friendlyHugeNumber(stats.entityHitCount()))
@@ -371,10 +366,8 @@ void MainWindow::updateView()
 
 		mFrameTime.restart();
 
-		if (mRenderer->isFinished())
-		{
+		if (mRenderContext->isFinished())
 			stopRendering();
-		}
 	}
 	else
 	{
@@ -468,9 +461,43 @@ void MainWindow::restartRendering()
 
 void MainWindow::startRendering(bool clear)
 {
-	if (!mRenderer->isFinished())
+	if(!mRenderFactory)
 		return;
 
+	if (mRenderContext)
+		return;
+
+	QRect cropRect = ui.viewWidget->selectedCropRect();
+	if (cropRect.isValid() && cropRect.width() > 2 && cropRect.height() > 2)
+	{
+		float xmin = qMin(qMax(cropRect.left() / (float)mRenderFactory->fullWidth(), 0.0f), 1.0f);
+		float xmax = qMin(qMax(cropRect.right() / (float)mRenderFactory->fullWidth(), 0.0f), 1.0f);
+		float ymin = qMin(qMax(cropRect.top() / (float)mRenderFactory->fullHeight(), 0.0f), 1.0f);
+		float ymax = qMin(qMax(cropRect.bottom() / (float)mRenderFactory->fullHeight(), 0.0f), 1.0f);
+		mRenderFactory->settings().setCropMaxX(xmax);
+		mRenderFactory->settings().setCropMinX(xmin);
+		mRenderFactory->settings().setCropMaxY(ymax);
+		mRenderFactory->settings().setCropMinY(ymin);
+	}
+	else
+	{
+		mRenderFactory->settings().setCropMaxX(1);
+		mRenderFactory->settings().setCropMinX(0);
+		mRenderFactory->settings().setCropMaxY(1);
+		mRenderFactory->settings().setCropMinY(0);
+	}
+
+	// Setup context 
+
+	ui.systemPropertyView->setupRenderer(mRenderFactory);
+	mRenderContext = mRenderFactory->create();
+	ui.viewWidget->setCropSelection(
+			QPoint(mEnvironment->cropMinX()*mRenderFactory->fullWidth(), mEnvironment->cropMinY()*mRenderFactory->fullHeight()),
+			QPoint(mEnvironment->cropMaxX()*mRenderFactory->fullWidth(), mEnvironment->cropMaxY()*mRenderFactory->fullHeight()));
+			
+	ui.viewWidget->setRenderer(mRenderContext);
+
+	// Setup controls
 	ui.actionStartRender->setEnabled(false);
 	ui.actionRestartRender->setEnabled(false);
 	ui.actionCancelRender->setEnabled(true);
@@ -478,45 +505,23 @@ void MainWindow::startRendering(bool clear)
 	ui.systemPropertyView->setEnabled(false);
 	ui.entityDetailsView->setEnabled(false);
 
-	ui.systemPropertyView->setupRenderer(mRenderer);
-
 	mEnvironment->scene()->freeze();
 	mEnvironment->scene()->buildTree();
 
-	mEnvironment->outputSpecification().init(mRenderer);
-	mEnvironment->outputSpecification().setup();
-
-	QRect cropRect = ui.viewWidget->selectedCropRect();
-	if (cropRect.isValid() && cropRect.width() > 2 && cropRect.height() > 2)
-	{
-		float xmin = qMin(qMax(cropRect.left() / (float)mRenderer->fullWidth(), 0.0f), 1.0f);
-		float xmax = qMin(qMax(cropRect.right() / (float)mRenderer->fullWidth(), 0.0f), 1.0f);
-		float ymin = qMin(qMax(cropRect.top() / (float)mRenderer->fullHeight(), 0.0f), 1.0f);
-		float ymax = qMin(qMax(cropRect.bottom() / (float)mRenderer->fullHeight(), 0.0f), 1.0f);
-		mRenderer->settings().setCropMaxX(xmax);
-		mRenderer->settings().setCropMinX(xmin);
-		mRenderer->settings().setCropMaxY(ymax);
-		mRenderer->settings().setCropMinY(ymin);
-	}
-	else
-	{
-		mRenderer->settings().setCropMaxX(1);
-		mRenderer->settings().setCropMinX(0);
-		mRenderer->settings().setCropMaxY(1);
-		mRenderer->settings().setCropMinY(0);
-	}
+	mEnvironment->outputSpecification().init(mRenderFactory);
+	mEnvironment->outputSpecification().setup(mRenderContext);
 
 	// if(clear)
 	// 	mDisplayBuffer->clear(0,0,0,0);
 
-	if(mRenderer->gpu())
+	if(mRenderContext->gpu())
 		mTimer.start(1000);
 	else
 		mTimer.start(4000);
 	
 	mElapsedTime.restart();
 	mFrameTime.restart();
-	mRenderer->start(ui.systemPropertyView->getTileX(),
+	mRenderContext->start(ui.systemPropertyView->getTileX(),
 		ui.systemPropertyView->getTileY(),
 		ui.systemPropertyView->getThreadCount());
 }
@@ -525,15 +530,18 @@ void MainWindow::stopRendering()
 {
 	mTimer.stop();
 
-	if (!mRenderer->isFinished())
+	if (!mRenderContext)
+		return;
+	
+	if (!mRenderContext->isFinished())
 	{
-		mRenderer->stop();
-		mRenderer->waitForFinish();
+		mRenderContext->stop();
+		mRenderContext->waitForFinish();
 		ui.statusBar->showMessage(tr("Rendering stopped."));
 	}
 	else
 	{
-		PR::RenderStatistics stats = mRenderer->stats();
+		PR::RenderStatistics stats = mRenderContext->stats();
 
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | Entity Hits: %3 | Background Hits: %4 | Render time: %5")
@@ -543,6 +551,9 @@ void MainWindow::stopRendering()
 			.arg(friendlyHugeNumber(stats.backgroundHitCount()))
 			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}
+
+	delete mRenderContext;
+	mRenderContext = nullptr;
 
 	ui.actionStartRender->setEnabled(true);
 	ui.actionRestartRender->setEnabled(true);

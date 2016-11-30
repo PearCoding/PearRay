@@ -1,5 +1,5 @@
 #include "ImageWriter.h"
-#include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
 #include "Logger.h"
 
 #include <OpenImageIO/imageio.h>
@@ -8,7 +8,6 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 
-
 OIIO_NAMESPACE_USING;
 
 namespace PRU
@@ -16,7 +15,7 @@ namespace PRU
 	using namespace PR;
 
 	ImageWriter::ImageWriter() :
-		mSpectralData(nullptr), mRGBData(nullptr), mRenderer(nullptr)
+		mRGBData(nullptr), mRenderer(nullptr)
 	{
 	}
 
@@ -25,18 +24,13 @@ namespace PRU
 		deinit();
 	}
 
-	void ImageWriter::init(Renderer* renderer)
+	void ImageWriter::init(RenderContext* renderer)
 	{
-		PR_ASSERT(renderer);
-
 		// Delete if resolution changed.
-		if(mRenderer && mSpectralData &&
-			(mRenderer->cropWidth() != renderer->cropWidth() ||
-			 mRenderer->cropHeight() != renderer->cropHeight()))
+		if(mRenderer && (!renderer ||
+			(mRenderer->width() != renderer->width() ||
+			 mRenderer->height() != renderer->height())))
 		{
-			delete[] mSpectralData;
-			mSpectralData = nullptr;
-
 			if(mRGBData)
 			{
 				delete[] mRGBData;
@@ -46,29 +40,19 @@ namespace PRU
 
 		mRenderer = renderer;
 
-		if(!mSpectralData)
-		{
-			mSpectralData = new float[renderer->cropWidth()*renderer->cropHeight()*Spectrum::SAMPLING_COUNT];
-			mRGBData = new float[renderer->cropWidth()*renderer->cropHeight()*3];
-		}
+		if(mRenderer && !mRGBData)
+			mRGBData = new float[mRenderer->width()*mRenderer->height()*3];
 	}
 
 	void ImageWriter::deinit()
 	{
-		if (mSpectralData)
-		{
-			delete[] mSpectralData;
-			mSpectralData = nullptr;
-		}
-
 		if(mRGBData)
 		{
 			delete[] mRGBData;
 			mRGBData = nullptr;
 		}
 
-		if(!mRenderer)
-			return;
+		mRenderer = nullptr;
 	}
 
 	bool ImageWriter::save(PR::ToneMapper& toneMapper, const std::string& file,
@@ -76,10 +60,13 @@ namespace PRU
 			const std::vector<IM_ChannelSetting1D>& ch1d,
 			const std::vector<IM_ChannelSetting3D>& ch3d) const
 	{
-		const uint32 rw = mRenderer->cropWidth();
-		const uint32 rh = mRenderer->cropHeight();
-		const uint32 cx = mRenderer->cropOffsetX();
-		const uint32 cy = mRenderer->cropOffsetY();
+		if(!mRenderer)
+			return false;
+	
+		const uint32 rw = mRenderer->width();
+		const uint32 rh = mRenderer->height();
+		const uint32 cx = mRenderer->offsetX();
+		const uint32 cy = mRenderer->offsetY();
 
 		const uint32 channelCount = (specSett ? 3 : 0) + ch1d.size() + ch3d.size()*3;
 		if(channelCount == 0)
@@ -126,15 +113,12 @@ namespace PRU
 			return false;
 
 		// Spectral
-		if(specSett && specSett->Channel)
-		{
-			for(uint32 i = 0; i < rw*rh; ++i)
-				specSett->Channel->ptr()[i].copyTo(&mSpectralData[i*Spectrum::SAMPLING_COUNT]);
-			
+		if(specSett && mRenderer->output()->getSpectralChannel())
+		{			
 			toneMapper.setColorMode(specSett->TCM);
 			toneMapper.setGammaMode(specSett->TGM);
 			toneMapper.setMapperMode(specSett->TMM);
-			toneMapper.exec(mSpectralData, mRGBData);// RGB
+			toneMapper.exec(mRenderer->output()->getSpectralChannel()->ptr(), mRGBData);// RGB
 		}
 		
 		// Calculate maximums for some mapper techniques
@@ -145,7 +129,8 @@ namespace PRU
 
 		for(const IM_ChannelSetting3D& sett : ch3d)
 		{
-			if(sett.TMM != TMM_Normalized)
+			Output3D* channel = mRenderer->output()->getChannel(sett.Variable);
+			if(sett.TMM != TMM_Normalized || !channel)
 				continue;
 
 			for (uint32 y = 0; y < rh; ++y)
@@ -154,7 +139,7 @@ namespace PRU
 				{
 					invMax3d[sett.Variable] =
 						PM::pm_Max(invMax3d[sett.Variable],
-							PM::pm_MagnitudeSqr3D(sett.Channel->getFragmentBounded(x,y)));
+							PM::pm_MagnitudeSqr3D(channel->getFragmentBounded(x,y)));
 				}
 			}
 
@@ -164,7 +149,8 @@ namespace PRU
 
 		for(const IM_ChannelSetting1D& sett : ch1d)
 		{
-			if(sett.TMM != TMM_Normalized)
+			Output1D* channel = mRenderer->output()->getChannel(sett.Variable);
+			if(sett.TMM != TMM_Normalized || !channel)
 				continue;
 
 			for (uint32 y = 0; y < rh; ++y)
@@ -172,7 +158,7 @@ namespace PRU
 				for(uint32 x = 0; x < rw; ++x)
 				{
 					invMax1d[sett.Variable] =
-						PM::pm_Max(invMax1d[sett.Variable], sett.Channel->getFragmentBounded(x,y));
+						PM::pm_Max(invMax1d[sett.Variable], channel->getFragmentBounded(x,y));
 				}
 			}
 
@@ -182,6 +168,12 @@ namespace PRU
 
 		// Write content		
 		float* line = new float[channelCount * rw];
+		if(!line)// TODO: Add single token variant!
+		{
+			PR_LOGGER.log(L_Error, M_System, "Not enough memory for image output!");
+			ImageOutput::destroy(out);
+			return false;
+		}
 
 		out->open(file, spec);
 		for (uint32 y = 0; y < rh; ++y)
@@ -202,79 +194,89 @@ namespace PRU
 
 				for(const IM_ChannelSetting3D& sett : ch3d)
 				{
-					const PM::avec3& a = sett.Channel->ptr()[id1d];
-
-					float r = a[0];
-					float g = a[1];
-					float b = a[2];
-					switch(sett.TMM)
+					Output3D* channel = mRenderer->output()->getChannel(sett.Variable);
+					if(channel)
 					{
-					case TMM_None:
-					case TMM_Simple_Reinhard:
-						break;
-					case TMM_Normalized:
-						r *= invMax3d[sett.Variable]; g *= invMax3d[sett.Variable]; b *= invMax3d[sett.Variable];
-						break;
-					case TMM_Clamp:
-						r = PM::pm_Max(std::abs(r), 0.0f);
-						g = PM::pm_Max(std::abs(g), 0.0f);
-						b = PM::pm_Max(std::abs(b), 0.0f);
-						break;
-					case TMM_Abs:
-						r = std::abs(r);
-						g = std::abs(g);
-						b = std::abs(b);
-						break;
-					case TMM_Positive:
-						r = PM::pm_Max(r, 0.0f);
-						g = PM::pm_Max(g, 0.0f);
-						b = PM::pm_Max(b, 0.0f);
-						break;
-					case TMM_Negative:
-						r = PM::pm_Max(-r, 0.0f);
-						g = PM::pm_Max(-g, 0.0f);
-						b = PM::pm_Max(-b, 0.0f);
-						break;
-					case TMM_Spherical:
-						r = 0.5f + 0.5f * std::atan2(b, r) * PM_INV_PI_F;
-						g = 0.5f - std::asin(-g) * PM_INV_PI_F;
-						b = 0;
-						break;
+						const PM::avec3& a = channel->ptr()[id1d];
+
+						float r = a[0];
+						float g = a[1];
+						float b = a[2];
+						switch(sett.TMM)
+						{
+						case TMM_None:
+						case TMM_Simple_Reinhard:
+							break;
+						case TMM_Normalized:
+							r *= invMax3d[sett.Variable]; g *= invMax3d[sett.Variable]; b *= invMax3d[sett.Variable];
+							break;
+						case TMM_Clamp:
+							r = PM::pm_Max(std::abs(r), 0.0f);
+							g = PM::pm_Max(std::abs(g), 0.0f);
+							b = PM::pm_Max(std::abs(b), 0.0f);
+							break;
+						case TMM_Abs:
+							r = std::abs(r);
+							g = std::abs(g);
+							b = std::abs(b);
+							break;
+						case TMM_Positive:
+							r = PM::pm_Max(r, 0.0f);
+							g = PM::pm_Max(g, 0.0f);
+							b = PM::pm_Max(b, 0.0f);
+							break;
+						case TMM_Negative:
+							r = PM::pm_Max(-r, 0.0f);
+							g = PM::pm_Max(-g, 0.0f);
+							b = PM::pm_Max(-b, 0.0f);
+							break;
+						case TMM_Spherical:
+							r = 0.5f + 0.5f * std::atan2(b, r) * PM_INV_PI_F;
+							g = 0.5f - std::asin(-g) * PM_INV_PI_F;
+							b = 0;
+							break;
+						}
+
+						line[id] = r;
+						line[id+1] = g;
+						line[id+2] = b;
 					}
 
-					line[id] = r;
-					line[id+1] = g;
-					line[id+2] = b;
 					id += 3;
 				}
 
 				for(const IM_ChannelSetting1D& sett : ch1d)
 				{
-					float r = sett.Channel->ptr()[id1d];
-					switch(sett.TMM)
+					Output1D* channel = mRenderer->output()->getChannel(sett.Variable);
+					if(channel)
 					{
-					case TMM_None:
-					case TMM_Simple_Reinhard:
-					case TMM_Spherical:
-						break;
-					case TMM_Normalized:
-						r *= invMax1d[sett.Variable];
-						break;
-					case TMM_Clamp:
-						r = PM::pm_Max(std::abs(r), 0.0f);
-						break;
-					case TMM_Abs:
-						r = std::abs(r);
-						break;
-					case TMM_Positive:
-						r = PM::pm_Max(r, 0.0f);
-						break;
-					case TMM_Negative:
-						r = PM::pm_Max(-r, 0.0f);
-						break;
+						float r = channel->ptr()[id1d];
+						switch(sett.TMM)
+						{
+						case TMM_None:
+						case TMM_Simple_Reinhard:
+						case TMM_Spherical:
+							break;
+						case TMM_Normalized:
+							r *= invMax1d[sett.Variable];
+							break;
+						case TMM_Clamp:
+							r = PM::pm_Max(std::abs(r), 0.0f);
+							break;
+						case TMM_Abs:
+							r = std::abs(r);
+							break;
+						case TMM_Positive:
+							r = PM::pm_Max(r, 0.0f);
+							break;
+						case TMM_Negative:
+							r = PM::pm_Max(-r, 0.0f);
+							break;
+						}
+
+						line[id] = r;
 					}
 
-					line[id] = r;
 					id += 1;
 				}
 			}
@@ -291,7 +293,7 @@ namespace PRU
 	bool ImageWriter::save_spectral(const std::string& file,
 			PR::OutputSpectral* spec) const
 	{
-		if(!spec)
+		if(!spec || !mRenderer)
 			return false;
 		
 		namespace io = boost::iostreams;
@@ -303,19 +305,14 @@ namespace PRU
 
 		uint32 tmp = Spectrum::SAMPLING_COUNT;
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->cropWidth();
+		tmp = mRenderer->width();
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->cropHeight();
+		tmp = mRenderer->height();
 		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
-		float buf[Spectrum::SAMPLING_COUNT];
-		for (uint32 i = 0; i < mRenderer->cropHeight() * mRenderer->cropWidth(); ++i)
-		{
-			const Spectrum& s = spec->ptr()[i];
-			s.copyTo(buf);
-			out.write(reinterpret_cast<const char*>(buf),
+		for (uint32 i = 0; i < mRenderer->height() * mRenderer->width(); ++i)
+			out.write(reinterpret_cast<const char*>(&spec->ptr()[i]),
 				Spectrum::SAMPLING_COUNT * sizeof(float));
-		}
 
 		return true;
 	}

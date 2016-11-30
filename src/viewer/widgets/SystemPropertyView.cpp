@@ -10,7 +10,7 @@
 #include "properties/BoolProperty.h"
 #include "properties/SelectionProperty.h"
 
-#include "renderer/Renderer.h"
+#include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
 
 #include <QBoxLayout>
@@ -28,7 +28,7 @@ QWidget(parent)
 	setLayout(layout);
 
 	// Setup properties
-	mRendererGroupProp = new GroupProperty(tr("Renderer"));
+	mRendererGroupProp = new GroupProperty(tr("RenderContext"));
 
 	mRendererTileXProp = new IntProperty(tr("Tile X Count"), 5, 1, 128);
 	mRendererGroupProp->addChild(mRendererTileXProp);
@@ -177,7 +177,7 @@ void SystemPropertyView::propertyValueChanged(IProperty* prop)
 {
 }
 
-void SystemPropertyView::fillContent(PR::Renderer* renderer)
+void SystemPropertyView::fillContent(PR::RenderFactory* renderer)
 {
 	reinterpret_cast<IntProperty*>(mRendererTileXProp)->setValue(8);
 	reinterpret_cast<IntProperty*>(mRendererTileXProp)->setDefaultValue(8);
@@ -226,7 +226,7 @@ void SystemPropertyView::fillContent(PR::Renderer* renderer)
 	reinterpret_cast<DoubleProperty*>(mPhotonSqueezeWeightProp)->setDefaultValue(renderer->settings().ppm().squeezeWeight());
 }
 
-void SystemPropertyView::setupRenderer(PR::Renderer* renderer)
+void SystemPropertyView::setupRenderer(PR::RenderFactory* renderer)
 {
 	renderer->settings().setMaxDiffuseBounces(reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->value());
 	renderer->settings().setMaxRayDepth(reinterpret_cast<IntProperty*>(mRendererMaxRayDepthProp)->value());

@@ -6,7 +6,7 @@
 
 namespace PR
 {
-	class Renderer;
+	class RenderContext;
 	struct ShaderClosure;
 
 	class PR_LIB OutputMap
@@ -44,7 +44,7 @@ namespace PR
 			V_1D_COUNT
 		};
 
-		OutputMap(Renderer* renderer);
+		OutputMap(RenderContext* renderer);
 		~OutputMap();
 		
 		void init();
@@ -56,17 +56,17 @@ namespace PR
 		
 		inline Spectrum getFragment(uint32 x, uint32 y) const
 		{
-			return mSpectral->getFragment(x, y);
+			return mSpectral->getFragmentBounded(x, y);
 		}
 
 		inline void setSampleCount(uint32 x, uint32 y, uint32 sample)
 		{
-			mInt1D[V_Samples]->pushFragment(x, y, sample);
+			mInt1D[V_Samples]->pushFragmentBounded(x, y, sample);
 		}
 
 		inline uint32 getSampleCount(uint32 x, uint32 y) const
 		{
-			return mInt1D[V_Samples]->getFragment(x, y);
+			return mInt1D[V_Samples]->getFragmentBounded(x, y);
 		}
 
 		inline void setPixelError(uint32 x, uint32 y, uint32 sample, const Spectrum& pixel, const Spectrum& weight)
@@ -80,8 +80,8 @@ namespace PR
 			const float s2 = weight.max();
 			const float ref = (s1 <= PM_EPSILON && s2 <= PM_EPSILON) ? 1 : (s1 + s2);
 			const float err = std::abs(s1 - s2) / ref;
-			mInt1D[V_Quality]->pushFragment(x, y,
-				mInt1D[V_Quality]->getFragment(x, y) * (1-t) + t * err * err);	
+			mInt1D[V_Quality]->pushFragmentBounded(x, y,
+				mInt1D[V_Quality]->getFragmentBounded(x, y) * (1-t) + t * err * err);	
 		}
 
 		bool isPixelFinished(uint32 x, uint32 y) const;
@@ -135,7 +135,7 @@ namespace PR
 		}
 
 	private:
-		Renderer* mRenderer;
+		RenderContext* mRenderer;
 
 		OutputSpectral* mSpectral;
 		Output3D* mInt3D[V_3D_COUNT];

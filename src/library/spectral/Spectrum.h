@@ -50,10 +50,11 @@ namespace PR
 		inline void setValue(uint32 index, float v);
 		inline float value(uint32 index) const;
 
-#ifndef PR_NO_SPECTRAL
 		inline void setValueAtWavelength(float wavelength, float value);
 		float approx(float wavelength, InterpolationType interpolation = IT_Linear) const;
-#endif
+
+		// Attention! Don't change values
+		inline const float* ptr() const;
 
 		inline void fill(float v);
 		inline void clear();

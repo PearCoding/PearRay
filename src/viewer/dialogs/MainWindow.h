@@ -10,7 +10,8 @@
 
 namespace PR
 {
-	class Renderer;
+	class RenderContext;
+	class RenderFactory;
 }
 
 namespace PRU
@@ -73,7 +74,8 @@ private:
 	Ui::MainWindowClass ui;
 
 	PRU::Environment* mEnvironment;
-	PR::Renderer* mRenderer;
+	PR::RenderFactory* mRenderFactory;
+	PR::RenderContext* mRenderContext;
 
 	QTimer mTimer;
 	QElapsedTimer mElapsedTime;

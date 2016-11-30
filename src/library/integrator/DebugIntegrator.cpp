@@ -1,8 +1,8 @@
 #include "DebugIntegrator.h"
 #include "ray/Ray.h"
 #include "shader/ShaderClosure.h"
-#include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderThreadContext.h"
 #include "entity/RenderEntity.h"
 #include "material/Material.h"
 #include "spectral/RGBConverter.h"
@@ -13,11 +13,11 @@ namespace PR
 	{
 	}
 
-	void DebugIntegrator::init(Renderer* renderer)
+	void DebugIntegrator::init(RenderContext* renderer)
 	{
 	}
 
-	Spectrum DebugIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
+	Spectrum DebugIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		Spectrum emission;
 		RenderEntity* entity;

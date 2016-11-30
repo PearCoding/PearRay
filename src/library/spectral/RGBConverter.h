@@ -13,7 +13,12 @@ namespace PR
 
 	public:
 		/* D65 sRGB (linear) */
-		static void convert(const Spectrum& s, float &x, float &y, float &z);
+		// len(src) = SAMPLING_COUNT
+		static void convert(const float* src, float &x, float &y, float &z);
+		static inline void convert(const Spectrum& s, float &x, float &y, float &z)
+		{
+			convert(s.ptr(), x, y, z);
+		}
 
 		static float luminance(float r, float g, float b);
 		static void gamma(float &x, float &y, float &z);

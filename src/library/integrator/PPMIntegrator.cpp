@@ -13,8 +13,8 @@
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/RandomSampler.h"
 
-#include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderThreadContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderThread.h"
 
@@ -65,7 +65,7 @@ namespace PR
 		mLights.clear();
 	}
 
-	void PPMIntegrator::init(Renderer* renderer)
+	void PPMIntegrator::init(RenderContext* renderer)
 	{
 		PR_ASSERT(!mPhotonMap);
 		PR_ASSERT(!mThreadData);
@@ -382,11 +382,11 @@ namespace PR
 		return pass < mRenderer->settings().ppm().maxPassCount() + 1;
 	}
 
-	void PPMIntegrator::onThreadStart(RenderContext* context)
+	void PPMIntegrator::onThreadStart(RenderThreadContext* context)
 	{
 	}
 
-	void PPMIntegrator::onPrePass(RenderContext* context, uint32 pass)
+	void PPMIntegrator::onPrePass(RenderThreadContext* context, uint32 pass)
 	{
 		if(pass > 0)
 		{
@@ -486,7 +486,7 @@ namespace PR
 		}
 	}
 
-	void PPMIntegrator::onPass(RenderTile* tile, RenderContext* context, uint32 pass)
+	void PPMIntegrator::onPass(RenderTile* tile, RenderThreadContext* context, uint32 pass)
 	{
 		// TODO: Find a solution for the background.
 		if(pass > 0)// Do we need other passes? Except for background.
@@ -501,26 +501,26 @@ namespace PR
 		}
 	}
 
-	void PPMIntegrator::onPostPass(RenderContext* context, uint32 i)
+	void PPMIntegrator::onPostPass(RenderThreadContext* context, uint32 i)
 	{
 	}
 
-	void PPMIntegrator::onThreadEnd(RenderContext* context)
+	void PPMIntegrator::onThreadEnd(RenderThreadContext* context)
 	{
 	}
 
-	uint64 PPMIntegrator::maxSamples(const Renderer* renderer) const
+	uint64 PPMIntegrator::maxSamples(const RenderContext* renderer) const
 	{
-		return renderer->cropWidth() * renderer->cropHeight() *
+		return renderer->width() * renderer->height() *
 			renderer->settings().maxPixelSampleCount() * (renderer->settings().ppm().maxPassCount() + 1);
 	}
 
-	uint64 PPMIntegrator::maxPasses(const Renderer* renderer) const
+	uint64 PPMIntegrator::maxPasses(const RenderContext* renderer) const
 	{
 		return renderer->settings().ppm().maxPassCount() + 1;
 	}
 
-	Spectrum PPMIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
+	Spectrum PPMIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
@@ -534,7 +534,7 @@ namespace PR
 			return applied + otherPass(in, sc, context);
 	}
 
-	Spectrum PPMIntegrator::firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderContext* context)
+	Spectrum PPMIntegrator::firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderThreadContext* context)
 	{
 		if (!sc.Material->canBeShaded())
 			return Spectrum();
@@ -603,7 +603,7 @@ namespace PR
 		return full_weight;
 	}
 	
-	Spectrum PPMIntegrator::otherPass(const Ray& in, const ShaderClosure& sc, RenderContext* context)
+	Spectrum PPMIntegrator::otherPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context)
 	{
 		if (!sc.Material->canBeShaded())
 			return Spectrum();

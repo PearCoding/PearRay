@@ -7,7 +7,7 @@ namespace PR
 	class RenderEntity;
 	struct ShaderClosure;
 	class Ray;
-	class Renderer;
+	class RenderContext;
 	class PR_LIB Material
 	{
 	public:

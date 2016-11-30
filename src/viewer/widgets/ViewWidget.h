@@ -8,7 +8,7 @@
 
 namespace PR
 {
-	class Renderer;
+	class RenderContext;
 	class Spectrum;
 	class ToneMapper;
 }
@@ -29,7 +29,7 @@ public:
 	ViewWidget(QWidget *parent);
 	~ViewWidget();
 
-	void setRenderer(PR::Renderer* renderer);
+	void setRenderer(PR::RenderContext* renderer);
 
 	inline PR::ToneColorMode colorMode() const
 	{
@@ -107,7 +107,7 @@ private:
 	void cache();
 	void cacheScale();
 
-	PR::Renderer* mRenderer;
+	PR::RenderContext* mRenderer;
 
 	ToolMode mToolMode;
 	PR::OutputMap::Variable1D mDisplayMode1D;

@@ -140,6 +140,11 @@ namespace PR
 		mValues[i] = value;
 	}
 
+	inline const float* Spectrum::ptr() const
+	{
+		return mValues;
+	}
+
 	inline void Spectrum::fill(float v)
 	{
 		std::fill_n(mValues, SAMPLING_COUNT, v);

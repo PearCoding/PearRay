@@ -46,9 +46,7 @@ namespace PR
 		 */
 		ToneMapper(GPU* gpu, size_t size);
 
-		// in -> size * SAMPLING_COUNT
-		void exec(const float* specIn, float* rgbOut) const;
-
+		void exec(const Spectrum* specIn, float* rgbOut) const;
 		void execMapper(const float* rgbIn, float* rgbOut) const;
 
 		// Not thread safe!

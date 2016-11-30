@@ -2,7 +2,8 @@
 #include "Environment.h"
 #include "SceneLoader.h"
 
-#include "renderer/Renderer.h"
+#include "renderer/RenderFactory.h"
+#include "renderer/RenderContext.h"
 #include "renderer/RenderStatistics.h"
 
 #include "spectral/ToneMapper.h"
@@ -53,8 +54,7 @@ int main(int argc, char** argv)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) "  << PR_VENDOR_STRING << std::endl;
 
 	PR_BEGIN_PROFILE_ID(0);
-	PRU::SceneLoader loader;
-	PRU::Environment* env = loader.loadFromFile(options.InputFile);
+	PRU::Environment* env = PRU::SceneLoader().loadFromFile(options.InputFile);
 	PR_END_PROFILE_ID(0);
 
 	if(!env || !env->scene())
@@ -73,13 +73,13 @@ int main(int argc, char** argv)
 		return -4;
 	}
 
-	// Setup renderer
+	// Setup renderFactory
 	PR_BEGIN_PROFILE_ID(1);
-	PR::Renderer* renderer = new PR::Renderer(
+	PR::RenderFactory* renderFactory = new PR::RenderFactory(
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
 		env->camera(), env->scene(), options.OutputDir, true);
-	renderer->setSettings(options.RenderSettings);
+	renderFactory->setSettings(options.RenderSettings);
 
 	if(options.CropMinXOverride >= 0 &&
 		options.CropMinXOverride < options.CropMaxXOverride &&
@@ -88,20 +88,19 @@ int main(int argc, char** argv)
 		options.CropMinYOverride < options.CropMaxYOverride &&
 		options.CropMaxYOverride <= 1)
 	{
-		renderer->settings().setCropMaxX(options.CropMaxXOverride);
-		renderer->settings().setCropMinX(options.CropMinXOverride);
-		renderer->settings().setCropMaxY(options.CropMaxYOverride);
-		renderer->settings().setCropMinY(options.CropMinYOverride);
+		renderFactory->settings().setCropMaxX(options.CropMaxXOverride);
+		renderFactory->settings().setCropMinX(options.CropMinXOverride);
+		renderFactory->settings().setCropMaxY(options.CropMaxYOverride);
+		renderFactory->settings().setCropMinY(options.CropMinYOverride);
 	}
 	else
 	{
-		renderer->settings().setCropMaxX(env->cropMaxX());
-		renderer->settings().setCropMinX(env->cropMinX());
-		renderer->settings().setCropMaxY(env->cropMaxY());
-		renderer->settings().setCropMinY(env->cropMinY());
+		renderFactory->settings().setCropMaxX(env->cropMaxX());
+		renderFactory->settings().setCropMinX(env->cropMinX());
+		renderFactory->settings().setCropMaxY(env->cropMaxY());
+		renderFactory->settings().setCropMinY(env->cropMinY());
 	}
 
-	PR::ToneMapper toneMapper(renderer->gpu(), renderer->cropWidth()*renderer->cropHeight());
 	PR_END_PROFILE_ID(1);
 
 	PR_BEGIN_PROFILE_ID(2);
@@ -112,59 +111,74 @@ int main(int argc, char** argv)
 	env->scene()->buildTree();
 	PR_END_PROFILE_ID(3);
 
-	env->outputSpecification().init(renderer);
-	env->outputSpecification().setup();
-
-	if(options.ShowProgress)
-		std::cout << "preprocess" << std::endl;
-
-	renderer->start(options.TileXCount, options.TileYCount, options.ThreadCount);
-
-	auto start = sc::high_resolution_clock::now();
-	auto start_prog = start;
-	auto start_img = start;
-	while(!renderer->isFinished())
+	env->outputSpecification().init(renderFactory);
+	// Render per image tile
+	for(PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i)
 	{
-		auto end = sc::high_resolution_clock::now();
-  		auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
-		if(options.ShowProgress > 0 && span_prog.count() > options.ShowProgress)
-		{
-			PR::RenderStatistics stats = renderer->stats();
+		PR::RenderContext* renderer =
+			renderFactory->create(i, options.ImageTileXCount, options.ImageTileYCount);
+		PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "Starting rendering of image tile %i / %i [%i, %i] x [%i, %i]",
+			renderer->index() + 1, options.ImageTileXCount * options.ImageTileYCount,
+			renderer->offsetX(), renderer->width(),
+			renderer->offsetY(), renderer->height());
 
-			std::cout << std::setprecision(6) << renderer->percentFinished() << "%"
-				<< " Pass " << renderer->currentPass() + 1 
-				<< " | S: " << stats.pixelSampleCount() 
-				<< " R: " << stats.rayCount() 
-				<< " EH: " << stats.entityHitCount() 
-				<< " BH: " << stats.backgroundHitCount() << std::endl;
-			start_prog = end;
+		env->outputSpecification().setup(renderer);
+		
+		PR::ToneMapper toneMapper(renderFactory->gpu(), renderer->width()*renderer->height());
+
+		if(options.ShowProgress)
+			std::cout << "preprocess" << std::endl;
+
+		renderer->start(options.RenderTileXCount, options.RenderTileYCount, options.ThreadCount);
+
+		auto start = sc::high_resolution_clock::now();
+		auto start_prog = start;
+		auto start_img = start;
+		while(!renderer->isFinished())
+		{
+			auto end = sc::high_resolution_clock::now();
+			auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
+			if(options.ShowProgress > 0 && span_prog.count() > options.ShowProgress)
+			{
+				PR::RenderStatistics stats = renderer->stats();
+
+				std::cout << std::setprecision(6) << renderer->percentFinished() << "%"
+					<< " Pass " << renderer->currentPass() + 1 
+					<< " | S: " << stats.pixelSampleCount() 
+					<< " R: " << stats.rayCount() 
+					<< " EH: " << stats.entityHitCount() 
+					<< " BH: " << stats.backgroundHitCount() << std::endl;
+				start_prog = end;
+			}
+
+			auto span_img = sc::duration_cast<sc::milliseconds>(end - start_img);
+			if(options.DDO == DDO_Image && options.ImgUpdate > 0 &&
+				span_img.count() > options.ImgUpdate*1000)
+			{
+				env->outputSpecification().save(renderer, toneMapper, false);
+				start_img = end;
+			}
 		}
 
-  		auto span_img = sc::duration_cast<sc::milliseconds>(end - start_img);
-		if(options.DDO == DDO_Image && options.ImgUpdate > 0 &&
-			span_img.count() > options.ImgUpdate*1000)
 		{
-			env->outputSpecification().save(toneMapper, false);
-			start_img = end;
+			auto end = sc::high_resolution_clock::now();
+			auto span = sc::duration_cast<sc::seconds>(end - start);
+			
+			if(!options.IsQuiet && options.ShowProgress && span.count() >= 1)
+				std::cout << std::endl;
+			
+			PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "Rendering took %d seconds.", span.count());
 		}
+
+		// Save images
+		env->outputSpecification().save(renderer, toneMapper, true);
+
+		// Close everything
+		delete renderer;
 	}
 
-	{
-		auto end = sc::high_resolution_clock::now();
-  		auto span = sc::duration_cast<sc::seconds>(end - start);
-		
-		if(!options.IsQuiet && options.ShowProgress && span.count() >= 1)
-			std::cout << std::endl;
-		
-		PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "Rendering took %d seconds.", span.count());
-	}
-
-	// Save images if needed
-	env->outputSpecification().save(toneMapper, true);
 	env->outputSpecification().deinit();
-
-	// Close everything
-	delete renderer;
+	delete renderFactory;
 	delete env;
 
 #ifdef PR_PROFILE

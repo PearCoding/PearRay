@@ -1,19 +1,18 @@
 #pragma once
 
-#include "renderer/Renderer.h"
+#include "renderer/RenderContext.h"
 
 namespace PR
 {
-	class Renderer;
+	class RenderContext;
 
 	template<typename T>
 	class PR_LIB OutputChannel
 	{
 		PR_CLASS_NON_COPYABLE(OutputChannel);
 	public:
-		inline OutputChannel(Renderer* renderer) :
-			mRenderer(renderer), mData(nullptr),
-			mRW(0), mRH(0), mCX(0), mCY(0)
+		inline OutputChannel(RenderContext* renderer) :
+			mRenderer(renderer), mData(nullptr)
 		{
 		}
 
@@ -25,11 +24,7 @@ namespace PR
 		inline void init()
 		{
 			PR_ASSERT(!mData);
-			mRW = mRenderer->cropWidth();
-			mRH = mRenderer->cropHeight();
-			mCX = mRenderer->cropOffsetX();
-			mCY = mRenderer->cropOffsetY();
-			mData = new T[mRW * mRH];
+			mData = new T[mRenderer->width() * mRenderer->height()];
 		}
 
 		inline void deinit()
@@ -46,31 +41,35 @@ namespace PR
 			if(!mData)
 				return;
 
-			std::memset(mData, 0, mRW*mRH*sizeof(T));
+			std::memset(mData, 0, mRenderer->width() * mRenderer->height() * sizeof(T));
 		}
 
-		inline void pushFragment(uint32 x, uint32 y, const T& v)
+		inline void pushFragment(uint32 x, uint32 y, const T& v) const
 		{
-			PR_DEBUG_ASSERT(x >= mCX && x < mCX + mRW);
-			PR_DEBUG_ASSERT(y >= mCY && y < mCY + mRH);
-			mData[(y-mCY)*mRW+(x-mCX)] = v;
+			PR_DEBUG_ASSERT(x >= mRenderer->offsetX() && x < mRenderer->offsetX() + mRenderer->width());
+			PR_DEBUG_ASSERT(y >= mRenderer->offsetY() && y < mRenderer->offsetY() + mRenderer->height());
+			mData[(y-mRenderer->offsetY())*mRenderer->width()+(x-mRenderer->offsetX())] = v;
 		}
 
 		inline T getFragment(uint32 x, uint32 y) const
 		{
-			PR_DEBUG_ASSERT(x >= mCX && x < mCX + mRW);
-			PR_DEBUG_ASSERT(y >= mCY && y < mCY + mRH);
-			return mData[(y-mCY)*mRW+(x-mCX)];
+			PR_DEBUG_ASSERT(x >= mRenderer->offsetX() && x < mRenderer->offsetX() + mRenderer->width());
+			PR_DEBUG_ASSERT(y >= mRenderer->offsetY() && y < mRenderer->offsetY() + mRenderer->height());
+			return mData[(y-mRenderer->offsetY())*mRenderer->width()+(x-mRenderer->offsetX())];
 		}
 
 		inline void pushFragmentBounded(uint32 x, uint32 y, const T& v)
 		{
-			mData[y*mRW+x] = v;
+			PR_DEBUG_ASSERT(x < mRenderer->width());
+			PR_DEBUG_ASSERT(y < mRenderer->height());
+			mData[y*mRenderer->width()+x] = v;
 		}
 
 		inline T getFragmentBounded(uint32 x, uint32 y) const
 		{
-			return mData[y*mRW+x];
+			PR_DEBUG_ASSERT(x < mRenderer->width());
+			PR_DEBUG_ASSERT(y < mRenderer->height());
+			return mData[y*mRenderer->width()+x];
 		}
 		
 		inline T* ptr() const
@@ -80,18 +79,12 @@ namespace PR
 
 		inline void fill(const T& v)
 		{
-			std::fill_n(mData, mRW * mRH, v);
+			std::fill_n(mData, mRenderer->width() * mRenderer->height(), v);
 		}
 
 	private:
-		Renderer* mRenderer;
+		RenderContext* mRenderer;
 		T* mData;
-
-		// Temp
-		uint32 mRW;
-		uint32 mRH;
-		uint32 mCX;
-		uint32 mCY;
 	};
 
 	typedef OutputChannel<PM::avec3> Output3D;

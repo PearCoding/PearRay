@@ -2,8 +2,8 @@
 #include "ray/Ray.h"
 #include "shader/ShaderClosure.h"
 #include "shader/FaceSample.h"
-#include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderThreadContext.h"
 #include "entity/RenderEntity.h"
 
 #include "material/Material.h"
@@ -36,7 +36,7 @@ namespace PR
 		}
 	}
 
-	void BiDirectIntegrator::init(Renderer* renderer)
+	void BiDirectIntegrator::init(RenderContext* renderer)
 	{
 		PR_ASSERT(renderer);
 
@@ -77,14 +77,14 @@ namespace PR
 	}
 	
 	constexpr float LightEpsilon = 0.00001f;
-	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
+	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		if (context->renderer()->settings().maxLightSamples() == 0)
 			return Spectrum();
 
 		ShaderClosure other_sc;
 
-		Renderer* renderer = context->renderer();
+		RenderContext* renderer = context->renderer();
 		MultiJitteredSampler sampler(context->random(), renderer->settings().maxLightSamples());
 		if (mThreadData && !renderer->lights().empty())
 		{
@@ -162,7 +162,7 @@ namespace PR
 		return applyRay(in, context, 0, sc);
 	}
 
-	Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderContext* context, uint32 diffBounces, ShaderClosure& sc)
+	Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderThreadContext* context, uint32 diffBounces, ShaderClosure& sc)
 	{
 		const uint32 maxLights = context->renderer()->settings().maxLightSamples()*(uint32)context->renderer()->lights().size();
 		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();

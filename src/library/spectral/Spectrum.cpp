@@ -1,7 +1,11 @@
 #include "Spectrum.h"
 
 #include <type_traits>
-static_assert(std::is_standard_layout<PR::Spectrum>::value, "Spectrum is not a standard layout type");
+static_assert(std::is_standard_layout<PR::Spectrum>::value,
+			"Spectrum is not a standard layout type");
+
+static_assert(sizeof(PR::Spectrum) == PR::Spectrum::SAMPLING_COUNT * sizeof(float),
+			"Spectrum is not a same size as internal data");
 
 namespace PR
 {

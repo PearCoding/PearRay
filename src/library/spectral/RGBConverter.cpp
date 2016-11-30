@@ -51,10 +51,10 @@ namespace PR
 	//	0,		0,		0,		// 780 nm
 	//};
 
-	void RGBConverter::convert(const Spectrum& s, float &x, float &y, float &z)
+	void RGBConverter::convert(const float* src, float &x, float &y, float &z)
 	{
 		float X, Y, Z;
-		XYZConverter::convertXYZ(s, X, Y, Z);
+		XYZConverter::convertXYZ(src, X, Y, Z);
 
 		// To D65
 		//X *= 0.95047f;

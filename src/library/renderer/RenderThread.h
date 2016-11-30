@@ -1,23 +1,23 @@
 #pragma once
 
 #include "thread/Thread.h"
-#include "RenderContext.h"
+#include "RenderThreadContext.h"
 
 namespace PR
 {
-	class Renderer;
+	class RenderContext;
 	class RenderTile;
 	class PR_LIB RenderThread : public Thread
 	{
 	public:
-		RenderThread(Renderer* renderer, uint32 index);
+		RenderThread(RenderContext* renderer, uint32 index);
 
 		inline RenderTile* currentTile() const
 		{
 			return mTile;
 		}
 
-		inline RenderContext& context()
+		inline RenderThreadContext& context()
 		{
 			return mContext;
 		}
@@ -26,8 +26,8 @@ namespace PR
 		virtual void main();
 
 	private:
-		Renderer* mRenderer;
+		RenderContext* mRenderer;
 		RenderTile* mTile;
-		RenderContext mContext;
+		RenderThreadContext mContext;
 	};
 }

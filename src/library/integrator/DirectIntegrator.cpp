@@ -2,8 +2,8 @@
 #include "ray/Ray.h"
 #include "shader/ShaderClosure.h"
 #include "shader/FaceSample.h"
-#include "renderer/Renderer.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderThreadContext.h"
 #include "entity/RenderEntity.h"
 #include "sampler/RandomSampler.h"
 #include "material/Material.h"
@@ -11,15 +11,15 @@
 
 namespace PR
 {
-	DirectIntegrator::DirectIntegrator(Renderer* renderer) : OnePassIntegrator()
+	DirectIntegrator::DirectIntegrator(RenderContext* renderer) : OnePassIntegrator()
 	{
 	}
 
-	void DirectIntegrator::init(Renderer* renderer)
+	void DirectIntegrator::init(RenderContext* renderer)
 	{
 	}
 
-	Spectrum DirectIntegrator::apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc)
+	Spectrum DirectIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		Spectrum applied;
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
@@ -30,7 +30,7 @@ namespace PR
 		return applied + applyRay(in, sc, context, 0);
 	}
 
-	Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc, RenderContext* context, uint32 diffbounces)
+	Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, uint32 diffbounces)
 	{
 		if (!sc.Material->canBeShaded())
 			return Spectrum();

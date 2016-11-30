@@ -5,7 +5,7 @@
 
 namespace PR
 {
-	class Renderer;
+	class RenderFactory;
 }
 
 class IProperty;
@@ -21,8 +21,8 @@ public:
 	int getTileY() const;
 	int getThreadCount() const;
 
-	void fillContent(PR::Renderer* renderer);
-	void setupRenderer(PR::Renderer* renderer);
+	void fillContent(PR::RenderFactory* renderer);
+	void setupRenderer(PR::RenderFactory* renderer);
 signals:
 	void startRendering();
 	void stopRendering();

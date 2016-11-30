@@ -1,7 +1,4 @@
 #include "XYZConverter.h"
-#include "Spectrum.h"
-
-#include "PearMath.h"
 
 //#define PR_XYZ_LINEAR_INTERP
 
@@ -15,7 +12,7 @@ namespace PR
 	constexpr float Y_SUM = 21.371327f;
 	constexpr float N = Y_SUM * Spectrum::ILL_SCALE;
 
-	void XYZConverter::convertXYZ(const Spectrum& s, float &X, float &Y, float &Z)
+	void XYZConverter::convertXYZ(const float* src, float &X, float &Y, float &Z)
 	{
 		X = 0;
 		Y = 0;
@@ -23,12 +20,12 @@ namespace PR
 
 		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 		{
-			float val1 = s.value(i);
+			float val1 = src[i];
 
 # ifdef PR_XYZ_LINEAR_INTERP
 			if (i < Spectrum::SAMPLING_COUNT - 1)
 			{
-				float val2 = s.value(i + 1);
+				float val2 = src[i + 1];
 
 				X += val1 * NM_TO_X[i] + val2 * NM_TO_X[i + 1];
 				Y += val1 * NM_TO_Y[i] + val2 * NM_TO_Y[i + 1];
@@ -56,10 +53,10 @@ namespace PR
 # endif
 	}
 
-	void XYZConverter::convert(const Spectrum& s, float &x, float &y, float &z)
+	void XYZConverter::convert(const float* src, float &x, float &y, float &z)
 	{
 		float X, Y, Z;
-		convertXYZ(s, X, Y, Z);
+		convertXYZ(src, X, Y, Z);
 
 		float m = X + Y + Z;
 		if (m != 0)

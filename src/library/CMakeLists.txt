@@ -60,12 +60,13 @@ SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Renderer_Src
   renderer/OutputMap.cpp
   renderer/PPMSettings.cpp
-  renderer/Renderer.cpp
   renderer/RenderContext.cpp
+  renderer/RenderFactory.cpp
   renderer/RenderSettings.cpp
   renderer/RenderStatistics.cpp
   renderer/RenderTile.cpp
-  renderer/RenderThread.cpp)
+  renderer/RenderThread.cpp
+  renderer/RenderThreadContext.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
   sampler/HaltonQMCSampler.cpp
@@ -182,12 +183,13 @@ SET(PR_Renderer_Hdr
   renderer/OutputChannel.h
   renderer/OutputMap.h
   renderer/PPMSettings.h
-  renderer/Renderer.h
   renderer/RenderContext.h
+  renderer/RenderFactory.h
   renderer/RenderSettings.h
   renderer/RenderStatistics.h
   renderer/RenderTile.h
-  renderer/RenderThread.h)
+  renderer/RenderThread.h
+  renderer/RenderThreadContext.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
   sampler/HaltonQMCSampler.h

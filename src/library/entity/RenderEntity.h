@@ -8,7 +8,7 @@ namespace PR
 	class Material;
 	class Random;
 	class Ray;
-	class Renderer;
+	class RenderContext;
 	struct FaceSample;
 	class Sampler;
 	class PR_LIB RenderEntity : public Entity

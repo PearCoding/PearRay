@@ -6,6 +6,7 @@
 namespace PR
 {
 	class ToneMapper;
+	class RenderFactory;
 }
 
 namespace DL
@@ -24,15 +25,16 @@ namespace PRU
 		OutputSpecification();
 		virtual ~OutputSpecification();
 
-		void init(PR::Renderer* renderer);
+		void init(PR::RenderFactory* factory);
 		void deinit();
-		void setup();
+
+		void setup(PR::RenderContext* renderer);
 
 		void parse(SceneLoader* loader, Environment* env, DL::DataGroup* group);
-		void save(PR::ToneMapper& toneMapper, bool force = false) const;
+		void save(PR::RenderContext* renderer, PR::ToneMapper& toneMapper, bool force = false) const;
 
 	private:
-		PR::Renderer* mRenderer;
+		PR::RenderFactory* mRenderFactory;
 		ImageWriter mImageWriter;
 
 		struct File
@@ -45,7 +47,6 @@ namespace PRU
 		struct FileSpectral
 		{
 			std::string Name;
-			PR::OutputSpectral* Spectral;
 		};
 
 		std::list<File> mFiles;

@@ -16,7 +16,6 @@ namespace PRU
 	struct IM_ChannelSetting1D
 	{
 		std::string Name;
-		PR::Output1D* Channel;
 		PR::OutputMap::Variable1D Variable;
 		PR::ToneMapperMode TMM;//TODO: Not implemented
 	};
@@ -24,7 +23,6 @@ namespace PRU
 	struct IM_ChannelSetting3D
 	{
 		std::string Name[3];
-		PR::Output3D* Channel;
 		PR::OutputMap::Variable3D Variable;
 		unsigned char Elements;//TODO: Not implemented
 		PR::ToneMapperMode TMM;//TODO: Not implemented
@@ -32,7 +30,6 @@ namespace PRU
 	
 	struct IM_ChannelSettingSpec
 	{
-		PR::OutputSpectral* Channel;
 		unsigned char Elements;//TODO: Not implemented
 		PR::ToneColorMode TCM;
 		PR::ToneGammaMode TGM;
@@ -46,7 +43,7 @@ namespace PRU
 		ImageWriter();
 		virtual ~ImageWriter();
 
-		void init(PR::Renderer* renderer);
+		void init(PR::RenderContext* renderer);
 		void deinit();
 
 		bool save(PR::ToneMapper& toneMapper, const std::string& file,
@@ -58,8 +55,7 @@ namespace PRU
 			PR::OutputSpectral* spec) const;
 
 	private:
-		float* mSpectralData;
 		float* mRGBData;
-		PR::Renderer* mRenderer;
+		PR::RenderContext* mRenderer;
 	};
 }

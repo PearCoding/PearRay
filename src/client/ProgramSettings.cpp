@@ -179,9 +179,9 @@ po::options_description setup_cmd_options()
 	thread_d.add_options()
 		("threads,t", po::value<PR::uint32>(),
 			"Amount of threads used for processing. Set 0 for automatic detection.")
-		("tile_x", po::value<PR::uint32>(), 
+		("rtx", po::value<PR::uint32>(), 
 			"Amount of horizontal tiles used in threading")
-		("tile_y", po::value<PR::uint32>(),
+		("rty", po::value<PR::uint32>(),
 			"Amount of vertical tiles used in threading")
 	;
 
@@ -197,6 +197,10 @@ po::options_description setup_cmd_options()
 			"If specified, will override renderHeight with this value")
 		("crop", fixed_tokens_value<std::vector<float> >(4,4), 
 			"(4D Vector) If specified, will override crop with this value")
+		("itx", po::value<PR::uint32>(), 
+			"Amount of horizontal image tiles used in rendering")
+		("ity", po::value<PR::uint32>(),
+			"Amount of vertical image tiles used in rendering")
 	;
 
 	PR::RenderSettings DefaultRenderSettings;
@@ -306,6 +310,8 @@ po::options_description setup_ini_options()
 		("scene.width", po::value<PR::uint32>())
 		("scene.height", po::value<PR::uint32>())
 		("scene.crop", fixed_tokens_value<std::vector<float> >(4,4))
+		("scene.tile_x", po::value<PR::uint32>())
+		("scene.tile_y", po::value<PR::uint32>())
 		("renderer.incremental", po::value<bool>()->default_value(DefaultRenderSettings.isIncremental()))
 		("renderer.integrator",
 			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()))
@@ -387,6 +393,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	ResolutionYOverride = 0;
 	CropMinXOverride = -1; CropMaxXOverride = -1;
 	CropMinYOverride = -1; CropMaxYOverride = -1;
+	ImageTileXCount = 1; ImageTileYCount = 1;
 
 	// First ini file
 	if (vm.count("config"))
@@ -404,8 +411,8 @@ bool ProgramSettings::parse(int argc, char** argv)
 			return false;
 		}
 
-		TileXCount = ini["threads.tile_x"].as<PR::uint32>();
-		TileYCount = ini["threads.tile_y"].as<PR::uint32>();
+		RenderTileXCount = ini["threads.tile_x"].as<PR::uint32>();
+		RenderTileYCount = ini["threads.tile_y"].as<PR::uint32>();
 		ThreadCount = ini["threads.count"].as<PR::uint32>();
 		
 		// Scene
@@ -430,7 +437,12 @@ bool ProgramSettings::parse(int argc, char** argv)
 			CropMinYOverride = crop[2]; CropMaxYOverride = crop[3];
 		}
 
-		// Renderer
+		if(ini.count("scene.tile_x"))
+			ImageTileXCount = PM::pm_Max<uint32>(1, ini["scene.tile_x"].as<PR::uint32>());
+		if(ini.count("scene.tile_y"))
+			ImageTileYCount = PM::pm_Max<uint32>(1, ini["scene.tile_y"].as<PR::uint32>());
+
+		// RenderContext
 		RenderSettings.setIncremental(ini["renderer.incremental"].as<bool>());
 		RenderSettings.setIntegratorMode(ini["renderer.integrator"].as<EnumOption<IntegratorMode> >());
 		RenderSettings.setDebugMode(ini["renderer.debug"].as<EnumOption<DebugMode> >());
@@ -517,20 +529,20 @@ bool ProgramSettings::parse(int argc, char** argv)
 	ImgExt = vm["img-ext"].as<std::string>();
 
 	// Thread
-	if (vm.count("tile_x"))
-		TileXCount = vm["tile_x"].as<PR::uint32>();
+	if (vm.count("rtx"))
+		RenderTileXCount = vm["rtx"].as<PR::uint32>();
 	else if(!vm.count("config"))
-		TileXCount = DEF_THREAD_TILE_X;
+		RenderTileXCount = DEF_THREAD_TILE_X;
 
-	if (vm.count("tile_y"))
-		TileYCount = vm["tile_y"].as<PR::uint32>();
+	if (vm.count("rty"))
+		RenderTileYCount = vm["rty"].as<PR::uint32>();
 	else if(!vm.count("config"))
-		TileXCount = DEF_THREAD_TILE_Y;
+		RenderTileYCount = DEF_THREAD_TILE_Y;
 
 	if (vm.count("threads"))
 		ThreadCount = vm["threads"].as<PR::uint32>();
 	else if(!vm.count("config"))
-		TileXCount = DEF_THREAD_COUNT;
+		ThreadCount = DEF_THREAD_COUNT;
 	
 	// Scene
 	if(vm.count("scene"))
@@ -554,7 +566,12 @@ bool ProgramSettings::parse(int argc, char** argv)
 		CropMinYOverride = crop[2]; CropMaxYOverride = crop[3];
 	}
 
-	// Renderer
+	if (vm.count("itx"))
+		ImageTileXCount = PM::pm_Max<uint32>(1, vm["itx"].as<PR::uint32>());
+	if (vm.count("itx"))
+		ImageTileYCount = PM::pm_Max<uint32>(1, vm["ity"].as<PR::uint32>());
+
+	// RenderContext
 	if(vm.count("inc"))
 		RenderSettings.setIncremental(vm["inc"].as<bool>());
 	if(vm.count("integrator"))

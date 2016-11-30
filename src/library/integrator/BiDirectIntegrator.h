@@ -10,11 +10,11 @@ namespace PR
 		BiDirectIntegrator();
 		~BiDirectIntegrator();
 
-		void init(Renderer* renderer) override;
-		Spectrum apply(const Ray& in, RenderContext* context, uint32 pass, ShaderClosure& sc) override;
+		void init(RenderContext* renderer) override;
+		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
 
 	private:
-		Spectrum applyRay(const Ray& in, RenderContext* context, uint32 diffBounces, ShaderClosure& sc);
+		Spectrum applyRay(const Ray& in, RenderThreadContext* context, uint32 diffBounces, ShaderClosure& sc);
 
 		struct ThreadData
 		{

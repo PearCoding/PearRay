@@ -32,8 +32,10 @@ public:
 
 	// Threading
 	PR::uint32 ThreadCount;
-	PR::uint32 TileXCount;
-	PR::uint32 TileYCount;
+	PR::uint32 RenderTileXCount;
+	PR::uint32 RenderTileYCount;
+	PR::uint32 ImageTileXCount;
+	PR::uint32 ImageTileYCount;
 
 	// Scene
 	std::string SceneName;

@@ -1,12 +1,12 @@
 #include "RenderThread.h"
-#include "Renderer.h"
+#include "RenderContext.h"
 #include "RenderTile.h"
 
 #include "integrator/Integrator.h"
 
 namespace PR
 {
-	RenderThread::RenderThread(Renderer* renderer, uint32 index) :
+	RenderThread::RenderThread(RenderContext* renderer, uint32 index) :
 		Thread(), mRenderer(renderer), mTile(nullptr), mContext(renderer, this, index)
 	{
 		PR_ASSERT(renderer);

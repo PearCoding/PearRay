@@ -11,15 +11,15 @@ namespace PR
 		virtual void onNextPass(uint32 i, bool& clean) override;
 		virtual void onEnd() override;
 
-		virtual void onThreadStart(RenderContext* context) override;
-		virtual void onPrePass(RenderContext* context, uint32 i) override;
-		virtual void onPass(RenderTile* tile, RenderContext* context, uint32 i) override;
-		virtual void onPostPass(RenderContext* context, uint32 i)  override;
-		virtual void onThreadEnd(RenderContext* context) override;
+		virtual void onThreadStart(RenderThreadContext* context) override;
+		virtual void onPrePass(RenderThreadContext* context, uint32 i) override;
+		virtual void onPass(RenderTile* tile, RenderThreadContext* context, uint32 i) override;
+		virtual void onPostPass(RenderThreadContext* context, uint32 i)  override;
+		virtual void onThreadEnd(RenderThreadContext* context) override;
 
 		virtual bool needNextPass(uint32 i) const override;
 
-		virtual uint64 maxSamples(const Renderer* renderer) const override;
-		virtual uint64 maxPasses(const Renderer* renderer) const override;
+		virtual uint64 maxSamples(const RenderContext* renderer) const override;
+		virtual uint64 maxPasses(const RenderContext* renderer) const override;
 	};
 }
