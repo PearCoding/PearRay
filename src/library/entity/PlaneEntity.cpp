@@ -72,7 +72,7 @@ namespace PR
 
 	BoundingBox PlaneEntity::localBoundingBox() const
 	{
-		return mPlane.toLocalBoundingBox();
+		return mPlane.toBoundingBox();
 	}
 
 	bool PlaneEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
@@ -109,13 +109,12 @@ namespace PR
 	{
 		auto s = sampler.generate2D(sample);
 
-		PM::vec xaxis = PM::pm_Multiply(directionMatrix(), mPlane.xAxis());
-		PM::vec yaxis = PM::pm_Multiply(directionMatrix(), mPlane.yAxis());
-
 		FaceSample fp;
-		fp.P = PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetX(s)),
-				PM::pm_Scale(yaxis, PM::pm_GetY(s))));
+		fp.P = PM::pm_Add(mPlane.position(),
+			PM::pm_Add(PM::pm_Scale(mPlane.xAxis(), PM::pm_GetX(s)),
+				PM::pm_Scale(mPlane.yAxis(), PM::pm_GetY(s))));
+		fp.P = PM::pm_SetW(PM::pm_Multiply(matrix(), fp.P), 1);
+
 		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), mPlane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 

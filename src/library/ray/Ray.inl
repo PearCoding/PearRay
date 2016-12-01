@@ -25,14 +25,24 @@ namespace PR
 		return mDirection;
 	}
 
-	inline void Ray::setPixel(const PM::vec2& dir)
+	inline void Ray::setPixelX(uint32 p)
 	{
-		mPixel = dir;
+		mPixelX = p;
 	}
 
-	inline PM::vec2 Ray::pixel() const
+	inline uint32 Ray::pixelX() const
 	{
-		return mPixel;
+		return mPixelX;
+	}
+
+	inline void Ray::setPixelY(uint32 p)
+	{
+		mPixelY = p;
+	}
+
+	inline uint32 Ray::pixelY() const
+	{
+		return mPixelY;
 	}
 
 	inline void Ray::setDepth(uint32 depth)
@@ -65,22 +75,12 @@ namespace PR
 		return mFlags;
 	}
 
-	inline uint32 Ray::maxDepth() const
-	{
-		return mMaxDepth;
-	}
-
-	inline void Ray::setMaxDepth(uint32 i)
-	{
-		mMaxDepth = i;
-	}
-
 	inline Ray Ray::next(const PM::vec3& pos, const PM::vec3& dir) const
 	{
-		return safe(mPixel, pos, dir, mDepth + 1, mTime, mFlags, mMaxDepth);
+		return safe(mPixelX, mPixelY, pos, dir, mDepth + 1, mTime, mFlags);
 	}
 
-	inline Ray Ray::safe(const PM::vec3& pixel, const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags, uint32 maxDepth)
+	inline Ray Ray::safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags)
 	{
 		PM::vec3 off = PM::pm_Scale(dir, RayOffsetEpsilon);
 		PM::vec3 posOff = PM::pm_Add(pos, off);
@@ -95,7 +95,7 @@ namespace PR
 					std::nextafter(PM::pm_GetIndex(posOff, i), std::numeric_limits<float>::lowest()));
 		}
 
-		return Ray(pixel, posOff, dir, depth, time, maxDepth);
+		return Ray(px, py, posOff, dir, depth, time);
 	}
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

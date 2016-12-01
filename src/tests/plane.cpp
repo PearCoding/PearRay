@@ -62,7 +62,7 @@ PR_TEST("Contains 2");
 PR_TEST("Intersects 1");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(1, 0, 0, 1), PM::pm_Set(0, 1, 0, 1));
-	Ray ray(PM::pm_Zero(), PM::pm_Set(0.5, 0.5, -1, 1), PM::pm_Set(0, 0, 1, 0));
+	Ray ray(0,0, PM::pm_Set(0.5, 0.5, -1, 1), PM::pm_Set(0, 0, 1, 0));
 
 	PM::vec3 point;
 	float u, v;
@@ -76,7 +76,7 @@ PR_TEST("Intersects 1");
 PR_TEST("Intersects 2");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(1, 0, 0, 1), PM::pm_Set(0, 1, 0, 1));
-	Ray ray(PM::pm_Zero(), PM::pm_Set(0.5, 0.5, -1, 1), PM::pm_Set(0, 1, 0, 0));
+	Ray ray(0,0, PM::pm_Set(0.5, 0.5, -1, 1), PM::pm_Set(0, 1, 0, 0));
 
 	PM::vec3 point;
 	float u, v, t;
@@ -86,7 +86,7 @@ PR_TEST("Intersects 2");
 PR_TEST("Intersects 3");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(10, 0, 0, 1), PM::pm_Set(0, 10, 0, 1));
-	Ray ray(PM::pm_Zero(), PM::pm_Set(5, 5, -1, 1), PM::pm_Set(0, 0, 1, 0));
+	Ray ray(0,0, PM::pm_Set(5, 5, -1, 1), PM::pm_Set(0, 0, 1, 0));
 
 	PM::vec3 point;
 	float u, v, t;
@@ -99,7 +99,7 @@ PR_TEST("Intersects 3");
 PR_TEST("Intersects 4");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(10, 0, 0, 1), PM::pm_Set(0, 20, 0, 1));
-	Ray ray(PM::pm_Zero(), PM::pm_Set(5, 10, -1, 1), PM::pm_Set(0, 0, 1, 0));
+	Ray ray(0,0, PM::pm_Set(5, 10, -1, 1), PM::pm_Set(0, 0, 1, 0));
 
 	PM::vec3 point;
 	float u, v, t;

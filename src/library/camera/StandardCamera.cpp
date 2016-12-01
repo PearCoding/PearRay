@@ -124,7 +124,7 @@ namespace PR
 
 		if (mOrthographic)
 		{
-			return Ray(PM::pm_Set((nx + 1)*0.5f, (ny + 1)*0.5f),
+			return Ray(0,0,
 					PM::pm_Add(position(),
 					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
 				mDirection_Cache);
@@ -152,7 +152,7 @@ namespace PR
 					mDirection_Cache);// One unit away in z direction.
 			PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint));
 
-			return Ray(PM::pm_Zero(), // Will be set by render context
+			return Ray(0,0, // Will be set by render context
 					PM::pm_Add(position(), eyePoint),
 					rayDir);
 		}

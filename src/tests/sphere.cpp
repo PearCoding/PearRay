@@ -15,7 +15,7 @@ PR_TEST("Size");
 
 PR_TEST("Intersects");
 {
-	Ray ray(PM::pm_Zero(), PM::pm_Set(-2, 0, 0), PM::pm_Set(1, 0, 0));
+	Ray ray(0,0, PM::pm_Set(-2, 0, 0), PM::pm_Set(1, 0, 0));
 	Sphere sphere(PM::pm_Set(0, 0, 0), 1);
 
 	PM::vec3 collisionPoint;
@@ -26,7 +26,7 @@ PR_TEST("Intersects");
 
 PR_TEST("Intersects Inside");
 {
-	Ray ray(PM::pm_Zero(), PM::pm_Set(0, 0, 0), PM::pm_Set(1, 0, 0));
+	Ray ray(0,0, PM::pm_Set(0, 0, 0), PM::pm_Set(1, 0, 0));
 	Sphere sphere(PM::pm_Set(0, 0, 0), 1);
 
 	PM::vec3 collisionPoint;

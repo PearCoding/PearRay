@@ -224,22 +224,6 @@ namespace PR
 			thread->start();
 	}
 
-	void RenderContext::pushPixel_Normalized(float x, float y, const Spectrum& spec, const ShaderClosure& sc)
-	{
-		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
-		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
-
-		mOutputMap->pushFragment(px, py, spec, sc);
-	}
-
-	Spectrum RenderContext::getPixel_Normalized(float x, float y)
-	{
-		uint32 px = PM::pm_Clamp<uint32>(std::round(x * (mWidth-1)), 0, mWidth-1);
-		uint32 py = PM::pm_Clamp<uint32>(std::round(y * (mHeight-1)), 0, mHeight-1);
-		
-		return mOutputMap->getFragment(px, py);
-	}
-
 	void RenderContext::render(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
 	{
 		PR_ASSERT(mOutputMap);
@@ -301,7 +285,8 @@ namespace PR
 		float fny = 2 * ((y+mOffsetX) / mFullHeight - 0.5f);
 
 		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t);
-		ray.setPixel(PM::pm_Set(nx, ny));
+		ray.setPixelX((uint32)x);
+		ray.setPixelY((uint32)y);
 
 		return mIntegrator->apply(ray, context, pass, sc);
 	}
@@ -320,9 +305,7 @@ namespace PR
 
 	RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderThreadContext* context)
 	{
-		const uint32 maxDepth = (ray.maxDepth() == 0) ?
-			mRenderSettings.maxRayDepth() : PM::pm_Min<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
-		if (ray.depth() < maxDepth)
+		if (ray.depth() < mRenderSettings.maxRayDepth())
 		{
 			sc.Flags = 0;
 
@@ -370,9 +353,7 @@ namespace PR
 
 	bool RenderContext::shootForDetection(const Ray& ray, RenderThreadContext* context)
 	{
-		const uint32 maxDepth = (ray.maxDepth() == 0) ?
-			mRenderSettings.maxRayDepth() : PM::pm_Min<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
-		if (ray.depth() < maxDepth)
+		if (ray.depth() < mRenderSettings.maxRayDepth())
 		{
 			FaceSample fs;
 			bool found = mScene->checkIfCollides(ray, fs);
@@ -401,9 +382,7 @@ namespace PR
 	RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
 		ShaderClosure& sc, RenderThreadContext* context)
 	{
-		const uint32 maxDepth = (ray.maxDepth() == 0) ?
-			mRenderSettings.maxRayDepth() : PM::pm_Min<uint32>(mRenderSettings.maxRayDepth() + 1, ray.maxDepth());
-		if (ray.depth() >= maxDepth)
+		if (ray.depth() >= mRenderSettings.maxRayDepth())
 			return nullptr;
 		
 		RenderEntity* entity = shoot(ray, sc, context);

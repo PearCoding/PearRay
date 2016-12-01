@@ -20,6 +20,7 @@ namespace PRU
 		const std::string& obj, DL::DataGroup* group) const
 	{
 		DL::Data materialD = group->getFromKey("material");
+		DL::Data centeringD = group->getFromKey("centering");
 
 		DL::Data xAxisD = group->getFromKey("xAxis");
 		DL::Data yAxisD = group->getFromKey("yAxis");
@@ -62,8 +63,12 @@ namespace PRU
 			yAxis = PM::pm_Set(0, yAxisD.getNumber(), 0, 1);
 		}
 
+		PM::vec3 pos = PM::pm_Set(0, 0, 0, 1);
+		if(centeringD.type() == DL::Data::T_Bool && centeringD.getBool())
+			pos = PM::pm_Add(PM::pm_Scale(xAxis, -0.5f), PM::pm_Scale(yAxis, -0.5f));
+
 		PlaneEntity* entity = new PlaneEntity(env->scene()->entities().size()+1, name,
-			Plane(PM::pm_Set(0, 0, 0, 1), xAxis, yAxis));
+			Plane(pos, xAxis, yAxis));
 
 		if (materialD.type() == DL::Data::T_String)
 		{

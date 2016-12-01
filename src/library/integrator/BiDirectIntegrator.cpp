@@ -236,13 +236,12 @@ namespace PR
 						const Spectrum& lightFlux = data.LightFlux[j * maxDepth + s];
 						const auto LP = PM::pm_Subtract(sc.P, lightPos);
 
-						Ray current = Ray::safe(in.pixel(),
+						Ray current = Ray::safe(in.pixelX(), in.pixelY(),
 							lightPos,
 							PM::pm_Normalize3D(LP),
 							in.depth() + 1,
 							in.time(),
-							in.flags() | RF_FromLight,
-							in.maxDepth());
+							in.flags() | RF_FromLight);
 
 						const PM::vec3 L = PM::pm_Negate(current.direction());
 

@@ -50,9 +50,6 @@ namespace PR
 		bool shootForDetection(const Ray& ray, RenderThreadContext* context);
 		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
 
-		void pushPixel_Normalized(float x, float y, const Spectrum& spec, const ShaderClosure& sc);
-		Spectrum getPixel_Normalized(float x, float y);
-
 		bool isFinished();
 		void waitForFinish();
 

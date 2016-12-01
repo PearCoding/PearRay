@@ -17,6 +17,7 @@
 #include "renderer/RenderThreadContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderThread.h"
+#include "renderer/OutputMap.h"
 
 #include "spectral/RGBConverter.h"
 
@@ -100,7 +101,7 @@ namespace PR
 		const uint64 k = MinPhotons * lightList.size();
 		if (k >= renderer->settings().ppm().maxPhotonsPerPass()) // Not enough photons given.
 		{
-			PR_LOGGER.logf(L_Warning, M_Integrator, "Not enough photons per pass given. At least %llu is good.", k);
+			PR_LOGGER.logf(L_Warning, M_Integrator, "Not enough photons per pass given. At least %llu is needed.", k);
 
 			for(RenderEntity* light : lightList)
 				mLights.push_back(new Light({light, MinPhotons, light->surfaceArea(nullptr)}));
@@ -170,14 +171,14 @@ namespace PR
 					PM::pm_SinCos(phi, phSin, phCos);
 					PM::vec3 dir = PM::pm_Set(thSin * phCos, thSin * phSin, thCos);
 
-					Ray ray(PM::pm_Zero(), 
+					Ray ray(0,0, 
 						PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
 						PM::pm_Negate(dir));
 					FaceSample lightSample;
 					float weight = 0;
 					if(l->Entity->checkCollision(ray, lightSample))
 					{
-						ray = Ray::safe(PM::pm_Zero(), lightSample.P, dir, 0, 0, RF_FromLight);
+						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, RF_FromLight);
 						float pdf = std::abs(PM::pm_Dot3D(dir, lightSample.Ng));
 						
 						uint32 j;// Calculates specular count
@@ -248,6 +249,9 @@ namespace PR
 		// Emit all lights
 		mPhotonMap->reset();
 
+		const uint32 H = mRenderer->settings().maxDiffuseBounces()+1;
+		const uint32 RD = mRenderer->settings().maxRayDepth();
+
 		Random random;
 		for (Light* light : mLights)
 		{
@@ -258,8 +262,7 @@ namespace PR
 
 			size_t photonsShoot = 0;
 			for (size_t i = 0;
-				 i < sampleSize*(mRenderer->settings().maxDiffuseBounces()+1) &&
-				 	photonsShoot < sampleSize;
+				 i < sampleSize*H && photonsShoot < sampleSize;
 				 ++i)
 			{
 				float t_pdf = 0;
@@ -270,7 +273,7 @@ namespace PR
 				{
 					dir = light->Proj->sample(random.getFloat(), random.getFloat(), random.getFloat(), random.getFloat(), t_pdf);
 					
-					Ray ray(PM::pm_Zero(),
+					Ray ray(0,0,
 							PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
 						PM::pm_Negate(dir));
 					if(!light->Entity->checkCollision(ray, lightSample))
@@ -286,14 +289,14 @@ namespace PR
 					t_pdf *= t_pdf2;
 				}
 				
-				Ray ray = Ray::safe(PM::pm_Zero(), lightSample.P, dir, 0, 0, RF_FromLight);
+				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_FromLight);
 
 				Spectrum radiance;
 				if(lightSample.Material->emission())
 				{
 					ShaderClosure lsc = lightSample;
 					radiance = lightSample.Material->emission()->eval(lsc);
-					//radiance /= t_pdf;
+					radiance /= t_pdf;
 				}
 				else
 				{
@@ -301,9 +304,7 @@ namespace PR
 				}
 
 				uint32 diffuseBounces = 0;
-				for (uint32 j = 0;
-					 j < mRenderer->settings().maxRayDepth();
-					 ++j)
+				for (uint32 j = 0; j < RD; ++j)
 				{
 					ShaderClosure sc;
 					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
@@ -472,13 +473,13 @@ namespace PR
 
 				// Render result:
 #if PR_PHOTON_RGB_MODE == 2
-				context->renderer()->pushPixel_Normalized(p.PixelX, p.PixelY,
+				context->renderer()->output()->pushFragment(p.PixelX, p.PixelY,
 					RGBConverter::toSpec(p.Weight[0] * p.CurrentFlux[0] * inv,
 						p.Weight[1] * p.CurrentFlux[1] * inv,
 						p.Weight[2] * p.CurrentFlux[2] * inv),
 					p.SC);
 #else
-				context->renderer()->pushPixel_Normalized(p.PixelX, p.PixelY,
+				context->renderer()->pushFragment(p.PixelX, p.PixelY,
 					p.Weight * p.CurrentFlux * inv,
 					p.SC);
 #endif//PR_PHOTON_RGB_MODE
@@ -528,10 +529,7 @@ namespace PR
 		if (!entity || !sc.Material)
 			return applied;
 		
-		if(pass == 0)
-			return applied + firstPass(Spectrum(1), in, sc, context);
-		else
-			return applied + otherPass(in, sc, context);
+		return applied + firstPass(Spectrum(1), in, sc, context);
 	}
 
 	Spectrum PPMIntegrator::firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderThreadContext* context)
@@ -563,7 +561,7 @@ namespace PR
 					ShaderClosure sc2;
 					RenderEntity* entity = context->shootWithEmission(other_weight, ray, sc2);
 					if (entity && sc2.Material)
-						other_weight += firstPass(other_weight + weight*app, ray, sc2, context);
+						other_weight += firstPass(path_weight * (other_weight + weight*app), ray, sc2, context);
 					other_weight *= app;
 				}
 			}
@@ -582,7 +580,8 @@ namespace PR
 				// Store it into Hitpoints
 				RayHitPoint hitpoint;
 				hitpoint.SC = sc;
-				hitpoint.PixelX = PM::pm_GetX(in.pixel()); hitpoint.PixelY = PM::pm_GetY(in.pixel());
+				hitpoint.PixelX = in.pixelX();
+				hitpoint.PixelY = in.pixelY();
 
 #if PR_PHOTON_RGB_MODE == 2
 				RGBConverter::convert(weight, hitpoint.Weight[0], hitpoint.Weight[1], hitpoint.Weight[2]);
@@ -598,42 +597,6 @@ namespace PR
 			}
 
 			full_weight += path_weight * other_weight;
-		}
-
-		return full_weight;
-	}
-	
-	Spectrum PPMIntegrator::otherPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context)
-	{
-		if (!sc.Material->canBeShaded())
-			return Spectrum();
-
-		float pdf;
-		PM::vec3 dir = sc.Material->sample(sc, context->random().get3D(), pdf);
-
-		Spectrum full_weight;
-		if(std::isinf(pdf))// Specular
-		{
-			const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
-
-			if (NdotL > PM_EPSILON)
-			{
-				Spectrum app = sc.Material->eval(sc, dir, NdotL)*NdotL;
-
-				Ray ray = in.next(sc.P, dir);
-				ShaderClosure sc2;
-				RenderEntity* entity = context->shootWithEmission(full_weight, ray, sc2);
-				if (entity && sc2.Material)
-					full_weight += otherPass(ray, sc2, context);
-				full_weight *= app;
-			}
-		}
-		else
-		{
-			pdf = 0;
-			float inf_pdf;
-			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::power(full_weight, pdf, inf_weight, inf_pdf);
 		}
 
 		return full_weight;

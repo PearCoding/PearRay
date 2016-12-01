@@ -44,7 +44,6 @@ namespace PR
 			return PM::pm_MagnitudeSqr3D(mXAxis)*PM::pm_MagnitudeSqr3D(mYAxis) > 0;
 		}
 
-
 		bool contains(const PM::vec3& point) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, float& u, float& v) const;
 

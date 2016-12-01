@@ -43,13 +43,12 @@ namespace PR
 
 	private:
 		Spectrum firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
-		Spectrum otherPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
 
 		struct RayHitPoint
 		{
 			ShaderClosure SC;
 
-			float PixelX, PixelY;
+			uint32 PixelX, PixelY;
 #if PR_PHOTON_RGB_MODE == 2
 			float Weight[3];
 #else
