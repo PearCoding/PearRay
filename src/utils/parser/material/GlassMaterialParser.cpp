@@ -22,11 +22,15 @@ namespace PRU
 	{
 		DL::Data specD = group->getFromKey("specularity");
 		DL::Data indexD = group->getFromKey("index");
+		DL::Data sampleIORD = group->getFromKey("sample_index");
 
 		GlassMaterial* diff = new GlassMaterial(env->materialCount() + 1);
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
 		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));
+
+		if(sampleIORD.type() == DL::Data::T_Bool)
+			diff->setSampleIOR(sampleIORD.getBool());
 
 		return diff;
 	}

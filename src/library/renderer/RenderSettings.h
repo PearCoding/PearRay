@@ -105,6 +105,11 @@ namespace PR
 
 		inline uint32 minPixelSampleCount() const { return mMinPixelSampleCount; }
 		inline void setMinPixelSampleCount(uint32 v) { mMinPixelSampleCount = v; }
+
+		// Distortion Sampling
+		inline float distortionQuality() const { return mDistortionQuality; }
+		inline void setDistortionQuality(float f) { mDistortionQuality = f; }
+
 	private:
 		bool mIncremental;
 		DebugMode mDebugMode;
@@ -135,5 +140,7 @@ namespace PR
 		float mASMaxError;
 		uint32 mMinPixelSampleCount;
 
+		// Distortion Sampling
+		float mDistortionQuality;
 	};
 }

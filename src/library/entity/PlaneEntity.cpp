@@ -124,4 +124,12 @@ namespace PR
 		pdf = 1;//?
 		return fp;
 	}
+
+	void PlaneEntity::setup(RenderContext* context)
+	{
+		RenderEntity::setup(context);
+		
+		if(mMaterial)
+			mMaterial->setup(context);
+	}
 }

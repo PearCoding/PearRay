@@ -133,4 +133,13 @@ namespace PR
 		pdf = 1;//??
 		return fp;
 	}
+
+	// Entity
+	void BoundaryEntity::setup(RenderContext* context)
+	{
+		RenderEntity::setup(context);
+
+		if(mMaterial)
+			mMaterial->setup(context);
+	}
 }

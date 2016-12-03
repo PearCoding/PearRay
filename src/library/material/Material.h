@@ -13,7 +13,10 @@ namespace PR
 	public:
 		Material(uint32 id);
 		virtual ~Material() {}
-
+		
+		/*
+		 Evaluate the BxDF based on L and point information.
+		*/
 		virtual Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
 		
 		/*
@@ -65,10 +68,11 @@ namespace PR
 		void enableCameraVisibility(bool b);
 		bool isCameraVisible() const;
 
+		virtual void setup(RenderContext* context) {};
 	private:
 		SpectralShaderOutput* mEmission;
 
-		uint32 mID;
+		const uint32 mID;
 		bool mIsLight;
 		bool mCanBeShaded;
 		bool mShadow;

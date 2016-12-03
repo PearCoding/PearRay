@@ -30,7 +30,11 @@ namespace PR
 
 		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 
+		// Entity
 		virtual void onFreeze() override;
+
+		// RenderEntity
+		virtual void setup(RenderContext* context) override;
 	private:
 		TriMesh* mMesh;
 		Material* mMaterialOverride;

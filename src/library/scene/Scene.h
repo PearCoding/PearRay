@@ -10,6 +10,7 @@ namespace PR
 	class Entity;
 	struct FaceSample;
 	class IInfiniteLight;
+	class RenderContext;
 	class RenderEntity;
 	class Ray;
 	class PR_LIB Scene
@@ -40,6 +41,7 @@ namespace PR
 		bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const;
 
 		void freeze();
+		void setup(RenderContext* context);
 
 		BoundingBox boundingBox() const;
 	private:

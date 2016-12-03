@@ -219,6 +219,12 @@ po::options_description setup_cmd_options()
 			"Render incremental.")
 	;
 
+	po::options_description distortion_d("Distortion Sampler[*]");
+	distortion_d.add_options()
+		("d_quality", po::value<float>(),
+			"Quality of distortion effects. Should be between 0 - 1.")
+	;
+
 	po::options_description pixelsampler_d("Pixel Sampler[*]");
 	pixelsampler_d.add_options()
 		("ps_mode",
@@ -289,6 +295,7 @@ po::options_description setup_cmd_options()
 	all_d.add(thread_d);
 	all_d.add(scene_d);
 	all_d.add(render_d);
+	all_d.add(distortion_d);
 	all_d.add(pixelsampler_d);
 	all_d.add(gi_d);
 	all_d.add(photon_d);
@@ -317,6 +324,8 @@ po::options_description setup_ini_options()
 			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()))
 		("renderer.debug",
 			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()))
+		("distortion.quality",
+			po::value<float>()->default_value(DefaultRenderSettings.distortionQuality()))
 		("renderer.max",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxRayDepth()))
 		("pixelsampler.mode",
@@ -447,6 +456,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setIntegratorMode(ini["renderer.integrator"].as<EnumOption<IntegratorMode> >());
 		RenderSettings.setDebugMode(ini["renderer.debug"].as<EnumOption<DebugMode> >());
 
+		// Distortion Sampling
+		RenderSettings.setDistortionQuality(PM::pm_Clamp<float>(ini["distortion.quality"].as<float>(), 0.0f, 1.0f));
+
 		// PixelSampler
 		RenderSettings.setPixelSampler(ini["pixelsampler.mode"].as<EnumOption<SamplerMode> >());
 		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
@@ -571,13 +583,17 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if (vm.count("itx"))
 		ImageTileYCount = PM::pm_Max<uint32>(1, vm["ity"].as<PR::uint32>());
 
-	// RenderContext
+	// Renderer
 	if(vm.count("inc"))
 		RenderSettings.setIncremental(vm["inc"].as<bool>());
 	if(vm.count("integrator"))
 		RenderSettings.setIntegratorMode(vm["integrator"].as<EnumOption<IntegratorMode> >());
 	if(vm.count("debug"))
 		RenderSettings.setDebugMode(vm["debug"].as<EnumOption<DebugMode> >());
+
+	// Distortion Sampling
+	if(vm.count("d_quality"))
+		RenderSettings.setDistortionQuality(PM::pm_Clamp<float>(vm["d_quality"].as<float>(), 0.0f, 1.0f));
 
 	// PixelSampler
 	if(vm.count("ps_mode"))
@@ -617,7 +633,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("p_proj_qual"))
 		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Clamp<float>(vm["p_proj_qual"].as<float>(), 0.01f, 1));
 	if(vm.count("p_proj_caustic"))
-		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Max<float>(vm["p_proj_caustic"].as<float>(), 0));
+		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_Max<float>(vm["p_proj_caustic"].as<float>(), 0));
 
 	return true;
 }

@@ -10,6 +10,9 @@ namespace PR
 	public:
 		GlassMaterial(uint32 id);
 
+		bool sampleIOR() const;
+		void setSampleIOR(bool b);
+		
 		SpectralShaderOutput* specularity() const;
 		void setSpecularity(SpectralShaderOutput* spec);
 
@@ -22,8 +25,15 @@ namespace PR
 	
 		PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& weight, uint32 path) override;
 		uint32 samplePathCount() const override;
+
+		void setup(RenderContext* context) override;
 	private:
 		SpectralShaderOutput* mSpecularity;
 		SpectralShaderOutput* mIndex;
+		bool mSampleIOR;
+
+		// Cache:
+		uint32 mIntervalCount_Cache;
+		uint32 mIntervalLength_Cache;
 	};
 }

@@ -28,7 +28,10 @@ namespace PR
 		// Adaptive Sampling (AS)
 		mAdaptiveSampling(true),
 		mASMaxError(0.0001f),
-		mMinPixelSampleCount(1)
+		mMinPixelSampleCount(1),
+
+		// Distortion Sampling
+		mDistortionQuality(0.1f)
 	{
 	}
 }

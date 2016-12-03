@@ -37,6 +37,7 @@ namespace PR
 		// Entity
 		virtual void onFreeze() override;
 
+		virtual void setup(RenderContext* context) {}
 	private:
 		BoundingBox calcWorldBoundingBox() const;
 

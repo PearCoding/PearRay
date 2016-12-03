@@ -123,6 +123,11 @@ int main(int argc, char** argv)
 			renderer->offsetY(), renderer->height());
 
 		env->outputSpecification().setup(renderer);
+		env->scene()->setup(renderer);
+		PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "%f %f %f",
+			options.RenderSettings.distortionQuality(),
+			renderFactory->settings().distortionQuality(),
+			renderer->settings().distortionQuality());
 		
 		PR::ToneMapper toneMapper(renderFactory->gpu(), renderer->width()*renderer->height());
 

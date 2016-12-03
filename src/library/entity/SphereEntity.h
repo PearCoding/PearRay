@@ -28,6 +28,9 @@ namespace PR
 		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
 		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+
+		// RenderEntity
+		virtual void setup(RenderContext* context) override;
 	private:
 		float mRadius;
 		Material* mMaterial;

@@ -130,6 +130,12 @@ namespace PR
 			e->freeze();
 	}
 
+	void Scene::setup(RenderContext* context)
+	{
+		for (RenderEntity* e: mRenderEntities)
+			e->setup(context);
+	}
+
 	BoundingBox Scene::boundingBox() const
 	{
 		PR_ASSERT(mKDTree);

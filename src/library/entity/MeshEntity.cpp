@@ -122,4 +122,12 @@ namespace PR
 		mSurfaceArea_Cache = mMesh->surfaceArea(nullptr,
 				flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
 	}
+
+	void MeshEntity::setup(RenderContext* context)
+	{
+		RenderEntity::setup(context);
+		
+		if(mMaterialOverride)
+			mMaterialOverride->setup(context);
+	}
 }

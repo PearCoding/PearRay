@@ -131,4 +131,12 @@ namespace PR
 
 		return p;
 	}
+
+	void SphereEntity::setup(RenderContext* context)
+	{
+		RenderEntity::setup(context);
+		
+		if(mMaterial)
+			mMaterial->setup(context);
+	}
 }

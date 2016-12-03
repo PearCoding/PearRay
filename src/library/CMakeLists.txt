@@ -1,6 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(PR_Main_Src
+  CTP.cpp
   FileLogListener.cpp
   Logger.cpp)
 SET(PR_Camera_Src
@@ -101,6 +102,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
 )
 
 SET(PR_Main_Hdr
+  CTP.h
   Config.h.in
   FileLogListener.h
   Logger.h

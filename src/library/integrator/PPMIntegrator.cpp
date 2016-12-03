@@ -325,16 +325,17 @@ namespace PR
 							// Always store when diffuse
 							Photon::Photon photon;
 							PM::pm_Store3D(sc.P, photon.Position);
-							mPhotonMap->mapDirection(PM::pm_Negate(ray.direction()), photon.Theta, photon.Phi);
+							mPhotonMap->mapDirection(PM::pm_Negate(ray.direction()),
+								photon.Theta, photon.Phi);
 #if PR_PHOTON_RGB_MODE >= 1
-							RGBConverter::convert(radiance, photon.Power[0], photon.Power[1], photon.Power[2]);
+							RGBConverter::convert(radiance,
+								photon.Power[0], photon.Power[1], photon.Power[2]);
 #else
-							for(int i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-								photon.Power[i] = radiance.value(i);
+							radiance.copyTo(photon.Power);
 #endif
 							mPhotonMap->store(sc.P, photon);
-							photonsShoot++;
 
+							photonsShoot++;
 							diffuseBounces++;
 
 							if (diffuseBounces > mRenderer->settings().maxDiffuseBounces())
