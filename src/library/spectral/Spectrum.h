@@ -57,6 +57,7 @@ namespace PR
 		inline const float* ptr() const;
 
 		inline void fill(float v);
+		inline void fill(uint32 si, uint32 ei, float v);
 		inline void clear();
 
 		inline void copyTo(float* data) const;
@@ -85,6 +86,7 @@ namespace PR
 		float luminousFlux() const;
 
 		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K), Output W·sr^−1·m^−3
+		inline static Spectrum fromRectangularFunction(uint32 si, uint32 ei, float factor=1.0f);// si = start_index, ei = end_index
 
 	private:
 		float mValues[SAMPLING_COUNT];

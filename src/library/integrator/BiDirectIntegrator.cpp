@@ -120,9 +120,7 @@ namespace PR
 
 					for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 					{
-						PM::vec3 s = PM::pm_Set(context->random().getFloat(),
-								context->random().getFloat(),
-								context->random().getFloat());
+						PM::vec3 s = context->random().get3D();
 						PM::vec3 dir = other_sc.Material->sample(other_sc, s, pdf);
 
 						if (pdf <= PM_EPSILON)
@@ -191,15 +189,17 @@ namespace PR
 			float other_pdf = 0;
 			Spectrum other_weight;
 
+			const uint32 path_count = sc.Material->samplePathCount();
+			PR_ASSERT(path_count > 0);
 			PM::vec3 rnd = sampler.generate3D(i);
-			for(uint32 path = 0; path < sc.Material->samplePathCount() && !std::isinf(other_pdf); ++path)
+			for(uint32 path = 0; path < path_count && !std::isinf(other_pdf); ++path)
 			{
 				Spectrum weight;
 				float pdf;
-				float path_weight;
+				Spectrum path_weight;
 				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 
-				if(pdf > PM_EPSILON && path_weight > PM_EPSILON)
+				if(pdf > PM_EPSILON)
 				{
 					const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
@@ -214,11 +214,11 @@ namespace PR
 					}
 				}
 
-				other_pdf += path_weight*pdf;
+				other_pdf += pdf;
 				other_weight += path_weight*weight;
 			}
 
-			MSI::power(full_weight, full_pdf, other_weight, other_pdf);
+			MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);
 		}
 
 		if (!std::isinf(full_pdf))
@@ -251,7 +251,8 @@ namespace PR
 
 						const float pdf = sc.Material->pdf(sc, L, NdotL);
 
-						if (context->shoot(current, other_sc) == entity &&
+						if (pdf > PM_EPSILON && 
+								context->shoot(current, other_sc) == entity &&
 								PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
 							other_weight = lightFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
 						else

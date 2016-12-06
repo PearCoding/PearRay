@@ -285,9 +285,9 @@ namespace PR
 			return specular_path(point, rnd, pdf);
 	}
 
-	PM::vec3 CookTorranceMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& weight, uint32 path)
+	PM::vec3 CookTorranceMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, Spectrum& path_weight, uint32 path)
 	{
-		weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
+		path_weight.fill(mReflectivity ? mReflectivity->eval(point) : 0.5f);
 
 		if(path == 0)
 			return diffuse_path(point, rnd, pdf);

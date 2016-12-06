@@ -56,6 +56,9 @@ namespace PR
 			return intersect(ray, face.V[0], face.V[1], face.V[2], u, v, point, t);
 		}
 
+#define BETWEEN_EXCLUSIVE(v, lower, upper) (((v) - (lower)) < ((upper) - (lower)))
+#define BETWEEN_INCLUSIVE(v, lower, upper) (((v) - (lower)) <= ((upper) - (lower)))
+
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 0
 		// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 		inline static bool intersect(const Ray& ray, const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3,
@@ -68,20 +71,23 @@ namespace PR
 			const PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
 			float a = PM::pm_Dot3D(e12, q);
 
-			if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
+			//if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
+			if (BETWEEN_EXCLUSIVE(a, -PR_TRIANGLE_INTERSECT_EPSILON, PR_TRIANGLE_INTERSECT_EPSILON)) // Single branching
 				return false;
 
 			float f = 1.0f / a;
 			const PM::vec3 s = PM::pm_Subtract(ray.startPosition(), p1);
 			u = f*PM::pm_Dot3D(s, q);
 
-			if (u < 0 || u > 1)
+			// u < 0 || u > 1
+			if (!BETWEEN_INCLUSIVE(u, 0, 1))
 				return false;
 
 			const PM::vec3 r = PM::pm_Cross3D(s, e12);
 			v = f*PM::pm_Dot3D(ray.direction(), r);
 
-			if (v < 0 || u + v > 1)
+			// v < 0 || u + v > 1
+			if (!BETWEEN_INCLUSIVE(v, 0, 1-u))
 				return false;
 			
 			t = f*PM::pm_Dot3D(e13, r);

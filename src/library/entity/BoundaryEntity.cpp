@@ -85,7 +85,7 @@ namespace PR
 		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
 
 		BoundingBox box = localBoundingBox();
@@ -93,7 +93,7 @@ namespace PR
 		BoundingBox::FaceSide side;
 		if (box.intersects(local, vertex, t, side))
 		{
-			collisionPoint.P = PM::pm_Transform(matrix(), vertex);
+			collisionPoint.P = PM::pm_Multiply(matrix(), vertex);
 
 			Plane plane = box.getFace(side);
 			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));

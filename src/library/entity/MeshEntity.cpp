@@ -83,13 +83,13 @@ namespace PR
 
 		// Local space
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
 		
 		if (mMesh->checkCollision(local, collisionPoint))
 		{
-			collisionPoint.P = PM::pm_Transform(matrix(), collisionPoint.P);
-			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(directionMatrix(), collisionPoint.Ng));
+			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
+			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), collisionPoint.Ng));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			if(mMaterialOverride)
@@ -108,8 +108,8 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		FaceSample point = mMesh->getRandomFacePoint(sampler, sample, pdf);
-		point.Ng = PM::pm_Normalize3D(PM::pm_Transform(directionMatrix(), point.Ng));
-		point.P = PM::pm_Transform(matrix(), point.P);
+		point.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), point.Ng));
+		point.P = PM::pm_Multiply(matrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 
 		return point;

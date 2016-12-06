@@ -78,7 +78,7 @@ namespace PR
 		return dir;
 	}
 
-	PM::vec3 GlassMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& weight, uint32 path)
+	PM::vec3 GlassMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, Spectrum& path_weight, uint32 path)
 	{
 		uint32 lambda = 0;
 		if(mSampleIOR)
@@ -89,7 +89,7 @@ namespace PR
 			lambda = PM::pm_GetX(rnd)*Spectrum::SAMPLING_COUNT;
 
 		const float ind = mIndex ? mIndex->eval(point).value(lambda) : 1.55f;
-		weight = (point.Flags & SCF_Inside) == 0 ?
+		float weight = (point.Flags & SCF_Inside) == 0 ?
 			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
 		
 		PM::vec3 dir;
@@ -102,7 +102,15 @@ namespace PR
 		}
 
 		if(mSampleIOR)
-			weight /= mIntervalCount_Cache;
+		{
+			const uint32 index = (path/2)*mIntervalLength_Cache;
+			path_weight = Spectrum::fromRectangularFunction(index, index+mIntervalLength_Cache) * weight;
+			//weight /= mIntervalCount_Cache;
+		}
+		else
+		{
+			path_weight.fill(weight);
+		}
 
 		pdf = std::numeric_limits<float>::infinity();
 		return dir;

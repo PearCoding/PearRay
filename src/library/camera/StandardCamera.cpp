@@ -166,11 +166,11 @@ namespace PR
 		Camera::onFreeze();
 
 		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(
-			PM::pm_Transform(directionMatrix(), mLocalDirection)), 0);
+			PM::pm_Multiply(directionMatrix(), mLocalDirection)), 0);
 		mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(
-			PM::pm_Transform(directionMatrix(), mLocalRight)), 0);
+			PM::pm_Multiply(directionMatrix(), mLocalRight)), 0);
 		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(
-			PM::pm_Transform(directionMatrix(), mLocalUp)), 0);
+			PM::pm_Multiply(directionMatrix(), mLocalUp)), 0);
 
 		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
 			name().c_str(),

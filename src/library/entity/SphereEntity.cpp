@@ -92,8 +92,8 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
 
 		Sphere sphere(PM::pm_Zero(), mRadius);
 		float t;
@@ -101,9 +101,9 @@ namespace PR
 		if (!sphere.intersects(local, collisionPos, t))
 			return false;
 
-		collisionPoint.P = PM::pm_Transform(matrix(), collisionPos);
+		collisionPoint.P = PM::pm_Multiply(matrix(), collisionPos);
 
-		collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Transform(directionMatrix(), collisionPos));
+		collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), collisionPos));
 		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), collisionPoint.Ng));
@@ -125,7 +125,7 @@ namespace PR
 		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), n));
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		p.P = PM::pm_Transform(matrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
+		p.P = PM::pm_Multiply(matrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
 		p.UV = Projection::sphereUV(p.Ng);
 		p.Material = material();
 

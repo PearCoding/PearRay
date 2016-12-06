@@ -543,10 +543,10 @@ namespace PR
 		for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
 		{
 			float pdf;
-			float path_weight;
+			Spectrum path_weight;
 			PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 
-			if(path_weight <= PM_EPSILON)
+			if(pdf <= PM_EPSILON)
 				continue;
 			
 			Spectrum other_weight;

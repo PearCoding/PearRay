@@ -3,7 +3,7 @@
 #include "Config.h"
 #include <string>
 
-#ifndef PR_NO_GPU
+#ifdef PR_WITH_GPU
 # define __CL_ENABLE_EXCEPTIONS
 # include <CL/cl.hpp>
 # include <map>
@@ -19,7 +19,7 @@ namespace PR
 
 		bool init(const std::string& profile);
 
-#ifndef PR_NO_GPU
+#ifdef PR_WITH_GPU
 		inline cl::Platform& platform()
 		{
 			return mPlatform;
@@ -44,7 +44,7 @@ namespace PR
 #endif
 
 	private:
-#ifndef PR_NO_GPU
+#ifdef PR_WITH_GPU
 		void addSource(const std::string& name, const std::string& source,
 			const std::string& defs);
 

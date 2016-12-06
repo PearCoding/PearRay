@@ -32,7 +32,7 @@ namespace PRT
 			mCount = 0;
 		}
 
-		inline void assert(bool cond, const std::string& msg, const std::string& func, int line)
+		inline void check(bool cond, const std::string& msg, const std::string& func, int line)
 		{
 			if (!cond)
 			{
@@ -131,14 +131,14 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected " << (expected) << " but got " << (value); \
-		_test->assert((value) == (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) == (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_EQ_2(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << "] but got [" << PM::pm_GetX((value)) << ", " << PM::pm_GetY((value)) << "]"; \
-		_test->assert(PM::pm_GetX((value)) == PM::pm_GetX((expected)) && PM::pm_GetY((value)) == PM::pm_GetY((expected)), \
+		_test->check(PM::pm_GetX((value)) == PM::pm_GetX((expected)) && PM::pm_GetY((value)) == PM::pm_GetY((expected)), \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
@@ -146,7 +146,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << "] but got [" << PM::pm_GetX((value)) << ", " << PM::pm_GetY((value)) << ", " << PM::pm_GetZ((value)) << "]"; \
-		_test->assert(PM::pm_GetX((value)) == PM::pm_GetX((expected)) && PM::pm_GetY((value)) == PM::pm_GetY((expected)) && PM::pm_GetZ((value)) == PM::pm_GetZ((expected)), \
+		_test->check(PM::pm_GetX((value)) == PM::pm_GetX((expected)) && PM::pm_GetY((value)) == PM::pm_GetY((expected)) && PM::pm_GetZ((value)) == PM::pm_GetZ((expected)), \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
@@ -154,7 +154,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << ", " << PM::pm_GetW((expected)) << "] but got [" << PM::pm_GetX((value)) << ", " << PM::pm_GetY((value)) << ", " << PM::pm_GetZ((value)) << ", " << PM::pm_GetW((value)) << "]"; \
-		_test->assert(PM::pm_GetX((value)) == PM::pm_GetX((expected)) && PM::pm_GetY((value)) == PM::pm_GetY((expected)) && PM::pm_GetZ((value)) == PM::pm_GetZ((expected)) && PM::pm_GetW((value)) == PM::pm_GetW((expected)), \
+		_test->check(PM::pm_GetX((value)) == PM::pm_GetX((expected)) && PM::pm_GetY((value)) == PM::pm_GetY((expected)) && PM::pm_GetZ((value)) == PM::pm_GetZ((expected)) && PM::pm_GetW((value)) == PM::pm_GetW((expected)), \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
@@ -162,14 +162,14 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected " << (expected) << " but got it"; \
-		_test->assert((value) != (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) != (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NOT_EQ_2(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << "] but got it"; \
-		_test->assert(PM::pm_GetX((value)) != PM::pm_GetX((expected)) || PM::pm_GetY((value)) != PM::pm_GetY((expected)), \
+		_test->check(PM::pm_GetX((value)) != PM::pm_GetX((expected)) || PM::pm_GetY((value)) != PM::pm_GetY((expected)), \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
@@ -177,7 +177,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << "] but got it"; \
-		_test->assert(PM::pm_GetX((value)) != PM::pm_GetX((expected)) || PM::pm_GetY((value)) != PM::pm_GetY((expected)) || PM::pm_GetZ((value)) != PM::pm_GetZ((expected)), \
+		_test->check(PM::pm_GetX((value)) != PM::pm_GetX((expected)) || PM::pm_GetY((value)) != PM::pm_GetY((expected)) || PM::pm_GetZ((value)) != PM::pm_GetZ((expected)), \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
@@ -185,7 +185,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << ", " << PM::pm_GetW((expected)) << "] but got it"; \
-		_test->assert(PM::pm_GetX((value)) != PM::pm_GetX((expected)) || PM::pm_GetY((value)) != PM::pm_GetY((expected)) || PM::pm_GetZ((value)) != PM::pm_GetZ((expected)) || PM::pm_GetW((value)) != PM::pm_GetW((expected)), \
+		_test->check(PM::pm_GetX((value)) != PM::pm_GetX((expected)) || PM::pm_GetY((value)) != PM::pm_GetY((expected)) || PM::pm_GetZ((value)) != PM::pm_GetZ((expected)) || PM::pm_GetW((value)) != PM::pm_GetW((expected)), \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
@@ -193,42 +193,42 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected less then " << (expected) << " but got " << (value); \
-		_test->assert((value) < (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) < (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_LESS_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected less or equal then " << (expected) << " but got " << (value); \
-		_test->assert((value) <= (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) <= (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_GREAT(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected greater then " << (expected) << " but got " << (value); \
-		_test->assert((value) > (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) > (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_GREAT_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected greater or equal then " << (expected) << " but got " << (value); \
-		_test->assert((value) >= (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) >= (expected), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NEARLY_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected (nearly) " << (expected) << " but got " << (value); \
-		_test->assert(std::abs((value) - (expected)) <= PRT_EPSILON, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check(std::abs((value) - (expected)) <= PRT_EPSILON, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NEARLY_EQ_2(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected (nearly) [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << "] but got [" << PM::pm_GetX((value)) << ", " << PM::pm_GetY((value)) << "]"; \
-		_test->assert(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON && \
+		_test->check(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON && \
 		 std::abs(PM::pm_GetY((value)) - PM::pm_GetY((expected))) <= PRT_EPSILON, \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
@@ -237,7 +237,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected (nearly) [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << "] but got [" << PM::pm_GetX((value)) << ", " << PM::pm_GetY((value)) << ", " << PM::pm_GetZ((value)) << "]"; \
-		_test->assert(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON && \
+		_test->check(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON && \
 		 std::abs(PM::pm_GetY((value)) - PM::pm_GetY((expected))) <= PRT_EPSILON && \
 		std::abs(PM::pm_GetZ((value)) - PM::pm_GetZ((expected))) <= PRT_EPSILON, \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
@@ -247,7 +247,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected (nearly) [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << ", " << PM::pm_GetW((expected)) << "] but got [" << PM::pm_GetX((value)) << ", " << PM::pm_GetY((value)) << ", " << PM::pm_GetZ((value)) << ", " << PM::pm_GetW((value)) << "]"; \
-		_test->assert(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON && \
+		_test->check(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON && \
 		std::abs(PM::pm_GetY((value)) - PM::pm_GetY((expected))) <= PRT_EPSILON && \
 		std::abs(PM::pm_GetZ((value)) - PM::pm_GetZ((expected))) <= PRT_EPSILON && \
 		std::abs(PM::pm_GetW((value)) - PM::pm_GetW((expected))) <= PRT_EPSILON, \
@@ -258,14 +258,14 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected (nearly) " << (expected) << " but got it"; \
-		_test->assert(std::abs((value) - (expected)) > std::numeric_limits<float>::epsilon(), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check(std::abs((value) - (expected)) > std::numeric_limits<float>::epsilon(), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NOT_NEARLY_EQ_2(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected (nearly) [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << "] but got it"; \
-		_test->assert(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) > PRT_EPSILON || \
+		_test->check(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) > PRT_EPSILON || \
 		 std::abs(PM::pm_GetY((value)) - PM::pm_GetY((expected))) > PRT_EPSILON, \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
@@ -274,7 +274,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected (nearly) [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << "] but got it"; \
-		_test->assert(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON || \
+		_test->check(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) <= PRT_EPSILON || \
 		 std::abs(PM::pm_GetY((value)) - PM::pm_GetY((expected))) > PRT_EPSILON || \
 		std::abs(PM::pm_GetZ((value)) - PM::pm_GetZ((expected))) > PRT_EPSILON, \
 		_stream.str(), PR_FUNCTION_NAME, __LINE__); \
@@ -284,7 +284,7 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected (nearly) [" << PM::pm_GetX((expected)) << ", " << PM::pm_GetY((expected)) << ", " << PM::pm_GetZ((expected)) << ", " << PM::pm_GetW((expected)) << "] but got it"; \
-		_test->assert(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) > PRT_EPSILON || \
+		_test->check(std::abs(PM::pm_GetX((value)) - PM::pm_GetX((expected))) > PRT_EPSILON || \
 		std::abs(PM::pm_GetY((value)) - PM::pm_GetY((expected))) > PRT_EPSILON || \
 		std::abs(PM::pm_GetZ((value)) - PM::pm_GetZ((expected))) > PRT_EPSILON || \
 		std::abs(PM::pm_GetW((value)) - PM::pm_GetW((expected))) > PRT_EPSILON, \
@@ -295,28 +295,28 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected NULL but not got it"; \
-		_test->assert((value) == nullptr, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) == nullptr, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NOT_NULL(value) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected NULL but got it"; \
-		_test->assert((value) != nullptr, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) != nullptr, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_TRUE(value) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected true but got false"; \
-		_test->assert((value) == true, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) == true, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_FALSE(value) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected false but got true"; \
-		_test->assert((value) == false, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check((value) == false, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PRT_BEGIN_MAIN \

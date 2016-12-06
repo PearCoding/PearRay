@@ -32,9 +32,9 @@ namespace PR
 		/*
 		 Sample a direction based on the uniform rnd value. (Non roussian roulette)
 		*/
-		virtual PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& weight, uint32 path)
+		virtual PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, Spectrum& path_weight, uint32 path)
 		{
-			weight = 1;
+			path_weight.fill(1);
 			return sample(point, rnd, pdf);
 		}
 

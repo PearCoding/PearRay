@@ -49,16 +49,16 @@ namespace PR
 		{
 			Spectrum other_weight;
 			float other_pdf = 0;
+			const uint32 path_count = sc.Material->samplePathCount();
+			PR_ASSERT(path_count > 0);
+			
 			PM::vec3 rnd = hemiSampler.generate3D(i);
-			for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
+			for(uint32 path = 0; path < path_count; ++path)
 			{
-				float path_weight;
+				Spectrum path_weight;
 				float pdf;
 
-				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-				if(path_weight <= PM_EPSILON)
-					continue;
-				
+				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);				
 				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
 				if (pdf > PM_EPSILON)
@@ -79,9 +79,9 @@ namespace PR
 					}					
 				}
 
-				other_pdf += path_weight * pdf;
+				other_pdf += pdf;
 			}
-			MSI::power(full_weight, full_pdf, other_weight, other_pdf);
+			MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);
 		}
 
 		if (!std::isinf(full_pdf))

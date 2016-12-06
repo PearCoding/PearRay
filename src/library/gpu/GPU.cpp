@@ -25,7 +25,7 @@ namespace PR
 	{
 	}
 
-#ifndef PR_NO_GPU
+#ifdef PR_WITH_GPU
 	const char* GPU::error(cl_int err)
 	{
 		switch (err)
@@ -102,7 +102,7 @@ namespace PR
 		default: return "Unknown OpenCL error";
 		}
 	}
-#endif
+#endif//PR_WITH_GPU
 
 //#define PR_GPU_DEBUG
 
@@ -141,7 +141,7 @@ namespace PR
 
 	bool GPU::init(const std::string& profile)
 	{
-#ifdef PR_NO_GPU
+#ifndef PR_WITH_GPU
 		return false;
 #else
 		std::vector<cl::Platform> platforms;
@@ -306,7 +306,7 @@ namespace PR
 #endif
 	}
 
-#ifndef PR_NO_GPU
+#ifdef PR_WITH_GPU
 	void GPU::addSource(const std::string& name, const std::string& source,
 		const std::string& defs)
 	{
@@ -341,5 +341,5 @@ namespace PR
 			}
 		}
 	}
-#endif//PR_NO_GPU
+#endif//PR_WITH_GPU
 }

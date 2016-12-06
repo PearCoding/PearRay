@@ -158,8 +158,12 @@ namespace PR
 		// Returns barycentric coordinates
 		static inline PM::vec2 triangle(float u1, float u2)
 		{
-			const float t = std::sqrt(u1);
-			return PM::pm_Set(1 - t, u2 * t);
+			// Simplex method
+			return u1 < u2 ? 
+				PM::pm_Set(u1, u2 - u1) :
+				PM::pm_Set(u2, u1 - u2) ;
+			//const float t = std::sqrt(u1);
+			//return PM::pm_Set(1 - t, u2 * t);
 		}
 	};
 }

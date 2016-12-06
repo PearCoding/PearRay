@@ -84,13 +84,13 @@ namespace PR
 
 		// Local space
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
 
 		float t;
 		if (mPlane.intersects(local, pos, t, u, v))
 		{
-			collisionPoint.P = PM::pm_Transform(matrix(), pos);
+			collisionPoint.P = PM::pm_Multiply(matrix(), pos);
 
 			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), mPlane.normal()));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);

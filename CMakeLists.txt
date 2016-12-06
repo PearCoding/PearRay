@@ -35,13 +35,13 @@ ENDIF()
 #PACKAGES
 option(PR_ONLY_LIBRARY "Compile only the main and util library." OFF)
 option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
-option(PR_NO_GPU "Build framework with only CPU support." OFF)
-option(PR_NO_NETWORK "Disable network support." OFF)
+option(PR_WITH_ASSERTS "Compile with asserts on. Disable only in deployment code!" ON)
+option(PR_WITH_GPU "Build framework with GPU support if available." ON)
+#option(PR_WITH_NETWORK "Enable network support." ON)
 option(PR_USE_TRIANGLE_WATERTIGHT "Use Watertight triangle intersection algorithm instead of Trombore." OFF)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
 option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
-option(PR_WITH_ASSERTS "Compile with asserts on. Disable only in deployment code!" ON)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -50,10 +50,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(Boost_USE_MULTITHREADED ON)
 #set(BOOST_ALL_DYN_LINK ON)
-
-#IF(NOT PR_NO_NETWORK)
-#	find_package(Asio)
-#ENDIF()
 
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
 find_package(Qt5Widgets)
@@ -97,6 +93,16 @@ ELSEIF(CMAKE_COMPILER_IS_GNUCXX)
     ELSE ()
         message(WARNING "C++11 needed. Build can fail.")   
     ENDIF ()
+ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+	# We do not check version any further.
+	if(VERBOSE)
+		message(STATUS "C++11 activated.")
+	endif()
+	IF(WIN32)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qstd=c++11")
+	ELSE()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	ENDIF()
 ELSEIF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	# We do not check version any further.
 	if(VERBOSE)
@@ -124,15 +130,15 @@ add_subdirectory(datalisp)
 
 SET(DEFS "${DEFS};${PM_DEFS}")
 SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PM_COMPILE_FLAGS}")
 
 IF(WIN32)
 	SET(DEFS ${DEFS} OPENEXR_DLL)
 ENDIF()
 
-IF((NOT OpenCL_FOUND) OR PR_NO_GPU)
-	SET(DEFS "${DEFS};PR_NO_GPU")
+IF(NOT OpenCL_FOUND)
+	UNSET(PR_WITH_GPU)
 ELSE()
-	SET(DEFS "${DEFS};PR_WITH_GPU")
 	MESSAGE(STATUS "Using OpenCL")
 ENDIF()
 
@@ -143,10 +149,6 @@ ENDIF()
 IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
 	SET(DEFS "${DEFS};PR_WITH_VIEWER")
 ENDIF()
-
-#IF(ASIO_FOUND)
-#	SET(DEFS "${DEFS};PR_WITH_NETWORK")
-#ENDIF()
 
 IF(PR_BUILD_PROFILE)
 	SET(DEFS "${DEFS};PR_PROFILE")
@@ -164,18 +166,13 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
 			src/library)
 
-IF(OpenCL_FOUND AND NOT PR_NO_GPU)
+IF(OpenCL_FOUND AND PR_WITH_GPU)
 	include_directories(${OpenCL_INCLUDE_DIRS})
 ENDIF()
 
 # Libraries
 add_subdirectory(src/library)
 add_subdirectory(src/utils)
-
-#IF(ASIO_FOUND)
-#	include_directories(${ASIO_INCLUDE_DIR})
-#	add_subdirectory(src/network)
-#ENDIF()
 
 IF(OSL_FOUND)
 	include_directories(${OSL_INCLUDE_DIR})

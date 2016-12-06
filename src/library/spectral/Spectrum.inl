@@ -1,8 +1,9 @@
 namespace PR
 {
-	inline Spectrum::Spectrum()
+	inline Spectrum::Spectrum() :
+		Spectrum(0.0f)
 	{
-		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
+		//std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
 	inline Spectrum::Spectrum(float f)
@@ -12,7 +13,7 @@ namespace PR
 
 	inline Spectrum::Spectrum(const float* data)
 	{
-		std::memcpy(mValues, data, sizeof(float)*SAMPLING_COUNT);
+		std::copy(data, data+SAMPLING_COUNT, mValues);
 	}
 
 	inline Spectrum::~Spectrum()
@@ -21,12 +22,12 @@ namespace PR
 
 	inline Spectrum::Spectrum(const Spectrum& spec)
 	{
-		std::memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
+		std::copy(spec.mValues, spec.mValues+SAMPLING_COUNT, mValues);
 	}
 
 	inline Spectrum& Spectrum::operator = (const Spectrum& spec)
 	{
-		std::memcpy(mValues, spec.mValues, sizeof(float)*SAMPLING_COUNT);
+		std::copy(spec.mValues, spec.mValues+SAMPLING_COUNT, mValues);
 		return *this;
 	}
 
@@ -149,15 +150,21 @@ namespace PR
 	{
 		std::fill_n(mValues, SAMPLING_COUNT, v);
 	}
+	
+	inline void Spectrum::fill(uint32 si, uint32 ei, float v)
+	{
+		PR_ASSERT(si < ei);
+		std::fill_n(&mValues[si], ei - si, v);
+	}
 
 	inline void Spectrum::clear()
 	{
-		std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
+		fill(0);
 	}
 
 	inline void Spectrum::copyTo(float* data) const
 	{
-		std::memcpy(data, mValues, sizeof(float)*SAMPLING_COUNT);
+		std::copy(mValues, mValues+SAMPLING_COUNT, data);
 	}
 
 	inline float Spectrum::max() const
@@ -288,6 +295,14 @@ namespace PR
 		}
 
 		return true;
+	}
+
+	inline Spectrum Spectrum::fromRectangularFunction(uint32 si, uint32 ei, float factor)
+	{
+		PR_ASSERT(si < ei);
+		Spectrum spec;
+		spec.fill(si, ei, factor);
+		return spec;
 	}
 
 	// Global

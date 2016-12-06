@@ -51,7 +51,7 @@ namespace PR
 			mData[(y-mRenderer->offsetY())*mRenderer->width()+(x-mRenderer->offsetX())] = v;
 		}
 
-		inline T getFragment(uint32 x, uint32 y) const
+		inline const T& getFragment(uint32 x, uint32 y) const
 		{
 			PR_DEBUG_ASSERT(x >= mRenderer->offsetX() && x < mRenderer->offsetX() + mRenderer->width());
 			PR_DEBUG_ASSERT(y >= mRenderer->offsetY() && y < mRenderer->offsetY() + mRenderer->height());
@@ -65,7 +65,7 @@ namespace PR
 			mData[y*mRenderer->width()+x] = v;
 		}
 
-		inline T getFragmentBounded(uint32 x, uint32 y) const
+		inline const T& getFragmentBounded(uint32 x, uint32 y) const
 		{
 			PR_DEBUG_ASSERT(x < mRenderer->width());
 			PR_DEBUG_ASSERT(y < mRenderer->height());
