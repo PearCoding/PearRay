@@ -12,6 +12,9 @@ namespace PR
 
 		bool sampleIOR() const;
 		void setSampleIOR(bool b);
+
+		bool isThin() const;
+		void setThin(bool b);
 		
 		SpectralShaderOutput* specularity() const;
 		void setSpecularity(SpectralShaderOutput* spec);
@@ -31,9 +34,11 @@ namespace PR
 		SpectralShaderOutput* mSpecularity;
 		SpectralShaderOutput* mIndex;
 		bool mSampleIOR;
+		bool mThin;
 
 		// Cache:
 		uint32 mIntervalCount_Cache;
 		uint32 mIntervalLength_Cache;
+		uint32 mPathCount_Cache;
 	};
 }

@@ -23,6 +23,7 @@ namespace PRU
 		DL::Data specD = group->getFromKey("specularity");
 		DL::Data indexD = group->getFromKey("index");
 		DL::Data sampleIORD = group->getFromKey("sample_index");
+		DL::Data thinD = group->getFromKey("thin");
 
 		GlassMaterial* diff = new GlassMaterial(env->materialCount() + 1);
 
@@ -31,6 +32,9 @@ namespace PRU
 
 		if(sampleIORD.type() == DL::Data::T_Bool)
 			diff->setSampleIOR(sampleIORD.getBool());
+
+		if(thinD.type() == DL::Data::T_Bool)
+			diff->setThin(thinD.getBool());
 
 		return diff;
 	}

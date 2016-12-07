@@ -15,7 +15,8 @@ namespace PR
 {
 	GlassMaterial::GlassMaterial(uint32 id) :
 		Material(id), 
-		mSpecularity(nullptr), mIndex(nullptr), mSampleIOR(false)
+		mSpecularity(nullptr), mIndex(nullptr), mSampleIOR(false), mThin(false),
+		mIntervalCount_Cache(0), mIntervalLength_Cache(0), mPathCount_Cache(0)
 	{
 	}
 	
@@ -27,6 +28,16 @@ namespace PR
 	void GlassMaterial::setSampleIOR(bool b)
 	{
 		mSampleIOR = b;
+	}
+	
+	bool GlassMaterial::isThin() const
+	{
+		return mThin;
+	}
+
+	void GlassMaterial::setThin(bool b)
+	{
+		mThin = b;
 	}
 
 	SpectralShaderOutput* GlassMaterial::specularity() const
@@ -68,13 +79,19 @@ namespace PR
 		float weight = (point.Flags & SCF_Inside) == 0 ?
 			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
 		
+		bool total = false;
 		PM::vec3 dir;
 		if (PM::pm_GetY(rnd) < weight)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		else
-			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind, point.NdotV, point.N, point.V);
+		{
+			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind,
+				point.NdotV, point.N, point.V, total);
+			if(!mThin && total)
+				dir = Reflection::reflect(point.NdotV, point.N, point.V);
+		}
 
-		pdf = std::numeric_limits<float>::infinity();
+		pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
 		return dir;
 	}
 
@@ -92,13 +109,17 @@ namespace PR
 		float weight = (point.Flags & SCF_Inside) == 0 ?
 			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
 		
+		bool total = false;
 		PM::vec3 dir;
 		if (path % 2 == 0)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		else
 		{
 			weight = 1-weight;
-			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind, point.NdotV, point.N, point.V);
+			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind,
+				point.NdotV, point.N, point.V, total);
+			if(!mThin && total)
+				dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		}
 
 		if(mSampleIOR)
@@ -112,13 +133,13 @@ namespace PR
 			path_weight.fill(weight);
 		}
 
-		pdf = std::numeric_limits<float>::infinity();
+		pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
 		return dir;
 	}
 
 	uint32 GlassMaterial::samplePathCount() const
 	{
-		return (mIndex && mSampleIOR) ? 2*mIntervalCount_Cache : 2;
+		return mPathCount_Cache;
 	}
 
 	typedef CTP::Divisor<Spectrum::SAMPLING_COUNT> SCDivisor;
@@ -129,7 +150,8 @@ namespace PR
 			0, SCDivisor::length-1)];
 		
 		mIntervalLength_Cache = Spectrum::SAMPLING_COUNT / mIntervalCount_Cache;
-	
+		mPathCount_Cache = (mIndex && mSampleIOR) ? 2*mIntervalCount_Cache : 2;
+
 		PR_LOGGER.logf(L_Info, M_Material,
 			"Glass Interval Length %i -> Count %i",
 				mIntervalLength_Cache, mIntervalCount_Cache);

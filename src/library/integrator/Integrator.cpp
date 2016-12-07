@@ -38,27 +38,27 @@ namespace PR
 				PM::vec3 rnd = sampler.generate3D(i);
 				PM::vec3 dir = e->sample(sc, rnd, pdf);
 
-				if(pdf > PM_EPSILON)
+				if(pdf <= PM_EPSILON)
+					continue;
+
+				Spectrum weight;
+				const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
+
+				if (NdotL > PM_EPSILON)
 				{
-					Spectrum weight;
-					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
+					RenderEntity* entity;
 
-					if (NdotL > PM_EPSILON)
-					{
-						RenderEntity* entity;
+					Ray ray = in.next(sc.P, dir);
+					ray.setFlags(ray.flags() | RF_FromLight);
 
-						Ray ray = in.next(sc.P, dir);
-						ray.setFlags(ray.flags() | RF_FromLight);
-
-						weight = handleSpecularPath(ray, sc, context, entity);
-						if (!entity)
-							weight *= sc.Material->eval(sc, dir, NdotL) * e->apply(dir) * NdotL;
-						else
-							weight.clear();
-					}
-
-					MSI::power(semi_weight, semi_pdf, weight, pdf);
+					weight = handleSpecularPath(ray, sc, context, entity);
+					if (!entity)
+						weight *= sc.Material->eval(sc, dir, NdotL) * e->apply(dir) * NdotL;
+					else
+						weight.clear();
 				}
+
+				MSI::power(semi_weight, semi_pdf, weight, pdf);
 			}
 			
 			MSI::balance(full_weight, full_pdf, semi_weight, std::isinf(semi_pdf) ? 1 : semi_pdf);

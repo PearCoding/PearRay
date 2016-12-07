@@ -59,26 +59,22 @@ namespace PR
 				float pdf;
 
 				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);				
-				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+				const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
 
-				if (pdf > PM_EPSILON)
-				{
-					if (NdotL > PM_EPSILON)
-					{
-						Spectrum weight;
-						Ray ray = in.next(sc.P, dir);
+				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON)
+					continue;
 
-						RenderEntity* entity = context->shootWithEmission(weight, ray, other_sc);
-						if (entity && other_sc.Material &&
-							(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))						
-							weight += applyRay(ray, other_sc, context,
-								!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
+				Spectrum weight;
+				Ray ray = in.next(sc.P, dir);
 
-						weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
-						other_weight += path_weight*weight;
-					}					
-				}
+				RenderEntity* entity = context->shootWithEmission(weight, ray, other_sc);
+				if (entity && other_sc.Material &&
+					(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))						
+					weight += applyRay(ray, other_sc, context,
+						!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
 
+				weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
+				other_weight += path_weight*weight;			
 				other_pdf += pdf;
 			}
 			MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);

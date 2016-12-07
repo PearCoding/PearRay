@@ -71,23 +71,23 @@ namespace PR
 			const PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
 			float a = PM::pm_Dot3D(e12, q);
 
-			//if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
-			if (BETWEEN_EXCLUSIVE(a, -PR_TRIANGLE_INTERSECT_EPSILON, PR_TRIANGLE_INTERSECT_EPSILON)) // Single branching
+			if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
+			//if (BETWEEN_EXCLUSIVE(a, -PR_TRIANGLE_INTERSECT_EPSILON, PR_TRIANGLE_INTERSECT_EPSILON)) // Single branching
 				return false;
 
 			float f = 1.0f / a;
 			const PM::vec3 s = PM::pm_Subtract(ray.startPosition(), p1);
 			u = f*PM::pm_Dot3D(s, q);
 
-			// u < 0 || u > 1
-			if (!BETWEEN_INCLUSIVE(u, 0, 1))
+			if (u < 0 || u > 1)
+			//if (!BETWEEN_INCLUSIVE(u, 0, 1))
 				return false;
 
 			const PM::vec3 r = PM::pm_Cross3D(s, e12);
 			v = f*PM::pm_Dot3D(ray.direction(), r);
 
-			// v < 0 || u + v > 1
-			if (!BETWEEN_INCLUSIVE(v, 0, 1-u))
+			if (v < 0 || u + v > 1) 
+			//if (!BETWEEN_INCLUSIVE(v, 0, 1-u))
 				return false;
 			
 			t = f*PM::pm_Dot3D(e13, r);

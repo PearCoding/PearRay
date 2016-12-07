@@ -175,6 +175,8 @@ namespace PR
 		// Temporary
 		ShaderClosure other_sc;
 		Spectrum other_weight;
+		Spectrum path_weight;
+			Spectrum weight;
 
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
 		if (!entity || !sc.Material || !sc.Material->canBeShaded())
@@ -187,32 +189,24 @@ namespace PR
 			 ++i)
 		{
 			float other_pdf = 0;
-			Spectrum other_weight;
-
 			const uint32 path_count = sc.Material->samplePathCount();
 			PR_ASSERT(path_count > 0);
 			PM::vec3 rnd = sampler.generate3D(i);
 			for(uint32 path = 0; path < path_count && !std::isinf(other_pdf); ++path)
 			{
-				Spectrum weight;
 				float pdf;
-				Spectrum path_weight;
 				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
+				const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
 
-				if(pdf > PM_EPSILON)
-				{
-					const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+				if(pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
+				 !(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
+					continue;
 
-					if (NdotL > PM_EPSILON &&
-						(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
-					{
-						weight = applyRay(in.next(sc.P, dir),
-							context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces,
-							other_sc);
+				weight = applyRay(in.next(sc.P, dir),
+						context, !std::isinf(pdf) ? diffBounces + 1 : diffBounces,
+						other_sc);
 
-						weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
-					}
-				}
+				weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
 
 				other_pdf += pdf;
 				other_weight += path_weight*weight;
