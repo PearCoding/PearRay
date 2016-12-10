@@ -10,7 +10,7 @@ namespace PR
 		mGatheringMode(PGM_Sphere),
 		mSqueezeWeight(0),
 		mContractRatio(0.3f),
-		mProjectionMapWeight(0.9f),
+		mProjectionMapWeight(0.0f),// Disable for now
 		mProjectionMapQuality(0.7f),
 		mProjectionMapPreferCaustic(0.2f)
 	{

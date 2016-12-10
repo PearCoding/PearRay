@@ -30,7 +30,7 @@ namespace PRU
 
 		void setup(PR::RenderContext* renderer);
 
-		void parse(SceneLoader* loader, Environment* env, DL::DataGroup* group);
+		void parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group);
 		void save(PR::RenderContext* renderer, PR::ToneMapper& toneMapper, bool force = false) const;
 
 	private:

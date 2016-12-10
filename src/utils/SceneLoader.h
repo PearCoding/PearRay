@@ -11,7 +11,6 @@
 namespace DL
 {
 	class Data;
-	class DataArray;
 	class DataGroup;
 }
 
@@ -33,7 +32,7 @@ namespace PRU
 		Environment* loadFromFile(const std::string& path);
 		Environment* load(const std::string& source);
 
-		PM::vec3 getVector(DL::DataArray* arr, bool& ok) const;
+		PM::vec3 getVector(const DL::DataGroup& arr, bool& ok) const;
 		PM::quat getRotation(const DL::Data& data, bool& ok) const;
 
 		PR::SpectralShaderOutput* getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false) const;
@@ -41,12 +40,12 @@ namespace PRU
 		PR::VectorShaderOutput* getVectorOutput(Environment* env, const DL::Data& data) const;
 
 	private:
-		void addEntity(DL::DataGroup* group, PR::Entity* parent, Environment* env);
-		void addLight(DL::DataGroup* group, Environment* env);
-		void addMaterial(DL::DataGroup* group, Environment* env);
-		void addTexture(DL::DataGroup* group, Environment* env);
-		void addSpectrum(DL::DataGroup* group, Environment* env);
-		void addSubGraph(DL::DataGroup* group, Environment* env);
-		void addMesh(DL::DataGroup* group, Environment* env);
+		void addEntity(const DL::DataGroup& group, PR::Entity* parent, Environment* env);
+		void addLight(const DL::DataGroup& group, Environment* env);
+		void addMaterial(const DL::DataGroup& group, Environment* env);
+		void addTexture(const DL::DataGroup& group, Environment* env);
+		void addSpectrum(const DL::DataGroup& group, Environment* env);
+		void addSubGraph(const DL::DataGroup& group, Environment* env);
+		void addMesh(const DL::DataGroup& group, Environment* env);
 	};
 }

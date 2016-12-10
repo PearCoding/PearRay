@@ -90,18 +90,15 @@ namespace PR
 
 		PR_LOGGER.logf(L_Info, M_Scene, "%i Render Entities", mRenderEntities.size());
 		
-		mKDTree = new SceneKDTree([](RenderEntity* e) {return e->worldBoundingBox();},
+		mKDTree = new SceneKDTree(
+			[](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FaceSample& point, RenderEntity* e) {
-				if(e->checkCollision(ray, point) &&
-				point.Material &&
-				((ray.flags() & RF_FromLight) ?
+				return (e->checkCollision(ray, point) &&
+					point.Material && ((ray.flags() & RF_Debug) ||
+					((ray.flags() & RF_Light) ?
 					point.Material->allowsShadow() :
 					point.Material->isCameraVisible()
-				)) {
-					return true;
-				}
-				else
-					return false;
+					)));
 		},
 		[](RenderEntity* e) {
 			return (float)e->collisionCost();

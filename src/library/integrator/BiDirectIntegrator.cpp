@@ -116,7 +116,7 @@ namespace PR
 					//lightPDF[lightDepth] = pdf;
 
 					Ray current = in;
-					current.setFlags(current.flags() | RF_FromLight);
+					current.setFlags(current.flags() | RF_Light);
 
 					for (uint32 k = 1; k < maxDepth && lightDepth <= maxDiffBounces; ++k)
 					{
@@ -196,7 +196,7 @@ namespace PR
 			{
 				float pdf;
 				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-				const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
 				if(pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
 				 !(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
@@ -235,7 +235,7 @@ namespace PR
 							PM::pm_Normalize3D(LP),
 							in.depth() + 1,
 							in.time(),
-							in.flags() | RF_FromLight);
+							in.flags() | RF_Light);
 
 						const PM::vec3 L = PM::pm_Negate(current.direction());
 

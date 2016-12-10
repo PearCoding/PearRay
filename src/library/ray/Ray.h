@@ -7,7 +7,8 @@ namespace PR
 {
 	enum RayFlags
 	{
-		RF_FromLight = 0x1
+		RF_Light 	= 0x1,
+		RF_Debug 	= 0x2
 	};
 
 	constexpr float RayOffsetEpsilon = 0.000001f;

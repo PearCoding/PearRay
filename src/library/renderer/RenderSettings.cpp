@@ -8,7 +8,7 @@ namespace PR
 		mIntegratorMode(IM_BiDirect),
 		
 		mPixelSampler(SM_MultiJitter),
-		mMaxPixelSampleCount(64),
+		mMaxPixelSampleCount(4),
 
 		mMaxDiffuseBounces(2),
 		mMaxRayDepth(10),
@@ -19,14 +19,14 @@ namespace PR
 		mCropMaxX(1), mCropMinX(0),
 		mCropMaxY(1), mCropMinY(0),
 
-		// Direct Lightning
-		mMaxLightSamples(1),
+		// (Bi-)Direct Lightning
+		mMaxLightSamples(2),
 
 		// PPM
 		mPPM(),
 
 		// Adaptive Sampling (AS)
-		mAdaptiveSampling(true),
+		mAdaptiveSampling(false),
 		mASMaxError(0.0001f),
 		mMinPixelSampleCount(1),
 

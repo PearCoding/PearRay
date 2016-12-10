@@ -15,9 +15,6 @@ namespace PR
 		Plane(const PM::vec3& pos, const PM::vec3& xAxis, const PM::vec3& yAxis);
 		Plane(float width, float height);
 
-		Plane(const Plane& other);
-		Plane& operator = (const Plane& other);
-
 		inline PM::vec3 position() const { return mPosition; }
 		inline void setPosition(const PM::vec3& pos) { PM::pm_Copy(mPosition, pos); }
 
@@ -29,15 +26,13 @@ namespace PR
 
 		void setAxis(const PM::vec3& xAxis, const PM::vec3& yAxis);
 
-		inline PM::vec3 normal() const { return mNormal; }
+		inline PM::vec3 normal() const { return mNormal_Cache; }
 		inline PM::vec3 center() const
 		{
 			return PM::pm_Add(mPosition, PM::pm_Add(PM::pm_Scale(mXAxis, 0.5f), PM::pm_Scale(mYAxis, 0.5f)));
 		}
 
-		inline float width() const { return mWidth; }
-		inline float height() const { return mHeight; }
-		inline float surfaceArea() const { return width()*height(); }
+		inline float surfaceArea() const { return mSurfaceArea_Cache; }
 
 		inline bool isValid() const
 		{
@@ -58,16 +53,16 @@ namespace PR
 		
 		BoundingBox toLocalBoundingBox() const;
 	private:
+		void recache();
+
 		PM::vec3 mPosition;
 		PM::vec3 mXAxis;
 		PM::vec3 mYAxis;
 
 		// Cache
-		PM::vec3 mNormal;
-		float mWidth;
-		float mHeight;
-
-		float mWidth2;
-		float mHeight2;
+		PM::vec3 mNormal_Cache;
+		float mSurfaceArea_Cache;
+		float mInvXLenSqr_Cache;
+		float mInvYLenSqr_Cache;
 	};
 }

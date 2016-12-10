@@ -9,15 +9,17 @@ PR_BEGIN_TESTCASE(Plane)
 PR_TEST("Size");
 {
 	Plane plane(10, 10);
-	PR_CHECK_EQ(plane.width(), 10);
-	PR_CHECK_EQ(plane.height(), 10);
+	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.xAxis()), 10);
+	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 10);
+	PR_CHECK_EQ(plane.surfaceArea(), 100);
 }
 
 PR_TEST("Axis");
 {
 	Plane plane(PM::pm_Set(0, 0, 0, 1), PM::pm_Set(10, 0, 0, 1), PM::pm_Set(0, 10, 0, 1));
-	PR_CHECK_EQ(plane.width(), 10);
-	PR_CHECK_EQ(plane.height(), 10);
+	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.xAxis()), 10);
+	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 10);
+	PR_CHECK_EQ(plane.surfaceArea(), 100);
 }
 
 PR_TEST("Normal");

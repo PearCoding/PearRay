@@ -49,7 +49,7 @@ namespace PR
 					RenderEntity* entity;
 
 					Ray ray = in.next(sc.P, dir);
-					ray.setFlags(ray.flags() | RF_FromLight);
+					ray.setFlags(ray.flags() | RF_Light);
 
 					weight = handleSpecularPath(ray, sc, context, entity);
 					if (!entity)

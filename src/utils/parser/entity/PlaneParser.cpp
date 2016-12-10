@@ -5,33 +5,25 @@
 
 #include "entity/PlaneEntity.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Entity* PlaneParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data materialD = group->getFromKey("material");
-		DL::Data centeringD = group->getFromKey("centering");
+		DL::Data materialD = group.getFromKey("material");
+		DL::Data centeringD = group.getFromKey("centering");
 
-		DL::Data xAxisD = group->getFromKey("xAxis");
-		DL::Data yAxisD = group->getFromKey("yAxis");
+		DL::Data xAxisD = group.getFromKey("xAxis");
+		DL::Data yAxisD = group.getFromKey("yAxis");
 
 		PM::vec3 xAxis = PM::pm_Set(1, 0, 0, 1);
-		if (xAxisD.type() == DL::Data::T_Array)
+		if (xAxisD.type() == DL::Data::T_Group)
 		{
-			DL::DataArray* arr = xAxisD.getArray();
-
 			bool ok;
-			xAxis = loader->getVector(arr, ok);
+			xAxis = loader->getVector(xAxisD.getGroup(), ok);
 
 			if (!ok)
 			{
@@ -45,12 +37,10 @@ namespace PRU
 		}
 
 		PM::vec3 yAxis = PM::pm_Set(0, 1, 0, 1);
-		if (yAxisD.type() == DL::Data::T_Array)
+		if (yAxisD.type() == DL::Data::T_Group)
 		{
-			DL::DataArray* arr = yAxisD.getArray();
-
 			bool ok;
-			yAxis = loader->getVector(arr, ok);
+			yAxis = loader->getVector(yAxisD.getGroup(), ok);
 
 			if (!ok)
 			{

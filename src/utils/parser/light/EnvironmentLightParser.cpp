@@ -5,22 +5,16 @@
 
 #include "light/EnvironmentLight.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 #include <algorithm>
 
 using namespace PR;
 namespace PRU
 {
-	PR::IInfiniteLight* EnvironmentLightParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
+	PR::IInfiniteLight* EnvironmentLightParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
 	{
-		DL::Data matD = group->getFromKey("material");
+		DL::Data matD = group.getFromKey("material");
 
 		EnvironmentLight* light = new EnvironmentLight();
 

@@ -21,11 +21,14 @@ namespace PR
 	{
 		Spectrum emission;
 		RenderEntity* entity;
+
+		Ray out = in;
+		out.setFlags(in.flags() | RF_Debug);
 		
 		if (context->renderer()->settings().debugMode() == DM_Emission)
-			entity = context->shootWithEmission(emission, in, sc);
+			entity = context->shootWithEmission(emission, out, sc);
 		else
-			entity = context->shoot(in, sc);
+			entity = context->shoot(out, sc);
 
 		if (!entity || 
 			(context->renderer()->settings().debugMode() != DM_Validity && !sc.Material))
@@ -124,7 +127,7 @@ namespace PR
 		case DM_Validity:
 		{
 			/*
-			 ERRORS:
+			 Color-Code:
 			 Red    -> No Material
 			 Yellow -> Non unit normal
 			 Cyan	-> Position non homogenous

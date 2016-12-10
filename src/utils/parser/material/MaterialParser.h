@@ -22,6 +22,6 @@ namespace PRU
 	{
 	public:
 		virtual PR::Material* parse(SceneLoader* loader, Environment* env,
-			const std::string& obj, DL::DataGroup* group) const = 0;
+			const std::string& obj, const DL::DataGroup& group) const = 0;
 	};
 }

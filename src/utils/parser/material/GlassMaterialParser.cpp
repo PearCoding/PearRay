@@ -6,24 +6,18 @@
 
 #include "material/GlassMaterial.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Material* GlassMaterialParser::parse(SceneLoader* loader, Environment* env,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data specD = group->getFromKey("specularity");
-		DL::Data indexD = group->getFromKey("index");
-		DL::Data sampleIORD = group->getFromKey("sample_index");
-		DL::Data thinD = group->getFromKey("thin");
+		DL::Data specD = group.getFromKey("specularity");
+		DL::Data indexD = group.getFromKey("index");
+		DL::Data sampleIORD = group.getFromKey("sample_index");
+		DL::Data thinD = group.getFromKey("thin");
 
 		GlassMaterial* diff = new GlassMaterial(env->materialCount() + 1);
 

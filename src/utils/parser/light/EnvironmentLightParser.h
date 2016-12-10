@@ -7,6 +7,6 @@ namespace PRU
 	class EnvironmentLightParser : public ILightParser
 	{
 	public:
-		PR::IInfiniteLight* parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const override;
+		PR::IInfiniteLight* parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const override;
 	};
 }

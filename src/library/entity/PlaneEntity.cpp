@@ -34,10 +34,25 @@ namespace PR
 
 	float PlaneEntity::surfaceArea(Material* m) const
 	{
-		if(!m || m == mMaterial)// TODO: Scale?
-			return mPlane.surfaceArea();
+		if(!m || m == mMaterial)
+		{
+			if(flags() & EF_LocalArea == 0)
+			{
+				if(isFrozen())
+					return mGlobalPlane_Cache.surfaceArea();
+				else
+					return std::sqrt(PM::pm_MagnitudeSqr3D(PM::pm_Multiply(directionMatrix(), mPlane.xAxis())) *
+							PM::pm_MagnitudeSqr3D(PM::pm_Multiply(directionMatrix(), mPlane.yAxis())));
+			}
+			else
+			{
+				return mPlane.surfaceArea();
+			}
+		}
 		else
+		{
 			return 0;
+		}
 	}
 
 	void PlaneEntity::setMaterial(Material* m)
@@ -82,18 +97,14 @@ namespace PR
 		PM::vec3 pos;
 		float u, v;
 
-		// Local space
-		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
-
 		float t;
-		if (mPlane.intersects(local, pos, t, u, v))
+		if (mGlobalPlane_Cache.intersects(ray, pos, t, u, v))
 		{
-			collisionPoint.P = PM::pm_Multiply(matrix(), pos);
+			collisionPoint.P = pos;
 
-			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), mPlane.normal()));
-			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+			collisionPoint.Ng = mGlobalPlane_Cache.normal();
+			collisionPoint.Nx = mGlobalPlane_Cache.xAxis();
+			collisionPoint.Ny = mGlobalPlane_Cache.yAxis();
 
 			collisionPoint.UV = PM::pm_Set(u, v);
 			collisionPoint.Material = material();
@@ -110,19 +121,42 @@ namespace PR
 		auto s = sampler.generate2D(sample);
 
 		FaceSample fp;
-		fp.P = PM::pm_Add(mPlane.position(),
-			PM::pm_Add(PM::pm_Scale(mPlane.xAxis(), PM::pm_GetX(s)),
-				PM::pm_Scale(mPlane.yAxis(), PM::pm_GetY(s))));
-		fp.P = PM::pm_SetW(PM::pm_Multiply(matrix(), fp.P), 1);
+		fp.P = PM::pm_Add(mGlobalPlane_Cache.position(),
+			PM::pm_Add(PM::pm_Scale(mGlobalPlane_Cache.xAxis(), PM::pm_GetX(s)),
+				PM::pm_Scale(mGlobalPlane_Cache.yAxis(), PM::pm_GetY(s))));
 
-		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), mPlane.normal()));
-		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
+		fp.Ng = mGlobalPlane_Cache.normal();
+		fp.Nx = mGlobalPlane_Cache.xAxis();
+		fp.Ny = mGlobalPlane_Cache.yAxis();
 
-		fp.UV = PM::pm_SetZ(s, 0);
+		fp.UV = s;
 		fp.Material = material();
 
 		pdf = 1;//?
 		return fp;
+	}
+
+	void PlaneEntity::onFreeze()
+	{
+		RenderEntity::onFreeze();
+
+		mGlobalPlane_Cache.setPosition(PM::pm_SetW(PM::pm_Multiply(matrix(), PM::pm_SetW(mPlane.position(), 1)), 1));
+		mGlobalPlane_Cache.setAxis(
+			PM::pm_SetW(PM::pm_Multiply(directionMatrix(), PM::pm_SetW(mPlane.xAxis(), 0)), 0),
+			PM::pm_SetW(PM::pm_Multiply(directionMatrix(), PM::pm_SetW(mPlane.yAxis(), 0)), 0));
+		
+		// Check up
+		if(std::abs(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.normal()) - 1) > PM_EPSILON)
+			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has a non unit normal vector!", name().c_str());
+
+		if(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.xAxis()) <= PM_EPSILON)
+			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero x axis!", name().c_str());
+
+		if(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.yAxis()) <= PM_EPSILON)
+			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero y axis!", name().c_str());
+
+		if(mGlobalPlane_Cache.surfaceArea() <= PM_EPSILON)
+			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero enclosed area!", name().c_str());
 	}
 
 	void PlaneEntity::setup(RenderContext* context)

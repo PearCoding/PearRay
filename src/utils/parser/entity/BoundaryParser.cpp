@@ -6,31 +6,23 @@
 
 #include "entity/BoundaryEntity.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Entity* BoundaryParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data materialD = group->getFromKey("material");
-		DL::Data sizeD = group->getFromKey("size");
+		DL::Data materialD = group.getFromKey("material");
+		DL::Data sizeD = group.getFromKey("size");
 
 		PM::vec3 size = PM::pm_Set(1, 1, 1, 1);
 
-		if (sizeD.type() == DL::Data::T_Array)
+		if (sizeD.type() == DL::Data::T_Group)
 		{
-			DL::DataArray* arr = sizeD.getArray();
-
 			bool ok;
-			size = loader->getVector(arr, ok);
+			size = loader->getVector(sizeD.getGroup(), ok);
 
 			if (!ok)
 			{

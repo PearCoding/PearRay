@@ -5,23 +5,17 @@
 
 #include "light/DistantLight.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 #include <algorithm>
 
 using namespace PR;
 namespace PRU
 {
-	PR::IInfiniteLight* DistantLightParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
+	PR::IInfiniteLight* DistantLightParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
 	{
-		DL::Data dirD = group->getFromKey("direction");
-		DL::Data matD = group->getFromKey("material");
+		DL::Data dirD = group.getFromKey("direction");
+		DL::Data matD = group.getFromKey("material");
 
 		DistantLight* light = new DistantLight();
 
@@ -33,10 +27,10 @@ namespace PRU
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", matD.getString().c_str());
 		}
 
-		if (dirD.type() == DL::Data::T_Array)
+		if (dirD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(dirD.getArray(), ok);
+			auto v = loader->getVector(dirD.getGroup(), ok);
 			if(ok)
 				light->setDirection(v);
 			else

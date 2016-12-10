@@ -316,7 +316,7 @@ namespace PR
 			sc.NgdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
 			sc.N = Reflection::faceforward(sc.NgdotV, sc.Ng);
 			sc.Flags |= (sc.NgdotV > 0) ? SCF_Inside : 0;
-			sc.NdotV = std::abs(sc.NgdotV);
+			sc.NdotV = PM::pm_Max(0.0f, -sc.NgdotV);
 			sc.V = ray.direction();
 			sc.T = ray.time();
 			sc.Depth2 = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(ray.startPosition(), sc.P));

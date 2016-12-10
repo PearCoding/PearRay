@@ -8,6 +8,6 @@ namespace PRU
 	{
 	public:
 		PR::Material* parse(SceneLoader* loader, Environment* env,
-			const std::string& obj, DL::DataGroup* group) const override;
+			const std::string& obj, const DL::DataGroup& group) const override;
 	};
 }

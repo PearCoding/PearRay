@@ -6,18 +6,12 @@
 #include "geometry/Face.h"
 #include "geometry/TriMesh.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
-	TriMesh* TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group) const
+	TriMesh* TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
 	{
 		std::vector<PM::vec3> positionAttr;
 		std::vector<PM::vec3> normalAttr;
@@ -25,20 +19,21 @@ namespace PRU
 		// TODO: More attributes!
 
 		// First get attributes
-		DL::DataGroup* facesGrp = nullptr;
-		for(size_t i = 0; i < group->anonymousCount(); ++i)
+		DL::DataGroup facesGrp;
+		bool hasFaces = false;
+		for(size_t i = 0; i < group.anonymousCount(); ++i)
 		{
-			DL::Data d = group->at(i);
+			DL::Data d = group.at(i);
 			if(d.type() != DL::Data::T_Group)
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Invalid entry in mesh description.");
 				return nullptr;
 			}
 
-			DL::DataGroup* grp = d.getGroup();
-			if(grp->id() == "attribute")
+			DL::DataGroup grp = d.getGroup();
+			if(grp.id() == "attribute")
 			{
-				DL::Data attrTypeD = grp->getFromKey("type");
+				DL::Data attrTypeD = grp.getFromKey("type");
 				if(attrTypeD.type() != DL::Data::T_String)
 				{
 					PR_LOGGER.log(L_Error, M_Scene, "Mesh attribute has no valid type.");
@@ -46,17 +41,17 @@ namespace PRU
 				}
 				else if(attrTypeD.getString() == "p")
 				{
-					for(size_t j = 0; j < grp->anonymousCount(); ++j)
+					for(size_t j = 0; j < grp.anonymousCount(); ++j)
 					{
-						DL::Data attrValD = grp->at(j);
-						if(attrValD.type() != DL::Data::T_Array)
+						DL::Data attrValD = grp.at(j);
+						if(attrValD.type() != DL::Data::T_Group)
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh position attribute is invalid.");
 							return nullptr;
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD.getArray(), ok);
+						PM::vec v = loader->getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							positionAttr.push_back(v);
@@ -69,17 +64,17 @@ namespace PRU
 				}
 				else if(attrTypeD.getString() == "n")
 				{
-					for(size_t j = 0; j < grp->anonymousCount(); ++j)
+					for(size_t j = 0; j < grp.anonymousCount(); ++j)
 					{
-						DL::Data attrValD = grp->at(j);
-						if(attrValD.type() != DL::Data::T_Array)
+						DL::Data attrValD = grp.at(j);
+						if(attrValD.type() != DL::Data::T_Group)
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh normal attribute is invalid.");
 							return nullptr;
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD.getArray(), ok);
+						PM::vec v = loader->getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							normalAttr.push_back(PM::pm_SetW(v, 0.0f));
@@ -92,17 +87,17 @@ namespace PRU
 				}
 				else if(attrTypeD.getString() == "t")
 				{
-					for(size_t j = 0; j < grp->anonymousCount(); ++j)
+					for(size_t j = 0; j < grp.anonymousCount(); ++j)
 					{
-						DL::Data attrValD = grp->at(j);
-						if(attrValD.type() != DL::Data::T_Array)
+						DL::Data attrValD = grp.at(j);
+						if(attrValD.type() != DL::Data::T_Group)
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh texture attribute is invalid.");
 							return nullptr;
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD.getArray(), ok);
+						PM::vec v = loader->getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							uvAttr.push_back(PM::pm_SetZ(PM::pm_SetW(v, 0.0f), 0.0f));
@@ -135,12 +130,15 @@ namespace PRU
 					return nullptr;
 				}
 			}
-			else if(grp->id() == "faces")
+			else if(grp.id() == "faces")
 			{
-				if(facesGrp)
+				if(hasFaces)
 					PR_LOGGER.log(L_Warning, M_Scene, "Faces already set for mesh.");
 				else
+				{
 					facesGrp = grp;
+					hasFaces = true;
+				}
 			}
 			else
 			{
@@ -170,7 +168,7 @@ namespace PRU
 
 		// Get indices (faces) -> only triangles!
 		std::vector<Face*> faces;
-		if(!facesGrp)// Assume linear
+		if(!hasFaces)// Assume linear
 		{
 			if((positionAttr.size() % 3) != 0)
 			{
@@ -211,18 +209,18 @@ namespace PRU
 		}
 		else
 		{
-			if((facesGrp->anonymousCount() % 3) != 0)
+			if((facesGrp.anonymousCount() % 3) != 0)
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Given index face count is not a multiply of 3.");
 				return nullptr;
 			}
 
-			faces.reserve(facesGrp->anonymousCount()/3);
-			for(size_t j = 0; j < facesGrp->anonymousCount(); j += 3)
+			faces.reserve(facesGrp.anonymousCount()/3);
+			for(size_t j = 0; j < facesGrp.anonymousCount(); j += 3)
 			{
-				DL::Data i1D = facesGrp->at(j);
-				DL::Data i2D = facesGrp->at(j+1);
-				DL::Data i3D = facesGrp->at(j+2);
+				DL::Data i1D = facesGrp.at(j);
+				DL::Data i2D = facesGrp.at(j+1);
+				DL::Data i3D = facesGrp.at(j+2);
 
 				if(	i1D.type() != DL::Data::T_Integer ||
 					i2D.type() != DL::Data::T_Integer ||

@@ -121,6 +121,10 @@ namespace PR
 
 		mSurfaceArea_Cache = mMesh->surfaceArea(nullptr,
 				flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
+		
+		// Check up
+		if(mSurfaceArea_Cache <= PM_EPSILON)
+			PR_LOGGER.logf(L_Warning, M_Entity, "Mesh entity %s has zero surface area!", name().c_str());
 	}
 
 	void MeshEntity::setup(RenderContext* context)

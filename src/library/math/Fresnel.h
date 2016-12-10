@@ -40,14 +40,20 @@ namespace PR
 			return PM::pm_Clamp(R, 0.0f, 1.0f);
 		}
 
-		static inline float schlick(float f0, float NdotV)
+		static inline float schlick(float dot, float n1, float n2)
 		{
-			return f0 + (1 - f0)*schlick_term(NdotV);
+			const float c = (n1-n2)/(n1+n2);
+			return schlick(dot, c*c);
 		}
 
-		static inline float schlick_term(float NdotV)
+		static inline float schlick(float dot, float f0)
 		{
-			const float t = 1 - NdotV;
+			return f0 + (1 - f0)*schlick_term(dot);
+		}
+
+		static inline float schlick_term(float dot)
+		{
+			const float t = 1 - dot;
 
 			return t*t*t*t*t;
 		}

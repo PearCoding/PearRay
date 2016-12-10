@@ -39,13 +39,7 @@
 
 #include "material/Material.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 #include <fstream>
 #include <sstream>
@@ -81,7 +75,7 @@ namespace PRU
 
 		//PR_LOGGER.log(L_Info, M_Scene, dataLisp.dump());
 
-		std::list<DL::DataGroup*> entries = container.getTopGroups();
+		auto entries = container.getTopGroups();
 
 		if (entries.empty())
 		{
@@ -90,9 +84,9 @@ namespace PRU
 		}
 		else
 		{
-			DL::DataGroup* top = entries.front();
+			DL::DataGroup top = entries.front();
 
-			if (top->id() != "scene")
+			if (top.id() != "scene")
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "DataLisp file does not contain valid top entry");
 				return nullptr;
@@ -100,10 +94,10 @@ namespace PRU
 			else
 			{
 				Environment* env;
-				DL::Data nameD = top->getFromKey("name");
-				DL::Data renderWidthD = top->getFromKey("renderWidth");
-				DL::Data renderHeightD = top->getFromKey("renderHeight");
-				DL::Data cropD = top->getFromKey("crop");
+				DL::Data nameD = top.getFromKey("name");
+				DL::Data renderWidthD = top.getFromKey("renderWidth");
+				DL::Data renderHeightD = top.getFromKey("renderHeight");
+				DL::Data cropD = top.getFromKey("crop");
 
 				if (nameD.type() != DL::Data::T_String)
 					env = new Environment("UNKNOWN");
@@ -120,15 +114,15 @@ namespace PRU
 					env->setRenderHeight(renderHeightD.getInt());
 				}
 
-				if (cropD.type() == DL::Data::T_Array)
+				if (cropD.type() == DL::Data::T_Group)
 				{
-					DL::DataArray* arr = cropD.getArray();
-					if (arr->size() == 4)
+					DL::DataGroup arr = cropD.getGroup();
+					if (arr.anonymousCount() == 4)
 					{
-						if (arr->isAllNumber())
+						if (arr.isAllNumber())
 						{
-							env->setCrop(arr->at(0).getNumber(), arr->at(1).getNumber(),
-								arr->at(2).getNumber(), arr->at(3).getNumber());
+							env->setCrop(arr.at(0).getNumber(), arr.at(1).getNumber(),
+								arr.at(2).getNumber(), arr.at(3).getNumber());
 						}
 					}
 				}
@@ -137,27 +131,27 @@ namespace PRU
 				env->outputSpecification().parse(this, env, top);
 
 				// First independent information
-				for (size_t i = 0; i < top->anonymousCount(); ++i)
+				for (size_t i = 0; i < top.anonymousCount(); ++i)
 				{
-					DL::Data dataD = top->at(i);
+					DL::Data dataD = top.at(i);
 
 					if (dataD.type() == DL::Data::T_Group)
 					{
-						DL::DataGroup* entry = dataD.getGroup();
+						DL::DataGroup entry = dataD.getGroup();
 
-						if (entry->id() == "spectrum")
+						if (entry.id() == "spectrum")
 						{
 							addSpectrum(entry, env);
 						}
-						else if (entry->id() == "texture")
+						else if (entry.id() == "texture")
 						{
 							addTexture(entry, env);
 						}
-						else if (entry->id() == "graph")
+						else if (entry.id() == "graph")
 						{
 							addSubGraph(entry, env);
 						}
-						else if (entry->id() == "mesh")
+						else if (entry.id() == "mesh")
 						{
 							addMesh(entry, env);
 						}
@@ -165,40 +159,40 @@ namespace PRU
 				}
 
 				// Now semi-dependent information
-				for (size_t i = 0; i < top->anonymousCount(); ++i)
+				for (size_t i = 0; i < top.anonymousCount(); ++i)
 				{
-					DL::Data dataD = top->at(i);
+					DL::Data dataD = top.at(i);
 
 					if (dataD.type() == DL::Data::T_Group)
 					{
-						DL::DataGroup* entry = dataD.getGroup();
+						DL::DataGroup entry = dataD.getGroup();
 
-						if (entry->id() == "material")
+						if (entry.id() == "material")
 							addMaterial(entry, env);
 					}
 				}
 
 				// Now entities and lights
-				for (size_t i = 0; i < top->anonymousCount(); ++i)
+				for (size_t i = 0; i < top.anonymousCount(); ++i)
 				{
-					DL::Data dataD = top->at(i);
+					DL::Data dataD = top.at(i);
 
 					if (dataD.type() == DL::Data::T_Group)
 					{
-						DL::DataGroup* entry = dataD.getGroup();
+						DL::DataGroup entry = dataD.getGroup();
 
-						if (entry->id() == "entity")
+						if (entry.id() == "entity")
 						{
 							addEntity(entry, nullptr, env);
 						}
-						else if(entry->id() == "light")
+						else if(entry.id() == "light")
 						{
 							addLight(entry, env);
 						}
 					}
 				}
 				
-				DL::Data cameraD = top->getFromKey("camera");
+				DL::Data cameraD = top.getFromKey("camera");
 				if (cameraD.type() == DL::Data::T_String)
 				{
 					Camera* cam = (Camera*)env->scene()->getEntity(cameraD.getString(), "standard_camera");
@@ -226,15 +220,15 @@ namespace PRU
 		{ nullptr, BoundaryParser() },//Just for the end
 	};
 
-	void SceneLoader::addEntity(DL::DataGroup* group, PR::Entity* parent, Environment* env)
+	void SceneLoader::addEntity(const DL::DataGroup& group, PR::Entity* parent, Environment* env)
 	{
-		DL::Data nameD = group->getFromKey("name");
-		DL::Data typeD = group->getFromKey("type");
-		DL::Data posD = group->getFromKey("position");
-		DL::Data rotD = group->getFromKey("rotation");
-		DL::Data scaleD = group->getFromKey("scale");
+		DL::Data nameD = group.getFromKey("name");
+		DL::Data typeD = group.getFromKey("type");
+		DL::Data posD = group.getFromKey("position");
+		DL::Data rotD = group.getFromKey("rotation");
+		DL::Data scaleD = group.getFromKey("scale");
 
-		DL::Data localAreaD = group->getFromKey("local_area");
+		DL::Data localAreaD = group.getFromKey("local_area");
 
 		std::string name;
 		if (nameD.type() == DL::Data::T_String)
@@ -285,10 +279,10 @@ namespace PRU
 		PR_ASSERT(entity);// After here it shouldn't be null
 
 		// Set position		
-		if (posD.type() == DL::Data::T_Array)
+		if (posD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::vec p = getVector(posD.getArray(), ok);
+			PM::vec p = getVector(posD.getGroup(), ok);
 
 			if (!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set position for entity %s.", name.c_str());
@@ -313,10 +307,10 @@ namespace PRU
 			float s = scaleD.getNumber();
 			entity->setScale(PM::pm_Set(s, s, s, 1));
 		}
-		else if(scaleD.type() == DL::Data::T_Array)
+		else if(scaleD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::vec3 s = PM::pm_SetW(getVector(scaleD.getArray(), ok), 1);
+			PM::vec3 s = PM::pm_SetW(getVector(scaleD.getGroup(), ok), 1);
 
 			if(!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());
@@ -348,13 +342,13 @@ namespace PRU
 		// Add to scene
 		env->scene()->addEntity(entity);
 
-		for (size_t i = 0; i < group->anonymousCount(); ++i)
+		for (size_t i = 0; i < group.anonymousCount(); ++i)
 		{
-			if (group->at(i).type() == DL::Data::T_Group)
+			if (group.at(i).type() == DL::Data::T_Group)
 			{
-				DL::DataGroup* child = group->at(i).getGroup();
+				DL::DataGroup child = group.at(i).getGroup();
 
-				if (child->id() == "entity")
+				if (child.id() == "entity")
 					addEntity(child, entity, env);
 			}
 		}
@@ -374,9 +368,9 @@ namespace PRU
 		{ "sun", DistantLightParser() },
 		{ nullptr, EnvironmentLightParser() },//Just for the end
 	};
-	void SceneLoader::addLight(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 	{
-		DL::Data typeD = group->getFromKey("type");
+		DL::Data typeD = group.getFromKey("type");
 
 		std::string type;
 
@@ -444,16 +438,16 @@ namespace PRU
 
 		{ nullptr, DiffuseMaterialParser() },//Just for the end
 	};
-	void SceneLoader::addMaterial(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 	{
-		DL::Data nameD = group->getFromKey("name");
-		DL::Data typeD = group->getFromKey("type");
+		DL::Data nameD = group.getFromKey("name");
+		DL::Data typeD = group.getFromKey("type");
 
-		DL::Data shadowD = group->getFromKey("shadow");
-		DL::Data selfShadowD = group->getFromKey("self_shadow");
-		DL::Data cameraVisibleD = group->getFromKey("camera_visible");
-		DL::Data shadeableD = group->getFromKey("shadeable");
-		DL::Data emissionD = group->getFromKey("emission");
+		DL::Data shadowD = group.getFromKey("shadow");
+		DL::Data selfShadowD = group.getFromKey("self_shadow");
+		DL::Data cameraVisibleD = group.getFromKey("camera_visible");
+		DL::Data shadeableD = group.getFromKey("shadeable");
+		DL::Data emissionD = group.getFromKey("emission");
 
 		std::string name;
 		std::string type;
@@ -512,31 +506,26 @@ namespace PRU
 		mat->setEmission(getSpectralOutput(env, emissionD));
 
 		if (shadeableD.type() == DL::Data::T_Bool)
-		{
 			mat->enableShading(shadeableD.getBool());
-		}
 
 		if (shadowD.type() == DL::Data::T_Bool)
-		{
 			mat->enableShadow(shadowD.getBool());
-		}
+
+		if (mat->isLight())
+			mat->enableShadow(true);// Force for lights
 
 		if (selfShadowD.type() == DL::Data::T_Bool)
-		{
 			mat->enableSelfShadow(selfShadowD.getBool());
-		}
 
 		if (cameraVisibleD.type() == DL::Data::T_Bool)
-		{
 			mat->enableCameraVisibility(cameraVisibleD.getBool());
-		}
 
 		env->addMaterial(name, mat);
 	}
 
-	void SceneLoader::addTexture(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
 	{
-		DL::Data nameD = group->getFromKey("name");
+		DL::Data nameD = group.getFromKey("name");
 
 		std::string name;
 
@@ -554,10 +543,10 @@ namespace PRU
 		parser.parse(this, env, name, group);// Will be added to env here
 	}
 
-	void SceneLoader::addMesh(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	{
-		DL::Data nameD = group->getFromKey("name");
-		DL::Data typeD = group->getFromKey("type");
+		DL::Data nameD = group.getFromKey("name");
+		DL::Data typeD = group.getFromKey("type");
 
 		std::string name;
 		std::string type;
@@ -597,10 +586,10 @@ namespace PRU
 		env->addMesh(name, mesh);
 	}
 
-	void SceneLoader::addSpectrum(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 	{
-		DL::Data nameD = group->getFromKey("name");
-		DL::Data dataD = group->getFromKey("data");
+		DL::Data nameD = group.getFromKey("name");
+		DL::Data dataD = group.getFromKey("data");
 
 		std::string name;
 		if (nameD.type() == DL::Data::T_String)
@@ -614,25 +603,22 @@ namespace PRU
 		}
 
 		Spectrum spec;
-		if (dataD.type() == DL::Data::T_Array)
+		if (dataD.type() == DL::Data::T_Group)
 		{
-			DL::DataArray* arr = dataD.getArray();
-			for (size_t i = 0; i < arr->size() && i < Spectrum::SAMPLING_COUNT; ++i)
+			DL::DataGroup grp = dataD.getGroup();
+			if(grp.isArray())
 			{
-				if (arr->at(i).isNumber())
-					spec.setValue((uint32)i, arr->at(i).getNumber());
-				else
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at index %i.", i);
+				for (size_t i = 0; i < grp.anonymousCount() && i < Spectrum::SAMPLING_COUNT; ++i)
+				{
+					if (grp.at(i).isNumber())
+						spec.setValue((uint32)i, grp.at(i).getNumber());
+					else
+						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at index %i.", i);
+				}
 			}
-		}
-		else if (dataD.type() == DL::Data::T_Group)
-		{
-			DL::DataGroup* grp = dataD.getGroup();
-
-			if (grp->id() == "field")
+			else if (grp.id() == "field")
 			{
-#ifndef PR_NO_SPECTRAL // TODO: Add conversion for no spectral mode
-				DL::Data defaultD = grp->getFromKey("default");
+				DL::Data defaultD = grp.getFromKey("default");
 
 				if (defaultD.isNumber())
 				{
@@ -642,105 +628,96 @@ namespace PRU
 					}
 				}
 
-				for (uint32 i = 0; i <= PR::Spectrum::SAMPLING_COUNT; ++i)
+				for (uint32 i = 0;
+					 i < grp.anonymousCount() && i < PR::Spectrum::SAMPLING_COUNT;
+					 ++i)
 				{
-					std::stringstream stream;
-					stream << (i*PR::Spectrum::WAVELENGTH_STEP + PR::Spectrum::WAVELENGTH_START);
-
-					DL::Data fieldD = grp->getFromKey(stream.str());
+					DL::Data fieldD = grp.at(i);
 
 					if (fieldD.isNumber())
-					{
 						spec.setValue(i, fieldD.getNumber());
-					}
-					/*else
-					{
-						PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at %s.",
-							stream.str().c_str());
-					}*/
 				}
-#endif
 			}
-			else if (grp->id() == "rgb")
+			else if (grp.id() == "rgb")
 			{
-				if (grp->anonymousCount() == 3 &&
-					grp->at(0).isNumber() &&
-					grp->at(1).isNumber() &&
-					grp->at(2).isNumber())
+				if (grp.anonymousCount() == 3 &&
+					grp.at(0).isNumber() &&
+					grp.at(1).isNumber() &&
+					grp.at(2).isNumber())
 				{
-					spec = RGBConverter::toSpec(grp->at(0).getNumber(),
-						grp->at(1).getNumber(),
-						grp->at(2).getNumber());
+					spec = RGBConverter::toSpec(grp.at(0).getNumber(),
+						grp.at(1).getNumber(),
+						grp.at(2).getNumber());
 				}
 			}
-			else if (grp->id() == "xyz")
+			else if (grp.id() == "xyz")
 			{
 				// TODO
 			}
-			else if (grp->id() == "temperature" || grp->id() == "blackbody")// Luminance
+			else if (grp.id() == "temperature" || grp.id() == "blackbody")// Luminance
 			{
-				if (grp->anonymousCount() >= 1 &&
-					grp->at(0).isNumber())
+				if (grp.anonymousCount() >= 1 &&
+					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
 					spec.weightPhotometric();
 
 					/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Luminance %f",
 						grp->at(0)->getNumber(), spec.avg());*/
 				}
 
-				if (grp->anonymousCount() >= 2 &&
-					grp->at(1).isNumber())
+				if (grp.anonymousCount() >= 2 &&
+					grp.at(1).isNumber())
 				{
-					spec *= grp->at(1).getNumber();
+					spec *= grp.at(1).getNumber();
 				}
 			}
-			else if (grp->id() == "temperature_raw" || grp->id() == "blackbody_raw")// Radiance
+			else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw")// Radiance
 			{
-				if (grp->anonymousCount() >= 1 &&
-					grp->at(0).isNumber())
+				if (grp.anonymousCount() >= 1 &&
+					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
 
 					/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Radiance %f",
 						grp->at(0)->getNumber(), spec.avg());*/
 				}
 
-				if (grp->anonymousCount() >= 2 &&
-					grp->at(1).isNumber())
+				if (grp.anonymousCount() >= 2 &&
+					grp.at(1).isNumber())
 				{
-					spec *= grp->at(1).getNumber();
+					spec *= grp.at(1).getNumber();
 				}
 			}
-			else if (grp->id() == "temperature_norm" || grp->id() == "blackbody_norm")// Luminance Norm
+			else if (grp.id() == "temperature_norm" || grp.id() == "blackbody_norm")// Luminance Norm
 			{
-				if (grp->anonymousCount() >= 1 &&
-					grp->at(0).isNumber())
+				if (grp.anonymousCount() >= 1 &&
+					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
 					spec.weightPhotometric();
 					spec.normalize();
 				}
 
-				if (grp->anonymousCount() >= 2 &&
-					grp->at(1).isNumber())
+				if (grp.anonymousCount() >= 2 &&
+					grp.at(1).isNumber())
 				{
-					spec *= grp->at(1).getNumber();
+					spec *= grp.at(1).getNumber();
 				}
 			}
-			else if (grp->id() == "temperature_raw_norm" || grp->id() == "blackbody_raw_norm")// Radiance Norm
+			else if (grp.id() == "temperature_raw_norm" || grp.id() == "blackbody_raw_norm")// Radiance Norm
 			{
-				if (grp->anonymousCount() >= 1 &&
-					grp->at(0).isNumber())
+				if (grp.anonymousCount() >= 1 &&
+					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp->at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
 					spec.normalize();
 				}
 
-				if (grp->anonymousCount() >= 2 &&
-					grp->at(1).isNumber())
+				if (grp.anonymousCount() >= 2 &&
+					grp.at(1).isNumber())
 				{
-					spec *= grp->at(1).getNumber();
+					spec *= grp.at(1).getNumber();
 				}
 			}
 		}
@@ -748,12 +725,12 @@ namespace PRU
 		env->addSpectrum(name, spec);
 	}
 
-	void SceneLoader::addSubGraph(DL::DataGroup* group, Environment* env)
+	void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	{
-		DL::Data nameD = group->getFromKey("name");
-		DL::Data overridesD = group->getFromKey("overrides");
-		DL::Data loaderD = group->getFromKey("loader");
-		DL::Data fileD = group->getFromKey("file");
+		DL::Data nameD = group.getFromKey("name");
+		DL::Data overridesD = group.getFromKey("overrides");
+		DL::Data loaderD = group.getFromKey("loader");
+		DL::Data fileD = group.getFromKey("file");
 
 		std::string name;
 		if (nameD.type() == DL::Data::T_String)
@@ -787,7 +764,7 @@ namespace PRU
 
 		if (loader == "obj")
 		{
-			DL::Data flipNormalD = group->getFromKey("flipNormal");
+			DL::Data flipNormalD = group.getFromKey("flipNormal");
 			
 			WavefrontLoader loader(overrides);
 
@@ -802,19 +779,17 @@ namespace PRU
 		}
 	}
 
-	PM::vec3 SceneLoader::getVector(DL::DataArray* arr, bool& ok) const
+	PM::vec3 SceneLoader::getVector(const DL::DataGroup& arr, bool& ok) const
 	{
-		PR_ASSERT(arr);
-
 		PM::vec3 res = PM::pm_Set(0, 0, 0, 1);
 
-		if (arr->size() == 2)
+		if (arr.anonymousCount() == 2)
 		{
-			if (arr->at(0).isNumber() &&
-				arr->at(1).isNumber())
+			if (arr.at(0).isNumber() &&
+				arr.at(1).isNumber())
 			{
-				res = PM::pm_Set(arr->at(0).getNumber(),
-					arr->at(1).getNumber(),
+				res = PM::pm_Set(arr.at(0).getNumber(),
+					arr.at(1).getNumber(),
 					0,
 					1);
 
@@ -825,15 +800,15 @@ namespace PRU
 				ok = false;
 			}
 		}
-		else if (arr->size() == 3)
+		else if (arr.anonymousCount() == 3)
 		{
-			if (arr->at(0).isNumber() &&
-				arr->at(1).isNumber() &&
-				arr->at(2).isNumber())
+			if (arr.at(0).isNumber() &&
+				arr.at(1).isNumber() &&
+				arr.at(2).isNumber())
 			{
-				res = PM::pm_Set(arr->at(0).getNumber(),
-					arr->at(1).getNumber(),
-					arr->at(2).getNumber(),
+				res = PM::pm_Set(arr.at(0).getNumber(),
+					arr.at(1).getNumber(),
+					arr.at(2).getNumber(),
 					1);
 
 				ok = true;
@@ -843,17 +818,17 @@ namespace PRU
 				ok = false;
 			}
 		}
-		else if (arr->size() == 4)
+		else if (arr.anonymousCount() == 4)
 		{
-			if (arr->at(0).isNumber() &&
-				arr->at(1).isNumber() &&
-				arr->at(2).isNumber() &&
-				arr->at(3).isNumber())
+			if (arr.at(0).isNumber() &&
+				arr.at(1).isNumber() &&
+				arr.at(2).isNumber() &&
+				arr.at(3).isNumber())
 			{
-				res = PM::pm_Set(arr->at(0).getNumber(),
-					arr->at(1).getNumber(),
-					arr->at(2).getNumber(),
-					arr->at(3).getNumber());
+				res = PM::pm_Set(arr.at(0).getNumber(),
+					arr.at(1).getNumber(),
+					arr.at(2).getNumber(),
+					arr.at(3).getNumber());
 
 				ok = true;
 			}
@@ -872,19 +847,19 @@ namespace PRU
 	
 	PM::quat SceneLoader::getRotation(const DL::Data& data, bool& ok) const
 	{
-		if (data.type() == DL::Data::T_Array)
+		if (data.type() == DL::Data::T_Group)
 		{
-			return PM::pm_Normalize4D(getVector(data.getArray(), ok));
-		}
-		else if (data.type() == DL::Data::T_Group)
-		{
-			DL::DataGroup* grp = data.getGroup();
-			if (grp->id() == "euler" && grp->anonymousCount() == 3 &&
-				grp->at(0).isNumber() && grp->at(1).isNumber() && grp->at(2).isNumber())
+			DL::DataGroup grp = data.getGroup();
+			if(grp.isArray())
 			{
-				float x = PM::pm_DegToRad(grp->at(0).getNumber());
-				float y = PM::pm_DegToRad(grp->at(1).getNumber());
-				float z = PM::pm_DegToRad(grp->at(2).getNumber());
+				return PM::pm_Normalize4D(getVector(grp, ok));
+			}
+			else if (grp.id() == "euler" && grp.anonymousCount() == 3 &&
+				grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber())
+			{
+				float x = PM::pm_DegToRad(grp.at(0).getNumber());
+				float y = PM::pm_DegToRad(grp.at(1).getNumber());
+				float z = PM::pm_DegToRad(grp.at(2).getNumber());
 
 				ok = true;
 				return PM::pm_Normalize4D(PM::pm_RotationQuatFromXYZ(x, y, z));
@@ -922,12 +897,12 @@ namespace PRU
 		}
 		else if (dataD.type() == DL::Data::T_Group)
 		{
-			std::string name = dataD.getGroup()->id();
+			std::string name = dataD.getGroup().id();
 
 			if((name == "tex" || name == "texture") &&
-				dataD.getGroup()->anonymousCount() == 1)
+				dataD.getGroup().anonymousCount() == 1)
 			{
-				DL::Data nameD = dataD.getGroup()->at(0);
+				DL::Data nameD = dataD.getGroup().at(0);
 				if (nameD.type() == DL::Data::T_String)
 				{
 					if(env->hasSpectralShaderOutput(nameD.getString()))
@@ -960,12 +935,12 @@ namespace PRU
 		}
 		else if (dataD.type() == DL::Data::T_Group)
 		{
-			std::string name = dataD.getGroup()->id();
+			std::string name = dataD.getGroup().id();
 
 			if((name == "tex" || name == "texture") &&
-				dataD.getGroup()->anonymousCount() == 1)
+				dataD.getGroup().anonymousCount() == 1)
 			{
-				DL::Data nameD = dataD.getGroup()->at(0);
+				DL::Data nameD = dataD.getGroup().at(0);
 				if (nameD.type() == DL::Data::T_String)
 				{
 					if(env->hasScalarShaderOutput(nameD.getString()))
@@ -990,42 +965,45 @@ namespace PRU
 
 	VectorShaderOutput* SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD) const
 	{		
-		if (dataD.type() == DL::Data::T_Array)
+		if (dataD.type() == DL::Data::T_Group)
 		{
-			bool ok;
-			const auto vec = getVector(dataD.getArray(), ok);
+			if(dataD.getGroup().isArray())
+			{
+				bool ok;
+				const auto vec = getVector(dataD.getGroup(), ok);
 
-			if(ok)
-			{
-				auto* tex = new ConstVectorShaderOutput(vec);
-				env->addShaderOutput(tex);
-				return tex;
-			}
-			else
-			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid vector entry.");
-			}
-		}
-		else if (dataD.type() == DL::Data::T_Group)
-		{
-			std::string name = dataD.getGroup()->id();
-
-			if((name == "tex" || name == "texture") &&
-				dataD.getGroup()->anonymousCount() == 1)
-			{
-				DL::Data nameD = dataD.getGroup()->at(0);
-				if (nameD.type() == DL::Data::T_String)
+				if(ok)
 				{
-					if(env->hasVectorShaderOutput(nameD.getString()))
-						return env->getVectorShaderOutput(nameD.getString());
-					else
-						PR_LOGGER.logf(L_Warning, M_Scene, "Unknown vector texture '%s'.",
-							nameD.getString().c_str());
+					auto* tex = new ConstVectorShaderOutput(vec);
+					env->addShaderOutput(tex);
+					return tex;
+				}
+				else
+				{
+					PR_LOGGER.logf(L_Warning, M_Scene, "Invalid vector entry.");
 				}
 			}
 			else
 			{
-				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+				std::string name = dataD.getGroup().id();
+
+				if((name == "tex" || name == "texture") &&
+					dataD.getGroup().anonymousCount() == 1)
+				{
+					DL::Data nameD = dataD.getGroup().at(0);
+					if (nameD.type() == DL::Data::T_String)
+					{
+						if(env->hasVectorShaderOutput(nameD.getString()))
+							return env->getVectorShaderOutput(nameD.getString());
+						else
+							PR_LOGGER.logf(L_Warning, M_Scene, "Unknown vector texture '%s'.",
+								nameD.getString().c_str());
+					}
+				}
+				else
+				{
+					PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+				}
 			}
 		}
 		else

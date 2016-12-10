@@ -10,9 +10,20 @@ namespace PR
 		RandomSampler(Random& random);
 		~RandomSampler();
 		
-		float generate1D(uint32 index) override;
-		PM::vec2 generate2D(uint32 index) override;
-		PM::vec3 generate3D(uint32 index) override;
+		inline float generate1D(uint32 index) override
+		{
+			return mRandom.getFloat();
+		}
+
+		inline PM::vec2 generate2D(uint32 index) override
+		{
+			return mRandom.get2D();
+		}
+
+		inline PM::vec3 generate3D(uint32 index) override
+		{
+			return mRandom.get3D();
+		}
 
 	private:
 		Random& mRandom;

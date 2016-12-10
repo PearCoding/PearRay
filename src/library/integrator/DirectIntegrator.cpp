@@ -40,6 +40,8 @@ namespace PR
 
 		// Used temporary
 		ShaderClosure other_sc;
+		Spectrum path_weight;
+		Spectrum weight;
 
 		// Hemisphere sampling
 		RandomSampler hemiSampler(context->random());
@@ -49,27 +51,26 @@ namespace PR
 		{
 			Spectrum other_weight;
 			float other_pdf = 0;
+
 			const uint32 path_count = sc.Material->samplePathCount();
 			PR_ASSERT(path_count > 0);
 			
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			for(uint32 path = 0; path < path_count; ++path)
 			{
-				Spectrum path_weight;
 				float pdf;
 
 				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);				
-				const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
-				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON)
+				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
+					!(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))
 					continue;
 
-				Spectrum weight;
 				Ray ray = in.next(sc.P, dir);
 
 				RenderEntity* entity = context->shootWithEmission(weight, ray, other_sc);
-				if (entity && other_sc.Material &&
-					(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))						
+				if (entity && other_sc.Material)						
 					weight += applyRay(ray, other_sc, context,
 						!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
 
@@ -94,27 +95,29 @@ namespace PR
 
 					const PM::vec3 PS = PM::pm_Subtract(p.P, sc.P);
 					const PM::vec3 L = PM::pm_Normalize3D(PS);
-					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(L, sc.N));
+					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(L, sc.N));// No back light detection
 
-					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) 
-						+ sc.Material->pdf(sc, L, NdotL);
+					pdf += /*MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) +*/
+						sc.Material->pdf(sc, L, NdotL);
 
-					if (pdf > PM_EPSILON)
+					if (pdf <= PM_EPSILON)
+						continue;
+					
+					if (NdotL > PM_EPSILON)
 					{
-						if (NdotL > PM_EPSILON)
-						{
-							Ray ray = in.next(sc.P, L);
-							if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
-								other_weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
-							else
-								other_weight.clear();
-						}
+						Ray ray = in.next(sc.P, L);
+						ray.setFlags(ray.flags() | RF_Light);
+
+						if (context->shootWithEmission(other_weight, ray, other_sc) == light)// Full light!!
+							other_weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
 						else
 							other_weight.clear();
-
-						MSI::power(full_weight, full_pdf,
-							other_weight, std::isinf(pdf) ? 1 : pdf);
 					}
+					else
+						other_weight.clear();
+
+					MSI::power(full_weight, full_pdf,
+						other_weight, std::isinf(pdf) ? 1 : pdf);
 				}
 			}
 

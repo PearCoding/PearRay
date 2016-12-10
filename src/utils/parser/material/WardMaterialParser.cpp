@@ -6,26 +6,20 @@
 
 #include "material/WardMaterial.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Material* WardMaterialParser::parse(SceneLoader* loader, Environment* env,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data albedoD = group->getFromKey("albedo");
-		DL::Data specularityD = group->getFromKey("specularity");
-		DL::Data roughnessD = group->getFromKey("roughness");
-		DL::Data roughnessXD = group->getFromKey("roughness_x");
-		DL::Data roughnessYD = group->getFromKey("roughness_x");
-		DL::Data reflectivityD = group->getFromKey("reflectivity");
+		DL::Data albedoD = group.getFromKey("albedo");
+		DL::Data specularityD = group.getFromKey("specularity");
+		DL::Data roughnessD = group.getFromKey("roughness");
+		DL::Data roughnessXD = group.getFromKey("roughness_x");
+		DL::Data roughnessYD = group.getFromKey("roughness_x");
+		DL::Data reflectivityD = group.getFromKey("reflectivity");
 
 		WardMaterial* diff = new WardMaterial(env->materialCount() + 1);
 

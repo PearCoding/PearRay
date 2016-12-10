@@ -50,5 +50,8 @@ namespace PR
 		Entity::onFreeze();
 
 		mWorldBoundingBox_Cache = calcWorldBoundingBox();
+
+		if(!mWorldBoundingBox_Cache.isValid())
+			PR_LOGGER.logf(L_Warning, M_Entity, "Render entity %s world bounding box is invalid!", name().c_str());
 	}
 }

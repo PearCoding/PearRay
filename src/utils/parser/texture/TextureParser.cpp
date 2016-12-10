@@ -7,13 +7,7 @@
 #include "shader/ImageSpectralOutput.h"
 #include "shader/ImageVectorOutput.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 #include <algorithm>
 
@@ -62,16 +56,16 @@ namespace PRU
 			return OIIO::TextureOpt::InterpSmartBicubic;
 	}
 
-	void TextureParser::parse(SceneLoader* loader, Environment* env, const std::string& name, DL::DataGroup* group) const
+	void TextureParser::parse(SceneLoader* loader, Environment* env, const std::string& name, const DL::DataGroup& group) const
 	{
-		DL::Data filenameD = group->getFromKey("file");
-		DL::Data typeD = group->getFromKey("type");
-		//DL::Data dimD = group->getFromKey("dimension");
-		DL::Data wrapModeD = group->getFromKey("wrap");
-		DL::Data mipModeD = group->getFromKey("mip");
-		DL::Data interpolationModeD = group->getFromKey("interpolation");
-		DL::Data blurD = group->getFromKey("blur");
-		DL::Data anisoD = group->getFromKey("anisotropic");
+		DL::Data filenameD = group.getFromKey("file");
+		DL::Data typeD = group.getFromKey("type");
+		//DL::Data dimD = group.getFromKey("dimension");
+		DL::Data wrapModeD = group.getFromKey("wrap");
+		DL::Data mipModeD = group.getFromKey("mip");
+		DL::Data interpolationModeD = group.getFromKey("interpolation");
+		DL::Data blurD = group.getFromKey("blur");
+		DL::Data anisoD = group.getFromKey("anisotropic");
 
 		OIIO::TextureOpt opts;
 		if(wrapModeD.type() == DL::Data::T_String)
@@ -82,12 +76,12 @@ namespace PRU
 			opts.twrap = parseWrap(wrap);
 			opts.rwrap = parseWrap(wrap);
 		}
-		else if(wrapModeD.type() == DL::Data::T_Array)
+		else if(wrapModeD.type() == DL::Data::T_Group)
 		{
-			DL::DataArray* arr = wrapModeD.getArray();
-			for(uint32 i = 0; i < 3 && i < arr->size(); ++i)
+			DL::DataGroup arr = wrapModeD.getGroup();
+			for(uint32 i = 0; i < 3 && i < arr.anonymousCount(); ++i)
 			{
-				DL::Data dat = arr->at(i);
+				DL::Data dat = arr.at(i);
 				if(dat.type() == DL::Data::T_String)
 				{
 					std::string wrap = dat.getString();
@@ -129,12 +123,12 @@ namespace PRU
 			opts.tblur = f;
 			opts.rblur = f;
 		}
-		else if(blurD.type() == DL::Data::T_Array)
+		else if(blurD.type() == DL::Data::T_Group)
 		{
-			DL::DataArray* arr = blurD.getArray();
-			for(uint32 i = 0; i < 3 && i < arr->size(); ++i)
+			DL::DataGroup arr = blurD.getGroup();
+			for(uint32 i = 0; i < 3 && i < arr.anonymousCount(); ++i)
 			{
-				DL::Data dat = arr->at(i);
+				DL::Data dat = arr.at(i);
 				if(dat.isNumber())
 				{
 					float f = dat.getNumber();

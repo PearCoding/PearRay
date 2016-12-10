@@ -107,7 +107,7 @@ namespace PR
 
 		const float ind = mIndex ? mIndex->eval(point).value(lambda) : 1.55f;
 		float weight = (point.Flags & SCF_Inside) == 0 ?
-			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
+			Fresnel::schlick(point.NdotV, 1, ind) : Fresnel::schlick(point.NdotV, ind, 1);
 		
 		bool total = false;
 		PM::vec3 dir;

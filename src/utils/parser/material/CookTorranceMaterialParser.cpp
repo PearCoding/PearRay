@@ -6,36 +6,30 @@
 
 #include "material/CookTorranceMaterial.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Material* CookTorranceMaterialParser::parse(SceneLoader* loader, Environment* env,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data fresnelModeD = group->getFromKey("fresnel_mode");
-		DL::Data distributionModeD = group->getFromKey("distribution_mode");
-		DL::Data geometryModeD = group->getFromKey("geometry_mode");
+		DL::Data fresnelModeD = group.getFromKey("fresnel_mode");
+		DL::Data distributionModeD = group.getFromKey("distribution_mode");
+		DL::Data geometryModeD = group.getFromKey("geometry_mode");
 
-		DL::Data albedoD = group->getFromKey("albedo");
-		DL::Data diffRoughnessD = group->getFromKey("diffuse_roughness");
+		DL::Data albedoD = group.getFromKey("albedo");
+		DL::Data diffRoughnessD = group.getFromKey("diffuse_roughness");
 
-		DL::Data specularityD = group->getFromKey("specularity");
-		DL::Data specRoughnessD = group->getFromKey("specular_roughness");
-		DL::Data specRoughnessXD = group->getFromKey("specular_roughness_x");
-		DL::Data specRoughnessYD = group->getFromKey("specular_roughness_y");
+		DL::Data specularityD = group.getFromKey("specularity");
+		DL::Data specRoughnessD = group.getFromKey("specular_roughness");
+		DL::Data specRoughnessXD = group.getFromKey("specular_roughness_x");
+		DL::Data specRoughnessYD = group.getFromKey("specular_roughness_y");
 
-		DL::Data indexD = group->getFromKey("index");
-		DL::Data condAbsorptionD = group->getFromKey("conductor_absorption");
+		DL::Data indexD = group.getFromKey("index");
+		DL::Data condAbsorptionD = group.getFromKey("conductor_absorption");
 
-		DL::Data reflectivityD = group->getFromKey("reflectivity");
+		DL::Data reflectivityD = group.getFromKey("reflectivity");
 
 		CookTorranceMaterial* diff = new CookTorranceMaterial(env->materialCount() + 1);
 

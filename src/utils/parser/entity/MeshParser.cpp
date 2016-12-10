@@ -5,22 +5,16 @@
 
 #include "entity/MeshEntity.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Entity* MeshParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data materialD = group->getFromKey("material");
-		DL::Data meshD = group->getFromKey("mesh");
+		DL::Data materialD = group.getFromKey("material");
+		DL::Data meshD = group.getFromKey("mesh");
 
 		MeshEntity* me = new MeshEntity(env->scene()->entities().size()+1, name);
 

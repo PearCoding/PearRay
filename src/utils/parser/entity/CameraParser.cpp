@@ -5,13 +5,7 @@
 
 #include "camera/StandardCamera.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 #include <algorithm>
 
@@ -19,20 +13,20 @@ using namespace PR;
 namespace PRU
 {
 	Entity* CameraParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data projectionD = group->getFromKey("projection");
-		DL::Data fovHD = group->getFromKey("fovH");
-		DL::Data fovVD = group->getFromKey("fovV");
-		DL::Data widthD = group->getFromKey("width");
-		DL::Data heightD = group->getFromKey("height");
-		DL::Data fstopD = group->getFromKey("fstop");
-		DL::Data apertureRadiusD = group->getFromKey("apertureRadius");
-		DL::Data zoomD = group->getFromKey("zoom");
+		DL::Data projectionD = group.getFromKey("projection");
+		DL::Data fovHD = group.getFromKey("fovH");
+		DL::Data fovVD = group.getFromKey("fovV");
+		DL::Data widthD = group.getFromKey("width");
+		DL::Data heightD = group.getFromKey("height");
+		DL::Data fstopD = group.getFromKey("fstop");
+		DL::Data apertureRadiusD = group.getFromKey("apertureRadius");
+		DL::Data zoomD = group.getFromKey("zoom");
 
-		DL::Data localDirD = group->getFromKey("localDirection");
-		DL::Data localRightD = group->getFromKey("localRight");
-		DL::Data localUpD = group->getFromKey("localUp");
+		DL::Data localDirD = group.getFromKey("localDirection");
+		DL::Data localRightD = group.getFromKey("localRight");
+		DL::Data localUpD = group.getFromKey("localUp");
 
 		StandardCamera* camera = new StandardCamera(env->scene()->entities().size()+1, name);
 
@@ -89,30 +83,30 @@ namespace PRU
 		if (apertureRadiusD.isNumber())
 			camera->setApertureRadius(apertureRadiusD.getNumber());
 
-		if (localDirD.type() == DL::Data::T_Array)
+		if (localDirD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(localDirD.getArray(), ok);
+			auto v = loader->getVector(localDirD.getGroup(), ok);
 			if(ok)
 				camera->setLocalDirection(v);
 			else
 				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid local direction given.");
 		}
 
-		if (localRightD.type() == DL::Data::T_Array)
+		if (localRightD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(localRightD.getArray(), ok);
+			auto v = loader->getVector(localRightD.getGroup(), ok);
 			if(ok)
 				camera->setLocalRight(v);
 			else
 				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid local right given.");
 		}
 
-		if (localUpD.type() == DL::Data::T_Array)
+		if (localUpD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(localUpD.getArray(), ok);
+			auto v = loader->getVector(localUpD.getGroup(), ok);
 			if(ok)
 				camera->setLocalUp(v);
 			else

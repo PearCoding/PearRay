@@ -178,7 +178,7 @@ namespace PR
 					float weight = 0;
 					if(l->Entity->checkCollision(ray, lightSample))
 					{
-						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, RF_FromLight);
+						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, RF_Light);
 						float pdf = std::abs(PM::pm_Dot3D(dir, lightSample.Ng));
 						
 						uint32 j;// Calculates specular count
@@ -289,7 +289,7 @@ namespace PR
 					t_pdf *= t_pdf2;
 				}
 				
-				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_FromLight);
+				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_Light);
 
 				Spectrum radiance;
 				if(lightSample.Material->emission())

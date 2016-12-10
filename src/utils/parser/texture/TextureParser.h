@@ -17,6 +17,6 @@ namespace PRU
 	{
 	public:
 		void parse(SceneLoader* loader, Environment* env,
-			const std::string& name, DL::DataGroup* group) const;
+			const std::string& name, const DL::DataGroup& group) const;
 	};
 }

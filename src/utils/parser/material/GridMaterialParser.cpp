@@ -6,24 +6,18 @@
 
 #include "material/GridMaterial.h"
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 using namespace PR;
 namespace PRU
 {
 	Material* GridMaterialParser::parse(SceneLoader* loader, Environment* env,
-		const std::string& obj, DL::DataGroup* group) const
+		const std::string& obj, const DL::DataGroup& group) const
 	{
-		DL::Data firstD = group->getFromKey("first");
-		DL::Data secondD = group->getFromKey("second");
-		DL::Data gridCountD = group->getFromKey("gridCount");
-		DL::Data tileUVD = group->getFromKey("tileUV");
+		DL::Data firstD = group.getFromKey("first");
+		DL::Data secondD = group.getFromKey("second");
+		DL::Data gridCountD = group.getFromKey("gridCount");
+		DL::Data tileUVD = group.getFromKey("tileUV");
 
 		GridMaterial* bnd = new GridMaterial(env->materialCount() + 1);
 

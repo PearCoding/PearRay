@@ -6,13 +6,7 @@
 #include <boost/filesystem.hpp>
 #include <sstream>
 
-// DataLisp
 #include "DataLisp.h"
-#include "DataContainer.h"
-#include "DataGroup.h"
-#include "DataArray.h"
-#include "Data.h"
-#include "SourceLogger.h"
 
 namespace PRU
 {
@@ -152,19 +146,19 @@ namespace PRU
 			return OutputMap::V_3D_COUNT;// AS UNKNOWN
 	}
 
-	void OutputSpecification::parse(SceneLoader* loader, Environment* env, DL::DataGroup* group)
+	void OutputSpecification::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group)
 	{
-		for (size_t i = 0; i < group->anonymousCount(); ++i)
+		for (size_t i = 0; i < group.anonymousCount(); ++i)
 		{
-			DL::Data dataD = group->at(i);
+			DL::Data dataD = group.at(i);
 
 			if (dataD.type() == DL::Data::T_Group)
 			{
-				DL::DataGroup* entry = dataD.getGroup();
+				DL::DataGroup entry = dataD.getGroup();
 
-				if (entry->id() == "output")
+				if (entry.id() == "output")
 				{
-					DL::Data nameD = entry->getFromKey("name");
+					DL::Data nameD = entry.getFromKey("name");
 					if(nameD.type() != DL::Data::T_String)
 						continue;
 					
@@ -172,18 +166,18 @@ namespace PRU
 					file.SettingsSpectral = nullptr;
 					file.Name = nameD.getString();
 					
-					for (size_t i = 0; i < entry->anonymousCount(); ++i)
+					for (size_t i = 0; i < entry.anonymousCount(); ++i)
 					{
-						DL::Data channelD = entry->at(i);
+						DL::Data channelD = entry.at(i);
 
 						if (channelD.type() == DL::Data::T_Group 
-							&& channelD.getGroup()->id() == "channel")
+							&& channelD.getGroup().id() == "channel")
 						{
-							DL::DataGroup* channel = channelD.getGroup();
-							DL::Data typeD = channel->getFromKey("type");
-							DL::Data colorD = channel->getFromKey("color");
-							DL::Data gammaD = channel->getFromKey("gamma");
-							DL::Data mapperD = channel->getFromKey("mapper");
+							DL::DataGroup channel = channelD.getGroup();
+							DL::Data typeD = channel.getFromKey("type");
+							DL::Data colorD = channel.getFromKey("color");
+							DL::Data gammaD = channel.getFromKey("gamma");
+							DL::Data mapperD = channel.getFromKey("mapper");
 
 							if(typeD.type() != DL::Data::T_String)
 								continue;
@@ -377,9 +371,9 @@ namespace PRU
 					
 					mFiles.push_back(file);
 				}
-				else if (entry->id() == "output_spectral")
+				else if (entry.id() == "output_spectral")
 				{
-					DL::Data nameD = entry->getFromKey("name");
+					DL::Data nameD = entry.getFromKey("name");
 					if(nameD.type() == DL::Data::T_String)
 					{
 						FileSpectral spec;
