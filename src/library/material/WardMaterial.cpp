@@ -6,6 +6,8 @@
 #include "math/Reflection.h"
 #include "math/Fresnel.h"
 
+#include <sstream>
+
 namespace PR
 {
 	WardMaterial::WardMaterial(uint32 id) :
@@ -214,5 +216,20 @@ namespace PR
 		pdf = PM::pm_Clamp(pdf/std::abs(PM::pm_Dot3D(point.V, dir)), 0.0f, 1.0f);
 		
 		return dir;
+	}
+	
+	std::string WardMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <WardMaterial>:" << std::endl
+			<< "    HasAlbedo:       " << (mAlbedo ? "true" :  "false") << std::endl
+			<< "    HasSpecularity:  " << (mSpecularity ? "true" :  "false") << std::endl
+			<< "    HasRoughnessX:   " << (mRoughnessX ? "true" :  "false") << std::endl
+			<< "    HasRoughnessY:   " << (mRoughnessY ? "true" :  "false") << std::endl
+			<< "    HasReflectivity: " << (mReflectivity ? "true" :  "false") << std::endl;
+
+		return stream.str();
 	}
 }

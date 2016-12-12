@@ -51,7 +51,7 @@ namespace PR
 			return mID;
 		}
 		
-		bool isLight() const;
+		bool isLight() const { return mEmission != nullptr; }
 
 		SpectralShaderOutput* emission() const;
 		void setEmission(SpectralShaderOutput* spec);
@@ -69,11 +69,12 @@ namespace PR
 		bool isCameraVisible() const;
 
 		virtual void setup(RenderContext* context) {};
+		
+		virtual std::string dumpInformation() const;
 	private:
 		SpectralShaderOutput* mEmission;
 
 		const uint32 mID;
-		bool mIsLight;
 		bool mCanBeShaded;
 		bool mShadow;
 		bool mSelfShadow;

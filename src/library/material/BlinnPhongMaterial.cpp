@@ -5,6 +5,8 @@
 #include "math/Fresnel.h"
 #include "shader/ShaderClosure.h"
 
+#include <sstream>
+
 namespace PR
 {
 	BlinnPhongMaterial::BlinnPhongMaterial(uint32 id) :
@@ -95,5 +97,18 @@ namespace PR
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		pdf += BlinnPhongMaterial::pdf(point, dir, 0);
 		return dir;
+	}
+	
+	std::string BlinnPhongMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <BlinnPhongMaterial>:" << std::endl
+			<< "    HasAlbedo:    " << (mAlbedo ? "true" : "false") << std::endl
+			<< "    HasShininess: " << (mShininess ? "true" : "false") << std::endl
+			<< "    HasIOR:       " << (mIndex ? "true" : "false") << std::endl;
+
+		return stream.str();
 	}
 }

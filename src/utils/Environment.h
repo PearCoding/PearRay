@@ -221,6 +221,8 @@ namespace PRU
 		{
 			return mOutputSpecification;
 		}
+
+		void dumpInformation() const;
 	private:
 		PR::Scene mScene;
 		PR::Camera* mCamera;

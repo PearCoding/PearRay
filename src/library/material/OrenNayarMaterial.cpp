@@ -6,6 +6,8 @@
 
 #include "BRDF.h"
 
+#include <sstream>
+
 namespace PR
 {
 	OrenNayarMaterial::OrenNayarMaterial(uint32 id) :
@@ -63,5 +65,17 @@ namespace PR
 		auto dir = Projection::tangent_align(point.N,
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
+	}
+	
+	std::string OrenNayarMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <OrenNayarMaterial>:" << std::endl
+			<< "    HasAlbedo:    " << (mAlbedo ? "true" : "false") << std::endl
+			<< "    HasRoughness: " << (mRoughness ? "true" : "false") << std::endl;
+
+		return stream.str();
 	}
 }

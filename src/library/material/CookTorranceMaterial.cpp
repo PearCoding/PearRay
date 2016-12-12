@@ -8,6 +8,8 @@
 
 #include "BRDF.h"
 
+#include <sstream>
+
 namespace PR
 {
 	CookTorranceMaterial::CookTorranceMaterial(uint32 id) :
@@ -391,5 +393,26 @@ namespace PR
 			pdf = 0;
 
 		return dir;
+	}
+	
+	std::string CookTorranceMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <CookTorranceMaterial>:" << std::endl
+			<< "    FresnelMode:             " << mFresnelMode << std::endl
+			<< "    DistributionMode:        " << mDistributionMode << std::endl
+			<< "    GeometryMode:            " << mGeometryMode << std::endl
+			<< "    HasAlbedo:               " << (mAlbedo ? "true" : "false") << std::endl
+			<< "    HasDiffuseRougness:      " << (mDiffuseRoughness ? "true" : "false") << std::endl
+			<< "    HasSpecularity:          " << (mSpecularity ? "true" : "false") << std::endl
+			<< "    HasSpecularityRougnessX: " << (mSpecRoughnessX ? "true" : "false") << std::endl
+			<< "    HasSpecularityRougnessY: " << (mSpecRoughnessY ? "true" : "false") << std::endl
+			<< "    HasIOR:                  " << (mIOR ? "true" : "false") << std::endl
+			<< "    HasConductorAbsorption:  " << (mConductorAbsorption ? "true" : "false") << std::endl
+			<< "    HasReflectivity:         " << (mReflectivity ? "true" : "false") << std::endl;
+
+		return stream.str();
 	}
 }

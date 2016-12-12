@@ -1,6 +1,8 @@
 #include "GridMaterial.h"
 #include "shader/ShaderClosure.h"
 
+#include <sstream>
+
 namespace PR
 {
 	GridMaterial::GridMaterial(uint32 id) :
@@ -54,13 +56,9 @@ namespace PR
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
-		{
 			return mFirst->eval(pointN, L, NdotL);
-		}
 		else if (mSecond)
-		{
 			return mSecond->eval(pointN, L, NdotL);
-		}
 	
 		return Spectrum();
 	}
@@ -90,13 +88,9 @@ namespace PR
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
-		{
 			return mFirst->pdf(pointN, L, NdotL);
-		}
 		else if (mSecond)
-		{
 			return mSecond->pdf(pointN, L, NdotL);
-		}
 
 		return 0;
 	}
@@ -107,15 +101,25 @@ namespace PR
 		auto pointN = applyGrid(point, u, v);
 
 		if (mFirst && (u % 2) == (v % 2))
-		{
 			return mFirst->sample(pointN, rnd, pdf);
-		}
 		else if (mSecond)
-		{
 			return mSecond->sample(pointN, rnd, pdf);
-		}
 
 		pdf = 0;
 		return PM::pm_Zero();
+	}
+	
+	std::string GridMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <GridMaterial>:" << std::endl
+			<< "    GridCount:  " << gridCount() << std::endl
+			<< "    IsUVTiled:  " << tileUV() << std::endl
+			<< "    Material 1: " << (mFirst ? mFirst->id() : -1) << std::endl
+			<< "    Material 2: " << (mSecond ? mSecond->id() : -1) << std::endl;
+
+		return stream.str();
 	}
 }

@@ -4,6 +4,8 @@
 
 #include "math/Projection.h"
 
+#include <sstream>
+
 namespace PR
 {
 	DiffuseMaterial::DiffuseMaterial(uint32 id) :
@@ -39,5 +41,16 @@ namespace PR
 		auto dir = Projection::tangent_align(point.N,
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
+	}
+	
+	std::string DiffuseMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <DiffuseMaterial>:" << std::endl
+			<< "    HasAlbedo: " << (mAlbedo ? "true" : "false") << std::endl;
+
+		return stream.str();
 	}
 }

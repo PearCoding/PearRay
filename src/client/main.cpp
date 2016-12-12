@@ -128,6 +128,9 @@ int main(int argc, char** argv)
 			options.RenderSettings.distortionQuality(),
 			renderFactory->settings().distortionQuality(),
 			renderer->settings().distortionQuality());
+			
+		if(options.ShowInformation)
+			env->dumpInformation();
 		
 		PR::ToneMapper toneMapper(renderFactory->gpu(), renderer->width()*renderer->height());
 

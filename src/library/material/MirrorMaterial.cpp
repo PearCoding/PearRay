@@ -8,6 +8,8 @@
 #include "math/Reflection.h"
 #include "math/Fresnel.h"
 
+#include <sstream>
+
 namespace PR
 {
 	MirrorMaterial::MirrorMaterial(uint32 id) :
@@ -53,5 +55,20 @@ namespace PR
 	{
 		pdf = std::numeric_limits<float>::infinity();
 		return Reflection::reflect(point.NdotV, point.N, point.V);
+	}
+	
+	std::string MirrorMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <MirrorMaterial>:" << std::endl
+			<< "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
+			<< "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl;
+			//<< "    SampleIOR:        " << sampleIOR() << std::endl
+			//<< "    [IntervalCount]:  " << mIntervalCount_Cache << std::endl
+			//<< "    [IntervalLength]: " << mIntervalLength_Cache << std::endl;
+
+		return stream.str();
 	}
 }

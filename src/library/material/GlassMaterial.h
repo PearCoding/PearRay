@@ -30,6 +30,7 @@ namespace PR
 		uint32 samplePathCount() const override;
 
 		void setup(RenderContext* context) override;
+		virtual std::string dumpInformation() const override;
 	private:
 		SpectralShaderOutput* mSpecularity;
 		SpectralShaderOutput* mIndex;

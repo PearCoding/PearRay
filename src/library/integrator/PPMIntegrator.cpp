@@ -292,7 +292,7 @@ namespace PR
 				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_Light);
 
 				Spectrum radiance;
-				if(lightSample.Material->emission())
+				if(lightSample.Material->isLight())
 				{
 					ShaderClosure lsc = lightSample;
 					radiance = lightSample.Material->emission()->eval(lsc);
@@ -309,16 +309,10 @@ namespace PR
 					ShaderClosure sc;
 					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
 
-					if (entity && sc.Material && sc.Material->canBeShaded() &&
-						sc.NdotV > PM_EPSILON)
+					if (entity && sc.Material && sc.Material->canBeShaded())
 					{
-						PM::vec3 nextDir;
 						float pdf;
-
-						PM::vec3 s = PM::pm_Set(random.getFloat(),
-							random.getFloat(),
-							random.getFloat());
-						nextDir = sc.Material->sample(sc, s, pdf);
+						PM::vec3 nextDir = sc.Material->sample(sc, random.get3D(), pdf);
 
 						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse
 						{
@@ -346,7 +340,9 @@ namespace PR
 							break;
 						}
 						
-						radiance *= sc.Material->eval(sc, nextDir, sc.NdotV) * sc.NdotV;
+						const float NdotL = std::abs(PM::pm_Dot3D(nextDir, sc.N));
+						radiance *= sc.Material->eval(sc, nextDir, NdotL) 
+							* (NdotL / (std::isinf(pdf) ? 1 : pdf));
 						ray = ray.next(sc.P, nextDir);
 					}
 					else // Nothing found, abort

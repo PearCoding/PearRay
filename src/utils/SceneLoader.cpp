@@ -917,7 +917,7 @@ namespace PRU
 				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
 			}
 		}
-		else
+		else if(dataD.isValid())
 		{
 			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
 		}
@@ -955,7 +955,7 @@ namespace PRU
 				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
 			}
 		}
-		else
+		else if(dataD.isValid())
 		{
 			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
 		}
@@ -1006,7 +1006,7 @@ namespace PRU
 				}
 			}
 		}
-		else
+		else if(dataD.isValid())
 		{
 			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
 		}

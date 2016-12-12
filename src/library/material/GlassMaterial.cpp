@@ -11,6 +11,10 @@
 #include "Logger.h"
 #include "CTP.h"
 
+#include <sstream>
+
+#define PR_GLASS_USE_DEFAULT_SCHLICK
+
 namespace PR
 {
 	GlassMaterial::GlassMaterial(uint32 id) :
@@ -77,7 +81,11 @@ namespace PR
 	{
 		const float ind = mIndex ? mIndex->eval(point).value(PM::pm_GetX(rnd)*Spectrum::SAMPLING_COUNT) : 1.55f;
 		float weight = (point.Flags & SCF_Inside) == 0 ?
-			Fresnel::dielectric(point.NdotV, 1, ind) : Fresnel::dielectric(point.NdotV, ind, 1);
+#ifndef PR_GLASS_USE_DEFAULT_SCHLICK
+			Fresnel::dielectric(-point.NdotV, 1, ind) : Fresnel::dielectric(-point.NdotV, ind, 1);
+#else
+			Fresnel::schlick(-point.NdotV, 1, ind) : Fresnel::schlick(-point.NdotV, ind, 1);
+#endif
 		
 		bool total = false;
 		PM::vec3 dir;
@@ -107,7 +115,11 @@ namespace PR
 
 		const float ind = mIndex ? mIndex->eval(point).value(lambda) : 1.55f;
 		float weight = (point.Flags & SCF_Inside) == 0 ?
-			Fresnel::schlick(point.NdotV, 1, ind) : Fresnel::schlick(point.NdotV, ind, 1);
+#ifndef PR_GLASS_USE_DEFAULT_SCHLICK
+			Fresnel::dielectric(-point.NdotV, 1, ind) : Fresnel::dielectric(-point.NdotV, ind, 1);
+#else
+			Fresnel::schlick(-point.NdotV, 1, ind) : Fresnel::schlick(-point.NdotV, ind, 1);
+#endif
 		
 		bool total = false;
 		PM::vec3 dir;
@@ -151,9 +163,21 @@ namespace PR
 		
 		mIntervalLength_Cache = Spectrum::SAMPLING_COUNT / mIntervalCount_Cache;
 		mPathCount_Cache = (mIndex && mSampleIOR) ? 2*mIntervalCount_Cache : 2;
+	}
+	
+	std::string GlassMaterial::dumpInformation() const
+	{
+		std::stringstream stream;
 
-		PR_LOGGER.logf(L_Info, M_Material,
-			"Glass Interval Length %i -> Count %i",
-				mIntervalLength_Cache, mIntervalCount_Cache);
+		stream << std::boolalpha << Material::dumpInformation() 
+		    << "  <GlassMaterial>:" << std::endl
+			<< "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
+			<< "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl
+			<< "    SampleIOR:        " << sampleIOR() << std::endl
+			<< "    IsThin:           " << isThin() << std::endl
+			<< "    [IntervalCount]:  " << mIntervalCount_Cache << std::endl
+			<< "    [IntervalLength]: " << mIntervalLength_Cache << std::endl;
+
+		return stream.str();
 	}
 }

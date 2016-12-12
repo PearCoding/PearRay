@@ -6,6 +6,8 @@
 #include "spectral/XYZConverter.h"
 #include "spectral/RGBConverter.h"
 
+#include "Logger.h"
+
 namespace PRU
 {
 	Environment::Environment(const std::string& name) :
@@ -60,5 +62,13 @@ namespace PRU
 		}
 
 		OIIO::TextureSystem::destroy(mTextureSystem);
+	}
+	
+	void Environment::dumpInformation() const
+	{
+		using namespace PR;
+		for (std::pair<std::string, PR::Material*> p : mMaterials)
+			PR_LOGGER.logf(L_Info, M_Material, "%s:\n%s",
+				p.first.c_str(), p.second->dumpInformation().c_str());
 	}
 }
