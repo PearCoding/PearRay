@@ -94,16 +94,17 @@ namespace PR
 			[](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FaceSample& point, RenderEntity* e) {
 				return (e->checkCollision(ray, point) &&
-					point.Material && ((ray.flags() & RF_Debug) ||
-					((ray.flags() & RF_Light) ?
-					point.Material->allowsShadow() :
-					point.Material->isCameraVisible()
+					((ray.flags() & RF_Debug) ||
+						((ray.flags() & RF_Light) ?
+						point.Material->allowsShadow() :
+						point.Material->isCameraVisible()
 					)));
 		},
 		[](RenderEntity* e) {
 			return (float)e->collisionCost();
 		});
-		((SceneKDTree*)mKDTree)->build(mRenderEntities);
+		((SceneKDTree*)mKDTree)->build(mRenderEntities,
+			[](RenderEntity* e){ return !e->isCollidable(); });
 	}
 
 	RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint) const

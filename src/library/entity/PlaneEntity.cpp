@@ -77,7 +77,7 @@ namespace PR
 
 	bool PlaneEntity::isCollidable() const
 	{
-		return true;
+		return mMaterial && mMaterial->canBeShaded();
 	}
 
 	float PlaneEntity::collisionCost() const

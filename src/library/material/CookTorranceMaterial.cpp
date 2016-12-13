@@ -153,7 +153,7 @@ namespace PR
 			spec = mAlbedo->eval(point) * (val*(1-refl));
 		}
 
-		if (refl > PM_EPSILON && mSpecularity && NdotL * point.NdotV > PM_EPSILON)
+		if (refl > PM_EPSILON && mSpecularity && -NdotL * point.NdotV > PM_EPSILON)
 		{
 			Spectrum ind = mIOR ? mIOR->eval(point) : Spectrum(1.55f);
 			Spectrum F;
@@ -163,7 +163,7 @@ namespace PR
 				case FM_Dielectric:
 					for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 					{
-						F.setValue(i, Fresnel::dielectric(point.NdotV, 1, ind.value(i)));
+						F.setValue(i, Fresnel::dielectric(-point.NdotV, 1, ind.value(i)));
 					}
 				break;
 				case FM_Conductor:
@@ -171,7 +171,7 @@ namespace PR
 					Spectrum k = mConductorAbsorption ? mConductorAbsorption->eval(point) : Spectrum(0.0f);
 					for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
 					{
-						F.setValue(i, Fresnel::conductor(point.NdotV, ind.value(i), k.value(i)));
+						F.setValue(i, Fresnel::conductor(-point.NdotV, ind.value(i), k.value(i)));
 					}
 				}
 				break;
@@ -188,17 +188,17 @@ namespace PR
 				switch(mGeometryMode)
 				{
 					case GM_Implicit:
-						G = BRDF::g_implicit(point.NdotV, NdotL);
+						G = BRDF::g_implicit(-point.NdotV, NdotL);
 						break;
 					case GM_Neumann:
-						G = BRDF::g_neumann(point.NdotV, NdotL);
+						G = BRDF::g_neumann(-point.NdotV, NdotL);
 						break;
 					default:
 					case GM_CookTorrance:
-						G = BRDF::g_cooktorrance(point.NdotV, NdotL, NdotH, -PM::pm_Dot3D(point.V, H));
+						G = BRDF::g_cooktorrance(-point.NdotV, NdotL, NdotH, -PM::pm_Dot3D(point.V, H));
 						break;
 					case GM_Kelemen:
-						G = BRDF::g_kelemen(point.NdotV, NdotL, PM::pm_Dot3D(point.V, H));// No need for -, will be quadrated anyway
+						G = BRDF::g_kelemen(-point.NdotV, NdotL, PM::pm_Dot3D(point.V, H));// No need for -, will be quadrated anyway
 						break;
 				}
 
@@ -244,7 +244,7 @@ namespace PR
 
 		const PM::vec3 H = Reflection::halfway(point.V, L);
 		const float NdotH = PM::pm_Dot3D(point.N, H);
-		const float prod = NdotL * point.NdotV;
+		const float prod = -NdotL * point.NdotV;
 
 		if (NdotH <= PM_EPSILON || prod <= PM_EPSILON)
 			return 0;
@@ -388,7 +388,7 @@ namespace PR
 
 		float NdotL = PM::pm_Dot3D(point.N, dir);
 		if(NdotL > PM_EPSILON)
-			pdf = PM::pm_Clamp(pdf / (4 * NdotL * point.NdotV), 0.0f, 1.0f);
+			pdf = PM::pm_Clamp(pdf / (-4 * NdotL * point.NdotV), 0.0f, 1.0f);
 		else
 			pdf = 0;
 

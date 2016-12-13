@@ -73,7 +73,7 @@ namespace PR
 
 	bool SphereEntity::isCollidable() const
 	{
-		return true;
+		return mMaterial && mMaterial->canBeShaded() && mRadius >= PM_EPSILON;
 	}
 
 	float SphereEntity::collisionCost() const

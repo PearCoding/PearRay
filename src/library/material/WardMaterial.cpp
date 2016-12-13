@@ -86,7 +86,7 @@ namespace PR
 
 			const PM::vec3 H = Reflection::halfway(point.V, L);
 			const float NdotH = PM::pm_Dot3D(point.N, H);
-			const float prod = NdotL*point.NdotV;
+			const float prod = -NdotL*point.NdotV;
 
 			if (NdotH > PM_EPSILON && prod > PM_EPSILON)
 			{
@@ -115,7 +115,7 @@ namespace PR
 
 		const PM::vec3 H = Reflection::halfway(point.V, L);
 		const float NdotH = PM::pm_Dot3D(point.N, H);
-		const float prod = NdotL*point.NdotV;
+		const float prod = -NdotL*point.NdotV;
 
 		if (NdotH <= PM_EPSILON || prod <= PM_EPSILON)
 			return PM_INV_PI_F;

@@ -54,10 +54,11 @@ namespace PR
 			return tangent_align(N, X, Y, V);
 		}
 
-		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& T, const PM::vec3& B, const PM::vec3& V)
+		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& Nx, const PM::vec3& Ny, const PM::vec3& V)
 		{
-			return PM::pm_Add(PM::pm_Add(PM::pm_Scale(N, PM::pm_GetZ(V)), PM::pm_Scale(T, PM::pm_GetY(V))),
-				PM::pm_Scale(B, PM::pm_GetX(V)));
+			return PM::pm_Add(
+				PM::pm_Add(PM::pm_Scale(N, PM::pm_GetZ(V)), PM::pm_Scale(Ny, PM::pm_GetY(V))),
+				PM::pm_Scale(Nx, PM::pm_GetX(V)));
 		}
 
 		static inline PM::vec2 sphereUV(const PM::vec3& V)

@@ -65,7 +65,7 @@ namespace PR
 
 	bool BoundaryEntity::isCollidable() const
 	{
-		return true;
+		return mMaterial && mMaterial->canBeShaded() && mBoundingBox.isValid();
 	}
 
 	float BoundaryEntity::collisionCost() const

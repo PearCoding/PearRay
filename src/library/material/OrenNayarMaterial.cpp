@@ -62,7 +62,7 @@ namespace PR
 
 	PM::vec3 OrenNayarMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
-		auto dir = Projection::tangent_align(point.N,
+		auto dir = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
 	}

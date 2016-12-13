@@ -22,10 +22,10 @@ namespace PR
 		static inline float ndf_ggx_aniso(float NdotH, float XDotH, float YdotH, float alphaX, float alphaY);
 
 		// Geometry (includes NdotL*NdotV term)
-		static inline float g_implicit(float NdotV, float NdotL);
-		static inline float g_neumann(float NdotV, float NdotL);
-		static inline float g_cooktorrance(float NdotV, float NdotL, float NdotH, float VdotH);
-		static inline float g_kelemen(float NdotV, float NdotL, float VdotH);
+		static inline float g_implicit(float dot, float NdotL);
+		static inline float g_neumann(float dot, float NdotL);
+		static inline float g_cooktorrance(float dot, float NdotL, float NdotH, float VdotH);
+		static inline float g_kelemen(float dot, float NdotL, float VdotH);
 
 		// Smith etc
 	};

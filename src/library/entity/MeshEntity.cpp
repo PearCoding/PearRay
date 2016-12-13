@@ -63,7 +63,7 @@ namespace PR
 
 	bool MeshEntity::isCollidable() const
 	{
-		return mMesh != nullptr;
+		return mMesh && (!mMaterialOverride || mMaterialOverride->canBeShaded());
 	}
 
 	float MeshEntity::collisionCost() const

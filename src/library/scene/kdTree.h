@@ -129,7 +129,7 @@ namespace PR
 			return mRoot->boundingBox;
 		}
 
-		inline void build(const std::list<T*>& entities)
+		inline void build(const std::list<T*>& entities, IgnoreCallback ignoreCallback = nullptr)
 		{
 			mDepth = 0;
 			if (entities.empty())
@@ -139,6 +139,9 @@ namespace PR
 			if (entities.size() == 1)
 			{
 				T* e = entities.front();
+				if(ignoreCallback && ignoreCallback(e))
+					return;
+				
 				auto leaf = new kdLeafNode(mGetBoundingBox(e));
 				leaf->objects.push_back(e);
 
@@ -153,6 +156,9 @@ namespace PR
 			BoundingBox V;
 			for (T* obj : entities)
 			{
+				if(ignoreCallback && ignoreCallback(obj))
+					continue;
+				
 				auto prim = new Primitive(obj, mGetBoundingBox(obj));
 				primitives.push_back(prim);
 				primitivesCopy.push_back(prim);
