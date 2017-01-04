@@ -279,10 +279,10 @@ namespace PR
 		context->stats().incPixelSampleCount();
 
 		// To camera coordinates [-1,1]
-		float nx = 2 * (x / mWidth - 0.5f);
-		float ny = 2 * (y / mHeight - 0.5f);
-		float fnx = 2 * ((x+mOffsetX) / mFullWidth - 0.5f);
-		float fny = 2 * ((y+mOffsetX) / mFullHeight - 0.5f);
+		//float nx = 2 * (x / mWidth - 0.5f);
+		//float ny = 2 * (y / mHeight - 0.5f);
+		const float fnx = 2 * ((x+mOffsetX) / mFullWidth - 0.5f);
+		const float fny = 2 * ((y+mOffsetY) / mFullHeight - 0.5f);
 
 		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t);
 		ray.setPixelX((uint32)x);

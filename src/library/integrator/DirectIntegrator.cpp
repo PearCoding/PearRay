@@ -97,7 +97,7 @@ namespace PR
 					const PM::vec3 L = PM::pm_Normalize3D(PS);
 					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(L, sc.N));// No back light detection
 
-					pdf += /*MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) +*/
+					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) +
 						sc.Material->pdf(sc, L, NdotL);
 
 					if (pdf <= PM_EPSILON)

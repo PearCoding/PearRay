@@ -622,7 +622,7 @@ namespace PRU
 
 				if (defaultD.isNumber())
 				{
-					for (uint32 i = 0; i <= PR::Spectrum::SAMPLING_COUNT; ++i)
+					for (uint32 i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
 					{
 						spec.setValue(i, defaultD.getNumber());
 					}

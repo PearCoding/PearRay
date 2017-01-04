@@ -1,6 +1,8 @@
 #pragma once
 
 #include "OnePassIntegrator.h"
+#include "shader/ShaderClosure.h"
+#include "spectral/Spectrum.h"
 
 namespace PR
 {
@@ -15,14 +17,23 @@ namespace PR
 
 	private:
 		Spectrum applyRay(const Ray& in, RenderThreadContext* context, uint32 diffBounces, ShaderClosure& sc);
-
+		
 		struct ThreadData
 		{
-			float* LightPos;// For every light a path (LightCount * MaxLightSamples * MaxPathCount * 3)
-			Spectrum* LightFlux;
-			uint32* LightMaxDepth;
-			//float* LightPDF;
+			struct EventVertex
+			{
+				Spectrum Flux;
+				ShaderClosure SC;
+				//float PDF;
+			};
+
+			EventVertex* LightVertices;
+			uint32* LightPathLength;
+			//EventVertex* EyeVertices;
 		};
+		
+		void deleteThreadStructure();
+
 		ThreadData* mThreadData;
 		uint32 mThreadCount;
 	};

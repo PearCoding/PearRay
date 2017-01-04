@@ -36,7 +36,7 @@ namespace PR
 	{
 		if(!m || m == mMaterial)
 		{
-			if(flags() & EF_LocalArea == 0)
+			if((flags() & EF_LocalArea) == 0)
 			{
 				if(isFrozen())
 					return mGlobalPlane_Cache.surfaceArea();

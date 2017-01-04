@@ -35,14 +35,13 @@ namespace PR
 				++i)
 			{
 				float pdf;
-				PM::vec3 rnd = sampler.generate3D(i);
-				PM::vec3 dir = e->sample(sc, rnd, pdf);
+				PM::vec3 dir = e->sample(sc, sampler.generate3D(i), pdf);
 
 				if(pdf <= PM_EPSILON)
 					continue;
 
 				Spectrum weight;
-				const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(dir, sc.N));
+				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
 				if (NdotL > PM_EPSILON)
 				{

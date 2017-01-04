@@ -535,7 +535,7 @@ namespace PR
 			return Spectrum();
 
 		Spectrum full_weight;
-		PM::vec3 rnd = context->random().get3D();
+		const PM::vec3 rnd = context->random().get3D();
 		for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
 		{
 			float pdf;

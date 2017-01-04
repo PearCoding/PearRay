@@ -47,6 +47,14 @@ namespace PR
 			B = PM::pm_Cross3D(N, T);
 		}
 
+		static inline void tangent_frame(const PM::vec3& N, PM::avec3& T, PM::avec3& B)
+		{
+			PM::vec3 X, Y;
+			tangent_frame(N, X, Y);
+			T = X;
+			B = Y;
+		}
+
 		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& V)
 		{
 			PM::vec3 X, Y;
