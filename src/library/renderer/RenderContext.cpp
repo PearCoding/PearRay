@@ -285,8 +285,8 @@ namespace PR
 		const float fny = 2 * ((y+mOffsetY) / mFullHeight - 0.5f);
 
 		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t);
-		ray.setPixelX((uint32)x);
-		ray.setPixelY((uint32)y);
+		ray.setPixelX((uint32)std::round(x));
+		ray.setPixelY((uint32)std::round(y));
 
 		return mIntegrator->apply(ray, context, pass, sc);
 	}
