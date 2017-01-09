@@ -30,7 +30,7 @@ namespace PR
 
 	bool MeshEntity::isLight() const
 	{
-		return mMesh->isLight();
+		return mMaterialOverride ? mMaterialOverride->isLight() : mMesh->isLight();
 	}
 
 	float MeshEntity::surfaceArea(Material* m) const
@@ -111,6 +111,9 @@ namespace PR
 		point.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), point.Ng));
 		point.P = PM::pm_Multiply(matrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
+
+		if(mMaterialOverride)
+			point.Material = mMaterialOverride;
 
 		return point;
 	}

@@ -127,10 +127,8 @@ namespace PR
 					map});
 				mLights.push_back(l);
 
-#ifdef PR_DEBUG
-				PR_LOGGER.logf(L_Debug, M_Integrator, "PPM Light %s %llu photons %f m2",
+				PR_LOGGER.logf(L_Info, M_Integrator, "PPM Light %s %llu photons %f m2",
 					light->name().c_str(), l->Photons, l->Surface);
-#endif
 			}
 		}
 	}
