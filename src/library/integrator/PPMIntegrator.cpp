@@ -23,8 +23,6 @@
 
 #include "Logger.h"
 
-//#define PR_PPM_CONE_FILTER
-
 namespace PR
 {
 	constexpr uint32 MAX_THETA_SIZE = 128;
@@ -235,7 +233,6 @@ namespace PR
 		}
 	}
 
-	constexpr float K = 1.1;// Cone filter
 	void PPMIntegrator::onNextPass(uint32 pass, bool& clean)
 	{
 		clean = true;// Clear sample, error, etc information prior next pass.
@@ -330,7 +327,7 @@ namespace PR
 							photonsShoot++;
 							diffuseBounces++;
 
-							if (diffuseBounces > mRenderer->settings().maxDiffuseBounces())
+							if (diffuseBounces > H-1)
 								break;// Absorb
 						}
 						else if(!std::isinf(pdf))// Absorb
@@ -389,7 +386,9 @@ namespace PR
 #ifdef PR_DEBUG
 			PR_LOGGER.log(L_Debug, M_Integrator, "PrePass: Accumulating Photons");
 #endif
-
+			
+			const float inv1 = 1.0f / pass;
+			const float inv2 = 1.0f / context->renderer()->settings().ppm().maxPhotonsPerPass();
 			const float A = 1 - context->renderer()->settings().ppm().contractRatio();
 
 			Photon::PointSphere<Photon::Photon>& sphere = mThreadData[context->threadNumber()].PhotonSearchSphere;
@@ -423,29 +422,13 @@ namespace PR
 						const Photon::Photon* photon = sphere.Index[i];
 						const PM::vec3 dir = mPhotonMap->evalDirection(photon->Theta, photon->Phi);
 
-						Spectrum weight;
-
-#ifdef PR_PPM_CONE_FILTER
-						const float d = sphere.Distances2[i]/sphere.Distances2[0];
-						const float w = 1 - d / K;
-
-						if (w > PM_EPSILON)
-						{
-#endif//PR_PPM_CONE_FILTER
-							const float NdotL = std::abs(PM::pm_Dot3D(p.SC.N, dir));
+						const float NdotL = std::abs(PM::pm_Dot3D(p.SC.N, dir));
 #if PR_PHOTON_RGB_MODE >= 1
-							weight = p.SC.Material->eval(p.SC, dir, NdotL) *
-								RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
+						full_weight += p.SC.Material->eval(p.SC, dir, NdotL) *
+							RGBConverter::toSpec(photon->Power[0], photon->Power[1], photon->Power[2]);
 #else
-							weight = p.SC.Material->eval(p.SC, dir, NdotL) * Spectrum(photon->Power);
+						full_weight += p.SC.Material->eval(p.SC, dir, NdotL) * Spectrum(photon->Power);
 #endif//PR_PHOTON_RGB_MODE
-
-#ifdef PR_PPM_CONE_FILTER 
-						}
-						full_weight += weight * (w * (PM_INV_PI_F / ((1 - 2/(3*K)) * sphere.Distances2[0])));
-#else
-						full_weight += weight * (PM_INV_PI_F / sphere.Distances2[0]);
-#endif//PR_PPM_CONE_FILTER
 					}
 					
 					// Change radius, photons etc.
@@ -464,7 +447,8 @@ namespace PR
 #endif//PR_PHOTON_RGB_MODE
 				}
 
-				const float inv = 1.0f / (context->renderer()->settings().ppm().maxPhotonsPerPass() * pass);
+				const float inv3 = 1.0f / p.CurrentRadius;
+				const float inv = inv1*inv2*inv3*PM_INV_PI_F;
 
 				// Render result:
 #if PR_PHOTON_RGB_MODE == 2
