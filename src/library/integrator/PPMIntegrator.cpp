@@ -291,7 +291,7 @@ namespace PR
 				{
 					ShaderClosure lsc = lightSample;
 					radiance = lightSample.Material->emission()->eval(lsc);
-					radiance /= t_pdf;
+					//radiance /= t_pdf;// This is not working properly
 				}
 				else
 				{
