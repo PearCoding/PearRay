@@ -41,7 +41,7 @@ before_script:
   - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make $MAKEFLAGS 
-  - make test
+  #- make test
 
 branches:
   only:
