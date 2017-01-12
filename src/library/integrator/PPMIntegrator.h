@@ -84,5 +84,9 @@ namespace PR
 		std::list<Light*> mLights;
 		uint32 mProjMaxTheta;
 		uint32 mProjMaxPhi;
+
+		uint64 mMaxPhotonsStoredPerPass;
+		uint64 mPhotonsEmitted;
+		uint64 mPhotonsStored;
 	};
 }

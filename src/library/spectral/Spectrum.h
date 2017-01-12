@@ -80,6 +80,7 @@ namespace PR
 
 		inline bool hasNaN() const;
 		inline bool hasInf() const;
+		inline bool hasNegative() const;
 		inline bool isOnlyZero() const;
 
 		void weightPhotometric();

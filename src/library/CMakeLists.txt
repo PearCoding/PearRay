@@ -104,6 +104,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
 SET(PR_Main_Hdr
   CTP.h
   Config.h.in
+  Diagnosis.h
   FileLogListener.h
   Logger.h
   LogListener.h

@@ -9,7 +9,7 @@
  2 - Everything is rgb
  */
 #ifndef PR_PHOTON_RGB_MODE
-# define PR_PHOTON_RGB_MODE 2
+# define PR_PHOTON_RGB_MODE 0
 #endif
 
 namespace PR
@@ -24,7 +24,7 @@ namespace PR
 #if PR_PHOTON_RGB_MODE >= 1
 			float Power[3];
 #else
-			float Power[Spectrum::SAMPLING_COUNT];// Approx: 370 bytes
+			Spectrum Power;// Approx: 370 bytes
 #endif
 		};
 	}

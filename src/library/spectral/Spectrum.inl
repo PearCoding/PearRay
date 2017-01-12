@@ -286,6 +286,17 @@ namespace PR
 		return false;
 	}
 
+	inline bool Spectrum::hasNegative() const
+	{
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+		{
+			if (mValues[i] < 0.0f)
+				return true;
+		}
+
+		return false;
+	}
+
 	inline bool Spectrum::isOnlyZero() const
 	{
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)

@@ -120,7 +120,8 @@ namespace PR
 		FaceSample p;
 
 		PM::vec2 s = sampler.generate2D(sample);
-		PM::vec3 n = Projection::sphere(PM::pm_GetX(s), PM::pm_GetY(s), pdf);
+		PM::vec3 n = Projection::sphere_coord(PM::pm_GetX(s)*PM_2_PI_F, PM::pm_GetY(s)*PM_PI_F);
+		pdf = 1;
 
 		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), n));
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);

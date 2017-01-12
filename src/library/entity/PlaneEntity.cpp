@@ -132,7 +132,7 @@ namespace PR
 		fp.UV = s;
 		fp.Material = material();
 
-		pdf = 1;//?
+		pdf = 1;
 		return fp;
 	}
 

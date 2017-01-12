@@ -4,6 +4,9 @@
 #include "spectral/Spectrum.h"
 #include "material/Material.h"
 
+//#define PR_ENABLE_DIAGNOSIS
+#include "Diagnosis.h"
+
 namespace PR
 {
 	OutputMap::OutputMap(RenderContext* renderer) :
@@ -132,9 +135,12 @@ namespace PR
 		uint32 oldSample = getSampleCount(x,y);
 		float t = 1.0f/(oldSample + 1.0f);
 	
+		PR_CHECK_NEGATIVE(t, "OutputMap::pushFragment");
+
 		// Spectral
 		Spectrum oldSpec = mSpectral->getFragmentBounded(x,y);
 		Spectrum newSpec = oldSpec * (1-t) + s*t;
+		PR_CHECK_NEGATIVE(newSpec, "OutputMap::pushFragment");
 
 		mSpectral->pushFragmentBounded(x, y, newSpec);
 		setPixelError(x,y,oldSample+1,oldSpec,newSpec);

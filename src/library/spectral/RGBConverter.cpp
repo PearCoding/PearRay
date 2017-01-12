@@ -3,6 +3,9 @@
 
 #include "PearMath.h"
 
+//#define PR_ENABLE_DIAGNOSIS
+#include "Diagnosis.h"
+
 namespace PR
 {
 	/* Source: https://en.wikipedia.org/wiki/File:CIE1931_RGBCMF.svg */
@@ -74,6 +77,10 @@ namespace PR
 		x = 3.240479f * X2 - 1.537150f * Y2 - 0.498535f * Z2;
 		y = -0.969256f * X2 + 1.875991f * Y2 + 0.041556f * Z2;
 		z = 0.055648f * X2 - 0.204043f * Y2 + 1.057311f * Z2;
+
+		x = std::max(x, 0.0f);
+		y = std::max(y, 0.0f);
+		z = std::max(z, 0.0f);
 
 		/*x = 3.2406f * X2 - 1.5372f * Y2 - 0.4986f * Z2;
 		y = -0.9689f * X2 + 1.8758f * Y2 + 0.0415f * Z2;
@@ -180,6 +187,14 @@ namespace PR
 				Green.setValue(i, RGB_TO_SPEC[(RGB_TO_SPEC_SAMPLING_COUNT - 1) * 7 + 5]);
 				Blue.setValue(i, RGB_TO_SPEC[(RGB_TO_SPEC_SAMPLING_COUNT - 1) * 7 + 6]);
 			}
+
+			White.setValue(i, std::max(0.0f, White.value(i)));
+			Cyan.setValue(i, std::max(0.0f, Cyan.value(i)));
+			Magenta.setValue(i, std::max(0.0f, Magenta.value(i)));
+			Yellow.setValue(i, std::max(0.0f, Yellow.value(i)));
+			Red.setValue(i, std::max(0.0f, Red.value(i)));
+			Green.setValue(i, std::max(0.0f, Green.value(i)));
+			Blue.setValue(i, std::max(0.0f, Blue.value(i)));
 		}
 	}
 
@@ -231,6 +246,6 @@ namespace PR
 			}
 		}
 
-		return spec;
+		return PR_CHECK_NEGATIVE(spec, "toSpec");
 	}
 }
