@@ -7,7 +7,7 @@ namespace PR
 {
 	StandardCamera::StandardCamera(uint32 id, const std::string& name) :
 		Camera(id, name), mOrthographic(false), mWidth(1), mHeight(1),
-		mFStop(0), mApertureRadius(0.1f),
+		mFStop(0), mApertureRadius(0.05f),
 		mLocalDirection(PM::pm_Set(0,0,1)), mLocalRight(PM::pm_Set(1,0,0)), mLocalUp(PM::pm_Set(0,1,0))
 	{
 	}
@@ -126,35 +126,37 @@ namespace PR
 		{
 			return Ray(0,0,
 					PM::pm_Add(position(),
-					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
-				mDirection_Cache);
+						PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
+					mDirection_Cache,
+					0,t);
 		}
 		else
 		{
-			float s, c;
-			if (std::abs(mFStop) > PM_EPSILON && mApertureRadius > PM_EPSILON)
+			PM::vec3 viewPlane = PM::pm_Add(
+					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx),
+						PM::pm_Scale(mUp_Cache, ny)),
+					mFocalDistance_Cache);
+					
+			if (mHasDOF_Cache)
 			{
+				float s, c;
 				PM::pm_SinCos(PM_2_PI_F * rx, s, c);
-				s *= ry;
-				c *= ry;
+				PM::vec3 eyePoint = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, ry*s),
+					PM::pm_Scale(mYApertureRadius_Cache, ry*c));
+				PM::vec3 rayDir = PM::pm_QualityNormalize3D(PM::pm_Subtract(viewPlane, eyePoint));
+				
+				return Ray(0,0, // Will be set by render context
+					PM::pm_Add(position(), eyePoint),
+					rayDir,
+					0,t);
 			}
 			else
 			{
-				s = 0;
-				c = 0;
+				return Ray(0,0, // Will be set by render context
+					position(),
+					PM::pm_QualityNormalize3D(viewPlane),
+					0,t);
 			}
-
-			PM::vec3 eyePoint = PM::pm_Add(
-				PM::pm_Scale(mXApertureRadius_Cache, s), PM::pm_Scale(mYApertureRadius_Cache, c));
-
-			PM::vec3 viewPlane = PM::pm_Add(
-					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny)),
-					mDirection_Cache);// One unit away in z direction.
-			PM::vec3 rayDir = PM::pm_Normalize3D(PM::pm_Subtract(viewPlane, eyePoint));
-
-			return Ray(0,0, // Will be set by render context
-					PM::pm_Add(position(), eyePoint),
-					rayDir);
 		}
 	}
 
@@ -165,11 +167,11 @@ namespace PR
 		
 		Camera::onFreeze();
 
-		mDirection_Cache = PM::pm_SetW(PM::pm_Normalize3D(
+		mDirection_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(
 			PM::pm_Multiply(directionMatrix(), mLocalDirection)), 0);
-		mRight_Cache = PM::pm_SetW(PM::pm_Normalize3D(
+		mRight_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(
 			PM::pm_Multiply(directionMatrix(), mLocalRight)), 0);
-		mUp_Cache = PM::pm_SetW(PM::pm_Normalize3D(
+		mUp_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(
 			PM::pm_Multiply(directionMatrix(), mLocalUp)), 0);
 
 		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
@@ -178,21 +180,29 @@ namespace PR
 			PM::pm_GetX(mRight_Cache), PM::pm_GetY(mRight_Cache), PM::pm_GetZ(mRight_Cache),
 			PM::pm_GetX(mUp_Cache), PM::pm_GetY(mUp_Cache), PM::pm_GetZ(mUp_Cache));
 
-		if (std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
+		if (mOrthographic || std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
 		{
-			mFocalDistance_Cache = 0.0f;
+			mFocalDistance_Cache = mDirection_Cache;
 			mXApertureRadius_Cache = PM::pm_Zero();
 			mYApertureRadius_Cache = PM::pm_Zero();
 			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
 			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
+			mHasDOF_Cache = false;
 		}
 		else
 		{
-			mFocalDistance_Cache = mFStop;
+			mFocalDistance_Cache = PM::pm_Scale(mDirection_Cache, mFStop+1);
 			mXApertureRadius_Cache = PM::pm_Scale(mRight_Cache, mApertureRadius);
 			mYApertureRadius_Cache = PM::pm_Scale(mUp_Cache, mApertureRadius);
-			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
+			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth*(mFStop+1));
+			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight*(mFStop+1));
+			mHasDOF_Cache = true;
+
+			PR_LOGGER.logf(L_Info, M_Camera,"    FocalDistance[%.3f,%.3f,%.3f] XAperature[%.3f,%.3f,%.3f] YAperature[%.3f,%.3f,%.3f]",
+				name().c_str(),
+				PM::pm_GetX(mFocalDistance_Cache), PM::pm_GetY(mFocalDistance_Cache), PM::pm_GetZ(mFocalDistance_Cache),
+				PM::pm_GetX(mXApertureRadius_Cache), PM::pm_GetY(mXApertureRadius_Cache), PM::pm_GetZ(mXApertureRadius_Cache),
+				PM::pm_GetX(mYApertureRadius_Cache), PM::pm_GetY(mYApertureRadius_Cache), PM::pm_GetZ(mYApertureRadius_Cache));
 		}
 	}
 }

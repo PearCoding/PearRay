@@ -116,6 +116,22 @@ namespace PR
 				thCos);
 		}
 
+		// Orientation +Z
+		static inline PM::vec3 hemi(float u1, float u2, float& pdf)
+		{
+			float thCos, thSin;
+			PM::pm_SinCos(u1*PM_PI_F*0.5f, thSin, thCos);
+
+			float phCos, phSin;
+			PM::pm_SinCos(u2*PM_2_PI_F, phSin, phCos);
+
+			pdf = 1;
+
+			return PM::pm_Set(thSin * phCos,
+				thSin * phSin,
+				thCos);
+		}
+
 		// Cosine weighted
 		// Orientation +Z
 		static inline PM::vec3 cos_hemi(float u1, float u2, float& pdf)
@@ -130,7 +146,7 @@ namespace PR
 			const float x = sinPhi * thCos;
 			const float y = sinPhi * thSin;
 
-			pdf = cosPhi * PM_INV_PI_F;
+			pdf = cosPhi;
 			
 			return PM::pm_Set(x, y, cosPhi);
 		}
@@ -155,7 +171,7 @@ namespace PR
 
 		static inline float cos_hemi_pdf(float NdotL)
 		{
-			return PM_INV_PI_F * NdotL;
+			return NdotL;
 		}
 
 		static inline float cos_hemi_pdf(float NdotL, float m)

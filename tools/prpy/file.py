@@ -103,6 +103,14 @@ class SpectralFile:
         return np.nanmin(self.spectrals)
     
     
+    def energy(self):
+        arr = np.zeros((self.height, self.width))
+        for j in range(0, self.height):
+            for i in range(0, self.width):
+                arr[j, i] = self.get(i,j).energy()
+        return arr
+    
+    
     def normalized(self):
         f = SpectralFile()
         f.samples = self.samples

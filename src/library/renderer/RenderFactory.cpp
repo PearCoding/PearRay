@@ -72,7 +72,7 @@ namespace PR
 		uint32 ix = index % itx;
 		uint32 iy = index / itx;
 		uint32 x = ix * itw;
-		uint32 y = iy * ity;
+		uint32 y = iy * ith;
 
 		return new RenderContext(index, x+cropOffsetX(), y+cropOffsetY(),
 			itw,ith,mFullWidth,mFullHeight,

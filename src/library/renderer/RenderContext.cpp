@@ -72,7 +72,8 @@ namespace PR
 	RenderContext::~RenderContext()
 	{
 		reset();
-
+		
+		PR_ASSERT(mOutputMap);
 		delete mOutputMap;
 	}
 
@@ -147,7 +148,7 @@ namespace PR
 				mIntegrator = new BiDirectIntegrator();
 				break;
 			case IM_PPM:
-				mIntegrator = new PPMIntegrator();// TODO
+				mIntegrator = new PPMIntegrator();
 				break;
 			}
 		}

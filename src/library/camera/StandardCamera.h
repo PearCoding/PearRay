@@ -61,7 +61,8 @@ namespace PR
 		PM::vec3 mRight_Cache;
 		PM::vec3 mUp_Cache;
 
-		float mFocalDistance_Cache;
+		bool mHasDOF_Cache;
+		PM::vec3 mFocalDistance_Cache;
 		PM::vec3 mXApertureRadius_Cache;
 		PM::vec3 mYApertureRadius_Cache;
 	};

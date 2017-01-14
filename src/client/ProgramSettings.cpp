@@ -582,7 +582,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 	if (vm.count("itx"))
 		ImageTileXCount = PM::pm_Max<uint32>(1, vm["itx"].as<PR::uint32>());
-	if (vm.count("itx"))
+	if (vm.count("ity"))
 		ImageTileYCount = PM::pm_Max<uint32>(1, vm["ity"].as<PR::uint32>());
 
 	// Renderer

@@ -119,8 +119,8 @@ int main(int argc, char** argv)
 			renderFactory->create(i, options.ImageTileXCount, options.ImageTileYCount);
 		PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "Starting rendering of image tile %i / %i [%i, %i] x [%i, %i]",
 			renderer->index() + 1, options.ImageTileXCount * options.ImageTileYCount,
-			renderer->offsetX(), renderer->width(),
-			renderer->offsetY(), renderer->height());
+			renderer->offsetX(), renderer->offsetX()+renderer->width(),
+			renderer->offsetY(), renderer->offsetY()+renderer->height());
 
 		env->outputSpecification().setup(renderer);
 		env->scene()->setup(renderer);

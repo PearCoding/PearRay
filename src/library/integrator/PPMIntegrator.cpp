@@ -273,14 +273,16 @@ namespace PR
 				 photonsShoot < sampleSize;
 				 ++photonsShoot)
 			{
+				float area_pdf = 0;
 				float t_pdf = 0;
 				FaceSample lightSample;
 				PM::vec3 dir;
 				
 				if(light->Proj)
 				{
-					dir = light->Proj->sample(random.getFloat(), random.getFloat(), random.getFloat(), random.getFloat(), t_pdf);
-					
+					dir = light->Proj->sample(random.getFloat(), random.getFloat(), random.getFloat(), random.getFloat(), area_pdf);
+					t_pdf = 1;
+
 					Ray ray(0,0,
 							PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
 						PM::pm_Negate(dir));
@@ -289,12 +291,10 @@ namespace PR
 				}
 				else
 				{
-					lightSample = light->Entity->getRandomFacePoint(sampler, photonsShoot, t_pdf);
+					lightSample = light->Entity->getRandomFacePoint(sampler, photonsShoot, area_pdf);
 
-					float t_pdf2 = 0;
 					dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-								Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf2));
-					t_pdf *= t_pdf2;
+								Projection::hemi(random.getFloat(), random.getFloat(), t_pdf));
 				}
 				
 				if(!lightSample.Material->isLight())
@@ -303,7 +303,7 @@ namespace PR
 				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_Light);
 				ShaderClosure lsc = lightSample;
 				Spectrum radiance = lightSample.Material->emission()->eval(lsc);
-				//radiance /= t_pdf;// This is not working properly
+				radiance /= t_pdf;// This is not working properly
 				
 				PR_CHECK_NEGATIVE(radiance, "After photon emission");
 
@@ -317,6 +317,9 @@ namespace PR
 
 					if (entity && sc.Material && sc.Material->canBeShaded())
 					{
+						//if(j == 0)
+						//	radiance /= MSI::toSolidAngle(area_pdf, sc.Depth2, std::abs(sc.NdotV));
+						
 						float pdf;
 						PM::vec3 nextDir = sc.Material->sample(sc, random.get3D(), pdf);
 
@@ -555,7 +558,6 @@ namespace PR
 		PR_CHECK_NEGATIVE(cpWeight[1], "Before first pass: cpWeight [1]");
 		PR_CHECK_NEGATIVE(cpWeight[2], "Before first pass: cpWeight [2]");
 #endif
-
 
 		Spectrum full_weight;
 		const PM::vec3 rnd = context->random().get3D();
