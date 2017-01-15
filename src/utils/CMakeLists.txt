@@ -9,6 +9,7 @@ SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
 SET(PR_Parser_Entity_Src
   parser/entity/BoundaryParser.cpp
   parser/entity/CameraParser.cpp
+  parser/entity/CoordinateAxisParser.cpp
   parser/entity/MeshParser.cpp
   parser/entity/PlaneParser.cpp
   parser/entity/SphereParser.cpp)
@@ -60,6 +61,7 @@ SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
 SET(PR_Parser_Entity_Hdr
   parser/entity/BoundaryParser.h
   parser/entity/CameraParser.h
+  parser/entity/CoordinateAxisParser.h
   parser/entity/EntityParser.h
   parser/entity/MeshParser.h
   parser/entity/PlaneParser.h

@@ -6,6 +6,7 @@
 
 #include "parser/entity/BoundaryParser.h"
 #include "parser/entity/CameraParser.h"
+#include "parser/entity/CoordinateAxisParser.h"
 #include "parser/entity/MeshParser.h"
 #include "parser/entity/PlaneParser.h"
 #include "parser/entity/SphereParser.h"
@@ -213,6 +214,7 @@ namespace PRU
 		{ "boundary", BoundaryParser() },
 		{ "box", BoundaryParser() },
 		{ "camera", CameraParser() },
+		{ "axis", CoordinateAxisParser() },
 		{ "mesh", MeshParser() },
 		{ "plane", PlaneParser() },
 		{ "sphere", SphereParser() },

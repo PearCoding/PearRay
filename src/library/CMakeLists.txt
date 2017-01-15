@@ -10,6 +10,7 @@ SET(PR_Camera_Src
 SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Entity_Src
   entity/BoundaryEntity.cpp
+  entity/CoordinateAxisEntity.cpp
   entity/Entity.cpp
   entity/MeshEntity.cpp
   entity/PlaneEntity.cpp
@@ -115,6 +116,7 @@ SET(PR_Camera_Hdr
 SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Entity_Hdr
   entity/BoundaryEntity.h
+  entity/CoordinateAxisEntity.h
   entity/Entity.h
   entity/Entity.inl
   entity/PlaneEntity.h

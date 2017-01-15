@@ -123,8 +123,8 @@ namespace PR
 
 		FaceSample fp;
 		fp.P = PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetX(ret)),
-				PM::pm_Scale(yaxis, PM::pm_GetY(ret))));
+			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetY(ret)),
+				PM::pm_Scale(yaxis, PM::pm_GetZ(ret))));
 		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
