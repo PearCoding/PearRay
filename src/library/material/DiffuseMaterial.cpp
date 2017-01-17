@@ -33,13 +33,14 @@ namespace PR
 
 	float DiffuseMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
 	{
-		return 1;//Projection::cos_hemi_pdf(NdotL);
+		return Projection::cos_hemi_pdf(NdotL);
+			//1;
 	}
 
 	PM::vec3 DiffuseMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
 	{
 		auto dir = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
 	}
 	

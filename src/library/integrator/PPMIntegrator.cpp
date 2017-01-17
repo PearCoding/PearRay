@@ -294,7 +294,7 @@ namespace PR
 					lightSample = light->Entity->getRandomFacePoint(sampler, photonsShoot, area_pdf);
 
 					dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-								Projection::hemi(random.getFloat(), random.getFloat(), t_pdf));
+								Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf));
 				}
 				
 				if(!lightSample.Material->isLight())
@@ -303,7 +303,7 @@ namespace PR
 				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_Light);
 				ShaderClosure lsc = lightSample;
 				Spectrum radiance = lightSample.Material->emission()->eval(lsc);
-				radiance /= t_pdf;// This is not working properly
+				//radiance /= t_pdf;// This is not working properly
 				
 				PR_CHECK_NEGATIVE(radiance, "After photon emission");
 

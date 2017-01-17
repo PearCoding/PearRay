@@ -117,12 +117,12 @@ def specToLum_Sco(spec_data):
     return mathutils.trapz(y_data, spectral.WAVELENGTH_STEP*1e-9) * SCO_K
 
 def specToXYZ(spec_data):    
-    return [mathutils.trapz(spec_data * PHO_X, spectral.WAVELENGTH_STEP*1e-9),
+    return np.array([mathutils.trapz(spec_data * PHO_X, spectral.WAVELENGTH_STEP*1e-9),
             mathutils.trapz(spec_data * PHO_Y, spectral.WAVELENGTH_STEP*1e-9),
-            mathutils.trapz(spec_data * PHO_Z, spectral.WAVELENGTH_STEP*1e-9)]
+            mathutils.trapz(spec_data * PHO_Z, spectral.WAVELENGTH_STEP*1e-9)])
 
 def specToRGB(spec_data):
-    return specToXYZ(spec_data) * M_F_RGB
+    return np.fmax(M_F_RGB.dot(specToXYZ(spec_data)), [0,0,0])
 
 # Parallel functions
 def p_imageToGrayLine(r, mapper, width, full_data):
@@ -139,17 +139,32 @@ def p_imageToColorLine(r, mapper, width, full_data):
 
 VERBOSE_LEVEL=5
 # Image functions
-def imageToLum(width, height, full_data):
-    return parallel.run(p_imageToGrayLine, range(0, height), [specToLum, width, full_data], verbose=VERBOSE_LEVEL)
+def imageToLum(width, height, full_data, do_parallel=True):
+    if do_parallel:
+        return parallel.run(p_imageToGrayLine, range(0, height), [specToLum, width, full_data], verbose=VERBOSE_LEVEL)
+    else:
+        return [p_imageToGrayLine(i, specToLum, width, full_data) for i in range(0, height)]
 
-def imageToLum_Sco(width, height, full_data):
-    return parallel.run(p_imageToGrayLine, range(0, height), [specToLum_Sco, width, full_data], verbose=VERBOSE_LEVEL)
+def imageToLum_Sco(width, height, full_data, do_parallel=True):
+    if do_parallel:
+        return parallel.run(p_imageToGrayLine, range(0, height), [specToLum_Sco, width, full_data], verbose=VERBOSE_LEVEL)
+    else:
+        return [p_imageToGrayLine(i, specToLum_Sco, width, full_data) for i in range(0, height)]
 
-def imageToEnergy(width, height, full_data):
-    return parallel.run(p_imageToGrayLine, range(0, height), [specToEnergy, width, full_data], verbose=VERBOSE_LEVEL)
+def imageToEnergy(width, height, full_data, do_parallel=True):
+    if do_parallel:
+        return parallel.run(p_imageToGrayLine, range(0, height), [specToEnergy, width, full_data], verbose=VERBOSE_LEVEL)
+    else:
+        return [p_imageToGrayLine(i, specToEnergy, width, full_data) for i in range(0, height)]
     
-def imageToXYZ(width, height, full_data):
-    return parallel.run(p_imageToColorLine, range(0, height), [specToXYZ, width, full_data], verbose=VERBOSE_LEVEL)
+def imageToXYZ(width, height, full_data, do_parallel=True):
+    if do_parallel:
+        return parallel.run(p_imageToColorLine, range(0, height), [specToXYZ, width, full_data], verbose=VERBOSE_LEVEL)
+    else:
+        return [p_imageToColorLine(i, specToXYZ, width, full_data) for i in range(0, height)]
     
-def imageToRGB(width, height, full_data):
-    return parallel.run(p_imageToColorLine, range(0, height), [specToRGB, width, full_data], verbose=VERBOSE_LEVEL)
+def imageToRGB(width, height, full_data, do_parallel=True):
+    if do_parallel:
+        return parallel.run(p_imageToColorLine, range(0, height), [specToRGB, width, full_data], verbose=VERBOSE_LEVEL)
+    else:
+        return [p_imageToColorLine(i, specToRGB, width, full_data) for i in range(0, height)]
