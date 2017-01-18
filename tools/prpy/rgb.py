@@ -124,6 +124,9 @@ def specToXYZ(spec_data):
 def specToRGB(spec_data):
     return np.fmax(M_F_RGB.dot(specToXYZ(spec_data)), [0,0,0])
 
+def specToRGBWeighted(spec_data):
+    return np.fmax(M_F_RGB.dot(specToXYZ(spec_data * PHO_Y)), [0,0,0])
+
 # Parallel functions
 def p_imageToGrayLine(r, mapper, width, full_data):
     data = np.zeros(width)
@@ -168,3 +171,9 @@ def imageToRGB(width, height, full_data, do_parallel=True):
         return parallel.run(p_imageToColorLine, range(0, height), [specToRGB, width, full_data], verbose=VERBOSE_LEVEL)
     else:
         return [p_imageToColorLine(i, specToRGB, width, full_data) for i in range(0, height)]
+    
+def imageToRGBWeighted(width, height, full_data, do_parallel=True):
+    if do_parallel:
+        return parallel.run(p_imageToColorLine, range(0, height), [specToRGBWeighted, width, full_data], verbose=VERBOSE_LEVEL)
+    else:
+        return [p_imageToColorLine(i, specToRGBWeighted, width, full_data) for i in range(0, height)]

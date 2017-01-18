@@ -323,7 +323,9 @@ namespace PR
 						float pdf;
 						PM::vec3 nextDir = sc.Material->sample(sc, random.get3D(), pdf);
 
-						if (pdf > PM_EPSILON && !std::isinf(pdf))// Diffuse
+						if (pdf > PM_EPSILON &&
+							!std::isinf(pdf) &&
+							!(sc.Flags & SCF_Inside))// Diffuse
 						{
 							// Always store when diffuse
 							Photon::Photon photon;
