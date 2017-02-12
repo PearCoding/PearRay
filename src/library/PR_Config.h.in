@@ -83,17 +83,40 @@
 
 #define PR_ALIGN(x) alignas(x)
 
-#ifndef PR_NO_ASSERTS
-#include <assert.h>
-# define PR_ASSERT(cond) assert((cond))
-#else
-# define PR_ASSERT(cond)
+#ifdef PR_CC_MSC
+# define PR_DEBUG_BREAK() __debugbreak()
+#else//FIXME: Really use cpu dependent assembler?
+# define PR_DEBUG_BREAK() __asm__ __volatile__ ("int $0x03")
 #endif
 
-#if defined(PR_DEBUG)
-# define PR_DEBUG_ASSERT(cond) PR_ASSERT((cond))
+#define PR_FUNCTION_NAME __func__
+
+#ifndef PR_NO_ASSERTS
+# include <assert.h>
+# define _PR_ASSERT_MSG(msg) \
+	std::cerr << "[PEARRAY] ASSERT | " << __FILE__ \
+		<< ":" << __LINE__ << " " << PR_FUNCTION_NAME \
+		<< " | " << (msg) << std::endl
+# ifdef PR_RELEASE
+#  define PR_ASSERT(cond, msg) \
+	do { \
+	  if(!(cond)) { \
+	  	_PR_ASSERT_MSG((msg)); \
+		std::abort(); \
+	  } \
+	} while(false)
+# else
+#  define PR_ASSERT(cond, msg) \
+	do { \
+	  if(!(cond)) { \
+	  	_PR_ASSERT_MSG((msg)); \
+		PR_DEBUG_BREAK(); \
+		std::abort(); \
+	  } \
+	} while(false)
+# endif
 #else
-# define PR_DEBUG_ASSERT(cond) PR::pr_Noop()
+# define PR_ASSERT(cond, msg) PR::pr_Noop()
 #endif
 
 #define PR_CLASS_NON_MOVEABLE(C) \
@@ -121,8 +144,6 @@
 # define PR_EXPORT
 # define PR_IMPORT
 #endif
-
-#define PR_FUNCTION_NAME __func__
 
 #if defined(PR_LIB_BUILD)
 # define PR_LIB PR_EXPORT
@@ -167,6 +188,7 @@
 #endif
 
 // Includes
+#include <iostream>
 #include <chrono>
 #include <cmath>
 #include <cstring>

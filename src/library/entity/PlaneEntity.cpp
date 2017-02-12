@@ -144,7 +144,7 @@ namespace PR
 		mGlobalPlane_Cache.setAxis(
 			PM::pm_SetW(PM::pm_Multiply(directionMatrix(), PM::pm_SetW(mPlane.xAxis(), 0)), 0),
 			PM::pm_SetW(PM::pm_Multiply(directionMatrix(), PM::pm_SetW(mPlane.yAxis(), 0)), 0));
-		
+
 		// Check up
 		if(std::abs(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.normal()) - 1) > PM_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has a non unit normal vector!", name().c_str());
@@ -162,7 +162,7 @@ namespace PR
 	void PlaneEntity::setup(RenderContext* context)
 	{
 		RenderEntity::setup(context);
-		
+
 		if(mMaterial)
 			mMaterial->setup(context);
 	}

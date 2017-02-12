@@ -14,8 +14,8 @@ namespace PR
 		mCamera(cam), mScene(scene),
 		mGPU(nullptr)
 	{
-		PR_ASSERT(cam);
-		PR_ASSERT(scene);
+		PR_ASSERT(cam, "Given camera has to be valid");
+		PR_ASSERT(scene, "Given scene has to be valid");
 
 		// Setup GPU
 #ifndef PR_NO_GPU
@@ -63,10 +63,10 @@ namespace PR
 
 	RenderContext* RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
 	{
-		PR_ASSERT(itx > 0);
-		PR_ASSERT(ity > 0);
-		PR_ASSERT(index < itx*ity);
-		
+		PR_ASSERT(itx > 0, "Image tile count x has to be greater 0");
+		PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
+		PR_ASSERT(index < itx*ity, "Index has to be in bounds");
+
 		uint32 itw = (uint32)std::ceil(cropWidth() / (float)itx);
 		uint32 ith = (uint32)std::ceil(cropHeight() / (float)ity);
 		uint32 ix = index % itx;

@@ -25,9 +25,9 @@ namespace PR
 		mUpperBound(PM::pm_Set(width/2, height/2, depth/2, 1)),
 		mLowerBound(PM::pm_Set(-width/2, -height/2, -depth/2, 1))
 	{
-		PR_ASSERT(width > PM_EPSILON);
-		PR_ASSERT(height > PM_EPSILON);
-		PR_ASSERT(depth > PM_EPSILON);
+		PR_ASSERT(width > PM_EPSILON, "width has to be greater than 0");
+		PR_ASSERT(height > PM_EPSILON, "height has to be greater than 0");
+		PR_ASSERT(depth > PM_EPSILON, "depth has to be greater than 0");
 	}
 
 	BoundingBox::BoundingBox(const BoundingBox& other)
@@ -130,7 +130,7 @@ namespace PR
 	Plane BoundingBox::getFace(FaceSide side) const
 	{
 		PR_GUARD_PROFILE();
-		
+
 		PM::vec3 diff = PM::pm_Subtract(mUpperBound, mLowerBound);
 
 		switch (side)

@@ -7,7 +7,7 @@
 using namespace PR;
 
 PR_BEGIN_TESTCASE(BoundingBox)
-PR_TEST("Size");
+PR_TEST("Size")
 {
 	BoundingBox box(10, 10, 10);
 	PR_CHECK_EQ(box.width(), 10);
@@ -16,7 +16,7 @@ PR_TEST("Size");
 	PR_CHECK_EQ(box.volume(), 1000);
 }
 
-PR_TEST("Bounds");
+PR_TEST("Bounds")
 {
 	BoundingBox box(2, 2, 2);
 	PR_CHECK_EQ_3(box.lowerBound(), PM::pm_Set(-1, -1, -1));
@@ -24,7 +24,7 @@ PR_TEST("Bounds");
 	PR_CHECK_EQ_3(box.center(), PM::pm_Set(0, 0, 0));
 }
 
-PR_TEST("Intersects Left");
+PR_TEST("Intersects Left")
 {
 	Ray ray(0,0, PM::pm_Set(-2, 0, 0), PM::pm_Set(1, 0, 0));
 	BoundingBox box(2, 2, 2);
@@ -37,7 +37,7 @@ PR_TEST("Intersects Left");
 	PR_CHECK_EQ(side, BoundingBox::FS_Left);
 }
 
-PR_TEST("Intersects Right Inside");
+PR_TEST("Intersects Right Inside")
 {
 	Ray ray(0,0, PM::pm_Set(0, 0, 0), PM::pm_Set(1, 0, 0));
 	BoundingBox box(2, 2, 2);
@@ -50,7 +50,7 @@ PR_TEST("Intersects Right Inside");
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
 
-PR_TEST("Intersects Right");
+PR_TEST("Intersects Right")
 {
 	Ray ray(0,0, PM::pm_Set(2, 0, 0), PM::pm_Set(-1, 0, 0));
 	BoundingBox box(2, 2, 2);
@@ -63,7 +63,7 @@ PR_TEST("Intersects Right");
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
 
-PR_TEST("Intersects Front");
+PR_TEST("Intersects Front")
 {
 	Ray ray(0,0, PM::pm_Set(0, 0, -2), PM::pm_Set(0, 0, 1));
 	BoundingBox box(2, 2, 2);
@@ -76,7 +76,7 @@ PR_TEST("Intersects Front");
 	PR_CHECK_EQ(side, BoundingBox::FS_Front);
 }
 
-PR_TEST("Intersects Back Inside");
+PR_TEST("Intersects Back Inside")
 {
 	Ray ray(0,0, PM::pm_Set(0, 0, 0), PM::pm_Set(0, 0, 1));
 	BoundingBox box(2, 2, 2);
@@ -89,7 +89,7 @@ PR_TEST("Intersects Back Inside");
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
 
-PR_TEST("Intersects Back");
+PR_TEST("Intersects Back")
 {
 	Ray ray(0,0, PM::pm_Set(0, 0, 2), PM::pm_Set(0, 0, -1));
 	BoundingBox box(2, 2, 2);
@@ -102,7 +102,7 @@ PR_TEST("Intersects Back");
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
 
-PR_TEST("Intersects Bottom");
+PR_TEST("Intersects Bottom")
 {
 	Ray ray(0,0, PM::pm_Set(0, -2, 0), PM::pm_Set(0, 1, 0));
 	BoundingBox box(2, 2, 2);
@@ -115,7 +115,7 @@ PR_TEST("Intersects Bottom");
 	PR_CHECK_EQ(side, BoundingBox::FS_Bottom);
 }
 
-PR_TEST("Intersects Top Inside");
+PR_TEST("Intersects Top Inside")
 {
 	Ray ray(0,0, PM::pm_Set(0, 0, 0), PM::pm_Set(0, 1, 0));
 	BoundingBox box(2, 2, 2);
@@ -128,7 +128,7 @@ PR_TEST("Intersects Top Inside");
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
-PR_TEST("Intersects Top");
+PR_TEST("Intersects Top")
 {
 	Ray ray(0,0, PM::pm_Set(0, 2, 0), PM::pm_Set(0, -1, 0));
 	BoundingBox box(2, 2, 2);
@@ -141,7 +141,7 @@ PR_TEST("Intersects Top");
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
-PR_TEST("Intersects Complex");
+PR_TEST("Intersects Complex")
 {
 	PM::vec3 point = PM::pm_Set(0, 1, 0);
 	Ray ray(0,0, PM::pm_Set(1, 2, 0), PM::pm_Normalize3D(PM::pm_Set(-1, -1, 0)));
@@ -155,7 +155,7 @@ PR_TEST("Intersects Complex");
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
-PR_TEST("Face Front");
+PR_TEST("Face Front")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Front);
@@ -165,7 +165,7 @@ PR_TEST("Face Front");
 	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 2);
 }
 
-PR_TEST("Face Back");
+PR_TEST("Face Back")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Back);
@@ -175,7 +175,7 @@ PR_TEST("Face Back");
 	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 2);
 }
 
-PR_TEST("Face Left");
+PR_TEST("Face Left")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Left);
@@ -185,7 +185,7 @@ PR_TEST("Face Left");
 	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 2);
 }
 
-PR_TEST("Face Right");
+PR_TEST("Face Right")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Right);
@@ -195,7 +195,7 @@ PR_TEST("Face Right");
 	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 2);
 }
 
-PR_TEST("Face Top");
+PR_TEST("Face Top")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Top);
@@ -205,7 +205,7 @@ PR_TEST("Face Top");
 	PR_CHECK_EQ(PM::pm_Magnitude3D(plane.yAxis()), 3);
 }
 
-PR_TEST("Face Bottom");
+PR_TEST("Face Bottom")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Bottom);

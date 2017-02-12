@@ -13,9 +13,7 @@ namespace PR
 	FileLogListener::~FileLogListener()
 	{
 		if (mStream.is_open())
-		{
 			mStream.close();
-		}
 	}
 
 	void FileLogListener::open(const std::string& file)
@@ -29,8 +27,17 @@ namespace PR
 		time_t t = time(0);
 		clock_t c = clock();
 
-		struct tm* ptm = gmtime(&t);
-		mStream << ptm->tm_hour << ":" << ptm->tm_min << ":" << ptm->tm_sec << "(" << c << ")> {" << std::this_thread::get_id() << "} [" << Logger::levelString(level) << "] (" << Logger::moduleString(m) << ") "
+		struct tm ptm;
+#ifndef PR_OS_WINDOWS
+		gmtime_r(&t, &ptm);
+#else
+		gmtime_s(&ptm, &t);
+#endif
+		mStream << ptm.tm_hour << ":" << ptm.tm_min << ":" << ptm.tm_sec
+			<< "(" << c << ")> {"
+			<< std::this_thread::get_id() << "} ["
+			<< Logger::levelString(level) << "] ("
+			<< Logger::moduleString(m) << ") "
 			<< str << std::endl;
 	}
 }

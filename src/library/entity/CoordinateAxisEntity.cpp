@@ -51,7 +51,7 @@ namespace PR
 			return 0;
 		}
 	}
-	
+
 	void CoordinateAxisEntity::setAxisLength(float f)
 	{
 		mAxisLength = f;
@@ -119,13 +119,13 @@ namespace PR
 	{
 		if(!isFrozen())
 			setup_cache();
-		
+
 		return mBoundingBox_Cache;
 	}
 
 	bool CoordinateAxisEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
 	{
-		PR_ASSERT(isFrozen())
+		PR_ASSERT(isFrozen(), "has to be frozen")
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
@@ -156,7 +156,7 @@ namespace PR
 
 		if(found >= 0)
 		{
-			PR_ASSERT(found < 3);
+			PR_ASSERT(found < 3, "found can't be greater than 2");
 
 			collisionPoint.P = PM::pm_Multiply(matrix(), vertex);
 
@@ -175,7 +175,7 @@ namespace PR
 
 	FaceSample CoordinateAxisEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
-		PR_ASSERT(isFrozen())
+		PR_ASSERT(isFrozen(), "has to be frozen")
 		PR_GUARD_PROFILE();
 
 		auto ret = sampler.generate3D(sample);
@@ -183,7 +183,7 @@ namespace PR
 		int proj = Projection::map(PM::pm_GetX(ret), 0, 3*6-1);// Get randomly a face
 
 		int elem = proj / 3;
-		PR_ASSERT(elem >= 0 && elem < 3);
+		PR_ASSERT(elem >= 0 && elem < 3, "elem has to be between 0 and 2");
 
 		BoundingBox::FaceSide side = (BoundingBox::FaceSide)(proj % 6);
 		Plane plane = mAxisBoundingBox_Cache[elem].getFace(side);

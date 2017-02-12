@@ -57,7 +57,8 @@ namespace PRU
 
 		inline void addMaterial(const std::string& name, PR::Material* mat)
 		{
-			PR_ASSERT(mat && !hasMaterial(name));
+			PR_ASSERT(mat, "Given material has to be valid");
+			PR_ASSERT(!hasMaterial(name), "Given name should be unique");
 			mMaterials[name] = mat;
 		}
 
@@ -78,21 +79,22 @@ namespace PRU
 
 		inline void addMesh(const std::string& name, PR::TriMesh* m)
 		{
-			PR_ASSERT(m && !hasMesh(name));
+			PR_ASSERT(m, "Given mesh has to be valid");
+			PR_ASSERT(!hasMesh(name), "Given name should be unique");
 			mMeshes[name] = m;
 		}
 
 		inline void addShaderOutput(const std::string& name, PR::ScalarShaderOutput* output)
 		{
-			PR_ASSERT(output);
-			PR_ASSERT(!hasScalarShaderOutput(name));
+			PR_ASSERT(output, "Given output has to be valid");
+			PR_ASSERT(!hasScalarShaderOutput(name), "Given name should be unique");
 			mNamedScalarShaderOutputs[name] = output;
 			mScalarShaderOutputs.push_back(output);
 		}
 
 		inline void addShaderOutput(PR::ScalarShaderOutput* output)
 		{
-			PR_ASSERT(output);
+			PR_ASSERT(output, "Given output has to be valid");
 			mScalarShaderOutputs.push_back(output);
 		}
 
@@ -108,15 +110,15 @@ namespace PRU
 
 		inline void addShaderOutput(const std::string& name, PR::SpectralShaderOutput* output)
 		{
-			PR_ASSERT(output);
-			PR_ASSERT(!hasSpectralShaderOutput(name));
+			PR_ASSERT(output, "Given output has to be valid");
+			PR_ASSERT(!hasSpectralShaderOutput(name), "Given name should be unique");
 			mNamedSpectralShaderOutputs[name] = output;
 			mSpectralShaderOutputs.push_back(output);
 		}
 
 		inline void addShaderOutput(PR::SpectralShaderOutput* output)
 		{
-			PR_ASSERT(output);
+			PR_ASSERT(output, "Given output has to be valid");
 			mSpectralShaderOutputs.push_back(output);
 		}
 
@@ -132,15 +134,15 @@ namespace PRU
 
 		inline void addShaderOutput(const std::string& name, PR::VectorShaderOutput* output)
 		{
-			PR_ASSERT(output);
-			PR_ASSERT(!hasVectorShaderOutput(name));
+			PR_ASSERT(output, "Given output has to be valid");
+			PR_ASSERT(!hasVectorShaderOutput(name), "Given name should be unique");
 			mNamedVectorShaderOutputs[name] = output;
 			mVectorShaderOutputs.push_back(output);
 		}
 
 		inline void addShaderOutput(PR::VectorShaderOutput* output)
 		{
-			PR_ASSERT(output);
+			PR_ASSERT(output, "Given output has to be valid");
 			mVectorShaderOutputs.push_back(output);
 		}
 

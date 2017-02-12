@@ -73,7 +73,7 @@ namespace PRU
 
 	void OutputSpecification::setup(RenderContext* renderer)
 	{
-		PR_ASSERT(renderer);
+		PR_ASSERT(renderer, "Given renderer has to be valid");
 
 		mImageWriter.init(renderer);
 		OutputMap* output = renderer->output();

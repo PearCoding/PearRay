@@ -30,7 +30,7 @@ namespace PR
 	{
 		mCanBeShaded = b;
 	}
-	
+
 	void Material::enableShadow(bool b)
 	{
 		mShadow = b;
@@ -60,7 +60,7 @@ namespace PR
 	{
 		return mCameraVisible;
 	}
-	
+
 	std::string Material::dumpInformation() const
 	{
 		std::stringstream stream;

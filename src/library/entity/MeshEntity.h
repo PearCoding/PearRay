@@ -38,7 +38,7 @@ namespace PR
 	private:
 		TriMesh* mMesh;
 		Material* mMaterialOverride;
-		
+
 		float mSurfaceArea_Cache;
 	};
 }

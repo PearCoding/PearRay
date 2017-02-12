@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 #include "PearMath.h"
 
 #include <iostream>
@@ -35,9 +35,7 @@ namespace PRT
 		inline void check(bool cond, const std::string& msg, const std::string& func, int line)
 		{
 			if (!cond)
-			{
 				add_error(msg, func, line);
-			}
 			mCount++;
 		}
 
@@ -124,7 +122,7 @@ namespace PRT
 #define PR_TEST(name) \
 	if (_test)\
 		_testcase.end(_test);\
-	_test = _testcase.begin(name)
+	_test = _testcase.begin(name);
 
 
 #define PR_CHECK_EQ(value, expected) \
@@ -328,6 +326,5 @@ namespace PRT
 		_errors += PR_TESTCASE(name) ? 0 : 1
 
 #define PRT_END_MAIN \
-		PR_DEBUG_ASSERT(_errors == 0); \
 		return -_errors; \
 	}

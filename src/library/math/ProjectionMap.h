@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 #include "PearMath.h"
 
 namespace PR
@@ -12,7 +12,7 @@ namespace PR
 		inline ProjectionMap(uint32 res) :
 			mProbability(nullptr), mProbTable(nullptr), mAliasTable(nullptr), mResolution(res)
 		{
-			PR_ASSERT(res > 0);
+			PR_ASSERT(res > 0, "resolution of ProjectionMap has to greater 0");
 
 			mProbability = new float[res];
 		}
@@ -23,14 +23,14 @@ namespace PR
 
 			if(mProbTable)
 				delete[] mProbTable;
-			
+
 			if(mAliasTable)
 				delete[] mAliasTable;
 		}
 
 		inline void setProbability(uint32 x, float value)
 		{
-			PR_ASSERT(!mProbTable);
+			PR_ASSERT(!mProbTable, "probability table has to be initialized before using it");
 			mProbability[x] = value;
 		}
 
@@ -44,7 +44,7 @@ namespace PR
 			float sum = 0;
 			for(uint32 i = 0; i < mResolution; ++i)
 				sum += mProbability[i];
-			
+
 			if(sum <= PM_EPSILON)
 				return;
 
@@ -57,7 +57,7 @@ namespace PR
 			float max = 0;
 			for(uint32 i = 0; i < mResolution; ++i)
 				max = PM::pm_Max(max, mProbability[i]);
-			
+
 			if(max <= PM_EPSILON)
 				return;
 
@@ -92,7 +92,7 @@ namespace PR
 					small.push_back(i);
 				else
 					large.push_back(i);
-				
+
 				prob[i] = p;
 			}
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
-
 #include "shader/ShaderOutput.h"
 
 #include <map>

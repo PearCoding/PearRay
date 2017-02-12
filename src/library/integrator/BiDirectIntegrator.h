@@ -17,7 +17,7 @@ namespace PR
 
 	private:
 		Spectrum applyRay(const Ray& in, RenderThreadContext* context, uint32 diffBounces, ShaderClosure& sc);
-		
+
 		struct ThreadData
 		{
 			struct EventVertex
@@ -31,7 +31,7 @@ namespace PR
 			uint32* LightPathLength;
 			//EventVertex* EyeVertices;
 		};
-		
+
 		void deleteThreadStructure();
 
 		ThreadData* mThreadData;

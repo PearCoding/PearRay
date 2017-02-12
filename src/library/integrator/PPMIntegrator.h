@@ -6,7 +6,7 @@
 #include "shader/ShaderClosure.h"
 
 #include <deque>
-#include <list>
+#include <vector>
 
 namespace PR
 {
@@ -26,7 +26,7 @@ namespace PR
 
 		void init(RenderContext* renderer) override;
 		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
-		
+
 		void onStart() override;
 		void onNextPass(uint32 pass, bool& clean) override;
 		void onEnd() override;
@@ -42,6 +42,9 @@ namespace PR
 		virtual uint64 maxPasses(const RenderContext* renderer) const override;
 
 	private:
+		void onPhotonPass(RenderThreadContext* context, uint32 pass);
+		void onAccumPass(RenderThreadContext* context, uint32 pass);
+		
 		Spectrum firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
 
 		struct RayHitPoint
@@ -66,13 +69,7 @@ namespace PR
 		};
 
 		RenderContext* mRenderer;
-		Photon::PointMap<Photon::Photon>* mPhotonMap;
-
-		struct ThreadData
-		{
-			std::deque<RayHitPoint> HitPoints;
-			Photon::PointSphere<Photon::Photon> PhotonSearchSphere;
-		}* mThreadData;
+		Photon::PointMap* mPhotonMap;
 
 		struct Light
 		{
@@ -81,7 +78,20 @@ namespace PR
 			float Surface;
 			SphereMap* Proj;
 		};
-		std::list<Light*> mLights;
+
+		struct LightThreadData
+		{
+			Light* Entity;
+			uint64 Photons;
+		};
+
+		struct ThreadData
+		{
+			std::deque<RayHitPoint> HitPoints;
+			std::vector<LightThreadData> Lights;
+		}* mThreadData;
+
+		std::vector<Light> mLights;
 		uint32 mProjMaxTheta;
 		uint32 mProjMaxPhi;
 

@@ -9,8 +9,8 @@ namespace PRU
 	ImageScalarShaderOutput::ImageScalarShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename) :
 		ScalarShaderOutput(), mFilename(filename), mTextureOptions(options), mTextureSystem(tsys)
 	{
-		PR_ASSERT(tsys);
-		PR_ASSERT(!mFilename.empty());
+		PR_ASSERT(tsys, "Given texture system has to be valid");
+		PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 	}
 
 	float ImageScalarShaderOutput::eval(const PR::ShaderClosure& point)

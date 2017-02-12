@@ -128,7 +128,7 @@ namespace PR
 		const float fy = HdotY / m2;
 
 		const float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (4 * m1 * m2 * std::sqrt(prod));
-		
+
 		return PM::pm_Clamp(Projection::cos_hemi_pdf(NdotL) * (1-refl) + r*refl, 0.0f, 1.0f);
 	}
 
@@ -169,7 +169,7 @@ namespace PR
 		float v = PM::pm_GetY(rnd);
 
 		const float m1 = PM::pm_Max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
-		
+
 		float cosTheta, sinTheta;// V samples
 		float cosPhi, sinPhi;// U samples
 		if (mRoughnessX == mRoughnessY)// Isotropic
@@ -179,7 +179,7 @@ namespace PR
 			const float f = - std::log(PM::pm_Max(0.001f, v))*m1*m1;
 			cosTheta = 1/(1+f);
 			sinTheta = PM::pm_SafeSqrt(f)*cosTheta;
-			
+
 			const float t = PM_4_PI_F * m1 * m1 * cosTheta * cosTheta * cosTheta * v;
 			if(t <= PM_EPSILON)
 				pdf = 1;
@@ -214,15 +214,15 @@ namespace PR
 		auto dir = Reflection::reflect(std::abs(PM::pm_Dot3D(H, point.V)), H, point.V);
 
 		pdf = PM::pm_Clamp(pdf/std::abs(PM::pm_Dot3D(point.V, dir)), 0.0f, 1.0f);
-		
+
 		return dir;
 	}
-	
+
 	std::string WardMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <WardMaterial>:" << std::endl
 			<< "    HasAlbedo:       " << (mAlbedo ? "true" :  "false") << std::endl
 			<< "    HasSpecularity:  " << (mSpecularity ? "true" :  "false") << std::endl

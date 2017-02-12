@@ -20,7 +20,7 @@ namespace PR
 		mIOR(nullptr), mConductorAbsorption(nullptr), mReflectivity(nullptr)
 	{
 	}
-	
+
 	CookTorranceMaterial::FresnelMode CookTorranceMaterial::fresnelMode() const
 	{
 		return mFresnelMode;
@@ -325,7 +325,7 @@ namespace PR
 					cosTheta = 1;
 				else
 					cosTheta = std::pow(1 - v, 1/(2*m1*m1));
-					
+
 				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
 
 				if(m1 <= PM_EPSILON)
@@ -380,7 +380,7 @@ namespace PR
 			}
 				break;
 		}
-		
+
 		sinTheta = std::sqrt(1-cosTheta*cosTheta);
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
@@ -394,12 +394,12 @@ namespace PR
 
 		return dir;
 	}
-	
+
 	std::string CookTorranceMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <CookTorranceMaterial>:" << std::endl
 			<< "    FresnelMode:             " << mFresnelMode << std::endl
 			<< "    DistributionMode:        " << mDistributionMode << std::endl

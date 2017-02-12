@@ -6,7 +6,7 @@ namespace PR
 		mIncremental(true),
 		mDebugMode(DM_None),
 		mIntegratorMode(IM_BiDirect),
-		
+
 		mPixelSampler(SM_MultiJitter),
 		mMaxPixelSampleCount(4),
 

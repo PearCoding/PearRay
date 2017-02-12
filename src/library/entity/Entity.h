@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 #include "PearMath.h"
 
 #include <string>
@@ -21,7 +21,7 @@ namespace PR
 		virtual ~Entity();
 
 		inline uint32 id() const;
-		
+
 		inline void setName(const std::string& name);
 		inline std::string name() const;
 
@@ -51,7 +51,7 @@ namespace PR
 
 		inline void freeze();
 		inline bool isFrozen() const;
-		
+
 		// Events:
 		/* The entity will not be changed after this. */
 		virtual void onFreeze();

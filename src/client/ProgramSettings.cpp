@@ -442,7 +442,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		{
 			std::vector<float> crop = ini["scene.crop"].as<std::vector<float> >();
 
-			PR_ASSERT(crop.size() == 4);
+			if(crop.size() != 4)
+			{
+				std::cout << "Option crop does not met syntax" << std::endl;
+				return false;
+			}
 			CropMinXOverride = crop[0]; CropMaxXOverride = crop[1];
 			CropMinYOverride = crop[2]; CropMaxYOverride = crop[3];
 		}
@@ -575,7 +579,12 @@ bool ProgramSettings::parse(int argc, char** argv)
 	{
 		std::vector<float> crop = vm["crop"].as<std::vector<float> >();
 
-		PR_ASSERT(crop.size() == 4);
+		if(crop.size() != 4)
+		{
+			std::cout << "Option crop does not met syntax" << std::endl;
+			return false;
+		}
+		
 		CropMinXOverride = crop[0]; CropMaxXOverride = crop[1];
 		CropMinYOverride = crop[2]; CropMaxYOverride = crop[3];
 	}

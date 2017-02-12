@@ -38,7 +38,7 @@ namespace PR
 		if(!m || m == mMaterial)
 		{
 			const auto s = flags() & EF_LocalArea ? PM::pm_Set(1,1,1) : scale();
-			
+
 			const float a = PM::pm_GetX(s) * mRadius;
 			const float b = PM::pm_GetY(s) * mRadius;
 			const float c = PM::pm_GetZ(s) * mRadius;
@@ -116,7 +116,7 @@ namespace PR
 	FaceSample SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
 	{
 		PR_GUARD_PROFILE();
-		
+
 		FaceSample p;
 
 		PM::vec2 s = sampler.generate2D(sample);
@@ -136,7 +136,7 @@ namespace PR
 	void SphereEntity::setup(RenderContext* context)
 	{
 		RenderEntity::setup(context);
-		
+
 		if(mMaterial)
 			mMaterial->setup(context);
 	}

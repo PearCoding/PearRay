@@ -26,7 +26,7 @@ namespace PR
 
 		if (!entity || !sc.Material)
 			return applied;
-		
+
 		return applied + applyRay(in, sc, context, 0);
 	}
 
@@ -53,14 +53,14 @@ namespace PR
 			float other_pdf = 0;
 
 			const uint32 path_count = sc.Material->samplePathCount();
-			PR_ASSERT(path_count > 0);
-			
+			PR_ASSERT(path_count > 0, "path_count should be always higher than 0.");
+
 			PM::vec3 rnd = hemiSampler.generate3D(i);
 			for(uint32 path = 0; path < path_count; ++path)
 			{
 				float pdf;
 
-				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);				
+				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
 
 				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
@@ -70,12 +70,12 @@ namespace PR
 				Ray ray = in.next(sc.P, dir);
 
 				RenderEntity* entity = context->shootWithEmission(weight, ray, other_sc);
-				if (entity && other_sc.Material)						
+				if (entity && other_sc.Material)
 					weight += applyRay(ray, other_sc, context,
 						!std::isinf(pdf) ? diffbounces + 1 : diffbounces);
 
 				weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
-				other_weight += path_weight*weight;			
+				other_weight += path_weight*weight;
 				other_pdf += pdf;
 			}
 			MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);
@@ -102,7 +102,7 @@ namespace PR
 
 					if (pdf <= PM_EPSILON)
 						continue;
-					
+
 					if (NdotL > PM_EPSILON)
 					{
 						Ray ray = in.next(sc.P, L);

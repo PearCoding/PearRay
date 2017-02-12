@@ -278,7 +278,7 @@ namespace PRU
 			}
 		}
 
-		PR_ASSERT(entity);// After here it shouldn't be null
+		PR_ASSERT(entity, "After here it shouldn't be null");
 
 		// Set position		
 		if (posD.type() == DL::Data::T_Group)
@@ -415,7 +415,7 @@ namespace PRU
 			return;
 		}
 
-		PR_ASSERT(light);// After here it shouldn't be null
+		PR_ASSERT(light, "After here it shouldn't be null");
 		env->scene()->addInfiniteLight(light);
 	}
 
@@ -503,7 +503,7 @@ namespace PRU
 			return;
 		}
 
-		PR_ASSERT(mat);// After here it shouldn't be null
+		PR_ASSERT(mat, "After here it shouldn't be null");
 
 		mat->setEmission(getSpectralOutput(env, emissionD));
 
@@ -584,7 +584,7 @@ namespace PRU
 			return;
 		}
 
-		PR_ASSERT(mesh);// After here it shouldn't be null
+		PR_ASSERT(mesh, "After here it shouldn't be null");
 		env->addMesh(name, mesh);
 	}
 

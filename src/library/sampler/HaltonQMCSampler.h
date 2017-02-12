@@ -27,7 +27,7 @@ namespace PR
 		float* mBaseXSamples;
 		float* mBaseYSamples;
 		float* mBaseZSamples;
-		
+
 		const bool mAdaptive;
 		const uint32 mBaseX;
 		const uint32 mBaseY;

@@ -8,6 +8,9 @@ SET(PR_Camera_Src
   camera/Camera.cpp
   camera/StandardCamera.cpp)
 SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
+SET(PR_Container_Src 
+  )
+SOURCE_GROUP("Source Files\\Container" FILES ${PR_Container_Src})
 SET(PR_Entity_Src
   entity/BoundaryEntity.cpp
   entity/CoordinateAxisEntity.cpp
@@ -66,6 +69,7 @@ SET(PR_Renderer_Src
   renderer/RenderFactory.cpp
   renderer/RenderSettings.cpp
   renderer/RenderStatistics.cpp
+  renderer/RenderStatus.cpp
   renderer/RenderTile.cpp
   renderer/RenderThread.cpp
   renderer/RenderThreadContext.cpp)
@@ -99,12 +103,12 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src} 
-  ${PR_Performance_Src} ${PR_Light_Src}
+  ${PR_Performance_Src} ${PR_Light_Src} ${PR_Container_Src}
 )
 
 SET(PR_Main_Hdr
   CTP.h
-  Config.h.in
+  PR_Config.h.in
   Diagnosis.h
   FileLogListener.h
   Logger.h
@@ -114,6 +118,9 @@ SET(PR_Camera_Hdr
   camera/Camera.h
   camera/StandardCamera.h)
 SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
+SET(PR_Container_Hdr
+  container/kdTree.h)
+SOURCE_GROUP("Header Files\\Container" FILES ${PR_Container_Hdr})
 SET(PR_Entity_Hdr
   entity/BoundaryEntity.h
   entity/CoordinateAxisEntity.h
@@ -163,6 +170,7 @@ SET(PR_Material_Hdr
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
   math/Fresnel.h
+  math/Generator.h
   math/HemiMap.h
   math/MSI.h
   math/Projection.h
@@ -192,6 +200,7 @@ SET(PR_Renderer_Hdr
   renderer/RenderFactory.h
   renderer/RenderSettings.h
   renderer/RenderStatistics.h
+  renderer/RenderStatus.h
   renderer/RenderTile.h
   renderer/RenderThread.h
   renderer/RenderThreadContext.h)
@@ -205,7 +214,6 @@ SET(PR_Sampler_Hdr
   sampler/UniformSampler.h)
 SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
 SET(PR_Scene_Hdr
-  scene/kdTree.h
   scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
 SET(PR_Spectral_Hdr
@@ -240,7 +248,10 @@ SET(PR_CL
 SOURCE_GROUP("CL Files" FILES ${PR_CL})
   	
 add_library(pr_lib SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
-target_link_libraries(pr_lib ${Boost_LIBRARIES})
+if(NOT WIN32)
+  target_link_libraries(pr_lib pthread )
+endif()
+target_link_libraries(pr_lib ${Boost_LIBRARIES} ${TBB_LIBRARIES})
 
 IF(OPENCL_FOUND AND NOT PR_NO_GPU)
 	target_link_libraries(pr_lib ${OpenCL_LIBRARIES})
@@ -248,3 +259,7 @@ ENDIF()
 
 set_target_properties(pr_lib PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(pr_lib PRIVATE "${DEFS};PR_LIB_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
+
+IF(PR_CPP_CHECK)
+add_cpplint_target(pr_lib_cppcheck "${PR_Src};${PR_Hdr}")
+ENDIF()

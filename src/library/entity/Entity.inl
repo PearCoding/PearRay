@@ -6,7 +6,7 @@ namespace PR
 	{
 		return mID;
 	}
-	
+
 	inline void Entity::setName(const std::string& name)
 	{
 		mName = name;
@@ -21,7 +21,7 @@ namespace PR
 	{
 		return "null";
 	}
-	
+
 	inline bool Entity::isRenderable() const
 	{
 		return false;

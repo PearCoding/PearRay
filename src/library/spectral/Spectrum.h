@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 #include "PearMath.h"
 
 #include <algorithm>
@@ -17,12 +17,12 @@ namespace PR
 	{
 	public:
 		static constexpr uint32 WAVELENGTH_START = 380;// nm
-		static constexpr uint32 WAVELENGTH_END = 780;// nm 
+		static constexpr uint32 WAVELENGTH_END = 780;// nm
 		static constexpr uint32 WAVELENGTH_AREA_SIZE = (WAVELENGTH_END - WAVELENGTH_START);
 		static constexpr uint32 WAVELENGTH_STEP = 5;// nm
 		static constexpr uint32 SAMPLING_COUNT = WAVELENGTH_AREA_SIZE / WAVELENGTH_STEP + 1;
 		static constexpr float ILL_SCALE = WAVELENGTH_STEP + 1;
-		
+
 		inline Spectrum();
 		inline explicit Spectrum(float f);
 		inline explicit Spectrum(const float* data);// Be cautious!
@@ -61,7 +61,7 @@ namespace PR
 		inline void clear();
 
 		inline void copyTo(float* data) const;
-		
+
 		inline float max() const;// Amplitude
 		inline float min() const;// Amplitude
 		inline float avg() const;// General average

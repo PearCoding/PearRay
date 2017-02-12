@@ -1,8 +1,5 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
-
 #include "geometry/BoundingBox.h"
 
 namespace PR
@@ -50,7 +47,7 @@ namespace PR
 			box.shift(mPosition);
 			return box;
 		}
-		
+
 		BoundingBox toLocalBoundingBox() const;
 	private:
 		void recache();

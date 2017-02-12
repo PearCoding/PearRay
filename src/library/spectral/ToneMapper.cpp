@@ -152,7 +152,7 @@ namespace PR
 				out[i * 3 + 1] = g;
 				out[i * 3 + 2] = b;
 			}
-			
+
 			// Map 2: Tone Mapping
 			stage_mapper_non_gpu(out, out);
 
@@ -190,7 +190,7 @@ namespace PR
 						0,
 						mSize * 3 * sizeof(float),
 						in);
-				
+
 				stage_mapper_gpu(queue);
 
 				queue.finish();
@@ -214,7 +214,7 @@ namespace PR
 
 #ifndef PR_NO_GPU
 	void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
-	{	
+	{
 		switch (mMapperMode)
 		{
 		case TMM_None:
@@ -249,7 +249,7 @@ namespace PR
 
 			if(max <= PM_EPSILON)
 				break;
-			
+
 			cl::Kernel toneKernel(mProgram, "k_tone_normalize");
 			toneKernel.setArg(0, mInbetweenBuffer);
 			toneKernel.setArg(1, (cl_ulong)mSize);
@@ -301,7 +301,7 @@ namespace PR
 		}
 	}
 #endif
-	
+
 	void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const
 	{
 		float invMax = 0.0f;
@@ -320,7 +320,7 @@ namespace PR
 
 			if(invMax <= PM_EPSILON)
 				return;
-			
+
 			invMax = 1.0f/invMax;
 		}
 

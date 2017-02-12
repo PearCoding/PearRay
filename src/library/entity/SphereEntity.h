@@ -21,7 +21,7 @@ namespace PR
 
 		void setRadius(float f);
 		float radius() const;
-		
+
 		virtual bool isCollidable() const override;
 		virtual float collisionCost() const override;
 		virtual BoundingBox localBoundingBox() const override;

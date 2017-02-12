@@ -50,7 +50,7 @@ namespace PR
 		Spectrum albedo;
 		if(mAlbedo)
 			albedo = mAlbedo->eval(point) * PM_INV_PI_F;
-		
+
 		Spectrum spec;
 		if (mIndex && mShininess)
 		{
@@ -98,12 +98,12 @@ namespace PR
 		pdf += BlinnPhongMaterial::pdf(point, dir, 0);
 		return dir;
 	}
-	
+
 	std::string BlinnPhongMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <BlinnPhongMaterial>:" << std::endl
 			<< "    HasAlbedo:    " << (mAlbedo ? "true" : "false") << std::endl
 			<< "    HasShininess: " << (mShininess ? "true" : "false") << std::endl

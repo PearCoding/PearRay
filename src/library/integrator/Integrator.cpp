@@ -59,7 +59,7 @@ namespace PR
 
 				MSI::power(semi_weight, semi_pdf, weight, pdf);
 			}
-			
+
 			MSI::balance(full_weight, full_pdf, semi_weight, std::isinf(semi_pdf) ? 1 : semi_pdf);
 		}
 
@@ -93,7 +93,7 @@ namespace PR
 				float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(ray.direction(), other_sc.N));
 				if (NdotL <= PM_EPSILON)
 					break;
-				
+
 				ray = ray.next(other_sc.P, dir);
 
 				lastEntity = context->shoot(ray, other_sc);
@@ -103,7 +103,7 @@ namespace PR
 					break;
 			}
 
-			return weight; 
+			return weight;
 		}
 		else
 		{

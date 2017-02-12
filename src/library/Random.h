@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 #include "PearMath.h"
 
 //#define PR_USE_STL_RANDOM

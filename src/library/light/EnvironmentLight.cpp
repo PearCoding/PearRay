@@ -33,11 +33,11 @@ namespace PR
 		sc.V = V;
 		sc.Ng = V;
 		sc.N = PM::pm_Negate(V);
-		
+
 		// Really do tangent?
 		Projection::tangent_frame(sc.N, sc.Nx, sc.Ny);
 		sc.UV = Projection::sphereUV(V);
-		
+
 		return mMaterial->emission()->eval(sc);
 	}
 }

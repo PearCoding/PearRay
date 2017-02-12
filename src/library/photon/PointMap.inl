@@ -1,334 +1,198 @@
 namespace PR
 {
-	namespace Photon
+namespace Photon
+{
+	PointMap::PointMap(float gridDelta) :
+		mPhotons(),
+		mStoredPhotons(0), mGridDelta(gridDelta)
 	{
-		template<class T>
-		PointMap<T>::PointMap(uint64 max_photons) :
-			mPhotons(nullptr),
-			mStoredPhotons(0), mHalfStoredPhotons(0), mMaxPhotons(max_photons),
-			mPreviousScaleIndex(1)
+		PR_ASSERT(mGridDelta > PM_EPSILON, "Grid delta has to greater 0");
+		// Caching
+		mInvGridDelta = 1.0f/mGridDelta;
+		PR_ASSERT(std::isfinite(mInvGridDelta), "Inverse of grid delta has to be valid");
+
+		for (int i = 0; i < 256; ++i)
 		{
-			mPhotons = new T[max_photons + 1];
-			PR_ASSERT(mPhotons);
+			float angle = i * (1.0f / 256)*PM_PI_F;
 
-			// Caching
-			for (int i = 0; i < 256; ++i)
-			{
-				float angle = i * (1.0f / 256)*PM_PI_F;
-
-				PM::pm_SinCos(angle, mSinTheta[i], mCosTheta[i]);
-				PM::pm_SinCos(2 * angle, mSinPhi[i], mCosPhi[i]);
-			}
-		}
-
-		template<class T>
-		PointMap<T>::~PointMap()
-		{
-			delete[] mPhotons;
-		}
-
-		template<class T>
-		void PointMap<T>::reset()
-		{
-			mStoredPhotons = 0;
-			mHalfStoredPhotons = 0;
-			mPreviousScaleIndex = 1;
-		}
-
-		template<class T>
-		void PointMap<T>::locateSphere(PointSphere<T>& sphere, uint64 index)
-		{
-			locate(sphere, index, [](const T* pht, const PointSphere<T>& sph, float& dist2)
-			{
-				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
-				dist2 = PM::pm_MagnitudeSqr3D(V);
-				const float d = PM::pm_Dot3D(V, sph.Normal);
-				const float r = sph.Distances2[0] * (1 - std::abs(d)) +
-					sph.Distances2[0] * std::abs(d) * (1 - sph.SqueezeWeight);
-				return dist2 <= r;
-			});
-		}
-	
-		template<class T>
-		void PointMap<T>::locateDome(PointSphere<T>& sphere, uint64 index)
-		{
-			locate(sphere, index, [](const T* pht, const PointSphere<T>& sph, float& dist2)
-			{
-				PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht->Position[0], pht->Position[1], pht->Position[2]), sph.Center);
-				dist2 = PM::pm_MagnitudeSqr3D(V);
-				const float d = PM::pm_Dot3D(V, sph.Normal);
-				const float r = sph.Distances2[0] * (1 - std::abs(d)) +
-					sph.Distances2[0] * std::abs(d) * (1 - sph.SqueezeWeight);
-				return d <= -PM_EPSILON && dist2 <= r;
-			});
-		}
-
-		template<class T>
-		void PointMap<T>::locate(PointSphere<T>& sphere, uint64 index, CheckFunction checkFunc)
-		{
-			T* photon = &mPhotons[index];
-
-			if (index < mHalfStoredPhotons)
-			{
-				float dist1 = PM::pm_GetIndex(sphere.Center, photon->KDFlags) - photon->Position[photon->KDFlags];
-				if (dist1 > 0) // Right search
-				{
-					locate(sphere, 2 * index + 1, checkFunc);
-
-					if (dist1 * dist1 < sphere.Distances2[0])
-						locate(sphere, 2 * index, checkFunc);
-				}
-				else // Left search
-				{
-					locate(sphere, 2 * index, checkFunc);
-
-					if (dist1 * dist1 < sphere.Distances2[0])
-						locate(sphere, 2 * index + 1, checkFunc);
-				}
-			}
-
-			// compute distance
-			float dist2;
-			if (checkFunc(photon, sphere, dist2))// Found a photon!
-			{
-				if (sphere.Found < sphere.Max)
-				{
-					sphere.Found++;
-					sphere.Distances2[sphere.Found] = dist2;
-					sphere.Index[sphere.Found] = photon;
-				}
-				else
-				{
-					uint64 j, parent;
-
-					if (!sphere.GotHeap)
-					{
-						const T* photon2;
-						uint64 halfFound = sphere.Found >> 1;
-						for (uint64 k = halfFound; k >= 1; --k)
-						{
-							parent = k;
-							photon2 = sphere.Index[k];
-							float distTmp = sphere.Distances2[k];
-
-							while (parent <= halfFound)
-							{
-								j = parent * 2;
-
-								if (j < sphere.Found && sphere.Distances2[j] < sphere.Distances2[j + 1])
-									j++;
-
-								if (distTmp >= sphere.Distances2[j])
-									break;
-
-								sphere.Distances2[parent] = sphere.Distances2[j];
-								sphere.Index[parent] = sphere.Index[j];
-								parent = j;
-							}
-
-							sphere.Distances2[parent] = distTmp;
-							sphere.Index[parent] = photon2;
-						}
-						sphere.GotHeap = true;
-					}
-
-					parent = 1;
-					j = 2;
-					while (j <= sphere.Found)
-					{
-						if (j < sphere.Found && sphere.Distances2[j] < sphere.Distances2[j + 1])
-							j++;
-
-						if (dist2 > sphere.Distances2[j])
-							break;
-
-						sphere.Distances2[parent] = sphere.Distances2[j];
-						sphere.Index[parent] = sphere.Index[j];
-						parent = j;
-						j += j;
-					}
-
-					if (dist2 < sphere.Distances2[parent])
-					{
-						sphere.Distances2[parent] = dist2;
-						sphere.Index[parent] = photon;
-					}
-
-					sphere.Distances2[0] = sphere.Distances2[1];
-				}
-			}
-		}
-
-		template<class T>
-		void PointMap<T>::store(const PM::vec3& pos, const T& pht)
-		{
-			if (isFull())
-				return;
-
-			mStoredPhotons++;
-			mPhotons[mStoredPhotons] = pht;
-
-			mBox.put(pos);
-		}
-
-		template<class T>
-		template<typename CallFunction>
-		void PointMap<T>::callNewestPoints(CallFunction f)
-		{
-			for (uint64 i = mPreviousScaleIndex; i <= mStoredPhotons; ++i)
-				f(&mPhotons[i]);
-			mPreviousScaleIndex = mStoredPhotons + 1;
-		}
-
-		template<class T>
-		void PointMap<T>::balanceTree()
-		{
-			if(mStoredPhotons > 1)
-				mHalfStoredPhotons = mStoredPhotons / 2 - 1;
-			else
-				mHalfStoredPhotons = 0;
-
-			if(mStoredPhotons < 1)
-				return;
-
-			T** pTmp1 = new T*[mStoredPhotons + 1];
-			T** pTmp2 = new T*[mStoredPhotons + 1];
-
-			PR_ASSERT(pTmp1);
-			PR_ASSERT(pTmp2);
-
-			for (uint64 i = 0; i <= mStoredPhotons; ++i)
-				pTmp2[i] = &mPhotons[i];
-
-			balanceSegment(pTmp1, pTmp2, 1, 1, mStoredPhotons);
-			delete[] pTmp2;
-			pTmp2 = nullptr;// For debug!
-
-			//Now reorganize balanced kd-tree to make use of the heap design
-			uint64 d, j = 1, h = 1;
-			T h_photon = mPhotons[j];
-
-			for (uint64 i = 1; i <= mStoredPhotons; ++i)
-			{
-				d = (uint64)(pTmp1[j] - mPhotons);
-				pTmp1[j] = nullptr;
-
-				if (d != h)
-				{
-					mPhotons[j] = mPhotons[d];
-					j = d;
-				}
-				else
-				{
-					mPhotons[j] = h_photon;
-
-					if (i < mStoredPhotons)// Not the last entry
-					{
-						for (; h <= mStoredPhotons; ++h)
-						{
-							if (pTmp1[h])
-							{
-								break;
-							}
-						}
-
-						h_photon = mPhotons[h];
-						j = h;
-					}
-				}
-			}
-
-			delete[] pTmp1;
-		}
-
-		template<class T>
-		void PointMap<T>::balanceSegment(T** balance, T** original, uint64 index, uint64 start, uint64 end)
-		{
-			// Calculate median
-			uint64 median = 1;
-			while ((4 * median) <= (end - start + 1))
-				median += median;
-
-			if ((3 * median) <= (end - start + 1))
-				median += median + start - 1;
-			else
-				median = end - median + 1;
-
-			// Find axis
-			int axis = 2;// Z axis
-			if (mBox.width() > mBox.height() &&
-				mBox.width() > mBox.depth())
-				axis = 0;// X axis
-			else if (mBox.height() > mBox.depth())
-				axis = 1;// Y axis
-
-			// Partition
-			medianSplit(original, start, end, median, axis);
-			balance[index] = original[median];
-			balance[index]->KDFlags = axis;
-
-			// Recursively do the left and right part
-			if (median > start)
-			{
-				if (start < median - 1)
-				{
-					float tmp = PM::pm_GetIndex(mBox.upperBound(), axis);
-					mBox.setUpperBound(PM::pm_SetIndex(mBox.upperBound(), axis, balance[index]->Position[axis]));
-					balanceSegment(balance, original, 2 * index, start, median - 1);
-					mBox.setUpperBound(PM::pm_SetIndex(mBox.upperBound(), axis, tmp));
-				}
-				else
-				{
-					balance[2 * index] = original[start];
-				}
-			}
-
-			if (median < end)
-			{
-				if (median + 1 < end)
-				{
-					float tmp = PM::pm_GetIndex(mBox.lowerBound(), axis);
-					mBox.setLowerBound(PM::pm_SetIndex(mBox.lowerBound(), axis, balance[index]->Position[axis]));
-					balanceSegment(balance, original, 2 * index + 1, median + 1, end);
-					mBox.setLowerBound(PM::pm_SetIndex(mBox.lowerBound(), axis, tmp));
-				}
-				else
-				{
-					balance[2 * index + 1] = original[end];
-				}
-			}
-		}
-
-		template<class T>
-		void PointMap<T>::medianSplit(T** photon, uint64 start, uint64 end, uint64 median, int axis)
-		{
-			uint64 left = start;
-			uint64 right = end;
-
-			while (right > left)
-			{
-				float v = photon[right]->Position[axis];
-				uint64 i = left - 1;
-				uint64 j = right;
-				while (true)
-				{
-					while (photon[++i]->Position[axis] < v)
-						;
-					while (photon[--j]->Position[axis] > v && j > left)
-						;
-
-					if (i >= j)
-						break;
-
-					T* tmp = photon[i]; photon[i] = photon[j]; photon[j] = tmp;
-				}
-				T* tmp = photon[i]; photon[i] = photon[right]; photon[right] = tmp;
-
-				if (i >= median)
-					right = i - 1;
-				if (i <= median)
-					left = i + 1;
-			}
+			PM::pm_SinCos(angle, mSinTheta[i], mCosTheta[i]);
+			PM::pm_SinCos(2 * angle, mSinPhi[i], mCosPhi[i]);
 		}
 	}
+
+	PointMap::~PointMap()
+	{
+	}
+
+	void PointMap::reset()
+	{
+		mStoredPhotons = 0;
+		mPhotons.clear();
+	}
+
+	template<typename AccumFunction>
+	Spectrum PointMap::estimateSphere(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const
+	{
+		return estimate<AccumFunction>(sphere,
+			[](const Photon& pht, const PointSphere& sph, float& dist2)
+				{
+					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
+					dist2 = PM::pm_MagnitudeSqr3D(V);
+					const float d = PM::pm_Dot3D(V, sph.Normal);
+					const float r = sph.Distance2 * (1 - std::abs(d)) +
+						sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
+					return dist2 <= r;
+				},
+			accumFunc, found);
+	}
+
+	template<typename AccumFunction>
+	Spectrum PointMap::estimateDome(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const
+	{
+		return estimate<AccumFunction>(sphere,
+			[](const Photon& pht, const PointSphere& sph, float& dist2)
+				{
+					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
+					dist2 = PM::pm_MagnitudeSqr3D(V);
+					const float d = PM::pm_Dot3D(V, sph.Normal);
+					const float r = sph.Distance2 * (1 - std::abs(d)) +
+						sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
+					return d <= -PM_EPSILON && dist2 <= r;
+				},
+			accumFunc, found);
+	}
+
+	template<typename AccumFunction>
+	Spectrum PointMap::estimate(const PointSphere& sphere,
+		CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const
+	{
+		found = 0;
+
+		KeyCoord centerCoord = toCoords(sphere.Center);
+		const int32 rad = std::floor(std::sqrt(sphere.Distance2) * mInvGridDelta);
+		const int32 rad2 = rad*rad;
+
+		float dist2;
+		Spectrum accum;
+
+#ifdef PR_USE_APPROX_PHOTON_MAP
+		for(int x = -rad; x <= rad; ++x)
+		{
+			for(int y = -rad; y <= rad; ++y)
+			{
+				for(int z = -rad; z <= rad; ++z)
+				{
+					if(x*x + y*y + z*z > rad2)
+						continue;
+					
+					KeyCoord key = {
+						centerCoord.X+x,
+						centerCoord.Y+y,
+						centerCoord.Z+z };
+
+					typename Map::const_accessor acc;
+					if(mPhotons.find(acc, key))
+					{
+						if (checkFunc((*acc).second.Approximation, sphere, dist2))// Found a photon!
+						{
+							found++;
+							accum += accumFunc((*acc).second.Approximation, sphere, dist2);
+						}
+					}
+				}
+			}
+		}
+#else
+		MinRadiusGenerator<3> generator(rad);
+		while(generator && found < sphere.MaxPhotons)
+		{
+			const auto point = generator.next();
+			if(point[0]*point[0] + point[1]*point[1] + point[2]*point[2] > rad2)
+				continue;
+			
+			KeyCoord key = {
+				centerCoord.X+point[0],
+				centerCoord.Y+point[1],
+				centerCoord.Z+point[2] };
+			
+			typename Map::const_accessor acc;
+			if(mPhotons.find(acc, key))
+			{
+				for(const T& pht: (*acc).second)
+				{
+					if (checkFunc(pht, sphere, dist2))// Found a photon!
+					{
+						found++;
+						accum += accumFunc(pht, sphere, dist2);
+					}
+				}
+			}
+		}
+#endif
+
+		return accum;
+	}
+
+	void PointMap::store(const PM::vec3& pos, const Photon& pht)
+	{
+		mStoredPhotons++;
+		const auto key = toCoords(pos);
+
+		typename Map::accessor acc;
+		mPhotons.insert(acc, key);
+
+#ifdef PR_USE_APPROX_PHOTON_MAP
+		auto& approx = (*acc).second;
+		float t = 1.0f/(approx.Count + 1.0f);
+
+		approx.Approximation.Position[0] = pht.Position[0] * t + approx.Approximation.Position[0]*(1-t);
+		approx.Approximation.Position[1] = pht.Position[1] * t + approx.Approximation.Position[1]*(1-t);
+		approx.Approximation.Position[2] = pht.Position[2] * t + approx.Approximation.Position[2]*(1-t);
+		approx.Approximation.Phi = pht.Phi * t + approx.Approximation.Phi*(1-t);
+		approx.Approximation.Theta = pht.Theta * t + approx.Approximation.Theta*(1-t);
+# if PR_PHOTON_RGB_MODE >= 1
+		approx.Approximation.Power[0] = pht.Power[0] * t + approx.Approximation.Power[0]*(1-t);
+		approx.Approximation.Power[1] = pht.Power[1] * t + approx.Approximation.Power[1]*(1-t);
+		approx.Approximation.Power[2] = pht.Power[2] * t + approx.Approximation.Power[2]*(1-t);
+# else
+		approx.Approximation.Power = pht.Power * t + approx.Approximation.Power*(1-t);
+# endif
+		approx.Count += 1;
+#else
+		(*acc).second.push_back(pht);
+#endif
+
+		mBox.put(pos);
+	}
+
+	typename PointMap::KeyCoord PointMap::toCoords(const PM::vec3& v) const
+	{
+		PM::vec3 s = PM::pm_Scale(v, mInvGridDelta);
+		return {
+			(int32)std::floor(PM::pm_GetX(s)),
+			(int32)std::floor(PM::pm_GetY(s)),
+			(int32)std::floor(PM::pm_GetZ(s))
+			};
+	}
+
+	bool PointMap::KeyCoord::operator ==(const KeyCoord& other) const
+	{
+		return X == other.X && Y == other.Y && Z == other.Z;
+	}
+
+	size_t PointMap::hash_compare::hash(const KeyCoord& coord)
+	{
+		constexpr size_t P1 = 863693;
+		constexpr size_t P2 = 990383;
+		constexpr size_t P3 = 729941;
+		return ((size_t)coord.X * P1) ^
+			((size_t)coord.Y * P2) ^
+			((size_t)coord.Z * P3);
+	}
+
+	bool PointMap::hash_compare::equal(const KeyCoord& k1, const KeyCoord& k2)
+	{
+		return k1 == k2;
+	}
+}
 }

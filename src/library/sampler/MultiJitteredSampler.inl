@@ -117,7 +117,7 @@ namespace PR
 		i ^= i >> 21;
 		i *= 0x93fc4795;
 		i ^= 0xdf6e307f;
-		i ^= i >> 17; 
+		i ^= i >> 17;
 		i *= 1 | p >> 18;
 		return i * (1.0f / 4294967808.0f);
 	}

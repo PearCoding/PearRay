@@ -58,7 +58,7 @@ namespace PR
 	{
 		if (!mVerbose && (level == L_Debug || level == L_Info))
 			return;
-				
+
 		if(!mQuiet)
 			printf("[%s] (%s) %s\n", levelStr[level], moduleStr[m], str.c_str());
 
@@ -70,9 +70,7 @@ namespace PR
 		}
 
 		if (level == L_Fatal)
-		{
 			exit(-1);
-		}
 	}
 
 	void Logger::logf(Level level, Module m, const char* fmt, ...)
@@ -80,11 +78,11 @@ namespace PR
 		if (!mVerbose && (level == L_Debug || level == L_Info))
 			return;
 
-		//Unsecured
+		// Unsecured
 		char buffer[1024];
 		va_list vl;
 		va_start(vl, fmt);
-		vsnprintf(buffer, 1024, fmt, vl);
+		vsnprintf(buffer, sizeof(buffer), fmt, vl);
 		va_end(vl);
 
 		if(!mQuiet)
@@ -98,9 +96,7 @@ namespace PR
 		}
 
 		if (level == L_Fatal)
-		{
 			exit(-1);
-		}
 	}
 
 	void Logger::addListener(LogListener* listener)

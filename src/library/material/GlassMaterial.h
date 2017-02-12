@@ -15,7 +15,7 @@ namespace PR
 
 		bool isThin() const;
 		void setThin(bool b);
-		
+
 		SpectralShaderOutput* specularity() const;
 		void setSpecularity(SpectralShaderOutput* spec);
 
@@ -25,7 +25,7 @@ namespace PR
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
-	
+
 		PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, Spectrum& path_weight, uint32 path) override;
 		uint32 samplePathCount() const override;
 

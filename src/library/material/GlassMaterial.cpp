@@ -18,12 +18,12 @@
 namespace PR
 {
 	GlassMaterial::GlassMaterial(uint32 id) :
-		Material(id), 
+		Material(id),
 		mSpecularity(nullptr), mIndex(nullptr), mSampleIOR(false), mThin(false),
 		mIntervalCount_Cache(0), mIntervalLength_Cache(0), mPathCount_Cache(0)
 	{
 	}
-	
+
 	bool GlassMaterial::sampleIOR() const
 	{
 		return mSampleIOR;
@@ -33,7 +33,7 @@ namespace PR
 	{
 		mSampleIOR = b;
 	}
-	
+
 	bool GlassMaterial::isThin() const
 	{
 		return mThin;
@@ -86,7 +86,7 @@ namespace PR
 #else
 			Fresnel::schlick(-point.NdotV, 1, ind) : Fresnel::schlick(-point.NdotV, ind, 1);
 #endif
-		
+
 		bool total = false;
 		PM::vec3 dir;
 		if (PM::pm_GetY(rnd) < weight)
@@ -120,7 +120,7 @@ namespace PR
 #else
 			Fresnel::schlick(-point.NdotV, 1, ind) : Fresnel::schlick(-point.NdotV, ind, 1);
 #endif
-		
+
 		bool total = false;
 		PM::vec3 dir;
 		if (path % 2 == 0)
@@ -160,16 +160,16 @@ namespace PR
 		mIntervalCount_Cache = SCDivisor::values[PM::pm_Clamp<uint32>(
 			std::floor(context->settings().distortionQuality() * SCDivisor::length),
 			0, SCDivisor::length-1)];
-		
+
 		mIntervalLength_Cache = Spectrum::SAMPLING_COUNT / mIntervalCount_Cache;
 		mPathCount_Cache = (mIndex && mSampleIOR) ? 2*mIntervalCount_Cache : 2;
 	}
-	
+
 	std::string GlassMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <GlassMaterial>:" << std::endl
 			<< "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
 			<< "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl

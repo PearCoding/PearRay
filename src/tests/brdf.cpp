@@ -11,7 +11,7 @@ using namespace PR;
 #endif
 
 PR_BEGIN_TESTCASE(BRDF)
-PR_TEST("Reflection");
+PR_TEST("Reflection")
 {
 	auto N = PM::pm_Set(0, 1, 0);
 	auto V = PM::pm_Normalize3D(PM::pm_Set(1, -1, 0));
@@ -21,7 +21,7 @@ PR_TEST("Reflection");
 	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(PM::pm_GetX(V), -PM::pm_GetY(V), PM::pm_GetZ(V)));
 }
 
-PR_TEST("Refraction");
+PR_TEST("Refraction")
 {
 	auto N = PM::pm_Set(0, 1, 0);
 	auto V = PM::pm_Normalize3D(PM::pm_Set(1, -1, 0));
@@ -31,7 +31,7 @@ PR_TEST("Refraction");
 	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0.636396, -0.771362, 0));
 }
 
-PR_TEST("Blinn NDF");
+PR_TEST("Blinn NDF")
 {
 	constexpr uint32 MAX_SAMPLES = 16;
 	constexpr float SAMPLE_STEP = 1.0f/MAX_SAMPLES;
@@ -92,7 +92,7 @@ PR_TEST("Blinn NDF");
 #endif
 }
 
-PR_TEST("Beckmann NDF");
+PR_TEST("Beckmann NDF")
 {
 	constexpr uint32 MAX_SAMPLES = 16;
 	constexpr float SAMPLE_STEP = 1.0f/MAX_SAMPLES;
@@ -153,7 +153,7 @@ PR_TEST("Beckmann NDF");
 #endif
 }
 
-PR_TEST("GGX ISO NDF");
+PR_TEST("GGX ISO NDF")
 {
 	constexpr uint32 MAX_SAMPLES = 16;
 	constexpr float SAMPLE_STEP = 1.0f/MAX_SAMPLES;

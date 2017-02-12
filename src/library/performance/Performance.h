@@ -19,7 +19,7 @@ namespace PR
 
 		inline PerformanceEntry(size_t hash, PerformanceEntry* parent,
 			int line, const char* file, const char* function);
-		
+
 		inline size_t hash() const;
 		inline PerformanceEntry* parent() const;
 		inline int line() const;
@@ -89,7 +89,7 @@ namespace PR
 	private:
 		std::map<std::thread::id, Set>  mEntries;
 		static thread_local PerformanceEntry* mCurrentParent;
-		std::mutex mMutex; 
+		std::mutex mMutex;
 	};
 
 	class PerformanceGuard

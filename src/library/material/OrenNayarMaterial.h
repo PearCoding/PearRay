@@ -14,7 +14,7 @@ namespace PR
 
 		ScalarShaderOutput* roughness() const;
 		void setRoughness(ScalarShaderOutput* data);
-		
+
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;

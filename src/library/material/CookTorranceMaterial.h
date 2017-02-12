@@ -3,7 +3,7 @@
 #include "Material.h"
 
 namespace PR
-{	
+{
 	class PR_LIB CookTorranceMaterial : public Material
 	{
 	public:
@@ -77,7 +77,7 @@ namespace PR
 	private:
 		PM::vec3 diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
 		PM::vec3 specular_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
-		
+
 		FresnelMode mFresnelMode;
 		DistributionMode mDistributionMode;
 		GeometryMode mGeometryMode;

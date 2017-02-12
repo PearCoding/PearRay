@@ -66,12 +66,12 @@ namespace PR
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
 	}
-	
+
 	std::string OrenNayarMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <OrenNayarMaterial>:" << std::endl
 			<< "    HasAlbedo:    " << (mAlbedo ? "true" : "false") << std::endl
 			<< "    HasRoughness: " << (mRoughness ? "true" : "false") << std::endl;

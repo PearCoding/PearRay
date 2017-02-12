@@ -237,7 +237,7 @@ namespace PR
 			PR_LOGGER.log(L_Error, M_GPU, "No valid OpenCL device found.");
 			return false;
 		}
-		
+
 		uint32 maxPoints = 0;
 		for (auto pair : selection)
 		{
@@ -259,7 +259,7 @@ namespace PR
 				mMainDevice = pair.second;
 			}
 		}
-		
+
 		// Now create context
 		PR_LOGGER.logf(L_Info, M_GPU, "Choosing: %s %s",
 			mPlatform.getInfo<CL_PLATFORM_VERSION>().c_str(), mPlatform.getInfo<CL_PLATFORM_VENDOR>().c_str());
@@ -277,7 +277,7 @@ namespace PR
 			PR_LOGGER.logf(L_Error, M_GPU, "Couldn't create GPU context: %s (%s)", err.what(), error(err.err()));
 			return false;
 		}
-		
+
 		// Init files
 		{
 			std::stringstream sstream;
@@ -311,7 +311,7 @@ namespace PR
 		const std::string& defs)
 	{
 		using namespace boost;
-		PR_ASSERT(mPrograms.count(name) == 0);
+		PR_ASSERT(mPrograms.count(name) == 0, "Program with name does not exists");
 
 		cl::Program program(mMainContext, source);
 		try

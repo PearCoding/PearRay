@@ -150,10 +150,10 @@ namespace PR
 	{
 		std::fill_n(mValues, SAMPLING_COUNT, v);
 	}
-	
+
 	inline void Spectrum::fill(uint32 si, uint32 ei, float v)
 	{
-		PR_ASSERT(si < ei);
+		PR_ASSERT(si < ei, "si has to be less than ei");
 		std::fill_n(&mValues[si], ei - si, v);
 	}
 
@@ -310,7 +310,7 @@ namespace PR
 
 	inline Spectrum Spectrum::fromRectangularFunction(uint32 si, uint32 ei, float factor)
 	{
-		PR_ASSERT(si < ei);
+		PR_ASSERT(si < ei, "si has to be less than ei");
 		Spectrum spec;
 		spec.fill(si, ei, factor);
 		return spec;

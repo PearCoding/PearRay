@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Config.h"
 #include "Face.h"
 #include "BoundingBox.h"
 
@@ -86,10 +85,10 @@ namespace PR
 			const PM::vec3 r = PM::pm_Cross3D(s, e12);
 			v = f*PM::pm_Dot3D(ray.direction(), r);
 
-			if (v < 0 || u + v > 1) 
+			if (v < 0 || u + v > 1)
 			//if (!BETWEEN_INCLUSIVE(v, 0, 1-u))
 				return false;
-			
+
 			t = f*PM::pm_Dot3D(e13, r);
 
 			if (t >= PR_TRIANGLE_INTERSECT_EPSILON)
@@ -174,7 +173,7 @@ namespace PR
 			const float Cz = sz*PM::pm_GetIndex(C, kz);
 
 			t = u*Az + v*Bz + w*Cz;
-			if (std::abs(t) >= PR_TRIANGLE_INTERSECT_EPSILON && 
+			if (std::abs(t) >= PR_TRIANGLE_INTERSECT_EPSILON &&
 				std::signbit(t) == std::signbit(det))
 			{
 				const float invDet = 1.0f / det;
@@ -209,7 +208,7 @@ namespace PR
 		inline static float surfaceArea(const PM::vec3& p1, const PM::vec3& p2, const PM::vec3& p3)
 		{
 			PR_GUARD_PROFILE();
-			
+
 			PM::vec3 v1 = PM::pm_Subtract(p2, p1);
 			PM::vec3 v2 = PM::pm_Subtract(p3, p1);
 			return 0.5f * PM::pm_Magnitude3D(PM::pm_Cross3D(v1,v2));

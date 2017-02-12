@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 
 namespace PR
 {
@@ -10,7 +10,7 @@ namespace PR
 		RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey);
 		void inc();
 		void reset();
-		
+
 		inline bool isWorking() const
 		{
 			return mWorking;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 #include "PearMath.h"
 
 namespace PR
@@ -21,8 +21,8 @@ namespace PR
 		inline float radius() const { return mRadius; }
 		inline void setRadius(float f)
 		{
-			PR_ASSERT(f > 0);
-			mRadius = f; 
+			PR_ASSERT(f > 0, "radius has to be greater than 0");
+			mRadius = f;
 		}
 
 		inline float volume() const { return (PM_4_PI_F/3)*mRadius*mRadius*mRadius; }

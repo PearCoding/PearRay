@@ -46,14 +46,14 @@ namespace PR
 
 		OutputMap(RenderContext* renderer);
 		~OutputMap();
-		
+
 		void init();
 		void deinit();
 
 		void clear();
 
 		void pushFragment(uint32 x, uint32 y, const Spectrum& s, const ShaderClosure& sc);
-		
+
 		inline Spectrum getFragment(uint32 x, uint32 y) const
 		{
 			return mSpectral->getFragmentBounded(x, y);
@@ -73,7 +73,7 @@ namespace PR
 		{
 			if(!mInt1D[V_Quality])
 				return;
-			
+
 			// MEAN SQUARE ERROR
 			const float t = 1.0f/sample;
 			const float s1 = pixel.max();
@@ -81,12 +81,12 @@ namespace PR
 			const float ref = (s1 <= PM_EPSILON && s2 <= PM_EPSILON) ? 1 : (s1 + s2);
 			const float err = std::abs(s1 - s2) / ref;
 			mInt1D[V_Quality]->pushFragmentBounded(x, y,
-				mInt1D[V_Quality]->getFragmentBounded(x, y) * (1-t) + t * err * err);	
+				mInt1D[V_Quality]->getFragmentBounded(x, y) * (1-t) + t * err * err);
 		}
 
 		bool isPixelFinished(uint32 x, uint32 y) const;
 		uint64 finishedPixelCount() const;
-	
+
 		inline Output1D* getChannel(Variable1D var) const
 		{
 			return mInt1D[var];
@@ -104,33 +104,33 @@ namespace PR
 
 		inline void registerChannel(Variable1D var, Output1D* output)
 		{
-			PR_ASSERT(output);
-			PR_ASSERT(!mInt1D[var]);
+			PR_ASSERT(output, "Given output has to be valid");
+			PR_ASSERT(!mInt1D[var], "Given output entry has to be set");
 			mInt1D[var] = output;
 		}
 
 		inline void registerChannel(Variable3D var, Output3D* output)
 		{
-			PR_ASSERT(output);
-			PR_ASSERT(!mInt3D[var]);
+			PR_ASSERT(output, "Given output has to be valid");
+			PR_ASSERT(!mInt3D[var], "Given output entry has to be set");
 			mInt3D[var] = output;
 		}
 
 		inline void registerUserChannel(Output1D* output)
 		{
-			PR_ASSERT(output);
+			PR_ASSERT(output, "Given output has to be valid");
 			mUser1D.push_back(output);
 		}
 
 		inline void registerUserChannel(Output3D* output)
 		{
-			PR_ASSERT(output);
+			PR_ASSERT(output, "Given output has to be valid");
 			mUser3D.push_back(output);
 		}
 
 		inline void registerUserChannel(OutputSpectral* output)
 		{
-			PR_ASSERT(output);
+			PR_ASSERT(output, "Given output has to be valid");
 			mUserSpectral.push_back(output);
 		}
 
@@ -140,7 +140,7 @@ namespace PR
 		OutputSpectral* mSpectral;
 		Output3D* mInt3D[V_3D_COUNT];
 		Output1D* mInt1D[V_1D_COUNT];
-		
+
 		std::list<Output3D*> mUser3D;
 		std::list<Output1D*> mUser1D;
 		std::list<OutputSpectral*> mUserSpectral;

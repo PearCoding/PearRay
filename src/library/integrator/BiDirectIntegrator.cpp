@@ -24,7 +24,7 @@ namespace PR
 	{
 		deleteThreadStructure();
 	}
-	
+
 	void BiDirectIntegrator::deleteThreadStructure()
 	{
 		if (mThreadData)
@@ -42,7 +42,7 @@ namespace PR
 
 	void BiDirectIntegrator::init(RenderContext* renderer)
 	{
-		PR_ASSERT(renderer);
+		PR_ASSERT(renderer, "No renderer given");
 
 		deleteThreadStructure();
 
@@ -60,14 +60,14 @@ namespace PR
 			mThreadData[i].LightPathLength = new uint32[renderer->lights().size() * renderer->settings().maxLightSamples()];
 		}
 	}
-	
+
 	constexpr float LightEpsilon = 0.00001f;
 	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
 	{
 		if (context->renderer()->settings().maxLightSamples() == 0)
 			return Spectrum();
 
-		PR_ASSERT(mThreadData);
+		PR_ASSERT(mThreadData, "ThreadData not initialized.");
 
 		ShaderClosure other_sc;
 
@@ -102,7 +102,7 @@ namespace PR
 					uint32 lightDepth = 0;// Counts diff bounces
 					lightV[0].Flux = flux;
 					lightV[0].SC = other_sc;
-					
+
 					Ray current = Ray::safe(in.pixelX(), in.pixelY(),
 						other_sc.P,
 						L,
@@ -178,7 +178,7 @@ namespace PR
 		{
 			float other_pdf = 0;
 			const uint32 path_count = sc.Material->samplePathCount();
-			PR_ASSERT(path_count > 0);
+			PR_ASSERT(path_count > 0, "path_count should be always higher than 0");
 			PM::vec3 rnd = sampler.generate3D(i);
 			for(uint32 path = 0; path < path_count && !std::isinf(other_pdf); ++path)
 			{
@@ -229,7 +229,7 @@ namespace PR
 
 					const float pdf = sc.Material->pdf(sc, L, NdotL);
 
-					if (pdf > PM_EPSILON && 
+					if (pdf > PM_EPSILON &&
 							context->shoot(current, other_sc) == entity &&
 							PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
 						other_weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;

@@ -7,7 +7,7 @@ namespace PR
 		mHash(hash), mParent(parent), mLine(line), mFile(file), mFunction(function),
 		mStart(), mTicks(0)
 	{}
-		
+
 	inline size_t PerformanceEntry::hash() const
 	{
 		return mHash;
@@ -75,7 +75,7 @@ namespace PR
 
 		mMutex.lock();
 		PerformanceEntry* parent = nullptr;
-		
+
 		if(!mEntries.count(this_id))
 			mEntries[this_id] = Set(10, [](const SetEntry& e) { return e.Hash; });
 		else
@@ -87,7 +87,7 @@ namespace PR
 		stream << function << "$" << file << "$" << line << "$" << this_id;
 		if(parent)
 			stream << "$" << parent->hash();
-		
+
 		size_t hash = std::hash<std::string>()(stream.str());
 		SetEntry hashE(hash);
 
@@ -100,7 +100,7 @@ namespace PR
 		else
 		{
 			entry = new PerformanceEntry(hash, parent, line, file, function);
-			PR_ASSERT(entry);
+			PR_ASSERT(entry, "new entry has to be non null");
 
 			hashE.Entry = entry;
 			set.insert(hashE);
@@ -134,7 +134,7 @@ namespace PR
 		//auto this_id = std::this_thread::get_id();
 		e->end();
 
-		PR_ASSERT(mCurrentParent == e);
+		PR_ASSERT(mCurrentParent == e, "current parent has to be the calling entry");
 		mCurrentParent = e->parent();
 	}
 

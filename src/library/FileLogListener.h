@@ -5,15 +5,14 @@
 
 namespace PR
 {
-	class PR_LIB FileLogListener : public LogListener
+	class PR_LIB FileLogListener final : public LogListener
 	{
 	public:
 		FileLogListener();
 		virtual ~FileLogListener();
 
 		void open(const std::string& file);
-
-		virtual void newEntry(Level level, Module m, const std::string& str);
+		void newEntry(Level level, Module m, const std::string& str) override;
 
 	private:
 		std::fstream mStream;

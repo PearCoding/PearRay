@@ -20,7 +20,7 @@ namespace PR
 		{
 			float Position[3]; // Non compressed positions
 			uint8 Phi, Theta; // Support of 65536 possible directions is enough
-			uint8 KDFlags;// Flags for the KD-Tree
+			//uint8 KDFlags;// Flags for the KD-Tree
 #if PR_PHOTON_RGB_MODE >= 1
 			float Power[3];
 #else

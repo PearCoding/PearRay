@@ -24,13 +24,13 @@ namespace PR
 
 		Ray out = in;
 		out.setFlags(in.flags() | RF_Debug);
-		
+
 		if (context->renderer()->settings().debugMode() == DM_Emission)
 			entity = context->shootWithEmission(emission, out, sc);
 		else
 			entity = context->shoot(out, sc);
 
-		if (!entity || 
+		if (!entity ||
 			(context->renderer()->settings().debugMode() != DM_Validity && !sc.Material))
 			return Spectrum();
 
@@ -136,7 +136,7 @@ namespace PR
 			 Green  -> Everything ok
 			 Black  -> Background
 			*/
-			
+
 			if (!sc.Material)
 				return RGBConverter::toSpec(1, 0, 0);
 
@@ -145,13 +145,13 @@ namespace PR
 
 			if (std::abs(PM::pm_GetW(sc.P)) - 1 > PM_EPSILON)
 				return RGBConverter::toSpec(0, 1, 1);
-			
+
 			float pdf;
 			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
 				context->random().getFloat(),
 				context->random().getFloat());
 			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
-			
+
 			if (PM::pm_MagnitudeSqr3D(dir) - 1 > PM_EPSILON)
 				return RGBConverter::toSpec(1, 0, 1);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Config.h"
+#include "PR_Config.h"
 
 #include <type_traits>
 
@@ -40,7 +40,7 @@ namespace PR
 
         public:
             static constexpr T value(T v)
-            { 
+            {
                 return v > 0 ? _helper(v, 0, v / 2 + 1) : (T)0;
             }
 
@@ -60,11 +60,11 @@ namespace PR
         public:
             static constexpr auto number = N;
             static constexpr auto sqrt_number = t_sqrt<int>::value(number) + 1;
-            
+
         // Calculate length
         private:
             static constexpr int calc_length(int i) {
-                return ((i == 0) ? 
+                return ((i == 0) ?
                     0 :
                     calc_length(i-1) + ((number % i == 0) ?
                         ((number / i == i) ? 1 : 2) :
@@ -97,7 +97,7 @@ namespace PR
             {
                 static constexpr int values[] = {Rest...};
             };
-            
+
         public:
             static constexpr auto&& values = Impl<sqrt_number>::values;
 

@@ -73,7 +73,7 @@ namespace PR
 
 	BoundingBox MeshEntity::localBoundingBox() const
 	{
-		PR_DEBUG_ASSERT(mMesh);
+		PR_ASSERT(mMesh, "mesh has to be initialized before accessing");
 		return mMesh->boundingBox();
 	}
 
@@ -85,7 +85,7 @@ namespace PR
 		Ray local = ray;
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
-		
+
 		if (mMesh->checkCollision(local, collisionPoint))
 		{
 			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
@@ -124,7 +124,7 @@ namespace PR
 
 		mSurfaceArea_Cache = mMesh->surfaceArea(nullptr,
 				flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
-		
+
 		// Check up
 		if(mSurfaceArea_Cache <= PM_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Mesh entity %s has zero surface area!", name().c_str());
@@ -133,7 +133,7 @@ namespace PR
 	void MeshEntity::setup(RenderContext* context)
 	{
 		RenderEntity::setup(context);
-		
+
 		if(mMaterialOverride)
 			mMaterialOverride->setup(context);
 	}

@@ -28,7 +28,7 @@ namespace PR
 			return 0;
 
 		if(interpolation == IT_Const)
-		{ 
+		{
 			if (m >= WAVELENGTH_STEP / 2 && c < SAMPLING_COUNT - 1)
 			{
 				return mValues[c+1];
@@ -64,7 +64,7 @@ namespace PR
 		float flux = 0;
 		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
 			flux += mValues[i] * NM_TO_Y[i];
-		
+
 		return flux * ILL_SCALE * CANDELA;
 	}
 
@@ -74,7 +74,7 @@ namespace PR
 		constexpr long double c = 299792458l;
 		constexpr long double h = 6.626070040e-34l;
 		constexpr long double kb = 1.38064852e-23l;
-		
+
 		constexpr long double c1 = 2*h*c*c;
 		constexpr long double c2 = h*c/kb;
 

@@ -30,7 +30,7 @@ namespace PR
 
 		PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, Spectrum& path_weight, uint32 path) override;
 		uint32 samplePathCount() const override;
-		
+
 		virtual std::string dumpInformation() const override;
 	private:
 		PM::vec3 diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);

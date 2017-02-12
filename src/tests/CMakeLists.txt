@@ -6,7 +6,7 @@ endif()
 
 set(PRT_Pre Test.h)
 
-set(LIBS pr_lib)
+set(LIBS pr_lib pr_lib_utils)
 
 FUNCTION(PUSH_TEST name files)
 	list(APPEND files ${PRT_Pre})
@@ -24,3 +24,4 @@ PUSH_TEST(boundingbox boundingbox.cpp)
 PUSH_TEST(projection projection.cpp)
 PUSH_TEST(brdf brdf.cpp)
 PUSH_TEST(sphere sphere.cpp)
+PUSH_TEST(generator generator.cpp)

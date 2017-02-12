@@ -28,7 +28,7 @@ namespace PR
 		void removeEntity(Entity* e);
 		Entity* getEntity(const std::string& name, const std::string& type) const;
 		inline const std::list<Entity*>& entities() const { return mEntities; }
-		
+
 		void addInfiniteLight(IInfiniteLight* e);
 		void removeInfiniteLight(IInfiniteLight* e);
 		inline const std::list<IInfiniteLight*>& infiniteLights() const { return mInfiniteLights; }

@@ -1,5 +1,5 @@
 #include "Scene.h"
-#include "kdTree.h"
+#include "container/kdTree.h"
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
 #include "material/Material.h"
@@ -23,7 +23,7 @@ namespace PR
 
 	void Scene::addEntity(Entity* e)
 	{
-		PR_ASSERT(e);
+		PR_ASSERT(e, "Given entity should be valid");
 		mEntities.push_back(e);
 		if (e->isRenderable())
 			mRenderEntities.push_back((RenderEntity*)e);
@@ -31,7 +31,7 @@ namespace PR
 
 	void Scene::removeEntity(Entity* e)
 	{
-		PR_ASSERT(e);
+		PR_ASSERT(e, "Given entity should be valid");
 		mEntities.remove(e);
 
 		if (e->isRenderable())
@@ -51,13 +51,13 @@ namespace PR
 
 	void Scene::addInfiniteLight(IInfiniteLight* e)
 	{
-		PR_ASSERT(e);
+		PR_ASSERT(e, "Given light should be valid");
 		mInfiniteLights.push_back(e);
 	}
 
 	void Scene::removeInfiniteLight(IInfiniteLight* e)
 	{
-		PR_ASSERT(e);
+		PR_ASSERT(e, "Given light should be valid");
 		mInfiniteLights.remove(e);
 	}
 
@@ -89,7 +89,7 @@ namespace PR
 		}
 
 		PR_LOGGER.logf(L_Info, M_Scene, "%i Render Entities", mRenderEntities.size());
-		
+
 		mKDTree = new SceneKDTree(
 			[](RenderEntity* e) {return e->worldBoundingBox();},
 			[](const Ray& ray, FaceSample& point, RenderEntity* e) {
@@ -109,13 +109,13 @@ namespace PR
 
 	RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
 	{
-		PR_ASSERT(mKDTree);
+		PR_ASSERT(mKDTree, "kdTree has to be valid");
 		return ((SceneKDTree*)mKDTree)->checkCollision(ray, collisionPoint);
 	}
 
 	bool Scene::checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const
 	{
-		PR_ASSERT(mKDTree);
+		PR_ASSERT(mKDTree, "kdTree has to be valid");
 		return ((SceneKDTree*)mKDTree)->checkIfCollides(ray, collisionPoint);
 	}
 
@@ -136,7 +136,7 @@ namespace PR
 
 	BoundingBox Scene::boundingBox() const
 	{
-		PR_ASSERT(mKDTree);
+		PR_ASSERT(mKDTree, "kdTree has to be valid");
 		return ((SceneKDTree*)mKDTree)->boundingBox();
 	}
 }

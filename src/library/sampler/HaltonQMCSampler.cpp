@@ -8,7 +8,7 @@ namespace PR
 		mBaseXSamples(nullptr), mBaseYSamples(nullptr), mBaseZSamples(nullptr),
 		mAdaptive(adaptive), mBaseX(baseX), mBaseY(baseY), mBaseZ(baseZ)
 	{
-		PR_ASSERT(samples > 0);
+		PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");
 
 		mBaseXSamples = new float[samples];
 		mBaseYSamples = new float[samples];

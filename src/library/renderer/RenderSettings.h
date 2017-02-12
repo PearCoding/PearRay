@@ -1,8 +1,5 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
-
 #include "PPMSettings.h"
 
 namespace PR
@@ -34,7 +31,7 @@ namespace PR
 		DM_Binormal_Spherical,
 		DM_UV,
 		DM_PDF,
-		DM_Emission, 
+		DM_Emission,
 		DM_Validity
 	};
 
@@ -95,7 +92,7 @@ namespace PR
 		// PPM
 		inline const PPMSettings& ppm() const { return mPPM; }
 		inline PPMSettings& ppm() { return mPPM; }
-		
+
 		// Adaptive Sampling (AS)
 		inline bool isAdaptiveSampling() const { return mAdaptiveSampling; }
 		inline void setAdaptiveSampling(bool b) { mAdaptiveSampling = b; }
@@ -122,7 +119,7 @@ namespace PR
 		uint32 mMaxRayDepth;
 
 		float mUnitScale;
-		
+
 		//Crop
 		float mCropMaxX;
 		float mCropMinX;

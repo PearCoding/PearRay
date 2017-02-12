@@ -43,12 +43,12 @@ namespace PR
 			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
 		return dir;
 	}
-	
+
 	std::string DiffuseMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <DiffuseMaterial>:" << std::endl
 			<< "    HasAlbedo: " << (mAlbedo ? "true" : "false") << std::endl;
 

@@ -118,8 +118,8 @@ namespace PR
 	// t -> [0, inf]
 	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t) const
 	{
-		PR_ASSERT(isFrozen());
-		
+		PR_ASSERT(isFrozen(), "has to be frozen");
+
 		PR_GUARD_PROFILE();
 
 		if (mOrthographic)
@@ -136,7 +136,7 @@ namespace PR
 					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx),
 						PM::pm_Scale(mUp_Cache, ny)),
 					mFocalDistance_Cache);
-					
+
 			if (mHasDOF_Cache)
 			{
 				float s, c;
@@ -144,7 +144,7 @@ namespace PR
 				PM::vec3 eyePoint = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, ry*s),
 					PM::pm_Scale(mYApertureRadius_Cache, ry*c));
 				PM::vec3 rayDir = PM::pm_QualityNormalize3D(PM::pm_Subtract(viewPlane, eyePoint));
-				
+
 				return Ray(0,0, // Will be set by render context
 					PM::pm_Add(position(), eyePoint),
 					rayDir,
@@ -164,7 +164,7 @@ namespace PR
 	void StandardCamera::onFreeze()
 	{
 		PR_GUARD_PROFILE();
-		
+
 		Camera::onFreeze();
 
 		mDirection_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(

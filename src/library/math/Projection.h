@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
 #include "sampler/Sampler.h"
 
 namespace PR
@@ -76,7 +74,7 @@ namespace PR
 			return PM::pm_Set(u, v);
 		}
 
-		// Projections 
+		// Projections
 		// Uniform [0, 1]
 		static inline PM::vec3 sphere(float u1, float u2, float& pdf)
 		{
@@ -92,7 +90,7 @@ namespace PR
 			const float z = 1 - 2.0f * u2;
 
 			pdf = PM_INV_PI_F * 0.25f;
-			
+
 			return PM::pm_Set(x*norm,y*norm,z*norm);
 		}
 
@@ -147,7 +145,7 @@ namespace PR
 			const float y = sinPhi * thSin;
 
 			pdf = cosPhi;
-			
+
 			return PM::pm_Set(x, y, cosPhi);
 		}
 
@@ -184,7 +182,7 @@ namespace PR
 		static inline PM::vec2 triangle(float u1, float u2)
 		{
 			// Simplex method
-			return u1 < u2 ? 
+			return u1 < u2 ?
 				PM::pm_Set(u1, u2 - u1) :
 				PM::pm_Set(u2, u1 - u2) ;
 			//const float t = std::sqrt(u1);

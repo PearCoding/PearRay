@@ -9,8 +9,8 @@ namespace PRU
 	ImageVectorShaderOutput::ImageVectorShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename) :
 		VectorShaderOutput(), mFilename(filename), mTextureOptions(options), mTextureSystem(tsys)
 	{
-		PR_ASSERT(tsys);
-		PR_ASSERT(!mFilename.empty());
+		PR_ASSERT(tsys, "Given texture system has to be valid");
+		PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 	}
 
 	PM::vec ImageVectorShaderOutput::eval(const PR::ShaderClosure& point)

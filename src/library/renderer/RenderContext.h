@@ -38,7 +38,7 @@ namespace PR
 		inline uint32 height() const { return mHeight; }
 		inline uint32 fullWidth() const { return mFullWidth; }
 		inline uint32 fullHeight() const { return mFullHeight; }
-		
+
 		// tcx = tile count x
 		// tcy = tile count y
 		// tcx and tcy should be able to divide width and height!
@@ -77,7 +77,7 @@ namespace PR
 		inline std::string workingDir() const { return mWorkingDir; }
 		inline OutputMap* output() const { return mOutputMap; }
 		inline GPU* gpu() const { return mGPU; }
-		
+
 	protected:
 		// Render Thread specific
 		void render(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);

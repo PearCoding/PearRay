@@ -42,6 +42,7 @@ option(PR_USE_TRIANGLE_WATERTIGHT "Use Watertight triangle intersection algorith
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
 option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
+option(PR_CPP_CHECK "Do style check with cpplint." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -59,6 +60,7 @@ IF(PR_WITH_GPU_SUPPORT)
 	find_package(OpenCL)
 ENDIF()
 find_package(OpenImageIO REQUIRED)
+find_package(TBB REQUIRED)
 #find_package(OSL)
 
 IF(OIIO_LINK_STATIC)# If static, the dependencies of OIIO has to be included aswell.
@@ -163,14 +165,52 @@ ELSE()
 	SET(TRIANGLE_TECHNIQUE 0)
 ENDIF()
 
-configure_file(src/library/Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/Config.h)
+configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
-			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR}
+			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
 			src/library)
 
 IF(OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS})
+ENDIF()
+
+# Setup CPPLINT
+IF(PR_CPP_CHECK)
+find_package(PythonInterp)
+SET(PR_CPPLINT_CMD "cpplint" CACHE FILEPATH "cpplint python script")
+
+set(PR_CPPLINT_STYLE)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/braces,)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/tab,)
+#set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_order,)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/namespaces,)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_what_you_use,)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include,)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-legal/copyright,)
+set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-readability/namespace,)
+
+function(add_cpplint_target TARGET_NAME SOURCES_LIST)
+  if(NOT PYTHONINTERP_FOUND)
+    return()
+  endif()
+
+  add_custom_target(${TARGET_NAME}
+    COMMAND "${CMAKE_COMMAND}" -E chdir
+            "${CMAKE_CURRENT_SOURCE_DIR}"
+            "${PYTHON_EXECUTABLE}"
+            "${PR_CPPLINT_CMD}"
+            "--filter=${PR_CPPLINT_STYLE}"
+            "--counting=detailed"
+            "--extensions=cpp,h,inl"
+            "--headers=h,inl"
+            "--linelength=80"
+            ${SOURCES_LIST}
+    DEPENDS ${SOURCES_LIST}
+    COMMENT "Checking C++ Style ${TARGET_NAME}"
+    VERBATIM)
+
+endfunction()
 ENDIF()
 
 # Libraries

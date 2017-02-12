@@ -11,7 +11,7 @@ namespace PR
 	{
 		return false;
 	}
-	
+
 	inline float RenderEntity::collisionCost() const
 	{
 		return 1;

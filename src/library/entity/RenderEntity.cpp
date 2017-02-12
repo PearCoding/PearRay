@@ -18,7 +18,7 @@ namespace PR
 	BoundingBox RenderEntity::calcWorldBoundingBox() const
 	{
 		PR_GUARD_PROFILE();
-		
+
 		const BoundingBox bx = localBoundingBox();
 		const PM::mat mat = matrix();
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Config.h"
 #include "gpu/GPU.h"
 
 namespace PR

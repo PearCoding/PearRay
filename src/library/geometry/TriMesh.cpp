@@ -1,7 +1,7 @@
 #include "TriMesh.h"
 #include "Face.h"
 #include "Triangle.h"
-#include "scene/kdTree.h"
+#include "container/kdTree.h"
 #include "Random.h"
 #include "sampler/Sampler.h"
 #include "math/Projection.h"
@@ -34,7 +34,7 @@ namespace PR
 
 	void TriMesh::addFace(Face* f)
 	{
-		PR_ASSERT(f);
+		PR_ASSERT(f, "f has to be not null");
 		mFaces.push_back(f);
 	}
 
@@ -110,7 +110,7 @@ namespace PR
 		}
 		return false;
 	}
-	
+
 	float TriMesh::surfaceArea(Material* m, const PM::mat& transform) const
 	{
 		float a = 0;
@@ -134,7 +134,7 @@ namespace PR
 
 	bool TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint)
 	{
-		PR_DEBUG_ASSERT(mKDTree);
+		//PR_ASSERT(mKDTree, "kdTree has to be valid");
 		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint) != nullptr;
 	}
 

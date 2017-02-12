@@ -13,7 +13,7 @@
 namespace PR
 {
 	MirrorMaterial::MirrorMaterial(uint32 id) :
-		Material(id), 
+		Material(id),
 		mSpecularity(nullptr), mIndex(nullptr)
 	{
 	}
@@ -56,12 +56,12 @@ namespace PR
 		pdf = std::numeric_limits<float>::infinity();
 		return Reflection::reflect(point.NdotV, point.N, point.V);
 	}
-	
+
 	std::string MirrorMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <MirrorMaterial>:" << std::endl
 			<< "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
 			<< "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl;

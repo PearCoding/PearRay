@@ -13,12 +13,12 @@ namespace PR
 	public:
 		Material(uint32 id);
 		virtual ~Material() {}
-		
+
 		/*
 		 Evaluate the BxDF based on L and point information.
 		*/
 		virtual Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
-		
+
 		/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
@@ -50,7 +50,7 @@ namespace PR
 		{
 			return mID;
 		}
-		
+
 		bool isLight() const { return mEmission != nullptr; }
 
 		SpectralShaderOutput* emission() const;
@@ -69,7 +69,7 @@ namespace PR
 		bool isCameraVisible() const;
 
 		virtual void setup(RenderContext* context) {};
-		
+
 		virtual std::string dumpInformation() const;
 	private:
 		SpectralShaderOutput* mEmission;

@@ -48,8 +48,8 @@ namespace PR
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
 		mRenderSettings(settings), mGPU(gpu), mIntegrator(nullptr), mShouldStop(false)
 	{
-		PR_ASSERT(cam);
-		PR_ASSERT(scene);
+		PR_ASSERT(cam, "Given camera has to be valid");
+		PR_ASSERT(scene, "Given scene has to be valid");
 
 		reset();
 
@@ -72,8 +72,8 @@ namespace PR
 	RenderContext::~RenderContext()
 	{
 		reset();
-		
-		PR_ASSERT(mOutputMap);
+
+		PR_ASSERT(mOutputMap, "OutputMap has to be non zero before deconstruction");
 		delete mOutputMap;
 	}
 
@@ -153,7 +153,7 @@ namespace PR
 			}
 		}
 
-		PR_ASSERT(mIntegrator);
+		PR_ASSERT(mIntegrator, "Integrator should be set after selection");
 
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
@@ -227,8 +227,8 @@ namespace PR
 
 	void RenderContext::render(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
 	{
-		PR_ASSERT(mOutputMap);
-		PR_ASSERT(context);
+		PR_ASSERT(mOutputMap, "OutputMap has to be initialized before rendering");
+		PR_ASSERT(context, "Rendering needs a valid context");
 
 		ShaderClosure sc;
 		if (mRenderSettings.isIncremental())// Only one sample a time!
@@ -239,7 +239,7 @@ namespace PR
 
 				float rx = context->random().getFloat();// Random sampling
 				float ry = context->random().getFloat();
-				
+
 				Spectrum spec = renderSample(context,
 					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
@@ -286,12 +286,12 @@ namespace PR
 		const float fny = 2 * ((y+mOffsetY) / mFullHeight - 0.5f);
 
 		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t);
-		ray.setPixelX((uint32)std::round(x));
-		ray.setPixelY((uint32)std::round(y));
+		ray.setPixelX((uint32)PM::pm_Max(0.0f, std::round(x)));
+		ray.setPixelY((uint32)PM::pm_Max(0.0f, std::round(y)));
 
 		return mIntegrator->apply(ray, context, pass, sc);
 	}
-	
+
 	std::list<RenderTile> RenderContext::currentTiles() const
 	{
 		std::list<RenderTile> list;
@@ -321,9 +321,9 @@ namespace PR
 			sc.V = ray.direction();
 			sc.T = ray.time();
 			sc.Depth2 = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(ray.startPosition(), sc.P));
-			
+
 			if(entity)
-				sc.EntityID = entity->id(); 
+				sc.EntityID = entity->id();
 
 			if (sc.Flags & SCF_Inside)
 			{
@@ -343,7 +343,7 @@ namespace PR
 				if(entity)
 					mGlobalStatistics.incEntityHitCount();
 			}
-			
+
 			return entity;
 		}
 		else
@@ -371,7 +371,7 @@ namespace PR
 				if(found)
 					mGlobalStatistics.incEntityHitCount();
 			}
-			
+
 			return found;
 		}
 		else
@@ -385,7 +385,7 @@ namespace PR
 	{
 		if (ray.depth() >= mRenderSettings.maxRayDepth())
 			return nullptr;
-		
+
 		RenderEntity* entity = shoot(ray, sc, context);
 		if (entity)
 		{
@@ -397,7 +397,7 @@ namespace PR
 		else
 		{
 			appliedSpec.clear();
-			
+
 			for(IInfiniteLight* e : mScene->infiniteLights())
 				appliedSpec += e->apply(ray.direction());
 
@@ -409,7 +409,7 @@ namespace PR
 
 		return entity;
 	}
-	
+
 	void RenderContext::waitForNextPass()
 	{
 		std::unique_lock<std::mutex> lk(mPassMutex);
@@ -419,7 +419,7 @@ namespace PR
 		{
 			if(mIntegrator->needNextPass(mCurrentPass + 1))
 				onNextPass();
-			
+
 			mCurrentPass++;
 			mThreadsWaitingForPass = 0;
 			lk.unlock();
@@ -526,10 +526,10 @@ namespace PR
 			s += thread->context().stats();
 		return s;
 	}
-	
+
 	float RenderContext::percentFinished() const
 	{
-		PR_ASSERT(mIntegrator);
+		PR_ASSERT(mIntegrator, "Integrator has to be set to gather information");
 
 		const uint64 maxPasses = mIntegrator->maxPasses(this);
 		const uint64 maxSamples = mIntegrator->maxSamples(this);

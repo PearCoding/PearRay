@@ -23,7 +23,7 @@ namespace PR
 		{
 			mRenderer->render(this, x, y, sample, pass);
 		}
-		
+
 		inline RenderEntity* shoot(const Ray& ray, ShaderClosure& sc)
 		{
 			return mRenderer->shoot(ray, sc, this);

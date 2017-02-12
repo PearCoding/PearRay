@@ -1,53 +1,52 @@
 #pragma once
 
-#include "Config.h"
-#include "PearMath.h"
 #include "geometry/BoundingBox.h"
+#include "spectral/Spectrum.h"
+#include "math/Generator.h"
+
+#include "photon/Photon.h"
+
+#include <tbb/concurrent_hash_map.h>
+#include <vector>
+
+#define PR_USE_APPROX_PHOTON_MAP
 
 namespace PR
 {
 	namespace Photon
 	{
-		template<class T>
-		struct PointSphere // Contains the photons in radius around the center
+		struct PointSphere // Setup for the estimation query
 		{
-			uint32 Max;
-			uint32 Found;
-			bool GotHeap;
+			uint64 MaxPhotons;
 			PM::vec3 Normal;
 			float SqueezeWeight;
 			PM::vec3 Center;
-			float* Distances2;
-			const T** Index;
+			float Distance2;
 		};
 
-		// Based on the implementation in the book:
-		// Realistic Image Synthesis Using Photon Mapping (2nd Edition: 2001)
-		// from Henrik Wann Jensen
-
-		/* T must have attributes:
-		 *   float Position[3];
-		 *   uint8 KDFlags;
-		 */
-		template<class T>
+		// Spatial Hashmap
 		class PointMap
 		{
 			PR_CLASS_NON_COPYABLE(PointMap);
 		public:
-			PointMap(uint64 max_points);
-			~PointMap();
+			typedef bool (*CheckFunction)(const Photon&, const PointSphere&, float&);
+
+			inline PointMap(float gridDelta);
+			inline ~PointMap();
 
 			inline void reset();
 
-			inline bool isFull() const { return mStoredPhotons >= mMaxPhotons; }
 			inline bool isEmpty() const { return mStoredPhotons == 0; }
 			inline uint64 storedPhotons() const { return mStoredPhotons; }
 
-			inline void locateSphere(PointSphere<T>& sphere, uint64 index);
-			inline void locateDome(PointSphere<T>& sphere, uint64 index);
+			template<typename AccumFunction>
+			inline Spectrum estimateSphere(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const;
 
-			typedef bool (*CheckFunction)(const T*, const PointSphere<T>&, float&);
-			inline void locate(PointSphere<T>& sphere, uint64 index, CheckFunction checkFunc);
+			template<typename AccumFunction>
+			inline Spectrum estimateDome(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const;
+
+			template<typename AccumFunction>
+			inline Spectrum estimate(const PointSphere& sphere, CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const;
 
 			inline void mapDirection(const PM::vec3& dir, uint8& theta, uint8& phi) const
 			{
@@ -66,30 +65,48 @@ namespace PR
 
 			inline PM::vec3 evalDirection(uint8 theta, uint8 phi) const
 			{
-				return PM::pm_Set(mSinTheta[theta] * mCosPhi[phi],
+				return PM::pm_Set(
+					mSinTheta[theta] * mCosPhi[phi],
 					mSinTheta[theta] * mSinPhi[phi],
 					mCosPhi[phi]);
 			}
 
-			inline void store(const PM::vec3& pos, const T& point);
-
-			template<typename CallFunction>
-			inline void callNewestPoints(CallFunction f);
-
-			inline void balanceTree();// Balance the KD-tree before using
+			inline void store(const PM::vec3& pos, const Photon& point);
 
 		private:
-			// KD-tree utils
-			void balanceSegment(T** balance, T** original, uint64 index, uint64 start, uint64 end);
-			static void medianSplit(T** photon, uint64 start, uint64 end, uint64 median, int axis);
+			struct KeyCoord
+			{
+				int32 X, Y, Z;
 
-			T* mPhotons;
+				inline bool operator ==(const KeyCoord& other) const;
+			};
+
+			inline KeyCoord toCoords(const PM::vec3& v) const;
+
+			struct hash_compare
+			{
+				inline static size_t hash(const KeyCoord&);
+				inline static bool equal(const KeyCoord& k1, const KeyCoord& k2);
+			};
+
+#ifdef PR_USE_APPROX_PHOTON_MAP
+			struct ApproxPhoton
+			{
+				Photon Approximation;
+				uint32 Count;
+				inline ApproxPhoton() : Count(0) {}
+			};
+			typedef tbb::concurrent_hash_map<KeyCoord, ApproxPhoton, hash_compare> Map;
+#else
+			typedef tbb::concurrent_hash_map<KeyCoord, std::vector<Photon>, hash_compare> Map;
+#endif
+			Map mPhotons;
+
 			uint64 mStoredPhotons;
-			uint64 mHalfStoredPhotons;
-			const uint64 mMaxPhotons;
-			uint64 mPreviousScaleIndex;// Contains the end index of the last scale
+			const float mGridDelta;
 
 			// Cache:
+			float mInvGridDelta;
 			float mCosTheta[256];
 			float mSinTheta[256];
 			float mCosPhi[256];

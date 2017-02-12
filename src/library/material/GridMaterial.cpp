@@ -59,7 +59,7 @@ namespace PR
 			return mFirst->eval(pointN, L, NdotL);
 		else if (mSecond)
 			return mSecond->eval(pointN, L, NdotL);
-	
+
 		return Spectrum();
 	}
 
@@ -108,12 +108,12 @@ namespace PR
 		pdf = 0;
 		return PM::pm_Zero();
 	}
-	
+
 	std::string GridMaterial::dumpInformation() const
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation() 
+		stream << std::boolalpha << Material::dumpInformation()
 		    << "  <GridMaterial>:" << std::endl
 			<< "    GridCount:  " << gridCount() << std::endl
 			<< "    IsUVTiled:  " << tileUV() << std::endl

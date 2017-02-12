@@ -31,8 +31,8 @@ namespace PR
 		mInvXLenSqr_Cache(1/(width*width)),
 		mInvYLenSqr_Cache(1/(height*height))
 	{
-		PR_ASSERT(width > 0);
-		PR_ASSERT(height > 0);
+		PR_ASSERT(width > 0, "width has to be greater than 0");
+		PR_ASSERT(height > 0, "height has to be greater than 0");
 	}
 
 	void Plane::recache()
@@ -115,7 +115,7 @@ namespace PR
 
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
 		if (PM::pm_Dot3D(p, mNormal_Cache) <= std::numeric_limits<float>::epsilon())// Is on the plane
-		{			
+		{
 			float u = PM::pm_Dot3D(mXAxis, p) * mInvXLenSqr_Cache;
 			float v = PM::pm_Dot3D(mYAxis, p) * mInvYLenSqr_Cache;
 
@@ -165,7 +165,7 @@ namespace PR
 	void Plane::project(const PM::vec3& point, float& u, float& v) const
 	{
 		PR_GUARD_PROFILE();
-		
+
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
 		u = PM::pm_Dot3D(mXAxis, p) * mInvXLenSqr_Cache;
 		v = PM::pm_Dot3D(mYAxis, p) * mInvYLenSqr_Cache;

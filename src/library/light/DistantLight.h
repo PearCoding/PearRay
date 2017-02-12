@@ -30,7 +30,7 @@ namespace PR
 		{
 			return mMaterial;
 		}
-		
+
 		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
 		Spectrum apply(const PM::vec3& V) override;
 

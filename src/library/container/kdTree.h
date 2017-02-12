@@ -85,7 +85,7 @@ namespace PR
 			Primitive(T* data, const BoundingBox& box) :
 				data(data), side(S_Both), box(box)
 			{
-				PR_ASSERT(data);
+				PR_ASSERT(data, "Primitive needs a valid data entry");
 			}
 
 			T* data;
@@ -103,9 +103,9 @@ namespace PR
 			CostCallback cost) :
 			mRoot(nullptr), mGetBoundingBox(getBoundingBox), mCheckCollision(checkCollision), mCost(cost), mDepth(0)
 		{
-			PR_ASSERT(getBoundingBox);
-			PR_ASSERT(checkCollision);
-			PR_ASSERT(cost);
+			PR_ASSERT(getBoundingBox, "Callback getBoundingBox has to be valid");
+			PR_ASSERT(checkCollision, "Callback checkCollision has to be valid");
+			PR_ASSERT(cost, "Callback cost has to be valid");
 		}
 
 		virtual ~kdTree()
@@ -125,7 +125,7 @@ namespace PR
 
 		inline const BoundingBox& boundingBox() const
 		{
-			PR_ASSERT(mRoot);
+			PR_ASSERT(mRoot, "Root has to be set before accessing it");
 			return mRoot->boundingBox;
 		}
 
@@ -141,7 +141,7 @@ namespace PR
 				T* e = entities.front();
 				if(ignoreCallback && ignoreCallback(e))
 					return;
-				
+
 				auto leaf = new kdLeafNode(mGetBoundingBox(e));
 				leaf->objects.push_back(e);
 
@@ -158,7 +158,7 @@ namespace PR
 			{
 				if(ignoreCallback && ignoreCallback(obj))
 					continue;
-				
+
 				auto prim = new Primitive(obj, mGetBoundingBox(obj));
 				primitives.push_back(prim);
 				primitivesCopy.push_back(prim);
@@ -200,7 +200,7 @@ namespace PR
 				{
 					stackPos--;
 					kdNode* node = stack[stackPos];
-					
+
 					if (node->leaf == 1)
 					{
 						kdLeafNode* leaf = (kdLeafNode*)node;
@@ -267,7 +267,7 @@ namespace PR
 				{
 					stackPos--;
 					kdNode* node = stack[stackPos];
-					
+
 					if (node->leaf == 1)
 					{
 						kdLeafNode* leaf = (kdLeafNode*)node;
@@ -327,7 +327,7 @@ namespace PR
 
 		static inline float probability(const BoundingBox& VI, const BoundingBox& V)
 		{
-			PR_ASSERT(V.surfaceArea() > PM_EPSILON);
+			PR_ASSERT(V.surfaceArea() > PM_EPSILON, "Surface area should be greater than zero");
 			return VI.surfaceArea() / V.surfaceArea();
 		}
 
@@ -522,7 +522,7 @@ namespace PR
 				{
 					if(low < v)
 						left.push_back(obj);
-					
+
 					if(up > v)
 						right.push_back(obj);
 				}

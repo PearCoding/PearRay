@@ -22,7 +22,7 @@ namespace PR
 		deinit();
 		delete mSpectral;
 	}
-		
+
 	void OutputMap::init()
 	{
 		// Init outputs
@@ -33,23 +33,36 @@ namespace PR
 		if(!mInt1D[V_Quality] && mRenderer->settings().isAdaptiveSampling())
 			mInt1D[V_Quality] = new Output1D(mRenderer);
 
+		PM::avec3 zeroV = {0,0,0};
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
 			if(mInt1D[i])
+			{
 				mInt1D[i]->init();
+				mInt1D[i]->fill(0);
+			}
 		}
 
 		for(uint32 i = 0; i < V_3D_COUNT; ++i)
 		{
 			if(mInt3D[i])
+			{
 				mInt3D[i]->init();
+				mInt3D[i]->fill(zeroV);
+			}
 		}
 
 		for(Output1D* output: mUser1D)
+		{
 			output->init();
+			output->fill(0);
+		}
 
 		for(Output3D* output: mUser3D)
+		{
 			output->init();
+			output->fill(zeroV);
+		}
 
 		for(OutputSpectral* output: mUserSpectral)
 			output->init();
@@ -134,7 +147,7 @@ namespace PR
 	{
 		uint32 oldSample = getSampleCount(x,y);
 		float t = 1.0f/(oldSample + 1.0f);
-	
+
 		PR_CHECK_NEGATIVE(t, "OutputMap::pushFragment");
 
 		// Spectral

@@ -17,7 +17,7 @@ namespace PR
 	Sphere::Sphere(PM::vec3 pos, float radius) :
 		mPosition(pos), mRadius(radius)
 	{
-		PR_ASSERT(radius > 0);
+		PR_ASSERT(radius > 0, "radius has to be bigger than 0. Check it before construction!");
 	}
 
 	Sphere::Sphere(const Sphere& other)
@@ -52,7 +52,7 @@ namespace PR
 			return false;
 
 		const float Q = std::sqrt(R2 - M2);
-		
+
 		float t0 = S - Q;
 		float t1 = S + Q;
 		if (t0 > t1)
@@ -85,7 +85,7 @@ namespace PR
 	void Sphere::combine(const Sphere& other)
 	{
 		PR_GUARD_PROFILE();
-		
+
 		if (!isValid())
 		{
 			*this = other;

@@ -14,7 +14,7 @@ namespace PR
 		static inline float orennayar(float roughness,
 			const PM::vec3 V, const PM::vec3 N, const PM::vec3 L,
 			float NdotV, float NdotL);
-		
+
 		// NDF
 		static inline float ndf_blinn(float NdotH, float alpha);
 		static inline float ndf_beckmann(float NdotH, float alpha);
