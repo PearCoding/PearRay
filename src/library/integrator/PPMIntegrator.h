@@ -2,8 +2,9 @@
 
 #include "Integrator.h"
 #include "photon/Photon.h"
-#include "photon/PointMap.h"
+#include "photon/PhotonMap.h"
 #include "shader/ShaderClosure.h"
+#include "renderer/OutputChannel.h"
 
 #include <deque>
 #include <vector>
@@ -15,8 +16,8 @@ namespace PR
 	class SphereMap;
 
 	/*
-	 * Progressive Photon Mapping: A Probabilistic Approach
-	 * by Claude Knaus and Matthias Zwicker
+	 * Stochastic Progressive Photon Mapping
+	 * (Toshiya Hachisuka and Henrik Wann Jensen)
 	 */
 	class PR_LIB PPMIntegrator : public Integrator
 	{
@@ -42,34 +43,11 @@ namespace PR
 		virtual uint64 maxPasses(const RenderContext* renderer) const override;
 
 	private:
-		void onPhotonPass(RenderThreadContext* context, uint32 pass);
-		void onAccumPass(RenderThreadContext* context, uint32 pass);
-		
-		Spectrum firstPass(const Spectrum& weight, const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
-
-		struct RayHitPoint
-		{
-			ShaderClosure SC;
-
-			uint32 PixelX, PixelY;
-#if PR_PHOTON_RGB_MODE == 2
-			float Weight[3];
-#else
-			Spectrum Weight;
-#endif
-
-			// Will be updated!
-			float CurrentRadius;
-			uint64 CurrentPhotons;
-#if PR_PHOTON_RGB_MODE == 2
-			float CurrentFlux[3];
-#else
-			Spectrum CurrentFlux;
-#endif
-		};
+		void photonPass(RenderThreadContext* context, uint32 pass);
+		Spectrum accumPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
 
 		RenderContext* mRenderer;
-		Photon::PointMap* mPhotonMap;
+		Photon::PhotonMap* mPhotonMap;
 
 		struct Light
 		{
@@ -87,9 +65,12 @@ namespace PR
 
 		struct ThreadData
 		{
-			std::deque<RayHitPoint> HitPoints;
 			std::vector<LightThreadData> Lights;
 		}* mThreadData;
+
+		OutputSpectral* mAccumulatedFlux;
+		Output1D* mSearchRadius2;
+		OutputCounter* mLocalPhotonCount;
 
 		std::vector<Light> mLights;
 		uint32 mProjMaxTheta;

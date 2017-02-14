@@ -11,8 +11,9 @@ namespace PR
 	{
 		PR_CLASS_NON_COPYABLE(OutputChannel);
 	public:
-		inline OutputChannel(RenderContext* renderer) :
-			mRenderer(renderer), mData(nullptr)
+		inline OutputChannel(RenderContext* renderer, const T& clear_value = T(), bool never_clear = false) :
+			mRenderer(renderer), mData(nullptr), mClearValue(clear_value),
+			mNeverClear(never_clear)
 		{
 		}
 
@@ -21,10 +22,21 @@ namespace PR
 			deinit();
 		}
 
+		inline void setNeverClear(bool b)
+		{
+			mNeverClear = b;
+		}
+
+		inline bool isNeverCleared() const
+		{
+			return mNeverClear;
+		}
+
 		inline void init()
 		{
 			PR_ASSERT(!mData, "Init shouldn't be called twice");
 			mData = new T[mRenderer->width() * mRenderer->height()];
+			clear(true);
 		}
 
 		inline void deinit()
@@ -36,15 +48,7 @@ namespace PR
 			}
 		}
 
-		void clear()
-		{
-			if(!mData)
-				return;
-
-			std::memset(mData, 0, mRenderer->width() * mRenderer->height() * sizeof(T));
-		}
-
-		inline void pushFragment(uint32 x, uint32 y, const T& v) const
+		inline void setFragment(uint32 x, uint32 y, const T& v) const
 		{
 			PR_ASSERT(x >= mRenderer->offsetX() && x < mRenderer->offsetX() + mRenderer->width(),
 				"x coord has to be between boundaries");
@@ -62,7 +66,7 @@ namespace PR
 			return mData[(y-mRenderer->offsetY())*mRenderer->width()+(x-mRenderer->offsetX())];
 		}
 
-		inline void pushFragmentBounded(uint32 x, uint32 y, const T& v)
+		inline void setFragmentBounded(uint32 x, uint32 y, const T& v)
 		{
 			/*PR_ASSERT(x < mRenderer->width(),
 				"x coord has to be between boundaries");
@@ -85,6 +89,12 @@ namespace PR
 			return mData;
 		}
 
+		inline void clear(bool force=false)
+		{
+			if(force || !mNeverClear)
+				fill(mClearValue);
+		}
+
 		inline void fill(const T& v)
 		{
 			std::fill_n(mData, mRenderer->width() * mRenderer->height(), v);
@@ -93,9 +103,12 @@ namespace PR
 	private:
 		RenderContext* mRenderer;
 		T* mData;
+		T mClearValue;
+		bool mNeverClear;
 	};
 
 	typedef OutputChannel<PM::avec3> Output3D;
 	typedef OutputChannel<float> Output1D;
+	typedef OutputChannel<uint64> OutputCounter;
 	typedef OutputChannel<Spectrum> OutputSpectral;
 }

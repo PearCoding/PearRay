@@ -58,6 +58,7 @@ namespace PRU
 	bool ImageWriter::save(PR::ToneMapper& toneMapper, const std::string& file,
 			IM_ChannelSettingSpec* specSett,
 			const std::vector<IM_ChannelSetting1D>& ch1d,
+			const std::vector<IM_ChannelSettingCounter>& chcounter,
 			const std::vector<IM_ChannelSetting3D>& ch3d) const
 	{
 		if(!mRenderer)
@@ -103,6 +104,10 @@ namespace PRU
 		{
 			spec.channelnames.push_back(sett.Name);
 		}
+		for(const IM_ChannelSettingCounter& sett : chcounter)
+		{
+			spec.channelnames.push_back(sett.Name);
+		}
 		
 		spec.attribute ("Software", "PearRay " PR_VERSION_STRING);
 		spec.attribute ("IPTC:ProgramVersion", PR_VERSION_STRING);
@@ -123,9 +128,11 @@ namespace PRU
 		
 		// Calculate maximums for some mapper techniques
 		float invMax3d[OutputMap::V_3D_COUNT];
-		std::memset(invMax3d, 0, sizeof(float)*OutputMap::V_3D_COUNT);
+		std::fill_n(invMax3d, OutputMap::V_3D_COUNT, 0);
 		float invMax1d[OutputMap::V_1D_COUNT];
-		std::memset(invMax1d, 0, sizeof(float)*OutputMap::V_1D_COUNT);
+		std::fill_n(invMax1d, OutputMap::V_1D_COUNT, 0);
+		float invMaxCounter[OutputMap::V_COUNTER_COUNT];
+		std::fill_n(invMax1d, OutputMap::V_COUNTER_COUNT, 0);
 
 		for(const IM_ChannelSetting3D& sett : ch3d)
 		{
@@ -164,6 +171,25 @@ namespace PRU
 
 			if(invMax1d[sett.Variable] > PM_EPSILON)
 				invMax1d[sett.Variable] = 1.0f / invMax1d[sett.Variable];
+		}
+
+		for(const IM_ChannelSettingCounter& sett : chcounter)
+		{
+			OutputCounter* channel = mRenderer->output()->getChannel(sett.Variable);
+			if(sett.TMM != TMM_Normalized || !channel)
+				continue;
+
+			for (uint32 y = 0; y < rh; ++y)
+			{
+				for(uint32 x = 0; x < rw; ++x)
+				{
+					invMaxCounter[sett.Variable] =
+						PM::pm_Max<uint64>(invMaxCounter[sett.Variable], channel->getFragmentBounded(x,y));
+				}
+			}
+
+			if(invMaxCounter[sett.Variable] > PM_EPSILON)
+				invMaxCounter[sett.Variable] = 1.0f / invMaxCounter[sett.Variable];
 		}
 
 		// Write content		
@@ -271,6 +297,25 @@ namespace PRU
 							break;
 						case TMM_Negative:
 							r = PM::pm_Max(-r, 0.0f);
+							break;
+						}
+
+						line[id] = r;
+					}
+
+					id += 1;
+				}
+
+				for(const IM_ChannelSettingCounter& sett : chcounter)
+				{
+					OutputCounter* channel = mRenderer->output()->getChannel(sett.Variable);
+					if(channel)
+					{
+						float r = channel->ptr()[id1d];
+						switch(sett.TMM)
+						{
+						case TMM_Normalized:
+							r *= invMaxCounter[sett.Variable];
 							break;
 						}
 

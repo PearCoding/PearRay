@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
 
 # PearRay
-Experimental ray and path tracing application.
+Experimental high accurate spectral path and ray tracer with Bidirect Raytracing, Distribution Raytracing and Photon Mapping support.
 
 ## Blender Addon
 There is an open source (still experimental) blender integration addon available [here](https://github.com/PearCoding/PearRay-Blender).
@@ -12,6 +12,7 @@ There is an open source (still experimental) blender integration addon available
  - Boost http://www.boost.org/
  - tinyobjloader https://github.com/syoyo/tinyobjloader (included into source)
  - OpenImageIO https://sites.google.com/site/openimageio/home
+ - Intel Threading Building Blocks https://www.threadingbuildingblocks.org/
 
 ### Optional
  - OpenCL https://www.khronos.org/opencl/

@@ -4,7 +4,6 @@
 #include "spectral/Spectrum.h"
 #include "material/Material.h"
 
-//#define PR_ENABLE_DIAGNOSIS
 #include "Diagnosis.h"
 
 namespace PR
@@ -13,8 +12,9 @@ namespace PR
 		mRenderer(renderer)
 	{
 		mSpectral = new OutputSpectral(mRenderer);
-		std::memset(mInt1D, 0, sizeof(Output1D*)*V_1D_COUNT);
-		std::memset(mInt3D, 0, sizeof(Output3D*)*V_3D_COUNT);
+		std::fill_n(mInt1D, V_1D_COUNT, nullptr);
+		std::fill_n(mIntCounter, V_COUNTER_COUNT, nullptr);
+		std::fill_n(mInt3D, V_3D_COUNT, nullptr);
 	}
 
 	OutputMap::~OutputMap()
@@ -27,45 +27,42 @@ namespace PR
 	{
 		// Init outputs
 		mSpectral->init();
-		if(!mInt1D[V_Samples])
-			mInt1D[V_Samples] = new Output1D(mRenderer);
+		if(!mIntCounter[V_Samples])
+			mIntCounter[V_Samples] = new OutputCounter(mRenderer, 0);
 
 		if(!mInt1D[V_Quality] && mRenderer->settings().isAdaptiveSampling())
-			mInt1D[V_Quality] = new Output1D(mRenderer);
+			mInt1D[V_Quality] = new Output1D(mRenderer, 0.0f);
 
 		PM::avec3 zeroV = {0,0,0};
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
 			if(mInt1D[i])
-			{
 				mInt1D[i]->init();
-				mInt1D[i]->fill(0);
-			}
+		}
+
+		for(uint32 i = 0; i < V_COUNTER_COUNT; ++i)
+		{
+			if(mIntCounter[i])
+				mIntCounter[i]->init();
 		}
 
 		for(uint32 i = 0; i < V_3D_COUNT; ++i)
 		{
 			if(mInt3D[i])
-			{
 				mInt3D[i]->init();
-				mInt3D[i]->fill(zeroV);
-			}
 		}
 
-		for(Output1D* output: mUser1D)
-		{
-			output->init();
-			output->fill(0);
-		}
+		for(const auto& p: mCustom1D)
+			p.second->init();
 
-		for(Output3D* output: mUser3D)
-		{
-			output->init();
-			output->fill(zeroV);
-		}
+		for(const auto& p: mCustomCounter)
+			p.second->init();
 
-		for(OutputSpectral* output: mUserSpectral)
-			output->init();
+		for(const auto& p: mCustom3D)
+			p.second->init();
+
+		for(const auto& p: mCustomSpectral)
+			p.second->init();
 
 		// if(mInt1D[V_Quality])
 		// 	mInt1D[V_Quality]->fill(std::numeric_limits<float>::max());
@@ -85,6 +82,16 @@ namespace PR
 			}
 		}
 
+		for(uint32 i = 0; i < V_COUNTER_COUNT; ++i)
+		{
+			if(mIntCounter[i])
+			{
+				mIntCounter[i]->deinit();
+				delete mIntCounter[i];
+				mIntCounter[i] = nullptr;
+			}
+		}
+
 		for(uint32 i = 0; i < V_3D_COUNT; ++i)
 		{
 			if(mInt3D[i])
@@ -95,26 +102,33 @@ namespace PR
 			}
 		}
 
-		for(Output1D* output: mUser1D)
+		for(const auto& p: mCustom1D)
 		{
-			output->deinit();
-			delete output;
+			p.second->deinit();
+			delete p.second;
 		}
-		mUser1D.clear();
+		mCustom1D.clear();
 
-		for(Output3D* output: mUser3D)
+		for(const auto& p: mCustomCounter)
 		{
-			output->deinit();
-			delete output;
+			p.second->deinit();
+			delete p.second;
 		}
-		mUser3D.clear();
+		mCustomCounter.clear();
 
-		for(OutputSpectral* output: mUserSpectral)
+		for(const auto& p: mCustom3D)
 		{
-			output->deinit();
-			delete output;
+			p.second->deinit();
+			delete p.second;
 		}
-		mUserSpectral.clear();
+		mCustom3D.clear();
+
+		for(const auto& p: mCustomSpectral)
+		{
+			p.second->deinit();
+			delete p.second;
+		}
+		mCustomSpectral.clear();
 	}
 
 	void OutputMap::clear()
@@ -127,20 +141,29 @@ namespace PR
 				mInt1D[i]->clear();
 		}
 
+		for(uint32 i = 0; i < V_COUNTER_COUNT; ++i)
+		{
+			if(mIntCounter[i])
+				mIntCounter[i]->clear();
+		}
+
 		for(uint32 i = 0; i < V_3D_COUNT; ++i)
 		{
 			if(mInt3D[i])
 				mInt3D[i]->clear();
 		}
 
-		for(Output1D* output: mUser1D)
-			output->clear();
+		for(const auto& p: mCustom1D)
+			p.second->clear();
 
-		for(Output3D* output: mUser3D)
-			output->clear();
+		for(const auto& p: mCustomCounter)
+			p.second->clear();
 
-		for(OutputSpectral* output: mUserSpectral)
-			output->clear();
+		for(const auto& p: mCustom3D)
+			p.second->clear();
+
+		for(const auto& p: mCustomSpectral)
+			p.second->clear();
 	}
 
 	void OutputMap::pushFragment(uint32 x, uint32 y, const Spectrum& s, const ShaderClosure& sc)
@@ -155,51 +178,53 @@ namespace PR
 		Spectrum newSpec = oldSpec * (1-t) + s*t;
 		PR_CHECK_NEGATIVE(newSpec, "OutputMap::pushFragment");
 
-		mSpectral->pushFragmentBounded(x, y, newSpec);
+		mSpectral->setFragmentBounded(x, y, newSpec);
 		setPixelError(x,y,oldSample+1,oldSpec,newSpec);
 		setSampleCount(x,y,oldSample+1);
 
 		// 3D
 		PM::vec tv = PM::pm_FillVector(t);
 		if(mInt3D[V_Position])
-			mInt3D[V_Position]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Position]->getFragmentBounded(x,y), sc.P, tv));
+			mInt3D[V_Position]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Position]->getFragmentBounded(x,y), sc.P, tv));
 		if(mInt3D[V_Normal])
-			mInt3D[V_Normal]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Normal]->getFragmentBounded(x,y), sc.N, tv));
+			mInt3D[V_Normal]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Normal]->getFragmentBounded(x,y), sc.N, tv));
 		if(mInt3D[V_NormalG])
-			mInt3D[V_NormalG]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_NormalG]->getFragmentBounded(x,y), sc.Ng, tv));
+			mInt3D[V_NormalG]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_NormalG]->getFragmentBounded(x,y), sc.Ng, tv));
 		if(mInt3D[V_Tangent])
-			mInt3D[V_Tangent]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Tangent]->getFragmentBounded(x,y), sc.Nx, tv));
+			mInt3D[V_Tangent]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Tangent]->getFragmentBounded(x,y), sc.Nx, tv));
 		if(mInt3D[V_Bitangent])
-			mInt3D[V_Bitangent]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Bitangent]->getFragmentBounded(x,y), sc.Ny, tv));
+			mInt3D[V_Bitangent]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Bitangent]->getFragmentBounded(x,y), sc.Ny, tv));
 		if(mInt3D[V_View])
-			mInt3D[V_View]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_View]->getFragmentBounded(x,y), sc.V, tv));
+			mInt3D[V_View]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_View]->getFragmentBounded(x,y), sc.V, tv));
 		if(mInt3D[V_UVW])
-			mInt3D[V_UVW]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_UVW]->getFragmentBounded(x,y), sc.UV, tv));
+			mInt3D[V_UVW]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_UVW]->getFragmentBounded(x,y), sc.UV, tv));
 		if(mInt3D[V_DPDU])
-			mInt3D[V_DPDU]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDU]->getFragmentBounded(x,y), sc.dPdU, tv));
+			mInt3D[V_DPDU]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDU]->getFragmentBounded(x,y), sc.dPdU, tv));
 		if(mInt3D[V_DPDV])
-			mInt3D[V_DPDV]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDV]->getFragmentBounded(x,y), sc.dPdV, tv));
+			mInt3D[V_DPDV]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDV]->getFragmentBounded(x,y), sc.dPdV, tv));
 		//if(mInt3D[V_DPDW])
-		//	mInt3D[V_DPDW]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDW]->getFragmentBounded(x,y), sc.dPdW, tv));
+		//	mInt3D[V_DPDW]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDW]->getFragmentBounded(x,y), sc.dPdW, tv));
 		if(mInt3D[V_DPDX])
-			mInt3D[V_DPDX]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDX]->getFragmentBounded(x,y), sc.dPdX, tv));
+			mInt3D[V_DPDX]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDX]->getFragmentBounded(x,y), sc.dPdX, tv));
 		if(mInt3D[V_DPDY])
-			mInt3D[V_DPDY]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDY]->getFragmentBounded(x,y), sc.dPdY, tv));
+			mInt3D[V_DPDY]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDY]->getFragmentBounded(x,y), sc.dPdY, tv));
 		if(mInt3D[V_DPDZ])
-			mInt3D[V_DPDZ]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDZ]->getFragmentBounded(x,y), sc.dPdZ, tv));
+			mInt3D[V_DPDZ]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDZ]->getFragmentBounded(x,y), sc.dPdZ, tv));
 		if(mInt3D[V_DPDT])
-			mInt3D[V_DPDT]->pushFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDT]->getFragment(x,y), sc.dPdT, tv));
+			mInt3D[V_DPDT]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDT]->getFragment(x,y), sc.dPdT, tv));
 
 		// 1D
 		if(mInt1D[V_Depth])
-			mInt1D[V_Depth]->pushFragmentBounded(x, y, mInt1D[V_Depth]->getFragmentBounded(x,y)*(1-t) + std::sqrt(sc.Depth2)*t);
+			mInt1D[V_Depth]->setFragmentBounded(x, y, mInt1D[V_Depth]->getFragmentBounded(x,y)*(1-t) + std::sqrt(sc.Depth2)*t);
 		if(mInt1D[V_Time])
-			mInt1D[V_Time]->pushFragmentBounded(x, y, mInt1D[V_Time]->getFragmentBounded(x,y)*(1-t) + sc.T*t);
+			mInt1D[V_Time]->setFragmentBounded(x, y, mInt1D[V_Time]->getFragmentBounded(x,y)*(1-t) + sc.T*t);
 		if(mInt1D[V_Material])
-			mInt1D[V_Material]->pushFragmentBounded(x, y, mInt1D[V_Material]->getFragmentBounded(x,y)*(1-t) +
+			mInt1D[V_Material]->setFragmentBounded(x, y, mInt1D[V_Material]->getFragmentBounded(x,y)*(1-t) +
 				(sc.Material ? sc.Material->id() : 0)*t);
-		if(mInt1D[V_ID])
-			mInt1D[V_ID]->pushFragmentBounded(x, y, mInt1D[V_ID]->getFragmentBounded(x,y)*(1-t) + sc.EntityID*t);
+		
+		// Counter
+		if(mIntCounter[V_ID])
+			mIntCounter[V_ID]->setFragmentBounded(x, y, sc.EntityID*t);
 	}
 
 	bool OutputMap::isPixelFinished(uint32 x, uint32 y) const
@@ -227,7 +252,7 @@ namespace PR
 			{
 				for(uint32 i = 0; i < rw; ++i)
 				{
-					if(mInt1D[V_Samples]->getFragmentBounded(i, j) >= minSamples &&
+					if(mIntCounter[V_Samples]->getFragmentBounded(i, j) >= minSamples &&
 						mInt1D[V_Quality]->getFragmentBounded(i, j) <= minError)
 						++pixelsFinished;
 				}
@@ -239,7 +264,7 @@ namespace PR
 			{
 				for(uint32 i = 0; i < rw; ++i)
 				{
-					if(mInt1D[V_Samples]->getFragmentBounded(i, j) >= maxSamples)
+					if(mIntCounter[V_Samples]->getFragmentBounded(i, j) >= maxSamples)
 						++pixelsFinished;
 				}
 			}

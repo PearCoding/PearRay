@@ -4,12 +4,11 @@
 #include "PearMath.h"
 
 /*
- 0 - Everything is spectral
- 1 - Photon hitpoints are rgb, but camera hitpoints are spectral
- 2 - Everything is rgb
+ 0 - Photon hitpoints are spectral
+ 1 - Photon hitpoints are rgb
  */
 #ifndef PR_PHOTON_RGB_MODE
-# define PR_PHOTON_RGB_MODE 0
+# define PR_PHOTON_RGB_MODE 1
 #endif
 
 namespace PR

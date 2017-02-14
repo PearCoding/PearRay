@@ -42,6 +42,7 @@ namespace PRU
 			std::string Name;
 			IM_ChannelSettingSpec* SettingsSpectral;
 			std::vector<IM_ChannelSetting1D> Settings1D;
+			std::vector<IM_ChannelSettingCounter> SettingsCounter;
 			std::vector<IM_ChannelSetting3D> Settings3D;
 		};
 		struct FileSpectral

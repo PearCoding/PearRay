@@ -114,9 +114,7 @@ namespace PR
 		reset();
 
 		if(mRenderSettings.isAdaptiveSampling() && !mOutputMap->getChannel(OutputMap::V_Quality))
-			mOutputMap->registerChannel(OutputMap::V_Quality, new Output1D(this));
-
-		mOutputMap->init();
+			mOutputMap->registerChannel(OutputMap::V_Quality, new Output1D(this, 0));
 
 		/* Setup entities */
 		for (RenderEntity* entity : mScene->renderEntities())
@@ -192,6 +190,7 @@ namespace PR
 		}
 
 		mIntegrator->init(this);
+		mOutputMap->init();
 
 		// Calculate tile sizes, etc.
 
@@ -235,12 +234,12 @@ namespace PR
 		{
 			if(!mOutputMap->isPixelFinished(x, y))
 			{
-				auto s = context->pixelSampler()->generate2D(sample);
+				const auto s = context->pixelSampler()->generate2D(sample);
 
-				float rx = context->random().getFloat();// Random sampling
-				float ry = context->random().getFloat();
+				const float rx = context->random().getFloat();// Random sampling
+				const float ry = context->random().getFloat();
 
-				Spectrum spec = renderSample(context,
+				const Spectrum spec = renderSample(context,
 					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
 					0.0f,
@@ -258,12 +257,12 @@ namespace PR
 				currentSample < SampleCount && !mOutputMap->isPixelFinished(x, y);
 				++currentSample)
 			{
-				auto s = context->pixelSampler()->generate2D(currentSample);
+				const auto s = context->pixelSampler()->generate2D(currentSample);
 
-				float rx = context->random().getFloat();// Random sampling
-				float ry = context->random().getFloat();
+				const float rx = context->random().getFloat();// Random sampling
+				const float ry = context->random().getFloat();
 
-				Spectrum spec = renderSample(context,
+				const Spectrum spec = renderSample(context,
 					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
 					rx, ry,//TODO
 					0.0f,

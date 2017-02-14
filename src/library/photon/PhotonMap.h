@@ -6,16 +6,17 @@
 
 #include "photon/Photon.h"
 
+#include <atomic>
 #include <tbb/concurrent_hash_map.h>
 #include <vector>
 
-#define PR_USE_APPROX_PHOTON_MAP
+//#define PR_USE_APPROX_PHOTON_MAP
 
 namespace PR
 {
 	namespace Photon
 	{
-		struct PointSphere // Setup for the estimation query
+		struct PhotonSphere // Setup for the estimation query
 		{
 			uint64 MaxPhotons;
 			PM::vec3 Normal;
@@ -25,14 +26,14 @@ namespace PR
 		};
 
 		// Spatial Hashmap
-		class PointMap
+		class PhotonMap
 		{
-			PR_CLASS_NON_COPYABLE(PointMap);
+			PR_CLASS_NON_COPYABLE(PhotonMap);
 		public:
-			typedef bool (*CheckFunction)(const Photon&, const PointSphere&, float&);
+			typedef bool (*CheckFunction)(const Photon&, const PhotonSphere&, float&);
 
-			inline PointMap(float gridDelta);
-			inline ~PointMap();
+			inline PhotonMap(float gridDelta);
+			inline ~PhotonMap();
 
 			inline void reset();
 
@@ -40,13 +41,13 @@ namespace PR
 			inline uint64 storedPhotons() const { return mStoredPhotons; }
 
 			template<typename AccumFunction>
-			inline Spectrum estimateSphere(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const;
+			inline Spectrum estimateSphere(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const;
 
 			template<typename AccumFunction>
-			inline Spectrum estimateDome(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const;
+			inline Spectrum estimateDome(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const;
 
 			template<typename AccumFunction>
-			inline Spectrum estimate(const PointSphere& sphere, CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const;
+			inline Spectrum estimate(const PhotonSphere& sphere, CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const;
 
 			inline void mapDirection(const PM::vec3& dir, uint8& theta, uint8& phi) const
 			{
@@ -102,7 +103,7 @@ namespace PR
 #endif
 			Map mPhotons;
 
-			uint64 mStoredPhotons;
+			std::atomic<uint64> mStoredPhotons;
 			const float mGridDelta;
 
 			// Cache:
@@ -117,4 +118,4 @@ namespace PR
 	}
 }
 
-#include "PointMap.inl"
+#include "PhotonMap.inl"

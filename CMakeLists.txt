@@ -43,6 +43,7 @@ option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT li
 option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
 option(PR_CPP_CHECK "Do style check with cpplint." OFF)
+option(PR_ENABLE_DIAGNOSIS "Enable diagnosis. Will slow down performance. Only for development." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -157,6 +158,10 @@ ENDIF()
 
 IF(PR_BUILD_PROFILE)
 	SET(DEFS "${DEFS};PR_PROFILE")
+ENDIF()
+
+IF(PR_ENABLE_DIAGNOSIS)
+	SET(DEFS "${DEFS};PR_ENABLE_DIAGNOSIS")
 ENDIF()
 
 IF(PR_USE_TRIANGLE_WATERTIGHT)

@@ -78,18 +78,25 @@ namespace PRU
 		mImageWriter.init(renderer);
 		OutputMap* output = renderer->output();
 
+		PM::vec3 zero = PM::pm_Zero();
 		for(const File& file : mFiles)
-		{			
+		{
 			for(const IM_ChannelSetting3D& cs3d : file.Settings3D)
 			{
 				if(!output->getChannel(cs3d.Variable))
-					output->registerChannel(cs3d.Variable, new Output3D(renderer));
+					output->registerChannel(cs3d.Variable, new Output3D(renderer, zero));
 			}
 			
 			for(const IM_ChannelSetting1D& cs1d : file.Settings1D)
 			{
 				if(!output->getChannel(cs1d.Variable))
-					output->registerChannel(cs1d.Variable, new Output1D(renderer));
+					output->registerChannel(cs1d.Variable, new Output1D(renderer, 0));
+			}
+			
+			for(const IM_ChannelSettingCounter& cs : file.SettingsCounter)
+			{
+				if(!output->getChannel(cs.Variable))
+					output->registerChannel(cs.Variable, new OutputCounter(renderer, 0));
 			}
 		}
 	}
@@ -104,12 +111,18 @@ namespace PRU
 			return OutputMap::V_Quality;
 		else if(str == "material" || str == "mat" || str == "m")
 			return OutputMap::V_Material;
-		else if(str == "id")
+		else
+			return OutputMap::V_1D_COUNT;// AS UNKNOWN
+	}
+
+	OutputMap::VariableCounter typeToVariableCounter(const std::string& str)
+	{
+		if(str == "id")
 			return OutputMap::V_ID;
 		else if(str == "samples" || str == "s")
 			return OutputMap::V_Samples;
 		else
-			return OutputMap::V_1D_COUNT;// AS UNKNOWN
+			return OutputMap::V_COUNTER_COUNT;// AS UNKNOWN
 	}
 
 	OutputMap::Variable3D typeToVariable3D(const std::string& str)
@@ -242,6 +255,9 @@ namespace PRU
 							else
 							{
 								OutputMap::Variable3D var3D = typeToVariable3D(type);
+								OutputMap::Variable1D var1D = typeToVariable1D(type);
+								OutputMap::VariableCounter varCounter = typeToVariableCounter(type);
+
 								if(var3D != OutputMap::V_3D_COUNT)
 								{
 									IM_ChannelSetting3D spec;
@@ -326,44 +342,52 @@ namespace PRU
 
 									file.Settings3D.push_back(spec);
 								}
+								else if(var1D != OutputMap::V_1D_COUNT)
+								{
+									IM_ChannelSetting1D spec;
+									spec.TMM = tmm;
+									spec.Variable = var1D;
+
+									switch(var1D)
+									{
+										default:
+										case OutputMap::V_Depth:
+											spec.Name = "depth";
+											break;
+										case OutputMap::V_Time:
+											spec.Name = "time";
+											break;
+										case OutputMap::V_Quality:
+											spec.Name = "quality";
+											break;
+										case OutputMap::V_Material:
+											spec.Name = "mat";
+											break;
+									}
+									file.Settings1D.push_back(spec);
+								}
+								else if(varCounter != OutputMap::V_COUNTER_COUNT)
+								{
+									IM_ChannelSettingCounter spec;
+									spec.TMM = tmm;
+									spec.Variable = varCounter;
+
+									switch(var1D)
+									{
+										default:
+										case OutputMap::V_ID:
+											spec.Name = "id";
+											break;
+										case OutputMap::V_Samples:
+											spec.Name = "samples";
+											break;
+									}
+									file.SettingsCounter.push_back(spec);
+								}
 								else
 								{
-									OutputMap::Variable1D var1D = typeToVariable1D(type);
-									if(var1D != OutputMap::V_1D_COUNT)
-									{
-										IM_ChannelSetting1D spec;
-										spec.TMM = tmm;
-										spec.Variable = var1D;
-
-										switch(var1D)
-										{
-											default:
-											case OutputMap::V_Depth:
-												spec.Name = "depth";
-												break;
-											case OutputMap::V_Time:
-												spec.Name = "time";
-												break;
-											case OutputMap::V_Quality:
-												spec.Name = "quality";
-												break;
-											case OutputMap::V_Material:
-												spec.Name = "mat";
-												break;
-											case OutputMap::V_ID:
-												spec.Name = "id";
-												break;
-											case OutputMap::V_Samples:
-												spec.Name = "samples";
-												break;
-										}
-										file.Settings1D.push_back(spec);
-									}
-									else
-									{
-										PR_LOGGER.logf(L_Error, M_Scene,
-											"Unknown channel type %s!", type.c_str());
-									}
+									PR_LOGGER.logf(L_Error, M_Scene,
+										"Unknown channel type %s!", type.c_str());
 								}
 							}
 						}
@@ -405,7 +429,7 @@ namespace PRU
 		{
 			const std::string filename = dir + "/" + f.Name + ".exr";
 			if(!mImageWriter.save(toneMapper, filename,
-				f.SettingsSpectral, f.Settings1D, f.Settings3D))
+				f.SettingsSpectral, f.Settings1D, f.SettingsCounter, f.Settings3D))
 				PR_LOGGER.logf(L_Error, M_System,
 					"Couldn't save image file '%s'!", filename.c_str());
 

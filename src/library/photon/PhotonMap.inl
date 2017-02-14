@@ -2,7 +2,7 @@ namespace PR
 {
 namespace Photon
 {
-	PointMap::PointMap(float gridDelta) :
+	PhotonMap::PhotonMap(float gridDelta) :
 		mPhotons(),
 		mStoredPhotons(0), mGridDelta(gridDelta)
 	{
@@ -20,21 +20,21 @@ namespace Photon
 		}
 	}
 
-	PointMap::~PointMap()
+	PhotonMap::~PhotonMap()
 	{
 	}
 
-	void PointMap::reset()
+	void PhotonMap::reset()
 	{
 		mStoredPhotons = 0;
 		mPhotons.clear();
 	}
 
 	template<typename AccumFunction>
-	Spectrum PointMap::estimateSphere(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const
+	Spectrum PhotonMap::estimateSphere(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const
 	{
 		return estimate<AccumFunction>(sphere,
-			[](const Photon& pht, const PointSphere& sph, float& dist2)
+			[](const Photon& pht, const PhotonSphere& sph, float& dist2)
 				{
 					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
 					dist2 = PM::pm_MagnitudeSqr3D(V);
@@ -47,10 +47,10 @@ namespace Photon
 	}
 
 	template<typename AccumFunction>
-	Spectrum PointMap::estimateDome(const PointSphere& sphere, AccumFunction accumFunc, size_t& found) const
+	Spectrum PhotonMap::estimateDome(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const
 	{
 		return estimate<AccumFunction>(sphere,
-			[](const Photon& pht, const PointSphere& sph, float& dist2)
+			[](const Photon& pht, const PhotonSphere& sph, float& dist2)
 				{
 					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
 					dist2 = PM::pm_MagnitudeSqr3D(V);
@@ -63,23 +63,25 @@ namespace Photon
 	}
 
 	template<typename AccumFunction>
-	Spectrum PointMap::estimate(const PointSphere& sphere,
+	Spectrum PhotonMap::estimate(const PhotonSphere& sphere,
 		CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const
 	{
 		found = 0;
 
 		KeyCoord centerCoord = toCoords(sphere.Center);
-		const int32 rad = std::floor(std::sqrt(sphere.Distance2) * mInvGridDelta);
+		const int32 rad = std::max<int32>(0, std::ceil(std::sqrt(sphere.Distance2) * mInvGridDelta)) + 1;
 		const int32 rad2 = rad*rad;
 
 		float dist2;
 		Spectrum accum;
 
-#ifdef PR_USE_APPROX_PHOTON_MAP
 		for(int x = -rad; x <= rad; ++x)
 		{
 			for(int y = -rad; y <= rad; ++y)
 			{
+				if(x*x + y*y > rad2)
+					continue;
+				
 				for(int z = -rad; z <= rad; ++z)
 				{
 					if(x*x + y*y + z*z > rad2)
@@ -93,47 +95,31 @@ namespace Photon
 					typename Map::const_accessor acc;
 					if(mPhotons.find(acc, key))
 					{
+#ifdef PR_USE_APPROX_PHOTON_MAP
 						if (checkFunc((*acc).second.Approximation, sphere, dist2))// Found a photon!
 						{
-							found++;
+							found += (*acc).second.Count;
 							accum += accumFunc((*acc).second.Approximation, sphere, dist2);
 						}
-					}
-				}
-			}
-		}
 #else
-		MinRadiusGenerator<3> generator(rad);
-		while(generator && found < sphere.MaxPhotons)
-		{
-			const auto point = generator.next();
-			if(point[0]*point[0] + point[1]*point[1] + point[2]*point[2] > rad2)
-				continue;
-			
-			KeyCoord key = {
-				centerCoord.X+point[0],
-				centerCoord.Y+point[1],
-				centerCoord.Z+point[2] };
-			
-			typename Map::const_accessor acc;
-			if(mPhotons.find(acc, key))
-			{
-				for(const T& pht: (*acc).second)
-				{
-					if (checkFunc(pht, sphere, dist2))// Found a photon!
-					{
-						found++;
-						accum += accumFunc(pht, sphere, dist2);
+						for(const Photon& pht: (*acc).second)
+						{
+							if (checkFunc(pht, sphere, dist2))// Found a photon!
+							{
+								found++;
+								accum += accumFunc(pht, sphere, dist2);
+							}
+						}
+#endif
 					}
 				}
 			}
 		}
-#endif
 
 		return accum;
 	}
 
-	void PointMap::store(const PM::vec3& pos, const Photon& pht)
+	void PhotonMap::store(const PM::vec3& pos, const Photon& pht)
 	{
 		mStoredPhotons++;
 		const auto key = toCoords(pos);
@@ -145,9 +131,9 @@ namespace Photon
 		auto& approx = (*acc).second;
 		float t = 1.0f/(approx.Count + 1.0f);
 
-		approx.Approximation.Position[0] = pht.Position[0] * t + approx.Approximation.Position[0]*(1-t);
-		approx.Approximation.Position[1] = pht.Position[1] * t + approx.Approximation.Position[1]*(1-t);
-		approx.Approximation.Position[2] = pht.Position[2] * t + approx.Approximation.Position[2]*(1-t);
+		approx.Approximation.Position[0] = pht.Position[0]; //* t + approx.Approximation.Position[0]*(1-t);
+		approx.Approximation.Position[1] = pht.Position[1]; // * t + approx.Approximation.Position[1]*(1-t);
+		approx.Approximation.Position[2] = pht.Position[2]; // * t + approx.Approximation.Position[2]*(1-t);
 		approx.Approximation.Phi = pht.Phi * t + approx.Approximation.Phi*(1-t);
 		approx.Approximation.Theta = pht.Theta * t + approx.Approximation.Theta*(1-t);
 # if PR_PHOTON_RGB_MODE >= 1
@@ -165,7 +151,7 @@ namespace Photon
 		mBox.put(pos);
 	}
 
-	typename PointMap::KeyCoord PointMap::toCoords(const PM::vec3& v) const
+	typename PhotonMap::KeyCoord PhotonMap::toCoords(const PM::vec3& v) const
 	{
 		PM::vec3 s = PM::pm_Scale(v, mInvGridDelta);
 		return {
@@ -175,12 +161,12 @@ namespace Photon
 			};
 	}
 
-	bool PointMap::KeyCoord::operator ==(const KeyCoord& other) const
+	bool PhotonMap::KeyCoord::operator ==(const KeyCoord& other) const
 	{
 		return X == other.X && Y == other.Y && Z == other.Z;
 	}
 
-	size_t PointMap::hash_compare::hash(const KeyCoord& coord)
+	size_t PhotonMap::hash_compare::hash(const KeyCoord& coord)
 	{
 		constexpr size_t P1 = 863693;
 		constexpr size_t P2 = 990383;
@@ -190,7 +176,7 @@ namespace Photon
 			((size_t)coord.Z * P3);
 	}
 
-	bool PointMap::hash_compare::equal(const KeyCoord& k1, const KeyCoord& k2)
+	bool PhotonMap::hash_compare::equal(const KeyCoord& k1, const KeyCoord& k2)
 	{
 		return k1 == k2;
 	}

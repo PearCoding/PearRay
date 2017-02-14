@@ -2,7 +2,7 @@
 
 #include "OutputChannel.h"
 
-#include <list>
+#include <unordered_map>
 
 namespace PR
 {
@@ -38,10 +38,16 @@ namespace PR
 			V_Time,
 			V_Quality,
 			V_Material,
-			V_ID,
-			V_Samples,
 
 			V_1D_COUNT
+		};
+
+		enum VariableCounter
+		{
+			V_ID = 0,
+			V_Samples,
+
+			V_COUNTER_COUNT
 		};
 
 		OutputMap(RenderContext* renderer);
@@ -59,14 +65,14 @@ namespace PR
 			return mSpectral->getFragmentBounded(x, y);
 		}
 
-		inline void setSampleCount(uint32 x, uint32 y, uint32 sample)
+		inline void setSampleCount(uint32 x, uint32 y, uint64 sample)
 		{
-			mInt1D[V_Samples]->pushFragmentBounded(x, y, sample);
+			mIntCounter[V_Samples]->setFragmentBounded(x, y, sample);
 		}
 
-		inline uint32 getSampleCount(uint32 x, uint32 y) const
+		inline uint64 getSampleCount(uint32 x, uint32 y) const
 		{
-			return mInt1D[V_Samples]->getFragmentBounded(x, y);
+			return mIntCounter[V_Samples]->getFragmentBounded(x, y);
 		}
 
 		inline void setPixelError(uint32 x, uint32 y, uint32 sample, const Spectrum& pixel, const Spectrum& weight)
@@ -80,7 +86,7 @@ namespace PR
 			const float s2 = weight.max();
 			const float ref = (s1 <= PM_EPSILON && s2 <= PM_EPSILON) ? 1 : (s1 + s2);
 			const float err = std::abs(s1 - s2) / ref;
-			mInt1D[V_Quality]->pushFragmentBounded(x, y,
+			mInt1D[V_Quality]->setFragmentBounded(x, y,
 				mInt1D[V_Quality]->getFragmentBounded(x, y) * (1-t) + t * err * err);
 		}
 
@@ -90,6 +96,11 @@ namespace PR
 		inline Output1D* getChannel(Variable1D var) const
 		{
 			return mInt1D[var];
+		}
+
+		inline OutputCounter* getChannel(VariableCounter var) const
+		{
+			return mIntCounter[var];
 		}
 
 		inline Output3D* getChannel(Variable3D var) const
@@ -109,6 +120,13 @@ namespace PR
 			mInt1D[var] = output;
 		}
 
+		inline void registerChannel(VariableCounter var, OutputCounter* output)
+		{
+			PR_ASSERT(output, "Given output has to be valid");
+			PR_ASSERT(!mIntCounter[var], "Given output entry has to be set");
+			mIntCounter[var] = output;
+		}
+
 		inline void registerChannel(Variable3D var, Output3D* output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
@@ -116,22 +134,28 @@ namespace PR
 			mInt3D[var] = output;
 		}
 
-		inline void registerUserChannel(Output1D* output)
+		inline void registerCustomChannel(const std::string& str, Output1D* output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
-			mUser1D.push_back(output);
+			mCustom1D[str] = output;
 		}
 
-		inline void registerUserChannel(Output3D* output)
+		inline void registerCustomChannel(const std::string& str, OutputCounter* output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
-			mUser3D.push_back(output);
+			mCustomCounter[str] = output;
 		}
 
-		inline void registerUserChannel(OutputSpectral* output)
+		inline void registerCustomChannel(const std::string& str, Output3D* output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
-			mUserSpectral.push_back(output);
+			mCustom3D[str] = output;
+		}
+
+		inline void registerCustomChannel(const std::string& str, OutputSpectral* output)
+		{
+			PR_ASSERT(output, "Given output has to be valid");
+			mCustomSpectral[str] = output;
 		}
 
 	private:
@@ -140,9 +164,11 @@ namespace PR
 		OutputSpectral* mSpectral;
 		Output3D* mInt3D[V_3D_COUNT];
 		Output1D* mInt1D[V_1D_COUNT];
+		OutputCounter* mIntCounter[V_COUNTER_COUNT];
 
-		std::list<Output3D*> mUser3D;
-		std::list<Output1D*> mUser1D;
-		std::list<OutputSpectral*> mUserSpectral;
+		std::unordered_map<std::string, Output3D*> mCustom3D;
+		std::unordered_map<std::string, Output1D*> mCustom1D;
+		std::unordered_map<std::string, OutputCounter*> mCustomCounter;
+		std::unordered_map<std::string, OutputSpectral*> mCustomSpectral;
 	};
 }

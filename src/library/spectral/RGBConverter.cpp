@@ -3,7 +3,6 @@
 
 #include "PearMath.h"
 
-//#define PR_ENABLE_DIAGNOSIS
 #include "Diagnosis.h"
 
 namespace PR
