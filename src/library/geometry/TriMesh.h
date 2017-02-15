@@ -38,8 +38,8 @@ namespace PR
 
 		void calcNormals();
 
-		bool isLight() const;
-		float surfaceArea(Material* m, const PM::mat& transform) const;
+		float surfaceArea(uint32 slot, const PM::mat& transform) const;
+		float surfaceArea(const PM::mat& transform) const;
 
 		inline BoundingBox boundingBox() const
 		{
@@ -48,14 +48,13 @@ namespace PR
 
 		float collisionCost() const;
 
-		bool checkCollision(const Ray& ray, FaceSample& collisionPoint);
-		FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const;
-
-		void replaceMaterial(Material* mat);
+		Face* checkCollision(const Ray& ray, FaceSample& collisionPoint);
+		FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const;
 	private:
 		BoundingBox mBoundingBox;
 		void* mKDTree;
 
 		std::vector<Face*> mFaces;
+		std::vector<uint32> mMaterialSlots;
 	};
 }

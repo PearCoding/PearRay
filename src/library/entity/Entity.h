@@ -57,6 +57,8 @@ namespace PR
 		virtual void onFreeze();
 
 		inline void invalidateCache();
+
+		virtual std::string dumpInformation() const;
 	private:
 		std::string mName;
 		uint32 mID;

@@ -36,6 +36,7 @@ namespace PR
 
 		// Entity
 		virtual void onFreeze() override;
+		virtual std::string dumpInformation() const override;
 
 		virtual void setup(RenderContext* context) {}
 	private:

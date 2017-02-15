@@ -54,4 +54,17 @@ namespace PR
 		if(!mWorldBoundingBox_Cache.isValid())
 			PR_LOGGER.logf(L_Warning, M_Entity, "Render entity %s world bounding box is invalid!", name().c_str());
 	}
+
+	
+	std::string RenderEntity::dumpInformation() const
+	{
+		std::stringstream stream;
+		stream << Entity::dumpInformation()
+			<< "  <RenderEntity>: " << std::endl
+			<< "    IsLight:       " << (isLight() ? "true" : "false") << std::endl
+			<< "    IsCollidable:  " << (isCollidable() ? "true" : "false") << std::endl
+			<< "    CollisionCost: " << collisionCost() << std::endl;
+
+		return stream.str();
+	}
 }

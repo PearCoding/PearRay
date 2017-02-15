@@ -1,6 +1,7 @@
 #include "Environment.h"
 
 #include "geometry/TriMesh.h"
+#include "entity/Entity.h"
 #include "material/Material.h"
 
 #include "spectral/XYZConverter.h"
@@ -67,6 +68,10 @@ namespace PRU
 	void Environment::dumpInformation() const
 	{
 		using namespace PR;
+		for (PR::Entity* p : mScene.entities())
+			PR_LOGGER.logf(L_Info, M_Entity, "%s:\n%s",
+				p->name().c_str(), p->dumpInformation().c_str());
+
 		for (std::pair<std::string, PR::Material*> p : mMaterials)
 			PR_LOGGER.logf(L_Info, M_Material, "%s:\n%s",
 				p.first.c_str(), p.second->dumpInformation().c_str());

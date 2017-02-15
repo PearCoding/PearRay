@@ -51,4 +51,25 @@ namespace PR
 		if(std::abs(PM::pm_Determinant4D(matrix())) <= PM_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Entity %s has zero determinant matrix", name().c_str());
 	}
+
+	std::string Entity::dumpInformation() const
+	{
+		std::stringstream stream;
+		stream << "<Entity> [" << mID << "]: " << std::endl
+			<< "  Position:        {" << PM::pm_GetX(mPosition)
+			<< "|" << PM::pm_GetY(mPosition)
+			<< "|" << PM::pm_GetZ(mPosition) << "}" << std::endl
+			<< "  Scale:           {" << PM::pm_GetX(mScale)
+			<< "|" << PM::pm_GetY(mScale)
+			<< "|" << PM::pm_GetZ(mScale) << "}" << std::endl
+			<< "  Rotation:        {" << PM::pm_GetX(mRotation)
+			<< "|" << PM::pm_GetY(mRotation)
+			<< "|" << PM::pm_GetZ(mRotation)
+			<< "|" << PM::pm_GetW(mRotation) << "}" << std::endl
+			<< "  Flag&Debug:      " << (mFlags & EF_Debug != 0 ? "true" : "false") << std::endl
+			<< "  Flag&LocalArea:  " << (mFlags & EF_LocalArea != 0 ? "true" : "false") << std::endl
+			<< "  Flag&ScaleLight: " << (mFlags & EF_ScaleLight != 0 ? "true" : "false") << std::endl;
+
+		return stream.str();
+	}
 }

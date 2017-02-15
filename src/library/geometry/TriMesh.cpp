@@ -93,30 +93,18 @@ namespace PR
 			return TriangleTestCost;
 		});
 
-		std::list<Face*> list;
-		std::copy(mFaces.begin(), mFaces.end(), std::back_inserter(list));
-		((TriKDTree*)mKDTree)->build(list);
+		((TriKDTree*)mKDTree)->build(mFaces.begin(), mFaces.end(), mFaces.size());
 
 		if(!((TriKDTree*)mKDTree)->isEmpty())
 			mBoundingBox = ((TriKDTree*)mKDTree)->boundingBox();
 	}
 
-	bool TriMesh::isLight() const
-	{
-		for (Face* f : mFaces)
-		{
-			if (f && f->Mat && f->Mat->isLight())
-				return true;
-		}
-		return false;
-	}
-
-	float TriMesh::surfaceArea(Material* m, const PM::mat& transform) const
+	float TriMesh::surfaceArea(uint32 slot, const PM::mat& transform) const
 	{
 		float a = 0;
 		for (Face* f : mFaces)
 		{
-			if(!m || f->Mat == m)
+			if(f->MaterialSlot == slot)
 			{
 				a += Triangle::surfaceArea(	PM::pm_Multiply(transform, f->V[0]),
 											PM::pm_Multiply(transform, f->V[1]),
@@ -126,16 +114,22 @@ namespace PR
 		return a;
 	}
 
-	void TriMesh::replaceMaterial(Material* mat)
+	float TriMesh::surfaceArea(const PM::mat& transform) const
 	{
+		float a = 0;
 		for (Face* f : mFaces)
-			f->Mat = mat;
+		{
+			a += Triangle::surfaceArea(	PM::pm_Multiply(transform, f->V[0]),
+										PM::pm_Multiply(transform, f->V[1]),
+										PM::pm_Multiply(transform, f->V[2]));
+		}
+		return a;
 	}
 
-	bool TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint)
+	Face* TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint)
 	{
 		//PR_ASSERT(mKDTree, "kdTree has to be valid");
-		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint) != nullptr;
+		return ((TriKDTree*)mKDTree)->checkCollision(ray, collisionPoint);
 	}
 
 	float TriMesh::collisionCost() const
@@ -143,7 +137,7 @@ namespace PR
 		return TriangleTestCost * ((TriKDTree*)mKDTree)->depth();
 	}
 
-	FaceSample TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+	FaceSample TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const
 	{
 		auto ret = sampler.generate3D(sample);
 		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, (int)mFaces.size() - 1);
@@ -160,7 +154,7 @@ namespace PR
 		fp.P = vec;
 		fp.Ng = n;
 		fp.UV = uv;
-		fp.Material = face->Mat;
+		materialSlot = face->MaterialSlot;
 
 		pdf = 1;//?
 		return fp;

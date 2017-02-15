@@ -2,6 +2,8 @@
 
 #include "RenderEntity.h"
 
+#include <vector>
+
 namespace PR
 {
 	class TriMesh;
@@ -20,8 +22,9 @@ namespace PR
 		void setMesh(TriMesh* mesh);
 		TriMesh* mesh() const;
 
-		void setMaterialOverride(Material* m);
-		Material* materialOverride() const;
+		void reserveMaterialSlots(size_t count);
+		void setMaterial(uint32 slot, Material* m);
+		Material* material(uint32 slot) const;
 
 		virtual bool isCollidable() const override;
 		virtual float collisionCost() const override;
@@ -32,12 +35,14 @@ namespace PR
 
 		// Entity
 		virtual void onFreeze() override;
+		virtual std::string dumpInformation() const override;
 
 		// RenderEntity
 		virtual void setup(RenderContext* context) override;
+
 	private:
 		TriMesh* mMesh;
-		Material* mMaterialOverride;
+		std::vector<Material*> mMaterials;
 
 		float mSurfaceArea_Cache;
 	};

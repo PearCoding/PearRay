@@ -13,7 +13,7 @@ namespace PR
 			V{PM::pm_Set(0, 0, 0, 1), PM::pm_Set(0, 0, 0, 1), PM::pm_Set(0, 0, 0, 1)},
 			N{PM::pm_Zero(), PM::pm_Zero(), PM::pm_Zero()},
 			UV{PM::pm_Zero(), PM::pm_Zero(), PM::pm_Zero()},
-			Mat(nullptr)
+			MaterialSlot(0)
 		{
 		}
 
@@ -33,6 +33,6 @@ namespace PR
 				PM::pm_Add(PM::pm_Scale(UV[2], v), PM::pm_Scale(UV[0], 1 - u - v)));
 		}
 
-		Material* Mat;
+		uint32 MaterialSlot;
 	};
 }

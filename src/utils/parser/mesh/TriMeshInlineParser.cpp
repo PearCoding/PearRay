@@ -21,6 +21,9 @@ namespace PRU
 		// First get attributes
 		DL::DataGroup facesGrp;
 		bool hasFaces = false;
+		DL::DataGroup materialsGrp;
+		bool hasMaterials = false;
+		
 		for(size_t i = 0; i < group.anonymousCount(); ++i)
 		{
 			DL::Data d = group.at(i);
@@ -140,6 +143,16 @@ namespace PRU
 					hasFaces = true;
 				}
 			}
+			else if(grp.id() == "materials")
+			{
+				if(hasMaterials)
+					PR_LOGGER.log(L_Warning, M_Scene, "Materials already set for mesh.");
+				else
+				{
+					materialsGrp = grp;
+					hasMaterials = true;
+				}
+			}
 			else
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Invalid entry in mesh description.");
@@ -166,6 +179,32 @@ namespace PRU
 			return nullptr;
 		}
 
+		std::vector<uint32> materials;
+		if(hasMaterials)
+		{
+			materials.reserve(materialsGrp.anonymousCount());
+			for(size_t j = 0; j < materialsGrp.anonymousCount(); j++)
+			{
+				DL::Data indexD = materialsGrp.at(j);
+
+				if(	indexD.type() != DL::Data::T_Integer)
+				{
+					PR_LOGGER.log(L_Error, M_Scene, "Given index is invalid.");
+					return nullptr;
+				}
+
+				auto index = indexD.getInt(); 
+
+				if (index < 0) 
+				{
+					PR_LOGGER.log(L_Error, M_Scene, "Given index range is invalid.");
+					return nullptr;
+				}
+
+				materials.push_back(index);
+			}
+		}
+
 		// Get indices (faces) -> only triangles!
 		std::vector<Face*> faces;
 		if(!hasFaces)// Assume linear
@@ -173,6 +212,12 @@ namespace PRU
 			if((positionAttr.size() % 3) != 0)
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Given position attribute count is not a multiply of 3.");
+				return nullptr;
+			}
+
+			if(materialsGrp.anonymousCount() != positionAttr.size()/3)
+			{
+				PR_LOGGER.log(L_Error, M_Scene, "Given material index count is not equal to face count.");
 				return nullptr;
 			}
 
@@ -204,6 +249,9 @@ namespace PRU
 					face->UV[2] = PM::pm_Zero();
 				}
 
+				if(hasMaterials)
+					face->MaterialSlot = materials[j/3];
+
 				faces.push_back(face);
 			}
 		}
@@ -212,6 +260,12 @@ namespace PRU
 			if((facesGrp.anonymousCount() % 3) != 0)
 			{
 				PR_LOGGER.log(L_Error, M_Scene, "Given index face count is not a multiply of 3.");
+				return nullptr;
+			}
+
+			if(materialsGrp.anonymousCount() != facesGrp.anonymousCount()/3)
+			{
+				PR_LOGGER.log(L_Error, M_Scene, "Given material index count is not equal to face count.");
 				return nullptr;
 			}
 
@@ -266,6 +320,9 @@ namespace PRU
 					face->UV[1] = PM::pm_Zero();
 					face->UV[2] = PM::pm_Zero();
 				}
+
+				if(hasMaterials)
+					face->MaterialSlot = materials[j/3];
 
 				faces.push_back(face);
 			}

@@ -129,16 +129,17 @@ namespace PR
 			return mRoot->boundingBox;
 		}
 
-		inline void build(const std::list<T*>& entities, IgnoreCallback ignoreCallback = nullptr)
+		template<typename Iterable>
+		inline void build(const Iterable& start, const Iterable& end, size_t size, IgnoreCallback ignoreCallback = nullptr)
 		{
 			mDepth = 0;
-			if (entities.empty())
+			if (start == end)
 				return;
 
 			PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
-			if (entities.size() == 1)
+			if (size == 1)
 			{
-				T* e = entities.front();
+				T* e = *start;
 				if(ignoreCallback && ignoreCallback(e))
 					return;
 
@@ -154,19 +155,19 @@ namespace PR
 			std::vector<Primitive*> primitivesCopy;// Copy for delete later
 
 			BoundingBox V;
-			for (T* obj : entities)
+			for (auto it = start; it != end; ++it)
 			{
-				if(ignoreCallback && ignoreCallback(obj))
+				if(ignoreCallback && ignoreCallback(*it))
 					continue;
 
-				auto prim = new Primitive(obj, mGetBoundingBox(obj));
+				auto prim = new Primitive(*it, mGetBoundingBox(*it));
 				primitives.push_back(prim);
 				primitivesCopy.push_back(prim);
 				V.combine(prim->box);
 			}
 
 			std::vector<Event> events;
-			events.reserve(entities.size() * 2);
+			events.reserve(size * 2);
 			for (auto obj : primitives)
 				generateEvents(obj, V, events);
 			std::sort(events.begin(), events.end());

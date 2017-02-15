@@ -103,7 +103,7 @@ namespace PR
 		[](RenderEntity* e) {
 			return (float)e->collisionCost();
 		});
-		((SceneKDTree*)mKDTree)->build(mRenderEntities,
+		((SceneKDTree*)mKDTree)->build(mRenderEntities.begin(), mRenderEntities.end(), mRenderEntities.size(),
 			[](RenderEntity* e){ return !e->isCollidable(); });
 	}
 

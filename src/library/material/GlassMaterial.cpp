@@ -169,7 +169,7 @@ namespace PR
 	{
 		std::stringstream stream;
 
-		stream << std::boolalpha << Material::dumpInformation()
+		stream << Material::dumpInformation()
 		    << "  <GlassMaterial>:" << std::endl
 			<< "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
 			<< "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl

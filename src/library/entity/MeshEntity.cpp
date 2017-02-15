@@ -15,7 +15,7 @@
 namespace PR
 {
 	MeshEntity::MeshEntity(uint32 id, const std::string& name) :
-		RenderEntity(id, name), mMesh(nullptr), mMaterialOverride(nullptr)
+		RenderEntity(id, name), mMesh(nullptr)
 	{
 	}
 
@@ -30,15 +30,40 @@ namespace PR
 
 	bool MeshEntity::isLight() const
 	{
-		return mMaterialOverride ? mMaterialOverride->isLight() : mMesh->isLight();
+		for(auto ptr : mMaterials)
+		{
+			if(ptr->isLight())
+				return true;
+		}
+
+		return false;
 	}
 
 	float MeshEntity::surfaceArea(Material* m) const
 	{
-		if(isFrozen() && (m == nullptr || m == mMaterialOverride))
+		if(isFrozen() && (m == nullptr))
 			return mSurfaceArea_Cache;
 		else
-			return mMesh->surfaceArea(m, flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
+		{
+			if(m)
+			{
+				uint32 slot;
+				for(slot = 0; slot < mMaterials.size(); ++slot)
+				{
+					if(mMaterials[slot] == m)
+						break;
+				}
+
+				if(slot >= mMaterials.size())
+					return mMesh->surfaceArea(flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
+				else
+					return mMesh->surfaceArea(slot, flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
+			}
+			else
+			{
+				return mMesh->surfaceArea(flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
+			}
+		}
 	}
 
 	void MeshEntity::setMesh(TriMesh* mesh)
@@ -51,19 +76,37 @@ namespace PR
 		return mMesh;
 	}
 
-	void MeshEntity::setMaterialOverride(Material* m)
+	void MeshEntity::reserveMaterialSlots(size_t count)
 	{
-		mMaterialOverride = m;
+		mMaterials.resize(count);
 	}
 
-	Material* MeshEntity::materialOverride() const
+	void MeshEntity::setMaterial(uint32 slot, Material* m)
 	{
-		return mMaterialOverride;
+		PR_ASSERT(slot < mMaterials.size(), "material slots not correctly reserved!");
+		mMaterials[slot] = m;
+	}
+
+	Material* MeshEntity::material(uint32 slot) const
+	{
+		if(slot >= mMaterials.size())
+			return mMaterials.front();
+		else
+			return mMaterials[slot];
 	}
 
 	bool MeshEntity::isCollidable() const
 	{
-		return mMesh && (!mMaterialOverride || mMaterialOverride->canBeShaded());
+		if(!mMesh)
+			return false;
+		
+		for(auto ptr : mMaterials)
+		{
+			if(ptr->canBeShaded())
+				return true;
+		}
+
+		return false;
 	}
 
 	float MeshEntity::collisionCost() const
@@ -86,14 +129,14 @@ namespace PR
 		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
 		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
 
-		if (mMesh->checkCollision(local, collisionPoint))
+		Face* f = mMesh->checkCollision(local, collisionPoint);
+		if (f)
 		{
 			collisionPoint.P = PM::pm_Multiply(matrix(), collisionPoint.P);
 			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), collisionPoint.Ng));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-			if(mMaterialOverride)
-				collisionPoint.Material = mMaterialOverride;
+			collisionPoint.Material = material(f->MaterialSlot);
 
 			return true;
 		}
@@ -107,13 +150,13 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		FaceSample point = mMesh->getRandomFacePoint(sampler, sample, pdf);
+		uint32 material_slot;
+		FaceSample point = mMesh->getRandomFacePoint(sampler, sample, material_slot, pdf);
 		point.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), point.Ng));
 		point.P = PM::pm_Multiply(matrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 
-		if(mMaterialOverride)
-			point.Material = mMaterialOverride;
+		point.Material = material(material_slot);
 
 		return point;
 	}
@@ -122,8 +165,7 @@ namespace PR
 	{
 		RenderEntity::onFreeze();
 
-		mSurfaceArea_Cache = mMesh->surfaceArea(nullptr,
-				flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
+		mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ? PM::pm_Identity() : matrix());
 
 		// Check up
 		if(mSurfaceArea_Cache <= PM_EPSILON)
@@ -134,7 +176,17 @@ namespace PR
 	{
 		RenderEntity::setup(context);
 
-		if(mMaterialOverride)
-			mMaterialOverride->setup(context);
+		for(auto ptr : mMaterials)
+			ptr->setup(context);
+	}
+	
+	std::string MeshEntity::dumpInformation() const
+	{
+		std::stringstream stream;
+		stream << RenderEntity::dumpInformation()
+			<< "    <MeshEntity>: " << std::endl
+			<< "      Material Count: " << mMaterials.size() << std::endl;
+
+		return stream.str();
 	}
 }

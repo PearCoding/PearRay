@@ -42,7 +42,7 @@ namespace PR
 				point.P = p;
 				point.UV = uv;
 				point.Ng = n;
-				point.Material = face.Mat;
+				point.Material = nullptr;
 				return true;
 			}
 			else
