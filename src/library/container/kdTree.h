@@ -183,15 +183,13 @@ namespace PR
 
 		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
 		{
-			PM::vec3 collisionPos;
-
 			T* res = nullptr;
 			FaceSample tmpCollisionPoint;
 
 			float t = std::numeric_limits<float>::infinity();
 			float l = t;// Temporary variable.
 
-			if (mRoot && mRoot->boundingBox.intersects(ray, collisionPos, l))
+			if (mRoot && mRoot->boundingBox.intersects(ray, l))
 			{
 				kdNode* stack[PR_KDTREE_MAX_STACK];
 				uint32 stackPos = 1;
@@ -225,7 +223,7 @@ namespace PR
 					{
 						bool leftIntersected = false;
 						kdInnerNode* inner = (kdInnerNode*)node;
-						if (inner->left && inner->left->boundingBox.intersects(ray, collisionPos, l))
+						if (inner->left && inner->left->boundingBox.intersects(ray, l))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return nullptr;
@@ -236,7 +234,7 @@ namespace PR
 						}
 
 						if (inner->right &&
-							(!leftIntersected || inner->right->boundingBox.intersects(ray, collisionPos, l)))
+							(!leftIntersected || inner->right->boundingBox.intersects(ray, l)))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return nullptr;
@@ -254,11 +252,9 @@ namespace PR
 		// A faster variant for rays detecting the background etc.
 		inline bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
 		{
-			PM::vec3 collisionPos;
-
 			float t = std::numeric_limits<float>::infinity();
 
-			if (mRoot && mRoot->boundingBox.intersects(ray, collisionPos, t))
+			if (mRoot && mRoot->boundingBox.intersects(ray, t))
 			{
 				kdNode* stack[PR_KDTREE_MAX_STACK];
 				uint32 stackPos = 1;
@@ -284,7 +280,7 @@ namespace PR
 					{
 						bool leftIntersected = false;
 						kdInnerNode* inner = (kdInnerNode*)node;
-						if (inner->left && inner->left->boundingBox.intersects(ray, collisionPos, t))
+						if (inner->left && inner->left->boundingBox.intersects(ray, t))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return false;
@@ -295,7 +291,7 @@ namespace PR
 						}
 
 						if (inner->right &&
-							(!leftIntersected || inner->right->boundingBox.intersects(ray, collisionPos, t)))
+							(!leftIntersected || inner->right->boundingBox.intersects(ray, t)))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return false;

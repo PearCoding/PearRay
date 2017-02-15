@@ -43,11 +43,28 @@ namespace PR
 
 		return *this;
 	}
+	
+	bool BoundingBox::intersects(const Ray& ray, float& t) const
+	{
+		PR_GUARD_PROFILE();
+
+		PM::vec3 vmin = PM::pm_Divide(PM::pm_Subtract(mLowerBound, ray.startPosition()),
+						ray.direction());
+		PM::vec3 vmax = PM::pm_Divide(PM::pm_Subtract(mUpperBound, ray.startPosition()),
+						ray.direction());
+
+		float tmin = PM::pm_MaxElement3D(PM::pm_Min(vmin, vmax));
+		float tmax = PM::pm_MinElement3D(PM::pm_Max(vmin, vmax));
+
+		t = tmin <= 0 ? tmax : tmin;
+		return tmax >= tmin && t > PM_EPSILON;
+	}
 
 	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
 	{
 		PR_GUARD_PROFILE();
 
+		//TODO: Better vector library!
 		PM::vec3 vmin = PM::pm_Divide(PM::pm_Subtract(mLowerBound, ray.startPosition()),
 						PM::pm_SetW(ray.direction(), 1));
 		PM::vec3 vmax = PM::pm_Divide(PM::pm_Subtract(mUpperBound, ray.startPosition()),
@@ -67,7 +84,6 @@ namespace PR
 			return false;
 		}
 	}
-
 
 	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, FaceSide& side) const
 	{

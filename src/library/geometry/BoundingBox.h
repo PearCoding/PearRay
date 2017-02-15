@@ -87,6 +87,7 @@ namespace PR
 				PM::pm_IsGreaterOrEqual(mLowerBound, point);
 		}
 
+		bool intersects(const Ray& ray, float& t) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const;
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, FaceSide& side) const;
 

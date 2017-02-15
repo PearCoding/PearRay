@@ -185,8 +185,8 @@ SET(PR_Performance_Hdr
 SOURCE_GROUP("Header Files\\Performance" FILES ${PR_Performance_Hdr})
 SET(PR_Photon_Hdr
   photon/Photon.h
-  photon/PointMap.h
-  photon/PointMap.inl)
+  photon/PhotonMap.h
+  photon/PhotonMap.inl)
 SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
 SET(PR_Ray_Hdr
   ray/Ray.h
