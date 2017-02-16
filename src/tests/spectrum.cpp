@@ -1,50 +1,148 @@
 #include "spectral/RGBConverter.h"
 #include "spectral/XYZConverter.h"
 
-#include <iostream>
+#include "Test.h"
 
-// Not a automatic test!
-int main(int argc, char** argv)
+using namespace PR;
+
+PR_BEGIN_TESTCASE(Spectrum)
+PR_TEST("Set/Get")
 {
-	PR::RGBConverter::init();
+	PR::Spectrum spec;
+
+	spec.setValueAtWavelength(640, 1);
+	PR_CHECK_EQ(spec.value(52), 1);
+}
+PR_TEST("Fill")
+{
+	PR::Spectrum spec;
+	spec.fill(1);
+
+	for(int i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
+		PR_CHECK_EQ(spec.value(i), 1);
+}
+PR_TEST("XYZ")
+{
+	PR::Spectrum spec;
+	spec.fill(1);
 
 	float X, Y, Z;
-	float x, y, z;
-	float R, G, B;
-	float gR, gG, gB;
-
-	PR::Spectrum spec;
-#ifndef PR_NO_SPECTRAL
-	spec.setValueAtWavelength(640, 1);
-
-	if (spec.value(56) != 1)
-		std::cout << "FAILED" << std::endl;
-#endif
-
 	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
-	PR::XYZConverter::convert(spec, x, y, z);
-	PR::RGBConverter::convert(spec, R, G, B);
-	
-	PR::RGBConverter::convert(spec, gR, gG, gB);
-	PR::RGBConverter::gamma(gR, gG, gB);
-
-	std::cout << "X " << X << " Y " << Y << " Z " << Z << std::endl;
-	std::cout << "x " << x << " y " << y << " z " << z << std::endl;
-	std::cout << "R " << R << " G " << G << " B " << B << std::endl;
-	std::cout << "gR " << gR << " gG " << gG << " gB " << gB << std::endl;
-
-	std::cout << (PR::Spectrum::fromBlackbody(5500).hasNaN() ? "Blackbody is invalid!" : "Blackbody ok.") << std::endl;
-
-	PR::Spectrum candle = PR::Spectrum::fromBlackbody(1000);
-
-	std::cout << "Blackbody Eq for T = 1000" << std::endl;
-	std::cout << "380nm -> " << candle.value(3) << " should be nearly 0.54139" << std::endl;
-	std::cout << "420nm -> " << candle.value(11) << " should be nearly 12.084" << std::endl;
-	std::cout << "550nm -> " << candle.value(37) << " should be nearly 1.0307e+04" << std::endl;
-	std::cout << "Max -> " << candle.max() << std::endl;
-
-#if defined(PR_OS_WINDOWS) && defined(PR_DEBUG)
-	system("pause");
-#endif
-	return 0;
+	PR_CHECK_NEARLY_EQ(X, 1);
+	PR_CHECK_NEARLY_EQ(Y, 1);
+	PR_CHECK_NEARLY_EQ(Z, 1);
 }
+PR_TEST("-> sRGB")
+{
+	PR::Spectrum spec;
+	spec.fill(1);
+
+	float X, Y, Z;
+	PR::RGBConverter::convert(spec, X, Y, Z);
+	PR_CHECK_NEARLY_EQ(X, 1);
+	PR_CHECK_NEARLY_EQ(Y, 1);
+	PR_CHECK_NEARLY_EQ(Z, 1);
+}
+PR_TEST("<-> sRGB [White]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(1,1,1);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 1);
+	PR_CHECK_NEARLY_EQ(G, 1);
+	PR_CHECK_NEARLY_EQ(B, 1);
+
+	const float q = (R-1)*(R-1) + (G-1)*(G-1) + (B-1)*(B-1);
+	std::cout << "Error [White]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Cyan]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(0,1,1);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 0);
+	PR_CHECK_NEARLY_EQ(G, 1);
+	PR_CHECK_NEARLY_EQ(B, 1);
+
+	const float q = (R-0)*(R-0) + (G-1)*(G-1) + (B-1)*(B-1);
+	std::cout << "Error [Cyan]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Magenta]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(1,0,1);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 1);
+	PR_CHECK_NEARLY_EQ(G, 0);
+	PR_CHECK_NEARLY_EQ(B, 1);
+
+	const float q = (R-1)*(R-1) + (G-0)*(G-0) + (B-1)*(B-1);
+	std::cout << "Error [Magenta]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Yellow]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(1,1,0);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 1);
+	PR_CHECK_NEARLY_EQ(G, 1);
+	PR_CHECK_NEARLY_EQ(B, 0);
+
+	const float q = (R-1)*(R-1) + (G-1)*(G-1) + (B-0)*(B-0);
+	std::cout << "Error [Yellow]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Red]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(1,0,0);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 1);
+	PR_CHECK_NEARLY_EQ(G, 0);
+	PR_CHECK_NEARLY_EQ(B, 0);
+
+	const float q = (R-1)*(R-1) + (G-0)*(G-0) + (B-0)*(B-0);
+	std::cout << "Error [Red]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Green]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(0,1,0);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 0);
+	PR_CHECK_NEARLY_EQ(G, 1);
+	PR_CHECK_NEARLY_EQ(B, 0);
+
+	const float q = (R-0)*(R-0) + (G-1)*(G-1) + (B-0)*(B-0);
+	std::cout << "Error [Green]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Blue]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(0,0,1);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 0);
+	PR_CHECK_NEARLY_EQ(G, 0);
+	PR_CHECK_NEARLY_EQ(B, 1);
+
+	const float q = (R-0)*(R-0) + (G-0)*(G-0) + (B-1)*(B-1);
+	std::cout << "Error [Blue]: " << q << std::endl;
+}
+PR_TEST("<-> sRGB [Custom]")
+{
+	PR::Spectrum spec = PR::RGBConverter::toSpec(0.8,0.5,0.2);
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ(R, 0.8);
+	PR_CHECK_NEARLY_EQ(G, 0.5);
+	PR_CHECK_NEARLY_EQ(B, 0.2);
+
+	const float q = (R-0.8)*(R-0.8) + (G-0.5)*(G-0.5) + (B-0.2)*(B-0.2);
+	std::cout << "Error [Custom]: " << q << std::endl;
+}
+
+PR_END_TESTCASE()
+
+PRT_BEGIN_MAIN
+//PR::RGBConverter::init();
+PRT_TESTCASE(Spectrum);
+PRT_END_MAIN

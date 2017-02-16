@@ -24,6 +24,7 @@ namespace PR
 		static constexpr float ILL_SCALE = WAVELENGTH_STEP + 1;
 
 		inline Spectrum();
+		inline Spectrum(std::initializer_list<float> list);
 		inline explicit Spectrum(float f);
 		inline explicit Spectrum(const float* data);// Be cautious!
 		inline ~Spectrum();

@@ -15,8 +15,6 @@ namespace PRU
 		mScene(name), mCamera(nullptr), mRenderWidth(1920), mRenderHeight(1080),
 		mCropMinX(0), mCropMaxX(1), mCropMinY(0), mCropMaxY(1)
 	{
-		PR::RGBConverter::init();
-
 		//Defaults
 		mSpectrums["black"] = PR::Spectrum();
 		mSpectrums["white"] = PR::RGBConverter::White;

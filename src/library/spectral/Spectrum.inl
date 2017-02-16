@@ -6,6 +6,18 @@ namespace PR
 		//std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
 	}
 
+	inline Spectrum::Spectrum(std::initializer_list<float> list)
+	{
+		PR_ASSERT(list.size() == SAMPLING_COUNT, "Given initializer_list is not of the same size as SAMPLING_COUNT");
+
+		size_t i = 0;
+		for(float f : list)
+		{
+			mValues[i] = f;
+			i++;
+		}
+	}
+
 	inline Spectrum::Spectrum(float f)
 	{
 		fill(f);

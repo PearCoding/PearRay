@@ -24,7 +24,6 @@ namespace PR
 		static void gamma(float &x, float &y, float &z);
 
 		static Spectrum toSpec(float x, float y, float z);
-		static void init();
 
 		static Spectrum White;
 		static Spectrum Cyan;
