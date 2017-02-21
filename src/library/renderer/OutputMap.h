@@ -36,7 +36,6 @@ namespace PR
 		{
 			V_Depth = 0,
 			V_Time,
-			V_Quality,
 			V_Material,
 
 			V_1D_COUNT
@@ -73,21 +72,6 @@ namespace PR
 		inline uint64 getSampleCount(uint32 x, uint32 y) const
 		{
 			return mIntCounter[V_Samples]->getFragmentBounded(x, y);
-		}
-
-		inline void setPixelError(uint32 x, uint32 y, uint32 sample, const Spectrum& pixel, const Spectrum& weight)
-		{
-			if(!mInt1D[V_Quality])
-				return;
-
-			// MEAN SQUARE ERROR
-			const float t = 1.0f/sample;
-			const float s1 = pixel.max();
-			const float s2 = weight.max();
-			const float ref = (s1 <= PM_EPSILON && s2 <= PM_EPSILON) ? 1 : (s1 + s2);
-			const float err = std::abs(s1 - s2) / ref;
-			mInt1D[V_Quality]->setFragmentBounded(x, y,
-				mInt1D[V_Quality]->getFragmentBounded(x, y) * (1-t) + t * err * err);
 		}
 
 		bool isPixelFinished(uint32 x, uint32 y) const;

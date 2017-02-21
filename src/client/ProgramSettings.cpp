@@ -98,6 +98,14 @@ BEGIN_ENUM_OPTION(SamplerMode)
 	{nullptr, SM_MultiJitter}
 };
 
+BEGIN_ENUM_OPTION(TileMode)
+{
+	{"linear", TM_Linear},
+	{"tile", TM_Tile},
+	{"spiral", TM_Spiral},
+	{nullptr, TM_Linear}
+};
+
 BEGIN_ENUM_OPTION(DebugMode)
 {
 	{"none", DM_None},
@@ -184,6 +192,9 @@ po::options_description setup_cmd_options()
 			"Amount of horizontal tiles used in threading")
 		("rty", po::value<PR::uint32>(),
 			"Amount of vertical tiles used in threading")
+		("rtm", po::value<EnumOption<TileMode> >(),
+		 	(std::string("Render Tile Mode [") + EnumOption<TileMode>::get_names() + "]").c_str())
+
 	;
 
 	po::options_description scene_d("Scene[*]");
@@ -234,15 +245,6 @@ po::options_description setup_cmd_options()
 		("ps_max",
 			po::value<PR::uint32>(),
 		 	"Maximum pixel sample count")
-		("ps_adaptive",
-			po::value<bool>(),
-		 	"Use Adaptive Sampling")
-		("ps_min",
-			po::value<PR::uint32>(),
-		 	"Minimum pixel sample count. Only used with Adaptive Sampling")
-		("ps_max_error",
-			po::value<float>(),
-		 	"Max error allowed when using Adaptive Sampling")
 	;
 
 	po::options_description gi_d("Global Illumination[*]");
@@ -313,6 +315,7 @@ po::options_description setup_ini_options()
 		("threads.count", po::value<PR::uint32>()->default_value(DEF_THREAD_COUNT))
 		("threads.tile_x", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_X))
 		("threads.tile_y", po::value<PR::uint32>()->default_value(DEF_THREAD_TILE_Y))
+		("threads.tile_mode", po::value<EnumOption<TileMode> >()->default_value(DefaultRenderSettings.tileMode()))
 		("scene.name", po::value<std::string>())
 		("scene.camera", po::value<std::string>())
 		("scene.width", po::value<PR::uint32>())
@@ -333,12 +336,6 @@ po::options_description setup_ini_options()
 			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.pixelSampler()))
 		("pixelsampler.max",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPixelSampleCount()))
-		("pixelsampler.adaptive",
-			po::value<bool>()->default_value(DefaultRenderSettings.isAdaptiveSampling()))
-		("pixelsampler.min",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.minPixelSampleCount()))
-		("pixelsampler.max_error",
-			po::value<float>()->default_value(DefaultRenderSettings.maxASError()))
 		("globalillumination.diffuse_bounces",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()))
 		("globalillumination.light_samples",
@@ -456,6 +453,8 @@ bool ProgramSettings::parse(int argc, char** argv)
 		if(ini.count("scene.tile_y"))
 			ImageTileYCount = PM::pm_Max<uint32>(1, ini["scene.tile_y"].as<PR::uint32>());
 
+		RenderSettings.setTileMode(ini["threads.tile_mode"].as<EnumOption<TileMode> >());
+
 		// RenderContext
 		RenderSettings.setIncremental(ini["renderer.incremental"].as<bool>());
 		RenderSettings.setIntegratorMode(ini["renderer.integrator"].as<EnumOption<IntegratorMode> >());
@@ -467,10 +466,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// PixelSampler
 		RenderSettings.setPixelSampler(ini["pixelsampler.mode"].as<EnumOption<SamplerMode> >());
 		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
-		RenderSettings.setAdaptiveSampling(ini["pixelsampler.adaptive"].as<bool>());
-		RenderSettings.setMinPixelSampleCount(ini["pixelsampler.min"].as<PR::uint32>());
-		RenderSettings.setMaxASError(PM::pm_Max(MinMaxASError, ini["pixelsampler.max_error"].as<float>()));
-
+	
 		// Global Illumination
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
 		RenderSettings.setMaxLightSamples(ini["globalillumination.light_samples"].as<PR::uint32>());
@@ -594,6 +590,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if (vm.count("ity"))
 		ImageTileYCount = PM::pm_Max<uint32>(1, vm["ity"].as<PR::uint32>());
 
+	if(vm.count("rtm"))
+		RenderSettings.setTileMode(vm["rtm"].as<EnumOption<TileMode> >());
+
 	// Renderer
 	if(vm.count("inc"))
 		RenderSettings.setIncremental(vm["inc"].as<bool>());
@@ -611,13 +610,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setPixelSampler(vm["ps_mode"].as<EnumOption<SamplerMode> >());
 	if(vm.count("ps_max"))
 		RenderSettings.setMaxPixelSampleCount(vm["ps_max"].as<PR::uint32>());
-	if(vm.count("ps_adaptive"))
-		RenderSettings.setAdaptiveSampling(vm["ps_adaptive"].as<bool>());
-	if(vm.count("ps_min"))
-		RenderSettings.setMinPixelSampleCount(vm["ps_min"].as<PR::uint32>());
-	if(vm.count("ps_max_error"))
-		RenderSettings.setMaxASError(PM::pm_Max(MinMaxASError, vm["ps_max_error"].as<float>()));
-
+	
 	// Global Illumination
 	if(vm.count("gi_diff_max"))
 		RenderSettings.setMaxDiffuseBounces(vm["gi_diff_max"].as<PR::uint32>());

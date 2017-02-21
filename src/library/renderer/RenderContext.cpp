@@ -29,6 +29,7 @@
 #include "math/Reflection.h"
 #include "math/Projection.h"
 #include "math/MSI.h"
+#include "math/Generator.h"
 
 #include "material/Material.h"
 
@@ -113,9 +114,6 @@ namespace PR
 	{
 		reset();
 
-		if(mRenderSettings.isAdaptiveSampling() && !mOutputMap->getChannel(OutputMap::V_Quality))
-			mOutputMap->registerChannel(OutputMap::V_Quality, new Output1D(this, 0));
-
 		/* Setup entities */
 		for (RenderEntity* entity : mScene->renderEntities())
 		{
@@ -199,18 +197,85 @@ namespace PR
 		mTileWidth = (uint32)std::ceil(mWidth / (float)mTileXCount);
 		mTileHeight = (uint32)std::ceil(mHeight / (float)mTileYCount);
 		mTileMap = new RenderTile*[mTileXCount*mTileYCount];
-		for (uint32 i = 0; i < mTileYCount; ++i)
+
+		switch(mRenderSettings.tileMode())
 		{
-			for (uint32 j = 0; j < mTileXCount; ++j)
+		default:
+		case TM_Linear:
+			for (uint32 i = 0; i < mTileYCount; ++i)
 			{
-				uint32 sx = j*mTileWidth;
-				uint32 sy = i*mTileHeight;
-				mTileMap[i*mTileXCount + j] = new RenderTile(
-					sx,
-					sy,
-					PM::pm_Min(mWidth, sx + mTileWidth),
-					PM::pm_Min(mHeight, sy + mTileHeight));
+				for (uint32 j = 0; j < mTileXCount; ++j)
+				{
+					uint32 sx = j*mTileWidth;
+					uint32 sy = i*mTileHeight;
+					mTileMap[i*mTileXCount + j] = new RenderTile(
+						sx,
+						sy,
+						PM::pm_Min(mWidth, sx + mTileWidth),
+						PM::pm_Min(mHeight, sy + mTileHeight));
+				}
 			}
+			break;
+		case TM_Tile:
+		{
+			uint32 k = 0;
+			// Even
+			for (uint32 i = 0; i < mTileYCount; ++i)
+			{
+				for(uint32 j = (i%2 ? 1 : 0); j < mTileXCount; j+=2)
+				{
+					uint32 sx = j*mTileWidth;
+					uint32 sy = i*mTileHeight;
+
+					mTileMap[k] = new RenderTile(
+						sx,
+						sy,
+						PM::pm_Min(mWidth, sx + mTileWidth),
+						PM::pm_Min(mHeight, sy + mTileHeight));
+					++k;
+				}
+			}
+			// Odd
+			for (uint32 i = 0; i < mTileYCount; ++i)
+			{
+				for(uint32 j = (i%2 ? 0 : 1); j < mTileXCount; j += 2)
+				{
+					uint32 sx = j*mTileWidth;
+					uint32 sy = i*mTileHeight;
+
+					mTileMap[k] = new RenderTile(
+						sx,
+						sy,
+						PM::pm_Min(mWidth, sx + mTileWidth),
+						PM::pm_Min(mHeight, sy + mTileHeight));
+					++k;
+				}
+			}
+		}
+			break;
+		case TM_Spiral:
+		{
+			MinRadiusGenerator<2> generator(PM::pm_Max(mTileXCount/2, mTileYCount/2));
+			uint32 i = 0;
+			while(generator.hasNext())
+			{
+				const auto p = generator.next();
+				const auto tx = mTileXCount/2 + p[0];
+				const auto ty = mTileYCount/2 + p[1];
+
+				if(tx >= 0 && tx < mTileXCount &&
+					ty >= 0 && ty < mTileYCount)
+				{
+					mTileMap[i] = new RenderTile(
+						tx*mTileWidth,
+						ty*mTileHeight,
+					PM::pm_Min(mWidth, tx*mTileWidth + mTileWidth),
+					PM::pm_Min(mHeight, ty*mTileHeight + mTileHeight));
+					++i;
+				}
+			}
+		}
+			break;
 		}
 
 		mIntegrator->onStart();// TODO: onEnd?

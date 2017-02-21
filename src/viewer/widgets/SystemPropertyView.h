@@ -37,6 +37,7 @@ private:
 	IProperty* mRendererGroupProp;
 	IProperty* mRendererTileXProp;
 	IProperty* mRendererTileYProp;
+	IProperty* mRendererTileModeProp;
 	IProperty* mRendererThreadsProp;
 	IProperty* mRendererIncremental;
 
@@ -48,9 +49,6 @@ private:
 	IProperty* mPixelSamplerGroupProp;
 	IProperty* mPixelSamplerProp;
 	IProperty* mPixelSamplesProp;
-	IProperty* mPixelMinSamplesProp;
-	IProperty* mPixelAdaptiveSamplingProp;
-	IProperty* mPixelMaxErrorProp;
 
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;

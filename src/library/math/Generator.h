@@ -9,6 +9,7 @@
 
 #include <boost/functional/hash/hash.hpp>
 
+/* This classes here really need C++XX Coroutine feature */
 namespace PR
 {
 	// Breadth-First-Search

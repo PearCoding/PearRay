@@ -30,9 +30,6 @@ namespace PR
 		if(!mIntCounter[V_Samples])
 			mIntCounter[V_Samples] = new OutputCounter(mRenderer, 0);
 
-		if(!mInt1D[V_Quality] && mRenderer->settings().isAdaptiveSampling())
-			mInt1D[V_Quality] = new Output1D(mRenderer, 0.0f);
-
 		PM::avec3 zeroV = {0,0,0};
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
@@ -63,9 +60,6 @@ namespace PR
 
 		for(const auto& p: mCustomSpectral)
 			p.second->init();
-
-		// if(mInt1D[V_Quality])
-		// 	mInt1D[V_Quality]->fill(std::numeric_limits<float>::max());
 	}
 
 	void OutputMap::deinit()
@@ -179,7 +173,6 @@ namespace PR
 		PR_CHECK_NEGATIVE(newSpec, "OutputMap::pushFragment");
 
 		mSpectral->setFragmentBounded(x, y, newSpec);
-		setPixelError(x,y,oldSample+1,oldSpec,newSpec);
 		setSampleCount(x,y,oldSample+1);
 
 		// 3D
@@ -229,44 +222,21 @@ namespace PR
 
 	bool OutputMap::isPixelFinished(uint32 x, uint32 y) const
 	{
-		if(mInt1D[V_Quality] &&
-			getSampleCount(x,y) >= mRenderer->settings().minPixelSampleCount())
-			return mInt1D[V_Quality]->getFragmentBounded(x, y) <= mRenderer->settings().maxASError();
-
-		return false;
+		return mIntCounter[V_Samples]->getFragmentBounded(x, y) >= mRenderer->settings().maxPixelSampleCount();
 	}
 
 	uint64 OutputMap::finishedPixelCount() const
 	{
 		const uint32 rw = mRenderer->width();
 		const uint32 rh = mRenderer->height();
-		const float minError = mRenderer->settings().maxASError();
-		const uint32 minSamples = mRenderer->settings().minPixelSampleCount();
-		const uint32 maxSamples = mRenderer->settings().maxPixelSampleCount();
-		const bool adaptive = mRenderer->settings().isAdaptiveSampling();
 
 		uint64 pixelsFinished = 0;
-		if(adaptive)
+		for(uint32 j = 0; j < rh; ++j)
 		{
-			for(uint32 j = 0; j < rh; ++j)
+			for(uint32 i = 0; i < rw; ++i)
 			{
-				for(uint32 i = 0; i < rw; ++i)
-				{
-					if(mIntCounter[V_Samples]->getFragmentBounded(i, j) >= minSamples &&
-						mInt1D[V_Quality]->getFragmentBounded(i, j) <= minError)
-						++pixelsFinished;
-				}
-			}
-		}
-		else
-		{
-			for(uint32 j = 0; j < rh; ++j)
-			{
-				for(uint32 i = 0; i < rw; ++i)
-				{
-					if(mIntCounter[V_Samples]->getFragmentBounded(i, j) >= maxSamples)
-						++pixelsFinished;
-				}
+				if(isPixelFinished(i,j))
+					++pixelsFinished;
 			}
 		}
 

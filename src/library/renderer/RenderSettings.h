@@ -39,7 +39,15 @@ namespace PR
 	{
 		IM_Direct,
 		IM_BiDirect,
-		IM_PPM// Progressive Photon Mapping [TODO]
+		IM_PPM// Progressive Photon Mapping
+	};
+
+	/* Visual feedback tile mode */
+	enum TileMode
+	{
+		TM_Linear,
+		TM_Tile,
+		TM_Spiral
 	};
 
 	class PR_LIB RenderSettings
@@ -93,20 +101,13 @@ namespace PR
 		inline const PPMSettings& ppm() const { return mPPM; }
 		inline PPMSettings& ppm() { return mPPM; }
 
-		// Adaptive Sampling (AS)
-		inline bool isAdaptiveSampling() const { return mAdaptiveSampling; }
-		inline void setAdaptiveSampling(bool b) { mAdaptiveSampling = b; }
-
-		inline float maxASError() const { return mASMaxError; }
-		inline void setMaxASError(float f) { mASMaxError = PM::pm_Max(f, 0.0f); }
-
-		inline uint32 minPixelSampleCount() const { return mMinPixelSampleCount; }
-		inline void setMinPixelSampleCount(uint32 v) { mMinPixelSampleCount = v; }
-
 		// Distortion Sampling
 		inline float distortionQuality() const { return mDistortionQuality; }
 		inline void setDistortionQuality(float f) { mDistortionQuality = f; }
 
+		// Display Rendering
+		inline TileMode tileMode() const { return mTileMode; }
+		inline void setTileMode(TileMode m) { mTileMode = m; }
 	private:
 		bool mIncremental;
 		DebugMode mDebugMode;
@@ -132,12 +133,10 @@ namespace PR
 		// PPM
 		PPMSettings mPPM;
 
-		// Adaptive Sampling (AS)
-		bool mAdaptiveSampling;
-		float mASMaxError;
-		uint32 mMinPixelSampleCount;
-
 		// Distortion Sampling
 		float mDistortionQuality;
+
+		// Display Rendering
+		TileMode mTileMode;
 	};
 }

@@ -107,8 +107,6 @@ namespace PRU
 			return OutputMap::V_Depth;
 		else if(str == "time" || str == "t")
 			return OutputMap::V_Time;
-		else if(str == "quality" || str == "qual" || str == "q")
-			return OutputMap::V_Quality;
 		else if(str == "material" || str == "mat" || str == "m")
 			return OutputMap::V_Material;
 		else
@@ -356,9 +354,6 @@ namespace PRU
 											break;
 										case OutputMap::V_Time:
 											spec.Name = "time";
-											break;
-										case OutputMap::V_Quality:
-											spec.Name = "quality";
 											break;
 										case OutputMap::V_Material:
 											spec.Name = "mat";

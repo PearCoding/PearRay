@@ -36,6 +36,12 @@ QWidget(parent)
 	mRendererTileYProp = new IntProperty(tr("Tile Y Count"), 5, 1, 128);
 	mRendererGroupProp->addChild(mRendererTileYProp);
 
+	mRendererTileModeProp = new SelectionProperty(tr("Tile Mode"), PR::TM_Linear);
+	((SelectionProperty*)mRendererTileModeProp)->addItem(tr("Linear"), PR::TM_Linear);
+	((SelectionProperty*)mRendererTileModeProp)->addItem(tr("Tile"), PR::TM_Tile);
+	((SelectionProperty*)mRendererTileModeProp)->addItem(tr("Spiral"), PR::TM_Spiral);
+	mRendererGroupProp->addChild(mRendererTileModeProp);
+
 	mRendererThreadsProp = new IntProperty(tr("Threads"), 0, -10000, 10000);
 	mRendererThreadsProp->setToolTip(tr("0 = Automatic"));
 	mRendererGroupProp->addChild(mRendererThreadsProp);
@@ -90,18 +96,7 @@ QWidget(parent)
 	mPixelSamplerGroupProp->addChild(mPixelSamplerProp);
 
 	mPixelSamplesProp = new IntProperty(tr("Max Samples"), 8, 1, 4096);
-	mPixelSamplerGroupProp->addChild(mPixelSamplesProp);
-
-	mPixelMinSamplesProp = new IntProperty(tr("Min Samples"), 8, 1, 4096);
-	mPixelSamplerGroupProp->addChild(mPixelMinSamplesProp);
-
-	mPixelAdaptiveSamplingProp = new BoolProperty(tr("Adaptive Sampling"), true);
-	mPixelSamplerGroupProp->addChild(mPixelAdaptiveSamplingProp);
-
-	mPixelMaxErrorProp = new DoubleProperty(tr("Max Error"), 0.000001, 0.0000001, 1);
-	mPixelSamplerGroupProp->addChild(mPixelMaxErrorProp);
-
-	mProperties.add(mPixelSamplerGroupProp);
+	mPixelSamplerGroupProp->addChild(mPixelSamplesProp);	mProperties.add(mPixelSamplerGroupProp);
 
 	// Direct Lightning
 	mDirectLightningGroupProp = new GroupProperty(tr("Direct Lightning"));
@@ -137,12 +132,10 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererGroupProp;
 	delete mRendererTileXProp;
 	delete mRendererTileYProp;
+	delete mRendererTileModeProp;
 	delete mRendererThreadsProp;
 	delete mRendererIncremental;
 	delete mPixelSamplesProp;
-	delete mPixelMinSamplesProp;
-	delete mPixelAdaptiveSamplingProp;
-	delete mPixelMaxErrorProp;
 	delete mPixelSamplerProp;
 	delete mRendererMaxDiffuseBouncesProp;
 	delete mRendererMaxRayDepthProp;
@@ -186,17 +179,14 @@ void SystemPropertyView::fillContent(PR::RenderFactory* renderer)
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setValue(0);
 	reinterpret_cast<IntProperty*>(mRendererThreadsProp)->setDefaultValue(0);
 
+	reinterpret_cast<SelectionProperty*>(mRendererTileModeProp)->setIndex(renderer->settings().tileMode());
+	reinterpret_cast<SelectionProperty*>(mRendererTileModeProp)->setDefaultIndex(renderer->settings().tileMode());
+
 	reinterpret_cast<BoolProperty*>(mRendererIncremental)->setValue(renderer->settings().isIncremental());
 	reinterpret_cast<BoolProperty*>(mRendererIncremental)->setDefaultValue(renderer->settings().isIncremental());
 
 	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setValue(renderer->settings().maxPixelSampleCount());
 	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setDefaultValue(renderer->settings().maxPixelSampleCount());
-	reinterpret_cast<IntProperty*>(mPixelMinSamplesProp)->setValue(renderer->settings().minPixelSampleCount());
-	reinterpret_cast<IntProperty*>(mPixelMinSamplesProp)->setDefaultValue(renderer->settings().minPixelSampleCount());
-	reinterpret_cast<BoolProperty*>(mPixelAdaptiveSamplingProp)->setValue(renderer->settings().isAdaptiveSampling());
-	reinterpret_cast<BoolProperty*>(mPixelAdaptiveSamplingProp)->setDefaultValue(renderer->settings().isAdaptiveSampling());
-	reinterpret_cast<DoubleProperty*>(mPixelMaxErrorProp)->setValue(renderer->settings().maxASError());
-	reinterpret_cast<DoubleProperty*>(mPixelMaxErrorProp)->setDefaultValue(renderer->settings().maxASError());
 	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setIndex(renderer->settings().pixelSampler());
 	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setDefaultIndex(renderer->settings().pixelSampler());
 
@@ -233,13 +223,11 @@ void SystemPropertyView::setupRenderer(PR::RenderFactory* renderer)
 	renderer->settings().setIntegratorMode((PR::IntegratorMode)reinterpret_cast<SelectionProperty*>(mIntegratorProp)->index());
 	renderer->settings().setDebugMode((PR::DebugMode)reinterpret_cast<SelectionProperty*>(mDebugVisualizationProp)->index());
 	renderer->settings().setIncremental(reinterpret_cast<BoolProperty*>(mRendererIncremental)->value());
+	renderer->settings().setTileMode((PR::TileMode)reinterpret_cast<SelectionProperty*>(mRendererTileModeProp)->index());
 
 	renderer->settings().setPixelSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->index());
 	renderer->settings().setMaxPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelSamplesProp)->value());
-	renderer->settings().setMinPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelMinSamplesProp)->value());
-	renderer->settings().setAdaptiveSampling(reinterpret_cast<BoolProperty*>(mPixelAdaptiveSamplingProp)->value());
-	renderer->settings().setMaxASError(reinterpret_cast<DoubleProperty*>(mPixelMaxErrorProp)->value());
-
+	
 	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
 
 	renderer->settings().ppm().setMaxPhotonsPerPass(reinterpret_cast<IntProperty*>(mMaxPhotonsPerPassProp)->value());

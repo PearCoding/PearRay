@@ -25,13 +25,11 @@ namespace PR
 		// PPM
 		mPPM(),
 
-		// Adaptive Sampling (AS)
-		mAdaptiveSampling(false),
-		mASMaxError(0.0001f),
-		mMinPixelSampleCount(1),
-
 		// Distortion Sampling
-		mDistortionQuality(0.1f)
+		mDistortionQuality(0.1f),
+
+		// Display Rendering
+		mTileMode(TM_Linear)
 	{
 	}
 }
