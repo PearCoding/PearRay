@@ -244,8 +244,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
 )
 
 SET(PR_CL
-  cl/tonemapper.cl
-  cl/xyztable.cl)
+  cl/tonemapper.cl)
 SOURCE_GROUP("CL Files" FILES ${PR_CL})
   	
 add_library(pr_lib SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
