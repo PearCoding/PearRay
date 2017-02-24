@@ -5,6 +5,12 @@
 
 using namespace PR;
 
+namespace PR {
+extern void barycentricTriangle(double px, double py,
+		double x1, double y1, double x2, double y2, double x3, double y3, double invArea,
+		double& s, double& t);
+}
+
 PR_BEGIN_TESTCASE(Spectrum)
 PR_TEST("Set/Get")
 {
@@ -18,8 +24,64 @@ PR_TEST("Fill")
 	PR::Spectrum spec;
 	spec.fill(1);
 
-	for(int i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
+	for(uint32 i = 0; i < PR::Spectrum::SAMPLING_COUNT; ++i)
 		PR_CHECK_EQ(spec.value(i), 1);
+}
+PR_TEST("BarycentricTriangle")
+{
+	const auto areaF = [] (double x1, double y1, double x2, double y2, double x3, double y3) {
+		return 0.5*(x1*y2 - x2*y1 - x1*y3 + x3*y1 + x2*y3 - x3*y2);
+	};
+
+	double area = areaF(0,0,1,0,0,1);
+	double s, t;
+	barycentricTriangle(0.5,0.5, 0,0, 1,0, 0,1, 1/(2*area), s,t);
+
+	PR_CHECK_NEARLY_EQ(s, 0.5);
+	PR_CHECK_NEARLY_EQ(t, 0.5);
+	PR_CHECK_NEARLY_EQ(area, 0.5);
+
+	barycentricTriangle(0,0.5, 0,0, 1,0, 0,1, 1/(2*area), s,t);
+	PR_CHECK_NEARLY_EQ(s, 0);
+	PR_CHECK_NEARLY_EQ(t, 0.5);
+
+	area = areaF(0,0,2,0,0,2);
+	barycentricTriangle(1,0, 0,0, 2,0, 0,2, 1/(2*area), s,t);
+	PR_CHECK_NEARLY_EQ(s, 0.5);
+	PR_CHECK_NEARLY_EQ(t, 0);
+
+	area = areaF(0,0,2,0,0,2);
+	barycentricTriangle(-1,0, 0,0, 2,0, 0,2, 1/(2*area), s,t);
+	PR_CHECK_NEARLY_EQ(s, -0.5);
+	PR_CHECK_NEARLY_EQ(t, 0);
+}
+PR_TEST("BarycentricTriangle Bad Order")
+{
+	const auto areaF = [] (double x1, double y1, double x2, double y2, double x3, double y3) {
+		return 0.5*(x1*y2 - x2*y1 - x1*y3 + x3*y1 + x2*y3 - x3*y2);
+	};
+
+	double area = areaF(1,0,0,0,0,1);
+	double s, t;
+	barycentricTriangle(0.5,0.5, 1,0, 0,0, 0,1, 1/(2*area), s,t);
+
+	PR_CHECK_NEARLY_EQ(s, 0);
+	PR_CHECK_NEARLY_EQ(t, 0.5);
+	PR_CHECK_NEARLY_EQ(area, -0.5);
+
+	barycentricTriangle(0,0.5, 1,0, 0,0, 0,1, 1/(2*area), s,t);
+	PR_CHECK_NEARLY_EQ(s, 0.5);
+	PR_CHECK_NEARLY_EQ(t, 0.5);
+
+	area = areaF(2,0,0,0,0,2);
+	barycentricTriangle(1,0, 2,0, 0,0, 0,2, 1/(2*area), s,t);
+	PR_CHECK_NEARLY_EQ(s, 0.5);
+	PR_CHECK_NEARLY_EQ(t, 0);
+
+	area = areaF(2,0,0,0,0,2);
+	barycentricTriangle(-1,0, 2,0, 0,0, 0,2, 1/(2*area), s,t);
+	PR_CHECK_NEARLY_EQ(s, 1.5);
+	PR_CHECK_NEARLY_EQ(t, 0);
 }
 PR_TEST("XYZ")
 {
@@ -39,9 +101,10 @@ PR_TEST("-> sRGB")
 
 	float X, Y, Z;
 	PR::RGBConverter::convert(spec, X, Y, Z);
-	PR_CHECK_NEARLY_EQ(X, 1);
-	PR_CHECK_NEARLY_EQ(Y, 1);
-	PR_CHECK_NEARLY_EQ(Z, 1);
+
+	PR_CHECK_NEARLY_EQ(X, 1.204976106621948);
+	PR_CHECK_NEARLY_EQ(Y, 0.948278897530075);
+	PR_CHECK_NEARLY_EQ(Z, 0.908624594035630);
 }
 PR_TEST("<-> sRGB [White]")
 {
@@ -138,6 +201,72 @@ PR_TEST("<-> sRGB [Custom]")
 
 	const float q = (R-0.8)*(R-0.8) + (G-0.5)*(G-0.5) + (B-0.2)*(B-0.2);
 	std::cout << "Error [Custom]: " << q << std::endl;
+}
+
+PR_TEST("-> XYZ")
+{
+	PR::Spectrum spec;
+	spec.fill(1);
+
+	float X, Y, Z;
+	PR::XYZConverter::convert(spec, X, Y, Z);
+	PR_CHECK_NEARLY_EQ(X, 1/3.0f);
+	PR_CHECK_NEARLY_EQ(Y, 1/3.0f);
+	PR_CHECK_NEARLY_EQ(Z, 1/3.0f);
+}
+
+PR_TEST("<-> XYZ")
+{
+	float x = 1/3.0f;
+	PR::Spectrum spec = PR::XYZConverter::toSpec(x,x,x);
+	float X, Y, Z;
+	PR::XYZConverter::convert(spec, X, Y, Z);
+	PR_CHECK_NEARLY_EQ(X, x);
+	PR_CHECK_NEARLY_EQ(Y, x);
+	PR_CHECK_NEARLY_EQ(Z, x);
+}
+PR_TEST("<-> XYZ")
+{
+	float x = 0.4f;	float y = 0.2f;	float z = 0.4f;
+	PR::Spectrum spec = PR::XYZConverter::toSpec(x,y,z);
+	float X, Y, Z;
+	PR::XYZConverter::convert(spec, X, Y, Z);
+	PR_CHECK_NEARLY_EQ(X, x);
+	PR_CHECK_NEARLY_EQ(Y, y);
+	PR_CHECK_NEARLY_EQ(Z, z);
+}
+PR_TEST("<-> XYZ")
+{
+	float x = 0.2f;	float y = 0.2f;	float z = 0.4f;
+	float b = x+y+z;
+	PR::Spectrum spec = PR::XYZConverter::toSpec(x,y,z);
+	float X, Y, Z;
+	PR::XYZConverter::convert(spec, X, Y, Z);
+	PR_CHECK_NEARLY_EQ(X, x/b);
+	PR_CHECK_NEARLY_EQ(Y, y/b);
+	PR_CHECK_NEARLY_EQ(Z, z/b);
+}
+PR_TEST("XYZ->RGB->XYZ")
+{
+	float X=1, Y=1, Z=1;
+	float r,g,b;
+	float x,y,z;
+	PR::RGBConverter::fromXYZ(X,Y,Z,r,g,b);
+	PR::RGBConverter::toXYZ(r,g,b,x,y,z);
+	PR_CHECK_NEARLY_EQ(x, X);
+	PR_CHECK_NEARLY_EQ(y, Y);
+	PR_CHECK_NEARLY_EQ(z, Z);
+}
+PR_TEST("RGB->XYZ->RGB")
+{
+	float R=1, G=1, B=1;
+	float r,g,b;
+	float x,y,z;
+	PR::RGBConverter::toXYZ(R,B,B,x,y,z);
+	PR::RGBConverter::fromXYZ(x,y,z,r,b,g);
+	PR_CHECK_NEARLY_EQ(r, R);
+	PR_CHECK_NEARLY_EQ(g, B);
+	PR_CHECK_NEARLY_EQ(b, G);
 }
 
 PR_END_TESTCASE()

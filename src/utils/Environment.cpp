@@ -17,13 +17,13 @@ namespace PRU
 	{
 		//Defaults
 		mSpectrums["black"] = PR::Spectrum();
-		mSpectrums["white"] = PR::RGBConverter::White;
-		mSpectrums["red"] = PR::RGBConverter::Red;
-		mSpectrums["green"] = PR::RGBConverter::Green;
-		mSpectrums["blue"] = PR::RGBConverter::Blue;
-		mSpectrums["magenta"] = PR::RGBConverter::Magenta;
-		mSpectrums["yellow"] = PR::RGBConverter::Yellow;
-		mSpectrums["cyan"] = PR::RGBConverter::Cyan;
+		mSpectrums["white"] = PR::RGBConverter::toSpec(1, 1, 1);
+		mSpectrums["red"] = PR::RGBConverter::toSpec(1, 0, 0);
+		mSpectrums["green"] = PR::RGBConverter::toSpec(0, 1, 0);
+		mSpectrums["blue"] = PR::RGBConverter::toSpec(0, 0, 1);
+		mSpectrums["magenta"] = PR::RGBConverter::toSpec(1, 0, 1);
+		mSpectrums["yellow"] = PR::RGBConverter::toSpec(1, 1, 0);
+		mSpectrums["cyan"] = PR::RGBConverter::toSpec(0, 1, 1);
 		mSpectrums["gray"] = PR::RGBConverter::toSpec(0.5f, 0.5f, 0.5f);
 		mSpectrums["lightGray"] = PR::RGBConverter::toSpec(0.666f, 0.666f, 0.666f);
 		mSpectrums["darkGray"] = PR::RGBConverter::toSpec(0.333f, 0.333f, 0.333f);

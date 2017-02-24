@@ -11,11 +11,7 @@
 
 namespace PR
 {
-#define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
-#define constant const
-#include "cl/xyztable.cl"
-#undef SAMPLING_COUNT
-#undef constant
+#include "spectral/xyz.inl"
 
 	GPU::GPU()
 	{

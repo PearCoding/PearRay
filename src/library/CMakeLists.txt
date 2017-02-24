@@ -222,6 +222,7 @@ SET(PR_Spectral_Hdr
   spectral/Spectrum.h
   spectral/Spectrum.inl
   spectral/ToneMapper.h
+  spectral/xyz2spec.inl
   spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Shader_Hdr

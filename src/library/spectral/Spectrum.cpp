@@ -9,11 +9,7 @@ static_assert(sizeof(PR::Spectrum) == PR::Spectrum::SAMPLING_COUNT * sizeof(floa
 
 namespace PR
 {
-# define SAMPLING_COUNT (Spectrum::SAMPLING_COUNT)
-# define constant const
-# include "cl/xyztable.cl"
-# undef SAMPLING_COUNT
-# undef constant
+# include "xyz.inl"
 
 	float Spectrum::approx(float wavelength, InterpolationType interpolation) const
 	{

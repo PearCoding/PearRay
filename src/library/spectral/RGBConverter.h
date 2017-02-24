@@ -20,17 +20,12 @@ namespace PR
 			convert(s.ptr(), x, y, z);
 		}
 
+		static void toXYZ(float r, float g, float b, float& x, float& y, float& z);
+		static void fromXYZ(float x, float y, float z, float& r, float& g, float& b);
+
 		static float luminance(float r, float g, float b);
 		static void gamma(float &x, float &y, float &z);
 
 		static Spectrum toSpec(float x, float y, float z);
-
-		static Spectrum White;
-		static Spectrum Cyan;
-		static Spectrum Magenta;
-		static Spectrum Yellow;
-		static Spectrum Red;
-		static Spectrum Green;
-		static Spectrum Blue;
 	};
 }
