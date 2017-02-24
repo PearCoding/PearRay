@@ -49,6 +49,9 @@ namespace PR
 		float T;
 		//float dT;
 
+		// Wavelength
+		uint8 WavelengthIndex;
+
 		// Some other utility variables
 		float Depth2;// Squared!
 		float NgdotV;
@@ -80,6 +83,7 @@ namespace PR
 			dUVdY(PM::pm_Zero()),
 			T(0),
 			//dT(0),
+			WavelengthIndex(0),
 			Depth2(0),
 			NgdotV(0),
 			NdotV(0),
@@ -108,6 +112,7 @@ namespace PR
 			dUVdY(fs.dUVdY),
 			T(0),
 			//dT(0),
+			WavelengthIndex(0),
 			Depth2(0),
 			NgdotV(0),
 			NdotV(0),

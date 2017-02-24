@@ -65,6 +65,18 @@ namespace PR
 		mTime = t;
 	}
 
+	inline uint8 Ray::wavelength() const
+	{
+		return mWavelengthIndex;
+	}
+
+	inline void Ray::setWavelength(uint8 wavelength)
+	{
+		PR_ASSERT(wavelength < Spectrum::SAMPLING_COUNT,
+			"Given wavelenght greater than SAMPLING_COUNT");
+		mWavelengthIndex = wavelength;
+	}
+
 	inline void Ray::setFlags(uint16 flags)
 	{
 		mFlags = flags;
@@ -77,10 +89,11 @@ namespace PR
 
 	inline Ray Ray::next(const PM::vec3& pos, const PM::vec3& dir) const
 	{
-		return safe(mPixelX, mPixelY, pos, dir, mDepth + 1, mTime, mFlags);
+		return safe(mPixelX, mPixelY, pos, dir, mDepth + 1, mTime, mWavelengthIndex, mFlags);
 	}
 
-	inline Ray Ray::safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth, float time, uint16 flags)
+	inline Ray Ray::safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth,
+		float time, uint8 wavelength, uint16 flags)
 	{
 		PM::vec3 off = PM::pm_Scale(dir, RayOffsetEpsilon);
 		PM::vec3 posOff = PM::pm_Add(pos, off);
@@ -95,7 +108,7 @@ namespace PR
 					std::nextafter(PM::pm_GetIndex(posOff, i), std::numeric_limits<float>::lowest()));
 		}
 
-		return Ray(px, py, posOff, dir, depth, time);
+		return Ray(px, py, posOff, dir, depth, time, wavelength, flags);
 	}
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

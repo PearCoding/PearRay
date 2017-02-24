@@ -40,7 +40,7 @@ namespace PR
 
 		// Used temporary
 		ShaderClosure other_sc;
-		Spectrum path_weight;
+		float path_weight;
 		Spectrum weight;
 
 		// Hemisphere sampling

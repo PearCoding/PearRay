@@ -110,6 +110,24 @@ namespace PR
 		mLights.clear();
 	}
 
+	static Sampler* createSampler(SamplerMode mode, Random& random, uint32 samples)
+	{
+		switch (mode)
+		{
+		case SM_Random:
+			return new RandomSampler(random);
+		case SM_Uniform:
+			return new UniformSampler(random, samples);
+		case SM_Jitter:
+			return new StratifiedSampler(random, samples);
+		default:
+		case SM_MultiJitter:
+			return new MultiJitteredSampler(random, samples);
+		case SM_HaltonQMC:
+			return new HaltonQMCSampler(samples);
+		}
+	}
+
 	void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	{
 		reset();
@@ -151,6 +169,12 @@ namespace PR
 
 		PR_ASSERT(mIntegrator, "Integrator should be set after selection");
 
+		PR_LOGGER.log(L_Info, M_Scene, "Rendering with: ");
+		PR_LOGGER.logf(L_Info, M_Scene, "  AA Samples: %i",  mRenderSettings.maxAASampleCount());
+		PR_LOGGER.logf(L_Info, M_Scene, "  Lens Samples: %i",  mRenderSettings.maxLensSampleCount());
+		PR_LOGGER.logf(L_Info, M_Scene, "  Time Samples: %i",  mRenderSettings.maxTimeSampleCount());
+		PR_LOGGER.logf(L_Info, M_Scene, "  Spectral Samples: %i",  mRenderSettings.maxSpectralSampleCount());
+
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
 		if (threads < 0)
@@ -164,27 +188,14 @@ namespace PR
 			mThreads.push_back(thread);
 
 			RenderThreadContext& context = thread->context();
-
-			/* Setup samplers */
-			switch (mRenderSettings.pixelSampler())
-			{
-			case SM_Random:
-				context.setPixelSampler(new RandomSampler(context.random()));
-				break;
-			case SM_Uniform:
-				context.setPixelSampler(new UniformSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
-				break;
-			case SM_Jitter:
-				context.setPixelSampler(new StratifiedSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
-				break;
-			default:
-			case SM_MultiJitter:
-				context.setPixelSampler(new MultiJitteredSampler(context.random(), mRenderSettings.maxPixelSampleCount()));
-				break;
-			case SM_HaltonQMC:
-				context.setPixelSampler(new HaltonQMCSampler(mRenderSettings.maxPixelSampleCount()));
-				break;
-			}
+			context.setAASampler(createSampler(
+				mRenderSettings.aaSampler(), context.random(), mRenderSettings.maxAASampleCount()));
+			context.setLensSampler(createSampler(
+				mRenderSettings.lensSampler(), context.random(), mRenderSettings.maxLensSampleCount()));
+			context.setTimeSampler(createSampler(
+				mRenderSettings.timeSampler(), context.random(), mRenderSettings.maxTimeSampleCount()));
+			context.setSpectralSampler(createSampler(
+				mRenderSettings.spectralSampler(), context.random(), mRenderSettings.maxSpectralSampleCount()));
 		}
 
 		mIntegrator->init(this);
@@ -294,52 +305,72 @@ namespace PR
 		PR_ASSERT(mOutputMap, "OutputMap has to be initialized before rendering");
 		PR_ASSERT(context, "Rendering needs a valid context");
 
-		ShaderClosure sc;
 		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
-			if(!mOutputMap->isPixelFinished(x, y))
-			{
-				const auto s = context->pixelSampler()->generate2D(sample);
-
-				const float rx = context->random().getFloat();// Random sampling
-				const float ry = context->random().getFloat();
-
-				const Spectrum spec = renderSample(context,
-					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
-					rx, ry,//TODO
-					0.0f,
-					pass,
-					sc);
-
-				mOutputMap->pushFragment(x,y,spec,sc);
-			}
+			renderIncremental(context, x, y, sample, pass);
 		}
 		else// Everything
 		{
-			const uint32 SampleCount = mRenderSettings.maxPixelSampleCount();
+			const uint32 SampleCount = mRenderSettings.maxCameraSampleCount();
 
 			for (uint32 currentSample = sample;
 				currentSample < SampleCount && !mOutputMap->isPixelFinished(x, y);
 				++currentSample)
 			{
-				const auto s = context->pixelSampler()->generate2D(currentSample);
-
-				const float rx = context->random().getFloat();// Random sampling
-				const float ry = context->random().getFloat();
-
-				const Spectrum spec = renderSample(context,
-					x + PM::pm_GetX(s) - 0.5f, y + PM::pm_GetY(s) - 0.5f,
-					rx, ry,//TODO
-					0.0f,
-					pass,
-					sc);
-
-				mOutputMap->pushFragment(x,y,spec,sc);
+				renderIncremental(context, x, y, currentSample, pass);
 			}
 		}
 	}
+	void RenderContext::renderIncremental(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
+	{
+		if(mOutputMap->isPixelFinished(x, y))
+			return;
 
-	Spectrum RenderContext::renderSample(RenderThreadContext* context, float x, float y, float rx, float ry, float t, uint32 pass, ShaderClosure& sc)
+		ShaderClosure sc;
+		const auto aaM = mRenderSettings.maxAASampleCount();
+		const auto lensM = mRenderSettings.maxLensSampleCount();
+		const auto timeM = mRenderSettings.maxTimeSampleCount();
+		const auto spectralM = mRenderSettings.maxSpectralSampleCount();
+
+		const auto aasample = sample/(lensM*timeM*spectralM);
+		const auto lenssample = (sample%(lensM*timeM*spectralM))/(timeM*spectralM);
+		const auto timesample = (sample%(timeM*spectralM))/spectralM;
+		const auto spectralsample = sample%spectralM;
+
+		const auto aa = context->aaSampler()->generate2D(aasample);
+		const auto lens = context->lensSampler()->generate2D(lenssample);
+		auto time = context->timeSampler()->generate1D(timesample);
+		switch(mRenderSettings.timeMappingMode())
+		{
+		default:
+		case TMM_Center:
+			time -= 0.5;
+			break;
+		case TMM_Right:
+			break;
+		case TMM_Left:
+			time *= -1;
+			break;
+		}
+		time *= mRenderSettings.timeScale();
+
+		uint8 specInd = PM::pm_Min<uint8>(Spectrum::SAMPLING_COUNT-1,
+			std::floor(
+				context->spectralSampler()->generate1D(spectralsample) * Spectrum::SAMPLING_COUNT));
+
+		const Spectrum spec = renderSample(context,
+			x + PM::pm_GetX(aa) - 0.5f, y + PM::pm_GetY(aa) - 0.5f,
+			PM::pm_GetX(lens), PM::pm_GetY(lens),
+			time, specInd,
+			pass,
+			sc);
+
+		mOutputMap->pushFragment(x,y,spec,sc);
+	}
+
+	Spectrum RenderContext::renderSample(RenderThreadContext* context,
+		float x, float y, float rx, float ry, float t, uint8 wavelength,
+		uint32 pass, ShaderClosure& sc)
 	{
 		context->stats().incPixelSampleCount();
 
@@ -349,7 +380,7 @@ namespace PR
 		const float fnx = 2 * ((x+mOffsetX) / mFullWidth - 0.5f);
 		const float fny = 2 * ((y+mOffsetY) / mFullHeight - 0.5f);
 
-		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t);
+		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t, wavelength);
 		ray.setPixelX((uint32)PM::pm_Max(0.0f, std::round(x)));
 		ray.setPixelY((uint32)PM::pm_Max(0.0f, std::round(y)));
 
@@ -384,6 +415,7 @@ namespace PR
 			sc.NdotV = -std::abs(sc.NgdotV);
 			sc.V = ray.direction();
 			sc.T = ray.time();
+			sc.WavelengthIndex = ray.wavelength();
 			sc.Depth2 = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(ray.startPosition(), sc.P));
 
 			if(entity)
@@ -529,6 +561,7 @@ namespace PR
 
 	RenderTile* RenderContext::getNextTile()
 	{
+		const auto maxCameraSamples = mRenderSettings.maxCameraSampleCount();
 		mTileMutex.lock();
 		if (mRenderSettings.isIncremental())
 		{
@@ -538,7 +571,7 @@ namespace PR
 				{
 					// TODO: Better check up for AS
 					if ( mTileMap[i*mTileXCount + j]->samplesRendered() <= mIncrementalCurrentSample &&
-						mTileMap[i*mTileXCount + j]->samplesRendered() < mRenderSettings.maxPixelSampleCount() &&
+						mTileMap[i*mTileXCount + j]->samplesRendered() < maxCameraSamples &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
 					{
 						mTileMap[i*mTileXCount + j]->setWorking(true);
@@ -549,7 +582,7 @@ namespace PR
 				}
 			}
 
-			if (mIncrementalCurrentSample < mRenderSettings.maxPixelSampleCount())// Try again
+			if (mIncrementalCurrentSample < maxCameraSamples)// Try again
 			{
 				mIncrementalCurrentSample++;
 				mTileMutex.unlock();
@@ -563,7 +596,7 @@ namespace PR
 				for (uint32 j = 0; j < mTileXCount; ++j)
 				{
 					if (mTileMap[i*mTileXCount + j]->samplesRendered() == 0 &&
-						mTileMap[i*mTileXCount + j]->samplesRendered() < mRenderSettings.maxPixelSampleCount() &&
+						mTileMap[i*mTileXCount + j]->samplesRendered() < maxCameraSamples &&
 						!mTileMap[i*mTileXCount + j]->isWorking())
 					{
 						mTileMap[i*mTileXCount + j]->setWorking(true);

@@ -137,6 +137,14 @@ BEGIN_ENUM_OPTION(IntegratorMode)
 	{nullptr, IM_BiDirect}
 };
 
+BEGIN_ENUM_OPTION(TimeMappingMode)
+{
+	{"center", TMM_Center},
+	{"left", TMM_Left},
+	{"right", TMM_Right},
+	{nullptr, TMM_Center}
+};
+
 BEGIN_ENUM_OPTION(PPMGatheringMode)
 {
 	{"dome", PGM_Dome},
@@ -231,20 +239,38 @@ po::options_description setup_cmd_options()
 			"Render incremental.")
 	;
 
-	po::options_description distortion_d("Distortion Sampler[*]");
-	distortion_d.add_options()
-		("d_quality", po::value<float>(),
-			"Quality of distortion effects. Should be between 0 - 1.")
-	;
-
-	po::options_description pixelsampler_d("Pixel Sampler[*]");
-	pixelsampler_d.add_options()
-		("ps_mode",
+	po::options_description sampler_d("Sampler[*]");
+	sampler_d.add_options()
+		("s_aa",
 			po::value<EnumOption<SamplerMode> >(),
-		 	(std::string("Pixel Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
-		("ps_max",
+		 	(std::string("AA Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
+		("s_aa_max",
 			po::value<PR::uint32>(),
-		 	"Maximum pixel sample count")
+		 	"Maximum AA sample count")
+		("s_lens",
+			po::value<EnumOption<SamplerMode> >(),
+		 	(std::string("Lens Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
+		("s_lens_max",
+			po::value<PR::uint32>(),
+		 	"Maximum Lens sample count")
+		("s_time",
+			po::value<EnumOption<SamplerMode> >(),
+		 	(std::string("Time Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
+		("s_time_max",
+			po::value<PR::uint32>(),
+		 	"Maximum Time sample count")
+		("s_time_mapping",
+			po::value<EnumOption<TimeMappingMode> >(),
+		 	(std::string("Time Mapping Mode [") + EnumOption<TimeMappingMode>::get_names() + "]").c_str())
+		("s_time_scale",
+			po::value<PR::uint32>(),
+		 	"Time scale")
+		("s_spectral",
+			po::value<EnumOption<SamplerMode> >(),
+		 	(std::string("Spectral Sampler Mode [") + EnumOption<SamplerMode>::get_names() + "]").c_str())
+		("s_spectral_max",
+			po::value<PR::uint32>(),
+		 	"Maximum Spectral sample count")
 	;
 
 	po::options_description gi_d("Global Illumination[*]");
@@ -298,8 +324,7 @@ po::options_description setup_cmd_options()
 	all_d.add(thread_d);
 	all_d.add(scene_d);
 	all_d.add(render_d);
-	all_d.add(distortion_d);
-	all_d.add(pixelsampler_d);
+	all_d.add(sampler_d);
 	all_d.add(gi_d);
 	all_d.add(photon_d);
 
@@ -328,14 +353,28 @@ po::options_description setup_ini_options()
 			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()))
 		("renderer.debug",
 			po::value<EnumOption<DebugMode> >()->default_value(DefaultRenderSettings.debugMode()))
-		("distortion.quality",
-			po::value<float>()->default_value(DefaultRenderSettings.distortionQuality()))
 		("renderer.max",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxRayDepth()))
-		("pixelsampler.mode",
-			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.pixelSampler()))
-		("pixelsampler.max",
-			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxPixelSampleCount()))
+		("sampler.aa_mode",
+			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.aaSampler()))
+		("sampler.aa_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxAASampleCount()))
+		("sampler.lens_mode",
+			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.lensSampler()))
+		("sampler.lens_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxLensSampleCount()))
+		("sampler.time_mode",
+			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.timeSampler()))
+		("sampler.time_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxTimeSampleCount()))
+		("sampler.time_mapping",
+			po::value<EnumOption<TimeMappingMode> >()->default_value(DefaultRenderSettings.timeMappingMode()))
+		("sampler.time_scale",
+			po::value<float>()->default_value(DefaultRenderSettings.timeScale()))
+		("sampler.spectral_mode",
+			po::value<EnumOption<SamplerMode> >()->default_value(DefaultRenderSettings.spectralSampler()))
+		("sampler.spectral_max",
+			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxSpectralSampleCount()))
 		("globalillumination.diffuse_bounces",
 			po::value<PR::uint32>()->default_value(DefaultRenderSettings.maxDiffuseBounces()))
 		("globalillumination.light_samples",
@@ -460,12 +499,17 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setIntegratorMode(ini["renderer.integrator"].as<EnumOption<IntegratorMode> >());
 		RenderSettings.setDebugMode(ini["renderer.debug"].as<EnumOption<DebugMode> >());
 
-		// Distortion Sampling
-		RenderSettings.setDistortionQuality(PM::pm_Clamp<float>(ini["distortion.quality"].as<float>(), 0.0f, 1.0f));
-
-		// PixelSampler
-		RenderSettings.setPixelSampler(ini["pixelsampler.mode"].as<EnumOption<SamplerMode> >());
-		RenderSettings.setMaxPixelSampleCount(ini["pixelsampler.max"].as<PR::uint32>());
+		// Sampler
+		RenderSettings.setAASampler(ini["sampler.aa_mode"].as<EnumOption<SamplerMode> >());
+		RenderSettings.setMaxAASampleCount(ini["sampler.aa_max"].as<PR::uint32>());
+		RenderSettings.setLensSampler(ini["sampler.lens_mode"].as<EnumOption<SamplerMode> >());
+		RenderSettings.setMaxLensSampleCount(ini["sampler.lens_max"].as<PR::uint32>());
+		RenderSettings.setTimeSampler(ini["sampler.time_mode"].as<EnumOption<SamplerMode> >());
+		RenderSettings.setMaxTimeSampleCount(ini["sampler.time_max"].as<PR::uint32>());
+		RenderSettings.setTimeMappingMode(ini["sampler.time_mapping"].as<EnumOption<TimeMappingMode> >());
+		RenderSettings.setTimeScale(ini["sampler.time_scale"].as<float>());
+		RenderSettings.setSpectralSampler(ini["sampler.spectral_mode"].as<EnumOption<SamplerMode> >());
+		RenderSettings.setMaxSpectralSampleCount(ini["sampler.spectral_max"].as<PR::uint32>());
 	
 		// Global Illumination
 		RenderSettings.setMaxDiffuseBounces(ini["globalillumination.diffuse_bounces"].as<PR::uint32>());
@@ -601,15 +645,27 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("debug"))
 		RenderSettings.setDebugMode(vm["debug"].as<EnumOption<DebugMode> >());
 
-	// Distortion Sampling
-	if(vm.count("d_quality"))
-		RenderSettings.setDistortionQuality(PM::pm_Clamp<float>(vm["d_quality"].as<float>(), 0.0f, 1.0f));
-
-	// PixelSampler
-	if(vm.count("ps_mode"))
-		RenderSettings.setPixelSampler(vm["ps_mode"].as<EnumOption<SamplerMode> >());
-	if(vm.count("ps_max"))
-		RenderSettings.setMaxPixelSampleCount(vm["ps_max"].as<PR::uint32>());
+	// Sampler
+	if(vm.count("s_aa_mode"))
+		RenderSettings.setAASampler(vm["s_aa_mode"].as<EnumOption<SamplerMode> >());
+	if(vm.count("s_aa_max"))
+		RenderSettings.setMaxLensSampleCount(vm["s_aa_max"].as<PR::uint32>());
+	if(vm.count("s_lens_mode"))
+		RenderSettings.setLensSampler(vm["s_lens_mode"].as<EnumOption<SamplerMode> >());
+	if(vm.count("s_lens_max"))
+		RenderSettings.setMaxLensSampleCount(vm["s_lens_max"].as<PR::uint32>());
+	if(vm.count("s_time_mode"))
+		RenderSettings.setTimeSampler(vm["s_time_mode"].as<EnumOption<SamplerMode> >());
+	if(vm.count("s_time_max"))
+		RenderSettings.setMaxTimeSampleCount(vm["s_time_max"].as<PR::uint32>());
+	if(vm.count("s_time_mapping"))
+		RenderSettings.setTimeMappingMode(vm["s_time_mapping"].as<EnumOption<TimeMappingMode> >());
+	if(vm.count("s_time_scale"))
+		RenderSettings.setTimeScale(vm["s_time_scale"].as<float>());
+	if(vm.count("s_spectral_mode"))
+		RenderSettings.setSpectralSampler(vm["s_spectral_mode"].as<EnumOption<SamplerMode> >());
+	if(vm.count("s_spectral_max"))
+		RenderSettings.setMaxSpectralSampleCount(vm["s_spectral_max"].as<PR::uint32>());
 	
 	// Global Illumination
 	if(vm.count("gi_diff_max"))

@@ -222,7 +222,7 @@ namespace PR
 
 	bool OutputMap::isPixelFinished(uint32 x, uint32 y) const
 	{
-		return mIntCounter[V_Samples]->getFragmentBounded(x, y) >= mRenderer->settings().maxPixelSampleCount();
+		return mIntCounter[V_Samples]->getFragmentBounded(x, y) >= mRenderer->settings().maxCameraSampleCount();
 	}
 
 	uint64 OutputMap::finishedPixelCount() const

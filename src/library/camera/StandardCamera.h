@@ -40,7 +40,7 @@ namespace PR
 		void setApertureRadius(float f);
 		float apertureRadius() const;
 
-		Ray constructRay(float nx, float ny, float rx, float ry, float t) const;
+		Ray constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const;
 
 		// Entity
 		void onFreeze() override;// Cache

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
-#include "PearMath.h"
+#include "spectral/Spectrum.h"
 
 namespace PR
 {
@@ -16,7 +15,8 @@ namespace PR
 	{
 	public:
 		Ray();
-		Ray(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0, float time = 0, uint16 flags = 0);
+		Ray(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0,
+			float time = 0, uint8 wavelength = 0, uint16 flags = 0);
 		virtual ~Ray();
 
 		inline void setStartPosition(const PM::vec3& p);
@@ -37,6 +37,9 @@ namespace PR
 		inline float time() const;
 		inline void setTime(float t);
 
+		inline uint8 wavelength() const;
+		inline void setWavelength(uint8 wavelength);
+
 		inline void setFlags(uint16 flags);
 		inline uint16 flags() const;
 
@@ -47,13 +50,14 @@ namespace PR
 
 		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
 		static inline Ray safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir,
-			uint32 depth = 0, float time = 0, uint16 flags = 0);
+			uint32 depth = 0, float time = 0, uint8 wavelength = 0, uint16 flags = 0);
 	private:
 		alignas(16) PM::vec3 mStartPosition;
 		alignas(16) PM::vec3 mDirection;
 		uint32 mPixelX; uint32 mPixelY;
 		uint32 mDepth;// Recursion depth!
 		float mTime;
+		uint8 mWavelengthIndex;
 		uint16 mFlags;
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

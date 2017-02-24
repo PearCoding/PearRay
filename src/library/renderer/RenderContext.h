@@ -90,7 +90,10 @@ namespace PR
 	private:
 		void reset();
 
-		Spectrum renderSample(RenderThreadContext* context, float x, float y, float rx, float ry, float t, uint32 pass, ShaderClosure& sc);
+		void renderIncremental(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);
+		Spectrum renderSample(RenderThreadContext* context,
+			float x, float y, float rx, float ry, float t, uint8 wavelength,
+			uint32 pass, ShaderClosure& sc);
 
 		const uint32 mIndex;
 		const uint32 mOffsetX;

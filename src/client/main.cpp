@@ -124,10 +124,6 @@ int main(int argc, char** argv)
 
 		env->outputSpecification().setup(renderer);
 		env->scene()->setup(renderer);
-		PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "%f %f %f",
-			options.RenderSettings.distortionQuality(),
-			renderFactory->settings().distortionQuality(),
-			renderer->settings().distortionQuality());
 			
 		if(options.ShowInformation)
 			env->dumpInformation();

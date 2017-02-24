@@ -85,18 +85,62 @@ QWidget(parent)
 	mProperties.add(mRendererGroupProp);
 
 	// Sampler
-	mPixelSamplerGroupProp = new GroupProperty(tr("Pixel Sampler"));
+	mSamplerGroupProp = new GroupProperty(tr("Sampler"));
 
-	mPixelSamplerProp = new SelectionProperty(tr("Mode"), PR::SM_MultiJitter);
-	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Random"), PR::SM_Random);
-	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Uniform"), PR::SM_Uniform);
-	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Jitter"), PR::SM_Jitter);
-	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
-	((SelectionProperty*)mPixelSamplerProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
-	mPixelSamplerGroupProp->addChild(mPixelSamplerProp);
+	mSamplerAAProp = new SelectionProperty(tr("AA Mode"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerAAProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mSamplerAAProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mSamplerAAProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	((SelectionProperty*)mSamplerAAProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerAAProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
+	mSamplerGroupProp->addChild(mSamplerAAProp);
 
-	mPixelSamplesProp = new IntProperty(tr("Max Samples"), 8, 1, 4096);
-	mPixelSamplerGroupProp->addChild(mPixelSamplesProp);	mProperties.add(mPixelSamplerGroupProp);
+	mSamplerAAMaxProp = new IntProperty(tr("Max AA Samples"), 8, 1, 4096);
+	mSamplerGroupProp->addChild(mSamplerAAMaxProp);
+
+	mSamplerLensProp = new SelectionProperty(tr("Lens Mode"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerLensProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mSamplerLensProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mSamplerLensProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	((SelectionProperty*)mSamplerLensProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerLensProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
+	mSamplerGroupProp->addChild(mSamplerLensProp);
+	
+	mSamplerLensMaxProp = new IntProperty(tr("Max Lens Samples"), 1, 1, 4096);
+	mSamplerGroupProp->addChild(mSamplerLensMaxProp);
+	
+	mSamplerTimeProp = new SelectionProperty(tr("Time Mode"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerTimeProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mSamplerTimeProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mSamplerTimeProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	((SelectionProperty*)mSamplerTimeProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerTimeProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
+	mSamplerGroupProp->addChild(mSamplerTimeProp);
+	
+	mSamplerTimeMaxProp = new IntProperty(tr("Max Time Samples"), 1, 1, 4096);
+	mSamplerGroupProp->addChild(mSamplerTimeMaxProp);
+	
+	mSamplerTimeMappingProp = new SelectionProperty(tr("Time Mapping Mode"), PR::TMM_Center);
+	((SelectionProperty*)mSamplerTimeMappingProp)->addItem(tr("Center [-1/2,1/2]"), PR::TMM_Center);
+	((SelectionProperty*)mSamplerTimeMappingProp)->addItem(tr("Left [-1,0]"), PR::TMM_Left);
+	((SelectionProperty*)mSamplerTimeMappingProp)->addItem(tr("Right [0,1]"), PR::TMM_Right);
+	mSamplerGroupProp->addChild(mSamplerTimeMappingProp);
+	
+	mSamplerTimeScaleProp = new DoubleProperty(tr("Time Scale"), 1, 0, 1000);
+	mSamplerGroupProp->addChild(mSamplerTimeScaleProp);
+	
+	mSamplerSpectralProp = new SelectionProperty(tr("Spectral Mode"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerSpectralProp)->addItem(tr("Random"), PR::SM_Random);
+	((SelectionProperty*)mSamplerSpectralProp)->addItem(tr("Uniform"), PR::SM_Uniform);
+	((SelectionProperty*)mSamplerSpectralProp)->addItem(tr("Jitter"), PR::SM_Jitter);
+	((SelectionProperty*)mSamplerSpectralProp)->addItem(tr("Multi Jitter"), PR::SM_MultiJitter);
+	((SelectionProperty*)mSamplerSpectralProp)->addItem(tr("Halton QMC"), PR::SM_HaltonQMC);
+	mSamplerGroupProp->addChild(mSamplerSpectralProp);
+	
+	mSamplerSpectralMaxProp = new IntProperty(tr("Max Spectral Samples"), 1, 1, 4096);
+	mSamplerGroupProp->addChild(mSamplerSpectralMaxProp);
+	
+	mProperties.add(mSamplerGroupProp);
 
 	// Direct Lightning
 	mDirectLightningGroupProp = new GroupProperty(tr("Direct Lightning"));
@@ -135,8 +179,17 @@ SystemPropertyView::~SystemPropertyView()
 	delete mRendererTileModeProp;
 	delete mRendererThreadsProp;
 	delete mRendererIncremental;
-	delete mPixelSamplesProp;
-	delete mPixelSamplerProp;
+	delete mSamplerGroupProp;
+	delete mSamplerAAProp;
+	delete mSamplerAAMaxProp;
+	delete mSamplerLensProp;
+	delete mSamplerLensMaxProp;
+	delete mSamplerTimeProp;
+	delete mSamplerTimeMaxProp;
+	delete mSamplerTimeMappingProp;
+	delete mSamplerTimeScaleProp;
+	delete mSamplerSpectralProp;
+	delete mSamplerSpectralMaxProp;
 	delete mRendererMaxDiffuseBouncesProp;
 	delete mRendererMaxRayDepthProp;
 	delete mIntegratorProp;
@@ -185,10 +238,26 @@ void SystemPropertyView::fillContent(PR::RenderFactory* renderer)
 	reinterpret_cast<BoolProperty*>(mRendererIncremental)->setValue(renderer->settings().isIncremental());
 	reinterpret_cast<BoolProperty*>(mRendererIncremental)->setDefaultValue(renderer->settings().isIncremental());
 
-	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setValue(renderer->settings().maxPixelSampleCount());
-	reinterpret_cast<IntProperty*>(mPixelSamplesProp)->setDefaultValue(renderer->settings().maxPixelSampleCount());
-	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setIndex(renderer->settings().pixelSampler());
-	reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->setDefaultIndex(renderer->settings().pixelSampler());
+	reinterpret_cast<SelectionProperty*>(mSamplerAAProp)->setIndex(renderer->settings().aaSampler());
+	reinterpret_cast<SelectionProperty*>(mSamplerAAProp)->setDefaultIndex(renderer->settings().aaSampler());
+	reinterpret_cast<IntProperty*>(mSamplerAAMaxProp)->setValue(renderer->settings().maxAASampleCount());
+	reinterpret_cast<IntProperty*>(mSamplerAAMaxProp)->setDefaultValue(renderer->settings().maxAASampleCount());
+	reinterpret_cast<SelectionProperty*>(mSamplerLensProp)->setIndex(renderer->settings().lensSampler());
+	reinterpret_cast<SelectionProperty*>(mSamplerLensProp)->setDefaultIndex(renderer->settings().lensSampler());
+	reinterpret_cast<IntProperty*>(mSamplerLensMaxProp)->setValue(renderer->settings().maxLensSampleCount());
+	reinterpret_cast<IntProperty*>(mSamplerLensMaxProp)->setDefaultValue(renderer->settings().maxLensSampleCount());
+	reinterpret_cast<SelectionProperty*>(mSamplerTimeProp)->setIndex(renderer->settings().timeSampler());
+	reinterpret_cast<SelectionProperty*>(mSamplerTimeProp)->setDefaultIndex(renderer->settings().timeSampler());
+	reinterpret_cast<IntProperty*>(mSamplerTimeMaxProp)->setValue(renderer->settings().maxTimeSampleCount());
+	reinterpret_cast<IntProperty*>(mSamplerTimeMaxProp)->setDefaultValue(renderer->settings().maxTimeSampleCount());
+	reinterpret_cast<SelectionProperty*>(mSamplerTimeMappingProp)->setIndex(renderer->settings().timeMappingMode());
+	reinterpret_cast<SelectionProperty*>(mSamplerTimeMappingProp)->setDefaultIndex(renderer->settings().timeMappingMode());
+	reinterpret_cast<DoubleProperty*>(mSamplerTimeScaleProp)->setValue(renderer->settings().timeScale());
+	reinterpret_cast<DoubleProperty*>(mSamplerTimeScaleProp)->setDefaultValue(renderer->settings().timeScale());
+	reinterpret_cast<SelectionProperty*>(mSamplerSpectralProp)->setIndex(renderer->settings().spectralSampler());
+	reinterpret_cast<SelectionProperty*>(mSamplerSpectralProp)->setDefaultIndex(renderer->settings().spectralSampler());
+	reinterpret_cast<IntProperty*>(mSamplerSpectralMaxProp)->setValue(renderer->settings().maxSpectralSampleCount());
+	reinterpret_cast<IntProperty*>(mSamplerSpectralMaxProp)->setDefaultValue(renderer->settings().maxSpectralSampleCount());
 
 	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setValue(renderer->settings().maxDiffuseBounces());
 	reinterpret_cast<IntProperty*>(mRendererMaxDiffuseBouncesProp)->setDefaultValue(renderer->settings().maxDiffuseBounces());
@@ -225,8 +294,16 @@ void SystemPropertyView::setupRenderer(PR::RenderFactory* renderer)
 	renderer->settings().setIncremental(reinterpret_cast<BoolProperty*>(mRendererIncremental)->value());
 	renderer->settings().setTileMode((PR::TileMode)reinterpret_cast<SelectionProperty*>(mRendererTileModeProp)->index());
 
-	renderer->settings().setPixelSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mPixelSamplerProp)->index());
-	renderer->settings().setMaxPixelSampleCount(reinterpret_cast<IntProperty*>(mPixelSamplesProp)->value());
+	renderer->settings().setAASampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mSamplerAAProp)->index());
+	renderer->settings().setMaxAASampleCount(reinterpret_cast<IntProperty*>(mSamplerAAMaxProp)->value());
+	renderer->settings().setLensSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mSamplerLensProp)->index());
+	renderer->settings().setMaxLensSampleCount(reinterpret_cast<IntProperty*>(mSamplerLensMaxProp)->value());
+	renderer->settings().setTimeSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mSamplerTimeProp)->index());
+	renderer->settings().setMaxTimeSampleCount(reinterpret_cast<IntProperty*>(mSamplerTimeMaxProp)->value());
+	renderer->settings().setTimeMappingMode((PR::TimeMappingMode)reinterpret_cast<SelectionProperty*>(mSamplerTimeMappingProp)->index());
+	renderer->settings().setTimeScale(reinterpret_cast<DoubleProperty*>(mSamplerTimeScaleProp)->value());
+	renderer->settings().setSpectralSampler((PR::SamplerMode)reinterpret_cast<SelectionProperty*>(mSamplerSpectralProp)->index());
+	renderer->settings().setMaxSpectralSampleCount(reinterpret_cast<IntProperty*>(mSamplerSpectralMaxProp)->value());
 	
 	renderer->settings().setMaxLightSamples(reinterpret_cast<IntProperty*>(mMaxLightSamplesProp)->value());
 

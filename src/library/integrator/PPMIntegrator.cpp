@@ -218,7 +218,7 @@ namespace PR
 					float weight = 0;
 					if(l.Entity->checkCollision(ray, lightSample))
 					{
-						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, RF_Light);
+						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, 0, RF_Light);
 						float pdf = std::abs(PM::pm_Dot3D(dir, lightSample.Ng));
 
 						uint32 j;// Calculates specular count
@@ -337,7 +337,7 @@ namespace PR
 	uint64 PPMIntegrator::maxSamples(const RenderContext* renderer) const
 	{
 		return renderer->width() * renderer->height() *
-			renderer->settings().maxPixelSampleCount() * (renderer->settings().ppm().maxPassCount() + 1);
+			renderer->settings().maxCameraSampleCount() * (renderer->settings().ppm().maxPassCount() + 1);
 	}
 
 	uint64 PPMIntegrator::maxPasses(const RenderContext* renderer) const
@@ -398,7 +398,7 @@ namespace PR
 				if(!lightSample.Material->isLight())
 					continue;
 
-				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, RF_Light);
+				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, 0, RF_Light);// TODO. Use pixel sample
 				ShaderClosure lsc = lightSample;
 				Spectrum radiance = lightSample.Material->emission()->eval(lsc);
 				//radiance /= t_pdf;// This is not working properly
@@ -489,7 +489,7 @@ namespace PR
 		for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
 		{
 			float pdf;
-			Spectrum path_weight;
+			float path_weight;
 			PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 
 			if(pdf <= PM_EPSILON)

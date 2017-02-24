@@ -59,14 +59,44 @@ namespace PR
 			return mRandom;
 		}
 
-		inline Sampler* pixelSampler() const
+		inline Sampler* aaSampler() const
 		{
-			return mPixelSampler;
+			return mAASampler;
 		}
 
-		inline void setPixelSampler(Sampler* sampler)
+		inline void setAASampler(Sampler* sampler)
 		{
-			mPixelSampler = sampler;
+			mAASampler = sampler;
+		}
+
+		inline Sampler* lensSampler() const
+		{
+			return mLensSampler;
+		}
+
+		inline void setLensSampler(Sampler* sampler)
+		{
+			mLensSampler = sampler;
+		}
+
+		inline Sampler* timeSampler() const
+		{
+			return mTimeSampler;
+		}
+
+		inline void setTimeSampler(Sampler* sampler)
+		{
+			mTimeSampler = sampler;
+		}
+
+		inline Sampler* spectralSampler() const
+		{
+			return mSpectralSampler;
+		}
+
+		inline void setSpectralSampler(Sampler* sampler)
+		{
+			mSpectralSampler = sampler;
 		}
 
 		inline const RenderStatistics& stats() const
@@ -84,7 +114,10 @@ namespace PR
 		RenderThread* mThread;
 		uint32 mIndex;
 		Random mRandom;
-		Sampler* mPixelSampler;
+		Sampler* mAASampler;
+		Sampler* mLensSampler;
+		Sampler* mTimeSampler;
+		Sampler* mSpectralSampler;
 		RenderStatistics mStatistics;
 	};
 }

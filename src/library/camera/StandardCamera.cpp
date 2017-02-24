@@ -116,7 +116,7 @@ namespace PR
 	// nx, ny -> [-1,1]
 	// rx, ry -> [0, 1]
 	// t -> [0, inf]
-	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t) const
+	Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const
 	{
 		PR_ASSERT(isFrozen(), "has to be frozen");
 
@@ -128,7 +128,7 @@ namespace PR
 					PM::pm_Add(position(),
 						PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
 					mDirection_Cache,
-					0,t);
+					0,t,wavelength);
 		}
 		else
 		{
@@ -148,14 +148,14 @@ namespace PR
 				return Ray(0,0, // Will be set by render context
 					PM::pm_Add(position(), eyePoint),
 					rayDir,
-					0,t);
+					0,t,wavelength);
 			}
 			else
 			{
 				return Ray(0,0, // Will be set by render context
 					position(),
 					PM::pm_QualityNormalize3D(viewPlane),
-					0,t);
+					0,t,wavelength);
 			}
 		}
 	}

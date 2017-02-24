@@ -107,7 +107,7 @@ namespace PR
 						other_sc.P,
 						L,
 						0,
-						in.time(),
+						in.time(), in.wavelength(),
 						in.flags() | RF_Light);
 
 					for (uint32 k = 1;
@@ -166,8 +166,8 @@ namespace PR
 		// Temporary
 		ShaderClosure other_sc;
 		Spectrum other_weight;
-		Spectrum path_weight;
-			Spectrum weight;
+		float path_weight;
+		Spectrum weight;
 
 		RenderEntity* entity = context->shootWithEmission(applied, in, sc);
 		if (!entity || !sc.Material || !sc.Material->canBeShaded())
@@ -218,7 +218,7 @@ namespace PR
 						lightV.SC.P,
 						PM::pm_Normalize3D(LP),
 						in.depth() + 1,
-						in.time(),
+						in.time(), in.wavelength(),
 						in.flags() | RF_Light);
 
 					const PM::vec3 L = PM::pm_Negate(current.direction());

@@ -46,9 +46,17 @@ private:
 	IProperty* mIntegratorProp;
 	IProperty* mDebugVisualizationProp;
 
-	IProperty* mPixelSamplerGroupProp;
-	IProperty* mPixelSamplerProp;
-	IProperty* mPixelSamplesProp;
+	IProperty* mSamplerGroupProp;
+	IProperty* mSamplerAAProp;
+	IProperty* mSamplerAAMaxProp;
+	IProperty* mSamplerLensProp;
+	IProperty* mSamplerLensMaxProp;
+	IProperty* mSamplerTimeProp;
+	IProperty* mSamplerTimeMaxProp;
+	IProperty* mSamplerTimeMappingProp;
+	IProperty* mSamplerTimeScaleProp;
+	IProperty* mSamplerSpectralProp;
+	IProperty* mSamplerSpectralMaxProp;
 
 	IProperty* mDirectLightningGroupProp;
 	IProperty* mMaxLightSamplesProp;

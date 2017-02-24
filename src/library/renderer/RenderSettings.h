@@ -50,6 +50,13 @@ namespace PR
 		TM_Spiral
 	};
 
+	enum TimeMappingMode
+	{
+		TMM_Center,// [0.5, 0.5]
+		TMM_Left,// [-1, 0]
+		TMM_Right// [0, 1]
+	};
+
 	class PR_LIB RenderSettings
 	{
 	public:
@@ -64,16 +71,43 @@ namespace PR
 		inline IntegratorMode integratorMode() const { return mIntegratorMode; }
 		inline void setIntegratorMode(IntegratorMode mode) { mIntegratorMode = mode; }
 
-		inline float unitScale() const { return mUnitScale; }
-		inline void setUnitScale(float f) { mUnitScale = f; }
+		// Sampler
+		inline SamplerMode aaSampler() const { return mAASampler; }
+		inline void setAASampler(SamplerMode mode) { mAASampler = mode; }
 
-		// Pixel
-		inline SamplerMode pixelSampler() const { return mPixelSampler; }
-		inline void setPixelSampler(SamplerMode mode) { mPixelSampler = mode; }
+		inline uint32 maxAASampleCount() const { return mMaxAASampleCount; }
+		inline void setMaxAASampleCount(uint32 v) { mMaxAASampleCount = v; }
 
-		inline uint32 maxPixelSampleCount() const { return mMaxPixelSampleCount; }
-		inline void setMaxPixelSampleCount(uint32 v) { mMaxPixelSampleCount = v; }
+		inline SamplerMode lensSampler() const { return mLensSampler; }
+		inline void setLensSampler(SamplerMode mode) { mLensSampler = mode; }
 
+		inline uint32 maxLensSampleCount() const { return mMaxLensSampleCount; }
+		inline void setMaxLensSampleCount(uint32 v) { mMaxLensSampleCount = v; }
+
+		inline SamplerMode timeSampler() const { return mTimeSampler; }
+		inline void setTimeSampler(SamplerMode mode) { mTimeSampler = mode; }
+
+		inline uint32 maxTimeSampleCount() const { return mMaxTimeSampleCount; }
+		inline void setMaxTimeSampleCount(uint32 v) { mMaxTimeSampleCount = v; }
+
+		inline TimeMappingMode timeMappingMode() const { return mTimeMappingMode; }
+		inline void setTimeMappingMode(TimeMappingMode mode) { mTimeMappingMode = mode; }
+
+		inline float timeScale() const { return mTimeScale; }
+		inline void setTimeScale(float s) { mTimeScale = s; }
+
+		inline SamplerMode spectralSampler() const { return mSpectralSampler; }
+		inline void setSpectralSampler(SamplerMode mode) { mSpectralSampler = mode; }
+
+		inline uint32 maxSpectralSampleCount() const { return mMaxSpectralSampleCount; }
+		inline void setMaxSpectralSampleCount(uint32 v) { mMaxSpectralSampleCount = v; }
+
+		inline uint32 maxCameraSampleCount() const
+		{
+			return mMaxAASampleCount * mMaxLensSampleCount * mMaxTimeSampleCount * mMaxSpectralSampleCount;
+		}
+
+		// Rays
 		inline uint32 maxDiffuseBounces() const { return mMaxDiffuseBounces; }
 		inline void setMaxDiffuseBounces(uint32 v) { mMaxDiffuseBounces = v; }
 
@@ -101,10 +135,6 @@ namespace PR
 		inline const PPMSettings& ppm() const { return mPPM; }
 		inline PPMSettings& ppm() { return mPPM; }
 
-		// Distortion Sampling
-		inline float distortionQuality() const { return mDistortionQuality; }
-		inline void setDistortionQuality(float f) { mDistortionQuality = f; }
-
 		// Display Rendering
 		inline TileMode tileMode() const { return mTileMode; }
 		inline void setTileMode(TileMode m) { mTileMode = m; }
@@ -113,13 +143,23 @@ namespace PR
 		DebugMode mDebugMode;
 		IntegratorMode mIntegratorMode;
 
-		SamplerMode mPixelSampler;
-		uint32 mMaxPixelSampleCount;
+		// Sampler
+		SamplerMode mAASampler;
+		uint32 mMaxAASampleCount;
+		SamplerMode mLensSampler;
+		uint32 mMaxLensSampleCount;
+		
+		SamplerMode mTimeSampler;
+		uint32 mMaxTimeSampleCount;
+		TimeMappingMode mTimeMappingMode;
+		float mTimeScale;
 
+		SamplerMode mSpectralSampler;
+		uint32 mMaxSpectralSampleCount;
+
+		// Rays
 		uint32 mMaxDiffuseBounces;
 		uint32 mMaxRayDepth;
-
-		float mUnitScale;
 
 		//Crop
 		float mCropMaxX;
@@ -132,9 +172,6 @@ namespace PR
 
 		// PPM
 		PPMSettings mPPM;
-
-		// Distortion Sampling
-		float mDistortionQuality;
 
 		// Display Rendering
 		TileMode mTileMode;

@@ -7,13 +7,21 @@ namespace PR
 		mDebugMode(DM_None),
 		mIntegratorMode(IM_BiDirect),
 
-		mPixelSampler(SM_MultiJitter),
-		mMaxPixelSampleCount(4),
+		mAASampler(SM_MultiJitter),
+		mMaxAASampleCount(4),
+		mLensSampler(SM_MultiJitter),
+		mMaxLensSampleCount(1),
+
+		mTimeSampler(SM_MultiJitter),
+		mMaxTimeSampleCount(1),
+		mTimeMappingMode(TMM_Center),
+		mTimeScale(1),
+
+		mSpectralSampler(SM_MultiJitter),
+		mMaxSpectralSampleCount(1),
 
 		mMaxDiffuseBounces(2),
 		mMaxRayDepth(10),
-
-		mUnitScale(0.01f),// For future use
 
 		// Crop
 		mCropMaxX(1), mCropMinX(0),
@@ -24,9 +32,6 @@ namespace PR
 
 		// PPM
 		mPPM(),
-
-		// Distortion Sampling
-		mDistortionQuality(0.1f),
 
 		// Display Rendering
 		mTileMode(TM_Linear)
