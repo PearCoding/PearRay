@@ -32,17 +32,6 @@ namespace PR
 	{
 	}
 
-	inline Spectrum::Spectrum(const Spectrum& spec)
-	{
-		std::copy(spec.mValues, spec.mValues+SAMPLING_COUNT, mValues);
-	}
-
-	inline Spectrum& Spectrum::operator = (const Spectrum& spec)
-	{
-		std::copy(spec.mValues, spec.mValues+SAMPLING_COUNT, mValues);
-		return *this;
-	}
-
 	inline Spectrum Spectrum::operator + (const Spectrum& spec) const
 	{
 		Spectrum tmp = *this;
@@ -318,14 +307,6 @@ namespace PR
 		}
 
 		return true;
-	}
-
-	inline Spectrum Spectrum::fromRectangularFunction(uint32 si, uint32 ei, float factor)
-	{
-		PR_ASSERT(si < ei, "si has to be less than ei");
-		Spectrum spec;
-		spec.fill(si, ei, factor);
-		return spec;
 	}
 
 	// Global

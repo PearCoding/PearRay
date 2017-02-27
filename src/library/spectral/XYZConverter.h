@@ -12,10 +12,10 @@ namespace PR
 
 	public:
 		//len(src) == SAMPLING_COUNT
-		static void convert(const float* src, float &x, float &y, float &z);
-		static inline void convert(const Spectrum& s, float &x, float &y, float &z)
+		static void convert(const float* src, float &x, float &y);
+		static inline void convert(const Spectrum& s, float &x, float &y)
 		{
-			convert(s.ptr(), x, y, z);
+			convert(s.ptr(), x, y);
 		}
 
 		static float luminance(float x, float y, float z) { return y; }

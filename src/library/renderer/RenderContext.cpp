@@ -327,7 +327,7 @@ namespace PR
 			return;
 
 		ShaderClosure sc;
-		const auto aaM = mRenderSettings.maxAASampleCount();
+		//const auto aaM = mRenderSettings.maxAASampleCount();
 		const auto lensM = mRenderSettings.maxLensSampleCount();
 		const auto timeM = mRenderSettings.maxTimeSampleCount();
 		const auto spectralM = mRenderSettings.maxSpectralSampleCount();

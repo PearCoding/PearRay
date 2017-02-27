@@ -44,7 +44,7 @@ namespace PR
 # endif
 	}
 
-	void XYZConverter::convert(const float* src, float &x, float &y, float &z)
+	void XYZConverter::convert(const float* src, float &x, float &y)
 	{
 		float X, Y, Z;
 		convertXYZ(src, X, Y, Z);
@@ -54,11 +54,10 @@ namespace PR
 		{
 			x = X / m;
 			y = Y / m;
-			z = 1 - x - y;
 		}
 		else
 		{
-			x = 0; y = 0; z = 0;
+			x = 0; y = 0;
 		}
 	}
 

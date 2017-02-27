@@ -208,29 +208,27 @@ PR_TEST("-> XYZ")
 	PR::Spectrum spec;
 	spec.fill(1);
 
-	float X, Y, Z;
-	PR::XYZConverter::convert(spec, X, Y, Z);
+	float X, Y;
+	PR::XYZConverter::convert(spec, X, Y);
 	PR_CHECK_NEARLY_EQ(X, 1/3.0f);
 	PR_CHECK_NEARLY_EQ(Y, 1/3.0f);
-	PR_CHECK_NEARLY_EQ(Z, 1/3.0f);
 }
 
 PR_TEST("<-> XYZ")
 {
 	float x = 1/3.0f;
 	PR::Spectrum spec = PR::XYZConverter::toSpec(x,x,x);
-	float X, Y, Z;
-	PR::XYZConverter::convert(spec, X, Y, Z);
+	float X, Y;
+	PR::XYZConverter::convert(spec, X, Y);
 	PR_CHECK_NEARLY_EQ(X, x);
 	PR_CHECK_NEARLY_EQ(Y, x);
-	PR_CHECK_NEARLY_EQ(Z, x);
 }
 PR_TEST("<-> XYZ")
 {
 	float x = 0.4f;	float y = 0.2f;	float z = 0.4f;
 	PR::Spectrum spec = PR::XYZConverter::toSpec(x,y,z);
 	float X, Y, Z;
-	PR::XYZConverter::convert(spec, X, Y, Z);
+	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
 	PR_CHECK_NEARLY_EQ(X, x);
 	PR_CHECK_NEARLY_EQ(Y, y);
 	PR_CHECK_NEARLY_EQ(Z, z);
@@ -241,7 +239,7 @@ PR_TEST("<-> XYZ")
 	float b = x+y+z;
 	PR::Spectrum spec = PR::XYZConverter::toSpec(x,y,z);
 	float X, Y, Z;
-	PR::XYZConverter::convert(spec, X, Y, Z);
+	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
 	PR_CHECK_NEARLY_EQ(X, x/b);
 	PR_CHECK_NEARLY_EQ(Y, y/b);
 	PR_CHECK_NEARLY_EQ(Z, z/b);

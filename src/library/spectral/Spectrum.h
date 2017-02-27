@@ -29,8 +29,10 @@ namespace PR
 		inline explicit Spectrum(const float* data);// Be cautious!
 		inline ~Spectrum();
 
-		inline Spectrum(const Spectrum& spec);
-		inline Spectrum& operator = (const Spectrum& spec);
+		Spectrum(const Spectrum& spec) = default;
+		Spectrum(Spectrum&& spec) = default;
+		Spectrum& operator = (const Spectrum& spec) = default;
+		Spectrum& operator = (Spectrum&& spec) = default;
 
 		inline Spectrum operator + (const Spectrum& spec) const;
 		inline Spectrum& operator += (const Spectrum& spec);
@@ -88,7 +90,6 @@ namespace PR
 		float luminousFlux() const;
 
 		static Spectrum fromBlackbody(float temp);// Temp in Kelvin (K), Output W·sr^−1·m^−3
-		inline static Spectrum fromRectangularFunction(uint32 si, uint32 ei, float factor=1.0f);// si = start_index, ei = end_index
 
 	private:
 		float mValues[SAMPLING_COUNT];

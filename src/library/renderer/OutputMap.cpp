@@ -30,7 +30,6 @@ namespace PR
 		if(!mIntCounter[V_Samples])
 			mIntCounter[V_Samples] = new OutputCounter(mRenderer, 0);
 
-		PM::avec3 zeroV = {0,0,0};
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
 			if(mInt1D[i])

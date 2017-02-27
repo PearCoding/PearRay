@@ -37,6 +37,8 @@ option(PR_ONLY_LIBRARY "Compile only the main and util library." OFF)
 option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
 option(PR_WITH_ASSERTS "Compile with asserts on. Disable only in deployment code!" ON)
 option(PR_WITH_GPU_SUPPORT "Build framework with GPU support if available." ON)
+option(PR_WITH_PYTHON "Compile with python API." ON)
+option(PR_WITH_OSL "Compile with OSL support if available." ON)
 #option(PR_WITH_NETWORK "Enable network support." ON)
 option(PR_USE_TRIANGLE_WATERTIGHT "Use Watertight triangle intersection algorithm instead of Trombore." OFF)
 option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT library." ON)
@@ -62,7 +64,10 @@ IF(PR_WITH_GPU_SUPPORT)
 ENDIF()
 find_package(OpenImageIO REQUIRED)
 find_package(TBB REQUIRED)
-#find_package(OSL)
+
+IF(PR_WITH_OSL)
+	find_package(OSL)
+ENDIF()
 
 IF(OIIO_LINK_STATIC)# If static, the dependencies of OIIO has to be included aswell.
 	find_package(PNG REQUIRED)
@@ -75,6 +80,20 @@ ENDIF()
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
+
+IF(PR_WITH_PYTHON)
+	SET(TMP_BOOST_LIBS ${Boost_LIBRARIES})
+	find_package(Boost 1.45 COMPONENTS python)
+	IF(Boost_FOUND)
+		find_package(PythonLibs)
+		find_package(PythonInterp)
+		IF(PythonLibs_FOUND AND PythonInterp_FOUND)
+  			include_directories(${PYTHON_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+			SET(PR_HAS_PYTHON True)
+		ENDIF()
+	ENDIF()
+	SET(Boost_LIBRARIES ${Boost_LIBRARIES} ${TMP_BOOST_LIBS})
+ENDIF()
 
 IF(MSVC)
 	SET(DEFS "${DEFS};_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE")
@@ -182,45 +201,52 @@ ENDIF()
 
 # Setup CPPLINT
 IF(PR_CPP_CHECK)
-find_package(PythonInterp)
-SET(PR_CPPLINT_CMD "cpplint" CACHE FILEPATH "cpplint python script")
+	if(NOT PythonInterp_FOUND)
+		find_package(PythonInterp)
+	endif()
 
-set(PR_CPPLINT_STYLE)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/braces,)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/tab,)
-#set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_order,)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/namespaces,)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_what_you_use,)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include,)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-legal/copyright,)
-set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-readability/namespace,)
+	SET(PR_CPPLINT_CMD "cpplint" CACHE FILEPATH "cpplint python script")
 
-function(add_cpplint_target TARGET_NAME SOURCES_LIST)
-  if(NOT PYTHONINTERP_FOUND)
-    return()
-  endif()
+	set(PR_CPPLINT_STYLE)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/braces,)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/tab,)
+	#set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_order,)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/namespaces,)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_what_you_use,)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include,)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-legal/copyright,)
+	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-readability/namespace,)
 
-  add_custom_target(${TARGET_NAME}
-    COMMAND "${CMAKE_COMMAND}" -E chdir
-            "${CMAKE_CURRENT_SOURCE_DIR}"
-            "${PYTHON_EXECUTABLE}"
-            "${PR_CPPLINT_CMD}"
-            "--filter=${PR_CPPLINT_STYLE}"
-            "--counting=detailed"
-            "--extensions=cpp,h,inl"
-            "--headers=h,inl"
-            "--linelength=80"
-            ${SOURCES_LIST}
-    DEPENDS ${SOURCES_LIST}
-    COMMENT "Checking C++ Style ${TARGET_NAME}"
-    VERBATIM)
+	function(add_cpplint_target TARGET_NAME SOURCES_LIST)
+	if(NOT PYTHONINTERP_FOUND)
+		return()
+	endif()
 
-endfunction()
+	add_custom_target(${TARGET_NAME}
+		COMMAND "${CMAKE_COMMAND}" -E chdir
+				"${CMAKE_CURRENT_SOURCE_DIR}"
+				"${PYTHON_EXECUTABLE}"
+				"${PR_CPPLINT_CMD}"
+				"--filter=${PR_CPPLINT_STYLE}"
+				"--counting=detailed"
+				"--extensions=cpp,h,inl"
+				"--headers=h,inl"
+				"--linelength=80"
+				${SOURCES_LIST}
+		DEPENDS ${SOURCES_LIST}
+		COMMENT "Checking C++ Style ${TARGET_NAME}"
+		VERBATIM)
+
+	endfunction()
 ENDIF()
 
 # Libraries
 add_subdirectory(src/library)
 add_subdirectory(src/utils)
+
+IF(PR_HAS_PYTHON)
+	add_subdirectory(src/python)
+ENDIF()
 
 IF(OSL_FOUND)
 	include_directories(${OSL_INCLUDE_DIR})

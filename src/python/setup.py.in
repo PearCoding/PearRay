@@ -1,0 +1,10 @@
+from distutils.core import setup
+from distutils.extension import Extension
+
+setup(name='pearray',
+      version='${PR_Version}',
+      package_dir={'': '${CMAKE_CURRENT_BINARY_DIR}' },
+      packages=['pearray'],
+      package_data={'pearray': ['pypearray.so']})
+
+

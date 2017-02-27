@@ -139,7 +139,8 @@ namespace PR
 					XYZConverter::convertXYZ(specIn[i], r, g, b);
 					break;
 				case TCM_XYZ_NORM:
-					XYZConverter::convert(specIn[i], r, g, b);
+					XYZConverter::convert(specIn[i], r, g);
+					b = 1-r-g;
 					break;
 				case TCM_LUMINANCE:
 					RGBConverter::convert(specIn[i], r, g, b);

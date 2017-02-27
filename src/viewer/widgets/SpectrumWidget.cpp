@@ -164,7 +164,8 @@ void SpectrumWidget::cache()
 		qBound<int>(0, G * 255, 255),
 		qBound<int>(0, B * 255, 255));
 
-	PR::XYZConverter::convert(mSpectrum, R, G, B);
+	PR::XYZConverter::convert(mSpectrum, R, G);
+	B = 1-R-G;
 	mSpecXYZNorm = QColor(qBound<int>(0, R * 255, 255),
 		qBound<int>(0, G * 255, 255),
 		qBound<int>(0, B * 255, 255));

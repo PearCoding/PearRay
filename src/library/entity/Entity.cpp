@@ -66,9 +66,9 @@ namespace PR
 			<< "|" << PM::pm_GetY(mRotation)
 			<< "|" << PM::pm_GetZ(mRotation)
 			<< "|" << PM::pm_GetW(mRotation) << "}" << std::endl
-			<< "  Flag&Debug:      " << (mFlags & EF_Debug != 0 ? "true" : "false") << std::endl
-			<< "  Flag&LocalArea:  " << (mFlags & EF_LocalArea != 0 ? "true" : "false") << std::endl
-			<< "  Flag&ScaleLight: " << (mFlags & EF_ScaleLight != 0 ? "true" : "false") << std::endl;
+			<< "  Flag&Debug:      " << ((mFlags & EF_Debug) != 0 ? "true" : "false") << std::endl
+			<< "  Flag&LocalArea:  " << ((mFlags & EF_LocalArea) != 0 ? "true" : "false") << std::endl
+			<< "  Flag&ScaleLight: " << ((mFlags & EF_ScaleLight) != 0 ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
