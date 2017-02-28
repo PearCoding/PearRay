@@ -10,7 +10,7 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* PlaneParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> PlaneParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data materialD = group.getFromKey("material");
@@ -57,7 +57,7 @@ namespace PRU
 		if(centeringD.type() == DL::Data::T_Bool && centeringD.getBool())
 			pos = PM::pm_Add(PM::pm_Scale(xAxis, -0.5f), PM::pm_Scale(yAxis, -0.5f));
 
-		PlaneEntity* entity = new PlaneEntity(env->scene()->entities().size()+1, name,
+		auto entity = std::make_shared<PlaneEntity>(env->scene().entities().size()+1, name,
 			Plane(pos, xAxis, yAxis));
 
 		if (materialD.type() == DL::Data::T_String)

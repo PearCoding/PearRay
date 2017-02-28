@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	PRU::Environment* env = PRU::SceneLoader().loadFromFile(options.InputFile);
 	PR_END_PROFILE_ID(0);
 
-	if(!env || !env->scene())
+	if(!env)
 	{
 		if(!options.IsQuiet)
 			std::cout << "Error while parsing input." << std::endl;
@@ -104,11 +104,11 @@ int main(int argc, char** argv)
 	PR_END_PROFILE_ID(1);
 
 	PR_BEGIN_PROFILE_ID(2);
-	env->scene()->freeze();// Freeze entities
+	env->scene().freeze();// Freeze entities
 	PR_END_PROFILE_ID(2);
 
 	PR_BEGIN_PROFILE_ID(3);
-	env->scene()->buildTree();
+	env->scene().buildTree();
 	PR_END_PROFILE_ID(3);
 
 	env->outputSpecification().init(renderFactory);
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 			renderer->offsetY(), renderer->offsetY()+renderer->height());
 
 		env->outputSpecification().setup(renderer);
-		env->scene()->setup(renderer);
+		env->scene().setup(renderer);
 			
 		if(options.ShowInformation)
 			env->dumpInformation();

@@ -35,7 +35,7 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		if(!m || m == mMaterial)
+		if(!m || m == mMaterial.get())
 		{
 			if(flags() & EF_LocalArea)
 				return localBoundingBox().surfaceArea();
@@ -48,12 +48,12 @@ namespace PR
 		}
 	}
 
-	void BoundaryEntity::setMaterial(Material* m)
+	void BoundaryEntity::setMaterial(const std::shared_ptr<Material>& m)
 	{
 		mMaterial = m;
 	}
 
-	Material* BoundaryEntity::material() const
+	const std::shared_ptr<Material>& BoundaryEntity::material() const
 	{
 		return mMaterial;
 	}
@@ -102,7 +102,7 @@ namespace PR
 			float u, v;
 			plane.project(vertex, u, v);
 			collisionPoint.UV = PM::pm_Set(u, v);
-			collisionPoint.Material = material();
+			collisionPoint.Material = material().get();
 			return true;
 		}
 		return false;
@@ -128,7 +128,7 @@ namespace PR
 		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
-		fp.Material = material();
+		fp.Material = material().get();
 
 		pdf = 1;
 		return fp;

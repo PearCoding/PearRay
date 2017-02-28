@@ -10,13 +10,13 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* MeshParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> MeshParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data materialsD = group.getFromKey("materials");
 		DL::Data meshD = group.getFromKey("mesh");
 
-		MeshEntity* me = new MeshEntity(env->scene()->entities().size()+1, name);
+		auto me = std::make_shared<MeshEntity>(env->scene().entities().size()+1, name);
 
 		if (meshD.type() == DL::Data::T_String)
 		{
@@ -27,14 +27,12 @@ namespace PRU
 			else
 			{
 				PR_LOGGER.logf(L_Error, M_Scene, "Couldn't find mesh %s.", meshD.getString().c_str());
-				delete me;
 				return nullptr;
 			}
 		}
 		else
 		{
 			PR_LOGGER.logf(L_Error, M_Scene, "Invalid mesh entry found.");
-			delete me;
 			return nullptr;
 		}
 		

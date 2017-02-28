@@ -66,4 +66,9 @@ namespace PRPY
     {
         return to4D(obj);
     }
+
+    void setup_math()
+    {
+        bpy::class_<PM::avec4>("vec");
+    }
 }

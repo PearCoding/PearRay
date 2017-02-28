@@ -9,15 +9,15 @@ namespace PR
 	public:
 		BlinnPhongMaterial(uint32 id);
 
-		SpectralShaderOutput* albedo() const;
-		void setAlbedo(SpectralShaderOutput* diffSpec);
+		const std::shared_ptr<SpectralShaderOutput>& albedo() const;
+		void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
 
-		ScalarShaderOutput* shininess() const;
-		void setShininess(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& shininess() const;
+		void setShininess(const std::shared_ptr<ScalarShaderOutput>& data);
 
-		//Normalized wavelength [0, 1] ~ 360 - 800
-		SpectralShaderOutput* fresnelIndex() const;
-		void setFresnelIndex(SpectralShaderOutput* data);
+		//Normalized wavelength [0, 1] ~ 380 - 780
+		const std::shared_ptr<SpectralShaderOutput>& fresnelIndex() const;
+		void setFresnelIndex(const std::shared_ptr<SpectralShaderOutput>& data);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
@@ -25,8 +25,8 @@ namespace PR
 
 		virtual std::string dumpInformation() const override;
 	private:
-		SpectralShaderOutput* mAlbedo;
-		ScalarShaderOutput* mShininess;
-		SpectralShaderOutput* mIndex;
+		std::shared_ptr<SpectralShaderOutput> mAlbedo;
+		std::shared_ptr<ScalarShaderOutput> mShininess;
+		std::shared_ptr<SpectralShaderOutput> mIndex;
 	};
 }

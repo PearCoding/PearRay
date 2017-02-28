@@ -15,22 +15,22 @@ namespace PR
 	{
 	}
 
-	SpectralShaderOutput* OrenNayarMaterial::albedo() const
+	const std::shared_ptr<SpectralShaderOutput>& OrenNayarMaterial::albedo() const
 	{
 		return mAlbedo;
 	}
 
-	void OrenNayarMaterial::setAlbedo(SpectralShaderOutput* diffSpec)
+	void OrenNayarMaterial::setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec)
 	{
 		mAlbedo = diffSpec;
 	}
 
-	ScalarShaderOutput* OrenNayarMaterial::roughness() const
+	const std::shared_ptr<ScalarShaderOutput>& OrenNayarMaterial::roughness() const
 	{
 		return mRoughness;
 	}
 
-	void OrenNayarMaterial::setRoughness(ScalarShaderOutput* d)
+	void OrenNayarMaterial::setRoughness(const std::shared_ptr<ScalarShaderOutput>& d)
 	{
 		mRoughness = d;
 	}

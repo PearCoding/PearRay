@@ -28,7 +28,7 @@ namespace PR
 		friend class RenderThreadContext;
 	public:
 		RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-			Camera* cam, Scene* scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
+			Camera* cam, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
 		virtual ~RenderContext();
 
 		inline uint32 index() const { return mIndex; }
@@ -72,7 +72,7 @@ namespace PR
 		RenderStatistics stats() const;
 		float percentFinished() const;
 
-		inline Scene* scene() const { return mScene; }
+		inline const Scene& scene() const { return mScene; }
 		inline Camera* camera() const { return mCamera; }
 		inline std::string workingDir() const { return mWorkingDir; }
 		inline OutputMap* output() const { return mOutputMap; }
@@ -105,7 +105,7 @@ namespace PR
 		const std::string mWorkingDir;
 
 		Camera* const mCamera;
-		Scene* const mScene;
+		const Scene& mScene;
 		OutputMap* mOutputMap;
 
 		std::list<RenderEntity*> mLights;

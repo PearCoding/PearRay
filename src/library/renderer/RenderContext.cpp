@@ -40,7 +40,7 @@
 namespace PR
 {
 	RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-		Camera* cam, Scene* scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings) :
+		Camera* cam, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings) :
 		mIndex(index), mOffsetX(ox), mOffsetY(oy), mWidth(w), mHeight(h), mFullWidth(fw), mFullHeight(fh),
 		mWorkingDir(workingDir),
 		mCamera(cam), mScene(scene),
@@ -50,7 +50,6 @@ namespace PR
 		mRenderSettings(settings), mGPU(gpu), mIntegrator(nullptr), mShouldStop(false)
 	{
 		PR_ASSERT(cam, "Given camera has to be valid");
-		PR_ASSERT(scene, "Given scene has to be valid");
 
 		reset();
 
@@ -133,10 +132,10 @@ namespace PR
 		reset();
 
 		/* Setup entities */
-		for (RenderEntity* entity : mScene->renderEntities())
+		for (const auto& entity : mScene.renderEntities())
 		{
 			if(entity->isLight())
-				mLights.push_back(entity);
+				mLights.push_back(entity.get());
 		}
 
 		/* Setup integrators */
@@ -406,7 +405,7 @@ namespace PR
 			sc.Flags = 0;
 
 			FaceSample fs;
-			RenderEntity* entity = mScene->checkCollision(ray, fs);
+			RenderEntity* entity = mScene.checkCollision(ray, fs);
 			sc = fs;
 
 			sc.NgdotV = PM::pm_Dot3D(ray.direction(), sc.Ng);
@@ -453,7 +452,7 @@ namespace PR
 		if (ray.depth() < mRenderSettings.maxRayDepth())
 		{
 			FaceSample fs;
-			bool found = mScene->checkIfCollides(ray, fs);
+			bool found = mScene.checkIfCollides(ray, fs);
 
 			if(context)
 			{
@@ -494,7 +493,7 @@ namespace PR
 		{
 			appliedSpec.clear();
 
-			for(IInfiniteLight* e : mScene->infiniteLights())
+			for(const auto& e : mScene.infiniteLights())
 				appliedSpec += e->apply(ray.direction());
 
 			if(context)

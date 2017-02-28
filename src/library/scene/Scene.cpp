@@ -21,26 +21,39 @@ namespace PR
 		clear();
 	}
 
-	void Scene::addEntity(Entity* e)
+	void Scene::addEntity(const std::shared_ptr<Entity>& e)
 	{
 		PR_ASSERT(e, "Given entity should be valid");
 		mEntities.push_back(e);
-		if (e->isRenderable())
-			mRenderEntities.push_back((RenderEntity*)e);
 	}
 
-	void Scene::removeEntity(Entity* e)
+	void Scene::removeEntity(const std::shared_ptr<Entity>& e)
 	{
 		PR_ASSERT(e, "Given entity should be valid");
 		mEntities.remove(e);
-
-		if (e->isRenderable())
-			mRenderEntities.remove((RenderEntity*)e);
 	}
 
-	Entity* Scene::getEntity(const std::string& name, const std::string& type) const
+	void Scene::addEntity(const std::shared_ptr<RenderEntity>& e)
 	{
-		for (Entity* entity : mEntities)
+		PR_ASSERT(e, "Given entity should be valid");
+		mRenderEntities.remove(e);
+	}
+
+	void Scene::removeEntity(const std::shared_ptr<RenderEntity>& e)
+	{
+		PR_ASSERT(e, "Given entity should be valid");
+		mRenderEntities.push_back(e);
+	}
+
+	std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::string& type) const
+	{
+		for (const auto& entity : mEntities)
+		{
+			if (entity->name() == name && entity->type() == type)
+				return entity;
+		}
+
+		for (const auto& entity : mRenderEntities)
 		{
 			if (entity->name() == name && entity->type() == type)
 				return entity;
@@ -49,13 +62,13 @@ namespace PR
 		return nullptr;
 	}
 
-	void Scene::addInfiniteLight(IInfiniteLight* e)
+	void Scene::addInfiniteLight(const std::shared_ptr<IInfiniteLight>& e)
 	{
 		PR_ASSERT(e, "Given light should be valid");
 		mInfiniteLights.push_back(e);
 	}
 
-	void Scene::removeInfiniteLight(IInfiniteLight* e)
+	void Scene::removeInfiniteLight(const std::shared_ptr<IInfiniteLight>& e)
 	{
 		PR_ASSERT(e, "Given light should be valid");
 		mInfiniteLights.remove(e);
@@ -63,13 +76,8 @@ namespace PR
 
 	void Scene::clear()
 	{
-		for (Entity* e : mEntities)
-			delete e;
 		mEntities.clear();
 		mRenderEntities.clear();
-
-		for (IInfiniteLight* e : mInfiniteLights)
-			delete e;
 		mInfiniteLights.clear();
 
 		if (mKDTree)
@@ -103,7 +111,13 @@ namespace PR
 		[](RenderEntity* e) {
 			return (float)e->collisionCost();
 		});
-		((SceneKDTree*)mKDTree)->build(mRenderEntities.begin(), mRenderEntities.end(), mRenderEntities.size(),
+
+		std::vector<RenderEntity*> list;
+		list.reserve(mRenderEntities.size());
+		for(const auto& e : mRenderEntities)
+			list.push_back(e.get());
+		
+		((SceneKDTree*)mKDTree)->build(list.begin(), list.end(), list.size(),
 			[](RenderEntity* e){ return !e->isCollidable(); });
 	}
 
@@ -121,16 +135,16 @@ namespace PR
 
 	void Scene::freeze()
 	{
-		for (Entity* e : mEntities)
+		for (const auto& e : mEntities)
 			e->freeze();
 
-		for (IInfiniteLight* e : mInfiniteLights)
+		for (const auto& e : mInfiniteLights)
 			e->freeze();
 	}
 
 	void Scene::setup(RenderContext* context)
 	{
-		for (RenderEntity* e: mRenderEntities)
+		for (const auto& e: mRenderEntities)
 			e->setup(context);
 	}
 

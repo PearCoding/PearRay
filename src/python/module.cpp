@@ -17,6 +17,7 @@ namespace PRPY
     void setup_spectral();
     void setup_entity();
     void setup_ray();
+    void setup_shader();
 }
 //----------
 BOOST_PYTHON_MODULE(pypearray)
@@ -26,5 +27,6 @@ BOOST_PYTHON_MODULE(pypearray)
     PRPY::setup_logger();
     PRPY::setup_spectral();
     PRPY::setup_ray();
+    PRPY::setup_shader();
     PRPY::setup_entity();
 }

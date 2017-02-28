@@ -16,8 +16,8 @@ namespace PR
 		virtual bool isLight() const override;
 		virtual float surfaceArea(Material* m) const override;
 
-		void setMaterial(Material* m);
-		Material* material() const;
+		void setMaterial(const std::shared_ptr<Material>& m);
+		const std::shared_ptr<Material>& material() const;
 
 		void setRadius(float f);
 		float radius() const;
@@ -33,6 +33,6 @@ namespace PR
 		virtual void setup(RenderContext* context) override;
 	private:
 		float mRadius;
-		Material* mMaterial;
+		std::shared_ptr<Material> mMaterial;
 	};
 }

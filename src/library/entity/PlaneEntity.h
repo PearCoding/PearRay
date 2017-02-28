@@ -17,8 +17,8 @@ namespace PR
 		virtual bool isLight() const override;
 		virtual float surfaceArea(Material* m) const override;
 
-		void setMaterial(Material* m);
-		Material* material() const;
+		void setMaterial(const std::shared_ptr<Material>& m);
+		const std::shared_ptr<Material>& material() const;
 
 		void setPlane(const Plane& plane);
 		Plane plane() const;
@@ -37,7 +37,7 @@ namespace PR
 		virtual void setup(RenderContext* context) override;
 	private:
 		Plane mPlane;
-		Material* mMaterial;
+		std::shared_ptr<Material> mMaterial;
 
 		Plane mGlobalPlane_Cache;
 	};

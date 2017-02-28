@@ -11,7 +11,7 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* BoundaryParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> BoundaryParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data materialD = group.getFromKey("material");
@@ -42,7 +42,7 @@ namespace PRU
 			PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no size. Assuming unit cube.", name.c_str());
 		}
 
-		BoundaryEntity* bnd = new BoundaryEntity(env->scene()->entities().size()+1, name,
+		auto bnd = std::make_shared<BoundaryEntity>(env->scene().entities().size()+1, name,
 			BoundingBox(PM::pm_GetX(size), PM::pm_GetY(size), PM::pm_GetZ(size)));
 
 		if (materialD.type() == DL::Data::T_String)

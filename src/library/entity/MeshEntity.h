@@ -3,6 +3,7 @@
 #include "RenderEntity.h"
 
 #include <vector>
+#include <memory>
 
 namespace PR
 {
@@ -19,12 +20,12 @@ namespace PR
 		virtual bool isLight() const override;
 		virtual float surfaceArea(Material* m) const override;
 
-		void setMesh(TriMesh* mesh);
-		TriMesh* mesh() const;
+		void setMesh(const std::shared_ptr<TriMesh>& mesh);
+		const std::shared_ptr<TriMesh>& mesh() const;
 
 		void reserveMaterialSlots(size_t count);
-		void setMaterial(uint32 slot, Material* m);
-		Material* material(uint32 slot) const;
+		void setMaterial(uint32 slot, const std::shared_ptr<Material>& m);
+		std::shared_ptr<Material> material(uint32 slot) const;
 
 		virtual bool isCollidable() const override;
 		virtual float collisionCost() const override;
@@ -41,8 +42,8 @@ namespace PR
 		virtual void setup(RenderContext* context) override;
 
 	private:
-		TriMesh* mMesh;
-		std::vector<Material*> mMaterials;
+		std::shared_ptr<TriMesh> mMesh;
+		std::vector<std::shared_ptr<Material> > mMaterials;
 
 		float mSurfaceArea_Cache;
 	};

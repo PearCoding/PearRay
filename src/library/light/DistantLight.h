@@ -21,12 +21,12 @@ namespace PR
 			return mDirection;
 		}
 
-		inline void setMaterial(Material* m)
+		inline void setMaterial(const std::shared_ptr<Material>& m)
 		{
 			mMaterial = m;
 		}
 
-		inline Material* material() const
+		inline const std::shared_ptr<Material>& material() const
 		{
 			return mMaterial;
 		}
@@ -37,7 +37,7 @@ namespace PR
 		void onFreeze() override;
 	private:
 		PM::vec3 mDirection;
-		Material* mMaterial;
+		std::shared_ptr<Material> mMaterial;
 
 		PM::vec3 mSampleDirection_Cache;
 		PM::vec3 mRight_Cache;

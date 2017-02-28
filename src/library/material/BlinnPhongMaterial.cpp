@@ -14,32 +14,32 @@ namespace PR
 	{
 	}
 
-	SpectralShaderOutput* BlinnPhongMaterial::albedo() const
+	const std::shared_ptr<SpectralShaderOutput>& BlinnPhongMaterial::albedo() const
 	{
 		return mAlbedo;
 	}
 
-	void BlinnPhongMaterial::setAlbedo(SpectralShaderOutput* diffSpec)
+	void BlinnPhongMaterial::setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec)
 	{
 		mAlbedo = diffSpec;
 	}
 
-	ScalarShaderOutput* BlinnPhongMaterial::shininess() const
+	const std::shared_ptr<ScalarShaderOutput>& BlinnPhongMaterial::shininess() const
 	{
 		return mShininess;
 	}
 
-	void BlinnPhongMaterial::setShininess(ScalarShaderOutput* d)
+	void BlinnPhongMaterial::setShininess(const std::shared_ptr<ScalarShaderOutput>& d)
 	{
 		mShininess = d;
 	}
 
-	SpectralShaderOutput* BlinnPhongMaterial::fresnelIndex() const
+	const std::shared_ptr<SpectralShaderOutput>& BlinnPhongMaterial::fresnelIndex() const
 	{
 		return mIndex;
 	}
 
-	void BlinnPhongMaterial::setFresnelIndex(SpectralShaderOutput* data)
+	void BlinnPhongMaterial::setFresnelIndex(const std::shared_ptr<SpectralShaderOutput>& data)
 	{
 		mIndex = data;
 	}

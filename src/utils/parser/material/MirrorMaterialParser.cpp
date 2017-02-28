@@ -11,13 +11,13 @@
 using namespace PR;
 namespace PRU
 {
-	Material* MirrorMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> MirrorMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data specD = group.getFromKey("specularity");
 		DL::Data indexD = group.getFromKey("index");
 
-		MirrorMaterial* diff = new MirrorMaterial(env->materialCount() + 1);
+		auto diff = std::make_shared<MirrorMaterial>(env->materialCount() + 1);
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
 		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));

@@ -35,7 +35,7 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		if(!m || m == mMaterial)
+		if(!m || m == mMaterial.get())
 		{
 			const auto s = flags() & EF_LocalArea ? PM::pm_Set(1,1,1) : scale();
 
@@ -51,12 +51,12 @@ namespace PR
 			return 0;
 	}
 
-	void SphereEntity::setMaterial(Material* m)
+	void SphereEntity::setMaterial(const std::shared_ptr<Material>& m)
 	{
 		mMaterial = m;
 	}
 
-	Material* SphereEntity::material() const
+	const std::shared_ptr<Material>& SphereEntity::material() const
 	{
 		return mMaterial;
 	}
@@ -108,7 +108,7 @@ namespace PR
 
 		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), collisionPoint.Ng));
 
-		collisionPoint.Material = material();
+		collisionPoint.Material = material().get();
 
 		return true;
 	}
@@ -128,7 +128,7 @@ namespace PR
 
 		p.P = PM::pm_Multiply(matrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
 		p.UV = Projection::sphereUV(p.Ng);
-		p.Material = material();
+		p.Material = material().get();
 
 		return p;
 	}

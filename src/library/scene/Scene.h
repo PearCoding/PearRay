@@ -22,16 +22,19 @@ namespace PR
 		inline void setName(const std::string& name) { mName = name; }
 		inline std::string name() const { return mName; }
 
-		inline const std::list<RenderEntity*>& renderEntities() const { return mRenderEntities; }
+		void addEntity(const std::shared_ptr<Entity>& e);
+		void removeEntity(const std::shared_ptr<Entity>& e);
+		void addEntity(const std::shared_ptr<RenderEntity>& e);
+		void removeEntity(const std::shared_ptr<RenderEntity>& e);
 
-		void addEntity(Entity* e);
-		void removeEntity(Entity* e);
-		Entity* getEntity(const std::string& name, const std::string& type) const;
-		inline const std::list<Entity*>& entities() const { return mEntities; }
+		std::shared_ptr<Entity> getEntity(const std::string& name, const std::string& type) const;
 
-		void addInfiniteLight(IInfiniteLight* e);
-		void removeInfiniteLight(IInfiniteLight* e);
-		inline const std::list<IInfiniteLight*>& infiniteLights() const { return mInfiniteLights; }
+		inline const std::list<std::shared_ptr<RenderEntity> >& renderEntities() const { return mRenderEntities; }
+		inline const std::list<std::shared_ptr<Entity> >& entities() const { return mEntities; }
+
+		void addInfiniteLight(const std::shared_ptr<IInfiniteLight>& e);
+		void removeInfiniteLight(const std::shared_ptr<IInfiniteLight>& e);
+		inline const std::list<std::shared_ptr<IInfiniteLight> >& infiniteLights() const { return mInfiniteLights; }
 
 		void clear();
 
@@ -46,9 +49,9 @@ namespace PR
 		BoundingBox boundingBox() const;
 	private:
 		std::string mName;
-		std::list<Entity*> mEntities;
-		std::list<RenderEntity*> mRenderEntities;
-		std::list<IInfiniteLight*> mInfiniteLights;
+		std::list<std::shared_ptr<Entity> > mEntities;
+		std::list<std::shared_ptr<RenderEntity> > mRenderEntities;
+		std::list<std::shared_ptr<IInfiniteLight> > mInfiniteLights;
 
 		void* mKDTree;// We use a void* pointer to hide the KDTree header only implementation
 	};

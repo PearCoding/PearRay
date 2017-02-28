@@ -12,12 +12,12 @@
 using namespace PR;
 namespace PRU
 {
-	PR::IInfiniteLight* DistantLightParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
+	std::shared_ptr<PR::IInfiniteLight> DistantLightParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
 	{
 		DL::Data dirD = group.getFromKey("direction");
 		DL::Data matD = group.getFromKey("material");
 
-		DistantLight* light = new DistantLight();
+		auto light = std::make_shared<DistantLight>();
 
 		if (matD.type() == DL::Data::T_String)
 		{

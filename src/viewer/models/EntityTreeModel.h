@@ -2,6 +2,7 @@
 
 #include <QAbstractItemModel>
 
+#include <memory>
 namespace PR
 {
 	class Entity;
@@ -13,7 +14,7 @@ class EntityTreeModel : public QAbstractItemModel
 	Q_OBJECT
 
 public:
-	explicit EntityTreeModel(PR::Scene* scene, QObject  *parent = 0);
+	explicit EntityTreeModel(const PR::Scene& scene, QObject* parent = nullptr);
 	virtual ~EntityTreeModel();
 	
 	QVariant data(const QModelIndex &index, int role) const Q_DECL_OVERRIDE;
@@ -27,7 +28,7 @@ public:
 	int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
 
 private:
-	QList<PR::Entity*> getEntities() const;
+	QList<std::shared_ptr<PR::Entity> > getEntities() const;
 
-	PR::Scene* mScene;
+	const PR::Scene& mScene;
 };

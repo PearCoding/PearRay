@@ -25,9 +25,14 @@ namespace PRU
 		explicit Environment(const std::string& name);
 		virtual ~Environment();
 
-		inline PR::Scene* scene()
+		inline PR::Scene& scene()
 		{
-			return &mScene;
+			return mScene;
+		}
+
+		inline const PR::Scene& scene() const
+		{
+			return mScene;
 		}
 
 		inline PR::Spectrum getSpectrum(const std::string& name) const
@@ -45,7 +50,7 @@ namespace PRU
 			mSpectrums[name] = spec;
 		}
 
-		inline PR::Material* getMaterial(const std::string& name) const
+		inline std::shared_ptr<PR::Material> getMaterial(const std::string& name) const
 		{
 			return mMaterials.at(name);
 		}
@@ -55,7 +60,7 @@ namespace PRU
 			return mMaterials.count(name) != 0;
 		}
 
-		inline void addMaterial(const std::string& name, PR::Material* mat)
+		inline void addMaterial(const std::string& name, const std::shared_ptr<PR::Material>& mat)
 		{
 			PR_ASSERT(mat, "Given material has to be valid");
 			PR_ASSERT(!hasMaterial(name), "Given name should be unique");
@@ -67,7 +72,7 @@ namespace PRU
 			return mMaterials.size();
 		}
 
-		inline PR::TriMesh* getMesh(const std::string& name) const
+		inline std::shared_ptr<PR::TriMesh> getMesh(const std::string& name) const
 		{
 			return mMeshes.at(name);
 		}
@@ -77,28 +82,22 @@ namespace PRU
 			return mMeshes.count(name) != 0;
 		}
 
-		inline void addMesh(const std::string& name, PR::TriMesh* m)
+		inline void addMesh(const std::string& name, const std::shared_ptr<PR::TriMesh>& m)
 		{
 			PR_ASSERT(m, "Given mesh has to be valid");
 			PR_ASSERT(!hasMesh(name), "Given name should be unique");
 			mMeshes[name] = m;
 		}
 
-		inline void addShaderOutput(const std::string& name, PR::ScalarShaderOutput* output)
+		inline void addShaderOutput(const std::string& name, 
+			const std::shared_ptr<PR::ScalarShaderOutput>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			PR_ASSERT(!hasScalarShaderOutput(name), "Given name should be unique");
 			mNamedScalarShaderOutputs[name] = output;
-			mScalarShaderOutputs.push_back(output);
 		}
 
-		inline void addShaderOutput(PR::ScalarShaderOutput* output)
-		{
-			PR_ASSERT(output, "Given output has to be valid");
-			mScalarShaderOutputs.push_back(output);
-		}
-
-		inline PR::ScalarShaderOutput* getScalarShaderOutput(const std::string& name) const
+		inline std::shared_ptr<PR::ScalarShaderOutput> getScalarShaderOutput(const std::string& name) const
 		{
 			return mNamedScalarShaderOutputs.at(name);
 		}
@@ -108,21 +107,15 @@ namespace PRU
 			return mNamedScalarShaderOutputs.count(name) != 0;
 		}
 
-		inline void addShaderOutput(const std::string& name, PR::SpectralShaderOutput* output)
+		inline void addShaderOutput(const std::string& name, 
+			const std::shared_ptr<PR::SpectralShaderOutput>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			PR_ASSERT(!hasSpectralShaderOutput(name), "Given name should be unique");
 			mNamedSpectralShaderOutputs[name] = output;
-			mSpectralShaderOutputs.push_back(output);
 		}
 
-		inline void addShaderOutput(PR::SpectralShaderOutput* output)
-		{
-			PR_ASSERT(output, "Given output has to be valid");
-			mSpectralShaderOutputs.push_back(output);
-		}
-
-		inline PR::SpectralShaderOutput* getSpectralShaderOutput(const std::string& name) const
+		inline std::shared_ptr<PR::SpectralShaderOutput> getSpectralShaderOutput(const std::string& name) const
 		{
 			return mNamedSpectralShaderOutputs.at(name);
 		}
@@ -132,21 +125,15 @@ namespace PRU
 			return mNamedSpectralShaderOutputs.count(name) != 0;
 		}
 
-		inline void addShaderOutput(const std::string& name, PR::VectorShaderOutput* output)
+		inline void addShaderOutput(const std::string& name,
+			const std::shared_ptr<PR::VectorShaderOutput>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			PR_ASSERT(!hasVectorShaderOutput(name), "Given name should be unique");
 			mNamedVectorShaderOutputs[name] = output;
-			mVectorShaderOutputs.push_back(output);
 		}
 
-		inline void addShaderOutput(PR::VectorShaderOutput* output)
-		{
-			PR_ASSERT(output, "Given output has to be valid");
-			mVectorShaderOutputs.push_back(output);
-		}
-
-		inline PR::VectorShaderOutput* getVectorShaderOutput(const std::string& name) const
+		inline std::shared_ptr<PR::VectorShaderOutput> getVectorShaderOutput(const std::string& name) const
 		{
 			return mNamedVectorShaderOutputs.at(name);
 		}
@@ -237,17 +224,13 @@ namespace PRU
 		float mCropMaxY;
 
 		std::map<std::string, PR::Spectrum> mSpectrums;
-		std::map<std::string, PR::Material*> mMaterials;
+		std::map<std::string, std::shared_ptr<PR::Material> > mMaterials;
 
-		std::map<std::string, PR::TriMesh*> mMeshes;
+		std::map<std::string, std::shared_ptr<PR::TriMesh> > mMeshes;
 
-		std::list<PR::ScalarShaderOutput*> mScalarShaderOutputs;
-		std::list<PR::SpectralShaderOutput*> mSpectralShaderOutputs;
-		std::list<PR::VectorShaderOutput*> mVectorShaderOutputs;
-
-		std::map<std::string, PR::ScalarShaderOutput*> mNamedScalarShaderOutputs;
-		std::map<std::string, PR::SpectralShaderOutput*> mNamedSpectralShaderOutputs;
-		std::map<std::string, PR::VectorShaderOutput*> mNamedVectorShaderOutputs;
+		std::map<std::string, std::shared_ptr<PR::ScalarShaderOutput> > mNamedScalarShaderOutputs;
+		std::map<std::string, std::shared_ptr<PR::SpectralShaderOutput> > mNamedSpectralShaderOutputs;
+		std::map<std::string, std::shared_ptr<PR::VectorShaderOutput> > mNamedVectorShaderOutputs;
 
 		OIIO::TextureSystem* mTextureSystem;
 		OutputSpecification mOutputSpecification;

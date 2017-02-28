@@ -3,6 +3,7 @@
 #include "Logger.h"
 
 #include "entity/Entity.h"
+#include "entity/RenderEntity.h"
 
 #include "parser/entity/BoundaryParser.h"
 #include "parser/entity/CameraParser.h"
@@ -196,7 +197,7 @@ namespace PRU
 				DL::Data cameraD = top.getFromKey("camera");
 				if (cameraD.type() == DL::Data::T_String)
 				{
-					Camera* cam = (Camera*)env->scene()->getEntity(cameraD.getString(), "standard_camera");
+					Camera* cam = (Camera*)env->scene().getEntity(cameraD.getString(), "standard_camera").get();
 					env->setCamera(cam);
 				}
 
@@ -222,7 +223,7 @@ namespace PRU
 		{ nullptr, BoundaryParser() },//Just for the end
 	};
 
-	void SceneLoader::addEntity(const DL::DataGroup& group, PR::Entity* parent, Environment* env)
+	void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env)
 	{
 		DL::Data nameD = group.getFromKey("name");
 		DL::Data typeD = group.getFromKey("type");
@@ -238,7 +239,7 @@ namespace PRU
 		else
 			name = "UNKNOWN";
 
-		Entity* entity = nullptr;
+		std::shared_ptr<Entity> entity;
 		if (typeD.type() != DL::Data::T_String)
 		{
 			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. No valid type given.", name.c_str());
@@ -246,7 +247,7 @@ namespace PRU
 		}
 		else if (typeD.getString() == "null" || typeD.getString() == "empty")
 		{
-			entity = new Entity(env->scene()->entities().size()+1, name);
+			entity = std::make_shared<Entity>(env->scene().entities().size()+1, name);
 		}
 		else
 		{
@@ -342,7 +343,10 @@ namespace PRU
 		}
 
 		// Add to scene
-		env->scene()->addEntity(entity);
+		if(entity->isRenderable())
+			env->scene().addEntity(std::static_pointer_cast<RenderEntity>(entity));
+		else
+			env->scene().addEntity(entity);
 
 		for (size_t i = 0; i < group.anonymousCount(); ++i)
 		{
@@ -387,7 +391,8 @@ namespace PRU
 			return;
 		}
 
-		IInfiniteLight* light = nullptr;
+		std::shared_ptr<IInfiniteLight> light;
+
 		const ILightParser* parser = nullptr;
 		for (int i = 0; LightParserEntries[i].Name; ++i)
 		{
@@ -416,7 +421,7 @@ namespace PRU
 		}
 
 		PR_ASSERT(light, "After here it shouldn't be null");
-		env->scene()->addInfiniteLight(light);
+		env->scene().addInfiniteLight(light);
 	}
 
 	struct
@@ -475,7 +480,7 @@ namespace PRU
 			return;
 		}
 
-		Material* mat = nullptr;
+		std::shared_ptr<Material> mat;
 		const IMaterialParser* parser = nullptr;
 		for (int i = 0; MaterialParserEntries[i].Name; ++i)
 		{
@@ -575,7 +580,7 @@ namespace PRU
 		}
 
 		TriMeshInlineParser parser;
-		TriMesh* mesh = parser.parse(this, env, group);
+		auto mesh = parser.parse(this, env, group);
 
 		if (!mesh)
 		{
@@ -871,31 +876,22 @@ namespace PRU
 		return PM::pm_IdentityQuat();
 	}
 
-	SpectralShaderOutput* SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar) const
+	std::shared_ptr<SpectralShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar) const
 	{
 		if(allowScalar && dataD.isNumber())
 		{
 			Spectrum spec;
 			spec.fill(dataD.getNumber());
 
-			auto* tex = new ConstSpectralShaderOutput(spec);
-			env->addShaderOutput(tex);
-			
-			return tex;
+			return std::make_shared<ConstSpectralShaderOutput>(spec);
 		}
 		else if (dataD.type() == DL::Data::T_String)
 		{
 			if (env->hasSpectrum(dataD.getString()))
-			{
-				auto* tex = new ConstSpectralShaderOutput(env->getSpectrum(dataD.getString()));
-				env->addShaderOutput(tex);
-				return tex;
-			}
+				return std::make_shared<ConstSpectralShaderOutput>(env->getSpectrum(dataD.getString()));
 			else
-			{
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
 					dataD.getString().c_str());
-			}
 		}
 		else if (dataD.type() == DL::Data::T_Group)
 		{
@@ -927,13 +923,11 @@ namespace PRU
 		return nullptr;
 	}
 
-	ScalarShaderOutput* SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD) const
+	std::shared_ptr<ScalarShaderOutput> SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD) const
 	{
 		if (dataD.isNumber())
 		{
-			auto* tex = new ConstScalarShaderOutput(dataD.getNumber());
-			env->addShaderOutput(tex);
-			return tex;
+			return std::make_shared<ConstScalarShaderOutput>(dataD.getNumber());
 		}
 		else if (dataD.type() == DL::Data::T_Group)
 		{
@@ -965,7 +959,7 @@ namespace PRU
 		return nullptr;
 	}
 
-	VectorShaderOutput* SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD) const
+	std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD) const
 	{		
 		if (dataD.type() == DL::Data::T_Group)
 		{
@@ -976,9 +970,7 @@ namespace PRU
 
 				if(ok)
 				{
-					auto* tex = new ConstVectorShaderOutput(vec);
-					env->addShaderOutput(tex);
-					return tex;
+					return std::make_shared<ConstVectorShaderOutput>(vec);
 				}
 				else
 				{

@@ -11,12 +11,12 @@ namespace PR
 		EnvironmentLight();
 		virtual ~EnvironmentLight();
 
-		inline void setMaterial(Material* m)
+		inline void setMaterial(const std::shared_ptr<Material>& m)
 		{
 			mMaterial = m;
 		}
 
-		inline Material* material() const
+		inline const std::shared_ptr<Material>& material() const
 		{
 			return mMaterial;
 		}
@@ -25,6 +25,6 @@ namespace PR
 		Spectrum apply(const PM::vec3& V) override;
 
 	private:
-		Material* mMaterial;
+		std::shared_ptr<Material> mMaterial;
 	};
 }

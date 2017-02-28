@@ -34,7 +34,7 @@ namespace PRU
 		{
 			for (tinyobj::shape_t shape : shapes)
 			{
-				PR::TriMesh* mesh = new PR::TriMesh();
+				auto mesh = std::make_shared<PR::TriMesh>();
 				mesh->reserve(shape.mesh.indices.size() / 3);
 
 				bool hasNorm = shape.mesh.normals.size() > 0;

@@ -10,11 +10,11 @@ namespace PR
 	public:
 		GridMaterial(uint32 id);
 
-		void setFirstMaterial(Material* mat);
-		Material* firstMaterial() const;
+		void setFirstMaterial(const std::shared_ptr<Material>& mat);
+		const std::shared_ptr<Material>& firstMaterial() const;
 
-		void setSecondMaterial(Material* mat);
-		Material* secondMaterial() const;
+		void setSecondMaterial(const std::shared_ptr<Material>& mat);
+		const std::shared_ptr<Material>& secondMaterial() const;
 
 		void setGridCount(int i);
 		int gridCount() const;
@@ -30,8 +30,8 @@ namespace PR
 	private:
 		ShaderClosure applyGrid(const ShaderClosure& point, int& u, int& v) const;
 
-		Material* mFirst;
-		Material* mSecond;
+		std::shared_ptr<Material> mFirst;
+		std::shared_ptr<Material> mSecond;
 
 		int mGridCount;
 

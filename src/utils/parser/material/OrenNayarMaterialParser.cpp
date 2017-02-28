@@ -11,14 +11,13 @@
 using namespace PR;
 namespace PRU
 {
-	Material* OrenNayarMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> OrenNayarMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
-
 		DL::Data albedoD = group.getFromKey("albedo");
 		DL::Data roughnessD = group.getFromKey("roughness");
 
-		OrenNayarMaterial* diff = new OrenNayarMaterial(env->materialCount() + 1);
+		auto diff = std::make_shared<OrenNayarMaterial>(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setRoughness(loader->getScalarOutput(env, roughnessD));

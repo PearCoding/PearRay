@@ -11,7 +11,7 @@
 using namespace PR;
 namespace PRU
 {
-	TriMesh* TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
+	std::shared_ptr<TriMesh> TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
 	{
 		std::vector<PM::vec3> positionAttr;
 		std::vector<PM::vec3> normalAttr;
@@ -328,7 +328,7 @@ namespace PRU
 			}
 		}
 
-		TriMesh* me = new TriMesh();
+		auto me = std::make_shared<TriMesh>();
 		me->setFaces(faces);
 
 		if(normalAttr.empty())

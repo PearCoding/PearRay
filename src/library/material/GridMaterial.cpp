@@ -10,22 +10,24 @@ namespace PR
 	{
 	}
 
-	void GridMaterial::setFirstMaterial(Material* mat)
+	void GridMaterial::setFirstMaterial(const std::shared_ptr<Material>& mat)
 	{
+		PR_ASSERT(mat.get() != this, "Self assignment is invalid!");
 		mFirst = mat;
 	}
 
-	Material* GridMaterial::firstMaterial() const
+	const std::shared_ptr<Material>& GridMaterial::firstMaterial() const
 	{
 		return mFirst;
 	}
 
-	void GridMaterial::setSecondMaterial(Material* mat)
+	void GridMaterial::setSecondMaterial(const std::shared_ptr<Material>& mat)
 	{
+		PR_ASSERT(mat.get() != this, "Self assignment is invalid!");
 		mSecond = mat;
 	}
 
-	Material* GridMaterial::secondMaterial() const
+	const std::shared_ptr<Material>& GridMaterial::secondMaterial() const
 	{
 		return mSecond;
 	}

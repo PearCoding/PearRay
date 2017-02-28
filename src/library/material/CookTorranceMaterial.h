@@ -41,30 +41,30 @@ namespace PR
 		void setGeometryMode(GeometryMode mode);
 
 		// Diffuse
-		SpectralShaderOutput* albedo() const;
-		void setAlbedo(SpectralShaderOutput* diffSpec);
+		const std::shared_ptr<SpectralShaderOutput>& albedo() const;
+		void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
 
-		ScalarShaderOutput* diffuseRoughness() const;
-		void setDiffuseRoughness(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& diffuseRoughness() const;
+		void setDiffuseRoughness(const std::shared_ptr<ScalarShaderOutput>& data);
 
 		// Specular
-		SpectralShaderOutput* specularity() const;
-		void setSpecularity(SpectralShaderOutput* spec);
+		const std::shared_ptr<SpectralShaderOutput>& specularity() const;
+		void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
 
-		ScalarShaderOutput* specularRoughnessX() const;
-		void setSpecularRoughnessX(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& specularRoughnessX() const;
+		void setSpecularRoughnessX(const std::shared_ptr<ScalarShaderOutput>& data);
 
-		ScalarShaderOutput* specularRoughnessY() const;
-		void setSpecularRoughnessY(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& specularRoughnessY() const;
+		void setSpecularRoughnessY(const std::shared_ptr<ScalarShaderOutput>& data);
 
-		SpectralShaderOutput* ior() const;
-		void setIOR(SpectralShaderOutput* data);
+		const std::shared_ptr<SpectralShaderOutput>& ior() const;
+		void setIOR(const std::shared_ptr<SpectralShaderOutput>& data);
 
-		SpectralShaderOutput* conductorAbsorption() const;
-		void setConductorAbsorption(SpectralShaderOutput* data);
+		const std::shared_ptr<SpectralShaderOutput>& conductorAbsorption() const;
+		void setConductorAbsorption(const std::shared_ptr<SpectralShaderOutput>& data);
 
-		ScalarShaderOutput* reflectivity() const;
-		void setReflectivity(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& reflectivity() const;
+		void setReflectivity(const std::shared_ptr<ScalarShaderOutput>& data);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
@@ -82,15 +82,15 @@ namespace PR
 		DistributionMode mDistributionMode;
 		GeometryMode mGeometryMode;
 
-		SpectralShaderOutput* mAlbedo;
-		ScalarShaderOutput* mDiffuseRoughness;
+		std::shared_ptr<SpectralShaderOutput> mAlbedo;
+		std::shared_ptr<ScalarShaderOutput> mDiffuseRoughness;
 
-		SpectralShaderOutput* mSpecularity;
-		ScalarShaderOutput* mSpecRoughnessX;
-		ScalarShaderOutput* mSpecRoughnessY;
-		SpectralShaderOutput* mIOR;
-		SpectralShaderOutput* mConductorAbsorption;
+		std::shared_ptr<SpectralShaderOutput> mSpecularity;
+		std::shared_ptr<ScalarShaderOutput> mSpecRoughnessX;
+		std::shared_ptr<ScalarShaderOutput> mSpecRoughnessY;
+		std::shared_ptr<SpectralShaderOutput> mIOR;
+		std::shared_ptr<SpectralShaderOutput> mConductorAbsorption;
 
-		ScalarShaderOutput* mReflectivity;
+		std::shared_ptr<ScalarShaderOutput> mReflectivity;
 	};
 }

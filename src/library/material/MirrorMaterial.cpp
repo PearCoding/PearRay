@@ -18,22 +18,22 @@ namespace PR
 	{
 	}
 
-	SpectralShaderOutput* MirrorMaterial::specularity() const
+	const std::shared_ptr<SpectralShaderOutput>& MirrorMaterial::specularity() const
 	{
 		return mSpecularity;
 	}
 
-	void MirrorMaterial::setSpecularity(SpectralShaderOutput* spec)
+	void MirrorMaterial::setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec)
 	{
 		mSpecularity = spec;
 	}
 
-	SpectralShaderOutput* MirrorMaterial::indexData() const
+	const std::shared_ptr<SpectralShaderOutput>& MirrorMaterial::indexData() const
 	{
 		return mIndex;
 	}
 
-	void MirrorMaterial::setIndexData(SpectralShaderOutput* data)
+	void MirrorMaterial::setIndexData(const std::shared_ptr<SpectralShaderOutput>& data)
 	{
 		mIndex = data;
 	}

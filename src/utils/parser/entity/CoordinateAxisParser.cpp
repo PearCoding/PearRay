@@ -11,7 +11,7 @@
 using namespace PR;
 namespace PRU
 {
-	Entity* CoordinateAxisParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> CoordinateAxisParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data axisLengthD = group.getFromKey("axis_length");
@@ -21,7 +21,7 @@ namespace PRU
 		DL::Data materialYD = group.getFromKey("y_material");
 		DL::Data materialZD = group.getFromKey("z_material");
 
-		CoordinateAxisEntity* bnd = new CoordinateAxisEntity(env->scene()->entities().size()+1, name);
+		auto bnd = std::make_shared<CoordinateAxisEntity>(env->scene().entities().size()+1, name);
 
 		if (axisLengthD.isNumber())
 			bnd->setAxisLength(std::max(PM_EPSILON, axisLengthD.getNumber()));

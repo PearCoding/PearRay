@@ -3,9 +3,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(Src
   entity.cpp
   logger.cpp
+  material.cpp
   module.cpp
   pymath.cpp
   ray.cpp
+  shader.cpp
   spectral.cpp)
 
 SET(Hdr

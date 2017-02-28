@@ -7,7 +7,7 @@ namespace PRU
 	class WardMaterialParser : public IMaterialParser
 	{
 	public:
-		PR::Material* parse(SceneLoader* loader, Environment* env,
+		std::shared_ptr<PR::Material> parse(SceneLoader* loader, Environment* env,
 			const std::string& obj, const DL::DataGroup& group) const override;
 	};
 }

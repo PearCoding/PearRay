@@ -181,14 +181,6 @@ void MainWindow::openProject(const QString& str)
 
 	if (mEnvironment)
 	{
-		if(!mEnvironment->scene())
-		{
-			QMessageBox::warning(this, tr("No scene"), tr("No scene was found in file."));
-			delete mEnvironment;
-			mEnvironment = nullptr;
-			return;
-		}
-
 		if(!mEnvironment->camera())
 		{
 			QMessageBox::warning(this, tr("No camera"), tr("No camera was set in given scene."));
@@ -505,8 +497,8 @@ void MainWindow::startRendering(bool clear)
 	ui.systemPropertyView->setEnabled(false);
 	ui.entityDetailsView->setEnabled(false);
 
-	mEnvironment->scene()->freeze();
-	mEnvironment->scene()->buildTree();
+	mEnvironment->scene().freeze();
+	mEnvironment->scene().buildTree();
 
 	mEnvironment->outputSpecification().init(mRenderFactory);
 	mEnvironment->outputSpecification().setup(mRenderContext);

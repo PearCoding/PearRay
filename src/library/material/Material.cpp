@@ -11,12 +11,12 @@ namespace PR
 	{
 	}
 
-	SpectralShaderOutput* Material::emission() const
+	const std::shared_ptr<SpectralShaderOutput>& Material::emission() const
 	{
 		return mEmission;
 	}
 
-	void Material::setEmission(SpectralShaderOutput* spec)
+	void Material::setEmission(const std::shared_ptr<SpectralShaderOutput>& spec)
 	{
 		mEmission = spec;
 	}

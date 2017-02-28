@@ -33,22 +33,22 @@ namespace PR
 		mThin = b;
 	}
 
-	SpectralShaderOutput* GlassMaterial::specularity() const
+	const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::specularity() const
 	{
 		return mSpecularity;
 	}
 
-	void GlassMaterial::setSpecularity(SpectralShaderOutput* spec)
+	void GlassMaterial::setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec)
 	{
 		mSpecularity = spec;
 	}
 
-	SpectralShaderOutput* GlassMaterial::indexData() const
+	const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::indexData() const
 	{
 		return mIndex;
 	}
 
-	void GlassMaterial::setIndexData(SpectralShaderOutput* data)
+	void GlassMaterial::setIndexData(const std::shared_ptr<SpectralShaderOutput>& data)
 	{
 		mIndex = data;
 	}

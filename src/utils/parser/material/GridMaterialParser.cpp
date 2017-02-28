@@ -11,7 +11,7 @@
 using namespace PR;
 namespace PRU
 {
-	Material* GridMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> GridMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data firstD = group.getFromKey("first");
@@ -19,7 +19,7 @@ namespace PRU
 		DL::Data gridCountD = group.getFromKey("gridCount");
 		DL::Data tileUVD = group.getFromKey("tileUV");
 
-		GridMaterial* bnd = new GridMaterial(env->materialCount() + 1);
+		auto bnd = std::make_shared<GridMaterial>(env->materialCount() + 1);
 
 		if (firstD.type() == DL::Data::T_String)
 		{

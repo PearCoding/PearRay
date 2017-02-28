@@ -25,7 +25,7 @@ namespace PR
 		full_pdf = 0;
 
 		RandomSampler sampler(context->random());
-		for(IInfiniteLight* e : context->renderer()->scene()->infiniteLights())
+		for(const auto& e : context->renderer()->scene().infiniteLights())
 		{
 			Spectrum semi_weight;
 			float semi_pdf = 0;

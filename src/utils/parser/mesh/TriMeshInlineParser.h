@@ -21,6 +21,6 @@ namespace PRU
 	class TriMeshInlineParser
 	{
 	public:
-		PR::TriMesh* parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const;
+		std::shared_ptr<PR::TriMesh> parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const;
 	};
 }

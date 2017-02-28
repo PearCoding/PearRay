@@ -34,43 +34,17 @@ namespace PRU
 	Environment::~Environment()
 	{
 		mScene.clear();
-		for (std::pair<std::string, PR::Material*> p : mMaterials)
-		{
-			delete p.second;
-		}
-
-		for (std::pair<std::string, PR::TriMesh*> p : mMeshes)
-		{
-			delete p.second;
-		}
-
-		// TODO: Destructor virtual?
-		for (PR::ScalarShaderOutput* s : mScalarShaderOutputs)
-		{
-			delete s;
-		}
-
-		for (PR::SpectralShaderOutput* s : mSpectralShaderOutputs)
-		{
-			delete s;
-		}
-
-		for (PR::VectorShaderOutput* s : mVectorShaderOutputs)
-		{
-			delete s;
-		}
-
 		OIIO::TextureSystem::destroy(mTextureSystem);
 	}
 	
 	void Environment::dumpInformation() const
 	{
 		using namespace PR;
-		for (PR::Entity* p : mScene.entities())
+		for (const auto& p : mScene.entities())
 			PR_LOGGER.logf(L_Info, M_Entity, "%s:\n%s",
 				p->name().c_str(), p->dumpInformation().c_str());
 
-		for (std::pair<std::string, PR::Material*> p : mMaterials)
+		for (const auto& p : mMaterials)
 			PR_LOGGER.logf(L_Info, M_Material, "%s:\n%s",
 				p.first.c_str(), p.second->dumpInformation().c_str());
 	}

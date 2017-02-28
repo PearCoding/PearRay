@@ -34,7 +34,7 @@ namespace PR
 
 	float PlaneEntity::surfaceArea(Material* m) const
 	{
-		if(!m || m == mMaterial)
+		if(!m || m == mMaterial.get())
 		{
 			if((flags() & EF_LocalArea) == 0)
 			{
@@ -55,12 +55,12 @@ namespace PR
 		}
 	}
 
-	void PlaneEntity::setMaterial(Material* m)
+	void PlaneEntity::setMaterial(const std::shared_ptr<Material>& m)
 	{
 		mMaterial = m;
 	}
 
-	Material* PlaneEntity::material() const
+	const std::shared_ptr<Material>& PlaneEntity::material() const
 	{
 		return mMaterial;
 	}
@@ -107,7 +107,7 @@ namespace PR
 			collisionPoint.Ny = mGlobalPlane_Cache.yAxis();
 
 			collisionPoint.UV = PM::pm_Set(u, v);
-			collisionPoint.Material = material();
+			collisionPoint.Material = material().get();
 
 			return true;
 		}
@@ -130,7 +130,7 @@ namespace PR
 		fp.Ny = mGlobalPlane_Cache.yAxis();
 
 		fp.UV = s;
-		fp.Material = material();
+		fp.Material = material().get();
 
 		pdf = 1;
 		return fp;

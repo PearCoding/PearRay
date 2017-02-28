@@ -21,7 +21,7 @@ namespace PRU
 	class PR_LIB_UTILS_INLINE IEntityParser
 	{
 	public:
-		virtual PR::Entity* parse(SceneLoader* loader, Environment* env, const std::string& name,
+		virtual std::shared_ptr<PR::Entity> parse(SceneLoader* loader, Environment* env, const std::string& name,
 			const std::string& obj, const DL::DataGroup& group) const = 0;
 	};
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shader/ShaderOutput.h"
+#include <memory>
 
 namespace PR
 {
@@ -53,8 +54,8 @@ namespace PR
 
 		bool isLight() const { return mEmission != nullptr; }
 
-		SpectralShaderOutput* emission() const;
-		void setEmission(SpectralShaderOutput* spec);
+		const std::shared_ptr<SpectralShaderOutput>& emission() const;
+		void setEmission(const std::shared_ptr<SpectralShaderOutput>& spec);
 
 		bool canBeShaded() const;
 		void enableShading(bool b);
@@ -72,7 +73,7 @@ namespace PR
 
 		virtual std::string dumpInformation() const;
 	private:
-		SpectralShaderOutput* mEmission;
+		std::shared_ptr<SpectralShaderOutput> mEmission;
 
 		const uint32 mID;
 		bool mCanBeShaded;

@@ -13,12 +13,12 @@ namespace PR
 	{
 	}
 
-	SpectralShaderOutput* DiffuseMaterial::albedo() const
+	const std::shared_ptr<SpectralShaderOutput>& DiffuseMaterial::albedo() const
 	{
 		return mAlbedo;
 	}
 
-	void DiffuseMaterial::setAlbedo(SpectralShaderOutput* diffSpec)
+	void DiffuseMaterial::setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec)
 	{
 		mAlbedo = diffSpec;
 	}

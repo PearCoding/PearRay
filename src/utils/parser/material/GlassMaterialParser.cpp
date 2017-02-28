@@ -11,14 +11,14 @@
 using namespace PR;
 namespace PRU
 {
-	Material* GlassMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> GlassMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data specD = group.getFromKey("specularity");
 		DL::Data indexD = group.getFromKey("index");
 		DL::Data thinD = group.getFromKey("thin");
 
-		GlassMaterial* diff = new GlassMaterial(env->materialCount() + 1);
+		auto diff = std::make_shared<GlassMaterial>(env->materialCount() + 1);
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
 		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));

@@ -11,7 +11,7 @@
 using namespace PR;
 namespace PRU
 {
-	Material* WardMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> WardMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data albedoD = group.getFromKey("albedo");
@@ -21,7 +21,7 @@ namespace PRU
 		DL::Data roughnessYD = group.getFromKey("roughness_x");
 		DL::Data reflectivityD = group.getFromKey("reflectivity");
 
-		WardMaterial* diff = new WardMaterial(env->materialCount() + 1);
+		auto diff = std::make_shared<WardMaterial>(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setSpecularity(loader->getSpectralOutput(env, specularityD));

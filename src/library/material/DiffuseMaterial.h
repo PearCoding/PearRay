@@ -9,8 +9,8 @@ namespace PR
 	public:
 		DiffuseMaterial(uint32 id);
 
-		SpectralShaderOutput* albedo() const;
-		void setAlbedo(SpectralShaderOutput* diffSpec);
+		const std::shared_ptr<SpectralShaderOutput>& albedo() const;
+		void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
@@ -18,6 +18,6 @@ namespace PR
 
 		virtual std::string dumpInformation() const override;
 	private:
-		SpectralShaderOutput* mAlbedo;
+		std::shared_ptr<SpectralShaderOutput> mAlbedo;
 	};
 }

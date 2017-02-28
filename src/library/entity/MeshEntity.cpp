@@ -50,7 +50,7 @@ namespace PR
 				uint32 slot;
 				for(slot = 0; slot < mMaterials.size(); ++slot)
 				{
-					if(mMaterials[slot] == m)
+					if(mMaterials[slot].get() == m)
 						break;
 				}
 
@@ -66,12 +66,12 @@ namespace PR
 		}
 	}
 
-	void MeshEntity::setMesh(TriMesh* mesh)
+	void MeshEntity::setMesh(const std::shared_ptr<TriMesh>& mesh)
 	{
 		mMesh = mesh;
 	}
 
-	TriMesh* MeshEntity::mesh() const
+	const std::shared_ptr<TriMesh>& MeshEntity::mesh() const
 	{
 		return mMesh;
 	}
@@ -81,13 +81,13 @@ namespace PR
 		mMaterials.resize(count);
 	}
 
-	void MeshEntity::setMaterial(uint32 slot, Material* m)
+	void MeshEntity::setMaterial(uint32 slot, const std::shared_ptr<Material>& m)
 	{
 		PR_ASSERT(slot < mMaterials.size(), "material slots not correctly reserved!");
 		mMaterials[slot] = m;
 	}
 
-	Material* MeshEntity::material(uint32 slot) const
+	std::shared_ptr<Material> MeshEntity::material(uint32 slot) const
 	{
 		if(slot >= mMaterials.size())
 			return mMaterials.front();
@@ -136,7 +136,7 @@ namespace PR
 			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), collisionPoint.Ng));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-			collisionPoint.Material = material(f->MaterialSlot);
+			collisionPoint.Material = material(f->MaterialSlot).get();
 
 			return true;
 		}
@@ -156,7 +156,7 @@ namespace PR
 		point.P = PM::pm_Multiply(matrix(), point.P);
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 
-		point.Material = material(material_slot);
+		point.Material = material(material_slot).get();
 
 		return point;
 	}

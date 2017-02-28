@@ -72,32 +72,32 @@ namespace PR
 		return mAxisThickness;
 	}
 
-	void CoordinateAxisEntity::setXMaterial(Material* m)
+	void CoordinateAxisEntity::setXMaterial(const std::shared_ptr<Material>& m)
 	{
 		mMaterials[0] = m;
 	}
 
-	Material* CoordinateAxisEntity::xMaterial() const
+	const std::shared_ptr<Material>& CoordinateAxisEntity::xMaterial() const
 	{
 		return mMaterials[0];
 	}
 
-	void CoordinateAxisEntity::setYMaterial(Material* m)
+	void CoordinateAxisEntity::setYMaterial(const std::shared_ptr<Material>& m)
 	{
 		mMaterials[1] = m;
 	}
 
-	Material* CoordinateAxisEntity::yMaterial() const
+	const std::shared_ptr<Material>& CoordinateAxisEntity::yMaterial() const
 	{
 		return mMaterials[1];
 	}
 
-	void CoordinateAxisEntity::setZMaterial(Material* m)
+	void CoordinateAxisEntity::setZMaterial(const std::shared_ptr<Material>& m)
 	{
 		mMaterials[2] = m;
 	}
 
-	Material* CoordinateAxisEntity::zMaterial() const
+	const std::shared_ptr<Material>& CoordinateAxisEntity::zMaterial() const
 	{
 		return mMaterials[2];
 	}
@@ -167,7 +167,7 @@ namespace PR
 			float u, v;
 			plane.project(vertex, u, v);
 			collisionPoint.UV = PM::pm_Set(u, v);
-			collisionPoint.Material = mMaterials[found];
+			collisionPoint.Material = mMaterials[found].get();
 			return true;
 		}
 		return false;
@@ -198,7 +198,7 @@ namespace PR
 		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
-		fp.Material = mMaterials[elem];
+		fp.Material = mMaterials[elem].get();
 
 		pdf = 1;
 		return fp;

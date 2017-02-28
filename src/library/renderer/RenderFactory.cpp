@@ -7,7 +7,7 @@
 
 namespace PR
 {
-	RenderFactory::RenderFactory(uint32 w, uint32 h, Camera* cam, Scene* scene,
+	RenderFactory::RenderFactory(uint32 w, uint32 h, Camera* cam, const Scene& scene,
 		const std::string& workingDir, bool useGPU) :
 		mFullWidth(w), mFullHeight(h),
 		mWorkingDir(workingDir),
@@ -15,7 +15,6 @@ namespace PR
 		mGPU(nullptr)
 	{
 		PR_ASSERT(cam, "Given camera has to be valid");
-		PR_ASSERT(scene, "Given scene has to be valid");
 
 		// Setup GPU
 #ifndef PR_NO_GPU

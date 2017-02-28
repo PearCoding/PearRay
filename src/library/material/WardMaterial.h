@@ -9,20 +9,20 @@ namespace PR
 	public:
 		WardMaterial(uint32 id);
 
-		SpectralShaderOutput* albedo() const;
-		void setAlbedo(SpectralShaderOutput* diffSpec);
+		const std::shared_ptr<SpectralShaderOutput>& albedo() const;
+		void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
 
-		SpectralShaderOutput* specularity() const;
-		void setSpecularity(SpectralShaderOutput* spec);
+		const std::shared_ptr<SpectralShaderOutput>& specularity() const;
+		void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
 
-		ScalarShaderOutput* roughnessX() const;
-		void setRoughnessX(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& roughnessX() const;
+		void setRoughnessX(const std::shared_ptr<ScalarShaderOutput>& data);
 
-		ScalarShaderOutput* roughnessY() const;
-		void setRoughnessY(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& roughnessY() const;
+		void setRoughnessY(const std::shared_ptr<ScalarShaderOutput>& data);
 
-		ScalarShaderOutput* reflectivity() const;
-		void setReflectivity(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& reflectivity() const;
+		void setReflectivity(const std::shared_ptr<ScalarShaderOutput>& data);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
@@ -36,10 +36,10 @@ namespace PR
 		PM::vec3 diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
 		PM::vec3 specular_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
 
-		SpectralShaderOutput* mAlbedo;
-		SpectralShaderOutput* mSpecularity;
-		ScalarShaderOutput* mRoughnessX;
-		ScalarShaderOutput* mRoughnessY;
-		ScalarShaderOutput* mReflectivity;
+		std::shared_ptr<SpectralShaderOutput> mAlbedo;
+		std::shared_ptr<SpectralShaderOutput> mSpecularity;
+		std::shared_ptr<ScalarShaderOutput> mRoughnessX;
+		std::shared_ptr<ScalarShaderOutput> mRoughnessY;
+		std::shared_ptr<ScalarShaderOutput> mReflectivity;
 	};
 }

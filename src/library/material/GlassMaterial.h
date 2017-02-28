@@ -13,11 +13,11 @@ namespace PR
 		bool isThin() const;
 		void setThin(bool b);
 
-		SpectralShaderOutput* specularity() const;
-		void setSpecularity(SpectralShaderOutput* spec);
+		const std::shared_ptr<SpectralShaderOutput>& specularity() const;
+		void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
 
-		SpectralShaderOutput* indexData() const;
-		void setIndexData(SpectralShaderOutput* data);
+		const std::shared_ptr<SpectralShaderOutput>& indexData() const;
+		void setIndexData(const std::shared_ptr<SpectralShaderOutput>& data);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
@@ -28,8 +28,8 @@ namespace PR
 
 		virtual std::string dumpInformation() const override;
 	private:
-		SpectralShaderOutput* mSpecularity;
-		SpectralShaderOutput* mIndex;
+		std::shared_ptr<SpectralShaderOutput> mSpecularity;
+		std::shared_ptr<SpectralShaderOutput> mIndex;
 		bool mThin;
 	};
 }

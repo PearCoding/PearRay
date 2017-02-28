@@ -22,14 +22,14 @@ namespace PR
 		void setAxisThickness(float f);
 		float axisThickness() const;
 
-		void setXMaterial(Material* m);
-		Material* xMaterial() const;
+		void setXMaterial(const std::shared_ptr<Material>& m);
+		const std::shared_ptr<Material>& xMaterial() const;
 
-		void setYMaterial(Material* m);
-		Material* yMaterial() const;
+		void setYMaterial(const std::shared_ptr<Material>& m);
+		const std::shared_ptr<Material>& yMaterial() const;
 
-		void setZMaterial(Material* m);
-		Material* zMaterial() const;
+		void setZMaterial(const std::shared_ptr<Material>& m);
+		const std::shared_ptr<Material>& zMaterial() const;
 
 		virtual bool isCollidable() const override;
 		virtual float collisionCost() const override;
@@ -50,7 +50,7 @@ namespace PR
 		float mAxisLength;
 		float mAxisThickness;
 
-		Material* mMaterials[3];
+		std::shared_ptr<Material> mMaterials[3];
 
 		mutable BoundingBox mBoundingBox_Cache;
 		mutable BoundingBox mAxisBoundingBox_Cache[3];

@@ -11,14 +11,14 @@
 using namespace PR;
 namespace PRU
 {
-	Material* BlinnPhongMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> BlinnPhongMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data albedoD = group.getFromKey("albedo");
 		DL::Data indexD = group.getFromKey("index");
 		DL::Data shininessD = group.getFromKey("shininess");
 
-		BlinnPhongMaterial* diff = new BlinnPhongMaterial(env->materialCount() + 1);
+		auto diff = std::make_shared<BlinnPhongMaterial>(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		diff->setShininess(loader->getScalarOutput(env, shininessD));

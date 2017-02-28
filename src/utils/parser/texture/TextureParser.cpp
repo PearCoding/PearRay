@@ -192,7 +192,7 @@ namespace PRU
 				return;
 			}
 
-			ImageScalarShaderOutput* output = new ImageScalarShaderOutput(env->textureSystem(), opts, filename);
+			auto output = std::make_shared<ImageScalarShaderOutput>(env->textureSystem(), opts, filename);
 			env->addShaderOutput(name, output);
 		}
 		else if(type == "color" || type == "spectral")
@@ -203,7 +203,7 @@ namespace PRU
 				return;
 			}
 
-			ImageSpectralShaderOutput* output = new ImageSpectralShaderOutput(env->textureSystem(), opts, filename);
+			auto output = std::make_shared<ImageSpectralShaderOutput>(env->textureSystem(), opts, filename);
 			env->addShaderOutput(name, output);
 		}
 		else if(type == "vector")
@@ -214,7 +214,7 @@ namespace PRU
 				return;
 			}
 
-			ImageVectorShaderOutput* output = new ImageVectorShaderOutput(env->textureSystem(), opts, filename);
+			auto output = std::make_shared<ImageVectorShaderOutput>(env->textureSystem(), opts, filename);
 			env->addShaderOutput(name, output);
 		}
 		else

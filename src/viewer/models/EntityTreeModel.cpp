@@ -5,7 +5,7 @@
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
 
-EntityTreeModel::EntityTreeModel(PR::Scene* scene, QObject* parent)
+EntityTreeModel::EntityTreeModel(const PR::Scene& scene, QObject* parent)
 	: QAbstractItemModel(parent), mScene(scene)
 {
 }
@@ -78,8 +78,8 @@ QModelIndex EntityTreeModel::index(int row, int column, const QModelIndex &paren
 
 	if (list.size() > row)
 	{
-		PR::Entity* childItem = list.at(row);
-		return createIndex(row, column, childItem);
+		auto childItem = list.at(row);
+		return createIndex(row, column, childItem.get());
 	}
 	else
 	{
@@ -105,7 +105,7 @@ int EntityTreeModel::columnCount(const QModelIndex &parent) const
 	return 2;
 }
 
-QList<PR::Entity*> EntityTreeModel::getEntities() const
+QList<std::shared_ptr<PR::Entity> > EntityTreeModel::getEntities() const
 {
-	return QList<PR::Entity*>::fromStdList(mScene->entities());
+	return QList<std::shared_ptr<PR::Entity> >::fromStdList(mScene.entities());
 }

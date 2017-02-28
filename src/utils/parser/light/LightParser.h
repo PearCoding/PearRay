@@ -21,6 +21,7 @@ namespace PRU
 	class PR_LIB_UTILS_INLINE ILightParser
 	{
 	public:
-		virtual PR::IInfiniteLight* parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const = 0;
+		virtual std::shared_ptr<PR::IInfiniteLight> parse(
+			SceneLoader* loader, Environment* env, const DL::DataGroup& group) const = 0;
 	};
 }

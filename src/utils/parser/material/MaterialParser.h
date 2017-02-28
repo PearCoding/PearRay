@@ -21,7 +21,7 @@ namespace PRU
 	class PR_LIB_UTILS_INLINE IMaterialParser
 	{
 	public:
-		virtual PR::Material* parse(SceneLoader* loader, Environment* env,
+		virtual std::shared_ptr<PR::Material> parse(SceneLoader* loader, Environment* env,
 			const std::string& obj, const DL::DataGroup& group) const = 0;
 	};
 }

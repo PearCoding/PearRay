@@ -11,12 +11,12 @@
 using namespace PR;
 namespace PRU
 {
-	Material* DiffuseMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> DiffuseMaterialParser::parse(SceneLoader* loader, Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data albedoD = group.getFromKey("albedo");
 
-		DiffuseMaterial* diff = new DiffuseMaterial(env->materialCount() + 1);
+		auto diff = std::make_shared<DiffuseMaterial>(env->materialCount() + 1);
 
 		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
 		return diff;

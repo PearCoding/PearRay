@@ -9,11 +9,11 @@ namespace PR
 	public:
 		OrenNayarMaterial(uint32 id);
 
-		SpectralShaderOutput* albedo() const;
-		void setAlbedo(SpectralShaderOutput* diffSpec);
+		const std::shared_ptr<SpectralShaderOutput>& albedo() const;
+		void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
 
-		ScalarShaderOutput* roughness() const;
-		void setRoughness(ScalarShaderOutput* data);
+		const std::shared_ptr<ScalarShaderOutput>& roughness() const;
+		void setRoughness(const std::shared_ptr<ScalarShaderOutput>& data);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
@@ -21,7 +21,7 @@ namespace PR
 
 		virtual std::string dumpInformation() const override;
 	private:
-		SpectralShaderOutput* mAlbedo;
-		ScalarShaderOutput* mRoughness;
+		std::shared_ptr<SpectralShaderOutput> mAlbedo;
+		std::shared_ptr<ScalarShaderOutput> mRoughness;
 	};
 }
