@@ -23,11 +23,11 @@ namespace PRPY
         ;
 
         bpy::class_<Logger, boost::noncopyable>("Logger", bpy::no_init)
-        .add_property("instance", bpy::make_function(&Logger::instance, 
+        .add_static_property("instance", bpy::make_function(&Logger::instance, 
             bpy::return_value_policy<bpy::reference_existing_object>()))
         .add_property("verbose", &Logger::isVerbose, &Logger::setVerbose)
         .add_property("quiet", &Logger::isQuiet, &Logger::setQuiet)
-        .def("def", &Logger::log)
+        .def("log", &Logger::log)
         .def("addListener", &Logger::addListener)
 		.def("removeListener", &Logger::removeListener)
         ;

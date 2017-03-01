@@ -13,8 +13,8 @@ namespace PR
 		const std::shared_ptr<SpectralShaderOutput>& specularity() const;
 		void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
 
-		const std::shared_ptr<SpectralShaderOutput>& indexData() const;
-		void setIndexData(const std::shared_ptr<SpectralShaderOutput>& data);
+		const std::shared_ptr<SpectralShaderOutput>& ior() const;
+		void setIOR(const std::shared_ptr<SpectralShaderOutput>& data);
 
 		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
 		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;

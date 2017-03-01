@@ -111,5 +111,8 @@ namespace PRPY
         .def("eval", bpy::pure_virtual(&VectorShaderOutputWrap::eval_Py))
         ;
 
+        bpy::register_ptr_to_python<std::shared_ptr<ScalarShaderOutput> >();
+        bpy::register_ptr_to_python<std::shared_ptr<SpectralShaderOutput> >();
+        bpy::register_ptr_to_python<std::shared_ptr<VectorShaderOutput> >();
     }
 }

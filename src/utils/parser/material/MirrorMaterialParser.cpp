@@ -20,7 +20,7 @@ namespace PRU
 		auto diff = std::make_shared<MirrorMaterial>(env->materialCount() + 1);
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
-		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));
+		diff->setIOR(loader->getSpectralOutput(env, indexD, true));
 
 		return diff;
 	}

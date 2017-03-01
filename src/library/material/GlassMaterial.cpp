@@ -43,12 +43,12 @@ namespace PR
 		mSpecularity = spec;
 	}
 
-	const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::indexData() const
+	const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::ior() const
 	{
 		return mIndex;
 	}
 
-	void GlassMaterial::setIndexData(const std::shared_ptr<SpectralShaderOutput>& data)
+	void GlassMaterial::setIOR(const std::shared_ptr<SpectralShaderOutput>& data)
 	{
 		mIndex = data;
 	}

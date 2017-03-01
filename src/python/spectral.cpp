@@ -1,5 +1,6 @@
 #include <boost/python.hpp>
 
+#include "spectral/Spectrum.h"
 #include "spectral/IntensityConverter.h"
 #include "spectral/XYZConverter.h"
 #include "spectral/RGBConverter.h"
@@ -27,6 +28,12 @@ namespace PRPY
             fillFromList(list);
         }
 
+        static uint32 WAVELENGTH_START_PY() { return Spectrum::WAVELENGTH_START; }
+        static uint32 WAVELENGTH_END_PY() { return Spectrum::WAVELENGTH_END; }
+        static uint32 WAVELENGTH_AREA_SIZE_PY() { return Spectrum::WAVELENGTH_AREA_SIZE; }
+        static uint32 WAVELENGTH_STEP_PY() { return Spectrum::WAVELENGTH_STEP; }
+        static uint32 SAMPLING_COUNT_PY() { return Spectrum::SAMPLING_COUNT; }
+        static uint32 ILL_SCALE_PY() { return Spectrum::ILL_SCALE; }
     private:
         void fillFromList(const bpy::list& list)
         {
@@ -137,13 +144,13 @@ namespace PRPY
             .def(bpy::self *= float())
             .def(bpy::self /= bpy::self)
             .def(bpy::self /= float())
+            .add_static_property("WAVELENGTH_START", &SpectrumWrap::WAVELENGTH_START_PY)
+            .add_static_property("WAVELENGTH_END", &SpectrumWrap::WAVELENGTH_END_PY)
+            .add_static_property("WAVELENGTH_AREA_SIZE", &SpectrumWrap::WAVELENGTH_AREA_SIZE_PY)
+            .add_static_property("WAVELENGTH_STEP", &SpectrumWrap::WAVELENGTH_STEP_PY)
+            .add_static_property("SAMPLING_COUNT", &SpectrumWrap::SAMPLING_COUNT_PY)
+            .add_static_property("ILL_SCALE", &SpectrumWrap::ILL_SCALE_PY)
         ;
-        spec.attr("WAVELENGTH_START") = Spectrum::WAVELENGTH_START;
-        spec.attr("WAVELENGTH_END") = Spectrum::WAVELENGTH_END;
-        spec.attr("WAVELENGTH_AREA_SIZE") = Spectrum::WAVELENGTH_AREA_SIZE;
-        spec.attr("WAVELENGTH_STEP") = Spectrum::WAVELENGTH_STEP;
-        spec.attr("SAMPLING_COUNT") = Spectrum::SAMPLING_COUNT;
-        spec.attr("ILL_SCALE") = Spectrum::ILL_SCALE;
 
         bpy::class_<IntensityConverter, boost::noncopyable>("IntensityConverter", bpy::no_init)
             .def("convert", &IntensityConverter::convert).staticmethod("convert")

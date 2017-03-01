@@ -21,7 +21,7 @@ namespace PRU
 		auto diff = std::make_shared<GlassMaterial>(env->materialCount() + 1);
 
 		diff->setSpecularity(loader->getSpectralOutput(env, specD));
-		diff->setIndexData(loader->getSpectralOutput(env, indexD, true));
+		diff->setIOR(loader->getSpectralOutput(env, indexD, true));
 
 		if(thinD.type() == DL::Data::T_Bool)
 			diff->setThin(thinD.getBool());

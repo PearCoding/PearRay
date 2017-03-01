@@ -13,11 +13,11 @@ SET(Src
 SET(Hdr
   pymath.h)
 
-
 add_library(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray pr_lib pr_lib_utils)
+target_link_libraries(pypearray pr_lib pr_lib_utils ${Boost_LIBRARIES})
 set_target_properties(pypearray PROPERTIES VERSION ${PR_Version})
 set_target_properties(pypearray PROPERTIES PREFIX "" )
+set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "" )
 target_compile_definitions(pypearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 
 #file(COPY python/pearray DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

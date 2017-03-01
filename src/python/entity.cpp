@@ -60,5 +60,7 @@ namespace PRPY
         .value("LocalArea", EF_LocalArea)
         .value("ScaleLight", EF_ScaleLight)
         ;
+
+        bpy::register_ptr_to_python<std::shared_ptr<Entity> >();
     }
 }

@@ -9,8 +9,17 @@ namespace PRPY
 
     PM::vec2 to2D(const bpy::object& obj)
     {
-        bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
-        return PM::pm_Set(bpy::extract<float>(tpl[0]), bpy::extract<float>(tpl[1]));
+        bpy::extract<bpy::list> lstc(obj);
+        if(lstc.check())
+        {
+            bpy::list lst = lstc();
+            return PM::pm_Set(bpy::extract<float>(lst[0]), bpy::extract<float>(lst[1]));
+        }
+        else
+        {
+            bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
+            return PM::pm_Set(bpy::extract<float>(tpl[0]), bpy::extract<float>(tpl[1]));
+        }
     }
 
     bpy::object convert3D(const PM::vec3& v)
@@ -20,10 +29,21 @@ namespace PRPY
 
     PM::vec3 to3D(const bpy::object& obj)
     {
-        bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
-        return PM::pm_Set(bpy::extract<float>(tpl[0]),
-            bpy::extract<float>(tpl[1]),
-            bpy::extract<float>(tpl[2]));
+        bpy::extract<bpy::list> lstc(obj);
+        if(lstc.check())
+        {
+            bpy::list lst = lstc();
+            return PM::pm_Set(bpy::extract<float>(lst[0]),
+                bpy::extract<float>(lst[1]),
+                bpy::extract<float>(lst[2]));
+        }
+        else
+        {
+            bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
+            return PM::pm_Set(bpy::extract<float>(tpl[0]),
+                bpy::extract<float>(tpl[1]),
+                bpy::extract<float>(tpl[2]));
+        }
     }
 
     bpy::object convert4D(const PM::vec4& v)
@@ -33,11 +53,23 @@ namespace PRPY
 
     PM::vec4 to4D(const bpy::object& obj)
     {
-        bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
-        return PM::pm_Set(bpy::extract<float>(tpl[0]),
-            bpy::extract<float>(tpl[1]),
-            bpy::extract<float>(tpl[2]),
-            bpy::extract<float>(tpl[3]));
+        bpy::extract<bpy::list> lstc(obj);
+        if(lstc.check())
+        {
+            bpy::list lst = lstc();
+            return PM::pm_Set(bpy::extract<float>(lst[0]),
+                bpy::extract<float>(lst[1]),
+                bpy::extract<float>(lst[2]),
+                bpy::extract<float>(lst[3]));
+        }
+        else
+        {
+            bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
+            return PM::pm_Set(bpy::extract<float>(tpl[0]),
+                bpy::extract<float>(tpl[1]),
+                bpy::extract<float>(tpl[2]),
+                bpy::extract<float>(tpl[3]));
+        }
     }
 
     bpy::object convertMat(const PM::mat4& m)
@@ -48,13 +80,27 @@ namespace PRPY
 
     PM::mat4 toMat(const bpy::object& obj)
     {
-        bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
-        PM::mat4 mat;
-        mat.v[0] = to4D(tpl[0]);
-        mat.v[1] = to4D(tpl[1]);
-        mat.v[2] = to4D(tpl[2]);
-        mat.v[3] = to4D(tpl[3]);
-        return mat;
+        bpy::extract<bpy::list> lstc(obj);
+        if(lstc.check())
+        {
+            bpy::list lst = lstc();
+            PM::mat4 mat;
+            mat.v[0] = to4D(lst[0]);
+            mat.v[1] = to4D(lst[1]);
+            mat.v[2] = to4D(lst[2]);
+            mat.v[3] = to4D(lst[3]);
+            return mat;
+        }
+        else
+        {
+            bpy::tuple tpl = bpy::extract<bpy::tuple>(obj);
+            PM::mat4 mat;
+            mat.v[0] = to4D(tpl[0]);
+            mat.v[1] = to4D(tpl[1]);
+            mat.v[2] = to4D(tpl[2]);
+            mat.v[3] = to4D(tpl[3]);
+            return mat;
+        }
     }
 
     bpy::object convertQuat(const PM::quat& v)
@@ -69,6 +115,5 @@ namespace PRPY
 
     void setup_math()
     {
-        bpy::class_<PM::avec4>("vec");
     }
 }
