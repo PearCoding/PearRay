@@ -83,8 +83,8 @@ namespace PR
 
 	BoundingBox SphereEntity::localBoundingBox() const
 	{
-		return BoundingBox(PM::pm_Set(mRadius, mRadius, mRadius, 1),
-			PM::pm_Set(-mRadius, -mRadius, -mRadius, 1));
+		return BoundingBox(PM::pm_Set(mRadius, mRadius, mRadius),
+			PM::pm_Set(-mRadius, -mRadius, -mRadius));
 	}
 
 	bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
@@ -92,21 +92,22 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
 
-		Sphere sphere(PM::pm_Zero(), mRadius);
+		Sphere sphere(PM::pm_Zero3D(), mRadius);
 		float t;
 		PM::vec3 collisionPos;
 		if (!sphere.intersects(local, collisionPos, t))
 			return false;
 
-		collisionPoint.P = PM::pm_Multiply(matrix(), collisionPos);
+		collisionPoint.P = PM::pm_Transform(matrix(), collisionPos);
 
-		collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), collisionPos));
+		collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), collisionPos));
 		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-		collisionPoint.UV = Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), collisionPoint.Ng));
+		collisionPoint.UVW = PM::pm_ExtendTo3D(
+			Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), collisionPoint.Ng)));
 
 		collisionPoint.Material = material().get();
 
@@ -123,11 +124,12 @@ namespace PR
 		PM::vec3 n = Projection::sphere_coord(PM::pm_GetX(s)*PM_2_PI_F, PM::pm_GetY(s)*PM_PI_F);
 		pdf = 1;
 
-		p.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), n));
+		p.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), n));
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		p.P = PM::pm_Multiply(matrix(), PM::pm_SetW(PM::pm_Scale(n, mRadius), 1));
-		p.UV = Projection::sphereUV(p.Ng);
+		p.P = PM::pm_Transform(matrix(), PM::pm_Scale(n, mRadius));
+		p.UVW = PM::pm_ExtendTo3D(
+			Projection::sphereUV(p.Ng));
 		p.Material = material().get();
 
 		return p;

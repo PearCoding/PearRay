@@ -27,8 +27,10 @@ namespace PR
 		BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound);
 		BoundingBox(float width, float height, float depth);
 
-		BoundingBox(const BoundingBox& other);
-		BoundingBox& operator = (const BoundingBox& other);
+		BoundingBox(const BoundingBox& other) = default;
+		BoundingBox(BoundingBox&& other) = default;
+		BoundingBox& operator = (const BoundingBox& other) = default;
+		BoundingBox& operator = (BoundingBox&& other) = default;
 
 		inline PM::vec3 upperBound() const { return mUpperBound; }
 		inline void setUpperBound(const PM::vec3& bound) { mUpperBound = bound; }

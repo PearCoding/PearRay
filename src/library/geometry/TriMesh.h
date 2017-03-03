@@ -27,7 +27,7 @@ namespace PR
 		void setFaces(const std::vector<Face*>& f);
 		void addFace(Face* f);
 		Face* getFace(size_t i) const;
-		inline const std::vector<Face*> faces() const
+		inline const std::vector<Face*>& faces() const
 		{
 			return mFaces;
 		}
@@ -38,10 +38,10 @@ namespace PR
 
 		void calcNormals();
 
-		float surfaceArea(uint32 slot, const PM::mat& transform) const;
-		float surfaceArea(const PM::mat& transform) const;
+		float surfaceArea(uint32 slot, const PM::mat4& transform) const;
+		float surfaceArea(const PM::mat4& transform) const;
 
-		inline BoundingBox boundingBox() const
+		inline const BoundingBox& boundingBox() const
 		{
 			return mBoundingBox;
 		}

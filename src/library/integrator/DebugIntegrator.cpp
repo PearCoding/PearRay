@@ -41,7 +41,7 @@ namespace PR
 			return Spectrum();
 		case DM_Depth:
 		{
-			float depth = PM::pm_Magnitude3D(PM::pm_Subtract(in.startPosition(), sc.P));
+			float depth = PM::pm_Magnitude(PM::pm_Subtract(in.startPosition(), sc.P));
 			return RGBConverter::toSpec(depth, depth, depth);
 		}
 		// NORMAL
@@ -106,7 +106,7 @@ namespace PR
 				PM::pm_Max(0.0f, -PM::pm_GetZ(sc.Ny)));
 		//OTHER STUFF
 		case DM_UV:
-			return RGBConverter::toSpec(PM::pm_GetX(sc.UV), PM::pm_GetY(sc.UV), 0);
+			return RGBConverter::toSpec(PM::pm_GetX(sc.UVW), PM::pm_GetY(sc.UVW), PM::pm_GetZ(sc.UVW));
 		case DM_PDF:
 		{
 			float full_pdf = 0;
@@ -130,7 +130,6 @@ namespace PR
 			 Color-Code:
 			 Red    -> No Material
 			 Yellow -> Non unit normal
-			 Cyan	-> Position non homogenous
 			 Magenta-> Sample Direction non unit
 			 Blue   -> PDF out of bounds
 			 Green  -> Everything ok
@@ -140,11 +139,8 @@ namespace PR
 			if (!sc.Material)
 				return RGBConverter::toSpec(1, 0, 0);
 
-			if (PM::pm_MagnitudeSqr3D(sc.N) - 1 > PM_EPSILON)
+			if (PM::pm_MagnitudeSqr(sc.N) - 1 > PM_EPSILON)
 				return RGBConverter::toSpec(1, 1, 0);
-
-			if (std::abs(PM::pm_GetW(sc.P)) - 1 > PM_EPSILON)
-				return RGBConverter::toSpec(0, 1, 1);
 
 			float pdf;
 			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
@@ -152,7 +148,7 @@ namespace PR
 				context->random().getFloat());
 			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
 
-			if (PM::pm_MagnitudeSqr3D(dir) - 1 > PM_EPSILON)
+			if (PM::pm_MagnitudeSqr(dir) - 1 > PM_EPSILON)
 				return RGBConverter::toSpec(1, 0, 1);
 
 			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?

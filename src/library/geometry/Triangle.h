@@ -40,7 +40,7 @@ namespace PR
 
 				face.interpolate(u, v, p, n, uv);
 				point.P = p;
-				point.UV = uv;
+				point.UVW = PM::pm_ExtendTo3D(uv);
 				point.Ng = n;
 				point.Material = nullptr;
 				return true;
@@ -67,8 +67,8 @@ namespace PR
 
 			const PM::vec3 e12 = PM::pm_Subtract(p2, p1);
 			const PM::vec3 e13 = PM::pm_Subtract(p3, p1);
-			const PM::vec3 q = PM::pm_Cross3D(ray.direction(), e13);
-			float a = PM::pm_Dot3D(e12, q);
+			const PM::vec3 q = PM::pm_Cross(ray.direction(), e13);
+			float a = PM::pm_Dot(e12, q);
 
 			if (a > -PR_TRIANGLE_INTERSECT_EPSILON && a < PR_TRIANGLE_INTERSECT_EPSILON)
 			//if (BETWEEN_EXCLUSIVE(a, -PR_TRIANGLE_INTERSECT_EPSILON, PR_TRIANGLE_INTERSECT_EPSILON)) // Single branching
@@ -76,20 +76,20 @@ namespace PR
 
 			float f = 1.0f / a;
 			const PM::vec3 s = PM::pm_Subtract(ray.startPosition(), p1);
-			u = f*PM::pm_Dot3D(s, q);
+			u = f*PM::pm_Dot(s, q);
 
 			if (u < 0 || u > 1)
 			//if (!BETWEEN_INCLUSIVE(u, 0, 1))
 				return false;
 
-			const PM::vec3 r = PM::pm_Cross3D(s, e12);
-			v = f*PM::pm_Dot3D(ray.direction(), r);
+			const PM::vec3 r = PM::pm_Cross(s, e12);
+			v = f*PM::pm_Dot(ray.direction(), r);
 
 			if (v < 0 || u + v > 1)
 			//if (!BETWEEN_INCLUSIVE(v, 0, 1-u))
 				return false;
 
-			t = f*PM::pm_Dot3D(e13, r);
+			t = f*PM::pm_Dot(e13, r);
 
 			if (t >= PR_TRIANGLE_INTERSECT_EPSILON)
 			{
@@ -211,7 +211,7 @@ namespace PR
 
 			PM::vec3 v1 = PM::pm_Subtract(p2, p1);
 			PM::vec3 v2 = PM::pm_Subtract(p3, p1);
-			return 0.5f * PM::pm_Magnitude3D(PM::pm_Cross3D(v1,v2));
+			return 0.5f * PM::pm_Magnitude(PM::pm_Cross(v1,v2));
 		}
 	};
 }

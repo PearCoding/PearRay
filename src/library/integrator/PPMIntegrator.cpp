@@ -77,11 +77,12 @@ namespace PR
 
 		mPhotonMap = new Photon::PhotonMap(renderer->settings().ppm().maxGatherRadius());
 
-		mAccumulatedFlux = new OutputSpectral(renderer, Spectrum(), true);// Will be deleted by outputmap
-		mSearchRadius2 = new Output1D(renderer,
+		mAccumulatedFlux = std::make_shared<OutputSpectral>(renderer, Spectrum(), true);// Will be deleted by outputmap
+		mSearchRadius2 = std::make_shared<Output1D>(renderer,
 			renderer->settings().ppm().maxGatherRadius() * renderer->settings().ppm().maxGatherRadius(),
 			true);
-		mLocalPhotonCount = new OutputCounter(renderer, 0, true);
+		mLocalPhotonCount = std::make_shared<OutputCounter>(renderer, 0, true);
+	
 		renderer->output()->registerCustomChannel("int.ppm.accumulated_flux", mAccumulatedFlux);
 		renderer->output()->registerCustomChannel("int.ppm.search_radius", mSearchRadius2);
 		renderer->output()->registerCustomChannel("int.ppm.local_photon_count", mLocalPhotonCount);
@@ -219,7 +220,7 @@ namespace PR
 					if(l.Entity->checkCollision(ray, lightSample))
 					{
 						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, 0, RF_Light);
-						float pdf = std::abs(PM::pm_Dot3D(dir, lightSample.Ng));
+						float pdf = std::abs(PM::pm_Dot(dir, lightSample.Ng));
 
 						uint32 j;// Calculates specular count
 						for (j = 0;
@@ -239,7 +240,7 @@ namespace PR
 									random.getFloat());
 								nextDir = sc.Material->sample(sc, s, l_pdf);
 
-								const float NdotL = std::abs(PM::pm_Dot3D(nextDir, sc.N));
+								const float NdotL = std::abs(PM::pm_Dot(nextDir, sc.N));
 								if(pdf*NdotL <= PM_EPSILON)// Drop this one.
 								{
 									if(j == 0)
@@ -450,7 +451,7 @@ namespace PR
 							break;
 						}
 
-						const float NdotL = std::abs(PM::pm_Dot3D(nextDir, sc.N));
+						const float NdotL = std::abs(PM::pm_Dot(nextDir, sc.N));
 						radiance *= PR_CHECK_VALIDITY(sc.Material->eval(sc, nextDir, NdotL), "After material eval")
 							* (NdotL / (std::isinf(pdf) ? 1 : pdf));
 						ray = ray.next(sc.P, nextDir);
@@ -498,7 +499,7 @@ namespace PR
 			Spectrum other_weight;
 			if(std::isinf(pdf))// Specular
 			{
-				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+				const float NdotL = std::abs(PM::pm_Dot(dir, sc.N));
 
 				if (NdotL > PM_EPSILON)
 				{
@@ -542,7 +543,7 @@ namespace PR
 				{
 					const PM::vec3 dir = mPhotonMap->evalDirection(photon.Theta, photon.Phi);
 
-					const float NdotL = std::abs(PM::pm_Dot3D(sc.N, dir));
+					const float NdotL = std::abs(PM::pm_Dot(sc.N, dir));
 					#if PR_PHOTON_RGB_MODE >= 1
 						return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL), "After photon material eval")
 							* PR_CHECK_VALIDITY(

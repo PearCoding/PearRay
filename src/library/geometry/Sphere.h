@@ -32,7 +32,7 @@ namespace PR
 
 		inline bool contains(const PM::vec3& point) const
 		{
-			return PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, point)) <= mRadius*mRadius;
+			return PM::pm_MagnitudeSqr(PM::pm_Subtract(mPosition, point)) <= mRadius*mRadius;
 		}
 
 		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const;

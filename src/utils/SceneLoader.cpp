@@ -285,7 +285,7 @@ namespace PRU
 		if (posD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::vec p = getVector(posD.getGroup(), ok);
+			PM::vec3 p = getVector(posD.getGroup(), ok);
 
 			if (!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set position for entity %s.", name.c_str());
@@ -308,12 +308,12 @@ namespace PRU
 		if (scaleD.isNumber())
 		{
 			float s = scaleD.getNumber();
-			entity->setScale(PM::pm_Set(s, s, s, 1));
+			entity->setScale(PM::pm_Set(s, s, s));
 		}
 		else if(scaleD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::vec3 s = PM::pm_SetW(getVector(scaleD.getGroup(), ok), 1);
+			PM::vec3 s = getVector(scaleD.getGroup(), ok);
 
 			if(!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());
@@ -323,7 +323,7 @@ namespace PRU
 
 		if(parent)
 		{
-			PM::mat m = PM::pm_Multiply(parent->matrix(), entity->matrix());
+			PM::mat4 m = PM::pm_Product(parent->matrix(), entity->matrix());
 
 			PM::vec3 p, s;
 			PM::quat r;
@@ -343,10 +343,7 @@ namespace PRU
 		}
 
 		// Add to scene
-		if(entity->isRenderable())
-			env->scene().addEntity(std::static_pointer_cast<RenderEntity>(entity));
-		else
-			env->scene().addEntity(entity);
+		env->scene().addEntity(entity);
 
 		for (size_t i = 0; i < group.anonymousCount(); ++i)
 		{
@@ -788,7 +785,7 @@ namespace PRU
 
 	PM::vec3 SceneLoader::getVector(const DL::DataGroup& arr, bool& ok) const
 	{
-		PM::vec3 res = PM::pm_Set(0, 0, 0, 1);
+		PM::vec3 res = PM::pm_Set(0, 0, 0);
 
 		if (arr.anonymousCount() == 2)
 		{
@@ -797,8 +794,7 @@ namespace PRU
 			{
 				res = PM::pm_Set(arr.at(0).getNumber(),
 					arr.at(1).getNumber(),
-					0,
-					1);
+					0);
 
 				ok = true;
 			}
@@ -815,27 +811,7 @@ namespace PRU
 			{
 				res = PM::pm_Set(arr.at(0).getNumber(),
 					arr.at(1).getNumber(),
-					arr.at(2).getNumber(),
-					1);
-
-				ok = true;
-			}
-			else
-			{
-				ok = false;
-			}
-		}
-		else if (arr.anonymousCount() == 4)
-		{
-			if (arr.at(0).isNumber() &&
-				arr.at(1).isNumber() &&
-				arr.at(2).isNumber() &&
-				arr.at(3).isNumber())
-			{
-				res = PM::pm_Set(arr.at(0).getNumber(),
-					arr.at(1).getNumber(),
-					arr.at(2).getNumber(),
-					arr.at(3).getNumber());
+					arr.at(2).getNumber());
 
 				ok = true;
 			}
@@ -857,9 +833,23 @@ namespace PRU
 		if (data.type() == DL::Data::T_Group)
 		{
 			DL::DataGroup grp = data.getGroup();
-			if(grp.isArray())
+			if(grp.isArray() && grp.anonymousCount() == 4)
 			{
-				return PM::pm_Normalize4D(getVector(grp, ok));
+				if (grp.at(0).isNumber() &&
+					grp.at(1).isNumber() &&
+					grp.at(2).isNumber() &&
+					grp.at(3).isNumber())
+				{
+					ok = true;
+					return PM::pm_Normalize(PM::pm_Set(grp.at(0).getNumber(),
+						grp.at(1).getNumber(),
+						grp.at(2).getNumber(),
+						grp.at(3).getNumber()));
+				}
+				else
+				{
+					ok = false;
+				}
 			}
 			else if (grp.id() == "euler" && grp.anonymousCount() == 3 &&
 				grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber())
@@ -869,7 +859,7 @@ namespace PRU
 				float z = PM::pm_DegToRad(grp.at(2).getNumber());
 
 				ok = true;
-				return PM::pm_Normalize4D(PM::pm_RotationQuatFromXYZ(x, y, z));
+				return PM::pm_Normalize(PM::pm_RotationQuatFromXYZ(x, y, z));
 			}
 		}
 

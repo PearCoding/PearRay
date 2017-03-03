@@ -71,8 +71,8 @@ namespace PR
 		bool mFrozen;
 
 		mutable bool mReCache;
-		mutable PM::mat mMatrixCache;
-		mutable PM::mat mInvMatrixCache;
+		mutable PM::mat4 mMatrixCache;
+		mutable PM::mat4 mInvMatrixCache;
 	};
 }
 

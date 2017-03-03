@@ -5,12 +5,12 @@
 using namespace PR;
 namespace PRU
 {
-	ConstVectorShaderOutput::ConstVectorShaderOutput(const PM::vec& f) :
+	ConstVectorShaderOutput::ConstVectorShaderOutput(const PM::vec3& f) :
 		VectorShaderOutput(), mValue(f)
 	{
 	}
 
-	PM::vec ConstVectorShaderOutput::eval(const PR::ShaderClosure& point)
+	PM::vec3 ConstVectorShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		return mValue;
 	}

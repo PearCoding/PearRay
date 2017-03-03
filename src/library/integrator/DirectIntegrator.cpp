@@ -61,7 +61,7 @@ namespace PR
 				float pdf;
 
 				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-				const float NdotL = std::abs(PM::pm_Dot3D(dir, sc.N));
+				const float NdotL = std::abs(PM::pm_Dot(dir, sc.N));
 
 				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
 					!(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))
@@ -94,10 +94,10 @@ namespace PR
 					FaceSample p = light->getRandomFacePoint(sampler, i, pdf);
 
 					const PM::vec3 PS = PM::pm_Subtract(p.P, sc.P);
-					const PM::vec3 L = PM::pm_Normalize3D(PS);
-					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot3D(L, sc.N));// No back light detection
+					const PM::vec3 L = PM::pm_Normalize(PS);
+					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot(L, sc.N));// No back light detection
 
-					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr3D(PS), NdotL) +
+					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr(PS), NdotL) +
 						sc.Material->pdf(sc, L, NdotL);
 
 					if (pdf <= PM_EPSILON)

@@ -324,4 +324,19 @@ namespace PR
 
 		return tmp;
 	}
+
+	inline bool operator==(const Spectrum& v1, const Spectrum& v2)
+	{
+		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
+		{
+			if(v1.value(i) != v2.value(i))
+				return false;
+		}
+		return true;
+	}
+
+	inline bool operator!=(const Spectrum& v1, const Spectrum& v2)
+	{
+		return !(v1 == v2);
+	}
 }

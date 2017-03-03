@@ -28,7 +28,7 @@ namespace PR
 
 		static inline PM::vec3 align(const PM::vec3& N, const PM::vec3& V, const PM::vec3& axis)
 		{
-			const float dot = PM::pm_Dot3D(N, axis);
+			const float dot = PM::pm_Dot(N, axis);
 			if (dot + 1 < PM_EPSILON)
 				return PM::pm_Negate(V);
 			else if (dot < 1)
@@ -41,17 +41,10 @@ namespace PR
 		static inline void tangent_frame(const PM::vec3& N, PM::vec3& T, PM::vec3& B)
 		{
 			PM::vec3 t = std::abs(PM::pm_GetX(N)) > 0.99f ? PM::pm_Set(0, 1, 0) : PM::pm_Set(1, 0, 0);
-			T = PM::pm_Normalize3D(PM::pm_Cross3D(N, t));
-			B = PM::pm_Cross3D(N, T);
+			T = PM::pm_Normalize(PM::pm_Cross(N, t));
+			B = PM::pm_Cross(N, T);
 		}
 
-		static inline void tangent_frame(const PM::vec3& N, PM::avec3& T, PM::avec3& B)
-		{
-			PM::vec3 X, Y;
-			tangent_frame(N, X, Y);
-			T = X;
-			B = Y;
-		}
 
 		static inline PM::vec3 tangent_align(const PM::vec3& N, const PM::vec3& V)
 		{

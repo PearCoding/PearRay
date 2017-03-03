@@ -1,4 +1,5 @@
 #include <boost/python.hpp>
+#include <thread>
 
 #include "Logger.h"
 #include "LogListener.h"

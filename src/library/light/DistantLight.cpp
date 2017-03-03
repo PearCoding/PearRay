@@ -37,7 +37,7 @@ namespace PR
 
 		PR_ASSERT(isFrozen(), "should be frozen.");
 
-		const float d = PM::pm_Max(0.0f, PM::pm_Dot3D(V, mSampleDirection_Cache));
+		const float d = PM::pm_Max(0.0f, PM::pm_Dot(V, mSampleDirection_Cache));
 
 		ShaderClosure sc;
 		sc.V = V;

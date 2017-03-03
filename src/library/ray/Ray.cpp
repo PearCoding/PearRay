@@ -3,7 +3,7 @@
 namespace PR
 {
 	Ray::Ray() :
-		mStartPosition(PM::pm_Set(0,0,0,1)), mDirection(PM::pm_Set(0,0,0)),
+		mStartPosition(PM::pm_Set(0,0,0)), mDirection(PM::pm_Set(0,0,0)),
 		mPixelX(0), mPixelY(0),
 		mDepth(0), mTime(0), mWavelengthIndex(0), mFlags(0)
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

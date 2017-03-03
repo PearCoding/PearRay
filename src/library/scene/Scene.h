@@ -24,8 +24,6 @@ namespace PR
 
 		void addEntity(const std::shared_ptr<Entity>& e);
 		void removeEntity(const std::shared_ptr<Entity>& e);
-		void addEntity(const std::shared_ptr<RenderEntity>& e);
-		void removeEntity(const std::shared_ptr<RenderEntity>& e);
 
 		std::shared_ptr<Entity> getEntity(const std::string& name, const std::string& type) const;
 

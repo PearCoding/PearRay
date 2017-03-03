@@ -209,7 +209,7 @@ namespace PR
 							if ((!ignoreCallback || ignoreCallback(entity)) &&
 								mCheckCollision(ray, tmpCollisionPoint, entity))
 							{
-								l = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(tmpCollisionPoint.P, ray.startPosition()));
+								l = PM::pm_MagnitudeSqr(PM::pm_Subtract(tmpCollisionPoint.P, ray.startPosition()));
 								if(l < t)
 								{
 									t = l;

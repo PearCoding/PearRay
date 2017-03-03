@@ -24,25 +24,19 @@ namespace PR
 	void Scene::addEntity(const std::shared_ptr<Entity>& e)
 	{
 		PR_ASSERT(e, "Given entity should be valid");
-		mEntities.push_back(e);
+		if(e->isRenderable())
+			mRenderEntities.push_back(std::static_pointer_cast<RenderEntity>(e));
+		else
+			mEntities.push_back(e);
 	}
 
 	void Scene::removeEntity(const std::shared_ptr<Entity>& e)
 	{
 		PR_ASSERT(e, "Given entity should be valid");
-		mEntities.remove(e);
-	}
-
-	void Scene::addEntity(const std::shared_ptr<RenderEntity>& e)
-	{
-		PR_ASSERT(e, "Given entity should be valid");
-		mRenderEntities.remove(e);
-	}
-
-	void Scene::removeEntity(const std::shared_ptr<RenderEntity>& e)
-	{
-		PR_ASSERT(e, "Given entity should be valid");
-		mRenderEntities.push_back(e);
+		if(e->isRenderable())
+			mRenderEntities.remove(std::static_pointer_cast<RenderEntity>(e));
+		else
+			mEntities.remove(e);
 	}
 
 	std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::string& type) const

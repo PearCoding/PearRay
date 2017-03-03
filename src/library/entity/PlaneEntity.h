@@ -21,7 +21,7 @@ namespace PR
 		const std::shared_ptr<Material>& material() const;
 
 		void setPlane(const Plane& plane);
-		Plane plane() const;
+		const Plane& plane() const;
 
 		virtual bool isCollidable() const override;
 		virtual float collisionCost() const override;

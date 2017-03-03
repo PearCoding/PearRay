@@ -13,7 +13,7 @@ namespace PR
 	   Sample context - nearly the same as for OSL
 	   View dependent!
 	*/
-	struct PM_ALIGN(16) PR_LIB_INLINE ShaderClosure
+	struct alignas(16) PR_LIB_INLINE ShaderClosure
 	{
 	public:
 		// Point of sample
@@ -23,6 +23,7 @@ namespace PR
 		PM::vec3 dPdZ;// Only useful for volumes.
 		PM::vec3 dPdU;
 		PM::vec3 dPdV;
+		PM::vec3 dPdW;
 		PM::vec3 dPdT;// Velocity of P
 
 		// View vector looking to the surface (only available if shoot)
@@ -41,9 +42,10 @@ namespace PR
 		PM::vec3 Ny;
 
 		// 2D surface parameters
-		PM::vec2 UV;
-		PM::vec2 dUVdX;
-		PM::vec2 dUVdY;
+		PM::vec3 UVW;
+		PM::vec3 dUVWdX;
+		PM::vec3 dUVWdY;
+		PM::vec3 dUVWdZ;
 
 		// Time for this sample.
 		float T;
@@ -64,23 +66,25 @@ namespace PR
 
 		// C++11 POD constructor
 		inline ShaderClosure() noexcept :
-			P(PM::pm_Zero()),
-			dPdX(PM::pm_Zero()),
-			dPdY(PM::pm_Zero()),
-			dPdZ(PM::pm_Zero()),
-			dPdU(PM::pm_Zero()),
-			dPdV(PM::pm_Zero()),
-			dPdT(PM::pm_Zero()),
-			V(PM::pm_Zero()),
-			dVdX(PM::pm_Zero()),
-			dVdY(PM::pm_Zero()),
-			N(PM::pm_Zero()),
-			Ng(PM::pm_Zero()),
-			Nx(PM::pm_Zero()),
-			Ny(PM::pm_Zero()),
-			UV(PM::pm_Zero()),
-			dUVdX(PM::pm_Zero()),
-			dUVdY(PM::pm_Zero()),
+			P(PM::pm_Zero3D()),
+			dPdX(PM::pm_Zero3D()),
+			dPdY(PM::pm_Zero3D()),
+			dPdZ(PM::pm_Zero3D()),
+			dPdU(PM::pm_Zero3D()),
+			dPdV(PM::pm_Zero3D()),
+			dPdW(PM::pm_Zero3D()),
+			dPdT(PM::pm_Zero3D()),
+			V(PM::pm_Zero3D()),
+			dVdX(PM::pm_Zero3D()),
+			dVdY(PM::pm_Zero3D()),
+			N(PM::pm_Zero3D()),
+			Ng(PM::pm_Zero3D()),
+			Nx(PM::pm_Zero3D()),
+			Ny(PM::pm_Zero3D()),
+			UVW(PM::pm_Zero3D()),
+			dUVWdX(PM::pm_Zero3D()),
+			dUVWdY(PM::pm_Zero3D()),
+			dUVWdZ(PM::pm_Zero3D()),
 			T(0),
 			//dT(0),
 			WavelengthIndex(0),
@@ -99,17 +103,19 @@ namespace PR
 			dPdZ(fs.dPdZ),
 			dPdU(fs.dPdU),
 			dPdV(fs.dPdV),
+			dPdW(fs.dPdW),
 			dPdT(fs.dPdT),
-			V(PM::pm_Zero()),
-			dVdX(PM::pm_Zero()),
-			dVdY(PM::pm_Zero()),
+			V(PM::pm_Zero3D()),
+			dVdX(PM::pm_Zero3D()),
+			dVdY(PM::pm_Zero3D()),
 			N(fs.Ng),
 			Ng(fs.Ng),
 			Nx(fs.Nx),
 			Ny(fs.Ny),
-			UV(fs.UV),
-			dUVdX(fs.dUVdX),
-			dUVdY(fs.dUVdY),
+			UVW(fs.UVW),
+			dUVWdX(fs.dUVWdX),
+			dUVWdY(fs.dUVWdY),
+			dUVWdZ(fs.dUVWdZ),
 			T(0),
 			//dT(0),
 			WavelengthIndex(0),
@@ -129,14 +135,16 @@ namespace PR
 			dPdZ = fs.dPdZ;
 			dPdU = fs.dPdU;
 			dPdV = fs.dPdV;
+			dPdW = fs.dPdW;
 			dPdT = fs.dPdT;
 			N = fs.Ng;
 			Ng = fs.Ng;
 			Nx = fs.Nx;
 			Ny = fs.Ny;
-			UV = fs.UV;
-			dUVdX = fs.dUVdX;
-			dUVdY = fs.dUVdY;
+			UVW = fs.UVW;
+			dUVWdX = fs.dUVWdX;
+			dUVWdY = fs.dUVWdY;
+			dUVWdY = fs.dUVWdY;
 			Material = fs.Material;
 
 			return *this;

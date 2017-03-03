@@ -1,17 +1,25 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(Src
+  camera.cpp
   entity.cpp
+  geometry.cpp
+  light.cpp
   logger.cpp
+  mat.cpp
   material.cpp
   module.cpp
-  pymath.cpp
+  output.cpp
   ray.cpp
+  renderentities.cpp
+  sampler.cpp
+  scene.cpp
+  settings.cpp
   shader.cpp
-  spectral.cpp)
+  spectral.cpp
+  vec.cpp)
 
-SET(Hdr
-  pymath.h)
+SET(Hdr )
 
 add_library(pypearray SHARED ${Src} ${Hdr})
 target_link_libraries(pypearray pr_lib pr_lib_utils ${Boost_LIBRARIES})

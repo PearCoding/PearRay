@@ -54,9 +54,9 @@ namespace PR
 		Spectrum spec;
 		if (mIndex && mShininess)
 		{
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, point.V));
-			const float NdotH = std::abs(PM::pm_Dot3D(point.N, H));
-			const float VdotH = std::abs(PM::pm_Dot3D(point.V, H));
+			const PM::vec3 H = PM::pm_Normalize(PM::pm_Subtract(L, point.V));
+			const float NdotH = std::abs(PM::pm_Dot(point.N, H));
+			const float VdotH = std::abs(PM::pm_Dot(point.V, H));
 			const float n = mShininess->eval(point);
 			Spectrum index = mIndex->eval(point);
 
@@ -80,8 +80,8 @@ namespace PR
 	{
 		if (mIndex)
 		{
-			const PM::vec3 H = PM::pm_Normalize3D(PM::pm_Subtract(L, point.V));
-			const float NdotH = std::abs(PM::pm_Dot3D(point.N, H));
+			const PM::vec3 H = PM::pm_Normalize(PM::pm_Subtract(L, point.V));
+			const float NdotH = std::abs(PM::pm_Dot(point.N, H));
 			const float n = mShininess->eval(point);
 			return PM_INV_PI_F + std::pow(NdotH, n);
 		}

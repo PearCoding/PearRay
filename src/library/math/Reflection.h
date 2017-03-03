@@ -19,7 +19,7 @@ namespace PR
 		*/
 		inline static PM::vec3 reflect(float NdotV, const PM::vec3& N, const PM::vec3& V)
 		{
-			return PM::pm_Normalize3D(PM::pm_Subtract(V, PM::pm_Scale(N, 2 * NdotV)));
+			return PM::pm_Normalize(PM::pm_Subtract(V, PM::pm_Scale(N, 2 * NdotV)));
 		}
 
 		/**
@@ -39,7 +39,7 @@ namespace PR
 				return reflect(NdotV, N, V);
 
 			const float t = eta * NdotV + std::sqrt(k);
-			return PM::pm_Normalize3D(PM::pm_Subtract(PM::pm_Scale(V, eta), PM::pm_Scale(N, t)));
+			return PM::pm_Normalize(PM::pm_Subtract(PM::pm_Scale(V, eta), PM::pm_Scale(N, t)));
 		}
 
 		/**
@@ -57,10 +57,10 @@ namespace PR
 
 			total = k < 0.0f;
 			if (total)//TOTAL REFLECTION
-				return PM::pm_Zero();
+				return PM::pm_Zero3D();
 
 			const float t = eta * NdotV + std::sqrt(k);
-			return PM::pm_Normalize3D(PM::pm_Subtract(PM::pm_Scale(V, eta), PM::pm_Scale(N, t)));
+			return PM::pm_Normalize(PM::pm_Subtract(PM::pm_Scale(V, eta), PM::pm_Scale(N, t)));
 		}
 
 		/**
@@ -88,7 +88,7 @@ namespace PR
 		 */
 		inline static PM::vec3 halfway(const PM::vec3& V, const PM::vec3& L)
 		{
-			return PM::pm_Normalize3D(PM::pm_Subtract(L, V));
+			return PM::pm_Normalize(PM::pm_Subtract(L, V));
 		}
 	};
 }

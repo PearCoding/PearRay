@@ -1,20 +1,38 @@
-#include "pymath.h"
+#include <boost/python.hpp>
+#include "material/Material.h"
+#include "shader/FaceSample.h"
 #include "shader/ShaderClosure.h"
 #include "shader/ShaderOutput.h"
 
 using namespace PR;
+namespace bpy = boost::python;
 namespace PRPY
 {
-    #define ATTR_3D(name) \
-        inline void set## name ##_Py(const bpy::object& v) { name = to3D(v); } \
-		inline bpy::object name ## _Py() const { return convert3D(name); }
+    #define ATTR(name) \
+        inline PM::vec3 get##name##_Py() const { return name; } \
+        inline void set##name##_Py(const PM::vec3& v) { name = v; }
+    
+    #define PROB_FS(name) \
+        .add_property(PR_STRINGIFY(name), &FSWrap::get##name##_Py, &FSWrap::set##name##_Py)
 
-    #define ATTR_2D(name) \
-        inline void set## name ##_Py(const bpy::object& v) { name = to2D(v); } \
-		inline bpy::object name ## _Py() const { return convert2D(name); }
+    #define PROB_SC(name) \
+        .add_property(PR_STRINGIFY(name), &SCWrap::get##name##_Py, &SCWrap::set##name##_Py)
 
-    #define PROB(name) \
-        .add_property(PR_STRINGIFY(name), &SCWrap::name##_Py, &SCWrap::set##name##_Py)
+    class FSWrap : public FaceSample, public bpy::wrapper<FaceSample>
+    {
+    public:
+        FSWrap() : FaceSample() {}
+        FSWrap(const boost::reference_wrapper<const FaceSample>::type& other) :
+            FaceSample(other) {}
+
+        ATTR(P) ATTR(dPdX) ATTR(dPdY) ATTR(dPdZ)
+        ATTR(dPdU) ATTR(dPdV) ATTR(dPdW) ATTR(dPdT)
+        ATTR(Ng) ATTR(Nx) ATTR(Ny)
+        ATTR(UVW) ATTR(dUVWdX) ATTR(dUVWdY) ATTR(dUVWdZ)
+
+        inline PR::Material* material_Py() const { return Material; }
+        inline void setMaterial_Py(PR::Material* m) { Material = m; }
+    };
 
     class SCWrap : public ShaderClosure, public bpy::wrapper<ShaderClosure>
     {
@@ -22,27 +40,15 @@ namespace PRPY
         SCWrap() : ShaderClosure() {}
         SCWrap(const boost::reference_wrapper<const ShaderClosure>::type& other) :
             ShaderClosure(other) {}
-        
-        ATTR_3D(P)
-        ATTR_3D(dPdX)
-        ATTR_3D(dPdY)
-        ATTR_3D(dPdZ)
-        ATTR_3D(dPdU)
-        ATTR_3D(dPdV)
-        ATTR_3D(dPdT)
 
-        ATTR_3D(V)
-        ATTR_3D(dVdX)
-        ATTR_3D(dVdY)
+        ATTR(P) ATTR(dPdX) ATTR(dPdY) ATTR(dPdZ)
+        ATTR(dPdU) ATTR(dPdV) ATTR(dPdW) ATTR(dPdT)
+        ATTR(V) ATTR(dVdX) ATTR(dVdY)
+        ATTR(N) ATTR(Ng) ATTR(Nx) ATTR(Ny)
+        ATTR(UVW) ATTR(dUVWdX) ATTR(dUVWdY) ATTR(dUVWdZ)
 
-        ATTR_3D(N)
-        ATTR_3D(Ng)
-        ATTR_3D(Nx)
-        ATTR_3D(Ny)
-
-        ATTR_2D(UV)
-        ATTR_2D(dUVdX)
-        ATTR_2D(dUVdY)
+        inline PR::Material* material_Py() const { return Material; }
+        inline void setMaterial_Py(PR::Material* m) { Material = m; }
     };
 
     class ScalarShaderOutputWrap : public ScalarShaderOutput, public bpy::wrapper<ScalarShaderOutput>
@@ -66,25 +72,30 @@ namespace PRPY
     class VectorShaderOutputWrap : public VectorShaderOutput, public bpy::wrapper<VectorShaderOutput>
     {
     public:
-        PM::vec eval(const ShaderClosure& point) override
+        PM::vec3 eval(const ShaderClosure& point) override
         {
-            return to3D(this->get_override("eval")(point));
-        }
-
-        bpy::object eval_Py(const ShaderClosure& point)
-        {
-            return convert3D(eval(point));
+            return this->get_override("eval")(point);
         }
     };
 
     void setup_shader()
     {
+        bpy::class_<FSWrap>("FaceSample")
+        PROB_FS(P) PROB_FS(dPdX) PROB_FS(dPdY) PROB_FS(dPdZ)
+        PROB_FS(dPdU) PROB_FS(dPdV) PROB_FS(dPdW) PROB_FS(dPdT)
+        PROB_FS(Ng) PROB_FS(Nx) PROB_FS(Ny)
+        PROB_FS(UVW) PROB_FS(dUVWdX) PROB_FS(dUVWdY) PROB_FS(dUVWdZ)
+        .add_property("Material",
+             bpy::make_function(&FSWrap::material_Py, bpy::return_internal_reference<>()),
+             &FSWrap::setMaterial_Py)
+        ;
+
         bpy::class_<SCWrap>("ShaderClosure")
-        PROB(P) PROB(dPdX) PROB(dPdY) PROB(dPdZ)
-        PROB(dPdU) PROB(dPdV) PROB(dPdT)
-        PROB(V) PROB(dVdX) PROB(dVdY)
-        PROB(N) PROB(Ng) PROB(Nx) PROB(Ny)
-        PROB(UV) PROB(dUVdX) PROB(dUVdY)
+        PROB_SC(P) PROB_SC(dPdX) PROB_SC(dPdY) PROB_SC(dPdZ)
+        PROB_SC(dPdU) PROB_SC(dPdV) PROB_SC(dPdW) PROB_SC(dPdT)
+        PROB_SC(V) PROB_SC(dVdX) PROB_SC(dVdY)
+        PROB_SC(N) PROB_SC(Ng) PROB_SC(Nx) PROB_SC(Ny)
+        PROB_SC(UVW) PROB_SC(dUVWdX) PROB_SC(dUVWdY) PROB_SC(dUVWdZ)
         .def_readwrite("T", &ShaderClosure::T)
         .def_readwrite("WavelengthIndex", &ShaderClosure::WavelengthIndex)
         .def_readwrite("Depth2", &ShaderClosure::Depth2)
@@ -92,7 +103,9 @@ namespace PRPY
         .def_readwrite("NdotV", &ShaderClosure::NdotV)
         .def_readwrite("Flags", &ShaderClosure::Flags)
         .def_readwrite("EntityID", &ShaderClosure::EntityID)
-        //.def_readwrite("Material", &ShaderClosure::Material)
+        .add_property("Material",
+             bpy::make_function(&SCWrap::material_Py, bpy::return_internal_reference<>()),
+             &SCWrap::setMaterial_Py)
         ;
 
         bpy::enum_<ShaderClosureFlags>("ShaderClosureFlags")
@@ -108,7 +121,7 @@ namespace PRPY
         ;
 
         bpy::class_<VectorShaderOutputWrap, boost::noncopyable>("VectorShaderOutput")
-        .def("eval", bpy::pure_virtual(&VectorShaderOutputWrap::eval_Py))
+        .def("eval", bpy::pure_virtual(&VectorShaderOutputWrap::eval))
         ;
 
         bpy::register_ptr_to_python<std::shared_ptr<ScalarShaderOutput> >();

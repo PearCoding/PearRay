@@ -41,8 +41,8 @@ namespace PR
 				if(isFrozen())
 					return mGlobalPlane_Cache.surfaceArea();
 				else
-					return std::sqrt(PM::pm_MagnitudeSqr3D(PM::pm_Multiply(directionMatrix(), mPlane.xAxis())) *
-							PM::pm_MagnitudeSqr3D(PM::pm_Multiply(directionMatrix(), mPlane.yAxis())));
+					return std::sqrt(PM::pm_MagnitudeSqr(PM::pm_Transform(directionMatrix(), mPlane.xAxis())) *
+							PM::pm_MagnitudeSqr(PM::pm_Transform(directionMatrix(), mPlane.yAxis())));
 			}
 			else
 			{
@@ -70,7 +70,7 @@ namespace PR
 		mPlane = plane;
 	}
 
-	Plane PlaneEntity::plane() const
+	const Plane& PlaneEntity::plane() const
 	{
 		return mPlane;
 	}
@@ -106,7 +106,7 @@ namespace PR
 			collisionPoint.Nx = mGlobalPlane_Cache.xAxis();
 			collisionPoint.Ny = mGlobalPlane_Cache.yAxis();
 
-			collisionPoint.UV = PM::pm_Set(u, v);
+			collisionPoint.UVW = PM::pm_Set(u, v,0);
 			collisionPoint.Material = material().get();
 
 			return true;
@@ -129,7 +129,7 @@ namespace PR
 		fp.Nx = mGlobalPlane_Cache.xAxis();
 		fp.Ny = mGlobalPlane_Cache.yAxis();
 
-		fp.UV = s;
+		fp.UVW = PM::pm_ExtendTo3D(s);
 		fp.Material = material().get();
 
 		pdf = 1;
@@ -140,19 +140,19 @@ namespace PR
 	{
 		RenderEntity::onFreeze();
 
-		mGlobalPlane_Cache.setPosition(PM::pm_SetW(PM::pm_Multiply(matrix(), PM::pm_SetW(mPlane.position(), 1)), 1));
+		mGlobalPlane_Cache.setPosition(PM::pm_Transform(matrix(), mPlane.position()));
 		mGlobalPlane_Cache.setAxis(
-			PM::pm_SetW(PM::pm_Multiply(directionMatrix(), PM::pm_SetW(mPlane.xAxis(), 0)), 0),
-			PM::pm_SetW(PM::pm_Multiply(directionMatrix(), PM::pm_SetW(mPlane.yAxis(), 0)), 0));
+			PM::pm_Transform(directionMatrix(), mPlane.xAxis()),
+			PM::pm_Transform(directionMatrix(), mPlane.yAxis()));
 
 		// Check up
-		if(std::abs(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.normal()) - 1) > PM_EPSILON)
+		if(std::abs(PM::pm_MagnitudeSqr(mGlobalPlane_Cache.normal()) - 1) > PM_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has a non unit normal vector!", name().c_str());
 
-		if(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.xAxis()) <= PM_EPSILON)
+		if(PM::pm_MagnitudeSqr(mGlobalPlane_Cache.xAxis()) <= PM_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero x axis!", name().c_str());
 
-		if(PM::pm_MagnitudeSqr3D(mGlobalPlane_Cache.yAxis()) <= PM_EPSILON)
+		if(PM::pm_MagnitudeSqr(mGlobalPlane_Cache.yAxis()) <= PM_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero y axis!", name().c_str());
 
 		if(mGlobalPlane_Cache.surfaceArea() <= PM_EPSILON)

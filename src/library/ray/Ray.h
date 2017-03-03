@@ -52,8 +52,8 @@ namespace PR
 		static inline Ray safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir,
 			uint32 depth = 0, float time = 0, uint8 wavelength = 0, uint16 flags = 0);
 	private:
-		alignas(16) PM::vec3 mStartPosition;
-		alignas(16) PM::vec3 mDirection;
+		PM::vec3 mStartPosition;
+		PM::vec3 mDirection;
 		uint32 mPixelX; uint32 mPixelY;
 		uint32 mDepth;// Recursion depth!
 		float mTime;

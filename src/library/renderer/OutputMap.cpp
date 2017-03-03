@@ -9,18 +9,13 @@
 namespace PR
 {
 	OutputMap::OutputMap(RenderContext* renderer) :
-		mRenderer(renderer)
+		mRenderer(renderer), mSpectral(new OutputSpectral(renderer))
 	{
-		mSpectral = new OutputSpectral(mRenderer);
-		std::fill_n(mInt1D, V_1D_COUNT, nullptr);
-		std::fill_n(mIntCounter, V_COUNTER_COUNT, nullptr);
-		std::fill_n(mInt3D, V_3D_COUNT, nullptr);
 	}
 
 	OutputMap::~OutputMap()
 	{
 		deinit();
-		delete mSpectral;
 	}
 
 	void OutputMap::init()
@@ -28,7 +23,7 @@ namespace PR
 		// Init outputs
 		mSpectral->init();
 		if(!mIntCounter[V_Samples])
-			mIntCounter[V_Samples] = new OutputCounter(mRenderer, 0);
+			mIntCounter[V_Samples] = std::make_shared<OutputCounter>(mRenderer, 0);
 
 		for(uint32 i = 0; i < V_1D_COUNT; ++i)
 		{
@@ -70,8 +65,7 @@ namespace PR
 			if(mInt1D[i])
 			{
 				mInt1D[i]->deinit();
-				delete mInt1D[i];
-				mInt1D[i] = nullptr;
+				mInt1D[i].reset();
 			}
 		}
 
@@ -80,8 +74,7 @@ namespace PR
 			if(mIntCounter[i])
 			{
 				mIntCounter[i]->deinit();
-				delete mIntCounter[i];
-				mIntCounter[i] = nullptr;
+				mIntCounter[i].reset();
 			}
 		}
 
@@ -90,37 +83,24 @@ namespace PR
 			if(mInt3D[i])
 			{
 				mInt3D[i]->deinit();
-				delete mInt3D[i];
-				mInt3D[i] = nullptr;
+				mInt3D[i].reset();
 			}
 		}
 
 		for(const auto& p: mCustom1D)
-		{
 			p.second->deinit();
-			delete p.second;
-		}
 		mCustom1D.clear();
 
 		for(const auto& p: mCustomCounter)
-		{
 			p.second->deinit();
-			delete p.second;
-		}
 		mCustomCounter.clear();
 
 		for(const auto& p: mCustom3D)
-		{
 			p.second->deinit();
-			delete p.second;
-		}
 		mCustom3D.clear();
 
 		for(const auto& p: mCustomSpectral)
-		{
 			p.second->deinit();
-			delete p.second;
-		}
 		mCustomSpectral.clear();
 	}
 
@@ -175,7 +155,7 @@ namespace PR
 		setSampleCount(x,y,oldSample+1);
 
 		// 3D
-		PM::vec tv = PM::pm_FillVector(t);
+		const PM::vec3 tv = PM::pm_FillVector3D(t);
 		if(mInt3D[V_Position])
 			mInt3D[V_Position]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_Position]->getFragmentBounded(x,y), sc.P, tv));
 		if(mInt3D[V_Normal])
@@ -189,13 +169,13 @@ namespace PR
 		if(mInt3D[V_View])
 			mInt3D[V_View]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_View]->getFragmentBounded(x,y), sc.V, tv));
 		if(mInt3D[V_UVW])
-			mInt3D[V_UVW]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_UVW]->getFragmentBounded(x,y), sc.UV, tv));
+			mInt3D[V_UVW]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_UVW]->getFragmentBounded(x,y), sc.UVW, tv));
 		if(mInt3D[V_DPDU])
 			mInt3D[V_DPDU]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDU]->getFragmentBounded(x,y), sc.dPdU, tv));
 		if(mInt3D[V_DPDV])
 			mInt3D[V_DPDV]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDV]->getFragmentBounded(x,y), sc.dPdV, tv));
-		//if(mInt3D[V_DPDW])
-		//	mInt3D[V_DPDW]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDW]->getFragmentBounded(x,y), sc.dPdW, tv));
+		if(mInt3D[V_DPDW])
+			mInt3D[V_DPDW]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDW]->getFragmentBounded(x,y), sc.dPdW, tv));
 		if(mInt3D[V_DPDX])
 			mInt3D[V_DPDX]->setFragmentBounded(x, y, PM::pm_Lerp(mInt3D[V_DPDX]->getFragmentBounded(x,y), sc.dPdX, tv));
 		if(mInt3D[V_DPDY])

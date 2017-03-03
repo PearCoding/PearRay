@@ -136,7 +136,7 @@ namespace PRU
 
 		for(const IM_ChannelSetting3D& sett : ch3d)
 		{
-			Output3D* channel = mRenderer->output()->getChannel(sett.Variable);
+			const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 			if(sett.TMM != TMM_Normalized || !channel)
 				continue;
 
@@ -146,7 +146,7 @@ namespace PRU
 				{
 					invMax3d[sett.Variable] =
 						PM::pm_Max(invMax3d[sett.Variable],
-							PM::pm_MagnitudeSqr3D(channel->getFragmentBounded(x,y)));
+							PM::pm_MagnitudeSqr(channel->getFragmentBounded(x,y)));
 				}
 			}
 
@@ -156,7 +156,7 @@ namespace PRU
 
 		for(const IM_ChannelSetting1D& sett : ch1d)
 		{
-			Output1D* channel = mRenderer->output()->getChannel(sett.Variable);
+			const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 			if(sett.TMM != TMM_Normalized || !channel)
 				continue;
 
@@ -175,7 +175,7 @@ namespace PRU
 
 		for(const IM_ChannelSettingCounter& sett : chcounter)
 		{
-			OutputCounter* channel = mRenderer->output()->getChannel(sett.Variable);
+			const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 			if(sett.TMM != TMM_Normalized || !channel)
 				continue;
 
@@ -220,14 +220,14 @@ namespace PRU
 
 				for(const IM_ChannelSetting3D& sett : ch3d)
 				{
-					Output3D* channel = mRenderer->output()->getChannel(sett.Variable);
+					const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 					if(channel)
 					{
-						const PM::avec3& a = channel->ptr()[id1d];
+						const PM::vec3& a = channel->ptr()[id1d];
 
-						float r = a[0];
-						float g = a[1];
-						float b = a[2];
+						float r = PM::pm_GetX(a);
+						float g = PM::pm_GetY(a);
+						float b = PM::pm_GetZ(a);
 						switch(sett.TMM)
 						{
 						case TMM_None:
@@ -273,7 +273,7 @@ namespace PRU
 
 				for(const IM_ChannelSetting1D& sett : ch1d)
 				{
-					Output1D* channel = mRenderer->output()->getChannel(sett.Variable);
+					const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 					if(channel)
 					{
 						float r = channel->ptr()[id1d];
@@ -308,7 +308,7 @@ namespace PRU
 
 				for(const IM_ChannelSettingCounter& sett : chcounter)
 				{
-					OutputCounter* channel = mRenderer->output()->getChannel(sett.Variable);
+					const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 					if(channel)
 					{
 						float r = channel->ptr()[id1d];

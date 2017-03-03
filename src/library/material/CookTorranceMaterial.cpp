@@ -178,7 +178,7 @@ namespace PR
 			}
 
 			const PM::vec3 H = Reflection::halfway(point.V, L);
-			const float NdotH = PM::pm_Dot3D(point.N, H);
+			const float NdotH = PM::pm_Dot(point.N, H);
 
 			if (NdotH > PM_EPSILON)
 			{
@@ -195,10 +195,10 @@ namespace PR
 						break;
 					default:
 					case GM_CookTorrance:
-						G = BRDF::g_cooktorrance(-point.NdotV, NdotL, NdotH, -PM::pm_Dot3D(point.V, H));
+						G = BRDF::g_cooktorrance(-point.NdotV, NdotL, NdotH, -PM::pm_Dot(point.V, H));
 						break;
 					case GM_Kelemen:
-						G = BRDF::g_kelemen(-point.NdotV, NdotL, PM::pm_Dot3D(point.V, H));// No need for -, will be quadrated anyway
+						G = BRDF::g_kelemen(-point.NdotV, NdotL, PM::pm_Dot(point.V, H));// No need for -, will be quadrated anyway
 						break;
 				}
 
@@ -219,8 +219,8 @@ namespace PR
 						{
 							const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-							const float XdotH = std::abs(PM::pm_Dot3D(point.Nx, H));
-							const float YdotH = std::abs(PM::pm_Dot3D(point.Ny, H));
+							const float XdotH = std::abs(PM::pm_Dot(point.Nx, H));
+							const float YdotH = std::abs(PM::pm_Dot(point.Ny, H));
 
 							D = BRDF::ndf_ggx_aniso(NdotH, XdotH, YdotH, m1, m2);
 						}
@@ -243,7 +243,7 @@ namespace PR
 		const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
 
 		const PM::vec3 H = Reflection::halfway(point.V, L);
-		const float NdotH = PM::pm_Dot3D(point.N, H);
+		const float NdotH = PM::pm_Dot(point.N, H);
 		const float prod = -NdotL * point.NdotV;
 
 		if (NdotH <= PM_EPSILON || prod <= PM_EPSILON)
@@ -266,8 +266,8 @@ namespace PR
 				{
 					const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-					const float XdotH = std::abs(PM::pm_Dot3D(point.Nx, H));
-					const float YdotH = std::abs(PM::pm_Dot3D(point.Ny, H));
+					const float XdotH = std::abs(PM::pm_Dot(point.Nx, H));
+					const float YdotH = std::abs(PM::pm_Dot(point.Ny, H));
 
 					D = BRDF::ndf_ggx_aniso(NdotH, XdotH, YdotH, m1, m2);
 				}
@@ -384,9 +384,9 @@ namespace PR
 		sinTheta = std::sqrt(1-cosTheta*cosTheta);
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
-		auto dir = PM::pm_Normalize3D(Reflection::reflect(std::abs(PM::pm_Dot3D(H, point.V)), H, point.V));
+		auto dir = PM::pm_Normalize(Reflection::reflect(std::abs(PM::pm_Dot(H, point.V)), H, point.V));
 
-		float NdotL = PM::pm_Dot3D(point.N, dir);
+		float NdotL = PM::pm_Dot(point.N, dir);
 		if(NdotL > PM_EPSILON)
 			pdf = PM::pm_Clamp(pdf / (-4 * NdotL * point.NdotV), 0.0f, 1.0f);
 		else

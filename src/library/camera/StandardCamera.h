@@ -10,8 +10,6 @@ namespace PR
 		StandardCamera(uint32 id, const std::string& name);
 		virtual ~StandardCamera();
 
-		virtual std::string type() const;
-
 		void setWithAngle(float foh, float fov);
 		void setWithSize(float width, float height);
 
@@ -40,9 +38,11 @@ namespace PR
 		void setApertureRadius(float f);
 		float apertureRadius() const;
 
-		Ray constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const;
+		// Camera
+		Ray constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const override;
 
 		// Entity
+		std::string type() const override;
 		void onFreeze() override;// Cache
 	private:
 		bool mOrthographic;

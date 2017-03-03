@@ -19,7 +19,7 @@ namespace PRU
 		DL::Data xAxisD = group.getFromKey("xAxis");
 		DL::Data yAxisD = group.getFromKey("yAxis");
 
-		PM::vec3 xAxis = PM::pm_Set(1, 0, 0, 1);
+		PM::vec3 xAxis = PM::pm_Set(1, 0, 0);
 		if (xAxisD.type() == DL::Data::T_Group)
 		{
 			bool ok;
@@ -27,16 +27,16 @@ namespace PRU
 
 			if (!ok)
 			{
-				xAxis = PM::pm_Set(1, 0, 0, 1);
+				xAxis = PM::pm_Set(1, 0, 0);
 				PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid x axis. Assuming unit x vector.", name.c_str());
 			}
 		}
 		else if(xAxisD.isNumber())
 		{
-			xAxis = PM::pm_Set(xAxisD.getNumber(), 0, 0, 1);
+			xAxis = PM::pm_Set(xAxisD.getNumber(), 0, 0);
 		}
 
-		PM::vec3 yAxis = PM::pm_Set(0, 1, 0, 1);
+		PM::vec3 yAxis = PM::pm_Set(0, 1, 0);
 		if (yAxisD.type() == DL::Data::T_Group)
 		{
 			bool ok;
@@ -44,16 +44,16 @@ namespace PRU
 
 			if (!ok)
 			{
-				yAxis = PM::pm_Set(0, 1, 0, 1);
+				yAxis = PM::pm_Set(0, 1, 0);
 				PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid y axis. Assuming unit y vector.", name.c_str());
 			}
 		}
 		else if(yAxisD.isNumber())
 		{
-			yAxis = PM::pm_Set(0, yAxisD.getNumber(), 0, 1);
+			yAxis = PM::pm_Set(0, yAxisD.getNumber(), 0);
 		}
 
-		PM::vec3 pos = PM::pm_Set(0, 0, 0, 1);
+		PM::vec3 pos = PM::pm_Set(0, 0, 0);
 		if(centeringD.type() == DL::Data::T_Bool && centeringD.getBool())
 			pos = PM::pm_Add(PM::pm_Scale(xAxis, -0.5f), PM::pm_Scale(yAxis, -0.5f));
 

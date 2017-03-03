@@ -97,7 +97,7 @@ namespace PR
 					Spectrum flux = other_sc.Material->emission()->eval(other_sc) / pdf;
 					PM::vec3 L = Projection::tangent_align(other_sc.Ng, other_sc.Nx, other_sc.Ny,
 									Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), pdf));
-					float NdotL = std::abs(PM::pm_Dot3D(other_sc.Ng, L));
+					float NdotL = std::abs(PM::pm_Dot(other_sc.Ng, L));
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					lightV[0].Flux = flux;
@@ -122,7 +122,7 @@ namespace PR
 								flux /= MSI::toArea(pdf, other_sc.Depth2, std::abs(other_sc.NdotV));
 
 							L = other_sc.Material->sample(other_sc, context->random().get3D(), pdf);
-							NdotL = std::abs(PM::pm_Dot3D(other_sc.N, L));
+							NdotL = std::abs(PM::pm_Dot(other_sc.N, L));
 
 							flux *=	other_sc.Material->eval(other_sc, L, NdotL) * NdotL;
 
@@ -184,7 +184,7 @@ namespace PR
 			{
 				float pdf;
 				PM::vec3 L = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-				const float NdotL = std::abs(PM::pm_Dot3D(L, sc.N));
+				const float NdotL = std::abs(PM::pm_Dot(L, sc.N));
 
 				if(pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
 				 !(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
@@ -216,13 +216,13 @@ namespace PR
 
 					Ray current = Ray::safe(in.pixelX(), in.pixelY(),
 						lightV.SC.P,
-						PM::pm_Normalize3D(LP),
+						PM::pm_Normalize(LP),
 						in.depth() + 1,
 						in.time(), in.wavelength(),
 						in.flags() | RF_Light);
 
 					const PM::vec3 L = PM::pm_Negate(current.direction());
-					const float NdotL = std::abs(PM::pm_Dot3D(sc.N, L));
+					const float NdotL = std::abs(PM::pm_Dot(sc.N, L));
 
 					if(NdotL <= PM_EPSILON)
 						continue;
@@ -231,7 +231,7 @@ namespace PR
 
 					if (pdf > PM_EPSILON &&
 							context->shoot(current, other_sc) == entity &&
-							PM::pm_MagnitudeSqr3D(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
+							PM::pm_MagnitudeSqr(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
 						other_weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;
 					else
 						other_weight.clear();

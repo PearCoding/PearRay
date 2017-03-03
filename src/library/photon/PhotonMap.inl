@@ -37,8 +37,8 @@ namespace Photon
 			[](const Photon& pht, const PhotonSphere& sph, float& dist2)
 				{
 					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
-					dist2 = PM::pm_MagnitudeSqr3D(V);
-					const float d = PM::pm_Dot3D(V, sph.Normal);
+					dist2 = PM::pm_MagnitudeSqr(V);
+					const float d = PM::pm_Dot(V, sph.Normal);
 					const float r = sph.Distance2 * (1 - std::abs(d)) +
 						sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
 					return dist2 <= r;
@@ -53,8 +53,8 @@ namespace Photon
 			[](const Photon& pht, const PhotonSphere& sph, float& dist2)
 				{
 					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
-					dist2 = PM::pm_MagnitudeSqr3D(V);
-					const float d = PM::pm_Dot3D(V, sph.Normal);
+					dist2 = PM::pm_MagnitudeSqr(V);
+					const float d = PM::pm_Dot(V, sph.Normal);
 					const float r = sph.Distance2 * (1 - std::abs(d)) +
 						sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
 					return d <= -PM_EPSILON && dist2 <= r;

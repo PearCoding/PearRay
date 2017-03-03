@@ -67,15 +67,16 @@ namespace PR
 
 	ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
 	{
-		u = (int)(PM::pm_GetX(point.UV) * mGridCount);
-		v = (int)(PM::pm_GetY(point.UV) * mGridCount);
+		u = (int)(PM::pm_GetX(point.UVW) * mGridCount);
+		v = (int)(PM::pm_GetY(point.UVW) * mGridCount);
 
 		if (mTiledUV)
 		{
 			ShaderClosure pointN = point;
-			pointN.UV = (PM::pm_Set(PM::pm_GetX(point.UV)*mGridCount - u,
-				PM::pm_GetY(point.UV)*mGridCount - v
-			));
+			pointN.UVW = PM::pm_Set(PM::pm_GetX(point.UVW)*mGridCount - u,
+				PM::pm_GetY(point.UVW)*mGridCount - v,
+				PM::pm_GetZ(point.UVW)
+			);
 			return pointN;
 		}
 		else
@@ -108,7 +109,7 @@ namespace PR
 			return mSecond->sample(pointN, rnd, pdf);
 
 		pdf = 0;
-		return PM::pm_Zero();
+		return PM::pm_Zero3D();
 	}
 
 	std::string GridMaterial::dumpInformation() const

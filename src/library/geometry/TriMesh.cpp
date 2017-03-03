@@ -64,7 +64,7 @@ namespace PR
 		{
 			PM::vec3 U = PM::pm_Subtract(f->V[1], f->V[0]);
 			PM::vec3 V = PM::pm_Subtract(f->V[2], f->V[0]);
-			PM::vec3 N = PM::pm_Normalize3D(PM::pm_Cross3D(U, V));
+			PM::vec3 N = PM::pm_Normalize(PM::pm_Cross(U, V));
 
 			f->N[0] = N;
 			f->N[1] = N;
@@ -99,29 +99,29 @@ namespace PR
 			mBoundingBox = ((TriKDTree*)mKDTree)->boundingBox();
 	}
 
-	float TriMesh::surfaceArea(uint32 slot, const PM::mat& transform) const
+	float TriMesh::surfaceArea(uint32 slot, const PM::mat4& transform) const
 	{
 		float a = 0;
 		for (Face* f : mFaces)
 		{
 			if(f->MaterialSlot == slot)
 			{
-				a += Triangle::surfaceArea(	PM::pm_Multiply(transform, f->V[0]),
-											PM::pm_Multiply(transform, f->V[1]),
-											PM::pm_Multiply(transform, f->V[2]));
+				a += Triangle::surfaceArea( PM::pm_Transform(transform, f->V[0]),
+											PM::pm_Transform(transform, f->V[1]),
+											PM::pm_Transform(transform, f->V[2]));
 			}
 		}
 		return a;
 	}
 
-	float TriMesh::surfaceArea(const PM::mat& transform) const
+	float TriMesh::surfaceArea(const PM::mat4& transform) const
 	{
 		float a = 0;
 		for (Face* f : mFaces)
 		{
-			a += Triangle::surfaceArea(	PM::pm_Multiply(transform, f->V[0]),
-										PM::pm_Multiply(transform, f->V[1]),
-										PM::pm_Multiply(transform, f->V[2]));
+			a += Triangle::surfaceArea(	PM::pm_Transform(transform, f->V[0]),
+										PM::pm_Transform(transform, f->V[1]),
+										PM::pm_Transform(transform, f->V[2]));
 		}
 		return a;
 	}
@@ -153,7 +153,7 @@ namespace PR
 		FaceSample fp;
 		fp.P = vec;
 		fp.Ng = n;
-		fp.UV = uv;
+		fp.UVW = PM::pm_ExtendTo3D(uv);
 		materialSlot = face->MaterialSlot;
 
 		pdf = 1;//?

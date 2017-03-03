@@ -9,7 +9,7 @@ namespace PR
 	   Sample context
 	   View independent!
 	*/
-	struct PM_ALIGN(16) PR_LIB_INLINE FaceSample
+	struct alignas(16) PR_LIB_INLINE FaceSample
 	{
 	public:
 		// Point of sample
@@ -19,6 +19,7 @@ namespace PR
 		PM::vec3 dPdZ;// Only useful for volumes.
 		PM::vec3 dPdU;
 		PM::vec3 dPdV;
+		PM::vec3 dPdW;
 		PM::vec3 dPdT;// Velocity of P
 
 		// Geometric normal.
@@ -27,28 +28,31 @@ namespace PR
 		PM::vec3 Nx;
 		PM::vec3 Ny;
 
-		// 2D surface parameters
-		PM::vec2 UV;
-		PM::vec2 dUVdX;
-		PM::vec2 dUVdY;
+		// 3D surface parameters
+		PM::vec3 UVW;
+		PM::vec3 dUVWdX;
+		PM::vec3 dUVWdY;
+		PM::vec3 dUVWdZ;
 
 		class Material* Material;
 
 		// C++11 POD constructor
 		inline FaceSample() noexcept :
-			P(PM::pm_Zero()),
-			dPdX(PM::pm_Zero()),
-			dPdY(PM::pm_Zero()),
-			dPdZ(PM::pm_Zero()),
-			dPdU(PM::pm_Zero()),
-			dPdV(PM::pm_Zero()),
-			dPdT(PM::pm_Zero()),
-			Ng(PM::pm_Zero()),
-			Nx(PM::pm_Zero()),
-			Ny(PM::pm_Zero()),
-			UV(PM::pm_Zero()),
-			dUVdX(PM::pm_Zero()),
-			dUVdY(PM::pm_Zero()),
+			P(PM::pm_Zero3D()),
+			dPdX(PM::pm_Zero3D()),
+			dPdY(PM::pm_Zero3D()),
+			dPdZ(PM::pm_Zero3D()),
+			dPdU(PM::pm_Zero3D()),
+			dPdV(PM::pm_Zero3D()),
+			dPdW(PM::pm_Zero3D()),
+			dPdT(PM::pm_Zero3D()),
+			Ng(PM::pm_Zero3D()),
+			Nx(PM::pm_Zero3D()),
+			Ny(PM::pm_Zero3D()),
+			UVW(PM::pm_Zero3D()),
+			dUVWdX(PM::pm_Zero3D()),
+			dUVWdY(PM::pm_Zero3D()),
+			dUVWdZ(PM::pm_Zero3D()),
 			Material(nullptr)
 			{}
 	};

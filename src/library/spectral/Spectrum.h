@@ -97,6 +97,8 @@ namespace PR
 
 	inline Spectrum operator * (float f, const Spectrum& spec);
 	inline Spectrum operator / (float f, const Spectrum& spec);
+	inline bool operator==(const Spectrum& v1, const Spectrum& v2);
+	inline bool operator!=(const Spectrum& v1, const Spectrum& v2);
 }
 
 #include "Spectrum.inl"

@@ -129,8 +129,8 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
 
 		float t = std::numeric_limits<float>::max();
 		int found = -1;
@@ -158,15 +158,15 @@ namespace PR
 		{
 			PR_ASSERT(found < 3, "found can't be greater than 2");
 
-			collisionPoint.P = PM::pm_Multiply(matrix(), vertex);
+			collisionPoint.P = PM::pm_Transform(matrix(), vertex);
 
 			Plane plane = mAxisBoundingBox_Cache[found].getFace(side);
-			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
+			collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			float u, v;
 			plane.project(vertex, u, v);
-			collisionPoint.UV = PM::pm_Set(u, v);
+			collisionPoint.UVW = PM::pm_Set(u, v,0);
 			collisionPoint.Material = mMaterials[found].get();
 			return true;
 		}
@@ -188,16 +188,16 @@ namespace PR
 		BoundingBox::FaceSide side = (BoundingBox::FaceSide)(proj % 6);
 		Plane plane = mAxisBoundingBox_Cache[elem].getFace(side);
 
-		PM::vec xaxis = PM::pm_Multiply(directionMatrix(), plane.xAxis());
-		PM::vec yaxis = PM::pm_Multiply(directionMatrix(), plane.yAxis());
+		PM::vec3 xaxis = PM::pm_Transform(directionMatrix(), plane.xAxis());
+		PM::vec3 yaxis = PM::pm_Transform(directionMatrix(), plane.yAxis());
 
 		FaceSample fp;
 		fp.P = PM::pm_Add(position(),
 			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetY(ret)),
 				PM::pm_Scale(yaxis, PM::pm_GetZ(ret))));
-		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
+		fp.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
-		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
+		fp.UVW = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret),0);
 		fp.Material = mMaterials[elem].get();
 
 		pdf = 1;

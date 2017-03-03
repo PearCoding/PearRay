@@ -36,7 +36,7 @@ namespace PR
 
 		// Really do tangent?
 		Projection::tangent_frame(sc.N, sc.Nx, sc.Ny);
-		sc.UV = Projection::sphereUV(V);
+		sc.UVW = PM::pm_ExtendTo3D(Projection::sphereUV(V));
 
 		return mMaterial->emission()->eval(sc);
 	}

@@ -82,26 +82,26 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		PM::vec3 vertex = PM::pm_Set(0,0,0,1);
+		PM::vec3 vertex = PM::pm_Set(0,0,0);
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Multiply(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize3D(PM::pm_Multiply(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
+		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
 
 		BoundingBox box = localBoundingBox();
 		float t;
 		BoundingBox::FaceSide side;
 		if (box.intersects(local, vertex, t, side))
 		{
-			collisionPoint.P = PM::pm_Multiply(matrix(), vertex);
+			collisionPoint.P = PM::pm_Transform(matrix(), vertex);
 
 			Plane plane = box.getFace(side);
-			collisionPoint.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
+			collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			float u, v;
 			plane.project(vertex, u, v);
-			collisionPoint.UV = PM::pm_Set(u, v);
+			collisionPoint.UVW = PM::pm_Set(u, v,0);
 			collisionPoint.Material = material().get();
 			return true;
 		}
@@ -118,16 +118,16 @@ namespace PR
 
 		Plane plane = localBoundingBox().getFace(side);
 
-		PM::vec xaxis = PM::pm_Multiply(directionMatrix(), plane.xAxis());
-		PM::vec yaxis = PM::pm_Multiply(directionMatrix(), plane.yAxis());
+		PM::vec3 xaxis = PM::pm_Transform(directionMatrix(), plane.xAxis());
+		PM::vec3 yaxis = PM::pm_Transform(directionMatrix(), plane.yAxis());
 
 		FaceSample fp;
 		fp.P = PM::pm_Add(position(),
 			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetY(ret)),
 				PM::pm_Scale(yaxis, PM::pm_GetZ(ret))));
-		fp.Ng = PM::pm_Normalize3D(PM::pm_Multiply(directionMatrix(), plane.normal()));
+		fp.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
-		fp.UV = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret));
+		fp.UVW = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret), 0);
 		fp.Material = material().get();
 
 		pdf = 1;

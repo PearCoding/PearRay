@@ -13,7 +13,7 @@ namespace PR
 		Plane(float width, float height);
 
 		inline PM::vec3 position() const { return mPosition; }
-		inline void setPosition(const PM::vec3& pos) { PM::pm_Copy(mPosition, pos); }
+		inline void setPosition(const PM::vec3& pos) { mPosition = pos; }
 
 		inline PM::vec3 xAxis() const { return mXAxis; }
 		void setXAxis(const PM::vec3& xAxis);
@@ -33,7 +33,7 @@ namespace PR
 
 		inline bool isValid() const
 		{
-			return PM::pm_MagnitudeSqr3D(mXAxis)*PM::pm_MagnitudeSqr3D(mYAxis) > 0;
+			return PM::pm_MagnitudeSqr(mXAxis)*PM::pm_MagnitudeSqr(mYAxis) > 0;
 		}
 
 		bool contains(const PM::vec3& point) const;

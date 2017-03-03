@@ -76,8 +76,8 @@ namespace PR
 		{
 			mReCache = false;
 
-			mMatrixCache = PM::pm_Multiply(PM::pm_Translation(mPosition), PM::pm_Multiply(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
-			mInvMatrixCache = PM::pm_Inverse4D(mMatrixCache);
+			mMatrixCache = PM::pm_Product(PM::pm_Translation(mPosition), PM::pm_Product(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
+			mInvMatrixCache = PM::pm_Inverse(mMatrixCache);
 		}
 
 		return mMatrixCache;

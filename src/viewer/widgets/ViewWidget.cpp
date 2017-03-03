@@ -391,7 +391,7 @@ void ViewWidget::refreshView()
 			}
 			else if(mDisplayMode1D != PR::OutputMap::V_1D_COUNT)
 			{
-				PR::Output1D* channel = map->getChannel(mDisplayMode1D);
+				const auto& channel = map->getChannel(mDisplayMode1D);
 
 				if(channel)
 				{
@@ -415,16 +415,16 @@ void ViewWidget::refreshView()
 			}
 			else
 			{
-				PR::Output3D* channel = map->getChannel(mDisplayMode3D);
+				const auto& channel = map->getChannel(mDisplayMode3D);
 
 				if(channel)
 				{
 					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
 					{
-						const PM::avec3& a = channel->ptr()[i];
-						mRenderData[i*3] = a[0];
-						mRenderData[i*3+1] = a[1];
-						mRenderData[i*3+2] = a[2];
+						const PM::vec3& a = channel->ptr()[i];
+						mRenderData[i*3] = PM::pm_GetX(a);
+						mRenderData[i*3+1] = PM::pm_GetY(a);
+						mRenderData[i*3+2] = PM::pm_GetZ(a);
 					}
 
 					mToneMapper->execMapper(mRenderData, mRenderData);

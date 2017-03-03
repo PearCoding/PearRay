@@ -68,9 +68,9 @@ namespace PR
 			std::vector<LightThreadData> Lights;
 		}* mThreadData;
 
-		OutputSpectral* mAccumulatedFlux;
-		Output1D* mSearchRadius2;
-		OutputCounter* mLocalPhotonCount;
+		std::shared_ptr<OutputSpectral> mAccumulatedFlux;
+		std::shared_ptr<Output1D> mSearchRadius2;
+		std::shared_ptr<OutputCounter> mLocalPhotonCount;
 
 		std::vector<Light> mLights;
 		uint32 mProjMaxTheta;

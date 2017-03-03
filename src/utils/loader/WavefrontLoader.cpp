@@ -49,22 +49,19 @@ namespace PRU
 						int idx = shape.mesh.indices[3 * i + j];
 						face->V[j] = PM::pm_Set(mScale * shape.mesh.positions[3 * idx],
 							mScale * shape.mesh.positions[3 * idx + 1],
-							mScale * shape.mesh.positions[3 * idx + 2],
-							1);
+							mScale * shape.mesh.positions[3 * idx + 2]);
 
 						if (hasNorm)
 						{
-							face->N[j] = PM::pm_Normalize3D(PM::pm_Set(inv * shape.mesh.normals[3 * idx],
+							face->N[j] = PM::pm_Normalize(PM::pm_Set(inv * shape.mesh.normals[3 * idx],
 								inv * shape.mesh.normals[3 * idx + 1],
-								inv * shape.mesh.normals[3 * idx + 2],
-								0));
+								inv * shape.mesh.normals[3 * idx + 2]));
 						}
 
 						if (hasUV)
 						{
 							face->UV[j] = PM::pm_Set(shape.mesh.texcoords[2 * idx],
-								shape.mesh.texcoords[2 * idx + 1],
-								0, 0);
+								shape.mesh.texcoords[2 * idx + 1]);
 						}
 					}
 

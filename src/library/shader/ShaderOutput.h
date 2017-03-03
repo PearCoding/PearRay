@@ -20,5 +20,5 @@ namespace PR
 
 	typedef ShaderOutput<float> ScalarShaderOutput;
 	typedef ShaderOutput<Spectrum> SpectralShaderOutput;
-	typedef ShaderOutput<PM::vec> VectorShaderOutput;
+	typedef ShaderOutput<PM::vec3> VectorShaderOutput;
 }

@@ -77,66 +77,66 @@ namespace PR
 		bool isPixelFinished(uint32 x, uint32 y) const;
 		uint64 finishedPixelCount() const;
 
-		inline Output1D* getChannel(Variable1D var) const
+		inline const std::shared_ptr<Output1D>& getChannel(Variable1D var) const
 		{
 			return mInt1D[var];
 		}
 
-		inline OutputCounter* getChannel(VariableCounter var) const
+		inline const std::shared_ptr<OutputCounter>& getChannel(VariableCounter var) const
 		{
 			return mIntCounter[var];
 		}
 
-		inline Output3D* getChannel(Variable3D var) const
+		inline const std::shared_ptr<Output3D>& getChannel(Variable3D var) const
 		{
 			return mInt3D[var];
 		}
 
 		inline OutputSpectral* getSpectralChannel() const
 		{
-			return mSpectral;
+			return mSpectral.get();
 		}
 
-		inline void registerChannel(Variable1D var, Output1D* output)
+		inline void registerChannel(Variable1D var, const std::shared_ptr<Output1D>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			PR_ASSERT(!mInt1D[var], "Given output entry has to be set");
 			mInt1D[var] = output;
 		}
 
-		inline void registerChannel(VariableCounter var, OutputCounter* output)
+		inline void registerChannel(VariableCounter var, const std::shared_ptr<OutputCounter>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			PR_ASSERT(!mIntCounter[var], "Given output entry has to be set");
 			mIntCounter[var] = output;
 		}
 
-		inline void registerChannel(Variable3D var, Output3D* output)
+		inline void registerChannel(Variable3D var, const std::shared_ptr<Output3D>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			PR_ASSERT(!mInt3D[var], "Given output entry has to be set");
 			mInt3D[var] = output;
 		}
 
-		inline void registerCustomChannel(const std::string& str, Output1D* output)
+		inline void registerCustomChannel(const std::string& str, const std::shared_ptr<Output1D>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			mCustom1D[str] = output;
 		}
 
-		inline void registerCustomChannel(const std::string& str, OutputCounter* output)
+		inline void registerCustomChannel(const std::string& str, const std::shared_ptr<OutputCounter>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			mCustomCounter[str] = output;
 		}
 
-		inline void registerCustomChannel(const std::string& str, Output3D* output)
+		inline void registerCustomChannel(const std::string& str, const std::shared_ptr<Output3D>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			mCustom3D[str] = output;
 		}
 
-		inline void registerCustomChannel(const std::string& str, OutputSpectral* output)
+		inline void registerCustomChannel(const std::string& str, const std::shared_ptr<OutputSpectral>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
 			mCustomSpectral[str] = output;
@@ -145,14 +145,14 @@ namespace PR
 	private:
 		RenderContext* mRenderer;
 
-		OutputSpectral* mSpectral;
-		Output3D* mInt3D[V_3D_COUNT];
-		Output1D* mInt1D[V_1D_COUNT];
-		OutputCounter* mIntCounter[V_COUNTER_COUNT];
+		std::unique_ptr<OutputSpectral> mSpectral;
+		std::shared_ptr<Output3D> mInt3D[V_3D_COUNT];
+		std::shared_ptr<Output1D> mInt1D[V_1D_COUNT];
+		std::shared_ptr<OutputCounter> mIntCounter[V_COUNTER_COUNT];
 
-		std::unordered_map<std::string, Output3D*> mCustom3D;
-		std::unordered_map<std::string, Output1D*> mCustom1D;
-		std::unordered_map<std::string, OutputCounter*> mCustomCounter;
-		std::unordered_map<std::string, OutputSpectral*> mCustomSpectral;
+		std::unordered_map<std::string, std::shared_ptr<Output3D> > mCustom3D;
+		std::unordered_map<std::string, std::shared_ptr<Output1D> > mCustom1D;
+		std::unordered_map<std::string, std::shared_ptr<OutputCounter> > mCustomCounter;
+		std::unordered_map<std::string, std::shared_ptr<OutputSpectral> > mCustomSpectral;
 	};
 }

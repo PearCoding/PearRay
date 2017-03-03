@@ -144,6 +144,8 @@ namespace PRPY
             .def(bpy::self *= float())
             .def(bpy::self /= bpy::self)
             .def(bpy::self /= float())
+            .def(bpy::self == bpy::self)
+            .def(bpy::self != bpy::self)
             .add_static_property("WAVELENGTH_START", &SpectrumWrap::WAVELENGTH_START_PY)
             .add_static_property("WAVELENGTH_END", &SpectrumWrap::WAVELENGTH_END_PY)
             .add_static_property("WAVELENGTH_AREA_SIZE", &SpectrumWrap::WAVELENGTH_AREA_SIZE_PY)

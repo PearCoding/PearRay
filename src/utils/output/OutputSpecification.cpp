@@ -78,25 +78,25 @@ namespace PRU
 		mImageWriter.init(renderer);
 		OutputMap* output = renderer->output();
 
-		PM::vec3 zero = PM::pm_Zero();
+		PM::vec3 zero = PM::pm_Zero3D();
 		for(const File& file : mFiles)
 		{
 			for(const IM_ChannelSetting3D& cs3d : file.Settings3D)
 			{
 				if(!output->getChannel(cs3d.Variable))
-					output->registerChannel(cs3d.Variable, new Output3D(renderer, zero));
+					output->registerChannel(cs3d.Variable, std::make_shared<Output3D>(renderer, zero));
 			}
 			
 			for(const IM_ChannelSetting1D& cs1d : file.Settings1D)
 			{
 				if(!output->getChannel(cs1d.Variable))
-					output->registerChannel(cs1d.Variable, new Output1D(renderer, 0));
+					output->registerChannel(cs1d.Variable, std::make_shared<Output1D>(renderer, 0));
 			}
 			
 			for(const IM_ChannelSettingCounter& cs : file.SettingsCounter)
 			{
 				if(!output->getChannel(cs.Variable))
-					output->registerChannel(cs.Variable, new OutputCounter(renderer, 0));
+					output->registerChannel(cs.Variable, std::make_shared<OutputCounter>(renderer, 0));
 			}
 		}
 	}

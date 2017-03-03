@@ -15,7 +15,7 @@ namespace PR
 		MeshEntity(uint32 id, const std::string& name);
 		virtual ~MeshEntity();
 
-		virtual std::string type() const;
+		virtual std::string type() const override;
 
 		virtual bool isLight() const override;
 		virtual float surfaceArea(Material* m) const override;

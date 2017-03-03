@@ -10,7 +10,7 @@
 namespace PR
 {
 	Sphere::Sphere() :
-		mPosition(PM::pm_Set(0,0,0,1)), mRadius(1)
+		mPosition(PM::pm_Set(0,0,0)), mRadius(1)
 	{
 	}
 
@@ -38,8 +38,8 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		const PM::vec3 L = PM::pm_Subtract(mPosition, ray.startPosition()); // C - O
-		const float S = PM::pm_Dot3D(L, ray.direction()); // L . D
-		const float L2 = PM::pm_MagnitudeSqr3D(L); // L . L
+		const float S = PM::pm_Dot(L, ray.direction()); // L . D
+		const float L2 = PM::pm_MagnitudeSqr(L); // L . L
 		const float R2 = mRadius*mRadius; // R^2
 
 		if (S < 0 && // when object behind ray
@@ -77,7 +77,7 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		float f = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, point));
+		float f = PM::pm_MagnitudeSqr(PM::pm_Subtract(mPosition, point));
 		if (f > mRadius*mRadius)
 			mRadius = std::sqrt(f);
 	}
@@ -92,7 +92,7 @@ namespace PR
 			return;
 		}
 
-		float f = PM::pm_MagnitudeSqr3D(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
+		float f = PM::pm_MagnitudeSqr(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
 		if (f > mRadius*mRadius)
 			mRadius = std::sqrt(f);
 	}

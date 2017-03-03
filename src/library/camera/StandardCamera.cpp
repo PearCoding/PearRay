@@ -143,7 +143,7 @@ namespace PR
 				PM::pm_SinCos(PM_2_PI_F * rx, s, c);
 				PM::vec3 eyePoint = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, ry*s),
 					PM::pm_Scale(mYApertureRadius_Cache, ry*c));
-				PM::vec3 rayDir = PM::pm_QualityNormalize3D(PM::pm_Subtract(viewPlane, eyePoint));
+				PM::vec3 rayDir = PM::pm_QualityNormalize(PM::pm_Subtract(viewPlane, eyePoint));
 
 				return Ray(0,0, // Will be set by render context
 					PM::pm_Add(position(), eyePoint),
@@ -154,7 +154,7 @@ namespace PR
 			{
 				return Ray(0,0, // Will be set by render context
 					position(),
-					PM::pm_QualityNormalize3D(viewPlane),
+					PM::pm_QualityNormalize(viewPlane),
 					0,t,wavelength);
 			}
 		}
@@ -167,12 +167,12 @@ namespace PR
 
 		Camera::onFreeze();
 
-		mDirection_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(
-			PM::pm_Multiply(directionMatrix(), mLocalDirection)), 0);
-		mRight_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(
-			PM::pm_Multiply(directionMatrix(), mLocalRight)), 0);
-		mUp_Cache = PM::pm_SetW(PM::pm_QualityNormalize3D(
-			PM::pm_Multiply(directionMatrix(), mLocalUp)), 0);
+		mDirection_Cache = PM::pm_SetW(PM::pm_QualityNormalize(
+			PM::pm_Transform(directionMatrix(), mLocalDirection)), 0);
+		mRight_Cache = PM::pm_SetW(PM::pm_QualityNormalize(
+			PM::pm_Transform(directionMatrix(), mLocalRight)), 0);
+		mUp_Cache = PM::pm_SetW(PM::pm_QualityNormalize(
+			PM::pm_Transform(directionMatrix(), mLocalUp)), 0);
 
 		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
 			name().c_str(),
@@ -183,8 +183,8 @@ namespace PR
 		if (mOrthographic || std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
 		{
 			mFocalDistance_Cache = mDirection_Cache;
-			mXApertureRadius_Cache = PM::pm_Zero();
-			mYApertureRadius_Cache = PM::pm_Zero();
+			mXApertureRadius_Cache = PM::pm_Zero3D();
+			mYApertureRadius_Cache = PM::pm_Zero3D();
 			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
 			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
 			mHasDOF_Cache = false;

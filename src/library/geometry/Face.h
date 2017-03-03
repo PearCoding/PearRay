@@ -10,9 +10,9 @@ namespace PR
 	{
 	public:
 		Face() :
-			V{PM::pm_Set(0, 0, 0, 1), PM::pm_Set(0, 0, 0, 1), PM::pm_Set(0, 0, 0, 1)},
-			N{PM::pm_Zero(), PM::pm_Zero(), PM::pm_Zero()},
-			UV{PM::pm_Zero(), PM::pm_Zero(), PM::pm_Zero()},
+			V{PM::pm_Zero3D(), PM::pm_Zero3D(), PM::pm_Zero3D()},
+			N{PM::pm_Zero3D(), PM::pm_Zero3D(), PM::pm_Zero3D()},
+			UV{PM::pm_Zero2D(), PM::pm_Zero2D(), PM::pm_Zero2D()},
 			MaterialSlot(0)
 		{
 		}
@@ -26,7 +26,7 @@ namespace PR
 			vec = PM::pm_Add(PM::pm_Scale(V[1], u),
 				PM::pm_Add(PM::pm_Scale(V[2], v), PM::pm_Scale(V[0], 1 - u - v)));
 
-			norm = PM::pm_Normalize3D(PM::pm_Add(PM::pm_Scale(N[1], u),
+			norm = PM::pm_Normalize(PM::pm_Add(PM::pm_Scale(N[1], u),
 				PM::pm_Add(PM::pm_Scale(N[2], v), PM::pm_Scale(N[0], 1 - u - v))));
 
 			uv = PM::pm_Add(PM::pm_Scale(UV[1], u),

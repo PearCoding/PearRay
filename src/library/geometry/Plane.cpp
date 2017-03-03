@@ -10,8 +10,8 @@ namespace PR
 	constexpr float EPSILON_BOUND = 0.00001f;
 
 	Plane::Plane() :
-		mPosition(PM::pm_Set(0, 0, 0, 1)), mXAxis(PM::pm_Set(1, 0, 0, 0)), mYAxis(PM::pm_Set(0, 1, 0, 0)),
-		mNormal_Cache(PM::pm_Set(0,0,1,0)), mSurfaceArea_Cache(1),
+		mPosition(PM::pm_Set(0, 0, 0)), mXAxis(PM::pm_Set(1, 0, 0)), mYAxis(PM::pm_Set(0, 1, 0)),
+		mNormal_Cache(PM::pm_Set(0,0,1)), mSurfaceArea_Cache(1),
 		mInvXLenSqr_Cache(1), mInvYLenSqr_Cache(1)
 	{
 	}
@@ -23,10 +23,10 @@ namespace PR
 	}
 
 	Plane::Plane(float width, float height) :
-		mPosition(PM::pm_Set(0,0,0,1)),
-		mXAxis(PM::pm_Set(width, 0, 0, 0)),
-		mYAxis(PM::pm_Set(0, height, 0, 0)),
-		mNormal_Cache(PM::pm_Set(0, 0, 1, 0)),
+		mPosition(PM::pm_Set(0,0,0)),
+		mXAxis(PM::pm_Set(width, 0, 0)),
+		mYAxis(PM::pm_Set(0, height, 0)),
+		mNormal_Cache(PM::pm_Set(0, 0, 1)),
 		mSurfaceArea_Cache(width * height),
 		mInvXLenSqr_Cache(1/(width*width)),
 		mInvYLenSqr_Cache(1/(height*height))
@@ -37,13 +37,13 @@ namespace PR
 
 	void Plane::recache()
 	{
-		mNormal_Cache = PM::pm_Cross3D(mXAxis, mYAxis);
-		mSurfaceArea_Cache = PM::pm_Magnitude3D(mNormal_Cache);
+		mNormal_Cache = PM::pm_Cross(mXAxis, mYAxis);
+		mSurfaceArea_Cache = PM::pm_Magnitude(mNormal_Cache);
 		mNormal_Cache = PM::pm_Scale(mNormal_Cache, 1/mSurfaceArea_Cache);
 
 		//Div Zero?
-		mInvXLenSqr_Cache = 1/PM::pm_MagnitudeSqr3D(mXAxis);
-		mInvYLenSqr_Cache = 1/PM::pm_MagnitudeSqr3D(mYAxis);
+		mInvXLenSqr_Cache = 1/PM::pm_MagnitudeSqr(mXAxis);
+		mInvYLenSqr_Cache = 1/PM::pm_MagnitudeSqr(mYAxis);
 	}
 
 	void Plane::setXAxis(const PM::vec3& v)
@@ -69,7 +69,7 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		BoundingBox box(PM::pm_SetW(PM::pm_Add(mXAxis, mYAxis),1), PM::pm_Set(0, 0, 0, 1));
+		BoundingBox box(PM::pm_Add(mXAxis, mYAxis), PM::pm_Set(0, 0, 0));
 		PM::vec3 diff = PM::pm_Abs(PM::pm_Subtract(mXAxis, mYAxis));
 
 		if (PM::pm_GetX(diff) <= PM_EPSILON)
@@ -114,10 +114,10 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
-		if (PM::pm_Dot3D(p, mNormal_Cache) <= std::numeric_limits<float>::epsilon())// Is on the plane
+		if (PM::pm_Dot(p, mNormal_Cache) <= std::numeric_limits<float>::epsilon())// Is on the plane
 		{
-			float u = PM::pm_Dot3D(mXAxis, p) * mInvXLenSqr_Cache;
-			float v = PM::pm_Dot3D(mYAxis, p) * mInvYLenSqr_Cache;
+			float u = PM::pm_Dot(mXAxis, p) * mInvXLenSqr_Cache;
+			float v = PM::pm_Dot(mYAxis, p) * mInvYLenSqr_Cache;
 
 			if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 				return true;
@@ -129,8 +129,8 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		float ln = PM::pm_Dot3D(ray.direction(), mNormal_Cache);
-		float pn = PM::pm_Dot3D(PM::pm_Subtract(mPosition, ray.startPosition()), mNormal_Cache);
+		float ln = PM::pm_Dot(ray.direction(), mNormal_Cache);
+		float pn = PM::pm_Dot(PM::pm_Subtract(mPosition, ray.startPosition()), mNormal_Cache);
 
 		if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON)//Parallel or on the plane
 		{
@@ -152,8 +152,8 @@ namespace PR
 			{
 				collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
 				PM::vec3 p = PM::pm_Subtract(collisionPoint, mPosition);
-				u = PM::pm_Dot3D(mXAxis, p) * mInvXLenSqr_Cache;
-				v = PM::pm_Dot3D(mYAxis, p) * mInvYLenSqr_Cache;
+				u = PM::pm_Dot(mXAxis, p) * mInvXLenSqr_Cache;
+				v = PM::pm_Dot(mYAxis, p) * mInvYLenSqr_Cache;
 
 				if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 					return true;
@@ -167,7 +167,7 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		PM::vec3 p = PM::pm_Subtract(point, mPosition);
-		u = PM::pm_Dot3D(mXAxis, p) * mInvXLenSqr_Cache;
-		v = PM::pm_Dot3D(mYAxis, p) * mInvYLenSqr_Cache;
+		u = PM::pm_Dot(mXAxis, p) * mInvXLenSqr_Cache;
+		v = PM::pm_Dot(mYAxis, p) * mInvYLenSqr_Cache;
 	}
 }

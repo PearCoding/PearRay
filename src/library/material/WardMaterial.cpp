@@ -85,13 +85,13 @@ namespace PR
 				m1 : PM::pm_Max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
 			const PM::vec3 H = Reflection::halfway(point.V, L);
-			const float NdotH = PM::pm_Dot3D(point.N, H);
+			const float NdotH = PM::pm_Dot(point.N, H);
 			const float prod = -NdotL*point.NdotV;
 
 			if (NdotH > PM_EPSILON && prod > PM_EPSILON)
 			{
-				const float HdotX = std::abs(PM::pm_Dot3D(H, point.Nx));
-				const float HdotY = std::abs(PM::pm_Dot3D(H, point.Ny));
+				const float HdotX = std::abs(PM::pm_Dot(H, point.Nx));
+				const float HdotY = std::abs(PM::pm_Dot(H, point.Ny));
 
 				const float NdotH2 = 0.5f + 0.5f * NdotH;
 				const float fx = HdotX / m1;
@@ -114,14 +114,14 @@ namespace PR
 			m1 : PM::pm_Max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
 		const PM::vec3 H = Reflection::halfway(point.V, L);
-		const float NdotH = PM::pm_Dot3D(point.N, H);
+		const float NdotH = PM::pm_Dot(point.N, H);
 		const float prod = -NdotL*point.NdotV;
 
 		if (NdotH <= PM_EPSILON || prod <= PM_EPSILON)
 			return PM_INV_PI_F;
 
-		const float HdotX = std::abs(PM::pm_Dot3D(H, point.Nx));
-		const float HdotY = std::abs(PM::pm_Dot3D(H, point.Ny));
+		const float HdotX = std::abs(PM::pm_Dot(H, point.Nx));
+		const float HdotY = std::abs(PM::pm_Dot(H, point.Ny));
 
 		const float NdotH2 = 0.5f + 0.5f * NdotH;
 		const float fx = HdotX / m1;
@@ -211,9 +211,9 @@ namespace PR
 
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
 			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
-		auto dir = Reflection::reflect(std::abs(PM::pm_Dot3D(H, point.V)), H, point.V);
+		auto dir = Reflection::reflect(std::abs(PM::pm_Dot(H, point.V)), H, point.V);
 
-		pdf = PM::pm_Clamp(pdf/std::abs(PM::pm_Dot3D(point.V, dir)), 0.0f, 1.0f);
+		pdf = PM::pm_Clamp(pdf/std::abs(PM::pm_Dot(point.V, dir)), 0.0f, 1.0f);
 
 		return dir;
 	}

@@ -107,7 +107,7 @@ namespace PR
 		bool mNeverClear;
 	};
 
-	typedef OutputChannel<PM::avec3> Output3D;
+	typedef OutputChannel<PM::vec3> Output3D;
 	typedef OutputChannel<float> Output1D;
 	typedef OutputChannel<uint64> OutputCounter;
 	typedef OutputChannel<Spectrum> OutputSpectral;

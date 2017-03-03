@@ -1,4 +1,4 @@
-#include "pymath.h"
+#include <boost/python.hpp>
 #include "material/Material.h"
 #include "shader/ShaderClosure.h"
 #include "renderer/RenderContext.h"
@@ -13,6 +13,7 @@
 #include "material/WardMaterial.h"
 
 using namespace PR;
+namespace bpy = boost::python;
 namespace PRPY
 {
     class MaterialWrap : public Material, public bpy::wrapper<Material>

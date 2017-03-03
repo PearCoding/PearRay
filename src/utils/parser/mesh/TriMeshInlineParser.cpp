@@ -54,7 +54,7 @@ namespace PRU
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD.getGroup(), ok);
+						PM::vec3 v = loader->getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							positionAttr.push_back(v);
@@ -77,10 +77,10 @@ namespace PRU
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD.getGroup(), ok);
+						PM::vec3 v = loader->getVector(attrValD.getGroup(), ok);
 
 						if(ok)
-							normalAttr.push_back(PM::pm_SetW(v, 0.0f));
+							normalAttr.push_back(v);
 						else
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh normal attribute entry is invalid.");
@@ -100,10 +100,10 @@ namespace PRU
 						}
 						
 						bool ok;
-						PM::vec v = loader->getVector(attrValD.getGroup(), ok);
+						PM::vec3 v = loader->getVector(attrValD.getGroup(), ok);
 
 						if(ok)
-							uvAttr.push_back(PM::pm_SetZ(PM::pm_SetW(v, 0.0f), 0.0f));
+							uvAttr.push_back(PM::pm_ShrinkTo2D(v));
 						else
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh texture attribute entry is invalid.");
@@ -244,9 +244,9 @@ namespace PRU
 				}
 				else
 				{
-					face->UV[0] = PM::pm_Zero();
-					face->UV[1] = PM::pm_Zero();
-					face->UV[2] = PM::pm_Zero();
+					face->UV[0] = PM::pm_Zero2D();
+					face->UV[1] = PM::pm_Zero2D();
+					face->UV[2] = PM::pm_Zero2D();
 				}
 
 				if(hasMaterials)
@@ -316,9 +316,9 @@ namespace PRU
 				}
 				else
 				{
-					face->UV[0] = PM::pm_Zero();
-					face->UV[1] = PM::pm_Zero();
-					face->UV[2] = PM::pm_Zero();
+					face->UV[0] = PM::pm_Zero2D();
+					face->UV[1] = PM::pm_Zero2D();
+					face->UV[2] = PM::pm_Zero2D();
 				}
 
 				if(hasMaterials)

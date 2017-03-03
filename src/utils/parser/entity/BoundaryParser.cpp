@@ -17,7 +17,7 @@ namespace PRU
 		DL::Data materialD = group.getFromKey("material");
 		DL::Data sizeD = group.getFromKey("size");
 
-		PM::vec3 size = PM::pm_Set(1, 1, 1, 1);
+		PM::vec3 size = PM::pm_Set(1, 1, 1);
 
 		if (sizeD.type() == DL::Data::T_Group)
 		{
@@ -26,16 +26,13 @@ namespace PRU
 
 			if (!ok)
 			{
-				size = PM::pm_Set(1, 1, 1, 1);
+				size = PM::pm_Set(1, 1, 1);
 				PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid size. Assuming unit cube.", name.c_str());
 			}
 		}
 		else if(sizeD.isNumber())
 		{
-			size = PM::pm_Set(sizeD.getNumber(),
-				sizeD.getNumber(),
-				sizeD.getNumber(),
-				1);
+			size = PM::pm_FillVector3D(sizeD.getNumber());
 		}
 		else
 		{

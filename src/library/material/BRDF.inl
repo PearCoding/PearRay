@@ -13,7 +13,7 @@ namespace PR
 		const float B = 0.45f * roughness / (roughness + 0.09f);
 		const float C = std::sin(or_alpha) * std::tan(or_beta);
 
-		const float gamma = PM::pm_Dot3D(PM::pm_Subtract(V, PM::pm_Scale(N, NdotV)),
+		const float gamma = PM::pm_Dot(PM::pm_Subtract(V, PM::pm_Scale(N, NdotV)),
 			PM::pm_Subtract(L, PM::pm_Scale(N, NdotL)));
 
 		const float L1 = (A + B * C * PM::pm_Max(0.0f, gamma));
