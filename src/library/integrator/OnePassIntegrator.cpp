@@ -54,7 +54,7 @@ namespace PR
 
 	RenderStatus OnePassIntegrator::status() const
 	{
-		const size_t max_samples =
+		const uint64 max_samples =
 			renderer()->width() * renderer()->height() * renderer()->settings().maxCameraSampleCount();
 		RenderStatus stat;
 		stat.setField("int.max_sample_count", max_samples);

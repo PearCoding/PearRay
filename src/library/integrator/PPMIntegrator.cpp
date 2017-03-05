@@ -333,7 +333,7 @@ namespace PR
 
 	RenderStatus PPMIntegrator::status() const
 	{
-		const size_t max_samples =
+		const uint64 max_samples =
 			renderer()->width() * renderer()->height() *
 			renderer()->settings().maxCameraSampleCount() * (renderer()->settings().ppm().maxPassCount() + 1);
 		RenderStatus stat;
