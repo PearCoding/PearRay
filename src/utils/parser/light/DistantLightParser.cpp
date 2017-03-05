@@ -9,10 +9,9 @@
 
 #include <algorithm>
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::IInfiniteLight> DistantLightParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
+	std::shared_ptr<PR::IInfiniteLight> DistantLightParser::parse(Environment* env, const DL::DataGroup& group) const
 	{
 		DL::Data dirD = group.getFromKey("direction");
 		DL::Data matD = group.getFromKey("material");
@@ -30,7 +29,7 @@ namespace PRU
 		if (dirD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(dirD.getGroup(), ok);
+			auto v = SceneLoader::getVector(dirD.getGroup(), ok);
 			if(ok)
 				light->setDirection(v);
 			else

@@ -7,10 +7,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Entity> MeshParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> MeshParser::parse(Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data materialsD = group.getFromKey("materials");

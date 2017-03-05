@@ -14,8 +14,8 @@
 
 namespace PR
 {
-	BiDirectIntegrator::BiDirectIntegrator() :
-		OnePassIntegrator(), mThreadData(nullptr), mThreadCount(0)
+	BiDirectIntegrator::BiDirectIntegrator(RenderContext* renderer) :
+		OnePassIntegrator(renderer), mThreadData(nullptr), mThreadCount(0)
 	{
 
 	}
@@ -40,50 +40,47 @@ namespace PR
 		}
 	}
 
-	void BiDirectIntegrator::init(RenderContext* renderer)
+	void BiDirectIntegrator::init()
 	{
-		PR_ASSERT(renderer, "No renderer given");
-
 		deleteThreadStructure();
 
-		if (renderer->lights().empty() || renderer->settings().maxLightSamples() == 0)
+		if (renderer()->lights().empty() || renderer()->settings().maxLightSamples() == 0)
 			return;
 
-		mThreadCount = renderer->threads();
-		mThreadData = new ThreadData[renderer->threads()];
-		size_t maxlightsamples = renderer->settings().maxRayDepth() *
-			renderer->lights().size() * renderer->settings().maxLightSamples();
+		mThreadCount = renderer()->threads();
+		mThreadData = new ThreadData[renderer()->threads()];
+		size_t maxlightsamples = renderer()->settings().maxRayDepth() *
+			renderer()->lights().size() * renderer()->settings().maxLightSamples();
 
 		for (uint32 i = 0; i < mThreadCount; ++i)
 		{
 			mThreadData[i].LightVertices = new ThreadData::EventVertex[maxlightsamples];
-			mThreadData[i].LightPathLength = new uint32[renderer->lights().size() * renderer->settings().maxLightSamples()];
+			mThreadData[i].LightPathLength = new uint32[renderer()->lights().size() * renderer()->settings().maxLightSamples()];
 		}
 	}
 
 	constexpr float LightEpsilon = 0.00001f;
 	Spectrum BiDirectIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
 	{
-		if (context->renderer()->settings().maxLightSamples() == 0)
+		if (renderer()->settings().maxLightSamples() == 0)
 			return Spectrum();
 
 		PR_ASSERT(mThreadData, "ThreadData not initialized.");
 
 		ShaderClosure other_sc;
 
-		RenderContext* renderer = context->renderer();
-		MultiJitteredSampler sampler(context->random(), renderer->settings().maxLightSamples());
-		if (!renderer->lights().empty())
+		MultiJitteredSampler sampler(context->random(), renderer()->settings().maxLightSamples());
+		if (!renderer()->lights().empty())
 		{
 			ThreadData& data = mThreadData[context->threadNumber()];
 
-			const uint32 maxDepth = renderer->settings().maxRayDepth();
-			const uint32 maxDiffBounces = renderer->settings().maxDiffuseBounces();
+			const uint32 maxDepth = renderer()->settings().maxRayDepth();
+			const uint32 maxDiffBounces = renderer()->settings().maxDiffuseBounces();
 
 			uint32 lightNr = 0;
-			for (RenderEntity* light : renderer->lights())
+			for (RenderEntity* light : renderer()->lights())
 			{
-				for (uint32 i = 0; i < renderer->settings().maxLightSamples(); ++i)
+				for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i)
 				{
 					ThreadData::EventVertex* lightV = &data.LightVertices[lightNr * maxDepth];
 
@@ -152,9 +149,9 @@ namespace PR
 
 	Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderThreadContext* context, uint32 diffBounces, ShaderClosure& sc)
 	{
-		const uint32 maxLightSamples = context->renderer()->settings().maxLightSamples();
-		const uint32 maxLights = maxLightSamples*(uint32)context->renderer()->lights().size();
-		const uint32 maxDepth = context->renderer()->settings().maxRayDepth();
+		const uint32 maxLightSamples = renderer()->settings().maxLightSamples();
+		const uint32 maxLights = maxLightSamples*(uint32)renderer()->lights().size();
+		const uint32 maxDepth = renderer()->settings().maxRayDepth();
 
 		if(in.depth() >= maxDepth)
 			return Spectrum();

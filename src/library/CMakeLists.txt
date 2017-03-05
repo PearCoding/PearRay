@@ -113,7 +113,8 @@ SET(PR_Main_Hdr
   FileLogListener.h
   Logger.h
   LogListener.h
-  Random.h)
+  Random.h
+  Variant.h)
 SET(PR_Camera_Hdr
   camera/Camera.h
   camera/StandardCamera.h)

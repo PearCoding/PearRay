@@ -46,18 +46,9 @@
 #include <fstream>
 #include <sstream>
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	SceneLoader::SceneLoader()
-	{
-	}
-
-	SceneLoader::~SceneLoader()
-	{
-	}
-
-	Environment* SceneLoader::loadFromFile(const std::string& path)
+	std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& path)
 	{
 		std::ifstream stream(path);
 		std::string str((std::istreambuf_iterator<char>(stream)),
@@ -66,7 +57,7 @@ namespace PRU
 		return load(str);
 	}
 
-	Environment* SceneLoader::load(const std::string& source)
+	std::shared_ptr<Environment> SceneLoader::load(const std::string& source)
 	{
 		DL::SourceLogger logger;
 		DL::DataLisp dataLisp(&logger);
@@ -95,16 +86,16 @@ namespace PRU
 			}
 			else
 			{
-				Environment* env;
+				std::shared_ptr<Environment> env;
 				DL::Data nameD = top.getFromKey("name");
 				DL::Data renderWidthD = top.getFromKey("renderWidth");
 				DL::Data renderHeightD = top.getFromKey("renderHeight");
 				DL::Data cropD = top.getFromKey("crop");
 
 				if (nameD.type() != DL::Data::T_String)
-					env = new Environment("UNKNOWN");
+					env = std::make_shared<Environment>("UNKNOWN");
 				else
-					env = new Environment(nameD.getString());
+					env = std::make_shared<Environment>(nameD.getString());
 
 				if (renderWidthD.type() == DL::Data::T_Integer)
 				{
@@ -130,7 +121,7 @@ namespace PRU
 				}
 				
 				// Output information
-				env->outputSpecification().parse(this, env, top);
+				env->outputSpecification().parse(env.get(), top);
 
 				// First independent information
 				for (size_t i = 0; i < top.anonymousCount(); ++i)
@@ -143,19 +134,19 @@ namespace PRU
 
 						if (entry.id() == "spectrum")
 						{
-							addSpectrum(entry, env);
+							addSpectrum(entry, env.get());
 						}
 						else if (entry.id() == "texture")
 						{
-							addTexture(entry, env);
+							addTexture(entry, env.get());
 						}
 						else if (entry.id() == "graph")
 						{
-							addSubGraph(entry, env);
+							addSubGraph(entry, env.get());
 						}
 						else if (entry.id() == "mesh")
 						{
-							addMesh(entry, env);
+							addMesh(entry, env.get());
 						}
 					}
 				}
@@ -170,7 +161,7 @@ namespace PRU
 						DL::DataGroup entry = dataD.getGroup();
 
 						if (entry.id() == "material")
-							addMaterial(entry, env);
+							addMaterial(entry, env.get());
 					}
 				}
 
@@ -185,11 +176,11 @@ namespace PRU
 
 						if (entry.id() == "entity")
 						{
-							addEntity(entry, nullptr, env);
+							addEntity(entry, nullptr, env.get());
 						}
 						else if(entry.id() == "light")
 						{
-							addLight(entry, env);
+							addLight(entry, env.get());
 						}
 					}
 				}
@@ -263,7 +254,7 @@ namespace PRU
 
 			if (parser)
 			{
-				entity = parser->parse(this, env, name, typeD.getString(), group);
+				entity = parser->parse(env, name, typeD.getString(), group);
 
 				if (!entity)
 				{
@@ -402,7 +393,7 @@ namespace PRU
 
 		if (parser)
 		{
-			light = parser->parse(this, env, group);
+			light = parser->parse(env, group);
 
 			if (!light)
 			{
@@ -490,7 +481,7 @@ namespace PRU
 
 		if (parser)
 		{
-			mat = parser->parse(this, env, typeD.getString(), group);
+			mat = parser->parse(env, typeD.getString(), group);
 
 			if (!mat)
 			{
@@ -544,7 +535,7 @@ namespace PRU
 		}
 
 		TextureParser parser;
-		parser.parse(this, env, name, group);// Will be added to env here
+		parser.parse(env, name, group);// Will be added to env here
 	}
 
 	void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
@@ -577,7 +568,7 @@ namespace PRU
 		}
 
 		TriMeshInlineParser parser;
-		auto mesh = parser.parse(this, env, group);
+		auto mesh = parser.parse(env, group);
 
 		if (!mesh)
 		{
@@ -783,7 +774,7 @@ namespace PRU
 		}
 	}
 
-	PM::vec3 SceneLoader::getVector(const DL::DataGroup& arr, bool& ok) const
+	PM::vec3 SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
 	{
 		PM::vec3 res = PM::pm_Set(0, 0, 0);
 
@@ -828,7 +819,7 @@ namespace PRU
 		return res;
 	}
 	
-	PM::quat SceneLoader::getRotation(const DL::Data& data, bool& ok) const
+	PM::quat SceneLoader::getRotation(const DL::Data& data, bool& ok)
 	{
 		if (data.type() == DL::Data::T_Group)
 		{
@@ -866,7 +857,7 @@ namespace PRU
 		return PM::pm_IdentityQuat();
 	}
 
-	std::shared_ptr<SpectralShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar) const
+	std::shared_ptr<SpectralShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
 	{
 		if(allowScalar && dataD.isNumber())
 		{
@@ -913,7 +904,7 @@ namespace PRU
 		return nullptr;
 	}
 
-	std::shared_ptr<ScalarShaderOutput> SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD) const
+	std::shared_ptr<ScalarShaderOutput> SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD)
 	{
 		if (dataD.isNumber())
 		{
@@ -949,7 +940,7 @@ namespace PRU
 		return nullptr;
 	}
 
-	std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD) const
+	std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD)
 	{		
 		if (dataD.type() == DL::Data::T_Group)
 		{

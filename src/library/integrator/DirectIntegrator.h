@@ -10,7 +10,7 @@ namespace PR
 	public:
 		DirectIntegrator(RenderContext* renderer);
 
-		void init(RenderContext* renderer) override;
+		void init() override;
 		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
 
 	private:

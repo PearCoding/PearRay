@@ -53,8 +53,7 @@ void ViewWidget::setRenderer(PR::RenderContext* renderer)
 		std::memset(mRenderData, 0,
 			mRenderer->width()*mRenderer->height() * 3 * sizeof(uchar));
 
-		mToneMapper = new PR::ToneMapper(mRenderer->gpu(),
-			mRenderer->width()*mRenderer->height());
+		mToneMapper = new PR::ToneMapper(mRenderer->width(),mRenderer->height(),mRenderer->gpu());
 	}
 
 	refreshView();

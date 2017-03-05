@@ -12,11 +12,6 @@ namespace PR
 {
 	class RenderContext;
 	class RenderFactory;
-}
-
-namespace PRU
-{
-	class DisplayBuffer;
 	class Environment;
 }
 
@@ -73,9 +68,9 @@ private:
 	
 	Ui::MainWindowClass ui;
 
-	PRU::Environment* mEnvironment;
+	std::shared_ptr<PR::Environment> mEnvironment;
 	PR::RenderFactory* mRenderFactory;
-	PR::RenderContext* mRenderContext;
+	std::shared_ptr<PR::RenderContext> mRenderContext;
 
 	QTimer mTimer;
 	QElapsedTimer mElapsedTime;

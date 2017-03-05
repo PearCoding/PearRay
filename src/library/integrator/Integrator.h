@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "renderer/RenderStatus.h"
 
 namespace PR
 {
@@ -14,9 +14,10 @@ namespace PR
 	class PR_LIB Integrator
 	{
 	public:
+		Integrator(RenderContext* renderer) : mRenderer(renderer) {}
 		virtual ~Integrator() {}
 
-		virtual void init(RenderContext* renderer) = 0;
+		virtual void init() = 0;
 
 		virtual void onStart() = 0;
 		virtual void onNextPass(uint32 i, bool& clean) = 0;// Not the main thread!
@@ -30,13 +31,16 @@ namespace PR
 		virtual void onPostPass(RenderThreadContext* context, uint32 pass) = 0;
 		virtual void onThreadEnd(RenderThreadContext* context) = 0;
 
-		virtual uint64 maxSamples(const RenderContext* renderer) const = 0;
-		virtual uint64 maxPasses(const RenderContext* renderer) const = 0;// Can change over time!
-
 		virtual Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) = 0;
 
+		virtual RenderStatus status() const = 0;
+
+		inline RenderContext* renderer() const { return mRenderer; }
 	protected:
 		static Spectrum handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, float& full_pdf);
 		static Spectrum handleSpecularPath(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, RenderEntity*& lastEntity);
+
+	private:
+		RenderContext* mRenderer;
 	};
 }

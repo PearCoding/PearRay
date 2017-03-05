@@ -88,7 +88,7 @@ namespace PRPY
 
     void setup_entity()
     {
-        bpy::class_<EntityWrap, boost::noncopyable>("Entity", bpy::init<uint32, std::string>())
+        bpy::class_<EntityWrap, std::shared_ptr<EntityWrap>, boost::noncopyable>("Entity", bpy::init<uint32, std::string>())
         .add_property("id", &Entity::id)
         .add_property("name", &Entity::name, &Entity::setName)
         .add_property("type", &Entity::type)
@@ -114,7 +114,7 @@ namespace PRPY
         .value("ScaleLight", EF_ScaleLight)
         ;
 
-        bpy::class_<RenderEntityWrap, bpy::bases<Entity>, boost::noncopyable>("RenderEntity", bpy::init<uint32, std::string>())
+        bpy::class_<RenderEntityWrap, std::shared_ptr<RenderEntityWrap>, bpy::bases<Entity>, boost::noncopyable>("RenderEntity", bpy::init<uint32, std::string>())
         .def("isLight", bpy::pure_virtual(&RenderEntity::isLight))
         .def("surfaceArea", bpy::pure_virtual(&RenderEntity::surfaceArea))
         .def("isCollidable", &RenderEntity::isCollidable, &RenderEntityWrap::isCollidable_PyDef)
@@ -127,5 +127,7 @@ namespace PRPY
 
         bpy::register_ptr_to_python<std::shared_ptr<Entity> >();
         bpy::register_ptr_to_python<std::shared_ptr<RenderEntity> >();
+        
+        bpy::implicitly_convertible<std::shared_ptr<RenderEntity>, std::shared_ptr<Entity> >();
     }
 }

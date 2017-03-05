@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) "  << PR_VENDOR_STRING << std::endl;
 
 	PR_BEGIN_PROFILE_ID(0);
-	PRU::Environment* env = PRU::SceneLoader().loadFromFile(options.InputFile);
+	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(options.InputFile);
 	PR_END_PROFILE_ID(0);
 
 	if(!env)
@@ -115,20 +115,20 @@ int main(int argc, char** argv)
 	// Render per image tile
 	for(PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i)
 	{
-		PR::RenderContext* renderer =
+		auto renderer =
 			renderFactory->create(i, options.ImageTileXCount, options.ImageTileYCount);
 		PR_LOGGER.logf(PR::L_Info, PR::M_Scene, "Starting rendering of image tile %i / %i [%i, %i] x [%i, %i]",
 			renderer->index() + 1, options.ImageTileXCount * options.ImageTileYCount,
 			renderer->offsetX(), renderer->offsetX()+renderer->width(),
 			renderer->offsetY(), renderer->offsetY()+renderer->height());
 
-		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
+		env->outputSpecification().setup(renderer.get());
+		env->scene().setup(renderer.get());
 			
 		if(options.ShowInformation)
 			env->dumpInformation();
 		
-		PR::ToneMapper toneMapper(renderFactory->gpu(), renderer->width()*renderer->height());
+		PR::ToneMapper toneMapper(renderer->width(), renderer->height(), renderFactory->gpu());
 
 		if(options.ShowProgress)
 			std::cout << "preprocess" << std::endl;
@@ -144,14 +144,20 @@ int main(int argc, char** argv)
 			auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
 			if(options.ShowProgress > 0 && span_prog.count() > options.ShowProgress)
 			{
-				PR::RenderStatistics stats = renderer->stats();
+				PR::RenderStatus status = renderer->status();
 
-				std::cout << std::setprecision(6) << renderer->percentFinished() << "%"
-					<< " Pass " << renderer->currentPass() + 1 
-					<< " | S: " << stats.pixelSampleCount() 
-					<< " R: " << stats.rayCount() 
-					<< " EH: " << stats.entityHitCount() 
-					<< " BH: " << stats.backgroundHitCount() << std::endl;
+				std::cout << std::setprecision(6) << status.percentage()*100 << "%"
+					<< " Pass " << renderer->currentPass() + 1;
+
+				if(status.hasField("int.feedback"))
+					std::cout << "( " << status.getField("int.feedback").getString() << ")";
+
+				std::cout << " | S: " << status.getField("global.sample_count").getUInt() 
+					<< " R: " << status.getField("global.ray_count").getUInt()
+					<< " EH: " << status.getField("global.entity_hit_count").getUInt()
+					<< " BH: " << status.getField("global.background_hit_count").getUInt()
+					<< std::endl;
+				
 				start_prog = end;
 			}
 
@@ -159,7 +165,7 @@ int main(int argc, char** argv)
 			if(options.DDO == DDO_Image && options.ImgUpdate > 0 &&
 				span_img.count() > options.ImgUpdate*1000)
 			{
-				env->outputSpecification().save(renderer, toneMapper, false);
+				env->outputSpecification().save(renderer.get(), toneMapper, false);
 				start_img = end;
 			}
 		}
@@ -175,15 +181,11 @@ int main(int argc, char** argv)
 		}
 
 		// Save images
-		env->outputSpecification().save(renderer, toneMapper, true);
-
-		// Close everything
-		delete renderer;
+		env->outputSpecification().save(renderer.get(), toneMapper, true);
 	}
 
 	env->outputSpecification().deinit();
 	delete renderFactory;
-	delete env;
 
 #ifdef PR_PROFILE
 	std::string prof_file = options.OutputDir + "/profile.out";

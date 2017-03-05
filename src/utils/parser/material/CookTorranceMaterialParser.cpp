@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Material> CookTorranceMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> CookTorranceMaterialParser::parse(Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data fresnelModeD = group.getFromKey("fresnel_mode");
@@ -33,24 +32,24 @@ namespace PRU
 
 		auto diff = std::make_shared<CookTorranceMaterial>(env->materialCount() + 1);
 
-		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
-		diff->setDiffuseRoughness(loader->getScalarOutput(env, diffRoughnessD));
+		diff->setAlbedo(SceneLoader::getSpectralOutput(env, albedoD));
+		diff->setDiffuseRoughness(SceneLoader::getScalarOutput(env, diffRoughnessD));
 
-		diff->setSpecularity(loader->getSpectralOutput(env, specularityD));
-		diff->setIOR(loader->getSpectralOutput(env, indexD, true));
-		diff->setConductorAbsorption(loader->getSpectralOutput(env, condAbsorptionD, true));
-		diff->setReflectivity(loader->getScalarOutput(env, reflectivityD));
+		diff->setSpecularity(SceneLoader::getSpectralOutput(env, specularityD));
+		diff->setIOR(SceneLoader::getSpectralOutput(env, indexD, true));
+		diff->setConductorAbsorption(SceneLoader::getSpectralOutput(env, condAbsorptionD, true));
+		diff->setReflectivity(SceneLoader::getScalarOutput(env, reflectivityD));
 
 		if (specRoughnessD.isValid() && !specRoughnessXD.isValid() && !specRoughnessYD.isValid())
 		{
-			auto roughness = loader->getScalarOutput(env, specRoughnessD);
+			auto roughness = SceneLoader::getScalarOutput(env, specRoughnessD);
 			diff->setSpecularRoughnessX(roughness);
 			diff->setSpecularRoughnessY(roughness);
 		}
 		else if (!specRoughnessD.isValid() && specRoughnessXD.isValid() && specRoughnessYD.isValid())
 		{
-			diff->setSpecularRoughnessX(loader->getScalarOutput(env, specRoughnessXD));
-			diff->setSpecularRoughnessY(loader->getScalarOutput(env, specRoughnessYD));
+			diff->setSpecularRoughnessX(SceneLoader::getScalarOutput(env, specRoughnessXD));
+			diff->setSpecularRoughnessY(SceneLoader::getScalarOutput(env, specRoughnessYD));
 		}
 		else if (specRoughnessD.isValid() || specRoughnessXD.isValid() || specRoughnessYD.isValid())
 		{

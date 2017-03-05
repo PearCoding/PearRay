@@ -9,10 +9,10 @@ namespace PR
 	class PR_LIB BiDirectIntegrator : public OnePassIntegrator
 	{
 	public:
-		BiDirectIntegrator();
+		BiDirectIntegrator(RenderContext* renderer);
 		~BiDirectIntegrator();
 
-		void init(RenderContext* renderer) override;
+		void init() override;
 		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
 
 	private:

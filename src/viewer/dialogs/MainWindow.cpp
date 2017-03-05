@@ -12,7 +12,6 @@
 #include "camera/Camera.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
-#include "renderer/RenderStatistics.h"
 
 #include "Environment.h"
 #include "SceneLoader.h"
@@ -22,7 +21,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
-	mEnvironment(nullptr), mRenderFactory(nullptr), mRenderContext(nullptr)
+	mRenderFactory(nullptr)
 {
 	ui.setupUi(this);
 
@@ -154,8 +153,7 @@ void MainWindow::closeProject()
 	{
 		mRenderContext->stop();
 		mRenderContext->waitForFinish();
-		delete mRenderContext;
-		mRenderContext = nullptr;
+		mRenderContext.reset();
 	}
 
 	if (mRenderFactory)
@@ -165,10 +163,7 @@ void MainWindow::closeProject()
 	}
 
 	if (mEnvironment)
-	{
-		delete mEnvironment;
-		mEnvironment = nullptr;
-	}
+		mEnvironment.reset();
 }
 
 void MainWindow::openProject(const QString& str)
@@ -176,16 +171,14 @@ void MainWindow::openProject(const QString& str)
 	if (mEnvironment)
 		closeProject();
 
-	PRU::SceneLoader loader;
-	mEnvironment = loader.loadFromFile(str.toStdString());
+	mEnvironment = PR::SceneLoader::loadFromFile(str.toStdString());
 
 	if (mEnvironment)
 	{
 		if(!mEnvironment->camera())
 		{
 			QMessageBox::warning(this, tr("No camera"), tr("No camera was set in given scene."));
-			delete mEnvironment;
-			mEnvironment = nullptr;
+			mEnvironment.reset();
 			return;
 		}
 		
@@ -336,25 +329,25 @@ void MainWindow::updateView()
 	{
 		quint64 time = mElapsedTime.elapsed();
 
-		PR::RenderStatistics stats = mRenderContext->stats();
-		const float percent = mRenderContext->percentFinished() / 100;
+		PR::RenderStatus status = mRenderContext->status();
 
-		quint64 timeLeft = (1 - percent) * time / PM::pm_Max(0.0001f, percent);
+		quint64 timeLeft = (1 - status.percentage()) * time / PM::pm_Max(0.0001f, status.percentage());
 
-		mLastPercent = percent;
+		mLastPercent = status.percentage();
 
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("%1% | Pass: %2 | Samples: %3 | Rays: %4 | Entity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
-			.arg(100*percent, 4)
+		ui.statusBar->showMessage(
+		QString("%1% | Pass: %2 | Samples: %3 | Rays: %4 | Entity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
+			.arg(100*status.percentage(), 4)
 			.arg(mRenderContext->currentPass() + 1)
-			.arg(friendlyHugeNumber(stats.pixelSampleCount()))
-			.arg(friendlyHugeNumber(stats.rayCount()))
-			.arg(friendlyHugeNumber(stats.entityHitCount()))
-			.arg(friendlyHugeNumber(stats.backgroundHitCount()))
+			.arg(friendlyHugeNumber(status.getField("global.pixel_sample_count").getUInt()))
+			.arg(friendlyHugeNumber(status.getField("global.ray_count").getUInt()))
+			.arg(friendlyHugeNumber(status.getField("global.entity_hit_count").getUInt()))
+			.arg(friendlyHugeNumber(status.getField("global.background_hit_count").getUInt()))
 			.arg(friendlyTime(time))
 			.arg(friendlyTime(timeLeft)));
 
-		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)(percent*100)));
+		setWindowTitle(tr("PearRay Viewer [ %1% ]").arg((int)(status.percentage()*100)));
 
 		mFrameTime.restart();
 
@@ -487,7 +480,7 @@ void MainWindow::startRendering(bool clear)
 			QPoint(mEnvironment->cropMinX()*mRenderFactory->fullWidth(), mEnvironment->cropMinY()*mRenderFactory->fullHeight()),
 			QPoint(mEnvironment->cropMaxX()*mRenderFactory->fullWidth(), mEnvironment->cropMaxY()*mRenderFactory->fullHeight()));
 			
-	ui.viewWidget->setRenderer(mRenderContext);
+	ui.viewWidget->setRenderer(mRenderContext.get());
 
 	// Setup controls
 	ui.actionStartRender->setEnabled(false);
@@ -501,7 +494,7 @@ void MainWindow::startRendering(bool clear)
 	mEnvironment->scene().buildTree();
 
 	mEnvironment->outputSpecification().init(mRenderFactory);
-	mEnvironment->outputSpecification().setup(mRenderContext);
+	mEnvironment->outputSpecification().setup(mRenderContext.get());
 
 	// if(clear)
 	// 	mDisplayBuffer->clear(0,0,0,0);
@@ -533,19 +526,18 @@ void MainWindow::stopRendering()
 	}
 	else
 	{
-		PR::RenderStatistics stats = mRenderContext->stats();
+		PR::RenderStatus status = mRenderContext->status();
 
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | Entity Hits: %3 | Background Hits: %4 | Render time: %5")
-			.arg(friendlyHugeNumber(stats.pixelSampleCount()))
-			.arg(friendlyHugeNumber(stats.rayCount()))
-			.arg(friendlyHugeNumber(stats.entityHitCount()))
-			.arg(friendlyHugeNumber(stats.backgroundHitCount()))
+			.arg(friendlyHugeNumber(status.getField("global.pixel_sample_count").getUInt()))
+			.arg(friendlyHugeNumber(status.getField("global.ray_count").getUInt()))
+			.arg(friendlyHugeNumber(status.getField("global.entity_hit_count").getUInt()))
+			.arg(friendlyHugeNumber(status.getField("global.background_hit_count").getUInt()))
 			.arg(friendlyTime(mElapsedTime.elapsed())));
 	}
 
-	delete mRenderContext;
-	mRenderContext = nullptr;
+	mRenderContext.reset();
 
 	ui.actionStartRender->setEnabled(true);
 	ui.actionRestartRender->setEnabled(true);
@@ -626,4 +618,3 @@ void MainWindow::setViewDisplayMode(int i)
 {
 	ui.viewWidget->setDisplayMode(i);
 }
-

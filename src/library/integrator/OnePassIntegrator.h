@@ -7,6 +7,8 @@ namespace PR
 	class PR_LIB OnePassIntegrator : public Integrator
 	{
 	public:
+		OnePassIntegrator(RenderContext* renderer) : Integrator(renderer) {}
+
 		virtual void onStart() override;
 		virtual void onNextPass(uint32 i, bool& clean) override;
 		virtual void onEnd() override;
@@ -19,7 +21,6 @@ namespace PR
 
 		virtual bool needNextPass(uint32 i) const override;
 
-		virtual uint64 maxSamples(const RenderContext* renderer) const override;
-		virtual uint64 maxPasses(const RenderContext* renderer) const override;
+		RenderStatus status() const;
 	};
 }

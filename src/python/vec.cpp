@@ -1,4 +1,6 @@
 #include <boost/python.hpp>
+#include <boost/python/numeric.hpp>
+
 #include "PearMath.h"
 
 #include <iostream>
@@ -46,6 +48,11 @@ namespace PRPY
                 return bpy::make_tuple(mVec[0],mVec[1],mVec[2],mVec[3]);
             else
                 return bpy::tuple();
+        }
+
+        bpy::object toNumPy() const
+        {
+            return bpy::numeric::array(toTuple());
         }
 
         int len() const { return D; }
@@ -223,6 +230,7 @@ namespace PRPY
             .add_property("y", &pyvec<D>::getY, &pyvec<D>::setY)
             .def("__len__", &pyvec<D>::len)
             .def("toTuple", &pyvec<D>::toTuple)
+            .def("toNumPy", &pyvec<D>::toNumPy)
             .def("__str__", &pyvec<D>::str)
             .def("__repr__", &pyvec<D>::repr)
             .def("__eq__", &eq<D>)

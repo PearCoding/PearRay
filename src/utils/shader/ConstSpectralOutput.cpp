@@ -2,8 +2,7 @@
 
 #include "Logger.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	ConstSpectralShaderOutput::ConstSpectralShaderOutput(const PR::Spectrum& f) :
 		SpectralShaderOutput(), mValue(f)

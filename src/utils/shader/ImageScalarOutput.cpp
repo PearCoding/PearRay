@@ -3,8 +3,7 @@
 #include "shader/ShaderClosure.h"
 #include "Logger.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	ImageScalarShaderOutput::ImageScalarShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename) :
 		ScalarShaderOutput(), mFilename(filename), mTextureOptions(options), mTextureSystem(tsys)

@@ -11,11 +11,11 @@
 
 namespace PR
 {
-	DirectIntegrator::DirectIntegrator(RenderContext* renderer) : OnePassIntegrator()
+	DirectIntegrator::DirectIntegrator(RenderContext* renderer) : OnePassIntegrator(renderer)
 	{
 	}
 
-	void DirectIntegrator::init(RenderContext* renderer)
+	void DirectIntegrator::init()
 	{
 	}
 
@@ -46,7 +46,7 @@ namespace PR
 		// Hemisphere sampling
 		RandomSampler hemiSampler(context->random());
 		for (uint32 i = 0;
-			 i < context->renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
+			 i < renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
 			 ++i)
 		{
 			Spectrum other_weight;
@@ -64,7 +64,7 @@ namespace PR
 				const float NdotL = std::abs(PM::pm_Dot(dir, sc.N));
 
 				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
-					!(std::isinf(pdf) || diffbounces < context->renderer()->settings().maxDiffuseBounces()))
+					!(std::isinf(pdf) || diffbounces < renderer()->settings().maxDiffuseBounces()))
 					continue;
 
 				Ray ray = in.next(sc.P, dir);
@@ -85,10 +85,10 @@ namespace PR
 		{
 			Spectrum other_weight;
 			// Area sampling!
-			for (RenderEntity* light : context->renderer()->lights())
+			for (RenderEntity* light : renderer()->lights())
 			{
 				RandomSampler sampler(context->random());
-				for (uint32 i = 0; i < context->renderer()->settings().maxLightSamples(); ++i)
+				for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i)
 				{
 					float pdf;
 					FaceSample p = light->getRandomFacePoint(sampler, i, pdf);

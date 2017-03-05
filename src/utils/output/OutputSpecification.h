@@ -3,20 +3,16 @@
 #include "ImageWriter.h"
 #include <list>
 
-namespace PR
-{
-	class ToneMapper;
-	class RenderFactory;
-}
-
 namespace DL
 {
 	class DataGroup;
 }
 
-namespace PRU
+namespace PR
 {
-	class SceneLoader;
+	class ToneMapper;
+	class RenderFactory;
+
 	class Environment;
 	class PR_LIB_UTILS OutputSpecification
 	{
@@ -30,7 +26,7 @@ namespace PRU
 
 		void setup(PR::RenderContext* renderer);
 
-		void parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group);
+		void parse(Environment* env, const DL::DataGroup& group);
 		void save(PR::RenderContext* renderer, PR::ToneMapper& toneMapper, bool force = false) const;
 
 	private:

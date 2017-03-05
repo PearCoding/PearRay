@@ -12,17 +12,21 @@ SET(Src
   output.cpp
   ray.cpp
   renderentities.cpp
+  renderer.cpp
   sampler.cpp
   scene.cpp
   settings.cpp
   shader.cpp
   spectral.cpp
+  status.cpp
   vec.cpp)
-
 SET(Hdr )
 
+include_directories(../utils)
+
 add_library(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray pr_lib pr_lib_utils ${Boost_LIBRARIES})
+target_link_libraries(pypearray pr_lib ${Boost_LIBRARIES})
+target_link_libraries(pypearray pr_lib_utils)
 set_target_properties(pypearray PROPERTIES VERSION ${PR_Version})
 set_target_properties(pypearray PROPERTIES PREFIX "" )
 set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "" )

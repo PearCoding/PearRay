@@ -9,11 +9,11 @@
 
 namespace PR
 {
-	DebugIntegrator::DebugIntegrator() : OnePassIntegrator()
+	DebugIntegrator::DebugIntegrator(RenderContext* renderer) : OnePassIntegrator(renderer)
 	{
 	}
 
-	void DebugIntegrator::init(RenderContext* renderer)
+	void DebugIntegrator::init()
 	{
 	}
 
@@ -25,16 +25,16 @@ namespace PR
 		Ray out = in;
 		out.setFlags(in.flags() | RF_Debug);
 
-		if (context->renderer()->settings().debugMode() == DM_Emission)
+		if (renderer()->settings().debugMode() == DM_Emission)
 			entity = context->shootWithEmission(emission, out, sc);
 		else
 			entity = context->shoot(out, sc);
 
 		if (!entity ||
-			(context->renderer()->settings().debugMode() != DM_Validity && !sc.Material))
+			(renderer()->settings().debugMode() != DM_Validity && !sc.Material))
 			return Spectrum();
 
-		switch (context->renderer()->settings().debugMode())
+		switch (renderer()->settings().debugMode())
 		{
 		default:
 		case DM_None:

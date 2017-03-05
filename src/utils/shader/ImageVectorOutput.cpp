@@ -3,8 +3,7 @@
 #include "shader/ShaderClosure.h"
 #include "Logger.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	ImageVectorShaderOutput::ImageVectorShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename) :
 		VectorShaderOutput(), mFilename(filename), mTextureOptions(options), mTextureSystem(tsys)

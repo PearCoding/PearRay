@@ -43,7 +43,7 @@ namespace PR
 		 * @param gpu GPU instance to be used, nullptr if no gpu support.
 		 * @param size Size of buffer (without component count -> only width*height but no rgb [3])
 		 */
-		ToneMapper(GPU* gpu, size_t size);
+		ToneMapper(uint32 width, uint32 height, GPU* gpu);
 
 		void exec(const Spectrum* specIn, float* rgbOut) const;
 		void execMapper(const float* rgbIn, float* rgbOut) const;

@@ -3,7 +3,7 @@
 #include <OpenImageIO/texture.h>
 #include "shader/ShaderOutput.h"
 
-namespace PRU
+namespace PR
 {
 	class PR_LIB_UTILS ImageScalarShaderOutput : public PR::ScalarShaderOutput
 	{

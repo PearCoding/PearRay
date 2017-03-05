@@ -10,39 +10,33 @@ namespace DL
 	class Data;
 	class DataGroup;
 }
-
 namespace PR
 {
 	class Entity;
 	class IMesh;
-}
 
-namespace PRU
-{
 	class Environment;
 	class PR_LIB_UTILS SceneLoader
 	{
+		PR_CLASS_NON_CONSTRUCTABLE(SceneLoader);
 	public:
-		SceneLoader();
-		virtual ~SceneLoader();
+		static std::shared_ptr<Environment> loadFromFile(const std::string& path);
+		static std::shared_ptr<Environment> load(const std::string& source);
 
-		Environment* loadFromFile(const std::string& path);
-		Environment* load(const std::string& source);
+		static PM::vec3 getVector(const DL::DataGroup& arr, bool& ok);
+		static PM::quat getRotation(const DL::Data& data, bool& ok);
 
-		PM::vec3 getVector(const DL::DataGroup& arr, bool& ok) const;
-		PM::quat getRotation(const DL::Data& data, bool& ok) const;
-
-		std::shared_ptr<PR::SpectralShaderOutput> getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false) const;
-		std::shared_ptr<PR::ScalarShaderOutput> getScalarOutput(Environment* env, const DL::Data& data) const;
-		std::shared_ptr<PR::VectorShaderOutput> getVectorOutput(Environment* env, const DL::Data& data) const;
+		static std::shared_ptr<PR::SpectralShaderOutput> getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false);
+		static std::shared_ptr<PR::ScalarShaderOutput> getScalarOutput(Environment* env, const DL::Data& data);
+		static std::shared_ptr<PR::VectorShaderOutput> getVectorOutput(Environment* env, const DL::Data& data);
 
 	private:
-		void addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env);
-		void addLight(const DL::DataGroup& group, Environment* env);
-		void addMaterial(const DL::DataGroup& group, Environment* env);
-		void addTexture(const DL::DataGroup& group, Environment* env);
-		void addSpectrum(const DL::DataGroup& group, Environment* env);
-		void addSubGraph(const DL::DataGroup& group, Environment* env);
-		void addMesh(const DL::DataGroup& group, Environment* env);
+		static void addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env);
+		static void addLight(const DL::DataGroup& group, Environment* env);
+		static void addMaterial(const DL::DataGroup& group, Environment* env);
+		static void addTexture(const DL::DataGroup& group, Environment* env);
+		static void addSpectrum(const DL::DataGroup& group, Environment* env);
+		static void addSubGraph(const DL::DataGroup& group, Environment* env);
+		static void addMesh(const DL::DataGroup& group, Environment* env);
 	};
 }

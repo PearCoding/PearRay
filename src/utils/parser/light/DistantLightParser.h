@@ -2,11 +2,11 @@
 
 #include "LightParser.h"
 
-namespace PRU
+namespace PR
 {
 	class DistantLightParser : public ILightParser
 	{
 	public:
-		std::shared_ptr<PR::IInfiniteLight> parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const override;
+		std::shared_ptr<PR::IInfiniteLight> parse(Environment* env, const DL::DataGroup& group) const override;
 	};
 }

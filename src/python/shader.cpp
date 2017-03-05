@@ -4,6 +4,14 @@
 #include "shader/ShaderClosure.h"
 #include "shader/ShaderOutput.h"
 
+// Implementations
+#include "shader/ConstScalarOutput.h"
+#include "shader/ConstSpectralOutput.h"
+#include "shader/ConstVectorOutput.h"
+#include "shader/ImageScalarOutput.h"
+#include "shader/ImageSpectralOutput.h"
+#include "shader/ImageVectorOutput.h"
+
 using namespace PR;
 namespace bpy = boost::python;
 namespace PRPY
@@ -112,20 +120,43 @@ namespace PRPY
         .value("Inside", SCF_Inside)
         ;
 
-        bpy::class_<ScalarShaderOutputWrap, boost::noncopyable>("ScalarShaderOutput")
+        bpy::class_<ScalarShaderOutputWrap, std::shared_ptr<ScalarShaderOutputWrap>, boost::noncopyable>("ScalarShaderOutput")
         .def("eval", bpy::pure_virtual(&ScalarShaderOutput::eval))
         ;
 
-        bpy::class_<SpectralShaderOutputWrap, boost::noncopyable>("SpectralShaderOutput")
+        bpy::class_<SpectralShaderOutputWrap, std::shared_ptr<SpectralShaderOutputWrap>, boost::noncopyable>("SpectralShaderOutput")
         .def("eval", bpy::pure_virtual(&SpectralShaderOutput::eval))
         ;
 
-        bpy::class_<VectorShaderOutputWrap, boost::noncopyable>("VectorShaderOutput")
+        bpy::class_<VectorShaderOutputWrap, std::shared_ptr<VectorShaderOutputWrap>, boost::noncopyable>("VectorShaderOutput")
         .def("eval", bpy::pure_virtual(&VectorShaderOutputWrap::eval))
         ;
 
         bpy::register_ptr_to_python<std::shared_ptr<ScalarShaderOutput> >();
         bpy::register_ptr_to_python<std::shared_ptr<SpectralShaderOutput> >();
         bpy::register_ptr_to_python<std::shared_ptr<VectorShaderOutput> >();
+
+        // Implementations
+        bpy::class_<ConstScalarShaderOutput, std::shared_ptr<ConstScalarShaderOutput>, bpy::bases<ScalarShaderOutput>, boost::noncopyable >
+            ("ConstScalarShaderOutput", bpy::init<float>())
+        ;
+        bpy::implicitly_convertible<std::shared_ptr<ConstScalarShaderOutput>, std::shared_ptr<ScalarShaderOutput> >();
+        bpy::class_<ConstSpectralShaderOutput, std::shared_ptr<ConstSpectralShaderOutput>, bpy::bases<SpectralShaderOutput>, boost::noncopyable >
+            ("ConstSpectralShaderOutput", bpy::init<const PR::Spectrum&>())
+        ;
+        bpy::implicitly_convertible<std::shared_ptr<ConstSpectralShaderOutput>, std::shared_ptr<SpectralShaderOutput> >();
+        bpy::class_<ConstVectorShaderOutput, std::shared_ptr<ConstVectorShaderOutput>, bpy::bases<VectorShaderOutput>, boost::noncopyable >
+            ("ConstVectorShaderOutput", bpy::init<const PM::vec3&>())
+        ;
+        bpy::implicitly_convertible<std::shared_ptr<ConstVectorShaderOutput>, std::shared_ptr<VectorShaderOutput> >();
+        // bpy::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, bpy::bases<ScalarShaderOutput>, boost::noncopyable >
+        //     ("ImageScalarOutput", bpy::init<float>())
+        // ;
+        // bpy::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, bpy::bases<SpectralShaderOutput>, boost::noncopyable >
+        //     ("ImageSpectralOutput", bpy::init<const PR::Spectrum&>())
+        // ;
+        // bpy::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, bpy::bases<VectorShaderOutput>, boost::noncopyable >
+        //     ("ImageVectorOutput", bpy::init<const PM::vec3&>())
+        // ;
     }
 }

@@ -9,10 +9,9 @@
 
 #include <algorithm>
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::IInfiniteLight> EnvironmentLightParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
+	std::shared_ptr<PR::IInfiniteLight> EnvironmentLightParser::parse(Environment* env, const DL::DataGroup& group) const
 	{
 		DL::Data matD = group.getFromKey("material");
 

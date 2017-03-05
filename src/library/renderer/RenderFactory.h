@@ -31,8 +31,8 @@ namespace PR
 		// index = image index; should be less then itx*ity!
 		// itx = image tile count x
 		// ity = image tile count y
-		RenderContext* create(uint32 index, uint32 itx, uint32 ity) const;
-		inline RenderContext* create() const { return create(0,1,1); }
+		std::shared_ptr<RenderContext> create(uint32 index, uint32 itx, uint32 ity) const;
+		inline std::shared_ptr<RenderContext> create() const { return create(0,1,1); }
 
 		inline void setSettings(const RenderSettings& s) { mRenderSettings = s; }
 		inline RenderSettings& settings() { return mRenderSettings; }

@@ -22,10 +22,10 @@ namespace PR
 	class PR_LIB PPMIntegrator : public Integrator
 	{
 	public:
-		PPMIntegrator();
+		PPMIntegrator(RenderContext* renderer);
 		virtual ~PPMIntegrator();
 
-		void init(RenderContext* renderer) override;
+		void init() override;
 		Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
 
 		void onStart() override;
@@ -39,14 +39,11 @@ namespace PR
 		void onPostPass(RenderThreadContext* context, uint32 i) override;
 		void onThreadEnd(RenderThreadContext* context) override;
 
-		virtual uint64 maxSamples(const RenderContext* renderer) const override;
-		virtual uint64 maxPasses(const RenderContext* renderer) const override;
-
+		RenderStatus status() const;
 	private:
 		void photonPass(RenderThreadContext* context, uint32 pass);
 		Spectrum accumPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
 
-		RenderContext* mRenderer;
 		Photon::PhotonMap* mPhotonMap;
 
 		struct Light

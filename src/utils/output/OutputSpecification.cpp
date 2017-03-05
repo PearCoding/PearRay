@@ -8,7 +8,7 @@
 
 #include "DataLisp.h"
 
-namespace PRU
+namespace PR
 {
 	using namespace PR;
 
@@ -157,7 +157,7 @@ namespace PRU
 			return OutputMap::V_3D_COUNT;// AS UNKNOWN
 	}
 
-	void OutputSpecification::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group)
+	void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 	{
 		for (size_t i = 0; i < group.anonymousCount(); ++i)
 		{

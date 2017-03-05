@@ -5,8 +5,7 @@
 
 #include "spectral/RGBConverter.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	ImageSpectralShaderOutput::ImageSpectralShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename) :
 		SpectralShaderOutput(), mFilename(filename), mTextureOptions(options), mTextureSystem(tsys)

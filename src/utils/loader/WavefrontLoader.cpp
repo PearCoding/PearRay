@@ -8,8 +8,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "external/tiny_obj_loader.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	WavefrontLoader::WavefrontLoader(const std::map<std::string, std::string>& overrides) :
 		mOverrides(overrides), mScale(1), mFlipNormal(false)

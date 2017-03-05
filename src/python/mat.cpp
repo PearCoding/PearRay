@@ -117,6 +117,26 @@ namespace PRPY
             assign(PM::pm_Inverse(*this));
         }
 
+        bpy::tuple toTuple() const
+        {
+            if(D1 == 2 && D2 == 2)
+                return bpy::make_tuple(bpy::make_tuple(mMat[0],mMat[1]),
+                    bpy::make_tuple(mMat[2],mMat[3]));
+            else if(D1 == 3 && D2 == 3)
+                return bpy::make_tuple(bpy::make_tuple(mMat[0],mMat[1],mMat[2]),
+                    bpy::make_tuple(mMat[3],mMat[4],mMat[5]));
+            else if(D1 == 4 && D2 == 4)
+                return bpy::make_tuple(bpy::make_tuple(mMat[0],mMat[1],mMat[2],mMat[3]),
+                    bpy::make_tuple(mMat[4],mMat[5],mMat[6],mMat[7]));
+            else
+                return bpy::tuple();
+        }
+
+        bpy::object toNumPy() const
+        {
+            return bpy::numeric::array(toTuple());
+        }
+
     private:
         void assign(const PM::mat<D1,D2>& m)
         {
@@ -244,6 +264,8 @@ namespace PRPY
             .def("__neq__", &neq<D1,D2>)
             .def("__getitem__", &pymat<D1,D2>::get)
             .def("__setitem__", &pymat<D1,D2>::set)
+            .def("toTuple", &pymat<D1,D2>::toTuple)
+            .def("toNumPy", &pymat<D1,D2>::toNumPy)
             .def(bpy::self + bpy::self)
             .def(bpy::self - bpy::self)
             .def(bpy::self * bpy::self)

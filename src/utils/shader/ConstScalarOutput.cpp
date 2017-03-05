@@ -2,8 +2,7 @@
 
 #include "Logger.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	ConstScalarShaderOutput::ConstScalarShaderOutput(float f) :
 		ScalarShaderOutput(), mValue(f)

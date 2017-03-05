@@ -2,6 +2,7 @@
 
 #include "RenderSettings.h"
 #include "RenderStatistics.h"
+#include "RenderStatus.h"
 #include "spectral/Spectrum.h"
 
 #include <list>
@@ -69,8 +70,7 @@ namespace PR
 		// Light
 		const std::list<RenderEntity*>& lights() const;
 
-		RenderStatistics stats() const;
-		float percentFinished() const;
+		RenderStatus status() const;
 
 		inline const Scene& scene() const { return mScene; }
 		inline Camera* camera() const { return mCamera; }

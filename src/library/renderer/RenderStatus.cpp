@@ -16,29 +16,28 @@ namespace PR
 		return mPercentage;
 	}
 
-	void RenderStatus::setField(const std::string& unique_name,
-		const std::string& short_name,
-		const std::string& grp, double v)
+	void RenderStatus::setField(const std::string& unique_name, const Variant& v)
 	{
-		Field f;
-		f.ShortName = short_name;
-		f.GroupName = grp;
-		f.Value = v;
-
-		mFields[unique_name] = f;
+		mFields[unique_name] = v;
 	}
 
-	double RenderStatus::getField(const std::string& unique_name) const
+	bool RenderStatus::hasField(const std::string& unique_name) const
 	{
-		return mFields.at(unique_name).Value;
+		return mFields.count(unique_name) != 0;
 	}
 
-	std::unordered_set<std::string> RenderStatus::getGroups() const
+	const Variant& RenderStatus::getField(const std::string& unique_name) const
 	{
-		std::unordered_set<std::string> set;
-		for(const auto& elem : mFields)
-			set.insert(elem.second.GroupName);
+		return mFields.at(unique_name);
+	}
 
-		return set;
+	RenderStatus::map_t::const_iterator RenderStatus::begin() const
+	{
+		return mFields.begin();
+	}
+
+	RenderStatus::map_t::const_iterator RenderStatus::end() const
+	{
+		return mFields.end();
 	}
 }

@@ -60,7 +60,7 @@ namespace PR
 		return std::ceil(mRenderSettings.cropMinY() * mFullHeight);
 	}
 
-	RenderContext* RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
+	std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
 	{
 		PR_ASSERT(itx > 0, "Image tile count x has to be greater 0");
 		PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
@@ -73,7 +73,7 @@ namespace PR
 		uint32 x = ix * itw;
 		uint32 y = iy * ith;
 
-		return new RenderContext(index, x+cropOffsetX(), y+cropOffsetY(),
+		return std::make_shared<RenderContext>(index, x+cropOffsetX(), y+cropOffsetY(),
 			itw,ith,mFullWidth,mFullHeight,
 			mCamera, mScene, mWorkingDir, mGPU, mRenderSettings);
 	}

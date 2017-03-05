@@ -11,9 +11,9 @@
 constexpr float REINHARD_RATIO = 0.32f;
 namespace PR
 {
-	ToneMapper::ToneMapper(GPU* gpu, size_t size) :
+	ToneMapper::ToneMapper(uint32 width, uint32 height, GPU* gpu) :
 		mColorMode(PR::TCM_SRGB), mGammaMode(PR::TGM_SRGB), mMapperMode(PR::TMM_Simple_Reinhard),
-		mGPU(gpu), mSize(size)
+		mGPU(gpu), mSize(width * height)
 	{
 #ifndef PR_NO_GPU
 		if (!mGPU)

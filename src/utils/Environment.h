@@ -15,27 +15,24 @@ namespace PR
 	class Camera;
 	class Material;
 	class TriMesh;
-}
-
-namespace PRU
-{
+	
 	class PR_LIB_UTILS Environment
 	{
 	public:
 		explicit Environment(const std::string& name);
 		virtual ~Environment();
 
-		inline PR::Scene& scene()
+		inline Scene& scene()
 		{
 			return mScene;
 		}
 
-		inline const PR::Scene& scene() const
+		inline const Scene& scene() const
 		{
 			return mScene;
 		}
 
-		inline PR::Spectrum getSpectrum(const std::string& name) const
+		inline Spectrum getSpectrum(const std::string& name) const
 		{
 			return mSpectrums.at(name);
 		}
@@ -45,12 +42,12 @@ namespace PRU
 			return mSpectrums.count(name) != 0;
 		}
 
-		inline void addSpectrum(const std::string& name, const PR::Spectrum& spec)
+		inline void addSpectrum(const std::string& name, const Spectrum& spec)
 		{
 			mSpectrums[name] = spec;
 		}
 
-		inline std::shared_ptr<PR::Material> getMaterial(const std::string& name) const
+		inline std::shared_ptr<Material> getMaterial(const std::string& name) const
 		{
 			return mMaterials.at(name);
 		}
@@ -60,7 +57,7 @@ namespace PRU
 			return mMaterials.count(name) != 0;
 		}
 
-		inline void addMaterial(const std::string& name, const std::shared_ptr<PR::Material>& mat)
+		inline void addMaterial(const std::string& name, const std::shared_ptr<Material>& mat)
 		{
 			PR_ASSERT(mat, "Given material has to be valid");
 			PR_ASSERT(!hasMaterial(name), "Given name should be unique");
@@ -72,7 +69,7 @@ namespace PRU
 			return mMaterials.size();
 		}
 
-		inline std::shared_ptr<PR::TriMesh> getMesh(const std::string& name) const
+		inline std::shared_ptr<TriMesh> getMesh(const std::string& name) const
 		{
 			return mMeshes.at(name);
 		}
@@ -153,27 +150,27 @@ namespace PRU
 			return mCamera;
 		}
 
-		inline void setCamera(PR::Camera* cam)
+		inline void setCamera(Camera* cam)
 		{
 			mCamera = cam;
 		}
 
-		inline PR::uint32 renderWidth() const
+		inline uint32 renderWidth() const
 		{
 			return mRenderWidth;
 		}
 
-		inline void setRenderWidth(PR::uint32 i)
+		inline void setRenderWidth(uint32 i)
 		{
 			mRenderWidth = i;
 		}
 
-		inline PR::uint32 renderHeight() const
+		inline uint32 renderHeight() const
 		{
 			return mRenderHeight;
 		}
 
-		inline void setRenderHeight(PR::uint32 i)
+		inline void setRenderHeight(uint32 i)
 		{
 			mRenderHeight = i;
 		}
@@ -213,10 +210,10 @@ namespace PRU
 
 		void dumpInformation() const;
 	private:
-		PR::Scene mScene;
-		PR::Camera* mCamera;
-		PR::uint32 mRenderWidth;
-		PR::uint32 mRenderHeight;
+		Scene mScene;
+		Camera* mCamera;
+		uint32 mRenderWidth;
+		uint32 mRenderHeight;
 
 		float mCropMinX;
 		float mCropMaxX;
@@ -224,13 +221,13 @@ namespace PRU
 		float mCropMaxY;
 
 		std::map<std::string, PR::Spectrum> mSpectrums;
-		std::map<std::string, std::shared_ptr<PR::Material> > mMaterials;
+		std::map<std::string, std::shared_ptr<Material> > mMaterials;
 
-		std::map<std::string, std::shared_ptr<PR::TriMesh> > mMeshes;
+		std::map<std::string, std::shared_ptr<TriMesh> > mMeshes;
 
-		std::map<std::string, std::shared_ptr<PR::ScalarShaderOutput> > mNamedScalarShaderOutputs;
-		std::map<std::string, std::shared_ptr<PR::SpectralShaderOutput> > mNamedSpectralShaderOutputs;
-		std::map<std::string, std::shared_ptr<PR::VectorShaderOutput> > mNamedVectorShaderOutputs;
+		std::map<std::string, std::shared_ptr<ScalarShaderOutput> > mNamedScalarShaderOutputs;
+		std::map<std::string, std::shared_ptr<SpectralShaderOutput> > mNamedSpectralShaderOutputs;
+		std::map<std::string, std::shared_ptr<VectorShaderOutput> > mNamedVectorShaderOutputs;
 
 		OIIO::TextureSystem* mTextureSystem;
 		OutputSpecification mOutputSpecification;

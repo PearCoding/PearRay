@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<TriMesh> TriMeshInlineParser::parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const
+	std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::DataGroup& group) const
 	{
 		std::vector<PM::vec3> positionAttr;
 		std::vector<PM::vec3> normalAttr;
@@ -54,7 +53,7 @@ namespace PRU
 						}
 						
 						bool ok;
-						PM::vec3 v = loader->getVector(attrValD.getGroup(), ok);
+						PM::vec3 v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							positionAttr.push_back(v);
@@ -77,7 +76,7 @@ namespace PRU
 						}
 						
 						bool ok;
-						PM::vec3 v = loader->getVector(attrValD.getGroup(), ok);
+						PM::vec3 v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							normalAttr.push_back(v);
@@ -100,7 +99,7 @@ namespace PRU
 						}
 						
 						bool ok;
-						PM::vec3 v = loader->getVector(attrValD.getGroup(), ok);
+						PM::vec3 v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							uvAttr.push_back(PM::pm_ShrinkTo2D(v));

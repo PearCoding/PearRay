@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Material> OrenNayarMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<Material> OrenNayarMaterialParser::parse(Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data albedoD = group.getFromKey("albedo");
@@ -19,8 +18,8 @@ namespace PRU
 
 		auto diff = std::make_shared<OrenNayarMaterial>(env->materialCount() + 1);
 
-		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
-		diff->setRoughness(loader->getScalarOutput(env, roughnessD));
+		diff->setAlbedo(SceneLoader::getSpectralOutput(env, albedoD));
+		diff->setRoughness(SceneLoader::getScalarOutput(env, roughnessD));
 		return diff;
 	}
 }

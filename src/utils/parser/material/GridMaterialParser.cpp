@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Material> GridMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> GridMaterialParser::parse(Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data firstD = group.getFromKey("first");

@@ -1,5 +1,6 @@
 #include <sstream>
 #include <boost/python.hpp>
+#include <boost/python/numeric.hpp>
 
 #include "PR_Config.h"
 
@@ -29,10 +30,14 @@ namespace PRPY
     void setup_sampler();
     void setup_vec();
     void setup_mat();
+    void setup_status();
+    void setup_renderer();
 }
 //----------
 BOOST_PYTHON_MODULE(pypearray)
 {
+    bpy::numeric::array::set_module_and_type("numpy", "ndarray");
+
     bpy::def("version", version);
 
     PRPY::setup_vec();
@@ -51,4 +56,6 @@ BOOST_PYTHON_MODULE(pypearray)
     PRPY::setup_scene();
     PRPY::setup_settings();
     PRPY::setup_output();
+    PRPY::setup_status();
+    PRPY::setup_renderer();
 }

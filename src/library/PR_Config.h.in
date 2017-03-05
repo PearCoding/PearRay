@@ -130,6 +130,11 @@
 		C& operator=(const C&) = delete; \
 		PR_CLASS_NON_MOVEABLE(C)
 
+#define PR_CLASS_NON_CONSTRUCTABLE(C) \
+	private: \
+		C() = delete; \
+		PR_CLASS_NON_COPYABLE(C)
+
 #if !defined(PR_LIB_STATIC)
 # if defined(PR_OS_WINDOWS)
 #  define PR_EXPORT __declspec(dllexport)

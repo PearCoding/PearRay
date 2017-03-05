@@ -7,10 +7,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Entity> PlaneParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> PlaneParser::parse(Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data materialD = group.getFromKey("material");
@@ -23,7 +22,7 @@ namespace PRU
 		if (xAxisD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			xAxis = loader->getVector(xAxisD.getGroup(), ok);
+			xAxis = SceneLoader::getVector(xAxisD.getGroup(), ok);
 
 			if (!ok)
 			{
@@ -40,7 +39,7 @@ namespace PRU
 		if (yAxisD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			yAxis = loader->getVector(yAxisD.getGroup(), ok);
+			yAxis = SceneLoader::getVector(yAxisD.getGroup(), ok);
 
 			if (!ok)
 			{

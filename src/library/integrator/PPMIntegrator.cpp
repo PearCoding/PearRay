@@ -30,13 +30,14 @@ namespace PR
 	constexpr uint32 MAX_THETA_SIZE = 128;
 	constexpr uint32 MAX_PHI_SIZE = MAX_THETA_SIZE*2;
 
-	PPMIntegrator::PPMIntegrator() :
-		Integrator(), mRenderer(nullptr),
+	PPMIntegrator::PPMIntegrator(RenderContext* renderer) :
+		Integrator(renderer),
 		mPhotonMap(nullptr), mThreadData(nullptr),
 		mAccumulatedFlux(nullptr), mSearchRadius2(nullptr), mLocalPhotonCount(nullptr),
 		mProjMaxTheta(MAX_THETA_SIZE), mProjMaxPhi(MAX_PHI_SIZE),
 		mMaxPhotonsStoredPerPass(0), mPhotonsEmitted(0), mPhotonsStored(0)
 	{
+		PR_ASSERT(renderer, "Parameter 'renderer' should be valid.");
 	}
 
 	PPMIntegrator::~PPMIntegrator()
@@ -45,10 +46,7 @@ namespace PR
 			delete mPhotonMap;
 
 		if(mThreadData)
-		{
-			PR_ASSERT(mRenderer, "When ThreadData is non null, renderer has to be non null aswell.");
 			delete[] mThreadData;
-		}
 
 		for(const auto& l : mLights)
 		{
@@ -59,45 +57,43 @@ namespace PR
 		mLights.clear();
 	}
 
-	void PPMIntegrator::init(RenderContext* renderer)
+	void PPMIntegrator::init()
 	{
 		PR_ASSERT(!mPhotonMap, "PhotonMap should be null at first.");
 		PR_ASSERT(!mThreadData, "ThreadData should be null at first.");
 		PR_ASSERT(mLights.empty(), "Lights should be empty at first.");
-		PR_ASSERT(renderer, "Parameter 'renderer' should be valid.");
 
-		PR_ASSERT(renderer->settings().ppm().maxPhotonsPerPass() > 0, "maxPhotonsPerPass should be bigger than 0 and be handled in upper classes.");
-		PR_ASSERT(renderer->settings().ppm().maxGatherCount() > 0, "maxGatherCount should be bigger than 0 and be handled in upper classes.");
-		PR_ASSERT(renderer->settings().ppm().maxGatherRadius() > PM_EPSILON, "maxGatherRadius should be bigger than 0 and be handled in upper classes.");
+		PR_ASSERT(renderer()->settings().ppm().maxPhotonsPerPass() > 0, "maxPhotonsPerPass should be bigger than 0 and be handled in upper classes.");
+		PR_ASSERT(renderer()->settings().ppm().maxGatherCount() > 0, "maxGatherCount should be bigger than 0 and be handled in upper classes.");
+		PR_ASSERT(renderer()->settings().ppm().maxGatherRadius() > PM_EPSILON, "maxGatherRadius should be bigger than 0 and be handled in upper classes.");
 
-		mRenderer = renderer;
-		mMaxPhotonsStoredPerPass = renderer->settings().ppm().maxPhotonsPerPass()
-				* (renderer->settings().maxDiffuseBounces()+1);
+		mMaxPhotonsStoredPerPass = renderer()->settings().ppm().maxPhotonsPerPass()
+				* (renderer()->settings().maxDiffuseBounces()+1);
 		PR_LOGGER.logf(L_Info, M_Integrator, "Photons to store per pass: %llu", mMaxPhotonsStoredPerPass);
 
-		mPhotonMap = new Photon::PhotonMap(renderer->settings().ppm().maxGatherRadius());
+		mPhotonMap = new Photon::PhotonMap(renderer()->settings().ppm().maxGatherRadius());
 
-		mAccumulatedFlux = std::make_shared<OutputSpectral>(renderer, Spectrum(), true);// Will be deleted by outputmap
-		mSearchRadius2 = std::make_shared<Output1D>(renderer,
-			renderer->settings().ppm().maxGatherRadius() * renderer->settings().ppm().maxGatherRadius(),
+		mAccumulatedFlux = std::make_shared<OutputSpectral>(renderer(), Spectrum(), true);// Will be deleted by outputmap
+		mSearchRadius2 = std::make_shared<Output1D>(renderer(),
+			renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
 			true);
-		mLocalPhotonCount = std::make_shared<OutputCounter>(renderer, 0, true);
+		mLocalPhotonCount = std::make_shared<OutputCounter>(renderer(), 0, true);
 	
-		renderer->output()->registerCustomChannel("int.ppm.accumulated_flux", mAccumulatedFlux);
-		renderer->output()->registerCustomChannel("int.ppm.search_radius", mSearchRadius2);
-		renderer->output()->registerCustomChannel("int.ppm.local_photon_count", mLocalPhotonCount);
+		renderer()->output()->registerCustomChannel("int.ppm.accumulated_flux", mAccumulatedFlux);
+		renderer()->output()->registerCustomChannel("int.ppm.search_radius", mSearchRadius2);
+		renderer()->output()->registerCustomChannel("int.ppm.local_photon_count", mLocalPhotonCount);
 
-		mThreadData = new ThreadData[mRenderer->threads()];
+		mThreadData = new ThreadData[renderer()->threads()];
 		mPhotonsEmitted=0;
 		mPhotonsStored=0;
 
 		// Assign photon count to each light
-		mProjMaxTheta = PM::pm_Max<uint32>(8, MAX_THETA_SIZE*renderer->settings().ppm().projectionMapQuality());
-		mProjMaxPhi = PM::pm_Max<uint32>(8, MAX_PHI_SIZE*renderer->settings().ppm().projectionMapQuality());
+		mProjMaxTheta = PM::pm_Max<uint32>(8, MAX_THETA_SIZE*renderer()->settings().ppm().projectionMapQuality());
+		mProjMaxPhi = PM::pm_Max<uint32>(8, MAX_PHI_SIZE*renderer()->settings().ppm().projectionMapQuality());
 
-		const uint64 Photons = renderer->settings().ppm().maxPhotonsPerPass();
+		const uint64 Photons = renderer()->settings().ppm().maxPhotonsPerPass();
 		constexpr uint64 MinPhotons = 10;
-		const std::list<RenderEntity*>& lightList = mRenderer->lights();
+		const std::list<RenderEntity*>& lightList = renderer()->lights();
 
 		const uint64 k = MinPhotons * lightList.size();
 		if (k >= Photons) // Not enough photons given.
@@ -118,7 +114,7 @@ namespace PR
 			for(RenderEntity* light : lightList)
 			{
 				SphereMap* map = nullptr;
-				if(renderer->settings().ppm().projectionMapWeight() > PM_EPSILON)
+				if(renderer()->settings().ppm().projectionMapWeight() > PM_EPSILON)
 					map = new SphereMap(mProjMaxTheta, mProjMaxPhi);
 
 				const float surface = light->surfaceArea(nullptr);
@@ -134,14 +130,14 @@ namespace PR
 		}
 
 		// Spread photons over threads
-		const uint64 PhotonsPerThread = std::ceil(Photons/(float)mRenderer->threads());
+		const uint64 PhotonsPerThread = std::ceil(Photons/(float)renderer()->threads());
 		PR_LOGGER.logf(L_Info, M_Integrator, "Each thread shoots %llu photons",
 					PhotonsPerThread);
 		
 		uint64 calcPhotons = 0;
 		uint64 calcPhotonsPerLight = 0;
 		uint32 currentLight = 0;
-		for(uint32 thread = 0; thread < mRenderer->threads(); ++thread)
+		for(uint32 thread = 0; thread < renderer()->threads(); ++thread)
 		{
 			uint64 currentPhotons = 0;
 			while(calcPhotons < Photons &&
@@ -183,13 +179,13 @@ namespace PR
 	void PPMIntegrator::onStart()
 	{
 		// Setup Projection Maps
-		if(mRenderer->settings().ppm().projectionMapWeight() <= PM_EPSILON)
+		if(renderer()->settings().ppm().projectionMapWeight() <= PM_EPSILON)
 			return;
 
 		PR_LOGGER.logf(L_Info, M_Integrator, "Calculating Projection Maps (%i,%i)", mProjMaxTheta, mProjMaxPhi);
 
-		const float DELTA_W = mRenderer->settings().ppm().projectionMapWeight();
-		const float CAUSTIC_PREF = mRenderer->settings().ppm().projectionMapPreferCaustic();
+		const float DELTA_W = renderer()->settings().ppm().projectionMapWeight();
+		const float CAUSTIC_PREF = renderer()->settings().ppm().projectionMapPreferCaustic();
 
 		Random random;
 		for(const Light& l : mLights)
@@ -224,11 +220,11 @@ namespace PR
 
 						uint32 j;// Calculates specular count
 						for (j = 0;
-							j < mRenderer->settings().maxRayDepth();
+							j < renderer()->settings().maxRayDepth();
 							++j)
 						{
 							ShaderClosure sc;
-							RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
+							RenderEntity* entity = renderer()->shoot(ray, sc, nullptr);
 
 							if (entity && sc.Material && sc.Material->canBeShaded())
 							{
@@ -267,7 +263,7 @@ namespace PR
 								break;
 							}
 						}
-						weight = pdf*(1+(j/(float)mRenderer->settings().maxRayDepth())*CAUSTIC_PREF);
+						weight = pdf*(1+(j/(float)renderer()->settings().maxRayDepth())*CAUSTIC_PREF);
 					}
 
 					l.Proj->setProbabilityWithIndex(thetaI, phiI, (weight+0.01f) * DELTA_W + (1-DELTA_W));
@@ -300,7 +296,7 @@ namespace PR
 
 	bool PPMIntegrator::needNextPass(uint32 pass) const
 	{
-		return pass < mRenderer->settings().ppm().maxPassCount()*2 + 1;
+		return pass < renderer()->settings().ppm().maxPassCount()*2 + 1;
 	}
 
 	void PPMIntegrator::onThreadStart(RenderThreadContext* context)
@@ -335,24 +331,32 @@ namespace PR
 	{
 	}
 
-	uint64 PPMIntegrator::maxSamples(const RenderContext* renderer) const
+	RenderStatus PPMIntegrator::status() const
 	{
-		return renderer->width() * renderer->height() *
-			renderer->settings().maxCameraSampleCount() * (renderer->settings().ppm().maxPassCount() + 1);
-	}
+		const size_t max_samples =
+			renderer()->width() * renderer()->height() *
+			renderer()->settings().maxCameraSampleCount() * (renderer()->settings().ppm().maxPassCount() + 1);
+		RenderStatus stat;
 
-	uint64 PPMIntegrator::maxPasses(const RenderContext* renderer) const
-	{
-		return 2*renderer->settings().ppm().maxPassCount();
-	}
+		stat.setField("int.max_sample_count", max_samples);
+		stat.setField("int.max_pass_count", (uint64)2*renderer()->settings().ppm().maxPassCount());
 
+		if(renderer()->currentPass() % 2 == 0)
+			stat.setField("int.pass_name", "Photon");
+		else
+			stat.setField("int.pass_name", "Accumulation");
+
+		stat.setPercentage(0);
+
+		return stat;
+	}
 	void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 	{
 #ifdef PR_DEBUG
 		PR_LOGGER.log(L_Debug, M_Integrator, "Shooting Photons");
 #endif
-		const uint32 H = mRenderer->settings().maxDiffuseBounces()+1;
-		const uint32 RD = mRenderer->settings().maxRayDepth();
+		const uint32 H = renderer()->settings().maxDiffuseBounces()+1;
+		const uint32 RD = renderer()->settings().maxRayDepth();
 
 		Random random;
 		for (const LightThreadData& ltd : mThreadData[context->threadNumber()].Lights)
@@ -412,7 +416,7 @@ namespace PR
 				for (uint32 j = 0; j < RD; ++j)
 				{
 					ShaderClosure sc;
-					RenderEntity* entity = mRenderer->shoot(ray, sc, nullptr);
+					RenderEntity* entity = renderer()->shoot(ray, sc, nullptr);
 
 					if (entity && sc.Material && sc.Material->canBeShaded())
 					{

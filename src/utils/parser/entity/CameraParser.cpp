@@ -9,10 +9,9 @@
 
 #include <algorithm>
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Entity> CameraParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> CameraParser::parse(Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data projectionD = group.getFromKey("projection");
@@ -86,7 +85,7 @@ namespace PRU
 		if (localDirD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(localDirD.getGroup(), ok);
+			auto v = SceneLoader::getVector(localDirD.getGroup(), ok);
 			if(ok)
 				camera->setLocalDirection(v);
 			else
@@ -96,7 +95,7 @@ namespace PRU
 		if (localRightD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(localRightD.getGroup(), ok);
+			auto v = SceneLoader::getVector(localRightD.getGroup(), ok);
 			if(ok)
 				camera->setLocalRight(v);
 			else
@@ -106,7 +105,7 @@ namespace PRU
 		if (localUpD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			auto v = loader->getVector(localUpD.getGroup(), ok);
+			auto v = SceneLoader::getVector(localUpD.getGroup(), ok);
 			if(ok)
 				camera->setLocalUp(v);
 			else

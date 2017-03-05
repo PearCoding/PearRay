@@ -12,15 +12,12 @@ namespace DL
 namespace PR
 {
 	class TriMesh;
-}
-
-namespace PRU
-{
+	
 	class SceneLoader;
 	class Environment;
 	class TriMeshInlineParser
 	{
 	public:
-		std::shared_ptr<PR::TriMesh> parse(SceneLoader* loader, Environment* env, const DL::DataGroup& group) const;
+		std::shared_ptr<PR::TriMesh> parse(Environment* env, const DL::DataGroup& group) const;
 	};
 }

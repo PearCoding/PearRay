@@ -10,10 +10,8 @@
 
 OIIO_NAMESPACE_USING;
 
-namespace PRU
+namespace PR
 {
-	using namespace PR;
-
 	ImageWriter::ImageWriter() :
 		mRGBData(nullptr), mRenderer(nullptr)
 	{

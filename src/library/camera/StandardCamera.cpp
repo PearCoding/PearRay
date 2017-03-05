@@ -167,12 +167,12 @@ namespace PR
 
 		Camera::onFreeze();
 
-		mDirection_Cache = PM::pm_SetW(PM::pm_QualityNormalize(
-			PM::pm_Transform(directionMatrix(), mLocalDirection)), 0);
-		mRight_Cache = PM::pm_SetW(PM::pm_QualityNormalize(
-			PM::pm_Transform(directionMatrix(), mLocalRight)), 0);
-		mUp_Cache = PM::pm_SetW(PM::pm_QualityNormalize(
-			PM::pm_Transform(directionMatrix(), mLocalUp)), 0);
+		mDirection_Cache = PM::pm_QualityNormalize(
+			PM::pm_Transform(directionMatrix(), mLocalDirection));
+		mRight_Cache = PM::pm_QualityNormalize(
+			PM::pm_Transform(directionMatrix(), mLocalRight));
+		mUp_Cache = PM::pm_QualityNormalize(
+			PM::pm_Transform(directionMatrix(), mLocalUp));
 
 		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
 			name().c_str(),

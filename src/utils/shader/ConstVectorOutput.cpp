@@ -2,8 +2,7 @@
 
 #include "Logger.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	ConstVectorShaderOutput::ConstVectorShaderOutput(const PM::vec3& f) :
 		VectorShaderOutput(), mValue(f)

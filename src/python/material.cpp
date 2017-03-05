@@ -105,7 +105,7 @@ namespace PRPY
 
     void setup_material()
     {
-        bpy::class_<MaterialWrap, boost::noncopyable>("Material", bpy::init<uint32>())
+        bpy::class_<MaterialWrap, std::shared_ptr<MaterialWrap>, boost::noncopyable>("Material", bpy::init<uint32>())
             .def("eval", bpy::pure_virtual(&MaterialWrap::eval))
             .def("pdf", bpy::pure_virtual(&MaterialWrap::pdf))
             .def("sample", bpy::pure_virtual(&MaterialWrap::sample_Py))
@@ -125,7 +125,7 @@ namespace PRPY
         ;
         bpy::register_ptr_to_python<std::shared_ptr<Material> >();
 
-        bpy::class_<BlinnPhongMaterial, bpy::bases<Material> >("BlinnPhongMaterial", bpy::init<uint32>())
+        bpy::class_<BlinnPhongMaterial, std::shared_ptr<BlinnPhongMaterial>, bpy::bases<Material> >("BlinnPhongMaterial", bpy::init<uint32>())
             .add_property("albedo",
                 bpy::make_function(&BlinnPhongMaterial::albedo, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &BlinnPhongMaterial::setAlbedo)
@@ -136,8 +136,9 @@ namespace PRPY
                 bpy::make_function(&BlinnPhongMaterial::fresnelIndex, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &BlinnPhongMaterial::setFresnelIndex)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<BlinnPhongMaterial>, std::shared_ptr<Material> >();
         
-        { bpy::scope scope = bpy::class_<CookTorranceMaterial, bpy::bases<Material> >("CookTorranceMaterial", bpy::init<uint32>())
+        { bpy::scope scope = bpy::class_<CookTorranceMaterial, std::shared_ptr<CookTorranceMaterial>, bpy::bases<Material> >("CookTorranceMaterial", bpy::init<uint32>())
             .add_property("fresnelMode",
                 &CookTorranceMaterial::fresnelMode,
                 &CookTorranceMaterial::setFresnelMode)
@@ -172,6 +173,7 @@ namespace PRPY
                 bpy::make_function(&CookTorranceMaterial::reflectivity, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &CookTorranceMaterial::setReflectivity)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<CookTorranceMaterial>, std::shared_ptr<Material> >();
 
         bpy::enum_<CookTorranceMaterial::FresnelMode>("FresnelMode")
         .value("Dielectric", CookTorranceMaterial::FM_Dielectric)
@@ -192,13 +194,14 @@ namespace PRPY
         ;
         }// End of scope
 
-        bpy::class_<DiffuseMaterial, bpy::bases<Material> >("DiffuseMaterial", bpy::init<uint32>())
+        bpy::class_<DiffuseMaterial, std::shared_ptr<DiffuseMaterial>, bpy::bases<Material> >("DiffuseMaterial", bpy::init<uint32>())
             .add_property("albedo",
                 bpy::make_function(&DiffuseMaterial::albedo, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &DiffuseMaterial::setAlbedo)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<DiffuseMaterial>, std::shared_ptr<Material> >();
 
-        bpy::class_<GlassMaterial, bpy::bases<Material> >("GlassMaterial", bpy::init<uint32>())
+        bpy::class_<GlassMaterial, std::shared_ptr<GlassMaterial>, bpy::bases<Material> >("GlassMaterial", bpy::init<uint32>())
             .add_property("thin",
                 &GlassMaterial::isThin,
                 &GlassMaterial::setThin)
@@ -209,8 +212,9 @@ namespace PRPY
                 bpy::make_function(&GlassMaterial::ior, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &GlassMaterial::setIOR)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<GlassMaterial>, std::shared_ptr<Material> >();
 
-        bpy::class_<GridMaterial, bpy::bases<Material> >("GridMaterial", bpy::init<uint32>())
+        bpy::class_<GridMaterial, std::shared_ptr<GridMaterial>, bpy::bases<Material> >("GridMaterial", bpy::init<uint32>())
             .add_property("gridCount",
                 &GridMaterial::gridCount,
                 &GridMaterial::setGridCount)
@@ -224,8 +228,9 @@ namespace PRPY
                 bpy::make_function(&GridMaterial::secondMaterial, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &GridMaterial::setSecondMaterial)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<GridMaterial>, std::shared_ptr<Material> >();
 
-        bpy::class_<MirrorMaterial, bpy::bases<Material> >("MirrorMaterial", bpy::init<uint32>())
+        bpy::class_<MirrorMaterial, std::shared_ptr<MirrorMaterial>, bpy::bases<Material> >("MirrorMaterial", bpy::init<uint32>())
             .add_property("specularity",
                 bpy::make_function(&MirrorMaterial::specularity, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &MirrorMaterial::setSpecularity)
@@ -233,8 +238,9 @@ namespace PRPY
                 bpy::make_function(&MirrorMaterial::ior, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &MirrorMaterial::setIOR)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<MirrorMaterial>, std::shared_ptr<Material> >();
 
-        bpy::class_<OrenNayarMaterial, bpy::bases<Material> >("OrenNayarMaterial", bpy::init<uint32>())
+        bpy::class_<OrenNayarMaterial, std::shared_ptr<OrenNayarMaterial>, bpy::bases<Material> >("OrenNayarMaterial", bpy::init<uint32>())
             .add_property("albedo",
                 bpy::make_function(&OrenNayarMaterial::albedo, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &OrenNayarMaterial::setAlbedo)
@@ -242,8 +248,9 @@ namespace PRPY
                 bpy::make_function(&OrenNayarMaterial::roughness, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &OrenNayarMaterial::setRoughness)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<OrenNayarMaterial>, std::shared_ptr<Material> >();
 
-        bpy::class_<WardMaterial, bpy::bases<Material> >("WardMaterial", bpy::init<uint32>())
+        bpy::class_<WardMaterial, std::shared_ptr<WardMaterial>, bpy::bases<Material> >("WardMaterial", bpy::init<uint32>())
             .add_property("albedo",
                 bpy::make_function(&WardMaterial::albedo, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &WardMaterial::setAlbedo)
@@ -260,5 +267,6 @@ namespace PRPY
                 bpy::make_function(&WardMaterial::reflectivity, bpy::return_value_policy<bpy::copy_const_reference >()),
                 &WardMaterial::setReflectivity)
         ;
+        bpy::implicitly_convertible<std::shared_ptr<WardMaterial>, std::shared_ptr<Material> >();
     }
 }

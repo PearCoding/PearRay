@@ -12,16 +12,13 @@ namespace DL
 namespace PR
 {
 	class Material;
-}
-
-namespace PRU
-{
+	
 	class Environment;
 	class SceneLoader;
 	class PR_LIB_UTILS_INLINE IMaterialParser
 	{
 	public:
-		virtual std::shared_ptr<PR::Material> parse(SceneLoader* loader, Environment* env,
+		virtual std::shared_ptr<Material> parse(Environment* env,
 			const std::string& obj, const DL::DataGroup& group) const = 0;
 	};
 }

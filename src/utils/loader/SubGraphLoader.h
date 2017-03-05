@@ -6,10 +6,7 @@
 namespace PR
 {
 	class IMesh;
-}
-
-namespace PRU
-{
+	
 	class Environment;
 	class PR_LIB_UTILS SubGraphLoader
 	{

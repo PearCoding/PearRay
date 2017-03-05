@@ -3,7 +3,7 @@
 #include "SubGraphLoader.h"
 #include <map>
 
-namespace PRU
+namespace PR
 {
 	class PR_LIB_UTILS WavefrontLoader : public SubGraphLoader
 	{

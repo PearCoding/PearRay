@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Material> MirrorMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> MirrorMaterialParser::parse(Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data specD = group.getFromKey("specularity");
@@ -19,8 +18,8 @@ namespace PRU
 
 		auto diff = std::make_shared<MirrorMaterial>(env->materialCount() + 1);
 
-		diff->setSpecularity(loader->getSpectralOutput(env, specD));
-		diff->setIOR(loader->getSpectralOutput(env, indexD, true));
+		diff->setSpecularity(SceneLoader::getSpectralOutput(env, specD));
+		diff->setIOR(SceneLoader::getSpectralOutput(env, indexD, true));
 
 		return diff;
 	}

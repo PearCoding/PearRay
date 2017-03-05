@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Material> BlinnPhongMaterialParser::parse(SceneLoader* loader, Environment* env,
+	std::shared_ptr<PR::Material> BlinnPhongMaterialParser::parse(Environment* env,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data albedoD = group.getFromKey("albedo");
@@ -20,9 +19,9 @@ namespace PRU
 
 		auto diff = std::make_shared<BlinnPhongMaterial>(env->materialCount() + 1);
 
-		diff->setAlbedo(loader->getSpectralOutput(env, albedoD));
-		diff->setShininess(loader->getScalarOutput(env, shininessD));
-		diff->setFresnelIndex(loader->getSpectralOutput(env, indexD, true));
+		diff->setAlbedo(SceneLoader::getSpectralOutput(env, albedoD));
+		diff->setShininess(SceneLoader::getScalarOutput(env, shininessD));
+		diff->setFresnelIndex(SceneLoader::getSpectralOutput(env, indexD, true));
 		return diff;
 	}
 }

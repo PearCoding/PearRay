@@ -13,8 +13,7 @@
 
 #include <boost/filesystem.hpp>
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
 	OIIO::TextureOpt::Wrap parseWrap(const std::string& name)
 	{
@@ -56,7 +55,7 @@ namespace PRU
 			return OIIO::TextureOpt::InterpSmartBicubic;
 	}
 
-	void TextureParser::parse(SceneLoader* loader, Environment* env, const std::string& name, const DL::DataGroup& group) const
+	void TextureParser::parse(Environment* env, const std::string& name, const DL::DataGroup& group) const
 	{
 		DL::Data filenameD = group.getFromKey("file");
 		DL::Data typeD = group.getFromKey("type");

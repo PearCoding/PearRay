@@ -141,7 +141,7 @@ namespace PR
 		/* Setup integrators */
 		if (mRenderSettings.debugMode() != DM_None)
 		{
-			mIntegrator = new DebugIntegrator();
+			mIntegrator = new DebugIntegrator(this);
 		}
 		else
 		{
@@ -158,10 +158,10 @@ namespace PR
 				break;
 			default:
 			case IM_BiDirect:
-				mIntegrator = new BiDirectIntegrator();
+				mIntegrator = new BiDirectIntegrator(this);
 				break;
 			case IM_PPM:
-				mIntegrator = new PPMIntegrator();
+				mIntegrator = new PPMIntegrator(this);
 				break;
 			}
 		}
@@ -197,7 +197,7 @@ namespace PR
 				mRenderSettings.spectralSampler(), context.random(), mRenderSettings.maxSpectralSampleCount()));
 		}
 
-		mIntegrator->init(this);
+		mIntegrator->init();
 		mOutputMap->init();
 
 		// Calculate tile sizes, etc.
@@ -615,27 +615,18 @@ namespace PR
 		return mLights;
 	}
 
-	RenderStatistics RenderContext::stats() const
+	RenderStatus RenderContext::status() const
 	{
 		RenderStatistics s = mGlobalStatistics;
 		for (RenderThread* thread : mThreads)
 			s += thread->context().stats();
-		return s;
-	}
-
-	float RenderContext::percentFinished() const
-	{
-		PR_ASSERT(mIntegrator, "Integrator has to be set to gather information");
-
-		const uint64 maxPasses = mIntegrator->maxPasses(this);
-		const uint64 maxSamples = mIntegrator->maxSamples(this);
-		const uint64 pixelsFinished = mOutputMap->finishedPixelCount();
-		RenderStatistics s = stats();
-
-		double finishedPercent = mRenderSettings.isIncremental() ? pixelsFinished / (double)(mWidth*mHeight) : 0;
-		double unfinishedPercent = (1-finishedPercent)*(s.pixelSampleCount() / (double)maxSamples);
-		return 100 * static_cast<float>(
-				(mCurrentPass + finishedPercent + unfinishedPercent) / (double)maxPasses);
+		
+		RenderStatus status = mIntegrator->status();
+		status.setField("global.ray_count", s.rayCount());
+		status.setField("global.pixel_sample_count", s.pixelSampleCount());
+		status.setField("global.entity_hit", s.entityHitCount());
+		status.setField("global.background_hit", s.backgroundHitCount());
+		return status;
 	}
 
 	void RenderContext::onNextPass()

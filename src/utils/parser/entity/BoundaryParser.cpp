@@ -8,10 +8,9 @@
 
 #include "DataLisp.h"
 
-using namespace PR;
-namespace PRU
+namespace PR
 {
-	std::shared_ptr<PR::Entity> BoundaryParser::parse(SceneLoader* loader, Environment* env, const std::string& name,
+	std::shared_ptr<PR::Entity> BoundaryParser::parse(Environment* env, const std::string& name,
 		const std::string& obj, const DL::DataGroup& group) const
 	{
 		DL::Data materialD = group.getFromKey("material");
@@ -22,7 +21,7 @@ namespace PRU
 		if (sizeD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			size = loader->getVector(sizeD.getGroup(), ok);
+			size = SceneLoader::getVector(sizeD.getGroup(), ok);
 
 			if (!ok)
 			{
