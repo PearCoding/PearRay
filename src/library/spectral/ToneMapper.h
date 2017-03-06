@@ -45,8 +45,8 @@ namespace PR
 		 */
 		ToneMapper(uint32 width, uint32 height, GPU* gpu);
 
-		void exec(const Spectrum* specIn, float* rgbOut) const;
-		void execMapper(const float* rgbIn, float* rgbOut) const;
+		void map(const Spectrum* specIn, float* rgbOut) const;
+		void mapOnlyMapper(const float* rgbIn, float* rgbOut) const;
 
 		// Not thread safe!
 		inline ToneColorMode colorMode() const { return mColorMode; }
@@ -58,11 +58,17 @@ namespace PR
 		inline ToneMapperMode mapperMode() const { return mMapperMode; }
 		inline void setMapperMode(ToneMapperMode mode) { mMapperMode = mode; }
 
+		inline uint32 width() const { return mWidth; }
+		inline uint32 height() const { return mHeight; }
+
+	private:
 		ToneColorMode mColorMode;
 		ToneGammaMode mGammaMode;
 		ToneMapperMode mMapperMode;
 
 		GPU* mGPU;
+		uint32 mWidth;
+		uint32 mHeight;
 		size_t mSize;
 
 #ifndef PR_NO_GPU

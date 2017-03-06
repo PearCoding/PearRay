@@ -1,12 +1,9 @@
 #include "ImageWriter.h"
 #include "renderer/RenderContext.h"
 #include "Logger.h"
+#include "SpectralFile.h"
 
 #include <OpenImageIO/imageio.h>
-
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
 
 OIIO_NAMESPACE_USING;
 
@@ -121,7 +118,7 @@ namespace PR
 			toneMapper.setColorMode(specSett->TCM);
 			toneMapper.setGammaMode(specSett->TGM);
 			toneMapper.setMapperMode(specSett->TMM);
-			toneMapper.exec(mRenderer->output()->getSpectralChannel()->ptr(), mRGBData);// RGB
+			toneMapper.map(mRenderer->output()->getSpectralChannel()->ptr(), mRGBData);// RGB
 		}
 		
 		// Calculate maximums for some mapper techniques
@@ -339,23 +336,8 @@ namespace PR
 		if(!spec || !mRenderer)
 			return false;
 		
-		namespace io = boost::iostreams;
-		io::filtering_ostream out;
-    	out.push(io::zlib_compressor());
-    	out.push(io::file_sink(file));
-
-		out.put('P').put('R').put('4').put('2');
-
-		uint32 tmp = Spectrum::SAMPLING_COUNT;
-		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->width();
-		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-		tmp = mRenderer->height();
-		out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-
-		for (uint32 i = 0; i < mRenderer->height() * mRenderer->width(); ++i)
-			out.write(reinterpret_cast<const char*>(&spec->ptr()[i]),
-				Spectrum::SAMPLING_COUNT * sizeof(float));
+		SpectralFile specFile(mRenderer->width(), mRenderer->height(), spec->ptr(), false);
+		specFile.save(file);
 
 		return true;
 	}

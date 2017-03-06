@@ -32,6 +32,7 @@ namespace PRPY
     void setup_mat();
     void setup_status();
     void setup_renderer();
+    void setup_tonemapper();
 }
 //----------
 BOOST_PYTHON_MODULE(pypearray)
@@ -58,4 +59,5 @@ BOOST_PYTHON_MODULE(pypearray)
     PRPY::setup_output();
     PRPY::setup_status();
     PRPY::setup_renderer();
+    PRPY::setup_tonemapper();
 }

@@ -63,6 +63,8 @@ namespace PR
 		struct ThreadData
 		{
 			std::vector<LightThreadData> Lights;
+			uint64 PhotonsEmitted;
+			uint64 PhotonsStored;
 		}* mThreadData;
 
 		std::shared_ptr<OutputSpectral> mAccumulatedFlux;
@@ -74,7 +76,5 @@ namespace PR
 		uint32 mProjMaxPhi;
 
 		uint64 mMaxPhotonsStoredPerPass;
-		uint64 mPhotonsEmitted;
-		uint64 mPhotonsStored;
 	};
 }

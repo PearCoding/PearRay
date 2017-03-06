@@ -34,6 +34,9 @@ namespace PR
 				mTile = mRenderer->getNextTile();
 			}
 
+			if(shouldStop())
+				break;
+			
 			integrator->onPostPass(&mContext, pass);
 
 			if(shouldStop())

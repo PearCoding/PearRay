@@ -35,7 +35,7 @@ namespace PR
 		mPhotonMap(nullptr), mThreadData(nullptr),
 		mAccumulatedFlux(nullptr), mSearchRadius2(nullptr), mLocalPhotonCount(nullptr),
 		mProjMaxTheta(MAX_THETA_SIZE), mProjMaxPhi(MAX_PHI_SIZE),
-		mMaxPhotonsStoredPerPass(0), mPhotonsEmitted(0), mPhotonsStored(0)
+		mMaxPhotonsStoredPerPass(0)
 	{
 		PR_ASSERT(renderer, "Parameter 'renderer' should be valid.");
 	}
@@ -84,8 +84,11 @@ namespace PR
 		renderer()->output()->registerCustomChannel("int.ppm.local_photon_count", mLocalPhotonCount);
 
 		mThreadData = new ThreadData[renderer()->threads()];
-		mPhotonsEmitted=0;
-		mPhotonsStored=0;
+		for(uint32 thread = 0; thread < renderer()->threads(); ++thread)
+		{
+			mThreadData[thread].PhotonsEmitted=0;
+			mThreadData[thread].PhotonsStored=0;
+		}
 
 		// Assign photon count to each light
 		mProjMaxTheta = PM::pm_Max<uint32>(8, MAX_THETA_SIZE*renderer()->settings().ppm().projectionMapQuality());
@@ -278,16 +281,11 @@ namespace PR
 	{
 		// Clear sample, error, etc information prior next pass.
 		clean = pass % 2;
-		PR_LOGGER.logf(L_Info, M_Integrator, "Preparing PPM pass %i", pass + 1);
+		PR_LOGGER.logf(L_Info, M_Integrator, "Preparing PPM pass %i (PP %i, AP %i)", pass + 1,
+			pass / 2 + 1, pass / 2 + pass % 2);
 
 		if (pass % 2 == 0)// Photon Pass
-		{
 			mPhotonMap->reset();
-		
-			PR_LOGGER.logf(L_Info, M_Integrator,
-				"Already %llu photons emmitted and %llu photons computed",
-				mPhotonsEmitted, mPhotonsStored);
-		}
 	}
 
 	void PPMIntegrator::onEnd()
@@ -296,7 +294,7 @@ namespace PR
 
 	bool PPMIntegrator::needNextPass(uint32 pass) const
 	{
-		return pass < renderer()->settings().ppm().maxPassCount()*2 + 1;
+		return pass < renderer()->settings().ppm().maxPassCount()*2;
 	}
 
 	void PPMIntegrator::onThreadStart(RenderThreadContext* context)
@@ -314,12 +312,8 @@ namespace PR
 		if(pass % 2 == 1)
 		{
 			for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
-			{
 				for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
-				{
 					context->render(x, y, tile->samplesRendered(), pass);
-				}
-			}
 		}
 	}
 
@@ -333,23 +327,43 @@ namespace PR
 
 	RenderStatus PPMIntegrator::status() const
 	{
-		const uint64 max_samples =
+		const uint64 max_pass_samples =
 			renderer()->width() * renderer()->height() *
-			renderer()->settings().maxCameraSampleCount() * (renderer()->settings().ppm().maxPassCount() + 1);
+			renderer()->settings().maxCameraSampleCount();
+		const uint64 max_samples = max_pass_samples * renderer()->settings().ppm().maxPassCount();
 		RenderStatus stat;
+
+		uint64 photonsEmitted = 0;
+		uint64 photonsStored = 0;
+		for(uint32 thread = 0; thread < renderer()->threads(); ++thread)
+		{
+			photonsEmitted += mThreadData[thread].PhotonsEmitted;
+			photonsStored += mThreadData[thread].PhotonsStored;
+		}
 
 		stat.setField("int.max_sample_count", max_samples);
 		stat.setField("int.max_pass_count", (uint64)2*renderer()->settings().ppm().maxPassCount());
+		stat.setField("int.photons_emitted", photonsEmitted);
+		stat.setField("int.photons_stored", photonsStored);
 
 		if(renderer()->currentPass() % 2 == 0)
 			stat.setField("int.pass_name", "Photon");
 		else
 			stat.setField("int.pass_name", "Accumulation");
 
-		stat.setPercentage(0);
+		const uint64 PhotonsPerPass = renderer()->settings().ppm().maxPhotonsPerPass();
+		const float passEff = 1.0f/(2*renderer()->settings().ppm().maxPassCount());
+		float percentage = renderer()->currentPass()*passEff;
+		if(renderer()->currentPass()%2 == 0)// Photon Pass
+			percentage += passEff * photonsEmitted / ((renderer()->currentPass()/2+1)*PhotonsPerPass);
+		else
+			percentage += passEff * renderer()->statistics().pixelSampleCount() / (float)max_pass_samples;
+		
+		stat.setPercentage(percentage);
 
 		return stat;
 	}
+
 	void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 	{
 #ifdef PR_DEBUG
@@ -358,8 +372,9 @@ namespace PR
 		const uint32 H = renderer()->settings().maxDiffuseBounces()+1;
 		const uint32 RD = renderer()->settings().maxRayDepth();
 
+		ThreadData& data = mThreadData[context->threadNumber()];
 		Random random;
-		for (const LightThreadData& ltd : mThreadData[context->threadNumber()].Lights)
+		for (const LightThreadData& ltd : data.Lights)
 		{
 			const Light& light = *ltd.Entity;
 			const Sphere outerSphere = light.Entity->worldBoundingBox().outerSphere();
@@ -410,7 +425,7 @@ namespace PR
 
 				PR_CHECK_VALIDITY(radiance, "After photon emission");
 
-				mPhotonsEmitted++;
+				data.PhotonsEmitted++;
 
 				uint32 diffuseBounces = 0;
 				for (uint32 j = 0; j < RD; ++j)
@@ -443,7 +458,7 @@ namespace PR
 #endif
 							mPhotonMap->store(sc.P, photon);
 
-							mPhotonsStored++;
+							data.PhotonsStored++;
 							photonsStored++;
 							diffuseBounces++;
 

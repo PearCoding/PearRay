@@ -70,6 +70,7 @@ namespace PR
 		// Light
 		const std::list<RenderEntity*>& lights() const;
 
+		RenderStatistics statistics() const;
 		RenderStatus status() const;
 
 		inline const Scene& scene() const { return mScene; }

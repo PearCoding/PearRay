@@ -13,7 +13,7 @@ namespace PR
 {
 	ToneMapper::ToneMapper(uint32 width, uint32 height, GPU* gpu) :
 		mColorMode(PR::TCM_SRGB), mGammaMode(PR::TGM_SRGB), mMapperMode(PR::TMM_Simple_Reinhard),
-		mGPU(gpu), mSize(width * height)
+		mGPU(gpu), mWidth(width), mHeight(height), mSize(width*height)
 	{
 #ifndef PR_NO_GPU
 		if (!mGPU)
@@ -46,7 +46,7 @@ namespace PR
 #endif
 	}
 
-	void ToneMapper::exec(const Spectrum* specIn, float* out) const
+	void ToneMapper::map(const Spectrum* specIn, float* out) const
 	{
 #ifndef PR_NO_GPU
 		if (mGPU && mSize > 100)
@@ -179,7 +179,7 @@ namespace PR
 #endif
 	}
 
-	void ToneMapper::execMapper(const float* rgbIn, float* rgbOut) const
+	void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut) const
 	{
 #ifndef PR_NO_GPU
 		if (mGPU && mSize > 100)

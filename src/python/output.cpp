@@ -57,21 +57,21 @@ namespace PRPY
         { bpy::scope scope = bpy::class_<OutputMap, boost::noncopyable>("OutputMap", bpy::no_init)
             .def("clear", &OutputMap::clear)
             .def("pushFragment", &OutputMap::pushFragment)
-            .def("getFragment", &OutputMap::getFragment)
+            .def("fragment", &OutputMap::getFragment)
             .def("setSampleCount", &OutputMap::setSampleCount)
-            .def("getSampleCount", &OutputMap::getSampleCount)
+            .def("sampleCount", &OutputMap::getSampleCount)
             .def("isPixelFinished", &OutputMap::isPixelFinished)
             .add_property("finishedPixelCount", &OutputMap::finishedPixelCount)
-            .def("getChannel",
+            .def("channel",
                 (const std::shared_ptr<Output1D>&(OutputMap::*)(OutputMap::Variable1D) const)&OutputMap::getChannel,
                 bpy::return_value_policy<bpy::copy_const_reference >())
-            .def("getChannel",
+            .def("channel",
                 (const std::shared_ptr<Output3D>&(OutputMap::*)(OutputMap::Variable3D) const)&OutputMap::getChannel,
                 bpy::return_value_policy<bpy::copy_const_reference >())
-            .def("getChannel",
+            .def("channel",
                 (const std::shared_ptr<OutputCounter>&(OutputMap::*)(OutputMap::VariableCounter) const)&OutputMap::getChannel,
                 bpy::return_value_policy<bpy::copy_const_reference >())
-            .def("getSpectralChannel", &OutputMap::getSpectralChannel, bpy::return_internal_reference<>())
+            .add_property("spectral", bpy::make_function(&OutputMap::getSpectralChannel, bpy::return_internal_reference<>()))
             .def("registerChannel",
                 (void (OutputMap::*)(OutputMap::Variable1D, const std::shared_ptr<Output1D>&))&OutputMap::registerChannel)
             .def("registerChannel",

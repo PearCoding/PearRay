@@ -19,6 +19,7 @@ SET(Src
   shader.cpp
   spectral.cpp
   status.cpp
+  tonemapper.cpp
   vec.cpp)
 SET(Hdr )
 

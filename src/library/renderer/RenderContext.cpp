@@ -615,12 +615,18 @@ namespace PR
 		return mLights;
 	}
 
-	RenderStatus RenderContext::status() const
+	RenderStatistics RenderContext::statistics() const
 	{
 		RenderStatistics s = mGlobalStatistics;
 		for (RenderThread* thread : mThreads)
 			s += thread->context().stats();
-		
+		return s;
+	}
+
+	RenderStatus RenderContext::status() const
+	{
+		RenderStatistics s = statistics();
+
 		RenderStatus status = mIntegrator->status();
 		status.setField("global.ray_count", s.rayCount());
 		status.setField("global.pixel_sample_count", s.pixelSampleCount());
@@ -632,12 +638,8 @@ namespace PR
 	void RenderContext::onNextPass()
 	{
 		for (uint32 i = 0; i < mTileYCount; ++i)
-		{
 			for (uint32 j = 0; j < mTileXCount; ++j)
-			{
 				mTileMap[i*mTileXCount + j]->reset();
-			}
-		}
 
 		bool clear = false;
 		mIntegrator->onNextPass(mCurrentPass + 1, clear);

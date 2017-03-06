@@ -56,11 +56,12 @@ namespace PR
 	{
 		const uint64 max_samples =
 			renderer()->width() * renderer()->height() * renderer()->settings().maxCameraSampleCount();
+		
 		RenderStatus stat;
 		stat.setField("int.max_sample_count", max_samples);
 		stat.setField("int.max_pass_count", (uint64)1);
 
-		stat.setPercentage(0);
+		stat.setPercentage(renderer()->statistics().pixelSampleCount() / (float)max_samples);
 
 		return stat;
 	}
