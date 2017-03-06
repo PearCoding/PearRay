@@ -24,6 +24,9 @@ namespace PRPY
         .add_property("infiniteLights",
             bpy::make_function(&Scene::infiniteLights,
                 bpy::return_internal_reference<>()))
+        .add_property("activeCamera",
+                bpy::make_function(&Scene::activeCamera, bpy::return_internal_reference<>()),
+                &Scene::setActiveCamera)
         .def("clear", &Scene::clear)
         .def("buildTree", &Scene::buildTree)
         .def("freeze", &Scene::freeze)

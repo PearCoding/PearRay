@@ -1,6 +1,5 @@
 #include "OutputSpecification.h"
 #include "renderer/RenderContext.h"
-#include "renderer/RenderFactory.h"
 #include "Logger.h"
 
 #include <boost/filesystem.hpp>
@@ -13,7 +12,7 @@ namespace PR
 	using namespace PR;
 
 	OutputSpecification::OutputSpecification() :
-		mRenderFactory(nullptr)
+		mInit(false)
 	{
 	}
 
@@ -22,28 +21,29 @@ namespace PR
 		deinit();
 	}
 
-	void OutputSpecification::init(RenderFactory* factory)
+	void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	{
-		if(mRenderFactory)
+		if(mInit)
 		{
-			std::string f = mRenderFactory->workingDir() + "/.lock";
+			std::string f = mWorkingDir + "/.lock";
 			if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 				PR_LOGGER.logf(L_Error, M_System,
 					"Couldn't delete lock directory '%s'!", f.c_str());
 		}
 
-		mRenderFactory = factory;
+		mInit = true;
+		mWorkingDir = context->workingDir();
 
-		if(mRenderFactory)
+		if(context)
 		{
 			// Setup lock directory
-			if(!boost::filesystem::create_directory(mRenderFactory->workingDir() + "/.lock"))
+			if(!boost::filesystem::create_directory(mWorkingDir + "/.lock"))
 				PR_LOGGER.logf(L_Warning, M_System,
-					"Couldn't create lock directory '%s/.lock'. Maybe already running?", mRenderFactory->workingDir().c_str());
+					"Couldn't create lock directory '%s/.lock'. Maybe already running?", mWorkingDir.c_str());
 
-			if(!boost::filesystem::remove(mRenderFactory->workingDir() + "/.img_lock"))// Remove it now
+			if(!boost::filesystem::remove(mWorkingDir + "/.img_lock"))// Remove it now
 				PR_LOGGER.logf(L_Error, M_System,
-					"Couldn't delete lock directory '%s/.img_lock'!", mRenderFactory->workingDir().c_str());
+					"Couldn't delete lock directory '%s/.img_lock'!", mWorkingDir.c_str());
 		}
 	}
 
@@ -60,21 +60,24 @@ namespace PR
 		mFiles.clear();
 		mSpectralFiles.clear();
 
-		if(!mRenderFactory)
+		if(!mInit)
 			return;
 
-		std::string f = mRenderFactory->workingDir() + "/.lock";
+		std::string f = mWorkingDir + "/.lock";
 		if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOGGER.logf(L_Error, M_System,
 				"Couldn't delete lock directory '%s'!", f.c_str());
 				
-		mRenderFactory = nullptr;
+		mInit = false;
 	}
 
-	void OutputSpecification::setup(RenderContext* renderer)
+	void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 	{
 		PR_ASSERT(renderer, "Given renderer has to be valid");
 
+		if(!isInit())
+			init(renderer);
+		
 		mImageWriter.init(renderer);
 		OutputMap* output = renderer->output();
 
@@ -84,19 +87,19 @@ namespace PR
 			for(const IM_ChannelSetting3D& cs3d : file.Settings3D)
 			{
 				if(!output->getChannel(cs3d.Variable))
-					output->registerChannel(cs3d.Variable, std::make_shared<Output3D>(renderer, zero));
+					output->registerChannel(cs3d.Variable, std::make_shared<Output3D>(renderer.get(), zero));
 			}
 			
 			for(const IM_ChannelSetting1D& cs1d : file.Settings1D)
 			{
 				if(!output->getChannel(cs1d.Variable))
-					output->registerChannel(cs1d.Variable, std::make_shared<Output1D>(renderer, 0));
+					output->registerChannel(cs1d.Variable, std::make_shared<Output1D>(renderer.get(), 0));
 			}
 			
 			for(const IM_ChannelSettingCounter& cs : file.SettingsCounter)
 			{
 				if(!output->getChannel(cs.Variable))
-					output->registerChannel(cs.Variable, std::make_shared<OutputCounter>(renderer, 0));
+					output->registerChannel(cs.Variable, std::make_shared<OutputCounter>(renderer.get(), 0));
 			}
 		}
 	}
@@ -404,9 +407,9 @@ namespace PR
 		}
 	}
 
-	void OutputSpecification::save(PR::RenderContext* renderer, ToneMapper& toneMapper, bool force) const
+	void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
 	{
-		if(!force && !boost::filesystem::create_directory(mRenderFactory->workingDir() + "/.img_lock"))
+		if(!force && !boost::filesystem::create_directory(mWorkingDir + "/.img_lock"))
 			return;
 
 		std::string resultDir = "/results";
@@ -417,7 +420,7 @@ namespace PR
 			resultDir = stream.str();
 		}
 
-		const std::string dir = mRenderFactory->workingDir() + resultDir;
+		const std::string dir = mWorkingDir + resultDir;
 		boost::filesystem::create_directory(dir);// Doesn't matter if it works
 
 		for(const File& f: mFiles)
@@ -445,8 +448,8 @@ namespace PR
 					"Saved file '%s'.", filename.c_str());
 		}
 
-		if(!force && !boost::filesystem::remove(mRenderFactory->workingDir() + "/.img_lock"))// Remove it now
+		if(!force && !boost::filesystem::remove(mWorkingDir + "/.img_lock"))// Remove it now
 			PR_LOGGER.logf(L_Error, M_System,
-				"Couldn't delete lock directory '%s/.img_lock'!", mRenderFactory->workingDir().c_str());
+				"Couldn't delete lock directory '%s/.img_lock'!", mWorkingDir.c_str());
 	}
 }

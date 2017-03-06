@@ -1,5 +1,7 @@
 #include "RenderFactory.h"
 #include "RenderContext.h"
+#include "scene/Scene.h"
+#include "Logger.h"
 
 #ifndef PR_NO_GPU
 # include "gpu/GPU.h"
@@ -7,15 +9,13 @@
 
 namespace PR
 {
-	RenderFactory::RenderFactory(uint32 w, uint32 h, Camera* cam, const Scene& scene,
+	RenderFactory::RenderFactory(uint32 w, uint32 h, const Scene& scene,
 		const std::string& workingDir, bool useGPU) :
 		mFullWidth(w), mFullHeight(h),
 		mWorkingDir(workingDir),
-		mCamera(cam), mScene(scene),
+		mScene(scene),
 		mGPU(nullptr)
 	{
-		PR_ASSERT(cam, "Given camera has to be valid");
-
 		// Setup GPU
 #ifndef PR_NO_GPU
 		if(useGPU)
@@ -62,6 +62,12 @@ namespace PR
 
 	std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
 	{
+		if(!mScene.activeCamera())
+		{
+			PR_LOGGER.log(L_Error, M_Scene, "No active camera selected");
+			return std::shared_ptr<RenderContext>();
+		}
+
 		PR_ASSERT(itx > 0, "Image tile count x has to be greater 0");
 		PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
 		PR_ASSERT(index < itx*ity, "Index has to be in bounds");
@@ -75,6 +81,6 @@ namespace PR
 
 		return std::make_shared<RenderContext>(index, x+cropOffsetX(), y+cropOffsetY(),
 			itw,ith,mFullWidth,mFullHeight,
-			mCamera, mScene, mWorkingDir, mGPU, mRenderSettings);
+			mScene, mWorkingDir, mGPU, mRenderSettings);
 	}
 }

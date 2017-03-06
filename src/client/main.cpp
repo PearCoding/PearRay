@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 		return -2;
 	}
 
-	if(!env->camera())
+	if(!env->scene().activeCamera())
 	{
 		if(!options.IsQuiet)
 			std::cout << "Error: No camera specified." << std::endl;
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 	PR::RenderFactory* renderFactory = new PR::RenderFactory(
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
-		env->camera(), env->scene(), options.OutputDir, true);
+		env->scene(), options.OutputDir, true);
 	renderFactory->setSettings(options.RenderSettings);
 
 	if(options.CropMinXOverride >= 0 &&
@@ -111,7 +111,6 @@ int main(int argc, char** argv)
 	env->scene().buildTree();
 	PR_END_PROFILE_ID(3);
 
-	env->outputSpecification().init(renderFactory);
 	// Render per image tile
 	for(PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i)
 	{
@@ -131,8 +130,8 @@ int main(int argc, char** argv)
 				renderer->offsetY(), renderer->offsetY()+renderer->height());
 		}
 
-		env->outputSpecification().setup(renderer.get());
-		env->scene().setup(renderer.get());
+		env->outputSpecification().setup(renderer);
+		env->scene().setup(renderer);
 			
 		if(options.ShowInformation)
 			env->dumpInformation();
@@ -174,7 +173,7 @@ int main(int argc, char** argv)
 			if(options.DDO == DDO_Image && options.ImgUpdate > 0 &&
 				span_img.count() > options.ImgUpdate*1000)
 			{
-				env->outputSpecification().save(renderer.get(), toneMapper, false);
+				env->save(renderer, toneMapper, false);
 				start_img = end;
 			}
 		}
@@ -190,7 +189,7 @@ int main(int argc, char** argv)
 		}
 
 		// Save images
-		env->outputSpecification().save(renderer.get(), toneMapper, true);
+		env->save(renderer, toneMapper, true);
 	}
 
 	env->outputSpecification().deinit();

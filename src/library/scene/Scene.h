@@ -7,6 +7,7 @@
 
 namespace PR
 {
+	class Camera;
 	class Entity;
 	struct FaceSample;
 	class IInfiniteLight;
@@ -34,19 +35,22 @@ namespace PR
 		void removeInfiniteLight(const std::shared_ptr<IInfiniteLight>& e);
 		inline const std::list<std::shared_ptr<IInfiniteLight> >& infiniteLights() const { return mInfiniteLights; }
 
-		void clear();
+		void setActiveCamera(const std::shared_ptr<Camera>& c);
+		const std::shared_ptr<Camera>& activeCamera() const;
 
+		void clear();
 		void buildTree();
 
 		RenderEntity* checkCollision(const Ray& ray, FaceSample& collisionPoint) const;
 		bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const;
 
 		void freeze();
-		void setup(RenderContext* context);
+		void setup(const std::shared_ptr<RenderContext>& context);
 
 		BoundingBox boundingBox() const;
 	private:
 		std::string mName;
+		std::shared_ptr<Camera> mActiveCamera;
 		std::list<std::shared_ptr<Entity> > mEntities;
 		std::list<std::shared_ptr<RenderEntity> > mRenderEntities;
 		std::list<std::shared_ptr<IInfiniteLight> > mInfiniteLights;

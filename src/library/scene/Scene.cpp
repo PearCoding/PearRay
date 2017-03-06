@@ -67,12 +67,24 @@ namespace PR
 		PR_ASSERT(e, "Given light should be valid");
 		mInfiniteLights.remove(e);
 	}
+		
+	void Scene::setActiveCamera(const std::shared_ptr<Camera>& c)
+	{
+		PR_ASSERT(c, "Given camera should be valid");
+		mActiveCamera = c;
+	}
+
+	const std::shared_ptr<Camera>& Scene::activeCamera() const
+	{
+		return mActiveCamera;
+	}
 
 	void Scene::clear()
 	{
 		mEntities.clear();
 		mRenderEntities.clear();
 		mInfiniteLights.clear();
+		mActiveCamera.reset();
 
 		if (mKDTree)
 		{
@@ -136,10 +148,10 @@ namespace PR
 			e->freeze();
 	}
 
-	void Scene::setup(RenderContext* context)
+	void Scene::setup(const std::shared_ptr<RenderContext>& context)
 	{
 		for (const auto& e: mRenderEntities)
-			e->setup(context);
+			e->setup(context.get());
 	}
 
 	BoundingBox Scene::boundingBox() const

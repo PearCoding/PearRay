@@ -145,16 +145,6 @@ namespace PR
 			return mTextureSystem;
 		}
 
-		inline PR::Camera* camera() const
-		{
-			return mCamera;
-		}
-
-		inline void setCamera(Camera* cam)
-		{
-			mCamera = cam;
-		}
-
 		inline uint32 renderWidth() const
 		{
 			return mRenderWidth;
@@ -209,9 +199,11 @@ namespace PR
 		}
 
 		void dumpInformation() const;
+
+		void setup(const std::shared_ptr<RenderContext>& renderer);
+		void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 	private:
 		Scene mScene;
-		Camera* mCamera;
 		uint32 mRenderWidth;
 		uint32 mRenderHeight;
 

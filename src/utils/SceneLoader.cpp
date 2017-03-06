@@ -5,6 +5,8 @@
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
 
+#include "camera/Camera.h"
+
 #include "parser/entity/BoundaryParser.h"
 #include "parser/entity/CameraParser.h"
 #include "parser/entity/CoordinateAxisParser.h"
@@ -54,10 +56,10 @@ namespace PR
 		std::string str((std::istreambuf_iterator<char>(stream)),
 			std::istreambuf_iterator<char>());
 
-		return load(str);
+		return loadFromString(str);
 	}
 
-	std::shared_ptr<Environment> SceneLoader::load(const std::string& source)
+	std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& source)
 	{
 		DL::SourceLogger logger;
 		DL::DataLisp dataLisp(&logger);
@@ -188,8 +190,8 @@ namespace PR
 				DL::Data cameraD = top.getFromKey("camera");
 				if (cameraD.type() == DL::Data::T_String)
 				{
-					Camera* cam = (Camera*)env->scene().getEntity(cameraD.getString(), "standard_camera").get();
-					env->setCamera(cam);
+					auto cam = env->scene().getEntity(cameraD.getString(), "standard_camera");
+					env->scene().setActiveCamera(std::static_pointer_cast<Camera>(cam));
 				}
 
 				return env;

@@ -21,7 +21,7 @@ namespace PR
 		PR_CLASS_NON_CONSTRUCTABLE(SceneLoader);
 	public:
 		static std::shared_ptr<Environment> loadFromFile(const std::string& path);
-		static std::shared_ptr<Environment> load(const std::string& source);
+		static std::shared_ptr<Environment> loadFromString(const std::string& source);
 
 		static PM::vec3 getVector(const DL::DataGroup& arr, bool& ok);
 		static PM::quat getRotation(const DL::Data& data, bool& ok);

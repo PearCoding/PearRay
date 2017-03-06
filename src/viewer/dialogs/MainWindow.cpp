@@ -175,7 +175,7 @@ void MainWindow::openProject(const QString& str)
 
 	if (mEnvironment)
 	{
-		if(!mEnvironment->camera())
+		if(!mEnvironment->scene().activeCamera())
 		{
 			QMessageBox::warning(this, tr("No camera"), tr("No camera was set in given scene."));
 			mEnvironment.reset();
@@ -183,7 +183,7 @@ void MainWindow::openProject(const QString& str)
 		}
 		
 		mRenderFactory = new PR::RenderFactory(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
-			mEnvironment->camera(), mEnvironment->scene(),
+			mEnvironment->scene(),
 			QDir::tempPath().toStdString());
 		mRenderFactory->settings().setCropMaxX(mEnvironment->cropMaxX());
 		mRenderFactory->settings().setCropMinX(mEnvironment->cropMinX());
@@ -492,9 +492,9 @@ void MainWindow::startRendering(bool clear)
 
 	mEnvironment->scene().freeze();
 	mEnvironment->scene().buildTree();
+	mEnvironment->scene().setup(mRenderContext);
 
-	mEnvironment->outputSpecification().init(mRenderFactory);
-	mEnvironment->outputSpecification().setup(mRenderContext.get());
+	mEnvironment->outputSpecification().setup(mRenderContext);
 
 	// if(clear)
 	// 	mDisplayBuffer->clear(0,0,0,0);

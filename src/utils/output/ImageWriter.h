@@ -47,7 +47,7 @@ namespace PR
 		ImageWriter();
 		virtual ~ImageWriter();
 
-		void init(RenderContext* renderer);
+		void init(const std::shared_ptr<RenderContext>& renderer);
 		void deinit();
 
 		bool save(ToneMapper& toneMapper, const std::string& file,
@@ -61,6 +61,6 @@ namespace PR
 
 	private:
 		float* mRGBData;
-		RenderContext* mRenderer;
+		std::shared_ptr<RenderContext> mRenderer;
 	};
 }

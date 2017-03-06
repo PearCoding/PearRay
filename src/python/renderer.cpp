@@ -22,7 +22,7 @@ namespace PRPY
     void setup_renderer()
     {
         bpy::class_<RenderFactory>("RenderFactory",
-            bpy::init<uint32, uint32, Camera*, const Scene&, const std::string&, bpy::optional<bool> >())
+            bpy::init<uint32, uint32, const Scene&, const std::string&, bpy::optional<bool> >())
             .add_property("fullWidth", &RenderFactory::fullWidth, &RenderFactory::setFullWidth)
             .add_property("fullHeight", &RenderFactory::fullHeight, &RenderFactory::setFullHeight)
             .add_property("cropWidth", &RenderFactory::cropWidth)
@@ -34,9 +34,6 @@ namespace PRPY
             .add_property("settings",
                 bpy::make_function((RenderSettings& (RenderFactory::*)())&RenderFactory::settings, bpy::return_internal_reference<>()),
                 &RenderFactory::setSettings)
-            .add_property("camera",
-                bpy::make_function(&RenderFactory::camera, bpy::return_internal_reference<>()),
-                &RenderFactory::setCamera)
             .add_property("workingDir", &RenderFactory::workingDir, &RenderFactory::setWorkingDir)
             .add_property("scene", bpy::make_function(&RenderFactory::scene, bpy::return_internal_reference<>()))
         ;
@@ -57,8 +54,6 @@ namespace PRPY
                 bpy::make_function(&RenderContext::settings, bpy::return_internal_reference<>()))
             .add_property("lights",
                 bpy::make_function(&RenderContext::lights, bpy::return_internal_reference<>()))
-            .add_property("camera",
-                bpy::make_function(&RenderContext::camera, bpy::return_internal_reference<>()))
             .add_property("workingDir", &RenderContext::workingDir)
             .add_property("scene", bpy::make_function(&RenderContext::scene, bpy::return_internal_reference<>()))
             .add_property("output", bpy::make_function(&RenderContext::output, bpy::return_internal_reference<>()))

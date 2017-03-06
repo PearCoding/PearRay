@@ -12,7 +12,7 @@
 namespace PR
 {
 	Environment::Environment(const std::string& name) :
-		mScene(name), mCamera(nullptr), mRenderWidth(1920), mRenderHeight(1080),
+		mScene(name), mRenderWidth(1920), mRenderHeight(1080),
 		mCropMinX(0), mCropMaxX(1), mCropMinY(0), mCropMaxY(1)
 	{
 		//Defaults
@@ -46,5 +46,18 @@ namespace PR
 		for (const auto& p : mMaterials)
 			PR_LOGGER.logf(L_Info, M_Material, "%s:\n%s",
 				p.first.c_str(), p.second->dumpInformation().c_str());
+	}
+
+	void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
+	{
+		mScene.freeze();
+		mScene.buildTree();
+		mOutputSpecification.setup(renderer);
+		mScene.setup(renderer);
+	}
+
+	void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
+	{
+		mOutputSpecification.save(renderer, toneMapper, force);
 	}
 }

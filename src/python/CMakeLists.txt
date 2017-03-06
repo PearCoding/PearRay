@@ -3,6 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 SET(Src
   camera.cpp
   entity.cpp
+  environment.cpp
   geometry.cpp
   light.cpp
   logger.cpp

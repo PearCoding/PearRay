@@ -40,33 +40,20 @@
 namespace PR
 {
 	RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-		Camera* cam, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings) :
+		const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings) :
 		mIndex(index), mOffsetX(ox), mOffsetY(oy), mWidth(w), mHeight(h), mFullWidth(fw), mFullHeight(fh),
 		mWorkingDir(workingDir),
-		mCamera(cam), mScene(scene),
+		mCamera(scene.activeCamera()), mScene(scene),
 		mOutputMap(nullptr),
 		mTileWidth(w/8), mTileHeight(h/8), mTileXCount(8), mTileYCount(8),
 		mTileMap(nullptr), mIncrementalCurrentSample(0),
 		mRenderSettings(settings), mGPU(gpu), mIntegrator(nullptr), mShouldStop(false)
 	{
-		PR_ASSERT(cam, "Given camera has to be valid");
+		PR_ASSERT(mCamera, "Given camera has to be valid");
 
 		reset();
 
 		mOutputMap = new OutputMap(this);
-
-		// Setup GPU
-#ifndef PR_NO_GPU
-		if(useGPU)
-		{
-			mGPU = new GPU();
-			if (!mGPU->init(""))
-			{
-				delete mGPU;
-				mGPU = nullptr;
-			}
-		}
-#endif
 	}
 
 	RenderContext::~RenderContext()

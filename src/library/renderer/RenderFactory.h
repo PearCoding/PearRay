@@ -6,14 +6,13 @@
 
 namespace PR
 {
-	class Camera;
 	class GPU;
 	class RenderContext;
 	class Scene;
 	class PR_LIB RenderFactory
 	{
 	public:
-		RenderFactory(uint32 width, uint32 height, Camera* cam, const Scene& scene,
+		RenderFactory(uint32 width, uint32 height, const Scene& scene,
 			const std::string& workingDir, bool useGPU = true);
 		virtual ~RenderFactory();
 
@@ -40,9 +39,6 @@ namespace PR
 
 		inline const Scene& scene() const { return mScene; }
 
-		inline void setCamera(Camera* camera) { mCamera = camera; }
-		inline Camera* camera() const { return mCamera; }
-
 		inline void setWorkingDir(const std::string& dir) { mWorkingDir = dir; }
 		inline std::string workingDir() const { return mWorkingDir; }
 
@@ -52,7 +48,6 @@ namespace PR
 		uint32 mFullHeight;
 		std::string mWorkingDir;
 
-		Camera* mCamera;
 		const Scene& mScene;
 
 		GPU* mGPU;

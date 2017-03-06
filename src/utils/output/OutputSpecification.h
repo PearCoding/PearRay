@@ -21,16 +21,18 @@ namespace PR
 		OutputSpecification();
 		virtual ~OutputSpecification();
 
-		void init(PR::RenderFactory* factory);
+		void init(const std::shared_ptr<RenderContext>& context);
 		void deinit();
+		inline bool isInit() const { return mInit; }
 
-		void setup(PR::RenderContext* renderer);
+		void setup(const std::shared_ptr<RenderContext>& renderer);
 
 		void parse(Environment* env, const DL::DataGroup& group);
-		void save(PR::RenderContext* renderer, PR::ToneMapper& toneMapper, bool force = false) const;
+		void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
 	private:
-		PR::RenderFactory* mRenderFactory;
+		bool mInit;
+		std::string mWorkingDir;
 		ImageWriter mImageWriter;
 
 		struct File

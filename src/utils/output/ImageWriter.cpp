@@ -19,7 +19,7 @@ namespace PR
 		deinit();
 	}
 
-	void ImageWriter::init(RenderContext* renderer)
+	void ImageWriter::init(const std::shared_ptr<RenderContext>& renderer)
 	{
 		// Delete if resolution changed.
 		if(mRenderer && (!renderer ||
@@ -50,7 +50,7 @@ namespace PR
 		mRenderer = nullptr;
 	}
 
-	bool ImageWriter::save(PR::ToneMapper& toneMapper, const std::string& file,
+	bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			IM_ChannelSettingSpec* specSett,
 			const std::vector<IM_ChannelSetting1D>& ch1d,
 			const std::vector<IM_ChannelSettingCounter>& chcounter,
