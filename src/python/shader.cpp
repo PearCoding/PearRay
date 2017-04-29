@@ -117,7 +117,7 @@ namespace PRPY
         ;
 
         bpy::enum_<ShaderClosureFlags>("ShaderClosureFlags")
-        .value("Inside", SCF_Inside)
+        .value("INSIDE", SCF_Inside)
         ;
 
         bpy::class_<ScalarShaderOutputWrap, std::shared_ptr<ScalarShaderOutputWrap>, boost::noncopyable>("ScalarShaderOutput")

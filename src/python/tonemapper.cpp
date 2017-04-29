@@ -73,26 +73,26 @@ namespace PRPY
         ;
 
         bpy::enum_<ToneColorMode>("ToneColorMode")
-        .value("sRGB", TCM_SRGB)
+        .value("SRGB", TCM_SRGB)
         .value("XYZ", TCM_XYZ)
-        .value("XYZ_Norm", TCM_XYZ_NORM)
-        .value("Luminance", TCM_LUMINANCE)
+        .value("XYZ_NORM", TCM_XYZ_NORM)
+        .value("LUMINANCE", TCM_LUMINANCE)
         ;
 
         bpy::enum_<ToneGammaMode>("ToneGammaMode")
-        .value("None", TGM_None)
-        .value("sRGB", TGM_SRGB)
+        .value("NONE", TGM_None)
+        .value("SRGB", TGM_SRGB)
         ;
 
         bpy::enum_<ToneMapperMode>("ToneMapperMode")
-        .value("None", TMM_None)
-        .value("Simple_Reinhard", TMM_Simple_Reinhard)
-        .value("Clamp", TMM_Clamp)
-        .value("Abs", TMM_Abs)
-        .value("Positive", TMM_Positive)
-        .value("Negative", TMM_Negative)
-        .value("Spherical", TMM_Spherical)
-        .value("Normalized", TMM_Normalized)
+        .value("NONE", TMM_None)
+        .value("SIMPLE_REINHARD", TMM_Simple_Reinhard)
+        .value("CLAMP", TMM_Clamp)
+        .value("ABS", TMM_Abs)
+        .value("POSITIVE", TMM_Positive)
+        .value("NEGATIVE", TMM_Negative)
+        .value("SPHERICAL", TMM_Spherical)
+        .value("NORMALIZED", TMM_Normalized)
         ;
     }
 }

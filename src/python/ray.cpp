@@ -32,8 +32,8 @@ namespace PRPY
         ;
 
         bpy::enum_<RayFlags>("RayFlags")
-        .value("Light", RF_Light)
-        .value("Debug", RF_Debug)
+        .value("LIGHT", RF_Light)
+        .value("DEBUG", RF_Debug)
         ;
     }
 }

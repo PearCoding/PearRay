@@ -11,7 +11,7 @@ PR_TEST("Align 1")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, V);
+	PR_CHECK_NEARLY_EQ(R, V);
 }
 
 PR_TEST("Align 2")
@@ -21,7 +21,7 @@ PR_TEST("Align 2")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0, 0, -1));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(0, 0, -1));
 }
 
 PR_TEST("Align 3")
@@ -31,7 +31,7 @@ PR_TEST("Align 3")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Normalize(PM::pm_Set(0, 0.5f, -0.5f)));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Normalize(PM::pm_Set(0, 0.5f, -0.5f)));
 }
 
 PR_TEST("Align 4")
@@ -41,7 +41,7 @@ PR_TEST("Align 4")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0, 1, 0));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(0, 1, 0));
 }
 
 PR_TEST("Align 5")
@@ -51,7 +51,7 @@ PR_TEST("Align 5")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, N);
+	PR_CHECK_NEARLY_EQ(R, N);
 }
 
 PR_TEST("Align 6")
@@ -61,7 +61,7 @@ PR_TEST("Align 6")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0, -1, 0));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(0, -1, 0));
 }
 
 PR_TEST("Align 6")
@@ -71,7 +71,7 @@ PR_TEST("Align 6")
 
 	auto R = Projection::align(N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0, 0, 1));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(0, 0, 1));
 }
 
 PR_END_TESTCASE()

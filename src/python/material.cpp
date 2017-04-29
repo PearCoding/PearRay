@@ -106,8 +106,8 @@ namespace PRPY
     void setup_material()
     {
         bpy::class_<MaterialWrap, std::shared_ptr<MaterialWrap>, boost::noncopyable>("Material", bpy::init<uint32>())
-            .def("eval", bpy::pure_virtual(&MaterialWrap::eval))
-            .def("pdf", bpy::pure_virtual(&MaterialWrap::pdf))
+            .def("eval", bpy::pure_virtual(&Material::eval))
+            .def("pdf", bpy::pure_virtual(&Material::pdf))
             .def("sample", bpy::pure_virtual(&MaterialWrap::sample_Py))
             .def("samplePath", &MaterialWrap::samplePath_Py, &MaterialWrap::samplePath_PyDef)
             .def("samplePathCount", &Material::samplePathCount, &MaterialWrap::samplePathCount_PyDef)
@@ -176,21 +176,21 @@ namespace PRPY
         bpy::implicitly_convertible<std::shared_ptr<CookTorranceMaterial>, std::shared_ptr<Material> >();
 
         bpy::enum_<CookTorranceMaterial::FresnelMode>("FresnelMode")
-        .value("Dielectric", CookTorranceMaterial::FM_Dielectric)
-        .value("Conductor", CookTorranceMaterial::FM_Conductor)
+        .value("DIELECTRIC", CookTorranceMaterial::FM_Dielectric)
+        .value("CONDUCTOR", CookTorranceMaterial::FM_Conductor)
         ;
 
         bpy::enum_<CookTorranceMaterial::DistributionMode>("DistributionMode")
-        .value("Blinn", CookTorranceMaterial::DM_Blinn)
-        .value("Beckmann", CookTorranceMaterial::DM_Beckmann)
+        .value("BLINN", CookTorranceMaterial::DM_Blinn)
+        .value("BECKMANN", CookTorranceMaterial::DM_Beckmann)
         .value("GGX", CookTorranceMaterial::DM_GGX)
         ;
 
         bpy::enum_<CookTorranceMaterial::GeometryMode>("GeometryMode")
-        .value("Implicit", CookTorranceMaterial::GM_Implicit)
-        .value("Neumann", CookTorranceMaterial::GM_Neumann)
-        .value("CookTorrance", CookTorranceMaterial::GM_CookTorrance)
-        .value("Kelemen", CookTorranceMaterial::GM_Kelemen)
+        .value("IMPLICIT", CookTorranceMaterial::GM_Implicit)
+        .value("NEUMANN", CookTorranceMaterial::GM_Neumann)
+        .value("COOKTORRANCE", CookTorranceMaterial::GM_CookTorrance)
+        .value("KELEMEN", CookTorranceMaterial::GM_Kelemen)
         ;
         }// End of scope
 

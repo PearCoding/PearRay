@@ -85,8 +85,8 @@ namespace PR
 
 		inline bool contains(const PM::vec3& point) const
 		{
-			return PM::pm_IsLessOrEqual(mUpperBound, point) &&
-				PM::pm_IsGreaterOrEqual(mLowerBound, point);
+			return PM::pm_IsAllTrue(PM::pm_IsLessOrEqual(mUpperBound, point)) &&
+				PM::pm_IsAllTrue(PM::pm_IsGreaterOrEqual(mLowerBound, point));
 		}
 
 		bool intersects(const Ray& ray, float& t) const;

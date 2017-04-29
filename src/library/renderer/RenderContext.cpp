@@ -617,8 +617,8 @@ namespace PR
 		RenderStatus status = mIntegrator->status();
 		status.setField("global.ray_count", s.rayCount());
 		status.setField("global.pixel_sample_count", s.pixelSampleCount());
-		status.setField("global.entity_hit", s.entityHitCount());
-		status.setField("global.background_hit", s.backgroundHitCount());
+		status.setField("global.entity_hit_count", s.entityHitCount());
+		status.setField("global.background_hit_count", s.backgroundHitCount());
 		return status;
 	}
 

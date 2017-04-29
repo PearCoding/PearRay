@@ -162,7 +162,7 @@ namespace PR
 
 		static inline float cos_hemi_pdf(float NdotL)
 		{
-			return NdotL;
+			return NdotL * PM_INV_2_PI_F;
 		}
 
 		static inline float cos_hemi_pdf(float NdotL, float m)

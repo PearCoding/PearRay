@@ -19,9 +19,9 @@ PR_TEST("Size")
 PR_TEST("Bounds")
 {
 	BoundingBox box(2, 2, 2);
-	PR_CHECK_EQ_3(box.lowerBound(), PM::pm_Set(-1, -1, -1));
-	PR_CHECK_EQ_3(box.upperBound(), PM::pm_Set(1, 1, 1));
-	PR_CHECK_EQ_3(box.center(), PM::pm_Set(0, 0, 0));
+	PR_CHECK_EQ(box.lowerBound(), PM::pm_Set(-1, -1, -1));
+	PR_CHECK_EQ(box.upperBound(), PM::pm_Set(1, 1, 1));
+	PR_CHECK_EQ(box.center(), PM::pm_Set(0, 0, 0));
 }
 
 PR_TEST("Intersects Left")
@@ -33,7 +33,7 @@ PR_TEST("Intersects Left")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(-1, 0, 0));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(-1, 0, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Left);
 }
 
@@ -46,7 +46,7 @@ PR_TEST("Intersects Right Inside")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(1, 0, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
 
@@ -59,7 +59,7 @@ PR_TEST("Intersects Right")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(1, 0, 0));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(1, 0, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Right);
 }
 
@@ -72,7 +72,7 @@ PR_TEST("Intersects Front")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, -1));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(0, 0, -1));
 	PR_CHECK_EQ(side, BoundingBox::FS_Front);
 }
 
@@ -85,7 +85,7 @@ PR_TEST("Intersects Back Inside")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, 1));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(0, 0, 1));
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
 
@@ -98,7 +98,7 @@ PR_TEST("Intersects Back")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 0, 1));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(0, 0, 1));
 	PR_CHECK_EQ(side, BoundingBox::FS_Back);
 }
 
@@ -111,7 +111,7 @@ PR_TEST("Intersects Bottom")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, -1, 0));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(0, -1, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Bottom);
 }
 
@@ -124,7 +124,7 @@ PR_TEST("Intersects Top Inside")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(0, 1, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
@@ -137,7 +137,7 @@ PR_TEST("Intersects Top")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_EQ_3(collisionPoint, PM::pm_Set(0, 1, 0));
+	PR_CHECK_EQ(collisionPoint, PM::pm_Set(0, 1, 0));
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
@@ -151,7 +151,7 @@ PR_TEST("Intersects Complex")
 	float t;
 	BoundingBox::FaceSide side;
 	PR_CHECK_TRUE(box.intersects(ray, collisionPoint, t, side));
-	PR_CHECK_NEARLY_EQ_3(collisionPoint, point);
+	PR_CHECK_NEARLY_EQ(collisionPoint, point);
 	PR_CHECK_EQ(side, BoundingBox::FS_Top);
 }
 
@@ -159,7 +159,7 @@ PR_TEST("Face Front")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Front);
-	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, 0, 1));
+	PR_CHECK_EQ(plane.normal(), PM::pm_Set(0, 0, 1));
 	PR_CHECK_NEARLY_EQ(PM::pm_GetZ(plane.position()), -3 / 2.0f);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.xAxis()), 1);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.yAxis()), 2);
@@ -169,7 +169,7 @@ PR_TEST("Face Back")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Back);
-	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, 0, -1));
+	PR_CHECK_EQ(plane.normal(), PM::pm_Set(0, 0, -1));
 	PR_CHECK_NEARLY_EQ(PM::pm_GetZ(plane.position()), 3 / 2.0f);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.xAxis()), 1);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.yAxis()), 2);
@@ -179,7 +179,7 @@ PR_TEST("Face Left")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Left);
-	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(1, 0, 0));
+	PR_CHECK_EQ(plane.normal(), PM::pm_Set(1, 0, 0));
 	PR_CHECK_NEARLY_EQ(PM::pm_GetX(plane.position()), -1 / 2.0f);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.xAxis()), 3);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.yAxis()), 2);
@@ -189,7 +189,7 @@ PR_TEST("Face Right")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Right);
-	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(-1, 0, 0));
+	PR_CHECK_EQ(plane.normal(), PM::pm_Set(-1, 0, 0));
 	PR_CHECK_NEARLY_EQ(PM::pm_GetX(plane.position()), 1 / 2.0f);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.xAxis()), 3);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.yAxis()), 2);
@@ -199,7 +199,7 @@ PR_TEST("Face Top")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Top);
-	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, -1, 0));
+	PR_CHECK_EQ(plane.normal(), PM::pm_Set(0, -1, 0));
 	PR_CHECK_NEARLY_EQ(PM::pm_GetY(plane.position()), 1);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.xAxis()), 1);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.yAxis()), 3);
@@ -209,7 +209,7 @@ PR_TEST("Face Bottom")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Bottom);
-	PR_CHECK_EQ_3(plane.normal(), PM::pm_Set(0, 1, 0));
+	PR_CHECK_EQ(plane.normal(), PM::pm_Set(0, 1, 0));
 	PR_CHECK_NEARLY_EQ(PM::pm_GetY(plane.position()), -1);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.xAxis()), 1);
 	PR_CHECK_EQ(PM::pm_Magnitude(plane.yAxis()), 3);

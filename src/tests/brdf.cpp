@@ -18,7 +18,7 @@ PR_TEST("Reflection")
 
 	auto R = Reflection::reflect(PM::pm_Dot(V, N), N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(PM::pm_GetX(V), -PM::pm_GetY(V), PM::pm_GetZ(V)));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(PM::pm_GetX(V), -PM::pm_GetY(V), PM::pm_GetZ(V)));
 }
 
 PR_TEST("Refraction")
@@ -28,7 +28,7 @@ PR_TEST("Refraction")
 
 	auto R = Reflection::refract(0.9, PM::pm_Dot(V, N), N, V);
 
-	PR_CHECK_NEARLY_EQ_3(R, PM::pm_Set(0.636396, -0.771362, 0));
+	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(0.636396, -0.771362, 0));
 }
 
 PR_TEST("Blinn NDF")

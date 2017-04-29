@@ -109,9 +109,9 @@ namespace PRPY
         ;
 
         bpy::enum_<EntityFlags>("EntityFlags")
-        .value("Debug", EF_Debug)
-        .value("LocalArea", EF_LocalArea)
-        .value("ScaleLight", EF_ScaleLight)
+        .value("DEBUG", EF_Debug)
+        .value("LOCALAREA", EF_LocalArea)
+        .value("SCALELIGHT", EF_ScaleLight)
         ;
 
         bpy::class_<RenderEntityWrap, std::shared_ptr<RenderEntityWrap>, bpy::bases<Entity>, boost::noncopyable>("RenderEntity", bpy::init<uint32, std::string>())

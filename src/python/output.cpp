@@ -89,12 +89,12 @@ namespace PRPY
         ;
 
         bpy::enum_<OutputMap::Variable3D>("Variable3D")
-        .value("Position", OutputMap::V_Position)
-        .value("Normal", OutputMap::V_Normal)
-        .value("NormalG", OutputMap::V_NormalG)
-        .value("Tangent", OutputMap::V_Tangent)
-        .value("Bitangent", OutputMap::V_Bitangent)
-        .value("View", OutputMap::V_View)
+        .value("POSITION", OutputMap::V_Position)
+        .value("NORMAL", OutputMap::V_Normal)
+        .value("NORMALG", OutputMap::V_NormalG)
+        .value("TANGENT", OutputMap::V_Tangent)
+        .value("BINORMAL", OutputMap::V_Bitangent)
+        .value("VIEW", OutputMap::V_View)
         .value("UVW", OutputMap::V_UVW)
         .value("DPDU", OutputMap::V_DPDU)
         .value("DPDV", OutputMap::V_DPDV)
@@ -106,14 +106,14 @@ namespace PRPY
         ;
 
         bpy::enum_<OutputMap::Variable1D>("Variable1D")
-        .value("Depth", OutputMap::V_Depth)
-        .value("Time", OutputMap::V_Time)
-        .value("Material", OutputMap::V_Material)
+        .value("DEPTH", OutputMap::V_Depth)
+        .value("TIME", OutputMap::V_Time)
+        .value("MATERIAL", OutputMap::V_Material)
         ;
 
         bpy::enum_<OutputMap::VariableCounter>("VariableCounter")
         .value("ID", OutputMap::V_ID)
-        .value("Samples", OutputMap::V_Samples)
+        .value("SAMPLES", OutputMap::V_Samples)
         ;
         }
     }

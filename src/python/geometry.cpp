@@ -112,12 +112,12 @@ namespace PRPY
         ;
         
         bpy::enum_<BoundingBox::FaceSide>("FaceSide")
-        .value("Left", BoundingBox::FS_Left)
-        .value("Right", BoundingBox::FS_Right)
-        .value("Top", BoundingBox::FS_Top)
-        .value("Bottom", BoundingBox::FS_Bottom)
-        .value("Front", BoundingBox::FS_Front)
-        .value("Back", BoundingBox::FS_Back)
+        .value("LEFT", BoundingBox::FS_Left)
+        .value("RIGHT", BoundingBox::FS_Right)
+        .value("TOP", BoundingBox::FS_Top)
+        .value("BOTTOM", BoundingBox::FS_Bottom)
+        .value("FRONT", BoundingBox::FS_Front)
+        .value("BACK", BoundingBox::FS_Back)
         ;
         }// End of scope
 

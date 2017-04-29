@@ -143,6 +143,15 @@ namespace PRPY
     }
 
     template<int D>
+    pyvec<D> operator -(const pyvec<D>& v1)
+    {
+        pyvec<D> r;
+        for(int i = 0; i < D; ++i)
+            r.set(i, -v1.get(i));
+        return r;
+    }
+
+    template<int D>
     pyvec<D> operator *(const pyvec<D>& v1, const pyvec<D>& v2)
     {
         pyvec<D> r;
@@ -239,6 +248,7 @@ namespace PRPY
             .def("__setitem__", &pyvec<D>::set)
             .def(bpy::self + bpy::self)
             .def(bpy::self - bpy::self)
+            .def(- bpy::self)
             .def(bpy::self * bpy::self)
             .def(bpy::self / bpy::self)
             .def(bpy::self * float())
