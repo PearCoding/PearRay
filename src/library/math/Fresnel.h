@@ -15,7 +15,7 @@ namespace PR
 			const float eta = n1 / n2;
 			const float z = 1 - eta * eta * (1 - dot * dot);
 
-			if (z < 0.0f)
+			if (z <= PM_EPSILON)
 				return 1;
 
 			const float dotT = std::sqrt(z);
@@ -28,6 +28,9 @@ namespace PR
 
 		static inline float conductor(float dot, float n, float k)
 		{
+			if(dot <= PM_EPSILON)
+				return 1;
+			
 			const float dot2 = dot*dot;
 			const float f = (n*n + k*k);
 			const float d1 = f*dot2;
