@@ -11,21 +11,21 @@
 
 /* General interface */
 template<typename T1, typename T2>
-bool _prt_test_eq(const T1& val, const T2& exp)
+bool _prt_test_eq(const T1& v1, const T2& v2)
 {
-	return val == exp;
+	return v1 == v2;
 }
 
 template<typename T1, typename T2>
-bool _prt_test_greater(const T1& val, const T2& exp)
+bool _prt_test_greater(const T1& v1, const T2& v2)
 {
-	return val > exp;
+	return v1 > v2;
 }
 
 template<typename T1, typename T2>
-bool _prt_test_diff(const T1& val, const T2& exp)
+double _prt_diff(const T1& v1, const T2& v2)
 {
-	return std::abs(val - exp);
+	return std::abs(v1 - v2);
 }
 
 template<typename T>
@@ -34,6 +34,18 @@ std::string _prt_test_string(const T& val)
 	std::stringstream stream;
 	stream << val;
 	return stream.str();
+}
+
+template<typename T1, typename T2>
+bool _prt_test_diff(const T1& v1, const T2& v2)
+{
+	return _prt_diff(v1, v2) == 0;
+}
+
+template<typename T1, typename T2>
+bool _prt_test_nearly(const T1& v1, const T2& v2, double eps)
+{
+	return _prt_diff(v1, v2) <= std::abs(eps);
 }
 
 /* 2D */
@@ -50,7 +62,7 @@ bool _prt_test_greater<PM::vec2,PM::vec2>(const PM::vec2& val, const PM::vec2& e
 }
 
 template<>
-bool _prt_test_diff<PM::vec2,PM::vec2>(const PM::vec2& val, const PM::vec2& exp)
+double _prt_diff<PM::vec2,PM::vec2>(const PM::vec2& val, const PM::vec2& exp)
 {
 	return PM::pm_MagnitudeSqr(PM::pm_Subtract(val, exp));
 }
@@ -69,7 +81,7 @@ bool _prt_test_greater<PM::vec3,PM::vec3>(const PM::vec3& val, const PM::vec3& e
 }
 
 template<>
-bool _prt_test_diff<PM::vec3,PM::vec3>(const PM::vec3& val, const PM::vec3& exp)
+double _prt_diff<PM::vec3,PM::vec3>(const PM::vec3& val, const PM::vec3& exp)
 {
 	return PM::pm_MagnitudeSqr(PM::pm_Subtract(val, exp));
 }
@@ -96,7 +108,7 @@ bool _prt_test_greater<PM::vec4,PM::vec4>(const PM::vec4& val, const PM::vec4& e
 }
 
 template<>
-bool _prt_test_diff<PM::vec4,PM::vec4>(const PM::vec4& val, const PM::vec4& exp)
+double _prt_diff<PM::vec4,PM::vec4>(const PM::vec4& val, const PM::vec4& exp)
 {
 	return PM::pm_MagnitudeSqr(PM::pm_Subtract(val, exp));
 }
@@ -324,14 +336,28 @@ namespace PRT
 	{ \
 		std::stringstream _stream; \
 		_stream << "Expected (nearly) " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
-		_test->check(_prt_test_diff((value), (expected)) <= PRT_EPSILON, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check(_prt_test_nearly((value), (expected), PRT_EPSILON), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+	}
+
+#define PR_CHECK_NEARLY_EQ_EPS(value, expected, eps) \
+	{ \
+		std::stringstream _stream; \
+		_stream << "Expected (nearly) " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
+		_test->check(_prt_test_nearly((value), (expected), (eps)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NOT_NEARLY_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
 		_stream << "Not expected (nearly) " << _prt_test_string((expected)) << " but got it"; \
-		_test->check(_prt_test_diff((value), (expected)) > PRT_EPSILON, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+		_test->check(!_prt_test_nearly((value), (expected), PRT_EPSILON), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+	}
+
+#define PR_CHECK_NOT_NEARLY_EQ_EPS(value, expected, eps) \
+	{ \
+		std::stringstream _stream; \
+		_stream << "Not expected (nearly) " << _prt_test_string((expected)) << " but got it"; \
+		_test->check(!_prt_test_nearly((value), (expected), (eps)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_NULL(value) \

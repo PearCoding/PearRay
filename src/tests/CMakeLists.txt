@@ -4,6 +4,8 @@ if(VERBOSE)
 	message(STATUS "Enabling Testing")
 endif()
 
+include_directories(../utils)
+
 set(PRT_Pre Test.h)
 
 set(LIBS pr_lib pr_lib_utils)
@@ -27,3 +29,4 @@ PUSH_TEST(sphere sphere.cpp)
 PUSH_TEST(generator generator.cpp)
 PUSH_TEST(triangle triangle.cpp)
 PUSH_TEST(fresnel fresnel.cpp)
+PUSH_TEST(inteqen inteqen.cpp)

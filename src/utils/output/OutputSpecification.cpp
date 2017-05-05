@@ -23,7 +23,7 @@ namespace PR
 
 	void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	{
-		if(mInit)
+		if(mInit && !mWorkingDir.empty())
 		{
 			std::string f = mWorkingDir + "/.lock";
 			if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
@@ -34,7 +34,7 @@ namespace PR
 		mInit = true;
 		mWorkingDir = context->workingDir();
 
-		if(context)
+		if(context && !mWorkingDir.empty())
 		{
 			// Setup lock directory
 			if(!boost::filesystem::create_directory(mWorkingDir + "/.lock"))
@@ -63,11 +63,14 @@ namespace PR
 		if(!mInit)
 			return;
 
-		std::string f = mWorkingDir + "/.lock";
-		if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
-			PR_LOGGER.logf(L_Error, M_System,
-				"Couldn't delete lock directory '%s'!", f.c_str());
-				
+		if(!mWorkingDir.empty())
+		{
+			std::string f = mWorkingDir + "/.lock";
+			if(boost::filesystem::exists(f) && !boost::filesystem::remove(f))
+				PR_LOGGER.logf(L_Error, M_System,
+					"Couldn't delete lock directory '%s'!", f.c_str());
+		}
+
 		mInit = false;
 	}
 
