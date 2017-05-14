@@ -57,7 +57,7 @@ namespace PR
 						weight.clear();
 				}
 
-				MSI::power(semi_weight, semi_pdf, weight, pdf);
+				MSI::balance(semi_weight, semi_pdf, weight, pdf);
 			}
 
 			MSI::balance(full_weight, full_pdf, semi_weight, std::isinf(semi_pdf) ? 1 : semi_pdf);

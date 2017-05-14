@@ -68,6 +68,8 @@ namespace PR
 		inline float max() const;// Amplitude
 		inline float min() const;// Amplitude
 		inline float avg() const;// General average
+		inline float sum() const;// Sum
+		inline float sqrSum() const;// Squared sum
 
 		inline Spectrum& normalize();
 		inline Spectrum normalized() const;

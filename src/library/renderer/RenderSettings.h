@@ -62,6 +62,9 @@ namespace PR
 	public:
 		RenderSettings();
 
+		inline uint32 seed() const { return mSeed; }
+		inline void setSeed(uint64 s) { mSeed = s; }
+		
 		inline bool isIncremental() const { return mIncremental; }
 		inline void setIncremental(bool b) { mIncremental = b; }
 
@@ -139,6 +142,7 @@ namespace PR
 		inline TileMode tileMode() const { return mTileMode; }
 		inline void setTileMode(TileMode m) { mTileMode = m; }
 	private:
+		uint64 mSeed;
 		bool mIncremental;
 		DebugMode mDebugMode;
 		IntegratorMode mIntegratorMode;

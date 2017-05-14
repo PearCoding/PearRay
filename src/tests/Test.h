@@ -307,28 +307,28 @@ namespace PRT
 #define PR_CHECK_LESS(value, expected) \
 	{ \
 		std::stringstream _stream; \
-		_stream << "Expected less then " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
+		_stream << "Expected less than " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
 		_test->check(!_prt_test_greater((value), (expected)) && !_prt_test_eq((value), (expected)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_LESS_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
-		_stream << "Expected less or equal then " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
+		_stream << "Expected less or equal than " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
 		_test->check(!_prt_test_greater((value), (expected)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_GREAT(value, expected) \
 	{ \
 		std::stringstream _stream; \
-		_stream << "Expected greater then " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
+		_stream << "Expected greater than " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
 		_test->check(_prt_test_greater((value), (expected)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 
 #define PR_CHECK_GREAT_EQ(value, expected) \
 	{ \
 		std::stringstream _stream; \
-		_stream << "Expected greater or equal then " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
+		_stream << "Expected greater or equal than " << _prt_test_string((expected)) << " but got " << _prt_test_string((value)); \
 		_test->check(_prt_test_greater((value), (expected)) || _prt_test_eq((value), (expected)), _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	}
 

@@ -28,7 +28,7 @@ namespace PR
 		static constexpr uint64_t MULT = 0x5851f42d4c957f2dULL;//6364136223846793005ULL
 #endif
 	public:
-		inline explicit Random(uint64_t seed = (uint64_t)time(NULL)) :
+		inline explicit Random(uint64_t seed) :
 #ifdef PR_USE_STL_RANDOM
 			mGenerator(seed), mDistributionFloat(0.0f, 1.0f), mDistributionDouble(0.0,1.0),
 			mDistributionUInt32(), mDistributionUInt64()

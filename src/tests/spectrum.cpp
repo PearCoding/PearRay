@@ -11,6 +11,8 @@ extern void barycentricTriangle(double px, double py,
 		double& s, double& t);
 }
 
+constexpr double SPEC_EPS = 0.00001;
+
 PR_BEGIN_TESTCASE(Spectrum)
 PR_TEST("Set/Get")
 {
@@ -90,9 +92,9 @@ PR_TEST("XYZ")
 
 	float X, Y, Z;
 	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
-	PR_CHECK_NEARLY_EQ(X, 1);
-	PR_CHECK_NEARLY_EQ(Y, 1);
-	PR_CHECK_NEARLY_EQ(Z, 1);
+	PR_CHECK_NEARLY_EQ_EPS(X, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Y, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Z, 1, SPEC_EPS);
 }
 PR_TEST("-> sRGB")
 {
@@ -102,18 +104,18 @@ PR_TEST("-> sRGB")
 	float X, Y, Z;
 	PR::RGBConverter::convert(spec, X, Y, Z);
 
-	PR_CHECK_NEARLY_EQ(X, 1.204976106621948);
-	PR_CHECK_NEARLY_EQ(Y, 0.948278897530075);
-	PR_CHECK_NEARLY_EQ(Z, 0.908624594035630);
+	PR_CHECK_NEARLY_EQ_EPS(X, 1.204976106621948, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Y, 0.948278897530075, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Z, 0.908624594035630, SPEC_EPS);
 }
 PR_TEST("<-> sRGB [White]")
 {
 	PR::Spectrum spec = PR::RGBConverter::toSpec(1,1,1);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 1);
-	PR_CHECK_NEARLY_EQ(G, 1);
-	PR_CHECK_NEARLY_EQ(B, 1);
+	PR_CHECK_NEARLY_EQ_EPS(R, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 1, SPEC_EPS);
 
 	const float q = (R-1)*(R-1) + (G-1)*(G-1) + (B-1)*(B-1);
 	std::cout << "Error [White]: " << q << std::endl;
@@ -123,9 +125,9 @@ PR_TEST("<-> sRGB [Cyan]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(0,1,1);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 0);
-	PR_CHECK_NEARLY_EQ(G, 1);
-	PR_CHECK_NEARLY_EQ(B, 1);
+	PR_CHECK_NEARLY_EQ_EPS(R, 0, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 1, SPEC_EPS);
 
 	const float q = (R-0)*(R-0) + (G-1)*(G-1) + (B-1)*(B-1);
 	std::cout << "Error [Cyan]: " << q << std::endl;
@@ -135,9 +137,9 @@ PR_TEST("<-> sRGB [Magenta]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(1,0,1);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 1);
-	PR_CHECK_NEARLY_EQ(G, 0);
-	PR_CHECK_NEARLY_EQ(B, 1);
+	PR_CHECK_NEARLY_EQ_EPS(R, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 0, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 1, SPEC_EPS);
 
 	const float q = (R-1)*(R-1) + (G-0)*(G-0) + (B-1)*(B-1);
 	std::cout << "Error [Magenta]: " << q << std::endl;
@@ -147,9 +149,9 @@ PR_TEST("<-> sRGB [Yellow]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(1,1,0);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 1);
-	PR_CHECK_NEARLY_EQ(G, 1);
-	PR_CHECK_NEARLY_EQ(B, 0);
+	PR_CHECK_NEARLY_EQ_EPS(R, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 0, SPEC_EPS);
 
 	const float q = (R-1)*(R-1) + (G-1)*(G-1) + (B-0)*(B-0);
 	std::cout << "Error [Yellow]: " << q << std::endl;
@@ -159,9 +161,9 @@ PR_TEST("<-> sRGB [Red]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(1,0,0);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 1);
-	PR_CHECK_NEARLY_EQ(G, 0);
-	PR_CHECK_NEARLY_EQ(B, 0);
+	PR_CHECK_NEARLY_EQ_EPS(R, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 0, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 0, SPEC_EPS);
 
 	const float q = (R-1)*(R-1) + (G-0)*(G-0) + (B-0)*(B-0);
 	std::cout << "Error [Red]: " << q << std::endl;
@@ -171,9 +173,9 @@ PR_TEST("<-> sRGB [Green]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(0,1,0);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 0);
-	PR_CHECK_NEARLY_EQ(G, 1);
-	PR_CHECK_NEARLY_EQ(B, 0);
+	PR_CHECK_NEARLY_EQ_EPS(R, 0, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 1, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 0, SPEC_EPS);
 
 	const float q = (R-0)*(R-0) + (G-1)*(G-1) + (B-0)*(B-0);
 	std::cout << "Error [Green]: " << q << std::endl;
@@ -183,9 +185,9 @@ PR_TEST("<-> sRGB [Blue]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(0,0,1);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 0);
-	PR_CHECK_NEARLY_EQ(G, 0);
-	PR_CHECK_NEARLY_EQ(B, 1);
+	PR_CHECK_NEARLY_EQ_EPS(R, 0, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 0, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 1, SPEC_EPS);
 
 	const float q = (R-0)*(R-0) + (G-0)*(G-0) + (B-1)*(B-1);
 	std::cout << "Error [Blue]: " << q << std::endl;
@@ -195,9 +197,9 @@ PR_TEST("<-> sRGB [Custom]")
 	PR::Spectrum spec = PR::RGBConverter::toSpec(0.8,0.5,0.2);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ(R, 0.8);
-	PR_CHECK_NEARLY_EQ(G, 0.5);
-	PR_CHECK_NEARLY_EQ(B, 0.2);
+	PR_CHECK_NEARLY_EQ_EPS(R, 0.8, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 0.5, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 0.2, SPEC_EPS);
 
 	const float q = (R-0.8)*(R-0.8) + (G-0.5)*(G-0.5) + (B-0.2)*(B-0.2);
 	std::cout << "Error [Custom]: " << q << std::endl;
@@ -210,8 +212,8 @@ PR_TEST("-> XYZ")
 
 	float X, Y;
 	PR::XYZConverter::convert(spec, X, Y);
-	PR_CHECK_NEARLY_EQ(X, 1/3.0f);
-	PR_CHECK_NEARLY_EQ(Y, 1/3.0f);
+	PR_CHECK_NEARLY_EQ_EPS(X, 1/3.0f, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Y, 1/3.0f, SPEC_EPS);
 }
 
 PR_TEST("<-> XYZ")
@@ -220,8 +222,8 @@ PR_TEST("<-> XYZ")
 	PR::Spectrum spec = PR::XYZConverter::toSpec(x,x,x);
 	float X, Y;
 	PR::XYZConverter::convert(spec, X, Y);
-	PR_CHECK_NEARLY_EQ(X, x);
-	PR_CHECK_NEARLY_EQ(Y, x);
+	PR_CHECK_NEARLY_EQ_EPS(X, x, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Y, x, SPEC_EPS);
 }
 PR_TEST("<-> XYZ")
 {
@@ -229,20 +231,21 @@ PR_TEST("<-> XYZ")
 	PR::Spectrum spec = PR::XYZConverter::toSpec(x,y,z);
 	float X, Y, Z;
 	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
-	PR_CHECK_NEARLY_EQ(X, x);
-	PR_CHECK_NEARLY_EQ(Y, y);
-	PR_CHECK_NEARLY_EQ(Z, z);
+	PR_CHECK_NEARLY_EQ_EPS(X, x, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Y, y, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Z, z, SPEC_EPS);
 }
 PR_TEST("<-> XYZ")
 {
 	float x = 0.2f;	float y = 0.2f;	float z = 0.4f;
 	float b = x+y+z;
+	x /= b; y /= b; z /= b;
 	PR::Spectrum spec = PR::XYZConverter::toSpec(x,y,z);
 	float X, Y, Z;
 	PR::XYZConverter::convertXYZ(spec, X, Y, Z);
-	PR_CHECK_NEARLY_EQ(X, x/b);
-	PR_CHECK_NEARLY_EQ(Y, y/b);
-	PR_CHECK_NEARLY_EQ(Z, z/b);
+	PR_CHECK_NEARLY_EQ_EPS(X, x, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Y, y, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(Z, z, SPEC_EPS);
 }
 PR_TEST("XYZ->RGB->XYZ")
 {
@@ -251,9 +254,9 @@ PR_TEST("XYZ->RGB->XYZ")
 	float x,y,z;
 	PR::RGBConverter::fromXYZ(X,Y,Z,r,g,b);
 	PR::RGBConverter::toXYZ(r,g,b,x,y,z);
-	PR_CHECK_NEARLY_EQ(x, X);
-	PR_CHECK_NEARLY_EQ(y, Y);
-	PR_CHECK_NEARLY_EQ(z, Z);
+	PR_CHECK_NEARLY_EQ_EPS(x, X, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(y, Y, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(z, Z, SPEC_EPS);
 }
 PR_TEST("RGB->XYZ->RGB")
 {
@@ -262,14 +265,34 @@ PR_TEST("RGB->XYZ->RGB")
 	float x,y,z;
 	PR::RGBConverter::toXYZ(R,B,B,x,y,z);
 	PR::RGBConverter::fromXYZ(x,y,z,r,b,g);
-	PR_CHECK_NEARLY_EQ(r, R);
-	PR_CHECK_NEARLY_EQ(g, B);
-	PR_CHECK_NEARLY_EQ(b, G);
+	PR_CHECK_NEARLY_EQ_EPS(r, R, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(g, B, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(b, G, SPEC_EPS);
+}
+PR_TEST("Gray")
+{
+	Spectrum spec(1);
+	spec *= 0.5f;
+
+	float R, G, B;
+	PR::RGBConverter::convert(spec, R, G, B);
+	PR_CHECK_NEARLY_EQ_EPS(R, 0.5, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 0.5, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 0.5, SPEC_EPS);
+}
+PR_TEST("White Norm")
+{
+	Spectrum white(1);
+	Spectrum spec = PR::RGBConverter::toSpec(1,1,1);
+
+	Spectrum Diff = white-spec;
+	float Err = Diff.sqrSum();
+	std::cout << " Reflectance White Error " << Err << " and max Error " << Diff.max() << " and avg Error " << Diff.avg() << std::endl;
+	PR_CHECK_LESS(Err, 0.2);
 }
 
 PR_END_TESTCASE()
 
 PRT_BEGIN_MAIN
-//PR::RGBConverter::init();
 PRT_TESTCASE(Spectrum);
 PRT_END_MAIN

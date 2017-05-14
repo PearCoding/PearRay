@@ -190,7 +190,7 @@ namespace PR
 		const float DELTA_W = renderer()->settings().ppm().projectionMapWeight();
 		const float CAUSTIC_PREF = renderer()->settings().ppm().projectionMapPreferCaustic();
 
-		Random random;
+		Random random(renderer()->settings().seed() ^ 0x314ff64e);
 		for(const Light& l : mLights)
 		{
 			if(!l.Proj)
@@ -373,14 +373,13 @@ namespace PR
 		const uint32 RD = renderer()->settings().maxRayDepth();
 
 		ThreadData& data = mThreadData[context->threadNumber()];
-		Random random;
 		for (const LightThreadData& ltd : data.Lights)
 		{
 			const Light& light = *ltd.Entity;
 			const Sphere outerSphere = light.Entity->worldBoundingBox().outerSphere();
 
 			const size_t sampleSize = ltd.Photons;
-			MultiJitteredSampler sampler(random, sampleSize);
+			MultiJitteredSampler sampler(context->random(), sampleSize);
 
 			const float inv = 1.0f/sampleSize;
 			size_t photonsShoot = 0;
@@ -396,7 +395,9 @@ namespace PR
 
 				if(light.Proj)
 				{
-					dir = light.Proj->sample(random.getFloat(), random.getFloat(), random.getFloat(), random.getFloat(), area_pdf);
+					dir = light.Proj->sample(
+						context->random().getFloat(), context->random().getFloat(),
+						context->random().getFloat(), context->random().getFloat(), area_pdf);
 					t_pdf = 1;
 
 					Ray ray(0,0,
@@ -410,9 +411,9 @@ namespace PR
 					lightSample = light.Entity->getRandomFacePoint(sampler, photonsShoot, area_pdf);
 
 					/*dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-								Projection::cos_hemi(random.getFloat(), random.getFloat(), t_pdf));*/
+								Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), t_pdf));*/
 					dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-								Projection::hemi(random.getFloat(), random.getFloat(), t_pdf));
+								Projection::hemi(context->random().getFloat(), context->random().getFloat(), t_pdf));
 				}
 
 				if(!lightSample.Material->isLight())
@@ -439,7 +440,7 @@ namespace PR
 						//	radiance /= MSI::toSolidAngle(area_pdf, sc.Depth2, std::abs(sc.NdotV));
 
 						float pdf;
-						PM::vec3 nextDir = sc.Material->sample(sc, random.get3D(), pdf);
+						PM::vec3 nextDir = sc.Material->sample(sc, context->random().get3D(), pdf);
 
 						if (pdf > PM_EPSILON &&
 							!std::isinf(pdf) &&

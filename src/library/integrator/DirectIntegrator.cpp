@@ -78,7 +78,7 @@ namespace PR
 				other_weight += path_weight*weight;
 				other_pdf += pdf;
 			}
-			MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);
+			MSI::balance(full_weight, full_pdf, other_weight, other_pdf / path_count);
 		}
 
 		if (!std::isinf(full_pdf))
@@ -116,14 +116,14 @@ namespace PR
 					else
 						other_weight.clear();
 
-					MSI::power(full_weight, full_pdf,
+					MSI::balance(full_weight, full_pdf,
 						other_weight, std::isinf(pdf) ? 1 : pdf);
 				}
 			}
 
 			float inf_pdf;
 			other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
-			MSI::power(full_weight, full_pdf, other_weight, inf_pdf);
+			MSI::balance(full_weight, full_pdf, other_weight, inf_pdf);
 		}
 
 		return full_weight;

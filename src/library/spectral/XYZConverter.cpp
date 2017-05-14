@@ -140,7 +140,12 @@ namespace PR
 		const Spectrum& s2 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][1]];
 		const Spectrum& s3 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][2]];
 
+		/*const double b1 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][0]]);
+		const double b2 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][1]]);
+		const double b3 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][2]]);*/
+
 		const Spectrum output = s1*(1-s-t) + s2*s + s3*t;
+		//const double invBrightness = b1*(1-s-t) + b2*s + b3*t;
 
 		return output * b;
 	}

@@ -203,6 +203,24 @@ namespace PR
 		return h / SAMPLING_COUNT;
 	}
 
+	inline float Spectrum::sum() const
+	{
+		float h = 0;
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+			h += mValues[i];
+
+		return h;
+	}
+
+	inline float Spectrum::sqrSum() const
+	{
+		float h = 0;
+		for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
+			h += mValues[i]*mValues[i];
+
+		return h;
+	}
+
 	inline Spectrum& Spectrum::normalize()
 	{
 		float h = max();

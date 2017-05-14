@@ -58,7 +58,7 @@ namespace PRPY
             ("UniformSampler", bpy::init<Random&, uint32>())
         ;
 
-        bpy::class_<Random, boost::noncopyable>("Random", bpy::init<bpy::optional<uint32> >())
+        bpy::class_<Random, boost::noncopyable>("Random", bpy::init<uint64 >())
             .def("get32", (uint32_t(Random::*)())&Random::get32)
             .def("get32", (uint32_t(Random::*)(uint32_t, uint32_t))&Random::get32)
             .def("get64", (uint64_t(Random::*)())&Random::get64)

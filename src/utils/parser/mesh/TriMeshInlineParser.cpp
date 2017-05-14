@@ -32,7 +32,7 @@ namespace PR
 				return nullptr;
 			}
 
-			DL::DataGroup grp = d.getGroup();
+			const DL::DataGroup& grp = d.getGroup();
 			if(grp.id() == "attribute")
 			{
 				DL::Data attrTypeD = grp.getFromKey("type");

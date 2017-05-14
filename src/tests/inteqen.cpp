@@ -119,9 +119,11 @@ PR_TEST("Equal Energy")
 	Spectrum bidiOutput;
 	Spectrum ppmOutput;
 
+	renderFactory->settings().setSeed(42);
+	renderFactory->settings().setMaxDiffuseBounces(0);
+
 	{// Direct
 		renderFactory->settings().setIntegratorMode(IM_Direct);
-		renderFactory->settings().setMaxDiffuseBounces(0);
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
@@ -137,7 +139,6 @@ PR_TEST("Equal Energy")
 
 	{// Bi-Direct
 		renderFactory->settings().setIntegratorMode(IM_BiDirect);
-		renderFactory->settings().setMaxDiffuseBounces(0);
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
@@ -153,7 +154,6 @@ PR_TEST("Equal Energy")
 
 	{// PPM
 		renderFactory->settings().setIntegratorMode(IM_PPM);
-		renderFactory->settings().setMaxDiffuseBounces(0);
 		renderFactory->settings().ppm().setMaxPhotonsPerPass(200000);
 		renderFactory->settings().ppm().setMaxPassCount(10);
 

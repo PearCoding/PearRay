@@ -4,7 +4,7 @@
 namespace PR
 {
 	RenderThreadContext::RenderThreadContext(RenderContext* renderer, RenderThread* thread, uint32 index) :
-		mRenderer(renderer), mThread(thread), mIndex(index), mRandom(),
+		mRenderer(renderer), mThread(thread), mIndex(index), mRandom(renderer->settings().seed() + index),
 		mAASampler(nullptr), mLensSampler(nullptr), mTimeSampler(nullptr), mSpectralSampler(nullptr)
 	{
 	}
