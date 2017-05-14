@@ -5,7 +5,6 @@
 #include "shader/FaceSample.h"
 
 #include "Logger.h"
-#include "Random.h"
 #include "sampler/Sampler.h"
 #include "math/Projection.h"
 

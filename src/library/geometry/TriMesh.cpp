@@ -2,7 +2,6 @@
 #include "Face.h"
 #include "Triangle.h"
 #include "container/kdTree.h"
-#include "Random.h"
 #include "sampler/Sampler.h"
 #include "math/Projection.h"
 #include "material/Material.h"

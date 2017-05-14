@@ -1,5 +1,4 @@
 #include "CoordinateAxisEntity.h"
-#include "Random.h"
 #include "ray/Ray.h"
 #include "shader/FaceSample.h"
 #include "geometry/Plane.h"

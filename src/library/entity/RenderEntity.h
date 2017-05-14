@@ -6,7 +6,6 @@
 namespace PR
 {
 	class Material;
-	class Random;
 	class Ray;
 	class RenderContext;
 	struct FaceSample;

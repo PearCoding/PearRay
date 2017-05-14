@@ -12,7 +12,6 @@ namespace PR
 	class Vertex;
 	class Material;
 	class Ray;
-	class Random;
 	struct FaceSample;
 	class Sampler;
 	class PR_LIB TriMesh
