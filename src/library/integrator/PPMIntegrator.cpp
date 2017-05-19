@@ -65,7 +65,7 @@ namespace PR
 
 		PR_ASSERT(renderer()->settings().ppm().maxPhotonsPerPass() > 0, "maxPhotonsPerPass should be bigger than 0 and be handled in upper classes.");
 		PR_ASSERT(renderer()->settings().ppm().maxGatherCount() > 0, "maxGatherCount should be bigger than 0 and be handled in upper classes.");
-		PR_ASSERT(renderer()->settings().ppm().maxGatherRadius() > PM_EPSILON, "maxGatherRadius should be bigger than 0 and be handled in upper classes.");
+		PR_ASSERT(renderer()->settings().ppm().maxGatherRadius() > PR_EPSILON, "maxGatherRadius should be bigger than 0 and be handled in upper classes.");
 
 		mMaxPhotonsStoredPerPass = renderer()->settings().ppm().maxPhotonsPerPass()
 				* (renderer()->settings().maxDiffuseBounces()+1);
@@ -91,8 +91,8 @@ namespace PR
 		}
 
 		// Assign photon count to each light
-		mProjMaxTheta = PM::pm_Max<uint32>(8, MAX_THETA_SIZE*renderer()->settings().ppm().projectionMapQuality());
-		mProjMaxPhi = PM::pm_Max<uint32>(8, MAX_PHI_SIZE*renderer()->settings().ppm().projectionMapQuality());
+		mProjMaxTheta = std::max<uint32>(8, MAX_THETA_SIZE*renderer()->settings().ppm().projectionMapQuality());
+		mProjMaxPhi = std::max<uint32>(8, MAX_PHI_SIZE*renderer()->settings().ppm().projectionMapQuality());
 
 		const uint64 Photons = renderer()->settings().ppm().maxPhotonsPerPass();
 		constexpr uint64 MinPhotons = 10;
@@ -117,7 +117,7 @@ namespace PR
 			for(RenderEntity* light : lightList)
 			{
 				SphereMap* map = nullptr;
-				if(renderer()->settings().ppm().projectionMapWeight() > PM_EPSILON)
+				if(renderer()->settings().ppm().projectionMapWeight() > PR_EPSILON)
 					map = new SphereMap(mProjMaxTheta, mProjMaxPhi);
 
 				const float surface = light->surfaceArea(nullptr);
@@ -182,7 +182,7 @@ namespace PR
 	void PPMIntegrator::onStart()
 	{
 		// Setup Projection Maps
-		if(renderer()->settings().ppm().projectionMapWeight() <= PM_EPSILON)
+		if(renderer()->settings().ppm().projectionMapWeight() <= PR_EPSILON)
 			return;
 
 		PR_LOGGER.logf(L_Info, M_Integrator, "Calculating Projection Maps (%i,%i)", mProjMaxTheta, mProjMaxPhi);
@@ -200,26 +200,26 @@ namespace PR
 
 			for(uint32 thetaI = 0; thetaI < mProjMaxTheta; ++thetaI)
 			{
-				const float theta = PM_PI_F * thetaI / (float)mProjMaxTheta;
-				float thCos, thSin;
-				PM::pm_SinCos(theta, thSin, thCos);
+				const float theta = PR_PI * thetaI / (float)mProjMaxTheta;
+				float thSin = std::sin(theta);
+				float thCos = std::cos(theta);
 
 				for(uint32 phiI = 0; phiI < mProjMaxPhi; ++phiI)
 				{
-					const float phi = PM_2_PI_F * phiI / (float)mProjMaxPhi;
-					float phCos, phSin;
-					PM::pm_SinCos(phi, phSin, phCos);
-					PM::vec3 dir = PM::pm_Set(thSin * phCos, thSin * phSin, thCos);
+					const float phi = 2 * PR_PI * phiI / (float)mProjMaxPhi;
+					float phSin = std::sin(phi);
+					float phCos = std::cos(phi);
+					Eigen::Vector3f dir(thSin * phCos, thSin * phSin, thCos);
 
-					Ray ray(0,0,
-						PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
-						PM::pm_Negate(dir));
+					Ray ray(Eigen::Vector2i(0,0),
+						outerSphere.position() + dir * (outerSphere.radius() + SAFE_DISTANCE),
+						-dir);
 					FaceSample lightSample;
 					float weight = 0;
 					if(l.Entity->checkCollision(ray, lightSample))
 					{
-						ray = Ray::safe(0,0, lightSample.P, dir, 0, 0, 0, RF_Light);
-						float pdf = std::abs(PM::pm_Dot(dir, lightSample.Ng));
+						ray = Ray::safe(Eigen::Vector2i(0,0), lightSample.P, dir, 0, 0, 0, RF_Light);
+						float pdf = std::abs(dir.dot(lightSample.Ng));
 
 						uint32 j;// Calculates specular count
 						for (j = 0;
@@ -231,16 +231,14 @@ namespace PR
 
 							if (entity && sc.Material && sc.Material->canBeShaded())
 							{
-								PM::vec3 nextDir;
+								Eigen::Vector3f nextDir;
 								float l_pdf;
 
-								PM::vec3 s = PM::pm_Set(random.getFloat(),
-									random.getFloat(),
-									random.getFloat());
+								Eigen::Vector3f s = random.get3D();
 								nextDir = sc.Material->sample(sc, s, l_pdf);
 
-								const float NdotL = std::abs(PM::pm_Dot(nextDir, sc.N));
-								if(pdf*NdotL <= PM_EPSILON)// Drop this one.
+								const float NdotL = std::abs(nextDir.dot(sc.N));
+								if(pdf*NdotL <= PR_EPSILON)// Drop this one.
 								{
 									if(j == 0)
 										pdf = 0;
@@ -313,7 +311,7 @@ namespace PR
 		{
 			for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
 				for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
-					context->render(x, y, tile->samplesRendered(), pass);
+					context->render(Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
 		}
 	}
 
@@ -391,7 +389,7 @@ namespace PR
 				float area_pdf = 0;
 				float t_pdf = 0;
 				FaceSample lightSample;
-				PM::vec3 dir;
+				Eigen::Vector3f dir;
 
 				if(light.Proj)
 				{
@@ -400,9 +398,9 @@ namespace PR
 						context->random().getFloat(), context->random().getFloat(), area_pdf);
 					t_pdf = 1;
 
-					Ray ray(0,0,
-							PM::pm_Add(outerSphere.position(), PM::pm_Scale(dir, outerSphere.radius() + SAFE_DISTANCE)),
-						PM::pm_Negate(dir));
+					Ray ray(Eigen::Vector2i(0,0),
+							outerSphere.position() + dir*(outerSphere.radius() + SAFE_DISTANCE),
+						-dir);
 					if(!light.Entity->checkCollision(ray, lightSample))
 						continue;
 				}
@@ -419,7 +417,7 @@ namespace PR
 				if(!lightSample.Material->isLight())
 					continue;
 
-				Ray ray = Ray::safe(0, 0, lightSample.P, dir, 0, 0, 0, RF_Light);// TODO. Use pixel sample
+				Ray ray = Ray::safe(Eigen::Vector2i(0, 0), lightSample.P, dir, 0, 0, 0, RF_Light);// TODO. Use pixel sample
 				ShaderClosure lsc = lightSample;
 				Spectrum radiance = lightSample.Material->emission()->eval(lsc);
 				//radiance /= t_pdf;// This is not working properly
@@ -440,16 +438,18 @@ namespace PR
 						//	radiance /= MSI::toSolidAngle(area_pdf, sc.Depth2, std::abs(sc.NdotV));
 
 						float pdf;
-						PM::vec3 nextDir = sc.Material->sample(sc, context->random().get3D(), pdf);
+						Eigen::Vector3f nextDir = sc.Material->sample(sc, context->random().get3D(), pdf);
 
-						if (pdf > PM_EPSILON &&
+						if (pdf > PR_EPSILON &&
 							!std::isinf(pdf) &&
 							!(sc.Flags & SCF_Inside))// Diffuse
 						{
 							// Always store when diffuse
 							Photon::Photon photon;
-							PM::pm_Store3D(sc.P, photon.Position);
-							mPhotonMap->mapDirection(PM::pm_Negate(ray.direction()),
+							photon.Position[0] = sc.P(0);
+							photon.Position[1] = sc.P(1);
+							photon.Position[2] = sc.P(2);
+							mPhotonMap->mapDirection(-ray.direction(),
 								photon.Theta, photon.Phi);
 #if PR_PHOTON_RGB_MODE >= 1
 							RGBConverter::convert(radiance*inv,
@@ -471,7 +471,7 @@ namespace PR
 							break;
 						}
 
-						const float NdotL = std::abs(PM::pm_Dot(nextDir, sc.N));
+						const float NdotL = std::abs(nextDir.dot(sc.N));
 						radiance *= PR_CHECK_VALIDITY(sc.Material->eval(sc, nextDir, NdotL), "After material eval")
 							* (NdotL / (std::isinf(pdf) ? 1 : pdf));
 						ray = ray.next(sc.P, nextDir);
@@ -506,22 +506,22 @@ namespace PR
 			return Spectrum();
 
 		Spectrum full_weight;
-		const PM::vec3 rnd = context->random().get3D();
+		const Eigen::Vector3f rnd = context->random().get3D();
 		for(uint32 path = 0; path < sc.Material->samplePathCount(); ++path)
 		{
 			float pdf;
 			float path_weight;
-			PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
+			Eigen::Vector3f dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
 
-			if(pdf <= PM_EPSILON)
+			if(pdf <= PR_EPSILON)
 				continue;
 
 			Spectrum other_weight;
 			if(std::isinf(pdf))// Specular
 			{
-				const float NdotL = std::abs(PM::pm_Dot(dir, sc.N));
+				const float NdotL = std::abs(dir.dot(sc.N));
 
-				if (NdotL > PM_EPSILON)
+				if (NdotL > PR_EPSILON)
 				{
 					Spectrum app = sc.Material->eval(sc, dir, NdotL)*NdotL;
 					PR_CHECK_VALIDITY(app, "After ray eval");
@@ -557,13 +557,13 @@ namespace PR
 					context->renderer()->settings().ppm().squeezeWeight();
 				query.Center = sc.P;
 				query.Normal = sc.N;
-				query.Distance2 = mSearchRadius2->getFragment(in.pixelX(), in.pixelY());
+				query.Distance2 = mSearchRadius2->getFragment(in.pixel());
 
 				auto accumFunc = [&](const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2)
 				{
-					const PM::vec3 dir = mPhotonMap->evalDirection(photon.Theta, photon.Phi);
+					const Eigen::Vector3f dir = mPhotonMap->evalDirection(photon.Theta, photon.Phi);
 
-					const float NdotL = std::abs(PM::pm_Dot(sc.N, dir));
+					const float NdotL = std::abs(sc.N.dot(dir));
 					#if PR_PHOTON_RGB_MODE >= 1
 						return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL), "After photon material eval")
 							* PR_CHECK_VALIDITY(
@@ -589,24 +589,24 @@ namespace PR
 
 				if(found > 1)
 				{
-					const auto currentPhotons = mLocalPhotonCount->getFragment(in.pixelX(), in.pixelY());
+					const auto currentPhotons = mLocalPhotonCount->getFragment(in.pixel());
 					// Change radius, photons etc.
 					const uint64 newN = currentPhotons + std::floor(A*found);
 					const float fraction = newN / (float)(currentPhotons + found);
 					
-					mSearchRadius2->setFragment(in.pixelX(), in.pixelY(), query.Distance2*fraction);
-					mLocalPhotonCount->setFragment(in.pixelX(), in.pixelY(), newN);
+					mSearchRadius2->setFragment(in.pixel(), query.Distance2*fraction);
+					mLocalPhotonCount->setFragment(in.pixel(), newN);
 
-					const auto oldFlux = mAccumulatedFlux->getFragment(in.pixelX(), in.pixelY());
+					const auto oldFlux = mAccumulatedFlux->getFragment(in.pixel());
 
-					mAccumulatedFlux->setFragment(in.pixelX(), in.pixelY(),
+					mAccumulatedFlux->setFragment(in.pixel(),
 						 PR_CHECK_VALIDITY((oldFlux + accum_weight) * fraction, "After photon to current flux"));
 				}
 
-				const float inv = PM_INV_PI_F / mSearchRadius2->getFragment(in.pixelX(), in.pixelY());
+				const float inv = PR_1_PI / mSearchRadius2->getFragment(in.pixel());
 
 				MSI::power(other_weight, pdf,
-					mAccumulatedFlux->getFragment(in.pixelX(), in.pixelY())*inv, 1);
+					mAccumulatedFlux->getFragment(in.pixel())*inv, 1);
 
 				PR_CHECK_VALIDITY(inv, "After photon estimation");
 				PR_CHECK_VALIDITY(other_weight, "After photon estimation");

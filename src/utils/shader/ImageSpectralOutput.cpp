@@ -19,14 +19,14 @@ namespace PR
 		float res[3] = { 0, 0, 0 };
 
 		if (!mTextureSystem->texture(mFilename, mTextureOptions,
-			PM::pm_GetX(point.UVW), 1-PM::pm_GetY(point.UVW),
-			PM::pm_GetX(point.dUVWdX), PM::pm_GetX(point.dUVWdY),
-			PM::pm_GetY(point.dUVWdX), PM::pm_GetY(point.dUVWdY),
+			point.UVW(0), 1 - point.UVW(1),
+			point.dUVWdX(0), point.dUVWdY(0),
+			point.dUVWdX(1), point.dUVWdY(1),
 			3, &res[0]))
 		{
 			std::string err = mTextureSystem->geterror();
 			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]: %s",
-				PM::pm_GetX(point.UVW), 1-PM::pm_GetY(point.UVW), err.c_str());
+				point.UVW(0), 1 - point.UVW(1), err.c_str());
 		}
 		
 		return RGBConverter::toSpec(res[0], res[1], res[2]);

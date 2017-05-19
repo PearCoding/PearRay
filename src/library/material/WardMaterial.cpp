@@ -67,82 +67,82 @@ namespace PR
 	}
 
 	constexpr float MinRoughness = 0.001f;
-	Spectrum WardMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum WardMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
 		Spectrum albedo;
 		if (mAlbedo)
 		{
-			albedo = mAlbedo->eval(point) * PM_INV_PI_F;
+			albedo = mAlbedo->eval(point) * PR_1_PI;
 		}
 
 		Spectrum spec;
 		if (mSpecularity && mRoughnessX && mRoughnessY)
 		{
-			const float m1 = PM::pm_Max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
+			const float m1 = std::max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 			const float m2 = mRoughnessX == mRoughnessY ?
-				m1 : PM::pm_Max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
+				m1 : std::max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-			const PM::vec3 H = Reflection::halfway(point.V, L);
-			const float NdotH = PM::pm_Dot(point.N, H);
+			const Eigen::Vector3f H = Reflection::halfway(point.V, L);
+			const float NdotH = point.N.dot(H);
 			const float prod = -NdotL*point.NdotV;
 
-			if (NdotH > PM_EPSILON && prod > PM_EPSILON)
+			if (NdotH > PR_EPSILON && prod > PR_EPSILON)
 			{
-				const float HdotX = std::abs(PM::pm_Dot(H, point.Nx));
-				const float HdotY = std::abs(PM::pm_Dot(H, point.Ny));
+				const float HdotX = std::abs(H.dot(point.Nx));
+				const float HdotY = std::abs(H.dot(point.Ny));
 
 				const float NdotH2 = 0.5f + 0.5f * NdotH;
 				const float fx = HdotX / m1;
 				const float fy = HdotY / m2;
-				float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (4 * m1 * m2 * std::sqrt(prod));
+				float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PR_1_PI / (4 * m1 * m2 * std::sqrt(prod));
 
-				if(r > PM_EPSILON)
-					spec = mSpecularity->eval(point) * PM::pm_Min(r, 1.0f);
+				if(r > PR_EPSILON)
+					spec = mSpecularity->eval(point) * std::min(r, 1.0f);
 			}
 		}
 
 		return albedo*(1-refl) + spec*refl;
 	}
 
-	float WardMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float WardMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
-		const float m1 = PM::pm_Max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
+		const float m1 = std::max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 		const float m2 = mRoughnessX == mRoughnessY ?
-			m1 : PM::pm_Max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
+			m1 : std::max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-		const PM::vec3 H = Reflection::halfway(point.V, L);
-		const float NdotH = PM::pm_Dot(point.N, H);
+		const Eigen::Vector3f H = Reflection::halfway(point.V, L);
+		const float NdotH = point.N.dot(H);
 		const float prod = -NdotL*point.NdotV;
 
-		if (NdotH <= PM_EPSILON || prod <= PM_EPSILON)
-			return PM_INV_PI_F;
+		if (NdotH <= PR_EPSILON || prod <= PR_EPSILON)
+			return PR_1_PI;
 
-		const float HdotX = std::abs(PM::pm_Dot(H, point.Nx));
-		const float HdotY = std::abs(PM::pm_Dot(H, point.Ny));
+		const float HdotX = std::abs(H.dot(point.Nx));
+		const float HdotY = std::abs(H.dot(point.Ny));
 
 		const float NdotH2 = 0.5f + 0.5f * NdotH;
 		const float fx = HdotX / m1;
 		const float fy = HdotY / m2;
 
-		const float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PM_INV_PI_F / (4 * m1 * m2 * std::sqrt(prod));
+		const float r = std::exp(-(fx*fx + fy*fy) / NdotH2) * PR_1_PI / (4 * m1 * m2 * std::sqrt(prod));
 
-		return PM::pm_Clamp(Projection::cos_hemi_pdf(NdotL) * (1-refl) + r*refl, 0.0f, 1.0f);
+		return std::min(std::max(Projection::cos_hemi_pdf(NdotL) * (1-refl) + r*refl, 0.0f), 1.0f);
 	}
 
-	PM::vec3 WardMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f WardMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
-		if(PM::pm_GetZ(rnd) < refl)
+		if(rnd(2) < refl)
 			return diffuse_path(point, rnd, pdf);
 		else
 			return specular_path(point, rnd, pdf);
 	}
 
-	PM::vec3 WardMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& path_weight, uint32 path)
+	Eigen::Vector3f WardMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
 	{
 		path_weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
@@ -157,63 +157,64 @@ namespace PR
 		return 2;
 	}
 
-	PM::vec3 WardMaterial::diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f WardMaterial::diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		return Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+			Projection::cos_hemi(rnd(0), rnd(1), pdf));
 	}
 
-	PM::vec3 WardMaterial::specular_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f WardMaterial::specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
-		float u = PM::pm_GetX(rnd);
-		float v = PM::pm_GetY(rnd);
+		float u = rnd(0);
+		float v = rnd(1);
 
-		const float m1 = PM::pm_Max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
+		const float m1 = std::max(MinRoughness, mRoughnessX ? mRoughnessX->eval(point) : 0);
 
 		float cosTheta, sinTheta;// V samples
 		float cosPhi, sinPhi;// U samples
 		if (mRoughnessX == mRoughnessY)// Isotropic
 		{
-			PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
+			sinPhi = std::sin(2 * PR_PI * u);
+			cosPhi = std::cos(2 * PR_PI * u);
 
-			const float f = - std::log(PM::pm_Max(0.001f, v))*m1*m1;
+			const float f = - std::log(std::max(0.00001f, v))*m1*m1;
 			cosTheta = 1/(1+f);
-			sinTheta = PM::pm_SafeSqrt(f)*cosTheta;
+			sinTheta = std::sqrt(f)*cosTheta;
 
-			const float t = PM_4_PI_F * m1 * m1 * cosTheta * cosTheta * cosTheta * v;
-			if(t <= PM_EPSILON)
+			const float t = 4 * PR_PI * m1 * m1 * cosTheta * cosTheta * cosTheta * v;
+			if(t <= PR_EPSILON)
 				pdf = 1;
 			else
 				pdf = 1 / t;
 		}
 		else
 		{
-			const float m2 = PM::pm_Max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
+			const float m2 = std::max(MinRoughness, mRoughnessY ? mRoughnessY->eval(point) : 0);
 
-			const float pm1 = PM::pm_Max(MinRoughness, m1*m1);
-			const float pm2 = PM::pm_Max(MinRoughness, m2*m2);
+			const float pm1 = std::max(MinRoughness, m1*m1);
+			const float pm2 = std::max(MinRoughness, m2*m2);
 
-			const float f1 = (m2/m1)*std::tan(PM_2_PI_F*u);
-			cosPhi = 1/PM::pm_SafeSqrt(1+f1*f1);
+			const float f1 = (m2/m1)*std::tan(2*PR_PI*u);
+			cosPhi = 1/std::sqrt(1+f1*f1);
 			sinPhi = f1*cosPhi;
 
 			const float cosPhi2 = cosPhi * cosPhi;
 			const float tz = (cosPhi2/pm1 + sinPhi*sinPhi/pm2);
-			const float f2 = - std::log(PM::pm_Max(0.001f, v)) / tz;
+			const float f2 = - std::log(std::max(0.000001f, v)) / tz;
 			cosTheta = 1/(1+f2);
-			sinTheta = PM::pm_SafeSqrt(f2)*cosTheta;
+			sinTheta = std::sqrt(f2)*cosTheta;
 
 			const float cosTheta2 = cosTheta * cosTheta;
 			const float tu = pm1*sinPhi*sinPhi + pm2*cosPhi2;
-			const float tb = 4 * PM_PI_F * m1 * m2 * (pm1*(1-cosPhi2)/cosPhi + pm2*cosPhi)*cosTheta2;
+			const float tb = 4 * PR_PI * m1 * m2 * (pm1*(1-cosPhi2)/cosPhi + pm2*cosPhi)*cosTheta2;
 			pdf = tu/tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
-		auto dir = Reflection::reflect(std::abs(PM::pm_Dot(H, point.V)), H, point.V);
+			Eigen::Vector3f(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
+		auto dir = Reflection::reflect(std::abs(H.dot(point.V)), H, point.V);
 
-		pdf = PM::pm_Clamp(pdf/std::abs(PM::pm_Dot(point.V, dir)), 0.0f, 1.0f);
+		pdf = std::min(std::max(pdf/std::abs(point.V.dot(dir)), 0.0f), 1.0f);
 
 		return dir;
 	}

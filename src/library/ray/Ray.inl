@@ -2,17 +2,17 @@
 
 namespace PR
 {
-	inline void Ray::setStartPosition(const PM::vec3& p)
+	inline void Ray::setStartPosition(const Eigen::Vector3f& p)
 	{
 		mStartPosition = p;
 	}
 
-	inline PM::vec3 Ray::startPosition() const
+	inline Eigen::Vector3f Ray::startPosition() const
 	{
 		return mStartPosition;
 	}
 
-	inline void Ray::setDirection(const PM::vec3& dir)
+	inline void Ray::setDirection(const Eigen::Vector3f& dir)
 	{
 		mDirection = dir;
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
@@ -20,29 +20,19 @@ namespace PR
 #endif
 	}
 
-	inline PM::vec3 Ray::direction() const
+	inline Eigen::Vector3f Ray::direction() const
 	{
 		return mDirection;
 	}
 
-	inline void Ray::setPixelX(uint32 p)
+	inline void Ray::setPixel(const Eigen::Vector2i& p)
 	{
-		mPixelX = p;
+		mPixel = p;
 	}
 
-	inline uint32 Ray::pixelX() const
+	inline Eigen::Vector2i Ray::pixel() const
 	{
-		return mPixelX;
-	}
-
-	inline void Ray::setPixelY(uint32 p)
-	{
-		mPixelY = p;
-	}
-
-	inline uint32 Ray::pixelY() const
-	{
-		return mPixelY;
+		return mPixel;
 	}
 
 	inline void Ray::setDepth(uint32 depth)
@@ -87,28 +77,26 @@ namespace PR
 		return mFlags;
 	}
 
-	inline Ray Ray::next(const PM::vec3& pos, const PM::vec3& dir) const
+	inline Ray Ray::next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) const
 	{
-		return safe(mPixelX, mPixelY, pos, dir, mDepth + 1, mTime, mWavelengthIndex, mFlags);
+		return safe(mPixel, pos, dir, mDepth + 1, mTime, mWavelengthIndex, mFlags);
 	}
 
-	inline Ray Ray::safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth,
-		float time, uint8 wavelength, uint16 flags)
+	inline Ray Ray::safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
+		uint32 depth, float time, uint8 wavelength, uint16 flags)
 	{
-		PM::vec3 off = PM::pm_Scale(dir, RayOffsetEpsilon);
-		PM::vec3 posOff = PM::pm_Add(pos, off);
+		Eigen::Vector3f off = dir * RayOffsetEpsilon;
+		Eigen::Vector3f posOff = pos + off;
 
 		for (int i = 0; i < 3; ++i)
 		{
-			if (PM::pm_GetIndex(off, i) > 0)
-				posOff = PM::pm_SetIndex(posOff, i,
-					std::nextafter(PM::pm_GetIndex(posOff, i), std::numeric_limits<float>::max()));
-			else if (PM::pm_GetIndex(off, i) < 0)
-				posOff = PM::pm_SetIndex(posOff, i,
-					std::nextafter(PM::pm_GetIndex(posOff, i), std::numeric_limits<float>::lowest()));
+			if (off(i) > 0)
+				posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::max());
+			else if (off(i) < 0)
+				posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::lowest());
 		}
 
-		return Ray(px, py, posOff, dir, depth, time, wavelength, flags);
+		return Ray(pixel, posOff, dir, depth, time, wavelength, flags);
 	}
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
@@ -123,7 +111,7 @@ namespace PR
 		float maxVal = 0;
 		for (uint32 i = 0; i < 3; ++i)
 		{
-			const float f = std::abs(PM::pm_GetIndex(mDirection, i));
+			const float f = std::abs(mDirection(i));
 			if (maxVal < f)
 			{
 				mMaxDirectionIndex = i;

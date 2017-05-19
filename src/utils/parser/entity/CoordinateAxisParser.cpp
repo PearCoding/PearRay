@@ -23,10 +23,10 @@ namespace PR
 		auto bnd = std::make_shared<CoordinateAxisEntity>(env->scene().entities().size()+1, name);
 
 		if (axisLengthD.isNumber())
-			bnd->setAxisLength(std::max(PM_EPSILON, axisLengthD.getNumber()));
+			bnd->setAxisLength(std::max(PR_EPSILON, axisLengthD.getNumber()));
 
 		if (axisThicknessD.isNumber())
-			bnd->setAxisThickness(std::max(PM_EPSILON, axisThicknessD.getNumber()));
+			bnd->setAxisThickness(std::max(PR_EPSILON, axisThicknessD.getNumber()));
 
 		if (materialXD.type() == DL::Data::T_String)
 		{

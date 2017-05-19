@@ -84,7 +84,7 @@ namespace PR
 		mImageWriter.init(renderer);
 		OutputMap* output = renderer->output();
 
-		PM::vec3 zero = PM::pm_Zero3D();
+		Eigen::Vector3f zero(0,0,0);
 		for(const File& file : mFiles)
 		{
 			for(const IM_ChannelSetting3D& cs3d : file.Settings3D)

@@ -331,7 +331,7 @@ void MainWindow::updateView()
 
 		PR::RenderStatus status = mRenderContext->status();
 
-		quint64 timeLeft = (1 - status.percentage()) * time / PM::pm_Max(0.0001f, status.percentage());
+		quint64 timeLeft = (1 - status.percentage()) * time / std::max(0.0001f, status.percentage());
 
 		mLastPercent = status.percentage();
 

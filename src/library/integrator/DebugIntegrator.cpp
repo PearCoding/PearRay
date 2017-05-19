@@ -41,79 +41,79 @@ namespace PR
 			return Spectrum();
 		case DM_Depth:
 		{
-			float depth = PM::pm_Magnitude(PM::pm_Subtract(in.startPosition(), sc.P));
+			float depth = (in.startPosition()-sc.P).norm();
 			return RGBConverter::toSpec(depth, depth, depth);
 		}
 		// NORMAL
 		case DM_Normal_Spherical:
 		{
-			float phi = PM::pm_SafeACos(PM::pm_GetZ(sc.N));
-			float rho = std::atan2(PM::pm_GetY(sc.N), PM::pm_GetX(sc.N));
+			float phi = std::acos(sc.N(2));
+			float rho = std::atan2(sc.N(1), sc.N(0));
 
-			return RGBConverter::toSpec(phi * PM_INV_PI_F, rho * PM_INV_PI_F * 0.5f, 0);
+			return RGBConverter::toSpec(phi * PR_1_PI, rho * PR_1_PI * 0.5f, 0);
 		}
 		case DM_Normal_Both:
-			return RGBConverter::toSpec(std::abs(PM::pm_GetX(sc.N)),
-				std::abs(PM::pm_GetY(sc.N)),
-				std::abs(PM::pm_GetZ(sc.N)));
+			return RGBConverter::toSpec(std::abs(sc.N(0)),
+				std::abs(sc.N(1)),
+				std::abs(sc.N(2)));
 		case DM_Normal_Positive:
-			return RGBConverter::toSpec(PM::pm_Max(0.0f, PM::pm_GetX(sc.N)),
-				PM::pm_Max(0.0f, PM::pm_GetY(sc.N)),
-				PM::pm_Max(0.0f, PM::pm_GetZ(sc.N)));
+			return RGBConverter::toSpec(std::max(0.0f, sc.N(0)),
+				std::max(0.0f, sc.N(1)),
+				std::max(0.0f, sc.N(2)));
 		case DM_Normal_Negative:
-			return RGBConverter::toSpec(PM::pm_Max(0.0f, -PM::pm_GetX(sc.N)),
-				PM::pm_Max(0.0f, -PM::pm_GetY(sc.N)),
-				PM::pm_Max(0.0f, -PM::pm_GetZ(sc.N)));
+			return RGBConverter::toSpec(std::max(0.0f, -sc.N(0)),
+				std::max(0.0f, -sc.N(1)),
+				std::max(0.0f, -sc.N(2)));
 		// TANGENT
 		case DM_Tangent_Spherical:
 		{
-			float phi = PM::pm_SafeACos(PM::pm_GetZ(sc.Nx));
-			float rho = std::atan2(PM::pm_GetY(sc.Nx), PM::pm_GetX(sc.Nx));
+			float phi = std::acos(sc.Nx(2));
+			float rho = std::atan2(sc.Nx(1), sc.Nx(0));
 
-			return RGBConverter::toSpec(phi * PM_INV_PI_F, rho * PM_INV_PI_F * 0.5f, 0);
+			return RGBConverter::toSpec(phi * PR_1_PI, rho * PR_1_PI * 0.5f, 0);
 		}
 		case DM_Tangent_Both:
-			return RGBConverter::toSpec(std::abs(PM::pm_GetX(sc.Nx)),
-				std::abs(PM::pm_GetY(sc.Nx)),
-				std::abs(PM::pm_GetZ(sc.Nx)));
+			return RGBConverter::toSpec(std::abs(sc.Nx(0)),
+				std::abs(sc.Nx(1)),
+				std::abs(sc.Nx(2)));
 		case DM_Tangent_Positive:
-			return RGBConverter::toSpec(PM::pm_Max(0.0f, PM::pm_GetX(sc.Nx)),
-				PM::pm_Max(0.0f, PM::pm_GetY(sc.Nx)),
-				PM::pm_Max(0.0f, PM::pm_GetZ(sc.Nx)));
+			return RGBConverter::toSpec(std::max(0.0f, sc.Nx(0)),
+				std::max(0.0f, sc.Nx(1)),
+				std::max(0.0f, sc.Nx(2)));
 		case DM_Tangent_Negative:
-			return RGBConverter::toSpec(PM::pm_Max(0.0f, -PM::pm_GetX(sc.Nx)),
-				PM::pm_Max(0.0f, -PM::pm_GetY(sc.Nx)),
-				PM::pm_Max(0.0f, -PM::pm_GetZ(sc.Nx)));
+			return RGBConverter::toSpec(std::max(0.0f, -sc.Nx(0)),
+				std::max(0.0f, -sc.Nx(1)),
+				std::max(0.0f, -sc.Nx(2)));
 		// BINORMAL
 		case DM_Binormal_Spherical:
 		{
-			float phi = PM::pm_SafeACos(PM::pm_GetZ(sc.Ny));
-			float rho = std::atan2(PM::pm_GetY(sc.Ny), PM::pm_GetX(sc.Ny));
+			float phi = std::acos(sc.Ny(2));
+			float rho = std::atan2(sc.Ny(1), sc.Ny(0));
 
-			return RGBConverter::toSpec(phi * PM_INV_PI_F, rho * PM_INV_PI_F * 0.5f, 0);
+			return RGBConverter::toSpec(phi * PR_1_PI, rho * PR_1_PI * 0.5f, 0);
 		}
 		case DM_Binormal_Both:
-			return RGBConverter::toSpec(std::abs(PM::pm_GetX(sc.Ny)),
-				std::abs(PM::pm_GetY(sc.Ny)),
-				std::abs(PM::pm_GetZ(sc.Ny)));
+			return RGBConverter::toSpec(std::abs(sc.Ny(0)),
+				std::abs(sc.Ny(1)),
+				std::abs(sc.Ny(2)));
 		case DM_Binormal_Positive:
-			return RGBConverter::toSpec(PM::pm_Max(0.0f, PM::pm_GetX(sc.Ny)),
-				PM::pm_Max(0.0f, PM::pm_GetY(sc.Ny)),
-				PM::pm_Max(0.0f, PM::pm_GetZ(sc.Ny)));
+			return RGBConverter::toSpec(std::max(0.0f, sc.Ny(0)),
+				std::max(0.0f, sc.Ny(1)),
+				std::max(0.0f, sc.Ny(2)));
 		case DM_Binormal_Negative:
-			return RGBConverter::toSpec(PM::pm_Max(0.0f, -PM::pm_GetX(sc.N)),
-				PM::pm_Max(0.0f, -PM::pm_GetY(sc.Ny)),
-				PM::pm_Max(0.0f, -PM::pm_GetZ(sc.Ny)));
+			return RGBConverter::toSpec(std::max(0.0f, -sc.N(0)),
+				std::max(0.0f, -sc.Ny(1)),
+				std::max(0.0f, -sc.Ny(2)));
 		//OTHER STUFF
 		case DM_UV:
-			return RGBConverter::toSpec(PM::pm_GetX(sc.UVW), PM::pm_GetY(sc.UVW), PM::pm_GetZ(sc.UVW));
+			return RGBConverter::toSpec(sc.UVW(0), sc.UVW(1), sc.UVW(2));
 		case DM_PDF:
 		{
 			float full_pdf = 0;
 			for(uint32 i = 0; i < 32; ++i)
 			{
 				float pdf;
-				PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
+				Eigen::Vector3f rnd(context->random().getFloat(),
 					context->random().getFloat(),
 					context->random().getFloat());
 				sc.Material->sample(sc, rnd, pdf);
@@ -122,7 +122,8 @@ namespace PR
 
 			full_pdf /= 32;
 
-			return std::isinf(full_pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(full_pdf, full_pdf, full_pdf);
+			return std::isinf(full_pdf) ?
+				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(full_pdf, full_pdf, full_pdf);
 		}
 		case DM_Validity:
 		{
@@ -139,19 +140,19 @@ namespace PR
 			if (!sc.Material)
 				return RGBConverter::toSpec(1, 0, 0);
 
-			if (PM::pm_MagnitudeSqr(sc.N) - 1 > PM_EPSILON)
+			if (sc.N.squaredNorm() - 1 > PR_EPSILON)
 				return RGBConverter::toSpec(1, 1, 0);
 
 			float pdf;
-			PM::vec3 rnd = PM::pm_Set(context->random().getFloat(),
+			Eigen::Vector3f rnd(context->random().getFloat(),
 				context->random().getFloat(),
 				context->random().getFloat());
-			PM::vec3 dir = sc.Material->sample(sc, rnd, pdf);
+			Eigen::Vector3f dir = sc.Material->sample(sc, rnd, pdf);
 
-			if (PM::pm_MagnitudeSqr(dir) - 1 > PM_EPSILON)
+			if (dir.squaredNorm() - 1 > PR_EPSILON)
 				return RGBConverter::toSpec(1, 0, 1);
 
-			return (std::isinf(pdf) || (pdf > PM_EPSILON && pdf <= 1.0f)) ?
+			return (std::isinf(pdf) || (pdf > PR_EPSILON && pdf <= 1.0f)) ?
 				RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 		}
 		case DM_Emission:

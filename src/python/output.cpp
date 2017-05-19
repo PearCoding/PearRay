@@ -9,7 +9,7 @@ namespace PRPY
     void setup_output()
     {
         // TODO: Add ptr() for bpy::object?
-        bpy::class_<Output3D, boost::noncopyable>("Output3D", bpy::init<RenderContext*, const PM::vec3&, bpy::optional<bool> >())
+        bpy::class_<Output3D, boost::noncopyable>("Output3D", bpy::init<RenderContext*, const Eigen::Vector3f&, bpy::optional<bool> >())
             .add_property("neverClear", &Output3D::isNeverCleared, &Output3D::setNeverClear)
             .def("setFragment", &Output3D::setFragment)
             .def("getFragment", &Output3D::getFragment, bpy::return_value_policy<bpy::copy_const_reference >())

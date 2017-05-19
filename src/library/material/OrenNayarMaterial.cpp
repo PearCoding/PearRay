@@ -35,17 +35,17 @@ namespace PR
 		mRoughness = d;
 	}
 
-	Spectrum OrenNayarMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum OrenNayarMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		if (mAlbedo)
 		{
-			float val = PM_INV_PI_F;
+			float val = PR_1_PI;
 			if (mRoughness)
 			{
 				float roughness = mRoughness->eval(point);
 				roughness *= roughness;// Square
 
-				if (roughness > PM_EPSILON)// Oren Nayar
+				if (roughness > PR_EPSILON)// Oren Nayar
 					val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
 			}// else lambert
 
@@ -55,15 +55,15 @@ namespace PR
 			return Spectrum();
 	}
 
-	float OrenNayarMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float OrenNayarMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		return Projection::cos_hemi_pdf(NdotL);
 	}
 
-	PM::vec3 OrenNayarMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		auto dir = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+			Projection::cos_hemi(rnd(0), rnd(1), pdf));
 		return dir;
 	}
 

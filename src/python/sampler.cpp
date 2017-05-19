@@ -19,12 +19,12 @@ namespace PRPY
             return this->get_override("generate1D")(index);
         }
 
-        inline PM::vec2 generate2D(uint32 index) override
+        inline Eigen::Vector2f generate2D(uint32 index) override
         {
             return this->get_override("generate2D")(index);
         }
 
-        inline PM::vec3 generate3D(uint32 index) override
+        inline Eigen::Vector3f generate3D(uint32 index) override
         {
             return this->get_override("generate3D")(index);
         }

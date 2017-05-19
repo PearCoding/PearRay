@@ -78,34 +78,34 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 		mProperties.append(type);
 
 		VectorProperty* pos = new VectorProperty(tr("Position"));
-		pos->setDefaultValue(PM::pm_GetX(entity->position()), 1);
-		pos->setDefaultValue(PM::pm_GetY(entity->position()), 2);
-		pos->setDefaultValue(PM::pm_GetZ(entity->position()), 3);
-		pos->setValue(PM::pm_GetX(entity->position()), 1);
-		pos->setValue(PM::pm_GetY(entity->position()), 2);
-		pos->setValue(PM::pm_GetZ(entity->position()), 3);
+		pos->setDefaultValue(entity->position()(0), 1);
+		pos->setDefaultValue(entity->position()(1), 2);
+		pos->setDefaultValue(entity->position()(2), 3);
+		pos->setValue(entity->position()(0), 1);
+		pos->setValue(entity->position()(1), 2);
+		pos->setValue(entity->position()(2), 3);
 		group->addChild(pos);
 		mProperties.append(pos);
 
 		VectorProperty* rot = new VectorProperty(tr("Rotation"), 4);
-		rot->setDefaultValue(PM::pm_GetX(entity->rotation()), 1);
-		rot->setDefaultValue(PM::pm_GetY(entity->rotation()), 2);
-		rot->setDefaultValue(PM::pm_GetZ(entity->rotation()), 3);
-		rot->setDefaultValue(PM::pm_GetW(entity->rotation()), 4);
-		rot->setValue(PM::pm_GetX(entity->rotation()), 1);
-		rot->setValue(PM::pm_GetY(entity->rotation()), 2);
-		rot->setValue(PM::pm_GetZ(entity->rotation()), 3);
-		rot->setValue(PM::pm_GetW(entity->rotation()), 4);
+		rot->setDefaultValue(entity->rotation().x(), 1);
+		rot->setDefaultValue(entity->rotation().y(), 2);
+		rot->setDefaultValue(entity->rotation().z(), 3);
+		rot->setDefaultValue(entity->rotation().w(), 4);
+		rot->setValue(entity->rotation().x(), 1);
+		rot->setValue(entity->rotation().y(), 2);
+		rot->setValue(entity->rotation().z(), 3);
+		rot->setValue(entity->rotation().w(), 4);
 		group->addChild(rot);
 		mProperties.append(rot);
 
 		VectorProperty* sca = new VectorProperty(tr("Scale"), 3);
-		sca->setDefaultValue(PM::pm_GetX(entity->scale()), 1);
-		sca->setDefaultValue(PM::pm_GetY(entity->scale()), 2);
-		sca->setDefaultValue(PM::pm_GetZ(entity->scale()), 3);
-		sca->setValue(PM::pm_GetX(entity->scale()), 1);
-		sca->setValue(PM::pm_GetY(entity->scale()), 2);
-		sca->setValue(PM::pm_GetZ(entity->scale()), 3);
+		sca->setDefaultValue(entity->scale()(0), 1);
+		sca->setDefaultValue(entity->scale()(1), 2);
+		sca->setDefaultValue(entity->scale()(2), 3);
+		sca->setValue(entity->scale()(0), 1);
+		sca->setValue(entity->scale()(1), 2);
+		sca->setValue(entity->scale()(2), 3);
 		group->addChild(sca);
 		mProperties.append(sca);
 
@@ -225,22 +225,22 @@ void EntityDetailsView::addPlane()
 	PR::PlaneEntity* ent = (PR::PlaneEntity*)mEntity;
 
 	VectorProperty* xAxis = new VectorProperty(tr("XAxis"));
-	xAxis->setDefaultValue(PM::pm_GetX(ent->plane().xAxis()), 1);
-	xAxis->setDefaultValue(PM::pm_GetY(ent->plane().xAxis()), 2);
-	xAxis->setDefaultValue(PM::pm_GetZ(ent->plane().xAxis()), 3);
-	xAxis->setValue(PM::pm_GetX(ent->plane().xAxis()), 1);
-	xAxis->setValue(PM::pm_GetY(ent->plane().xAxis()), 2);
-	xAxis->setValue(PM::pm_GetZ(ent->plane().xAxis()), 3);
+	xAxis->setDefaultValue(ent->plane().xAxis()(0), 1);
+	xAxis->setDefaultValue(ent->plane().xAxis()(1), 2);
+	xAxis->setDefaultValue(ent->plane().xAxis()(2), 3);
+	xAxis->setValue(ent->plane().xAxis()(0), 1);
+	xAxis->setValue(ent->plane().xAxis()(1), 2);
+	xAxis->setValue(ent->plane().xAxis()(2), 3);
 	group->addChild(xAxis);
 	mProperties.append(xAxis);
 
 	VectorProperty* yAxis = new VectorProperty(tr("YAxis"));
-	yAxis->setDefaultValue(PM::pm_GetX(ent->plane().yAxis()), 1);
-	yAxis->setDefaultValue(PM::pm_GetY(ent->plane().yAxis()), 2);
-	yAxis->setDefaultValue(PM::pm_GetZ(ent->plane().yAxis()), 3);
-	yAxis->setValue(PM::pm_GetX(ent->plane().yAxis()), 1);
-	yAxis->setValue(PM::pm_GetY(ent->plane().yAxis()), 2);
-	yAxis->setValue(PM::pm_GetZ(ent->plane().yAxis()), 3);
+	yAxis->setDefaultValue(ent->plane().yAxis()(0), 1);
+	yAxis->setDefaultValue(ent->plane().yAxis()(1), 2);
+	yAxis->setDefaultValue(ent->plane().yAxis()(2), 3);
+	yAxis->setValue(ent->plane().yAxis()(0), 1);
+	yAxis->setValue(ent->plane().yAxis()(1), 2);
+	yAxis->setValue(ent->plane().yAxis()(2), 3);
 	group->addChild(yAxis);
 	mProperties.append(yAxis);
 
@@ -255,17 +255,17 @@ void EntityDetailsView::propertyValueChanged(IProperty* prop)
 	if (prop->propertyName() == tr("Position"))
 	{
 		VectorProperty* p = (VectorProperty*)prop;
-		mEntity->setPosition(PM::pm_Set(p->value(1), p->value(2), p->value(3)));
+		mEntity->setPosition(Eigen::Vector3f(p->value(1), p->value(2), p->value(3)));
 	}
 	else if (prop->propertyName() == tr("Rotation"))
 	{
 		VectorProperty* p = (VectorProperty*)prop;
-		mEntity->setRotation(PM::pm_Set(p->value(1), p->value(2), p->value(3), p->value(4)));
+		mEntity->setRotation(Eigen::Quaternionf(p->value(1), p->value(2), p->value(3), p->value(4)));
 	}
 	else if (prop->propertyName() == tr("Scale"))
 	{
 		VectorProperty* p = (VectorProperty*)prop;
-		mEntity->setScale(PM::pm_Set(p->value(1), p->value(2), p->value(3)));
+		mEntity->setScale(Eigen::Vector3f(p->value(1), p->value(2), p->value(3)));
 	}
 	// Sphere
 	else if (prop->propertyName() == tr("Radius"))

@@ -23,8 +23,8 @@ namespace PR
 		static std::shared_ptr<Environment> loadFromFile(const std::string& path);
 		static std::shared_ptr<Environment> loadFromString(const std::string& source);
 
-		static PM::vec3 getVector(const DL::DataGroup& arr, bool& ok);
-		static PM::quat getRotation(const DL::Data& data, bool& ok);
+		static Eigen::Vector3f getVector(const DL::DataGroup& arr, bool& ok);
+		static Eigen::Quaternionf getRotation(const DL::Data& data, bool& ok);
 
 		static std::shared_ptr<PR::SpectralShaderOutput> getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false);
 		static std::shared_ptr<PR::ScalarShaderOutput> getScalarOutput(Environment* env, const DL::Data& data);

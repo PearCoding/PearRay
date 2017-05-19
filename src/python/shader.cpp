@@ -17,8 +17,8 @@ namespace bpy = boost::python;
 namespace PRPY
 {
     #define ATTR(name) \
-        inline PM::vec3 get##name##_Py() const { return name; } \
-        inline void set##name##_Py(const PM::vec3& v) { name = v; }
+        inline Eigen::Vector3f get##name##_Py() const { return name; } \
+        inline void set##name##_Py(const Eigen::Vector3f& v) { name = v; }
     
     #define PROB_FS(name) \
         .add_property(PR_STRINGIFY(name), &FSWrap::get##name##_Py, &FSWrap::set##name##_Py)
@@ -80,7 +80,7 @@ namespace PRPY
     class VectorShaderOutputWrap : public VectorShaderOutput, public bpy::wrapper<VectorShaderOutput>
     {
     public:
-        PM::vec3 eval(const ShaderClosure& point) override
+        Eigen::Vector3f eval(const ShaderClosure& point) override
         {
             return this->get_override("eval")(point);
         }
@@ -146,7 +146,7 @@ namespace PRPY
         ;
         bpy::implicitly_convertible<std::shared_ptr<ConstSpectralShaderOutput>, std::shared_ptr<SpectralShaderOutput> >();
         bpy::class_<ConstVectorShaderOutput, std::shared_ptr<ConstVectorShaderOutput>, bpy::bases<VectorShaderOutput>, boost::noncopyable >
-            ("ConstVectorShaderOutput", bpy::init<const PM::vec3&>())
+            ("ConstVectorShaderOutput", bpy::init<const Eigen::Vector3f&>())
         ;
         bpy::implicitly_convertible<std::shared_ptr<ConstVectorShaderOutput>, std::shared_ptr<VectorShaderOutput> >();
         // bpy::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, bpy::bases<ScalarShaderOutput>, boost::noncopyable >
@@ -156,7 +156,7 @@ namespace PRPY
         //     ("ImageSpectralOutput", bpy::init<const PR::Spectrum&>())
         // ;
         // bpy::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, bpy::bases<VectorShaderOutput>, boost::noncopyable >
-        //     ("ImageVectorOutput", bpy::init<const PM::vec3&>())
+        //     ("ImageVectorOutput", bpy::init<const Eigen::Vector3f&>())
         // ;
     }
 }

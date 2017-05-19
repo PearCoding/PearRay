@@ -37,68 +37,74 @@ namespace PR
 		return mFlags;
 	}
 
-	inline void Entity::setPosition(const PM::vec3& pos)
+	inline void Entity::setPosition(const Eigen::Vector3f& pos)
 	{
 		mPosition = pos;
 		invalidateCache();
 	}
 
-	inline PM::vec3 Entity::position() const
+	inline Eigen::Vector3f Entity::position() const
 	{
 		return mPosition;
 	}
 
-	inline void Entity::setScale(const PM::vec3& scale)
+	inline void Entity::setScale(const Eigen::Vector3f& scale)
 	{
 		mScale = scale;
 		invalidateCache();
 	}
 
-	inline PM::vec3 Entity::scale() const
+	inline Eigen::Vector3f Entity::scale() const
 	{
 		return mScale;
 	}
 
-	inline void Entity::setRotation(const PM::quat& quat)
+	inline void Entity::setRotation(const Eigen::Quaternionf& quat)
 	{
 		mRotation = quat;
 		invalidateCache();
 	}
 
-	inline PM::quat Entity::rotation() const
+	inline Eigen::Quaternionf Entity::rotation() const
 	{
 		return mRotation;
 	}
 
-	inline PM::mat4 Entity::matrix() const
+	inline const Eigen::Affine3f& Entity::transform() const
 	{
 		if (mReCache)
 		{
 			mReCache = false;
 
-			mMatrixCache = PM::pm_Product(PM::pm_Translation(mPosition), PM::pm_Product(PM::pm_Rotation(mRotation), PM::pm_Scaling(mScale)));
-			mInvMatrixCache = PM::pm_Inverse(mMatrixCache);
+			mTransformCache = Eigen::Translation3f(mPosition)*mRotation*Eigen::Scaling(mScale);
+			mInvTransformCache = mTransformCache.inverse();
+			mNormalMatrixCache = mTransformCache.linear().inverse().transpose();
+			mInvNormalMatrixCache = mTransformCache.linear().transpose();
 		}
 
-		return mMatrixCache;
+		return mTransformCache;
 	}
 
-	inline PM::mat4 Entity::invMatrix() const
+	inline const Eigen::Affine3f& Entity::invTransform() const
 	{
 		if (mReCache)
-			matrix();
+			transform();
 
-		return mInvMatrixCache;
+		return mInvTransformCache;
 	}
 
-	inline PM::mat4 Entity::directionMatrix() const
+	inline const Eigen::Matrix3f& Entity::directionMatrix() const
 	{
-		return PM::pm_Transpose(invMatrix());
+		if (mReCache)
+			transform();
+		return mNormalMatrixCache;
 	}
 
-	inline PM::mat4 Entity::invDirectionMatrix() const
+	inline const Eigen::Matrix3f& Entity::invDirectionMatrix() const
 	{
-		return PM::pm_Transpose(matrix());
+		if (mReCache)
+			transform();
+		return mInvNormalMatrixCache;
 	}
 
 	inline void Entity::invalidateCache()

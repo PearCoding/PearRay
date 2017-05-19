@@ -1,7 +1,6 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
-#include "PearMath.h"
 
 /*
  0 - Photon hitpoints are spectral

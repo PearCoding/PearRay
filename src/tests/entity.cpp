@@ -33,31 +33,31 @@ PR_TEST("isRenderable")
 PR_TEST("position")
 {
     Entity entity(0, "Test");
-    PR_CHECK_EQ(entity.position(), PM::pm_Zero3D());
+    PR_CHECK_EQ(entity.position(), Eigen::Vector3f(0,0,0));
 }
 
 PR_TEST("scale")
 {
     Entity entity(0, "Test");
-    PR_CHECK_EQ(entity.scale(), PM::pm_Set(1,1,1));
+    PR_CHECK_EQ(entity.scale(), Eigen::Vector3f(1,1,1));
 }
 
 PR_TEST("rotation")
 {
     Entity entity(0, "Test");
-    PR_CHECK_EQ(entity.rotation(), PM::pm_IdentityQuat());
+    PR_CHECK_EQ(entity.rotation(), Eigen::Quaternionf::Identity());
 }
 
 PR_TEST("matrix")
 {
     Entity entity(0, "Test");
-    PR_CHECK_EQ(entity.matrix(), PM::pm_Identity4());
+    PR_CHECK_EQ(entity.transform().matrix(), Eigen::Matrix4f::Identity());
 }
 
 PR_TEST("direction matrix")
 {
     Entity entity(0, "Test");
-    PR_CHECK_EQ(entity.directionMatrix(), PM::pm_Identity4());
+    PR_CHECK_EQ(entity.directionMatrix(), Eigen::Matrix3f::Identity());
 }
 
 PR_END_TESTCASE()

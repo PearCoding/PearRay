@@ -19,9 +19,9 @@ namespace PR
 		RenderThreadContext(RenderContext* renderer, RenderThread* thread, uint32 index);
 		~RenderThreadContext();
 
-		inline void render(uint32 x, uint32 y, uint32 sample, uint32 pass)
+		inline void render(const Eigen::Vector2i& pixel, uint32 sample, uint32 pass)
 		{
-			mRenderer->render(this, x, y, sample, pass);
+			mRenderer->render(this, pixel, sample, pass);
 		}
 
 		inline RenderEntity* shoot(const Ray& ray, ShaderClosure& sc)

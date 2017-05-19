@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sphere.h"
+#include <Eigen/Geometry>
 
 namespace PR
 {
@@ -24,7 +25,7 @@ namespace PR
 		};
 
 		BoundingBox();
-		BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound);
+		BoundingBox(const Eigen::Vector3f& upperbound, const Eigen::Vector3f& lowerbound);
 		BoundingBox(float width, float height, float depth);
 
 		BoundingBox(const BoundingBox& other) = default;
@@ -32,77 +33,74 @@ namespace PR
 		BoundingBox& operator = (const BoundingBox& other) = default;
 		BoundingBox& operator = (BoundingBox&& other) = default;
 
-		inline PM::vec3 upperBound() const { return mUpperBound; }
-		inline void setUpperBound(const PM::vec3& bound) { mUpperBound = bound; }
+		inline const Eigen::Vector3f& upperBound() const { return mBox.max(); }
+		inline Eigen::Vector3f& upperBound() { return mBox.max(); }
+		inline void setUpperBound(const Eigen::Vector3f& bound) { mBox.max() = bound; }
 
-		inline PM::vec3 lowerBound() const { return mLowerBound; }
-		inline void setLowerBound(const PM::vec3& bound) { mLowerBound = bound; }
+		inline const Eigen::Vector3f& lowerBound() const { return mBox.min(); }
+		inline Eigen::Vector3f& lowerBound() { return mBox.min(); }
+		inline void setLowerBound(const Eigen::Vector3f& bound) { mBox.min() = bound; }
 
-		inline PM::vec3 center() const
+		inline Eigen::Vector3f center() const
 		{
-			return PM::pm_Add(mLowerBound, PM::pm_Scale(PM::pm_Subtract(mUpperBound, mLowerBound), 0.5f));
+			return mBox.min() + (mBox.max() - mBox.min()) * 0.5f;
 		}
 
 		inline float width() const
 		{
-			return std::abs(PM::pm_GetX(mUpperBound) - PM::pm_GetX(mLowerBound));
+			return mBox.sizes()(0);
 		}
 
 		inline float height() const
 		{
-			return std::abs(PM::pm_GetY(mUpperBound) - PM::pm_GetY(mLowerBound));
+			return mBox.sizes()(1);
 		}
 
 		inline float depth() const
 		{
-			return std::abs(PM::pm_GetZ(mUpperBound) - PM::pm_GetZ(mLowerBound));
+			return mBox.sizes()(2);
 		}
 
 		inline Sphere outerSphere()
 		{
 			return Sphere(center(),
-				PM::pm_Max(width(), PM::pm_Max(height(), depth()))*0.5f*1.73205080757f);
+				std::max(width(), std::max(height(), depth()))*0.5f*1.73205080757f);
 		}
 
 		inline Sphere innerSphere()
 		{
 			return Sphere(center(),
-				PM::pm_Max(width(), PM::pm_Max(height(), depth()))*0.5f);
+				std::max(width(), std::max(height(), depth()))*0.5f);
 		}
 
-		inline float volume() const { return width()*height()*depth(); }
+		inline float volume() const { return mBox.volume(); }
 		inline float surfaceArea() const
 		{
 			return 2 * (width()*height() + width()*depth() + height()*depth());
 		}
 
-		inline bool isValid() const { return surfaceArea() > PM_EPSILON; }
+		inline bool isValid() const { return !mBox.isEmpty(); }
 
 		inline bool isPlanar() const
 		{
-			return width() <= PM_EPSILON || height() <= PM_EPSILON || depth() <= PM_EPSILON;
+			return width() <= PR_EPSILON || height() <= PR_EPSILON || depth() <= PR_EPSILON;
 		}
 
-		inline bool contains(const PM::vec3& point) const
-		{
-			return PM::pm_IsAllTrue(PM::pm_IsLessOrEqual(mUpperBound, point)) &&
-				PM::pm_IsAllTrue(PM::pm_IsGreaterOrEqual(mLowerBound, point));
-		}
+		inline bool contains(const Eigen::Vector3f& point) const { return mBox.contains(point); }
 
 		bool intersects(const Ray& ray, float& t) const;
-		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const;
-		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, FaceSide& side) const;
+		bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const;
+		bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, FaceSide& side) const;
 
-		void put(const PM::vec3& point);
-		void combine(const BoundingBox& other);
+		inline void put(const Eigen::Vector3f& point) { mBox.extend(point); }
+		inline void combine(const BoundingBox& other) { mBox.extend(other.mBox); }
 
-		inline void shift(const PM::vec3& point)
+		inline void shift(const Eigen::Vector3f& point)
 		{
-			mLowerBound = PM::pm_Add(mLowerBound, point);
-			mUpperBound = PM::pm_Add(mUpperBound, point);
+			mBox.translate(point);
 		}
 
-		inline BoundingBox putted(const PM::vec3& point) const
+		inline BoundingBox putted(const Eigen::Vector3f& point) const
 		{
 			BoundingBox tmp = *this;
 			tmp.put(point);
@@ -116,7 +114,7 @@ namespace PR
 			return tmp;
 		}
 
-		inline BoundingBox shifted(const PM::vec3& point) const
+		inline BoundingBox shifted(const Eigen::Vector3f& point) const
 		{
 			BoundingBox tmp = *this;
 			tmp.shift(point);
@@ -125,7 +123,6 @@ namespace PR
 
 		Plane getFace(FaceSide side) const;
 	private:
-		PM::vec3 mUpperBound;
-		PM::vec3 mLowerBound;
+		Eigen::AlignedBox3f mBox;
 	};
 }

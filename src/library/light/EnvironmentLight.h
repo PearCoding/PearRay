@@ -21,8 +21,8 @@ namespace PR
 			return mMaterial;
 		}
 
-		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
-		Spectrum apply(const PM::vec3& V) override;
+		Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
+		Spectrum apply(const Eigen::Vector3f& V) override;
 
 	private:
 		std::shared_ptr<Material> mMaterial;

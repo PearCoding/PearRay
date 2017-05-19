@@ -10,11 +10,11 @@
 namespace PR
 {
 	Sphere::Sphere() :
-		mPosition(PM::pm_Set(0,0,0)), mRadius(1)
+		mPosition(0,0,0), mRadius(1)
 	{
 	}
 
-	Sphere::Sphere(PM::vec3 pos, float radius) :
+	Sphere::Sphere(const Eigen::Vector3f& pos, float radius) :
 		mPosition(pos), mRadius(radius)
 	{
 		PR_ASSERT(radius > 0, "radius has to be bigger than 0. Check it before construction!");
@@ -33,13 +33,13 @@ namespace PR
 		return *this;
 	}
 
-	bool Sphere::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
+	bool Sphere::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const
 	{
 		PR_GUARD_PROFILE();
 
-		const PM::vec3 L = PM::pm_Subtract(mPosition, ray.startPosition()); // C - O
-		const float S = PM::pm_Dot(L, ray.direction()); // L . D
-		const float L2 = PM::pm_MagnitudeSqr(L); // L . L
+		const Eigen::Vector3f L = mPosition - ray.startPosition(); // C - O
+		const float S = L.dot(ray.direction()); // L . D
+		const float L2 = L.squaredNorm(); // L . L
 		const float R2 = mRadius*mRadius; // R^2
 
 		if (S < 0 && // when object behind ray
@@ -64,7 +64,7 @@ namespace PR
 		if (t0 >= PR_SPHERE_INTERSECT_EPSILON)
 		{
 			t = t0;
-			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+			collisionPoint = ray.startPosition() + ray.direction() * t;
 			return true;
 		}
 		else
@@ -73,11 +73,11 @@ namespace PR
 		}
 	}
 
-	void Sphere::put(const PM::vec3& point)
+	void Sphere::put(const Eigen::Vector3f& point)
 	{
 		PR_GUARD_PROFILE();
 
-		float f = PM::pm_MagnitudeSqr(PM::pm_Subtract(mPosition, point));
+		float f = (mPosition - point).squaredNorm();
 		if (f > mRadius*mRadius)
 			mRadius = std::sqrt(f);
 	}
@@ -92,7 +92,7 @@ namespace PR
 			return;
 		}
 
-		float f = PM::pm_MagnitudeSqr(PM::pm_Subtract(mPosition, other.mPosition)) + other.mRadius;
+		float f = (mPosition - other.mPosition).squaredNorm() + other.mRadius;
 		if (f > mRadius*mRadius)
 			mRadius = std::sqrt(f);
 	}

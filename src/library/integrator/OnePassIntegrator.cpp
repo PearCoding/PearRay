@@ -34,7 +34,7 @@ namespace PR
 		{
 			for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
 			{
-				context->render(x, y, tile->samplesRendered(), pass);
+				context->render(Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
 			}
 		}
 	}

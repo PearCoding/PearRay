@@ -225,4 +225,18 @@ namespace PR
 	typedef std::chrono::high_resolution_clock::time_point TimePoint;
 	typedef uint32 EntityID;
 	typedef uint32 DataRefID;
+
+	constexpr float PR_EPSILON = 0.0000001f;
+
+#ifdef M_PI
+	constexpr float PR_PI = M_PI;
+#else
+	constexpr float PR_PI = 3.14159265358979323846;
+#endif
+
+#ifdef M_1_PI
+	constexpr float PR_1_PI = M_1_PI;
+#else
+	constexpr float PR_1_PI = 1/PR_PI;
+#endif
 }

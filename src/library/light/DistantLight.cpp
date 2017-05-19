@@ -11,7 +11,7 @@
 namespace PR
 {
 	DistantLight::DistantLight() :
-		mDirection(PM::pm_Set(0,0,1)), mMaterial(nullptr)
+		mDirection(0,0,1), mMaterial(nullptr)
 	{
 
 	}
@@ -20,7 +20,7 @@ namespace PR
 	{
 	}
 
-	PM::vec3 DistantLight::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f DistantLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		PR_ASSERT(isFrozen(), "should be frozen.");
 
@@ -30,14 +30,14 @@ namespace PR
 		//	Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), 32, pdf));
 	}
 
-	Spectrum DistantLight::apply(const PM::vec3& V)
+	Spectrum DistantLight::apply(const Eigen::Vector3f& V)
 	{
 		if(!mMaterial || !mMaterial->emission())
 			return Spectrum();
 
 		PR_ASSERT(isFrozen(), "should be frozen.");
 
-		const float d = PM::pm_Max(0.0f, PM::pm_Dot(V, mSampleDirection_Cache));
+		const float d = std::max(0.0f, V.dot(mSampleDirection_Cache));
 
 		ShaderClosure sc;
 		sc.V = V;
@@ -52,10 +52,10 @@ namespace PR
 
 	void DistantLight::onFreeze()
 	{
-		mSampleDirection_Cache = PM::pm_Negate(mDirection);
+		mSampleDirection_Cache = -mDirection;
 		Projection::tangent_frame(mDirection, mRight_Cache, mUp_Cache);
 
 		PR_LOGGER.logf(L_Info, M_Camera,"DistantLight Dir[%.3f,%.3f,%.3f]",
-			PM::pm_GetX(mDirection), PM::pm_GetY(mDirection), PM::pm_GetZ(mDirection));
+			mDirection(0), mDirection(1), mDirection(2));
 	}
 }

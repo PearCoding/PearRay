@@ -16,7 +16,7 @@ namespace PR
 		DL::Data materialD = group.getFromKey("material");
 		DL::Data sizeD = group.getFromKey("size");
 
-		PM::vec3 size = PM::pm_Set(1, 1, 1);
+		Eigen::Vector3f size(1, 1, 1);
 
 		if (sizeD.type() == DL::Data::T_Group)
 		{
@@ -25,13 +25,13 @@ namespace PR
 
 			if (!ok)
 			{
-				size = PM::pm_Set(1, 1, 1);
+				size = Eigen::Vector3f(1, 1, 1);
 				PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid size. Assuming unit cube.", name.c_str());
 			}
 		}
 		else if(sizeD.isNumber())
 		{
-			size = PM::pm_FillVector3D(sizeD.getNumber());
+			size = Eigen::Vector3f(sizeD.getNumber(),sizeD.getNumber(),sizeD.getNumber());
 		}
 		else
 		{
@@ -39,7 +39,7 @@ namespace PR
 		}
 
 		auto bnd = std::make_shared<BoundaryEntity>(env->scene().entities().size()+1, name,
-			BoundingBox(PM::pm_GetX(size), PM::pm_GetY(size), PM::pm_GetZ(size)));
+			BoundingBox(size(0), size(1), size(2)));
 
 		if (materialD.type() == DL::Data::T_String)
 		{

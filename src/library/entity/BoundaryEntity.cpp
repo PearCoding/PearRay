@@ -81,26 +81,26 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		PM::vec3 vertex = PM::pm_Set(0,0,0);
+		Eigen::Vector3f vertex(0,0,0);
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(invTransform()*ray.startPosition());
+		local.setDirection((invDirectionMatrix()*ray.direction()).normalized());
 
 		BoundingBox box = localBoundingBox();
 		float t;
 		BoundingBox::FaceSide side;
 		if (box.intersects(local, vertex, t, side))
 		{
-			collisionPoint.P = PM::pm_Transform(matrix(), vertex);
+			collisionPoint.P = transform()*vertex;
 
 			Plane plane = box.getFace(side);
-			collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
+			collisionPoint.Ng = (directionMatrix()*plane.normal()).normalized();
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			float u, v;
 			plane.project(vertex, u, v);
-			collisionPoint.UVW = PM::pm_Set(u, v,0);
+			collisionPoint.UVW = Eigen::Vector3f(u, v,0);
 			collisionPoint.Material = material().get();
 			return true;
 		}
@@ -113,20 +113,20 @@ namespace PR
 
 		auto ret = sampler.generate3D(sample);
 
-		BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(PM::pm_GetX(ret), 0, 5);// Get randomly a face
+		// Get randomly a face
+		BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(ret(0), 0, 5);
 
 		Plane plane = localBoundingBox().getFace(side);
 
-		PM::vec3 xaxis = PM::pm_Transform(directionMatrix(), plane.xAxis());
-		PM::vec3 yaxis = PM::pm_Transform(directionMatrix(), plane.yAxis());
+		// TODO: Optimize?
+		Eigen::Vector3f xaxis = (directionMatrix() * plane.xAxis()).normalized() * std::sqrt(plane.invSquaredWidth());
+		Eigen::Vector3f yaxis = (directionMatrix() * plane.yAxis()).normalized() * std::sqrt(plane.invSquaredHeight());
 
 		FaceSample fp;
-		fp.P = PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetY(ret)),
-				PM::pm_Scale(yaxis, PM::pm_GetZ(ret))));
-		fp.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
+		fp.P = position() + xaxis*ret(1) + yaxis*ret(2);
+		fp.Ng = (directionMatrix()*plane.normal()).normalized();
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
-		fp.UVW = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret), 0);
+		fp.UVW = Eigen::Vector3f(ret(1), ret(2), 0);
 		fp.Material = material().get();
 
 		pdf = 1;

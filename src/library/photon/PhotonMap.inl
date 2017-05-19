@@ -6,17 +6,20 @@ namespace Photon
 		mPhotons(),
 		mStoredPhotons(0), mGridDelta(gridDelta)
 	{
-		PR_ASSERT(mGridDelta > PM_EPSILON, "Grid delta has to greater 0");
+		PR_ASSERT(mGridDelta > PR_EPSILON, "Grid delta has to greater 0");
 		// Caching
 		mInvGridDelta = 1.0f/mGridDelta;
 		PR_ASSERT(std::isfinite(mInvGridDelta), "Inverse of grid delta has to be valid");
 
 		for (int i = 0; i < 256; ++i)
 		{
-			float angle = i * (1.0f / 256)*PM_PI_F;
+			float angle = i * (1.0f / 256)*PR_PI;
 
-			PM::pm_SinCos(angle, mSinTheta[i], mCosTheta[i]);
-			PM::pm_SinCos(2 * angle, mSinPhi[i], mCosPhi[i]);
+			mSinTheta[i] = std::sin(angle);
+			mCosTheta[i] = std::cos(angle);
+
+			mSinPhi[i] = std::sin(2*angle);
+			mCosPhi[i] = std::cos(2*angle);
 		}
 	}
 
@@ -36,9 +39,9 @@ namespace Photon
 		return estimate<AccumFunction>(sphere,
 			[](const Photon& pht, const PhotonSphere& sph, float& dist2)
 				{
-					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
-					dist2 = PM::pm_MagnitudeSqr(V);
-					const float d = PM::pm_Dot(V, sph.Normal);
+					Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
+					dist2 = V.squaredNorm();
+					const float d = V.dot(sph.Normal);
 					const float r = sph.Distance2 * (1 - std::abs(d)) +
 						sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
 					return dist2 <= r;
@@ -52,12 +55,12 @@ namespace Photon
 		return estimate<AccumFunction>(sphere,
 			[](const Photon& pht, const PhotonSphere& sph, float& dist2)
 				{
-					PM::vec3 V = PM::pm_Subtract(PM::pm_Set(pht.Position[0], pht.Position[1], pht.Position[2]), sph.Center);
-					dist2 = PM::pm_MagnitudeSqr(V);
-					const float d = PM::pm_Dot(V, sph.Normal);
+					Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
+					dist2 = V.squaredNorm();
+					const float d = V.dot(sph.Normal);
 					const float r = sph.Distance2 * (1 - std::abs(d)) +
 						sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
-					return d <= -PM_EPSILON && dist2 <= r;
+					return d <= -PR_EPSILON && dist2 <= r;
 				},
 			accumFunc, found);
 	}
@@ -119,7 +122,7 @@ namespace Photon
 		return accum;
 	}
 
-	void PhotonMap::store(const PM::vec3& pos, const Photon& pht)
+	void PhotonMap::store(const Eigen::Vector3f& pos, const Photon& pht)
 	{
 		mStoredPhotons++;
 		const auto key = toCoords(pos);
@@ -151,13 +154,13 @@ namespace Photon
 		mBox.put(pos);
 	}
 
-	typename PhotonMap::KeyCoord PhotonMap::toCoords(const PM::vec3& v) const
+	typename PhotonMap::KeyCoord PhotonMap::toCoords(const Eigen::Vector3f& v) const
 	{
-		PM::vec3 s = PM::pm_Scale(v, mInvGridDelta);
+		Eigen::Vector3f s = v*mInvGridDelta;
 		return {
-			(int32)std::floor(PM::pm_GetX(s)),
-			(int32)std::floor(PM::pm_GetY(s)),
-			(int32)std::floor(PM::pm_GetZ(s))
+			(int32)std::floor(s(0)),
+			(int32)std::floor(s(1)),
+			(int32)std::floor(s(2))
 			};
 	}
 

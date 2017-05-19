@@ -164,7 +164,7 @@ namespace PR
 		/* Setup threads */
 		uint32 threadCount = Thread::hardwareThreadCount();
 		if (threads < 0)
-			threadCount = PM::pm_Max(1, (int32)threadCount + threads);
+			threadCount = std::max(1, (int32)threadCount + threads);
 		else if(threads > 0)
 			threadCount = threads;
 
@@ -208,8 +208,8 @@ namespace PR
 					mTileMap[i*mTileXCount + j] = new RenderTile(
 						sx,
 						sy,
-						PM::pm_Min(mWidth, sx + mTileWidth),
-						PM::pm_Min(mHeight, sy + mTileHeight));
+						std::min(mWidth, sx + mTileWidth),
+						std::min(mHeight, sy + mTileHeight));
 				}
 			}
 			break;
@@ -227,8 +227,8 @@ namespace PR
 					mTileMap[k] = new RenderTile(
 						sx,
 						sy,
-						PM::pm_Min(mWidth, sx + mTileWidth),
-						PM::pm_Min(mHeight, sy + mTileHeight));
+						std::min(mWidth, sx + mTileWidth),
+						std::min(mHeight, sy + mTileHeight));
 					++k;
 				}
 			}
@@ -243,8 +243,8 @@ namespace PR
 					mTileMap[k] = new RenderTile(
 						sx,
 						sy,
-						PM::pm_Min(mWidth, sx + mTileWidth),
-						PM::pm_Min(mHeight, sy + mTileHeight));
+						std::min(mWidth, sx + mTileWidth),
+						std::min(mHeight, sy + mTileHeight));
 					++k;
 				}
 			}
@@ -252,7 +252,7 @@ namespace PR
 			break;
 		case TM_Spiral:
 		{
-			MinRadiusGenerator<2> generator(PM::pm_Max(mTileXCount/2, mTileYCount/2));
+			MinRadiusGenerator<2> generator(std::max(mTileXCount/2, mTileYCount/2));
 			uint32 i = 0;
 			while(generator.hasNext())
 			{
@@ -266,8 +266,8 @@ namespace PR
 					mTileMap[i] = new RenderTile(
 						tx*mTileWidth,
 						ty*mTileHeight,
-					PM::pm_Min(mWidth, tx*mTileWidth + mTileWidth),
-					PM::pm_Min(mHeight, ty*mTileHeight + mTileHeight));
+					std::min(mWidth, tx*mTileWidth + mTileWidth),
+					std::min(mHeight, ty*mTileHeight + mTileHeight));
 					++i;
 				}
 			}
@@ -286,30 +286,32 @@ namespace PR
 			thread->start();
 	}
 
-	void RenderContext::render(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
+	void RenderContext::render(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+		uint32 sample, uint32 pass)
 	{
 		PR_ASSERT(mOutputMap, "OutputMap has to be initialized before rendering");
 		PR_ASSERT(context, "Rendering needs a valid context");
 
 		if (mRenderSettings.isIncremental())// Only one sample a time!
 		{
-			renderIncremental(context, x, y, sample, pass);
+			renderIncremental(context, pixel, sample, pass);
 		}
 		else// Everything
 		{
 			const uint32 SampleCount = mRenderSettings.maxCameraSampleCount();
 
 			for (uint32 currentSample = sample;
-				currentSample < SampleCount && !mOutputMap->isPixelFinished(x, y);
+				currentSample < SampleCount && !mOutputMap->isPixelFinished(pixel);
 				++currentSample)
 			{
-				renderIncremental(context, x, y, currentSample, pass);
+				renderIncremental(context, pixel, currentSample, pass);
 			}
 		}
 	}
-	void RenderContext::renderIncremental(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass)
+	void RenderContext::renderIncremental(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+		uint32 sample, uint32 pass)
 	{
-		if(mOutputMap->isPixelFinished(x, y))
+		if(mOutputMap->isPixelFinished(pixel))
 			return;
 
 		ShaderClosure sc;
@@ -340,18 +342,18 @@ namespace PR
 		}
 		time *= mRenderSettings.timeScale();
 
-		uint8 specInd = PM::pm_Min<uint8>(Spectrum::SAMPLING_COUNT-1,
+		uint8 specInd = std::min<uint8>(Spectrum::SAMPLING_COUNT-1,
 			std::floor(
 				context->spectralSampler()->generate1D(spectralsample) * Spectrum::SAMPLING_COUNT));
 
 		const Spectrum spec = renderSample(context,
-			x + PM::pm_GetX(aa) - 0.5f, y + PM::pm_GetY(aa) - 0.5f,
-			PM::pm_GetX(lens), PM::pm_GetY(lens),
+			pixel(0) + aa(0) - 0.5f, pixel(1) + aa(1) - 0.5f,
+			lens(0), lens(1),
 			time, specInd,
 			pass,
 			sc);
 
-		mOutputMap->pushFragment(x,y,spec,sc);
+		mOutputMap->pushFragment(pixel,spec,sc);
 	}
 
 	Spectrum RenderContext::renderSample(RenderThreadContext* context,
@@ -367,8 +369,10 @@ namespace PR
 		const float fny = 2 * ((y+mOffsetY) / mFullHeight - 0.5f);
 
 		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t, wavelength);
-		ray.setPixelX((uint32)PM::pm_Max(0.0f, std::round(x)));
-		ray.setPixelY((uint32)PM::pm_Max(0.0f, std::round(y)));
+		ray.setPixel(Eigen::Vector2i(
+			(uint32)std::max(0.0f, std::round(x)),
+			(uint32)std::max(0.0f, std::round(y))
+			));
 
 		return mIntegrator->apply(ray, context, pass, sc);
 	}
@@ -395,22 +399,22 @@ namespace PR
 			RenderEntity* entity = mScene.checkCollision(ray, fs);
 			sc = fs;
 
-			sc.NgdotV = PM::pm_Dot(ray.direction(), sc.Ng);
+			sc.NgdotV = ray.direction().dot(sc.Ng);
 			sc.N = Reflection::faceforward(sc.NgdotV, sc.Ng);
 			sc.Flags |= Reflection::is_inside(sc.NgdotV) ? SCF_Inside : 0;
 			sc.NdotV = -std::abs(sc.NgdotV);
 			sc.V = ray.direction();
 			sc.T = ray.time();
 			sc.WavelengthIndex = ray.wavelength();
-			sc.Depth2 = PM::pm_MagnitudeSqr(PM::pm_Subtract(ray.startPosition(), sc.P));
+			sc.Depth2 = (ray.startPosition() - sc.P).squaredNorm();
 
 			if(entity)
 				sc.EntityID = entity->id();
 
 			if (sc.Flags & SCF_Inside)
 			{
-				sc.Nx = PM::pm_Negate(fs.Nx);
-				//sc.Ny = PM::pm_Negate(fs.Ny);
+				sc.Nx = -fs.Nx;
+				//sc.Ny = -fs.Ny;
 			}
 
 			if(context)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -17,9 +17,9 @@ namespace PR
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-		inline static PM::vec3 reflect(float NdotV, const PM::vec3& N, const PM::vec3& V)
+		inline static Eigen::Vector3f reflect(float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
 		{
-			return PM::pm_Normalize(PM::pm_Subtract(V, PM::pm_Scale(N, 2 * NdotV)));
+			return (V - N * 2 * NdotV).normalized();
 		}
 
 		/**
@@ -31,7 +31,7 @@ namespace PR
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-		inline static PM::vec3 refract(float eta, float NdotV, const PM::vec3& N, const PM::vec3& V)
+		inline static Eigen::Vector3f refract(float eta, float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
 		{
 			const float k = 1 - eta*eta*(1 - NdotV*NdotV);
 
@@ -39,7 +39,7 @@ namespace PR
 				return reflect(NdotV, N, V);
 
 			const float t = eta * NdotV + std::sqrt(k);
-			return PM::pm_Normalize(PM::pm_Subtract(PM::pm_Scale(V, eta), PM::pm_Scale(N, t)));
+			return (V*eta - N*t).normalized();
 		}
 
 		/**
@@ -51,25 +51,25 @@ namespace PR
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-		inline static PM::vec3 refract(float eta, float NdotV, const PM::vec3& N, const PM::vec3& V, bool& total)
+		inline static Eigen::Vector3f refract(float eta, float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V, bool& total)
 		{
 			const float k = 1 - eta*eta*(1 - NdotV*NdotV);
 
 			total = k < 0.0f;
 			if (total)//TOTAL REFLECTION
-				return PM::pm_Zero3D();
+				return Eigen::Vector3f(0,0,0);
 
 			const float t = eta * NdotV + std::sqrt(k);
-			return PM::pm_Normalize(PM::pm_Subtract(PM::pm_Scale(V, eta), PM::pm_Scale(N, t)));
+			return (V*eta - N*t).normalized();
 		}
 
 		/**
 		* @param NdotV dot product between normal and incident view vector
 		* @param N Normal of the surface point.
 		*/
-		inline static PM::vec3 faceforward(float NdotV, const PM::vec3& N)
+		inline static Eigen::Vector3f faceforward(float NdotV, const Eigen::Vector3f& N)
 		{
-			return is_inside(NdotV) ? PM::pm_Negate(N) : N;
+			return is_inside(NdotV) ? -N : N;
 		}
 
 		/**
@@ -86,9 +86,9 @@ namespace PR
 		* @param L Unit vector pointing FROM the surface point outwards.
 		* @return Unit vector pointing FROM the surface point outwards. (Between L and V)
 		 */
-		inline static PM::vec3 halfway(const PM::vec3& V, const PM::vec3& L)
+		inline static Eigen::Vector3f halfway(const Eigen::Vector3f& V, const Eigen::Vector3f& L)
 		{
-			return PM::pm_Normalize(PM::pm_Subtract(L, V));
+			return (L-V).normalized();
 		}
 	};
 }

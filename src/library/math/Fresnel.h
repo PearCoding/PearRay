@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
 
 namespace PR
 {
@@ -15,7 +14,7 @@ namespace PR
 			const float eta = n1 / n2;
 			const float z = 1 - eta * eta * (1 - dot * dot);
 
-			if (z <= PM_EPSILON)
+			if (z <= PR_EPSILON)
 				return 1;
 
 			const float dotT = std::sqrt(z);
@@ -23,12 +22,12 @@ namespace PR
 			const float perp = (n1 * dotT - n2 * dot) / (n1 * dotT + n2 * dot);
 
 			const float R = (para * para + perp * perp) / 2;
-			return PM::pm_Clamp(R, 0.0f, 1.0f);
+			return std::min(std::max(R, 0.0f), 1.0f);
 		}
 
 		static inline float conductor(float dot, float n, float k)
 		{
-			if(dot <= PM_EPSILON)
+			if(dot <= PR_EPSILON)
 				return 1;
 			
 			const float dot2 = dot*dot;
@@ -40,7 +39,7 @@ namespace PR
 			const float perp = (f - d2 + dot2) / (f + d2 + dot2);
 
 			const float R = (para * para + perp * perp) / 2;
-			return PM::pm_Clamp(R, 0.0f, 1.0f);
+			return std::min(std::max(R, 0.0f), 1.0f);
 		}
 
 		static inline float schlick(float dot, float n1, float n2)

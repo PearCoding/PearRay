@@ -6,6 +6,8 @@
 #include "entity/RenderEntity.h"
 #include "sampler/Sampler.h"
 
+#include <Eigen/Dense>
+
 using namespace PR;
 namespace bpy = boost::python;
 namespace PRPY
@@ -96,10 +98,10 @@ namespace PRPY
         .add_property("position", &Entity::position, &Entity::setPosition)
         .add_property("scale", &Entity::scale, &Entity::setScale)
         .add_property("rotation", &Entity::rotation, &Entity::setRotation)
-        .add_property("matrix", &Entity::matrix)
-        .add_property("invMatrix", &Entity::invMatrix)
-        .add_property("directionMatrix", &Entity::directionMatrix)
-        .add_property("invDirectionMatrix", &Entity::invDirectionMatrix)
+        .add_property("transform", bpy::make_function(&Entity::transform, bpy::return_value_policy<bpy::copy_const_reference >()))
+        .add_property("invTransform", bpy::make_function(&Entity::invTransform, bpy::return_value_policy<bpy::copy_const_reference >()))
+        .add_property("directionMatrix", bpy::make_function(&Entity::directionMatrix, bpy::return_value_policy<bpy::copy_const_reference >()))
+        .add_property("invDirectionMatrix", bpy::make_function(&Entity::invDirectionMatrix, bpy::return_value_policy<bpy::copy_const_reference >()))
         .def("__str__", &Entity::toString)
         .def("freeze", &Entity::freeze)
         .add_property("frozen", &Entity::isFrozen)

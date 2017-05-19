@@ -16,9 +16,9 @@ namespace PR
 		const std::shared_ptr<SpectralShaderOutput>& ior() const;
 		void setIOR(const std::shared_ptr<SpectralShaderOutput>& data);
 
-		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
-		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
-		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
+		Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
+		float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
+		Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
 
 		virtual std::string dumpInformation() const override;
 	private:

@@ -4,12 +4,12 @@
 
 namespace PR
 {
-	ConstVectorShaderOutput::ConstVectorShaderOutput(const PM::vec3& f) :
+	ConstVectorShaderOutput::ConstVectorShaderOutput(const Eigen::Vector3f& f) :
 		VectorShaderOutput(), mValue(f)
 	{
 	}
 
-	PM::vec3 ConstVectorShaderOutput::eval(const PR::ShaderClosure& point)
+	Eigen::Vector3f ConstVectorShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		return mValue;
 	}

@@ -24,17 +24,17 @@ namespace PR
 		const std::shared_ptr<ScalarShaderOutput>& reflectivity() const;
 		void setReflectivity(const std::shared_ptr<ScalarShaderOutput>& data);
 
-		Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
-		float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override;
-		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
+		Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
+		float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
+		Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
 
-		PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& path_weight, uint32 path) override;
+		Eigen::Vector3f samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path) override;
 		uint32 samplePathCount() const override;
 
 		virtual std::string dumpInformation() const override;
 	private:
-		PM::vec3 diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
-		PM::vec3 specular_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf);
+		Eigen::Vector3f diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf);
+		Eigen::Vector3f specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf);
 
 		std::shared_ptr<SpectralShaderOutput> mAlbedo;
 		std::shared_ptr<SpectralShaderOutput> mSpecularity;

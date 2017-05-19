@@ -17,8 +17,8 @@ namespace PR
 		~MultiJitteredSampler();
 
 		inline float generate1D(uint32 index) override;
-		inline PM::vec2 generate2D(uint32 index) override;
-		inline PM::vec3 generate3D(uint32 index) override;
+		inline Eigen::Vector2f generate2D(uint32 index) override;
+		inline Eigen::Vector3f generate3D(uint32 index) override;
 
 	private:
 		inline static uint32 permute(uint32 i, uint32 l, uint32 p);

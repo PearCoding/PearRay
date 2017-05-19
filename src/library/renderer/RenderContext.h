@@ -5,6 +5,7 @@
 #include "RenderStatus.h"
 #include "spectral/Spectrum.h"
 
+#include <Eigen/Dense>
 #include <list>
 #include <mutex>
 #include <condition_variable>
@@ -80,7 +81,8 @@ namespace PR
 
 	protected:
 		// Render Thread specific
-		void render(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);
+		void render(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+			uint32 sample, uint32 pass);
 
 		RenderTile* getNextTile();
 
@@ -90,7 +92,8 @@ namespace PR
 	private:
 		void reset();
 
-		void renderIncremental(RenderThreadContext* context, uint32 x, uint32 y, uint32 sample, uint32 pass);
+		void renderIncremental(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+			uint32 sample, uint32 pass);
 		Spectrum renderSample(RenderThreadContext* context,
 			float x, float y, float rx, float ry, float t, uint8 wavelength,
 			uint32 pass, ShaderClosure& sc);

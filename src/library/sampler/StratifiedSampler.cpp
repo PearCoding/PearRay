@@ -21,20 +21,20 @@ namespace PR
 	}
 
 	// Need better strategy for 2D and 3D
-	PM::vec2 StratifiedSampler::generate2D(uint32 index)
+	Eigen::Vector2f StratifiedSampler::generate2D(uint32 index)
 	{
 		auto x = Projection::stratified(mRandom.getFloat(), index % m2D_X, mSamples);
 		auto y = Projection::stratified(mRandom.getFloat(), index / m2D_X, mSamples);
 
-		return PM::pm_Set(x, y);
+		return Eigen::Vector2f(x, y);
 	}
 
-	PM::vec3 StratifiedSampler::generate3D(uint32 index)
+	Eigen::Vector3f StratifiedSampler::generate3D(uint32 index)
 	{
 		auto x = Projection::stratified(mRandom.getFloat(), index, mSamples);
 		auto y = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
 		auto z = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
 
-		return PM::pm_Set(x, y, z);
+		return Eigen::Vector3f(x, y, z);
 	}
 }

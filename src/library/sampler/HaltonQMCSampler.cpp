@@ -37,23 +37,23 @@ namespace PR
 			return halton(index, mBaseX);
 	}
 
-	PM::vec2 HaltonQMCSampler::generate2D(uint32 index)
+	Eigen::Vector2f HaltonQMCSampler::generate2D(uint32 index)
 	{
 		if(!mAdaptive || index < mSamples)
-			return PM::pm_Set(mBaseXSamples[index % mSamples], mBaseYSamples[index % mSamples]);
+			return Eigen::Vector2f(mBaseXSamples[index % mSamples], mBaseYSamples[index % mSamples]);
 		else// To allow adaptive methods with higher samples
-			return PM::pm_Set(halton(index, mBaseX),
+			return Eigen::Vector2f(halton(index, mBaseX),
 				halton(index, mBaseY));
 	}
 
-	PM::vec3 HaltonQMCSampler::generate3D(uint32 index)
+	Eigen::Vector3f HaltonQMCSampler::generate3D(uint32 index)
 	{
 		if(!mAdaptive || index < mSamples)
-			return PM::pm_Set(mBaseXSamples[index % mSamples],
+			return Eigen::Vector3f(mBaseXSamples[index % mSamples],
 				mBaseYSamples[index % mSamples],
 				mBaseZSamples[index % mSamples]);
 		else// To allow adaptive methods with higher samples
-			return PM::pm_Set(halton(index, mBaseX),
+			return Eigen::Vector3f(halton(index, mBaseX),
 				halton(index, mBaseY),
 				halton(index, mBaseZ));
 	}

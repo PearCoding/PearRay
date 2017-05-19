@@ -13,7 +13,7 @@ namespace PRPY
     {
     public:
         BoundingBoxWrap() : BoundingBox() {}
-		BoundingBoxWrap(const PM::vec3& upperbound, const PM::vec3& lowerbound) :
+		BoundingBoxWrap(const Eigen::Vector3f& upperbound, const Eigen::Vector3f& lowerbound) :
             BoundingBox(upperbound, lowerbound) {}
 		BoundingBoxWrap(float width, float height, float depth) :
             BoundingBox(width, height, depth) {}
@@ -29,13 +29,13 @@ namespace PRPY
         }
 
         inline bpy::tuple intersects2_Py(const Ray& ray) const {
-            float t; PM::vec3 collisionPoint;
+            float t; Eigen::Vector3f collisionPoint;
             bool b = intersects(ray, collisionPoint, t);
             return bpy::make_tuple(b, collisionPoint, t);
         }
 
         inline bpy::tuple intersects3_Py(const Ray& ray) const {
-            float t; PM::vec3 collisionPoint; BoundingBox::FaceSide side;
+            float t; Eigen::Vector3f collisionPoint; BoundingBox::FaceSide side;
             bool b = intersects(ray, collisionPoint, t, side);
             return bpy::make_tuple(b, collisionPoint, t, side);
         }
@@ -45,7 +45,7 @@ namespace PRPY
     {
     public:
         PlaneWrap() : Plane() {}
-		PlaneWrap(const PM::vec3& pos, const PM::vec3& xAxis, const PM::vec3& yAxis) :
+		PlaneWrap(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis) :
             Plane(pos, xAxis, yAxis) {}
 		PlaneWrap(float width, float height) :
             Plane(width, height) {}
@@ -54,12 +54,12 @@ namespace PRPY
             Plane(other) {}
 
         inline bpy::tuple intersects_Py(const Ray& ray) const {
-            PM::vec3 pos; float t, u, v;
+            Eigen::Vector3f pos; float t, u, v;
             bool b = intersects(ray, pos, t, u, v);
             return bpy::make_tuple(b, pos, t, u, v);
         }
 
-        inline bpy::tuple project_Py(const PM::vec3& p) const {
+        inline bpy::tuple project_Py(const Eigen::Vector3f& p) const {
             float u, v;
             project(p, u, v);
             return bpy::make_tuple(u, v);
@@ -70,14 +70,14 @@ namespace PRPY
     {
     public:
         SphereWrap() : Sphere() {}
-		SphereWrap(const PM::vec3& pos, float radius) :
+		SphereWrap(const Eigen::Vector3f& pos, float radius) :
             Sphere(pos, radius) {}
 
         SphereWrap(const boost::reference_wrapper<const Sphere>::type& other) :
             Sphere(other) {}
 
         inline bpy::tuple intersects_Py(const Ray& ray) const {
-            PM::vec3 pos; float t;
+            Eigen::Vector3f pos; float t;
             bool b = intersects(ray, pos, t);
             return bpy::make_tuple(b, pos, t);
         }
@@ -86,10 +86,10 @@ namespace PRPY
     void setup_geometry()
     {
         {bpy::scope scope = bpy::class_<BoundingBoxWrap>("BoundingBox")
-            .def(bpy::init<const PM::vec3&, const PM::vec3&>())
+            .def(bpy::init<const Eigen::Vector3f&, const Eigen::Vector3f&>())
             .def(bpy::init<float, float, float>())
-            .add_property("upperBound", &BoundingBox::upperBound, &BoundingBox::setUpperBound)
-            .add_property("lowerBound", &BoundingBox::lowerBound, &BoundingBox::setLowerBound)
+            .add_property("upperBound", bpy::make_function((const Eigen::Vector3f&(BoundingBox::*)()const)&BoundingBox::upperBound, bpy::return_value_policy<bpy::copy_const_reference >()), &BoundingBox::setUpperBound)
+            .add_property("lowerBound", bpy::make_function((const Eigen::Vector3f&(BoundingBox::*)()const)&BoundingBox::lowerBound, bpy::return_value_policy<bpy::copy_const_reference >()), &BoundingBox::setLowerBound)
             .add_property("center", &BoundingBox::center)
             .add_property("width", &BoundingBox::width)
             .add_property("height", &BoundingBox::height)
@@ -122,7 +122,7 @@ namespace PRPY
         }// End of scope
 
         bpy::class_<PlaneWrap>("Plane")
-            .def(bpy::init<const PM::vec3&, const PM::vec3&, const PM::vec3&>())
+            .def(bpy::init<const Eigen::Vector3f&, const Eigen::Vector3f&, const Eigen::Vector3f&>())
             .def(bpy::init<float, float>())
             .add_property("position", &Plane::position, &Plane::setPosition)
             .add_property("xAxis", &Plane::xAxis, &Plane::setXAxis)
@@ -140,7 +140,7 @@ namespace PRPY
         ;
 
         bpy::class_<SphereWrap>("Sphere")
-            .def(bpy::init<const PM::vec3&, float>())
+            .def(bpy::init<const Eigen::Vector3f&, float>())
             .add_property("position", &Sphere::position, &Sphere::setPosition)
             .add_property("radius", &Sphere::radius, &Sphere::setRadius)
             .add_property("volume", &Sphere::volume)

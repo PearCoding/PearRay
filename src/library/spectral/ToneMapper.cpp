@@ -1,7 +1,6 @@
 #include "ToneMapper.h"
 #include "Spectrum.h"
 
-#include "PearMath.h"
 #include "gpu/GPU.h"
 #include "Logger.h"
 
@@ -25,7 +24,7 @@ namespace PR
 		size_t maxSize = (size_t)std::ceil((0.4f * fullSize) /
 			(Spectrum::SAMPLING_COUNT * sizeof(float)));
 
-		mRunSize = PM::pm_Min(maxSize, size);
+		mRunSize = std::min(maxSize, size);
 		try
 		{
 			mSpecInput = cl::Buffer(gpu->context(),
@@ -79,7 +78,7 @@ namespace PR
 
 				for (size_t off = 0; off < mSize; off += mRunSize)
 				{
-					size_t current = PM::pm_Min(mSize - off, mRunSize);
+					size_t current = std::min(mSize - off, mRunSize);
 					specKernel.setArg(2, (cl_ulong)off);
 
 					queue.enqueueWriteBuffer(mSpecInput, CL_TRUE,
@@ -244,11 +243,11 @@ namespace PR
 				g = in[i*3 + 1];
 				b = in[i*3 + 2];
 
-				max = PM::pm_Max(r*r+g*g+b*b, max);
+				max = std::max(r*r+g*g+b*b, max);
 			}
 			max = std::sqrt(max);
 
-			if(max <= PM_EPSILON)
+			if(max <= PR_EPSILON)
 				break;
 
 			cl::Kernel toneKernel(mProgram, "k_tone_normalize");
@@ -315,11 +314,11 @@ namespace PR
 				g = rgbIn[i*3 + 1];
 				b = rgbIn[i*3 + 2];
 
-				invMax = PM::pm_Max(r*r+g*g+b*b, invMax);
+				invMax = std::max(r*r+g*g+b*b, invMax);
 			}
 			invMax = std::sqrt(invMax);
 
-			if(invMax <= PM_EPSILON)
+			if(invMax <= PR_EPSILON)
 				return;
 
 			invMax = 1.0f/invMax;
@@ -346,9 +345,9 @@ namespace PR
 				r *= invMax; g *= invMax; b *= invMax;
 				break;
 			case TMM_Clamp:
-				r = PM::pm_Max(std::abs(r), 0.0f);
-				g = PM::pm_Max(std::abs(g), 0.0f);
-				b = PM::pm_Max(std::abs(b), 0.0f);
+				r = std::max(std::abs(r), 0.0f);
+				g = std::max(std::abs(g), 0.0f);
+				b = std::max(std::abs(b), 0.0f);
 				break;
 			case TMM_Abs:
 				r = std::abs(r);
@@ -356,18 +355,18 @@ namespace PR
 				b = std::abs(b);
 				break;
 			case TMM_Positive:
-				r = PM::pm_Max(r, 0.0f);
-				g = PM::pm_Max(g, 0.0f);
-				b = PM::pm_Max(b, 0.0f);
+				r = std::max(r, 0.0f);
+				g = std::max(g, 0.0f);
+				b = std::max(b, 0.0f);
 				break;
 			case TMM_Negative:
-				r = PM::pm_Max(-r, 0.0f);
-				g = PM::pm_Max(-g, 0.0f);
-				b = PM::pm_Max(-b, 0.0f);
+				r = std::max(-r, 0.0f);
+				g = std::max(-g, 0.0f);
+				b = std::max(-b, 0.0f);
 				break;
 			case TMM_Spherical:
-				r = 0.5f + 0.5f * std::atan2(b, r) * PM_INV_PI_F;
-				g = 0.5f - std::asin(-g) * PM_INV_PI_F;
+				r = 0.5f + 0.5f * std::atan2(b, r) * PR_1_PI;
+				g = 0.5f - std::asin(-g) * PR_1_PI;
 				b = 0;
 				break;
 			}

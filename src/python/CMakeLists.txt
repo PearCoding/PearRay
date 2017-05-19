@@ -7,7 +7,6 @@ SET(Src
   geometry.cpp
   light.cpp
   logger.cpp
-  mat.cpp
   material.cpp
   module.cpp
   output.cpp
@@ -20,8 +19,7 @@ SET(Src
   shader.cpp
   spectral.cpp
   status.cpp
-  tonemapper.cpp
-  vec.cpp)
+  tonemapper.cpp)
 SET(Hdr )
 
 include_directories(../utils)

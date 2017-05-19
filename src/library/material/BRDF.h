@@ -1,7 +1,7 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -12,7 +12,7 @@ namespace PR
 	{
 	public:
 		static inline float orennayar(float roughness,
-			const PM::vec3 V, const PM::vec3 N, const PM::vec3 L,
+			const Eigen::Vector3f V, const Eigen::Vector3f N, const Eigen::Vector3f L,
 			float NdotV, float NdotL);
 
 		// NDF

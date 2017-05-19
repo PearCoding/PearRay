@@ -13,22 +13,22 @@ using namespace PR;
 PR_BEGIN_TESTCASE(BRDF)
 PR_TEST("Reflection")
 {
-	auto N = PM::pm_Set(0, 1, 0);
-	auto V = PM::pm_Normalize(PM::pm_Set(1, -1, 0));
+	auto N = Eigen::Vector3f(0, 1, 0);
+	auto V = Eigen::Vector3f(1, -1, 0).normalized();
 
-	auto R = Reflection::reflect(PM::pm_Dot(V, N), N, V);
+	auto R = Reflection::reflect(V.dot(N), N, V);
 
-	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(PM::pm_GetX(V), -PM::pm_GetY(V), PM::pm_GetZ(V)));
+	PR_CHECK_NEARLY_EQ(R, Eigen::Vector3f(V(0), -V(1), V(2)));
 }
 
 PR_TEST("Refraction")
 {
-	auto N = PM::pm_Set(0, 1, 0);
-	auto V = PM::pm_Normalize(PM::pm_Set(1, -1, 0));
+	auto N = Eigen::Vector3f(0, 1, 0);
+	auto V = Eigen::Vector3f(1, -1, 0).normalized();
 
-	auto R = Reflection::refract(0.9, PM::pm_Dot(V, N), N, V);
+	auto R = Reflection::refract(0.9, V.dot(N), N, V);
 
-	PR_CHECK_NEARLY_EQ(R, PM::pm_Set(0.636396, -0.771362, 0));
+	PR_CHECK_NEARLY_EQ(R, Eigen::Vector3f(0.636396, -0.771362, 0));
 }
 
 PR_TEST("Blinn NDF")

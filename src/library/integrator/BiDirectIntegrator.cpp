@@ -88,19 +88,19 @@ namespace PR
 					other_sc = light->getRandomFacePoint(sampler, i, pdf);
 
 					// Initiate with power
-					if(!other_sc.Material->isLight() || pdf <= PM_EPSILON)
+					if(!other_sc.Material->isLight() || pdf <= PR_EPSILON)
 						continue;
 
 					Spectrum flux = other_sc.Material->emission()->eval(other_sc) / pdf;
-					PM::vec3 L = Projection::tangent_align(other_sc.Ng, other_sc.Nx, other_sc.Ny,
+					Eigen::Vector3f L = Projection::tangent_align(other_sc.Ng, other_sc.Nx, other_sc.Ny,
 									Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), pdf));
-					float NdotL = std::abs(PM::pm_Dot(other_sc.Ng, L));
+					float NdotL = std::abs(other_sc.Ng.dot(L));
 
 					uint32 lightDepth = 0;// Counts diff bounces
 					lightV[0].Flux = flux;
 					lightV[0].SC = other_sc;
 
-					Ray current = Ray::safe(in.pixelX(), in.pixelY(),
+					Ray current = Ray::safe(in.pixel(),
 						other_sc.P,
 						L,
 						0,
@@ -108,7 +108,7 @@ namespace PR
 						in.flags() | RF_Light);
 
 					for (uint32 k = 1;
-						k < maxDepth && lightDepth <= maxDiffBounces && pdf > PM_EPSILON && NdotL > PM_EPSILON;
+						k < maxDepth && lightDepth <= maxDiffBounces && pdf > PR_EPSILON && NdotL > PR_EPSILON;
 					 	++k)
 					{
 						RenderEntity* entity = context->shoot(current, other_sc);
@@ -119,7 +119,7 @@ namespace PR
 								flux /= MSI::toArea(pdf, other_sc.Depth2, std::abs(other_sc.NdotV));
 
 							L = other_sc.Material->sample(other_sc, context->random().get3D(), pdf);
-							NdotL = std::abs(PM::pm_Dot(other_sc.N, L));
+							NdotL = std::abs(other_sc.N.dot(L));
 
 							flux *=	other_sc.Material->eval(other_sc, L, NdotL) * NdotL;
 
@@ -176,14 +176,14 @@ namespace PR
 			float other_pdf = 0;
 			const uint32 path_count = sc.Material->samplePathCount();
 			PR_ASSERT(path_count > 0, "path_count should be always higher than 0");
-			PM::vec3 rnd = sampler.generate3D(i);
+			Eigen::Vector3f rnd = sampler.generate3D(i);
 			for(uint32 path = 0; path < path_count && !std::isinf(other_pdf); ++path)
 			{
 				float pdf;
-				PM::vec3 L = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-				const float NdotL = std::abs(PM::pm_Dot(L, sc.N));
+				Eigen::Vector3f L = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
+				const float NdotL = std::abs(L.dot(sc.N));
 
-				if(pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
+				if(pdf <= PR_EPSILON || NdotL <= PR_EPSILON ||
 				 !(std::isinf(pdf) || diffBounces < context->renderer()->settings().maxDiffuseBounces()))
 					continue;
 
@@ -209,26 +209,26 @@ namespace PR
 				for (uint32 s = 0; s < data.LightPathLength[j]; ++s)
 				{
 					const ThreadData::EventVertex& lightV = data.LightVertices[j * maxDepth + s];
-					const auto LP = PM::pm_Subtract(sc.P, lightV.SC.P);
+					const auto LP = sc.P - lightV.SC.P;
 
-					Ray current = Ray::safe(in.pixelX(), in.pixelY(),
+					Ray current = Ray::safe(in.pixel(),
 						lightV.SC.P,
-						PM::pm_Normalize(LP),
+						LP.normalized(),
 						in.depth() + 1,
 						in.time(), in.wavelength(),
 						in.flags() | RF_Light);
 
-					const PM::vec3 L = PM::pm_Negate(current.direction());
-					const float NdotL = std::abs(PM::pm_Dot(sc.N, L));
+					const Eigen::Vector3f L = -current.direction();
+					const float NdotL = std::abs(sc.N.dot(L));
 
-					if(NdotL <= PM_EPSILON)
+					if(NdotL <= PR_EPSILON)
 						continue;
 
 					const float pdf = sc.Material->pdf(sc, L, NdotL);
 
-					if (pdf > PM_EPSILON &&
+					if (pdf > PR_EPSILON &&
 							context->shoot(current, other_sc) == entity &&
-							PM::pm_MagnitudeSqr(PM::pm_Subtract(sc.P, other_sc.P)) <= LightEpsilon)
+							(sc.P-other_sc.P).squaredNorm() <= LightEpsilon)
 						other_weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;
 					else
 						other_weight.clear();

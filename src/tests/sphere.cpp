@@ -9,30 +9,30 @@ using namespace PR;
 PR_BEGIN_TESTCASE(Sphere)
 PR_TEST("Size")
 {
-	Sphere sphere(PM::pm_Set(0,0,0), 1);
-	PR_CHECK_NEARLY_EQ(sphere.volume(), 4*PM_PI_F/3);
+	Sphere sphere(Eigen::Vector3f(0,0,0), 1);
+	PR_CHECK_NEARLY_EQ(sphere.volume(), 4*PR_PI/3);
 }
 
 PR_TEST("Intersects")
 {
-	Ray ray(0,0, PM::pm_Set(-2, 0, 0), PM::pm_Set(1, 0, 0));
-	Sphere sphere(PM::pm_Set(0, 0, 0), 1);
+	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Sphere sphere(Eigen::Vector3f(0, 0, 0), 1);
 
-	PM::vec3 collisionPoint;
+	Eigen::Vector3f collisionPoint;
 	float t;
 	sphere.intersects(ray, collisionPoint, t);
-	PR_CHECK_EQ(collisionPoint, PM::pm_Set(-1, 0, 0));
+	PR_CHECK_EQ(collisionPoint, Eigen::Vector3f(-1, 0, 0));
 }
 
 PR_TEST("Intersects Inside")
 {
-	Ray ray(0,0, PM::pm_Set(0, 0, 0), PM::pm_Set(1, 0, 0));
-	Sphere sphere(PM::pm_Set(0, 0, 0), 1);
+	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Sphere sphere(Eigen::Vector3f(0, 0, 0), 1);
 
-	PM::vec3 collisionPoint;
+	Eigen::Vector3f collisionPoint;
 	float t;
 	sphere.intersects(ray, collisionPoint, t);
-	PR_CHECK_EQ(collisionPoint, PM::pm_Set(1, 0, 0));
+	PR_CHECK_EQ(collisionPoint, Eigen::Vector3f(1, 0, 0));
 }
 
 PR_END_TESTCASE()

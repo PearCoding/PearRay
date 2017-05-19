@@ -8,7 +8,7 @@ namespace PR
 	StandardCamera::StandardCamera(uint32 id, const std::string& name) :
 		Camera(id, name), mOrthographic(false), mWidth(1), mHeight(1),
 		mFStop(0), mApertureRadius(0.05f),
-		mLocalDirection(PM::pm_Set(0,0,1)), mLocalRight(PM::pm_Set(1,0,0)), mLocalUp(PM::pm_Set(0,1,0))
+		mLocalDirection(0,0,1), mLocalRight(1,0,0), mLocalUp(0,1,0)
 	{
 	}
 
@@ -33,8 +33,8 @@ namespace PR
 
 	void StandardCamera::setWithAngle(float foh, float fov)
 	{
-		mWidth = 2 * tan(foh / 2);
-		mHeight = 2 * tan(fov / 2);
+		mWidth = 2 * std::tan(foh / 2);
+		mHeight = 2 * std::tan(fov / 2);
 	}
 
 	void StandardCamera::setWithSize(float width, float height)
@@ -68,32 +68,32 @@ namespace PR
 		mFStop = f;
 	}
 
-	void StandardCamera::setLocalDirection(const PM::vec3& d)
+	void StandardCamera::setLocalDirection(const Eigen::Vector3f& d)
 	{
 		mLocalDirection = d;
 	}
 
-	PM::vec3 StandardCamera::localDirection() const
+	Eigen::Vector3f StandardCamera::localDirection() const
 	{
 		return mLocalDirection;
 	}
 
-	void StandardCamera::setLocalRight(const PM::vec3& d)
+	void StandardCamera::setLocalRight(const Eigen::Vector3f& d)
 	{
 		mLocalRight = d;
 	}
 
-	PM::vec3 StandardCamera::localRight() const
+	Eigen::Vector3f StandardCamera::localRight() const
 	{
 		return mLocalRight;
 	}
 
-	void StandardCamera::setLocalUp(const PM::vec3& d)
+	void StandardCamera::setLocalUp(const Eigen::Vector3f& d)
 	{
 		mLocalUp = d;
 	}
 
-	PM::vec3 StandardCamera::localUp() const
+	Eigen::Vector3f StandardCamera::localUp() const
 	{
 		return mLocalUp;
 	}
@@ -124,37 +124,33 @@ namespace PR
 
 		if (mOrthographic)
 		{
-			return Ray(0,0,
-					PM::pm_Add(position(),
-						PM::pm_Add(PM::pm_Scale(mRight_Cache, nx), PM::pm_Scale(mUp_Cache, ny))),
+			return Ray(Eigen::Vector2i(0,0),
+					position() + mRight_Cache * nx + mUp_Cache * ny,
 					mDirection_Cache,
 					0,t,wavelength);
 		}
 		else
 		{
-			PM::vec3 viewPlane = PM::pm_Add(
-					PM::pm_Add(PM::pm_Scale(mRight_Cache, nx),
-						PM::pm_Scale(mUp_Cache, ny)),
-					mFocalDistance_Cache);
+			Eigen::Vector3f viewPlane = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
 
 			if (mHasDOF_Cache)
 			{
-				float s, c;
-				PM::pm_SinCos(PM_2_PI_F * rx, s, c);
-				PM::vec3 eyePoint = PM::pm_Add(PM::pm_Scale(mXApertureRadius_Cache, ry*s),
-					PM::pm_Scale(mYApertureRadius_Cache, ry*c));
-				PM::vec3 rayDir = PM::pm_QualityNormalize(PM::pm_Subtract(viewPlane, eyePoint));
+				float s = std::sin(2*PR_PI*rx);
+				float c = std::cos(2*PR_PI*rx);
+				Eigen::Vector3f eyePoint = mXApertureRadius_Cache*ry*s+
+					mYApertureRadius_Cache*ry*c;
+				Eigen::Vector3f rayDir = (viewPlane-eyePoint).normalized();
 
-				return Ray(0,0, // Will be set by render context
-					PM::pm_Add(position(), eyePoint),
+				return Ray(Eigen::Vector2i(0,0), // Will be set by render context
+					position()+eyePoint,
 					rayDir,
 					0,t,wavelength);
 			}
 			else
 			{
-				return Ray(0,0, // Will be set by render context
+				return Ray(Eigen::Vector2i(0,0), // Will be set by render context
 					position(),
-					PM::pm_QualityNormalize(viewPlane),
+					viewPlane.normalized(),
 					0,t,wavelength);
 			}
 		}
@@ -167,42 +163,39 @@ namespace PR
 
 		Camera::onFreeze();
 
-		mDirection_Cache = PM::pm_QualityNormalize(
-			PM::pm_Transform(directionMatrix(), mLocalDirection));
-		mRight_Cache = PM::pm_QualityNormalize(
-			PM::pm_Transform(directionMatrix(), mLocalRight));
-		mUp_Cache = PM::pm_QualityNormalize(
-			PM::pm_Transform(directionMatrix(), mLocalUp));
+		mDirection_Cache = (directionMatrix()*mLocalDirection).normalized();
+		mRight_Cache = (directionMatrix()*mLocalRight).normalized();
+		mUp_Cache = (directionMatrix()*mLocalUp).normalized();
 
 		PR_LOGGER.logf(L_Info, M_Camera,"%s: Dir[%.3f,%.3f,%.3f] Right[%.3f,%.3f,%.3f] Up[%.3f,%.3f,%.3f]",
 			name().c_str(),
-			PM::pm_GetX(mDirection_Cache), PM::pm_GetY(mDirection_Cache), PM::pm_GetZ(mDirection_Cache),
-			PM::pm_GetX(mRight_Cache), PM::pm_GetY(mRight_Cache), PM::pm_GetZ(mRight_Cache),
-			PM::pm_GetX(mUp_Cache), PM::pm_GetY(mUp_Cache), PM::pm_GetZ(mUp_Cache));
+			mDirection_Cache(0), mDirection_Cache(1), mDirection_Cache(2),
+			mRight_Cache(0), mRight_Cache(1), mRight_Cache(2),
+			mUp_Cache(0), mUp_Cache(1), mUp_Cache(2));
 
-		if (mOrthographic || std::abs(mFStop) <= PM_EPSILON || mApertureRadius <= PM_EPSILON)// No depth of field
+		if (mOrthographic || std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON)// No depth of field
 		{
 			mFocalDistance_Cache = mDirection_Cache;
-			mXApertureRadius_Cache = PM::pm_Zero3D();
-			mYApertureRadius_Cache = PM::pm_Zero3D();
-			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth);
-			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight);
+			mXApertureRadius_Cache = Eigen::Vector3f(0,0,0);
+			mYApertureRadius_Cache = Eigen::Vector3f(0,0,0);
+			mRight_Cache *= 0.5f*mWidth;
+			mUp_Cache *= 0.5f*mHeight;
 			mHasDOF_Cache = false;
 		}
 		else
 		{
-			mFocalDistance_Cache = PM::pm_Scale(mDirection_Cache, mFStop+1);
-			mXApertureRadius_Cache = PM::pm_Scale(mRight_Cache, mApertureRadius);
-			mYApertureRadius_Cache = PM::pm_Scale(mUp_Cache, mApertureRadius);
-			mRight_Cache = PM::pm_Scale(mRight_Cache, 0.5f*mWidth*(mFStop+1));
-			mUp_Cache = PM::pm_Scale(mUp_Cache, 0.5f*mHeight*(mFStop+1));
+			mFocalDistance_Cache = mDirection_Cache*(mFStop+1);
+			mXApertureRadius_Cache = mRight_Cache*mApertureRadius;
+			mYApertureRadius_Cache = mUp_Cache*mApertureRadius;
+			mRight_Cache *= 0.5f*mWidth*(mFStop+1);
+			mUp_Cache *= 0.5f*mHeight*(mFStop+1);
 			mHasDOF_Cache = true;
 
 			PR_LOGGER.logf(L_Info, M_Camera,"    FocalDistance[%.3f,%.3f,%.3f] XAperature[%.3f,%.3f,%.3f] YAperature[%.3f,%.3f,%.3f]",
 				name().c_str(),
-				PM::pm_GetX(mFocalDistance_Cache), PM::pm_GetY(mFocalDistance_Cache), PM::pm_GetZ(mFocalDistance_Cache),
-				PM::pm_GetX(mXApertureRadius_Cache), PM::pm_GetY(mXApertureRadius_Cache), PM::pm_GetZ(mXApertureRadius_Cache),
-				PM::pm_GetX(mYApertureRadius_Cache), PM::pm_GetY(mYApertureRadius_Cache), PM::pm_GetZ(mYApertureRadius_Cache));
+				mFocalDistance_Cache(0), mFocalDistance_Cache(1), mFocalDistance_Cache(2),
+				mXApertureRadius_Cache(0), mXApertureRadius_Cache(1), mXApertureRadius_Cache(2),
+				mYApertureRadius_Cache(0), mYApertureRadius_Cache(1), mYApertureRadius_Cache(2));
 		}
 	}
 }

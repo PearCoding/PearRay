@@ -11,12 +11,12 @@ namespace PR
 		DistantLight();
 		virtual ~DistantLight();
 
-		inline void setDirection(const PM::vec3& dir)
+		inline void setDirection(const Eigen::Vector3f& dir)
 		{
 			mDirection = dir;
 		}
 
-		inline PM::vec3 direction() const
+		inline Eigen::Vector3f direction() const
 		{
 			return mDirection;
 		}
@@ -31,16 +31,16 @@ namespace PR
 			return mMaterial;
 		}
 
-		PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override;
-		Spectrum apply(const PM::vec3& V) override;
+		Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
+		Spectrum apply(const Eigen::Vector3f& V) override;
 
 		void onFreeze() override;
 	private:
-		PM::vec3 mDirection;
+		Eigen::Vector3f mDirection;
 		std::shared_ptr<Material> mMaterial;
 
-		PM::vec3 mSampleDirection_Cache;
-		PM::vec3 mRight_Cache;
-		PM::vec3 mUp_Cache;
+		Eigen::Vector3f mSampleDirection_Cache;
+		Eigen::Vector3f mRight_Cache;
+		Eigen::Vector3f mUp_Cache;
 	};
 }

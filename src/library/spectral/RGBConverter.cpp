@@ -1,8 +1,6 @@
 #include "RGBConverter.h"
 #include "XYZConverter.h"
 
-#include "PearMath.h"
-
 #include "Diagnosis.h"
 
 namespace PR
@@ -27,9 +25,9 @@ namespace PR
 		g = -9.692436e-01*x +1.875968e+00*y +4.155506e-02*z;
 		b =  5.563008e-02*x -2.039770e-01*y +1.056972e+00*z;
 
-		r = PM::pm_Max(0.0f, r);
-		g = PM::pm_Max(0.0f, g);
-		b = PM::pm_Max(0.0f, b);
+		r = std::max(0.0f, r);
+		g = std::max(0.0f, g);
+		b = std::max(0.0f, b);
 	}
 
 	float RGBConverter::luminance(float r, float g, float b)

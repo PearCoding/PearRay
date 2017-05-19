@@ -4,7 +4,6 @@
 #include "renderer/RenderTile.h"
 
 #include "spectral/ToneMapper.h"
-#include "PearMath.h"
 
 #include "Logger.h"
 
@@ -189,7 +188,7 @@ void ViewWidget::mousePressEvent(QMouseEvent * event)
 				p.y() >= mRenderer->offsetY() && p.y() < mRenderer->offsetY() + mRenderer->height())
 			{
 				emit spectrumSelected(
-					mRenderer->output()->getSpectralChannel()->getFragment(p.x(), p.y()));
+					mRenderer->output()->getSpectralChannel()->getFragment(Eigen::Vector2i(p.x(), p.y())));
 			}
 		}
 		else if (mToolMode == TM_Pan)
@@ -420,10 +419,10 @@ void ViewWidget::refreshView()
 				{
 					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
 					{
-						const PM::vec3& a = channel->ptr()[i];
-						mRenderData[i*3] = PM::pm_GetX(a);
-						mRenderData[i*3+1] = PM::pm_GetY(a);
-						mRenderData[i*3+2] = PM::pm_GetZ(a);
+						const Eigen::Vector3f& a = channel->ptr()[i];
+						mRenderData[i*3] = a(0);
+						mRenderData[i*3+1] = a(1);
+						mRenderData[i*3+2] = a(2);
 					}
 
 					mToneMapper->mapOnlyMapper(mRenderData, mRenderData);

@@ -140,12 +140,12 @@ namespace PR
 				for(uint32 x = 0; x < rw; ++x)
 				{
 					invMax3d[sett.Variable] =
-						PM::pm_Max(invMax3d[sett.Variable],
-							PM::pm_MagnitudeSqr(channel->getFragmentBounded(x,y)));
+						std::max(invMax3d[sett.Variable],
+							channel->getFragmentBounded(Eigen::Vector2i(x,y)).squaredNorm());
 				}
 			}
 
-			if(invMax3d[sett.Variable] > PM_EPSILON)
+			if(invMax3d[sett.Variable] > PR_EPSILON)
 				invMax3d[sett.Variable] = 1.0f / std::sqrt(invMax3d[sett.Variable]);
 		}
 
@@ -159,12 +159,12 @@ namespace PR
 			{
 				for(uint32 x = 0; x < rw; ++x)
 				{
-					invMax1d[sett.Variable] =
-						PM::pm_Max(invMax1d[sett.Variable], channel->getFragmentBounded(x,y));
+					invMax1d[sett.Variable] = std::max(invMax1d[sett.Variable],
+						channel->getFragmentBounded(Eigen::Vector2i(x,y)));
 				}
 			}
 
-			if(invMax1d[sett.Variable] > PM_EPSILON)
+			if(invMax1d[sett.Variable] > PR_EPSILON)
 				invMax1d[sett.Variable] = 1.0f / invMax1d[sett.Variable];
 		}
 
@@ -178,12 +178,12 @@ namespace PR
 			{
 				for(uint32 x = 0; x < rw; ++x)
 				{
-					invMaxCounter[sett.Variable] =
-						PM::pm_Max<uint64>(invMaxCounter[sett.Variable], channel->getFragmentBounded(x,y));
+					invMaxCounter[sett.Variable] = std::max<uint64>(invMaxCounter[sett.Variable],
+						channel->getFragmentBounded(Eigen::Vector2i(x,y)));
 				}
 			}
 
-			if(invMaxCounter[sett.Variable] > PM_EPSILON)
+			if(invMaxCounter[sett.Variable] > PR_EPSILON)
 				invMaxCounter[sett.Variable] = 1.0f / invMaxCounter[sett.Variable];
 		}
 
@@ -218,11 +218,11 @@ namespace PR
 					const auto& channel = mRenderer->output()->getChannel(sett.Variable);
 					if(channel)
 					{
-						const PM::vec3& a = channel->ptr()[id1d];
+						const Eigen::Vector3f& a = channel->ptr()[id1d];
 
-						float r = PM::pm_GetX(a);
-						float g = PM::pm_GetY(a);
-						float b = PM::pm_GetZ(a);
+						float r = a(0);
+						float g = a(1);
+						float b = a(2);
 						switch(sett.TMM)
 						{
 						case TMM_None:
@@ -232,9 +232,9 @@ namespace PR
 							r *= invMax3d[sett.Variable]; g *= invMax3d[sett.Variable]; b *= invMax3d[sett.Variable];
 							break;
 						case TMM_Clamp:
-							r = PM::pm_Max(std::abs(r), 0.0f);
-							g = PM::pm_Max(std::abs(g), 0.0f);
-							b = PM::pm_Max(std::abs(b), 0.0f);
+							r = std::max(std::abs(r), 0.0f);
+							g = std::max(std::abs(g), 0.0f);
+							b = std::max(std::abs(b), 0.0f);
 							break;
 						case TMM_Abs:
 							r = std::abs(r);
@@ -242,18 +242,18 @@ namespace PR
 							b = std::abs(b);
 							break;
 						case TMM_Positive:
-							r = PM::pm_Max(r, 0.0f);
-							g = PM::pm_Max(g, 0.0f);
-							b = PM::pm_Max(b, 0.0f);
+							r = std::max(r, 0.0f);
+							g = std::max(g, 0.0f);
+							b = std::max(b, 0.0f);
 							break;
 						case TMM_Negative:
-							r = PM::pm_Max(-r, 0.0f);
-							g = PM::pm_Max(-g, 0.0f);
-							b = PM::pm_Max(-b, 0.0f);
+							r = std::max(-r, 0.0f);
+							g = std::max(-g, 0.0f);
+							b = std::max(-b, 0.0f);
 							break;
 						case TMM_Spherical:
-							r = 0.5f + 0.5f * std::atan2(b, r) * PM_INV_PI_F;
-							g = 0.5f - std::asin(-g) * PM_INV_PI_F;
+							r = 0.5f + 0.5f * std::atan2(b, r) * PR_1_PI;
+							g = 0.5f - std::asin(-g) * PR_1_PI;
 							b = 0;
 							break;
 						}
@@ -282,16 +282,16 @@ namespace PR
 							r *= invMax1d[sett.Variable];
 							break;
 						case TMM_Clamp:
-							r = PM::pm_Max(std::abs(r), 0.0f);
+							r = std::max(std::abs(r), 0.0f);
 							break;
 						case TMM_Abs:
 							r = std::abs(r);
 							break;
 						case TMM_Positive:
-							r = PM::pm_Max(r, 0.0f);
+							r = std::max(r, 0.0f);
 							break;
 						case TMM_Negative:
-							r = PM::pm_Max(-r, 0.0f);
+							r = std::max(-r, 0.0f);
 							break;
 						}
 

@@ -209,7 +209,7 @@ namespace PR
 							if ((!ignoreCallback || ignoreCallback(entity)) &&
 								mCheckCollision(ray, tmpCollisionPoint, entity))
 							{
-								l = PM::pm_MagnitudeSqr(PM::pm_Subtract(tmpCollisionPoint.P, ray.startPosition()));
+								l = (tmpCollisionPoint.P-ray.startPosition()).squaredNorm();
 								if(l < t)
 								{
 									t = l;
@@ -324,7 +324,7 @@ namespace PR
 
 		static inline float probability(const BoundingBox& VI, const BoundingBox& V)
 		{
-			PR_ASSERT(V.surfaceArea() > PM_EPSILON, "Surface area should be greater than zero");
+			PR_ASSERT(V.surfaceArea() > PR_EPSILON, "Surface area should be greater than zero");
 			return VI.surfaceArea() / V.surfaceArea();
 		}
 
@@ -332,19 +332,20 @@ namespace PR
 		{
 			VL = V;
 			VR = V;
-			VL.setUpperBound(PM::pm_SetIndex(VL.upperBound(), dim, v));
-			VR.setLowerBound(PM::pm_SetIndex(VR.lowerBound(), dim, v));
+
+			VL.upperBound()(dim) = v;
+			VR.lowerBound()(dim) = v;
 		}
 
 		static inline void clipBox(BoundingBox& VI, const BoundingBox& V)
 		{
 			for (int i = 0; i < 3; i++)
 			{
-				if (PM::pm_GetIndex(VI.lowerBound(), i) < PM::pm_GetIndex(V.lowerBound(), i))
-					VI.setLowerBound(PM::pm_SetIndex(VI.lowerBound(), i, PM::pm_GetIndex(V.lowerBound(), i)));
+				if (VI.lowerBound()(i) < V.lowerBound()(i))
+					VI.lowerBound()(i) = V.lowerBound()(i);
 
-				if (PM::pm_GetIndex(VI.upperBound(), i) > PM::pm_GetIndex(V.upperBound(), i))
-					VI.setUpperBound(PM::pm_SetIndex(VI.upperBound(), i, PM::pm_GetIndex(V.upperBound(), i)));
+				if (VI.upperBound()(i) > V.upperBound()(i))
+					VI.upperBound()(i) = V.upperBound()(i);
 			}
 		}
 
@@ -353,14 +354,14 @@ namespace PR
 		{
 			c = std::numeric_limits<float>::infinity();
 
-			if (V.surfaceArea() <= PM_EPSILON)
+			if (V.surfaceArea() <= PR_EPSILON)
 				return;
 
 			splitBox(V, dim, v, vl, vr);
 			float pl = probability(vl, V);
 			float pr = probability(vr, V);
 
-			if (pl <= PM_EPSILON || pr <= PM_EPSILON)
+			if (pl <= PR_EPSILON || pr <= PR_EPSILON)
 				return;
 
 			float cl = cost(costIntersection, pl, pr, nl + np, nr);
@@ -420,18 +421,18 @@ namespace PR
 			clipBox(box, V);
 			if (box.isPlanar())
 			{
-				events.push_back(Event(p, 0, PM::pm_GetIndex(box.lowerBound(), 0), ET_OnPlane));
-				events.push_back(Event(p, 1, PM::pm_GetIndex(box.lowerBound(), 1), ET_OnPlane));
-				events.push_back(Event(p, 2, PM::pm_GetIndex(box.lowerBound(), 2), ET_OnPlane));
+				events.push_back(Event(p, 0, box.lowerBound()(0), ET_OnPlane));
+				events.push_back(Event(p, 1, box.lowerBound()(1), ET_OnPlane));
+				events.push_back(Event(p, 2, box.lowerBound()(2), ET_OnPlane));
 			}
 			else
 			{
-				events.push_back(Event(p, 0, PM::pm_GetIndex(box.lowerBound(), 0), ET_StartOnPlane));
-				events.push_back(Event(p, 1, PM::pm_GetIndex(box.lowerBound(), 1), ET_StartOnPlane));
-				events.push_back(Event(p, 2, PM::pm_GetIndex(box.lowerBound(), 2), ET_StartOnPlane));
-				events.push_back(Event(p, 0, PM::pm_GetIndex(box.upperBound(), 0), ET_EndOnPlane));
-				events.push_back(Event(p, 1, PM::pm_GetIndex(box.upperBound(), 1), ET_EndOnPlane));
-				events.push_back(Event(p, 2, PM::pm_GetIndex(box.upperBound(), 2), ET_EndOnPlane));
+				events.push_back(Event(p, 0, box.lowerBound()(0), ET_StartOnPlane));
+				events.push_back(Event(p, 1, box.lowerBound()(1), ET_StartOnPlane));
+				events.push_back(Event(p, 2, box.lowerBound()(2), ET_StartOnPlane));
+				events.push_back(Event(p, 0, box.upperBound()(0), ET_EndOnPlane));
+				events.push_back(Event(p, 1, box.upperBound()(1), ET_EndOnPlane));
+				events.push_back(Event(p, 2, box.upperBound()(2), ET_EndOnPlane));
 			}
 		}
 
@@ -455,21 +456,21 @@ namespace PR
 				size_t endOnPlane = 0;
 
 				while (j < events.size() && events[j].dim == dim &&
-					std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_EndOnPlane)
+					std::abs(events[j].v - v) <= PR_EPSILON && events[j].type == ET_EndOnPlane)
 				{
 					++endOnPlane;
 					++j;
 				}
 
 				while (j < events.size() && events[j].dim == dim &&
-					std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_OnPlane)
+					std::abs(events[j].v - v) <= PR_EPSILON && events[j].type == ET_OnPlane)
 				{
 					++onPlane;
 					++j;
 				}
 
 				while (j < events.size() && events[j].dim == dim &&
-					std::abs(events[j].v - v) <= PM_EPSILON && events[j].type == ET_StartOnPlane)
+					std::abs(events[j].v - v) <= PR_EPSILON && events[j].type == ET_StartOnPlane)
 				{
 					++startOnPlane;
 					++j;
@@ -505,10 +506,10 @@ namespace PR
 			for (auto obj : objs)
 			{
 				BoundingBox box = obj->box;
-				float low = PM::pm_GetIndex(box.lowerBound(), dim);
-				float up = PM::pm_GetIndex(box.upperBound(), dim);
-				if (std::abs(low - v) <= PM_EPSILON &&
-					std::abs(up - v) <= PM_EPSILON)
+				float low = box.lowerBound()(dim);
+				float up = box.upperBound()(dim);
+				if (std::abs(low - v) <= PR_EPSILON &&
+					std::abs(up - v) <= PR_EPSILON)
 				{
 					if (side == SP_Left)
 						left.push_back(obj);
@@ -542,9 +543,9 @@ namespace PR
 					e.primitive->side = S_Right;
 				else if (e.type == ET_OnPlane && e.dim == dim)
 				{
-					if (e.v < v || (std::abs(e.v - v) <= PM_EPSILON && side == SP_Left))
+					if (e.v < v || (std::abs(e.v - v) <= PR_EPSILON && side == SP_Left))
 						e.primitive->side = S_Left;
-					if (e.v > v || (std::abs(e.v - v) <= PM_EPSILON && side == SP_Right))
+					if (e.v > v || (std::abs(e.v - v) <= PR_EPSILON && side == SP_Right))
 						e.primitive->side = S_Right;
 				}
 			}
@@ -590,7 +591,7 @@ namespace PR
 
 			if (c > objs.size()*costIntersection ||
 				depth > PR_KDTREE_MAX_DEPTH ||
-				(prev_dim == dim && std::abs(prev_v - v) <= PM_EPSILON))
+				(prev_dim == dim && std::abs(prev_v - v) <= PR_EPSILON))
 			{
 				auto leaf = new kdLeafNode(V);
 				for (auto obj : objs)

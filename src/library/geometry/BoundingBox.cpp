@@ -10,58 +10,54 @@
 namespace PR
 {
 	BoundingBox::BoundingBox() :
-		mUpperBound(PM::pm_Set(0, 0, 0)), mLowerBound(PM::pm_Set(0, 0, 0))
+		 mBox()
 	{
 	}
 
-	constexpr float BIAS = 0.00001f;
-	BoundingBox::BoundingBox(const PM::vec3& upperbound, const PM::vec3& lowerbound):
-		mUpperBound(PM::pm_Max(upperbound, lowerbound)),
-		mLowerBound(PM::pm_Min(upperbound, lowerbound))
+	BoundingBox::BoundingBox(const Eigen::Vector3f& upperbound, const Eigen::Vector3f& lowerbound):
+		 mBox(lowerbound, upperbound)
 	{
 	}
 
 	BoundingBox::BoundingBox(float width, float height, float depth) :
-		mUpperBound(PM::pm_Set(width/2, height/2, depth/2)),
-		mLowerBound(PM::pm_Set(-width/2, -height/2, -depth/2))
+		mBox(Eigen::Vector3f(-width/2, -height/2, -depth/2),
+			Eigen::Vector3f(width/2, height/2, depth/2))
 	{
-		PR_ASSERT(width > PM_EPSILON, "width has to be greater than 0");
-		PR_ASSERT(height > PM_EPSILON, "height has to be greater than 0");
-		PR_ASSERT(depth > PM_EPSILON, "depth has to be greater than 0");
+		PR_ASSERT(width > PR_EPSILON, "width has to be greater than 0");
+		PR_ASSERT(height > PR_EPSILON, "height has to be greater than 0");
+		PR_ASSERT(depth > PR_EPSILON, "depth has to be greater than 0");
 	}
 
 	bool BoundingBox::intersects(const Ray& ray, float& t) const
 	{
 		PR_GUARD_PROFILE();
 
-		PM::vec3 vmin = PM::pm_Divide(PM::pm_Subtract(mLowerBound, ray.startPosition()),
-						ray.direction());
-		PM::vec3 vmax = PM::pm_Divide(PM::pm_Subtract(mUpperBound, ray.startPosition()),
-						ray.direction());
+		const Eigen::Vector3f idir = ray.direction().cwiseInverse();
+		const Eigen::Vector3f vmin = (lowerBound() - ray.startPosition()).cwiseProduct(idir);
+		const Eigen::Vector3f vmax = (upperBound() - ray.startPosition()).cwiseProduct(idir);
 
-		float tmin = PM::pm_MaxElement(PM::pm_Min(vmin, vmax));
-		float tmax = PM::pm_MinElement(PM::pm_Max(vmin, vmax));
+		const float tmin = vmin.array().min(vmax.array()).maxCoeff();
+		const float tmax = vmin.array().max(vmax.array()).minCoeff();
 
 		t = tmin <= 0 ? tmax : tmin;
-		return tmax >= tmin && t > PM_EPSILON;
+		return tmax >= tmin && t > PR_EPSILON;
 	}
 
-	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const
+	bool BoundingBox::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const
 	{
 		PR_GUARD_PROFILE();
 
-		PM::vec3 vmin = PM::pm_Divide(PM::pm_Subtract(mLowerBound, ray.startPosition()),
-						ray.direction());
-		PM::vec3 vmax = PM::pm_Divide(PM::pm_Subtract(mUpperBound, ray.startPosition()),
-						ray.direction());
+		const Eigen::Vector3f idir = ray.direction().cwiseInverse();
+		const Eigen::Vector3f vmin = (lowerBound() - ray.startPosition()).cwiseProduct(idir);
+		const Eigen::Vector3f vmax = (upperBound() - ray.startPosition()).cwiseProduct(idir);
 
-		float tmin = PM::pm_MaxElement(PM::pm_Min(vmin, vmax));
-		float tmax = PM::pm_MinElement(PM::pm_Max(vmin, vmax));
+		const float tmin = vmin.array().min(vmax.array()).maxCoeff();
+		const float tmax = vmin.array().max(vmax.array()).minCoeff();
 
 		t = tmin <= 0 ? tmax : tmin;
-		if (tmax >= tmin && t > PM_EPSILON)
+		if (tmax >= tmin && t > PR_EPSILON)
 		{
-			collisionPoint = PM::pm_Add(ray.startPosition(), PM::pm_Scale(ray.direction(), t));
+			collisionPoint = ray.startPosition() + ray.direction() * t;
 			return true;
 		}
 		else
@@ -70,44 +66,44 @@ namespace PR
 		}
 	}
 
-	bool BoundingBox::intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, FaceSide& side) const
+	bool BoundingBox::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, FaceSide& side) const
 	{
 		PR_GUARD_PROFILE();
 
 		if (!intersects(ray, collisionPoint, t))
 			return false;
 
-		PM::vec3 minDist = PM::pm_Abs(PM::pm_Subtract(collisionPoint, mLowerBound));
-		PM::vec3 maxDist = PM::pm_Abs(PM::pm_Subtract(collisionPoint, mUpperBound));
+		Eigen::Vector3f minDist = (collisionPoint - lowerBound()).cwiseAbs();
+		Eigen::Vector3f maxDist = (collisionPoint - upperBound()).cwiseAbs();
 
 		side = FS_Left;
-		float f = PM::pm_GetX(minDist);
+		float f = minDist(0);
 
-		if (PM::pm_GetX(maxDist) < f)
+		if (maxDist(0) < f)
 		{
 			side = FS_Right;
-			f = PM::pm_GetX(maxDist);
+			f = maxDist(0);
 		}
 
-		if (PM::pm_GetY(minDist) < f)
+		if (minDist(1) < f)
 		{
 			side = FS_Bottom;
-			f = PM::pm_GetY(minDist);
+			f = minDist(1);
 		}
 
-		if (PM::pm_GetY(maxDist) < f)
+		if (maxDist(1) < f)
 		{
 			side = FS_Top;
-			f = PM::pm_GetY(maxDist);
+			f = maxDist(1);
 		}
 
-		if (PM::pm_GetZ(minDist) < f)
+		if (minDist(2) < f)
 		{
 			side = FS_Front;
-			f = PM::pm_GetZ(minDist);
+			f = minDist(2);
 		}
 
-		if (PM::pm_GetZ(maxDist) < f)
+		if (maxDist(2) < f)
 		{
 			side = FS_Back;
 			//f = PM::pm_GetZ(maxDist);
@@ -116,51 +112,39 @@ namespace PR
 		return true;
 	}
 
-	void BoundingBox::put(const PM::vec3& point)
-	{
-		mUpperBound = PM::pm_Max(mUpperBound, point);
-		mLowerBound = PM::pm_Min(mLowerBound, point);
-	}
-
-	void BoundingBox::combine(const BoundingBox& other)
-	{
-		put(other.upperBound());
-		put(other.lowerBound());
-	}
-
 	Plane BoundingBox::getFace(FaceSide side) const
 	{
 		PR_GUARD_PROFILE();
 
-		PM::vec3 diff = PM::pm_Subtract(mUpperBound, mLowerBound);
+		Eigen::Vector3f diff = upperBound() - lowerBound();
 
 		switch (side)
 		{
 		default:
 		case FS_Front:
-			return Plane(mLowerBound,
-				PM::pm_Set(PM::pm_GetX(diff), 0, 0),
-				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+			return Plane(lowerBound(),
+				Eigen::Vector3f(diff(0), 0, 0),
+				Eigen::Vector3f(0, diff(1), 0));
 		case FS_Back:
-			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mUpperBound)),
-				PM::pm_Set(-PM::pm_GetX(diff), 0, 0),
-				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+			return Plane(Eigen::Vector3f(upperBound()(0), lowerBound()(1), upperBound()(2)),
+				Eigen::Vector3f(-diff(0), 0, 0),
+				Eigen::Vector3f(0, diff(1), 0));
 		case FS_Left:
-			return Plane(PM::pm_Set(PM::pm_GetX(mLowerBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mUpperBound)),
-				PM::pm_Set(0, 0, -PM::pm_GetZ(diff)),
-				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+			return Plane(Eigen::Vector3f(lowerBound()(0), lowerBound()(1), upperBound()(2)),
+				Eigen::Vector3f(0, 0, -diff(2)),
+				Eigen::Vector3f(0, diff(1), 0));
 		case FS_Right:
-			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mLowerBound)),
-				PM::pm_Set(0, 0, PM::pm_GetZ(diff)),
-				PM::pm_Set(0, PM::pm_GetY(diff), 0));
+			return Plane(Eigen::Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
+				Eigen::Vector3f(0, 0, diff(2)),
+				Eigen::Vector3f(0, diff(1), 0));
 		case FS_Top:
-			return Plane(PM::pm_Set(PM::pm_GetX(mLowerBound), PM::pm_GetY(mUpperBound), PM::pm_GetZ(mLowerBound)),
-				PM::pm_Set(PM::pm_GetX(diff), 0,0),
-				PM::pm_Set(0, 0, PM::pm_GetZ(diff)));
+			return Plane(Eigen::Vector3f(lowerBound()(0), upperBound()(1), lowerBound()(2)),
+				Eigen::Vector3f(diff(0), 0,0),
+				Eigen::Vector3f(0, 0, diff(2)));
 		case FS_Bottom:
-			return Plane(PM::pm_Set(PM::pm_GetX(mUpperBound), PM::pm_GetY(mLowerBound), PM::pm_GetZ(mLowerBound)),
-				PM::pm_Set(-PM::pm_GetX(diff), 0,0),
-				PM::pm_Set(0, 0, PM::pm_GetZ(diff)));
+			return Plane(Eigen::Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
+				Eigen::Vector3f(-diff(0), 0,0),
+				Eigen::Vector3f(0, 0, diff(2)));
 		}
 	}
 }

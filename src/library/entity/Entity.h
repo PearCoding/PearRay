@@ -1,7 +1,8 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 #include <string>
 
@@ -31,21 +32,21 @@ namespace PR
 		inline void setFlags(uint8 f);
 		inline uint8 flags() const;
 
-		inline void setPosition(const PM::vec3& pos);
-		inline PM::vec3 position() const;
+		inline void setPosition(const Eigen::Vector3f& pos);
+		inline Eigen::Vector3f position() const;
 
-		inline void setScale(const PM::vec3& s);
-		inline PM::vec3 scale() const;
+		inline void setScale(const Eigen::Vector3f& s);
+		inline Eigen::Vector3f scale() const;
 
-		inline void setRotation(const PM::quat& quat);
-		inline PM::quat rotation() const;
+		inline void setRotation(const Eigen::Quaternionf& quat);
+		inline Eigen::Quaternionf rotation() const;
 
-		inline PM::mat4 matrix() const;
-		inline PM::mat4 invMatrix() const;
+		inline const Eigen::Affine3f& transform() const;
+		inline const Eigen::Affine3f& invTransform() const;
 
 		/* Matrix to be used by directions/normals */
-		inline PM::mat4 directionMatrix() const;
-		inline PM::mat4 invDirectionMatrix() const;
+		inline const Eigen::Matrix3f& directionMatrix() const;
+		inline const Eigen::Matrix3f& invDirectionMatrix() const;
 
 		virtual std::string toString() const;
 
@@ -64,15 +65,17 @@ namespace PR
 		uint32 mID;
 		uint8 mFlags;
 
-		PM::vec3 mPosition;
-		PM::vec3 mScale;
-		PM::quat mRotation;
+		Eigen::Vector3f mPosition;
+		Eigen::Vector3f mScale;
+		Eigen::Quaternionf mRotation;
 
 		bool mFrozen;
 
 		mutable bool mReCache;
-		mutable PM::mat4 mMatrixCache;
-		mutable PM::mat4 mInvMatrixCache;
+		mutable Eigen::Affine3f mTransformCache;
+		mutable Eigen::Affine3f mInvTransformCache;
+		mutable Eigen::Matrix3f mNormalMatrixCache;
+		mutable Eigen::Matrix3f mInvNormalMatrixCache;
 	};
 }
 

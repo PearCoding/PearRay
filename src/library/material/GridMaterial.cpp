@@ -52,7 +52,7 @@ namespace PR
 		return mTiledUV;
 	}
 
-	Spectrum GridMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum GridMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
@@ -67,15 +67,15 @@ namespace PR
 
 	ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
 	{
-		u = (int)(PM::pm_GetX(point.UVW) * mGridCount);
-		v = (int)(PM::pm_GetY(point.UVW) * mGridCount);
+		u = (int)(point.UVW(0) * mGridCount);
+		v = (int)(point.UVW(1) * mGridCount);
 
 		if (mTiledUV)
 		{
 			ShaderClosure pointN = point;
-			pointN.UVW = PM::pm_Set(PM::pm_GetX(point.UVW)*mGridCount - u,
-				PM::pm_GetY(point.UVW)*mGridCount - v,
-				PM::pm_GetZ(point.UVW)
+			pointN.UVW = Eigen::Vector3f(point.UVW(1)*mGridCount - u,
+				point.UVW(1)*mGridCount - v,
+				point.UVW(2)
 			);
 			return pointN;
 		}
@@ -85,7 +85,7 @@ namespace PR
 		}
 	}
 
-	float GridMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
@@ -98,7 +98,7 @@ namespace PR
 		return 0;
 	}
 
-	PM::vec3 GridMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		int u, v;
 		auto pointN = applyGrid(point, u, v);
@@ -109,7 +109,7 @@ namespace PR
 			return mSecond->sample(pointN, rnd, pdf);
 
 		pdf = 0;
-		return PM::pm_Zero3D();
+		return Eigen::Vector3f(0,0,0);
 	}
 
 	std::string GridMaterial::dumpInformation() const

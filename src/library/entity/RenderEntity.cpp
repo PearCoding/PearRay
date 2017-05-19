@@ -20,24 +20,23 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		const BoundingBox bx = localBoundingBox();
-		const PM::mat4 mat = matrix();
 
-		const PM::vec3 v1 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.upperBound()), PM::pm_GetY(bx.upperBound()), PM::pm_GetZ(bx.upperBound())));
-		const PM::vec3 v2 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.lowerBound()), PM::pm_GetY(bx.upperBound()), PM::pm_GetZ(bx.upperBound())));
-		const PM::vec3 v3 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.lowerBound()), PM::pm_GetY(bx.lowerBound()), PM::pm_GetZ(bx.upperBound())));
-		const PM::vec3 v4 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.lowerBound()), PM::pm_GetY(bx.upperBound()), PM::pm_GetZ(bx.lowerBound())));
-		const PM::vec3 v5 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.lowerBound()), PM::pm_GetY(bx.lowerBound()), PM::pm_GetZ(bx.lowerBound())));
-		const PM::vec3 v6 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.upperBound()), PM::pm_GetY(bx.lowerBound()), PM::pm_GetZ(bx.upperBound())));
-		const PM::vec3 v7 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.upperBound()), PM::pm_GetY(bx.lowerBound()), PM::pm_GetZ(bx.lowerBound())));
-		const PM::vec3 v8 = PM::pm_Transform(mat,
-			PM::pm_Set(PM::pm_GetX(bx.upperBound()), PM::pm_GetY(bx.upperBound()), PM::pm_GetZ(bx.lowerBound())));
+		const Eigen::Vector3f v1 = transform()*
+			Eigen::Vector3f(bx.upperBound()(0), bx.upperBound()(1), bx.upperBound()(2));
+		const Eigen::Vector3f v2 = transform()*
+			Eigen::Vector3f(bx.lowerBound()(0), bx.upperBound()(1), bx.upperBound()(2));
+		const Eigen::Vector3f v3 = transform()*
+			Eigen::Vector3f(bx.lowerBound()(0), bx.lowerBound()(1), bx.upperBound()(2));
+		const Eigen::Vector3f v4 = transform()*
+			Eigen::Vector3f(bx.lowerBound()(0), bx.upperBound()(1), bx.lowerBound()(2));
+		const Eigen::Vector3f v5 = transform()*
+			Eigen::Vector3f(bx.lowerBound()(0), bx.lowerBound()(1), bx.lowerBound()(2));
+		const Eigen::Vector3f v6 = transform()*
+			Eigen::Vector3f(bx.upperBound()(0), bx.lowerBound()(1), bx.upperBound()(2));
+		const Eigen::Vector3f v7 = transform()*
+			Eigen::Vector3f(bx.upperBound()(0), bx.lowerBound()(1), bx.lowerBound()(2));
+		const Eigen::Vector3f v8 = transform()*
+			Eigen::Vector3f(bx.upperBound()(0), bx.upperBound()(1), bx.lowerBound()(2));
 
 		BoundingBox w(v1, v2);
 		w.put(v3); w.put(v4); w.put(v5);

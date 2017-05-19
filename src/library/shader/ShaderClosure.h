@@ -17,35 +17,35 @@ namespace PR
 	{
 	public:
 		// Point of sample
-		PM::vec3 P;
-		PM::vec3 dPdX;
-		PM::vec3 dPdY;
-		PM::vec3 dPdZ;// Only useful for volumes.
-		PM::vec3 dPdU;
-		PM::vec3 dPdV;
-		PM::vec3 dPdW;
-		PM::vec3 dPdT;// Velocity of P
+		Eigen::Vector3f P;
+		Eigen::Vector3f dPdX;
+		Eigen::Vector3f dPdY;
+		Eigen::Vector3f dPdZ;// Only useful for volumes.
+		Eigen::Vector3f dPdU;
+		Eigen::Vector3f dPdV;
+		Eigen::Vector3f dPdW;
+		Eigen::Vector3f dPdT;// Velocity of P
 
 		// View vector looking to the surface (only available if shoot)
-		PM::vec3 V;
-		PM::vec3 dVdX;
-		PM::vec3 dVdY;
+		Eigen::Vector3f V;
+		Eigen::Vector3f dVdX;
+		Eigen::Vector3f dVdY;
 
 		// Normal - Front facing
-		PM::vec3 N;
+		Eigen::Vector3f N;
 
 		// Geometric normal.
-		PM::vec3 Ng;
+		Eigen::Vector3f Ng;
 
 		// Normal Tangent Frame
-		PM::vec3 Nx;
-		PM::vec3 Ny;
+		Eigen::Vector3f Nx;
+		Eigen::Vector3f Ny;
 
 		// 2D surface parameters
-		PM::vec3 UVW;
-		PM::vec3 dUVWdX;
-		PM::vec3 dUVWdY;
-		PM::vec3 dUVWdZ;
+		Eigen::Vector3f UVW;
+		Eigen::Vector3f dUVWdX;
+		Eigen::Vector3f dUVWdY;
+		Eigen::Vector3f dUVWdZ;
 
 		// Time for this sample.
 		float T;
@@ -66,33 +66,6 @@ namespace PR
 
 		// C++11 POD constructor
 		inline ShaderClosure() noexcept :
-			P(PM::pm_Zero3D()),
-			dPdX(PM::pm_Zero3D()),
-			dPdY(PM::pm_Zero3D()),
-			dPdZ(PM::pm_Zero3D()),
-			dPdU(PM::pm_Zero3D()),
-			dPdV(PM::pm_Zero3D()),
-			dPdW(PM::pm_Zero3D()),
-			dPdT(PM::pm_Zero3D()),
-			V(PM::pm_Zero3D()),
-			dVdX(PM::pm_Zero3D()),
-			dVdY(PM::pm_Zero3D()),
-			N(PM::pm_Zero3D()),
-			Ng(PM::pm_Zero3D()),
-			Nx(PM::pm_Zero3D()),
-			Ny(PM::pm_Zero3D()),
-			UVW(PM::pm_Zero3D()),
-			dUVWdX(PM::pm_Zero3D()),
-			dUVWdY(PM::pm_Zero3D()),
-			dUVWdZ(PM::pm_Zero3D()),
-			T(0),
-			//dT(0),
-			WavelengthIndex(0),
-			Depth2(0),
-			NgdotV(0),
-			NdotV(0),
-			Flags(0),
-			EntityID(0),
 			Material(nullptr)
 			{}
 
@@ -105,9 +78,9 @@ namespace PR
 			dPdV(fs.dPdV),
 			dPdW(fs.dPdW),
 			dPdT(fs.dPdT),
-			V(PM::pm_Zero3D()),
-			dVdX(PM::pm_Zero3D()),
-			dVdY(PM::pm_Zero3D()),
+			V(0,0,0),
+			dVdX(0,0,0),
+			dVdY(0,0,0),
 			N(fs.Ng),
 			Ng(fs.Ng),
 			Nx(fs.Nx),
