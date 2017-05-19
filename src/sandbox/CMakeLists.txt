@@ -2,7 +2,8 @@
 SET(PR_Main_Src
   main.cpp
   ProgramSettings.cpp
-  suite_spectral1.cpp)
+  suite_spectral1.cpp
+  suite_random1.cpp)
 SET(PR_Src ${PR_Main_Src}
 )
 

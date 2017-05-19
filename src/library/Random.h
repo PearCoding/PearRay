@@ -76,7 +76,7 @@ namespace PR
 #if PR_RANDOM_ALGORITHM == 0
 			return std::uniform_int_distribution<uint32>(start, end)(mGenerator);
 #else
-			return get32() % (end - start) + start;
+			return (get32() % (end - start)) + start;
 #endif
 		}
 
@@ -98,7 +98,7 @@ namespace PR
 #if PR_RANDOM_ALGORITHM == 0
 			return std::uniform_int_distribution<uint64>(start, end)(mGenerator);
 #else
-			return get64() % (end - start) + start;
+			return (get64() % (end - start)) + start;
 #endif
 		}
 

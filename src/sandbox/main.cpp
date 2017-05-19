@@ -13,7 +13,9 @@ namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
 typedef void (*SuiteCallback)();
+
 void suite_spectral1();
+void suite_random1();
 
 struct Suite
 {
@@ -23,6 +25,7 @@ struct Suite
 
 Suite suites[] = {
 	{"spectral1", suite_spectral1},
+	{"random1", suite_random1},
 	{nullptr, nullptr}
 };
 
