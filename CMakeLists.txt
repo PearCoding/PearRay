@@ -268,6 +268,7 @@ ENDIF()
 
 # Tests
 IF(NOT PR_ONLY_LIBRARY AND PR_BUILD_TESTS)
+	add_subdirectory(src/sandbox)
 	enable_testing()
 	add_subdirectory(src/tests)
 ENDIF()
