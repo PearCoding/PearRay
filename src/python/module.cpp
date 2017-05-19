@@ -28,8 +28,6 @@ namespace PRPY
     void setup_renderentities();
     void setup_light();
     void setup_sampler();
-    void setup_vec();
-    void setup_mat();
     void setup_status();
     void setup_renderer();
     void setup_tonemapper();
@@ -42,8 +40,6 @@ BOOST_PYTHON_MODULE(pypearray)
 
     bpy::def("version", version);
 
-    PRPY::setup_vec();
-    PRPY::setup_mat();
     PRPY::setup_logger();
     PRPY::setup_spectral();
     PRPY::setup_ray();
