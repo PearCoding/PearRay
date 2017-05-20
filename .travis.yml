@@ -24,6 +24,8 @@ install:
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenexr-dev libilmbase-dev
 # Intel TBB
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libtbb-dev
+# Eigen3
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libeigen3-dev
 # OpenImageIO
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenjpeg-dev libtiff-dev libjpeg-dev libpng-dev
   - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
@@ -40,7 +42,7 @@ before_script:
   - cmake --version
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DPM_ONLY_LIBRARY=ON -DDL_ONLY_LIBRARY=ON ..
+  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON ..
 script:
   - make $MAKEFLAGS 
   #- make test
