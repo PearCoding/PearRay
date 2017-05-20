@@ -70,7 +70,7 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		BoundingBox box(mXAxis + mYAxis, Eigen::Vector3f(0,0,0));
-		box.inflate(EPSILON_BOUND, true);
+		box.inflate(EPSILON_BOUND);
 		return box;
 	}
 
@@ -100,10 +100,6 @@ namespace PR
 		if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON)//Parallel or on the plane
 		{
 			return false;
-			//if (pn <= std::numeric_limits<float>::epsilon())// Is on the plane!
-			//{
-			//	// TODO: Should we make this case special?
-			//}
 		}
 		else
 		{
@@ -116,9 +112,7 @@ namespace PR
 			else
 			{
 				collisionPoint = ray.startPosition() + ray.direction() * t;
-				Eigen::Vector3f p = collisionPoint - mPosition;
-				u = mXAxis.dot(p) * mInvXLenSqr_Cache;
-				v = mYAxis.dot(p) * mInvYLenSqr_Cache;
+				project(collisionPoint, u, v);
 
 				if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
 					return true;

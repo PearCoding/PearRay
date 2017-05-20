@@ -101,8 +101,8 @@ namespace PR
 			collisionPoint.P = pos;
 
 			collisionPoint.Ng = mGlobalPlane_Cache.normal();
-			collisionPoint.Nx = mGlobalPlane_Cache.xAxis();
-			collisionPoint.Ny = mGlobalPlane_Cache.yAxis();
+			collisionPoint.Nx = mXAxisN_Cache;
+			collisionPoint.Ny = mYAxisN_Cache;
 
 			collisionPoint.UVW = Eigen::Vector3f(u, v,0);
 			collisionPoint.Material = material().get();
@@ -124,8 +124,8 @@ namespace PR
 				mGlobalPlane_Cache.yAxis()*s(1);
 
 		fp.Ng = mGlobalPlane_Cache.normal();
-		fp.Nx = mGlobalPlane_Cache.xAxis();
-		fp.Ny = mGlobalPlane_Cache.yAxis();
+		fp.Nx = mXAxisN_Cache;
+		fp.Ny = mYAxisN_Cache;
 
 		fp.UVW = Eigen::Vector3f(s(0), s(1), 0);
 		fp.Material = material().get();
@@ -145,6 +145,9 @@ namespace PR
 
 		mGlobalPlane_Cache.setAxis(px-mGlobalPlane_Cache.position(),
 			py-mGlobalPlane_Cache.position());
+
+		mXAxisN_Cache = mGlobalPlane_Cache.xAxis().normalized();
+		mYAxisN_Cache = mGlobalPlane_Cache.yAxis().normalized();
 
 		// Check up
 		if(std::abs((mGlobalPlane_Cache.normal()).squaredNorm() - 1) > PR_EPSILON)

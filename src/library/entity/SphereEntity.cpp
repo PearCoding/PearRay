@@ -127,7 +127,7 @@ namespace PR
 		p.Ng = (directionMatrix()*n).normalized();
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		p.P = transform()*n*mRadius;
+		p.P = transform()*(n*mRadius);
 		const Eigen::Vector2f uv = Projection::sphereUV(p.Ng);
 		p.UVW = Eigen::Vector3f(uv(0),uv(1),0);
 		p.Material = material().get();

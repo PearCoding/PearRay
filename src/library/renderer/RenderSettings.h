@@ -29,7 +29,7 @@ namespace PR
 		DM_Binormal_Positive,
 		DM_Binormal_Negative,
 		DM_Binormal_Spherical,
-		DM_UV,
+		DM_UVW,
 		DM_PDF,
 		DM_Emission,
 		DM_Validity

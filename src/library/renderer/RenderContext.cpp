@@ -362,15 +362,13 @@ namespace PR
 		context->stats().incPixelSampleCount();
 
 		// To camera coordinates [-1,1]
-		//float nx = 2 * (x / mWidth - 0.5f);
-		//float ny = 2 * (y / mHeight - 0.5f);
 		const float fnx = 2 * ((x+mOffsetX) / mFullWidth - 0.5f);
 		const float fny = 2 * ((y+mOffsetY) / mFullHeight - 0.5f);
 
 		Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t, wavelength);
 		ray.setPixel(Eigen::Vector2i(
-			(uint32)std::max(0.0f, std::round(x)),
-			(uint32)std::max(0.0f, std::round(y))
+			std::min(std::max(mOffsetX, (uint32)std::round(x)), mOffsetX + mWidth - 1),
+			std::min(std::max(mOffsetY, (uint32)std::round(y)), mOffsetY + mHeight - 1)
 			));
 
 		return mIntegrator->apply(ray, context, pass, sc);

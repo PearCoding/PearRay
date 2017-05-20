@@ -76,7 +76,7 @@ QWidget(parent)
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Positive"), PR::DM_Binormal_Positive);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Negative"), PR::DM_Binormal_Negative);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Binormal Spherical"), PR::DM_Binormal_Spherical);
-	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UV"), PR::DM_UV);
+	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("UVW"), PR::DM_UVW);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("PDF"), PR::DM_PDF);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Emission"), PR::DM_Emission);
 	((SelectionProperty*)mDebugVisualizationProp)->addItem(tr("Validity"), PR::DM_Validity);

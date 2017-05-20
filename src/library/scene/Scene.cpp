@@ -143,6 +143,9 @@ namespace PR
 	{
 		for (const auto& e : mEntities)
 			e->freeze();
+			
+		for (const auto& e : mRenderEntities)
+			e->freeze();
 
 		for (const auto& e : mInfiniteLights)
 			e->freeze();

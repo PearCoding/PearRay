@@ -36,6 +36,8 @@ namespace PR
 
 		if(context && !mWorkingDir.empty())
 		{
+			mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
+			
 			// Setup lock directory
 			if(!boost::filesystem::create_directory(mWorkingDir + "/.lock"))
 				PR_LOGGER.logf(L_Warning, M_System,

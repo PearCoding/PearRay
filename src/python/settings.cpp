@@ -69,10 +69,10 @@ namespace PRPY
 		.value("BINORMAL_POSITIVE", DM_Binormal_Positive)
 		.value("BINORMAL_NEGATIVE", DM_Binormal_Negative)
 		.value("BINORMAL_SPHERICAL", DM_Binormal_Spherical)
-		.value("UV", DM_UV)
+		.value("UVW", DM_UVW)
 		.value("PDF", DM_PDF)
 		.value("EMISSION", DM_Emission)
-		.value("VALIDITIY", DM_Validity)
+		.value("VALIDITY", DM_Validity)
         ;
         
         bpy::enum_<IntegratorMode>("IntegratorMode")

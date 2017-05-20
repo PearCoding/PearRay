@@ -105,7 +105,7 @@ namespace PR
 				std::max(0.0f, -sc.Ny(1)),
 				std::max(0.0f, -sc.Ny(2)));
 		//OTHER STUFF
-		case DM_UV:
+		case DM_UVW:
 			return RGBConverter::toSpec(sc.UVW(0), sc.UVW(1), sc.UVW(2));
 		case DM_PDF:
 		{

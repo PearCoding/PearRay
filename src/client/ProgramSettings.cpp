@@ -122,7 +122,8 @@ BEGIN_ENUM_OPTION(DebugMode)
 	{"bino_p", DM_Binormal_Positive},
 	{"bino_n", DM_Binormal_Negative},
 	{"bino_s", DM_Binormal_Spherical},
-	{"uv", DM_UV},
+	{"uv", DM_UVW},
+	{"uvw", DM_UVW},
 	{"pdf", DM_PDF},
 	{"emission", DM_Emission},
 	{"validity", DM_Validity},
@@ -566,7 +567,10 @@ bool ProgramSettings::parse(int argc, char** argv)
 		std::cout << "Invalid output path given." << std::endl;
 		return false;
 	}
-	OutputDir = directoryPath.native();
+	OutputDir = directoryPath.string();
+	// Remove trailing slashes
+	if(!OutputDir.empty() && OutputDir.back() == '/')
+		OutputDir.pop_back();
 
 	IsVerbose = (vm.count("verbose") != 0);
 	IsQuiet = (vm.count("quiet") != 0);

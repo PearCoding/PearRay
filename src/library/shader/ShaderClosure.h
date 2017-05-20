@@ -66,6 +66,33 @@ namespace PR
 
 		// C++11 POD constructor
 		inline ShaderClosure() noexcept :
+			P(0,0,0),
+			dPdX(0,0,0),
+			dPdY(0,0,0),
+			dPdZ(0,0,0),
+			dPdU(0,0,0),
+			dPdV(0,0,0),
+			dPdW(0,0,0),
+			dPdT(0,0,0),
+			V(0,0,0),
+			dVdX(0,0,0),
+			dVdY(0,0,0),
+			N(0,0,0),
+			Ng(0,0,0),
+			Nx(0,0,0),
+			Ny(0,0,0),
+			UVW(0,0,0),
+			dUVWdX(0,0,0),
+			dUVWdY(0,0,0),
+			dUVWdZ(0,0,0),
+			T(0),
+			//dT(0),
+			WavelengthIndex(0),
+			Depth2(0),
+			NgdotV(0),
+			NdotV(0),
+			Flags(0),
+			EntityID(0),
 			Material(nullptr)
 			{}
 

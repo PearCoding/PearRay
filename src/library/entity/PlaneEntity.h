@@ -42,5 +42,7 @@ namespace PR
 		std::shared_ptr<Material> mMaterial;
 
 		Plane mGlobalPlane_Cache;
+		Eigen::Vector3f mXAxisN_Cache;
+		Eigen::Vector3f mYAxisN_Cache;
 	};
 }
