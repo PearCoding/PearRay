@@ -25,7 +25,14 @@ install:
 # Intel TBB
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libtbb-dev
 # Eigen3
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libeigen3-dev
+  - wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz -O /tmp/eigen-3.3.3.tar.gz
+  - tar zxf /tmp/eigen-3.3.3.tar.gz > /dev/null 2>&1
+  - cd eigen-eigen-67e894c6cd8f
+  - mkdir build
+  - cd build
+  - cmake ../
+  - sudo make install
+  - cd ../../
 # OpenImageIO
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenjpeg-dev libtiff-dev libjpeg-dev libpng-dev
   - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
