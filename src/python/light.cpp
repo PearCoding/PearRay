@@ -13,19 +13,19 @@ namespace PRPY
     class IInfiniteLightWrap : public IInfiniteLight, public bpy::wrapper<IInfiniteLight>
     {
     public:
-        inline Spectrum apply(const PM::vec3& L) override
+        inline Spectrum apply(const Eigen::Vector3f& L) override
         {
             return this->get_override("apply")(L);
         }
 
-        inline PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override
+        inline Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override
         {
             bpy::tuple tpl = bpy::extract<bpy::tuple>(sample_Py(point, rnd));
             pdf = bpy::extract<float>(tpl[1]);
-            return bpy::extract<PM::vec3>(tpl[0]);
+            return bpy::extract<Eigen::Vector3f>(tpl[0]);
         }
 
-        inline bpy::tuple sample_Py(const ShaderClosure& point, const PM::vec3& rnd)
+        inline bpy::tuple sample_Py(const ShaderClosure& point, const Eigen::Vector3f& rnd)
         {
             return this->get_override("sample")(point, rnd);
         }

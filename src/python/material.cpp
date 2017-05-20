@@ -21,48 +21,48 @@ namespace PRPY
     public:
         MaterialWrap(uint32 id) : Material(id) {}
 
-        Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) override
+        Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override
         {
             return this->get_override("eval")(point, L, NdotL);
         }
 
-        float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) override
+        float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override
         {
             return this->get_override("pdf")(point, L, NdotL);
         }
 
-        PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) override
+        Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override
         {
             bpy::tuple tpl = sample_Py(point, rnd);
             pdf = bpy::extract<float>(tpl[1]);
-            return bpy::extract<PM::vec3>(tpl[0]);
+            return bpy::extract<Eigen::Vector3f>(tpl[0]);
         }
 
-        bpy::tuple sample_Py(const ShaderClosure& point, const PM::vec3& rnd)
+        bpy::tuple sample_Py(const ShaderClosure& point, const Eigen::Vector3f& rnd)
         {
             return this->get_override("sample")(point, rnd);
         }
 
-        PM::vec3 samplePath(
-            const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& path_weight, uint32 path)
+        Eigen::Vector3f samplePath(
+            const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
         { 
             bpy::tuple tpl = samplePath_Py(point, rnd, path);
             path_weight = bpy::extract<float>(tpl[2]);
             pdf = bpy::extract<float>(tpl[1]);
-            return bpy::extract<PM::vec3>(tpl[0]);
+            return bpy::extract<Eigen::Vector3f>(tpl[0]);
         }
 
-        bpy::tuple samplePath_Py(const ShaderClosure& point, const PM::vec3& rnd, uint32 path)
+        bpy::tuple samplePath_Py(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
         {
             if (bpy::override f = this->get_override("samplePath"))
                 return f(point, rnd, path);
             return samplePath_PyDef(point, rnd, path);
         }
 
-        bpy::tuple samplePath_PyDef(const ShaderClosure& point, const PM::vec3& rnd, uint32 path)
+        bpy::tuple samplePath_PyDef(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
         {
             float pdf, weight;
-            PM::vec3 v = Material::samplePath(point, rnd, pdf, weight, path);
+            Eigen::Vector3f v = Material::samplePath(point, rnd, pdf, weight, path);
             return bpy::make_tuple(v, pdf, weight);
         }
 

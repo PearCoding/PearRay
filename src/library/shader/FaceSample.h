@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -13,47 +13,49 @@ namespace PR
 	{
 	public:
 		// Point of sample
-		PM::vec3 P;
-		PM::vec3 dPdX;
-		PM::vec3 dPdY;
-		PM::vec3 dPdZ;// Only useful for volumes.
-		PM::vec3 dPdU;
-		PM::vec3 dPdV;
-		PM::vec3 dPdW;
-		PM::vec3 dPdT;// Velocity of P
+		Eigen::Vector3f P;
+		Eigen::Vector3f dPdX;
+		Eigen::Vector3f dPdY;
+		Eigen::Vector3f dPdZ;// Only useful for volumes.
+		Eigen::Vector3f dPdU;
+		Eigen::Vector3f dPdV;
+		Eigen::Vector3f dPdW;
+		Eigen::Vector3f dPdT;// Velocity of P
 
 		// Geometric normal.
-		PM::vec3 Ng;
+		Eigen::Vector3f Ng;
 		// Normal Tangent Frame
-		PM::vec3 Nx;
-		PM::vec3 Ny;
+		Eigen::Vector3f Nx;
+		Eigen::Vector3f Ny;
 
 		// 3D surface parameters
-		PM::vec3 UVW;
-		PM::vec3 dUVWdX;
-		PM::vec3 dUVWdY;
-		PM::vec3 dUVWdZ;
+		Eigen::Vector3f UVW;
+		Eigen::Vector3f dUVWdX;
+		Eigen::Vector3f dUVWdY;
+		Eigen::Vector3f dUVWdZ;
 
 		class Material* Material;
 
 		// C++11 POD constructor
 		inline FaceSample() noexcept :
-			P(PM::pm_Zero3D()),
-			dPdX(PM::pm_Zero3D()),
-			dPdY(PM::pm_Zero3D()),
-			dPdZ(PM::pm_Zero3D()),
-			dPdU(PM::pm_Zero3D()),
-			dPdV(PM::pm_Zero3D()),
-			dPdW(PM::pm_Zero3D()),
-			dPdT(PM::pm_Zero3D()),
-			Ng(PM::pm_Zero3D()),
-			Nx(PM::pm_Zero3D()),
-			Ny(PM::pm_Zero3D()),
-			UVW(PM::pm_Zero3D()),
-			dUVWdX(PM::pm_Zero3D()),
-			dUVWdY(PM::pm_Zero3D()),
-			dUVWdZ(PM::pm_Zero3D()),
+			P(0,0,0),
+			dPdX(0,0,0),
+			dPdY(0,0,0),
+			dPdZ(0,0,0),
+			dPdU(0,0,0),
+			dPdV(0,0,0),
+			dPdW(0,0,0),
+			dPdT(0,0,0),
+			Ng(0,0,0),
+			Nx(0,0,0),
+			Ny(0,0,0),
+			UVW(0,0,0),
+			dUVWdX(0,0,0),
+			dUVWdY(0,0,0),
+			dUVWdZ(0,0,0),
 			Material(nullptr)
 			{}
+		
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};
 }

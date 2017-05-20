@@ -40,8 +40,7 @@ namespace PR
 				if(isFrozen())
 					return mGlobalPlane_Cache.surfaceArea();
 				else
-					return std::sqrt(PM::pm_MagnitudeSqr(PM::pm_Transform(directionMatrix(), mPlane.xAxis())) *
-							PM::pm_MagnitudeSqr(PM::pm_Transform(directionMatrix(), mPlane.yAxis())));
+					return (directionMatrix()*mPlane.xAxis()).norm() * (directionMatrix()*mPlane.yAxis()).norm();
 			}
 			else
 			{
@@ -93,7 +92,7 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		PM::vec3 pos;
+		Eigen::Vector3f pos;
 		float u, v;
 
 		float t;
@@ -102,10 +101,10 @@ namespace PR
 			collisionPoint.P = pos;
 
 			collisionPoint.Ng = mGlobalPlane_Cache.normal();
-			collisionPoint.Nx = mGlobalPlane_Cache.xAxis();
-			collisionPoint.Ny = mGlobalPlane_Cache.yAxis();
+			collisionPoint.Nx = mXAxisN_Cache;
+			collisionPoint.Ny = mYAxisN_Cache;
 
-			collisionPoint.UVW = PM::pm_Set(u, v,0);
+			collisionPoint.UVW = Eigen::Vector3f(u, v,0);
 			collisionPoint.Material = material().get();
 
 			return true;
@@ -120,15 +119,15 @@ namespace PR
 		auto s = sampler.generate2D(sample);
 
 		FaceSample fp;
-		fp.P = PM::pm_Add(mGlobalPlane_Cache.position(),
-			PM::pm_Add(PM::pm_Scale(mGlobalPlane_Cache.xAxis(), PM::pm_GetX(s)),
-				PM::pm_Scale(mGlobalPlane_Cache.yAxis(), PM::pm_GetY(s))));
+		fp.P = mGlobalPlane_Cache.position() +
+				mGlobalPlane_Cache.xAxis()*s(0) +
+				mGlobalPlane_Cache.yAxis()*s(1);
 
 		fp.Ng = mGlobalPlane_Cache.normal();
-		fp.Nx = mGlobalPlane_Cache.xAxis();
-		fp.Ny = mGlobalPlane_Cache.yAxis();
+		fp.Nx = mXAxisN_Cache;
+		fp.Ny = mYAxisN_Cache;
 
-		fp.UVW = PM::pm_ExtendTo3D(s);
+		fp.UVW = Eigen::Vector3f(s(0), s(1), 0);
 		fp.Material = material().get();
 
 		pdf = 1;
@@ -139,22 +138,28 @@ namespace PR
 	{
 		RenderEntity::onFreeze();
 
-		mGlobalPlane_Cache.setPosition(PM::pm_Transform(matrix(), mPlane.position()));
-		mGlobalPlane_Cache.setAxis(
-			PM::pm_Transform(directionMatrix(), mPlane.xAxis()),
-			PM::pm_Transform(directionMatrix(), mPlane.yAxis()));
+		mGlobalPlane_Cache.setPosition(transform()*mPlane.position());
+
+		const Eigen::Vector3f px = transform()*(mPlane.position() + mPlane.xAxis());
+		const Eigen::Vector3f py = transform()*(mPlane.position() + mPlane.yAxis());
+
+		mGlobalPlane_Cache.setAxis(px-mGlobalPlane_Cache.position(),
+			py-mGlobalPlane_Cache.position());
+
+		mXAxisN_Cache = mGlobalPlane_Cache.xAxis().normalized();
+		mYAxisN_Cache = mGlobalPlane_Cache.yAxis().normalized();
 
 		// Check up
-		if(std::abs(PM::pm_MagnitudeSqr(mGlobalPlane_Cache.normal()) - 1) > PM_EPSILON)
+		if(std::abs((mGlobalPlane_Cache.normal()).squaredNorm() - 1) > PR_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has a non unit normal vector!", name().c_str());
 
-		if(PM::pm_MagnitudeSqr(mGlobalPlane_Cache.xAxis()) <= PM_EPSILON)
+		if((mGlobalPlane_Cache.xAxis()).squaredNorm() <= PR_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero x axis!", name().c_str());
 
-		if(PM::pm_MagnitudeSqr(mGlobalPlane_Cache.yAxis()) <= PM_EPSILON)
+		if((mGlobalPlane_Cache.yAxis()).squaredNorm() <= PR_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero y axis!", name().c_str());
 
-		if(mGlobalPlane_Cache.surfaceArea() <= PM_EPSILON)
+		if(mGlobalPlane_Cache.surfaceArea() <= PR_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has zero enclosed area!", name().c_str());
 	}
 

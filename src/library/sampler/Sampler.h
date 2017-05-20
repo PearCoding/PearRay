@@ -10,8 +10,8 @@ namespace PR
 		virtual ~Sampler() {}
 
 		virtual float generate1D(uint32 index) = 0;
-		virtual PM::vec2 generate2D(uint32 index) = 0;
-		virtual PM::vec3 generate3D(uint32 index) = 0;
+		virtual Eigen::Vector2f generate2D(uint32 index) = 0;
+		virtual Eigen::Vector3f generate3D(uint32 index) = 0;
 
 	};
 }

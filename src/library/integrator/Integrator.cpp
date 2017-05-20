@@ -35,15 +35,15 @@ namespace PR
 				++i)
 			{
 				float pdf;
-				PM::vec3 dir = e->sample(sc, sampler.generate3D(i), pdf);
+				Eigen::Vector3f dir = e->sample(sc, sampler.generate3D(i), pdf);
 
-				if(pdf <= PM_EPSILON)
+				if(pdf <= PR_EPSILON)
 					continue;
 
 				Spectrum weight;
-				const float NdotL = std::abs(PM::pm_Dot(dir, sc.N));
+				const float NdotL = std::abs(dir.dot(sc.N));
 
-				if (NdotL > PM_EPSILON)
+				if (NdotL > PR_EPSILON)
 				{
 					RenderEntity* entity;
 
@@ -75,7 +75,7 @@ namespace PR
 
 		if(lastEntity && other_sc.Material)
 		{
-			float NdotL = PM::pm_Max(0.0f, PM::pm_Dot(ray.direction(), other_sc.N));
+			float NdotL = std::max(0.0f, ray.direction().dot(other_sc.N));
 			Spectrum weight = other_sc.Material->eval(other_sc, ray.direction(), NdotL) * NdotL;
 
 			float other_pdf;
@@ -83,15 +83,15 @@ namespace PR
 				depth < context->renderer()->settings().maxRayDepth();
 				++depth)
 			{
-				PM::vec3 dir = other_sc.Material->sample(other_sc,
+				Eigen::Vector3f dir = other_sc.Material->sample(other_sc,
 					context->random().get3D(),
 					other_pdf);
 
 				if(!std::isinf(other_pdf))
 					break;
 
-				float NdotL = PM::pm_Max(0.0f, PM::pm_Dot(ray.direction(), other_sc.N));
-				if (NdotL <= PM_EPSILON)
+				float NdotL = std::max(0.0f, ray.direction().dot(other_sc.N));
+				if (NdotL <= PR_EPSILON)
 					break;
 
 				ray = ray.next(other_sc.P, dir);

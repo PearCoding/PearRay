@@ -45,6 +45,7 @@
 
 #include "DataLisp.h"
 
+#include <Eigen/SVD>
 #include <fstream>
 #include <sstream>
 
@@ -135,21 +136,13 @@ namespace PR
 						DL::DataGroup entry = dataD.getGroup();
 
 						if (entry.id() == "spectrum")
-						{
 							addSpectrum(entry, env.get());
-						}
 						else if (entry.id() == "texture")
-						{
 							addTexture(entry, env.get());
-						}
 						else if (entry.id() == "graph")
-						{
 							addSubGraph(entry, env.get());
-						}
 						else if (entry.id() == "mesh")
-						{
 							addMesh(entry, env.get());
-						}
 					}
 				}
 
@@ -177,13 +170,9 @@ namespace PR
 						DL::DataGroup entry = dataD.getGroup();
 
 						if (entry.id() == "entity")
-						{
 							addEntity(entry, nullptr, env.get());
-						}
 						else if(entry.id() == "light")
-						{
 							addLight(entry, env.get());
-						}
 					}
 				}
 				
@@ -278,7 +267,7 @@ namespace PR
 		if (posD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::vec3 p = getVector(posD.getGroup(), ok);
+			Eigen::Vector3f p = getVector(posD.getGroup(), ok);
 
 			if (!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set position for entity %s.", name.c_str());
@@ -287,9 +276,10 @@ namespace PR
 		}
 
 		// Set rotation
+		if (rotD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::quat rot = getRotation(rotD, ok);
+			Eigen::Quaternionf rot = getRotation(rotD, ok);
 
 			if (!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set rotation for entity %s.", name.c_str());
@@ -301,12 +291,12 @@ namespace PR
 		if (scaleD.isNumber())
 		{
 			float s = scaleD.getNumber();
-			entity->setScale(PM::pm_Set(s, s, s));
+			entity->setScale(Eigen::Vector3f(s, s, s));
 		}
 		else if(scaleD.type() == DL::Data::T_Group)
 		{
 			bool ok;
-			PM::vec3 s = getVector(scaleD.getGroup(), ok);
+			Eigen::Vector3f s = getVector(scaleD.getGroup(), ok);
 
 			if(!ok)
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());
@@ -316,15 +306,15 @@ namespace PR
 
 		if(parent)
 		{
-			PM::mat4 m = PM::pm_Product(parent->matrix(), entity->matrix());
+			const auto m = parent->transform() * entity->transform();
 
-			PM::vec3 p, s;
-			PM::quat r;
-			PM::pm_Decompose(m, p, s, r);
+			Eigen::Matrix3f s;
+			Eigen::Matrix3f r;
+			m.computeRotationScaling(&r, &s);
 
-			entity->setPosition(p);
-			entity->setRotation(r);
-			entity->setScale(s);
+			entity->setPosition(m.translation());
+			entity->setRotation(Eigen::Quaternionf(r));
+			entity->setScale(s.diagonal());
 		}
 
 		if (localAreaD.type() == DL::Data::T_Bool)
@@ -656,7 +646,7 @@ namespace PR
 				if (grp.anonymousCount() >= 1 &&
 					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(std::max(0.0f, grp.at(0).getNumber()));
 					spec.weightPhotometric();
 
 					/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Luminance %f",
@@ -674,7 +664,7 @@ namespace PR
 				if (grp.anonymousCount() >= 1 &&
 					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(std::max(0.0f, grp.at(0).getNumber()));
 
 					/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Radiance %f",
 						grp->at(0)->getNumber(), spec.avg());*/
@@ -691,7 +681,7 @@ namespace PR
 				if (grp.anonymousCount() >= 1 &&
 					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(std::max(0.0f, grp.at(0).getNumber()));
 					spec.weightPhotometric();
 					spec.normalize();
 				}
@@ -707,7 +697,7 @@ namespace PR
 				if (grp.anonymousCount() >= 1 &&
 					grp.at(0).isNumber())
 				{
-					spec = Spectrum::fromBlackbody(PM::pm_Max(0.0f, grp.at(0).getNumber()));
+					spec = Spectrum::fromBlackbody(std::max(0.0f, grp.at(0).getNumber()));
 					spec.normalize();
 				}
 
@@ -776,16 +766,16 @@ namespace PR
 		}
 	}
 
-	PM::vec3 SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
+	Eigen::Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
 	{
-		PM::vec3 res = PM::pm_Set(0, 0, 0);
+		Eigen::Vector3f res(0, 0, 0);
 
 		if (arr.anonymousCount() == 2)
 		{
 			if (arr.at(0).isNumber() &&
 				arr.at(1).isNumber())
 			{
-				res = PM::pm_Set(arr.at(0).getNumber(),
+				res = Eigen::Vector3f(arr.at(0).getNumber(),
 					arr.at(1).getNumber(),
 					0);
 
@@ -802,7 +792,7 @@ namespace PR
 				arr.at(1).isNumber() &&
 				arr.at(2).isNumber())
 			{
-				res = PM::pm_Set(arr.at(0).getNumber(),
+				res = Eigen::Vector3f(arr.at(0).getNumber(),
 					arr.at(1).getNumber(),
 					arr.at(2).getNumber());
 
@@ -821,7 +811,7 @@ namespace PR
 		return res;
 	}
 	
-	PM::quat SceneLoader::getRotation(const DL::Data& data, bool& ok)
+	Eigen::Quaternionf SceneLoader::getRotation(const DL::Data& data, bool& ok)
 	{
 		if (data.type() == DL::Data::T_Group)
 		{
@@ -834,10 +824,10 @@ namespace PR
 					grp.at(3).isNumber())
 				{
 					ok = true;
-					return PM::pm_Normalize(PM::pm_Set(grp.at(0).getNumber(),
+					return Eigen::Quaternionf(grp.at(0).getNumber(),
 						grp.at(1).getNumber(),
 						grp.at(2).getNumber(),
-						grp.at(3).getNumber()));
+						grp.at(3).getNumber());
 				}
 				else
 				{
@@ -847,16 +837,20 @@ namespace PR
 			else if (grp.id() == "euler" && grp.anonymousCount() == 3 &&
 				grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber())
 			{
-				float x = PM::pm_DegToRad(grp.at(0).getNumber());
-				float y = PM::pm_DegToRad(grp.at(1).getNumber());
-				float z = PM::pm_DegToRad(grp.at(2).getNumber());
+				float x = grp.at(0).getNumber()*PR_PI/180;
+				float y = grp.at(1).getNumber()*PR_PI/180;
+				float z = grp.at(2).getNumber()*PR_PI/180;
+
+				Eigen::AngleAxisf ax(x, Eigen::Vector3f::UnitX());
+				Eigen::AngleAxisf ay(y, Eigen::Vector3f::UnitY());
+				Eigen::AngleAxisf az(z, Eigen::Vector3f::UnitZ());
 
 				ok = true;
-				return PM::pm_Normalize(PM::pm_RotationQuatFromXYZ(x, y, z));
+				return az * ay * ax;
 			}
 		}
 
-		return PM::pm_IdentityQuat();
+		return Eigen::Quaternionf::Identity();
 	}
 
 	std::shared_ptr<SpectralShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)

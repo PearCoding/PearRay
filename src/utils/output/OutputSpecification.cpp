@@ -36,6 +36,8 @@ namespace PR
 
 		if(context && !mWorkingDir.empty())
 		{
+			mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
+			
 			// Setup lock directory
 			if(!boost::filesystem::create_directory(mWorkingDir + "/.lock"))
 				PR_LOGGER.logf(L_Warning, M_System,
@@ -84,7 +86,7 @@ namespace PR
 		mImageWriter.init(renderer);
 		OutputMap* output = renderer->output();
 
-		PM::vec3 zero = PM::pm_Zero3D();
+		Eigen::Vector3f zero(0,0,0);
 		for(const File& file : mFiles)
 		{
 			for(const IM_ChannelSetting3D& cs3d : file.Settings3D)

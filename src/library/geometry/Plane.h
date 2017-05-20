@@ -8,38 +8,40 @@ namespace PR
 	class PR_LIB Plane
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		Plane();
-		Plane(const PM::vec3& pos, const PM::vec3& xAxis, const PM::vec3& yAxis);
+		Plane(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
 		Plane(float width, float height);
 
-		inline PM::vec3 position() const { return mPosition; }
-		inline void setPosition(const PM::vec3& pos) { mPosition = pos; }
+		inline Eigen::Vector3f position() const { return mPosition; }
+		inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
 
-		inline PM::vec3 xAxis() const { return mXAxis; }
-		void setXAxis(const PM::vec3& xAxis);
+		inline Eigen::Vector3f xAxis() const { return mXAxis; }
+		void setXAxis(const Eigen::Vector3f& xAxis);
 
-		inline PM::vec3 yAxis() const { return mYAxis; }
-		void setYAxis(const PM::vec3& yAxis);
+		inline Eigen::Vector3f yAxis() const { return mYAxis; }
+		void setYAxis(const Eigen::Vector3f& yAxis);
 
-		void setAxis(const PM::vec3& xAxis, const PM::vec3& yAxis);
+		void setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
 
-		inline PM::vec3 normal() const { return mNormal_Cache; }
-		inline PM::vec3 center() const
+		inline Eigen::Vector3f normal() const { return mNormal_Cache; }
+		inline Eigen::Vector3f center() const
 		{
-			return PM::pm_Add(mPosition, PM::pm_Add(PM::pm_Scale(mXAxis, 0.5f), PM::pm_Scale(mYAxis, 0.5f)));
+			return mPosition + mXAxis * 0.5f + mYAxis * 0.5f;
 		}
 
 		inline float surfaceArea() const { return mSurfaceArea_Cache; }
 
 		inline bool isValid() const
 		{
-			return PM::pm_MagnitudeSqr(mXAxis)*PM::pm_MagnitudeSqr(mYAxis) > 0;
+			return mXAxis.squaredNorm()*mYAxis.squaredNorm() > 0;
 		}
 
-		bool contains(const PM::vec3& point) const;
-		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t, float& u, float& v) const;
+		bool contains(const Eigen::Vector3f& point) const;
+		bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, float& u, float& v) const;
 
-		void project(const PM::vec3& point, float& u, float& v) const;
+		void project(const Eigen::Vector3f& point, float& u, float& v) const;
 
 		inline BoundingBox toBoundingBox() const
 		{
@@ -52,12 +54,12 @@ namespace PR
 	private:
 		void recache();
 
-		PM::vec3 mPosition;
-		PM::vec3 mXAxis;
-		PM::vec3 mYAxis;
+		Eigen::Vector3f mPosition;
+		Eigen::Vector3f mXAxis;
+		Eigen::Vector3f mYAxis;
 
 		// Cache
-		PM::vec3 mNormal_Cache;
+		Eigen::Vector3f mNormal_Cache;
 		float mSurfaceArea_Cache;
 		float mInvXLenSqr_Cache;
 		float mInvYLenSqr_Cache;

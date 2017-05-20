@@ -24,17 +24,17 @@ namespace PR
 		return r;
 	}
 
-	PM::vec2 UniformSampler::generate2D(uint32 index)
+	Eigen::Vector2f UniformSampler::generate2D(uint32 index)
 	{
-		auto r = PM::pm_Set((index % m2D_X + 0.5f) / m2D_X,
+		auto r = Eigen::Vector2f((index % m2D_X + 0.5f) / m2D_X,
 			(index / m2D_X + 0.5f) / m2D_Y);
 		return r;
 	}
 
 	// TODO: Fix this! Not finished.
-	PM::vec3 UniformSampler::generate3D(uint32 index)
+	Eigen::Vector3f UniformSampler::generate3D(uint32 index)
 	{
-		auto r = PM::pm_Set((index % (m3D_X*m3D_Y) + 0.5f) / (m3D_X*m3D_Y),
+		auto r = Eigen::Vector3f((index % (m3D_X*m3D_Y) + 0.5f) / (m3D_X*m3D_Y),
 			(index % (m3D_Y*m3D_Z) + 0.5f) /m3D_Y,
 			(index / (m3D_X*m3D_Y) + 0.5f) / m3D_Z);
 		return r;

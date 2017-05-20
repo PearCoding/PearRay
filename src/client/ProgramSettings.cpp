@@ -122,7 +122,8 @@ BEGIN_ENUM_OPTION(DebugMode)
 	{"bino_p", DM_Binormal_Positive},
 	{"bino_n", DM_Binormal_Negative},
 	{"bino_s", DM_Binormal_Spherical},
-	{"uv", DM_UV},
+	{"uv", DM_UVW},
+	{"uvw", DM_UVW},
 	{"pdf", DM_PDF},
 	{"emission", DM_Emission},
 	{"validity", DM_Validity},
@@ -488,9 +489,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 		}
 
 		if(ini.count("scene.tile_x"))
-			ImageTileXCount = PM::pm_Max<uint32>(1, ini["scene.tile_x"].as<PR::uint32>());
+			ImageTileXCount = std::max<uint32>(1, ini["scene.tile_x"].as<PR::uint32>());
 		if(ini.count("scene.tile_y"))
-			ImageTileYCount = PM::pm_Max<uint32>(1, ini["scene.tile_y"].as<PR::uint32>());
+			ImageTileYCount = std::max<uint32>(1, ini["scene.tile_y"].as<PR::uint32>());
 
 		RenderSettings.setTileMode(ini["threads.tile_mode"].as<EnumOption<TileMode> >());
 
@@ -521,11 +522,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.ppm().setMaxGatherRadius(ini["ppm.radius"].as<float>());
 		RenderSettings.ppm().setMaxGatherCount(ini["ppm.max"].as<PR::uint32>());
 		RenderSettings.ppm().setGatheringMode(ini["ppm.gathering_mode"].as<EnumOption<PPMGatheringMode> >());
-		RenderSettings.ppm().setSqueezeWeight(PM::pm_Clamp<float>(ini["ppm.squeeze"].as<float>(), 0, 1));
-		RenderSettings.ppm().setContractRatio(PM::pm_Clamp<float>(ini["ppm.ratio"].as<float>(), 0.01f, 1));
-		RenderSettings.ppm().setProjectionMapWeight(PM::pm_Clamp<float>(ini["ppm.proj"].as<float>(), 0, 1));
-		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Clamp<float>(ini["ppm.proj_qual"].as<float>(), 0.01f, 1));
-		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_Max<float>(ini["ppm.proj_caustic"].as<float>(), 0));
+		RenderSettings.ppm().setSqueezeWeight(std::min<float>(std::max<float>(ini["ppm.squeeze"].as<float>(), 0), 1));
+		RenderSettings.ppm().setContractRatio(std::min<float>(std::max<float>(ini["ppm.ratio"].as<float>(), 0.01f), 1));
+		RenderSettings.ppm().setProjectionMapWeight(std::min<float>(std::max<float>(ini["ppm.proj"].as<float>(), 0), 1));
+		RenderSettings.ppm().setProjectionMapQuality(std::min<float>(std::max<float>(ini["ppm.proj_qual"].as<float>(), 0.01f), 1));
+		RenderSettings.ppm().setProjectionMapPreferCaustic(std::max<float>(ini["ppm.proj_caustic"].as<float>(), 0));
 	}
 
 	if(!vm.count("input"))
@@ -566,7 +567,10 @@ bool ProgramSettings::parse(int argc, char** argv)
 		std::cout << "Invalid output path given." << std::endl;
 		return false;
 	}
-	OutputDir = directoryPath.native();
+	OutputDir = directoryPath.string();
+	// Remove trailing slashes
+	if(!OutputDir.empty() && OutputDir.back() == '/')
+		OutputDir.pop_back();
 
 	IsVerbose = (vm.count("verbose") != 0);
 	IsQuiet = (vm.count("quiet") != 0);
@@ -630,9 +634,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 	}
 
 	if (vm.count("itx"))
-		ImageTileXCount = PM::pm_Max<uint32>(1, vm["itx"].as<PR::uint32>());
+		ImageTileXCount = std::max<uint32>(1, vm["itx"].as<PR::uint32>());
 	if (vm.count("ity"))
-		ImageTileYCount = PM::pm_Max<uint32>(1, vm["ity"].as<PR::uint32>());
+		ImageTileYCount = std::max<uint32>(1, vm["ity"].as<PR::uint32>());
 
 	if(vm.count("rtm"))
 		RenderSettings.setTileMode(vm["rtm"].as<EnumOption<TileMode> >());
@@ -685,15 +689,15 @@ bool ProgramSettings::parse(int argc, char** argv)
 	if(vm.count("p_g_mode"))
 		RenderSettings.ppm().setGatheringMode(vm["p_g_mode"].as<EnumOption<PPMGatheringMode> >());
 	if(vm.count("p_squeeze"))
-		RenderSettings.ppm().setSqueezeWeight(PM::pm_Clamp<float>(vm["p_squeeze"].as<float>(), 0, 1));
+		RenderSettings.ppm().setSqueezeWeight(std::min<float>(std::max<float>(vm["p_squeeze"].as<float>(), 0), 1));
 	if(vm.count("p_ratio"))
-		RenderSettings.ppm().setContractRatio(PM::pm_Clamp<float>(vm["p_ratio"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setContractRatio(std::min<float>(std::max<float>(vm["p_ratio"].as<float>(), 0.01f), 1));
 	if(vm.count("p_proj"))
-		RenderSettings.ppm().setProjectionMapWeight(PM::pm_Clamp<float>(vm["p_proj"].as<float>(), 0, 1));
+		RenderSettings.ppm().setProjectionMapWeight(std::min<float>(std::max<float>(vm["p_proj"].as<float>(), 0), 1));
 	if(vm.count("p_proj_qual"))
-		RenderSettings.ppm().setProjectionMapQuality(PM::pm_Clamp<float>(vm["p_proj_qual"].as<float>(), 0.01f, 1));
+		RenderSettings.ppm().setProjectionMapQuality(std::min<float>(std::max<float>(vm["p_proj_qual"].as<float>(), 0.01f), 1));
 	if(vm.count("p_proj_caustic"))
-		RenderSettings.ppm().setProjectionMapPreferCaustic(PM::pm_Max<float>(vm["p_proj_caustic"].as<float>(), 0));
+		RenderSettings.ppm().setProjectionMapPreferCaustic(std::max<float>(vm["p_proj_caustic"].as<float>(), 0));
 
 	return true;
 }

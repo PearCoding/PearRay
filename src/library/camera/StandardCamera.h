@@ -7,6 +7,8 @@ namespace PR
 	class PR_LIB StandardCamera : public Camera
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		StandardCamera(uint32 id, const std::string& name);
 		virtual ~StandardCamera();
 
@@ -22,14 +24,14 @@ namespace PR
 		void setHeight(float h);
 		float height() const;
 
-		void setLocalDirection(const PM::vec3& d);
-		PM::vec3 localDirection() const;
+		void setLocalDirection(const Eigen::Vector3f& d);
+		Eigen::Vector3f localDirection() const;
 
-		void setLocalRight(const PM::vec3& d);
-		PM::vec3 localRight() const;
+		void setLocalRight(const Eigen::Vector3f& d);
+		Eigen::Vector3f localRight() const;
 
-		void setLocalUp(const PM::vec3& d);
-		PM::vec3 localUp() const;
+		void setLocalUp(const Eigen::Vector3f& d);
+		Eigen::Vector3f localUp() const;
 
 		// Depth of Field
 		void setFStop(float f);
@@ -52,18 +54,18 @@ namespace PR
 		float mFStop;
 		float mApertureRadius;
 
-		PM::vec3 mLocalDirection;
-		PM::vec3 mLocalRight;
-		PM::vec3 mLocalUp;
+		Eigen::Vector3f mLocalDirection;
+		Eigen::Vector3f mLocalRight;
+		Eigen::Vector3f mLocalUp;
 
 		// Cache:
-		PM::vec3 mDirection_Cache;
-		PM::vec3 mRight_Cache;
-		PM::vec3 mUp_Cache;
+		Eigen::Vector3f mDirection_Cache;
+		Eigen::Vector3f mRight_Cache;
+		Eigen::Vector3f mUp_Cache;
 
 		bool mHasDOF_Cache;
-		PM::vec3 mFocalDistance_Cache;
-		PM::vec3 mXApertureRadius_Cache;
-		PM::vec3 mYApertureRadius_Cache;
+		Eigen::Vector3f mFocalDistance_Cache;
+		Eigen::Vector3f mXApertureRadius_Cache;
+		Eigen::Vector3f mYApertureRadius_Cache;
 	};
 }

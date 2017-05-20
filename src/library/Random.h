@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 /**
  * Available random algorithms
@@ -121,19 +121,19 @@ namespace PR
 #endif
 		}
 
-		inline PM::vec2 get2D()
+		inline Eigen::Vector2f get2D()
 		{
-			return PM::pm_Set(getFloat(), getFloat());
+			return Eigen::Vector2f(getFloat(), getFloat());
 		}
 
-		inline PM::vec3 get3D()
+		inline Eigen::Vector3f get3D()
 		{
-			return PM::pm_Set(getFloat(), getFloat(), getFloat());
+			return Eigen::Vector3f(getFloat(), getFloat(), getFloat());
 		}
 
-		inline PM::vec4 get4D()
+		inline Eigen::Vector4f get4D()
 		{
-			return PM::pm_Set(getFloat(), getFloat(), getFloat(), getFloat());
+			return Eigen::Vector4f(getFloat(), getFloat(), getFloat(), getFloat());
 		}
 	};
 }

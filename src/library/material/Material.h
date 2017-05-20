@@ -18,22 +18,22 @@ namespace PR
 		/*
 		 Evaluate the BxDF based on L and point information.
 		*/
-		virtual Spectrum eval(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
+		virtual Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) = 0;
 
 		/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
-		virtual float pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL) = 0;
+		virtual float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) = 0;
 
 		/*
 		 Sample a direction based on the uniform rnd value. (Roussian Roulette)
 		*/
-		virtual PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) = 0;
+		virtual Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) = 0;
 
 		/*
 		 Sample a direction based on the uniform rnd value. (Non roussian roulette)
 		*/
-		virtual PM::vec3 samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& path_weight, uint32 path)
+		virtual Eigen::Vector3f samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
 		{
 			path_weight = 1;
 			return sample(point, rnd, pdf);

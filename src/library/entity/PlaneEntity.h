@@ -9,6 +9,8 @@ namespace PR
 	class PR_LIB PlaneEntity : public RenderEntity
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		PlaneEntity(uint32 id, const std::string& name, const Plane& plane);
 		virtual ~PlaneEntity();
 
@@ -40,5 +42,7 @@ namespace PR
 		std::shared_ptr<Material> mMaterial;
 
 		Plane mGlobalPlane_Cache;
+		Eigen::Vector3f mXAxisN_Cache;
+		Eigen::Vector3f mYAxisN_Cache;
 	};
 }

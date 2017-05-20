@@ -1,7 +1,7 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -20,5 +20,5 @@ namespace PR
 
 	typedef ShaderOutput<float> ScalarShaderOutput;
 	typedef ShaderOutput<Spectrum> SpectralShaderOutput;
-	typedef ShaderOutput<PM::vec3> VectorShaderOutput;
+	typedef ShaderOutput<Eigen::Vector3f> VectorShaderOutput;
 }

@@ -64,6 +64,7 @@ ENDIF()
 IF(PR_WITH_GPU_SUPPORT)
 	find_package(OpenCL)
 ENDIF()
+find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)
 find_package(TBB REQUIRED)
 
@@ -151,18 +152,14 @@ ENDIF()
 
 #CONFIGURE
 IF(PR_ONLY_LIBRARY_SUBS)
-	SET(PM_ONLY_LIBRARY ON)
 	SET(DL_ONLY_LIBRARY ON)
 ENDIF(PR_ONLY_LIBRARY_SUBS)
 
 SET(DL_TARGET "datalisp")
-
-add_subdirectory(pearmath)
 add_subdirectory(datalisp)
 
 SET(DEFS "${DEFS};${PM_DEFS}")
-SET(DEFS_DEBUG "${DEFS_DEBUG};${PM_DEFS_DEBUG};PR_DEBUG")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PM_COMPILE_FLAGS}")
+SET(DEFS_DEBUG "${DEFS_DEBUG};PR_DEBUG")
 
 IF(WIN32)
 	SET(DEFS ${DEFS} OPENEXR_DLL)
@@ -196,7 +193,7 @@ ELSE()
 ENDIF()
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} pearmath/src
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
 			src/library)

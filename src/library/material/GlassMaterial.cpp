@@ -53,7 +53,7 @@ namespace PR
 		mIndex = data;
 	}
 
-	Spectrum GlassMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum GlassMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		if (mSpecularity)
 			return mSpecularity->eval(point);
@@ -61,12 +61,12 @@ namespace PR
 			return Spectrum();
 	}
 
-	float GlassMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		return std::numeric_limits<float>::infinity();
 	}
 
-	PM::vec3 GlassMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
 		float weight = (point.Flags & SCF_Inside) == 0 ?
@@ -77,8 +77,8 @@ namespace PR
 #endif
 
 		bool total = false;
-		PM::vec3 dir;
-		if (PM::pm_GetY(rnd) < weight)
+		Eigen::Vector3f dir;
+		if (rnd(1) < weight)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		else
 		{
@@ -92,7 +92,7 @@ namespace PR
 		return dir;
 	}
 
-	PM::vec3 GlassMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& path_weight, uint32 path)
+	Eigen::Vector3f GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
 	{
 		const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
 		path_weight = (point.Flags & SCF_Inside) == 0 ?
@@ -103,7 +103,7 @@ namespace PR
 #endif
 
 		bool total = false;
-		PM::vec3 dir;
+		Eigen::Vector3f dir;
 		if (path == 0)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
 		else

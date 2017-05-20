@@ -135,6 +135,13 @@
 		C() = delete; \
 		PR_CLASS_NON_COPYABLE(C)
 
+#define PR_CLASS_STACK_ONLY(C) \
+	private: \
+		static void *operator new(size_t) = delete; \
+		static void *operator new[](size_t) = delete; \
+		static void operator delete(void*) = delete; \
+		static void operator delete[](void*) = delete
+
 #if !defined(PR_LIB_STATIC)
 # if defined(PR_OS_WINDOWS)
 #  define PR_EXPORT __declspec(dllexport)
@@ -225,4 +232,18 @@ namespace PR
 	typedef std::chrono::high_resolution_clock::time_point TimePoint;
 	typedef uint32 EntityID;
 	typedef uint32 DataRefID;
+
+	constexpr float PR_EPSILON = 0.0000001f;
+
+#ifdef M_PI
+	constexpr float PR_PI = M_PI;
+#else
+	constexpr float PR_PI = 3.14159265358979323846;
+#endif
+
+#ifdef M_1_PI
+	constexpr float PR_1_PI = M_1_PI;
+#else
+	constexpr float PR_1_PI = 1/PR_PI;
+#endif
 }

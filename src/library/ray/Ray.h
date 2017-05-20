@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -15,21 +16,18 @@ namespace PR
 	{
 	public:
 		Ray();
-		Ray(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir, uint32 depth = 0,
-			float time = 0, uint8 wavelength = 0, uint16 flags = 0);
+		Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
+			uint32 depth = 0, float time = 0, uint8 wavelength = 0, uint16 flags = 0);
 		virtual ~Ray();
 
-		inline void setStartPosition(const PM::vec3& p);
-		inline PM::vec3 startPosition() const;
+		inline void setStartPosition(const Eigen::Vector3f& p);
+		inline Eigen::Vector3f startPosition() const;
 
-		inline void setDirection(const PM::vec3& p);
-		inline PM::vec3 direction() const;
+		inline void setDirection(const Eigen::Vector3f& p);
+		inline Eigen::Vector3f direction() const;
 
-		inline void setPixelX(uint32 px);
-		inline uint32 pixelX() const;
-
-		inline void setPixelY(uint32 py);
-		inline uint32 pixelY() const;
+		inline void setPixel(const Eigen::Vector2i& pixel);
+		inline Eigen::Vector2i pixel() const;
 
 		inline void setDepth(uint32 depth);
 		inline uint32 depth() const;
@@ -48,13 +46,13 @@ namespace PR
 		inline uint32 maxDirectionIndex() const;
 #endif
 
-		inline Ray next(const PM::vec3& pos, const PM::vec3& dir) const;
-		static inline Ray safe(uint32 px, uint32 py, const PM::vec3& pos, const PM::vec3& dir,
+		inline Ray next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) const;
+		static inline Ray safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
 			uint32 depth = 0, float time = 0, uint8 wavelength = 0, uint16 flags = 0);
 	private:
-		PM::vec3 mStartPosition;
-		PM::vec3 mDirection;
-		uint32 mPixelX; uint32 mPixelY;
+		Eigen::Vector3f mStartPosition;
+		Eigen::Vector3f mDirection;
+		Eigen::Vector2i mPixel;
 		uint32 mDepth;// Recursion depth!
 		float mTime;
 		uint8 mWavelengthIndex;

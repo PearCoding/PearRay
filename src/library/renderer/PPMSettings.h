@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
 
 namespace PR
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -9,14 +9,16 @@ namespace PR
 	class PR_LIB Sphere
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		Sphere();
-		Sphere(PM::vec3 pos, float radius);
+		Sphere(const Eigen::Vector3f& pos, float radius);
 
 		Sphere(const Sphere& other);
 		Sphere& operator = (const Sphere& other);
 
-		inline PM::vec3 position() const { return mPosition; }
-		inline void setPosition(const PM::vec3& pos) { mPosition = pos; }
+		inline Eigen::Vector3f position() const { return mPosition; }
+		inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
 
 		inline float radius() const { return mRadius; }
 		inline void setRadius(float f)
@@ -25,22 +27,22 @@ namespace PR
 			mRadius = f;
 		}
 
-		inline float volume() const { return (PM_4_PI_F/3)*mRadius*mRadius*mRadius; }
-		inline float surfaceArea() const { return PM_4_PI_F*mRadius*mRadius; }
+		inline float volume() const { return (PR_PI*4.0/3)*mRadius*mRadius*mRadius; }
+		inline float surfaceArea() const { return PR_PI*4*mRadius*mRadius; }
 
 		inline bool isValid() const { return mRadius > 0; }
 
-		inline bool contains(const PM::vec3& point) const
+		inline bool contains(const Eigen::Vector3f& point) const
 		{
-			return PM::pm_MagnitudeSqr(PM::pm_Subtract(mPosition, point)) <= mRadius*mRadius;
+			return (mPosition - point).squaredNorm() <= mRadius*mRadius;
 		}
 
-		bool intersects(const Ray& ray, PM::vec3& collisionPoint, float& t) const;
+		bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const;
 
-		void put(const PM::vec3& point);
+		void put(const Eigen::Vector3f& point);
 		void combine(const Sphere& other);
 
-		inline Sphere putted(const PM::vec3& point) const
+		inline Sphere putted(const Eigen::Vector3f& point) const
 		{
 			Sphere tmp = *this;
 			tmp.put(point);
@@ -55,7 +57,7 @@ namespace PR
 		}
 
 	private:
-		PM::vec3 mPosition;
+		Eigen::Vector3f mPosition;
 		float mRadius;
 	};
 }

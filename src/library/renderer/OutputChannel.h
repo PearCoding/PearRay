@@ -2,6 +2,8 @@
 
 #include "renderer/RenderContext.h"
 
+#include <Eigen/Dense>
+
 namespace PR
 {
 	class RenderContext;
@@ -48,40 +50,32 @@ namespace PR
 			}
 		}
 
-		inline void setFragment(uint32 x, uint32 y, const T& v) const
+		inline void setFragment(const Eigen::Vector2i& p, const T& v) const
 		{
-			PR_ASSERT(x >= mRenderer->offsetX() && x < mRenderer->offsetX() + mRenderer->width(),
+			PR_ASSERT(p(0) >= mRenderer->offsetX() && p(0) < mRenderer->offsetX() + mRenderer->width(),
 				"x coord has to be between boundaries");
-			PR_ASSERT(y >= mRenderer->offsetY() && y < mRenderer->offsetY() + mRenderer->height(),
+			PR_ASSERT(p(1) >= mRenderer->offsetY() && p(1) < mRenderer->offsetY() + mRenderer->height(),
 				"y coord has to be between boundaries");
-			mData[(y-mRenderer->offsetY())*mRenderer->width()+(x-mRenderer->offsetX())] = v;
+			mData[(p(1)-mRenderer->offsetY())*mRenderer->width()+(p(0)-mRenderer->offsetX())] = v;
 		}
 
-		inline const T& getFragment(uint32 x, uint32 y) const
+		inline const T& getFragment(const Eigen::Vector2i& p) const
 		{
-			PR_ASSERT(x >= mRenderer->offsetX() && x < mRenderer->offsetX() + mRenderer->width(),
+			PR_ASSERT(p(0) >= mRenderer->offsetX() && p(0) < mRenderer->offsetX() + mRenderer->width(),
 				"x coord has to be between boundaries");
-			PR_ASSERT(y >= mRenderer->offsetY() && y < mRenderer->offsetY() + mRenderer->height(),
+			PR_ASSERT(p(1) >= mRenderer->offsetY() && p(1) < mRenderer->offsetY() + mRenderer->height(),
 				"y coord has to be between boundaries");
-			return mData[(y-mRenderer->offsetY())*mRenderer->width()+(x-mRenderer->offsetX())];
+			return mData[(p(1)-mRenderer->offsetY())*mRenderer->width()+(p(0)-mRenderer->offsetX())];
 		}
 
-		inline void setFragmentBounded(uint32 x, uint32 y, const T& v)
+		inline void setFragmentBounded(const Eigen::Vector2i& p, const T& v)
 		{
-			/*PR_ASSERT(x < mRenderer->width(),
-				"x coord has to be between boundaries");
-			PR_ASSERT(y < mRenderer->height(),
-				"y coord has to be between boundaries");*/
-			mData[y*mRenderer->width()+x] = v;
+			mData[p(1)*mRenderer->width()+p(0)] = v;
 		}
 
-		inline const T& getFragmentBounded(uint32 x, uint32 y) const
+		inline const T& getFragmentBounded(const Eigen::Vector2i& p) const
 		{
-			/*PR_ASSERT(x < mRenderer->width(),
-				"x coord has to be between boundaries");
-			PR_ASSERT(y < mRenderer->height(),
-				"y coord has to be between boundaries");*/
-			return mData[y*mRenderer->width()+x];
+			return mData[p(1)*mRenderer->width()+p(0)];
 		}
 
 		inline T* ptr() const
@@ -107,7 +101,7 @@ namespace PR
 		bool mNeverClear;
 	};
 
-	typedef OutputChannel<PM::vec3> Output3D;
+	typedef OutputChannel<Eigen::Vector3f> Output3D;
 	typedef OutputChannel<float> Output1D;
 	typedef OutputChannel<uint64> OutputCounter;
 	typedef OutputChannel<Spectrum> OutputSpectral;

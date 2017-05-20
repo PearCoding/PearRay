@@ -24,7 +24,7 @@ namespace PR
 
 		inline void setProbability(float theta, float phi, float value)
 		{
-			uint32 i = PM::pm_ClampT<float>(2*theta*PM_INV_PI_F, 0, 1) * mResTheta;
+			uint32 i = PM::pm_ClampT<float>(2*theta*PR_1_PI, 0, 1) * mResTheta;
 			uint32 j = PM::pm_ClampT<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
 
 			setProbabilityWithIndex(i, j, value);
@@ -32,7 +32,7 @@ namespace PR
 
 		inline float probability(float theta, float phi) const
 		{
-			uint32 i = PM::pm_ClampT<float>(2*theta*PM_INV_PI_F, 0, 1) * mResTheta;
+			uint32 i = PM::pm_ClampT<float>(2*theta*PR_1_PI, 0, 1) * mResTheta;
 			uint32 j = PM::pm_ClampT<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
 
 			return probabilityWithIndex(i, j);
@@ -51,7 +51,7 @@ namespace PR
 		}
 
 		// u1, u2 in [0, 1]
-		inline PM::vec3 sample(float u1, float u2, float& pdf) const
+		inline Eigen::Vector3f sample(float u1, float u2, float& pdf) const
 		{
 			uint32 i = mProj.sample(u1, u2, pdf);
 
@@ -66,7 +66,7 @@ namespace PR
 
 		// Randomize output aswell
 		// u1, u2, u3, u4 in [0, 1]
-		inline PM::vec3 sample(float u1, float u2, float u3, float u4, float& pdf) const
+		inline Eigen::Vector3f sample(float u1, float u2, float u3, float u4, float& pdf) const
 		{
 			uint32 i = mProj.sample(u1, u2, pdf);
 

@@ -133,27 +133,27 @@ namespace PR
 
 	// Alot of potential to optimize!
 	constexpr float MinRoughness = 0.001f;
-	Spectrum CookTorranceMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum CookTorranceMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
 		Spectrum spec;
 		if (refl < 1 && mAlbedo)
 		{
-			float val = PM_INV_PI_F;
+			float val = PR_1_PI;
 			if (mDiffuseRoughness)
 			{
 				float roughness = mDiffuseRoughness->eval(point);
 				roughness *= roughness;// Square
 
-				if (roughness > PM_EPSILON)// Oren Nayar
+				if (roughness > PR_EPSILON)// Oren Nayar
 					val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
 			}// else lambert
 
 			spec = mAlbedo->eval(point) * (val*(1-refl));
 		}
 
-		if (refl > PM_EPSILON && mSpecularity && -NdotL * point.NdotV > PM_EPSILON)
+		if (refl > PR_EPSILON && mSpecularity && -NdotL * point.NdotV > PR_EPSILON)
 		{
 			Spectrum ind = mIOR ? mIOR->eval(point) : Spectrum(1.55f);
 			Spectrum F;
@@ -177,12 +177,12 @@ namespace PR
 				break;
 			}
 
-			const PM::vec3 H = Reflection::halfway(point.V, L);
-			const float NdotH = PM::pm_Dot(point.N, H);
+			const Eigen::Vector3f H = Reflection::halfway(point.V, L);
+			const float NdotH = point.N.dot(H);
 
-			if (NdotH > PM_EPSILON)
+			if (NdotH > PR_EPSILON)
 			{
-				const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+				const float m1 = std::max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
 
 				float G;// Includes 1/NdotL*NdotV
 				switch(mGeometryMode)
@@ -195,10 +195,10 @@ namespace PR
 						break;
 					default:
 					case GM_CookTorrance:
-						G = BRDF::g_cooktorrance(-point.NdotV, NdotL, NdotH, -PM::pm_Dot(point.V, H));
+						G = BRDF::g_cooktorrance(-point.NdotV, NdotL, NdotH, -point.V.dot(H));
 						break;
 					case GM_Kelemen:
-						G = BRDF::g_kelemen(-point.NdotV, NdotL, PM::pm_Dot(point.V, H));// No need for -, will be quadrated anyway
+						G = BRDF::g_kelemen(-point.NdotV, NdotL, point.V.dot(H));// No need for -, will be quadrated anyway
 						break;
 				}
 
@@ -217,10 +217,10 @@ namespace PR
 							D = BRDF::ndf_ggx_iso(NdotH, m1);
 						else
 						{
-							const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+							const float m2 = std::max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-							const float XdotH = std::abs(PM::pm_Dot(point.Nx, H));
-							const float YdotH = std::abs(PM::pm_Dot(point.Ny, H));
+							const float XdotH = std::abs(point.Nx.dot(H));
+							const float YdotH = std::abs(point.Ny.dot(H));
 
 							D = BRDF::ndf_ggx_aniso(NdotH, XdotH, YdotH, m1, m2);
 						}
@@ -229,7 +229,7 @@ namespace PR
 
 				// TODO: Really just clamping? A better bound would be better
 				// The max clamp value is just determined by try and error.
-				D = PM::pm_Clamp(D, 0.0f, 100.0f);
+				D = std::min(std::max(D, 0.0f), 100.0f);
 				spec += mSpecularity->eval(point) * F * (0.25f * D * G * refl);
 			}
 		}
@@ -237,16 +237,16 @@ namespace PR
 		return spec;
 	}
 
-	float CookTorranceMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
-		const float m1 = PM::pm_Max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+		const float m1 = std::max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
 
-		const PM::vec3 H = Reflection::halfway(point.V, L);
-		const float NdotH = PM::pm_Dot(point.N, H);
+		const Eigen::Vector3f H = Reflection::halfway(point.V, L);
+		const float NdotH = point.N.dot(H);
 		const float prod = -NdotL * point.NdotV;
 
-		if (NdotH <= PM_EPSILON || prod <= PM_EPSILON)
+		if (NdotH <= PR_EPSILON || prod <= PR_EPSILON)
 			return 0;
 
 		float D;
@@ -264,30 +264,30 @@ namespace PR
 					D = BRDF::ndf_ggx_iso(NdotH, m1);
 				else
 				{
-					const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+					const float m2 = std::max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-					const float XdotH = std::abs(PM::pm_Dot(point.Nx, H));
-					const float YdotH = std::abs(PM::pm_Dot(point.Ny, H));
+					const float XdotH = std::abs(point.Nx.dot(H));
+					const float YdotH = std::abs(point.Ny.dot(H));
 
 					D = BRDF::ndf_ggx_aniso(NdotH, XdotH, YdotH, m1, m2);
 				}
 				break;
 		}
 
-		return PM::pm_Clamp(Projection::cos_hemi_pdf(NdotL) * (1-refl) + (0.25f*D/prod)*refl, 0.0f, 1.0f);
+		return std::min(std::max(Projection::cos_hemi_pdf(NdotL) * (1-refl) + (0.25f*D/prod)*refl, 0.0f), 1.0f);
 	}
 
-	PM::vec3 CookTorranceMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f CookTorranceMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
-		if(PM::pm_GetZ(rnd) < refl)
+		if(rnd(2) < refl)
 			return diffuse_path(point, rnd, pdf);
 		else
 			return specular_path(point, rnd, pdf);
 	}
 
-	PM::vec3 CookTorranceMaterial::samplePath(const ShaderClosure& point, const PM::vec3& rnd, float& pdf, float& path_weight, uint32 path)
+	Eigen::Vector3f CookTorranceMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
 	{
 		path_weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
@@ -302,16 +302,16 @@ namespace PR
 		return 2;
 	}
 
-	PM::vec3 CookTorranceMaterial::diffuse_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f CookTorranceMaterial::diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		return Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+			Projection::cos_hemi(rnd(0), rnd(1), pdf));
 	}
 
-	PM::vec3 CookTorranceMaterial::specular_path(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
-		float u = PM::pm_GetX(rnd);
-		float v = PM::pm_GetY(rnd);
+		float u = rnd(0);
+		float v = rnd(1);
 
 		float m1 = mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0;
 		float cosTheta, sinTheta;// V samples
@@ -321,17 +321,18 @@ namespace PR
 		{
 			case DM_Blinn:
 			{
-				if(m1 <= PM_EPSILON)
+				if(m1 <= PR_EPSILON)
 					cosTheta = 1;
 				else
 					cosTheta = std::pow(1 - v, 1/(2*m1*m1));
 
-				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
+				sinPhi = std::sin(2*PR_PI*u);
+				cosPhi = std::cos(2*PR_PI*u);
 
-				if(m1 <= PM_EPSILON)
+				if(m1 <= PR_EPSILON)
 					pdf = 1;
 				else
-					pdf = PM_4_PI_F * m1 * m1 * (1 - v)/cosTheta;
+					pdf = 4 * PR_PI * m1 * m1 * (1 - v)/cosTheta;
 			}
 				break;
 			default:
@@ -339,32 +340,36 @@ namespace PR
 			{
 				float t = 1/(1-m1*m1*std::log(1-v));
 				cosTheta = std::sqrt(t);
-				PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
+				sinPhi = std::sin(2*PR_PI*u);
+				cosPhi = std::cos(2*PR_PI*u);
 
-				if(m1 <= PM_EPSILON)
+				if(m1 <= PR_EPSILON)
 					pdf = 1;
 				else
-					pdf = PM_INV_PI_F / (m1 * m1 * cosTheta * cosTheta * cosTheta) * (1-v);
+					pdf = PR_1_PI / (m1 * m1 * cosTheta * cosTheta * cosTheta) * (1-v);
 			}
 				break;
 			case DM_GGX:
 			{
-				m1 = PM::pm_Max(MinRoughness, m1);
+				m1 = std::max(MinRoughness, m1);
 				float r2;
 				float alpha2;
 				if(mSpecRoughnessX == mSpecRoughnessY)
 				{
-					PM::pm_SinCos(PM_2_PI_F * u, sinPhi, cosPhi);
+					sinPhi = std::sin(2*PR_PI*u);
+					cosPhi = std::cos(2*PR_PI*u);
 					alpha2 = m1*m1;
 					r2 = alpha2;
 				}
 				else
 				{
-					const float m2 = PM::pm_Max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+					const float m2 = std::max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
 
-					float phi = std::atan(m2/m1*std::tan(PM_PI_F + PM_2_PI_F * u)) +
-						PM_PI_F * std::floor(2*u + 0.5f);
-					PM::pm_SinCos(phi, sinPhi, cosPhi);
+					float phi = std::atan(m2/m1*std::tan(PR_PI + 2 * PR_PI * u)) +
+						PR_PI * std::floor(2*u + 0.5f);
+						
+					sinPhi = std::sin(phi);
+					cosPhi = std::cos(phi);
 
 					float f1 = cosPhi/m1;
 					float f2 = sinPhi/m2;
@@ -373,22 +378,22 @@ namespace PR
 				}
 
 				float t2 = alpha2 * v / (1-v);
-				cosTheta = PM::pm_Max(0.001f, 1.0f / std::sqrt(1 + t2));
+				cosTheta = std::max(0.001f, 1.0f / std::sqrt(1 + t2));
 
 				float s = 1+t2/alpha2;
-				pdf = PM_INV_PI_F / (r2*cosTheta*cosTheta*cosTheta*s*s);
+				pdf = PR_1_PI / (r2*cosTheta*cosTheta*cosTheta*s*s);
 			}
 				break;
 		}
 
 		sinTheta = std::sqrt(1-cosTheta*cosTheta);
 		auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			PM::pm_Set(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
-		auto dir = PM::pm_Normalize(Reflection::reflect(std::abs(PM::pm_Dot(H, point.V)), H, point.V));
+			Eigen::Vector3f(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta));
+		auto dir = Reflection::reflect(std::abs(H.dot(point.V)), H, point.V).normalized();
 
-		float NdotL = PM::pm_Dot(point.N, dir);
-		if(NdotL > PM_EPSILON)
-			pdf = PM::pm_Clamp(pdf / (-4 * NdotL * point.NdotV), 0.0f, 1.0f);
+		float NdotL = point.N.dot(dir);
+		if(NdotL > PR_EPSILON)
+			pdf = std::min(std::max(pdf / (-4 * NdotL * point.NdotV), 0.0f), 1.0f);
 		else
 			pdf = 0;
 

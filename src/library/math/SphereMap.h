@@ -2,6 +2,8 @@
 
 #include "ProjectionMap.h"
 
+#include <Eigen/Dense>
+
 namespace PR
 {
 	class PR_LIB SphereMap
@@ -24,16 +26,16 @@ namespace PR
 
 		inline void setProbability(float theta, float phi, float value)
 		{
-			uint32 i = PM::pm_Clamp<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
-			uint32 j = PM::pm_Clamp<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
+			uint32 i = std::min<float>(std::max<float>(theta*PR_1_PI, 0), 1) * mResTheta;
+			uint32 j = std::min<float>(std::max<float>(phi*0.5*PR_1_PI, 0), 1) * mResPhi;
 
 			setProbabilityWithIndex(i, j, value);
 		}
 
 		inline float probability(float theta, float phi) const
 		{
-			uint32 i = PM::pm_Clamp<float>(theta*PM_INV_PI_F, 0, 1) * mResTheta;
-			uint32 j = PM::pm_Clamp<float>(phi*PM_INV_2_PI_F, 0, 1) * mResPhi;
+			uint32 i = std::min<float>(std::max<float>(theta*PR_1_PI, 0), 1) * mResTheta;
+			uint32 j = std::min<float>(std::max<float>(phi*0.5*PR_1_PI, 0), 1) * mResPhi;
 
 			return probabilityWithIndex(i, j);
 		}
@@ -46,35 +48,35 @@ namespace PR
 		inline void setup()
 		{
 			mProj.rebound();
-			mProj.scale(PM_INV_PI_F*0.25f);
+			mProj.scale(PR_1_PI*0.25f);
 			mProj.setup();
 		}
 
 		// u1, u2 in [0, 1]
-		inline PM::vec3 sample(float u1, float u2, float& pdf) const
+		inline Eigen::Vector3f sample(float u1, float u2, float& pdf) const
 		{
 			uint32 i = mProj.sample(u1, u2, pdf);
 
 			uint32 phiI = i % mResPhi;
 			uint32 thetaI = i / mResPhi;
 
-			float phi = PM_2_PI_F * phiI / (float)mResPhi;
-			float theta = PM_PI_F * thetaI / (float)mResTheta;
+			float phi = 2 * PR_PI * phiI / (float)mResPhi;
+			float theta = PR_PI * thetaI / (float)mResTheta;
 
 			return Projection::sphere_coord(theta, phi);
 		}
 
 		// Randomize output aswell
 		// u1, u2, u3, u4 in [0, 1]
-		inline PM::vec3 sample(float u1, float u2, float u3, float u4, float& pdf) const
+		inline Eigen::Vector3f sample(float u1, float u2, float u3, float u4, float& pdf) const
 		{
 			uint32 i = mProj.sample(u1, u2, pdf);
 
 			uint32 phiI = i % mResPhi;
 			uint32 thetaI = i / mResPhi;
 
-			float phi = PM_2_PI_F * PM::pm_Clamp((phiI+u3) / (float)mResPhi, 0.0f, 1.0f);
-			float theta = PM_PI_F * PM::pm_Clamp((thetaI+u4) / (float)mResTheta, 0.0f, 1.0f);
+			float phi = 2 * PR_PI * std::min<float>(std::max<float>((phiI+u3) / (float)mResPhi, 0.0f), 1.0f);
+			float theta = PR_PI * std::min<float>(std::max<float>((thetaI+u4) / (float)mResTheta, 0.0f), 1.0f);
 
 			return Projection::sphere_coord(theta, phi);
 		}

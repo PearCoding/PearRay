@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BoundingBox.h"
-
+#include <Eigen/Geometry>
 #include <vector>
 
 namespace PR
@@ -19,6 +19,8 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(TriMesh);
 
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		TriMesh();
 		~TriMesh();
 
@@ -37,8 +39,8 @@ namespace PR
 
 		void calcNormals();
 
-		float surfaceArea(uint32 slot, const PM::mat4& transform) const;
-		float surfaceArea(const PM::mat4& transform) const;
+		float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
+		float surfaceArea(const Eigen::Affine3f& transform) const;
 
 		inline const BoundingBox& boundingBox() const
 		{

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 #include <iostream>
 #include <list>
@@ -48,128 +49,73 @@ bool _prt_test_nearly(const T1& v1, const T2& v2, double eps)
 	return _prt_diff(v1, v2) <= std::abs(eps);
 }
 
-/* 2D */
-template<>
-bool _prt_test_eq<PM::vec2,PM::vec2>(const PM::vec2& val, const PM::vec2& exp)
+// Generic
+template<typename Derived>
+bool _prt_test_eq_V(const Eigen::MatrixBase<Derived>& val, const Eigen::MatrixBase<Derived>& exp)
 {
-	return PM::pm_IsAllTrue(PM::pm_IsEqual(val,exp));
+	return val==exp;
 }
 
-template<>
-bool _prt_test_greater<PM::vec2,PM::vec2>(const PM::vec2& val, const PM::vec2& exp)
+template<typename Derived>
+bool _prt_test_greater_V(const Eigen::MatrixBase<Derived>& val, const Eigen::MatrixBase<Derived>& exp)
 {
-	return PM::pm_IsAllTrue(PM::pm_IsGreater(val, exp));
+	return (val.array()>exp.array()).all();
 }
 
-template<>
-double _prt_diff<PM::vec2,PM::vec2>(const PM::vec2& val, const PM::vec2& exp)
+template<typename Derived>
+double _prt_diff_V(const Eigen::MatrixBase<Derived>& val, const Eigen::MatrixBase<Derived>& exp)
 {
-	return PM::pm_MagnitudeSqr(PM::pm_Subtract(val, exp));
+	return (val-exp).squaredNorm();
 }
 
-/* 3D */
-template<>
-bool _prt_test_eq<PM::vec3,PM::vec3>(const PM::vec3& val, const PM::vec3& exp)
-{
-	return PM::pm_IsAllTrue(PM::pm_IsEqual(val,exp));
-}
-
-template<>
-bool _prt_test_greater<PM::vec3,PM::vec3>(const PM::vec3& val, const PM::vec3& exp)
-{
-	return PM::pm_IsAllTrue(PM::pm_IsGreater(val, exp));
-}
-
-template<>
-double _prt_diff<PM::vec3,PM::vec3>(const PM::vec3& val, const PM::vec3& exp)
-{
-	return PM::pm_MagnitudeSqr(PM::pm_Subtract(val, exp));
-}
-
-template<>
-std::string _prt_test_string<PM::vec3>(const PM::vec3& val)
+template<typename Derived>
+std::string _prt_test_string_V(const Eigen::MatrixBase<Derived>& val)
 {
 	std::stringstream stream;
-	stream << "(" << PM::pm_GetX(val) << "," << PM::pm_GetY(val) << "," << PM::pm_GetZ(val) << ")";
+	stream << val;
 	return stream.str();
 }
 
-/* 4D */
+#define _PRT_DEF_STRUCT(M) \
+template<> \
+bool _prt_test_eq<M,M>(const M& val, const M& exp) { return _prt_test_eq_V(val, exp); } \
+template<> \
+bool _prt_test_greater<M,M>(const M& val, const M& exp) { return _prt_test_greater_V(val, exp); } \
+template<> \
+double _prt_diff<M,M>(const M& val, const M& exp) { return _prt_diff_V(val, exp); } \
+template<> \
+std::string _prt_test_string<M>(const M& val) { return _prt_test_string_V(val); }
+
+_PRT_DEF_STRUCT(Eigen::Matrix2f)
+_PRT_DEF_STRUCT(Eigen::Matrix3f)
+_PRT_DEF_STRUCT(Eigen::Matrix4f)
+_PRT_DEF_STRUCT(Eigen::Vector2f)
+_PRT_DEF_STRUCT(Eigen::Vector3f)
+_PRT_DEF_STRUCT(Eigen::Vector4f)
+
 template<>
-bool _prt_test_eq<PM::vec4,PM::vec4>(const PM::vec4& val, const PM::vec4& exp)
+bool _prt_test_eq(const Eigen::Quaternionf& val, const Eigen::Quaternionf& exp)
 {
-	return PM::pm_IsAllTrue(PM::pm_IsEqual(val,exp));
+	return val.vec()==exp.vec();
 }
 
 template<>
-bool _prt_test_greater<PM::vec4,PM::vec4>(const PM::vec4& val, const PM::vec4& exp)
+bool _prt_test_greater(const Eigen::Quaternionf& val, const Eigen::Quaternionf& exp)
 {
-	return PM::pm_IsAllTrue(PM::pm_IsGreater(val, exp));
+	return (val.vec().array()>exp.vec().array()).all();
 }
 
 template<>
-double _prt_diff<PM::vec4,PM::vec4>(const PM::vec4& val, const PM::vec4& exp)
+double _prt_diff(const Eigen::Quaternionf& val, const Eigen::Quaternionf& exp)
 {
-	return PM::pm_MagnitudeSqr(PM::pm_Subtract(val, exp));
+	return (val.vec()-exp.vec()).squaredNorm();
 }
 
 template<>
-std::string _prt_test_string<PM::vec4>(const PM::vec4& val)
+std::string _prt_test_string(const Eigen::Quaternionf& val)
 {
 	std::stringstream stream;
-	stream << "(" << PM::pm_GetX(val) << "," << PM::pm_GetY(val) 
-		<< "," << PM::pm_GetZ(val) << "," << PM::pm_GetW(val) << ")";
-	return stream.str();
-}
-
-/* mat2 */
-template<>
-bool _prt_test_eq<PM::mat2,PM::mat2>(const PM::mat2& val, const PM::mat2& exp)
-{
-	return PM::pm_IsAllTrue(PM::pm_IsEqual(val,exp));
-}
-
-template<>
-std::string _prt_test_string<PM::mat2>(const PM::mat2& val)
-{
-	std::stringstream stream;
-	stream << "\n[" << PM::pm_GetIndex(val,0,0) << "," << PM::pm_GetIndex(val,0,1)
-		<< ";\n " << PM::pm_GetIndex(val,1,0) << "," << PM::pm_GetIndex(val,1,1) << "]";
-	return stream.str();
-}
-
-/* mat3 */
-template<>
-bool _prt_test_eq<PM::mat3,PM::mat3>(const PM::mat3& val, const PM::mat3& exp)
-{
-	return PM::pm_IsAllTrue(PM::pm_IsEqual(val,exp));
-}
-
-template<>
-std::string _prt_test_string<PM::mat3>(const PM::mat3& val)
-{
-	std::stringstream stream;
-	stream << "\n[" << PM::pm_GetIndex(val,0,0) << "," << PM::pm_GetIndex(val,0,1) << "," << PM::pm_GetIndex(val,0,2)
-		<< ";\n " << PM::pm_GetIndex(val,1,0) << "," << PM::pm_GetIndex(val,1,1) << "," << PM::pm_GetIndex(val,1,2)
-		<< ";\n " << PM::pm_GetIndex(val,2,0) << "," << PM::pm_GetIndex(val,2,1) << "," << PM::pm_GetIndex(val,2,2) << "]";
-	return stream.str();
-}
-
-/* mat4 */
-template<>
-bool _prt_test_eq<PM::mat4,PM::mat4>(const PM::mat4& val, const PM::mat4& exp)
-{
-	return PM::pm_IsAllTrue(PM::pm_IsEqual(val,exp));
-}
-
-template<>
-std::string _prt_test_string<PM::mat4>(const PM::mat4& val)
-{
-	std::stringstream stream;
-	stream << "\n[" << PM::pm_GetIndex(val,0,0) << "," << PM::pm_GetIndex(val,0,1) << "," << PM::pm_GetIndex(val,0,2) << "," << PM::pm_GetIndex(val,0,3)
-		<< ";\n " << PM::pm_GetIndex(val,1,0) << "," << PM::pm_GetIndex(val,1,1) << "," << PM::pm_GetIndex(val,1,2) << "," << PM::pm_GetIndex(val,1,3)
-		<< ";\n " << PM::pm_GetIndex(val,2,0) << "," << PM::pm_GetIndex(val,2,1) << "," << PM::pm_GetIndex(val,2,2) << "," << PM::pm_GetIndex(val,2,3)
-		<< ";\n " << PM::pm_GetIndex(val,3,0) << "," << PM::pm_GetIndex(val,3,1) << "," << PM::pm_GetIndex(val,3,2) << "," << PM::pm_GetIndex(val,3,3) << "]";
+	stream << val.vec();
 	return stream.str();
 }
 
@@ -267,7 +213,7 @@ namespace PRT
 }
 
 #ifndef PRT_EPSILON
-# define PRT_EPSILON (PM_EPSILON * 2)
+# define PRT_EPSILON (PR_EPSILON * 2)
 #endif
 
 #define PR_BEGIN_TESTCASE(name) \

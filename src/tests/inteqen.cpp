@@ -100,6 +100,7 @@ const char* PROJECT = R"(
 constexpr int SPX = 50;
 constexpr int SPY = 50;
 constexpr float EPS = 10.0f;
+constexpr int THREADS = 0;
 
 PR_BEGIN_TESTCASE(IntEqEn)
 PR_TEST("Equal Energy")
@@ -129,12 +130,12 @@ PR_TEST("Equal Energy")
 		env->outputSpecification().setup(renderer);
 		env->scene().setup(renderer);
 
-		renderer->start(8, 8, 0);
+		renderer->start(8, 8, THREADS);
 
 		while(!renderer->isFinished())
 		{}
 
-		diOutput = renderer->output()->getFragment(SPX,SPY);
+		diOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
 	}
 
 	{// Bi-Direct
@@ -144,12 +145,12 @@ PR_TEST("Equal Energy")
 		env->outputSpecification().setup(renderer);
 		env->scene().setup(renderer);
 
-		renderer->start(8, 8, 0);
+		renderer->start(8, 8, THREADS);
 
 		while(!renderer->isFinished())
 		{}
 
-		bidiOutput = renderer->output()->getFragment(SPX,SPY);
+		bidiOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
 	}
 
 	{// PPM
@@ -161,12 +162,12 @@ PR_TEST("Equal Energy")
 		env->outputSpecification().setup(renderer);
 		env->scene().setup(renderer);
 
-		renderer->start(8, 8, 0);
+		renderer->start(8, 8, THREADS);
 
 		while(!renderer->isFinished())
 		{}
 
-		ppmOutput = renderer->output()->getFragment(SPX,SPY);
+		ppmOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
 	}
 
 	const float dif = diOutput.luminousFlux();

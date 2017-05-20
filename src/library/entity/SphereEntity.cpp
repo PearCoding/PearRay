@@ -37,15 +37,15 @@ namespace PR
 
 		if(!m || m == mMaterial.get())
 		{
-			const auto s = flags() & EF_LocalArea ? PM::pm_Set(1,1,1) : scale();
+			const auto s = flags() & EF_LocalArea ? Eigen::Vector3f(1,1,1) : scale();
 
-			const float a = PM::pm_GetX(s) * mRadius;
-			const float b = PM::pm_GetY(s) * mRadius;
-			const float c = PM::pm_GetZ(s) * mRadius;
+			const float a = s(0) * mRadius;
+			const float b = s(1) * mRadius;
+			const float c = s(2) * mRadius;
 
 			// Knud Thomsen’s Formula
 			const float t = (std::pow(a*b,P) + std::pow(a*c,P) + std::pow(b*c,P)) / 3;
-			return PM_4_PI_F * std::pow(t, 1/P);
+			return 4 * PR_PI * std::pow(t, 1/P);
 		}
 		else
 			return 0;
@@ -73,7 +73,7 @@ namespace PR
 
 	bool SphereEntity::isCollidable() const
 	{
-		return mMaterial && mMaterial->canBeShaded() && mRadius >= PM_EPSILON;
+		return mMaterial && mMaterial->canBeShaded() && mRadius >= PR_EPSILON;
 	}
 
 	float SphereEntity::collisionCost() const
@@ -83,8 +83,8 @@ namespace PR
 
 	BoundingBox SphereEntity::localBoundingBox() const
 	{
-		return BoundingBox(PM::pm_Set(mRadius, mRadius, mRadius),
-			PM::pm_Set(-mRadius, -mRadius, -mRadius));
+		return BoundingBox(Eigen::Vector3f(mRadius, mRadius, mRadius),
+			Eigen::Vector3f(-mRadius, -mRadius, -mRadius));
 	}
 
 	bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
@@ -92,22 +92,22 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(invTransform()*ray.startPosition());
+		local.setDirection((invDirectionMatrix()*ray.direction()).normalized());
 
-		Sphere sphere(PM::pm_Zero3D(), mRadius);
+		Sphere sphere(Eigen::Vector3f(0,0,0), mRadius);
 		float t;
-		PM::vec3 collisionPos;
+		Eigen::Vector3f collisionPos;
 		if (!sphere.intersects(local, collisionPos, t))
 			return false;
 
-		collisionPoint.P = PM::pm_Transform(matrix(), collisionPos);
+		collisionPoint.P = transform()*collisionPos;
 
-		collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), collisionPos));
+		collisionPoint.Ng = (directionMatrix()*collisionPos).normalized();
 		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-		collisionPoint.UVW = PM::pm_ExtendTo3D(
-			Projection::sphereUV(PM::pm_RotateWithQuat(PM::pm_InverseQuat(rotation()), collisionPoint.Ng)));
+		const Eigen::Vector2f uv = Projection::sphereUV(collisionPoint.Ng);
+		collisionPoint.UVW = Eigen::Vector3f(uv(0),uv(1),0);
 
 		collisionPoint.Material = material().get();
 
@@ -120,16 +120,16 @@ namespace PR
 
 		FaceSample p;
 
-		PM::vec2 s = sampler.generate2D(sample);
-		PM::vec3 n = Projection::sphere_coord(PM::pm_GetX(s)*PM_2_PI_F, PM::pm_GetY(s)*PM_PI_F);
+		Eigen::Vector2f s = sampler.generate2D(sample);
+		Eigen::Vector3f n = Projection::sphere_coord(s(0)*2*PR_PI, s(1)*PR_PI);
 		pdf = 1;
 
-		p.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), n));
+		p.Ng = (directionMatrix()*n).normalized();
 		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		p.P = PM::pm_Transform(matrix(), PM::pm_Scale(n, mRadius));
-		p.UVW = PM::pm_ExtendTo3D(
-			Projection::sphereUV(p.Ng));
+		p.P = transform()*(n*mRadius);
+		const Eigen::Vector2f uv = Projection::sphereUV(p.Ng);
+		p.UVW = Eigen::Vector3f(uv(0),uv(1),0);
 		p.Material = material().get();
 
 		return p;

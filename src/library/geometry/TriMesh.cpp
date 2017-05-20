@@ -61,9 +61,9 @@ namespace PR
 	{
 		for (Face* f : mFaces)
 		{
-			PM::vec3 U = PM::pm_Subtract(f->V[1], f->V[0]);
-			PM::vec3 V = PM::pm_Subtract(f->V[2], f->V[0]);
-			PM::vec3 N = PM::pm_Normalize(PM::pm_Cross(U, V));
+			Eigen::Vector3f U = f->V[1] - f->V[0];
+			Eigen::Vector3f V = f->V[2] - f->V[0];
+			Eigen::Vector3f N = U.cross(V).normalized();
 
 			f->N[0] = N;
 			f->N[1] = N;
@@ -98,29 +98,29 @@ namespace PR
 			mBoundingBox = ((TriKDTree*)mKDTree)->boundingBox();
 	}
 
-	float TriMesh::surfaceArea(uint32 slot, const PM::mat4& transform) const
+	float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
 	{
 		float a = 0;
 		for (Face* f : mFaces)
 		{
 			if(f->MaterialSlot == slot)
 			{
-				a += Triangle::surfaceArea( PM::pm_Transform(transform, f->V[0]),
-											PM::pm_Transform(transform, f->V[1]),
-											PM::pm_Transform(transform, f->V[2]));
+				a += Triangle::surfaceArea( transform * f->V[0],
+											transform * f->V[1],
+											transform * f->V[2]);
 			}
 		}
 		return a;
 	}
 
-	float TriMesh::surfaceArea(const PM::mat4& transform) const
+	float TriMesh::surfaceArea(const Eigen::Affine3f& transform) const
 	{
 		float a = 0;
 		for (Face* f : mFaces)
 		{
-			a += Triangle::surfaceArea(	PM::pm_Transform(transform, f->V[0]),
-										PM::pm_Transform(transform, f->V[1]),
-										PM::pm_Transform(transform, f->V[2]));
+			a += Triangle::surfaceArea( transform * f->V[0],
+										transform * f->V[1],
+										transform * f->V[2]);
 		}
 		return a;
 	}
@@ -139,20 +139,20 @@ namespace PR
 	FaceSample TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const
 	{
 		auto ret = sampler.generate3D(sample);
-		uint32 fi = Projection::map(PM::pm_GetX(ret), 0, (int)mFaces.size() - 1);
-		auto bary = Projection::triangle(PM::pm_GetY(ret), PM::pm_GetZ(ret));
+		uint32 fi = Projection::map(ret(0), 0, (int)mFaces.size() - 1);
+		auto bary = Projection::triangle(ret(1), ret(2));
 
 		Face* face = mFaces.at(fi);
 
-		PM::vec3 vec;
-		PM::vec3 n;
-		PM::vec2 uv;
-		face->interpolate(PM::pm_GetX(bary), PM::pm_GetY(bary), vec, n, uv);
+		Eigen::Vector3f vec;
+		Eigen::Vector3f n;
+		Eigen::Vector2f uv;
+		face->interpolate(bary(0), bary(1), vec, n, uv);
 
 		FaceSample fp;
 		fp.P = vec;
 		fp.Ng = n;
-		fp.UVW = PM::pm_ExtendTo3D(uv);
+		fp.UVW = Eigen::Vector3f(uv(0),uv(1),0);
 		materialSlot = face->MaterialSlot;
 
 		pdf = 1;//?

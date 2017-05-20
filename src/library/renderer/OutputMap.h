@@ -57,24 +57,24 @@ namespace PR
 
 		void clear();
 
-		void pushFragment(uint32 x, uint32 y, const Spectrum& s, const ShaderClosure& sc);
+		void pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc);
 
-		inline Spectrum getFragment(uint32 x, uint32 y) const
+		inline Spectrum getFragment(const Eigen::Vector2i& p) const
 		{
-			return mSpectral->getFragmentBounded(x, y);
+			return mSpectral->getFragmentBounded(p);
 		}
 
-		inline void setSampleCount(uint32 x, uint32 y, uint64 sample)
+		inline void setSampleCount(const Eigen::Vector2i& p, uint64 sample)
 		{
-			mIntCounter[V_Samples]->setFragmentBounded(x, y, sample);
+			mIntCounter[V_Samples]->setFragmentBounded(p, sample);
 		}
 
-		inline uint64 getSampleCount(uint32 x, uint32 y) const
+		inline uint64 getSampleCount(const Eigen::Vector2i& p) const
 		{
-			return mIntCounter[V_Samples]->getFragmentBounded(x, y);
+			return mIntCounter[V_Samples]->getFragmentBounded(p);
 		}
 
-		bool isPixelFinished(uint32 x, uint32 y) const;
+		bool isPixelFinished(const Eigen::Vector2i& p) const;
 		uint64 finishedPixelCount() const;
 
 		inline const std::shared_ptr<Output1D>& getChannel(Variable1D var) const

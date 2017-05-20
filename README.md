@@ -10,6 +10,7 @@ There is an open source (still experimental) blender integration addon available
 
 ## Dependencies
  - Boost http://www.boost.org/
+ - Eigen3 http://eigen.tuxfamily.org
  - tinyobjloader https://github.com/syoyo/tinyobjloader (included into source)
  - OpenImageIO https://sites.google.com/site/openimageio/home
  - Intel Threading Building Blocks https://www.threadingbuildingblocks.org/
@@ -17,6 +18,7 @@ There is an open source (still experimental) blender integration addon available
 ### Optional
  - OpenCL https://www.khronos.org/opencl/
  - OSL https://github.com/imageworks/OpenShadingLanguage
+ - minieigen https://github.com/eudoxos/minieigen (For Python support)
 
 ## Wiki
 See [Wiki](https://github.com/PearCoding/PearRay/wiki) for more information, examples and tutorials.

@@ -8,6 +8,8 @@ namespace PR
 	class PR_LIB BoundaryEntity : public RenderEntity
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		BoundaryEntity(uint32 id, const std::string& name, const BoundingBox& box);
 		virtual ~BoundaryEntity();
 

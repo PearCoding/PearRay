@@ -3,6 +3,7 @@
 
 #include "math/Projection.h"
 #include "math/Fresnel.h"
+#include "math/Reflection.h"
 #include "shader/ShaderClosure.h"
 
 #include <sstream>
@@ -45,18 +46,18 @@ namespace PR
 	}
 
 	// TODO: Should be normalized better.
-	Spectrum BlinnPhongMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum BlinnPhongMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		Spectrum albedo;
 		if(mAlbedo)
-			albedo = mAlbedo->eval(point) * PM_INV_PI_F;
+			albedo = mAlbedo->eval(point) * PR_1_PI;
 
 		Spectrum spec;
 		if (mIndex && mShininess)
 		{
-			const PM::vec3 H = PM::pm_Normalize(PM::pm_Subtract(L, point.V));
-			const float NdotH = std::abs(PM::pm_Dot(point.N, H));
-			const float VdotH = std::abs(PM::pm_Dot(point.V, H));
+			const Eigen::Vector3f H = Reflection::halfway(L, point.V);
+			const float NdotH = std::abs(point.N.dot(H));
+			const float VdotH = std::abs(point.V.dot(H));
 			const float n = mShininess->eval(point);
 			Spectrum index = mIndex->eval(point);
 
@@ -70,31 +71,31 @@ namespace PR
 				spec.setValue(i, f);
 			}
 
-			spec *= std::pow(NdotH, n) * PM_INV_PI_F * (n + 4) / 8;
+			spec *= std::pow(NdotH, n) * PR_1_PI * (n + 4) / 8;
 		}
 
 		return albedo + spec;
 	}
 
-	float BlinnPhongMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		if (mIndex)
 		{
-			const PM::vec3 H = PM::pm_Normalize(PM::pm_Subtract(L, point.V));
-			const float NdotH = std::abs(PM::pm_Dot(point.N, H));
+			const Eigen::Vector3f H = Reflection::halfway(L, point.V);
+			const float NdotH = std::abs(point.N.dot(H));
 			const float n = mShininess->eval(point);
-			return PM_INV_PI_F + std::pow(NdotH, n);
+			return PR_1_PI + std::pow(NdotH, n);
 		}
 		else
 		{
-			return PM_INV_PI_F;
+			return PR_1_PI;
 		}
 	}
 
-	PM::vec3 BlinnPhongMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		auto dir = Projection::tangent_align(point.N,
-			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+			Projection::cos_hemi(rnd(0), rnd(1), pdf));
 		pdf += BlinnPhongMaterial::pdf(point, dir, 0);
 		return dir;
 	}

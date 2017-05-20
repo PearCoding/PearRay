@@ -29,7 +29,7 @@ namespace PR
 		DM_Binormal_Positive,
 		DM_Binormal_Negative,
 		DM_Binormal_Spherical,
-		DM_UV,
+		DM_UVW,
 		DM_PDF,
 		DM_Emission,
 		DM_Validity
@@ -119,16 +119,16 @@ namespace PR
 
 		// Crop
 		inline float cropMaxX() const { return mCropMaxX; }
-		inline void setCropMaxX(float v) { mCropMaxX = PM::pm_Clamp(v, mCropMinX, 1.0f); }
+		inline void setCropMaxX(float v) { mCropMaxX = std::min(std::max(v, mCropMinX), 1.0f); }
 
 		inline float cropMinX() const { return mCropMinX; }
-		inline void setCropMinX(float v) { mCropMinX = PM::pm_Clamp(v, 0.0f, mCropMaxX); }
+		inline void setCropMinX(float v) { mCropMinX = std::min(std::max(v, 0.0f), mCropMaxX); }
 
 		inline float cropMaxY() const { return mCropMaxY; }
-		inline void setCropMaxY(float v) { mCropMaxY = PM::pm_Clamp(v, mCropMinY, 1.0f); }
+		inline void setCropMaxY(float v) { mCropMaxY = std::min(std::max(v, mCropMinY), 1.0f); }
 
 		inline float cropMinY() const { return mCropMinY; }
-		inline void setCropMinY(float v) { mCropMinY = PM::pm_Clamp(v, 0.0f, mCropMaxY); }
+		inline void setCropMinY(float v) { mCropMinY = std::min(std::max(v, 0.0f), mCropMaxY); }
 
 		// Direct Lightning
 		inline uint32 maxLightSamples() const { return mMaxLightSamples; }

@@ -46,20 +46,20 @@ namespace PR
 					for (int j = 0; j < 3; j++)
 					{
 						int idx = shape.mesh.indices[3 * i + j];
-						face->V[j] = PM::pm_Set(mScale * shape.mesh.positions[3 * idx],
+						face->V[j] = Eigen::Vector3f(mScale * shape.mesh.positions[3 * idx],
 							mScale * shape.mesh.positions[3 * idx + 1],
 							mScale * shape.mesh.positions[3 * idx + 2]);
 
 						if (hasNorm)
 						{
-							face->N[j] = PM::pm_Normalize(PM::pm_Set(inv * shape.mesh.normals[3 * idx],
+							face->N[j] = Eigen::Vector3f(inv * shape.mesh.normals[3 * idx],
 								inv * shape.mesh.normals[3 * idx + 1],
-								inv * shape.mesh.normals[3 * idx + 2]));
+								inv * shape.mesh.normals[3 * idx + 2]).normalized();
 						}
 
 						if (hasUV)
 						{
-							face->UV[j] = PM::pm_Set(shape.mesh.texcoords[2 * idx],
+							face->UV[j] = Eigen::Vector2f(shape.mesh.texcoords[2 * idx],
 								shape.mesh.texcoords[2 * idx + 1]);
 						}
 					}

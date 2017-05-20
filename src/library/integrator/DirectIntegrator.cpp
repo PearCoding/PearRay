@@ -55,15 +55,15 @@ namespace PR
 			const uint32 path_count = sc.Material->samplePathCount();
 			PR_ASSERT(path_count > 0, "path_count should be always higher than 0.");
 
-			PM::vec3 rnd = hemiSampler.generate3D(i);
+			Eigen::Vector3f rnd = hemiSampler.generate3D(i);
 			for(uint32 path = 0; path < path_count; ++path)
 			{
 				float pdf;
 
-				PM::vec3 dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-				const float NdotL = std::abs(PM::pm_Dot(dir, sc.N));
+				Eigen::Vector3f dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
+				const float NdotL = std::abs(dir.dot(sc.N));
 
-				if (pdf <= PM_EPSILON || NdotL <= PM_EPSILON ||
+				if (pdf <= PR_EPSILON || NdotL <= PR_EPSILON ||
 					!(std::isinf(pdf) || diffbounces < renderer()->settings().maxDiffuseBounces()))
 					continue;
 
@@ -93,17 +93,17 @@ namespace PR
 					float pdf;
 					FaceSample p = light->getRandomFacePoint(sampler, i, pdf);
 
-					const PM::vec3 PS = PM::pm_Subtract(p.P, sc.P);
-					const PM::vec3 L = PM::pm_Normalize(PS);
-					const float NdotL = PM::pm_Max(0.0f, PM::pm_Dot(L, sc.N));// No back light detection
+					const Eigen::Vector3f PS = p.P-sc.P;
+					const Eigen::Vector3f L = PS.normalized();
+					const float NdotL = std::max(0.0f, L.dot(sc.N));// No back light detection
 
-					pdf = MSI::toSolidAngle(pdf, PM::pm_MagnitudeSqr(PS), NdotL) +
+					pdf = MSI::toSolidAngle(pdf, PS.squaredNorm(), NdotL) +
 						sc.Material->pdf(sc, L, NdotL);
 
-					if (pdf <= PM_EPSILON)
+					if (pdf <= PR_EPSILON)
 						continue;
 
-					if (NdotL > PM_EPSILON)
+					if (NdotL > PR_EPSILON)
 					{
 						Ray ray = in.next(sc.P, L);
 						ray.setFlags(ray.flags() | RF_Light);

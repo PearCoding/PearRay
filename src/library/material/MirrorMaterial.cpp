@@ -38,7 +38,7 @@ namespace PR
 		mIndex = data;
 	}
 
-	Spectrum MirrorMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum MirrorMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		if (mSpecularity)
 			return mSpecularity->eval(point);
@@ -46,12 +46,12 @@ namespace PR
 			return Spectrum();
 	}
 
-	float MirrorMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		return std::numeric_limits<float>::infinity();
 	}
 
-	PM::vec3 MirrorMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		pdf = std::numeric_limits<float>::infinity();
 		return Reflection::reflect(point.NdotV, point.N, point.V);

@@ -17,7 +17,7 @@ namespace PR
 		return r;
 	}
 
-	PM::vec2 MultiJitteredSampler::generate2D(uint32 index)
+	Eigen::Vector2f MultiJitteredSampler::generate2D(uint32 index)
 	{
 		uint32 newIndex = index % mSamples;
 
@@ -33,17 +33,17 @@ namespace PR
 		float jy = mRandom.getFloat();
 #endif
 
-		auto r = PM::pm_Set((newIndex % m2D_X + (sy + jx) / m2D_Y) / m2D_X,
+		auto r = Eigen::Vector2f((newIndex % m2D_X + (sy + jx) / m2D_Y) / m2D_X,
 			(newIndex / m2D_X + (sx + jy) / m2D_X) / m2D_Y);
 		return r;
 	}
 
 	// Not really uniform!
-	PM::vec3 MultiJitteredSampler::generate3D(uint32 index)
+	Eigen::Vector3f MultiJitteredSampler::generate3D(uint32 index)
 	{
 		auto x = generate1D(index);
 		auto yz = generate2D(index);
-		return PM::pm_Set(x, PM::pm_GetX(yz), PM::pm_GetY(yz));
+		return Eigen::Vector3f(x, yz(0), yz(1));
 	}
 
 	uint32 MultiJitteredSampler::permute(uint32 i, uint32 l, uint32 p)

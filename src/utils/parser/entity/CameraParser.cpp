@@ -40,7 +40,7 @@ namespace PR
 			if (fovVD.isNumber())
 				fovV = fovVD.getNumber();
 
-			camera->setWithAngle(PM::pm_DegToRad(fovH), PM::pm_DegToRad(fovV));
+			camera->setWithAngle(fovH*PR_PI/180, fovV*PR_PI/180);
 		}
 		else
 		{
@@ -60,7 +60,7 @@ namespace PR
 		{
 			float zoom = zoomD.getNumber();
 
-			if (zoom > PM_EPSILON)
+			if (zoom > PR_EPSILON)
 			{
 				camera->setWidth(camera->width() / zoom);
 				camera->setHeight(camera->height() / zoom);

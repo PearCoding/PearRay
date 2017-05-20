@@ -106,7 +106,7 @@ namespace PR
 		return mMaterials[0] && mMaterials[0]->canBeShaded() &&
 			 mMaterials[1] && mMaterials[1]->canBeShaded() &&
 			 mMaterials[2] && mMaterials[2]->canBeShaded() &&
-			 mAxisLength > PM_EPSILON && mAxisThickness > PM_EPSILON;
+			 mAxisLength > PR_EPSILON && mAxisThickness > PR_EPSILON;
 	}
 
 	float CoordinateAxisEntity::collisionCost() const
@@ -128,18 +128,18 @@ namespace PR
 		PR_GUARD_PROFILE();
 
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(invTransform()*ray.startPosition());
+		local.setDirection((invDirectionMatrix()*ray.direction()).normalized());
 
 		float t = std::numeric_limits<float>::max();
 		int found = -1;
-		PM::vec3 vertex;
+		Eigen::Vector3f vertex;
 		BoundingBox::FaceSide side;
 
 		for(int i = 0; i < 3; ++i)
 		{
 			float tmp;
-			PM::vec3 tmpVertex;
+			Eigen::Vector3f tmpVertex;
 			BoundingBox::FaceSide tmpSide;
 			if (mAxisBoundingBox_Cache[i].intersects(local, tmpVertex, tmp, tmpSide))
 			{
@@ -157,15 +157,15 @@ namespace PR
 		{
 			PR_ASSERT(found < 3, "found can't be greater than 2");
 
-			collisionPoint.P = PM::pm_Transform(matrix(), vertex);
+			collisionPoint.P = transform()*vertex;
 
 			Plane plane = mAxisBoundingBox_Cache[found].getFace(side);
-			collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
+			collisionPoint.Ng = (directionMatrix()*plane.normal()).normalized();
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			float u, v;
 			plane.project(vertex, u, v);
-			collisionPoint.UVW = PM::pm_Set(u, v,0);
+			collisionPoint.UVW = Eigen::Vector3f(u, v,0);
 			collisionPoint.Material = mMaterials[found].get();
 			return true;
 		}
@@ -179,7 +179,7 @@ namespace PR
 
 		auto ret = sampler.generate3D(sample);
 
-		int proj = Projection::map(PM::pm_GetX(ret), 0, 3*6-1);// Get randomly a face
+		int proj = Projection::map(ret(0), 0, 3*6-1);// Get randomly a face
 
 		int elem = proj / 3;
 		PR_ASSERT(elem >= 0 && elem < 3, "elem has to be between 0 and 2");
@@ -187,16 +187,11 @@ namespace PR
 		BoundingBox::FaceSide side = (BoundingBox::FaceSide)(proj % 6);
 		Plane plane = mAxisBoundingBox_Cache[elem].getFace(side);
 
-		PM::vec3 xaxis = PM::pm_Transform(directionMatrix(), plane.xAxis());
-		PM::vec3 yaxis = PM::pm_Transform(directionMatrix(), plane.yAxis());
-
 		FaceSample fp;
-		fp.P = PM::pm_Add(position(),
-			PM::pm_Add(PM::pm_Scale(xaxis, PM::pm_GetY(ret)),
-				PM::pm_Scale(yaxis, PM::pm_GetZ(ret))));
-		fp.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), plane.normal()));
+		fp.P = transform()*(plane.xAxis()*ret(1) + plane.yAxis()*ret(2));
+		fp.Ng = (directionMatrix()*plane.normal()).normalized();
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
-		fp.UVW = PM::pm_Set(PM::pm_GetY(ret), PM::pm_GetZ(ret),0);
+		fp.UVW = Eigen::Vector3f(ret(1), ret(2), 0);
 		fp.Material = mMaterials[elem].get();
 
 		pdf = 1;
@@ -206,14 +201,14 @@ namespace PR
 	void CoordinateAxisEntity::setup_cache() const
 	{
 		mAxisBoundingBox_Cache[0] = BoundingBox(
-			PM::pm_Set(mAxisThickness, 0, 0),
-			PM::pm_Set(mAxisLength,mAxisThickness,mAxisThickness));
+			Eigen::Vector3f(mAxisThickness, 0, 0),
+			Eigen::Vector3f(mAxisLength,mAxisThickness,mAxisThickness));
 		mAxisBoundingBox_Cache[1] = BoundingBox(
-			PM::pm_Set(0, mAxisThickness, 0),
-			PM::pm_Set(mAxisThickness,mAxisLength,mAxisThickness));
+			Eigen::Vector3f(0, mAxisThickness, 0),
+			Eigen::Vector3f(mAxisThickness,mAxisLength,mAxisThickness));
 		mAxisBoundingBox_Cache[2] = BoundingBox(
-			PM::pm_Set(0, 0, mAxisThickness),
-			PM::pm_Set(mAxisThickness,mAxisThickness,mAxisLength));
+			Eigen::Vector3f(0, 0, mAxisThickness),
+			Eigen::Vector3f(mAxisThickness,mAxisThickness,mAxisLength));
 
 		mBoundingBox_Cache = mAxisBoundingBox_Cache[0];
 		mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[1]);

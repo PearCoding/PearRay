@@ -16,8 +16,8 @@ namespace PR
 		~HaltonQMCSampler();
 
 		float generate1D(uint32 index) override;
-		PM::vec2 generate2D(uint32 index) override;
-		PM::vec3 generate3D(uint32 index) override;
+		Eigen::Vector2f generate2D(uint32 index) override;
+		Eigen::Vector3f generate3D(uint32 index) override;
 
 	private:
 		static float halton(uint32 index, uint32 base);

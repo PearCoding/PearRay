@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
 
 #include <array>
 #include <queue>

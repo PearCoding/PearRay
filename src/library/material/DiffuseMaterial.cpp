@@ -23,24 +23,23 @@ namespace PR
 		mAlbedo = diffSpec;
 	}
 
-	Spectrum DiffuseMaterial::eval(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	Spectrum DiffuseMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		if (mAlbedo)
-			return mAlbedo->eval(point) * PM_INV_PI_F;
+			return mAlbedo->eval(point) * PR_1_PI;
 		else
 			return Spectrum();
 	}
 
-	float DiffuseMaterial::pdf(const ShaderClosure& point, const PM::vec3& L, float NdotL)
+	float DiffuseMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
 	{
 		return Projection::cos_hemi_pdf(NdotL);
-			//PM_INV_PI_F*PM_INV_PI_F;
 	}
 
-	PM::vec3 DiffuseMaterial::sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf)
+	Eigen::Vector3f DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
 	{
 		auto dir = Projection::tangent_align(point.N, point.Nx, point.Ny,
-			Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), pdf));
+			Projection::cos_hemi(rnd(0), rnd(1), pdf));
 		return dir;
 	}
 

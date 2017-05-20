@@ -55,13 +55,16 @@ namespace PR
 				}
 
 				if(slot >= mMaterials.size())
-					return mMesh->surfaceArea(flags() & EF_LocalArea ? PM::pm_Identity4() : matrix());
+					return mMesh->surfaceArea(flags() & EF_LocalArea ?
+						Eigen::Affine3f::Identity() : transform());
 				else
-					return mMesh->surfaceArea(slot, flags() & EF_LocalArea ? PM::pm_Identity4() : matrix());
+					return mMesh->surfaceArea(slot, flags() & EF_LocalArea ?
+						Eigen::Affine3f::Identity() : transform());
 			}
 			else
 			{
-				return mMesh->surfaceArea(flags() & EF_LocalArea ? PM::pm_Identity4() : matrix());
+				return mMesh->surfaceArea(flags() & EF_LocalArea ?
+					Eigen::Affine3f::Identity() : transform());
 			}
 		}
 	}
@@ -126,14 +129,14 @@ namespace PR
 
 		// Local space
 		Ray local = ray;
-		local.setStartPosition(PM::pm_Transform(invMatrix(), ray.startPosition()));
-		local.setDirection(PM::pm_Normalize(PM::pm_Transform(invDirectionMatrix(), ray.direction())));
+		local.setStartPosition(invTransform()*ray.startPosition());
+		local.setDirection((invDirectionMatrix()*ray.direction()).normalized());
 
 		Face* f = mMesh->checkCollision(local, collisionPoint);
 		if (f)
 		{
-			collisionPoint.P = PM::pm_Transform(matrix(), collisionPoint.P);
-			collisionPoint.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), collisionPoint.Ng));
+			collisionPoint.P = transform()*collisionPoint.P;
+			collisionPoint.Ng = (directionMatrix()*collisionPoint.Ng).normalized();
 			Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
 			collisionPoint.Material = material(f->MaterialSlot).get();
@@ -152,8 +155,8 @@ namespace PR
 
 		uint32 material_slot;
 		FaceSample point = mMesh->getRandomFacePoint(sampler, sample, material_slot, pdf);
-		point.Ng = PM::pm_Normalize(PM::pm_Transform(directionMatrix(), point.Ng));
-		point.P = PM::pm_Transform(matrix(), point.P);
+		point.Ng = (directionMatrix()*point.Ng).normalized();
+		point.P = transform()*point.P;
 		Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
 
 		point.Material = material(material_slot).get();
@@ -165,10 +168,11 @@ namespace PR
 	{
 		RenderEntity::onFreeze();
 
-		mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ? PM::pm_Identity4() : matrix());
+		mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ?
+			Eigen::Affine3f::Identity() : transform());
 
 		// Check up
-		if(mSurfaceArea_Cache <= PM_EPSILON)
+		if(mSurfaceArea_Cache <= PR_EPSILON)
 			PR_LOGGER.logf(L_Warning, M_Entity, "Mesh entity %s has zero surface area!", name().c_str());
 	}
 

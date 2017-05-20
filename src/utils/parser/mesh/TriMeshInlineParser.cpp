@@ -12,9 +12,9 @@ namespace PR
 {
 	std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::DataGroup& group) const
 	{
-		std::vector<PM::vec3> positionAttr;
-		std::vector<PM::vec3> normalAttr;
-		std::vector<PM::vec2> uvAttr;
+		std::vector<Eigen::Vector3f> positionAttr;
+		std::vector<Eigen::Vector3f> normalAttr;
+		std::vector<Eigen::Vector2f> uvAttr;
 		// TODO: More attributes!
 
 		// First get attributes
@@ -53,7 +53,7 @@ namespace PR
 						}
 						
 						bool ok;
-						PM::vec3 v = SceneLoader::getVector(attrValD.getGroup(), ok);
+						Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							positionAttr.push_back(v);
@@ -76,7 +76,7 @@ namespace PR
 						}
 						
 						bool ok;
-						PM::vec3 v = SceneLoader::getVector(attrValD.getGroup(), ok);
+						Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 						if(ok)
 							normalAttr.push_back(v);
@@ -99,10 +99,10 @@ namespace PR
 						}
 						
 						bool ok;
-						PM::vec3 v = SceneLoader::getVector(attrValD.getGroup(), ok);
+						Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 						if(ok)
-							uvAttr.push_back(PM::pm_ShrinkTo2D(v));
+							uvAttr.push_back(Eigen::Vector2f(v(0), v(1)));
 						else
 						{
 							PR_LOGGER.log(L_Error, M_Scene, "Mesh texture attribute entry is invalid.");
@@ -243,9 +243,9 @@ namespace PR
 				}
 				else
 				{
-					face->UV[0] = PM::pm_Zero2D();
-					face->UV[1] = PM::pm_Zero2D();
-					face->UV[2] = PM::pm_Zero2D();
+					face->UV[0] = Eigen::Vector2f(0,0);
+					face->UV[1] = Eigen::Vector2f(0,0);
+					face->UV[2] = Eigen::Vector2f(0,0);
 				}
 
 				if(hasMaterials)
@@ -315,9 +315,9 @@ namespace PR
 				}
 				else
 				{
-					face->UV[0] = PM::pm_Zero2D();
-					face->UV[1] = PM::pm_Zero2D();
-					face->UV[2] = PM::pm_Zero2D();
+					face->UV[0] = Eigen::Vector2f(0,0);
+					face->UV[1] = Eigen::Vector2f(0,0);
+					face->UV[2] = Eigen::Vector2f(0,0);
 				}
 
 				if(hasMaterials)

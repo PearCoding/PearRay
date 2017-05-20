@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "PearMath.h"
+#include <Eigen/Dense>
 
 namespace PR
 {
@@ -18,8 +18,8 @@ namespace PR
 		IInfiniteLight() : mFrozen(false) {}
 		virtual ~IInfiniteLight() {}
 
-		virtual PM::vec3 sample(const ShaderClosure& point, const PM::vec3& rnd, float& pdf) = 0;
-		virtual Spectrum apply(const PM::vec3& V) = 0;
+		virtual Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) = 0;
+		virtual Spectrum apply(const Eigen::Vector3f& V) = 0;
 
 		inline void freeze()
 		{
