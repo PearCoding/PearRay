@@ -18,6 +18,8 @@ namespace PR
 	class PR_LIB Entity
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		Entity(uint32 id, const std::string& name);
 		virtual ~Entity();
 

@@ -50,6 +50,8 @@ namespace PR
 
 		struct kdNode
 		{
+			EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 			kdNode(uint8 l, const BoundingBox& b) :
 				leaf(l), boundingBox(b)
 			{

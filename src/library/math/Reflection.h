@@ -6,7 +6,7 @@ namespace PR
 {
 	class PR_LIB Reflection
 	{
-		PR_CLASS_NON_COPYABLE(Reflection);
+		PR_CLASS_NON_CONSTRUCTABLE(Reflection);
 	public:
 		/**
 		* @brief Reflects the viewing vector through the surface normal.

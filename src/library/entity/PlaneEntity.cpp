@@ -139,9 +139,12 @@ namespace PR
 		RenderEntity::onFreeze();
 
 		mGlobalPlane_Cache.setPosition(transform()*mPlane.position());
-		mGlobalPlane_Cache.setAxis(
-			directionMatrix()*mPlane.xAxis(),
-			directionMatrix()*mPlane.yAxis());
+
+		const Eigen::Vector3f px = transform()*(mPlane.position() + mPlane.xAxis());
+		const Eigen::Vector3f py = transform()*(mPlane.position() + mPlane.yAxis());
+
+		mGlobalPlane_Cache.setAxis(px-mGlobalPlane_Cache.position(),
+			py-mGlobalPlane_Cache.position());
 
 		// Check up
 		if(std::abs((mGlobalPlane_Cache.normal()).squaredNorm() - 1) > PR_EPSILON)

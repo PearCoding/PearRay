@@ -10,22 +10,49 @@
 namespace PR
 {
 	BoundingBox::BoundingBox() :
-		 mBox()
+		mUpperBound(0,0,0),
+		mLowerBound(0,0,0)
 	{
 	}
 
 	BoundingBox::BoundingBox(const Eigen::Vector3f& upperbound, const Eigen::Vector3f& lowerbound):
-		 mBox(lowerbound, upperbound)
+		mUpperBound(upperbound.array().max(lowerbound.array()).matrix()),
+		mLowerBound(lowerbound.array().min(upperbound.array()).matrix())
 	{
 	}
 
 	BoundingBox::BoundingBox(float width, float height, float depth) :
-		mBox(Eigen::Vector3f(-width/2, -height/2, -depth/2),
-			Eigen::Vector3f(width/2, height/2, depth/2))
+		mUpperBound(width/2, height/2, depth/2),
+		mLowerBound(-width/2, -height/2, -depth/2)
 	{
-		PR_ASSERT(width > PR_EPSILON, "width has to be greater than 0");
-		PR_ASSERT(height > PR_EPSILON, "height has to be greater than 0");
-		PR_ASSERT(depth > PR_EPSILON, "depth has to be greater than 0");
+		PR_ASSERT(width >= 0, "width has to be positive");
+		PR_ASSERT(height >= 0, "height has to be positive");
+		PR_ASSERT(depth >= 0, "depth has to be positive");
+	}
+
+	void BoundingBox::inflate(float eps, bool maxDir)
+	{
+		Eigen::Vector3f diff = (mUpperBound - mLowerBound).cwiseAbs();
+
+		if(maxDir)
+		{
+			for(int i = 0; i < 3; i++)
+			{
+				if(diff(i) <= eps)
+					mUpperBound(i) += eps;
+			}
+		}
+		else
+		{
+			for(int i = 0; i < 3; i++)
+			{
+				if(diff(i) <= eps)
+				{
+					mLowerBound(i) -= eps;
+					mUpperBound(i) += eps;
+				}
+			}
+		}
 	}
 
 	bool BoundingBox::intersects(const Ray& ray, float& t) const
@@ -146,5 +173,17 @@ namespace PR
 				Eigen::Vector3f(-diff(0), 0,0),
 				Eigen::Vector3f(0, 0, diff(2)));
 		}
+	}
+
+	void BoundingBox::combine(const Eigen::Vector3f& point)
+	{
+		mUpperBound = mUpperBound.array().max(point.array()).matrix();
+		mLowerBound = mLowerBound.array().min(point.array()).matrix();
+	}
+
+	void BoundingBox::combine(const BoundingBox& other)
+	{
+		combine(other.lowerBound());
+		combine(other.upperBound());
 	}
 }

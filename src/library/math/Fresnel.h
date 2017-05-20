@@ -6,7 +6,7 @@ namespace PR
 {
 	class PR_LIB Fresnel
 	{
-		PR_CLASS_NON_COPYABLE(Fresnel);
+		PR_CLASS_NON_CONSTRUCTABLE(Fresnel);
 	public:
 		static inline float dielectric(float dot, float n1, float n2)
 		{

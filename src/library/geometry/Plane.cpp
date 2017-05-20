@@ -7,7 +7,7 @@
 namespace PR
 {
 	#define PR_PLANE_INTERSECT_EPSILON (PR_EPSILON)
-	constexpr float EPSILON_BOUND = 0.00001f;
+	constexpr float EPSILON_BOUND = 0.0001f;
 
 	Plane::Plane() :
 		mPosition(0, 0, 0), mXAxis(1, 0, 0), mYAxis(0, 1, 0),
@@ -69,32 +69,9 @@ namespace PR
 	{
 		PR_GUARD_PROFILE();
 
-		Eigen::Vector3f diff = (mXAxis - mYAxis).cwiseAbs();
-		Eigen::Vector3f min(0,0,0), max(0,0,0);
-
-		for(int i = 0; i < 3; i++)
-		{
-			if(diff(i) <= PR_EPSILON)
-			{
-				min(i) = -EPSILON_BOUND;
-				max(i) = EPSILON_BOUND;
-			}
-			else
-			{
-				if(mXAxis(i)>mYAxis(i))
-				{
-					min(i) = mYAxis(i);
-					max(i) = mXAxis(i);
-				}
-				else
-				{
-					min(i) = mXAxis(i);
-					max(i) = mYAxis(i);
-				}
-			}
-		}
-
-		return BoundingBox(max, min);
+		BoundingBox box(mXAxis + mYAxis, Eigen::Vector3f(0,0,0));
+		box.inflate(EPSILON_BOUND, true);
+		return box;
 	}
 
 	bool Plane::contains(const Eigen::Vector3f& point) const

@@ -8,6 +8,8 @@ namespace PR
 	class PR_LIB Plane
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		Plane();
 		Plane(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
 		Plane(float width, float height);
@@ -49,9 +51,6 @@ namespace PR
 		}
 
 		BoundingBox toLocalBoundingBox() const;
-
-		inline float invSquaredWidth() const { return mInvXLenSqr_Cache; }
-		inline float invSquaredHeight() const { return mInvYLenSqr_Cache; }
 	private:
 		void recache();
 

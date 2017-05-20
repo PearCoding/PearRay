@@ -13,6 +13,8 @@ namespace PR
 	class PR_LIB RenderEntity : public Entity
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 		RenderEntity(uint32 id, const std::string& name);
 		virtual ~RenderEntity();
 
@@ -40,7 +42,6 @@ namespace PR
 		virtual void setup(RenderContext* context) {}
 	private:
 		BoundingBox calcWorldBoundingBox() const;
-
 		BoundingBox mWorldBoundingBox_Cache;
 	};
 }

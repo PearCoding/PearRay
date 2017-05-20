@@ -40,5 +40,7 @@ namespace PR
 		inline FaceSample() noexcept :
 			Material(nullptr)
 			{}
+		
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};
 }

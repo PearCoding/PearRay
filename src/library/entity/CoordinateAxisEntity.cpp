@@ -186,12 +186,9 @@ namespace PR
 
 		BoundingBox::FaceSide side = (BoundingBox::FaceSide)(proj % 6);
 		Plane plane = mAxisBoundingBox_Cache[elem].getFace(side);
-// TODO: Optimize?
-		Eigen::Vector3f xaxis = (directionMatrix() * plane.xAxis()).normalized() * std::sqrt(plane.invSquaredWidth());
-		Eigen::Vector3f yaxis = (directionMatrix() * plane.yAxis()).normalized() * std::sqrt(plane.invSquaredHeight());
 
 		FaceSample fp;
-		fp.P = position() + xaxis*ret(1) + yaxis*ret(2);
+		fp.P = transform()*(plane.xAxis()*ret(1) + plane.yAxis()*ret(2));
 		fp.Ng = (directionMatrix()*plane.normal()).normalized();
 		Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
 		fp.UVW = Eigen::Vector3f(ret(1), ret(2), 0);

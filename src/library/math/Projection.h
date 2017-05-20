@@ -6,7 +6,7 @@ namespace PR
 {
 	class PR_LIB Projection
 	{
-		PR_CLASS_NON_COPYABLE(Projection);
+		PR_CLASS_NON_CONSTRUCTABLE(Projection);
 	public:
 		// Map [0, 1] uniformly to [min, max] as integers! (max is included)
 		static inline int map(float u, int min, int max)

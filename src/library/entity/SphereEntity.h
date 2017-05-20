@@ -8,6 +8,8 @@ namespace PR
 	class PR_LIB SphereEntity : public RenderEntity
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		SphereEntity(uint32 id, const std::string& name, float r);
 		virtual ~SphereEntity();
 

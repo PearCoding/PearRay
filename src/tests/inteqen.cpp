@@ -100,6 +100,7 @@ const char* PROJECT = R"(
 constexpr int SPX = 50;
 constexpr int SPY = 50;
 constexpr float EPS = 10.0f;
+constexpr int THREADS = 0;
 
 PR_BEGIN_TESTCASE(IntEqEn)
 PR_TEST("Equal Energy")
@@ -129,7 +130,7 @@ PR_TEST("Equal Energy")
 		env->outputSpecification().setup(renderer);
 		env->scene().setup(renderer);
 
-		renderer->start(8, 8, 0);
+		renderer->start(8, 8, THREADS);
 
 		while(!renderer->isFinished())
 		{}
@@ -144,7 +145,7 @@ PR_TEST("Equal Energy")
 		env->outputSpecification().setup(renderer);
 		env->scene().setup(renderer);
 
-		renderer->start(8, 8, 0);
+		renderer->start(8, 8, THREADS);
 
 		while(!renderer->isFinished())
 		{}
@@ -161,7 +162,7 @@ PR_TEST("Equal Energy")
 		env->outputSpecification().setup(renderer);
 		env->scene().setup(renderer);
 
-		renderer->start(8, 8, 0);
+		renderer->start(8, 8, THREADS);
 
 		while(!renderer->isFinished())
 		{}

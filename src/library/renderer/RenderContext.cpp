@@ -188,7 +188,6 @@ namespace PR
 		mOutputMap->init();
 
 		// Calculate tile sizes, etc.
-
 		mTileXCount = std::max<uint32>(1,tcx);
 		mTileYCount = std::max<uint32>(1,tcy);
 		mTileWidth = (uint32)std::ceil(mWidth / (float)mTileXCount);

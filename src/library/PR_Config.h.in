@@ -135,6 +135,13 @@
 		C() = delete; \
 		PR_CLASS_NON_COPYABLE(C)
 
+#define PR_CLASS_STACK_ONLY(C) \
+	private: \
+		static void *operator new(size_t) = delete; \
+		static void *operator new[](size_t) = delete; \
+		static void operator delete(void*) = delete; \
+		static void operator delete[](void*) = delete
+
 #if !defined(PR_LIB_STATIC)
 # if defined(PR_OS_WINDOWS)
 #  define PR_EXPORT __declspec(dllexport)

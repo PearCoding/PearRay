@@ -9,6 +9,8 @@ namespace PR
 	class PR_LIB Sphere
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		Sphere();
 		Sphere(const Eigen::Vector3f& pos, float radius);
 

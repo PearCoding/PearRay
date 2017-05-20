@@ -10,6 +10,7 @@ namespace PR
 	*/
 	class PR_LIB BRDF
 	{
+		PR_CLASS_NON_CONSTRUCTABLE(BRDF);
 	public:
 		static inline float orennayar(float roughness,
 			const Eigen::Vector3f V, const Eigen::Vector3f N, const Eigen::Vector3f L,

@@ -24,6 +24,24 @@ PR_TEST("Bounds")
 	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
 }
 
+PR_TEST("Inflate")
+{
+	BoundingBox box(0, 0, 0);
+	box.inflate(0.1);
+	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(-0.1, -0.1, -0.1));
+	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(0.1, 0.1, 0.1));
+	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+}
+
+PR_TEST("Inflate Max")
+{
+	BoundingBox box(0, 0, 0);
+	box.inflate(0.1, true);
+	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(0.1, 0.1, 0.1));
+	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0.05, 0.05, 0.05));
+}
+
 PR_TEST("Intersects Left")
 {
 	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));

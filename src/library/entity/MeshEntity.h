@@ -12,6 +12,8 @@ namespace PR
 	class PR_LIB MeshEntity : public RenderEntity
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		MeshEntity(uint32 id, const std::string& name);
 		virtual ~MeshEntity();
 

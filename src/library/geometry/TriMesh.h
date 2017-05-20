@@ -19,6 +19,8 @@ namespace PR
 		PR_CLASS_NON_COPYABLE(TriMesh);
 
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		TriMesh();
 		~TriMesh();
 

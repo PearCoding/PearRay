@@ -7,6 +7,8 @@ namespace PR
 	class PR_LIB StandardCamera : public Camera
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		StandardCamera(uint32 id, const std::string& name);
 		virtual ~StandardCamera();
 

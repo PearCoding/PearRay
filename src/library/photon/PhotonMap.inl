@@ -151,7 +151,7 @@ namespace Photon
 		(*acc).second.push_back(pht);
 #endif
 
-		mBox.put(pos);
+		mBox.combine(pos);
 	}
 
 	typename PhotonMap::KeyCoord PhotonMap::toCoords(const Eigen::Vector3f& v) const

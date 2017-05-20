@@ -39,8 +39,8 @@ namespace PR
 			Eigen::Vector3f(bx.upperBound()(0), bx.upperBound()(1), bx.lowerBound()(2));
 
 		BoundingBox w(v1, v2);
-		w.put(v3); w.put(v4); w.put(v5);
-		w.put(v6); w.put(v7); w.put(v8);
+		w.combine(v3); w.combine(v4); w.combine(v5);
+		w.combine(v6); w.combine(v7); w.combine(v8);
 		return w;
 	}
 

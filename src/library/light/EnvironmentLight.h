@@ -8,6 +8,8 @@ namespace PR
 	class PR_LIB EnvironmentLight : public IInfiniteLight
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		EnvironmentLight();
 		virtual ~EnvironmentLight();
 

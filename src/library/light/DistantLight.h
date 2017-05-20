@@ -8,6 +8,8 @@ namespace PR
 	class PR_LIB DistantLight : public IInfiniteLight
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		DistantLight();
 		virtual ~DistantLight();
 

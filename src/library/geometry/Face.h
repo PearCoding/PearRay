@@ -9,6 +9,8 @@ namespace PR
 	class PR_LIB Face
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+		
 		Face() :
 			MaterialSlot(0)
 		{

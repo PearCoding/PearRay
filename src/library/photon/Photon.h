@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
+#include <Eigen/Dense>
 
 /*
  0 - Photon hitpoints are spectral
@@ -16,7 +17,9 @@ namespace PR
 	{
 		struct Photon
 		{
-			float Position[3]; // Non compressed positions
+			EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+			Eigen::Vector3f Position;
 			uint8 Phi, Theta; // Support of 65536 possible directions is enough
 			//uint8 KDFlags;// Flags for the KD-Tree
 #if PR_PHOTON_RGB_MODE >= 1

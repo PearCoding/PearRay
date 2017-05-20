@@ -276,6 +276,7 @@ namespace PR
 		}
 
 		// Set rotation
+		if (rotD.type() == DL::Data::T_Group)
 		{
 			bool ok;
 			Eigen::Quaternionf rot = getRotation(rotD, ok);
@@ -840,12 +841,12 @@ namespace PR
 				float y = grp.at(1).getNumber()*PR_PI/180;
 				float z = grp.at(2).getNumber()*PR_PI/180;
 
-				Eigen::AngleAxisf rollAngle(x, Eigen::Vector3f::UnitZ());
-				Eigen::AngleAxisf yawAngle(y, Eigen::Vector3f::UnitY());
-				Eigen::AngleAxisf pitchAngle(z, Eigen::Vector3f::UnitX());
+				Eigen::AngleAxisf ax(x, Eigen::Vector3f::UnitX());
+				Eigen::AngleAxisf ay(y, Eigen::Vector3f::UnitY());
+				Eigen::AngleAxisf az(z, Eigen::Vector3f::UnitZ());
 
 				ok = true;
-				return rollAngle * yawAngle * pitchAngle;
+				return az * ay * ax;
 			}
 		}
 

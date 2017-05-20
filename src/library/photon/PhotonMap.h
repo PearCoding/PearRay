@@ -30,6 +30,8 @@ namespace PR
 		{
 			PR_CLASS_NON_COPYABLE(PhotonMap);
 		public:
+			EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 			typedef bool (*CheckFunction)(const Photon&, const PhotonSphere&, float&);
 
 			inline PhotonMap(float gridDelta);

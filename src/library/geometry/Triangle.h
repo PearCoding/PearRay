@@ -23,6 +23,7 @@ namespace PR
 {
 	class PR_LIB_INLINE Triangle
 	{
+		PR_CLASS_NON_CONSTRUCTABLE(Triangle);
 	public:
 		inline static bool intersect(const Ray& ray, const Face& face,
 			FaceSample& point, float& t)
@@ -200,7 +201,8 @@ namespace PR
 		inline static BoundingBox getBoundingBox(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& p3)
 		{
 			BoundingBox box(p1, p2);
-			box.put(p3);
+			box.combine(p3);
+			box.inflate(0.000001f);
 
 			return box;
 		}

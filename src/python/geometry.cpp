@@ -104,9 +104,11 @@ namespace PRPY
             .def("intersects1", &BoundingBoxWrap::intersects1_Py)
             .def("intersects2", &BoundingBoxWrap::intersects2_Py)
             .def("intersects3", &BoundingBoxWrap::intersects3_Py)
-            .def("put", &BoundingBoxWrap::put)
+            .def("combine", (void (BoundingBox::*)(const Eigen::Vector3f&))&BoundingBox::combine)
+            .def("combine", (void (BoundingBox::*)(const BoundingBox&))&BoundingBox::combine)
             .def("shift", &BoundingBox::shift)
-            .def("putted", &BoundingBox::putted)
+            .def("combined", (BoundingBox (BoundingBox::*)(const Eigen::Vector3f&) const)&BoundingBox::combined)
+            .def("combined", (BoundingBox (BoundingBox::*)(const BoundingBox&) const)&BoundingBox::combined)
             .def("shifted", &BoundingBox::shifted)
             .def("getFace", &BoundingBox::getFace)
         ;
