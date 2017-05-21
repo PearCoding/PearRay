@@ -165,6 +165,7 @@ SET(PR_Material_Hdr
   material/GlassMaterial.h
   material/GridMaterial.h
   material/Material.h
+  material/Material.inl
   material/MirrorMaterial.h
   material/OrenNayarMaterial.h
   material/WardMaterial.h)

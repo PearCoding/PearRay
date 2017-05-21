@@ -47,27 +47,24 @@ namespace PR
 			return 1;
 		}
 
-		inline uint32 id() const
-		{
-			return mID;
-		}
+		inline uint32 id() const;
 
-		bool isLight() const { return mEmission != nullptr; }
+		inline bool isLight() const;
 
-		const std::shared_ptr<SpectralShaderOutput>& emission() const;
-		void setEmission(const std::shared_ptr<SpectralShaderOutput>& spec);
+		inline const std::shared_ptr<SpectralShaderOutput>& emission() const;
+		inline void setEmission(const std::shared_ptr<SpectralShaderOutput>& spec);
 
-		bool canBeShaded() const;
-		void enableShading(bool b);
+		inline bool canBeShaded() const;
+		inline void enableShading(bool b);
 
-		void enableShadow(bool b);
-		bool allowsShadow() const;
+		inline void enableShadow(bool b);
+		inline bool allowsShadow() const;
 
-		void enableSelfShadow(bool b);
-		bool allowsSelfShadow() const;
+		inline void enableSelfShadow(bool b);
+		inline bool allowsSelfShadow() const;
 
-		void enableCameraVisibility(bool b);
-		bool isCameraVisible() const;
+		inline void enableCameraVisibility(bool b);
+		inline bool isCameraVisible() const;
 
 		virtual void setup(RenderContext* context) {};
 
@@ -82,3 +79,5 @@ namespace PR
 		bool mCameraVisible;
 	};
 }
+
+#include "Material.inl"
