@@ -95,7 +95,7 @@ namespace PR
 		mProjMaxPhi = std::max<uint32>(8, MAX_PHI_SIZE*renderer()->settings().ppm().projectionMapQuality());
 
 		const uint64 Photons = renderer()->settings().ppm().maxPhotonsPerPass();
-		constexpr uint64 MinPhotons = 10;
+		const uint64 MinPhotons = renderer()->settings().ppm().maxPhotonsPerPass()*0.1f;// Should be a parameter
 		const std::list<RenderEntity*>& lightList = renderer()->lights();
 
 		const uint64 k = MinPhotons * lightList.size();
@@ -137,34 +137,36 @@ namespace PR
 		PR_LOGGER.logf(L_Info, M_Integrator, "Each thread shoots %llu photons",
 					PhotonsPerThread);
 		
-		uint64 calcPhotons = 0;
-		uint64 calcPhotonsPerLight = 0;
-		uint32 currentLight = 0;
-		for(uint32 thread = 0; thread < renderer()->threads(); ++thread)
+		std::vector<uint64> photonsPerThread(renderer()->threads(), 0);
+		for(Light& light : mLights)
 		{
-			uint64 currentPhotons = 0;
-			while(calcPhotons < Photons &&
-				currentPhotons < PhotonsPerThread &&
-				currentLight < mLights.size())
+			uint64 photonsSpread = 0;
+			for(uint32 thread = 0; thread < renderer()->threads(); ++thread)
 			{
-				LightThreadData ltd;
-				ltd.Entity = &mLights[currentLight];
-				ltd.Photons = std::min(PhotonsPerThread, mLights[currentLight].Photons-calcPhotonsPerLight);
-
-				if(ltd.Photons > 0)
-					mThreadData[thread].Lights.push_back(ltd);
-
-				calcPhotonsPerLight += ltd.Photons;
-				calcPhotons += ltd.Photons;
-				currentPhotons += ltd.Photons;
-
-				if(ltd.Photons < PhotonsPerThread)
+				if(photonsSpread >= light.Photons)
+					break;
+				
+				if(photonsPerThread[thread] >= PhotonsPerThread)
+					continue;
+				
+				const uint64 photons = std::min(PhotonsPerThread - photonsPerThread[thread],
+								light.Photons - photonsSpread);
+				
+				photonsSpread += photons;
+				photonsPerThread[thread] += photons;
+				
+				if (photons > 0)
 				{
-					currentLight++;
-					calcPhotonsPerLight = 0;
+					LightThreadData ltd;
+					ltd.Entity = &light;
+					ltd.Photons = photons;
+					mThreadData[thread].Lights.push_back(ltd);
 				}
 			}
+		}
 
+		for(uint32 thread = 0; thread < renderer()->threads(); ++thread)
+		{
 			PR_LOGGER.logf(L_Info, M_Integrator, "PPM Thread %llu lights",
 				mThreadData[thread].Lights.size());
 			for(const auto& ltd: mThreadData[thread].Lights)
