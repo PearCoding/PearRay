@@ -1,13 +1,12 @@
 #include "IntensityConverter.h"
 #include "Spectrum.h"
 
-namespace PR
+namespace PR {
+void IntensityConverter::convert(const Spectrum& s, float& x, float& y, float& z)
 {
-	void IntensityConverter::convert(const Spectrum& s, float &x, float &y, float &z)
-	{
-		float avg = s.luminousFlux();
-		x = avg;
-		y = avg;
-		z = avg;
-	}
+	float avg = s.luminousFlux();
+	x		  = avg;
+	y		  = avg;
+	z		  = avg;
+}
 }

@@ -1,13 +1,13 @@
 #include "RandomSampler.h"
 
-namespace PR
+namespace PR {
+RandomSampler::RandomSampler(Random& random)
+	: Sampler()
+	, mRandom(random)
 {
-	RandomSampler::RandomSampler(Random& random) :
-		Sampler(), mRandom(random)
-	{
-	}
+}
 
-	RandomSampler::~RandomSampler()
-	{
-	}
+RandomSampler::~RandomSampler()
+{
+}
 }

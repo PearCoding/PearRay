@@ -2,70 +2,69 @@
 
 #include "Camera.h"
 
-namespace PR
-{
-	class PR_LIB StandardCamera : public Camera
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		StandardCamera(uint32 id, const std::string& name);
-		virtual ~StandardCamera();
+namespace PR {
+class PR_LIB StandardCamera : public Camera {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		void setWithAngle(float foh, float fov);
-		void setWithSize(float width, float height);
+	StandardCamera(uint32 id, const std::string& name);
+	virtual ~StandardCamera();
 
-		void setOrthographic(bool b);
-		bool isOrthographic() const;
+	void setWithAngle(float foh, float fov);
+	void setWithSize(float width, float height);
 
-		void setWidth(float w);
-		float width() const;
+	void setOrthographic(bool b);
+	bool isOrthographic() const;
 
-		void setHeight(float h);
-		float height() const;
+	void setWidth(float w);
+	float width() const;
 
-		void setLocalDirection(const Eigen::Vector3f& d);
-		Eigen::Vector3f localDirection() const;
+	void setHeight(float h);
+	float height() const;
 
-		void setLocalRight(const Eigen::Vector3f& d);
-		Eigen::Vector3f localRight() const;
+	void setLocalDirection(const Eigen::Vector3f& d);
+	Eigen::Vector3f localDirection() const;
 
-		void setLocalUp(const Eigen::Vector3f& d);
-		Eigen::Vector3f localUp() const;
+	void setLocalRight(const Eigen::Vector3f& d);
+	Eigen::Vector3f localRight() const;
 
-		// Depth of Field
-		void setFStop(float f);
-		float fstop() const;
+	void setLocalUp(const Eigen::Vector3f& d);
+	Eigen::Vector3f localUp() const;
 
-		void setApertureRadius(float f);
-		float apertureRadius() const;
+	// Depth of Field
+	void setFStop(float f);
+	float fstop() const;
 
-		// Camera
-		Ray constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const override;
+	void setApertureRadius(float f);
+	float apertureRadius() const;
 
-		// Entity
-		std::string type() const override;
-		void onFreeze() override;// Cache
-	private:
-		bool mOrthographic;
-		float mWidth;
-		float mHeight;
+	// Camera
+	Ray constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const override;
 
-		float mFStop;
-		float mApertureRadius;
+	// Entity
+	std::string type() const override;
+	void onFreeze() override; // Cache
 
-		Eigen::Vector3f mLocalDirection;
-		Eigen::Vector3f mLocalRight;
-		Eigen::Vector3f mLocalUp;
+private:
+	bool mOrthographic;
+	float mWidth;
+	float mHeight;
 
-		// Cache:
-		Eigen::Vector3f mDirection_Cache;
-		Eigen::Vector3f mRight_Cache;
-		Eigen::Vector3f mUp_Cache;
+	float mFStop;
+	float mApertureRadius;
 
-		bool mHasDOF_Cache;
-		Eigen::Vector3f mFocalDistance_Cache;
-		Eigen::Vector3f mXApertureRadius_Cache;
-		Eigen::Vector3f mYApertureRadius_Cache;
-	};
+	Eigen::Vector3f mLocalDirection;
+	Eigen::Vector3f mLocalRight;
+	Eigen::Vector3f mLocalUp;
+
+	// Cache:
+	Eigen::Vector3f mDirection_Cache;
+	Eigen::Vector3f mRight_Cache;
+	Eigen::Vector3f mUp_Cache;
+
+	bool mHasDOF_Cache;
+	Eigen::Vector3f mFocalDistance_Cache;
+	Eigen::Vector3f mXApertureRadius_Cache;
+	Eigen::Vector3f mYApertureRadius_Cache;
+};
 }

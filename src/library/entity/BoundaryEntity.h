@@ -2,38 +2,37 @@
 
 #include "RenderEntity.h"
 
-namespace PR
-{
-	class Material;
-	class PR_LIB BoundaryEntity : public RenderEntity
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		BoundaryEntity(uint32 id, const std::string& name, const BoundingBox& box);
-		virtual ~BoundaryEntity();
+namespace PR {
+class Material;
+class PR_LIB BoundaryEntity : public RenderEntity {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		virtual std::string type() const override;
+	BoundaryEntity(uint32 id, const std::string& name, const BoundingBox& box);
+	virtual ~BoundaryEntity();
 
-		virtual bool isLight() const override;
-		virtual float surfaceArea(Material* m) const override;
+	std::string type() const override;
 
-		void setMaterial(const std::shared_ptr<Material>& m);
-		const std::shared_ptr<Material>& material() const;
+	bool isLight() const override;
+	float surfaceArea(Material* m) const override;
 
-		void setBoundingBox(const BoundingBox& box);
+	void setMaterial(const std::shared_ptr<Material>& m);
+	const std::shared_ptr<Material>& material() const;
 
-		virtual bool isCollidable() const override;
-		virtual float collisionCost() const override;
-		virtual BoundingBox localBoundingBox() const override;
-		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
+	void setBoundingBox(const BoundingBox& box);
 
-		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+	bool isCollidable() const override;
+	float collisionCost() const override;
+	BoundingBox localBoundingBox() const override;
+	bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
-		// RenderEntity
-		virtual void setup(RenderContext* context) override;
-	private:
-		BoundingBox mBoundingBox;
-		std::shared_ptr<Material> mMaterial;
-	};
+	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+
+	// RenderEntity
+	void setup(RenderContext* context) override;
+
+private:
+	BoundingBox mBoundingBox;
+	std::shared_ptr<Material> mMaterial;
+};
 }

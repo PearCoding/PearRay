@@ -6,7 +6,7 @@ endif()
 
 include_directories(../utils)
 
-set(PRT_Pre Test.h)
+set(PRT_Pre Test.h testscene.inl)
 
 set(LIBS pr_lib pr_lib_utils)
 
@@ -31,3 +31,4 @@ PUSH_TEST(triangle triangle.cpp)
 PUSH_TEST(fresnel fresnel.cpp)
 PUSH_TEST(inteqen inteqen.cpp)
 PUSH_TEST(random random.cpp)
+PUSH_TEST(seed seed.cpp)

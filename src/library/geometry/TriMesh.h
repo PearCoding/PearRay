@@ -4,58 +4,57 @@
 #include <Eigen/Geometry>
 #include <vector>
 
-namespace PR
-{
-	class Face;
-	class Normal;
-	class UV;
-	class Vertex;
-	class Material;
-	class Ray;
-	struct FaceSample;
-	class Sampler;
-	class PR_LIB TriMesh
+namespace PR {
+class Face;
+class Normal;
+class UV;
+class Vertex;
+class Material;
+class Ray;
+struct FaceSample;
+class Sampler;
+class PR_LIB TriMesh {
+	PR_CLASS_NON_COPYABLE(TriMesh);
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	TriMesh();
+	~TriMesh();
+
+	void reserve(size_t count);
+	void setFaces(const std::vector<Face*>& f);
+	void addFace(Face* f);
+	Face* getFace(size_t i) const;
+	inline const std::vector<Face*>& faces() const
 	{
-		PR_CLASS_NON_COPYABLE(TriMesh);
+		return mFaces;
+	}
 
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		TriMesh();
-		~TriMesh();
+	void clear();
 
-		void reserve(size_t count);
-		void setFaces(const std::vector<Face*>& f);
-		void addFace(Face* f);
-		Face* getFace(size_t i) const;
-		inline const std::vector<Face*>& faces() const
-		{
-			return mFaces;
-		}
+	void build();
 
-		void clear();
+	void calcNormals();
 
-		void build();
+	float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
+	float surfaceArea(const Eigen::Affine3f& transform) const;
 
-		void calcNormals();
+	inline const BoundingBox& boundingBox() const
+	{
+		return mBoundingBox;
+	}
 
-		float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
-		float surfaceArea(const Eigen::Affine3f& transform) const;
+	float collisionCost() const;
 
-		inline const BoundingBox& boundingBox() const
-		{
-			return mBoundingBox;
-		}
+	Face* checkCollision(const Ray& ray, FaceSample& collisionPoint);
+	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const;
 
-		float collisionCost() const;
+private:
+	BoundingBox mBoundingBox;
+	void* mKDTree;
 
-		Face* checkCollision(const Ray& ray, FaceSample& collisionPoint);
-		FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const;
-	private:
-		BoundingBox mBoundingBox;
-		void* mKDTree;
-
-		std::vector<Face*> mFaces;
-		std::vector<uint32> mMaterialSlots;
-	};
+	std::vector<Face*> mFaces;
+	std::vector<uint32> mMaterialSlots;
+};
 }

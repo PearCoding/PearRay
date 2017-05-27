@@ -3,46 +3,45 @@
 #include "RenderEntity.h"
 #include "geometry/Plane.h"
 
-namespace PR
-{
-	class Material;
-	class PR_LIB PlaneEntity : public RenderEntity
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		PlaneEntity(uint32 id, const std::string& name, const Plane& plane);
-		virtual ~PlaneEntity();
+namespace PR {
+class Material;
+class PR_LIB PlaneEntity : public RenderEntity {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		virtual std::string type() const;
+	PlaneEntity(uint32 id, const std::string& name, const Plane& plane);
+	virtual ~PlaneEntity();
 
-		virtual bool isLight() const override;
-		virtual float surfaceArea(Material* m) const override;
+	std::string type() const;
 
-		void setMaterial(const std::shared_ptr<Material>& m);
-		const std::shared_ptr<Material>& material() const;
+	bool isLight() const override;
+	float surfaceArea(Material* m) const override;
 
-		void setPlane(const Plane& plane);
-		const Plane& plane() const;
+	void setMaterial(const std::shared_ptr<Material>& m);
+	const std::shared_ptr<Material>& material() const;
 
-		virtual bool isCollidable() const override;
-		virtual float collisionCost() const override;
-		virtual BoundingBox localBoundingBox() const override;
-		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
+	void setPlane(const Plane& plane);
+	const Plane& plane() const;
 
-		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+	bool isCollidable() const override;
+	float collisionCost() const override;
+	BoundingBox localBoundingBox() const override;
+	bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
-		// Entity
-		virtual void onFreeze() override;
+	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 
-		// RenderEntity
-		virtual void setup(RenderContext* context) override;
-	private:
-		Plane mPlane;
-		std::shared_ptr<Material> mMaterial;
+	// Entity
+	void onFreeze() override;
 
-		Plane mGlobalPlane_Cache;
-		Eigen::Vector3f mXAxisN_Cache;
-		Eigen::Vector3f mYAxisN_Cache;
-	};
+	// RenderEntity
+	void setup(RenderContext* context) override;
+
+private:
+	Plane mPlane;
+	std::shared_ptr<Material> mMaterial;
+
+	Plane mGlobalPlane_Cache;
+	Eigen::Vector3f mXAxisN_Cache;
+	Eigen::Vector3f mYAxisN_Cache;
+};
 }

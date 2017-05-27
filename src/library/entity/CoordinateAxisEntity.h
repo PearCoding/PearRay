@@ -2,59 +2,57 @@
 
 #include "RenderEntity.h"
 
-namespace PR
-{
-	class Material;
-	class PR_LIB CoordinateAxisEntity : public RenderEntity
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		CoordinateAxisEntity(uint32 id, const std::string& name);
-		virtual ~CoordinateAxisEntity();
+namespace PR {
+class Material;
+class PR_LIB CoordinateAxisEntity : public RenderEntity {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		virtual std::string type() const override;
+	CoordinateAxisEntity(uint32 id, const std::string& name);
+	virtual ~CoordinateAxisEntity();
 
-		virtual bool isLight() const override;
-		virtual float surfaceArea(Material* m) const override;
+	std::string type() const override;
 
-		void setAxisLength(float f);
-		float axisLength() const;
+	bool isLight() const override;
+	float surfaceArea(Material* m) const override;
 
-		void setAxisThickness(float f);
-		float axisThickness() const;
+	void setAxisLength(float f);
+	float axisLength() const;
 
-		void setXMaterial(const std::shared_ptr<Material>& m);
-		const std::shared_ptr<Material>& xMaterial() const;
+	void setAxisThickness(float f);
+	float axisThickness() const;
 
-		void setYMaterial(const std::shared_ptr<Material>& m);
-		const std::shared_ptr<Material>& yMaterial() const;
+	void setXMaterial(const std::shared_ptr<Material>& m);
+	const std::shared_ptr<Material>& xMaterial() const;
 
-		void setZMaterial(const std::shared_ptr<Material>& m);
-		const std::shared_ptr<Material>& zMaterial() const;
+	void setYMaterial(const std::shared_ptr<Material>& m);
+	const std::shared_ptr<Material>& yMaterial() const;
 
-		virtual bool isCollidable() const override;
-		virtual float collisionCost() const override;
-		virtual BoundingBox localBoundingBox() const override;
-		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
+	void setZMaterial(const std::shared_ptr<Material>& m);
+	const std::shared_ptr<Material>& zMaterial() const;
 
-		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+	bool isCollidable() const override;
+	float collisionCost() const override;
+	BoundingBox localBoundingBox() const override;
+	bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
-		// Entity
-		virtual void onFreeze() override;
+	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 
-		// RenderEntity
-		virtual void setup(RenderContext* context) override;
+	// Entity
+	void onFreeze() override;
 
-	private:
-		void setup_cache() const;
+	// RenderEntity
+	void setup(RenderContext* context) override;
 
-		float mAxisLength;
-		float mAxisThickness;
+private:
+	void setup_cache() const;
 
-		std::shared_ptr<Material> mMaterials[3];
+	float mAxisLength;
+	float mAxisThickness;
 
-		mutable BoundingBox mBoundingBox_Cache;
-		mutable BoundingBox mAxisBoundingBox_Cache[3];
-	};
+	std::shared_ptr<Material> mMaterials[3];
+
+	mutable BoundingBox mBoundingBox_Cache;
+	mutable BoundingBox mAxisBoundingBox_Cache[3];
+};
 }

@@ -2,66 +2,65 @@
 
 #include "geometry/BoundingBox.h"
 
-namespace PR
-{
-	class Ray;
-	class PR_LIB Plane
+namespace PR {
+class Ray;
+class PR_LIB Plane {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	Plane();
+	Plane(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
+	Plane(float width, float height);
+
+	inline Eigen::Vector3f position() const { return mPosition; }
+	inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
+
+	inline Eigen::Vector3f xAxis() const { return mXAxis; }
+	void setXAxis(const Eigen::Vector3f& xAxis);
+
+	inline Eigen::Vector3f yAxis() const { return mYAxis; }
+	void setYAxis(const Eigen::Vector3f& yAxis);
+
+	void setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
+
+	inline Eigen::Vector3f normal() const { return mNormal_Cache; }
+	inline Eigen::Vector3f center() const
 	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		Plane();
-		Plane(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
-		Plane(float width, float height);
+		return mPosition + mXAxis * 0.5f + mYAxis * 0.5f;
+	}
 
-		inline Eigen::Vector3f position() const { return mPosition; }
-		inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
+	inline float surfaceArea() const { return mSurfaceArea_Cache; }
 
-		inline Eigen::Vector3f xAxis() const { return mXAxis; }
-		void setXAxis(const Eigen::Vector3f& xAxis);
+	inline bool isValid() const
+	{
+		return mXAxis.squaredNorm() * mYAxis.squaredNorm() > 0;
+	}
 
-		inline Eigen::Vector3f yAxis() const { return mYAxis; }
-		void setYAxis(const Eigen::Vector3f& yAxis);
+	bool contains(const Eigen::Vector3f& point) const;
+	bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, float& u, float& v) const;
 
-		void setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
+	void project(const Eigen::Vector3f& point, float& u, float& v) const;
 
-		inline Eigen::Vector3f normal() const { return mNormal_Cache; }
-		inline Eigen::Vector3f center() const
-		{
-			return mPosition + mXAxis * 0.5f + mYAxis * 0.5f;
-		}
+	inline BoundingBox toBoundingBox() const
+	{
+		BoundingBox box = toLocalBoundingBox();
+		box.shift(mPosition);
+		return box;
+	}
 
-		inline float surfaceArea() const { return mSurfaceArea_Cache; }
+	BoundingBox toLocalBoundingBox() const;
 
-		inline bool isValid() const
-		{
-			return mXAxis.squaredNorm()*mYAxis.squaredNorm() > 0;
-		}
+private:
+	void recache();
 
-		bool contains(const Eigen::Vector3f& point) const;
-		bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, float& u, float& v) const;
+	Eigen::Vector3f mPosition;
+	Eigen::Vector3f mXAxis;
+	Eigen::Vector3f mYAxis;
 
-		void project(const Eigen::Vector3f& point, float& u, float& v) const;
-
-		inline BoundingBox toBoundingBox() const
-		{
-			BoundingBox box = toLocalBoundingBox();
-			box.shift(mPosition);
-			return box;
-		}
-
-		BoundingBox toLocalBoundingBox() const;
-	private:
-		void recache();
-
-		Eigen::Vector3f mPosition;
-		Eigen::Vector3f mXAxis;
-		Eigen::Vector3f mYAxis;
-
-		// Cache
-		Eigen::Vector3f mNormal_Cache;
-		float mSurfaceArea_Cache;
-		float mInvXLenSqr_Cache;
-		float mInvYLenSqr_Cache;
-	};
+	// Cache
+	Eigen::Vector3f mNormal_Cache;
+	float mSurfaceArea_Cache;
+	float mInvXLenSqr_Cache;
+	float mInvYLenSqr_Cache;
+};
 }

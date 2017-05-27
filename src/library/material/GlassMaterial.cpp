@@ -1,139 +1,142 @@
 #include "GlassMaterial.h"
+#include "entity/RenderEntity.h"
 #include "ray/Ray.h"
-#include "shader/ShaderClosure.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSettings.h"
-#include "entity/RenderEntity.h"
+#include "shader/ShaderClosure.h"
 
-#include "math/Reflection.h"
 #include "math/Fresnel.h"
+#include "math/Reflection.h"
 
-#include "Logger.h"
 #include "CTP.h"
+#include "Logger.h"
 
 #include <sstream>
 
 #define PR_GLASS_USE_DEFAULT_SCHLICK
 
-namespace PR
+namespace PR {
+GlassMaterial::GlassMaterial(uint32 id)
+	: Material(id)
+	, mSpecularity(nullptr)
+	, mIndex(nullptr)
+	, mThin(false)
 {
-	GlassMaterial::GlassMaterial(uint32 id) :
-		Material(id),
-		mSpecularity(nullptr), mIndex(nullptr), mThin(false)
-	{
-	}
+}
 
-	bool GlassMaterial::isThin() const
-	{
-		return mThin;
-	}
+bool GlassMaterial::isThin() const
+{
+	return mThin;
+}
 
-	void GlassMaterial::setThin(bool b)
-	{
-		mThin = b;
-	}
+void GlassMaterial::setThin(bool b)
+{
+	mThin = b;
+}
 
-	const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::specularity() const
-	{
-		return mSpecularity;
-	}
+const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::specularity() const
+{
+	return mSpecularity;
+}
 
-	void GlassMaterial::setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec)
-	{
-		mSpecularity = spec;
-	}
+void GlassMaterial::setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec)
+{
+	mSpecularity = spec;
+}
 
-	const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::ior() const
-	{
-		return mIndex;
-	}
+const std::shared_ptr<SpectralShaderOutput>& GlassMaterial::ior() const
+{
+	return mIndex;
+}
 
-	void GlassMaterial::setIOR(const std::shared_ptr<SpectralShaderOutput>& data)
-	{
-		mIndex = data;
-	}
+void GlassMaterial::setIOR(const std::shared_ptr<SpectralShaderOutput>& data)
+{
+	mIndex = data;
+}
 
-	Spectrum GlassMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
-	{
-		if (mSpecularity)
-			return mSpecularity->eval(point);
-		else
-			return Spectrum();
-	}
+Spectrum GlassMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+{
+	if (mSpecularity)
+		return mSpecularity->eval(point);
+	else
+		return Spectrum();
+}
 
-	float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
-	{
-		return std::numeric_limits<float>::infinity();
-	}
+float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+{
+	return std::numeric_limits<float>::infinity();
+}
 
-	Eigen::Vector3f GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
-	{
-		const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
-		float weight = (point.Flags & SCF_Inside) == 0 ?
+Eigen::Vector3f GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+{
+	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
+	float weight	= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
-			Fresnel::dielectric(-point.NdotV, 1, ind) : Fresnel::dielectric(-point.NdotV, ind, 1);
+												   Fresnel::dielectric(-point.NdotV, 1, ind)
+												   : Fresnel::dielectric(-point.NdotV, ind, 1);
 #else
-			Fresnel::schlick(-point.NdotV, 1, ind) : Fresnel::schlick(-point.NdotV, ind, 1);
+												   Fresnel::schlick(-point.NdotV, 1, ind)
+												   : Fresnel::schlick(-point.NdotV, ind, 1);
 #endif
 
-		bool total = false;
-		Eigen::Vector3f dir;
-		if (rnd(1) < weight)
+	bool total = false;
+	Eigen::Vector3f dir;
+	if (rnd(1) < weight) {
+		dir = Reflection::reflect(point.NdotV, point.N, point.V);
+	} else {
+		dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
+								  point.NdotV, point.N, point.V, total);
+		if (!mThin && total)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
-		else
-		{
-			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind,
-				point.NdotV, point.N, point.V, total);
-			if(!mThin && total)
-				dir = Reflection::reflect(point.NdotV, point.N, point.V);
-		}
-
-		pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
-		return dir;
 	}
 
-	Eigen::Vector3f GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
-	{
-		const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
-		path_weight = (point.Flags & SCF_Inside) == 0 ?
+	pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	return dir;
+}
+
+Eigen::Vector3f GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
+{
+	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
+	path_weight		= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
-			Fresnel::dielectric(-point.NdotV, 1, ind) : Fresnel::dielectric(-point.NdotV, ind, 1);
+												  Fresnel::dielectric(-point.NdotV, 1, ind)
+												  : Fresnel::dielectric(-point.NdotV, ind, 1);
 #else
-			Fresnel::schlick(-point.NdotV, 1, ind) : Fresnel::schlick(-point.NdotV, ind, 1);
+												  Fresnel::schlick(-point.NdotV, 1, ind)
+												  : Fresnel::schlick(-point.NdotV, ind, 1);
 #endif
 
-		bool total = false;
-		Eigen::Vector3f dir;
-		if (path == 0)
+	bool total = false;
+	Eigen::Vector3f dir;
+	if (path == 0) {
+		dir = Reflection::reflect(point.NdotV, point.N, point.V);
+	} else {
+		path_weight = 1 - path_weight;
+		dir			= Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
+								  point.NdotV, point.N, point.V, total);
+		if (!mThin && total)
 			dir = Reflection::reflect(point.NdotV, point.N, point.V);
-		else
-		{
-			path_weight = 1-path_weight;
-			dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1/ind : ind,
-				point.NdotV, point.N, point.V, total);
-			if(!mThin && total)
-				dir = Reflection::reflect(point.NdotV, point.N, point.V);
-		}
-
-		pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
-		return dir;
 	}
 
-	uint32 GlassMaterial::samplePathCount() const
-	{
-		return 2;
-	}
+	pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	return dir;
+}
 
-	std::string GlassMaterial::dumpInformation() const
-	{
-		std::stringstream stream;
+uint32 GlassMaterial::samplePathCount() const
+{
+	return 2;
+}
 
-		stream << Material::dumpInformation()
-		    << "  <GlassMaterial>:" << std::endl
-			<< "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
-			<< "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl
-			<< "    IsThin:           " << isThin() << std::endl;
+std::string GlassMaterial::dumpInformation() const
+{
+	std::stringstream stream;
 
-		return stream.str();
-	}
+	stream << Material::dumpInformation()
+		   << "  <GlassMaterial>:" << std::endl
+		   << "    HasSpecularity:   " << (mSpecularity ? "true" : "false") << std::endl
+		   << "    HasIOR:           " << (mIndex ? "true" : "false") << std::endl
+		   << "    IsThin:           " << isThin() << std::endl;
+
+	return stream.str();
+}
 }

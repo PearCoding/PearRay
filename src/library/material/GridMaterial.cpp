@@ -3,126 +3,125 @@
 
 #include <sstream>
 
-namespace PR
+namespace PR {
+GridMaterial::GridMaterial(uint32 id)
+	: Material(id)
+	, mFirst(nullptr)
+	, mSecond(nullptr)
+	, mGridCount(10)
+	, mTiledUV(true)
 {
-	GridMaterial::GridMaterial(uint32 id) :
-		Material(id), mFirst(nullptr), mSecond(nullptr), mGridCount(10), mTiledUV(true)
-	{
+}
+
+void GridMaterial::setFirstMaterial(const std::shared_ptr<Material>& mat)
+{
+	PR_ASSERT(mat.get() != this, "Self assignment is invalid!");
+	mFirst = mat;
+}
+
+const std::shared_ptr<Material>& GridMaterial::firstMaterial() const
+{
+	return mFirst;
+}
+
+void GridMaterial::setSecondMaterial(const std::shared_ptr<Material>& mat)
+{
+	PR_ASSERT(mat.get() != this, "Self assignment is invalid!");
+	mSecond = mat;
+}
+
+const std::shared_ptr<Material>& GridMaterial::secondMaterial() const
+{
+	return mSecond;
+}
+
+void GridMaterial::setGridCount(int i)
+{
+	mGridCount = i;
+}
+
+int GridMaterial::gridCount() const
+{
+	return mGridCount;
+}
+
+void GridMaterial::setTileUV(bool b)
+{
+	mTiledUV = b;
+}
+
+bool GridMaterial::tileUV() const
+{
+	return mTiledUV;
+}
+
+Spectrum GridMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+{
+	int u, v;
+	auto pointN = applyGrid(point, u, v);
+
+	if (mFirst && (u % 2) == (v % 2))
+		return mFirst->eval(pointN, L, NdotL);
+	else if (mSecond)
+		return mSecond->eval(pointN, L, NdotL);
+
+	return Spectrum();
+}
+
+ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
+{
+	u = (int)(point.UVW(0) * mGridCount);
+	v = (int)(point.UVW(1) * mGridCount);
+
+	if (mTiledUV) {
+		ShaderClosure pointN = point;
+		pointN.UVW			 = Eigen::Vector3f(point.UVW(1) * mGridCount - u,
+									 point.UVW(1) * mGridCount - v,
+									 point.UVW(2));
+		return pointN;
+	} else {
+		return point;
 	}
+}
 
-	void GridMaterial::setFirstMaterial(const std::shared_ptr<Material>& mat)
-	{
-		PR_ASSERT(mat.get() != this, "Self assignment is invalid!");
-		mFirst = mat;
-	}
+float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+{
+	int u, v;
+	auto pointN = applyGrid(point, u, v);
 
-	const std::shared_ptr<Material>& GridMaterial::firstMaterial() const
-	{
-		return mFirst;
-	}
+	if (mFirst && (u % 2) == (v % 2))
+		return mFirst->pdf(pointN, L, NdotL);
+	else if (mSecond)
+		return mSecond->pdf(pointN, L, NdotL);
 
-	void GridMaterial::setSecondMaterial(const std::shared_ptr<Material>& mat)
-	{
-		PR_ASSERT(mat.get() != this, "Self assignment is invalid!");
-		mSecond = mat;
-	}
+	return 0;
+}
 
-	const std::shared_ptr<Material>& GridMaterial::secondMaterial() const
-	{
-		return mSecond;
-	}
+Eigen::Vector3f GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+{
+	int u, v;
+	auto pointN = applyGrid(point, u, v);
 
-	void GridMaterial::setGridCount(int i)
-	{
-		mGridCount = i;
-	}
+	if (mFirst && (u % 2) == (v % 2))
+		return mFirst->sample(pointN, rnd, pdf);
+	else if (mSecond)
+		return mSecond->sample(pointN, rnd, pdf);
 
-	int GridMaterial::gridCount() const
-	{
-		return mGridCount;
-	}
+	pdf = 0;
+	return Eigen::Vector3f(0, 0, 0);
+}
 
-	void GridMaterial::setTileUV(bool b)
-	{
-		mTiledUV = b;
-	}
+std::string GridMaterial::dumpInformation() const
+{
+	std::stringstream stream;
 
-	bool GridMaterial::tileUV() const
-	{
-		return mTiledUV;
-	}
+	stream << std::boolalpha << Material::dumpInformation()
+		   << "  <GridMaterial>:" << std::endl
+		   << "    GridCount:  " << gridCount() << std::endl
+		   << "    IsUVTiled:  " << tileUV() << std::endl
+		   << "    Material 1: " << (mFirst ? mFirst->id() : -1) << std::endl
+		   << "    Material 2: " << (mSecond ? mSecond->id() : -1) << std::endl;
 
-	Spectrum GridMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
-	{
-		int u, v;
-		auto pointN = applyGrid(point, u, v);
-
-		if (mFirst && (u % 2) == (v % 2))
-			return mFirst->eval(pointN, L, NdotL);
-		else if (mSecond)
-			return mSecond->eval(pointN, L, NdotL);
-
-		return Spectrum();
-	}
-
-	ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
-	{
-		u = (int)(point.UVW(0) * mGridCount);
-		v = (int)(point.UVW(1) * mGridCount);
-
-		if (mTiledUV)
-		{
-			ShaderClosure pointN = point;
-			pointN.UVW = Eigen::Vector3f(point.UVW(1)*mGridCount - u,
-				point.UVW(1)*mGridCount - v,
-				point.UVW(2)
-			);
-			return pointN;
-		}
-		else
-		{
-			return point;
-		}
-	}
-
-	float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
-	{
-		int u, v;
-		auto pointN = applyGrid(point, u, v);
-
-		if (mFirst && (u % 2) == (v % 2))
-			return mFirst->pdf(pointN, L, NdotL);
-		else if (mSecond)
-			return mSecond->pdf(pointN, L, NdotL);
-
-		return 0;
-	}
-
-	Eigen::Vector3f GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
-	{
-		int u, v;
-		auto pointN = applyGrid(point, u, v);
-
-		if (mFirst && (u % 2) == (v % 2))
-			return mFirst->sample(pointN, rnd, pdf);
-		else if (mSecond)
-			return mSecond->sample(pointN, rnd, pdf);
-
-		pdf = 0;
-		return Eigen::Vector3f(0,0,0);
-	}
-
-	std::string GridMaterial::dumpInformation() const
-	{
-		std::stringstream stream;
-
-		stream << std::boolalpha << Material::dumpInformation()
-		    << "  <GridMaterial>:" << std::endl
-			<< "    GridCount:  " << gridCount() << std::endl
-			<< "    IsUVTiled:  " << tileUV() << std::endl
-			<< "    Material 1: " << (mFirst ? mFirst->id() : -1) << std::endl
-			<< "    Material 2: " << (mSecond ? mSecond->id() : -1) << std::endl;
-
-		return stream.str();
-	}
+	return stream.str();
+}
 }

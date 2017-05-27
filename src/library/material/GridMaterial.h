@@ -3,38 +3,37 @@
 #include "Material.h"
 #include "spectral/Spectrum.h"
 
-namespace PR
-{
-	class PR_LIB GridMaterial : public Material
-	{
-	public:
-		GridMaterial(uint32 id);
+namespace PR {
+class PR_LIB GridMaterial : public Material {
+public:
+	explicit GridMaterial(uint32 id);
 
-		void setFirstMaterial(const std::shared_ptr<Material>& mat);
-		const std::shared_ptr<Material>& firstMaterial() const;
+	void setFirstMaterial(const std::shared_ptr<Material>& mat);
+	const std::shared_ptr<Material>& firstMaterial() const;
 
-		void setSecondMaterial(const std::shared_ptr<Material>& mat);
-		const std::shared_ptr<Material>& secondMaterial() const;
+	void setSecondMaterial(const std::shared_ptr<Material>& mat);
+	const std::shared_ptr<Material>& secondMaterial() const;
 
-		void setGridCount(int i);
-		int gridCount() const;
+	void setGridCount(int i);
+	int gridCount() const;
 
-		void setTileUV(bool b);
-		bool tileUV() const;
+	void setTileUV(bool b);
+	bool tileUV() const;
 
-		Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-		float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-		Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
+	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
+	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
+	Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
 
-		virtual std::string dumpInformation() const override;
-	private:
-		ShaderClosure applyGrid(const ShaderClosure& point, int& u, int& v) const;
+	std::string dumpInformation() const override;
 
-		std::shared_ptr<Material> mFirst;
-		std::shared_ptr<Material> mSecond;
+private:
+	ShaderClosure applyGrid(const ShaderClosure& point, int& u, int& v) const;
 
-		int mGridCount;
+	std::shared_ptr<Material> mFirst;
+	std::shared_ptr<Material> mSecond;
 
-		bool mTiledUV;
-	};
+	int mGridCount;
+
+	bool mTiledUV;
+};
 }

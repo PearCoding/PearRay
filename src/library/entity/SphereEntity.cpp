@@ -1,145 +1,145 @@
 #include "SphereEntity.h"
+#include "geometry/Sphere.h"
 #include "ray/Ray.h"
 #include "shader/FaceSample.h"
-#include "geometry/Sphere.h"
 
+#include "material/Material.h"
 #include "math/Projection.h"
 #include "sampler/Sampler.h"
-#include "material/Material.h"
 
 #include "performance/Performance.h"
 
-namespace PR
+namespace PR {
+SphereEntity::SphereEntity(uint32 id, const std::string& name, float r)
+	: RenderEntity(id, name)
+	, mRadius(r)
+	, mMaterial(nullptr)
 {
-	SphereEntity::SphereEntity(uint32 id, const std::string& name, float r) :
-		RenderEntity(id, name), mRadius(r), mMaterial(nullptr)
-	{
+}
+
+SphereEntity::~SphereEntity()
+{
+}
+
+std::string SphereEntity::type() const
+{
+	return "sphere";
+}
+
+bool SphereEntity::isLight() const
+{
+	return mMaterial ? mMaterial->isLight() : false;
+}
+
+constexpr float P = 1.6075f;
+float SphereEntity::surfaceArea(Material* m) const
+{
+	PR_GUARD_PROFILE();
+
+	if (!m || m == mMaterial.get()) {
+		const auto s = flags() & EF_LocalArea ? Eigen::Vector3f(1, 1, 1) : scale();
+
+		const float a = s(0) * mRadius;
+		const float b = s(1) * mRadius;
+		const float c = s(2) * mRadius;
+
+		// Knud Thomsen’s Formula
+		const float t = (std::pow(a * b, P) + std::pow(a * c, P) + std::pow(b * c, P)) / 3;
+		return 4 * PR_PI * std::pow(t, 1 / P);
+	} else {
+		return 0;
 	}
+}
 
-	SphereEntity::~SphereEntity()
-	{
-	}
+void SphereEntity::setMaterial(const std::shared_ptr<Material>& m)
+{
+	mMaterial = m;
+}
 
-	std::string SphereEntity::type() const
-	{
-		return "sphere";
-	}
+const std::shared_ptr<Material>& SphereEntity::material() const
+{
+	return mMaterial;
+}
 
-	bool SphereEntity::isLight() const
-	{
-		return mMaterial ? mMaterial->isLight() : false;
-	}
+void SphereEntity::setRadius(float f)
+{
+	mRadius = f;
+}
 
-	constexpr float P = 1.6075f;
-	float SphereEntity::surfaceArea(Material* m) const
-	{
-		PR_GUARD_PROFILE();
+float SphereEntity::radius() const
+{
+	return mRadius;
+}
 
-		if(!m || m == mMaterial.get())
-		{
-			const auto s = flags() & EF_LocalArea ? Eigen::Vector3f(1,1,1) : scale();
+bool SphereEntity::isCollidable() const
+{
+	return mMaterial && mMaterial->canBeShaded() && mRadius >= PR_EPSILON;
+}
 
-			const float a = s(0) * mRadius;
-			const float b = s(1) * mRadius;
-			const float c = s(2) * mRadius;
+float SphereEntity::collisionCost() const
+{
+	return 1;
+}
 
-			// Knud Thomsen’s Formula
-			const float t = (std::pow(a*b,P) + std::pow(a*c,P) + std::pow(b*c,P)) / 3;
-			return 4 * PR_PI * std::pow(t, 1/P);
-		}
-		else
-			return 0;
-	}
+BoundingBox SphereEntity::localBoundingBox() const
+{
+	return BoundingBox(Eigen::Vector3f(mRadius, mRadius, mRadius),
+					   Eigen::Vector3f(-mRadius, -mRadius, -mRadius));
+}
 
-	void SphereEntity::setMaterial(const std::shared_ptr<Material>& m)
-	{
-		mMaterial = m;
-	}
+bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+{
+	PR_GUARD_PROFILE();
 
-	const std::shared_ptr<Material>& SphereEntity::material() const
-	{
-		return mMaterial;
-	}
+	Ray local = ray;
+	local.setStartPosition(invTransform() * ray.startPosition());
+	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
-	void SphereEntity::setRadius(float f)
-	{
-		mRadius = f;
-	}
+	Sphere sphere(Eigen::Vector3f(0, 0, 0), mRadius);
+	float t;
+	Eigen::Vector3f collisionPos;
+	if (!sphere.intersects(local, collisionPos, t))
+		return false;
 
-	float SphereEntity::radius() const
-	{
-		return mRadius;
-	}
+	collisionPoint.P = transform() * collisionPos;
 
-	bool SphereEntity::isCollidable() const
-	{
-		return mMaterial && mMaterial->canBeShaded() && mRadius >= PR_EPSILON;
-	}
+	collisionPoint.Ng = (directionMatrix() * collisionPos).normalized();
+	Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
 
-	float SphereEntity::collisionCost() const
-	{
-		return 1;
-	}
+	const Eigen::Vector2f uv = Projection::sphereUV(collisionPoint.Ng);
+	collisionPoint.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
 
-	BoundingBox SphereEntity::localBoundingBox() const
-	{
-		return BoundingBox(Eigen::Vector3f(mRadius, mRadius, mRadius),
-			Eigen::Vector3f(-mRadius, -mRadius, -mRadius));
-	}
+	collisionPoint.Material = material().get();
 
-	bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
-	{
-		PR_GUARD_PROFILE();
+	return true;
+}
 
-		Ray local = ray;
-		local.setStartPosition(invTransform()*ray.startPosition());
-		local.setDirection((invDirectionMatrix()*ray.direction()).normalized());
+FaceSample SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+{
+	PR_GUARD_PROFILE();
 
-		Sphere sphere(Eigen::Vector3f(0,0,0), mRadius);
-		float t;
-		Eigen::Vector3f collisionPos;
-		if (!sphere.intersects(local, collisionPos, t))
-			return false;
+	FaceSample p;
 
-		collisionPoint.P = transform()*collisionPos;
+	Eigen::Vector2f s = sampler.generate2D(sample);
+	Eigen::Vector3f n = Projection::sphere_coord(s(0) * 2 * PR_PI, s(1) * PR_PI);
+	pdf				  = 1;
 
-		collisionPoint.Ng = (directionMatrix()*collisionPos).normalized();
-		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+	p.Ng = (directionMatrix() * n).normalized();
+	Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
 
-		const Eigen::Vector2f uv = Projection::sphereUV(collisionPoint.Ng);
-		collisionPoint.UVW = Eigen::Vector3f(uv(0),uv(1),0);
+	p.P						 = transform() * (n * mRadius);
+	const Eigen::Vector2f uv = Projection::sphereUV(p.Ng);
+	p.UVW					 = Eigen::Vector3f(uv(0), uv(1), 0);
+	p.Material				 = material().get();
 
-		collisionPoint.Material = material().get();
+	return p;
+}
 
-		return true;
-	}
+void SphereEntity::setup(RenderContext* context)
+{
+	RenderEntity::setup(context);
 
-	FaceSample SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
-	{
-		PR_GUARD_PROFILE();
-
-		FaceSample p;
-
-		Eigen::Vector2f s = sampler.generate2D(sample);
-		Eigen::Vector3f n = Projection::sphere_coord(s(0)*2*PR_PI, s(1)*PR_PI);
-		pdf = 1;
-
-		p.Ng = (directionMatrix()*n).normalized();
-		Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
-
-		p.P = transform()*(n*mRadius);
-		const Eigen::Vector2f uv = Projection::sphereUV(p.Ng);
-		p.UVW = Eigen::Vector3f(uv(0),uv(1),0);
-		p.Material = material().get();
-
-		return p;
-	}
-
-	void SphereEntity::setup(RenderContext* context)
-	{
-		RenderEntity::setup(context);
-
-		if(mMaterial)
-			mMaterial->setup(context);
-	}
+	if (mMaterial)
+		mMaterial->setup(context);
+}
 }

@@ -6,133 +6,134 @@
 #include "spectral/Spectrum.h"
 
 #include <Eigen/Dense>
+#include <condition_variable>
 #include <list>
 #include <mutex>
-#include <condition_variable>
 
-namespace PR
-{
-	class Camera;
-	class Entity;
-	class GPU;
-	class Integrator;
-	class OutputMap;
-	class Ray;
-	class RenderEntity;
-	class RenderThread;
-	class RenderTile;
-	class RenderThreadContext;
-	class Scene;
-	struct ShaderClosure;
-	class PR_LIB RenderContext
-	{
-		friend class RenderThread;
-		friend class RenderThreadContext;
-	public:
-		RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-			const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
-		virtual ~RenderContext();
+namespace PR {
+class Camera;
+class Entity;
+class GPU;
+class Integrator;
+class OutputMap;
+class Ray;
+class RenderEntity;
+class RenderThread;
+class RenderTile;
+class RenderThreadContext;
+class Scene;
+struct ShaderClosure;
+class PR_LIB RenderContext {
+	friend class RenderThread;
+	friend class RenderThreadContext;
 
-		inline uint32 index() const { return mIndex; }
-		inline uint32 offsetX() const { return mOffsetX; }
-		inline uint32 offsetY() const { return mOffsetY; }
-		inline uint32 width() const { return mWidth; }
-		inline uint32 height() const { return mHeight; }
-		inline uint32 fullWidth() const { return mFullWidth; }
-		inline uint32 fullHeight() const { return mFullHeight; }
+	PR_CLASS_NON_COPYABLE(RenderContext);
 
-		// tcx = tile count x
-		// tcy = tile count y
-		// tcx and tcy should be able to divide width and height!
-		// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
-		void start(uint32 tcx, uint32 tcy, int32 threads = 0);
-		void stop();
+public:
+	RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
+				  const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
+	virtual ~RenderContext();
 
-		RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
-		bool shootForDetection(const Ray& ray, RenderThreadContext* context);
-		RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
+	inline uint32 index() const { return mIndex; }
+	inline uint32 offsetX() const { return mOffsetX; }
+	inline uint32 offsetY() const { return mOffsetY; }
+	inline uint32 width() const { return mWidth; }
+	inline uint32 height() const { return mHeight; }
+	inline uint32 fullWidth() const { return mFullWidth; }
+	inline uint32 fullHeight() const { return mFullHeight; }
 
-		bool isFinished();
-		void waitForFinish();
+	// tcx = tile count x
+	// tcy = tile count y
+	// tcx and tcy should be able to divide width and height!
+	// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
+	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
+	void stop();
 
-		uint32 threads() const;
+	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
+	bool shootForDetection(const Ray& ray, RenderThreadContext* context);
+	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
 
-		// Pass control
-		inline uint32 currentPass() const { return mCurrentPass; }
+	bool isFinished();
+	void waitForFinish();
 
-		// Slow and only copies!
-		std::list<RenderTile> currentTiles() const;
+	uint32 threads() const;
 
-		Integrator* integrator() const { return mIntegrator; }
+	// Pass control
+	inline uint32 currentPass() const { return mCurrentPass; }
 
-		// Settings
-		inline const RenderSettings& settings() const { return mRenderSettings; }
+	// Slow and only copies!
+	std::list<RenderTile> currentTiles() const;
 
-		// Light
-		const std::list<RenderEntity*>& lights() const;
+	Integrator* integrator() const { return mIntegrator; }
 
-		RenderStatistics statistics() const;
-		RenderStatus status() const;
+	// Settings
+	inline const RenderSettings& settings() const { return mRenderSettings; }
 
-		inline const Scene& scene() const { return mScene; }
-		inline std::string workingDir() const { return mWorkingDir; }
-		inline OutputMap* output() const { return mOutputMap; }
-		inline GPU* gpu() const { return mGPU; }
+	// Light
+	const std::list<RenderEntity*>& lights() const;
 
-	protected:
-		// Render Thread specific
-		void render(RenderThreadContext* context, const Eigen::Vector2i& pixel,
-			uint32 sample, uint32 pass);
+	RenderStatistics statistics() const;
+	RenderStatus status() const;
 
-		RenderTile* getNextTile();
+	inline const Scene& scene() const { return mScene; }
+	inline std::string workingDir() const { return mWorkingDir; }
+	inline OutputMap* output() const { return mOutputMap; }
+	inline GPU* gpu() const { return mGPU; }
 
-		void onNextPass();
-		void waitForNextPass();// Never call it from main thread
+protected:
+	// Render Thread specific
+	void render(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+				uint32 sample, uint32 pass);
 
-	private:
-		void reset();
+	RenderTile* getNextTile();
 
-		void renderIncremental(RenderThreadContext* context, const Eigen::Vector2i& pixel,
-			uint32 sample, uint32 pass);
-		Spectrum renderSample(RenderThreadContext* context,
-			float x, float y, float rx, float ry, float t, uint8 wavelength,
-			uint32 pass, ShaderClosure& sc);
+	void onNextPass();
+	void waitForNextPass(); // Never call it from main thread
 
-		const uint32 mIndex;
-		const uint32 mOffsetX;
-		const uint32 mOffsetY;
-		const uint32 mWidth;
-		const uint32 mHeight;
-		const uint32 mFullWidth;
-		const uint32 mFullHeight;
-		const std::string mWorkingDir;
+private:
+	void reset();
 
-		const std::shared_ptr<Camera> mCamera;
-		const Scene& mScene;
-		OutputMap* mOutputMap;
+	void renderIncremental(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+						   uint32 sample, uint32 pass);
+	Spectrum renderSample(RenderThreadContext* context,
+						  float x, float y, float rx, float ry, float t, uint8 wavelength,
+						  uint32 pass, ShaderClosure& sc);
 
-		std::list<RenderEntity*> mLights;
+	const uint32 mIndex;
+	const uint32 mOffsetX;
+	const uint32 mOffsetY;
+	const uint32 mWidth;
+	const uint32 mHeight;
+	const uint32 mFullWidth;
+	const uint32 mFullHeight;
+	const std::string mWorkingDir;
 
-		std::mutex mTileMutex;
-		uint32 mTileWidth;
-		uint32 mTileHeight;
-		uint32 mTileXCount;
-		uint32 mTileYCount;
-		RenderTile** mTileMap;
-		uint32 mIncrementalCurrentSample;
-		std::list<RenderThread*> mThreads;
+	const std::shared_ptr<Camera> mCamera;
+	const Scene& mScene;
+	OutputMap* mOutputMap;
 
-		const RenderSettings mRenderSettings;
-		RenderStatistics mGlobalStatistics;
+	std::list<RenderEntity*> mLights;
 
-		GPU* const mGPU;
-		Integrator* mIntegrator;
+	std::mutex mTileMutex;
+	uint32 mTileWidth;
+	uint32 mTileHeight;
+	uint32 mTileXCount;
+	uint32 mTileYCount;
+	RenderTile** mTileMap;
+	uint32 mIncrementalCurrentSample;
+	std::list<RenderThread*> mThreads;
 
-		std::mutex mPassMutex;
-		std::condition_variable mPassCondition;
-		uint32 mThreadsWaitingForPass;
-		uint32 mCurrentPass;
+	const RenderSettings mRenderSettings;
+	RenderStatistics mGlobalStatistics;
 
-		bool mShouldStop;
-	};
+	GPU* const mGPU;
+	Integrator* mIntegrator;
+
+	std::mutex mPassMutex;
+	std::condition_variable mPassCondition;
+	uint32 mThreadsWaitingForPass;
+	uint32 mCurrentPass;
+
+	bool mShouldStop;
+};
 }

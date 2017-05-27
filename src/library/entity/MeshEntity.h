@@ -2,51 +2,49 @@
 
 #include "RenderEntity.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
-namespace PR
-{
-	class TriMesh;
-	class Material;
-	class PR_LIB MeshEntity : public RenderEntity
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		MeshEntity(uint32 id, const std::string& name);
-		virtual ~MeshEntity();
+namespace PR {
+class TriMesh;
+class Material;
+class PR_LIB MeshEntity : public RenderEntity {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		virtual std::string type() const override;
+	MeshEntity(uint32 id, const std::string& name);
+	virtual ~MeshEntity();
 
-		virtual bool isLight() const override;
-		virtual float surfaceArea(Material* m) const override;
+	std::string type() const override;
 
-		void setMesh(const std::shared_ptr<TriMesh>& mesh);
-		const std::shared_ptr<TriMesh>& mesh() const;
+	bool isLight() const override;
+	float surfaceArea(Material* m) const override;
 
-		void reserveMaterialSlots(size_t count);
-		void setMaterial(uint32 slot, const std::shared_ptr<Material>& m);
-		std::shared_ptr<Material> material(uint32 slot) const;
+	void setMesh(const std::shared_ptr<TriMesh>& mesh);
+	const std::shared_ptr<TriMesh>& mesh() const;
 
-		virtual bool isCollidable() const override;
-		virtual float collisionCost() const override;
-		virtual BoundingBox localBoundingBox() const override;
-		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
+	void reserveMaterialSlots(size_t count);
+	void setMaterial(uint32 slot, const std::shared_ptr<Material>& m);
+	std::shared_ptr<Material> material(uint32 slot) const;
 
-		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+	bool isCollidable() const override;
+	float collisionCost() const override;
+	BoundingBox localBoundingBox() const override;
+	bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
-		// Entity
-		virtual void onFreeze() override;
-		virtual std::string dumpInformation() const override;
+	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
 
-		// RenderEntity
-		virtual void setup(RenderContext* context) override;
+	// Entity
+	void onFreeze() override;
+	std::string dumpInformation() const override;
 
-	private:
-		std::shared_ptr<TriMesh> mMesh;
-		std::vector<std::shared_ptr<Material> > mMaterials;
+	// RenderEntity
+	void setup(RenderContext* context) override;
 
-		float mSurfaceArea_Cache;
-	};
+private:
+	std::shared_ptr<TriMesh> mMesh;
+	std::vector<std::shared_ptr<Material>> mMaterials;
+
+	float mSurfaceArea_Cache;
+};
 }

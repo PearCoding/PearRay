@@ -2,39 +2,38 @@
 
 #include "RenderEntity.h"
 
-namespace PR
-{
-	class Material;
-	class PR_LIB SphereEntity : public RenderEntity
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
-		SphereEntity(uint32 id, const std::string& name, float r);
-		virtual ~SphereEntity();
+namespace PR {
+class Material;
+class PR_LIB SphereEntity : public RenderEntity {
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		virtual std::string type() const;
+	SphereEntity(uint32 id, const std::string& name, float r);
+	virtual ~SphereEntity();
 
-		virtual bool isLight() const override;
-		virtual float surfaceArea(Material* m) const override;
+	std::string type() const;
 
-		void setMaterial(const std::shared_ptr<Material>& m);
-		const std::shared_ptr<Material>& material() const;
+	bool isLight() const override;
+	float surfaceArea(Material* m) const override;
 
-		void setRadius(float f);
-		float radius() const;
+	void setMaterial(const std::shared_ptr<Material>& m);
+	const std::shared_ptr<Material>& material() const;
 
-		virtual bool isCollidable() const override;
-		virtual float collisionCost() const override;
-		virtual BoundingBox localBoundingBox() const override;
-		virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
+	void setRadius(float f);
+	float radius() const;
 
-		virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+	bool isCollidable() const override;
+	float collisionCost() const override;
+	BoundingBox localBoundingBox() const override;
+	bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
-		// RenderEntity
-		virtual void setup(RenderContext* context) override;
-	private:
-		float mRadius;
-		std::shared_ptr<Material> mMaterial;
-	};
+	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+
+	// RenderEntity
+	void setup(RenderContext* context) override;
+
+private:
+	float mRadius;
+	std::shared_ptr<Material> mMaterial;
+};
 }
