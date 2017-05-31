@@ -13,12 +13,14 @@ before_install:
   - sudo -E apt-add-repository -y "ppa:george-edison55/precise-backports"
   - sudo -E apt-get update -qq
 install:
+# Coverage
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov ruby-switch rubygems*
+  - ruby-switch --list
+  - sudo ruby-switch --set ruby2.2
+  - sudo gem install coveralls-lcov
 # CMake and GCC
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
-# Coverage
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov ruby2* rubygems*
-  - sudo gem install coveralls-lcov
 # Qt
 #  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
 # Boost
