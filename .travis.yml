@@ -7,7 +7,7 @@ env:
 cache:
   - apt
 before_install:
-  - sudo -E apt-add-repository -y "ppa:beineri/opt-qt521"
+#  - sudo -E apt-add-repository -y "ppa:beineri/opt-qt521"
   - sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
   - sudo -E apt-add-repository -y "ppa:boost-latest/ppa"
   - sudo -E apt-add-repository -y "ppa:george-edison55/precise-backports"
@@ -17,7 +17,7 @@ install:
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
 # Qt
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
+#  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
 # Boost
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libboost-filesystem1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-iostreams1.55-dev libboost-thread1.55-dev
 # OpenEXR
@@ -45,7 +45,7 @@ install:
   - sudo make install
   - cd ../../
 # Coverage
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov gem
   - sudo gem install coveralls-lcov
 before_script:
   - $CXX --version
