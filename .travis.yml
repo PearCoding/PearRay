@@ -58,8 +58,8 @@ script:
   - make $MAKEFLAGS 
   - make test || true
 after_success:
-  - lcov --capture --no-external --directory . --output-file coverage-raw.info --base-directory ../src/
-  - coveralls -r ../ -b . --exclude sandbox --exclude viewer --exclude tests --repo-token ${COVERALLS_TOKEN} --gcov-options '\-lp'
+  - lcov --capture --no-external --directory . --output-file coverage.info --base-directory ../src/
+  - coveralls -r ../ -b . --exclude sandbox --exclude datalisp --exclude viewer --exclude tests --repo-token ${COVERALLS_TOKEN} --gcov-options '\-lp'
 branches:
   only:
   - master
