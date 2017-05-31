@@ -44,16 +44,23 @@ install:
   - make $MAKEFLAGS 
   - sudo make install
   - cd ../../
+# Coverage
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov
+  - sudo gem install coveralls-lcov
 before_script:
   - $CXX --version
   - cmake --version
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON ..
+  - lcov --directory . --zerocounters
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON -DPR_GENERATE_COVERAGE=ON ..
 script:
   - make $MAKEFLAGS 
-  #- make test
-
+  - make test
+after_success:
+  - lcov --capture --no-external --directory . --output-file coverage-raw.info --base-directory ../src/
+  - lcov --remove coverage-raw.info 'tests/*' 'sandbox/*' 'viewer/*' --output-file coverage.info
+  - coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
 branches:
   only:
   - master
