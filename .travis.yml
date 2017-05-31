@@ -18,6 +18,9 @@ install:
   - export CXX=g++-4.8 CC=gcc-4.8
 # Coverage
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov rubygems*
+  - sudo rvm install 2.0.0
+  - sudo rvm use 2.0.0
+  - sudo rvm rubygems latest
   - sudo gem install coveralls-lcov
 # Qt
 #  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
