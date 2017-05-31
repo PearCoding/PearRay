@@ -14,10 +14,8 @@ before_install:
   - sudo -E apt-get update -qq
 install:
 # Coverage
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov ruby-switch rubygems*
-  - ruby-switch --list
-  - sudo ruby-switch --set ruby2.2
-  - sudo gem install coveralls-lcov
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov 
+  - pip install --user cpp-coveralls
 # CMake and GCC
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
@@ -61,8 +59,7 @@ script:
   - make test
 after_success:
   - lcov --capture --no-external --directory . --output-file coverage-raw.info --base-directory ../src/
-  - lcov --remove coverage-raw.info 'tests/*' 'sandbox/*' 'viewer/*' --output-file coverage.info
-  - coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
+  - coveralls --exclude sandbox --exclude viewer --exclude tests --gcov-options '\-lp'
 branches:
   only:
   - master
