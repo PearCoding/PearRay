@@ -14,10 +14,9 @@ before_install:
   - sudo -E apt-get update -qq
 install:
 # Coverage
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov 
-  - pip install --user cpp-coveralls
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov
 # CMake and GCC
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 gcov-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
 # Qt
 #  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
