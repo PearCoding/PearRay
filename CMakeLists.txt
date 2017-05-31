@@ -82,9 +82,8 @@ IF(OIIO_LINK_STATIC)# If static, the dependencies of OIIO has to be included asw
 ENDIF()
 
 IF(PR_GENERATE_COVERAGE)
-IF(CMAKE_COMPILER_IS_GNUCXX)
-	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} --coverage")
-ENDIF()
+	include(Coveralls)
+	coveralls_turn_on_coverage()
 ENDIF()
 
 #DEFINITIONS AND FLAGS
@@ -237,4 +236,24 @@ IF(NOT PR_ONLY_LIBRARY AND PR_BUILD_TESTS)
 	add_subdirectory(src/sandbox)
 	enable_testing()
 	add_subdirectory(src/tests)
+ENDIF()
+
+# Coverage
+IF(PR_GENERATE_COVERAGE)
+file(GLOB_RECURSE HDR_FILES_CLIENT "src/client/*.h")
+file(GLOB_RECURSE HDR_FILES_LIBRARY "src/library/*.h")
+file(GLOB_RECURSE HDR_FILES_OSL "src/osl/*.h")
+file(GLOB_RECURSE HDR_FILES_PYTHON "src/python/*.h")
+file(GLOB_RECURSE HDR_FILES_UTILS "src/utils/*.h")
+
+file(GLOB_RECURSE SRC_FILES_CLIENT "src/client/*.cpp")
+file(GLOB_RECURSE SRC_FILES_LIBRARY "src/library/*.cpp")
+file(GLOB_RECURSE SRC_FILES_OSL "src/osl/*.cpp")
+file(GLOB_RECURSE SRC_FILES_PYTHON "src/python/*.cpp")
+file(GLOB_RECURSE SRC_FILES_UTILS "src/utils/*.cpp")
+
+SET(CV_FILES ${HDR_FILES_CLIENT} ${HDR_FILES_LIBRARY} ${HDR_FILES_OSL} ${HDR_FILES_PYTHON} ${HDR_FILES_UTILS}
+		${SRC_FILES_CLIENT} ${SRC_FILES_LIBRARY} ${SRC_FILES_OSL} ${SRC_FILES_PYTHON} ${SRC_FILES_UTILS})
+
+coveralls_setup("${CV_FILES}" ON)
 ENDIF()

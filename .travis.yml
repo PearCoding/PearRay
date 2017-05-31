@@ -57,9 +57,7 @@ before_script:
 script:
   - make $MAKEFLAGS 
   - make test || true
-after_success:
-  - lcov --capture --directory . --output-file coverage.info
-  - coveralls -r ../ -b . --exclude sandbox --exclude datalisp --exclude viewer --exclude tests --repo-token ${COVERALLS_TOKEN} --gcov-options '\-lp'
+  - make coveralls
 branches:
   only:
   - master

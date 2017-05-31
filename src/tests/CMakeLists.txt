@@ -23,7 +23,7 @@ FUNCTION(PUSH_TEST name files)
 	add_test(NAME ${name} COMMAND pr_test_${name})
 ENDFUNCTION(PUSH_TEST)
 
-PUSH_TEST(spectrum spectrum.cpp)
+PUSH_TEST2(spectrum spectrum.cpp)
 PUSH_TEST(plane plane.cpp)
 PUSH_TEST(entity entity.cpp)
 PUSH_TEST(boundingbox boundingbox.cpp)
