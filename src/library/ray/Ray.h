@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
+#include "SIMath.h"
 #include <Eigen/Dense>
 
 namespace PR {
@@ -14,7 +15,7 @@ class PR_LIB Ray {
 public:
 	Ray();
 	Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-		uint32 depth = 0, float time = 0, uint8 wavelength = 0, uint16 flags = 0);
+		uint32 depth = 0, const SI::Time& time = 0, uint8 wavelength = 0, uint16 flags = 0);
 	virtual ~Ray();
 
 	inline void setStartPosition(const Eigen::Vector3f& p);
@@ -29,8 +30,8 @@ public:
 	inline void setDepth(uint32 depth);
 	inline uint32 depth() const;
 
-	inline float time() const;
-	inline void setTime(float t);
+	inline SI::Time time() const;
+	inline void setTime(const SI::Time& t);
 
 	inline uint8 wavelength() const;
 	inline void setWavelength(uint8 wavelength);
@@ -45,14 +46,14 @@ public:
 
 	inline Ray next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) const;
 	static inline Ray safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-						   uint32 depth = 0, float time = 0, uint8 wavelength = 0, uint16 flags = 0);
+						   uint32 depth = 0, const SI::Time& time = 0, uint8 wavelength = 0, uint16 flags = 0);
 
 private:
 	Eigen::Vector3f mStartPosition;
 	Eigen::Vector3f mDirection;
 	Eigen::Vector2i mPixel;
 	uint32 mDepth; // Recursion depth!
-	float mTime;
+	SI::Time mTime;
 	uint8 mWavelengthIndex;
 	uint16 mFlags;
 

@@ -16,7 +16,7 @@ Ray::Ray()
 }
 
 Ray::Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-		 uint32 depth, float time, uint8 wavelength, uint16 flags)
+		 uint32 depth, const SI::Time& time, uint8 wavelength, uint16 flags)
 	: mStartPosition(pos)
 	, mDirection(dir)
 	, mPixel(pixel)

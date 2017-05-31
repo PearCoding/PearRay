@@ -114,6 +114,8 @@ SET(PR_Main_Hdr
   Logger.h
   LogListener.h
   Random.h
+  SIMath.h
+  SIMathUtils.h
   Variant.h)
 SET(PR_Camera_Hdr
   camera/Camera.h

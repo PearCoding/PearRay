@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FaceSample.h"
+#include "SIMath.h"
 
 namespace PR {
 enum ShaderClosureFlags {
@@ -45,7 +46,7 @@ public:
 	Eigen::Vector3f dUVWdZ;
 
 	// Time for this sample.
-	float T;
+	SI::Time T;
 	//float dT;
 
 	// Wavelength

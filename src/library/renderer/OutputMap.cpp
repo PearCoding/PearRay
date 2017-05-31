@@ -192,7 +192,7 @@ void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const 
 											mInt1D[V_Depth]->getFragmentBounded(p) * (1 - t) + std::sqrt(sc.Depth2) * t);
 	if (mInt1D[V_Time])
 		mInt1D[V_Time]->setFragmentBounded(p,
-										   mInt1D[V_Time]->getFragmentBounded(p) * (1 - t) + sc.T * t);
+										   mInt1D[V_Time]->getFragmentBounded(p) * (1 - t) + (float)sc.T * t);
 	if (mInt1D[V_Material])
 		mInt1D[V_Material]->setFragmentBounded(p,
 											   mInt1D[V_Material]->getFragmentBounded(p) * (1 - t) + (sc.Material ? sc.Material->id() : 0) * t);

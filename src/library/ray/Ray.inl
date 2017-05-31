@@ -44,12 +44,12 @@ inline uint32 Ray::depth() const
 	return mDepth;
 }
 
-inline float Ray::time() const
+inline SI::Time Ray::time() const
 {
 	return mTime;
 }
 
-inline void Ray::setTime(float t)
+inline void Ray::setTime(const SI::Time& t)
 {
 	mTime = t;
 }
@@ -82,7 +82,7 @@ inline Ray Ray::next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) con
 }
 
 inline Ray Ray::safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-					 uint32 depth, float time, uint8 wavelength, uint16 flags)
+					 uint32 depth, const SI::Time& time, uint8 wavelength, uint16 flags)
 {
 	Eigen::Vector3f off	= dir * RayOffsetEpsilon;
 	Eigen::Vector3f posOff = pos + off;
