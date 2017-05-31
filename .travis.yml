@@ -16,6 +16,9 @@ install:
 # CMake and GCC
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8 
   - export CXX=g++-4.8 CC=gcc-4.8
+# Coverage
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov rubygems*
+  - sudo gem install coveralls-lcov
 # Qt
 #  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
 # Boost
@@ -44,9 +47,6 @@ install:
   - make $MAKEFLAGS 
   - sudo make install
   - cd ../../
-# Coverage
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov gem
-  - sudo gem install coveralls-lcov
 before_script:
   - $CXX --version
   - cmake --version
