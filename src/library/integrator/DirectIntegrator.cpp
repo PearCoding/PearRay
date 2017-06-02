@@ -4,7 +4,7 @@
 #include "math/MSI.h"
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
-#include "renderer/RenderThreadContext.h"
+#include "renderer/RenderTile.h"
 #include "sampler/RandomSampler.h"
 #include "shader/FaceSample.h"
 #include "shader/ShaderClosure.h"
@@ -17,20 +17,20 @@ DirectIntegrator::DirectIntegrator(RenderContext* renderer)
 
 void DirectIntegrator::init() {}
 
-Spectrum DirectIntegrator::apply(const Ray& in, RenderThreadContext* context,
+Spectrum DirectIntegrator::apply(const Ray& in, RenderTile* tile,
 								 uint32 pass, ShaderClosure& sc)
 {
 	Spectrum applied;
-	RenderEntity* entity = context->shootWithEmission(applied, in, sc);
+	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
 
 	if (!entity || !sc.Material)
 		return applied;
 
-	return applied + applyRay(in, sc, context, 0);
+	return applied + applyRay(in, sc, tile, 0);
 }
 
 Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
-									RenderThreadContext* context,
+									RenderTile* tile,
 									uint32 diffbounces)
 {
 	if (!sc.Material->canBeShaded())
@@ -45,7 +45,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 	Spectrum weight;
 
 	// Hemisphere sampling
-	RandomSampler hemiSampler(context->random());
+	RandomSampler hemiSampler(tile->random());
 	for (uint32 i = 0;
 		 i < renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
 		 ++i) {
@@ -67,9 +67,9 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 
 			Ray ray = in.next(sc.P, dir);
 
-			RenderEntity* entity = context->shootWithEmission(weight, ray, other_sc);
+			RenderEntity* entity = renderer()->shootWithEmission(weight, ray, other_sc, tile);
 			if (entity && other_sc.Material)
-				weight += applyRay(ray, other_sc, context,
+				weight += applyRay(ray, other_sc, tile,
 								   !std::isinf(pdf) ? diffbounces + 1 : diffbounces);
 
 			weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
@@ -83,7 +83,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 		Spectrum other_weight;
 		// Area sampling!
 		for (RenderEntity* light : renderer()->lights()) {
-			RandomSampler sampler(context->random());
+			RandomSampler sampler(tile->random());
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
 				float pdf;
 				FaceSample p = light->getRandomFacePoint(sampler, i, pdf);
@@ -101,7 +101,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 					Ray ray = in.next(sc.P, L);
 					ray.setFlags(ray.flags() | RF_Light);
 
-					if (context->shootWithEmission(other_weight, ray, other_sc) == light) // Full light!!
+					if (renderer()->shootWithEmission(other_weight, ray, other_sc, tile) == light) // Full light!!
 						other_weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
 					else
 						other_weight.clear();
@@ -115,7 +115,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 		}
 
 		float inf_pdf;
-		other_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+		other_weight = handleInfiniteLights(in, sc, tile, inf_pdf);
 		MSI::balance(full_weight, full_pdf, other_weight, inf_pdf);
 	}
 

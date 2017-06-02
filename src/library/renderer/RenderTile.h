@@ -1,11 +1,18 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "Random.h"
+#include "renderer/RenderStatistics.h"
 
 namespace PR {
+
+class RenderSettings;
+class Sampler;
 class PR_LIB RenderTile {
 public:
-	RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey);
+	RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
+		const RenderSettings& settings, uint32 index);
+	~RenderTile();
+
 	void inc();
 	void reset();
 
@@ -39,9 +46,49 @@ public:
 		return mEY;
 	}
 
+	inline uint32 index() const
+	{
+		return mIndex;
+	}
+
 	inline uint32 samplesRendered() const
 	{
 		return mSamplesRendered;
+	}
+
+	inline Random& random()
+	{
+		return mRandom;
+	}
+
+	inline Sampler* aaSampler() const
+	{
+		return mAASampler;
+	}
+	
+	inline Sampler* lensSampler() const
+	{
+		return mLensSampler;
+	}
+
+	inline Sampler* timeSampler() const
+	{
+		return mTimeSampler;
+	}
+
+	inline Sampler* spectralSampler() const
+	{
+		return mSpectralSampler;
+	}
+
+	inline const RenderStatistics& statistics() const
+	{
+		return mStatistics;
+	}
+
+	inline RenderStatistics& statistics()
+	{
+		return mStatistics;
 	}
 
 private:
@@ -51,7 +98,15 @@ private:
 	uint32 mSY;
 	uint32 mEX;
 	uint32 mEY;
+	uint32 mIndex;
 
 	uint32 mSamplesRendered;
+
+	Random mRandom;
+	Sampler* mAASampler;
+	Sampler* mLensSampler;
+	Sampler* mTimeSampler;
+	Sampler* mSpectralSampler;
+	RenderStatistics mStatistics;
 };
 }

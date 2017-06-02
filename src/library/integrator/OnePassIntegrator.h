@@ -14,11 +14,7 @@ public:
 	void onNextPass(uint32 i, bool& clean) override;
 	void onEnd() override;
 
-	void onThreadStart(RenderThreadContext* context) override;
-	void onPrePass(RenderThreadContext* context, uint32 i) override;
-	void onPass(RenderTile* tile, RenderThreadContext* context, uint32 i) override;
-	void onPostPass(RenderThreadContext* context, uint32 i) override;
-	void onThreadEnd(RenderThreadContext* context) override;
+	void onPass(RenderTile* tile, uint32 i) override;
 
 	bool needNextPass(uint32 i) const override;
 

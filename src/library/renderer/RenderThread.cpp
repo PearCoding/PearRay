@@ -6,11 +6,10 @@
 
 #include "Logger.h"
 namespace PR {
-RenderThread::RenderThread(RenderContext* renderer, uint32 index)
+RenderThread::RenderThread(RenderContext* renderer)
 	: Thread()
 	, mRenderer(renderer)
 	, mTile(nullptr)
-	, mContext(renderer, this, index)
 {
 	PR_ASSERT(renderer, "RenderThread needs valid renderer");
 }
@@ -20,14 +19,11 @@ void RenderThread::main()
 	size_t pass			   = 0;
 	Integrator* integrator = mRenderer->integrator();
 
-	integrator->onThreadStart(&mContext);
 	while (integrator->needNextPass(pass) && !shouldStop()) {
-		integrator->onPrePass(&mContext, pass);
-
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
-			integrator->onPass(mTile, &mContext, pass);
+			integrator->onPass(mTile, pass);
 			mTile->inc();
 
 			mTile->setWorking(false);
@@ -37,15 +33,9 @@ void RenderThread::main()
 		if (shouldStop())
 			break;
 
-		integrator->onPostPass(&mContext, pass);
-
-		if (shouldStop())
-			break;
-
 		mRenderer->waitForNextPass();
 
 		pass++;
 	}
-	integrator->onThreadEnd(&mContext);
 }
 }

@@ -3,7 +3,7 @@
 #include "material/Material.h"
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
-#include "renderer/RenderThreadContext.h"
+#include "renderer/RenderTile.h"
 #include "shader/ShaderClosure.h"
 #include "spectral/RGBConverter.h"
 
@@ -17,7 +17,7 @@ void DebugIntegrator::init()
 {
 }
 
-Spectrum DebugIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
+Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc)
 {
 	Spectrum emission;
 	RenderEntity* entity;
@@ -26,9 +26,9 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderThreadContext* context, uin
 	out.setFlags(in.flags() | RF_Debug);
 
 	if (renderer()->settings().debugMode() == DM_Emission)
-		entity = context->shootWithEmission(emission, out, sc);
+		entity = renderer()->shootWithEmission(emission, out, sc, tile);
 	else
-		entity = context->shoot(out, sc);
+		entity = renderer()->shoot(out, sc, tile);
 
 	if (!entity || (renderer()->settings().debugMode() != DM_Validity && !sc.Material))
 		return Spectrum();
@@ -105,9 +105,7 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderThreadContext* context, uin
 		float full_pdf = 0;
 		for (uint32 i = 0; i < 32; ++i) {
 			float pdf;
-			Eigen::Vector3f rnd(context->random().getFloat(),
-								context->random().getFloat(),
-								context->random().getFloat());
+			Eigen::Vector3f rnd = tile->random().get3D();
 			sc.Material->sample(sc, rnd, pdf);
 			full_pdf += pdf;
 		}
@@ -134,9 +132,7 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderThreadContext* context, uin
 			return RGBConverter::toSpec(1, 1, 0);
 
 		float pdf;
-		Eigen::Vector3f rnd(context->random().getFloat(),
-							context->random().getFloat(),
-							context->random().getFloat());
+		Eigen::Vector3f rnd = tile->random().get3D();
 		Eigen::Vector3f dir = sc.Material->sample(sc, rnd, pdf);
 
 		if (dir.squaredNorm() - 1 > PR_EPSILON)

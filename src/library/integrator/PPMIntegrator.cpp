@@ -16,7 +16,6 @@
 #include "renderer/OutputMap.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderThread.h"
-#include "renderer/RenderThreadContext.h"
 #include "renderer/RenderTile.h"
 
 #include "spectral/RGBConverter.h"
@@ -32,7 +31,7 @@ constexpr uint32 MAX_PHI_SIZE   = MAX_THETA_SIZE * 2;
 PPMIntegrator::PPMIntegrator(RenderContext* renderer)
 	: Integrator(renderer)
 	, mPhotonMap(nullptr)
-	, mThreadData(nullptr)
+	, mTileData(nullptr)
 	, mAccumulatedFlux(nullptr)
 	, mSearchRadius2(nullptr)
 	, mLocalPhotonCount(nullptr)
@@ -48,8 +47,8 @@ PPMIntegrator::~PPMIntegrator()
 	if (mPhotonMap)
 		delete mPhotonMap;
 
-	if (mThreadData)
-		delete[] mThreadData;
+	if (mTileData)
+		delete[] mTileData;
 
 	for (const auto& l : mLights) {
 		if (l.Proj)
@@ -62,7 +61,7 @@ PPMIntegrator::~PPMIntegrator()
 void PPMIntegrator::init()
 {
 	PR_ASSERT(!mPhotonMap, "PhotonMap should be null at first.");
-	PR_ASSERT(!mThreadData, "ThreadData should be null at first.");
+	PR_ASSERT(!mTileData, "TileData should be null at first.");
 	PR_ASSERT(mLights.empty(), "Lights should be empty at first.");
 
 	PR_ASSERT(renderer()->settings().ppm().maxPhotonsPerPass() > 0, "maxPhotonsPerPass should be bigger than 0 and be handled in upper classes.");
@@ -84,10 +83,10 @@ void PPMIntegrator::init()
 	renderer()->output()->registerCustomChannel("int.ppm.search_radius", mSearchRadius2);
 	renderer()->output()->registerCustomChannel("int.ppm.local_photon_count", mLocalPhotonCount);
 
-	mThreadData = new ThreadData[renderer()->threads()];
-	for (uint32 thread = 0; thread < renderer()->threads(); ++thread) {
-		mThreadData[thread].PhotonsEmitted = 0;
-		mThreadData[thread].PhotonsStored  = 0;
+	mTileData = new TileData[renderer()->tileCount()];
+	for (uint32 t = 0; t < renderer()->tileCount(); ++t) {
+		mTileData[t].PhotonsEmitted = 0;
+		mTileData[t].PhotonsStored  = 0;
 	}
 
 	// Assign photon count to each light
@@ -129,40 +128,40 @@ void PPMIntegrator::init()
 		}
 	}
 
-	// Spread photons over threads
-	const uint64 PhotonsPerThread = std::ceil(Photons / (float)renderer()->threads());
-	PR_LOGGER.logf(L_Info, M_Integrator, "Each thread shoots %llu photons",
-				   PhotonsPerThread);
+	// Spread photons over tile
+	const uint64 PhotonsPerTile = std::ceil(Photons / (float)renderer()->tileCount());
+	PR_LOGGER.logf(L_Info, M_Integrator, "Each tile shoots %llu photons",
+				   PhotonsPerTile);
 
-	std::vector<uint64> photonsPerThread(renderer()->threads(), 0);
+	std::vector<uint64> photonsPerTile(renderer()->tileCount(), 0);
 	for (Light& light : mLights) {
 		uint64 photonsSpread = 0;
-		for (uint32 thread = 0; thread < renderer()->threads(); ++thread) {
+		for (uint32 t = 0; t < renderer()->tileCount(); ++t) {
 			if (photonsSpread >= light.Photons)
 				break;
 
-			if (photonsPerThread[thread] >= PhotonsPerThread)
+			if (photonsPerTile[t] >= PhotonsPerTile)
 				continue;
 
-			const uint64 photons = std::min(PhotonsPerThread - photonsPerThread[thread],
+			const uint64 photons = std::min(PhotonsPerTile - photonsPerTile[t],
 											light.Photons - photonsSpread);
 
 			photonsSpread += photons;
-			photonsPerThread[thread] += photons;
+			photonsPerTile[t] += photons;
 
 			if (photons > 0) {
-				LightThreadData ltd;
+				LightTileData ltd;
 				ltd.Entity  = &light;
 				ltd.Photons = photons;
-				mThreadData[thread].Lights.push_back(ltd);
+				mTileData[t].Lights.push_back(ltd);
 			}
 		}
 	}
 
-	for (uint32 thread = 0; thread < renderer()->threads(); ++thread) {
-		PR_LOGGER.logf(L_Info, M_Integrator, "PPM Thread %llu lights",
-					   mThreadData[thread].Lights.size());
-		for (const auto& ltd : mThreadData[thread].Lights) {
+	for (uint32 t = 0; t < renderer()->tileCount(); ++t) {
+		PR_LOGGER.logf(L_Info, M_Integrator, "PPM Tile %llu lights",
+					   mTileData[t].Lights.size());
+		for (const auto& ltd : mTileData[t].Lights) {
 			PR_LOGGER.logf(L_Info, M_Integrator, "  -> Light %s with %llu photons",
 						   ltd.Entity->Entity->name().c_str(), ltd.Photons);
 		}
@@ -281,31 +280,15 @@ bool PPMIntegrator::needNextPass(uint32 pass) const
 	return pass < renderer()->settings().ppm().maxPassCount() * 2;
 }
 
-void PPMIntegrator::onThreadStart(RenderThreadContext* context)
-{
-}
-
-void PPMIntegrator::onPrePass(RenderThreadContext* context, uint32 pass)
-{
-	if (pass % 2 == 0)
-		photonPass(context, pass);
-}
-
-void PPMIntegrator::onPass(RenderTile* tile, RenderThreadContext* context, uint32 pass)
+void PPMIntegrator::onPass(RenderTile* tile, uint32 pass)
 {
 	if (pass % 2 == 1) {
-		for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y)
-			for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x)
-				context->render(Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
+		for (uint32 y = tile->sy(); y < tile->ey(); ++y)
+			for (uint32 x = tile->sx(); x < tile->ex(); ++x)
+				renderer()->render(tile, Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
+	} else {
+		photonPass(tile, pass);
 	}
-}
-
-void PPMIntegrator::onPostPass(RenderThreadContext* context, uint32 i)
-{
-}
-
-void PPMIntegrator::onThreadEnd(RenderThreadContext* context)
-{
 }
 
 RenderStatus PPMIntegrator::status() const
@@ -317,8 +300,8 @@ RenderStatus PPMIntegrator::status() const
 	uint64 photonsEmitted = 0;
 	uint64 photonsStored  = 0;
 	for (uint32 thread = 0; thread < renderer()->threads(); ++thread) {
-		photonsEmitted += mThreadData[thread].PhotonsEmitted;
-		photonsStored += mThreadData[thread].PhotonsStored;
+		photonsEmitted += mTileData[thread].PhotonsEmitted;
+		photonsStored += mTileData[thread].PhotonsStored;
 	}
 
 	stat.setField("int.max_sample_count", max_samples);
@@ -344,7 +327,7 @@ RenderStatus PPMIntegrator::status() const
 	return stat;
 }
 
-void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
+void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 {
 #ifdef PR_DEBUG
 	PR_LOGGER.log(L_Debug, M_Integrator, "Shooting Photons");
@@ -352,13 +335,13 @@ void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 	const uint32 H  = renderer()->settings().maxDiffuseBounces() + 1;
 	const uint32 RD = renderer()->settings().maxRayDepth();
 
-	ThreadData& data = mThreadData[context->threadNumber()];
-	for (const LightThreadData& ltd : data.Lights) {
+	TileData& data = mTileData[tile->index()];
+	for (const LightTileData& ltd : data.Lights) {
 		const Light& light		 = *ltd.Entity;
 		const Sphere outerSphere = light.Entity->worldBoundingBox().outerSphere();
 
 		const size_t sampleSize = ltd.Photons;
-		MultiJitteredSampler sampler(context->random(), sampleSize);
+		MultiJitteredSampler sampler(tile->random(), sampleSize);
 
 		const float inv		 = 1.0f / sampleSize;
 		size_t photonsShoot  = 0;
@@ -373,8 +356,8 @@ void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 
 			if (light.Proj) {
 				dir = light.Proj->sample(
-					context->random().getFloat(), context->random().getFloat(),
-					context->random().getFloat(), context->random().getFloat(), area_pdf);
+					tile->random().getFloat(), tile->random().getFloat(),
+					tile->random().getFloat(), tile->random().getFloat(), area_pdf);
 				t_pdf = 1;
 
 				Ray ray(Eigen::Vector2i(0, 0),
@@ -386,9 +369,9 @@ void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 				lightSample = light.Entity->getRandomFacePoint(sampler, photonsShoot, area_pdf);
 
 				/*dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-								Projection::cos_hemi(context->random().getFloat(), context->random().getFloat(), t_pdf));*/
+								Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), t_pdf));*/
 				dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-												Projection::hemi(context->random().getFloat(), context->random().getFloat(), t_pdf));
+												Projection::hemi(tile->random().getFloat(), tile->random().getFloat(), t_pdf));
 			}
 
 			if (!lightSample.Material->isLight())
@@ -413,7 +396,7 @@ void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 					//	radiance /= MSI::toSolidAngle(area_pdf, sc.Depth2, std::abs(sc.NdotV));
 
 					float pdf;
-					Eigen::Vector3f nextDir = sc.Material->sample(sc, context->random().get3D(), pdf);
+					Eigen::Vector3f nextDir = sc.Material->sample(sc, tile->random().get3D(), pdf);
 
 					if (pdf > PR_EPSILON && !std::isinf(pdf) && !(sc.Flags & SCF_Inside)) // Diffuse
 					{
@@ -456,25 +439,25 @@ void PPMIntegrator::photonPass(RenderThreadContext* context, uint32 pass)
 	}
 }
 
-Spectrum PPMIntegrator::apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc)
+Spectrum PPMIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc)
 {
 	Spectrum applied;
-	RenderEntity* entity = context->shootWithEmission(applied, in, sc);
+	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
 
 	PR_CHECK_VALIDITY(applied, "From emission");
 	if (!entity || !sc.Material)
 		return applied;
 
-	return applied + PR_CHECK_VALIDITY(accumPass(in, sc, context), "From accumPass");
+	return applied + PR_CHECK_VALIDITY(accumPass(in, sc, tile), "From accumPass");
 }
 
-Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context)
+Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, RenderTile* tile)
 {
 	if (!sc.Material->canBeShaded())
 		return Spectrum();
 
 	Spectrum full_weight;
-	const Eigen::Vector3f rnd = context->random().get3D();
+	const Eigen::Vector3f rnd = tile->random().get3D();
 	for (uint32 path = 0; path < sc.Material->samplePathCount(); ++path) {
 		float pdf;
 		float path_weight;
@@ -494,30 +477,30 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, Render
 
 				Ray ray = in.next(sc.P, dir);
 				ShaderClosure sc2;
-				RenderEntity* entity = context->shootWithEmission(other_weight, ray, sc2);
+				RenderEntity* entity = renderer()->shootWithEmission(other_weight, ray, sc2, tile);
 				if (entity && sc2.Material)
-					other_weight += accumPass(ray, sc2, context);
+					other_weight += accumPass(ray, sc2, tile);
 				other_weight *= app;
 				PR_CHECK_VALIDITY(other_weight, "After ray apply");
 			}
 		} else {
 			pdf = 0;
 			float inf_pdf;
-			Spectrum inf_weight = handleInfiniteLights(in, sc, context, inf_pdf);
+			Spectrum inf_weight = handleInfiniteLights(in, sc, tile, inf_pdf);
 			MSI::power(other_weight, pdf, inf_weight, inf_pdf);
 
 			PR_CHECK_VALIDITY(inf_pdf, "After inf lights");
 			PR_CHECK_VALIDITY(inf_weight, "After inf lights");
 
 			// Gathering
-			const auto gatheringMode = context->renderer()->settings().ppm().gatheringMode();
-			const float A			 = 1 - context->renderer()->settings().ppm().contractRatio();
+			const auto gatheringMode = renderer()->settings().ppm().gatheringMode();
+			const float A			 = 1 - renderer()->settings().ppm().contractRatio();
 
 			Spectrum accum_weight;
 			Photon::PhotonSphere query;
 
-			query.MaxPhotons	= context->renderer()->settings().ppm().maxGatherCount();
-			query.SqueezeWeight = context->renderer()->settings().ppm().squeezeWeight() * context->renderer()->settings().ppm().squeezeWeight();
+			query.MaxPhotons	= renderer()->settings().ppm().maxGatherCount();
+			query.SqueezeWeight = renderer()->settings().ppm().squeezeWeight() * renderer()->settings().ppm().squeezeWeight();
 			query.Center		= sc.P;
 			query.Normal		= sc.N;
 			query.Distance2		= mSearchRadius2->getFragment(in.pixel());

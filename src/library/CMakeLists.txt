@@ -71,8 +71,7 @@ SET(PR_Renderer_Src
   renderer/RenderStatistics.cpp
   renderer/RenderStatus.cpp
   renderer/RenderTile.cpp
-  renderer/RenderThread.cpp
-  renderer/RenderThreadContext.cpp)
+  renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
   sampler/HaltonQMCSampler.cpp
@@ -206,8 +205,7 @@ SET(PR_Renderer_Hdr
   renderer/RenderStatistics.h
   renderer/RenderStatus.h
   renderer/RenderTile.h
-  renderer/RenderThread.h
-  renderer/RenderThreadContext.h)
+  renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
   sampler/HaltonQMCSampler.h

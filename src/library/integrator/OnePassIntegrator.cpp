@@ -2,7 +2,6 @@
 
 #include "renderer/RenderContext.h"
 #include "renderer/RenderThread.h"
-#include "renderer/RenderThreadContext.h"
 #include "renderer/RenderTile.h"
 
 namespace PR {
@@ -19,30 +18,15 @@ void OnePassIntegrator::onEnd()
 {
 }
 
-void OnePassIntegrator::onThreadStart(RenderThreadContext*)
+void OnePassIntegrator::onPass(RenderTile* tile, uint32 pass)
 {
-}
-
-void OnePassIntegrator::onPrePass(RenderThreadContext*, uint32)
-{
-}
-
-void OnePassIntegrator::onPass(RenderTile* tile, RenderThreadContext* context, uint32 pass)
-{
-	for (uint32 y = tile->sy(); y < tile->ey() && !context->thread()->shouldStop(); ++y) {
-		for (uint32 x = tile->sx(); x < tile->ex() && !context->thread()->shouldStop(); ++x) {
-			context->render(Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
+	for (uint32 y = tile->sy(); y < tile->ey(); ++y) {
+		for (uint32 x = tile->sx(); x < tile->ex(); ++x) {
+			renderer()->render(tile, Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
 		}
 	}
 }
 
-void OnePassIntegrator::onPostPass(RenderThreadContext*, uint32)
-{
-}
-
-void OnePassIntegrator::onThreadEnd(RenderThreadContext*)
-{
-}
 
 bool OnePassIntegrator::needNextPass(uint32 i) const
 {

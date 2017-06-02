@@ -5,7 +5,6 @@
 namespace PR {
 class Ray;
 class RenderContext;
-class RenderThreadContext;
 class RenderEntity;
 class RenderTile;
 class Spectrum;
@@ -27,21 +26,19 @@ public:
 	virtual bool needNextPass(uint32 i) const = 0;
 
 	// Per thread
-	virtual void onThreadStart(RenderThreadContext* context) = 0;
-	virtual void onPrePass(RenderThreadContext* context, uint32 pass) = 0;
-	virtual void onPass(RenderTile* tile, RenderThreadContext* context, uint32 pass) = 0;
-	virtual void onPostPass(RenderThreadContext* context, uint32 pass) = 0;
-	virtual void onThreadEnd(RenderThreadContext* context) = 0;
+	virtual void onPass(RenderTile* tile, uint32 pass) = 0;
 
-	virtual Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) = 0;
+	virtual Spectrum apply(const Ray& in, RenderTile* tile,
+						   uint32 pass, ShaderClosure& sc)
+		= 0;
 
 	virtual RenderStatus status() const = 0;
 
 	inline RenderContext* renderer() const { return mRenderer; }
 
 protected:
-	static Spectrum handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, float& full_pdf);
-	static Spectrum handleSpecularPath(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context, RenderEntity*& lastEntity);
+	Spectrum handleInfiniteLights(const Ray& in, const ShaderClosure& sc, RenderTile* tile, float& full_pdf);
+	Spectrum handleSpecularPath(const Ray& in, const ShaderClosure& sc, RenderTile* tile, RenderEntity*& lastEntity);
 
 private:
 	RenderContext* mRenderer;

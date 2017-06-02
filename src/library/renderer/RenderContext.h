@@ -25,7 +25,6 @@ class Scene;
 struct ShaderClosure;
 class PR_LIB RenderContext {
 	friend class RenderThread;
-	friend class RenderThreadContext;
 
 	PR_CLASS_NON_COPYABLE(RenderContext);
 
@@ -42,6 +41,8 @@ public:
 	inline uint32 fullWidth() const { return mFullWidth; }
 	inline uint32 fullHeight() const { return mFullHeight; }
 
+	inline uint32 tileCount() const { return mTileXCount * mTileYCount; }
+
 	// tcx = tile count x
 	// tcy = tile count y
 	// tcx and tcy should be able to divide width and height!
@@ -49,9 +50,11 @@ public:
 	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
 	void stop();
 
-	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
-	bool shootForDetection(const Ray& ray, RenderThreadContext* context);
-	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderThreadContext* context);
+	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderTile* tile);
+	bool shootForDetection(const Ray& ray, RenderTile* tile);
+	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderTile* tile);
+	void render(RenderTile* tile, const Eigen::Vector2i& pixel,
+				uint32 sample, uint32 pass);
 
 	bool isFinished();
 	void waitForFinish();
@@ -81,10 +84,6 @@ public:
 	inline GPU* gpu() const { return mGPU; }
 
 protected:
-	// Render Thread specific
-	void render(RenderThreadContext* context, const Eigen::Vector2i& pixel,
-				uint32 sample, uint32 pass);
-
 	RenderTile* getNextTile();
 
 	void onNextPass();
@@ -93,9 +92,9 @@ protected:
 private:
 	void reset();
 
-	void renderIncremental(RenderThreadContext* context, const Eigen::Vector2i& pixel,
+	void renderIncremental(RenderTile* tile, const Eigen::Vector2i& pixel,
 						   uint32 sample, uint32 pass);
-	Spectrum renderSample(RenderThreadContext* context,
+	Spectrum renderSample(RenderTile* tile,
 						  float x, float y, float rx, float ry, float t, uint8 wavelength,
 						  uint32 pass, ShaderClosure& sc);
 

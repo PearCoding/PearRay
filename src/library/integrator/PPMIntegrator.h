@@ -24,24 +24,20 @@ public:
 	virtual ~PPMIntegrator();
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
+	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc) override;
 
 	void onStart() override;
 	void onNextPass(uint32 pass, bool& clean) override;
 	void onEnd() override;
 	bool needNextPass(uint32 pass) const override;
 
-	void onThreadStart(RenderThreadContext* context) override;
-	void onPrePass(RenderThreadContext* context, uint32 i) override;
-	void onPass(RenderTile* tile, RenderThreadContext* context, uint32 pass) override;
-	void onPostPass(RenderThreadContext* context, uint32 i) override;
-	void onThreadEnd(RenderThreadContext* context) override;
+	void onPass(RenderTile* tile, uint32 pass) override;
 
 	RenderStatus status() const;
 
 private:
-	void photonPass(RenderThreadContext* context, uint32 pass);
-	Spectrum accumPass(const Ray& in, const ShaderClosure& sc, RenderThreadContext* context);
+	void photonPass(RenderTile* tile, uint32 pass);
+	Spectrum accumPass(const Ray& in, const ShaderClosure& sc, RenderTile* tile);
 
 	Photon::PhotonMap* mPhotonMap;
 
@@ -52,16 +48,16 @@ private:
 		SphereMap* Proj;
 	};
 
-	struct LightThreadData {
+	struct LightTileData {
 		Light* Entity;
 		uint64 Photons;
 	};
 
-	struct ThreadData {
-		std::vector<LightThreadData> Lights;
+	struct TileData {
+		std::vector<LightTileData> Lights;
 		uint64 PhotonsEmitted;
 		uint64 PhotonsStored;
-	} * mThreadData;
+	} * mTileData;
 
 	std::shared_ptr<OutputSpectral> mAccumulatedFlux;
 	std::shared_ptr<Output1D> mSearchRadius2;

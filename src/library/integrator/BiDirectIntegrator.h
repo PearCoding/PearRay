@@ -11,12 +11,12 @@ public:
 	~BiDirectIntegrator();
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass, ShaderClosure& sc) override;
+	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc) override;
 
 private:
-	Spectrum applyRay(const Ray& in, RenderThreadContext* context, uint32 diffBounces, ShaderClosure& sc);
+	Spectrum applyRay(const Ray& in, RenderTile* tile, uint32 diffBounces, ShaderClosure& sc);
 
-	struct ThreadData {
+	struct TileData {
 		struct EventVertex {
 			Spectrum Flux;
 			ShaderClosure SC;
@@ -28,9 +28,9 @@ private:
 		//EventVertex* EyeVertices;
 	};
 
-	void deleteThreadStructure();
+	void deleteTileStructure();
 
-	ThreadData* mThreadData;
-	uint32 mThreadCount;
+	TileData* mTileData;
+	uint32 mTileCount;
 };
 }

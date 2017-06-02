@@ -9,11 +9,11 @@ public:
 	explicit DirectIntegrator(RenderContext* renderer);
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderThreadContext* context, uint32 pass,
+	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass,
 				   ShaderClosure& sc) override;
 
 private:
 	Spectrum applyRay(const Ray& in, const ShaderClosure& sc,
-					  RenderThreadContext* context, uint32 diffbounces);
+					  RenderTile* tile, uint32 diffbounces);
 };
 }
