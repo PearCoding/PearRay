@@ -38,7 +38,7 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 	case DM_None:
 		return Spectrum();
 	case DM_Depth: {
-		float depth = (in.startPosition() - sc.P).norm();
+		float depth = (in.origin() - sc.P).norm();
 		return RGBConverter::toSpec(depth, depth, depth);
 	}
 	// NORMAL

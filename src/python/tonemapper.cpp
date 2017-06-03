@@ -47,11 +47,11 @@ namespace PRPY
             return bpy::object(bpy::handle<>(obj));
         }
 
-        bpy::object map_Py2(const OutputSpectral& f) const
+        bpy::object map_Py2(const std::shared_ptr<OutputSpectral>& f) const
         {
             const size_t size = width()*height()*3;
             float* rgb = new float[size];
-            map(f.ptr(), rgb);
+            map(f->ptr(), rgb);
 
             PyObject* obj = resultToTuple(rgb, width(), height());
             

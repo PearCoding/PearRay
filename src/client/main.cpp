@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 				if(status.hasField("int.feedback"))
 					std::cout << "( " << status.getField("int.feedback").getString() << ")";
 
-				std::cout << " | S: " << status.getField("global.sample_count").getUInt() 
+				std::cout << " | S: " << status.getField("global.pixel_sample_count").getUInt() 
 					<< " R: " << status.getField("global.ray_count").getUInt()
 					<< " EH: " << status.getField("global.entity_hit_count").getUInt()
 					<< " BH: " << status.getField("global.background_hit_count").getUInt()

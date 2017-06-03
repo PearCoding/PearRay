@@ -100,7 +100,7 @@ bool Plane::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t
 	PR_GUARD_PROFILE();
 
 	float ln = ray.direction().dot(mNormal_Cache);
-	float pn = (mPosition - ray.startPosition()).dot(mNormal_Cache);
+	float pn = (mPosition - ray.origin()).dot(mNormal_Cache);
 
 	if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON) // Parallel or on the plane
 	{
@@ -111,7 +111,7 @@ bool Plane::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t
 		if (t < PR_PLANE_INTERSECT_EPSILON) {
 			return false;
 		} else {
-			collisionPoint = ray.startPosition() + ray.direction() * t;
+			collisionPoint = ray.origin() + ray.direction() * t;
 			project(collisionPoint, u, v);
 
 			if (v >= 0 && v <= 1 && u >= 0 && u <= 1)

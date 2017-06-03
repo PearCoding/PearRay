@@ -92,7 +92,7 @@ bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) co
 	PR_GUARD_PROFILE();
 
 	Ray local = ray;
-	local.setStartPosition(invTransform() * ray.startPosition());
+	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
 	Sphere sphere(Eigen::Vector3f(0, 0, 0), mRadius);

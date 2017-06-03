@@ -120,7 +120,7 @@ bool CoordinateAxisEntity::checkCollision(const Ray& ray, FaceSample& collisionP
 	PR_GUARD_PROFILE();
 
 	Ray local = ray;
-	local.setStartPosition(invTransform() * ray.startPosition());
+	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
 	float t   = std::numeric_limits<float>::max();

@@ -39,13 +39,15 @@ public:
 	float apertureRadius() const;
 
 	// Camera
-	Ray constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const override;
+	Ray constructRay(RenderContext* context, const CameraSample& sample) const override;
 
 	// Entity
 	std::string type() const override;
 	void onFreeze() override; // Cache
 
 private:
+	void constructRay(float nx, float ny, const Eigen::Vector2f& r, Eigen::Vector3f& origin, Eigen::Vector3f& dir) const;
+
 	bool mOrthographic;
 	float mWidth;
 	float mHeight;

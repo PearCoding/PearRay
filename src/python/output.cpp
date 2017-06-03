@@ -9,7 +9,7 @@ namespace PRPY
     void setup_output()
     {
         // TODO: Add ptr() for bpy::object?
-        bpy::class_<Output3D, boost::noncopyable>("Output3D", bpy::init<RenderContext*, const Eigen::Vector3f&, bpy::optional<bool> >())
+        bpy::class_<Output3D, std::shared_ptr<Output3D>, boost::noncopyable>("Output3D", bpy::init<RenderContext*, const Eigen::Vector3f&, bpy::optional<bool> >())
             .add_property("neverClear", &Output3D::isNeverCleared, &Output3D::setNeverClear)
             .def("setFragment", &Output3D::setFragment)
             .def("getFragment", &Output3D::getFragment, bpy::return_value_policy<bpy::copy_const_reference >())
@@ -19,7 +19,7 @@ namespace PRPY
             .def("fill", &Output3D::fill)
         ;
 
-        bpy::class_<Output1D, boost::noncopyable>("Output1D", bpy::init<RenderContext*, bpy::optional<float,bool> >())
+        bpy::class_<Output1D, std::shared_ptr<Output1D>, boost::noncopyable>("Output1D", bpy::init<RenderContext*, bpy::optional<float,bool> >())
             .add_property("neverClear", &Output1D::isNeverCleared, &Output1D::setNeverClear)
             .def("setFragment", &Output1D::setFragment)
             .def("getFragment", &Output1D::getFragment, bpy::return_value_policy<bpy::copy_const_reference >())
@@ -29,7 +29,7 @@ namespace PRPY
             .def("fill", &Output1D::fill)
         ;
 
-        bpy::class_<OutputCounter, boost::noncopyable>("OutputCounter", bpy::init<RenderContext*, bpy::optional<uint64,bool> >())
+        bpy::class_<OutputCounter, std::shared_ptr<OutputCounter>, boost::noncopyable>("OutputCounter", bpy::init<RenderContext*, bpy::optional<uint64,bool> >())
             .add_property("neverClear", &OutputCounter::isNeverCleared, &OutputCounter::setNeverClear)
             .def("setFragment", &OutputCounter::setFragment)
             .def("getFragment", &OutputCounter::getFragment, bpy::return_value_policy<bpy::copy_const_reference >())
@@ -39,7 +39,7 @@ namespace PRPY
             .def("fill", &OutputCounter::fill)
         ;
 
-        bpy::class_<OutputSpectral, boost::noncopyable>("OutputSpectral", bpy::init<RenderContext*, bpy::optional<Spectrum,bool> >())
+        bpy::class_<OutputSpectral, std::shared_ptr<OutputSpectral>, boost::noncopyable>("OutputSpectral", bpy::init<RenderContext*, bpy::optional<Spectrum,bool> >())
             .add_property("neverClear", &OutputSpectral::isNeverCleared, &OutputSpectral::setNeverClear)
             .def("setFragment", &OutputSpectral::setFragment)
             .def("getFragment", &OutputSpectral::getFragment, bpy::return_internal_reference<>())

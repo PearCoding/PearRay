@@ -38,7 +38,7 @@ bool Sphere::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& 
 {
 	PR_GUARD_PROFILE();
 
-	const Eigen::Vector3f L = mPosition - ray.startPosition(); // C - O
+	const Eigen::Vector3f L = mPosition - ray.origin(); // C - O
 	const float S			= L.dot(ray.direction());		   // L . D
 	const float L2			= L.squaredNorm();				   // L . L
 	const float R2			= mRadius * mRadius;			   // R^2
@@ -64,7 +64,7 @@ bool Sphere::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& 
 
 	if (t0 >= PR_SPHERE_INTERSECT_EPSILON) {
 		t			   = t0;
-		collisionPoint = ray.startPosition() + ray.direction() * t;
+		collisionPoint = ray.origin() + ray.direction() * t;
 		return true;
 	} else {
 		return false;

@@ -57,7 +57,7 @@ namespace PR
 			const std::vector<IM_ChannelSetting3D>& ch3d) const;
 
 		bool save_spectral(const std::string& file,
-			OutputSpectral* spec) const;
+			const std::shared_ptr<OutputSpectral>& spec) const;
 
 	private:
 		float* mRGBData;

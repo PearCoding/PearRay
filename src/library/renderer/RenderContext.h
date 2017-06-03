@@ -123,7 +123,6 @@ private:
 	std::list<RenderThread*> mThreads;
 
 	const RenderSettings mRenderSettings;
-	RenderStatistics mGlobalStatistics;
 
 	GPU* const mGPU;
 	Integrator* mIntegrator;

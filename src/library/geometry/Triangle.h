@@ -73,7 +73,7 @@ public:
 			return false;
 
 		float f					= 1.0f / a;
-		const Eigen::Vector3f s = ray.startPosition() - p1;
+		const Eigen::Vector3f s = ray.origin() - p1;
 		u						= f * s.dot(q);
 
 		if (u < 0 || u > 1)
@@ -90,7 +90,7 @@ public:
 		t = f * e13.dot(r);
 
 		if (t >= PR_TRIANGLE_INTERSECT_EPSILON) {
-			point = ray.startPosition() + ray.direction() * t;
+			point = ray.origin() + ray.direction() * t;
 			return true;
 		} else {
 			return false;
@@ -124,9 +124,9 @@ public:
 		const float sz = 1.0f / dZ;
 
 		// We use (1-u-v)*P1 + u*P2 + v*P3 convention
-		Eigen::Vector3f A = p2 - ray.startPosition();
-		Eigen::Vector3f B = p3 - ray.startPosition();
-		Eigen::Vector3f C = p1 - ray.startPosition();
+		Eigen::Vector3f A = p2 - ray.origin();
+		Eigen::Vector3f B = p3 - ray.origin();
+		Eigen::Vector3f C = p1 - ray.origin();
 
 		// Shear
 		const float Ax = A(kx) - sx * A(kz);
@@ -175,7 +175,7 @@ public:
 			t *= invDet;
 
 			if (t >= PR_TRIANGLE_INTERSECT_EPSILON) {
-				point = ray.startPosition() + ray.direction() * t;
+				point = ray.origin() + ray.direction() * t;
 				return true;
 			} else {
 				return false;

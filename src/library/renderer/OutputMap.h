@@ -87,9 +87,9 @@ public:
 		return mInt3D[var];
 	}
 
-	inline OutputSpectral* getSpectralChannel() const
+	inline const std::shared_ptr<OutputSpectral>& getSpectralChannel() const
 	{
-		return mSpectral.get();
+		return mSpectral;
 	}
 
 	inline void registerChannel(Variable1D var, const std::shared_ptr<Output1D>& output)
@@ -140,7 +140,7 @@ public:
 private:
 	RenderContext* mRenderer;
 
-	std::unique_ptr<OutputSpectral> mSpectral;
+	std::shared_ptr<OutputSpectral> mSpectral;
 	std::shared_ptr<Output3D> mInt3D[V_3D_COUNT];
 	std::shared_ptr<Output1D> mInt1D[V_1D_COUNT];
 	std::shared_ptr<OutputCounter> mIntCounter[V_COUNTER_COUNT];

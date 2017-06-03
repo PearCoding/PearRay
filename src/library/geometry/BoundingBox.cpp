@@ -53,8 +53,8 @@ bool BoundingBox::intersects(const Ray& ray, float& t) const
 	PR_GUARD_PROFILE();
 
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
-	const Eigen::Vector3f vmin = (lowerBound() - ray.startPosition()).cwiseProduct(idir);
-	const Eigen::Vector3f vmax = (upperBound() - ray.startPosition()).cwiseProduct(idir);
+	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
+	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
 
 	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
 	const float tmax = vmin.array().max(vmax.array()).minCoeff();
@@ -68,15 +68,15 @@ bool BoundingBox::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, fl
 	PR_GUARD_PROFILE();
 
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
-	const Eigen::Vector3f vmin = (lowerBound() - ray.startPosition()).cwiseProduct(idir);
-	const Eigen::Vector3f vmax = (upperBound() - ray.startPosition()).cwiseProduct(idir);
+	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
+	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
 
 	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
 	const float tmax = vmin.array().max(vmax.array()).minCoeff();
 
 	t = tmin <= 0 ? tmax : tmin;
 	if (tmax >= tmin && t > PR_EPSILON) {
-		collisionPoint = ray.startPosition() + ray.direction() * t;
+		collisionPoint = ray.origin() + ray.direction() * t;
 		return true;
 	} else {
 		return false;

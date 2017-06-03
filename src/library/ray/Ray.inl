@@ -1,14 +1,14 @@
 #pragma once
 
 namespace PR {
-inline void Ray::setStartPosition(const Eigen::Vector3f& p)
+inline void Ray::setOrigin(const Eigen::Vector3f& p)
 {
-	mStartPosition = p;
+	mOrigin = p;
 }
 
-inline Eigen::Vector3f Ray::startPosition() const
+inline Eigen::Vector3f Ray::origin() const
 {
-	return mStartPosition;
+	return mOrigin;
 }
 
 inline void Ray::setDirection(const Eigen::Vector3f& dir)
@@ -32,6 +32,46 @@ inline void Ray::setPixel(const Eigen::Vector2i& p)
 inline Eigen::Vector2i Ray::pixel() const
 {
 	return mPixel;
+}
+
+inline void Ray::setXOrigin(const Eigen::Vector3f& p)
+{
+	mXOrigin = p;
+}
+
+inline Eigen::Vector3f Ray::xorigin() const
+{
+	return mXOrigin;
+}
+
+inline void Ray::setXDirection(const Eigen::Vector3f& dir)
+{
+	mXDirection = dir;
+}
+
+inline Eigen::Vector3f Ray::xdirection() const
+{
+	return mXDirection;
+}
+
+inline void Ray::setYOrigin(const Eigen::Vector3f& p)
+{
+	mYOrigin = p;
+}
+
+inline Eigen::Vector3f Ray::yorigin() const
+{
+	return mYOrigin;
+}
+
+inline void Ray::setYDirection(const Eigen::Vector3f& dir)
+{
+	mYDirection = dir;
+}
+
+inline Eigen::Vector3f Ray::ydirection() const
+{
+	return mYDirection;
 }
 
 inline void Ray::setDepth(uint32 depth)

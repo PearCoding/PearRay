@@ -9,7 +9,7 @@ namespace PRPY
     {
         bpy::class_<Ray>("Ray")
         .def(bpy::init<const Eigen::Vector2i&, const Eigen::Vector3f&, const Eigen::Vector3f&, bpy::optional<uint32, float, uint8, uint16> >())
-        .add_property("startPosition", &Ray::startPosition, &Ray::setStartPosition)
+        .add_property("origin", &Ray::origin, &Ray::setOrigin)
         .add_property("direction", &Ray::direction, &Ray::setDirection)
         .add_property("pixel", &Ray::pixel, &Ray::setPixel)
         .add_property("depth", &Ray::depth, &Ray::setDepth)

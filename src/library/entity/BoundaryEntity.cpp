@@ -82,7 +82,7 @@ bool BoundaryEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) 
 	Eigen::Vector3f vertex(0, 0, 0);
 
 	Ray local = ray;
-	local.setStartPosition(invTransform() * ray.startPosition());
+	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
 	BoundingBox box = localBoundingBox();

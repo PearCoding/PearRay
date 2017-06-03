@@ -331,7 +331,7 @@ namespace PR
 	}
 
 	bool ImageWriter::save_spectral(const std::string& file,
-			PR::OutputSpectral* spec) const
+			const std::shared_ptr<OutputSpectral>& spec) const
 	{
 		if(!spec || !mRenderer)
 			return false;

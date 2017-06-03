@@ -119,7 +119,7 @@ bool MeshEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) cons
 
 	// Local space
 	Ray local = ray;
-	local.setStartPosition(invTransform() * ray.startPosition());
+	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
 	Face* f = mMesh->checkCollision(local, collisionPoint);

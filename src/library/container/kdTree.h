@@ -211,7 +211,7 @@ namespace PR
 							if ((!ignoreCallback || ignoreCallback(entity)) &&
 								mCheckCollision(ray, tmpCollisionPoint, entity))
 							{
-								l = (tmpCollisionPoint.P-ray.startPosition()).squaredNorm();
+								l = (tmpCollisionPoint.P-ray.origin()).squaredNorm();
 								if(l < t)
 								{
 									t = l;

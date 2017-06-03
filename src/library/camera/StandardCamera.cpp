@@ -1,7 +1,7 @@
 #include "StandardCamera.h"
-#include "ray/Ray.h"
-
 #include "performance/Performance.h"
+#include "ray/Ray.h"
+#include "renderer/RenderContext.h"
 
 namespace PR {
 StandardCamera::StandardCamera(uint32 id, const std::string& name)
@@ -118,38 +118,57 @@ float StandardCamera::apertureRadius() const
 	return mApertureRadius;
 }
 
-// nx, ny -> [-1,1]
-// rx, ry -> [0, 1]
-// t -> [0, inf]
-Ray StandardCamera::constructRay(float nx, float ny, float rx, float ry, float t, uint8 wavelength) const
+Ray StandardCamera::constructRay(RenderContext* context, const CameraSample& sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen");
 
 	PR_GUARD_PROFILE();
 
+	const float nx  = 2 * (sample.PixelF.x() / context->fullWidth() - 0.5f);
+	const float nx1 = 2 * ((sample.PixelF.x() + 1) / context->fullWidth() - 0.5f);
+	const float ny  = 2 * (sample.PixelF.y() / context->fullHeight() - 0.5f);
+	const float ny1 = 2 * ((sample.PixelF.y() + 1) / context->fullHeight() - 0.5f);
+
+	Eigen::Vector3f o;
+	Eigen::Vector3f d;
+	constructRay(nx, ny, sample.R, o, d);
+
+	Eigen::Vector3f ox;
+	Eigen::Vector3f dx;
+	constructRay(nx1, ny, sample.R, ox, dx);
+
+	Eigen::Vector3f oy;
+	Eigen::Vector3f dy;
+	constructRay(nx, ny1, sample.R, oy, dy);
+
+	Ray ray(sample.Pixel, o, d, 0, sample.Time, sample.WavelengthIndex);
+	ray.setXOrigin(ox);
+	ray.setXDirection(dx);
+	ray.setYOrigin(oy);
+	ray.setYDirection(dy);
+
+	return ray;
+}
+
+void StandardCamera::constructRay(float nx, float ny, const Eigen::Vector2f& r, Eigen::Vector3f& origin, Eigen::Vector3f& dir) const
+{
 	if (mOrthographic) {
-		return Ray(Eigen::Vector2i(0, 0),
-				   position() + mRight_Cache * nx + mUp_Cache * ny,
-				   mDirection_Cache,
-				   0, t, wavelength);
+		origin = position() + mRight_Cache * nx + mUp_Cache * ny;
+		dir	= mDirection_Cache;
 	} else {
 		Eigen::Vector3f viewPlane = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
 
 		if (mHasDOF_Cache) {
-			float s					 = std::sin(2 * PR_PI * rx);
-			float c					 = std::cos(2 * PR_PI * rx);
-			Eigen::Vector3f eyePoint = mXApertureRadius_Cache * ry * s + mYApertureRadius_Cache * ry * c;
+			float s					 = std::sin(2 * PR_PI * r.x());
+			float c					 = std::cos(2 * PR_PI * r.x());
+			Eigen::Vector3f eyePoint = mXApertureRadius_Cache * r.y() * s + mYApertureRadius_Cache * r.y() * c;
 			Eigen::Vector3f rayDir   = (viewPlane - eyePoint).normalized();
 
-			return Ray(Eigen::Vector2i(0, 0), // Will be set by render context
-					   position() + eyePoint,
-					   rayDir,
-					   0, t, wavelength);
+			origin = position() + eyePoint;
+			dir	= rayDir;
 		} else {
-			return Ray(Eigen::Vector2i(0, 0), // Will be set by render context
-					   position(),
-					   viewPlane.normalized(),
-					   0, t, wavelength);
+			origin = position();
+			dir	= viewPlane.normalized();
 		}
 	}
 }

@@ -158,9 +158,6 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		mThreads.push_back(thread);
 	}
 
-	mIntegrator->init();
-	mOutputMap->init();
-
 	// Calculate tile sizes, etc.
 	mTileXCount = std::max<uint32>(1, tcx);
 	mTileYCount = std::max<uint32>(1, tcy);
@@ -238,6 +235,11 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	} break;
 	}
 
+	// Init modules
+	mIntegrator->init();
+	mOutputMap->init();
+
+	// Start
 	mIntegrator->onStart(); // TODO: onEnd?
 	if (mIntegrator->needNextPass(0)) {
 		bool clear; // Doesn't matter, as it is already clean.
@@ -322,14 +324,16 @@ Spectrum RenderContext::renderSample(RenderTile* tile,
 {
 	tile->statistics().incPixelSampleCount();
 
-	// To camera coordinates [-1,1]
-	const float fnx = 2 * ((x + mOffsetX) / mFullWidth - 0.5f);
-	const float fny = 2 * ((y + mOffsetY) / mFullHeight - 0.5f);
-
-	Ray ray = mCamera->constructRay(fnx, fny, rx, ry, t, wavelength);
-	ray.setPixel(Eigen::Vector2i(
+	CameraSample sample;
+	sample.PixelF = Eigen::Vector2f(x + mOffsetX, y + mOffsetY);
+	sample.Pixel  = Eigen::Vector2i(
 		std::min(std::max(mOffsetX, (uint32)std::round(x)), mOffsetX + mWidth - 1),
-		std::min(std::max(mOffsetY, (uint32)std::round(y)), mOffsetY + mHeight - 1)));
+		std::min(std::max(mOffsetY, (uint32)std::round(y)), mOffsetY + mHeight - 1));
+	sample.R			   = Eigen::Vector2f(rx, ry);
+	sample.Time			   = t;
+	sample.WavelengthIndex = wavelength;
+
+	Ray ray = mCamera->constructRay(this, sample);
 
 	return mIntegrator->apply(ray, tile, pass, sc);
 }
@@ -347,6 +351,8 @@ std::list<RenderTile> RenderContext::currentTiles() const
 
 RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile* tile)
 {
+	PR_ASSERT(tile, "Invalid tile given");
+
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
 		sc.Flags = 0;
 
@@ -361,7 +367,7 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 		sc.V			   = ray.direction();
 		sc.T			   = ray.time();
 		sc.WavelengthIndex = ray.wavelength();
-		sc.Depth2		   = (ray.startPosition() - sc.P).squaredNorm();
+		sc.Depth2		   = (ray.origin() - sc.P).squaredNorm();
 
 		if (entity)
 			sc.EntityID = entity->id();
@@ -371,15 +377,9 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 			//sc.Ny = -fs.Ny;
 		}
 
-		if (tile) {
-			tile->statistics().incRayCount();
-			if (entity)
-				tile->statistics().incEntityHitCount();
-		} else {
-			mGlobalStatistics.incRayCount();
-			if (entity)
-				mGlobalStatistics.incEntityHitCount();
-		}
+		tile->statistics().incRayCount();
+		if (entity)
+			tile->statistics().incEntityHitCount();
 
 		return entity;
 	} else {
@@ -389,19 +389,15 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 
 bool RenderContext::shootForDetection(const Ray& ray, RenderTile* tile)
 {
+	PR_ASSERT(tile, "Invalid tile given");
+
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
 		FaceSample fs;
 		bool found = mScene.checkIfCollides(ray, fs);
 
-		if (tile) {
-			tile->statistics().incRayCount();
-			if (found)
-				tile->statistics().incEntityHitCount();
-		} else {
-			mGlobalStatistics.incRayCount();
-			if (found)
-				mGlobalStatistics.incEntityHitCount();
-		}
+		tile->statistics().incRayCount();
+		if (found)
+			tile->statistics().incEntityHitCount();
 
 		return found;
 	} else {
@@ -412,6 +408,8 @@ bool RenderContext::shootForDetection(const Ray& ray, RenderTile* tile)
 RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
 											   ShaderClosure& sc, RenderTile* tile)
 {
+	PR_ASSERT(tile, "Invalid tile given");
+
 	if (ray.depth() >= mRenderSettings.maxRayDepth())
 		return nullptr;
 
@@ -427,10 +425,7 @@ RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray&
 		for (const auto& e : mScene.infiniteLights())
 			appliedSpec += e->apply(ray.direction());
 
-		if (tile)
-			tile->statistics().incBackgroundHitCount();
-		else
-			mGlobalStatistics.incBackgroundHitCount();
+		tile->statistics().incBackgroundHitCount();
 	}
 
 	return entity;
@@ -531,7 +526,7 @@ const std::list<RenderEntity*>& RenderContext::lights() const
 
 RenderStatistics RenderContext::statistics() const
 {
-	RenderStatistics s = mGlobalStatistics;
+	RenderStatistics s;
 	for (uint32 i = 0; i < mTileYCount; ++i) {
 		for (uint32 j = 0; j < mTileXCount; ++j) {
 			s += mTileMap[i * mTileXCount + j]->statistics();

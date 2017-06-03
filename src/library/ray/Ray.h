@@ -18,14 +18,26 @@ public:
 		uint32 depth = 0, const SI::Time& time = 0, uint8 wavelength = 0, uint16 flags = 0);
 	virtual ~Ray();
 
-	inline void setStartPosition(const Eigen::Vector3f& p);
-	inline Eigen::Vector3f startPosition() const;
+	inline void setOrigin(const Eigen::Vector3f& p);
+	inline Eigen::Vector3f origin() const;
 
 	inline void setDirection(const Eigen::Vector3f& p);
 	inline Eigen::Vector3f direction() const;
 
 	inline void setPixel(const Eigen::Vector2i& pixel);
 	inline Eigen::Vector2i pixel() const;
+
+	inline void setXOrigin(const Eigen::Vector3f& p);
+	inline Eigen::Vector3f xorigin() const;
+
+	inline void setXDirection(const Eigen::Vector3f& p);
+	inline Eigen::Vector3f xdirection() const;
+
+	inline void setYOrigin(const Eigen::Vector3f& p);
+	inline Eigen::Vector3f yorigin() const;
+
+	inline void setYDirection(const Eigen::Vector3f& p);
+	inline Eigen::Vector3f ydirection() const;
 
 	inline void setDepth(uint32 depth);
 	inline uint32 depth() const;
@@ -49,9 +61,17 @@ public:
 						   uint32 depth = 0, const SI::Time& time = 0, uint8 wavelength = 0, uint16 flags = 0);
 
 private:
-	Eigen::Vector3f mStartPosition;
+	Eigen::Vector3f mOrigin;
 	Eigen::Vector3f mDirection;
 	Eigen::Vector2i mPixel;
+
+	// Ray differentials
+	Eigen::Vector3f mXOrigin;
+	Eigen::Vector3f mXDirection;
+
+	Eigen::Vector3f mYOrigin;
+	Eigen::Vector3f mYDirection;
+
 	uint32 mDepth; // Recursion depth!
 	SI::Time mTime;
 	uint8 mWavelengthIndex;
