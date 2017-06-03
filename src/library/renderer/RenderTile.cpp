@@ -32,6 +32,7 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	, mSY(sy)
 	, mEX(ex)
 	, mEY(ey)
+	, mIndex(index)
 	, mSamplesRendered(0)
 	, mRandom(settings.seed() + index)
 	, mAASampler(nullptr)
