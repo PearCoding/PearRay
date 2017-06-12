@@ -56,10 +56,11 @@ public:
 	void render(RenderTile* tile, const Eigen::Vector2i& pixel,
 				uint32 sample, uint32 pass);
 
+	inline bool isStopping() const { return mShouldStop; }
 	bool isFinished();
 	void waitForFinish();
 
-	uint32 threads() const;
+	size_t threads() const { return mThreads.size(); }
 
 	// Pass control
 	inline uint32 currentPass() const { return mCurrentPass; }
@@ -73,7 +74,7 @@ public:
 	inline const RenderSettings& settings() const { return mRenderSettings; }
 
 	// Light
-	const std::list<RenderEntity*>& lights() const;
+	inline const std::list<RenderEntity*>& lights() const { return mLights; }
 
 	RenderStatistics statistics() const;
 	RenderStatus status() const;

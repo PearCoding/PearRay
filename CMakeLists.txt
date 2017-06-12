@@ -57,7 +57,12 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Boost_USE_MULTITHREADED ON)
 #set(BOOST_ALL_DYN_LINK ON)
 
-find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
+IF(PR_WITH_PYTHON)# We only need Boost 1.63 for numpy support in boost::python!
+	find_package(Boost 1.63 COMPONENTS filesystem system iostreams program_options REQUIRED)
+ELSE()
+	find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
+ENDIF()
+
 IF(PR_BUILD_VIEWER)
 	find_package(Qt5Widgets)
 ENDIF()
@@ -91,7 +96,7 @@ link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 IF(PR_WITH_PYTHON)
 	SET(TMP_BOOST_LIBS ${Boost_LIBRARIES})
-	find_package(Boost 1.45 COMPONENTS python)
+	find_package(Boost 1.63 COMPONENTS python)
 	IF(Boost_FOUND)
 		find_package(PythonLibs)
 		find_package(PythonInterp)

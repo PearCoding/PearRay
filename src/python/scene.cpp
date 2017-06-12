@@ -1,6 +1,7 @@
 #include <boost/python.hpp>
 #include "scene/Scene.h"
 #include "renderer/RenderContext.h"
+#include "entity/Entity.h"
 
 using namespace PR;
 namespace bpy = boost::python;

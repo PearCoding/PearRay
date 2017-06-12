@@ -46,9 +46,24 @@ public:
 		return mEY;
 	}
 
+	inline uint32 width() const
+	{
+		return mWidth;
+	}
+
+	inline uint32 height() const
+	{
+		return mHeight;
+	}
+
 	inline uint32 index() const
 	{
 		return mIndex;
+	}
+
+	inline bool isFinished() const
+	{
+		return mSamplesRendered >= mMaxSamples;
 	}
 
 	inline uint32 samplesRendered() const
@@ -94,11 +109,14 @@ public:
 private:
 	bool mWorking;
 
-	uint32 mSX;
-	uint32 mSY;
-	uint32 mEX;
-	uint32 mEY;
-	uint32 mIndex;
+	const uint32 mSX;
+	const uint32 mSY;
+	const uint32 mEX;
+	const uint32 mEY;
+	const uint32 mWidth;
+	const uint32 mHeight;
+	const uint32 mIndex;
+	const uint32 mMaxSamples;
 
 	uint32 mSamplesRendered;
 

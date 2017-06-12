@@ -451,11 +451,6 @@ void RenderContext::waitForNextPass()
 	}
 }
 
-uint32 RenderContext::threads() const
-{
-	return (uint32)mThreads.size();
-}
-
 bool RenderContext::isFinished()
 {
 	for (RenderThread* thread : mThreads) {
@@ -517,11 +512,6 @@ RenderTile* RenderContext::getNextTile()
 	}
 	mTileMutex.unlock();
 	return nullptr;
-}
-
-const std::list<RenderEntity*>& RenderContext::lights() const
-{
-	return mLights;
 }
 
 RenderStatistics RenderContext::statistics() const

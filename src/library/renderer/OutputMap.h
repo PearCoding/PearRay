@@ -69,6 +69,11 @@ public:
 		return mIntCounter[V_Samples]->getFragmentBounded(p);
 	}
 
+	inline void incSampleCount(const Eigen::Vector2i& p)
+	{
+		mIntCounter[V_Samples]->setFragmentBounded(p, mIntCounter[V_Samples]->getFragmentBounded(p) + 1);
+	}
+
 	bool isPixelFinished(const Eigen::Vector2i& p) const;
 	uint64 finishedPixelCount() const;
 

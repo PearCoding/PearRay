@@ -32,7 +32,10 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	, mSY(sy)
 	, mEX(ex)
 	, mEY(ey)
+	, mWidth(ex - sx)
+	, mHeight(ey - sy)
 	, mIndex(index)
+	, mMaxSamples(settings.maxCameraSampleCount() * mWidth * mHeight)
 	, mSamplesRendered(0)
 	, mRandom(settings.seed() + index)
 	, mAASampler(nullptr)
@@ -40,6 +43,9 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	, mTimeSampler(nullptr)
 	, mSpectralSampler(nullptr)
 {
+	PR_ASSERT(mWidth > 0, "Invalid tile width");
+	PR_ASSERT(mHeight > 0, "Invalid tile height");
+
 	mAASampler = createSampler(
 		settings.aaSampler(), mRandom, settings.maxAASampleCount());
 
