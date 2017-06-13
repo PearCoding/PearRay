@@ -57,10 +57,11 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Boost_USE_MULTITHREADED ON)
 #set(BOOST_ALL_DYN_LINK ON)
 
-IF(PR_WITH_PYTHON)# We only need Boost 1.63 for numpy support in boost::python!
-	find_package(Boost 1.63 COMPONENTS filesystem system iostreams program_options REQUIRED)
-ELSE()
-	find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
+find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
+
+IF((${Boost_VERSION} VERSION_LESS 1.63) AND PR_WITH_PYTHON)
+MESSAGE(WARNING "Need atleast Boost 1.63 to enable python library")
+SET(PR_WITH_PYTHON OFF)
 ENDIF()
 
 IF(PR_BUILD_VIEWER)
