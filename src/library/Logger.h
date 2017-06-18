@@ -28,7 +28,8 @@ enum Module {
 	M_Network,
 	M_Loader,
 	M_Shader,
-	M_Main
+	M_Main,
+	M_Script
 };
 
 class LogListener;

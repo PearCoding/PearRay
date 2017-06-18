@@ -9,6 +9,7 @@ SET(Src
   logger.cpp
   material.cpp
   module.cpp
+  npmath.cpp
   output.cpp
   ray.cpp
   renderentities.cpp
@@ -20,7 +21,8 @@ SET(Src
   spectral.cpp
   status.cpp
   tonemapper.cpp)
-SET(Hdr )
+SET(Hdr 
+  npmath.h)
 
 include_directories(../utils)
 

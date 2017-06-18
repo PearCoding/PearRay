@@ -27,7 +27,6 @@ There is an open source (still experimental) blender integration addon available
 ### Optional
  - OpenCL https://www.khronos.org/opencl/
  - OSL https://github.com/imageworks/OpenShadingLanguage
- - minieigen https://github.com/eudoxos/minieigen (For Python support)
 
 ## Wiki
 See [Wiki](https://github.com/PearCoding/PearRay/wiki) for more information, examples and tutorials.

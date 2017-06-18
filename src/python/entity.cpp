@@ -6,7 +6,7 @@
 #include "entity/RenderEntity.h"
 #include "sampler/Sampler.h"
 
-#include <Eigen/Dense>
+#include "npmath.h"
 
 using namespace PR;
 namespace bpy = boost::python;
@@ -23,6 +23,21 @@ namespace PRPY
                 f();
             Entity::onFreeze();
         }
+
+        PRPY_WRAP_GET_VEC3(position)
+        PRPY_WRAP_SET_VEC3(setPosition)
+
+        PRPY_WRAP_GET_VEC3(scale)
+        PRPY_WRAP_SET_VEC3(setScale)
+
+        PRPY_WRAP_GET_QUAT(rotation)
+        PRPY_WRAP_SET_QUAT(setRotation)
+
+        PRPY_WRAP_GET_AFF3(transform)
+        PRPY_WRAP_GET_AFF3(invTransform)
+
+        PRPY_WRAP_GET_MAT3(directionMatrix)
+        PRPY_WRAP_GET_MAT3(invDirectionMatrix)
     };
 
     class RenderEntityWrap : public RenderEntity, public bpy::wrapper<RenderEntity>
@@ -95,13 +110,13 @@ namespace PRPY
         .add_property("name", &Entity::name, &Entity::setName)
         .add_property("type", &Entity::type)
         .add_property("flags", &Entity::flags, &Entity::setFlags)
-        .add_property("position", &Entity::position, &Entity::setPosition)
-        .add_property("scale", &Entity::scale, &Entity::setScale)
-        .add_property("rotation", &Entity::rotation, &Entity::setRotation)
-        .add_property("transform", bpy::make_function(&Entity::transform, bpy::return_value_policy<bpy::copy_const_reference >()))
-        .add_property("invTransform", bpy::make_function(&Entity::invTransform, bpy::return_value_policy<bpy::copy_const_reference >()))
-        .add_property("directionMatrix", bpy::make_function(&Entity::directionMatrix, bpy::return_value_policy<bpy::copy_const_reference >()))
-        .add_property("invDirectionMatrix", bpy::make_function(&Entity::invDirectionMatrix, bpy::return_value_policy<bpy::copy_const_reference >()))
+        .add_property("position", &EntityWrap::position_Py, &EntityWrap::setPosition_Py)
+        .add_property("scale", &EntityWrap::scale_Py, &EntityWrap::setScale_Py)
+        .add_property("rotation", &EntityWrap::rotation_Py, &EntityWrap::setRotation_Py)
+        .add_property("transform", &EntityWrap::transform_Py)
+        .add_property("invTransform", &EntityWrap::invTransform_Py)
+        .add_property("directionMatrix", &EntityWrap::directionMatrix_Py)
+        .add_property("invDirectionMatrix", &EntityWrap::invDirectionMatrix_Py)
         .def("__str__", &Entity::toString)
         .def("freeze", &Entity::freeze)
         .add_property("frozen", &Entity::isFrozen)

@@ -36,3 +36,7 @@ PUSH_TEST(fresnel fresnel.cpp)
 PUSH_TEST2(inteqen inteqen.cpp)# Disable it on make test
 PUSH_TEST(random random.cpp)
 PUSH_TEST2(seed seed.cpp)
+
+IF(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
+	add_subdirectory(python)
+ENDIF()

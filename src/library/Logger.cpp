@@ -39,7 +39,8 @@ const char* moduleStr[] = {
 	"Network   ",
 	"Loader    ",
 	"Shader    ",
-	"Main      "
+	"Main      ",
+	"Script    "
 };
 
 const char* Logger::levelString(Level l)

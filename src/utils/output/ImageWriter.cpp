@@ -225,6 +225,7 @@ namespace PR
 						float b = a(2);
 						switch(sett.TMM)
 						{
+						default:
 						case TMM_None:
 						case TMM_Simple_Reinhard:
 							break;
@@ -274,6 +275,7 @@ namespace PR
 						float r = channel->ptr()[id1d];
 						switch(sett.TMM)
 						{
+						default:
 						case TMM_None:
 						case TMM_Simple_Reinhard:
 						case TMM_Spherical:
@@ -309,6 +311,8 @@ namespace PR
 						float r = channel->ptr()[id1d];
 						switch(sett.TMM)
 						{
+						default:
+							break;
 						case TMM_Normalized:
 							r *= invMaxCounter[sett.Variable];
 							break;
