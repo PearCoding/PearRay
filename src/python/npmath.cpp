@@ -21,6 +21,23 @@ Eigen::Vector2f vec2FromPython(const np::ndarray& arr)
 	return Eigen::Vector2f();
 }
 
+np::ndarray ivec2ToPython(const Eigen::Vector2i& v)
+{
+	return np::array(bpy::make_tuple(v.x(), v.y()));
+}
+
+Eigen::Vector2i ivec2FromPython(const np::ndarray& arr)
+{
+	if (arr.get_nd() == 1 && arr.shape(0) == 2)
+		return Eigen::Vector2i(
+			bpy::extract<int>(arr[0]),
+			bpy::extract<int>(arr[1]));
+	else
+		PR_LOGGER.logf(PR::L_Error, PR::M_Script, "Invalid array of type Vector2 given."); // Better error report?
+
+	return Eigen::Vector2i();
+}
+
 np::ndarray vec3ToPython(const Eigen::Vector3f& v)
 {
 	return np::array(bpy::make_tuple(v.x(), v.y(), v.z()));

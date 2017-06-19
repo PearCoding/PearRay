@@ -71,7 +71,7 @@ bool Sphere::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& 
 	}
 }
 
-void Sphere::put(const Eigen::Vector3f& point)
+void Sphere::combine(const Eigen::Vector3f& point)
 {
 	PR_GUARD_PROFILE();
 

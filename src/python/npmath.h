@@ -12,6 +12,9 @@ namespace np  = boost::python::numpy;
 np::ndarray vec2ToPython(const Eigen::Vector2f& v);
 Eigen::Vector2f vec2FromPython(const np::ndarray& arr);
 
+np::ndarray ivec2ToPython(const Eigen::Vector2i& v);
+Eigen::Vector2i ivec2FromPython(const np::ndarray& arr);
+
 np::ndarray vec3ToPython(const Eigen::Vector3f& v);
 Eigen::Vector3f vec3FromPython(const np::ndarray& arr);
 
@@ -38,6 +41,8 @@ Eigen::Matrix4f mat4FromPython(const np::ndarray& arr);
 
 #define PRPY_WRAP_GET_VEC2(f) _PRPY_WRAP_GET(f, vec2ToPython)
 #define PRPY_WRAP_SET_VEC2(f) _PRPY_WRAP_SET(f, vec2FromPython)
+#define PRPY_WRAP_GET_IVEC2(f) _PRPY_WRAP_GET(f, ivec2ToPython)
+#define PRPY_WRAP_SET_IVEC2(f) _PRPY_WRAP_SET(f, ivec2FromPython)
 #define PRPY_WRAP_GET_VEC3(f) _PRPY_WRAP_GET(f, vec3ToPython)
 #define PRPY_WRAP_SET_VEC3(f) _PRPY_WRAP_SET(f, vec3FromPython)
 #define PRPY_WRAP_GET_VEC4(f) _PRPY_WRAP_GET(f, vec4ToPython)

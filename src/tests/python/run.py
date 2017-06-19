@@ -3,6 +3,11 @@ import sys
 import os
 import importlib
 
+#
+# Test runner
+# Will get binary to pypearray from the cmake/ctest build system
+# and the module to test
+#
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -34,4 +39,7 @@ if __name__ == '__main__':
         print("Invalid test '%s': Not a callable" % args.MODULE)
         sys.exit(-1)
 
-    test.runTest(pr)
+    success = test.runTest(pr)
+
+    if not success:
+        sys.exit(-2)

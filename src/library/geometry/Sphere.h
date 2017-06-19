@@ -37,13 +37,13 @@ public:
 
 	bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const;
 
-	void put(const Eigen::Vector3f& point);
+	void combine(const Eigen::Vector3f& point);
 	void combine(const Sphere& other);
 
-	inline Sphere putted(const Eigen::Vector3f& point) const
+	inline Sphere combined(const Eigen::Vector3f& point) const
 	{
 		Sphere tmp = *this;
-		tmp.put(point);
+		tmp.combine(point);
 		return tmp;
 	}
 
