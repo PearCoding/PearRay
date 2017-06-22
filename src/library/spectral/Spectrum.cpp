@@ -1,6 +1,11 @@
 #include "Spectrum.h"
 
+#include "SIMath.h"
+#include "SIMathConstants.h"
+#include "SIMathStd.h"
+
 #include <type_traits>
+
 static_assert(std::is_standard_layout<PR::Spectrum>::value,
 			  "Spectrum is not a standard layout type");
 
@@ -55,25 +60,35 @@ float Spectrum::luminousFlux() const
 }
 
 // Has to be in double!
-inline long double blackbody_eq(long double temp, long double lambda_nm)
+template <typename T = long double>
+inline SI::SpectralIrradianceWavelengthU<T, 0>
+blackbody_eq(const SI::TemperatureU<T, 0>& temp, const SI::LengthU<T, 0>& lambda_nm)
 {
-	constexpr long double c  = 299792458l;
-	constexpr long double h  = 6.626070040e-34l;
-	constexpr long double kb = 1.38064852e-23l;
+	using namespace SI;
 
-	constexpr long double c1 = 2 * h * c * c;
-	constexpr long double c2 = h * c / kb;
+	const auto c  = SI::constants::c<T>();
+	const auto h  = SI::constants::h<T>();
+	const auto kb = SI::constants::kb<T>();
 
-	const long double lambda5 = lambda_nm * (lambda_nm * lambda_nm) * (lambda_nm * lambda_nm);
-	return (c1 / lambda5) / (std::exp(c2 / (lambda_nm * temp)) - 1);
+	const auto c1 = 2 * h * c * c;
+	const auto c2 = h * c / kb;
+
+	const auto lambda5 = lambda_nm * (lambda_nm * lambda_nm) * (lambda_nm * lambda_nm);
+	const auto f	   = c2 / (lambda_nm * temp);
+
+	return (c1 / lambda5) / SI::expm1(f);
 }
 
 Spectrum Spectrum::fromBlackbody(float temp)
 {
+	SI::TemperatureU<long double, 0> T(temp);
 	Spectrum spec;
 	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
 		long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP) * 1e-9l;
-		spec.mValues[i]	= static_cast<float>(blackbody_eq(temp, lambda));
+		spec.mValues[i]	= static_cast<float>(
+			(long double)blackbody_eq(
+				T,
+				SI::LengthU<long double, 0>(lambda)));
 	}
 
 	return spec;
