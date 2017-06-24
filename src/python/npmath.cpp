@@ -4,6 +4,28 @@
 
 namespace PRPY {
 
+float extract_item(const np::ndarray& arr, size_t index)
+{
+	const auto v = arr[index];
+
+	bpy::extract<PR::int64> itype(v);
+	if(itype.check())
+		return static_cast<float>(itype());
+	
+	return bpy::extract<float>(v);
+}
+
+float extract_item(const np::ndarray& arr, size_t i1, size_t i2)
+{
+	const auto v = arr(i1,i2);
+
+	bpy::extract<PR::int64> itype(v);
+	if(itype.check())
+		return static_cast<float>(itype());
+	
+	return bpy::extract<float>(v);
+}
+
 np::ndarray vec2ToPython(const Eigen::Vector2f& v)
 {
 	return np::array(bpy::make_tuple(v.x(), v.y()));
@@ -13,8 +35,8 @@ Eigen::Vector2f vec2FromPython(const np::ndarray& arr)
 {
 	if (arr.get_nd() == 1 && arr.shape(0) == 2)
 		return Eigen::Vector2f(
-			bpy::extract<float>(arr[0]),
-			bpy::extract<float>(arr[1]));
+			extract_item(arr, 0),
+			extract_item(arr, 1));
 	else
 		PR_LOGGER.logf(PR::L_Error, PR::M_Script, "Invalid array of type Vector2 given."); // Better error report?
 
@@ -47,9 +69,9 @@ Eigen::Vector3f vec3FromPython(const np::ndarray& arr)
 {
 	if (arr.get_nd() == 1 && arr.shape(0) == 3)
 		return Eigen::Vector3f(
-			bpy::extract<float>(arr[0]),
-			bpy::extract<float>(arr[1]),
-			bpy::extract<float>(arr[2]));
+			extract_item(arr,0),
+			extract_item(arr,1),
+			extract_item(arr,2));
 	else
 		PR_LOGGER.logf(PR::L_Error, PR::M_Script, "Invalid array of type Vector3 given."); // Better error report?
 
@@ -65,10 +87,10 @@ Eigen::Vector4f vec4FromPython(const np::ndarray& arr)
 {
 	if (arr.get_nd() == 1 && arr.shape(0) == 4)
 		return Eigen::Vector4f(
-			bpy::extract<float>(arr[0]),
-			bpy::extract<float>(arr[1]),
-			bpy::extract<float>(arr[2]),
-			bpy::extract<float>(arr[3]));
+			extract_item(arr,0),
+			extract_item(arr,1),
+			extract_item(arr,2),
+			extract_item(arr,3));
 	else
 		PR_LOGGER.logf(PR::L_Error, PR::M_Script, "Invalid array of type Vector4 given."); // Better error report?
 
@@ -84,10 +106,10 @@ Eigen::Quaternionf quatFromPython(const np::ndarray& arr)
 {
 	if (arr.get_nd() == 1 && arr.shape(0) == 4)
 		return Eigen::Quaternionf(
-			bpy::extract<float>(arr[0]),
-			bpy::extract<float>(arr[1]),
-			bpy::extract<float>(arr[2]),
-			bpy::extract<float>(arr[3]));
+			extract_item(arr,0),
+			extract_item(arr,1),
+			extract_item(arr,2),
+			extract_item(arr,3));
 	else
 		PR_LOGGER.logf(PR::L_Error, PR::M_Script, "Invalid array of type Quaternion given."); // Better error report?
 
@@ -124,7 +146,7 @@ Eigen::Matrix3f mat3FromPython(const np::ndarray& arr)
 	if (arr.get_nd() == 2 && arr.shape(0) == 3 && arr.shape(1) == 3) {
 		for (int i = 0; i < 3; ++i) {
 			for (int j = 0; j < 3; ++j) {
-				m(i, j) = bpy::extract<float>(arr(i, j));
+				m(i, j) = extract_item(arr, i, j);
 			}
 		}
 	} else {
@@ -154,7 +176,7 @@ Eigen::Matrix4f mat4FromPython(const np::ndarray& arr)
 	if (arr.get_nd() == 2 && arr.shape(0) == 4 && arr.shape(1) == 4) {
 		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
-				m(i, j) = bpy::extract<float>(arr(i, j));
+				m(i, j) = extract_item(arr, i, j);
 			}
 		}
 	} else {

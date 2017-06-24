@@ -2,6 +2,7 @@ if(VERBOSE)
 	message(STATUS "Enabling Python Testing")
 endif()
 
+MESSAGE(STATUS "${PYTHON_EXECUTABLE}")
 FUNCTION(PUSH_PY_TEST name)
 	add_test(NAME ${name}_py 
 		COMMAND ${PYTHON_EXECUTABLE}
@@ -10,3 +11,4 @@ FUNCTION(PUSH_PY_TEST name)
 ENDFUNCTION(PUSH_PY_TEST)
 
 PUSH_PY_TEST(vector)
+PUSH_PY_TEST(entity)

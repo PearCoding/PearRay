@@ -165,10 +165,10 @@ void setup_output()
 		.def("clear", &OutputSpectral::clear)
 		.def("fill", &OutputSpectral::fill);
 
-	bpy::register_ptr_to_python<std::shared_ptr<Output3D>>();
-	bpy::register_ptr_to_python<std::shared_ptr<Output1D>>();
-	bpy::register_ptr_to_python<std::shared_ptr<OutputCounter>>();
-	bpy::register_ptr_to_python<std::shared_ptr<OutputSpectral>>();
+	bpy::register_ptr_to_python<std::shared_ptr<Output3DWrap>>();
+	bpy::register_ptr_to_python<std::shared_ptr<Output1DWrap>>();
+	bpy::register_ptr_to_python<std::shared_ptr<OutputCounterWrap>>();
+	bpy::register_ptr_to_python<std::shared_ptr<OutputSpectralWrap>>();
 
 	{
 		bpy::scope scope = bpy::class_<OutputMap, boost::noncopyable>("OutputMap", bpy::no_init)
