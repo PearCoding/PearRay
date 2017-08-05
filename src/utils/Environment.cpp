@@ -50,9 +50,13 @@ namespace PR
 
 	void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 	{
+		PR_LOGGER.log(L_Info, M_Scene, "Freezing scene");
 		mScene.freeze();
+		PR_LOGGER.log(L_Info, M_Scene, "Starting to build space-partitioning structure");
 		mScene.buildTree();
+		PR_LOGGER.log(L_Info, M_Scene, "Initializing output");
 		mOutputSpecification.setup(renderer);
+		PR_LOGGER.log(L_Info, M_Scene, "Initializing scene");
 		mScene.setup(renderer);
 	}
 

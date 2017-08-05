@@ -1,79 +1,65 @@
-#include <boost/python.hpp>
-#include "renderer/RenderFactory.h"
-#include "renderer/RenderContext.h"
-#include "renderer/OutputMap.h"
-#include "renderer/RenderTile.h"
-#include "scene/Scene.h"
 #include "camera/Camera.h"
+#include "renderer/OutputMap.h"
+#include "renderer/RenderContext.h"
+#include "renderer/RenderFactory.h"
+#include "renderer/RenderTile.h"
+
+#include "entity/RenderEntity.h"
+#include "scene/Scene.h"
+
+#include "pypearray.h"
 
 using namespace PR;
-namespace bpy = boost::python;
-namespace PRPY
+namespace PRPY {
+
+void setup_renderer(py::module& m)
 {
-    class RenderContextWrap : public RenderContext, public bpy::wrapper<RenderContext>
-    {
-    public:
-        inline void start_Py(uint32 tx, uint32 ty)
-        {
-            start(tx, ty);
-        }
-    };
+	py::class_<RenderFactory>(m, "RenderFactory")
+		.def(py::init<uint32, uint32, const Scene&, const std::string&, bool>())
+		.def_property("fullWidth", &RenderFactory::fullWidth, &RenderFactory::setFullWidth)
+		.def_property("fullHeight", &RenderFactory::fullHeight, &RenderFactory::setFullHeight)
+		.def_property_readonly("cropWidth", &RenderFactory::cropWidth)
+		.def_property_readonly("cropHeight", &RenderFactory::cropHeight)
+		.def_property_readonly("cropOffsetX", &RenderFactory::cropOffsetX)
+		.def_property_readonly("cropOffsetY", &RenderFactory::cropOffsetY)
+		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)() const) & RenderFactory::create)
+		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(uint32, uint32, uint32) const) & RenderFactory::create)
+		.def_property("settings",
+					  (RenderSettings & (RenderFactory::*)()) & RenderFactory::settings,
+					  &RenderFactory::setSettings)
+		.def_property("workingDir", &RenderFactory::workingDir, &RenderFactory::setWorkingDir)
+		.def_property_readonly("scene", &RenderFactory::scene);
 
-    void setup_renderer()
-    {
-        bpy::class_<RenderFactory>("RenderFactory",
-            bpy::init<uint32, uint32, const Scene&, const std::string&, bpy::optional<bool> >())
-            .add_property("fullWidth", &RenderFactory::fullWidth, &RenderFactory::setFullWidth)
-            .add_property("fullHeight", &RenderFactory::fullHeight, &RenderFactory::setFullHeight)
-            .add_property("cropWidth", &RenderFactory::cropWidth)
-            .add_property("cropHeight", &RenderFactory::cropHeight)
-            .add_property("cropOffsetX", &RenderFactory::cropOffsetX)
-            .add_property("cropOffsetY", &RenderFactory::cropOffsetY)
-            .def("create", (std::shared_ptr<RenderContext> (RenderFactory::*)() const)&RenderFactory::create)
-            .def("create", (std::shared_ptr<RenderContext> (RenderFactory::*)(uint32,uint32,uint32) const)&RenderFactory::create)
-            .add_property("settings",
-                bpy::make_function((RenderSettings& (RenderFactory::*)())&RenderFactory::settings, bpy::return_internal_reference<>()),
-                &RenderFactory::setSettings)
-            .add_property("workingDir", &RenderFactory::workingDir, &RenderFactory::setWorkingDir)
-            .add_property("scene", bpy::make_function(&RenderFactory::scene, bpy::return_internal_reference<>()))
-        ;
+	py::class_<RenderContext, std::shared_ptr<RenderContext>>(m, "RenderContext")
+		.def_property_readonly("width", &RenderContext::width)
+		.def_property_readonly("height", &RenderContext::height)
+		.def_property_readonly("fullWidth", &RenderContext::fullWidth)
+		.def_property_readonly("fullHeight", &RenderContext::fullHeight)
+		.def_property_readonly("offsetX", &RenderContext::offsetX)
+		.def_property_readonly("offsetY", &RenderContext::offsetY)
+		.def_property_readonly("index", &RenderContext::index)
+		.def_property_readonly("threads", &RenderContext::threads)
+		.def_property_readonly("finished", &RenderContext::isFinished)
+		.def_property_readonly("currentPass", &RenderContext::currentPass)
+		.def_property_readonly("currentTiles", &RenderContext::currentTiles)
+		.def_property_readonly("settings", &RenderContext::settings)
+		.def_property_readonly("lights", &RenderContext::lights)
+		.def_property_readonly("workingDir", &RenderContext::workingDir)
+		.def_property_readonly("scene", &RenderContext::scene)
+		.def_property_readonly("output", &RenderContext::output)
+		.def_property_readonly("status", &RenderContext::status)
 
-        bpy::class_<RenderContextWrap, boost::noncopyable>("RenderContext", bpy::no_init)
-            .add_property("width", &RenderContext::width)
-            .add_property("height", &RenderContext::height)
-            .add_property("fullWidth", &RenderContext::fullWidth)
-            .add_property("fullHeight", &RenderContext::fullHeight)
-            .add_property("offsetX", &RenderContext::offsetX)
-            .add_property("offsetY", &RenderContext::offsetY)
-            .add_property("index", &RenderContext::index)
-            .add_property("threads", &RenderContext::threads)
-            .add_property("finished", &RenderContext::isFinished)
-            .add_property("currentPass", &RenderContext::currentPass)
-            .add_property("currentTiles", &RenderContext::currentTiles)
-            .add_property("settings",
-                bpy::make_function(&RenderContext::settings, bpy::return_internal_reference<>()))
-            .add_property("lights",
-                bpy::make_function(&RenderContext::lights, bpy::return_internal_reference<>()))
-            .add_property("workingDir", &RenderContext::workingDir)
-            .add_property("scene", bpy::make_function(&RenderContext::scene, bpy::return_internal_reference<>()))
-            .add_property("output", bpy::make_function(&RenderContext::output, bpy::return_internal_reference<>()))
-            .add_property("status", &RenderContext::status)
+		.def("start", (void (RenderContext::*)(uint32, uint32, uint32)) & RenderContext::start)
+		.def("start", (void (RenderContext::*)(uint32, uint32)) & RenderContext::start)
+		.def("stop", &RenderContext::stop)
+		.def("waitForFinish", &RenderContext::waitForFinish);
 
-            .def("start", (void (RenderContext::*)(uint32, uint32, uint32))&RenderContext::start)
-            .def("start", (void (RenderContext::*)(uint32, uint32))&RenderContextWrap::start_Py)
-            .def("stop", &RenderContext::stop)
-            .def("waitForFinish", &RenderContext::waitForFinish)
-        ;
-
-        bpy::class_<RenderTile>("RenderTile", bpy::no_init)
-            .add_property("sx", &RenderTile::sx)
-            .add_property("sy", &RenderTile::sy)
-            .add_property("ex", &RenderTile::ex)
-            .add_property("ey", &RenderTile::ey)
-            .add_property("samplesRendered", &RenderTile::samplesRendered)
-            .add_property("working", &RenderTile::isWorking)
-        ;
-
-        bpy::register_ptr_to_python<std::shared_ptr<RenderContext> >();
-    }
+	py::class_<RenderTile>(m, "RenderTile")
+		.def_property_readonly("sx", &RenderTile::sx)
+		.def_property_readonly("sy", &RenderTile::sy)
+		.def_property_readonly("ex", &RenderTile::ex)
+		.def_property_readonly("ey", &RenderTile::ey)
+		.def_property_readonly("samplesRendered", &RenderTile::samplesRendered)
+		.def_property_readonly("working", &RenderTile::isWorking);
+}
 }

@@ -59,11 +59,12 @@ float OrenNayarMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& 
 	return Projection::cos_hemi_pdf(NdotL);
 }
 
-Eigen::Vector3f OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+MaterialSample OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
-	auto dir = Projection::tangent_align(point.N, point.Nx, point.Ny,
-										 Projection::cos_hemi(rnd(0), rnd(1), pdf));
-	return dir;
+	MaterialSample ms;
+	ms.L = Projection::tangent_align(point.N, point.Nx, point.Ny,
+										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF));
+	return ms;
 }
 
 std::string OrenNayarMaterial::dumpInformation() const

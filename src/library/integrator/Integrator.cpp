@@ -32,29 +32,28 @@ Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc
 		for (uint32 i = 0;
 			 i < renderer()->settings().maxLightSamples() && !std::isinf(semi_pdf);
 			 ++i) {
-			float pdf;
-			Eigen::Vector3f dir = e->sample(sc, sampler.generate3D(i), pdf);
+			IInfiniteLight::LightSample ls = e->sample(sc, sampler.generate3D(i));
 
-			if (pdf <= PR_EPSILON)
+			if (ls.PDF <= PR_EPSILON)
 				continue;
 
 			Spectrum weight;
-			const float NdotL = std::abs(dir.dot(sc.N));
+			const float NdotL = std::abs(ls.L.dot(sc.N));
 
 			if (NdotL > PR_EPSILON) {
 				RenderEntity* entity;
 
-				Ray ray = in.next(sc.P, dir);
+				Ray ray = in.next(sc.P, ls.L);
 				ray.setFlags(ray.flags() | RF_Light);
 
 				weight = handleSpecularPath(ray, sc, tile, entity);
 				if (!entity)
-					weight *= sc.Material->eval(sc, dir, NdotL) * e->apply(dir) * NdotL;
+					weight *= sc.Material->eval(sc, ls.L, NdotL) * e->apply(ls.L) * NdotL;
 				else
 					weight.clear();
 			}
 
-			MSI::balance(semi_weight, semi_pdf, weight, pdf);
+			MSI::balance(semi_weight, semi_pdf, weight, ls.PDF);
 		}
 
 		MSI::balance(full_weight, full_pdf, semi_weight, std::isinf(semi_pdf) ? 1 : semi_pdf);
@@ -74,26 +73,24 @@ Spectrum Integrator::handleSpecularPath(const Ray& in, const ShaderClosure& sc, 
 		float NdotL		= std::max(0.0f, ray.direction().dot(other_sc.N));
 		Spectrum weight = other_sc.Material->eval(other_sc, ray.direction(), NdotL) * NdotL;
 
-		float other_pdf;
 		for (uint32 depth = in.depth();
 			 depth < renderer()->settings().maxRayDepth();
 			 ++depth) {
-			Eigen::Vector3f dir = other_sc.Material->sample(other_sc,
-															tile->random().get3D(),
-															other_pdf);
+			MaterialSample ms = other_sc.Material->sample(other_sc,
+															tile->random().get3D());
 
-			if (!std::isinf(other_pdf))
+			if (!std::isinf(ms.PDF))
 				break;
 
 			float NdotL = std::max(0.0f, ray.direction().dot(other_sc.N));
 			if (NdotL <= PR_EPSILON)
 				break;
 
-			ray = ray.next(other_sc.P, dir);
+			ray = ray.next(other_sc.P, ms.L);
 
 			lastEntity = mRenderer->shoot(ray, other_sc, tile);
 			if (lastEntity && other_sc.Material)
-				weight *= other_sc.Material->eval(other_sc, dir, NdotL) * NdotL;
+				weight *= other_sc.Material->eval(other_sc, ms.L, NdotL) * NdotL;
 			else
 				break;
 		}

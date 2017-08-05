@@ -2,7 +2,7 @@
 
 #include "material/Material.h"
 #include "ray/Ray.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 
 #include "Logger.h"
 #include "math/Projection.h"
@@ -83,47 +83,49 @@ BoundingBox PlaneEntity::localBoundingBox() const
 	return mPlane.toBoundingBox();
 }
 
-bool PlaneEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+RenderEntity::Collision PlaneEntity::checkCollision(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
 
-	Eigen::Vector3f pos;
-	float u, v;
+	RenderEntity::Collision c;
+	Plane::Intersection in = mGlobalPlane_Cache.intersects(ray);
+	c.Successful		   = in.Successful;
 
-	float t;
-	if (mGlobalPlane_Cache.intersects(ray, pos, t, u, v)) {
-		collisionPoint.P = pos;
+	if (c.Successful) {
+		c.Point.P = in.Position;
 
-		collisionPoint.Ng = mGlobalPlane_Cache.normal();
-		collisionPoint.Nx = mXAxisN_Cache;
-		collisionPoint.Ny = mYAxisN_Cache;
+		c.Point.Ng = mGlobalPlane_Cache.normal();
+		c.Point.Nx = mXAxisN_Cache;
+		c.Point.Ny = mYAxisN_Cache;
 
-		collisionPoint.UVW		= Eigen::Vector3f(u, v, 0);
-		collisionPoint.Material = material().get();
+		c.Point.UVW		 = Eigen::Vector3f(in.UV(0), in.UV(1), 0);
+		c.Point.Material = material().get();
 
-		return true;
+		return c;
 	}
 
-	return false;
+	return c;
 }
 
 // World space
-FaceSample PlaneEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
 {
 	auto s = sampler.generate2D(sample);
 
-	FaceSample fp;
-	fp.P = mGlobalPlane_Cache.position() + mGlobalPlane_Cache.xAxis() * s(0) + mGlobalPlane_Cache.yAxis() * s(1);
+	RenderEntity::FacePointSample sm;
+	sm.Point.P = mGlobalPlane_Cache.position()
+				 + mGlobalPlane_Cache.xAxis() * s(0)
+				 + mGlobalPlane_Cache.yAxis() * s(1);
 
-	fp.Ng = mGlobalPlane_Cache.normal();
-	fp.Nx = mXAxisN_Cache;
-	fp.Ny = mYAxisN_Cache;
+	sm.Point.Ng = mGlobalPlane_Cache.normal();
+	sm.Point.Nx = mXAxisN_Cache;
+	sm.Point.Ny = mYAxisN_Cache;
 
-	fp.UVW		= Eigen::Vector3f(s(0), s(1), 0);
-	fp.Material = material().get();
+	sm.Point.UVW	  = Eigen::Vector3f(s(0), s(1), 0);
+	sm.Point.Material = material().get();
+	sm.PDF			  = 1;
 
-	pdf = 1;
-	return fp;
+	return sm;
 }
 
 void PlaneEntity::onFreeze()

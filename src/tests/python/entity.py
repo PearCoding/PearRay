@@ -22,10 +22,10 @@ class TestEntity(unittest.TestCase):
         self.assertEqual(entity.scale[1], 1)
         self.assertEqual(entity.scale[2], 1)
 
-        self.assertEqual(entity.rotation[0], 0)
+        self.assertEqual(entity.rotation[0], 1)
         self.assertEqual(entity.rotation[1], 0)
         self.assertEqual(entity.rotation[2], 0)
-        self.assertEqual(entity.rotation[3], 1)
+        self.assertEqual(entity.rotation[3], 0)
 
 
 def runTest(pr):

@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 SET(Src
   camera.cpp
@@ -8,8 +8,8 @@ SET(Src
   light.cpp
   logger.cpp
   material.cpp
+  math.cpp
   module.cpp
-  npmath.cpp
   output.cpp
   ray.cpp
   renderentities.cpp
@@ -22,16 +22,19 @@ SET(Src
   status.cpp
   tonemapper.cpp)
 SET(Hdr 
-  npmath.h)
+  pypearray.h)
 
 include_directories(../utils)
 
+
 add_library(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray pr_lib ${Boost_LIBRARIES})
-target_link_libraries(pypearray pr_lib_utils)
+target_link_libraries(pypearray PRIVATE pybind11::module)
+target_link_libraries(pypearray PRIVATE pr_lib)
+target_link_libraries(pypearray PRIVATE pr_lib_utils)
 set_target_properties(pypearray PROPERTIES VERSION ${PR_Version})
-set_target_properties(pypearray PROPERTIES PREFIX "" )
-set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "" )
+set_target_properties(pypearray PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
+                                         SUFFIX "${PYTHON_MODULE_EXTENSION}")
+set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "")# Disable suffix for this target
 target_compile_definitions(pypearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 
 #file(COPY python/pearray DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

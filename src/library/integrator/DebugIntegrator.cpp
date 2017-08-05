@@ -104,10 +104,9 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 	case DM_PDF: {
 		float full_pdf = 0;
 		for (uint32 i = 0; i < 32; ++i) {
-			float pdf;
 			Eigen::Vector3f rnd = tile->random().get3D();
-			sc.Material->sample(sc, rnd, pdf);
-			full_pdf += pdf;
+			MaterialSample ms = sc.Material->sample(sc, rnd);
+			full_pdf += ms.PDF;
 		}
 
 		full_pdf /= 32;
@@ -131,14 +130,13 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 		if (sc.N.squaredNorm() - 1 > PR_EPSILON)
 			return RGBConverter::toSpec(1, 1, 0);
 
-		float pdf;
 		Eigen::Vector3f rnd = tile->random().get3D();
-		Eigen::Vector3f dir = sc.Material->sample(sc, rnd, pdf);
+		MaterialSample ms = sc.Material->sample(sc, rnd);
 
-		if (dir.squaredNorm() - 1 > PR_EPSILON)
+		if (ms.L.squaredNorm() - 1 > PR_EPSILON)
 			return RGBConverter::toSpec(1, 0, 1);
 
-		return (std::isinf(pdf) || (pdf > PR_EPSILON && pdf <= 1.0f)) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
+		return (std::isinf(ms.PDF) || (ms.PDF > PR_EPSILON && ms.PDF <= 1.0f)) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 	}
 	case DM_Emission:
 		return emission;

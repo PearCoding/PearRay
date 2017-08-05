@@ -8,7 +8,7 @@ namespace PR {
 	   Sample context
 	   View independent!
 	*/
-struct alignas(16) PR_LIB_INLINE FaceSample {
+struct alignas(16) PR_LIB_INLINE FacePoint {
 public:
 	// Point of sample
 	Eigen::Vector3f P;
@@ -35,7 +35,7 @@ public:
 	class Material* Material;
 
 	// C++11 POD constructor
-	inline FaceSample() noexcept
+	inline FacePoint() noexcept
 		: P(0, 0, 0)
 		, dPdX(0, 0, 0)
 		, dPdY(0, 0, 0)

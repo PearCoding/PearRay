@@ -3,7 +3,7 @@
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
 
 #include "material/Material.h"
@@ -77,49 +77,51 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
 				TileData::EventVertex* lightV = &data.LightVertices[lightNr * maxDepth];
 
-				float pdf; // Area to Solid Angle?
-				other_sc = light->getRandomFacePoint(sampler, i, pdf);
+				RenderEntity::FacePointSample fps = light->sampleFacePoint(sampler, i);
 
 				// Initiate with power
-				if (!other_sc.Material->isLight() || pdf <= PR_EPSILON)
+				if (!fps.Point.Material->isLight() || fps.PDF <= PR_EPSILON)
 					continue;
 
-				Spectrum flux	 = other_sc.Material->emission()->eval(other_sc) / pdf;
-				Eigen::Vector3f L = Projection::tangent_align(other_sc.Ng, other_sc.Nx, other_sc.Ny,
-															  Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), pdf));
-				float NdotL = std::abs(other_sc.Ng.dot(L));
+
+				Spectrum flux	 = fps.Point.Material->emission()->eval(fps.Point) / fps.PDF;
+
+				MaterialSample ms;
+				ms.L = Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
+															  Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), ms.PDF));
+				float NdotL = std::abs(fps.Point.Ng.dot(ms.L));
 
 				uint32 lightDepth = 0; // Counts diff bounces
 				lightV[0].Flux	= flux;
-				lightV[0].SC	  = other_sc;
+				lightV[0].SC	  = fps.Point;
 
 				Ray current = Ray::safe(in.pixel(),
 										other_sc.P,
-										L,
+										ms.L,
 										0,
 										in.time(), in.wavelength(),
 										in.flags() | RF_Light);
 
 				for (uint32 k = 1;
-					 k < maxDepth && lightDepth <= maxDiffBounces && pdf > PR_EPSILON && NdotL > PR_EPSILON;
+					 k < maxDepth && lightDepth <= maxDiffBounces && ms.PDF > PR_EPSILON && NdotL > PR_EPSILON;
 					 ++k) {
 					RenderEntity* entity = renderer()->shoot(current, other_sc, tile);
 					if (entity && other_sc.Material && other_sc.Material->canBeShaded()) {
-						if (!std::isinf(pdf))
-							flux /= MSI::toArea(pdf, other_sc.Depth2, std::abs(other_sc.NdotV));
+						if (!std::isinf(ms.PDF))
+							flux /= MSI::toArea(ms.PDF, other_sc.Depth2, std::abs(other_sc.NdotV));
 
-						L	 = other_sc.Material->sample(other_sc, tile->random().get3D(), pdf);
-						NdotL = std::abs(other_sc.N.dot(L));
+						ms = other_sc.Material->sample(other_sc, tile->random().get3D());
+						NdotL = std::abs(other_sc.N.dot(ms.L));
 
-						flux *= other_sc.Material->eval(other_sc, L, NdotL) * NdotL;
+						flux *= other_sc.Material->eval(other_sc, ms.L, NdotL) * NdotL;
 
-						if (!std::isinf(pdf)) {
+						if (!std::isinf(ms.PDF)) {
 							lightDepth++;
 							lightV[lightDepth].Flux = flux;
 							lightV[lightDepth].SC   = other_sc;
 						}
 
-						current = current.next(other_sc.P, L);
+						current = current.next(other_sc.P, ms.L);
 					} else {
 						break;
 					}
@@ -150,7 +152,6 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 	// Temporary
 	ShaderClosure other_sc;
 	Spectrum other_weight;
-	float path_weight;
 	Spectrum weight;
 
 	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
@@ -164,21 +165,21 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0");
 		Eigen::Vector3f rnd = sampler.generate3D(i);
 		for (uint32 path = 0; path < path_count && !std::isinf(other_pdf); ++path) {
-			float pdf;
-			Eigen::Vector3f L = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-			const float NdotL = std::abs(L.dot(sc.N));
+			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
+			const float NdotL = std::abs(ms.L.dot(sc.N));
 
-			if (pdf <= PR_EPSILON || NdotL <= PR_EPSILON || !(std::isinf(pdf) || diffBounces < renderer()->settings().maxDiffuseBounces()))
+			if (ms.PDF <= PR_EPSILON || NdotL <= PR_EPSILON ||
+				 !(std::isinf(ms.PDF) || diffBounces < renderer()->settings().maxDiffuseBounces()))
 				continue;
 
-			weight = applyRay(in.next(sc.P, L),
-							  tile, !std::isinf(pdf) ? diffBounces + 1 : diffBounces,
+			weight = applyRay(in.next(sc.P, ms.L),
+							  tile, !std::isinf(ms.PDF) ? diffBounces + 1 : diffBounces,
 							  other_sc);
 
-			weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
+			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
 
-			other_pdf += pdf;
-			other_weight += path_weight * weight;
+			other_pdf += ms.PDF;
+			other_weight += ms.Weight * weight;
 		}
 
 		MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);

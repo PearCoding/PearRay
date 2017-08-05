@@ -48,9 +48,10 @@ void BoundingBox::inflate(float eps, bool maxDir)
 	}
 }
 
-bool BoundingBox::intersects(const Ray& ray, float& t) const
+BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
+	BoundingBox::Intersection r;
 
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
 	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
@@ -59,42 +60,26 @@ bool BoundingBox::intersects(const Ray& ray, float& t) const
 	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
 	const float tmax = vmin.array().max(vmax.array()).minCoeff();
 
-	t = tmin <= 0 ? tmax : tmin;
-	return tmax >= tmin && t > PR_EPSILON;
-}
-
-bool BoundingBox::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const
-{
-	PR_GUARD_PROFILE();
-
-	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
-	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
-	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
-
-	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
-	const float tmax = vmin.array().max(vmax.array()).minCoeff();
-
-	t = tmin <= 0 ? tmax : tmin;
-	if (tmax >= tmin && t > PR_EPSILON) {
-		collisionPoint = ray.origin() + ray.direction() * t;
-		return true;
+	r.T = tmin <= 0 ? tmax : tmin;
+	if (tmax >= tmin && r.T > PR_EPSILON) {
+		r.Position   = ray.origin() + ray.direction() * r.T;
+		r.Successful = true;
 	} else {
-		return false;
+		r.Successful = false;
 	}
+
+	return r;
 }
 
-bool BoundingBox::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, FaceSide& side) const
+BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Intersection& intersection) const
 {
 	PR_GUARD_PROFILE();
 
-	if (!intersects(ray, collisionPoint, t))
-		return false;
+	Eigen::Vector3f minDist = (intersection.Position - lowerBound()).cwiseAbs();
+	Eigen::Vector3f maxDist = (intersection.Position - upperBound()).cwiseAbs();
 
-	Eigen::Vector3f minDist = (collisionPoint - lowerBound()).cwiseAbs();
-	Eigen::Vector3f maxDist = (collisionPoint - upperBound()).cwiseAbs();
-
-	side	= FS_Left;
-	float f = minDist(0);
+	BoundingBox::FaceSide side = FS_Left;
+	float f					   = minDist(0);
 
 	if (maxDist(0) < f) {
 		side = FS_Right;
@@ -118,10 +103,9 @@ bool BoundingBox::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, fl
 
 	if (maxDist(2) < f) {
 		side = FS_Back;
-		// f = PM::pm_GetZ(maxDist);
 	}
 
-	return true;
+	return side;
 }
 
 Plane BoundingBox::getFace(FaceSide side) const

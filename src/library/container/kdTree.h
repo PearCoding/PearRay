@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ray/Ray.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 #include "geometry/BoundingBox.h"
 #include "Logger.h"
 
@@ -96,7 +96,7 @@ namespace PR
 		};
 	public:
 		typedef BoundingBox (*GetBoundingBoxCallback)(T*);
-		typedef bool (*CheckCollisionCallback)(const Ray&, FaceSample&, T*);
+		typedef bool (*CheckCollisionCallback)(const Ray&, FacePoint&, T*);
 		typedef float (*CostCallback)(T*);
 		typedef bool (*IgnoreCallback)(T*);
 
@@ -183,15 +183,15 @@ namespace PR
 				delete obj;
 		}
 
-		inline T* checkCollision(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
+		inline T* checkCollision(const Ray& ray, FacePoint& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
 		{
 			T* res = nullptr;
-			FaceSample tmpCollisionPoint;
+			FacePoint tmpCollisionPoint;
 
 			float t = std::numeric_limits<float>::infinity();
 			float l = t;// Temporary variable.
 
-			if (mRoot && mRoot->boundingBox.intersects(ray, l))
+			if (mRoot && mRoot->boundingBox.intersects(ray).Successful)
 			{
 				kdNode* stack[PR_KDTREE_MAX_STACK];
 				uint32 stackPos = 1;
@@ -225,7 +225,7 @@ namespace PR
 					{
 						bool leftIntersected = false;
 						kdInnerNode* inner = (kdInnerNode*)node;
-						if (inner->left && inner->left->boundingBox.intersects(ray, l))
+						if (inner->left && inner->left->boundingBox.intersects(ray).Successful)
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return nullptr;
@@ -236,7 +236,7 @@ namespace PR
 						}
 
 						if (inner->right &&
-							(!leftIntersected || inner->right->boundingBox.intersects(ray, l)))
+							(!leftIntersected || inner->right->boundingBox.intersects(ray).Successful))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return nullptr;
@@ -252,11 +252,9 @@ namespace PR
 		}
 
 		// A faster variant for rays detecting the background etc.
-		inline bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
+		inline bool checkCollisionSimple(const Ray& ray, FacePoint& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
 		{
-			float t = std::numeric_limits<float>::infinity();
-
-			if (mRoot && mRoot->boundingBox.intersects(ray, t))
+			if (mRoot && mRoot->boundingBox.intersects(ray).Successful)
 			{
 				kdNode* stack[PR_KDTREE_MAX_STACK];
 				uint32 stackPos = 1;
@@ -282,7 +280,7 @@ namespace PR
 					{
 						bool leftIntersected = false;
 						kdInnerNode* inner = (kdInnerNode*)node;
-						if (inner->left && inner->left->boundingBox.intersects(ray, t))
+						if (inner->left && inner->left->boundingBox.intersects(ray).Successful)
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return false;
@@ -293,7 +291,7 @@ namespace PR
 						}
 
 						if (inner->right &&
-							(!leftIntersected || inner->right->boundingBox.intersects(ray, t)))
+							(!leftIntersected || inner->right->boundingBox.intersects(ray).Successful))
 						{
 							if (stackPos >= PR_KDTREE_MAX_STACK)
 								return false;

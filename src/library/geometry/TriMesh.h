@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BoundingBox.h"
+#include "shader/FacePoint.h"
 #include <Eigen/Geometry>
 #include <vector>
 
@@ -11,7 +12,7 @@ class UV;
 class Vertex;
 class Material;
 class Ray;
-struct FaceSample;
+struct FacePoint;
 class Sampler;
 class PR_LIB TriMesh {
 	PR_CLASS_NON_COPYABLE(TriMesh);
@@ -47,8 +48,19 @@ public:
 
 	float collisionCost() const;
 
-	Face* checkCollision(const Ray& ray, FaceSample& collisionPoint);
-	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const;
+	struct Collision {
+		bool Successful;
+		Face* Ptr;
+		FacePoint Point;
+	};
+	Collision checkCollision(const Ray& ray);
+
+	struct FacePointSample {
+		FacePoint Point;
+		uint32 MaterialSlot;
+		float PDF;
+	};
+	FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const;
 
 private:
 	BoundingBox mBoundingBox;

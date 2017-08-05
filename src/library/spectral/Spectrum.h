@@ -53,7 +53,8 @@ public:
 	float approx(float wavelength, InterpolationType interpolation = IT_Linear) const;
 
 	// Attention! Don't change values
-	inline const float* ptr() const;
+	inline const float* c_ptr() const;
+	inline float* ptr();
 
 	inline void fill(float v);
 	inline void fill(uint32 si, uint32 ei, float v);

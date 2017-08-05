@@ -1,61 +1,57 @@
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include "pypearray.h"
 #include <sstream>
 
-#include "PR_Config.h"
-
-using namespace PR;
-namespace bpy = boost::python;
-namespace np = boost::python::numpy;
-
-bpy::tuple version()
+std::tuple<int,int> version()
 {
-	return bpy::make_tuple(PR_VERSION_MAJOR, PR_VERSION_MINOR);
+	return std::make_tuple(PR_VERSION_MAJOR, PR_VERSION_MINOR);
 }
 
 namespace PRPY {
-void setup_logger();
-void setup_spectral();
-void setup_entity();
-void setup_ray();
-void setup_shader();
-void setup_material();
-void setup_settings();
-void setup_output();
-void setup_scene();
-void setup_geometry();
-void setup_camera();
-void setup_renderentities();
-void setup_light();
-void setup_sampler();
-void setup_status();
-void setup_renderer();
-void setup_tonemapper();
-void setup_environment();
+void setup_logger(py::module& m);
+void setup_spectral(py::module& m);
+void setup_entity(py::module& m);
+void setup_ray(py::module& m);
+void setup_shader(py::module& m);
+void setup_math(py::module& m);
+void setup_material(py::module& m);
+void setup_settings(py::module& m);
+void setup_output(py::module& m);
+void setup_scene(py::module& m);
+void setup_geometry(py::module& m);
+void setup_camera(py::module& m);
+void setup_renderentities(py::module& m);
+void setup_light(py::module& m);
+void setup_sampler(py::module& m);
+void setup_status(py::module& m);
+void setup_renderer(py::module& m);
+void setup_tonemapper(py::module& m);
+void setup_environment(py::module& m);
 }
+
 //----------
-BOOST_PYTHON_MODULE(pypearray)
+PYBIND11_MODULE(pypearray, m)
 {
-	np::initialize();
+	m.doc() = "PearRay Python API";
 
-	bpy::def("version", version);
+	m.def("version", &version, "Returns tuple representing the version of the API");
 
-	PRPY::setup_logger();
-	PRPY::setup_spectral();
-	PRPY::setup_ray();
-	PRPY::setup_sampler();
-	PRPY::setup_geometry();
-	PRPY::setup_shader();
-	PRPY::setup_material();
-	PRPY::setup_entity();
-	PRPY::setup_camera();
-	PRPY::setup_renderentities();
-	PRPY::setup_light();
-	PRPY::setup_scene();
-	PRPY::setup_settings();
-	PRPY::setup_output();
-	PRPY::setup_status();
-	PRPY::setup_renderer();
-	PRPY::setup_tonemapper();
-	PRPY::setup_environment();
+	PRPY::setup_math(m);
+	PRPY::setup_logger(m);
+	PRPY::setup_spectral(m);
+	PRPY::setup_ray(m);
+	PRPY::setup_sampler(m);
+	PRPY::setup_geometry(m);
+	PRPY::setup_shader(m);
+	PRPY::setup_material(m);
+	PRPY::setup_entity(m);
+	PRPY::setup_camera(m);
+	PRPY::setup_renderentities(m);
+	PRPY::setup_light(m);
+	PRPY::setup_scene(m);
+	PRPY::setup_settings(m);
+	PRPY::setup_output(m);
+	PRPY::setup_status(m);
+	PRPY::setup_renderer(m);
+	PRPY::setup_tonemapper(m);
+	PRPY::setup_environment(m);
 }

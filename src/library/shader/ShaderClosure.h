@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FaceSample.h"
+#include "FacePoint.h"
 #include "SIMath.h"
 
 namespace PR {
@@ -96,7 +96,7 @@ public:
 	{
 	}
 
-	inline ShaderClosure(const FaceSample& fs) noexcept
+	inline ShaderClosure(const FacePoint& fs) noexcept
 		: P(fs.P)
 		, dPdX(fs.dPdX)
 		, dPdY(fs.dPdY)
@@ -129,7 +129,7 @@ public:
 	{
 	}
 
-	ShaderClosure& operator=(const FaceSample& fs)
+	ShaderClosure& operator=(const FacePoint& fs)
 	{
 		P		 = fs.P;
 		dPdX	 = fs.dPdX;

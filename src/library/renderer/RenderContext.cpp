@@ -21,7 +21,7 @@
 #include "sampler/StratifiedSampler.h"
 #include "sampler/UniformSampler.h"
 
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
 
 #include "Logger.h"
@@ -354,12 +354,10 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 	PR_ASSERT(tile, "Invalid tile given");
 
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
+		SceneCollision c = mScene.checkCollision(ray);
+		sc				 = c.Point;
+
 		sc.Flags = 0;
-
-		FaceSample fs;
-		RenderEntity* entity = mScene.checkCollision(ray, fs);
-		sc					 = fs;
-
 		sc.NgdotV = ray.direction().dot(sc.Ng);
 		sc.N	  = Reflection::faceforward(sc.NgdotV, sc.Ng);
 		sc.Flags |= Reflection::is_inside(sc.NgdotV) ? SCF_Inside : 0;
@@ -369,19 +367,19 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 		sc.WavelengthIndex = ray.wavelength();
 		sc.Depth2		   = (ray.origin() - sc.P).squaredNorm();
 
-		if (entity)
-			sc.EntityID = entity->id();
+		if (c.Entity)
+			sc.EntityID = c.Entity->id();
 
 		if (sc.Flags & SCF_Inside) {
-			sc.Nx = -fs.Nx;
-			//sc.Ny = -fs.Ny;
+			sc.Nx = -sc.Nx;
+			//sc.Ny = -sc.Ny;
 		}
 
 		tile->statistics().incRayCount();
-		if (entity)
+		if (c.Entity)
 			tile->statistics().incEntityHitCount();
 
-		return entity;
+		return c.Entity;
 	} else {
 		return nullptr;
 	}
@@ -392,14 +390,13 @@ bool RenderContext::shootForDetection(const Ray& ray, RenderTile* tile)
 	PR_ASSERT(tile, "Invalid tile given");
 
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
-		FaceSample fs;
-		bool found = mScene.checkIfCollides(ray, fs);
+		SceneCollision c = mScene.checkCollisionSimple(ray);
 
 		tile->statistics().incRayCount();
-		if (found)
+		if (c.Successful)
 			tile->statistics().incEntityHitCount();
 
-		return found;
+		return c.Successful;
 	} else {
 		return false;
 	}

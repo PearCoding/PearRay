@@ -26,9 +26,9 @@ public:
 	bool isCollidable() const override;
 	float collisionCost() const override;
 	BoundingBox localBoundingBox() const override;
-	bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override;
 
-	FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override;
+	RenderEntity::Collision checkCollision(const Ray& ray) const override;
+	RenderEntity::FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const override;
 
 	// Entity
 	void onFreeze() override;

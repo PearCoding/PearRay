@@ -22,7 +22,7 @@ public:
 
 	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
 	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
 
 	std::string dumpInformation() const override;
 

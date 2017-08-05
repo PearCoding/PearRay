@@ -4,7 +4,7 @@
 #include "Face.h"
 
 #include "ray/Ray.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 
 #include <utility>
 
@@ -24,7 +24,7 @@ class PR_LIB_INLINE Triangle {
 
 public:
 	inline static bool intersect(const Ray& ray, const Face& face,
-								 FaceSample& point, float& t)
+								 FacePoint& point, float& t)
 	{
 		PR_GUARD_PROFILE();
 

@@ -19,9 +19,9 @@ public:
 
 	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
 	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
 
-	Eigen::Vector3f samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path) override;
+	MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path) override;
 	uint32 samplePathCount() const override;
 
 	std::string dumpInformation() const override;

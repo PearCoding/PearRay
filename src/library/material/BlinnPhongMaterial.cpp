@@ -89,12 +89,13 @@ float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f&
 	}
 }
 
-Eigen::Vector3f BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
-	auto dir = Projection::tangent_align(point.N,
-										 Projection::cos_hemi(rnd(0), rnd(1), pdf));
-	pdf += BlinnPhongMaterial::pdf(point, dir, 0);
-	return dir;
+	MaterialSample ms;
+	ms.L = Projection::tangent_align(point.N,
+										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF));
+	ms.PDF += BlinnPhongMaterial::pdf(point, ms.L, 0);
+	return ms;
 }
 
 std::string BlinnPhongMaterial::dumpInformation() const

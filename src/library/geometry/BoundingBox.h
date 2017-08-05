@@ -86,9 +86,14 @@ public:
 		return (mUpperBound.array() <= point.array()).all() && (mLowerBound.array() >= point.array()).all();
 	}
 
-	bool intersects(const Ray& ray, float& t) const;
-	bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const;
-	bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, FaceSide& side) const;
+	struct Intersection {
+		bool Successful;
+		Eigen::Vector3f Position;
+		float T;
+	};
+	Intersection intersects(const Ray& ray) const;
+
+	FaceSide getIntersectionSide(const Intersection& intersection) const;
 
 	void combine(const Eigen::Vector3f& point);
 	void combine(const BoundingBox& other);

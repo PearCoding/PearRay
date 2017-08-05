@@ -102,8 +102,12 @@ void Scene::buildTree()
 
 	mKDTree = new SceneKDTree(
 		[](RenderEntity* e) { return e->worldBoundingBox(); },
-		[](const Ray& ray, FaceSample& point, RenderEntity* e) {
-			return (e->checkCollision(ray, point) && ((ray.flags() & RF_Debug) || ((ray.flags() & RF_Light) ? point.Material->allowsShadow() : point.Material->isCameraVisible())));
+		[](const Ray& ray, FacePoint& point, RenderEntity* e) {
+			RenderEntity::Collision c = e->checkCollision(ray);
+			point = c.Point;
+			return (c.Successful
+					&& ((ray.flags() & RF_Debug)
+						|| ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
 		},
 		[](RenderEntity* e) {
 			return e->collisionCost();
@@ -117,16 +121,22 @@ void Scene::buildTree()
 	reinterpret_cast<SceneKDTree*>(mKDTree)->build(list.begin(), list.end(), list.size(), [](RenderEntity* e) { return !e->isCollidable(); });
 }
 
-RenderEntity* Scene::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+SceneCollision Scene::checkCollision(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	return reinterpret_cast<SceneKDTree*>(mKDTree)->checkCollision(ray, collisionPoint);
+	SceneCollision sc;
+	sc.Entity	 = reinterpret_cast<SceneKDTree*>(mKDTree)->checkCollision(ray, sc.Point);
+	sc.Successful = (sc.Entity != nullptr);
+	return sc;
 }
 
-bool Scene::checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const
+SceneCollision Scene::checkCollisionSimple(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	return reinterpret_cast<SceneKDTree*>(mKDTree)->checkIfCollides(ray, collisionPoint);
+	SceneCollision sc;
+	sc.Successful = reinterpret_cast<SceneKDTree*>(mKDTree)->checkCollisionSimple(ray, sc.Point);
+	sc.Entity	 = nullptr;
+	return sc;
 }
 
 void Scene::freeze()

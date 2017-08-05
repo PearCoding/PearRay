@@ -1,178 +1,158 @@
-#include <boost/python.hpp>
-
-#include "spectral/Spectrum.h"
 #include "spectral/IntensityConverter.h"
-#include "spectral/XYZConverter.h"
 #include "spectral/RGBConverter.h"
+#include "spectral/Spectrum.h"
+#include "spectral/XYZConverter.h"
+
+#include "pypearray.h"
+#include <pybind11/numpy.h>
+#include <pybind11/operators.h>
 
 using namespace PR;
-namespace bpy = boost::python; 
-namespace PRPY
+namespace PRPY {
+class XYZConverterWrap : public XYZConverter {
+public:
+	static Eigen::Vector2f convert(const Spectrum& spec)
+	{
+		float x, y;
+		XYZConverter::convert(spec, x, y);
+		return Eigen::Vector2f(x, y);
+	}
+	static Eigen::Vector3f convertXYZ(const Spectrum& spec)
+	{
+		float x, y, z;
+		XYZConverter::convertXYZ(spec, x, y, z);
+		return Eigen::Vector3f(x, y, z);
+	}
+	static Eigen::Vector2f toNorm(float X, float Y, float Z)
+	{
+		float x, y;
+		XYZConverter::toNorm(X, Y, Z, x, y);
+		return Eigen::Vector2f(x, y);
+	}
+};
+
+class RGBConverterWrap : public RGBConverter {
+public:
+	static Eigen::Vector3f convert(const Spectrum& spec)
+	{
+		float x, y, z;
+		RGBConverter::convert(spec, x, y, z);
+		return Eigen::Vector3f(x, y, z);
+	}
+
+	static Eigen::Vector3f toXYZ(float X, float Y, float Z)
+	{
+		float x, y, z;
+		RGBConverter::toXYZ(X, Y, Z, x, y, z);
+		return Eigen::Vector3f(x, y, z);
+	}
+
+	static Eigen::Vector3f fromXYZ(float X, float Y, float Z)
+	{
+		float x, y, z;
+		RGBConverter::fromXYZ(X, Y, Z, x, y, z);
+		return Eigen::Vector3f(x, y, z);
+	}
+
+	static Eigen::Vector3f gamma(float X, float Y, float Z)
+	{
+		float x = X, y = Y, z = Z;
+		RGBConverter::gamma(x, y, z);
+		return Eigen::Vector3f(x, y, z);
+	}
+};
+
+void setup_spectral(py::module& m)
 {
-    class SpectrumWrap : public Spectrum, public bpy::wrapper<Spectrum>
-    {
-    public:
-        SpectrumWrap() = default;
-        SpectrumWrap(const SpectrumWrap& other) = default;
-        SpectrumWrap(SpectrumWrap&& other) = default;
-        SpectrumWrap& operator=(const SpectrumWrap& other) = default;
-        SpectrumWrap& operator=(SpectrumWrap&& other) = default;
+	auto spec = py::class_<Spectrum>(m, "Spectrum", py::buffer_protocol())
+					.def(py::init<float>())
+					.def("__init__", [](Spectrum& s, py::array_t<float, py::array::c_style | py::array::forcecast> b) { // Allow buffer initializing
+						py::buffer_info info = b.request();
+						if (info.format != py::format_descriptor<float>::format())
+							throw std::runtime_error("Incompatible format: expected a float array!");
 
-        SpectrumWrap(const boost::reference_wrapper<const Spectrum>::type& other) :
-            Spectrum(other) {}
-        
-        explicit SpectrumWrap(float f) : Spectrum(f) {}
-        explicit SpectrumWrap(const bpy::list& list) :
-            Spectrum()
-        {
-            fillFromList(list);
-        }
+						if (info.ndim != 1)
+							throw std::runtime_error("Incompatible buffer dimension. Expected 1d");
 
-        static uint32 WAVELENGTH_START_PY() { return Spectrum::WAVELENGTH_START; }
-        static uint32 WAVELENGTH_END_PY() { return Spectrum::WAVELENGTH_END; }
-        static uint32 WAVELENGTH_AREA_SIZE_PY() { return Spectrum::WAVELENGTH_AREA_SIZE; }
-        static uint32 WAVELENGTH_STEP_PY() { return Spectrum::WAVELENGTH_STEP; }
-        static uint32 SAMPLING_COUNT_PY() { return Spectrum::SAMPLING_COUNT; }
-        static uint32 ILL_SCALE_PY() { return Spectrum::ILL_SCALE; }
-    private:
-        void fillFromList(const bpy::list& list)
-        {
-            const auto len = bpy::len(list);
+						if (info.itemsize != sizeof(float))
+							throw std::runtime_error("Incompatible format: Expected float item size");
 
-            if(len != Spectrum::SAMPLING_COUNT)// ERROR?
-                return;
-            
-            for(uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-                setValue(i, bpy::extract<float>(list[i]));
-        }
-    };
+						if (info.shape[0] != Spectrum::SAMPLING_COUNT)
+							throw std::runtime_error("Incompatible shape: Expected correct sampling count");
 
-    class XYZConverterWrap : public XYZConverter, public bpy::wrapper<XYZConverter>
-    {
-    public:
-        static bpy::tuple convert(const Spectrum& spec)
-        {
-            float x, y;
-            XYZConverter::convert(spec, x,y);
-            return bpy::make_tuple(x,y);
-        }
-        static bpy::tuple convertXYZ(const Spectrum& spec)
-        {
-            float x, y,z;
-            XYZConverter::convertXYZ(spec, x,y,z);
-            return bpy::make_tuple(x,y,z);
-        }
-        static bpy::tuple toNorm(float X, float Y, float Z)
-        {
-            float x, y;
-            XYZConverter::toNorm(X,Y,Z, x,y);
-            return bpy::make_tuple(x,y);
-        }
-    };
+						new (&s) Spectrum((float*)info.ptr);
+					})
+					.def_buffer([](Spectrum& s) -> py::buffer_info { // Allow buffer use
+						return py::buffer_info(
+							s.ptr(),
+							sizeof(float),
+							py::format_descriptor<float>::format(),
+							1,
+							std::vector<size_t>({ Spectrum::SAMPLING_COUNT }),
+							std::vector<size_t>({ sizeof(float) }));
+					})
+					.def("fill", (void (Spectrum::*)(float)) & Spectrum::fill)
+					.def("fill", (void (Spectrum::*)(uint32, uint32, float)) & Spectrum::fill)
+					.def("clear", &Spectrum::clear)
+					.def_property_readonly("max", &Spectrum::max)
+					.def_property_readonly("min", &Spectrum::min)
+					.def_property_readonly("avg", &Spectrum::avg)
+					.def("normalize", &Spectrum::normalize)
+					.def("normalized", &Spectrum::normalized)
+					.def("clamp", &Spectrum::clamp)
+					.def("clamped", &Spectrum::clamped)
+					.def("lerp", (Spectrum & (Spectrum::*)(const Spectrum&, float)) & Spectrum::lerp)
+					.def_static("fromLerp", (Spectrum(*)(const Spectrum&, const Spectrum&, float)) & Spectrum::lerp)
+					.def("sqrt", &Spectrum::sqrt)
+					.def("sqrted", &Spectrum::sqrted)
+					.def("hasNaN", &Spectrum::hasNaN)
+					.def("hasInf", &Spectrum::hasInf)
+					.def("hasNegative", &Spectrum::hasNegative)
+					.def("isOnlyZero", &Spectrum::isOnlyZero)
+					.def("weightPhotometric", &Spectrum::weightPhotometric)
+					.def_property_readonly("luminousFlux", &Spectrum::luminousFlux)
+					.def_static("fromBlackbody", &Spectrum::fromBlackbody)
+					.def("__getitem__", &Spectrum::value)
+					.def("__setitem__", &Spectrum::setValue)
+					.def(py::self + py::self)
+					.def(py::self - py::self)
+					.def(py::self * py::self)
+					.def(py::self * float())
+					.def(float() * py::self)
+					.def(py::self / py::self)
+					.def(py::self / float())
+					.def(float() / py::self)
+					.def(py::self += py::self)
+					.def(py::self -= py::self)
+					.def(py::self *= py::self)
+					.def(py::self *= float())
+					.def(py::self /= py::self)
+					.def(py::self /= float())
+					.def(py::self == py::self)
+					.def(py::self != py::self);
+	spec.attr("WAVELENGTH_START")	 = py::int_(Spectrum::WAVELENGTH_START);
+	spec.attr("WAVELENGTH_END")		  = py::int_(Spectrum::WAVELENGTH_END);
+	spec.attr("WAVELENGTH_AREA_SIZE") = py::int_(Spectrum::WAVELENGTH_AREA_SIZE);
+	spec.attr("WAVELENGTH_STEP")	  = py::int_(Spectrum::WAVELENGTH_STEP);
+	spec.attr("SAMPLING_COUNT")		  = py::int_(Spectrum::SAMPLING_COUNT);
+	spec.attr("ILL_SCALE")			  = py::float_(Spectrum::ILL_SCALE);
 
-    class RGBConverterWrap : public RGBConverter, public bpy::wrapper<RGBConverter>
-    {
-    public:
-        static bpy::tuple convert(const Spectrum& spec)
-        {
-            float x, y, z;
-            RGBConverter::convert(spec, x,y,z);
-            return bpy::make_tuple(x,y,z);
-        }
-        
-        static bpy::tuple toXYZ(float X, float Y, float Z)
-        {
-            float x, y, z;
-            RGBConverter::toXYZ(X,Y,Z, x,y,z);
-            return bpy::make_tuple(x,y,z);
-        }
-        
-        static bpy::tuple fromXYZ(float X, float Y, float Z)
-        {
-            float x, y, z;
-            RGBConverter::fromXYZ(X,Y,Z, x,y,z);
-            return bpy::make_tuple(x,y,z);
-        }
-        
-        static bpy::tuple gamma(float X, float Y, float Z)
-        {
-            float x=X, y=Y, z=Z;
-            RGBConverter::gamma(x,y,z);
-            return bpy::make_tuple(x,y,z);
-        }
-    };
+	py::class_<IntensityConverter>(m, "IntensityConverter")
+		.def_static("convert", &IntensityConverter::convert);
 
-    void setup_spectral()
-    {
-        auto spec = bpy::class_<SpectrumWrap>("Spectrum")
-            .def(bpy::init<bpy::list>())
-            .def(bpy::init<float>())
-            .def("fill", (void (Spectrum::*)(float))&Spectrum::fill)
-            .def("fill", (void (Spectrum::*)(uint32,uint32,float))&Spectrum::fill)
-            .def("clear", &Spectrum::clear)
-            .add_property("max", &Spectrum::max)
-            .add_property("min", &Spectrum::min)
-            .add_property("avg", &Spectrum::avg)
-            .def("normalize", &Spectrum::normalize, bpy::return_internal_reference<>())
-            .def("normalized", &Spectrum::normalized)
-            .def("clamp", &Spectrum::clamp, bpy::return_internal_reference<>())
-            .def("clamped", &Spectrum::clamped)
-            .def("lerp", (Spectrum& (Spectrum::*)(const Spectrum&, float))&Spectrum::lerp, bpy::return_internal_reference<>())
-            .add_property("lerp", bpy::make_function((Spectrum (*)(const Spectrum&, const Spectrum&, float))&Spectrum::lerp))
-            .def("sqrt", &Spectrum::sqrt, bpy::return_internal_reference<>())
-            .def("sqrted", &Spectrum::sqrted)
-            .def("hasNaN", &Spectrum::hasNaN)
-            .def("hasInf", &Spectrum::hasInf)
-            .def("hasNegative", &Spectrum::hasNegative)
-            .def("isOnlyZero", &Spectrum::isOnlyZero)
-            .def("weightPhotometric", &Spectrum::weightPhotometric)
-            .add_property("luminousFlux", &Spectrum::luminousFlux)
-            .def("fromBlackbody", &Spectrum::fromBlackbody).staticmethod("fromBlackbody")
-            .def("__getitem__", &Spectrum::value)
-            .def("__setitem__", &Spectrum::setValue)
-            .def(bpy::self + bpy::self)
-            .def(bpy::self - bpy::self)
-            .def(bpy::self * bpy::self)
-            .def(bpy::self * float())
-            .def(float() * bpy::self)
-            .def(bpy::self / bpy::self)
-            .def(bpy::self / float())
-            .def(float() / bpy::self)
-            .def(bpy::self += bpy::self)
-            .def(bpy::self -= bpy::self)
-            .def(bpy::self *= bpy::self)
-            .def(bpy::self *= float())
-            .def(bpy::self /= bpy::self)
-            .def(bpy::self /= float())
-            .def(bpy::self == bpy::self)
-            .def(bpy::self != bpy::self)
-            .add_static_property("WAVELENGTH_START", &SpectrumWrap::WAVELENGTH_START_PY)
-            .add_static_property("WAVELENGTH_END", &SpectrumWrap::WAVELENGTH_END_PY)
-            .add_static_property("WAVELENGTH_AREA_SIZE", &SpectrumWrap::WAVELENGTH_AREA_SIZE_PY)
-            .add_static_property("WAVELENGTH_STEP", &SpectrumWrap::WAVELENGTH_STEP_PY)
-            .add_static_property("SAMPLING_COUNT", &SpectrumWrap::SAMPLING_COUNT_PY)
-            .add_static_property("ILL_SCALE", &SpectrumWrap::ILL_SCALE_PY)
-        ;
+	py::class_<XYZConverterWrap>(m, "XYZConverter")
+		.def_static("convert", &XYZConverterWrap::convert)
+		.def_static("convertXYZ", &XYZConverterWrap::convertXYZ)
+		.def_static("luminance", &XYZConverter::luminance)
+		.def_static("toNorm", &XYZConverterWrap::toNorm)
+		.def_static("toSpec", &XYZConverter::toSpec);
 
-        bpy::class_<IntensityConverter, boost::noncopyable>("IntensityConverter", bpy::no_init)
-            .def("convert", &IntensityConverter::convert).staticmethod("convert")
-        ;
-
-        bpy::class_<XYZConverterWrap, boost::noncopyable>("XYZConverter", bpy::no_init)
-            .def("convert", &XYZConverterWrap::convert).staticmethod("convert")
-            .def("convertXYZ", &XYZConverterWrap::convertXYZ).staticmethod("convertXYZ")
-            .def("luminance", &XYZConverter::luminance).staticmethod("luminance")
-            .def("toNorm", &XYZConverterWrap::toNorm).staticmethod("toNorm")
-            .def("toSpec", &XYZConverter::toSpec).staticmethod("toSpec")
-        ;
-
-        bpy::class_<RGBConverterWrap, boost::noncopyable>("RGBConverter", bpy::no_init)
-            .def("convert", &RGBConverterWrap::convert).staticmethod("convert")
-            .def("toXYZ", &RGBConverterWrap::toXYZ).staticmethod("toXYZ")
-            .def("fromXYZ", &RGBConverterWrap::fromXYZ).staticmethod("fromXYZ")
-            .def("luminance", &RGBConverter::luminance).staticmethod("luminance")
-            .def("gamma", &RGBConverterWrap::gamma).staticmethod("gamma")
-            .def("toSpec", &RGBConverter::toSpec).staticmethod("toSpec")
-        ;
-    }
+	py::class_<RGBConverterWrap>(m, "RGBConverter")
+		.def_static("convert", &RGBConverterWrap::convert)
+		.def_static("toXYZ", &RGBConverterWrap::toXYZ)
+		.def_static("fromXYZ", &RGBConverterWrap::fromXYZ)
+		.def_static("luminance", &RGBConverter::luminance)
+		.def_static("gamma", &RGBConverterWrap::gamma)
+		.def_static("toSpec", &RGBConverter::toSpec);
+}
 }

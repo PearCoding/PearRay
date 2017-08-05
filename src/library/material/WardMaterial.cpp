@@ -130,24 +130,30 @@ float WardMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, fl
 	return std::min(std::max(Projection::cos_hemi_pdf(NdotL) * (1 - refl) + r * refl, 0.0f), 1.0f);
 }
 
-Eigen::Vector3f WardMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+MaterialSample WardMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
 	const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
+	MaterialSample ms;
 	if (rnd(2) < refl)
-		return diffuse_path(point, rnd, pdf);
+		ms.L = diffuse_path(point, rnd, ms.PDF);
 	else
-		return specular_path(point, rnd, pdf);
+		ms.L = specular_path(point, rnd, ms.PDF);
+	
+	return ms;
 }
 
-Eigen::Vector3f WardMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
+MaterialSample WardMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
 {
-	path_weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
+	MaterialSample ms;
+	ms.Weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
 	if (path == 0)
-		return diffuse_path(point, rnd, pdf);
+		ms.L = diffuse_path(point, rnd, ms.PDF);
 	else
-		return specular_path(point, rnd, pdf);
+		ms.L = specular_path(point, rnd, ms.PDF);
+
+	return ms;
 }
 
 uint32 WardMaterial::samplePathCount() const

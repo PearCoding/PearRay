@@ -228,7 +228,7 @@ SET(PR_Spectral_Hdr
   spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Shader_Hdr
-  shader/FaceSample.h
+  shader/FacePoint.h
   shader/ShaderClosure.h
   shader/ShaderOutput.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})

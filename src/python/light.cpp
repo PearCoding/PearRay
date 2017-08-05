@@ -1,83 +1,54 @@
-#include <boost/python.hpp>
-#include "material/Material.h"
-#include "shader/ShaderClosure.h"
-#include "renderer/RenderContext.h"
-#include "light/IInfiniteLight.h"
 #include "light/DistantLight.h"
 #include "light/EnvironmentLight.h"
+#include "light/IInfiniteLight.h"
+#include "material/Material.h"
+#include "renderer/RenderContext.h"
+#include "shader/ShaderClosure.h"
 
-#include "npmath.h"
+#include "pypearray.h"
 
 using namespace PR;
-namespace bpy = boost::python;
-namespace np = boost::python::numpy;
+namespace PRPY {
+class IInfiniteLightWrap : public IInfiniteLight {
+public:
+	inline Spectrum apply(const Eigen::Vector3f& L) override
+	{
+		PYBIND11_OVERLOAD_PURE(Spectrum, IInfiniteLight, apply, L);
+	}
 
-namespace PRPY
+	inline LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override
+	{
+		PYBIND11_OVERLOAD_PURE(LightSample, IInfiniteLight, sample, point, rnd);
+	}
+
+	inline void onFreeze() override
+	{
+		PYBIND11_OVERLOAD(void, IInfiniteLight, onFreeze);
+	}
+};
+
+void setup_light(py::module& m)
 {
-    class IInfiniteLightWrap : public IInfiniteLight, public bpy::wrapper<IInfiniteLight>
-    {
-    public:
-        inline Spectrum apply(const Eigen::Vector3f& L) override
-        {
-            return apply_Py(vec3ToPython(L));
-        }
+	auto scope = py::class_<IInfiniteLight, IInfiniteLightWrap, std::shared_ptr<IInfiniteLight>>(m, "IInfiniteLight");
+	scope.def("apply", &IInfiniteLight::apply)
+		.def("sample", &IInfiniteLight::sample)
+		.def("onFreeze", &IInfiniteLight::onFreeze)
+		.def("freeze", &IInfiniteLight::freeze)
+		.def_property_readonly("frozen", &IInfiniteLight::isFrozen);
 
-        inline Spectrum apply_Py(const np::ndarray& L)
-        {
-            return this->get_override("apply")(L);
-        }
+	py::class_<IInfiniteLight::LightSample>(scope, "LightSample")
+		.def_readwrite("PDF", &IInfiniteLight::LightSample::PDF)
+		.def_readwrite("L", &IInfiniteLight::LightSample::L);
 
-        inline Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override
-        {
-            bpy::tuple tpl = bpy::extract<bpy::tuple>(sample_Py(point, vec3ToPython(rnd)));
-            pdf = bpy::extract<float>(tpl[1]);
-            return bpy::extract<Eigen::Vector3f>(tpl[0]);
-        }
+	py::class_<DistantLight, std::shared_ptr<DistantLight>, IInfiniteLight>(m, "DistantLight")
+		.def_property("direction", &DistantLight::direction, &DistantLight::setDirection)
+		.def_property("material",
+					  &DistantLight::material,
+					  &DistantLight::setMaterial);
 
-        inline bpy::tuple sample_Py(const ShaderClosure& point, const np::ndarray& rnd)
-        {
-            return this->get_override("sample")(point, rnd);
-        }
-
-        inline void onFreeze() override
-        {
-            if(bpy::override f = this->get_override("onFreeze"))
-                f();
-            IInfiniteLight::onFreeze();
-        }
-
-        inline void onFreeze_PyDef() { IInfiniteLight::onFreeze(); }
-    };
-
-    class DistantLightWrap : public DistantLight, public bpy::wrapper<DistantLight>
-    {
-    public:
-        PRPY_WRAP_GET_VEC3(direction)
-        PRPY_WRAP_SET_VEC3(setDirection)
-    };
-    
-    void setup_light()
-    {
-        bpy::class_<IInfiniteLightWrap, boost::noncopyable>("IInfiniteLight")
-            .def("apply", bpy::pure_virtual(&IInfiniteLightWrap::apply_Py))
-            .def("sample", bpy::pure_virtual(&IInfiniteLightWrap::sample_Py))
-            .def("onFreeze", &IInfiniteLight::onFreeze, &IInfiniteLightWrap::onFreeze_PyDef)
-            .def("freeze", &IInfiniteLight::freeze)
-            .add_property("frozen", &IInfiniteLight::isFrozen)
-        ;
-        bpy::register_ptr_to_python<std::shared_ptr<IInfiniteLight> >();
-
-        bpy::class_<DistantLightWrap, bpy::bases<IInfiniteLight>, boost::noncopyable>("DistantLight")
-            .add_property("direction", &DistantLightWrap::direction_Py, &DistantLightWrap::setDirection_Py)
-            .add_property("material", 
-                bpy::make_function(&DistantLight::material, bpy::return_value_policy<bpy::copy_const_reference >()),
-                &DistantLight::setMaterial)
-        ;
-
-        bpy::class_<EnvironmentLight, bpy::bases<IInfiniteLight>, boost::noncopyable>("EnvironmentLight")
-            .add_property("material", 
-                bpy::make_function(&EnvironmentLight::material, bpy::return_value_policy<bpy::copy_const_reference >()),
-                &EnvironmentLight::setMaterial)
-        ;
-    }
+	py::class_<EnvironmentLight, std::shared_ptr<EnvironmentLight>, IInfiniteLight>(m, "EnvironmentLight")
+		.def_property("material",
+					  &EnvironmentLight::material,
+					  &EnvironmentLight::setMaterial);
+}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geometry/BoundingBox.h"
+#include "shader/FacePoint.h"
 
 #include <list>
 #include <string>
@@ -8,11 +9,18 @@
 namespace PR {
 class Camera;
 class Entity;
-struct FaceSample;
+struct FacePoint;
 class IInfiniteLight;
 class RenderContext;
 class RenderEntity;
 class Ray;
+
+struct SceneCollision {
+	bool Successful;
+	RenderEntity* Entity;
+	FacePoint Point;
+};
+
 class PR_LIB Scene {
 public:
 	explicit Scene(const std::string& name);
@@ -39,8 +47,8 @@ public:
 	void clear();
 	void buildTree();
 
-	RenderEntity* checkCollision(const Ray& ray, FaceSample& collisionPoint) const;
-	bool checkIfCollides(const Ray& ray, FaceSample& collisionPoint) const;
+	SceneCollision checkCollision(const Ray& ray) const;
+	SceneCollision checkCollisionSimple(const Ray& ray) const;
 
 	void freeze();
 	void setup(const std::shared_ptr<RenderContext>& context);

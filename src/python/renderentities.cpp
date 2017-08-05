@@ -1,67 +1,61 @@
-#include <boost/python.hpp>
-#include "ray/Ray.h"
-#include "material/Material.h"
 #include "entity/BoundaryEntity.h"
 #include "entity/CoordinateAxisEntity.h"
 #include "entity/MeshEntity.h"
 #include "entity/PlaneEntity.h"
 #include "entity/SphereEntity.h"
+#include "material/Material.h"
+#include "ray/Ray.h"
+
+#include "pypearray.h"
 
 using namespace PR;
-namespace bpy = boost::python;
-namespace PRPY
+namespace PRPY {
+void setup_renderentities(py::module& m)
 {
-    void setup_renderentities()
-    {
-        bpy::class_<BoundaryEntity, std::shared_ptr<BoundaryEntity>, bpy::bases<RenderEntity>, boost::noncopyable>("BoundaryEntity", bpy::init<uint32, std::string, const BoundingBox&>())
-        .add_property("material", 
-            bpy::make_function(&BoundaryEntity::material, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &BoundaryEntity::setMaterial)
-        .def("setBoundingBox", &BoundaryEntity::setBoundingBox)
-        ;
-        bpy::implicitly_convertible<std::shared_ptr<BoundaryEntity>, std::shared_ptr<RenderEntity> >();
+	py::class_<BoundaryEntity, RenderEntity, std::shared_ptr<BoundaryEntity>>(m, "BoundaryEntity")
+		.def(py::init<uint32, std::string, const BoundingBox&>())
+		.def_property("material",
+					  &BoundaryEntity::material,
+					  &BoundaryEntity::setMaterial)
+		.def("setBoundingBox", &BoundaryEntity::setBoundingBox);
 
-        bpy::class_<CoordinateAxisEntity, std::shared_ptr<CoordinateAxisEntity>, bpy::bases<RenderEntity>, boost::noncopyable>("CoordinateAxisEntity", bpy::init<uint32, std::string>())
-        .add_property("xMaterial", 
-            bpy::make_function(&CoordinateAxisEntity::xMaterial, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &CoordinateAxisEntity::setXMaterial)
-        .add_property("yMaterial", 
-            bpy::make_function(&CoordinateAxisEntity::yMaterial, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &CoordinateAxisEntity::setYMaterial)
-        .add_property("zMaterial", 
-            bpy::make_function(&CoordinateAxisEntity::zMaterial, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &CoordinateAxisEntity::setZMaterial)
-        .add_property("axisLength", &CoordinateAxisEntity::axisLength, &CoordinateAxisEntity::setAxisLength)
-        .add_property("axisThickness", &CoordinateAxisEntity::axisThickness, &CoordinateAxisEntity::setAxisThickness)
-        ;
-        bpy::implicitly_convertible<std::shared_ptr<CoordinateAxisEntity>, std::shared_ptr<RenderEntity> >();
+	py::class_<CoordinateAxisEntity, RenderEntity, std::shared_ptr<CoordinateAxisEntity>>(m, "CoordinateAxisEntity")
+		.def(py::init<uint32, std::string>())
+		.def_property("xMaterial",
+					  &CoordinateAxisEntity::xMaterial,
+					  &CoordinateAxisEntity::setXMaterial)
+		.def_property("yMaterial",
+					  &CoordinateAxisEntity::yMaterial,
+					  &CoordinateAxisEntity::setYMaterial)
+		.def_property("zMaterial",
+					  &CoordinateAxisEntity::zMaterial,
+					  &CoordinateAxisEntity::setZMaterial)
+		.def_property("axisLength", &CoordinateAxisEntity::axisLength, &CoordinateAxisEntity::setAxisLength)
+		.def_property("axisThickness", &CoordinateAxisEntity::axisThickness, &CoordinateAxisEntity::setAxisThickness);
 
-        bpy::class_<MeshEntity, std::shared_ptr<MeshEntity>, bpy::bases<RenderEntity>, boost::noncopyable>("MeshEntity", bpy::init<uint32, std::string>())
-        /*.add_property("mesh", 
-            bpy::make_function(&MeshEntity::mesh, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &MeshEntity::setMesh)*/
-        .def("reserveMaterialSlots", &MeshEntity::reserveMaterialSlots)
-        .def("setMaterial", &MeshEntity::setMaterial)
-        .def("material", &MeshEntity::material)
-        ;
-        bpy::implicitly_convertible<std::shared_ptr<MeshEntity>, std::shared_ptr<RenderEntity> >();
+	py::class_<MeshEntity, RenderEntity, std::shared_ptr<MeshEntity>>(m, "MeshEntity")
+		.def(py::init<uint32, std::string>())
+		/*.def_property("mesh",
+					  &MeshEntity::mesh,
+					  &MeshEntity::setMesh)*/
+		.def("reserveMaterialSlots", &MeshEntity::reserveMaterialSlots)
+		.def("setMaterial", &MeshEntity::setMaterial)
+		.def("material", &MeshEntity::material);
 
-        bpy::class_<PlaneEntity, std::shared_ptr<PlaneEntity>, bpy::bases<RenderEntity>, boost::noncopyable>("PlaneEntity", bpy::init<uint32, std::string, const Plane&>())
-        .add_property("material", 
-            bpy::make_function(&PlaneEntity::material, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &PlaneEntity::setMaterial)
-        .add_property("plane",  
-            bpy::make_function(&PlaneEntity::plane, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &PlaneEntity::setPlane)
-        ;
-        bpy::implicitly_convertible<std::shared_ptr<PlaneEntity>, std::shared_ptr<RenderEntity> >();
+	py::class_<PlaneEntity, RenderEntity, std::shared_ptr<PlaneEntity>>(m, "PlaneEntity")
+		.def(py::init<uint32, std::string, const Plane&>())
+		.def_property("material",
+					  &PlaneEntity::material,
+					  &PlaneEntity::setMaterial)
+		.def_property("plane",
+					  &PlaneEntity::plane,
+					  &PlaneEntity::setPlane);
 
-        bpy::class_<SphereEntity, std::shared_ptr<SphereEntity>, bpy::bases<RenderEntity>, boost::noncopyable>("SphereEntity", bpy::init<uint32, std::string, float>())
-        .add_property("material", 
-            bpy::make_function(&SphereEntity::material, bpy::return_value_policy<bpy::copy_const_reference >()),
-            &SphereEntity::setMaterial)
-        .add_property("radius", &SphereEntity::radius, &SphereEntity::setRadius)
-        ;
-        bpy::implicitly_convertible<std::shared_ptr<SphereEntity>, std::shared_ptr<RenderEntity> >();
-    }
+	py::class_<SphereEntity, RenderEntity, std::shared_ptr<SphereEntity>>(m, "SphereEntity")
+		.def(py::init<uint32, std::string, float>())
+		.def_property("material",
+					  &SphereEntity::material,
+					  &SphereEntity::setMaterial)
+		.def_property("radius", &SphereEntity::radius, &SphereEntity::setRadius);
+}
 }

@@ -37,9 +37,16 @@ public:
 	}
 
 	bool contains(const Eigen::Vector3f& point) const;
-	bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, float& u, float& v) const;
 
-	void project(const Eigen::Vector3f& point, float& u, float& v) const;
+	struct Intersection {
+		bool Successful;
+		Eigen::Vector3f Position;
+		float T;
+		Eigen::Vector2f UV;
+	};
+	Intersection intersects(const Ray& ray) const;
+
+	Eigen::Vector2f project(const Eigen::Vector3f& point) const;
 
 	inline BoundingBox toBoundingBox() const
 	{

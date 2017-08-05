@@ -34,23 +34,25 @@ Sphere& Sphere::operator=(const Sphere& other)
 	return *this;
 }
 
-bool Sphere::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const
+Sphere::Intersection Sphere::intersects(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
+	Sphere::Intersection r;
+	r.Successful = false;
 
 	const Eigen::Vector3f L = mPosition - ray.origin(); // C - O
-	const float S			= L.dot(ray.direction());		   // L . D
-	const float L2			= L.squaredNorm();				   // L . L
-	const float R2			= mRadius * mRadius;			   // R^2
+	const float S			= L.dot(ray.direction());   // L . D
+	const float L2			= L.squaredNorm();			// L . L
+	const float R2			= mRadius * mRadius;		// R^2
 
 	if (S < 0 && // when object behind ray
 		L2 > R2)
-		return false;
+		return r;
 
 	const float M2 = L2 - S * S; // L . L - S^2
 
 	if (M2 > R2)
-		return false;
+		return r;
 
 	const float Q = std::sqrt(R2 - M2);
 
@@ -63,11 +65,12 @@ bool Sphere::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& 
 		t0 = t1;
 
 	if (t0 >= PR_SPHERE_INTERSECT_EPSILON) {
-		t			   = t0;
-		collisionPoint = ray.origin() + ray.direction() * t;
-		return true;
+		r.T			 = t0;
+		r.Position		 = ray.origin() + ray.direction() * r.T;
+		r.Successful = true;
+		return r;
 	} else {
-		return false;
+		return r;
 	}
 }
 

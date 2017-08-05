@@ -21,7 +21,7 @@ public:
 		return mMaterial;
 	}
 
-	Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) override;
+	LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
 	Spectrum apply(const Eigen::Vector3f& V) override;
 
 private:

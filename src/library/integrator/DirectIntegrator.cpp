@@ -6,7 +6,7 @@
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "sampler/RandomSampler.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
 
 namespace PR {
@@ -41,7 +41,6 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 
 	// Used temporary
 	ShaderClosure other_sc;
-	float path_weight;
 	Spectrum weight;
 
 	// Hemisphere sampling
@@ -57,24 +56,22 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 
 		Eigen::Vector3f rnd = hemiSampler.generate3D(i);
 		for (uint32 path = 0; path < path_count; ++path) {
-			float pdf;
+			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
+			const float NdotL   = std::abs(ms.L.dot(sc.N));
 
-			Eigen::Vector3f dir = sc.Material->samplePath(sc, rnd, pdf, path_weight, path);
-			const float NdotL   = std::abs(dir.dot(sc.N));
-
-			if (pdf <= PR_EPSILON || NdotL <= PR_EPSILON || !(std::isinf(pdf) || diffbounces < renderer()->settings().maxDiffuseBounces()))
+			if (ms.PDF <= PR_EPSILON || NdotL <= PR_EPSILON || !(std::isinf(ms.PDF) || diffbounces < renderer()->settings().maxDiffuseBounces()))
 				continue;
 
-			Ray ray = in.next(sc.P, dir);
+			Ray ray = in.next(sc.P, ms.L);
 
 			RenderEntity* entity = renderer()->shootWithEmission(weight, ray, other_sc, tile);
 			if (entity && other_sc.Material)
 				weight += applyRay(ray, other_sc, tile,
-								   !std::isinf(pdf) ? diffbounces + 1 : diffbounces);
+								   !std::isinf(ms.PDF) ? diffbounces + 1 : diffbounces);
 
-			weight *= sc.Material->eval(sc, dir, NdotL) * NdotL;
-			other_weight += path_weight * weight;
-			other_pdf += pdf;
+			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
+			other_weight += ms.Weight * weight;
+			other_pdf += ms.PDF;
 		}
 		MSI::balance(full_weight, full_pdf, other_weight, other_pdf / path_count);
 	}
@@ -85,14 +82,13 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, const ShaderClosure& sc,
 		for (RenderEntity* light : renderer()->lights()) {
 			RandomSampler sampler(tile->random());
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
-				float pdf;
-				FaceSample p = light->getRandomFacePoint(sampler, i, pdf);
+				RenderEntity::FacePointSample fps = light->sampleFacePoint(sampler, i);
 
-				const Eigen::Vector3f PS = p.P - sc.P;
+				const Eigen::Vector3f PS = fps.Point.P - sc.P;
 				const Eigen::Vector3f L  = PS.normalized();
 				const float NdotL		 = std::max(0.0f, L.dot(sc.N)); // No back light detection
 
-				pdf = MSI::toSolidAngle(pdf, PS.squaredNorm(), NdotL) + sc.Material->pdf(sc, L, NdotL);
+				float pdf = MSI::toSolidAngle(fps.PDF, PS.squaredNorm(), NdotL) + sc.Material->pdf(sc, L, NdotL);
 
 				if (pdf <= PR_EPSILON)
 					continue;

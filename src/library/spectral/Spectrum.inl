@@ -140,7 +140,12 @@ inline void Spectrum::setValueAtWavelength(float wavelength, float value)
 	mValues[i] = value;
 }
 
-inline const float* Spectrum::ptr() const
+inline const float* Spectrum::c_ptr() const
+{
+	return mValues;
+}
+
+inline float* Spectrum::ptr()
 {
 	return mValues;
 }

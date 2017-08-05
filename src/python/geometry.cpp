@@ -3,242 +3,93 @@
 #include "geometry/Plane.h"
 #include "geometry/Sphere.h"
 #include "ray/Ray.h"
-#include <boost/python.hpp>
 
-#include "npmath.h"
+#include "pypearray.h"
 
 using namespace PR;
-namespace bpy = boost::python;
-namespace np  = boost::python::numpy;
-
 namespace PRPY {
-class BoundingBoxWrap : public BoundingBox, public bpy::wrapper<BoundingBox> {
-public:
-	BoundingBoxWrap()
-		: BoundingBox()
-	{
-	}
-	BoundingBoxWrap(const np::ndarray& upperbound, const np::ndarray& lowerbound)
-		: BoundingBox(vec3FromPython(upperbound), vec3FromPython(lowerbound))
-	{
-	}
-	BoundingBoxWrap(float width, float height, float depth)
-		: BoundingBox(width, height, depth)
-	{
-	}
 
-	BoundingBoxWrap(const boost::reference_wrapper<const BoundingBox>::type& other)
-		: BoundingBox(other)
-	{
-	}
-
-	// Better names?
-	inline bpy::tuple intersects1_Py(const Ray& ray) const
-	{
-		float t;
-		bool b = intersects(ray, t);
-		return bpy::make_tuple(b, t);
-	}
-
-	inline bpy::tuple intersects2_Py(const Ray& ray) const
-	{
-		float t;
-		Eigen::Vector3f collisionPoint;
-		bool b = intersects(ray, collisionPoint, t);
-		return bpy::make_tuple(b, vec3ToPython(collisionPoint), t);
-	}
-
-	inline bpy::tuple intersects3_Py(const Ray& ray) const
-	{
-		float t;
-		Eigen::Vector3f collisionPoint;
-		BoundingBox::FaceSide side;
-		bool b = intersects(ray, collisionPoint, t, side);
-		return bpy::make_tuple(b, vec3ToPython(collisionPoint), t, side);
-	}
-
-	void combine_Py(const np::ndarray& point)
-	{
-		combine(vec3FromPython(point));
-	}
-
-	BoundingBox combined_Py(const np::ndarray& point) const
-	{
-		return combined(vec3FromPython(point));
-	}
-
-	BoundingBox shifted_Py(const np::ndarray& point) const
-	{
-		return shifted(vec3FromPython(point));
-	}
-
-	PRPY_WRAP_GET_VEC3(upperBound)
-	PRPY_WRAP_SET_VEC3(setUpperBound)
-	PRPY_WRAP_GET_VEC3(lowerBound)
-	PRPY_WRAP_SET_VEC3(setLowerBound)
-	PRPY_WRAP_GET_VEC3(center)
-};
-
-class PlaneWrap : public Plane, public bpy::wrapper<Plane> {
-public:
-	PlaneWrap()
-		: Plane()
-	{
-	}
-	PlaneWrap(const np::ndarray& pos, const np::ndarray& xAxis, const np::ndarray& yAxis)
-		: Plane(vec3FromPython(pos), vec3FromPython(xAxis), vec3FromPython(yAxis))
-	{
-	}
-	PlaneWrap(float width, float height)
-		: Plane(width, height)
-	{
-	}
-
-	PlaneWrap(const boost::reference_wrapper<const Plane>::type& other)
-		: Plane(other)
-	{
-	}
-
-	inline bpy::tuple intersects_Py(const Ray& ray) const
-	{
-		Eigen::Vector3f pos;
-		float t, u, v;
-		bool b = intersects(ray, pos, t, u, v);
-		return bpy::make_tuple(b, vec3ToPython(pos), t, u, v);
-	}
-
-	inline bpy::tuple project_Py(const np::ndarray& p) const
-	{
-		float u, v;
-		project(vec3FromPython(p), u, v);
-		return bpy::make_tuple(u, v);
-	}
-
-	bool contains_Py(const np::ndarray& point) const
-	{
-		return contains(vec3FromPython(point));
-	}
-
-	PRPY_WRAP_GET_VEC3(position)
-	PRPY_WRAP_SET_VEC3(setPosition)
-	PRPY_WRAP_GET_VEC3(xAxis)
-	PRPY_WRAP_SET_VEC3(setXAxis)
-	PRPY_WRAP_GET_VEC3(yAxis)
-	PRPY_WRAP_SET_VEC3(setYAxis)
-	PRPY_WRAP_GET_VEC3(normal)
-	PRPY_WRAP_GET_VEC3(center)
-};
-
-class SphereWrap : public Sphere, public bpy::wrapper<Sphere> {
-public:
-	SphereWrap()
-		: Sphere()
-	{
-	}
-	SphereWrap(const np::ndarray& pos, float radius)
-		: Sphere(vec3FromPython(pos), radius)
-	{
-	}
-
-	SphereWrap(const boost::reference_wrapper<const Sphere>::type& other)
-		: Sphere(other)
-	{
-	}
-
-	inline bpy::tuple intersects_Py(const Ray& ray) const
-	{
-		Eigen::Vector3f pos;
-		float t;
-		bool b = intersects(ray, pos, t);
-		return bpy::make_tuple(b, vec3ToPython(pos), t);
-	}
-
-	bool contains_Py(const np::ndarray& point) const
-	{
-		return contains(vec3FromPython(point));
-	}
-
-	void combine_Py(const np::ndarray& point)
-	{
-		combine(vec3FromPython(point));
-	}
-
-	Sphere combined_Py(const np::ndarray& point) const
-	{
-		return combined(vec3FromPython(point));
-	}
-
-	PRPY_WRAP_GET_VEC3(position)
-	PRPY_WRAP_SET_VEC3(setPosition)
-};
-
-void setup_geometry()
+void setup_geometry(py::module& m)
 {
-	{
-		bpy::scope scope = bpy::class_<BoundingBoxWrap>("BoundingBox")
-							   .def(bpy::init<const np::ndarray&, const np::ndarray&>())
-							   .def(bpy::init<float, float, float>())
-							   .add_property("upperBound", &BoundingBoxWrap::upperBound_Py, &BoundingBoxWrap::setUpperBound_Py)
-							   .add_property("lowerBound", &BoundingBoxWrap::lowerBound_Py, &BoundingBoxWrap::setLowerBound_Py)
-							   .add_property("center", &BoundingBoxWrap::center_Py)
-							   .add_property("width", &BoundingBox::width)
-							   .add_property("height", &BoundingBox::height)
-							   .add_property("depth", &BoundingBox::depth)
-							   .add_property("outerSphere", &BoundingBox::outerSphere)
-							   .add_property("innerSphere", &BoundingBox::innerSphere)
-							   .add_property("volume", &BoundingBox::volume)
-							   .add_property("surfaceArea", &BoundingBox::surfaceArea)
-							   .def("isValid", &BoundingBox::isValid)
-							   .def("isPlanar", &BoundingBox::isPlanar)
-							   .def("contains", &BoundingBox::contains)
-							   .def("intersects1", &BoundingBoxWrap::intersects1_Py)
-							   .def("intersects2", &BoundingBoxWrap::intersects2_Py)
-							   .def("intersects3", &BoundingBoxWrap::intersects3_Py)
-							   .def("combine", &BoundingBoxWrap::combine_Py)
-							   .def("combine", (void (BoundingBox::*)(const BoundingBox&)) & BoundingBox::combine)
-							   .def("shift", &BoundingBox::shift)
-							   .def("combined", &BoundingBoxWrap::combined_Py)
-							   .def("combined", (BoundingBox(BoundingBox::*)(const BoundingBox&) const) & BoundingBox::combined)
-							   .def("shifted", &BoundingBoxWrap::shifted_Py)
-							   .def("getFace", &BoundingBox::getFace);
+	auto scope = py::class_<BoundingBox>(m, "BoundingBox");
+	scope.def(py::init<const Eigen::Vector3f&, const Eigen::Vector3f&>())
+		.def(py::init<float, float, float>())
+		.def_property("upperBound", (const Eigen::Vector3f& (BoundingBox::*)() const) & BoundingBox::upperBound, &BoundingBox::setUpperBound)
+		.def_property("lowerBound", (const Eigen::Vector3f& (BoundingBox::*)() const) & BoundingBox::lowerBound, &BoundingBox::setLowerBound)
+		.def_property_readonly("center", &BoundingBox::center)
+		.def_property_readonly("width", &BoundingBox::width)
+		.def_property_readonly("height", &BoundingBox::height)
+		.def_property_readonly("depth", &BoundingBox::depth)
+		.def_property_readonly("outerSphere", &BoundingBox::outerSphere)
+		.def_property_readonly("innerSphere", &BoundingBox::innerSphere)
+		.def_property_readonly("volume", &BoundingBox::volume)
+		.def_property_readonly("surfaceArea", &BoundingBox::surfaceArea)
+		.def("isValid", &BoundingBox::isValid)
+		.def("isPlanar", &BoundingBox::isPlanar)
+		.def("contains", &BoundingBox::contains)
+		.def("intersects", &BoundingBox::intersects)
+		.def("getIntersectionSide", &BoundingBox::getIntersectionSide)
+		.def("combine", (void (BoundingBox::*)(const Eigen::Vector3f&)) & BoundingBox::combine)
+		.def("combine", (void (BoundingBox::*)(const BoundingBox&)) & BoundingBox::combine)
+		.def("shift", &BoundingBox::shift)
+		.def("combined", (BoundingBox(BoundingBox::*)(const Eigen::Vector3f&) const) & BoundingBox::combined)
+		.def("combined", (BoundingBox(BoundingBox::*)(const BoundingBox&) const) & BoundingBox::combined)
+		.def("shifted", &BoundingBox::shifted)
+		.def("getFace", &BoundingBox::getFace);
 
-		bpy::enum_<BoundingBox::FaceSide>("FaceSide")
-			.value("LEFT", BoundingBox::FS_Left)
-			.value("RIGHT", BoundingBox::FS_Right)
-			.value("TOP", BoundingBox::FS_Top)
-			.value("BOTTOM", BoundingBox::FS_Bottom)
-			.value("FRONT", BoundingBox::FS_Front)
-			.value("BACK", BoundingBox::FS_Back);
-	} // End of scope
-
-	bpy::class_<PlaneWrap>("Plane")
-		.def(bpy::init<const np::ndarray&, const np::ndarray&, const np::ndarray&>())
-		.def(bpy::init<float, float>())
-		.add_property("position", &PlaneWrap::position_Py, &PlaneWrap::setPosition_Py)
-		.add_property("xAxis", &PlaneWrap::xAxis_Py, &PlaneWrap::setXAxis_Py)
-		.add_property("yAxis", &PlaneWrap::yAxis_Py, &PlaneWrap::setYAxis_Py)
-		.add_property("center", &PlaneWrap::center)
-		.add_property("normal", &PlaneWrap::normal)
-		.add_property("surfaceArea", &Plane::surfaceArea)
+	py::enum_<BoundingBox::FaceSide>(scope, "FaceSide")
+		.value("LEFT", BoundingBox::FS_Left)
+		.value("RIGHT", BoundingBox::FS_Right)
+		.value("TOP", BoundingBox::FS_Top)
+		.value("BOTTOM", BoundingBox::FS_Bottom)
+		.value("FRONT", BoundingBox::FS_Front)
+		.value("BACK", BoundingBox::FS_Back);
+	
+	py::class_<BoundingBox::Intersection>(scope, "Intersection")
+		.def_readwrite("Successful", &BoundingBox::Intersection::Successful)
+		.def_readwrite("Position", &BoundingBox::Intersection::Position)
+		.def_readwrite("T", &BoundingBox::Intersection::T);
+	
+	/////////////////////////////////////////////////////
+	auto scope2 = py::class_<Plane>(m, "Plane");
+	scope2.def(py::init<const Eigen::Vector3f&, const Eigen::Vector3f&, const Eigen::Vector3f&>())
+		.def(py::init<float, float>())
+		.def_property("position", &Plane::position, &Plane::setPosition)
+		.def_property("xAxis", &Plane::xAxis, &Plane::setXAxis)
+		.def_property("yAxis", &Plane::yAxis, &Plane::setYAxis)
+		.def_property_readonly("center", &Plane::center)
+		.def_property_readonly("normal", &Plane::normal)
+		.def_property_readonly("surfaceArea", &Plane::surfaceArea)
 		.def("isValid", &Plane::isValid)
-		.def("contains", &PlaneWrap::contains_Py)
-		.def("intersects", &PlaneWrap::intersects_Py)
-		.def("project", &PlaneWrap::project_Py)
-		.add_property("boundingBox", &Plane::toBoundingBox)
-		.add_property("localBoundingBox", &Plane::toLocalBoundingBox);
-
-	bpy::class_<SphereWrap>("Sphere")
-		.def(bpy::init<const np::ndarray&, float>())
-		.add_property("position", &SphereWrap::position_Py, &SphereWrap::setPosition_Py)
-		.add_property("radius", &Sphere::radius, &Sphere::setRadius)
-		.add_property("volume", &Sphere::volume)
-		.add_property("surfaceArea", &Sphere::surfaceArea)
+		.def("contains", &Plane::contains)
+		.def("intersects", &Plane::intersects)
+		.def("project", &Plane::project)
+		.def_property_readonly("boundingBox", &Plane::toBoundingBox)
+		.def_property_readonly("localBoundingBox", &Plane::toLocalBoundingBox);
+	
+	py::class_<Plane::Intersection>(scope2, "Intersection")
+		.def_readwrite("Successful", &Plane::Intersection::Successful)
+		.def_readwrite("Position", &Plane::Intersection::Position)
+		.def_readwrite("T", &Plane::Intersection::T);
+	
+	/////////////////////////////////////////////////////
+	auto scope3 = py::class_<Sphere>(m, "Sphere");
+	scope3.def(py::init<const Eigen::Vector3f&, float>())
+		.def_property("position", &Sphere::position, &Sphere::setPosition)
+		.def_property("radius", &Sphere::radius, &Sphere::setRadius)
+		.def_property_readonly("volume", &Sphere::volume)
+		.def_property_readonly("surfaceArea", &Sphere::surfaceArea)
 		.def("isValid", &Sphere::isValid)
-		.def("contains", &SphereWrap::contains_Py)
-		.def("intersects", &SphereWrap::intersects_Py)
-		.def("combine", &SphereWrap::combine_Py)
-		.def("combined", &SphereWrap::combined_Py)
-		.def("combine", (void (Sphere::*)(const Sphere&))&Sphere::combine)
-		.def("combined", (Sphere (Sphere::*)(const Sphere&)const)&Sphere::combined);
+		.def("contains", &Sphere::contains)
+		.def("intersects", &Sphere::intersects)
+		.def("combine", (void (Sphere::*)(const Eigen::Vector3f&)) & Sphere::combine)
+		.def("combined", (Sphere(Sphere::*)(const Eigen::Vector3f&) const) & Sphere::combined)
+		.def("combine", (void (Sphere::*)(const Sphere&)) & Sphere::combine)
+		.def("combined", (Sphere(Sphere::*)(const Sphere&) const) & Sphere::combined);
+	
+	py::class_<Sphere::Intersection>(scope3, "Intersection")
+		.def_readwrite("Successful", &Sphere::Intersection::Successful)
+		.def_readwrite("Position", &Sphere::Intersection::Position)
+		.def_readwrite("T", &Sphere::Intersection::T);
 }
 }

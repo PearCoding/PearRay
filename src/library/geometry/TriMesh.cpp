@@ -79,7 +79,7 @@ void TriMesh::build()
 		[](Face* f) {
 			return Triangle::getBoundingBox(f->V[0], f->V[1], f->V[2]);
 		},
-		[](const Ray& ray, FaceSample& point, Face* f) {
+		[](const Ray& ray, FacePoint& point, Face* f) {
 			float t;
 			return Triangle::intersect(ray, *f, point, t); // Major bottleneck!
 		},
@@ -117,10 +117,13 @@ float TriMesh::surfaceArea(const Eigen::Affine3f& transform) const
 	return a;
 }
 
-Face* TriMesh::checkCollision(const Ray& ray, FaceSample& collisionPoint)
+TriMesh::Collision TriMesh::checkCollision(const Ray& ray)
 {
-	//PR_ASSERT(mKDTree, "kdTree has to be valid");
-	return reinterpret_cast<TriKDTree*>(mKDTree)->checkCollision(ray, collisionPoint);
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+	TriMesh::Collision r;
+	r.Ptr = reinterpret_cast<TriKDTree*>(mKDTree)->checkCollision(ray, r.Point);
+	r.Successful = (r.Ptr != nullptr);
+	return r;
 }
 
 float TriMesh::collisionCost() const
@@ -128,7 +131,7 @@ float TriMesh::collisionCost() const
 	return TriangleTestCost * reinterpret_cast<TriKDTree*>(mKDTree)->depth();
 }
 
-FaceSample TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& materialSlot, float& pdf) const
+TriMesh::FacePointSample TriMesh::sampleFacePoint(Sampler& sampler, uint32 sample) const
 {
 	auto ret  = sampler.generate3D(sample);
 	uint32 fi = Projection::map(ret(0), 0, (int)mFaces.size() - 1);
@@ -141,13 +144,12 @@ FaceSample TriMesh::getRandomFacePoint(Sampler& sampler, uint32 sample, uint32& 
 	Eigen::Vector2f uv;
 	face->interpolate(bary(0), bary(1), vec, n, uv);
 
-	FaceSample fp;
-	fp.P		 = vec;
-	fp.Ng		 = n;
-	fp.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
-	materialSlot = face->MaterialSlot;
-
-	pdf = 1; //?
-	return fp;
+	TriMesh::FacePointSample r;
+	r.Point.P		 = vec;
+	r.Point.Ng		 = n;
+	r.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
+	r.MaterialSlot = face->MaterialSlot;
+	r.PDF = 1; //?
+	return r;
 }
 }

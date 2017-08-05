@@ -16,10 +16,13 @@ EnvironmentLight::~EnvironmentLight()
 {
 }
 
-Eigen::Vector3f EnvironmentLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
-	return Projection::tangent_align(point.N,
-									 Projection::cos_hemi(rnd(0), rnd(1), pdf));
+	IInfiniteLight::LightSample ls;
+	ls.L = Projection::tangent_align(point.N,
+									 Projection::cos_hemi(rnd(0), rnd(1), ls.PDF));
+	
+	return ls;
 }
 
 Spectrum EnvironmentLight::apply(const Eigen::Vector3f& V)

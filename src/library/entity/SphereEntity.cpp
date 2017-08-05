@@ -1,7 +1,7 @@
 #include "SphereEntity.h"
 #include "geometry/Sphere.h"
 #include "ray/Ray.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 
 #include "material/Material.h"
 #include "math/Projection.h"
@@ -87,7 +87,7 @@ BoundingBox SphereEntity::localBoundingBox() const
 					   Eigen::Vector3f(-mRadius, -mRadius, -mRadius));
 }
 
-bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+RenderEntity::Collision SphereEntity::checkCollision(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
 
@@ -96,43 +96,44 @@ bool SphereEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) co
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
 	Sphere sphere(Eigen::Vector3f(0, 0, 0), mRadius);
-	float t;
-	Eigen::Vector3f collisionPos;
-	if (!sphere.intersects(local, collisionPos, t))
-		return false;
+	RenderEntity::Collision c;
+	Sphere::Intersection in = sphere.intersects(local);
+	c.Successful			= in.Successful;
 
-	collisionPoint.P = transform() * collisionPos;
+	if (!in.Successful)
+		return c;
 
-	collisionPoint.Ng = (directionMatrix() * collisionPos).normalized();
-	Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+	c.Point.P = transform() * in.Position;
 
-	const Eigen::Vector2f uv = Projection::sphereUV(collisionPoint.Ng);
-	collisionPoint.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
+	c.Point.Ng = (directionMatrix() * in.Position).normalized();
+	Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
-	collisionPoint.Material = material().get();
+	const Eigen::Vector2f uv = Projection::sphereUV(c.Point.Ng);
+	c.Point.UVW				 = Eigen::Vector3f(uv(0), uv(1), 0);
+	c.Point.Material		 = material().get();
 
-	return true;
+	return c;
 }
 
-FaceSample SphereEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+RenderEntity::FacePointSample SphereEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
 {
 	PR_GUARD_PROFILE();
 
-	FaceSample p;
+	RenderEntity::FacePointSample sm;
 
 	Eigen::Vector2f s = sampler.generate2D(sample);
 	Eigen::Vector3f n = Projection::sphere_coord(s(0) * 2 * PR_PI, s(1) * PR_PI);
-	pdf				  = 1;
+	sm.PDF			  = 1;
 
-	p.Ng = (directionMatrix() * n).normalized();
-	Projection::tangent_frame(p.Ng, p.Nx, p.Ny);
+	sm.Point.Ng = (directionMatrix() * n).normalized();
+	Projection::tangent_frame(sm.Point.Ng, sm.Point.Nx, sm.Point.Ny);
 
-	p.P						 = transform() * (n * mRadius);
-	const Eigen::Vector2f uv = Projection::sphereUV(p.Ng);
-	p.UVW					 = Eigen::Vector3f(uv(0), uv(1), 0);
-	p.Material				 = material().get();
+	sm.Point.P				 = transform() * (n * mRadius);
+	const Eigen::Vector2f uv = Projection::sphereUV(sm.Point.Ng);
+	sm.Point.UVW			 = Eigen::Vector3f(uv(0), uv(1), 0);
+	sm.Point.Material		 = material().get();
 
-	return p;
+	return sm;
 }
 
 void SphereEntity::setup(RenderContext* context)

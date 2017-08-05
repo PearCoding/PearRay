@@ -19,14 +19,14 @@ DistantLight::~DistantLight()
 {
 }
 
-Eigen::Vector3f DistantLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+IInfiniteLight::LightSample DistantLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
 	PR_ASSERT(isFrozen(), "should be frozen.");
 
-	pdf = std::numeric_limits<float>::infinity();
-	return mSampleDirection_Cache;
-	//return Projection::tangent_align(mSampleDirection_Cache, mRight_Cache, mUp_Cache,
-	//	Projection::cos_hemi(PM::pm_GetX(rnd), PM::pm_GetY(rnd), 32, pdf));
+	IInfiniteLight::LightSample ls;
+	ls.PDF = std::numeric_limits<float>::infinity();
+	ls.L = mSampleDirection_Cache;
+	return ls;
 }
 
 Spectrum DistantLight::apply(const Eigen::Vector3f& V)

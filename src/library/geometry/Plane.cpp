@@ -95,38 +95,43 @@ bool Plane::contains(const Eigen::Vector3f& point) const
 	return false;
 }
 
-bool Plane::intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t, float& u, float& v) const
+Plane::Intersection Plane::intersects(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
 
+	Plane::Intersection r;
 	float ln = ray.direction().dot(mNormal_Cache);
 	float pn = (mPosition - ray.origin()).dot(mNormal_Cache);
 
+	r.Successful = false;
 	if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON) // Parallel or on the plane
 	{
-		return false;
+		return r;
 	} else {
-		t = pn / ln;
+		r.T = pn / ln;
 
-		if (t < PR_PLANE_INTERSECT_EPSILON) {
-			return false;
+		if (r.T < PR_PLANE_INTERSECT_EPSILON) {
+			return r;
 		} else {
-			collisionPoint = ray.origin() + ray.direction() * t;
-			project(collisionPoint, u, v);
+			r.Position = ray.origin() + ray.direction() * r.T;
+			r.UV	= project(r.Position);
 
-			if (v >= 0 && v <= 1 && u >= 0 && u <= 1)
-				return true;
+			if (r.UV.x() >= 0 && r.UV.x() <= 1 && r.UV.y() >= 0 && r.UV.y() <= 1) {
+				r.Successful = true;
+				return r;
+			}
 		}
-		return false;
+		return r;
 	}
 }
 
-void Plane::project(const Eigen::Vector3f& point, float& u, float& v) const
+Eigen::Vector2f Plane::project(const Eigen::Vector3f& point) const
 {
 	PR_GUARD_PROFILE();
 
 	Eigen::Vector3f p = point - mPosition;
-	u				  = mXAxis.dot(p) * mInvXLenSqr_Cache;
-	v				  = mYAxis.dot(p) * mInvYLenSqr_Cache;
+	return Eigen::Vector2f(
+		mXAxis.dot(p) * mInvXLenSqr_Cache,
+		mYAxis.dot(p) * mInvYLenSqr_Cache);
 }
 }

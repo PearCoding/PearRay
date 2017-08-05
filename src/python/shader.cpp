@@ -1,8 +1,7 @@
 #include "material/Material.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
 #include "shader/ShaderOutput.h"
-#include <boost/python.hpp>
 
 // Implementations
 #include "shader/ConstScalarOutput.h"
@@ -12,168 +11,114 @@
 #include "shader/ImageSpectralOutput.h"
 #include "shader/ImageVectorOutput.h"
 
-#include "npmath.h"
+#include "pypearray.h"
 
 using namespace PR;
-namespace bpy = boost::python;
-namespace np  = boost::python::numpy;
-
 namespace PRPY {
-#define ATTR(name)                                                           \
-	inline np::ndarray get##name##_Py() const { return vec3ToPython(name); } \
-	inline void set##name##_Py(const np::ndarray& v) { name = vec3FromPython(v); }
 
-#define PROB_FS(name) \
-	.add_property(PR_STRINGIFY(name), &FSWrap::get##name##_Py, &FSWrap::set##name##_Py)
-
-#define PROB_SC(name) \
-	.add_property(PR_STRINGIFY(name), &SCWrap::get##name##_Py, &SCWrap::set##name##_Py)
-
-class FSWrap : public FaceSample, public bpy::wrapper<FaceSample> {
-public:
-	FSWrap()
-		: FaceSample()
-	{
-	}
-	FSWrap(const boost::reference_wrapper<const FaceSample>::type& other)
-		: FaceSample(other)
-	{
-	}
-
-	ATTR(P)
-	ATTR(dPdX) ATTR(dPdY) ATTR(dPdZ)
-		ATTR(dPdU) ATTR(dPdV) ATTR(dPdW) ATTR(dPdT)
-			ATTR(Ng) ATTR(Nx) ATTR(Ny)
-				ATTR(UVW) ATTR(dUVWdX) ATTR(dUVWdY) ATTR(dUVWdZ)
-
-					inline PR::Material* material_Py() const
-	{
-		return Material;
-	}
-	inline void setMaterial_Py(PR::Material* m) { Material = m; }
-};
-
-class SCWrap : public ShaderClosure, public bpy::wrapper<ShaderClosure> {
-public:
-	SCWrap()
-		: ShaderClosure()
-	{
-	}
-	SCWrap(const boost::reference_wrapper<const ShaderClosure>::type& other)
-		: ShaderClosure(other)
-	{
-	}
-
-	ATTR(P)
-	ATTR(dPdX) ATTR(dPdY) ATTR(dPdZ)
-		ATTR(dPdU) ATTR(dPdV) ATTR(dPdW) ATTR(dPdT)
-			ATTR(V) ATTR(dVdX) ATTR(dVdY)
-				ATTR(N) ATTR(Ng) ATTR(Nx) ATTR(Ny)
-					ATTR(UVW) ATTR(dUVWdX) ATTR(dUVWdY) ATTR(dUVWdZ)
-
-						inline PR::Material* material_Py() const
-	{
-		return Material;
-	}
-	inline void setMaterial_Py(PR::Material* m) { Material = m; }
-};
-
-class ScalarShaderOutputWrap : public ScalarShaderOutput, public bpy::wrapper<ScalarShaderOutput> {
+class ScalarShaderOutputWrap : public ScalarShaderOutput {
 public:
 	float eval(const ShaderClosure& point) override
 	{
-		return this->get_override("eval")(point);
+		PYBIND11_OVERLOAD_PURE(float, ScalarShaderOutput, eval, point);
 	}
 };
 
-class SpectralShaderOutputWrap : public SpectralShaderOutput, public bpy::wrapper<SpectralShaderOutput> {
+class SpectralShaderOutputWrap : public SpectralShaderOutput {
 public:
 	Spectrum eval(const ShaderClosure& point) override
 	{
-		return this->get_override("eval")(point);
+		PYBIND11_OVERLOAD_PURE(Spectrum, SpectralShaderOutput, eval, point);
 	}
 };
 
-class VectorShaderOutputWrap : public VectorShaderOutput, public bpy::wrapper<VectorShaderOutput> {
+class VectorShaderOutputWrap : public VectorShaderOutput {
 public:
 	Eigen::Vector3f eval(const ShaderClosure& point) override
 	{
-		return vec3FromPython(eval_Py(point));
-	}
-
-	np::ndarray eval_Py(const ShaderClosure& point)
-	{
-		return this->get_override("eval")(point);
+		PYBIND11_OVERLOAD_PURE(Eigen::Vector3f, VectorShaderOutput, eval, point);
 	}
 };
 
-class ConstVectorShaderOutputWrap : public ConstVectorShaderOutput, public bpy::wrapper<ConstVectorShaderOutput> {
-public:
-	ConstVectorShaderOutputWrap(const np::ndarray& array)
-		: ConstVectorShaderOutput(vec3FromPython(array))
-	{
-	}
-};
-
-void setup_shader()
+void setup_shader(py::module& m)
 {
-	bpy::class_<FSWrap>("FaceSample")
-		PROB_FS(P) PROB_FS(dPdX) PROB_FS(dPdY) PROB_FS(dPdZ)
-			PROB_FS(dPdU) PROB_FS(dPdV) PROB_FS(dPdW) PROB_FS(dPdT)
-				PROB_FS(Ng) PROB_FS(Nx) PROB_FS(Ny)
-					PROB_FS(UVW) PROB_FS(dUVWdX) PROB_FS(dUVWdY) PROB_FS(dUVWdZ)
-						.add_property("Material",
-									  bpy::make_function(&FSWrap::material_Py, bpy::return_internal_reference<>()),
-									  &FSWrap::setMaterial_Py);
+	py::class_<FacePoint>(m, "FacePoint")
+		.def_readwrite("P", &FacePoint::P)
+		.def_readwrite("dPdX", &FacePoint::dPdX)
+		.def_readwrite("dPdY", &FacePoint::dPdY)
+		.def_readwrite("dPdZ", &FacePoint::dPdZ)
+		.def_readwrite("dPdU", &FacePoint::dPdU)
+		.def_readwrite("dPdV", &FacePoint::dPdV)
+		.def_readwrite("dPdW", &FacePoint::dPdW)
+		.def_readwrite("dPdT", &FacePoint::dPdT)
+		.def_readwrite("Ng", &FacePoint::Ng)
+		.def_readwrite("Nx", &FacePoint::Nx)
+		.def_readwrite("Ny", &FacePoint::Ny)
+		.def_readwrite("UVW", &FacePoint::UVW)
+		.def_readwrite("dUVWdX", &FacePoint::dUVWdX)
+		.def_readwrite("dUVWdY", &FacePoint::dUVWdY)
+		.def_readwrite("dUVWdZ", &FacePoint::dUVWdZ)
+		.def_readwrite("Material", &FacePoint::Material);
 
-	bpy::class_<SCWrap>("ShaderClosure")
-		PROB_SC(P) PROB_SC(dPdX) PROB_SC(dPdY) PROB_SC(dPdZ)
-			PROB_SC(dPdU) PROB_SC(dPdV) PROB_SC(dPdW) PROB_SC(dPdT)
-				PROB_SC(V) PROB_SC(dVdX) PROB_SC(dVdY)
-					PROB_SC(N) PROB_SC(Ng) PROB_SC(Nx) PROB_SC(Ny)
-						PROB_SC(UVW) PROB_SC(dUVWdX) PROB_SC(dUVWdY) PROB_SC(dUVWdZ)
-							.def_readwrite("T", &ShaderClosure::T)
-							.def_readwrite("WavelengthIndex", &ShaderClosure::WavelengthIndex)
-							.def_readwrite("Depth2", &ShaderClosure::Depth2)
-							.def_readwrite("NgdotV", &ShaderClosure::NgdotV)
-							.def_readwrite("NdotV", &ShaderClosure::NdotV)
-							.def_readwrite("Flags", &ShaderClosure::Flags)
-							.def_readwrite("EntityID", &ShaderClosure::EntityID)
-							.add_property("Material",
-										  bpy::make_function(&SCWrap::material_Py, bpy::return_internal_reference<>()),
-										  &SCWrap::setMaterial_Py);
+	py::class_<ShaderClosure>(m, "ShaderClosure")
+		.def_readwrite("P", &ShaderClosure::P)
+		.def_readwrite("dPdX", &ShaderClosure::dPdX)
+		.def_readwrite("dPdY", &ShaderClosure::dPdY)
+		.def_readwrite("dPdZ", &ShaderClosure::dPdZ)
+		.def_readwrite("dPdU", &ShaderClosure::dPdU)
+		.def_readwrite("dPdV", &ShaderClosure::dPdV)
+		.def_readwrite("dPdW", &ShaderClosure::dPdW)
+		.def_readwrite("dPdT", &ShaderClosure::dPdT)
+		.def_readwrite("V", &ShaderClosure::V)
+		.def_readwrite("dVdX", &ShaderClosure::dVdX)
+		.def_readwrite("dVdY", &ShaderClosure::dVdX)
+		.def_readwrite("N", &ShaderClosure::N)
+		.def_readwrite("Ng", &ShaderClosure::Ng)
+		.def_readwrite("Nx", &ShaderClosure::Nx)
+		.def_readwrite("Ny", &ShaderClosure::Ny)
+		.def_readwrite("UVW", &ShaderClosure::UVW)
+		.def_readwrite("dUVWdX", &ShaderClosure::dUVWdX)
+		.def_readwrite("dUVWdY", &ShaderClosure::dUVWdY)
+		.def_readwrite("dUVWdZ", &ShaderClosure::dUVWdZ)
+		.def_readwrite("T", &ShaderClosure::T)
+		.def_readwrite("WavelengthIndex", &ShaderClosure::WavelengthIndex)
+		.def_readwrite("Depth2", &ShaderClosure::Depth2)
+		.def_readwrite("NgdotV", &ShaderClosure::NgdotV)
+		.def_readwrite("NdotV", &ShaderClosure::NdotV)
+		.def_readwrite("Flags", &ShaderClosure::Flags)
+		.def_readwrite("EntityID", &ShaderClosure::EntityID)
+		.def_readwrite("Material", &ShaderClosure::Material);
 
-	bpy::enum_<ShaderClosureFlags>("ShaderClosureFlags")
+	py::enum_<ShaderClosureFlags>(m, "ShaderClosureFlags")
 		.value("INSIDE", SCF_Inside);
 
-	bpy::class_<ScalarShaderOutputWrap, std::shared_ptr<ScalarShaderOutputWrap>, boost::noncopyable>("ScalarShaderOutput")
-		.def("eval", bpy::pure_virtual(&ScalarShaderOutput::eval));
+	py::class_<ScalarShaderOutput, ScalarShaderOutputWrap, std::shared_ptr<ScalarShaderOutput>>(m, "ScalarShaderOutput")
+		.def("eval", &ScalarShaderOutput::eval);
 
-	bpy::class_<SpectralShaderOutputWrap, std::shared_ptr<SpectralShaderOutputWrap>, boost::noncopyable>("SpectralShaderOutput")
-		.def("eval", bpy::pure_virtual(&SpectralShaderOutput::eval));
+	py::class_<SpectralShaderOutput, SpectralShaderOutputWrap, std::shared_ptr<SpectralShaderOutput>>(m, "SpectralShaderOutput")
+		.def("eval", &SpectralShaderOutput::eval);
 
-	bpy::class_<VectorShaderOutputWrap, std::shared_ptr<VectorShaderOutputWrap>, boost::noncopyable>("VectorShaderOutput")
-		.def("eval", bpy::pure_virtual(&VectorShaderOutputWrap::eval_Py));
-
-	bpy::register_ptr_to_python<std::shared_ptr<ScalarShaderOutput>>();
-	bpy::register_ptr_to_python<std::shared_ptr<SpectralShaderOutput>>();
-	bpy::register_ptr_to_python<std::shared_ptr<VectorShaderOutput>>();
+	py::class_<VectorShaderOutput, VectorShaderOutputWrap, std::shared_ptr<VectorShaderOutput>>(m, "VectorShaderOutput")
+		.def("eval", &VectorShaderOutput::eval);
 
 	// Implementations
-	bpy::class_<ConstScalarShaderOutput, std::shared_ptr<ConstScalarShaderOutput>, bpy::bases<ScalarShaderOutput>, boost::noncopyable>("ConstScalarShaderOutput", bpy::init<float>());
-	bpy::implicitly_convertible<std::shared_ptr<ConstScalarShaderOutput>, std::shared_ptr<ScalarShaderOutput>>();
-	bpy::class_<ConstSpectralShaderOutput, std::shared_ptr<ConstSpectralShaderOutput>, bpy::bases<SpectralShaderOutput>, boost::noncopyable>("ConstSpectralShaderOutput", bpy::init<const PR::Spectrum&>());
-	bpy::implicitly_convertible<std::shared_ptr<ConstSpectralShaderOutput>, std::shared_ptr<SpectralShaderOutput>>();
-	bpy::class_<ConstVectorShaderOutputWrap, std::shared_ptr<ConstVectorShaderOutputWrap>, bpy::bases<VectorShaderOutput>, boost::noncopyable>("ConstVectorShaderOutput", bpy::init<const np::ndarray&>());
-	bpy::implicitly_convertible<std::shared_ptr<ConstVectorShaderOutputWrap>, std::shared_ptr<VectorShaderOutput>>();
-	// bpy::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, bpy::bases<ScalarShaderOutput>, boost::noncopyable >
-	//     ("ImageScalarOutput", bpy::init<float>())
+	py::class_<ConstScalarShaderOutput, ScalarShaderOutput, std::shared_ptr<ConstScalarShaderOutput>>(m, "ConstScalarShaderOutput")
+		.def(py::init<float>());
+
+	py::class_<ConstSpectralShaderOutput, SpectralShaderOutput, std::shared_ptr<ConstSpectralShaderOutput>>(m, "ConstSpectralShaderOutput")
+		.def(py::init<const Spectrum&>());
+
+	py::class_<ConstVectorShaderOutput, VectorShaderOutput, std::shared_ptr<ConstVectorShaderOutput>>(m, "ConstVectorShaderOutput")
+		.def(py::init<const Eigen::Vector3f&>());
+
+	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarShaderOutput >
+	//     ("ImageScalarOutput", py::init<float>())
 	// ;
-	// bpy::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, bpy::bases<SpectralShaderOutput>, boost::noncopyable >
-	//     ("ImageSpectralOutput", bpy::init<const PR::Spectrum&>())
+	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectralShaderOutput >
+	//     ("ImageSpectralOutput", py::init<const PR::Spectrum&>())
 	// ;
-	// bpy::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, bpy::bases<VectorShaderOutput>, boost::noncopyable >
-	//     ("ImageVectorOutput", bpy::init<const Eigen::Vector3f&>())
+	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorShaderOutput >
+	//     ("ImageVectorOutput", py::init<const Eigen::Vector3f&>())
 	// ;
 }
 }

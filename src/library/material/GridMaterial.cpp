@@ -97,18 +97,17 @@ float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, fl
 	return 0;
 }
 
-Eigen::Vector3f GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->sample(pointN, rnd, pdf);
+		return mFirst->sample(pointN, rnd);
 	else if (mSecond)
-		return mSecond->sample(pointN, rnd, pdf);
+		return mSecond->sample(pointN, rnd);
 
-	pdf = 0;
-	return Eigen::Vector3f(0, 0, 0);
+	return MaterialSample();
 }
 
 std::string GridMaterial::dumpInformation() const

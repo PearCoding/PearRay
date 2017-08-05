@@ -2,13 +2,15 @@
 
 #include "Entity.h"
 #include "geometry/BoundingBox.h"
+#include "shader/FacePoint.h"
 
 namespace PR {
 class Material;
 class Ray;
 class RenderContext;
-struct FaceSample;
+struct FacePoint;
 class Sampler;
+
 class PR_LIB RenderEntity : public Entity {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -27,11 +29,19 @@ public:
 	virtual BoundingBox localBoundingBox() const = 0;
 	inline BoundingBox worldBoundingBox() const;
 
+	struct Collision {
+		bool Successful;
+		FacePoint Point;
+	};
 	// In world coords
-	virtual bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const = 0;
+	virtual Collision checkCollision(const Ray& ray) const = 0;
 
+	struct FacePointSample {
+		float PDF;
+		FacePoint Point;
+	};
 	// In world coords
-	virtual FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const = 0;
+	virtual FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const = 0;
 
 	// Entity
 	void onFreeze() override;

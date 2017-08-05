@@ -13,7 +13,7 @@ public:
 	static void convert(const float* src, float& x, float& y);
 	static inline void convert(const Spectrum& s, float& x, float& y)
 	{
-		convert(s.ptr(), x, y);
+		convert(s.c_ptr(), x, y);
 	}
 
 	static float luminance(float x, float y, float z) { return y; }
@@ -22,7 +22,7 @@ public:
 	static void convertXYZ(const float* src, float& X, float& Y, float& Z);
 	static inline void convertXYZ(const Spectrum& s, float& X, float& Y, float& Z)
 	{
-		convertXYZ(s.ptr(), X, Y, Z);
+		convertXYZ(s.c_ptr(), X, Y, Z);
 	}
 
 	static void toNorm(float X, float Y, float Z, float& x, float& y)

@@ -36,11 +36,12 @@ float DiffuseMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L,
 	return Projection::cos_hemi_pdf(NdotL);
 }
 
-Eigen::Vector3f DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+MaterialSample DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
-	auto dir = Projection::tangent_align(point.N, point.Nx, point.Ny,
-										 Projection::cos_hemi(rnd(0), rnd(1), pdf));
-	return dir;
+	MaterialSample ms;
+	ms.L = Projection::tangent_align(point.N, point.Nx, point.Ny,
+										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF));
+	return ms;
 }
 
 std::string DiffuseMaterial::dumpInformation() const

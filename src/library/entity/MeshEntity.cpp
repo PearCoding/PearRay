@@ -4,7 +4,7 @@
 #include "geometry/TriMesh.h"
 #include "geometry/Triangle.h"
 #include "material/Material.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 
 #include "math/Projection.h"
 
@@ -113,7 +113,7 @@ BoundingBox MeshEntity::localBoundingBox() const
 	return mMesh->boundingBox();
 }
 
-bool MeshEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
 
@@ -122,33 +122,39 @@ bool MeshEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) cons
 	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
-	Face* f = mMesh->checkCollision(local, collisionPoint);
-	if (f) {
-		collisionPoint.P  = transform() * collisionPoint.P;
-		collisionPoint.Ng = (directionMatrix() * collisionPoint.Ng).normalized();
-		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+	TriMesh::Collision cm = mMesh->checkCollision(local);
+	RenderEntity::Collision c;
+	c.Successful = cm.Successful;
 
-		collisionPoint.Material = material(f->MaterialSlot).get();
+	if (cm.Successful) {
+		c.Point.P  = transform() * cm.Point.P;
+		c.Point.Ng = (directionMatrix() * cm.Point.Ng).normalized();
+		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
-		return true;
+		c.Point.Material = material(cm.Ptr->MaterialSlot).get();
+
+		return c;
 	} else {
-		return false;
+		return c;
 	}
 }
 
-FaceSample MeshEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+RenderEntity::FacePointSample MeshEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
 {
 	PR_GUARD_PROFILE();
 
-	uint32 material_slot;
-	FaceSample point = mMesh->getRandomFacePoint(sampler, sample, material_slot, pdf);
-	point.Ng		 = (directionMatrix() * point.Ng).normalized();
-	point.P			 = transform() * point.P;
-	Projection::tangent_frame(point.Ng, point.Nx, point.Ny);
+	TriMesh::FacePointSample sm = mMesh->sampleFacePoint(sampler, sample);
+	RenderEntity::FacePointSample s;
 
-	point.Material = material(material_slot).get();
+	s.Point	= sm.Point;
+	s.Point.Ng = (directionMatrix() * s.Point.Ng).normalized();
+	s.Point.P  = transform() * s.Point.P;
+	Projection::tangent_frame(s.Point.Ng, s.Point.Nx, s.Point.Ny);
 
-	return point;
+	s.Point.Material = material(sm.MaterialSlot).get();
+	s.PDF			 = sm.PDF;
+
+	return s;
 }
 
 void MeshEntity::onFreeze()

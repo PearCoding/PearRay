@@ -1,7 +1,7 @@
 #include "BoundaryEntity.h"
 #include "geometry/Plane.h"
 #include "ray/Ray.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 
 #include "material/Material.h"
 #include "math/Projection.h"
@@ -75,7 +75,7 @@ BoundingBox BoundaryEntity::localBoundingBox() const
 	return mBoundingBox;
 }
 
-bool BoundaryEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
 
@@ -85,26 +85,28 @@ bool BoundaryEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) 
 	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
+	RenderEntity::Collision c;
 	BoundingBox box = localBoundingBox();
-	float t;
-	BoundingBox::FaceSide side;
-	if (box.intersects(local, vertex, t, side)) {
-		collisionPoint.P = transform() * vertex;
+	BoundingBox::Intersection in = box.intersects(local);
+	c.Successful = in.Successful;
 
-		Plane plane		  = box.getFace(side);
-		collisionPoint.Ng = (directionMatrix() * plane.normal()).normalized();
-		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+	if (in.Successful) {
+		c.Point.P = transform() * in.Position;
 
-		float u, v;
-		plane.project(vertex, u, v);
-		collisionPoint.UVW		= Eigen::Vector3f(u, v, 0);
-		collisionPoint.Material = material().get();
-		return true;
+		Plane plane = box.getFace(box.getIntersectionSide(in));
+		c.Point.Ng  = (directionMatrix() * plane.normal()).normalized();
+		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
+
+		Eigen::Vector2f uv = plane.project(in.Position);
+		c.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
+		c.Point.Material = material().get();
+		return c;
 	}
-	return false;
+
+	return c;
 }
 
-FaceSample BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
 {
 	PR_GUARD_PROFILE();
 
@@ -114,15 +116,15 @@ FaceSample BoundaryEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, f
 	BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(ret(0), 0, 5);
 	Plane plane				   = localBoundingBox().getFace(side);
 
-	FaceSample fp;
-	fp.P  = transform() * (plane.xAxis() * ret(1) + plane.yAxis() * ret(2));
-	fp.Ng = (directionMatrix() * plane.normal()).normalized();
-	Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
-	fp.UVW		= Eigen::Vector3f(ret(1), ret(2), 0);
-	fp.Material = material().get();
+	RenderEntity::FacePointSample r;
+	r.Point.P  = transform() * (plane.xAxis() * ret(1) + plane.yAxis() * ret(2));
+	r.Point.Ng = (directionMatrix() * plane.normal()).normalized();
+	Projection::tangent_frame(r.Point.Ng, r.Point.Nx, r.Point.Ny);
+	r.Point.UVW		= Eigen::Vector3f(ret(1), ret(2), 0);
+	r.Point.Material = material().get();
 
-	pdf = 1;
-	return fp;
+	r.PDF = 1;
+	return r;
 }
 
 // Entity

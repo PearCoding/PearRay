@@ -8,6 +8,13 @@ class RenderEntity;
 struct ShaderClosure;
 class Ray;
 class RenderContext;
+
+struct MaterialSample {
+	float PDF{0};
+	float Weight{0};
+	Eigen::Vector3f L;
+};
+
 class PR_LIB Material {
 public:
 	explicit Material(uint32 id);
@@ -26,15 +33,16 @@ public:
 	/*
 		 Sample a direction based on the uniform rnd value. (Roussian Roulette)
 		*/
-	virtual Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) = 0;
+	virtual MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) = 0;
 
 	/*
 		 Sample a direction based on the uniform rnd value. (Non roussian roulette)
 		*/
-	virtual Eigen::Vector3f samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
+	virtual MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
 	{
-		path_weight = 1;
-		return sample(point, rnd, pdf);
+		MaterialSample s = sample(point, rnd);
+		s.Weight		 = 1;
+		return s;
 	}
 
 	/*

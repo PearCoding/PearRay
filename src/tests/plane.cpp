@@ -66,13 +66,10 @@ PR_TEST("Intersects 1")
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0), Eigen::Vector3f(0, 1, 0));
 	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0.5, 0.5, -1), Eigen::Vector3f(0, 0, 1));
 
-	Eigen::Vector3f point;
-	float u, v;
-	float t;
-	PR_CHECK_TRUE(plane.intersects(ray, point, t, u, v));
-	PR_CHECK_NEARLY_EQ(point, Eigen::Vector3f(0.5, 0.5, 0));
-	PR_CHECK_NEARLY_EQ(u, 0.5);
-	PR_CHECK_NEARLY_EQ(v, 0.5);
+	Plane::Intersection s = plane.intersects(ray);
+	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_NEARLY_EQ(s.Position, Eigen::Vector3f(0.5, 0.5, 0));
+	PR_CHECK_NEARLY_EQ(s.UV, Eigen::Vector2f(0.5, 0.5));
 }
 
 PR_TEST("Intersects 2")
@@ -80,9 +77,8 @@ PR_TEST("Intersects 2")
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0), Eigen::Vector3f(0, 1, 0));
 	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0.5, 0.5, -1), Eigen::Vector3f(0, 1, 0));
 
-	Eigen::Vector3f point;
-	float u, v, t;
-	PR_CHECK_FALSE(plane.intersects(ray, point, t, u, v));
+	Plane::Intersection s = plane.intersects(ray);
+	PR_CHECK_FALSE(s.Successful);
 }
 
 PR_TEST("Intersects 3")
@@ -90,12 +86,10 @@ PR_TEST("Intersects 3")
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(10, 0, 0), Eigen::Vector3f(0, 10, 0));
 	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(5, 5, -1), Eigen::Vector3f(0, 0, 1));
 
-	Eigen::Vector3f point;
-	float u, v, t;
-	PR_CHECK_TRUE(plane.intersects(ray, point, t, u, v));
-	PR_CHECK_NEARLY_EQ(point, Eigen::Vector3f(5, 5, 0));
-	PR_CHECK_NEARLY_EQ(u, 0.5);
-	PR_CHECK_NEARLY_EQ(v, 0.5);
+	Plane::Intersection s = plane.intersects(ray);
+	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_NEARLY_EQ(s.Position, Eigen::Vector3f(5, 5, 0));
+	PR_CHECK_NEARLY_EQ(s.UV, Eigen::Vector2f(0.5, 0.5));
 }
 
 PR_TEST("Intersects 4")
@@ -103,12 +97,10 @@ PR_TEST("Intersects 4")
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(10, 0, 0), Eigen::Vector3f(0, 20, 0));
 	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(5, 10, -1), Eigen::Vector3f(0, 0, 1));
 
-	Eigen::Vector3f point;
-	float u, v, t;
-	PR_CHECK_TRUE(plane.intersects(ray, point, t, u, v));
-	PR_CHECK_NEARLY_EQ(point, Eigen::Vector3f(5, 10, 0));
-	PR_CHECK_NEARLY_EQ(u, 0.5);
-	PR_CHECK_NEARLY_EQ(v, 0.5);
+	Plane::Intersection s = plane.intersects(ray);
+	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_NEARLY_EQ(s.Position, Eigen::Vector3f(5, 10, 0));
+	PR_CHECK_NEARLY_EQ(s.UV, Eigen::Vector2f(0.5, 0.5));
 }
 
 PR_END_TESTCASE()

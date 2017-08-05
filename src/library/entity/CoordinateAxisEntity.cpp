@@ -1,7 +1,7 @@
 #include "CoordinateAxisEntity.h"
 #include "geometry/Plane.h"
 #include "ray/Ray.h"
-#include "shader/FaceSample.h"
+#include "shader/FacePoint.h"
 
 #include "material/Material.h"
 #include "math/Projection.h"
@@ -114,7 +114,7 @@ BoundingBox CoordinateAxisEntity::localBoundingBox() const
 	return mBoundingBox_Cache;
 }
 
-bool CoordinateAxisEntity::checkCollision(const Ray& ray, FaceSample& collisionPoint) const
+RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen")
 	PR_GUARD_PROFILE();
@@ -129,38 +129,37 @@ bool CoordinateAxisEntity::checkCollision(const Ray& ray, FaceSample& collisionP
 	BoundingBox::FaceSide side;
 
 	for (int i = 0; i < 3; ++i) {
-		float tmp;
-		Eigen::Vector3f tmpVertex;
-		BoundingBox::FaceSide tmpSide;
-		if (mAxisBoundingBox_Cache[i].intersects(local, tmpVertex, tmp, tmpSide)) {
-			if (tmp > 0 && tmp < t) {
-				t	  = tmp;
-				found  = i;
-				vertex = tmpVertex;
-				side   = tmpSide;
-			}
+		BoundingBox::Intersection in = mAxisBoundingBox_Cache[i].intersects(local);
+		if (in.Successful && in.T > 0 && in.T < t) {
+			t	  = in.T;
+			found  = i;
+			vertex = in.Position;
+			side   = mAxisBoundingBox_Cache[i].getIntersectionSide(in);
 		}
 	}
 
+	RenderEntity::Collision c;
 	if (found >= 0) {
 		PR_ASSERT(found < 3, "found can't be greater than 2");
 
-		collisionPoint.P = transform() * vertex;
+		c.Point.P = transform() * vertex;
 
-		Plane plane		  = mAxisBoundingBox_Cache[found].getFace(side);
-		collisionPoint.Ng = (directionMatrix() * plane.normal()).normalized();
-		Projection::tangent_frame(collisionPoint.Ng, collisionPoint.Nx, collisionPoint.Ny);
+		Plane plane = mAxisBoundingBox_Cache[found].getFace(side);
+		c.Point.Ng  = (directionMatrix() * plane.normal()).normalized();
+		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
-		float u, v;
-		plane.project(vertex, u, v);
-		collisionPoint.UVW		= Eigen::Vector3f(u, v, 0);
-		collisionPoint.Material = mMaterials[found].get();
-		return true;
+		Eigen::Vector2f uv = plane.project(vertex);
+		c.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
+		c.Point.Material = mMaterials[found].get();
+		c.Successful	 = true;
+		return c;
 	}
-	return false;
+
+	c.Successful = false;
+	return c;
 }
 
-FaceSample CoordinateAxisEntity::getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const
+RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen")
 	PR_GUARD_PROFILE();
@@ -175,15 +174,15 @@ FaceSample CoordinateAxisEntity::getRandomFacePoint(Sampler& sampler, uint32 sam
 	BoundingBox::FaceSide side = (BoundingBox::FaceSide)(proj % 6);
 	Plane plane				   = mAxisBoundingBox_Cache[elem].getFace(side);
 
-	FaceSample fp;
-	fp.P  = transform() * (plane.xAxis() * ret(1) + plane.yAxis() * ret(2));
-	fp.Ng = (directionMatrix() * plane.normal()).normalized();
-	Projection::tangent_frame(fp.Ng, fp.Nx, fp.Ny);
-	fp.UVW		= Eigen::Vector3f(ret(1), ret(2), 0);
-	fp.Material = mMaterials[elem].get();
+	RenderEntity::FacePointSample r;
+	r.Point.P  = transform() * (plane.xAxis() * ret(1) + plane.yAxis() * ret(2));
+	r.Point.Ng = (directionMatrix() * plane.normal()).normalized();
+	Projection::tangent_frame(r.Point.Ng, r.Point.Nx, r.Point.Ny);
+	r.Point.UVW		 = Eigen::Vector3f(ret(1), ret(2), 0);
+	r.Point.Material = mMaterials[elem].get();
 
-	pdf = 1;
-	return fp;
+	r.PDF = 1;
+	return r;
 }
 
 void CoordinateAxisEntity::setup_cache() const

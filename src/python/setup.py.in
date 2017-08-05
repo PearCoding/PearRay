@@ -5,6 +5,6 @@ setup(name='pearray',
       version='${PR_Version}',
       package_dir={'': '${CMAKE_CURRENT_BINARY_DIR}' },
       packages=['pearray'],
-      package_data={'pearray': ['pypearray.so']})
+      package_data={'pearray': ['${PYTHON_MODULE_PREFIX}pypearray${PYTHON_MODULE_EXTENSION}']})
 
 

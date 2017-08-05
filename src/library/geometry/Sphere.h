@@ -35,7 +35,12 @@ public:
 		return (mPosition - point).squaredNorm() <= mRadius * mRadius;
 	}
 
-	bool intersects(const Ray& ray, Eigen::Vector3f& collisionPoint, float& t) const;
+	struct Intersection {
+		bool Successful;
+		Eigen::Vector3f Position;
+		float T;
+	};
+	Intersection intersects(const Ray& ray) const;
 
 	void combine(const Eigen::Vector3f& point);
 	void combine(const Sphere& other);

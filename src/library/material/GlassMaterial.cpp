@@ -67,7 +67,7 @@ float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, f
 	return std::numeric_limits<float>::infinity();
 }
 
-Eigen::Vector3f GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
 	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
 	float weight	= (point.Flags & SCF_Inside) == 0 ?
@@ -80,24 +80,25 @@ Eigen::Vector3f GlassMaterial::sample(const ShaderClosure& point, const Eigen::V
 #endif
 
 	bool total = false;
-	Eigen::Vector3f dir;
+	MaterialSample ms;
 	if (rnd(1) < weight) {
-		dir = Reflection::reflect(point.NdotV, point.N, point.V);
+		ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	} else {
-		dir = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
+		ms.L = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
 								  point.NdotV, point.N, point.V, total);
 		if (!mThin && total)
-			dir = Reflection::reflect(point.NdotV, point.N, point.V);
+			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	}
 
-	pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
-	return dir;
+	ms.PDF = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	return ms;
 }
 
-Eigen::Vector3f GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf, float& path_weight, uint32 path)
+MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
 {
+	MaterialSample ms;
 	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
-	path_weight		= (point.Flags & SCF_Inside) == 0 ?
+	ms.Weight		= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
 												  Fresnel::dielectric(-point.NdotV, 1, ind)
 												  : Fresnel::dielectric(-point.NdotV, ind, 1);
@@ -107,19 +108,18 @@ Eigen::Vector3f GlassMaterial::samplePath(const ShaderClosure& point, const Eige
 #endif
 
 	bool total = false;
-	Eigen::Vector3f dir;
 	if (path == 0) {
-		dir = Reflection::reflect(point.NdotV, point.N, point.V);
+		ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	} else {
-		path_weight = 1 - path_weight;
-		dir			= Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
+		ms.Weight = 1 - ms.Weight;
+		ms.L			= Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
 								  point.NdotV, point.N, point.V, total);
 		if (!mThin && total)
-			dir = Reflection::reflect(point.NdotV, point.N, point.V);
+			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	}
 
-	pdf = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
-	return dir;
+	ms.PDF = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	return ms;
 }
 
 uint32 GlassMaterial::samplePathCount() const

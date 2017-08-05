@@ -1,150 +1,109 @@
-#include <boost/python.hpp>
-#include "ray/Ray.h"
-#include "material/Material.h"
-#include "shader/FaceSample.h"
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
+#include "material/Material.h"
+#include "ray/Ray.h"
 #include "sampler/Sampler.h"
+#include "shader/FacePoint.h"
 
-#include "npmath.h"
+#include "pypearray.h"
 
 using namespace PR;
-namespace bpy = boost::python;
-namespace PRPY
-{
-    class EntityWrap : public Entity, public bpy::wrapper<Entity>
+
+namespace PRPY {
+class EntityWrap : public Entity {
+public:
+	using Entity::Entity;
+
+	inline virtual void onFreeze() override
+	{
+		PYBIND11_OVERLOAD(void, Entity, onFreeze);
+	}
+};
+
+class RenderEntityWrap : public RenderEntity {
+public:
+	using RenderEntity::RenderEntity;
+
+	bool isLight() const override
+	{
+		PYBIND11_OVERLOAD_PURE(bool, RenderEntity, isLight);
+	}
+
+	float surfaceArea(Material* m) const override
+	{
+		PYBIND11_OVERLOAD_PURE(float, RenderEntity, surfaceArea, m);
+	}
+
+	bool isCollidable() const override
+	{
+		PYBIND11_OVERLOAD(bool, RenderEntity, isCollidable);
+	}
+
+	float collisionCost() const override
+	{
+		PYBIND11_OVERLOAD(float, RenderEntity, collisionCost);
+	}
+
+	BoundingBox localBoundingBox() const override
+	{
+		PYBIND11_OVERLOAD_PURE(BoundingBox, RenderEntity, localBoundingBox);
+	}
+
+    RenderEntity::Collision checkCollision(const Ray& ray) const override
     {
-    public:
-        EntityWrap(uint32 id, const std::string& name) : Entity(id, name) {}
-
-        inline virtual void onFreeze() override
-        {
-            if (bpy::override f = this->get_override("onFreeze"))
-                f();
-            Entity::onFreeze();
-        }
-
-        PRPY_WRAP_GET_VEC3(position)
-        PRPY_WRAP_SET_VEC3(setPosition)
-
-        PRPY_WRAP_GET_VEC3(scale)
-        PRPY_WRAP_SET_VEC3(setScale)
-
-        PRPY_WRAP_GET_QUAT(rotation)
-        PRPY_WRAP_SET_QUAT(setRotation)
-
-        PRPY_WRAP_GET_AFF3(transform)
-        PRPY_WRAP_GET_AFF3(invTransform)
-
-        PRPY_WRAP_GET_MAT3(directionMatrix)
-        PRPY_WRAP_GET_MAT3(invDirectionMatrix)
-    };
-
-    class RenderEntityWrap : public RenderEntity, public bpy::wrapper<RenderEntity>
-    {
-    public:
-        RenderEntityWrap(uint32 id, const std::string& name) : RenderEntity(id, name) {}
-
-        bool isLight() const override
-        {
-            return this->get_override("isLight")();
-        }
-
-        float surfaceArea(Material* m) const override
-        {
-            return this->get_override("surfaceArea")(m);
-        }
-
-        bool isCollidable() const override
-        {
-            if(bpy::override f = this->get_override("isCollidable"))
-                return f();
-            return RenderEntity::isCollidable();
-        }
-
-        bool isCollidable_PyDef() const { return RenderEntity::isCollidable(); }
-
-        float collisionCost() const override
-        {
-            if(bpy::override f = this->get_override("collisionCost"))
-                return f();
-            return RenderEntity::collisionCost();
-        }
-
-        float collisionCost_PyDef() const { return RenderEntity::collisionCost(); }
-
-        BoundingBox localBoundingBox() const override
-        {
-            return this->get_override("localBoundingBox")();
-        }
-
-        bool checkCollision(const Ray& ray, FaceSample& collisionPoint) const override
-        {
-            bpy::tuple tpl = checkCollision_Py(ray);
-            collisionPoint = bpy::extract<FaceSample>(tpl[1]);
-            return bpy::extract<bool>(tpl[0]);
-        }
-
-        bpy::tuple checkCollision_Py(const Ray& ray) const
-        {
-            return this->get_override("checkCollision")(ray);
-        }
-
-        FaceSample getRandomFacePoint(Sampler& sampler, uint32 sample, float& pdf) const override
-        {
-            bpy::tuple tpl = getRandomFacePoint_Py(sampler, sample);
-            pdf = bpy::extract<float>(tpl[1]);
-            return bpy::extract<FaceSample>(tpl[0]);
-        }
-
-        bpy::tuple getRandomFacePoint_Py(Sampler& sampler, uint32 sample) const
-        {
-            return this->get_override("getRandomFacePoint")(sampler, sample);
-        }
-    };
-
-    void setup_entity()
-    {
-        bpy::class_<EntityWrap, std::shared_ptr<EntityWrap>, boost::noncopyable>("Entity", bpy::init<uint32, std::string>())
-        .add_property("id", &Entity::id)
-        .add_property("name", &Entity::name, &Entity::setName)
-        .add_property("type", &Entity::type)
-        .add_property("flags", &Entity::flags, &Entity::setFlags)
-        .add_property("position", &EntityWrap::position_Py, &EntityWrap::setPosition_Py)
-        .add_property("scale", &EntityWrap::scale_Py, &EntityWrap::setScale_Py)
-        .add_property("rotation", &EntityWrap::rotation_Py, &EntityWrap::setRotation_Py)
-        .add_property("transform", &EntityWrap::transform_Py)
-        .add_property("invTransform", &EntityWrap::invTransform_Py)
-        .add_property("directionMatrix", &EntityWrap::directionMatrix_Py)
-        .add_property("invDirectionMatrix", &EntityWrap::invDirectionMatrix_Py)
-        .def("__str__", &Entity::toString)
-        .def("freeze", &Entity::freeze)
-        .add_property("frozen", &Entity::isFrozen)
-        .def("onFreeze", &EntityWrap::onFreeze)
-        .def("invalidateCache", &Entity::invalidateCache)
-        .def("dumpInformation", &Entity::dumpInformation)
-        ;
-
-        bpy::enum_<EntityFlags>("EntityFlags")
-        .value("DEBUG", EF_Debug)
-        .value("LOCALAREA", EF_LocalArea)
-        .value("SCALELIGHT", EF_ScaleLight)
-        ;
-
-        bpy::class_<RenderEntityWrap, std::shared_ptr<RenderEntityWrap>, bpy::bases<Entity>, boost::noncopyable>("RenderEntity", bpy::init<uint32, std::string>())
-        .def("isLight", bpy::pure_virtual(&RenderEntity::isLight))
-        .def("surfaceArea", bpy::pure_virtual(&RenderEntity::surfaceArea))
-        .def("isCollidable", &RenderEntity::isCollidable, &RenderEntityWrap::isCollidable_PyDef)
-        .def("collisionCost", &RenderEntity::collisionCost, &RenderEntityWrap::collisionCost_PyDef)
-        .def("localBoundingBox", bpy::pure_virtual(&RenderEntity::localBoundingBox))
-        .def("worldBoundingBox", &RenderEntity::worldBoundingBox)
-        .def("checkCollision", bpy::pure_virtual(&RenderEntityWrap::checkCollision_Py))
-        .def("getRandomFacePoint", bpy::pure_virtual(&RenderEntityWrap::getRandomFacePoint_Py))
-        ;
-
-        bpy::register_ptr_to_python<std::shared_ptr<Entity> >();
-        bpy::register_ptr_to_python<std::shared_ptr<RenderEntity> >();
-        
-        bpy::implicitly_convertible<std::shared_ptr<RenderEntity>, std::shared_ptr<Entity> >();
+        PYBIND11_OVERLOAD_PURE(RenderEntity::Collision, RenderEntity, checkCollision, ray);
     }
+
+    FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const override
+    {
+        PYBIND11_OVERLOAD_PURE(FacePointSample, RenderEntity, sampleFacePoint, sampler, sample);
+    }
+};
+
+void setup_entity(py::module& m)
+{
+	py::class_<Entity, EntityWrap, std::shared_ptr<Entity>>(m, "Entity")
+		.def(py::init<uint32, std::string>())
+		.def_property_readonly("id", &Entity::id)
+		.def_property("name", &Entity::name, &Entity::setName)
+		.def_property_readonly("type", &Entity::type)
+		.def_property("flags", &Entity::flags, &Entity::setFlags)
+		.def_property("position", &Entity::position, &Entity::setPosition)
+		.def_property("scale", &Entity::scale, &Entity::setScale)
+		.def_property("rotation", &Entity::rotation, &Entity::setRotation)
+		.def_property_readonly("transform", &Entity::transform)
+		.def_property_readonly("invTransform", &Entity::invTransform)
+		.def_property_readonly("directionMatrix", &Entity::directionMatrix)
+		.def_property_readonly("invDirectionMatrix", &Entity::invDirectionMatrix)
+		.def("__str__", &Entity::toString)
+		.def("freeze", &Entity::freeze)
+		.def_property_readonly("frozen", &Entity::isFrozen)
+		.def("onFreeze", &Entity::onFreeze)
+		.def("invalidateCache", &Entity::invalidateCache)
+		.def("dumpInformation", &Entity::dumpInformation);
+
+	py::enum_<EntityFlags>(m, "EntityFlags")
+		.value("DEBUG", EF_Debug)
+		.value("LOCALAREA", EF_LocalArea)
+		.value("SCALELIGHT", EF_ScaleLight);
+
+	auto re = py::class_<RenderEntity, RenderEntityWrap, std::shared_ptr<RenderEntity>, Entity>(m, "RenderEntity");
+	re.def(py::init<uint32, std::string>())
+		.def("isLight", &RenderEntity::isLight)
+		.def("surfaceArea", &RenderEntity::surfaceArea)
+		.def("isCollidable", &RenderEntity::isCollidable)
+		.def("collisionCost", &RenderEntity::collisionCost)
+		.def("localBoundingBox", &RenderEntity::localBoundingBox)
+		.def("worldBoundingBox", &RenderEntity::worldBoundingBox)
+		.def("checkCollision", &RenderEntity::checkCollision)
+		.def("sampleFacePoint", &RenderEntity::sampleFacePoint);
+	
+	py::class_<RenderEntity::Collision>(re, "Collision")
+		.def_readwrite("Successful", &RenderEntity::Collision::Successful)
+		.def_readwrite("Point", &RenderEntity::Collision::Point);
+
+	py::class_<RenderEntity::FacePointSample>(re, "FacePointSample")
+		.def_readwrite("PDF", &RenderEntity::FacePointSample::PDF)
+		.def_readwrite("Point", &RenderEntity::FacePointSample::Point);
+}
 }

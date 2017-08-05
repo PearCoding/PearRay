@@ -19,7 +19,11 @@ public:
 	}
 	virtual ~IInfiniteLight() {}
 
-	virtual Eigen::Vector3f sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) = 0;
+	struct LightSample {
+		float PDF;
+		Eigen::Vector3f L;
+	};
+	virtual LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) = 0;
 	virtual Spectrum apply(const Eigen::Vector3f& V) = 0;
 
 	inline void freeze()
