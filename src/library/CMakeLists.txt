@@ -84,6 +84,7 @@ SET(PR_Scene_Src
   scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
 SET(PR_Spectral_Src
+  spectral/ColorBuffer.cpp
   spectral/IntensityConverter.cpp
   spectral/RGBConverter.cpp
   spectral/Spectrum.cpp
@@ -219,6 +220,7 @@ SET(PR_Scene_Hdr
   scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
 SET(PR_Spectral_Hdr
+  spectral/ColorBuffer.h
   spectral/IntensityConverter.h
   spectral/RGBConverter.h
   spectral/Spectrum.h

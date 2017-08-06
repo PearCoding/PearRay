@@ -118,7 +118,7 @@ namespace PR
 			toneMapper.setColorMode(specSett->TCM);
 			toneMapper.setGammaMode(specSett->TGM);
 			toneMapper.setMapperMode(specSett->TMM);
-			toneMapper.map(mRenderer->output()->getSpectralChannel()->ptr(), mRGBData);// RGB
+			toneMapper.map(mRenderer->output()->getSpectralChannel()->ptr(), mRGBData, 3);// RGB
 		}
 		
 		// Calculate maximums for some mapper techniques

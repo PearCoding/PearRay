@@ -43,7 +43,7 @@ ToneMapper::ToneMapper(uint32 width, uint32 height, GPU* gpu)
 #endif
 }
 
-void ToneMapper::map(const Spectrum* specIn, float* out) const
+void ToneMapper::map(const Spectrum* specIn, float* out, size_t rgbElems) const
 {
 #ifndef PR_NO_GPU
 	if (mGPU && mSize > 100) {
@@ -70,6 +70,7 @@ void ToneMapper::map(const Spectrum* specIn, float* out) const
 			cl::Kernel specKernel(mProgram, specKernelName.c_str());
 			specKernel.setArg(0, mSpecInput);
 			specKernel.setArg(1, mInbetweenBuffer);
+			specKernel.setArg(3, (cl_ulong)rgbElems);
 
 			for (size_t off = 0; off < mSize; off += mRunSize) {
 				size_t current = std::min(mSize - off, mRunSize);
@@ -88,25 +89,25 @@ void ToneMapper::map(const Spectrum* specIn, float* out) const
 				queue.finish();
 			}
 
-			stage_mapper_gpu(queue);
+			stage_mapper_gpu(queue, rgbElems);
 			queue.finish();
 
 			// Map 3: Gamma Correction
 			if (mGammaMode != TGM_None) {
 				cl::Kernel gammaKernel(mProgram, "k_gamma");
 				gammaKernel.setArg(0, mInbetweenBuffer);
-				gammaKernel.setArg(1, (cl_ulong)mSize * 3);
+				gammaKernel.setArg(1, (cl_ulong)mSize * rgbElems);
 
 				queue.enqueueNDRangeKernel(
 					gammaKernel,
 					cl::NullRange,
-					cl::NDRange(mSize * 3),
+					cl::NDRange(mSize * rgbElems),
 					cl::NullRange);
 			}
 
 			queue.finish();
 			queue.enqueueReadBuffer(mInbetweenBuffer, CL_TRUE, 0,
-									mSize * 3 * sizeof(float),
+									mSize * rgbElems * sizeof(float),
 									out);
 		} catch (const cl::Error& error) {
 			PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Error: %s (%s)", GPU::error(error.err()), error.what());
@@ -136,27 +137,27 @@ void ToneMapper::map(const Spectrum* specIn, float* out) const
 				break;
 			}
 
-			out[i * 3]	 = r;
-			out[i * 3 + 1] = g;
-			out[i * 3 + 2] = b;
+			out[i * rgbElems]	 = r;
+			out[i * rgbElems + 1] = g;
+			out[i * rgbElems + 2] = b;
 		}
 
 		// Map 2: Tone Mapping
-		stage_mapper_non_gpu(out, out);
+		stage_mapper_non_gpu(out, out, rgbElems);
 
 		// Map 3: Gamma Correction
 		if (mGammaMode != TGM_None) {
 			for (size_t i = 0; i < mSize; ++i) {
 				float r, g, b;
-				r = out[i * 3];
-				g = out[i * 3 + 1];
-				b = out[i * 3 + 2];
+				r = out[i * rgbElems];
+				g = out[i * rgbElems + 1];
+				b = out[i * rgbElems + 2];
 
 				RGBConverter::gamma(r, g, b);
 
-				out[i * 3]	 = r;
-				out[i * 3 + 1] = g;
-				out[i * 3 + 2] = b;
+				out[i * rgbElems]	 = r;
+				out[i * rgbElems + 1] = g;
+				out[i * rgbElems + 2] = b;
 			}
 		}
 #ifndef PR_NO_GPU
@@ -164,7 +165,7 @@ void ToneMapper::map(const Spectrum* specIn, float* out) const
 #endif
 }
 
-void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut) const
+void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const
 {
 #ifndef PR_NO_GPU
 	if (mGPU && mSize > 100) {
@@ -172,28 +173,28 @@ void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut) const
 			cl::CommandQueue queue(mGPU->context(), mGPU->device(), 0);
 			queue.enqueueWriteBuffer(mInbetweenBuffer, CL_TRUE,
 									 0,
-									 mSize * 3 * sizeof(float),
+									 mSize * rgbElems * sizeof(float),
 									 in);
 
-			stage_mapper_gpu(queue);
+			stage_mapper_gpu(queue, rgbElems);
 
 			queue.finish();
 			queue.enqueueReadBuffer(mInbetweenBuffer, CL_TRUE, 0,
-									mSize * 3 * sizeof(float),
+									mSize * rgbElems * sizeof(float),
 									out);
 		} catch (const cl::Error& error) {
 			PR_LOGGER.logf(L_Error, M_GPU, "OpenCL Error: %s (%s)", GPU::error(error.err()), error.what());
 		}
 	} else {
 #endif
-		stage_mapper_non_gpu(rgbIn, rgbOut);
+		stage_mapper_non_gpu(rgbIn, rgbOut, rgbElems);
 #ifndef PR_NO_GPU
 	}
 #endif
 }
 
 #ifndef PR_NO_GPU
-void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
+void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue, size_t rgbElems) const
 {
 	switch (mMapperMode) {
 	case TMM_None:
@@ -203,6 +204,7 @@ void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
 		toneKernel.setArg(0, mInbetweenBuffer);
 		toneKernel.setArg(1, (cl_ulong)mSize);
 		toneKernel.setArg(2, REINHARD_RATIO);
+		toneKernel.setArg(3, (cl_ulong)rgbElems);
 
 		queue.enqueueNDRangeKernel(
 			toneKernel,
@@ -214,9 +216,9 @@ void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
 		float max = 0.0f;
 		for (size_t i = 0; i < mSize; ++i) {
 			float r, g, b;
-			r = in[i * 3];
-			g = in[i * 3 + 1];
-			b = in[i * 3 + 2];
+			r = in[i * rgbElems];
+			g = in[i * rgbElems + 1];
+			b = in[i * rgbElems + 2];
 
 			max = std::max(r * r + g * g + b * b, max);
 		}
@@ -229,6 +231,7 @@ void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
 		toneKernel.setArg(0, mInbetweenBuffer);
 		toneKernel.setArg(1, (cl_ulong)mSize);
 		toneKernel.setArg(2, 1.0f / max);
+		toneKernel.setArg(3, (cl_ulong)rgbElems);
 
 		queue.enqueueNDRangeKernel(
 			toneKernel,
@@ -262,6 +265,7 @@ void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
 		cl::Kernel toneKernel(mProgram, kernelName.c_str());
 		toneKernel.setArg(0, mInbetweenBuffer);
 		toneKernel.setArg(1, (cl_ulong)mSize);
+		toneKernel.setArg(2, (cl_ulong)rgbElems);
 
 		queue.enqueueNDRangeKernel(
 			toneKernel,
@@ -273,15 +277,15 @@ void ToneMapper::stage_mapper_gpu(cl::CommandQueue& queue) const
 }
 #endif
 
-void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const
+void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut, size_t rgbElems) const
 {
 	float invMax = 0.0f;
 	if (mMapperMode == TMM_Normalized) {
 		for (size_t i = 0; i < mSize; ++i) {
 			float r, g, b;
-			r = rgbIn[i * 3];
-			g = rgbIn[i * 3 + 1];
-			b = rgbIn[i * 3 + 2];
+			r = rgbIn[i * rgbElems];
+			g = rgbIn[i * rgbElems + 1];
+			b = rgbIn[i * rgbElems + 2];
 
 			invMax = std::max(r * r + g * g + b * b, invMax);
 		}
@@ -295,9 +299,9 @@ void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const
 
 	for (size_t i = 0; i < mSize; ++i) {
 		float r, g, b;
-		r = rgbIn[i * 3];
-		g = rgbIn[i * 3 + 1];
-		b = rgbIn[i * 3 + 2];
+		r = rgbIn[i * rgbElems];
+		g = rgbIn[i * rgbElems + 1];
+		b = rgbIn[i * rgbElems + 2];
 
 		switch (mMapperMode) {
 		case TMM_None:
@@ -340,9 +344,9 @@ void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const
 			break;
 		}
 
-		rgbOut[i * 3]	 = r;
-		rgbOut[i * 3 + 1] = g;
-		rgbOut[i * 3 + 2] = b;
+		rgbOut[i * rgbElems]	 = r;
+		rgbOut[i * rgbElems + 1] = g;
+		rgbOut[i * rgbElems + 2] = b;
 	}
 }
 }

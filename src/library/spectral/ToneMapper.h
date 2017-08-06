@@ -40,8 +40,8 @@ public:
 		 */
 	ToneMapper(uint32 width, uint32 height, GPU* gpu);
 
-	void map(const Spectrum* specIn, float* rgbOut) const;
-	void mapOnlyMapper(const float* rgbIn, float* rgbOut) const;
+	void map(const Spectrum* specIn, float* rgbOut, size_t rgbElems) const;
+	void mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const;
 
 	// Not thread safe!
 	inline ToneColorMode colorMode() const { return mColorMode; }
@@ -73,8 +73,8 @@ private:
 	cl::Program mProgram;
 	size_t mRunSize;
 
-	void stage_mapper_gpu(cl::CommandQueue& queue) const;
+	void stage_mapper_gpu(cl::CommandQueue& queue, size_t rgbElems) const;
 #endif
-	void stage_mapper_non_gpu(const float* rgbIn, float* rgbOut) const;
+	void stage_mapper_non_gpu(const float* rgbIn, float* rgbOut, size_t rgbElems) const;
 };
 }

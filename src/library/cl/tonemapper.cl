@@ -33,18 +33,18 @@ float3 spec_to_xyz(__global const float* specs)
 	return col * (ILL_SCALE / N);
 }
 
-__kernel void k_xyz(__global const float* specs, __global float* rgb, ulong off)
+__kernel void k_xyz(__global const float* specs, __global float* rgb, ulong off, ulong elems)
 {
 	size_t id = get_global_id(0);
 
 	const float3 color = spec_to_xyz(&specs[id*SAMPLING_COUNT]);
 	id += off;
-	rgb[id*3] = color.x;
-	rgb[id*3 + 1] = color.y;
-	rgb[id*3 + 2] = color.z;
+	rgb[id*elems] = color.x;
+	rgb[id*elems + 1] = color.y;
+	rgb[id*elems + 2] = color.z;
 }
 
-__kernel void k_xyz_norm(__global const float* specs, __global float* rgb, ulong off)
+__kernel void k_xyz_norm(__global const float* specs, __global float* rgb, ulong off, ulong elems)
 {
 	size_t id = get_global_id(0);
 
@@ -52,9 +52,9 @@ __kernel void k_xyz_norm(__global const float* specs, __global float* rgb, ulong
 	const float m = 1 / (color.x + color.y + color.z + 0.000001f);
 
 	id += off;
-	rgb[id*3] = color.x * m;
-	rgb[id*3 + 1] = color.y * m;
-	rgb[id*3 + 2] = 1 - (color.x - color.y) * m;
+	rgb[id*elems] = color.x * m;
+	rgb[id*elems + 1] = color.y * m;
+	rgb[id*elems + 2] = 1 - (color.x - color.y) * m;
 }
 
 // sRGB
@@ -70,18 +70,18 @@ float3 xyz_to_srgb(float3 rgb)
 		0.055648f * X2 - 0.204043f * Y2 + 1.057311f * Z2);
 }
 
-__kernel void k_srgb(__global const float* specs, __global float* rgb, ulong off)
+__kernel void k_srgb(__global const float* specs, __global float* rgb, ulong off, ulong elems)
 {
 	size_t id = get_global_id(0);
 
 	const float3 color = xyz_to_srgb(spec_to_xyz(&specs[id*SAMPLING_COUNT]));
 	id += off;
-	rgb[id*3] = color.x;
-	rgb[id*3 + 1] = color.y;
-	rgb[id*3 + 2] = color.z;
+	rgb[id*elems] = color.x;
+	rgb[id*elems + 1] = color.y;
+	rgb[id*elems + 2] = color.z;
 }
 
-__kernel void k_lum(__global const float* specs, __global float* rgb, ulong off)
+__kernel void k_lum(__global const float* specs, __global float* rgb, ulong off, ulong elems)
 {
 	size_t id = get_global_id(0);
 
@@ -89,13 +89,13 @@ __kernel void k_lum(__global const float* specs, __global float* rgb, ulong off)
 	const float lum = luminance(color.x, color.y, color.z);
 
 	id += off;
-	rgb[id*3] = lum;
-	rgb[id*3 + 1] = lum;
-	rgb[id*3 + 2] = lum;
+	rgb[id*elems] = lum;
+	rgb[id*elems + 1] = lum;
+	rgb[id*elems + 2] = lum;
 }
 
 // Tone Mapping
-__kernel void k_tone_reinhard_luminance_log(__global const float* in, __global float* out, ulong size, __local float* tmp)
+__kernel void k_tone_reinhard_luminance_log(__global const float* in, __global float* out, ulong size, ulong elems,  __local float* tmp)
 {
     uint gid = get_global_id(0);
 	uint grpid = get_group_id(0);
@@ -106,7 +106,7 @@ __kernel void k_tone_reinhard_luminance_log(__global const float* in, __global f
 	float local_acc = 0;
 	if(gid < size)
 	{
-		local_acc = log(0.000001f + luminance(in[gid*3],in[gid*3 + 1],in[gid*3 + 2]));
+		local_acc = log(0.000001f + luminance(in[gid*elems],in[gid*elems + 1],in[gid*elems + 2]));
 	}
 
 	barrier(CLK_LOCAL_MEM_FENCE);
@@ -128,66 +128,66 @@ __kernel void k_tone_reinhard_luminance_log(__global const float* in, __global f
 	}
 }
 
-__kernel void k_tone_reinhard_simple(__global float* rgb, ulong size, float ratio)
+__kernel void k_tone_reinhard_simple(__global float* rgb, ulong size, float ratio, ulong elems)
 {
     uint gid = get_global_id(0);
-	float L = luminance(rgb[gid*3],rgb[gid*3 + 1],rgb[gid*3 + 2]) * ratio;
+	float L = luminance(rgb[gid*elems],rgb[gid*elems + 1],rgb[gid*elems + 2]) * ratio;
 	float Ld = 1 / (1 + L);
-	rgb[gid*3] *= Ld;
-	rgb[gid*3 + 1] *= Ld;
-	rgb[gid*3 + 2] *= Ld;
+	rgb[gid*elems] *= Ld;
+	rgb[gid*elems + 1] *= Ld;
+	rgb[gid*elems + 2] *= Ld;
 }
 
-__kernel void k_tone_clamp(__global float* rgb, ulong size)
+__kernel void k_tone_clamp(__global float* rgb, ulong size, ulong elems)
 {
 	uint gid = get_global_id(0);
-	rgb[gid*3] = min(abs(rgb[gid*3]), 1.0);
-	rgb[gid*3+1] = min(abs(rgb[gid*3+1]), 1.0);
-	rgb[gid*3+2] = min(abs(rgb[gid*3+2]), 1.0);
+	rgb[gid*elems] = min(abs(rgb[gid*elems]), 1.0);
+	rgb[gid*elems+1] = min(abs(rgb[gid*elems+1]), 1.0);
+	rgb[gid*elems+2] = min(abs(rgb[gid*elems+2]), 1.0);
 }
 
-__kernel void k_tone_abs(__global float* rgb, ulong size)
+__kernel void k_tone_abs(__global float* rgb, ulong size, ulong elems)
 {
 	uint gid = get_global_id(0);
-	rgb[gid*3] = abs(rgb[gid*3]);
-	rgb[gid*3+1] = abs(rgb[gid*3+1]);
-	rgb[gid*3+2] = abs(rgb[gid*3+2]);
+	rgb[gid*elems] = abs(rgb[gid*elems]);
+	rgb[gid*elems+1] = abs(rgb[gid*elems+1]);
+	rgb[gid*elems+2] = abs(rgb[gid*elems+2]);
 }
 
-__kernel void k_tone_positive(__global float* rgb, ulong size)
+__kernel void k_tone_positive(__global float* rgb, ulong size, ulong elems)
 {
 	uint gid = get_global_id(0);
-	rgb[gid*3] = max(rgb[gid*3], 0.0);
-	rgb[gid*3+1] = max(rgb[gid*3+1], 0.0);
-	rgb[gid*3+2] = max(rgb[gid*3+2], 0.0);
+	rgb[gid*elems] = max(rgb[gid*elems], 0.0);
+	rgb[gid*elems+1] = max(rgb[gid*elems+1], 0.0);
+	rgb[gid*elems+2] = max(rgb[gid*elems+2], 0.0);
 }
 
-__kernel void k_tone_negative(__global float* rgb, ulong size)
+__kernel void k_tone_negative(__global float* rgb, ulong size, ulong elems)
 {
 	uint gid = get_global_id(0);
-	rgb[gid*3] = -min(rgb[gid*3], 0.0);
-	rgb[gid*3+1] = -min(rgb[gid*3+1], 0.0);
-	rgb[gid*3+2] = -min(rgb[gid*3+2], 0.0);
+	rgb[gid*elems] = -min(rgb[gid*elems], 0.0);
+	rgb[gid*elems+1] = -min(rgb[gid*elems+1], 0.0);
+	rgb[gid*elems+2] = -min(rgb[gid*elems+2], 0.0);
 }
 
-__kernel void k_tone_normalize(__global float* rgb, ulong size, float invMax)
+__kernel void k_tone_normalize(__global float* rgb, ulong size, float invMax, ulong elems)
 {
 	uint gid = get_global_id(0);
-	rgb[gid*3] *= invMax;
-	rgb[gid*3+1] *= invMax;
-	rgb[gid*3+2] *= invMax;
+	rgb[gid*elems] *= invMax;
+	rgb[gid*elems+1] *= invMax;
+	rgb[gid*elems+2] *= invMax;
 }
 
 // Assume normalized vector
-__kernel void k_tone_spherical(__global float* rgb, ulong size)
+__kernel void k_tone_spherical(__global float* rgb, ulong size, ulong elems)
 {
 	uint gid = get_global_id(0);
-	float rho = 0.5 + 0.5 * atan2(rgb[gid*3+2], rgb[gid*3]) / 3.141592;
-	float phi = 0.5 - asin(-rgb[gid*3+1]) / 3.141592;
+	float rho = 0.5 + 0.5 * atan2(rgb[gid*elems+2], rgb[gid*elems]) / 3.141592;
+	float phi = 0.5 - asin(-rgb[gid*elems+1]) / 3.141592;
 
-	rgb[gid*3] = rho;
-	rgb[gid*3+1] = phi;
-	rgb[gid*3+2] = 0;
+	rgb[gid*elems] = rho;
+	rgb[gid*elems+1] = phi;
+	rgb[gid*elems+2] = 0;
 }
 
 )";

@@ -377,7 +377,7 @@ void ViewWidget::refreshView()
 			if(mDisplayMode1D == PR::OutputMap::V_1D_COUNT &&
 				mDisplayMode3D == PR::OutputMap::V_3D_COUNT)// Spectral
 			{
-				mToneMapper->map(map->getSpectralChannel()->ptr(), mRenderData);
+				mToneMapper->map(map->getSpectralChannel()->ptr(), mRenderData, 3);
 
 				uchar* tmp = new uchar[mRenderer->width() * mRenderer->height() * 3];
 				for(int i = 0; mRenderer->width()*mRenderer->height()*3; ++i)
@@ -400,7 +400,7 @@ void ViewWidget::refreshView()
 						mRenderData[i*3 + 2] = channel->ptr()[i];
 					}
 
-					mToneMapper->mapOnlyMapper(mRenderData, mRenderData);
+					mToneMapper->mapOnlyMapper(mRenderData, mRenderData, 3);
 
 					uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()];
 					for(int i = 0; mRenderer->width()*mRenderer->height(); ++i)
@@ -425,7 +425,7 @@ void ViewWidget::refreshView()
 						mRenderData[i*3+2] = a(2);
 					}
 
-					mToneMapper->mapOnlyMapper(mRenderData, mRenderData);
+					mToneMapper->mapOnlyMapper(mRenderData, mRenderData, 3);
 
 					uchar* tmp = new uchar[mRenderer->width()*mRenderer->height()];
 					for(int i = 0; mRenderer->width()*mRenderer->height()*3; ++i)
