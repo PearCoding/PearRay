@@ -159,7 +159,7 @@ namespace PR
 
 		if(mData->Refs == 0)
 		{
-			if(mData->External)
+			if(!mData->External)
 				delete[] mData->Ptr;
 
 			delete mData;

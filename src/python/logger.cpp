@@ -21,12 +21,12 @@ void setup_logger(py::module& m)
 		.def("newEntry", &LogListener::newEntry);
 
 	py::class_<Logger>(m, "Logger")
-		.def_property_readonly_static("instance", [](const py::object&) -> Logger& { return Logger::instance(); })
+		.def_property_readonly_static("instance", [](const py::object&) -> Logger& { return Logger::instance(); }, py::return_value_policy::reference)
 		.def_property("verbose", &Logger::isVerbose, &Logger::setVerbose)
 		.def_property("quiet", &Logger::isQuiet, &Logger::setQuiet)
 		.def("log", &Logger::log)
-		.def("addListener", &Logger::addListener)
-		.def("removeListener", &Logger::removeListener);
+		.def("addListener", &Logger::addListener, py::keep_alive<1, 2>())
+		.def("removeListener", &Logger::removeListener);// TODO: Remove assignment?
 
 	py::enum_<Level>(m, "Level")
 		.value("DEBUG", L_Debug)

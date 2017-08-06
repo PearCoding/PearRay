@@ -29,7 +29,7 @@ void setup_settings(py::module& m)
 		.def_property("cropMaxY", &RenderSettings::cropMaxY, &RenderSettings::setCropMaxY)
 		.def_property("cropMinY", &RenderSettings::cropMinY, &RenderSettings::setCropMinY)
 		.def_property("maxLightSamples", &RenderSettings::maxLightSamples, &RenderSettings::setMaxLightSamples)
-		.def_property_readonly("ppm", (PPMSettings & (RenderSettings::*)()) & RenderSettings::ppm)
+		.def_property_readonly("ppm", (PPMSettings & (RenderSettings::*)()) & RenderSettings::ppm, py::return_value_policy::reference)
 		.def_property("tileMode", &RenderSettings::tileMode, &RenderSettings::setTileMode);
 
 	py::class_<PPMSettings>(m, "PPMSettings")

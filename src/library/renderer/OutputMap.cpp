@@ -9,52 +9,60 @@
 namespace PR {
 OutputMap::OutputMap(RenderContext* renderer)
 	: mRenderer(renderer)
-	, mSpectral(new OutputSpectral(renderer))
+	, mInitialized(false)
+	, mSpectral(new OutputSpectral())
 {
 }
 
 OutputMap::~OutputMap()
 {
-	deinit();
+	if(mInitialized)
+		deinit();
 }
 
 void OutputMap::init()
 {
+	PR_ASSERT(!mInitialized, "OutputMap already initialized");
+
 	// Init outputs
-	mSpectral->init();
+	mSpectral->init(mRenderer);
 	if (!mIntCounter[V_Samples])
-		mIntCounter[V_Samples] = std::make_shared<OutputCounter>(mRenderer, 0);
+		mIntCounter[V_Samples] = std::make_shared<OutputCounter>(0);
 
 	for (uint32 i = 0; i < V_1D_COUNT; ++i) {
 		if (mInt1D[i])
-			mInt1D[i]->init();
+			mInt1D[i]->init(mRenderer);
 	}
 
 	for (uint32 i = 0; i < V_COUNTER_COUNT; ++i) {
 		if (mIntCounter[i])
-			mIntCounter[i]->init();
+			mIntCounter[i]->init(mRenderer);
 	}
 
 	for (uint32 i = 0; i < V_3D_COUNT; ++i) {
 		if (mInt3D[i])
-			mInt3D[i]->init();
+			mInt3D[i]->init(mRenderer);
 	}
 
 	for (const auto& p : mCustom1D)
-		p.second->init();
+		p.second->init(mRenderer);
 
 	for (const auto& p : mCustomCounter)
-		p.second->init();
+		p.second->init(mRenderer);
 
 	for (const auto& p : mCustom3D)
-		p.second->init();
+		p.second->init(mRenderer);
 
 	for (const auto& p : mCustomSpectral)
-		p.second->init();
+		p.second->init(mRenderer);
+
+	mInitialized = true;
 }
 
 void OutputMap::deinit()
 {
+	PR_ASSERT(mInitialized, "OutputMap not initialized");
+
 	mSpectral->deinit();
 
 	for (uint32 i = 0; i < V_1D_COUNT; ++i) {
@@ -93,10 +101,14 @@ void OutputMap::deinit()
 	for (const auto& p : mCustomSpectral)
 		p.second->deinit();
 	mCustomSpectral.clear();
+
+	mInitialized = false;
 }
 
 void OutputMap::clear()
 {
+	PR_ASSERT(mInitialized, "OutputMap not initialized");
+
 	mSpectral->clear();
 
 	for (uint32 i = 0; i < V_1D_COUNT; ++i) {
@@ -129,6 +141,8 @@ void OutputMap::clear()
 
 void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc)
 {
+	PR_ASSERT(mInitialized, "OutputMap not initialized");
+	
 	uint32 oldSample = getSampleCount(p);
 	float t			 = 1.0f / (oldSample + 1.0f);
 

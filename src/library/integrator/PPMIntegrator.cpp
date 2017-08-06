@@ -73,11 +73,10 @@ void PPMIntegrator::init()
 
 	mPhotonMap = new Photon::PhotonMap(renderer()->settings().ppm().maxGatherRadius());
 
-	mAccumulatedFlux = std::make_shared<OutputSpectral>(renderer(), Spectrum(), true); // Will be deleted by outputmap
-	mSearchRadius2   = std::make_shared<Output1D>(renderer(),
-												renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
+	mAccumulatedFlux = std::make_shared<OutputSpectral>(Spectrum(), true); // Will be deleted by outputmap
+	mSearchRadius2   = std::make_shared<Output1D>(renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
 												true);
-	mLocalPhotonCount = std::make_shared<OutputCounter>(renderer(), 0, true);
+	mLocalPhotonCount = std::make_shared<OutputCounter>(0, true);
 
 	renderer()->output()->registerCustomChannel("int.ppm.accumulated_flux", mAccumulatedFlux);
 	renderer()->output()->registerCustomChannel("int.ppm.search_radius", mSearchRadius2);
@@ -361,7 +360,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 				Ray ray(Eigen::Vector2i(0, 0),
 						outerSphere.position() + dir * (outerSphere.radius() + SAFE_DISTANCE),
 						-dir);
-				
+
 				RenderEntity::Collision c = light.Entity->checkCollision(ray);
 				if (!c.Successful)
 					continue;
@@ -390,7 +389,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 			uint32 diffuseBounces = 0;
 			for (uint32 j = 0; j < RD; ++j) {
 				ShaderClosure sc;
-				RenderEntity* entity = renderer()->shoot(ray, sc, nullptr);
+				RenderEntity* entity = renderer()->shoot(ray, sc, tile);
 
 				if (entity && sc.Material && sc.Material->canBeShaded()) {
 					//if(j == 0)
@@ -420,7 +419,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 						diffuseBounces++;
 
 						if (diffuseBounces > H - 1)
-							break;				   // Absorb
+							break;					  // Absorb
 					} else if (!std::isinf(ms.PDF)) { // Absorb
 						break;
 					}

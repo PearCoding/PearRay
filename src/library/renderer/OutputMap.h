@@ -145,6 +145,8 @@ public:
 private:
 	RenderContext* mRenderer;
 
+	bool mInitialized;
+	
 	std::shared_ptr<OutputSpectral> mSpectral;
 	std::shared_ptr<Output3D> mInt3D[V_3D_COUNT];
 	std::shared_ptr<Output1D> mInt1D[V_1D_COUNT];

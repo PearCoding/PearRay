@@ -27,7 +27,7 @@ public:
 
 void setup_status(py::module& m)
 {
-	py::class_<RenderStatusWrap>(m, "RenderStatus")
+	py::class_<RenderStatus, RenderStatusWrap>(m, "RenderStatus")
 		.def_property("percentage", &RenderStatus::percentage, &RenderStatus::setPercentage)
 		.def("__getitem__", &RenderStatusWrap::getField_Py)
 		.def("__setitem__", &RenderStatus::setField)

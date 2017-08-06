@@ -24,9 +24,8 @@ void setup_renderer(py::module& m)
 		.def_property_readonly("cropOffsetY", &RenderFactory::cropOffsetY)
 		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)() const) & RenderFactory::create)
 		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(uint32, uint32, uint32) const) & RenderFactory::create)
-		.def_property("settings",
-					  (RenderSettings & (RenderFactory::*)()) & RenderFactory::settings,
-					  &RenderFactory::setSettings)
+		.def_property_readonly("settings",
+					  (RenderSettings & (RenderFactory::*)()) & RenderFactory::settings, py::return_value_policy::reference)
 		.def_property("workingDir", &RenderFactory::workingDir, &RenderFactory::setWorkingDir)
 		.def_property_readonly("scene", &RenderFactory::scene);
 

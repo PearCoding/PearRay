@@ -10,7 +10,7 @@ void setup_output(py::module& m)
 {
 	/* TODO: Add buffer protocol for vector3f */
 	py::class_<Output3D, std::shared_ptr<Output3D>>(m, "Output3D")
-		.def(py::init<RenderContext*, const Eigen::Vector3f&, bool>(), py::arg("context"), py::arg("clear_value"), py::arg("never_clear") = false)
+		.def(py::init<const Eigen::Vector3f&, bool>(), py::arg("clear_value"), py::arg("never_clear") = false)
 		.def_property("neverClear", &Output3D::isNeverCleared, &Output3D::setNeverClear)
 		.def("setFragment", &Output3D::setFragment)
 		.def("getFragment", &Output3D::getFragment)
@@ -20,7 +20,7 @@ void setup_output(py::module& m)
 		.def("fill", &Output3D::fill);
 
 	py::class_<Output1D, std::shared_ptr<Output1D>>(m, "Output1D", py::buffer_protocol())
-		.def(py::init<RenderContext*, const float&, bool>(), py::arg("context"), py::arg("clear_value") = float(), py::arg("never_clear") = false)
+		.def(py::init<const float&, bool>(), py::arg("clear_value") = float(), py::arg("never_clear") = false)
 		.def_buffer([](Output1D& s) -> py::buffer_info { // Allow buffer use
 			return py::buffer_info(
 				s.ptr(),
@@ -41,7 +41,7 @@ void setup_output(py::module& m)
 		.def("fill", &Output1D::fill);
 
 	py::class_<OutputCounter, std::shared_ptr<OutputCounter>>(m, "OutputCounter", py::buffer_protocol())
-		.def(py::init<RenderContext*, const uint64&, bool>(), py::arg("context"), py::arg("clear_value") = uint64(), py::arg("never_clear") = false)
+		.def(py::init<const uint64&, bool>(), py::arg("clear_value") = uint64(), py::arg("never_clear") = false)
 		.def_buffer([](OutputCounter& s) -> py::buffer_info { // Allow buffer use
 			return py::buffer_info(
 				s.ptr(),
@@ -62,7 +62,7 @@ void setup_output(py::module& m)
 		.def("fill", &OutputCounter::fill);
 
 	py::class_<OutputSpectral, std::shared_ptr<OutputSpectral>>(m, "OutputSpectral", py::buffer_protocol())
-		.def(py::init<RenderContext*, const Spectrum&, bool>(), py::arg("context"), py::arg("clear_value") = Spectrum(), py::arg("never_clear") = false)
+		.def(py::init<const Spectrum&, bool>(), py::arg("clear_value") = Spectrum(), py::arg("never_clear") = false)
 		.def_buffer([](OutputSpectral& s) -> py::buffer_info { // Allow buffer use
 			return py::buffer_info(
 				s.ptr(),
