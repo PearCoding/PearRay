@@ -20,7 +20,7 @@ private:
 		struct EventVertex {
 			Spectrum Flux;
 			ShaderClosure SC;
-			//float PDF;
+			float PDF;
 		};
 
 		EventVertex* LightVertices;

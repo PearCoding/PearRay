@@ -54,9 +54,9 @@ public:
         PYBIND11_OVERLOAD_PURE(RenderEntity::Collision, RenderEntity, checkCollision, ray);
     }
 
-    FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const override
+    FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const override
     {
-        PYBIND11_OVERLOAD_PURE(FacePointSample, RenderEntity, sampleFacePoint, sampler, sample);
+        PYBIND11_OVERLOAD_PURE(FacePointSample, RenderEntity, sampleFacePoint, rnd, sample);
     }
 };
 

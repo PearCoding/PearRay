@@ -41,7 +41,7 @@ public:
 		FacePoint Point;
 	};
 	// In world coords
-	virtual FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const = 0;
+	virtual FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const = 0;
 
 	// Entity
 	void onFreeze() override;

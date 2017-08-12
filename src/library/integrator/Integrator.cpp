@@ -24,6 +24,12 @@ Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc
 	Spectrum full_weight;
 	full_pdf = 0;
 
+	if(renderer()->scene().infiniteLights().empty())
+		return full_weight;
+
+	const float lightSampleWeight = 1.0f/renderer()->settings().maxLightSamples();
+	const float inflightCountWeight = 1.0f/renderer()->scene().infiniteLights().size();
+
 	RandomSampler sampler(tile->random());
 	for (const auto& e : renderer()->scene().infiniteLights()) {
 		Spectrum semi_weight;
@@ -40,23 +46,23 @@ Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc
 			Spectrum weight;
 			const float NdotL = std::abs(ls.L.dot(sc.N));
 
-			if (NdotL > PR_EPSILON) {
-				RenderEntity* entity;
+			if(NdotL <= PR_EPSILON)
+				continue;
 
-				Ray ray = in.next(sc.P, ls.L);
-				ray.setFlags(ray.flags() | RF_Light);
+			RenderEntity* entity;
 
-				weight = handleSpecularPath(ray, sc, tile, entity);
-				if (!entity)
-					weight *= sc.Material->eval(sc, ls.L, NdotL) * e->apply(ls.L) * NdotL;
-				else
-					weight.clear();
-			}
+			Ray ray = in.next(sc.P, ls.L);
+			ray.setFlags(ray.flags() | RF_Light);
 
-			MSI::balance(semi_weight, semi_pdf, weight, ls.PDF);
+			weight = handleSpecularPath(ray, sc, tile, entity);
+			if (!entity)
+				weight *= sc.Material->eval(sc, ls.L, NdotL) * e->apply(ls.L) * NdotL;
+
+			MSI::balance(semi_weight, semi_pdf, weight, lightSampleWeight * ls.PDF);
 		}
 
-		MSI::balance(full_weight, full_pdf, semi_weight, std::isinf(semi_pdf) ? 1 : semi_pdf);
+		MSI::balance(full_weight, full_pdf, semi_weight,
+			inflightCountWeight * (std::isinf(semi_pdf) ? 1 : semi_pdf));
 	}
 
 	return full_weight;

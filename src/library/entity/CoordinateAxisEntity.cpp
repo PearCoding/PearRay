@@ -5,7 +5,6 @@
 
 #include "material/Material.h"
 #include "math/Projection.h"
-#include "sampler/Sampler.h"
 
 #include "performance/Performance.h"
 
@@ -159,14 +158,12 @@ RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) con
 	return c;
 }
 
-RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
+RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen")
 	PR_GUARD_PROFILE();
 
-	auto ret = sampler.generate3D(sample);
-
-	int proj = Projection::map(ret(0), 0, 3 * 6 - 1); // Get randomly a face
+	int proj = Projection::map(rnd(0), 0, 3 * 6 - 1); // Get randomly a face
 
 	int elem = proj / 3;
 	PR_ASSERT(elem >= 0 && elem < 3, "elem has to be between 0 and 2");
@@ -175,10 +172,10 @@ RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(Sampler& sam
 	Plane plane				   = mAxisBoundingBox_Cache[elem].getFace(side);
 
 	RenderEntity::FacePointSample r;
-	r.Point.P  = transform() * (plane.xAxis() * ret(1) + plane.yAxis() * ret(2));
+	r.Point.P  = transform() * (plane.xAxis() * rnd(1) + plane.yAxis() * rnd(2));
 	r.Point.Ng = (directionMatrix() * plane.normal()).normalized();
 	Projection::tangent_frame(r.Point.Ng, r.Point.Nx, r.Point.Ny);
-	r.Point.UVW		 = Eigen::Vector3f(ret(1), ret(2), 0);
+	r.Point.UVW		 = Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = mMaterials[elem].get();
 
 	r.PDF = 1;

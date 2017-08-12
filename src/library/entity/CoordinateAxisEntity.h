@@ -37,7 +37,7 @@ public:
 
 	RenderEntity::Collision checkCollision(const Ray& ray) const override;
 
-	RenderEntity::FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const override;
+	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const override;
 
 	// Entity
 	void onFreeze() override;

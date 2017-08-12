@@ -5,7 +5,6 @@
 
 #include "material/Material.h"
 #include "math/Projection.h"
-#include "sampler/Sampler.h"
 
 #include "performance/Performance.h"
 
@@ -115,14 +114,13 @@ RenderEntity::Collision SphereEntity::checkCollision(const Ray& ray) const
 	return c;
 }
 
-RenderEntity::FacePointSample SphereEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
+RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
 {
 	PR_GUARD_PROFILE();
 
 	RenderEntity::FacePointSample sm;
 
-	Eigen::Vector2f s = sampler.generate2D(sample);
-	Eigen::Vector3f n = Projection::sphere_coord(s(0) * 2 * PR_PI, s(1) * PR_PI);
+	Eigen::Vector3f n = Projection::sphere_coord(rnd(0) * 2 * PR_PI, rnd(1) * PR_PI);
 	sm.PDF			  = 1;
 
 	sm.Point.Ng = (directionMatrix() * n).normalized();

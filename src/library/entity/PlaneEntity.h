@@ -28,7 +28,7 @@ public:
 	BoundingBox localBoundingBox() const override;
 
 	RenderEntity::Collision checkCollision(const Ray& ray) const override;
-	RenderEntity::FacePointSample sampleFacePoint(Sampler& sampler, uint32 sample) const override;
+	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const override;
 
 	// Entity
 	void onFreeze() override;
@@ -40,6 +40,7 @@ private:
 	Plane mPlane;
 	std::shared_ptr<Material> mMaterial;
 
+	float mPDF_Cache;
 	Plane mGlobalPlane_Cache;
 	Eigen::Vector3f mXAxisN_Cache;
 	Eigen::Vector3f mYAxisN_Cache;

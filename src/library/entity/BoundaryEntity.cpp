@@ -5,7 +5,6 @@
 
 #include "material/Material.h"
 #include "math/Projection.h"
-#include "sampler/Sampler.h"
 
 #include "performance/Performance.h"
 
@@ -106,21 +105,19 @@ RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 	return c;
 }
 
-RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
+RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
 {
 	PR_GUARD_PROFILE();
 
-	auto ret = sampler.generate3D(sample);
-
 	// Get randomly a face
-	BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(ret(0), 0, 5);
+	BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(rnd(0), 0, 5);
 	Plane plane				   = localBoundingBox().getFace(side);
 
 	RenderEntity::FacePointSample r;
-	r.Point.P  = transform() * (plane.xAxis() * ret(1) + plane.yAxis() * ret(2));
+	r.Point.P  = transform() * (plane.xAxis() * rnd(1) + plane.yAxis() * rnd(2));
 	r.Point.Ng = (directionMatrix() * plane.normal()).normalized();
 	Projection::tangent_frame(r.Point.Ng, r.Point.Nx, r.Point.Ny);
-	r.Point.UVW		= Eigen::Vector3f(ret(1), ret(2), 0);
+	r.Point.UVW		= Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = material().get();
 
 	r.PDF = 1;

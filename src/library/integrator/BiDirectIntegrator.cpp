@@ -65,7 +65,8 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 
 	ShaderClosure other_sc;
 
-	MultiJitteredSampler sampler(tile->random(), renderer()->settings().maxLightSamples());
+	//MultiJitteredSampler sampler(tile->random(), renderer()->settings().maxLightSamples());
+	const Eigen::Vector3f rnd = tile->random().get3D();
 	if (!renderer()->lights().empty()) {
 		TileData& data = mTileData[tile->index()];
 
@@ -77,23 +78,23 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
 				TileData::EventVertex* lightV = &data.LightVertices[lightNr * maxDepth];
 
-				RenderEntity::FacePointSample fps = light->sampleFacePoint(sampler, i);
+				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd, i);
 
 				// Initiate with power
 				if (!fps.Point.Material->isLight() || fps.PDF <= PR_EPSILON)
 					continue;
 
-
-				Spectrum flux	 = fps.Point.Material->emission()->eval(fps.Point) / fps.PDF;
+				Spectrum flux = fps.Point.Material->emission()->eval(fps.Point) / fps.PDF;
 
 				MaterialSample ms;
 				ms.L = Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
-															  Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), ms.PDF));
+												 Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), ms.PDF));
 				float NdotL = std::abs(fps.Point.Ng.dot(ms.L));
 
 				uint32 lightDepth = 0; // Counts diff bounces
 				lightV[0].Flux	= flux;
 				lightV[0].SC	  = fps.Point;
+				lightV[0].PDF	 = ms.PDF;
 
 				Ray current = Ray::safe(in.pixel(),
 										other_sc.P,
@@ -107,10 +108,7 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 					 ++k) {
 					RenderEntity* entity = renderer()->shoot(current, other_sc, tile);
 					if (entity && other_sc.Material && other_sc.Material->canBeShaded()) {
-						if (!std::isinf(ms.PDF))
-							flux /= MSI::toArea(ms.PDF, other_sc.Depth2, std::abs(other_sc.NdotV));
-
-						ms = other_sc.Material->sample(other_sc, tile->random().get3D());
+						ms	= other_sc.Material->sample(other_sc, tile->random().get3D());
 						NdotL = std::abs(other_sc.N.dot(ms.L));
 
 						flux *= other_sc.Material->eval(other_sc, ms.L, NdotL) * NdotL;
@@ -119,6 +117,8 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 							lightDepth++;
 							lightV[lightDepth].Flux = flux;
 							lightV[lightDepth].SC   = other_sc;
+							lightV[lightDepth].PDF  = lightV[lightDepth - 1].PDF * ms.PDF;
+							PR_ASSERT(!std::isinf(lightV[lightDepth].PDF), "No light vertex should be specular");
 						}
 
 						current = current.next(other_sc.P, ms.L);
@@ -151,7 +151,6 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 
 	// Temporary
 	ShaderClosure other_sc;
-	Spectrum other_weight;
 	Spectrum weight;
 
 	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
@@ -160,16 +159,14 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 
 	MultiJitteredSampler sampler(tile->random(), maxLightSamples);
 	for (uint32 i = 0; i < maxLightSamples && !std::isinf(full_pdf); ++i) {
-		float other_pdf			= 0;
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0");
 		Eigen::Vector3f rnd = sampler.generate3D(i);
-		for (uint32 path = 0; path < path_count && !std::isinf(other_pdf); ++path) {
+		for (uint32 path = 0; path < path_count && !std::isinf(full_pdf); ++path) {
 			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
-			if (ms.PDF <= PR_EPSILON || NdotL <= PR_EPSILON ||
-				 !(std::isinf(ms.PDF) || diffBounces < renderer()->settings().maxDiffuseBounces()))
+			if (ms.PDF <= PR_EPSILON || NdotL <= PR_EPSILON || !(std::isinf(ms.PDF) || diffBounces < renderer()->settings().maxDiffuseBounces()))
 				continue;
 
 			weight = applyRay(in.next(sc.P, ms.L),
@@ -177,19 +174,15 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 							  other_sc);
 
 			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-
-			other_pdf += ms.PDF;
-			other_weight += ms.Weight * weight;
+			MSI::balance(full_weight, full_pdf, ms.Weight * weight, ms.PDF);
 		}
-
-		MSI::power(full_weight, full_pdf, other_weight, other_pdf / path_count);
 	}
 
 	if (!std::isinf(full_pdf)) {
 		const TileData& data = mTileData[tile->index()];
 
-		for (uint32 j = 0; j < maxLights; ++j) // Each light
-		{
+		// Each light
+		for (uint32 j = 0; j < maxLights; ++j) {
 			for (uint32 s = 0; s < data.LightPathLength[j]; ++s) {
 				const TileData::EventVertex& lightV = data.LightVertices[j * maxDepth + s];
 				const auto LP						= sc.P - lightV.SC.P;
@@ -197,7 +190,7 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 				Ray current = Ray::safe(in.pixel(),
 										lightV.SC.P,
 										LP.normalized(),
-										in.depth() + 1,
+										in.depth(),
 										in.time(), in.wavelength(),
 										in.flags() | RF_Light);
 
@@ -207,20 +200,20 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 				if (NdotL <= PR_EPSILON)
 					continue;
 
-				const float pdf = sc.Material->pdf(sc, L, NdotL);
+				const float pdf = sc.Material->pdf(sc, L, NdotL) * lightV.PDF;
 
 				if (pdf > PR_EPSILON && renderer()->shoot(current, other_sc, tile) == entity && (sc.P - other_sc.P).squaredNorm() <= LightEpsilon)
-					other_weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;
+					weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;
 				else
-					other_weight.clear();
+					weight.clear();
 
-				MSI::power(full_weight, full_pdf, other_weight, pdf);
+				MSI::balance(full_weight, full_pdf, weight, pdf);
 			}
 		}
 
 		float inf_pdf;
-		other_weight = handleInfiniteLights(in, sc, tile, inf_pdf);
-		MSI::power(full_weight, full_pdf, other_weight, inf_pdf);
+		weight = handleInfiniteLights(in, sc, tile, inf_pdf);
+		MSI::balance(full_weight, full_pdf, weight, inf_pdf);
 	}
 
 	return applied + full_weight;

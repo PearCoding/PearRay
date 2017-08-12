@@ -6,7 +6,6 @@
 
 #include "Logger.h"
 #include "math/Projection.h"
-#include "sampler/Sampler.h"
 
 #include "performance/Performance.h"
 
@@ -108,22 +107,20 @@ RenderEntity::Collision PlaneEntity::checkCollision(const Ray& ray) const
 }
 
 // World space
-RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(Sampler& sampler, uint32 sample) const
+RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
 {
-	auto s = sampler.generate2D(sample);
-
 	RenderEntity::FacePointSample sm;
 	sm.Point.P = mGlobalPlane_Cache.position()
-				 + mGlobalPlane_Cache.xAxis() * s(0)
-				 + mGlobalPlane_Cache.yAxis() * s(1);
+				 + mGlobalPlane_Cache.xAxis() * rnd(0)
+				 + mGlobalPlane_Cache.yAxis() * rnd(1);
 
 	sm.Point.Ng = mGlobalPlane_Cache.normal();
 	sm.Point.Nx = mXAxisN_Cache;
 	sm.Point.Ny = mYAxisN_Cache;
 
-	sm.Point.UVW	  = Eigen::Vector3f(s(0), s(1), 0);
+	sm.Point.UVW	  = Eigen::Vector3f(rnd(0), rnd(1), 0);
 	sm.Point.Material = material().get();
-	sm.PDF			  = 1;
+	sm.PDF			  = 1/*mPDF_Cache*/;
 
 	return sm;
 }
@@ -143,6 +140,14 @@ void PlaneEntity::onFreeze()
 	mXAxisN_Cache = mGlobalPlane_Cache.xAxis().normalized();
 	mYAxisN_Cache = mGlobalPlane_Cache.yAxis().normalized();
 
+	mPDF_Cache = 1.0f/mGlobalPlane_Cache.surfaceArea();
+
+	PR_LOGGER.logf(L_Info, M_Entity, "Plane: px [%f, %f, %f] py [%f, %f, %f]³",
+		 px(0), px(1), px(2), py(0), py(1), py(2));
+	PR_LOGGER.logf(L_Info, M_Entity, "Plane: axisX [%f, %f, %f] axisY [%f, %f, %f]³",
+		 mGlobalPlane_Cache.xAxis()(0), mGlobalPlane_Cache.xAxis()(1), mGlobalPlane_Cache.xAxis()(2),
+		 mGlobalPlane_Cache.yAxis()(0), mGlobalPlane_Cache.yAxis()(1), mGlobalPlane_Cache.yAxis()(2));
+		 
 	// Check up
 	if (std::abs((mGlobalPlane_Cache.normal()).squaredNorm() - 1) > PR_EPSILON)
 		PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has a non unit normal vector!", name().c_str());

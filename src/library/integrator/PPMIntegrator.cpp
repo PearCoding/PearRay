@@ -338,7 +338,6 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 		const Sphere outerSphere = light.Entity->worldBoundingBox().outerSphere();
 
 		const size_t sampleSize = ltd.Photons;
-		MultiJitteredSampler sampler(tile->random(), sampleSize);
 
 		const float inv		 = 1.0f / sampleSize;
 		size_t photonsShoot  = 0;
@@ -365,7 +364,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 				if (!c.Successful)
 					continue;
 			} else {
-				RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(sampler, photonsShoot);
+				RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(tile->random().get3D(), photonsShoot);
 
 				lightSample = fps.Point;
 				/*dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,

@@ -13,7 +13,7 @@ public:
 				   ShaderClosure& sc) override;
 
 private:
-	Spectrum applyRay(const Ray& in, const ShaderClosure& sc,
+	Spectrum applyRay(const Ray& in, ShaderClosure& sc,
 					  RenderTile* tile, uint32 diffbounces);
 };
 }

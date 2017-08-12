@@ -4,7 +4,6 @@
 #include "container/kdTree.h"
 #include "material/Material.h"
 #include "math/Projection.h"
-#include "sampler/Sampler.h"
 
 #include <iterator>
 
@@ -131,11 +130,10 @@ float TriMesh::collisionCost() const
 	return TriangleTestCost * reinterpret_cast<TriKDTree*>(mKDTree)->depth();
 }
 
-TriMesh::FacePointSample TriMesh::sampleFacePoint(Sampler& sampler, uint32 sample) const
+TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
 {
-	auto ret  = sampler.generate3D(sample);
-	uint32 fi = Projection::map(ret(0), 0, (int)mFaces.size() - 1);
-	auto bary = Projection::triangle(ret(1), ret(2));
+	uint32 fi = Projection::map(rnd(0), 0, (int)mFaces.size() - 1);
+	auto bary = Projection::triangle(rnd(1), rnd(2));
 
 	Face* face = mFaces.at(fi);
 

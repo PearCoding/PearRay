@@ -133,7 +133,7 @@ public:
 		const float x = sinPhi * thCos;
 		const float y = sinPhi * thSin;
 
-		pdf = cosPhi;
+		pdf = cosPhi * PR_1_PI;
 
 		return Eigen::Vector3f(x, y, cosPhi);
 	}
@@ -158,7 +158,7 @@ public:
 
 	static inline float cos_hemi_pdf(float NdotL)
 	{
-		return NdotL * 0.5f * PR_1_PI;
+		return NdotL * PR_1_PI;
 	}
 
 	static inline float cos_hemi_pdf(float NdotL, float m)
