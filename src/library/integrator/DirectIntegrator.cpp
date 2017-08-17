@@ -75,7 +75,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, ShaderClosure& sc,
 
 				const Eigen::Vector3f PS = fps.Point.P - sc.P;
 				const Eigen::Vector3f L  = PS.normalized();
-				const float NdotL		 = std::max(0.0f, L.dot(sc.N)); // No back light detection
+				const float NdotL		 = std::abs(L.dot(sc.N)); // No back light detection
 
 				float pdfA = fps.PDF; //MSI::toSolidAngle(fps.PDF, PS.squaredNorm(), NdotL) /*+ sc.Material->pdf(sc, L, NdotL)*/;
 
@@ -88,6 +88,9 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, ShaderClosure& sc,
 				// Full light!!
 				if (renderer()->shootWithEmission(weight, ray, other_sc, tile) == light /*&&
 					(fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+					if(other_sc.Flags & SCF_Inside)// Wrong side (Back side)
+						continue;
+					
 					weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
 
 					const float pdfS = MSI::toSolidAngle(pdfA, PS.squaredNorm(), std::abs(sc.NdotV * NdotL));

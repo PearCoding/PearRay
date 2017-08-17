@@ -17,8 +17,8 @@ namespace PR
 		SpectralFile& operator = (const SpectralFile& other);
 		SpectralFile& operator = (SpectralFile&& other);
 
-		void set(uint32 px, uint32 py, const Spectrum& spec);
-		const Spectrum& at(uint32 px, uint32 py) const;
+		void set(uint32 row, uint32 column, const Spectrum& spec);
+		const Spectrum& at(uint32 row, uint32 column) const;
 
 		void save(const std::string& path) const;
 		static SpectralFile open(const std::string& path);

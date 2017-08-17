@@ -23,4 +23,14 @@ inline BoundingBox RenderEntity::worldBoundingBox() const
 	else
 		return calcWorldBoundingBox();
 }
+
+inline uint32 RenderEntity::containerID() const
+{
+	return mContainerID;
+}
+
+inline void RenderEntity::setContainerID(uint32 id)
+{
+	mContainerID = id;
+}
 }

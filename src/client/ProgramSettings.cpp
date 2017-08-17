@@ -127,6 +127,8 @@ BEGIN_ENUM_OPTION(DebugMode)
 	{"pdf", DM_PDF},
 	{"emission", DM_Emission},
 	{"validity", DM_Validity},
+	{"f_inside", DM_Flag_Inside},
+	{"container", DM_Container_ID},
 	{nullptr, DM_None}
 };
 

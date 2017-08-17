@@ -7,6 +7,7 @@
 namespace PR {
 RenderEntity::RenderEntity(uint32 id, const std::string& name)
 	: Entity(id, name)
+	, mContainerID(0)
 {
 }
 

@@ -29,7 +29,9 @@ enum DebugMode {
 	DM_UVW,
 	DM_PDF,
 	DM_Emission,
-	DM_Validity
+	DM_Validity,
+	DM_Flag_Inside,
+	DM_Container_ID
 };
 
 enum IntegratorMode {

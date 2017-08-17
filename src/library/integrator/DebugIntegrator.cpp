@@ -138,8 +138,15 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 
 		return (std::isinf(ms.PDF) || (ms.PDF > PR_EPSILON && ms.PDF <= 1.0f)) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 	}
+	case DM_Flag_Inside:
+		if (!sc.Flags & SCF_Inside)
+			return RGBConverter::toSpec(0, 1, 0);
+		else
+			return RGBConverter::toSpec(1, 0, 0);
 	case DM_Emission:
 		return emission;
+	case DM_Container_ID:
+		return RGBConverter::toSpec(entity->containerID(), entity->containerID(), entity->containerID());
 	}
 }
 }

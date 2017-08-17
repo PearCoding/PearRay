@@ -26,6 +26,9 @@ public:
 	virtual bool isCollidable() const;
 	virtual float collisionCost() const;
 
+	uint32 containerID() const;
+	void setContainerID(uint32 id);
+
 	virtual BoundingBox localBoundingBox() const = 0;
 	inline BoundingBox worldBoundingBox() const;
 
@@ -50,6 +53,7 @@ public:
 	virtual void setup(RenderContext* context) {}
 
 private:
+	uint32 mContainerID;// To which (latest) container node it belongs
 	BoundingBox calcWorldBoundingBox() const;
 	BoundingBox mWorldBoundingBox_Cache;
 };

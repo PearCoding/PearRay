@@ -73,20 +73,20 @@ namespace PR
 		return *this;
 	}
 
-	void SpectralFile::set(uint32 px, uint32 py, const Spectrum& spec)
+	void SpectralFile::set(uint32 row, uint32 column, const Spectrum& spec)
 	{
 		PR_ASSERT(mData, "Access to invalid spectral file");
-		PR_ASSERT(px < mData->Width && py < mData->Height, "Access out of bound");
+		PR_ASSERT(column < mData->Width && row < mData->Height, "Access out of bound");
 
-		mData->Ptr[py*mData->Width + py] = spec;
+		mData->Ptr[row*mData->Width + column] = spec;
 	}
 
-	const Spectrum& SpectralFile::at(uint32 px, uint32 py) const
+	const Spectrum& SpectralFile::at(uint32 row, uint32 column) const
 	{
 		PR_ASSERT(mData, "Access to invalid spectral file");
-		PR_ASSERT(px < mData->Width && py < mData->Height, "Access out of bound");
+		PR_ASSERT(column < mData->Width && row < mData->Height, "Access out of bound");
 
-		return mData->Ptr[py*mData->Width + py];
+		return mData->Ptr[row*mData->Width + column];
 	}
 
 	void SpectralFile::save(const std::string& path) const

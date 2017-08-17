@@ -3,6 +3,8 @@
 #include "spectral/Spectrum.h"
 #include "spectral/XYZConverter.h"
 
+#include "SpectralFile.h"
+
 #include "pypearray.h"
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
@@ -154,5 +156,40 @@ void setup_spectral(py::module& m)
 		.def_static("luminance", &RGBConverter::luminance)
 		.def_static("gamma", &RGBConverterWrap::gamma)
 		.def_static("toSpec", &RGBConverter::toSpec);
+
+	py::class_<SpectralFile>(m, "SpectralFile", py::buffer_protocol())
+		.def(py::init<uint32, uint32>())
+		.def("__init__", [](Spectrum& s, py::array_t<float, py::array::c_style | py::array::forcecast> b) { // Allow buffer initializing
+			py::buffer_info info = b.request();
+			if (info.format != py::format_descriptor<float>::format())
+				throw std::runtime_error("Incompatible format: expected a float array!");
+
+			if (info.ndim != 3)
+				throw std::runtime_error("Incompatible buffer dimension. Expected 3d");
+
+			if (info.itemsize != sizeof(float))
+				throw std::runtime_error("Incompatible format: Expected float item size");
+
+			if (info.shape[0] <= 0 || info.shape[1] <= 0)
+				throw std::runtime_error("Incompatible shape: Expected valid dimensions");
+
+			if (info.shape[2] != Spectrum::SAMPLING_COUNT)
+				throw std::runtime_error("Incompatible shape: Expected correct sampling count");
+
+			new (&s) SpectralFile(info.shape[1], info.shape[0], (Spectrum*)info.ptr, true);
+		})
+		.def("set", &SpectralFile::set)
+		.def("at", &SpectralFile::at)
+		.def("__setitem__", [](SpectralFile& s, std::pair<size_t, size_t> p, const Spectrum& v) {
+			s.set(p.first, p.second, v);
+		})
+		.def("__getitem__", [](const SpectralFile& s, std::pair<size_t, size_t> p) -> Spectrum {
+			return s.at(p.first, p.second);
+		})
+		.def("save", &SpectralFile::save)
+		.def_static("open", &SpectralFile::open)
+		.def_property_readonly("width", &SpectralFile::width)
+		.def_property_readonly("height", &SpectralFile::height)
+		.def_property_readonly("valid", &SpectralFile::isValid);
 }
 }

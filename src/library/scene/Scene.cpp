@@ -111,6 +111,9 @@ void Scene::buildTree()
 		},
 		[](RenderEntity* e) {
 			return e->collisionCost();
+		},
+		[](RenderEntity* e, uint32 id) {
+			e->setContainerID(id);
 		});
 
 	std::vector<RenderEntity*> list;

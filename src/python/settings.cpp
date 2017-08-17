@@ -66,7 +66,9 @@ void setup_settings(py::module& m)
 		.value("UVW", DM_UVW)
 		.value("PDF", DM_PDF)
 		.value("EMISSION", DM_Emission)
-		.value("VALIDITY", DM_Validity);
+		.value("VALIDITY", DM_Validity)
+		.value("FLAG_INSIDE", DM_Flag_Inside)
+		.value("CONTAINER_ID", DM_Container_ID);
 
 	py::enum_<IntegratorMode>(m, "IntegratorMode")
 		.value("DIRECT", IM_Direct)
