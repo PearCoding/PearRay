@@ -14,6 +14,7 @@ namespace sc = std::chrono;
 
 typedef void (*SuiteCallback)();
 
+void suite_projection1();
 void suite_spectral1();
 void suite_random1();
 
@@ -24,6 +25,7 @@ struct Suite
 };
 
 Suite suites[] = {
+	{"projection1", suite_projection1},
 	{"spectral1", suite_spectral1},
 	{"random1", suite_random1},
 	{nullptr, nullptr}

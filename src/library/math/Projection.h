@@ -106,17 +106,8 @@ public:
 	// Orientation +Z
 	static inline Eigen::Vector3f hemi(float u1, float u2, float& pdf)
 	{
-		const float thSin = std::sin(u1 * PR_PI * 0.5f);
-		const float thCos = std::cos(u1 * PR_PI * 0.5f);
-
-		const float phSin = std::sin(u2 * 2 * PR_PI);
-		const float phCos = std::cos(u2 * 2 * PR_PI);
-
-		pdf = 1;
-
-		return Eigen::Vector3f(thSin * phCos,
-							   thSin * phSin,
-							   thCos);
+		pdf = PR_1_PI;
+		return sphere_coord(u1 * PR_PI * 0.5f, u2 * 2 * PR_PI);
 	}
 
 	// Cosine weighted
