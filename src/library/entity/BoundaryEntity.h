@@ -34,5 +34,7 @@ public:
 private:
 	BoundingBox mBoundingBox;
 	std::shared_ptr<Material> mMaterial;
+
+	float mPDF_Cache;
 };
 }

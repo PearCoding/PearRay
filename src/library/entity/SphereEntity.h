@@ -35,5 +35,7 @@ public:
 private:
 	float mRadius;
 	std::shared_ptr<Material> mMaterial;
+
+	float mPDF_Cache;
 };
 }

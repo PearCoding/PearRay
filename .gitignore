@@ -36,4 +36,5 @@ build
 res
 .vscode
 
-.raw
+# Sandbox/Script output
+*.raw

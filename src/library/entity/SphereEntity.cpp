@@ -13,6 +13,7 @@ SphereEntity::SphereEntity(uint32 id, const std::string& name, float r)
 	: RenderEntity(id, name)
 	, mRadius(r)
 	, mMaterial(nullptr)
+	, mPDF_Cache(0.0f)
 {
 }
 
@@ -121,7 +122,7 @@ RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3
 	RenderEntity::FacePointSample sm;
 
 	Eigen::Vector3f n = Projection::sphere_coord(rnd(0) * 2 * PR_PI, rnd(1) * PR_PI);
-	sm.PDF			  = 1;
+	sm.PDF			  = mPDF_Cache;
 
 	sm.Point.Ng = (directionMatrix() * n).normalized();
 	Projection::tangent_frame(sm.Point.Ng, sm.Point.Nx, sm.Point.Ny);
@@ -140,5 +141,8 @@ void SphereEntity::setup(RenderContext* context)
 
 	if (mMaterial)
 		mMaterial->setup(context);
+
+	const float area = surfaceArea(nullptr);
+	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
 }
 }

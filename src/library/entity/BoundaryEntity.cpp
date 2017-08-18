@@ -13,6 +13,7 @@ BoundaryEntity::BoundaryEntity(uint32 id, const std::string& name, const Boundin
 	: RenderEntity(id, name)
 	, mBoundingBox(box)
 	, mMaterial(nullptr)
+	, mPDF_Cache(0)
 {
 }
 
@@ -120,7 +121,7 @@ RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vecto
 	r.Point.UVW		= Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = material().get();
 
-	r.PDF = 1;
+	r.PDF = mPDF_Cache;
 	return r;
 }
 
@@ -131,5 +132,8 @@ void BoundaryEntity::setup(RenderContext* context)
 
 	if (mMaterial)
 		mMaterial->setup(context);
+
+	const float area = surfaceArea(nullptr);
+	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
 }
 }

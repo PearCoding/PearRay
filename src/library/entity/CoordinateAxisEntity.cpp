@@ -14,6 +14,7 @@ CoordinateAxisEntity::CoordinateAxisEntity(uint32 id, const std::string& name)
 	, mAxisLength(1)
 	, mAxisThickness(0.05f)
 	, mMaterials{ nullptr, nullptr, nullptr }
+	, mPDF_Cache(0)
 {
 }
 
@@ -36,10 +37,17 @@ float CoordinateAxisEntity::surfaceArea(Material* m) const
 	PR_GUARD_PROFILE();
 
 	if (!m) {
-		if (flags() & EF_LocalArea)
-			return localBoundingBox().surfaceArea();
+		//TODO: Add world transformed surface area
+		/*if (flags() & EF_LocalArea)
+		{*/
+			float area = 0;
+			for(int i = 0; i < 3; ++i)
+				area += mAxisBoundingBox_Cache[i].surfaceArea();
+			
+			return area;
+		/*}
 		else
-			return worldBoundingBox().surfaceArea();
+			return worldBoundingBox().surfaceArea();*/
 	} else { // TODO: Add material specific surface area
 		return 0;
 	}
@@ -178,7 +186,7 @@ RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen:
 	r.Point.UVW		 = Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = mMaterials[elem].get();
 
-	r.PDF = 1;
+	r.PDF = mPDF_Cache;
 	return r;
 }
 
@@ -197,6 +205,9 @@ void CoordinateAxisEntity::setup_cache() const
 	mBoundingBox_Cache = mAxisBoundingBox_Cache[0];
 	mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[1]);
 	mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[2]);
+
+	const float area = surfaceArea(nullptr);
+	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
 }
 
 // Entity

@@ -11,6 +11,7 @@ namespace PR {
 typedef PR::kdTree<Face, false> TriKDTree;
 TriMesh::TriMesh()
 	: mKDTree(nullptr)
+	, mPDF_Cache(0.0f)
 {
 }
 
@@ -90,6 +91,12 @@ void TriMesh::build()
 
 	if (!reinterpret_cast<TriKDTree*>(mKDTree)->isEmpty())
 		mBoundingBox = reinterpret_cast<TriKDTree*>(mKDTree)->boundingBox();
+
+	const float area = surfaceArea(Eigen::Affine3f::Identity());
+	if(area > PR_EPSILON)
+		mPDF_Cache = 1.0f/area;
+	else
+		mPDF_Cache = 0.0f;
 }
 
 float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
@@ -120,7 +127,7 @@ TriMesh::Collision TriMesh::checkCollision(const Ray& ray)
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	TriMesh::Collision r;
-	r.Ptr = reinterpret_cast<TriKDTree*>(mKDTree)->checkCollision(ray, r.Point);
+	r.Ptr		 = reinterpret_cast<TriKDTree*>(mKDTree)->checkCollision(ray, r.Point);
 	r.Successful = (r.Ptr != nullptr);
 	return r;
 }
@@ -143,11 +150,11 @@ TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd, ui
 	face->interpolate(bary(0), bary(1), vec, n, uv);
 
 	TriMesh::FacePointSample r;
-	r.Point.P		 = vec;
-	r.Point.Ng		 = n;
-	r.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
+	r.Point.P	  = vec;
+	r.Point.Ng	 = n;
+	r.Point.UVW	= Eigen::Vector3f(uv(0), uv(1), 0);
 	r.MaterialSlot = face->MaterialSlot;
-	r.PDF = 1; //?
+	r.PDF		   = mPDF_Cache;
 	return r;
 }
 }

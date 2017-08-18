@@ -66,6 +66,7 @@ private:
 	BoundingBox mBoundingBox;
 	void* mKDTree;
 
+	float mPDF_Cache;
 	std::vector<Face*> mFaces;
 	std::vector<uint32> mMaterialSlots;
 };

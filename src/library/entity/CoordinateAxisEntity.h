@@ -55,5 +55,6 @@ private:
 
 	mutable BoundingBox mBoundingBox_Cache;
 	mutable BoundingBox mAxisBoundingBox_Cache[3];
+	mutable float mPDF_Cache;
 };
 }
