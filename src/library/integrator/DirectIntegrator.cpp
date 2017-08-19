@@ -20,7 +20,14 @@ void DirectIntegrator::init() {}
 constexpr float LightEpsilon = 0.00001f;
 Spectrum DirectIntegrator::apply(const Ray& in,
 								 RenderTile* tile,
-								 uint32 diffbounces, ShaderClosure& sc)
+								 uint32 pass, ShaderClosure& sc)
+{
+	return applyRay(in, tile, 0, sc);
+}
+
+Spectrum DirectIntegrator::applyRay(const Ray& in,
+									RenderTile* tile,
+									uint32 diffbounces, ShaderClosure& sc)
 {
 	Spectrum applied;
 	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
@@ -53,13 +60,13 @@ Spectrum DirectIntegrator::apply(const Ray& in,
 			if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON)
 				continue;
 
-			weight = apply(in.next(sc.P, ms.L), tile,
+			weight = applyRay(in.next(sc.P, ms.L), tile,
 						   !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
 						   other_sc);
 
 			//if (!weight.isOnlyZero()) {
-				weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-				MSI::balance(full_weight, full_pdf, weight, ms.PDF_S * ms.Weight);
+			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
+			MSI::balance(full_weight, full_pdf, weight, ms.PDF_S * ms.Weight);
 			//}
 		}
 	}

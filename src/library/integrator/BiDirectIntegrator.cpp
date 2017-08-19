@@ -235,29 +235,26 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 				const auto PS							= lightV.SC.P - sc.P;
 				const auto L							= PS.normalized();
 
+				const float NdotL = std::abs(sc.N.dot(L));
+
+				if (NdotL <= PR_EPSILON)
+					continue;
+
 				{ // Recalculate light vertex flux
 					other_sc   = lightV.SC;
 					other_sc.V = L;
 					// TODO: dVdX, dVdY
-					const float pdfS  = lightV.PDF;
-					const float NdotL = std::abs(other_sc.N.dot(lastLightV.SC.V));
-					inFlux			  = lastLightV.Flux * lightV.SC.Material->eval(other_sc, lastLightV.SC.V, NdotL) * NdotL;
+					const float pdfS	  = lightV.PDF;
+					const float lastNdotL = std::abs(other_sc.N.dot(lastLightV.SC.V));
+					inFlux				  = lastLightV.Flux * lightV.SC.Material->eval(other_sc, lastLightV.SC.V, lastNdotL) * lastNdotL;
 					inFlux /= pdfS;
 				}
 
 				{ // Calculate connection
-					const float NdotL = std::abs(sc.N.dot(L));
-
-					if (NdotL <= PR_EPSILON)
-						continue;
-
 					Ray ray = in.next(sc.P, L);
 					ray.setFlags(ray.flags() | RF_Light);
 
 					if (renderer()->shootWithEmission(weight, ray, other_sc, tile) == lightV.Entity /*&& (sc.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
-						if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
-							continue;
-
 						weight += inFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
 						MSI::balance(full_weight, full_pdf, weight, PR_1_PI); // FIXME: Really fixed 1/pi?
 					}

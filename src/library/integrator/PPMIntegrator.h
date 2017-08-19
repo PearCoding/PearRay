@@ -37,7 +37,7 @@ public:
 
 private:
 	void photonPass(RenderTile* tile, uint32 pass);
-	Spectrum accumPass(const Ray& in, const ShaderClosure& sc, RenderTile* tile);
+	Spectrum accumPass(const Ray& in, ShaderClosure& sc, uint32 diffbounces, RenderTile* tile);
 
 	Photon::PhotonMap* mPhotonMap;
 

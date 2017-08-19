@@ -349,6 +349,8 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 			float t_pdf	= 0;
 			FacePoint lightSample;
 			Eigen::Vector3f dir;
+			const Eigen::Vector3f rnd  = tile->random().get3D();
+			const Eigen::Vector3f rnd2 = tile->random().get3D();
 
 			if (light.Proj) {
 				dir = light.Proj->sample(
@@ -364,22 +366,25 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 				if (!c.Successful)
 					continue;
 			} else {
-				RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(tile->random().get3D(), photonsShoot);
+				RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(rnd, photonsShoot);
 
 				lightSample = fps.Point;
 				/*dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
 								Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), t_pdf));*/
 				dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-												Projection::hemi(tile->random().getFloat(), tile->random().getFloat(), t_pdf));
+												Projection::hemi(rnd(0), rnd(1), t_pdf));
+
+				t_pdf *= fps.PDF_A;
 			}
 
 			if (!lightSample.Material->isLight())
 				continue;
 
-			Ray ray			  = Ray::safe(Eigen::Vector2i(0, 0), lightSample.P, dir, 0, 0, 0, RF_Light); // TODO: Use pixel sample
+			Ray ray = Ray::safe(Eigen::Vector2i(0, 0), lightSample.P, dir,
+								0, rnd2(0), rnd2(1) * Spectrum::SAMPLING_COUNT, RF_Light); // TODO: Use pixel sample
 			ShaderClosure lsc = lightSample;
 			Spectrum radiance = lightSample.Material->emission()->eval(lsc);
-			// radiance /= t_pdf;// This is not working properly
+			radiance /= t_pdf;
 
 			PR_CHECK_VALIDITY(radiance, "After photon emission");
 
@@ -396,7 +401,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 
 					MaterialSample ms = sc.Material->sample(sc, tile->random().get3D());
 
-					if (ms.PDF_S > PR_EPSILON && !std::isinf(ms.PDF_S) && !(sc.Flags & SCF_Inside)) // Diffuse
+					if (ms.PDF_S > PR_EPSILON && !std::isinf(ms.PDF_S)) // Diffuse
 					{
 						// Always store when diffuse
 						Photon::Photon photon;
@@ -439,22 +444,21 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 
 Spectrum PPMIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc)
 {
+	return accumPass(in, sc, 0, tile);
+}
+
+Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffbounces, RenderTile* tile)
+{
 	Spectrum applied;
 	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
 
-	PR_CHECK_VALIDITY(applied, "From emission");
-	if (!entity || !sc.Material)
+	if (!entity || !sc.Material
+		|| !sc.Material->canBeShaded()
+		|| diffbounces > renderer()->settings().maxDiffuseBounces())
 		return applied;
 
-	return applied + PR_CHECK_VALIDITY(accumPass(in, sc, tile), "From accumPass");
-}
-
-Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, RenderTile* tile)
-{
-	if (!sc.Material->canBeShaded())
-		return Spectrum();
-
 	Spectrum full_weight;
+	float full_pdf			  = 0;
 	const Eigen::Vector3f rnd = tile->random().get3D();
 	for (uint32 path = 0; path < sc.Material->samplePathCount(); ++path) {
 		MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
@@ -462,28 +466,25 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, Render
 		if (ms.PDF_S <= PR_EPSILON)
 			continue;
 
-		Spectrum other_weight;
-
 		if (std::isinf(ms.PDF_S)) { // Specular
+			Spectrum other_weight;
+
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
 			if (NdotL > PR_EPSILON) {
-				Spectrum app = sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-				PR_CHECK_VALIDITY(app, "After ray eval");
+				ShaderClosure sc2;
 
 				Ray ray = in.next(sc.P, ms.L);
-				ShaderClosure sc2;
-				RenderEntity* entity = renderer()->shootWithEmission(other_weight, ray, sc2, tile);
-				if (entity && sc2.Material)
-					other_weight += accumPass(ray, sc2, tile);
-				other_weight *= app;
-				PR_CHECK_VALIDITY(other_weight, "After ray apply");
+				other_weight = accumPass(ray, sc2, 0, tile);
+				other_weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
+				
+				MSI::balance(full_weight, full_pdf, other_weight, ms.PDF_S);
 			}
 		} else {
 			ms.PDF_S = 0;
 			float inf_pdf;
 			Spectrum inf_weight = handleInfiniteLights(in, sc, tile, inf_pdf);
-			MSI::power(other_weight, ms.PDF_S, inf_weight, inf_pdf);
+			MSI::balance(full_weight, full_pdf, inf_weight, inf_pdf);
 
 			PR_CHECK_VALIDITY(inf_pdf, "After inf lights");
 			PR_CHECK_VALIDITY(inf_weight, "After inf lights");
@@ -506,11 +507,11 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, Render
 
 				const float NdotL = std::abs(sc.N.dot(dir));
 #if PR_PHOTON_RGB_MODE >= 1
-				return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL), "After photon material eval") * PR_CHECK_VALIDITY(
-																												RGBConverter::toSpec(photon.Power[0], photon.Power[1], photon.Power[2]),
-																												"After photon power convert");
+				return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL) * NdotL, "After photon material eval") * PR_CHECK_VALIDITY(
+																														RGBConverter::toSpec(photon.Power[0], photon.Power[1], photon.Power[2]),
+																														"After photon power convert");
 #else
-				return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL), "After photon material eval") * PR_CHECK_VALIDITY(photon.Power, "After photon power convert");
+				return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL) * NdotL, "After photon material eval") * PR_CHECK_VALIDITY(photon.Power, "After photon power convert");
 #endif //PR_PHOTON_RGB_MODE
 			};
 
@@ -542,14 +543,11 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, const ShaderClosure& sc, Render
 
 			const float inv = PR_1_PI / mSearchRadius2->getFragment(in.pixel());
 
-			MSI::power(other_weight, ms.PDF_S,
-					   mAccumulatedFlux->getFragment(in.pixel()) * inv, 1);
+			MSI::balance(full_weight, full_pdf,
+						 mAccumulatedFlux->getFragment(in.pixel()) * inv, ms.Weight * ms.PDF_S);
 
 			PR_CHECK_VALIDITY(inv, "After photon estimation");
-			PR_CHECK_VALIDITY(other_weight, "After photon estimation");
 		} // End diffuse
-
-		full_weight += ms.Weight * other_weight;
 
 		PR_CHECK_VALIDITY(full_weight, "After path accumulation");
 	}
