@@ -90,7 +90,7 @@ MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Ve
 			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	}
 
-	ms.PDF = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	ms.PDF_S = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
 	return ms;
 }
 
@@ -118,7 +118,7 @@ MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen
 			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	}
 
-	ms.PDF = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	ms.PDF_S = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
 	return ms;
 }
 

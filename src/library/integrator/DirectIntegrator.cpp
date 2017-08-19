@@ -17,16 +17,10 @@ DirectIntegrator::DirectIntegrator(RenderContext* renderer)
 
 void DirectIntegrator::init() {}
 
-Spectrum DirectIntegrator::apply(const Ray& in, RenderTile* tile,
-								 uint32 pass, ShaderClosure& sc)
-{
-	return applyRay(in, sc, tile, 0);
-}
-
 constexpr float LightEpsilon = 0.00001f;
-Spectrum DirectIntegrator::applyRay(const Ray& in, ShaderClosure& sc,
-									RenderTile* tile,
-									uint32 diffbounces)
+Spectrum DirectIntegrator::apply(const Ray& in,
+								 RenderTile* tile,
+								 uint32 diffbounces, ShaderClosure& sc)
 {
 	Spectrum applied;
 	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
@@ -56,14 +50,17 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, ShaderClosure& sc,
 			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
-			if (ms.PDF <= PR_EPSILON || NdotL <= PR_EPSILON)
+			if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON)
 				continue;
 
-			weight = applyRay(in.next(sc.P, ms.L), other_sc, tile,
-							  !std::isinf(ms.PDF) ? diffbounces + 1 : diffbounces);
+			weight = apply(in.next(sc.P, ms.L), tile,
+						   !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
+						   other_sc);
 
-			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-			MSI::balance(full_weight, full_pdf, weight, ms.PDF * ms.Weight);
+			//if (!weight.isOnlyZero()) {
+				weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
+				MSI::balance(full_weight, full_pdf, weight, ms.PDF_S * ms.Weight);
+			//}
 		}
 	}
 
@@ -77,7 +74,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, ShaderClosure& sc,
 				const Eigen::Vector3f L  = PS.normalized();
 				const float NdotL		 = std::abs(L.dot(sc.N)); // No back light detection
 
-				float pdfA = fps.PDF; //MSI::toSolidAngle(fps.PDF, PS.squaredNorm(), NdotL) /*+ sc.Material->pdf(sc, L, NdotL)*/;
+				float pdfA = fps.PDF_A;
 
 				if (pdfA <= PR_EPSILON || NdotL <= PR_EPSILON)
 					continue;
@@ -88,9 +85,9 @@ Spectrum DirectIntegrator::applyRay(const Ray& in, ShaderClosure& sc,
 				// Full light!!
 				if (renderer()->shootWithEmission(weight, ray, other_sc, tile) == light /*&&
 					(fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
-					if(other_sc.Flags & SCF_Inside)// Wrong side (Back side)
+					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
-					
+
 					weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
 
 					const float pdfS = MSI::toSolidAngle(pdfA, PS.squaredNorm(), std::abs(sc.NdotV * NdotL));

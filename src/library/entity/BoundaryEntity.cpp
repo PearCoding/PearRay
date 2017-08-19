@@ -121,7 +121,7 @@ RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vecto
 	r.Point.UVW		= Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = material().get();
 
-	r.PDF = mPDF_Cache;
+	r.PDF_A = mPDF_Cache;
 	return r;
 }
 

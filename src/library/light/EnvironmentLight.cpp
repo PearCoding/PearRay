@@ -20,7 +20,7 @@ IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point,
 {
 	IInfiniteLight::LightSample ls;
 	ls.L = Projection::tangent_align(point.N,
-									 Projection::cos_hemi(rnd(0), rnd(1), ls.PDF));
+									 Projection::cos_hemi(rnd(0), rnd(1), ls.PDF_S));
 	
 	return ls;
 }

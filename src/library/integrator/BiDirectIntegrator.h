@@ -21,6 +21,7 @@ private:
 			Spectrum Flux;
 			ShaderClosure SC;
 			float PDF;
+			RenderEntity* Entity;
 		};
 
 		EventVertex* LightVertices;

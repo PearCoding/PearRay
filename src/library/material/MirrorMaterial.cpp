@@ -54,7 +54,7 @@ float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, 
 MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
 {
 	MaterialSample ms;
-	ms.PDF = std::numeric_limits<float>::infinity();
+	ms.PDF_S = std::numeric_limits<float>::infinity();
 	ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	return ms;
 }

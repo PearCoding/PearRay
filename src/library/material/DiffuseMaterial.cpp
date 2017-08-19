@@ -40,7 +40,7 @@ MaterialSample DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::
 {
 	MaterialSample ms;
 	ms.L = Projection::tangent_align(point.N, point.Nx, point.Ny,
-										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF));
+										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
 	return ms;
 }
 

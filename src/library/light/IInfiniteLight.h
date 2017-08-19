@@ -20,7 +20,7 @@ public:
 	virtual ~IInfiniteLight() {}
 
 	struct LightSample {
-		float PDF;
+		float PDF_S;// Respect to Solid Angle
 		Eigen::Vector3f L;
 	};
 	virtual LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) = 0;

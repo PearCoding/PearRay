@@ -80,22 +80,32 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 
 				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd, i);
 
-				// Initiate with power
-				if (!fps.Point.Material->isLight() || fps.PDF <= PR_EPSILON)
+				// Skip light if needed
+				if (!fps.Point.Material->isLight() || fps.PDF_A <= PR_EPSILON) {
+					lightV[0].PDF				  = 0;
+					lightV[0].Entity			  = nullptr;
+					data.LightPathLength[lightNr] = 0;
+					lightNr++;
 					continue;
+				}
 
-				Spectrum flux = fps.Point.Material->emission()->eval(fps.Point) / fps.PDF;
+				// Initiate with power
+				Spectrum flux = fps.Point.Material->emission()->eval(fps.Point);
+
+				uint32 lightDepth = 0;
+				// Initial entry -> Light
+				lightV[0].Flux   = flux;
+				lightV[0].SC	 = fps.Point;
+				lightV[0].PDF	= fps.PDF_A; // The direct light entry has an area pdf
+				lightV[0].Entity = light;
+				lightDepth++;
+
+				flux /= fps.PDF_A;
 
 				MaterialSample ms;
 				ms.L = Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
-												 Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), ms.PDF));
+												 Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), ms.PDF_S));
 				float NdotL = std::abs(fps.Point.Ng.dot(ms.L));
-
-				uint32 lightDepth = 0; // Counts diff bounces
-				lightV[0].Flux	= flux;
-				lightV[0].SC	  = fps.Point;
-				lightV[0].PDF	 = ms.PDF;
-
 				Ray current = Ray::safe(in.pixel(),
 										other_sc.P,
 										ms.L,
@@ -103,9 +113,12 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 										in.time(), in.wavelength(),
 										in.flags() | RF_Light);
 
+				float lastPdfS = ms.PDF_S;
 				for (uint32 k = 1;
-					 k < maxDepth && lightDepth <= maxDiffBounces && ms.PDF > PR_EPSILON && NdotL > PR_EPSILON;
+					 k < maxDepth && lightDepth <= maxDiffBounces && ms.PDF_S > PR_EPSILON && NdotL > PR_EPSILON;
 					 ++k) {
+					const Eigen::Vector3f lastP = other_sc.P;
+
 					RenderEntity* entity = renderer()->shoot(current, other_sc, tile);
 					if (entity && other_sc.Material && other_sc.Material->canBeShaded()) {
 						ms	= other_sc.Material->sample(other_sc, tile->random().get3D());
@@ -113,12 +126,16 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 
 						flux *= other_sc.Material->eval(other_sc, ms.L, NdotL) * NdotL;
 
-						if (!std::isinf(ms.PDF)) {
-							lightDepth++;
-							lightV[lightDepth].Flux = flux;
-							lightV[lightDepth].SC   = other_sc;
-							lightV[lightDepth].PDF  = lightV[lightDepth - 1].PDF * ms.PDF;
+						if (!std::isinf(ms.PDF_S)) {
+							lightV[lightDepth].Flux   = flux;
+							lightV[lightDepth].SC	 = other_sc;
+							lightV[lightDepth].PDF	= lastPdfS;
+							lightV[lightDepth].Entity = entity;
 							PR_ASSERT(!std::isinf(lightV[lightDepth].PDF), "No light vertex should be specular");
+
+							lightDepth++;
+							flux /= ms.PDF_S;
+							lastPdfS = ms.PDF_S;
 						}
 
 						current = current.next(other_sc.P, ms.L);
@@ -142,20 +159,20 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 	const uint32 maxLights		 = maxLightSamples * (uint32)renderer()->lights().size();
 	const uint32 maxDepth		 = renderer()->settings().maxRayDepth();
 
-	if (in.depth() >= maxDepth)
-		return Spectrum();
-
 	Spectrum applied;
+	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
+
+	if (!entity || !sc.Material
+		|| !sc.Material->canBeShaded()
+		|| diffBounces > renderer()->settings().maxDiffuseBounces())
+		return applied;
+
 	Spectrum full_weight;
 	float full_pdf = 0;
 
 	// Temporary
 	ShaderClosure other_sc;
 	Spectrum weight;
-
-	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
-	if (!entity || !sc.Material || !sc.Material->canBeShaded())
-		return applied;
 
 	MultiJitteredSampler sampler(tile->random(), maxLightSamples);
 	for (uint32 i = 0; i < maxLightSamples && !std::isinf(full_pdf); ++i) {
@@ -166,48 +183,85 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
-			if (ms.PDF <= PR_EPSILON || NdotL <= PR_EPSILON || !(std::isinf(ms.PDF) || diffBounces < renderer()->settings().maxDiffuseBounces()))
+			if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON)
 				continue;
 
-			weight = applyRay(in.next(sc.P, ms.L),
-							  tile, !std::isinf(ms.PDF) ? diffBounces + 1 : diffBounces,
+			weight = applyRay(in.next(sc.P, ms.L), tile,
+							  !std::isinf(ms.PDF_S) ? diffBounces + 1 : diffBounces,
 							  other_sc);
 
+			//if (!weight.isOnlyZero()) {
 			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-			MSI::balance(full_weight, full_pdf, ms.Weight * weight, ms.PDF);
+			MSI::balance(full_weight, full_pdf, weight, ms.Weight * ms.PDF_S);
+			//}
 		}
 	}
 
 	if (!std::isinf(full_pdf)) {
+		Spectrum inFlux;
 		const TileData& data = mTileData[tile->index()];
 
 		// Each light
 		for (uint32 j = 0; j < maxLights; ++j) {
-			for (uint32 s = 0; s < data.LightPathLength[j]; ++s) {
-				const TileData::EventVertex& lightV = data.LightVertices[j * maxDepth + s];
-				const auto LP						= sc.P - lightV.SC.P;
+			if (data.LightPathLength[j] == 0)
+				continue;
 
-				Ray current = Ray::safe(in.pixel(),
-										lightV.SC.P,
-										LP.normalized(),
-										in.depth(),
-										in.time(), in.wavelength(),
-										in.flags() | RF_Light);
+			// Special case s = 0 -> Direct Light
+			{
+				const TileData::EventVertex& lightV = data.LightVertices[j * maxDepth];
+				const auto PS						= lightV.SC.P - sc.P;
+				const auto L						= PS.normalized();
+				const float NdotL					= std::abs(sc.N.dot(L));
+				// The direct light entry is given in pdf respect to surface area
+				const float pdfS = MSI::toSolidAngle(lightV.PDF,
+													 PS.squaredNorm(), std::abs(NdotL * sc.NdotV));
 
-				const Eigen::Vector3f L = -current.direction();
-				const float NdotL		= std::abs(sc.N.dot(L));
+				Ray ray = in.next(sc.P, L);
+				ray.setFlags(ray.flags() | RF_Light);
 
-				if (NdotL <= PR_EPSILON)
-					continue;
+				if (renderer()->shoot(ray, other_sc, tile) == lightV.Entity /*&& (sc.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
+						continue;
 
-				const float pdf = sc.Material->pdf(sc, L, NdotL) * lightV.PDF;
-
-				if (pdf > PR_EPSILON && renderer()->shoot(current, other_sc, tile) == entity && (sc.P - other_sc.P).squaredNorm() <= LightEpsilon)
 					weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;
-				else
-					weight.clear();
+					MSI::balance(full_weight, full_pdf, weight, pdfS);
+				}
+			}
 
-				MSI::balance(full_weight, full_pdf, weight, pdf);
+			/* We have to calculate the flux and pdf entry of the "light vertex" and of the connection */
+			for (uint32 s = 1; s < data.LightPathLength[j]; ++s) {
+				const TileData::EventVertex& lightV		= data.LightVertices[j * maxDepth + s];
+				const TileData::EventVertex& lastLightV = data.LightVertices[j * maxDepth + s - 1];
+				const auto PS							= lightV.SC.P - sc.P;
+				const auto L							= PS.normalized();
+
+				{ // Recalculate light vertex flux
+					other_sc   = lightV.SC;
+					other_sc.V = L;
+					// TODO: dVdX, dVdY
+					const float pdfS  = lightV.PDF;
+					const float NdotL = std::abs(other_sc.N.dot(lastLightV.SC.V));
+					inFlux			  = lastLightV.Flux * lightV.SC.Material->eval(other_sc, lastLightV.SC.V, NdotL) * NdotL;
+					inFlux /= pdfS;
+				}
+
+				{ // Calculate connection
+					const float NdotL = std::abs(sc.N.dot(L));
+
+					if (NdotL <= PR_EPSILON)
+						continue;
+
+					Ray ray = in.next(sc.P, L);
+					ray.setFlags(ray.flags() | RF_Light);
+
+					if (renderer()->shootWithEmission(weight, ray, other_sc, tile) == lightV.Entity /*&& (sc.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+						if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
+							continue;
+
+						weight += inFlux * sc.Material->eval(sc, L, NdotL) * NdotL;
+						MSI::balance(full_weight, full_pdf, weight, PR_1_PI); // FIXME: Really fixed 1/pi?
+					}
+				}
 			}
 		}
 

@@ -24,7 +24,7 @@ IInfiniteLight::LightSample DistantLight::sample(const ShaderClosure& point, con
 	PR_ASSERT(isFrozen(), "should be frozen.");
 
 	IInfiniteLight::LightSample ls;
-	ls.PDF = std::numeric_limits<float>::infinity();
+	ls.PDF_S = std::numeric_limits<float>::infinity();
 	ls.L = mSampleDirection_Cache;
 	return ls;
 }

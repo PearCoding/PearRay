@@ -120,7 +120,7 @@ RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(const Eigen::Vector3f
 
 	sm.Point.UVW	  = Eigen::Vector3f(rnd(0), rnd(1), 0);
 	sm.Point.Material = material().get();
-	sm.PDF			  = mPDF_Cache;
+	sm.PDF_A			  = mPDF_Cache;
 
 	return sm;
 }

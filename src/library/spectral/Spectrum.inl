@@ -316,7 +316,7 @@ inline bool Spectrum::hasNegative() const
 inline bool Spectrum::isOnlyZero() const
 {
 	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (mValues[i] != 0)
+		if (std::abs(mValues[i]) <= PR_EPSILON)
 			return false;
 	}
 

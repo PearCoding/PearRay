@@ -106,7 +106,7 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 		for (uint32 i = 0; i < 32; ++i) {
 			Eigen::Vector3f rnd = tile->random().get3D();
 			MaterialSample ms = sc.Material->sample(sc, rnd);
-			full_pdf += ms.PDF;
+			full_pdf += ms.PDF_S;
 		}
 
 		full_pdf /= 32;
@@ -136,7 +136,7 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 		if (ms.L.squaredNorm() - 1 > PR_EPSILON)
 			return RGBConverter::toSpec(1, 0, 1);
 
-		return (std::isinf(ms.PDF) || (ms.PDF > PR_EPSILON && ms.PDF <= 1.0f)) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
+		return (ms.PDF_S > PR_EPSILON) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(0, 0, 1);
 	}
 	case DM_Flag_Inside:
 		if (!sc.Flags & SCF_Inside)

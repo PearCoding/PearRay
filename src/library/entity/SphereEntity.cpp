@@ -122,7 +122,7 @@ RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3
 	RenderEntity::FacePointSample sm;
 
 	Eigen::Vector3f n = Projection::sphere_coord(rnd(0) * 2 * PR_PI, rnd(1) * PR_PI);
-	sm.PDF			  = mPDF_Cache;
+	sm.PDF_A		  = mPDF_Cache;
 
 	sm.Point.Ng = (directionMatrix() * n).normalized();
 	Projection::tangent_frame(sm.Point.Ng, sm.Point.Nx, sm.Point.Ny);
@@ -143,6 +143,6 @@ void SphereEntity::setup(RenderContext* context)
 		mMaterial->setup(context);
 
 	const float area = surfaceArea(nullptr);
-	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
+	mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 }
 }

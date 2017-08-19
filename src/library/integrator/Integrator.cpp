@@ -40,7 +40,7 @@ Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc
 			 ++i) {
 			IInfiniteLight::LightSample ls = e->sample(sc, sampler.generate3D(i));
 
-			if (ls.PDF <= PR_EPSILON)
+			if (ls.PDF_S <= PR_EPSILON)
 				continue;
 
 			Spectrum weight;
@@ -58,7 +58,7 @@ Spectrum Integrator::handleInfiniteLights(const Ray& in, const ShaderClosure& sc
 			if (!entity)
 				weight *= sc.Material->eval(sc, ls.L, NdotL) * e->apply(ls.L) * NdotL;
 
-			MSI::balance(semi_weight, semi_pdf, weight, lightSampleWeight * ls.PDF);
+			MSI::balance(semi_weight, semi_pdf, weight, lightSampleWeight * ls.PDF_S);
 		}
 
 		MSI::balance(full_weight, full_pdf, semi_weight,
@@ -85,7 +85,7 @@ Spectrum Integrator::handleSpecularPath(const Ray& in, const ShaderClosure& sc, 
 			MaterialSample ms = other_sc.Material->sample(other_sc,
 															tile->random().get3D());
 
-			if (!std::isinf(ms.PDF))
+			if (!std::isinf(ms.PDF_S))
 				break;
 
 			float NdotL = std::max(0.0f, ray.direction().dot(other_sc.N));

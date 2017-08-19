@@ -186,7 +186,7 @@ RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen:
 	r.Point.UVW		 = Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = mMaterials[elem].get();
 
-	r.PDF = mPDF_Cache;
+	r.PDF_A = mPDF_Cache;
 	return r;
 }
 

@@ -11,9 +11,5 @@ public:
 	void init() override;
 	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass,
 				   ShaderClosure& sc) override;
-
-private:
-	Spectrum applyRay(const Ray& in, ShaderClosure& sc,
-					  RenderTile* tile, uint32 diffbounces);
 };
 }

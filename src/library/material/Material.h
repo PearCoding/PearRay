@@ -10,7 +10,7 @@ class Ray;
 class RenderContext;
 
 struct MaterialSample {
-	float PDF{0};
+	float PDF_S{0};// Respect to Solid Angle
 	float Weight{0};
 	Eigen::Vector3f L;
 };

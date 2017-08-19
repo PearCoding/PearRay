@@ -103,7 +103,7 @@ void setup_entity(py::module& m)
 		.def_readwrite("Point", &RenderEntity::Collision::Point);
 
 	py::class_<RenderEntity::FacePointSample>(re, "FacePointSample")
-		.def_readwrite("PDF", &RenderEntity::FacePointSample::PDF)
+		.def_readwrite("PDF_A", &RenderEntity::FacePointSample::PDF_A)
 		.def_readwrite("Point", &RenderEntity::FacePointSample::Point);
 }
 }

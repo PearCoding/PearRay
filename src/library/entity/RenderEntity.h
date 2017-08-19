@@ -40,7 +40,7 @@ public:
 	virtual Collision checkCollision(const Ray& ray) const = 0;
 
 	struct FacePointSample {
-		float PDF;
+		float PDF_A; // Respect to Area
 		FacePoint Point;
 	};
 	// In world coords

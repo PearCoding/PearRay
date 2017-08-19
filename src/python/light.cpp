@@ -37,7 +37,7 @@ void setup_light(py::module& m)
 		.def_property_readonly("frozen", &IInfiniteLight::isFrozen);
 
 	py::class_<IInfiniteLight::LightSample>(scope, "LightSample")
-		.def_readwrite("PDF", &IInfiniteLight::LightSample::PDF)
+		.def_readwrite("PDF_S", &IInfiniteLight::LightSample::PDF_S)
 		.def_readwrite("L", &IInfiniteLight::LightSample::L);
 
 	py::class_<DistantLight, std::shared_ptr<DistantLight>, IInfiniteLight>(m, "DistantLight")

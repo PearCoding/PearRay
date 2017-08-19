@@ -136,9 +136,9 @@ MaterialSample WardMaterial::sample(const ShaderClosure& point, const Eigen::Vec
 
 	MaterialSample ms;
 	if (rnd(2) < refl)
-		ms.L = diffuse_path(point, rnd, ms.PDF);
+		ms.L = diffuse_path(point, rnd, ms.PDF_S);
 	else
-		ms.L = specular_path(point, rnd, ms.PDF);
+		ms.L = specular_path(point, rnd, ms.PDF_S);
 	
 	return ms;
 }
@@ -149,9 +149,9 @@ MaterialSample WardMaterial::samplePath(const ShaderClosure& point, const Eigen:
 	ms.Weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
 	if (path == 0)
-		ms.L = diffuse_path(point, rnd, ms.PDF);
+		ms.L = diffuse_path(point, rnd, ms.PDF_S);
 	else
-		ms.L = specular_path(point, rnd, ms.PDF);
+		ms.L = specular_path(point, rnd, ms.PDF_S);
 
 	return ms;
 }

@@ -152,7 +152,7 @@ RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f&
 	Projection::tangent_frame(s.Point.Ng, s.Point.Nx, s.Point.Ny);
 
 	s.Point.Material = material(sm.MaterialSlot).get();
-	s.PDF			 = sm.PDF;
+	s.PDF_A			 = sm.PDF;
 
 	return s;
 }

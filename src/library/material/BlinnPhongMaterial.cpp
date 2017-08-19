@@ -93,8 +93,8 @@ MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eige
 {
 	MaterialSample ms;
 	ms.L = Projection::tangent_align(point.N,
-										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF));
-	ms.PDF += BlinnPhongMaterial::pdf(point, ms.L, 0);
+										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
+	ms.PDF_S += BlinnPhongMaterial::pdf(point, ms.L, 0);
 	return ms;
 }
 

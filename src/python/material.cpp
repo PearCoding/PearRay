@@ -62,7 +62,7 @@ public:
 void setup_material(py::module& m)
 {
 	py::class_<MaterialSample>(m, "MaterialSample")
-		.def_readwrite("PDF", &MaterialSample::PDF)
+		.def_readwrite("PDF_S", &MaterialSample::PDF_S)
 		.def_readwrite("Weight", &MaterialSample::Weight)
 		.def_readwrite("L", &MaterialSample::L);
 
