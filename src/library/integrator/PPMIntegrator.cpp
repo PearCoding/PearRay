@@ -474,10 +474,10 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffb
 			if (NdotL > PR_EPSILON) {
 				ShaderClosure sc2;
 
-				Ray ray = in.next(sc.P, ms.L);
+				Ray ray		 = in.next(sc.P, ms.L);
 				other_weight = accumPass(ray, sc2, 0, tile);
 				other_weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-				
+
 				MSI::balance(full_weight, full_pdf, other_weight, ms.PDF_S);
 			}
 		} else {

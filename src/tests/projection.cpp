@@ -109,7 +109,8 @@ PR_TEST("Cos Hemi Equal")
 	PR_CHECK_NEARLY_EQ(V1, V2);
 	PR_CHECK_NEARLY_EQ(pdf1, pdf2);
 	PR_CHECK_NEARLY_EQ(pdf2, pdf3);
-	PR_CHECK_NEARLY_EQ(pdf3, pdf1);
+	PR_CHECK_NEARLY_EQ(pdf3, pdf4);
+	PR_CHECK_NEARLY_EQ(pdf4, pdf1);
 }
 
 PR_END_TESTCASE()

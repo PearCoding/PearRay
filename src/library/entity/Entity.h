@@ -13,9 +13,12 @@ enum EntityFlags {
 	EF_ScaleLight = 0x4,
 };
 
+#define ENTITY_CLASS \
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 class PR_LIB Entity {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	ENTITY_CLASS
 
 	Entity(uint32 id, const std::string& name);
 	virtual ~Entity();
@@ -40,8 +43,12 @@ public:
 	inline void setRotation(const Eigen::Quaternionf& quat);
 	inline Eigen::Quaternionf rotation() const;
 
-	inline const Eigen::Affine3f& transform() const;
-	inline const Eigen::Affine3f& invTransform() const;
+	// FIXME: Unfortunatly we have to disable alignment for the transformations.
+	// A SIGSEV is raised in release build otherwise. 
+	// It may be a bug in Eigen or somewhere in my own code.
+	typedef Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign> Transform;
+	inline const Transform& transform() const;
+	inline const Transform& invTransform() const;
 
 	/* Matrix to be used by directions/normals */
 	inline const Eigen::Matrix3f& directionMatrix() const;
@@ -72,8 +79,8 @@ private:
 	bool mFrozen;
 
 	mutable bool mReCache;
-	mutable Eigen::Affine3f mTransformCache;
-	mutable Eigen::Affine3f mInvTransformCache;
+	mutable Transform mTransformCache;
+	mutable Transform mInvTransformCache;
 	mutable Eigen::Matrix3f mNormalMatrixCache;
 	mutable Eigen::Matrix3f mInvNormalMatrixCache;
 };

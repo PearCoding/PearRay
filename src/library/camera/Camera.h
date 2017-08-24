@@ -19,6 +19,8 @@ struct CameraSample {
 
 class PR_LIB Camera : public Entity {
 public:
+	ENTITY_CLASS
+	
 	Camera(uint32 id, const std::string& name);
 	virtual ~Camera();
 

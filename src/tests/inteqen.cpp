@@ -1,6 +1,8 @@
 #include "Environment.h"
 #include "SceneLoader.h"
 
+#include "Logger.h"
+
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderContext.h"
 #include "Test.h"
@@ -26,13 +28,13 @@ PR_TEST("Equal Energy")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
+	env->scene().freeze();
+	env->scene().buildTree();
+
 	auto renderFactory = std::make_shared<RenderFactory>(
 		env->renderWidth(),
 		env->renderHeight(),
 		env->scene(), "", true);
-
-	env->scene().freeze();
-	env->scene().buildTree();
 
 	Spectrum diOutput;
 	Spectrum bidiOutput;
@@ -41,7 +43,8 @@ PR_TEST("Equal Energy")
 	renderFactory->settings().setSeed(42);
 	renderFactory->settings().setMaxDiffuseBounces(0);
 
-	{// Direct
+	std::cout << "Direct>" << std::endl;
+	{
 		renderFactory->settings().setIntegratorMode(IM_Direct);
 
 		auto renderer = renderFactory->create(0, 1, 1);
@@ -56,7 +59,8 @@ PR_TEST("Equal Energy")
 		diOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
 	}
 
-	{// Bi-Direct
+	std::cout << "Bi-Direct>" << std::endl;
+	{
 		renderFactory->settings().setIntegratorMode(IM_BiDirect);
 
 		auto renderer = renderFactory->create(0, 1, 1);
@@ -71,7 +75,8 @@ PR_TEST("Equal Energy")
 		bidiOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
 	}
 
-	{// PPM
+	std::cout << "PPM>" << std::endl;
+	{
 		renderFactory->settings().setIntegratorMode(IM_PPM);
 		renderFactory->settings().ppm().setMaxPhotonsPerPass(200000);
 		renderFactory->settings().ppm().setMaxPassCount(10);

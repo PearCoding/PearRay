@@ -34,9 +34,9 @@ private:
 		_Data(uint32 width, uint32 height, ColorBufferMode mode);
 		~_Data();
 
-		ColorBufferMode Mode;
 		uint32 Width;
 		uint32 Height;
+		ColorBufferMode Mode;
 		float* Ptr;
 	};
 

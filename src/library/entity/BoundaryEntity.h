@@ -6,7 +6,7 @@ namespace PR {
 class Material;
 class PR_LIB BoundaryEntity : public RenderEntity {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	ENTITY_CLASS
 
 	BoundaryEntity(uint32 id, const std::string& name, const BoundingBox& box);
 	virtual ~BoundaryEntity();

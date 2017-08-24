@@ -69,7 +69,7 @@ public:
 		if (info1.shape[0] != height() || info1.shape[1] != width())
 			throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
 
-		if (info1.shape[2] != elems)
+		if (info1.shape[2] != (ssize_t)elems)
 			throw std::runtime_error("Incompatible shape: Expected RGB in inner most dimension");
 
 		// rgbOut
@@ -118,7 +118,7 @@ public:
 
 	void mapOnlyMapper_py(const ToneMapper& mapper, Array rgbIn)
 	{
-		size_t elems = mode() == CBM_RGB ? 3 : 4;
+		ssize_t elems = mode() == CBM_RGB ? 3 : 4;
 
 		// rgbIn
 		py::buffer_info info1 = rgbIn.request();

@@ -57,7 +57,7 @@ public:
 				uint32 sample, uint32 pass);
 
 	inline bool isStopping() const { return mShouldStop; }
-	bool isFinished();
+	bool isFinished() const;
 	void waitForFinish();
 
 	size_t threads() const { return mThreads.size(); }

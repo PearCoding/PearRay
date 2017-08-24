@@ -534,10 +534,10 @@ private:
 			costIntersection /= objs.size();
 		}
 
-		int dim;
-		float v;
-		float c;
-		SplitPlane side;
+		int dim			= 0;
+		float v			= 0;
+		float c			= 0;
+		SplitPlane side = SP_Left;
 		BoundingBox vl, vr;
 
 		findSplit(costIntersection, events, objs, V, dim, v, c, side, vl, vr);
@@ -549,10 +549,9 @@ private:
 
 		if (c > objs.size() * costIntersection || depth > PR_KDTREE_MAX_DEPTH || (prev_dim == dim && std::abs(prev_v - v) <= PR_EPSILON)) {
 			auto leaf = new kdLeafNode(mNodeCount++, V);
-			for (auto obj : objs)
-			{
+			for (auto obj : objs) {
 				leaf->objects.push_back(obj->data);
-				if(mAddedCallback)
+				if (mAddedCallback)
 					mAddedCallback(obj->data, leaf->id);
 			}
 			return leaf;

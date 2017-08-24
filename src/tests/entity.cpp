@@ -9,7 +9,7 @@ PR_BEGIN_TESTCASE(Entity)
 PR_TEST("id")
 {
     Entity entity(0, "Test");
-    PR_CHECK_EQ(entity.id(), 0);
+    PR_CHECK_EQ(entity.id(), (uint32)0);
 }
 
 PR_TEST("name")

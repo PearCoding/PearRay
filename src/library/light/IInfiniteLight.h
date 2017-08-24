@@ -13,6 +13,8 @@ class Spectrum;
  */
 class PR_LIB IInfiniteLight {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	
 	IInfiniteLight()
 		: mFrozen(false)
 	{

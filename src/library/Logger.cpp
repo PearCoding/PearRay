@@ -7,7 +7,11 @@
 
 namespace PR {
 Logger::Logger()
+#ifdef PR_DEBUG
+	: mVerbose(true)
+#else
 	: mVerbose(false)
+#endif
 	, mQuiet(false)
 {
 }

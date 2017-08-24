@@ -69,7 +69,7 @@ inline Eigen::Quaternionf Entity::rotation() const
 	return mRotation;
 }
 
-inline const Eigen::Affine3f& Entity::transform() const
+inline const Entity::Transform& Entity::transform() const
 {
 	if (mReCache) {
 		mReCache = false;
@@ -83,7 +83,7 @@ inline const Eigen::Affine3f& Entity::transform() const
 	return mTransformCache;
 }
 
-inline const Eigen::Affine3f& Entity::invTransform() const
+inline const Entity::Transform& Entity::invTransform() const
 {
 	if (mReCache)
 		transform();

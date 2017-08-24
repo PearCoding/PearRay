@@ -448,7 +448,7 @@ void RenderContext::waitForNextPass()
 	}
 }
 
-bool RenderContext::isFinished()
+bool RenderContext::isFinished() const
 {
 	for (RenderThread* thread : mThreads) {
 		if (thread->state() != Thread::S_Stopped)

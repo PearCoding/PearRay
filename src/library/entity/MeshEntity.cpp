@@ -51,11 +51,11 @@ float MeshEntity::surfaceArea(Material* m) const
 			}
 
 			if (slot >= mMaterials.size())
-				return mMesh->surfaceArea(flags() & EF_LocalArea ? Eigen::Affine3f::Identity() : transform());
+				return mMesh->surfaceArea(flags() & EF_LocalArea ? Entity::Transform::Identity() : transform());
 			else
-				return mMesh->surfaceArea(slot, flags() & EF_LocalArea ? Eigen::Affine3f::Identity() : transform());
+				return mMesh->surfaceArea(slot, flags() & EF_LocalArea ? Entity::Transform::Identity() : transform());
 		} else {
-			return mMesh->surfaceArea(flags() & EF_LocalArea ? Eigen::Affine3f::Identity() : transform());
+			return mMesh->surfaceArea(flags() & EF_LocalArea ? Entity::Transform::Identity() : transform());
 		}
 	}
 }
@@ -161,7 +161,7 @@ void MeshEntity::onFreeze()
 {
 	RenderEntity::onFreeze();
 
-	mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ? Eigen::Affine3f::Identity() : transform());
+	mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ? Entity::Transform::Identity() : transform());
 
 	// Check up
 	if (mSurfaceArea_Cache <= PR_EPSILON)

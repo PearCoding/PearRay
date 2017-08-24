@@ -133,7 +133,7 @@ RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) con
 	float t   = std::numeric_limits<float>::max();
 	int found = -1;
 	Eigen::Vector3f vertex;
-	BoundingBox::FaceSide side;
+	BoundingBox::FaceSide side = BoundingBox::FS_Front;
 
 	for (int i = 0; i < 3; ++i) {
 		BoundingBox::Intersection in = mAxisBoundingBox_Cache[i].intersects(local);
