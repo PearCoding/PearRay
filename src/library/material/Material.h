@@ -9,10 +9,28 @@ struct ShaderClosure;
 class Ray;
 class RenderContext;
 
+/* A material having a diffuse path should never have a specular path and vice versa! */
+enum MaterialScatteringType {
+	MST_DiffuseReflection = 0,
+	MST_SpecularReflection,
+	MST_DiffuseTransmission,
+	MST_SpecularTransmission
+};
+
 struct MaterialSample {
-	float PDF_S{0};// Respect to Solid Angle
-	float Weight{0};
+	float PDF_S{ 0 }; // Respect to Solid Angle
 	Eigen::Vector3f L;
+	MaterialScatteringType ScatteringType{ MST_DiffuseReflection };
+
+	inline bool isSpecular() const
+	{
+		return ScatteringType == MST_SpecularReflection || ScatteringType == MST_SpecularTransmission;
+	}
+
+	inline bool isReflection() const
+	{
+		return ScatteringType == MST_SpecularReflection || ScatteringType == MST_DiffuseReflection;
+	}
 };
 
 class PR_LIB Material {
@@ -31,23 +49,21 @@ public:
 	virtual float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) = 0;
 
 	/*
-		 Sample a direction based on the uniform rnd value. (Roussian Roulette)
+		 Sample a direction based on the uniform rnd value. (Russian Roulette)
 		*/
 	virtual MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) = 0;
 
 	/*
-		 Sample a direction based on the uniform rnd value. (Non roussian roulette)
-		*/
+		Sample a direction based on the uniform rnd value. (Non russian roulette)
+	*/
 	virtual MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
 	{
-		MaterialSample s = sample(point, rnd);
-		s.Weight		 = 1;
-		return s;
+		return sample(point, rnd);
 	}
 
 	/*
-		 Returns amount of special paths in the material. (like reflection/refraction)
-		 */
+		Returns amount of special paths in the material. (like reflection/refraction)
+	*/
 	virtual uint32 samplePathCount() const
 	{
 		return 1;

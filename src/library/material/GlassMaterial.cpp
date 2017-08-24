@@ -81,16 +81,20 @@ MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Ve
 
 	bool total = false;
 	MaterialSample ms;
-	if (rnd(1) < weight) {
-		ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
+	if (rnd(0) < weight) {
+		ms.ScatteringType = MST_SpecularReflection;
+		ms.L			  = Reflection::reflect(point.NdotV, point.N, point.V);
 	} else {
-		ms.L = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
-								  point.NdotV, point.N, point.V, total);
+		ms.ScatteringType = MST_SpecularTransmission;
+		ms.L			  = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
+								   -point.NdotV, point.N, point.V, total);
 		if (!mThin && total)
 			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	}
 
-	ms.PDF_S = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	PR_ASSERT(weight >= 0 && weight <= 1, "Weight should be bounded to [0,1]");
+
+	ms.PDF_S = (total && mThin) ? 0 : weight;
 	return ms;
 }
 
@@ -98,27 +102,31 @@ MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen
 {
 	MaterialSample ms;
 	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
-	ms.Weight		= (point.Flags & SCF_Inside) == 0 ?
+	float weight	= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
-												  Fresnel::dielectric(-point.NdotV, 1, ind)
-												  : Fresnel::dielectric(-point.NdotV, ind, 1);
+												   Fresnel::dielectric(-point.NdotV, 1, ind)
+												   : Fresnel::dielectric(-point.NdotV, ind, 1);
 #else
-												  Fresnel::schlick(-point.NdotV, 1, ind)
-												  : Fresnel::schlick(-point.NdotV, ind, 1);
+												   Fresnel::schlick(-point.NdotV, 1, ind)
+												   : Fresnel::schlick(-point.NdotV, ind, 1);
 #endif
 
 	bool total = false;
 	if (path == 0) {
-		ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
+		ms.ScatteringType = MST_SpecularReflection;
+		ms.L			  = Reflection::reflect(point.NdotV, point.N, point.V);
 	} else {
-		ms.Weight = 1 - ms.Weight;
-		ms.L			= Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
-								  point.NdotV, point.N, point.V, total);
+		weight			  = 1 - weight;
+		ms.ScatteringType = MST_SpecularTransmission;
+		ms.L			  = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
+								   -point.NdotV, point.N, point.V, total);
 		if (!mThin && total)
 			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	}
 
-	ms.PDF_S = (total && mThin) ? 0 : std::numeric_limits<float>::infinity();
+	PR_ASSERT(weight >= 0 && weight <= 1, "Weight should be bounded to [0,1]");
+
+	ms.PDF_S = (total && mThin) ? 0 : weight;
 	return ms;
 }
 

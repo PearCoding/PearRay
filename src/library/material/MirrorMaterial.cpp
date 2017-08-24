@@ -55,6 +55,7 @@ MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::V
 {
 	MaterialSample ms;
 	ms.PDF_S = std::numeric_limits<float>::infinity();
+	ms.ScatteringType = MST_SpecularReflection;
 	ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
 	return ms;
 }

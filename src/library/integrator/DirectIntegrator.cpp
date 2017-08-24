@@ -46,9 +46,11 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 	ShaderClosure other_sc;
 	Spectrum weight;
 
+	bool noSpecular = true;
+
 	// Hemisphere sampling
 	for (uint32 i = 0;
-		 i < renderer()->settings().maxLightSamples() && !std::isinf(full_pdf);
+		 i < renderer()->settings().maxLightSamples() && noSpecular;
 		 ++i) {
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0.");
@@ -61,17 +63,20 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 				continue;
 
 			weight = applyRay(in.next(sc.P, ms.L), tile,
-						   !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
-						   other_sc);
+							  !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
+							  other_sc);
 
 			//if (!weight.isOnlyZero()) {
 			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-			MSI::balance(full_weight, full_pdf, weight, ms.PDF_S * ms.Weight);
+			MSI::balance(full_weight, full_pdf, weight, ms.PDF_S);
 			//}
+
+			if(ms.isSpecular())
+				noSpecular = false;
 		}
 	}
 
-	if (!std::isinf(full_pdf)) {
+	if (noSpecular) {
 		// Area sampling!
 		for (RenderEntity* light : renderer()->lights()) {
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
@@ -80,10 +85,11 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 				const Eigen::Vector3f PS = fps.Point.P - sc.P;
 				const Eigen::Vector3f L  = PS.normalized();
 				const float NdotL		 = std::abs(L.dot(sc.N)); // No back light detection
+				const float lightNdotV   = std::abs(L.dot(fps.Point.Ng));
 
 				float pdfA = fps.PDF_A;
 
-				if (pdfA <= PR_EPSILON || NdotL <= PR_EPSILON)
+				if (pdfA <= PR_EPSILON || NdotL <= PR_EPSILON || lightNdotV <= PR_EPSILON)
 					continue;
 
 				Ray ray = in.next(sc.P, L);
@@ -95,7 +101,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
-					weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
+					weight *= sc.Material->eval(sc, L, NdotL) * NdotL * lightNdotV;
 
 					const float pdfS = MSI::toSolidAngle(pdfA, PS.squaredNorm(), std::abs(sc.NdotV * NdotL));
 					MSI::balance(full_weight, full_pdf, weight, pdfS);

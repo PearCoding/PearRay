@@ -10,7 +10,7 @@ public:
 	static inline float dielectric(float dot, float n1, float n2)
 	{
 		// Snells Law
-		const float eta = n1 / n2;
+		const float eta = n1 / n2; // Actually inverse eta
 		const float z   = 1 - eta * eta * (1 - dot * dot);
 
 		if (z <= PR_EPSILON)
@@ -56,7 +56,7 @@ public:
 	{
 		const float t = 1 - dot;
 
-		return t * t * t * t * t;
+		return (t * t) * (t * t) * t;
 	}
 };
 }

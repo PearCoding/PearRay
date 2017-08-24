@@ -85,13 +85,13 @@ namespace MSI {
 	// Casts
 	inline float toSolidAngle(float pdf_area, float dist_sqr, float abs_cosine)
 	{
-		PR_ASSERT(abs_cosine >= 0, "absolute_cosine has to greater or equal 0");
+		PR_ASSERT(abs_cosine >= 0, "absolute_cosine has to be greater or equal 0");
 		return pdf_area * abs_cosine / dist_sqr;
 	}
 
 	inline float toArea(float pdf_solidangle, float dist_sqr, float abs_cosine)
 	{
-		PR_ASSERT(abs_cosine >= 0, "absolute_cosine has to greater or equal 0");
+		PR_ASSERT(abs_cosine >= 0, "absolute_cosine has to be greater or equal 0");
 		return pdf_solidangle * dist_sqr / abs_cosine;
 	}
 }

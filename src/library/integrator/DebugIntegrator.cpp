@@ -111,7 +111,7 @@ Spectrum DebugIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass, Sh
 
 		full_pdf /= 32;
 
-		return std::isinf(full_pdf) ? RGBConverter::toSpec(0, 1, 0) : RGBConverter::toSpec(full_pdf, full_pdf, full_pdf);
+		return RGBConverter::toSpec(full_pdf, full_pdf, full_pdf);
 	}
 	case DM_Validity: {
 		/*

@@ -142,8 +142,8 @@ void PlaneEntity::onFreeze()
 
 	mPDF_Cache = 1.0f/mGlobalPlane_Cache.surfaceArea();
 
-	PR_LOGGER.logf(L_Info, M_Entity, "Plane: px [%f, %f, %f] py [%f, %f, %f]³",
-		 px(0), px(1), px(2), py(0), py(1), py(2));
+	PR_LOGGER.logf(L_Info, M_Entity, "Plane: px [%f, %f, %f] py [%f, %f, %f] A %f",
+		 px(0), px(1), px(2), py(0), py(1), py(2), mGlobalPlane_Cache.surfaceArea());
 	PR_LOGGER.logf(L_Info, M_Entity, "Plane: axisX [%f, %f, %f] axisY [%f, %f, %f]³",
 		 mGlobalPlane_Cache.xAxis()(0), mGlobalPlane_Cache.xAxis()(1), mGlobalPlane_Cache.xAxis()(2),
 		 mGlobalPlane_Cache.yAxis()(0), mGlobalPlane_Cache.yAxis()(1), mGlobalPlane_Cache.yAxis()(2));

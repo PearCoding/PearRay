@@ -126,7 +126,7 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 
 						flux *= other_sc.Material->eval(other_sc, ms.L, NdotL) * NdotL;
 
-						if (!std::isinf(ms.PDF_S)) {
+						if (!ms.isSpecular()) {
 							lightV[lightDepth].Flux   = flux;
 							lightV[lightDepth].SC	 = other_sc;
 							lightV[lightDepth].PDF	= lastPdfS;
@@ -174,12 +174,14 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 	ShaderClosure other_sc;
 	Spectrum weight;
 
+	bool noSpecular = true;
+
 	MultiJitteredSampler sampler(tile->random(), maxLightSamples);
-	for (uint32 i = 0; i < maxLightSamples && !std::isinf(full_pdf); ++i) {
+	for (uint32 i = 0; i < maxLightSamples && noSpecular; ++i) {
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0");
 		Eigen::Vector3f rnd = sampler.generate3D(i);
-		for (uint32 path = 0; path < path_count && !std::isinf(full_pdf); ++path) {
+		for (uint32 path = 0; path < path_count && noSpecular; ++path) {
 			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
@@ -192,12 +194,15 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 
 			//if (!weight.isOnlyZero()) {
 			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-			MSI::balance(full_weight, full_pdf, weight, ms.Weight * ms.PDF_S);
+			MSI::balance(full_weight, full_pdf, weight, ms.PDF_S);
 			//}
+
+			if (ms.isSpecular())
+				noSpecular = false;
 		}
 	}
 
-	if (!std::isinf(full_pdf)) {
+	if (noSpecular) {
 		Spectrum inFlux;
 		const TileData& data = mTileData[tile->index()];
 
@@ -212,6 +217,8 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 				const auto PS						= lightV.SC.P - sc.P;
 				const auto L						= PS.normalized();
 				const float NdotL					= std::abs(sc.N.dot(L));
+				const float lightNdotV				= std::abs(L.dot(lightV.SC.Ng));
+
 				// The direct light entry is given in pdf respect to surface area
 				const float pdfS = MSI::toSolidAngle(lightV.PDF,
 													 PS.squaredNorm(), std::abs(NdotL * sc.NdotV));
@@ -223,7 +230,7 @@ Spectrum BiDirectIntegrator::applyRay(const Ray& in, RenderTile* tile, uint32 di
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
-					weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL;
+					weight = lightV.Flux * sc.Material->eval(sc, L, NdotL) * NdotL * lightNdotV;
 					MSI::balance(full_weight, full_pdf, weight, pdfS);
 				}
 			}

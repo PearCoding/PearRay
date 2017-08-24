@@ -95,6 +95,7 @@ MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eige
 	ms.L = Projection::tangent_align(point.N,
 										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
 	ms.PDF_S += BlinnPhongMaterial::pdf(point, ms.L, 0);
+	ms.ScatteringType = MST_DiffuseReflection;
 	return ms;
 }
 

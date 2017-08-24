@@ -274,10 +274,14 @@ MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Ei
 	const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
 	MaterialSample ms;
+	ms.ScatteringType = MST_DiffuseReflection; // Even specular path is diffuse, as it is not fixed like a mirror
+
 	if (rnd(2) < refl)
 		ms.L = diffuse_path(point, rnd, ms.PDF_S);
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
+
+	ms.PDF_S *= mReflectivity ? mReflectivity->eval(point) : 0.5f;
 
 	return ms;
 }
@@ -285,13 +289,15 @@ MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Ei
 MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
 {
 	MaterialSample ms;
-	ms.Weight = mReflectivity ? mReflectivity->eval(point) : 0.5f;
+	ms.ScatteringType = MST_DiffuseReflection;
 
 	if (path == 0)
 		ms.L = diffuse_path(point, rnd, ms.PDF_S);
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
-	
+
+	ms.PDF_S *= mReflectivity ? mReflectivity->eval(point) : 0.5f; // TODO: Really?
+
 	return ms;
 }
 

@@ -374,7 +374,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 				dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
 												Projection::hemi(rnd(0), rnd(1), t_pdf));
 
-				t_pdf *= fps.PDF_A;
+				//t_pdf *= fps.PDF_A;
 			}
 
 			if (!lightSample.Material->isLight())
@@ -401,7 +401,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 
 					MaterialSample ms = sc.Material->sample(sc, tile->random().get3D());
 
-					if (ms.PDF_S > PR_EPSILON && !std::isinf(ms.PDF_S)) // Diffuse
+					if (ms.PDF_S > PR_EPSILON && !ms.isSpecular()) // Diffuse
 					{
 						// Always store when diffuse
 						Photon::Photon photon;
@@ -424,15 +424,15 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 
 						if (diffuseBounces > H - 1)
 							break;						// Absorb
-					} else if (!std::isinf(ms.PDF_S)) { // Absorb
+					} else if (!ms.isSpecular()) { // Absorb
 						break;
 					}
 
 					const float NdotL = std::abs(ms.L.dot(sc.N));
-					radiance *= PR_CHECK_VALIDITY(sc.Material->eval(sc, ms.L, NdotL), "After material eval") * (NdotL / (std::isinf(ms.PDF_S) ? 1 : ms.PDF_S));
+					radiance *= PR_CHECK_VALIDITY(sc.Material->eval(sc, ms.L, NdotL), "After material eval") * (NdotL / ms.PDF_S);
 					ray = ray.next(sc.P, ms.L);
 
-					PR_CHECK_VALIDITY(std::isinf(ms.PDF_S) ? 1 : ms.PDF_S, "After photon apply");
+					PR_CHECK_VALIDITY(ms.PDF_S, "After photon apply");
 					PR_CHECK_VALIDITY(radiance, "After photon apply");
 				} else { // Nothing found, abort
 					break;
@@ -466,7 +466,7 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffb
 		if (ms.PDF_S <= PR_EPSILON)
 			continue;
 
-		if (std::isinf(ms.PDF_S)) { // Specular
+		if (ms.isSpecular()) { // Specular
 			Spectrum other_weight;
 
 			const float NdotL = std::abs(ms.L.dot(sc.N));
@@ -480,7 +480,7 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffb
 
 				MSI::balance(full_weight, full_pdf, other_weight, ms.PDF_S);
 			}
-		} else {
+		} else {// Diffuse
 			ms.PDF_S = 0;
 			float inf_pdf;
 			Spectrum inf_weight = handleInfiniteLights(in, sc, tile, inf_pdf);
@@ -544,7 +544,7 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffb
 			const float inv = PR_1_PI / mSearchRadius2->getFragment(in.pixel());
 
 			MSI::balance(full_weight, full_pdf,
-						 mAccumulatedFlux->getFragment(in.pixel()) * inv, ms.Weight * ms.PDF_S);
+						 mAccumulatedFlux->getFragment(in.pixel()) * inv, ms.PDF_S);
 
 			PR_CHECK_VALIDITY(inv, "After photon estimation");
 		} // End diffuse

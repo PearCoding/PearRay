@@ -61,10 +61,18 @@ public:
 
 void setup_material(py::module& m)
 {
+	py::enum_<MaterialScatteringType>(m, "MaterialScatteringType")
+		.value("DIFFUSEREFLECTION", MST_DiffuseReflection)
+		.value("SPECULARREFLECTION", MST_SpecularReflection)
+		.value("DIFFUSETRANSMISSION", MST_DiffuseTransmission)
+		.value("SPECULARTRANSMISSION", MST_SpecularTransmission);
+
 	py::class_<MaterialSample>(m, "MaterialSample")
 		.def_readwrite("PDF_S", &MaterialSample::PDF_S)
-		.def_readwrite("Weight", &MaterialSample::Weight)
-		.def_readwrite("L", &MaterialSample::L);
+		.def_readwrite("ScatteringType", &MaterialSample::ScatteringType)
+		.def_readwrite("L", &MaterialSample::L)
+		.def_property_readonly("isSpecular", &MaterialSample::isSpecular)
+		.def_property_readonly("isReflection", &MaterialSample::isReflection);
 
 	py::class_<Material, std::shared_ptr<Material>>(m, "Material")
 		.def("eval", &Material::eval)
