@@ -1,5 +1,6 @@
 #include "Material.h"
 #include "ray/Ray.h"
+#include "shader/ShaderClosure.h"
 
 #include <sstream>
 
@@ -12,6 +13,15 @@ Material::Material(uint32 id)
 	, mSelfShadow(true)
 	, mCameraVisible(true)
 {
+}
+
+Spectrum Material::evalEmission(const ShaderClosure& point)
+{
+	if(!mEmission)
+		return Spectrum();
+	
+	const float NdotV = std::max(0.0f, -point.Ng.dot(point.V));
+	return mEmission->eval(point) * NdotV;
 }
 
 std::string Material::dumpInformation() const

@@ -106,7 +106,7 @@ RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 	return c;
 }
 
-RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
+RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
 	PR_GUARD_PROFILE();
 

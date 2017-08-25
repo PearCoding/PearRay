@@ -21,9 +21,6 @@ public:
 		V_DPDU,
 		V_DPDV,
 		V_DPDW,
-		V_DPDX,
-		V_DPDY,
-		V_DPDZ,
 		V_DPDT,
 
 		V_3D_COUNT

@@ -40,8 +40,6 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 	float full_pdf = 0;
 	Spectrum full_weight;
 
-	const Eigen::Vector3f rnd = tile->random().get3D();
-
 	// Used temporary
 	ShaderClosure other_sc;
 	Spectrum weight;
@@ -54,6 +52,8 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 		 ++i) {
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0.");
+
+		const Eigen::Vector3f rnd = tile->random().get3D();
 
 		for (uint32 path = 0; path < path_count; ++path) {
 			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
@@ -80,16 +80,16 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 		// Area sampling!
 		for (RenderEntity* light : renderer()->lights()) {
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
-				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd, i);
+				const Eigen::Vector3f rnd = tile->random().get3D();
+				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
 
 				const Eigen::Vector3f PS = fps.Point.P - sc.P;
 				const Eigen::Vector3f L  = PS.normalized();
 				const float NdotL		 = std::abs(L.dot(sc.N)); // No back light detection
-				const float lightNdotV   = std::abs(L.dot(fps.Point.Ng));
 
 				float pdfA = fps.PDF_A;
 
-				if (pdfA <= PR_EPSILON || NdotL <= PR_EPSILON || lightNdotV <= PR_EPSILON)
+				if (pdfA <= PR_EPSILON || NdotL <= PR_EPSILON)
 					continue;
 
 				Ray ray = in.next(sc.P, L);
@@ -101,7 +101,8 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
-					weight *= sc.Material->eval(sc, L, NdotL) * NdotL * lightNdotV;
+					weight *= light->surfaceArea(fps.Point.Material);// Area based
+					weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
 
 					const float pdfS = MSI::toSolidAngle(pdfA, PS.squaredNorm(), std::abs(sc.NdotV * NdotL));
 					MSI::balance(full_weight, full_pdf, weight, pdfS);

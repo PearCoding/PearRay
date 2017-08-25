@@ -60,7 +60,7 @@ public:
 		uint32 MaterialSlot;
 		float PDF;
 	};
-	FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const;
+	FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const;
 
 private:
 	BoundingBox mBoundingBox;

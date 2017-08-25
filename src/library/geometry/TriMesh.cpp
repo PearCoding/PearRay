@@ -137,7 +137,7 @@ float TriMesh::collisionCost() const
 	return TriangleTestCost * reinterpret_cast<TriKDTree*>(mKDTree)->depth();
 }
 
-TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
+TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
 	uint32 fi = Projection::map(rnd(0), 0, (int)mFaces.size() - 1);
 	auto bary = Projection::triangle(rnd(1), rnd(2));

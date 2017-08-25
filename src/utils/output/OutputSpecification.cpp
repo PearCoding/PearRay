@@ -144,12 +144,6 @@ OutputMap::Variable3D typeToVariable3D(const std::string& str)
 		return OutputMap::V_DPDV;
 	else if (str == "dpdw")
 		return OutputMap::V_DPDW;
-	else if (str == "dpdx")
-		return OutputMap::V_DPDX;
-	else if (str == "dpdy")
-		return OutputMap::V_DPDY;
-	else if (str == "dpdz")
-		return OutputMap::V_DPDZ;
 	else if (str == "velocity" || str == "movement" || str == "dpdt")
 		return OutputMap::V_DPDT;
 	else
@@ -301,21 +295,6 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 									spec.Name[0] = "dpdw_x";
 									spec.Name[1] = "dpdw_y";
 									spec.Name[2] = "dpdw_z";
-									break;
-								case OutputMap::V_DPDX:
-									spec.Name[0] = "dpdx_x";
-									spec.Name[1] = "dpdx_y";
-									spec.Name[2] = "dpdx_z";
-									break;
-								case OutputMap::V_DPDY:
-									spec.Name[0] = "dpdy_x";
-									spec.Name[1] = "dpdy_y";
-									spec.Name[2] = "dpdy_z";
-									break;
-								case OutputMap::V_DPDZ:
-									spec.Name[0] = "dpdz_x";
-									spec.Name[1] = "dpdz_y";
-									spec.Name[2] = "dpdz_z";
 									break;
 								case OutputMap::V_DPDT:
 									spec.Name[0] = "dpdt_x";

@@ -12,9 +12,6 @@ struct alignas(16) PR_LIB_INLINE FacePoint {
 public:
 	// Point of sample
 	Eigen::Vector3f P;
-	Eigen::Vector3f dPdX;
-	Eigen::Vector3f dPdY;
-	Eigen::Vector3f dPdZ; // Only useful for volumes.
 	Eigen::Vector3f dPdU;
 	Eigen::Vector3f dPdV;
 	Eigen::Vector3f dPdW;
@@ -37,9 +34,6 @@ public:
 	// C++11 POD constructor
 	inline FacePoint() noexcept
 		: P(0, 0, 0)
-		, dPdX(0, 0, 0)
-		, dPdY(0, 0, 0)
-		, dPdZ(0, 0, 0)
 		, dPdU(0, 0, 0)
 		, dPdV(0, 0, 0)
 		, dPdW(0, 0, 0)

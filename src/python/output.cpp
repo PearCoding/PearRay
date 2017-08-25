@@ -125,9 +125,6 @@ void setup_output(py::module& m)
 		.value("DPDU", OutputMap::V_DPDU)
 		.value("DPDV", OutputMap::V_DPDV)
 		.value("DPDW", OutputMap::V_DPDW)
-		.value("DPDX", OutputMap::V_DPDX)
-		.value("DPDY", OutputMap::V_DPDY)
-		.value("DPDZ", OutputMap::V_DPDZ)
 		.value("DPDT", OutputMap::V_DPDT);
 
 	py::enum_<OutputMap::Variable1D>(scope, "Variable1D")

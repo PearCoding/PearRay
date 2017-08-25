@@ -4,10 +4,11 @@
 #include <memory>
 
 namespace PR {
-class RenderEntity;
-struct ShaderClosure;
+struct FacePoint;
 class Ray;
 class RenderContext;
+class RenderEntity;
+struct ShaderClosure;
 
 /* A material having a diffuse path should never have a specular path and vice versa! */
 enum MaterialScatteringType {
@@ -72,6 +73,8 @@ public:
 	inline uint32 id() const;
 
 	inline bool isLight() const;
+
+	virtual Spectrum evalEmission(const ShaderClosure& point);
 
 	inline const std::shared_ptr<SpectralShaderOutput>& emission() const;
 	inline void setEmission(const std::shared_ptr<SpectralShaderOutput>& spec);

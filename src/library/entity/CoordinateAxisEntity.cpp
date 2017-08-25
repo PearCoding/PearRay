@@ -166,7 +166,7 @@ RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) con
 	return c;
 }
 
-RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
+RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen")
 	PR_GUARD_PROFILE();

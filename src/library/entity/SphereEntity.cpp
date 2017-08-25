@@ -115,7 +115,7 @@ RenderEntity::Collision SphereEntity::checkCollision(const Ray& ray) const
 	return c;
 }
 
-RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
+RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
 	PR_GUARD_PROFILE();
 

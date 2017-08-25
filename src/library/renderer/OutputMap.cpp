@@ -187,15 +187,6 @@ void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const 
 	if (mInt3D[V_DPDW])
 		mInt3D[V_DPDW]->setFragmentBounded(p,
 										   mInt3D[V_DPDW]->getFragmentBounded(p) * (1 - t) + sc.dPdW * t);
-	if (mInt3D[V_DPDX])
-		mInt3D[V_DPDX]->setFragmentBounded(p,
-										   mInt3D[V_DPDX]->getFragmentBounded(p) * (1 - t) + sc.dPdX * t);
-	if (mInt3D[V_DPDY])
-		mInt3D[V_DPDY]->setFragmentBounded(p,
-										   mInt3D[V_DPDY]->getFragmentBounded(p) * (1 - t) + sc.dPdY * t);
-	if (mInt3D[V_DPDZ])
-		mInt3D[V_DPDZ]->setFragmentBounded(p,
-										   mInt3D[V_DPDZ]->getFragmentBounded(p) * (1 - t) + sc.dPdZ * t);
 	if (mInt3D[V_DPDT])
 		mInt3D[V_DPDT]->setFragmentBounded(p,
 										   mInt3D[V_DPDT]->getFragment(p) * (1 - t) + sc.dPdT * t);

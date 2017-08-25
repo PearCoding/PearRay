@@ -139,11 +139,11 @@ RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 	}
 }
 
-RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
+RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
 	PR_GUARD_PROFILE();
 
-	TriMesh::FacePointSample sm = mMesh->sampleFacePoint(rnd, sample);
+	TriMesh::FacePointSample sm = mMesh->sampleFacePoint(rnd);
 	RenderEntity::FacePointSample s;
 
 	s.Point	= sm.Point;

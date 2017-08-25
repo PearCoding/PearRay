@@ -66,7 +66,6 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 	ShaderClosure other_sc;
 
 	//MultiJitteredSampler sampler(tile->random(), renderer()->settings().maxLightSamples());
-	const Eigen::Vector3f rnd = tile->random().get3D();
 	if (!renderer()->lights().empty()) {
 		TileData& data = mTileData[tile->index()];
 
@@ -78,7 +77,8 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
 				TileData::EventVertex* lightV = &data.LightVertices[lightNr * maxDepth];
 
-				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd, i);
+				const Eigen::Vector3f rnd = tile->random().get3D();
+				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
 
 				// Skip light if needed
 				if (!fps.Point.Material->isLight() || fps.PDF_A <= PR_EPSILON) {
@@ -91,6 +91,7 @@ Spectrum BiDirectIntegrator::apply(const Ray& in, RenderTile* tile, uint32 pass,
 
 				// Initiate with power
 				Spectrum flux = fps.Point.Material->emission()->eval(fps.Point);
+				flux *= light->surfaceArea(fps.Point.Material);
 
 				uint32 lightDepth = 0;
 				// Initial entry -> Light

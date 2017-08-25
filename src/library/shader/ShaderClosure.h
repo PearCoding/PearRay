@@ -16,9 +16,6 @@ struct alignas(16) PR_LIB_INLINE ShaderClosure {
 public:
 	// Point of sample
 	Eigen::Vector3f P;
-	Eigen::Vector3f dPdX;
-	Eigen::Vector3f dPdY;
-	Eigen::Vector3f dPdZ; // Only useful for volumes.
 	Eigen::Vector3f dPdU;
 	Eigen::Vector3f dPdV;
 	Eigen::Vector3f dPdW;
@@ -26,6 +23,8 @@ public:
 
 	// View vector looking to the surface (only available if shoot)
 	Eigen::Vector3f V;
+
+	// Ray Differentials
 	Eigen::Vector3f dVdX;
 	Eigen::Vector3f dVdY;
 
@@ -65,9 +64,6 @@ public:
 	// C++11 POD constructor
 	inline ShaderClosure() noexcept
 		: P(0, 0, 0)
-		, dPdX(0, 0, 0)
-		, dPdY(0, 0, 0)
-		, dPdZ(0, 0, 0)
 		, dPdU(0, 0, 0)
 		, dPdV(0, 0, 0)
 		, dPdW(0, 0, 0)
@@ -98,9 +94,6 @@ public:
 
 	inline ShaderClosure(const FacePoint& fs) noexcept
 		: P(fs.P)
-		, dPdX(fs.dPdX)
-		, dPdY(fs.dPdY)
-		, dPdZ(fs.dPdZ)
 		, dPdU(fs.dPdU)
 		, dPdV(fs.dPdV)
 		, dPdW(fs.dPdW)
@@ -132,9 +125,6 @@ public:
 	ShaderClosure& operator=(const FacePoint& fs)
 	{
 		P		 = fs.P;
-		dPdX	 = fs.dPdX;
-		dPdY	 = fs.dPdY;
-		dPdZ	 = fs.dPdZ;
 		dPdU	 = fs.dPdU;
 		dPdV	 = fs.dPdV;
 		dPdW	 = fs.dPdW;

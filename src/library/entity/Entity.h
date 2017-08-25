@@ -10,7 +10,6 @@ namespace PR {
 enum EntityFlags {
 	EF_Debug	  = 0x1,
 	EF_LocalArea  = 0x2,
-	EF_ScaleLight = 0x4,
 };
 
 #define ENTITY_CLASS \

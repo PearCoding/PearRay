@@ -107,7 +107,7 @@ RenderEntity::Collision PlaneEntity::checkCollision(const Ray& ray) const
 }
 
 // World space
-RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const
+RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
 	RenderEntity::FacePointSample sm;
 	sm.Point.P = mGlobalPlane_Cache.position()

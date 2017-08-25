@@ -366,7 +366,7 @@ void PPMIntegrator::photonPass(RenderTile* tile, uint32 pass)
 				if (!c.Successful)
 					continue;
 			} else {
-				RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(rnd, photonsShoot);
+				RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(rnd);
 
 				lightSample = fps.Point;
 				/*dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,

@@ -412,8 +412,8 @@ RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray&
 
 	RenderEntity* entity = shoot(ray, sc, tile);
 	if (entity) {
-		if (sc.Material && sc.Material->emission())
-			appliedSpec = sc.Material->emission()->eval(sc);
+		if (sc.Material)
+			appliedSpec = sc.Material->evalEmission(sc);
 		else
 			appliedSpec.clear();
 	} else {

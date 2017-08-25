@@ -31,6 +31,7 @@ PUSH_TEST(projection projection.cpp)
 PUSH_TEST(brdf brdf.cpp)
 PUSH_TEST(sphere sphere.cpp)
 PUSH_TEST(generator generator.cpp)
+PUSH_TEST(registry registry.cpp)
 PUSH_TEST(triangle triangle.cpp)
 PUSH_TEST(fresnel fresnel.cpp)
 PUSH_TEST2(inteqen inteqen.cpp)# Disable it on make test

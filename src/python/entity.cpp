@@ -54,9 +54,9 @@ public:
         PYBIND11_OVERLOAD_PURE(RenderEntity::Collision, RenderEntity, checkCollision, ray);
     }
 
-    FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const override
+    FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const override
     {
-        PYBIND11_OVERLOAD_PURE(FacePointSample, RenderEntity, sampleFacePoint, rnd, sample);
+        PYBIND11_OVERLOAD_PURE(FacePointSample, RenderEntity, sampleFacePoint, rnd);
     }
 };
 
@@ -84,8 +84,7 @@ void setup_entity(py::module& m)
 
 	py::enum_<EntityFlags>(m, "EntityFlags")
 		.value("DEBUG", EF_Debug)
-		.value("LOCALAREA", EF_LocalArea)
-		.value("SCALELIGHT", EF_ScaleLight);
+		.value("LOCALAREA", EF_LocalArea);
 
 	auto re = py::class_<RenderEntity, RenderEntityWrap, std::shared_ptr<RenderEntity>, Entity>(m, "RenderEntity");
 	re.def(py::init<uint32, std::string>())

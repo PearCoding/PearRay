@@ -62,6 +62,10 @@ SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
 SET(PR_Ray_Src
   ray/Ray.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
+SET(PR_Registry_Src
+  registry/Registry.cpp
+  registry/URI.cpp)
+SOURCE_GROUP("Source Files\\Registry" FILES ${PR_Registry_Src})
 SET(PR_Renderer_Src
   renderer/OutputMap.cpp
   renderer/PPMSettings.cpp
@@ -104,6 +108,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src} 
   ${PR_Performance_Src} ${PR_Light_Src} ${PR_Container_Src}
+  ${PR_Registry_Src}
 )
 
 SET(PR_Main_Hdr
@@ -196,6 +201,13 @@ SET(PR_Ray_Hdr
   ray/Ray.h
   ray/Ray.inl)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
+SET(PR_Registry_Hdr
+  registry/Parameter.h
+  registry/Parameter.inl
+  registry/Registry.h
+  registry/URI.h
+  registry/URI.inl)
+SOURCE_GROUP("Header Files\\Registry" FILES ${PR_Registry_Hdr})
 SET(PR_Renderer_Hdr
   renderer/OutputChannel.h
   renderer/OutputMap.h
@@ -244,7 +256,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_GPU_Hdr}
-  ${PR_Performance_Hdr} ${PR_Light_Hdr}
+  ${PR_Performance_Hdr} ${PR_Light_Hdr} ${PR_Registry_Hdr}
 )
 
 SET(PR_CL

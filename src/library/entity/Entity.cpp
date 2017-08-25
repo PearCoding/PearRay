@@ -9,7 +9,7 @@ namespace PR {
 Entity::Entity(uint32 id, const std::string& name)
 	: mName(name)
 	, mID(id)
-	, mFlags(EF_ScaleLight)
+	, mFlags(0)
 	, mPosition(0, 0, 0)
 	, mScale(1, 1, 1)
 	, mRotation(Eigen::Quaternionf::Identity())
@@ -60,8 +60,7 @@ std::string Entity::dumpInformation() const
 		   << "|" << mRotation.z()
 		   << "|" << mRotation.w() << "}" << std::endl
 		   << "  Flag&Debug:      " << ((mFlags & EF_Debug) != 0 ? "true" : "false") << std::endl
-		   << "  Flag&LocalArea:  " << ((mFlags & EF_LocalArea) != 0 ? "true" : "false") << std::endl
-		   << "  Flag&ScaleLight: " << ((mFlags & EF_ScaleLight) != 0 ? "true" : "false") << std::endl;
+		   << "  Flag&LocalArea:  " << ((mFlags & EF_LocalArea) != 0 ? "true" : "false") << std::endl;
 
 	return stream.str();
 }

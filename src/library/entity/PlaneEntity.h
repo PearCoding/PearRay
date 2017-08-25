@@ -28,7 +28,7 @@ public:
 	BoundingBox localBoundingBox() const override;
 
 	RenderEntity::Collision checkCollision(const Ray& ray) const override;
-	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd, uint32 sample) const override;
+	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const override;
 
 	// Entity
 	void onFreeze() override;
