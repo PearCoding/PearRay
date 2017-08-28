@@ -6,8 +6,14 @@
 #include <unordered_map>
 
 namespace PR {
-class PR_LIB Registry
-{
+enum RegistryGroup {
+	RG_Global,
+	RG_Material,
+	RG_Entity,
+	RG_Integrator,
+};
+
+class PR_LIB Registry {
 public:
 	Registry();
 
@@ -17,14 +23,17 @@ public:
 	Parameter get(const URI& absUri, const Parameter& def = Parameter());
 	bool exists(const URI& absUri) const;
 
-	void setGlobal(const URI& relUri, const Parameter& p);
-	Parameter getGlobal(const URI& relUri, const Parameter& def = Parameter());
-	bool existsGlobal(const URI& relUri) const;
+	void setByGroup(RegistryGroup grp, const URI& relUri, const Parameter& p);
+	Parameter getByGroup(RegistryGroup grp, const URI& relUri, const Parameter& def = Parameter());
+	bool existsByGroup(RegistryGroup grp, const URI& relUri) const;
 
-	void setMaterial(uint32 matID, const URI& relUri, const Parameter& p);
-	Parameter getMaterial(uint32 matID, const URI& relUri, const Parameter& def = Parameter(), bool useGlobalFallback = true);
-	bool existsMaterial(uint32 matID, const URI& relUri, bool useGlobalFallback = true);
+	void setForObject(RegistryGroup grp, uint32 id, const URI& relUri, const Parameter& p);
+	Parameter getForObject(RegistryGroup grp, uint32 id, const URI& relUri, const Parameter& def = Parameter(), bool useGlobalFallback = true);
+	bool existsForObject(RegistryGroup grp, uint32 id, const URI& relUri, bool useGlobalFallback = true);
 
+	static URI getGroupPrefix(RegistryGroup);
+
+	std::string dump() const;
 private:
 	std::unordered_map<URI, Parameter, URIHash> mData;
 };

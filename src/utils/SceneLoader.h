@@ -26,7 +26,7 @@ namespace PR
 		static Eigen::Vector3f getVector(const DL::DataGroup& arr, bool& ok);
 		static Eigen::Quaternionf getRotation(const DL::Data& data, bool& ok);
 
-		static std::shared_ptr<PR::SpectralShaderOutput> getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false);
+		static std::shared_ptr<PR::SpectrumShaderOutput> getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false);
 		static std::shared_ptr<PR::ScalarShaderOutput> getScalarOutput(Environment* env, const DL::Data& data);
 		static std::shared_ptr<PR::VectorShaderOutput> getVectorOutput(Environment* env, const DL::Data& data);
 

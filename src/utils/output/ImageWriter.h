@@ -1,66 +1,61 @@
 #pragma once
 
-#include "renderer/OutputChannel.h"
+#include "buffer/FrameBuffer.h"
 #include "renderer/OutputMap.h"
 #include "spectral/ToneMapper.h"
 #include <string>
 #include <vector>
 
-namespace PR
-{
-	class ToneMapper;
-	
-	struct IM_ChannelSetting1D
-	{
-		std::string Name;
-		OutputMap::Variable1D Variable;
-		ToneMapperMode TMM;//TODO: Not implemented
-	};
+namespace PR {
+class ToneMapper;
 
-	struct IM_ChannelSettingCounter
-	{
-		std::string Name;
-		OutputMap::VariableCounter Variable;
-		ToneMapperMode TMM;//TODO: Not implemented
-	};
-	
-	struct IM_ChannelSetting3D
-	{
-		std::string Name[3];
-		OutputMap::Variable3D Variable;
-		unsigned char Elements;//TODO: Not implemented
-		ToneMapperMode TMM;//TODO: Not implemented
-	};
-	
-	struct IM_ChannelSettingSpec
-	{
-		unsigned char Elements;//TODO: Not implemented
-		ToneColorMode TCM;
-		ToneGammaMode TGM;
-		ToneMapperMode TMM;
-	};
+struct IM_ChannelSetting1D {
+	std::string Name;
+	OutputMap::Variable1D Variable;
+	ToneMapperMode TMM; //TODO: Not implemented
+};
 
-	class PR_LIB_UTILS ImageWriter
-	{
-		PR_CLASS_NON_COPYABLE(ImageWriter);
-	public:
-		ImageWriter();
-		virtual ~ImageWriter();
+struct IM_ChannelSettingCounter {
+	std::string Name;
+	OutputMap::VariableCounter Variable;
+	ToneMapperMode TMM; //TODO: Not implemented
+};
 
-		void init(const std::shared_ptr<RenderContext>& renderer);
-		void deinit();
+struct IM_ChannelSetting3D {
+	std::string Name[3];
+	OutputMap::Variable3D Variable;
+	unsigned char Elements; //TODO: Not implemented
+	ToneMapperMode TMM;		//TODO: Not implemented
+};
 
-		bool save(ToneMapper& toneMapper, const std::string& file,
-			IM_ChannelSettingSpec* spec,
-			const std::vector<IM_ChannelSetting1D>& ch1d,
-			const std::vector<IM_ChannelSettingCounter>& chcounter,
-			const std::vector<IM_ChannelSetting3D>& ch3d) const;
+struct IM_ChannelSettingSpec {
+	unsigned char Elements; //TODO: Not implemented
+	ToneColorMode TCM;
+	ToneGammaMode TGM;
+	ToneMapperMode TMM;
+};
 
-		bool save_spectral(const std::string& file,
-			const std::shared_ptr<OutputSpectral>& spec) const;
+class PR_LIB_UTILS ImageWriter {
+	PR_CLASS_NON_COPYABLE(ImageWriter);
 
-	private:
-		float* mRGBData;
-		std::shared_ptr<RenderContext> mRenderer;
-	};
+public:
+	ImageWriter();
+	virtual ~ImageWriter();
+
+	void init(const std::shared_ptr<RenderContext>& renderer);
+	void deinit();
+
+	bool save(ToneMapper& toneMapper, const std::string& file,
+			  IM_ChannelSettingSpec* spec,
+			  const std::vector<IM_ChannelSetting1D>& ch1d,
+			  const std::vector<IM_ChannelSettingCounter>& chcounter,
+			  const std::vector<IM_ChannelSetting3D>& ch3d) const;
+
+	bool save_spectral(const std::string& file,
+					   const std::shared_ptr<FrameBufferSpectrum>& spec) const;
+
+private:
+	float* mRGBData;
+	std::shared_ptr<RenderContext> mRenderer;
+};
 }

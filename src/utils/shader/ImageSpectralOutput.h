@@ -5,10 +5,10 @@
 
 namespace PR
 {
-	class PR_LIB_UTILS ImageSpectralShaderOutput : public PR::SpectralShaderOutput
+	class PR_LIB_UTILS ImageSpectrumShaderOutput : public PR::SpectrumShaderOutput
 	{
 	public:
-		ImageSpectralShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
+		ImageSpectrumShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
 		PR::Spectrum eval(const PR::ShaderClosure& point) override;
 
 	private:

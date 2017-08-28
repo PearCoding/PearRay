@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OutputChannel.h"
+#include "buffer/FrameBuffer.h"
 
 #include <unordered_map>
 
@@ -74,66 +74,66 @@ public:
 	bool isPixelFinished(const Eigen::Vector2i& p) const;
 	uint64 finishedPixelCount() const;
 
-	inline const std::shared_ptr<Output1D>& getChannel(Variable1D var) const
+	inline const std::shared_ptr<FrameBuffer1D>& getChannel(Variable1D var) const
 	{
 		return mInt1D[var];
 	}
 
-	inline const std::shared_ptr<OutputCounter>& getChannel(VariableCounter var) const
+	inline const std::shared_ptr<FrameBufferCounter>& getChannel(VariableCounter var) const
 	{
 		return mIntCounter[var];
 	}
 
-	inline const std::shared_ptr<Output3D>& getChannel(Variable3D var) const
+	inline const std::shared_ptr<FrameBuffer3D>& getChannel(Variable3D var) const
 	{
 		return mInt3D[var];
 	}
 
-	inline const std::shared_ptr<OutputSpectral>& getSpectralChannel() const
+	inline const std::shared_ptr<FrameBufferSpectrum>& getSpectralChannel() const
 	{
 		return mSpectral;
 	}
 
-	inline void registerChannel(Variable1D var, const std::shared_ptr<Output1D>& output)
+	inline void registerChannel(Variable1D var, const std::shared_ptr<FrameBuffer1D>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		PR_ASSERT(!mInt1D[var], "Given output entry has to be set");
 		mInt1D[var] = output;
 	}
 
-	inline void registerChannel(VariableCounter var, const std::shared_ptr<OutputCounter>& output)
+	inline void registerChannel(VariableCounter var, const std::shared_ptr<FrameBufferCounter>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		PR_ASSERT(!mIntCounter[var], "Given output entry has to be set");
 		mIntCounter[var] = output;
 	}
 
-	inline void registerChannel(Variable3D var, const std::shared_ptr<Output3D>& output)
+	inline void registerChannel(Variable3D var, const std::shared_ptr<FrameBuffer3D>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		PR_ASSERT(!mInt3D[var], "Given output entry has to be set");
 		mInt3D[var] = output;
 	}
 
-	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<Output1D>& output)
+	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<FrameBuffer1D>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		mCustom1D[str] = output;
 	}
 
-	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<OutputCounter>& output)
+	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<FrameBufferCounter>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		mCustomCounter[str] = output;
 	}
 
-	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<Output3D>& output)
+	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<FrameBuffer3D>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		mCustom3D[str] = output;
 	}
 
-	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<OutputSpectral>& output)
+	inline void registerCustomChannel(const std::string& str, const std::shared_ptr<FrameBufferSpectrum>& output)
 	{
 		PR_ASSERT(output, "Given output has to be valid");
 		mCustomSpectral[str] = output;
@@ -144,14 +144,14 @@ private:
 
 	bool mInitialized;
 	
-	std::shared_ptr<OutputSpectral> mSpectral;
-	std::shared_ptr<Output3D> mInt3D[V_3D_COUNT];
-	std::shared_ptr<Output1D> mInt1D[V_1D_COUNT];
-	std::shared_ptr<OutputCounter> mIntCounter[V_COUNTER_COUNT];
+	std::shared_ptr<FrameBufferSpectrum> mSpectral;
+	std::shared_ptr<FrameBuffer3D> mInt3D[V_3D_COUNT];
+	std::shared_ptr<FrameBuffer1D> mInt1D[V_1D_COUNT];
+	std::shared_ptr<FrameBufferCounter> mIntCounter[V_COUNTER_COUNT];
 
-	std::unordered_map<std::string, std::shared_ptr<Output3D>> mCustom3D;
-	std::unordered_map<std::string, std::shared_ptr<Output1D>> mCustom1D;
-	std::unordered_map<std::string, std::shared_ptr<OutputCounter>> mCustomCounter;
-	std::unordered_map<std::string, std::shared_ptr<OutputSpectral>> mCustomSpectral;
+	std::unordered_map<std::string, std::shared_ptr<FrameBuffer3D>> mCustom3D;
+	std::unordered_map<std::string, std::shared_ptr<FrameBuffer1D>> mCustom1D;
+	std::unordered_map<std::string, std::shared_ptr<FrameBufferCounter>> mCustomCounter;
+	std::unordered_map<std::string, std::shared_ptr<FrameBufferSpectrum>> mCustomSpectral;
 };
 }

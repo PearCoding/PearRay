@@ -85,17 +85,17 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 	for (const File& file : mFiles) {
 		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {
 			if (!output->getChannel(cs3d.Variable))
-				output->registerChannel(cs3d.Variable, std::make_shared<Output3D>(zero));
+				output->registerChannel(cs3d.Variable, std::make_shared<FrameBuffer3D>(zero));
 		}
 
 		for (const IM_ChannelSetting1D& cs1d : file.Settings1D) {
 			if (!output->getChannel(cs1d.Variable))
-				output->registerChannel(cs1d.Variable, std::make_shared<Output1D>(0));
+				output->registerChannel(cs1d.Variable, std::make_shared<FrameBuffer1D>(0));
 		}
 
 		for (const IM_ChannelSettingCounter& cs : file.SettingsCounter) {
 			if (!output->getChannel(cs.Variable))
-				output->registerChannel(cs.Variable, std::make_shared<OutputCounter>(0));
+				output->registerChannel(cs.Variable, std::make_shared<FrameBufferCounter>(0));
 		}
 	}
 }

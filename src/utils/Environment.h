@@ -105,21 +105,21 @@ namespace PR
 		}
 
 		inline void addShaderOutput(const std::string& name, 
-			const std::shared_ptr<PR::SpectralShaderOutput>& output)
+			const std::shared_ptr<PR::SpectrumShaderOutput>& output)
 		{
 			PR_ASSERT(output, "Given output has to be valid");
-			PR_ASSERT(!hasSpectralShaderOutput(name), "Given name should be unique");
-			mNamedSpectralShaderOutputs[name] = output;
+			PR_ASSERT(!hasSpectrumShaderOutput(name), "Given name should be unique");
+			mNamedSpectrumShaderOutputs[name] = output;
 		}
 
-		inline std::shared_ptr<PR::SpectralShaderOutput> getSpectralShaderOutput(const std::string& name) const
+		inline std::shared_ptr<PR::SpectrumShaderOutput> getSpectrumShaderOutput(const std::string& name) const
 		{
-			return mNamedSpectralShaderOutputs.at(name);
+			return mNamedSpectrumShaderOutputs.at(name);
 		}
 
-		inline bool hasSpectralShaderOutput(const std::string& name) const
+		inline bool hasSpectrumShaderOutput(const std::string& name) const
 		{
-			return mNamedSpectralShaderOutputs.count(name) != 0;
+			return mNamedSpectrumShaderOutputs.count(name) != 0;
 		}
 
 		inline void addShaderOutput(const std::string& name,
@@ -218,7 +218,7 @@ namespace PR
 		std::map<std::string, std::shared_ptr<TriMesh> > mMeshes;
 
 		std::map<std::string, std::shared_ptr<ScalarShaderOutput> > mNamedScalarShaderOutputs;
-		std::map<std::string, std::shared_ptr<SpectralShaderOutput> > mNamedSpectralShaderOutputs;
+		std::map<std::string, std::shared_ptr<SpectrumShaderOutput> > mNamedSpectrumShaderOutputs;
 		std::map<std::string, std::shared_ptr<VectorShaderOutput> > mNamedVectorShaderOutputs;
 
 		OIIO::TextureSystem* mTextureSystem;

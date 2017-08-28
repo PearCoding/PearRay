@@ -57,12 +57,12 @@ void CookTorranceMaterial::setGeometryMode(GeometryMode mode)
 	mGeometryMode = mode;
 }
 
-const std::shared_ptr<SpectralShaderOutput>& CookTorranceMaterial::albedo() const
+const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::albedo() const
 {
 	return mAlbedo;
 }
 
-void CookTorranceMaterial::setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec)
+void CookTorranceMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec)
 {
 	mAlbedo = diffSpec;
 }
@@ -77,12 +77,12 @@ void CookTorranceMaterial::setDiffuseRoughness(const std::shared_ptr<ScalarShade
 	mDiffuseRoughness = d;
 }
 
-const std::shared_ptr<SpectralShaderOutput>& CookTorranceMaterial::specularity() const
+const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::specularity() const
 {
 	return mSpecularity;
 }
 
-void CookTorranceMaterial::setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec)
+void CookTorranceMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec)
 {
 	mSpecularity = spec;
 }
@@ -107,22 +107,22 @@ void CookTorranceMaterial::setSpecularRoughnessY(const std::shared_ptr<ScalarSha
 	mSpecRoughnessY = d;
 }
 
-const std::shared_ptr<SpectralShaderOutput>& CookTorranceMaterial::ior() const
+const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::ior() const
 {
 	return mIOR;
 }
 
-void CookTorranceMaterial::setIOR(const std::shared_ptr<SpectralShaderOutput>& data)
+void CookTorranceMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 {
 	mIOR = data;
 }
 
-const std::shared_ptr<SpectralShaderOutput>& CookTorranceMaterial::conductorAbsorption() const
+const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::conductorAbsorption() const
 {
 	return mConductorAbsorption;
 }
 
-void CookTorranceMaterial::setConductorAbsorption(const std::shared_ptr<SpectralShaderOutput>& data)
+void CookTorranceMaterial::setConductorAbsorption(const std::shared_ptr<SpectrumShaderOutput>& data)
 {
 	mConductorAbsorption = data;
 }

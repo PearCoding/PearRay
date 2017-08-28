@@ -4,6 +4,9 @@ SET(PR_Main_Src
   CTP.cpp
   FileLogListener.cpp
   Logger.cpp)
+SET(PR_Buffer_Src
+  buffer/ColorBuffer.cpp)
+SOURCE_GROUP("Source Files\\Buffer" FILES ${PR_Buffer_Src})
 SET(PR_Camera_Src
   camera/Camera.cpp
   camera/StandardCamera.cpp)
@@ -88,7 +91,6 @@ SET(PR_Scene_Src
   scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
 SET(PR_Spectral_Src
-  spectral/ColorBuffer.cpp
   spectral/IntensityConverter.cpp
   spectral/RGBConverter.cpp
   spectral/Spectrum.cpp
@@ -108,7 +110,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_GPU_Src} 
   ${PR_Performance_Src} ${PR_Light_Src} ${PR_Container_Src}
-  ${PR_Registry_Src}
+  ${PR_Registry_Src} ${PR_Buffer_Src}
 )
 
 SET(PR_Main_Hdr
@@ -122,6 +124,10 @@ SET(PR_Main_Hdr
   SIMath.h
   SIMathUtils.h
   Variant.h)
+SET(PR_Buffer_Hdr
+  buffer/ColorBuffer.h
+  buffer/FrameBuffer.h)
+SOURCE_GROUP("Header Files\\Buffer" FILES ${PR_Buffer_Hdr})
 SET(PR_Camera_Hdr
   camera/Camera.h
   camera/StandardCamera.h)
@@ -209,7 +215,6 @@ SET(PR_Registry_Hdr
   registry/URI.inl)
 SOURCE_GROUP("Header Files\\Registry" FILES ${PR_Registry_Hdr})
 SET(PR_Renderer_Hdr
-  renderer/OutputChannel.h
   renderer/OutputMap.h
   renderer/PPMSettings.h
   renderer/RenderContext.h
@@ -232,7 +237,6 @@ SET(PR_Scene_Hdr
   scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
 SET(PR_Spectral_Hdr
-  spectral/ColorBuffer.h
   spectral/IntensityConverter.h
   spectral/RGBConverter.h
   spectral/Spectrum.h
@@ -257,6 +261,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_GPU_Hdr}
   ${PR_Performance_Hdr} ${PR_Light_Hdr} ${PR_Registry_Hdr}
+  ${PR_Buffer_Hdr}
 )
 
 SET(PR_CL

@@ -1,6 +1,6 @@
 #include "ColorBuffer.h"
-#include "Spectrum.h"
-#include "ToneMapper.h"
+#include "spectral/Spectrum.h"
+#include "spectral/ToneMapper.h"
 
 namespace PR {
 ColorBuffer::_Data::_Data(uint32 width, uint32 height, ColorBufferMode mode)

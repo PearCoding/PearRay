@@ -19,22 +19,22 @@ WardMaterial::WardMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectralShaderOutput>& WardMaterial::albedo() const
+const std::shared_ptr<SpectrumShaderOutput>& WardMaterial::albedo() const
 {
 	return mAlbedo;
 }
 
-void WardMaterial::setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec)
+void WardMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec)
 {
 	mAlbedo = diffSpec;
 }
 
-const std::shared_ptr<SpectralShaderOutput>& WardMaterial::specularity() const
+const std::shared_ptr<SpectrumShaderOutput>& WardMaterial::specularity() const
 {
 	return mSpecularity;
 }
 
-void WardMaterial::setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec)
+void WardMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec)
 {
 	mSpecularity = spec;
 }

@@ -1,9 +1,9 @@
+#include "buffer/ColorBuffer.h"
+#include "buffer/FrameBuffer.h"
 #include "spectral/Spectrum.h"
 #include "spectral/ToneMapper.h"
-#include "spectral/ColorBuffer.h"
 
 #include "SpectralFile.h"
-#include "renderer/OutputChannel.h"
 
 #include "pypearray.h"
 #include <pybind11/numpy.h>

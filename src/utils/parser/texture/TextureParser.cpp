@@ -196,13 +196,13 @@ namespace PR
 		}
 		else if(type == "color" || type == "spectral")
 		{
-			if(env->hasSpectralShaderOutput(name))
+			if(env->hasSpectrumShaderOutput(name))
 			{
 				PR_LOGGER.logf(L_Error, M_Scene, "Texture '%s' already exists", name.c_str());
 				return;
 			}
 
-			auto output = std::make_shared<ImageSpectralShaderOutput>(env->textureSystem(), opts, filename);
+			auto output = std::make_shared<ImageSpectrumShaderOutput>(env->textureSystem(), opts, filename);
 			env->addShaderOutput(name, output);
 		}
 		else if(type == "vector")

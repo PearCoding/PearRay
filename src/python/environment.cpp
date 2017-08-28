@@ -26,13 +26,13 @@ void setup_environment(py::module& m)
 		.def("addShaderOutput",
 			 (void (Environment::*)(const std::string&, const std::shared_ptr<PR::ScalarShaderOutput>&)) & Environment::addShaderOutput)
 		.def("addShaderOutput",
-			 (void (Environment::*)(const std::string&, const std::shared_ptr<PR::SpectralShaderOutput>&)) & Environment::addShaderOutput)
+			 (void (Environment::*)(const std::string&, const std::shared_ptr<PR::SpectrumShaderOutput>&)) & Environment::addShaderOutput)
 		.def("addShaderOutput",
 			 (void (Environment::*)(const std::string&, const std::shared_ptr<PR::VectorShaderOutput>&)) & Environment::addShaderOutput)
 		.def("getScalarShaderOutput", &Environment::getScalarShaderOutput)
 		.def("hasScalarShaderOutput", &Environment::hasScalarShaderOutput)
-		.def("getSpectralShaderOutput", &Environment::getSpectralShaderOutput)
-		.def("hasSpectralShaderOutput", &Environment::hasSpectralShaderOutput)
+		.def("getSpectrumShaderOutput", &Environment::getSpectrumShaderOutput)
+		.def("hasSpectrumShaderOutput", &Environment::hasSpectrumShaderOutput)
 		.def("getVectorShaderOutput", &Environment::getVectorShaderOutput)
 		.def("hasVectorShaderOutput", &Environment::hasVectorShaderOutput)
 		.def_property("renderWidth", &Environment::renderWidth, &Environment::setRenderWidth)

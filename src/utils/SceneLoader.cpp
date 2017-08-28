@@ -853,19 +853,19 @@ namespace PR
 		return Eigen::Quaternionf::Identity();
 	}
 
-	std::shared_ptr<SpectralShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
+	std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
 	{
 		if(allowScalar && dataD.isNumber())
 		{
 			Spectrum spec;
 			spec.fill(dataD.getNumber());
 
-			return std::make_shared<ConstSpectralShaderOutput>(spec);
+			return std::make_shared<ConstSpectrumShaderOutput>(spec);
 		}
 		else if (dataD.type() == DL::Data::T_String)
 		{
 			if (env->hasSpectrum(dataD.getString()))
-				return std::make_shared<ConstSpectralShaderOutput>(env->getSpectrum(dataD.getString()));
+				return std::make_shared<ConstSpectrumShaderOutput>(env->getSpectrum(dataD.getString()));
 			else
 				PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
 					dataD.getString().c_str());
@@ -880,8 +880,8 @@ namespace PR
 				DL::Data nameD = dataD.getGroup().at(0);
 				if (nameD.type() == DL::Data::T_String)
 				{
-					if(env->hasSpectralShaderOutput(nameD.getString()))
-						return env->getSpectralShaderOutput(nameD.getString());
+					if(env->hasSpectrumShaderOutput(nameD.getString()))
+						return env->getSpectrumShaderOutput(nameD.getString());
 					else
 						PR_LOGGER.logf(L_Warning, M_Scene, "Unknown spectral texture '%s'.",
 							nameD.getString().c_str());

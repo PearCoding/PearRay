@@ -18,6 +18,6 @@ public:
 };
 
 typedef ShaderOutput<float> ScalarShaderOutput;
-typedef ShaderOutput<Spectrum> SpectralShaderOutput;
+typedef ShaderOutput<Spectrum> SpectrumShaderOutput;
 typedef ShaderOutput<Eigen::Vector3f> VectorShaderOutput;
 }

@@ -4,12 +4,12 @@
 
 namespace PR
 {
-	ConstSpectralShaderOutput::ConstSpectralShaderOutput(const PR::Spectrum& f) :
-		SpectralShaderOutput(), mValue(f)
+	ConstSpectrumShaderOutput::ConstSpectrumShaderOutput(const PR::Spectrum& f) :
+		SpectrumShaderOutput(), mValue(f)
 	{
 	}
 
-	PR::Spectrum ConstSpectralShaderOutput::eval(const PR::ShaderClosure& point)
+	PR::Spectrum ConstSpectrumShaderOutput::eval(const PR::ShaderClosure& point)
 	{
 		return mValue;
 	}

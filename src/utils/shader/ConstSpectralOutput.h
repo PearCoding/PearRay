@@ -4,10 +4,10 @@
 
 namespace PR
 {
-	class PR_LIB_UTILS ConstSpectralShaderOutput : public PR::SpectralShaderOutput
+	class PR_LIB_UTILS ConstSpectrumShaderOutput : public PR::SpectrumShaderOutput
 	{
 	public:
-		ConstSpectralShaderOutput(const PR::Spectrum& spec);
+		ConstSpectrumShaderOutput(const PR::Spectrum& spec);
 		PR::Spectrum eval(const PR::ShaderClosure& point) override;
 
 	private:

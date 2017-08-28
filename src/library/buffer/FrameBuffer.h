@@ -8,11 +8,11 @@ namespace PR {
 class RenderContext;
 
 template <typename T>
-class PR_LIB OutputChannel {
-	PR_CLASS_NON_COPYABLE(OutputChannel);
+class PR_LIB FrameBuffer {
+	PR_CLASS_NON_COPYABLE(FrameBuffer);
 
 public:
-	inline explicit OutputChannel(const T& clear_value = T(), bool never_clear = false)
+	inline explicit FrameBuffer(const T& clear_value = T(), bool never_clear = false)
 		: mWidth(0)
 		, mHeight(0)
 		, mOffsetX(0)
@@ -23,7 +23,7 @@ public:
 	{
 	}
 
-	inline ~OutputChannel()
+	inline ~FrameBuffer()
 	{
 		deinit();
 	}
@@ -127,8 +127,8 @@ private:
 	bool mNeverClear;
 };
 
-typedef OutputChannel<Eigen::Vector3f> Output3D;
-typedef OutputChannel<float> Output1D;
-typedef OutputChannel<uint64> OutputCounter;
-typedef OutputChannel<Spectrum> OutputSpectral;
+typedef FrameBuffer<Eigen::Vector3f> FrameBuffer3D;
+typedef FrameBuffer<float> FrameBuffer1D;
+typedef FrameBuffer<uint64> FrameBufferCounter;
+typedef FrameBuffer<Spectrum> FrameBufferSpectrum;
 }

@@ -73,10 +73,10 @@ void PPMIntegrator::init()
 
 	mPhotonMap = new Photon::PhotonMap(renderer()->settings().ppm().maxGatherRadius());
 
-	mAccumulatedFlux = std::make_shared<OutputSpectral>(Spectrum(), true); // Will be deleted by outputmap
-	mSearchRadius2   = std::make_shared<Output1D>(renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
+	mAccumulatedFlux = std::make_shared<FrameBufferSpectrum>(Spectrum(), true); // Will be deleted by outputmap
+	mSearchRadius2   = std::make_shared<FrameBuffer1D>(renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
 												true);
-	mLocalPhotonCount = std::make_shared<OutputCounter>(0, true);
+	mLocalPhotonCount = std::make_shared<FrameBufferCounter>(0, true);
 
 	renderer()->output()->registerCustomChannel("int.ppm.accumulated_flux", mAccumulatedFlux);
 	renderer()->output()->registerCustomChannel("int.ppm.search_radius", mSearchRadius2);

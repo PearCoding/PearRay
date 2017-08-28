@@ -24,11 +24,11 @@ public:
 	}
 };
 
-class SpectralShaderOutputWrap : public SpectralShaderOutput {
+class SpectrumShaderOutputWrap : public SpectrumShaderOutput {
 public:
 	Spectrum eval(const ShaderClosure& point) override
 	{
-		PYBIND11_OVERLOAD_PURE(Spectrum, SpectralShaderOutput, eval, point);
+		PYBIND11_OVERLOAD_PURE(Spectrum, SpectrumShaderOutput, eval, point);
 	}
 };
 
@@ -89,8 +89,8 @@ void setup_shader(py::module& m)
 	py::class_<ScalarShaderOutput, ScalarShaderOutputWrap, std::shared_ptr<ScalarShaderOutput>>(m, "ScalarShaderOutput")
 		.def("eval", &ScalarShaderOutput::eval);
 
-	py::class_<SpectralShaderOutput, SpectralShaderOutputWrap, std::shared_ptr<SpectralShaderOutput>>(m, "SpectralShaderOutput")
-		.def("eval", &SpectralShaderOutput::eval);
+	py::class_<SpectrumShaderOutput, SpectrumShaderOutputWrap, std::shared_ptr<SpectrumShaderOutput>>(m, "SpectrumShaderOutput")
+		.def("eval", &SpectrumShaderOutput::eval);
 
 	py::class_<VectorShaderOutput, VectorShaderOutputWrap, std::shared_ptr<VectorShaderOutput>>(m, "VectorShaderOutput")
 		.def("eval", &VectorShaderOutput::eval);
@@ -99,7 +99,7 @@ void setup_shader(py::module& m)
 	py::class_<ConstScalarShaderOutput, ScalarShaderOutput, std::shared_ptr<ConstScalarShaderOutput>>(m, "ConstScalarShaderOutput")
 		.def(py::init<float>());
 
-	py::class_<ConstSpectralShaderOutput, SpectralShaderOutput, std::shared_ptr<ConstSpectralShaderOutput>>(m, "ConstSpectralShaderOutput")
+	py::class_<ConstSpectrumShaderOutput, SpectrumShaderOutput, std::shared_ptr<ConstSpectrumShaderOutput>>(m, "ConstSpectrumShaderOutput")
 		.def(py::init<const Spectrum&>());
 
 	py::class_<ConstVectorShaderOutput, VectorShaderOutput, std::shared_ptr<ConstVectorShaderOutput>>(m, "ConstVectorShaderOutput")
@@ -108,7 +108,7 @@ void setup_shader(py::module& m)
 	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarShaderOutput >
 	//     ("ImageScalarOutput", py::init<float>())
 	// ;
-	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectralShaderOutput >
+	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectrumShaderOutput >
 	//     ("ImageSpectralOutput", py::init<const PR::Spectrum&>())
 	// ;
 	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorShaderOutput >

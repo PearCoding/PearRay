@@ -112,40 +112,40 @@ PR_TEST("Registry SET/GET")
 	PR_CHECK_EQ(registry.get(uri2, Parameter(-1)).getInteger(), -1);
 }
 
-PR_TEST("Registry Material SET/GET")
+PR_TEST("Registry Object SET/GET")
 {
 	Registry registry;
-	const uint32 matID = 0xdeadbeef;
+	const uint32 id = 0xdeadbeef;
 	const URI uri("test");
 	const URI uri2("test2");
 
-	PR_CHECK_FALSE(registry.existsMaterial(matID, uri));
+	PR_CHECK_FALSE(registry.existsForObject(RG_Material, id, uri));
 
-	registry.setMaterial(matID, uri, Parameter(42));
-	PR_CHECK_TRUE(registry.existsMaterial(matID, uri));
-	PR_CHECK_EQ(registry.getMaterial(matID, uri, Parameter(-1)).getInteger(), 42);
-	PR_CHECK_EQ(registry.getMaterial(matID, uri2, Parameter(-1)).getInteger(), -1);
+	registry.setForObject(RG_Material, id, uri, Parameter(42));
+	PR_CHECK_TRUE(registry.existsForObject(RG_Material, id, uri));
+	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri, Parameter(-1)).getInteger(), 42);
+	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri2, Parameter(-1)).getInteger(), -1);
 }
 
-PR_TEST("Registry Material SET/GET GLOBAL")
+PR_TEST("Registry Object SET/GET GLOBAL")
 {
 	Registry registry;
-	const uint32 matID = 0xdeadbeef;
+	const uint32 id = 0xdeadbeef;
 	const URI uri("test");
 	const URI uri2("test2");
 
-	PR_CHECK_FALSE(registry.existsMaterial(matID, uri));
-	PR_CHECK_FALSE(registry.existsGlobal(uri));
+	PR_CHECK_FALSE(registry.existsForObject(RG_Material, id, uri));
+	PR_CHECK_FALSE(registry.existsByGroup(RG_Global, uri));
 
-	registry.setGlobal(uri, Parameter(81));
-	PR_CHECK_TRUE(registry.existsMaterial(matID, uri));
-	PR_CHECK_EQ(registry.getMaterial(matID, uri, Parameter(-1)).getInteger(), 81);
-	PR_CHECK_EQ(registry.getMaterial(matID, uri2, Parameter(-1)).getInteger(), -1);
+	registry.setByGroup(RG_Global, uri, Parameter(81));
+	PR_CHECK_TRUE(registry.existsForObject(RG_Material, id, uri));
+	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri, Parameter(-1)).getInteger(), 81);
+	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri2, Parameter(-1)).getInteger(), -1);
 
-	registry.setMaterial(matID, uri, Parameter(42));
-	PR_CHECK_TRUE(registry.existsMaterial(matID, uri));
-	PR_CHECK_EQ(registry.getMaterial(matID, uri, Parameter(-1)).getInteger(), 42);
-	PR_CHECK_EQ(registry.getMaterial(matID, uri2, Parameter(-1)).getInteger(), -1);
+	registry.setForObject(RG_Material, id, uri, Parameter(42));
+	PR_CHECK_TRUE(registry.existsForObject(RG_Material, id, uri));
+	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri, Parameter(-1)).getInteger(), 42);
+	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri2, Parameter(-1)).getInteger(), -1);
 }
 
 PR_END_TESTCASE()

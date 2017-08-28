@@ -36,15 +36,15 @@ public:
 	void setGeometryMode(GeometryMode mode);
 
 	// Diffuse
-	const std::shared_ptr<SpectralShaderOutput>& albedo() const;
-	void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
+	const std::shared_ptr<SpectrumShaderOutput>& albedo() const;
+	void setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec);
 
 	const std::shared_ptr<ScalarShaderOutput>& diffuseRoughness() const;
 	void setDiffuseRoughness(const std::shared_ptr<ScalarShaderOutput>& data);
 
 	// Specular
-	const std::shared_ptr<SpectralShaderOutput>& specularity() const;
-	void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
+	const std::shared_ptr<SpectrumShaderOutput>& specularity() const;
+	void setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec);
 
 	const std::shared_ptr<ScalarShaderOutput>& specularRoughnessX() const;
 	void setSpecularRoughnessX(const std::shared_ptr<ScalarShaderOutput>& data);
@@ -52,11 +52,11 @@ public:
 	const std::shared_ptr<ScalarShaderOutput>& specularRoughnessY() const;
 	void setSpecularRoughnessY(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	const std::shared_ptr<SpectralShaderOutput>& ior() const;
-	void setIOR(const std::shared_ptr<SpectralShaderOutput>& data);
+	const std::shared_ptr<SpectrumShaderOutput>& ior() const;
+	void setIOR(const std::shared_ptr<SpectrumShaderOutput>& data);
 
-	const std::shared_ptr<SpectralShaderOutput>& conductorAbsorption() const;
-	void setConductorAbsorption(const std::shared_ptr<SpectralShaderOutput>& data);
+	const std::shared_ptr<SpectrumShaderOutput>& conductorAbsorption() const;
+	void setConductorAbsorption(const std::shared_ptr<SpectrumShaderOutput>& data);
 
 	const std::shared_ptr<ScalarShaderOutput>& reflectivity() const;
 	void setReflectivity(const std::shared_ptr<ScalarShaderOutput>& data);
@@ -78,14 +78,14 @@ private:
 	DistributionMode mDistributionMode;
 	GeometryMode mGeometryMode;
 
-	std::shared_ptr<SpectralShaderOutput> mAlbedo;
+	std::shared_ptr<SpectrumShaderOutput> mAlbedo;
 	std::shared_ptr<ScalarShaderOutput> mDiffuseRoughness;
 
-	std::shared_ptr<SpectralShaderOutput> mSpecularity;
+	std::shared_ptr<SpectrumShaderOutput> mSpecularity;
 	std::shared_ptr<ScalarShaderOutput> mSpecRoughnessX;
 	std::shared_ptr<ScalarShaderOutput> mSpecRoughnessY;
-	std::shared_ptr<SpectralShaderOutput> mIOR;
-	std::shared_ptr<SpectralShaderOutput> mConductorAbsorption;
+	std::shared_ptr<SpectrumShaderOutput> mIOR;
+	std::shared_ptr<SpectrumShaderOutput> mConductorAbsorption;
 
 	std::shared_ptr<ScalarShaderOutput> mReflectivity;
 };

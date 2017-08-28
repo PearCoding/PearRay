@@ -16,12 +16,12 @@ OrenNayarMaterial::OrenNayarMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectralShaderOutput>& OrenNayarMaterial::albedo() const
+const std::shared_ptr<SpectrumShaderOutput>& OrenNayarMaterial::albedo() const
 {
 	return mAlbedo;
 }
 
-void OrenNayarMaterial::setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec)
+void OrenNayarMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec)
 {
 	mAlbedo = diffSpec;
 }

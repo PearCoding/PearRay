@@ -4,6 +4,22 @@ namespace PR {
 static URI sGlobalsPath("/Globals");
 static URI sMaterialsPath("/Materials");
 static URI sEntitiesPath("/Entities");
+static URI sIntegratorsPath("/Integrators");
+
+URI Registry::getGroupPrefix(RegistryGroup grp)
+{
+	switch (grp) {
+	default:
+	case RG_Global:
+		return sGlobalsPath;
+	case RG_Material:
+		return sMaterialsPath;
+	case RG_Entity:
+		return sEntitiesPath;
+	case RG_Integrator:
+		return sIntegratorsPath;
+	}
+}
 
 Registry::Registry()
 {
@@ -50,7 +66,7 @@ bool Registry::exists(const URI& absUri) const
 	return mData.count(absUri) != 0;
 }
 
-void Registry::setGlobal(const URI& relUri, const Parameter& p)
+void Registry::setByGroup(RegistryGroup grp, const URI& relUri, const Parameter& p)
 {
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
@@ -58,10 +74,10 @@ void Registry::setGlobal(const URI& relUri, const Parameter& p)
 	if (relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
-	set(URI::makeAbsolute(relUri, sGlobalsPath), p);
+	set(URI::makeAbsolute(relUri, getGroupPrefix(grp)), p);
 }
 
-Parameter Registry::getGlobal(const URI& relUri, const Parameter& def)
+Parameter Registry::getByGroup(RegistryGroup grp, const URI& relUri, const Parameter& def)
 {
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
@@ -69,10 +85,10 @@ Parameter Registry::getGlobal(const URI& relUri, const Parameter& def)
 	if (relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
-	return get(URI::makeAbsolute(relUri, sGlobalsPath), def);
+	return get(URI::makeAbsolute(relUri, getGroupPrefix(grp)), def);
 }
 
-bool Registry::existsGlobal(const URI& relUri) const
+bool Registry::existsByGroup(RegistryGroup grp, const URI& relUri) const
 {
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
@@ -80,10 +96,10 @@ bool Registry::existsGlobal(const URI& relUri) const
 	if (relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
-	return exists(URI::makeAbsolute(relUri, sGlobalsPath));
+	return exists(URI::makeAbsolute(relUri, getGroupPrefix(grp)));
 }
 
-void Registry::setMaterial(uint32 matID, const URI& relUri, const Parameter& p)
+void Registry::setForObject(RegistryGroup grp, uint32 id, const URI& relUri, const Parameter& p)
 {
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
@@ -91,9 +107,9 @@ void Registry::setMaterial(uint32 matID, const URI& relUri, const Parameter& p)
 	if (relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
-	URI base = sMaterialsPath;
+	URI base = getGroupPrefix(grp);
 	std::stringstream stream;
-	stream << base.path() << "/" << matID;
+	stream << base.path() << "/objects/" << id;
 	base.setPath(stream.str());
 
 	const URI absURI = URI::makeAbsolute(relUri, base);
@@ -101,7 +117,7 @@ void Registry::setMaterial(uint32 matID, const URI& relUri, const Parameter& p)
 	set(absURI, p);
 }
 
-Parameter Registry::getMaterial(uint32 matID, const URI& relUri, const Parameter& def, bool useGlobalFallback)
+Parameter Registry::getForObject(RegistryGroup grp, uint32 id, const URI& relUri, const Parameter& def, bool useGlobalFallback)
 {
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
@@ -109,9 +125,9 @@ Parameter Registry::getMaterial(uint32 matID, const URI& relUri, const Parameter
 	if (relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
-	URI base = sMaterialsPath;
+	URI base = getGroupPrefix(grp);
 	std::stringstream stream;
-	stream << base.path() << "/" << matID;
+	stream << base.path() << "/objects/" << id;
 	base.setPath(stream.str());
 
 	const URI absURI = URI::makeAbsolute(relUri, base);
@@ -121,7 +137,7 @@ Parameter Registry::getMaterial(uint32 matID, const URI& relUri, const Parameter
 		return get(URI::makeAbsolute(relUri, sGlobalsPath), def);
 }
 
-bool Registry::existsMaterial(uint32 matID, const URI& relUri, bool useGlobalFallback)
+bool Registry::existsForObject(RegistryGroup grp, uint32 id, const URI& relUri, bool useGlobalFallback)
 {
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
@@ -129,9 +145,9 @@ bool Registry::existsMaterial(uint32 matID, const URI& relUri, bool useGlobalFal
 	if (relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
-	URI base = sMaterialsPath;
+	URI base = getGroupPrefix(grp);
 	std::stringstream stream;
-	stream << base.path() << "/" << matID;
+	stream << base.path() << "/objects/" << id;
 	base.setPath(stream.str());
 
 	const URI absURI = URI::makeAbsolute(relUri, base);
@@ -140,5 +156,15 @@ bool Registry::existsMaterial(uint32 matID, const URI& relUri, bool useGlobalFal
 		return b;
 	else
 		return exists(URI::makeAbsolute(relUri, sGlobalsPath));
+}
+
+std::string Registry::dump() const
+{
+	std::stringstream stream;
+	for (const std::pair<URI, Parameter>& p : mData) {
+		stream << p.first.str() << " [" << p.second.typeString() << "]" << std::endl;
+	}
+
+	return stream.str();
 }
 }

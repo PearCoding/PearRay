@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Integrator.h"
+#include "buffer/FrameBuffer.h"
 #include "photon/Photon.h"
 #include "photon/PhotonMap.h"
-#include "renderer/OutputChannel.h"
 #include "shader/ShaderClosure.h"
 
 #include <deque>
@@ -59,9 +59,9 @@ private:
 		uint64 PhotonsStored;
 	} * mTileData;
 
-	std::shared_ptr<OutputSpectral> mAccumulatedFlux;
-	std::shared_ptr<Output1D> mSearchRadius2;
-	std::shared_ptr<OutputCounter> mLocalPhotonCount;
+	std::shared_ptr<FrameBufferSpectrum> mAccumulatedFlux;
+	std::shared_ptr<FrameBuffer1D> mSearchRadius2;
+	std::shared_ptr<FrameBufferCounter> mLocalPhotonCount;
 
 	std::vector<Light> mLights;
 	uint32 mProjMaxTheta;

@@ -15,11 +15,28 @@ enum ParameterType {
 	PT_Matrix3,
 	PT_Matrix4,
 	PT_Spectrum,
-	PT_String
+	PT_String,
+
+	PT_FrameBuffer3D,
+	PT_FrameBuffer1D,
+	PT_FrameBufferCounter,
+	PT_FrameBufferSpectrum,
+
+	PT_ScalarShaderOutput,
+	PT_SpectrumShaderOutput,
+	PT_VectorShaderOutput,
 };
 
-class PR_LIB_INLINE ParameterAccessException : public std::exception
-{
+class FrameBuffer3D;
+class FrameBuffer1D;
+class FrameBufferCounter;
+class FrameBufferSpectrum;
+
+class ScalarShaderOutput;
+class SpectrumShaderOutput;
+class VectorShaderOutput;
+
+class PR_LIB_INLINE ParameterAccessException : public std::exception {
 public:
 	inline ParameterAccessException(ParameterType type) noexcept;
 	inline char const* what() const noexcept override;
@@ -30,21 +47,26 @@ private:
 	ParameterType mType;
 };
 
+#define _PR_STD_PARAMETER_TYPE(type, name)    \
+	inline explicit Parameter(const type& v); \
+	inline type get##name() const;            \
+	inline void set##name(const type& v)
+
+#define _PR_STD_PARAMETER_TYPE_PTR(type, name)                 \
+	inline explicit Parameter(const std::shared_ptr<type>& v); \
+	inline const std::shared_ptr<type>& get##name() const;     \
+	inline void set##name(const std::shared_ptr<type>& v)
+
 class PR_LIB_INLINE Parameter {
 public:
 	inline Parameter();
 	inline explicit Parameter(bool b);
 	inline explicit Parameter(int b);
 	inline explicit Parameter(float b);
-	inline explicit Parameter(const Eigen::Vector2f& v);
-	inline explicit Parameter(const Eigen::Vector3f& v);
-	inline explicit Parameter(const Eigen::Vector4f& v);
-	inline explicit Parameter(const Eigen::Matrix3f& m);
-	inline explicit Parameter(const Eigen::Matrix4f& m);
 	inline explicit Parameter(const Spectrum& spec);
-	inline explicit Parameter(const std::string& str);
 
 	inline ParameterType type() const;
+	inline std::string typeString() const;
 
 	inline bool getBoolean() const;
 	inline void setBoolean(bool b);
@@ -55,26 +77,25 @@ public:
 	inline float getFloat() const;
 	inline void setFloat(float b);
 
-	inline Eigen::Vector2f getVector2() const;
-	inline void setVector2(const Eigen::Vector2f& v);
-
-	inline Eigen::Vector3f getVector3() const;
-	inline void setVector3(const Eigen::Vector3f& v);
-
-	inline Eigen::Vector4f getVector4() const;
-	inline void setVector4(const Eigen::Vector4f& v);
-
-	inline Eigen::Matrix3f getMatrix3() const;
-	inline void setMatrix3(const Eigen::Matrix3f& v);
-
-	inline Eigen::Matrix4f getMatrix4() const;
-	inline void setMatrix4(const Eigen::Matrix4f& v);
-
 	inline const Spectrum& getSpectrum() const;
 	inline void setSpectrum(const Spectrum& s);
 
-	inline std::string getString() const;
-	inline void setString(const std::string& s);
+	// Generic
+	_PR_STD_PARAMETER_TYPE(Eigen::Vector2f, Vector2);
+	_PR_STD_PARAMETER_TYPE(Eigen::Vector3f, Vector3);
+	_PR_STD_PARAMETER_TYPE(Eigen::Vector4f, Vector4);
+	_PR_STD_PARAMETER_TYPE(Eigen::Matrix3f, Matrix3);
+	_PR_STD_PARAMETER_TYPE(Eigen::Matrix4f, Matrix4);
+	_PR_STD_PARAMETER_TYPE(std::string, String);
+
+	_PR_STD_PARAMETER_TYPE_PTR(FrameBuffer3D, FrameBuffer3D);
+	_PR_STD_PARAMETER_TYPE_PTR(FrameBuffer1D, FrameBuffer1D);
+	_PR_STD_PARAMETER_TYPE_PTR(FrameBufferCounter, FrameBufferCounter);
+	_PR_STD_PARAMETER_TYPE_PTR(FrameBufferSpectrum, FrameBufferSpectrum);
+
+	_PR_STD_PARAMETER_TYPE_PTR(ScalarShaderOutput, ScalarShaderOutput);
+	_PR_STD_PARAMETER_TYPE_PTR(SpectrumShaderOutput, SpectrumShaderOutput);
+	_PR_STD_PARAMETER_TYPE_PTR(VectorShaderOutput, VectorShaderOutput);
 
 private:
 	ParameterType mType;
@@ -92,7 +113,19 @@ private:
 	Eigen::Matrix<float, 4, 4, Eigen::DontAlign> mMatrix4;
 	Spectrum mSpectrum;
 	std::string mString;
+
+	std::shared_ptr<FrameBuffer3D> mFrameBuffer3D;
+	std::shared_ptr<FrameBuffer1D> mFrameBuffer1D;
+	std::shared_ptr<FrameBufferCounter> mFrameBufferCounter;
+	std::shared_ptr<FrameBufferSpectrum> mFrameBufferSpectrum;
+
+	std::shared_ptr<ScalarShaderOutput> mScalarShaderOutput;
+	std::shared_ptr<SpectrumShaderOutput> mSpectrumShaderOutput;
+	std::shared_ptr<VectorShaderOutput> mVectorShaderOutput;
 };
 }
+
+#undef _PR_STD_PARAMETER_TYPE
+#undef _PR_STD_PARAMETER_TYPE_PTR
 
 #include "Parameter.inl"

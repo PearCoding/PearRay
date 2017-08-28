@@ -10,7 +10,7 @@ namespace PR {
 OutputMap::OutputMap(RenderContext* renderer)
 	: mRenderer(renderer)
 	, mInitialized(false)
-	, mSpectral(new OutputSpectral())
+	, mSpectral(new FrameBufferSpectrum())
 {
 }
 
@@ -27,7 +27,7 @@ void OutputMap::init()
 	// Init outputs
 	mSpectral->init(mRenderer);
 	if (!mIntCounter[V_Samples])
-		mIntCounter[V_Samples] = std::make_shared<OutputCounter>(0);
+		mIntCounter[V_Samples] = std::make_shared<FrameBufferCounter>(0);
 
 	for (uint32 i = 0; i < V_1D_COUNT; ++i) {
 		if (mInt1D[i])

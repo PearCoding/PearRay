@@ -76,8 +76,8 @@ public:
 
 	virtual Spectrum evalEmission(const ShaderClosure& point);
 
-	inline const std::shared_ptr<SpectralShaderOutput>& emission() const;
-	inline void setEmission(const std::shared_ptr<SpectralShaderOutput>& spec);
+	inline const std::shared_ptr<SpectrumShaderOutput>& emission() const;
+	inline void setEmission(const std::shared_ptr<SpectrumShaderOutput>& spec);
 
 	inline bool canBeShaded() const;
 	inline void enableShading(bool b);
@@ -96,7 +96,7 @@ public:
 	virtual std::string dumpInformation() const;
 
 private:
-	std::shared_ptr<SpectralShaderOutput> mEmission;
+	std::shared_ptr<SpectrumShaderOutput> mEmission;
 
 	const uint32 mID;
 	bool mCanBeShaded;

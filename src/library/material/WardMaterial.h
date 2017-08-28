@@ -7,11 +7,11 @@ class PR_LIB WardMaterial : public Material {
 public:
 	explicit WardMaterial(uint32 id);
 
-	const std::shared_ptr<SpectralShaderOutput>& albedo() const;
-	void setAlbedo(const std::shared_ptr<SpectralShaderOutput>& diffSpec);
+	const std::shared_ptr<SpectrumShaderOutput>& albedo() const;
+	void setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec);
 
-	const std::shared_ptr<SpectralShaderOutput>& specularity() const;
-	void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
+	const std::shared_ptr<SpectrumShaderOutput>& specularity() const;
+	void setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec);
 
 	const std::shared_ptr<ScalarShaderOutput>& roughnessX() const;
 	void setRoughnessX(const std::shared_ptr<ScalarShaderOutput>& data);
@@ -35,8 +35,8 @@ private:
 	Eigen::Vector3f diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf);
 	Eigen::Vector3f specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf);
 
-	std::shared_ptr<SpectralShaderOutput> mAlbedo;
-	std::shared_ptr<SpectralShaderOutput> mSpecularity;
+	std::shared_ptr<SpectrumShaderOutput> mAlbedo;
+	std::shared_ptr<SpectrumShaderOutput> mSpecularity;
 	std::shared_ptr<ScalarShaderOutput> mRoughnessX;
 	std::shared_ptr<ScalarShaderOutput> mRoughnessY;
 	std::shared_ptr<ScalarShaderOutput> mReflectivity;

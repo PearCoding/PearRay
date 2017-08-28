@@ -11,11 +11,11 @@ public:
 	bool isThin() const;
 	void setThin(bool b);
 
-	const std::shared_ptr<SpectralShaderOutput>& specularity() const;
-	void setSpecularity(const std::shared_ptr<SpectralShaderOutput>& spec);
+	const std::shared_ptr<SpectrumShaderOutput>& specularity() const;
+	void setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec);
 
-	const std::shared_ptr<SpectralShaderOutput>& ior() const;
-	void setIOR(const std::shared_ptr<SpectralShaderOutput>& data);
+	const std::shared_ptr<SpectrumShaderOutput>& ior() const;
+	void setIOR(const std::shared_ptr<SpectrumShaderOutput>& data);
 
 	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
 	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
@@ -27,8 +27,8 @@ public:
 	std::string dumpInformation() const override;
 
 private:
-	std::shared_ptr<SpectralShaderOutput> mSpecularity;
-	std::shared_ptr<SpectralShaderOutput> mIndex;
+	std::shared_ptr<SpectrumShaderOutput> mSpecularity;
+	std::shared_ptr<SpectrumShaderOutput> mIndex;
 	bool mThin;
 };
 }
