@@ -23,20 +23,20 @@ void DiffuseMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& dif
 	mAlbedo = diffSpec;
 }
 
-Spectrum DiffuseMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void DiffuseMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	if (mAlbedo)
-		return mAlbedo->eval(point) * PR_1_PI;
-	else
-		return Spectrum();
+	if (mAlbedo) {
+		mAlbedo->eval(spec, point);
+		spec *= PR_1_PI;
+	}
 }
 
-float DiffuseMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+float DiffuseMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	return Projection::cos_hemi_pdf(NdotL);
 }
 
-MaterialSample DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;

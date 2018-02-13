@@ -1,13 +1,15 @@
 #include "RGBConverter.h"
 #include "XYZConverter.h"
 
+#include "SpectrumDescriptor.h"
+
 #include "Diagnosis.h"
 
 namespace PR {
-void RGBConverter::convert(const float* src, float& x, float& y, float& z)
+void RGBConverter::convert(uint32 samples, const float* src, float& x, float& y, float& z)
 {
 	float X, Y, Z;
-	XYZConverter::convertXYZ(src, X, Y, Z);
+	XYZConverter::convertXYZ(samples, src, X, Y, Z);
 	fromXYZ(X, Y, Z, x, y, z);
 }
 
@@ -41,11 +43,11 @@ void RGBConverter::gamma(float& x, float& y, float& z)
 	z = (z <= 0.0031308f) ? 12.92f * z : (1.055f * pow(z, 0.4166666f) - 0.055f);
 }
 
-Spectrum RGBConverter::toSpec(float r, float g, float b)
+void RGBConverter::toSpec(Spectrum& spec, float r, float g, float b)
 {
 	float x, y, z;
 	toXYZ(r, g, b, x, y, z);
 
-	return PR_CHECK_NEGATIVE(XYZConverter::toSpec(x, y, z), "toSpec");
+	XYZConverter::toSpec(spec, x, y, z);
 }
 }

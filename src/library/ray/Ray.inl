@@ -94,16 +94,34 @@ inline void Ray::setTime(const SI::Time& t)
 	mTime = t;
 }
 
-inline uint8 Ray::wavelength() const
+inline float Ray::wavelength() const
 {
-	return mWavelengthIndex;
+	return mWavelength;
 }
 
-inline void Ray::setWavelength(uint8 wavelength)
+inline void Ray::setWavelength(float lambda_nm)
 {
-	PR_ASSERT(wavelength < Spectrum::SAMPLING_COUNT,
-			  "Given wavelenght greater than SAMPLING_COUNT");
-	mWavelengthIndex = wavelength;
+	mWavelength = lambda_nm;
+}
+
+inline uint32 Ray::spectralStart() const {
+	return mSpectralStart;
+}
+
+inline void Ray::setSpectralStart(uint32 start) {
+	mSpectralStart = start;
+}
+
+inline uint32 Ray::spectralEnd() const {
+	return mSpectralEnd;
+}
+
+inline void Ray::setSpectralEnd(uint32 end) {
+	mSpectralEnd = end;
+}
+
+inline bool Ray::isFullSpectrum() const {
+	return mSpectralStart >= mSpectralEnd;
 }
 
 inline void Ray::setFlags(uint16 flags)
@@ -118,11 +136,14 @@ inline uint16 Ray::flags() const
 
 inline Ray Ray::next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) const
 {
-	return safe(mPixel, pos, dir, mDepth + 1, mTime, mWavelengthIndex, mFlags);
+	Ray tmp = *this;
+	tmp.setOrigin(safePosition(pos, dir));
+	tmp.setDirection(dir);
+	tmp.setDepth(mDepth+1);
+	return tmp;
 }
 
-inline Ray Ray::safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-					 uint32 depth, const SI::Time& time, uint8 wavelength, uint16 flags)
+inline Eigen::Vector3f Ray::safePosition(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir)
 {
 	Eigen::Vector3f off	= dir * RayOffsetEpsilon;
 	Eigen::Vector3f posOff = pos + off;
@@ -134,7 +155,7 @@ inline Ray Ray::safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, c
 			posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::lowest());
 	}
 
-	return Ray(pixel, posOff, dir, depth, time, wavelength, flags);
+	return posOff;
 }
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

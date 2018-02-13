@@ -1,96 +1,81 @@
 #include "Spectrum.h"
-
-#include "SIMath.h"
-#include "SIMathConstants.h"
-#include "SIMathStd.h"
-
-#include <type_traits>
-
-static_assert(std::is_standard_layout<PR::Spectrum>::value,
-			  "Spectrum is not a standard layout type");
-
-static_assert(sizeof(PR::Spectrum) == PR::Spectrum::SAMPLING_COUNT * sizeof(float),
-			  "Spectrum is not a same size as internal data");
+#include "SpectrumDescriptor.h"
 
 namespace PR {
-#include "xyz.inl"
-
-float Spectrum::approx(float wavelength, InterpolationType interpolation) const
+// Internal
+Spectrum::Spectrum_Internal::Spectrum_Internal(const SpectrumDescriptor* descriptor, uint32 start, uint32 end, float* data)
+	: Descriptor(descriptor)
+	, Start(start)
+	, End(end)
+	, External(true)
+	, Data(data)
 {
-	if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
-		return -1;
+}
 
-	float st = wavelength - WAVELENGTH_START;
-	uint32 c = (uint32)(st / WAVELENGTH_STEP);
-	uint32 m = (uint32)fmodf(st, (float)WAVELENGTH_STEP);
+Spectrum::Spectrum_Internal::Spectrum_Internal(const SpectrumDescriptor* descriptor, uint32 start, uint32 end)
+	: Descriptor(descriptor)
+	, Start(start)
+	, End(end)
+	, External(false)
+	, Data(nullptr)
+{
+	Data = new float[end - start];
+}
 
-	if (st < 0 || c >= SAMPLING_COUNT)
-		return 0;
-
-	if (interpolation == IT_Const) {
-		if (m >= WAVELENGTH_STEP / 2 && c < SAMPLING_COUNT - 1) {
-			return mValues[c + 1];
-		} else {
-			return mValues[c];
-		}
-	} else {
-		if (c >= SAMPLING_COUNT - 1) {
-			return mValues[SAMPLING_COUNT - 1];
-		} else {
-			float t = m / (float)WAVELENGTH_STEP;
-			return mValues[c] * (1 - t) + mValues[c + 1] * t;
-		}
+Spectrum::Spectrum_Internal::~Spectrum_Internal()
+{
+	if (External && Data) {
+		delete[] Data;
 	}
+}
+
+// Public
+Spectrum::Spectrum(const SpectrumDescriptor* descriptor)
+	: Spectrum(descriptor, 0, descriptor->samples())
+{
+}
+
+Spectrum::Spectrum(const SpectrumDescriptor* descriptor, float initial)
+	: Spectrum(descriptor, 0, descriptor->samples(), initial)
+{
+}
+
+Spectrum::Spectrum(const SpectrumDescriptor* descriptor, uint32 start, uint32 end)
+	: mInternal(std::make_shared<Spectrum_Internal>(descriptor, start, end))
+{
+}
+
+Spectrum::Spectrum(const SpectrumDescriptor* descriptor, uint32 start, uint32 end, float initial)
+	: Spectrum(descriptor, start, end)
+{
+	fill(initial);
+}
+
+Spectrum::Spectrum(const SpectrumDescriptor* descriptor, uint32 start, uint32 end, float* data)
+	: mInternal(std::make_shared<Spectrum_Internal>(descriptor, start, end, data))
+{
+}
+
+Spectrum Spectrum::clone() const
+{
+	Spectrum spec(descriptor(), spectralStart(), spectralEnd());
+	spec.copyFrom(c_ptr());
+	return spec;
 }
 
 constexpr float CANDELA = 683.002f;
 void Spectrum::weightPhotometric()
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] *= NM_TO_Y[i] * CANDELA;
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) * descriptor()->luminousFactor(i + spectralStart()) * CANDELA);
 }
 
-float Spectrum::luminousFlux() const
+float Spectrum::luminousFlux_nm() const
 {
 	float flux = 0;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		flux += mValues[i] * NM_TO_Y[i];
+	for (uint32 i = 0; i < samples(); ++i)
+		flux += value(i) * descriptor()->luminousFactor(i + spectralStart()) * descriptor()->integralDelta(i + spectralStart());
 
-	return flux * ILL_SCALE * CANDELA;
-}
-
-// Has to be in double!
-template <typename T = long double>
-inline SI::SpectralIrradianceWavelengthU<T, 0>
-blackbody_eq(const SI::TemperatureU<T, 0>& temp, const SI::LengthU<T, 0>& lambda_nm)
-{
-	using namespace SI;
-
-	const auto c  = SI::constants::c<T>();
-	const auto h  = SI::constants::h<T>();
-	const auto kb = SI::constants::kb<T>();
-
-	const auto c1 = 2 * h * c * c;
-	const auto c2 = h * c / kb;
-
-	const auto lambda5 = lambda_nm * (lambda_nm * lambda_nm) * (lambda_nm * lambda_nm);
-	const auto f	   = c2 / (lambda_nm * temp);
-
-	return (c1 / lambda5) / SI::expm1(f);
-}
-
-Spectrum Spectrum::fromBlackbody(float temp)
-{
-	SI::TemperatureU<long double, 0> T(temp);
-	Spectrum spec;
-	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
-		long double lambda = (WAVELENGTH_START + i * WAVELENGTH_STEP) * 1e-9l;
-		spec.mValues[i]	= static_cast<float>(
-			(long double)blackbody_eq(
-				T,
-				SI::LengthU<long double, 0>(lambda)));
-	}
-
-	return spec;
+	return flux * CANDELA;
 }
 }

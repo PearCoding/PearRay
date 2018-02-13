@@ -23,50 +23,32 @@ public:
 	explicit PPMIntegrator(RenderContext* renderer);
 	virtual ~PPMIntegrator();
 
-	void init() override;
-	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc) override;
-
 	void onStart() override;
+	void init() override;
+	void apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc) override;
+
 	void onNextPass(uint32 pass, bool& clean) override;
 	void onEnd() override;
 	bool needNextPass(uint32 pass) const override;
 
-	void onPass(RenderTile* tile, uint32 pass) override;
+	void onPass(const RenderSession& session, uint32 pass) override;
 
 	RenderStatus status() const;
 
 private:
-	void photonPass(RenderTile* tile, uint32 pass);
-	Spectrum accumPass(const Ray& in, ShaderClosure& sc, uint32 diffbounces, RenderTile* tile);
+	void photonPass(const RenderSession& session, uint32 pass);
+	Spectrum accumPass(const Ray& in, ShaderClosure& sc, uint32 diffbounces, const RenderSession& session);
 
 	Photon::PhotonMap* mPhotonMap;
 
-	struct Light {
-		RenderEntity* Entity;
-		uint64 Photons;
-		float Surface;
-		SphereMap* Proj;
-	};
+	std::shared_ptr<FrameBufferFloat> mAccumulatedFlux;
+	std::shared_ptr<FrameBufferFloat> mSearchRadius2;
+	std::shared_ptr<FrameBufferUInt64> mLocalPhotonCount;
 
-	struct LightTileData {
-		Light* Entity;
-		uint64 Photons;
-	};
-
-	struct TileData {
-		std::vector<LightTileData> Lights;
-		uint64 PhotonsEmitted;
-		uint64 PhotonsStored;
-	} * mTileData;
-
-	std::shared_ptr<FrameBufferSpectrum> mAccumulatedFlux;
-	std::shared_ptr<FrameBuffer1D> mSearchRadius2;
-	std::shared_ptr<FrameBufferCounter> mLocalPhotonCount;
-
-	std::vector<Light> mLights;
-	uint32 mProjMaxTheta;
-	uint32 mProjMaxPhi;
-
+	std::vector<struct PPM_Light> mLights;
+	std::vector<struct PPM_TileData> mTileData;
+	std::vector<struct PPM_ThreadData> mThreadData;
+	
 	uint64 mMaxPhotonsStoredPerPass;
 };
 }

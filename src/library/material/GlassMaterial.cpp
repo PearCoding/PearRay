@@ -3,7 +3,10 @@
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSettings.h"
+#include "renderer/RenderSession.h"
+
 #include "shader/ShaderClosure.h"
+#include "shader/ConstSpectralOutput.h"
 
 #include "math/Fresnel.h"
 #include "math/Reflection.h"
@@ -54,22 +57,45 @@ void GlassMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 	mIndex = data;
 }
 
-Spectrum GlassMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+struct GM_ThreadData {
+	Spectrum IOR;
+	Spectrum Specularity;
+
+	GM_ThreadData(RenderContext* context) :
+		IOR(context->spectrumDescriptor()), Specularity(context->spectrumDescriptor()) {
+	}
+};
+
+constexpr float MinRoughness = 0.001f;
+void GlassMaterial::setup(RenderContext* context)
 {
-	if (mSpecularity)
-		return mSpecularity->eval(point);
-	else
-		return Spectrum();
+	mThreadData.clear();
+	for(size_t i = 0; context->threads(); ++i) {
+		mThreadData.emplace_back(context);
+	}
+
+	if(!mSpecularity)
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite());
+
+	if(!mIndex)
+		mIndex = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite()*1.55f);
 }
 
-float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void GlassMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+{
+	mSpecularity->eval(spec, point);
+}
+
+float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	return std::numeric_limits<float>::infinity();
 }
 
-MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
-	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
+	GM_ThreadData& data = mThreadData[session.thread()];
+	const float ind = data.IOR.value(point.WavelengthIndex);
+
 	float weight	= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
 												   Fresnel::dielectric(-point.NdotV, 1, ind)
@@ -98,10 +124,12 @@ MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Ve
 	return ms;
 }
 
-MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
+MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
 {
+	GM_ThreadData& data = mThreadData[session.thread()];
+	const float ind = data.IOR.value(point.WavelengthIndex);
+
 	MaterialSample ms;
-	const float ind = mIndex ? mIndex->eval(point).value(point.WavelengthIndex) : 1.55f;
 	float weight	= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
 												   Fresnel::dielectric(-point.NdotV, 1, ind)

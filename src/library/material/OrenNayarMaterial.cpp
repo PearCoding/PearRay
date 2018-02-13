@@ -1,6 +1,12 @@
 #include "OrenNayarMaterial.h"
 #include "ray/Ray.h"
+
+#include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
+
 #include "shader/ShaderClosure.h"
+#include "shader/ConstScalarOutput.h"
+#include "shader/ConstSpectralOutput.h"
 
 #include "math/Projection.h"
 
@@ -36,30 +42,35 @@ void OrenNayarMaterial::setRoughness(const std::shared_ptr<ScalarShaderOutput>& 
 	mRoughness = d;
 }
 
-Spectrum OrenNayarMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+constexpr float MinRoughness = 0.001f;
+void OrenNayarMaterial::setup(RenderContext* context)
 {
-	if (mAlbedo) {
-		float val = PR_1_PI;
-		if (mRoughness) {
-			float roughness = mRoughness->eval(point);
-			roughness *= roughness; // Square
+	if(!mRoughness)
+		mRoughness = std::make_shared<ConstScalarShaderOutput>(0.5f);
 
-			if (roughness > PR_EPSILON) // Oren Nayar
-				val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
-		} // else lambert
-
-		return mAlbedo->eval(point) * val;
-	} else {
-		return Spectrum();
-	}
+	if(!mAlbedo)
+		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromBlack());
 }
 
-float OrenNayarMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void OrenNayarMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+{
+	float val = PR_1_PI;
+	float roughness = mRoughness->eval(point);
+	roughness *= roughness; // Square
+
+	if (roughness > PR_EPSILON) // Oren Nayar
+		val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
+	
+	mAlbedo->eval(spec, point);
+	spec *= val;
+}
+
+float OrenNayarMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	return Projection::cos_hemi_pdf(NdotL);
 }
 
-MaterialSample OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "OnePassIntegrator.h"
+#include <vector>
 
 namespace PR {
 struct ShaderClosure;
@@ -9,11 +10,13 @@ public:
 	explicit DirectIntegrator(RenderContext* renderer);
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass,
+	void apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass,
 				   ShaderClosure& sc) override;
 
 private:
-	Spectrum applyRay(const Ray& in, RenderTile* tile, uint32 diffbounces,
+	void applyRay(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 diffbounces,
 		ShaderClosure& sc);
+
+	std::vector<struct DI_ThreadData> mThreadData;
 };
 }

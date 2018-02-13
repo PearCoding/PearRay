@@ -16,7 +16,7 @@ EnvironmentLight::~EnvironmentLight()
 {
 }
 
-IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	IInfiniteLight::LightSample ls;
 	ls.L = Projection::tangent_align(point.N,
@@ -25,10 +25,10 @@ IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point,
 	return ls;
 }
 
-Spectrum EnvironmentLight::apply(const Eigen::Vector3f& V)
+void EnvironmentLight::apply(Spectrum& spec, const Eigen::Vector3f& V, const RenderSession& session)
 {
 	if (!mMaterial || !mMaterial->emission())
-		return Spectrum();
+		return;
 
 	ShaderClosure sc;
 	sc.V  = V;
@@ -40,6 +40,6 @@ Spectrum EnvironmentLight::apply(const Eigen::Vector3f& V)
 	const Eigen::Vector2f uv = Projection::sphereUV(V);
 	sc.UVW					 = Eigen::Vector3f(uv(0), uv(1), 0);
 
-	return mMaterial->emission()->eval(sc);
+	mMaterial->evalEmission(spec, sc, session);
 }
 }

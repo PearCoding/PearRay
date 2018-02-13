@@ -26,8 +26,8 @@ inline char const* ParameterAccessException::what() const noexcept
 		return "Can not access parameter. Type is not Matrix3.";
 	case PT_Matrix4:
 		return "Can not access parameter. Type is not Matrix4.";
-	case PT_Spectrum:
-		return "Can not access parameter. Type is not Spectrum.";
+	/*case PT_Spectrum:
+		return "Can not access parameter. Type is not Spectrum.";*/
 	case PT_String:
 		return "Can not access parameter. Type is not String.";
 
@@ -86,8 +86,8 @@ inline std::string Parameter::typeString() const
 		return "Matrix3";
 	case PT_Matrix4:
 		return "Matrix4";
-	case PT_Spectrum:
-		return "Spectrum";
+	/*case PT_Spectrum:
+		return "Spectrum";*/
 	case PT_String:
 		return "String";
 
@@ -137,7 +137,7 @@ _PR_PARAMETER_GETSET(const Eigen::Vector3f&, Eigen::Vector3f, Vector3)
 _PR_PARAMETER_GETSET(const Eigen::Vector4f&, Eigen::Vector4f, Vector4)
 _PR_PARAMETER_GETSET(const Eigen::Matrix3f&, Eigen::Matrix3f, Matrix3)
 _PR_PARAMETER_GETSET(const Eigen::Matrix4f&, Eigen::Matrix4f, Matrix4)
-_PR_PARAMETER_GETSET(const Spectrum&, const Spectrum&, Spectrum)
+//_PR_PARAMETER_GETSET(const Spectrum&, const Spectrum&, Spectrum)
 _PR_PARAMETER_GETSET(const std::string&, std::string, String)
 
 _PR_PARAMETER_GETSET(const std::shared_ptr<FrameBuffer3D>&, const std::shared_ptr<FrameBuffer3D>&, FrameBuffer3D)

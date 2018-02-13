@@ -1,5 +1,9 @@
 #include "BlinnPhongMaterial.h"
+#include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
 #include "ray/Ray.h"
+#include "shader/ConstSpectralOutput.h"
+#include "shader/ConstScalarOutput.h"
 
 #include "math/Fresnel.h"
 #include "math/Projection.h"
@@ -47,54 +51,72 @@ void BlinnPhongMaterial::setFresnelIndex(const std::shared_ptr<SpectrumShaderOut
 	mIndex = data;
 }
 
+struct BPM_ThreadData {
+	Spectrum Index;
+
+	BPM_ThreadData(RenderContext* context) :
+		Index(context->spectrumDescriptor())
+	{}
+};
+
+void BlinnPhongMaterial::setup(RenderContext* context) {
+	mThreadData.clear();
+	for(size_t i = 0; context->threads(); ++i) {
+		mThreadData.emplace_back(context);
+	}
+
+	if(!mAlbedo)
+		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromBlack());
+
+	if(!mIndex)
+		mIndex = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite()*1.55f);
+	
+	if(!mShininess)
+		mShininess = std::make_shared<ConstScalarShaderOutput>(0.0f);
+}
+
 // TODO: Should be normalized better.
-Spectrum BlinnPhongMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	Spectrum albedo;
-	if (mAlbedo)
-		albedo = mAlbedo->eval(point) * PR_1_PI;
+	BPM_ThreadData& data = mThreadData[session.thread()];
+	mAlbedo->eval(spec, point);
+	spec *= PR_1_PI;
 
-	Spectrum spec;
-	if (mIndex && mShininess) {
-		const Eigen::Vector3f H = Reflection::halfway(L, point.V);
-		const float NdotH		= std::abs(point.N.dot(H));
-		const float VdotH		= std::abs(point.V.dot(H));
-		const float n			= mShininess->eval(point);
-		Spectrum index			= mIndex->eval(point);
+	const Eigen::Vector3f H = Reflection::halfway(L, point.V);
+	const float NdotH		= std::abs(point.N.dot(H));
+	const float VdotH		= std::abs(point.V.dot(H));
 
-		for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
-			const float n2 = index.value(i);
-			const float f  = Fresnel::dielectric(VdotH,
-												!(point.Flags & SCF_Inside) ? 1 : n2,
-												!(point.Flags & SCF_Inside) ? n2 : 1);
+	float n = mShininess->eval(point);
 
-			spec.setValue(i, f);
-		}
+	mIndex->eval(data.Index, point);
 
-		spec *= std::pow(NdotH, n) * PR_1_PI * (n + 4) / 8;
-	}
+	const float factor = std::pow(NdotH, n) * PR_1_PI * (n + 4) / 8;
 
-	return albedo + spec;
-}
+	for (uint32 i = 0; i < spec.samples(); ++i) {
+		const float n2 = data.Index.value(i);
+		const float f  = Fresnel::dielectric(VdotH,
+											!(point.Flags & SCF_Inside) ? 1 : n2,
+											!(point.Flags & SCF_Inside) ? n2 : 1);
 
-float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
-{
-	if (mIndex) {
-		const Eigen::Vector3f H = Reflection::halfway(L, point.V);
-		const float NdotH		= std::abs(point.N.dot(H));
-		const float n			= mShininess->eval(point);
-		return PR_1_PI + std::pow(NdotH, n);
-	} else {
-		return PR_1_PI;
+		spec.setValue(i, spec.value(i) + f*factor);
 	}
 }
 
-MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+{
+	const Eigen::Vector3f H = Reflection::halfway(L, point.V);
+	const float NdotH		= std::abs(point.N.dot(H));
+	float n = 0;
+	mShininess->eval(n, point);
+	return PR_1_PI + std::pow(NdotH, n);
+}
+
+MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	MaterialSample ms;
 	ms.L = Projection::tangent_align(point.N,
 										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
-	ms.PDF_S += BlinnPhongMaterial::pdf(point, ms.L, 0);
+	ms.PDF_S += BlinnPhongMaterial::pdf(point, ms.L, 0, session);
 	ms.ScatteringType = MST_DiffuseReflection;
 	return ms;
 }

@@ -8,6 +8,6 @@ public:
 	explicit DebugIntegrator(RenderContext* renderer);
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc) override;
+	void apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc) override;
 };
 }

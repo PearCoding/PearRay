@@ -1,6 +1,7 @@
 #include "OnePassIntegrator.h"
 
 #include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
 #include "renderer/RenderThread.h"
 #include "renderer/RenderTile.h"
 
@@ -18,11 +19,11 @@ void OnePassIntegrator::onEnd()
 {
 }
 
-void OnePassIntegrator::onPass(RenderTile* tile, uint32 pass)
+void OnePassIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
-	for (uint32 y = tile->sy(); y < tile->ey(); ++y) {
-		for (uint32 x = tile->sx(); x < tile->ex(); ++x) {
-			renderer()->render(tile, Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
+	for (uint32 y = session.tile()->sy(); y < session.tile()->ey(); ++y) {
+		for (uint32 x = session.tile()->sx(); x < session.tile()->ex(); ++x) {
+			renderer()->render(Eigen::Vector2i(x, y), session.tile()->samplesRendered(), pass, session);
 		}
 	}
 }

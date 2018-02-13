@@ -12,10 +12,10 @@ class PR_LIB RGBConverter {
 public:
 	/* D65 sRGB (linear) */
 	// len(src) = SAMPLING_COUNT
-	static void convert(const float* src, float& x, float& y, float& z);
+	static void convert(uint32 samples, const float* src, float& x, float& y, float& z);
 	static inline void convert(const Spectrum& s, float& x, float& y, float& z)
 	{
-		convert(s.c_ptr(), x, y, z);
+		convert(s.samples(), s.c_ptr(), x, y, z);
 	}
 
 	static void toXYZ(float r, float g, float b, float& x, float& y, float& z);
@@ -24,6 +24,6 @@ public:
 	static float luminance(float r, float g, float b);
 	static void gamma(float& x, float& y, float& z);
 
-	static Spectrum toSpec(float x, float y, float z);
+	static void toSpec(Spectrum& spec, float x, float y, float z);
 };
 }

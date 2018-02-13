@@ -14,9 +14,11 @@ public:
 	const std::shared_ptr<SpectrumShaderOutput>& ior() const;
 	void setIOR(const std::shared_ptr<SpectrumShaderOutput>& data);
 
-	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
+	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
+
+	void setup(RenderContext* context) override;
 
 	std::string dumpInformation() const override;
 

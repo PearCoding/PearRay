@@ -39,7 +39,7 @@ public:
 	float apertureRadius() const;
 
 	// Camera
-	Ray constructRay(RenderContext* context, const CameraSample& sample) const override;
+	Ray constructRay(const CameraSample& sample) const override;
 
 	// Entity
 	std::string type() const override;

@@ -9,8 +9,8 @@ namespace PR
 	{
 	}
 
-	float ConstScalarShaderOutput::eval(const PR::ShaderClosure& point)
+	void ConstScalarShaderOutput::eval(float& f, const PR::ShaderClosure& point)
 	{
-		return mValue;
+		f = mValue;
 	}
 }

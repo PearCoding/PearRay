@@ -10,6 +10,9 @@
 namespace PR {
 using namespace PR;
 
+#define LOCK_FILE_NAME ".pearray_lock"
+#define LOCK_IMG_FILE_NAME ".pearray_img_lock"
+
 OutputSpecification::OutputSpecification()
 	: mInit(false)
 {
@@ -23,7 +26,7 @@ OutputSpecification::~OutputSpecification()
 void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 {
 	if (mInit && !mWorkingDir.empty()) {
-		std::string f = mWorkingDir + "/.lock";
+		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOGGER.logf(L_Error, M_System,
 						   "Couldn't delete lock directory '%s'!", f.c_str());
@@ -36,13 +39,13 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
 
 		// Setup lock directory
-		if (!boost::filesystem::create_directory(mWorkingDir + "/.lock"))
+		if (!boost::filesystem::create_directory(mWorkingDir + "/" LOCK_FILE_NAME))
 			PR_LOGGER.logf(L_Warning, M_System,
-						   "Couldn't create lock directory '%s/.lock'. Maybe already running?", mWorkingDir.c_str());
+						   "Couldn't create lock directory '%s/" LOCK_FILE_NAME "'. Maybe already running?", mWorkingDir.c_str());
 
-		if (!boost::filesystem::remove(mWorkingDir + "/.img_lock")) // Remove it now
+		if (!boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
 			PR_LOGGER.logf(L_Error, M_System,
-						   "Couldn't delete lock directory '%s/.img_lock'!", mWorkingDir.c_str());
+						   "Couldn't delete lock directory '%s/" LOCK_IMG_FILE_NAME "'!", mWorkingDir.c_str());
 	}
 }
 
@@ -62,7 +65,7 @@ void OutputSpecification::deinit()
 		return;
 
 	if (!mWorkingDir.empty()) {
-		std::string f = mWorkingDir + "/.lock";
+		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOGGER.logf(L_Error, M_System,
 						   "Couldn't delete lock directory '%s'!", f.c_str());
@@ -360,7 +363,7 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 
 void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
 {
-	if (!force && !boost::filesystem::create_directory(mWorkingDir + "/.img_lock"))
+	if (!force && !boost::filesystem::create_directory(mWorkingDir + "/" LOCK_IMG_FILE_NAME))
 		return;
 
 	std::string resultDir = "/results";
@@ -396,8 +399,8 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, T
 						   "Saved file '%s'.", filename.c_str());
 	}
 
-	if (!force && !boost::filesystem::remove(mWorkingDir + "/.img_lock")) // Remove it now
+	if (!force && !boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
 		PR_LOGGER.logf(L_Error, M_System,
-					   "Couldn't delete lock directory '%s/.img_lock'!", mWorkingDir.c_str());
+					   "Couldn't delete lock directory '%s/" LOCK_IMG_FILE_NAME "'!", mWorkingDir.c_str());
 }
 }

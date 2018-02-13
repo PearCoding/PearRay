@@ -10,10 +10,10 @@ inline std::string dump_negatives(const Spectrum& spec)
 {
 	std::stringstream stream;
 	stream << "[";
-	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
+	for (uint32 i = 0; i < spec.samples(); ++i) {
 		if (spec.value(i) < 0.0f) {
 			stream << i << ":" << spec.value(i);
-			if (i < Spectrum::SAMPLING_COUNT - 1)
+			if (i < spec.samples() - 1)
 				stream << ";";
 		}
 	}

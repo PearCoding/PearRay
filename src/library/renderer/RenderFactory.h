@@ -41,7 +41,6 @@ public:
 	inline std::string workingDir() const { return mWorkingDir; }
 
 	inline GPU* gpu() const { return mGPU; }
-
 private:
 	uint32 mFullWidth;
 	uint32 mFullHeight;

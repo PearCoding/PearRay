@@ -14,7 +14,7 @@ enum ParameterType {
 	PT_Vector4,
 	PT_Matrix3,
 	PT_Matrix4,
-	PT_Spectrum,
+	//PT_Spectrum,
 	PT_String,
 
 	PT_FrameBuffer3D,
@@ -77,8 +77,8 @@ public:
 	inline float getFloat() const;
 	inline void setFloat(float b);
 
-	inline const Spectrum& getSpectrum() const;
-	inline void setSpectrum(const Spectrum& s);
+	/*inline const Spectrum& getSpectrum() const;
+	inline void setSpectrum(const Spectrum& s);*/
 
 	// Generic
 	_PR_STD_PARAMETER_TYPE(Eigen::Vector2f, Vector2);
@@ -111,7 +111,7 @@ private:
 	Eigen::Matrix<float, 4, 1, Eigen::DontAlign> mVector4;
 	Eigen::Matrix<float, 3, 3, Eigen::DontAlign> mMatrix3;
 	Eigen::Matrix<float, 4, 4, Eigen::DontAlign> mMatrix4;
-	Spectrum mSpectrum;
+	//Spectrum mSpectrum;
 	std::string mString;
 
 	std::shared_ptr<FrameBuffer3D> mFrameBuffer3D;

@@ -1,7 +1,9 @@
 #include "RenderContext.h"
 #include "OutputMap.h"
+#include "RenderSession.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
+#include "RenderTileMap.h"
 
 #include "camera/Camera.h"
 #include "entity/RenderEntity.h"
@@ -15,17 +17,10 @@
 
 #include "light/IInfiniteLight.h"
 
-#include "sampler/HaltonQMCSampler.h"
-#include "sampler/MultiJitteredSampler.h"
-#include "sampler/RandomSampler.h"
-#include "sampler/StratifiedSampler.h"
-#include "sampler/UniformSampler.h"
-
 #include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
 
 #include "Logger.h"
-#include "math/Generator.h"
 #include "math/MSI.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
@@ -38,7 +33,7 @@
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-							 const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
+							 const SpectrumDescriptor& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)
@@ -47,14 +42,11 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint3
 	, mFullWidth(fw)
 	, mFullHeight(fh)
 	, mWorkingDir(workingDir)
+	, mSpectrumDescriptor(specdesc)
 	, mCamera(scene.activeCamera())
 	, mScene(scene)
-	, mOutputMap(nullptr)
-	, mTileWidth(w / 8)
-	, mTileHeight(h / 8)
-	, mTileXCount(8)
-	, mTileYCount(8)
-	, mTileMap(nullptr)
+	, mOutputMap()
+	, mTileMap()
 	, mIncrementalCurrentSample(0)
 	, mRenderSettings(settings)
 	, mGPU(gpu)
@@ -65,15 +57,12 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint3
 
 	reset();
 
-	mOutputMap = new OutputMap(this);
+	mOutputMap = std::make_unique<OutputMap>(this);
 }
 
 RenderContext::~RenderContext()
 {
 	reset();
-
-	PR_ASSERT(mOutputMap, "OutputMap has to be non zero before deconstruction");
-	delete mOutputMap;
 }
 
 void RenderContext::reset()
@@ -92,16 +81,6 @@ void RenderContext::reset()
 		delete thread;
 
 	mThreads.clear();
-
-	if (mTileMap) {
-		for (uint32 i = 0; i < mTileXCount * mTileYCount; ++i) {
-			delete mTileMap[i];
-		}
-
-		delete[] mTileMap;
-		mTileMap = nullptr;
-	}
-
 	mLights.clear();
 }
 
@@ -154,86 +133,17 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		threadCount = threads;
 
 	for (uint32 i = 0; i < threadCount; ++i) {
-		RenderThread* thread = new RenderThread(this);
+		RenderThread* thread = new RenderThread(i, this);
 		mThreads.push_back(thread);
 	}
 
 	// Calculate tile sizes, etc.
-	mTileXCount = std::max<uint32>(1, tcx);
-	mTileYCount = std::max<uint32>(1, tcy);
-	mTileWidth  = (uint32)std::ceil(mWidth / (float)mTileXCount);
-	mTileHeight = (uint32)std::ceil(mHeight / (float)mTileYCount);
-	mTileMap	= new RenderTile*[mTileXCount * mTileYCount];
-
-	switch (mRenderSettings.tileMode()) {
-	default:
-	case TM_Linear:
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = 0; j < mTileXCount; ++j) {
-				uint32 sx					  = j * mTileWidth;
-				uint32 sy					  = i * mTileHeight;
-				mTileMap[i * mTileXCount + j] = new RenderTile(
-					sx,
-					sy,
-					std::min(mWidth, sx + mTileWidth),
-					std::min(mHeight, sy + mTileHeight),
-					mRenderSettings, i * mTileXCount + j);
-			}
-		}
-		break;
-	case TM_Tile: {
-		uint32 k = 0;
-		// Even
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = ((i % 2) ? 1 : 0); j < mTileXCount; j += 2) {
-				uint32 sx = j * mTileWidth;
-				uint32 sy = i * mTileHeight;
-
-				mTileMap[k] = new RenderTile(
-					sx,
-					sy,
-					std::min(mWidth, sx + mTileWidth),
-					std::min(mHeight, sy + mTileHeight),
-					mRenderSettings, i * mTileXCount + j);
-				++k;
-			}
-		}
-		// Odd
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = ((i % 2) ? 0 : 1); j < mTileXCount; j += 2) {
-				uint32 sx = j * mTileWidth;
-				uint32 sy = i * mTileHeight;
-
-				mTileMap[k] = new RenderTile(
-					sx,
-					sy,
-					std::min(mWidth, sx + mTileWidth),
-					std::min(mHeight, sy + mTileHeight),
-					mRenderSettings, i * mTileXCount + j);
-				++k;
-			}
-		}
-	} break;
-	case TM_Spiral: {
-		MinRadiusGenerator<2> generator(std::max(mTileXCount / 2, mTileYCount / 2));
-		uint32 i = 0;
-		while (generator.hasNext()) {
-			const auto p  = generator.next();
-			const auto tx = mTileXCount / 2 + p[0];
-			const auto ty = mTileYCount / 2 + p[1];
-
-			if (tx >= 0 && tx < mTileXCount && ty >= 0 && ty < mTileYCount) {
-				mTileMap[i] = new RenderTile(
-					tx * mTileWidth,
-					ty * mTileHeight,
-					std::min(mWidth, tx * mTileWidth + mTileWidth),
-					std::min(mHeight, ty * mTileHeight + mTileHeight),
-					mRenderSettings, ty * mTileXCount + tx);
-				++i;
-			}
-		}
-	} break;
-	}
+	mTileMap = std::make_unique<RenderTileMap>(
+		std::max<uint32>(1, tcx),
+		std::max<uint32>(1, tcy),
+		(uint32)std::ceil(mWidth / (float)std::max<uint32>(1, tcx)),
+		(uint32)std::ceil(mHeight / (float)std::max<uint32>(1, tcy)));
+	mTileMap->init(*this, mRenderSettings.tileMode());
 
 	// Init modules
 	mIntegrator->init();
@@ -252,112 +162,29 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		thread->start();
 }
 
-void RenderContext::render(RenderTile* tile, const Eigen::Vector2i& pixel,
-						   uint32 sample, uint32 pass)
+uint32 RenderContext::tileCount() const
 {
-	PR_ASSERT(mOutputMap, "OutputMap has to be initialized before rendering");
-	PR_ASSERT(tile, "Rendering needs a valid tile");
-
-	if (mRenderSettings.isIncremental()) // Only one sample a time!
-	{
-		renderIncremental(tile, pixel, sample, pass);
-	} else { // Everything
-		const uint32 SampleCount = mRenderSettings.maxCameraSampleCount();
-
-		for (uint32 currentSample = sample;
-			 currentSample < SampleCount && !mOutputMap->isPixelFinished(pixel);
-			 ++currentSample) {
-			renderIncremental(tile, pixel, currentSample, pass);
-		}
-	}
-}
-void RenderContext::renderIncremental(RenderTile* tile, const Eigen::Vector2i& pixel,
-									  uint32 sample, uint32 pass)
-{
-	if (mOutputMap->isPixelFinished(pixel))
-		return;
-
-	ShaderClosure sc;
-	//const auto aaM = mRenderSettings.maxAASampleCount();
-	const auto lensM	 = mRenderSettings.maxLensSampleCount();
-	const auto timeM	 = mRenderSettings.maxTimeSampleCount();
-	const auto spectralM = mRenderSettings.maxSpectralSampleCount();
-
-	const auto aasample		  = sample / (lensM * timeM * spectralM);
-	const auto lenssample	 = (sample % (lensM * timeM * spectralM)) / (timeM * spectralM);
-	const auto timesample	 = (sample % (timeM * spectralM)) / spectralM;
-	const auto spectralsample = sample % spectralM;
-
-	const auto aa   = tile->aaSampler()->generate2D(aasample);
-	const auto lens = tile->lensSampler()->generate2D(lenssample);
-	auto time		= tile->timeSampler()->generate1D(timesample);
-	switch (mRenderSettings.timeMappingMode()) {
-	default:
-	case TMM_Center:
-		time -= 0.5;
-		break;
-	case TMM_Right:
-		break;
-	case TMM_Left:
-		time *= -1;
-		break;
-	}
-	time *= mRenderSettings.timeScale();
-
-	uint8 specInd = std::min<uint8>(Spectrum::SAMPLING_COUNT - 1,
-									std::floor(
-										tile->spectralSampler()->generate1D(spectralsample) * Spectrum::SAMPLING_COUNT));
-
-	const Spectrum spec = renderSample(tile,
-									   pixel(0) + aa(0) - 0.5f, pixel(1) + aa(1) - 0.5f,
-									   lens(0), lens(1),
-									   time, specInd,
-									   pass,
-									   sc);
-
-	mOutputMap->pushFragment(pixel, spec, sc);
+	return mTileMap->tileCount();
 }
 
-Spectrum RenderContext::renderSample(RenderTile* tile,
-									 float x, float y, float rx, float ry, float t, uint8 wavelength,
-									 uint32 pass, ShaderClosure& sc)
+std::list<RenderTile*> RenderContext::currentTiles() const
 {
-	tile->statistics().incPixelSampleCount();
-
-	CameraSample sample;
-	sample.PixelF = Eigen::Vector2f(x + mOffsetX, y + mOffsetY);
-	sample.Pixel  = Eigen::Vector2i(
-		std::min(std::max(mOffsetX, (uint32)std::round(x)), mOffsetX + mWidth - 1),
-		std::min(std::max(mOffsetY, (uint32)std::round(y)), mOffsetY + mHeight - 1));
-	sample.R			   = Eigen::Vector2f(rx, ry);
-	sample.Time			   = t;
-	sample.WavelengthIndex = wavelength;
-
-	Ray ray = mCamera->constructRay(this, sample);
-
-	return mIntegrator->apply(ray, tile, pass, sc);
-}
-
-std::list<RenderTile> RenderContext::currentTiles() const
-{
-	std::list<RenderTile> list;
+	std::list<RenderTile*> list;
 	for (RenderThread* thread : mThreads) {
 		RenderTile* tile = thread->currentTile();
 		if (tile)
-			list.push_back(*tile);
+			list.push_back(tile);
 	}
 	return list;
 }
 
-RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile* tile)
+RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session)
 {
-	PR_ASSERT(tile, "Invalid tile given");
-
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
 		SceneCollision c = mScene.checkCollision(ray);
 		sc				 = c.Point;
 
-		sc.Flags = 0;
+		sc.Flags  = 0;
 		sc.NgdotV = ray.direction().dot(sc.Ng);
 		sc.N	  = Reflection::faceforward(sc.NgdotV, sc.Ng);
 		sc.Flags |= Reflection::is_inside(sc.NgdotV) ? SCF_Inside : 0;
@@ -375,9 +202,9 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 			//sc.Ny = -sc.Ny;
 		}
 
-		tile->statistics().incRayCount();
+		session.tile()->statistics().incRayCount();
 		if (c.Entity)
-			tile->statistics().incEntityHitCount();
+			session.tile()->statistics().incEntityHitCount();
 
 		return c.Entity;
 	} else {
@@ -385,16 +212,14 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, RenderTile
 	}
 }
 
-bool RenderContext::shootForDetection(const Ray& ray, RenderTile* tile)
+bool RenderContext::shootForDetection(const Ray& ray, const RenderSession& session)
 {
-	PR_ASSERT(tile, "Invalid tile given");
-
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
 		SceneCollision c = mScene.checkCollisionSimple(ray);
 
-		tile->statistics().incRayCount();
+		session.tile()->statistics().incRayCount();
 		if (c.Successful)
-			tile->statistics().incEntityHitCount();
+			session.tile()->statistics().incEntityHitCount();
 
 		return c.Successful;
 	} else {
@@ -403,26 +228,24 @@ bool RenderContext::shootForDetection(const Ray& ray, RenderTile* tile)
 }
 
 RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
-											   ShaderClosure& sc, RenderTile* tile)
+											   ShaderClosure& sc, const RenderSession& session)
 {
-	PR_ASSERT(tile, "Invalid tile given");
-
 	if (ray.depth() >= mRenderSettings.maxRayDepth())
 		return nullptr;
 
-	RenderEntity* entity = shoot(ray, sc, tile);
+	RenderEntity* entity = shoot(ray, sc, session);
 	if (entity) {
 		if (sc.Material)
-			appliedSpec = sc.Material->evalEmission(sc);
+			sc.Material->evalEmission(appliedSpec, sc, session);
 		else
 			appliedSpec.clear();
 	} else {
 		appliedSpec.clear();
 
 		for (const auto& e : mScene.infiniteLights())
-			appliedSpec += e->apply(ray.direction());
+			e->apply(appliedSpec, ray.direction(), session);
 
-		tile->statistics().incBackgroundHitCount();
+		session.tile()->statistics().incBackgroundHitCount();
 	}
 
 	return entity;
@@ -474,52 +297,25 @@ void RenderContext::stop()
 
 RenderTile* RenderContext::getNextTile()
 {
+	std::lock_guard<std::mutex> guard(mTileMutex);
+
 	const auto maxCameraSamples = mRenderSettings.maxCameraSampleCount();
-	mTileMutex.lock();
-	if (mRenderSettings.isIncremental()) {
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = 0; j < mTileXCount; ++j) {
-				// TODO: Better check up for AS
-				if (mTileMap[i * mTileXCount + j]->samplesRendered() <= mIncrementalCurrentSample && mTileMap[i * mTileXCount + j]->samplesRendered() < maxCameraSamples && !mTileMap[i * mTileXCount + j]->isWorking()) {
-					mTileMap[i * mTileXCount + j]->setWorking(true);
-					mTileMutex.unlock();
+	RenderTile* tile			= nullptr;
 
-					return mTileMap[i * mTileXCount + j];
-				}
-			}
-		}
-
-		if (mIncrementalCurrentSample < maxCameraSamples) // Try again
-		{
+	// Try till we find a tile or all samples are already rendered
+	while (tile == nullptr && mIncrementalCurrentSample <= maxCameraSamples) {
+		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, maxCameraSamples));
+		if (tile == nullptr && mIncrementalCurrentSample < maxCameraSamples) {
 			mIncrementalCurrentSample++;
-			mTileMutex.unlock();
-			return getNextTile();
-		}
-	} else {
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = 0; j < mTileXCount; ++j) {
-				if (mTileMap[i * mTileXCount + j]->samplesRendered() == 0 && mTileMap[i * mTileXCount + j]->samplesRendered() < maxCameraSamples && !mTileMap[i * mTileXCount + j]->isWorking()) {
-					mTileMap[i * mTileXCount + j]->setWorking(true);
-					mTileMutex.unlock();
-
-					return mTileMap[i * mTileXCount + j];
-				}
-			}
 		}
 	}
-	mTileMutex.unlock();
-	return nullptr;
+
+	return tile;
 }
 
 RenderStatistics RenderContext::statistics() const
 {
-	RenderStatistics s;
-	for (uint32 i = 0; i < mTileYCount; ++i) {
-		for (uint32 j = 0; j < mTileXCount; ++j) {
-			s += mTileMap[i * mTileXCount + j]->statistics();
-		}
-	}
-	return s;
+	return mTileMap->statistics();
 }
 
 RenderStatus RenderContext::status() const
@@ -536,9 +332,7 @@ RenderStatus RenderContext::status() const
 
 void RenderContext::onNextPass()
 {
-	for (uint32 i = 0; i < mTileYCount; ++i)
-		for (uint32 j = 0; j < mTileXCount; ++j)
-			mTileMap[i * mTileXCount + j]->reset();
+	mTileMap->reset();
 
 	bool clear = false;
 	mIntegrator->onNextPass(mCurrentPass + 1, clear);

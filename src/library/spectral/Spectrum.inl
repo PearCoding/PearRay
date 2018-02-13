@@ -1,164 +1,189 @@
 namespace PR {
-inline Spectrum::Spectrum()
-	: Spectrum(0.0f)
+
+// Simple Properties
+inline uint32 Spectrum::samples() const
 {
-	//std::memset(mValues, 0, sizeof(float)*SAMPLING_COUNT);
+	return spectralEnd() - spectralStart();
 }
 
-inline Spectrum::Spectrum(std::initializer_list<float> list)
+inline uint32 Spectrum::spectralStart() const
 {
-	PR_ASSERT(list.size() == SAMPLING_COUNT, "Given initializer_list is not of the same size as SAMPLING_COUNT");
+	return mInternal->Start;
+}
 
-	size_t i = 0;
-	for (float f : list) {
-		mValues[i] = f;
-		i++;
+inline uint32 Spectrum::spectralEnd() const
+{
+	return mInternal->End;
+}
+
+inline const SpectrumDescriptor* Spectrum::descriptor() const
+{
+	return mInternal->Descriptor;
+}
+
+inline bool Spectrum::isExternal() const
+{
+	return mInternal->External;
+}
+
+// Simple Access
+inline void Spectrum::setValue(uint32 index, float v)
+{
+	PR_ASSERT(index < samples(), "Bad access");
+	mInternal->Data[index] = v;
+}
+
+inline float Spectrum::value(uint32 index) const
+{
+	PR_ASSERT(index < samples(), "Bad access");
+	return mInternal->Data[index];
+}
+
+inline const float& Spectrum::operator[](uint32 index) const
+{
+	PR_ASSERT(index < samples(), "Bad access");
+	return mInternal->Data[index];
+}
+
+inline float& Spectrum::operator[](uint32 index)
+{
+	PR_ASSERT(index < samples(), "Bad access");
+	return mInternal->Data[index];
+}
+
+inline float* Spectrum::ptr()
+{
+	return mInternal->Data;
+}
+
+inline const float* Spectrum::c_ptr() const
+{
+	return mInternal->Data;
+}
+
+// Memory management -> Dangerous functions!
+inline void Spectrum::copyFrom(const float* data)
+{
+	for (uint32 i = 0; i < samples(); ++i) {
+		ptr()[i] = data[i];
 	}
 }
 
-inline Spectrum::Spectrum(float f)
+inline void Spectrum::copyTo(float* data) const
 {
-	fill(f);
+	for (uint32 i = 0; i < samples(); ++i) {
+		data[i] = c_ptr()[i];
+	}
 }
 
-inline Spectrum::Spectrum(const float* data)
-{
-	std::copy(data, data + SAMPLING_COUNT, mValues);
-}
-
-inline Spectrum::~Spectrum()
-{
-}
-
+// Operators
 inline Spectrum Spectrum::operator+(const Spectrum& spec) const
 {
-	Spectrum tmp = *this;
+	Spectrum tmp = clone();
 	tmp += spec;
 	return tmp;
 }
 
 inline Spectrum& Spectrum::operator+=(const Spectrum& spec)
 {
-	const float* o = spec.mValues;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] += o[i];
+	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
+
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) + spec.value(i));
 
 	return *this;
 }
-
 inline Spectrum Spectrum::operator-(const Spectrum& spec) const
 {
-	Spectrum tmp = *this;
+	Spectrum tmp = clone();
 	tmp -= spec;
 	return tmp;
 }
 
 inline Spectrum& Spectrum::operator-=(const Spectrum& spec)
 {
-	const float* o = spec.mValues;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] -= o[i];
+	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
+
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) - spec.value(i));
 
 	return *this;
 }
 
 inline Spectrum Spectrum::operator*(const Spectrum& spec) const
 {
-	Spectrum tmp = *this;
+	Spectrum tmp = clone();
 	tmp *= spec;
 	return tmp;
 }
-
 inline Spectrum Spectrum::operator*(float f) const
 {
-	Spectrum tmp = *this;
+	Spectrum tmp = clone();
 	tmp *= f;
 	return tmp;
 }
-
 inline Spectrum& Spectrum::operator*=(const Spectrum& spec)
 {
-	const float* o = spec.mValues;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] *= o[i];
+	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
+
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) * spec.value(i));
 
 	return *this;
 }
 
 inline Spectrum& Spectrum::operator*=(float f)
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] *= f;
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) * f);
+
 	return *this;
 }
 
 inline Spectrum Spectrum::operator/(const Spectrum& spec) const
 {
-	Spectrum tmp = *this;
+	Spectrum tmp = clone();
 	tmp /= spec;
 	return tmp;
 }
-
 inline Spectrum Spectrum::operator/(float f) const
 {
-	Spectrum tmp = *this;
+	Spectrum tmp = clone();
 	tmp /= f;
 	return tmp;
 }
 
 inline Spectrum& Spectrum::operator/=(const Spectrum& spec)
 {
-	const float* o = spec.mValues;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] /= o[i];
+	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
+
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) / spec.value(i));
+
 	return *this;
 }
 
 inline Spectrum& Spectrum::operator/=(float f)
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] /= f;
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) / f);
+
 	return *this;
 }
 
-inline void Spectrum::setValue(uint32 index, float v)
-{
-	mValues[index] = v;
-}
-
-inline float Spectrum::value(uint32 index) const
-{
-	return mValues[index];
-}
-
-inline void Spectrum::setValueAtWavelength(float wavelength, float value)
-{
-	if (wavelength < WAVELENGTH_START || wavelength > WAVELENGTH_END)
-		return;
-
-	uint32 i   = (uint32)((wavelength - WAVELENGTH_START) / WAVELENGTH_STEP);
-	mValues[i] = value;
-}
-
-inline const float* Spectrum::c_ptr() const
-{
-	return mValues;
-}
-
-inline float* Spectrum::ptr()
-{
-	return mValues;
-}
-
+// Fill Functions
 inline void Spectrum::fill(float v)
 {
-	std::fill_n(mValues, SAMPLING_COUNT, v);
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, v);
+	}
 }
 
 inline void Spectrum::fill(uint32 si, uint32 ei, float v)
 {
-	PR_ASSERT(si < ei, "si has to be less than ei");
-	std::fill_n(&mValues[si], ei - si, v);
+	for (uint32 i = si; i < samples() && i < ei; ++i) {
+		setValue(i, v);
+	}
 }
 
 inline void Spectrum::clear()
@@ -166,18 +191,14 @@ inline void Spectrum::clear()
 	fill(0);
 }
 
-inline void Spectrum::copyTo(float* data) const
-{
-	std::copy(mValues, mValues + SAMPLING_COUNT, data);
-}
-
+// Apply Functions
 inline float Spectrum::max() const
 {
 	float h = 0;
 
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (h < std::abs(mValues[i]))
-			h = std::abs(mValues[i]);
+	for (uint32 i = 0; i < samples(); ++i) {
+		if (h < std::abs(value(i)))
+			h = std::abs(value(i));
 	}
 
 	return h;
@@ -187,9 +208,9 @@ inline float Spectrum::min() const
 {
 	float h = std::numeric_limits<float>::max();
 
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (h > std::abs(mValues[i]))
-			h = std::abs(mValues[i]);
+	for (uint32 i = 0; i < samples(); ++i) {
+		if (h > std::abs(value(i)))
+			h = std::abs(value(i));
 	}
 
 	return h;
@@ -198,17 +219,17 @@ inline float Spectrum::min() const
 inline float Spectrum::avg() const
 {
 	float h = 0;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		h += mValues[i];
+	for (uint32 i = 0; i < samples(); ++i)
+		h += value(i);
 
-	return h / SAMPLING_COUNT;
+	return h / samples();
 }
 
 inline float Spectrum::sum() const
 {
 	float h = 0;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		h += mValues[i];
+	for (uint32 i = 0; i < samples(); ++i)
+		h += value(i);
 
 	return h;
 }
@@ -216,77 +237,17 @@ inline float Spectrum::sum() const
 inline float Spectrum::sqrSum() const
 {
 	float h = 0;
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i)
-		h += mValues[i] * mValues[i];
+	for (uint32 i = 0; i < samples(); ++i)
+		h += value(i) * value(i);
 
 	return h;
 }
 
-inline Spectrum& Spectrum::normalize()
-{
-	float h = max();
-
-	if (h > PR_EPSILON) {
-		float sh = 1 / h;
-		*this *= sh;
-	}
-
-	return *this;
-}
-
-inline Spectrum Spectrum::normalized() const
-{
-	Spectrum spec = *this;
-	return spec.normalize();
-}
-
-inline Spectrum& Spectrum::clamp(float start, float end)
-{
-	for (uint32 i  = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] = mValues[i] > end ? end : (mValues[i] < start ? start : mValues[i]);
-
-	return *this;
-}
-
-inline Spectrum Spectrum::clamped(float start, float end) const
-{
-	Spectrum spec = *this;
-	return spec.clamp(start, end);
-}
-
-inline Spectrum& Spectrum::lerp(const Spectrum& spec, float t)
-{
-	const float* o = spec.mValues;
-	for (uint32 i  = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] = mValues[i] * (1 - t) + o[i] * t;
-
-	return *this;
-}
-
-inline Spectrum Spectrum::lerp(const Spectrum& spec1, const Spectrum& spec2, float t)
-{
-	Spectrum spec = spec1;
-	return spec.lerp(spec2, t);
-}
-
-inline Spectrum& Spectrum::sqrt()
-{
-	for (uint32 i  = 0; i < SAMPLING_COUNT; ++i)
-		mValues[i] = std::sqrt(mValues[i]);
-
-	return *this;
-}
-
-inline Spectrum Spectrum::sqrted() const
-{
-	Spectrum spec = *this;
-	return spec.sqrt();
-}
-
+// Detect Functions
 inline bool Spectrum::hasNaN() const
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (std::isnan(mValues[i]))
+	for (uint32 i = 0; i < samples(); ++i) {
+		if (std::isnan(value(i)))
 			return true;
 	}
 
@@ -295,8 +256,8 @@ inline bool Spectrum::hasNaN() const
 
 inline bool Spectrum::hasInf() const
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (std::isinf(mValues[i]))
+	for (uint32 i = 0; i < samples(); ++i) {
+		if (std::isinf(value(i)))
 			return true;
 	}
 
@@ -305,8 +266,8 @@ inline bool Spectrum::hasInf() const
 
 inline bool Spectrum::hasNegative() const
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (mValues[i] < 0.0f)
+	for (uint32 i = 0; i < samples(); ++i) {
+		if (value(i) < 0.0f)
 			return true;
 	}
 
@@ -315,33 +276,80 @@ inline bool Spectrum::hasNegative() const
 
 inline bool Spectrum::isOnlyZero() const
 {
-	for (uint32 i = 0; i < SAMPLING_COUNT; ++i) {
-		if (std::abs(mValues[i]) <= PR_EPSILON)
+	for (uint32 i = 0; i < samples(); ++i) {
+		if (std::abs(value(i)) <= PR_EPSILON)
 			return false;
 	}
 
 	return true;
 }
 
+// Vector Operations
+inline void Spectrum::normalize()
+{
+	float h = max();
+
+	if (h > PR_EPSILON) {
+		float sh = 1 / h;
+		for (uint32 i = 0; i < samples(); ++i)
+			setValue(i, value(i) * sh);
+	}
+}
+
+inline void Spectrum::clamp(float start, float end)
+{
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) > end ? end : (value(i) < start ? start : value(i)));
+}
+
+inline void Spectrum::lerp(const Spectrum& spec, float t)
+{
+	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
+
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, value(i) * (1 - t) + spec.value(i) * t);
+}
+
+inline void Spectrum::sqrt()
+{
+	for (uint32 i = 0; i < samples(); ++i)
+		setValue(i, std::sqrt(value(i)));
+}
+
+inline Spectrum Spectrum::normalized() const
+{
+	Spectrum spec = clone();
+	spec.normalize();
+	return spec;
+}
+
+inline Spectrum Spectrum::clamped(float start, float end) const
+{
+	Spectrum spec = clone();
+	spec.clamp(start, end);
+	return spec;
+}
+
+inline Spectrum Spectrum::lerp(const Spectrum& spec1, const Spectrum& spec2, float t)
+{
+	Spectrum spec = spec1.clone();
+	spec.lerp(spec2, t);
+	return spec;
+}
+
+inline Spectrum Spectrum::sqrted() const
+{
+	Spectrum spec = clone();
+	spec.sqrt();
+	return spec;
+}
 // Global
-inline Spectrum operator*(float f, const Spectrum& spec)
-{
-	return spec * f;
-}
-
-inline Spectrum operator/(float f, const Spectrum& spec)
-{
-	Spectrum tmp;
-
-	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i)
-		tmp.setValue(i, f / spec.value(i));
-
-	return tmp;
-}
-
 inline bool operator==(const Spectrum& v1, const Spectrum& v2)
 {
-	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
+	if (v1.samples() != v2.samples())
+		return false;
+
+	for (uint32 i = 0; i < v1.samples(); ++i) {
 		if (v1.value(i) != v2.value(i))
 			return false;
 	}
@@ -351,5 +359,20 @@ inline bool operator==(const Spectrum& v1, const Spectrum& v2)
 inline bool operator!=(const Spectrum& v1, const Spectrum& v2)
 {
 	return !(v1 == v2);
+}
+
+inline Spectrum operator*(float f, const Spectrum& spec)
+{
+	return spec * f;
+}
+
+inline Spectrum operator/(float f, const Spectrum& spec)
+{
+	Spectrum tmp = spec.clone();
+
+	for (uint32 i = 0; i < spec.samples(); ++i)
+		tmp.setValue(i, f / spec.value(i));
+
+	return tmp;
 }
 }

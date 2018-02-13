@@ -11,7 +11,9 @@ Ray::Ray()
 	, mYDirection(0,0,0)
 	, mDepth(0)
 	, mTime(0)
-	, mWavelengthIndex(0)
+	, mWavelength(0)
+	, mSpectralStart(0)
+	, mSpectralEnd(0)
 	, mFlags(0)
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 	, mMaxDirectionIndex(0)
@@ -20,7 +22,7 @@ Ray::Ray()
 }
 
 Ray::Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-		 uint32 depth, const SI::Time& time, uint8 wavelength, uint16 flags)
+		 uint32 depth, const SI::Time& time, float wavelength, uint16 flags)
 	: mOrigin(pos)
 	, mDirection(dir)
 	, mPixel(pixel)
@@ -30,7 +32,9 @@ Ray::Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::
 	, mYDirection(0,0,0)
 	, mDepth(depth)
 	, mTime(time)
-	, mWavelengthIndex(wavelength)
+	, mWavelength(wavelength)
+	, mSpectralStart(0)
+	, mSpectralEnd(0)
 	, mFlags(flags)
 {
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

@@ -74,10 +74,12 @@ SET(PR_Renderer_Src
   renderer/PPMSettings.cpp
   renderer/RenderContext.cpp
   renderer/RenderFactory.cpp
+  renderer/RenderSession.cpp
   renderer/RenderSettings.cpp
   renderer/RenderStatistics.cpp
   renderer/RenderStatus.cpp
   renderer/RenderTile.cpp
+  renderer/RenderTileMap.cpp
   renderer/RenderThread.cpp)
 SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
 SET(PR_Sampler_Src
@@ -94,10 +96,14 @@ SET(PR_Spectral_Src
   spectral/IntensityConverter.cpp
   spectral/RGBConverter.cpp
   spectral/Spectrum.cpp
+  spectral/SpectrumDescriptor.cpp
   spectral/ToneMapper.cpp
   spectral/XYZConverter.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
 SET(PR_Shader_Src
+  shader/ConstScalarOutput.cpp
+  shader/ConstSpectralOutput.cpp
+  shader/ConstVectorOutput.cpp
 )
 SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Thread_Src
@@ -218,11 +224,14 @@ SET(PR_Renderer_Hdr
   renderer/OutputMap.h
   renderer/PPMSettings.h
   renderer/RenderContext.h
+  renderer/RenderEnums.h
   renderer/RenderFactory.h
+  renderer/RenderSession.h
   renderer/RenderSettings.h
   renderer/RenderStatistics.h
   renderer/RenderStatus.h
   renderer/RenderTile.h
+  renderer/RenderTileMap.h
   renderer/RenderThread.h)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
@@ -241,11 +250,16 @@ SET(PR_Spectral_Hdr
   spectral/RGBConverter.h
   spectral/Spectrum.h
   spectral/Spectrum.inl
+  spectral/SpectrumDescriptor.h
+  spectral/SpectrumDescriptor.inl
   spectral/ToneMapper.h
   spectral/xyz2spec.inl
   spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Shader_Hdr
+  shader/ConstScalarOutput.h
+  shader/ConstSpectralOutput.h
+  shader/ConstVectorOutput.h
   shader/FacePoint.h
   shader/ShaderClosure.h
   shader/ShaderOutput.h)

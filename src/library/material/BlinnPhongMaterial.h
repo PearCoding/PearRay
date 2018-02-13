@@ -2,6 +2,8 @@
 
 #include "Material.h"
 
+#include <vector>
+
 namespace PR {
 class PR_LIB BlinnPhongMaterial : public Material {
 public:
@@ -17,9 +19,11 @@ public:
 	const std::shared_ptr<SpectrumShaderOutput>& fresnelIndex() const;
 	void setFresnelIndex(const std::shared_ptr<SpectrumShaderOutput>& data);
 
-	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
+	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)  override;
+	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
+
+	void setup(RenderContext* context) override;
 
 	std::string dumpInformation() const override;
 
@@ -27,5 +31,7 @@ private:
 	std::shared_ptr<SpectrumShaderOutput> mAlbedo;
 	std::shared_ptr<ScalarShaderOutput> mShininess;
 	std::shared_ptr<SpectrumShaderOutput> mIndex;
+
+	std::vector<struct BPM_ThreadData> mThreadData;
 };
 }

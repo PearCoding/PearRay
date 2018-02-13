@@ -7,8 +7,10 @@ namespace PR {
 struct FacePoint;
 class Ray;
 class RenderContext;
+class RenderSession;
 class RenderEntity;
 struct ShaderClosure;
+class Spectrum;
 
 /* A material having a diffuse path should never have a specular path and vice versa! */
 enum MaterialScatteringType {
@@ -40,26 +42,26 @@ public:
 	virtual ~Material() {}
 
 	/*
-		 Evaluate the BxDF based on L and point information.
-		*/
-	virtual Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) = 0;
+		Evaluate the BxDF based on L and point information.
+	*/
+	virtual void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) = 0;
 
 	/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
-	virtual float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) = 0;
+	virtual float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) = 0;
 
 	/*
 		 Sample a direction based on the uniform rnd value. (Russian Roulette)
 		*/
-	virtual MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) = 0;
+	virtual MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) = 0;
 
 	/*
 		Sample a direction based on the uniform rnd value. (Non russian roulette)
 	*/
-	virtual MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
+	virtual MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
 	{
-		return sample(point, rnd);
+		return sample(point, rnd, session);
 	}
 
 	/*
@@ -74,7 +76,7 @@ public:
 
 	inline bool isLight() const;
 
-	virtual Spectrum evalEmission(const ShaderClosure& point);
+	virtual void evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session);
 
 	inline const std::shared_ptr<SpectrumShaderOutput>& emission() const;
 	inline void setEmission(const std::shared_ptr<SpectrumShaderOutput>& spec);
@@ -91,7 +93,7 @@ public:
 	inline void enableCameraVisibility(bool b);
 	inline bool isCameraVisible() const;
 
-	virtual void setup(RenderContext* context) {}
+	virtual void setup(RenderContext* context) = 0;
 
 	virtual std::string dumpInformation() const;
 

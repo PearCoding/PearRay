@@ -4,6 +4,7 @@
 #include "RenderStatistics.h"
 #include "RenderStatus.h"
 #include "spectral/Spectrum.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include <Eigen/Dense>
 #include <condition_variable>
@@ -18,9 +19,10 @@ class Integrator;
 class OutputMap;
 class Ray;
 class RenderEntity;
+class RenderSession;
 class RenderThread;
 class RenderTile;
-class RenderThreadContext;
+class RenderTileMap;
 class Scene;
 struct ShaderClosure;
 class PR_LIB RenderContext {
@@ -30,7 +32,7 @@ class PR_LIB RenderContext {
 
 public:
 	RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-				  const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
+				  const SpectrumDescriptor& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -41,7 +43,9 @@ public:
 	inline uint32 fullWidth() const { return mFullWidth; }
 	inline uint32 fullHeight() const { return mFullHeight; }
 
-	inline uint32 tileCount() const { return mTileXCount * mTileYCount; }
+	uint32 tileCount() const;
+
+	inline const SpectrumDescriptor* spectrumDescriptor() const { return &mSpectrumDescriptor; }
 
 	// tcx = tile count x
 	// tcy = tile count y
@@ -50,11 +54,9 @@ public:
 	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
 	void stop();
 
-	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, RenderTile* tile);
-	bool shootForDetection(const Ray& ray, RenderTile* tile);
-	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, RenderTile* tile);
-	void render(RenderTile* tile, const Eigen::Vector2i& pixel,
-				uint32 sample, uint32 pass);
+	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session);
+	bool shootForDetection(const Ray& ray, const RenderSession& session);
+	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, const RenderSession& session);
 
 	inline bool isStopping() const { return mShouldStop; }
 	bool isFinished() const;
@@ -66,7 +68,7 @@ public:
 	inline uint32 currentPass() const { return mCurrentPass; }
 
 	// Slow and only copies!
-	std::list<RenderTile> currentTiles() const;
+	std::list<RenderTile*> currentTiles() const;
 
 	Integrator* integrator() const { return mIntegrator; }
 
@@ -81,8 +83,9 @@ public:
 
 	inline const Scene& scene() const { return mScene; }
 	inline std::string workingDir() const { return mWorkingDir; }
-	inline OutputMap* output() const { return mOutputMap; }
+	inline const std::unique_ptr<OutputMap>& output() const { return mOutputMap; }
 	inline GPU* gpu() const { return mGPU; }
+	inline const std::shared_ptr<Camera>& camera() const { return mCamera; }
 
 protected:
 	RenderTile* getNextTile();
@@ -93,12 +96,6 @@ protected:
 private:
 	void reset();
 
-	void renderIncremental(RenderTile* tile, const Eigen::Vector2i& pixel,
-						   uint32 sample, uint32 pass);
-	Spectrum renderSample(RenderTile* tile,
-						  float x, float y, float rx, float ry, float t, uint8 wavelength,
-						  uint32 pass, ShaderClosure& sc);
-
 	const uint32 mIndex;
 	const uint32 mOffsetX;
 	const uint32 mOffsetY;
@@ -108,18 +105,16 @@ private:
 	const uint32 mFullHeight;
 	const std::string mWorkingDir;
 
+	const SpectrumDescriptor mSpectrumDescriptor;
+
 	const std::shared_ptr<Camera> mCamera;
 	const Scene& mScene;
-	OutputMap* mOutputMap;
+	std::unique_ptr<OutputMap> mOutputMap;
 
 	std::list<RenderEntity*> mLights;
 
 	std::mutex mTileMutex;
-	uint32 mTileWidth;
-	uint32 mTileHeight;
-	uint32 mTileXCount;
-	uint32 mTileYCount;
-	RenderTile** mTileMap;
+	std::unique_ptr<RenderTileMap> mTileMap;
 	uint32 mIncrementalCurrentSample;
 	std::list<RenderThread*> mThreads;
 

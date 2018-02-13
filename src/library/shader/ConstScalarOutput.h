@@ -4,11 +4,11 @@
 
 namespace PR
 {
-	class PR_LIB_UTILS ConstScalarShaderOutput : public PR::ScalarShaderOutput
+	class PR_LIB ConstScalarShaderOutput : public PR::ScalarShaderOutput
 	{
 	public:
 		ConstScalarShaderOutput(float f);
-		float eval(const PR::ShaderClosure& point) override;
+		void eval(float& f, const PR::ShaderClosure& point) override;
 
 	private:
 		float mValue;

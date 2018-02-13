@@ -41,9 +41,6 @@ SET(PR_Output_Src
   output/OutputSpecification.cpp)
 SOURCE_GROUP("Source Files\\Output" FILES ${PR_Output_Src})
 SET(PR_Shader_Src
-  shader/ConstScalarOutput.cpp
-  shader/ConstSpectralOutput.cpp
-  shader/ConstVectorOutput.cpp
   shader/ImageScalarOutput.cpp
   shader/ImageSpectralOutput.cpp
   shader/ImageVectorOutput.cpp)
@@ -97,9 +94,6 @@ SET(PR_Output_Hdr
   output/OutputSpecification.h)
 SOURCE_GROUP("Header Files\\Output" FILES ${PR_Output_Hdr})
 SET(PR_Shader_Hdr
-  shader/ConstScalarOutput.h
-  shader/ConstSpectralOutput.h
-  shader/ConstVectorOutput.h
   shader/ImageScalarOutput.h
   shader/ImageSpectralOutput.h
   shader/ImageVectorOutput.h)

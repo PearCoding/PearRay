@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(PearRay)
 
 #SETS
-SET(VENDOR "PearRay project 2015-2017")
+SET(VENDOR "PearRay project 2015-2018")
 SET(VERSION_MAJOR 0)
 SET(VERSION_MINOR 10)
 SET(VERSION_HEX 0x0010)
@@ -47,6 +47,7 @@ option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON "Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
 option(PR_GENERATE_COVERAGE "Generate coverage for debug builds - Currently only supported with the GCC compiler." ON)
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
+option(PR_BUILD_DOCUMENTATION "Build documentation with doxygen." ON)
 option(PR_CPP_CHECK "Do style check with cpplint." OFF)
 option(PR_ENABLE_DIAGNOSIS "Enable diagnosis. Will slow down performance. Only for development." OFF)
 
@@ -96,7 +97,7 @@ IF(PR_WITH_PYTHON)
 	SET(PR_HAS_PYTHON_API ON)
 ENDIF()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 IF(NOT PR_WITH_ASSERTS)
@@ -225,6 +226,19 @@ IF(NOT PR_ONLY_LIBRARY AND PR_BUILD_TESTS)
 	add_subdirectory(src/sandbox)
 	enable_testing()
 	add_subdirectory(src/tests)
+ENDIF()
+
+# DOCUMENTATION
+IF(DL_BUILD_DOCUMENTATION)
+  find_package(Doxygen)
+  IF(DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tools/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    add_custom_target(doc_pearray
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+  )
+  ENDIF()
 ENDIF()
 
 # Coverage

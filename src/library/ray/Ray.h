@@ -15,7 +15,7 @@ class PR_LIB Ray {
 public:
 	Ray();
 	Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-		uint32 depth = 0, const SI::Time& time = 0, uint8 wavelength = 0, uint16 flags = 0);
+		uint32 depth = 0, const SI::Time& time = 0, float wavelength = 0, uint16 flags = 0);
 	virtual ~Ray();
 
 	inline void setOrigin(const Eigen::Vector3f& p);
@@ -45,8 +45,16 @@ public:
 	inline SI::Time time() const;
 	inline void setTime(const SI::Time& t);
 
-	inline uint8 wavelength() const;
-	inline void setWavelength(uint8 wavelength);
+	inline float wavelength() const;
+	inline void setWavelength(float lambda_nm);
+
+	inline uint32 spectralStart() const;
+	inline void setSpectralStart(uint32 start);
+
+	inline uint32 spectralEnd() const;
+	inline void setSpectralEnd(uint32 end);
+
+	inline bool isFullSpectrum() const;
 
 	inline void setFlags(uint16 flags);
 	inline uint16 flags() const;
@@ -57,8 +65,7 @@ public:
 #endif
 
 	inline Ray next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) const;
-	static inline Ray safe(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-						   uint32 depth = 0, const SI::Time& time = 0, uint8 wavelength = 0, uint16 flags = 0);
+	static inline Eigen::Vector3f safePosition(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir);
 
 private:
 	Eigen::Vector3f mOrigin;
@@ -74,7 +81,11 @@ private:
 
 	uint32 mDepth; // Recursion depth!
 	SI::Time mTime;
-	uint8 mWavelengthIndex;
+
+	float mWavelength;
+	uint32 mSpectralStart;
+	uint32 mSpectralEnd;
+
 	uint16 mFlags;
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1

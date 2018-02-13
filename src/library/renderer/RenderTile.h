@@ -1,20 +1,23 @@
 #pragma once
 
 #include "Random.h"
+#include "ray/Ray.h"
 #include "renderer/RenderStatistics.h"
 
 namespace PR {
 
-class RenderSettings;
+class RenderContext;
 class Sampler;
 class PR_LIB RenderTile {
 public:
 	RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
-		const RenderSettings& settings, uint32 index);
+			   const RenderContext& context, uint32 index);
 	~RenderTile();
 
 	void inc();
 	void reset();
+
+	Ray constructCameraRay(const Eigen::Vector2i& pixel, uint32 sample);
 
 	inline bool isWorking() const
 	{
@@ -76,22 +79,22 @@ public:
 		return mRandom;
 	}
 
-	inline Sampler* aaSampler() const
+	inline const std::unique_ptr<Sampler>& aaSampler() const
 	{
 		return mAASampler;
 	}
-	
-	inline Sampler* lensSampler() const
+
+	inline const std::unique_ptr<Sampler>& lensSampler() const
 	{
 		return mLensSampler;
 	}
 
-	inline Sampler* timeSampler() const
+	inline const std::unique_ptr<Sampler>& timeSampler() const
 	{
 		return mTimeSampler;
 	}
 
-	inline Sampler* spectralSampler() const
+	inline const std::unique_ptr<Sampler>& spectralSampler() const
 	{
 		return mSpectralSampler;
 	}
@@ -121,10 +124,12 @@ private:
 	uint32 mSamplesRendered;
 
 	Random mRandom;
-	Sampler* mAASampler;
-	Sampler* mLensSampler;
-	Sampler* mTimeSampler;
-	Sampler* mSpectralSampler;
+	std::unique_ptr<Sampler> mAASampler;
+	std::unique_ptr<Sampler> mLensSampler;
+	std::unique_ptr<Sampler> mTimeSampler;
+	std::unique_ptr<Sampler> mSpectralSampler;
 	RenderStatistics mStatistics;
+
+	const RenderContext& mContext;
 };
 }

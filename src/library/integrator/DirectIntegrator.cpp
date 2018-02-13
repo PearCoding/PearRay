@@ -4,45 +4,64 @@
 #include "math/MSI.h"
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
 #include "renderer/RenderTile.h"
 #include "sampler/RandomSampler.h"
 #include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
 
 namespace PR {
+struct DI_ThreadData {
+	Spectrum FullWeight;
+	Spectrum Weight;
+	Spectrum Evaluation;
+
+	DI_ThreadData(RenderContext* context) 
+		: FullWeight(context->spectrumDescriptor())
+		, Weight(context->spectrumDescriptor())
+		, Evaluation(context->spectrumDescriptor())
+		{}
+};
+
 DirectIntegrator::DirectIntegrator(RenderContext* renderer)
 	: OnePassIntegrator(renderer)
 {
 }
 
-void DirectIntegrator::init() {}
+void DirectIntegrator::init() {
+	OnePassIntegrator::init();
 
-constexpr float LightEpsilon = 0.00001f;
-Spectrum DirectIntegrator::apply(const Ray& in,
-								 RenderTile* tile,
-								 uint32 pass, ShaderClosure& sc)
-{
-	return applyRay(in, tile, 0, sc);
+	mThreadData.clear();
+	
+	for(uint32 i = 0; i < renderer()->threads(); ++i)
+		mThreadData.emplace_back(renderer());
 }
 
-Spectrum DirectIntegrator::applyRay(const Ray& in,
-									RenderTile* tile,
+constexpr float LightEpsilon = 0.00001f;
+void DirectIntegrator::apply(Spectrum& spec, const Ray& in,
+								 const RenderSession& session,
+								 uint32 pass, ShaderClosure& sc)
+{
+	applyRay(spec, in, session, 0, sc);
+}
+
+void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
+									const RenderSession& session,
 									uint32 diffbounces, ShaderClosure& sc)
 {
-	Spectrum applied;
-	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
+	DI_ThreadData& threadData = mThreadData[session.thread()];
+
+	RenderEntity* entity = renderer()->shootWithEmission(spec, in, sc, session);
 
 	if (!entity || !sc.Material
 		|| !sc.Material->canBeShaded()
 		|| diffbounces > renderer()->settings().maxDiffuseBounces())
-		return applied;
+		return;
 
 	float full_pdf = 0;
-	Spectrum full_weight;
 
 	// Used temporary
 	ShaderClosure other_sc;
-	Spectrum weight;
 
 	bool noSpecular = true;
 
@@ -53,22 +72,23 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0.");
 
-		const Eigen::Vector3f rnd = tile->random().get3D();
+		const Eigen::Vector3f rnd = session.tile()->random().get3D();
 
 		for (uint32 path = 0; path < path_count; ++path) {
-			MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
+			MaterialSample ms = sc.Material->samplePath(sc, rnd, path, session);
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
 			if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON)
 				continue;
 
-			weight = applyRay(in.next(sc.P, ms.L), tile,
+			applyRay(threadData.Weight, in.next(sc.P, ms.L), session,
 							  !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
 							  other_sc);
 
 			//if (!weight.isOnlyZero()) {
-			weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
-			MSI::balance(full_weight, full_pdf, weight, ms.PDF_S);
+			sc.Material->eval(threadData.Evaluation, sc, ms.L, NdotL, session);
+			threadData.Weight *= threadData.Evaluation * NdotL;
+			MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, ms.PDF_S);
 			//}
 
 			if(ms.isSpecular())
@@ -80,7 +100,7 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 		// Area sampling!
 		for (RenderEntity* light : renderer()->lights()) {
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
-				const Eigen::Vector3f rnd = tile->random().get3D();
+				const Eigen::Vector3f rnd = session.tile()->random().get3D();
 				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
 
 				const Eigen::Vector3f PS = fps.Point.P - sc.P;
@@ -96,25 +116,25 @@ Spectrum DirectIntegrator::applyRay(const Ray& in,
 				ray.setFlags(ray.flags() | RF_Light);
 
 				// Full light!!
-				if (renderer()->shootWithEmission(weight, ray, other_sc, tile) == light /*&&
+				if (renderer()->shootWithEmission(threadData.Weight, ray, other_sc, session) == light /*&&
 					(fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
-					weight *= light->surfaceArea(fps.Point.Material);// Area based
-					weight *= sc.Material->eval(sc, L, NdotL) * NdotL;
+					sc.Material->eval(threadData.Evaluation, sc, L, NdotL, session);
+					threadData.Weight *= threadData.Evaluation * NdotL * light->surfaceArea(fps.Point.Material);
 
 					const float pdfS = MSI::toSolidAngle(pdfA, PS.squaredNorm(), std::abs(sc.NdotV * NdotL));
-					MSI::balance(full_weight, full_pdf, weight, pdfS);
+					MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, pdfS);
 				}
 			}
 		}
 
 		float inf_pdf;
-		weight = handleInfiniteLights(in, sc, tile, inf_pdf);
-		MSI::balance(full_weight, full_pdf, weight, inf_pdf);
+		handleInfiniteLights(threadData.Weight, in, sc, session, inf_pdf);
+		MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, inf_pdf);
 	}
 
-	return applied + full_weight;
+	spec += threadData.FullWeight;
 }
 }

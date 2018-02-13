@@ -7,7 +7,7 @@ class RenderContext;
 class RenderTile;
 class PR_LIB RenderThread : public Thread {
 public:
-	RenderThread(RenderContext* renderer);
+	RenderThread(uint32 index, RenderContext* renderer);
 
 	inline RenderTile* currentTile() const
 	{
@@ -18,6 +18,7 @@ protected:
 	virtual void main();
 
 private:
+	uint32 mThreadIndex;
 	RenderContext* mRenderer;
 	RenderTile* mTile;
 };

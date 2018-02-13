@@ -246,4 +246,7 @@ namespace PR
 #else
 	constexpr float PR_1_PI = 1/PR_PI;
 #endif
+
+	constexpr float PR_NM_TO_M_F = 1e-9f;
+	constexpr double PR_NM_TO_M = 1e-9;
 }

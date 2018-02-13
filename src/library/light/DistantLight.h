@@ -31,8 +31,8 @@ public:
 		return mMaterial;
 	}
 
-	LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
-	Spectrum apply(const Eigen::Vector3f& V) override;
+	LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
+	void apply(Spectrum& view, const Eigen::Vector3f& V, const RenderSession& session) override;
 
 	void onFreeze() override;
 

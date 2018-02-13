@@ -2,7 +2,9 @@
 #include "entity/RenderEntity.h"
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
 #include "shader/ShaderClosure.h"
+#include "shader/ConstSpectralOutput.h"
 
 #include "BRDF.h"
 #include "math/Fresnel.h"
@@ -38,20 +40,23 @@ void MirrorMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 	mIndex = data;
 }
 
-Spectrum MirrorMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void MirrorMaterial::setup(RenderContext* context)
 {
-	if (mSpecularity)
-		return mSpecularity->eval(point);
-	else
-		return Spectrum();
+	if(!mSpecularity)
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite());
 }
 
-float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void MirrorMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+{
+	mSpecularity->eval(spec, point);
+}
+
+float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	return std::numeric_limits<float>::infinity();
 }
 
-MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	MaterialSample ms;
 	ms.PDF_S = std::numeric_limits<float>::infinity();

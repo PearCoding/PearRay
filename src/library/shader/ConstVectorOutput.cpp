@@ -9,8 +9,8 @@ namespace PR
 	{
 	}
 
-	Eigen::Vector3f ConstVectorShaderOutput::eval(const PR::ShaderClosure& point)
+	void ConstVectorShaderOutput::eval(Eigen::Vector3f& p, const PR::ShaderClosure& point)
 	{
-		return mValue;
+		p = mValue;
 	}
 }

@@ -55,17 +55,15 @@ bool GridMaterial::tileUV() const
 	return mTiledUV;
 }
 
-Spectrum GridMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void GridMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->eval(pointN, L, NdotL);
+		mFirst->eval(spec, pointN, L, NdotL, session);
 	else if (mSecond)
-		return mSecond->eval(pointN, L, NdotL);
-
-	return Spectrum();
+		mSecond->eval(spec, pointN, L, NdotL, session);
 }
 
 ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
@@ -84,28 +82,28 @@ ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v
 	}
 }
 
-float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->pdf(pointN, L, NdotL);
+		return mFirst->pdf(pointN, L, NdotL, session);
 	else if (mSecond)
-		return mSecond->pdf(pointN, L, NdotL);
+		return mSecond->pdf(pointN, L, NdotL, session);
 
 	return 0;
 }
 
-MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->sample(pointN, rnd);
+		return mFirst->sample(pointN, rnd, session);
 	else if (mSecond)
-		return mSecond->sample(pointN, rnd);
+		return mSecond->sample(pointN, rnd, session);
 
 	return MaterialSample();
 }

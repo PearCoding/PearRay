@@ -19,7 +19,7 @@ DistantLight::~DistantLight()
 {
 }
 
-IInfiniteLight::LightSample DistantLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+IInfiniteLight::LightSample DistantLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	PR_ASSERT(isFrozen(), "should be frozen.");
 
@@ -29,10 +29,10 @@ IInfiniteLight::LightSample DistantLight::sample(const ShaderClosure& point, con
 	return ls;
 }
 
-Spectrum DistantLight::apply(const Eigen::Vector3f& V)
+void DistantLight::apply(Spectrum& spec, const Eigen::Vector3f& V, const RenderSession& session)
 {
 	if (!mMaterial || !mMaterial->emission())
-		return Spectrum();
+		return;
 
 	PR_ASSERT(isFrozen(), "should be frozen.");
 
@@ -46,7 +46,8 @@ Spectrum DistantLight::apply(const Eigen::Vector3f& V)
 	sc.Ny = mUp_Cache;
 	// UV is zero
 
-	return mMaterial->emission()->eval(sc) * d;
+	mMaterial->evalEmission(spec, sc, session);
+	spec *= d;
 }
 
 void DistantLight::onFreeze()

@@ -15,13 +15,14 @@ Material::Material(uint32 id)
 {
 }
 
-Spectrum Material::evalEmission(const ShaderClosure& point)
+void Material::evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session)
 {
 	if(!mEmission)
-		return Spectrum();
+		return;
 	
 	const float NdotV = std::max(0.0f, -point.Ng.dot(point.V));
-	return mEmission->eval(point) * NdotV;
+	mEmission->eval(spec, point);
+	spec *= NdotV;
 }
 
 std::string Material::dumpInformation() const
