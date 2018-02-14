@@ -87,7 +87,7 @@ void BiDirectIntegrator::init()
 }
 
 constexpr float LightEpsilon = 0.00001f;
-void BiDirectIntegrator::apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc)
+void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session)
 {
 	if (renderer()->settings().maxLightSamples() == 0)
 		return;

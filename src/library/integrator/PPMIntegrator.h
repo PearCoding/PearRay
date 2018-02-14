@@ -25,7 +25,6 @@ public:
 
 	void onStart() override;
 	void init() override;
-	void apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc) override;
 
 	void onNextPass(uint32 pass, bool& clean) override;
 	void onEnd() override;
@@ -37,7 +36,7 @@ public:
 
 private:
 	void photonPass(const RenderSession& session, uint32 pass);
-	Spectrum accumPass(const Ray& in, ShaderClosure& sc, uint32 diffbounces, const RenderSession& session);
+	void accumPass(Spectrum& spec, ShaderClosure& sc,const Ray& in, uint32 diffbounces, const RenderSession& session);
 
 	Photon::PhotonMap* mPhotonMap;
 

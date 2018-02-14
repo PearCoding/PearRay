@@ -34,11 +34,21 @@ Spectrum SpectrumDescriptor::fromBlackbody(float temp) const
 	for (uint32 i = 0; i < samples(); ++i) {
 		long double lambda = wavelength(i) * PR_NM_TO_M_F;
 		spec.setValue(i, static_cast<float>(
-			(long double)blackbody_eq(
-				T,
-				SI::LengthU<long double, 0>(lambda))));
+							 (long double)blackbody_eq(
+								 T,
+								 SI::LengthU<long double, 0>(lambda))));
 	}
 
 	return spec;
 }
+
+SpectrumDescriptor SpectrumDescriptor::createTriplet()
+{
+	return SpectrumDescriptor(std::vector<float>{ PR_SPECTRAL_TRIPLET_X_LAMBDA, PR_SPECTRAL_TRIPLET_Y_LAMBDA, PR_SPECTRAL_TRIPLET_Z_LAMBDA });
 }
+
+SpectrumDescriptor SpectrumDescriptor::createStandardSpectral()
+{
+	return SpectrumDescriptor(PR_SPECTRAL_WAVELENGTH_SAMPLES, PR_SPECTRAL_WAVELENGTH_START, PR_SPECTRAL_WAVELENGTH_END);
+}
+} // namespace PR

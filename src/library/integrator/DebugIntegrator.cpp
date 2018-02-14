@@ -21,7 +21,7 @@ void DebugIntegrator::init()
 	OnePassIntegrator::init();
 }
 
-void DebugIntegrator::apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc)
+void DebugIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session)
 {
 	RenderEntity* entity;
 

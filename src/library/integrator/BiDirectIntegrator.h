@@ -11,7 +11,9 @@ public:
 	~BiDirectIntegrator();
 
 	void init() override;
-	void apply(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc) override;
+
+protected:
+	void onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session) override;
 
 private:
 	void applyRay(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 diffBounces, ShaderClosure& sc);

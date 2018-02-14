@@ -19,5 +19,8 @@ public:
 	bool needNextPass(uint32 i) const override;
 
 	RenderStatus status() const;
+
+protected:
+	virtual void onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& ray, const RenderSession& session) = 0;
 };
 }

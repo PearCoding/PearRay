@@ -145,6 +145,29 @@ public:
 		return mData[p(1) * mWidth * mChannels + p(0) * mChannels + channel];
 	}
 
+	// Spectrum
+	inline void getFragment(const Eigen::Vector2i& p, Spectrum& spec) {
+		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
+		for(uint32 i = 0; i < mChannels; ++i)
+			spec[i] = getFragment(p, i);
+	}
+
+	inline void getFragmentBounded(const Eigen::Vector2i& p, Spectrum& spec) {
+		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
+		for(uint32 i = 0; i < mChannels; ++i)
+			spec[i] = getFragmentBounded(p, i);
+	}
+
+	inline void setFragment(const Eigen::Vector2i& p, const Spectrum& spec) {
+		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
+		spec.copyTo(&getFragment(p));
+	}
+
+	inline void setFragmentBounded(const Eigen::Vector2i& p, const Spectrum& spec) {
+		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
+		spec.copyTo(&getFragmentBounded(p));
+	}
+
 	inline T* ptr() const
 	{
 		return mData;

@@ -38,9 +38,7 @@ void DirectIntegrator::init() {
 }
 
 constexpr float LightEpsilon = 0.00001f;
-void DirectIntegrator::apply(Spectrum& spec, const Ray& in,
-								 const RenderSession& session,
-								 uint32 pass, ShaderClosure& sc)
+void DirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session)
 {
 	applyRay(spec, in, session, 0, sc);
 }

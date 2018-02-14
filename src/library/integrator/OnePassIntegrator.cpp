@@ -1,9 +1,12 @@
 #include "OnePassIntegrator.h"
 
+#include "renderer/OutputMap.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSession.h"
 #include "renderer/RenderThread.h"
 #include "renderer/RenderTile.h"
+
+#include "shader/ShaderClosure.h"
 
 namespace PR {
 void OnePassIntegrator::onStart()
@@ -21,13 +24,19 @@ void OnePassIntegrator::onEnd()
 
 void OnePassIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
+	const std::unique_ptr<OutputMap>& output = renderer()->output();
+	Spectrum spec(renderer()->spectrumDescriptor());
+	ShaderClosure sc;
+
 	for (uint32 y = session.tile()->sy(); y < session.tile()->ey(); ++y) {
 		for (uint32 x = session.tile()->sx(); x < session.tile()->ex(); ++x) {
-			renderer()->render(Eigen::Vector2i(x, y), session.tile()->samplesRendered(), pass, session);
+			Eigen::Vector2i p(x, y);
+			Ray ray = session.tile()->constructCameraRay(p, session.tile()->samplesRendered());
+			onPixel(spec, sc, ray, session);
+			output->pushFragment(p, spec, sc);
 		}
 	}
 }
-
 
 bool OnePassIntegrator::needNextPass(uint32 i) const
 {
@@ -46,4 +55,4 @@ RenderStatus OnePassIntegrator::status() const
 
 	return stat;
 }
-}
+} // namespace PR

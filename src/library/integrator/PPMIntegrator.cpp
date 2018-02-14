@@ -22,8 +22,6 @@
 
 #include "Logger.h"
 
-#include "Diagnosis.h"
-
 namespace PR {
 constexpr uint32 MAX_THETA_SIZE = 128;
 constexpr uint32 MAX_PHI_SIZE   = MAX_THETA_SIZE * 2;
@@ -56,11 +54,13 @@ struct PPM_ThreadData {
 	std::vector<Spectrum> FullWeight;
 	std::vector<Spectrum> Weight;
 	std::vector<Spectrum> Evaluation;
+	std::vector<Spectrum> Accum;
 
 	PPM_ThreadData(RenderContext* context)
 		: FullWeight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 		, Weight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 		, Evaluation(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
+		, Accum(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 	{
 	}
 };
@@ -213,9 +213,18 @@ bool PPMIntegrator::needNextPass(uint32 pass) const
 void PPMIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
 	if (pass % 2 == 1) {
-		for (uint32 y = session.tile()->sy(); y < session.tile()->ey(); ++y)
-			for (uint32 x = session.tile()->sx(); x < session.tile()->ex(); ++x)
-				renderer()->render(Eigen::Vector2i(x, y), session.tile()->samplesRendered(), pass, session);
+		const std::unique_ptr<OutputMap>& output = renderer()->output();
+		Spectrum spec(renderer()->spectrumDescriptor());
+		ShaderClosure sc;
+
+		for (uint32 y = session.tile()->sy(); y < session.tile()->ey(); ++y) {
+			for (uint32 x = session.tile()->sx(); x < session.tile()->ex(); ++x) {
+				Eigen::Vector2i p(x, y);
+				Ray ray = session.tile()->constructCameraRay(p, session.tile()->samplesRendered());
+				accumPass(spec, sc, ray, 0, session);
+				output->pushFragment(p, spec, sc);
+			}
+		}
 	} else {
 		photonPass(session, pass);
 	}
@@ -265,10 +274,13 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 	const uint32 H  = renderer()->settings().maxDiffuseBounces() + 1;
 	const uint32 RD = renderer()->settings().maxRayDepth();
 
+	Spectrum spec(renderer()->spectrumDescriptor());
+	Spectrum radiance = spec.clone();
+	Spectrum evaluation = spec.clone();
+
 	PPM_TileData& data = mTileData[session.tile()->index()];
 	for (const PPM_LightTileData& ltd : data.Lights) {
 		const PPM_Light& light		 = *ltd.Entity;
-		const Sphere outerSphere = light.Entity->worldBoundingBox().outerSphere();
 
 		const size_t sampleSize = ltd.Photons;
 
@@ -278,7 +290,6 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 		for (photonsShoot = 0;
 			 photonsShoot < sampleSize;
 			 ++photonsShoot) {
-			float area_pdf = 0;
 			float t_pdf	= 0;
 			FacePoint lightSample;
 			Eigen::Vector3f dir;
@@ -288,36 +299,27 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 			RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(rnd);
 
 			lightSample = fps.Point;
-			/*dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-							Projection::cos_hemi(tile->random().getFloat(), tile->random().getFloat(), t_pdf));*/
 			dir = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
 											Projection::hemi(rnd(0), rnd(1), t_pdf));
-
-			//t_pdf *= fps.PDF_A;
 
 			if (!lightSample.Material->isLight())
 				continue;
 
 			Ray ray = Ray(Eigen::Vector2i(0, 0), lightSample.P, dir,
-								0, rnd2(0), rnd2(1) * Spectrum::SAMPLING_COUNT, RF_Light); // TODO: Use pixel sample
+								0, rnd2(0), rnd2(1) * spec.samples(), RF_Light); // TODO: Use pixel sample
 			ShaderClosure lsc = lightSample;
-			Spectrum radiance = lightSample.Material->emission()->eval(lsc);
+			lightSample.Material->evalEmission(radiance, lsc, session);
 			radiance /= t_pdf;
-
-			PR_CHECK_VALIDITY(radiance, "After photon emission");
 
 			data.PhotonsEmitted++;
 
 			uint32 diffuseBounces = 0;
 			for (uint32 j = 0; j < RD; ++j) {
 				ShaderClosure sc;
-				RenderEntity* entity = renderer()->shoot(ray, sc, tile);
+				RenderEntity* entity = renderer()->shoot(ray, sc, session);
 
 				if (entity && sc.Material && sc.Material->canBeShaded()) {
-					//if(j == 0)
-					//	radiance /= MSI::toSolidAngle(area_pdf, sc.Depth2, std::abs(sc.NdotV));
-
-					MaterialSample ms = sc.Material->sample(sc, tile->random().get3D());
+					MaterialSample ms = sc.Material->sample(sc, session.tile()->random().get3D(), session);
 
 					if (ms.PDF_S > PR_EPSILON && !ms.isSpecular()) // Diffuse
 					{
@@ -328,12 +330,10 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 						photon.Position[2] = sc.P(2);
 						mPhotonMap->mapDirection(-ray.direction(),
 												 photon.Theta, photon.Phi);
-#if PR_PHOTON_RGB_MODE >= 1
+
 						RGBConverter::convert(radiance * inv,
 											  photon.Power[0], photon.Power[1], photon.Power[2]);
-#else
-						photon.Power = radiance * inv;
-#endif
+
 						mPhotonMap->store(sc.P, photon);
 
 						data.PhotonsStored++;
@@ -347,11 +347,10 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 					}
 
 					const float NdotL = std::abs(ms.L.dot(sc.N));
-					radiance *= PR_CHECK_VALIDITY(sc.Material->eval(sc, ms.L, NdotL), "After material eval") * (NdotL / ms.PDF_S);
+					sc.Material->eval(evaluation, sc, ms.L, NdotL, session);
+					radiance *= evaluation;
+					radiance *= (NdotL / ms.PDF_S);
 					ray = ray.next(sc.P, ms.L);
-
-					PR_CHECK_VALIDITY(ms.PDF_S, "After photon apply");
-					PR_CHECK_VALIDITY(radiance, "After photon apply");
 				} else { // Nothing found, abort
 					break;
 				}
@@ -360,58 +359,48 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 	}
 }
 
-Spectrum PPMIntegrator::apply(const Ray& in, const RenderSession& session, uint32 pass, ShaderClosure& sc)
+void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, uint32 diffbounces, const RenderSession& session)
 {
-	return accumPass(in, sc, 0, session);
-}
-
-Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffbounces, const RenderSession& session)
-{
-	Spectrum applied;
-	RenderEntity* entity = renderer()->shootWithEmission(applied, in, sc, tile);
+	PPM_ThreadData& threadData = mThreadData[session.thread()];
+	RenderEntity* entity = renderer()->shootWithEmission(spec, in, sc, session);
 
 	if (!entity || !sc.Material
 		|| !sc.Material->canBeShaded()
 		|| diffbounces > renderer()->settings().maxDiffuseBounces())
-		return applied;
+		return;
 
-	Spectrum full_weight;
+	const uint32 depth = in.depth();
 	float full_pdf			  = 0;
-	const Eigen::Vector3f rnd = tile->random().get3D();
+	const Eigen::Vector3f rnd = session.tile()->random().get3D();
 	for (uint32 path = 0; path < sc.Material->samplePathCount(); ++path) {
-		MaterialSample ms = sc.Material->samplePath(sc, rnd, path);
+		MaterialSample ms = sc.Material->samplePath(sc, rnd, path, session);
 
 		if (ms.PDF_S <= PR_EPSILON)
 			continue;
 
 		if (ms.isSpecular()) { // Specular
-			Spectrum other_weight;
-
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
 			if (NdotL > PR_EPSILON) {
 				ShaderClosure sc2;
 
 				Ray ray		 = in.next(sc.P, ms.L);
-				other_weight = accumPass(ray, sc2, 0, tile);
-				other_weight *= sc.Material->eval(sc, ms.L, NdotL) * NdotL;
+				accumPass(threadData.Weight[depth], sc2, ray, diffbounces, session);
+				sc.Material->eval(threadData.Evaluation[depth], sc, ms.L, NdotL, session);
+				threadData.Weight[depth] *= threadData.Evaluation[depth] * NdotL;
 
-				MSI::balance(full_weight, full_pdf, other_weight, ms.PDF_S);
+				MSI::balance(threadData.FullWeight[depth], full_pdf, threadData.Weight[depth], ms.PDF_S);
 			}
 		} else { // Diffuse
 			ms.PDF_S = 0;
 			float inf_pdf;
-			Spectrum inf_weight = handleInfiniteLights(in, sc, tile, inf_pdf);
-			MSI::balance(full_weight, full_pdf, inf_weight, inf_pdf);
-
-			PR_CHECK_VALIDITY(inf_pdf, "After inf lights");
-			PR_CHECK_VALIDITY(inf_weight, "After inf lights");
+			handleInfiniteLights(threadData.Evaluation[depth], in, sc, session, inf_pdf);
+			MSI::balance(threadData.FullWeight[depth], full_pdf, threadData.Evaluation[depth], inf_pdf);
 
 			// Gathering
 			const auto gatheringMode = renderer()->settings().ppm().gatheringMode();
 			const float A			 = 1 - renderer()->settings().ppm().contractRatio();
 
-			Spectrum accum_weight;
 			Photon::PhotonSphere query;
 
 			query.MaxPhotons	= renderer()->settings().ppm().maxGatherCount();
@@ -420,27 +409,24 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffb
 			query.Normal		= sc.N;
 			query.Distance2		= mSearchRadius2->getFragment(in.pixel());
 
-			auto accumFunc = [&](const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
+			auto accumFunc = [&](Spectrum& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2) {
 				const Eigen::Vector3f dir = mPhotonMap->evalDirection(photon.Theta, photon.Phi);
-
 				const float NdotL = std::abs(sc.N.dot(dir));
-#if PR_PHOTON_RGB_MODE >= 1
-				return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL) * NdotL, "After photon material eval") * PR_CHECK_VALIDITY(
-																														RGBConverter::toSpec(photon.Power[0], photon.Power[1], photon.Power[2]),
-																														"After photon power convert");
-#else
-				return PR_CHECK_VALIDITY(sc.Material->eval(sc, dir, NdotL) * NdotL, "After photon material eval") * PR_CHECK_VALIDITY(photon.Power, "After photon power convert");
-#endif //PR_PHOTON_RGB_MODE
+
+				sc.Material->eval(threadData.Evaluation[depth], sc, dir, NdotL, session);
+				RGBConverter::toSpec(threadData.Weight[depth], photon.Power[0], photon.Power[1], photon.Power[2]);
+
+				accum += threadData.Evaluation[depth] * threadData.Weight[depth];
 			};
 
 			size_t found = 0;
 			switch (gatheringMode) {
 			default:
 			case PGM_Sphere:
-				accum_weight = mPhotonMap->estimateSphere(query, accumFunc, found);
+				mPhotonMap->estimateSphere(threadData.Accum[depth], query, accumFunc, found);
 				break;
 			case PGM_Dome:
-				accum_weight = mPhotonMap->estimateDome(query, accumFunc, found);
+				mPhotonMap->estimateDome(threadData.Accum[depth], query, accumFunc, found);
 				break;
 			}
 
@@ -450,26 +436,24 @@ Spectrum PPMIntegrator::accumPass(const Ray& in, ShaderClosure& sc, uint32 diffb
 				const uint64 newN	= currentPhotons + std::floor(A * found);
 				const float fraction = newN / (float)(currentPhotons + found);
 
-				mSearchRadius2->setFragment(in.pixel(), query.Distance2 * fraction);
-				mLocalPhotonCount->setFragment(in.pixel(), newN);
+				mSearchRadius2->setFragment(in.pixel(), 0, query.Distance2 * fraction);
+				mLocalPhotonCount->setFragment(in.pixel(), 0, newN);
 
-				const auto oldFlux = mAccumulatedFlux->getFragment(in.pixel());
+				mAccumulatedFlux->getFragment(in.pixel(), threadData.Evaluation[depth]);
 
-				mAccumulatedFlux->setFragment(in.pixel(),
-											  PR_CHECK_VALIDITY((oldFlux + accum_weight) * fraction, "After photon to current flux"));
+				threadData.Accum[depth] += threadData.Evaluation[depth];
+				threadData.Accum[depth] *= fraction;
+				mAccumulatedFlux->setFragment(in.pixel(), threadData.Accum[depth]);
 			}
 
 			const float inv = PR_1_PI / mSearchRadius2->getFragment(in.pixel());
 
-			MSI::balance(full_weight, full_pdf,
-						 mAccumulatedFlux->getFragment(in.pixel()) * inv, ms.PDF_S);
-
-			PR_CHECK_VALIDITY(inv, "After photon estimation");
+			mAccumulatedFlux->getFragment(in.pixel(), threadData.Evaluation[depth]);
+			MSI::balance(threadData.FullWeight[depth], full_pdf,
+						 threadData.Evaluation[depth] * inv, ms.PDF_S);
 		} // End diffuse
-
-		PR_CHECK_VALIDITY(full_weight, "After path accumulation");
 	}
 
-	return full_weight;
+	spec += threadData.FullWeight[depth];
 }
 }

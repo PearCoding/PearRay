@@ -76,11 +76,8 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 	uint32 x   = ix * itw;
 	uint32 y   = iy * ith;
 
-	SpectrumDescriptor specDesc(PR_SPECTRAL_WAVELENGTH_SAMPLES, PR_SPECTRAL_WAVELENGTH_START, PR_SPECTRAL_WAVELENGTH_END);
-	// TODO: Add more information
-
 	return std::make_shared<RenderContext>(index, x + cropOffsetX(), y + cropOffsetY(),
 										   itw, ith, mFullWidth, mFullHeight,
-										   specDesc, mScene, mWorkingDir, mGPU, mRenderSettings);
+										   SpectrumDescriptor::createStandardSpectral(), mScene, mWorkingDir, mGPU, mRenderSettings);
 }
 }

@@ -1,5 +1,6 @@
 #include "Logger.h"
 
+#include "spectral/SpectrumDescriptor.h"
 #include "spectral/RGBConverter.h"
 
 #include <OpenImageIO/imageio.h>
@@ -55,7 +56,10 @@ static void save_image(const std::string& path,
 
 static void handle_color(float r, float g, float b)
 {
-    const PR::Spectrum spec = PR::RGBConverter::toSpec(r,g,b);
+    SpectrumDescriptor desc = SpectrumDescriptor::createStandardSpectral();
+    Spectrum spec(&desc);
+
+    PR::RGBConverter::toSpec(spec, r,g,b);
     float R, G, B;
     PR::RGBConverter::convert(spec, R, G, B);
 
