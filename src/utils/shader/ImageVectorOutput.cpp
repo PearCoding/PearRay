@@ -12,7 +12,7 @@ namespace PR
 		PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 	}
 
-	Eigen::Vector3f ImageVectorShaderOutput::eval(const PR::ShaderClosure& point)
+	void ImageVectorShaderOutput::eval(Eigen::Vector3f& v, const PR::ShaderClosure& point)
 	{
 		float res[4] = { 0, 0, 0};
 		if (!mTextureSystem->texture(mFilename, mTextureOptions,
@@ -27,6 +27,6 @@ namespace PR
 		}
 
 		// TODO
-		return Eigen::Vector3f(res[0], res[1], res[2]);
+		v = Eigen::Vector3f(res[0], res[1], res[2]);
 	}
 }

@@ -92,6 +92,6 @@ private:
 
 	std::shared_ptr<ScalarShaderOutput> mReflectivity;
 
-	std::vector<struct CTM_ThreadData> mThreadData;
+	std::vector<std::shared_ptr<struct CTM_ThreadData>> mThreadData;
 };
 }

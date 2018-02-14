@@ -9,7 +9,7 @@ namespace PR
 	{
 	public:
 		ImageSpectrumShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
-		PR::Spectrum eval(const PR::ShaderClosure& point) override;
+		void eval(Spectrum& spec, const PR::ShaderClosure& point) override;
 
 	private:
 		OIIO::ustring mFilename;

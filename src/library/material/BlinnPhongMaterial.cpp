@@ -62,14 +62,14 @@ struct BPM_ThreadData {
 void BlinnPhongMaterial::setup(RenderContext* context) {
 	mThreadData.clear();
 	for(size_t i = 0; context->threads(); ++i) {
-		mThreadData.emplace_back(context);
+		mThreadData.push_back(std::make_shared<BPM_ThreadData>(context));
 	}
 
 	if(!mAlbedo)
-		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromBlack());
+		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
 
 	if(!mIndex)
-		mIndex = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite()*1.55f);
+		mIndex = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::gray(context->spectrumDescriptor(), 1.55f));
 	
 	if(!mShininess)
 		mShininess = std::make_shared<ConstScalarShaderOutput>(0.0f);
@@ -78,7 +78,7 @@ void BlinnPhongMaterial::setup(RenderContext* context) {
 // TODO: Should be normalized better.
 void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	BPM_ThreadData& data = mThreadData[session.thread()];
+	const std::shared_ptr<BPM_ThreadData>& data = mThreadData[session.thread()];
 	mAlbedo->eval(spec, point);
 	spec *= PR_1_PI;
 
@@ -88,12 +88,12 @@ void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const 
 
 	float n = mShininess->eval(point);
 
-	mIndex->eval(data.Index, point);
+	mIndex->eval(data->Index, point);
 
 	const float factor = std::pow(NdotH, n) * PR_1_PI * (n + 4) / 8;
 
 	for (uint32 i = 0; i < spec.samples(); ++i) {
-		const float n2 = data.Index.value(i);
+		const float n2 = data->Index.value(i);
 		const float f  = Fresnel::dielectric(VdotH,
 											!(point.Flags & SCF_Inside) ? 1 : n2,
 											!(point.Flags & SCF_Inside) ? n2 : 1);

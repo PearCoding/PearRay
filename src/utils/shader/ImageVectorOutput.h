@@ -9,7 +9,7 @@ namespace PR
 	{
 	public:
 		ImageVectorShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
-		Eigen::Vector3f eval(const PR::ShaderClosure& point) override;
+		void eval(Eigen::Vector3f& v, const PR::ShaderClosure& point) override;
 
 	private:
 		OIIO::ustring mFilename;

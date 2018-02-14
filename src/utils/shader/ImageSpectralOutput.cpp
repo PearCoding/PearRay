@@ -14,7 +14,7 @@ namespace PR
 		PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 	}
 
-	PR::Spectrum ImageSpectrumShaderOutput::eval(const PR::ShaderClosure& point)
+	void ImageSpectrumShaderOutput::eval(Spectrum& spec, const PR::ShaderClosure& point)
 	{
 		float res[3] = { 0, 0, 0 };
 
@@ -29,6 +29,6 @@ namespace PR
 				point.UVW(0), 1 - point.UVW(1), err.c_str());
 		}
 		
-		return RGBConverter::toSpec(res[0], res[1], res[2]);
+		return RGBConverter::toSpec(spec, res[0], res[1], res[2]);
 	}
 }

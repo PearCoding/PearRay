@@ -12,9 +12,9 @@ namespace PR
 		PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 	}
 
-	float ImageScalarShaderOutput::eval(const PR::ShaderClosure& point)
+	void ImageScalarShaderOutput::eval(float& res, const PR::ShaderClosure& point)
 	{
-		float res = 0;
+		res = 0;
 		if (!mTextureSystem->texture(mFilename, mTextureOptions,
 			point.UVW(0), 1 - point.UVW(1),
 			point.dUVWdX(0), point.dUVWdY(0),
@@ -25,7 +25,5 @@ namespace PR
 			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]: %s",
 				point.UVW(0), 1 - point.UVW(1), err.c_str());
 		}
-
-		return res;
 	}
 }

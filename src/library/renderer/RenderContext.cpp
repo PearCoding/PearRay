@@ -33,7 +33,7 @@
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-							 const SpectrumDescriptor& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
+							 const std::shared_ptr<SpectrumDescriptor>& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)

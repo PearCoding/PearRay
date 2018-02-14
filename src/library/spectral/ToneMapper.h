@@ -40,7 +40,7 @@ public:
 		 */
 	ToneMapper(uint32 width, uint32 height, GPU* gpu);
 
-	void map(const Spectrum* specIn, float* rgbOut, size_t rgbElems) const;
+	void map(const float* specIn, float* rgbOut, size_t specElems, size_t rgbElems) const;
 	void mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const;
 
 	// Not thread safe!

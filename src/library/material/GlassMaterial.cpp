@@ -70,15 +70,14 @@ constexpr float MinRoughness = 0.001f;
 void GlassMaterial::setup(RenderContext* context)
 {
 	mThreadData.clear();
-	for(size_t i = 0; context->threads(); ++i) {
-		mThreadData.emplace_back(context);
-	}
+	for(size_t i = 0; context->threads(); ++i)
+		mThreadData.push_back(std::make_shared<GM_ThreadData>(context));
 
 	if(!mSpecularity)
-		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite());
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
 
 	if(!mIndex)
-		mIndex = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite()*1.55f);
+		mIndex = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::gray(context->spectrumDescriptor(), 1.55f));
 }
 
 void GlassMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
@@ -93,8 +92,8 @@ float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, f
 
 MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
-	GM_ThreadData& data = mThreadData[session.thread()];
-	const float ind = data.IOR.value(point.WavelengthIndex);
+	const std::shared_ptr<GM_ThreadData>& data = mThreadData[session.thread()];
+	const float ind = data->IOR.value(point.WavelengthIndex);
 
 	float weight	= (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
@@ -126,8 +125,8 @@ MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Ve
 
 MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
 {
-	GM_ThreadData& data = mThreadData[session.thread()];
-	const float ind = data.IOR.value(point.WavelengthIndex);
+	const std::shared_ptr<GM_ThreadData>& data = mThreadData[session.thread()];
+	const float ind = data->IOR.value(point.WavelengthIndex);
 
 	MaterialSample ms;
 	float weight	= (point.Flags & SCF_Inside) == 0 ?

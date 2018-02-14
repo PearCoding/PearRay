@@ -58,14 +58,6 @@ inline float SpectrumDescriptor::integralDelta(uint32 i) const {
 		return 0.5f*(wavelength(i+1)-2*wavelength(i)+wavelength(i-1));
 	}
 }
-	
-inline Spectrum SpectrumDescriptor::fromWhite() const {
-	return Spectrum(this, 1.0f);
-}
-
-inline Spectrum SpectrumDescriptor::fromBlack() const {
-	return Spectrum(this, 0.0f);
-}
 
 inline bool SpectrumDescriptor::isTriplet() const {
 	return samples() == PR_SPECTRAL_TRIPLET_SAMPLES;

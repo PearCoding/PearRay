@@ -44,6 +44,6 @@ private:
 	std::shared_ptr<ScalarShaderOutput> mRoughnessY;
 	std::shared_ptr<ScalarShaderOutput> mReflectivity;
 
-	std::vector<struct WM_ThreadData> mThreadData;
+	std::vector<std::shared_ptr<struct WM_ThreadData>> mThreadData;
 };
 }

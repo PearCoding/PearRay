@@ -3,8 +3,8 @@
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSession.h"
-#include "shader/ShaderClosure.h"
 #include "shader/ConstSpectralOutput.h"
+#include "shader/ShaderClosure.h"
 
 #include "BRDF.h"
 #include "math/Fresnel.h"
@@ -42,8 +42,8 @@ void MirrorMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 
 void MirrorMaterial::setup(RenderContext* context)
 {
-	if(!mSpecularity)
-		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite());
+	if (!mSpecularity)
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
 }
 
 void MirrorMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
@@ -59,9 +59,9 @@ float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, 
 MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	MaterialSample ms;
-	ms.PDF_S = std::numeric_limits<float>::infinity();
+	ms.PDF_S		  = std::numeric_limits<float>::infinity();
 	ms.ScatteringType = MST_SpecularReflection;
-	ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
+	ms.L			  = Reflection::reflect(point.NdotV, point.N, point.V);
 	return ms;
 }
 
@@ -79,4 +79,4 @@ std::string MirrorMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

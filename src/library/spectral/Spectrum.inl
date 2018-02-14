@@ -16,7 +16,7 @@ inline uint32 Spectrum::spectralEnd() const
 	return mInternal->End;
 }
 
-inline const SpectrumDescriptor* Spectrum::descriptor() const
+inline const std::shared_ptr<SpectrumDescriptor>& Spectrum::descriptor() const
 {
 	return mInternal->Descriptor;
 }
@@ -343,6 +343,23 @@ inline Spectrum Spectrum::sqrted() const
 	spec.sqrt();
 	return spec;
 }
+
+// Standard Methods
+inline Spectrum Spectrum::black(const std::shared_ptr<SpectrumDescriptor>& desc)
+{
+	return Spectrum::gray(desc, 0.0f);
+}
+
+inline Spectrum Spectrum::white(const std::shared_ptr<SpectrumDescriptor>& desc)
+{
+	return Spectrum::gray(desc, 1.0f);
+}
+
+inline Spectrum Spectrum::gray(const std::shared_ptr<SpectrumDescriptor>& desc, float f)
+{
+	return Spectrum(desc, f);
+}
+
 // Global
 inline bool operator==(const Spectrum& v1, const Spectrum& v2)
 {
@@ -375,4 +392,4 @@ inline Spectrum operator/(float f, const Spectrum& spec)
 
 	return tmp;
 }
-}
+} // namespace PR

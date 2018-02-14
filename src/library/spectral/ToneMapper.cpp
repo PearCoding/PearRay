@@ -43,7 +43,7 @@ ToneMapper::ToneMapper(uint32 width, uint32 height, GPU* gpu)
 #endif
 }
 
-void ToneMapper::map(const Spectrum* specIn, float* out, size_t rgbElems) const
+void ToneMapper::map(const float* specIn, float* out, size_t specElems, size_t rgbElems) const
 {
 #ifndef PR_NO_GPU
 	if (mGPU && mSize > 100) {
@@ -78,8 +78,8 @@ void ToneMapper::map(const Spectrum* specIn, float* out, size_t rgbElems) const
 
 				queue.enqueueWriteBuffer(mSpecInput, CL_TRUE,
 										 0,
-										 current * Spectrum::SAMPLING_COUNT * sizeof(float),
-										 &in[off * Spectrum::SAMPLING_COUNT]);
+										 current * specElems * sizeof(float),
+										 &in[off * specElems]);
 
 				queue.enqueueNDRangeKernel(
 					specKernel,
@@ -120,17 +120,17 @@ void ToneMapper::map(const Spectrum* specIn, float* out, size_t rgbElems) const
 			// Map 1: Spec to RGB
 			switch (mColorMode) {
 			case TCM_SRGB:
-				RGBConverter::convert(specIn[i], r, g, b);
+				RGBConverter::convert(specElems, &specIn[i * specElems], r, g, b);
 				break;
 			case TCM_XYZ:
-				XYZConverter::convertXYZ(specIn[i], r, g, b);
+				XYZConverter::convertXYZ(specElems, &specIn[i * specElems], r, g, b);
 				break;
 			case TCM_XYZ_NORM:
-				XYZConverter::convert(specIn[i], r, g);
+				XYZConverter::convert(specElems, &specIn[i * specElems], r, g);
 				b = 1 - r - g;
 				break;
 			case TCM_LUMINANCE:
-				RGBConverter::convert(specIn[i], r, g, b);
+				RGBConverter::convert(specElems, &specIn[i * specElems], r, g, b);
 				r = RGBConverter::luminance(r, g, b);
 				g = r;
 				b = r;
@@ -349,4 +349,4 @@ void ToneMapper::stage_mapper_non_gpu(const float* rgbIn, float* rgbOut, size_t 
 		rgbOut[i * rgbElems + 2] = b;
 	}
 }
-}
+} // namespace PR

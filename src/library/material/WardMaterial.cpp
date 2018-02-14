@@ -4,9 +4,9 @@
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSession.h"
 
-#include "shader/ShaderClosure.h"
 #include "shader/ConstScalarOutput.h"
 #include "shader/ConstSpectralOutput.h"
+#include "shader/ShaderClosure.h"
 
 #include "math/Fresnel.h"
 #include "math/Projection.h"
@@ -78,8 +78,9 @@ void WardMaterial::setReflectivity(const std::shared_ptr<ScalarShaderOutput>& d)
 struct WM_ThreadData {
 	Spectrum Albedo;
 
-	WM_ThreadData(RenderContext* context) :
-		Albedo(context->spectrumDescriptor()) {
+	WM_ThreadData(RenderContext* context)
+		: Albedo(context->spectrumDescriptor())
+	{
 	}
 };
 
@@ -87,33 +88,32 @@ constexpr float MinRoughness = 0.001f;
 void WardMaterial::setup(RenderContext* context)
 {
 	mThreadData.clear();
-	for(size_t i = 0; context->threads(); ++i) {
-		mThreadData.emplace_back(context);
-	}
+	for (size_t i = 0; context->threads(); ++i)
+		mThreadData.push_back(std::make_shared<WM_ThreadData>(context));
 
-	if(!mAlbedo)
-		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromBlack());
+	if (!mAlbedo)
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
 
-	if(!mSpecularity)
-		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromWhite());
+	if (!mSpecularity)
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
 
-	if(!mReflectivity)
+	if (!mReflectivity)
 		mReflectivity = std::make_shared<ConstScalarShaderOutput>(0.5f);
 
-	if(!mRoughnessX)
+	if (!mRoughnessX)
 		mRoughnessX = mRoughnessY ? mRoughnessY : std::make_shared<ConstScalarShaderOutput>(0.0f);
 
-	if(!mRoughnessY)
+	if (!mRoughnessY)
 		mRoughnessY = mRoughnessX;
 }
 
 void WardMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	const float refl = mReflectivity->eval(point);
-	WM_ThreadData& data = mThreadData[session.thread()];
+	const float refl	= mReflectivity->eval(point);
+	const std::shared_ptr<WM_ThreadData>& data = mThreadData[session.thread()];
 
-	mAlbedo->eval(data.Albedo, point);
-	data.Albedo *= PR_1_PI;
+	mAlbedo->eval(data->Albedo, point);
+	data->Albedo *= PR_1_PI;
 
 	const float m1 = std::max(MinRoughness, mRoughnessX->eval(point));
 	const float m2 = std::max(MinRoughness, mRoughnessY->eval(point));
@@ -136,7 +136,7 @@ void WardMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen:
 	}
 
 	spec *= refl;
-	spec += data.Albedo * (1 - refl);
+	spec += data->Albedo * (1 - refl);
 }
 
 float WardMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
@@ -170,12 +170,12 @@ MaterialSample WardMaterial::sample(const ShaderClosure& point, const Eigen::Vec
 
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;
-	
+
 	if (rnd(2) < refl)
 		ms.L = diffuse_path(point, rnd, ms.PDF_S);
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
-	
+
 	ms.PDF_S *= refl;
 	return ms;
 }
@@ -210,7 +210,7 @@ Eigen::Vector3f WardMaterial::specular_path(const ShaderClosure& point, const Ei
 	float u = rnd(0);
 	float v = rnd(1);
 
-	const float m1 = std::max(MinRoughness,mRoughnessX->eval(point));
+	const float m1 = std::max(MinRoughness, mRoughnessX->eval(point));
 
 	float cosTheta, sinTheta;		// V samples
 	float cosPhi, sinPhi;			// U samples
@@ -250,8 +250,8 @@ Eigen::Vector3f WardMaterial::specular_path(const ShaderClosure& point, const Ei
 		pdf					  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 	}
 
-	auto H = Projection::tangent_align(point.N, point.Nx, point.Ny,
-									   Eigen::Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta));
+	auto H   = Projection::tangent_align(point.N, point.Nx, point.Ny,
+										 Eigen::Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta));
 	auto dir = Reflection::reflect(std::abs(H.dot(point.V)), H, point.V);
 
 	pdf = std::min(std::max(pdf / std::abs(point.V.dot(dir)), 0.0f), 1.0f);
@@ -273,4 +273,4 @@ std::string WardMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

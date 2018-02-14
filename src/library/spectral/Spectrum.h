@@ -9,11 +9,11 @@ namespace PR {
 class SpectrumDescriptor;
 class PR_LIB Spectrum {
 public:
-	explicit Spectrum(const SpectrumDescriptor* descriptor);
-	Spectrum(const SpectrumDescriptor* descriptor, float initial);
-	Spectrum(const SpectrumDescriptor* descriptor, uint32 start, uint32 end);
-	Spectrum(const SpectrumDescriptor* descriptor, uint32 start, uint32 end, float initial);
-	Spectrum(const SpectrumDescriptor* descriptor, uint32 start, uint32 end, float* data);
+	explicit Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, float initial);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float initial);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data);
 
 	virtual ~Spectrum() = default;
 
@@ -31,7 +31,7 @@ public:
 	inline uint32 spectralStart() const;
 	inline uint32 spectralEnd() const;
 
-	inline const SpectrumDescriptor* descriptor() const;
+	inline const std::shared_ptr<SpectrumDescriptor>& descriptor() const;
 	inline bool isExternal() const;
 
 	// Simple Access
@@ -99,16 +99,22 @@ public:
 	float luminousFlux_nm() const;
 	inline double luminousFlux() const { return luminousFlux_nm() * PR_NM_TO_M; }
 
+	// Standard Constructor
+	inline static Spectrum black(const std::shared_ptr<SpectrumDescriptor>& desc);
+	inline static Spectrum white(const std::shared_ptr<SpectrumDescriptor>& desc);
+	inline static Spectrum gray(const std::shared_ptr<SpectrumDescriptor>& desc, float f);
+
+	static Spectrum blackbody(const std::shared_ptr<SpectrumDescriptor>& desc, float temp); // Temp in Kelvin (K), Output W·sr^−1·m^−3
 private:
 	struct Spectrum_Internal {
-		const SpectrumDescriptor* Descriptor;
+		std::shared_ptr<SpectrumDescriptor> Descriptor;
 		uint32 Start;
 		uint32 End;
 		bool External;
 		float* Data;
 		
-		Spectrum_Internal(const SpectrumDescriptor* descriptor, uint32 start, uint32 end, float* data);
-		Spectrum_Internal(const SpectrumDescriptor* descriptor, uint32 start, uint32 end);
+		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data);
+		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end);
 		~Spectrum_Internal();
 	};
 	std::shared_ptr<Spectrum_Internal> mInternal;

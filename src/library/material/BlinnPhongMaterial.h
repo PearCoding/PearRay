@@ -32,6 +32,6 @@ private:
 	std::shared_ptr<ScalarShaderOutput> mShininess;
 	std::shared_ptr<SpectrumShaderOutput> mIndex;
 
-	std::vector<struct BPM_ThreadData> mThreadData;
+	std::vector<std::shared_ptr<struct BPM_ThreadData>> mThreadData;
 };
 }

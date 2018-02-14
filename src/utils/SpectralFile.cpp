@@ -1,29 +1,30 @@
 #include "SpectralFile.h"
+#include "spectral/SpectrumDescriptor.h"
 
-#include <stdexcept>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <stdexcept>
 
 namespace PR {
 
 struct SF_Data {
-	SpectrumDescriptor Descriptor;
+	std::shared_ptr<SpectrumDescriptor> Descriptor;
 	uint32 Width;
 	uint32 Height;
 	bool External;
 	float* Ptr;
 
-	SF_Data(const SpectrumDescriptor& desc, uint32 width, uint32 height)
+	SF_Data(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height)
 		: Descriptor(desc)
 		, Width(width)
 		, Height(height)
 		, External(false)
 	{
-		Ptr = new float[width * height * desc.samples()];
+		Ptr = new float[width * height * desc->samples()];
 	}
 
-	SF_Data(const SpectrumDescriptor& desc, uint32 width, uint32 height, float* data)
+	SF_Data(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height, float* data)
 		: Descriptor(desc)
 		, Width(width)
 		, Height(height)
@@ -40,33 +41,37 @@ struct SF_Data {
 	}
 };
 
-SpectralFile::SpectralFile(const SpectrumDescriptor& desc, uint32 width, uint32 height)
+SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height)
 	: mData(std::make_shared<SF_Data>(desc, width, height))
 {
 }
 
-SpectralFile::SpectralFile(const SpectrumDescriptor& desc, uint32 width, uint32 height, float* data, bool copy)
+SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height, float* data, bool copy)
 {
 	if (copy) {
 		mData = std::make_shared<SF_Data>(desc, width, height);
-		std::memcpy(mData->Ptr, data, width * height * desc.samples() * sizeof(float));
+		std::memcpy(mData->Ptr, data, width * height * desc->samples() * sizeof(float));
 	} else {
 		mData = std::make_shared<SF_Data>(desc, width, height, data);
 	}
+}
+
+SpectralFile::~SpectralFile()
+{
 }
 
 void SpectralFile::set(uint32 row, uint32 column, const Spectrum& spec)
 {
 	PR_ASSERT(column < mData->Width && row < mData->Height, "Access out of bound");
 
-	spec.copyTo(&mData->Ptr[row*mData->Width*mData->Descriptor.samples() + column*mData->Descriptor.samples()]);
+	spec.copyTo(&mData->Ptr[row * mData->Width * mData->Descriptor->samples() + column * mData->Descriptor->samples()]);
 }
 
 void SpectralFile::get(uint32 row, uint32 column, Spectrum& spec) const
 {
 	PR_ASSERT(column < mData->Width && row < mData->Height, "Access out of bound");
 
-	spec.copyFrom(&mData->Ptr[row * mData->Width * mData->Descriptor.samples() + column * mData->Descriptor.samples()]);
+	spec.copyFrom(&mData->Ptr[row * mData->Width * mData->Descriptor->samples() + column * mData->Descriptor->samples()]);
 }
 
 void SpectralFile::save(const std::string& path) const
@@ -80,14 +85,14 @@ void SpectralFile::save(const std::string& path) const
 
 	out.put('P').put('R').put('4').put('2');
 
-	uint32 tmp = mData->Descriptor.samples();
+	uint32 tmp = mData->Descriptor->samples();
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 	tmp = mData->Width;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 	tmp = mData->Height;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
-	for (uint32 i = 0; i < mData->Height * mData->Width * mData->Descriptor.samples(); ++i)
+	for (uint32 i = 0; i < mData->Height * mData->Width * mData->Descriptor->samples(); ++i)
 		out.write(reinterpret_cast<const char*>(&mData->Ptr[i]), sizeof(float));
 }
 
@@ -116,7 +121,7 @@ SpectralFile SpectralFile::open(const std::string& path)
 	if (samplingCount == 0 || width == 0 || height == 0)
 		throw std::runtime_error("Invalid file");
 
-	SpectrumDescriptor desc(samplingCount, 0, 0); // TODO: Get lambda information
+	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(samplingCount, 0, 0); // TODO: Get lambda information
 
 	SpectralFile f(desc, width, height);
 	for (uint32 y = 0; y < height; ++y) {
@@ -130,7 +135,7 @@ SpectralFile SpectralFile::open(const std::string& path)
 	return f;
 }
 
-const SpectrumDescriptor& SpectralFile::descriptor() const
+const std::shared_ptr<SpectrumDescriptor>& SpectralFile::descriptor() const
 {
 	return mData->Descriptor;
 }

@@ -74,8 +74,8 @@ ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v
 	if (mTiledUV) {
 		ShaderClosure pointN = point;
 		pointN.UVW			 = Eigen::Vector3f(point.UVW(1) * mGridCount - u,
-									 point.UVW(1) * mGridCount - v,
-									 point.UVW(2));
+									   point.UVW(1) * mGridCount - v,
+									   point.UVW(2));
 		return pointN;
 	} else {
 		return point;
@@ -108,6 +108,10 @@ MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vec
 	return MaterialSample();
 }
 
+void GridMaterial::setup(RenderContext* context)
+{
+}
+
 std::string GridMaterial::dumpInformation() const
 {
 	std::stringstream stream;
@@ -121,4 +125,4 @@ std::string GridMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

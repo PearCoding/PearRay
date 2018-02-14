@@ -4,9 +4,9 @@
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSession.h"
 
-#include "shader/ShaderClosure.h"
 #include "shader/ConstScalarOutput.h"
 #include "shader/ConstSpectralOutput.h"
+#include "shader/ShaderClosure.h"
 
 #include "math/Projection.h"
 
@@ -45,22 +45,22 @@ void OrenNayarMaterial::setRoughness(const std::shared_ptr<ScalarShaderOutput>& 
 constexpr float MinRoughness = 0.001f;
 void OrenNayarMaterial::setup(RenderContext* context)
 {
-	if(!mRoughness)
+	if (!mRoughness)
 		mRoughness = std::make_shared<ConstScalarShaderOutput>(0.5f);
 
-	if(!mAlbedo)
-		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(context->spectrumDescriptor()->fromBlack());
+	if (!mAlbedo)
+		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
 }
 
 void OrenNayarMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	float val = PR_1_PI;
+	float val		= PR_1_PI;
 	float roughness = mRoughness->eval(point);
 	roughness *= roughness; // Square
 
 	if (roughness > PR_EPSILON) // Oren Nayar
 		val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
-	
+
 	mAlbedo->eval(spec, point);
 	spec *= val;
 }
@@ -75,7 +75,7 @@ MaterialSample OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;
 	ms.L			  = Projection::tangent_align(point.N, point.Nx, point.Ny,
-									 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
+									  Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
 	return ms;
 }
 
@@ -90,4 +90,4 @@ std::string OrenNayarMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

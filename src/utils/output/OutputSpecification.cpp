@@ -82,23 +82,23 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	OutputMap* output = renderer->output();
+	const std::unique_ptr<OutputMap>& output = renderer->output();
 
 	Eigen::Vector3f zero(0, 0, 0);
 	for (const File& file : mFiles) {
 		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {
 			if (!output->getChannel(cs3d.Variable))
-				output->registerChannel(cs3d.Variable, std::make_shared<FrameBuffer3D>(zero));
+				output->registerChannel(cs3d.Variable, std::make_shared<FrameBufferFloat>(3, 0.0f));
 		}
 
 		for (const IM_ChannelSetting1D& cs1d : file.Settings1D) {
 			if (!output->getChannel(cs1d.Variable))
-				output->registerChannel(cs1d.Variable, std::make_shared<FrameBuffer1D>(0));
+				output->registerChannel(cs1d.Variable, std::make_shared<FrameBufferFloat>(1, 0));
 		}
 
 		for (const IM_ChannelSettingCounter& cs : file.SettingsCounter) {
 			if (!output->getChannel(cs.Variable))
-				output->registerChannel(cs.Variable, std::make_shared<FrameBufferCounter>(0));
+				output->registerChannel(cs.Variable, std::make_shared<FrameBufferUInt64>(1, 0));
 		}
 	}
 }

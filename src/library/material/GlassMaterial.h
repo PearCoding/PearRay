@@ -35,6 +35,6 @@ private:
 	std::shared_ptr<SpectrumShaderOutput> mIndex;
 	bool mThin;
 
-	std::vector<struct GM_ThreadData> mThreadData;
+	std::vector<std::shared_ptr<struct GM_ThreadData>> mThreadData;
 };
 }

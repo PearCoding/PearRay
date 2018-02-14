@@ -56,8 +56,8 @@ static void save_image(const std::string& path,
 
 static void handle_color(float r, float g, float b)
 {
-    SpectrumDescriptor desc = SpectrumDescriptor::createStandardSpectral();
-    Spectrum spec(&desc);
+    std::shared_ptr<SpectrumDescriptor> desc = SpectrumDescriptor::createStandardSpectral();
+    Spectrum spec(desc);
 
     PR::RGBConverter::toSpec(spec, r,g,b);
     float R, G, B;

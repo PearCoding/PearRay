@@ -20,7 +20,7 @@ public:
 	ColorBuffer& operator=(const ColorBuffer& other);
 	ColorBuffer& operator=(ColorBuffer&& other);
 
-	void map(const ToneMapper& mapper, const Spectrum* specIn);
+	void map(const ToneMapper& mapper, const float* specIn, uint32 samples);
 	void mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn);
 
 	inline uint32 width() const { return mData->Width; }

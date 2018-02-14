@@ -32,15 +32,11 @@ public:
 
 	inline float integralDelta(uint32 index) const;
 
-	inline Spectrum fromWhite() const;
-	inline Spectrum fromBlack() const;
-	Spectrum fromBlackbody(float temp) const; // Temp in Kelvin (K), Output W·sr^−1·m^−3
-
 	inline bool isTriplet() const;
 	inline bool isStandardSpectral() const;
 
-	static SpectrumDescriptor createTriplet();
-	static SpectrumDescriptor createStandardSpectral();
+	static std::shared_ptr<SpectrumDescriptor> createTriplet();
+	static std::shared_ptr<SpectrumDescriptor> createStandardSpectral();
 
 private:
 	std::vector<float> mWavelengths;

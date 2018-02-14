@@ -127,8 +127,10 @@ IF(OIIO_LINK_STATIC)
 	SET(DEFS "${DEFS};OIIO_STATIC_BUILD")
 ENDIF()
 
-IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
-	SET(DEFS "${DEFS};PR_WITH_VIEWER")
+IF(PR_BUILD_VIEWER)
+	IF(${Qt5Widgets_FOUND})
+		SET(DEFS "${DEFS};PR_WITH_VIEWER")
+	ENDIF()
 ENDIF()
 
 IF(PR_BUILD_PROFILE)
@@ -217,8 +219,10 @@ ENDIF()
 # Executables
 add_subdirectory(src/client)
 
-IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
-	add_subdirectory(src/viewer)
+IF(PR_BUILD_VIEWER)
+	IF(${Qt5Widgets_FOUND})
+		add_subdirectory(src/viewer)
+	ENDIF()
 ENDIF()
 
 # Tests

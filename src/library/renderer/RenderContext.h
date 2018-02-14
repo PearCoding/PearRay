@@ -32,7 +32,7 @@ class PR_LIB RenderContext {
 
 public:
 	RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-				  const SpectrumDescriptor& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
+				  const std::shared_ptr<SpectrumDescriptor>& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -45,7 +45,7 @@ public:
 
 	uint32 tileCount() const;
 
-	inline const SpectrumDescriptor* spectrumDescriptor() const { return &mSpectrumDescriptor; }
+	inline const std::shared_ptr<SpectrumDescriptor>& spectrumDescriptor() const { return mSpectrumDescriptor; }
 
 	// tcx = tile count x
 	// tcy = tile count y
@@ -105,7 +105,7 @@ private:
 	const uint32 mFullHeight;
 	const std::string mWorkingDir;
 
-	const SpectrumDescriptor mSpectrumDescriptor;
+	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 
 	const std::shared_ptr<Camera> mCamera;
 	const Scene& mScene;
