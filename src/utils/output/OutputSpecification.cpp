@@ -82,7 +82,7 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	const std::unique_ptr<OutputMap>& output = renderer->output();
+	const auto& output = renderer->output();
 
 	Eigen::Vector3f zero(0, 0, 0);
 	for (const File& file : mFiles) {

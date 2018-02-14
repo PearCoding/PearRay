@@ -79,7 +79,7 @@ public:
 		}
 	}
 
-	inline void setFragment(const Eigen::Vector2i& p, size_t channel, const T& v) const
+	inline void setFragment(const Eigen::Vector2i& p, size_t channel, const T& v)
 	{
 		PR_ASSERT(p(0) >= 0 && (uint32) p(0) >= mOffsetX && (uint32) p(0) < mOffsetX + mWidth,
 				  "x coord has to be between boundaries");

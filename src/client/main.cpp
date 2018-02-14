@@ -7,6 +7,7 @@
 #include "renderer/RenderStatistics.h"
 
 #include "spectral/ToneMapper.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include "gpu/GPU.h"
 
@@ -76,6 +77,7 @@ int main(int argc, char** argv)
 	// Setup renderFactory
 	PR_BEGIN_PROFILE_ID(1);
 	PR::RenderFactory* renderFactory = new PR::RenderFactory(
+		PR::SpectrumDescriptor::createStandardSpectral(),
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
 		env->scene(), options.OutputDir, true);

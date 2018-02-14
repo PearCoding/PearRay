@@ -11,7 +11,6 @@ SET(Src
   math.cpp
   module.cpp
   output.cpp
-  ray.cpp
   renderentities.cpp
   renderer.cpp
   sampler.cpp

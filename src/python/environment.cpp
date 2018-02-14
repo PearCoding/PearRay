@@ -11,7 +11,7 @@ namespace PRPY {
 void setup_environment(py::module& m)
 {
 	py::class_<Environment, std::shared_ptr<Environment>>(m, "Environment")
-		.def(py::init<std::string>())
+		.def(py::init<const std::shared_ptr<SpectrumDescriptor>&, std::string>())
 		.def_property_readonly("scene", (Scene & (Environment::*)()) & Environment::scene)
 		.def("getSpectrum", &Environment::getSpectrum)
 		.def("hasSpectrum", &Environment::hasSpectrum)

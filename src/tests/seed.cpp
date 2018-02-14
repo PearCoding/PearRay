@@ -29,6 +29,7 @@ PR_TEST("Direct Integrator")
 	PR_ASSERT(env, "Test project string should be valid");
 
 	auto renderFactory = std::make_shared<RenderFactory>(
+		SpectrumDescriptor::createStandardSpectral(),
 		env->renderWidth(),
 		env->renderHeight(),
 		env->scene(), "", true);
@@ -36,8 +37,8 @@ PR_TEST("Direct Integrator")
 	env->scene().freeze();
 	env->scene().buildTree();
 
-	Spectrum output1[POS_COUNT];
-	Spectrum output2[POS_COUNT];
+	std::list<Spectrum> output1;
+	std::list<Spectrum> output2;
 
 	renderFactory->settings().setSeed(SEED);
 	renderFactory->settings().setMaxDiffuseBounces(0);
@@ -54,8 +55,10 @@ PR_TEST("Direct Integrator")
 		while (!renderer->isFinished()) {
 		}
 
-		for (uint32 i  = 0; i < POS_COUNT; ++i)
-			output1[i] = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]));
+		for (uint32 i  = 0; i < POS_COUNT; ++i) {
+			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			output1.push_back(spec);
+		}
 	}
 
 	{ // 2
@@ -70,15 +73,24 @@ PR_TEST("Direct Integrator")
 		while (!renderer->isFinished()) {
 		}
 
-		for (uint32 i  = 0; i < POS_COUNT; ++i)
-			output2[i] = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]));
+		for (uint32 i  = 0; i < POS_COUNT; ++i) {
+			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			output2.push_back(spec);
+		}
 	}
 
-	for (uint32 i = 0; i < POS_COUNT; ++i) {
-		const float dif = (output1[i] - output2[i]).sqrSum();
+	auto it1 = output1.begin();
+	auto it2 = output2.begin();
+	uint32 i = 0;
+	while(it1 != output1.end() && it2 != output2.end()) {
+		const float dif = (*it1 - *it2).sqrSum();
 		std::cout << "DI [" << xpos[i] << "|" << ypos[i] << "] " << dif 
-				  << " (" << output1[i].max() << "|" << output2[i].max() << ")" << std::endl;
+				  << " (" << it1->max() << "|" << it2->max() << ")" << std::endl;
 		PR_CHECK_NEARLY_EQ_EPS(dif, 0, EPS);
+
+		++it1;
+		++it2;
+		++i;
 	}
 }
 
@@ -88,6 +100,7 @@ PR_TEST("Bi-Direct Integrator")
 	PR_ASSERT(env, "Test project string should be valid");
 
 	auto renderFactory = std::make_shared<RenderFactory>(
+		SpectrumDescriptor::createStandardSpectral(),
 		env->renderWidth(),
 		env->renderHeight(),
 		env->scene(), "", true);
@@ -95,8 +108,8 @@ PR_TEST("Bi-Direct Integrator")
 	env->scene().freeze();
 	env->scene().buildTree();
 
-	Spectrum output1[POS_COUNT];
-	Spectrum output2[POS_COUNT];
+	std::list<Spectrum> output1;
+	std::list<Spectrum> output2;
 
 	renderFactory->settings().setSeed(SEED);
 	renderFactory->settings().setMaxDiffuseBounces(0);
@@ -113,8 +126,10 @@ PR_TEST("Bi-Direct Integrator")
 		while (!renderer->isFinished()) {
 		}
 
-		for (uint32 i  = 0; i < POS_COUNT; ++i)
-			output1[i] = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]));
+		for (uint32 i  = 0; i < POS_COUNT; ++i) {
+			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			output1.push_back(spec);
+		}
 	}
 
 	{ // 2
@@ -129,15 +144,24 @@ PR_TEST("Bi-Direct Integrator")
 		while (!renderer->isFinished()) {
 		}
 
-		for (uint32 i  = 0; i < POS_COUNT; ++i)
-			output2[i] = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]));
+		for (uint32 i  = 0; i < POS_COUNT; ++i) {
+			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			output2.push_back(spec);
+		}
 	}
 
-	for (uint32 i = 0; i < POS_COUNT; ++i) {
-		const float dif = (output1[i] - output2[i]).sqrSum();
-		std::cout << "BIDI [" << xpos[i] << "|" << ypos[i] << "] " << dif
-				  << " (" << output1[i].max() << "|" << output2[i].max() << ")" << std::endl;
+	auto it1 = output1.begin();
+	auto it2 = output2.begin();
+	uint32 i = 0;
+	while(it1 != output1.end() && it2 != output2.end()) {
+		const float dif = (*it1 - *it2).sqrSum();
+		std::cout << "BIDI [" << xpos[i] << "|" << ypos[i] << "] " << dif 
+				  << " (" << it1->max() << "|" << it2->max() << ")" << std::endl;
 		PR_CHECK_NEARLY_EQ_EPS(dif, 0, EPS);
+
+		++it1;
+		++it2;
+		++i;
 	}
 }
 

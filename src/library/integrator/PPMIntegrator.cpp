@@ -213,7 +213,7 @@ bool PPMIntegrator::needNextPass(uint32 pass) const
 void PPMIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
 	if (pass % 2 == 1) {
-		const std::unique_ptr<OutputMap>& output = renderer()->output();
+		const auto& output = renderer()->output();
 		Spectrum spec(renderer()->spectrumDescriptor());
 		ShaderClosure sc;
 

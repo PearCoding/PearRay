@@ -8,9 +8,11 @@ namespace PR {
 class GPU;
 class RenderContext;
 class Scene;
+class SpectrumDescriptor;
 class PR_LIB RenderFactory {
 public:
-	RenderFactory(uint32 width, uint32 height, const Scene& scene,
+	RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc,
+				  uint32 width, uint32 height, const Scene& scene,
 				  const std::string& workingDir, bool useGPU = true);
 	virtual ~RenderFactory();
 
@@ -41,6 +43,9 @@ public:
 	inline std::string workingDir() const { return mWorkingDir; }
 
 	inline GPU* gpu() const { return mGPU; }
+
+	inline const std::shared_ptr<SpectrumDescriptor>& spectrumDescriptor() const { return mSpectrumDescriptor; }
+
 private:
 	uint32 mFullWidth;
 	uint32 mFullHeight;
@@ -49,7 +54,8 @@ private:
 	const Scene& mScene;
 
 	GPU* mGPU;
+	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 
 	RenderSettings mRenderSettings;
 };
-}
+} // namespace PR

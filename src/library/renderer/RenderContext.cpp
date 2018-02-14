@@ -57,7 +57,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint3
 
 	reset();
 
-	mOutputMap = std::make_unique<OutputMap>(this);
+	mOutputMap = std::make_shared<OutputMap>(this);
 }
 
 RenderContext::~RenderContext()

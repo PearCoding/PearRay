@@ -31,14 +31,16 @@ PR_TEST("Equal Energy")
 	env->scene().freeze();
 	env->scene().buildTree();
 
+	std::shared_ptr<SpectrumDescriptor> specDesc = SpectrumDescriptor::createStandardSpectral();
 	auto renderFactory = std::make_shared<RenderFactory>(
+		specDesc,
 		env->renderWidth(),
 		env->renderHeight(),
 		env->scene(), "", true);
 
-	Spectrum diOutput;
-	Spectrum bidiOutput;
-	Spectrum ppmOutput;
+	Spectrum diOutput(specDesc);
+	Spectrum bidiOutput(specDesc);
+	Spectrum ppmOutput(specDesc);
 
 	renderFactory->settings().setSeed(42);
 	renderFactory->settings().setMaxDiffuseBounces(0);

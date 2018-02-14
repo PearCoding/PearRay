@@ -83,7 +83,7 @@ public:
 
 	inline const Scene& scene() const { return mScene; }
 	inline std::string workingDir() const { return mWorkingDir; }
-	inline const std::unique_ptr<OutputMap>& output() const { return mOutputMap; }
+	inline const std::shared_ptr<OutputMap>& output() const { return mOutputMap; }
 	inline GPU* gpu() const { return mGPU; }
 	inline const std::shared_ptr<Camera>& camera() const { return mCamera; }
 
@@ -109,7 +109,7 @@ private:
 
 	const std::shared_ptr<Camera> mCamera;
 	const Scene& mScene;
-	std::unique_ptr<OutputMap> mOutputMap;
+	std::shared_ptr<OutputMap> mOutputMap;
 
 	std::list<RenderEntity*> mLights;
 

@@ -9,13 +9,14 @@
 #endif
 
 namespace PR {
-RenderFactory::RenderFactory(uint32 w, uint32 h, const Scene& scene,
+RenderFactory::RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc, uint32 w, uint32 h, const Scene& scene,
 							 const std::string& workingDir, bool useGPU)
 	: mFullWidth(w)
 	, mFullHeight(h)
 	, mWorkingDir(workingDir)
 	, mScene(scene)
 	, mGPU(nullptr)
+	, mSpectrumDescriptor(specDesc)
 {
 // Setup GPU
 #ifndef PR_NO_GPU
@@ -78,6 +79,6 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 
 	return std::make_shared<RenderContext>(index, x + cropOffsetX(), y + cropOffsetY(),
 										   itw, ith, mFullWidth, mFullHeight,
-										   SpectrumDescriptor::createStandardSpectral(), mScene, mWorkingDir, mGPU, mRenderSettings);
+										   mSpectrumDescriptor, mScene, mWorkingDir, mGPU, mRenderSettings);
 }
 }

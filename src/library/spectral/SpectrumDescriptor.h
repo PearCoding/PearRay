@@ -10,9 +10,9 @@ constexpr uint32 PR_SPECTRAL_WAVELENGTH_STEP	= 5;   // nm
 constexpr uint32 PR_SPECTRAL_WAVELENGTH_SAMPLES = (PR_SPECTRAL_WAVELENGTH_END - PR_SPECTRAL_WAVELENGTH_START) / PR_SPECTRAL_WAVELENGTH_STEP + 1;
 
 constexpr uint32 PR_SPECTRAL_TRIPLET_SAMPLES = 3;
-constexpr float PR_SPECTRAL_TRIPLET_X_LAMBDA = 0;// TODO
-constexpr float PR_SPECTRAL_TRIPLET_Y_LAMBDA = 0;// TODO
-constexpr float PR_SPECTRAL_TRIPLET_Z_LAMBDA = 0;// TODO
+constexpr float PR_SPECTRAL_TRIPLET_X_LAMBDA = 0; // TODO
+constexpr float PR_SPECTRAL_TRIPLET_Y_LAMBDA = 0; // TODO
+constexpr float PR_SPECTRAL_TRIPLET_Z_LAMBDA = 0; // TODO
 
 class PR_LIB SpectrumDescriptor {
 public:
@@ -22,7 +22,8 @@ public:
 
 	inline uint32 samples() const;
 
-	inline const std::vector<float>& get() const;
+	inline const std::vector<float>& getWavelengths() const;
+	inline const std::vector<float>& getLuminousFactors() const;
 
 	inline float wavelength(uint32 index) const;
 	inline void setWavelength(uint32 index, float lambda);
