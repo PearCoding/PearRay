@@ -24,6 +24,7 @@ FUNCTION(PUSH_TEST name files)
 ENDFUNCTION(PUSH_TEST)
 
 PUSH_TEST2(spectrum spectrum.cpp)
+PUSH_TEST(spectrum_lazy spectrum_lazy.cpp)
 PUSH_TEST(plane plane.cpp)
 PUSH_TEST(entity entity.cpp)
 PUSH_TEST(boundingbox boundingbox.cpp)

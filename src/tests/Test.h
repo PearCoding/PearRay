@@ -335,7 +335,7 @@ namespace PRT
 	}
 
 #define PRT_BEGIN_MAIN \
-	int main(int argc, char** argv) \
+	int main(int /*argc*/, char** /*argv*/) \
 	{ \
 		int _errors = 0;
 

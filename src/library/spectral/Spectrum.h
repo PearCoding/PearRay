@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "SpectrumLazyOperator.h"
 
 #include <algorithm>
 
@@ -41,6 +41,9 @@ public:
 	inline const float& operator[](uint32 index) const;
 	inline float& operator[](uint32 index);
 
+	inline const float& operator()(uint32 index) const;
+	inline float& operator()(uint32 index);
+
 	inline float* ptr();
 	inline const float* c_ptr() const;
 
@@ -49,19 +52,10 @@ public:
 	inline void copyTo(float* data) const;
 
 	// Operators
-	inline Spectrum operator+(const Spectrum& spec) const;
 	inline Spectrum& operator+=(const Spectrum& spec);
-
-	inline Spectrum operator-(const Spectrum& spec) const;
 	inline Spectrum& operator-=(const Spectrum& spec);
-
-	inline Spectrum operator*(const Spectrum& spec) const; // Element wise
-	inline Spectrum operator*(float f) const;
 	inline Spectrum& operator*=(const Spectrum& spec);
 	inline Spectrum& operator*=(float f);
-
-	inline Spectrum operator/(const Spectrum& spec) const; // Element wise
-	inline Spectrum operator/(float f) const;
 	inline Spectrum& operator/=(const Spectrum& spec);
 	inline Spectrum& operator/=(float f);
 
@@ -86,12 +80,10 @@ public:
 	// Vector Operations
 	inline void normalize();
 	inline void clamp(float start = 0, float end = 1);
-	inline void lerp(const Spectrum& spec, float t);
 	inline void sqrt();
 
 	inline Spectrum normalized() const;
 	inline Spectrum clamped(float start = 0, float end = 1) const;
-	inline static Spectrum lerp(const Spectrum& spec1, const Spectrum& spec2, float t);
 	inline Spectrum sqrted() const;
 
 	// Photometric Operations
@@ -105,6 +97,29 @@ public:
 	inline static Spectrum gray(const std::shared_ptr<SpectrumDescriptor>& desc, float f);
 
 	static Spectrum blackbody(const std::shared_ptr<SpectrumDescriptor>& desc, float temp); // Temp in Kelvin (K), Output W·sr^−1·m^−3
+
+	// SLO
+	template <typename T, typename = std::enable_if_t<Lazy::is_slo<T>::value>>
+	inline Spectrum(const T& slo);
+	template <typename T>
+	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator=(const T& slo);
+	template <typename T>
+	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator+=(const T& slo);
+	template <typename T>
+	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator-=(const T& slo);
+	template <typename T>
+	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator*=(const T& slo);
+	template <typename T>
+	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator/=(const T& slo);
+
+	template <typename T>
+	inline Lazy::enable_if_slo_t<T, T, void> lerp(const T& slo, float t);
+
+	template <typename T1, typename T2, typename = Lazy::enable_if_slo_t<T1, T2, void>>
+	inline static auto lerp(const T1& spec1, const T2& spec2, float t)
+	{
+		return spec1 * (1 - t) + spec2 * t;
+	}
 
 private:
 	struct Spectrum_Internal {
@@ -121,11 +136,6 @@ private:
 	std::shared_ptr<Spectrum_Internal> mInternal;
 };
 
-inline Spectrum operator*(float f, const Spectrum& spec);
-inline Spectrum operator/(float f, const Spectrum& spec);
-
-inline bool operator==(const Spectrum& v1, const Spectrum& v2);
-inline bool operator!=(const Spectrum& v1, const Spectrum& v2);
 } // namespace PR
 
 #include "Spectrum.inl"

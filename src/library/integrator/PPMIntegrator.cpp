@@ -277,6 +277,7 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 	Spectrum spec(renderer()->spectrumDescriptor());
 	Spectrum radiance   = spec.clone();
 	Spectrum evaluation = spec.clone();
+	Spectrum invRad		= spec.clone();
 
 	PPM_TileData& data = mTileData[session.tile()->index()];
 	for (const PPM_LightTileData& ltd : data.Lights) {
@@ -331,7 +332,8 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 						mPhotonMap->mapDirection(-ray.direction(),
 												 photon.Theta, photon.Phi);
 
-						RGBConverter::convert(radiance * inv,
+						invRad = radiance * inv;
+						RGBConverter::convert(invRad,
 											  photon.Power[0], photon.Power[1], photon.Power[2]);
 
 						mPhotonMap->store(sc.P, photon);
@@ -348,8 +350,7 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 
 					const float NdotL = std::abs(ms.L.dot(sc.N));
 					sc.Material->eval(evaluation, sc, ms.L, NdotL, session);
-					radiance *= evaluation;
-					radiance *= (NdotL / ms.PDF_S);
+					radiance *= evaluation * (NdotL / ms.PDF_S);
 					ray = ray.next(sc.P, ms.L);
 				} else { // Nothing found, abort
 					break;

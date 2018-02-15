@@ -83,7 +83,7 @@ PR_TEST("Direct Integrator")
 	auto it2 = output2.begin();
 	uint32 i = 0;
 	while(it1 != output1.end() && it2 != output2.end()) {
-		const float dif = (*it1 - *it2).sqrSum();
+		const float dif = Spectrum(*it1 - *it2).sqrSum();
 		std::cout << "DI [" << xpos[i] << "|" << ypos[i] << "] " << dif 
 				  << " (" << it1->max() << "|" << it2->max() << ")" << std::endl;
 		PR_CHECK_NEARLY_EQ_EPS(dif, 0, EPS);
@@ -154,7 +154,7 @@ PR_TEST("Bi-Direct Integrator")
 	auto it2 = output2.begin();
 	uint32 i = 0;
 	while(it1 != output1.end() && it2 != output2.end()) {
-		const float dif = (*it1 - *it2).sqrSum();
+		const float dif = Spectrum(*it1 - *it2).sqrSum();
 		std::cout << "BIDI [" << xpos[i] << "|" << ypos[i] << "] " << dif 
 				  << " (" << it1->max() << "|" << it2->max() << ")" << std::endl;
 		PR_CHECK_NEARLY_EQ_EPS(dif, 0, EPS);

@@ -51,6 +51,18 @@ inline float& Spectrum::operator[](uint32 index)
 	return mInternal->Data[index];
 }
 
+inline const float& Spectrum::operator()(uint32 index) const
+{
+	PR_ASSERT(index < samples(), "Bad access");
+	return mInternal->Data[index];
+}
+
+inline float& Spectrum::operator()(uint32 index)
+{
+	PR_ASSERT(index < samples(), "Bad access");
+	return mInternal->Data[index];
+}
+
 inline float* Spectrum::ptr()
 {
 	return mInternal->Data;
@@ -77,13 +89,6 @@ inline void Spectrum::copyTo(float* data) const
 }
 
 // Operators
-inline Spectrum Spectrum::operator+(const Spectrum& spec) const
-{
-	Spectrum tmp = clone();
-	tmp += spec;
-	return tmp;
-}
-
 inline Spectrum& Spectrum::operator+=(const Spectrum& spec)
 {
 	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
@@ -92,12 +97,6 @@ inline Spectrum& Spectrum::operator+=(const Spectrum& spec)
 		setValue(i, value(i) + spec.value(i));
 
 	return *this;
-}
-inline Spectrum Spectrum::operator-(const Spectrum& spec) const
-{
-	Spectrum tmp = clone();
-	tmp -= spec;
-	return tmp;
 }
 
 inline Spectrum& Spectrum::operator-=(const Spectrum& spec)
@@ -110,18 +109,6 @@ inline Spectrum& Spectrum::operator-=(const Spectrum& spec)
 	return *this;
 }
 
-inline Spectrum Spectrum::operator*(const Spectrum& spec) const
-{
-	Spectrum tmp = clone();
-	tmp *= spec;
-	return tmp;
-}
-inline Spectrum Spectrum::operator*(float f) const
-{
-	Spectrum tmp = clone();
-	tmp *= f;
-	return tmp;
-}
 inline Spectrum& Spectrum::operator*=(const Spectrum& spec)
 {
 	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
@@ -138,19 +125,6 @@ inline Spectrum& Spectrum::operator*=(float f)
 		setValue(i, value(i) * f);
 
 	return *this;
-}
-
-inline Spectrum Spectrum::operator/(const Spectrum& spec) const
-{
-	Spectrum tmp = clone();
-	tmp /= spec;
-	return tmp;
-}
-inline Spectrum Spectrum::operator/(float f) const
-{
-	Spectrum tmp = clone();
-	tmp /= f;
-	return tmp;
 }
 
 inline Spectrum& Spectrum::operator/=(const Spectrum& spec)
@@ -302,14 +276,6 @@ inline void Spectrum::clamp(float start, float end)
 		setValue(i, value(i) > end ? end : (value(i) < start ? start : value(i)));
 }
 
-inline void Spectrum::lerp(const Spectrum& spec, float t)
-{
-	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
-
-	for (uint32 i = 0; i < samples(); ++i)
-		setValue(i, value(i) * (1 - t) + spec.value(i) * t);
-}
-
 inline void Spectrum::sqrt()
 {
 	for (uint32 i = 0; i < samples(); ++i)
@@ -327,13 +293,6 @@ inline Spectrum Spectrum::clamped(float start, float end) const
 {
 	Spectrum spec = clone();
 	spec.clamp(start, end);
-	return spec;
-}
-
-inline Spectrum Spectrum::lerp(const Spectrum& spec1, const Spectrum& spec2, float t)
-{
-	Spectrum spec = spec1.clone();
-	spec.lerp(spec2, t);
 	return spec;
 }
 
@@ -360,36 +319,67 @@ inline Spectrum Spectrum::gray(const std::shared_ptr<SpectrumDescriptor>& desc, 
 	return Spectrum(desc, f);
 }
 
-// Global
-inline bool operator==(const Spectrum& v1, const Spectrum& v2)
+// SLO
+template <typename T, typename = std::enable_if_t<Lazy::is_slo<T>::value>>
+inline Spectrum::Spectrum(const T& slo)
+	: Spectrum(slo.descriptor(), slo.spectralStart(), slo.spectralEnd())
 {
-	if (v1.samples() != v2.samples())
-		return false;
-
-	for (uint32 i = 0; i < v1.samples(); ++i) {
-		if (v1.value(i) != v2.value(i))
-			return false;
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, slo(i));
 	}
-	return true;
 }
 
-inline bool operator!=(const Spectrum& v1, const Spectrum& v2)
+template <typename T>
+inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator=(const T& slo)
 {
-	return !(v1 == v2);
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, slo(i));
+	}
+	return *this;
 }
 
-inline Spectrum operator*(float f, const Spectrum& spec)
+template <typename T>
+inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator+=(const T& slo)
 {
-	return spec * f;
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, value(i) + slo(i));
+	}
+	return *this;
 }
 
-inline Spectrum operator/(float f, const Spectrum& spec)
+template <typename T>
+inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator-=(const T& slo)
 {
-	Spectrum tmp = spec.clone();
-
-	for (uint32 i = 0; i < spec.samples(); ++i)
-		tmp.setValue(i, f / spec.value(i));
-
-	return tmp;
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, value(i) - slo(i));
+	}
+	return *this;
 }
+
+template <typename T>
+inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator*=(const T& slo)
+{
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, value(i) * slo(i));
+	}
+	return *this;
+}
+
+template <typename T>
+inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator/=(const T& slo)
+{
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, value(i) / slo(i));
+	}
+	return *this;
+}
+
+template <typename T>
+inline Lazy::enable_if_slo_t<T, T, void> Spectrum::lerp(const T& slo, float t)
+{
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, value(i) * (1 - t) + slo(i) * t);
+	}
+}
+
 } // namespace PR

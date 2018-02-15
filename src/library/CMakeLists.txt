@@ -251,6 +251,7 @@ SET(PR_Spectral_Hdr
   spectral/Spectrum.inl
   spectral/SpectrumDescriptor.h
   spectral/SpectrumDescriptor.inl
+  spectral/SpectrumLazyOperator.h
   spectral/ToneMapper.h
   spectral/xyz2spec.inl
   spectral/XYZConverter.h)
