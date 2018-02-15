@@ -49,9 +49,9 @@ RenderStatus OnePassIntegrator::status() const
 
 	RenderStatus stat;
 	stat.setField("int.max_sample_count", max_samples);
-	stat.setField("int.max_pass_count", (uint64)1);
+	stat.setField("int.max_pass_count", static_cast<uint64>(1));
 
-	stat.setPercentage(renderer()->statistics().pixelSampleCount() / (float)max_samples);
+	stat.setPercentage(renderer()->statistics().pixelSampleCount() / static_cast<float>(max_samples));
 
 	return stat;
 }

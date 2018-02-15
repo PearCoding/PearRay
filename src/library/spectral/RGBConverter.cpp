@@ -3,8 +3,6 @@
 
 #include "SpectrumDescriptor.h"
 
-#include "Diagnosis.h"
-
 namespace PR {
 void RGBConverter::convert(uint32 samples, const float* src, float& x, float& y, float& z)
 {

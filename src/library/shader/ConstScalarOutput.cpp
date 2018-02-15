@@ -2,15 +2,15 @@
 
 #include "Logger.h"
 
-namespace PR
+namespace PR {
+ConstScalarShaderOutput::ConstScalarShaderOutput(float f)
+	: ScalarShaderOutput()
+	, mValue(f)
 {
-	ConstScalarShaderOutput::ConstScalarShaderOutput(float f) :
-		ScalarShaderOutput(), mValue(f)
-	{
-	}
-
-	void ConstScalarShaderOutput::eval(float& f, const PR::ShaderClosure& point)
-	{
-		f = mValue;
-	}
 }
+
+void ConstScalarShaderOutput::eval(float& f, const PR::ShaderClosure& point)
+{
+	f = mValue;
+}
+} // namespace PR

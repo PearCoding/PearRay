@@ -78,7 +78,7 @@ void WardMaterial::setReflectivity(const std::shared_ptr<ScalarShaderOutput>& d)
 struct WM_ThreadData {
 	Spectrum Albedo;
 
-	WM_ThreadData(RenderContext* context)
+	explicit WM_ThreadData(RenderContext* context)
 		: Albedo(context->spectrumDescriptor())
 	{
 	}

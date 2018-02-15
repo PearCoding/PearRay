@@ -68,8 +68,8 @@ void GridMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen:
 
 ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
 {
-	u = (int)(point.UVW(0) * mGridCount);
-	v = (int)(point.UVW(1) * mGridCount);
+	u = static_cast<int>(point.UVW(0) * mGridCount);
+	v = static_cast<int>(point.UVW(1) * mGridCount);
 
 	if (mTiledUV) {
 		ShaderClosure pointN = point;

@@ -147,7 +147,7 @@ private:
 	RenderContext* mRenderer;
 
 	bool mInitialized;
-	
+
 	std::shared_ptr<FrameBufferFloat> mSpectral;
 	std::shared_ptr<FrameBufferFloat> mInt3D[V_3D_COUNT];
 	std::shared_ptr<FrameBufferFloat> mInt1D[V_1D_COUNT];
@@ -158,4 +158,4 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<FrameBufferUInt64>> mCustomCounter;
 	std::unordered_map<std::string, std::shared_ptr<FrameBufferFloat>> mCustomSpectral;
 };
-}
+} // namespace PR

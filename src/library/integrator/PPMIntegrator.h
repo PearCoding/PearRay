@@ -36,7 +36,7 @@ public:
 
 private:
 	void photonPass(const RenderSession& session, uint32 pass);
-	void accumPass(Spectrum& spec, ShaderClosure& sc,const Ray& in, uint32 diffbounces, const RenderSession& session);
+	void accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, uint32 diffbounces, const RenderSession& session);
 
 	Photon::PhotonMap* mPhotonMap;
 
@@ -47,7 +47,7 @@ private:
 	std::vector<struct PPM_Light> mLights;
 	std::vector<struct PPM_TileData> mTileData;
 	std::vector<struct PPM_ThreadData> mThreadData;
-	
+
 	uint64 mMaxPhotonsStoredPerPass;
 };
-}
+} // namespace PR

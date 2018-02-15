@@ -15,7 +15,7 @@ OutputMap::OutputMap(RenderContext* renderer)
 
 OutputMap::~OutputMap()
 {
-	if(mInitialized)
+	if (mInitialized)
 		deinit();
 }
 
@@ -141,14 +141,14 @@ void OutputMap::clear()
 void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc)
 {
 	PR_ASSERT(mInitialized, "OutputMap not initialized");
-	
+
 	uint32 oldSample = getSampleCount(p);
 	float t			 = 1.0f / (oldSample + 1.0f);
 
 	// Spectral
 	float* spec = &mSpectral->getFragmentBounded(p, 0) + s.spectralStart();
-	for(uint32 i = 0; i < s.samples(); ++i) {
-		spec[i] = spec[i]*(1-t)+s.value(i)*t;
+	for (uint32 i = 0; i < s.samples(); ++i) {
+		spec[i] = spec[i] * (1 - t) + s.value(i) * t;
 	}
 	setSampleCount(p, oldSample + 1);
 
@@ -182,7 +182,7 @@ void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const 
 											mInt1D[V_Depth]->getFragmentBounded(p) * (1 - t) + std::sqrt(sc.Depth2) * t);
 	if (mInt1D[V_Time])
 		mInt1D[V_Time]->setFragmentBounded(p, 0,
-										   mInt1D[V_Time]->getFragmentBounded(p) * (1 - t) + (float)sc.T * t);
+										   mInt1D[V_Time]->getFragmentBounded(p) * (1 - t) + static_cast<float>(sc.T) * t);
 	if (mInt1D[V_Material])
 		mInt1D[V_Material]->setFragmentBounded(p, 0,
 											   mInt1D[V_Material]->getFragmentBounded(p) * (1 - t) + (sc.Material ? sc.Material->id() : 0) * t);
@@ -193,7 +193,8 @@ void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const 
 }
 
 // TODO: To heavy cost with new allocation insided Spectrum
-const Spectrum OutputMap::getFragment(const Eigen::Vector2i& p) const {
+const Spectrum OutputMap::getFragment(const Eigen::Vector2i& p) const
+{
 	return Spectrum(mRenderer->spectrumDescriptor(), 0, mSpectral->channels(), &mSpectral->getFragmentBounded(p));
 }
 
@@ -218,12 +219,13 @@ uint64 OutputMap::finishedPixelCount() const
 	return pixelsFinished;
 }
 
-void OutputMap::setValue(Variable3D var, const Eigen::Vector2i& p, float t, const Eigen::Vector3f& val) {
+void OutputMap::setValue(Variable3D var, const Eigen::Vector2i& p, float t, const Eigen::Vector3f& val)
+{
 	const Eigen::Vector3f intp = val * t;
 
-	for(uint32 i = 0; i < 3; ++i) {
-		mInt3D[var]->setFragmentBounded(p, i, mInt3D[var]->getFragmentBounded(p, i)*(1-t) + intp(i));
+	for (uint32 i = 0; i < 3; ++i) {
+		mInt3D[var]->setFragmentBounded(p, i, mInt3D[var]->getFragmentBounded(p, i) * (1 - t) + intp(i));
 	}
 }
 
-}
+} // namespace PR

@@ -58,8 +58,8 @@ public:
 		uint32 phiI   = i % mResPhi;
 		uint32 thetaI = i / mResPhi;
 
-		float phi   = PM_2_PI_F * phiI / (float)mResPhi;
-		float theta = PM_PI_2_DIV_F * thetaI / (float)mResTheta;
+		float phi   = PM_2_PI_F * phiI / static_cast<float>(mResPhi);
+		float theta = PM_PI_2_DIV_F * thetaI / static_cast<float>(mResTheta);
 
 		return Projection::sphere_coord(theta, phi);
 	}
@@ -73,8 +73,8 @@ public:
 		uint32 phiI   = i % mResPhi;
 		uint32 thetaI = i / mResPhi;
 
-		float phi   = PM_2_PI_F * PM::pm_ClampT((phiI + u3) / (float)mResPhi, 0.0f, 1.0f);
-		float theta = PM_PI_2_DIV_F * PM::pm_ClampT((thetaI + u4) / (float)mResTheta, 0.0f, 1.0f);
+		float phi   = PM_2_PI_F * PM::pm_ClampT((phiI + u3) / static_cast<float>(mResPhi), 0.0f, 1.0f);
+		float theta = PM_PI_2_DIV_F * PM::pm_ClampT((thetaI + u4) / static_cast<float>(mResTheta), 0.0f, 1.0f);
 
 		return Projection::sphere_coord(theta, phi);
 	}
@@ -84,4 +84,4 @@ private:
 	uint32 mResTheta;
 	uint32 mResPhi;
 };
-}
+} // namespace PR

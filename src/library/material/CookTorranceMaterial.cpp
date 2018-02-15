@@ -148,7 +148,7 @@ struct CTM_ThreadData {
 	Spectrum Conductor;
 	Spectrum Specularity;
 
-	CTM_ThreadData(RenderContext* context)
+	explicit CTM_ThreadData(RenderContext* context)
 		: IOR(context->spectrumDescriptor())
 		, F(context->spectrumDescriptor())
 		, Conductor(context->spectrumDescriptor())

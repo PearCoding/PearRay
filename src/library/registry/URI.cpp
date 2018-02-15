@@ -131,4 +131,4 @@ URI URI::makeAbsolute(const URI& p, const URI& base)
 
 	return newURI;
 }
-}
+} // namespace PR

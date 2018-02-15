@@ -1,9 +1,9 @@
 #include "BlinnPhongMaterial.h"
+#include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderSession.h"
-#include "ray/Ray.h"
-#include "shader/ConstSpectralOutput.h"
 #include "shader/ConstScalarOutput.h"
+#include "shader/ConstSpectralOutput.h"
 
 #include "math/Fresnel.h"
 #include "math/Projection.h"
@@ -54,24 +54,26 @@ void BlinnPhongMaterial::setFresnelIndex(const std::shared_ptr<SpectrumShaderOut
 struct BPM_ThreadData {
 	Spectrum Index;
 
-	BPM_ThreadData(RenderContext* context) :
-		Index(context->spectrumDescriptor())
-	{}
+	explicit BPM_ThreadData(RenderContext* context)
+		: Index(context->spectrumDescriptor())
+	{
+	}
 };
 
-void BlinnPhongMaterial::setup(RenderContext* context) {
+void BlinnPhongMaterial::setup(RenderContext* context)
+{
 	mThreadData.clear();
-	for(size_t i = 0; context->threads(); ++i) {
+	for (size_t i = 0; context->threads(); ++i) {
 		mThreadData.push_back(std::make_shared<BPM_ThreadData>(context));
 	}
 
-	if(!mAlbedo)
+	if (!mAlbedo)
 		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
 
-	if(!mIndex)
+	if (!mIndex)
 		mIndex = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::gray(context->spectrumDescriptor(), 1.55f));
-	
-	if(!mShininess)
+
+	if (!mShininess)
 		mShininess = std::make_shared<ConstScalarShaderOutput>(0.0f);
 }
 
@@ -95,10 +97,10 @@ void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const 
 	for (uint32 i = 0; i < spec.samples(); ++i) {
 		const float n2 = data->Index.value(i);
 		const float f  = Fresnel::dielectric(VdotH,
-											!(point.Flags & SCF_Inside) ? 1 : n2,
-											!(point.Flags & SCF_Inside) ? n2 : 1);
+											 !(point.Flags & SCF_Inside) ? 1 : n2,
+											 !(point.Flags & SCF_Inside) ? n2 : 1);
 
-		spec.setValue(i, spec.value(i) + f*factor);
+		spec.setValue(i, spec.value(i) + f * factor);
 	}
 }
 
@@ -106,7 +108,7 @@ float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f&
 {
 	const Eigen::Vector3f H = Reflection::halfway(L, point.V);
 	const float NdotH		= std::abs(point.N.dot(H));
-	float n = 0;
+	float n					= 0;
 	mShininess->eval(n, point);
 	return PR_1_PI + std::pow(NdotH, n);
 }
@@ -115,7 +117,7 @@ MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eige
 {
 	MaterialSample ms;
 	ms.L = Projection::tangent_align(point.N,
-										 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
+									 Projection::cos_hemi(rnd(0), rnd(1), ms.PDF_S));
 	ms.PDF_S += BlinnPhongMaterial::pdf(point, ms.L, 0, session);
 	ms.ScatteringType = MST_DiffuseReflection;
 	return ms;
@@ -133,4 +135,4 @@ std::string BlinnPhongMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

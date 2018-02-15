@@ -16,11 +16,12 @@ struct DI_ThreadData {
 	Spectrum Weight;
 	Spectrum Evaluation;
 
-	DI_ThreadData(RenderContext* context) 
+	explicit DI_ThreadData(RenderContext* context)
 		: FullWeight(context->spectrumDescriptor())
 		, Weight(context->spectrumDescriptor())
 		, Evaluation(context->spectrumDescriptor())
-		{}
+	{
+	}
 };
 
 DirectIntegrator::DirectIntegrator(RenderContext* renderer)
@@ -28,12 +29,13 @@ DirectIntegrator::DirectIntegrator(RenderContext* renderer)
 {
 }
 
-void DirectIntegrator::init() {
+void DirectIntegrator::init()
+{
 	OnePassIntegrator::init();
 
 	mThreadData.clear();
-	
-	for(uint32 i = 0; i < renderer()->threads(); ++i)
+
+	for (uint32 i = 0; i < renderer()->threads(); ++i)
 		mThreadData.emplace_back(renderer());
 }
 
@@ -44,8 +46,8 @@ void DirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in,
 }
 
 void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
-									const RenderSession& session,
-									uint32 diffbounces, ShaderClosure& sc)
+								const RenderSession& session,
+								uint32 diffbounces, ShaderClosure& sc)
 {
 	DI_ThreadData& threadData = mThreadData[session.thread()];
 
@@ -80,8 +82,8 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 				continue;
 
 			applyRay(threadData.Weight, in.next(sc.P, ms.L), session,
-							  !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
-							  other_sc);
+					 !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
+					 other_sc);
 
 			//if (!weight.isOnlyZero()) {
 			sc.Material->eval(threadData.Evaluation, sc, ms.L, NdotL, session);
@@ -89,7 +91,7 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 			MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, ms.PDF_S);
 			//}
 
-			if(ms.isSpecular())
+			if (ms.isSpecular())
 				noSpecular = false;
 		}
 	}
@@ -98,7 +100,7 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 		// Area sampling!
 		for (RenderEntity* light : renderer()->lights()) {
 			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
-				const Eigen::Vector3f rnd = session.tile()->random().get3D();
+				const Eigen::Vector3f rnd		  = session.tile()->random().get3D();
 				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
 
 				const Eigen::Vector3f PS = fps.Point.P - sc.P;
@@ -114,8 +116,7 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 				ray.setFlags(ray.flags() | RF_Light);
 
 				// Full light!!
-				if (renderer()->shootWithEmission(threadData.Weight, ray, other_sc, session) == light /*&&
-					(fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+				if (renderer()->shootWithEmission(threadData.Weight, ray, other_sc, session) == light /*&& (fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
@@ -135,4 +136,4 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 
 	spec += threadData.FullWeight;
 }
-}
+} // namespace PR

@@ -125,8 +125,8 @@ void PhotonMap::store(const Eigen::Vector3f& pos, const Photon& pht)
 	approx.Approximation.Position[0] = pht.Position[0]; //* t + approx.Approximation.Position[0]*(1-t);
 	approx.Approximation.Position[1] = pht.Position[1]; // * t + approx.Approximation.Position[1]*(1-t);
 	approx.Approximation.Position[2] = pht.Position[2]; // * t + approx.Approximation.Position[2]*(1-t);
-	approx.Approximation.Phi		= pht.Phi * t + approx.Approximation.Phi * (1 - t);
-	approx.Approximation.Theta		= pht.Theta * t + approx.Approximation.Theta * (1 - t);
+	approx.Approximation.Phi		 = pht.Phi * t + approx.Approximation.Phi * (1 - t);
+	approx.Approximation.Theta		 = pht.Theta * t + approx.Approximation.Theta * (1 - t);
 	approx.Approximation.Power[0]	= pht.Power[0] * t + approx.Approximation.Power[0] * (1 - t);
 	approx.Approximation.Power[1]	= pht.Power[1] * t + approx.Approximation.Power[1] * (1 - t);
 	approx.Approximation.Power[2]	= pht.Power[2] * t + approx.Approximation.Power[2] * (1 - t);
@@ -142,9 +142,9 @@ typename PhotonMap::KeyCoord PhotonMap::toCoords(const Eigen::Vector3f& v) const
 {
 	Eigen::Vector3f s = v * mInvGridDelta;
 	return {
-		(int32)std::floor(s(0)),
-		(int32)std::floor(s(1)),
-		(int32)std::floor(s(2))
+		static_cast<int32>(std::floor(s(0))),
+		static_cast<int32>(std::floor(s(1))),
+		static_cast<int32>(std::floor(s(2)))
 	};
 }
 

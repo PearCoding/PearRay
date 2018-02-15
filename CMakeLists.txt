@@ -159,10 +159,6 @@ ENDIF()
 
 # Setup CPPLINT
 IF(PR_CPP_CHECK)
-	if(NOT PythonInterp_FOUND)
-		find_package(PythonInterp)
-	endif()
-
 	SET(PR_CPPLINT_CMD "cpplint" CACHE FILEPATH "cpplint python script")
 
 	set(PR_CPPLINT_STYLE)
@@ -181,14 +177,9 @@ IF(PR_CPP_CHECK)
 	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-runtime/references,)
 
 	function(add_cpplint_target TARGET_NAME SOURCES_LIST)
-	if(NOT PYTHONINTERP_FOUND)
-		return()
-	endif()
-
 	add_custom_target(${TARGET_NAME}
 		COMMAND "${CMAKE_COMMAND}" -E chdir
 				"${CMAKE_CURRENT_SOURCE_DIR}"
-				"${PYTHON_EXECUTABLE}"
 				"${PR_CPPLINT_CMD}"
 				"--filter=${PR_CPPLINT_STYLE}"
 				"--counting=detailed"

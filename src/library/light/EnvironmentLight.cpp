@@ -21,7 +21,7 @@ IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point,
 	IInfiniteLight::LightSample ls;
 	ls.L = Projection::tangent_align(point.N,
 									 Projection::cos_hemi(rnd(0), rnd(1), ls.PDF_S));
-	
+
 	return ls;
 }
 
@@ -42,4 +42,4 @@ void EnvironmentLight::apply(Spectrum& spec, const Eigen::Vector3f& V, const Ren
 
 	mMaterial->evalEmission(spec, sc, session);
 }
-}
+} // namespace PR

@@ -70,8 +70,8 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 	PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
 	PR_ASSERT(index < itx * ity, "Index has to be in bounds");
 
-	uint32 itw = (uint32)std::ceil(cropWidth() / (float)itx);
-	uint32 ith = (uint32)std::ceil(cropHeight() / (float)ity);
+	uint32 itw = std::ceil(cropWidth() / static_cast<float>(itx));
+	uint32 ith = std::ceil(cropHeight() / static_cast<float>(ity));
 	uint32 ix  = index % itx;
 	uint32 iy  = index / itx;
 	uint32 x   = ix * itw;

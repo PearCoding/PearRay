@@ -61,7 +61,7 @@ struct GM_ThreadData {
 	Spectrum IOR;
 	Spectrum Specularity;
 
-	GM_ThreadData(RenderContext* context) :
+	explicit GM_ThreadData(RenderContext* context) :
 		IOR(context->spectrumDescriptor()), Specularity(context->spectrumDescriptor()) {
 	}
 };

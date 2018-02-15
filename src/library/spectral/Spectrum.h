@@ -19,7 +19,7 @@ public:
 
 	// Copy/Move operations
 	Spectrum(const Spectrum& other) = default;
-	Spectrum(Spectrum&& other) = default;
+	Spectrum(Spectrum&& other)		= default;
 
 	Spectrum& operator=(const Spectrum& other) = default;
 	Spectrum& operator=(Spectrum&& other) = default;
@@ -69,7 +69,7 @@ public:
 	inline void fill(float v);
 	inline void fill(uint32 si, uint32 ei, float v);
 	inline void clear();
-	
+
 	// Apply Functions
 	inline float max() const;	// Amplitude
 	inline float min() const;	// Amplitude
@@ -105,6 +105,7 @@ public:
 	inline static Spectrum gray(const std::shared_ptr<SpectrumDescriptor>& desc, float f);
 
 	static Spectrum blackbody(const std::shared_ptr<SpectrumDescriptor>& desc, float temp); // Temp in Kelvin (K), Output W·sr^−1·m^−3
+
 private:
 	struct Spectrum_Internal {
 		std::shared_ptr<SpectrumDescriptor> Descriptor;
@@ -112,7 +113,7 @@ private:
 		uint32 End;
 		bool External;
 		float* Data;
-		
+
 		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data);
 		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end);
 		~Spectrum_Internal();
@@ -125,6 +126,6 @@ inline Spectrum operator/(float f, const Spectrum& spec);
 
 inline bool operator==(const Spectrum& v1, const Spectrum& v2);
 inline bool operator!=(const Spectrum& v1, const Spectrum& v2);
-}
+} // namespace PR
 
 #include "Spectrum.inl"

@@ -40,11 +40,11 @@ float CoordinateAxisEntity::surfaceArea(Material* m) const
 		//TODO: Add world transformed surface area
 		/*if (flags() & EF_LocalArea)
 		{*/
-			float area = 0;
-			for(int i = 0; i < 3; ++i)
-				area += mAxisBoundingBox_Cache[i].surfaceArea();
-			
-			return area;
+		float area = 0;
+		for (int i = 0; i < 3; ++i)
+			area += mAxisBoundingBox_Cache[i].surfaceArea();
+
+		return area;
 		/*}
 		else
 			return worldBoundingBox().surfaceArea();*/
@@ -156,9 +156,9 @@ RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) con
 		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
 		Eigen::Vector2f uv = plane.project(vertex);
-		c.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
-		c.Point.Material = mMaterials[found].get();
-		c.Successful	 = true;
+		c.Point.UVW		   = Eigen::Vector3f(uv(0), uv(1), 0);
+		c.Point.Material   = mMaterials[found].get();
+		c.Successful	   = true;
 		return c;
 	}
 
@@ -207,7 +207,7 @@ void CoordinateAxisEntity::setup_cache() const
 	mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[2]);
 
 	const float area = surfaceArea(nullptr);
-	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
+	mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 }
 
 // Entity
@@ -226,4 +226,4 @@ void CoordinateAxisEntity::setup(RenderContext* context)
 			mMaterials[i]->setup(context);
 	}
 }
-}
+} // namespace PR

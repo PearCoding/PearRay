@@ -1,7 +1,7 @@
 #include "RenderTile.h"
 #include "RenderContext.h"
-#include "shader/ShaderClosure.h"
 #include "camera/Camera.h"
+#include "shader/ShaderClosure.h"
 
 #include "sampler/HaltonQMCSampler.h"
 #include "sampler/MultiJitteredSampler.h"
@@ -119,14 +119,14 @@ Ray RenderTile::constructCameraRay(const Eigen::Vector2i& pixel, uint32 sample)
 	cameraSample.SensorSize = Eigen::Vector2i(mContext.fullWidth(), mContext.fullHeight());
 	cameraSample.PixelF		= Eigen::Vector2f(x + mContext.offsetX(), y + mContext.offsetY());
 	cameraSample.Pixel		= Eigen::Vector2i(
-		std::min(std::max(mContext.offsetX(), (uint32)std::round(x)),
-				 mContext.offsetX() + mContext.width() - 1),
-		std::min(std::max(mContext.offsetY(), (uint32)std::round(y)),
-				 mContext.offsetY() + mContext.height() - 1));
+		 std::min(std::max<uint32>(mContext.offsetX(), std::round(x)),
+				  mContext.offsetX() + mContext.width() - 1),
+		 std::min(std::max<uint32>(mContext.offsetY(), std::round(y)),
+				  mContext.offsetY() + mContext.height() - 1));
 	cameraSample.R				 = Eigen::Vector2f(lens(0), lens(1));
 	cameraSample.Time			 = t;
 	cameraSample.WavelengthIndex = specInd;
 
 	return mContext.camera()->constructRay(cameraSample);
 }
-}
+} // namespace PR

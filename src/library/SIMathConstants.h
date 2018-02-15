@@ -57,5 +57,5 @@ inline SIBase<Base, Coordinate, std::ratio<2>, std::ratio<1>, std::ratio<-2>, st
 {
 	return 1.3806485279e-23;
 }
-}
-}
+} // namespace constants
+} // namespace SI

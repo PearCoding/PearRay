@@ -89,4 +89,4 @@ private:
 	};
 	std::string mString;
 };
-}
+} // namespace PR

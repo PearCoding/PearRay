@@ -25,15 +25,16 @@ struct I_ThreadData {
 	Spectrum Weight;
 	Spectrum Evaluation;
 
-	I_ThreadData(RenderContext* context)
+	explicit I_ThreadData(RenderContext* context)
 		: SemiWeight(context->spectrumDescriptor())
 		, Weight(context->spectrumDescriptor())
 		, Evaluation(context->spectrumDescriptor())
-		{}
+	{
+	}
 };
 
 Integrator::Integrator(RenderContext* renderer)
-		: mRenderer(renderer)
+	: mRenderer(renderer)
 {
 }
 
@@ -44,20 +45,20 @@ Integrator::~Integrator()
 void Integrator::init()
 {
 	mThreadData.clear();
-	for(uint32 i = 0; i < mRenderer->threads(); ++i)
+	for (uint32 i = 0; i < mRenderer->threads(); ++i)
 		mThreadData.emplace_back(mRenderer);
 }
 
 void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const ShaderClosure& sc, const RenderSession& session, float& full_pdf)
 {
 	I_ThreadData& threadData = mThreadData[session.thread()];
-	full_pdf = 0;
+	full_pdf				 = 0;
 
-	if(renderer()->scene().infiniteLights().empty())
+	if (renderer()->scene().infiniteLights().empty())
 		return;
 
-	const float lightSampleWeight = 1.0f/renderer()->settings().maxLightSamples();
-	const float inflightCountWeight = 1.0f/renderer()->scene().infiniteLights().size();
+	const float lightSampleWeight   = 1.0f / renderer()->settings().maxLightSamples();
+	const float inflightCountWeight = 1.0f / renderer()->scene().infiniteLights().size();
 
 	RandomSampler sampler(session.tile()->random());
 	for (const auto& e : renderer()->scene().infiniteLights()) {
@@ -73,7 +74,7 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 
 			const float NdotL = std::abs(ls.L.dot(sc.N));
 
-			if(NdotL <= PR_EPSILON)
+			if (NdotL <= PR_EPSILON)
 				continue;
 
 			RenderEntity* entity;
@@ -93,7 +94,7 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 		}
 
 		MSI::balance(spec, full_pdf, threadData.SemiWeight,
-			inflightCountWeight * (std::isinf(semi_pdf) ? 1 : semi_pdf));
+					 inflightCountWeight * (std::isinf(semi_pdf) ? 1 : semi_pdf));
 	}
 }
 
@@ -106,7 +107,7 @@ void Integrator::handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderC
 	lastEntity = mRenderer->shoot(ray, other_sc, session);
 
 	if (lastEntity && other_sc.Material) {
-		float NdotL		= std::max(0.0f, ray.direction().dot(other_sc.N));
+		float NdotL = std::max(0.0f, ray.direction().dot(other_sc.N));
 		other_sc.Material->eval(spec, other_sc, ray.direction(), NdotL, session);
 		spec *= NdotL;
 
@@ -114,8 +115,8 @@ void Integrator::handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderC
 			 depth < renderer()->settings().maxRayDepth();
 			 ++depth) {
 			MaterialSample ms = other_sc.Material->sample(other_sc,
-															session.tile()->random().get3D(),
-															session);
+														  session.tile()->random().get3D(),
+														  session);
 
 			if (!std::isinf(ms.PDF_S))
 				break;
@@ -130,10 +131,10 @@ void Integrator::handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderC
 			if (lastEntity && other_sc.Material) {
 				other_sc.Material->eval(threadData.Evaluation, other_sc, ms.L, NdotL, session);
 				spec *= threadData.Evaluation * NdotL;
-			}
-			else
+			} else {
 				break;
+			}
 		}
 	}
 }
-}
+} // namespace PR

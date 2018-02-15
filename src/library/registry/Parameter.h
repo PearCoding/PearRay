@@ -38,7 +38,7 @@ class VectorShaderOutput;
 
 class PR_LIB_INLINE ParameterAccessException : public std::exception {
 public:
-	inline ParameterAccessException(ParameterType type) noexcept;
+	inline explicit ParameterAccessException(ParameterType type) noexcept;
 	inline char const* what() const noexcept override;
 
 	inline ParameterType type() const;
@@ -123,7 +123,7 @@ private:
 	std::shared_ptr<SpectrumShaderOutput> mSpectrumShaderOutput;
 	std::shared_ptr<VectorShaderOutput> mVectorShaderOutput;
 };
-}
+} // namespace PR
 
 #undef _PR_STD_PARAMETER_TYPE
 #undef _PR_STD_PARAMETER_TYPE_PTR

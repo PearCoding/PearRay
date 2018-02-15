@@ -2,15 +2,13 @@
 
 #include "shader/ShaderOutput.h"
 
-namespace PR
-{
-	class PR_LIB ConstScalarShaderOutput : public PR::ScalarShaderOutput
-	{
-	public:
-		ConstScalarShaderOutput(float f);
-		void eval(float& f, const PR::ShaderClosure& point) override;
+namespace PR {
+class PR_LIB ConstScalarShaderOutput : public PR::ScalarShaderOutput {
+public:
+	explicit ConstScalarShaderOutput(float f);
+	void eval(float& f, const PR::ShaderClosure& point) override;
 
-	private:
-		float mValue;
-	};
-}
+private:
+	float mValue;
+};
+} // namespace PR

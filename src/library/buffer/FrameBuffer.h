@@ -81,31 +81,31 @@ public:
 
 	inline void setFragment(const Eigen::Vector2i& p, size_t channel, const T& v)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32) p(0) >= mOffsetX && (uint32) p(0) < mOffsetX + mWidth,
+		PR_ASSERT(p(0) >= 0 && (uint32)p(0) >= mOffsetX && (uint32)p(0) < mOffsetX + mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32) p(1) >= mOffsetY && (uint32) p(1) < mOffsetY + mHeight,
+		PR_ASSERT(p(1) >= 0 && (uint32)p(1) >= mOffsetY && (uint32)p(1) < mOffsetY + mHeight,
 				  "y coord has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		mData[(p(1) - mOffsetY) * mWidth * mChannels + (p(0) - mOffsetX) * mChannels + channel] = v;
 	}
 
-	inline const T& getFragment(const Eigen::Vector2i& p, size_t channel=0) const
+	inline const T& getFragment(const Eigen::Vector2i& p, size_t channel = 0) const
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32) p(0) >= mOffsetX && (uint32) p(0) < mOffsetX + mWidth,
+		PR_ASSERT(p(0) >= 0 && (uint32)p(0) >= mOffsetX && (uint32)p(0) < mOffsetX + mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32) p(1) >= mOffsetY && (uint32) p(1) < mOffsetY + mHeight,
+		PR_ASSERT(p(1) >= 0 && (uint32)p(1) >= mOffsetY && (uint32)p(1) < mOffsetY + mHeight,
 				  "y coord has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		return mData[(p(1) - mOffsetY) * mWidth * mChannels + (p(0) - mOffsetX) * mChannels + channel];
 	}
 
-	inline T& getFragment(const Eigen::Vector2i& p, size_t channel=0)
+	inline T& getFragment(const Eigen::Vector2i& p, size_t channel = 0)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32) p(0) >= mOffsetX && (uint32) p(0) < mOffsetX + mWidth,
+		PR_ASSERT(p(0) >= 0 && (uint32)p(0) >= mOffsetX && (uint32)p(0) < mOffsetX + mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32) p(1) >= mOffsetY && (uint32) p(1) < mOffsetY + mHeight,
+		PR_ASSERT(p(1) >= 0 && (uint32)p(1) >= mOffsetY && (uint32)p(1) < mOffsetY + mHeight,
 				  "y coord has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
@@ -114,31 +114,31 @@ public:
 
 	inline void setFragmentBounded(const Eigen::Vector2i& p, size_t channel, const T& v)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32) p(0) < mWidth,
+		PR_ASSERT(p(0) >= 0 && (uint32)p(0) < mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32) p(1) < mHeight,
+		PR_ASSERT(p(1) >= 0 && (uint32)p(1) < mHeight,
 				  "y coord has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		mData[p(1) * mWidth * mChannels + p(0) * mChannels + channel] = v;
 	}
 
-	inline const T& getFragmentBounded(const Eigen::Vector2i& p, size_t channel=0) const
+	inline const T& getFragmentBounded(const Eigen::Vector2i& p, size_t channel = 0) const
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32) p(0) < mWidth,
+		PR_ASSERT(p(0) >= 0 && (uint32)p(0) < mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32) p(1) < mHeight,
+		PR_ASSERT(p(1) >= 0 && (uint32)p(1) < mHeight,
 				  "y coord has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		return mData[p(1) * mWidth * mChannels + p(0) * mChannels + channel];
 	}
 
-	inline T& getFragmentBounded(const Eigen::Vector2i& p, size_t channel=0)
+	inline T& getFragmentBounded(const Eigen::Vector2i& p, size_t channel = 0)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32) p(0) < mWidth,
+		PR_ASSERT(p(0) >= 0 && (uint32)p(0) < mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32) p(1) < mHeight,
+		PR_ASSERT(p(1) >= 0 && (uint32)p(1) < mHeight,
 				  "y coord has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
@@ -146,24 +146,28 @@ public:
 	}
 
 	// Spectrum
-	inline void getFragment(const Eigen::Vector2i& p, Spectrum& spec) {
+	inline void getFragment(const Eigen::Vector2i& p, Spectrum& spec)
+	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for(uint32 i = 0; i < mChannels; ++i)
+		for (uint32 i = 0; i < mChannels; ++i)
 			spec[i] = getFragment(p, i);
 	}
 
-	inline void getFragmentBounded(const Eigen::Vector2i& p, Spectrum& spec) {
+	inline void getFragmentBounded(const Eigen::Vector2i& p, Spectrum& spec)
+	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for(uint32 i = 0; i < mChannels; ++i)
+		for (uint32 i = 0; i < mChannels; ++i)
 			spec[i] = getFragmentBounded(p, i);
 	}
 
-	inline void setFragment(const Eigen::Vector2i& p, const Spectrum& spec) {
+	inline void setFragment(const Eigen::Vector2i& p, const Spectrum& spec)
+	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
 		spec.copyTo(&getFragment(p));
 	}
 
-	inline void setFragmentBounded(const Eigen::Vector2i& p, const Spectrum& spec) {
+	inline void setFragmentBounded(const Eigen::Vector2i& p, const Spectrum& spec)
+	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
 		spec.copyTo(&getFragmentBounded(p));
 	}
@@ -197,4 +201,4 @@ private:
 
 typedef FrameBuffer<float> FrameBufferFloat;
 typedef FrameBuffer<uint64> FrameBufferUInt64;
-}
+} // namespace PR

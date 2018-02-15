@@ -44,7 +44,7 @@ struct BIDI_ThreadData {
 	std::vector<Spectrum> Weight;
 	std::vector<Spectrum> Evaluation;
 
-	BIDI_ThreadData(RenderContext* context)
+	explicit BIDI_ThreadData(RenderContext* context)
 		: Lock(false)
 		, FullWeight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 		, Weight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
@@ -137,8 +137,8 @@ void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& i
 				threadData.Weight[0] /= fps.PDF_A;
 
 				MaterialSample ms;
-				ms.L = Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
-												 Projection::cos_hemi(session.tile()->random().getFloat(), session.tile()->random().getFloat(), ms.PDF_S));
+				ms.L		= Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
+													Projection::cos_hemi(session.tile()->random().getFloat(), session.tile()->random().getFloat(), ms.PDF_S));
 				float NdotL = std::abs(fps.Point.Ng.dot(ms.L));
 				Ray current = Ray(in.pixel(),
 								  Ray::safePosition(other_sc.P, ms.L),
@@ -151,7 +151,6 @@ void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& i
 				for (uint32 k = 1;
 					 k < maxDepth && lightDepth <= maxDiffBounces && ms.PDF_S > PR_EPSILON && NdotL > PR_EPSILON;
 					 ++k) {
-
 					RenderEntity* entity = renderer()->shoot(current, other_sc, session);
 					if (entity && other_sc.Material && other_sc.Material->canBeShaded()) {
 						ms = other_sc.Material->sample(
@@ -193,7 +192,7 @@ void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& i
 void BiDirectIntegrator::applyRay(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 diffBounces, ShaderClosure& sc)
 {
 	const uint32 maxLightSamples = renderer()->settings().maxLightSamples();
-	const uint32 maxLights		 = maxLightSamples * (uint32)renderer()->lights().size();
+	const uint32 maxLights		 = maxLightSamples * renderer()->lights().size();
 	const uint32 maxDepth		 = renderer()->settings().maxRayDepth();
 
 	RenderEntity* entity = renderer()->shootWithEmission(spec, in, sc, session);
@@ -313,4 +312,4 @@ void BiDirectIntegrator::applyRay(Spectrum& spec, const Ray& in, const RenderSes
 		MSI::balance(spec, full_pdf, threadData.Evaluation[depth], inf_pdf);
 	}
 }
-}
+} // namespace PR

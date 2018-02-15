@@ -17,9 +17,9 @@ Material::Material(uint32 id)
 
 void Material::evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session)
 {
-	if(!mEmission)
+	if (!mEmission)
 		return;
-	
+
 	const float NdotV = std::max(0.0f, -point.Ng.dot(point.V));
 	mEmission->eval(spec, point);
 	spec *= NdotV;
@@ -38,4 +38,4 @@ std::string Material::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

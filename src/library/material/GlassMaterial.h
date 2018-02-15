@@ -27,7 +27,7 @@ public:
 	uint32 samplePathCount() const override;
 
 	void setup(RenderContext* context) override;
-	
+
 	std::string dumpInformation() const override;
 
 private:
@@ -37,4 +37,4 @@ private:
 
 	std::vector<std::shared_ptr<struct GM_ThreadData>> mThreadData;
 };
-}
+} // namespace PR

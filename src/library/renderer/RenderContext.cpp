@@ -128,7 +128,7 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
 	if (threads < 0)
-		threadCount = std::max(1, (int32)threadCount + threads);
+		threadCount = std::max(1, static_cast<int32>(threadCount) + threads);
 	else if (threads > 0)
 		threadCount = threads;
 
@@ -141,8 +141,8 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	mTileMap = std::make_unique<RenderTileMap>(
 		std::max<uint32>(1, tcx),
 		std::max<uint32>(1, tcy),
-		(uint32)std::ceil(mWidth / (float)std::max<uint32>(1, tcx)),
-		(uint32)std::ceil(mHeight / (float)std::max<uint32>(1, tcy)));
+		std::ceil(mWidth / std::max<float>(1, tcx)),
+		std::ceil(mHeight / std::max<float>(1, tcy)));
 	mTileMap->init(*this, mRenderSettings.tileMode());
 
 	// Init modules
@@ -340,4 +340,4 @@ void RenderContext::onNextPass()
 	if (clear)
 		mOutputMap->clear();
 }
-}
+} // namespace PR

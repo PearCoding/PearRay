@@ -125,4 +125,4 @@ inline void URI::setFragment(const std::string& s)
 {
 	mFragment = s;
 }
-}
+} // namespace PR
