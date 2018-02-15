@@ -3,34 +3,32 @@
 #include "SubGraphLoader.h"
 #include <map>
 
-namespace PR
-{
-	class PR_LIB_UTILS WavefrontLoader : public SubGraphLoader
+namespace PR {
+class PR_LIB_UTILS WavefrontLoader : public SubGraphLoader {
+public:
+	explicit WavefrontLoader(const std::map<std::string, std::string>& overrides);
+	~WavefrontLoader();
+
+	inline float scale() const
 	{
-	public:
-		WavefrontLoader(const std::map<std::string, std::string>& overrides);
-		~WavefrontLoader();
+		return mScale;
+	}
 
-		inline float scale() const
-		{
-			return mScale;
-		}
+	inline void setScale(float f)
+	{
+		mScale = f;
+	}
 
-		inline void setScale(float f)
-		{
-			mScale = f;
-		}
+	inline void flipNormal(bool b)
+	{
+		mFlipNormal = b;
+	}
 
-		inline void flipNormal(bool b)
-		{
-			mFlipNormal = b;
-		}
+	void load(const std::string& file, Environment* env) override;
 
-		void load(const std::string& file, Environment* env) override;
-
-	private:
-		std::map<std::string, std::string> mOverrides;
-		float mScale;
-		bool mFlipNormal;
-	};
-}
+private:
+	std::map<std::string, std::string> mOverrides;
+	float mScale;
+	bool mFlipNormal;
+};
+} // namespace PR

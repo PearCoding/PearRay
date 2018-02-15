@@ -49,7 +49,6 @@ option(PR_GENERATE_COVERAGE "Generate coverage for debug builds - Currently only
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
 option(PR_BUILD_DOCUMENTATION "Build documentation with doxygen." ON)
 option(PR_CPP_CHECK "Do style check with cpplint." OFF)
-option(PR_ENABLE_DIAGNOSIS "Enable diagnosis. Will slow down performance. Only for development." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -190,8 +189,10 @@ IF(PR_CPP_CHECK)
 		DEPENDS ${SOURCES_LIST}
 		COMMENT "Checking C++ Style ${TARGET_NAME}"
 		VERBATIM)
-
+	add_dependencies(cppcheck ${TARGET_NAME})
 	endfunction()
+
+	add_custom_target(cppcheck)
 ENDIF()
 
 # Libraries

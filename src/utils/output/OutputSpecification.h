@@ -3,52 +3,48 @@
 #include "ImageWriter.h"
 #include <list>
 
-namespace DL
-{
-	class DataGroup;
+namespace DL {
+class DataGroup;
 }
 
-namespace PR
-{
-	class ToneMapper;
-	class RenderFactory;
+namespace PR {
+class ToneMapper;
+class RenderFactory;
 
-	class Environment;
-	class PR_LIB_UTILS OutputSpecification
-	{
-		PR_CLASS_NON_COPYABLE(OutputSpecification);
-	public:
-		OutputSpecification();
-		virtual ~OutputSpecification();
+class Environment;
+class PR_LIB_UTILS OutputSpecification {
+	PR_CLASS_NON_COPYABLE(OutputSpecification);
 
-		void init(const std::shared_ptr<RenderContext>& context);
-		void deinit();
-		inline bool isInit() const { return mInit; }
+public:
+	OutputSpecification();
+	virtual ~OutputSpecification();
 
-		void setup(const std::shared_ptr<RenderContext>& renderer);
+	void init(const std::shared_ptr<RenderContext>& context);
+	void deinit();
+	inline bool isInit() const { return mInit; }
 
-		void parse(Environment* env, const DL::DataGroup& group);
-		void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
+	void setup(const std::shared_ptr<RenderContext>& renderer);
 
-	private:
-		bool mInit;
-		std::string mWorkingDir;
-		ImageWriter mImageWriter;
+	void parse(Environment* env, const DL::DataGroup& group);
+	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
-		struct File
-		{
-			std::string Name;
-			IM_ChannelSettingSpec* SettingsSpectral;
-			std::vector<IM_ChannelSetting1D> Settings1D;
-			std::vector<IM_ChannelSettingCounter> SettingsCounter;
-			std::vector<IM_ChannelSetting3D> Settings3D;
-		};
-		struct FileSpectral
-		{
-			std::string Name;
-		};
+private:
+	bool mInit;
+	std::string mWorkingDir;
+	ImageWriter mImageWriter;
 
-		std::list<File> mFiles;
-		std::list<FileSpectral> mSpectralFiles;
+	struct File {
+		std::string Name;
+		IM_ChannelSettingSpec* SettingsSpectral;
+		std::vector<IM_ChannelSetting1D> Settings1D;
+		std::vector<IM_ChannelSettingCounter> SettingsCounter;
+		std::vector<IM_ChannelSetting3D> Settings3D;
 	};
-}
+	struct FileSpectral {
+		std::string Name;
+	};
+
+	std::list<File> mFiles;
+	std::list<FileSpectral> mSpectralFiles;
+};
+} // namespace PR

@@ -119,3 +119,7 @@ endif()
 
 set_target_properties(pr_lib_utils PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(pr_lib_utils PRIVATE "${DEFS};PR_LIB_UTILS_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
+
+IF(PR_CPP_CHECK)
+  add_cpplint_target(pr_lib_utils_cppcheck "${PR_Src};${PR_Hdr}")
+ENDIF()

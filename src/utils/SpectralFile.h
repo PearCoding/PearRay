@@ -3,7 +3,7 @@
 #include "spectral/Spectrum.h"
 
 namespace PR {
-	
+
 class SpectrumDescriptor;
 class PR_LIB_UTILS SpectralFile {
 public:
@@ -22,7 +22,7 @@ public:
 	uint32 height() const;
 	float* ptr() const;
 
-private:	
+private:
 	std::shared_ptr<struct SF_Data> mData;
 };
 } // namespace PR

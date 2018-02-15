@@ -9,7 +9,7 @@
 
 #include <list>
 #include <map>
-#include <utility> 
+#include <utility>
 
 namespace PR {
 class Camera;

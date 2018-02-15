@@ -58,4 +58,4 @@ private:
 	float* mRGBData;
 	std::shared_ptr<RenderContext> mRenderer;
 };
-}
+} // namespace PR

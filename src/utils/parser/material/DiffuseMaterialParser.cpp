@@ -1,6 +1,6 @@
 #include "DiffuseMaterialParser.h"
-#include "SceneLoader.h"
 #include "Environment.h"
+#include "SceneLoader.h"
 
 #include "Logger.h"
 
@@ -8,16 +8,15 @@
 
 #include "DataLisp.h"
 
-namespace PR
+namespace PR {
+std::shared_ptr<PR::Material> DiffuseMaterialParser::parse(Environment* env,
+														   const std::string& obj, const DL::DataGroup& group) const
 {
-	std::shared_ptr<PR::Material> DiffuseMaterialParser::parse(Environment* env,
-		const std::string& obj, const DL::DataGroup& group) const
-	{
-		DL::Data albedoD = group.getFromKey("albedo");
+	DL::Data albedoD = group.getFromKey("albedo");
 
-		auto diff = std::make_shared<DiffuseMaterial>(env->materialCount() + 1);
+	auto diff = std::make_shared<DiffuseMaterial>(env->materialCount() + 1);
 
-		diff->setAlbedo(SceneLoader::getSpectralOutput(env, albedoD));
-		return diff;
-	}
+	diff->setAlbedo(SceneLoader::getSpectralOutput(env, albedoD));
+	return diff;
 }
+} // namespace PR

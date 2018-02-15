@@ -403,4 +403,4 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, T
 		PR_LOGGER.logf(L_Error, M_System,
 					   "Couldn't delete lock directory '%s/" LOCK_IMG_FILE_NAME "'!", mWorkingDir.c_str());
 }
-}
+} // namespace PR

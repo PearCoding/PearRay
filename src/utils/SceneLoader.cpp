@@ -90,7 +90,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 			DL::Data rgbD		   = top.getFromKey("rgb");
 
 			std::shared_ptr<SpectrumDescriptor> spectrumDescriptor;
-			if(rgbD.type() == DL::Data::T_Bool && rgbD.getBool())
+			if (rgbD.type() == DL::Data::T_Bool && rgbD.getBool())
 				spectrumDescriptor = SpectrumDescriptor::createTriplet();
 			else
 				spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
@@ -526,7 +526,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		if (grp.isArray()) {
 			for (size_t i = 0; i < grp.anonymousCount() && i < spec.samples(); ++i) {
 				if (grp.at(i).isNumber())
-					spec.setValue((uint32)i, grp.at(i).getNumber());
+					spec.setValue(i, grp.at(i).getNumber());
 				else
 					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at index %i.", i);
 			}
@@ -556,8 +556,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			}
 		} else if (grp.id() == "xyz") {
 			// TODO
-		} else if (grp.id() == "temperature" || grp.id() == "blackbody") // Luminance
-		{
+		} else if (grp.id() == "temperature" || grp.id() == "blackbody") { // Luminance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
@@ -569,8 +568,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
 				spec *= grp.at(1).getNumber();
 			}
-		} else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw") // Radiance
-		{
+		} else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw") { // Radiance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 
@@ -581,8 +579,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
 				spec *= grp.at(1).getNumber();
 			}
-		} else if (grp.id() == "temperature_norm" || grp.id() == "blackbody_norm") // Luminance Norm
-		{
+		} else if (grp.id() == "temperature_norm" || grp.id() == "blackbody_norm") { // Luminance Norm
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
@@ -592,8 +589,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
 				spec *= grp.at(1).getNumber();
 			}
-		} else if (grp.id() == "temperature_raw_norm" || grp.id() == "blackbody_raw_norm") // Radiance Norm
-		{
+		} else if (grp.id() == "temperature_raw_norm" || grp.id() == "blackbody_raw_norm") { // Radiance Norm
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.normalize();
