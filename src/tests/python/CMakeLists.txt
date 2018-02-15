@@ -2,7 +2,13 @@ if(VERBOSE)
 	message(STATUS "Enabling Python Testing")
 endif()
 
-MESSAGE(STATUS "${PYTHON_EXECUTABLE}")
+find_package(PythonInterp)
+
+IF(NOT PYTHON_EXECUTABLE)
+	message(WARNING "No Python executable found! Skipping Python test modules.")
+	return()
+ENDIF()
+
 FUNCTION(PUSH_PY_TEST name)
 	add_test(NAME ${name}_py 
 		COMMAND ${PYTHON_EXECUTABLE}
