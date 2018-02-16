@@ -4,6 +4,7 @@
 
 #include "math/Generator.h"
 
+#include "Logger.h"
 namespace PR {
 RenderTileMap::RenderTileMap(uint32 xcount, uint32 ycount, uint32 tilewidth, uint32 tileheight)
 	: mTileXCount(xcount)
@@ -32,6 +33,7 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 	// New data
 	mTileMap.resize(mTileXCount * mTileYCount, nullptr);
 
+	//PR_LOGGER.logf(L_Warning, M_Scene, "%d, %d, %d, %d, %d, %d", mTileXCount, mTileYCount, mTileWidth, mTileHeight, context.width(), context.height());
 	switch (mode) {
 	default:
 	case TM_Linear:
@@ -61,7 +63,7 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 					sy,
 					std::min(context.width(), sx + mTileWidth),
 					std::min(context.height(), sy + mTileHeight),
-					context, i * mTileXCount + j);
+					context, k);
 				++k;
 			}
 		}
@@ -76,7 +78,7 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 					sy,
 					std::min(context.width(), sx + mTileWidth),
 					std::min(context.height(), sy + mTileHeight),
-					context, i * mTileXCount + j);
+					context, k);
 				++k;
 			}
 		}
@@ -89,13 +91,13 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 			const auto tx = mTileXCount / 2 + p[0];
 			const auto ty = mTileYCount / 2 + p[1];
 
-			if (tx >= 0 && tx < mTileXCount && ty >= 0 && ty < mTileYCount) {
+			if (tx < mTileXCount && ty < mTileYCount) {
 				mTileMap[i] = new RenderTile(
 					tx * mTileWidth,
 					ty * mTileHeight,
 					std::min(context.width(), tx * mTileWidth + mTileWidth),
 					std::min(context.height(), ty * mTileHeight + mTileHeight),
-					context, ty * mTileXCount + tx);
+					context, i);
 				++i;
 			}
 		}

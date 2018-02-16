@@ -26,7 +26,7 @@ std::shared_ptr<PR::Entity> CameraParser::parse(Environment* env, const std::str
 	DL::Data localRightD = group.getFromKey("localRight");
 	DL::Data localUpD	= group.getFromKey("localUp");
 
-	auto camera = std::make_shared<StandardCamera>(env->scene().entities().size() + 1, name);
+	auto camera = std::make_shared<StandardCamera>(env->sceneFactory().entities().size() + 1, name);
 
 	if (fovVD.isNumber() || fovHD.isNumber()) {
 		float fovH = 60;

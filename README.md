@@ -25,7 +25,6 @@ There is an open source (still experimental) blender integration addon available
  - Intel Threading Building Blocks https://www.threadingbuildingblocks.org/
 
 ### Optional
- - OpenCL https://www.khronos.org/opencl/
  - OSL https://github.com/imageworks/OpenShadingLanguage
  - Qt https://www.qt.io/
  - pybind11 https://github.com/pybind/pybind11

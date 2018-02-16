@@ -30,7 +30,7 @@ Spectrum::Spectrum_Internal::Spectrum_Internal(const std::shared_ptr<SpectrumDes
 
 Spectrum::Spectrum_Internal::~Spectrum_Internal()
 {
-	if (External && Data) {
+	if (!External && Data) {
 		delete[] Data;
 	}
 }

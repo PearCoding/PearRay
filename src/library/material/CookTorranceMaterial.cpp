@@ -161,7 +161,7 @@ constexpr float MinRoughness = 0.001f;
 void CookTorranceMaterial::setup(RenderContext* context)
 {
 	mThreadData.clear();
-	for (size_t i = 0; context->threads(); ++i) {
+	for (size_t i = 0; i < context->threads(); ++i) {
 		mThreadData.push_back(std::make_shared<CTM_ThreadData>(context));
 	}
 

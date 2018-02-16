@@ -32,7 +32,7 @@ class PR_LIB RenderContext {
 
 public:
 	RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-				  const std::shared_ptr<SpectrumDescriptor>& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
+				  const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -81,8 +81,8 @@ public:
 	RenderStatistics statistics() const;
 	RenderStatus status() const;
 
-	inline const Scene& scene() const { return mScene; }
-	inline std::string workingDir() const { return mWorkingDir; }
+	inline const std::shared_ptr<Scene>& scene() const { return mScene; }
+	inline const std::string& workingDir() const { return mWorkingDir; }
 	inline const std::shared_ptr<OutputMap>& output() const { return mOutputMap; }
 	inline GPU* gpu() const { return mGPU; }
 	inline const std::shared_ptr<Camera>& camera() const { return mCamera; }
@@ -105,10 +105,10 @@ private:
 	const uint32 mFullHeight;
 	const std::string mWorkingDir;
 
-	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
+	const std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 
 	const std::shared_ptr<Camera> mCamera;
-	const Scene& mScene;
+	const std::shared_ptr<Scene> mScene;
 	std::shared_ptr<OutputMap> mOutputMap;
 
 	std::list<RenderEntity*> mLights;

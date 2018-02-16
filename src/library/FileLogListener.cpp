@@ -2,6 +2,7 @@
 
 #include <ctime>
 #include <thread>
+#include <iomanip>
 
 namespace PR {
 FileLogListener::FileLogListener()
@@ -33,7 +34,9 @@ void FileLogListener::newEntry(Level level, Module m, const std::string& str)
 #else
 	gmtime_s(&ptm, &t);
 #endif
-	mStream << ptm.tm_hour << ":" << ptm.tm_min << ":" << ptm.tm_sec
+	mStream << std::setw(2) << std::setfill('0') << ptm.tm_hour
+			<< ":" << std::setw(2) << ptm.tm_min << ":"
+			<< std::setw(2) << ptm.tm_sec
 			<< "(" << c << ")> {"
 			<< std::this_thread::get_id() << "} ["
 			<< Logger::levelString(level) << "] ("

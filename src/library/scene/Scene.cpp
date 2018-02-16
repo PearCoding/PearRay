@@ -10,33 +10,26 @@
 namespace PR {
 typedef kdTree<RenderEntity, true> SceneKDTree;
 
-Scene::Scene(const std::string& name)
+Scene::Scene(const std::string& name,
+			 const std::shared_ptr<Camera>& activeCamera,
+			 const std::list<std::shared_ptr<Entity>>& entities,
+			 const std::list<std::shared_ptr<RenderEntity>>& renderentities,
+			 const std::list<std::shared_ptr<IInfiniteLight>>& lights)
 	: mName(name)
+	, mActiveCamera(activeCamera)
+	, mEntities(entities)
+	, mRenderEntities(renderentities)
+	, mInfiniteLights(lights)
 	, mKDTree(nullptr)
 {
 }
 
 Scene::~Scene()
 {
-	clear();
-}
-
-void Scene::addEntity(const std::shared_ptr<Entity>& e)
-{
-	PR_ASSERT(e, "Given entity should be valid");
-	if (e->isRenderable())
-		mRenderEntities.push_back(std::static_pointer_cast<RenderEntity>(e));
-	else
-		mEntities.push_back(e);
-}
-
-void Scene::removeEntity(const std::shared_ptr<Entity>& e)
-{
-	PR_ASSERT(e, "Given entity should be valid");
-	if (e->isRenderable())
-		mRenderEntities.remove(std::static_pointer_cast<RenderEntity>(e));
-	else
-		mEntities.remove(e);
+	if (mKDTree) {
+		delete reinterpret_cast<SceneKDTree*>(mKDTree);
+		mKDTree = nullptr;
+	}
 }
 
 std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::string& type) const
@@ -54,48 +47,21 @@ std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::str
 	return nullptr;
 }
 
-void Scene::addInfiniteLight(const std::shared_ptr<IInfiniteLight>& e)
-{
-	PR_ASSERT(e, "Given light should be valid");
-	mInfiniteLights.push_back(e);
-}
-
-void Scene::removeInfiniteLight(const std::shared_ptr<IInfiniteLight>& e)
-{
-	PR_ASSERT(e, "Given light should be valid");
-	mInfiniteLights.remove(e);
-}
-
-void Scene::setActiveCamera(const std::shared_ptr<Camera>& c)
-{
-	PR_ASSERT(c, "Given camera should be valid");
-	mActiveCamera = c;
-}
-
 const std::shared_ptr<Camera>& Scene::activeCamera() const
 {
 	return mActiveCamera;
 }
 
-void Scene::clear()
-{
-	mEntities.clear();
-	mRenderEntities.clear();
-	mInfiniteLights.clear();
-	mActiveCamera.reset();
-
-	if (mKDTree) {
-		delete reinterpret_cast<SceneKDTree*>(mKDTree);
-		mKDTree = nullptr;
-	}
-}
-
-void Scene::buildTree()
+void Scene::buildTree(bool force)
 {
 	if (mKDTree) {
-		PR_LOGGER.log(L_Info, M_Scene, "kdTree already exists, deleting old one.");
-		delete reinterpret_cast<SceneKDTree*>(mKDTree);
-		mKDTree = nullptr;
+		if(force) {
+			PR_LOGGER.log(L_Info, M_Scene, "kdTree already exists, deleting old one.");
+			delete reinterpret_cast<SceneKDTree*>(mKDTree);
+			mKDTree = nullptr;
+		} else {
+			return;
+		}
 	}
 
 	PR_LOGGER.logf(L_Info, M_Scene, "%i Render Entities", mRenderEntities.size());
@@ -104,7 +70,7 @@ void Scene::buildTree()
 		[](RenderEntity* e) { return e->worldBoundingBox(); },
 		[](const Ray& ray, FacePoint& point, RenderEntity* e) {
 			RenderEntity::Collision c = e->checkCollision(ray);
-			point = c.Point;
+			point					  = c.Point;
 			return (c.Successful
 					&& ((ray.flags() & RF_Debug)
 						|| ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
@@ -154,10 +120,15 @@ void Scene::freeze()
 		e->freeze();
 }
 
-void Scene::setup(const std::shared_ptr<RenderContext>& context)
+void Scene::setup(RenderContext* context, bool force)
 {
+	PR_LOGGER.log(L_Info, M_Scene, "Freezing scene");
+	freeze();
+	PR_LOGGER.log(L_Info, M_Scene, "Starting to build global space-partitioning structure");
+	buildTree(force);
+	PR_LOGGER.log(L_Info, M_Scene, "Initializing render entities");
 	for (const auto& e : mRenderEntities)
-		e->setup(context.get());
+		e->setup(context);
 }
 
 BoundingBox Scene::boundingBox() const

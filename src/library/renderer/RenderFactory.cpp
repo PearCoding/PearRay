@@ -9,7 +9,8 @@
 #endif
 
 namespace PR {
-RenderFactory::RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc, uint32 w, uint32 h, const Scene& scene,
+RenderFactory::RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc,
+							 uint32 w, uint32 h, const std::shared_ptr<Scene>& scene,
 							 const std::string& workingDir, bool useGPU)
 	: mFullWidth(w)
 	, mFullHeight(h)
@@ -61,7 +62,7 @@ uint32 RenderFactory::cropOffsetY() const
 
 std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
 {
-	if (!mScene.activeCamera()) {
+	if (!mScene->activeCamera()) {
 		PR_LOGGER.log(L_Error, M_Scene, "No active camera selected");
 		return std::shared_ptr<RenderContext>();
 	}

@@ -9,8 +9,6 @@
 #include "spectral/ToneMapper.h"
 #include "spectral/SpectrumDescriptor.h"
 
-#include "gpu/GPU.h"
-
 #include "FileLogListener.h"
 
 #include "ProgramSettings.h"
@@ -66,7 +64,7 @@ int main(int argc, char** argv)
 		return -2;
 	}
 
-	if(!env->scene().activeCamera())
+	if(!env->sceneFactory().activeCamera())
 	{
 		if(!options.IsQuiet)
 			std::cout << "Error: No camera specified." << std::endl;
@@ -76,11 +74,12 @@ int main(int argc, char** argv)
 
 	// Setup renderFactory
 	PR_BEGIN_PROFILE_ID(1);
+	auto scene = env->sceneFactory().create();
 	PR::RenderFactory* renderFactory = new PR::RenderFactory(
 		PR::SpectrumDescriptor::createStandardSpectral(),
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
-		env->scene(), options.OutputDir, true);
+		scene, options.OutputDir, true);
 	renderFactory->setSettings(options.RenderSettings);
 
 	if(options.CropMinXOverride >= 0 &&
@@ -105,14 +104,6 @@ int main(int argc, char** argv)
 
 	PR_END_PROFILE_ID(1);
 
-	PR_BEGIN_PROFILE_ID(2);
-	env->scene().freeze();// Freeze entities
-	PR_END_PROFILE_ID(2);
-
-	PR_BEGIN_PROFILE_ID(3);
-	env->scene().buildTree();
-	PR_END_PROFILE_ID(3);
-
 	// Render per image tile
 	for(PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i)
 	{
@@ -133,12 +124,11 @@ int main(int argc, char** argv)
 		}
 
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 			
 		if(options.ShowInformation)
 			env->dumpInformation();
 		
-		PR::ToneMapper toneMapper(renderer->width(), renderer->height(), renderFactory->gpu());
+		PR::ToneMapper toneMapper(renderer->width(), renderer->height());
 
 		if(options.ShowProgress)
 			std::cout << "preprocess" << std::endl;

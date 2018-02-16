@@ -28,14 +28,12 @@ PR_TEST("Direct Integrator")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
+	auto scene = env->sceneFactory().create();
 	auto renderFactory = std::make_shared<RenderFactory>(
 		SpectrumDescriptor::createStandardSpectral(),
 		env->renderWidth(),
 		env->renderHeight(),
-		env->scene(), "", true);
-
-	env->scene().freeze();
-	env->scene().buildTree();
+		scene, "", true);
 
 	std::list<Spectrum> output1;
 	std::list<Spectrum> output2;
@@ -48,7 +46,6 @@ PR_TEST("Direct Integrator")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 
@@ -66,7 +63,6 @@ PR_TEST("Direct Integrator")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 
@@ -99,14 +95,12 @@ PR_TEST("Bi-Direct Integrator")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
+	auto scene = env->sceneFactory().create();
 	auto renderFactory = std::make_shared<RenderFactory>(
 		SpectrumDescriptor::createStandardSpectral(),
 		env->renderWidth(),
 		env->renderHeight(),
-		env->scene(), "", true);
-
-	env->scene().freeze();
-	env->scene().buildTree();
+		scene, "", true);
 
 	std::list<Spectrum> output1;
 	std::list<Spectrum> output2;
@@ -119,7 +113,6 @@ PR_TEST("Bi-Direct Integrator")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 
@@ -137,7 +130,6 @@ PR_TEST("Bi-Direct Integrator")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 
@@ -170,13 +162,11 @@ PR_TEST("Bi-Direct Integrator")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
+	auto scene = env->sceneFactory().create();
 	auto renderFactory = std::make_shared<RenderFactory>(
 		env->renderWidth(),
 		env->renderHeight(),
-		env->scene(), "", true);
-
-	env->scene().freeze();
-	env->scene().buildTree();
+		scene, "", true);
 
 	Spectrum output1[POS_COUNT];
 	Spectrum output2[POS_COUNT];
@@ -191,7 +181,6 @@ PR_TEST("Bi-Direct Integrator")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 

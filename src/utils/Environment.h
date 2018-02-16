@@ -1,7 +1,7 @@
 #pragma once
 
 #include "output/OutputSpecification.h"
-#include "scene/Scene.h"
+#include "scene/SceneFactory.h"
 #include "shader/ShaderOutput.h"
 #include "spectral/Spectrum.h"
 
@@ -22,14 +22,14 @@ public:
 	explicit Environment(const std::shared_ptr<SpectrumDescriptor>& desc, const std::string& name);
 	virtual ~Environment();
 
-	inline Scene& scene()
+	inline SceneFactory& sceneFactory()
 	{
-		return mScene;
+		return mSceneFactory;
 	}
 
-	inline const Scene& scene() const
+	inline const SceneFactory& sceneFactory() const
 	{
-		return mScene;
+		return mSceneFactory;
 	}
 
 	inline const std::shared_ptr<SpectrumDescriptor>& spectrumDescriptor() const
@@ -209,7 +209,7 @@ public:
 	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
 private:
-	Scene mScene;
+	SceneFactory mSceneFactory;
 	uint32 mRenderWidth;
 	uint32 mRenderHeight;
 

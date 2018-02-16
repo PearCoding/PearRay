@@ -230,8 +230,6 @@ po::options_description setup_cmd_options()
 
 	po::options_description render_d("Render[*]");
 	render_d.add_options()
-		("inc", po::value<bool>(),
-			"Render incremental.")
 		("debug",
 			po::value<EnumOption<DebugMode> >(),
 		 	(std::string("Debug Mode [") + EnumOption<DebugMode>::get_names() + "]").c_str())
@@ -351,7 +349,6 @@ po::options_description setup_ini_options()
 		("scene.crop", fixed_tokens_value<std::vector<float> >(4,4))
 		("scene.tile_x", po::value<PR::uint32>())
 		("scene.tile_y", po::value<PR::uint32>())
-		("renderer.incremental", po::value<bool>()->default_value(DefaultRenderSettings.isIncremental()))
 		("renderer.integrator",
 			po::value<EnumOption<IntegratorMode> >()->default_value(DefaultRenderSettings.integratorMode()))
 		("renderer.debug",
@@ -498,7 +495,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setTileMode(ini["threads.tile_mode"].as<EnumOption<TileMode> >());
 
 		// RenderContext
-		RenderSettings.setIncremental(ini["renderer.incremental"].as<bool>());
 		RenderSettings.setIntegratorMode(ini["renderer.integrator"].as<EnumOption<IntegratorMode> >());
 		RenderSettings.setDebugMode(ini["renderer.debug"].as<EnumOption<DebugMode> >());
 
@@ -644,8 +640,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 		RenderSettings.setTileMode(vm["rtm"].as<EnumOption<TileMode> >());
 
 	// Renderer
-	if(vm.count("inc"))
-		RenderSettings.setIncremental(vm["inc"].as<bool>());
 	if(vm.count("integrator"))
 		RenderSettings.setIntegratorMode(vm["integrator"].as<EnumOption<IntegratorMode> >());
 	if(vm.count("debug"))

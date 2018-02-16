@@ -167,8 +167,8 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 
 			DL::Data cameraD = top.getFromKey("camera");
 			if (cameraD.type() == DL::Data::T_String) {
-				auto cam = env->scene().getEntity(cameraD.getString(), "standard_camera");
-				env->scene().setActiveCamera(std::static_pointer_cast<Camera>(cam));
+				auto cam = env->sceneFactory().getEntity(cameraD.getString(), "standard_camera");
+				env->sceneFactory().setActiveCamera(std::static_pointer_cast<Camera>(cam));
 			}
 
 			return env;
@@ -213,7 +213,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 		PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. No valid type given.", name.c_str());
 		return;
 	} else if (typeD.getString() == "null" || typeD.getString() == "empty") {
-		entity = std::make_shared<Entity>(env->scene().entities().size() + 1, name);
+		entity = std::make_shared<Entity>(env->sceneFactory().entities().size() + 1, name);
 	} else {
 		const IEntityParser* parser = nullptr;
 		for (int i = 0; EntityParserEntries[i].Name; ++i) {
@@ -295,7 +295,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 	}
 
 	// Add to scene
-	env->scene().addEntity(entity);
+	env->sceneFactory().addEntity(entity);
 
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		if (group.at(i).type() == DL::Data::T_Group) {
@@ -358,7 +358,7 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 	}
 
 	PR_ASSERT(light, "After here it shouldn't be null");
-	env->scene().addInfiniteLight(light);
+	env->sceneFactory().addInfiniteLight(light);
 }
 
 struct

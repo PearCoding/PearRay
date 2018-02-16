@@ -11,9 +11,6 @@ public:
 	inline uint32 seed() const { return mSeed; }
 	inline void setSeed(uint64 s) { mSeed = s; }
 
-	inline bool isIncremental() const { return mIncremental; }
-	inline void setIncremental(bool b) { mIncremental = b; }
-
 	inline DebugMode debugMode() const { return mDebugMode; }
 	inline void setDebugMode(DebugMode mode) { mDebugMode = mode; }
 
@@ -90,7 +87,6 @@ public:
 
 private:
 	uint64 mSeed;
-	bool mIncremental;
 	DebugMode mDebugMode;
 	IntegratorMode mIntegratorMode;
 

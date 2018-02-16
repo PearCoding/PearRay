@@ -12,7 +12,7 @@ class SpectrumDescriptor;
 class PR_LIB RenderFactory {
 public:
 	RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc,
-				  uint32 width, uint32 height, const Scene& scene,
+				  uint32 width, uint32 height, const std::shared_ptr<Scene>& scene,
 				  const std::string& workingDir, bool useGPU = true);
 	virtual ~RenderFactory();
 
@@ -37,7 +37,7 @@ public:
 	inline RenderSettings& settings() { return mRenderSettings; }
 	inline const RenderSettings& settings() const { return mRenderSettings; }
 
-	inline const Scene& scene() const { return mScene; }
+	inline const std::shared_ptr<Scene>& scene() const { return mScene; }
 
 	inline void setWorkingDir(const std::string& dir) { mWorkingDir = dir; }
 	inline std::string workingDir() const { return mWorkingDir; }
@@ -51,7 +51,7 @@ private:
 	uint32 mFullHeight;
 	std::string mWorkingDir;
 
-	const Scene& mScene;
+	std::shared_ptr<Scene> mScene;
 
 	GPU* mGPU;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;

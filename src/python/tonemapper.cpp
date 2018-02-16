@@ -78,7 +78,7 @@ void setup_tonemapper(py::module& m)
 		.def_property_readonly("height", &ColorBuffer::height);
 
 	py::class_<ToneMapper>(m, "ToneMapper")
-		.def(py::init([](uint32 w, uint32 h) { return std::make_unique<ToneMapper>(w, h, nullptr); }))
+		.def(py::init<uint32,uint32>())
 		.def("map", [](ToneMapper& tm, Array specIn, size_t elems) {
 			// specIn
 			py::buffer_info info1 = specIn.request();

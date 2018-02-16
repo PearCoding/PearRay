@@ -20,7 +20,7 @@ std::shared_ptr<PR::Entity> SphereParser::parse(Environment* env, const std::str
 	else
 		PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has no radius. Assuming 1.", name.c_str());
 
-	auto sphere = std::make_shared<SphereEntity>(env->scene().entities().size() + 1, name, r);
+	auto sphere = std::make_shared<SphereEntity>(env->sceneFactory().entities().size() + 1, name, r);
 
 	if (materialD.type() == DL::Data::T_String) {
 		if (env->hasMaterial(materialD.getString()))

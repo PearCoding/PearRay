@@ -15,7 +15,7 @@ namespace PRPY {
 void setup_renderer(py::module& m)
 {
 	py::class_<RenderFactory>(m, "RenderFactory")
-		.def(py::init<const std::shared_ptr<SpectrumDescriptor>&, uint32, uint32, const Scene&, const std::string&, bool>())
+		.def(py::init<const std::shared_ptr<SpectrumDescriptor>&, uint32, uint32, const std::shared_ptr<Scene>&, const std::string&, bool>())
 		.def_property("fullWidth", &RenderFactory::fullWidth, &RenderFactory::setFullWidth)
 		.def_property("fullHeight", &RenderFactory::fullHeight, &RenderFactory::setFullHeight)
 		.def_property_readonly("cropWidth", &RenderFactory::cropWidth)

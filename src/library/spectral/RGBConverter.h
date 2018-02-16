@@ -2,8 +2,6 @@
 
 #include "Spectrum.h"
 
-#include "gpu/GPU.h"
-
 namespace PR {
 class GPU;
 class PR_LIB RGBConverter {

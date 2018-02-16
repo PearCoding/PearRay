@@ -28,15 +28,13 @@ PR_TEST("Equal Energy")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
-	env->scene().freeze();
-	env->scene().buildTree();
-
 	std::shared_ptr<SpectrumDescriptor> specDesc = SpectrumDescriptor::createStandardSpectral();
+	auto scene = env->sceneFactory().create();
 	auto renderFactory = std::make_shared<RenderFactory>(
 		specDesc,
 		env->renderWidth(),
 		env->renderHeight(),
-		env->scene(), "", true);
+		scene, "", true);
 
 	Spectrum diOutput(specDesc);
 	Spectrum bidiOutput(specDesc);
@@ -51,7 +49,6 @@ PR_TEST("Equal Energy")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 
@@ -67,7 +64,6 @@ PR_TEST("Equal Energy")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 
@@ -85,7 +81,6 @@ PR_TEST("Equal Energy")
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 
 		renderer->start(8, 8, THREADS);
 

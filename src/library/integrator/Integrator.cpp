@@ -54,14 +54,14 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 	I_ThreadData& threadData = mThreadData[session.thread()];
 	full_pdf				 = 0;
 
-	if (renderer()->scene().infiniteLights().empty())
+	if (renderer()->scene()->infiniteLights().empty())
 		return;
 
 	const float lightSampleWeight   = 1.0f / renderer()->settings().maxLightSamples();
-	const float inflightCountWeight = 1.0f / renderer()->scene().infiniteLights().size();
+	const float inflightCountWeight = 1.0f / renderer()->scene()->infiniteLights().size();
 
 	RandomSampler sampler(session.tile()->random());
-	for (const auto& e : renderer()->scene().infiniteLights()) {
+	for (const auto& e : renderer()->scene()->infiniteLights()) {
 		float semi_pdf = 0;
 
 		for (uint32 i = 0;

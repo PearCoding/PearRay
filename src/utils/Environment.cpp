@@ -11,7 +11,7 @@
 
 namespace PR {
 Environment::Environment(const std::shared_ptr<SpectrumDescriptor>& desc, const std::string& name)
-	: mScene(name)
+	: mSceneFactory(name)
 	, mRenderWidth(1920)
 	, mRenderHeight(1080)
 	, mCropMinX(0)
@@ -44,13 +44,13 @@ Environment::Environment(const std::shared_ptr<SpectrumDescriptor>& desc, const 
 
 Environment::~Environment()
 {
-	mScene.clear();
+	mSceneFactory.clear();
 	OIIO::TextureSystem::destroy(mTextureSystem);
 }
 
 void Environment::dumpInformation() const
 {
-	for (const auto& p : mScene.entities())
+	for (const auto& p : mSceneFactory.entities())
 		PR_LOGGER.logf(L_Info, M_Entity, "%s:\n%s",
 					   p->name().c_str(), p->dumpInformation().c_str());
 
@@ -61,14 +61,8 @@ void Environment::dumpInformation() const
 
 void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 {
-	PR_LOGGER.log(L_Info, M_Scene, "Freezing scene");
-	mScene.freeze();
-	PR_LOGGER.log(L_Info, M_Scene, "Starting to build space-partitioning structure");
-	mScene.buildTree();
 	PR_LOGGER.log(L_Info, M_Scene, "Initializing output");
 	mOutputSpecification.setup(renderer);
-	PR_LOGGER.log(L_Info, M_Scene, "Initializing scene");
-	mScene.setup(renderer);
 }
 
 void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const

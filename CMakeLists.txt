@@ -38,7 +38,6 @@ ENDIF()
 option(PR_ONLY_LIBRARY "Compile only the main and util library." OFF)
 option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
 option(PR_WITH_ASSERTS "Compile with asserts on. Disable only in deployment code!" ON)
-option(PR_WITH_GPU_SUPPORT "Build framework with GPU support if available." ON)
 option(PR_WITH_PYTHON "Compile with python API (using pybind11)." ON)
 option(PR_WITH_OSL "Compile with OSL support if available." ON)
 option(PR_USE_TRIANGLE_WATERTIGHT "Use Watertight triangle intersection algorithm instead of Trombore." OFF)
@@ -62,9 +61,6 @@ find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options R
 
 IF(PR_BUILD_VIEWER)
 	find_package(Qt5Widgets)
-ENDIF()
-IF(PR_WITH_GPU_SUPPORT)
-	find_package(OpenCL)
 ENDIF()
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)
@@ -117,11 +113,6 @@ IF(WIN32)
 	SET(DEFS ${DEFS} OPENEXR_DLL)
 ENDIF()
 
-IF(OpenCL_FOUND)
-	SET(PR_WITH_GPU)
-	MESSAGE(STATUS "Using OpenCL")
-ENDIF()
-
 IF(OIIO_LINK_STATIC)
 	SET(DEFS "${DEFS};OIIO_STATIC_BUILD")
 ENDIF()
@@ -151,10 +142,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
 			src/library)
-
-IF(OpenCL_FOUND)
-	include_directories(${OpenCL_INCLUDE_DIRS})
-ENDIF()
 
 # Setup CPPLINT
 IF(PR_CPP_CHECK)

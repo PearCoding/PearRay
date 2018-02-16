@@ -33,7 +33,7 @@
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-							 const std::shared_ptr<SpectrumDescriptor>& specdesc, const Scene& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
+							 const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)
@@ -43,7 +43,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint3
 	, mFullHeight(fh)
 	, mWorkingDir(workingDir)
 	, mSpectrumDescriptor(specdesc)
-	, mCamera(scene.activeCamera())
+	, mCamera(scene->activeCamera())
 	, mScene(scene)
 	, mOutputMap()
 	, mTileMap()
@@ -89,7 +89,7 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	reset();
 
 	/* Setup entities */
-	for (const auto& entity : mScene.renderEntities()) {
+	for (const auto& entity : mScene->renderEntities()) {
 		if (entity->isLight())
 			mLights.push_back(entity.get());
 	}
@@ -137,12 +137,18 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		mThreads.push_back(thread);
 	}
 
+	/* Setup scene */
+	mScene->setup(this);
+
 	// Calculate tile sizes, etc.
-	mTileMap = std::make_unique<RenderTileMap>(
-		std::max<uint32>(1, tcx),
-		std::max<uint32>(1, tcy),
-		std::ceil(mWidth / std::max<float>(1, tcx)),
-		std::ceil(mHeight / std::max<float>(1, tcy)));
+	uint32 ptcx = std::max<uint32>(1, tcx);
+	uint32 ptcy = std::max<uint32>(1, tcy);
+	uint32 ptcw = std::max<uint32>(1, std::floor(mWidth / (float)ptcx));
+	uint32 ptch = std::max<uint32>(1, std::floor(mHeight / (float)ptcy));
+	ptcx = std::ceil(mWidth / (float)ptcw);
+	ptcy = std::ceil(mHeight / (float)ptch);
+
+	mTileMap = std::make_unique<RenderTileMap>(ptcx, ptcy, ptcw, ptch);
 	mTileMap->init(*this, mRenderSettings.tileMode());
 
 	// Init modules
@@ -181,7 +187,7 @@ std::list<RenderTile*> RenderContext::currentTiles() const
 RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session)
 {
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
-		SceneCollision c = mScene.checkCollision(ray);
+		SceneCollision c = mScene->checkCollision(ray);
 		sc				 = c.Point;
 
 		sc.Flags  = 0;
@@ -215,7 +221,7 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, const Rend
 bool RenderContext::shootForDetection(const Ray& ray, const RenderSession& session)
 {
 	if (ray.depth() < mRenderSettings.maxRayDepth()) {
-		SceneCollision c = mScene.checkCollisionSimple(ray);
+		SceneCollision c = mScene->checkCollisionSimple(ray);
 
 		session.tile()->statistics().incRayCount();
 		if (c.Successful)
@@ -242,7 +248,7 @@ RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray&
 	} else {
 		appliedSpec.clear();
 
-		for (const auto& e : mScene.infiniteLights())
+		for (const auto& e : mScene->infiniteLights())
 			e->apply(appliedSpec, ray.direction(), session);
 
 		session.tile()->statistics().incBackgroundHitCount();
@@ -305,7 +311,7 @@ RenderTile* RenderContext::getNextTile()
 	// Try till we find a tile or all samples are already rendered
 	while (tile == nullptr && mIncrementalCurrentSample <= maxCameraSamples) {
 		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, maxCameraSamples));
-		if (tile == nullptr && mIncrementalCurrentSample < maxCameraSamples) {
+		if (tile == nullptr) {
 			mIncrementalCurrentSample++;
 		}
 	}
@@ -336,6 +342,8 @@ void RenderContext::onNextPass()
 
 	bool clear = false;
 	mIntegrator->onNextPass(mCurrentPass + 1, clear);
+
+	mIncrementalCurrentSample = 0;
 
 	if (clear)
 		mOutputMap->clear();

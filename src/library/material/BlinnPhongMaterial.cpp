@@ -63,7 +63,7 @@ struct BPM_ThreadData {
 void BlinnPhongMaterial::setup(RenderContext* context)
 {
 	mThreadData.clear();
-	for (size_t i = 0; context->threads(); ++i) {
+	for (size_t i = 0; i < context->threads(); ++i) {
 		mThreadData.push_back(std::make_shared<BPM_ThreadData>(context));
 	}
 
