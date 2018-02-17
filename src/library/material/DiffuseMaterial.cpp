@@ -1,6 +1,8 @@
 #include "DiffuseMaterial.h"
 #include "ray/Ray.h"
+#include "renderer/RenderContext.h"
 #include "shader/ShaderClosure.h"
+#include "shader/ConstSpectralOutput.h"
 
 #include "math/Projection.h"
 
@@ -25,10 +27,8 @@ void DiffuseMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& dif
 
 void DiffuseMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	if (mAlbedo) {
-		mAlbedo->eval(spec, point);
-		spec *= PR_1_PI;
-	}
+	mAlbedo->eval(spec, point);
+	spec *= PR_1_PI;
 }
 
 float DiffuseMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
@@ -47,6 +47,8 @@ MaterialSample DiffuseMaterial::sample(const ShaderClosure& point, const Eigen::
 
 void DiffuseMaterial::setup(RenderContext* context)
 {
+	if (!mAlbedo)
+		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
 }
 
 std::string DiffuseMaterial::dumpInformation() const

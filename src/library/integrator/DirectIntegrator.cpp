@@ -12,14 +12,12 @@
 
 namespace PR {
 struct DI_ThreadData {
-	Spectrum FullWeight;
-	Spectrum Weight;
-	Spectrum Evaluation;
+	std::vector<Spectrum> Weight;
+	std::vector<Spectrum> Evaluation;
 
 	explicit DI_ThreadData(RenderContext* context)
-		: FullWeight(context->spectrumDescriptor())
-		, Weight(context->spectrumDescriptor())
-		, Evaluation(context->spectrumDescriptor())
+		: Weight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
+		, Evaluation(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 	{
 	}
 };
@@ -49,7 +47,6 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 								const RenderSession& session,
 								uint32 diffbounces, ShaderClosure& sc)
 {
-	DI_ThreadData& threadData = mThreadData[session.thread()];
 
 	RenderEntity* entity = renderer()->shootWithEmission(spec, in, sc, session);
 
@@ -58,7 +55,9 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 		|| diffbounces > renderer()->settings().maxDiffuseBounces())
 		return;
 
-	float full_pdf = 0;
+	DI_ThreadData& threadData = mThreadData[session.thread()];
+	const uint32 depth		  = in.depth();
+	float full_pdf			  = 0;
 
 	// Used temporary
 	ShaderClosure other_sc;
@@ -81,14 +80,14 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 			if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON)
 				continue;
 
-			applyRay(threadData.Weight, in.next(sc.P, ms.L), session,
+			applyRay(threadData.Weight[depth], in.next(sc.P, ms.L), session,
 					 !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
 					 other_sc);
 
 			//if (!weight.isOnlyZero()) {
-			sc.Material->eval(threadData.Evaluation, sc, ms.L, NdotL, session);
-			threadData.Weight *= threadData.Evaluation * NdotL;
-			MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, ms.PDF_S);
+			sc.Material->eval(threadData.Evaluation[depth], sc, ms.L, NdotL, session);
+			threadData.Weight[depth] *= threadData.Evaluation[depth] * NdotL;
+			MSI::balance(spec, full_pdf, threadData.Weight[depth], ms.PDF_S);
 			//}
 
 			if (ms.isSpecular())
@@ -116,24 +115,22 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 				ray.setFlags(ray.flags() | RF_Light);
 
 				// Full light!!
-				if (renderer()->shootWithEmission(threadData.Weight, ray, other_sc, session) == light /*&& (fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+				if (renderer()->shootWithEmission(threadData.Weight[depth], ray, other_sc, session) == light /*&& (fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
-					sc.Material->eval(threadData.Evaluation, sc, L, NdotL, session);
-					threadData.Weight *= threadData.Evaluation * NdotL * light->surfaceArea(fps.Point.Material);
+					sc.Material->eval(threadData.Evaluation[depth], sc, L, NdotL, session);
+					threadData.Weight[depth] *= threadData.Evaluation[depth] * NdotL * light->surfaceArea(fps.Point.Material);
 
 					const float pdfS = MSI::toSolidAngle(pdfA, PS.squaredNorm(), std::abs(sc.NdotV * NdotL));
-					MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, pdfS);
+					MSI::balance(spec, full_pdf, threadData.Weight[depth], pdfS);
 				}
 			}
 		}
 
 		float inf_pdf;
-		handleInfiniteLights(threadData.Weight, in, sc, session, inf_pdf);
-		MSI::balance(threadData.FullWeight, full_pdf, threadData.Weight, inf_pdf);
+		handleInfiniteLights(threadData.Weight[depth], in, sc, session, inf_pdf);
+		MSI::balance(spec, full_pdf, threadData.Weight[depth], inf_pdf);
 	}
-
-	spec += threadData.FullWeight;
 }
 } // namespace PR

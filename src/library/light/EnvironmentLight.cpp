@@ -40,6 +40,6 @@ void EnvironmentLight::apply(Spectrum& spec, const Eigen::Vector3f& V, const Ren
 	const Eigen::Vector2f uv = Projection::sphereUV(V);
 	sc.UVW					 = Eigen::Vector3f(uv(0), uv(1), 0);
 
-	mMaterial->evalEmission(spec, sc, session);
+	mMaterial->evalEmission(spec, sc, session, true);
 }
 } // namespace PR

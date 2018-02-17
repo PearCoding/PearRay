@@ -82,10 +82,8 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 			Ray ray = in.next(sc.P, ls.L);
 			ray.setFlags(ray.flags() | RF_Light);
 
-			handleSpecularPath(threadData.Weight, ray, sc, session, entity);
-			if (!entity) {
-				sc.Material->eval(threadData.Evaluation, sc, ls.L, NdotL, session);
-				threadData.Weight *= threadData.Evaluation;
+			if (!mRenderer->shootForDetection(ray, session)) {
+				sc.Material->eval(threadData.Weight, sc, ls.L, NdotL, session);
 				e->apply(threadData.Evaluation, ls.L, session);
 				threadData.Weight *= threadData.Evaluation * NdotL;
 			}
