@@ -88,7 +88,7 @@ ENDIF()
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 IF(PR_WITH_PYTHON)
-	add_subdirectory(pybind11)
+	add_subdirectory(external/pybind11)
 	SET(PR_HAS_PYTHON_API ON)
 ENDIF()
 
@@ -105,7 +105,7 @@ IF(PR_ONLY_LIBRARY_SUBS)
 ENDIF(PR_ONLY_LIBRARY_SUBS)
 
 SET(DL_TARGET "datalisp")
-add_subdirectory(datalisp)
+add_subdirectory(external/DataLisp)
 
 SET(DEFS_DEBUG "${DEFS_DEBUG};PR_DEBUG")
 
@@ -139,7 +139,8 @@ ENDIF()
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
-			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
+			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
+			external/tinyobjloader
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
 			src/library)
 
