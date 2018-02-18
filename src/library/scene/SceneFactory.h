@@ -39,6 +39,7 @@ public:
 	void clear();
 
 	std::shared_ptr<Scene> create() const;
+
 private:
 	std::string mName;
 	std::shared_ptr<Camera> mActiveCamera;

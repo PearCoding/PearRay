@@ -311,14 +311,15 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 }
 
 bool ImageWriter::save_spectral(const std::string& file,
-								const std::shared_ptr<FrameBufferFloat>& spec) const
+								const std::shared_ptr<FrameBufferFloat>& spec,
+								bool compress) const
 {
 	if (!spec || !mRenderer)
 		return false;
 
 	SpectralFile specFile(mRenderer->spectrumDescriptor(),
 						  mRenderer->width(), mRenderer->height(), spec->ptr(), false);
-	specFile.save(file);
+	specFile.save(file, compress);
 
 	return true;
 }

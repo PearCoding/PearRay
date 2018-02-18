@@ -52,7 +52,8 @@ public:
 			  const std::vector<IM_ChannelSetting3D>& ch3d) const;
 
 	bool save_spectral(const std::string& file,
-					   const std::shared_ptr<FrameBufferFloat>& spec) const;
+					   const std::shared_ptr<FrameBufferFloat>& spec,
+					   bool compress) const;
 
 private:
 	float* mRGBData;

@@ -27,6 +27,7 @@
 namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
+constexpr int OUTPUT_FIELD_SIZE = 8;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
@@ -146,16 +147,16 @@ int main(int argc, char** argv)
 			{
 				PR::RenderStatus status = renderer->status();
 
-				std::cout << std::setprecision(6) << status.percentage()*100 << "%"
+				std::cout << std::setw(OUTPUT_FIELD_SIZE) << /*std::setfill('0') <<*/ std::setprecision(4) << std::fixed << status.percentage()*100 << "%"
 					<< " Pass " << renderer->currentPass() + 1;
 
 				if(status.hasField("int.feedback"))
 					std::cout << "( " << status.getField("int.feedback").getString() << ")";
 
-				std::cout << " | S: " << status.getField("global.pixel_sample_count").getUInt() 
-					<< " R: " << status.getField("global.ray_count").getUInt()
-					<< " EH: " << status.getField("global.entity_hit_count").getUInt()
-					<< " BH: " << status.getField("global.background_hit_count").getUInt()
+				std::cout << " | S: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt() 
+					<< " R: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
+					<< " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
+					<< " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt()
 					<< std::endl;
 				
 				start_prog = end;

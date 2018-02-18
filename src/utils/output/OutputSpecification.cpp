@@ -351,9 +351,11 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 				mFiles.push_back(file);
 			} else if (entry.id() == "output_spectral") {
 				DL::Data nameD = entry.getFromKey("name");
+				DL::Data compressD = entry.getFromKey("compress");
 				if (nameD.type() == DL::Data::T_String) {
 					FileSpectral spec;
 					spec.Name = nameD.getString();
+					spec.Compress = compressD.type() == DL::Data::T_Bool ? compressD.getBool() : true;
 					mSpectralFiles.push_back(spec);
 				}
 			}
@@ -390,7 +392,7 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, T
 
 	for (const FileSpectral& f : mSpectralFiles) {
 		const std::string filename = dir + "/" + f.Name + ".spec";
-		if (!mImageWriter.save_spectral(filename, renderer->output()->getSpectralChannel()))
+		if (!mImageWriter.save_spectral(filename, renderer->output()->getSpectralChannel(), f.Compress))
 			PR_LOGGER.logf(L_Error, M_System,
 						   "Couldn't save spectral file '%s'!", filename.c_str());
 

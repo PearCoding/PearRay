@@ -25,7 +25,7 @@ inline float power(float& out_pdf, float in_pdf)
 	return w;
 }
 
-template<typename T, typename = Lazy::enable_if_slo_t<T,T,void>>
+template <typename T, typename = Lazy::enable_if_slo_t<T, T, void>>
 inline void power(Spectrum& out_weight, float& out_pdf, const T& in_weight, float in_pdf)
 {
 	float w = power(out_pdf, in_pdf);
@@ -53,7 +53,7 @@ inline float power(float& out_pdf, float in_pdf, float beta)
 	return w;
 }
 
-template<typename T, typename = Lazy::enable_if_slo_t<T,T,void>>
+template <typename T, typename = Lazy::enable_if_slo_t<T, T, void>>
 inline void power(Spectrum& out_weight, float& out_pdf, const T& in_weight, float in_pdf, float beta)
 {
 	float w = power(out_pdf, in_pdf, beta);
@@ -78,7 +78,7 @@ inline float balance(float& out_pdf, float in_pdf)
 	return w;
 }
 
-template<typename T, typename = Lazy::enable_if_slo_t<T,T,void>>
+template <typename T, typename = Lazy::enable_if_slo_t<T, T, void>>
 inline void balance(Spectrum& out_weight, float& out_pdf, const T& in_weight, float in_pdf)
 {
 	float w = balance(out_pdf, in_pdf);

@@ -24,10 +24,10 @@ struct SceneCollision {
 class PR_LIB Scene {
 public:
 	Scene(const std::string& name,
-		const std::shared_ptr<Camera>& activeCamera,
-		const std::list<std::shared_ptr<Entity>>& entities,
-		const std::list<std::shared_ptr<RenderEntity>>& renderentities,
-		const std::list<std::shared_ptr<IInfiniteLight>>& lights);
+		  const std::shared_ptr<Camera>& activeCamera,
+		  const std::list<std::shared_ptr<Entity>>& entities,
+		  const std::list<std::shared_ptr<RenderEntity>>& renderentities,
+		  const std::list<std::shared_ptr<IInfiniteLight>>& lights);
 	virtual ~Scene();
 
 	inline const std::string& name() const { return mName; }
@@ -44,7 +44,7 @@ public:
 	SceneCollision checkCollision(const Ray& ray) const;
 	SceneCollision checkCollisionSimple(const Ray& ray) const;
 
-	void setup(RenderContext* context, bool force=false);
+	void setup(RenderContext* context, bool force = false);
 
 	BoundingBox boundingBox() const;
 

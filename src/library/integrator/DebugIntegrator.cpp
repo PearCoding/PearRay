@@ -65,6 +65,7 @@ void DebugIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 		RGBConverter::toSpec(spec, std::max(0.0f, -sc.N(0)),
 							 std::max(0.0f, -sc.N(1)),
 							 std::max(0.0f, -sc.N(2)));
+		break;
 	// TANGENT
 	case DM_Tangent_Spherical: {
 		float phi = std::acos(sc.Nx(2));

@@ -49,7 +49,8 @@ void ToneMapper::map(const float* specIn, float* out, size_t specElems, size_t r
 	}
 
 	// Map 2: Tone Mapping
-	mapOnlyMapper(out, out, rgbElems);
+	if(mMapperMode != TMM_None)
+		mapOnlyMapper(out, out, rgbElems);
 
 	// Map 3: Gamma Correction
 	if (mGammaMode != TGM_None) {
@@ -70,6 +71,11 @@ void ToneMapper::map(const float* specIn, float* out, size_t specElems, size_t r
 
 void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const
 {
+	if(mMapperMode == TMM_None) { // Fast approach
+		std::memcpy(rgbOut, rgbIn, sizeof(float)*rgbElems*mSize);
+		return;
+	}
+
 	float invMax = 0.0f;
 	if (mMapperMode == TMM_Normalized) {
 		for (size_t i = 0; i < mSize; ++i) {

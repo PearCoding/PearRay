@@ -77,8 +77,6 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 			if (NdotL <= PR_EPSILON)
 				continue;
 
-			RenderEntity* entity;
-
 			Ray ray = in.next(sc.P, ls.L);
 			ray.setFlags(ray.flags() | RF_Light);
 

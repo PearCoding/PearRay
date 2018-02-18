@@ -76,7 +76,7 @@ public:
 
 	inline bool isLight() const;
 
-	virtual void evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent=false);
+	virtual void evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent = false);
 
 	inline const std::shared_ptr<SpectrumShaderOutput>& emission() const;
 	inline void setEmission(const std::shared_ptr<SpectrumShaderOutput>& spec);

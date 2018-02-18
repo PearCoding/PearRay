@@ -9,7 +9,7 @@ namespace PR {
 OutputMap::OutputMap(RenderContext* renderer)
 	: mRenderer(renderer)
 	, mInitialized(false)
-	, mSpectral(new FrameBufferFloat(renderer->spectrumDescriptor()->samples()))
+	, mSpectral(new FrameBufferFloat(renderer->spectrumDescriptor()->samples(), 0.0f))
 {
 }
 
@@ -56,6 +56,8 @@ void OutputMap::init()
 		p.second->init(mRenderer);
 
 	mInitialized = true;
+
+	clear();
 }
 
 void OutputMap::deinit()

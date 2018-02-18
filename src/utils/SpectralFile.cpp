@@ -74,13 +74,14 @@ void SpectralFile::get(uint32 row, uint32 column, Spectrum& spec) const
 	spec.copyFrom(&mData->Ptr[row * mData->Width * mData->Descriptor->samples() + column * mData->Descriptor->samples()]);
 }
 
-void SpectralFile::save(const std::string& path) const
+void SpectralFile::save(const std::string& path, bool compress) const
 {
 	PR_ASSERT(mData, "Access to invalid spectral file");
 
 	namespace io = boost::iostreams;
 	io::filtering_ostream out;
-	out.push(io::zlib_compressor());
+	if(compress)
+		out.push(io::zlib_compressor());
 	out.push(io::file_sink(path));
 
 	out.put('P').put('R').put('4').put('2');
@@ -92,15 +93,15 @@ void SpectralFile::save(const std::string& path) const
 	tmp = mData->Height;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
-	for (uint32 i = 0; i < mData->Height * mData->Width * mData->Descriptor->samples(); ++i)
-		out.write(reinterpret_cast<const char*>(&mData->Ptr[i]), sizeof(float));
+	out.write(reinterpret_cast<const char*>(mData->Ptr), sizeof(float) * mData->Height * mData->Width * mData->Descriptor->samples());
 }
 
-SpectralFile SpectralFile::open(const std::string& path)
+SpectralFile SpectralFile::open(const std::string& path, bool compressed)
 {
 	namespace io = boost::iostreams;
 	io::filtering_istream in;
-	in.push(io::zlib_decompressor());
+	if (compressed)
+		in.push(io::zlib_decompressor());
 	in.push(io::file_source(path));
 
 	char c1, c2, c3, c4;

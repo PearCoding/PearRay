@@ -21,8 +21,8 @@ void Material::evalEmission(Spectrum& spec, const ShaderClosure& point, const Re
 		return;
 
 	mEmission->eval(spec, point);
-	
-	if(!viewIndependent) {
+
+	if (!viewIndependent) {
 		const float NdotV = std::max(0.0f, -point.Ng.dot(point.V));
 		spec *= NdotV;
 	}
