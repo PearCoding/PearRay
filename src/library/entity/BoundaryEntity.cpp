@@ -50,7 +50,7 @@ void BoundaryEntity::setMaterial(const std::shared_ptr<Material>& m)
 	mMaterial = m;
 }
 
-const std::shared_ptr<Material>& BoundaryEntity::material() const
+std::shared_ptr<Material> BoundaryEntity::material() const
 {
 	return mMaterial;
 }

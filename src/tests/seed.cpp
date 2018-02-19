@@ -33,7 +33,7 @@ PR_TEST("Direct Integrator")
 		SpectrumDescriptor::createStandardSpectral(),
 		env->renderWidth(),
 		env->renderHeight(),
-		scene, "", true);
+		scene, "");
 
 	std::list<Spectrum> output1;
 	std::list<Spectrum> output2;
@@ -100,7 +100,7 @@ PR_TEST("Bi-Direct Integrator")
 		SpectrumDescriptor::createStandardSpectral(),
 		env->renderWidth(),
 		env->renderHeight(),
-		scene, "", true);
+		scene, "");
 
 	std::list<Spectrum> output1;
 	std::list<Spectrum> output2;
@@ -166,7 +166,7 @@ PR_TEST("Bi-Direct Integrator")
 	auto renderFactory = std::make_shared<RenderFactory>(
 		env->renderWidth(),
 		env->renderHeight(),
-		scene, "", true);
+		scene, "");
 
 	Spectrum output1[POS_COUNT];
 	Spectrum output2[POS_COUNT];

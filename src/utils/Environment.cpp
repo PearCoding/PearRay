@@ -50,11 +50,11 @@ Environment::~Environment()
 
 void Environment::dumpInformation() const
 {
-	for (const auto& p : mSceneFactory.entities())
+	for (auto p : mSceneFactory.entities())
 		PR_LOGGER.logf(L_Info, M_Entity, "%s:\n%s",
 					   p->name().c_str(), p->dumpInformation().c_str());
 
-	for (const auto& p : mMaterials)
+	for (auto p : mMaterials)
 		PR_LOGGER.logf(L_Info, M_Material, "%s:\n%s",
 					   p.first.c_str(), p.second->dumpInformation().c_str());
 }

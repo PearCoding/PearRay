@@ -43,16 +43,16 @@ void OutputMap::init()
 			mInt3D[i]->init(mRenderer);
 	}
 
-	for (const auto& p : mCustom1D)
+	for (auto p : mCustom1D)
 		p.second->init(mRenderer);
 
-	for (const auto& p : mCustomCounter)
+	for (auto p : mCustomCounter)
 		p.second->init(mRenderer);
 
-	for (const auto& p : mCustom3D)
+	for (auto p : mCustom3D)
 		p.second->init(mRenderer);
 
-	for (const auto& p : mCustomSpectral)
+	for (auto p : mCustomSpectral)
 		p.second->init(mRenderer);
 
 	mInitialized = true;
@@ -87,19 +87,19 @@ void OutputMap::deinit()
 		}
 	}
 
-	for (const auto& p : mCustom1D)
+	for (auto p : mCustom1D)
 		p.second->deinit();
 	mCustom1D.clear();
 
-	for (const auto& p : mCustomCounter)
+	for (auto p : mCustomCounter)
 		p.second->deinit();
 	mCustomCounter.clear();
 
-	for (const auto& p : mCustom3D)
+	for (auto p : mCustom3D)
 		p.second->deinit();
 	mCustom3D.clear();
 
-	for (const auto& p : mCustomSpectral)
+	for (auto p : mCustomSpectral)
 		p.second->deinit();
 	mCustomSpectral.clear();
 
@@ -127,22 +127,26 @@ void OutputMap::clear()
 			mInt3D[i]->clear();
 	}
 
-	for (const auto& p : mCustom1D)
+	for (auto p : mCustom1D)
 		p.second->clear();
 
-	for (const auto& p : mCustomCounter)
+	for (auto p : mCustomCounter)
 		p.second->clear();
 
-	for (const auto& p : mCustom3D)
+	for (auto p : mCustom3D)
 		p.second->clear();
 
-	for (const auto& p : mCustomSpectral)
+	for (auto p : mCustomSpectral)
 		p.second->clear();
 }
 
 void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc)
 {
 	PR_ASSERT(mInitialized, "OutputMap not initialized");
+
+	if(p(0) < 0 || p(0) >= mSpectral->width() ||
+		p(1) < 0 || p(1) >= mSpectral->height())
+		return;// Assert??
 
 	uint32 oldSample = getSampleCount(p);
 	float t			 = 1.0f / (oldSample + 1.0f);

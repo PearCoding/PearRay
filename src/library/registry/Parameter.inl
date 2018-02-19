@@ -140,14 +140,14 @@ _PR_PARAMETER_GETSET(const Eigen::Matrix4f&, Eigen::Matrix4f, Matrix4)
 //_PR_PARAMETER_GETSET(const Spectrum&, const Spectrum&, Spectrum)
 _PR_PARAMETER_GETSET(const std::string&, std::string, String)
 
-_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBuffer3D>&, const std::shared_ptr<FrameBuffer3D>&, FrameBuffer3D)
-_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBuffer1D>&, const std::shared_ptr<FrameBuffer1D>&, FrameBuffer1D)
-_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBufferCounter>&, const std::shared_ptr<FrameBufferCounter>&, FrameBufferCounter)
-_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBufferSpectrum>&, const std::shared_ptr<FrameBufferSpectrum>&, FrameBufferSpectrum)
+_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBuffer3D>&, std::shared_ptr<FrameBuffer3D>, FrameBuffer3D)
+_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBuffer1D>&, std::shared_ptr<FrameBuffer1D>, FrameBuffer1D)
+_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBufferCounter>&, std::shared_ptr<FrameBufferCounter>, FrameBufferCounter)
+_PR_PARAMETER_GETSET(const std::shared_ptr<FrameBufferSpectrum>&, std::shared_ptr<FrameBufferSpectrum>, FrameBufferSpectrum)
 
-_PR_PARAMETER_GETSET(const std::shared_ptr<ScalarShaderOutput>&, const std::shared_ptr<ScalarShaderOutput>&, ScalarShaderOutput)
-_PR_PARAMETER_GETSET(const std::shared_ptr<SpectrumShaderOutput>&, const std::shared_ptr<SpectrumShaderOutput>&, SpectrumShaderOutput)
-_PR_PARAMETER_GETSET(const std::shared_ptr<VectorShaderOutput>&, const std::shared_ptr<VectorShaderOutput>&, VectorShaderOutput)
+_PR_PARAMETER_GETSET(const std::shared_ptr<ScalarShaderOutput>&, std::shared_ptr<ScalarShaderOutput>, ScalarShaderOutput)
+_PR_PARAMETER_GETSET(const std::shared_ptr<SpectrumShaderOutput>&, std::shared_ptr<SpectrumShaderOutput>, SpectrumShaderOutput)
+_PR_PARAMETER_GETSET(const std::shared_ptr<VectorShaderOutput>&, std::shared_ptr<VectorShaderOutput>, VectorShaderOutput)
 
 #undef _PR_PARAMETER_GETSET
 }

@@ -71,22 +71,22 @@ public:
 	bool isPixelFinished(const Eigen::Vector2i& p) const;
 	uint64 finishedPixelCount() const;
 
-	inline const std::shared_ptr<FrameBufferFloat>& getChannel(Variable1D var) const
+	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable1D var) const
 	{
 		return mInt1D[var];
 	}
 
-	inline const std::shared_ptr<FrameBufferUInt64>& getChannel(VariableCounter var) const
+	inline std::shared_ptr<FrameBufferUInt64> getChannel(VariableCounter var) const
 	{
 		return mIntCounter[var];
 	}
 
-	inline const std::shared_ptr<FrameBufferFloat>& getChannel(Variable3D var) const
+	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable3D var) const
 	{
 		return mInt3D[var];
 	}
 
-	inline const std::shared_ptr<FrameBufferFloat>& getSpectralChannel() const
+	inline std::shared_ptr<FrameBufferFloat> getSpectralChannel() const
 	{
 		return mSpectral;
 	}

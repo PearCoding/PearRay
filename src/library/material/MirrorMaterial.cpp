@@ -20,7 +20,7 @@ MirrorMaterial::MirrorMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& MirrorMaterial::specularity() const
+std::shared_ptr<SpectrumShaderOutput> MirrorMaterial::specularity() const
 {
 	return mSpecularity;
 }
@@ -30,7 +30,7 @@ void MirrorMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOutput>&
 	mSpecularity = spec;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& MirrorMaterial::ior() const
+std::shared_ptr<SpectrumShaderOutput> MirrorMaterial::ior() const
 {
 	return mIndex;
 }

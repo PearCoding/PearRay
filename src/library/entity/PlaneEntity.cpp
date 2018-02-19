@@ -52,7 +52,7 @@ void PlaneEntity::setMaterial(const std::shared_ptr<Material>& m)
 	mMaterial = m;
 }
 
-const std::shared_ptr<Material>& PlaneEntity::material() const
+std::shared_ptr<Material> PlaneEntity::material() const
 {
 	return mMaterial;
 }

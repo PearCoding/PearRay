@@ -179,7 +179,7 @@ void PPMIntegrator::init()
 	for (uint32 t = 0; t < renderer()->tileCount(); ++t) {
 		PR_LOGGER.logf(L_Info, M_Integrator, "PPM Tile %llu lights",
 					   mTileData[t].Lights.size());
-		for (const auto& ltd : mTileData[t].Lights) {
+		for (auto ltd : mTileData[t].Lights) {
 			PR_LOGGER.logf(L_Info, M_Integrator, "  -> Light %s with %llu photons",
 						   ltd.Entity->Entity->name().c_str(), ltd.Photons);
 		}
@@ -213,7 +213,7 @@ bool PPMIntegrator::needNextPass(uint32 pass) const
 void PPMIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
 	if (pass % 2 == 1) {
-		const auto& output = renderer()->output();
+		OutputMap* output = renderer()->output();
 		Spectrum spec(renderer()->spectrumDescriptor());
 		ShaderClosure sc;
 

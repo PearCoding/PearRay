@@ -16,7 +16,7 @@ public:
 		mMaterial = m;
 	}
 
-	inline const std::shared_ptr<Material>& material() const
+	inline std::shared_ptr<Material> material() const
 	{
 		return mMaterial;
 	}

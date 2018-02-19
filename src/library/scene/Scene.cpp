@@ -34,12 +34,12 @@ Scene::~Scene()
 
 std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::string& type) const
 {
-	for (const auto& entity : mEntities) {
+	for (auto entity : mEntities) {
 		if (entity->name() == name && entity->type() == type)
 			return entity;
 	}
 
-	for (const auto& entity : mRenderEntities) {
+	for (auto entity : mRenderEntities) {
 		if (entity->name() == name && entity->type() == type)
 			return entity;
 	}
@@ -47,7 +47,7 @@ std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::str
 	return nullptr;
 }
 
-const std::shared_ptr<Camera>& Scene::activeCamera() const
+std::shared_ptr<Camera> Scene::activeCamera() const
 {
 	return mActiveCamera;
 }
@@ -84,7 +84,7 @@ void Scene::buildTree(bool force)
 
 	std::vector<RenderEntity*> list;
 	list.reserve(mRenderEntities.size());
-	for (const auto& e : mRenderEntities)
+	for (auto e : mRenderEntities)
 		list.push_back(e.get());
 
 	reinterpret_cast<SceneKDTree*>(mKDTree)->build(list.begin(), list.end(), list.size(), [](RenderEntity* e) { return !e->isCollidable(); });
@@ -110,13 +110,13 @@ SceneCollision Scene::checkCollisionSimple(const Ray& ray) const
 
 void Scene::freeze()
 {
-	for (const auto& e : mEntities)
+	for (auto e : mEntities)
 		e->freeze();
 
-	for (const auto& e : mRenderEntities)
+	for (auto e : mRenderEntities)
 		e->freeze();
 
-	for (const auto& e : mInfiniteLights)
+	for (auto e : mInfiniteLights)
 		e->freeze();
 }
 
@@ -127,7 +127,7 @@ void Scene::setup(RenderContext* context, bool force)
 	PR_LOGGER.log(L_Info, M_Scene, "Starting to build global space-partitioning structure");
 	buildTree(force);
 	PR_LOGGER.log(L_Info, M_Scene, "Initializing render entities");
-	for (const auto& e : mRenderEntities)
+	for (auto e : mRenderEntities)
 		e->setup(context);
 }
 

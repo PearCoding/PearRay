@@ -21,7 +21,7 @@ BlinnPhongMaterial::BlinnPhongMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& BlinnPhongMaterial::albedo() const
+std::shared_ptr<SpectrumShaderOutput> BlinnPhongMaterial::albedo() const
 {
 	return mAlbedo;
 }
@@ -31,7 +31,7 @@ void BlinnPhongMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& 
 	mAlbedo = diffSpec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& BlinnPhongMaterial::shininess() const
+std::shared_ptr<ScalarShaderOutput> BlinnPhongMaterial::shininess() const
 {
 	return mShininess;
 }
@@ -41,7 +41,7 @@ void BlinnPhongMaterial::setShininess(const std::shared_ptr<ScalarShaderOutput>&
 	mShininess = d;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& BlinnPhongMaterial::fresnelIndex() const
+std::shared_ptr<SpectrumShaderOutput> BlinnPhongMaterial::fresnelIndex() const
 {
 	return mIndex;
 }

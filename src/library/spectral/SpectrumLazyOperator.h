@@ -20,7 +20,7 @@ public:
 	{
 	}
 
-	inline const std::shared_ptr<SpectrumDescriptor>& descriptor() const { return mArg1.descriptor(); }
+	inline std::shared_ptr<SpectrumDescriptor> descriptor() const { return mArg1.descriptor(); }
 
 	inline uint32 samples() const { return mArg1.samples(); }
 	inline uint32 spectralStart() const { return mArg1.spectralStart(); }

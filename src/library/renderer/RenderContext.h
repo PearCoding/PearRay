@@ -14,7 +14,6 @@
 namespace PR {
 class Camera;
 class Entity;
-class GPU;
 class Integrator;
 class OutputMap;
 class Ray;
@@ -32,7 +31,7 @@ class PR_LIB RenderContext {
 
 public:
 	RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-				  const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings);
+				  const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, const RenderSettings& settings);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -45,7 +44,7 @@ public:
 
 	uint32 tileCount() const;
 
-	inline const std::shared_ptr<SpectrumDescriptor>& spectrumDescriptor() const { return mSpectrumDescriptor; }
+	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
 
 	// tcx = tile count x
 	// tcy = tile count y
@@ -81,11 +80,10 @@ public:
 	RenderStatistics statistics() const;
 	RenderStatus status() const;
 
-	inline const std::shared_ptr<Scene>& scene() const { return mScene; }
+	inline std::shared_ptr<Scene> scene() const { return mScene; }
 	inline const std::string& workingDir() const { return mWorkingDir; }
-	inline const std::shared_ptr<OutputMap>& output() const { return mOutputMap; }
-	inline GPU* gpu() const { return mGPU; }
-	inline const std::shared_ptr<Camera>& camera() const { return mCamera; }
+	inline OutputMap* output() const { return mOutputMap.get(); }
+	inline std::shared_ptr<Camera> camera() const { return mCamera; }
 
 protected:
 	RenderTile* getNextTile();
@@ -109,7 +107,7 @@ private:
 
 	const std::shared_ptr<Camera> mCamera;
 	const std::shared_ptr<Scene> mScene;
-	std::shared_ptr<OutputMap> mOutputMap;
+	std::unique_ptr<OutputMap> mOutputMap;
 
 	std::list<RenderEntity*> mLights;
 
@@ -120,7 +118,6 @@ private:
 
 	const RenderSettings mRenderSettings;
 
-	GPU* const mGPU;
 	Integrator* mIntegrator;
 
 	std::mutex mPassMutex;

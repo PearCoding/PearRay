@@ -34,7 +34,7 @@ public:
 	inline const std::list<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfiniteLights; }
 
 	void setActiveCamera(const std::shared_ptr<Camera>& c);
-	const std::shared_ptr<Camera>& activeCamera() const;
+	std::shared_ptr<Camera> activeCamera() const;
 
 	void clear();
 

@@ -9,10 +9,6 @@ using namespace PR;
 namespace PRPY {
 void setup_camera(py::module& m)
 {
-	py::class_<CameraSample, std::shared_ptr<CameraSample>>(m, "CameraSample")
-		/* TODO */
-		;
-
 	py::class_<Camera, std::shared_ptr<Camera>>(m, "Camera");
 
 	py::class_<StandardCamera, std::shared_ptr<StandardCamera>, Camera>(m, "StandardCamera")

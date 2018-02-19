@@ -24,7 +24,7 @@ void OnePassIntegrator::onEnd()
 
 void OnePassIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
-	const auto& output = renderer()->output();
+	OutputMap* output = renderer()->output();
 	Spectrum spec(renderer()->spectrumDescriptor());
 	ShaderClosure sc;
 

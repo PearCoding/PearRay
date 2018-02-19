@@ -31,7 +31,7 @@ public:
 	inline uint32 spectralStart() const;
 	inline uint32 spectralEnd() const;
 
-	inline const std::shared_ptr<SpectrumDescriptor>& descriptor() const;
+	inline std::shared_ptr<SpectrumDescriptor> descriptor() const;
 	inline bool isExternal() const;
 
 	// Simple Access

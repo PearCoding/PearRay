@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 		PR::SpectrumDescriptor::createStandardSpectral(),
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
-		scene, options.OutputDir, true);
+		scene, options.OutputDir);
 	renderFactory->setSettings(options.RenderSettings);
 
 	if(options.CropMinXOverride >= 0 &&

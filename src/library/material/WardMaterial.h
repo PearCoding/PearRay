@@ -8,19 +8,19 @@ class PR_LIB WardMaterial : public Material {
 public:
 	explicit WardMaterial(uint32 id);
 
-	const std::shared_ptr<SpectrumShaderOutput>& albedo() const;
+	std::shared_ptr<SpectrumShaderOutput> albedo() const;
 	void setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec);
 
-	const std::shared_ptr<SpectrumShaderOutput>& specularity() const;
+	std::shared_ptr<SpectrumShaderOutput> specularity() const;
 	void setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec);
 
-	const std::shared_ptr<ScalarShaderOutput>& roughnessX() const;
+	std::shared_ptr<ScalarShaderOutput> roughnessX() const;
 	void setRoughnessX(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	const std::shared_ptr<ScalarShaderOutput>& roughnessY() const;
+	std::shared_ptr<ScalarShaderOutput> roughnessY() const;
 	void setRoughnessY(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	const std::shared_ptr<ScalarShaderOutput>& reflectivity() const;
+	std::shared_ptr<ScalarShaderOutput> reflectivity() const;
 	void setReflectivity(const std::shared_ptr<ScalarShaderOutput>& data);
 
 	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;

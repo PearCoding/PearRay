@@ -9,10 +9,10 @@ public:
 	explicit GridMaterial(uint32 id);
 
 	void setFirstMaterial(const std::shared_ptr<Material>& mat);
-	const std::shared_ptr<Material>& firstMaterial() const;
+	std::shared_ptr<Material> firstMaterial() const;
 
 	void setSecondMaterial(const std::shared_ptr<Material>& mat);
-	const std::shared_ptr<Material>& secondMaterial() const;
+	std::shared_ptr<Material> secondMaterial() const;
 
 	void setGridCount(int i);
 	int gridCount() const;

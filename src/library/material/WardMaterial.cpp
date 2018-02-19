@@ -25,7 +25,7 @@ WardMaterial::WardMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& WardMaterial::albedo() const
+std::shared_ptr<SpectrumShaderOutput> WardMaterial::albedo() const
 {
 	return mAlbedo;
 }
@@ -35,7 +35,7 @@ void WardMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSp
 	mAlbedo = diffSpec;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& WardMaterial::specularity() const
+std::shared_ptr<SpectrumShaderOutput> WardMaterial::specularity() const
 {
 	return mSpecularity;
 }
@@ -45,7 +45,7 @@ void WardMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& s
 	mSpecularity = spec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& WardMaterial::roughnessX() const
+std::shared_ptr<ScalarShaderOutput> WardMaterial::roughnessX() const
 {
 	return mRoughnessX;
 }
@@ -55,7 +55,7 @@ void WardMaterial::setRoughnessX(const std::shared_ptr<ScalarShaderOutput>& d)
 	mRoughnessX = d;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& WardMaterial::roughnessY() const
+std::shared_ptr<ScalarShaderOutput> WardMaterial::roughnessY() const
 {
 	return mRoughnessY;
 }
@@ -65,7 +65,7 @@ void WardMaterial::setRoughnessY(const std::shared_ptr<ScalarShaderOutput>& d)
 	mRoughnessY = d;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& WardMaterial::reflectivity() const
+std::shared_ptr<ScalarShaderOutput> WardMaterial::reflectivity() const
 {
 	return mReflectivity;
 }

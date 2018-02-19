@@ -16,7 +16,7 @@ inline uint32 Spectrum::spectralEnd() const
 	return mInternal->End;
 }
 
-inline const std::shared_ptr<SpectrumDescriptor>& Spectrum::descriptor() const
+inline std::shared_ptr<SpectrumDescriptor> Spectrum::descriptor() const
 {
 	return mInternal->Descriptor;
 }

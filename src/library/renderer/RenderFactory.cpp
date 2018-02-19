@@ -4,40 +4,20 @@
 #include "scene/Scene.h"
 #include "spectral/SpectrumDescriptor.h"
 
-#ifndef PR_NO_GPU
-#include "gpu/GPU.h"
-#endif
-
 namespace PR {
 RenderFactory::RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc,
 							 uint32 w, uint32 h, const std::shared_ptr<Scene>& scene,
-							 const std::string& workingDir, bool useGPU)
+							 const std::string& workingDir)
 	: mFullWidth(w)
 	, mFullHeight(h)
 	, mWorkingDir(workingDir)
 	, mScene(scene)
-	, mGPU(nullptr)
 	, mSpectrumDescriptor(specDesc)
 {
-// Setup GPU
-#ifndef PR_NO_GPU
-	if (useGPU) {
-		mGPU = new GPU();
-		if (!mGPU->init("")) {
-			delete mGPU;
-			mGPU = nullptr;
-		}
-	}
-#endif
 }
 
 RenderFactory::~RenderFactory()
 {
-#ifndef PR_NO_GPU
-	if (mGPU) {
-		delete mGPU;
-	}
-#endif
 }
 
 uint32 RenderFactory::cropWidth() const
@@ -80,6 +60,6 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 
 	return std::make_shared<RenderContext>(index, x + cropOffsetX(), y + cropOffsetY(),
 										   itw, ith, mFullWidth, mFullHeight,
-										   mSpectrumDescriptor, mScene, mWorkingDir, mGPU, mRenderSettings);
+										   mSpectrumDescriptor, mScene, mWorkingDir, mRenderSettings);
 }
 }

@@ -19,7 +19,7 @@ void GridMaterial::setFirstMaterial(const std::shared_ptr<Material>& mat)
 	mFirst = mat;
 }
 
-const std::shared_ptr<Material>& GridMaterial::firstMaterial() const
+std::shared_ptr<Material> GridMaterial::firstMaterial() const
 {
 	return mFirst;
 }
@@ -30,7 +30,7 @@ void GridMaterial::setSecondMaterial(const std::shared_ptr<Material>& mat)
 	mSecond = mat;
 }
 
-const std::shared_ptr<Material>& GridMaterial::secondMaterial() const
+std::shared_ptr<Material> GridMaterial::secondMaterial() const
 {
 	return mSecond;
 }

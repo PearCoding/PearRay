@@ -39,7 +39,7 @@ public:
 
 	inline const std::list<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfiniteLights; }
 
-	const std::shared_ptr<Camera>& activeCamera() const;
+	std::shared_ptr<Camera> activeCamera() const;
 
 	SceneCollision checkCollision(const Ray& ray) const;
 	SceneCollision checkCollisionSimple(const Ray& ray) const;

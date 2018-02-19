@@ -61,7 +61,7 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 	const float inflightCountWeight = 1.0f / renderer()->scene()->infiniteLights().size();
 
 	RandomSampler sampler(session.tile()->random());
-	for (const auto& e : renderer()->scene()->infiniteLights()) {
+	for (auto e : renderer()->scene()->infiniteLights()) {
 		float semi_pdf = 0;
 
 		for (uint32 i = 0;

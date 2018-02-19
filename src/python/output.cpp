@@ -63,11 +63,11 @@ void setup_output(py::module& m)
 		.def("fragment", &OutputMap::getFragment)
 		.def("sampleCount", &OutputMap::getSampleCount)
 		.def("channel",
-			 (const std::shared_ptr<FrameBufferFloat>& (OutputMap::*)(OutputMap::Variable1D) const) & OutputMap::getChannel)
+			 (std::shared_ptr<FrameBufferFloat> (OutputMap::*)(OutputMap::Variable1D) const) & OutputMap::getChannel)
 		.def("channel",
-			 (const std::shared_ptr<FrameBufferFloat>& (OutputMap::*)(OutputMap::Variable3D) const) & OutputMap::getChannel)
+			 (std::shared_ptr<FrameBufferFloat> (OutputMap::*)(OutputMap::Variable3D) const) & OutputMap::getChannel)
 		.def("channel",
-			 (const std::shared_ptr<FrameBufferUInt64>& (OutputMap::*)(OutputMap::VariableCounter) const) & OutputMap::getChannel)
+			 (std::shared_ptr<FrameBufferUInt64> (OutputMap::*)(OutputMap::VariableCounter) const) & OutputMap::getChannel)
 		.def_property_readonly("spectral", &OutputMap::getSpectralChannel)
 		.def("registerChannel",
 			 (void (OutputMap::*)(OutputMap::Variable1D, const std::shared_ptr<FrameBufferFloat>&)) & OutputMap::registerChannel)

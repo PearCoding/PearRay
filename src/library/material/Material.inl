@@ -11,7 +11,7 @@ inline bool Material::isLight() const
 	return mEmission != nullptr;
 }
 
-inline const std::shared_ptr<SpectrumShaderOutput>& Material::emission() const
+inline std::shared_ptr<SpectrumShaderOutput> Material::emission() const
 {
 	return mEmission;
 }

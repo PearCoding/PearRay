@@ -78,7 +78,7 @@ void CoordinateAxisEntity::setXMaterial(const std::shared_ptr<Material>& m)
 	mMaterials[0] = m;
 }
 
-const std::shared_ptr<Material>& CoordinateAxisEntity::xMaterial() const
+std::shared_ptr<Material> CoordinateAxisEntity::xMaterial() const
 {
 	return mMaterials[0];
 }
@@ -88,7 +88,7 @@ void CoordinateAxisEntity::setYMaterial(const std::shared_ptr<Material>& m)
 	mMaterials[1] = m;
 }
 
-const std::shared_ptr<Material>& CoordinateAxisEntity::yMaterial() const
+std::shared_ptr<Material> CoordinateAxisEntity::yMaterial() const
 {
 	return mMaterials[1];
 }
@@ -98,7 +98,7 @@ void CoordinateAxisEntity::setZMaterial(const std::shared_ptr<Material>& m)
 	mMaterials[2] = m;
 }
 
-const std::shared_ptr<Material>& CoordinateAxisEntity::zMaterial() const
+std::shared_ptr<Material> CoordinateAxisEntity::zMaterial() const
 {
 	return mMaterials[2];
 }

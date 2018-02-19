@@ -34,7 +34,7 @@ PR_TEST("Equal Energy")
 		specDesc,
 		env->renderWidth(),
 		env->renderHeight(),
-		scene, "", true);
+		scene, "");
 
 	Spectrum diOutput(specDesc);
 	Spectrum bidiOutput(specDesc);

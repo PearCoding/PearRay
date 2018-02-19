@@ -120,7 +120,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	std::fill_n(invMax1d, OutputMap::V_COUNTER_COUNT, 0);
 
 	for (const IM_ChannelSetting3D& sett : ch3d) {
-		const auto& channel = mRenderer->output()->getChannel(sett.Variable);
+		auto channel = mRenderer->output()->getChannel(sett.Variable);
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
@@ -140,7 +140,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	}
 
 	for (const IM_ChannelSetting1D& sett : ch1d) {
-		const auto& channel = mRenderer->output()->getChannel(sett.Variable);
+		auto channel = mRenderer->output()->getChannel(sett.Variable);
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
@@ -156,7 +156,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	}
 
 	for (const IM_ChannelSettingCounter& sett : chcounter) {
-		const auto& channel = mRenderer->output()->getChannel(sett.Variable);
+		auto channel = mRenderer->output()->getChannel(sett.Variable);
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
@@ -195,7 +195,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			}
 
 			for (const IM_ChannelSetting3D& sett : ch3d) {
-				const auto& channel = mRenderer->output()->getChannel(sett.Variable);
+				auto channel = mRenderer->output()->getChannel(sett.Variable);
 				if (channel) {
 					Eigen::Vector3f a(channel->ptr()[id3d],
 									  channel->ptr()[id3d + 1],
@@ -250,7 +250,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			}
 
 			for (const IM_ChannelSetting1D& sett : ch1d) {
-				const auto& channel = mRenderer->output()->getChannel(sett.Variable);
+				auto channel = mRenderer->output()->getChannel(sett.Variable);
 				if (channel) {
 					float r = channel->ptr()[id1d];
 					switch (sett.TMM) {
@@ -283,7 +283,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			}
 
 			for (const IM_ChannelSettingCounter& sett : chcounter) {
-				const auto& channel = mRenderer->output()->getChannel(sett.Variable);
+				auto channel = mRenderer->output()->getChannel(sett.Variable);
 				if (channel) {
 					float r = channel->ptr()[id1d];
 					switch (sett.TMM) {

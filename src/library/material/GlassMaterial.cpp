@@ -37,7 +37,7 @@ void GlassMaterial::setThin(bool b)
 	mThin = b;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& GlassMaterial::specularity() const
+std::shared_ptr<SpectrumShaderOutput> GlassMaterial::specularity() const
 {
 	return mSpecularity;
 }
@@ -47,7 +47,7 @@ void GlassMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& 
 	mSpecularity = spec;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& GlassMaterial::ior() const
+std::shared_ptr<SpectrumShaderOutput> GlassMaterial::ior() const
 {
 	return mIndex;
 }

@@ -79,24 +79,24 @@ public:
 		return mRandom;
 	}
 
-	inline const std::unique_ptr<Sampler>& aaSampler() const
+	inline Sampler* aaSampler() const
 	{
-		return mAASampler;
+		return mAASampler.get();
 	}
 
-	inline const std::unique_ptr<Sampler>& lensSampler() const
+	inline Sampler* lensSampler() const
 	{
-		return mLensSampler;
+		return mLensSampler.get();
 	}
 
-	inline const std::unique_ptr<Sampler>& timeSampler() const
+	inline Sampler* timeSampler() const
 	{
-		return mTimeSampler;
+		return mTimeSampler.get();
 	}
 
-	inline const std::unique_ptr<Sampler>& spectralSampler() const
+	inline Sampler* spectralSampler() const
 	{
-		return mSpectralSampler;
+		return mSpectralSampler.get();
 	}
 
 	inline const RenderStatistics& statistics() const

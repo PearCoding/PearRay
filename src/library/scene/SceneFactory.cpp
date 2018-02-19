@@ -37,12 +37,12 @@ void SceneFactory::removeEntity(const std::shared_ptr<Entity>& e)
 
 std::shared_ptr<Entity> SceneFactory::getEntity(const std::string& name, const std::string& type) const
 {
-	for (const auto& entity : mEntities) {
+	for (auto entity : mEntities) {
 		if (entity->name() == name && entity->type() == type)
 			return entity;
 	}
 
-	for (const auto& entity : mRenderEntities) {
+	for (auto entity : mRenderEntities) {
 		if (entity->name() == name && entity->type() == type)
 			return entity;
 	}
@@ -68,7 +68,7 @@ void SceneFactory::setActiveCamera(const std::shared_ptr<Camera>& c)
 	mActiveCamera = c;
 }
 
-const std::shared_ptr<Camera>& SceneFactory::activeCamera() const
+std::shared_ptr<Camera> SceneFactory::activeCamera() const
 {
 	return mActiveCamera;
 }

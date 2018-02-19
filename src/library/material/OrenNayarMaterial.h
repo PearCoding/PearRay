@@ -7,10 +7,10 @@ class PR_LIB OrenNayarMaterial : public Material {
 public:
 	explicit OrenNayarMaterial(uint32 id);
 
-	const std::shared_ptr<SpectrumShaderOutput>& albedo() const;
+	std::shared_ptr<SpectrumShaderOutput> albedo() const;
 	void setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec);
 
-	const std::shared_ptr<ScalarShaderOutput>& roughness() const;
+	std::shared_ptr<ScalarShaderOutput> roughness() const;
 	void setRoughness(const std::shared_ptr<ScalarShaderOutput>& data);
 
 	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;

@@ -22,7 +22,7 @@ OrenNayarMaterial::OrenNayarMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& OrenNayarMaterial::albedo() const
+std::shared_ptr<SpectrumShaderOutput> OrenNayarMaterial::albedo() const
 {
 	return mAlbedo;
 }
@@ -32,7 +32,7 @@ void OrenNayarMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& d
 	mAlbedo = diffSpec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& OrenNayarMaterial::roughness() const
+std::shared_ptr<ScalarShaderOutput> OrenNayarMaterial::roughness() const
 {
 	return mRoughness;
 }

@@ -54,7 +54,7 @@ private:
 
 #define _PR_STD_PARAMETER_TYPE_PTR(type, name)                 \
 	inline explicit Parameter(const std::shared_ptr<type>& v); \
-	inline const std::shared_ptr<type>& get##name() const;     \
+	inline std::shared_ptr<type> get##name() const;     \
 	inline void set##name(const std::shared_ptr<type>& v)
 
 class PR_LIB_INLINE Parameter {

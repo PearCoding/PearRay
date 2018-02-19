@@ -23,13 +23,13 @@ public:
 	float axisThickness() const;
 
 	void setXMaterial(const std::shared_ptr<Material>& m);
-	const std::shared_ptr<Material>& xMaterial() const;
+	std::shared_ptr<Material> xMaterial() const;
 
 	void setYMaterial(const std::shared_ptr<Material>& m);
-	const std::shared_ptr<Material>& yMaterial() const;
+	std::shared_ptr<Material> yMaterial() const;
 
 	void setZMaterial(const std::shared_ptr<Material>& m);
-	const std::shared_ptr<Material>& zMaterial() const;
+	std::shared_ptr<Material> zMaterial() const;
 
 	bool isCollidable() const override;
 	float collisionCost() const override;

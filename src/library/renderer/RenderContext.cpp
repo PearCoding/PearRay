@@ -33,7 +33,7 @@
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-							 const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, GPU* gpu, const RenderSettings& settings)
+							 const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, const RenderSettings& settings)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)
@@ -49,7 +49,6 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint3
 	, mTileMap()
 	, mIncrementalCurrentSample(0)
 	, mRenderSettings(settings)
-	, mGPU(gpu)
 	, mIntegrator(nullptr)
 	, mShouldStop(false)
 {
@@ -57,7 +56,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint3
 
 	reset();
 
-	mOutputMap = std::make_shared<OutputMap>(this);
+	mOutputMap = std::make_unique<OutputMap>(this);
 }
 
 RenderContext::~RenderContext()
@@ -88,8 +87,10 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 {
 	reset();
 
+	PR_ASSERT(mOutputMap, "Output Map must be already created!");
+
 	/* Setup entities */
-	for (const auto& entity : mScene->renderEntities()) {
+	for (auto entity : mScene->renderEntities()) {
 		if (entity->isLight())
 			mLights.push_back(entity.get());
 	}
@@ -248,7 +249,7 @@ RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray&
 	} else {
 		appliedSpec.clear();
 
-		for (const auto& e : mScene->infiniteLights())
+		for (auto e : mScene->infiniteLights())
 			e->apply(appliedSpec, ray.direction(), session);
 
 		session.tile()->statistics().incBackgroundHitCount();

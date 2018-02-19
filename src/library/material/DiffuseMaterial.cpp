@@ -15,7 +15,7 @@ DiffuseMaterial::DiffuseMaterial(uint32 id)
 {
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& DiffuseMaterial::albedo() const
+std::shared_ptr<SpectrumShaderOutput> DiffuseMaterial::albedo() const
 {
 	return mAlbedo;
 }

@@ -62,7 +62,7 @@ void CookTorranceMaterial::setGeometryMode(GeometryMode mode)
 	mGeometryMode = mode;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::albedo() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::albedo() const
 {
 	return mAlbedo;
 }
@@ -72,7 +72,7 @@ void CookTorranceMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>
 	mAlbedo = diffSpec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::diffuseRoughness() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::diffuseRoughness() const
 {
 	return mDiffuseRoughness;
 }
@@ -82,7 +82,7 @@ void CookTorranceMaterial::setDiffuseRoughness(const std::shared_ptr<ScalarShade
 	mDiffuseRoughness = d;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::specularity() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::specularity() const
 {
 	return mSpecularity;
 }
@@ -92,7 +92,7 @@ void CookTorranceMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOu
 	mSpecularity = spec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::specularRoughnessX() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::specularRoughnessX() const
 {
 	return mSpecRoughnessX;
 }
@@ -102,7 +102,7 @@ void CookTorranceMaterial::setSpecularRoughnessX(const std::shared_ptr<ScalarSha
 	mSpecRoughnessX = d;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::specularRoughnessY() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::specularRoughnessY() const
 {
 	return mSpecRoughnessY;
 }
@@ -112,7 +112,7 @@ void CookTorranceMaterial::setSpecularRoughnessY(const std::shared_ptr<ScalarSha
 	mSpecRoughnessY = d;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::ior() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::ior() const
 {
 	return mIOR;
 }
@@ -122,7 +122,7 @@ void CookTorranceMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& d
 	mIOR = data;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::conductorAbsorption() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::conductorAbsorption() const
 {
 	return mConductorAbsorption;
 }
@@ -132,7 +132,7 @@ void CookTorranceMaterial::setConductorAbsorption(const std::shared_ptr<Spectrum
 	mConductorAbsorption = data;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::reflectivity() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::reflectivity() const
 {
 	return mReflectivity;
 }
