@@ -11,5 +11,8 @@ public:
 
 protected:
 	void onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session) override;
+
+private:
+	const DebugMode mDebugMode;
 };
 }

@@ -8,7 +8,7 @@ namespace PR {
 class PR_LIB BiDirectIntegrator : public OnePassIntegrator {
 public:
 	explicit BiDirectIntegrator(RenderContext* renderer);
-	~BiDirectIntegrator();
+	virtual ~BiDirectIntegrator();
 
 	void init() override;
 

@@ -19,6 +19,12 @@
 
 #include "math/MSI.h"
 
+// Implementations
+#include "integrator/BiDirectIntegrator.h"
+#include "integrator/DebugIntegrator.h"
+#include "integrator/DirectIntegrator.h"
+#include "integrator/PPMIntegrator.h"
+
 namespace PR {
 struct I_ThreadData {
 	Spectrum SemiWeight;
@@ -132,5 +138,21 @@ void Integrator::handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderC
 			}
 		}
 	}
+}
+
+std::unique_ptr<Integrator> Integrator::create(RenderContext* context, IntegratorMode mode) {
+	switch (mode) {
+	case IM_Direct:
+		return std::make_unique<DirectIntegrator>(context);
+	default:
+	case IM_BiDirect:
+		return std::make_unique<BiDirectIntegrator>(context);
+	case IM_PPM:
+		return std::make_unique<PPMIntegrator>(context);
+	}
+}
+
+std::unique_ptr<Integrator> Integrator::createDebug(RenderContext* context) {
+	return std::make_unique<DebugIntegrator>(context);
 }
 } // namespace PR

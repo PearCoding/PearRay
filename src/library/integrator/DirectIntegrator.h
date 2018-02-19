@@ -8,6 +8,7 @@ struct ShaderClosure;
 class PR_LIB DirectIntegrator : public OnePassIntegrator {
 public:
 	explicit DirectIntegrator(RenderContext* renderer);
+	virtual ~DirectIntegrator();
 
 	void init() override;
 

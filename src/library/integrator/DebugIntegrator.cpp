@@ -13,6 +13,7 @@
 namespace PR {
 DebugIntegrator::DebugIntegrator(RenderContext* renderer)
 	: OnePassIntegrator(renderer)
+	, mDebugMode(renderer->settings().debugMode())
 {
 }
 
@@ -28,15 +29,17 @@ void DebugIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 	Ray out = in;
 	out.setFlags(in.flags() | RF_Debug);
 
-	if (renderer()->settings().debugMode() == DM_Emission)
+	if (mDebugMode == DM_Emission)
 		entity = renderer()->shootWithEmission(spec, out, sc, session);
 	else
 		entity = renderer()->shoot(out, sc, session);
 
-	if (!entity || (renderer()->settings().debugMode() != DM_Validity && !sc.Material))
+	spec.clear();
+	
+	if (!entity || (mDebugMode != DM_Validity && !sc.Material))
 		return;
 
-	switch (renderer()->settings().debugMode()) {
+	switch (mDebugMode) {
 	default:
 	case DM_None:
 		break;

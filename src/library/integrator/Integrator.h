@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/RenderStatus.h"
+#include "renderer/RenderEnums.h"
 #include <vector>
 
 namespace PR {
@@ -28,6 +29,8 @@ public:
 
 	inline RenderContext* renderer() const { return mRenderer; }
 
+	static std::unique_ptr<Integrator> create(RenderContext* context, IntegratorMode mode);
+	static std::unique_ptr<Integrator> createDebug(RenderContext* context);
 protected:
 	void handleInfiniteLights(Spectrum& spec, const Ray& in, const ShaderClosure& sc, const RenderSession& session, float& full_pdf);
 	void handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderClosure& sc, const RenderSession& session, RenderEntity*& lastEntity);

@@ -143,10 +143,8 @@ void OutputMap::clear()
 void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc)
 {
 	PR_ASSERT(mInitialized, "OutputMap not initialized");
-
-	if(p(0) < 0 || p(0) >= mSpectral->width() ||
-		p(1) < 0 || p(1) >= mSpectral->height())
-		return;// Assert??
+	PR_ASSERT(!(p(0) < 0 || (uint32)p(0) >= mSpectral->width() ||
+		p(1) < 0 || (uint32)p(1) >= mSpectral->height()), "Expected valid pixel coordinates");
 
 	uint32 oldSample = getSampleCount(p);
 	float t			 = 1.0f / (oldSample + 1.0f);

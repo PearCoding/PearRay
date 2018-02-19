@@ -10,12 +10,9 @@
 #include "ray/Ray.h"
 #include "scene/Scene.h"
 
-#include "integrator/BiDirectIntegrator.h"
-#include "integrator/DebugIntegrator.h"
-#include "integrator/DirectIntegrator.h"
-#include "integrator/PPMIntegrator.h"
-
 #include "light/IInfiniteLight.h"
+
+#include "integrator/Integrator.h"
 
 #include "shader/FacePoint.h"
 #include "shader/ShaderClosure.h"
@@ -26,10 +23,6 @@
 #include "math/Reflection.h"
 
 #include "material/Material.h"
-
-#ifndef PR_NO_GPU
-#include "gpu/GPU.h"
-#endif
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
@@ -71,10 +64,7 @@ void RenderContext::reset()
 	mCurrentPass			  = 0;
 	mIncrementalCurrentSample = 0;
 
-	if (mIntegrator) {
-		delete mIntegrator;
-		mIntegrator = nullptr;
-	}
+	mIntegrator.release();
 
 	for (RenderThread* thread : mThreads)
 		delete thread;
@@ -97,25 +87,13 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 
 	/* Setup integrators */
 	if (mRenderSettings.debugMode() != DM_None) {
-		mIntegrator = new DebugIntegrator(this);
+		mIntegrator = Integrator::createDebug(this);
 	} else {
 		if (mRenderSettings.maxLightSamples() == 0) {
 			PR_LOGGER.log(L_Warning, M_Scene, "MaxLightSamples is zero: Nothing to render");
 			return;
 		}
-
-		switch (mRenderSettings.integratorMode()) {
-		case IM_Direct:
-			mIntegrator = new DirectIntegrator(this);
-			break;
-		default:
-		case IM_BiDirect:
-			mIntegrator = new BiDirectIntegrator(this);
-			break;
-		case IM_PPM:
-			mIntegrator = new PPMIntegrator(this);
-			break;
-		}
+		mIntegrator = Integrator::create(this, mRenderSettings.integratorMode());
 	}
 
 	PR_ASSERT(mIntegrator, "Integrator should be set after selection");

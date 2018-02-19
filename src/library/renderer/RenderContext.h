@@ -69,7 +69,7 @@ public:
 	// Slow and only copies!
 	std::list<RenderTile*> currentTiles() const;
 
-	Integrator* integrator() const { return mIntegrator; }
+	Integrator* integrator() const { return mIntegrator.get(); }
 
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
@@ -118,7 +118,7 @@ private:
 
 	const RenderSettings mRenderSettings;
 
-	Integrator* mIntegrator;
+	std::unique_ptr<Integrator> mIntegrator;
 
 	std::mutex mPassMutex;
 	std::condition_variable mPassCondition;

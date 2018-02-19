@@ -27,6 +27,10 @@ DirectIntegrator::DirectIntegrator(RenderContext* renderer)
 {
 }
 
+DirectIntegrator::~DirectIntegrator()
+{
+}
+
 void DirectIntegrator::init()
 {
 	OnePassIntegrator::init();
