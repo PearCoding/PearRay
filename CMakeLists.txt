@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(PearRay)
 
 #SETS
-SET(VENDOR "PearRay project 2015-2017")
+SET(VENDOR "PearRay project 2015-2018")
 SET(VERSION_MAJOR 0)
 SET(VERSION_MINOR 10)
 SET(VERSION_HEX 0x0010)
@@ -38,7 +38,6 @@ ENDIF()
 option(PR_ONLY_LIBRARY "Compile only the main and util library." OFF)
 option(PR_ONLY_LIBRARY_SUBS "Compile only the main libraries in the subprojects." ON)
 option(PR_WITH_ASSERTS "Compile with asserts on. Disable only in deployment code!" ON)
-option(PR_WITH_GPU_SUPPORT "Build framework with GPU support if available." ON)
 option(PR_WITH_PYTHON "Compile with python API (using pybind11)." ON)
 option(PR_WITH_OSL "Compile with OSL support if available." ON)
 option(PR_USE_TRIANGLE_WATERTIGHT "Use Watertight triangle intersection algorithm instead of Trombore." OFF)
@@ -47,8 +46,8 @@ option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON "Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
 option(PR_GENERATE_COVERAGE "Generate coverage for debug builds - Currently only supported with the GCC compiler." ON)
 option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
+option(PR_BUILD_DOCUMENTATION "Build documentation with doxygen." ON)
 option(PR_CPP_CHECK "Do style check with cpplint." OFF)
-option(PR_ENABLE_DIAGNOSIS "Enable diagnosis. Will slow down performance. Only for development." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -62,9 +61,6 @@ find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options R
 
 IF(PR_BUILD_VIEWER)
 	find_package(Qt5Widgets)
-ENDIF()
-IF(PR_WITH_GPU_SUPPORT)
-	find_package(OpenCL)
 ENDIF()
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)
@@ -92,11 +88,11 @@ ENDIF()
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 IF(PR_WITH_PYTHON)
-	add_subdirectory(pybind11)
+	add_subdirectory(external/pybind11)
 	SET(PR_HAS_PYTHON_API ON)
 ENDIF()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 IF(NOT PR_WITH_ASSERTS)
@@ -109,7 +105,7 @@ IF(PR_ONLY_LIBRARY_SUBS)
 ENDIF(PR_ONLY_LIBRARY_SUBS)
 
 SET(DL_TARGET "datalisp")
-add_subdirectory(datalisp)
+add_subdirectory(external/DataLisp)
 
 SET(DEFS_DEBUG "${DEFS_DEBUG};PR_DEBUG")
 
@@ -117,17 +113,14 @@ IF(WIN32)
 	SET(DEFS ${DEFS} OPENEXR_DLL)
 ENDIF()
 
-IF(OpenCL_FOUND)
-	SET(PR_WITH_GPU)
-	MESSAGE(STATUS "Using OpenCL")
-ENDIF()
-
 IF(OIIO_LINK_STATIC)
 	SET(DEFS "${DEFS};OIIO_STATIC_BUILD")
 ENDIF()
 
-IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
-	SET(DEFS "${DEFS};PR_WITH_VIEWER")
+IF(PR_BUILD_VIEWER)
+	IF(${Qt5Widgets_FOUND})
+		SET(DEFS "${DEFS};PR_WITH_VIEWER")
+	ENDIF()
 ENDIF()
 
 IF(PR_BUILD_PROFILE)
@@ -146,20 +139,13 @@ ENDIF()
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
-			datalisp/src ${CMAKE_CURRENT_BINARY_DIR}/datalisp
+			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
+			external/tinyobjloader
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
 			src/library)
 
-IF(OpenCL_FOUND)
-	include_directories(${OpenCL_INCLUDE_DIRS})
-ENDIF()
-
 # Setup CPPLINT
 IF(PR_CPP_CHECK)
-	if(NOT PythonInterp_FOUND)
-		find_package(PythonInterp)
-	endif()
-
 	SET(PR_CPPLINT_CMD "cpplint" CACHE FILEPATH "cpplint python script")
 
 	set(PR_CPPLINT_STYLE)
@@ -178,14 +164,9 @@ IF(PR_CPP_CHECK)
 	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-runtime/references,)
 
 	function(add_cpplint_target TARGET_NAME SOURCES_LIST)
-	if(NOT PYTHONINTERP_FOUND)
-		return()
-	endif()
-
 	add_custom_target(${TARGET_NAME}
 		COMMAND "${CMAKE_COMMAND}" -E chdir
 				"${CMAKE_CURRENT_SOURCE_DIR}"
-				"${PYTHON_EXECUTABLE}"
 				"${PR_CPPLINT_CMD}"
 				"--filter=${PR_CPPLINT_STYLE}"
 				"--counting=detailed"
@@ -196,8 +177,10 @@ IF(PR_CPP_CHECK)
 		DEPENDS ${SOURCES_LIST}
 		COMMENT "Checking C++ Style ${TARGET_NAME}"
 		VERBATIM)
-
+	add_dependencies(cppcheck ${TARGET_NAME})
 	endfunction()
+
+	add_custom_target(cppcheck)
 ENDIF()
 
 # Libraries
@@ -216,8 +199,10 @@ ENDIF()
 # Executables
 add_subdirectory(src/client)
 
-IF(${Qt5Widgets_FOUND} AND PR_BUILD_VIEWER)
-	add_subdirectory(src/viewer)
+IF(PR_BUILD_VIEWER)
+	IF(${Qt5Widgets_FOUND})
+		add_subdirectory(src/viewer)
+	ENDIF()
 ENDIF()
 
 # Tests
@@ -225,6 +210,19 @@ IF(NOT PR_ONLY_LIBRARY AND PR_BUILD_TESTS)
 	add_subdirectory(src/sandbox)
 	enable_testing()
 	add_subdirectory(src/tests)
+ENDIF()
+
+# DOCUMENTATION
+IF(PR_BUILD_DOCUMENTATION)
+  find_package(Doxygen)
+  IF(DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tools/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    add_custom_target(doc_pearray
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+  )
+  ENDIF()
 ENDIF()
 
 # Coverage

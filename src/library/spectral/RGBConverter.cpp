@@ -1,13 +1,13 @@
 #include "RGBConverter.h"
 #include "XYZConverter.h"
 
-#include "Diagnosis.h"
+#include "SpectrumDescriptor.h"
 
 namespace PR {
-void RGBConverter::convert(const float* src, float& x, float& y, float& z)
+void RGBConverter::convert(uint32 samples, const float* src, float& x, float& y, float& z)
 {
 	float X, Y, Z;
-	XYZConverter::convertXYZ(src, X, Y, Z);
+	XYZConverter::convertXYZ(samples, src, X, Y, Z);
 	fromXYZ(X, Y, Z, x, y, z);
 }
 
@@ -24,14 +24,14 @@ void RGBConverter::fromXYZ(float x, float y, float z, float& r, float& g, float&
 	g = -9.692436e-01 * x + 1.875968e+00 * y + 4.155506e-02 * z;
 	b = 5.563008e-02 * x - 2.039770e-01 * y + 1.056972e+00 * z;
 
-	r = std::max(0.0f, r);
+	/*r = std::max(0.0f, r);
 	g = std::max(0.0f, g);
-	b = std::max(0.0f, b);
+	b = std::max(0.0f, b);*/
 }
 
 float RGBConverter::luminance(float r, float g, float b)
 {
-	return 0.2126f * r + 0.7152f * g + 0.0722f * b;
+	return PR_LUMINOSITY_RED * r + PR_LUMINOSITY_GREEN * g + PR_LUMINOSITY_BLUE * b;
 }
 
 void RGBConverter::gamma(float& x, float& y, float& z)
@@ -41,11 +41,19 @@ void RGBConverter::gamma(float& x, float& y, float& z)
 	z = (z <= 0.0031308f) ? 12.92f * z : (1.055f * pow(z, 0.4166666f) - 0.055f);
 }
 
-Spectrum RGBConverter::toSpec(float r, float g, float b)
+void RGBConverter::toSpec(Spectrum& spec, float r, float g, float b)
 {
 	float x, y, z;
 	toXYZ(r, g, b, x, y, z);
 
-	return PR_CHECK_NEGATIVE(XYZConverter::toSpec(x, y, z), "toSpec");
+	XYZConverter::toSpec(spec, x, y, z);
+}
+
+float RGBConverter::toSpecIndex(uint32 samples, uint32 index, float r, float g, float b)
+{
+	float x, y, z;
+	toXYZ(r, g, b, x, y, z);
+
+	return XYZConverter::toSpecIndex(samples, index, x, y, z);
 }
 }

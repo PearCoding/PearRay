@@ -19,7 +19,11 @@ if __name__ == '__main__':
     modname = os.path.basename(os.path.realpath(args.BINARY))
 
     sys.path.insert(0, bindir)
+
+    print("Loading module %s" % (modname))
     pr = importlib.import_module(modname.split('.')[0])
+
+    print("Starting test: %s" % (args.MODULE))
 
     if(not pr):
         print("Couldn't load binary '%s'" % args.BINARY)
@@ -43,3 +47,6 @@ if __name__ == '__main__':
 
     if not success:
         sys.exit(-2)
+else:
+    print("run.py is being imported into another module. This is not allowed!")
+    sys.exit(-3)

@@ -56,7 +56,7 @@ void SphereEntity::setMaterial(const std::shared_ptr<Material>& m)
 	mMaterial = m;
 }
 
-const std::shared_ptr<Material>& SphereEntity::material() const
+std::shared_ptr<Material> SphereEntity::material() const
 {
 	return mMaterial;
 }

@@ -8,30 +8,17 @@ namespace PR {
 class PR_LIB BiDirectIntegrator : public OnePassIntegrator {
 public:
 	explicit BiDirectIntegrator(RenderContext* renderer);
-	~BiDirectIntegrator();
+	virtual ~BiDirectIntegrator();
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc) override;
+
+protected:
+	void onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session) override;
 
 private:
-	Spectrum applyRay(const Ray& in, RenderTile* tile, uint32 diffBounces, ShaderClosure& sc);
+	void applyRay(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 diffBounces, ShaderClosure& sc);
 
-	struct TileData {
-		struct EventVertex {
-			Spectrum Flux;
-			ShaderClosure SC;
-			float PDF;
-			RenderEntity* Entity;
-		};
-
-		EventVertex* LightVertices;
-		uint32* LightPathLength;
-		//EventVertex* EyeVertices;
-	};
-
-	void deleteTileStructure();
-
-	TileData* mTileData;
-	uint32 mTileCount;
+	std::vector<struct BIDI_TileData> mTileData;
+	std::vector<struct BIDI_ThreadData> mThreadData;
 };
 }

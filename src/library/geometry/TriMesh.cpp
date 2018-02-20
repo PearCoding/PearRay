@@ -139,7 +139,7 @@ float TriMesh::collisionCost() const
 
 TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
-	uint32 fi = Projection::map(rnd(0), 0, (int)mFaces.size() - 1);
+	uint32 fi = Projection::map<uint32>(rnd(0), 0, mFaces.size() - 1);
 	auto bary = Projection::triangle(rnd(1), rnd(2));
 
 	Face* face = mFaces.at(fi);

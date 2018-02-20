@@ -1,4 +1,5 @@
 #include "XYZConverter.h"
+#include "SpectrumDescriptor.h"
 //#include "Logger.h"
 
 #define PR_XYZ_LINEAR_INTERP
@@ -6,45 +7,53 @@
 namespace PR {
 #include "xyz.inl"
 
-void XYZConverter::convertXYZ(const float* src, float& X, float& Y, float& Z)
+void XYZConverter::convertXYZ(uint32 samples, const float* src, float& X, float& Y, float& Z)
 {
-	X = 0;
-	Y = 0;
-	Z = 0;
+	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) { // Direct XYZ
+		X = src[0];
+		Y = src[1];
+		Z = src[2];
+	} else {
+		PR_ASSERT(samples == PR_SPECTRAL_WAVELENGTH_SAMPLES, "XYZ Converter only works with standard spectral type");
+
+		X = 0;
+		Y = 0;
+		Z = 0;
 
 #ifdef PR_XYZ_LINEAR_INTERP
-	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT - 1; ++i) {
-		const float val1 = src[i];
-		const float val2 = src[i + 1];
+		for (uint32 i = 0; i < samples - 1; ++i) {
+			const float val1 = src[i];
+			const float val2 = src[i + 1];
 
-		X += val1 * NM_TO_X[i] + val2 * NM_TO_X[i + 1];
-		Y += val1 * NM_TO_Y[i] + val2 * NM_TO_Y[i + 1];
-		Z += val1 * NM_TO_Z[i] + val2 * NM_TO_Z[i + 1];
-	}
+			X += val1 * NM_TO_X[i] + val2 * NM_TO_X[i + 1];
+			Y += val1 * NM_TO_Y[i] + val2 * NM_TO_Y[i + 1];
+			Z += val1 * NM_TO_Z[i] + val2 * NM_TO_Z[i + 1];
+		}
 #else
-	for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT - 1; ++i) {
-		const float val1 = src[i];
-		X += val1 * NM_TO_X[i];
-		Y += val1 * NM_TO_Y[i];
-		Z += val1 * NM_TO_Z[i];
-	}
+		for (uint32 i = 0; i < samples - 1; ++i) {
+			const float val1 = src[i];
+			X += val1 * NM_TO_X[i];
+			Y += val1 * NM_TO_Y[i];
+			Z += val1 * NM_TO_Z[i];
+		}
 #endif
 
-	X /= Y_SUM;
-	Y /= Y_SUM;
-	Z /= Y_SUM;
+		X /= Y_SUM;
+		Y /= Y_SUM;
+		Z /= Y_SUM;
 
 #ifdef PR_XYZ_LINEAR_INTERP
-	X *= 0.5f;
-	Y *= 0.5f;
-	Z *= 0.5f;
+		X *= 0.5f;
+		Y *= 0.5f;
+		Z *= 0.5f;
 #endif
+	}
 }
 
-void XYZConverter::convert(const float* src, float& x, float& y)
+void XYZConverter::convert(uint32 samples, const float* src, float& x, float& y)
 {
 	float X, Y, Z;
-	convertXYZ(src, X, Y, Z);
+	convertXYZ(samples, src, X, Y, Z);
 
 	float m = X + Y + Z;
 	if (m != 0) {
@@ -80,23 +89,15 @@ void barycentricTriangle(double px, double py,
 	t = -(py * x1 - py * x2 - px * y1 + px * y2 - x1 * y2 + x2 * y1) * invDet;
 }
 
-Spectrum XYZConverter::toSpec(float x, float y, float z)
+static bool findRegion(float nx, float ny, double& s, double& t, const float*& s1, const float*& s2, const float*& s3)
 {
-	const float b  = x + y + z; // Brightness
-	const float nx = x / b;
-	const float ny = y / b;
-
-	/*PR_LOGGER.logf(L_Warning, M_Internal, "XYZ [%f,%f,%f] -> [%f,%f]", x,y,z,nx,ny);*/
 	const int vIndex = _xyz2spec::pointToVoxel(nx, ny);
 	if (vIndex == -1) // Error?
-		return Spectrum();
-
-	/*PR_LOGGER.logf(L_Warning, M_Internal, "  Voxel %i -> [%i, %i]",
-			vIndex, _xyz2spec::voxelTable[vIndex][0], _xyz2spec::voxelTable[vIndex][1]);*/
+		return false;
 
 	// Check if point inside triangle
-	double s	  = -1;
-	double t	  = -1;
+	s			  = -1;
+	t			  = -1;
 	uint32 triInd = 0;
 	for (uint32 i = _xyz2spec::voxelTable[vIndex][0];
 		 i < _xyz2spec::voxelTable[vIndex][1] && (s < 0 || t < 0 || 1 - s - t < 0);
@@ -114,9 +115,6 @@ Spectrum XYZConverter::toSpec(float x, float y, float z)
 		const double p2x = _xyz2spec::pointTable[tri[2]][0];
 		const double p2y = _xyz2spec::pointTable[tri[2]][1];
 
-		/*PR_LOGGER.logf(L_Warning, M_Internal, "  Tri [%f, %f]~[%f, %f]~[%f, %f]",
-				p0x,p0y,p1x,p1y,p2x,p2y);*/
-
 		barycentricTriangle(nx, ny,
 							p0x, p0y, p1x, p1y, p2x, p2y,
 							_xyz2spec::triInvDetTable[triInd],
@@ -127,19 +125,64 @@ Spectrum XYZConverter::toSpec(float x, float y, float z)
 	}
 
 	if (s < 0 || t < 0 || 1 - s - t < 0) // No triangle found
-		return Spectrum();
+		return false;
 
-	const Spectrum& s1 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][0]];
-	const Spectrum& s2 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][1]];
-	const Spectrum& s3 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][2]];
+	s1 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][0]];
+	s2 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][1]];
+	s3 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][2]];
 
-	/*const double b1 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][0]]);
-		const double b2 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][1]]);
-		const double b3 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][2]]);*/
+	return true;
+}
 
-	const Spectrum output = s1 * (1 - s - t) + s2 * s + s3 * t;
-	//const double invBrightness = b1*(1-s-t) + b2*s + b3*t;
+void XYZConverter::toSpec(Spectrum& spec, float x, float y, float z)
+{
+	if (spec.samples() == PR_SPECTRAL_TRIPLET_SAMPLES) {
+		spec.setValue(0, x);
+		spec.setValue(1, y);
+		spec.setValue(2, z);
+	} else {
+		PR_ASSERT(spec.samples() == PR_SPECTRAL_WAVELENGTH_SAMPLES, "XYZ Converter only works with standard spectral type");
 
-	return output * b;
+		const float b  = x + y + z; // Brightness
+		const float nx = x / b;
+		const float ny = y / b;
+
+		double s, t;
+		const float* s1 = nullptr;
+		const float* s2 = nullptr;
+		const float* s3 = nullptr;
+
+		if (!findRegion(nx, ny, s, t, s1, s2, s3))
+			return;
+
+		for (uint32 i = 0; i < spec.samples(); ++i) {
+			spec.setValue(i, s1[i] * (1 - s - t) + s2[i] * s + s3[i] * t);
+		}
+
+		spec *= b;
+	}
+}
+
+float XYZConverter::toSpecIndex(uint32 samples, uint32 index, float x, float y, float z)
+{
+	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) {
+		return (index == 0) ? x : (index == 1 ? y : z);
+	} else {
+		PR_ASSERT(samples == PR_SPECTRAL_WAVELENGTH_SAMPLES, "XYZ Converter only works with standard spectral type");
+
+		const float b  = x + y + z; // Brightness
+		const float nx = x / b;
+		const float ny = y / b;
+
+		double s, t;
+		const float* s1 = nullptr;
+		const float* s2 = nullptr;
+		const float* s3 = nullptr;
+
+		if (!findRegion(nx, ny, s, t, s1, s2, s3))
+			return 0.0f;
+
+		return (s1[index] * (1 - s - t) + s2[index] * s + s3[index] * t) * b;
+	}
 }
 }

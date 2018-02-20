@@ -7,33 +7,29 @@
 #include <fstream>
 #include <sstream>
 
-namespace PR
+namespace PR {
+RenderSettings GlobalPropertyLoader::loadGlobalProperties(const DL::DataGroup& group)
 {
-	RenderSettings GlobalPropertyLoader::loadGlobalProperties(const DL::DataGroup& group)
-	{
-		RenderSettings settings;
+	RenderSettings settings;
 
-		for (size_t i = 0; i < group.anonymousCount(); ++i)
-		{
-			DL::Data dataD = group.at(i);
+	for (size_t i = 0; i < group.anonymousCount(); ++i) {
+		DL::Data dataD = group.at(i);
 
-			if (dataD.type() == DL::Data::T_Group)
-			{
-				DL::DataGroup entry = dataD.getGroup();
+		if (dataD.type() == DL::Data::T_Group) {
+			DL::DataGroup entry = dataD.getGroup();
 
-				if (entry.id() == "property")
-				{
-					handleProperty(entry, settings);
-				}
+			if (entry.id() == "property") {
+				handleProperty(entry, settings);
 			}
 		}
-
-		return settings;
 	}
 
-	void GlobalPropertyLoader::handleProperty(const DL::DataGroup& group, RenderSettings& settings)
-	{
-		/*if(entry.id() != "incremental")
+	return settings;
+}
+
+void GlobalPropertyLoader::handleProperty(const DL::DataGroup& group, RenderSettings& settings)
+{
+	/*if(entry.id() != "incremental")
 			settings.setIncremental(handleBool(entry, settings.isIncremental()));
 		else if(entry.id() != "debug")
 			settings.setDebugMode(handleDebugMode(entry, settings.debugMode()));
@@ -68,6 +64,6 @@ namespace PR
 		else if(entry.id() != "light_samples")
 			settings.setMaxLightSamples(handleInteger(entry, settings.maxLightSamples()));
 		*/
-			// Tile Mode??
-	}
+	// Tile Mode??
 }
+} // namespace PR

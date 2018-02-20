@@ -7,9 +7,9 @@
 
 namespace PR {
 class Ray;
-class RenderContext;
 
 struct CameraSample {
+	Eigen::Vector2i SensorSize; // Full Size (Width and Height)
 	Eigen::Vector2i Pixel;
 	Eigen::Vector2f PixelF;
 	Eigen::Vector2f R;
@@ -20,10 +20,10 @@ struct CameraSample {
 class PR_LIB Camera : public Entity {
 public:
 	ENTITY_CLASS
-	
+
 	Camera(uint32 id, const std::string& name);
 	virtual ~Camera();
 
-	virtual Ray constructRay(RenderContext* context, const CameraSample& sample) const = 0;
+	virtual Ray constructRay(const CameraSample& sample) const = 0;
 };
-}
+} // namespace PR

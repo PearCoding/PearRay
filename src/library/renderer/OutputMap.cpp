@@ -3,20 +3,19 @@
 #include "material/Material.h"
 #include "shader/ShaderClosure.h"
 #include "spectral/Spectrum.h"
-
-#include "Diagnosis.h"
+#include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
 OutputMap::OutputMap(RenderContext* renderer)
 	: mRenderer(renderer)
 	, mInitialized(false)
-	, mSpectral(new FrameBufferSpectrum())
+	, mSpectral(new FrameBufferFloat(renderer->spectrumDescriptor()->samples(), 0.0f))
 {
 }
 
 OutputMap::~OutputMap()
 {
-	if(mInitialized)
+	if (mInitialized)
 		deinit();
 }
 
@@ -27,7 +26,7 @@ void OutputMap::init()
 	// Init outputs
 	mSpectral->init(mRenderer);
 	if (!mIntCounter[V_Samples])
-		mIntCounter[V_Samples] = std::make_shared<FrameBufferCounter>(0);
+		mIntCounter[V_Samples] = std::make_shared<FrameBufferUInt64>(1, 0);
 
 	for (uint32 i = 0; i < V_1D_COUNT; ++i) {
 		if (mInt1D[i])
@@ -44,19 +43,21 @@ void OutputMap::init()
 			mInt3D[i]->init(mRenderer);
 	}
 
-	for (const auto& p : mCustom1D)
+	for (auto p : mCustom1D)
 		p.second->init(mRenderer);
 
-	for (const auto& p : mCustomCounter)
+	for (auto p : mCustomCounter)
 		p.second->init(mRenderer);
 
-	for (const auto& p : mCustom3D)
+	for (auto p : mCustom3D)
 		p.second->init(mRenderer);
 
-	for (const auto& p : mCustomSpectral)
+	for (auto p : mCustomSpectral)
 		p.second->init(mRenderer);
 
 	mInitialized = true;
+
+	clear();
 }
 
 void OutputMap::deinit()
@@ -86,19 +87,19 @@ void OutputMap::deinit()
 		}
 	}
 
-	for (const auto& p : mCustom1D)
+	for (auto p : mCustom1D)
 		p.second->deinit();
 	mCustom1D.clear();
 
-	for (const auto& p : mCustomCounter)
+	for (auto p : mCustomCounter)
 		p.second->deinit();
 	mCustomCounter.clear();
 
-	for (const auto& p : mCustom3D)
+	for (auto p : mCustom3D)
 		p.second->deinit();
 	mCustom3D.clear();
 
-	for (const auto& p : mCustomSpectral)
+	for (auto p : mCustomSpectral)
 		p.second->deinit();
 	mCustomSpectral.clear();
 
@@ -126,85 +127,79 @@ void OutputMap::clear()
 			mInt3D[i]->clear();
 	}
 
-	for (const auto& p : mCustom1D)
+	for (auto p : mCustom1D)
 		p.second->clear();
 
-	for (const auto& p : mCustomCounter)
+	for (auto p : mCustomCounter)
 		p.second->clear();
 
-	for (const auto& p : mCustom3D)
+	for (auto p : mCustom3D)
 		p.second->clear();
 
-	for (const auto& p : mCustomSpectral)
+	for (auto p : mCustomSpectral)
 		p.second->clear();
 }
 
 void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc)
 {
 	PR_ASSERT(mInitialized, "OutputMap not initialized");
-	
+	PR_ASSERT(!(p(0) < 0 || (uint32)p(0) >= mSpectral->width() ||
+		p(1) < 0 || (uint32)p(1) >= mSpectral->height()), "Expected valid pixel coordinates");
+
 	uint32 oldSample = getSampleCount(p);
 	float t			 = 1.0f / (oldSample + 1.0f);
 
-	PR_CHECK_NEGATIVE(t, "OutputMap::pushFragment");
-
 	// Spectral
-	Spectrum oldSpec = mSpectral->getFragmentBounded(p);
-	Spectrum newSpec = oldSpec * (1 - t) + s * t;
-	PR_CHECK_NEGATIVE(newSpec, "OutputMap::pushFragment");
-
-	mSpectral->setFragmentBounded(p, newSpec);
+	float* spec = &mSpectral->getFragmentBounded(p, 0) + s.spectralStart();
+	for (uint32 i = 0; i < s.samples(); ++i) {
+		spec[i] = spec[i] * (1 - t) + s.value(i) * t;
+	}
 	setSampleCount(p, oldSample + 1);
 
 	// 3D
 	if (mInt3D[V_Position])
-		mInt3D[V_Position]->setFragmentBounded(p,
-											   mInt3D[V_Position]->getFragmentBounded(p) * (1 - t) + sc.P * t);
+		setValue(V_Position, p, t, sc.P);
 	if (mInt3D[V_Normal])
-		mInt3D[V_Normal]->setFragmentBounded(p,
-											 mInt3D[V_Normal]->getFragmentBounded(p) * (1 - t) + sc.N * t);
+		setValue(V_Normal, p, t, sc.N);
 	if (mInt3D[V_NormalG])
-		mInt3D[V_NormalG]->setFragmentBounded(p,
-											  mInt3D[V_NormalG]->getFragmentBounded(p) * (1 - t) + sc.Ng * t);
+		setValue(V_NormalG, p, t, sc.Ng);
 	if (mInt3D[V_Tangent])
-		mInt3D[V_Tangent]->setFragmentBounded(p,
-											  mInt3D[V_Tangent]->getFragmentBounded(p) * (1 - t) + sc.Nx * t);
+		setValue(V_Tangent, p, t, sc.Nx);
 	if (mInt3D[V_Bitangent])
-		mInt3D[V_Bitangent]->setFragmentBounded(p,
-												mInt3D[V_Bitangent]->getFragmentBounded(p) * (1 - t) + sc.Ny * t);
+		setValue(V_Bitangent, p, t, sc.Ny);
 	if (mInt3D[V_View])
-		mInt3D[V_View]->setFragmentBounded(p,
-										   mInt3D[V_View]->getFragmentBounded(p) * (1 - t) + sc.V * t);
+		setValue(V_View, p, t, sc.V);
 	if (mInt3D[V_UVW])
-		mInt3D[V_UVW]->setFragmentBounded(p,
-										  mInt3D[V_UVW]->getFragmentBounded(p) * (1 - t) + sc.UVW * t);
+		setValue(V_UVW, p, t, sc.UVW);
 	if (mInt3D[V_DPDU])
-		mInt3D[V_DPDU]->setFragmentBounded(p,
-										   mInt3D[V_DPDU]->getFragmentBounded(p) * (1 - t) + sc.dPdU * t);
+		setValue(V_DPDU, p, t, sc.dPdU);
 	if (mInt3D[V_DPDV])
-		mInt3D[V_DPDV]->setFragmentBounded(p,
-										   mInt3D[V_DPDV]->getFragmentBounded(p) * (1 - t) + sc.dPdV * t);
+		setValue(V_DPDV, p, t, sc.dPdV);
 	if (mInt3D[V_DPDW])
-		mInt3D[V_DPDW]->setFragmentBounded(p,
-										   mInt3D[V_DPDW]->getFragmentBounded(p) * (1 - t) + sc.dPdW * t);
+		setValue(V_DPDW, p, t, sc.dPdW);
 	if (mInt3D[V_DPDT])
-		mInt3D[V_DPDT]->setFragmentBounded(p,
-										   mInt3D[V_DPDT]->getFragment(p) * (1 - t) + sc.dPdT * t);
+		setValue(V_DPDT, p, t, sc.dPdT);
 
 	// 1D
 	if (mInt1D[V_Depth])
-		mInt1D[V_Depth]->setFragmentBounded(p,
+		mInt1D[V_Depth]->setFragmentBounded(p, 0,
 											mInt1D[V_Depth]->getFragmentBounded(p) * (1 - t) + std::sqrt(sc.Depth2) * t);
 	if (mInt1D[V_Time])
-		mInt1D[V_Time]->setFragmentBounded(p,
-										   mInt1D[V_Time]->getFragmentBounded(p) * (1 - t) + (float)sc.T * t);
+		mInt1D[V_Time]->setFragmentBounded(p, 0,
+										   mInt1D[V_Time]->getFragmentBounded(p) * (1 - t) + static_cast<float>(sc.T) * t);
 	if (mInt1D[V_Material])
-		mInt1D[V_Material]->setFragmentBounded(p,
+		mInt1D[V_Material]->setFragmentBounded(p, 0,
 											   mInt1D[V_Material]->getFragmentBounded(p) * (1 - t) + (sc.Material ? sc.Material->id() : 0) * t);
 
 	// Counter
 	if (mIntCounter[V_ID])
-		mIntCounter[V_ID]->setFragmentBounded(p, sc.EntityID);
+		mIntCounter[V_ID]->setFragmentBounded(p, 0, sc.EntityID);
+}
+
+// TODO: To heavy cost with new allocation insided Spectrum
+const Spectrum OutputMap::getFragment(const Eigen::Vector2i& p) const
+{
+	return Spectrum(mRenderer->spectrumDescriptor(), 0, mSpectral->channels(), &mSpectral->getFragmentBounded(p));
 }
 
 bool OutputMap::isPixelFinished(const Eigen::Vector2i& p) const
@@ -227,4 +222,14 @@ uint64 OutputMap::finishedPixelCount() const
 
 	return pixelsFinished;
 }
+
+void OutputMap::setValue(Variable3D var, const Eigen::Vector2i& p, float t, const Eigen::Vector3f& val)
+{
+	const Eigen::Vector3f intp = val * t;
+
+	for (uint32 i = 0; i < 3; ++i) {
+		mInt3D[var]->setFragmentBounded(p, i, mInt3D[var]->getFragmentBounded(p, i) * (1 - t) + intp(i));
+	}
 }
+
+} // namespace PR

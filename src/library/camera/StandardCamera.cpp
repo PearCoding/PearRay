@@ -118,16 +118,16 @@ float StandardCamera::apertureRadius() const
 	return mApertureRadius;
 }
 
-Ray StandardCamera::constructRay(RenderContext* context, const CameraSample& sample) const
+Ray StandardCamera::constructRay(const CameraSample& sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen");
 
 	PR_GUARD_PROFILE();
 
-	const float nx  = 2 * (sample.PixelF.x() / context->fullWidth() - 0.5f);
-	const float nx1 = 2 * ((sample.PixelF.x() + 1) / context->fullWidth() - 0.5f);
-	const float ny  = 2 * (sample.PixelF.y() / context->fullHeight() - 0.5f);
-	const float ny1 = 2 * ((sample.PixelF.y() + 1) / context->fullHeight() - 0.5f);
+	const float nx  = 2 * (sample.PixelF.x() / sample.SensorSize.x() - 0.5f);
+	const float nx1 = 2 * ((sample.PixelF.x() + 1) / sample.SensorSize.x() - 0.5f);
+	const float ny  = 2 * (sample.PixelF.y() / sample.SensorSize.y() - 0.5f);
+	const float ny1 = 2 * ((sample.PixelF.y() + 1) / sample.SensorSize.y() - 0.5f);
 
 	Eigen::Vector3f o;
 	Eigen::Vector3f d;

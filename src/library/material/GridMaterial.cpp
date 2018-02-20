@@ -19,7 +19,7 @@ void GridMaterial::setFirstMaterial(const std::shared_ptr<Material>& mat)
 	mFirst = mat;
 }
 
-const std::shared_ptr<Material>& GridMaterial::firstMaterial() const
+std::shared_ptr<Material> GridMaterial::firstMaterial() const
 {
 	return mFirst;
 }
@@ -30,7 +30,7 @@ void GridMaterial::setSecondMaterial(const std::shared_ptr<Material>& mat)
 	mSecond = mat;
 }
 
-const std::shared_ptr<Material>& GridMaterial::secondMaterial() const
+std::shared_ptr<Material> GridMaterial::secondMaterial() const
 {
 	return mSecond;
 }
@@ -55,59 +55,61 @@ bool GridMaterial::tileUV() const
 	return mTiledUV;
 }
 
-Spectrum GridMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void GridMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->eval(pointN, L, NdotL);
+		mFirst->eval(spec, pointN, L, NdotL, session);
 	else if (mSecond)
-		return mSecond->eval(pointN, L, NdotL);
-
-	return Spectrum();
+		mSecond->eval(spec, pointN, L, NdotL, session);
 }
 
 ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v) const
 {
-	u = (int)(point.UVW(0) * mGridCount);
-	v = (int)(point.UVW(1) * mGridCount);
+	u = static_cast<int>(point.UVW(0) * mGridCount);
+	v = static_cast<int>(point.UVW(1) * mGridCount);
 
 	if (mTiledUV) {
 		ShaderClosure pointN = point;
 		pointN.UVW			 = Eigen::Vector3f(point.UVW(1) * mGridCount - u,
-									 point.UVW(1) * mGridCount - v,
-									 point.UVW(2));
+									   point.UVW(1) * mGridCount - v,
+									   point.UVW(2));
 		return pointN;
 	} else {
 		return point;
 	}
 }
 
-float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->pdf(pointN, L, NdotL);
+		return mFirst->pdf(pointN, L, NdotL, session);
 	else if (mSecond)
-		return mSecond->pdf(pointN, L, NdotL);
+		return mSecond->pdf(pointN, L, NdotL, session);
 
 	return 0;
 }
 
-MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
 
 	if (mFirst && (u % 2) == (v % 2))
-		return mFirst->sample(pointN, rnd);
+		return mFirst->sample(pointN, rnd, session);
 	else if (mSecond)
-		return mSecond->sample(pointN, rnd);
+		return mSecond->sample(pointN, rnd, session);
 
 	return MaterialSample();
+}
+
+void GridMaterial::setup(RenderContext* context)
+{
 }
 
 std::string GridMaterial::dumpInformation() const
@@ -123,4 +125,4 @@ std::string GridMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

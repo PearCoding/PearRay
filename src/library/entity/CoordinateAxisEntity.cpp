@@ -40,11 +40,11 @@ float CoordinateAxisEntity::surfaceArea(Material* m) const
 		//TODO: Add world transformed surface area
 		/*if (flags() & EF_LocalArea)
 		{*/
-			float area = 0;
-			for(int i = 0; i < 3; ++i)
-				area += mAxisBoundingBox_Cache[i].surfaceArea();
-			
-			return area;
+		float area = 0;
+		for (int i = 0; i < 3; ++i)
+			area += mAxisBoundingBox_Cache[i].surfaceArea();
+
+		return area;
 		/*}
 		else
 			return worldBoundingBox().surfaceArea();*/
@@ -78,7 +78,7 @@ void CoordinateAxisEntity::setXMaterial(const std::shared_ptr<Material>& m)
 	mMaterials[0] = m;
 }
 
-const std::shared_ptr<Material>& CoordinateAxisEntity::xMaterial() const
+std::shared_ptr<Material> CoordinateAxisEntity::xMaterial() const
 {
 	return mMaterials[0];
 }
@@ -88,7 +88,7 @@ void CoordinateAxisEntity::setYMaterial(const std::shared_ptr<Material>& m)
 	mMaterials[1] = m;
 }
 
-const std::shared_ptr<Material>& CoordinateAxisEntity::yMaterial() const
+std::shared_ptr<Material> CoordinateAxisEntity::yMaterial() const
 {
 	return mMaterials[1];
 }
@@ -98,7 +98,7 @@ void CoordinateAxisEntity::setZMaterial(const std::shared_ptr<Material>& m)
 	mMaterials[2] = m;
 }
 
-const std::shared_ptr<Material>& CoordinateAxisEntity::zMaterial() const
+std::shared_ptr<Material> CoordinateAxisEntity::zMaterial() const
 {
 	return mMaterials[2];
 }
@@ -156,9 +156,9 @@ RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) con
 		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
 		Eigen::Vector2f uv = plane.project(vertex);
-		c.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
-		c.Point.Material = mMaterials[found].get();
-		c.Successful	 = true;
+		c.Point.UVW		   = Eigen::Vector3f(uv(0), uv(1), 0);
+		c.Point.Material   = mMaterials[found].get();
+		c.Successful	   = true;
 		return c;
 	}
 
@@ -207,7 +207,7 @@ void CoordinateAxisEntity::setup_cache() const
 	mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[2]);
 
 	const float area = surfaceArea(nullptr);
-	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
+	mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 }
 
 // Entity
@@ -226,4 +226,4 @@ void CoordinateAxisEntity::setup(RenderContext* context)
 			mMaterials[i]->setup(context);
 	}
 }
-}
+} // namespace PR

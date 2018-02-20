@@ -17,7 +17,7 @@ public:
 	float surfaceArea(Material* m) const override;
 
 	void setMaterial(const std::shared_ptr<Material>& m);
-	const std::shared_ptr<Material>& material() const;
+	std::shared_ptr<Material> material() const;
 
 	void setBoundingBox(const BoundingBox& box);
 

@@ -15,13 +15,17 @@ Material::Material(uint32 id)
 {
 }
 
-Spectrum Material::evalEmission(const ShaderClosure& point)
+void Material::evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent)
 {
-	if(!mEmission)
-		return Spectrum();
-	
-	const float NdotV = std::max(0.0f, -point.Ng.dot(point.V));
-	return mEmission->eval(point) * NdotV;
+	if (!mEmission)
+		return;
+
+	mEmission->eval(spec, point);
+
+	if (!viewIndependent) {
+		const float NdotV = std::max(0.0f, -point.Ng.dot(point.V));
+		spec *= NdotV;
+	}
 }
 
 std::string Material::dumpInformation() const
@@ -37,4 +41,4 @@ std::string Material::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

@@ -3,7 +3,6 @@
 namespace PR {
 RenderSettings::RenderSettings()
 	: mSeed((uint64_t)time(NULL))
-	, mIncremental(true)
 	, mDebugMode(DM_None)
 	, mIntegratorMode(IM_BiDirect)
 	, mAASampler(SM_MultiJitter)

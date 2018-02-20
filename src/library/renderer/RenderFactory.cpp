@@ -2,39 +2,22 @@
 #include "Logger.h"
 #include "RenderContext.h"
 #include "scene/Scene.h"
-
-#ifndef PR_NO_GPU
-#include "gpu/GPU.h"
-#endif
+#include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
-RenderFactory::RenderFactory(uint32 w, uint32 h, const Scene& scene,
-							 const std::string& workingDir, bool useGPU)
+RenderFactory::RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc,
+							 uint32 w, uint32 h, const std::shared_ptr<Scene>& scene,
+							 const std::string& workingDir)
 	: mFullWidth(w)
 	, mFullHeight(h)
 	, mWorkingDir(workingDir)
 	, mScene(scene)
-	, mGPU(nullptr)
+	, mSpectrumDescriptor(specDesc)
 {
-// Setup GPU
-#ifndef PR_NO_GPU
-	if (useGPU) {
-		mGPU = new GPU();
-		if (!mGPU->init("")) {
-			delete mGPU;
-			mGPU = nullptr;
-		}
-	}
-#endif
 }
 
 RenderFactory::~RenderFactory()
 {
-#ifndef PR_NO_GPU
-	if (mGPU) {
-		delete mGPU;
-	}
-#endif
 }
 
 uint32 RenderFactory::cropWidth() const
@@ -59,7 +42,7 @@ uint32 RenderFactory::cropOffsetY() const
 
 std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
 {
-	if (!mScene.activeCamera()) {
+	if (!mScene->activeCamera()) {
 		PR_LOGGER.log(L_Error, M_Scene, "No active camera selected");
 		return std::shared_ptr<RenderContext>();
 	}
@@ -68,8 +51,8 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 	PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
 	PR_ASSERT(index < itx * ity, "Index has to be in bounds");
 
-	uint32 itw = (uint32)std::ceil(cropWidth() / (float)itx);
-	uint32 ith = (uint32)std::ceil(cropHeight() / (float)ity);
+	uint32 itw = std::ceil(cropWidth() / static_cast<float>(itx));
+	uint32 ith = std::ceil(cropHeight() / static_cast<float>(ity));
 	uint32 ix  = index % itx;
 	uint32 iy  = index / itx;
 	uint32 x   = ix * itw;
@@ -77,6 +60,6 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 
 	return std::make_shared<RenderContext>(index, x + cropOffsetX(), y + cropOffsetY(),
 										   itw, ith, mFullWidth, mFullHeight,
-										   mScene, mWorkingDir, mGPU, mRenderSettings);
+										   mSpectrumDescriptor, mScene, mWorkingDir, mRenderSettings);
 }
 }

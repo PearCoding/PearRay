@@ -36,6 +36,7 @@ private:
 #else
 	uint64 mState;
 #endif
+
 public:
 	inline explicit Random(uint64 seed)
 		:
@@ -66,10 +67,10 @@ public:
 		mState = oldstate * MULT + mInc;
 
 		// Calculate output function (XSH RR), uses old state for max ILP
-		uint32 xorshifted = (uint32)(((oldstate >> 18u) ^ oldstate) >> 27u);
-		uint32 rot		  = (uint32)(oldstate >> 59u);
+		uint32 xorshifted = static_cast<uint32>(((oldstate >> 18u) ^ oldstate) >> 27u);
+		uint32 rot		  = static_cast<uint32>(oldstate >> 59u);
 
-		return ((xorshifted >> rot) | (xorshifted << ((~rot + 1u) & 31))) ^ (uint32)mSeed;
+		return ((xorshifted >> rot) | (xorshifted << ((~rot + 1u) & 31))) ^ static_cast<uint32>(mSeed);
 #else
 		return static_cast<uint32>(get64() & 0xFFFFFFFF);
 #endif
@@ -89,7 +90,7 @@ public:
 #if PR_RANDOM_ALGORITHM == 0
 		return mDistributionUInt64(mGenerator);
 #elif PR_RANDOM_ALGORITHM == 1
-		return (((uint64)get32()) << 32) | (uint64)get32();
+		return ((static_cast<uint64>(get32())) << 32) | static_cast<uint64>(get32());
 #else
 		mState ^= (mState << 13);
 		mState ^= (mState >> 7);
@@ -140,4 +141,4 @@ public:
 		return Eigen::Vector4f(getFloat(), getFloat(), getFloat(), getFloat());
 	}
 };
-}
+} // namespace PR

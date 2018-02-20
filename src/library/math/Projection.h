@@ -8,9 +8,10 @@ class PR_LIB Projection {
 
 public:
 	// Map [0, 1] uniformly to [min, max] as integers! (max is included)
-	static inline int map(float u, int min, int max)
+	template<typename T>
+	static inline T map(float u, T min, T max)
 	{
-		return std::min<int>(max - min, static_cast<int>(u * (max - min + 1))) + min;
+		return std::min<T>(max - min, static_cast<T>(u * (max - min + 1))) + min;
 	}
 
 	static inline float stratified(float u, int index, int groups, float min = 0, float max = 1)

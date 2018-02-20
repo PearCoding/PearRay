@@ -7,8 +7,7 @@
 #include "renderer/RenderStatistics.h"
 
 #include "spectral/ToneMapper.h"
-
-#include "gpu/GPU.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include "FileLogListener.h"
 
@@ -28,6 +27,7 @@
 namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
+constexpr int OUTPUT_FIELD_SIZE = 8;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 		return -2;
 	}
 
-	if(!env->scene().activeCamera())
+	if(!env->sceneFactory().activeCamera())
 	{
 		if(!options.IsQuiet)
 			std::cout << "Error: No camera specified." << std::endl;
@@ -75,10 +75,12 @@ int main(int argc, char** argv)
 
 	// Setup renderFactory
 	PR_BEGIN_PROFILE_ID(1);
+	auto scene = env->sceneFactory().create();
 	PR::RenderFactory* renderFactory = new PR::RenderFactory(
+		PR::SpectrumDescriptor::createStandardSpectral(),
 		options.ResolutionXOverride > 0 ? options.ResolutionXOverride : env->renderWidth(),
 		options.ResolutionYOverride > 0 ? options.ResolutionYOverride : env->renderHeight(),
-		env->scene(), options.OutputDir, true);
+		scene, options.OutputDir);
 	renderFactory->setSettings(options.RenderSettings);
 
 	if(options.CropMinXOverride >= 0 &&
@@ -103,14 +105,6 @@ int main(int argc, char** argv)
 
 	PR_END_PROFILE_ID(1);
 
-	PR_BEGIN_PROFILE_ID(2);
-	env->scene().freeze();// Freeze entities
-	PR_END_PROFILE_ID(2);
-
-	PR_BEGIN_PROFILE_ID(3);
-	env->scene().buildTree();
-	PR_END_PROFILE_ID(3);
-
 	// Render per image tile
 	for(PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i)
 	{
@@ -131,12 +125,11 @@ int main(int argc, char** argv)
 		}
 
 		env->outputSpecification().setup(renderer);
-		env->scene().setup(renderer);
 			
 		if(options.ShowInformation)
 			env->dumpInformation();
 		
-		PR::ToneMapper toneMapper(renderer->width(), renderer->height(), renderFactory->gpu());
+		PR::ToneMapper toneMapper(renderer->width(), renderer->height());
 
 		if(options.ShowProgress)
 			std::cout << "preprocess" << std::endl;
@@ -154,16 +147,16 @@ int main(int argc, char** argv)
 			{
 				PR::RenderStatus status = renderer->status();
 
-				std::cout << std::setprecision(6) << status.percentage()*100 << "%"
+				std::cout << std::setw(OUTPUT_FIELD_SIZE) << /*std::setfill('0') <<*/ std::setprecision(4) << std::fixed << status.percentage()*100 << "%"
 					<< " Pass " << renderer->currentPass() + 1;
 
 				if(status.hasField("int.feedback"))
 					std::cout << "( " << status.getField("int.feedback").getString() << ")";
 
-				std::cout << " | S: " << status.getField("global.pixel_sample_count").getUInt() 
-					<< " R: " << status.getField("global.ray_count").getUInt()
-					<< " EH: " << status.getField("global.entity_hit_count").getUInt()
-					<< " BH: " << status.getField("global.background_hit_count").getUInt()
+				std::cout << " | S: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt() 
+					<< " R: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
+					<< " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
+					<< " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt()
 					<< std::endl;
 				
 				start_prog = end;

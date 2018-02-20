@@ -22,37 +22,6 @@ public:
 	{
 	}
 
-	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override
-	{
-		PYBIND11_OVERLOAD_PURE(Spectrum, Material, eval, point, L, NdotL);
-	}
-
-	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override
-	{
-		PYBIND11_OVERLOAD_PURE(float, Material, pdf, point, L, NdotL);
-	}
-
-	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override
-	{
-		PYBIND11_OVERLOAD_PURE(MaterialSample, Material, sample, point, rnd);
-	}
-
-	MaterialSample samplePath(
-		const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
-	{
-		PYBIND11_OVERLOAD(MaterialSample, Material, samplePath, point, rnd, path);
-	}
-
-	uint32 samplePathCount() const override
-	{
-		PYBIND11_OVERLOAD(uint32, Material, samplePathCount);
-	}
-
-	void setup(RenderContext* context) override
-	{
-		PYBIND11_OVERLOAD(void, Material, setup, context);
-	}
-
 	std::string dumpInformation() const override
 	{
 		PYBIND11_OVERLOAD(std::string, Material, dumpInformation);
@@ -61,26 +30,7 @@ public:
 
 void setup_material(py::module& m)
 {
-	py::enum_<MaterialScatteringType>(m, "MaterialScatteringType")
-		.value("DIFFUSEREFLECTION", MST_DiffuseReflection)
-		.value("SPECULARREFLECTION", MST_SpecularReflection)
-		.value("DIFFUSETRANSMISSION", MST_DiffuseTransmission)
-		.value("SPECULARTRANSMISSION", MST_SpecularTransmission);
-
-	py::class_<MaterialSample>(m, "MaterialSample")
-		.def_readwrite("PDF_S", &MaterialSample::PDF_S)
-		.def_readwrite("ScatteringType", &MaterialSample::ScatteringType)
-		.def_readwrite("L", &MaterialSample::L)
-		.def_property_readonly("isSpecular", &MaterialSample::isSpecular)
-		.def_property_readonly("isReflection", &MaterialSample::isReflection);
-
 	py::class_<Material, std::shared_ptr<Material>>(m, "Material")
-		.def("eval", &Material::eval)
-		.def("pdf", &Material::pdf)
-		.def("sample", &Material::sample)
-		.def("samplePath", &Material::samplePath)
-		.def("samplePathCount", &Material::samplePathCount)
-		.def("setup", &Material::setup)
 		.def("dumpInformation", &Material::dumpInformation)
 		.def_property_readonly("id", &Material::id)
 		.def_property_readonly("light", &Material::isLight)

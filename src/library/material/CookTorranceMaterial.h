@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Material.h"
+#include <vector>
 
 namespace PR {
 class PR_LIB CookTorranceMaterial : public Material {
@@ -36,37 +37,39 @@ public:
 	void setGeometryMode(GeometryMode mode);
 
 	// Diffuse
-	const std::shared_ptr<SpectrumShaderOutput>& albedo() const;
+	std::shared_ptr<SpectrumShaderOutput> albedo() const;
 	void setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec);
 
-	const std::shared_ptr<ScalarShaderOutput>& diffuseRoughness() const;
+	std::shared_ptr<ScalarShaderOutput> diffuseRoughness() const;
 	void setDiffuseRoughness(const std::shared_ptr<ScalarShaderOutput>& data);
 
 	// Specular
-	const std::shared_ptr<SpectrumShaderOutput>& specularity() const;
+	std::shared_ptr<SpectrumShaderOutput> specularity() const;
 	void setSpecularity(const std::shared_ptr<SpectrumShaderOutput>& spec);
 
-	const std::shared_ptr<ScalarShaderOutput>& specularRoughnessX() const;
+	std::shared_ptr<ScalarShaderOutput> specularRoughnessX() const;
 	void setSpecularRoughnessX(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	const std::shared_ptr<ScalarShaderOutput>& specularRoughnessY() const;
+	std::shared_ptr<ScalarShaderOutput> specularRoughnessY() const;
 	void setSpecularRoughnessY(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	const std::shared_ptr<SpectrumShaderOutput>& ior() const;
+	std::shared_ptr<SpectrumShaderOutput> ior() const;
 	void setIOR(const std::shared_ptr<SpectrumShaderOutput>& data);
 
-	const std::shared_ptr<SpectrumShaderOutput>& conductorAbsorption() const;
+	std::shared_ptr<SpectrumShaderOutput> conductorAbsorption() const;
 	void setConductorAbsorption(const std::shared_ptr<SpectrumShaderOutput>& data);
 
-	const std::shared_ptr<ScalarShaderOutput>& reflectivity() const;
+	std::shared_ptr<ScalarShaderOutput> reflectivity() const;
 	void setReflectivity(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
+	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
 
-	MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path) override;
+	MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session) override;
 	uint32 samplePathCount() const override;
+
+	void setup(RenderContext* context) override;
 
 	std::string dumpInformation() const override;
 
@@ -88,5 +91,7 @@ private:
 	std::shared_ptr<SpectrumShaderOutput> mConductorAbsorption;
 
 	std::shared_ptr<ScalarShaderOutput> mReflectivity;
+
+	std::vector<std::shared_ptr<struct CTM_ThreadData>> mThreadData;
 };
 }

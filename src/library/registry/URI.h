@@ -56,6 +56,6 @@ inline bool operator==(const URI& a, const URI& b) { return a.str() == b.str(); 
 struct URIHash {
 	inline size_t operator()(const URI& x) const { return std::hash<std::string>()(x.str()); }
 };
-}
+} // namespace PR
 
 #include "URI.inl"

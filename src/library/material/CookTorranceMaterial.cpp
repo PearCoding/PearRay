@@ -1,5 +1,10 @@
 #include "CookTorranceMaterial.h"
 #include "ray/Ray.h"
+#include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
+
+#include "shader/ConstScalarOutput.h"
+#include "shader/ConstSpectralOutput.h"
 #include "shader/ShaderClosure.h"
 
 #include "math/Fresnel.h"
@@ -57,7 +62,7 @@ void CookTorranceMaterial::setGeometryMode(GeometryMode mode)
 	mGeometryMode = mode;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::albedo() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::albedo() const
 {
 	return mAlbedo;
 }
@@ -67,7 +72,7 @@ void CookTorranceMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>
 	mAlbedo = diffSpec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::diffuseRoughness() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::diffuseRoughness() const
 {
 	return mDiffuseRoughness;
 }
@@ -77,7 +82,7 @@ void CookTorranceMaterial::setDiffuseRoughness(const std::shared_ptr<ScalarShade
 	mDiffuseRoughness = d;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::specularity() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::specularity() const
 {
 	return mSpecularity;
 }
@@ -87,7 +92,7 @@ void CookTorranceMaterial::setSpecularity(const std::shared_ptr<SpectrumShaderOu
 	mSpecularity = spec;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::specularRoughnessX() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::specularRoughnessX() const
 {
 	return mSpecRoughnessX;
 }
@@ -97,7 +102,7 @@ void CookTorranceMaterial::setSpecularRoughnessX(const std::shared_ptr<ScalarSha
 	mSpecRoughnessX = d;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::specularRoughnessY() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::specularRoughnessY() const
 {
 	return mSpecRoughnessY;
 }
@@ -107,7 +112,7 @@ void CookTorranceMaterial::setSpecularRoughnessY(const std::shared_ptr<ScalarSha
 	mSpecRoughnessY = d;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::ior() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::ior() const
 {
 	return mIOR;
 }
@@ -117,7 +122,7 @@ void CookTorranceMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& d
 	mIOR = data;
 }
 
-const std::shared_ptr<SpectrumShaderOutput>& CookTorranceMaterial::conductorAbsorption() const
+std::shared_ptr<SpectrumShaderOutput> CookTorranceMaterial::conductorAbsorption() const
 {
 	return mConductorAbsorption;
 }
@@ -127,7 +132,7 @@ void CookTorranceMaterial::setConductorAbsorption(const std::shared_ptr<Spectrum
 	mConductorAbsorption = data;
 }
 
-const std::shared_ptr<ScalarShaderOutput>& CookTorranceMaterial::reflectivity() const
+std::shared_ptr<ScalarShaderOutput> CookTorranceMaterial::reflectivity() const
 {
 	return mReflectivity;
 }
@@ -137,40 +142,88 @@ void CookTorranceMaterial::setReflectivity(const std::shared_ptr<ScalarShaderOut
 	mReflectivity = d;
 }
 
-// Alot of potential to optimize!
+struct CTM_ThreadData {
+	Spectrum IOR;
+	Spectrum F;
+	Spectrum Conductor;
+	Spectrum Specularity;
+
+	explicit CTM_ThreadData(RenderContext* context)
+		: IOR(context->spectrumDescriptor())
+		, F(context->spectrumDescriptor())
+		, Conductor(context->spectrumDescriptor())
+		, Specularity(context->spectrumDescriptor())
+	{
+	}
+};
+
 constexpr float MinRoughness = 0.001f;
-Spectrum CookTorranceMaterial::eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+void CookTorranceMaterial::setup(RenderContext* context)
 {
-	const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
-
-	Spectrum spec;
-	if (refl < 1 && mAlbedo) {
-		float val = PR_1_PI;
-		if (mDiffuseRoughness) {
-			float roughness = mDiffuseRoughness->eval(point);
-			roughness *= roughness; // Square
-
-			if (roughness > PR_EPSILON) // Oren Nayar
-				val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
-		} // else lambert
-
-		spec = mAlbedo->eval(point) * (val * (1 - refl));
+	mThreadData.clear();
+	for (size_t i = 0; i < context->threads(); ++i) {
+		mThreadData.push_back(std::make_shared<CTM_ThreadData>(context));
 	}
 
-	if (refl > PR_EPSILON && mSpecularity && -NdotL * point.NdotV > PR_EPSILON) {
-		Spectrum ind = mIOR ? mIOR->eval(point) : Spectrum(1.55f);
-		Spectrum F;
+	if (!mReflectivity)
+		mReflectivity = std::make_shared<ConstScalarShaderOutput>(0.5f);
+
+	if (!mDiffuseRoughness)
+		mDiffuseRoughness = std::make_shared<ConstScalarShaderOutput>(1.0f);
+
+	if (!mAlbedo)
+		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
+
+	if (!mSpecularity)
+		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
+
+	if (!mIOR)
+		mIOR = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::gray(context->spectrumDescriptor(), 1.55f));
+
+	if (!mConductorAbsorption)
+		mConductorAbsorption = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
+
+	if (!mSpecRoughnessX)
+		mSpecRoughnessX = (mSpecRoughnessY ? mSpecRoughnessY : std::make_shared<ConstScalarShaderOutput>(MinRoughness));
+
+	if (!mSpecRoughnessY)
+		mSpecRoughnessY = mSpecRoughnessX;
+}
+
+// Alot of potential to optimize!
+void CookTorranceMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+{
+	float refl = mReflectivity->eval(point);
+
+	if (refl < 1) {
+		float val		= PR_1_PI;
+		float roughness = mDiffuseRoughness->eval(point);
+		roughness *= roughness; // Square
+
+		if (roughness > PR_EPSILON) // Oren Nayar
+			val = BRDF::orennayar(roughness, point.V, point.N, L, point.NdotV, NdotL);
+
+		mAlbedo->eval(spec, point);
+		spec *= val * (1 - refl);
+	}
+
+	if (refl > PR_EPSILON && -NdotL * point.NdotV > PR_EPSILON) {
+		const std::shared_ptr<CTM_ThreadData>& data = mThreadData[session.thread()];
+
+		mIOR->eval(data->IOR, point);
+
 		switch (mFresnelMode) {
 		default:
 		case FM_Dielectric:
-			for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
-				F.setValue(i, Fresnel::dielectric(-point.NdotV, 1, ind.value(i)));
+			for (uint32 i = 0; i < data->F.samples(); ++i) {
+				data->F.setValue(i, Fresnel::dielectric(-point.NdotV, 1, data->IOR.value(i)));
 			}
 			break;
 		case FM_Conductor: {
-			Spectrum k = mConductorAbsorption ? mConductorAbsorption->eval(point) : Spectrum(0.0f);
-			for (uint32 i = 0; i < Spectrum::SAMPLING_COUNT; ++i) {
-				F.setValue(i, Fresnel::conductor(-point.NdotV, ind.value(i), k.value(i)));
+			mConductorAbsorption->eval(data->Conductor, point);
+
+			for (uint32 i = 0; i < data->F.samples(); ++i) {
+				data->F.setValue(i, Fresnel::conductor(-point.NdotV, data->IOR.value(i), data->Conductor.value(i)));
 			}
 		} break;
 		}
@@ -179,7 +232,7 @@ Spectrum CookTorranceMaterial::eval(const ShaderClosure& point, const Eigen::Vec
 		const float NdotH		= point.N.dot(H);
 
 		if (NdotH > PR_EPSILON) {
-			const float m1 = std::max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+			const float m1 = std::max(MinRoughness, mSpecRoughnessX->eval(point));
 
 			float G; // Includes 1/NdotL*NdotV
 			switch (mGeometryMode) {
@@ -211,7 +264,7 @@ Spectrum CookTorranceMaterial::eval(const ShaderClosure& point, const Eigen::Vec
 				if (mSpecRoughnessX == mSpecRoughnessY) {
 					D = BRDF::ndf_ggx_iso(NdotH, m1);
 				} else {
-					const float m2 = std::max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+					const float m2 = std::max(MinRoughness, mSpecRoughnessY->eval(point));
 
 					const float XdotH = std::abs(point.Nx.dot(H));
 					const float YdotH = std::abs(point.Ny.dot(H));
@@ -224,17 +277,18 @@ Spectrum CookTorranceMaterial::eval(const ShaderClosure& point, const Eigen::Vec
 			// TODO: Really just clamping? A better bound would be better
 			// The max clamp value is just determined by try and error.
 			D = std::min(std::max(D, 0.0f), 100.0f);
-			spec += mSpecularity->eval(point) * F * (0.25f * D * G * refl);
+			mSpecularity->eval(data->Specularity, point);
+			data->Specularity *= data->F;
+			data->Specularity *= (0.25f * D * G * refl);
+			spec += data->Specularity;
 		}
 	}
-
-	return spec;
 }
 
-float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL)
+float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
 {
-	const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
-	const float m1   = std::max(MinRoughness, mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0);
+	const float refl = mReflectivity->eval(point);
+	const float m1   = std::max(MinRoughness, mSpecRoughnessX->eval(point));
 
 	const Eigen::Vector3f H = Reflection::halfway(point.V, L);
 	const float NdotH		= point.N.dot(H);
@@ -256,7 +310,7 @@ float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3
 		if (mSpecRoughnessX == mSpecRoughnessY) {
 			D = BRDF::ndf_ggx_iso(NdotH, m1);
 		} else {
-			const float m2 = std::max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+			const float m2 = std::max(MinRoughness, mSpecRoughnessY->eval(point));
 
 			const float XdotH = std::abs(point.Nx.dot(H));
 			const float YdotH = std::abs(point.Ny.dot(H));
@@ -269,9 +323,9 @@ float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3
 	return std::min(std::max(Projection::cos_hemi_pdf(NdotL) * (1 - refl) + (0.25f * D / prod) * refl, 0.0f), 1.0f);
 }
 
-MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd)
+MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
-	const float refl = mReflectivity ? mReflectivity->eval(point) : 0.5f;
+	const float refl = mReflectivity->eval(point);
 
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection; // Even specular path is diffuse, as it is not fixed like a mirror
@@ -281,12 +335,12 @@ MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Ei
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
 
-	ms.PDF_S *= mReflectivity ? mReflectivity->eval(point) : 0.5f;
+	ms.PDF_S *= refl;
 
 	return ms;
 }
 
-MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path)
+MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
 {
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;
@@ -296,7 +350,7 @@ MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, cons
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
 
-	ms.PDF_S *= mReflectivity ? mReflectivity->eval(point) : 0.5f; // TODO: Really?
+	ms.PDF_S *= mReflectivity->eval(point); // TODO: Really?
 
 	return ms;
 }
@@ -317,7 +371,8 @@ Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, 
 	float u = rnd(0);
 	float v = rnd(1);
 
-	float m1 = mSpecRoughnessX ? mSpecRoughnessX->eval(point) : 0;
+	const float m1 = std::max(MinRoughness, mSpecRoughnessX->eval(point));
+
 	float cosTheta, sinTheta; // V samples
 	float cosPhi, sinPhi;	 // U samples
 
@@ -349,7 +404,6 @@ Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, 
 			pdf = PR_1_PI / (m1 * m1 * cosTheta * cosTheta * cosTheta) * (1 - v);
 	} break;
 	case DM_GGX: {
-		m1 = std::max(MinRoughness, m1);
 		float r2;
 		float alpha2;
 		if (mSpecRoughnessX == mSpecRoughnessY) {
@@ -358,7 +412,7 @@ Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, 
 			alpha2 = m1 * m1;
 			r2	 = alpha2;
 		} else {
-			const float m2 = std::max(MinRoughness, mSpecRoughnessY ? mSpecRoughnessY->eval(point) : 0);
+			float m2 = std::max(MinRoughness, mSpecRoughnessY->eval(point));
 
 			float phi = std::atan(m2 / m1 * std::tan(PR_PI + 2 * PR_PI * u)) + PR_PI * std::floor(2 * u + 0.5f);
 
@@ -381,7 +435,7 @@ Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, 
 
 	sinTheta = std::sqrt(1 - cosTheta * cosTheta);
 	auto H   = Projection::tangent_align(point.N, point.Nx, point.Ny,
-									   Eigen::Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta));
+										 Eigen::Vector3f(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta));
 	auto dir = Reflection::reflect(std::abs(H.dot(point.V)), H, point.V).normalized();
 
 	float NdotL = point.N.dot(dir);
@@ -413,4 +467,4 @@ std::string CookTorranceMaterial::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

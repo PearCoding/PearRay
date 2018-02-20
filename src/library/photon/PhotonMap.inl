@@ -32,36 +32,36 @@ void PhotonMap::reset()
 }
 
 template <typename AccumFunction>
-Spectrum PhotonMap::estimateSphere(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const
+void PhotonMap::estimateSphere(Spectrum& spec, const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const
 {
-	return estimate<AccumFunction>(sphere,
-								   [](const Photon& pht, const PhotonSphere& sph, float& dist2) {
-									   Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
-									   dist2			 = V.squaredNorm();
-									   const float d	 = V.dot(sph.Normal);
-									   const float r	 = sph.Distance2 * (1 - std::abs(d)) + sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
-									   return dist2 <= r;
-								   },
-								   accumFunc, found);
+	estimate<AccumFunction>(spec, sphere,
+							[](const Photon& pht, const PhotonSphere& sph, float& dist2) {
+								Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
+								dist2			  = V.squaredNorm();
+								const float d	 = V.dot(sph.Normal);
+								const float r	 = sph.Distance2 * (1 - std::abs(d)) + sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
+								return dist2 <= r;
+							},
+							accumFunc, found);
 }
 
 template <typename AccumFunction>
-Spectrum PhotonMap::estimateDome(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const
+void PhotonMap::estimateDome(Spectrum& spec, const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const
 {
-	return estimate<AccumFunction>(sphere,
-								   [](const Photon& pht, const PhotonSphere& sph, float& dist2) {
-									   Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
-									   dist2			 = V.squaredNorm();
-									   const float d	 = V.dot(sph.Normal);
-									   const float r	 = sph.Distance2 * (1 - std::abs(d)) + sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
-									   return d <= -PR_EPSILON && dist2 <= r;
-								   },
-								   accumFunc, found);
+	estimate<AccumFunction>(spec, sphere,
+							[](const Photon& pht, const PhotonSphere& sph, float& dist2) {
+								Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
+								dist2			  = V.squaredNorm();
+								const float d	 = V.dot(sph.Normal);
+								const float r	 = sph.Distance2 * (1 - std::abs(d)) + sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
+								return d <= -PR_EPSILON && dist2 <= r;
+							},
+							accumFunc, found);
 }
 
 template <typename AccumFunction>
-Spectrum PhotonMap::estimate(const PhotonSphere& sphere,
-							 CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const
+void PhotonMap::estimate(Spectrum& spec, const PhotonSphere& sphere,
+						 CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const
 {
 	found = 0;
 
@@ -70,8 +70,8 @@ Spectrum PhotonMap::estimate(const PhotonSphere& sphere,
 	const int32 rad2	 = rad * rad;
 
 	float dist2;
-	Spectrum accum;
 
+	spec.clear();
 	for (int x = -rad; x <= rad; ++x) {
 		for (int y = -rad; y <= rad; ++y) {
 			if (x * x + y * y > rad2)
@@ -90,17 +90,15 @@ Spectrum PhotonMap::estimate(const PhotonSphere& sphere,
 				typename Map::const_accessor acc;
 				if (mPhotons.find(acc, key)) {
 #ifdef PR_USE_APPROX_PHOTON_MAP
-					if (checkFunc((*acc).second.Approximation, sphere, dist2)) // Found a photon!
-					{
+					if (checkFunc((*acc).second.Approximation, sphere, dist2)) { // Found a photon!
 						found += (*acc).second.Count;
-						accum += accumFunc((*acc).second.Approximation, sphere, dist2);
+						accumFunc(spec, (*acc).second.Approximation, sphere, dist2);
 					}
 #else
 					for (const Photon& pht : (*acc).second) {
-						if (checkFunc(pht, sphere, dist2)) // Found a photon!
-						{
+						if (checkFunc(pht, sphere, dist2)) { // Found a photon!
 							found++;
-							accum += accumFunc(pht, sphere, dist2);
+							accumFunc(spec, pht, sphere, dist2);
 						}
 					}
 #endif
@@ -108,8 +106,6 @@ Spectrum PhotonMap::estimate(const PhotonSphere& sphere,
 			}
 		}
 	}
-
-	return accum;
 }
 
 void PhotonMap::store(const Eigen::Vector3f& pos, const Photon& pht)
@@ -129,13 +125,9 @@ void PhotonMap::store(const Eigen::Vector3f& pos, const Photon& pht)
 	approx.Approximation.Position[2] = pht.Position[2]; // * t + approx.Approximation.Position[2]*(1-t);
 	approx.Approximation.Phi		 = pht.Phi * t + approx.Approximation.Phi * (1 - t);
 	approx.Approximation.Theta		 = pht.Theta * t + approx.Approximation.Theta * (1 - t);
-#if PR_PHOTON_RGB_MODE >= 1
-	approx.Approximation.Power[0] = pht.Power[0] * t + approx.Approximation.Power[0] * (1 - t);
-	approx.Approximation.Power[1] = pht.Power[1] * t + approx.Approximation.Power[1] * (1 - t);
-	approx.Approximation.Power[2] = pht.Power[2] * t + approx.Approximation.Power[2] * (1 - t);
-#else
-	approx.Approximation.Power = pht.Power * t + approx.Approximation.Power * (1 - t);
-#endif
+	approx.Approximation.Power[0]	= pht.Power[0] * t + approx.Approximation.Power[0] * (1 - t);
+	approx.Approximation.Power[1]	= pht.Power[1] * t + approx.Approximation.Power[1] * (1 - t);
+	approx.Approximation.Power[2]	= pht.Power[2] * t + approx.Approximation.Power[2] * (1 - t);
 	approx.Count += 1;
 #else
 	(*acc).second.push_back(pht);
@@ -148,9 +140,9 @@ typename PhotonMap::KeyCoord PhotonMap::toCoords(const Eigen::Vector3f& v) const
 {
 	Eigen::Vector3f s = v * mInvGridDelta;
 	return {
-		(int32)std::floor(s(0)),
-		(int32)std::floor(s(1)),
-		(int32)std::floor(s(2))
+		static_cast<int32>(std::floor(s(0))),
+		static_cast<int32>(std::floor(s(1))),
+		static_cast<int32>(std::floor(s(2)))
 	};
 }
 
@@ -171,5 +163,5 @@ bool PhotonMap::hash_compare::equal(const KeyCoord& k1, const KeyCoord& k2)
 {
 	return k1 == k2;
 }
-}
-}
+} // namespace Photon
+} // namespace PR

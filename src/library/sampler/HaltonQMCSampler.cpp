@@ -69,9 +69,9 @@ float HaltonQMCSampler::halton(uint32 index, uint32 base)
 	for (uint32 i = index; i > 0;) {
 		f = f / base;
 		result += f * (i % base);
-		i = (uint32)std::floor(i / (float)base);
+		i = static_cast<uint32>(std::floor(i / static_cast<float>(base)));
 	}
 
 	return result;
 }
-}
+} // namespace PR

@@ -1,11 +1,8 @@
 #pragma once
 
-#include "gpu/GPU.h"
+#include "PR_Config.h"
 
 namespace PR {
-class GPU;
-class Spectrum;
-
 enum ToneColorMode {
 	TCM_SRGB,
 	TCM_XYZ,
@@ -35,12 +32,10 @@ class PR_LIB ToneMapper {
 public:
 	/**
 		 * @brief Constructs a ToneMapper
-		 * @param gpu GPU instance to be used, nullptr if no gpu support.
-		 * @param size Size of buffer (without component count -> only width*height but no rgb [3])
 		 */
-	ToneMapper(uint32 width, uint32 height, GPU* gpu);
+	ToneMapper(uint32 width, uint32 height);
 
-	void map(const Spectrum* specIn, float* rgbOut, size_t rgbElems) const;
+	void map(const float* specIn, float* rgbOut, size_t specElems, size_t rgbElems) const;
 	void mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const;
 
 	// Not thread safe!
@@ -61,20 +56,8 @@ private:
 	ToneGammaMode mGammaMode;
 	ToneMapperMode mMapperMode;
 
-	GPU* mGPU;
 	uint32 mWidth;
 	uint32 mHeight;
 	size_t mSize;
-
-#ifndef PR_NO_GPU
-	cl::Buffer mSpecInput;
-	cl::Buffer mInbetweenBuffer;
-	cl::Buffer mLocalBuffer;
-	cl::Program mProgram;
-	size_t mRunSize;
-
-	void stage_mapper_gpu(cl::CommandQueue& queue, size_t rgbElems) const;
-#endif
-	void stage_mapper_non_gpu(const float* rgbIn, float* rgbOut, size_t rgbElems) const;
 };
 }

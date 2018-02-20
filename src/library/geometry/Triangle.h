@@ -107,7 +107,7 @@ public:
 		const uint32 kz = ray.maxDirectionIndex();
 		uint32 kx		= kz + 1;
 		if (kx == 3)
-			kx	= 0;
+			kx = 0;
 		uint32 ky = kx + 1;
 		if (ky == 3)
 			ky = 0;
@@ -142,17 +142,17 @@ public:
 
 		// Better precision needed:
 		if (u <= PR_EPSILON || v <= PR_EPSILON || w <= PR_EPSILON) {
-			double CxBy = (double)Cx * (double)By;
-			double CyBx = (double)Cy * (double)Bx;
-			u			= (float)(CxBy - CyBx);
+			double CxBy = static_cast<double>(Cx) * static_cast<double>(By);
+			double CyBx = static_cast<double>(Cy) * static_cast<double>(Bx);
+			u			= static_cast<float>(CxBy - CyBx);
 
-			double AxCy = (double)Ax * (double)Cy;
-			double AyCx = (double)Ay * (double)Cx;
-			v			= (float)(AxCy - AyCx);
+			double AxCy = static_cast<double>(Ax) * static_cast<double>(Cy);
+			double AyCx = static_cast<double>(Ay) * static_cast<double>(Cx);
+			v			= static_cast<float>(AxCy - AyCx);
 
-			double BxAy = (double)Bx * (double)Ay;
-			double ByAx = (double)By * (double)Ax;
-			w			= (float)(BxAy - ByAx);
+			double BxAy = static_cast<double>(Bx) * static_cast<double>(Ay);
+			double ByAx = static_cast<double>(By) * static_cast<double>(Ax);
+			w			= static_cast<float>(BxAy - ByAx);
 		}
 
 		if ((u < 0 || v < 0 || w < 0) && (u > 0 || v > 0 || w > 0))
@@ -204,4 +204,4 @@ public:
 		return 0.5f * v1.cross(v2).norm();
 	}
 };
-}
+} // namespace PR

@@ -18,14 +18,14 @@ public:
 	constexpr static int Dimension = D;
 	typedef std::array<int, Dimension> point_type;
 
-	MinRadiusGenerator(int radius)
+	explicit MinRadiusGenerator(int radius)
 		: mRadius(radius)
 	{
 		mVisited.reserve(std::pow(2 * radius + 1, Dimension));
 
 		point_type p;
 		for (int i = 0; i < Dimension; ++i)
-			p[i]   = 0;
+			p[i] = 0;
 
 		mQueue.push(p);
 		mVisited.insert(p);
@@ -90,4 +90,4 @@ private:
 	std::queue<point_type> mQueue;
 	std::unordered_set<point_type, PointHash> mVisited;
 };
-}
+} // namespace PR

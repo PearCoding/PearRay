@@ -1,13 +1,15 @@
 #include "RenderThread.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "RenderSession.h"
 
 #include "integrator/Integrator.h"
 
 #include "Logger.h"
 namespace PR {
-RenderThread::RenderThread(RenderContext* renderer)
+RenderThread::RenderThread(uint32 index, RenderContext* renderer)
 	: Thread()
+	, mThreadIndex(index)
 	, mRenderer(renderer)
 	, mTile(nullptr)
 {
@@ -23,7 +25,7 @@ void RenderThread::main()
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
-			integrator->onPass(mTile, pass);
+			integrator->onPass(RenderSession(mThreadIndex, mTile), pass);
 			mTile->inc();
 
 			mTile->setWorking(false);

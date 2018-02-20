@@ -1,8 +1,12 @@
 #include "OnePassIntegrator.h"
 
+#include "renderer/OutputMap.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderSession.h"
 #include "renderer/RenderThread.h"
 #include "renderer/RenderTile.h"
+
+#include "shader/ShaderClosure.h"
 
 namespace PR {
 void OnePassIntegrator::onStart()
@@ -18,15 +22,21 @@ void OnePassIntegrator::onEnd()
 {
 }
 
-void OnePassIntegrator::onPass(RenderTile* tile, uint32 pass)
+void OnePassIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
-	for (uint32 y = tile->sy(); y < tile->ey(); ++y) {
-		for (uint32 x = tile->sx(); x < tile->ex(); ++x) {
-			renderer()->render(tile, Eigen::Vector2i(x, y), tile->samplesRendered(), pass);
+	OutputMap* output = renderer()->output();
+	Spectrum spec(renderer()->spectrumDescriptor());
+	ShaderClosure sc;
+
+	for (uint32 y = session.tile()->sy(); y < session.tile()->ey(); ++y) {
+		for (uint32 x = session.tile()->sx(); x < session.tile()->ex(); ++x) {
+			Eigen::Vector2i p(x, y);
+			Ray ray = session.tile()->constructCameraRay(p, session.tile()->samplesRendered());
+			onPixel(spec, sc, ray, session);
+			output->pushFragment(p, spec, sc);
 		}
 	}
 }
-
 
 bool OnePassIntegrator::needNextPass(uint32 i) const
 {
@@ -39,10 +49,10 @@ RenderStatus OnePassIntegrator::status() const
 
 	RenderStatus stat;
 	stat.setField("int.max_sample_count", max_samples);
-	stat.setField("int.max_pass_count", (uint64)1);
+	stat.setField("int.max_pass_count", static_cast<uint64>(1));
 
-	stat.setPercentage(renderer()->statistics().pixelSampleCount() / (float)max_samples);
+	stat.setPercentage(renderer()->statistics().pixelSampleCount() / static_cast<float>(max_samples));
 
 	return stat;
 }
-}
+} // namespace PR

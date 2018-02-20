@@ -41,9 +41,6 @@ SET(PR_Output_Src
   output/OutputSpecification.cpp)
 SOURCE_GROUP("Source Files\\Output" FILES ${PR_Output_Src})
 SET(PR_Shader_Src
-  shader/ConstScalarOutput.cpp
-  shader/ConstSpectralOutput.cpp
-  shader/ConstVectorOutput.cpp
   shader/ImageScalarOutput.cpp
   shader/ImageSpectralOutput.cpp
   shader/ImageVectorOutput.cpp)
@@ -97,9 +94,6 @@ SET(PR_Output_Hdr
   output/OutputSpecification.h)
 SOURCE_GROUP("Header Files\\Output" FILES ${PR_Output_Hdr})
 SET(PR_Shader_Hdr
-  shader/ConstScalarOutput.h
-  shader/ConstSpectralOutput.h
-  shader/ConstVectorOutput.h
   shader/ImageScalarOutput.h
   shader/ImageSpectralOutput.h
   shader/ImageVectorOutput.h)
@@ -125,3 +119,7 @@ endif()
 
 set_target_properties(pr_lib_utils PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(pr_lib_utils PRIVATE "${DEFS};PR_LIB_UTILS_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
+
+IF(PR_CPP_CHECK)
+  add_cpplint_target(pr_lib_utils_cppcheck "${PR_Src};${PR_Hdr}")
+ENDIF()

@@ -41,23 +41,23 @@ public:
 	inline uint64 storedPhotons() const { return mStoredPhotons; }
 
 	template <typename AccumFunction>
-	inline Spectrum estimateSphere(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const;
+	inline void estimateSphere(Spectrum& spec, const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const;
 
 	template <typename AccumFunction>
-	inline Spectrum estimateDome(const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const;
+	inline void estimateDome(Spectrum& spec, const PhotonSphere& sphere, AccumFunction accumFunc, size_t& found) const;
 
 	template <typename AccumFunction>
-	inline Spectrum estimate(const PhotonSphere& sphere, CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const;
+	inline void estimate(Spectrum& spec, const PhotonSphere& sphere, CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const;
 
 	inline void mapDirection(const Eigen::Vector3f& dir, uint8& theta, uint8& phi) const
 	{
-		int theta2 = (int)(std::cos(dir(2)) * 256 * PR_1_PI);
+		int theta2 = static_cast<int>(std::cos(dir(2)) * 256 * PR_1_PI);
 		if (theta2 > 255)
 			theta = 255;
 		else
 			theta = (uint8)theta2;
 
-		int phi2 = (int)(std::atan2(dir(1), dir(0)) * 256 * PR_1_PI * 0.5f);
+		int phi2 = static_cast<int>(std::atan2(dir(1), dir(0)) * 256 * PR_1_PI * 0.5f);
 		if (phi2 > 255)
 			phi = 255;
 		else

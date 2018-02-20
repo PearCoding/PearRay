@@ -14,7 +14,7 @@ enum ParameterType {
 	PT_Vector4,
 	PT_Matrix3,
 	PT_Matrix4,
-	PT_Spectrum,
+	//PT_Spectrum,
 	PT_String,
 
 	PT_FrameBuffer3D,
@@ -38,7 +38,7 @@ class VectorShaderOutput;
 
 class PR_LIB_INLINE ParameterAccessException : public std::exception {
 public:
-	inline ParameterAccessException(ParameterType type) noexcept;
+	inline explicit ParameterAccessException(ParameterType type) noexcept;
 	inline char const* what() const noexcept override;
 
 	inline ParameterType type() const;
@@ -54,7 +54,7 @@ private:
 
 #define _PR_STD_PARAMETER_TYPE_PTR(type, name)                 \
 	inline explicit Parameter(const std::shared_ptr<type>& v); \
-	inline const std::shared_ptr<type>& get##name() const;     \
+	inline std::shared_ptr<type> get##name() const;     \
 	inline void set##name(const std::shared_ptr<type>& v)
 
 class PR_LIB_INLINE Parameter {
@@ -77,8 +77,8 @@ public:
 	inline float getFloat() const;
 	inline void setFloat(float b);
 
-	inline const Spectrum& getSpectrum() const;
-	inline void setSpectrum(const Spectrum& s);
+	/*inline const Spectrum& getSpectrum() const;
+	inline void setSpectrum(const Spectrum& s);*/
 
 	// Generic
 	_PR_STD_PARAMETER_TYPE(Eigen::Vector2f, Vector2);
@@ -111,7 +111,7 @@ private:
 	Eigen::Matrix<float, 4, 1, Eigen::DontAlign> mVector4;
 	Eigen::Matrix<float, 3, 3, Eigen::DontAlign> mMatrix3;
 	Eigen::Matrix<float, 4, 4, Eigen::DontAlign> mMatrix4;
-	Spectrum mSpectrum;
+	//Spectrum mSpectrum;
 	std::string mString;
 
 	std::shared_ptr<FrameBuffer3D> mFrameBuffer3D;
@@ -123,7 +123,7 @@ private:
 	std::shared_ptr<SpectrumShaderOutput> mSpectrumShaderOutput;
 	std::shared_ptr<VectorShaderOutput> mVectorShaderOutput;
 };
-}
+} // namespace PR
 
 #undef _PR_STD_PARAMETER_TYPE
 #undef _PR_STD_PARAMETER_TYPE_PTR

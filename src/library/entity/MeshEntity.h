@@ -21,7 +21,7 @@ public:
 	float surfaceArea(Material* m) const override;
 
 	void setMesh(const std::shared_ptr<TriMesh>& mesh);
-	const std::shared_ptr<TriMesh>& mesh() const;
+	std::shared_ptr<TriMesh> mesh() const;
 
 	void reserveMaterialSlots(size_t count);
 	void setMaterial(uint32 slot, const std::shared_ptr<Material>& m);

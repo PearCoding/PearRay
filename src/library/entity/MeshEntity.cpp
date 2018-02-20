@@ -65,7 +65,7 @@ void MeshEntity::setMesh(const std::shared_ptr<TriMesh>& mesh)
 	mMesh = mesh;
 }
 
-const std::shared_ptr<TriMesh>& MeshEntity::mesh() const
+std::shared_ptr<TriMesh> MeshEntity::mesh() const
 {
 	return mMesh;
 }

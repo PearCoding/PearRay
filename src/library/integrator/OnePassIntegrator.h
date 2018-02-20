@@ -14,10 +14,13 @@ public:
 	void onNextPass(uint32 i, bool& clean) override;
 	void onEnd() override;
 
-	void onPass(RenderTile* tile, uint32 i) override;
+	void onPass(const RenderSession& session, uint32 i) override;
 
 	bool needNextPass(uint32 i) const override;
 
 	RenderStatus status() const;
+
+protected:
+	virtual void onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& ray, const RenderSession& session) = 0;
 };
 }

@@ -124,7 +124,7 @@ struct is_scalar : public std::integral_constant<bool, !(has_length<Unit>::value
 template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
 struct is_transcendental : public std::integral_constant<bool, is_scalar<Unit>::value> {
 };
-}
+} // namespace traits
 
 namespace details {
 template <class Unit1, class Unit2, typename = typename std::enable_if<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>::type>
@@ -186,38 +186,38 @@ template <class Unit, typename = typename std::enable_if<traits::is_unit<Unit>::
 struct unit_inv {
 	typedef typename unit_pow<Unit, std::ratio<-1>>::type type;
 };
-}
+} // namespace details
 
 // ------------------------------------
-#define _SIMATH_DEFINE_UNIT_SET(Name, L, M, T, I, K, N, J, R)                                                                                                                    \
-	template <typename Base = SIMATH_DEFAULT_BASE, int Coordinate = 0>                                                                                                           \
-	using _SIMATH_U(Name)	= SIBase<Base, Coordinate, std::ratio<L>, std::ratio<M>, std::ratio<T>, std::ratio<I>, std::ratio<K>, std::ratio<N>, std::ratio<J>, std::ratio<R>>; \
-	template <int Coordinate = 0>                                                                                                                                                \
-	using _SIMATH_C(Name)	= _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;                                                                                                 \
-	using _SIMATH_S(Name)	= _SIMATH_C(Name)<0>
+#define _SIMATH_DEFINE_UNIT_SET(Name, L, M, T, I, K, N, J, R)                                                                                                                 \
+	template <typename Base = SIMATH_DEFAULT_BASE, int Coordinate = 0>                                                                                                        \
+	using _SIMATH_U(Name) = SIBase<Base, Coordinate, std::ratio<L>, std::ratio<M>, std::ratio<T>, std::ratio<I>, std::ratio<K>, std::ratio<N>, std::ratio<J>, std::ratio<R>>; \
+	template <int Coordinate = 0>                                                                                                                                             \
+	using _SIMATH_C(Name) = _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;                                                                                                 \
+	using _SIMATH_S(Name) = _SIMATH_C(Name)<0>
 
 #define _SIMATH_DEFINE_UNIT_MUL(Name, Unit1, Unit2)                                          \
 	template <typename Base = SIMATH_DEFAULT_BASE, int Coordinate = 0>                       \
 	using _SIMATH_U(Name) = typename details::unit_mul<_SIMATH_U(Unit1) < Base, Coordinate>, \
 		  _SIMATH_U(Unit2)<Base, Coordinate>> ::type;                                        \
 	template <int Coordinate = 0>                                                            \
-	using _SIMATH_C(Name)	= _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;             \
-	using _SIMATH_S(Name)	= _SIMATH_C(Name)<0>
+	using _SIMATH_C(Name) = _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;                \
+	using _SIMATH_S(Name) = _SIMATH_C(Name)<0>
 
 #define _SIMATH_DEFINE_UNIT_DIV(Name, Unit1, Unit2)                                          \
 	template <typename Base = SIMATH_DEFAULT_BASE, int Coordinate = 0>                       \
 	using _SIMATH_U(Name) = typename details::unit_div<_SIMATH_U(Unit1) < Base, Coordinate>, \
 		  _SIMATH_U(Unit2)<Base, Coordinate>> ::type;                                        \
 	template <int Coordinate = 0>                                                            \
-	using _SIMATH_C(Name)	= _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;             \
-	using _SIMATH_S(Name)	= _SIMATH_C(Name)<0>
+	using _SIMATH_C(Name) = _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;                \
+	using _SIMATH_S(Name) = _SIMATH_C(Name)<0>
 
-#define _SIMATH_DEFINE_UNIT_INV(Name, Unit)                                                            \
-	template <typename Base = SIMATH_DEFAULT_BASE, int Coordinate = 0>                                 \
-	using _SIMATH_U(Name)	= typename details::unit_inv<_SIMATH_U(Unit) < Base, Coordinate>> ::type; \
-	template <int Coordinate = 0>                                                                      \
-	using _SIMATH_C(Name)	= _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;                       \
-	using _SIMATH_S(Name)	= _SIMATH_C(Name)<0>
+#define _SIMATH_DEFINE_UNIT_INV(Name, Unit)                                                         \
+	template <typename Base = SIMATH_DEFAULT_BASE, int Coordinate = 0>                              \
+	using _SIMATH_U(Name) = typename details::unit_inv<_SIMATH_U(Unit) < Base, Coordinate>> ::type; \
+	template <int Coordinate = 0>                                                                   \
+	using _SIMATH_C(Name) = _SIMATH_U(Name)<SIMATH_DEFAULT_BASE, Coordinate>;                       \
+	using _SIMATH_S(Name) = _SIMATH_C(Name)<0>
 
 // -----------------------------
 // Base units

@@ -9,10 +9,10 @@ public:
 	explicit GridMaterial(uint32 id);
 
 	void setFirstMaterial(const std::shared_ptr<Material>& mat);
-	const std::shared_ptr<Material>& firstMaterial() const;
+	std::shared_ptr<Material> firstMaterial() const;
 
 	void setSecondMaterial(const std::shared_ptr<Material>& mat);
-	const std::shared_ptr<Material>& secondMaterial() const;
+	std::shared_ptr<Material> secondMaterial() const;
 
 	void setGridCount(int i);
 	int gridCount() const;
@@ -20,10 +20,11 @@ public:
 	void setTileUV(bool b);
 	bool tileUV() const;
 
-	Spectrum eval(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL) override;
-	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd) override;
+	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
 
+	void setup(RenderContext* context) override;
 	std::string dumpInformation() const override;
 
 private:

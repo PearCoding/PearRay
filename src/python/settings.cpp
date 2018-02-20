@@ -8,7 +8,6 @@ namespace PRPY {
 void setup_settings(py::module& m)
 {
 	py::class_<RenderSettings>(m, "RenderSettings")
-		.def_property("incremental", &RenderSettings::isIncremental, &RenderSettings::setIncremental)
 		.def_property("debugMode", &RenderSettings::debugMode, &RenderSettings::setDebugMode)
 		.def_property("integratorMode", &RenderSettings::integratorMode, &RenderSettings::setIntegratorMode)
 		.def_property("aaSampler", &RenderSettings::aaSampler, &RenderSettings::setAASampler)

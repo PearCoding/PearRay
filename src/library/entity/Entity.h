@@ -8,8 +8,8 @@
 
 namespace PR {
 enum EntityFlags {
-	EF_Debug	  = 0x1,
-	EF_LocalArea  = 0x2,
+	EF_Debug	 = 0x1,
+	EF_LocalArea = 0x2,
 };
 
 #define ENTITY_CLASS \
@@ -43,7 +43,7 @@ public:
 	inline Eigen::Quaternionf rotation() const;
 
 	// FIXME: Unfortunatly we have to disable alignment for the transformations.
-	// A SIGSEV is raised in release build otherwise. 
+	// A SIGSEV is raised in release build otherwise.
 	// It may be a bug in Eigen or somewhere in my own code.
 	typedef Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign> Transform;
 	inline const Transform& transform() const;
@@ -83,6 +83,6 @@ private:
 	mutable Eigen::Matrix3f mNormalMatrixCache;
 	mutable Eigen::Matrix3f mInvNormalMatrixCache;
 };
-}
+} // namespace PR
 
 #include "Entity.inl"

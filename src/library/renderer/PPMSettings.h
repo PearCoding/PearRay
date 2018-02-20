@@ -1,13 +1,9 @@
 #pragma once
 
 #include "PR_Config.h"
+#include "RenderEnums.h"
 
 namespace PR {
-enum PPMGatheringMode {
-	PGM_Sphere,
-	PGM_Dome
-};
-
 class PR_LIB PPMSettings {
 public:
 	PPMSettings();

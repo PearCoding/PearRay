@@ -52,7 +52,7 @@ void PlaneEntity::setMaterial(const std::shared_ptr<Material>& m)
 	mMaterial = m;
 }
 
-const std::shared_ptr<Material>& PlaneEntity::material() const
+std::shared_ptr<Material> PlaneEntity::material() const
 {
 	return mMaterial;
 }
@@ -120,7 +120,7 @@ RenderEntity::FacePointSample PlaneEntity::sampleFacePoint(const Eigen::Vector3f
 
 	sm.Point.UVW	  = Eigen::Vector3f(rnd(0), rnd(1), 0);
 	sm.Point.Material = material().get();
-	sm.PDF_A			  = mPDF_Cache;
+	sm.PDF_A		  = mPDF_Cache;
 
 	return sm;
 }
@@ -140,14 +140,14 @@ void PlaneEntity::onFreeze()
 	mXAxisN_Cache = mGlobalPlane_Cache.xAxis().normalized();
 	mYAxisN_Cache = mGlobalPlane_Cache.yAxis().normalized();
 
-	mPDF_Cache = 1.0f/mGlobalPlane_Cache.surfaceArea();
+	mPDF_Cache = 1.0f / mGlobalPlane_Cache.surfaceArea();
 
 	PR_LOGGER.logf(L_Info, M_Entity, "Plane: px [%f, %f, %f] py [%f, %f, %f] A %f",
-		 px(0), px(1), px(2), py(0), py(1), py(2), mGlobalPlane_Cache.surfaceArea());
+				   px(0), px(1), px(2), py(0), py(1), py(2), mGlobalPlane_Cache.surfaceArea());
 	PR_LOGGER.logf(L_Info, M_Entity, "Plane: axisX [%f, %f, %f] axisY [%f, %f, %f]³",
-		 mGlobalPlane_Cache.xAxis()(0), mGlobalPlane_Cache.xAxis()(1), mGlobalPlane_Cache.xAxis()(2),
-		 mGlobalPlane_Cache.yAxis()(0), mGlobalPlane_Cache.yAxis()(1), mGlobalPlane_Cache.yAxis()(2));
-		 
+				   mGlobalPlane_Cache.xAxis()(0), mGlobalPlane_Cache.xAxis()(1), mGlobalPlane_Cache.xAxis()(2),
+				   mGlobalPlane_Cache.yAxis()(0), mGlobalPlane_Cache.yAxis()(1), mGlobalPlane_Cache.yAxis()(2));
+
 	// Check up
 	if (std::abs((mGlobalPlane_Cache.normal()).squaredNorm() - 1) > PR_EPSILON)
 		PR_LOGGER.logf(L_Warning, M_Entity, "Plane entity %s has a non unit normal vector!", name().c_str());
@@ -169,4 +169,4 @@ void PlaneEntity::setup(RenderContext* context)
 	if (mMaterial)
 		mMaterial->setup(context);
 }
-}
+} // namespace PR

@@ -2,6 +2,7 @@
 
 #include "spectral/Spectrum.h"
 #include <Eigen/Dense>
+#include <type_traits>
 
 namespace PR {
 class Ray;
@@ -14,10 +15,25 @@ public:
 	ShaderOutput<T>() = default;
 	virtual ~ShaderOutput<T>() {}
 
-	virtual T eval(const ShaderClosure& point) = 0;
+	virtual void eval(T& t, const ShaderClosure& point) = 0;
+
+	template<class Q = T>
+	inline typename std::enable_if<!std::is_same<Q, Spectrum>::value, Q>::type eval(const ShaderClosure& point) {
+		Q val;
+		eval(val, point);
+		return val;
+	}
 };
 
 typedef ShaderOutput<float> ScalarShaderOutput;
-typedef ShaderOutput<Spectrum> SpectrumShaderOutput;
 typedef ShaderOutput<Eigen::Vector3f> VectorShaderOutput;
+
+class PR_LIB_INLINE SpectrumShaderOutput : public ShaderOutput<Spectrum> {
+	PR_CLASS_NON_COPYABLE(SpectrumShaderOutput);
+public:
+	SpectrumShaderOutput() = default;
+	virtual ~SpectrumShaderOutput() {}
+
+	virtual float evalIndex(const ShaderClosure& point, uint32 index, uint32 samples) = 0;// Fast access
+};
 }

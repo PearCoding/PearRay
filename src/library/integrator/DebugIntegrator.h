@@ -8,6 +8,11 @@ public:
 	explicit DebugIntegrator(RenderContext* renderer);
 
 	void init() override;
-	Spectrum apply(const Ray& in, RenderTile* tile, uint32 pass, ShaderClosure& sc) override;
+
+protected:
+	void onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, const RenderSession& session) override;
+
+private:
+	const DebugMode mDebugMode;
 };
 }
