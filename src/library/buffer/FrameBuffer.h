@@ -146,30 +146,50 @@ public:
 	}
 
 	// Spectrum
-	inline void getFragment(const Eigen::Vector2i& p, Spectrum& spec)
+	inline void getFragmentSpectrum(const Eigen::Vector2i& p, Spectrum& spec)
 	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
 		for (uint32 i = 0; i < mChannels; ++i)
 			spec[i] = getFragment(p, i);
 	}
 
-	inline void getFragmentBounded(const Eigen::Vector2i& p, Spectrum& spec)
+	inline void getFragmentBoundedSpectrum(const Eigen::Vector2i& p, Spectrum& spec)
 	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
 		for (uint32 i = 0; i < mChannels; ++i)
 			spec[i] = getFragmentBounded(p, i);
 	}
 
-	inline void setFragment(const Eigen::Vector2i& p, const Spectrum& spec)
+	template <typename SLO>
+	inline Lazy::enable_if_slo_t<SLO, SLO, void> setFragmentSpectrum(const Eigen::Vector2i& p, const SLO& spec)
 	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		spec.copyTo(&getFragment(p));
+		for (uint32 i = 0; i < mChannels; ++i)
+			getFragment(p, i) = spec(i);
 	}
 
-	inline void setFragmentBounded(const Eigen::Vector2i& p, const Spectrum& spec)
+	template <typename SLO>
+	inline Lazy::enable_if_slo_t<SLO, SLO, void> setFragmentBoundedSpectrum(const Eigen::Vector2i& p, const SLO& spec)
 	{
 		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		spec.copyTo(&getFragmentBounded(p));
+		for (uint32 i = 0; i < mChannels; ++i)
+			getFragmentBounded(p, i) = spec(i);
+	}
+
+	template <typename SLO>
+	inline Lazy::enable_if_slo_t<SLO, SLO, void> addFragmentSpectrum(const Eigen::Vector2i& p, const SLO& spec)
+	{
+		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
+		for (uint32 i = 0; i < mChannels; ++i)
+			getFragment(p, i) += spec(i);
+	}
+
+	template <typename SLO>
+	inline Lazy::enable_if_slo_t<SLO, SLO, void> addFragmentBoundedSpectrum(const Eigen::Vector2i& p, const SLO& spec)
+	{
+		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
+		for (uint32 i = 0; i < mChannels; ++i)
+			getFragmentBounded(p, i) += spec(i);
 	}
 
 	inline T* ptr() const

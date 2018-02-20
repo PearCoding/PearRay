@@ -39,14 +39,12 @@ struct BIDI_TileData {
 };
 
 struct BIDI_ThreadData {
-	bool Lock;
 	std::vector<Spectrum> FullWeight;
 	std::vector<Spectrum> Weight;
 	std::vector<Spectrum> Evaluation;
 
 	explicit BIDI_ThreadData(RenderContext* context)
-		: Lock(false)
-		, FullWeight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
+		: FullWeight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 		, Weight(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 		, Evaluation(context->settings().maxRayDepth(), Spectrum(context->spectrumDescriptor()))
 	{
@@ -95,8 +93,6 @@ void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& i
 	ShaderClosure other_sc;
 
 	BIDI_ThreadData& threadData = mThreadData[session.thread()];
-	PR_ASSERT(threadData.Lock == false, "No recursive call of Integrators allowed");
-	threadData.Lock = true; // Only for development purposes
 
 	//MultiJitteredSampler sampler(tile->random(), renderer()->settings().maxLightSamples());
 	if (!renderer()->lights().empty()) {
@@ -137,8 +133,8 @@ void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& i
 				threadData.Weight[0] /= fps.PDF_A;
 
 				MaterialSample ms;
-				ms.L		= Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
-													Projection::cos_hemi(session.tile()->random().getFloat(), session.tile()->random().getFloat(), ms.PDF_S));
+				ms.L = Projection::tangent_align(fps.Point.Ng, fps.Point.Nx, fps.Point.Ny,
+												 Projection::cos_hemi(session.tile()->random().getFloat(), session.tile()->random().getFloat(), ms.PDF_S));
 				float NdotL = std::abs(fps.Point.Ng.dot(ms.L));
 				Ray current = Ray(in.pixel(),
 								  Ray::safePosition(other_sc.P, ms.L),
@@ -185,8 +181,6 @@ void BiDirectIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& i
 	}
 
 	applyRay(spec, in, session, 0, sc);
-
-	threadData.Lock = false;
 }
 
 void BiDirectIntegrator::applyRay(Spectrum& spec, const Ray& in, const RenderSession& session, uint32 diffBounces, ShaderClosure& sc)
@@ -217,14 +211,13 @@ void BiDirectIntegrator::applyRay(Spectrum& spec, const Ray& in, const RenderSes
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0");
 		Eigen::Vector3f rnd = sampler.generate3D(i);
-		for (uint32 path = 0; path < path_count && noSpecular; ++path) {
+		for (uint32 path = 0; path < path_count; ++path) {
 			MaterialSample ms = sc.Material->samplePath(sc, rnd, path, session);
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
 			if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON)
 				continue;
 
-			// TODO: Serialize
 			applyRay(threadData.Weight[depth], in.next(sc.P, ms.L), session,
 					 !std::isinf(ms.PDF_S) ? diffBounces + 1 : diffBounces,
 					 other_sc);
@@ -261,13 +254,12 @@ void BiDirectIntegrator::applyRay(Spectrum& spec, const Ray& in, const RenderSes
 				Ray ray = in.next(sc.P, L);
 				ray.setFlags(ray.flags() | RF_Light);
 
-				if (renderer()->shoot(ray, other_sc, session) == lightV.Entity /*&& (sc.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+				if (renderer()->shoot(ray, other_sc, session) == lightV.Entity && (sc.P - other_sc.P).squaredNorm() <= LightEpsilon) {
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 
 					sc.Material->eval(threadData.Evaluation[depth], sc, L, NdotL, session);
-					threadData.Weight[depth] = lightV.Flux * threadData.Evaluation[depth] * NdotL * lightNdotV;
-					MSI::balance(spec, full_pdf, threadData.Weight[depth], pdfS);
+					MSI::balance(spec, full_pdf, lightV.Flux * threadData.Evaluation[depth] * NdotL * lightNdotV, pdfS);
 				}
 			}
 
@@ -278,7 +270,7 @@ void BiDirectIntegrator::applyRay(Spectrum& spec, const Ray& in, const RenderSes
 				const auto PS								 = lightV.SC.P - sc.P;
 				const auto L								 = PS.normalized();
 
-				const float NdotL = std::abs(sc.N.dot(L));
+				const float NdotL = std::max(0.0f, sc.N.dot(L));
 
 				if (NdotL <= PR_EPSILON)
 					continue;

@@ -51,12 +51,13 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 								const RenderSession& session,
 								uint32 diffbounces, ShaderClosure& sc)
 {
-
-	RenderEntity* entity = renderer()->shootWithEmission(spec, in, sc, session);
+	RenderContext* context		 = renderer();
+	const uint32 maxLightSamples = context->settings().maxLightSamples();
+	RenderEntity* entity		 = context->shootWithEmission(spec, in, sc, session);
 
 	if (!entity || !sc.Material
 		|| !sc.Material->canBeShaded()
-		|| diffbounces > renderer()->settings().maxDiffuseBounces())
+		|| diffbounces > context->settings().maxDiffuseBounces())
 		return;
 
 	DI_ThreadData& threadData = mThreadData[session.thread()];
@@ -66,11 +67,11 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 	// Used temporary
 	ShaderClosure other_sc;
 
-	bool noSpecular = true;
+	bool specular = false;
 
 	// Hemisphere sampling
 	for (uint32 i = 0;
-		 i < renderer()->settings().maxLightSamples() && noSpecular;
+		 i < maxLightSamples && !specular;
 		 ++i) {
 		const uint32 path_count = sc.Material->samplePathCount();
 		PR_ASSERT(path_count > 0, "path_count should be always higher than 0.");
@@ -88,27 +89,25 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 					 !std::isinf(ms.PDF_S) ? diffbounces + 1 : diffbounces,
 					 other_sc);
 
-			//if (!weight.isOnlyZero()) {
 			sc.Material->eval(threadData.Evaluation[depth], sc, ms.L, NdotL, session);
 			threadData.Weight[depth] *= threadData.Evaluation[depth] * NdotL;
 			MSI::balance(spec, full_pdf, threadData.Weight[depth], ms.PDF_S);
-			//}
 
 			if (ms.isSpecular())
-				noSpecular = false;
+				specular = true;
 		}
 	}
 
-	if (noSpecular) {
+	if (!specular) {
 		// Area sampling!
-		for (RenderEntity* light : renderer()->lights()) {
-			for (uint32 i = 0; i < renderer()->settings().maxLightSamples(); ++i) {
-				const Eigen::Vector3f rnd		  = session.tile()->random().get3D();
-				RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
+		for (RenderEntity* light : context->lights()) {
+			for (uint32 i = 0; i < maxLightSamples; ++i) {
+				const Eigen::Vector3f rnd				= session.tile()->random().get3D();
+				const RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
 
 				const Eigen::Vector3f PS = fps.Point.P - sc.P;
 				const Eigen::Vector3f L  = PS.normalized();
-				const float NdotL		 = std::abs(L.dot(sc.N)); // No back light detection
+				const float NdotL		 = std::max(0.0f, L.dot(sc.N)); // No back light detection
 
 				float pdfA = fps.PDF_A;
 
@@ -119,7 +118,8 @@ void DirectIntegrator::applyRay(Spectrum& spec, const Ray& in,
 				ray.setFlags(ray.flags() | RF_Light);
 
 				// Full light!!
-				if (renderer()->shootWithEmission(threadData.Weight[depth], ray, other_sc, session) == light /*&& (fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon*/) {
+				if (context->shootWithEmission(threadData.Weight[depth], ray, other_sc, session) == light
+					&& (fps.Point.P - other_sc.P).squaredNorm() <= LightEpsilon) {
 					if (other_sc.Flags & SCF_Inside) // Wrong side (Back side)
 						continue;
 

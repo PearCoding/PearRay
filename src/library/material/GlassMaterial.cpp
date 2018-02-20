@@ -58,12 +58,10 @@ void GlassMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 }
 
 struct GM_ThreadData {
-	Spectrum IOR;
 	Spectrum Specularity;
 
 	explicit GM_ThreadData(RenderContext* context)
-		: IOR(context->spectrumDescriptor())
-		, Specularity(context->spectrumDescriptor())
+		: Specularity(context->spectrumDescriptor())
 	{
 	}
 };
@@ -95,7 +93,7 @@ float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, f
 MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	const std::shared_ptr<GM_ThreadData>& data = mThreadData[session.thread()];
-	const float ind							   = data->IOR.value(point.WavelengthIndex);
+	const float ind = mIndex->evalIndex(point, point.WavelengthIndex, data->Specularity.samples());
 
 	float weight = (point.Flags & SCF_Inside) == 0 ?
 #ifndef PR_GLASS_USE_DEFAULT_SCHLICK
@@ -128,7 +126,7 @@ MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Ve
 MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
 {
 	const std::shared_ptr<GM_ThreadData>& data = mThreadData[session.thread()];
-	const float ind							   = data->IOR.value(point.WavelengthIndex);
+	const float ind = mIndex->evalIndex(point, point.WavelengthIndex, data->Specularity.samples());
 
 	MaterialSample ms;
 	float weight = (point.Flags & SCF_Inside) == 0 ?

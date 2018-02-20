@@ -215,6 +215,8 @@ bool RenderContext::shootForDetection(const Ray& ray, const RenderSession& sessi
 RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
 											   ShaderClosure& sc, const RenderSession& session)
 {
+	appliedSpec.clear();
+
 	if (ray.depth() >= mRenderSettings.maxRayDepth())
 		return nullptr;
 
@@ -225,8 +227,6 @@ RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray&
 		else
 			appliedSpec.clear();
 	} else {
-		appliedSpec.clear();
-
 		for (auto e : mScene->infiniteLights())
 			e->apply(appliedSpec, ray.direction(), session);
 

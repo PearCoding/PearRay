@@ -33,5 +33,6 @@ public:
 	}
 
 	static void toSpec(Spectrum& spec, float x, float y, float z);
+	static float toSpecIndex(uint32 samples, uint32 index, float x, float y, float z);
 };
 }

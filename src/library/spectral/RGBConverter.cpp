@@ -24,14 +24,14 @@ void RGBConverter::fromXYZ(float x, float y, float z, float& r, float& g, float&
 	g = -9.692436e-01 * x + 1.875968e+00 * y + 4.155506e-02 * z;
 	b = 5.563008e-02 * x - 2.039770e-01 * y + 1.056972e+00 * z;
 
-	r = std::max(0.0f, r);
+	/*r = std::max(0.0f, r);
 	g = std::max(0.0f, g);
-	b = std::max(0.0f, b);
+	b = std::max(0.0f, b);*/
 }
 
 float RGBConverter::luminance(float r, float g, float b)
 {
-	return 0.2126f * r + 0.7152f * g + 0.0722f * b;
+	return PR_LUMINOSITY_RED * r + PR_LUMINOSITY_GREEN * g + PR_LUMINOSITY_BLUE * b;
 }
 
 void RGBConverter::gamma(float& x, float& y, float& z)
@@ -47,5 +47,13 @@ void RGBConverter::toSpec(Spectrum& spec, float r, float g, float b)
 	toXYZ(r, g, b, x, y, z);
 
 	XYZConverter::toSpec(spec, x, y, z);
+}
+
+float RGBConverter::toSpecIndex(uint32 samples, uint32 index, float r, float g, float b)
+{
+	float x, y, z;
+	toXYZ(r, g, b, x, y, z);
+
+	return XYZConverter::toSpecIndex(samples, index, x, y, z);
 }
 }

@@ -60,6 +60,8 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 	I_ThreadData& threadData = mThreadData[session.thread()];
 	full_pdf				 = 0;
 
+	spec.clear();
+
 	if (renderer()->scene()->infiniteLights().empty())
 		return;
 
@@ -70,6 +72,7 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 	for (auto e : renderer()->scene()->infiniteLights()) {
 		float semi_pdf = 0;
 
+		threadData.SemiWeight.clear();
 		for (uint32 i = 0;
 			 i < renderer()->settings().maxLightSamples() && !std::isinf(semi_pdf);
 			 ++i) {
@@ -90,9 +93,9 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 				sc.Material->eval(threadData.Weight, sc, ls.L, NdotL, session);
 				e->apply(threadData.Evaluation, ls.L, session);
 				threadData.Weight *= threadData.Evaluation * NdotL;
-			}
 
-			MSI::balance(threadData.SemiWeight, semi_pdf, threadData.Weight, lightSampleWeight * ls.PDF_S);
+				MSI::balance(threadData.SemiWeight, semi_pdf, threadData.Weight, lightSampleWeight * ls.PDF_S);
+			}
 		}
 
 		MSI::balance(spec, full_pdf, threadData.SemiWeight,

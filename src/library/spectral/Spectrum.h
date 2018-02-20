@@ -50,6 +50,7 @@ public:
 	// Memory management -> Dangerous functions!
 	inline void copyFrom(const float* data);
 	inline void copyTo(float* data) const;
+	inline void copyTo(Spectrum& spec) const;
 
 	// Operators
 	inline Spectrum& operator+=(const Spectrum& spec);
@@ -120,6 +121,9 @@ public:
 	{
 		return spec1 * (1 - t) + spec2 * t;
 	}
+
+	template <typename T>
+	inline Lazy::enable_if_slo_t<T, T, void> copyFrom(const T& slo);
 
 private:
 	struct Spectrum_Internal {

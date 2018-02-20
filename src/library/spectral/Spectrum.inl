@@ -88,6 +88,12 @@ inline void Spectrum::copyTo(float* data) const
 	}
 }
 
+inline void Spectrum::copyTo(Spectrum& spec) const
+{
+	PR_ASSERT(spec.samples() == samples(), "Can not assign data to non equal sized spectrum");
+	copyTo(spec.ptr());
+}
+
 // Operators
 inline Spectrum& Spectrum::operator+=(const Spectrum& spec)
 {
@@ -379,6 +385,14 @@ inline Lazy::enable_if_slo_t<T, T, void> Spectrum::lerp(const T& slo, float t)
 {
 	for (uint32 i = 0; i < samples(); ++i) {
 		setValue(i, value(i) * (1 - t) + slo(i) * t);
+	}
+}
+
+template <typename T>
+inline Lazy::enable_if_slo_t<T, T, void> Spectrum::copyFrom(const T& slo)
+{
+	for (uint32 i = 0; i < samples(); ++i) {
+		setValue(i, slo(i));
 	}
 }
 

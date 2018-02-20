@@ -90,15 +90,13 @@ void PhotonMap::estimate(Spectrum& spec, const PhotonSphere& sphere,
 				typename Map::const_accessor acc;
 				if (mPhotons.find(acc, key)) {
 #ifdef PR_USE_APPROX_PHOTON_MAP
-					if (checkFunc((*acc).second.Approximation, sphere, dist2)) // Found a photon!
-					{
+					if (checkFunc((*acc).second.Approximation, sphere, dist2)) { // Found a photon!
 						found += (*acc).second.Count;
 						accumFunc(spec, (*acc).second.Approximation, sphere, dist2);
 					}
 #else
 					for (const Photon& pht : (*acc).second) {
-						if (checkFunc(pht, sphere, dist2)) // Found a photon!
-						{
+						if (checkFunc(pht, sphere, dist2)) { // Found a photon!
 							found++;
 							accumFunc(spec, pht, sphere, dist2);
 						}

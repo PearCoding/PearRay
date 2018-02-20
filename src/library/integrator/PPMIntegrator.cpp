@@ -100,9 +100,9 @@ void PPMIntegrator::init()
 
 	mPhotonMap = new Photon::PhotonMap(renderer()->settings().ppm().maxGatherRadius());
 
-	mAccumulatedFlux  = std::make_shared<FrameBufferFloat>(renderer()->spectrumDescriptor()->samples(), 0.0f, true); // Will be deleted by outputmap
-	mSearchRadius2	= std::make_shared<FrameBufferFloat>(1, renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
-														   true);
+	mAccumulatedFlux = std::make_shared<FrameBufferFloat>(renderer()->spectrumDescriptor()->samples(), 0.0f, true); // Will be deleted by outputmap
+	mSearchRadius2   = std::make_shared<FrameBufferFloat>(1, renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
+														true);
 	mLocalPhotonCount = std::make_shared<FrameBufferUInt64>(1, 0, true);
 
 	renderer()->output()->registerCustomChannel_Spectral("int.ppm.accumulated_flux", mAccumulatedFlux);
@@ -274,10 +274,9 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 	const uint32 H  = renderer()->settings().maxDiffuseBounces() + 1;
 	const uint32 RD = renderer()->settings().maxRayDepth();
 
-	Spectrum spec(renderer()->spectrumDescriptor());
+	Spectrum spec(renderer()->spectrumDescriptor(), 0.0f);
 	Spectrum radiance   = spec.clone();
 	Spectrum evaluation = spec.clone();
-	Spectrum invRad		= spec.clone();
 
 	PPM_TileData& data = mTileData[session.tile()->index()];
 	for (const PPM_LightTileData& ltd : data.Lights) {
@@ -291,25 +290,21 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 		for (photonsShoot = 0;
 			 photonsShoot < sampleSize;
 			 ++photonsShoot) {
-			float t_pdf = 0;
-			FacePoint lightSample;
-			Eigen::Vector3f dir;
+			float t_pdf				   = 0;
 			const Eigen::Vector3f rnd  = session.tile()->random().get3D();
 			const Eigen::Vector3f rnd2 = session.tile()->random().get3D();
 
 			RenderEntity::FacePointSample fps = light.Entity->sampleFacePoint(rnd);
 
-			lightSample = fps.Point;
-			dir			= Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
-											Projection::hemi(rnd(0), rnd(1), t_pdf));
+			FacePoint lightSample = fps.Point;
+			Eigen::Vector3f dir   = Projection::tangent_align(lightSample.Ng, lightSample.Nx, lightSample.Ny,
+															Projection::hemi(rnd(0), rnd(1), t_pdf));
 
-			if (!lightSample.Material->isLight())
-				continue;
+			PR_ASSERT(lightSample.Material->isLight(), "Light Sample should always be associated with a light material!");
 
-			Ray ray			  = Ray(Eigen::Vector2i(0, 0), lightSample.P, dir,
-							0, rnd2(0), rnd2(1) * spec.samples(), RF_Light); // TODO: Use pixel sample
-			ShaderClosure lsc = lightSample;
-			lightSample.Material->evalEmission(radiance, lsc, session);
+			Ray ray = Ray(Eigen::Vector2i(0, 0), lightSample.P, dir,
+						  0, rnd2(0), rnd2(1) * spec.samples(), RF_Light); // TODO: Use pixel sample
+			lightSample.Material->evalEmission(radiance, ShaderClosure(lightSample), session);
 			radiance /= t_pdf;
 
 			data.PhotonsEmitted++;
@@ -322,8 +317,7 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 				if (entity && sc.Material && sc.Material->canBeShaded()) {
 					MaterialSample ms = sc.Material->sample(sc, session.tile()->random().get3D(), session);
 
-					if (ms.PDF_S > PR_EPSILON && !ms.isSpecular()) // Diffuse
-					{
+					if (ms.PDF_S > PR_EPSILON && !ms.isSpecular()) { // Diffuse
 						// Always store when diffuse
 						Photon::Photon photon;
 						photon.Position[0] = sc.P(0);
@@ -332,8 +326,8 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 						mPhotonMap->mapDirection(-ray.direction(),
 												 photon.Theta, photon.Phi);
 
-						invRad = radiance * inv;
-						RGBConverter::convert(invRad,
+						evaluation = radiance * inv;
+						RGBConverter::convert(evaluation,
 											  photon.Power[0], photon.Power[1], photon.Power[2]);
 
 						mPhotonMap->store(sc.P, photon);
@@ -344,8 +338,8 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 
 						if (diffuseBounces > H - 1)
 							break;				   // Absorb
-					} else if (!ms.isSpecular()) { // Absorb
-						break;
+					} else if (!ms.isSpecular()) { // Continue
+						ms.PDF_S = 1;
 					}
 
 					const float NdotL = std::abs(ms.L.dot(sc.N));
@@ -373,6 +367,7 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 	const uint32 depth		  = in.depth();
 	float full_pdf			  = 0;
 	const Eigen::Vector3f rnd = session.tile()->random().get3D();
+	bool specular			  = false;
 	for (uint32 path = 0; path < sc.Material->samplePathCount(); ++path) {
 		MaterialSample ms = sc.Material->samplePath(sc, rnd, path, session);
 
@@ -380,6 +375,7 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 			continue;
 
 		if (ms.isSpecular()) { // Specular
+			specular		  = true;
 			const float NdotL = std::abs(ms.L.dot(sc.N));
 
 			if (NdotL > PR_EPSILON) {
@@ -388,16 +384,9 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 				Ray ray = in.next(sc.P, ms.L);
 				accumPass(threadData.Weight[depth], sc2, ray, diffbounces, session);
 				sc.Material->eval(threadData.Evaluation[depth], sc, ms.L, NdotL, session);
-				threadData.Weight[depth] *= threadData.Evaluation[depth] * NdotL;
-
-				MSI::balance(threadData.FullWeight[depth], full_pdf, threadData.Weight[depth], ms.PDF_S);
+				MSI::balance(spec, full_pdf, threadData.Weight[depth] * threadData.Evaluation[depth] * NdotL, ms.PDF_S);
 			}
 		} else { // Diffuse
-			ms.PDF_S = 0;
-			float inf_pdf;
-			handleInfiniteLights(threadData.Evaluation[depth], in, sc, session, inf_pdf);
-			MSI::balance(threadData.FullWeight[depth], full_pdf, threadData.Evaluation[depth], inf_pdf);
-
 			// Gathering
 			const auto gatheringMode = renderer()->settings().ppm().gatheringMode();
 			const float A			 = 1 - renderer()->settings().ppm().contractRatio();
@@ -424,10 +413,10 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 			switch (gatheringMode) {
 			default:
 			case PGM_Sphere:
-				mPhotonMap->estimateSphere(threadData.Accum[depth], query, accumFunc, found);
+				mPhotonMap->estimateSphere(threadData.Evaluation[depth], query, accumFunc, found);
 				break;
 			case PGM_Dome:
-				mPhotonMap->estimateDome(threadData.Accum[depth], query, accumFunc, found);
+				mPhotonMap->estimateDome(threadData.Evaluation[depth], query, accumFunc, found);
 				break;
 			}
 
@@ -439,22 +428,22 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 
 				mSearchRadius2->setFragment(in.pixel(), 0, query.Distance2 * fraction);
 				mLocalPhotonCount->setFragment(in.pixel(), 0, newN);
-
-				mAccumulatedFlux->getFragment(in.pixel(), threadData.Evaluation[depth]);
-
-				threadData.Accum[depth] += threadData.Evaluation[depth];
-				threadData.Accum[depth] *= fraction;
-				mAccumulatedFlux->setFragment(in.pixel(), threadData.Accum[depth]);
+				mAccumulatedFlux->addFragmentSpectrum(in.pixel(), threadData.Evaluation[depth] * fraction);
 			}
 
+			// TODO: Add PPM and other parts together!
 			const float inv = PR_1_PI / mSearchRadius2->getFragment(in.pixel());
 
-			mAccumulatedFlux->getFragment(in.pixel(), threadData.Evaluation[depth]);
-			MSI::balance(threadData.FullWeight[depth], full_pdf,
+			mAccumulatedFlux->getFragmentSpectrum(in.pixel(), threadData.Evaluation[depth]);
+			MSI::balance(spec, full_pdf,
 						 threadData.Evaluation[depth] * inv, ms.PDF_S);
 		} // End diffuse
 	}
 
-	spec += threadData.FullWeight[depth];
+	if (!specular) { // Apply infinite lights if no specular scattering happened
+		float inf_pdf;
+		handleInfiniteLights(threadData.Evaluation[depth], in, sc, session, inf_pdf);
+		MSI::balance(spec, full_pdf, threadData.Evaluation[depth], inf_pdf);
+	}
 }
 } // namespace PR

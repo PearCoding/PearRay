@@ -89,6 +89,51 @@ void barycentricTriangle(double px, double py,
 	t = -(py * x1 - py * x2 - px * y1 + px * y2 - x1 * y2 + x2 * y1) * invDet;
 }
 
+static bool findRegion(float nx, float ny, double& s, double& t, const float*& s1, const float*& s2, const float*& s3)
+{
+	const int vIndex = _xyz2spec::pointToVoxel(nx, ny);
+	if (vIndex == -1) // Error?
+		return false;
+
+	// Check if point inside triangle
+	s			  = -1;
+	t			  = -1;
+	uint32 triInd = 0;
+	for (uint32 i = _xyz2spec::voxelTable[vIndex][0];
+		 i < _xyz2spec::voxelTable[vIndex][1] && (s < 0 || t < 0 || 1 - s - t < 0);
+		 ++i) {
+		triInd = _xyz2spec::voxelEntryTable[i];
+		if (_xyz2spec::triInvDetTable[triInd] == 0)
+			continue;
+
+		const auto tri = _xyz2spec::triTable[triInd];
+
+		const double p0x = _xyz2spec::pointTable[tri[0]][0];
+		const double p0y = _xyz2spec::pointTable[tri[0]][1];
+		const double p1x = _xyz2spec::pointTable[tri[1]][0];
+		const double p1y = _xyz2spec::pointTable[tri[1]][1];
+		const double p2x = _xyz2spec::pointTable[tri[2]][0];
+		const double p2y = _xyz2spec::pointTable[tri[2]][1];
+
+		barycentricTriangle(nx, ny,
+							p0x, p0y, p1x, p1y, p2x, p2y,
+							_xyz2spec::triInvDetTable[triInd],
+							s, t);
+
+		/*PR_LOGGER.logf(L_Warning, M_Internal, "  => [%f, %f]",
+				s,t);*/
+	}
+
+	if (s < 0 || t < 0 || 1 - s - t < 0) // No triangle found
+		return false;
+
+	s1 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][0]];
+	s2 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][1]];
+	s3 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][2]];
+
+	return true;
+}
+
 void XYZConverter::toSpec(Spectrum& spec, float x, float y, float z)
 {
 	if (spec.samples() == PR_SPECTRAL_TRIPLET_SAMPLES) {
@@ -102,62 +147,42 @@ void XYZConverter::toSpec(Spectrum& spec, float x, float y, float z)
 		const float nx = x / b;
 		const float ny = y / b;
 
-		/*PR_LOGGER.logf(L_Warning, M_Internal, "XYZ [%f,%f,%f] -> [%f,%f]", x,y,z,nx,ny);*/
-		const int vIndex = _xyz2spec::pointToVoxel(nx, ny);
-		if (vIndex == -1) // Error?
+		double s, t;
+		const float* s1 = nullptr;
+		const float* s2 = nullptr;
+		const float* s3 = nullptr;
+
+		if (!findRegion(nx, ny, s, t, s1, s2, s3))
 			return;
-
-		/*PR_LOGGER.logf(L_Warning, M_Internal, "  Voxel %i -> [%i, %i]",
-			vIndex, _xyz2spec::voxelTable[vIndex][0], _xyz2spec::voxelTable[vIndex][1]);*/
-
-		// Check if point inside triangle
-		double s	  = -1;
-		double t	  = -1;
-		uint32 triInd = 0;
-		for (uint32 i = _xyz2spec::voxelTable[vIndex][0];
-			 i < _xyz2spec::voxelTable[vIndex][1] && (s < 0 || t < 0 || 1 - s - t < 0);
-			 ++i) {
-			triInd = _xyz2spec::voxelEntryTable[i];
-			if (_xyz2spec::triInvDetTable[triInd] == 0)
-				continue;
-
-			const auto tri = _xyz2spec::triTable[triInd];
-
-			const double p0x = _xyz2spec::pointTable[tri[0]][0];
-			const double p0y = _xyz2spec::pointTable[tri[0]][1];
-			const double p1x = _xyz2spec::pointTable[tri[1]][0];
-			const double p1y = _xyz2spec::pointTable[tri[1]][1];
-			const double p2x = _xyz2spec::pointTable[tri[2]][0];
-			const double p2y = _xyz2spec::pointTable[tri[2]][1];
-
-			/*PR_LOGGER.logf(L_Warning, M_Internal, "  Tri [%f, %f]~[%f, %f]~[%f, %f]",
-				p0x,p0y,p1x,p1y,p2x,p2y);*/
-
-			barycentricTriangle(nx, ny,
-								p0x, p0y, p1x, p1y, p2x, p2y,
-								_xyz2spec::triInvDetTable[triInd],
-								s, t);
-
-			/*PR_LOGGER.logf(L_Warning, M_Internal, "  => [%f, %f]",
-				s,t);*/
-		}
-
-		if (s < 0 || t < 0 || 1 - s - t < 0) // No triangle found
-			return;
-
-		const float* s1 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][0]];
-		const float* s2 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][1]];
-		const float* s3 = _xyz2spec::xyzTable[_xyz2spec::triTable[triInd][2]];
-
-		/*const double b1 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][0]]);
-		const double b2 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][1]]);
-		const double b3 = PM::pm_Min(1.0f, _xyz2spec::invBrightnessTable[_xyz2spec::triTable[triInd][2]]);*/
 
 		for (uint32 i = 0; i < spec.samples(); ++i) {
 			spec.setValue(i, s1[i] * (1 - s - t) + s2[i] * s + s3[i] * t);
 		}
 
 		spec *= b;
+	}
+}
+
+float XYZConverter::toSpecIndex(uint32 samples, uint32 index, float x, float y, float z)
+{
+	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) {
+		return (index == 0) ? x : (index == 1 ? y : z);
+	} else {
+		PR_ASSERT(samples == PR_SPECTRAL_WAVELENGTH_SAMPLES, "XYZ Converter only works with standard spectral type");
+
+		const float b  = x + y + z; // Brightness
+		const float nx = x / b;
+		const float ny = y / b;
+
+		double s, t;
+		const float* s1 = nullptr;
+		const float* s2 = nullptr;
+		const float* s3 = nullptr;
+
+		if (!findRegion(nx, ny, s, t, s1, s2, s3))
+			return 0.0f;
+
+		return (s1[index] * (1 - s - t) + s2[index] * s + s3[index] * t) * b;
 	}
 }
 }

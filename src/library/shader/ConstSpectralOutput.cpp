@@ -9,8 +9,13 @@ ConstSpectrumShaderOutput::ConstSpectrumShaderOutput(const Spectrum& f)
 {
 }
 
-void ConstSpectrumShaderOutput::eval(Spectrum& spec, const ShaderClosure& point)
+void ConstSpectrumShaderOutput::eval(Spectrum& spec, const ShaderClosure& /*point*/)
 {
-	spec = mValue;
+	spec.copyFrom(mValue);
+}
+
+float ConstSpectrumShaderOutput::evalIndex(const ShaderClosure& /*point*/, uint32 index, uint32 /*samples*/)
+{
+	return mValue(index);
 }
 } // namespace PR

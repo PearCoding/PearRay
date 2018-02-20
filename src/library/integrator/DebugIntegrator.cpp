@@ -29,13 +29,13 @@ void DebugIntegrator::onPixel(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 	Ray out = in;
 	out.setFlags(in.flags() | RF_Debug);
 
+	spec.clear();
+
 	if (mDebugMode == DM_Emission)
 		entity = renderer()->shootWithEmission(spec, out, sc, session);
 	else
 		entity = renderer()->shoot(out, sc, session);
 
-	spec.clear();
-	
 	if (!entity || (mDebugMode != DM_Validity && !sc.Material))
 		return;
 
