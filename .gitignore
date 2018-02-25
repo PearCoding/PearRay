@@ -38,3 +38,6 @@ res
 
 # Sandbox/Script output
 *.raw
+
+# Working on it... Still broken
+tools/spectrum
