@@ -25,7 +25,7 @@ install:
 # Boost
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libboost-filesystem1.55-dev libboost-program-options1.55-dev libboost-system1.55-dev libboost-iostreams1.55-dev libboost-thread1.55-dev
 # OpenEXR
-#  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenexr-dev libilmbase-dev
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenexr-dev libilmbase-dev
 # Intel TBB
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libtbb-dev
 # Eigen3
@@ -39,17 +39,18 @@ install:
   - sudo make install
   - cd ../../
 # OpenImageIO
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenimageio-dev
-#  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenjpeg-dev libtiff-dev libjpeg-dev libpng-dev
-#  - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
-#  - tar zxf /tmp/OpenImageIO-1.6.11.tar.gz > /dev/null 2>&1
-#  - cd oiio-Release-1.6.11
-#  - mkdir build
-#  - cd build
-#  - cmake -DUSE_QT=0 -DUSE_TBB=0 -DUSE_PYTHON=0 -DUSE_PYTHON3=0 -DUSE_FIELD3D=0 -DUSE_FFMPEG=0 -DUSE_OPENJPEG=1 -DUSE_OCIO=0 -DUSE_OPENCV=0 -DUSE_OPENSSL=0 -DUSE_FREETYPE=0 -DUSE_GIF=0 -DUSE_PTEX=0 -DUSE_LIBRAW=0 -DOIIO_BUILD_TESTS=0 -DOIIO_BUILD_TOOLS=0 ../
-#  - make $MAKEFLAGS 
-#  - sudo make install
-#  - cd ../../
+# Unfortunatly cmake does not find openimageio 1.3...
+#  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenimageio-dev
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenjpeg-dev libtiff-dev libjpeg-dev libpng-dev
+  - wget https://github.com/OpenImageIO/oiio/archive/Release-1.6.11.tar.gz -O /tmp/OpenImageIO-1.6.11.tar.gz
+  - tar zxf /tmp/OpenImageIO-1.6.11.tar.gz > /dev/null 2>&1
+  - cd oiio-Release-1.6.11
+  - mkdir build
+  - cd build
+  - cmake -DUSE_QT=0 -DUSE_TBB=0 -DUSE_PYTHON=0 -DUSE_PYTHON3=0 -DUSE_FIELD3D=0 -DUSE_FFMPEG=0 -DUSE_OPENJPEG=1 -DUSE_OCIO=0 -DUSE_OPENCV=0 -DUSE_OPENSSL=0 -DUSE_FREETYPE=0 -DUSE_GIF=0 -DUSE_PTEX=0 -DUSE_LIBRAW=0 -DOIIO_BUILD_TESTS=0 -DOIIO_BUILD_TOOLS=0 ../
+  - make $MAKEFLAGS 
+  - sudo make install
+  - cd ../../
 before_script:
   - $CXX --version
   - cmake --version
