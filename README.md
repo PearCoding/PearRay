@@ -7,7 +7,7 @@
 ![CMake 3.1](https://img.shields.io/badge/CMake-3.1+-green.svg)
 ![Language](https://img.shields.io/badge/language-c++-blue.svg)
 ![C++ Standard](https://img.shields.io/badge/std-c++14-blue.svg)
-![GCC 4.8](https://img.shields.io/badge/GCC-4.8+-blue.svg)
+![GCC 4.9](https://img.shields.io/badge/GCC-4.9+-blue.svg)
 ![Language](https://img.shields.io/badge/language-Python-orange.svg)
 ![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)

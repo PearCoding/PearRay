@@ -188,17 +188,6 @@
 // Some other configs
 #define PR_TRIANGLE_INTERSECTION_TECHNIQUE (${TRIANGLE_TECHNIQUE})
 
-#cmakedefine PR_WITH_GPU
-#cmakedefine PR_WITH_NETWORK
-
-#ifndef PR_WITH_GPU
-# define PR_NO_GPU
-#endif
-
-#ifndef PR_WITH_NETWORK
-# define PR_NO_NETWORK
-#endif
-
 // Includes
 #include <iostream>
 #include <chrono>

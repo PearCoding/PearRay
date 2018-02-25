@@ -101,7 +101,14 @@ public:
 
 	// SLO
 	template <typename T, typename = std::enable_if_t<Lazy::is_slo<T>::value>>
-	inline Spectrum(const T& slo);
+	inline Spectrum(const T& slo)
+		: Spectrum(slo.descriptor(), slo.spectralStart(), slo.spectralEnd())
+	{
+		for (uint32 i = 0; i < samples(); ++i) {
+			setValue(i, slo(i));
+		}
+	}
+	
 	template <typename T>
 	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator=(const T& slo);
 	template <typename T>

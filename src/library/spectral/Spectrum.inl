@@ -326,15 +326,6 @@ inline Spectrum Spectrum::gray(const std::shared_ptr<SpectrumDescriptor>& desc, 
 }
 
 // SLO
-template <typename T, typename = std::enable_if_t<Lazy::is_slo<T>::value>>
-inline Spectrum::Spectrum(const T& slo)
-	: Spectrum(slo.descriptor(), slo.spectralStart(), slo.spectralEnd())
-{
-	for (uint32 i = 0; i < samples(); ++i) {
-		setValue(i, slo(i));
-	}
-}
-
 template <typename T>
 inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator=(const T& slo)
 {
