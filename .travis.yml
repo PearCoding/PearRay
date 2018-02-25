@@ -18,9 +18,9 @@ install:
 # Coverage
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install lcov
 # CMake and GCC
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.8 g++-4.8
-  - export CXX=g++-4.8 CC=gcc-4.8
-  - sudo ln -sf /usr/bin/gcov-4.8 /usr/bin/gcov
+  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install cmake cmake-data gcc-4.9 g++-4.9
+  - export CXX=g++-4.9 CC=gcc-4.9
+  - sudo ln -sf /usr/bin/gcov-4.9 /usr/bin/gcov
 # Qt
 #  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install qt52base qt52tools 
 # Boost

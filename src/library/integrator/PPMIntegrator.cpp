@@ -18,7 +18,7 @@
 #include "renderer/RenderThread.h"
 #include "renderer/RenderTile.h"
 
-#include "spectral/RGBConverter.h"
+#include "spectral/XYZConverter.h"
 
 #include "Logger.h"
 
@@ -327,7 +327,7 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 												 photon.Theta, photon.Phi);
 
 						evaluation = radiance * inv;
-						RGBConverter::convert(evaluation,
+						XYZConverter::convertXYZ(evaluation,
 											  photon.Power[0], photon.Power[1], photon.Power[2]);
 
 						mPhotonMap->store(sc.P, photon);
@@ -404,7 +404,7 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 				const float NdotL		  = std::abs(sc.N.dot(dir));
 
 				sc.Material->eval(threadData.Evaluation[depth], sc, dir, NdotL, session);
-				RGBConverter::toSpec(threadData.Weight[depth], photon.Power[0], photon.Power[1], photon.Power[2]);
+				XYZConverter::toSpec(threadData.Weight[depth], photon.Power[0], photon.Power[1], photon.Power[2]);
 
 				accum += threadData.Evaluation[depth] * threadData.Weight[depth];
 			};
