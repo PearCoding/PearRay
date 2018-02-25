@@ -9,9 +9,9 @@ cache:
   - apt
 before_install:
 #  - sudo -E apt-add-repository -y "ppa:beineri/opt-qt521"
-#  - sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+  - sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
 #  - sudo -E apt-add-repository -y "ppa:boost-latest/ppa"
-  - sudo -E apt-add-repository -y "ppa:george-edison55/precise-backports"
+#  - sudo -E apt-add-repository -y "ppa:george-edison55/precise-backports"
   - sudo -E apt-get update -qq
 install:
 # Coverage
