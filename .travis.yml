@@ -1,7 +1,7 @@
 language: cpp
 compiler: gcc
-sudo: true
 dist: trusty
+sudo: true
 env:
   global:
     - MAKEFLAGS="-j 2"
@@ -29,15 +29,15 @@ install:
 # Intel TBB
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libtbb-dev
 # Eigen3
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libeigen3-dev
-#  - wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz -O /tmp/eigen-3.3.3.tar.gz
-#  - tar zxf /tmp/eigen-3.3.3.tar.gz > /dev/null 2>&1
-#  - cd eigen-eigen-67e894c6cd8f
-#  - mkdir build
-#  - cd build
-#  - cmake ../
-#  - sudo make install
-#  - cd ../../
+#  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libeigen3-dev
+  - wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz -O /tmp/eigen-3.3.3.tar.gz
+  - tar zxf /tmp/eigen-3.3.3.tar.gz > /dev/null 2>&1
+  - cd eigen-eigen-67e894c6cd8f
+  - mkdir build
+  - cd build
+  - cmake ../
+  - sudo make install
+  - cd ../../
 # OpenImageIO
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenimageio-dev
 #  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install libopenjpeg-dev libtiff-dev libjpeg-dev libpng-dev
@@ -56,7 +56,7 @@ before_script:
   - mkdir build
   - cd build
   - lcov --directory . --zerocounters
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON -DPR_GENERATE_COVERAGE=ON -DPR_WITH_GPU_SUPPORT=OFF -DPR_WITH_PYTHON=OFF -DPR_WITH_OSL=OFF ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON -DPR_GENERATE_COVERAGE=ON -DPR_WITH_PYTHON=OFF -DPR_WITH_OSL=OFF ..
 script:
   - make $MAKEFLAGS 
   - make test || true
