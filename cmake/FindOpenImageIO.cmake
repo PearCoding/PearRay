@@ -32,7 +32,7 @@ endfunction()
 find_path(OIIO_INCLUDE_DIR OpenImageIO/version.h
   HINTS
     ENV OIIO_HOME
-  PATH_SUFFIXES include local/include 
+  PATH_SUFFIXES include/ local/include/
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
