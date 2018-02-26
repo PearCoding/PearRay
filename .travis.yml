@@ -58,7 +58,7 @@ before_script:
   - cd build
   - lcov --directory . --zerocounters
   - export OIIO_HOME=/usr/
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON -DPR_GENERATE_COVERAGE=ON -DPR_WITH_PYTHON=OFF -DPR_WITH_OSL=OFF ..
+  - cmake -E env CXXFLAGS="-O0" cmake -DCMAKE_BUILD_TYPE=Debug -DPR_ONLY_LIBRARY_SUBS=ON -DDL_ONLY_LIBRARY=ON -DPR_GENERATE_COVERAGE=ON -DPR_WITH_PYTHON=OFF -DPR_WITH_OSL=OFF ..
 script:
   - make $MAKEFLAGS 
   - make test || true
