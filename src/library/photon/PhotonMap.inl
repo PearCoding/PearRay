@@ -9,16 +9,6 @@ PhotonMap::PhotonMap(float gridDelta)
 	// Caching
 	mInvGridDelta = 1.0f / mGridDelta;
 	PR_ASSERT(std::isfinite(mInvGridDelta), "Inverse of grid delta has to be valid");
-
-	for (int i = 0; i < 256; ++i) {
-		float angle = i * (1.0f / 256) * PR_PI;
-
-		mSinTheta[i] = std::sin(angle);
-		mCosTheta[i] = std::cos(angle);
-
-		mSinPhi[i] = std::sin(2 * angle);
-		mCosPhi[i] = std::cos(2 * angle);
-	}
 }
 
 PhotonMap::~PhotonMap()
@@ -65,7 +55,7 @@ void PhotonMap::estimate(Spectrum& spec, const PhotonSphere& sphere,
 {
 	found = 0;
 
-	KeyCoord centerCoord = toCoords(sphere.Center);
+	KeyCoord centerCoord = toCoords(sphere.Center(0), sphere.Center(1), sphere.Center(2));
 	const int32 rad		 = std::max<int32>(0, std::ceil(std::sqrt(sphere.Distance2) * mInvGridDelta)) + 1;
 	const int32 rad2	 = rad * rad;
 
@@ -108,41 +98,37 @@ void PhotonMap::estimate(Spectrum& spec, const PhotonSphere& sphere,
 	}
 }
 
-void PhotonMap::store(const Eigen::Vector3f& pos, const Photon& pht)
+void PhotonMap::store(const Photon& pht)
 {
 	mStoredPhotons++;
-	const auto key = toCoords(pos);
+	const auto key = toCoords(pht.Position[0], pht.Position[1], pht.Position[2]);
 
 	typename Map::accessor acc;
 	mPhotons.insert(acc, key);
 
 #ifdef PR_USE_APPROX_PHOTON_MAP
 	auto& approx = (*acc).second;
-	float t		 = 1.0f / (approx.Count + 1.0f);
+	const float t		 = 1.0f / (approx.Count + 1.0f);
 
-	approx.Approximation.Position[0] = pht.Position[0]; //* t + approx.Approximation.Position[0]*(1-t);
-	approx.Approximation.Position[1] = pht.Position[1]; // * t + approx.Approximation.Position[1]*(1-t);
-	approx.Approximation.Position[2] = pht.Position[2]; // * t + approx.Approximation.Position[2]*(1-t);
-	approx.Approximation.Phi		 = pht.Phi * t + approx.Approximation.Phi * (1 - t);
-	approx.Approximation.Theta		 = pht.Theta * t + approx.Approximation.Theta * (1 - t);
-	approx.Approximation.Power[0]	= pht.Power[0] * t + approx.Approximation.Power[0] * (1 - t);
-	approx.Approximation.Power[1]	= pht.Power[1] * t + approx.Approximation.Power[1] * (1 - t);
-	approx.Approximation.Power[2]	= pht.Power[2] * t + approx.Approximation.Power[2] * (1 - t);
+	for(int i = 0; i < 3; ++i) {
+		approx.Approximation.Position[i] = pht.Position[i]; //* t + approx.Approximation.Position[i]*(1-t);
+		approx.Approximation.Direction[i]= pht.Direction[i] * t + approx.Approximation.Direction[i] * (1 - t);
+		approx.Approximation.Power[i]	 = pht.Power[i] * t + approx.Approximation.Power[i] * (1 - t);
+	}
 	approx.Count += 1;
 #else
 	(*acc).second.push_back(pht);
 #endif
 
-	mBox.combine(pos);
+	mBox.combine(Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]));
 }
 
-typename PhotonMap::KeyCoord PhotonMap::toCoords(const Eigen::Vector3f& v) const
+typename PhotonMap::KeyCoord PhotonMap::toCoords(float x, float y, float z) const
 {
-	Eigen::Vector3f s = v * mInvGridDelta;
 	return {
-		static_cast<int32>(std::floor(s(0))),
-		static_cast<int32>(std::floor(s(1))),
-		static_cast<int32>(std::floor(s(2)))
+		static_cast<int32>(std::floor(x * mInvGridDelta)),
+		static_cast<int32>(std::floor(y * mInvGridDelta)),
+		static_cast<int32>(std::floor(z * mInvGridDelta))
 	};
 }
 

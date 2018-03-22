@@ -93,6 +93,8 @@ _PRT_DEF_STRUCT(Eigen::Vector2f)
 _PRT_DEF_STRUCT(Eigen::Vector3f)
 _PRT_DEF_STRUCT(Eigen::Vector4f)
 
+#undef _PRT_DEF_STRUCT
+
 template<>
 bool _prt_test_eq(const Eigen::Quaternionf& val, const Eigen::Quaternionf& exp)
 {

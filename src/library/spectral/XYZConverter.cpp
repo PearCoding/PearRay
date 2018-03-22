@@ -152,8 +152,10 @@ void XYZConverter::toSpec(Spectrum& spec, float x, float y, float z)
 		const float* s2 = nullptr;
 		const float* s3 = nullptr;
 
-		if (!findRegion(nx, ny, s, t, s1, s2, s3))
+		if (!findRegion(nx, ny, s, t, s1, s2, s3)) {
+			spec.clear();
 			return;
+		}
 
 		for (uint32 i = 0; i < spec.samples(); ++i) {
 			spec.setValue(i, s1[i] * (1 - s - t) + s2[i] * s + s3[i] * t);

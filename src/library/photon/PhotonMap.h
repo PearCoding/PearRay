@@ -49,30 +49,7 @@ public:
 	template <typename AccumFunction>
 	inline void estimate(Spectrum& spec, const PhotonSphere& sphere, CheckFunction checkFunc, AccumFunction accumFunc, size_t& found) const;
 
-	inline void mapDirection(const Eigen::Vector3f& dir, uint8& theta, uint8& phi) const
-	{
-		int theta2 = static_cast<int>(std::cos(dir(2)) * 256 * PR_1_PI);
-		if (theta2 > 255)
-			theta = 255;
-		else
-			theta = (uint8)theta2;
-
-		int phi2 = static_cast<int>(std::atan2(dir(1), dir(0)) * 256 * PR_1_PI * 0.5f);
-		if (phi2 > 255)
-			phi = 255;
-		else
-			phi = (uint8)phi2;
-	}
-
-	inline Eigen::Vector3f evalDirection(uint8 theta, uint8 phi) const
-	{
-		return Eigen::Vector3f(
-			mSinTheta[theta] * mCosPhi[phi],
-			mSinTheta[theta] * mSinPhi[phi],
-			mCosPhi[phi]);
-	}
-
-	inline void store(const Eigen::Vector3f& pos, const Photon& point);
+	inline void store(const Photon& point);
 
 private:
 	struct KeyCoord {
@@ -81,7 +58,7 @@ private:
 		inline bool operator==(const KeyCoord& other) const;
 	};
 
-	inline KeyCoord toCoords(const Eigen::Vector3f& v) const;
+	inline KeyCoord toCoords(float x, float y, float z) const;
 
 	struct hash_compare {
 		inline static size_t hash(const KeyCoord&);
@@ -108,10 +85,6 @@ private:
 
 	// Cache:
 	float mInvGridDelta;
-	float mCosTheta[256];
-	float mSinTheta[256];
-	float mCosPhi[256];
-	float mSinPhi[256];
 
 	BoundingBox mBox;
 };
