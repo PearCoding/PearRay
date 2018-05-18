@@ -11,6 +11,7 @@ SET(Src
   math.cpp
   module.cpp
   output.cpp
+  registry.cpp
   renderentities.cpp
   renderer.cpp
   sampler.cpp

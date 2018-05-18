@@ -14,7 +14,7 @@ CoordinateAxisEntity::CoordinateAxisEntity(uint32 id, const std::string& name)
 	, mAxisLength(1)
 	, mAxisThickness(0.05f)
 	, mMaterials{ nullptr, nullptr, nullptr }
-	, mPDF_Cache(0)
+	, mPDF_Cache()
 {
 }
 
@@ -186,7 +186,7 @@ RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen:
 	r.Point.UVW		 = Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = mMaterials[elem].get();
 
-	r.PDF_A = mPDF_Cache;
+	r.PDF_A = mPDF_Cache[proj];
 	return r;
 }
 
@@ -206,24 +206,27 @@ void CoordinateAxisEntity::setup_cache() const
 	mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[1]);
 	mBoundingBox_Cache.combine(mAxisBoundingBox_Cache[2]);
 
-	const float area = surfaceArea(nullptr);
-	mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
+	// TODO: PDF in world coordinates?
+	constexpr float prefactor = 1.0f / 18;
+	for (int i = 0; i < 18; ++i) {
+		const int elem					 = i / 3;
+		const BoundingBox::FaceSide side = (BoundingBox::FaceSide)(i % 6);
+		const Plane plane				 = mAxisBoundingBox_Cache[elem].getFace(side);
+
+		const float area = plane.surfaceArea();
+		mPDF_Cache[i]	= prefactor * (area > PR_EPSILON ? 1.0f / area : 0);
+	}
 }
 
-// Entity
-void CoordinateAxisEntity::onFreeze()
+// IFreezable
+void CoordinateAxisEntity::onFreeze(RenderContext* context)
 {
-	RenderEntity::onFreeze();
+	RenderEntity::onFreeze(context);
 	setup_cache();
-}
-
-void CoordinateAxisEntity::setup(RenderContext* context)
-{
-	RenderEntity::setup(context);
 
 	for (int i = 0; i < 3; ++i) {
 		if (mMaterials[i])
-			mMaterials[i]->setup(context);
+			mMaterials[i]->freeze(context);
 	}
 }
 } // namespace PR

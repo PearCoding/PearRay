@@ -60,7 +60,7 @@ struct BPM_ThreadData {
 	}
 };
 
-void BlinnPhongMaterial::setup(RenderContext* context)
+void BlinnPhongMaterial::onFreeze(RenderContext* context)
 {
 	mThreadData.clear();
 	for (size_t i = 0; i < context->threads(); ++i) {
@@ -78,7 +78,7 @@ void BlinnPhongMaterial::setup(RenderContext* context)
 }
 
 // TODO: Should be normalized better.
-void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	const std::shared_ptr<BPM_ThreadData>& data = mThreadData[session.thread()];
 	mAlbedo->eval(spec, point);
@@ -104,7 +104,7 @@ void BlinnPhongMaterial::eval(Spectrum& spec, const ShaderClosure& point, const 
 	}
 }
 
-float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	const Eigen::Vector3f H = Reflection::halfway(L, point.V);
 	const float NdotH		= std::abs(point.N.dot(H));
@@ -113,7 +113,7 @@ float BlinnPhongMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f&
 	return PR_1_PI + std::pow(NdotH, n);
 }
 
-MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample BlinnPhongMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
 	MaterialSample ms;
 	ms.L = Projection::tangent_align(point.N,

@@ -14,7 +14,7 @@ ImageScalarShaderOutput::ImageScalarShaderOutput(OIIO::TextureSystem* tsys, cons
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 }
 
-void ImageScalarShaderOutput::eval(float& res, const PR::ShaderClosure& point)
+void ImageScalarShaderOutput::eval(float& res, const PR::ShaderClosure& point) const
 {
 	res = 0;
 	if (!mTextureSystem->texture(mFilename, mTextureOptions,
@@ -23,8 +23,7 @@ void ImageScalarShaderOutput::eval(float& res, const PR::ShaderClosure& point)
 								 point.dUVWdX(1), point.dUVWdY(1),
 								 1, &res)) {
 		std::string err = mTextureSystem->geterror();
-		PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]: %s",
-					   point.UVW(0), 1 - point.UVW(1), err.c_str());
+		PR_LOG(L_ERROR) << "Couldn't lookup texture at UV [" << point.UVW << "]: " << err << std::endl;
 	}
 }
 } // namespace PR

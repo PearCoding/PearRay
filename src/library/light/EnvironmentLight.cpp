@@ -16,7 +16,8 @@ EnvironmentLight::~EnvironmentLight()
 {
 }
 
-IInfiniteLight::LightSample EnvironmentLight::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+IInfiniteLight::LightSample EnvironmentLight::sample(
+	const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
 {
 	IInfiniteLight::LightSample ls;
 	ls.L = Projection::tangent_align(point.N,
@@ -41,5 +42,13 @@ void EnvironmentLight::apply(Spectrum& spec, const Eigen::Vector3f& V, const Ren
 	sc.UVW					 = Eigen::Vector3f(uv(0), uv(1), 0);
 
 	mMaterial->evalEmission(spec, sc, session, true);
+}
+
+void EnvironmentLight::onFreeze(RenderContext* context)
+{
+	//IInfiniteLight::onFreeze(context);
+
+	if (mMaterial)
+		mMaterial->freeze(context);
 }
 } // namespace PR

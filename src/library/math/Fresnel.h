@@ -1,27 +1,32 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "Reflection.h"
 
 namespace PR {
 class PR_LIB Fresnel {
 	PR_CLASS_NON_CONSTRUCTABLE(Fresnel);
 
 public:
-	static inline float dielectric(float dot, float n1, float n2)
+	static inline float dielectric(float NdotV, float n1, float n2)
 	{
 		// Snells Law
-		const float eta = n1 / n2; // Actually inverse eta
-		const float z   = 1 - eta * eta * (1 - dot * dot);
+		const float NdotT = Reflection::refraction_angle(NdotV, n1/n2);
 
-		if (z <= PR_EPSILON)
+		if (NdotT < 0)
 			return 1;
 
-		const float dotT = std::sqrt(z);
-		const float para = (n1 * dot - n2 * dotT) / (n1 * dot + n2 * dotT);
-		const float perp = (n1 * dotT - n2 * dot) / (n1 * dotT + n2 * dot);
+		return dielectric(NdotV, NdotT, n1, n2);
+	}
 
-		const float R = (para * para + perp * perp) / 2;
-		return std::min(std::max(R, 0.0f), 1.0f);
+	static inline float dielectric(float NdotV, float NdotT, float n1, float n2)
+	{
+		if(NdotV*NdotT <= PR_EPSILON)
+			return 1;
+		
+		const float para = (n1 * NdotV - n2 * NdotT) / (n1 * NdotV + n2 * NdotT);
+		const float perp = (n1 * NdotT - n2 * NdotV) / (n1 * NdotT + n2 * NdotV);
+
+		return (para * para + perp * perp) / 2;
 	}
 
 	static inline float conductor(float dot, float n, float k)

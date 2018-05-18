@@ -131,7 +131,7 @@ RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 		c.Point.Ng = (directionMatrix() * cm.Point.Ng).normalized();
 		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
-		c.Point.Material = material(cm.Ptr->MaterialSlot).get();
+		c.Point.Material = material(mMesh->getFaceMaterial(cm.Index)).get();
 
 		return c;
 	} else {
@@ -152,28 +152,23 @@ RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f&
 	Projection::tangent_frame(s.Point.Ng, s.Point.Nx, s.Point.Ny);
 
 	s.Point.Material = material(sm.MaterialSlot).get();
-	s.PDF_A			 = sm.PDF;
+	s.PDF_A			 = sm.PDF_A;
 
 	return s;
 }
 
-void MeshEntity::onFreeze()
+void MeshEntity::onFreeze(RenderContext* context)
 {
-	RenderEntity::onFreeze();
+	RenderEntity::onFreeze(context);
 
 	mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ? Entity::Transform::Identity() : transform());
 
 	// Check up
 	if (mSurfaceArea_Cache <= PR_EPSILON)
-		PR_LOGGER.logf(L_Warning, M_Entity, "Mesh entity %s has zero surface area!", name().c_str());
-}
-
-void MeshEntity::setup(RenderContext* context)
-{
-	RenderEntity::setup(context);
+		PR_LOG(L_WARNING) << "Mesh entity " << name() << " has zero surface area!" << std::endl;
 
 	for (auto ptr : mMaterials)
-		ptr->setup(context);
+		ptr->freeze(context);
 }
 
 std::string MeshEntity::dumpInformation() const

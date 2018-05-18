@@ -40,23 +40,23 @@ void MirrorMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 	mIndex = data;
 }
 
-void MirrorMaterial::setup(RenderContext* context)
+void MirrorMaterial::onFreeze(RenderContext* context)
 {
 	if (!mSpecularity)
 		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
 }
 
-void MirrorMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void MirrorMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	mSpecularity->eval(spec, point);
 }
 
-float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float MirrorMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	return std::numeric_limits<float>::infinity();
 }
 
-MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample MirrorMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
 	MaterialSample ms;
 	ms.PDF_S		  = std::numeric_limits<float>::infinity();

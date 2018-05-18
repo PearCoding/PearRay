@@ -143,8 +143,7 @@ void OutputMap::clear()
 void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc)
 {
 	PR_ASSERT(mInitialized, "OutputMap not initialized");
-	PR_ASSERT(!(p(0) < 0 || (uint32)p(0) >= mSpectral->width() ||
-		p(1) < 0 || (uint32)p(1) >= mSpectral->height()), "Expected valid pixel coordinates");
+	PR_ASSERT(!(p(0) < 0 || (uint32)p(0) >= mSpectral->width() || p(1) < 0 || (uint32)p(1) >= mSpectral->height()), "Expected valid pixel coordinates");
 
 	uint32 oldSample = getSampleCount(p);
 	float t			 = 1.0f / (oldSample + 1.0f);
@@ -196,31 +195,9 @@ void OutputMap::pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const 
 		mIntCounter[V_ID]->setFragmentBounded(p, 0, sc.EntityID);
 }
 
-// TODO: To heavy cost with new allocation insided Spectrum
-const Spectrum OutputMap::getFragment(const Eigen::Vector2i& p) const
+void OutputMap::getFragment(const Eigen::Vector2i&p, Spectrum& spec) const
 {
-	return Spectrum(mRenderer->spectrumDescriptor(), 0, mSpectral->channels(), &mSpectral->getFragmentBounded(p));
-}
-
-bool OutputMap::isPixelFinished(const Eigen::Vector2i& p) const
-{
-	return mIntCounter[V_Samples]->getFragmentBounded(p) >= mRenderer->settings().maxCameraSampleCount();
-}
-
-uint64 OutputMap::finishedPixelCount() const
-{
-	const uint32 rw = mRenderer->width();
-	const uint32 rh = mRenderer->height();
-
-	uint64 pixelsFinished = 0;
-	for (uint32 j = 0; j < rh; ++j) {
-		for (uint32 i = 0; i < rw; ++i) {
-			if (isPixelFinished(Eigen::Vector2i(i, j)))
-				++pixelsFinished;
-		}
-	}
-
-	return pixelsFinished;
+	mSpectral->getFragmentBoundedSpectrum(p, spec);
 }
 
 void OutputMap::setValue(Variable3D var, const Eigen::Vector2i& p, float t, const Eigen::Vector3f& val)

@@ -68,18 +68,16 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 	dataLisp.parse(source);
 	dataLisp.build(container);
 
-	//PR_LOGGER.log(L_Info, M_Scene, dataLisp.dump());
-
 	auto entries = container.getTopGroups();
 
 	if (entries.empty()) {
-		PR_LOGGER.log(L_Error, M_Scene, "DataLisp file does not contain valid entries");
+		PR_LOG(L_ERROR) << "DataLisp file does not contain valid entries" << std::endl;
 		return nullptr;
 	} else {
 		DL::DataGroup top = entries.front();
 
 		if (top.id() != "scene") {
-			PR_LOGGER.log(L_Error, M_Scene, "DataLisp file does not contain valid top entry");
+			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
 			return nullptr;
 		} else {
 			std::shared_ptr<Environment> env;
@@ -114,6 +112,17 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 					if (arr.isAllNumber()) {
 						env->setCrop(arr.at(0).getNumber(), arr.at(1).getNumber(),
 									 arr.at(2).getNumber(), arr.at(3).getNumber());
+					}
+				}
+			}
+			// Registry information
+			for (size_t i = 0; i < top.anonymousCount(); ++i) {
+				DL::Data dataD = top.at(i);
+
+				if (dataD.type() == DL::Data::T_Group) {
+					DL::DataGroup entry = dataD.getGroup();
+					if (entry.id() == "registry") {
+						addRegistryEntry(entry, env.get());
 					}
 				}
 			}
@@ -176,6 +185,37 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 	}
 }
 
+void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
+{
+	if (group.anonymousCount() != 2
+		|| group.at(0).type() != DL::Data::T_String) {
+		PR_LOG(L_ERROR) << "Invalid registry entry." << std::endl;
+		return;
+	}
+
+	std::string key = group.at(0).getString();
+
+	DL::Data value = group.at(1);
+	switch(value.type()) {
+		case DL::Data::T_Integer:
+			env->registry()->set(key, value.getInt());
+			break;
+		case DL::Data::T_Float:
+			env->registry()->set(key, value.getFloat());
+			break;
+		case DL::Data::T_Bool:
+			env->registry()->set(key, value.getBool());
+			break;
+		case DL::Data::T_String:
+			env->registry()->set(key, value.getString());
+			break;
+		case DL::Data::T_Group:// TODO
+		default:
+			PR_LOG(L_ERROR) << "Invalid registry entry value." << std::endl;
+			break;
+	}
+}
+
 struct
 {
 	const char* Name;
@@ -194,11 +234,12 @@ struct
 
 void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env)
 {
-	DL::Data nameD  = group.getFromKey("name");
-	DL::Data typeD  = group.getFromKey("type");
-	DL::Data posD   = group.getFromKey("position");
-	DL::Data rotD   = group.getFromKey("rotation");
-	DL::Data scaleD = group.getFromKey("scale");
+	DL::Data nameD		= group.getFromKey("name");
+	DL::Data typeD		= group.getFromKey("type");
+	DL::Data transformD = group.getFromKey("transform");
+	DL::Data posD		= group.getFromKey("position");
+	DL::Data rotD		= group.getFromKey("rotation");
+	DL::Data scaleD		= group.getFromKey("scale");
 
 	DL::Data localAreaD = group.getFromKey("local_area");
 
@@ -210,7 +251,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 
 	std::shared_ptr<Entity> entity;
 	if (typeD.type() != DL::Data::T_String) {
-		PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. No valid type given.", name.c_str());
+		PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. No valid type given." << std::endl;
 		return;
 	} else if (typeD.getString() == "null" || typeD.getString() == "empty") {
 		entity = std::make_shared<Entity>(env->sceneFactory().entities().size() + 1, name);
@@ -227,64 +268,71 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 			entity = parser->parse(env, name, typeD.getString(), group);
 
 			if (!entity) {
-				PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. Error in '%s' type parser.",
-							   name.c_str(), typeD.getString().c_str());
+				PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
 				return;
 			}
 		} else {
-			PR_LOGGER.logf(L_Error, M_Scene, "Entity %s couldn't be load. Unknown type given.", name.c_str());
+			PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. Unknown type given." << std::endl;
 			return;
 		}
 	}
 
 	PR_ASSERT(entity, "After here it shouldn't be null");
 
-	// Set position
-	if (posD.type() == DL::Data::T_Group) {
+	if (transformD.type() == DL::Data::T_Group) {
 		bool ok;
-		Eigen::Vector3f p = getVector(posD.getGroup(), ok);
+		Entity::Transform t = Entity::Transform(getMatrix(transformD.getGroup(), ok));
+		//t.makeAffine();
 
 		if (!ok)
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set position for entity %s.", name.c_str());
+			PR_LOG(L_WARNING) << "Couldn't set transform for entity " << name << std::endl;
 		else
-			entity->setPosition(p);
-	}
-
-	// Set rotation
-	if (rotD.type() == DL::Data::T_Group) {
+			entity->setTransform(t);
+	} else {
 		bool ok;
-		Eigen::Quaternionf rot = getRotation(rotD, ok);
+		Eigen::Vector3f pos;
+		Eigen::Quaternionf rot;
+		Eigen::Vector3f sca;
 
-		if (!ok)
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set rotation for entity %s.", name.c_str());
-		else
-			entity->setRotation(rot);
-	}
+		if (posD.type() == DL::Data::T_Group) {
+			pos = getVector(posD.getGroup(), ok);
 
-	// Set scale
-	if (scaleD.isNumber()) {
-		float s = scaleD.getNumber();
-		entity->setScale(Eigen::Vector3f(s, s, s));
-	} else if (scaleD.type() == DL::Data::T_Group) {
-		bool ok;
-		Eigen::Vector3f s = getVector(scaleD.getGroup(), ok);
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set position for entity " << name << std::endl;
+		}
 
-		if (!ok)
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set scale for entity %s.", name.c_str());
-		else
-			entity->setScale(s);
+		if (ok && rotD.type() == DL::Data::T_Group) {
+			rot = getRotation(rotD, ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set rotation for entity " << name << std::endl;
+		}
+
+		if (ok && scaleD.isNumber()) {
+			float s = scaleD.getNumber();
+			sca		= Eigen::Vector3f(s, s, s);
+		} else if (ok && scaleD.type() == DL::Data::T_Group) {
+			sca = getVector(scaleD.getGroup(), ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set scale for entity " << name << std::endl;
+		}
+
+		if (!ok) {
+			return;
+		} else {
+			rot.normalize();
+
+			Entity::Transform trans;
+			trans.fromPositionOrientationScale(pos, rot, sca);
+			trans.makeAffine();
+
+			entity->setTransform(trans);
+		}
 	}
 
 	if (parent) {
-		const auto m = parent->transform() * entity->transform();
-
-		Eigen::Matrix3f s;
-		Eigen::Matrix3f r;
-		m.computeRotationScaling(&r, &s);
-
-		entity->setPosition(m.translation());
-		entity->setRotation(Eigen::Quaternionf(r));
-		entity->setScale(s.diagonal());
+		entity->setTransform(parent->transform() * entity->transform());
 	}
 
 	if (localAreaD.type() == DL::Data::T_Bool) {
@@ -330,7 +378,7 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No light type set");
+		PR_LOG(L_ERROR) << "No light type set" << std::endl;
 		return;
 	}
 
@@ -348,12 +396,11 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		light = parser->parse(env, group);
 
 		if (!light) {
-			PR_LOGGER.logf(L_Error, M_Scene, "Light couldn't be load. Error in '%s' type parser.",
-						   typeD.getString().c_str());
+			PR_LOG(L_ERROR) << "Light couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
 			return;
 		}
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "Light couldn't be load. Unknown type given.");
+		PR_LOG(L_ERROR) << "Light couldn't be load. Unknown type given." << std::endl;
 		return;
 	}
 
@@ -398,7 +445,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 	if (nameD.type() == DL::Data::T_String) {
 		name = nameD.getString();
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No material name set");
+		PR_LOG(L_ERROR) << "No material name set" << std::endl;
 		return;
 	}
 
@@ -406,7 +453,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No material type set");
+		PR_LOG(L_ERROR) << "No material type set" << std::endl;
 		return;
 	}
 
@@ -423,12 +470,11 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		mat = parser->parse(env, typeD.getString(), group);
 
 		if (!mat) {
-			PR_LOGGER.logf(L_Error, M_Scene, "Material %s couldn't be load. Error in '%s' type parser.",
-						   name.c_str(), typeD.getString().c_str());
+			PR_LOG(L_ERROR) << "Material " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
 			return;
 		}
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "Material %s couldn't be load. Unknown type given.", name.c_str());
+		PR_LOG(L_ERROR) << "Material " << name << " couldn't be load. Unknown type given." << std::endl;
 		return;
 	}
 
@@ -463,7 +509,7 @@ void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
 	if (nameD.type() == DL::Data::T_String) {
 		name = nameD.getString();
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No texture name set");
+		PR_LOG(L_ERROR) << "No texture name set" << std::endl;
 		return;
 	}
 
@@ -482,7 +528,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	if (nameD.type() == DL::Data::T_String) {
 		name = nameD.getString();
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No mesh name set");
+		PR_LOG(L_ERROR) << "No mesh name set" << std::endl;
 		return;
 	}
 
@@ -490,7 +536,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No mesh type set");
+		PR_LOG(L_ERROR) << "No mesh type set" << std::endl;
 		return;
 	}
 
@@ -498,8 +544,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	auto mesh = parser.parse(env, group);
 
 	if (!mesh) {
-		PR_LOGGER.logf(L_Error, M_Scene, "Mesh %s couldn't be load. Error in '%s' type parser.",
-					   name.c_str(), typeD.getString().c_str());
+		PR_LOG(L_ERROR) << "Mesh " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
 		return;
 	}
 
@@ -516,7 +561,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 	if (nameD.type() == DL::Data::T_String) {
 		name = nameD.getString();
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get name for spectral entry.");
+		PR_LOG(L_ERROR) << "Couldn't get name for spectral entry." << std::endl;
 		return;
 	}
 
@@ -528,7 +573,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 				if (grp.at(i).isNumber())
 					spec.setValue(i, grp.at(i).getNumber());
 				else
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't set spectrum entry at index %i.", i);
+					PR_LOG(L_WARNING) << "Couldn't set spectrum entry at index " << i << std::endl;
 			}
 		} else if (grp.id() == "field") {
 			DL::Data defaultD = grp.getFromKey("default");
@@ -560,9 +605,6 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
-
-				/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Luminance %f",
-						grp->at(0)->getNumber(), spec.avg());*/
 			}
 
 			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
@@ -571,9 +613,6 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		} else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw") { // Radiance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
-
-				/*PR_LOGGER.logf(L_Info, M_Scene, "Temp %f -> Radiance %f",
-						grp->at(0)->getNumber(), spec.avg());*/
 			}
 
 			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
@@ -623,7 +662,7 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	if (fileD.type() == DL::Data::T_String) {
 		file = fileD.getString();
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "Couldn't get file for subgraph entry.");
+		PR_LOG(L_ERROR) << "Couldn't get file for subgraph entry." << std::endl;
 		return;
 	}
 
@@ -631,7 +670,7 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	if (loaderD.type() == DL::Data::T_String) {
 		loader = loaderD.getString();
 	} else {
-		PR_LOGGER.logf(L_Warning, M_Scene, "No valid loader set. Assuming 'obj'.");
+		PR_LOG(L_WARNING) << "No valid loader set. Assuming 'obj'." << std::endl;
 		loader = "obj";
 	}
 
@@ -645,8 +684,35 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 
 		loader.load(file, env);
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "Unknown '%s' loader.", loader.c_str());
+		PR_LOG(L_ERROR) << "Unknown " << loader << " loader." << std::endl;
 	}
+}
+
+Eigen::Matrix4f SceneLoader::getMatrix(const DL::DataGroup& grp, bool& ok)
+{
+	ok = false;
+	if (grp.anonymousCount() == 16) {
+		ok = true;
+		for (int i = 0; i < 16; ++i) {
+			if (!grp.at(i).isNumber()) {
+				ok = false;
+				break;
+			}
+		}
+
+		if (ok) {
+			Eigen::Matrix4f m;
+			for (int i = 0; i < 4; ++i) {
+				for (int j = 0; j < 4; ++j) {
+					m(i, j) = grp.at(i * 4 + j).getNumber();
+				}
+			}
+
+			return m;
+		}
+	}
+
+	return Eigen::Matrix4f::Identity();
 }
 
 Eigen::Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
@@ -722,8 +788,7 @@ std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment
 		if (env->hasSpectrum(dataD.getString()))
 			return std::make_shared<ConstSpectrumShaderOutput>(env->getSpectrum(dataD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find spectrum '%s' for material",
-						   dataD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find spectrum " << dataD.getString() << " for material" << std::endl;
 	} else if (dataD.type() == DL::Data::T_Group) {
 		std::string name = dataD.getGroup().id();
 
@@ -733,14 +798,13 @@ std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment
 				if (env->hasSpectrumShaderOutput(nameD.getString()))
 					return env->getSpectrumShaderOutput(nameD.getString());
 				else
-					PR_LOGGER.logf(L_Warning, M_Scene, "Unknown spectral texture '%s'.",
-								   nameD.getString().c_str());
+					PR_LOG(L_WARNING) << "Unknown spectral texture " << nameD.getString() << "." << std::endl;
 			}
 		} else {
-			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+			PR_LOG(L_WARNING) << "Unknown data entry." << std::endl;
 		}
 	} else if (dataD.isValid()) {
-		PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
+		PR_LOG(L_WARNING) << "Unknown texture entry." << std::endl;
 	}
 
 	return nullptr;
@@ -759,14 +823,13 @@ std::shared_ptr<ScalarShaderOutput> SceneLoader::getScalarOutput(Environment* en
 				if (env->hasScalarShaderOutput(nameD.getString()))
 					return env->getScalarShaderOutput(nameD.getString());
 				else
-					PR_LOGGER.logf(L_Warning, M_Scene, "Unknown scalar texture '%s'.",
-								   nameD.getString().c_str());
+					PR_LOG(L_WARNING) << "Unknown scalar texture " << nameD.getString() << "." << std::endl;
 			}
 		} else {
-			PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+			PR_LOG(L_WARNING) << "Unknown data entry." << std::endl;
 		}
 	} else if (dataD.isValid()) {
-		PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
+		PR_LOG(L_WARNING) << "Unknown texture entry." << std::endl;
 	}
 
 	return nullptr;
@@ -782,7 +845,7 @@ std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* en
 			if (ok) {
 				return std::make_shared<ConstVectorShaderOutput>(vec);
 			} else {
-				PR_LOGGER.logf(L_Warning, M_Scene, "Invalid vector entry.");
+				PR_LOG(L_WARNING) << "Invalid vector entry." << std::endl;
 			}
 		} else {
 			std::string name = dataD.getGroup().id();
@@ -793,15 +856,14 @@ std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* en
 					if (env->hasVectorShaderOutput(nameD.getString()))
 						return env->getVectorShaderOutput(nameD.getString());
 					else
-						PR_LOGGER.logf(L_Warning, M_Scene, "Unknown vector texture '%s'.",
-									   nameD.getString().c_str());
+						PR_LOG(L_WARNING) << "Unknown vector texture " << nameD.getString() << std::endl;
 				}
 			} else {
-				PR_LOGGER.logf(L_Warning, M_Scene, "Unknown data entry.");
+				PR_LOG(L_WARNING) << "Unknown data entry." << std::endl;
 			}
 		}
 	} else if (dataD.isValid()) {
-		PR_LOGGER.logf(L_Warning, M_Scene, "Unknown texture entry.");
+		PR_LOG(L_WARNING) << "Unknown texture entry." << std::endl;
 	}
 
 	return nullptr;

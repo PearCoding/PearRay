@@ -7,14 +7,11 @@
 
 namespace PR {
 Entity::Entity(uint32 id, const std::string& name)
-	: mName(name)
+	: IFreezable()
+	, mName(name)
 	, mID(id)
 	, mFlags(0)
-	, mPosition(0, 0, 0)
-	, mScale(1, 1, 1)
-	, mRotation(Eigen::Quaternionf::Identity())
-	, mFrozen(false)
-	, mReCache(true)
+	, mTransform(Transform::Identity())
 {
 }
 
@@ -22,43 +19,52 @@ Entity::~Entity()
 {
 }
 
-std::string Entity::toString() const
-{
-	std::stringstream stream;
-	Eigen::Vector3f pos = position();
-	stream << name() << "[" << type() << "]{" << pos(0) << "|" << pos(1) << "|" << pos(2) << "}";
-
-	return stream.str();
-}
-
-void Entity::onFreeze()
+void Entity::onFreeze(RenderContext*)
 {
 	PR_GUARD_PROFILE();
 
-	PR_LOGGER.logf(L_Info, M_Entity, "%s: P[%.3f,%.3f,%.3f] R[%.3f,%.3f,%.3f,%f] S[%.3f,%.3f,%.3f]",
-				   mName.c_str(),
-				   mPosition(0), mPosition(1), mPosition(2),
-				   mRotation.x(), mRotation.y(), mRotation.z(), mRotation.w(),
-				   mScale(0), mScale(1), mScale(2));
+	mInvTransformCache	= mTransform.inverse();
+	mNormalMatrixCache	= mTransform.linear().inverse().transpose();
+	mInvNormalMatrixCache = mNormalMatrixCache.inverse();
 
-	if (mScale.squaredNorm() <= PR_EPSILON)
-		PR_LOGGER.logf(L_Warning, M_Entity, "Entity %s has zero scale attribute", name().c_str());
+	Eigen::Matrix3f rot;
+	Eigen::Matrix3f sca;
+	mTransform.computeRotationScaling(&rot, &sca);
+	//mTransform.computeScalingRotation(&sca, &rot);
+
+	/*PR_LOG(L_INFO) << mName << ": P[" << mTransform.translation() << "] R[" << Eigen::Quaternionf(rot) << "] S[" << sca.diagonal() << "]" << std::endl;
+
+	Eigen::Matrix3f irot;
+	Eigen::Matrix3f isca;
+	mInvTransformCache.computeRotationScaling(&irot, &isca);
+	PR_LOG(L_INFO) << " IP[" << mInvTransformCache.translation() << "] IR[" << Eigen::Quaternionf(irot) << "] IS[" << isca.diagonal() << "]" << std::endl;*/
+
+	if (sca.squaredNorm() <= PR_EPSILON)
+		PR_LOG(L_WARNING) << "Entity " << mName << " has zero scale attribute" << std::endl;
 }
 
 std::string Entity::dumpInformation() const
 {
+	const auto pos = mTransform.translation();
+	Eigen::Matrix3f rot;
+	Eigen::Matrix3f sca;
+	mTransform.computeRotationScaling(&rot, &sca);
+
+	Eigen::Quaternionf quat(rot);
+	Eigen::Vector3f scav = sca.diagonal();
+
 	std::stringstream stream;
 	stream << "<Entity> [" << mID << "]: " << std::endl
-		   << "  Position:        {" << mPosition(0)
-		   << "|" << mPosition(1)
-		   << "|" << mPosition(2) << "}" << std::endl
-		   << "  Scale:           {" << mScale(0)
-		   << "|" << mScale(1)
-		   << "|" << mScale(2) << "}" << std::endl
-		   << "  Rotation:        {" << mRotation.x()
-		   << "|" << mRotation.y()
-		   << "|" << mRotation.z()
-		   << "|" << mRotation.w() << "}" << std::endl
+		   << "  Position:        {" << pos(0)
+		   << "|" << pos(1)
+		   << "|" << pos(2) << "}" << std::endl
+		   << "  Scale:           {" << scav(0)
+		   << "|" << scav(1)
+		   << "|" << scav(2) << "}" << std::endl
+		   << "  Rotation:        {" << quat.x()
+		   << "|" << quat.y()
+		   << "|" << quat.z()
+		   << "|" << quat.w() << "}" << std::endl
 		   << "  Flag&Debug:      " << ((mFlags & EF_Debug) != 0 ? "true" : "false") << std::endl
 		   << "  Flag&LocalArea:  " << ((mFlags & EF_LocalArea) != 0 ? "true" : "false") << std::endl;
 

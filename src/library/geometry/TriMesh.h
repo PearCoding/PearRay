@@ -1,11 +1,18 @@
 #pragma once
 
 #include "BoundingBox.h"
+#include "Vector.h"
 #include "shader/FacePoint.h"
 #include <Eigen/Geometry>
 #include <vector>
 
 namespace PR {
+enum TriMeshFeatures : uint32 {
+	TMF_HAS_UV = 0x1,
+	TMF_HAS_VELOCITY = 0x2,
+	TMF_HAS_MATERIAL = 0x4
+};
+
 class Face;
 class Normal;
 class UV;
@@ -23,20 +30,26 @@ public:
 	TriMesh();
 	~TriMesh();
 
-	void reserve(size_t count);
-	void setFaces(const std::vector<Face*>& f);
-	void addFace(Face* f);
-	Face* getFace(size_t i) const;
-	inline const std::vector<Face*>& faces() const
-	{
-		return mFaces;
-	}
+	inline void setVertices(const std::vector<Vector3f>& f) { mVertices = f; }
+	inline void setNormals(const std::vector<Vector3f>& f) { mNormals = f; };
+	inline void setTangents(const std::vector<Vector3f>& f) { mTangents = f; };
+	inline void setBitangents(const std::vector<Vector3f>& f) { mBitangents = f; };
+	inline void setUVs(const std::vector<Vector2f>& f) { mUVs = f; };
+	inline void setVelocities(const std::vector<Vector3f>& f) { mVelocities = f; };
+	inline void setMaterials(const std::vector<uint32>& f) { mMaterials = f; };
+	inline void setIndices(const std::vector<Vector3u64>& f) { mIndices = f; };
 
+	inline uint32 features() const { return mFeatures; }
+
+	size_t nodeCount() const { return mVertices.size(); }
+	size_t faceCount() const { return mIndices.size(); }
+	
+	Face getFace(uint64 index) const;
+	uint32 getFaceMaterial(uint64 index) const;
+
+	bool isValid() const;
 	void clear();
-
 	void build();
-
-	void calcNormals();
 
 	float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
 	float surfaceArea(const Eigen::Affine3f& transform) const;
@@ -50,7 +63,7 @@ public:
 
 	struct Collision {
 		bool Successful;
-		Face* Ptr;
+		uint64 Index;
 		FacePoint Point;
 	};
 	Collision checkCollision(const Ray& ray);
@@ -58,7 +71,7 @@ public:
 	struct FacePointSample {
 		FacePoint Point;
 		uint32 MaterialSlot;
-		float PDF;
+		float PDF_A;
 	};
 	FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const;
 
@@ -66,8 +79,14 @@ private:
 	BoundingBox mBoundingBox;
 	void* mKDTree;
 
-	float mPDF_Cache;
-	std::vector<Face*> mFaces;
-	std::vector<uint32> mMaterialSlots;
+	uint32 mFeatures;
+	std::vector<Vector3f> mVertices;
+	std::vector<Vector3f> mNormals;
+	std::vector<Vector3f> mTangents;
+	std::vector<Vector3f> mBitangents;
+	std::vector<Vector2f> mUVs;
+	std::vector<Vector3f> mVelocities;
+	std::vector<uint32> mMaterials;
+	std::vector<Vector3u64> mIndices;
 };
 }

@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(PR_Main_Src
   CTP.cpp
+  IFreezable.cpp
   FileLogListener.cpp
   Logger.cpp)
 SET(PR_Buffer_Src
@@ -30,6 +31,7 @@ SET(PR_Geometry_Src
   geometry/TriMesh.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Integrator_Src
+  integrator/AOIntegrator.cpp
   integrator/BiDirectIntegrator.cpp
   integrator/DebugIntegrator.cpp
   integrator/DirectIntegrator.cpp
@@ -68,7 +70,6 @@ SET(PR_Registry_Src
 SOURCE_GROUP("Source Files\\Registry" FILES ${PR_Registry_Src})
 SET(PR_Renderer_Src
   renderer/OutputMap.cpp
-  renderer/PPMSettings.cpp
   renderer/RenderContext.cpp
   renderer/RenderFactory.cpp
   renderer/RenderSession.cpp
@@ -121,6 +122,7 @@ SET(PR_Main_Hdr
   CTP.h
   PR_Config.h.in
   FileLogListener.h
+  IFreezable.h
   Logger.h
   LogListener.h
   Random.h
@@ -154,9 +156,11 @@ SET(PR_Geometry_Hdr
   geometry/Plane.h
   geometry/Sphere.h
   geometry/Triangle.h
-  geometry/TriMesh.h)
+  geometry/TriMesh.h
+  geometry/Vector.h)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Integrator_Hdr
+  integrator/AOIntegrator.h
   integrator/BiDirectIntegrator.h
   integrator/DebugIntegrator.h
   integrator/DirectIntegrator.h
@@ -184,6 +188,12 @@ SET(PR_Material_Hdr
   material/WardMaterial.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
+  math/AutoDiff.h
+  math/AutoDiff.inl
+  math/AutoDiff_ADLO.inl
+  math/AutoDiff_Operators.inl
+  math/AutoDiff_Scalar.inl
+  math/AutoDiff_Vector.inl
   math/Fresnel.h
   math/Generator.h
   math/HemiMap.h
@@ -208,15 +218,14 @@ SET(PR_Ray_Hdr
   ray/Ray.inl)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Registry_Hdr
-  registry/Parameter.h
-  registry/Parameter.inl
+  registry/Any.h
   registry/Registry.h
+  registry/Registry.inl
   registry/URI.h
   registry/URI.inl)
 SOURCE_GROUP("Header Files\\Registry" FILES ${PR_Registry_Hdr})
 SET(PR_Renderer_Hdr
   renderer/OutputMap.h
-  renderer/PPMSettings.h
   renderer/RenderContext.h
   renderer/RenderEnums.h
   renderer/RenderFactory.h

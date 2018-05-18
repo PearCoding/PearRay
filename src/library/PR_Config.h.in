@@ -195,6 +195,10 @@
 #include <cstring>
 #include <memory>
 
+// Eigen3 Library
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
 namespace PR
 {
 	inline void pr_Noop()
@@ -222,7 +226,7 @@ namespace PR
 	typedef uint32 EntityID;
 	typedef uint32 DataRefID;
 
-	constexpr float PR_EPSILON = 0.0000001f;
+	constexpr float PR_EPSILON = 0.00001f;
 
 #ifdef M_PI
 	constexpr float PR_PI = M_PI;

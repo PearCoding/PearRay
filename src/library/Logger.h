@@ -5,31 +5,12 @@
 #include <string>
 
 namespace PR {
-enum Level {
-	L_Debug = 0,
-	L_Info,
-	L_Warning,
-	L_Error,
-	L_Fatal
-};
-
-enum Module {
-	M_Internal = 0,
-	M_Test,
-	M_Camera,
-	M_GPU,
-	M_Entity,
-	M_Math,
-	M_Integrator,
-	M_Material,
-	M_System,
-	M_Scene,
-	M_Volume,
-	M_Network,
-	M_Loader,
-	M_Shader,
-	M_Main,
-	M_Script
+enum LogLevel {
+	L_DEBUG = 0,
+	L_INFO,
+	L_WARNING,
+	L_ERROR,
+	L_FATAL
 };
 
 class LogListener;
@@ -37,22 +18,30 @@ class PR_LIB Logger {
 	PR_CLASS_NON_COPYABLE(Logger);
 
 public:
+	class PR_LIB StreamBuf final : public std::streambuf {
+	public:
+		inline StreamBuf(Logger& logger, bool ignore) : std::streambuf(), mLogger(logger), mIgnore(ignore) {}
+		std::streambuf::int_type overflow(std::streambuf::int_type c);
+	private:
+		Logger& mLogger;
+		bool mIgnore;
+	};
+
 	Logger();
 	~Logger();
 
-	static const char* levelString(Level l);
-	static const char* moduleString(Module m);
+	static const char* levelString(LogLevel l);
 
-	void log(Level level, Module m, const std::string& str);
-	void logf(Level level, Module m, const char* fmt, ...);
 	void addListener(LogListener* listener);
 	void removeListener(LogListener* listener);
 
-	inline void setVerbose(bool b) { mVerbose = b; }
-	inline bool isVerbose() const { return mVerbose; }
+	inline void setVerbosity(LogLevel level) { mVerbosity = level; }
+	inline LogLevel verbosity() const { return mVerbosity; }
 
 	inline void setQuiet(bool b) { mQuiet = b; }
 	inline bool isQuiet() const { return mQuiet; }
+
+	std::ostream& startEntry(LogLevel level);
 
 	static inline Logger& instance()
 	{
@@ -60,11 +49,27 @@ public:
 		return log;
 	}
 
+	static inline std::ostream& log(LogLevel level) {
+		return instance().startEntry(level);
+	}
+
 private:
 	std::list<LogListener*> mListener;
-	bool mVerbose;
+	LogLevel mVerbosity;
 	bool mQuiet;
+
+	StreamBuf mEmptyStreamBuf;
+	std::ostream mEmptyStream;
+
+	StreamBuf mStreamBuf;
+	std::ostream mStream;
 };
+
+std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v);
+std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v);
+std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v);
+std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v);
 }
 
 #define PR_LOGGER (PR::Logger::instance())
+#define PR_LOG(l) (PR::Logger::log((l)))

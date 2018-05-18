@@ -13,13 +13,14 @@ public:
 	std::shared_ptr<ScalarShaderOutput> roughness() const;
 	void setRoughness(const std::shared_ptr<ScalarShaderOutput>& data);
 
-	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
-	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) override;
-	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
-
-	void setup(RenderContext* context) override;
+	void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const override;
+	float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const override;
+	MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const override;
 
 	std::string dumpInformation() const override;
+
+protected:
+	void onFreeze(RenderContext* context) override;
 
 private:
 	std::shared_ptr<SpectrumShaderOutput> mAlbedo;

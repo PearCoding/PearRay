@@ -23,7 +23,7 @@ void FileLogListener::open(const std::string& file)
 	mStream << "Build: " << PR_BUILD_STRING << std::endl;
 }
 
-void FileLogListener::newEntry(Level level, Module m, const std::string& str)
+void FileLogListener::startEntry(LogLevel level)
 {
 	time_t t  = time(0);
 	clock_t c = clock();
@@ -39,8 +39,10 @@ void FileLogListener::newEntry(Level level, Module m, const std::string& str)
 			<< std::setw(2) << ptm.tm_sec
 			<< "(" << c << ")> {"
 			<< std::this_thread::get_id() << "} ["
-			<< Logger::levelString(level) << "] ("
-			<< Logger::moduleString(m) << ") "
-			<< str << std::endl;
+			<< Logger::levelString(level) << "] ";
+}
+
+void FileLogListener::writeEntry(int c) {
+	mStream.put(c);
 }
 }

@@ -140,13 +140,12 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 	if (filenameD.type() == DL::Data::T_String) {
 		filename = filenameD.getString();
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No valid filename given for texture '%s'", name.c_str());
+		PR_LOG(L_ERROR) << "No valid filename given for texture " << name << std::endl;
 		return;
 	}
 
 	if (!boost::filesystem::exists(filename) || !boost::filesystem::is_regular_file(filename)) {
-		PR_LOGGER.logf(L_Error, M_Scene, "No valid file fount for texture '%s' at '%s'",
-					   name.c_str(), filename.c_str());
+		PR_LOG(L_ERROR) << "No valid file fount for texture " << name << " at " << filename << std::endl;
 		return;
 	}
 
@@ -155,13 +154,13 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No valid type given for texture '%s'", name.c_str());
+		PR_LOG(L_ERROR) << "No valid type given for texture " << name << std::endl;
 		return;
 	}
 
 	if (type == "scalar" || type == "grayscale") {
 		if (env->hasScalarShaderOutput(name)) {
-			PR_LOGGER.logf(L_Error, M_Scene, "Texture '%s' already exists", name.c_str());
+			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
 
@@ -169,7 +168,7 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		env->addShaderOutput(name, output);
 	} else if (type == "color" || type == "spectral") {
 		if (env->hasSpectrumShaderOutput(name)) {
-			PR_LOGGER.logf(L_Error, M_Scene, "Texture '%s' already exists", name.c_str());
+			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
 
@@ -177,14 +176,14 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		env->addShaderOutput(name, output);
 	} else if (type == "vector") {
 		if (env->hasVectorShaderOutput(name)) {
-			PR_LOGGER.logf(L_Error, M_Scene, "Texture '%s' already exists", name.c_str());
+			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
 
 		auto output = std::make_shared<ImageVectorShaderOutput>(env->textureSystem(), opts, filename);
 		env->addShaderOutput(name, output);
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "No known type given for texture '%s'", name.c_str());
+		PR_LOG(L_ERROR) << "No known type given for texture " << name << std::endl;
 		return;
 	}
 }

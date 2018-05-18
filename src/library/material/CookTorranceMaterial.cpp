@@ -158,7 +158,7 @@ struct CTM_ThreadData {
 };
 
 constexpr float MinRoughness = 0.001f;
-void CookTorranceMaterial::setup(RenderContext* context)
+void CookTorranceMaterial::onFreeze(RenderContext* context)
 {
 	mThreadData.clear();
 	for (size_t i = 0; i < context->threads(); ++i) {
@@ -191,7 +191,7 @@ void CookTorranceMaterial::setup(RenderContext* context)
 }
 
 // Alot of potential to optimize!
-void CookTorranceMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void CookTorranceMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	float refl = mReflectivity->eval(point);
 
@@ -285,7 +285,7 @@ void CookTorranceMaterial::eval(Spectrum& spec, const ShaderClosure& point, cons
 	}
 }
 
-float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	const float refl = mReflectivity->eval(point);
 	const float m1   = std::max(MinRoughness, mSpecRoughnessX->eval(point));
@@ -323,24 +323,25 @@ float CookTorranceMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3
 	return std::min(std::max(Projection::cos_hemi_pdf(NdotL) * (1 - refl) + (0.25f * D / prod) * refl, 0.0f), 1.0f);
 }
 
-MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample CookTorranceMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
 	const float refl = mReflectivity->eval(point);
 
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection; // Even specular path is diffuse, as it is not fixed like a mirror
 
-	if (rnd(2) < refl)
+	if (rnd(2) <= refl) {
 		ms.L = diffuse_path(point, rnd, ms.PDF_S);
-	else
+		ms.PDF_S *= refl;
+	} else {
 		ms.L = specular_path(point, rnd, ms.PDF_S);
-
-	ms.PDF_S *= refl;
+		ms.PDF_S *= (1-refl);
+	}
 
 	return ms;
 }
 
-MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
+MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session) const
 {
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;
@@ -350,8 +351,6 @@ MaterialSample CookTorranceMaterial::samplePath(const ShaderClosure& point, cons
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
 
-	ms.PDF_S *= mReflectivity->eval(point); // TODO: Really?
-
 	return ms;
 }
 
@@ -360,13 +359,13 @@ uint32 CookTorranceMaterial::samplePathCount() const
 	return 2;
 }
 
-Eigen::Vector3f CookTorranceMaterial::diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+Eigen::Vector3f CookTorranceMaterial::diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) const
 {
 	return Projection::tangent_align(point.N, point.Nx, point.Ny,
 									 Projection::cos_hemi(rnd(0), rnd(1), pdf));
 }
 
-Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+Eigen::Vector3f CookTorranceMaterial::specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) const
 {
 	float u = rnd(0);
 	float v = rnd(1);

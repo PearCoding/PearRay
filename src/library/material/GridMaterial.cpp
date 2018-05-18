@@ -55,7 +55,7 @@ bool GridMaterial::tileUV() const
 	return mTiledUV;
 }
 
-void GridMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void GridMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
@@ -82,7 +82,7 @@ ShaderClosure GridMaterial::applyGrid(const ShaderClosure& point, int& u, int& v
 	}
 }
 
-float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
@@ -95,7 +95,7 @@ float GridMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, fl
 	return 0;
 }
 
-MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
 	int u, v;
 	auto pointN = applyGrid(point, u, v);
@@ -108,7 +108,7 @@ MaterialSample GridMaterial::sample(const ShaderClosure& point, const Eigen::Vec
 	return MaterialSample();
 }
 
-void GridMaterial::setup(RenderContext* context)
+void GridMaterial::onFreeze(RenderContext* context)
 {
 }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Logger.h"
 #include "geometry/BoundingBox.h"
 #include "ray/Ray.h"
 #include "shader/FacePoint.h"
@@ -10,8 +9,8 @@
 #include <list>
 #include <vector>
 
-#ifdef PR_DEBUG
-//# define PR_KDTREE_DEBUG
+#if 0 //def PR_DEBUG
+#define PR_KDTREE_DEBUG
 #endif
 
 #ifndef PR_KDTREE_MAX_STACK
@@ -30,9 +29,13 @@
    Vlastimil Havran
 */
 namespace PR {
-template <class T, bool elementWise = false>
+template <class T, class Observer, bool elementWise = false>
 class PR_LIB_INLINE kdTree {
 private:
+	typedef std::remove_reference_t<std::remove_cv_t<T>> entity_t;
+	typedef std::conditional_t<std::is_fundamental<entity_t>::value, entity_t, std::add_lvalue_reference_t<entity_t>> reference_t;
+	typedef std::conditional_t<std::is_fundamental<entity_t>::value, reference_t, std::add_lvalue_reference_t<std::add_const_t<entity_t>>> const_reference_t;
+
 	enum SplitPlane {
 		SP_Left = 0,
 		SP_Right
@@ -77,43 +80,50 @@ private:
 		{
 		}
 
-		std::list<T*> objects;
+		std::vector<entity_t> objects;
 	};
 
 	struct Primitive {
-		Primitive(T* data, const BoundingBox& box)
-			: data(data)
+		Primitive(const_reference_t d, const BoundingBox& box)
+			: data(d)
 			, side(S_Both)
 			, box(box)
 		{
-			PR_ASSERT(data, "Primitive needs a valid data entry");
+			//PR_ASSERT(data, "Primitive needs a valid data entry");
 		}
 
-		T* data;
+		entity_t data;
 		Side side;
 		BoundingBox box;
 	};
 
 public:
-	typedef BoundingBox (*GetBoundingBoxCallback)(T*);
-	typedef bool (*CheckCollisionCallback)(const Ray&, FacePoint&, T*);
-	typedef float (*CostCallback)(T*);
-	typedef bool (*IgnoreCallback)(T*);
-	typedef void (*AddedCallback)(T*, uint32 id);
+	typedef BoundingBox (*GetBoundingBoxCallback)(Observer*, const_reference_t);
+	typedef float (*CostCallback)(Observer*, const_reference_t);
+	typedef void (*AddedCallback)(Observer*, const_reference_t, uint32 id);
 
-	inline kdTree(GetBoundingBoxCallback getBoundingBox,
-				  CheckCollisionCallback checkCollision,
+	//typedef bool (*IgnoreCallback)(Observer*, const_reference_t);
+	//typedef bool (*CheckCollisionCallback)(Observer*, const Ray&, FacePoint&, const_reference_t);
+
+	inline kdTree(Observer* observer,
+				  GetBoundingBoxCallback getBoundingBox,
 				  CostCallback cost,
 				  AddedCallback addedCallback = nullptr)
 		: mRoot(nullptr)
+		, mObserver(observer)
+		, mNodeCount(0)
 		, mGetBoundingBox(getBoundingBox)
-		, mCheckCollision(checkCollision)
 		, mCost(cost)
 		, mAddedCallback(addedCallback)
 		, mDepth(0)
+		, mAvgElementsPerLeaf(0)
+		, mMinElementsPerLeaf(0)
+		, mMaxElementsPerLeaf(0)
+		, mLeafCount(0)
+		, mMinimumObjectsForLeaf(1)
+		, mUseCostForLeaf(true)
 	{
 		PR_ASSERT(getBoundingBox, "Callback getBoundingBox has to be valid");
-		PR_ASSERT(checkCollision, "Callback checkCollision has to be valid");
 		PR_ASSERT(cost, "Callback cost has to be valid");
 	}
 
@@ -125,6 +135,46 @@ public:
 	inline uint32 depth() const
 	{
 		return mDepth;
+	}
+
+	inline float avgElementsPerLeaf() const
+	{
+		return mAvgElementsPerLeaf;
+	}
+
+	inline size_t minElementsPerLeaf() const
+	{
+		return mMinElementsPerLeaf;
+	}
+
+	inline size_t maxElementsPerLeaf() const
+	{
+		return mMaxElementsPerLeaf;
+	}
+
+	inline size_t leafCount() const
+	{
+		return mLeafCount;
+	}
+
+	inline size_t minimumObjectsForLeaf() const
+	{
+		return mMinimumObjectsForLeaf;
+	}
+
+	inline void setMinimumObjectsForLeaf(size_t v)
+	{
+		mMinimumObjectsForLeaf = std::max<size_t>(1, v);
+	}
+
+	inline bool useCostForLeafDetection() const
+	{
+		return mUseCostForLeaf;
+	}
+
+	inline void enableCostForLeafDetection(bool b)
+	{
+		mUseCostForLeaf = b;
 	}
 
 	inline bool isEmpty() const
@@ -139,20 +189,17 @@ public:
 	}
 
 	template <typename Iterable>
-	inline void build(const Iterable& start, const Iterable& end, size_t size, IgnoreCallback ignoreCallback = nullptr)
+	inline void build(const Iterable& start, const Iterable& end, size_t size)
 	{
 		mDepth	 = 0;
 		mNodeCount = 0;
 		if (start == end)
 			return;
 
-		PR_LOGGER.log(L_Info, M_Scene, "Building kdTree...");
 		if (size == 1) {
-			T* e = *start;
-			if (ignoreCallback && ignoreCallback(e))
-				return;
+			entity_t e = *start;
 
-			auto leaf = new kdLeafNode(mNodeCount, mGetBoundingBox(e));
+			auto leaf = new kdLeafNode(mNodeCount, mGetBoundingBox(mObserver, e));
 			leaf->objects.push_back(e);
 
 			mDepth = 1;
@@ -161,14 +208,11 @@ public:
 		}
 
 		std::vector<Primitive*> primitives;		// Will be cleared to save memory
-		std::vector<Primitive*> primitivesCopy; // Copy for delete later
+		std::vector<Primitive*> primitivesCopy; // Copy to be deleted later
 
 		BoundingBox V;
 		for (auto it = start; it != end; ++it) {
-			if (ignoreCallback && ignoreCallback(*it))
-				continue;
-
-			auto prim = new Primitive(*it, mGetBoundingBox(*it));
+			auto prim = new Primitive(*it, mGetBoundingBox(mObserver, *it));
 			primitives.push_back(prim);
 			primitivesCopy.push_back(prim);
 			V.combine(prim->box);
@@ -181,107 +225,131 @@ public:
 		std::sort(events.begin(), events.end());
 
 		mRoot = build(events, primitives, V, 0, -1, 0);
-		PR_LOGGER.logf(L_Info, M_Scene, "-> KD-tree has %d depth.", mDepth);
-		if (isEmpty())
-			PR_LOGGER.log(L_Warning, M_Scene, "-> KD-tree is empty!");
 
 		for (auto obj : primitivesCopy)
 			delete obj;
+
+		// Extract statistical information
+		mAvgElementsPerLeaf = 0;
+		mMinElementsPerLeaf = std::numeric_limits<size_t>::max();
+		mMaxElementsPerLeaf = 0;
+		mLeafCount			= 0;
+		if (mRoot) {
+			size_t sum = 0;
+			statElementsNode(mRoot, mLeafCount, sum, mMinElementsPerLeaf, mMaxElementsPerLeaf);
+			mAvgElementsPerLeaf = sum / (float)mLeafCount;
+		}
+
+		if (mMaxElementsPerLeaf < mMinElementsPerLeaf)
+			mMinElementsPerLeaf = mMaxElementsPerLeaf;
 	}
 
-	inline T* checkCollision(const Ray& ray, FacePoint& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
+	template <typename CheckCollisionCallback>
+	inline bool checkCollision(const Ray& ray, entity_t& foundEntity, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallack) const
 	{
-		T* res = nullptr;
+		thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
+
+		bool found = false;
 		FacePoint tmpCollisionPoint;
 
 		float t = std::numeric_limits<float>::infinity();
-		float l = t; // Temporary variable.
 
-		if (mRoot && mRoot->boundingBox.intersects(ray).Successful) {
-			kdNode* stack[PR_KDTREE_MAX_STACK];
-			uint32 stackPos = 1;
-			stack[0]		= mRoot;
+		PR_ASSERT(mRoot, "No root given for kdTree!");
 
-			while (stackPos > 0) {
-				stackPos--;
-				kdNode* node = stack[stackPos];
+		uint32 stackPos = 1;
+		stack[0]		= mRoot;
 
-				if (node->leaf == 1) {
-					kdLeafNode* leaf = (kdLeafNode*)node;
+		while (stackPos > 0) {
+			stackPos--;
+			kdNode* node = stack[stackPos];
 
-					for (T* entity : leaf->objects) {
-						if ((!ignoreCallback || ignoreCallback(entity)) && mCheckCollision(ray, tmpCollisionPoint, entity)) {
-							l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
-							if (l < t) {
-								t			   = l;
-								res			   = entity;
-								collisionPoint = tmpCollisionPoint;
-							}
+			const auto in = node->boundingBox.intersects(ray);
+			if (!in.Successful || in.T > t) {
+				continue;
+			}
+
+			if (node->leaf == 1) {
+				kdLeafNode* leaf = (kdLeafNode*)node;
+
+				for (const_reference_t entity : leaf->objects) {
+					if (checkCollisionCallack(mObserver, ray, tmpCollisionPoint, entity)) {
+						const float l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
+						if (l < t) {
+							t			   = l;
+							found		   = true;
+							foundEntity	= entity;
+							collisionPoint = tmpCollisionPoint;
 						}
 					}
-				} else {
-					bool leftIntersected = false;
-					kdInnerNode* inner   = (kdInnerNode*)node;
-					if (inner->left && inner->left->boundingBox.intersects(ray).Successful) {
-						if (stackPos >= PR_KDTREE_MAX_STACK)
-							return nullptr;
-
-						leftIntersected = true;
+				}
+			} else {
+				kdInnerNode* inner = (kdInnerNode*)node;
+				if (inner->left) {
+					if (stackPos < PR_KDTREE_MAX_STACK) {
 						stack[stackPos] = inner->left;
 						stackPos++;
+					} else {
+						// FIXME:
 					}
+				}
 
-					if (inner->right && (!leftIntersected || inner->right->boundingBox.intersects(ray).Successful)) {
-						if (stackPos >= PR_KDTREE_MAX_STACK)
-							return nullptr;
-
+				if (inner->right) {
+					if (stackPos < PR_KDTREE_MAX_STACK) {
 						stack[stackPos] = inner->right;
 						stackPos++;
+					} else {
+						// FIXME:
 					}
 				}
 			}
 		}
 
-		return res;
+		return found;
 	}
 
 	// A faster variant for rays detecting the background etc.
-	inline bool checkCollisionSimple(const Ray& ray, FacePoint& collisionPoint, IgnoreCallback ignoreCallback = nullptr) const
+	template <typename CheckCollisionCallback>
+	inline bool checkCollisionSimple(const Ray& ray, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallack) const
 	{
-		if (mRoot && mRoot->boundingBox.intersects(ray).Successful) {
-			kdNode* stack[PR_KDTREE_MAX_STACK];
-			uint32 stackPos = 1;
-			stack[0]		= mRoot;
+		thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
 
-			while (stackPos > 0) {
-				stackPos--;
-				kdNode* node = stack[stackPos];
+		PR_ASSERT(mRoot, "No root given for kdTree!");
 
-				if (node->leaf == 1) {
-					kdLeafNode* leaf = (kdLeafNode*)node;
+		uint32 stackPos = 1;
+		stack[0]		= mRoot;
 
-					for (T* entity : leaf->objects) {
-						if ((!ignoreCallback || ignoreCallback(entity)) && mCheckCollision(ray, collisionPoint, entity))
-							return true;
-					}
-				} else {
-					bool leftIntersected = false;
-					kdInnerNode* inner   = (kdInnerNode*)node;
-					if (inner->left && inner->left->boundingBox.intersects(ray).Successful) {
-						if (stackPos >= PR_KDTREE_MAX_STACK)
-							return false;
+		while (stackPos > 0) {
+			stackPos--;
+			kdNode* node = stack[stackPos];
 
-						leftIntersected = true;
+			if (!node->boundingBox.intersectsSimple(ray)) {
+				continue;
+			}
+
+			if (node->leaf == 1) {
+				kdLeafNode* leaf = (kdLeafNode*)node;
+
+				for (const_reference_t entity : leaf->objects) {
+					if (checkCollisionCallack(mObserver, ray, collisionPoint, entity))
+						return true;
+				}
+			} else {
+				kdInnerNode* inner = (kdInnerNode*)node;
+				if (inner->left) {
+					if (stackPos < PR_KDTREE_MAX_STACK) {
 						stack[stackPos] = inner->left;
 						stackPos++;
+					} else {
+						// FIXME:
 					}
+				}
 
-					if (inner->right && (!leftIntersected || inner->right->boundingBox.intersects(ray).Successful)) {
-						if (stackPos >= PR_KDTREE_MAX_STACK)
-							return false;
-
+				if (inner->right) {
+					if (stackPos < PR_KDTREE_MAX_STACK) {
 						stack[stackPos] = inner->right;
 						stackPos++;
+					} else {
+						// FIXME:
 					}
 				}
 			}
@@ -291,6 +359,27 @@ public:
 	}
 
 private:
+	static inline void statElementsNode(kdNode* node,
+										size_t& leafCount, size_t& sumV, size_t& minV, size_t& maxV)
+	{
+		if (node->leaf == 1) {
+			kdLeafNode* leaf = (kdLeafNode*)node;
+			++leafCount;
+
+			maxV = std::max(maxV, leaf->objects.size());
+			minV = std::min(minV, leaf->objects.size());
+			sumV += leaf->objects.size();
+		} else {
+			kdInnerNode* inner = (kdInnerNode*)node;
+			if (inner->left) {
+				statElementsNode(inner->left, leafCount, sumV, minV, maxV);
+			}
+
+			if (inner->right) {
+				statElementsNode(inner->right, leafCount, sumV, minV, maxV);
+			}
+		}
+	}
 	static inline void deleteNode(kdNode* node)
 	{
 		if (node) {
@@ -330,7 +419,8 @@ private:
 		}
 	}
 
-	inline void SAH(float costIntersection, const BoundingBox& V, int dim, float v, size_t nl, size_t nr, size_t np,
+	inline void SAH(float costIntersection, const BoundingBox& V,
+					int dim, float v, size_t nl, size_t nr, size_t np,
 					float& c, SplitPlane& side, BoundingBox& vl, BoundingBox& vr)
 	{
 		c = std::numeric_limits<float>::infinity();
@@ -342,8 +432,8 @@ private:
 		float pl = probability(vl, V);
 		float pr = probability(vr, V);
 
-		if (pl <= PR_EPSILON || pr <= PR_EPSILON)
-			return;
+		/*if (pl <= PR_EPSILON || pr <= PR_EPSILON)
+			return;*/
 
 		float cl = cost(costIntersection, pl, pr, nl + np, nr);
 		float cr = cost(costIntersection, pl, pr, nl, nr + np);
@@ -359,7 +449,8 @@ private:
 
 	inline float cost(float costIntersection, float PL, float PR, size_t NL, size_t NR) const
 	{
-		return ((NL == 0 || NR == 0) ? 0.8f : 1) * (CostTraversal + costIntersection * (PL * NL + PR * NR));
+		return ((NL == 0 || NR == 0) ? 0.8f : 1)
+			   * (CostTraversal + costIntersection * (PL * NL + PR * NR));
 	}
 
 	enum EventType {
@@ -401,16 +492,13 @@ private:
 		BoundingBox box = p->box;
 		clipBox(box, V);
 		if (box.isPlanar()) {
-			events.push_back(Event(p, 0, box.lowerBound()(0), ET_OnPlane));
-			events.push_back(Event(p, 1, box.lowerBound()(1), ET_OnPlane));
-			events.push_back(Event(p, 2, box.lowerBound()(2), ET_OnPlane));
+			for (int i = 0; i < 3; ++i)
+				events.push_back(Event(p, i, box.lowerBound()(i), ET_OnPlane));
 		} else {
-			events.push_back(Event(p, 0, box.lowerBound()(0), ET_StartOnPlane));
-			events.push_back(Event(p, 1, box.lowerBound()(1), ET_StartOnPlane));
-			events.push_back(Event(p, 2, box.lowerBound()(2), ET_StartOnPlane));
-			events.push_back(Event(p, 0, box.upperBound()(0), ET_EndOnPlane));
-			events.push_back(Event(p, 1, box.upperBound()(1), ET_EndOnPlane));
-			events.push_back(Event(p, 2, box.upperBound()(2), ET_EndOnPlane));
+			for (int i = 0; i < 3; ++i)
+				events.push_back(Event(p, i, box.upperBound()(i), ET_StartOnPlane));
+			for (int i = 0; i < 3; ++i)
+				events.push_back(Event(p, i, box.lowerBound()(i), ET_EndOnPlane));
 		}
 	}
 
@@ -432,17 +520,23 @@ private:
 			size_t startOnPlane = 0;
 			size_t endOnPlane   = 0;
 
-			while (j < events.size() && events[j].dim == dim && std::abs(events[j].v - v) <= PR_EPSILON && events[j].type == ET_EndOnPlane) {
+			while (j < events.size() && events[j].dim == dim
+				   && std::abs(events[j].v - v) <= PR_EPSILON
+				   && events[j].type == ET_EndOnPlane) {
 				++endOnPlane;
 				++j;
 			}
 
-			while (j < events.size() && events[j].dim == dim && std::abs(events[j].v - v) <= PR_EPSILON && events[j].type == ET_OnPlane) {
+			while (j < events.size() && events[j].dim == dim
+				   && std::abs(events[j].v - v) <= PR_EPSILON
+				   && events[j].type == ET_OnPlane) {
 				++onPlane;
 				++j;
 			}
 
-			while (j < events.size() && events[j].dim == dim && std::abs(events[j].v - v) <= PR_EPSILON && events[j].type == ET_StartOnPlane) {
+			while (j < events.size() && events[j].dim == dim
+				   && std::abs(events[j].v - v) <= PR_EPSILON
+				   && events[j].type == ET_StartOnPlane) {
 				++startOnPlane;
 				++j;
 			}
@@ -477,7 +571,8 @@ private:
 			BoundingBox box = obj->box;
 			float low		= box.lowerBound()(dim);
 			float up		= box.upperBound()(dim);
-			if (std::abs(low - v) <= PR_EPSILON && std::abs(up - v) <= PR_EPSILON) {
+			if (std::abs(low - v) <= PR_EPSILON
+				&& std::abs(up - v) <= PR_EPSILON) {
 				if (side == SP_Left)
 					left.push_back(obj);
 				else
@@ -525,11 +620,11 @@ private:
 
 		float costIntersection;
 		if (!elementWise) {
-			costIntersection = mCost(nullptr);
+			costIntersection = mCost(mObserver, entity_t());
 		} else {
 			costIntersection = 0;
 			for (auto obj : objs) {
-				costIntersection += mCost(obj->data);
+				costIntersection += mCost(mObserver, obj->data);
 			}
 			costIntersection /= objs.size();
 		}
@@ -542,17 +637,15 @@ private:
 
 		findSplit(costIntersection, events, objs, V, dim, v, c, side, vl, vr);
 
-#ifdef PR_KDTREE_DEBUG
-		PR_LOGGER.logf(L_Debug, M_Scene, "%d: N=%d, V=%f, Dim=%d, val=%f, C=%f, Side=%s, VL=%f, VR=%f",
-					   depth, objs.size(), V.volume(), dim, v, c, side == SP_Left ? "L" : "R", vl.volume(), vr.volume());
-#endif
-
-		if (c > objs.size() * costIntersection || depth > PR_KDTREE_MAX_DEPTH || (prev_dim == dim && std::abs(prev_v - v) <= PR_EPSILON)) {
+		if ((/*mUseCostForLeaf &&*/ c > objs.size() * costIntersection)
+			//|| objs.size() <= mMinimumObjectsForLeaf
+			|| depth > PR_KDTREE_MAX_DEPTH
+			|| (prev_dim == dim && std::abs(prev_v - v) <= PR_EPSILON)) {
 			auto leaf = new kdLeafNode(mNodeCount++, V);
 			for (auto obj : objs) {
 				leaf->objects.push_back(obj->data);
 				if (mAddedCallback)
-					mAddedCallback(obj->data, leaf->id);
+					mAddedCallback(mObserver, obj->data, leaf->id);
 			}
 			return leaf;
 		}
@@ -606,12 +699,20 @@ private:
 
 	kdNode* mRoot;
 
+	Observer* mObserver;
+
 	size_t mNodeCount;
 	GetBoundingBoxCallback mGetBoundingBox;
-	CheckCollisionCallback mCheckCollision;
 	CostCallback mCost;
 	AddedCallback mAddedCallback;
 
 	uint32 mDepth;
+	float mAvgElementsPerLeaf;
+	size_t mMinElementsPerLeaf;
+	size_t mMaxElementsPerLeaf;
+	size_t mLeafCount;
+
+	size_t mMinimumObjectsForLeaf;
+	bool mUseCostForLeaf;
 };
-}
+} // namespace PR

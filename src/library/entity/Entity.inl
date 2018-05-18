@@ -36,91 +36,31 @@ inline uint8 Entity::flags() const
 	return mFlags;
 }
 
-inline void Entity::setPosition(const Eigen::Vector3f& pos)
+inline void Entity::setTransform(const Transform& transform)
 {
-	mPosition = pos;
-	invalidateCache();
-}
-
-inline Eigen::Vector3f Entity::position() const
-{
-	return mPosition;
-}
-
-inline void Entity::setScale(const Eigen::Vector3f& scale)
-{
-	mScale = scale;
-	invalidateCache();
-}
-
-inline Eigen::Vector3f Entity::scale() const
-{
-	return mScale;
-}
-
-inline void Entity::setRotation(const Eigen::Quaternionf& quat)
-{
-	mRotation = quat;
-	invalidateCache();
-}
-
-inline Eigen::Quaternionf Entity::rotation() const
-{
-	return mRotation;
+	mTransform = transform;
 }
 
 inline const Entity::Transform& Entity::transform() const
 {
-	if (mReCache) {
-		mReCache = false;
-
-		mTransformCache		  = Eigen::Translation3f(mPosition) * mRotation * Eigen::Scaling(mScale);
-		mInvTransformCache	= mTransformCache.inverse();
-		mNormalMatrixCache	= mTransformCache.linear().inverse().transpose();
-		mInvNormalMatrixCache = mTransformCache.linear().transpose();
-	}
-
-	return mTransformCache;
+	return mTransform;
 }
 
 inline const Entity::Transform& Entity::invTransform() const
 {
-	if (mReCache)
-		transform();
-
+	PR_ASSERT(isFrozen(), "Access outside frozen environment!");
 	return mInvTransformCache;
 }
 
 inline const Eigen::Matrix3f& Entity::directionMatrix() const
 {
-	if (mReCache)
-		transform();
+	PR_ASSERT(isFrozen(), "Access outside frozen environment!");
 	return mNormalMatrixCache;
 }
 
 inline const Eigen::Matrix3f& Entity::invDirectionMatrix() const
 {
-	if (mReCache)
-		transform();
+	PR_ASSERT(isFrozen(), "Access outside frozen environment!");
 	return mInvNormalMatrixCache;
-}
-
-inline void Entity::invalidateCache()
-{
-	mReCache = true;
-	mFrozen  = false;
-}
-
-inline void Entity::freeze()
-{
-	if (!mFrozen) {
-		onFreeze();
-		mFrozen = true;
-	}
-}
-
-inline bool Entity::isFrozen() const
-{
-	return mFrozen;
 }
 }

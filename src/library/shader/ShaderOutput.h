@@ -15,10 +15,10 @@ public:
 	ShaderOutput<T>() = default;
 	virtual ~ShaderOutput<T>() {}
 
-	virtual void eval(T& t, const ShaderClosure& point) = 0;
+	virtual void eval(T& t, const ShaderClosure& point) const = 0;
 
 	template<class Q = T>
-	inline typename std::enable_if<!std::is_same<Q, Spectrum>::value, Q>::type eval(const ShaderClosure& point) {
+	inline typename std::enable_if<!std::is_same<Q, Spectrum>::value, Q>::type eval(const ShaderClosure& point) const {
 		Q val;
 		eval(val, point);
 		return val;
@@ -34,6 +34,6 @@ public:
 	SpectrumShaderOutput() = default;
 	virtual ~SpectrumShaderOutput() {}
 
-	virtual float evalIndex(const ShaderClosure& point, uint32 index, uint32 samples) = 0;// Fast access
+	virtual float evalIndex(const ShaderClosure& point, uint32 index, uint32 samples) const = 0;// Fast access
 };
 }

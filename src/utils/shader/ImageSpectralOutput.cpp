@@ -16,7 +16,7 @@ ImageSpectrumShaderOutput::ImageSpectrumShaderOutput(OIIO::TextureSystem* tsys, 
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 }
 
-void ImageSpectrumShaderOutput::eval(Spectrum& spec, const PR::ShaderClosure& point)
+void ImageSpectrumShaderOutput::eval(Spectrum& spec, const PR::ShaderClosure& point) const
 {
 	float res[3] = { 0, 0, 0 };
 
@@ -26,14 +26,13 @@ void ImageSpectrumShaderOutput::eval(Spectrum& spec, const PR::ShaderClosure& po
 								 point.dUVWdX(1), point.dUVWdY(1),
 								 3, &res[0])) {
 		std::string err = mTextureSystem->geterror();
-		PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]: %s",
-					   point.UVW(0), 1 - point.UVW(1), err.c_str());
+		PR_LOG(L_ERROR) << "Couldn't lookup texture at UV [" << point.UVW << "]: " << err << std::endl;
 	}
 
 	RGBConverter::toSpec(spec, res[0], res[1], res[2]);
 }
 
-float ImageSpectrumShaderOutput::evalIndex(const ShaderClosure& point, uint32 index, uint32 samples)
+float ImageSpectrumShaderOutput::evalIndex(const ShaderClosure& point, uint32 index, uint32 samples) const
 {
 	float res[3] = { 0, 0, 0 };
 
@@ -43,8 +42,7 @@ float ImageSpectrumShaderOutput::evalIndex(const ShaderClosure& point, uint32 in
 								 point.dUVWdX(1), point.dUVWdY(1),
 								 3, &res[0])) {
 		std::string err = mTextureSystem->geterror();
-		PR_LOGGER.logf(L_Error, M_Scene, "Couldn't lookup texture at UV [%f, %f]: %s",
-					   point.UVW(0), 1 - point.UVW(1), err.c_str());
+		PR_LOG(L_ERROR) << "Couldn't lookup texture at UV [" << point.UVW << "]: " << err << std::endl;
 	}
 
 	return RGBConverter::toSpecIndex(samples, index, res[0], res[1], res[2]);

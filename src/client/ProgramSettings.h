@@ -1,7 +1,6 @@
 #pragma once
 
-#include "renderer/RenderSettings.h"
-#include "spectral/ToneMapper.h"
+#include "PR_Config.h"
 #include <string>
 
 enum DisplayDriverOption
@@ -37,19 +36,6 @@ public:
 	PR::uint32 RenderTileYCount;
 	PR::uint32 ImageTileXCount;
 	PR::uint32 ImageTileYCount;
-
-	// Scene
-	std::string SceneName;
-	std::string CameraOverride;
-	PR::uint32 ResolutionXOverride;
-	PR::uint32 ResolutionYOverride;
-	float CropMinXOverride;
-	float CropMaxXOverride;
-	float CropMinYOverride;
-	float CropMaxYOverride;
-
-	// Render Settings
-	PR::RenderSettings RenderSettings;
 
 	bool parse(int argc, char** argv);
 };

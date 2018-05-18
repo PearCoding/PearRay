@@ -14,6 +14,7 @@ class IInfiniteLight;
 class RenderContext;
 class RenderEntity;
 class Ray;
+class Registry;
 
 struct SceneCollision {
 	bool Successful;
@@ -42,15 +43,16 @@ public:
 	std::shared_ptr<Camera> activeCamera() const;
 
 	SceneCollision checkCollision(const Ray& ray) const;
+	/* Simple collision detection. Only position is populated! */
+	SceneCollision checkCollisionBoundingBox(const Ray& ray) const;
 	SceneCollision checkCollisionSimple(const Ray& ray) const;
 
-	void setup(RenderContext* context, bool force = false);
+	void setup(RenderContext* context, bool force=false);
 
 	BoundingBox boundingBox() const;
 
 private:
 	void buildTree(bool force);
-	void freeze();
 
 	const std::string mName;
 	const std::shared_ptr<Camera> mActiveCamera;

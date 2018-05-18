@@ -7,7 +7,8 @@ namespace PR {
 class PR_LIB URI {
 public:
 	inline URI();
-	inline explicit URI(const std::string& uri);
+	inline URI(const char* uri);
+	inline URI(const std::string& uri);// implicit
 
 	inline URI& operator=(const std::string& uri);
 

@@ -34,12 +34,12 @@ void BoundingBox::inflate(float eps, bool maxDir)
 	Eigen::Vector3f diff = (mUpperBound - mLowerBound).cwiseAbs();
 
 	if (maxDir) {
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; ++i) {
 			if (diff(i) <= eps)
 				mUpperBound(i) += eps;
 		}
 	} else {
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; ++i) {
 			if (diff(i) <= eps) {
 				mLowerBound(i) -= eps;
 				mUpperBound(i) += eps;
@@ -71,12 +71,27 @@ BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 	return r;
 }
 
+bool BoundingBox::intersectsSimple(const Ray& ray) const
+{
+	PR_GUARD_PROFILE();
+
+	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
+	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
+	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
+
+	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
+	const float tmax = vmin.array().max(vmax.array()).minCoeff();
+
+	const float t = tmin <= 0 ? tmax : tmin;
+	return tmax >= tmin && t > PR_EPSILON;
+}
+
 BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Intersection& intersection) const
 {
 	PR_GUARD_PROFILE();
 
-	Eigen::Vector3f minDist = (intersection.Position - lowerBound()).cwiseAbs();
-	Eigen::Vector3f maxDist = (intersection.Position - upperBound()).cwiseAbs();
+	const Eigen::Vector3f minDist = (intersection.Position - lowerBound()).cwiseAbs();
+	const Eigen::Vector3f maxDist = (intersection.Position - upperBound()).cwiseAbs();
 
 	BoundingBox::FaceSide side = FS_Left;
 	float f					   = minDist(0);
@@ -112,7 +127,7 @@ Plane BoundingBox::getFace(FaceSide side) const
 {
 	PR_GUARD_PROFILE();
 
-	Eigen::Vector3f diff = upperBound() - lowerBound();
+	const Eigen::Vector3f diff = upperBound() - lowerBound();
 
 	switch (side) {
 	default:

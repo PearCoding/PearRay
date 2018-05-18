@@ -2,7 +2,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(PR_Main_Src
   Environment.cpp
-  GlobalPropertyLoader.cpp
   SceneLoader.cpp
   SpectralFile.cpp)
 SET(PR_Loader_Src
@@ -52,7 +51,6 @@ SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_M
 
 SET(PR_Main_Hdr
   Environment.h
-  GlobalPropertyLoader.h
   SceneLoader.h
   SpectralFile.h)
 SET(PR_Loader_Hdr

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "renderer/RenderStatus.h"
 #include "renderer/RenderEnums.h"
+#include "renderer/RenderStatus.h"
 #include <vector>
 
 namespace PR {
@@ -18,21 +18,22 @@ public:
 
 	virtual void init();
 
-	virtual void onStart()						   = 0;
+	virtual void onStart() = 0;
 	virtual void onNextPass(uint32 i, bool& clean) = 0; // Not the main thread!
-	virtual void onEnd()						   = 0;
-	virtual bool needNextPass(uint32 i) const	  = 0;
+	virtual void onEnd()					  = 0;
+	virtual bool needNextPass(uint32 i) const = 0;
 
 	// Per thread
 	virtual void onPass(const RenderSession& session, uint32 pass) = 0;
-	virtual RenderStatus status() const							   = 0;
+	virtual RenderStatus status() const = 0;
 
 	inline RenderContext* renderer() const { return mRenderer; }
 
 	static std::unique_ptr<Integrator> create(RenderContext* context, IntegratorMode mode);
-	static std::unique_ptr<Integrator> createDebug(RenderContext* context);
+
 protected:
-	void handleInfiniteLights(Spectrum& spec, const Ray& in, const ShaderClosure& sc, const RenderSession& session, float& full_pdf);
+	void addInfiniteLightContribution(Spectrum& spec, const Ray& in, const ShaderClosure& sc,
+									  const RenderSession& session, uint32 samplesPerLight);
 	void handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderClosure& sc, const RenderSession& session, RenderEntity*& lastEntity);
 
 private:

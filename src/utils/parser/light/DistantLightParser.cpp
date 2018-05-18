@@ -21,7 +21,7 @@ std::shared_ptr<PR::IInfiniteLight> DistantLightParser::parse(Environment* env, 
 		if (env->hasMaterial(matD.getString()))
 			light->setMaterial(env->getMaterial(matD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", matD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << matD.getString() << std::endl;
 	}
 
 	if (dirD.type() == DL::Data::T_Group) {
@@ -30,7 +30,7 @@ std::shared_ptr<PR::IInfiniteLight> DistantLightParser::parse(Environment* env, 
 		if (ok)
 			light->setDirection(v);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Invalid direction given.");
+			PR_LOG(L_WARNING) << "Invalid direction given." << std::endl;
 	}
 
 	return light;

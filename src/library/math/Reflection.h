@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PR_Config.h"
 #include <Eigen/Dense>
 
 namespace PR {
@@ -7,6 +8,22 @@ class PR_LIB Reflection {
 	PR_CLASS_NON_CONSTRUCTABLE(Reflection);
 
 public:
+	/**
+		* @brief Returns angle between normal and refracted ray based on the Snell's law.
+		*
+		* @param eta Index ratio (n1/n2) between the two mediums.
+		* @param NdotV Angle between N and V
+		* @return NdotT Angle between N and the (virtual) refracted ray. -1 if total reflection!
+		*/
+	inline static float refraction_angle(float NdotV, float eta)
+	{
+		const float k = 1 - eta * eta * (1 - NdotV * NdotV);
+		if (k < 0)
+			return -1;
+		else
+			return std::sqrt(k);
+	}
+
 	/**
 		* @brief Reflects the viewing vector through the surface normal.
 		* L = V - 2(N*V)N
@@ -18,7 +35,10 @@ public:
 		*/
 	inline static Eigen::Vector3f reflect(float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
 	{
-		return (V - N * 2 * NdotV).normalized();
+		if (is_inside(NdotV)) // Backfacing
+			return (V + N * 2 * NdotV).normalized();
+		else
+			return (V - N * 2 * NdotV).normalized();
 	}
 
 	/**
@@ -32,13 +52,12 @@ public:
 		*/
 	inline static Eigen::Vector3f refract(float eta, float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
 	{
-		const float k = 1 - eta * eta * (1 - NdotV * NdotV);
+		const float NdotT = refraction_angle(NdotV, eta);
 
-		if (k < 0.0f) //TOTAL REFLECTION
+		if (NdotT < 0.0f) //TOTAL REFLECTION
 			return reflect(NdotV, N, V);
-
-		const float t = eta * NdotV + std::sqrt(k);
-		return (V * eta - N * t).normalized();
+		else
+			return refract(eta, NdotV, NdotT, N, V);
 	}
 
 	/**
@@ -52,14 +71,29 @@ public:
 		*/
 	inline static Eigen::Vector3f refract(float eta, float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V, bool& total)
 	{
-		const float k = 1 - eta * eta * (1 - NdotV * NdotV);
+		const float NdotT = refraction_angle(NdotV, eta);
 
-		total = k < 0.0f;
+		total = NdotT < 0.0f;
 		if (total) //TOTAL REFLECTION
 			return Eigen::Vector3f(0, 0, 0);
+		else
+			return refract(eta, NdotV, NdotT, N, V);
+	}
 
-		const float t = eta * NdotV + std::sqrt(k);
-		return (V * eta - N * t).normalized();
+	/**
+		* @brief Refracts the ray based on the eta parameter (eta = n1/n2) and previously calculated NdotT (Angle between Normal and refracted ray)
+		*
+		* @param eta Index ratio (n1/n2) between the two mediums.
+		* @param NdotV Angle between N and V
+		* @param NdotT Angle between N and the result of this function
+		* @param N Normal of the surface point.
+		* @param V Unit vector pointing TO the surface point.
+		* @return Unit vector pointing FROM the surface point outwards.
+		*/
+	inline static Eigen::Vector3f refract(float eta, float NdotV, float NdotT, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
+	{
+		const float t = -eta * NdotV - NdotT;
+		return (V * eta + N * t).normalized();
 	}
 
 	/**

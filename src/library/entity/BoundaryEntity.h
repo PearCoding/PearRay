@@ -28,13 +28,14 @@ public:
 	RenderEntity::Collision checkCollision(const Ray& ray) const override;
 	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const override;
 
-	// RenderEntity
-	void setup(RenderContext* context) override;
+protected:
+	// Entity
+	void onFreeze(RenderContext* context) override;
 
 private:
 	BoundingBox mBoundingBox;
 	std::shared_ptr<Material> mMaterial;
 
-	float mPDF_Cache;
+	float mPDF_Cache[6];
 };
 }

@@ -25,7 +25,7 @@ IInfiniteLight::LightSample DistantLight::sample(const ShaderClosure& point, con
 
 	IInfiniteLight::LightSample ls;
 	ls.PDF_S = std::numeric_limits<float>::infinity();
-	ls.L = mSampleDirection_Cache;
+	ls.L	 = mSampleDirection_Cache;
 	return ls;
 }
 
@@ -50,12 +50,16 @@ void DistantLight::apply(Spectrum& spec, const Eigen::Vector3f& V, const RenderS
 	spec *= d;
 }
 
-void DistantLight::onFreeze()
+void DistantLight::onFreeze(RenderContext* context)
 {
+	//IInfiniteLight::onFreeze(context);
+
 	mSampleDirection_Cache = -mDirection;
 	Projection::tangent_frame(mDirection, mRight_Cache, mUp_Cache);
 
-	PR_LOGGER.logf(L_Info, M_Camera, "DistantLight Dir[%.3f,%.3f,%.3f]",
-				   mDirection(0), mDirection(1), mDirection(2));
+	PR_LOG(L_INFO) << "DistantLight Dir[" << mDirection << "]" << std::endl;
+
+	if (mMaterial)
+		mMaterial->freeze(context);
 }
 }

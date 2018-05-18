@@ -30,11 +30,9 @@ public:
 	RenderEntity::Collision checkCollision(const Ray& ray) const override;
 	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const override;
 
+protected:
 	// Entity
-	void onFreeze() override;
-
-	// RenderEntity
-	void setup(RenderContext* context) override;
+	void onFreeze(RenderContext* context) override;
 
 private:
 	Plane mPlane;

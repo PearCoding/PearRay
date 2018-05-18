@@ -8,7 +8,7 @@
 #include "Logger.h"
 
 namespace PR {
-typedef kdTree<RenderEntity, true> SceneKDTree;
+typedef kdTree<std::shared_ptr<RenderEntity>, Scene, true> SceneKDTree;
 
 Scene::Scene(const std::string& name,
 			 const std::shared_ptr<Camera>& activeCamera,
@@ -55,8 +55,8 @@ std::shared_ptr<Camera> Scene::activeCamera() const
 void Scene::buildTree(bool force)
 {
 	if (mKDTree) {
-		if(force) {
-			PR_LOGGER.log(L_Info, M_Scene, "kdTree already exists, deleting old one.");
+		if (force) {
+			PR_LOG(L_DEBUG) << "kdTree already exists, deleting old one." << std::endl;
 			delete reinterpret_cast<SceneKDTree*>(mKDTree);
 			mKDTree = nullptr;
 		} else {
@@ -64,38 +64,63 @@ void Scene::buildTree(bool force)
 		}
 	}
 
-	PR_LOGGER.logf(L_Info, M_Scene, "%i Render Entities", mRenderEntities.size());
+	PR_LOG(L_INFO) << mRenderEntities.size() << " Render Entities" << std::endl;
 
-	mKDTree = new SceneKDTree(
-		[](RenderEntity* e) { return e->worldBoundingBox(); },
-		[](const Ray& ray, FacePoint& point, RenderEntity* e) {
-			RenderEntity::Collision c = e->checkCollision(ray);
-			point					  = c.Point;
-			return (c.Successful
-					&& ((ray.flags() & RF_Debug)
-						|| ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
-		},
-		[](RenderEntity* e) {
-			return e->collisionCost();
-		},
-		[](RenderEntity* e, uint32 id) {
-			e->setContainerID(id);
-		});
+	mKDTree = new SceneKDTree(this,
+							  [](Scene*, const std::shared_ptr<RenderEntity>& e) { return e->worldBoundingBox(); },
+							  [](Scene*, const std::shared_ptr<RenderEntity>& e) {
+								  return e->collisionCost();
+							  },
+							  [](Scene*, const std::shared_ptr<RenderEntity>& e, uint32 id) {
+								  e->setContainerID(id);
+							  });
 
-	std::vector<RenderEntity*> list;
-	list.reserve(mRenderEntities.size());
-	for (auto e : mRenderEntities)
-		list.push_back(e.get());
+	reinterpret_cast<SceneKDTree*>(mKDTree)->enableCostForLeafDetection(false);
+	reinterpret_cast<SceneKDTree*>(mKDTree)->setMinimumObjectsForLeaf(1);
 
-	reinterpret_cast<SceneKDTree*>(mKDTree)->build(list.begin(), list.end(), list.size(), [](RenderEntity* e) { return !e->isCollidable(); });
+	reinterpret_cast<SceneKDTree*>(mKDTree)->build(
+		mRenderEntities.begin(), mRenderEntities.end(), mRenderEntities.size());
 }
 
 SceneCollision Scene::checkCollision(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	SceneCollision sc;
-	sc.Entity	 = reinterpret_cast<SceneKDTree*>(mKDTree)->checkCollision(ray, sc.Point);
-	sc.Successful = (sc.Entity != nullptr);
+	std::shared_ptr<RenderEntity> entity;
+	sc.Successful = reinterpret_cast<SceneKDTree*>(
+						mKDTree)
+						->checkCollision(ray, entity, sc.Point,
+										 [](Scene*, const Ray& ray, FacePoint& point, const std::shared_ptr<RenderEntity>& e) {
+											 RenderEntity::Collision c = e->checkCollision(ray);
+											 point					   = c.Point;
+											 return (c.Successful
+													 && ((ray.flags() & RF_Debug)
+														 || ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
+										 });
+	sc.Entity = entity.get(); // We use direct pointer here!
+	return sc;
+}
+
+SceneCollision Scene::checkCollisionBoundingBox(const Ray& ray) const
+{
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+	SceneCollision sc;
+	std::shared_ptr<RenderEntity> entity;
+	sc.Successful = reinterpret_cast<SceneKDTree*>(
+						mKDTree)
+						->checkCollision(ray, entity, sc.Point,
+										 [](Scene*, const Ray& ray, FacePoint& point, const std::shared_ptr<RenderEntity>& e) {
+											 BoundingBox bx = e->worldBoundingBox();
+
+											 BoundingBox::Intersection in = bx.intersects(ray);
+
+											 if (in.Successful) {
+												 point.P = in.Position;
+											 }
+
+											 return in.Successful;
+										 });
+	sc.Entity = entity.get(); // We use direct pointer here!
 	return sc;
 }
 
@@ -103,32 +128,34 @@ SceneCollision Scene::checkCollisionSimple(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	SceneCollision sc;
-	sc.Successful = reinterpret_cast<SceneKDTree*>(mKDTree)->checkCollisionSimple(ray, sc.Point);
-	sc.Entity	 = nullptr;
+	sc.Successful = reinterpret_cast<SceneKDTree*>(
+						mKDTree)
+						->checkCollisionSimple(ray, sc.Point,
+											   [](Scene*, const Ray& ray, FacePoint& point, const std::shared_ptr<RenderEntity>& e) {
+												   RenderEntity::Collision c = e->checkCollision(ray);
+												   point					 = c.Point;
+												   return (c.Successful
+														   && ((ray.flags() & RF_Debug)
+															   || ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
+											   });
+	sc.Entity = nullptr;
 	return sc;
-}
-
-void Scene::freeze()
-{
-	for (auto e : mEntities)
-		e->freeze();
-
-	for (auto e : mRenderEntities)
-		e->freeze();
-
-	for (auto e : mInfiniteLights)
-		e->freeze();
 }
 
 void Scene::setup(RenderContext* context, bool force)
 {
-	PR_LOGGER.log(L_Info, M_Scene, "Freezing scene");
-	freeze();
-	PR_LOGGER.log(L_Info, M_Scene, "Starting to build global space-partitioning structure");
-	buildTree(force);
-	PR_LOGGER.log(L_Info, M_Scene, "Initializing render entities");
+	PR_LOG(L_INFO) << "Freezing scene" << std::endl;
+	for (auto e : mEntities)
+		e->freeze(context);
+
 	for (auto e : mRenderEntities)
-		e->setup(context);
+		e->freeze(context);
+
+	for (auto e : mInfiniteLights)
+		e->freeze(context);
+
+	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure" << std::endl;
+	buildTree(force);
 }
 
 BoundingBox Scene::boundingBox() const
@@ -136,4 +163,4 @@ BoundingBox Scene::boundingBox() const
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	return reinterpret_cast<SceneKDTree*>(mKDTree)->boundingBox();
 }
-}
+} // namespace PR

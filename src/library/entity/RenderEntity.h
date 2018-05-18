@@ -47,10 +47,10 @@ public:
 	virtual FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const = 0;
 
 	// Entity
-	void onFreeze() override;
 	std::string dumpInformation() const override;
 
-	virtual void setup(RenderContext* context) {}
+protected:
+	virtual void onFreeze(RenderContext* context) override;
 
 private:
 	uint32 mContainerID;// To which (latest) container node it belongs

@@ -10,7 +10,9 @@ public:
 	virtual ~FileLogListener();
 
 	void open(const std::string& file);
-	void newEntry(Level level, Module m, const std::string& str) override;
+
+	void startEntry(LogLevel level) override;
+	void writeEntry(int c) override;
 
 private:
 	std::fstream mStream;

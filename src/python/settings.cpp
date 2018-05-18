@@ -1,91 +1,79 @@
-#include "renderer/PPMSettings.h"
 #include "renderer/RenderSettings.h"
 
 #include "pypearray.h"
 
 using namespace PR;
 namespace PRPY {
+
 void setup_settings(py::module& m)
 {
 	py::class_<RenderSettings>(m, "RenderSettings")
-		.def_property("debugMode", &RenderSettings::debugMode, &RenderSettings::setDebugMode)
-		.def_property("integratorMode", &RenderSettings::integratorMode, &RenderSettings::setIntegratorMode)
-		.def_property("aaSampler", &RenderSettings::aaSampler, &RenderSettings::setAASampler)
-		.def_property("maxAASampleCount", &RenderSettings::maxAASampleCount, &RenderSettings::setMaxAASampleCount)
-		.def_property("lensSampler", &RenderSettings::lensSampler, &RenderSettings::setLensSampler)
-		.def_property("maxLensSampleCount", &RenderSettings::maxLensSampleCount, &RenderSettings::setMaxLensSampleCount)
-		.def_property("timeSampler", &RenderSettings::timeSampler, &RenderSettings::setTimeSampler)
-		.def_property("maxTimeSampleCount", &RenderSettings::maxTimeSampleCount, &RenderSettings::setMaxTimeSampleCount)
-		.def_property("timeMappingMode", &RenderSettings::timeMappingMode, &RenderSettings::setTimeMappingMode)
-		.def_property("timeScale", &RenderSettings::timeScale, &RenderSettings::setTimeScale)
-		.def_property("spectralSampler", &RenderSettings::spectralSampler, &RenderSettings::setSpectralSampler)
-		.def_property("maxSpectralSampleCount", &RenderSettings::maxSpectralSampleCount, &RenderSettings::setMaxSpectralSampleCount)
-		.def_property_readonly("maxCameraSampleCount", &RenderSettings::maxCameraSampleCount)
-		.def_property("maxDiffuseBounces", &RenderSettings::maxDiffuseBounces, &RenderSettings::setMaxDiffuseBounces)
-		.def_property("maxRayDepth", &RenderSettings::maxRayDepth, &RenderSettings::setMaxRayDepth)
-		.def_property("cropMaxX", &RenderSettings::cropMaxX, &RenderSettings::setCropMaxX)
-		.def_property("cropMinX", &RenderSettings::cropMinX, &RenderSettings::setCropMinX)
-		.def_property("cropMaxY", &RenderSettings::cropMaxY, &RenderSettings::setCropMaxY)
-		.def_property("cropMinY", &RenderSettings::cropMinY, &RenderSettings::setCropMinY)
-		.def_property("maxLightSamples", &RenderSettings::maxLightSamples, &RenderSettings::setMaxLightSamples)
-		.def_property_readonly("ppm", (PPMSettings & (RenderSettings::*)()) & RenderSettings::ppm, py::return_value_policy::reference)
-		.def_property("tileMode", &RenderSettings::tileMode, &RenderSettings::setTileMode);
-
-	py::class_<PPMSettings>(m, "PPMSettings")
-		.def_property("maxPhotonsPerPass", &PPMSettings::maxPhotonsPerPass, &PPMSettings::setMaxPhotonsPerPass)
-		.def_property("maxPassCount", &PPMSettings::maxPassCount, &PPMSettings::setMaxPassCount)
-		.def_property("maxGatherRadius", &PPMSettings::maxGatherRadius, &PPMSettings::setMaxGatherRadius)
-		.def_property("maxGatherCount", &PPMSettings::maxGatherCount, &PPMSettings::setMaxGatherCount)
-		.def_property("gatheringMode", &PPMSettings::gatheringMode, &PPMSettings::setGatheringMode)
-		.def_property("squeezeWeight", &PPMSettings::squeezeWeight, &PPMSettings::setSqueezeWeight)
-		.def_property("contractRatio", &PPMSettings::contractRatio, &PPMSettings::setContractRatio);
+		.def_property_readonly("aaSampler", &RenderSettings::aaSampler)
+		.def_property_readonly("aaSampleCount", &RenderSettings::aaSampleCount)
+		.def_property_readonly("lensSampler", &RenderSettings::lensSampler)
+		.def_property_readonly("lensSampleCount", &RenderSettings::lensSampleCount)
+		.def_property_readonly("timeSampler", &RenderSettings::timeSampler)
+		.def_property_readonly("timeSampleCount", &RenderSettings::timeSampleCount)
+		.def_property_readonly("timeMappingMode", &RenderSettings::timeMappingMode)
+		.def_property_readonly("timeScale", &RenderSettings::timeScale)
+		.def_property_readonly("spectralSampler", &RenderSettings::spectralSampler)
+		.def_property_readonly("spectralSampleCount", &RenderSettings::spectralSampleCount)
+		.def_property_readonly("samplesPerPixel", &RenderSettings::samplesPerPixel)
+		.def_property_readonly("maxRayDepth", &RenderSettings::maxRayDepth)
+		.def_property_readonly("cropMaxX", &RenderSettings::cropMaxX)
+		.def_property_readonly("cropMinX", &RenderSettings::cropMinX)
+		.def_property_readonly("cropMaxY", &RenderSettings::cropMaxY)
+		.def_property_readonly("cropMinY", &RenderSettings::cropMinY)
+		.def_property_readonly("tileMode", &RenderSettings::tileMode);
 
 	py::enum_<SamplerMode>(m, "SamplerMode")
-		.value("RANDOM", SM_Random)
-		.value("UNIFORM", SM_Uniform)
-		.value("JITTER", SM_Jitter)
-		.value("MULTIJITTER", SM_MultiJitter)
-		.value("HALTONQMC", SM_HaltonQMC);
+		.value("RANDOM", SM_RANDOM)
+		.value("UNIFORM", SM_UNIFORM)
+		.value("JITTER", SM_JITTER)
+		.value("MULTI_JITTER", SM_MULTI_JITTER)
+		.value("HALTON_QMC", SM_HALTON_QMC);
 
 	py::enum_<DebugMode>(m, "DebugMode")
-		.value("NONE", DM_None)
-		.value("DEPTH", DM_Depth)
-		.value("NORMAL_BOTH", DM_Normal_Both)
-		.value("NORMAL_POSITIVE", DM_Normal_Positive)
-		.value("NORMAL_NEGATIVE", DM_Normal_Negative)
-		.value("NORMAL_SPHERICAL", DM_Normal_Spherical)
-		.value("TANGENT_BOTH", DM_Tangent_Both)
-		.value("TANGENT_POSITIVE", DM_Tangent_Positive)
-		.value("TANGENT_NEGATIVE", DM_Tangent_Negative)
-		.value("TANGENT_SPHERICAL", DM_Tangent_Spherical)
-		.value("BINORMAL_BOTH", DM_Binormal_Both)
-		.value("BINORMAL_POSITIVE", DM_Binormal_Positive)
-		.value("BINORMAL_NEGATIVE", DM_Binormal_Negative)
-		.value("BINORMAL_SPHERICAL", DM_Binormal_Spherical)
+		.value("DEPTH", DM_DEPTH)
+		.value("NORMAL_BOTH", DM_NORMAL_BOTH)
+		.value("NORMAL_POSITIVE", DM_NORMAL_POSITIVE)
+		.value("NORMAL_NEGATIVE", DM_NORMAL_NEGATIVE)
+		.value("NORMAL_SPHERICAL", DM_NORMAL_SPHERICAL)
+		.value("TANGENT_BOTH", DM_TANGENT_BOTH)
+		.value("TANGENT_POSITIVE", DM_TANGENT_POSITIVE)
+		.value("TANGENT_NEGATIVE", DM_TANGENT_NEGATIVE)
+		.value("TANGENT_SPHERICAL", DM_TANGENT_SPHERICAL)
+		.value("BINORMAL_BOTH", DM_BINORMAL_BOTH)
+		.value("BINORMAL_POSITIVE", DM_BINORMAL_POSITIVE)
+		.value("BINORMAL_NEGATIVE", DM_BINORMAL_NEGATIVE)
+		.value("BINORMAL_SPHERICAL", DM_BINORMAL_SPHERICAL)
 		.value("UVW", DM_UVW)
 		.value("PDF", DM_PDF)
-		.value("EMISSION", DM_Emission)
-		.value("VALIDITY", DM_Validity)
-		.value("FLAG_INSIDE", DM_Flag_Inside)
-		.value("CONTAINER_ID", DM_Container_ID);
+		.value("EMISSION", DM_EMISSION)
+		.value("VALIDITY", DM_VALIDITY)
+		.value("FLAG_INSIDE", DM_FLAG_INSIDE)
+		.value("CONTAINER_ID", DM_CONTAINER_ID)
+		.value("BOUNDING_BOX", DM_BOUNDING_BOX);
 
 	py::enum_<IntegratorMode>(m, "IntegratorMode")
-		.value("DIRECT", IM_Direct)
-		.value("BIDIRECT", IM_BiDirect)
-		.value("PPM", IM_PPM);
+		.value("DIRECT", IM_DIRECT)
+		.value("BIDIRECT", IM_BIDIRECT)
+		.value("PPM", IM_PPM)
+		.value("AO", IM_AO)
+		.value("VISUALIZER", IM_VISUALIZER);
 
 	py::enum_<TileMode>(m, "TileMode")
-		.value("LINEAR", TM_Linear)
-		.value("TILE", TM_Tile)
-		.value("SPIRAL", TM_Spiral);
+		.value("LINEAR", TM_LINEAR)
+		.value("TILE", TM_TILE)
+		.value("SPIRAL", TM_SPIRAL);
 
 	py::enum_<TimeMappingMode>(m, "TimeMappingMode")
-		.value("CENTER", TMM_Center)
-		.value("LEFT", TMM_Left)
-		.value("RIGHT", TMM_Right);
+		.value("CENTER", TMM_CENTER)
+		.value("LEFT", TMM_LEFT)
+		.value("RIGHT", TMM_RIGHT);
 
 	py::enum_<PPMGatheringMode>(m, "PPMGatheringMode")
-		.value("SPHERE", PGM_Sphere)
-		.value("DOME", PGM_Dome);
+		.value("SPHERE", PGM_SPHERE)
+		.value("DOME", PGM_DOME);
 }
 }

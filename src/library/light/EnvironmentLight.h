@@ -24,6 +24,9 @@ public:
 	LightSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) override;
 	void apply(Spectrum& view, const Eigen::Vector3f& V, const RenderSession& session) override;
 
+protected:
+	void onFreeze(RenderContext* context) override;
+
 private:
 	std::shared_ptr<Material> mMaterial;
 };

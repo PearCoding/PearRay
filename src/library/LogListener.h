@@ -6,6 +6,7 @@
 namespace PR {
 class PR_LIB_INLINE LogListener {
 public:
-	virtual void newEntry(Level level, Module m, const std::string& str) = 0;
+	virtual void startEntry(LogLevel level) = 0;
+	virtual void writeEntry(int c) = 0;
 };
 }

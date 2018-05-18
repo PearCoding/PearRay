@@ -23,7 +23,7 @@ std::shared_ptr<PR::Material> GridMaterialParser::parse(Environment* env,
 		if (env->hasMaterial(firstD.getString())) {
 			bnd->setFirstMaterial(env->getMaterial(firstD.getString()));
 		} else {
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", firstD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << firstD.getString() << std::endl;
 		}
 	}
 
@@ -31,7 +31,7 @@ std::shared_ptr<PR::Material> GridMaterialParser::parse(Environment* env,
 		if (env->hasMaterial(secondD.getString())) {
 			bnd->setSecondMaterial(env->getMaterial(secondD.getString()));
 		} else {
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", secondD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << secondD.getString() << std::endl;
 		}
 	}
 

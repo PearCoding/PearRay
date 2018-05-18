@@ -9,7 +9,7 @@ ConstScalarShaderOutput::ConstScalarShaderOutput(float f)
 {
 }
 
-void ConstScalarShaderOutput::eval(float& f, const PR::ShaderClosure& point)
+void ConstScalarShaderOutput::eval(float& f, const PR::ShaderClosure& point) const
 {
 	f = mValue;
 }

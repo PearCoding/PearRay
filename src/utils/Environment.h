@@ -1,6 +1,7 @@
 #pragma once
 
 #include "output/OutputSpecification.h"
+#include "registry/Registry.h"
 #include "scene/SceneFactory.h"
 #include "shader/ShaderOutput.h"
 #include "spectral/Spectrum.h"
@@ -150,57 +151,25 @@ public:
 		return mTextureSystem;
 	}
 
-	inline uint32 renderWidth() const
-	{
-		return mRenderWidth;
-	}
+	uint32 renderWidth() const;
+	void setRenderWidth(uint32 i);
+	uint32 renderHeight() const;
+	void setRenderHeight(uint32 i);
 
-	inline void setRenderWidth(uint32 i)
-	{
-		mRenderWidth = i;
-	}
-
-	inline uint32 renderHeight() const
-	{
-		return mRenderHeight;
-	}
-
-	inline void setRenderHeight(uint32 i)
-	{
-		mRenderHeight = i;
-	}
-
-	inline void setCrop(float xmin, float xmax, float ymin, float ymax)
-	{
-		mCropMinX = xmin;
-		mCropMaxX = xmax;
-		mCropMinY = ymin;
-		mCropMaxY = ymax;
-	}
-
-	inline float cropMinX() const
-	{
-		return mCropMinX;
-	}
-
-	inline float cropMaxX() const
-	{
-		return mCropMaxX;
-	}
-
-	inline float cropMinY() const
-	{
-		return mCropMinY;
-	}
-
-	inline float cropMaxY() const
-	{
-		return mCropMaxY;
-	}
+	void setCrop(float xmin, float xmax, float ymin, float ymax);
+	float cropMinX() const;
+	float cropMaxX() const;
+	float cropMinY() const;
+	float cropMaxY() const;
 
 	inline OutputSpecification& outputSpecification()
 	{
 		return mOutputSpecification;
+	}
+
+	inline const std::shared_ptr<Registry>& registry() const
+	{
+		return mRegistry;
 	}
 
 	void dumpInformation() const;
@@ -208,17 +177,13 @@ public:
 	void setup(const std::shared_ptr<RenderContext>& renderer);
 	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
+	std::shared_ptr<RenderFactory> createRenderFactory(const std::string& workingDir) const;
 private:
 	SceneFactory mSceneFactory;
-	uint32 mRenderWidth;
-	uint32 mRenderHeight;
 
-	float mCropMinX;
-	float mCropMaxX;
-	float mCropMinY;
-	float mCropMaxY;
-
+	std::shared_ptr<Registry> mRegistry;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
+	
 	std::map<std::string, PR::Spectrum> mSpectrums;
 	std::map<std::string, std::shared_ptr<Material>> mMaterials;
 

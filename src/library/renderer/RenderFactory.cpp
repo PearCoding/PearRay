@@ -6,12 +6,12 @@
 
 namespace PR {
 RenderFactory::RenderFactory(const std::shared_ptr<SpectrumDescriptor>& specDesc,
-							 uint32 w, uint32 h, const std::shared_ptr<Scene>& scene,
+							 const std::shared_ptr<Scene>& scene,
+							 const std::shared_ptr<Registry>& registry,
 							 const std::string& workingDir)
-	: mFullWidth(w)
-	, mFullHeight(h)
-	, mWorkingDir(workingDir)
+	: mWorkingDir(workingDir)
 	, mScene(scene)
+	, mRegistry(registry)
 	, mSpectrumDescriptor(specDesc)
 {
 }
@@ -20,30 +20,10 @@ RenderFactory::~RenderFactory()
 {
 }
 
-uint32 RenderFactory::cropWidth() const
-{
-	return std::ceil((mRenderSettings.cropMaxX() - mRenderSettings.cropMinX()) * mFullWidth);
-}
-
-uint32 RenderFactory::cropHeight() const
-{
-	return std::ceil((mRenderSettings.cropMaxY() - mRenderSettings.cropMinY()) * mFullHeight);
-}
-
-uint32 RenderFactory::cropOffsetX() const
-{
-	return std::ceil(mRenderSettings.cropMinX() * mFullWidth);
-}
-
-uint32 RenderFactory::cropOffsetY() const
-{
-	return std::ceil(mRenderSettings.cropMinY() * mFullHeight);
-}
-
 std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, uint32 ity) const
 {
 	if (!mScene->activeCamera()) {
-		PR_LOGGER.log(L_Error, M_Scene, "No active camera selected");
+		PR_LOG(L_ERROR) << "No active camera selected!" << std::endl;
 		return std::shared_ptr<RenderContext>();
 	}
 
@@ -51,15 +31,19 @@ std::shared_ptr<RenderContext> RenderFactory::create(uint32 index, uint32 itx, u
 	PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
 	PR_ASSERT(index < itx * ity, "Index has to be in bounds");
 
-	uint32 itw = std::ceil(cropWidth() / static_cast<float>(itx));
-	uint32 ith = std::ceil(cropHeight() / static_cast<float>(ity));
+	RenderSettings settings(mRegistry);
+
+	uint32 itw = std::ceil(settings.cropWidth() / static_cast<float>(itx));
+	uint32 ith = std::ceil(settings.cropHeight() / static_cast<float>(ity));
 	uint32 ix  = index % itx;
 	uint32 iy  = index / itx;
 	uint32 x   = ix * itw;
 	uint32 y   = iy * ith;
 
-	return std::make_shared<RenderContext>(index, x + cropOffsetX(), y + cropOffsetY(),
-										   itw, ith, mFullWidth, mFullHeight,
-										   mSpectrumDescriptor, mScene, mWorkingDir, mRenderSettings);
+	return std::make_shared<RenderContext>(index,
+										   x + settings.cropOffsetX(), y + settings.cropOffsetY(),
+										   itw, ith,
+										   mSpectrumDescriptor, mScene, mRegistry,
+										   mWorkingDir);
 }
 }

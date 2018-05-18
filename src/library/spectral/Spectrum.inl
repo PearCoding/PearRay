@@ -145,10 +145,8 @@ inline Spectrum& Spectrum::operator/=(const Spectrum& spec)
 
 inline Spectrum& Spectrum::operator/=(float f)
 {
-	for (uint32 i = 0; i < samples(); ++i)
-		setValue(i, value(i) / f);
-
-	return *this;
+	const float inv = 1.0f/f;
+	return (*this *= inv);
 }
 
 // Fill Functions

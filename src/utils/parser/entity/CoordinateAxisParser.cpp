@@ -31,21 +31,21 @@ std::shared_ptr<PR::Entity> CoordinateAxisParser::parse(Environment* env, const 
 		if (env->hasMaterial(materialXD.getString()))
 			bnd->setXMaterial(env->getMaterial(materialXD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialXD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << materialXD.getString() << std::endl;
 	}
 
 	if (materialYD.type() == DL::Data::T_String) {
 		if (env->hasMaterial(materialYD.getString()))
 			bnd->setYMaterial(env->getMaterial(materialYD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialYD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << materialYD.getString() << std::endl;
 	}
 
 	if (materialZD.type() == DL::Data::T_String) {
 		if (env->hasMaterial(materialZD.getString()))
 			bnd->setZMaterial(env->getMaterial(materialZD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialZD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << materialZD.getString() << std::endl;
 	}
 
 	return bnd;

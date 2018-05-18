@@ -8,11 +8,15 @@
 namespace PR {
 Logger::Logger()
 #ifdef PR_DEBUG
-	: mVerbose(true)
+	: mVerbosity(L_DEBUG)
 #else
-	: mVerbose(false)
+	: mVerbosity(L_INFO)
 #endif
 	, mQuiet(false)
+	, mEmptyStreamBuf(*this, true)
+	, mEmptyStream(&mEmptyStreamBuf)
+	, mStreamBuf(*this, false)
+	, mStream(&mStreamBuf)
 {
 }
 
@@ -28,76 +32,9 @@ const char* levelStr[] = {
 	"Fatal  "
 };
 
-const char* moduleStr[] = {
-	"Internal  ",
-	"Test      ",
-	"Camera    ",
-	"GPU       ",
-	"Entity    ",
-	"Math      ",
-	"Integrator",
-	"Material  ",
-	"System    ",
-	"Scene     ",
-	"Volume    ",
-	"Network   ",
-	"Loader    ",
-	"Shader    ",
-	"Main      ",
-	"Script    "
-};
-
-const char* Logger::levelString(Level l)
+const char* Logger::levelString(LogLevel l)
 {
 	return levelStr[l];
-}
-
-const char* Logger::moduleString(Module m)
-{
-	return moduleStr[m];
-}
-
-void Logger::log(Level level, Module m, const std::string& str)
-{
-	if (!mVerbose && (level == L_Debug || level == L_Info))
-		return;
-
-	if (!mQuiet)
-		printf("[%s] (%s) %s\n", levelStr[level], moduleStr[m], str.c_str());
-
-	for (std::list<LogListener*>::iterator it = mListener.begin();
-		 it != mListener.end();
-		 ++it) {
-		(*it)->newEntry(level, m, str);
-	}
-
-	if (level == L_Fatal)
-		exit(-1);
-}
-
-void Logger::logf(Level level, Module m, const char* fmt, ...)
-{
-	if (!mVerbose && (level == L_Debug || level == L_Info))
-		return;
-
-	// Unsecured
-	char buffer[1024];
-	va_list vl;
-	va_start(vl, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, vl);
-	va_end(vl);
-
-	if (!mQuiet)
-		printf("[%s] (%s) %s\n", levelStr[level], moduleStr[m], buffer);
-
-	for (std::list<LogListener*>::iterator it = mListener.begin();
-		 it != mListener.end();
-		 ++it) {
-		(*it)->newEntry(level, m, buffer);
-	}
-
-	if (level == L_Fatal)
-		exit(-1);
 }
 
 void Logger::addListener(LogListener* listener)
@@ -109,4 +46,57 @@ void Logger::removeListener(LogListener* listener)
 {
 	mListener.remove(listener);
 }
+
+std::ostream& Logger::startEntry(LogLevel level) {
+	if ((int)verbosity() < (int)level)
+		return mEmptyStream;
+
+	if (!mQuiet)
+		std::cout << "[" << levelStr[level] << "] ";
+
+	for (std::list<LogListener*>::iterator it = mListener.begin();
+		 it != mListener.end();
+		 ++it) {
+		(*it)->startEntry(level);
+	}
+
+	return mStream;
+}
+
+std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c) {
+	if (mIgnore)
+		return 0;
+		
+	if (!mLogger.isQuiet())
+		std::cout.put(c);
+
+	for (std::list<LogListener*>::iterator it = mLogger.mListener.begin();
+		 it != mLogger.mListener.end();
+		 ++it) {
+		(*it)->writeEntry(c);
+	}
+
+	return 0;
+}
+
+std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v) {
+	stream << v.x() << ", " << v.y();
+	return stream;
+}
+
+std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v) {
+	stream << v.x() << ", " << v.y();
+	return stream;
+}
+
+std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v) {
+	stream << v.x() << ", " << v.y() << ", " << v.z();
+	return stream;
+}
+
+std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v) {
+	stream << v.w() << ", " << v.x() << ", " << v.y() << ", " << v.z();
+	return stream;
+}
+
 }

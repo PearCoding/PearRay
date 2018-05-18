@@ -8,7 +8,6 @@
 using namespace PR;
 
 /* Little test to ensure equal seed produces equal output
- * (which is unfortunatly not the case currently)
  */
 
 const char* PROJECT =
@@ -28,22 +27,16 @@ PR_TEST("Direct Integrator")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
-	auto scene = env->sceneFactory().create();
-	auto renderFactory = std::make_shared<RenderFactory>(
-		SpectrumDescriptor::createStandardSpectral(),
-		env->renderWidth(),
-		env->renderHeight(),
-		scene, "");
+	env->registry()->setByGroup(RG_RENDERER, "common/seed", SEED);
+	env->registry()->setByGroup(RG_RENDERER, "common/type", IM_DIRECT);
+	env->registry()->setByGroup(RG_RENDERER, "direct/diffuse/max_depth", 0);
+
+	auto renderFactory = env->createRenderFactory("");
 
 	std::list<Spectrum> output1;
 	std::list<Spectrum> output2;
 
-	renderFactory->settings().setSeed(SEED);
-	renderFactory->settings().setMaxDiffuseBounces(0);
-
 	{ // 1
-		renderFactory->settings().setIntegratorMode(IM_Direct);
-
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
 
@@ -53,14 +46,13 @@ PR_TEST("Direct Integrator")
 		}
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
-			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			Spectrum spec(renderFactory->spectrumDescriptor());
+			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
 			output1.push_back(spec);
 		}
 	}
 
 	{ // 2
-		renderFactory->settings().setIntegratorMode(IM_Direct);
-
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
 
@@ -70,7 +62,8 @@ PR_TEST("Direct Integrator")
 		}
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
-			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			Spectrum spec(renderFactory->spectrumDescriptor());
+			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
 			output2.push_back(spec);
 		}
 	}
@@ -95,22 +88,16 @@ PR_TEST("Bi-Direct Integrator")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
-	auto scene = env->sceneFactory().create();
-	auto renderFactory = std::make_shared<RenderFactory>(
-		SpectrumDescriptor::createStandardSpectral(),
-		env->renderWidth(),
-		env->renderHeight(),
-		scene, "");
+	env->registry()->setByGroup(RG_RENDERER, "common/seed", SEED);
+	env->registry()->setByGroup(RG_RENDERER, "common/type", IM_BIDIRECT);
+	env->registry()->setByGroup(RG_RENDERER, "bidirect/diffuse/max_depth", 0);
+
+	auto renderFactory = env->createRenderFactory("");
 
 	std::list<Spectrum> output1;
 	std::list<Spectrum> output2;
 
-	renderFactory->settings().setSeed(SEED);
-	renderFactory->settings().setMaxDiffuseBounces(0);
-
 	{ // 1
-		renderFactory->settings().setIntegratorMode(IM_BiDirect);
-
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
 
@@ -120,14 +107,13 @@ PR_TEST("Bi-Direct Integrator")
 		}
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
-			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			Spectrum spec(renderFactory->spectrumDescriptor());
+			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
 			output1.push_back(spec);
 		}
 	}
 
 	{ // 2
-		renderFactory->settings().setIntegratorMode(IM_BiDirect);
-
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
 
@@ -137,7 +123,8 @@ PR_TEST("Bi-Direct Integrator")
 		}
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
-			Spectrum spec = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i])).clone();
+			Spectrum spec(renderFactory->spectrumDescriptor());
+			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
 			output2.push_back(spec);
 		}
 	}

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
+#include "IFreezable.h"
 
 #include <string>
 
@@ -15,7 +13,8 @@ enum EntityFlags {
 #define ENTITY_CLASS \
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-class PR_LIB Entity {
+class RenderContext;
+class PR_LIB Entity : public IFreezable {
 public:
 	ENTITY_CLASS
 
@@ -33,19 +32,11 @@ public:
 	inline void setFlags(uint8 f);
 	inline uint8 flags() const;
 
-	inline void setPosition(const Eigen::Vector3f& pos);
-	inline Eigen::Vector3f position() const;
-
-	inline void setScale(const Eigen::Vector3f& s);
-	inline Eigen::Vector3f scale() const;
-
-	inline void setRotation(const Eigen::Quaternionf& quat);
-	inline Eigen::Quaternionf rotation() const;
-
 	// FIXME: Unfortunatly we have to disable alignment for the transformations.
 	// A SIGSEV is raised in release build otherwise.
 	// It may be a bug in Eigen or somewhere in my own code.
 	typedef Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign> Transform;
+	inline void setTransform(const Transform& transform);
 	inline const Transform& transform() const;
 	inline const Transform& invTransform() const;
 
@@ -53,35 +44,21 @@ public:
 	inline const Eigen::Matrix3f& directionMatrix() const;
 	inline const Eigen::Matrix3f& invDirectionMatrix() const;
 
-	virtual std::string toString() const;
-
-	inline void freeze();
-	inline bool isFrozen() const;
-
-	// Events:
-	/* The entity will not be changed after this. */
-	virtual void onFreeze();
-
-	inline void invalidateCache();
-
 	virtual std::string dumpInformation() const;
+
+protected:
+	virtual void onFreeze(RenderContext* context) override;
 
 private:
 	std::string mName;
 	uint32 mID;
 	uint8 mFlags;
 
-	Eigen::Vector3f mPosition;
-	Eigen::Vector3f mScale;
-	Eigen::Quaternionf mRotation;
+	Transform mTransform;
 
-	bool mFrozen;
-
-	mutable bool mReCache;
-	mutable Transform mTransformCache;
-	mutable Transform mInvTransformCache;
-	mutable Eigen::Matrix3f mNormalMatrixCache;
-	mutable Eigen::Matrix3f mInvNormalMatrixCache;
+	Transform mInvTransformCache;
+	Eigen::Matrix3f mNormalMatrixCache;
+	Eigen::Matrix3f mInvNormalMatrixCache;
 };
 } // namespace PR
 

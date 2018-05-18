@@ -42,6 +42,7 @@ void setup_environment(py::module& m)
 		.def_property_readonly("cropMaxX", &Environment::cropMaxX)
 		.def_property_readonly("cropMinY", &Environment::cropMinY)
 		.def_property_readonly("cropMaxY", &Environment::cropMaxY)
+		.def_property_readonly("registry", &Environment::registry)
 		// TODO
 		.def("dumpInformation", &Environment::dumpInformation)
 		.def("setup", &Environment::setup)

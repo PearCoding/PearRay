@@ -51,6 +51,10 @@ public:
 
 	inline float depth() const { return std::abs((mUpperBound - mLowerBound)(2)); }
 
+	inline float longestEdge() const { return std::max(width(), std::max(height(), depth())); }
+
+	inline float diameter() const { return (mUpperBound - mLowerBound).norm(); }
+
 	inline Sphere outerSphere()
 	{
 		return Sphere(center(),
@@ -92,6 +96,7 @@ public:
 		float T;
 	};
 	Intersection intersects(const Ray& ray) const;
+	bool intersectsSimple(const Ray& ray) const;
 
 	FaceSide getIntersectionSide(const Intersection& intersection) const;
 

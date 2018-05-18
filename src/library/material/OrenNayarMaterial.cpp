@@ -43,7 +43,7 @@ void OrenNayarMaterial::setRoughness(const std::shared_ptr<ScalarShaderOutput>& 
 }
 
 constexpr float MinRoughness = 0.001f;
-void OrenNayarMaterial::setup(RenderContext* context)
+void OrenNayarMaterial::onFreeze(RenderContext* context)
 {
 	if (!mRoughness)
 		mRoughness = std::make_shared<ConstScalarShaderOutput>(0.5f);
@@ -52,7 +52,7 @@ void OrenNayarMaterial::setup(RenderContext* context)
 		mAlbedo = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::black(context->spectrumDescriptor()));
 }
 
-void OrenNayarMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void OrenNayarMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	float val		= PR_1_PI;
 	float roughness = mRoughness->eval(point);
@@ -65,12 +65,12 @@ void OrenNayarMaterial::eval(Spectrum& spec, const ShaderClosure& point, const E
 	spec *= val;
 }
 
-float OrenNayarMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float OrenNayarMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	return Projection::cos_hemi_pdf(NdotL);
 }
 
-MaterialSample OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample OrenNayarMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;

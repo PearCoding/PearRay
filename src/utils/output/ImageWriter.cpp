@@ -67,8 +67,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 				   channelCount, TypeDesc::FLOAT);
 	spec.full_x		 = 0;
 	spec.full_y		 = 0;
-	spec.full_width  = mRenderer->fullWidth();
-	spec.full_height = mRenderer->fullHeight();
+	spec.full_width  = mRenderer->settings().filmWidth();
+	spec.full_height = mRenderer->settings().filmHeight();
 	spec.x			 = cx;
 	spec.y			 = cy;
 
@@ -173,9 +173,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 
 	// Write content
 	float* line = new float[channelCount * rw];
-	if (!line) // TODO: Add single token variant!
-	{
-		PR_LOGGER.log(L_Error, M_System, "Not enough memory for image output!");
+	if (!line) {// TODO: Add single token variant!
+		PR_LOG(L_ERROR) << "Not enough memory for image output!" << std::endl;
 		ImageOutput::destroy(out);
 		return false;
 	}

@@ -43,7 +43,9 @@ public:
 
 	// Entity
 	std::string type() const override;
-	void onFreeze() override; // Cache
+	
+protected:
+	void onFreeze(RenderContext* context) override; // Cache
 
 private:
 	void constructRay(float nx, float ny, const Eigen::Vector2f& r, Eigen::Vector3f& origin, Eigen::Vector3f& dir) const;

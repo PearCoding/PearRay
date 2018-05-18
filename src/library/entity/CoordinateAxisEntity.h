@@ -39,11 +39,9 @@ public:
 
 	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const override;
 
+protected:
 	// Entity
-	void onFreeze() override;
-
-	// RenderEntity
-	void setup(RenderContext* context) override;
+	void onFreeze(RenderContext* context) override;
 
 private:
 	void setup_cache() const;
@@ -55,6 +53,7 @@ private:
 
 	mutable BoundingBox mBoundingBox_Cache;
 	mutable BoundingBox mAxisBoundingBox_Cache[3];
-	mutable float mPDF_Cache;
+
+	mutable float mPDF_Cache[6*3];
 };
 }

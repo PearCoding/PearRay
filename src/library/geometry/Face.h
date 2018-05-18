@@ -24,7 +24,7 @@ public:
 		vec = V[1] * u + V[2] * v + V[0] * (1 - u - v);
 
 		norm = N[1] * u + N[2] * v + N[0] * (1 - u - v);
-		norm.normalize();
+		//norm.normalize();
 
 		uv = UV[1] * u + UV[2] * v + UV[0] * (1 - u - v);
 	}

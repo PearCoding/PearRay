@@ -13,7 +13,7 @@ BoundaryEntity::BoundaryEntity(uint32 id, const std::string& name, const Boundin
 	: RenderEntity(id, name)
 	, mBoundingBox(box)
 	, mMaterial(nullptr)
-	, mPDF_Cache(0)
+	, mPDF_Cache()
 {
 }
 
@@ -79,16 +79,14 @@ RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 {
 	PR_GUARD_PROFILE();
 
-	Eigen::Vector3f vertex(0, 0, 0);
-
 	Ray local = ray;
 	local.setOrigin(invTransform() * ray.origin());
 	local.setDirection((invDirectionMatrix() * ray.direction()).normalized());
 
 	RenderEntity::Collision c;
-	BoundingBox box = localBoundingBox();
+	BoundingBox box				 = localBoundingBox();
 	BoundingBox::Intersection in = box.intersects(local);
-	c.Successful = in.Successful;
+	c.Successful				 = in.Successful;
 
 	if (in.Successful) {
 		c.Point.P = transform() * in.Position;
@@ -98,8 +96,8 @@ RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);
 
 		Eigen::Vector2f uv = plane.project(in.Position);
-		c.Point.UVW		 = Eigen::Vector3f(uv(0), uv(1), 0);
-		c.Point.Material = material().get();
+		c.Point.UVW		   = Eigen::Vector3f(uv(0), uv(1), 0);
+		c.Point.Material   = material().get();
 		return c;
 	}
 
@@ -118,22 +116,27 @@ RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vecto
 	r.Point.P  = transform() * (plane.xAxis() * rnd(1) + plane.yAxis() * rnd(2));
 	r.Point.Ng = (directionMatrix() * plane.normal()).normalized();
 	Projection::tangent_frame(r.Point.Ng, r.Point.Nx, r.Point.Ny);
-	r.Point.UVW		= Eigen::Vector3f(rnd(1), rnd(2), 0);
+	r.Point.UVW		 = Eigen::Vector3f(rnd(1), rnd(2), 0);
 	r.Point.Material = material().get();
 
-	r.PDF_A = mPDF_Cache;
+	r.PDF_A = mPDF_Cache[(int)side];
 	return r;
 }
 
 // Entity
-void BoundaryEntity::setup(RenderContext* context)
+void BoundaryEntity::onFreeze(RenderContext* context)
 {
-	RenderEntity::setup(context);
+	RenderEntity::onFreeze(context);
+
+	constexpr float prefactor = 1.0f / 6;
+
+	for (int i = 0; i < 6; ++i) {
+		Plane plane		 = worldBoundingBox().getFace((BoundingBox::FaceSide)i);
+		const float area = plane.surfaceArea();
+		mPDF_Cache[i]	= prefactor * (area > PR_EPSILON ? 1.0f / area : 0);
+	}
 
 	if (mMaterial)
-		mMaterial->setup(context);
-
-	const float area = surfaceArea(nullptr);
-	mPDF_Cache = (area > PR_EPSILON ? 1.0f/area : 0);
+		mMaterial->freeze(context);
 }
-}
+} // namespace PR

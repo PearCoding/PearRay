@@ -28,8 +28,7 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	if (mInit && !mWorkingDir.empty()) {
 		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
-			PR_LOGGER.logf(L_Error, M_System,
-						   "Couldn't delete lock directory '%s'!", f.c_str());
+			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
 	}
 
 	mInit		= true;
@@ -40,12 +39,10 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 
 		// Setup lock directory
 		if (!boost::filesystem::create_directory(mWorkingDir + "/" LOCK_FILE_NAME))
-			PR_LOGGER.logf(L_Warning, M_System,
-						   "Couldn't create lock directory '%s/" LOCK_FILE_NAME "'. Maybe already running?", mWorkingDir.c_str());
+			PR_LOG(L_WARNING) << "Couldn't create lock directory " << mWorkingDir << "/" LOCK_FILE_NAME ". Maybe already running?" << std::endl;
 
 		if (!boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
-			PR_LOGGER.logf(L_Error, M_System,
-						   "Couldn't delete lock directory '%s/" LOCK_IMG_FILE_NAME "'!", mWorkingDir.c_str());
+			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << "/" LOCK_IMG_FILE_NAME "!" << std::endl;
 	}
 }
 
@@ -67,8 +64,7 @@ void OutputSpecification::deinit()
 	if (!mWorkingDir.empty()) {
 		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
-			PR_LOGGER.logf(L_Error, M_System,
-						   "Couldn't delete lock directory '%s'!", f.c_str());
+			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f;
 	}
 
 	mInit = false;
@@ -341,8 +337,7 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 								}
 								file.SettingsCounter.push_back(spec);
 							} else {
-								PR_LOGGER.logf(L_Error, M_Scene,
-											   "Unknown channel type %s!", type.c_str());
+								PR_LOG(L_ERROR) << "Unknown channel type " << type;
 							}
 						}
 					}
@@ -382,27 +377,22 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, T
 		const std::string filename = dir + "/" + f.Name + ".exr";
 		if (!mImageWriter.save(toneMapper, filename,
 							   f.SettingsSpectral, f.Settings1D, f.SettingsCounter, f.Settings3D))
-			PR_LOGGER.logf(L_Error, M_System,
-						   "Couldn't save image file '%s'!", filename.c_str());
+			PR_LOG(L_ERROR) << "Couldn't save image file " << filename << std::endl;
 
 		if (force)
-			PR_LOGGER.logf(L_Info, M_System,
-						   "Saved file '%s'.", filename.c_str());
+			PR_LOG(L_INFO) << "Saved file " << filename << std::endl;
 	}
 
 	for (const FileSpectral& f : mSpectralFiles) {
 		const std::string filename = dir + "/" + f.Name + ".spec";
 		if (!mImageWriter.save_spectral(filename, renderer->output()->getSpectralChannel(), f.Compress))
-			PR_LOGGER.logf(L_Error, M_System,
-						   "Couldn't save spectral file '%s'!", filename.c_str());
+			PR_LOG(L_ERROR) << "Couldn't save spectral file " << filename << std::endl;
 
 		if (force)
-			PR_LOGGER.logf(L_Info, M_System,
-						   "Saved file '%s'.", filename.c_str());
+			PR_LOG(L_INFO) << "Saved file " << filename << std::endl;
 	}
 
 	if (!force && !boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
-		PR_LOGGER.logf(L_Error, M_System,
-					   "Couldn't delete lock directory '%s/" LOCK_IMG_FILE_NAME "'!", mWorkingDir.c_str());
+		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << "/" LOCK_IMG_FILE_NAME "!" << std::endl;
 }
 } // namespace PR

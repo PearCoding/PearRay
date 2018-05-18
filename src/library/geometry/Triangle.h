@@ -190,7 +190,7 @@ public:
 	{
 		BoundingBox box(p1, p2);
 		box.combine(p3);
-		box.inflate(0.000001f);
+		box.inflate(0.0001f);
 
 		return box;
 	}

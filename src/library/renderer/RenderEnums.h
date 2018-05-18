@@ -1,58 +1,62 @@
 #pragma once
 
+#include "PR_Config.h"
+
 namespace PR {
 enum SamplerMode {
-	SM_Random,
-	SM_Uniform,
-	SM_Jitter,
-	SM_MultiJitter,
-	SM_HaltonQMC
+	SM_RANDOM,
+	SM_UNIFORM,
+	SM_JITTER,
+	SM_MULTI_JITTER,
+	SM_HALTON_QMC
 };
 
 enum DebugMode {
-	DM_None,
-	DM_Depth,
-	DM_Normal_Both,
-	DM_Normal_Positive,
-	DM_Normal_Negative,
-	DM_Normal_Spherical,
-	DM_Tangent_Both,
-	DM_Tangent_Positive,
-	DM_Tangent_Negative,
-	DM_Tangent_Spherical,
-	DM_Binormal_Both,
-	DM_Binormal_Positive,
-	DM_Binormal_Negative,
-	DM_Binormal_Spherical,
+	DM_DEPTH,
+	DM_NORMAL_BOTH,
+	DM_NORMAL_POSITIVE,
+	DM_NORMAL_NEGATIVE,
+	DM_NORMAL_SPHERICAL,
+	DM_TANGENT_BOTH,
+	DM_TANGENT_POSITIVE,
+	DM_TANGENT_NEGATIVE,
+	DM_TANGENT_SPHERICAL,
+	DM_BINORMAL_BOTH,
+	DM_BINORMAL_POSITIVE,
+	DM_BINORMAL_NEGATIVE,
+	DM_BINORMAL_SPHERICAL,
 	DM_UVW,
 	DM_PDF,
-	DM_Emission,
-	DM_Validity,
-	DM_Flag_Inside,
-	DM_Container_ID
+	DM_EMISSION,
+	DM_VALIDITY,
+	DM_FLAG_INSIDE,
+	DM_CONTAINER_ID,
+	DM_BOUNDING_BOX
 };
 
 enum IntegratorMode {
-	IM_Direct,
-	IM_BiDirect,
-	IM_PPM // Progressive Photon Mapping
+	IM_DIRECT,
+	IM_BIDIRECT,
+	IM_PPM, // Progressive Photon Mapping
+	IM_AO,
+	IM_VISUALIZER
 };
 
 /* Visual feedback tile mode */
 enum TileMode {
-	TM_Linear,
-	TM_Tile,
-	TM_Spiral
+	TM_LINEAR,
+	TM_TILE,
+	TM_SPIRAL
 };
 
 enum TimeMappingMode {
-	TMM_Center, // [0.5, 0.5]
-	TMM_Left,   // [-1, 0]
-	TMM_Right   // [0, 1]
+	TMM_CENTER, // [0.5, 0.5]
+	TMM_LEFT,   // [-1, 0]
+	TMM_RIGHT   // [0, 1]
 };
 
 enum PPMGatheringMode {
-	PGM_Sphere,
-	PGM_Dome
+	PGM_SPHERE,
+	PGM_DOME
 };
 }

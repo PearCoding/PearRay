@@ -23,9 +23,17 @@
 #include "Logger.h"
 
 namespace PR {
-constexpr uint32 MAX_THETA_SIZE = 128;
-constexpr uint32 MAX_PHI_SIZE   = MAX_THETA_SIZE * 2;
+// Registy Entries:
+static const char* RE_PASS_COUNT	   = "ppm/pass/count";
+static const char* RE_PHOTONS_PER_PASS = "ppm/pass/photons";
+static const char* RE_GATHER_COUNT	 = "ppm/photons/gather/max_count";
+static const char* RE_GATHER_RADIUS	= "ppm/photons/gather/max_radius";
+static const char* RE_GATHER_MODE	  = "ppm/photons/gather/mode";
+static const char* RE_DIFFUSE_DEPTH	= "ppm/diffuse/max_depth";
+static const char* RE_SQUEEZE_WEIGHT   = "ppm/photons/gather/squeeze_weight";
+static const char* RE_CONTRACT_RATIO   = "ppm/photons/gather/contract_ratio";
 
+//...
 struct PPM_Light {
 	RenderEntity* Entity = nullptr;
 	uint64 Photons		 = 0;
@@ -91,18 +99,52 @@ void PPMIntegrator::init()
 	PR_ASSERT(!mPhotonMap, "PhotonMap should be null at first.");
 	PR_ASSERT(mLights.empty(), "Lights should be empty at first.");
 
-	PR_ASSERT(renderer()->settings().ppm().maxPhotonsPerPass() > 0, "maxPhotonsPerPass should be bigger than 0 and be handled in upper classes.");
-	PR_ASSERT(renderer()->settings().ppm().maxGatherCount() > 0, "maxGatherCount should be bigger than 0 and be handled in upper classes.");
-	PR_ASSERT(renderer()->settings().ppm().maxGatherRadius() > PR_EPSILON, "maxGatherRadius should be bigger than 0 and be handled in upper classes.");
+	mPassCount = std::max<uint32>(1,
+								  renderer()->registry()->getByGroup<uint32>(RG_INTEGRATOR,
+																			 RE_PASS_COUNT,
+																			 16));
+	mPhotonsPerPass = std::max<uint64>(64,
+									   renderer()->registry()->getByGroup<uint64>(RG_INTEGRATOR,
+																				  RE_PHOTONS_PER_PASS,
+																				  100000));
 
-	mMaxPhotonsStoredPerPass = renderer()->settings().ppm().maxPhotonsPerPass() * (renderer()->settings().maxDiffuseBounces() + 1);
-	PR_LOGGER.logf(L_Info, M_Integrator, "Photons to store per pass: %llu", mMaxPhotonsStoredPerPass);
+	mMaxGatherCount = std::max<uint64>(64,
+									   renderer()->registry()->getByGroup<uint64>(RG_INTEGRATOR,
+																				  RE_GATHER_COUNT,
+																				  100000));
 
-	mPhotonMap = new Photon::PhotonMap(renderer()->settings().ppm().maxGatherRadius());
+	mMaxGatherRadius = std::max<float>(PR_EPSILON,
+									   renderer()->registry()->getByGroup<float>(RG_INTEGRATOR,
+																				 RE_GATHER_RADIUS,
+																				 10.0f));
 
-	mAccumulatedFlux = std::make_shared<FrameBufferFloat>(renderer()->spectrumDescriptor()->samples(), 0.0f, true);
-	mSearchRadius2   = std::make_shared<FrameBufferFloat>(1, renderer()->settings().ppm().maxGatherRadius() * renderer()->settings().ppm().maxGatherRadius(),
-														true);
+	mGatherMode = renderer()->registry()->getByGroup<PPMGatheringMode>(RG_INTEGRATOR,
+																	   RE_GATHER_MODE,
+																	   PGM_SPHERE);
+
+	mMaxDiffBounces = renderer()->registry()->getByGroup<uint32>(RG_INTEGRATOR,
+																 RE_DIFFUSE_DEPTH,
+																 1);
+
+	mSqueezeWeight2 = std::max<float>(0, std::min<float>(1,
+														 renderer()->registry()->getByGroup<float>(RG_INTEGRATOR,
+																								   RE_SQUEEZE_WEIGHT,
+																								   1.0f)));
+	mSqueezeWeight2 *= mSqueezeWeight2;
+
+	mContractRatio = std::max<float>(0, std::min<float>(1,
+														renderer()->registry()->getByGroup<float>(RG_INTEGRATOR,
+																								  RE_CONTRACT_RATIO,
+																								  0.25f)));
+
+	mMaxPhotonsStoredPerPass = mPhotonsPerPass * mMaxDiffBounces;
+
+	PR_LOG(L_DEBUG) << "Photons to store per pass: " << mMaxPhotonsStoredPerPass << std::endl;
+
+	mPhotonMap = new Photon::PhotonMap(mMaxGatherRadius);
+
+	mAccumulatedFlux  = std::make_shared<FrameBufferFloat>(renderer()->spectrumDescriptor()->samples(), 0.0f, true);
+	mSearchRadius2	= std::make_shared<FrameBufferFloat>(1, mMaxGatherRadius * mMaxGatherRadius, true);
 	mLocalPhotonCount = std::make_shared<FrameBufferUInt64>(1, 0, true);
 
 	renderer()->output()->registerCustomChannel_Spectral("int.ppm.accumulated_flux", mAccumulatedFlux);
@@ -117,13 +159,13 @@ void PPMIntegrator::init()
 
 	// Assign photon count to each light
 
-	const uint64 Photons					  = renderer()->settings().ppm().maxPhotonsPerPass();
-	const uint64 MinPhotons					  = renderer()->settings().ppm().maxPhotonsPerPass() * 0.1f; // Should be a parameter
-	const std::list<RenderEntity*>& lightList = renderer()->lights();
+	const uint64 Photons	= mPhotonsPerPass;
+	const uint64 MinPhotons = mPhotonsPerPass * 0.1f; // Should be a parameter
+	const auto& lightList   = renderer()->lights();
 
 	const uint64 k = MinPhotons * lightList.size();
 	if (k >= Photons) { // Not enough photons given.
-		PR_LOGGER.logf(L_Warning, M_Integrator, "Not enough photons per pass given. At least %llu is needed.", k);
+		PR_LOG(L_WARNING) << "Not enough photons per pass given. At least " << k << " is needed." << std::endl;
 
 		for (RenderEntity* light : lightList)
 			mLights.push_back(PPM_Light(light, MinPhotons, light->surfaceArea(nullptr)));
@@ -140,15 +182,13 @@ void PPMIntegrator::init()
 								 MinPhotons + std::ceil(d * (surface / fullArea)),
 								 surface);
 
-			PR_LOGGER.logf(L_Info, M_Integrator, "PPM Light %s %llu photons %f m2",
-						   light->name().c_str(), mLights.back().Photons, mLights.back().Surface);
+			PR_LOG(L_DEBUG) << "PPM Light " << light->name() << " " << mLights.back().Photons << " photons " << mLights.back().Surface << "m2" << std::endl;
 		}
 	}
 
 	// Spread photons over tile
 	const uint64 PhotonsPerTile = std::ceil(Photons / static_cast<float>(renderer()->tileCount()));
-	PR_LOGGER.logf(L_Info, M_Integrator, "Each tile shoots %llu photons",
-				   PhotonsPerTile);
+	PR_LOG(L_DEBUG) << "Each tile shoots " << PhotonsPerTile << " photons" << std::endl;
 
 	std::vector<uint64> photonsPerTile(renderer()->tileCount(), 0);
 	for (PPM_Light& light : mLights) {
@@ -176,11 +216,9 @@ void PPMIntegrator::init()
 	}
 
 	for (uint32 t = 0; t < renderer()->tileCount(); ++t) {
-		PR_LOGGER.logf(L_Info, M_Integrator, "PPM Tile %llu lights",
-					   mTileData[t].Lights.size());
+		PR_LOG(L_DEBUG) << "PPM Tile " << mTileData[t].Lights.size() << " lights" << std::endl;
 		for (auto ltd : mTileData[t].Lights) {
-			PR_LOGGER.logf(L_Info, M_Integrator, "  -> Light %s with %llu photons",
-						   ltd.Entity->Entity->name().c_str(), ltd.Photons);
+			PR_LOG(L_DEBUG) << "  -> Light " << ltd.Entity->Entity->name() << " with " << ltd.Photons << " photons" << std::endl;
 		}
 	}
 }
@@ -189,8 +227,7 @@ void PPMIntegrator::onNextPass(uint32 pass, bool& clean)
 {
 	// Clear sample, error, etc information prior next pass.
 	clean = pass % 2;
-	PR_LOGGER.logf(L_Info, M_Integrator, "Preparing PPM pass %i (PP %i, AP %i)", pass + 1,
-				   pass / 2 + 1, pass / 2 + pass % 2);
+	PR_LOG(L_DEBUG) << "Preparing PPM pass " << (pass + 1) << " (PP " << (pass / 2 + 1) << ", AP " << (pass / 2 + pass % 2) << ")" << std::endl;
 
 	if (pass % 2 == 0) // Photon Pass
 		mPhotonMap->reset();
@@ -206,14 +243,14 @@ void PPMIntegrator::onEnd()
 
 bool PPMIntegrator::needNextPass(uint32 pass) const
 {
-	return pass < renderer()->settings().ppm().maxPassCount() * 2;
+	return pass < mPassCount * 2;
 }
 
 void PPMIntegrator::onPass(const RenderSession& session, uint32 pass)
 {
 	if (pass % 2 == 1) {
 		OutputMap* output = renderer()->output();
-		Spectrum spec = Spectrum::black(renderer()->spectrumDescriptor());
+		Spectrum spec	 = Spectrum::black(renderer()->spectrumDescriptor());
 		ShaderClosure sc;
 
 		for (uint32 y = session.tile()->sy(); y < session.tile()->ey(); ++y) {
@@ -232,8 +269,8 @@ void PPMIntegrator::onPass(const RenderSession& session, uint32 pass)
 
 RenderStatus PPMIntegrator::status() const
 {
-	const uint64 max_pass_samples = renderer()->width() * renderer()->height() * renderer()->settings().maxCameraSampleCount();
-	const uint64 max_samples	  = max_pass_samples * renderer()->settings().ppm().maxPassCount();
+	const uint64 max_pass_samples = renderer()->width() * renderer()->height() * renderer()->samplesPerPixel();
+	const uint64 max_samples	  = max_pass_samples * mPassCount;
 	RenderStatus stat;
 
 	uint64 photonsEmitted = 0;
@@ -244,7 +281,7 @@ RenderStatus PPMIntegrator::status() const
 	}
 
 	stat.setField("int.max_sample_count", max_samples);
-	stat.setField("int.max_pass_count", static_cast<uint64>(2 * renderer()->settings().ppm().maxPassCount()));
+	stat.setField("int.max_pass_count", static_cast<uint64>(2 * mPassCount));
 	stat.setField("int.photons_emitted", photonsEmitted);
 	stat.setField("int.photons_stored", photonsStored);
 
@@ -253,11 +290,10 @@ RenderStatus PPMIntegrator::status() const
 	else
 		stat.setField("int.pass_name", "Accumulation");
 
-	const uint64 PhotonsPerPass = renderer()->settings().ppm().maxPhotonsPerPass();
-	const float passEff			= 1.0f / (2 * renderer()->settings().ppm().maxPassCount());
-	float percentage			= renderer()->currentPass() * passEff;
+	const float passEff = 1.0f / (2 * mPassCount);
+	float percentage	= renderer()->currentPass() * passEff;
 	if (renderer()->currentPass() % 2 == 0) // Photon Pass
-		percentage += passEff * photonsEmitted / ((renderer()->currentPass() / 2 + 1) * PhotonsPerPass);
+		percentage += passEff * photonsEmitted / ((renderer()->currentPass() / 2 + 1) * mPhotonsPerPass);
 	else
 		percentage += passEff * renderer()->statistics().pixelSampleCount() / static_cast<float>(max_pass_samples);
 
@@ -268,10 +304,7 @@ RenderStatus PPMIntegrator::status() const
 
 void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 {
-#ifdef PR_DEBUG
-	PR_LOGGER.log(L_Debug, M_Integrator, "Shooting Photons");
-#endif
-	const uint32 H  = renderer()->settings().maxDiffuseBounces() + 1;
+	const uint32 H  = mMaxDiffBounces + 1;
 	const uint32 RD = renderer()->settings().maxRayDepth();
 
 	Spectrum radiance(renderer()->spectrumDescriptor(), 0.0f);
@@ -319,14 +352,14 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 					if (ms.PDF_S > PR_EPSILON && !ms.isSpecular()) { // Diffuse
 						// Always store when diffuse
 						Photon::Photon photon;
-						for(int k = 0; k < 3; ++k) {
-							photon.Position[k] = sc.P(k);
+						for (int k = 0; k < 3; ++k) {
+							photon.Position[k]  = sc.P(k);
 							photon.Direction[k] = -ray.direction().coeff(k);
 						}
 
 						evaluation = radiance * inv;
 						XYZConverter::convertXYZ(evaluation,
-											  photon.Power[0], photon.Power[1], photon.Power[2]);
+												 photon.Power[0], photon.Power[1], photon.Power[2]);
 
 						mPhotonMap->store(photon);
 
@@ -354,15 +387,14 @@ void PPMIntegrator::photonPass(const RenderSession& session, uint32 pass)
 
 void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, uint32 diffbounces, const RenderSession& session)
 {
-	const auto gatheringMode = renderer()->settings().ppm().gatheringMode();
-	const float A			 = 1 - renderer()->settings().ppm().contractRatio();
+	const float A = 1 - mContractRatio;
 
 	PPM_ThreadData& threadData = mThreadData[session.thread()];
 	RenderEntity* entity	   = renderer()->shootWithEmission(spec, in, sc, session);
 
 	if (!entity || !sc.Material
 		|| !sc.Material->canBeShaded()
-		|| diffbounces > renderer()->settings().maxDiffuseBounces())
+		|| diffbounces > mMaxDiffBounces)
 		return;
 
 	const uint32 depth		  = in.depth();
@@ -391,8 +423,8 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 			// Gathering
 			Photon::PhotonSphere query;
 
-			query.MaxPhotons	= renderer()->settings().ppm().maxGatherCount();
-			query.SqueezeWeight = renderer()->settings().ppm().squeezeWeight() * renderer()->settings().ppm().squeezeWeight();
+			query.MaxPhotons	= mMaxGatherCount;
+			query.SqueezeWeight = mSqueezeWeight2;
 			query.Center		= sc.P;
 			query.Normal		= sc.N;
 			query.Distance2		= mSearchRadius2->getFragment(in.pixel());
@@ -409,12 +441,12 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 
 			threadData.Accum[depth].clear();
 			size_t found = 0;
-			switch (gatheringMode) {
+			switch (mGatherMode) {
 			default:
-			case PGM_Sphere:
+			case PGM_SPHERE:
 				mPhotonMap->estimateSphere(threadData.Accum[depth], query, accumFunc, found);
 				break;
-			case PGM_Dome:
+			case PGM_DOME:
 				mPhotonMap->estimateDome(threadData.Accum[depth], query, accumFunc, found);
 				break;
 			}
@@ -439,11 +471,11 @@ void PPMIntegrator::accumPass(Spectrum& spec, ShaderClosure& sc, const Ray& in, 
 		} // End diffuse
 	}
 
-	if (!specular) { // Apply infinite lights if no specular scattering happened
+	/*if (!specular) { // Apply infinite lights if no specular scattering happened
 		float inf_pdf;
 		handleInfiniteLights(threadData.Evaluation[depth], in, sc, session, inf_pdf);
 		MSI::balance(threadData.FullWeight[depth], full_pdf, threadData.Evaluation[depth], inf_pdf);
-	}
+	}*/
 
 	spec += threadData.FullWeight[depth];
 }

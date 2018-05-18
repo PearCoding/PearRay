@@ -11,12 +11,11 @@
 #include "math/Fresnel.h"
 #include "math/Reflection.h"
 
-#include "CTP.h"
 #include "Logger.h"
 
 #include <sstream>
 
-#define PR_GLASS_USE_DEFAULT_SCHLICK
+//#define PR_GLASS_USE_DEFAULT_SCHLICK
 
 namespace PR {
 GlassMaterial::GlassMaterial(uint32 id)
@@ -24,6 +23,7 @@ GlassMaterial::GlassMaterial(uint32 id)
 	, mSpecularity(nullptr)
 	, mIndex(nullptr)
 	, mThin(false)
+	, mSpectrumSamples(0)
 {
 }
 
@@ -57,21 +57,9 @@ void GlassMaterial::setIOR(const std::shared_ptr<SpectrumShaderOutput>& data)
 	mIndex = data;
 }
 
-struct GM_ThreadData {
-	Spectrum Specularity;
-
-	explicit GM_ThreadData(RenderContext* context)
-		: Specularity(context->spectrumDescriptor())
-	{
-	}
-};
-
-constexpr float MinRoughness = 0.001f;
-void GlassMaterial::setup(RenderContext* context)
+void GlassMaterial::onFreeze(RenderContext* context)
 {
-	mThreadData.clear();
-	for (size_t i = 0; i < context->threads(); ++i)
-		mThreadData.push_back(std::make_shared<GM_ThreadData>(context));
+	mSpectrumSamples = context->spectrumDescriptor()->samples();
 
 	if (!mSpecularity)
 		mSpecularity = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::white(context->spectrumDescriptor()));
@@ -80,81 +68,107 @@ void GlassMaterial::setup(RenderContext* context)
 		mIndex = std::make_shared<ConstSpectrumShaderOutput>(Spectrum::gray(context->spectrumDescriptor(), 1.55f));
 }
 
-void GlassMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void GlassMaterial::eval(
+	Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L,
+	float NdotL, const RenderSession& session) const
 {
 	mSpecularity->eval(spec, point);
 }
 
-float GlassMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float GlassMaterial::pdf(
+	const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	return std::numeric_limits<float>::infinity();
 }
 
-MaterialSample GlassMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample GlassMaterial::sample(
+	const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
-	const std::shared_ptr<GM_ThreadData>& data = mThreadData[session.thread()];
-	const float ind = mIndex->evalIndex(point, point.WavelengthIndex, data->Specularity.samples());
+	const float ind   = mIndex->evalIndex(point, point.WavelengthIndex, mSpectrumSamples);
+	const float eta   = (point.Flags & SCF_Inside) == 0 ? 1 / ind : ind;
+	const float NdotT = Reflection::refraction_angle(point.NdotV, eta);
 
-	float weight = (point.Flags & SCF_Inside) == 0 ?
-#ifndef PR_GLASS_USE_DEFAULT_SCHLICK
-												   Fresnel::dielectric(-point.NdotV, 1, ind)
-												   : Fresnel::dielectric(-point.NdotV, ind, 1);
-#else
-												   Fresnel::schlick(-point.NdotV, 1, ind)
-												   : Fresnel::schlick(-point.NdotV, ind, 1);
-#endif
-
-	bool total = false;
 	MaterialSample ms;
-	if (rnd(0) < weight) {
-		ms.ScatteringType = MST_SpecularReflection;
-		ms.L			  = Reflection::reflect(point.NdotV, point.N, point.V);
+	if (NdotT < 0) { // Total reflection
+		if (!mThin) {
+			ms.PathWeight = 1;
+			sample_reflection(ms, point, session);
+		} else {
+			ms.PathWeight = 0;
+		}
 	} else {
-		ms.ScatteringType = MST_SpecularTransmission;
-		ms.L			  = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
-								   -point.NdotV, point.N, point.V, total);
-		if (!mThin && total)
-			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
+		ms.PathWeight = get_weight(ind, NdotT, point);
+
+		if (rnd(0) <= ms.PathWeight) {
+			sample_reflection(ms, point, session);
+		} else {
+			ms.PathWeight = 1 - ms.PathWeight;
+			sample_refraction(ms, NdotT, eta, point, session);
+		}
 	}
 
-	PR_ASSERT(weight >= 0 && weight <= 1, "Weight should be bounded to [0,1]");
+	PR_ASSERT(ms.PathWeight >= 0 && ms.PathWeight <= 1, "Weight should be bounded to [0,1]");
+	ms.PDF_S = std::numeric_limits<float>::infinity();
 
-	ms.PDF_S = (total && mThin) ? 0 : weight;
 	return ms;
 }
 
-MaterialSample GlassMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
+MaterialSample GlassMaterial::samplePath(
+	const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session) const
 {
-	const std::shared_ptr<GM_ThreadData>& data = mThreadData[session.thread()];
-	const float ind = mIndex->evalIndex(point, point.WavelengthIndex, data->Specularity.samples());
+	const float ind   = mIndex->evalIndex(point, point.WavelengthIndex, mSpectrumSamples);
+	const float eta   = (!point.isInside()) ? 1 / ind : ind;
+	const float NdotT = Reflection::refraction_angle(point.NdotV, eta);
 
 	MaterialSample ms;
-	float weight = (point.Flags & SCF_Inside) == 0 ?
-#ifndef PR_GLASS_USE_DEFAULT_SCHLICK
-												   Fresnel::dielectric(-point.NdotV, 1, ind)
-												   : Fresnel::dielectric(-point.NdotV, ind, 1);
-#else
-												   Fresnel::schlick(-point.NdotV, 1, ind)
-												   : Fresnel::schlick(-point.NdotV, ind, 1);
-#endif
-
-	bool total = false;
-	if (path == 0) {
-		ms.ScatteringType = MST_SpecularReflection;
-		ms.L			  = Reflection::reflect(point.NdotV, point.N, point.V);
+	if (NdotT < 0) { // Total reflection
+		if (!mThin && path == 0) {
+			ms.PathWeight = 1;
+			sample_reflection(ms, point, session);
+		} else {
+			ms.PathWeight = 0;
+		}
 	} else {
-		weight			  = 1 - weight;
-		ms.ScatteringType = MST_SpecularTransmission;
-		ms.L			  = Reflection::refract((point.Flags & SCF_Inside) == 0 ? 1 / ind : ind,
-								   -point.NdotV, point.N, point.V, total);
-		if (!mThin && total)
-			ms.L = Reflection::reflect(point.NdotV, point.N, point.V);
+		ms.PathWeight = get_weight(ind, NdotT, point);
+
+		if (path == 0) {
+			sample_reflection(ms, point, session);
+		} else {
+			ms.PathWeight = 1 - ms.PathWeight;
+			sample_refraction(ms, NdotT, eta, point, session);
+		}
 	}
 
-	PR_ASSERT(weight >= 0 && weight <= 1, "Weight should be bounded to [0,1]");
+	PR_ASSERT(ms.PathWeight >= 0 && ms.PathWeight <= 1, "Weight should be bounded to [0,1]");
 
-	ms.PDF_S = (total && mThin) ? 0 : weight;
+	ms.PDF_S = std::numeric_limits<float>::infinity();
 	return ms;
+}
+
+void GlassMaterial::sample_reflection(
+	MaterialSample& ms, const ShaderClosure& point, const RenderSession& session) const
+{
+	ms.ScatteringType = MST_SpecularReflection;
+	ms.L			  = Reflection::reflect(point.NdotV, point.N, point.V);
+}
+
+void GlassMaterial::sample_refraction(
+	MaterialSample& ms, float NdotT, float eta, const ShaderClosure& point, const RenderSession& session) const
+{
+	ms.ScatteringType = MST_SpecularTransmission;
+	ms.L			  = Reflection::refract(eta, point.NdotV, NdotT, point.N, point.V);
+}
+
+float GlassMaterial::get_weight(float ior, float NdotT, const ShaderClosure& point) const
+{
+	return (point.Flags & SCF_Inside) == 0 ?
+#ifndef PR_GLASS_USE_DEFAULT_SCHLICK
+										   Fresnel::dielectric(-point.NdotV, NdotT, 1, ior)
+										   : Fresnel::dielectric(-point.NdotV, NdotT, ior, 1);
+#else
+										   Fresnel::schlick(-point.NdotV, 1, ior)
+										   : Fresnel::schlick(-point.NdotV, ior, 1);
+#endif
 }
 
 uint32 GlassMaterial::samplePathCount() const

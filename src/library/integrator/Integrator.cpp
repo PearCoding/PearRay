@@ -20,6 +20,7 @@
 #include "math/MSI.h"
 
 // Implementations
+#include "integrator/AOIntegrator.h"
 #include "integrator/BiDirectIntegrator.h"
 #include "integrator/DebugIntegrator.h"
 #include "integrator/DirectIntegrator.h"
@@ -55,33 +56,25 @@ void Integrator::init()
 		mThreadData.emplace_back(mRenderer);
 }
 
-void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const ShaderClosure& sc, const RenderSession& session, float& full_pdf)
+void Integrator::addInfiniteLightContribution(Spectrum& spec, const Ray& in, const ShaderClosure& sc,
+											  const RenderSession& session, uint32 samplesPerLight)
 {
 	I_ThreadData& threadData = mThreadData[session.thread()];
-	full_pdf				 = 0;
 
-	spec.clear();
+	const uint32 infinityLightCount = renderer()->scene()->infiniteLights().size();
+	const uint32 lightPatchCount	= samplesPerLight * infinityLightCount;
 
-	if (renderer()->scene()->infiniteLights().empty())
-		return;
-
-	const float lightSampleWeight   = 1.0f / renderer()->settings().maxLightSamples();
-	const float inflightCountWeight = 1.0f / renderer()->scene()->infiniteLights().size();
-
-	RandomSampler sampler(session.tile()->random());
 	for (auto e : renderer()->scene()->infiniteLights()) {
-		float semi_pdf = 0;
-
 		threadData.SemiWeight.clear();
 		for (uint32 i = 0;
-			 i < renderer()->settings().maxLightSamples() && !std::isinf(semi_pdf);
+			 i < samplesPerLight;
 			 ++i) {
-			IInfiniteLight::LightSample ls = e->sample(sc, sampler.generate3D(i), session);
+			IInfiniteLight::LightSample ls = e->sample(sc, session.tile()->random().get3D(), session);
 
 			if (ls.PDF_S <= PR_EPSILON)
 				continue;
 
-			const float NdotL = std::abs(ls.L.dot(sc.N));
+			const float NdotL = std::max(0.0f, ls.L.dot(sc.N));
 
 			if (NdotL <= PR_EPSILON)
 				continue;
@@ -92,14 +85,12 @@ void Integrator::handleInfiniteLights(Spectrum& spec, const Ray& in, const Shade
 			if (!mRenderer->shootForDetection(ray, session)) {
 				sc.Material->eval(threadData.Weight, sc, ls.L, NdotL, session);
 				e->apply(threadData.Evaluation, ls.L, session);
-				threadData.Weight *= threadData.Evaluation * NdotL;
-
-				MSI::balance(threadData.SemiWeight, semi_pdf, threadData.Weight, lightSampleWeight * ls.PDF_S);
+				threadData.Weight *= threadData.Evaluation * (NdotL / ls.PDF_S);
+				threadData.SemiWeight += threadData.Weight;
 			}
 		}
 
-		MSI::balance(spec, full_pdf, threadData.SemiWeight,
-					 inflightCountWeight * (std::isinf(semi_pdf) ? 1 : semi_pdf));
+		spec += threadData.SemiWeight / (float)lightPatchCount;
 	}
 }
 
@@ -143,19 +134,20 @@ void Integrator::handleSpecularPath(Spectrum& spec, const Ray& in, const ShaderC
 	}
 }
 
-std::unique_ptr<Integrator> Integrator::create(RenderContext* context, IntegratorMode mode) {
+std::unique_ptr<Integrator> Integrator::create(RenderContext* context, IntegratorMode mode)
+{
 	switch (mode) {
-	case IM_Direct:
+	case IM_DIRECT:
 		return std::make_unique<DirectIntegrator>(context);
 	default:
-	case IM_BiDirect:
+	case IM_BIDIRECT:
 		return std::make_unique<BiDirectIntegrator>(context);
 	case IM_PPM:
 		return std::make_unique<PPMIntegrator>(context);
+	case IM_AO:
+		return std::make_unique<AOIntegrator>(context);
+	case IM_VISUALIZER:
+		return std::make_unique<DebugIntegrator>(context);
 	}
-}
-
-std::unique_ptr<Integrator> Integrator::createDebug(RenderContext* context) {
-	return std::make_unique<DebugIntegrator>(context);
 }
 } // namespace PR

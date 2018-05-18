@@ -20,11 +20,11 @@ std::shared_ptr<PR::Entity> MeshParser::parse(Environment* env, const std::strin
 		if (env->hasMesh(meshD.getString())) {
 			me->setMesh(env->getMesh(meshD.getString()));
 		} else {
-			PR_LOGGER.logf(L_Error, M_Scene, "Couldn't find mesh %s.", meshD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find mesh " << meshD.getString() << std::endl;
 			return nullptr;
 		}
 	} else {
-		PR_LOGGER.logf(L_Error, M_Scene, "Invalid mesh entry found.");
+		PR_LOG(L_ERROR) << "Invalid mesh entry found." << std::endl;
 		return nullptr;
 	}
 
@@ -33,7 +33,7 @@ std::shared_ptr<PR::Entity> MeshParser::parse(Environment* env, const std::strin
 		if (env->hasMaterial(materialsD.getString()))
 			me->setMaterial(0, env->getMaterial(materialsD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialsD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << materialsD.getString() << std::endl;
 	} else if (materialsD.type() == DL::Data::T_Group) {
 		const DL::DataGroup& group = materialsD.getGroup();
 		me->reserveMaterialSlots(group.anonymousCount());
@@ -45,7 +45,7 @@ std::shared_ptr<PR::Entity> MeshParser::parse(Environment* env, const std::strin
 				if (env->hasMaterial(matD.getString()))
 					me->setMaterial(slot, env->getMaterial(matD.getString()));
 				else
-					PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", matD.getString().c_str());
+					PR_LOG(L_WARNING) << "Couldn't find material " << matD.getString() << std::endl;
 
 				++slot;
 			}

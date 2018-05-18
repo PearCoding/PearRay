@@ -25,23 +25,26 @@
 #include "material/Material.h"
 
 namespace PR {
-RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy, uint32 w, uint32 h, uint32 fw, uint32 fh,
-							 const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, const RenderSettings& settings)
+RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
+							 uint32 w, uint32 h,
+							 const std::shared_ptr<SpectrumDescriptor>& specdesc,
+							 const std::shared_ptr<Scene>& scene,
+							 const std::shared_ptr<Registry>& registry,
+							 const std::string& workingDir)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)
 	, mWidth(w)
 	, mHeight(h)
-	, mFullWidth(fw)
-	, mFullHeight(fh)
 	, mWorkingDir(workingDir)
 	, mSpectrumDescriptor(specdesc)
 	, mCamera(scene->activeCamera())
 	, mScene(scene)
+	, mRegistry(registry)
 	, mOutputMap()
 	, mTileMap()
 	, mIncrementalCurrentSample(0)
-	, mRenderSettings(settings)
+	, mRenderSettings(registry)
 	, mIntegrator(nullptr)
 	, mShouldStop(false)
 {
@@ -86,23 +89,19 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	}
 
 	/* Setup integrators */
-	if (mRenderSettings.debugMode() != DM_None) {
-		mIntegrator = Integrator::createDebug(this);
-	} else {
-		if (mRenderSettings.maxLightSamples() == 0) {
-			PR_LOGGER.log(L_Warning, M_Scene, "MaxLightSamples is zero: Nothing to render");
-			return;
-		}
-		mIntegrator = Integrator::create(this, mRenderSettings.integratorMode());
-	}
+	mIntegrator = Integrator::create(this, mRenderSettings.integratorMode());
 
 	PR_ASSERT(mIntegrator, "Integrator should be set after selection");
 
-	PR_LOGGER.log(L_Info, M_Scene, "Rendering with: ");
-	PR_LOGGER.logf(L_Info, M_Scene, "  AA Samples: %i", mRenderSettings.maxAASampleCount());
-	PR_LOGGER.logf(L_Info, M_Scene, "  Lens Samples: %i", mRenderSettings.maxLensSampleCount());
-	PR_LOGGER.logf(L_Info, M_Scene, "  Time Samples: %i", mRenderSettings.maxTimeSampleCount());
-	PR_LOGGER.logf(L_Info, M_Scene, "  Spectral Samples: %i", mRenderSettings.maxSpectralSampleCount());
+	mMaxRayDepth	 = mRenderSettings.maxRayDepth();
+	mSamplesPerPixel = mRenderSettings.samplesPerPixel();
+
+	PR_LOG(L_INFO) << "Rendering with: " << std::endl;
+	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount() << std::endl;
+	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount() << std::endl;
+	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount() << std::endl;
+	PR_LOG(L_INFO) << "  Spectral Samples: " << mRenderSettings.spectralSampleCount() << std::endl;
+	PR_LOG(L_INFO) << "  Full Samples: " << mSamplesPerPixel << std::endl;
 
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
@@ -141,8 +140,8 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		mIntegrator->onNextPass(0, clear);
 	}
 
-	PR_LOGGER.logf(L_Info, M_Scene, "Rendering with %d threads.", threadCount);
-	PR_LOGGER.log(L_Info, M_Scene, "Starting threads.");
+	PR_LOG(L_INFO) << "Rendering with " << threadCount << " threads." << std::endl;
+	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
 }
@@ -165,9 +164,14 @@ std::list<RenderTile*> RenderContext::currentTiles() const
 
 RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session)
 {
-	if (ray.depth() < mRenderSettings.maxRayDepth()) {
+	if (ray.depth() < mMaxRayDepth) {
 		SceneCollision c = mScene->checkCollision(ray);
 		sc				 = c.Point;
+
+		if (!c.Successful) {
+			session.tile()->statistics().incRayCount();
+			return nullptr;
+		}
 
 		sc.Flags  = 0;
 		sc.NgdotV = ray.direction().dot(sc.Ng);
@@ -199,7 +203,7 @@ RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, const Rend
 
 bool RenderContext::shootForDetection(const Ray& ray, const RenderSession& session)
 {
-	if (ray.depth() < mRenderSettings.maxRayDepth()) {
+	if (ray.depth() < mMaxRayDepth) {
 		SceneCollision c = mScene->checkCollisionSimple(ray);
 
 		session.tile()->statistics().incRayCount();
@@ -212,12 +216,29 @@ bool RenderContext::shootForDetection(const Ray& ray, const RenderSession& sessi
 	}
 }
 
+RenderEntity* RenderContext::shootForBoundingBox(const Ray& ray, Eigen::Vector3f& p, const RenderSession& session)
+{
+	if (ray.depth() < mMaxRayDepth) {
+		SceneCollision sc = mScene->checkCollisionBoundingBox(ray);
+
+		p = sc.Point.P;
+
+		session.tile()->statistics().incRayCount();
+		if (sc.Successful)
+			session.tile()->statistics().incEntityHitCount();
+
+		return sc.Entity;
+	} else {
+		return nullptr;
+	}
+}
+
 RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
 											   ShaderClosure& sc, const RenderSession& session)
 {
 	appliedSpec.clear();
 
-	if (ray.depth() >= mRenderSettings.maxRayDepth())
+	if (ray.depth() >= mMaxRayDepth)
 		return nullptr;
 
 	RenderEntity* entity = shoot(ray, sc, session);
@@ -284,12 +305,11 @@ RenderTile* RenderContext::getNextTile()
 {
 	std::lock_guard<std::mutex> guard(mTileMutex);
 
-	const auto maxCameraSamples = mRenderSettings.maxCameraSampleCount();
-	RenderTile* tile			= nullptr;
+	RenderTile* tile = nullptr;
 
 	// Try till we find a tile or all samples are already rendered
-	while (tile == nullptr && mIncrementalCurrentSample <= maxCameraSamples) {
-		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, maxCameraSamples));
+	while (tile == nullptr && mIncrementalCurrentSample <= mSamplesPerPixel) {
+		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, mSamplesPerPixel));
 		if (tile == nullptr) {
 			mIncrementalCurrentSample++;
 		}

@@ -17,6 +17,7 @@ const char* PROJECT =
 #include "testscene.inl"
 ;
 
+constexpr uint32 SEED = 42;
 constexpr int SPX = 50;
 constexpr int SPY = 50;
 constexpr float EPS = 10.0f;
@@ -28,24 +29,18 @@ PR_TEST("Equal Energy")
 	auto env = SceneLoader::loadFromString(PROJECT);
 	PR_ASSERT(env, "Test project string should be valid");
 
-	std::shared_ptr<SpectrumDescriptor> specDesc = SpectrumDescriptor::createStandardSpectral();
-	auto scene = env->sceneFactory().create();
-	auto renderFactory = std::make_shared<RenderFactory>(
-		specDesc,
-		env->renderWidth(),
-		env->renderHeight(),
-		scene, "");
+	env->registry()->setByGroup(RG_RENDERER, "common/seed", SEED);
+	auto renderFactory = env->createRenderFactory("");
 
-	Spectrum diOutput(specDesc);
-	Spectrum bidiOutput(specDesc);
-	Spectrum ppmOutput(specDesc);
+	Spectrum diOutput(renderFactory->spectrumDescriptor());
+	Spectrum bidiOutput(renderFactory->spectrumDescriptor());
+	Spectrum ppmOutput(renderFactory->spectrumDescriptor());
 
-	renderFactory->settings().setSeed(42);
-	renderFactory->settings().setMaxDiffuseBounces(0);
 
 	std::cout << "Direct>" << std::endl;
 	{
-		renderFactory->settings().setIntegratorMode(IM_Direct);
+		env->registry()->setByGroup(RG_RENDERER, "common/type", IM_DIRECT);
+		env->registry()->setByGroup(RG_RENDERER, "direct/diffuse/max_depth", 0);
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
@@ -55,12 +50,13 @@ PR_TEST("Equal Energy")
 		while(!renderer->isFinished())
 		{}
 
-		diOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
+		renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY), diOutput);
 	}
 
 	std::cout << "Bi-Direct>" << std::endl;
 	{
-		renderFactory->settings().setIntegratorMode(IM_BiDirect);
+		env->registry()->setByGroup(RG_RENDERER, "common/type", IM_BIDIRECT);
+		env->registry()->setByGroup(RG_RENDERER, "bidirect/diffuse/max_depth", 0);
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
@@ -70,14 +66,14 @@ PR_TEST("Equal Energy")
 		while(!renderer->isFinished())
 		{}
 
-		bidiOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
+		renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY), bidiOutput);
 	}
 
 	std::cout << "PPM>" << std::endl;
 	{
-		renderFactory->settings().setIntegratorMode(IM_PPM);
-		renderFactory->settings().ppm().setMaxPhotonsPerPass(200000);
-		renderFactory->settings().ppm().setMaxPassCount(10);
+		env->registry()->setByGroup(RG_RENDERER, "common/type", IM_PPM);
+		env->registry()->setByGroup(RG_RENDERER, "ppm/diffuse/max_depth", 0);
+		env->registry()->setByGroup(RG_RENDERER, "ppm/photons/pass_count", 10);
 
 		auto renderer = renderFactory->create(0, 1, 1);
 		env->outputSpecification().setup(renderer);
@@ -87,7 +83,7 @@ PR_TEST("Equal Energy")
 		while(!renderer->isFinished())
 		{}
 
-		ppmOutput = renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY));
+		renderer->output()->getFragment(Eigen::Vector2i(SPX,SPY), ppmOutput);
 	}
 
 	const float dif = diOutput.luminousFlux();

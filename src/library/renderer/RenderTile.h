@@ -118,6 +118,8 @@ private:
 	const uint32 mEY;
 	const uint32 mWidth;
 	const uint32 mHeight;
+	const uint32 mFullWidth;
+	const uint32 mFullHeight;
 	const uint32 mIndex;
 	const uint32 mMaxSamples;
 
@@ -128,6 +130,16 @@ private:
 	std::unique_ptr<Sampler> mLensSampler;
 	std::unique_ptr<Sampler> mTimeSampler;
 	std::unique_ptr<Sampler> mSpectralSampler;
+
+	const uint32 mAASampleCount;
+	const uint32 mLensSampleCount;
+	const uint32 mTimeSampleCount;
+	const uint32 mSpectralSampleCount;
+
+	// t = t'*alpha + beta
+	float mTimeAlpha;
+	float mTimeBeta;
+
 	RenderStatistics mStatistics;
 
 	const RenderContext& mContext;

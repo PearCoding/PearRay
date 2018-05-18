@@ -30,8 +30,12 @@ class PR_LIB RenderContext {
 	PR_CLASS_NON_COPYABLE(RenderContext);
 
 public:
-	RenderContext(uint32 index, uint32 offx, uint32 offy, uint32 width, uint32 height, uint32 fwidth, uint32 fheight,
-				  const std::shared_ptr<SpectrumDescriptor>& specdesc, const std::shared_ptr<Scene>& scene, const std::string& workingDir, const RenderSettings& settings);
+	RenderContext(uint32 index, uint32 offx, uint32 offy,
+				  uint32 width, uint32 height,
+				  const std::shared_ptr<SpectrumDescriptor>& specdesc,
+				  const std::shared_ptr<Scene>& scene,
+				  const std::shared_ptr<Registry>& registry,
+				  const std::string& workingDir);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -39,8 +43,6 @@ public:
 	inline uint32 offsetY() const { return mOffsetY; }
 	inline uint32 width() const { return mWidth; }
 	inline uint32 height() const { return mHeight; }
-	inline uint32 fullWidth() const { return mFullWidth; }
-	inline uint32 fullHeight() const { return mFullHeight; }
 
 	uint32 tileCount() const;
 
@@ -56,6 +58,7 @@ public:
 	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session);
 	bool shootForDetection(const Ray& ray, const RenderSession& session);
 	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, const RenderSession& session);
+	RenderEntity* shootForBoundingBox(const Ray& ray, Eigen::Vector3f& p, const RenderSession& session);
 
 	inline bool isStopping() const { return mShouldStop; }
 	bool isFinished() const;
@@ -73,9 +76,10 @@ public:
 
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
+	inline const std::shared_ptr<Registry>& registry() const { return mRegistry; }
 
 	// Light
-	inline const std::list<RenderEntity*>& lights() const { return mLights; }
+	inline const std::vector<RenderEntity*>& lights() const { return mLights; }
 
 	RenderStatistics statistics() const;
 	RenderStatus status() const;
@@ -84,6 +88,10 @@ public:
 	inline const std::string& workingDir() const { return mWorkingDir; }
 	inline OutputMap* output() const { return mOutputMap.get(); }
 	inline std::shared_ptr<Camera> camera() const { return mCamera; }
+
+	// Useful settings
+	inline uint32 maxRayDepth() const { return mMaxRayDepth; }
+	inline uint64 samplesPerPixel() const { return mSamplesPerPixel; }
 
 protected:
 	RenderTile* getNextTile();
@@ -99,21 +107,20 @@ private:
 	const uint32 mOffsetY;
 	const uint32 mWidth;
 	const uint32 mHeight;
-	const uint32 mFullWidth;
-	const uint32 mFullHeight;
 	const std::string mWorkingDir;
 
 	const std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 
 	const std::shared_ptr<Camera> mCamera;
 	const std::shared_ptr<Scene> mScene;
+	const std::shared_ptr<Registry> mRegistry;
 	std::unique_ptr<OutputMap> mOutputMap;
 
-	std::list<RenderEntity*> mLights;
+	std::vector<RenderEntity*> mLights;
 
 	std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;
-	uint32 mIncrementalCurrentSample;
+	uint64 mIncrementalCurrentSample;
 	std::list<RenderThread*> mThreads;
 
 	const RenderSettings mRenderSettings;
@@ -126,5 +133,8 @@ private:
 	uint32 mCurrentPass;
 
 	bool mShouldStop;
+
+	uint32 mMaxRayDepth;
+	uint64 mSamplesPerPixel;
 };
 }

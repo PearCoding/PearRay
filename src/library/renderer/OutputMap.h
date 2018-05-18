@@ -51,7 +51,7 @@ public:
 	void clear();
 
 	void pushFragment(const Eigen::Vector2i& p, const Spectrum& s, const ShaderClosure& sc);
-	const Spectrum getFragment(const Eigen::Vector2i& p) const;
+	void getFragment(const Eigen::Vector2i&p, Spectrum& spec) const;
 
 	inline void setSampleCount(const Eigen::Vector2i& p, uint64 sample)
 	{
@@ -67,9 +67,6 @@ public:
 	{
 		mIntCounter[V_Samples]->setFragmentBounded(p, 0, mIntCounter[V_Samples]->getFragmentBounded(p, 0) + 1);
 	}
-
-	bool isPixelFinished(const Eigen::Vector2i& p) const;
-	uint64 finishedPixelCount() const;
 
 	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable1D var) const
 	{

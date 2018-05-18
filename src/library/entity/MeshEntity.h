@@ -35,11 +35,10 @@ public:
 	RenderEntity::FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const override;
 
 	// Entity
-	void onFreeze() override;
 	std::string dumpInformation() const override;
 
-	// RenderEntity
-	void setup(RenderContext* context) override;
+protected:
+	void onFreeze(RenderContext* context) override;
 
 private:
 	std::shared_ptr<TriMesh> mMesh;

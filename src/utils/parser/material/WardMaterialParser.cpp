@@ -33,7 +33,7 @@ std::shared_ptr<PR::Material> WardMaterialParser::parse(Environment* env,
 		diff->setRoughnessX(SceneLoader::getScalarOutput(env, roughnessXD));
 		diff->setRoughnessY(SceneLoader::getScalarOutput(env, roughnessYD));
 	} else if (roughnessD.isValid() || roughnessXD.isValid() || roughnessYD.isValid()) {
-		PR_LOGGER.logf(L_Warning, M_Scene, "Ward: Isotropic and Anisotropic mismatch.");
+		PR_LOG(L_WARNING) << "Ward: Isotropic and Anisotropic mismatch." << std::endl;
 	}
 
 	return diff;

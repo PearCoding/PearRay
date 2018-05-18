@@ -9,12 +9,12 @@ ConstSpectrumShaderOutput::ConstSpectrumShaderOutput(const Spectrum& f)
 {
 }
 
-void ConstSpectrumShaderOutput::eval(Spectrum& spec, const ShaderClosure& /*point*/)
+void ConstSpectrumShaderOutput::eval(Spectrum& spec, const ShaderClosure& /*point*/) const
 {
 	spec.copyFrom(mValue);
 }
 
-float ConstSpectrumShaderOutput::evalIndex(const ShaderClosure& /*point*/, uint32 index, uint32 /*samples*/)
+float ConstSpectrumShaderOutput::evalIndex(const ShaderClosure& /*point*/, uint32 index, uint32 /*samples*/) const
 {
 	return mValue(index);
 }

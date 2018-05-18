@@ -22,6 +22,7 @@ public:
 	static std::shared_ptr<Environment> loadFromString(const std::string& source);
 
 	static Eigen::Vector3f getVector(const DL::DataGroup& arr, bool& ok);
+	static Eigen::Matrix4f getMatrix(const DL::DataGroup& arr, bool& ok);
 	static Eigen::Quaternionf getRotation(const DL::Data& data, bool& ok);
 
 	static std::shared_ptr<PR::SpectrumShaderOutput> getSpectralOutput(Environment* env, const DL::Data& data, bool allowScalar = false);
@@ -29,6 +30,7 @@ public:
 	static std::shared_ptr<PR::VectorShaderOutput> getVectorOutput(Environment* env, const DL::Data& data);
 
 private:
+	static void addRegistryEntry(const DL::DataGroup& group, Environment* env);
 	static void addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env);
 	static void addLight(const DL::DataGroup& group, Environment* env);
 	static void addMaterial(const DL::DataGroup& group, Environment* env);

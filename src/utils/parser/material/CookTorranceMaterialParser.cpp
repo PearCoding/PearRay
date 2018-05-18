@@ -47,7 +47,7 @@ std::shared_ptr<PR::Material> CookTorranceMaterialParser::parse(Environment* env
 		diff->setSpecularRoughnessX(SceneLoader::getScalarOutput(env, specRoughnessXD));
 		diff->setSpecularRoughnessY(SceneLoader::getScalarOutput(env, specRoughnessYD));
 	} else if (specRoughnessD.isValid() || specRoughnessXD.isValid() || specRoughnessYD.isValid()) {
-		PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Isotropic and Anisotropic specular roughness mismatch.");
+		PR_LOG(L_WARNING) << "CookTorrance: Isotropic and Anisotropic specular roughness mismatch." << std::endl;
 	}
 
 	if (fresnelModeD.type() == DL::Data::T_String) {
@@ -58,7 +58,7 @@ std::shared_ptr<PR::Material> CookTorranceMaterialParser::parse(Environment* env
 		else if (s == "conductor")
 			diff->setFresnelMode(CookTorranceMaterial::FM_Conductor);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Unknown fresnel mode '%s'.", s.c_str());
+			PR_LOG(L_WARNING) << "CookTorrance: Unknown fresnel mode " << s << std::endl;
 	}
 
 	if (distributionModeD.type() == DL::Data::T_String) {
@@ -71,7 +71,7 @@ std::shared_ptr<PR::Material> CookTorranceMaterialParser::parse(Environment* env
 		else if (s == "ggx")
 			diff->setDistributionMode(CookTorranceMaterial::DM_GGX);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Unknown distribution mode '%s'.", s.c_str());
+			PR_LOG(L_WARNING) << "CookTorrance: Unknown distribution mode " << s << std::endl;
 	}
 
 	if (geometryModeD.type() == DL::Data::T_String) {
@@ -86,7 +86,7 @@ std::shared_ptr<PR::Material> CookTorranceMaterialParser::parse(Environment* env
 		else if (s == "kelemen")
 			diff->setGeometryMode(CookTorranceMaterial::GM_Kelemen);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "CookTorrance: Unknown geometry mode '%s'.", s.c_str());
+			PR_LOG(L_WARNING) << "CookTorrance: Unknown geometry mode " << s << std::endl;
 	}
 
 	return diff;

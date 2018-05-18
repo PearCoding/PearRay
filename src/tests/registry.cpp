@@ -5,11 +5,6 @@
 using namespace PR;
 
 PR_BEGIN_TESTCASE(Registry)
-PR_TEST("Parameter")
-{
-	Parameter param(true);
-	PR_CHECK_TRUE(param.type() == PT_Boolean);
-}
 
 PR_TEST("URI /test/foo.txt")
 {
@@ -106,10 +101,10 @@ PR_TEST("Registry SET/GET")
 
 	PR_CHECK_FALSE(registry.exists(uri));
 
-	registry.set(uri, Parameter(42));
+	registry.set(uri, 42);
 	PR_CHECK_TRUE(registry.exists(uri));
-	PR_CHECK_EQ(registry.get(uri, Parameter(-1)).getInteger(), 42);
-	PR_CHECK_EQ(registry.get(uri2, Parameter(-1)).getInteger(), -1);
+	PR_CHECK_EQ(registry.get<int>(uri, -1), 42);
+	PR_CHECK_EQ(registry.get<int>(uri2, -1), -1);
 }
 
 PR_TEST("Registry Object SET/GET")
@@ -119,12 +114,12 @@ PR_TEST("Registry Object SET/GET")
 	const URI uri("test");
 	const URI uri2("test2");
 
-	PR_CHECK_FALSE(registry.existsForObject(RG_Material, id, uri));
+	PR_CHECK_FALSE(registry.existsForObject(RG_MATERIAL, id, uri));
 
-	registry.setForObject(RG_Material, id, uri, Parameter(42));
-	PR_CHECK_TRUE(registry.existsForObject(RG_Material, id, uri));
-	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri, Parameter(-1)).getInteger(), 42);
-	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri2, Parameter(-1)).getInteger(), -1);
+	registry.setForObject(RG_MATERIAL, id, uri, 42);
+	PR_CHECK_TRUE(registry.existsForObject(RG_MATERIAL, id, uri));
+	PR_CHECK_EQ(registry.getForObject<int>(RG_MATERIAL, id, uri, -1), 42);
+	PR_CHECK_EQ(registry.getForObject<int>(RG_MATERIAL, id, uri2, -1), -1);
 }
 
 PR_TEST("Registry Object SET/GET GLOBAL")
@@ -134,18 +129,18 @@ PR_TEST("Registry Object SET/GET GLOBAL")
 	const URI uri("test");
 	const URI uri2("test2");
 
-	PR_CHECK_FALSE(registry.existsForObject(RG_Material, id, uri));
-	PR_CHECK_FALSE(registry.existsByGroup(RG_Global, uri));
+	PR_CHECK_FALSE(registry.existsForObject(RG_MATERIAL, id, uri));
+	PR_CHECK_FALSE(registry.existsByGroup(RG_GLOBAL, uri));
 
-	registry.setByGroup(RG_Global, uri, Parameter(81));
-	PR_CHECK_TRUE(registry.existsForObject(RG_Material, id, uri));
-	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri, Parameter(-1)).getInteger(), 81);
-	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri2, Parameter(-1)).getInteger(), -1);
+	registry.setByGroup(RG_GLOBAL, uri, 81);
+	PR_CHECK_TRUE(registry.existsForObject(RG_MATERIAL, id, uri));
+	PR_CHECK_EQ(registry.getForObject<int>(RG_MATERIAL, id, uri, -1), 81);
+	PR_CHECK_EQ(registry.getForObject<int>(RG_MATERIAL, id, uri2, -1), -1);
 
-	registry.setForObject(RG_Material, id, uri, Parameter(42));
-	PR_CHECK_TRUE(registry.existsForObject(RG_Material, id, uri));
-	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri, Parameter(-1)).getInteger(), 42);
-	PR_CHECK_EQ(registry.getForObject(RG_Material, id, uri2, Parameter(-1)).getInteger(), -1);
+	registry.setForObject(RG_MATERIAL, id, uri, 42);
+	PR_CHECK_TRUE(registry.existsForObject(RG_MATERIAL, id, uri));
+	PR_CHECK_EQ(registry.getForObject<int>(RG_MATERIAL, id, uri, -1), 42);
+	PR_CHECK_EQ(registry.getForObject<int>(RG_MATERIAL, id, uri2, -1), -1);
 }
 
 PR_END_TESTCASE()

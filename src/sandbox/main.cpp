@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 	PR_LOGGER.addListener(&fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);
-	PR_LOGGER.setVerbose(options.IsVerbose);
+	PR_LOGGER.setVerbosity(options.IsVerbose ? PR::L_DEBUG : PR::L_INFO);
 
 	if(!options.IsQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) "  << PR_VENDOR_STRING << std::endl;

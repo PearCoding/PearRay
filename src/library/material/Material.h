@@ -1,5 +1,6 @@
 #pragma once
 
+#include "IFreezable.h"
 #include "shader/ShaderOutput.h"
 #include <memory>
 
@@ -22,6 +23,7 @@ enum MaterialScatteringType {
 
 struct MaterialSample {
 	float PDF_S{ 0 }; // Respect to Solid Angle
+	float PathWeight{ 1 };
 	Eigen::Vector3f L;
 	MaterialScatteringType ScatteringType{ MST_DiffuseReflection };
 
@@ -34,9 +36,14 @@ struct MaterialSample {
 	{
 		return ScatteringType == MST_SpecularReflection || ScatteringType == MST_DiffuseReflection;
 	}
+
+	inline float safePDF_S() const
+	{
+		return (std::isinf(PDF_S) /* || PDF_S <= PR_EPSILON*/) ? 1 : PDF_S;
+	}
 };
 
-class PR_LIB Material {
+class PR_LIB Material : public IFreezable {
 public:
 	explicit Material(uint32 id);
 	virtual ~Material() {}
@@ -44,22 +51,22 @@ public:
 	/*
 		Evaluate the BxDF based on L and point information.
 	*/
-	virtual void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) = 0;
+	virtual void eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const = 0;
 
 	/*
 		 Calculate the PDF based on L. Can be infinitive to force predestined directions (e.g. glass)
 		*/
-	virtual float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) = 0;
+	virtual float pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const = 0;
 
 	/*
 		 Sample a direction based on the uniform rnd value. (Russian Roulette)
 		*/
-	virtual MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) = 0;
+	virtual MaterialSample sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const = 0;
 
 	/*
 		Sample a direction based on the uniform rnd value. (Non russian roulette)
 	*/
-	virtual MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
+	virtual MaterialSample samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session) const
 	{
 		return sample(point, rnd, session);
 	}
@@ -76,7 +83,7 @@ public:
 
 	inline bool isLight() const;
 
-	virtual void evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent = false);
+	virtual void evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent = false) const;
 
 	inline std::shared_ptr<SpectrumShaderOutput> emission() const;
 	inline void setEmission(const std::shared_ptr<SpectrumShaderOutput>& spec);
@@ -92,8 +99,6 @@ public:
 
 	inline void enableCameraVisibility(bool b);
 	inline bool isCameraVisible() const;
-
-	virtual void setup(RenderContext* context) = 0;
 
 	virtual std::string dumpInformation() const;
 

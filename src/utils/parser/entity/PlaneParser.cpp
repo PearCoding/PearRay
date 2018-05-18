@@ -24,7 +24,7 @@ std::shared_ptr<PR::Entity> PlaneParser::parse(Environment* env, const std::stri
 
 		if (!ok) {
 			xAxis = Eigen::Vector3f(1, 0, 0);
-			PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid x axis. Assuming unit x vector.", name.c_str());
+			PR_LOG(L_WARNING) << "Entity " << name << " has invalid x axis. Assuming unit x vector." << std::endl;
 		}
 	} else if (xAxisD.isNumber()) {
 		xAxis = Eigen::Vector3f(xAxisD.getNumber(), 0, 0);
@@ -37,7 +37,7 @@ std::shared_ptr<PR::Entity> PlaneParser::parse(Environment* env, const std::stri
 
 		if (!ok) {
 			yAxis = Eigen::Vector3f(0, 1, 0);
-			PR_LOGGER.logf(L_Warning, M_Scene, "Entity %s has invalid y axis. Assuming unit y vector.", name.c_str());
+			PR_LOG(L_WARNING) << "Entity " << name << " has invalid y axis. Assuming unit y vector." << std::endl;
 		}
 	} else if (yAxisD.isNumber()) {
 		yAxis = Eigen::Vector3f(0, yAxisD.getNumber(), 0);
@@ -54,7 +54,7 @@ std::shared_ptr<PR::Entity> PlaneParser::parse(Environment* env, const std::stri
 		if (env->hasMaterial(materialD.getString()))
 			entity->setMaterial(env->getMaterial(materialD.getString()));
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Couldn't find material %s.", materialD.getString().c_str());
+			PR_LOG(L_WARNING) << "Couldn't find material " << materialD.getString() << std::endl;
 	}
 
 	return entity;

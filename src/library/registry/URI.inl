@@ -4,6 +4,11 @@ inline URI::URI()
 {
 }
 
+inline URI::URI(const char* uri)
+{
+	parse(uri);
+}
+
 inline URI::URI(const std::string& uri)
 {
 	parse(uri);

@@ -119,9 +119,6 @@ static bool findRegion(float nx, float ny, double& s, double& t, const float*& s
 							p0x, p0y, p1x, p1y, p2x, p2y,
 							_xyz2spec::triInvDetTable[triInd],
 							s, t);
-
-		/*PR_LOGGER.logf(L_Warning, M_Internal, "  => [%f, %f]",
-				s,t);*/
 	}
 
 	if (s < 0 || t < 0 || 1 - s - t < 0) // No triangle found

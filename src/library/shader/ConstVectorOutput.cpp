@@ -9,7 +9,7 @@ ConstVectorShaderOutput::ConstVectorShaderOutput(const Eigen::Vector3f& f)
 {
 }
 
-void ConstVectorShaderOutput::eval(Eigen::Vector3f& p, const PR::ShaderClosure& point)
+void ConstVectorShaderOutput::eval(Eigen::Vector3f& p, const PR::ShaderClosure& point) const
 {
 	p = mValue;
 }

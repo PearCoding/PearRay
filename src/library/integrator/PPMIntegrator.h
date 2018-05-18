@@ -48,6 +48,14 @@ private:
 	std::vector<struct PPM_TileData> mTileData;
 	std::vector<struct PPM_ThreadData> mThreadData;
 
+	uint32 mPassCount;
+	uint32 mMaxDiffBounces;
+	float mMaxGatherRadius;
+	uint64 mMaxGatherCount;
+	PPMGatheringMode mGatherMode;
+	uint64 mPhotonsPerPass;
 	uint64 mMaxPhotonsStoredPerPass;
+	float mSqueezeWeight2;
+	float mContractRatio;
 };
 } // namespace PR

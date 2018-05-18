@@ -81,7 +81,7 @@ std::shared_ptr<PR::Entity> CameraParser::parse(Environment* env, const std::str
 		if (ok)
 			camera->setLocalDirection(v);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Invalid local direction given.");
+			PR_LOG(L_WARNING) << "Invalid local direction given." << std::endl;
 	}
 
 	if (localRightD.type() == DL::Data::T_Group) {
@@ -90,7 +90,7 @@ std::shared_ptr<PR::Entity> CameraParser::parse(Environment* env, const std::str
 		if (ok)
 			camera->setLocalRight(v);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Invalid local right given.");
+			PR_LOG(L_WARNING) << "Invalid local right given." << std::endl;
 	}
 
 	if (localUpD.type() == DL::Data::T_Group) {
@@ -99,7 +99,7 @@ std::shared_ptr<PR::Entity> CameraParser::parse(Environment* env, const std::str
 		if (ok)
 			camera->setLocalUp(v);
 		else
-			PR_LOGGER.logf(L_Warning, M_Scene, "Invalid local up given.");
+			PR_LOG(L_WARNING) << "Invalid local up given." << std::endl;
 	}
 
 	return camera;

@@ -7,11 +7,11 @@ namespace PR {
 class PR_LIB_UTILS ImageScalarShaderOutput : public PR::ScalarShaderOutput {
 public:
 	ImageScalarShaderOutput(OIIO::TextureSystem* tsys, const OIIO::TextureOpt& options, const std::string& filename);
-	void eval(float& f, const PR::ShaderClosure& point) override;
+	void eval(float& f, const PR::ShaderClosure& point) const override;
 
 private:
 	OIIO::ustring mFilename;
-	OIIO::TextureOpt mTextureOptions;
+	mutable OIIO::TextureOpt mTextureOptions;
 	OIIO::TextureSystem* mTextureSystem;
 };
 } // namespace PR

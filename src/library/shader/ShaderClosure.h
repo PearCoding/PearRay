@@ -24,7 +24,7 @@ public:
 	// View vector looking to the surface (only available if shoot)
 	Eigen::Vector3f V;
 
-	// Ray Differentials
+	// Ray Differentials (X & Y are in pixel space)
 	Eigen::Vector3f dVdX;
 	Eigen::Vector3f dVdY;
 
@@ -80,9 +80,7 @@ public:
 		, dUVWdY(0, 0, 0)
 		, dUVWdZ(0, 0, 0)
 		, T(0)
-		,
-		//dT(0),
-		WavelengthIndex(0)
+		, WavelengthIndex(0)
 		, Depth2(0)
 		, NgdotV(0)
 		, NdotV(0)
@@ -110,9 +108,7 @@ public:
 		, dUVWdY(fs.dUVWdY)
 		, dUVWdZ(fs.dUVWdZ)
 		, T(0)
-		,
-		//dT(0),
-		WavelengthIndex(0)
+		, WavelengthIndex(0)
 		, Depth2(0)
 		, NgdotV(0)
 		, NdotV(0)
@@ -143,5 +139,10 @@ public:
 	}
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	inline bool isInside() const
+	{
+		return (Flags & SCF_Inside) != 0;
+	}
 };
 }

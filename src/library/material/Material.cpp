@@ -6,7 +6,8 @@
 
 namespace PR {
 Material::Material(uint32 id)
-	: mEmission(nullptr)
+	: IFreezable()
+	, mEmission(nullptr)
 	, mID(id)
 	, mCanBeShaded(true)
 	, mShadow(true)
@@ -15,7 +16,7 @@ Material::Material(uint32 id)
 {
 }
 
-void Material::evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent)
+void Material::evalEmission(Spectrum& spec, const ShaderClosure& point, const RenderSession& session, bool viewIndependent) const
 {
 	if (!mEmission)
 		return;

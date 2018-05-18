@@ -9,6 +9,7 @@
 #include "shader/ShaderClosure.h"
 
 namespace PR {
+
 void OnePassIntegrator::onStart()
 {
 }
@@ -45,7 +46,7 @@ bool OnePassIntegrator::needNextPass(uint32 i) const
 
 RenderStatus OnePassIntegrator::status() const
 {
-	const uint64 max_samples = renderer()->width() * renderer()->height() * renderer()->settings().maxCameraSampleCount();
+	const uint64 max_samples = renderer()->width() * renderer()->height() * renderer()->samplesPerPixel();
 
 	RenderStatus stat;
 	stat.setField("int.max_sample_count", max_samples);

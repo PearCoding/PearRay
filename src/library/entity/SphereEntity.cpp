@@ -37,7 +37,10 @@ float SphereEntity::surfaceArea(Material* m) const
 	PR_GUARD_PROFILE();
 
 	if (!m || m == mMaterial.get()) {
-		const auto s = flags() & EF_LocalArea ? Eigen::Vector3f(1, 1, 1) : scale();
+		Eigen::Matrix3f sca;
+		transform().computeRotationScaling((Eigen::Matrix3f*)nullptr, &sca);
+
+		const auto s = flags() & EF_LocalArea ? Eigen::Vector3f(1, 1, 1) : sca.diagonal();
 
 		const float a = s(0) * mRadius;
 		const float b = s(1) * mRadius;
@@ -135,14 +138,14 @@ RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3
 	return sm;
 }
 
-void SphereEntity::setup(RenderContext* context)
+void SphereEntity::onFreeze(RenderContext* context)
 {
-	RenderEntity::setup(context);
-
-	if (mMaterial)
-		mMaterial->setup(context);
+	RenderEntity::onFreeze(context);
 
 	const float area = surfaceArea(nullptr);
 	mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
+
+	if (mMaterial)
+		mMaterial->freeze(context);
 }
 }

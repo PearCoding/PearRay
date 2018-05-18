@@ -85,7 +85,7 @@ struct WM_ThreadData {
 };
 
 constexpr float MinRoughness = 0.001f;
-void WardMaterial::setup(RenderContext* context)
+void WardMaterial::onFreeze(RenderContext* context)
 {
 	mThreadData.clear();
 	for (size_t i = 0; i < context->threads(); ++i)
@@ -107,7 +107,7 @@ void WardMaterial::setup(RenderContext* context)
 		mRoughnessY = mRoughnessX;
 }
 
-void WardMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+void WardMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	const float refl	= mReflectivity->eval(point);
 	const std::shared_ptr<WM_ThreadData>& data = mThreadData[session.thread()];
@@ -139,7 +139,7 @@ void WardMaterial::eval(Spectrum& spec, const ShaderClosure& point, const Eigen:
 	spec += data->Albedo * (1 - refl);
 }
 
-float WardMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session)
+float WardMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, float NdotL, const RenderSession& session) const
 {
 	const float refl = mReflectivity->eval(point);
 	const float m1   = std::max(MinRoughness, mRoughnessX->eval(point));
@@ -164,23 +164,25 @@ float WardMaterial::pdf(const ShaderClosure& point, const Eigen::Vector3f& L, fl
 	return std::min(std::max(Projection::cos_hemi_pdf(NdotL) * (1 - refl) + r * refl, 0.0f), 1.0f);
 }
 
-MaterialSample WardMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session)
+MaterialSample WardMaterial::sample(const ShaderClosure& point, const Eigen::Vector3f& rnd, const RenderSession& session) const
 {
 	const float refl = mReflectivity->eval(point);
 
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;
 
-	if (rnd(2) < refl)
+	if (rnd(2) <= refl) {
 		ms.L = diffuse_path(point, rnd, ms.PDF_S);
-	else
+		ms.PDF_S *= refl;
+	} else {
 		ms.L = specular_path(point, rnd, ms.PDF_S);
+		ms.PDF_S *= (1-refl);
+	}
 
-	ms.PDF_S *= refl;
 	return ms;
 }
 
-MaterialSample WardMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session)
+MaterialSample WardMaterial::samplePath(const ShaderClosure& point, const Eigen::Vector3f& rnd, uint32 path, const RenderSession& session) const
 {
 	MaterialSample ms;
 	ms.ScatteringType = MST_DiffuseReflection;
@@ -190,7 +192,6 @@ MaterialSample WardMaterial::samplePath(const ShaderClosure& point, const Eigen:
 	else
 		ms.L = specular_path(point, rnd, ms.PDF_S);
 
-	ms.PDF_S *= mReflectivity->eval(point); // TODO: Really?
 	return ms;
 }
 
@@ -199,13 +200,13 @@ uint32 WardMaterial::samplePathCount() const
 	return 2;
 }
 
-Eigen::Vector3f WardMaterial::diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+Eigen::Vector3f WardMaterial::diffuse_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) const
 {
 	return Projection::tangent_align(point.N, point.Nx, point.Ny,
 									 Projection::cos_hemi(rnd(0), rnd(1), pdf));
 }
 
-Eigen::Vector3f WardMaterial::specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf)
+Eigen::Vector3f WardMaterial::specular_path(const ShaderClosure& point, const Eigen::Vector3f& rnd, float& pdf) const
 {
 	float u = rnd(0);
 	float v = rnd(1);
