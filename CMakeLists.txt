@@ -45,7 +45,6 @@ option(PR_BUILD_VIEWER "Compile the additional PearRay Viewer based on the QT li
 option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON "Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
 option(PR_GENERATE_COVERAGE "Generate coverage for debug builds - Currently only supported with the GCC compiler." ON)
-option(PR_BUILD_PROFILE "Build with internal profiling system. Only recommended for development." OFF)
 option(PR_BUILD_DOCUMENTATION "Build documentation with doxygen." ON)
 option(PR_CPP_CHECK "Do style check with cpplint." OFF)
 
@@ -121,14 +120,6 @@ IF(PR_BUILD_VIEWER)
 	IF(${Qt5Widgets_FOUND})
 		SET(DEFS "${DEFS};PR_WITH_VIEWER")
 	ENDIF()
-ENDIF()
-
-IF(PR_BUILD_PROFILE)
-	SET(DEFS "${DEFS};PR_PROFILE")
-ENDIF()
-
-IF(PR_ENABLE_DIAGNOSIS)
-	SET(DEFS "${DEFS};PR_ENABLE_DIAGNOSIS")
 ENDIF()
 
 IF(PR_USE_TRIANGLE_WATERTIGHT)
