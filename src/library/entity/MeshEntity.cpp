@@ -10,7 +10,7 @@
 
 #include "Logger.h"
 
-#include "performance/Performance.h"
+
 
 namespace PR {
 MeshEntity::MeshEntity(uint32 id, const std::string& name)
@@ -115,7 +115,7 @@ BoundingBox MeshEntity::localBoundingBox() const
 
 RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	// Local space
 	Ray local = ray;
@@ -141,7 +141,7 @@ RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 
 RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	TriMesh::FacePointSample sm = mMesh->sampleFacePoint(rnd);
 	RenderEntity::FacePointSample s;

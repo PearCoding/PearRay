@@ -25,17 +25,17 @@ static void save_spec(const std::string& path,
 		const float f = spec(i);
 
 		if (f < 0) {
-			pixels[(yres - 1) * xres * 3 + i * 3]	 = 255;
+			pixels[(yres - 1) * xres * 3 + i * 3 + 0] = 255;
 			pixels[(yres - 1) * xres * 3 + i * 3 + 1] = 0;
 			pixels[(yres - 1) * xres * 3 + i * 3 + 2] = 0;
 		} else if (f > MAX_INTENSITY) {
-			pixels[0 * xres * 3 + i * 3]	  = 0;
+			pixels[0 * xres * 3 + i * 3 + 0] = 0;
 			pixels[0 * xres * 3 + i * 3 + 1] = 255;
-			pixels[0 * xres * 3 + i * 3 + 2]  = 0;
+			pixels[0 * xres * 3 + i * 3 + 2] = 0;
 		} else {
-			uint32 y = yres - std::min<uint32>(yres - 1, std::max<uint32>(0, yres * f / MAX_INTENSITY)) - 1;
+			const uint32 y = yres - std::min<uint32>(yres - 1, std::max<uint32>(0, yres * f / MAX_INTENSITY)) - 1;
 
-			pixels[y * xres * 3 + i * 3]	 = 0;
+			pixels[y * xres * 3 + i * 3 + 0] = 0;
 			pixels[y * xres * 3 + i * 3 + 1] = 0;
 			pixels[y * xres * 3 + i * 3 + 2] = 255;
 		}
@@ -65,7 +65,7 @@ static void save_image(const std::string& path,
 
 	for (uint32 i = 0; i < xres / 2; ++i) {
 		for (uint32 j = 0; j < yres; ++j) {
-			pixels[j * xres * 3 + i * 3]	 = int(r * 255);
+			pixels[j * xres * 3 + i * 3 + 0] = int(r * 255);
 			pixels[j * xres * 3 + i * 3 + 1] = int(g * 255);
 			pixels[j * xres * 3 + i * 3 + 2] = int(b * 255);
 		}
@@ -73,7 +73,7 @@ static void save_image(const std::string& path,
 
 	for (uint32 i = xres / 2; i < xres; ++i) {
 		for (uint32 j = 0; j < yres; ++j) {
-			pixels[j * xres * 3 + i * 3]	 = int(r2 * 255);
+			pixels[j * xres * 3 + i * 3 + 0] = int(r2 * 255);
 			pixels[j * xres * 3 + i * 3 + 1] = int(g2 * 255);
 			pixels[j * xres * 3 + i * 3 + 2] = int(b2 * 255);
 		}
@@ -126,12 +126,12 @@ void suite_spectral1()
 	maxE = 0;
 	minE = std::numeric_limits<float>::infinity();
 
-    constexpr size_t count = 11;
-	constexpr float step = 1.0f/(count-1);
+	constexpr size_t count = 11;
+	constexpr float step   = 1.0f / (count - 1);
 	for (size_t r = 0; r < count; ++r) {
 		for (size_t g = 0; g < count; ++g) {
 			for (size_t b = 0; b < count; ++b) {
-				handle_color(r*step, g*step, b*step, log);
+				handle_color(r * step, g * step, b * step, log);
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 #include "StandardCamera.h"
-#include "performance/Performance.h"
+
+#include "Logger.h"
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 
@@ -122,8 +123,6 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen");
 
-	PR_GUARD_PROFILE();
-
 	const float nx  = 2 * (sample.PixelF.x() / sample.SensorSize.x() - 0.5f);
 	const float nx1 = 2 * ((sample.PixelF.x() + 1) / sample.SensorSize.x() - 0.5f);
 	const float ny  = 2 * (sample.PixelF.y() / sample.SensorSize.y() - 0.5f);
@@ -178,8 +177,6 @@ void StandardCamera::constructRay(float nx, float ny, const Eigen::Vector2f& r, 
 // Cache
 void StandardCamera::onFreeze(RenderContext* context)
 {
-	PR_GUARD_PROFILE();
-
 	Camera::onFreeze(context);
 
 	mDirection_Cache = (directionMatrix() * mLocalDirection).normalized();

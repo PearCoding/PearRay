@@ -2,8 +2,6 @@
 
 #include "ray/Ray.h"
 
-#include "performance/Performance.h"
-
 namespace PR {
 #define PR_PLANE_INTERSECT_EPSILON (PR_EPSILON)
 constexpr float EPSILON_BOUND = 0.0001f;
@@ -72,7 +70,7 @@ void Plane::setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
 
 BoundingBox Plane::toLocalBoundingBox() const
 {
-	PR_GUARD_PROFILE();
+	
 
 	BoundingBox box(mXAxis + mYAxis, Eigen::Vector3f(0, 0, 0));
 	box.inflate(EPSILON_BOUND);
@@ -81,7 +79,7 @@ BoundingBox Plane::toLocalBoundingBox() const
 
 bool Plane::contains(const Eigen::Vector3f& point) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	Eigen::Vector3f p = point - mPosition;
 	if (p.dot(mNormal_Cache) <= std::numeric_limits<float>::epsilon()) // Is on the plane
@@ -97,7 +95,7 @@ bool Plane::contains(const Eigen::Vector3f& point) const
 
 Plane::Intersection Plane::intersects(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	Plane::Intersection r;
 	float ln = ray.direction().dot(mNormal_Cache);
@@ -127,7 +125,7 @@ Plane::Intersection Plane::intersects(const Ray& ray) const
 
 Eigen::Vector2f Plane::project(const Eigen::Vector3f& point) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	Eigen::Vector3f p = point - mPosition;
 	return Eigen::Vector2f(

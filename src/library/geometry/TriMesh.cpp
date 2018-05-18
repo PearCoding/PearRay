@@ -1,6 +1,5 @@
 #include "TriMesh.h"
-#include "Face.h"
-#include "Triangle.h"
+#include "Logger.h"
 #include "container/kdTree.h"
 #include "material/Material.h"
 #include "math/Projection.h"
@@ -17,47 +16,6 @@ TriMesh::TriMesh()
 TriMesh::~TriMesh()
 {
 	clear();
-}
-
-Face TriMesh::getFace(size_t i) const
-{
-	PR_ASSERT(i < faceCount(), "Invalid face access!");
-
-	const Vector3u64& ind = mIndices[i];
-
-	Face f;
-	for (int j = 0; j < 3; ++j) {
-		const Vector3f& v = mVertices[ind[j]];
-		const Vector3f& n = mNormals[ind[j]];
-
-		f.V[j] = v;
-		f.N[j] = n;
-
-		if (features() & TMF_HAS_UV) {
-			const Vector2f& uv = mUVs[ind[j]];
-			f.UV[j]			   = uv;
-		} else {
-			f.UV[j] = Eigen::Vector2f(0.0f, 0.0f);
-		}
-	}
-
-	f.MaterialSlot = getFaceMaterial(i);
-
-	return f;
-}
-
-uint32 TriMesh::getFaceMaterial(uint64 index) const
-{
-	if (features() & TMF_HAS_MATERIAL) {
-		return mMaterials[index];
-	} else {
-		return 0;
-	}
-}
-
-bool TriMesh::isValid() const
-{
-	return mVertices.size() >= 3 && !mIndices.empty() && mVertices.size() == mNormals.size();
 }
 
 void TriMesh::clear()
@@ -158,11 +116,13 @@ TriMesh::Collision TriMesh::checkCollision(const Ray& ray)
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	TriMesh::Collision r;
-	r.Successful = reinterpret_cast<TriKDTree*>(mKDTree)->checkCollision(ray, r.Index, r.Point,
-																		 [](TriMesh* mesh, const Ray& ray, FacePoint& point, uint64 f) {
-																			 float t;
-																			 return Triangle::intersect(ray, mesh->getFace(f), point, t); // Major bottleneck!
-																		 });
+	r.Successful = reinterpret_cast<TriKDTree*>(
+					   mKDTree)
+					   ->checkCollision(ray, r.Index, r.Point,
+										[](TriMesh* mesh, const Ray& ray, FacePoint& point, uint64 f) {
+											float t;
+											return Triangle::intersect(ray, mesh->getFace(f), point, t); // Major bottleneck!
+										});
 	return r;
 }
 

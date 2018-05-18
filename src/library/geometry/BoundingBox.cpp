@@ -5,7 +5,7 @@
 
 #include <utility>
 
-#include "performance/Performance.h"
+
 
 namespace PR {
 BoundingBox::BoundingBox()
@@ -50,7 +50,7 @@ void BoundingBox::inflate(float eps, bool maxDir)
 
 BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 	BoundingBox::Intersection r;
 
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
@@ -60,7 +60,8 @@ BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
 	const float tmax = vmin.array().max(vmax.array()).minCoeff();
 
-	r.T = tmin <= 0 ? tmax : tmin;
+	r.Inside = tmin <= 0;
+	r.T = r.Inside ? tmax : tmin;
 	if (tmax >= tmin && r.T > PR_EPSILON) {
 		r.Position   = ray.origin() + ray.direction() * r.T;
 		r.Successful = true;
@@ -73,7 +74,7 @@ BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 
 bool BoundingBox::intersectsSimple(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
 	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
@@ -88,7 +89,7 @@ bool BoundingBox::intersectsSimple(const Ray& ray) const
 
 BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Intersection& intersection) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	const Eigen::Vector3f minDist = (intersection.Position - lowerBound()).cwiseAbs();
 	const Eigen::Vector3f maxDist = (intersection.Position - upperBound()).cwiseAbs();
@@ -125,7 +126,7 @@ BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Inters
 
 Plane BoundingBox::getFace(FaceSide side) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	const Eigen::Vector3f diff = upperBound() - lowerBound();
 

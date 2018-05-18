@@ -6,7 +6,7 @@
 #include "material/Material.h"
 #include "math/Projection.h"
 
-#include "performance/Performance.h"
+
 
 namespace PR {
 BoundaryEntity::BoundaryEntity(uint32 id, const std::string& name, const BoundingBox& box)
@@ -33,7 +33,7 @@ bool BoundaryEntity::isLight() const
 
 float BoundaryEntity::surfaceArea(Material* m) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	if (!m || m == mMaterial.get()) {
 		if (flags() & EF_LocalArea)
@@ -77,7 +77,7 @@ BoundingBox BoundaryEntity::localBoundingBox() const
 
 RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	Ray local = ray;
 	local.setOrigin(invTransform() * ray.origin());
@@ -106,7 +106,7 @@ RenderEntity::Collision BoundaryEntity::checkCollision(const Ray& ray) const
 
 RenderEntity::FacePointSample BoundaryEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	// Get randomly a face
 	BoundingBox::FaceSide side = (BoundingBox::FaceSide)Projection::map(rnd(0), 0, 5);

@@ -8,8 +8,6 @@
 
 #include <utility>
 
-#include "performance/Performance.h"
-
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 0
 #define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
 #elif PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
@@ -26,8 +24,6 @@ public:
 	inline static bool intersect(const Ray& ray, const Face& face,
 								 FacePoint& point, float& t)
 	{
-		PR_GUARD_PROFILE();
-
 		float u, v;
 		Eigen::Vector3f pos;
 
@@ -61,7 +57,7 @@ public:
 	inline static bool intersect(const Ray& ray, const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& p3,
 								 float& u, float& v, Eigen::Vector3f& point, float& t)
 	{
-		PR_GUARD_PROFILE();
+		
 
 		const Eigen::Vector3f e12 = p2 - p1;
 		const Eigen::Vector3f e13 = p3 - p1;
@@ -102,7 +98,7 @@ public:
 	inline static bool intersect(const Ray& ray, const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& p3,
 								 float& u, float& v, Eigen::Vector3f& point, float& t)
 	{
-		PR_GUARD_PROFILE();
+		
 
 		const uint32 kz = ray.maxDirectionIndex();
 		uint32 kx		= kz + 1;
@@ -197,7 +193,7 @@ public:
 
 	inline static float surfaceArea(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& p3)
 	{
-		PR_GUARD_PROFILE();
+		
 
 		Eigen::Vector3f v1 = p2 - p1;
 		Eigen::Vector3f v2 = p3 - p1;

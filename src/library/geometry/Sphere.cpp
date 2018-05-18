@@ -4,8 +4,6 @@
 
 #include <utility>
 
-#include "performance/Performance.h"
-
 #define PR_SPHERE_INTERSECT_EPSILON (1e-5f)
 namespace PR {
 Sphere::Sphere()
@@ -36,7 +34,7 @@ Sphere& Sphere::operator=(const Sphere& other)
 
 Sphere::Intersection Sphere::intersects(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 	Sphere::Intersection r;
 	r.Successful = false;
 
@@ -76,7 +74,7 @@ Sphere::Intersection Sphere::intersects(const Ray& ray) const
 
 void Sphere::combine(const Eigen::Vector3f& point)
 {
-	PR_GUARD_PROFILE();
+	
 
 	float f = (mPosition - point).squaredNorm();
 	if (f > mRadius * mRadius)
@@ -85,7 +83,7 @@ void Sphere::combine(const Eigen::Vector3f& point)
 
 void Sphere::combine(const Sphere& other)
 {
-	PR_GUARD_PROFILE();
+	
 
 	if (!isValid()) {
 		*this = other;

@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "Logger.h"
-#include "performance/Performance.h"
+
 
 namespace PR {
 Entity::Entity(uint32 id, const std::string& name)
@@ -21,7 +21,7 @@ Entity::~Entity()
 
 void Entity::onFreeze(RenderContext*)
 {
-	PR_GUARD_PROFILE();
+	
 
 	mInvTransformCache	= mTransform.inverse();
 	mNormalMatrixCache	= mTransform.linear().inverse().transpose();

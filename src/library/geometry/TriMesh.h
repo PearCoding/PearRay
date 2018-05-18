@@ -2,6 +2,8 @@
 
 #include "BoundingBox.h"
 #include "Vector.h"
+#include "Face.h"
+#include "Triangle.h"
 #include "shader/FacePoint.h"
 #include <Eigen/Geometry>
 #include <vector>
@@ -41,13 +43,14 @@ public:
 
 	inline uint32 features() const { return mFeatures; }
 
-	size_t nodeCount() const { return mVertices.size(); }
-	size_t faceCount() const { return mIndices.size(); }
+	inline size_t nodeCount() const { return mVertices.size(); }
+	inline size_t faceCount() const { return mIndices.size(); }
 	
-	Face getFace(uint64 index) const;
-	uint32 getFaceMaterial(uint64 index) const;
+	inline Face getFace(uint64 index) const;
+	inline uint32 getFaceMaterial(uint64 index) const;
 
-	bool isValid() const;
+	inline bool isValid() const;
+
 	void clear();
 	void build();
 
@@ -90,3 +93,5 @@ private:
 	std::vector<Vector3u64> mIndices;
 };
 }
+
+#include "TriMesh.inl"

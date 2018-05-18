@@ -92,6 +92,7 @@ public:
 
 	struct Intersection {
 		bool Successful;
+		bool Inside;
 		Eigen::Vector3f Position;
 		float T;
 	};

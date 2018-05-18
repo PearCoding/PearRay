@@ -6,7 +6,7 @@
 #include "material/Material.h"
 #include "math/Projection.h"
 
-#include "performance/Performance.h"
+
 
 namespace PR {
 SphereEntity::SphereEntity(uint32 id, const std::string& name, float r)
@@ -34,7 +34,7 @@ bool SphereEntity::isLight() const
 constexpr float P = 1.6075f;
 float SphereEntity::surfaceArea(Material* m) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	if (!m || m == mMaterial.get()) {
 		Eigen::Matrix3f sca;
@@ -92,7 +92,7 @@ BoundingBox SphereEntity::localBoundingBox() const
 
 RenderEntity::Collision SphereEntity::checkCollision(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	Ray local = ray;
 	local.setOrigin(invTransform() * ray.origin());
@@ -120,7 +120,7 @@ RenderEntity::Collision SphereEntity::checkCollision(const Ray& ray) const
 
 RenderEntity::FacePointSample SphereEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	RenderEntity::FacePointSample sm;
 

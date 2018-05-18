@@ -13,11 +13,6 @@
 
 #include "ProgramSettings.h"
 
-#ifdef PR_PROFILE
-#include "performance/PerformanceWriter.h"
-#endif
-#include "performance/Performance.h"
-
 #include <boost/filesystem.hpp>
 
 #include <chrono>
@@ -53,9 +48,7 @@ int main(int argc, char** argv)
 	if (!options.IsQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) " << PR_VENDOR_STRING << std::endl;
 
-	PR_BEGIN_PROFILE_ID(0);
 	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(options.InputFile);
-	PR_END_PROFILE_ID(0);
 
 	if (!env) {
 		if (!options.IsQuiet)
@@ -72,13 +65,10 @@ int main(int argc, char** argv)
 	}
 
 	// Setup renderFactory
-	PR_BEGIN_PROFILE_ID(1);
 	auto scene						 = env->sceneFactory().create();
 	PR::RenderFactory* renderFactory = new PR::RenderFactory(
 		PR::SpectrumDescriptor::createStandardSpectral(),
 		scene, env->registry(), options.OutputDir);
-
-	PR_END_PROFILE_ID(1);
 
 	// Render per image tile
 	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
@@ -152,11 +142,6 @@ int main(int argc, char** argv)
 
 	env->outputSpecification().deinit();
 	delete renderFactory;
-
-#ifdef PR_PROFILE
-	std::string prof_file = options.OutputDir + "/profile.out";
-	PR::PerformanceWriter::write(prof_file);
-#endif
 
 	return 0;
 }

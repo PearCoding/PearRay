@@ -1,8 +1,7 @@
 #include "RenderEntity.h"
+#include "Logger.h"
 
 #include "material/Material.h"
-
-#include "performance/Performance.h"
 
 namespace PR {
 RenderEntity::RenderEntity(uint32 id, const std::string& name)
@@ -17,8 +16,6 @@ RenderEntity::~RenderEntity()
 
 BoundingBox RenderEntity::calcWorldBoundingBox() const
 {
-	PR_GUARD_PROFILE();
-
 	const BoundingBox bx = localBoundingBox();
 
 	const Eigen::Matrix3f M = transform().linear();

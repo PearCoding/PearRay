@@ -7,7 +7,7 @@
 #include "Logger.h"
 #include "math/Projection.h"
 
-#include "performance/Performance.h"
+
 
 namespace PR {
 PlaneEntity::PlaneEntity(uint32 id, const std::string& name, const Plane& plane)
@@ -84,7 +84,7 @@ BoundingBox PlaneEntity::localBoundingBox() const
 
 RenderEntity::Collision PlaneEntity::checkCollision(const Ray& ray) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	RenderEntity::Collision c;
 	Plane::Intersection in = mGlobalPlane_Cache.intersects(ray);

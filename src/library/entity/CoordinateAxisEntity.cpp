@@ -6,7 +6,7 @@
 #include "material/Material.h"
 #include "math/Projection.h"
 
-#include "performance/Performance.h"
+
 
 namespace PR {
 CoordinateAxisEntity::CoordinateAxisEntity(uint32 id, const std::string& name)
@@ -34,7 +34,7 @@ bool CoordinateAxisEntity::isLight() const
 
 float CoordinateAxisEntity::surfaceArea(Material* m) const
 {
-	PR_GUARD_PROFILE();
+	
 
 	if (!m) {
 		//TODO: Add world transformed surface area
@@ -123,8 +123,8 @@ BoundingBox CoordinateAxisEntity::localBoundingBox() const
 
 RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) const
 {
-	PR_ASSERT(isFrozen(), "has to be frozen")
-	PR_GUARD_PROFILE();
+	PR_ASSERT(isFrozen(), "has to be frozen");
+	
 
 	Ray local = ray;
 	local.setOrigin(invTransform() * ray.origin());
@@ -168,8 +168,8 @@ RenderEntity::Collision CoordinateAxisEntity::checkCollision(const Ray& ray) con
 
 RenderEntity::FacePointSample CoordinateAxisEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
-	PR_ASSERT(isFrozen(), "has to be frozen")
-	PR_GUARD_PROFILE();
+	PR_ASSERT(isFrozen(), "has to be frozen");
+	
 
 	int proj = Projection::map(rnd(0), 0, 3 * 6 - 1); // Get randomly a face
 

@@ -50,21 +50,21 @@ private:
 	struct kdNode {
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		kdNode(uint32 id, uint8 l, const BoundingBox& b)
+		kdNode(uint32 id, bool leaf, const BoundingBox& b)
 			: id(id)
-			, leaf(l)
+			, isLeaf(leaf)
 			, boundingBox(b)
 		{
 		}
 
 		const uint32 id;
-		const uint8 leaf;
+		const bool isLeaf;
 		BoundingBox boundingBox;
 	};
 
 	struct kdInnerNode : public kdNode {
 		kdInnerNode(uint32 id, kdNode* l, kdNode* r, const BoundingBox& b)
-			: kdNode(id, 0, b)
+			: kdNode(id, false, b)
 			, left(l)
 			, right(r)
 		{
@@ -76,7 +76,7 @@ private:
 
 	struct kdLeafNode : public kdNode {
 		kdLeafNode(uint32 id, const BoundingBox& b)
-			: kdNode(id, 1, b)
+			: kdNode(id, true, b)
 		{
 		}
 
@@ -245,18 +245,19 @@ public:
 	}
 
 	template <typename CheckCollisionCallback>
-	inline bool checkCollision(const Ray& ray, entity_t& foundEntity, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallack) const
+	inline bool checkCollision(const Ray& ray, entity_t& foundEntity, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallback) const
 	{
-		thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
+		/*thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
 
 		bool found = false;
-		FacePoint tmpCollisionPoint;
+		FacePoint tmpCollisionPoint;*/
 
 		float t = std::numeric_limits<float>::infinity();
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
+		return checkCollision_Rec(mRoot, ray, t, foundEntity, collisionPoint, checkCollisionCallback);
 
-		uint32 stackPos = 1;
+		/*uint32 stackPos = 1;
 		stack[0]		= mRoot;
 
 		while (stackPos > 0) {
@@ -304,18 +305,19 @@ public:
 			}
 		}
 
-		return found;
+		return found;*/
 	}
 
 	// A faster variant for rays detecting the background etc.
 	template <typename CheckCollisionCallback>
-	inline bool checkCollisionSimple(const Ray& ray, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallack) const
+	inline bool checkCollisionSimple(const Ray& ray, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallback) const
 	{
-		thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
+		//thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
 
-		uint32 stackPos = 1;
+		return checkCollisionSimple_Rec(mRoot, ray, collisionPoint, checkCollisionCallback);
+		/*uint32 stackPos = 1;
 		stack[0]		= mRoot;
 
 		while (stackPos > 0) {
@@ -355,14 +357,86 @@ public:
 			}
 		}
 
-		return false;
+		return false;*/
 	}
 
 private:
+	template <typename CheckCollisionCallback>
+	inline bool checkCollision_Rec(kdNode* node,
+								   const Ray& ray, float& t, entity_t& foundEntity, FacePoint& collisionPoint,
+								   CheckCollisionCallback checkCollisionCallback) const
+	{
+		const auto in = node->boundingBox.intersects(ray);
+		if (!in.Successful
+			|| (!in.Inside && (in.T * in.T) > t)) {
+				// We ignore this node when the origin is not inside the block and the distance of intersection is far away
+			return false;
+		}
+
+		if (node->isLeaf) {
+			const kdLeafNode* leaf = (kdLeafNode*)node;
+
+			bool found = false;
+			FacePoint tmpCollisionPoint;
+			for (const_reference_t entity : leaf->objects) {
+				if (checkCollisionCallback(mObserver, ray, tmpCollisionPoint, entity)) {
+					const float l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
+					if (l < t) {
+						t			   = l;
+						found		   = true;
+						foundEntity	= entity;
+						collisionPoint = tmpCollisionPoint;
+					}
+				}
+			}
+			return found;
+		} else {
+			const kdInnerNode* inner = (kdInnerNode*)node;
+
+			const bool b1 = (inner->left)
+					  && checkCollision_Rec(inner->left, ray,
+											t, foundEntity, collisionPoint,
+											checkCollisionCallback);
+			const bool b2 = (inner->right)
+					  && checkCollision_Rec(inner->right, ray,
+											t, foundEntity, collisionPoint,
+											checkCollisionCallback);
+
+			// Do not inline the above calls, as we have to make sure both functions are called!
+			return b1 || b2;
+		}
+	}
+
+	template <typename CheckCollisionCallback>
+	inline bool checkCollisionSimple_Rec(kdNode* node,
+										 const Ray& ray, FacePoint& collisionPoint,
+										 CheckCollisionCallback checkCollisionCallback) const
+	{
+		if (!node->boundingBox.intersectsSimple(ray)) {
+			return false;
+		}
+
+		if (node->isLeaf) {
+			kdLeafNode* leaf = (kdLeafNode*)node;
+
+			for (const_reference_t entity : leaf->objects) {
+				if (checkCollisionCallback(mObserver, ray, collisionPoint, entity))
+					return true;
+			}
+			return false;
+		} else {
+			kdInnerNode* inner = (kdInnerNode*)node;
+			return ((inner->left)
+					&& checkCollisionSimple_Rec(inner->left, ray, collisionPoint, checkCollisionCallback))
+				   || ((inner->right)
+					   && checkCollisionSimple_Rec(inner->right, ray, collisionPoint, checkCollisionCallback));
+		}
+	}
+
 	static inline void statElementsNode(kdNode* node,
 										size_t& leafCount, size_t& sumV, size_t& minV, size_t& maxV)
 	{
-		if (node->leaf == 1) {
+		if (node->isLeaf) {
 			kdLeafNode* leaf = (kdLeafNode*)node;
 			++leafCount;
 
@@ -383,7 +457,7 @@ private:
 	static inline void deleteNode(kdNode* node)
 	{
 		if (node) {
-			if (node->leaf == 1)
+			if (node->isLeaf)
 				delete (kdLeafNode*)node;
 			else {
 				deleteNode(((kdInnerNode*)node)->left);
