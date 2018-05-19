@@ -15,7 +15,7 @@
 
 #include <sstream>
 
-//#define PR_GLASS_USE_DEFAULT_SCHLICK
+#define PR_GLASS_USE_DEFAULT_SCHLICK
 
 namespace PR {
 GlassMaterial::GlassMaterial(uint32 id)
@@ -134,7 +134,7 @@ MaterialSample GlassMaterial::samplePath(
 		if (path == 0) {
 			sample_reflection(ms, point, session);
 		} else {
-			ms.PathWeight = 1 - ms.PathWeight;
+			ms.PathWeight = 1.0f - ms.PathWeight;
 			sample_refraction(ms, NdotT, eta, point, session);
 		}
 	}

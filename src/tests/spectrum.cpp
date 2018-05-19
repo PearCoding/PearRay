@@ -28,7 +28,20 @@ PR_TEST("Fill")
 	spec.fill(1);
 
 	for (uint32 i = 0; i < spec.samples(); ++i)
-		PR_CHECK_EQ(spec.value(i), 1);
+		PR_CHECK_EQ(spec(i), 1);
+}
+PR_TEST("Max/Min/Avg/Sum")
+{
+	PR::Spectrum spec(SpectrumDescriptor::createStandardSpectral(), 0);
+
+	spec(52) = 1;
+	spec(42) = -1;
+
+	PR_CHECK_EQ(spec.max(), 1);
+	PR_CHECK_EQ(spec.min(), 0);// Amplitude!
+	PR_CHECK_EQ(spec.avg(), 0);
+	PR_CHECK_EQ(spec.sum(), 0);
+	PR_CHECK_EQ(spec.sqrSum(), 2);
 }
 PR_TEST("BarycentricTriangle")
 {

@@ -17,7 +17,7 @@ public:
 		*/
 	inline static float refraction_angle(float NdotV, float eta)
 	{
-		const float k = 1 - eta * eta * (1 - NdotV * NdotV);
+		const float k = 1 - (eta * eta) * (1 - NdotV * NdotV);
 		if (k < 0)
 			return -1;
 		else
@@ -90,7 +90,8 @@ public:
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-	inline static Eigen::Vector3f refract(float eta, float NdotV, float NdotT, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
+	inline static Eigen::Vector3f refract(float eta, float NdotV, float NdotT,
+										  const Eigen::Vector3f& N, const Eigen::Vector3f& V)
 	{
 		const float t = -eta * NdotV - NdotT;
 		return (V * eta + N * t).normalized();

@@ -19,18 +19,18 @@ namespace PR {
 struct DI_ThreadData {
 	Spectrum LiWeight;
 	Spectrum IntegralWeight;
-	Spectrum Evaluation;
+	std::vector<Spectrum> Evaluations;
 	std::vector<Spectrum> HemiWeights;
 	std::vector<Spectrum> PathWeights;
 
 	explicit DI_ThreadData(RenderContext* context)
 		: LiWeight(context->spectrumDescriptor())
 		, IntegralWeight(context->spectrumDescriptor())
-		, Evaluation(context->spectrumDescriptor())
 	{
 		for (uint32 i = 0; i < context->settings().maxRayDepth(); ++i) {
 			HemiWeights.emplace_back(context->spectrumDescriptor());
 			PathWeights.emplace_back(context->spectrumDescriptor());
+			Evaluations.emplace_back(context->spectrumDescriptor());
 		}
 	}
 };
@@ -142,9 +142,17 @@ bool DirectIntegrator::sampleHemisphere(Spectrum& spec, const Eigen::Vector3f& r
 
 		specular = specular || ms.isSpecular();
 
+		const float W = ms.PathWeight*NdotL;
 		const uint32 nextDiffBounces = !ms.isSpecular() ? diffbounces + 1 : diffbounces;
-		if (ms.PDF_S <= PR_EPSILON || NdotL <= PR_EPSILON
-			|| ms.PathWeight <= PR_EPSILON || nextDiffBounces > mMaxDiffBounces) {
+		if (ms.PDF_S <= PR_EPSILON || W <= PR_EPSILON
+			 || nextDiffBounces > mMaxDiffBounces) {
+			continue;
+		}
+
+		sc.Material->eval(threadData.Evaluations[depth], sc, ms.L, NdotL, session);
+		threadData.Evaluations[depth] *= W / ms.safePDF_S();
+		if(threadData.Evaluations[depth].isOnlyZero(0.0001f)) {
+			// TODO: Careful -> What with high radiance?
 			continue;
 		}
 
@@ -152,11 +160,7 @@ bool DirectIntegrator::sampleHemisphere(Spectrum& spec, const Eigen::Vector3f& r
 		applyRay(threadData.PathWeights[depth], in.next(sc.P, ms.L), session,
 				 nextDiffBounces, other_sc);
 
-		sc.Material->eval(threadData.Evaluation, sc, ms.L, NdotL, session);
-		threadData.PathWeights[depth] *= threadData.Evaluation
-										 * (ms.PathWeight * NdotL / ms.safePDF_S());
-
-		spec += threadData.PathWeights[depth];
+		spec += threadData.PathWeights[depth] * threadData.Evaluations[depth];
 	}
 
 	return specular;
@@ -167,6 +171,7 @@ void DirectIntegrator::sampleLight(Spectrum& spec, RenderEntity* light, const Ei
 	DI_ThreadData& threadData = mThreadData[session.thread()];
 
 	const RenderEntity::FacePointSample fps = light->sampleFacePoint(rnd);
+	const uint32 depth		  = in.depth();
 
 	const Eigen::Vector3f PS = fps.Point.P - sc.P;
 	const Eigen::Vector3f L  = PS.normalized();
@@ -190,8 +195,8 @@ void DirectIntegrator::sampleLight(Spectrum& spec, RenderEntity* light, const Ei
 
 		const float geom_term = NdotL * std::abs(other_sc.NdotV) /* other_sc.Depth2*/;
 
-		sc.Material->eval(threadData.Evaluation, sc, L, NdotL, session);
-		spec *= threadData.Evaluation * (geom_term / pdfA);
+		sc.Material->eval(threadData.Evaluations[depth], sc, L, NdotL, session);
+		spec *= threadData.Evaluations[depth] * (geom_term / pdfA);
 	}
 }
 } // namespace PR

@@ -20,13 +20,13 @@ public:
 
 	static inline float dielectric(float NdotV, float NdotT, float n1, float n2)
 	{
-		if(NdotV*NdotT <= PR_EPSILON)
-			return 1;
+		/*if(NdotV*NdotT <= PR_EPSILON)
+			return 1;*/
 		
 		const float para = (n1 * NdotV - n2 * NdotT) / (n1 * NdotV + n2 * NdotT);
 		const float perp = (n1 * NdotT - n2 * NdotV) / (n1 * NdotT + n2 * NdotV);
 
-		return (para * para + perp * perp) / 2;
+		return (para * para + perp * perp) / 2.0f;
 	}
 
 	static inline float conductor(float dot, float n, float k)

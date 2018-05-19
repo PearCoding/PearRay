@@ -252,10 +252,10 @@ inline bool Spectrum::hasNegative() const
 	return false;
 }
 
-inline bool Spectrum::isOnlyZero() const
+inline bool Spectrum::isOnlyZero(float eps) const
 {
 	for (uint32 i = 0; i < samples(); ++i) {
-		if (std::abs(value(i)) <= PR_EPSILON)
+		if (std::abs(value(i)) > eps)
 			return false;
 	}
 

@@ -21,6 +21,13 @@
 #define PR_KDTREE_MAX_DEPTH (512)
 #endif
 
+/* Traversal algorithm
+  0 - Stack based
+  1 - Push-down [HORN, Daniel Reiter, et al. Interactive kd tree GPU raytracing. In: Proceedings of the 2007 symposium on Interactive 3D graphics and games. ACM, 2007. S. 167-174.]
+ */
+
+#define PR_KDTREE_TRAVERSAL_ALGORITHM 1
+
 /*
  kdTree implementation based on:
  "On building fast kd-Trees for Ray Tracing, and on doing that in O(N log N)"
@@ -63,13 +70,18 @@ private:
 	};
 
 	struct kdInnerNode : public kdNode {
-		kdInnerNode(uint32 id, kdNode* l, kdNode* r, const BoundingBox& b)
+		kdInnerNode(uint32 id, uint8 axis, float sp,
+					kdNode* l, kdNode* r, const BoundingBox& b)
 			: kdNode(id, false, b)
+			, axis(axis)
+			, splitPos(sp)
 			, left(l)
 			, right(r)
 		{
 		}
 
+		const uint8 axis;
+		const float splitPos;
 		kdNode* left;
 		kdNode* right;
 	};
@@ -229,6 +241,8 @@ public:
 		for (auto obj : primitivesCopy)
 			delete obj;
 
+		cleanupNode(mRoot);
+
 		// Extract statistical information
 		mAvgElementsPerLeaf = 0;
 		mMinElementsPerLeaf = std::numeric_limits<size_t>::max();
@@ -247,192 +261,197 @@ public:
 	template <typename CheckCollisionCallback>
 	inline bool checkCollision(const Ray& ray, entity_t& foundEntity, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallback) const
 	{
-		/*thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
-
-		bool found = false;
-		FacePoint tmpCollisionPoint;*/
-
-		float t = std::numeric_limits<float>::infinity();
+#if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
+		struct _stackdata {
+			kdNode* node;
+			float minT;
+			float maxT;
+		};
+		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
+#endif
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
-		return checkCollision_Rec(mRoot, ray, t, foundEntity, collisionPoint, checkCollisionCallback);
+		const auto root_in = mRoot->boundingBox.intersectsRange(ray);
+		if (!root_in.Successful)
+			return false;
 
-		/*uint32 stackPos = 1;
-		stack[0]		= mRoot;
+		float hit_d = std::numeric_limits<float>::infinity();
+
+#if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
+		int stackPos		 = 0;
+		stack[stackPos].node = mRoot;
+		stack[stackPos].minT = root_in.Entry;
+		stack[stackPos].maxT = root_in.Exit;
+		++stackPos;
 
 		while (stackPos > 0) {
-			stackPos--;
-			kdNode* node = stack[stackPos];
+			kdNode* currentN = stack[stackPos - 1].node;
+			float minT		 = stack[stackPos - 1].minT;
+			float maxT		 = stack[stackPos - 1].maxT;
+			--stackPos;
+#else
+		kdNode* pushedN = mRoot;
+		float fullmaxT  = root_in.Exit;
+		float maxT		= root_in.Entry;
+		bool pushdown   = true;
 
-			const auto in = node->boundingBox.intersects(ray);
-			if (!in.Successful || in.T > t) {
-				continue;
+		while (maxT < fullmaxT) {
+			kdNode* currentN = pushedN;
+			float minT		 = maxT;
+			maxT			 = fullmaxT;
+#endif
+
+			while (!currentN->isLeaf) {
+				kdInnerNode* innerN = reinterpret_cast<kdInnerNode*>(currentN);
+				const float t		= (innerN->splitPos - ray.origin()(innerN->axis))
+								/ ray.direction()(innerN->axis);
+
+				const bool side = innerN->splitPos > ray.origin()(innerN->axis);
+				kdNode* nearN   = side ? innerN->left : innerN->right;
+				kdNode* farN	= side ? innerN->right : innerN->left;
+
+				if (t >= maxT || t < 0) {
+					currentN = nearN;
+				} else if (t <= minT) {
+					currentN = farN;
+				} else {
+
+#if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
+					stack[stackPos].node = farN;
+					stack[stackPos].minT = t;
+					stack[stackPos].maxT = maxT;
+					++stackPos;
+#else
+					pushdown = false;
+#endif
+					currentN = nearN;
+					maxT	 = t;
+				}
+
+				PR_ASSERT(currentN, "Null node not expected!");
+
+#if PR_KDTREE_TRAVERSAL_ALGORITHM != 0
+				if (pushdown) {
+					pushedN = currentN;
+				}
+#endif
 			}
 
-			if (node->leaf == 1) {
-				kdLeafNode* leaf = (kdLeafNode*)node;
+			// Traverse leaf
+			PR_ASSERT(currentN->isLeaf, "Expected leaf node!");
+			kdLeafNode* leafN = (kdLeafNode*)currentN;
 
-				for (const_reference_t entity : leaf->objects) {
-					if (checkCollisionCallack(mObserver, ray, tmpCollisionPoint, entity)) {
-						const float l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
-						if (l < t) {
-							t			   = l;
-							found		   = true;
-							foundEntity	= entity;
-							collisionPoint = tmpCollisionPoint;
-						}
+			FacePoint tmpCollisionPoint;
+			for (const_reference_t entity : leafN->objects) {
+				if (checkCollisionCallback(mObserver, ray, tmpCollisionPoint, entity)) {
+					const float l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
+					if (l < hit_d) {
+						hit_d		   = l;
+						foundEntity	= entity;
+						collisionPoint = tmpCollisionPoint;
 					}
-				}
-			} else {
-				kdInnerNode* inner = (kdInnerNode*)node;
-				if (inner->left) {
-					if (stackPos < PR_KDTREE_MAX_STACK) {
-						stack[stackPos] = inner->left;
-						stackPos++;
-					} else {
-						// FIXME:
-					}
-				}
 
-				if (inner->right) {
-					if (stackPos < PR_KDTREE_MAX_STACK) {
-						stack[stackPos] = inner->right;
-						stackPos++;
-					} else {
-						// FIXME:
-					}
+					if (hit_d < maxT)
+						return true;
 				}
 			}
 		}
 
-		return found;*/
+		return hit_d < std::numeric_limits<float>::infinity();
 	}
 
 	// A faster variant for rays detecting the background etc.
 	template <typename CheckCollisionCallback>
 	inline bool checkCollisionSimple(const Ray& ray, FacePoint& collisionPoint, CheckCollisionCallback checkCollisionCallback) const
 	{
-		//thread_local kdNode* stack[PR_KDTREE_MAX_STACK];
+#if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
+		struct _stackdata {
+			kdNode* node;
+			float minT;
+			float maxT;
+		};
+		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
+#endif
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
+		const auto root_in = mRoot->boundingBox.intersectsRange(ray);
+		if (!root_in.Successful)
+			return false;
 
-		return checkCollisionSimple_Rec(mRoot, ray, collisionPoint, checkCollisionCallback);
-		/*uint32 stackPos = 1;
-		stack[0]		= mRoot;
+#if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
+		int stackPos		 = 0;
+		stack[stackPos].node = mRoot;
+		stack[stackPos].minT = root_in.Entry;
+		stack[stackPos].maxT = root_in.Exit;
+		++stackPos;
 
 		while (stackPos > 0) {
-			stackPos--;
-			kdNode* node = stack[stackPos];
+			kdNode* currentN = stack[stackPos - 1].node;
+			float minT		 = stack[stackPos - 1].minT;
+			float maxT		 = stack[stackPos - 1].maxT;
+			--stackPos;
+#else
+		kdNode* pushedN = mRoot;
+		float fullmaxT  = root_in.Exit;
+		float maxT		= root_in.Entry;
+		bool pushdown   = true;
 
-			if (!node->boundingBox.intersectsSimple(ray)) {
-				continue;
+		while (maxT < fullmaxT) {
+			kdNode* currentN = pushedN;
+			float minT		 = maxT;
+			maxT			 = fullmaxT;
+#endif
+
+			while (!currentN->isLeaf) {
+				kdInnerNode* innerN = reinterpret_cast<kdInnerNode*>(currentN);
+				const float t		= (innerN->splitPos - ray.origin()(innerN->axis))
+								/ ray.direction()(innerN->axis);
+
+				const bool side = innerN->splitPos > ray.origin()(innerN->axis);
+				kdNode* nearN   = side ? innerN->left : innerN->right;
+				kdNode* farN	= side ? innerN->right : innerN->left;
+
+				if (t >= maxT || t < 0) {
+					currentN = nearN;
+				} else if (t <= minT) {
+					currentN = farN;
+				} else {
+#if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
+					stack[stackPos].node = farN;
+					stack[stackPos].minT = t;
+					stack[stackPos].maxT = maxT;
+					++stackPos;
+#else
+					pushdown = false;
+#endif
+					currentN = nearN;
+					maxT	 = t;
+				}
+
+				PR_ASSERT(currentN, "Null node not expected!");
+
+#if PR_KDTREE_TRAVERSAL_ALGORITHM != 0
+				if (pushdown) {
+					pushedN = currentN;
+				}
+#endif
 			}
 
-			if (node->leaf == 1) {
-				kdLeafNode* leaf = (kdLeafNode*)node;
+			// Traverse leaf
+			PR_ASSERT(currentN->isLeaf, "Expected leaf node!");
+			kdLeafNode* leafN = (kdLeafNode*)currentN;
 
-				for (const_reference_t entity : leaf->objects) {
-					if (checkCollisionCallack(mObserver, ray, collisionPoint, entity))
-						return true;
-				}
-			} else {
-				kdInnerNode* inner = (kdInnerNode*)node;
-				if (inner->left) {
-					if (stackPos < PR_KDTREE_MAX_STACK) {
-						stack[stackPos] = inner->left;
-						stackPos++;
-					} else {
-						// FIXME:
-					}
-				}
-
-				if (inner->right) {
-					if (stackPos < PR_KDTREE_MAX_STACK) {
-						stack[stackPos] = inner->right;
-						stackPos++;
-					} else {
-						// FIXME:
-					}
+			for (const_reference_t entity : leafN->objects) {
+				if (checkCollisionCallback(mObserver, ray, collisionPoint, entity)) {
+					return true;
 				}
 			}
 		}
 
-		return false;*/
+		return false;
 	}
 
 private:
-	template <typename CheckCollisionCallback>
-	inline bool checkCollision_Rec(kdNode* node,
-								   const Ray& ray, float& t, entity_t& foundEntity, FacePoint& collisionPoint,
-								   CheckCollisionCallback checkCollisionCallback) const
-	{
-		const auto in = node->boundingBox.intersects(ray);
-		if (!in.Successful
-			|| (!in.Inside && (in.T * in.T) > t)) {
-				// We ignore this node when the origin is not inside the block and the distance of intersection is far away
-			return false;
-		}
-
-		if (node->isLeaf) {
-			const kdLeafNode* leaf = (kdLeafNode*)node;
-
-			bool found = false;
-			FacePoint tmpCollisionPoint;
-			for (const_reference_t entity : leaf->objects) {
-				if (checkCollisionCallback(mObserver, ray, tmpCollisionPoint, entity)) {
-					const float l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
-					if (l < t) {
-						t			   = l;
-						found		   = true;
-						foundEntity	= entity;
-						collisionPoint = tmpCollisionPoint;
-					}
-				}
-			}
-			return found;
-		} else {
-			const kdInnerNode* inner = (kdInnerNode*)node;
-
-			const bool b1 = (inner->left)
-					  && checkCollision_Rec(inner->left, ray,
-											t, foundEntity, collisionPoint,
-											checkCollisionCallback);
-			const bool b2 = (inner->right)
-					  && checkCollision_Rec(inner->right, ray,
-											t, foundEntity, collisionPoint,
-											checkCollisionCallback);
-
-			// Do not inline the above calls, as we have to make sure both functions are called!
-			return b1 || b2;
-		}
-	}
-
-	template <typename CheckCollisionCallback>
-	inline bool checkCollisionSimple_Rec(kdNode* node,
-										 const Ray& ray, FacePoint& collisionPoint,
-										 CheckCollisionCallback checkCollisionCallback) const
-	{
-		if (!node->boundingBox.intersectsSimple(ray)) {
-			return false;
-		}
-
-		if (node->isLeaf) {
-			kdLeafNode* leaf = (kdLeafNode*)node;
-
-			for (const_reference_t entity : leaf->objects) {
-				if (checkCollisionCallback(mObserver, ray, collisionPoint, entity))
-					return true;
-			}
-			return false;
-		} else {
-			kdInnerNode* inner = (kdInnerNode*)node;
-			return ((inner->left)
-					&& checkCollisionSimple_Rec(inner->left, ray, collisionPoint, checkCollisionCallback))
-				   || ((inner->right)
-					   && checkCollisionSimple_Rec(inner->right, ray, collisionPoint, checkCollisionCallback));
-		}
-	}
-
 	static inline void statElementsNode(kdNode* node,
 										size_t& leafCount, size_t& sumV, size_t& minV, size_t& maxV)
 	{
@@ -454,6 +473,7 @@ private:
 			}
 		}
 	}
+
 	static inline void deleteNode(kdNode* node)
 	{
 		if (node) {
@@ -463,6 +483,29 @@ private:
 				deleteNode(((kdInnerNode*)node)->left);
 				deleteNode(((kdInnerNode*)node)->right);
 				delete (kdInnerNode*)node;
+			}
+		}
+	}
+
+	static inline void cleanupNode(kdNode*& node)
+	{
+		if (node->isLeaf) {
+			return; // Ignore leafs
+		} else {
+			kdInnerNode* innerN = (kdInnerNode*)node;
+
+			PR_ASSERT(innerN->left || innerN->right, "Expected atleast one node to be valid!");
+			if (innerN->left && !innerN->right) {
+				node = innerN->left;
+				delete innerN;
+				cleanupNode(node);
+			} else if (!innerN->left && innerN->right) {
+				node = innerN->right;
+				delete innerN;
+				cleanupNode(node);
+			} else {
+				cleanupNode(innerN->left);
+				cleanupNode(innerN->right);
 			}
 		}
 	}
@@ -713,7 +756,7 @@ private:
 
 		if ((/*mUseCostForLeaf &&*/ c > objs.size() * costIntersection)
 			//|| objs.size() <= mMinimumObjectsForLeaf
-			|| depth > PR_KDTREE_MAX_DEPTH
+			//|| depth > PR_KDTREE_MAX_DEPTH
 			|| (prev_dim == dim && std::abs(prev_v - v) <= PR_EPSILON)) {
 			auto leaf = new kdLeafNode(mNodeCount++, V);
 			for (auto obj : objs) {
@@ -762,7 +805,7 @@ private:
 		std::vector<Event>().swap(events);
 		std::vector<Primitive*>().swap(objs);
 
-		return new kdInnerNode(mNodeCount++,
+		return new kdInnerNode(mNodeCount++, dim, v,
 							   build(leftEvents, left, vl, depth + 1, dim, v),
 							   build(rightEvents, right, vr, depth + 1, dim, v),
 							   V);

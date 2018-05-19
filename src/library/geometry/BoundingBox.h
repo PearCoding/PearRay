@@ -92,12 +92,18 @@ public:
 
 	struct Intersection {
 		bool Successful;
-		bool Inside;
 		Eigen::Vector3f Position;
 		float T;
 	};
 	Intersection intersects(const Ray& ray) const;
 	bool intersectsSimple(const Ray& ray) const;
+
+	struct IntersectionRange {
+		bool Successful;
+		float Entry;
+		float Exit;
+	};
+	IntersectionRange intersectsRange(const Ray& ray) const;
 
 	FaceSide getIntersectionSide(const Intersection& intersection) const;
 

@@ -50,7 +50,6 @@ void BoundingBox::inflate(float eps, bool maxDir)
 
 BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 {
-	
 	BoundingBox::Intersection r;
 
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
@@ -60,8 +59,7 @@ BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
 	const float tmax = vmin.array().max(vmax.array()).minCoeff();
 
-	r.Inside = tmin <= 0;
-	r.T = r.Inside ? tmax : tmin;
+	r.T = tmin <= 0 ? tmax : tmin;
 	if (tmax >= tmin && r.T > PR_EPSILON) {
 		r.Position   = ray.origin() + ray.direction() * r.T;
 		r.Successful = true;
@@ -74,8 +72,6 @@ BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 
 bool BoundingBox::intersectsSimple(const Ray& ray) const
 {
-	
-
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
 	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
 	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
@@ -87,10 +83,29 @@ bool BoundingBox::intersectsSimple(const Ray& ray) const
 	return tmax >= tmin && t > PR_EPSILON;
 }
 
+BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& ray) const
+{
+	BoundingBox::IntersectionRange r;
+
+	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
+	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
+	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
+
+	r.Entry = vmin.array().min(vmax.array()).maxCoeff();
+	r.Exit = vmin.array().max(vmax.array()).minCoeff();
+
+	const float t = r.Entry <= 0 ? r.Exit : r.Entry;
+	if (r.Exit >= r.Entry && t > PR_EPSILON) {
+		r.Successful = true;
+	} else {
+		r.Successful = false;
+	}
+
+	return r;
+}
+
 BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Intersection& intersection) const
 {
-	
-
 	const Eigen::Vector3f minDist = (intersection.Position - lowerBound()).cwiseAbs();
 	const Eigen::Vector3f maxDist = (intersection.Position - upperBound()).cwiseAbs();
 
@@ -126,8 +141,6 @@ BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Inters
 
 Plane BoundingBox::getFace(FaceSide side) const
 {
-	
-
 	const Eigen::Vector3f diff = upperBound() - lowerBound();
 
 	switch (side) {

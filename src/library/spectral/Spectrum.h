@@ -76,7 +76,7 @@ public:
 	inline bool hasNaN() const;
 	inline bool hasInf() const;
 	inline bool hasNegative() const;
-	inline bool isOnlyZero() const;
+	inline bool isOnlyZero(float eps = PR_EPSILON) const;
 
 	// Vector Operations
 	inline void normalize();

@@ -780,10 +780,8 @@ Eigen::Quaternionf SceneLoader::getRotation(const DL::Data& data, bool& ok)
 std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
 {
 	if (allowScalar && dataD.isNumber()) {
-		Spectrum spec(env->spectrumDescriptor());
-		spec.fill(dataD.getNumber());
-
-		return std::make_shared<ConstSpectrumShaderOutput>(spec);
+		return std::make_shared<ConstSpectrumShaderOutput>(
+			Spectrum(env->spectrumDescriptor(), dataD.getNumber()));
 	} else if (dataD.type() == DL::Data::T_String) {
 		if (env->hasSpectrum(dataD.getString()))
 			return std::make_shared<ConstSpectrumShaderOutput>(env->getSpectrum(dataD.getString()));

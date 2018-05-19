@@ -28,6 +28,8 @@ void setup_geometry(py::module& m)
 		.def("isPlanar", &BoundingBox::isPlanar)
 		.def("contains", &BoundingBox::contains)
 		.def("intersects", &BoundingBox::intersects)
+		.def("intersectsSimple", &BoundingBox::intersectsSimple)
+		.def("intersectsRange", &BoundingBox::intersectsRange)
 		.def("getIntersectionSide", &BoundingBox::getIntersectionSide)
 		.def("combine", (void (BoundingBox::*)(const Eigen::Vector3f&)) & BoundingBox::combine)
 		.def("combine", (void (BoundingBox::*)(const BoundingBox&)) & BoundingBox::combine)
@@ -49,6 +51,11 @@ void setup_geometry(py::module& m)
 		.def_readwrite("Successful", &BoundingBox::Intersection::Successful)
 		.def_readwrite("Position", &BoundingBox::Intersection::Position)
 		.def_readwrite("T", &BoundingBox::Intersection::T);
+	
+	py::class_<BoundingBox::IntersectionRange>(scope, "IntersectionRange")
+		.def_readwrite("Successful", &BoundingBox::IntersectionRange::Successful)
+		.def_readwrite("Entry", &BoundingBox::IntersectionRange::Entry)
+		.def_readwrite("Exit", &BoundingBox::IntersectionRange::Exit);
 	
 	/////////////////////////////////////////////////////
 	auto scope2 = py::class_<Plane>(m, "Plane");

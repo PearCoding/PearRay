@@ -26,7 +26,7 @@ void TriMesh::clear()
 	}
 }
 
-constexpr float TriangleTestCost = 100.0f;
+constexpr float TriangleTestCost = 10.0f;
 void TriMesh::build()
 {
 	PR_ASSERT(isValid(), "Mesh has to be valid before build()!");
