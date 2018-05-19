@@ -275,7 +275,7 @@ public:
 		if (!root_in.Successful)
 			return false;
 
-		float hit_d = std::numeric_limits<float>::infinity();
+		float hitT2 = std::numeric_limits<float>::infinity();
 
 #if PR_KDTREE_TRAVERSAL_ALGORITHM == 0
 		int stackPos		 = 0;
@@ -345,19 +345,19 @@ public:
 			for (const_reference_t entity : leafN->objects) {
 				if (checkCollisionCallback(mObserver, ray, tmpCollisionPoint, entity)) {
 					const float l = (tmpCollisionPoint.P - ray.origin()).squaredNorm();
-					if (l < hit_d) {
-						hit_d		   = l;
+					if (l < hitT2) {
+						hitT2		   = l;
 						foundEntity	= entity;
 						collisionPoint = tmpCollisionPoint;
 					}
-
-					if (hit_d < maxT)
-						return true;
 				}
 			}
+
+			if (hitT2 < maxT*maxT)
+				return true;
 		}
 
-		return hit_d < std::numeric_limits<float>::infinity();
+		return hitT2 < std::numeric_limits<float>::infinity();
 	}
 
 	// A faster variant for rays detecting the background etc.
