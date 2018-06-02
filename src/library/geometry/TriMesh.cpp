@@ -8,6 +8,8 @@
 
 #include <fstream>
 
+#define BUILDER kdTreeBuilder
+
 namespace PR {
 TriMesh::TriMesh()
 	: mKDTree(nullptr)
@@ -53,16 +55,16 @@ void TriMesh::build(const std::string& container_file, bool loadOnly)
 
 void TriMesh::buildTree(const std::string& file)
 {
-	kdTreeBuilderNaive builder(this, [](void* observer, uint64 f) {
+	BUILDER builder(this, [](void* observer, uint64 f) {
 								TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
 								return Triangle::getBoundingBox(
 									mesh->mVertices[mesh->mIndices[f][0]],
 																mesh->mVertices[mesh->mIndices[f][1]],
 																mesh->mVertices[mesh->mIndices[f][2]]); },
-							   [](void* observer, uint64) {
-								   TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
-								   return mesh->intersectionTestCost();
-							   });
+					[](void* observer, uint64) {
+						TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
+						return mesh->intersectionTestCost();
+					});
 	builder.build(mIndices.size());
 
 	std::ofstream stream(file, std::ios::out | std::ios::trunc);

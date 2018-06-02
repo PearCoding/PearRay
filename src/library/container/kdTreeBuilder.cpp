@@ -166,6 +166,8 @@ static void cleanupNode(kdNodeBuilder*& node)
 	}
 }
 
+//////////////////////////////////////
+
 static inline float probability(const BoundingBox& VI, const BoundingBox& V)
 {
 	PR_ASSERT(V.surfaceArea() > PR_EPSILON, "Surface area should be greater than zero");
@@ -192,17 +194,14 @@ static inline float SAH(float costIntersection, const BoundingBox& V,
 						int dim, float v, size_t nl, size_t nr, size_t np,
 						SplitPlane& side, BoundingBox& vl, BoundingBox& vr)
 {
-	if (V.surfaceArea() <= PR_EPSILON || nl == 0 || nr == 0)
-		return std::numeric_limits<float>::infinity();
-
 	splitBox(V, dim, v, vl, vr);
 
-	/* Check which side objects on the plane belongs*/
+	// Skip non decreasing splits
+	if (vl.edge(dim) <= PR_EPSILON || vr.edge(dim) <= PR_EPSILON)
+		return std::numeric_limits<float>::infinity();
+
 	const float pl = probability(vl, V);
 	const float pr = probability(vr, V);
-
-	if (pl <= PR_EPSILON || pr <= PR_EPSILON)
-		return std::numeric_limits<float>::infinity();
 
 	const float cl = cost(costIntersection, pl, pr, nl + np, nr);
 	const float cr = cost(costIntersection, pl, pr, nl, nr + np);
@@ -216,7 +215,7 @@ static inline float SAH(float costIntersection, const BoundingBox& V,
 	}
 }
 
-enum EventType {
+enum EventType : uint8 {
 	ET_EndOnPlane   = 0, // -
 	ET_OnPlane		= 1, // |
 	ET_StartOnPlane = 2  // +
@@ -256,9 +255,7 @@ static void generateEvents(Primitive* p, const BoundingBox& V, std::vector<Event
 	BoundingBox box = p->box;
 	box.clipBy(V);
 	for (int i = 0; i < 3; ++i) {
-		if (/*box.faceArea(i) <= PR_EPSILON 
-			&&*/ box.faceArea((i+1)%3) <= PR_EPSILON 
-			|| box.faceArea((i+2)%3) <= PR_EPSILON) {
+		if (box.edge(i) <= PR_EPSILON) {
 			events.emplace_back(p, i, box.lowerBound()(i), ET_OnPlane);
 		} else {
 			events.emplace_back(p, i, box.lowerBound()(i), ET_StartOnPlane);
@@ -275,6 +272,7 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 	PR_ASSERT(std::is_sorted(events.begin(), events.end()), "Expected sorted events list");
 
 	size_t nl[3] = { 0, 0, 0 };
+	size_t np[3] = { 0, 0, 0 };
 	size_t nr[3] = { objs.size(), objs.size(), objs.size() };
 
 	for (size_t j = 0; j < events.size();) {
@@ -305,13 +303,14 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 			++j;
 		}
 
+		np[dim] = onPlane;
 		nr[dim] -= onPlane;
 		nr[dim] -= endOnPlane;
 
 		SplitPlane side;
 		BoundingBox vl;
 		BoundingBox vr;
-		const float c = SAH(costIntersection, V, dim, v, nl[dim], nr[dim], onPlane, side, vl, vr);
+		const float c = SAH(costIntersection, V, dim, v, nl[dim], nr[dim], np[dim], side, vl, vr);
 
 		if (c < c_out) {
 			c_out	= c;
@@ -322,6 +321,7 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 			vr_out   = vr;
 		}
 
+		np[dim] = 0;
 		nl[dim] += startOnPlane;
 		nl[dim] += onPlane;
 	}
@@ -361,17 +361,32 @@ static void classify(const std::vector<Event>& events, const std::vector<Primiti
 		if (e.dim != dim)
 			continue;
 
-		if (e.type == ET_EndOnPlane && e.v <= v)
+		if (e.type == ET_EndOnPlane && e.v <= v) { // | S---E P       |
 			e.primitive->side = S_Left;
-		else if (e.type == ET_StartOnPlane && e.v >= v)
+		} else if (e.type == ET_StartOnPlane && e.v >= v) { // |       P S---E |
 			e.primitive->side = S_Right;
-		else if (e.type == ET_OnPlane) {
+		} else if (e.type == ET_OnPlane) {
+			// |       P       | or |       P   S   | or |   S   P       |
 			if (e.v < v || (std::abs(e.v - v) <= PR_EPSILON && side == SP_Left))
 				e.primitive->side = S_Left;
-			if (e.v > v || (std::abs(e.v - v) <= PR_EPSILON && side == SP_Right))
+			else //if (e.v > v || (std::abs(e.v - v) <= PR_EPSILON && side == SP_Right))
 				e.primitive->side = S_Right;
 		}
 	}
+}
+
+inline static kdNodeBuilder* createLeafNode(void* observer,
+										   kdTreeBuilder::AddedCallback addedCallback,
+										   std::vector<Primitive*>& objs,
+										   const BoundingBox& V)
+{
+	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(-1, V);
+	for (auto obj : objs) {
+		leaf->objects.push_back(obj->data);
+		if (addedCallback)
+			addedCallback(observer, obj->data, leaf->id);
+	}
+	return leaf;
 }
 
 static kdNodeBuilder* buildNode(void* observer,
@@ -380,7 +395,11 @@ static kdNodeBuilder* buildNode(void* observer,
 								std::vector<Event>& events, std::vector<Primitive*>& objs,
 								const BoundingBox& V, uint32 depth, uint32 maxDepth, bool elementWise)
 {
-	PR_ASSERT(!objs.empty(), "Nodes should never be empty!");
+	if (objs.empty() || V.surfaceArea() <= PR_EPSILON || depth > maxDepth) {
+		// Empty leaf or very tiny volume or max depth.
+		// Just give up and make a leaf.
+		return createLeafNode(observer, addedCallback, objs, V);
+	}
 
 	float costIntersection;
 	if (!elementWise) {
@@ -401,18 +420,15 @@ static kdNodeBuilder* buildNode(void* observer,
 
 	findSplit(costIntersection, events, objs, V, dim, v, c, side, vl, vr);
 
-	if (c > objs.size() * costIntersection
-		|| depth > maxDepth) {
-		auto leaf = new kdLeafNodeBuilder(-1, V);
-		for (auto obj : objs) {
-			leaf->objects.push_back(obj->data);
-			if (addedCallback)
-				addedCallback(observer, obj->data, leaf->id);
-		}
-		return leaf;
+	if (c > objs.size() * costIntersection) {
+		return createLeafNode(observer, addedCallback, objs, V);
 	}
 
 	classify(events, objs, dim, v, side);
+
+	// Distribute
+	std::vector<Primitive*> left, right;
+	distributeObjects(objs, left, right);
 
 	// Splice E into ELO and ERO,
 	// and generate events for ELB and ERB
@@ -426,10 +442,13 @@ static kdNodeBuilder* buildNode(void* observer,
 		case S_Right:
 			rightOnlyEvents.push_back(e);
 			break;
-		case S_Both:
-			generateEvents(e.primitive, vl, leftBothEvents);
-			generateEvents(e.primitive, vr, rightBothEvents);
-			break;
+		}
+	}
+
+	for (const auto& p : objs) {
+		if (p->side == S_Both) {
+			generateEvents(p, vl, leftBothEvents);
+			generateEvents(p, vr, rightBothEvents);
 		}
 	}
 
@@ -441,10 +460,6 @@ static kdNodeBuilder* buildNode(void* observer,
 	std::vector<Event> leftEvents, rightEvents;
 	std::merge(leftOnlyEvents.begin(), leftOnlyEvents.end(), leftBothEvents.begin(), leftBothEvents.end(), std::back_inserter(leftEvents));
 	std::merge(rightOnlyEvents.begin(), rightOnlyEvents.end(), rightBothEvents.begin(), rightBothEvents.end(), std::back_inserter(rightEvents));
-
-	// Distribute
-	std::vector<Primitive*> left, right;
-	distributeObjects(objs, left, right);
 
 	// Cleanup for memory
 	std::vector<Event>().swap(leftOnlyEvents);
@@ -479,7 +494,7 @@ void kdTreeBuilder::build(size_t size)
 		return;
 	}
 
-	mMaxDepth = std::min<uint32>(PR_KDTREE_MAX_DEPTH, std::ceil(8 + 1.5 * std::log2(size)));
+	mMaxDepth = std::ceil(8 + 3 * 1.5 * std::log2(size));
 
 	std::vector<Primitive*> primitives;		// Will be cleared to save memory
 	std::vector<Primitive*> primitivesCopy; // Copy to be deleted later
@@ -531,6 +546,8 @@ void kdTreeBuilder::build(size_t size)
 	if (mMaxElementsPerLeaf < mMinElementsPerLeaf)
 		mMinElementsPerLeaf = mMaxElementsPerLeaf;
 }
+
+/////////////////////////////////////////////
 
 static void saveNode(std::ostream& stream, kdNodeBuilder* node)
 {

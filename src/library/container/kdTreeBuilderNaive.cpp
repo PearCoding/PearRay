@@ -320,17 +320,31 @@ static void distributeObjects(const std::vector<Primitive*>& objs, SidePlane sid
 	}
 }
 
+inline static kdNodeBuilder* createLeafNode(void* observer,
+										   kdTreeBuilderNaive::AddedCallback addedCallback,
+										   std::vector<Primitive*>& objs,
+										   const BoundingBox& V)
+{
+	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(-1, V);
+	for (auto obj : objs) {
+		leaf->objects.push_back(obj->data);
+		if (addedCallback)
+			addedCallback(observer, obj->data, leaf->id);
+	}
+	return leaf;
+}
+
 static kdNodeBuilder* buildNode(void* observer,
 								kdTreeBuilderNaive::CostCallback costCallback,
 								kdTreeBuilderNaive::AddedCallback addedCallback,
 								std::vector<Primitive*>& objs,
 								const BoundingBox& V, uint32 depth, uint32 maxDepth, bool elementWise)
 {
-	if (objs.empty()) { // Empty leaf!
-		return new kdLeafNodeBuilder(-1, V);
-		//return nullptr;
+	if (objs.empty() || V.surfaceArea() <= PR_EPSILON || depth > maxDepth) {
+		// Empty leaf or very tiny volume or max depth.
+		// Just give up and make a leaf.
+		return createLeafNode(observer, addedCallback, objs, V);
 	}
-	//PR_ASSERT(!objs.empty(), "Nodes should never be empty!");
 
 	float costIntersection;
 	if (!elementWise) {
@@ -350,15 +364,8 @@ static kdNodeBuilder* buildNode(void* observer,
 	BoundingBox vl, vr;
 	findSplit(costIntersection, objs, V, dim, v, c, side, vl, vr);
 
-	if (c > objs.size() * costIntersection
-		|| depth > maxDepth) {
-		auto leaf = new kdLeafNodeBuilder(-1, V);
-		for (auto obj : objs) {
-			leaf->objects.push_back(obj->data);
-			if (addedCallback)
-				addedCallback(observer, obj->data, leaf->id);
-		}
-		return leaf;
+	if (c > objs.size() * costIntersection) {
+		return createLeafNode(observer, addedCallback, objs, V);
 	}
 
 	uint32 nl, nr, np;

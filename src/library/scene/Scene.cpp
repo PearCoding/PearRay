@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
 #include "entity/Entity.h"
@@ -10,6 +11,8 @@
 #include "Logger.h"
 
 #include <fstream>
+
+#define BUILDER kdTreeBuilder
 
 namespace PR {
 Scene::Scene(const std::string& name,
@@ -58,14 +61,14 @@ void Scene::buildTree(const std::string& file)
 {
 	PR_LOG(L_INFO) << mRenderEntities.size() << " Render Entities" << std::endl;
 
-	kdTreeBuilderNaive builder(this,
-						  [](void* data, uint64 index) { return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->worldBoundingBox(); },
-						  [](void* data, uint64 index) {
-							  return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->collisionCost();
-						  },
-						  [](void* data, uint64 index, uint32 id) {
-							  reinterpret_cast<Scene*>(data)->mRenderEntities[index]->setContainerID(id);
-						  });
+	BUILDER builder(this,
+					[](void* data, uint64 index) { return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->worldBoundingBox(); },
+					[](void* data, uint64 index) {
+						return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->collisionCost();
+					},
+					[](void* data, uint64 index, uint32 id) {
+						reinterpret_cast<Scene*>(data)->mRenderEntities[index]->setContainerID(id);
+					});
 	builder.setCostElementWise(true);
 	builder.build(mRenderEntities.size());
 

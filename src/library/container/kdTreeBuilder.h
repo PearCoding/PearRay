@@ -8,10 +8,6 @@
 #include <vector>
 #include <ostream>
 
-#ifndef PR_KDTREE_MAX_DEPTH
-#define PR_KDTREE_MAX_DEPTH (1 << 20 /*PR_KDTREE_MAX_STACK / 4*/)
-#endif
-
 /*
  kdTree implementation based on:
  "On building fast kd-Trees for Ray Tracing, and on doing that in O(N log N)"
