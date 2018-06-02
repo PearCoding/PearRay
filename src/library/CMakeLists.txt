@@ -13,6 +13,9 @@ SET(PR_Camera_Src
   camera/StandardCamera.cpp)
 SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Container_Src 
+  container/kdTreeBuilder.cpp
+  container/kdTreeBuilderNaive.cpp
+  container/kdTreeCollider.cpp
   )
 SOURCE_GROUP("Source Files\\Container" FILES ${PR_Container_Src})
 SET(PR_Entity_Src
@@ -134,7 +137,9 @@ SET(PR_Camera_Hdr
   camera/StandardCamera.h)
 SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Container_Hdr
-  container/kdTree.h)
+  container/kdTreeBuilder.h
+  container/kdTreeBuilderNaive.h
+  container/kdTreeCollider.h)
 SOURCE_GROUP("Header Files\\Container" FILES ${PR_Container_Hdr})
 SET(PR_Entity_Hdr
   entity/BoundaryEntity.h

@@ -40,6 +40,7 @@ PUSH_TEST(random random.cpp)
 PUSH_TEST2(seed seed.cpp)
 PUSH_TEST(photon photon.cpp)
 PUSH_TEST(auto_diff auto_diff.cpp)
+PUSH_TEST(kdtree kdtree.cpp)
 
 IF(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)

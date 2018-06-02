@@ -52,10 +52,14 @@ public:
 	inline bool isValid() const;
 
 	void clear();
-	void build();
+	void build(const std::string& container_file, bool loadOnly=false);
+	inline bool isBuilt() const { return mKDTree != nullptr; }
 
 	float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
 	float surfaceArea(const Eigen::Affine3f& transform) const;
+
+	inline void setIntersectionTestCost(float f);
+	inline float intersectionTestCost() const;
 
 	inline const BoundingBox& boundingBox() const
 	{
@@ -79,8 +83,11 @@ public:
 	FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const;
 
 private:
+	void buildTree(const std::string& container_file);
+	void loadTree(const std::string& container_file);
+
 	BoundingBox mBoundingBox;
-	void* mKDTree;
+	class kdTreeCollider* mKDTree;
 
 	uint32 mFeatures;
 	std::vector<Vector3f> mVertices;
@@ -91,6 +98,8 @@ private:
 	std::vector<Vector3f> mVelocities;
 	std::vector<uint32> mMaterials;
 	std::vector<Vector3u64> mIndices;
+
+	float mIntersectionTestCost;
 };
 }
 

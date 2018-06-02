@@ -36,4 +36,14 @@ inline bool TriMesh::isValid() const
 {
 	return mVertices.size() >= 3 && !mIndices.empty() && mVertices.size() == mNormals.size();
 }
+
+inline void TriMesh::setIntersectionTestCost(float f)
+{
+	mIntersectionTestCost = f;
+}
+
+inline float TriMesh::intersectionTestCost() const
+{
+	return mIntersectionTestCost;
+}
 } // namespace PR

@@ -1,20 +1,22 @@
 #include "Scene.h"
-#include "container/kdTree.h"
+#include "container/kdTreeBuilderNaive.h"
+#include "container/kdTreeCollider.h"
 #include "entity/Entity.h"
 #include "entity/RenderEntity.h"
 #include "light/IInfiniteLight.h"
 #include "material/Material.h"
+#include "renderer/RenderContext.h"
 
 #include "Logger.h"
 
-namespace PR {
-typedef kdTree<std::shared_ptr<RenderEntity>, Scene, true> SceneKDTree;
+#include <fstream>
 
+namespace PR {
 Scene::Scene(const std::string& name,
 			 const std::shared_ptr<Camera>& activeCamera,
-			 const std::list<std::shared_ptr<Entity>>& entities,
-			 const std::list<std::shared_ptr<RenderEntity>>& renderentities,
-			 const std::list<std::shared_ptr<IInfiniteLight>>& lights)
+			 const std::vector<std::shared_ptr<Entity>>& entities,
+			 const std::vector<std::shared_ptr<RenderEntity>>& renderentities,
+			 const std::vector<std::shared_ptr<IInfiniteLight>>& lights)
 	: mName(name)
 	, mActiveCamera(activeCamera)
 	, mEntities(entities)
@@ -27,7 +29,7 @@ Scene::Scene(const std::string& name,
 Scene::~Scene()
 {
 	if (mKDTree) {
-		delete reinterpret_cast<SceneKDTree*>(mKDTree);
+		delete mKDTree;
 		mKDTree = nullptr;
 	}
 }
@@ -52,52 +54,58 @@ std::shared_ptr<Camera> Scene::activeCamera() const
 	return mActiveCamera;
 }
 
-void Scene::buildTree(bool force)
+void Scene::buildTree(const std::string& file)
 {
-	if (mKDTree) {
-		if (force) {
-			PR_LOG(L_DEBUG) << "kdTree already exists, deleting old one." << std::endl;
-			delete reinterpret_cast<SceneKDTree*>(mKDTree);
-			mKDTree = nullptr;
-		} else {
-			return;
-		}
-	}
-
 	PR_LOG(L_INFO) << mRenderEntities.size() << " Render Entities" << std::endl;
 
-	mKDTree = new SceneKDTree(this,
-							  [](Scene*, const std::shared_ptr<RenderEntity>& e) { return e->worldBoundingBox(); },
-							  [](Scene*, const std::shared_ptr<RenderEntity>& e) {
-								  return e->collisionCost();
-							  },
-							  [](Scene*, const std::shared_ptr<RenderEntity>& e, uint32 id) {
-								  e->setContainerID(id);
-							  });
+	kdTreeBuilderNaive builder(this,
+						  [](void* data, uint64 index) { return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->worldBoundingBox(); },
+						  [](void* data, uint64 index) {
+							  return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->collisionCost();
+						  },
+						  [](void* data, uint64 index, uint32 id) {
+							  reinterpret_cast<Scene*>(data)->mRenderEntities[index]->setContainerID(id);
+						  });
+	builder.setCostElementWise(true);
+	builder.build(mRenderEntities.size());
 
-	reinterpret_cast<SceneKDTree*>(mKDTree)->enableCostForLeafDetection(false);
-	reinterpret_cast<SceneKDTree*>(mKDTree)->setMinimumObjectsForLeaf(1);
+	std::ofstream stream(file);
+	builder.save(stream);
+}
 
-	reinterpret_cast<SceneKDTree*>(mKDTree)->build(
-		mRenderEntities.begin(), mRenderEntities.end(), mRenderEntities.size());
+void Scene::loadTree(const std::string& file)
+{
+	if (mKDTree) {
+		delete mKDTree;
+		mKDTree = nullptr;
+	}
+
+	std::ifstream stream(file);
+	mKDTree = new kdTreeCollider;
+	mKDTree->load(stream);
+	if (!mKDTree->isEmpty())
+		mBoundingBox = mKDTree->boundingBox();
 }
 
 SceneCollision Scene::checkCollision(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	SceneCollision sc;
-	std::shared_ptr<RenderEntity> entity;
-	sc.Successful = reinterpret_cast<SceneKDTree*>(
-						mKDTree)
+	uint64 entity;
+	sc.Successful = mKDTree
 						->checkCollision(ray, entity, sc.Point,
-										 [](Scene*, const Ray& ray, FacePoint& point, const std::shared_ptr<RenderEntity>& e) {
-											 RenderEntity::Collision c = e->checkCollision(ray);
+										 [this](const Ray& ray, FacePoint& point, uint64 index, float& t) {
+											 RenderEntity::Collision c = this->mRenderEntities[index]->checkCollision(ray);
 											 point					   = c.Point;
+											 t						   = (ray.origin() - c.Point.P).norm();
 											 return (c.Successful
 													 && ((ray.flags() & RF_Debug)
 														 || ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
 										 });
-	sc.Entity = entity.get(); // We use direct pointer here!
+	if (sc.Successful)
+		sc.Entity = mRenderEntities[entity].get(); // We use direct pointer here!
+	else
+		sc.Entity = nullptr;
 	return sc;
 }
 
@@ -105,22 +113,25 @@ SceneCollision Scene::checkCollisionBoundingBox(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	SceneCollision sc;
-	std::shared_ptr<RenderEntity> entity;
-	sc.Successful = reinterpret_cast<SceneKDTree*>(
-						mKDTree)
+	uint64 entity;
+	sc.Successful = mKDTree
 						->checkCollision(ray, entity, sc.Point,
-										 [](Scene*, const Ray& ray, FacePoint& point, const std::shared_ptr<RenderEntity>& e) {
-											 BoundingBox bx = e->worldBoundingBox();
+										 [this](const Ray& ray, FacePoint& point, uint64 index, float& t) {
+											 BoundingBox bx = this->mRenderEntities[index]->worldBoundingBox();
 
 											 BoundingBox::Intersection in = bx.intersects(ray);
 
 											 if (in.Successful) {
 												 point.P = in.Position;
 											 }
+											 t = (ray.origin() - point.P).norm();
 
 											 return in.Successful;
 										 });
-	sc.Entity = entity.get(); // We use direct pointer here!
+	if (sc.Successful)
+		sc.Entity = mRenderEntities[entity].get(); // We use direct pointer here!
+	else
+		sc.Entity = nullptr;
 	return sc;
 }
 
@@ -128,11 +139,10 @@ SceneCollision Scene::checkCollisionSimple(const Ray& ray) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	SceneCollision sc;
-	sc.Successful = reinterpret_cast<SceneKDTree*>(
-						mKDTree)
+	sc.Successful = mKDTree
 						->checkCollisionSimple(ray, sc.Point,
-											   [](Scene*, const Ray& ray, FacePoint& point, const std::shared_ptr<RenderEntity>& e) {
-												   RenderEntity::Collision c = e->checkCollision(ray);
+											   [this](const Ray& ray, FacePoint& point, uint64 index) {
+												   RenderEntity::Collision c = this->mRenderEntities[index]->checkCollision(ray);
 												   point					 = c.Point;
 												   return (c.Successful
 														   && ((ray.flags() & RF_Debug)
@@ -142,7 +152,7 @@ SceneCollision Scene::checkCollisionSimple(const Ray& ray) const
 	return sc;
 }
 
-void Scene::setup(RenderContext* context, bool force)
+void Scene::setup(RenderContext* context)
 {
 	PR_LOG(L_INFO) << "Freezing scene" << std::endl;
 	for (auto e : mEntities)
@@ -154,13 +164,9 @@ void Scene::setup(RenderContext* context, bool force)
 	for (auto e : mInfiniteLights)
 		e->freeze(context);
 
-	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure" << std::endl;
-	buildTree(force);
-}
-
-BoundingBox Scene::boundingBox() const
-{
-	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	return reinterpret_cast<SceneKDTree*>(mKDTree)->boundingBox();
+	const std::string file = context->workingDir() + "scene.cnt";
+	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure \"" << file << "\"" << std::endl;
+	buildTree(file);
+	loadTree(file);
 }
 } // namespace PR

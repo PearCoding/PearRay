@@ -19,7 +19,7 @@ std::shared_ptr<PR::Entity> CoordinateAxisParser::parse(Environment* env, const 
 	DL::Data materialYD = group.getFromKey("y_material");
 	DL::Data materialZD = group.getFromKey("z_material");
 
-	auto bnd = std::make_shared<CoordinateAxisEntity>(env->sceneFactory().entities().size() + 1, name);
+	auto bnd = std::make_shared<CoordinateAxisEntity>(env->sceneFactory().fullEntityCount() + 1, name);
 
 	if (axisLengthD.isNumber())
 		bnd->setAxisLength(std::max(PR_EPSILON, axisLengthD.getNumber()));

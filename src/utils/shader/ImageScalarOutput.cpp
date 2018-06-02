@@ -19,8 +19,8 @@ void ImageScalarShaderOutput::eval(float& res, const PR::ShaderClosure& point) c
 	res = 0;
 	if (!mTextureSystem->texture(mFilename, mTextureOptions,
 								 point.UVW(0), 1 - point.UVW(1),
-								 point.dUVWdX(0), point.dUVWdY(0),
-								 point.dUVWdX(1), point.dUVWdY(1),
+								 0,0,0,0,/*point.dUVWdX(0), point.dUVWdY(0),
+								 point.dUVWdX(1), point.dUVWdY(1),*/
 								 1, &res)) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup texture at UV [" << point.UVW << "]: " << err << std::endl;

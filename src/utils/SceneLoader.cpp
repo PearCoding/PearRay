@@ -254,7 +254,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 		PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. No valid type given." << std::endl;
 		return;
 	} else if (typeD.getString() == "null" || typeD.getString() == "empty") {
-		entity = std::make_shared<Entity>(env->sceneFactory().entities().size() + 1, name);
+		entity = std::make_shared<Entity>(env->sceneFactory().fullEntityCount() + 1, name);
 	} else {
 		const IEntityParser* parser = nullptr;
 		for (int i = 0; EntityParserEntries[i].Name; ++i) {

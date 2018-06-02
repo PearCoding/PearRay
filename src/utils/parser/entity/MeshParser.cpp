@@ -14,7 +14,7 @@ std::shared_ptr<PR::Entity> MeshParser::parse(Environment* env, const std::strin
 	DL::Data materialsD = group.getFromKey("materials");
 	DL::Data meshD		= group.getFromKey("mesh");
 
-	auto me = std::make_shared<MeshEntity>(env->sceneFactory().entities().size() + 1, name);
+	auto me = std::make_shared<MeshEntity>(env->sceneFactory().fullEntityCount() + 1, name);
 
 	if (meshD.type() == DL::Data::T_String) {
 		if (env->hasMesh(meshD.getString())) {

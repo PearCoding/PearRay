@@ -5,12 +5,10 @@
 
 #include <utility>
 
-
-
 namespace PR {
 BoundingBox::BoundingBox()
-	: mUpperBound(0, 0, 0)
-	, mLowerBound(0, 0, 0)
+	: mUpperBound(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity())
+	, mLowerBound(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity())
 {
 }
 
@@ -92,7 +90,7 @@ BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& ray) cons
 	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
 
 	r.Entry = vmin.array().min(vmax.array()).maxCoeff();
-	r.Exit = vmin.array().max(vmax.array()).minCoeff();
+	r.Exit  = vmin.array().max(vmax.array()).minCoeff();
 
 	const float t = r.Entry <= 0 ? r.Exit : r.Entry;
 	if (r.Exit >= r.Entry && t > PR_EPSILON) {
@@ -183,4 +181,4 @@ void BoundingBox::combine(const BoundingBox& other)
 	combine(other.lowerBound());
 	combine(other.upperBound());
 }
-}
+} // namespace PR

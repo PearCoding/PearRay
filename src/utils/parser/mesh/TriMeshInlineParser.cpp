@@ -219,7 +219,6 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 	me->setIndices(faces);
 
 	if (me->isValid()) {
-		me->build();
 		return me;
 	} else {
 		PR_LOG(L_ERROR) << "Loaded mesh is invalid." << std::endl;

@@ -7,6 +7,18 @@
 using namespace PR;
 
 PR_BEGIN_TESTCASE(BoundingBox)
+PR_TEST("Validity")
+{
+	BoundingBox box(10, 10, 10);
+	PR_CHECK_TRUE(box.isValid());
+}
+
+PR_TEST("Invalidity")
+{
+	BoundingBox box;
+	PR_CHECK_FALSE(box.isValid());
+}
+
 PR_TEST("Size")
 {
 	BoundingBox box(10, 10, 10);
@@ -22,6 +34,69 @@ PR_TEST("Bounds")
 	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(-1, -1, -1));
 	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(1, 1, 1));
 	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+}
+
+PR_TEST("Clip Inside")
+{
+	BoundingBox box(2, 2, 2);
+	BoundingBox parent(3, 3, 3);
+
+	box.clipBy(parent);
+	PR_CHECK_EQ(box.width(), 2);
+	PR_CHECK_EQ(box.height(), 2);
+	PR_CHECK_EQ(box.depth(), 2);
+	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+}
+
+PR_TEST("Clip Outside")
+{
+	BoundingBox box(2, 2, 2);
+	BoundingBox parent(1, 1, 1);
+
+	box.clipBy(parent);
+	PR_CHECK_EQ(box.width(), 1);
+	PR_CHECK_EQ(box.height(), 1);
+	PR_CHECK_EQ(box.depth(), 1);
+	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+}
+
+PR_TEST("Clip Zero")
+{
+	BoundingBox box(Eigen::Vector3f(0,0,0), Eigen::Vector3f(1,1,1));
+	BoundingBox parent(Eigen::Vector3f(-1,-1,-1), Eigen::Vector3f(0,0,0));
+
+	box.clipBy(parent);
+	PR_CHECK_EQ(box.width(), 0);
+	PR_CHECK_EQ(box.height(), 0);
+	PR_CHECK_EQ(box.depth(), 0);
+	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(0,0,0));
+	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(0,0,0));
+}
+
+PR_TEST("Clip Left Half")
+{
+	BoundingBox box(Eigen::Vector3f(0,1,2), Eigen::Vector3f(2,3,4));
+	BoundingBox parent(Eigen::Vector3f(-1,0,1), Eigen::Vector3f(1,2,3));
+
+	box.clipBy(parent);
+	PR_CHECK_EQ(box.width(), 1);
+	PR_CHECK_EQ(box.height(), 1);
+	PR_CHECK_EQ(box.depth(), 1);
+	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(0,1,2));
+	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(1,2,3));
+}
+
+PR_TEST("Clip Right Half")
+{
+	BoundingBox box(Eigen::Vector3f(-2,-3,-4), Eigen::Vector3f(1,0,-1));
+	BoundingBox parent(Eigen::Vector3f(-1,-2,-3), Eigen::Vector3f(1,2,3));
+
+	box.clipBy(parent);
+	PR_CHECK_EQ(box.width(), 2);
+	PR_CHECK_EQ(box.height(), 2);
+	PR_CHECK_EQ(box.depth(), 2);
+	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(-1,-2,-3));
+	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(1,0,-1));
 }
 
 PR_TEST("Inflate")
@@ -151,6 +226,17 @@ PR_TEST("Intersects Complex")
 	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.Position, point);
 	PR_CHECK_EQ(box.getIntersectionSide(s), BoundingBox::FS_Top);
+}
+
+PR_TEST("Intersects Range")
+{
+	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
+	BoundingBox box(2, 2, 2);
+
+	BoundingBox::IntersectionRange s = box.intersectsRange(ray);
+	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_EQ(s.Entry, 1);
+	PR_CHECK_EQ(s.Exit, 3);
 }
 
 PR_TEST("Face Front")

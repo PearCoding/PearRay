@@ -48,7 +48,7 @@ void Logger::removeListener(LogListener* listener)
 }
 
 std::ostream& Logger::startEntry(LogLevel level) {
-	if ((int)verbosity() < (int)level)
+	if ((int)level < (int)verbosity())
 		return mEmptyStream;
 
 	if (!mQuiet)

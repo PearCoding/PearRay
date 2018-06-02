@@ -31,7 +31,7 @@ std::shared_ptr<PR::Entity> BoundaryParser::parse(Environment* env, const std::s
 		PR_LOG(L_WARNING) << "Entity " << name << " has no size. Assuming unit cube." << std::endl;
 	}
 
-	auto bnd = std::make_shared<BoundaryEntity>(env->sceneFactory().entities().size() + 1, name,
+	auto bnd = std::make_shared<BoundaryEntity>(env->sceneFactory().fullEntityCount() + 1, name,
 												BoundingBox(size(0), size(1), size(2)));
 
 	if (materialD.type() == DL::Data::T_String) {

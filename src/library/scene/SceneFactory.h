@@ -2,7 +2,7 @@
 
 #include "PR_Config.h"
 
-#include <list>
+#include <vector>
 #include <string>
 
 namespace PR {
@@ -26,12 +26,12 @@ public:
 
 	std::shared_ptr<Entity> getEntity(const std::string& name, const std::string& type) const;
 
-	inline const std::list<std::shared_ptr<RenderEntity>>& renderEntities() const { return mRenderEntities; }
-	inline const std::list<std::shared_ptr<Entity>>& entities() const { return mEntities; }
+	inline const std::vector<std::shared_ptr<RenderEntity>>& renderEntities() const { return mRenderEntities; }
+	inline const std::vector<std::shared_ptr<Entity>>& entities() const { return mEntities; }
 
 	void addInfiniteLight(const std::shared_ptr<IInfiniteLight>& e);
 	void removeInfiniteLight(const std::shared_ptr<IInfiniteLight>& e);
-	inline const std::list<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfiniteLights; }
+	inline const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfiniteLights; }
 
 	void setActiveCamera(const std::shared_ptr<Camera>& c);
 	std::shared_ptr<Camera> activeCamera() const;
@@ -40,11 +40,13 @@ public:
 
 	std::shared_ptr<Scene> create() const;
 
+	inline size_t fullEntityCount() const { return mEntities.size() + mRenderEntities.size(); }
+
 private:
 	std::string mName;
 	std::shared_ptr<Camera> mActiveCamera;
-	std::list<std::shared_ptr<Entity>> mEntities;
-	std::list<std::shared_ptr<RenderEntity>> mRenderEntities;
-	std::list<std::shared_ptr<IInfiniteLight>> mInfiniteLights;
+	std::vector<std::shared_ptr<Entity>> mEntities;
+	std::vector<std::shared_ptr<RenderEntity>> mRenderEntities;
+	std::vector<std::shared_ptr<IInfiniteLight>> mInfiniteLights;
 };
 }

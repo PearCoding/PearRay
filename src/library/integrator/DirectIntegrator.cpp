@@ -175,7 +175,7 @@ void DirectIntegrator::sampleLight(Spectrum& spec, RenderEntity* light, const Ei
 
 	const Eigen::Vector3f PS = fps.Point.P - sc.P;
 	const Eigen::Vector3f L  = PS.normalized();
-	const float NdotL		 = std::max(0.0f, L.dot(sc.N)); // No back light detection
+	const float NdotL		 = /*std::max(0.0f, */L.dot(sc.N)/*)*/; // No back light detection
 
 	float pdfA = fps.PDF_A;
 

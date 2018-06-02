@@ -1,15 +1,17 @@
 #include "TriMesh.h"
 #include "Logger.h"
-#include "container/kdTree.h"
+#include "container/kdTreeBuilder.h"
+#include "container/kdTreeBuilderNaive.h"
+#include "container/kdTreeCollider.h"
 #include "material/Material.h"
 #include "math/Projection.h"
 
-#include <boost/range/irange.hpp>
+#include <fstream>
 
 namespace PR {
-typedef PR::kdTree<uint64, TriMesh, false> TriKDTree;
 TriMesh::TriMesh()
 	: mKDTree(nullptr)
+	, mIntersectionTestCost(4.0f)
 {
 }
 
@@ -21,49 +23,20 @@ TriMesh::~TriMesh()
 void TriMesh::clear()
 {
 	if (mKDTree) {
-		delete reinterpret_cast<TriKDTree*>(mKDTree);
+		delete mKDTree;
 		mKDTree = nullptr;
 	}
 }
 
-constexpr float TriangleTestCost = 10.0f;
-void TriMesh::build()
+void TriMesh::build(const std::string& container_file, bool loadOnly)
 {
 	PR_ASSERT(isValid(), "Mesh has to be valid before build()!");
 
 	// Build internal KDtree
-	if (mKDTree) {
-		delete reinterpret_cast<TriKDTree*>(mKDTree);
-		mKDTree = nullptr;
-	}
+	if (!loadOnly)
+		buildTree(container_file);
 
-	mKDTree = new TriKDTree(this,
-							[](TriMesh* mesh, uint64 f) {
-								return Triangle::getBoundingBox(mesh->mVertices[mesh->mIndices[f][0]],
-																mesh->mVertices[mesh->mIndices[f][1]],
-																mesh->mVertices[mesh->mIndices[f][2]]);
-							},
-							[](TriMesh*, uint64 f) {
-								return TriangleTestCost;
-							});
-
-	reinterpret_cast<TriKDTree*>(mKDTree)->enableCostForLeafDetection(false);
-	reinterpret_cast<TriKDTree*>(mKDTree)->setMinimumObjectsForLeaf(8);
-
-	auto it = boost::irange<uint64>(0, mIndices.size());
-	reinterpret_cast<TriKDTree*>(mKDTree)->build(it.begin(), it.end(), mIndices.size());
-
-	PR_LOG(L_INFO) << "Mesh KDtree [depth="
-				   << reinterpret_cast<TriKDTree*>(mKDTree)->depth()
-				   << ", elements=" << faceCount()
-				   << ", leafs=" << reinterpret_cast<TriKDTree*>(mKDTree)->leafCount()
-				   << ", elementsPerLeaf=[avg:" << reinterpret_cast<TriKDTree*>(mKDTree)->avgElementsPerLeaf()
-				   << ", min:" << reinterpret_cast<TriKDTree*>(mKDTree)->minElementsPerLeaf()
-				   << ", max:" << reinterpret_cast<TriKDTree*>(mKDTree)->maxElementsPerLeaf()
-				   << "]]" << std::endl;
-
-	if (!reinterpret_cast<TriKDTree*>(mKDTree)->isEmpty())
-		mBoundingBox = reinterpret_cast<TriKDTree*>(mKDTree)->boundingBox();
+	loadTree(container_file);
 
 	// Setup features
 	mFeatures = 0;
@@ -76,6 +49,50 @@ void TriMesh::build()
 	if (mIndices.size() == mMaterials.size()) {
 		mFeatures |= TMF_HAS_MATERIAL;
 	}
+}
+
+void TriMesh::buildTree(const std::string& file)
+{
+	kdTreeBuilderNaive builder(this, [](void* observer, uint64 f) {
+								TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
+								return Triangle::getBoundingBox(
+									mesh->mVertices[mesh->mIndices[f][0]],
+																mesh->mVertices[mesh->mIndices[f][1]],
+																mesh->mVertices[mesh->mIndices[f][2]]); },
+							   [](void* observer, uint64) {
+								   TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
+								   return mesh->intersectionTestCost();
+							   });
+	builder.build(mIndices.size());
+
+	std::ofstream stream(file, std::ios::out | std::ios::trunc);
+	builder.save(stream);
+
+	PR_LOG(L_INFO) << "Mesh KDtree [depth="
+				   << builder.depth()
+				   << ", elements=" << faceCount()
+				   << ", leafs=" << builder.leafCount()
+				   << ", elementsPerLeaf=[avg:" << builder.avgElementsPerLeaf()
+				   << ", min:" << builder.minElementsPerLeaf()
+				   << ", max:" << builder.maxElementsPerLeaf()
+				   << ", ET:" << builder.expectedTraversalSteps()
+				   << ", EL:" << builder.expectedLeavesVisited()
+				   << ", EI:" << builder.expectedObjectsIntersected()
+				   << "]]" << std::endl;
+}
+
+void TriMesh::loadTree(const std::string& file)
+{
+	if (mKDTree) {
+		delete mKDTree;
+		mKDTree = nullptr;
+	}
+
+	std::ifstream stream(file);
+	mKDTree = new kdTreeCollider;
+	mKDTree->load(stream);
+	if (!mKDTree->isEmpty())
+		mBoundingBox = mKDTree->boundingBox();
 }
 
 float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
@@ -91,9 +108,10 @@ float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
 	size_t counter = 0;
 	for (uint32 mat : mMaterials) {
 		if (mat == slot) {
-			a += Triangle::surfaceArea(transform * (Eigen::Vector3f)mVertices[mIndices[counter][0]],
-									   transform * (Eigen::Vector3f)mVertices[mIndices[counter][1]],
-									   transform * (Eigen::Vector3f)mVertices[mIndices[counter][2]]);
+			a += Triangle::surfaceArea(
+				transform * (Eigen::Vector3f)mVertices[mIndices[counter][0]],
+				transform * (Eigen::Vector3f)mVertices[mIndices[counter][1]],
+				transform * (Eigen::Vector3f)mVertices[mIndices[counter][2]]);
 		}
 
 		++counter;
@@ -116,19 +134,17 @@ TriMesh::Collision TriMesh::checkCollision(const Ray& ray)
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	TriMesh::Collision r;
-	r.Successful = reinterpret_cast<TriKDTree*>(
-					   mKDTree)
+	r.Successful = mKDTree
 					   ->checkCollision(ray, r.Index, r.Point,
-										[](TriMesh* mesh, const Ray& ray, FacePoint& point, uint64 f) {
-											float t;
-											return Triangle::intersect(ray, mesh->getFace(f), point, t); // Major bottleneck!
+										[this](const Ray& ray, FacePoint& point, uint64 f, float& t) {
+											return Triangle::intersect(ray, this->getFace(f), point, t); // Major bottleneck!
 										});
 	return r;
 }
 
 float TriMesh::collisionCost() const
 {
-	return reinterpret_cast<TriKDTree*>(mKDTree)->depth() + TriangleTestCost * reinterpret_cast<TriKDTree*>(mKDTree)->avgElementsPerLeaf();
+	return faceCount();
 }
 
 TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd) const

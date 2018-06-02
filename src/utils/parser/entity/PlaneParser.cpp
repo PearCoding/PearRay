@@ -47,7 +47,7 @@ std::shared_ptr<PR::Entity> PlaneParser::parse(Environment* env, const std::stri
 	if (centeringD.type() == DL::Data::T_Bool && centeringD.getBool())
 		pos = -xAxis * 0.5f - yAxis * 0.5f;
 
-	auto entity = std::make_shared<PlaneEntity>(env->sceneFactory().entities().size() + 1, name,
+	auto entity = std::make_shared<PlaneEntity>(env->sceneFactory().fullEntityCount() + 1, name,
 												Plane(pos, xAxis, yAxis));
 
 	if (materialD.type() == DL::Data::T_String) {

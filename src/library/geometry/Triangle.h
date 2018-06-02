@@ -186,15 +186,13 @@ public:
 	{
 		BoundingBox box(p1, p2);
 		box.combine(p3);
-		box.inflate(0.0001f);
+		//box.inflate(0.0001f);
 
 		return box;
 	}
 
 	inline static float surfaceArea(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& p3)
 	{
-		
-
 		Eigen::Vector3f v1 = p2 - p1;
 		Eigen::Vector3f v2 = p3 - p1;
 		return 0.5f * v1.cross(v2).norm();

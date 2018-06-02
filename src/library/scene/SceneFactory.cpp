@@ -30,9 +30,10 @@ void SceneFactory::removeEntity(const std::shared_ptr<Entity>& e)
 {
 	PR_ASSERT(e, "Given entity should be valid");
 	if (e->isRenderable())
-		mRenderEntities.remove(std::static_pointer_cast<RenderEntity>(e));
+		mRenderEntities.erase(std::find(mRenderEntities.begin(), mRenderEntities.end(),
+										std::static_pointer_cast<RenderEntity>(e)));
 	else
-		mEntities.remove(e);
+		mEntities.erase(std::find(mEntities.begin(), mEntities.end(), e));
 }
 
 std::shared_ptr<Entity> SceneFactory::getEntity(const std::string& name, const std::string& type) const
@@ -59,7 +60,7 @@ void SceneFactory::addInfiniteLight(const std::shared_ptr<IInfiniteLight>& e)
 void SceneFactory::removeInfiniteLight(const std::shared_ptr<IInfiniteLight>& e)
 {
 	PR_ASSERT(e, "Given light should be valid");
-	mInfiniteLights.remove(e);
+	mInfiniteLights.erase(std::find(mInfiniteLights.begin(), mInfiniteLights.end(), e));
 }
 
 void SceneFactory::setActiveCamera(const std::shared_ptr<Camera>& c)
@@ -85,4 +86,4 @@ std::shared_ptr<Scene> SceneFactory::create() const
 {
 	return std::make_shared<Scene>(mName, mActiveCamera, mEntities, mRenderEntities, mInfiniteLights);
 }
-}
+} // namespace PR

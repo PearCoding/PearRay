@@ -89,7 +89,6 @@ void WavefrontLoader::load(const std::string& file, Environment* env)
 		mesh->setNormals(normals);
 		mesh->setUVs(uvs);
 		mesh->setIndices(indices);
-		mesh->build();
 
 		std::string name = shape.name;
 		if (mOverrides.count(shape.name))

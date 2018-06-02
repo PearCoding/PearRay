@@ -45,11 +45,13 @@ public:
 		return mLowerBound + (mUpperBound - mLowerBound) * 0.5f;
 	}
 
-	inline float width() const { return std::abs((mUpperBound - mLowerBound)(0)); }
+	inline float width() const { return edge(0); }
 
-	inline float height() const { return std::abs((mUpperBound - mLowerBound)(1)); }
+	inline float height() const { return edge(1); }
 
-	inline float depth() const { return std::abs((mUpperBound - mLowerBound)(2)); }
+	inline float depth() const { return edge(2); }
+
+	inline float edge(int dim) const { return mUpperBound(dim) - mLowerBound(dim); }
 
 	inline float longestEdge() const { return std::max(width(), std::max(height(), depth())); }
 
@@ -73,13 +75,32 @@ public:
 		return 2 * (width() * height() + width() * depth() + height() * depth());
 	}
 
-	inline bool isValid() const { return surfaceArea() > PR_EPSILON; }
-
-	inline bool isPlanar() const
+	inline float faceArea(int dim)
 	{
-		return width() <= PR_EPSILON || height() <= PR_EPSILON || depth() <= PR_EPSILON;
+		switch (dim) {
+		case 0:
+			return edge(1) * edge(2);
+		case 1:
+			return edge(0) * edge(2);
+		case 2:
+			return edge(0) * edge(1);
+		default:
+			return -1;
+		}
 	}
 
+	inline bool isValid() const { return (mLowerBound.array() <= mUpperBound.array()).all(); }
+
+	inline bool isPlanar(float eps = PR_EPSILON) const
+	{
+		return width() <= eps || height() <= eps || depth() <= eps;
+	}
+
+	inline void clipBy(const BoundingBox& other)
+	{
+		mLowerBound = mLowerBound.array().max(other.mLowerBound.array()).min(other.mUpperBound.array()).matrix();
+		mUpperBound = mUpperBound.array().max(other.mLowerBound.array()).min(other.mUpperBound.array()).matrix();
+	}
 	/* Make sure bounding box has a valid volume.
 	 * @param maxDir If true, will inflate in max direction, otherwise max and min direction.
 	 */
@@ -143,4 +164,4 @@ private:
 	Eigen::Vector3f mUpperBound;
 	Eigen::Vector3f mLowerBound;
 };
-}
+} // namespace PR

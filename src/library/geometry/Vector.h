@@ -7,33 +7,52 @@ namespace PR {
  * For computation use the eigen3 library instead!
  */
 template <typename T>
-struct Vector2 {
-	typedef Eigen::Matrix<T,2,1> eigen_t;
+struct PR_LIB_INLINE Vector2 {
+	typedef Eigen::Matrix<T, 2, 1> eigen_t;
 	T x;
 	T y;
 
-	inline T operator [](int i) const {
+	Vector2() = default;
+	inline Vector2(T x_, T y_)
+		: x(x_)
+		, y(y_)
+	{
+	}
+
+	inline T operator[](int i) const
+	{
 		return i == 0 ? x : y;
 	}
 
-	inline operator eigen_t () const {
-		return eigen_t(x,y);
+	inline operator eigen_t() const
+	{
+		return eigen_t(x, y);
 	}
 };
 
 template <typename T>
-struct Vector3 {
-	typedef Eigen::Matrix<T,3,1> eigen_t;
+struct PR_LIB_INLINE Vector3 {
+	typedef Eigen::Matrix<T, 3, 1> eigen_t;
 	T x;
 	T y;
 	T z;
 
-	inline T operator [](int i) const {
+	Vector3() = default;
+	inline Vector3(T x_, T y_, T z_)
+		: x(x_)
+		, y(y_)
+		, z(z_)
+	{
+	}
+
+	inline T operator[](int i) const
+	{
 		return i == 0 ? x : (i == 1 ? y : z);
 	}
 
-	inline operator eigen_t () const {
-		return eigen_t(x,y,z);
+	inline operator eigen_t() const
+	{
+		return eigen_t(x, y, z);
 	}
 };
 

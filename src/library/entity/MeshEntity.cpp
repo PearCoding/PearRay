@@ -6,11 +6,12 @@
 #include "material/Material.h"
 #include "shader/FacePoint.h"
 
+#include "renderer/RenderContext.h"
 #include "math/Projection.h"
 
 #include "Logger.h"
 
-
+#include <sstream>
 
 namespace PR {
 MeshEntity::MeshEntity(uint32 id, const std::string& name)
@@ -115,8 +116,6 @@ BoundingBox MeshEntity::localBoundingBox() const
 
 RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 {
-	
-
 	// Local space
 	Ray local = ray;
 	local.setOrigin(invTransform() * ray.origin());
@@ -141,8 +140,6 @@ RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 
 RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f& rnd) const
 {
-	
-
 	TriMesh::FacePointSample sm = mMesh->sampleFacePoint(rnd);
 	RenderEntity::FacePointSample s;
 
@@ -159,6 +156,14 @@ RenderEntity::FacePointSample MeshEntity::sampleFacePoint(const Eigen::Vector3f&
 
 void MeshEntity::onFreeze(RenderContext* context)
 {
+	if(!mMesh->isBuilt()) {
+		std::stringstream filename;
+		filename << context->workingDir() << "mesh_" << id() << ".cnt";
+
+		PR_LOG(L_INFO) << "Building mesh \"" << filename.str() << "\"" << std::endl;
+		mMesh->build(filename.str());
+	}
+
 	RenderEntity::onFreeze(context);
 
 	mSurfaceArea_Cache = mMesh->surfaceArea(flags() & EF_LocalArea ? Entity::Transform::Identity() : transform());
@@ -180,4 +185,4 @@ std::string MeshEntity::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR
