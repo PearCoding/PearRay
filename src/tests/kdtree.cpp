@@ -113,6 +113,52 @@ PR_TEST("Overlap")
 	PR_CHECK_EQ(res2.Index, 0);
 }
 
+PR_TEST("UV")
+{
+	std::vector<Vector3f> vertices;
+	vertices.emplace_back(0,0,-1);
+	vertices.emplace_back(1,0,-1);
+	vertices.emplace_back(1,1,-0);
+
+	vertices.emplace_back(0,0,0);
+	vertices.emplace_back(1,0,1);
+	vertices.emplace_back(1,1,1);
+
+	std::vector<Vector2f> uvs;
+	uvs.emplace_back(0.1,0.1);
+	uvs.emplace_back(0.2,0.2);
+	uvs.emplace_back(0.3,0.3);
+	uvs.emplace_back(0.4,0.4);
+	uvs.emplace_back(0.5,0.5);
+	uvs.emplace_back(0.6,0.6);
+
+	std::vector<Vector3u64> faces;
+	faces.emplace_back(0,1,2);
+	faces.emplace_back(3,4,5);
+
+	TriMesh mesh;
+	mesh.setVertices(vertices);
+	mesh.setNormals(vertices);// Bad normals, but we do not care
+	mesh.setUVs(uvs);
+	mesh.setIndices(faces);
+
+	PR_CHECK_TRUE(mesh.isValid());
+
+	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
+	mesh.build("tmp3.cnt", false);
+
+	PR_CHECK_TRUE(mesh.features() & TMF_HAS_UV);
+
+	// From top to bottom
+	Ray ray1(Eigen::Vector2i(0,0), Eigen::Vector3f(0.75, 0.5, 2), Eigen::Vector3f(0, 0, -1));
+	const auto res1 = mesh.checkCollision(ray1);
+
+	PR_CHECK_TRUE(res1.Successful);
+	PR_CHECK_EQ(res1.Index, 1);
+	PR_CHECK_GREAT(res1.Point.UVW(0), 0);
+	PR_CHECK_GREAT(res1.Point.UVW(1), 0);
+}
+
 PR_END_TESTCASE()
 
 // MAIN

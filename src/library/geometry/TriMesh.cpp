@@ -42,14 +42,23 @@ void TriMesh::build(const std::string& container_file, bool loadOnly)
 
 	// Setup features
 	mFeatures = 0;
+
 	if (mUVs.size() == mVertices.size()) {
 		mFeatures |= TMF_HAS_UV;
+	} else if(!mUVs.empty()) {
+		PR_LOG(L_WARNING) << "Insufficient UV data!" << std::endl;
 	}
+
 	if (mVelocities.size() == mVertices.size()) {
 		mFeatures |= TMF_HAS_VELOCITY;
+	} else if(!mVelocities.empty()) {
+		PR_LOG(L_WARNING) << "Insufficient velocity data!" << std::endl;
 	}
+
 	if (mIndices.size() == mMaterials.size()) {
 		mFeatures |= TMF_HAS_MATERIAL;
+	} else if(!mMaterials.empty()) {
+		PR_LOG(L_WARNING) << "Insufficient material data!" << std::endl;
 	}
 }
 

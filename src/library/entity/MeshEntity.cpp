@@ -126,6 +126,10 @@ RenderEntity::Collision MeshEntity::checkCollision(const Ray& ray) const
 	c.Successful = cm.Successful;
 
 	if (cm.Successful) {
+		// Copy local information
+		c.Point = cm.Point;
+
+		// Update local to global
 		c.Point.P  = transform() * cm.Point.P;
 		c.Point.Ng = (directionMatrix() * cm.Point.Ng).normalized();
 		Projection::tangent_frame(c.Point.Ng, c.Point.Nx, c.Point.Ny);

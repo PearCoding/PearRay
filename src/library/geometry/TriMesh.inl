@@ -10,12 +10,14 @@ inline Face TriMesh::getFace(size_t i) const
 	for (int j = 0; j < 3; ++j) {
 		f.V[j] = mVertices[ind[j]];
 		f.N[j] = mNormals[ind[j]];
+	}
 
-		if (features() & TMF_HAS_UV) {
+	if (features() & TMF_HAS_UV) {
+		for(int j = 0; j < 3; ++j)
 			f.UV[j] = mUVs[ind[j]];
-		} else {
+	} else {
+		for(int j = 0; j < 3; ++j)
 			f.UV[j] = Eigen::Vector2f(0.0f, 0.0f);
-		}
 	}
 
 	f.MaterialSlot = getFaceMaterial(i);
