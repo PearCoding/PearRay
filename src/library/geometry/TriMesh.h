@@ -1,16 +1,16 @@
 #pragma once
 
 #include "BoundingBox.h"
-#include "Vector.h"
-#include "Face.h"
+#include "FacePackage.h"
 #include "Triangle.h"
-#include "shader/FacePoint.h"
+#include "math/Vector.h"
+#include "shader/ShadingPoint.h"
 #include <Eigen/Geometry>
 #include <vector>
 
 namespace PR {
 enum TriMeshFeatures : uint32 {
-	TMF_HAS_UV = 0x1,
+	TMF_HAS_UV		 = 0x1,
 	TMF_HAS_VELOCITY = 0x2,
 	TMF_HAS_MATERIAL = 0x4
 };
@@ -19,7 +19,6 @@ class Face;
 class Normal;
 class UV;
 class Vertex;
-class Material;
 class Ray;
 struct FacePoint;
 class Sampler;
@@ -32,29 +31,37 @@ public:
 	TriMesh();
 	~TriMesh();
 
-	inline void setVertices(const std::vector<Vector3f>& f) { mVertices = f; }
-	inline void setNormals(const std::vector<Vector3f>& f) { mNormals = f; };
-	inline void setTangents(const std::vector<Vector3f>& f) { mTangents = f; };
-	inline void setBitangents(const std::vector<Vector3f>& f) { mBitangents = f; };
-	inline void setUVs(const std::vector<Vector2f>& f) { mUVs = f; };
-	inline void setVelocities(const std::vector<Vector3f>& f) { mVelocities = f; };
+	inline void setVertices(const std::vector<float>& vx,
+							const std::vector<float>& vy, const std::vector<float>& vz);
+	inline void setNormals(const std::vector<float>& vx,
+						   const std::vector<float>& vy, const std::vector<float>& vz);
+	inline void setTangents(const std::vector<float>& vx,
+							const std::vector<float>& vy, const std::vector<float>& vz);
+	inline void setBitangents(const std::vector<float>& vx,
+							  const std::vector<float>& vy, const std::vector<float>& vz);
+	inline void setUVs(const std::vector<float>& u,
+					   const std::vector<float>& v);
+	inline void setVelocities(const std::vector<float>& vx,
+							  const std::vector<float>& vy, const std::vector<float>& vz);
+	inline void setIndices(const std::vector<uint32>& i1,
+						   const std::vector<uint32>& i2, const std::vector<uint32>& i3);
 	inline void setMaterials(const std::vector<uint32>& f) { mMaterials = f; };
-	inline void setIndices(const std::vector<Vector3u64>& f) { mIndices = f; };
 
 	inline uint32 features() const { return mFeatures; }
 
-	inline size_t nodeCount() const { return mVertices.size(); }
-	inline size_t faceCount() const { return mIndices.size(); }
-	
-	inline Face getFace(uint64 index) const;
-	inline uint32 getFaceMaterial(uint64 index) const;
+	inline size_t nodeCount() const { return mVertices[0].size(); }
+	inline size_t faceCount() const { return mIndices[0].size(); }
+
+	inline FacePackage getFaces(const vuint32& indices) const;
+	inline vuint32 getFaceMaterials(const vuint32& indices) const;
 
 	inline bool isValid() const;
 
 	void clear();
-	void build(const std::string& container_file, bool loadOnly=false);
+	void build(const std::string& container_file, bool loadOnly = false);
 	inline bool isBuilt() const { return mKDTree != nullptr; }
 
+	float faceArea(uint32 f, const Eigen::Affine3f& transform) const;
 	float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
 	float surfaceArea(const Eigen::Affine3f& transform) const;
 
@@ -68,19 +75,9 @@ public:
 
 	float collisionCost() const;
 
-	struct Collision {
-		bool Successful;
-		uint64 Index;
-		FacePoint Point;
-	};
-	Collision checkCollision(const Ray& ray);
-
-	struct FacePointSample {
-		FacePoint Point;
-		uint32 MaterialSlot;
-		float PDF_A;
-	};
-	FacePointSample sampleFacePoint(const Eigen::Vector3f& rnd) const;
+	bool checkCollision(const CollisionInput& in, CollisionOutput& out) const;
+	void sampleFacePoint(const vfloat& rnd1, const vfloat& rnd2, const vfloat& rnd3,
+						 ShadingPoint& p, vfloat& pdfA) const;
 
 private:
 	void buildTree(const std::string& container_file);
@@ -90,17 +87,17 @@ private:
 	class kdTreeCollider* mKDTree;
 
 	uint32 mFeatures;
-	std::vector<Vector3f> mVertices;
-	std::vector<Vector3f> mNormals;
-	std::vector<Vector3f> mTangents;
-	std::vector<Vector3f> mBitangents;
-	std::vector<Vector2f> mUVs;
-	std::vector<Vector3f> mVelocities;
+	std::vector<float> mVertices[3];
+	std::vector<float> mNormals[3];
+	std::vector<float> mTangents[3];
+	std::vector<float> mBitangents[3];
+	std::vector<float> mUVs[2];
+	std::vector<float> mVelocities[3];
 	std::vector<uint32> mMaterials;
-	std::vector<Vector3u64> mIndices;
+	std::vector<uint32> mIndices[3]; // Triangle corners
 
 	float mIntersectionTestCost;
 };
-}
+} // namespace PR
 
 #include "TriMesh.inl"

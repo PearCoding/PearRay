@@ -10,7 +10,7 @@ class Data;
 class DataGroup;
 } // namespace DL
 namespace PR {
-class Entity;
+class VirtualEntity;
 class IMesh;
 
 class Environment;
@@ -31,7 +31,7 @@ public:
 
 private:
 	static void addRegistryEntry(const DL::DataGroup& group, Environment* env);
-	static void addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env);
+	static void addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env);
 	static void addLight(const DL::DataGroup& group, Environment* env);
 	static void addMaterial(const DL::DataGroup& group, Environment* env);
 	static void addTexture(const DL::DataGroup& group, Environment* env);

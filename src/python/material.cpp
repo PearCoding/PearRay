@@ -11,6 +11,8 @@
 #include "material/OrenNayarMaterial.h"
 #include "material/WardMaterial.h"
 
+#include "material/MaterialManager.h"
+
 #include "pypearray.h"
 
 using namespace PR;
@@ -173,5 +175,8 @@ void setup_material(py::module& m)
 		.def_property("reflectivity",
 					  &WardMaterial::reflectivity,
 					  &WardMaterial::setReflectivity);
+
+	py::class_<MaterialManager, std::shared_ptr<MaterialManager>>(m, "MaterialManager")
+		.def(py::init<>());
 }
 }

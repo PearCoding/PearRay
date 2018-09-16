@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sampler.h"
+#include "math/SIMD.h"
 
 namespace PR {
 /*
@@ -9,26 +10,27 @@ namespace PR {
 	*/
 class PR_LIB HaltonQMCSampler : public Sampler {
 public:
-	explicit HaltonQMCSampler(uint32 samples, bool adaptive = false,
-					 uint32 baseX = 13, uint32 baseY = 47, uint32 baseZ = 89);
+	explicit HaltonQMCSampler(uint32 samples,
+							  uint32 baseX = 13, uint32 baseY = 47, uint32 baseZ = 89);
 	~HaltonQMCSampler();
 
 	float generate1D(uint32 index) override;
 	Eigen::Vector2f generate2D(uint32 index) override;
 	Eigen::Vector3f generate3D(uint32 index) override;
 
-private:
-	static float halton(uint32 index, uint32 base);
+	void generate1Dv(uint32 index, vfloat& s1) override;
+	void generate2Dv(uint32 index, vfloat& s1, vfloat& s2) override;
+	void generate3Dv(uint32 index, vfloat& s1, vfloat& s2, vfloat& s3) override;
 
+private:
 	uint32 mSamples;
 
-	float* mBaseXSamples;
-	float* mBaseYSamples;
-	float* mBaseZSamples;
+	simd_vector<float> mBaseXSamples;
+	simd_vector<float> mBaseYSamples;
+	simd_vector<float> mBaseZSamples;
 
-	const bool mAdaptive;
 	const uint32 mBaseX;
 	const uint32 mBaseY;
 	const uint32 mBaseZ;
 };
-}
+} // namespace PR

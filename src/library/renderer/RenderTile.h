@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Random.h"
-#include "ray/Ray.h"
+#include "ray/RayPackage.h"
 #include "renderer/RenderStatistics.h"
 
 namespace PR {
@@ -17,7 +17,7 @@ public:
 	void inc();
 	void reset();
 
-	Ray constructCameraRay(const Eigen::Vector2i& pixel, uint32 sample);
+	RayPackage constructCameraRay(const vuint32& px, const vuint32& py, uint32 sample);
 
 	inline bool isWorking() const
 	{
@@ -109,6 +109,11 @@ public:
 		return mStatistics;
 	}
 
+	inline const RenderContext& context() const
+	{
+		return mContext;
+	}
+
 private:
 	bool mWorking;
 
@@ -144,4 +149,4 @@ private:
 
 	const RenderContext& mContext;
 };
-}
+} // namespace PR

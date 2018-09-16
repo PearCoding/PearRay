@@ -226,7 +226,7 @@
   </widget>
   <widget class="QDockWidget" name="entityDetailsDockWidget">
    <property name="windowTitle">
-    <string>Entity Details</string>
+    <string>VirtualEntity Details</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>

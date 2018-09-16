@@ -45,8 +45,11 @@ public:
 		Eigen::Vector2f UV;
 	};
 	Intersection intersects(const Ray& ray) const;
+	void intersectsV(const CollisionInput& in, CollisionOutput& out) const;
 
 	Eigen::Vector2f project(const Eigen::Vector3f& point) const;
+	void projectV(const vfloat& px, const vfloat& py, const vfloat& pz,
+				  vfloat& u, vfloat& v) const;
 
 	inline BoundingBox toBoundingBox() const
 	{
@@ -70,4 +73,4 @@ private:
 	float mInvXLenSqr_Cache;
 	float mInvYLenSqr_Cache;
 };
-}
+} // namespace PR

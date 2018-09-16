@@ -6,6 +6,7 @@
 
 #include "entity/RenderEntity.h"
 #include "scene/Scene.h"
+#include "material/MaterialManager.h"
 
 #include "pypearray.h"
 
@@ -15,7 +16,7 @@ namespace PRPY {
 void setup_renderer(py::module& m)
 {
 	py::class_<RenderFactory>(m, "RenderFactory")
-		.def(py::init<const std::shared_ptr<SpectrumDescriptor>&, const std::shared_ptr<Scene>&, const std::shared_ptr<Registry>&, const std::string&>())
+		.def(py::init<const std::shared_ptr<SpectrumDescriptor>&, const std::shared_ptr<Scene>&, const std::shared_ptr<Registry>&, const std::shared_ptr<MaterialManager>&, const std::string&>())
 		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)() const) & RenderFactory::create)
 		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(uint32, uint32, uint32) const) & RenderFactory::create)
 		.def_property("workingDir", &RenderFactory::workingDir, &RenderFactory::setWorkingDir)

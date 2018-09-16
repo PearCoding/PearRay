@@ -3,7 +3,6 @@
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
-#include "material/Material.h"
 #include "math/Projection.h"
 
 #include <fstream>
@@ -40,24 +39,26 @@ void TriMesh::build(const std::string& container_file, bool loadOnly)
 
 	loadTree(container_file);
 
+	if (mVertices[0].size() != mVertices[1].size()
+		|| mVertices[1].size() != mVertices[2].size())
+		PR_LOG(L_ERROR) << "Vertex dimensional size mismatch!" << std::endl;
+
+	if (mIndices[0].size() != mIndices[1].size()
+		|| mIndices[1].size() != mIndices[2].size())
+		PR_LOG(L_ERROR) << "Index dimensional size mismatch!" << std::endl;
+
 	// Setup features
 	mFeatures = 0;
 
-	if (mUVs.size() == mVertices.size()) {
+	if (mUVs[0].size() == mVertices[0].size() && mUVs[1].size() == mVertices[0].size()) {
 		mFeatures |= TMF_HAS_UV;
-	} else if(!mUVs.empty()) {
+	} else if (!mUVs[0].empty() || !mUVs[1].empty()) {
 		PR_LOG(L_WARNING) << "Insufficient UV data!" << std::endl;
 	}
 
-	if (mVelocities.size() == mVertices.size()) {
-		mFeatures |= TMF_HAS_VELOCITY;
-	} else if(!mVelocities.empty()) {
-		PR_LOG(L_WARNING) << "Insufficient velocity data!" << std::endl;
-	}
-
-	if (mIndices.size() == mMaterials.size()) {
+	if (mIndices[0].size() == mMaterials.size()) {
 		mFeatures |= TMF_HAS_MATERIAL;
-	} else if(!mMaterials.empty()) {
+	} else if (!mMaterials.empty()) {
 		PR_LOG(L_WARNING) << "Insufficient material data!" << std::endl;
 	}
 }
@@ -66,15 +67,25 @@ void TriMesh::buildTree(const std::string& file)
 {
 	BUILDER builder(this, [](void* observer, uint64 f) {
 								TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
-								return Triangle::getBoundingBox(
-									mesh->mVertices[mesh->mIndices[f][0]],
-																mesh->mVertices[mesh->mIndices[f][1]],
-																mesh->mVertices[mesh->mIndices[f][2]]); },
+								const uint32 ind1 = mesh->mIndices[0][f];
+								const uint32 ind2 = mesh->mIndices[1][f];
+								const uint32 ind3 = mesh->mIndices[2][f];
+
+								Eigen::Vector3f p1 = Eigen::Vector3f(mesh->mVertices[0][ind1],
+																	mesh->mVertices[1][ind1],
+																	mesh->mVertices[2][ind1]);
+								Eigen::Vector3f p2 = Eigen::Vector3f(mesh->mVertices[0][ind2],
+																	mesh->mVertices[1][ind2],
+																	mesh->mVertices[2][ind2]);
+								Eigen::Vector3f p3 = Eigen::Vector3f(mesh->mVertices[0][ind3],
+																	mesh->mVertices[1][ind3],
+																	mesh->mVertices[2][ind3]);
+								return Triangle::getBoundingBox(p1,p2,p3); },
 					[](void* observer, uint64) {
 						TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
 						return mesh->intersectionTestCost();
 					});
-	builder.build(mIndices.size());
+	builder.build(faceCount());
 
 	std::ofstream stream(file, std::ios::out | std::ios::trunc);
 	builder.save(stream);
@@ -106,6 +117,32 @@ void TriMesh::loadTree(const std::string& file)
 		mBoundingBox = mKDTree->boundingBox();
 }
 
+float TriMesh::faceArea(uint32 f, const Eigen::Affine3f& transform) const
+{
+	const uint32 ind1 = mIndices[0][f];
+	const uint32 ind2 = mIndices[1][f];
+	const uint32 ind3 = mIndices[2][f];
+
+	float p1x, p1y, p1z;
+	transformV(transform.matrix(),
+			   mVertices[0][ind1], mVertices[1][ind1], mVertices[2][ind1],
+			   p1x, p1y, p1z);
+
+	float p2x, p2y, p2z;
+	transformV(transform.matrix(),
+			   mVertices[0][ind2], mVertices[1][ind2], mVertices[2][ind2],
+			   p2x, p2y, p2z);
+
+	float p3x, p3y, p3z;
+	transformV(transform.matrix(),
+			   mVertices[0][ind3], mVertices[1][ind3], mVertices[2][ind3],
+			   p3x, p3y, p3z);
+
+	return Triangle::surfaceArea(p1x, p1y, p1z,
+								 p2x, p2y, p2z,
+								 p3x, p3y, p3z);
+}
+
 float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
 {
 	if (!(features() & TMF_HAS_MATERIAL)) {
@@ -119,10 +156,7 @@ float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
 	size_t counter = 0;
 	for (uint32 mat : mMaterials) {
 		if (mat == slot) {
-			a += Triangle::surfaceArea(
-				transform * (Eigen::Vector3f)mVertices[mIndices[counter][0]],
-				transform * (Eigen::Vector3f)mVertices[mIndices[counter][1]],
-				transform * (Eigen::Vector3f)mVertices[mIndices[counter][2]]);
+			a += faceArea(counter, transform);
 		}
 
 		++counter;
@@ -133,24 +167,52 @@ float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
 float TriMesh::surfaceArea(const Eigen::Affine3f& transform) const
 {
 	float a = 0;
-	for (const Vector3u64& ind : mIndices) {
-		a += Triangle::surfaceArea(transform * (Eigen::Vector3f)mVertices[ind[0]],
-								   transform * (Eigen::Vector3f)mVertices[ind[1]],
-								   transform * (Eigen::Vector3f)mVertices[ind[2]]);
+	for (uint32 counter = 0; counter < faceCount(); ++counter) {
+		a += faceArea(counter, transform);
 	}
 	return a;
 }
 
-TriMesh::Collision TriMesh::checkCollision(const Ray& ray)
+bool TriMesh::checkCollision(const CollisionInput& in, CollisionOutput& out) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	TriMesh::Collision r;
-	r.Successful = mKDTree
-					   ->checkCollision(ray, r.Index, r.Point,
-										[this](const Ray& ray, FacePoint& point, uint64 f, float& t) {
-											return Triangle::intersect(ray, this->getFace(f), point, t); // Major bottleneck!
-										});
-	return r;
+	return mKDTree
+		->checkCollision(in, out,
+						 [this](const CollisionInput& in2, uint64 f, CollisionOutput& out2) {
+							 vfloat u, v, t;
+
+							 const uint32 i1 = mIndices[0][f];
+							 const uint32 i2 = mIndices[1][f];
+							 const uint32 i3 = mIndices[2][f];
+
+							 bfloat hits = Triangle::intersect(in2,
+															   mVertices[0][i1], mVertices[1][i1], mVertices[2][i1],
+															   mVertices[0][i2], mVertices[1][i2], mVertices[2][i2],
+															   mVertices[0][i3], mVertices[1][i3], mVertices[2][i3],
+															   u, v,
+															   t); // Major bottleneck!
+
+							 const vfloat inf = simdpp::make_float(std::numeric_limits<float>::infinity());
+							 out2.HitDistance = simdpp::blend(t, inf, hits);
+
+							 if (features() & TMF_HAS_UV) {
+								 for (int i = 0; i < 2; ++i)
+									 out2.UV[i] = mUVs[i][i2] * u
+												  + mUVs[i][i3] * v
+												  + mUVs[i][i1] * (1 - u - v);
+							 } else {
+								 out2.UV[0] = u;
+								 out2.UV[1] = v;
+							 }
+
+							 if (features() & TMF_HAS_MATERIAL)
+								 out2.MaterialID = simdpp::make_uint(mMaterials[f]); // Has to be updated in entity!
+							 else
+								 out2.MaterialID = simdpp::make_uint(0);
+
+							 out2.FaceID = simdpp::make_uint(f);
+							 //out2.EntityID; Ignore
+						 });
 }
 
 float TriMesh::collisionCost() const
@@ -158,24 +220,21 @@ float TriMesh::collisionCost() const
 	return faceCount();
 }
 
-TriMesh::FacePointSample TriMesh::sampleFacePoint(const Eigen::Vector3f& rnd) const
+void TriMesh::sampleFacePoint(const vfloat& rnd1, const vfloat& rnd2, const vfloat& rnd3,
+							  ShadingPoint& p, vfloat& pdfA) const
 {
-	uint32 fi = Projection::map<uint32>(rnd(0), 0, mIndices.size() - 1);
-	auto bary = Projection::triangle(rnd(1), rnd(2));
+	vuint32 fi = simdpp::to_uint32(rnd1 * (faceCount() - 1));
+	vfloat b1, b2;
+	Projection::triangleV(rnd2, rnd3, b1, b2);
 
-	Face face = getFace(fi);
+	FacePackage pkg = getFaces(fi);
+	pkg.interpolate(b1, b2,
+					p.P[0], p.P[1], p.P[2],
+					p.Ng[0], p.Ng[1], p.Ng[2],
+					p.UVW[0], p.UVW[1]);
+	p.MaterialID = pkg.MaterialSlot;
 
-	Eigen::Vector3f vec;
-	Eigen::Vector3f n;
-	Eigen::Vector2f uv;
-	face.interpolate(bary(0), bary(1), vec, n, uv);
-
-	TriMesh::FacePointSample r;
-	r.Point.P	  = vec;
-	r.Point.Ng	 = n;
-	r.Point.UVW	= Eigen::Vector3f(uv(0), uv(1), 0);
-	r.MaterialSlot = face.MaterialSlot;
-	r.PDF_A		   = 1.0f / (mIndices.size() * Triangle::surfaceArea(face.V[0], face.V[1], face.V[2]));
-	return r;
+	// TODO:
+	//pdfA = 1.0f / (mIndices.size() * Triangle::surfaceArea(face.V[0], face.V[1], face.V[2]));
 }
 } // namespace PR

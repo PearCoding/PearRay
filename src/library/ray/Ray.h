@@ -1,7 +1,6 @@
 #pragma once
 
 #include "spectral/Spectrum.h"
-#include "SIMath.h"
 #include <Eigen/Dense>
 
 namespace PR {
@@ -10,13 +9,25 @@ enum RayFlags {
 	RF_Debug = 0x2
 };
 
+enum RayDiffType {
+	RDT_PixelX = 0,
+	RDT_PixelY,
+	RDT_Time,
+	RDT_Wavelength,
+	_RDT_Count
+};
+
 constexpr float RayOffsetEpsilon = 0.000001f;
 class PR_LIB Ray {
 public:
 	Ray();
-	Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-		uint32 depth = 0, const SI::Time& time = 0, float wavelength = 0, uint16 flags = 0);
+	Ray(float weight,
+		uint32 pixelIndex, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
+		uint16 depth = 0, float time = 0, uint8 wavelengthIndex = 0, uint8 flags = 0);
 	virtual ~Ray();
+
+	inline void setWeight(float f);
+	inline float weight() const;
 
 	inline void setOrigin(const Eigen::Vector3f& p);
 	inline Eigen::Vector3f origin() const;
@@ -24,40 +35,26 @@ public:
 	inline void setDirection(const Eigen::Vector3f& p);
 	inline Eigen::Vector3f direction() const;
 
-	inline void setPixel(const Eigen::Vector2i& pixel);
-	inline Eigen::Vector2i pixel() const;
+	inline void setPixelIndex(uint32 index);
+	inline uint32 pixelIndex() const;
 
-	inline void setXOrigin(const Eigen::Vector3f& p);
-	inline Eigen::Vector3f xorigin() const;
+	inline void setOriginDiff(RayDiffType type, const Eigen::Vector3f& p);
+	inline Eigen::Vector3f originDiff(RayDiffType type) const;
 
-	inline void setXDirection(const Eigen::Vector3f& p);
-	inline Eigen::Vector3f xdirection() const;
+	inline void setDirectionDiff(RayDiffType type, const Eigen::Vector3f& p);
+	inline Eigen::Vector3f directionDiff(RayDiffType type) const;
 
-	inline void setYOrigin(const Eigen::Vector3f& p);
-	inline Eigen::Vector3f yorigin() const;
+	inline void setDepth(uint16 depth);
+	inline uint16 depth() const;
 
-	inline void setYDirection(const Eigen::Vector3f& p);
-	inline Eigen::Vector3f ydirection() const;
+	inline float time() const;
+	inline void setTime(float t);
 
-	inline void setDepth(uint32 depth);
-	inline uint32 depth() const;
+	inline uint8 wavelengthIndex() const;
+	inline void setWavelengthIndex(uint8 index);
 
-	inline SI::Time time() const;
-	inline void setTime(const SI::Time& t);
-
-	inline float wavelength() const;
-	inline void setWavelength(float lambda_nm);
-
-	inline uint32 spectralStart() const;
-	inline void setSpectralStart(uint32 start);
-
-	inline uint32 spectralEnd() const;
-	inline void setSpectralEnd(uint32 end);
-
-	inline bool isFullSpectrum() const;
-
-	inline void setFlags(uint16 flags);
-	inline uint16 flags() const;
+	inline void setFlags(uint8 flags);
+	inline uint8 flags() const;
 
 // Used by Triangle.h
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
@@ -68,25 +65,21 @@ public:
 	static inline Eigen::Vector3f safePosition(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir);
 
 private:
+	uint32 mPixelIndex;
 	Eigen::Vector3f mOrigin;
 	Eigen::Vector3f mDirection;
-	Eigen::Vector2i mPixel;
 
 	// Ray differentials
-	Eigen::Vector3f mXOrigin;
-	Eigen::Vector3f mXDirection;
+	Eigen::Vector3f mOriginDiff[_RDT_Count];
+	Eigen::Vector3f mDirectionDiff[_RDT_Count];
 
-	Eigen::Vector3f mYOrigin;
-	Eigen::Vector3f mYDirection;
+	uint16 mDepth; // Recursion depth!
+	float mTime;
 
-	uint32 mDepth; // Recursion depth!
-	SI::Time mTime;
+	uint8 mWavelengthIndex;
+	uint8 mFlags;
 
-	float mWavelength;
-	uint32 mSpectralStart;
-	uint32 mSpectralEnd;
-
-	uint16 mFlags;
+	float mWeight;
 
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 	inline void calcMaxDirectionElement();

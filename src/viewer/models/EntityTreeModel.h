@@ -5,7 +5,7 @@
 #include <memory>
 namespace PR
 {
-	class Entity;
+	class VirtualEntity;
 	class Scene;
 }
 
@@ -28,7 +28,7 @@ public:
 	int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
 
 private:
-	QList<std::shared_ptr<PR::Entity> > getEntities() const;
+	QList<std::shared_ptr<PR::VirtualEntity> > getEntities() const;
 
 	const PR::Scene& mScene;
 };

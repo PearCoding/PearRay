@@ -8,7 +8,7 @@ class PR_LIB Projection {
 
 public:
 	// Map [0, 1] uniformly to [min, max] as integers! (max is included)
-	template<typename T>
+	template <typename T>
 	static inline T map(float u, T min, T max)
 	{
 		return std::min<T>(max - min, static_cast<T>(u * (max - min + 1))) + min;
@@ -130,6 +130,23 @@ public:
 		return Eigen::Vector3f(x, y, cosPhi);
 	}
 
+	template <typename VT>
+	static inline void cos_hemi(VT u1, VT u2, VT& pdf, VT& dx, VT& dy, VT& dz)
+	{
+		const VT cosPhi = std::sqrt(u1);
+		const VT sinPhi = std::sqrt(1 - u1); // Faster?
+		const VT theta  = 2 * PR_PI * u2;
+
+		const VT thSin = std::sin(theta);
+		const VT thCos = std::cos(theta);
+
+		dx = sinPhi * thCos;
+		dy = sinPhi * thSin;
+		dz = cosPhi;
+
+		pdf = cosPhi * PR_1_PI;
+	}
+
 	static inline Eigen::Vector3f cos_hemi(float u1, float u2, float m, float& pdf)
 	{
 		const float cosPhi = std::pow(u1, 1 / (m + 1.0f));
@@ -165,5 +182,13 @@ public:
 		// Simplex method
 		return u1 < u2 ? Eigen::Vector2f(u1, u2 - u1) : Eigen::Vector2f(u2, u1 - u2);
 	}
+
+	static inline void triangleV(const vfloat& u1, const vfloat& u2,
+								 vfloat& b1, vfloat& b2)
+	{
+		bfloat m = u1 < u2;
+		b1		 = simdpp::blend(u1, u2, m);
+		b2		 = simdpp::blend(u2 - u1, u1 - u2, m);
+	}
 };
-}
+} // namespace PR

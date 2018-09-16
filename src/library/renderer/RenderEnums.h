@@ -4,7 +4,7 @@
 
 namespace PR {
 enum SamplerMode {
-	SM_RANDOM,
+	SM_RANDOM = 0,
 	SM_UNIFORM,
 	SM_JITTER,
 	SM_MULTI_JITTER,
@@ -12,7 +12,7 @@ enum SamplerMode {
 };
 
 enum DebugMode {
-	DM_DEPTH,
+	DM_DEPTH = 0,
 	DM_NORMAL_BOTH,
 	DM_NORMAL_POSITIVE,
 	DM_NORMAL_NEGATIVE,
@@ -35,7 +35,7 @@ enum DebugMode {
 };
 
 enum IntegratorMode {
-	IM_DIRECT,
+	IM_DIRECT = 0,
 	IM_BIDIRECT,
 	IM_PPM, // Progressive Photon Mapping
 	IM_AO,
@@ -44,19 +44,19 @@ enum IntegratorMode {
 
 /* Visual feedback tile mode */
 enum TileMode {
-	TM_LINEAR,
+	TM_LINEAR = 0,
 	TM_TILE,
 	TM_SPIRAL
 };
 
 enum TimeMappingMode {
-	TMM_CENTER, // [0.5, 0.5]
-	TMM_LEFT,   // [-1, 0]
-	TMM_RIGHT   // [0, 1]
+	TMM_CENTER = 0, // [0.5, 0.5]
+	TMM_LEFT,		// [-1, 0]
+	TMM_RIGHT		// [0, 1]
 };
 
 enum PPMGatheringMode {
-	PGM_SPHERE,
+	PGM_SPHERE = 0,
 	PGM_DOME
 };
-}
+} // namespace PR

@@ -4,7 +4,7 @@
 
 namespace PR
 {
-	class Entity;
+	class VirtualEntity;
 }
 
 class IProperty;
@@ -18,7 +18,7 @@ public:
 	virtual ~EntityDetailsView();
 
 public slots:
-	void setEntity(PR::Entity* entity);
+	void setEntity(PR::VirtualEntity* entity);
 
 private slots:
 	void propertyValueChanged(IProperty* prop);
@@ -33,7 +33,7 @@ private:
 
 	PropertyView* mView;
 
-	PR::Entity* mEntity;
+	PR::VirtualEntity* mEntity;
 	PropertyTable* mPropertyTable;
 	QList<IProperty*> mProperties;
 };

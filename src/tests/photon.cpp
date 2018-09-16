@@ -53,7 +53,7 @@ PR_TEST("Search")
 	Photon::PhotonSphere sphere;
 	sphere.MaxPhotons = PHOTONS;
 	sphere.Center = Eigen::Vector3f(0,0,0);
-	sphere.Distance2 = 2;
+	sphere.Distance2 = 4;
 
 	auto emptyAccum = [&](Spectrum& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2){};
 	PR::Spectrum spec(SpectrumDescriptor::createStandardSpectral());

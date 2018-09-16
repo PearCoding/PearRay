@@ -376,9 +376,9 @@ static void classify(const std::vector<Event>& events, const std::vector<Primiti
 }
 
 inline static kdNodeBuilder* createLeafNode(void* observer,
-										   kdTreeBuilder::AddedCallback addedCallback,
-										   std::vector<Primitive*>& objs,
-										   const BoundingBox& V)
+											kdTreeBuilder::AddedCallback addedCallback,
+											std::vector<Primitive*>& objs,
+											const BoundingBox& V)
 {
 	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(-1, V);
 	for (auto obj : objs) {
@@ -436,6 +436,8 @@ static kdNodeBuilder* buildNode(void* observer,
 	std::vector<Event> leftBothEvents, rightBothEvents;
 	for (const Event& e : events) {
 		switch (e.primitive->side) {
+		case S_Both:
+			break;
 		case S_Left:
 			leftOnlyEvents.push_back(e);
 			break;

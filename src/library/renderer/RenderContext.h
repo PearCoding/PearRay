@@ -3,27 +3,23 @@
 #include "RenderSettings.h"
 #include "RenderStatistics.h"
 #include "RenderStatus.h"
-#include "spectral/Spectrum.h"
-#include "spectral/SpectrumDescriptor.h"
 
-#include <Eigen/Dense>
 #include <condition_variable>
 #include <list>
 #include <mutex>
 
 namespace PR {
-class Camera;
-class Entity;
-class Integrator;
+class HitStream;
+class IEntity;
+class IIntegrator;
 class OutputMap;
-class Ray;
-class RenderEntity;
+class RayStream;
+class RenderManager;
 class RenderSession;
 class RenderThread;
 class RenderTile;
 class RenderTileMap;
 class Scene;
-struct ShaderClosure;
 class PR_LIB RenderContext {
 	friend class RenderThread;
 
@@ -32,10 +28,8 @@ class PR_LIB RenderContext {
 public:
 	RenderContext(uint32 index, uint32 offx, uint32 offy,
 				  uint32 width, uint32 height,
-				  const std::shared_ptr<SpectrumDescriptor>& specdesc,
 				  const std::shared_ptr<Scene>& scene,
-				  const std::shared_ptr<Registry>& registry,
-				  const std::string& workingDir);
+				  const RenderManager* manager);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -46,8 +40,6 @@ public:
 
 	uint32 tileCount() const;
 
-	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
-
 	// tcx = tile count x
 	// tcy = tile count y
 	// tcx and tcy should be able to divide width and height!
@@ -55,10 +47,7 @@ public:
 	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
 	void stop();
 
-	RenderEntity* shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session);
-	bool shootForDetection(const Ray& ray, const RenderSession& session);
-	RenderEntity* shootWithEmission(Spectrum& appliedSpec, const Ray& ray, ShaderClosure& sc, const RenderSession& session);
-	RenderEntity* shootForBoundingBox(const Ray& ray, Eigen::Vector3f& p, const RenderSession& session);
+	void traceRays(RayStream& rays, HitStream& hits);
 
 	inline bool isStopping() const { return mShouldStop; }
 	bool isFinished() const;
@@ -72,22 +61,20 @@ public:
 	// Slow and only copies!
 	std::list<RenderTile*> currentTiles() const;
 
-	Integrator* integrator() const { return mIntegrator.get(); }
+	IIntegrator* integrator() const { return mIntegrator.get(); }
 
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
-	inline const std::shared_ptr<Registry>& registry() const { return mRegistry; }
 
 	// Light
-	inline const std::vector<RenderEntity*>& lights() const { return mLights; }
+	inline const std::vector<IEntity*>& lights() const { return mLights; }
 
 	RenderStatistics statistics() const;
 	RenderStatus status() const;
 
-	inline std::shared_ptr<Scene> scene() const { return mScene; }
-	inline const std::string& workingDir() const { return mWorkingDir; }
 	inline OutputMap* output() const { return mOutputMap.get(); }
-	inline std::shared_ptr<Camera> camera() const { return mCamera; }
+	inline const RenderManager* renderManager() const { return mRenderManager; }
+	inline Scene* scene() const { return mScene.get(); }
 
 	// Useful settings
 	inline uint32 maxRayDepth() const { return mMaxRayDepth; }
@@ -107,16 +94,12 @@ private:
 	const uint32 mOffsetY;
 	const uint32 mWidth;
 	const uint32 mHeight;
-	const std::string mWorkingDir;
 
-	const std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
-
-	const std::shared_ptr<Camera> mCamera;
-	const std::shared_ptr<Scene> mScene;
-	const std::shared_ptr<Registry> mRegistry;
+	const RenderManager* mRenderManager;
+	std::shared_ptr<Scene> mScene;
 	std::unique_ptr<OutputMap> mOutputMap;
 
-	std::vector<RenderEntity*> mLights;
+	std::vector<IEntity*> mLights;
 
 	std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;
@@ -125,7 +108,7 @@ private:
 
 	const RenderSettings mRenderSettings;
 
-	std::unique_ptr<Integrator> mIntegrator;
+	std::shared_ptr<IIntegrator> mIntegrator;
 
 	std::mutex mPassMutex;
 	std::condition_variable mPassCondition;
@@ -137,4 +120,4 @@ private:
 	uint32 mMaxRayDepth;
 	uint64 mSamplesPerPixel;
 };
-}
+} // namespace PR

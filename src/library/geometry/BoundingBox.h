@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sphere.h"
+#include "CollisionData.h"
 #include <Eigen/Geometry>
 
 namespace PR {
@@ -118,6 +119,7 @@ public:
 	};
 	Intersection intersects(const Ray& ray) const;
 	bool intersectsSimple(const Ray& ray) const;
+	void intersectsV(const CollisionInput& in, CollisionOutput& out) const;
 
 	struct IntersectionRange {
 		bool Successful;
@@ -125,6 +127,13 @@ public:
 		float Exit;
 	};
 	IntersectionRange intersectsRange(const Ray& ray) const;
+
+	struct IntersectionRangeV {
+		simdpp::mask_float32v Successful;
+		simdpp::float32v Entry;
+		simdpp::float32v Exit;
+	};
+	IntersectionRangeV intersectsRangeV(const CollisionInput& in) const;
 
 	FaceSide getIntersectionSide(const Intersection& intersection) const;
 

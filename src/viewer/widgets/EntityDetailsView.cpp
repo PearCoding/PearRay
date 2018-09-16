@@ -1,7 +1,7 @@
 #include "EntityDetailsView.h"
 #include "PropertyView.h"
 
-#include "entity/Entity.h"
+#include "entity/VirtualEntity.h"
 #include "entity/RenderEntity.h"
 #include "entity/SphereEntity.h"
 #include "entity/MeshEntity.h"
@@ -45,7 +45,7 @@ EntityDetailsView::~EntityDetailsView()
 	}
 }
 
-void EntityDetailsView::setEntity(PR::Entity* entity)
+void EntityDetailsView::setEntity(PR::VirtualEntity* entity)
 {
 	if (mPropertyTable)
 	{
@@ -64,7 +64,7 @@ void EntityDetailsView::setEntity(PR::Entity* entity)
 	{
 		mPropertyTable = new PropertyTable;
 
-		GroupProperty* group = new GroupProperty(tr("Entity"));
+		GroupProperty* group = new GroupProperty(tr("VirtualEntity"));
 		mProperties.append(group);
 
 		TextProperty* name = new TextProperty(tr("Name"), entity->name().c_str());

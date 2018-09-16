@@ -1,6 +1,7 @@
 #include "OutputSpecification.h"
 #include "Logger.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderManager.h"
 
 #include <boost/filesystem.hpp>
 #include <sstream>
@@ -32,7 +33,7 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	}
 
 	mInit		= true;
-	mWorkingDir = context->workingDir();
+	mWorkingDir = context->renderManager()->workingDir();
 
 	if (context && !mWorkingDir.empty()) {
 		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
@@ -80,21 +81,26 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 	mImageWriter.init(renderer);
 	OutputMap* output = renderer->output();
 
-	Eigen::Vector3f zero(0, 0, 0);
 	for (const File& file : mFiles) {
 		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {
 			if (!output->getChannel(cs3d.Variable))
-				output->registerChannel(cs3d.Variable, std::make_shared<FrameBufferFloat>(3, 0.0f));
+				output->registerChannel(cs3d.Variable,
+										std::make_shared<FrameBufferFloat>(
+											3, renderer->width(), renderer->height(), 0.0f));
 		}
 
 		for (const IM_ChannelSetting1D& cs1d : file.Settings1D) {
 			if (!output->getChannel(cs1d.Variable))
-				output->registerChannel(cs1d.Variable, std::make_shared<FrameBufferFloat>(1, 0));
+				output->registerChannel(cs1d.Variable,
+										std::make_shared<FrameBufferFloat>(
+											1, renderer->width(), renderer->height(), 0));
 		}
 
 		for (const IM_ChannelSettingCounter& cs : file.SettingsCounter) {
 			if (!output->getChannel(cs.Variable))
-				output->registerChannel(cs.Variable, std::make_shared<FrameBufferUInt64>(1, 0));
+				output->registerChannel(cs.Variable,
+										std::make_shared<FrameBufferUInt64>(
+											1, renderer->width(), renderer->height(), 0));
 		}
 	}
 }
@@ -345,11 +351,11 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 
 				mFiles.push_back(file);
 			} else if (entry.id() == "output_spectral") {
-				DL::Data nameD = entry.getFromKey("name");
+				DL::Data nameD	 = entry.getFromKey("name");
 				DL::Data compressD = entry.getFromKey("compress");
 				if (nameD.type() == DL::Data::T_String) {
 					FileSpectral spec;
-					spec.Name = nameD.getString();
+					spec.Name	 = nameD.getString();
 					spec.Compress = compressD.type() == DL::Data::T_Bool ? compressD.getBool() : true;
 					mSpectralFiles.push_back(spec);
 				}
@@ -358,7 +364,8 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 	}
 }
 
-void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
+void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
+							   ToneMapper& toneMapper, bool force) const
 {
 	if (!force && !boost::filesystem::create_directory(mWorkingDir + "/" LOCK_IMG_FILE_NAME))
 		return;

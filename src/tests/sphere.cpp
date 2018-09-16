@@ -15,7 +15,7 @@ PR_TEST("Size")
 
 PR_TEST("Intersects")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Ray ray(0,0, Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
 	Sphere sphere(Eigen::Vector3f(0, 0, 0), 1);
 
 	Sphere::Intersection s = sphere.intersects(ray);
@@ -25,7 +25,7 @@ PR_TEST("Intersects")
 
 PR_TEST("Intersects Inside")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Ray ray(0,0, Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0));
 	Sphere sphere(Eigen::Vector3f(0, 0, 0), 1);
 
 	Sphere::Intersection s = sphere.intersects(ray);

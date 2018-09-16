@@ -9,9 +9,8 @@ class DataGroup;
 
 namespace PR {
 class ToneMapper;
-class RenderFactory;
-
 class Environment;
+
 class PR_LIB_UTILS OutputSpecification {
 	PR_CLASS_NON_COPYABLE(OutputSpecification);
 

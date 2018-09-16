@@ -68,6 +68,30 @@ BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
 	return r;
 }
 
+void BoundingBox::intersectsV(const CollisionInput& in, CollisionOutput& out) const
+{
+	using namespace simdpp;
+
+	float32v entry, exit;
+	for (int i = 0; i < 3; ++i) {
+		const float32v vmin = (lowerBound()(i) - in.RayOrigin[i]) * in.RayInvDirection[i];
+		const float32v vmax = (upperBound()(i) - in.RayOrigin[i]) * in.RayInvDirection[i];
+
+		if (i == 0) {
+			entry = min(vmin, vmax);
+			exit  = max(vmin, vmax);
+		} else {
+			entry = max(min(vmin, vmax), entry);
+			exit  = min(max(vmin, vmax), exit);
+		}
+	}
+
+	const float32v inf = make_float(std::numeric_limits<float>::infinity());
+	out.HitDistance	= blend(exit, entry, entry < 0);
+	out.HitDistance	= blend(out.HitDistance, inf,
+							   (exit >= entry) & (out.HitDistance > PR_EPSILON));
+}
+
 bool BoundingBox::intersectsSimple(const Ray& ray) const
 {
 	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
@@ -92,12 +116,31 @@ BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& ray) cons
 	r.Entry = vmin.array().min(vmax.array()).maxCoeff();
 	r.Exit  = vmin.array().max(vmax.array()).minCoeff();
 
-	const float t = r.Entry <= 0 ? r.Exit : r.Entry;
-	if (r.Exit >= r.Entry && t > PR_EPSILON) {
-		r.Successful = true;
-	} else {
-		r.Successful = false;
+	r.Successful = (r.Exit >= r.Entry && r.Exit > PR_EPSILON);
+
+	return r;
+}
+
+BoundingBox::IntersectionRangeV BoundingBox::intersectsRangeV(const CollisionInput& in) const
+{
+	using namespace simdpp;
+
+	BoundingBox::IntersectionRangeV r;
+
+	for (int i = 0; i < 3; ++i) {
+		const float32v vmin = (lowerBound()(i) - in.RayOrigin[i]) * in.RayInvDirection[i];
+		const float32v vmax = (upperBound()(i) - in.RayOrigin[i]) * in.RayInvDirection[i];
+
+		if (i == 0) {
+			r.Entry = min(vmin, vmax);
+			r.Exit  = max(vmin, vmax);
+		} else {
+			r.Entry = max(min(vmin, vmax), r.Entry);
+			r.Exit  = min(max(vmin, vmax), r.Exit);
+		}
 	}
+
+	r.Successful = (r.Exit >= r.Entry) & (r.Exit > PR_EPSILON);
 
 	return r;
 }

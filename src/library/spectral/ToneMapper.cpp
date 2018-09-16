@@ -8,19 +8,17 @@
 
 constexpr float REINHARD_RATIO = 0.32f;
 namespace PR {
-ToneMapper::ToneMapper(uint32 width, uint32 height)
+ToneMapper::ToneMapper()
 	: mColorMode(TCM_SRGB)
 	, mGammaMode(TGM_SRGB)
 	, mMapperMode(TMM_Simple_Reinhard)
-	, mWidth(width)
-	, mHeight(height)
-	, mSize(width * height)
 {
 }
 
-void ToneMapper::map(const float* specIn, float* out, size_t specElems, size_t rgbElems) const
+void ToneMapper::map(const float* specIn, float* out,
+					 size_t specElems, size_t rgbElems, size_t pixelCount) const
 {
-	for (size_t i = 0; i < mSize; ++i) {
+	for (size_t i = 0; i < pixelCount; ++i) {
 		float r, g, b;
 
 		// Map 1: Spec to RGB
@@ -49,12 +47,12 @@ void ToneMapper::map(const float* specIn, float* out, size_t specElems, size_t r
 	}
 
 	// Map 2: Tone Mapping
-	if(mMapperMode != TMM_None)
-		mapOnlyMapper(out, out, rgbElems);
+	if (mMapperMode != TMM_None)
+		mapOnlyMapper(out, out, rgbElems, pixelCount);
 
 	// Map 3: Gamma Correction
 	if (mGammaMode != TGM_None) {
-		for (size_t i = 0; i < mSize; ++i) {
+		for (size_t i = 0; i < pixelCount; ++i) {
 			float r, g, b;
 			r = out[i * rgbElems];
 			g = out[i * rgbElems + 1];
@@ -69,16 +67,17 @@ void ToneMapper::map(const float* specIn, float* out, size_t specElems, size_t r
 	}
 }
 
-void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const
+void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut,
+							   size_t rgbElems, size_t pixelCount) const
 {
-	if(mMapperMode == TMM_None) { // Fast approach
-		std::memcpy(rgbOut, rgbIn, sizeof(float)*rgbElems*mSize);
+	if (mMapperMode == TMM_None) { // Fast approach
+		std::memcpy(rgbOut, rgbIn, sizeof(float) * rgbElems * pixelCount);
 		return;
 	}
 
 	float invMax = 0.0f;
 	if (mMapperMode == TMM_Normalized) {
-		for (size_t i = 0; i < mSize; ++i) {
+		for (size_t i = 0; i < pixelCount; ++i) {
 			float r, g, b;
 			r = rgbIn[i * rgbElems];
 			g = rgbIn[i * rgbElems + 1];
@@ -94,7 +93,7 @@ void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElem
 		invMax = 1.0f / invMax;
 	}
 
-	for (size_t i = 0; i < mSize; ++i) {
+	for (size_t i = 0; i < pixelCount; ++i) {
 		float r, g, b;
 		r = rgbIn[i * rgbElems];
 		g = rgbIn[i * rgbElems + 1];

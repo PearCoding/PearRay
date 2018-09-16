@@ -1,5 +1,5 @@
 #include "camera/Camera.h"
-#include "entity/Entity.h"
+#include "entity/VirtualEntity.h"
 #include "entity/RenderEntity.h"
 #include "light/IInfiniteLight.h"
 #include "renderer/RenderContext.h"

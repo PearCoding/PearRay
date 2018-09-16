@@ -5,6 +5,8 @@
 
 namespace PR {
 class Ray;
+class CollisionInput;
+class CollisionOutput;
 class PR_LIB Sphere {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -41,6 +43,7 @@ public:
 		float T;
 	};
 	Intersection intersects(const Ray& ray) const;
+	void intersectsV(const CollisionInput& in, CollisionOutput& out) const;
 
 	void combine(const Eigen::Vector3f& point);
 	void combine(const Sphere& other);

@@ -6,7 +6,7 @@ PR = None
 
 class TestEntity(unittest.TestCase):
     def test_default(self):
-        entity = PR.Entity(0, "TEST")
+        entity = PR.VirtualEntity(0, "TEST")
 
         self.assertEqual(entity.id, 0)
         self.assertEqual(entity.name, "TEST")

@@ -5,6 +5,7 @@
 #include <type_traits>
 
 namespace PR {
+
 class Ray;
 struct ShaderClosure;
 template <typename T>

@@ -2,8 +2,8 @@
 #include "Environment.h"
 #include "Logger.h"
 
-#include "entity/Entity.h"
 #include "entity/RenderEntity.h"
+#include "entity/VirtualEntity.h"
 
 #include "camera/Camera.h"
 
@@ -80,8 +80,8 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
 			return nullptr;
 		} else {
-			std::shared_ptr<Environment> env;
-			DL::Data nameD		   = top.getFromKey("name");
+			std::shared_ptr<Environment> env = std::make_shared<Environment>();
+
 			DL::Data renderWidthD  = top.getFromKey("renderWidth");
 			DL::Data renderHeightD = top.getFromKey("renderHeight");
 			DL::Data cropD		   = top.getFromKey("crop");
@@ -93,10 +93,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 			else
 				spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
 
-			if (nameD.type() != DL::Data::T_String)
-				env = std::make_shared<Environment>(spectrumDescriptor, "UNKNOWN");
-			else
-				env = std::make_shared<Environment>(spectrumDescriptor, nameD.getString());
+			env->renderManager().setSpectrumDescriptor(spectrumDescriptor);
 
 			if (renderWidthD.type() == DL::Data::T_Integer) {
 				env->setRenderWidth(renderWidthD.getInt());
@@ -196,23 +193,23 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	std::string key = group.at(0).getString();
 
 	DL::Data value = group.at(1);
-	switch(value.type()) {
-		case DL::Data::T_Integer:
-			env->registry()->set(key, value.getInt());
-			break;
-		case DL::Data::T_Float:
-			env->registry()->set(key, value.getFloat());
-			break;
-		case DL::Data::T_Bool:
-			env->registry()->set(key, value.getBool());
-			break;
-		case DL::Data::T_String:
-			env->registry()->set(key, value.getString());
-			break;
-		case DL::Data::T_Group:// TODO
-		default:
-			PR_LOG(L_ERROR) << "Invalid registry entry value." << std::endl;
-			break;
+	switch (value.type()) {
+	case DL::Data::T_Integer:
+		env->registry()->set(key, value.getInt());
+		break;
+	case DL::Data::T_Float:
+		env->registry()->set(key, value.getFloat());
+		break;
+	case DL::Data::T_Bool:
+		env->registry()->set(key, value.getBool());
+		break;
+	case DL::Data::T_String:
+		env->registry()->set(key, value.getString());
+		break;
+	case DL::Data::T_Group: // TODO
+	default:
+		PR_LOG(L_ERROR) << "Invalid registry entry value." << std::endl;
+		break;
 	}
 }
 
@@ -232,7 +229,7 @@ struct
 	{ nullptr, BoundaryParser() }, //Just for the end
 };
 
-void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::Entity>& parent, Environment* env)
+void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
 {
 	DL::Data nameD		= group.getFromKey("name");
 	DL::Data typeD		= group.getFromKey("type");
@@ -249,12 +246,12 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 	else
 		name = "UNKNOWN";
 
-	std::shared_ptr<Entity> entity;
+	std::shared_ptr<VirtualEntity> entity;
 	if (typeD.type() != DL::Data::T_String) {
-		PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. No valid type given." << std::endl;
+		PR_LOG(L_ERROR) << "VirtualEntity " << name << " couldn't be load. No valid type given." << std::endl;
 		return;
 	} else if (typeD.getString() == "null" || typeD.getString() == "empty") {
-		entity = std::make_shared<Entity>(env->sceneFactory().fullEntityCount() + 1, name);
+		entity = std::make_shared<VirtualEntity>(env->sceneFactory().fullEntityCount() + 1, name);
 	} else {
 		const IEntityParser* parser = nullptr;
 		for (int i = 0; EntityParserEntries[i].Name; ++i) {
@@ -268,11 +265,11 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 			entity = parser->parse(env, name, typeD.getString(), group);
 
 			if (!entity) {
-				PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
+				PR_LOG(L_ERROR) << "VirtualEntity " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
 				return;
 			}
 		} else {
-			PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. Unknown type given." << std::endl;
+			PR_LOG(L_ERROR) << "VirtualEntity " << name << " couldn't be load. Unknown type given." << std::endl;
 			return;
 		}
 	}
@@ -281,7 +278,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 
 	if (transformD.type() == DL::Data::T_Group) {
 		bool ok;
-		Entity::Transform t = Entity::Transform(getMatrix(transformD.getGroup(), ok));
+		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
 		//t.makeAffine();
 
 		if (!ok)
@@ -323,7 +320,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 		} else {
 			rot.normalize();
 
-			Entity::Transform trans;
+			VirtualEntity::Transform trans;
 			trans.fromPositionOrientationScale(pos, rot, sca);
 			trans.makeAffine();
 

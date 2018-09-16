@@ -93,5 +93,7 @@ public:
 template <int N>
 template <int... Rest>
 constexpr int Divisor<N>::Impl<0, Rest...>::values[];
-}
-}
+
+}; // namespace CTP
+
+} // namespace PR

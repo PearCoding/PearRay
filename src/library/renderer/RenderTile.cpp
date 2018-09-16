@@ -1,7 +1,9 @@
 #include "RenderTile.h"
 #include "RenderContext.h"
-#include "camera/Camera.h"
-#include "shader/ShaderClosure.h"
+#include "RenderManager.h"
+#include "camera/CameraManager.h"
+#include "camera/ICamera.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include "sampler/HaltonQMCSampler.h"
 #include "sampler/MultiJitteredSampler.h"
@@ -106,39 +108,36 @@ void RenderTile::reset()
 	mSamplesRendered = 0;
 }
 
-Ray RenderTile::constructCameraRay(const Eigen::Vector2i& pixel, uint32 sample)
+RayPackage RenderTile::constructCameraRay(const vuint32& px, const vuint32& py, uint32 sample)
 {
 	statistics().incPixelSampleCount();
 
-	ShaderClosure sc;
-	const auto aasample		  = sample / (mLensSampleCount * mTimeSampleCount * mSpectralSampleCount);
-	const auto lenssample	 = (sample % (mLensSampleCount * mTimeSampleCount * mSpectralSampleCount)) / (mTimeSampleCount * mSpectralSampleCount);
-	const auto timesample	 = (sample % (mTimeSampleCount * mSpectralSampleCount)) / mSpectralSampleCount;
-	const auto spectralsample = sample % mSpectralSampleCount;
+	const uint32 aasample		= sample / (mLensSampleCount * mTimeSampleCount * mSpectralSampleCount);
+	const uint32 lenssample		= (sample % (mLensSampleCount * mTimeSampleCount * mSpectralSampleCount)) / (mTimeSampleCount * mSpectralSampleCount);
+	const uint32 timesample		= (sample % (mTimeSampleCount * mSpectralSampleCount)) / mSpectralSampleCount;
+	const uint32 spectralsample = sample % mSpectralSampleCount;
 
 	const auto aa   = aaSampler()->generate2D(aasample);
 	const auto lens = lensSampler()->generate2D(lenssample);
-	auto t			= mTimeAlpha * timeSampler()->generate1D(timesample) + mTimeBeta;
+	const float t   = mTimeAlpha * timeSampler()->generate1D(timesample) + mTimeBeta;
 
-	uint8 specInd = std::min<uint8>(mContext.spectrumDescriptor()->samples() - 1,
-									std::floor(
-										spectralSampler()->generate1D(spectralsample) * mContext.spectrumDescriptor()->samples()));
+	float specInd = spectralSampler()->generate1D(spectralsample);
+	specInd		  = std::min<uint8>(mContext.renderManager()->spectrumDescriptor()->samples() - 1,
+								std::floor(specInd
+										   * mContext.renderManager()->spectrumDescriptor()->samples()));
 
-	const float x = pixel(0) + aa(0) - 0.5f;
-	const float y = pixel(1) + aa(1) - 0.5f;
+	const vfloat x = simdpp::to_float32(px) + (aa(0) - 0.5f + mContext.offsetX());
+	const vfloat y = simdpp::to_float32(py) + (aa(1) - 0.5f + mContext.offsetY());
 
 	CameraSample cameraSample;
-	cameraSample.SensorSize = Eigen::Vector2i(mFullWidth, mFullHeight);
-	cameraSample.PixelF		= Eigen::Vector2f(x + mContext.offsetX(), y + mContext.offsetY());
-	cameraSample.Pixel		= Eigen::Vector2i(
-		std::min(std::max<uint32>(mContext.offsetX(), std::round(cameraSample.PixelF(0))),
-				 mContext.offsetX() + mContext.width() - 1),
-		std::min(std::max<uint32>(mContext.offsetY(), std::round(cameraSample.PixelF(1))),
-				 mContext.offsetY() + mContext.height() - 1));
-	cameraSample.R				 = Eigen::Vector2f(lens(0), lens(1));
-	cameraSample.Time			 = t;
-	cameraSample.WavelengthIndex = specInd;
+	cameraSample.SensorSize		 = Eigen::Vector2i(mFullWidth, mFullHeight);
+	cameraSample.Pixel[0]		 = x;
+	cameraSample.Pixel[1]		 = y;
+	cameraSample.R[1]			 = simdpp::make_float(lens(0));
+	cameraSample.R[2]			 = simdpp::make_float(lens(1));
+	cameraSample.Time			 = simdpp::make_float(t);
+	cameraSample.WavelengthIndex = simdpp::make_uint(specInd);
 
-	return mContext.camera()->constructRay(cameraSample);
+	return mContext.renderManager()->cameraManager()->getActiveCamera()->constructRay(cameraSample);
 }
 } // namespace PR

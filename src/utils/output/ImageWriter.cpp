@@ -2,6 +2,8 @@
 #include "Logger.h"
 #include "SpectralFile.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderManager.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include <OpenImageIO/imageio.h>
 
@@ -46,7 +48,7 @@ void ImageWriter::deinit()
 }
 
 bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
-					   IM_ChannelSettingSpec* specSett,
+					   const std::vector<IM_ChannelSettingSpec>& chSpec,
 					   const std::vector<IM_ChannelSetting1D>& ch1d,
 					   const std::vector<IM_ChannelSettingCounter>& chcounter,
 					   const std::vector<IM_ChannelSetting3D>& ch3d) const
@@ -59,7 +61,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	const uint32 cx = mRenderer->offsetX();
 	const uint32 cy = mRenderer->offsetY();
 
-	const uint32 channelCount = (specSett ? 3 : 0) + ch1d.size() + ch3d.size() * 3;
+	const uint32 channelCount = chSpec.size() * 3 + ch1d.size() + chcounter.size() + ch3d.size() * 3;
 	if (channelCount == 0)
 		return false;
 
@@ -74,12 +76,18 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 
 	// Channel names
 	spec.channelnames.clear();
-	if (specSett) {
-		spec.channelnames.push_back("R");
-		spec.channelnames.push_back("G");
-		spec.channelnames.push_back("B");
+	for (const IM_ChannelSettingSpec& sett : chSpec) {
+		if (sett.Name.empty()) {
+			spec.channelnames.push_back("R");
+			spec.channelnames.push_back("G");
+			spec.channelnames.push_back("B");
+		} else {
+			spec.channelnames.push_back(sett.Name + ".R");
+			spec.channelnames.push_back(sett.Name + ".G");
+			spec.channelnames.push_back(sett.Name + ".B");
+		}
 
-		if (specSett->TGM == TGM_SRGB)
+		if (sett.TGM == TGM_SRGB)
 			spec.attribute("oiio:ColorSpace", "sRGB");
 	}
 
@@ -88,9 +96,11 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 		spec.channelnames.push_back(sett.Name[1]);
 		spec.channelnames.push_back(sett.Name[2]);
 	}
+
 	for (const IM_ChannelSetting1D& sett : ch1d) {
 		spec.channelnames.push_back(sett.Name);
 	}
+
 	for (const IM_ChannelSettingCounter& sett : chcounter) {
 		spec.channelnames.push_back(sett.Name);
 	}
@@ -103,14 +113,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	if (!out)
 		return false;
 
-	// Spectral
-	if (specSett && mRenderer->output()->getSpectralChannel()) {
-		toneMapper.setColorMode(specSett->TCM);
-		toneMapper.setGammaMode(specSett->TGM);
-		toneMapper.setMapperMode(specSett->TMM);
-		toneMapper.map(mRenderer->output()->getSpectralChannel()->ptr(), mRGBData, mRenderer->spectrumDescriptor()->samples(), 3); // RGB
-	}
-
 	// Calculate maximums for some mapper techniques
 	float invMax3d[OutputMap::V_3D_COUNT];
 	std::fill_n(invMax3d, OutputMap::V_3D_COUNT, 0);
@@ -120,15 +122,20 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	std::fill_n(invMax1d, OutputMap::V_COUNTER_COUNT, 0);
 
 	for (const IM_ChannelSetting3D& sett : ch3d) {
-		auto channel = mRenderer->output()->getChannel(sett.Variable);
+		std::shared_ptr<FrameBufferFloat> channel;
+		if (sett.LPE < 0)
+			channel = mRenderer->output()->getChannel(sett.Variable);
+		else
+			channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
-				Eigen::Vector3f v(channel->getFragmentBounded(Eigen::Vector2i(x, y), 0),
-								  channel->getFragmentBounded(Eigen::Vector2i(x, y), 1),
-								  channel->getFragmentBounded(Eigen::Vector2i(x, y), 2));
+				Eigen::Vector3f v(channel->getFragment(x, y, 0),
+								  channel->getFragment(x, y, 1),
+								  channel->getFragment(x, y, 2));
 
 				invMax3d[sett.Variable] = std::max(invMax3d[sett.Variable],
 												   v.squaredNorm());
@@ -140,14 +147,19 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	}
 
 	for (const IM_ChannelSetting1D& sett : ch1d) {
-		auto channel = mRenderer->output()->getChannel(sett.Variable);
+		std::shared_ptr<FrameBufferFloat> channel;
+		if (sett.LPE < 0)
+			channel = mRenderer->output()->getChannel(sett.Variable);
+		else
+			channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
 				invMax1d[sett.Variable] = std::max(invMax1d[sett.Variable],
-												   channel->getFragmentBounded(Eigen::Vector2i(x, y)));
+												   channel->getFragment(x, y, 0));
 			}
 		}
 
@@ -156,14 +168,19 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	}
 
 	for (const IM_ChannelSettingCounter& sett : chcounter) {
-		auto channel = mRenderer->output()->getChannel(sett.Variable);
+		std::shared_ptr<FrameBufferUInt32> channel;
+		if (sett.LPE < 0)
+			channel = mRenderer->output()->getChannel(sett.Variable);
+		else
+			channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
 				invMaxCounter[sett.Variable] = std::max<uint64>(invMaxCounter[sett.Variable],
-																channel->getFragmentBounded(Eigen::Vector2i(x, y)));
+																channel->getFragment(x, y, 0));
 			}
 		}
 
@@ -173,7 +190,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 
 	// Write content
 	float* line = new float[channelCount * rw];
-	if (!line) {// TODO: Add single token variant!
+	if (!line) { // TODO: Add single token variant!
 		PR_LOG(L_ERROR) << "Not enough memory for image output!" << std::endl;
 		ImageOutput::destroy(out);
 		return false;
@@ -186,15 +203,31 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			const uint32 id1d = y * rw + x;
 			const uint32 id3d = id1d * 3;
 
-			if (specSett) {
-				line[id]	 = mRGBData[id3d];
-				line[id + 1] = mRGBData[id3d + 1];
-				line[id + 2] = mRGBData[id3d + 2];
+			// Spectral
+			for (const IM_ChannelSettingSpec& sett : chSpec) {
+				std::shared_ptr<FrameBufferFloat> channel;
+				if (sett.LPE < 0)
+					channel = mRenderer->output()->getSpectralChannel();
+				else
+					channel = mRenderer->output()->getSpectralChannel(sett.LPE);
+
+				toneMapper.setColorMode(sett.TCM);
+				toneMapper.setGammaMode(sett.TGM);
+				toneMapper.setMapperMode(sett.TMM);
+				toneMapper.map(channel->ptr(), &line[id],
+							   mRenderer->renderManager()->spectrumDescriptor()->samples(), 3,
+							   1); // RGB
+
 				id += 3;
 			}
 
 			for (const IM_ChannelSetting3D& sett : ch3d) {
-				auto channel = mRenderer->output()->getChannel(sett.Variable);
+				std::shared_ptr<FrameBufferFloat> channel;
+				if (sett.LPE < 0)
+					channel = mRenderer->output()->getChannel(sett.Variable);
+				else
+					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+
 				if (channel) {
 					Eigen::Vector3f a(channel->ptr()[id3d],
 									  channel->ptr()[id3d + 1],
@@ -249,7 +282,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			}
 
 			for (const IM_ChannelSetting1D& sett : ch1d) {
-				auto channel = mRenderer->output()->getChannel(sett.Variable);
+				std::shared_ptr<FrameBufferFloat> channel;
+				if (sett.LPE < 0)
+					channel = mRenderer->output()->getChannel(sett.Variable);
+				else
+					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+
 				if (channel) {
 					float r = channel->ptr()[id1d];
 					switch (sett.TMM) {
@@ -282,7 +320,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 			}
 
 			for (const IM_ChannelSettingCounter& sett : chcounter) {
-				auto channel = mRenderer->output()->getChannel(sett.Variable);
+				std::shared_ptr<FrameBufferUInt32> channel;
+				if (sett.LPE < 0)
+					channel = mRenderer->output()->getChannel(sett.Variable);
+				else
+					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+
 				if (channel) {
 					float r = channel->ptr()[id1d];
 					switch (sett.TMM) {
@@ -316,7 +359,7 @@ bool ImageWriter::save_spectral(const std::string& file,
 	if (!spec || !mRenderer)
 		return false;
 
-	SpectralFile specFile(mRenderer->spectrumDescriptor(),
+	SpectralFile specFile(mRenderer->renderManager()->spectrumDescriptor(),
 						  mRenderer->width(), mRenderer->height(), spec->ptr(), false);
 	specFile.save(file, compress);
 

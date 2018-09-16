@@ -171,22 +171,8 @@
 #endif
 #define PR_LIB_UTILS_INLINE
 
-#if defined(PR_LIB_OSL_BUILD)
-# define PR_LIB_OSL PR_EXPORT
-#else
-# define PR_LIB_OSL PR_IMPORT
-#endif
-#define PR_LIB_OSL_INLINE
-
-#if defined(PR_LIB_NETWORK_BUILD)
-# define PR_LIB_NETWORK PR_EXPORT
-#else
-# define PR_LIB_NETWORK PR_IMPORT
-#endif
-#define PR_LIB_NETWORK_INLINE
-
-// Some other configs
-#define PR_TRIANGLE_INTERSECTION_TECHNIQUE (${TRIANGLE_TECHNIQUE})
+#define PR_PLUGIN_API_VERSION 1
+#define PR_PLUGIN_EXPORT PR_EXPORT
 
 // Includes
 #include <iostream>
@@ -198,6 +184,39 @@
 // Eigen3 Library
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+
+// SIMD
+// Always enable SSE2... everything below is too old anyway
+#define SIMDPP_ARCH_X86_SSE2
+#cmakedefine PR_USE_SSE3
+#ifdef PR_USE_SSE3
+# define SIMDPP_ARCH_X86_SSE3
+#endif
+#cmakedefine PR_USE_SSSE3
+#ifdef PR_USE_SSSE3
+# define SIMDPP_ARCH_X86_SSSE3
+#endif
+#cmakedefine PR_USE_SSE4
+#ifdef PR_USE_SSE4
+# define SIMDPP_ARCH_X86_SSE4_1
+#endif
+#cmakedefine PR_USE_AVX
+#ifdef PR_USE_AVX
+# define SIMDPP_ARCH_X86_AVX
+#endif
+#cmakedefine PR_USE_AVX2
+#ifdef PR_USE_AVX2
+# define SIMDPP_ARCH_X86_AVX2
+#endif
+#cmakedefine PR_USE_AVX512
+#ifdef PR_USE_AVX512
+# define SIMDPP_ARCH_X86_AVX512F
+#endif
+
+#include <simdpp/simd.h>
+// Always align at the 8 byte border regardless of the underlying bandwidth
+#define PR_SIMD_ALIGNMENT_PARAM (32)
+#define PR_SIMD_ALIGN alignas(PR_SIMD_ALIGNMENT_PARAM)
 
 namespace PR
 {
@@ -242,4 +261,7 @@ namespace PR
 
 	constexpr float PR_NM_TO_M_F = 1e-9f;
 	constexpr double PR_NM_TO_M = 1e-9;
+
+	constexpr size_t INTERSECTION_GROUP_SIZE = 64;
+	constexpr size_t MATERIAL_GROUP_SIZE = 64;
 }

@@ -1,5 +1,6 @@
 #include "geometry/TriMesh.h"
 #include "material/Material.h"
+#include "material/MaterialManager.h"
 
 #include "Environment.h"
 #include "SceneLoader.h"
@@ -43,6 +44,7 @@ void setup_environment(py::module& m)
 		.def_property_readonly("cropMinY", &Environment::cropMinY)
 		.def_property_readonly("cropMaxY", &Environment::cropMaxY)
 		.def_property_readonly("registry", &Environment::registry)
+		.def_property_readonly("materialManager", &Environment::materialManager)
 		// TODO
 		.def("dumpInformation", &Environment::dumpInformation)
 		.def("setup", &Environment::setup)

@@ -1,55 +1,51 @@
 #include "RenderContext.h"
 #include "OutputMap.h"
+#include "RenderManager.h"
 #include "RenderSession.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
 #include "RenderTileMap.h"
 
-#include "camera/Camera.h"
-#include "entity/RenderEntity.h"
+#include "camera/ICamera.h"
+#include "entity/EntityManager.h"
+#include "entity/IEntity.h"
 #include "ray/Ray.h"
 #include "scene/Scene.h"
 
-#include "light/IInfiniteLight.h"
+#include "infinitelight/IInfiniteLight.h"
 
-#include "integrator/Integrator.h"
+#include "integrator/IIntegrator.h"
 
-#include "shader/FacePoint.h"
-#include "shader/ShaderClosure.h"
+#include "shader/ShadingPoint.h"
 
 #include "Logger.h"
 #include "math/MSI.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
 
-#include "material/Material.h"
+#include "material/IMaterial.h"
+#include "material/MaterialManager.h"
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 							 uint32 w, uint32 h,
-							 const std::shared_ptr<SpectrumDescriptor>& specdesc,
 							 const std::shared_ptr<Scene>& scene,
-							 const std::shared_ptr<Registry>& registry,
-							 const std::string& workingDir)
+							 const RenderManager* manager)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)
 	, mWidth(w)
 	, mHeight(h)
-	, mWorkingDir(workingDir)
-	, mSpectrumDescriptor(specdesc)
-	, mCamera(scene->activeCamera())
+	, mRenderManager(manager)
 	, mScene(scene)
-	, mRegistry(registry)
 	, mOutputMap()
 	, mTileMap()
 	, mIncrementalCurrentSample(0)
-	, mRenderSettings(registry)
+	, mRenderSettings(mRenderManager->registry())
 	, mIntegrator(nullptr)
 	, mShouldStop(false)
 {
-	PR_ASSERT(mCamera, "Given camera has to be valid");
-
+	PR_ASSERT(mRenderManager, "Render manager can not be NULL!");
 	reset();
 
 	mOutputMap = std::make_unique<OutputMap>(this);
@@ -67,8 +63,8 @@ void RenderContext::reset()
 	mCurrentPass			  = 0;
 	mIncrementalCurrentSample = 0;
 
-	mIntegrator.release();
-
+	mIntegrator.reset();
+	
 	for (RenderThread* thread : mThreads)
 		delete thread;
 
@@ -83,13 +79,13 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
 
 	/* Setup entities */
-	for (auto entity : mScene->renderEntities()) {
+	for (auto entity : mRenderManager->entityManager()->getAll()) {
 		if (entity->isLight())
 			mLights.push_back(entity.get());
 	}
 
 	/* Setup integrators */
-	mIntegrator = Integrator::create(this, mRenderSettings.integratorMode());
+	//mIntegrator = Integrator::create(this, mRenderSettings.integratorMode());
 
 	PR_ASSERT(mIntegrator, "Integrator should be set after selection");
 
@@ -131,10 +127,11 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 
 	// Init modules
 	mIntegrator->init();
-	mOutputMap->init();
+	
+	mOutputMap->clear();
 
 	// Start
-	mIntegrator->onStart(); // TODO: onEnd?
+	mIntegrator->onStart(); // TODO: onEnd
 	if (mIntegrator->needNextPass(0)) {
 		bool clear; // Doesn't matter, as it is already clean.
 		mIntegrator->onNextPass(0, clear);
@@ -162,99 +159,9 @@ std::list<RenderTile*> RenderContext::currentTiles() const
 	return list;
 }
 
-RenderEntity* RenderContext::shoot(const Ray& ray, ShaderClosure& sc, const RenderSession& session)
+void RenderContext::traceRays(RayStream& rays, HitStream& hits)
 {
-	if (ray.depth() < mMaxRayDepth) {
-		SceneCollision c = mScene->checkCollision(ray);
-		sc				 = c.Point;
-
-		if (!c.Successful) {
-			session.tile()->statistics().incRayCount();
-			return nullptr;
-		}
-
-		sc.Flags  = 0;
-		sc.NgdotV = ray.direction().dot(sc.Ng);
-		sc.N	  = Reflection::faceforward(sc.NgdotV, sc.Ng);
-		sc.Flags |= Reflection::is_inside(sc.NgdotV) ? SCF_Inside : 0;
-		sc.NdotV		   = -std::abs(sc.NgdotV);
-		sc.V			   = ray.direction();
-		sc.T			   = ray.time();
-		sc.WavelengthIndex = ray.wavelength();
-		sc.Depth2		   = (ray.origin() - sc.P).squaredNorm();
-
-		if (c.Entity)
-			sc.EntityID = c.Entity->id();
-
-		if (sc.Flags & SCF_Inside) {
-			sc.Nx = -sc.Nx;
-			//sc.Ny = -sc.Ny;
-		}
-
-		session.tile()->statistics().incRayCount();
-		if (c.Entity)
-			session.tile()->statistics().incEntityHitCount();
-
-		return c.Entity;
-	} else {
-		return nullptr;
-	}
-}
-
-bool RenderContext::shootForDetection(const Ray& ray, const RenderSession& session)
-{
-	if (ray.depth() < mMaxRayDepth) {
-		SceneCollision c = mScene->checkCollisionSimple(ray);
-
-		session.tile()->statistics().incRayCount();
-		if (c.Successful)
-			session.tile()->statistics().incEntityHitCount();
-
-		return c.Successful;
-	} else {
-		return false;
-	}
-}
-
-RenderEntity* RenderContext::shootForBoundingBox(const Ray& ray, Eigen::Vector3f& p, const RenderSession& session)
-{
-	if (ray.depth() < mMaxRayDepth) {
-		SceneCollision sc = mScene->checkCollisionBoundingBox(ray);
-
-		p = sc.Point.P;
-
-		session.tile()->statistics().incRayCount();
-		if (sc.Successful)
-			session.tile()->statistics().incEntityHitCount();
-
-		return sc.Entity;
-	} else {
-		return nullptr;
-	}
-}
-
-RenderEntity* RenderContext::shootWithEmission(Spectrum& appliedSpec, const Ray& ray,
-											   ShaderClosure& sc, const RenderSession& session)
-{
-	appliedSpec.clear();
-
-	if (ray.depth() >= mMaxRayDepth)
-		return nullptr;
-
-	RenderEntity* entity = shoot(ray, sc, session);
-	if (entity) {
-		if (sc.Material)
-			sc.Material->evalEmission(appliedSpec, sc, session);
-		else
-			appliedSpec.clear();
-	} else {
-		for (auto e : mScene->infiniteLights())
-			e->apply(appliedSpec, ray.direction(), session);
-
-		session.tile()->statistics().incBackgroundHitCount();
-	}
-
-	return entity;
+	mScene->traceRays(rays, hits);
 }
 
 void RenderContext::waitForNextPass()

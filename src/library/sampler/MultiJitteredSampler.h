@@ -12,7 +12,7 @@ namespace PR {
 class PR_LIB MultiJitteredSampler : public Sampler {
 public:
 	MultiJitteredSampler(Random& random, uint32 samples);
-	~MultiJitteredSampler();
+	~MultiJitteredSampler() = default;
 
 	inline float generate1D(uint32 index) override;
 	inline Eigen::Vector2f generate2D(uint32 index) override;

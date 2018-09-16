@@ -2,7 +2,7 @@
 
 
 #include "scene/Scene.h"
-#include "entity/Entity.h"
+#include "entity/VirtualEntity.h"
 #include "entity/RenderEntity.h"
 
 EntityTreeModel::EntityTreeModel(const PR::Scene& scene, QObject* parent)
@@ -19,7 +19,7 @@ QVariant EntityTreeModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid())
 		return QVariant();
 
-	PR::Entity *item = static_cast<PR::Entity*>(index.internalPointer());
+	PR::VirtualEntity *item = static_cast<PR::VirtualEntity*>(index.internalPointer());
 	if (role == Qt::ToolTipRole)
 	{
 		QString tooltip = QString("World coordinates:\nPos\t[%1, %2, %3]\nRot\t[%4, %5, %6, %7]\nScale\t[%8, %9, %10]")
@@ -105,7 +105,7 @@ int EntityTreeModel::columnCount(const QModelIndex &parent) const
 	return 2;
 }
 
-QList<std::shared_ptr<PR::Entity> > EntityTreeModel::getEntities() const
+QList<std::shared_ptr<PR::VirtualEntity> > EntityTreeModel::getEntities() const
 {
-	return QList<std::shared_ptr<PR::Entity> >::fromStdList(mScene.entities());
+	return QList<std::shared_ptr<PR::VirtualEntity> >::fromStdList(mScene.entities());
 }

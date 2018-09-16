@@ -9,8 +9,8 @@ SET(PR_Buffer_Src
   buffer/ColorBuffer.cpp)
 SOURCE_GROUP("Source Files\\Buffer" FILES ${PR_Buffer_Src})
 SET(PR_Camera_Src
-  camera/Camera.cpp
-  camera/StandardCamera.cpp)
+  camera/ICamera.cpp
+  camera/CameraManager.cpp)
 SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Container_Src 
   container/kdTreeBuilder.cpp
@@ -19,13 +19,9 @@ SET(PR_Container_Src
   )
 SOURCE_GROUP("Source Files\\Container" FILES ${PR_Container_Src})
 SET(PR_Entity_Src
-  entity/BoundaryEntity.cpp
-  entity/CoordinateAxisEntity.cpp
-  entity/Entity.cpp
-  entity/MeshEntity.cpp
-  entity/PlaneEntity.cpp
-  entity/RenderEntity.cpp
-  entity/SphereEntity.cpp)
+  entity/EntityManager.cpp
+  entity/IEntity.cpp
+  entity/VirtualEntity.cpp)
 SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
 SET(PR_Geometry_Src
   geometry/BoundingBox.cpp
@@ -34,35 +30,38 @@ SET(PR_Geometry_Src
   geometry/TriMesh.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
 SET(PR_Integrator_Src
-  integrator/AOIntegrator.cpp
-  integrator/BiDirectIntegrator.cpp
-  integrator/DebugIntegrator.cpp
-  integrator/DirectIntegrator.cpp
-  integrator/Integrator.cpp
-  integrator/OnePassIntegrator.cpp
-  integrator/PPMIntegrator.cpp)
+  integrator/IIntegrator.cpp)
 SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
+SET(PR_InfiniteLight_Src
+  light/ILight.cpp
+  light/LightManager.cpp)
+SOURCE_GROUP("Source Files\\InfiniteLight" FILES ${PR_InfiniteLight_Src})
 SET(PR_Light_Src
-  light/DistantLight.cpp
-  light/EnvironmentLight.cpp)
+  infinitelight/IInfiniteLight.cpp
+  infinitelight/InfiniteLightManager.cpp)
 SOURCE_GROUP("Source Files\\Light" FILES ${PR_Light_Src})
 SET(PR_Material_Src
-  material/BlinnPhongMaterial.cpp
-  material/CookTorranceMaterial.cpp
-  material/DiffuseMaterial.cpp
-  material/GlassMaterial.cpp
-  material/GridMaterial.cpp
-  material/Material.cpp
-  material/MirrorMaterial.cpp
-  material/OrenNayarMaterial.cpp
-  material/WardMaterial.cpp)
+  material/IMaterial.cpp
+  material/MaterialManager.cpp)
 SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
 SET(PR_Math_Src ) 
 SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
+SET(PR_Path_Src 
+  path/LightPathExpression.cpp
+  path/LightPathManager.cpp
+  path/LightPath.cpp
+  path/LPE_Automaton.cpp
+  path/LPE_Parser.cpp
+  path/LPE_RegExpr.cpp)
+SOURCE_GROUP("Source Files\\Path" FILES ${PR_Path_Src})
 SET(PR_Photon_Src )
 SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
+SET(PR_Plugin_Src 
+  plugin/PluginLoader.cpp)
+SOURCE_GROUP("Source Files\\Plugin" FILES ${PR_Plugin_Src})
 SET(PR_Ray_Src
-  ray/Ray.cpp)
+  ray/Ray.cpp
+  ray/RayStream.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Registry_Src
   registry/Registry.cpp
@@ -72,6 +71,7 @@ SET(PR_Renderer_Src
   renderer/OutputMap.cpp
   renderer/RenderContext.cpp
   renderer/RenderFactory.cpp
+  renderer/RenderManager.cpp
   renderer/RenderSession.cpp
   renderer/RenderSettings.cpp
   renderer/RenderStatistics.cpp
@@ -88,8 +88,7 @@ SET(PR_Sampler_Src
   sampler/UniformSampler.cpp)
 SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
 SET(PR_Scene_Src
-  scene/Scene.cpp
-  scene/SceneFactory.cpp)
+  scene/Scene.cpp)
 SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
 SET(PR_Spectral_Src
   spectral/IntensityConverter.cpp
@@ -100,10 +99,8 @@ SET(PR_Spectral_Src
   spectral/XYZConverter.cpp)
 SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
 SET(PR_Shader_Src
-  shader/ConstScalarOutput.cpp
-  shader/ConstSpectralOutput.cpp
-  shader/ConstVectorOutput.cpp
-)
+  shader/ConstShadingSocket.cpp
+  shader/HitStream.cpp)
 SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
 SET(PR_Thread_Src
   thread/Thread.cpp)
@@ -115,6 +112,7 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_Buffer_Src}
   ${PR_Light_Src} ${PR_Container_Src} ${PR_Registry_Src}
+  ${PR_Plugin_Src} ${PR_InfiniteLight_Src} ${PR_Path_Src}
 )
 
 SET(PR_Main_Hdr
@@ -125,32 +123,29 @@ SET(PR_Main_Hdr
   Logger.h
   LogListener.h
   Random.h
-  SIMath.h
-  SIMathUtils.h
   Variant.h)
 SET(PR_Buffer_Hdr
   buffer/ColorBuffer.h
   buffer/FrameBuffer.h)
 SOURCE_GROUP("Header Files\\Buffer" FILES ${PR_Buffer_Hdr})
 SET(PR_Camera_Hdr
-  camera/Camera.h
-  camera/StandardCamera.h)
+  camera/ICamera.h
+  camera/CameraManager.h)
 SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
 SET(PR_Container_Hdr
   container/kdTreeBuilder.h
   container/kdTreeBuilderNaive.h
-  container/kdTreeCollider.h)
+  container/kdTreeCollider.h
+  container/RadixSort.h)
 SOURCE_GROUP("Header Files\\Container" FILES ${PR_Container_Hdr})
 SET(PR_Entity_Hdr
-  entity/BoundaryEntity.h
-  entity/CoordinateAxisEntity.h
-  entity/Entity.h
-  entity/Entity.inl
-  entity/PlaneEntity.h
-  entity/MeshEntity.h
-  entity/RenderEntity.h
-  entity/SphereEntity.h)
-SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
+  entity/EntityManager.h
+  entity/IEntity.h
+  entity/IEntity.inl
+  entity/IEntityFactory.h
+  entity/VirtualEntity.h
+  entity/VirtualEntity.inl)
+SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr}) 
 SET(PR_Geometry_Hdr
   geometry/BoundingBox.h
   geometry/Face.h
@@ -158,44 +153,30 @@ SET(PR_Geometry_Hdr
   geometry/Sphere.h
   geometry/Triangle.h
   geometry/TriMesh.h
-  geometry/TriMesh.inl
-  geometry/Vector.h)
+  geometry/TriMesh.inl)
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Integrator_Hdr
-  integrator/AOIntegrator.h
-  integrator/BiDirectIntegrator.h
-  integrator/DebugIntegrator.h
-  integrator/DirectIntegrator.h
-  integrator/Integrator.h
-  integrator/OnePassIntegrator.h
-  integrator/PPMIntegrator.h)
+  integrator/IIntegrator.h
+  integrator/IIntegratorFactory.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
+SET(PR_InfiniteLight_Hdr
+  infinitelight/IInfiniteLight.h
+  infinitelight/IInfiniteLightFactory.h
+  infinitelight/InfiniteLightManager.h)
+SOURCE_GROUP("Header Files\\InfiniteLight" FILES ${PR_InfiniteLight_Hdr})
 SET(PR_Light_Hdr
-  light/DistantLight.h
-  light/EnvironmentLight.h
-  light/IInfiniteLight.h)
+  light/ILight.h
+  light/ILightFactory.h
+  light/LightManager.h)
 SOURCE_GROUP("Header Files\\Light" FILES ${PR_Light_Hdr})
 SET(PR_Material_Hdr 
-  material/BlinnPhongMaterial.h
-  material/BRDF.h
-  material/BRDF.inl
-  material/CookTorranceMaterial.h
-  material/DiffuseMaterial.h
-  material/GlassMaterial.h
-  material/GridMaterial.h
-  material/Material.h
-  material/Material.inl
-  material/MirrorMaterial.h
-  material/OrenNayarMaterial.h
-  material/WardMaterial.h)
+  material/IMaterial.h
+  material/IMaterial.inl
+  material/IMaterialFactory.h
+  material/MaterialManager.h)
 SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
 SET(PR_Math_Hdr
-  math/AutoDiff.h
-  math/AutoDiff.inl
-  math/AutoDiff_ADLO.inl
-  math/AutoDiff_Operators.inl
-  math/AutoDiff_Scalar.inl
-  math/AutoDiff_Vector.inl
+  math/Compression.h
   math/Fresnel.h
   math/Generator.h
   math/HemiMap.h
@@ -203,16 +184,35 @@ SET(PR_Math_Hdr
   math/Projection.h
   math/ProjectionMap.h
   math/Reflection.h
-  math/SphereMap.h)
+  math/SIMath.h
+  math/SIMathUtils.h
+  math/SphereMap.h
+  math/Tangent.h
+  math/Vector.h)
 SOURCE_GROUP("Header Files\\Math" FILES ${PR_Math_Hdr})
+SET(PR_Path_Hdr
+  path/LightPath.h
+  path/LightPathExpression.h
+  path/LightPathManager.h
+  path/LightPathToken.h
+  path/LPE_Automaton.h
+  path/LPE_Parser.h
+  path/LPE_RegExpr.h
+  path/LPE_RegState.h)
+SOURCE_GROUP("Header Files\\Path" FILES ${PR_Path_Hdr})
 SET(PR_Photon_Hdr
   photon/Photon.h
   photon/PhotonMap.h
   photon/PhotonMap.inl)
 SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
+SET(PR_Plugin_Hdr
+  plugin/Plugin.h
+  plugin/PluginLoader.h)
+SOURCE_GROUP("Header Files\\Plugin" FILES ${PR_Plugin_Hdr})
 SET(PR_Ray_Hdr
   ray/Ray.h
-  ray/Ray.inl)
+  ray/Ray.inl
+  ray/RayStream.h)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Registry_Hdr
   registry/Any.h
@@ -226,6 +226,7 @@ SET(PR_Renderer_Hdr
   renderer/RenderContext.h
   renderer/RenderEnums.h
   renderer/RenderFactory.h
+  renderer/RenderManager.h
   renderer/RenderSession.h
   renderer/RenderSettings.h
   renderer/RenderStatistics.h
@@ -243,8 +244,7 @@ SET(PR_Sampler_Hdr
   sampler/UniformSampler.h)
 SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
 SET(PR_Scene_Hdr
-  scene/Scene.h
-  scene/SceneFactory.h)
+  scene/Scene.h)
 SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
 SET(PR_Spectral_Hdr
   spectral/IntensityConverter.h
@@ -259,12 +259,11 @@ SET(PR_Spectral_Hdr
   spectral/XYZConverter.h)
 SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
 SET(PR_Shader_Hdr
-  shader/ConstScalarOutput.h
-  shader/ConstSpectralOutput.h
-  shader/ConstVectorOutput.h
-  shader/FacePoint.h
-  shader/ShaderClosure.h
-  shader/ShaderOutput.h)
+  shader/ConstShadingSocket.h
+  shader/HitStream.h
+  shader/ShadingGroup.h
+  shader/ShadingPoint.h
+  shader/ShadingSocket.h)
 SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
 SET(PR_Thread_Hdr
   thread/Thread.h
@@ -276,16 +275,18 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_Buffer_Hdr}
-  ${PR_Light_Hdr} ${PR_Registry_Hdr}
+  ${PR_Light_Hdr} ${PR_Registry_Hdr} ${PR_Plugin_Hdr}
+  ${PR_InfiniteLight_Hdr} ${PR_Path_Hdr}
 )
   	
 add_library(pr_lib SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
 if(NOT WIN32)
   target_link_libraries(pr_lib pthread )
 endif()
-target_link_libraries(pr_lib ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+target_link_libraries(pr_lib ${CMAKE_DL_LIBS} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
 
 set_target_properties(pr_lib PROPERTIES VERSION ${PR_Version})
+set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(pr_lib PRIVATE "${DEFS};PR_LIB_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 
 IF(PR_CPP_CHECK)

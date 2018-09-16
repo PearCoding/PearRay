@@ -65,10 +65,10 @@ private:
 	std::ostream mStream;
 };
 
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v);
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v);
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v);
-std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v);
 }
 
 #define PR_LOGGER (PR::Logger::instance())

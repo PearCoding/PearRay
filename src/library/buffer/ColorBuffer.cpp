@@ -12,7 +12,7 @@ ColorBuffer::_Data::_Data(uint32 width, uint32 height, ColorBufferMode mode)
 	size_t elems = (mode == CBM_RGB ? 3 : 4);
 	Ptr			 = new float[width * height * elems];
 
-	std::fill_n(Ptr, width*height*elems, 1);
+	std::fill_n(Ptr, width * height * elems, 1);
 }
 
 ColorBuffer::_Data::~_Data()
@@ -53,11 +53,13 @@ ColorBuffer& ColorBuffer::operator=(ColorBuffer&& other)
 
 void ColorBuffer::map(const ToneMapper& mapper, const float* specIn, uint32 samples)
 {
-	mapper.map(specIn, mData->Ptr, samples, mData->Mode == CBM_RGB ? 3 : 4);
+	mapper.map(specIn, mData->Ptr,
+			   samples, mData->Mode == CBM_RGB ? 3 : 4, mData->Width * mData->Height);
 }
 
 void ColorBuffer::mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn)
 {
-	mapper.mapOnlyMapper(rgbIn, mData->Ptr, mData->Mode == CBM_RGB ? 3 : 4);
+	mapper.mapOnlyMapper(rgbIn, mData->Ptr,
+						 mData->Mode == CBM_RGB ? 3 : 4, mData->Width * mData->Height);
 }
-}
+} // namespace PR

@@ -119,7 +119,7 @@ PR_TEST("Inflate Max")
 
 PR_TEST("Intersects Left")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Ray ray(0,0, Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
 	BoundingBox box(2, 2, 2);
 
 	BoundingBox::Intersection s = box.intersects(ray);
@@ -130,7 +130,7 @@ PR_TEST("Intersects Left")
 
 PR_TEST("Intersects Right Inside")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Ray ray(0,0, Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -141,7 +141,7 @@ PR_TEST("Intersects Right Inside")
 
 PR_TEST("Intersects Right")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(2, 0, 0), Eigen::Vector3f(-1, 0, 0));
+	Ray ray(0,0, Eigen::Vector3f(2, 0, 0), Eigen::Vector3f(-1, 0, 0));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -152,7 +152,7 @@ PR_TEST("Intersects Right")
 
 PR_TEST("Intersects Front")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, -2), Eigen::Vector3f(0, 0, 1));
+	Ray ray(0,0, Eigen::Vector3f(0, 0, -2), Eigen::Vector3f(0, 0, 1));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -163,7 +163,7 @@ PR_TEST("Intersects Front")
 
 PR_TEST("Intersects Back Inside")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 1));
+	Ray ray(0,0, Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 1));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -174,7 +174,7 @@ PR_TEST("Intersects Back Inside")
 
 PR_TEST("Intersects Back")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, 2), Eigen::Vector3f(0, 0, -1));
+	Ray ray(0,0, Eigen::Vector3f(0, 0, 2), Eigen::Vector3f(0, 0, -1));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -185,7 +185,7 @@ PR_TEST("Intersects Back")
 
 PR_TEST("Intersects Bottom")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, -2, 0), Eigen::Vector3f(0, 1, 0));
+	Ray ray(0,0, Eigen::Vector3f(0, -2, 0), Eigen::Vector3f(0, 1, 0));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -196,7 +196,7 @@ PR_TEST("Intersects Bottom")
 
 PR_TEST("Intersects Top Inside")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 1, 0));
+	Ray ray(0,0, Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 1, 0));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -207,7 +207,7 @@ PR_TEST("Intersects Top Inside")
 
 PR_TEST("Intersects Top")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 2, 0), Eigen::Vector3f(0, -1, 0));
+	Ray ray(0,0, Eigen::Vector3f(0, 2, 0), Eigen::Vector3f(0, -1, 0));
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -219,7 +219,7 @@ PR_TEST("Intersects Top")
 PR_TEST("Intersects Complex")
 {
 	Eigen::Vector3f point = Eigen::Vector3f(0, 1, 0);
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(1, 2, 0), Eigen::Vector3f(-1, -1, 0).normalized());
+	Ray ray(0,0, Eigen::Vector3f(1, 2, 0), Eigen::Vector3f(-1, -1, 0).normalized());
 	BoundingBox box(2, 2, 2);
 
 	 	BoundingBox::Intersection s = box.intersects(ray);
@@ -230,7 +230,7 @@ PR_TEST("Intersects Complex")
 
 PR_TEST("Intersects Range")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
+	Ray ray(0,0, Eigen::Vector3f(-2, 0, 0), Eigen::Vector3f(1, 0, 0));
 	BoundingBox box(2, 2, 2);
 
 	BoundingBox::IntersectionRange s = box.intersectsRange(ray);

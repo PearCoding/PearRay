@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 	auto scene						 = env->sceneFactory().create();
 	PR::RenderFactory* renderFactory = new PR::RenderFactory(
 		PR::SpectrumDescriptor::createStandardSpectral(),
-		scene, env->registry(), options.OutputDir);
+		scene, env->registry(), env->materialManager(), options.OutputDir);
 
 	// Render per image tile
 	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {

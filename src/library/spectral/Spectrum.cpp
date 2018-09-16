@@ -1,9 +1,9 @@
 #include "Spectrum.h"
 #include "SpectrumDescriptor.h"
 
-#include "SIMath.h"
-#include "SIMathConstants.h"
-#include "SIMathStd.h"
+#include "math/SIMath.h"
+#include "math/SIMathConstants.h"
+#include "math/SIMathStd.h"
 
 #include <type_traits>
 

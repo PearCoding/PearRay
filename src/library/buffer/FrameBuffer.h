@@ -1,32 +1,32 @@
 #pragma once
 
-#include "renderer/RenderContext.h"
-
-#include <Eigen/Dense>
+#include "math/SIMD.h"
 
 namespace PR {
-class RenderContext;
-
-template <typename T>
+/* This framebuffer uses a channel * height * width structure
+ * to better utilize SIMD channel independent loading and storing
+ * It also expands width and height to be a multiply of the simd bandwidth
+ */
+template <typename T, typename VT>
 class PR_LIB FrameBuffer {
 	PR_CLASS_NON_COPYABLE(FrameBuffer);
 
 public:
-	inline explicit FrameBuffer(size_t channels, const T& clear_value = T(), bool never_clear = false)
-		: mWidth(0)
-		, mHeight(0)
-		, mOffsetX(0)
-		, mOffsetY(0)
+	inline FrameBuffer(size_t channels, size_t width, size_t height,
+					   const T& clear_value = T(), bool never_clear = false)
+		: mWidth(width)
+		, mHeight(height)
 		, mChannels(channels)
-		, mData(nullptr)
+		, mChannelPitch(width * height + (width * height) % PR_SIMD_BANDWIDTH)
 		, mClearValue(clear_value)
 		, mNeverClear(never_clear)
+		, mData()
 	{
+		mData.resize(mChannels * mChannelPitch);
 	}
 
 	inline ~FrameBuffer()
 	{
-		deinit();
 	}
 
 	inline size_t width() const
@@ -44,6 +44,11 @@ public:
 		return mChannels;
 	}
 
+	inline size_t channelPitch() const
+	{
+		return mChannelPitch;
+	}
+
 	inline void setNeverClear(bool b)
 	{
 		mNeverClear = b;
@@ -54,147 +59,92 @@ public:
 		return mNeverClear;
 	}
 
-	inline void init(RenderContext* renderer)
+	inline void setFragment(size_t px, size_t py, size_t channel, const T& v)
 	{
-		PR_ASSERT(renderer, "Renderer should be not null");
-		PR_ASSERT(!mData, "Init shouldn't be called twice");
-
-		mWidth   = renderer->width();
-		mHeight  = renderer->height();
-		mOffsetX = renderer->offsetX();
-		mOffsetY = renderer->offsetY();
-
-		PR_ASSERT(mWidth > mOffsetX, "Offset should be less then width");
-		PR_ASSERT(mHeight > mOffsetY, "Offset should be less then height");
-
-		mData = new T[mWidth * mHeight * mChannels];
-		clear(true);
-	}
-
-	inline void deinit()
-	{
-		if (mData) {
-			delete[] mData;
-			mData = nullptr;
-		}
-	}
-
-	inline void setFragment(const Eigen::Vector2i& p, size_t channel, const T& v)
-	{
-		PR_ASSERT(p(0) >= 0 && (uint32)p(0) >= mOffsetX && (uint32)p(0) < mOffsetX + mWidth,
+		PR_ASSERT(px < mWidth,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32)p(1) >= mOffsetY && (uint32)p(1) < mOffsetY + mHeight,
+		PR_ASSERT(py < mHeight,
 				  "y coord has to be between boundaries");
+		setFragment(py * mWidth + px, channel, v);
+	}
+
+	inline const T& getFragment(size_t px, size_t py, size_t channel) const
+	{
+		PR_ASSERT(px < mWidth,
+				  "x coord has to be between boundaries");
+		PR_ASSERT(py < mHeight,
+				  "y coord has to be between boundaries");
+		return getFragment(py * mWidth + px, channel);
+	}
+
+	inline T& getFragment(size_t px, size_t py, size_t channel)
+	{
+		PR_ASSERT(px < mWidth,
+				  "x coord has to be between boundaries");
+		PR_ASSERT(py < mHeight,
+				  "y coord has to be between boundaries");
+		return getFragment(py * mWidth + px, channel);
+	}
+
+	inline void setFragment(size_t pixelindex, size_t channel, const T& v)
+	{
+		PR_ASSERT(pixelindex < mWidth * mHeight,
+				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
-		mData[(p(1) - mOffsetY) * mWidth * mChannels + (p(0) - mOffsetX) * mChannels + channel] = v;
+		mData[channel * mChannelPitch + pixelindex] = v;
 	}
 
-	inline const T& getFragment(const Eigen::Vector2i& p, size_t channel = 0) const
+	inline const T& getFragment(size_t pixelindex, size_t channel = 0) const
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32)p(0) >= mOffsetX && (uint32)p(0) < mOffsetX + mWidth,
-				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32)p(1) >= mOffsetY && (uint32)p(1) < mOffsetY + mHeight,
-				  "y coord has to be between boundaries");
+		PR_ASSERT(pixelindex < mWidth * mHeight,
+				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
-		return mData[(p(1) - mOffsetY) * mWidth * mChannels + (p(0) - mOffsetX) * mChannels + channel];
+		return mData[channel * mChannelPitch + pixelindex];
 	}
 
-	inline T& getFragment(const Eigen::Vector2i& p, size_t channel = 0)
+	inline T& getFragment(size_t pixelindex, size_t channel = 0)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32)p(0) >= mOffsetX && (uint32)p(0) < mOffsetX + mWidth,
-				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32)p(1) >= mOffsetY && (uint32)p(1) < mOffsetY + mHeight,
-				  "y coord has to be between boundaries");
+		PR_ASSERT(pixelindex < mWidth * mHeight,
+				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
-		return mData[(p(1) - mOffsetY) * mWidth * mChannels + (p(0) - mOffsetX) * mChannels + channel];
+		return mData[channel * mChannelPitch + pixelindex];
 	}
 
-	inline void setFragmentBounded(const Eigen::Vector2i& p, size_t channel, const T& v)
+	// SIMD versions
+	inline void setFragment(const vuint32& pixelIndex, size_t channel, const VT& v)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32)p(0) < mWidth,
-				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32)p(1) < mHeight,
-				  "y coord has to be between boundaries");
-		PR_ASSERT(channel < mChannels,
-				  "channel coord has to be less then maximum");
-		mData[p(1) * mWidth * mChannels + p(0) * mChannels + channel] = v;
+		store_into_container(pixelIndex, mData, v, channel * mChannelPitch);
 	}
 
-	inline const T& getFragmentBounded(const Eigen::Vector2i& p, size_t channel = 0) const
+	inline VT getFragment(const vuint32& pixelIndex, size_t channel = 0) const
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32)p(0) < mWidth,
-				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32)p(1) < mHeight,
-				  "y coord has to be between boundaries");
-		PR_ASSERT(channel < mChannels,
-				  "channel coord has to be less then maximum");
-		return mData[p(1) * mWidth * mChannels + p(0) * mChannels + channel];
+		return load_from_container(pixelIndex, mData, channel * mChannelPitch);
 	}
 
-	inline T& getFragmentBounded(const Eigen::Vector2i& p, size_t channel = 0)
+	inline void blendFragment(const vuint32& pixelIndex, size_t channel,
+							  const VT& newValue, const vfloat& blendFactor)
 	{
-		PR_ASSERT(p(0) >= 0 && (uint32)p(0) < mWidth,
-				  "x coord has to be between boundaries");
-		PR_ASSERT(p(1) >= 0 && (uint32)p(1) < mHeight,
-				  "y coord has to be between boundaries");
-		PR_ASSERT(channel < mChannels,
-				  "channel coord has to be less then maximum");
-		return mData[p(1) * mWidth * mChannels + p(0) * mChannels + channel];
+		// Better performance then using load and store
+		for_each_v([&](uint32 i) {
+			uint32 pi = extract(i, pixelIndex);
+			T v		  = extract(i, newValue);
+			float t   = extract(i, blendFactor);
+
+			getFragment(pi, channel) = getFragment(pi, channel) * (1 - t) + v * t;
+		});
 	}
 
-	// Spectrum
-	inline void getFragmentSpectrum(const Eigen::Vector2i& p, Spectrum& spec)
+	inline const T* ptr() const
 	{
-		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for (uint32 i = 0; i < mChannels; ++i)
-			spec[i] = getFragment(p, i);
+		return mData.data();
 	}
 
-	inline void getFragmentBoundedSpectrum(const Eigen::Vector2i& p, Spectrum& spec)
+	inline T* ptr()
 	{
-		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for (uint32 i = 0; i < mChannels; ++i)
-			spec[i] = getFragmentBounded(p, i);
-	}
-
-	template <typename SLO>
-	inline Lazy::enable_if_slo_t<SLO, SLO, void> setFragmentSpectrum(const Eigen::Vector2i& p, const SLO& spec)
-	{
-		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for (uint32 i = 0; i < mChannels; ++i)
-			getFragment(p, i) = spec(i);
-	}
-
-	template <typename SLO>
-	inline Lazy::enable_if_slo_t<SLO, SLO, void> setFragmentBoundedSpectrum(const Eigen::Vector2i& p, const SLO& spec)
-	{
-		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for (uint32 i = 0; i < mChannels; ++i)
-			getFragmentBounded(p, i) = spec(i);
-	}
-
-	template <typename SLO>
-	inline Lazy::enable_if_slo_t<SLO, SLO, void> addFragmentSpectrum(const Eigen::Vector2i& p, const SLO& spec)
-	{
-		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for (uint32 i = 0; i < mChannels; ++i)
-			getFragment(p, i) += spec(i);
-	}
-
-	template <typename SLO>
-	inline Lazy::enable_if_slo_t<SLO, SLO, void> addFragmentBoundedSpectrum(const Eigen::Vector2i& p, const SLO& spec)
-	{
-		PR_ASSERT(spec.samples() == mChannels, "Channel count and spectrum samples have to be the same");
-		for (uint32 i = 0; i < mChannels; ++i)
-			getFragmentBounded(p, i) += spec(i);
-	}
-
-	inline T* ptr() const
-	{
-		return mData;
+		return mData.data();
 	}
 
 	inline void clear(bool force = false)
@@ -205,20 +155,20 @@ public:
 
 	inline void fill(const T& v)
 	{
-		std::fill_n(mData, mWidth * mHeight * mChannels, v);
+		std::fill(mData.begin(), mData.end(), v);
 	}
 
 private:
 	size_t mWidth;
 	size_t mHeight;
-	size_t mOffsetX;
-	size_t mOffsetY;
 	size_t mChannels;
-	T* mData;
+	size_t mChannelPitch;
 	T mClearValue;
 	bool mNeverClear;
+
+	simd_vector<T> mData;
 };
 
-typedef FrameBuffer<float> FrameBufferFloat;
-typedef FrameBuffer<uint64> FrameBufferUInt64;
+typedef FrameBuffer<float, vfloat> FrameBufferFloat;
+typedef FrameBuffer<uint32, vuint32> FrameBufferUInt32;
 } // namespace PR

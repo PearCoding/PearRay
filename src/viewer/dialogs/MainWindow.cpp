@@ -337,7 +337,7 @@ void MainWindow::updateView()
 
 		ui.viewWidget->refreshView();
 		ui.statusBar->showMessage(
-		QString("%1% | Pass: %2 | Samples: %3 | Rays: %4 | Entity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
+		QString("%1% | Pass: %2 | Samples: %3 | Rays: %4 | VirtualEntity Hits: %5 | Background Hits: %6 | Elapsed time: %7 | Time left: %8")
 			.arg(100*status.percentage(), 4)
 			.arg(mRenderContext->currentPass() + 1)
 			.arg(friendlyHugeNumber(status.getField("global.pixel_sample_count").getUInt()))
@@ -529,7 +529,7 @@ void MainWindow::stopRendering()
 		PR::RenderStatus status = mRenderContext->status();
 
 		ui.viewWidget->refreshView();
-		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | Entity Hits: %3 | Background Hits: %4 | Render time: %5")
+		ui.statusBar->showMessage(QString("Samples: %1 | Rays: %2 | VirtualEntity Hits: %3 | Background Hits: %4 | Render time: %5")
 			.arg(friendlyHugeNumber(status.getField("global.pixel_sample_count").getUInt()))
 			.arg(friendlyHugeNumber(status.getField("global.ray_count").getUInt()))
 			.arg(friendlyHugeNumber(status.getField("global.entity_hit_count").getUInt()))
@@ -555,7 +555,7 @@ void MainWindow::entitySelected(QModelIndex index)
 {
 	if (index.isValid())
 	{
-		ui.entityDetailsView->setEntity((PR::Entity*)index.internalPointer());
+		ui.entityDetailsView->setEntity((PR::VirtualEntity*)index.internalPointer());
 	}
 	else
 	{

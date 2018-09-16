@@ -1,4 +1,5 @@
 #include "geometry/Triangle.h"
+#include "math/SIMD.h"
 #include "ray/Ray.h"
 
 #include "Test.h"
@@ -8,55 +9,60 @@ using namespace PR;
 PR_BEGIN_TESTCASE(Triangle)
 PR_TEST("Intersects CCW")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0.5, 0.5, -1), Eigen::Vector3f(0, 0, 1));
+	CollisionInput in;
+	in.RayOrigin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
+	in.RayOrigin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
+	in.RayOrigin[2] = simdpp::make_float(-1, -1, -1, -1);
 
-	Eigen::Vector3f point;
-	float u, v;
-	float t;
-	PR_CHECK_TRUE(Triangle::intersect(ray, Eigen::Vector3f(0,0,0), Eigen::Vector3f(1,0,0), Eigen::Vector3f(0,1,0),
-		u, v, point, t));
-	PR_CHECK_NEARLY_EQ(point, Eigen::Vector3f(0.5, 0.5, 0));
-	PR_CHECK_NEARLY_EQ(u, 0.5);
-	PR_CHECK_NEARLY_EQ(v, 0.5);
+	in.RayDirection[0] = simdpp::make_float(0);
+	in.RayDirection[1] = simdpp::make_float(0);
+	in.RayDirection[2] = simdpp::make_float(1);
+
+	in.setupInverse();
+	
+	vfloat u, v, t;
+	const bfloat res = Triangle::intersect(in,
+										   0, 0, 0,
+										   1, 0, 0,
+										   0, 1, 0,
+										   u, v, t);
+
+	PR_CHECK_TRUE(any(res));
+	PR_CHECK_FALSE(all(res));
+
+	PR_CHECK_TRUE(extract<0>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_FALSE(extract<3>(res));
 }
 
 PR_TEST("Intersects CW")
 {
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0.5, 0.5, -1), Eigen::Vector3f(0, 0, 1));
+	CollisionInput in;
+	in.RayOrigin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
+	in.RayOrigin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
+	in.RayOrigin[2] = simdpp::make_float(-1, -1, -1, -1);
 
-	Eigen::Vector3f point;
-	float u, v;
-	float t;
-	PR_CHECK_TRUE(Triangle::intersect(ray, Eigen::Vector3f(0,0,0), Eigen::Vector3f(0,1,0), Eigen::Vector3f(1,0,0),
-		u, v, point, t));
-	PR_CHECK_NEARLY_EQ(point, Eigen::Vector3f(0.5, 0.5, 0));
-	PR_CHECK_NEARLY_EQ(u, 0.5);
-	PR_CHECK_NEARLY_EQ(v, 0.5);
-}
+	in.RayDirection[0] = simdpp::make_float(0);
+	in.RayDirection[1] = simdpp::make_float(0);
+	in.RayDirection[2] = simdpp::make_float(1);
 
-PR_TEST("Intersects Border")
-{
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0, -1), Eigen::Vector3f(0, 0, 1));
+	in.setupInverse();
 
-	Eigen::Vector3f point;
-	float u, v;
-	float t;
-	PR_CHECK_TRUE(Triangle::intersect(ray, Eigen::Vector3f(0,0,0), Eigen::Vector3f(1,0,0), Eigen::Vector3f(0,1,0),
-		u, v, point, t));
-	PR_CHECK_NEARLY_EQ(point, Eigen::Vector3f(0, 0, 0));
-	PR_CHECK_NEARLY_EQ(u, 0);
-	PR_CHECK_NEARLY_EQ(v, 0);
-}
+	vfloat u, v, t;
+	const bfloat res = Triangle::intersect(in,
+										   0, 0, 0,
+										   0, 1, 0,
+										   1, 0, 0,
+										   u, v, t);
 
-PR_TEST("Intersects Not")
-{
-	Ray ray(Eigen::Vector2i(0,0), Eigen::Vector3f(0.6, 0.6, -1), Eigen::Vector3f(0, 0, 1));
+	PR_CHECK_TRUE(any(res));
+	PR_CHECK_FALSE(all(res));
 
-	Eigen::Vector3f point;
-	float u, v;
-	float t;
-	PR_CHECK_FALSE(Triangle::intersect(ray, Eigen::Vector3f(0,0,0), Eigen::Vector3f(1,0,0), Eigen::Vector3f(0,1,0),
-		u, v, point, t));
+	PR_CHECK_TRUE(extract<0>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_FALSE(extract<3>(res));
 }
 
 PR_END_TESTCASE()

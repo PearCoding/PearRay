@@ -2,44 +2,42 @@
 
 namespace PR {
 Ray::Ray()
-	: mOrigin(0, 0, 0)
+	: mPixelIndex(0)
+	, mOrigin(0, 0, 0)
 	, mDirection(0, 0, 0)
-	, mPixel(0, 0)
-	, mXOrigin(0, 0, 0)
-	, mXDirection(0, 0, 0)
-	, mYOrigin(0, 0, 0)
-	, mYDirection(0, 0, 0)
 	, mDepth(0)
 	, mTime(0)
-	, mWavelength(0)
-	, mSpectralStart(0)
-	, mSpectralEnd(0)
+	, mWavelengthIndex(0)
 	, mFlags(0)
+	, mWeight(1)
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 	, mMaxDirectionIndex(0)
 #endif
 {
+	for(int i = 0; i < _RDT_Count; ++i) {
+		mOriginDiff[(RayDiffType)i] = Eigen::Vector3f(0,0,0);
+		mDirectionDiff[(RayDiffType)i] = Eigen::Vector3f(0,0,0);
+	}
 }
 
-Ray::Ray(const Eigen::Vector2i& pixel, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
-		 uint32 depth, const SI::Time& time, float wavelength, uint16 flags)
-	: mOrigin(pos)
+Ray::Ray(float weight, uint32 pixelIndex, const Eigen::Vector3f& pos, const Eigen::Vector3f& dir,
+		 uint16 depth, float time, uint8 wavelengthIndex, uint8 flags)
+	: mPixelIndex(pixelIndex)
+	, mOrigin(pos)
 	, mDirection(dir)
-	, mPixel(pixel)
-	, mXOrigin(0, 0, 0)
-	, mXDirection(0, 0, 0)
-	, mYOrigin(0, 0, 0)
-	, mYDirection(0, 0, 0)
 	, mDepth(depth)
 	, mTime(time)
-	, mWavelength(wavelength)
-	, mSpectralStart(0)
-	, mSpectralEnd(0)
+	, mWavelengthIndex(wavelengthIndex)
 	, mFlags(flags)
+	, mWeight(weight)
 {
 #if PR_TRIANGLE_INTERSECTION_TECHNIQUE == 1
 	calcMaxDirectionElement();
 #endif
+	for(int i = 0; i < _RDT_Count; ++i) {
+		mOriginDiff[(RayDiffType)i] = Eigen::Vector3f(0,0,0);
+		mDirectionDiff[(RayDiffType)i] = Eigen::Vector3f(0,0,0);
+	}
 }
 
 Ray::~Ray()

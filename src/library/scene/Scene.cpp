@@ -1,12 +1,23 @@
 #include "Scene.h"
+#include "camera/CameraManager.h"
+#include "camera/ICamera.h"
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
-#include "entity/Entity.h"
-#include "entity/RenderEntity.h"
-#include "light/IInfiniteLight.h"
-#include "material/Material.h"
+#include "entity/EntityManager.h"
+#include "entity/IEntity.h"
+#include "infinitelight/IInfiniteLight.h"
+#include "infinitelight/InfiniteLightManager.h"
+#include "light/ILight.h"
+#include "light/LightManager.h"
+#include "material/IMaterial.h"
+#include "material/MaterialManager.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderManager.h"
+
+#include "math/Compression.h"
+#include "ray/RayStream.h"
+#include "shader/HitStream.h"
 
 #include "Logger.h"
 
@@ -15,16 +26,9 @@
 #define BUILDER kdTreeBuilder
 
 namespace PR {
-Scene::Scene(const std::string& name,
-			 const std::shared_ptr<Camera>& activeCamera,
-			 const std::vector<std::shared_ptr<Entity>>& entities,
-			 const std::vector<std::shared_ptr<RenderEntity>>& renderentities,
-			 const std::vector<std::shared_ptr<IInfiniteLight>>& lights)
-	: mName(name)
-	, mActiveCamera(activeCamera)
-	, mEntities(entities)
-	, mRenderEntities(renderentities)
-	, mInfiniteLights(lights)
+Scene::Scene(const RenderManager* manager)
+	: mRenderManager(manager)
+	, mActiveCamera(manager->cameraManager()->getActiveCamera())
 	, mKDTree(nullptr)
 {
 }
@@ -37,40 +41,32 @@ Scene::~Scene()
 	}
 }
 
-std::shared_ptr<Entity> Scene::getEntity(const std::string& name, const std::string& type) const
+std::shared_ptr<IEntity> Scene::getEntity(const std::string& name, const std::string& type) const
 {
-	for (auto entity : mEntities) {
-		if (entity->name() == name && entity->type() == type)
-			return entity;
-	}
-
-	for (auto entity : mRenderEntities) {
-		if (entity->name() == name && entity->type() == type)
-			return entity;
-	}
-
-	return nullptr;
+	return mRenderManager->entityManager()->getObjectByName(name, type);
 }
 
-std::shared_ptr<Camera> Scene::activeCamera() const
+const std::vector<std::shared_ptr<IEntity>>& Scene::entities() const
 {
-	return mActiveCamera;
+
+	return mRenderManager->entityManager()->getAll();
 }
 
 void Scene::buildTree(const std::string& file)
 {
-	PR_LOG(L_INFO) << mRenderEntities.size() << " Render Entities" << std::endl;
+	size_t count = mRenderManager->entityManager()->size();
+	PR_LOG(L_INFO) << count << " Entities" << std::endl;
 
 	BUILDER builder(this,
-					[](void* data, uint64 index) { return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->worldBoundingBox(); },
+					[](void* data, uint64 index) { return reinterpret_cast<Scene*>(data)->mRenderManager->entityManager()->getObject(index)->worldBoundingBox(); },
 					[](void* data, uint64 index) {
-						return reinterpret_cast<Scene*>(data)->mRenderEntities[index]->collisionCost();
+						return reinterpret_cast<Scene*>(data)->mRenderManager->entityManager()->getObject(index)->collisionCost();
 					},
 					[](void* data, uint64 index, uint32 id) {
-						reinterpret_cast<Scene*>(data)->mRenderEntities[index]->setContainerID(id);
+						reinterpret_cast<Scene*>(data)->mRenderManager->entityManager()->getObject(index)->setContainerID(id);
 					});
 	builder.setCostElementWise(true);
-	builder.build(mRenderEntities.size());
+	builder.build(count);
 
 	std::ofstream stream(file);
 	builder.save(stream);
@@ -90,84 +86,77 @@ void Scene::loadTree(const std::string& file)
 		mBoundingBox = mKDTree->boundingBox();
 }
 
-SceneCollision Scene::checkCollision(const Ray& ray) const
+void Scene::traceRays(RayStream& rays, HitStream& hits) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	SceneCollision sc;
-	uint64 entity;
-	sc.Successful = mKDTree
-						->checkCollision(ray, entity, sc.Point,
-										 [this](const Ray& ray, FacePoint& point, uint64 index, float& t) {
-											 RenderEntity::Collision c = this->mRenderEntities[index]->checkCollision(ray);
-											 point					   = c.Point;
-											 t						   = (ray.origin() - c.Point.P).norm();
-											 return (c.Successful
-													 && ((ray.flags() & RF_Debug)
-														 || ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
-										 });
-	if (sc.Successful)
-		sc.Entity = mRenderEntities[entity].get(); // We use direct pointer here!
-	else
-		sc.Entity = nullptr;
-	return sc;
-}
 
-SceneCollision Scene::checkCollisionBoundingBox(const Ray& ray) const
-{
-	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	SceneCollision sc;
-	uint64 entity;
-	sc.Successful = mKDTree
-						->checkCollision(ray, entity, sc.Point,
-										 [this](const Ray& ray, FacePoint& point, uint64 index, float& t) {
-											 BoundingBox bx = this->mRenderEntities[index]->worldBoundingBox();
+	CollisionInput in;
+	CollisionOutput out;
+	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
 
-											 BoundingBox::Intersection in = bx.intersects(ray);
+	// First sort all rays
+	rays.sort();
 
-											 if (in.Successful) {
-												 point.P = in.Position;
-											 }
-											 t = (ray.origin() - point.P).norm();
+	// Split stream into specific groups
+	// TODO: Currently only one group is present
+	size_t currentID = 0;
+	while (rays.hasNextGroup()) {
+		RayGroup grp = rays.getNextGroup();
 
-											 return in.Successful;
-										 });
-	if (sc.Successful)
-		sc.Entity = mRenderEntities[entity].get(); // We use direct pointer here!
-	else
-		sc.Entity = nullptr;
-	return sc;
-}
+		// In some cases the group size will be not a multiply of the simd bandwith.
+		// The internal stream is always a multiply therefore garbage may be traced
+		// but no internal data will be corrupted.
+		for (size_t i = 0;
+			 i < grp.Size;
+			 i += PR_SIMD_BANDWIDTH) {
+			for (int j = 0; j < 3; ++j)
+				in.RayOrigin[j] = simdpp::load(&grp.Origin[j][i]);
 
-SceneCollision Scene::checkCollisionSimple(const Ray& ray) const
-{
-	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	SceneCollision sc;
-	sc.Successful = mKDTree
-						->checkCollisionSimple(ray, sc.Point,
-											   [this](const Ray& ray, FacePoint& point, uint64 index) {
-												   RenderEntity::Collision c = this->mRenderEntities[index]->checkCollision(ray);
-												   point					 = c.Point;
-												   return (c.Successful
-														   && ((ray.flags() & RF_Debug)
-															   || ((ray.flags() & RF_Light) ? c.Point.Material->allowsShadow() : c.Point.Material->isCameraVisible())));
-											   });
-	sc.Entity = nullptr;
-	return sc;
+			// Decompress
+			for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
+				from_oct(
+					from_snorm16(grp.Direction[0][i + k]),
+					from_snorm16(grp.Direction[1][i + k]),
+					dir[0][k], dir[1][k], dir[2][k]);
+			}
+
+			for (int j = 0; j < 3; ++j)
+				in.RayDirection[j] = simdpp::load(&dir[j][0]);
+
+			for (int j = 0; j < 3; ++j)
+				in.RayInvDirection[j] = 1 / in.RayDirection[j];
+
+			// Check for collisions
+			mKDTree
+				->checkCollision(in, out,
+								 [this](const CollisionInput& in2, uint64 index, CollisionOutput& out2) {
+									 // TODO
+								 });
+
+			currentID += PR_SIMD_BANDWIDTH;
+		}
+	}
 }
 
 void Scene::setup(RenderContext* context)
 {
 	PR_LOG(L_INFO) << "Freezing scene" << std::endl;
-	for (auto e : mEntities)
+	for (auto e : mRenderManager->entityManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mRenderEntities)
+	for (auto e : mRenderManager->cameraManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mInfiniteLights)
+	for (auto e : mRenderManager->lightManager()->getAll())
 		e->freeze(context);
 
-	const std::string file = context->workingDir() + "scene.cnt";
+	for (auto e : mRenderManager->infiniteLightManager()->getAll())
+		e->freeze(context);
+
+	for (auto e : mRenderManager->materialManager()->getAll())
+		e->freeze(context);
+
+	const std::string file = context->renderManager()->workingDir() + "scene.cnt";
 	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure \"" << file << "\"" << std::endl;
 	buildTree(file);
 	loadTree(file);

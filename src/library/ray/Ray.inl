@@ -1,6 +1,16 @@
 #pragma once
 
 namespace PR {
+inline void Ray::setWeight(float f)
+{
+	mWeight = f;
+}
+
+inline float Ray::weight() const
+{
+	return mWeight;
+}
+
 inline void Ray::setOrigin(const Eigen::Vector3f& p)
 {
 	mOrigin = p;
@@ -24,112 +34,72 @@ inline Eigen::Vector3f Ray::direction() const
 	return mDirection;
 }
 
-inline void Ray::setPixel(const Eigen::Vector2i& p)
+inline void Ray::setPixelIndex(uint32 p)
 {
-	mPixel = p;
+	mPixelIndex = p;
 }
 
-inline Eigen::Vector2i Ray::pixel() const
+inline uint32 Ray::pixelIndex() const
 {
-	return mPixel;
+	return mPixelIndex;
 }
 
-inline void Ray::setXOrigin(const Eigen::Vector3f& p)
+inline void Ray::setOriginDiff(RayDiffType type, const Eigen::Vector3f& p)
 {
-	mXOrigin = p;
+	mOriginDiff[type] = p;
 }
 
-inline Eigen::Vector3f Ray::xorigin() const
+inline Eigen::Vector3f Ray::originDiff(RayDiffType type) const
 {
-	return mXOrigin;
+	return mOriginDiff[type];
 }
 
-inline void Ray::setXDirection(const Eigen::Vector3f& dir)
+inline void Ray::setDirectionDiff(RayDiffType type, const Eigen::Vector3f& dir)
 {
-	mXDirection = dir;
+	mDirectionDiff[type] = dir;
 }
 
-inline Eigen::Vector3f Ray::xdirection() const
+inline Eigen::Vector3f Ray::directionDiff(RayDiffType type) const
 {
-	return mXDirection;
+	return mDirectionDiff[type];
 }
 
-inline void Ray::setYOrigin(const Eigen::Vector3f& p)
-{
-	mYOrigin = p;
-}
-
-inline Eigen::Vector3f Ray::yorigin() const
-{
-	return mYOrigin;
-}
-
-inline void Ray::setYDirection(const Eigen::Vector3f& dir)
-{
-	mYDirection = dir;
-}
-
-inline Eigen::Vector3f Ray::ydirection() const
-{
-	return mYDirection;
-}
-
-inline void Ray::setDepth(uint32 depth)
+inline void Ray::setDepth(uint16 depth)
 {
 	mDepth = depth;
 }
 
-inline uint32 Ray::depth() const
+inline uint16 Ray::depth() const
 {
 	return mDepth;
 }
 
-inline SI::Time Ray::time() const
+inline float Ray::time() const
 {
 	return mTime;
 }
 
-inline void Ray::setTime(const SI::Time& t)
+inline void Ray::setTime(float t)
 {
 	mTime = t;
 }
 
-inline float Ray::wavelength() const
+inline uint8 Ray::wavelengthIndex() const
 {
-	return mWavelength;
+	return mWavelengthIndex;
 }
 
-inline void Ray::setWavelength(float lambda_nm)
+inline void Ray::setWavelengthIndex(uint8 index)
 {
-	mWavelength = lambda_nm;
+	mWavelengthIndex = index;
 }
 
-inline uint32 Ray::spectralStart() const {
-	return mSpectralStart;
-}
-
-inline void Ray::setSpectralStart(uint32 start) {
-	mSpectralStart = start;
-}
-
-inline uint32 Ray::spectralEnd() const {
-	return mSpectralEnd;
-}
-
-inline void Ray::setSpectralEnd(uint32 end) {
-	mSpectralEnd = end;
-}
-
-inline bool Ray::isFullSpectrum() const {
-	return mSpectralStart >= mSpectralEnd;
-}
-
-inline void Ray::setFlags(uint16 flags)
+inline void Ray::setFlags(uint8 flags)
 {
 	mFlags = flags;
 }
 
-inline uint16 Ray::flags() const
+inline uint8 Ray::flags() const
 {
 	return mFlags;
 }
@@ -139,7 +109,7 @@ inline Ray Ray::next(const Eigen::Vector3f& pos, const Eigen::Vector3f& dir) con
 	Ray tmp = *this;
 	tmp.setOrigin(safePosition(pos, dir));
 	tmp.setDirection(dir);
-	tmp.setDepth(mDepth+1);
+	tmp.setDepth(mDepth + 1);
 	return tmp;
 }
 
@@ -177,4 +147,4 @@ inline void Ray::calcMaxDirectionElement()
 	}
 }
 #endif
-}
+} // namespace PR

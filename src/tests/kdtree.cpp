@@ -1,4 +1,5 @@
 #include "geometry/TriMesh.h"
+#include "math/SIMD.h"
 #include "ray/Ray.h"
 
 #include "Test.h"
@@ -7,6 +8,23 @@ using namespace PR;
 
 // Make sure the tree builder gives each triangle his own volume
 constexpr float CUSTOM_INTERSECTION_TEST_COST = 10000000;
+
+template <typename T>
+inline void addVertex(T p1, T p2, T p3,
+					  std::vector<T>* c)
+{
+	c[0].emplace_back(p1);
+	c[1].emplace_back(p2);
+	c[2].emplace_back(p3);
+}
+
+template <typename T>
+inline void addVertex(T p1, T p2,
+					  std::vector<T>* c)
+{
+	c[0].emplace_back(p1);
+	c[1].emplace_back(p2);
+}
 
 PR_BEGIN_TESTCASE(KDTree)
 /*
@@ -21,74 +39,80 @@ PR_BEGIN_TESTCASE(KDTree)
  */
 PR_TEST("Two Half")
 {
-	std::vector<Vector3f> vertices;
-	vertices.emplace_back(-2,0,0);
-	vertices.emplace_back(-1,1,0);
-	vertices.emplace_back(-1,0,0);
+	std::vector<float> vertices[3];
+	addVertex<float>(-2, 0, 0, vertices);
+	addVertex<float>(-1, 1, 0, vertices);
+	addVertex<float>(-1, 0, 0, vertices);
 
-	vertices.emplace_back(1,0,0);
-	vertices.emplace_back(1,1,0);
-	vertices.emplace_back(2,1,0);
+	addVertex<float>(1, 0, 0, vertices);
+	addVertex<float>(1, 1, 0, vertices);
+	addVertex<float>(2, 1, 0, vertices);
 
-	std::vector<Vector3u64> faces;
-	faces.emplace_back(0,1,2);
-	faces.emplace_back(3,4,5);
+	std::vector<uint32> faces[3];
+	addVertex<uint32>(0, 1, 2, faces);
+	addVertex<uint32>(3, 4, 5, faces);
 
 	TriMesh mesh;
-	mesh.setVertices(vertices);
-	mesh.setNormals(vertices);// Bad normals, but we do not care
-	mesh.setIndices(faces);
+	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
+	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	mesh.setIndices(faces[0], faces[1], faces[2]);
 
 	PR_CHECK_TRUE(mesh.isValid());
 
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
 	mesh.build("tmp1.cnt", false);
 
-	// Left triangle
-	Ray ray1(Eigen::Vector2i(0,0), Eigen::Vector3f(-1.5, 0.5, 1), Eigen::Vector3f(0, 0, -1));
-	const auto res1 = mesh.checkCollision(ray1);
+	CollisionInput in;
+	in.RayOrigin[0] = simdpp::make_float(-1.5, 1.5, 0, 0.6);
+	in.RayOrigin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
+	in.RayOrigin[2] = simdpp::make_float(1, 1, 1, 1);
 
-	PR_CHECK_TRUE(res1.Successful);
-	PR_CHECK_EQ(res1.Index, 0);
+	in.RayDirection[0] = simdpp::make_float(0);
+	in.RayDirection[1] = simdpp::make_float(0);
+	in.RayDirection[2] = simdpp::make_float(-1);
+
+	in.setupInverse();
+
+	CollisionOutput out;
+	mesh.checkCollision(in, out);
+
+	// Left triangle
+	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(extract<0>(out.FaceID), 0);
 
 	// Right triangle
-	Ray ray2(Eigen::Vector2i(0,0), Eigen::Vector3f(1.5, 0.5, 1), Eigen::Vector3f(0, 0, -1));
-	const auto res2 = mesh.checkCollision(ray2);
-
-	PR_CHECK_TRUE(res2.Successful);
-	PR_CHECK_EQ(res2.Index, 1);
+	PR_CHECK_TRUE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(extract<1>(out.FaceID), 1);
 
 	// Empty mid space
-	Ray ray3(Eigen::Vector2i(0,0), Eigen::Vector3f(0, 0.5, 1), Eigen::Vector3f(0, 0, -1));
-	const auto res3 = mesh.checkCollision(ray3);
-
-	PR_CHECK_FALSE(res3.Successful);
+	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
 }
 
 PR_TEST("Overlap")
 {
-	std::vector<Vector3f> vertices;
-	vertices.emplace_back(0,0,-1);
-	vertices.emplace_back(1,0,-1);
-	vertices.emplace_back(1,1,-0);
+	std::vector<float> vertices[3];
+	addVertex<float>(0, 0, -1, vertices);
+	addVertex<float>(1, 0, -1, vertices);
+	addVertex<float>(1, 1, 0, vertices);
 
-	vertices.emplace_back(0,0,0);
-	vertices.emplace_back(1,0,1);
-	vertices.emplace_back(1,1,1);
+	addVertex<float>(0, 0, 0, vertices);
+	addVertex<float>(1, 0, 1, vertices);
+	addVertex<float>(1, 1, 1, vertices);
 
-	vertices.emplace_back(0,0,3);
-	vertices.emplace_back(1,0,3);
-	vertices.emplace_back(1,1,2);
+	addVertex<float>(0, 0, 3, vertices);
+	addVertex<float>(1, 0, 3, vertices);
+	addVertex<float>(1, 1, 2, vertices);
 
-	std::vector<Vector3u64> faces;
-	faces.emplace_back(0,1,2);
-	faces.emplace_back(3,4,5);
-	faces.emplace_back(6,7,8);
+	std::vector<uint32> faces[3];
+	addVertex<uint32>(0, 1, 2, faces);
+	addVertex<uint32>(3, 4, 5, faces);
+	addVertex<uint32>(6, 7, 8, faces);
 
 	TriMesh mesh;
-	mesh.setVertices(vertices);
-	mesh.setNormals(vertices);// Bad normals, but we do not care
-	mesh.setIndices(faces);
+	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
+	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	mesh.setIndices(faces[0], faces[1], faces[2]);
 
 	PR_CHECK_EQ(mesh.nodeCount(), 9);
 	PR_CHECK_EQ(mesh.faceCount(), 3);
@@ -98,49 +122,61 @@ PR_TEST("Overlap")
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
 	mesh.build("tmp2.cnt", false);
 
-	// From top to bottom
-	Ray ray1(Eigen::Vector2i(0,0), Eigen::Vector3f(0.75, 0.5, 2), Eigen::Vector3f(0, 0, -1));
-	const auto res1 = mesh.checkCollision(ray1);
+	CollisionInput in;
+	in.RayOrigin[0] = simdpp::make_float(0.75, 0.75, 0, 5);
+	in.RayOrigin[1] = simdpp::make_float(0.5, 0.5, 0.5, 5);
+	in.RayOrigin[2] = simdpp::make_float(2, -2, 1, 1);
 
-	PR_CHECK_TRUE(res1.Successful);
-	PR_CHECK_EQ(res1.Index, 1);
+	in.RayDirection[0] = simdpp::make_float(0);
+	in.RayDirection[1] = simdpp::make_float(0);
+	in.RayDirection[2] = simdpp::make_float(-1, 1, 1, 1);
+
+	in.setupInverse();
+
+	CollisionOutput out;
+	mesh.checkCollision(in, out);
+
+	// From top to bottom
+	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(extract<0>(out.FaceID), 1);
 
 	// From bottom to top
-	Ray ray2(Eigen::Vector2i(0,0), Eigen::Vector3f(0.75, 0.5, -2), Eigen::Vector3f(0, 0, 1));
-	const auto res2 = mesh.checkCollision(ray2);
+	PR_CHECK_TRUE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(extract<1>(out.FaceID), 0);
 
-	PR_CHECK_TRUE(res2.Successful);
-	PR_CHECK_EQ(res2.Index, 0);
+	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
 }
 
 PR_TEST("UV")
 {
-	std::vector<Vector3f> vertices;
-	vertices.emplace_back(0,0,-1);
-	vertices.emplace_back(1,0,-1);
-	vertices.emplace_back(1,1,-0);
+	std::vector<float> vertices[3];
+	addVertex<float>(0, 0, -1, vertices);
+	addVertex<float>(1, 0, -1, vertices);
+	addVertex<float>(1, 1, 0, vertices);
 
-	vertices.emplace_back(0,0,0);
-	vertices.emplace_back(1,0,1);
-	vertices.emplace_back(1,1,1);
+	addVertex<float>(0, 0, 0, vertices);
+	addVertex<float>(1, 0, 1, vertices);
+	addVertex<float>(1, 1, 1, vertices);
 
-	std::vector<Vector2f> uvs;
-	uvs.emplace_back(0.1,0.1);
-	uvs.emplace_back(0.2,0.2);
-	uvs.emplace_back(0.3,0.3);
-	uvs.emplace_back(0.4,0.4);
-	uvs.emplace_back(0.5,0.5);
-	uvs.emplace_back(0.6,0.6);
+	std::vector<float> uvs[2];
+	addVertex<float>(0.1, 0.1, uvs);
+	addVertex<float>(0.2, 0.2, uvs);
+	addVertex<float>(0.3, 0.3, uvs);
 
-	std::vector<Vector3u64> faces;
-	faces.emplace_back(0,1,2);
-	faces.emplace_back(3,4,5);
+	addVertex<float>(0.4, 0.4, uvs);
+	addVertex<float>(0.5, 0.5, uvs);
+	addVertex<float>(0.6, 0.6, uvs);
+
+	std::vector<uint32> faces[3];
+	addVertex<uint32>(0, 1, 2, faces);
+	addVertex<uint32>(3, 4, 5, faces);
 
 	TriMesh mesh;
-	mesh.setVertices(vertices);
-	mesh.setNormals(vertices);// Bad normals, but we do not care
-	mesh.setUVs(uvs);
-	mesh.setIndices(faces);
+	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
+	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	mesh.setUVs(uvs[0], uvs[1]);
+	mesh.setIndices(faces[0], faces[1], faces[2]);
 
 	PR_CHECK_TRUE(mesh.isValid());
 
@@ -149,14 +185,29 @@ PR_TEST("UV")
 
 	PR_CHECK_TRUE(mesh.features() & TMF_HAS_UV);
 
-	// From top to bottom
-	Ray ray1(Eigen::Vector2i(0,0), Eigen::Vector3f(0.75, 0.5, 2), Eigen::Vector3f(0, 0, -1));
-	const auto res1 = mesh.checkCollision(ray1);
+	CollisionInput in;
+	in.RayOrigin[0] = simdpp::make_float(0.75, 0.75, 0, 0.6);
+	in.RayOrigin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
+	in.RayOrigin[2] = simdpp::make_float(2, -2, -1, -1);
 
-	PR_CHECK_TRUE(res1.Successful);
-	PR_CHECK_EQ(res1.Index, 1);
-	PR_CHECK_GREAT(res1.Point.UVW(0), 0);
-	PR_CHECK_GREAT(res1.Point.UVW(1), 0);
+	in.RayDirection[0] = simdpp::make_float(0);
+	in.RayDirection[1] = simdpp::make_float(0);
+	in.RayDirection[2] = simdpp::make_float(-1);
+
+	in.setupInverse();
+
+	CollisionOutput out;
+	mesh.checkCollision(in, out);
+
+	// From top to bottom
+	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(extract<0>(out.FaceID), 1);
+	PR_CHECK_GREAT(extract<0>(out.UV[0]), 0);
+	PR_CHECK_GREAT(extract<0>(out.UV[1]), 0);
+
+	PR_CHECK_FALSE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
 }
 
 PR_END_TESTCASE()

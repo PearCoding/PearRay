@@ -33,10 +33,12 @@ public:
 	/**
 		 * @brief Constructs a ToneMapper
 		 */
-	ToneMapper(uint32 width, uint32 height);
+	ToneMapper();
 
-	void map(const float* specIn, float* rgbOut, size_t specElems, size_t rgbElems) const;
-	void mapOnlyMapper(const float* rgbIn, float* rgbOut, size_t rgbElems) const;
+	void map(const float* specIn, float* rgbOut,
+			 size_t specElems, size_t rgbElems, size_t pixelCount) const;
+	void mapOnlyMapper(const float* rgbIn, float* rgbOut,
+					   size_t rgbElems, size_t pixelCount) const;
 
 	// Not thread safe!
 	inline ToneColorMode colorMode() const { return mColorMode; }
@@ -48,16 +50,9 @@ public:
 	inline ToneMapperMode mapperMode() const { return mMapperMode; }
 	inline void setMapperMode(ToneMapperMode mode) { mMapperMode = mode; }
 
-	inline uint32 width() const { return mWidth; }
-	inline uint32 height() const { return mHeight; }
-
 private:
 	ToneColorMode mColorMode;
 	ToneGammaMode mGammaMode;
 	ToneMapperMode mMapperMode;
-
-	uint32 mWidth;
-	uint32 mHeight;
-	size_t mSize;
 };
-}
+} // namespace PR

@@ -81,7 +81,7 @@ namespace _xyz2spec {
 }
 
 // We have the right ordering
-void barycentricTriangle(double px, double py,
+void PR_LIB barycentricTriangle(double px, double py,
 						 double x1, double y1, double x2, double y2, double x3, double y3, double invDet,
 						 double& s, double& t)
 {
