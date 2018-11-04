@@ -1,7 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 SET(PR_Main_Src
-  CTP.cpp
   IFreezable.cpp
   FileLogListener.cpp
   Logger.cpp)
@@ -57,7 +56,7 @@ SOURCE_GROUP("Source Files\\Path" FILES ${PR_Path_Src})
 SET(PR_Photon_Src )
 SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
 SET(PR_Plugin_Src 
-  plugin/PluginLoader.cpp)
+  plugin/PluginManager.cpp)
 SOURCE_GROUP("Source Files\\Plugin" FILES ${PR_Plugin_Src})
 SET(PR_Ray_Src
   ray/Ray.cpp
@@ -72,7 +71,7 @@ SET(PR_Renderer_Src
   renderer/RenderContext.cpp
   renderer/RenderFactory.cpp
   renderer/RenderManager.cpp
-  renderer/RenderSession.cpp
+  renderer/RenderTileSession.cpp
   renderer/RenderSettings.cpp
   renderer/RenderStatistics.cpp
   renderer/RenderStatus.cpp
@@ -116,7 +115,6 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
 )
 
 SET(PR_Main_Hdr
-  CTP.h
   PR_Config.h.in
   FileLogListener.h
   IFreezable.h
@@ -185,6 +183,8 @@ SET(PR_Math_Hdr
   math/ProjectionMap.h
   math/Reflection.h
   math/SIMath.h
+  math/SIMathConstants.h
+  math/SIMathStd.h
   math/SIMathUtils.h
   math/SphereMap.h
   math/Tangent.h
@@ -207,7 +207,7 @@ SET(PR_Photon_Hdr
 SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
 SET(PR_Plugin_Hdr
   plugin/Plugin.h
-  plugin/PluginLoader.h)
+  plugin/PluginManager.h)
 SOURCE_GROUP("Header Files\\Plugin" FILES ${PR_Plugin_Hdr})
 SET(PR_Ray_Hdr
   ray/Ray.h
@@ -227,7 +227,7 @@ SET(PR_Renderer_Hdr
   renderer/RenderEnums.h
   renderer/RenderFactory.h
   renderer/RenderManager.h
-  renderer/RenderSession.h
+  renderer/RenderTileSession.h
   renderer/RenderSettings.h
   renderer/RenderStatistics.h
   renderer/RenderStatus.h

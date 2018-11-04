@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CTP.h"
+#include "PR_Config.h"
 
 #include <boost/align/aligned_allocator.hpp>
 #include <vector>
@@ -35,6 +35,29 @@ inline bool extract(const bfloat& a)
 	return simdpp::extract<K>(simdpp::bit_cast<vuint32>(a)) != 0;
 }
 
+// TODO: Better solution?
+template <uint32 N>
+inline void sincos(const simdpp::float32<N>& v,
+				   simdpp::float32<N>& s, simdpp::float32<N>& c)
+{
+	SIMDPP_ALIGN(N * 4)
+	float vals[N];
+
+	SIMDPP_ALIGN(N * 4)
+	float sd[N];
+	SIMDPP_ALIGN(N * 4)
+	float cd[N];
+
+	simdpp::store(vals, v);
+	for (uint32 i = 0; i < N; ++i) {
+		sd[i] = std::sin(vals[i]);
+		cd[i] = std::cos(vals[i]);
+	}
+
+	s = simdpp::load(sd);
+	c = simdpp::load(cd);
+}
+
 template <typename T1, typename T2, typename T3>
 inline void crossV(const T1& a1, const T1& a2, const T1& a3,
 				   const T2& b1, const T2& b2, const T2& b3,
@@ -47,7 +70,7 @@ inline void crossV(const T1& a1, const T1& a2, const T1& a3,
 
 template <typename T1, typename T2>
 inline T1 dotV(const T1& a1, const T1& a2, const T1& a3,
-				 const T2& b1, const T2& b2, const T2& b3)
+			   const T2& b1, const T2& b2, const T2& b3)
 {
 	return a1 * b1 + a2 * b2 + a3 * b3;
 }

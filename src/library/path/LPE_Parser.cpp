@@ -5,32 +5,33 @@
 #include <cctype>
 
 namespace PR {
-LPE_Parser::LPE_Parser(const std::string& str)
+namespace LPE {
+Parser::Parser(const std::string& str)
 	: mError(false)
 	, mPosition(0)
 	, mString(str)
 {
 }
 
-std::shared_ptr<LPE_RegExpr> LPE_Parser::parse()
+std::shared_ptr<RegExpr> Parser::parse()
 {
-	auto r = std::make_shared<LPE_RegExpr>();
+	auto r = std::make_shared<RegExpr>();
 	gr_fullexpr(*r);
 
 	if (mError || !r->isValid()) {
 		return nullptr;
 	} else {
 		r->convertToDFA();
-		/*PR_LOG(L_INFO) << LPE_RegExpr::dumpTable(r->getNFATable()) << std::endl;
-		PR_LOG(L_INFO) << LPE_RegExpr::dumpTable(r->getDFATable()) << std::endl;
+		/*PR_LOG(L_INFO) << RegExpr::dumpTable(r->getNFATable()) << std::endl;
+		PR_LOG(L_INFO) << RegExpr::dumpTable(r->getDFATable()) << std::endl;
 
-		LPE_RegExpr::saveTableToDot("nfa.dot", r->getNFATable());
-		LPE_RegExpr::saveTableToDot("dfa.dot", r->getDFATable());*/
+		RegExpr::saveTableToDot("nfa.dot", r->getNFATable());
+		RegExpr::saveTableToDot("dfa.dot", r->getDFATable());*/
 		return r;
 	}
 }
 
-char LPE_Parser::current() const
+char Parser::current() const
 {
 	if (mPosition < mString.size())
 		return mString.at(mPosition);
@@ -38,7 +39,7 @@ char LPE_Parser::current() const
 		return -1;
 }
 
-char LPE_Parser::peek() const
+char Parser::peek() const
 {
 	if (mPosition + 1 < mString.size())
 		return mString.at(mPosition + 1);
@@ -46,7 +47,7 @@ char LPE_Parser::peek() const
 		return -1;
 }
 
-bool LPE_Parser::accept(char c)
+bool Parser::accept(char c)
 {
 	if (current() != c) {
 		PR_LOG(L_ERROR) << "LPE Syntax Error[" << mPosition << "]: Expected '" << c << "' but got '" << current() << "' instead" << std::endl;
@@ -60,12 +61,12 @@ bool LPE_Parser::accept(char c)
 	}
 }
 
-void LPE_Parser::gr_fullexpr(LPE_RegExpr& expr)
+void Parser::gr_fullexpr(RegExpr& expr)
 {
 	accept('C');
-	expr.push(LPE_Token('C', '.'));
+	expr.push(Token('C', '.'));
 
-	LPE_RegExpr other;
+	RegExpr other;
 	gr_expr(other);
 
 	if (other.isValid()) {
@@ -74,7 +75,7 @@ void LPE_Parser::gr_fullexpr(LPE_RegExpr& expr)
 	}
 }
 
-void LPE_Parser::gr_expr(LPE_RegExpr& expr)
+void Parser::gr_expr(RegExpr& expr)
 {
 	gr_term(expr);
 
@@ -84,7 +85,7 @@ void LPE_Parser::gr_expr(LPE_RegExpr& expr)
 	}
 }
 
-void LPE_Parser::gr_term(LPE_RegExpr& expr)
+void Parser::gr_term(RegExpr& expr)
 {
 	if (current() == 'D'
 		|| current() == 'S'
@@ -107,20 +108,20 @@ void LPE_Parser::gr_term(LPE_RegExpr& expr)
 	}
 }
 
-void LPE_Parser::gr_group(LPE_RegExpr& expr)
+void Parser::gr_group(RegExpr& expr)
 {
 	accept('(');
-	LPE_RegExpr other;
+	RegExpr other;
 	gr_expr(other);
 	accept(')');
 
-	//PR_LOG(L_INFO) << "[" << LPE_RegExpr::dumpTable(other.getNFATable()) << "]" << std::endl;
+	//PR_LOG(L_INFO) << "[" << RegExpr::dumpTable(other.getNFATable()) << "]" << std::endl;
 
 	if (other.isValid())
 		expr.attachNFA(other);
 }
 
-void LPE_Parser::gr_orgroup(LPE_RegExpr& expr)
+void Parser::gr_orgroup(RegExpr& expr)
 {
 	bool negate = false;
 	accept('[');
@@ -129,7 +130,7 @@ void LPE_Parser::gr_orgroup(LPE_RegExpr& expr)
 		negate = true;
 	}
 
-	LPE_RegExpr other;
+	RegExpr other;
 	gr_term(other);
 	while (!isEOS() && current() != ']') {
 		gr_term(other);
@@ -138,7 +139,7 @@ void LPE_Parser::gr_orgroup(LPE_RegExpr& expr)
 
 	accept(']');
 
-	if(!other.isValid())
+	if (!other.isValid())
 		return;
 
 	if (negate) {
@@ -148,31 +149,31 @@ void LPE_Parser::gr_orgroup(LPE_RegExpr& expr)
 		other.complementDFA();
 		expr.attachDFA(other);*/
 	} else {
-		//PR_LOG(L_INFO) << "O[" << LPE_RegExpr::dumpTable(other.getNFATable()) << "]" << std::endl;
+		//PR_LOG(L_INFO) << "O[" << RegExpr::dumpTable(other.getNFATable()) << "]" << std::endl;
 		expr.attachNFA(other);
 	}
 }
 
-void LPE_Parser::gr_token(LPE_RegExpr& expr)
+void Parser::gr_token(RegExpr& expr)
 {
 	if (current() == 'D') {
 		accept('D');
-		expr.push(LPE_Token('.', 'D'));
+		expr.push(Token('.', 'D'));
 	} else if (current() == 'S') {
 		accept('S');
-		expr.push(LPE_Token('.', 'S'));
+		expr.push(Token('.', 'S'));
 	} else if (current() == 'E') {
 		accept('E');
-		expr.push(LPE_Token('E', '.'));
+		expr.push(Token('E', '.'));
 	} else if (current() == 'L') {
 		accept('L');
-		expr.push(LPE_Token('L', '.'));
+		expr.push(Token('L', '.'));
 	} else if (current() == 'B') {
 		accept('B');
-		expr.push(LPE_Token('B', '.'));
+		expr.push(Token('B', '.'));
 	} else if (current() == '.') {
 		accept('.');
-		expr.push(LPE_Token('.', '.'));
+		expr.push(Token('.', '.'));
 	} else if (current() == '<') {
 		accept('<');
 		char t; // Type
@@ -222,11 +223,11 @@ void LPE_Parser::gr_token(LPE_RegExpr& expr)
 		}
 		accept('>');
 
-		expr.push(LPE_Token(t, e, lbl));
+		expr.push(Token(t, e, lbl));
 	}
 }
 
-void LPE_Parser::gr_op(LPE_RegExpr& expr)
+void Parser::gr_op(RegExpr& expr)
 {
 	if (current() == '*') {
 		accept('*');
@@ -256,7 +257,7 @@ void LPE_Parser::gr_op(LPE_RegExpr& expr)
 	}
 }
 
-std::string LPE_Parser::gr_string()
+std::string Parser::gr_string()
 {
 	std::string str = "";
 	accept('"');
@@ -268,7 +269,7 @@ std::string LPE_Parser::gr_string()
 	return str;
 }
 
-uint32 LPE_Parser::gr_integer()
+uint32 Parser::gr_integer()
 {
 	std::string number = "";
 	while (!isEOS() && std::isdigit(current())) {
@@ -277,4 +278,5 @@ uint32 LPE_Parser::gr_integer()
 	}
 	return std::stoi(number);
 }
+} // namespace LPE
 } // namespace PR

@@ -4,16 +4,17 @@
 #include "Logger.h"
 
 namespace PR {
-#define INSIDE_BLOCK_INDEX(s, t, e) ((e)*_ST_COUNT * mSB_IsFinal.size() + (t) * mSB_IsFinal.size() + (s))
+namespace LPE {
+#define INSIDE_BLOCK_INDEX(s, t, e) ((e)*_ST_COUNT * mSB_IsFinal.size() + (t)*mSB_IsFinal.size() + (s))
 
 constexpr size_t NO_EMPTY = std::numeric_limits<size_t>::max();
 
-bool LPE_Automaton::build(const std::shared_ptr<LPE_RegExpr>& expr)
+bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 {
 	auto table = expr->getDFATable();
 
 	// Assign ids
-	std::unordered_map<std::shared_ptr<LPE_RegState>, uint32> ids;
+	std::unordered_map<std::shared_ptr<RegState>, uint32> ids;
 	uint32 idCounter = 0;
 	for (const auto& s : table) {
 		ids[s] = idCounter;
@@ -86,7 +87,7 @@ bool LPE_Automaton::build(const std::shared_ptr<LPE_RegExpr>& expr)
 	return true;
 }
 
-bool LPE_Automaton::match(const LightPath& path) const
+bool Automaton::match(const LightPath& path) const
 {
 	bool success;
 
@@ -103,7 +104,7 @@ bool LPE_Automaton::match(const LightPath& path) const
 	return mSB_IsFinal[currentState];
 }
 
-uint32 LPE_Automaton::nextState(uint32 currentState, const LightPathToken& token, bool& success) const
+uint32 Automaton::nextState(uint32 currentState, const LightPathToken& token, bool& success) const
 {
 	success		 = false;
 	size_t index = INSIDE_BLOCK_INDEX(currentState, token.Type, token.Event);
@@ -131,7 +132,7 @@ uint32 LPE_Automaton::nextState(uint32 currentState, const LightPathToken& token
 }
 
 // Debug
-std::string LPE_Automaton::dumpTable() const
+std::string Automaton::dumpTable() const
 {
 	std::stringstream stream;
 	for (uint32 i = 0; i < mSB_IsFinal.size(); ++i) {
@@ -167,4 +168,5 @@ std::string LPE_Automaton::dumpTable() const
 	return stream.str();
 }
 
+} // namespace LPE
 } // namespace PR

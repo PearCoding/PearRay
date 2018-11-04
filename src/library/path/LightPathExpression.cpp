@@ -17,11 +17,11 @@ bool LightPathExpression::parseString(const std::string& str)
 {
 	mAutomaton.reset();
 
-	LPE_Parser parser(str);
+	LPE::Parser parser(str);
 	auto reg = parser.parse();
 
 	if (reg) {
-		mAutomaton = std::make_shared<LPE_Automaton>();
+		mAutomaton = std::make_shared<LPE::Automaton>();
 		bool b	 = mAutomaton->build(reg);
 		//PR_LOG(L_INFO) << mAutomaton->dumpTable() << std::endl;
 		return b;

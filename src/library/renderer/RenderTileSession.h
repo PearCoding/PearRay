@@ -10,11 +10,11 @@ class RayStream;
 class RenderTile;
 class IEntity;
 
-class PR_LIB RenderSession {
+class PR_LIB RenderTileSession {
 public:
-	RenderSession(uint32 threadIndex, RenderTile* tile,
+	RenderTileSession(uint32 threadIndex, RenderTile* tile,
 		RayStream* rayStream, HitStream* hitStream);
-	~RenderSession();
+	~RenderTileSession();
 
 	inline uint32 thread() const
 	{

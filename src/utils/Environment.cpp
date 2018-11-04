@@ -1,10 +1,12 @@
 #include "Environment.h"
 
-#include "entity/VirtualEntity.h"
+#include "entity/EntityManager.h"
+#include "entity/IEntity.h"
 #include "geometry/TriMesh.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "renderer/RenderFactory.h"
+#include "renderer/RenderSettings.h"
 
 #include "spectral/RGBConverter.h"
 #include "spectral/XYZConverter.h"
@@ -12,15 +14,20 @@
 #include "Logger.h"
 
 namespace PR {
-Environment::Environment(bool useStandardLib)
-	: mRenderManager()
+Environment::Environment(const std::string& workdir,
+						 const std::shared_ptr<SpectrumDescriptor>& specDesc,
+						 const std::string& plugdir,
+						 bool useStandardLib)
+	: mRenderManager(workdir)
 {
+	mRenderManager.setSpectrumDescriptor(specDesc);
+	mRenderManager.registry()->setByGroup(RG_RENDERER, "plugin/path", plugdir);
 	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
 		//Defaults
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
-			Spectrum c(desc);
+			Spectrum c(specDesc);
 			RGBConverter::toSpec(c, r, g, b);
 			mSpectrums.insert(std::make_pair(name, c));
 		};
@@ -38,14 +45,14 @@ Environment::Environment(bool useStandardLib)
 		addColor("darkGray", 0.333f, 0.333f, 0.333f);
 
 		// Load
-		mRenderManager.materialManager()->loadFactory(mRenderManager.registry(),
-			"", "lambert");
+		if (!mRenderManager.materialManager()->loadFactory(mRenderManager,
+														   "", "lambert"))
+			throw BadRenderEnvironment();
 	}
 }
 
 Environment::~Environment()
 {
-	mSceneFactory.clear();
 	OIIO::TextureSystem::destroy(mTextureSystem);
 }
 
@@ -56,7 +63,7 @@ uint32 Environment::renderWidth() const
 
 void Environment::setRenderWidth(uint32 i)
 {
-	mRegistry->setByGroup(RG_RENDERER, "film/width", i);
+	mRenderManager.registry()->setByGroup(RG_RENDERER, "film/width", i);
 }
 
 uint32 Environment::renderHeight() const
@@ -99,7 +106,7 @@ float Environment::cropMaxY() const
 
 void Environment::dumpInformation() const
 {
-	for (auto p : mSceneFactory.entities())
+	for (auto p : mRenderManager.entityManager()->getAll())
 		PR_LOG(L_INFO) << p->name() << ":" << std::endl
 					   << p->dumpInformation() << std::endl;
 

@@ -3,6 +3,10 @@
 #include "PR_Config.h"
 
 namespace PR {
+namespace LPE {
+class Automaton;
+}
+
 class LightPath;
 class PR_LIB LightPathExpression {
 public:
@@ -15,6 +19,6 @@ public:
 	inline bool isValid() const { return mAutomaton != nullptr; }
 
 private:
-	std::shared_ptr<class LPE_Automaton> mAutomaton;
+	std::shared_ptr<LPE::Automaton> mAutomaton;
 };
 } // namespace PR

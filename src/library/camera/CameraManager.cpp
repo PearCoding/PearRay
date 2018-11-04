@@ -1,6 +1,7 @@
 #include "CameraManager.h"
 #include "ICameraFactory.h"
-#include "plugin/PluginLoader.h"
+#include "plugin/PluginManager.h"
+#include "renderer/RenderManager.h"
 
 #include "Logger.h"
 
@@ -13,27 +14,26 @@ CameraManager::CameraManager()
 
 CameraManager::~CameraManager()
 {
-	/* Remark: ICameraFactory pointer are not freed! The plugin itself does the work */
 }
 
-void CameraManager::loadFactory(const Registry& reg,
+bool CameraManager::loadFactory(const RenderManager& mng,
 								const std::string& base, const std::string& name)
 {
-	IPlugin* plugin = PluginLoader::load(base + "pr_pl_" + name, reg);
+	auto plugin = mng.pluginManager()->load(base + "pr_pl_" + name, *mng.registry());
 	if (!plugin) {
 		PR_LOG(L_ERROR) << "Couldn't load camera plugin " << name << " with base path " << base << std::endl;
-		return;
+		return false;
 	}
 
 	if (plugin->type() != PT_CAMERA) {
 		PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not a camera plugin!" << std::endl;
-		return;
+		return false;
 	}
 
-	ICameraFactory* fac = dynamic_cast<ICameraFactory*>(plugin);
+	auto fac = std::dynamic_pointer_cast<ICameraFactory>(plugin);
 	if (!fac) {
 		PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not a camera plugin even when it says it is!" << std::endl;
-		return;
+		return false;
 	}
 
 	auto names = fac->getNames();
@@ -43,6 +43,7 @@ void CameraManager::loadFactory(const Registry& reg,
 
 		mFactories[alias] = fac;
 	}
+	return true;
 }
 
 } // namespace PR

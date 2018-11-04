@@ -1,6 +1,7 @@
 #include "MaterialManager.h"
 #include "IMaterialFactory.h"
-#include "plugin/PluginLoader.h"
+#include "plugin/PluginManager.h"
+#include "renderer/RenderManager.h"
 
 #include "Logger.h"
 
@@ -11,27 +12,26 @@ MaterialManager::MaterialManager()
 
 MaterialManager::~MaterialManager()
 {
-	/* Remark: IMaterialFactory pointer are not freed! The plugin itself does the work */
 }
 
-void MaterialManager::loadFactory(const Registry& reg,
+bool MaterialManager::loadFactory(const RenderManager& mng,
 								  const std::string& base, const std::string& name)
 {
-	IPlugin* plugin = PluginLoader::load(base + "pr_pl_" + name, reg);
+	auto plugin = mng.pluginManager()->load(base + "pr_pl_" + name, *mng.registry());
 	if (!plugin) {
-		PR_LOG(L_ERROR) << "Couldn't load material plugin " << name << " with base path " << base << std::endl;
-		return;
+		PR_LOG(L_ERROR) << "Could not load material plugin " << name << " with base path " << base << std::endl;
+		return false;
 	}
 
 	if (plugin->type() != PT_MATERIAL) {
 		PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not a material plugin!" << std::endl;
-		return;
+		return false;
 	}
 
-	IMaterialFactory* matF = dynamic_cast<IMaterialFactory*>(plugin);
+	auto matF = std::dynamic_pointer_cast<IMaterialFactory>(plugin);
 	if (!matF) {
 		PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not a material plugin even when it says it is!" << std::endl;
-		return;
+		return false;
 	}
 
 	auto names = matF->getNames();
@@ -41,6 +41,8 @@ void MaterialManager::loadFactory(const Registry& reg,
 
 		mFactories[alias] = matF;
 	}
+
+	return true;
 }
 
 } // namespace PR

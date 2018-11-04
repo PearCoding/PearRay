@@ -7,6 +7,7 @@
 namespace PR {
 class Registry;
 class EntityManager;
+class PluginManager;
 class MaterialManager;
 class CameraManager;
 class LightManager;
@@ -21,6 +22,7 @@ public:
 	virtual ~RenderManager();
 
 	inline std::shared_ptr<Registry> registry() const { return mRegistry; }
+	inline std::shared_ptr<PluginManager> pluginManager() const { return mPluginManager; }
 	inline std::shared_ptr<MaterialManager> materialManager() const { return mMaterialManager; }
 	inline std::shared_ptr<EntityManager> entityManager() const { return mEntityManager; }
 	inline std::shared_ptr<CameraManager> cameraManager() const { return mCameraManager; }
@@ -46,8 +48,10 @@ public:
 private:
 	std::string mWorkingDir;
 
+	// Order matters: PluginManager should be before other managers
 	std::shared_ptr<Registry> mRegistry;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
+	std::shared_ptr<PluginManager> mPluginManager;
 	std::shared_ptr<MaterialManager> mMaterialManager;
 	std::shared_ptr<EntityManager> mEntityManager;
 	std::shared_ptr<CameraManager> mCameraManager;

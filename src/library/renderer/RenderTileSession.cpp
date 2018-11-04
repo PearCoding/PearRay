@@ -1,10 +1,10 @@
-#include "RenderSession.h"
+#include "RenderTileSession.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "scene/Scene.h"
 
 namespace PR {
-RenderSession::RenderSession(uint32 thread, RenderTile* tile,
+RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
 							 RayStream* rayStream, HitStream* hitStream)
 	: mThread(thread)
 	, mTile(tile)
@@ -13,11 +13,11 @@ RenderSession::RenderSession(uint32 thread, RenderTile* tile,
 {
 }
 
-RenderSession::~RenderSession()
+RenderTileSession::~RenderTileSession()
 {
 }
 
-IEntity* RenderSession::getEntity(uint32 id) const
+IEntity* RenderTileSession::getEntity(uint32 id) const
 {
 	return mTile->context().scene()->entities()[id].get();
 }

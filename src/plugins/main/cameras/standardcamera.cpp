@@ -2,6 +2,7 @@
 
 #include "Logger.h"
 #include "ray/Ray.h"
+#include "ray/RayPackage.h"
 #include "renderer/RenderContext.h"
 
 namespace PR {
@@ -73,8 +74,10 @@ private:
 	Eigen::Vector3f mYApertureRadius_Cache;
 };
 
+////////////////////
+
 StandardCamera::StandardCamera(uint32 id, const std::string& name)
-	: Camera(id, name)
+	: ICamera(id, name)
 	, mWidth(1)
 	, mHeight(1)
 	, mFStop(0)
@@ -176,7 +179,7 @@ float StandardCamera::apertureRadius() const
 	return mApertureRadius;
 }
 
-RayPackage StandardCamera::cpm(const CameraSample& sample) const
+RayPackage StandardCamera::constructRay(const CameraSample& sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen");
 
@@ -185,22 +188,12 @@ RayPackage StandardCamera::cpm(const CameraSample& sample) const
 	const vfloat ny = 2 * (sample.Pixel[1] / sample.SensorSize.y() - 0.5f);
 	//const float ny1 = 2 * ((sample.PixelF.y() + 1) / sample.SensorSize.y() - 0.5f);
 
-	vfloat o, d;
-	constructRay(nx, ny, sample.R[0], sample.R[1], o, d);
-
-	/*Eigen::Vector3f ox;
-	Eigen::Vector3f dx;
-	constructRay(nx1, ny, sample.R, ox, dx);
-
-	Eigen::Vector3f oy;
-	Eigen::Vector3f dy;
-	constructRay(nx, ny1, sample.R, oy, dy);*/
-
-	Ray ray(1, sample.PixelIndex, o, d, 0, sample.Time, sample.WavelengthIndex);
-	/*ray.setXOrigin(ox);
-	ray.setXDirection(dx);
-	ray.setYOrigin(oy);
-	ray.setYDirection(dy);*/
+	RayPackage ray;
+	constructRay(nx, ny, sample.R[0], sample.R[1],
+				 ray.Origin[0], ray.Origin[1], ray.Origin[2],
+				 ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+	ray.setupInverse();
+	ray.normalize();
 
 	return ray;
 }
@@ -218,8 +211,8 @@ void StandardCamera::constructRay(const vfloat& nx, const vfloat& ny,
 
 	if (mHasDOF_Cache) {
 		const vfloat t = 2 * PR_PI * r1;
-		const vfloat s = std::sin(t);
-		const vfloat c = std::cos(t);
+		vfloat s, c;
+		sincos(t, s, c);
 
 		vfloat ex = mXApertureRadius_Cache(0) * r2 * s + mYApertureRadius_Cache(0) * r2 * c;
 		vfloat ey = mXApertureRadius_Cache(1) * r2 * s + mYApertureRadius_Cache(1) * r2 * c;
@@ -232,7 +225,7 @@ void StandardCamera::constructRay(const vfloat& nx, const vfloat& ny,
 		dx = vx - ex;
 		dy = vy - ey;
 		dz = vz - ez;
-		
+
 		normalizeV(dx, dy, dz);
 	} else {
 		ox = simdpp::make_float(pos(0));
@@ -250,7 +243,7 @@ void StandardCamera::constructRay(const vfloat& nx, const vfloat& ny,
 // Cache
 void StandardCamera::onFreeze(RenderContext* context)
 {
-	Camera::onFreeze(context);
+	ICamera::onFreeze(context);
 
 	mDirection_Cache = (directionMatrix() * mLocalDirection).normalized();
 	mRight_Cache	 = (directionMatrix() * mLocalRight).normalized();
@@ -258,7 +251,7 @@ void StandardCamera::onFreeze(RenderContext* context)
 
 	PR_LOG(L_INFO) << name() << ": Dir[" << mDirection_Cache << "] Right[" << mRight_Cache << "] Up[" << mUp_Cache << "]" << std::endl;
 
-	if (mOrthographic || std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) { // No depth of field
+	if (std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) { // No depth of field
 		mFocalDistance_Cache   = mDirection_Cache;
 		mXApertureRadius_Cache = Eigen::Vector3f(0, 0, 0);
 		mYApertureRadius_Cache = Eigen::Vector3f(0, 0, 0);

@@ -1,14 +1,34 @@
 #pragma once
 
+#include "math/Vector.h"
 #include "shader/ShadingSocket.h"
+#include "spectral/Spectrum.h"
 
 namespace PR {
-class PR_LIB ConstScalarShadingSocket : public FloatShadingSocket {
+class PR_LIB ConstScalarShadingSocket : public FloatScalarShadingSocket {
 public:
 	explicit ConstScalarShadingSocket(float f);
-	vfloat eval(size_t channel, const ShadingPoint& ctx) const override;
+	vfloat eval(const ShadingPoint& ctx) const override;
 
 private:
 	float mValue;
+};
+
+class PR_LIB ConstSpectralShadingSocket : public FloatSpectralShadingSocket {
+public:
+	explicit ConstSpectralShadingSocket(const Spectrum& f);
+	vfloat eval(const ShadingPoint& ctx) const override;
+
+private:
+	Spectrum mValue;
+};
+
+class PR_LIB ConstVectorShadingSocket : public FloatVectorShadingSocket {
+public:
+	explicit ConstVectorShadingSocket(const Eigen::Vector3f& f);
+	vfloat eval(uint32 channel, const ShadingPoint& ctx) const override;
+
+private:
+	Vector3f mValue;
 };
 } // namespace PR

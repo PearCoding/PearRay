@@ -6,19 +6,20 @@
 #include <unordered_set>
 
 namespace PR {
-struct LPE_Token {
+namespace LPE {
+struct Token {
 	char Type;
 	char Event;
 	std::string Label;
 
-	LPE_Token(char t, char e, const std::string& l = "")
+	Token(char t, char e, const std::string& l = "")
 		: Type(t)
 		, Event(e)
 		, Label(l)
 	{
 	}
 
-	LPE_Token()
+	Token()
 		: Type(0)
 		, Event(0)
 		, Label()
@@ -26,18 +27,18 @@ struct LPE_Token {
 	}
 
 	inline bool isEmpty() const { return Type == 0; }
-	inline bool operator==(const LPE_Token& other) const
+	inline bool operator==(const Token& other) const
 	{
 		return Type == other.Type && Event == other.Event && Label == other.Label;
 	}
-	inline bool operator!=(const LPE_Token& other) const
+	inline bool operator!=(const Token& other) const
 	{
 		return !(*this == other);
 	}
 
 	// This is a context sensitive match
 	// in contrast to == which is raw equal
-	inline bool match(const LPE_Token& other) const
+	inline bool match(const Token& other) const
 	{
 		if (Type != '.' && other.Type != '.' && Type != other.Type)
 			return false;
@@ -98,7 +99,7 @@ struct LPE_Token {
 	}
 };
 
-inline std::size_t hash_value(const LPE_Token& k)
+inline std::size_t hash_value(const Token& k)
 {
 	std::size_t s = 0;
 	boost::hash_combine(s, k.Type);
@@ -107,25 +108,25 @@ inline std::size_t hash_value(const LPE_Token& k)
 	return s;
 }
 
-typedef std::unordered_set<LPE_Token, boost::hash<LPE_Token>> TokenSet;
+typedef std::unordered_set<Token, boost::hash<Token>> TokenSet;
 
-struct LPE_Transition {
-	std::shared_ptr<class LPE_RegState> To;
+struct Transition {
+	std::shared_ptr<class RegState> To;
 	TokenSet Tokens;
 
-	inline LPE_Transition(const LPE_Token& token, const std::shared_ptr<LPE_RegState>& to)
+	inline Transition(const Token& token, const std::shared_ptr<RegState>& to)
 		: To(to)
 		, Tokens({ token })
 	{
 	}
 
-	inline LPE_Transition(const TokenSet& tokens, const std::shared_ptr<LPE_RegState>& to)
+	inline Transition(const TokenSet& tokens, const std::shared_ptr<RegState>& to)
 		: To(to)
 		, Tokens(tokens)
 	{
 	}
 
-	inline bool hasToken(const LPE_Token& token) const
+	inline bool hasToken(const Token& token) const
 	{
 		bool found = Tokens.count(token) != 0;
 		//return Negation ? !found : found;
@@ -133,18 +134,18 @@ struct LPE_Transition {
 	}
 };
 
-class LPE_RegState {
+class RegState {
 public:
-	typedef std::vector<LPE_Transition> TransitionMap;
-	typedef std::unordered_set<std::shared_ptr<LPE_RegState>> StateSet;
+	typedef std::vector<Transition> TransitionMap;
+	typedef std::unordered_set<std::shared_ptr<RegState>> StateSet;
 
-	LPE_RegState()
+	RegState()
 		: mInitial(false)
 		, mFinal(false)
 	{
 	}
 
-	LPE_RegState(const StateSet& states)
+	RegState(const StateSet& states)
 		: mStates(states)
 		, mInitial(false)
 		, mFinal(false)
@@ -164,8 +165,8 @@ public:
 		}
 	}
 
-	inline void addTransition(const LPE_Token& token,
-							  const std::shared_ptr<LPE_RegState>& state)
+	inline void addTransition(const Token& token,
+							  const std::shared_ptr<RegState>& state)
 	{
 		for (auto& s : mTransitions) {
 			if (s.To == state) {
@@ -178,7 +179,7 @@ public:
 	}
 
 	inline void addTransition(const TokenSet& tokens,
-							  const std::shared_ptr<LPE_RegState>& state)
+							  const std::shared_ptr<RegState>& state)
 	{
 		for (auto& s : mTransitions) {
 			if (s.To == state) {
@@ -193,7 +194,7 @@ public:
 	inline const TransitionMap& transitions() const { return mTransitions; }
 	inline size_t transitionCount() const { return mTransitions.size(); }
 
-	inline void removeTransitionsTo(const std::shared_ptr<LPE_RegState>& state)
+	inline void removeTransitionsTo(const std::shared_ptr<RegState>& state)
 	{
 		for (auto it = mTransitions.begin(); it != mTransitions.end();) {
 			if (it->To == state) {
@@ -233,4 +234,5 @@ private:
 	bool mInitial;
 	bool mFinal;
 };
+} // namespace LPE
 } // namespace PR

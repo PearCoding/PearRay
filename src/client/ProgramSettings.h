@@ -14,6 +14,7 @@ class ProgramSettings
 public:
 	std::string InputFile;
 	std::string OutputDir;
+	std::string PluginPath;
 
 	bool IsVerbose;
 	bool IsQuiet;

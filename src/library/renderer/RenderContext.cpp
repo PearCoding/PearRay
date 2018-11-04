@@ -1,7 +1,7 @@
 #include "RenderContext.h"
 #include "OutputMap.h"
 #include "RenderManager.h"
-#include "RenderSession.h"
+#include "RenderTileSession.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
 #include "RenderTileMap.h"

@@ -1,6 +1,7 @@
 #include "LightManager.h"
 #include "ILightFactory.h"
-#include "plugin/PluginLoader.h"
+#include "plugin/PluginManager.h"
+#include "renderer/RenderManager.h"
 
 #include "Logger.h"
 
@@ -11,27 +12,26 @@ LightManager::LightManager()
 
 LightManager::~LightManager()
 {
-	/* Remark: ILightFactory pointer are not freed! The plugin itself does the work */
 }
 
-void LightManager::loadFactory(const Registry& reg,
+bool LightManager::loadFactory(const RenderManager& mng,
 							   const std::string& base, const std::string& name)
 {
-	IPlugin* plugin = PluginLoader::load(base + "pr_pl_" + name, reg);
+	auto plugin = mng.pluginManager()->load(base + "pr_pl_" + name, *mng.registry());
 	if (!plugin) {
 		PR_LOG(L_ERROR) << "Couldn't load light plugin " << name << " with base path " << base << std::endl;
-		return;
+		return false;
 	}
 
 	if (plugin->type() != PT_LIGHT) {
 		PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not a light plugin!" << std::endl;
-		return;
+		return false;
 	}
 
-	ILightFactory* matF = dynamic_cast<ILightFactory*>(plugin);
+	auto matF = std::dynamic_pointer_cast<ILightFactory>(plugin);
 	if (!matF) {
 		PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not a light plugin even when it says it is!" << std::endl;
-		return;
+		return false;
 	}
 
 	auto names = matF->getNames();
@@ -41,6 +41,7 @@ void LightManager::loadFactory(const Registry& reg,
 
 		mFactories[alias] = matF;
 	}
+	return true;
 }
 
 } // namespace PR

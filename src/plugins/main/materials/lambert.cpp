@@ -1,8 +1,7 @@
 #include "lambert.h"
 #include "ray/Ray.h"
 #include "renderer/RenderContext.h"
-#include "shader/ConstSpectralOutput.h"
-#include "shader/ShaderClosure.h"
+#include "shader/ConstShadingSocket.h"
 
 #include "math/Projection.h"
 
@@ -17,17 +16,17 @@ LambertMaterial::LambertMaterial(uint32 id)
 {
 }
 
-std::shared_ptr<SpectrumShaderOutput> LambertMaterial::albedo() const
+std::shared_ptr<FloatSpectralShadingSocket> LambertMaterial::albedo() const
 {
 	return mAlbedo;
 }
 
-void LambertMaterial::setAlbedo(const std::shared_ptr<SpectrumShaderOutput>& diffSpec)
+void LambertMaterial::setAlbedo(const std::shared_ptr<FloatSpectralShadingSocket>& diffSpec)
 {
 	mAlbedo = diffSpec;
 }
 
-void LambertMaterial::startGroup(size_t size, const RenderSession& session)
+void LambertMaterial::startGroup(size_t size, const RenderTileSession& session)
 {
 }
 
@@ -36,32 +35,40 @@ void LambertMaterial::endGroup()
 }
 
 void LambertMaterial::eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
-						   const RenderSession& session) const
+						   const RenderTileSession& session) const
 {
-	PR_ASSERT(in.Size <= MATERIAL_GROUP_SIZE, "Bad size given");
-	out.Size = in.Size;
-
-	for (size_t i = 0; i < in.Size; ++i) {
-		out.Weight[i]		  = 0;		 // TODO
-		out.PDF_S_Forward[i]  = PR_1_PI; // TODO: Base it on the normal
-		out.PDF_S_Backward[i] = PR_1_PI;
-	}
+	out.Weight		   = mAlbedo->eval(in.Point);
+	out.PDF_S_Forward  = simdpp::make_float(PR_1_PI);
+	out.PDF_S_Backward = simdpp::make_float(PR_1_PI);
 }
 
 void LambertMaterial::sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
-							 const RenderSession& session) const
+							 const RenderTileSession& session) const
 {
-	PR_ASSERT(in.Size <= MATERIAL_GROUP_SIZE, "Bad size given");
-	out.Size = in.Size;
-	for (size_t i = 0; i < in.Size; ++i) {
-		out.Weight[i] = 0; // TODO
-		out.Type[i]   = MST_DiffuseReflection;
-	}
+	out.Weight = simdpp::make_float(0);
+	out.Type   = simdpp::make_int(MST_DiffuseReflection);
 
-	ispc::sample_lambert(in.RND[0].data(), in.RND[1].data(),
-		out.PDF_S_Forward.data(), out.PDF_S_Backward.data(),
-		out.Outgoing[0].data(),out.Outgoing[1].data(),out.Outgoing[2].data(),
-		in.Size);
+	PR_SIMD_ALIGN float r0[PR_SIMD_BANDWIDTH];
+	PR_SIMD_ALIGN float r1[PR_SIMD_BANDWIDTH];
+	PR_SIMD_ALIGN float pf[PR_SIMD_BANDWIDTH];
+	PR_SIMD_ALIGN float pb[PR_SIMD_BANDWIDTH];
+	PR_SIMD_ALIGN float o0[PR_SIMD_BANDWIDTH];
+	PR_SIMD_ALIGN float o1[PR_SIMD_BANDWIDTH];
+	PR_SIMD_ALIGN float o2[PR_SIMD_BANDWIDTH];
+
+	simdpp::store(r0, in.RND[0]);
+	simdpp::store(r1, in.RND[1]);
+
+	ispc::sample_lambert(r0, r1,
+						 pf, pb,
+						 o0, o1, o2,
+						 PR_SIMD_BANDWIDTH);
+
+	out.PDF_S_Forward  = simdpp::load(pf);
+	out.PDF_S_Backward = simdpp::load(pb);
+	out.Outgoing[0]	= simdpp::load(o0);
+	out.Outgoing[1]	= simdpp::load(o1);
+	out.Outgoing[2]	= simdpp::load(o2);
 }
 
 std::string LambertMaterial::dumpInformation() const
@@ -73,6 +80,10 @@ std::string LambertMaterial::dumpInformation() const
 		   << "    HasAlbedo: " << (mAlbedo ? "true" : "false") << std::endl;
 
 	return stream.str();
+}
+
+void LambertMaterial::onFreeze(RenderContext* context)
+{
 }
 
 class LambertMaterialFactory : public IMaterialFactory {

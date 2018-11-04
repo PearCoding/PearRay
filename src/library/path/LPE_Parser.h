@@ -3,14 +3,15 @@
 #include "PR_Config.h"
 
 namespace PR {
-class LPE_RegExpr;
-class PR_LIB LPE_Parser
-{
+namespace LPE {
+class RegExpr;
+class Parser {
 public:
-	LPE_Parser(const std::string& str);
-	~LPE_Parser() = default;
+	Parser(const std::string& str);
+	~Parser() = default;
 
-	std::shared_ptr<LPE_RegExpr> parse();
+	std::shared_ptr<RegExpr> parse();
+
 private:
 	char current() const;
 	char peek() const;
@@ -18,13 +19,13 @@ private:
 
 	inline bool isEOS() const { return current() == -1; }
 
-	void gr_fullexpr(LPE_RegExpr& expr);
-	void gr_expr(LPE_RegExpr& expr);
-	void gr_term(LPE_RegExpr& expr);
-	void gr_group(LPE_RegExpr& expr);
-	void gr_orgroup(LPE_RegExpr& expr);
-	void gr_token(LPE_RegExpr& expr);
-	void gr_op(LPE_RegExpr& expr);
+	void gr_fullexpr(RegExpr& expr);
+	void gr_expr(RegExpr& expr);
+	void gr_term(RegExpr& expr);
+	void gr_group(RegExpr& expr);
+	void gr_orgroup(RegExpr& expr);
+	void gr_token(RegExpr& expr);
+	void gr_op(RegExpr& expr);
 
 	std::string gr_string();
 	uint32 gr_integer();
@@ -33,4 +34,5 @@ private:
 	size_t mPosition;
 	std::string mString;
 };
+} // namespace LPE
 } // namespace PR

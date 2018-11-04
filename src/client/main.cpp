@@ -48,7 +48,8 @@ int main(int argc, char** argv)
 	if (!options.IsQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) " << PR_VENDOR_STRING << std::endl;
 
-	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(options.InputFile);
+	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(
+		options.OutputDir, options.InputFile, options.PluginPath);
 
 	if (!env) {
 		if (!options.IsQuiet)
@@ -57,38 +58,33 @@ int main(int argc, char** argv)
 		return -2;
 	}
 
-	if (!env->sceneFactory().activeCamera()) {
+	// Setup renderFactory
+	auto renderFactory = env->renderManager().createRenderFactory();
+	if (!renderFactory) {
 		if (!options.IsQuiet)
-			std::cout << "Error: No camera specified." << std::endl;
+			std::cout << "Error: Couldn't setup render factory." << std::endl;
 
 		return -4;
 	}
 
-	// Setup renderFactory
-	auto scene						 = env->sceneFactory().create();
-	PR::RenderFactory* renderFactory = new PR::RenderFactory(
-		PR::SpectrumDescriptor::createStandardSpectral(),
-		scene, env->registry(), env->materialManager(), options.OutputDir);
-
 	// Render per image tile
+	PR::ToneMapper toneMapper;
 	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
 		auto renderer = renderFactory->create(i, options.ImageTileXCount, options.ImageTileYCount);
 		if (options.ImageTileXCount * options.ImageTileYCount == 1) {
 			PR_LOG(PR::L_INFO) << "Starting rendering of image ["
-						   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
-						   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
+							   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
+							   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
 		} else {
-			PR_LOG(PR::L_INFO) << "Starting rendering of image tile " << (renderer->index()+1) << "/" << (options.ImageTileXCount * options.ImageTileYCount) << "["
-						   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
-						   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
+			PR_LOG(PR::L_INFO) << "Starting rendering of image tile " << (renderer->index() + 1) << "/" << (options.ImageTileXCount * options.ImageTileYCount) << "["
+							   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
+							   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
 		}
 
 		env->outputSpecification().setup(renderer);
 
 		if (options.ShowInformation)
 			env->dumpInformation();
-
-		PR::ToneMapper toneMapper(renderer->width(), renderer->height());
 
 		if (options.ShowProgress)
 			std::cout << "preprocess" << std::endl;
@@ -141,7 +137,6 @@ int main(int argc, char** argv)
 	}
 
 	env->outputSpecification().deinit();
-	delete renderFactory;
 
 	return 0;
 }

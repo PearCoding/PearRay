@@ -11,7 +11,7 @@ public:
 	MaterialManager();
 	virtual ~MaterialManager();
 
-	void loadFactory(const Registry& reg,
+	bool loadFactory(const RenderManager& mng,
 					 const std::string& base, const std::string& name) override;
 };
 } // namespace PR

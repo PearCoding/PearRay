@@ -5,6 +5,7 @@
 #include "infinitelight/InfiniteLightManager.h"
 #include "light/LightManager.h"
 #include "material/MaterialManager.h"
+#include "plugin/PluginManager.h"
 #include "registry/Registry.h"
 #include "renderer/RenderFactory.h"
 #include "scene/Scene.h"
@@ -15,6 +16,7 @@ RenderManager::RenderManager(const std::string& workingDir)
 	: mWorkingDir(workingDir)
 	, mRegistry(std::make_shared<Registry>())
 	, mSpectrumDescriptor(SpectrumDescriptor::createStandardSpectral())
+	, mPluginManager(std::make_shared<PluginManager>())
 	, mMaterialManager(std::make_shared<MaterialManager>())
 	, mEntityManager(std::make_shared<EntityManager>())
 	, mCameraManager(std::make_shared<CameraManager>())

@@ -6,20 +6,20 @@
 #include <memory>
 
 namespace PR {
-class RenderSession;
+class RenderTileSession;
 
 class PR_LIB IInfiniteLight : public VirtualEntity {
 public:
 	IInfiniteLight(uint32 id, const std::string& name);
 	virtual ~IInfiniteLight() {}
 
-	virtual void startGroup(size_t size, const RenderSession& session) = 0;
+	virtual void startGroup(size_t size, const RenderTileSession& session) = 0;
 	virtual void endGroup()											   = 0;
 
 	/*
 		Evaluate the light based on incident direction and point information.
 	*/
-	virtual void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderSession& session) const = 0;
+	virtual void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const = 0;
 
 	virtual std::string dumpInformation() const;
 };

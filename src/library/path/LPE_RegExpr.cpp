@@ -5,26 +5,27 @@
 #include <fstream>
 
 namespace PR {
+namespace LPE {
 /* Primarily based on 
 	https://www.codeguru.com/cpp/cpp/cpp_mfc/parsing/article.php/c4093/Write-Your-Own-Regular-Expression-Parser.htm
 * The initial implementation is changed to allow better dfa optimization and complements
 */
-LPE_RegExpr::LPE_RegExpr()
+RegExpr::RegExpr()
 {
 	/*static const char* TYPES  = ".ERTBL";
 	static const char* EVENTS = ".DS";
 
 	for (uint32 i = 0; TYPES[i]; ++i) {
 		for (uint32 j = 0; EVENTS[j]; ++j) {
-			mInputSet.insert(LPE_Token(TYPES[i], EVENTS[j]));
+			mInputSet.insert(Token(TYPES[i], EVENTS[j]));
 		}
 	}*/
 }
 
-void LPE_RegExpr::push(const LPE_Token& token)
+void RegExpr::push(const Token& token)
 {
-	auto s1 = std::make_shared<LPE_RegState>();
-	auto s2 = std::make_shared<LPE_RegState>();
+	auto s1 = std::make_shared<RegState>();
+	auto s2 = std::make_shared<RegState>();
 
 	s1->addTransition(token, s2);
 
@@ -39,7 +40,7 @@ void LPE_RegExpr::push(const LPE_Token& token)
 	mInputSet.insert(token);
 }
 
-bool LPE_RegExpr::pop(FSATable& table)
+bool RegExpr::pop(FSATable& table)
 {
 	if (mOperandStack.empty())
 		return false;
@@ -49,7 +50,7 @@ bool LPE_RegExpr::pop(FSATable& table)
 	return true;
 }
 
-bool LPE_RegExpr::doConcat()
+bool RegExpr::doConcat()
 {
 	FSATable a, b;
 	if (!pop(b) || !pop(a))
@@ -57,7 +58,7 @@ bool LPE_RegExpr::doConcat()
 
 	for (auto& s : a) {
 		if (s->isFinal())
-			connect_to_initial(s, LPE_Token(), b);
+			connect_to_initial(s, Token(), b);
 	}
 
 	// Remove final flag from a and initial flag from b
@@ -70,20 +71,20 @@ bool LPE_RegExpr::doConcat()
 	return true;
 }
 
-bool LPE_RegExpr::doUnion()
+bool RegExpr::doUnion()
 {
 	FSATable a, b;
 	if (!pop(b) || !pop(a))
 		return false;
 
-	auto start = std::make_shared<LPE_RegState>();
-	auto end   = std::make_shared<LPE_RegState>();
+	auto start = std::make_shared<RegState>();
+	auto end   = std::make_shared<RegState>();
 
-	connect_to_initial(start, LPE_Token(), a);
-	connect_to_initial(start, LPE_Token(), b);
+	connect_to_initial(start, Token(), a);
+	connect_to_initial(start, Token(), b);
 
-	connect_from_final(end, LPE_Token(), a);
-	connect_from_final(end, LPE_Token(), b);
+	connect_from_final(end, Token(), a);
+	connect_from_final(end, Token(), b);
 
 	remove_flags(a);
 	remove_flags(b);
@@ -99,30 +100,30 @@ bool LPE_RegExpr::doUnion()
 	return true;
 }
 
-bool LPE_RegExpr::repeatLast(uint32 min, uint32 max)
+bool RegExpr::repeatLast(uint32 min, uint32 max)
 {
 	FSATable a;
 	if (!pop(a))
 		return false;
 
 	FSATable newFull;
-	auto start = std::make_shared<LPE_RegState>();
+	auto start = std::make_shared<RegState>();
 	newFull.push_back(start);
 
 	auto addState = [&](bool optional, bool repeat) {
 		FSATable newTable;
 		copyTable(a, newTable);
 
-		auto end = std::make_shared<LPE_RegState>();
+		auto end = std::make_shared<RegState>();
 
-		connect_to_initial(start, LPE_Token(), newTable);
+		connect_to_initial(start, Token(), newTable);
 
 		if (optional)
-			start->addTransition(LPE_Token(), end);
+			start->addTransition(Token(), end);
 
-		connect_from_final(end, LPE_Token(), newTable);
+		connect_from_final(end, Token(), newTable);
 		if (repeat)
-			connect_to_self(LPE_Token(), newTable, false);
+			connect_to_self(Token(), newTable, false);
 
 		remove_flags(newTable);
 
@@ -151,36 +152,36 @@ bool LPE_RegExpr::repeatLast(uint32 min, uint32 max)
 	return true;
 }
 
-void LPE_RegExpr::connect_to_initial(const std::shared_ptr<LPE_RegState>& state,
-									 const LPE_Token& token,
-									 FSATable& tbl)
+void RegExpr::connect_to_initial(const std::shared_ptr<RegState>& state,
+								 const Token& token,
+								 FSATable& tbl)
 {
 	for (auto& s : tbl) {
 		if (s->isInitial())
-			state->addTransition(LPE_Token(), s);
+			state->addTransition(Token(), s);
 	}
 }
 
-void LPE_RegExpr::connect_from_final(const std::shared_ptr<LPE_RegState>& state,
-									 const LPE_Token& token,
-									 FSATable& tbl)
+void RegExpr::connect_from_final(const std::shared_ptr<RegState>& state,
+								 const Token& token,
+								 FSATable& tbl)
 {
 	for (auto& s : tbl) {
 		if (s->isFinal())
-			s->addTransition(LPE_Token(), state);
+			s->addTransition(Token(), state);
 	}
 }
 
-void LPE_RegExpr::connect_to_self(const LPE_Token& token,
-								  FSATable& tbl,
-								  bool initialToFinal)
+void RegExpr::connect_to_self(const Token& token,
+							  FSATable& tbl,
+							  bool initialToFinal)
 {
 	if (initialToFinal) {
 		for (auto& s : tbl) {
 			if (s->isInitial()) {
 				for (auto& t : tbl) {
 					if (t->isFinal())
-						s->addTransition(LPE_Token(), t);
+						s->addTransition(Token(), t);
 				}
 			}
 		}
@@ -189,14 +190,14 @@ void LPE_RegExpr::connect_to_self(const LPE_Token& token,
 			if (s->isFinal()) {
 				for (auto& t : tbl) {
 					if (t->isInitial())
-						s->addTransition(LPE_Token(), t);
+						s->addTransition(Token(), t);
 				}
 			}
 		}
 	}
 }
 
-void LPE_RegExpr::remove_flags(FSATable& tbl, bool initialFlag, bool finalFlag)
+void RegExpr::remove_flags(FSATable& tbl, bool initialFlag, bool finalFlag)
 {
 	for (auto& s : tbl) {
 		if (initialFlag)
@@ -206,11 +207,11 @@ void LPE_RegExpr::remove_flags(FSATable& tbl, bool initialFlag, bool finalFlag)
 	}
 }
 
-void LPE_RegExpr::copyTable(const FSATable& oldTable, FSATable& newTable)
+void RegExpr::copyTable(const FSATable& oldTable, FSATable& newTable)
 {
-	std::unordered_map<std::shared_ptr<LPE_RegState>, std::shared_ptr<LPE_RegState>> mapper;
+	std::unordered_map<std::shared_ptr<RegState>, std::shared_ptr<RegState>> mapper;
 	for (const auto& o : oldTable) {
-		mapper[o] = std::make_shared<LPE_RegState>();
+		mapper[o] = std::make_shared<RegState>();
 		newTable.push_back(mapper[o]);
 	}
 
@@ -230,20 +231,20 @@ void LPE_RegExpr::copyTable(const FSATable& oldTable, FSATable& newTable)
 	}
 }
 
-bool LPE_RegExpr::attachNFA(const LPE_RegExpr& other)
+bool RegExpr::attachNFA(const RegExpr& other)
 {
 	mOperandStack.push(other.getNFATable());
 	mInputSet.insert(other.mInputSet.begin(), other.mInputSet.end());
 	return true;
 }
 
-const FSATable& LPE_RegExpr::getNFATable() const
+const FSATable& RegExpr::getNFATable() const
 {
 	PR_ASSERT(mOperandStack.size() == 1, "Expression has to be fully proceeded!");
 	return mOperandStack.top();
 }
 
-void LPE_RegExpr::convertToDFA()
+void RegExpr::convertToDFA()
 {
 	dfa_construct(getNFATable(), mDFA, mInputSet);
 
@@ -252,7 +253,7 @@ void LPE_RegExpr::convertToDFA()
 	dfa_remove_nondistinguishables(mDFA, mInputSet);
 }
 
-void LPE_RegExpr::complementDFA()
+void RegExpr::complementDFA()
 {
 	// Make final states normal and normal to final
 	for (auto& s : mDFA) {
@@ -260,7 +261,7 @@ void LPE_RegExpr::complementDFA()
 	}
 
 	// Add sink to complete dfa
-	auto sink = std::make_shared<LPE_RegState>();
+	auto sink = std::make_shared<RegState>();
 
 	// TODO: Get symbol space - tokenset
 
@@ -269,25 +270,25 @@ void LPE_RegExpr::complementDFA()
 	mDFA.push_back(sink);
 }
 
-bool LPE_RegExpr::attachDFA(const LPE_RegExpr& other)
+bool RegExpr::attachDFA(const RegExpr& other)
 {
 	mOperandStack.push(other.getDFATable());
 	mInputSet.insert(other.mInputSet.begin(), other.mInputSet.end());
 	return true;
 }
 
-const FSATable& LPE_RegExpr::getDFATable() const
+const FSATable& RegExpr::getDFATable() const
 {
 	return mDFA;
 }
 
-void LPE_RegExpr::dfa_construct(const FSATable& nfa, FSATable& dfa, const TokenSet& inputSet)
+void RegExpr::dfa_construct(const FSATable& nfa, FSATable& dfa, const TokenSet& inputSet)
 {
 	dfa.clear();
 
-	std::stack<std::shared_ptr<LPE_RegState>> unmarked;
-	LPE_RegState::StateSet nfaStart;
-	LPE_RegState::StateSet dfaStart;
+	std::stack<std::shared_ptr<RegState>> unmarked;
+	RegState::StateSet nfaStart;
+	RegState::StateSet dfaStart;
 
 	// Create initial set
 	for (const auto& s : nfa) {
@@ -297,17 +298,17 @@ void LPE_RegExpr::dfa_construct(const FSATable& nfa, FSATable& dfa, const TokenS
 	}
 	dfa_getEpsilonClosure(nfaStart, dfaStart);
 
-	auto dfaStartState = std::make_shared<LPE_RegState>(dfaStart);
+	auto dfaStartState = std::make_shared<RegState>(dfaStart);
 	dfa.push_back(dfaStartState);
 
 	unmarked.push(dfaStartState);
 	while (!unmarked.empty()) {
-		std::shared_ptr<LPE_RegState> ps = unmarked.top();
+		std::shared_ptr<RegState> ps = unmarked.top();
 		unmarked.pop();
 
 		for (const auto& token : inputSet) {
-			LPE_RegState::StateSet moveRes;
-			LPE_RegState::StateSet epsRes;
+			RegState::StateSet moveRes;
+			RegState::StateSet epsRes;
 
 			dfa_move(token, ps->states(), moveRes);
 			/*if (moveRes.empty())
@@ -317,7 +318,7 @@ void LPE_RegExpr::dfa_construct(const FSATable& nfa, FSATable& dfa, const TokenS
 			/*if (epsRes.empty())
 				continue;*/
 
-			std::shared_ptr<LPE_RegState> foundS = nullptr;
+			std::shared_ptr<RegState> foundS = nullptr;
 			for (const auto& s : dfa) {
 				if (s->states() == epsRes) {
 					foundS = s;
@@ -326,7 +327,7 @@ void LPE_RegExpr::dfa_construct(const FSATable& nfa, FSATable& dfa, const TokenS
 			}
 
 			if (foundS == nullptr) {
-				auto newS = std::make_shared<LPE_RegState>(epsRes);
+				auto newS = std::make_shared<RegState>(epsRes);
 				unmarked.push(newS);
 				dfa.push_back(newS);
 
@@ -337,22 +338,22 @@ void LPE_RegExpr::dfa_construct(const FSATable& nfa, FSATable& dfa, const TokenS
 		}
 	}
 }
-void LPE_RegExpr::dfa_getEpsilonClosure(const LPE_RegState::StateSet& state,
-										LPE_RegState::StateSet& res)
+void RegExpr::dfa_getEpsilonClosure(const RegState::StateSet& state,
+									RegState::StateSet& res)
 {
 	res.clear();
 	res = state;
 
-	std::stack<std::shared_ptr<LPE_RegState>> todoStack;
+	std::stack<std::shared_ptr<RegState>> todoStack;
 	for (const auto& s : state)
 		todoStack.push(s);
 
 	while (!todoStack.empty()) {
-		std::shared_ptr<LPE_RegState> s = todoStack.top();
+		std::shared_ptr<RegState> s = todoStack.top();
 		todoStack.pop();
 
 		for (const auto& p : s->transitions()) {
-			if (!p.hasToken(LPE_Token())) // Only empty closures
+			if (!p.hasToken(Token())) // Only empty closures
 				continue;
 
 			if (res.find(p.To) == res.end()) {
@@ -363,9 +364,9 @@ void LPE_RegExpr::dfa_getEpsilonClosure(const LPE_RegState::StateSet& state,
 	}
 }
 
-void LPE_RegExpr::dfa_move(const LPE_Token& token,
-						   const LPE_RegState::StateSet& state,
-						   LPE_RegState::StateSet& res)
+void RegExpr::dfa_move(const Token& token,
+					   const RegState::StateSet& state,
+					   RegState::StateSet& res)
 {
 	res.clear();
 
@@ -379,9 +380,9 @@ void LPE_RegExpr::dfa_move(const LPE_Token& token,
 	}
 }
 
-void LPE_RegExpr::dfa_remove_deadends(FSATable& dfa)
+void RegExpr::dfa_remove_deadends(FSATable& dfa)
 {
-	LPE_RegState::StateSet deadends;
+	RegState::StateSet deadends;
 
 	for (const auto& s : dfa) {
 		if (s->isDeadEnd())
@@ -399,7 +400,7 @@ void LPE_RegExpr::dfa_remove_deadends(FSATable& dfa)
 	}
 }
 
-void LPE_RegExpr::dfa_remove_nondistinguishables(FSATable& dfa, const TokenSet& inputSet)
+void RegExpr::dfa_remove_nondistinguishables(FSATable& dfa, const TokenSet& inputSet)
 {
 	// Brzozowski's algorithm
 
@@ -421,13 +422,13 @@ void LPE_RegExpr::dfa_remove_nondistinguishables(FSATable& dfa, const TokenSet& 
 	dfa_remove_deadends(dfa);
 }
 
-void LPE_RegExpr::dfa_reverse(const FSATable& dfa, FSATable& reverseNFA)
+void RegExpr::dfa_reverse(const FSATable& dfa, FSATable& reverseNFA)
 {
 	reverseNFA.clear();
 
-	std::unordered_map<std::shared_ptr<LPE_RegState>, std::shared_ptr<LPE_RegState>> mapper;
+	std::unordered_map<std::shared_ptr<RegState>, std::shared_ptr<RegState>> mapper;
 	for (const auto& s : dfa) {
-		auto ns = std::make_shared<LPE_RegState>();
+		auto ns = std::make_shared<RegState>();
 
 		// Flip
 		ns->makeInitial(s->isFinal());
@@ -445,7 +446,7 @@ void LPE_RegExpr::dfa_reverse(const FSATable& dfa, FSATable& reverseNFA)
 }
 
 // Debug
-std::string LPE_RegExpr::dumpTable(const FSATable& tbl)
+std::string RegExpr::dumpTable(const FSATable& tbl)
 {
 	std::stringstream stream;
 
@@ -468,12 +469,12 @@ std::string LPE_RegExpr::dumpTable(const FSATable& tbl)
 	return stream.str();
 }
 
-std::string LPE_RegExpr::dumpTableToDot(const FSATable& tbl)
+std::string RegExpr::dumpTableToDot(const FSATable& tbl)
 {
 	std::stringstream stream;
 	stream << "digraph {" << std::endl;
 
-	std::unordered_map<std::shared_ptr<LPE_RegState>, uint32> ids;
+	std::unordered_map<std::shared_ptr<RegState>, uint32> ids;
 	uint32 idCounter = 0;
 	for (const auto& s : tbl) {
 		if (!ids.count(s)) {
@@ -515,11 +516,12 @@ std::string LPE_RegExpr::dumpTableToDot(const FSATable& tbl)
 	return stream.str();
 }
 
-void LPE_RegExpr::saveTableToDot(const std::string& filename, const FSATable& tbl)
+void RegExpr::saveTableToDot(const std::string& filename, const FSATable& tbl)
 {
 	std::ofstream dotFile;
 	dotFile.open(filename);
-	dotFile << LPE_RegExpr::dumpTableToDot(tbl);
+	dotFile << RegExpr::dumpTableToDot(tbl);
 	dotFile.close();
 }
+} // namespace LPE
 } // namespace PR

@@ -31,8 +31,8 @@ public:
 	virtual bool isLight() const				  = 0;
 	virtual float surfaceArea(IMaterial* m) const = 0;
 
-	virtual void getNormal(const vuint32& primID, const vfloat& u, const vfloat& v,
-						   vfloat& n1, vfloat& n2, vfloat& n3) const = 0;
+	/*virtual void getNormal(const vuint32& primID, const vfloat& u, const vfloat& v,
+						   vfloat& n1, vfloat& n2, vfloat& n3) const = 0;*/
 
 	virtual BoundingBox localBoundingBox() const = 0;
 

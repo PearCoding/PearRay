@@ -38,7 +38,7 @@ struct PR_LIB_INLINE PluginInterface {
 } // namespace PR
 
 #define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                 \
-	class entityType;                                                                                         \
+	class entityType;                                                                                      \
 	class Registry;                                                                                        \
 	class PR_LIB_INLINE className : public IPlugin {                                                       \
 	public:                                                                                                \
@@ -46,15 +46,14 @@ struct PR_LIB_INLINE PluginInterface {
 		virtual ~className()																	= default; \
 		virtual std::shared_ptr<entityType> create(uint32 id, uint32 uuid, const Registry& reg) = 0;       \
 		virtual const std::vector<std::string>& getNames() const								= 0;       \
-		inline PluginType type() const override { return typeEnum; }                                                \
+		inline PluginType type() const override { return typeEnum; }                                       \
 	}
 
 #define PR_PLUGIN_INIT(classType, pluginName, pluginVersion)              \
 	extern "C" {                                                          \
 	PR_PLUGIN_EXPORT PR::IPlugin* _pr_getFactoryPlugin()                  \
 	{                                                                     \
-		static classType factory;                                         \
-		return &factory;                                                  \
+		return new classType();                                           \
 	}                                                                     \
 	PR_PLUGIN_EXPORT PR::PluginInterface PR_PLUGIN_API_INTERFACE_NAME = { \
 		PR_PLUGIN_API_VERSION,                                            \

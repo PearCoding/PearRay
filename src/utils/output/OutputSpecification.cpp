@@ -11,8 +11,8 @@
 namespace PR {
 using namespace PR;
 
-#define LOCK_FILE_NAME ".pearray_lock"
-#define LOCK_IMG_FILE_NAME ".pearray_img_lock"
+constexpr static const char* LOCK_FILE_NAME = "/.pearray_lock";
+constexpr static const char* LOCK_IMG_FILE_NAME = "/.pearray_img_lock";
 
 OutputSpecification::OutputSpecification()
 	: mInit(false)
@@ -27,7 +27,7 @@ OutputSpecification::~OutputSpecification()
 void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 {
 	if (mInit && !mWorkingDir.empty()) {
-		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
+		std::string f = mWorkingDir + LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
 	}
@@ -39,23 +39,17 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
 
 		// Setup lock directory
-		if (!boost::filesystem::create_directory(mWorkingDir + "/" LOCK_FILE_NAME))
-			PR_LOG(L_WARNING) << "Couldn't create lock directory " << mWorkingDir << "/" LOCK_FILE_NAME ". Maybe already running?" << std::endl;
+		if (!boost::filesystem::create_directory(mWorkingDir + LOCK_FILE_NAME))
+			PR_LOG(L_WARNING) << "Couldn't create lock directory " << mWorkingDir << LOCK_FILE_NAME << ". Maybe already running?" << std::endl;
 
-		if (!boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
-			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << "/" LOCK_IMG_FILE_NAME "!" << std::endl;
+		if (!boost::filesystem::remove(mWorkingDir + LOCK_IMG_FILE_NAME)) // Remove it now
+			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
 	}
 }
 
 void OutputSpecification::deinit()
 {
 	mImageWriter.deinit();
-
-	for (const File& file : mFiles) {
-		if (file.SettingsSpectral)
-			delete file.SettingsSpectral;
-	}
-
 	mFiles.clear();
 	mSpectralFiles.clear();
 
@@ -63,7 +57,7 @@ void OutputSpecification::deinit()
 		return;
 
 	if (!mWorkingDir.empty()) {
-		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
+		std::string f = mWorkingDir + LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f;
 	}
@@ -99,7 +93,7 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		for (const IM_ChannelSettingCounter& cs : file.SettingsCounter) {
 			if (!output->getChannel(cs.Variable))
 				output->registerChannel(cs.Variable,
-										std::make_shared<FrameBufferUInt64>(
+										std::make_shared<FrameBufferUInt32>(
 											1, renderer->width(), renderer->height(), 0));
 		}
 	}
@@ -143,12 +137,6 @@ OutputMap::Variable3D typeToVariable3D(const std::string& str)
 		return OutputMap::V_View;
 	else if (str == "uv" || str == "texture" || str == "uvw" || str == "tex")
 		return OutputMap::V_UVW;
-	else if (str == "dpdu")
-		return OutputMap::V_DPDU;
-	else if (str == "dpdv")
-		return OutputMap::V_DPDV;
-	else if (str == "dpdw")
-		return OutputMap::V_DPDW;
 	else if (str == "velocity" || str == "movement" || str == "dpdt")
 		return OutputMap::V_DPDT;
 	else
@@ -169,8 +157,7 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 					continue;
 
 				File file;
-				file.SettingsSpectral = nullptr;
-				file.Name			  = nameD.getString();
+				file.Name = nameD.getString();
 
 				for (size_t i = 0; i < entry.anonymousCount(); ++i) {
 					DL::Data channelD = entry.at(i);
@@ -230,14 +217,12 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 						}
 
 						if (type == "rgb" || type == "color") {
-							if (file.SettingsSpectral)
-								delete file.SettingsSpectral;
-
-							file.SettingsSpectral			= new IM_ChannelSettingSpec;
-							file.SettingsSpectral->Elements = 0; //TODO
-							file.SettingsSpectral->TCM		= tcm;
-							file.SettingsSpectral->TGM		= tgm;
-							file.SettingsSpectral->TMM		= tmm;
+							IM_ChannelSettingSpec spec;
+							spec.Elements = 0; //TODO
+							spec.TCM	  = tcm;
+							spec.TGM	  = tgm;
+							spec.TMM	  = tmm;
+							file.SettingsSpectral.push_back(spec);
 						} else {
 							OutputMap::Variable3D var3D			  = typeToVariable3D(type);
 							OutputMap::Variable1D var1D			  = typeToVariable1D(type);
@@ -285,21 +270,6 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 									spec.Name[0] = "uv_u";
 									spec.Name[1] = "uv_v";
 									spec.Name[2] = "uv_w";
-									break;
-								case OutputMap::V_DPDU:
-									spec.Name[0] = "dpdu_x";
-									spec.Name[1] = "dpdu_y";
-									spec.Name[2] = "dpdu_z";
-									break;
-								case OutputMap::V_DPDV:
-									spec.Name[0] = "dpdv_x";
-									spec.Name[1] = "dpdv_y";
-									spec.Name[2] = "dpdv_z";
-									break;
-								case OutputMap::V_DPDW:
-									spec.Name[0] = "dpdw_x";
-									spec.Name[1] = "dpdw_y";
-									spec.Name[2] = "dpdw_z";
 									break;
 								case OutputMap::V_DPDT:
 									spec.Name[0] = "dpdt_x";
@@ -367,7 +337,7 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 							   ToneMapper& toneMapper, bool force) const
 {
-	if (!force && !boost::filesystem::create_directory(mWorkingDir + "/" LOCK_IMG_FILE_NAME))
+	if (!force && !boost::filesystem::create_directory(mWorkingDir + LOCK_IMG_FILE_NAME))
 		return;
 
 	std::string resultDir = "/results";
@@ -399,7 +369,7 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 			PR_LOG(L_INFO) << "Saved file " << filename << std::endl;
 	}
 
-	if (!force && !boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
-		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << "/" LOCK_IMG_FILE_NAME "!" << std::endl;
+	if (!force && !boost::filesystem::remove(mWorkingDir + LOCK_IMG_FILE_NAME)) // Remove it now
+		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
 }
 } // namespace PR

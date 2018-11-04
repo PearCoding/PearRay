@@ -1,19 +1,21 @@
 #pragma once
 
-#include "LightPath.h"
 #include "LPE_RegExpr.h"
+#include "LightPath.h"
 
 namespace PR {
-class LPE_RegExpr;
-class LPE_Automaton {
+namespace LPE {
+class RegExpr;
+class Automaton {
 public:
-	LPE_Automaton() = default;
-	~LPE_Automaton() = default;
+	Automaton()  = default;
+	~Automaton() = default;
 
-	bool build(const std::shared_ptr<LPE_RegExpr>& expr);
+	bool build(const std::shared_ptr<RegExpr>& expr);
 	bool match(const LightPath& path) const;
 
 	std::string dumpTable() const;
+
 private:
 	uint32 nextState(uint32 currentState, const LightPathToken& token, bool& success) const;
 
@@ -33,4 +35,5 @@ private:
 
 	uint32 mStartingState;
 };
+} // namespace LPE
 } // namespace PR

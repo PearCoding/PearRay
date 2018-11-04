@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace PR {
-class Registry;
+class RenderManager;
 
 template <class OBJ, class FAC>
 class PR_LIB_INLINE AbstractManager {
@@ -13,9 +13,11 @@ public:
 	AbstractManager()		   = default;
 	virtual ~AbstractManager() = default;
 
+	inline uint32 nextID() const { return size(); }
+
 	inline uint32 addObject(const std::shared_ptr<OBJ>& mat)
 	{
-		const uint32 id = mObjects.size();
+		const uint32 id = nextID();
 		mObjects.emplace_back(mat);
 		return id;
 	}
@@ -24,11 +26,11 @@ public:
 	inline const std::vector<std::shared_ptr<OBJ>>& getAll() const { return mObjects; }
 	inline size_t size() const { return mObjects.size(); }
 
-	virtual void loadFactory(const Registry& reg,
+	virtual bool loadFactory(const RenderManager& mng,
 							 const std::string& base, const std::string& name)
 		= 0;
 
-	inline FAC* getFactory(const std::string& alias) const
+	inline std::shared_ptr<FAC> getFactory(const std::string& alias) const
 	{
 		if (mFactories.count(alias) > 0) {
 			return mFactories.at(alias);
@@ -39,6 +41,6 @@ public:
 
 protected:
 	std::vector<std::shared_ptr<OBJ>> mObjects;
-	std::map<std::string, FAC*> mFactories;
+	std::map<std::string, std::shared_ptr<FAC>> mFactories;
 };
 } // namespace PR

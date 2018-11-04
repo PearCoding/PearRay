@@ -9,7 +9,7 @@ namespace PR {
 ImageShadingSocket::ImageShadingSocket(OIIO::TextureSystem* tsys,
 									   const OIIO::TextureOpt& options,
 									   const std::string& filename)
-	: FloatShadingSocket()
+	: FloatSpectralShadingSocket()
 	, mFilename(filename)
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
@@ -18,7 +18,7 @@ ImageShadingSocket::ImageShadingSocket(OIIO::TextureSystem* tsys,
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
 }
 
-vfloat ImageShadingSocket::eval(size_t channel, const ShadingPoint& ctx) const
+vfloat ImageShadingSocket::eval(const ShadingPoint& ctx) const
 {
 // Batch implementation is incomplete -> Disable it for now
 //#if PR_OIIO_HAS_BATCH_SUPPORT
@@ -27,7 +27,7 @@ vfloat ImageShadingSocket::eval(size_t channel, const ShadingPoint& ctx) const
 				  "OIIO texture batchwidth has to be greater or equal of internal simd bandwidth");
 
 	OIIO::TextureOptBatch batchOp;
-	batchOp.firstchannel = channel;
+	batchOp.firstchannel = ctx.WavelengthIndex;
 	batchOp.swrap		 = mTextureOptions.swrap;
 	batchOp.twrap		 = mTextureOptions.twrap;
 	batchOp.mipmode		 = mTextureOptions.mipmode;
@@ -69,7 +69,7 @@ vfloat ImageShadingSocket::eval(size_t channel, const ShadingPoint& ctx) const
 	return l;
 #else
 	OIIO::TextureOpt ops = mTextureOptions;
-	ops.firstchannel	 = channel;
+	ops.firstchannel	 = ctx.WavelengthIndex;
 
 	PR_SIMD_ALIGN float res[PR_SIMD_BANDWIDTH];
 

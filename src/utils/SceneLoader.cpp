@@ -2,46 +2,26 @@
 #include "Environment.h"
 #include "Logger.h"
 
-#include "entity/RenderEntity.h"
+#include "entity/EntityManager.h"
+#include "entity/IEntity.h"
 #include "entity/VirtualEntity.h"
 
-#include "camera/Camera.h"
+#include "infinitelight/IInfiniteLight.h"
+#include "infinitelight/InfiniteLightManager.h"
 
-#include "parser/entity/BoundaryParser.h"
-#include "parser/entity/CameraParser.h"
-#include "parser/entity/CoordinateAxisParser.h"
-#include "parser/entity/MeshParser.h"
-#include "parser/entity/PlaneParser.h"
-#include "parser/entity/SphereParser.h"
-
-#include "parser/material/BlinnPhongMaterialParser.h"
-#include "parser/material/CookTorranceMaterialParser.h"
-#include "parser/material/DiffuseMaterialParser.h"
-#include "parser/material/GlassMaterialParser.h"
-#include "parser/material/GridMaterialParser.h"
-#include "parser/material/MirrorMaterialParser.h"
-#include "parser/material/OrenNayarMaterialParser.h"
-#include "parser/material/WardMaterialParser.h"
+#include "material/IMaterial.h"
+#include "material/MaterialManager.h"
 
 #include "parser/mesh/TriMeshInlineParser.h"
 
-#include "parser/light/DistantLightParser.h"
-#include "parser/light/EnvironmentLightParser.h"
-
 #include "parser/texture/TextureParser.h"
-
-#include "shader/ConstScalarOutput.h"
-#include "shader/ConstSpectralOutput.h"
-#include "shader/ConstVectorOutput.h"
-#include "shader/ImageScalarOutput.h"
-#include "shader/ImageSpectralOutput.h"
-#include "shader/ImageVectorOutput.h"
 
 #include "loader/WavefrontLoader.h"
 
 #include "spectral/RGBConverter.h"
+#include "spectral/SpectrumDescriptor.h"
 
-#include "material/Material.h"
+#include "shader/ConstShadingSocket.h"
 
 #include "DataLisp.h"
 
@@ -50,16 +30,20 @@
 #include <sstream>
 
 namespace PR {
-std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& path)
+std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& wrkDir,
+													   const std::string& path,
+													   const std::string& pluginPath)
 {
 	std::ifstream stream(path);
 	std::string str((std::istreambuf_iterator<char>(stream)),
 					std::istreambuf_iterator<char>());
 
-	return loadFromString(str);
+	return loadFromString(wrkDir, str, pluginPath);
 }
 
-std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& source)
+std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkDir,
+														 const std::string& source,
+														 const std::string& pluginPath)
 {
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
@@ -80,7 +64,6 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
 			return nullptr;
 		} else {
-			std::shared_ptr<Environment> env = std::make_shared<Environment>();
 
 			DL::Data renderWidthD  = top.getFromKey("renderWidth");
 			DL::Data renderHeightD = top.getFromKey("renderHeight");
@@ -93,7 +76,12 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 			else
 				spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
 
-			env->renderManager().setSpectrumDescriptor(spectrumDescriptor);
+			std::shared_ptr<Environment> env;
+			try {
+				env = std::make_shared<Environment>(wrkDir, spectrumDescriptor, pluginPath);
+			} catch (BadRenderEnvironment e) {
+				return nullptr;
+			}
 
 			if (renderWidthD.type() == DL::Data::T_Integer) {
 				env->setRenderWidth(renderWidthD.getInt());
@@ -172,10 +160,10 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& sour
 			}
 
 			DL::Data cameraD = top.getFromKey("camera");
-			if (cameraD.type() == DL::Data::T_String) {
+			/*if (cameraD.type() == DL::Data::T_String) {
 				auto cam = env->sceneFactory().getEntity(cameraD.getString(), "standard_camera");
 				env->sceneFactory().setActiveCamera(std::static_pointer_cast<Camera>(cam));
-			}
+			}*/
 
 			return env;
 		}
@@ -195,16 +183,16 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	DL::Data value = group.at(1);
 	switch (value.type()) {
 	case DL::Data::T_Integer:
-		env->registry()->set(key, value.getInt());
+		env->renderManager().registry()->set(key, value.getInt());
 		break;
 	case DL::Data::T_Float:
-		env->registry()->set(key, value.getFloat());
+		env->renderManager().registry()->set(key, value.getFloat());
 		break;
 	case DL::Data::T_Bool:
-		env->registry()->set(key, value.getBool());
+		env->renderManager().registry()->set(key, value.getBool());
 		break;
 	case DL::Data::T_String:
-		env->registry()->set(key, value.getString());
+		env->renderManager().registry()->set(key, value.getString());
 		break;
 	case DL::Data::T_Group: // TODO
 	default:
@@ -213,24 +201,11 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	}
 }
 
-struct
+void SceneLoader::addEntity(const DL::DataGroup& group,
+							const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
 {
-	const char* Name;
-	const IEntityParser& Parser;
-} EntityParserEntries[] = {
-	{ "boundary", BoundaryParser() },
-	{ "box", BoundaryParser() },
-	{ "camera", CameraParser() },
-	{ "axis", CoordinateAxisParser() },
-	{ "mesh", MeshParser() },
-	{ "plane", PlaneParser() },
-	{ "sphere", SphereParser() },
+	const uint32 id = env->renderManager().entityManager()->nextID();
 
-	{ nullptr, BoundaryParser() }, //Just for the end
-};
-
-void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
-{
 	DL::Data nameD		= group.getFromKey("name");
 	DL::Data typeD		= group.getFromKey("type");
 	DL::Data transformD = group.getFromKey("transform");
@@ -246,32 +221,12 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 	else
 		name = "UNKNOWN";
 
-	std::shared_ptr<VirtualEntity> entity;
+	std::shared_ptr<IEntity> entity;
 	if (typeD.type() != DL::Data::T_String) {
-		PR_LOG(L_ERROR) << "VirtualEntity " << name << " couldn't be load. No valid type given." << std::endl;
+		PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. No valid type given." << std::endl;
 		return;
-	} else if (typeD.getString() == "null" || typeD.getString() == "empty") {
-		entity = std::make_shared<VirtualEntity>(env->sceneFactory().fullEntityCount() + 1, name);
 	} else {
-		const IEntityParser* parser = nullptr;
-		for (int i = 0; EntityParserEntries[i].Name; ++i) {
-			if (typeD.getString() == EntityParserEntries[i].Name) {
-				parser = &EntityParserEntries[i].Parser;
-				break;
-			}
-		}
-
-		if (parser) {
-			entity = parser->parse(env, name, typeD.getString(), group);
-
-			if (!entity) {
-				PR_LOG(L_ERROR) << "VirtualEntity " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
-				return;
-			}
-		} else {
-			PR_LOG(L_ERROR) << "VirtualEntity " << name << " couldn't be load. Unknown type given." << std::endl;
-			return;
-		}
+		// TODO:
 	}
 
 	PR_ASSERT(entity, "After here it shouldn't be null");
@@ -340,7 +295,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 	}
 
 	// Add to scene
-	env->sceneFactory().addEntity(entity);
+	env->renderManager().entityManager()->addObject(entity);
 
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		if (group.at(i).type() == DL::Data::T_Group) {
@@ -352,19 +307,6 @@ void SceneLoader::addEntity(const DL::DataGroup& group, const std::shared_ptr<PR
 	}
 }
 
-struct
-{
-	const char* Name;
-	const ILightParser& Parser;
-} LightParserEntries[] = {
-	{ "env", EnvironmentLightParser() },
-	{ "environment", EnvironmentLightParser() },
-	{ "background", EnvironmentLightParser() },
-
-	{ "distant", DistantLightParser() },
-	{ "sun", DistantLightParser() },
-	{ nullptr, EnvironmentLightParser() }, //Just for the end
-};
 void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 {
 	DL::Data typeD = group.getFromKey("type");
@@ -380,51 +322,12 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 	}
 
 	std::shared_ptr<IInfiniteLight> light;
-
-	const ILightParser* parser = nullptr;
-	for (int i = 0; LightParserEntries[i].Name; ++i) {
-		if (typeD.getString() == LightParserEntries[i].Name) {
-			parser = &LightParserEntries[i].Parser;
-			break;
-		}
-	}
-
-	if (parser) {
-		light = parser->parse(env, group);
-
-		if (!light) {
-			PR_LOG(L_ERROR) << "Light couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
-			return;
-		}
-	} else {
-		PR_LOG(L_ERROR) << "Light couldn't be load. Unknown type given." << std::endl;
-		return;
-	}
+	// TODO:
 
 	PR_ASSERT(light, "After here it shouldn't be null");
-	env->sceneFactory().addInfiniteLight(light);
+	env->renderManager().infiniteLightManager()->addObject(light);
 }
 
-struct
-{
-	const char* Name;
-	const IMaterialParser& Parser;
-} MaterialParserEntries[] = {
-	{ "standard", CookTorranceMaterialParser() },
-	{ "light", DiffuseMaterialParser() },
-
-	{ "diffuse", DiffuseMaterialParser() },
-	{ "orennayar", OrenNayarMaterialParser() },
-	{ "blinnphong", BlinnPhongMaterialParser() },
-	{ "ward", WardMaterialParser() },
-	{ "cook_torrance", CookTorranceMaterialParser() },
-
-	{ "grid", GridMaterialParser() },
-	{ "glass", GlassMaterialParser() },
-	{ "mirror", MirrorMaterialParser() },
-
-	{ nullptr, DiffuseMaterialParser() }, //Just for the end
-};
 void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 {
 	DL::Data nameD = group.getFromKey("name");
@@ -434,7 +337,6 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 	DL::Data selfShadowD	= group.getFromKey("self_shadow");
 	DL::Data cameraVisibleD = group.getFromKey("camera_visible");
 	DL::Data shadeableD		= group.getFromKey("shadeable");
-	DL::Data emissionD		= group.getFromKey("emission");
 
 	std::string name;
 	std::string type;
@@ -454,39 +356,16 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	std::shared_ptr<Material> mat;
-	const IMaterialParser* parser = nullptr;
-	for (int i = 0; MaterialParserEntries[i].Name; ++i) {
-		if (type == MaterialParserEntries[i].Name) {
-			parser = &MaterialParserEntries[i].Parser;
-			break;
-		}
-	}
-
-	if (parser) {
-		mat = parser->parse(env, typeD.getString(), group);
-
-		if (!mat) {
-			PR_LOG(L_ERROR) << "Material " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
-			return;
-		}
-	} else {
-		PR_LOG(L_ERROR) << "Material " << name << " couldn't be load. Unknown type given." << std::endl;
-		return;
-	}
+	std::shared_ptr<IMaterial> mat;
+	// TODO
 
 	PR_ASSERT(mat, "After here it shouldn't be null");
-
-	mat->setEmission(getSpectralOutput(env, emissionD));
 
 	if (shadeableD.type() == DL::Data::T_Bool)
 		mat->enableShading(shadeableD.getBool());
 
 	if (shadowD.type() == DL::Data::T_Bool)
 		mat->enableShadow(shadowD.getBool());
-
-	if (mat->isLight())
-		mat->enableShadow(true); // Force for lights
 
 	if (selfShadowD.type() == DL::Data::T_Bool)
 		mat->enableSelfShadow(selfShadowD.getBool());
@@ -495,6 +374,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		mat->enableCameraVisibility(cameraVisibleD.getBool());
 
 	env->addMaterial(name, mat);
+	env->renderManager().materialManager()->addObject(mat);
 }
 
 void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
@@ -562,7 +442,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	Spectrum spec(env->spectrumDescriptor());
+	Spectrum spec(env->renderManager().spectrumDescriptor());
 	if (dataD.type() == DL::Data::T_Group) {
 		DL::DataGroup grp = dataD.getGroup();
 		if (grp.isArray()) {
@@ -774,14 +654,14 @@ Eigen::Quaternionf SceneLoader::getRotation(const DL::Data& data, bool& ok)
 	return Eigen::Quaternionf::Identity();
 }
 
-std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
+std::shared_ptr<FloatSpectralShadingSocket> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
 {
 	if (allowScalar && dataD.isNumber()) {
-		return std::make_shared<ConstSpectrumShaderOutput>(
-			Spectrum(env->spectrumDescriptor(), dataD.getNumber()));
+		return std::make_shared<ConstSpectralShadingSocket>(
+			Spectrum(env->renderManager().spectrumDescriptor(), dataD.getNumber()));
 	} else if (dataD.type() == DL::Data::T_String) {
 		if (env->hasSpectrum(dataD.getString()))
-			return std::make_shared<ConstSpectrumShaderOutput>(env->getSpectrum(dataD.getString()));
+			return std::make_shared<ConstSpectralShadingSocket>(env->getSpectrum(dataD.getString()));
 		else
 			PR_LOG(L_WARNING) << "Couldn't find spectrum " << dataD.getString() << " for material" << std::endl;
 	} else if (dataD.type() == DL::Data::T_Group) {
@@ -790,8 +670,8 @@ std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment
 		if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
 			DL::Data nameD = dataD.getGroup().at(0);
 			if (nameD.type() == DL::Data::T_String) {
-				if (env->hasSpectrumShaderOutput(nameD.getString()))
-					return env->getSpectrumShaderOutput(nameD.getString());
+				if (env->isShadingSocket<FloatSpectralShadingSocket>(nameD.getString()))
+					return env->getShadingSocket<FloatSpectralShadingSocket>(nameD.getString());
 				else
 					PR_LOG(L_WARNING) << "Unknown spectral texture " << nameD.getString() << "." << std::endl;
 			}
@@ -805,18 +685,18 @@ std::shared_ptr<SpectrumShaderOutput> SceneLoader::getSpectralOutput(Environment
 	return nullptr;
 }
 
-std::shared_ptr<ScalarShaderOutput> SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD)
+std::shared_ptr<FloatScalarShadingSocket> SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD)
 {
 	if (dataD.isNumber()) {
-		return std::make_shared<ConstScalarShaderOutput>(dataD.getNumber());
+		return std::make_shared<ConstScalarShadingSocket>(dataD.getNumber());
 	} else if (dataD.type() == DL::Data::T_Group) {
 		std::string name = dataD.getGroup().id();
 
 		if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
 			DL::Data nameD = dataD.getGroup().at(0);
 			if (nameD.type() == DL::Data::T_String) {
-				if (env->hasScalarShaderOutput(nameD.getString()))
-					return env->getScalarShaderOutput(nameD.getString());
+				if (env->isShadingSocket<FloatScalarShadingSocket>(nameD.getString()))
+					return env->getShadingSocket<FloatScalarShadingSocket>(nameD.getString());
 				else
 					PR_LOG(L_WARNING) << "Unknown scalar texture " << nameD.getString() << "." << std::endl;
 			}
@@ -830,7 +710,7 @@ std::shared_ptr<ScalarShaderOutput> SceneLoader::getScalarOutput(Environment* en
 	return nullptr;
 }
 
-std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD)
+std::shared_ptr<FloatVectorShadingSocket> SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD)
 {
 	if (dataD.type() == DL::Data::T_Group) {
 		if (dataD.getGroup().isArray()) {
@@ -838,7 +718,7 @@ std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* en
 			const auto vec = getVector(dataD.getGroup(), ok);
 
 			if (ok) {
-				return std::make_shared<ConstVectorShaderOutput>(vec);
+				return std::make_shared<ConstVectorShadingSocket>(vec);
 			} else {
 				PR_LOG(L_WARNING) << "Invalid vector entry." << std::endl;
 			}
@@ -848,8 +728,8 @@ std::shared_ptr<VectorShaderOutput> SceneLoader::getVectorOutput(Environment* en
 			if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
 				DL::Data nameD = dataD.getGroup().at(0);
 				if (nameD.type() == DL::Data::T_String) {
-					if (env->hasVectorShaderOutput(nameD.getString()))
-						return env->getVectorShaderOutput(nameD.getString());
+					if (env->isShadingSocket<FloatVectorShadingSocket>(nameD.getString()))
+						return env->getShadingSocket<FloatVectorShadingSocket>(nameD.getString());
 					else
 						PR_LOG(L_WARNING) << "Unknown vector texture " << nameD.getString() << std::endl;
 				}

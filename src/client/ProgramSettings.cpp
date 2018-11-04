@@ -84,7 +84,7 @@ void validate(boost::any& v,
 BEGIN_ENUM_OPTION(DisplayDriverOption)
 {
 	{"image", DDO_Image},
-	{"net", DDO_Network},
+	//{"net", DDO_Network},
 	{nullptr, DDO_Image}
 };
 
@@ -109,6 +109,7 @@ po::options_description setup_cmd_options()
 			po::value<EnumOption<DisplayDriverOption> >()->default_value(
 				EnumOption<DisplayDriverOption>::get_default()),
 		 	(std::string("Display Driver Mode [") + EnumOption<DisplayDriverOption>::get_names() + "]").c_str())
+		("pluginpath", po::value<std::string>(), "Additional plugin path")
 	;		
 
 	po::options_description network_d("Network");
@@ -201,6 +202,18 @@ bool ProgramSettings::parse(int argc, char** argv)
 	{
 		std::cout << "No output given!" << std::endl;
 		return false;
+	}
+
+	PluginPath = "";
+	if(vm.count("pluginpath"))
+	{
+		PluginPath = vm["pluginpath"].as<std::string>();
+
+		if(!bf::is_directory(PluginPath)) {
+			std::cout << "Given plugin path '" << PluginPath 
+				<< "' is not a valid directory" << std::endl;
+			return false;
+		}
 	}
 
 	// Setup output directory

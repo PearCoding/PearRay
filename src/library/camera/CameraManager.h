@@ -15,7 +15,7 @@ public:
 	inline std::shared_ptr<ICamera> getActiveCamera() const { return getObject(mActiveCamera); }
 	inline bool hasActiveCamera() const { return mActiveCamera < mObjects.size(); }
 
-	void loadFactory(const Registry& reg,
+	bool loadFactory(const RenderManager& mng,
 					 const std::string& base, const std::string& name) override;
 
 private:

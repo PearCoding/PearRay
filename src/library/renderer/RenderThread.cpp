@@ -2,7 +2,7 @@
 #include "RenderContext.h"
 #include "RenderManager.h"
 #include "RenderTile.h"
-#include "RenderSession.h"
+#include "RenderTileSession.h"
 
 #include "integrator/IIntegrator.h"
 
@@ -37,7 +37,7 @@ void RenderThread::main()
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
-			integrator->onPass(RenderSession(mThreadIndex, mTile, &rays, &hits), pass);
+			integrator->onPass(RenderTileSession(mThreadIndex, mTile, &rays, &hits), pass);
 			mTile->inc();
 
 			mTile->setWorking(false);

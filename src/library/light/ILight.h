@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace PR {
-class RenderSession;
+class RenderTileSession;
 
 // Evaluation
 struct PR_LIB_INLINE LightEvalInput {
@@ -28,13 +28,13 @@ public:
 
 	inline uint32 id() const;
 
-	virtual void startGroup(size_t size, const RenderSession& session) = 0;
+	virtual void startGroup(size_t size, const RenderTileSession& session) = 0;
 	virtual void endGroup()											   = 0;
 
 	/*
 		Evaluate the light based on incident direction and point information.
 	*/
-	virtual void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderSession& session) const = 0;
+	virtual void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const = 0;
 
 	virtual std::string dumpInformation() const;
 

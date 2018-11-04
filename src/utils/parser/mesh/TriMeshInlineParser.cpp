@@ -11,9 +11,9 @@
 namespace PR {
 std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::DataGroup& group) const
 {
-	std::vector<Vector3f> positionAttr;
-	std::vector<Vector3f> normalAttr;
-	std::vector<Vector2f> uvAttr;
+	std::vector<float> positionAttr[3];
+	std::vector<float> normalAttr[3];
+	std::vector<float> uvAttr[2];
 	// TODO: More attributes!
 
 	// First get attributes
@@ -47,7 +47,8 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 					Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 					if (ok) {
-						positionAttr.push_back(Vector3f{ v[0], v[1], v[2] });
+						for (int i = 0; i < 3; ++i)
+							positionAttr[i].push_back(v[i]);
 					} else {
 						PR_LOG(L_ERROR) << "Mesh position attribute entry is invalid." << std::endl;
 						return nullptr;
@@ -65,7 +66,8 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 					Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 					if (ok) {
-						normalAttr.push_back(Vector3f{ v[0], v[1], v[2] });
+						for (int i = 0; i < 3; ++i)
+							normalAttr[i].push_back(v[i]);
 					} else {
 						PR_LOG(L_ERROR) << "Mesh normal attribute entry is invalid." << std::endl;
 						return nullptr;
@@ -83,7 +85,8 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 					Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 					if (ok) {
-						uvAttr.push_back(Vector2f{ v[0], v[1] });
+						for (int i = 0; i < 2; ++i)
+							uvAttr[i].push_back(v[i]);
 					} else {
 						PR_LOG(L_ERROR) << "Mesh texture attribute entry is invalid." << std::endl;
 						return nullptr;
@@ -122,17 +125,17 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 	}
 
 	// Check validity
-	if (positionAttr.empty()) {
+	if (positionAttr[0].empty()) {
 		PR_LOG(L_ERROR) << "No position attribute given." << std::endl;
 		return nullptr;
 	}
 
-	if (normalAttr.empty() || normalAttr.size() != positionAttr.size()) {
+	if (normalAttr[0].empty() || normalAttr[0].size() != positionAttr[0].size()) {
 		PR_LOG(L_ERROR) << "Normal attribute does not match position attribute in size or is empty." << std::endl;
 		return nullptr;
 	}
 
-	if (!uvAttr.empty() && uvAttr.size() != positionAttr.size()) {
+	if (!uvAttr[0].empty() && uvAttr[0].size() != positionAttr[0].size()) {
 		PR_LOG(L_ERROR) << "Texture attribute does not match position attribute in size." << std::endl;
 		return nullptr;
 	}
@@ -160,21 +163,24 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 	}
 
 	// Get indices (faces) -> only triangles!
-	std::vector<Vector3u64> faces;
+	std::vector<uint32> faces[3];
+	const size_t vertexCount = positionAttr[0].size();
 	if (!hasFaces) { // Assume linear
-		if ((positionAttr.size() % 3) != 0) {
+		if ((vertexCount % 3) != 0) {
 			PR_LOG(L_ERROR) << "Given position attribute count is not a multiply of 3." << std::endl;
 			return nullptr;
 		}
 
-		if (hasMaterials && materialsGrp.anonymousCount() != positionAttr.size() / 3) {
+		if (hasMaterials && materialsGrp.anonymousCount() != vertexCount / 3) {
 			PR_LOG(L_ERROR) << "Given material index count is not equal to face count." << std::endl;
 			return nullptr;
 		}
 
-		faces.reserve(positionAttr.size() / 3);
-		for (size_t j = 0; positionAttr.size(); j += 3) {
-			faces.push_back(Vector3u64{ j + 0, j + 1, j + 2 });
+		for (int k = 0; k < 3; ++k)
+			faces[k].reserve(vertexCount / 3);
+
+		for (size_t j = 0; vertexCount; ++j) {
+			faces[j % 3].push_back(j);
 		}
 	} else {
 		if ((facesGrp.anonymousCount() % 3) != 0) {
@@ -187,36 +193,34 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 			return nullptr;
 		}
 
-		faces.reserve(facesGrp.anonymousCount() / 3);
-		for (size_t j = 0; j < facesGrp.anonymousCount(); j += 3) {
-			DL::Data i1D = facesGrp.at(j);
-			DL::Data i2D = facesGrp.at(j + 1);
-			DL::Data i3D = facesGrp.at(j + 2);
+		for (int k = 0; k < 3; ++k)
+			faces[k].reserve(facesGrp.anonymousCount() / 3);
 
-			if (i1D.type() != DL::Data::T_Integer || i2D.type() != DL::Data::T_Integer || i3D.type() != DL::Data::T_Integer) {
+		for (size_t j = 0; j < facesGrp.anonymousCount(); ++j) {
+			DL::Data iD = facesGrp.at(j);
+
+			if (iD.type() != DL::Data::T_Integer) {
 				PR_LOG(L_ERROR) << "Given index is invalid." << std::endl;
 				return nullptr;
 			}
 
-			auto i1 = i1D.getInt();
-			auto i2 = i2D.getInt();
-			auto i3 = i3D.getInt();
+			auto val = iD.getInt();
 
-			if (i1 < 0 || (size_t)i1 >= positionAttr.size() || i2 < 0 || (size_t)i2 >= positionAttr.size() || i3 < 0 || (size_t)i3 >= positionAttr.size()) {
+			if (val < 0 || (size_t)val >= vertexCount) {
 				PR_LOG(L_ERROR) << "Given index range is invalid." << std::endl;
 				return nullptr;
 			}
 
-			faces.push_back(Vector3u64{ static_cast<uint64>(i1), static_cast<uint64>(i2), static_cast<uint64>(i3) });
+			faces[j % 3].push_back(val);
 		}
 	}
 
 	auto me = std::make_shared<TriMesh>();
-	me->setVertices(positionAttr);
-	me->setNormals(normalAttr);
-	me->setUVs(uvAttr);
+	me->setVertices(positionAttr[0], positionAttr[1], positionAttr[2]);
+	me->setNormals(normalAttr[0], normalAttr[1], normalAttr[2]);
+	me->setUVs(uvAttr[0], uvAttr[1]);
 	me->setMaterials(materials);
-	me->setIndices(faces);
+	me->setIndices(faces[0], faces[1], faces[2]);
 
 	if (me->isValid()) {
 		return me;

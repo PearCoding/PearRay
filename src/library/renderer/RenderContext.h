@@ -15,7 +15,7 @@ class IIntegrator;
 class OutputMap;
 class RayStream;
 class RenderManager;
-class RenderSession;
+class RenderTileSession;
 class RenderThread;
 class RenderTile;
 class RenderTileMap;
