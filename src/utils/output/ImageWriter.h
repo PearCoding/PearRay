@@ -13,14 +13,14 @@ struct IM_ChannelSetting1D {
 	std::string Name;
 	OutputMap::Variable1D Variable;
 	ToneMapperMode TMM; //TODO: Not implemented
-	int LPE;
+	int LPE = -1;
 };
 
 struct IM_ChannelSettingCounter {
 	std::string Name;
 	OutputMap::VariableCounter Variable;
 	ToneMapperMode TMM; //TODO: Not implemented
-	int LPE;
+	int LPE = -1;
 };
 
 struct IM_ChannelSetting3D {
@@ -28,7 +28,7 @@ struct IM_ChannelSetting3D {
 	OutputMap::Variable3D Variable;
 	unsigned char Elements; //TODO: Not implemented
 	ToneMapperMode TMM;		//TODO: Not implemented
-	int LPE;
+	int LPE = -1;
 };
 
 struct IM_ChannelSettingSpec {
@@ -37,7 +37,7 @@ struct IM_ChannelSettingSpec {
 	ToneColorMode TCM;
 	ToneGammaMode TGM;
 	ToneMapperMode TMM;
-	int LPE;
+	int LPE = -1;
 };
 
 class PR_LIB_UTILS ImageWriter {

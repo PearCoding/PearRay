@@ -1,11 +1,9 @@
 #pragma once
 
-#include "AbstractManager.h"
+#include "ICameraFactory.h"
+#include "plugin/AbstractManager.h"
 
 namespace PR {
-class ICamera;
-class ICameraFactory;
-
 class PR_LIB CameraManager : public AbstractManager<ICamera, ICameraFactory> {
 public:
 	CameraManager();
@@ -14,9 +12,6 @@ public:
 	inline void setActiveCamera(uint32 id) { mActiveCamera = id; }
 	inline std::shared_ptr<ICamera> getActiveCamera() const { return getObject(mActiveCamera); }
 	inline bool hasActiveCamera() const { return mActiveCamera < mObjects.size(); }
-
-	bool loadFactory(const RenderManager& mng,
-					 const std::string& base, const std::string& name) override;
 
 private:
 	uint32 mActiveCamera;

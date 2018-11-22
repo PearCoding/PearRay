@@ -1,4 +1,5 @@
 #include "camera/ICamera.h"
+#include "camera/ICameraFactory.h"
 
 #include "Logger.h"
 #include "ray/Ray.h"
@@ -271,4 +272,26 @@ void StandardCamera::onFreeze(RenderContext* context)
 					   << "] YAperature[" << mYApertureRadius_Cache << "]" << std::endl;
 	}
 }
+
+class StandardCameraFactory : public ICameraFactory {
+public:
+	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const Registry& reg)
+	{
+		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
+		return std::make_shared<StandardCamera>(id, name);
+	}
+
+	const std::vector<std::string>& getNames() const
+	{
+		static std::vector<std::string> names({ "standard_camera", "standard", "default" });
+		return names;
+	}
+
+	bool init()
+	{
+		return true;
+	}
+};
 } // namespace PR
+
+PR_PLUGIN_INIT(PR::StandardCameraFactory, "cam_standardcamera", PR_PLUGIN_VERSION)

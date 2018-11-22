@@ -8,8 +8,8 @@
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/InfiniteLightManager.h"
-#include "light/ILight.h"
-#include "light/LightManager.h"
+#include "emission/IEmission.h"
+#include "emission/EmissionManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "renderer/RenderContext.h"
@@ -147,10 +147,10 @@ void Scene::setup(RenderContext* context)
 	for (auto e : mRenderManager->cameraManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mRenderManager->lightManager()->getAll())
+	for (auto e : mRenderManager->infiniteLightManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mRenderManager->infiniteLightManager()->getAll())
+	for (auto e : mRenderManager->emissionManager()->getAll())
 		e->freeze(context);
 
 	for (auto e : mRenderManager->materialManager()->getAll())

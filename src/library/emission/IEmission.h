@@ -21,10 +21,10 @@ struct PR_LIB_INLINE LightEvalOutput {
 	vfloat Weight;
 };
 
-class PR_LIB ILight : public IFreezable {
+class PR_LIB IEmission : public IFreezable {
 public:
-	ILight(uint32 id);
-	virtual ~ILight() {}
+	IEmission(uint32 id);
+	virtual ~IEmission() {}
 
 	inline uint32 id() const;
 
@@ -43,4 +43,4 @@ private:
 };
 } // namespace PR
 
-#include "ILight.inl"
+#include "IEmission.inl"

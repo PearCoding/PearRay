@@ -4,6 +4,6 @@
 
 namespace PR {
 
-PR_INTERNAL_PLUGIN_DEFINE_FACTORY(ILightFactory, ILight, PT_LIGHT);
+PR_INTERNAL_PLUGIN_DEFINE_FACTORY(IEmissionFactory, IEmission, PT_EMISSION);
 
 } // namespace PR

@@ -10,7 +10,7 @@ class EntityManager;
 class PluginManager;
 class MaterialManager;
 class CameraManager;
-class LightManager;
+class EmissionManager;
 class InfiniteLightManager;
 class IntegratorManager;
 class Scene;
@@ -26,9 +26,9 @@ public:
 	inline std::shared_ptr<MaterialManager> materialManager() const { return mMaterialManager; }
 	inline std::shared_ptr<EntityManager> entityManager() const { return mEntityManager; }
 	inline std::shared_ptr<CameraManager> cameraManager() const { return mCameraManager; }
-	inline std::shared_ptr<LightManager> lightManager() const { return mLightManager; }
+	inline std::shared_ptr<EmissionManager> emissionManager() const { return mEmissionManager; }
 	inline std::shared_ptr<InfiniteLightManager> infiniteLightManager() const { return mInfiniteLightManager; }
-	/*inline std::shared_ptr<IntegratorManager> integratorManager() const { return mIntegratorManager; }*/
+	inline std::shared_ptr<IntegratorManager> integratorManager() const { return mIntegratorManager; }
 
 	inline void setSpectrumDescriptor(const std::shared_ptr<SpectrumDescriptor>& desc)
 	{
@@ -45,6 +45,7 @@ public:
 	std::shared_ptr<Scene> createScene() const;
 	std::shared_ptr<RenderFactory> createRenderFactory() const;
 
+	void loadPlugins(const std::string& basedir);
 private:
 	std::string mWorkingDir;
 
@@ -55,8 +56,8 @@ private:
 	std::shared_ptr<MaterialManager> mMaterialManager;
 	std::shared_ptr<EntityManager> mEntityManager;
 	std::shared_ptr<CameraManager> mCameraManager;
-	std::shared_ptr<LightManager> mLightManager;
+	std::shared_ptr<EmissionManager> mEmissionManager;
 	std::shared_ptr<InfiniteLightManager> mInfiniteLightManager;
-	/*std::shared_ptr<IntegratorManager> mIntegratorManager;*/
+	std::shared_ptr<IntegratorManager> mIntegratorManager;
 };
 } // namespace PR

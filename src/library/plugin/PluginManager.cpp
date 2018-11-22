@@ -101,9 +101,12 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::string& path, const Regi
 	if (!try_load(path + "_d", reg, useFallbacks)) {
 		if (!try_load(path, reg, useFallbacks)) {
 			return nullptr;
+		} else {
+			return get(path);
 		}
+	} else {
+		return get(path + "_d");
 	}
-	return get(path);
 #else
 	if (!try_load(path, reg, useFallbacks))
 		return nullptr;

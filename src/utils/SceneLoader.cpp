@@ -4,13 +4,23 @@
 
 #include "entity/EntityManager.h"
 #include "entity/IEntity.h"
-#include "entity/VirtualEntity.h"
+#include "entity/IEntityFactory.h"
+
+#include "camera/CameraManager.h"
+#include "camera/ICamera.h"
+#include "camera/ICameraFactory.h"
 
 #include "infinitelight/IInfiniteLight.h"
+#include "infinitelight/IInfiniteLightFactory.h"
 #include "infinitelight/InfiniteLightManager.h"
 
 #include "material/IMaterial.h"
+#include "material/IMaterialFactory.h"
 #include "material/MaterialManager.h"
+
+#include "emission/EmissionManager.h"
+#include "emission/IEmission.h"
+#include "emission/IEmissionFactory.h"
 
 #include "parser/mesh/TriMeshInlineParser.h"
 
@@ -29,6 +39,7 @@
 #include <fstream>
 #include <sstream>
 
+/* This source code has many repetative code lines. Better refactoring needed! */
 namespace PR {
 std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& wrkDir,
 													   const std::string& path,
@@ -142,6 +153,8 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 
 					if (entry.id() == "material")
 						addMaterial(entry, env.get());
+					else if (entry.id() == "emission")
+						addEmission(entry, env.get());
 				}
 			}
 
@@ -156,14 +169,10 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 						addEntity(entry, nullptr, env.get());
 					else if (entry.id() == "light")
 						addLight(entry, env.get());
+					else if (entry.id() == "camera")
+						addCamera(entry, env.get());
 				}
 			}
-
-			DL::Data cameraD = top.getFromKey("camera");
-			/*if (cameraD.type() == DL::Data::T_String) {
-				auto cam = env->sceneFactory().getEntity(cameraD.getString(), "standard_camera");
-				env->sceneFactory().setActiveCamera(std::static_pointer_cast<Camera>(cam));
-			}*/
 
 			return env;
 		}
@@ -204,7 +213,8 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 void SceneLoader::addEntity(const DL::DataGroup& group,
 							const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
 {
-	const uint32 id = env->renderManager().entityManager()->nextID();
+	auto manag		= env->renderManager().entityManager();
+	const uint32 id = manag->nextID();
 
 	DL::Data nameD		= group.getFromKey("name");
 	DL::Data typeD		= group.getFromKey("type");
@@ -212,8 +222,9 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	DL::Data posD		= group.getFromKey("position");
 	DL::Data rotD		= group.getFromKey("rotation");
 	DL::Data scaleD		= group.getFromKey("scale");
-
 	DL::Data localAreaD = group.getFromKey("local_area");
+
+	populateObjectRegistry(RG_ENTITY, id, group, env);
 
 	std::string name;
 	if (nameD.type() == DL::Data::T_String)
@@ -221,16 +232,28 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	else
 		name = "UNKNOWN";
 
-	std::shared_ptr<IEntity> entity;
+	std::string type;
 	if (typeD.type() != DL::Data::T_String) {
 		PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. No valid type given." << std::endl;
 		return;
 	} else {
-		// TODO:
+		type = typeD.getString();
+		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	}
 
-	PR_ASSERT(entity, "After here it shouldn't be null");
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown entity type " << type << std::endl;
+		return;
+	}
 
+	auto entity = fac->create(id, id, *env->renderManager().registry());
+	if (!entity) {
+		PR_LOG(L_ERROR) << "Could not create entity of type " << type << std::endl;
+		return;
+	}
+
+	// Setup transform
 	if (transformD.type() == DL::Data::T_Group) {
 		bool ok;
 		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
@@ -307,8 +330,114 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	}
 }
 
+void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
+{
+	auto manag		= env->renderManager().cameraManager();
+	const uint32 id = manag->nextID();
+
+	DL::Data nameD		= group.getFromKey("name");
+	DL::Data typeD		= group.getFromKey("type");
+	DL::Data transformD = group.getFromKey("transform");
+	DL::Data posD		= group.getFromKey("position");
+	DL::Data rotD		= group.getFromKey("rotation");
+	DL::Data scaleD		= group.getFromKey("scale");
+
+	populateObjectRegistry(RG_CAMERA, id, group, env);
+
+	std::string name;
+	if (nameD.type() == DL::Data::T_String)
+		name = nameD.getString();
+	else
+		name = "UNKNOWN";
+
+	std::string type;
+	if (typeD.type() != DL::Data::T_String) {
+		if(typeD.isValid()) {
+			PR_LOG(L_ERROR) << "No valid camera type set" << std::endl;
+			return;
+		} else {
+			type = "standard";
+		}
+	} else {
+		type = typeD.getString();
+		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+	}
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown camera type " << type << std::endl;
+		return;
+	}
+
+	auto camera = fac->create(id, id, *env->renderManager().registry());
+	if (!camera) {
+		PR_LOG(L_ERROR) << "Could not create camera of type " << type << std::endl;
+		return;
+	}
+
+	// Setup transform
+	if (transformD.type() == DL::Data::T_Group) {
+		bool ok;
+		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
+		//t.makeAffine();
+
+		if (!ok)
+			PR_LOG(L_WARNING) << "Couldn't set transform for camera " << name << std::endl;
+		else
+			camera->setTransform(t);
+	} else {
+		bool ok;
+		Eigen::Vector3f pos;
+		Eigen::Quaternionf rot;
+		Eigen::Vector3f sca;
+
+		if (posD.type() == DL::Data::T_Group) {
+			pos = getVector(posD.getGroup(), ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set position for camera " << name << std::endl;
+		}
+
+		if (ok && rotD.type() == DL::Data::T_Group) {
+			rot = getRotation(rotD, ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set rotation for camera " << name << std::endl;
+		}
+
+		if (ok && scaleD.isNumber()) {
+			float s = scaleD.getNumber();
+			sca		= Eigen::Vector3f(s, s, s);
+		} else if (ok && scaleD.type() == DL::Data::T_Group) {
+			sca = getVector(scaleD.getGroup(), ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set scale for camera " << name << std::endl;
+		}
+
+		if (!ok) {
+			return;
+		} else {
+			rot.normalize();
+
+			VirtualEntity::Transform trans;
+			trans.fromPositionOrientationScale(pos, rot, sca);
+			trans.makeAffine();
+
+			camera->setTransform(trans);
+		}
+	}
+
+	manag->addObject(camera);
+}
+
 void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 {
+	auto manag		= env->renderManager().infiniteLightManager();
+	const uint32 id = manag->nextID();
+
+	populateObjectRegistry(RG_INFINITELIGHT, id, group, env);
+
 	DL::Data typeD = group.getFromKey("type");
 
 	std::string type;
@@ -321,15 +450,79 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	std::shared_ptr<IInfiniteLight> light;
-	// TODO:
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown light type " << type << std::endl;
+		return;
+	}
 
-	PR_ASSERT(light, "After here it shouldn't be null");
+	auto light = fac->create(id, id, *env->renderManager().registry());
+	if (!light) {
+		PR_LOG(L_ERROR) << "Could not create light of type " << type << std::endl;
+		return;
+	}
+
 	env->renderManager().infiniteLightManager()->addObject(light);
+}
+
+void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
+{
+	auto manag		= env->renderManager().emissionManager();
+	const uint32 id = manag->nextID();
+
+	populateObjectRegistry(RG_EMISSION, id, group, env);
+
+	DL::Data nameD = group.getFromKey("name");
+	DL::Data typeD = group.getFromKey("type");
+
+	std::string name;
+	if (nameD.type() == DL::Data::T_String) {
+		name = nameD.getString();
+	} else {
+		PR_LOG(L_ERROR) << "No emission name set" << std::endl;
+		return;
+	}
+
+	if (env->hasEmission(name)) {
+		PR_LOG(L_ERROR) << "Emission name already set" << std::endl;
+		return;
+	}
+
+	std::string type;
+	if (typeD.type() == DL::Data::T_String) {
+		type = typeD.getString();
+		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+	} else {
+		if(typeD.isValid()) {
+			PR_LOG(L_ERROR) << "No valid emission type set" << std::endl;
+			return;
+		} else {
+			type = "diffuse";
+		}
+	}
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown emission type " << type << std::endl;
+		return;
+	}
+
+	auto emission = fac->create(id, id, *env->renderManager().registry());
+	if (!emission) {
+		PR_LOG(L_ERROR) << "Could not create emission of type " << type << std::endl;
+		return;
+	}
+
+	env->addEmission(name, emission);
+	manag->addObject(emission);
 }
 
 void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 {
+	auto manag		= env->renderManager().materialManager();
+	const uint32 id = manag->nextID();
+	populateObjectRegistry(RG_MATERIAL, id, group, env);
+
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
 
@@ -348,6 +541,11 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
+	if (env->hasMaterial(name)) {
+		PR_LOG(L_ERROR) << "Material name already set" << std::endl;
+		return;
+	}
+
 	if (typeD.type() == DL::Data::T_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
@@ -356,10 +554,17 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	std::shared_ptr<IMaterial> mat;
-	// TODO
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "Unknown material type " << type << std::endl;
+		return;
+	}
 
-	PR_ASSERT(mat, "After here it shouldn't be null");
+	auto mat = fac->create(id, id, *env->renderManager().registry());
+	if (!mat) {
+		PR_LOG(L_ERROR) << "Could not create material of type " << type << std::endl;
+		return;
+	}
 
 	if (shadeableD.type() == DL::Data::T_Bool)
 		mat->enableShading(shadeableD.getBool());
@@ -374,7 +579,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		mat->enableCameraVisibility(cameraVisibleD.getBool());
 
 	env->addMaterial(name, mat);
-	env->renderManager().materialManager()->addObject(mat);
+	manag->addObject(mat);
 }
 
 void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
@@ -409,12 +614,21 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
+	if (env->hasMesh(name)) {
+		PR_LOG(L_ERROR) << "Mesh name already set" << std::endl;
+		return;
+	}
+
 	if (typeD.type() == DL::Data::T_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOG(L_ERROR) << "No mesh type set" << std::endl;
-		return;
+		if(typeD.isValid()) {
+			PR_LOG(L_ERROR) << "No valid mesh type set" << std::endl;
+			return;
+		} else {
+			type = "triangles";
+		}
 	}
 
 	TriMeshInlineParser parser;
@@ -439,6 +653,11 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		name = nameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "Couldn't get name for spectral entry." << std::endl;
+		return;
+	}
+
+	if (env->hasSpectrum(name)) {
+		PR_LOG(L_ERROR) << "Spectrum name already set" << std::endl;
 		return;
 	}
 
@@ -742,5 +961,38 @@ std::shared_ptr<FloatVectorShadingSocket> SceneLoader::getVectorOutput(Environme
 	}
 
 	return nullptr;
+}
+
+void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
+										 const DL::DataGroup& group, Environment* env)
+{
+	auto reg = env->renderManager().registry();
+	for (const auto& entry : group.getNamedEntries()) {
+		if (entry.key() == "transform"
+			|| entry.key() == "position"
+			|| entry.key() == "rotation"
+			|| entry.key() == "scale")
+			continue; // Skip those entries
+
+		switch (entry.type()) {
+		case DL::Data::T_Integer:
+			reg->setForObject(regGroup, id, entry.key(), entry.getInt());
+			break;
+		case DL::Data::T_Float:
+			reg->setForObject(regGroup, id, entry.key(), entry.getFloat());
+			break;
+		case DL::Data::T_String:
+			reg->setForObject(regGroup, id, entry.key(), entry.getString());
+			break;
+		case DL::Data::T_Bool:
+			reg->setForObject(regGroup, id, entry.key(), entry.getBool());
+			break;
+		case DL::Data::T_Group:
+			/* TODO */
+			break;
+		case DL::Data::T_None:/* IGNORE */
+			break;
+		}
+	}
 }
 } // namespace PR

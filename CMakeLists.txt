@@ -63,7 +63,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Boost_USE_MULTITHREADED ON)
 #set(BOOST_ALL_DYN_LINK ON)
 
-find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options REQUIRED)
+find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
 
 IF(PR_WITH_VIEWER OR PR_WITH_CNT_VIEWER)
 	find_package(Qt5Widgets)

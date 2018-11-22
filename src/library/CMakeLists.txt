@@ -14,8 +14,7 @@ SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
 SET(PR_Container_Src 
   container/kdTreeBuilder.cpp
   container/kdTreeBuilderNaive.cpp
-  container/kdTreeCollider.cpp
-  )
+  container/kdTreeCollider.cpp)
 SOURCE_GROUP("Source Files\\Container" FILES ${PR_Container_Src})
 SET(PR_Entity_Src
   entity/EntityManager.cpp
@@ -28,17 +27,18 @@ SET(PR_Geometry_Src
   geometry/Sphere.cpp
   geometry/TriMesh.cpp)
 SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
-SET(PR_Integrator_Src
-  integrator/IIntegrator.cpp)
-SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
+SET(PR_Emission_Src
+  emission/IEmission.cpp
+  emission/EmissionManager.cpp)
+SOURCE_GROUP("Source Files\\Emission" FILES ${PR_Emission_Src})
 SET(PR_InfiniteLight_Src
-  light/ILight.cpp
-  light/LightManager.cpp)
-SOURCE_GROUP("Source Files\\InfiniteLight" FILES ${PR_InfiniteLight_Src})
-SET(PR_Light_Src
   infinitelight/IInfiniteLight.cpp
   infinitelight/InfiniteLightManager.cpp)
-SOURCE_GROUP("Source Files\\Light" FILES ${PR_Light_Src})
+SOURCE_GROUP("Source Files\\InfiniteLight" FILES ${PR_InfiniteLight_Src})
+SET(PR_Integrator_Src
+  integrator/IIntegrator.cpp
+  integrator/IntegratorManager.cpp)
+SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
 SET(PR_Material_Src
   material/IMaterial.cpp
   material/MaterialManager.cpp)
@@ -53,9 +53,7 @@ SET(PR_Path_Src
   path/LPE_Parser.cpp
   path/LPE_RegExpr.cpp)
 SOURCE_GROUP("Source Files\\Path" FILES ${PR_Path_Src})
-SET(PR_Photon_Src )
-SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
-SET(PR_Plugin_Src 
+SET(PR_Plugin_Src
   plugin/PluginManager.cpp)
 SOURCE_GROUP("Source Files\\Plugin" FILES ${PR_Plugin_Src})
 SET(PR_Ray_Src
@@ -110,8 +108,8 @@ SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
   ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
   ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
   ${PR_Affector_Src} ${PR_Math_Src} ${PR_Buffer_Src}
-  ${PR_Light_Src} ${PR_Container_Src} ${PR_Registry_Src}
-  ${PR_Plugin_Src} ${PR_InfiniteLight_Src} ${PR_Path_Src}
+  ${PR_InfiniteLight_Src} ${PR_Container_Src} ${PR_Registry_Src}
+  ${PR_Plugin_Src} ${PR_Emission_Src} ${PR_Path_Src}
 )
 
 SET(PR_Main_Hdr
@@ -155,18 +153,19 @@ SET(PR_Geometry_Hdr
 SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
 SET(PR_Integrator_Hdr
   integrator/IIntegrator.h
-  integrator/IIntegratorFactory.h)
+  integrator/IIntegratorFactory.h
+  integrator/IntegratorManager.h)
 SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
 SET(PR_InfiniteLight_Hdr
   infinitelight/IInfiniteLight.h
   infinitelight/IInfiniteLightFactory.h
   infinitelight/InfiniteLightManager.h)
 SOURCE_GROUP("Header Files\\InfiniteLight" FILES ${PR_InfiniteLight_Hdr})
-SET(PR_Light_Hdr
-  light/ILight.h
-  light/ILightFactory.h
-  light/LightManager.h)
-SOURCE_GROUP("Header Files\\Light" FILES ${PR_Light_Hdr})
+SET(PR_Emission_Hdr
+  emission/IEmission.h
+  emission/IEmissionFactory.h
+  emission/EmissionManager.h)
+SOURCE_GROUP("Header Files\\Emission" FILES ${PR_Emission_Hdr})
 SET(PR_Material_Hdr 
   material/IMaterial.h
   material/IMaterial.inl
@@ -206,6 +205,7 @@ SET(PR_Photon_Hdr
   photon/PhotonMap.inl)
 SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
 SET(PR_Plugin_Hdr
+  plugin/AbstractManager.h
   plugin/Plugin.h
   plugin/PluginManager.h)
 SOURCE_GROUP("Header Files\\Plugin" FILES ${PR_Plugin_Hdr})
@@ -275,7 +275,7 @@ SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
   ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
   ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
   ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_Buffer_Hdr}
-  ${PR_Light_Hdr} ${PR_Registry_Hdr} ${PR_Plugin_Hdr}
+  ${PR_Emission_Hdr} ${PR_Registry_Hdr} ${PR_Plugin_Hdr}
   ${PR_InfiniteLight_Hdr} ${PR_Path_Hdr}
 )
   	

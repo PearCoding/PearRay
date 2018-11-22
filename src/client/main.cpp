@@ -67,6 +67,11 @@ int main(int argc, char** argv)
 		return -4;
 	}
 
+	if (options.ShowRegistry && !options.IsQuiet) {
+		std::cout << "Registry:" << std::endl
+				  << env->renderManager().registry()->dump() << std::endl;
+	}
+
 	// Render per image tile
 	PR::ToneMapper toneMapper;
 	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {

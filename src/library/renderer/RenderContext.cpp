@@ -1,10 +1,10 @@
 #include "RenderContext.h"
 #include "OutputMap.h"
 #include "RenderManager.h"
-#include "RenderTileSession.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
 #include "RenderTileMap.h"
+#include "RenderTileSession.h"
 
 #include "camera/ICamera.h"
 #include "entity/EntityManager.h"
@@ -15,6 +15,8 @@
 #include "infinitelight/IInfiniteLight.h"
 
 #include "integrator/IIntegrator.h"
+#include "integrator/IIntegratorFactory.h"
+#include "integrator/IntegratorManager.h"
 
 #include "shader/ShadingPoint.h"
 
@@ -64,7 +66,7 @@ void RenderContext::reset()
 	mIncrementalCurrentSample = 0;
 
 	mIntegrator.reset();
-	
+
 	for (RenderThread* thread : mThreads)
 		delete thread;
 
@@ -85,10 +87,21 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	}
 
 	/* Setup integrators */
-	//mIntegrator = Integrator::create(this, mRenderSettings.integratorMode());
+	auto intfact = mRenderManager->integratorManager()->getFactory(mRenderSettings.integratorMode());
+	if (!intfact) {
+		PR_LOG(L_ERROR) << "Integrator " << mRenderSettings.integratorMode()
+						<< " not found!" << std::endl;
+		return;
+	}
 
-	PR_ASSERT(mIntegrator, "Integrator should be set after selection");
+	mIntegrator = intfact->create(this);
+	if (!mIntegrator) {
+		PR_LOG(L_ERROR) << "Integrator " << mRenderSettings.integratorMode()
+						<< " implementation is broken! Please contact plugin developer." << std::endl;
+		return;
+	}
 
+	// Get other informations
 	mMaxRayDepth	 = mRenderSettings.maxRayDepth();
 	mSamplesPerPixel = mRenderSettings.samplesPerPixel();
 
@@ -127,7 +140,7 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 
 	// Init modules
 	mIntegrator->init();
-	
+
 	mOutputMap->clear();
 
 	// Start

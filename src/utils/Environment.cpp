@@ -1,8 +1,12 @@
 #include "Environment.h"
 
+#include "camera/CameraManager.h"
+#include "emission/EmissionManager.h"
+#include "emission/IEmission.h"
 #include "entity/EntityManager.h"
 #include "entity/IEntity.h"
 #include "geometry/TriMesh.h"
+#include "infinitelight/InfiniteLightManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "renderer/RenderFactory.h"
@@ -21,7 +25,7 @@ Environment::Environment(const std::string& workdir,
 	: mRenderManager(workdir)
 {
 	mRenderManager.setSpectrumDescriptor(specDesc);
-	mRenderManager.registry()->setByGroup(RG_RENDERER, "plugin/path", plugdir);
+	mRenderManager.registry()->setByGroup(RG_RENDERER, "plugins/path", plugdir);
 	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
@@ -44,10 +48,7 @@ Environment::Environment(const std::string& workdir,
 		addColor("lightGray", 0.666f, 0.666f, 0.666f);
 		addColor("darkGray", 0.333f, 0.333f, 0.333f);
 
-		// Load
-		if (!mRenderManager.materialManager()->loadFactory(mRenderManager,
-														   "", "lambert"))
-			throw BadRenderEnvironment();
+		mRenderManager.loadPlugins(plugdir);
 	}
 }
 

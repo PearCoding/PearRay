@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entity/VirtualEntity.h"
-#include "light/ILight.h"
+#include "emission/IEmission.h"
 #include "math/SIMD.h"
 #include <memory>
 

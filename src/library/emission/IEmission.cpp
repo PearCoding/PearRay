@@ -1,15 +1,15 @@
-#include "ILight.h"
+#include "IEmission.h"
 
 #include <sstream>
 
 namespace PR {
-ILight::ILight(uint32 id)
+IEmission::IEmission(uint32 id)
 	: IFreezable()
 	, mID(id)
 {
 }
 
-std::string ILight::dumpInformation() const
+std::string IEmission::dumpInformation() const
 {
 	std::stringstream stream;
 	stream << std::boolalpha << "<Light> [" << id() << "]: " << std::endl;

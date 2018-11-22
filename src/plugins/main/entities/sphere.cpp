@@ -10,7 +10,7 @@
 namespace PR {
 constexpr float P = 1.6075f;
 
-class ILight;
+class IEmission;
 
 class SphereEntity : public IEntity {
 public:
@@ -114,7 +114,7 @@ protected:
 private:
 	float mRadius;
 	std::shared_ptr<IMaterial> mMaterial;
-	std::shared_ptr<ILight> mLight;
+	std::shared_ptr<IEmission> mLight;
 
 	float mPDF_Cache;
 };
@@ -141,4 +141,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::SphereEntityFactory, "sphere", "1.0")
+PR_PLUGIN_INIT(PR::SphereEntityFactory, "ent_sphere", PR_PLUGIN_VERSION)

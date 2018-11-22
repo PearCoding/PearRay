@@ -34,14 +34,6 @@ enum DebugMode {
 	DM_BOUNDING_BOX
 };
 
-enum IntegratorMode {
-	IM_DIRECT = 0,
-	IM_BIDIRECT,
-	IM_PPM, // Progressive Photon Mapping
-	IM_AO,
-	IM_VISUALIZER
-};
-
 /* Visual feedback tile mode */
 enum TileMode {
 	TM_LINEAR = 0,

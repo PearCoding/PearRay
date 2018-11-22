@@ -1,7 +1,7 @@
 #pragma once
 
 namespace PR {
-inline uint32 ILight::id() const
+inline uint32 IEmission::id() const
 {
 	return mID;
 }

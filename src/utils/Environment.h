@@ -14,6 +14,7 @@
 #include <utility>
 
 namespace PR {
+class IEmission;
 class IMaterial;
 class TriMesh;
 class SpectrumDescriptor;
@@ -52,6 +53,28 @@ public:
 	inline void addSpectrum(const std::string& name, const Spectrum& spec)
 	{
 		mSpectrums.insert(std::make_pair(name, spec));
+	}
+
+	inline std::shared_ptr<IEmission> getEmission(const std::string& name) const
+	{
+		return mEmissions.at(name);
+	}
+
+	inline bool hasEmission(const std::string& name) const
+	{
+		return mEmissions.count(name) != 0;
+	}
+
+	inline void addEmission(const std::string& name, const std::shared_ptr<IEmission>& mat)
+	{
+		PR_ASSERT(mat, "Given emission has to be valid");
+		PR_ASSERT(!hasEmission(name), "Given name should be unique");
+		mEmissions[name] = mat;
+	}
+
+	inline size_t emissionCount() const
+	{
+		return mEmissions.size();
 	}
 
 	inline std::shared_ptr<IMaterial> getMaterial(const std::string& name) const
@@ -151,6 +174,7 @@ private:
 	RenderManager mRenderManager;
 
 	std::map<std::string, PR::Spectrum> mSpectrums;
+	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<TriMesh>> mMeshes;
 	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSocket;

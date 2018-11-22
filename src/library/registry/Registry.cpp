@@ -1,11 +1,15 @@
 #include "Registry.h"
 
 #include <vector>
+#include <boost/core/demangle.hpp>
 
 namespace PR {
 static URI sGlobalsPath("/globals");
 static URI sMaterialsPath("/materials");
+static URI sEmissionsPath("/emissions");
 static URI sEntitiesPath("/entities");
+static URI sCamerasPath("/cameras");
+static URI sInfiniteLightsPath("/infinitelights");
 static URI sRendererPath("/renderer");
 static URI sIntegratorPath("/renderer/integrator");
 
@@ -17,8 +21,14 @@ URI Registry::getGroupPrefix(RegistryGroup grp)
 		return sGlobalsPath;
 	case RG_MATERIAL:
 		return sMaterialsPath;
+	case RG_EMISSION:
+		return sEmissionsPath;
 	case RG_ENTITY:
 		return sEntitiesPath;
+	case RG_CAMERA:
+		return sCamerasPath;
+	case RG_INFINITELIGHT:
+		return sInfiniteLightsPath;
 	case RG_RENDERER:
 		return sRendererPath;
 	case RG_INTEGRATOR:
@@ -129,7 +139,7 @@ std::string Registry::dump() const
 
 	std::stringstream stream;
 	for (const std::pair<URI, Any>& p : elems) {
-		stream << p.first.str() << " [" << p.second.type().name() << "]";
+		stream << p.first.str() << " [" << boost::core::demangle(p.second.type().name()) << "]";
 		try {
 			std::string c = p.second.cast<std::string>();
 			stream << " = " << c;

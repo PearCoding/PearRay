@@ -95,11 +95,11 @@ float RenderSettings::timeScale() const
 										1.0);
 }
 
-IntegratorMode RenderSettings::integratorMode() const
+std::string RenderSettings::integratorMode() const
 {
-	return mRegistry->getByGroup<IntegratorMode>(RG_RENDERER,
-												 "common/type",
-												 IM_BIDIRECT);
+	return mRegistry->getByGroup<std::string>(RG_RENDERER,
+											  "common/type",
+											  "default");
 }
 
 TileMode RenderSettings::tileMode() const
@@ -156,4 +156,4 @@ float RenderSettings::cropMaxY() const
 																			"film/crop/max_y",
 																			1)));
 }
-}
+} // namespace PR

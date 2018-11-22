@@ -95,7 +95,7 @@ public:
 
 	const std::vector<std::string>& getNames() const
 	{
-		static std::vector<std::string> names({ "diffuse", "lambert" });
+		const static std::vector<std::string> names({ "diffuse", "lambert" });
 		return names;
 	}
 
@@ -106,4 +106,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::LambertMaterialFactory, "lambert", "1.0")
+PR_PLUGIN_INIT(PR::LambertMaterialFactory, "mat_lambert", PR_PLUGIN_VERSION)

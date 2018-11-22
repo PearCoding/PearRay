@@ -20,6 +20,7 @@ public:
 	bool IsQuiet;
 	PR::uint32 ShowProgress;
 	bool ShowInformation;
+	bool ShowRegistry;
 
 	DisplayDriverOption DDO;
 

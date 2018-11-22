@@ -30,7 +30,7 @@ public:
 	TimeMappingMode timeMappingMode() const;
 	float timeScale() const;
 
-	IntegratorMode integratorMode() const;
+	std::string integratorMode() const;
 	TileMode tileMode() const;
 
 	// Film entries
