@@ -5,6 +5,7 @@
 #include "Triangle.h"
 #include "math/Vector.h"
 #include "shader/ShadingPoint.h"
+
 #include <Eigen/Geometry>
 #include <vector>
 
@@ -19,7 +20,6 @@ class Face;
 class Normal;
 class UV;
 class Vertex;
-class Ray;
 struct FacePoint;
 class Sampler;
 class PR_LIB TriMesh {
@@ -75,7 +75,9 @@ public:
 
 	float collisionCost() const;
 
-	bool checkCollision(const CollisionInput& in, CollisionOutput& out) const;
+	bool checkCollision(const Ray& in, SingleCollisionOutput& out) const;
+	bool checkCollision(const RayPackage& in, CollisionOutput& out) const;
+
 	void sampleFacePoint(const vfloat& rnd1, const vfloat& rnd2, const vfloat& rnd3,
 						 ShadingPoint& p, vfloat& pdfA) const;
 

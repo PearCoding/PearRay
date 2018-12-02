@@ -57,7 +57,6 @@ SET(PR_Plugin_Src
   plugin/PluginManager.cpp)
 SOURCE_GROUP("Source Files\\Plugin" FILES ${PR_Plugin_Src})
 SET(PR_Ray_Src
-  ray/Ray.cpp
   ray/RayStream.cpp)
 SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
 SET(PR_Registry_Src
@@ -210,8 +209,6 @@ SET(PR_Plugin_Hdr
   plugin/PluginManager.h)
 SOURCE_GROUP("Header Files\\Plugin" FILES ${PR_Plugin_Hdr})
 SET(PR_Ray_Hdr
-  ray/Ray.h
-  ray/Ray.inl
   ray/RayStream.h)
 SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
 SET(PR_Registry_Hdr
@@ -227,13 +224,14 @@ SET(PR_Renderer_Hdr
   renderer/RenderEnums.h
   renderer/RenderFactory.h
   renderer/RenderManager.h
-  renderer/RenderTileSession.h
   renderer/RenderSettings.h
   renderer/RenderStatistics.h
   renderer/RenderStatus.h
+  renderer/RenderThread.h
   renderer/RenderTile.h
   renderer/RenderTileMap.h
-  renderer/RenderThread.h)
+  renderer/RenderTileSession.h
+  renderer/RenderTileSession.inl)
 SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
 SET(PR_Sampler_Hdr
   sampler/HaltonQMCSampler.h

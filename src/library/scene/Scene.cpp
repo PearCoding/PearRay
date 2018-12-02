@@ -4,12 +4,12 @@
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
+#include "emission/EmissionManager.h"
+#include "emission/IEmission.h"
 #include "entity/EntityManager.h"
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/InfiniteLightManager.h"
-#include "emission/IEmission.h"
-#include "emission/EmissionManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "renderer/RenderContext.h"
@@ -86,11 +86,11 @@ void Scene::loadTree(const std::string& file)
 		mBoundingBox = mKDTree->boundingBox();
 }
 
-void Scene::traceRays(RayStream& rays, HitStream& hits) const
+void Scene::traceCoherentRays(RayStream& rays, HitStream& hits) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 
-	CollisionInput in;
+	RayPackage in;
 	CollisionOutput out;
 	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
 
@@ -99,7 +99,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 
 	// Split stream into specific groups
 	// TODO: Currently only one group is present
-	size_t currentID = 0;
+	hits.reset();
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
 
@@ -110,7 +110,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 			 i < grp.Size;
 			 i += PR_SIMD_BANDWIDTH) {
 			for (int j = 0; j < 3; ++j)
-				in.RayOrigin[j] = simdpp::load(&grp.Origin[j][i]);
+				in.Origin[j] = simdpp::load(&grp.Origin[j][i]);
 
 			// Decompress
 			for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
@@ -121,39 +121,89 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 			}
 
 			for (int j = 0; j < 3; ++j)
-				in.RayDirection[j] = simdpp::load(&dir[j][0]);
+				in.Direction[j] = simdpp::load(&dir[j][0]);
 
-			for (int j = 0; j < 3; ++j)
-				in.RayInvDirection[j] = 1 / in.RayDirection[j];
+			in.setupInverse();
 
 			// Check for collisions
 			mKDTree
 				->checkCollision(in, out,
-								 [this](const CollisionInput& in2, uint64 index, CollisionOutput& out2) {
-									 // TODO
+								 [this](const RayPackage& in2, uint64 index, CollisionOutput& out2) {
+									 mRenderManager->entityManager()->getObject(index)->checkCollision(in2, out2);
 								 });
-
-			currentID += PR_SIMD_BANDWIDTH;
 		}
 	}
+
+	// Clear ray stream, as it is finished
+	rays.reset();
+}
+
+void Scene::traceIncoherentRays(RayStream& rays, HitStream& hits) const
+{
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+
+	Ray in;
+	SingleCollisionOutput out;
+
+	// First sort all rays
+	rays.sort();
+
+	// Split stream into specific groups
+	// TODO: Currently only one group is present
+
+	hits.reset();
+	while (rays.hasNextGroup()) {
+		RayGroup grp = rays.getNextGroup();
+
+		for (size_t i = 0;
+			 i < grp.Size;
+			 ++i) {
+			for (int j = 0; j < 3; ++j)
+				in.Origin[j] = grp.Origin[j][i];
+
+			// Decompress
+			from_oct(
+				from_snorm16(grp.Direction[0][i]),
+				from_snorm16(grp.Direction[1][i]),
+				in.Direction[0], in.Direction[1], in.Direction[2]);
+
+			in.setupInverse();
+
+			// Check for collisions
+			mKDTree
+				->checkCollision(in, out,
+								 [this](const Ray& in2, uint64 index, SingleCollisionOutput& out2) {
+									 mRenderManager->entityManager()->getObject(index)->checkCollision(in2, out2);
+								 });
+		}
+	}
+
+	// Clear ray stream, as it is finished
+	rays.reset();
+}
+
+void Scene::traceShadowRays(RayStream& rays, HitStream& hits) const
+{
+	// TODO: Some special methods?
+	traceIncoherentRays(rays, hits);
 }
 
 void Scene::setup(RenderContext* context)
 {
 	PR_LOG(L_INFO) << "Freezing scene" << std::endl;
-	for (auto e : mRenderManager->entityManager()->getAll())
+	for (auto e : mRenderManager->emissionManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mRenderManager->cameraManager()->getAll())
+	for (auto e : mRenderManager->materialManager()->getAll())
 		e->freeze(context);
 
 	for (auto e : mRenderManager->infiniteLightManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mRenderManager->emissionManager()->getAll())
+	for (auto e : mRenderManager->entityManager()->getAll())
 		e->freeze(context);
 
-	for (auto e : mRenderManager->materialManager()->getAll())
+	for (auto e : mRenderManager->cameraManager()->getAll())
 		e->freeze(context);
 
 	const std::string file = context->renderManager()->workingDir() + "scene.cnt";

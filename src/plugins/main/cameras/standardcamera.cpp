@@ -1,8 +1,6 @@
+#include "Logger.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraFactory.h"
-
-#include "Logger.h"
-#include "ray/Ray.h"
 #include "ray/RayPackage.h"
 #include "renderer/RenderContext.h"
 
@@ -40,7 +38,7 @@ public:
 	float apertureRadius() const;
 
 	// ICamera
-	RayPackage constructRay(const CameraSample& sample) const override;
+	Ray constructRay(const CameraSample& sample) const override;
 
 	// VirtualEntity
 	std::string type() const override;
@@ -49,10 +47,10 @@ protected:
 	void onFreeze(RenderContext* context) override; // Cache
 
 private:
-	void constructRay(const vfloat& nx, const vfloat& ny,
-					  const vfloat& r1, const vfloat& r2,
-					  vfloat& ox, vfloat& oy, vfloat& oz,
-					  vfloat& dx, vfloat& dy, vfloat& dz) const;
+	void constructRay(float nx, float ny,
+					  float r1, float r2,
+					  float& ox, float& oy, float& oz,
+					  float& dx, float& dy, float& dz) const;
 
 	float mWidth;
 	float mHeight;
@@ -180,16 +178,16 @@ float StandardCamera::apertureRadius() const
 	return mApertureRadius;
 }
 
-RayPackage StandardCamera::constructRay(const CameraSample& sample) const
+Ray StandardCamera::constructRay(const CameraSample& sample) const
 {
 	PR_ASSERT(isFrozen(), "has to be frozen");
 
-	const vfloat nx = 2 * (sample.Pixel[0] / sample.SensorSize.x() - 0.5f);
+	const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.x() - 0.5f);
 	//const float nx1 = 2 * ((sample.PixelF.x() + 1) / sample.SensorSize.x() - 0.5f);
-	const vfloat ny = 2 * (sample.Pixel[1] / sample.SensorSize.y() - 0.5f);
+	const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.y() - 0.5f);
 	//const float ny1 = 2 * ((sample.PixelF.y() + 1) / sample.SensorSize.y() - 0.5f);
 
-	RayPackage ray;
+	Ray ray;
 	constructRay(nx, ny, sample.R[0], sample.R[1],
 				 ray.Origin[0], ray.Origin[1], ray.Origin[2],
 				 ray.Direction[0], ray.Direction[1], ray.Direction[2]);
@@ -199,25 +197,25 @@ RayPackage StandardCamera::constructRay(const CameraSample& sample) const
 	return ray;
 }
 
-void StandardCamera::constructRay(const vfloat& nx, const vfloat& ny,
-								  const vfloat& r1, const vfloat& r2,
-								  vfloat& ox, vfloat& oy, vfloat& oz,
-								  vfloat& dx, vfloat& dy, vfloat& dz) const
+void StandardCamera::constructRay(float nx, float ny,
+								  float r1, float r2,
+								  float& ox, float& oy, float& oz,
+								  float& dx, float& dy, float& dz) const
 {
 	const Eigen::Vector3f pos = transform().translation();
 
-	const vfloat vx = mRight_Cache(0) * nx + mUp_Cache(0) * ny + mFocalDistance_Cache(0);
-	const vfloat vy = mRight_Cache(1) * nx + mUp_Cache(1) * ny + mFocalDistance_Cache(1);
-	const vfloat vz = mRight_Cache(2) * nx + mUp_Cache(2) * ny + mFocalDistance_Cache(2);
+	const float vx = mRight_Cache(0) * nx + mUp_Cache(0) * ny + mFocalDistance_Cache(0);
+	const float vy = mRight_Cache(1) * nx + mUp_Cache(1) * ny + mFocalDistance_Cache(1);
+	const float vz = mRight_Cache(2) * nx + mUp_Cache(2) * ny + mFocalDistance_Cache(2);
 
 	if (mHasDOF_Cache) {
-		const vfloat t = 2 * PR_PI * r1;
-		vfloat s, c;
+		const float t = 2 * PR_PI * r1;
+		float s, c;
 		sincos(t, s, c);
 
-		vfloat ex = mXApertureRadius_Cache(0) * r2 * s + mYApertureRadius_Cache(0) * r2 * c;
-		vfloat ey = mXApertureRadius_Cache(1) * r2 * s + mYApertureRadius_Cache(1) * r2 * c;
-		vfloat ez = mXApertureRadius_Cache(2) * r2 * s + mYApertureRadius_Cache(2) * r2 * c;
+		float ex = mXApertureRadius_Cache(0) * r2 * s + mYApertureRadius_Cache(0) * r2 * c;
+		float ey = mXApertureRadius_Cache(1) * r2 * s + mYApertureRadius_Cache(1) * r2 * c;
+		float ez = mXApertureRadius_Cache(2) * r2 * s + mYApertureRadius_Cache(2) * r2 * c;
 
 		ox = pos(0) + ex;
 		oy = pos(1) + ey;
@@ -229,9 +227,9 @@ void StandardCamera::constructRay(const vfloat& nx, const vfloat& ny,
 
 		normalizeV(dx, dy, dz);
 	} else {
-		ox = simdpp::make_float(pos(0));
-		oy = simdpp::make_float(pos(1));
-		oz = simdpp::make_float(pos(2));
+		ox = pos(0);
+		oy = pos(1);
+		oz = pos(2);
 
 		dx = vx;
 		dy = vy;

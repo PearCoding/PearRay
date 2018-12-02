@@ -1,5 +1,4 @@
 #include "geometry/Plane.h"
-#include "ray/Ray.h"
 
 #include "Test.h"
 
@@ -64,43 +63,56 @@ PR_TEST("Contains 2")
 PR_TEST("Intersects 1")
 {
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0), Eigen::Vector3f(0, 1, 0));
-	Ray ray(0,0, Eigen::Vector3f(0.5, 0.5, -1), Eigen::Vector3f(0, 0, 1));
 
-	Plane::Intersection s = plane.intersects(ray);
-	PR_CHECK_TRUE(s.Successful);
-	PR_CHECK_NEARLY_EQ(s.Position, Eigen::Vector3f(0.5, 0.5, 0));
-	PR_CHECK_NEARLY_EQ(s.UV, Eigen::Vector2f(0.5, 0.5));
+	Ray ray(0.5, 0.5, -1,
+	 		0, 0, 1);
+
+	SingleCollisionOutput s;
+	plane.intersects(ray, s);
+
+	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
+	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5);
+	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5);
 }
 
 PR_TEST("Intersects 2")
 {
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 0, 0), Eigen::Vector3f(0, 1, 0));
-	Ray ray(0,0, Eigen::Vector3f(0.5, 0.5, -1), Eigen::Vector3f(0, 1, 0));
 
-	Plane::Intersection s = plane.intersects(ray);
-	PR_CHECK_FALSE(s.Successful);
+	Ray ray(0.5, 0.5, -1,
+	 		0, 1, 0);
+
+	SingleCollisionOutput s;
+	plane.intersects(ray, s);
+	PR_CHECK_FALSE(s.HitDistance < std::numeric_limits<float>::infinity());
 }
 
 PR_TEST("Intersects 3")
 {
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(10, 0, 0), Eigen::Vector3f(0, 10, 0));
-	Ray ray(0,0, Eigen::Vector3f(5, 5, -1), Eigen::Vector3f(0, 0, 1));
+	Ray ray(5, 5, -1,
+	 		0, 0, 1);
 
-	Plane::Intersection s = plane.intersects(ray);
-	PR_CHECK_TRUE(s.Successful);
-	PR_CHECK_NEARLY_EQ(s.Position, Eigen::Vector3f(5, 5, 0));
-	PR_CHECK_NEARLY_EQ(s.UV, Eigen::Vector2f(0.5, 0.5));
+	SingleCollisionOutput s;
+	plane.intersects(ray, s);
+
+	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
+	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5);
+	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5);
 }
 
 PR_TEST("Intersects 4")
 {
 	Plane plane(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(10, 0, 0), Eigen::Vector3f(0, 20, 0));
-	Ray ray(0,0, Eigen::Vector3f(5, 10, -1), Eigen::Vector3f(0, 0, 1));
+	Ray ray(5, 10, -1,
+	 		0, 0, 1);
 
-	Plane::Intersection s = plane.intersects(ray);
-	PR_CHECK_TRUE(s.Successful);
-	PR_CHECK_NEARLY_EQ(s.Position, Eigen::Vector3f(5, 10, 0));
-	PR_CHECK_NEARLY_EQ(s.UV, Eigen::Vector2f(0.5, 0.5));
+	SingleCollisionOutput s;
+	plane.intersects(ray, s);
+
+	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
+	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5);
+	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5);
 }
 
 PR_END_TESTCASE()

@@ -47,9 +47,9 @@ std::shared_ptr<RenderFactory> RenderManager::createRenderFactory() const
 void RenderManager::loadPlugins(const std::string& basedir)
 {
 #ifdef PR_DEBUG
-	static const boost::regex e("(lib)?pr_pl_(\\w+)_(\\w+)_d");
+	static const boost::regex e("(lib)?pr_pl_([\\w_]+)_d");
 #else
-	static const boost::regex e("(lib)?pr_pl_(\\w+)_(\\w+)");
+	static const boost::regex e("(lib)?pr_pl_([\\w_]+)");
 #endif
 
 	for (auto& entry :
@@ -61,29 +61,41 @@ void RenderManager::loadPlugins(const std::string& basedir)
 
 		boost::smatch what;
 		if (boost::regex_match(filename, what, e)) {
-			const std::string type = what[2];
-			const std::string name = type + "_" + what[3];
-
-			if (type == "int") {
-				mIntegratorManager->loadFactory(*this, basedir, name,
-												"integrator", PT_INTEGRATOR);
-			} else if (type == "ent") {
-				mEntityManager->loadFactory(*this, basedir, name,
-											"entity", PT_ENTITY);
-			} else if (type == "cam") {
-				mCameraManager->loadFactory(*this, basedir, name,
-											"camera", PT_CAMERA);
-			} else if (type == "emi") {
-				mEmissionManager->loadFactory(*this, basedir, name,
-											  "emission", PT_EMISSION);
-			} else if (type == "mat") {
-				mMaterialManager->loadFactory(*this, basedir, name,
-											  "material", PT_MATERIAL);
-			} else if (type == "lig") {
-				mInfiniteLightManager->loadFactory(*this, basedir, name,
-												   "infinitelight", PT_INFINITELIGHT);
-			}
+			loadOnePlugin(entry.path().string());
 		}
+	}
+}
+
+void RenderManager::loadOnePlugin(const std::string& name)
+{
+	auto plugin = mPluginManager->load(name, *mRegistry);
+	if (!plugin) {
+		PR_LOG(L_ERROR) << "Could not load plugin " << name << std::endl;
+		return;
+	}
+
+	switch (plugin->type()) {
+	case PT_INTEGRATOR:
+		mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorFactory>(plugin));
+		break;
+	case PT_CAMERA:
+		mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraFactory>(plugin));
+		break;
+	case PT_MATERIAL:
+		mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialFactory>(plugin));
+		break;
+	case PT_EMISSION:
+		mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionFactory>(plugin));
+		break;
+	case PT_INFINITELIGHT:
+		mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightFactory>(plugin));
+		break;
+	case PT_ENTITY:
+		mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityFactory>(plugin));
+		break;
+	default:
+		PR_LOG(L_ERROR) << "Plugin " << name << " has unknown plugin type." << std::endl;
+		return;
 	}
 }
 } // namespace PR

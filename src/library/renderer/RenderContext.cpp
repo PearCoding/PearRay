@@ -1,32 +1,25 @@
 #include "RenderContext.h"
+#include "Logger.h"
 #include "OutputMap.h"
 #include "RenderManager.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
 #include "RenderTileMap.h"
 #include "RenderTileSession.h"
-
 #include "camera/ICamera.h"
 #include "entity/EntityManager.h"
 #include "entity/IEntity.h"
-#include "ray/Ray.h"
-#include "scene/Scene.h"
-
 #include "infinitelight/IInfiniteLight.h"
-
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "integrator/IntegratorManager.h"
-
-#include "shader/ShadingPoint.h"
-
-#include "Logger.h"
+#include "material/IMaterial.h"
+#include "material/MaterialManager.h"
 #include "math/MSI.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
-
-#include "material/IMaterial.h"
-#include "material/MaterialManager.h"
+#include "scene/Scene.h"
+#include "shader/ShadingPoint.h"
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
@@ -172,9 +165,19 @@ std::list<RenderTile*> RenderContext::currentTiles() const
 	return list;
 }
 
-void RenderContext::traceRays(RayStream& rays, HitStream& hits)
+void RenderContext::traceCoherentRays(RayStream& rays, HitStream& hits) const
 {
-	mScene->traceRays(rays, hits);
+	mScene->traceCoherentRays(rays, hits);
+}
+
+void RenderContext::traceIncoherentRays(RayStream& rays, HitStream& hits) const
+{
+	mScene->traceIncoherentRays(rays, hits);
+}
+
+void RenderContext::traceShadowRays(RayStream& rays, HitStream& hits) const
+{
+	mScene->traceShadowRays(rays, hits);
 }
 
 void RenderContext::waitForNextPass()

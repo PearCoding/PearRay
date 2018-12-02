@@ -19,6 +19,26 @@ using bfloat					   = simdpp::mask_float32<PR_SIMD_BANDWIDTH>;
 using bint32					   = simdpp::mask_int32<PR_SIMD_BANDWIDTH>;
 using buint32					   = bint32;
 
+template <typename V>
+struct VectorTemplate {
+};
+
+template <>
+struct VectorTemplate<vfloat> {
+	using float_t  = vfloat;
+	using bool_t   = bfloat;
+	using int32_t  = vint32;
+	using uint32_t = vuint32;
+};
+
+template <>
+struct VectorTemplate<float> {
+	using float_t  = float;
+	using bool_t   = bool;
+	using int32_t  = int32;
+	using uint32_t = uint32;
+};
+
 inline bool any(const bfloat& a)
 {
 	return simdpp::reduce_or(simdpp::bit_cast<vuint32>(a));
@@ -33,6 +53,39 @@ template <unsigned int K>
 inline bool extract(const bfloat& a)
 {
 	return simdpp::extract<K>(simdpp::bit_cast<vuint32>(a)) != 0;
+}
+
+template <typename T>
+inline auto b_not(const T& v)
+{
+	return ~v;
+}
+
+inline bool b_not(bool v)
+{
+	return !v;
+}
+
+template <typename T1, typename T2>
+inline auto b_and(const T1& v1, const T2& v2)
+{
+	return v1 & v2;
+}
+
+inline bool b_and(bool v1, bool v2)
+{
+	return v1 && v2;
+}
+
+template <typename T1, typename T2>
+inline auto b_or(const T1& v1, const T2& v2)
+{
+	return v1 | v2;
+}
+
+inline bool b_or(bool v1, bool v2)
+{
+	return v1 || v2;
 }
 
 // TODO: Better solution?
@@ -58,6 +111,12 @@ inline void sincos(const simdpp::float32<N>& v,
 	c = simdpp::load(cd);
 }
 
+inline void sincos(float v, float& s, float& c)
+{
+	s = std::sin(v);
+	c = std::cos(v);
+}
+
 template <typename T1, typename T2, typename T3>
 inline void crossV(const T1& a1, const T1& a2, const T1& a3,
 				   const T2& b1, const T2& b2, const T2& b3,
@@ -76,11 +135,18 @@ inline T1 dotV(const T1& a1, const T1& a2, const T1& a3,
 }
 
 template <typename T>
+inline T magnitudeV(T& a1, T& a2, T& a3)
+{
+	using namespace simdpp;
+	return sqrt(dotV(a1, a2, a3, a1, a2, a3));
+}
+
+template <typename T>
 inline void normalizeV(T& a1, T& a2, T& a3)
 {
 	using namespace simdpp;
 
-	T h = 1 / sqrt(dotV(a1, a2, a3, a1, a2, a3));
+	T h = 1 / magnitudeV(a1, a2, a3);
 	a1  = a1 * h;
 	a2  = a2 * h;
 	a3  = a3 * h;

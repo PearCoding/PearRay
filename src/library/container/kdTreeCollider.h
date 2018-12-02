@@ -2,7 +2,7 @@
 
 #include "geometry/BoundingBox.h"
 #include "math/SIMD.h"
-#include "ray/Ray.h"
+#include "ray/RayPackage.h"
 
 #include <algorithm>
 #include <iterator>
@@ -68,8 +68,10 @@ public:
 		return mBoundingBox;
 	}
 
+	// Package Version
 	template <typename CheckCollisionCallback>
-	inline bool checkCollision(const CollisionInput& in, CollisionOutput& out, CheckCollisionCallback checkCollisionCallback) const
+	inline bool checkCollision(const RayPackage& in, CollisionOutput& out,
+							   CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
 
@@ -81,7 +83,7 @@ public:
 		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
-		const auto root_in = mBoundingBox.intersectsRangeV(in);
+		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!any(root_in.Successful))
 			return false;
 
@@ -102,10 +104,10 @@ public:
 
 			while (!currentN->isLeaf) {
 				kdInnerNodeCollider* innerN = reinterpret_cast<kdInnerNodeCollider*>(currentN);
-				const vfloat splitM			= innerN->splitPos - in.RayOrigin[innerN->axis];
-				const vfloat t				= splitM * in.RayInvDirection[innerN->axis];
+				const vfloat splitM			= innerN->splitPos - in.Origin[innerN->axis];
+				const vfloat t				= splitM * in.InvDirection[innerN->axis];
 
-				const bfloat dirMask = in.RayInvDirection[innerN->axis] < 0;
+				const bfloat dirMask = in.InvDirection[innerN->axis] < 0;
 				const bfloat minHit  = minT <= t;
 				const bfloat maxHit  = maxT >= t;
 
@@ -164,6 +166,89 @@ public:
 		}
 
 		return any(out.HitDistance < std::numeric_limits<float>::infinity());
+	}
+
+	// Single version
+	template <typename CheckCollisionCallback>
+	inline bool checkCollision(const Ray& in, SingleCollisionOutput& out,
+							   CheckCollisionCallback checkCollisionCallback) const
+	{
+		using namespace simdpp;
+
+		struct _stackdata {
+			kdNodeCollider* node;
+			float minT;
+			float maxT;
+		};
+		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
+
+		PR_ASSERT(mRoot, "No root given for kdTree!");
+		const auto root_in = mBoundingBox.intersectsRange(in);
+		if (!root_in.Successful)
+			return false;
+
+		out.HitDistance = std::numeric_limits<float>::infinity();
+
+		SingleCollisionOutput tmp;
+		size_t stackPos		 = 0;
+		stack[stackPos].node = mRoot;
+		stack[stackPos].minT = root_in.Entry;
+		stack[stackPos].maxT = root_in.Exit;
+		++stackPos;
+
+		while (stackPos > 0) {
+			kdNodeCollider* currentN = stack[stackPos - 1].node;
+			float minT				 = stack[stackPos - 1].minT;
+			float maxT				 = stack[stackPos - 1].maxT;
+			--stackPos;
+
+			while (!currentN->isLeaf) {
+				kdInnerNodeCollider* innerN = reinterpret_cast<kdInnerNodeCollider*>(currentN);
+				const float t				= (innerN->splitPos - in.Origin[innerN->axis])
+								* in.InvDirection[innerN->axis];
+
+				const bool side = (innerN->splitPos > in.Origin[innerN->axis])
+								  || (std::abs(innerN->splitPos - in.Origin[innerN->axis]) <= PR_EPSILON && in.Direction[innerN->axis] <= 0);
+				kdNodeCollider* nearN = side ? innerN->left : innerN->right;
+				kdNodeCollider* farN  = side ? innerN->right : innerN->left;
+
+				if (t > maxT || t <= 0) {
+					currentN = nearN;
+				} else if (t < minT) {
+					currentN = farN;
+				} else {
+					stack[stackPos].node = farN;
+					stack[stackPos].minT = t;
+					stack[stackPos].maxT = maxT;
+					++stackPos;
+
+					currentN = nearN;
+					maxT	 = t;
+				}
+
+				PR_ASSERT(currentN, "Null node not expected!");
+			}
+
+			// Traverse leaf
+			PR_ASSERT(currentN->isLeaf, "Expected leaf node!");
+
+			kdLeafNodeCollider* leafN = reinterpret_cast<kdLeafNodeCollider*>(currentN);
+
+			for (uint64 entity : leafN->objects) {
+				tmp.HitDistance = std::numeric_limits<float>::infinity();
+
+				// Check for < 0?
+				checkCollisionCallback(in, entity, tmp);
+				if (tmp.HitDistance < out.HitDistance)
+					out = tmp;
+			}
+
+			// Early termination
+			if (out.HitDistance < minT)
+				return true;
+		}
+
+		return out.HitDistance < std::numeric_limits<float>::infinity();
 	}
 
 	void load(std::istream& stream);

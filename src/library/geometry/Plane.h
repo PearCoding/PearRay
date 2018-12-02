@@ -3,7 +3,6 @@
 #include "geometry/BoundingBox.h"
 
 namespace PR {
-class Ray;
 class PR_LIB Plane {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -38,14 +37,8 @@ public:
 
 	bool contains(const Eigen::Vector3f& point) const;
 
-	struct Intersection {
-		bool Successful;
-		Eigen::Vector3f Position;
-		float T;
-		Eigen::Vector2f UV;
-	};
-	Intersection intersects(const Ray& ray) const;
-	void intersectsV(const CollisionInput& in, CollisionOutput& out) const;
+	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
+	void intersects(const RayPackage& in, CollisionOutput& out) const;
 
 	Eigen::Vector2f project(const Eigen::Vector3f& point) const;
 	void projectV(const vfloat& px, const vfloat& py, const vfloat& pz,

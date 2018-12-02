@@ -1,5 +1,9 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
+#include "renderer/RenderTileSession.h"
+#include "path/LightPath.h"
+
+#include "Logger.h"
 
 namespace PR {
 class IntDirect : public IIntegrator {
@@ -29,18 +33,26 @@ public:
 
 	bool needNextPass(uint32 i) const override
 	{
-		return false;
+		return i == 0;
 	}
 
 	// Per thread
-	void onPass(const RenderTileSession& session, uint32 pass) override
+	void onPass(RenderTileSession& session, uint32 pass) override
 	{
+		while(session.handleCameraRays()) {
+			//PR_LOG(L_INFO) << "HELLO??" << std::endl;
+			// Setup 
+		}
 	}
 
 	RenderStatus status() const override
 	{
 		return RenderStatus();
 	}
+
+private:
+	std::vector<LightPath> mLightPaths;
+
 };
 
 class IntDirectFactory : public IIntegratorFactory {

@@ -1,5 +1,4 @@
 #include "lambert.h"
-#include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
 

@@ -2,17 +2,16 @@
 
 #include "entity/VirtualEntity.h"
 #include "math/SIMD.h"
+#include "ray/RayPackage.h"
 
 namespace PR {
-class RayPackage;
-
 struct CameraSample {
 	Eigen::Vector2i SensorSize; // Full Size (Width and Height)
-	vfloat Pixel[2];
-	vfloat R[2];
-	vuint32 PixelIndex;
-	vfloat Time;
-	vuint32 WavelengthIndex;
+	float Pixel[2];
+	float R[2];
+	uint32 PixelIndex;
+	float Time;
+	uint32 WavelengthIndex;
 };
 
 class PR_LIB ICamera : public VirtualEntity {
@@ -22,6 +21,6 @@ public:
 	ICamera(uint32 id, const std::string& name);
 	virtual ~ICamera();
 
-	virtual RayPackage constructRay(const CameraSample& sample) const = 0;
+	virtual Ray constructRay(const CameraSample& sample) const = 0;
 };
 } // namespace PR

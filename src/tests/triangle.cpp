@@ -1,6 +1,5 @@
 #include "geometry/Triangle.h"
 #include "math/SIMD.h"
-#include "ray/Ray.h"
 
 #include "Test.h"
 
@@ -9,14 +8,14 @@ using namespace PR;
 PR_BEGIN_TESTCASE(Triangle)
 PR_TEST("Intersects CCW")
 {
-	CollisionInput in;
-	in.RayOrigin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
-	in.RayOrigin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
-	in.RayOrigin[2] = simdpp::make_float(-1, -1, -1, -1);
+	RayPackage in;
+	in.Origin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
+	in.Origin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
+	in.Origin[2] = simdpp::make_float(-1, -1, -1, -1);
 
-	in.RayDirection[0] = simdpp::make_float(0);
-	in.RayDirection[1] = simdpp::make_float(0);
-	in.RayDirection[2] = simdpp::make_float(1);
+	in.Direction[0] = simdpp::make_float(0);
+	in.Direction[1] = simdpp::make_float(0);
+	in.Direction[2] = simdpp::make_float(1);
 
 	in.setupInverse();
 	
@@ -38,14 +37,14 @@ PR_TEST("Intersects CCW")
 
 PR_TEST("Intersects CW")
 {
-	CollisionInput in;
-	in.RayOrigin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
-	in.RayOrigin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
-	in.RayOrigin[2] = simdpp::make_float(-1, -1, -1, -1);
+	RayPackage in;
+	in.Origin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
+	in.Origin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
+	in.Origin[2] = simdpp::make_float(-1, -1, -1, -1);
 
-	in.RayDirection[0] = simdpp::make_float(0);
-	in.RayDirection[1] = simdpp::make_float(0);
-	in.RayDirection[2] = simdpp::make_float(1);
+	in.Direction[0] = simdpp::make_float(0);
+	in.Direction[1] = simdpp::make_float(0);
+	in.Direction[2] = simdpp::make_float(1);
 
 	in.setupInverse();
 

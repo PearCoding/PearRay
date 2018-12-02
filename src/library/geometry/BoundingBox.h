@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Sphere.h"
 #include "CollisionData.h"
+#include "Sphere.h"
+#include "ray/RayPackage.h"
 #include <Eigen/Geometry>
 
 namespace PR {
-class Ray;
 class Plane;
 
 /**
@@ -112,14 +112,8 @@ public:
 		return (mUpperBound.array() <= point.array()).all() && (mLowerBound.array() >= point.array()).all();
 	}
 
-	struct Intersection {
-		bool Successful;
-		Eigen::Vector3f Position;
-		float T;
-	};
-	Intersection intersects(const Ray& ray) const;
-	bool intersectsSimple(const Ray& ray) const;
-	void intersectsV(const CollisionInput& in, CollisionOutput& out) const;
+	void intersects(const Ray& in, SingleCollisionOutput& out) const;
+	void intersects(const RayPackage& in, CollisionOutput& out) const;
 
 	struct IntersectionRange {
 		bool Successful;
@@ -129,13 +123,13 @@ public:
 	IntersectionRange intersectsRange(const Ray& ray) const;
 
 	struct IntersectionRangeV {
-		simdpp::mask_float32v Successful;
-		simdpp::float32v Entry;
-		simdpp::float32v Exit;
+		bfloat Successful;
+		vfloat Entry;
+		vfloat Exit;
 	};
-	IntersectionRangeV intersectsRangeV(const CollisionInput& in) const;
+	IntersectionRangeV intersectsRange(const RayPackage& in) const;
 
-	FaceSide getIntersectionSide(const Intersection& intersection) const;
+	FaceSide getIntersectionSide(const Eigen::Vector3f& intersection) const;
 
 	void combine(const Eigen::Vector3f& point);
 	void combine(const BoundingBox& other);

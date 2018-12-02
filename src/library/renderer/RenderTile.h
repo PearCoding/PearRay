@@ -17,7 +17,7 @@ public:
 	void inc();
 	void reset();
 
-	RayPackage constructCameraRay(const vuint32& px, const vuint32& py, uint32 sample);
+	Ray constructCameraRay(uint32 px, uint32 py, uint32 sample);
 
 	inline bool isWorking() const
 	{

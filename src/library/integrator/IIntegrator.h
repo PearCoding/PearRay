@@ -19,7 +19,7 @@ public:
 	virtual bool needNextPass(uint32 i) const = 0;
 
 	// Per thread
-	virtual void onPass(const RenderTileSession& session, uint32 pass) = 0;
+	virtual void onPass(RenderTileSession& session, uint32 pass) = 0;
 	virtual RenderStatus status() const = 0;
 
 	inline RenderContext* renderer() const { return mRenderer; }

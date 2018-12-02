@@ -5,6 +5,7 @@
 #include "renderer/RenderManager.h"
 
 #include <map>
+#include <typeinfo>
 #include <vector>
 
 namespace PR {
@@ -29,36 +30,20 @@ public:
 	inline const std::vector<std::shared_ptr<OBJ>>& getAll() const { return mObjects; }
 	inline size_t size() const { return mObjects.size(); }
 
-	bool loadFactory(const RenderManager& mng,
-					 const std::string& base, const std::string& name,
-					 const std::string& typeName, PluginType type)
+	void addFactory(const std::shared_ptr<FAC>& ptr)
 	{
-		auto plugin = mng.pluginManager()->load(base + "pr_pl_" + name, *mng.registry());
-		if (!plugin) {
-			PR_LOG(L_ERROR) << "Could not load plugin of type " << typeName << " and name " << name << " with base path " << base << std::endl;
-			return false;
+		if (!ptr) {
+			PR_LOG(L_ERROR) << "Expected " << typeid(FAC).name() << " but got NULL instead.";
+			return;
 		}
 
-		if (plugin->type() != type) {
-			PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base
-							<< " is not plugin of type " << typeName << std::endl;
-			return false;
-		}
-
-		auto ptrF = std::dynamic_pointer_cast<FAC>(plugin);
-		if (!ptrF) {
-			PR_LOG(L_ERROR) << "Plugin " << name << " within base path " << base << " is not an integrator plugin even when it says it is!" << std::endl;
-			return false;
-		}
-
-		auto names = ptrF->getNames();
+		auto names = ptr->getNames();
 		for (const std::string& alias : names) {
 			if (mFactories.count(alias))
-				PR_LOG(L_WARNING) << typeName << " with name " << alias << " already given! Replacing it." << std::endl;
+				PR_LOG(L_WARNING) << "Name " << alias << " already in use! Replacing it." << std::endl;
 
-			mFactories[alias] = ptrF;
+			mFactories[alias] = ptr;
 		}
-		return true;
 	}
 
 	inline std::shared_ptr<FAC> getFactory(const std::string& alias) const

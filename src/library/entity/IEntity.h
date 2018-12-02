@@ -29,14 +29,15 @@ public:
 
 	// Mandatory Interface
 	virtual bool isLight() const				  = 0;
-	virtual float surfaceArea(IMaterial* m) const = 0;
+	virtual float surfaceArea(uint32 materialID) const = 0;
 
 	/*virtual void getNormal(const vuint32& primID, const vfloat& u, const vfloat& v,
 						   vfloat& n1, vfloat& n2, vfloat& n3) const = 0;*/
 
 	virtual BoundingBox localBoundingBox() const = 0;
 
-	virtual void checkCollision(const CollisionInput& in, CollisionOutput& out) const = 0;
+	virtual void checkCollision(const Ray& in, SingleCollisionOutput& out) const = 0;
+	virtual void checkCollision(const RayPackage& in, CollisionOutput& out) const = 0;
 
 protected:
 	virtual void onFreeze(RenderContext* context) override;

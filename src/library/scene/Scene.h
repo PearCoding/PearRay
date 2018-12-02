@@ -26,7 +26,9 @@ public:
 	inline const RenderManager* renderManager() const { return mRenderManager; }
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
-	void traceRays(RayStream& rays, HitStream& hits) const;
+	void traceCoherentRays(RayStream& rays, HitStream& hits) const;
+	void traceIncoherentRays(RayStream& rays, HitStream& hits) const;
+	void traceShadowRays(RayStream& rays, HitStream& hits) const;
 	void setup(RenderContext* context);
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }

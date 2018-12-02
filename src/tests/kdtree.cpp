@@ -1,6 +1,5 @@
 #include "geometry/TriMesh.h"
 #include "math/SIMD.h"
-#include "ray/Ray.h"
 
 #include "Test.h"
 
@@ -62,14 +61,14 @@ PR_TEST("Two Half")
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
 	mesh.build("tmp1.cnt", false);
 
-	CollisionInput in;
-	in.RayOrigin[0] = simdpp::make_float(-1.5, 1.5, 0, 0.6);
-	in.RayOrigin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
-	in.RayOrigin[2] = simdpp::make_float(1, 1, 1, 1);
+	RayPackage in;
+	in.Origin[0] = simdpp::make_float(-1.5, 1.5, 0, 0.6);
+	in.Origin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
+	in.Origin[2] = simdpp::make_float(1, 1, 1, 1);
 
-	in.RayDirection[0] = simdpp::make_float(0);
-	in.RayDirection[1] = simdpp::make_float(0);
-	in.RayDirection[2] = simdpp::make_float(-1);
+	in.Direction[0] = simdpp::make_float(0);
+	in.Direction[1] = simdpp::make_float(0);
+	in.Direction[2] = simdpp::make_float(-1);
 
 	in.setupInverse();
 
@@ -122,14 +121,14 @@ PR_TEST("Overlap")
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
 	mesh.build("tmp2.cnt", false);
 
-	CollisionInput in;
-	in.RayOrigin[0] = simdpp::make_float(0.75, 0.75, 0, 5);
-	in.RayOrigin[1] = simdpp::make_float(0.5, 0.5, 0.5, 5);
-	in.RayOrigin[2] = simdpp::make_float(2, -2, 1, 1);
+	RayPackage in;
+	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 5);
+	in.Origin[1] = simdpp::make_float(0.5, 0.5, 0.5, 5);
+	in.Origin[2] = simdpp::make_float(2, -2, 1, 1);
 
-	in.RayDirection[0] = simdpp::make_float(0);
-	in.RayDirection[1] = simdpp::make_float(0);
-	in.RayDirection[2] = simdpp::make_float(-1, 1, 1, 1);
+	in.Direction[0] = simdpp::make_float(0);
+	in.Direction[1] = simdpp::make_float(0);
+	in.Direction[2] = simdpp::make_float(-1, 1, 1, 1);
 
 	in.setupInverse();
 
@@ -185,14 +184,14 @@ PR_TEST("UV")
 
 	PR_CHECK_TRUE(mesh.features() & TMF_HAS_UV);
 
-	CollisionInput in;
-	in.RayOrigin[0] = simdpp::make_float(0.75, 0.75, 0, 0.6);
-	in.RayOrigin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
-	in.RayOrigin[2] = simdpp::make_float(2, -2, -1, -1);
+	RayPackage in;
+	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 0.6);
+	in.Origin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
+	in.Origin[2] = simdpp::make_float(2, -2, -1, -1);
 
-	in.RayDirection[0] = simdpp::make_float(0);
-	in.RayDirection[1] = simdpp::make_float(0);
-	in.RayDirection[2] = simdpp::make_float(-1);
+	in.Direction[0] = simdpp::make_float(0);
+	in.Direction[1] = simdpp::make_float(0);
+	in.Direction[2] = simdpp::make_float(-1);
 
 	in.setupInverse();
 
@@ -208,6 +207,50 @@ PR_TEST("UV")
 	PR_CHECK_FALSE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
 	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
 	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
+}
+
+PR_TEST("Single Intersection")
+{
+	std::vector<float> vertices[3];
+	addVertex<float>(-2, 0, 0, vertices);
+	addVertex<float>(-1, 1, 0, vertices);
+	addVertex<float>(-1, 0, 0, vertices);
+
+	addVertex<float>(1, 0, 0, vertices);
+	addVertex<float>(1, 1, 0, vertices);
+	addVertex<float>(2, 1, 0, vertices);
+
+	std::vector<uint32> faces[3];
+	addVertex<uint32>(0, 1, 2, faces);
+	addVertex<uint32>(3, 4, 5, faces);
+
+	TriMesh mesh;
+	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
+	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	mesh.setIndices(faces[0], faces[1], faces[2]);
+
+	PR_CHECK_TRUE(mesh.isValid());
+
+	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
+	mesh.build("tmp1.cnt", false);
+
+	Ray in;
+	in.Origin[0] = -1.5;
+	in.Origin[1] = 0.5;
+	in.Origin[2] = 1;
+
+	in.Direction[0] = 0;
+	in.Direction[1] = 0;
+	in.Direction[2] = -1;
+
+	in.setupInverse();
+
+	SingleCollisionOutput out;
+	mesh.checkCollision(in, out);
+
+	// Left triangle
+	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(out.FaceID, 0);
 }
 
 PR_END_TESTCASE()

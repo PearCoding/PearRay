@@ -173,12 +173,54 @@ float TriMesh::surfaceArea(const Eigen::Affine3f& transform) const
 	return a;
 }
 
-bool TriMesh::checkCollision(const CollisionInput& in, CollisionOutput& out) const
+bool TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	return mKDTree
 		->checkCollision(in, out,
-						 [this](const CollisionInput& in2, uint64 f, CollisionOutput& out2) {
+						 [this](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
+							 const uint32 i1 = mIndices[0][f];
+							 const uint32 i2 = mIndices[1][f];
+							 const uint32 i3 = mIndices[2][f];
+
+							 float u, v, t;
+							 bool hit = Triangle::intersect(in2,
+															mVertices[0][i1], mVertices[1][i1], mVertices[2][i1],
+															mVertices[0][i2], mVertices[1][i2], mVertices[2][i2],
+															mVertices[0][i3], mVertices[1][i3], mVertices[2][i3],
+															u, v, t); // Major bottleneck!
+
+							 if (!hit)
+								 return;
+							 else
+								 out2.HitDistance = t;
+
+							 if (features() & TMF_HAS_UV) {
+								 for (int i = 0; i < 2; ++i)
+									 out2.UV[i] = mUVs[i][i2] * u
+												  + mUVs[i][i3] * v
+												  + mUVs[i][i1] * (1 - u - v);
+							 } else {
+								 out2.UV[0] = u;
+								 out2.UV[1] = v;
+							 }
+
+							 if (features() & TMF_HAS_MATERIAL)
+								 out2.MaterialID = mMaterials[f]; // Has to be updated in entity!
+							 else
+								 out2.MaterialID = 0;
+
+							 out2.FaceID = f;
+							 //out2.EntityID; Ignore
+						 });
+}
+
+bool TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
+{
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+	return mKDTree
+		->checkCollision(in, out,
+						 [this](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
 							 vfloat u, v, t;
 
 							 const uint32 i1 = mIndices[0][f];

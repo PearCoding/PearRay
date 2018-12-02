@@ -47,6 +47,8 @@ public:
 
 	void loadPlugins(const std::string& basedir);
 private:
+	void loadOnePlugin(const std::string& name);
+
 	std::string mWorkingDir;
 
 	// Order matters: PluginManager should be before other managers

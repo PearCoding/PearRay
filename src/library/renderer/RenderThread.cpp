@@ -27,7 +27,9 @@ void RenderThread::main()
 										 "stream/count",
 										 1000000);
 
-	RayStream rays(streamElemCount);
+	RayStream coherentRays(streamElemCount);
+	RayStream incoherentRays(streamElemCount);
+	RayStream shadowRays(streamElemCount);
 	HitStream hits(streamElemCount);
 
 	size_t pass				= 0;
@@ -37,7 +39,9 @@ void RenderThread::main()
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
-			integrator->onPass(RenderTileSession(mThreadIndex, mTile, &rays, &hits), pass);
+			RenderTileSession session(mThreadIndex, mTile,
+			 &coherentRays, &incoherentRays, &shadowRays, &hits);
+			integrator->onPass(session, pass);
 			mTile->inc();
 
 			mTile->setWorking(false);

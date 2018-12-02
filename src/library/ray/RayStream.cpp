@@ -1,10 +1,9 @@
 #include "RayStream.h"
-#include "Ray.h"
 
 namespace PR {
 
 RayStream::RayStream(size_t raycount)
-	: mSize(raycount % PR_SIMD_BANDWIDTH)
+	: mSize(raycount + raycount % PR_SIMD_BANDWIDTH)
 	, mCurrentPos(0)
 {
 	for (int i = 0; i < 3; ++i)
@@ -29,18 +28,18 @@ void RayStream::add(const Ray& ray)
 	PR_ASSERT(!isFull(), "Check before adding!");
 
 	for (int i = 0; i < 3; ++i)
-		mOrigin[i].emplace_back(ray.origin()(i));
+		mOrigin[i].emplace_back(ray.Origin[i]);
 
-	octNormal16 n(ray.direction());
+	octNormal16 n(ray.Direction[0], ray.Direction[1], ray.Direction[2]);
 	for (int i = 0; i < 2; ++i)
 		mDirection[i].emplace_back(n(i));
 
-	mDepth.emplace_back(ray.depth());
-	mPixelIndex.emplace_back(ray.pixelIndex());
-	mTime.emplace_back(to_unorm16(ray.time()));
-	mWavelengthIndex.emplace_back(ray.wavelengthIndex());
-	mFlags.emplace_back(ray.flags());
-	mWeight.emplace_back(ray.weight());
+	mDepth.emplace_back(ray.Depth);
+	mPixelIndex.emplace_back(ray.PixelIndex);
+	mTime.emplace_back(to_unorm16(ray.Time));
+	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
+	mFlags.emplace_back(ray.Flags);
+	mWeight.emplace_back(ray.Weight);
 }
 
 void RayStream::sort()

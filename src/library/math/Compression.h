@@ -122,11 +122,17 @@ public:
 	octNormal(octNormal&& other)	  = default;
 	virtual ~octNormal()			  = default;
 
-	inline explicit octNormal(const Eigen::Vector3f& p)
+	inline octNormal(float px, float py, float pz)
 	{
-		const Eigen::Vector2f d = to_oct(p);
-		mValue[0]				= to_snorm<T>(d(0));
-		mValue[1]				= to_snorm<T>(d(1));
+		float d0, d1;
+		to_oct(px, py, pz, d0, d1);
+		mValue[0] = to_snorm<T>(d0);
+		mValue[1] = to_snorm<T>(d1);
+	}
+
+	inline explicit octNormal(const Eigen::Vector3f& p)
+		: octNormal(p(0), p(1), p(2))
+	{
 	}
 
 	octNormal& operator=(const octNormal& other) = default;

@@ -47,7 +47,9 @@ public:
 	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
 	void stop();
 
-	void traceRays(RayStream& rays, HitStream& hits);
+	void traceCoherentRays(RayStream& rays, HitStream& hits) const;
+	void traceIncoherentRays(RayStream& rays, HitStream& hits) const;
+	void traceShadowRays(RayStream& rays, HitStream& hits) const;
 
 	inline bool isStopping() const { return mShouldStop; }
 	bool isFinished() const;

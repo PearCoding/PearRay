@@ -1,11 +1,9 @@
 #pragma once
 
-#include "PR_Config.h"
-#include <Eigen/Dense>
+#include "ray/RayPackage.h"
 
 namespace PR {
-class Ray;
-class CollisionInput;
+class SingleCollisionOutput;
 class CollisionOutput;
 class PR_LIB Sphere {
 public:
@@ -37,13 +35,8 @@ public:
 		return (mPosition - point).squaredNorm() <= mRadius * mRadius;
 	}
 
-	struct Intersection {
-		bool Successful;
-		Eigen::Vector3f Position;
-		float T;
-	};
-	Intersection intersects(const Ray& ray) const;
-	void intersectsV(const CollisionInput& in, CollisionOutput& out) const;
+	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
+	void intersects(const RayPackage& in, CollisionOutput& out) const;
 
 	void combine(const Eigen::Vector3f& point);
 	void combine(const Sphere& other);

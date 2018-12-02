@@ -1,7 +1,6 @@
 #include "Plane.h"
 
 #include "math/SIMD.h"
-#include "ray/Ray.h"
 
 namespace PR {
 #define PR_PLANE_INTERSECT_EPSILON (PR_EPSILON)
@@ -91,53 +90,57 @@ bool Plane::contains(const Eigen::Vector3f& point) const
 	return false;
 }
 
-Plane::Intersection Plane::intersects(const Ray& ray) const
+void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	Plane::Intersection r;
-	float ln = ray.direction().dot(mNormal_Cache);
-	float pn = (mPosition - ray.origin()).dot(mNormal_Cache);
+	out.HitDistance = std::numeric_limits<float>::infinity();
 
-	r.Successful = false;
-	if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON) // Parallel or on the plane
-	{
-		return r;
-	} else {
-		r.T = pn / ln;
+	float ln = dotV(in.Direction[0], in.Direction[1], in.Direction[2],
+					mNormal_Cache(0), mNormal_Cache(1), mNormal_Cache(2));
 
-		if (r.T < PR_PLANE_INTERSECT_EPSILON) {
-			return r;
-		} else {
-			r.Position = ray.origin() + ray.direction() * r.T;
-			r.UV	   = project(r.Position);
+	float pn = dotV(float(mPosition(0) - in.Origin[0]),
+					float(mPosition(1) - in.Origin[1]),
+					float(mPosition(2) - in.Origin[2]),
+					mNormal_Cache(0), mNormal_Cache(1), mNormal_Cache(2));
 
-			if (r.UV.x() >= 0 && r.UV.x() <= 1 && r.UV.y() >= 0 && r.UV.y() <= 1) {
-				r.Successful = true;
-				return r;
+	if (std::abs(ln) > PR_PLANE_INTERSECT_EPSILON) {
+		const float t = pn / ln;
+
+		if (t > PR_PLANE_INTERSECT_EPSILON) {
+			float px = in.Origin[0] - mPosition(0) + in.Direction[0] * t;
+			float py = in.Origin[1] - mPosition(1) + in.Direction[1] * t;
+			float pz = in.Origin[2] - mPosition(2) + in.Direction[2] * t;
+
+			out.UV[0] = dotV(px, py, pz, mXAxis(0), mXAxis(1), mXAxis(2)) * mInvXLenSqr_Cache;
+			out.UV[1] = dotV(px, py, pz, mYAxis(0), mYAxis(1), mYAxis(2)) * mInvYLenSqr_Cache;
+
+			if (out.UV[0] >= 0 && out.UV[0] <= 1
+				&& out.UV[1] >= 0 && out.UV[1] <= 1) {
+				out.HitDistance = t;
+				return;
 			}
 		}
-		return r;
 	}
 }
 
-void Plane::intersectsV(const CollisionInput& in, CollisionOutput& out) const
+void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	using namespace simdpp;
 
 	const vfloat inf = make_float(std::numeric_limits<float>::infinity());
 
-	vfloat ln = dotV(in.RayDirection[0], in.RayDirection[1], in.RayDirection[2],
+	vfloat ln = dotV(in.Direction[0], in.Direction[1], in.Direction[2],
 					 mNormal_Cache(0), mNormal_Cache(1), mNormal_Cache(2));
 
-	vfloat pn = dotV(vfloat(mPosition(0) - in.RayOrigin[0]),
-					 vfloat(mPosition(1) - in.RayOrigin[1]),
-					 vfloat(mPosition(2) - in.RayOrigin[2]),
+	vfloat pn = dotV(vfloat(mPosition(0) - in.Origin[0]),
+					 vfloat(mPosition(1) - in.Origin[1]),
+					 vfloat(mPosition(2) - in.Origin[2]),
 					 mNormal_Cache(0), mNormal_Cache(1), mNormal_Cache(2));
 
 	out.HitDistance = pn / ln;
 
-	vfloat px = in.RayOrigin[0] - mPosition(0) + in.RayDirection[0] * out.HitDistance;
-	vfloat py = in.RayOrigin[1] - mPosition(1) + in.RayDirection[1] * out.HitDistance;
-	vfloat pz = in.RayOrigin[2] - mPosition(2) + in.RayDirection[2] * out.HitDistance;
+	vfloat px = in.Origin[0] - mPosition(0) + in.Direction[0] * out.HitDistance;
+	vfloat py = in.Origin[1] - mPosition(1) + in.Direction[1] * out.HitDistance;
+	vfloat pz = in.Origin[2] - mPosition(2) + in.Direction[2] * out.HitDistance;
 
 	out.UV[0] = dotV(px, py, pz, mXAxis(0), mXAxis(1), mXAxis(2)) * mInvXLenSqr_Cache;
 	out.UV[1] = dotV(px, py, pz, mYAxis(0), mYAxis(1), mYAxis(2)) * mInvYLenSqr_Cache;

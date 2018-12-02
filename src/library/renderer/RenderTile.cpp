@@ -108,7 +108,7 @@ void RenderTile::reset()
 	mSamplesRendered = 0;
 }
 
-RayPackage RenderTile::constructCameraRay(const vuint32& px, const vuint32& py, uint32 sample)
+Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 {
 	statistics().incPixelSampleCount();
 
@@ -126,17 +126,17 @@ RayPackage RenderTile::constructCameraRay(const vuint32& px, const vuint32& py, 
 								std::floor(specInd
 										   * mContext.renderManager()->spectrumDescriptor()->samples()));
 
-	const vfloat x = simdpp::to_float32(px) + (aa(0) - 0.5f + mContext.offsetX());
-	const vfloat y = simdpp::to_float32(py) + (aa(1) - 0.5f + mContext.offsetY());
+	const float x = px + (aa(0) - 0.5f + mContext.offsetX());
+	const float y = py + (aa(1) - 0.5f + mContext.offsetY());
 
 	CameraSample cameraSample;
 	cameraSample.SensorSize		 = Eigen::Vector2i(mFullWidth, mFullHeight);
 	cameraSample.Pixel[0]		 = x;
 	cameraSample.Pixel[1]		 = y;
-	cameraSample.R[1]			 = simdpp::make_float(lens(0));
-	cameraSample.R[2]			 = simdpp::make_float(lens(1));
-	cameraSample.Time			 = simdpp::make_float(t);
-	cameraSample.WavelengthIndex = simdpp::make_uint(specInd);
+	cameraSample.R[0]			 = lens(0);
+	cameraSample.R[1]			 = lens(1);
+	cameraSample.Time			 = t;
+	cameraSample.WavelengthIndex = specInd;
 
 	return mContext.renderManager()->cameraManager()->getActiveCamera()->constructRay(cameraSample);
 }

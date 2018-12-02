@@ -3,14 +3,11 @@
 
 #include "geometry/Sphere.h"
 
-#include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "registry/Registry.h"
 
 namespace PR {
 constexpr float P = 1.6075f;
-
-class IEmission;
 
 class SphereEntity : public IEntity {
 public:
@@ -19,7 +16,8 @@ public:
 	SphereEntity(uint32 id, const std::string& name, float r)
 		: IEntity(id, name)
 		, mRadius(r)
-		, mMaterial(nullptr)
+		, mMaterialID(0)
+		, mLightID(0)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -32,12 +30,12 @@ public:
 
 	bool isLight() const override
 	{
-		return mLight != nullptr;
+		return mLightID != 0;
 	}
 
-	float surfaceArea(IMaterial* m) const override
+	float surfaceArea(uint32 id) const override
 	{
-		if (!m || m == mMaterial.get()) {
+		if (id == 0 || id == mMaterialID) {
 			Eigen::Matrix3f sca;
 			transform().computeRotationScaling((Eigen::Matrix3f*)nullptr, &sca);
 
@@ -55,14 +53,14 @@ public:
 		}
 	}
 
-	void setMaterial(const std::shared_ptr<IMaterial>& m)
+	void setMaterialID(uint32 m)
 	{
-		mMaterial = m;
+		mMaterialID = m;
 	}
 
-	std::shared_ptr<IMaterial> material() const
+	uint32 materialID() const
 	{
-		return mMaterial;
+		return mMaterialID;
 	}
 
 	void setRadius(float f)
@@ -77,7 +75,7 @@ public:
 
 	bool isCollidable() const override
 	{
-		return mMaterial && mMaterial->canBeShaded() && mRadius >= PR_EPSILON;
+		return mRadius >= PR_EPSILON;
 	}
 
 	float collisionCost() const override
@@ -91,12 +89,26 @@ public:
 						   Eigen::Vector3f(-mRadius, -mRadius, -mRadius));
 	}
 
-	void checkCollision(const CollisionInput& in, CollisionOutput& out) const override
+	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
-		// TODO
-		out.EntityID   = simdpp::make_uint(id());
-		out.FaceID	 = simdpp::make_uint(0);
-		out.MaterialID = simdpp::make_uint(mMaterial->id());
+		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		mSphere_Cache.intersects(in_local, out);
+
+		out.HitDistance = in_local.distance_transformed(out.HitDistance, transform().matrix(), in);
+		out.EntityID	= simdpp::make_uint(id());
+		out.FaceID		= simdpp::make_uint(0);
+		out.MaterialID  = simdpp::make_uint(mMaterialID);
+	}
+
+	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	{
+		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		mSphere_Cache.intersects(in_local, out);
+
+		out.HitDistance = in_local.distance_transformed(out.HitDistance, transform().matrix(), in);
+		out.EntityID	= id();
+		out.FaceID		= 0;
+		out.MaterialID  = mMaterialID;
 	}
 
 protected:
@@ -104,18 +116,18 @@ protected:
 	{
 		IEntity::onFreeze(context);
 
-		const float area = surfaceArea(nullptr);
+		const float area = surfaceArea(0);
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 
-		if (mMaterial)
-			mMaterial->freeze(context);
+		mSphere_Cache = Sphere(Eigen::Vector3f(0, 0, 0), mRadius);
 	}
 
 private:
 	float mRadius;
-	std::shared_ptr<IMaterial> mMaterial;
-	std::shared_ptr<IEmission> mLight;
+	uint32 mMaterialID;
+	uint32 mLightID;
 
+	Sphere mSphere_Cache;
 	float mPDF_Cache;
 };
 
