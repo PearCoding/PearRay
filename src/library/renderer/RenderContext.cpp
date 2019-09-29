@@ -1,20 +1,15 @@
 #include "RenderContext.h"
 #include "Logger.h"
-#include "OutputMap.h"
-#include "RenderManager.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
 #include "RenderTileMap.h"
 #include "RenderTileSession.h"
+#include "buffer/OutputBuffer.h"
 #include "camera/ICamera.h"
-#include "entity/EntityManager.h"
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
-#include "integrator/IIntegratorFactory.h"
-#include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
-#include "material/MaterialManager.h"
 #include "math/MSI.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
@@ -24,26 +19,30 @@
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 							 uint32 w, uint32 h,
+							 const std::shared_ptr<IIntegrator>& integrator,
 							 const std::shared_ptr<Scene>& scene,
-							 const RenderManager* manager)
+							 const std::shared_ptr<SpectrumDescriptor>& specDesc,
+							 const RenderSettings& settings)
 	: mIndex(index)
 	, mOffsetX(ox)
 	, mOffsetY(oy)
 	, mWidth(w)
 	, mHeight(h)
-	, mRenderManager(manager)
 	, mScene(scene)
+	, mSpectrumDescriptor(specDesc)
 	, mOutputMap()
 	, mTileMap()
 	, mIncrementalCurrentSample(0)
-	, mRenderSettings(mRenderManager->registry())
-	, mIntegrator(nullptr)
+	, mRenderSettings(settings)
+	, mIntegrator(integrator)
 	, mShouldStop(false)
 {
-	PR_ASSERT(mRenderManager, "Render manager can not be NULL!");
+	PR_ASSERT(mIntegrator, "Integrator can not be NULL!");
+	PR_ASSERT(mScene, "Scene can not be NULL!");
+	PR_ASSERT(mSpectrumDescriptor, "Spectrum Descriptor can not be NULL!");
 	reset();
 
-	mOutputMap = std::make_unique<OutputMap>(this);
+	mOutputMap = std::make_unique<OutputBuffer>(this);
 }
 
 RenderContext::~RenderContext()
@@ -57,8 +56,6 @@ void RenderContext::reset()
 	mThreadsWaitingForPass	= 0;
 	mCurrentPass			  = 0;
 	mIncrementalCurrentSample = 0;
-
-	mIntegrator.reset();
 
 	for (RenderThread* thread : mThreads)
 		delete thread;
@@ -74,35 +71,20 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
 
 	/* Setup entities */
-	for (auto entity : mRenderManager->entityManager()->getAll()) {
+	for (auto entity : mScene->entities()) {
 		if (entity->isLight())
 			mLights.push_back(entity.get());
 	}
 
-	/* Setup integrators */
-	auto intfact = mRenderManager->integratorManager()->getFactory(mRenderSettings.integratorMode());
-	if (!intfact) {
-		PR_LOG(L_ERROR) << "Integrator " << mRenderSettings.integratorMode()
-						<< " not found!" << std::endl;
-		return;
-	}
-
-	mIntegrator = intfact->create(this);
-	if (!mIntegrator) {
-		PR_LOG(L_ERROR) << "Integrator " << mRenderSettings.integratorMode()
-						<< " implementation is broken! Please contact plugin developer." << std::endl;
-		return;
-	}
-
 	// Get other informations
-	mMaxRayDepth	 = mRenderSettings.maxRayDepth();
+	mMaxRayDepth	 = mRenderSettings.maxRayDepth;
 	mSamplesPerPixel = mRenderSettings.samplesPerPixel();
 
 	PR_LOG(L_INFO) << "Rendering with: " << std::endl;
-	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount() << std::endl;
-	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount() << std::endl;
-	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount() << std::endl;
-	PR_LOG(L_INFO) << "  Spectral Samples: " << mRenderSettings.spectralSampleCount() << std::endl;
+	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount << std::endl;
+	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount << std::endl;
+	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount << std::endl;
+	PR_LOG(L_INFO) << "  Spectral Samples: " << mRenderSettings.spectralSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Full Samples: " << mSamplesPerPixel << std::endl;
 
 	/* Setup threads */
@@ -117,9 +99,6 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		mThreads.push_back(thread);
 	}
 
-	/* Setup scene */
-	mScene->setup(this);
-
 	// Calculate tile sizes, etc.
 	uint32 ptcx = std::max<uint32>(1, tcx);
 	uint32 ptcy = std::max<uint32>(1, tcy);
@@ -129,15 +108,15 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	ptcy		= std::ceil(mHeight / static_cast<float>(ptch));
 
 	mTileMap = std::make_unique<RenderTileMap>(ptcx, ptcy, ptcw, ptch);
-	mTileMap->init(*this, mRenderSettings.tileMode());
+	mTileMap->init(*this, mRenderSettings.tileMode);
 
 	// Init modules
-	mIntegrator->init();
+	mIntegrator->init(this);
 
 	mOutputMap->clear();
 
 	// Start
-	mIntegrator->onStart(); // TODO: onEnd
+	mIntegrator->onStart();
 	if (mIntegrator->needNextPass(0)) {
 		bool clear; // Doesn't matter, as it is already clean.
 		mIntegrator->onNextPass(0, clear);
@@ -147,6 +126,12 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
+}
+
+void RenderContext::notifyEnd()
+{
+	if (isFinished() && mIntegrator)
+		mIntegrator->onEnd();
 }
 
 uint32 RenderContext::tileCount() const
@@ -163,21 +148,6 @@ std::list<RenderTile*> RenderContext::currentTiles() const
 			list.push_back(tile);
 	}
 	return list;
-}
-
-void RenderContext::traceCoherentRays(RayStream& rays, HitStream& hits) const
-{
-	mScene->traceCoherentRays(rays, hits);
-}
-
-void RenderContext::traceIncoherentRays(RayStream& rays, HitStream& hits) const
-{
-	mScene->traceIncoherentRays(rays, hits);
-}
-
-void RenderContext::traceShadowRays(RayStream& rays, HitStream& hits) const
-{
-	mScene->traceShadowRays(rays, hits);
 }
 
 void RenderContext::waitForNextPass()

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BoundingBox.h"
-#include "FacePackage.h"
-#include "Triangle.h"
+#include "geometry/BoundingBox.h"
+#include "geometry/FacePackage.h"
+#include "geometry/Triangle.h"
 #include "math/Vector.h"
 #include "shader/ShadingPoint.h"
 

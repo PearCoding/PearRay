@@ -4,7 +4,7 @@
 #include <QImage>
 
 #include "spectral/ToneMapper.h"
-#include "renderer/OutputMap.h"
+#include "renderer/OutputBuffer.h"
 
 namespace PR
 {
@@ -80,7 +80,7 @@ public slots:
 
 	void setToolMode(ToolMode tm);
 	void setDisplayMode(quint32 mode);
-	
+
 	void resetZoomPan();
 	void fitIntoWindow();
 
@@ -110,8 +110,8 @@ private:
 	PR::RenderContext* mRenderer;
 
 	ToolMode mToolMode;
-	PR::OutputMap::Variable1D mDisplayMode1D;
-	PR::OutputMap::Variable3D mDisplayMode3D;
+	PR::OutputBuffer::Variable1D mDisplayMode1D;
+	PR::OutputBuffer::Variable3D mDisplayMode3D;
 
 	bool mShowProgress;
 

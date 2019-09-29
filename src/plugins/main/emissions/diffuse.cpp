@@ -50,7 +50,7 @@ private:
 
 class DiffuseEmissionFactory : public IEmissionFactory {
 public:
-	std::shared_ptr<IEmission> create(uint32 id, uint32 uuid, const Registry& reg) override
+	std::shared_ptr<IEmission> create(uint32 id, uint32 uuid, const Environment& env) override
 	{
 		// TODO
 		return std::make_shared<DiffuseEmission>(id);

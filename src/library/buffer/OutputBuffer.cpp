@@ -1,31 +1,30 @@
-#include "OutputMap.h"
-#include "RenderContext.h"
-#include "RenderManager.h"
+#include "OutputBuffer.h"
+#include "renderer/RenderContext.h"
 #include "shader/ShadingPoint.h"
 #include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
-OutputMap::OutputMap(RenderContext* renderer)
+OutputBuffer::OutputBuffer(RenderContext* renderer)
 	: mRenderer(renderer)
 	, mInitialized(false)
 	, mSpectral(new FrameBufferFloat(
 		  renderer->width(),
 		  renderer->height(),
-		  renderer->renderManager()->spectrumDescriptor()->samples(),
+		  renderer->spectrumDescriptor()->samples(),
 		  0.0f))
 {
 	mIntCounter[V_Samples] = std::make_shared<FrameBufferUInt32>(
 		renderer->width(),
 		renderer->height(),
-		1,
+		renderer->spectrumDescriptor()->samples(),
 		0);
 }
 
-OutputMap::~OutputMap()
+OutputBuffer::~OutputBuffer()
 {
 }
 
-void OutputMap::clear()
+void OutputBuffer::clear()
 {
 	mSpectral->clear();
 
@@ -57,9 +56,9 @@ void OutputMap::clear()
 		p.second->clear();
 }
 
-void OutputMap::pushFragment(const vuint32& pixelIndex, const ShadingPoint& s)
+void OutputBuffer::pushFragment(const vuint32& pixelIndex, const ShadingPoint& s)
 {
-	vfloat oldSample = simdpp::to_float32(getSampleCount(pixelIndex));
+	vfloat oldSample = simdpp::to_float32(getSampleCount(pixelIndex, s.WavelengthIndex));
 	vfloat t		 = 1.0f / (oldSample + 1.0f);
 
 	// Spectral
@@ -68,7 +67,7 @@ void OutputMap::pushFragment(const vuint32& pixelIndex, const ShadingPoint& s)
 	// TODO:
 
 	// Increase sample count
-	incSampleCount(pixelIndex);
+	incSampleCount(pixelIndex, s.WavelengthIndex);
 }
 
 } // namespace PR

@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(PearRay)
 
 #SETS
-SET(VENDOR "PearRay project 2015-2018")
+SET(VENDOR "PearRay project 2015-2020")
 SET(VERSION_MAJOR 0)
 SET(VERSION_MINOR 11)
 SET(VERSION_HEX 0x0011)
@@ -129,7 +129,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
 			external/tinyobjloader external/libsimdpp
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
-			src/library)
+			src/library src/utils)
 
 # Setup CPPLINT
 IF(PR_CPP_CHECK)

@@ -15,7 +15,7 @@ class PR_LIB_UTILS OutputSpecification {
 	PR_CLASS_NON_COPYABLE(OutputSpecification);
 
 public:
-	OutputSpecification();
+	OutputSpecification(const std::string& wrkDir);
 	virtual ~OutputSpecification();
 
 	void init(const std::shared_ptr<RenderContext>& context);

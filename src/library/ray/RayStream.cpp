@@ -2,6 +2,67 @@
 
 namespace PR {
 
+Ray RayGroup::getRay(size_t id) const
+{
+	PR_ASSERT(id < Size, "Invalid access!");
+
+	Ray ray;
+	for (int i = 0; i < 3; ++i)
+		ray.Origin[i] = Origin[i][id];
+
+	float d0 = from_snorm16(Direction[0][id]);
+	float d1 = from_snorm16(Direction[1][id]);
+	from_oct(d0, d1, ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+
+	ray.Depth			= Depth[id];
+	ray.PixelIndex		= PixelIndex[id];
+	ray.Time			= from_unorm16(Time[id]);
+	ray.WavelengthIndex = WavelengthIndex[id];
+	ray.Flags			= Flags[id];
+	ray.Weight			= Weight[id];
+
+	ray.setupInverse();
+	return ray;
+}
+
+RayPackage RayGroup::getRayPackage(size_t id) const
+{
+	PR_ASSERT(id < Size, "Invalid access!");
+
+	RayPackage ray;
+	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
+
+	for (int j = 0; j < 3; ++j)
+		ray.Origin[j] = simdpp::load(&Origin[j][id]);
+
+	// Decompress
+	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
+		from_oct(
+			from_snorm16(Direction[0][id + k]),
+			from_snorm16(Direction[1][id + k]),
+			dir[0][k], dir[1][k], dir[2][k]);
+	}
+
+	for (int j = 0; j < 3; ++j)
+		ray.Direction[j] = simdpp::load(&dir[j][0]);
+
+	load_from_container_linear(ray.Depth, Depth, id);
+	load_from_container_linear(ray.PixelIndex, PixelIndex, id);
+
+	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
+		dir[0][k] = from_unorm16(Time[id + k]);
+	}
+	ray.Time = simdpp::load(&dir[0][id]);
+
+	load_from_container_linear(ray.WavelengthIndex, WavelengthIndex, id);
+	load_from_container_linear(ray.Flags, Flags, id);
+	load_from_container_linear(ray.Weight, Weight, id);
+
+	ray.setupInverse();
+
+	return ray;
+}
+
 RayStream::RayStream(size_t raycount)
 	: mSize(raycount + raycount % PR_SIMD_BANDWIDTH)
 	, mCurrentPos(0)
@@ -38,7 +99,7 @@ void RayStream::add(const Ray& ray)
 	mPixelIndex.emplace_back(ray.PixelIndex);
 	mTime.emplace_back(to_unorm16(ray.Time));
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
-	mFlags.emplace_back(ray.Flags);
+	mFlags.emplace_back(ray.Flags & ~RF_BackgroundHit);
 	mWeight.emplace_back(ray.Weight);
 }
 

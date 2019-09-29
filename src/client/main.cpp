@@ -23,6 +23,19 @@ namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
 constexpr int OUTPUT_FIELD_SIZE = 8;
+
+void printStatus(const PR::RenderStatus& status)
+{
+	if (status.hasField("int.feedback"))
+		std::cout << "( " << status.getField("int.feedback").getString() << ")";
+
+	std::cout << " | S: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
+			  << " R: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
+			  << " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
+			  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt()
+			  << std::endl;
+}
+
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
@@ -37,6 +50,11 @@ int main(int argc, char** argv)
 	sstream << "pr_" << t << ".log";
 #endif
 	const bf::path logFile = options.OutputDir + "/" + sstream.str();
+
+	// If the plugin path is empty, use the current working directory
+	if (options.PluginPath.empty()) {
+		options.PluginPath = bf::current_path().string();
+	}
 
 	PR::FileLogListener fileLogListener;
 	fileLogListener.open(logFile.native());
@@ -59,7 +77,7 @@ int main(int argc, char** argv)
 	}
 
 	// Setup renderFactory
-	auto renderFactory = env->renderManager().createRenderFactory();
+	auto renderFactory = env->createRenderFactory();
 	if (!renderFactory) {
 		if (!options.IsQuiet)
 			std::cout << "Error: Couldn't setup render factory." << std::endl;
@@ -69,13 +87,24 @@ int main(int argc, char** argv)
 
 	if (options.ShowRegistry && !options.IsQuiet) {
 		std::cout << "Registry:" << std::endl
-				  << env->renderManager().registry()->dump() << std::endl;
+				  << env->registry().dump() << std::endl;
 	}
+
+	auto integrator = env->createSelectedIntegrator();
 
 	// Render per image tile
 	PR::ToneMapper toneMapper;
 	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
-		auto renderer = renderFactory->create(i, options.ImageTileXCount, options.ImageTileYCount);
+		auto renderer = renderFactory->create(integrator,
+											  i, options.ImageTileXCount, options.ImageTileYCount);
+
+		if (!renderer) {
+			PR_LOG(PR::L_ERROR) << "Unable to create renderer!" << std::endl;
+			return -5;
+		}
+
+		env->setup(renderer);
+
 		if (options.ImageTileXCount * options.ImageTileYCount == 1) {
 			PR_LOG(PR::L_INFO) << "Starting rendering of image ["
 							   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
@@ -85,8 +114,6 @@ int main(int argc, char** argv)
 							   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
 							   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
 		}
-
-		env->outputSpecification().setup(renderer);
 
 		if (options.ShowInformation)
 			env->dumpInformation();
@@ -107,15 +134,7 @@ int main(int argc, char** argv)
 
 				std::cout << std::setw(OUTPUT_FIELD_SIZE) << /*std::setfill('0') <<*/ std::setprecision(4) << std::fixed << status.percentage() * 100 << "%"
 						  << " Pass " << renderer->currentPass() + 1;
-
-				if (status.hasField("int.feedback"))
-					std::cout << "( " << status.getField("int.feedback").getString() << ")";
-
-				std::cout << " | S: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
-						  << " R: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
-						  << " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
-						  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt()
-						  << std::endl;
+				printStatus(status);
 
 				start_prog = end;
 			}
@@ -125,6 +144,14 @@ int main(int argc, char** argv)
 				env->save(renderer, toneMapper, false);
 				start_img = end;
 			}
+		}
+		renderer->notifyEnd();
+
+		// Final status
+		if (options.ShowProgress > 0) {
+			PR::RenderStatus status = renderer->status();
+			std::cout << "Final";
+			printStatus(status);
 		}
 
 		{

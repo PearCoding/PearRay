@@ -9,7 +9,7 @@ namespace PR {
 class RenderContext;
 struct ShadingPoint;
 
-class PR_LIB OutputMap {
+class PR_LIB OutputBuffer {
 public:
 	enum Variable3D {
 		V_Position = 0,
@@ -39,29 +39,29 @@ public:
 		V_COUNTER_COUNT
 	};
 
-	explicit OutputMap(RenderContext* renderer);
-	~OutputMap();
+	explicit OutputBuffer(RenderContext* renderer);
+	~OutputBuffer();
 
 	void clear();
 
 	void pushFragment(const vuint32& pixelIndex, const ShadingPoint& pt);
 
-	inline void setSampleCount(const vuint32& pixelIndex, const vuint32& sample)
+	inline void setSampleCount(const vuint32& pixelIndex, uint32 channel, const vuint32& sample)
 	{
-		mIntCounter[V_Samples]->setFragment(pixelIndex, 0, sample);
+		mIntCounter[V_Samples]->setFragment(pixelIndex, channel, sample);
 	}
 
-	inline vuint32 getSampleCount(const vuint32& pixelIndex) const
+	inline vuint32 getSampleCount(const vuint32& pixelIndex, uint32 channel) const
 	{
-		return mIntCounter[V_Samples]->getFragment(pixelIndex, 0);
+		return mIntCounter[V_Samples]->getFragment(pixelIndex, channel);
 	}
 
-	inline void incSampleCount(const vuint32& pixelIndex)
+	inline void incSampleCount(const vuint32& pixelIndex, uint32 channel)
 	{
 		for_each_v([&](uint32 i) {
 			uint32 pi = extract(i, pixelIndex);
-			mIntCounter[V_Samples]->setFragment(pi, 0,
-												mIntCounter[V_Samples]->getFragment(pi, 0) + 1);
+			mIntCounter[V_Samples]->setFragment(pi, channel,
+												mIntCounter[V_Samples]->getFragment(pi, channel) + 1);
 		});
 	}
 

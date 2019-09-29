@@ -70,6 +70,11 @@
 # define PR_CC_NAME "Unknown compiler"
 #endif
 
+// Check if C++14
+#if __cplusplus < 201300
+# warning PearRay requires C++14 to compile successfully
+#endif
+
 #if defined(PR_DEBUG)
 # define PR_BUILDVARIANT_NAME "Debug"
 # define PR_BUILD_STRING PR_NAME_STRING " " PR_VERSION_STRING " build variant " PR_BUILDVARIANT_NAME " on " __DATE__  " at " __TIME__ " with " PR_CC_NAME " { OS: " PR_OS_NAME "; Last change: " __TIMESTAMP__ "}\n"
@@ -223,7 +228,7 @@ namespace PR
 	inline void pr_Noop()
 	{
 	}
-	
+
 	typedef signed char int8;
 	typedef unsigned char uint8;
 
@@ -240,7 +245,7 @@ namespace PR
 	typedef signed long int int64;
 	typedef unsigned long int uint64;
 #endif
-	
+
 	typedef std::chrono::high_resolution_clock::time_point TimePoint;
 	typedef uint32 EntityID;
 	typedef uint32 DataRefID;

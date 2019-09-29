@@ -7,19 +7,20 @@
 #include <condition_variable>
 #include <list>
 #include <mutex>
+#include <vector>
 
 namespace PR {
 class HitStream;
 class IEntity;
 class IIntegrator;
-class OutputMap;
+class OutputBuffer;
 class RayStream;
-class RenderManager;
 class RenderTileSession;
 class RenderThread;
 class RenderTile;
 class RenderTileMap;
 class Scene;
+class SpectrumDescriptor;
 class PR_LIB RenderContext {
 	friend class RenderThread;
 
@@ -28,8 +29,10 @@ class PR_LIB RenderContext {
 public:
 	RenderContext(uint32 index, uint32 offx, uint32 offy,
 				  uint32 width, uint32 height,
+				  const std::shared_ptr<IIntegrator>& integrator,
 				  const std::shared_ptr<Scene>& scene,
-				  const RenderManager* manager);
+				  const std::shared_ptr<SpectrumDescriptor>& specDesc,
+				  const RenderSettings& settings);
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
@@ -46,10 +49,7 @@ public:
 	// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
 	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
 	void stop();
-
-	void traceCoherentRays(RayStream& rays, HitStream& hits) const;
-	void traceIncoherentRays(RayStream& rays, HitStream& hits) const;
-	void traceShadowRays(RayStream& rays, HitStream& hits) const;
+	void notifyEnd();
 
 	inline bool isStopping() const { return mShouldStop; }
 	bool isFinished() const;
@@ -63,7 +63,7 @@ public:
 	// Slow and only copies!
 	std::list<RenderTile*> currentTiles() const;
 
-	IIntegrator* integrator() const { return mIntegrator.get(); }
+	std::shared_ptr<IIntegrator> integrator() const { return mIntegrator; }
 
 	// Settings
 	inline const RenderSettings& settings() const { return mRenderSettings; }
@@ -74,9 +74,9 @@ public:
 	RenderStatistics statistics() const;
 	RenderStatus status() const;
 
-	inline OutputMap* output() const { return mOutputMap.get(); }
-	inline const RenderManager* renderManager() const { return mRenderManager; }
-	inline Scene* scene() const { return mScene.get(); }
+	inline OutputBuffer* output() const { return mOutputMap.get(); }
+	inline std::shared_ptr<Scene> scene() const { return mScene; }
+	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
 
 	// Useful settings
 	inline uint32 maxRayDepth() const { return mMaxRayDepth; }
@@ -97,9 +97,9 @@ private:
 	const uint32 mWidth;
 	const uint32 mHeight;
 
-	const RenderManager* mRenderManager;
 	std::shared_ptr<Scene> mScene;
-	std::unique_ptr<OutputMap> mOutputMap;
+	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
+	std::unique_ptr<OutputBuffer> mOutputMap;
 
 	std::vector<IEntity*> mLights;
 

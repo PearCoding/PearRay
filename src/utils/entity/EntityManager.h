@@ -4,7 +4,7 @@
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB EntityManager : public AbstractManager<IEntity, IEntityFactory> {
+class PR_LIB_UTILS EntityManager : public AbstractManager<IEntity, IEntityFactory> {
 public:
 	EntityManager();
 	virtual ~EntityManager();

@@ -18,6 +18,9 @@ struct PR_LIB_INLINE RayGroup {
 	uint8* WavelengthIndex;
 	uint8* Flags;
 	float* Weight;
+
+	Ray getRay(size_t id) const;
+	RayPackage getRayPackage(size_t id) const;
 };
 
 class PR_LIB RayStream {
@@ -25,14 +28,15 @@ public:
 	explicit RayStream(size_t size);
 	virtual ~RayStream();
 
-	inline bool isFull() const { return mWeight.size() >= mSize; }
-	inline bool enoughSpace(size_t requested = 1) const { return mWeight.size() + requested <= mSize; }
-	inline bool hasNextGroup() const { return mCurrentPos < mWeight.size(); }
+	inline bool isFull() const { return currentSize() >= maxSize(); }
+	inline bool enoughSpace(size_t requested = 1) const { return currentSize() + requested <= maxSize(); }
+	inline bool hasNextGroup() const { return mCurrentPos < currentSize(); }
 
 	inline size_t maxSize() const { return mSize; }
 	inline size_t currentSize() const { return mWeight.size(); }
 
 	void add(const Ray& ray);
+
 	void sort();
 	void reset();
 	RayGroup getNextGroup();

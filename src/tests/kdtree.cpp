@@ -1,4 +1,4 @@
-#include "geometry/TriMesh.h"
+#include "mesh/TriMesh.h"
 #include "math/SIMD.h"
 
 #include "Test.h"
@@ -33,7 +33,7 @@ PR_BEGIN_TESTCASE(KDTree)
  *      /  |     |  /
  *     /   |     | /
  * 0  x----x     x
- * 
+ *
  *   -2   -1     1    2
  */
 PR_TEST("Two Half")

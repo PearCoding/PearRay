@@ -7,13 +7,11 @@ namespace PR {
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
 									 RayStream* rayCoherentStream,
 									 RayStream* rayIncoherentStream,
-									 RayStream* rayShadowStream,
 									 HitStream* hitStream)
 	: mThread(thread)
 	, mTile(tile)
 	, mCoherentRayStream(rayCoherentStream)
 	, mIncoherentRayStream(rayIncoherentStream)
-	, mShadowRayStream(rayShadowStream)
 	, mHitStream(hitStream)
 	, mCurrentPixel(0)
 {
@@ -31,8 +29,10 @@ IEntity* RenderTileSession::getEntity(uint32 id) const
 bool RenderTileSession::handleCameraRays()
 {
 	const size_t endIndex = mTile->ex() * mTile->ey();
-	if(mCurrentPixel >= endIndex)
+	if (mCurrentPixel >= endIndex)
 		return false;
+
+	mCoherentRayStream->reset();
 
 	for (; mCurrentPixel < endIndex; ++mCurrentPixel) {
 		if (!enoughCoherentRaySpace(1))
@@ -44,9 +44,23 @@ bool RenderTileSession::handleCameraRays()
 		Ray ray = mTile->constructCameraRay(x, y, mTile->samplesRendered());
 		enqueueCoherentRay(ray);
 	}
-	
-	mTile->context().traceCoherentRays(*mCoherentRayStream, *mHitStream);
+
+	mTile->context().scene()->traceCoherentRays(*mCoherentRayStream, *mHitStream,
+												[&](const Ray& ray) {
+													mTile->statistics().addBackgroundHitCount();
+												});
 
 	return true;
+}
+
+void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
+										  IEntity*& entity, IMaterial*& material)
+{
+	/*entity   = mTile->context().renderManager()->entityManager()->getObject(grp.EntityID).get();
+	material = mTile->context().renderManager()->materialManager()->getObject(grp.MaterialID).get();*/
+}
+
+void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
+{
 }
 } // namespace PR

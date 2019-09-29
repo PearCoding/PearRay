@@ -1,5 +1,5 @@
 #include "EntityManager.h"
-#include "IEntity.h"
+#include "entity/IEntity.h"
 
 namespace PR {
 EntityManager::EntityManager()

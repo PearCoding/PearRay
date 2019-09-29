@@ -12,7 +12,7 @@
  * Limited to arithmetic, enums and other special types.
  */
 namespace PR {
-class PR_LIB BadCast : public std::exception {
+class PR_LIB_UTILS BadCast : public std::exception {
 public:
 	inline explicit BadCast(const char* what)
 		: mWhat(what)
@@ -28,7 +28,7 @@ private:
 #define _AH_MEMB_INV(T)                                                        \
 	virtual inline void cast(T&) const { throw BadCast("Invalid void cast"); }
 
-class PR_LIB _AnyHolder {
+class PR_LIB_UTILS _AnyHolder {
 public:
 	_AnyHolder()		  = default;
 	virtual ~_AnyHolder() = default;
@@ -72,7 +72,7 @@ public:
 	inline void cast(O& v) const override { internal_cast<O>(v); }
 
 template <typename T, typename = void>
-class PR_LIB _AnyHolderImpl : public _AnyHolder {
+class PR_LIB_UTILS _AnyHolderImpl : public _AnyHolder {
 public:
 	typedef std::remove_cv_t<std::decay_t<T>> value_t;
 
@@ -121,7 +121,7 @@ private:
 };
 #undef _AH_MEMB
 
-class PR_LIB Any {
+class PR_LIB_UTILS Any {
 public:
 	// Default constructor
 	inline Any()

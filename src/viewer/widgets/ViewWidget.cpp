@@ -14,7 +14,7 @@
 ViewWidget::ViewWidget(QWidget *parent)
 	: QWidget(parent),
 	mRenderer(nullptr), mToolMode(TM_Selection),
-	mDisplayMode1D(PR::OutputMap::V_1D_COUNT), mDisplayMode3D(PR::OutputMap::V_3D_COUNT),
+	mDisplayMode1D(PR::OutputBuffer::V_1D_COUNT), mDisplayMode3D(PR::OutputBuffer::V_3D_COUNT),
 	mShowProgress(true),
 	mRenderData(nullptr), mToneMapper(nullptr),
 	mZoom(1), mPanX(0), mPanY(0), mLastPanX(0), mLastPanY(0), mPressing(false)
@@ -133,18 +133,18 @@ void ViewWidget::setDisplayMode(quint32 mode)
 {
 	if(mode == 0)// Spectral
 	{
-		mDisplayMode1D = PR::OutputMap::V_1D_COUNT;// OFF
-		mDisplayMode3D = PR::OutputMap::V_3D_COUNT;// OFF
+		mDisplayMode1D = PR::OutputBuffer::V_1D_COUNT;// OFF
+		mDisplayMode3D = PR::OutputBuffer::V_3D_COUNT;// OFF
 	}
-	else if(mode < PR::OutputMap::V_3D_COUNT + 1)
+	else if(mode < PR::OutputBuffer::V_3D_COUNT + 1)
 	{
-		mDisplayMode1D = PR::OutputMap::V_1D_COUNT;// OFF
-		mDisplayMode3D = (PR::OutputMap::Variable3D)(mode - 1);
+		mDisplayMode1D = PR::OutputBuffer::V_1D_COUNT;// OFF
+		mDisplayMode3D = (PR::OutputBuffer::Variable3D)(mode - 1);
 	}
 	else
 	{
-		mDisplayMode1D = (PR::OutputMap::Variable1D)(mode - 1 - PR::OutputMap::V_3D_COUNT);
-		mDisplayMode3D = PR::OutputMap::V_3D_COUNT;// OFF
+		mDisplayMode1D = (PR::OutputBuffer::Variable1D)(mode - 1 - PR::OutputBuffer::V_3D_COUNT);
+		mDisplayMode3D = PR::OutputBuffer::V_3D_COUNT;// OFF
 	}
 
 	refreshView();
@@ -319,7 +319,7 @@ void ViewWidget::paintEvent(QPaintEvent* event)
 {
 	QPainter painter(this);
 	painter.drawPixmap(0, 0, mBackgroundImage);
-	
+
 	if (!mScaledImage.isNull())
 	{
 		int x = width() / 2 - mScaledImage.width() / 2 - mPanX;
@@ -370,12 +370,12 @@ void ViewWidget::refreshView()
 	{
 		QImage src;
 		bool success = false;
-		PR::OutputMap* map = mRenderer->output();
-		
+		PR::OutputBuffer* map = mRenderer->output();
+
 		if(map)
 		{
-			if(mDisplayMode1D == PR::OutputMap::V_1D_COUNT &&
-				mDisplayMode3D == PR::OutputMap::V_3D_COUNT)// Spectral
+			if(mDisplayMode1D == PR::OutputBuffer::V_1D_COUNT &&
+				mDisplayMode3D == PR::OutputBuffer::V_3D_COUNT)// Spectral
 			{
 				mToneMapper->map(map->getSpectralChannel()->ptr(), mRenderData, 3);
 
@@ -387,7 +387,7 @@ void ViewWidget::refreshView()
 				delete[] tmp;
 				success = true;
 			}
-			else if(mDisplayMode1D != PR::OutputMap::V_1D_COUNT)
+			else if(mDisplayMode1D != PR::OutputBuffer::V_1D_COUNT)
 			{
 				const auto& channel = map->getChannel(mDisplayMode1D);
 
@@ -437,7 +437,7 @@ void ViewWidget::refreshView()
 				}
 			}
 		}
-		
+
 		mRenderImage = QImage(mRenderer->fullWidth(), mRenderer->fullHeight(), QImage::Format_RGB888);
 		mRenderImage.fill(Qt::black);
 		if(success)

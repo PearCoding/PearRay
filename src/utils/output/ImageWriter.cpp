@@ -2,7 +2,6 @@
 #include "Logger.h"
 #include "SpectralFile.h"
 #include "renderer/RenderContext.h"
-#include "renderer/RenderManager.h"
 #include "spectral/SpectrumDescriptor.h"
 
 #include <OpenImageIO/imageio.h>
@@ -69,8 +68,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 				   channelCount, TypeDesc::FLOAT);
 	spec.full_x		 = 0;
 	spec.full_y		 = 0;
-	spec.full_width  = mRenderer->settings().filmWidth();
-	spec.full_height = mRenderer->settings().filmHeight();
+	spec.full_width  = mRenderer->settings().filmWidth;
+	spec.full_height = mRenderer->settings().filmHeight;
 	spec.x			 = cx;
 	spec.y			 = cy;
 
@@ -114,12 +113,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 		return false;
 
 	// Calculate maximums for some mapper techniques
-	float invMax3d[OutputMap::V_3D_COUNT];
-	std::fill_n(invMax3d, OutputMap::V_3D_COUNT, 0);
-	float invMax1d[OutputMap::V_1D_COUNT];
-	std::fill_n(invMax1d, OutputMap::V_1D_COUNT, 0);
-	float invMaxCounter[OutputMap::V_COUNTER_COUNT];
-	std::fill_n(invMax1d, OutputMap::V_COUNTER_COUNT, 0);
+	float invMax3d[OutputBuffer::V_3D_COUNT];
+	std::fill_n(invMax3d, OutputBuffer::V_3D_COUNT, 0);
+	float invMax1d[OutputBuffer::V_1D_COUNT];
+	std::fill_n(invMax1d, OutputBuffer::V_1D_COUNT, 0);
+	float invMaxCounter[OutputBuffer::V_COUNTER_COUNT];
+	std::fill_n(invMax1d, OutputBuffer::V_COUNTER_COUNT, 0);
 
 	for (const IM_ChannelSetting3D& sett : ch3d) {
 		std::shared_ptr<FrameBufferFloat> channel;
@@ -215,7 +214,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 				toneMapper.setGammaMode(sett.TGM);
 				toneMapper.setMapperMode(sett.TMM);
 				toneMapper.map(channel->ptr(), &line[id],
-							   mRenderer->renderManager()->spectrumDescriptor()->samples(), 3,
+							   mRenderer->spectrumDescriptor()->samples(), 3,
 							   1); // RGB
 
 				id += 3;
@@ -359,7 +358,7 @@ bool ImageWriter::save_spectral(const std::string& file,
 	if (!spec || !mRenderer)
 		return false;
 
-	SpectralFile specFile(mRenderer->renderManager()->spectrumDescriptor(),
+	SpectralFile specFile(mRenderer->spectrumDescriptor(),
 						  mRenderer->width(), mRenderer->height(), spec->ptr(), false);
 	specFile.save(file, compress);
 

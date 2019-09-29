@@ -4,6 +4,10 @@
 
 namespace PR {
 
+enum RayFlags {
+	RF_BackgroundHit = 0x80 // Special flag for use in ray stream to indicate miss
+};
+
 template <typename V, typename IV>
 struct PR_LIB_INLINE RayPackageBase {
 	typedef V FloatingType;

@@ -1,8 +1,8 @@
 #include "lambert.h"
+#include "Environment.h"
+#include "math/Projection.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
-
-#include "math/Projection.h"
 
 #include "lambert_ispc.h"
 
@@ -87,7 +87,7 @@ void LambertMaterial::onFreeze(RenderContext* context)
 
 class LambertMaterialFactory : public IMaterialFactory {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Registry& reg)
+	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
 	{
 		return std::make_shared<LambertMaterial>(id);
 	}

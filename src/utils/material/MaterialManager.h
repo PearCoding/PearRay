@@ -4,7 +4,7 @@
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB MaterialManager : public AbstractManager<IMaterial, IMaterialFactory> {
+class PR_LIB_UTILS MaterialManager : public AbstractManager<IMaterial, IMaterialFactory> {
 public:
 	MaterialManager();
 	virtual ~MaterialManager();

@@ -4,7 +4,7 @@
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB CameraManager : public AbstractManager<ICamera, ICameraFactory> {
+class PR_LIB_UTILS CameraManager : public AbstractManager<ICamera, ICameraFactory> {
 public:
 	CameraManager();
 	virtual ~CameraManager();

@@ -1,4 +1,4 @@
-#include "renderer/OutputMap.h"
+#include "renderer/OutputBuffer.h"
 #include "shader/ShaderClosure.h"
 
 #include "pypearray.h"
@@ -60,52 +60,52 @@ void setup_output(py::module& m)
 		.def("fill", &FrameBufferFloat::fill)
 		.def_property_readonly("channels", &FrameBufferFloat::channels);
 
-	auto scope = py::class_<OutputMap>(m, "OutputMap");
-	scope.def("clear", &OutputMap::clear)
-		.def("fragment", &OutputMap::getFragment)
-		.def("sampleCount", &OutputMap::getSampleCount)
+	auto scope = py::class_<OutputBuffer>(m, "OutputBuffer");
+	scope.def("clear", &OutputBuffer::clear)
+		.def("fragment", &OutputBuffer::getFragment)
+		.def("sampleCount", &OutputBuffer::getSampleCount)
 		.def("channel",
-			 (std::shared_ptr<FrameBufferFloat>(OutputMap::*)(OutputMap::Variable1D) const) & OutputMap::getChannel)
+			 (std::shared_ptr<FrameBufferFloat>(OutputBuffer::*)(OutputBuffer::Variable1D) const) & OutputBuffer::getChannel)
 		.def("channel",
-			 (std::shared_ptr<FrameBufferFloat>(OutputMap::*)(OutputMap::Variable3D) const) & OutputMap::getChannel)
+			 (std::shared_ptr<FrameBufferFloat>(OutputBuffer::*)(OutputBuffer::Variable3D) const) & OutputBuffer::getChannel)
 		.def("channel",
-			 (std::shared_ptr<FrameBufferUInt64>(OutputMap::*)(OutputMap::VariableCounter) const) & OutputMap::getChannel)
-		.def_property_readonly("spectral", &OutputMap::getSpectralChannel)
+			 (std::shared_ptr<FrameBufferUInt64>(OutputBuffer::*)(OutputBuffer::VariableCounter) const) & OutputBuffer::getChannel)
+		.def_property_readonly("spectral", &OutputBuffer::getSpectralChannel)
 		.def("registerChannel",
-			 (void (OutputMap::*)(OutputMap::Variable1D, const std::shared_ptr<FrameBufferFloat>&)) & OutputMap::registerChannel)
+			 (void (OutputBuffer::*)(OutputBuffer::Variable1D, const std::shared_ptr<FrameBufferFloat>&)) & OutputBuffer::registerChannel)
 		.def("registerChannel",
-			 (void (OutputMap::*)(OutputMap::Variable3D, const std::shared_ptr<FrameBufferFloat>&)) & OutputMap::registerChannel)
+			 (void (OutputBuffer::*)(OutputBuffer::Variable3D, const std::shared_ptr<FrameBufferFloat>&)) & OutputBuffer::registerChannel)
 		.def("registerChannel",
-			 (void (OutputMap::*)(OutputMap::VariableCounter, const std::shared_ptr<FrameBufferUInt64>&)) & OutputMap::registerChannel)
+			 (void (OutputBuffer::*)(OutputBuffer::VariableCounter, const std::shared_ptr<FrameBufferUInt64>&)) & OutputBuffer::registerChannel)
 		.def("registerCustomChannel_1D",
-			 (void (OutputMap::*)(const std::string&, const std::shared_ptr<FrameBufferFloat>&)) & OutputMap::registerCustomChannel_1D)
+			 (void (OutputBuffer::*)(const std::string&, const std::shared_ptr<FrameBufferFloat>&)) & OutputBuffer::registerCustomChannel_1D)
 		.def("registerCustomChannel_3D",
-			 (void (OutputMap::*)(const std::string&, const std::shared_ptr<FrameBufferFloat>&)) & OutputMap::registerCustomChannel_3D)
+			 (void (OutputBuffer::*)(const std::string&, const std::shared_ptr<FrameBufferFloat>&)) & OutputBuffer::registerCustomChannel_3D)
 		.def("registerCustomChannel_Counter",
-			 (void (OutputMap::*)(const std::string&, const std::shared_ptr<FrameBufferUInt64>&)) & OutputMap::registerCustomChannel_Counter)
+			 (void (OutputBuffer::*)(const std::string&, const std::shared_ptr<FrameBufferUInt64>&)) & OutputBuffer::registerCustomChannel_Counter)
 		.def("registerCustomChannel_Spectral",
-			 (void (OutputMap::*)(const std::string&, const std::shared_ptr<FrameBufferFloat>&)) & OutputMap::registerCustomChannel_Spectral);
+			 (void (OutputBuffer::*)(const std::string&, const std::shared_ptr<FrameBufferFloat>&)) & OutputBuffer::registerCustomChannel_Spectral);
 
-	py::enum_<OutputMap::Variable3D>(scope, "Variable3D")
-		.value("POSITION", OutputMap::V_Position)
-		.value("NORMAL", OutputMap::V_Normal)
-		.value("NORMALG", OutputMap::V_NormalG)
-		.value("TANGENT", OutputMap::V_Tangent)
-		.value("BINORMAL", OutputMap::V_Bitangent)
-		.value("VIEW", OutputMap::V_View)
-		.value("UVW", OutputMap::V_UVW)
-		.value("DPDU", OutputMap::V_DPDU)
-		.value("DPDV", OutputMap::V_DPDV)
-		.value("DPDW", OutputMap::V_DPDW)
-		.value("DPDT", OutputMap::V_DPDT);
+	py::enum_<OutputBuffer::Variable3D>(scope, "Variable3D")
+		.value("POSITION", OutputBuffer::V_Position)
+		.value("NORMAL", OutputBuffer::V_Normal)
+		.value("NORMALG", OutputBuffer::V_NormalG)
+		.value("TANGENT", OutputBuffer::V_Tangent)
+		.value("BINORMAL", OutputBuffer::V_Bitangent)
+		.value("VIEW", OutputBuffer::V_View)
+		.value("UVW", OutputBuffer::V_UVW)
+		.value("DPDU", OutputBuffer::V_DPDU)
+		.value("DPDV", OutputBuffer::V_DPDV)
+		.value("DPDW", OutputBuffer::V_DPDW)
+		.value("DPDT", OutputBuffer::V_DPDT);
 
-	py::enum_<OutputMap::Variable1D>(scope, "Variable1D")
-		.value("DEPTH", OutputMap::V_Depth)
-		.value("TIME", OutputMap::V_Time)
-		.value("MATERIAL", OutputMap::V_Material);
+	py::enum_<OutputBuffer::Variable1D>(scope, "Variable1D")
+		.value("DEPTH", OutputBuffer::V_Depth)
+		.value("TIME", OutputBuffer::V_Time)
+		.value("MATERIAL", OutputBuffer::V_Material);
 
-	py::enum_<OutputMap::VariableCounter>(scope, "VariableCounter")
-		.value("ID", OutputMap::V_ID)
-		.value("SAMPLES", OutputMap::V_Samples);
+	py::enum_<OutputBuffer::VariableCounter>(scope, "VariableCounter")
+		.value("ID", OutputBuffer::V_ID)
+		.value("SAMPLES", OutputBuffer::V_Samples);
 }
 } // namespace PRPY

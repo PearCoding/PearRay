@@ -94,23 +94,6 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 				return nullptr;
 			}
 
-			if (renderWidthD.type() == DL::Data::T_Integer) {
-				env->setRenderWidth(renderWidthD.getInt());
-			}
-
-			if (renderHeightD.type() == DL::Data::T_Integer) {
-				env->setRenderHeight(renderHeightD.getInt());
-			}
-
-			if (cropD.type() == DL::Data::T_Group) {
-				DL::DataGroup arr = cropD.getGroup();
-				if (arr.anonymousCount() == 4) {
-					if (arr.isAllNumber()) {
-						env->setCrop(arr.at(0).getNumber(), arr.at(1).getNumber(),
-									 arr.at(2).getNumber(), arr.at(3).getNumber());
-					}
-				}
-			}
 			// Registry information
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
@@ -192,16 +175,16 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	DL::Data value = group.at(1);
 	switch (value.type()) {
 	case DL::Data::T_Integer:
-		env->renderManager().registry()->set(key, value.getInt());
+		env->registry().set(key, value.getInt());
 		break;
 	case DL::Data::T_Float:
-		env->renderManager().registry()->set(key, value.getFloat());
+		env->registry().set(key, value.getFloat());
 		break;
 	case DL::Data::T_Bool:
-		env->renderManager().registry()->set(key, value.getBool());
+		env->registry().set(key, value.getBool());
 		break;
 	case DL::Data::T_String:
-		env->renderManager().registry()->set(key, value.getString());
+		env->registry().set(key, value.getString());
 		break;
 	case DL::Data::T_Group: // TODO
 	default:
@@ -213,7 +196,7 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 void SceneLoader::addEntity(const DL::DataGroup& group,
 							const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
 {
-	auto manag		= env->renderManager().entityManager();
+	auto manag		= env->entityManager();
 	const uint32 id = manag->nextID();
 
 	DL::Data nameD		= group.getFromKey("name");
@@ -247,7 +230,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		return;
 	}
 
-	auto entity = fac->create(id, id, *env->renderManager().registry());
+	auto entity = fac->create(id, id, *env);
 	if (!entity) {
 		PR_LOG(L_ERROR) << "Could not create entity of type " << type << std::endl;
 		return;
@@ -318,7 +301,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	}
 
 	// Add to scene
-	env->renderManager().entityManager()->addObject(entity);
+	manag->addObject(entity);
 
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		if (group.at(i).type() == DL::Data::T_Group) {
@@ -332,7 +315,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 
 void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 {
-	auto manag		= env->renderManager().cameraManager();
+	auto manag		= env->cameraManager();
 	const uint32 id = manag->nextID();
 
 	DL::Data nameD		= group.getFromKey("name");
@@ -369,7 +352,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto camera = fac->create(id, id, *env->renderManager().registry());
+	auto camera = fac->create(id, id, *env);
 	if (!camera) {
 		PR_LOG(L_ERROR) << "Could not create camera of type " << type << std::endl;
 		return;
@@ -433,7 +416,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 
 void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 {
-	auto manag		= env->renderManager().infiniteLightManager();
+	auto manag		= env->infiniteLightManager();
 	const uint32 id = manag->nextID();
 
 	populateObjectRegistry(RG_INFINITELIGHT, id, group, env);
@@ -456,18 +439,18 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto light = fac->create(id, id, *env->renderManager().registry());
+	auto light = fac->create(id, id, *env);
 	if (!light) {
 		PR_LOG(L_ERROR) << "Could not create light of type " << type << std::endl;
 		return;
 	}
 
-	env->renderManager().infiniteLightManager()->addObject(light);
+	env->infiniteLightManager()->addObject(light);
 }
 
 void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 {
-	auto manag		= env->renderManager().emissionManager();
+	auto manag		= env->emissionManager();
 	const uint32 id = manag->nextID();
 
 	populateObjectRegistry(RG_EMISSION, id, group, env);
@@ -507,7 +490,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto emission = fac->create(id, id, *env->renderManager().registry());
+	auto emission = fac->create(id, id, *env);
 	if (!emission) {
 		PR_LOG(L_ERROR) << "Could not create emission of type " << type << std::endl;
 		return;
@@ -519,7 +502,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 
 void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 {
-	auto manag		= env->renderManager().materialManager();
+	auto manag		= env->materialManager();
 	const uint32 id = manag->nextID();
 	populateObjectRegistry(RG_MATERIAL, id, group, env);
 
@@ -560,7 +543,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto mat = fac->create(id, id, *env->renderManager().registry());
+	auto mat = fac->create(id, id, *env);
 	if (!mat) {
 		PR_LOG(L_ERROR) << "Could not create material of type " << type << std::endl;
 		return;
@@ -661,7 +644,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	Spectrum spec(env->renderManager().spectrumDescriptor());
+	Spectrum spec(env->spectrumDescriptor());
 	if (dataD.type() == DL::Data::T_Group) {
 		DL::DataGroup grp = dataD.getGroup();
 		if (grp.isArray()) {
@@ -877,7 +860,7 @@ std::shared_ptr<FloatSpectralShadingSocket> SceneLoader::getSpectralOutput(Envir
 {
 	if (allowScalar && dataD.isNumber()) {
 		return std::make_shared<ConstSpectralShadingSocket>(
-			Spectrum(env->renderManager().spectrumDescriptor(), dataD.getNumber()));
+			Spectrum(env->spectrumDescriptor(), dataD.getNumber()));
 	} else if (dataD.type() == DL::Data::T_String) {
 		if (env->hasSpectrum(dataD.getString()))
 			return std::make_shared<ConstSpectralShadingSocket>(env->getSpectrum(dataD.getString()));
@@ -966,7 +949,7 @@ std::shared_ptr<FloatVectorShadingSocket> SceneLoader::getVectorOutput(Environme
 void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 										 const DL::DataGroup& group, Environment* env)
 {
-	auto reg = env->renderManager().registry();
+	auto& reg = env->registry();
 	for (const auto& entry : group.getNamedEntries()) {
 		if (entry.key() == "transform"
 			|| entry.key() == "position"
@@ -976,16 +959,16 @@ void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 
 		switch (entry.type()) {
 		case DL::Data::T_Integer:
-			reg->setForObject(regGroup, id, entry.key(), entry.getInt());
+			reg.setForObject(regGroup, id, entry.key(), entry.getInt());
 			break;
 		case DL::Data::T_Float:
-			reg->setForObject(regGroup, id, entry.key(), entry.getFloat());
+			reg.setForObject(regGroup, id, entry.key(), entry.getFloat());
 			break;
 		case DL::Data::T_String:
-			reg->setForObject(regGroup, id, entry.key(), entry.getString());
+			reg.setForObject(regGroup, id, entry.key(), entry.getString());
 			break;
 		case DL::Data::T_Bool:
-			reg->setForObject(regGroup, id, entry.key(), entry.getBool());
+			reg.setForObject(regGroup, id, entry.key(), entry.getBool());
 			break;
 		case DL::Data::T_Group:
 			/* TODO */

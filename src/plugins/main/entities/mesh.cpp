@@ -1,18 +1,18 @@
-#include "geometry/Sphere.h"
-#include "Environment.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
+
+#include "geometry/TriMesh.h"
+
 #include "math/Projection.h"
 #include "registry/Registry.h"
 
 namespace PR {
-constexpr float P = 1.6075f;
 
-class SphereEntity : public IEntity {
+class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	SphereEntity(uint32 id, const std::string& name, float r)
+	MeshEntity(uint32 id, const std::string& name, float r)
 		: IEntity(id, name)
 		, mRadius(r)
 		, mMaterialID(0)
@@ -20,11 +20,11 @@ public:
 		, mPDF_Cache(0.0f)
 	{
 	}
-	virtual ~SphereEntity() {}
+	virtual ~MeshEntity() {}
 
 	std::string type() const override
 	{
-		return "sphere";
+		return "mesh";
 	}
 
 	bool isLight() const override
@@ -60,16 +60,6 @@ public:
 	uint32 materialID() const
 	{
 		return mMaterialID;
-	}
-
-	void setRadius(float f)
-	{
-		mRadius = f;
-	}
-
-	float radius() const
-	{
-		return mRadius;
 	}
 
 	bool isCollidable() const override
@@ -130,11 +120,10 @@ private:
 	float mPDF_Cache;
 };
 
-class SphereEntityFactory : public IEntityFactory {
+class MeshEntityFactory : public IEntityFactory {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Registry& reg)
 	{
-		const auto& reg  = env.registry();
 		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		float r			 = reg.getForObject<float>(RG_ENTITY, uuid, "radius", 1.0f);
 		return std::make_shared<SphereEntity>(id, name, r);
@@ -142,7 +131,7 @@ public:
 
 	const std::vector<std::string>& getNames() const
 	{
-		static std::vector<std::string> names({ "sphere" });
+		static std::vector<std::string> names({ "mesh" });
 		return names;
 	}
 

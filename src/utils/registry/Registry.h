@@ -18,7 +18,7 @@ enum RegistryGroup {
 	RG_INTEGRATOR,
 };
 
-class PR_LIB Registry {
+class PR_LIB_UTILS Registry {
 public:
 	Registry();
 

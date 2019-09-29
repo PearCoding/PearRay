@@ -6,7 +6,6 @@ namespace PR {
 
 HitStream::HitStream(size_t size)
 	: mSize(size + size % PR_SIMD_BANDWIDTH)
-	, mEnd(0)
 	, mCurrentPos(0)
 {
 	mRayID.resize(mSize);
@@ -21,6 +20,19 @@ HitStream::HitStream(size_t size)
 
 HitStream::~HitStream()
 {
+}
+
+void HitStream::add(const HitEntry& entry)
+{
+	PR_ASSERT(!isFull(), "Check before adding!");
+
+	mRayID.emplace_back(entry.RayID);
+	mMaterialID.emplace_back(entry.MaterialID);
+	mEntityID.emplace_back(entry.EntityID);
+	mPrimitiveID.emplace_back(entry.PrimitiveID);
+	mUV[0].emplace_back(entry.UV[0]);
+	mUV[1].emplace_back(entry.UV[1]);
+	mFlags.emplace_back(entry.Flags);
 }
 
 void HitStream::sort()
@@ -39,13 +51,14 @@ void HitStream::sort()
 
 	// TODO: Maybe get maximum mask?
 	radixSort(mEntityID.data(), op,
-			  0, mEnd - 1);
+			  0, currentSize() - 1);
 
-	for (size_t i = 0; i < mEnd;) {
+	size_t end = currentSize();
+	for (size_t i = 0; i < end;) {
 		size_t start  = i;
 		uint32 entity = mEntityID[i];
 
-		while (i < mEnd && mEntityID[i] == entity) {
+		while (i < end && mEntityID[i] == entity) {
 			++i;
 		}
 		size_t s = i - start;
@@ -59,7 +72,14 @@ void HitStream::sort()
 
 void HitStream::reset()
 {
-	mEnd		= 0;
+	mRayID.clear();
+	mMaterialID.clear();
+	mEntityID.clear();
+	mPrimitiveID.clear();
+	mUV[0].clear();
+	mUV[1].clear();
+	mFlags.clear();
+
 	mCurrentPos = 0;
 }
 
@@ -72,7 +92,7 @@ ShadingGroup HitStream::getNextGroup()
 	grp.MaterialID = mMaterialID[mCurrentPos];
 	grp.Start	  = mCurrentPos;
 
-	while (mCurrentPos < mEnd
+	while (mCurrentPos < currentSize()
 		   && mEntityID[mCurrentPos] == grp.EntityID
 		   && mMaterialID[mCurrentPos] == grp.MaterialID) {
 		++mCurrentPos;

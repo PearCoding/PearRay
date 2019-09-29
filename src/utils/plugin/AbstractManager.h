@@ -2,15 +2,12 @@
 
 #include "Logger.h"
 #include "PluginManager.h"
-#include "renderer/RenderManager.h"
 
 #include <map>
 #include <typeinfo>
 #include <vector>
 
 namespace PR {
-class RenderManager;
-
 template <class OBJ, class FAC>
 class PR_LIB_INLINE AbstractManager {
 public:

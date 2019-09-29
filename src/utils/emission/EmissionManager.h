@@ -4,7 +4,7 @@
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB EmissionManager : public AbstractManager<IEmission, IEmissionFactory> {
+class PR_LIB_UTILS EmissionManager : public AbstractManager<IEmission, IEmissionFactory> {
 public:
 	EmissionManager();
 	virtual ~EmissionManager();

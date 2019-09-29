@@ -4,7 +4,7 @@
 #include <sstream>
 
 namespace PR {
-class PR_LIB URI {
+class PR_LIB_UTILS URI {
 public:
 	inline URI();
 	inline URI(const char* uri);

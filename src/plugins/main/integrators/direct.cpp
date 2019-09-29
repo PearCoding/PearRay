@@ -1,21 +1,22 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
-#include "renderer/RenderTileSession.h"
 #include "path/LightPath.h"
+#include "renderer/RenderTileSession.h"
+#include "renderer/RenderTile.h"
 
 #include "Logger.h"
 
 namespace PR {
 class IntDirect : public IIntegrator {
 public:
-	IntDirect(RenderContext* renderer)
-		: IIntegrator(renderer)
+	IntDirect()
+		: IIntegrator()
 	{
 	}
 
 	virtual ~IntDirect() = default;
 
-	void init() override
+	void init(RenderContext* renderer) override
 	{
 	}
 
@@ -39,9 +40,12 @@ public:
 	// Per thread
 	void onPass(RenderTileSession& session, uint32 pass) override
 	{
-		while(session.handleCameraRays()) {
+		while (session.handleCameraRays()) {
+			session.handleHits([&](const HitEntry& entry, IEntity* entity, IMaterial* material) {
+				session.tile()->statistics().addEntityHitCount();
+			});
 			//PR_LOG(L_INFO) << "HELLO??" << std::endl;
-			// Setup 
+			// Setup
 		}
 	}
 
@@ -52,14 +56,13 @@ public:
 
 private:
 	std::vector<LightPath> mLightPaths;
-
 };
 
 class IntDirectFactory : public IIntegratorFactory {
 public:
-	std::shared_ptr<IIntegrator> create(RenderContext* ctx) override
+	std::shared_ptr<IIntegrator> create() override
 	{
-		return std::make_shared<IntDirect>(ctx);
+		return std::make_shared<IntDirect>();
 	}
 
 	const std::vector<std::string>& getNames() const override

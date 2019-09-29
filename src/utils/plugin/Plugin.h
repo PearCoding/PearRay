@@ -37,16 +37,16 @@ struct PR_LIB_INLINE PluginInterface {
 };
 } // namespace PR
 
-#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                 \
-	class entityType;                                                                                      \
-	class Registry;                                                                                        \
-	class PR_LIB_INLINE className : public IPlugin {                                                       \
-	public:                                                                                                \
-		className()																				= default; \
-		virtual ~className()																	= default; \
-		virtual std::shared_ptr<entityType> create(uint32 id, uint32 uuid, const Registry& reg) = 0;       \
-		virtual const std::vector<std::string>& getNames() const								= 0;       \
-		inline PluginType type() const override { return typeEnum; }                                       \
+#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                    \
+	class entityType;                                                                                         \
+	class Environment;                                                                                        \
+	class PR_LIB_INLINE className : public IPlugin {                                                          \
+	public:                                                                                                   \
+		className()																				   = default; \
+		virtual ~className()																	   = default; \
+		virtual std::shared_ptr<entityType> create(uint32 id, uint32 uuid, const Environment& env) = 0;       \
+		virtual const std::vector<std::string>& getNames() const								   = 0;       \
+		inline PluginType type() const override { return typeEnum; }                                          \
 	}
 
 #define PR_PLUGIN_INIT(classType, pluginName, pluginVersion)              \

@@ -2,9 +2,8 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoader.h"
-
 #include "geometry/Face.h"
-#include "geometry/TriMesh.h"
+#include "mesh/TriMesh.h"
 
 #include "DataLisp.h"
 

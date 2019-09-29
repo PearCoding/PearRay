@@ -21,5 +21,7 @@ private:
 	uint32 mThreadIndex;
 	RenderContext* mRenderer;
 	RenderTile* mTile;
+
+	size_t mStreamElementCount;
 };
 }

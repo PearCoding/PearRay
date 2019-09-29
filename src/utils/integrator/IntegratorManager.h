@@ -6,7 +6,7 @@
 namespace PR {
 class IIntegrator;
 
-class PR_LIB IntegratorManager : public AbstractManager<IIntegrator, IIntegratorFactory> {
+class PR_LIB_UTILS IntegratorManager : public AbstractManager<IIntegrator, IIntegratorFactory> {
 public:
 	IntegratorManager();
 	virtual ~IntegratorManager();

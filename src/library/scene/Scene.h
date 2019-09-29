@@ -1,6 +1,12 @@
 #pragma once
 
+#include "container/kdTreeCollider.h"
+#include "entity/IEntity.h"
 #include "geometry/BoundingBox.h"
+#include "math/Compression.h"
+#include "ray/RayStream.h"
+#include "trace/HitStream.h"
+#include "trace/ShadowHit.h"
 
 #include <string>
 #include <vector>
@@ -9,27 +15,27 @@ namespace PR {
 class ICamera;
 class IEntity;
 class RenderContext;
-class RenderManager;
-class Registry;
 
 class RayStream;
 class HitStream;
 
 class PR_LIB Scene {
 public:
-	Scene(const RenderManager* manager);
+	Scene(const std::shared_ptr<ICamera>& activeCamera,
+		  const std::vector<std::shared_ptr<IEntity>>& entities,
+		  const std::string& cntFile);
 	virtual ~Scene();
 
-	std::shared_ptr<IEntity> getEntity(const std::string& name, const std::string& type) const;
-	const std::vector<std::shared_ptr<IEntity>>& entities() const;
+	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
 
-	inline const RenderManager* renderManager() const { return mRenderManager; }
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
-	void traceCoherentRays(RayStream& rays, HitStream& hits) const;
-	void traceIncoherentRays(RayStream& rays, HitStream& hits) const;
-	void traceShadowRays(RayStream& rays, HitStream& hits) const;
-	void setup(RenderContext* context);
+	template <typename Func>
+	inline void traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) const;
+	template <typename Func>
+	inline void traceIncoherentRays(RayStream& rays, HitStream& hits, Func nonHit) const;
+
+	ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
 
@@ -37,10 +43,12 @@ private:
 	void buildTree(const std::string& file);
 	void loadTree(const std::string& file);
 
-	const RenderManager* mRenderManager;
-	const std::shared_ptr<ICamera> mActiveCamera;
+	std::shared_ptr<ICamera> mActiveCamera;
+	std::vector<std::shared_ptr<IEntity>> mEntities;
 
 	class kdTreeCollider* mKDTree;
 	BoundingBox mBoundingBox;
 };
 } // namespace PR
+
+#include "Scene.inl"

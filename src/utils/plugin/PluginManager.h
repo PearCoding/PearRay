@@ -7,7 +7,7 @@
 namespace PR {
 
 class Registry;
-class PR_LIB PluginManager {
+class PR_LIB_UTILS PluginManager {
 public:
 	std::shared_ptr<IPlugin> load(const std::string& path, const Registry& reg,
 								  bool useFallbacks = true);

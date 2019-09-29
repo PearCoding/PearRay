@@ -74,6 +74,7 @@ public:
 							   CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
+		out.HitDistance = make_float(std::numeric_limits<float>::infinity());
 
 		struct PR_SIMD_ALIGN _stackdata {
 			kdNodeCollider* node;
@@ -86,8 +87,6 @@ public:
 		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!any(root_in.Successful))
 			return false;
-
-		out.HitDistance = make_float(std::numeric_limits<float>::infinity());
 
 		CollisionOutput tmp;
 		size_t stackPos		 = 0;
@@ -174,6 +173,7 @@ public:
 							   CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
+		out.HitDistance = std::numeric_limits<float>::infinity();
 
 		struct _stackdata {
 			kdNodeCollider* node;
@@ -186,8 +186,6 @@ public:
 		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!root_in.Successful)
 			return false;
-
-		out.HitDistance = std::numeric_limits<float>::infinity();
 
 		SingleCollisionOutput tmp;
 		size_t stackPos		 = 0;

@@ -93,12 +93,12 @@ template <uint32 N>
 inline void sincos(const simdpp::float32<N>& v,
 				   simdpp::float32<N>& s, simdpp::float32<N>& c)
 {
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	float vals[N];
 
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	float sd[N];
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	float cd[N];
 
 	simdpp::store(vals, v);
@@ -179,14 +179,44 @@ inline void transformV(const Eigen::Matrix4f& m,
 }
 
 template <typename C, unsigned N>
+inline void load_from_container_linear(simdpp::float32<N>& out,
+									   const C& container,
+									   uint32 off = 0)
+{
+	PR_SIMD_ALIGN
+	float data[N];
+
+	for (uint32 i = 0; i < N; ++i) {
+		data[i] = container[off + i];
+	}
+
+	out = simdpp::load(data);
+}
+
+template <typename C, unsigned N>
+inline void load_from_container_linear(simdpp::uint32<N>& out,
+									   const C& container,
+									   uint32 off = 0)
+{
+	PR_SIMD_ALIGN
+	uint32 data[N];
+
+	for (uint32 i = 0; i < N; ++i) {
+		data[i] = container[off + i];
+	}
+
+	out = simdpp::load(data);
+}
+
+template <typename C, unsigned N>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value, simdpp::float32<N>>
 load_from_container(const simdpp::uint32<N>& indices,
 					const C& container,
 					uint32 off = 0)
 {
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	uint32 ind[N];
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	float data[N];
 
 	simdpp::store(ind, indices);
@@ -203,9 +233,9 @@ load_from_container(const simdpp::uint32<N>& indices,
 					const C& container,
 					uint32 off = 0)
 {
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	uint32 ind[N];
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	uint32 data[N];
 
 	simdpp::store(ind, indices);
@@ -223,9 +253,9 @@ store_into_container(const simdpp::uint32<N>& indices,
 					 const simdpp::float32<N>& val,
 					 uint32 off = 0)
 {
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	uint32 ind[N];
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	float data[N];
 
 	simdpp::store(ind, indices);
@@ -242,9 +272,9 @@ store_into_container(const simdpp::uint32<N>& indices,
 					 const simdpp::uint32<N>& val,
 					 uint32 off = 0)
 {
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	uint32 ind[N];
-	SIMDPP_ALIGN(N * 4)
+	PR_SIMD_ALIGN
 	uint32 data[N];
 
 	simdpp::store(ind, indices);
@@ -343,7 +373,6 @@ public:
 	}
 };
 
-template <>
 template <typename F>
 class runtime_foreach_H<0, F> {
 public:

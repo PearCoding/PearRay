@@ -1,3 +1,4 @@
+#include "Environment.h"
 #include "Logger.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraFactory.h"
@@ -273,9 +274,9 @@ void StandardCamera::onFreeze(RenderContext* context)
 
 class StandardCameraFactory : public ICameraFactory {
 public:
-	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const Registry& reg)
+	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const Environment& env)
 	{
-		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
+		std::string name = env.registry().getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		return std::make_shared<StandardCamera>(id, name);
 	}
 

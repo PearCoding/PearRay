@@ -1,7 +1,6 @@
 #include "OutputSpecification.h"
 #include "Logger.h"
 #include "renderer/RenderContext.h"
-#include "renderer/RenderManager.h"
 
 #include <boost/filesystem.hpp>
 #include <sstream>
@@ -11,11 +10,12 @@
 namespace PR {
 using namespace PR;
 
-constexpr static const char* LOCK_FILE_NAME = "/.pearray_lock";
+constexpr static const char* LOCK_FILE_NAME		= "/.pearray_lock";
 constexpr static const char* LOCK_IMG_FILE_NAME = "/.pearray_img_lock";
 
-OutputSpecification::OutputSpecification()
+OutputSpecification::OutputSpecification(const std::string& wrkDir)
 	: mInit(false)
+	, mWorkingDir(wrkDir)
 {
 }
 
@@ -33,7 +33,6 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	}
 
 	mInit		= true;
-	mWorkingDir = context->renderManager()->workingDir();
 
 	if (context && !mWorkingDir.empty()) {
 		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
@@ -73,7 +72,7 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	OutputMap* output = renderer->output();
+	OutputBuffer* output = renderer->output();
 
 	for (const File& file : mFiles) {
 		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {
@@ -99,48 +98,48 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 	}
 }
 
-OutputMap::Variable1D typeToVariable1D(const std::string& str)
+OutputBuffer::Variable1D typeToVariable1D(const std::string& str)
 {
 	if (str == "depth" || str == "d")
-		return OutputMap::V_Depth;
+		return OutputBuffer::V_Depth;
 	else if (str == "time" || str == "t")
-		return OutputMap::V_Time;
+		return OutputBuffer::V_Time;
 	else if (str == "material" || str == "mat" || str == "m")
-		return OutputMap::V_Material;
+		return OutputBuffer::V_Material;
 	else
-		return OutputMap::V_1D_COUNT; // AS UNKNOWN
+		return OutputBuffer::V_1D_COUNT; // AS UNKNOWN
 }
 
-OutputMap::VariableCounter typeToVariableCounter(const std::string& str)
+OutputBuffer::VariableCounter typeToVariableCounter(const std::string& str)
 {
 	if (str == "id")
-		return OutputMap::V_ID;
+		return OutputBuffer::V_ID;
 	else if (str == "samples" || str == "s")
-		return OutputMap::V_Samples;
+		return OutputBuffer::V_Samples;
 	else
-		return OutputMap::V_COUNTER_COUNT; // AS UNKNOWN
+		return OutputBuffer::V_COUNTER_COUNT; // AS UNKNOWN
 }
 
-OutputMap::Variable3D typeToVariable3D(const std::string& str)
+OutputBuffer::Variable3D typeToVariable3D(const std::string& str)
 {
 	if (str == "position" || str == "pos" || str == "p")
-		return OutputMap::V_Position;
+		return OutputBuffer::V_Position;
 	else if (str == "normal" || str == "norm" || str == "n")
-		return OutputMap::V_Normal;
+		return OutputBuffer::V_Normal;
 	else if (str == "geometric_normal" || str == "ng")
-		return OutputMap::V_NormalG;
+		return OutputBuffer::V_NormalG;
 	else if (str == "tangent" || str == "tan" || str == "nx")
-		return OutputMap::V_Tangent;
+		return OutputBuffer::V_Tangent;
 	else if (str == "bitangent" || str == "binormal" || str == "bi" || str == "ny")
-		return OutputMap::V_Bitangent;
+		return OutputBuffer::V_Bitangent;
 	else if (str == "view" || str == "v")
-		return OutputMap::V_View;
+		return OutputBuffer::V_View;
 	else if (str == "uv" || str == "texture" || str == "uvw" || str == "tex")
-		return OutputMap::V_UVW;
+		return OutputBuffer::V_UVW;
 	else if (str == "velocity" || str == "movement" || str == "dpdt")
-		return OutputMap::V_DPDT;
+		return OutputBuffer::V_DPDT;
 	else
-		return OutputMap::V_3D_COUNT; // AS UNKNOWN
+		return OutputBuffer::V_3D_COUNT; // AS UNKNOWN
 }
 
 void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
@@ -224,11 +223,11 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 							spec.TMM	  = tmm;
 							file.SettingsSpectral.push_back(spec);
 						} else {
-							OutputMap::Variable3D var3D			  = typeToVariable3D(type);
-							OutputMap::Variable1D var1D			  = typeToVariable1D(type);
-							OutputMap::VariableCounter varCounter = typeToVariableCounter(type);
+							OutputBuffer::Variable3D var3D			 = typeToVariable3D(type);
+							OutputBuffer::Variable1D var1D			 = typeToVariable1D(type);
+							OutputBuffer::VariableCounter varCounter = typeToVariableCounter(type);
 
-							if (var3D != OutputMap::V_3D_COUNT) {
+							if (var3D != OutputBuffer::V_3D_COUNT) {
 								IM_ChannelSetting3D spec;
 								spec.Elements = 0; //TODO
 								spec.TMM	  = tmm;
@@ -236,42 +235,42 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 
 								switch (var3D) {
 								default:
-								case OutputMap::V_Position:
+								case OutputBuffer::V_Position:
 									spec.Name[0] = "p_x";
 									spec.Name[1] = "p_y";
 									spec.Name[2] = "p_z";
 									break;
-								case OutputMap::V_Normal:
+								case OutputBuffer::V_Normal:
 									spec.Name[0] = "n_x";
 									spec.Name[1] = "n_y";
 									spec.Name[2] = "n_z";
 									break;
-								case OutputMap::V_NormalG:
+								case OutputBuffer::V_NormalG:
 									spec.Name[0] = "ng_x";
 									spec.Name[1] = "ng_y";
 									spec.Name[2] = "ng_z";
 									break;
-								case OutputMap::V_Tangent:
+								case OutputBuffer::V_Tangent:
 									spec.Name[0] = "nx_x";
 									spec.Name[1] = "nx_y";
 									spec.Name[2] = "nx_z";
 									break;
-								case OutputMap::V_Bitangent:
+								case OutputBuffer::V_Bitangent:
 									spec.Name[0] = "ny_x";
 									spec.Name[1] = "ny_y";
 									spec.Name[2] = "ny_z";
 									break;
-								case OutputMap::V_View:
+								case OutputBuffer::V_View:
 									spec.Name[0] = "v_x";
 									spec.Name[1] = "v_y";
 									spec.Name[2] = "v_z";
 									break;
-								case OutputMap::V_UVW:
+								case OutputBuffer::V_UVW:
 									spec.Name[0] = "uv_u";
 									spec.Name[1] = "uv_v";
 									spec.Name[2] = "uv_w";
 									break;
-								case OutputMap::V_DPDT:
+								case OutputBuffer::V_DPDT:
 									spec.Name[0] = "dpdt_x";
 									spec.Name[1] = "dpdt_y";
 									spec.Name[2] = "dpdt_z";
@@ -279,35 +278,35 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 								}
 
 								file.Settings3D.push_back(spec);
-							} else if (var1D != OutputMap::V_1D_COUNT) {
+							} else if (var1D != OutputBuffer::V_1D_COUNT) {
 								IM_ChannelSetting1D spec;
 								spec.TMM	  = tmm;
 								spec.Variable = var1D;
 
 								switch (var1D) {
 								default:
-								case OutputMap::V_Depth:
+								case OutputBuffer::V_Depth:
 									spec.Name = "depth";
 									break;
-								case OutputMap::V_Time:
+								case OutputBuffer::V_Time:
 									spec.Name = "time";
 									break;
-								case OutputMap::V_Material:
+								case OutputBuffer::V_Material:
 									spec.Name = "mat";
 									break;
 								}
 								file.Settings1D.push_back(spec);
-							} else if (varCounter != OutputMap::V_COUNTER_COUNT) {
+							} else if (varCounter != OutputBuffer::V_COUNTER_COUNT) {
 								IM_ChannelSettingCounter spec;
 								spec.TMM	  = tmm;
 								spec.Variable = varCounter;
 
 								switch (var1D) {
 								default:
-								case OutputMap::V_ID:
+								case OutputBuffer::V_ID:
 									spec.Name = "id";
 									break;
-								case OutputMap::V_Samples:
+								case OutputBuffer::V_Samples:
 									spec.Name = "samples";
 									break;
 								}

@@ -1,5 +1,5 @@
 #include "camera/Camera.h"
-#include "renderer/OutputMap.h"
+#include "renderer/OutputBuffer.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderTile.h"

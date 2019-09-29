@@ -1,7 +1,7 @@
 #pragma once
 
 #include "buffer/FrameBuffer.h"
-#include "renderer/OutputMap.h"
+#include "buffer/OutputBuffer.h"
 #include "spectral/ToneMapper.h"
 #include <string>
 #include <vector>
@@ -11,21 +11,21 @@ class ToneMapper;
 
 struct IM_ChannelSetting1D {
 	std::string Name;
-	OutputMap::Variable1D Variable;
+	OutputBuffer::Variable1D Variable;
 	ToneMapperMode TMM; //TODO: Not implemented
 	int LPE = -1;
 };
 
 struct IM_ChannelSettingCounter {
 	std::string Name;
-	OutputMap::VariableCounter Variable;
+	OutputBuffer::VariableCounter Variable;
 	ToneMapperMode TMM; //TODO: Not implemented
 	int LPE = -1;
 };
 
 struct IM_ChannelSetting3D {
 	std::string Name[3];
-	OutputMap::Variable3D Variable;
+	OutputBuffer::Variable3D Variable;
 	unsigned char Elements; //TODO: Not implemented
 	ToneMapperMode TMM;		//TODO: Not implemented
 	int LPE = -1;

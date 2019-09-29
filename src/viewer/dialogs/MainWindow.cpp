@@ -15,7 +15,7 @@
 
 #include "Environment.h"
 #include "SceneLoader.h"
-#include "renderer/OutputMap.h"
+#include "renderer/OutputBuffer.h"
 
 #include "models/EntityTreeModel.h"
 
@@ -107,7 +107,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.actionStartRender, SIGNAL(triggered()), this, SLOT(startRendering()));
 	connect(ui.actionRestartRender, SIGNAL(triggered()), this, SLOT(restartRendering()));
 	connect(ui.actionCancelRender, SIGNAL(triggered()), this, SLOT(stopRendering()));
-	
+
 	connect(ui.actionShowToolbars, SIGNAL(triggered()), this, SLOT(showAllToolbars()));
 	connect(ui.actionHideToolbars, SIGNAL(triggered()), this, SLOT(hideAllToolbars()));
 	connect(ui.actionShowDockWidgets, SIGNAL(triggered()), this, SLOT(showAllDocks()));
@@ -181,7 +181,7 @@ void MainWindow::openProject(const QString& str)
 			mEnvironment.reset();
 			return;
 		}
-		
+
 		mRenderFactory = new PR::RenderFactory(mEnvironment->renderWidth(), mEnvironment->renderHeight(),
 			mEnvironment->scene(),
 			QDir::tempPath().toStdString());
@@ -472,14 +472,14 @@ void MainWindow::startRendering(bool clear)
 		mRenderFactory->settings().setCropMinY(0);
 	}
 
-	// Setup context 
+	// Setup context
 
 	ui.systemPropertyView->setupRenderer(mRenderFactory);
 	mRenderContext = mRenderFactory->create();
 	ui.viewWidget->setCropSelection(
 			QPoint(mEnvironment->cropMinX()*mRenderFactory->fullWidth(), mEnvironment->cropMinY()*mRenderFactory->fullHeight()),
 			QPoint(mEnvironment->cropMaxX()*mRenderFactory->fullWidth(), mEnvironment->cropMaxY()*mRenderFactory->fullHeight()));
-			
+
 	ui.viewWidget->setRenderer(mRenderContext.get());
 
 	// Setup controls
@@ -503,7 +503,7 @@ void MainWindow::startRendering(bool clear)
 		mTimer.start(1000);
 	else
 		mTimer.start(4000);
-	
+
 	mElapsedTime.restart();
 	mFrameTime.restart();
 	mRenderContext->start(ui.systemPropertyView->getTileX(),
@@ -517,7 +517,7 @@ void MainWindow::stopRendering()
 
 	if (!mRenderContext)
 		return;
-	
+
 	if (!mRenderContext->isFinished())
 	{
 		mRenderContext->stop();
