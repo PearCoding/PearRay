@@ -7,9 +7,9 @@ ConstScalarShadingSocket::ConstScalarShadingSocket(float f)
 {
 }
 
-vfloat ConstScalarShadingSocket::eval(const ShadingPoint&) const
+float ConstScalarShadingSocket::eval(const ShadingPoint&) const
 {
-	return simdpp::make_float(mValue);
+	return mValue;
 }
 
 /////////////////////////////////////
@@ -20,9 +20,9 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 {
 }
 
-vfloat ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
+float ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
-	return simdpp::make_float(mValue[ctx.WavelengthIndex]);
+	return mValue[ctx.WavelengthIndex];
 }
 
 /////////////////////////////////////
@@ -33,8 +33,8 @@ ConstVectorShadingSocket::ConstVectorShadingSocket(const Eigen::Vector3f& f)
 {
 }
 
-vfloat ConstVectorShadingSocket::eval(uint32 channel, const ShadingPoint&) const
+float ConstVectorShadingSocket::eval(uint32 channel, const ShadingPoint&) const
 {
-	return simdpp::make_float(mValue(channel));
+	return mValue(channel);
 }
 } // namespace PR

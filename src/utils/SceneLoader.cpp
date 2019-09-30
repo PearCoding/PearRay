@@ -82,10 +82,10 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 			DL::Data rgbD		   = top.getFromKey("rgb");
 
 			std::shared_ptr<SpectrumDescriptor> spectrumDescriptor;
-			if (rgbD.type() == DL::Data::T_Bool && rgbD.getBool())
-				spectrumDescriptor = SpectrumDescriptor::createTriplet();
-			else
+			if (rgbD.type() == DL::Data::T_Bool && !rgbD.getBool())
 				spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
+			else
+				spectrumDescriptor = SpectrumDescriptor::createTriplet();
 
 			std::shared_ptr<Environment> env;
 			try {
@@ -335,7 +335,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 
 	std::string type;
 	if (typeD.type() != DL::Data::T_String) {
-		if(typeD.isValid()) {
+		if (typeD.isValid()) {
 			PR_LOG(L_ERROR) << "No valid camera type set" << std::endl;
 			return;
 		} else {
@@ -476,7 +476,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		if(typeD.isValid()) {
+		if (typeD.isValid()) {
 			PR_LOG(L_ERROR) << "No valid emission type set" << std::endl;
 			return;
 		} else {
@@ -606,7 +606,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		if(typeD.isValid()) {
+		if (typeD.isValid()) {
 			PR_LOG(L_ERROR) << "No valid mesh type set" << std::endl;
 			return;
 		} else {
@@ -783,7 +783,7 @@ Eigen::Matrix4f SceneLoader::getMatrix(const DL::DataGroup& grp, bool& ok)
 			Eigen::Matrix4f m;
 			for (int i = 0; i < 4; ++i) {
 				for (int j = 0; j < 4; ++j) {
-					m(i, j) = grp.at(i * 4 + j).getNumber();
+					m(j, i) = grp.at(i * 4 + j).getNumber();
 				}
 			}
 
@@ -973,7 +973,7 @@ void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 		case DL::Data::T_Group:
 			/* TODO */
 			break;
-		case DL::Data::T_None:/* IGNORE */
+		case DL::Data::T_None: /* IGNORE */
 			break;
 		}
 	}

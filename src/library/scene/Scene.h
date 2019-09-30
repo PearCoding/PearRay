@@ -35,7 +35,7 @@ public:
 	template <typename Func>
 	inline void traceIncoherentRays(RayStream& rays, HitStream& hits, Func nonHit) const;
 
-	ShadowHit traceShadowRay(const Ray& ray) const;
+	inline ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
 

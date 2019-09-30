@@ -3,14 +3,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 add_custom_target(pr_plugins ALL)
 
 function(PR_ADD_PLUGIN NAME)
-  cmake_parse_arguments(_args "" "" "CPP;ISPC" ${ARGN})
-  IF(_args_ISPC)
-    ispc_compile(ISPC_OBJS SOURCES ${_args_ISPC})
-  ENDIF()
-
+  cmake_parse_arguments(_args "" "" "CPP" ${ARGN})
   set(TARGET pr_pl_${NAME})
 
-  add_library(${TARGET} MODULE ${_args_CPP} ${ISPC_OBJS})
+  add_library(${TARGET} MODULE ${_args_CPP})
   target_link_libraries(${TARGET} pr_lib pr_lib_utils)
   set_target_properties(${TARGET} PROPERTIES VERSION ${PR_Version})
   set_target_properties(${TARGET} PROPERTIES CXX_VISIBILITY_PRESET hidden)

@@ -9,7 +9,7 @@ public:
 	ImageShadingSocket(OIIO::TextureSystem* tsys,
 					   const OIIO::TextureOpt& options,
 					   const std::string& filename);
-	vfloat eval(const ShadingPoint& ctx) const override;
+	float eval(const ShadingPoint& ctx) const override;
 
 private:
 	OIIO::ustring mFilename;

@@ -44,25 +44,24 @@ public:
 
 	void clear();
 
-	void pushFragment(const vuint32& pixelIndex, const ShadingPoint& pt);
+	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt);
 
-	inline void setSampleCount(const vuint32& pixelIndex, uint32 channel, const vuint32& sample)
+	inline void setSampleCount(uint32 pixelIndex, uint32 channel, uint32 sample)
 	{
 		mIntCounter[V_Samples]->setFragment(pixelIndex, channel, sample);
 	}
 
-	inline vuint32 getSampleCount(const vuint32& pixelIndex, uint32 channel) const
+	inline uint32 getSampleCount(uint32 pixelIndex, uint32 channel) const
 	{
 		return mIntCounter[V_Samples]->getFragment(pixelIndex, channel);
 	}
 
-	inline void incSampleCount(const vuint32& pixelIndex, uint32 channel)
+	inline void incSampleCount(uint32 pixelIndex, uint32 channel)
 	{
-		for_each_v([&](uint32 i) {
-			uint32 pi = extract(i, pixelIndex);
-			mIntCounter[V_Samples]->setFragment(pi, channel,
-												mIntCounter[V_Samples]->getFragment(pi, channel) + 1);
-		});
+		mIntCounter[V_Samples]->setFragment(
+			pixelIndex,
+			channel,
+			mIntCounter[V_Samples]->getFragment(pixelIndex, channel) + 1);
 	}
 
 	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable1D var) const
@@ -203,8 +202,6 @@ public:
 
 private:
 	RenderContext* mRenderer;
-
-	bool mInitialized;
 
 	std::shared_ptr<FrameBufferFloat> mSpectral;
 	std::shared_ptr<FrameBufferFloat> mInt3D[V_3D_COUNT];

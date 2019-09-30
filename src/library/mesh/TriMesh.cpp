@@ -262,19 +262,27 @@ float TriMesh::collisionCost() const
 	return faceCount();
 }
 
-void TriMesh::sampleFacePoint(const vfloat& rnd1, const vfloat& rnd2, const vfloat& rnd3,
-							  ShadingPoint& p, vfloat& pdfA) const
+void TriMesh::sampleFacePoint(float rnd1, float rnd2, float rnd3,
+							  ShadingPoint& p, float& pdfA) const
 {
-	vuint32 fi = simdpp::to_uint32(rnd1 * (faceCount() - 1));
-	vfloat b1, b2;
-	Projection::triangleV(rnd2, rnd3, b1, b2);
+	uint32 fi		  = (rnd1 * (faceCount() - 1));
+	Eigen::Vector2f b = Projection::triangle(rnd2, rnd3);
 
-	FacePackage pkg = getFaces(fi);
-	pkg.interpolate(b1, b2,
-					p.P[0], p.P[1], p.P[2],
-					p.Ng[0], p.Ng[1], p.Ng[2],
-					p.UVW[0], p.UVW[1]);
-	p.MaterialID = pkg.MaterialSlot;
+	Face f = getFace(fi);
+
+	Eigen::Vector3f po, ng;
+	Eigen::Vector2f uvw;
+	f.interpolate(b(0), b(1), po, ng, uvw);
+
+	p.P[0]		 = po(0);
+	p.P[1]		 = po(1);
+	p.P[2]		 = po(2);
+	p.Ng[0]		 = ng(0);
+	p.Ng[1]		 = ng(1);
+	p.Ng[2]		 = ng(2);
+	p.UVW[0]	 = uvw(0);
+	p.UVW[1]	 = uvw(1);
+	p.MaterialID = f.MaterialSlot;
 
 	// TODO:
 	//pdfA = 1.0f / (mIndices.size() * Triangle::surfaceArea(face.V[0], face.V[1], face.V[2]));

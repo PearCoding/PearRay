@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geometry/BoundingBox.h"
+#include "geometry/Face.h"
 #include "geometry/FacePackage.h"
 #include "geometry/Triangle.h"
 #include "math/Vector.h"
@@ -52,8 +53,8 @@ public:
 	inline size_t nodeCount() const { return mVertices[0].size(); }
 	inline size_t faceCount() const { return mIndices[0].size(); }
 
-	inline FacePackage getFaces(const vuint32& indices) const;
-	inline vuint32 getFaceMaterials(const vuint32& indices) const;
+	inline Face getFace(uint32 index) const;
+	inline uint32 getFaceMaterial(uint32 index) const;
 
 	inline bool isValid() const;
 
@@ -78,8 +79,8 @@ public:
 	bool checkCollision(const Ray& in, SingleCollisionOutput& out) const;
 	bool checkCollision(const RayPackage& in, CollisionOutput& out) const;
 
-	void sampleFacePoint(const vfloat& rnd1, const vfloat& rnd2, const vfloat& rnd3,
-						 ShadingPoint& p, vfloat& pdfA) const;
+	void sampleFacePoint(float rnd1, float rnd2, float rnd3,
+						 ShadingPoint& p, float& pdfA) const;
 
 private:
 	void buildTree(const std::string& container_file);

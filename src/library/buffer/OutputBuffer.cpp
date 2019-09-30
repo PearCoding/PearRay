@@ -6,17 +6,16 @@
 namespace PR {
 OutputBuffer::OutputBuffer(RenderContext* renderer)
 	: mRenderer(renderer)
-	, mInitialized(false)
 	, mSpectral(new FrameBufferFloat(
+		  renderer->spectrumDescriptor()->samples(),
 		  renderer->width(),
 		  renderer->height(),
-		  renderer->spectrumDescriptor()->samples(),
 		  0.0f))
 {
 	mIntCounter[V_Samples] = std::make_shared<FrameBufferUInt32>(
+		renderer->spectrumDescriptor()->samples(),
 		renderer->width(),
 		renderer->height(),
-		renderer->spectrumDescriptor()->samples(),
 		0);
 }
 
@@ -56,10 +55,10 @@ void OutputBuffer::clear()
 		p.second->clear();
 }
 
-void OutputBuffer::pushFragment(const vuint32& pixelIndex, const ShadingPoint& s)
+void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 {
-	vfloat oldSample = simdpp::to_float32(getSampleCount(pixelIndex, s.WavelengthIndex));
-	vfloat t		 = 1.0f / (oldSample + 1.0f);
+	float oldSample = getSampleCount(pixelIndex, s.WavelengthIndex);
+	float t			= 1.0f / (oldSample + 1.0f);
 
 	// Spectral
 	mSpectral->blendFragment(pixelIndex, s.WavelengthIndex, s.Radiance, t);

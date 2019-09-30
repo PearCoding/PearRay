@@ -11,6 +11,11 @@ inline bool RenderTileSession::enoughCoherentRaySpace(size_t requested) const
 	return mCoherentRayStream->enoughSpace(requested);
 }
 
+inline Ray RenderTileSession::getCoherentRay(size_t id) const
+{
+	return mCoherentRayStream->getRay(id);
+}
+
 inline void RenderTileSession::enqueueIncoherentRay(const Ray& ray)
 {
 	PR_ASSERT(enoughIncoherentRaySpace(), "Check space requirement first!");
@@ -21,6 +26,11 @@ inline void RenderTileSession::enqueueIncoherentRay(const Ray& ray)
 inline bool RenderTileSession::enoughIncoherentRaySpace(size_t requested) const
 {
 	return mIncoherentRayStream->enoughSpace(requested);
+}
+
+inline Ray RenderTileSession::getIncoherentRay(size_t id) const
+{
+	return mIncoherentRayStream->getRay(id);
 }
 
 inline size_t RenderTileSession::maxBufferCount() const
@@ -39,13 +49,13 @@ inline void RenderTileSession::handleHits(Func hitFunc)
 
 		for (uint32 i = grp.Start; i < grp.End; ++i) {
 			HitEntry entry;
-			entry.Flags = mHitStream->flags(i);
-			entry.RayID = mHitStream->rayID(i);
+			entry.Flags		  = mHitStream->flags(i);
+			entry.RayID		  = mHitStream->rayID(i);
 			entry.MaterialID  = grp.MaterialID;
 			entry.EntityID	= grp.EntityID;
 			entry.PrimitiveID = mHitStream->primitiveID(i);
-			entry.UV[0]		  = mHitStream->uv(i, 0);
-			entry.UV[1]		  = mHitStream->uv(i, 1);
+			entry.UV[0]		  = mHitStream->uv(0, i);
+			entry.UV[1]		  = mHitStream->uv(1, i);
 			hitFunc(entry, entity, material);
 		}
 		endShadingGroup(grp);

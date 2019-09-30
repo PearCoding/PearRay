@@ -184,14 +184,16 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 	PR_ASSERT(isFrozen(), "has to be frozen");
 
 	const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.x() - 0.5f);
-	//const float nx1 = 2 * ((sample.PixelF.x() + 1) / sample.SensorSize.x() - 0.5f);
 	const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.y() - 0.5f);
-	//const float ny1 = 2 * ((sample.PixelF.y() + 1) / sample.SensorSize.y() - 0.5f);
 
 	Ray ray;
 	constructRay(nx, ny, sample.R[0], sample.R[1],
 				 ray.Origin[0], ray.Origin[1], ray.Origin[2],
 				 ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+
+	ray.WavelengthIndex = sample.WavelengthIndex;
+	ray.Weight			= 0;
+
 	ray.setupInverse();
 	ray.normalize();
 

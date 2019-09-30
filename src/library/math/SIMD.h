@@ -171,7 +171,7 @@ inline void transformV(const Eigen::Matrix4f& m,
 	b2 = m(1, 0) * a1 + m(1, 1) * a2 + m(1, 2) * a3 + m(1, 3);
 	b3 = m(2, 0) * a1 + m(2, 1) * a2 + m(2, 2) * a3 + m(2, 3);
 
-	const T h = 1 / (m(3, 0) * a1 + m(3, 1) * a2 + m(3, 2) * a3 + m(3, 3));
+	const T h = 1.0 / (m(3, 0) * a1 + m(3, 1) * a2 + m(3, 2) * a3 + m(3, 3));
 
 	b1 = b1 * h;
 	b2 = b2 * h;

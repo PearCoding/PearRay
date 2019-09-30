@@ -67,12 +67,4 @@ void Scene::loadTree(const std::string& file)
 	if (!mKDTree->isEmpty())
 		mBoundingBox = mKDTree->boundingBox();
 }
-
-ShadowHit Scene::traceShadowRay(const Ray& ray) const
-{
-	// TODO
-	ShadowHit hit;
-	hit.Successful = false;
-	return hit;
-}
 } // namespace PR

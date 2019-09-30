@@ -4,8 +4,6 @@
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
 
-#include "lambert_ispc.h"
-
 #include <sstream>
 
 namespace PR {
@@ -37,37 +35,17 @@ void LambertMaterial::eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 						   const RenderTileSession& session) const
 {
 	out.Weight		   = mAlbedo->eval(in.Point);
-	out.PDF_S_Forward  = simdpp::make_float(PR_1_PI);
-	out.PDF_S_Backward = simdpp::make_float(PR_1_PI);
+	out.PDF_S_Forward  = PR_1_PI;
+	out.PDF_S_Backward = PR_1_PI;
 }
 
 void LambertMaterial::sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 							 const RenderTileSession& session) const
 {
-	out.Weight = simdpp::make_float(0);
-	out.Type   = simdpp::make_int(MST_DiffuseReflection);
+	out.Weight = 0;
+	out.Type   = MST_DiffuseReflection;
 
-	PR_SIMD_ALIGN float r0[PR_SIMD_BANDWIDTH];
-	PR_SIMD_ALIGN float r1[PR_SIMD_BANDWIDTH];
-	PR_SIMD_ALIGN float pf[PR_SIMD_BANDWIDTH];
-	PR_SIMD_ALIGN float pb[PR_SIMD_BANDWIDTH];
-	PR_SIMD_ALIGN float o0[PR_SIMD_BANDWIDTH];
-	PR_SIMD_ALIGN float o1[PR_SIMD_BANDWIDTH];
-	PR_SIMD_ALIGN float o2[PR_SIMD_BANDWIDTH];
-
-	simdpp::store(r0, in.RND[0]);
-	simdpp::store(r1, in.RND[1]);
-
-	ispc::sample_lambert(r0, r1,
-						 pf, pb,
-						 o0, o1, o2,
-						 PR_SIMD_BANDWIDTH);
-
-	out.PDF_S_Forward  = simdpp::load(pf);
-	out.PDF_S_Backward = simdpp::load(pb);
-	out.Outgoing[0]	= simdpp::load(o0);
-	out.Outgoing[1]	= simdpp::load(o1);
-	out.Outgoing[2]	= simdpp::load(o2);
+	// TODO:
 }
 
 std::string LambertMaterial::dumpInformation() const

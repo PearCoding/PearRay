@@ -1,6 +1,7 @@
 #include "RenderTileSession.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "buffer/OutputBuffer.h"
 #include "scene/Scene.h"
 
 namespace PR {
@@ -41,8 +42,16 @@ bool RenderTileSession::handleCameraRays()
 		uint32 x = mCurrentPixel % mTile->width() + mTile->sx();
 		uint32 y = mCurrentPixel / mTile->width() + mTile->sy();
 
-		Ray ray = mTile->constructCameraRay(x, y, mTile->samplesRendered());
+		Ray ray		   = mTile->constructCameraRay(x, y, mTile->samplesRendered());
+		ray.PixelIndex = mCurrentPixel;
+
 		enqueueCoherentRay(ray);
+	}
+
+	{
+		std::stringstream sstream;
+		sstream << "rays_t" << mTile->index() << ".rdmp";
+		mCoherentRayStream->dump(sstream.str());
 	}
 
 	mTile->context().scene()->traceCoherentRays(*mCoherentRayStream, *mHitStream,
@@ -62,5 +71,15 @@ void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 
 void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 {
+}
+
+ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
+{
+	return mTile->context().scene()->traceShadowRay(ray);
+}
+
+void RenderTileSession::pushFragment(const uint32 pixelIndex, const ShadingPoint& pt) const
+{
+	mTile->context().output()->pushFragment(pixelIndex, pt);
 }
 } // namespace PR

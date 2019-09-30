@@ -36,12 +36,14 @@ public:
 	inline size_t currentSize() const { return mWeight.size(); }
 
 	void add(const Ray& ray);
+	Ray getRay(size_t id) const;
 
 	void sort();
 	void reset();
 	RayGroup getNextGroup();
 
 	size_t getMemoryUsage() const;
+	void dump(const std::string& file) const;
 
 private: // Some vectors are not aligned, due to required preprocessing
 	/* SoA style */

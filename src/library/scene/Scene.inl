@@ -20,13 +20,13 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 
 		/*for (size_t i = 0; i < grp.Size; ++i) {
 			Ray ray  = grp.getRay(i);
-			bool col = mKDTree->checkCollision(ray, outS,
+			mKDTree->checkCollision(ray, outS,
 											   [this](const Ray& in2, uint64 index, SingleCollisionOutput& out2) {
-												   return mEntities[index]->checkCollision(in2, out2);
+												   mEntities[index]->checkCollision(in2, out2);
 											   });
 
 			float hitD = outS.HitDistance;
-			if (col && hitD < std::numeric_limits<float>::infinity()) {
+			if (hitD < std::numeric_limits<float>::infinity()) {
 				HitEntry entry;
 				entry.RayID		  = i;
 				entry.MaterialID  = outS.MaterialID;
@@ -56,7 +56,7 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 			mKDTree
 				->checkCollision(in, out,
 								 [this](const RayPackage& in2, uint64 index, CollisionOutput& out2) {
-									 return mEntities[index]->checkCollision(in2, out2);
+									 mEntities[index]->checkCollision(in2, out2);
 								 });
 
 			// TODO: Split
@@ -121,7 +121,7 @@ void Scene::traceIncoherentRays(RayStream& rays, HitStream& hits, Func nonHit) c
 			mKDTree
 				->checkCollision(in, out,
 								 [this](const Ray& in2, uint64 index, SingleCollisionOutput& out2) {
-									return mEntities[index]->checkCollision(in2, out2);
+									 mEntities[index]->checkCollision(in2, out2);
 								 });
 
 			if (out.HitDistance < std::numeric_limits<float>::infinity()) { // Hit
@@ -141,6 +141,24 @@ void Scene::traceIncoherentRays(RayStream& rays, HitStream& hits, Func nonHit) c
 			}
 		}
 	}
+}
+
+ShadowHit Scene::traceShadowRay(const Ray& in) const
+{
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+
+	SingleCollisionOutput out;
+	ShadowHit hit;
+
+	hit.Successful = mKDTree->checkCollision(in, out,
+											 [this](const Ray& in2, uint64 index, SingleCollisionOutput& out2) {
+												 mEntities[index]->checkCollision(in2, out2);
+											 });
+
+	hit.EntityID	= out.EntityID;
+	hit.PrimitiveID = out.FaceID;
+
+	return hit;
 }
 
 } // namespace PR

@@ -25,4 +25,9 @@ std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createStandardSpectral()
 
 	return desc;
 }
+
+std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createDefault()
+{
+	return createTriplet();
+}
 } // namespace PR

@@ -22,6 +22,8 @@ public:
 	SamplerMode timeSampler;
 	SamplerMode spectralSampler;
 
+	SpectralProcessMode spectralProcessMode;
+
 	TimeMappingMode timeMappingMode;
 	float timeScale;
 	TileMode tileMode;

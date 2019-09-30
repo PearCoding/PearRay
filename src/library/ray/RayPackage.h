@@ -36,12 +36,12 @@ struct PR_LIB_INLINE RayPackageBase {
 	inline void setupInverse()
 	{
 		for (int i = 0; i < 3; ++i)
-			InvDirection[i] = 1 / Direction[i];
+			InvDirection[i] = 1.0 / Direction[i];
 	}
 
 	inline void normalize()
 	{
-		V n = 1 / (Direction[0] * Direction[0] + Direction[1] * Direction[1] + Direction[2] * Direction[2]);
+		V n = 1.0 / (Direction[0] * Direction[0] + Direction[1] * Direction[1] + Direction[2] * Direction[2]);
 
 		for (int i = 0; i < 3; ++i)
 			Direction[i] = Direction[i] * n;
@@ -50,6 +50,8 @@ struct PR_LIB_INLINE RayPackageBase {
 	inline RayPackageBase<V, IV> transform(const Eigen::Matrix4f& oM, const Eigen::Matrix3f& dM) const
 	{
 		RayPackageBase<V, IV> other;
+		other = *this;
+
 		transformV(oM,
 				   Origin[0], Origin[1], Origin[2],
 				   other.Origin[0], other.Origin[1], other.Origin[2]);

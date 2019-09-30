@@ -8,7 +8,7 @@ namespace PR {
 class PR_LIB_UTILS ConstScalarShadingSocket : public FloatScalarShadingSocket {
 public:
 	explicit ConstScalarShadingSocket(float f);
-	vfloat eval(const ShadingPoint& ctx) const override;
+	float eval(const ShadingPoint& ctx) const override;
 
 private:
 	float mValue;
@@ -17,7 +17,7 @@ private:
 class PR_LIB_UTILS ConstSpectralShadingSocket : public FloatSpectralShadingSocket {
 public:
 	explicit ConstSpectralShadingSocket(const Spectrum& f);
-	vfloat eval(const ShadingPoint& ctx) const override;
+	float eval(const ShadingPoint& ctx) const override;
 
 private:
 	Spectrum mValue;
@@ -26,7 +26,7 @@ private:
 class PR_LIB_UTILS ConstVectorShadingSocket : public FloatVectorShadingSocket {
 public:
 	explicit ConstVectorShadingSocket(const Eigen::Vector3f& f);
-	vfloat eval(uint32 channel, const ShadingPoint& ctx) const override;
+	float eval(uint32 channel, const ShadingPoint& ctx) const override;
 
 private:
 	Vector3f mValue;

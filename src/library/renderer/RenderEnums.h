@@ -41,6 +41,11 @@ enum TileMode {
 	TM_SPIRAL
 };
 
+enum SpectralProcessMode {
+	SPM_LINEAR = 0, // Each length will be used one after another
+	SPM_SAMPLED
+};
+
 enum TimeMappingMode {
 	TMM_CENTER = 0, // [0.5, 0.5]
 	TMM_LEFT,		// [-1, 0]

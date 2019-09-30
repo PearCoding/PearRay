@@ -18,6 +18,7 @@
 #include "renderer/RenderSettings.h"
 #include "scene/Scene.h"
 #include "spectral/RGBConverter.h"
+#include "spectral/SpectrumDescriptor.h"
 #include "spectral/XYZConverter.h"
 
 #include "Logger.h"
@@ -113,6 +114,13 @@ void Environment::loadPlugins(const std::string& basedir)
 
 		boost::smatch what;
 		if (boost::regex_match(filename, what, e)) {
+
+#ifndef PR_DEBUG
+			// Ignore debug builds
+			if (filename.substr(filename.size() - 2, 2) == "_d")
+				continue;
+#endif
+
 			loadOnePlugin(entry.path().string());
 		}
 	}
@@ -243,6 +251,10 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		RG_RENDERER,
 		"common/sampler/spectral/type",
 		SM_MULTI_JITTER);
+	fct->settings().spectralProcessMode = mRegistry.getByGroup<SpectralProcessMode>(
+		RG_RENDERER,
+		"common/sampler/spectral/mode",
+		SPM_LINEAR);
 	fct->settings().timeMappingMode = mRegistry.getByGroup<TimeMappingMode>(
 		RG_RENDERER,
 		"common/sampler/time/mapping",
@@ -289,6 +301,11 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 																	 RG_RENDERER,
 																	 "film/crop/max_y",
 																	 1)));
+
+	// If using linear mode, overwrite sample size by actual spectrum size
+	if (fct->settings().spectralProcessMode == SPM_LINEAR) {
+		fct->settings().spectralSampleCount = mSpectrumDescriptor->samples();
+	}
 	return fct;
 }
 

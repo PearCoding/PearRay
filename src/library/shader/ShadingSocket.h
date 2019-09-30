@@ -12,7 +12,7 @@ public:
 	virtual T eval(const ShadingPoint& ctx) const = 0;
 };
 
-using FloatScalarShadingSocket = ScalarShadingSocket<vfloat>;
+using FloatScalarShadingSocket = ScalarShadingSocket<float>;
 
 ///////////////////
 template <typename T>
@@ -24,7 +24,7 @@ public:
 	virtual T eval(const ShadingPoint& ctx) const = 0;
 };
 
-using FloatSpectralShadingSocket = SpectralShadingSocket<vfloat>;
+using FloatSpectralShadingSocket = SpectralShadingSocket<float>;
 
 ///////////////////
 template <typename T>
@@ -36,5 +36,5 @@ public:
 	virtual T eval(uint32 channel, const ShadingPoint& ctx) const = 0;
 };
 
-using FloatVectorShadingSocket = VectorShadingSocket<vfloat>;
+using FloatVectorShadingSocket = VectorShadingSocket<float>;
 } // namespace PR

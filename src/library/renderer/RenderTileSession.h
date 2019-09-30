@@ -6,12 +6,14 @@
 #include "renderer/RenderStatistics.h"
 #include "renderer/RenderTile.h"
 #include "trace/HitStream.h"
+#include "trace/ShadowHit.h"
 
 namespace PR {
 
 class RenderTile;
 class IEntity;
 class IMaterial;
+class ShadingPoint;
 
 class PR_LIB RenderTileSession {
 public:
@@ -42,13 +44,18 @@ public:
 
 	inline void enqueueCoherentRay(const Ray& ray);
 	inline bool enoughCoherentRaySpace(size_t requested = 1) const;
+	inline Ray getCoherentRay(size_t id) const;
 	inline void enqueueIncoherentRay(const Ray& ray);
 	inline bool enoughIncoherentRaySpace(size_t requested = 1) const;
+	inline Ray getIncoherentRay(size_t id) const;
+	ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline size_t maxBufferCount() const;
 
 	template <typename Func>
 	inline void handleHits(Func hitFunc);
+
+	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt) const;
 
 private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);

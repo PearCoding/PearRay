@@ -14,7 +14,7 @@ struct PR_LIB_INLINE LightEvalInput {
 };
 
 struct PR_LIB_INLINE LightEvalOutput {
-	vfloat Weight;
+	float Weight;
 };
 
 class PR_LIB IEmission : public IFreezable {

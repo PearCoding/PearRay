@@ -20,27 +20,27 @@ enum MaterialScatteringType : uint32 {
 // Evaluation
 struct PR_LIB_INLINE MaterialEvalInput {
 	ShadingPoint Point;
-	vfloat Outgoing[3];
+	float Outgoing[3];
 };
 
 struct PR_LIB_INLINE MaterialEvalOutput {
-	vfloat Weight;
-	vfloat PDF_S_Forward;
-	vfloat PDF_S_Backward;
+	float Weight;
+	float PDF_S_Forward;
+	float PDF_S_Backward;
 };
 
 // Sampling
 struct PR_LIB_INLINE MaterialSampleInput {
 	ShadingPoint Point;
-	vfloat RND[2];
+	float RND[2];
 };
 
 struct PR_LIB_INLINE MaterialSampleOutput {
-	vfloat Outgoing[3];
-	vfloat Weight;
-	vfloat PDF_S_Forward;
-	vfloat PDF_S_Backward;
-	vuint32 Type;
+	float Outgoing[3];
+	float Weight;
+	float PDF_S_Forward;
+	float PDF_S_Backward;
+	uint32 Type;
 };
 
 class PR_LIB IMaterial : public IFreezable {

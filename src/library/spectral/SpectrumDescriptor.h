@@ -40,6 +40,7 @@ public:
 
 	static std::shared_ptr<SpectrumDescriptor> createTriplet();
 	static std::shared_ptr<SpectrumDescriptor> createStandardSpectral();
+	static std::shared_ptr<SpectrumDescriptor> createDefault();
 
 private:
 	std::vector<float> mWavelengths;

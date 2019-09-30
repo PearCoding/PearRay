@@ -119,10 +119,13 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	const auto lens = lensSampler()->generate2D(lenssample);
 	const float t   = mTimeAlpha * timeSampler()->generate1D(timesample) + mTimeBeta;
 
-	float specInd = spectralSampler()->generate1D(spectralsample);
-	specInd		  = std::min<uint8>(mContext.spectrumDescriptor()->samples() - 1,
-								std::floor(specInd
-										   * mContext.spectrumDescriptor()->samples()));
+	uint32 waveInd = spectralsample;
+	if (mContext.settings().spectralProcessMode != SPM_LINEAR) {
+		float specInd = spectralSampler()->generate1D(spectralsample);
+		waveInd		  = std::min<uint32>(mContext.spectrumDescriptor()->samples() - 1,
+									 std::floor(specInd
+												* mContext.spectrumDescriptor()->samples()));
+	}
 
 	const float x = px + (aa(0) - 0.5f + mContext.offsetX());
 	const float y = py + (aa(1) - 0.5f + mContext.offsetY());
@@ -134,7 +137,7 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	cameraSample.R[0]			 = lens(0);
 	cameraSample.R[1]			 = lens(1);
 	cameraSample.Time			 = t;
-	cameraSample.WavelengthIndex = specInd;
+	cameraSample.WavelengthIndex = waveInd;
 
 	return mContext.scene()->activeCamera()->constructRay(cameraSample);
 }

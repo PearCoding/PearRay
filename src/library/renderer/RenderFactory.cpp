@@ -13,7 +13,7 @@ RenderFactory::RenderFactory(const std::shared_ptr<Scene>& scene,
 }
 
 RenderFactory::RenderFactory(const std::shared_ptr<Scene>& scene)
-	: RenderFactory(scene, SpectrumDescriptor::createStandardSpectral())
+	: RenderFactory(scene, SpectrumDescriptor::createDefault())
 {
 }
 

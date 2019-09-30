@@ -1,8 +1,9 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "path/LightPath.h"
-#include "renderer/RenderTileSession.h"
 #include "renderer/RenderTile.h"
+#include "renderer/RenderTileSession.h"
+#include "shader/ShadingPoint.h"
 
 #include "Logger.h"
 
@@ -43,9 +44,18 @@ public:
 		while (session.handleCameraRays()) {
 			session.handleHits([&](const HitEntry& entry, IEntity* entity, IMaterial* material) {
 				session.tile()->statistics().addEntityHitCount();
+
+				Ray ray = session.getCoherentRay(entry.RayID);
+
+				ShadingPoint pt;
+				pt.WavelengthIndex = ray.WavelengthIndex;
+				pt.Radiance		   = ray.Direction[ray.WavelengthIndex];
+				pt.UVW[0]		   = entry.UV[0];
+				pt.UVW[1]		   = entry.UV[1];
+				pt.UVW[2]		   = 0;
+
+				session.pushFragment(ray.PixelIndex, pt);
 			});
-			//PR_LOG(L_INFO) << "HELLO??" << std::endl;
-			// Setup
 		}
 	}
 

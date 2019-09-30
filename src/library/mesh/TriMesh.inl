@@ -55,41 +55,40 @@ inline void TriMesh::setIndices(const std::vector<uint32>& i1,
 	mIndices[2] = i3;
 }
 
-inline FacePackage TriMesh::getFaces(const vuint32& indices) const
+inline Face TriMesh::getFace(uint32 index) const
 {
-	FacePackage pkg;
-	vuint32 ind[3] = { load_from_container(indices, mIndices[0]),
-					   load_from_container(indices, mIndices[1]),
-					   load_from_container(indices, mIndices[2]) };
+	Face f;
+	uint32 ind[3] = { mIndices[0][index],
+					  mIndices[1][index],
+					  mIndices[2][index] };
 
 	for (int j = 0; j < 3; ++j) {
-		pkg.Vx[j] = load_from_container(ind[j], mVertices[0]);
-		pkg.Vy[j] = load_from_container(ind[j], mVertices[1]);
-		pkg.Vz[j] = load_from_container(ind[j], mVertices[2]);
+		f.V[j](0) = mVertices[0][ind[j]];
+		f.V[j](1) = mVertices[1][ind[j]];
+		f.V[j](2) = mVertices[2][ind[j]];
 
-		pkg.Nx[j] = load_from_container(ind[j], mNormals[0]);
-		pkg.Ny[j] = load_from_container(ind[j], mNormals[1]);
-		pkg.Nz[j] = load_from_container(ind[j], mNormals[2]);
+		f.N[j](0) = mNormals[0][ind[j]];
+		f.N[j](1) = mNormals[1][ind[j]];
+		f.N[j](2) = mNormals[2][ind[j]];
 
 		if (features() & TMF_HAS_UV) {
-			pkg.U[j] = load_from_container(ind[j], mUVs[0]);
-			pkg.V[j] = load_from_container(ind[j], mUVs[1]);
+			f.UV[j](0) = mUVs[0][ind[j]];
+			f.UV[j](1) = mUVs[1][ind[j]];
 		} else {
-			pkg.U[j] = simdpp::make_float(0);
-			pkg.V[j] = simdpp::make_float(0);
+			f.UV[j] = Eigen::Vector2f(0, 0);
 		}
 	}
 
-	pkg.MaterialSlot = getFaceMaterials(indices);
-	return pkg;
+	f.MaterialSlot = getFaceMaterial(index);
+	return f;
 }
 
-inline vuint32 TriMesh::getFaceMaterials(const vuint32& indices) const
+inline uint32 TriMesh::getFaceMaterial(uint32 index) const
 {
 	if (features() & TMF_HAS_MATERIAL) {
-		return load_from_container(indices, mMaterials);
+		return mMaterials.at(index);
 	} else {
-		return simdpp::make_uint(0);
+		return 0;
 	}
 }
 

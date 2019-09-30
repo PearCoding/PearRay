@@ -1,5 +1,7 @@
 #include "RayStream.h"
 
+#include <fstream>
+
 namespace PR {
 
 Ray RayGroup::getRay(size_t id) const
@@ -127,7 +129,7 @@ void RayStream::reset()
 }
 
 /* A algorithm grouping rays together for coherent intersections
- * would give this function more meaning. 
+ * would give this function more meaning.
  */
 RayGroup RayStream::getNextGroup()
 {
@@ -158,5 +160,54 @@ RayGroup RayStream::getNextGroup()
 size_t RayStream::getMemoryUsage() const
 {
 	return mSize * (3 * sizeof(float) + 2 * sizeof(snorm16) + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + 2 * sizeof(uint8) + sizeof(float));
+}
+
+Ray RayStream::getRay(size_t id) const
+{
+	// FIXME: What happens if we sort?
+
+	PR_ASSERT(id < currentSize(), "Invalid access!");
+
+	Ray ray;
+	for (int i = 0; i < 3; ++i)
+		ray.Origin[i] = mOrigin[i][id];
+
+	float d0 = from_snorm16(mDirection[0][id]);
+	float d1 = from_snorm16(mDirection[1][id]);
+	from_oct(d0, d1, ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+
+	ray.Depth			= mDepth[id];
+	ray.PixelIndex		= mPixelIndex[id];
+	ray.Time			= from_unorm16(mTime[id]);
+	ray.WavelengthIndex = mWavelengthIndex[id];
+	ray.Flags			= mFlags[id];
+	ray.Weight			= mWeight[id];
+
+	ray.setupInverse();
+	return ray;
+}
+
+// Utility function
+void RayStream::dump(const std::string& file) const
+{
+	std::ofstream stream;
+	stream.open(file, std::ios::out | std::ios::binary);
+	if (!stream)
+		return;
+
+	uint64 size = currentSize();
+	stream.write((char*)&size, sizeof(size));
+
+	for (size_t i = 0; i < size; ++i) {
+		Ray ray = getRay(i);
+		stream.write((char*)&ray.Origin[0], sizeof(float));
+		stream.write((char*)&ray.Origin[1], sizeof(float));
+		stream.write((char*)&ray.Origin[2], sizeof(float));
+		stream.write((char*)&ray.Direction[0], sizeof(float));
+		stream.write((char*)&ray.Direction[1], sizeof(float));
+		stream.write((char*)&ray.Direction[2], sizeof(float));
+	}
+
+	stream.close();
 }
 } // namespace PR

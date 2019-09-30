@@ -113,6 +113,13 @@ public:
 		return mData[channel * mChannelPitch + pixelindex];
 	}
 
+	inline void blendFragment(uint32 pixelIndex, size_t channel,
+							  const T& newValue, float t)
+	{
+		getFragment(pixelIndex, channel) = getFragment(pixelIndex, channel) * (1 - t)
+										   + newValue * t;
+	}
+
 	// SIMD versions
 	inline void setFragment(const vuint32& pixelIndex, size_t channel, const VT& v)
 	{
