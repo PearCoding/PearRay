@@ -20,6 +20,7 @@ private slots:
 	void openCNTFile();
 	void openRDMPFile();
 	void openRDMPDir();
+	void openEXRFile();
 
 private:
 	void readSettings();

@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "CNTWindow.h"
 #include "RDMPWindow.h"
+#include "EXRWindow.h"
 
 #include <fstream>
 
@@ -23,6 +24,7 @@ MainWindow::MainWindow(QWidget* parent)
 	connect(ui.actionOpenCNTFile, SIGNAL(triggered()), this, SLOT(openCNTFile()));
 	connect(ui.actionOpenRDMPFile, SIGNAL(triggered()), this, SLOT(openRDMPFile()));
 	connect(ui.actionOpenRDMPDir, SIGNAL(triggered()), this, SLOT(openRDMPDir()));
+	connect(ui.actionOpenEXRFile, SIGNAL(triggered()), this, SLOT(openEXRFile()));
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 	connect(ui.actionWebsite, SIGNAL(triggered()), this, SLOT(openWebsite()));
@@ -129,6 +131,28 @@ void MainWindow::openRDMPDir()
 		if (d2.cdUp()) {
 			mLastDir = d2.path();
 		}
+	}
+}
+
+void MainWindow::openEXRFile() {
+
+	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+
+	if (mLastDir.isEmpty()) {
+		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
+	}
+
+	QString file = QFileDialog::getOpenFileName(this, tr("Open OpenEXR File"),
+												mLastDir,
+												tr("OpenEXR Files (*.exr)"));
+
+	if (!file.isEmpty()) {
+		EXRWindow* w = new EXRWindow(ui.mdiArea);
+		ui.mdiArea->addSubWindow(w);
+
+		w->show();
+		w->openFile(file);
+		mLastDir = QFileInfo(file).dir().path();
 	}
 }
 

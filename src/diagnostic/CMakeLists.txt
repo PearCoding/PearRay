@@ -17,8 +17,10 @@ SET(Src
   3d/OrbitCamera.cpp
   cnt/Container.cpp
   dialogs/CNTWindow.cpp
+  dialogs/EXRWindow.cpp
   dialogs/MainWindow.cpp
   dialogs/RDMPWindow.cpp
+  exr/EXRFile.cpp
   rdmp/RayArray.cpp
   widgets/View3DWidget.cpp)
 
@@ -28,13 +30,16 @@ SET(Hdr
   3d/OrbitCamera.h
   cnt/Container.h
   dialogs/CNTWindow.h
+  dialogs/EXRWindow.h
   dialogs/MainWindow.h
   dialogs/RDMPWindow.h
+  exr/EXRFile.h
   rdmp/RayArray.h
   widgets/View3DWidget.h)
 
 SET(Fms
   ui/CNTWindow.ui
+  ui/EXRWindow.ui
   ui/MainWindow.ui
   ui/RDMPWindow.ui)
 
@@ -52,6 +57,6 @@ SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 cmake_policy(SET CMP0020 OLD)
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
-target_link_libraries(prdiag Qt5::Widgets)
+target_link_libraries(prdiag Qt5::Widgets ${OPENEXR_LIBRARIES})
 set_target_properties(prdiag PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(prdiag PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

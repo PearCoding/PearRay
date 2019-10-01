@@ -46,6 +46,8 @@
     <addaction name="actionOpenRDMPFile"/>
     <addaction name="actionOpenRDMPDir"/>
     <addaction name="separator"/>
+    <addaction name="actionOpenEXRFile"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -144,6 +146,11 @@
    </property>
    <property name="shortcut">
     <string>F2</string>
+   </property>
+  </action>
+  <action name="actionOpenEXRFile">
+   <property name="text">
+    <string>Open EXR file</string>
    </property>
   </action>
  </widget>
