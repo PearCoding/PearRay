@@ -11,37 +11,22 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>PearRay RDMP Viewer</string>
+   <string>PearRayDiagnostic</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../utils/resources/icons.qrc">
+   <iconset resource="../resources/icons.qrc">
     <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
   </property>
-  <widget class="QWidget" name="viewWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_5">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>0</number>
-    </property>
-    <item>
-     <widget class="View3DWidget" name="openGLWidget">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
-   </layout>
+  <widget class="QMdiArea" name="mdiArea">
+   <property name="viewMode">
+    <enum>QMdiArea::TabbedView</enum>
+   </property>
+   <property name="tabsClosable">
+    <bool>true</bool>
+   </property>
+   <property name="tabsMovable">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -56,8 +41,10 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpenDump"/>
-    <addaction name="actionOpenMultipleDumps"/>
+    <addaction name="actionOpenCNTFile"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpenRDMPFile"/>
+    <addaction name="actionOpenRDMPDir"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -84,35 +71,21 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QDockWidget" name="dockWidget">
-   <property name="features">
-    <set>QDockWidget::NoDockWidgetFeatures</set>
+  <action name="actionOpenCNTFile">
+   <property name="text">
+    <string>Open CNT file</string>
    </property>
-   <property name="windowTitle">
-    <string>Information</string>
+  </action>
+  <action name="actionOpenRDMPFile">
+   <property name="text">
+    <string>Open RDMP file</string>
    </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents">
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Rays:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="rayCountLabel">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
+  </action>
+  <action name="actionOpenRDMPDir">
+   <property name="text">
+    <string>Open RDMP directory</string>
+   </property>
+  </action>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -173,40 +146,10 @@
     <string>F2</string>
    </property>
   </action>
-  <action name="actionOpenDump">
-   <property name="icon">
-    <iconset resource="../resources/icons.qrc">
-     <normaloff>:/ic_nature_people_black_24dp_2x.png</normaloff>:/ic_nature_people_black_24dp_2x.png</iconset>
-   </property>
-   <property name="text">
-    <string>Open dump</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
-  </action>
-  <action name="actionOpenMultipleDumps">
-   <property name="icon">
-    <iconset resource="../resources/icons.qrc">
-     <normaloff>:/ic_nature_people_black_24dp_2x.png</normaloff>:/ic_nature_people_black_24dp_2x.png</iconset>
-   </property>
-   <property name="text">
-    <string>Open multiple dumps</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+R</string>
-   </property>
-  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>View3DWidget</class>
-   <extends>QOpenGLWidget</extends>
-   <header>widgets/View3DWidget.h</header>
-  </customwidget>
- </customwidgets>
  <resources>
-  <include location="../../utils/resources/icons.qrc"/>
+  <include location="../resources/icons.qrc"/>
  </resources>
+ <connections/>
 </ui>

@@ -1,11 +1,12 @@
 #include "dialogs/MainWindow.h"
 
 #include <QApplication>
+#include <QSurfaceFormat>
 
 // We do not link to the library, only include the configuration file!
 #include "PR_Config.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
 #ifdef Q_WS_X11
 	bool useGUI = getenv("DISPLAY") != 0;
@@ -15,11 +16,11 @@ int main(int argc, char* argv[])
 	}
 #endif
 
-	QApplication a(argc, argv);
+	QApplication app(argc, argv);
 
-	a.setApplicationName("PearRay CNT Viewer");
-	a.setApplicationVersion(PR_VERSION_STRING);
-	a.setOrganizationName(PR_VENDOR_STRING);
+	app.setApplicationName("PearRayDiagnostic");
+	app.setApplicationVersion(PR_VERSION_STRING);
+	app.setOrganizationName(PR_VENDOR_STRING);
 
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
@@ -31,9 +32,5 @@ int main(int argc, char* argv[])
 	MainWindow w;
 	w.show();
 
-	if (argc == 2) {
-		w.openProject(argv[1]);
-	}
-
-	return a.exec();
+	return app.exec();
 }

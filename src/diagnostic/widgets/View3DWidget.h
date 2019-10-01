@@ -4,8 +4,8 @@
 #include <QVector>
 #include <memory>
 
-#include "GraphicObject.h"
-#include "OrbitCamera.h"
+#include "3d/GraphicObject.h"
+#include "3d/OrbitCamera.h"
 
 class View3DWidget : public QOpenGLWidget {
 	Q_OBJECT
