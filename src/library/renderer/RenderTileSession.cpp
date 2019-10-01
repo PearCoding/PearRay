@@ -62,7 +62,8 @@ bool RenderTileSession::handleCameraRays()
 	{
 		std::stringstream sstream;
 		sstream << "rays_t" << mTile->index()
-				<< "_" << (mCurrentY * w + mCurrentX) << ".rdmp";
+				<< "_p" << (mCurrentY * w + mCurrentX)
+				<< "_s" << mTile->samplesRendered() << ".rdmp";
 		mCoherentRayStream->dump(sstream.str());
 	}
 

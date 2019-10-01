@@ -115,6 +115,7 @@ void Scene::traceIncoherentRays(RayStream& rays, HitStream& hits, Func nonHit) c
 				from_snorm16(grp.Direction[1][i]),
 				in.Direction[0], in.Direction[1], in.Direction[2]);
 
+			in.normalize();
 			in.setupInverse();
 
 			// Check for collisions
