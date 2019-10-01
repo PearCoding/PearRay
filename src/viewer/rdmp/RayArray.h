@@ -17,7 +17,9 @@ public:
 
 	void clear();
 	bool load(std::istream& stream, quint32 step = 1);
-	void populate(QVector<QVector3D>& vertices, QVector<unsigned int>& indices) const;
+	void populate(QVector<QVector3D>& vertices,
+				  QVector<QVector3D>& colors,
+				  QVector<unsigned int>& indices) const;
 
 	inline size_t size() const { return mRays.size(); }
 

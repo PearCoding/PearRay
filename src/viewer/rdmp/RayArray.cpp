@@ -43,20 +43,30 @@ bool RayArray::load(std::istream& stream, quint32 step)
 	return true;
 }
 
-void RayArray::populate(QVector<QVector3D>& vertices, QVector<unsigned int>& indices) const
+void RayArray::populate(QVector<QVector3D>& vertices,
+						QVector<QVector3D>& colors,
+						QVector<unsigned int>& indices) const
 {
 	constexpr float L = 0.2f;
 
 	vertices.clear();
+	colors.clear();
 	indices.clear();
 
 	vertices.reserve(mRays.size() * 2);
+	colors.reserve(mRays.size() * 2);
 	indices.reserve(mRays.size() * 2);
 
 	for (const Ray& ray : mRays) {
 		size_t id = vertices.size();
 		vertices.append(ray.Origin);
 		vertices.append(ray.Origin + ray.Direction * L);
+
+		QVector3D color = QVector3D(std::abs(ray.Direction[0]),
+									std::abs(ray.Direction[1]),
+									std::abs(ray.Direction[2]));
+		colors.append(color * 0.5f);
+		colors.append(color);
 
 		indices.append(id);
 		indices.append(id + 1);

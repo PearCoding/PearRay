@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget* parent)
 	readSettings();
 
 	mRays		   = std::make_unique<RayArray>();
-	mGraphicObject = std::make_shared<GraphicObject>();
+	mGraphicObject = std::make_shared<GraphicObject>(true);
 	ui.openGLWidget->addGraphicObject(mGraphicObject);
 }
 
@@ -49,7 +49,9 @@ void MainWindow::openProject(const QString& str)
 
 		ui.rayCountLabel->setText(QString::number(mRays->size()));
 
-		mRays->populate(mGraphicObject->vertices(), mGraphicObject->indices());
+		mRays->populate(mGraphicObject->vertices(),
+						mGraphicObject->colors(),
+						mGraphicObject->indices());
 		ui.openGLWidget->rebuild();
 	} else {
 		statusBar()->showMessage(tr("Failed to load RDMP"));
@@ -62,7 +64,7 @@ void MainWindow::openProjectDir(const QString& str)
 
 	QDir directory(str);
 	QFileInfoList files = directory.entryInfoList(QStringList() << "*.rdmp",
-											QDir::Files);
+												  QDir::Files);
 
 	bool ok = true;
 	for (QFileInfo filename : files) {
@@ -79,7 +81,9 @@ void MainWindow::openProjectDir(const QString& str)
 
 		ui.rayCountLabel->setText(QString::number(mRays->size()));
 
-		mRays->populate(mGraphicObject->vertices(), mGraphicObject->indices());
+		mRays->populate(mGraphicObject->vertices(),
+						mGraphicObject->colors(),
+						mGraphicObject->indices());
 		ui.openGLWidget->rebuild();
 	} else {
 		statusBar()->showMessage(tr("Failed to load RDMPs from directory"));
