@@ -1,6 +1,7 @@
 #include "dialogs/MainWindow.h"
 
 #include <QApplication>
+#include <QFileInfo>
 
 // We do not link to the library, only include the configuration file!
 #include "PR_Config.h"
@@ -32,7 +33,11 @@ int main(int argc, char* argv[])
 	w.show();
 
 	if (argc == 2) {
-		w.openProject(argv[1], true);
+		QFileInfo info(argv[1]);
+		if (info.isDir())
+			w.openProjectDir(argv[1]);
+		else
+			w.openProject(argv[1]);
 	}
 
 	return a.exec();

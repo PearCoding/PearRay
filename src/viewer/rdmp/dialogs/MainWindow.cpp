@@ -14,9 +14,10 @@
 // We do not link to the library, only include the configuration file!
 #include "PR_Config.h"
 
+constexpr quint32 DEFAULT_SKIP = 1;
+
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
-	, mRays(nullptr)
 {
 	ui.setupUi(this);
 
@@ -28,43 +29,46 @@ MainWindow::MainWindow(QWidget* parent)
 	connect(ui.actionQuit, SIGNAL(triggered()), this, SLOT(close()));
 
 	readSettings();
+
+	mRays		   = std::make_unique<RayArray>();
+	mGraphicObject = std::make_shared<GraphicObject>();
+	ui.openGLWidget->addGraphicObject(mGraphicObject);
 }
 
 MainWindow::~MainWindow()
 {
 }
 
-void MainWindow::openProject(const QString& str, bool multiple)
+void MainWindow::openProject(const QString& str)
 {
-	if (!mRays) {
-		mRays = std::make_unique<RayArray>();
+	mRays->clear();
+
+	std::ifstream stream(str.toStdString());
+	if (stream && mRays->load(stream)) {
+		statusBar()->showMessage(tr("Loaded RDMP"));
+
+		ui.rayCountLabel->setText(QString::number(mRays->size()));
+
+		mRays->populate(mGraphicObject->vertices(), mGraphicObject->indices());
+		ui.openGLWidget->rebuild();
+	} else {
+		statusBar()->showMessage(tr("Failed to load RDMP"));
 	}
+}
 
-	QStringList files;
-	if (multiple) {
-		QRegExp rx("(\\d+\\.rdmp)$");
+void MainWindow::openProjectDir(const QString& str)
+{
+	mRays->clear();
 
-		int pos = rx.indexIn(str);
-		if (pos >= 0) {
-			QString base = str;
-			base.chop(str.size() - pos);
-
-			size_t i = 0;
-			while (QFile::exists(QString("%1%2.rdmp").arg(base).arg(i))) {
-				files.append(QString("%1%2.rdmp").arg(base).arg(i));
-				++i;
-			}
-		}
-	}
-
-	if (files.empty()) {
-		files.append(str);
-	}
+	QDir directory(str);
+	QFileInfoList files = directory.entryInfoList(QStringList() << "*.rdmp",
+											QDir::Files);
 
 	bool ok = true;
-	for (QString f : files) {
-		std::ifstream stream(str.toStdString());
-		if (!mRays->load(stream)) {
+	for (QFileInfo filename : files) {
+		//qDebug() << filename.filePath();
+		std::ifstream stream(filename.filePath().toStdString());
+		if (!stream || !mRays->load(stream, DEFAULT_SKIP)) {
 			ok = false;
 			break;
 		}
@@ -75,34 +79,49 @@ void MainWindow::openProject(const QString& str, bool multiple)
 
 		ui.rayCountLabel->setText(QString::number(mRays->size()));
 
-		ui.openGLWidget->clear();
-		mRays->populate(ui.openGLWidget->vertices(), ui.openGLWidget->indices());
+		mRays->populate(mGraphicObject->vertices(), mGraphicObject->indices());
 		ui.openGLWidget->rebuild();
 	} else {
-		statusBar()->showMessage(tr("Failed to load CNT"));
+		statusBar()->showMessage(tr("Failed to load RDMPs from directory"));
 	}
 }
 
 void MainWindow::openDump()
 {
 	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-	QString file			 = QFileDialog::getOpenFileName(this, tr("Open File"),
-												docLoc.isEmpty() ? QDir::currentPath() : docLoc.last(),
+
+	if (mLastDir.isEmpty()) {
+		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
+	}
+
+	QString file = QFileDialog::getOpenFileName(this, tr("Open File"),
+												mLastDir,
 												tr("Ray Dump Files (*.rdmp)"));
 
-	if (!file.isEmpty())
-		openProject(file, false);
+	if (!file.isEmpty()) {
+		openProject(file);
+		mLastDir = QFileInfo(file).dir().path();
+	}
 }
 
 void MainWindow::openMultipleDumps()
 {
 	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-	QString file			 = QFileDialog::getOpenFileName(this, tr("Open File"),
-												docLoc.isEmpty() ? QDir::currentPath() : docLoc.last(),
-												tr("Ray Dump Files (*.rdmp)"));
 
-	if (!file.isEmpty())
-		openProject(file, true);
+	if (mLastDir.isEmpty()) {
+		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
+	}
+
+	QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+													mLastDir);
+
+	if (!dir.isEmpty()) {
+		openProjectDir(dir);
+		QDir d2 = QDir(dir);
+		if (d2.cdUp()) {
+			mLastDir = d2.path();
+		}
+	}
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
@@ -118,6 +137,7 @@ void MainWindow::readSettings()
 	settings.beginGroup("MainWindow");
 	restoreGeometry(settings.value("geometry").toByteArray());
 	restoreState(settings.value("state").toByteArray());
+	mLastDir = settings.value("last_dir").toString();
 	settings.endGroup();
 }
 
@@ -128,6 +148,7 @@ void MainWindow::writeSettings()
 	settings.beginGroup("MainWindow");
 	settings.setValue("geometry", saveGeometry());
 	settings.setValue("state", saveState());
+	settings.setValue("last_dir", mLastDir);
 	settings.endGroup();
 }
 

@@ -1,11 +1,10 @@
 #pragma once
 
-#include <QOpenGLBuffer>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QVector>
+#include <memory>
 
+#include "GraphicObject.h"
 #include "OrbitCamera.h"
 
 class View3DWidget : public QOpenGLWidget {
@@ -14,10 +13,9 @@ public:
 	View3DWidget(QWidget* parent = nullptr);
 	virtual ~View3DWidget();
 
-	inline QVector<QVector3D>& vertices() { return mVertices; }
-	inline QVector<unsigned int>& indices() { return mIndices; }
+	void addGraphicObject(const std::shared_ptr<GraphicObject>& obj);
 
-    void clear();
+	void clear();
 	void rebuild();
 
 protected:
@@ -30,19 +28,16 @@ protected:
 	void wheelEvent(QWheelEvent* event) override;
 
 private:
-	GLuint mPosAttr;
-	GLuint mMatrixUniform;
+	enum InteractionMode {
+		IM_ROTATE,
+		IM_PAN
+	};
 
-	QOpenGLShaderProgram* mProgram;
-	QOpenGLBuffer* mVertexBuffer;
-	QOpenGLBuffer* mIndexBuffer;
-	QOpenGLVertexArrayObject* mVAO;
-
-	QVector<QVector3D> mVertices;
-	QVector<unsigned int> mIndices;
+	QVector<std::shared_ptr<GraphicObject>> mObjects;
 
 	QMatrix4x4 mProjection;
 
 	OrbitCamera mCamera;
 	QPointF mLastPoint;
+	InteractionMode mLastMode;
 };

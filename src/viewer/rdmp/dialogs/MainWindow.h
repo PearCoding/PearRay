@@ -5,6 +5,7 @@
 
 #include <memory>
 
+class GraphicObject;
 class RayArray;
 class MainWindow : public QMainWindow
 {
@@ -14,7 +15,8 @@ public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
 
-	void openProject(const QString& str, bool multiple);
+	void openProject(const QString& str);
+	void openProjectDir(const QString& str);
 
 protected:
 	void closeEvent(QCloseEvent* event);
@@ -32,4 +34,7 @@ private:
 	Ui::MainWindowClass ui;
 
 	std::unique_ptr<RayArray> mRays;
+	std::shared_ptr<GraphicObject> mGraphicObject;
+
+	QString mLastDir;
 };

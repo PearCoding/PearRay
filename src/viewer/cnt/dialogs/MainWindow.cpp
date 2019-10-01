@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "Container.h"
+#include "GraphicObject.h"
 
 #include <fstream>
 
@@ -16,7 +17,6 @@
 
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
-	, mContainer(nullptr)
 {
 	ui.setupUi(this);
 
@@ -28,21 +28,19 @@ MainWindow::MainWindow(QWidget* parent)
 	connect(ui.maxDepthSlider, SIGNAL(valueChanged(int)), this, SLOT(depthChanged(int)));
 
 	readSettings();
+
+	mContainer = std::make_unique<Container>();
+	mGraphicObject = std::make_shared<GraphicObject>();
+
+	ui.openGLWidget->addGraphicObject(mGraphicObject);
 }
 
 MainWindow::~MainWindow()
 {
-	if (mContainer) {
-		delete mContainer;
-	}
 }
 
 void MainWindow::openProject(const QString& str)
 {
-	if (!mContainer) {
-		mContainer = new Container;
-	}
-
 	std::ifstream stream(str.toStdString());
 	if (mContainer->load(stream)) {
 		statusBar()->showMessage(tr("Loaded CNT"));
@@ -62,8 +60,7 @@ void MainWindow::openProject(const QString& str)
 			itemUp->setText(QString::number(mContainer->upperBound(i)));
 		}
 
-		ui.openGLWidget->clear();
-		mContainer->populate(ui.openGLWidget->vertices(), ui.openGLWidget->indices(), mContainer->depth());
+		mContainer->populate(mGraphicObject->vertices(), mGraphicObject->indices(), mContainer->depth());
 		ui.openGLWidget->rebuild();
 	} else {
 		statusBar()->showMessage(tr("Failed to load CNT"));
@@ -132,8 +129,7 @@ void MainWindow::openWebsite()
 void MainWindow::depthChanged(int tick)
 {
 	if (mContainer) {
-		ui.openGLWidget->clear();
-		mContainer->populate(ui.openGLWidget->vertices(), ui.openGLWidget->indices(), tick);
+		mContainer->populate(mGraphicObject->vertices(), mGraphicObject->indices(), tick);
 		ui.openGLWidget->rebuild();
 	}
 }

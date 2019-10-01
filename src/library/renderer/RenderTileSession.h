@@ -61,13 +61,16 @@ private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);
 	void endShadingGroup(const ShadingGroup& grp);
 
+	uint32 currentIndex() const;
+
 	uint32 mThread;
 	RenderTile* mTile;
 	RayStream* mCoherentRayStream;
 	RayStream* mIncoherentRayStream;
 	HitStream* mHitStream;
 
-	uint32 mCurrentPixel;
+	uint32 mCurrentX;
+	uint32 mCurrentY;
 };
 } // namespace PR
 

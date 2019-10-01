@@ -206,6 +206,9 @@ static void drawNode(QVector<QVector3D>& vertices, QVector<unsigned int>& indice
 }
 void Container::populate(QVector<QVector3D>& vertices, QVector<unsigned int>& indices, int maxDepth) const
 {
+	vertices.clear();
+	indices.clear();
+
 	vertices.reserve(4 * mInnerCount + 8);
 	indices.reserve(8 * mInnerCount + 12);
 

@@ -11,10 +11,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 ENDIF()
 
 SET(Src
+  Camera.cpp
+  GraphicObject.cpp
   OrbitCamera.cpp
   widgets/View3DWidget.cpp)
 
 SET(Hdr
+  Camera.h
+  GraphicObject.h
   OrbitCamera.h
   widgets/View3DWidget.h)
 

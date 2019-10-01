@@ -3,7 +3,10 @@
 #include <QMainWindow>
 #include "ui_MainWindow.h"
 
+#include <memory>
+
 class Container;
+class GraphicObject;
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -11,7 +14,7 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
-	
+
 	void openProject(const QString& str);
 
 protected:
@@ -19,7 +22,7 @@ protected:
 
 private slots:
 	void depthChanged(int tick);
-	
+
 	void openScene();
 	void about();
 	void openWebsite();
@@ -27,8 +30,9 @@ private slots:
 private:
 	void readSettings();
 	void writeSettings();
-	
+
 	Ui::MainWindowClass ui;
 
-	Container* mContainer;
+	std::unique_ptr<Container> mContainer;
+	std::shared_ptr<GraphicObject> mGraphicObject;
 };

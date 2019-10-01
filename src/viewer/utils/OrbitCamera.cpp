@@ -1,10 +1,8 @@
 #include "OrbitCamera.h"
 
 OrbitCamera::OrbitCamera()
-	: mEye(0, 0, -1)
+	: Camera()
 	, mLookAt(0, 0, 0)
-	, mZoom(1)
-	, mRotation()
 {
 }
 
@@ -12,13 +10,21 @@ OrbitCamera::~OrbitCamera()
 {
 }
 
+void OrbitCamera::pan(const QPointF& delta)
+{
+	Camera::pan(delta);
+
+	// FIXME
+	QVector3D up, right;
+	constructFrame(up, right);
+
+	mLookAt += right * delta.x();
+	mLookAt += up * delta.y();
+}
+
 QMatrix4x4 OrbitCamera::getViewMatrix() const
 {
-	QMatrix4x4 view;
-	view.setToIdentity();
-	view.translate(mEye);
-	view.scale(mZoom);
-	view.rotate(mRotation);
+	QMatrix4x4 view = Camera::getViewMatrix();
 	view.translate(mLookAt);
 
 	return view;

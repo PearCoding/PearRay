@@ -14,7 +14,8 @@ RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
 	, mCoherentRayStream(rayCoherentStream)
 	, mIncoherentRayStream(rayIncoherentStream)
 	, mHitStream(hitStream)
-	, mCurrentPixel(0)
+	, mCurrentX(0)
+	, mCurrentY(0)
 {
 }
 
@@ -29,28 +30,39 @@ IEntity* RenderTileSession::getEntity(uint32 id) const
 
 bool RenderTileSession::handleCameraRays()
 {
-	const size_t endIndex = mTile->ex() * mTile->ey();
-	if (mCurrentPixel >= endIndex)
+	const uint32 w = mTile->width();
+	const uint32 h = mTile->height();
+
+	if (mCurrentY >= h)
 		return false;
 
 	mCoherentRayStream->reset();
 
-	for (; mCurrentPixel < endIndex; ++mCurrentPixel) {
-		if (!enoughCoherentRaySpace(1))
-			break;
+	for (; mCurrentY < h; ++mCurrentY) {
+		const uint32 fy = mCurrentY + mTile->sy();
 
-		uint32 x = mCurrentPixel % mTile->width() + mTile->sx();
-		uint32 y = mCurrentPixel / mTile->width() + mTile->sy();
+		// Allow continuation
+		if (mCurrentX >= w)
+			mCurrentX = 0;
 
-		Ray ray		   = mTile->constructCameraRay(x, y, mTile->samplesRendered());
-		ray.PixelIndex = mCurrentPixel;
+		for (; mCurrentX < w; ++mCurrentX) {
+			if (!enoughCoherentRaySpace(1))
+				break;
 
-		enqueueCoherentRay(ray);
+			const uint32 fx = mCurrentX + mTile->sx();
+
+			Ray ray		   = mTile->constructCameraRay(fx, fy,
+												   mTile->samplesRendered());
+			ray.PixelIndex = fy * mTile->context().width() + fx;
+
+			enqueueCoherentRay(ray);
+		}
 	}
 
 	{
 		std::stringstream sstream;
-		sstream << "rays_t" << mTile->index() << ".rdmp";
+		sstream << "rays_t" << mTile->index()
+				<< "_" << (mCurrentY * w + mCurrentX) << ".rdmp";
 		mCoherentRayStream->dump(sstream.str());
 	}
 
