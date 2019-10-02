@@ -14,6 +14,8 @@ constexpr int MIN_S		 = 5;
 constexpr float PAN_W  = 0.4f;
 constexpr float ZOOM_W = 1.05f;
 
+constexpr int GRID_S = 10;
+
 ImageView::ImageView(QWidget* parent)
 	: QWidget(parent)
 	, mZoom(1)
@@ -58,30 +60,21 @@ QSize ImageView::sizeHint() const
 void ImageView::paintEvent(QPaintEvent* event)
 {
 	QPainter painter(this);
-	painter.setBrush(QBrush(Qt::darkGray));
-	painter.drawRect(0, 0, width() - 1, BAR_HEIGHT - 1);
+	painter.drawPixmap(0, 0, mBackground);
 
 	// Position Field
 	painter.setBrush(QBrush(Qt::white));
 	painter.drawText(QRect(0, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
 					 QString::number(mLastPixel.x()),
 					 QTextOption(Qt::AlignCenter));
-	painter.drawLine(BAR_POS_W / 2, 0, BAR_POS_W / 2, BAR_HEIGHT - 1);
 	painter.drawText(QRect(BAR_POS_W / 2 + 1, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
 					 QString::number(mLastPixel.y()),
 					 QTextOption(Qt::AlignCenter));
-
-	// Separator
-	painter.drawLine(BAR_POS_W, 0, BAR_POS_W, BAR_HEIGHT - 1);
 
 	// Value Field
 	QString valS = valueAt(mLastPixel);
 	painter.drawText(QRect(BAR_POS_W, 0, width() - BAR_POS_W - 1, BAR_HEIGHT - 1),
 					 valS, QTextOption(Qt::AlignCenter));
-
-	// Background
-	painter.setPen(Qt::NoPen);
-	painter.drawRect(0, BAR_HEIGHT, width(), height() - BAR_HEIGHT);
 
 	// Image
 	painter.setClipRect(0, BAR_HEIGHT, width(), height() - BAR_HEIGHT);
@@ -90,6 +83,44 @@ void ImageView::paintEvent(QPaintEvent* event)
 	int dx = (width() - mPixmap.width()) / 2 + mDelta.x();
 	int dy = (height() - mPixmap.height() - BAR_HEIGHT) / 2 + mDelta.y();
 	painter.drawPixmap(dx, dy + BAR_HEIGHT, mPixmap);
+}
+
+// Cache background
+void ImageView::resizeEvent(QResizeEvent* event)
+{
+	QPainter painter;
+	mBackground = QPixmap(event->size());
+
+	painter.begin(&mBackground);
+
+	// Bar
+	painter.setBrush(QBrush(Qt::darkGray));
+	painter.drawRect(0, 0, mBackground.width() - 1, BAR_HEIGHT - 1);
+
+	// Separators
+	painter.drawLine(BAR_POS_W / 2, 0, BAR_POS_W / 2, BAR_HEIGHT - 1);
+	painter.drawLine(BAR_POS_W, 0, BAR_POS_W, BAR_HEIGHT - 1);
+
+	// Background
+	const size_t gx = (mBackground.width() / (2 * GRID_S) + 1);
+	const size_t gy = (mBackground.height() - BAR_HEIGHT) / GRID_S + 1;
+
+	painter.setPen(Qt::NoPen);
+	for (size_t y = 0; y < gy; ++y) {
+		int dx = (y % 2) ? 0 : GRID_S;
+		int py = BAR_HEIGHT + y * GRID_S;
+
+		painter.setBrush(QBrush(Qt::white));
+		for (size_t x = 0; x < gx; ++x)
+			painter.drawRect(dx + x * GRID_S * 2, py,
+							 GRID_S, GRID_S);
+
+		painter.setBrush(QBrush(Qt::lightGray));
+		for (size_t x = 0; x < gx; ++x)
+			painter.drawRect(GRID_S - dx + x * GRID_S * 2, py,
+							 GRID_S, GRID_S);
+	}
+	painter.end();
 }
 
 void ImageView::mousePressEvent(QMouseEvent* event)
