@@ -22,6 +22,7 @@ SET(Src
   dialogs/RDMPWindow.cpp
   exr/EXRFile.cpp
   rdmp/RayArray.cpp
+  widgets/ImageView.cpp
   widgets/View3DWidget.cpp)
 
 SET(Hdr
@@ -35,6 +36,7 @@ SET(Hdr
   dialogs/RDMPWindow.h
   exr/EXRFile.h
   rdmp/RayArray.h
+  widgets/ImageView.h
   widgets/View3DWidget.h)
 
 SET(Fms

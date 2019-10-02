@@ -48,8 +48,5 @@ void EXRWindow::updateImage(int layerID)
 	if (layerID >= mFile->layers().size())
 		return;
 
-	QImage image;
-	mFile->layers()[layerID]->fillImage(image);
-
-	ui.imageLabel->setPixmap(QPixmap::fromImage(image));
+	ui.imageWidget->setLayer(mFile->layers()[layerID]);
 }

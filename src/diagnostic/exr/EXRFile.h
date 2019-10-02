@@ -11,13 +11,23 @@ public:
 	~EXRLayer();
 
 	inline QVector<QVector<float>>& data() { return mData; }
-    inline const QString& name() const { return mName; }
+	inline QVector<QString>& channelNames() { return mChannelNames; }
+	inline const QString& name() const { return mName; }
+	inline size_t width() const { return mWidth; }
+	inline size_t height() const { return mHeight; }
 
-	void fillImage(QImage& image) const;
+	inline float value(size_t x, size_t y, size_t channel) const
+	{
+		return mData[channel][y * mWidth + x];
+	}
+
+	void fillImage(QImage& image, quint8 channelMask = 0xFF) const;
 
 private:
 	QString mName;
 	QVector<QVector<float>> mData;
+	QVector<QString> mChannelNames;
+
 	size_t mWidth;
 	size_t mHeight;
 };

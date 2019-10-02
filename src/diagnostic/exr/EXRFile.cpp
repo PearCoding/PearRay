@@ -10,6 +10,7 @@ EXRLayer::EXRLayer(const QString& name, size_t channels,
 				   size_t width, size_t height)
 	: mName(name)
 	, mData(channels)
+	, mChannelNames(channels)
 	, mWidth(width)
 	, mHeight(height)
 {
@@ -34,7 +35,7 @@ static QImage::Format channelToFormat(size_t channelCount)
 	}
 }
 
-void EXRLayer::fillImage(QImage& image) const
+void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 {
 	const QImage::Format expectedFormat = channelToFormat(mData.size());
 	if (expectedFormat == QImage::Format_Invalid)
@@ -48,6 +49,9 @@ void EXRLayer::fillImage(QImage& image) const
 	// Retrieve image wide maximum
 	float maximum = 0;
 	for (size_t i = 0; i < (size_t)mData.size(); ++i) {
+		if (!((1 << i) & channelMask))
+			continue;
+
 		for (float f : mData[i]) {
 			maximum = std::max(maximum, f);
 		}
@@ -71,8 +75,8 @@ void EXRLayer::fillImage(QImage& image) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[3 * x]	 = mData[0][y * mWidth + x] * scale;
-				ptr[3 * x + 1] = mData[1][y * mWidth + x] * scale;
+				ptr[3 * x]	 = (channelMask & 0x1) ? mData[0][y * mWidth + x] * scale : 0;
+				ptr[3 * x + 1] = (channelMask & 0x2) ? mData[1][y * mWidth + x] * scale : 0;
 				ptr[3 * x + 2] = 0;
 			}
 		}
@@ -81,9 +85,9 @@ void EXRLayer::fillImage(QImage& image) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[3 * x]	 = mData[0][y * mWidth + x] * scale;
-				ptr[3 * x + 1] = mData[1][y * mWidth + x] * scale;
-				ptr[3 * x + 2] = mData[2][y * mWidth + x] * scale;
+				ptr[3 * x]	 = (channelMask & 0x1) ? mData[0][y * mWidth + x] * scale : 0;
+				ptr[3 * x + 1] = (channelMask & 0x2) ? mData[1][y * mWidth + x] * scale : 0;
+				ptr[3 * x + 2] = (channelMask & 0x4) ? mData[2][y * mWidth + x] * scale : 0;
 			}
 		}
 		break;
@@ -91,10 +95,10 @@ void EXRLayer::fillImage(QImage& image) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[4 * x]	 = mData[0][y * mWidth + x] * scale;
-				ptr[4 * x + 1] = mData[1][y * mWidth + x] * scale;
-				ptr[4 * x + 2] = mData[2][y * mWidth + x] * scale;
-				ptr[4 * x + 3] = mData[3][y * mWidth + x] * scale;
+				ptr[4 * x]	 = (channelMask & 0x1) ? mData[0][y * mWidth + x] * scale : 0;
+				ptr[4 * x + 1] = (channelMask & 0x2) ? mData[1][y * mWidth + x] * scale : 0;
+				ptr[4 * x + 2] = (channelMask & 0x4) ? mData[2][y * mWidth + x] * scale : 0;
+				ptr[4 * x + 3] = (channelMask & 0x8) ? mData[3][y * mWidth + x] * scale : 0;
 			}
 		}
 		break;
@@ -192,6 +196,15 @@ bool EXRFile::open(const QString& filename)
 
 		size_t k = 0;
 		for (QString ch : it.value()) {
+			QString plainChannelName;
+			int pointPos = ch.indexOf('.');
+			if (pointPos < 0) {
+				plainChannelName = ch;
+			} else {
+				plainChannelName = ch.mid(pointPos + 1);
+			}
+
+			layer->channelNames()[k] = plainChannelName;
 			layer->data()[k].resize(size);
 
 			const Channel* channel = channels.findChannel(ch.toStdString());
