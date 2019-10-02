@@ -8,14 +8,14 @@ HitStream::HitStream(size_t size)
 	: mSize(size + size % PR_SIMD_BANDWIDTH)
 	, mCurrentPos(0)
 {
-	mRayID.resize(mSize);
-	mMaterialID.resize(mSize);
-	mEntityID.resize(mSize);
-	mPrimitiveID.resize(mSize);
+	mRayID.reserve(mSize);
+	mMaterialID.reserve(mSize);
+	mEntityID.reserve(mSize);
+	mPrimitiveID.reserve(mSize);
 	for (int i = 0; i < 2; ++i) {
-		mUV[i].resize(mSize);
+		mUV[i].reserve(mSize);
 	}
-	mFlags.resize(mSize);
+	mFlags.reserve(mSize);
 }
 
 HitStream::~HitStream()

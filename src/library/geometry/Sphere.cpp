@@ -47,11 +47,9 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 	const float R2 = mRadius * mRadius;													  // R^2
 	const float M2 = L2 - S * S;														  // L . L - S^2
 
-	if (S < 0 && // when object behind ray
-		L2 > R2)
-		return;
-
-	if (M2 > R2)
+	if ((S < 0 && // when object behind ray
+		 L2 > R2)
+		|| (M2 > R2))
 		return;
 
 	const float Q = std::sqrt(R2 - M2);
@@ -83,7 +81,7 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	const float R2  = mRadius * mRadius;												   // R^2
 	const vfloat M2 = L2 - S * S;														   // L . L - S^2
 
-	const bfloat valid = (S >= 0) | (L2 <= R2) | (M2 <= R2);
+	const bfloat valid = ((S >= 0) | (L2 <= R2)) & (M2 <= R2);
 
 	const vfloat Q = sqrt(R2 - M2);
 

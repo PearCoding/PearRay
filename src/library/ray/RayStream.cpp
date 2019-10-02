@@ -55,7 +55,7 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
 		dir[0][k] = from_unorm16(Time[id + k]);
 	}
-	ray.Time = simdpp::load(&dir[0][id]);
+	ray.Time = simdpp::load(&dir[0][0]);
 
 	load_from_container_linear(ray.WavelengthIndex, WavelengthIndex, id);
 	load_from_container_linear(ray.Flags, Flags, id);

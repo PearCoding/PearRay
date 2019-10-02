@@ -34,6 +34,29 @@ PR_TEST("Intersects Inside")
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
 }
 
+PR_TEST("Intersects [Package]")
+{
+	Sphere sphere(Eigen::Vector3f(0, 0, 0), 1);
+	RayPackage rays;
+	rays.Origin[0]	= simdpp::make_float(-2, -2, -2, -2);
+	rays.Origin[1]	= simdpp::make_float(0, 0, 0, 0);
+	rays.Origin[2]	= simdpp::make_float(0, 0, 0, 0);
+	rays.Direction[0] = simdpp::make_float(1, 1, -1, 0);
+	rays.Direction[1] = simdpp::make_float(0, 0, 0, 1);
+	rays.Direction[2] = simdpp::make_float(0, 0, 0, 0);
+
+	rays.setupInverse();
+
+	CollisionOutput s;
+	sphere.intersects(rays, s);
+	const float INF = std::numeric_limits<float>::infinity();
+
+	PR_CHECK_NEARLY_EQ(extract<0>(s.HitDistance), 1);
+	PR_CHECK_NEARLY_EQ(extract<1>(s.HitDistance), 1);
+	PR_CHECK_EQ(extract<2>(s.HitDistance), INF);
+	PR_CHECK_EQ(extract<3>(s.HitDistance), INF);
+}
+
 PR_END_TESTCASE()
 
 // MAIN
