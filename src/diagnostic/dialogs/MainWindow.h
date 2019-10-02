@@ -10,6 +10,9 @@ public:
 	MainWindow(QWidget* parent = 0);
 	~MainWindow();
 
+	void openFile(const QString& file);
+	void openRDMPDir(const QString& file);
+
 protected:
 	void closeEvent(QCloseEvent* event);
 
@@ -17,10 +20,8 @@ private slots:
 	void about();
 	void openWebsite();
 
-	void openCNTFile();
-	void openRDMPFile();
+	void openFile();
 	void openRDMPDir();
-	void openEXRFile();
 
 private:
 	void readSettings();

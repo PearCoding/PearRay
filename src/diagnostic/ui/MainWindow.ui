@@ -41,12 +41,9 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpenCNTFile"/>
+    <addaction name="actionOpenFile"/>
     <addaction name="separator"/>
-    <addaction name="actionOpenRDMPFile"/>
     <addaction name="actionOpenRDMPDir"/>
-    <addaction name="separator"/>
-    <addaction name="actionOpenEXRFile"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -73,14 +70,12 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionOpenCNTFile">
+  <action name="actionOpenFile">
    <property name="text">
-    <string>Open CNT file</string>
+    <string>Open file</string>
    </property>
-  </action>
-  <action name="actionOpenRDMPFile">
-   <property name="text">
-    <string>Open RDMP file</string>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionOpenRDMPDir">

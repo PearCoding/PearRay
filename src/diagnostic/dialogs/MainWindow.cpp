@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "CNTWindow.h"
-#include "RDMPWindow.h"
 #include "EXRWindow.h"
+#include "RDMPWindow.h"
 
 #include <fstream>
 
@@ -21,10 +21,8 @@ MainWindow::MainWindow(QWidget* parent)
 {
 	ui.setupUi(this);
 
-	connect(ui.actionOpenCNTFile, SIGNAL(triggered()), this, SLOT(openCNTFile()));
-	connect(ui.actionOpenRDMPFile, SIGNAL(triggered()), this, SLOT(openRDMPFile()));
+	connect(ui.actionOpenFile, SIGNAL(triggered()), this, SLOT(openFile()));
 	connect(ui.actionOpenRDMPDir, SIGNAL(triggered()), this, SLOT(openRDMPDir()));
-	connect(ui.actionOpenEXRFile, SIGNAL(triggered()), this, SLOT(openEXRFile()));
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 	connect(ui.actionWebsite, SIGNAL(triggered()), this, SLOT(openWebsite()));
@@ -65,7 +63,7 @@ void MainWindow::writeSettings()
 	settings.endGroup();
 }
 
-void MainWindow::openCNTFile()
+void MainWindow::openFile()
 {
 	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
 
@@ -73,38 +71,12 @@ void MainWindow::openCNTFile()
 		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
 	}
 
-	QString file = QFileDialog::getOpenFileName(this, tr("Open CNT File"),
+	QString file = QFileDialog::getOpenFileName(this, tr("Open File"),
 												mLastDir,
-												tr("CNT Files (*.cnt)"));
+												tr("Supported Files (*.cnt *.rdmp *.exr);;CNT Files (*.cnt);;RDMP Files (*.rdmp);;EXR Files (*.exr)"));
 
 	if (!file.isEmpty()) {
-		CNTWindow* cnt = new CNTWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(cnt);
-
-		cnt->show();
-		cnt->openFile(file);
-		mLastDir = QFileInfo(file).dir().path();
-	}
-}
-
-void MainWindow::openRDMPFile()
-{
-	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-
-	if (mLastDir.isEmpty()) {
-		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
-	}
-
-	QString file = QFileDialog::getOpenFileName(this, tr("Open RDMP File"),
-												mLastDir,
-												tr("Ray Dump Files (*.rdmp)"));
-
-	if (!file.isEmpty()) {
-		RDMPWindow* w = new RDMPWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(w);
-
-		w->show();
-		w->openFile(file);
+		openFile(file);
 		mLastDir = QFileInfo(file).dir().path();
 	}
 }
@@ -121,11 +93,7 @@ void MainWindow::openRDMPDir()
 													mLastDir);
 
 	if (!dir.isEmpty()) {
-		RDMPWindow* w = new RDMPWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(w);
-
-		w->show();
-		w->openDir(dir);
+		openRDMPDir(dir);
 
 		QDir d2 = QDir(dir);
 		if (d2.cdUp()) {
@@ -134,28 +102,40 @@ void MainWindow::openRDMPDir()
 	}
 }
 
-void MainWindow::openEXRFile() {
+void MainWindow::openFile(const QString& file)
+{
+	QFileInfo info(file);
 
-	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+	if (info.suffix() == "cnt") {
+		CNTWindow* cnt = new CNTWindow(ui.mdiArea);
+		ui.mdiArea->addSubWindow(cnt);
 
-	if (mLastDir.isEmpty()) {
-		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
-	}
+		cnt->show();
+		cnt->openFile(file);
+	} else if (info.suffix() == "rdmp") {
+		RDMPWindow* w = new RDMPWindow(ui.mdiArea);
+		ui.mdiArea->addSubWindow(w);
 
-	QString file = QFileDialog::getOpenFileName(this, tr("Open OpenEXR File"),
-												mLastDir,
-												tr("OpenEXR Files (*.exr)"));
+		w->show();
+		w->openFile(file);
 
-	if (!file.isEmpty()) {
+	} else if (info.suffix() == "exr") {
 		EXRWindow* w = new EXRWindow(ui.mdiArea);
 		ui.mdiArea->addSubWindow(w);
 
 		w->show();
 		w->openFile(file);
-		mLastDir = QFileInfo(file).dir().path();
 	}
 }
 
+void MainWindow::openRDMPDir(const QString& dir)
+{
+	RDMPWindow* w = new RDMPWindow(ui.mdiArea);
+	ui.mdiArea->addSubWindow(w);
+
+	w->show();
+	w->openDir(dir);
+}
 void MainWindow::about()
 {
 	QMessageBox::about(this, tr("About PearRayDiagnostic"),
