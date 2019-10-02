@@ -49,6 +49,8 @@ PUSH_TEST(random random.cpp)
 #PUSH_TEST(seed seed.cpp USES_UTILS NO_ADD)
 PUSH_TEST(photon photon.cpp)
 PUSH_TEST(kdtree kdtree.cpp)
+PUSH_TEST(simd simd.cpp)
+PUSH_TEST(compression compression.cpp)
 
 IF(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)

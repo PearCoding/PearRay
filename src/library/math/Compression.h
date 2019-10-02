@@ -14,7 +14,7 @@ namespace PR {
 template <typename T>
 inline T to_unorm(float f)
 {
-	return static_cast<T>(std::round(
+	return static_cast<T>(std::roundf(
 		std::min<float>(std::max<float>(f, 0), 1) * std::numeric_limits<T>::max()));
 }
 
@@ -25,15 +25,15 @@ inline float from_unorm(T v)
 }
 
 typedef uint16 unorm16;
-using to_unorm16   = decltype(to_unorm<unorm16>(0));
-using from_unorm16 = decltype(from_unorm<unorm16>(0));
+inline unorm16 to_unorm16(float f) { return to_unorm<unorm16>(f); }
+inline float from_unorm16(unorm16 s) { return from_unorm<unorm16>(s); }
 
 // Signed normalised floating point representation [-1,1]
 template <typename T>
 inline T to_snorm(float f)
 {
 	static_assert(std::is_signed<T>::value, "Require signed type");
-	return static_cast<T>(std::round(
+	return static_cast<T>(std::roundf(
 		std::min<float>(std::max<float>(f, -1), 1) * ((1 << std::numeric_limits<T>::digits) - 1)));
 }
 
@@ -48,8 +48,8 @@ inline float from_snorm(T v)
 }
 
 typedef int16 snorm16;
-using to_snorm16   = decltype(to_snorm<snorm16>(0));
-using from_snorm16 = decltype(from_snorm<snorm16>(0));
+inline snorm16 to_snorm16(float f) { return to_snorm<snorm16>(f); }
+inline float from_snorm16(snorm16 s) { return from_snorm<snorm16>(s); }
 
 /* Octahedron Projection method
 * MEYER, Q., SÜSSMUTH, J., SUSSNER, G., STAMMINGER, M., AND GREINER, G. 2010.

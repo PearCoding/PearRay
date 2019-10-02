@@ -65,7 +65,7 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 					break;
 
 				float hitD = extract(k, out.HitDistance);
-				if (hitD < std::numeric_limits<float>::infinity()) {
+				if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 					HitEntry entry;
 					entry.RayID		  = i;
 					entry.MaterialID  = extract(k, out.MaterialID);

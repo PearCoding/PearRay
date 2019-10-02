@@ -351,12 +351,12 @@ public:
 	}
 };
 
-inline vfloat insert(size_t i, const vfloat& v, float& f)
+inline vfloat insert(size_t i, const vfloat& v, float f)
 {
 	return runtime_insert_H<PR_SIMD_BANDWIDTH - 1>()(i, v, f);
 }
 
-inline vuint32 insert(size_t i, const vuint32& v, uint32& f)
+inline vuint32 insert(size_t i, const vuint32& v, uint32 f)
 {
 	return runtime_insert_H<PR_SIMD_BANDWIDTH - 1>()(i, v, f);
 }

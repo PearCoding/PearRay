@@ -61,7 +61,7 @@
 		:name 'Sphere'
 		:type 'sphere'
 		:material 'Material'
-		:radius 1
+		:radius 0.25
 		:transform [1,0,0,0,
 0,1,0,0,
 0,0,1,-4,
