@@ -211,14 +211,14 @@ RenderTile* RenderContext::getNextTile()
 	return tile;
 }
 
-RenderStatistics RenderContext::statistics() const
+RenderTileStatistics RenderContext::statistics() const
 {
 	return mTileMap->statistics();
 }
 
 RenderStatus RenderContext::status() const
 {
-	RenderStatistics s = statistics();
+	RenderTileStatistics s = statistics();
 
 	RenderStatus status = mIntegrator->status();
 	status.setField("global.ray_count", s.rayCount());

@@ -25,7 +25,7 @@ void RenderThread::main()
 	RayStream incoherentRays(mStreamElementCount);
 	HitStream hits(mStreamElementCount);
 
-	size_t pass				= 0;
+	size_t pass		= 0;
 	auto integrator = mRenderer->integrator();
 
 	while (integrator->needNextPass(pass) && !shouldStop()) {
@@ -34,6 +34,8 @@ void RenderThread::main()
 		while (mTile && !shouldStop()) {
 			RenderTileSession session(mThreadIndex, mTile,
 									  &coherentRays, &incoherentRays, &hits);
+			mStatistics.addTileCount();
+
 			integrator->onPass(session, pass);
 			mTile->inc();
 

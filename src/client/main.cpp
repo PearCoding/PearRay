@@ -4,7 +4,7 @@
 
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
-#include "renderer/RenderStatistics.h"
+#include "renderer/RenderTileStatistics.h"
 
 #include "spectral/SpectrumDescriptor.h"
 #include "spectral/ToneMapper.h"

@@ -2,7 +2,7 @@
 
 #include "Random.h"
 #include "ray/RayPackage.h"
-#include "renderer/RenderStatistics.h"
+#include "renderer/RenderTileStatistics.h"
 
 namespace PR {
 
@@ -99,12 +99,12 @@ public:
 		return mSpectralSampler.get();
 	}
 
-	inline const RenderStatistics& statistics() const
+	inline const RenderTileStatistics& statistics() const
 	{
 		return mStatistics;
 	}
 
-	inline RenderStatistics& statistics()
+	inline RenderTileStatistics& statistics()
 	{
 		return mStatistics;
 	}
@@ -145,7 +145,7 @@ private:
 	float mTimeAlpha;
 	float mTimeBeta;
 
-	RenderStatistics mStatistics;
+	RenderTileStatistics mStatistics;
 
 	const RenderContext& mContext;
 };

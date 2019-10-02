@@ -3,7 +3,7 @@
 #include "Random.h"
 #include "ray/RayPackage.h"
 #include "ray/RayStream.h"
-#include "renderer/RenderStatistics.h"
+#include "renderer/RenderTileStatistics.h"
 #include "renderer/RenderTile.h"
 #include "trace/HitStream.h"
 #include "trace/ShadowHit.h"

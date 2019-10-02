@@ -1,7 +1,7 @@
-#include "RenderStatistics.h"
+#include "RenderTileStatistics.h"
 
 namespace PR {
-RenderStatistics::RenderStatistics()
+RenderTileStatistics::RenderTileStatistics()
 	: mCoherentRayCount(0)
 	, mIncoherentRayCount(0)
 	, mShadowRayCount(0)
@@ -11,7 +11,7 @@ RenderStatistics::RenderStatistics()
 {
 }
 
-RenderStatistics& RenderStatistics::operator+=(const RenderStatistics& other)
+RenderTileStatistics& RenderTileStatistics::operator+=(const RenderTileStatistics& other)
 {
 	mCoherentRayCount += other.mCoherentRayCount;
 	mIncoherentRayCount += other.mIncoherentRayCount;

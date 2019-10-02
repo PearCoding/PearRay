@@ -3,11 +3,11 @@
 #include "PR_Config.h"
 
 namespace PR {
-class PR_LIB RenderStatistics {
+class PR_LIB RenderTileStatistics {
 public:
-	RenderStatistics();
+	RenderTileStatistics();
 
-	RenderStatistics& operator+=(const RenderStatistics& other);
+	RenderTileStatistics& operator+=(const RenderTileStatistics& other);
 
 	inline void addCoherentRayCount(uint64 i = 1) { mCoherentRayCount += i; }
 	inline uint64 coherentRayCount() const { return mCoherentRayCount; }

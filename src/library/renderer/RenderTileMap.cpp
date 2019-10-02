@@ -145,9 +145,9 @@ RenderTile* RenderTileMap::getNextTile(uint32 maxSample)
 	return nullptr;
 }
 
-RenderStatistics RenderTileMap::statistics() const
+RenderTileStatistics RenderTileMap::statistics() const
 {
-	RenderStatistics s;
+	RenderTileStatistics s;
 	for (uint32 i = 0; i < mTileYCount; ++i) {
 		for (uint32 j = 0; j < mTileXCount; ++j) {
 			s += mTileMap[i * mTileXCount + j]->statistics();

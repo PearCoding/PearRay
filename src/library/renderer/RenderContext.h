@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RenderSettings.h"
-#include "RenderStatistics.h"
+#include "RenderTileStatistics.h"
 #include "RenderStatus.h"
 
 #include <condition_variable>
@@ -71,7 +71,7 @@ public:
 	// Light
 	inline const std::vector<IEntity*>& lights() const { return mLights; }
 
-	RenderStatistics statistics() const;
+	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
 
 	inline OutputBuffer* output() const { return mOutputMap.get(); }

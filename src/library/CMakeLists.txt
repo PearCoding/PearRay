@@ -91,11 +91,14 @@ SET(PR_Src
   renderer/RenderFactory.cpp
   renderer/RenderFactory.h
   renderer/RenderSettings.h
-  renderer/RenderStatistics.h
+  renderer/RenderTileStatistics.h
   renderer/RenderStatus.h
   renderer/RenderSettings.cpp
-  renderer/RenderStatistics.cpp
   renderer/RenderStatus.cpp
+  renderer/RenderThread.cpp
+  renderer/RenderThread.h
+  renderer/RenderThreadStatistics.cpp
+  renderer/RenderThreadStatistics.h
   renderer/RenderTile.cpp
   renderer/RenderTile.h
   renderer/RenderTileMap.cpp
@@ -103,8 +106,7 @@ SET(PR_Src
   renderer/RenderTileSession.cpp
   renderer/RenderTileSession.h
   renderer/RenderTileSession.inl
-  renderer/RenderThread.cpp
-  renderer/RenderThread.h
+  renderer/RenderTileStatistics.cpp
   sampler/HaltonQMCSampler.cpp
   sampler/MultiJitteredSampler.cpp
   sampler/RandomSampler.cpp
