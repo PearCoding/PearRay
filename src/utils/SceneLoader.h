@@ -1,7 +1,7 @@
 #pragma once
 
-#include "shader/ShadingSocket.h"
 #include "registry/Registry.h"
+#include "shader/ShadingSocket.h"
 
 #include <map>
 #include <string>
@@ -51,7 +51,10 @@ private:
 	static void addSubGraph(const DL::DataGroup& group, Environment* env);
 	static void addMesh(const DL::DataGroup& group, Environment* env);
 
+	static void addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
+								 const std::string& key, const DL::Data& group,
+								 Environment* env);
 	static void populateObjectRegistry(RegistryGroup regGroup, uint32 id,
-		const DL::DataGroup& group, Environment* env);
+									   const DL::DataGroup& group, Environment* env);
 };
 } // namespace PR

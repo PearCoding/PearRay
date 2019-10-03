@@ -281,7 +281,13 @@ public:
 	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const Environment& env)
 	{
 		std::string name = env.registry().getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
-		return std::make_shared<StandardCamera>(id, name);
+
+		auto cam = std::make_shared<StandardCamera>(id, name);
+		cam->setLocalDirection(env.registry().getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "localDirection", Eigen::Vector3f(0, 0, 1)));
+		cam->setLocalUp(env.registry().getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "localUp", Eigen::Vector3f(0, 1, 0)));
+		cam->setLocalRight(env.registry().getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "localRight", Eigen::Vector3f(1, 0, 0)));
+
+		return cam;
 	}
 
 	const std::vector<std::string>& getNames() const

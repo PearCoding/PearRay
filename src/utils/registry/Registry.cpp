@@ -1,9 +1,10 @@
 #include "Registry.h"
 
-#include <vector>
 #include <boost/core/demangle.hpp>
+#include <vector>
 
 namespace PR {
+static URI sNonePath("");
 static URI sGlobalsPath("/globals");
 static URI sMaterialsPath("/materials");
 static URI sEmissionsPath("/emissions");
@@ -17,6 +18,8 @@ URI Registry::getGroupPrefix(RegistryGroup grp)
 {
 	switch (grp) {
 	default:
+	case RG_NONE:
+		return sNonePath;
 	case RG_GLOBAL:
 		return sGlobalsPath;
 	case RG_MATERIAL:
@@ -72,7 +75,7 @@ void Registry::setByGroup(RegistryGroup grp, const URI& relUri, const Any& p)
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
 
-	if (relUri.isAbsolute())
+	if (grp != RG_NONE && relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
 	set(URI::makeAbsolute(relUri, getGroupPrefix(grp)), p);
@@ -83,7 +86,7 @@ bool Registry::existsByGroup(RegistryGroup grp, const URI& relUri) const
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
 
-	if (relUri.isAbsolute())
+	if (grp != RG_NONE && relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
 	return exists(URI::makeAbsolute(relUri, getGroupPrefix(grp)));
@@ -94,7 +97,7 @@ void Registry::setForObject(RegistryGroup grp, uint32 id, const URI& relUri, con
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
 
-	if (relUri.isAbsolute())
+	if (grp != RG_NONE && relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
 	URI base = getGroupPrefix(grp);
@@ -112,7 +115,7 @@ bool Registry::existsForObject(RegistryGroup grp, uint32 id, const URI& relUri, 
 	if (!relUri.isValid())
 		throw std::runtime_error("Invalid URI given");
 
-	if (relUri.isAbsolute())
+	if (grp != RG_NONE && relUri.isAbsolute())
 		throw std::runtime_error("Relative URI expected");
 
 	URI base = getGroupPrefix(grp);
@@ -133,23 +136,17 @@ std::string Registry::dump() const
 	// Before output, sort to make it more appealing
 	std::vector<std::pair<URI, Any>> elems(mData.begin(), mData.end());
 	std::sort(elems.begin(), elems.end(),
-		[](const std::pair<URI, Any>&p1, const std::pair<URI, Any>&p2) {
-			return p1.first.str() < p2.first.str();
-		});
+			  [](const std::pair<URI, Any>& p1, const std::pair<URI, Any>& p2) {
+				  return p1.first.str() < p2.first.str();
+			  });
 
 	std::stringstream stream;
 	for (const std::pair<URI, Any>& p : elems) {
-		stream << p.first.str() << " [" << boost::core::demangle(p.second.type().name()) << "]";
-		try {
-			std::string c = p.second.cast<std::string>();
-			stream << " = " << c;
-		} catch (const BadCast&) {
-			// Ignore
-		}
-
-		stream << std::endl;
+		std::string c = p.second.cast<std::string>();
+		stream << p.first.str() << " [" << boost::core::demangle(p.second.typeName()) << "]"
+			   << " = " << c << std::endl;
 	}
 
 	return stream.str();
 }
-}
+} // namespace PR

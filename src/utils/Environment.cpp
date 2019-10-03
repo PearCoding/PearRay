@@ -25,6 +25,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
+#include <boost/range/iterator_range.hpp>
 
 namespace PR {
 Environment::Environment(const std::string& workdir,

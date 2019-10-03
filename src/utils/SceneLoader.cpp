@@ -171,26 +171,9 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	}
 
 	std::string key = group.at(0).getString();
+	DL::Data value  = group.at(1);
 
-	DL::Data value = group.at(1);
-	switch (value.type()) {
-	case DL::Data::T_Integer:
-		env->registry().set(key, value.getInt());
-		break;
-	case DL::Data::T_Float:
-		env->registry().set(key, value.getFloat());
-		break;
-	case DL::Data::T_Bool:
-		env->registry().set(key, value.getBool());
-		break;
-	case DL::Data::T_String:
-		env->registry().set(key, value.getString());
-		break;
-	case DL::Data::T_Group: // TODO
-	default:
-		PR_LOG(L_ERROR) << "Invalid registry entry value." << std::endl;
-		break;
-	}
+	addRegistryEntry(RG_NONE, 0, false, key, value, env);
 }
 
 void SceneLoader::addEntity(const DL::DataGroup& group,
@@ -783,7 +766,7 @@ Eigen::Matrix4f SceneLoader::getMatrix(const DL::DataGroup& grp, bool& ok)
 			Eigen::Matrix4f m;
 			for (int i = 0; i < 4; ++i) {
 				for (int j = 0; j < 4; ++j) {
-					m(j, i) = grp.at(i * 4 + j).getNumber();
+					m(i, j) = grp.at(i * 4 + j).getNumber();
 				}
 			}
 
@@ -946,6 +929,51 @@ std::shared_ptr<FloatVectorShadingSocket> SceneLoader::getVectorOutput(Environme
 	return nullptr;
 }
 
+template <typename T>
+static void varAddReg(Registry& reg, RegistryGroup regGroup, uint32 uuid, bool hasID,
+					  const std::string& key, const T& value)
+{
+	if (hasID)
+		reg.setForObject(regGroup, uuid, key, value);
+	else
+		reg.setByGroup(regGroup, key, value);
+}
+
+void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
+								   const std::string& key, const DL::Data& value,
+								   Environment* env)
+{
+	Registry& reg = env->registry();
+
+	switch (value.type()) {
+	case DL::Data::T_Integer:
+		varAddReg(reg, regGroup, uuid, hasID, key, value.getInt());
+		break;
+	case DL::Data::T_Float:
+		varAddReg(reg, regGroup, uuid, hasID, key, value.getFloat());
+		break;
+	case DL::Data::T_Bool:
+		varAddReg(reg, regGroup, uuid, hasID, key, value.getBool());
+		break;
+	case DL::Data::T_String:
+		varAddReg(reg, regGroup, uuid, hasID, key, value.getString());
+		break;
+	case DL::Data::T_Group: {
+		DL::DataGroup grp = value.getGroup();
+		if (grp.isArray() && grp.isAllNumber()) {
+			std::vector<float> arr(grp.anonymousCount());
+			for (size_t i = 0; i < grp.anonymousCount(); ++i)
+				arr[i] = grp.at(i).getNumber();
+
+			varAddReg(reg, regGroup, uuid, hasID, key, arr);
+		}
+	} break;
+	default:
+		PR_LOG(L_ERROR) << "Invalid registry entry value." << std::endl;
+		break;
+	}
+}
+
 void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 										 const DL::DataGroup& group, Environment* env)
 {
@@ -957,25 +985,8 @@ void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 			|| entry.key() == "scale")
 			continue; // Skip those entries
 
-		switch (entry.type()) {
-		case DL::Data::T_Integer:
-			reg.setForObject(regGroup, id, entry.key(), entry.getInt());
-			break;
-		case DL::Data::T_Float:
-			reg.setForObject(regGroup, id, entry.key(), entry.getFloat());
-			break;
-		case DL::Data::T_String:
-			reg.setForObject(regGroup, id, entry.key(), entry.getString());
-			break;
-		case DL::Data::T_Bool:
-			reg.setForObject(regGroup, id, entry.key(), entry.getBool());
-			break;
-		case DL::Data::T_Group:
-			/* TODO */
-			break;
-		case DL::Data::T_None: /* IGNORE */
-			break;
-		}
+		if (entry.type() != DL::Data::T_None)
+			addRegistryEntry(regGroup, id, true, entry.key(), entry, env);
 	}
 }
 } // namespace PR
