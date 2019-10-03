@@ -22,11 +22,11 @@ float ImageShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	float res;
 	OIIO::TextureOpt ops = mTextureOptions;
-	ops.firstchannel	 = ctx.WavelengthIndex;
+	ops.firstchannel	 = ctx.Ray.WavelengthIndex;
 	ops.subimage		 = ctx.PrimID;
 
 	if (!mTextureSystem->texture(mFilename, ops,
-								 ctx.UVW[0], ctx.UVW[1],
+								 ctx.Geometry.UVW[0], ctx.Geometry.UVW[1],
 								 0, 0, 0, 0,
 								 1, &res)) {
 		std::string err = mTextureSystem->geterror();

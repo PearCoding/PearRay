@@ -263,7 +263,7 @@ float TriMesh::collisionCost() const
 }
 
 void TriMesh::sampleFacePoint(float rnd1, float rnd2, float rnd3,
-							  ShadingPoint& p, float& pdfA) const
+							  GeometryPoint& p, float& pdfA) const
 {
 	uint32 fi		  = (rnd1 * (faceCount() - 1));
 	Eigen::Vector2f b = Projection::triangle(rnd2, rnd3);
@@ -284,7 +284,6 @@ void TriMesh::sampleFacePoint(float rnd1, float rnd2, float rnd3,
 	p.UVW[1]	 = uvw(1);
 	p.MaterialID = f.MaterialSlot;
 
-	// TODO:
-	//pdfA = 1.0f / (mIndices.size() * Triangle::surfaceArea(face.V[0], face.V[1], face.V[2]));
+	pdfA = 1.0f / (mIndices[0].size() * Triangle::surfaceArea(f.V[0](0), f.V[0](1), f.V[0](2), f.V[1](0), f.V[1](1), f.V[1](2), f.V[2](0), f.V[2](1), f.V[2](2)));
 }
 } // namespace PR

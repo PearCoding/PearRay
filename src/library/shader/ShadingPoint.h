@@ -1,10 +1,12 @@
 #pragma once
 
-#include "math/SIMD.h"
+#include "PR_Config.h"
+#include "ray/RayPackage.h"
+#include "geometry/GeometryPoint.h"
 
 namespace PR {
-enum ShaderClosureFlags {
-	SCF_Inside = 0x1
+enum ShaderPointFlags {
+	SPF_Inside = 0x1
 };
 
 /*
@@ -14,31 +16,17 @@ Shading context (SOA)
 */
 struct PR_LIB_INLINE ShadingPoint {
 public:
-	// Point of sample
-	float P[3];
-	float Pd[3];   // Position after displacement
-	float dPdT[3]; // Velocity of P
+	GeometryPoint Geometry;
+	PR::Ray Ray;
 
-	float Ng[3]; // Geometric normal.
 	float Ns[3]; // Shading normal - Front facing
-	float Nd[3]; // Normal after displacement
 
 	// Normal Tangent Frame
 	float Nx[3];
 	float Ny[3];
 
-	// 2D surface parameters
-	float UVW[3];
-	float dU; // Pixel footprint (U)
-	float dV; // Pixel footprint (V)
-	float dW; // Pixel footprint (W)
-
 	// Spectral
-	uint32 WavelengthIndex;
 	float Radiance;
-
-	// Viewing direction (incident)
-	float V[3];
 
 	// Some other utility variables
 	float Depth2; // Squared!
@@ -48,6 +36,5 @@ public:
 
 	uint32 EntityID;
 	uint32 PrimID;
-	uint32 MaterialID;
 };
 } // namespace PR

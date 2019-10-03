@@ -1,6 +1,7 @@
 #include "Sphere.h"
 #include "CollisionData.h"
 
+#include "math/Projection.h"
 #include "math/SIMD.h"
 
 #include <utility>
@@ -115,5 +116,15 @@ void Sphere::combine(const Sphere& other)
 	float f = (mPosition - other.mPosition).squaredNorm() + other.mRadius;
 	if (f > mRadius * mRadius)
 		mRadius = std::sqrt(f);
+}
+
+Eigen::Vector3f Sphere::normalPoint(float u, float v) const
+{
+	return Projection::sphere_coord(u * 2 * M_PI, v * M_PI);
+}
+
+Eigen::Vector3f Sphere::surfacePoint(float u, float v) const
+{
+	return normalPoint(u, v) * mRadius;
 }
 } // namespace PR

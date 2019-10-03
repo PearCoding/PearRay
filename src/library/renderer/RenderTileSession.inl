@@ -39,12 +39,12 @@ inline size_t RenderTileSession::maxBufferCount() const
 }
 
 template <typename Func>
-inline void RenderTileSession::handleHits(Func hitFunc)
+inline void RenderTileSession::handleHits(Func hitFunc, bool coherent)
 {
 	while (mHitStream->hasNextGroup()) {
-		ShadingGroup grp = mHitStream->getNextGroup();
-		IEntity* entity;
-		IMaterial* material;
+		ShadingGroup grp	= mHitStream->getNextGroup();
+		IEntity* entity		= nullptr;
+		IMaterial* material = nullptr;
 		startShadingGroup(grp, entity, material);
 
 		for (uint32 i = grp.Start; i < grp.End; ++i) {
@@ -56,7 +56,15 @@ inline void RenderTileSession::handleHits(Func hitFunc)
 			entry.PrimitiveID = mHitStream->primitiveID(i);
 			entry.UV[0]		  = mHitStream->uv(0, i);
 			entry.UV[1]		  = mHitStream->uv(1, i);
-			hitFunc(entry, entity, material);
+
+			Ray ray = (coherent)
+						  ? mCoherentRayStream->getRay(entry.RayID)
+						  : mIncoherentRayStream->getRay(entry.RayID);
+
+			GeometryPoint pt;
+			entity->provideGeometryPoint(entry.PrimitiveID, entry.UV[0], entry.UV[1], pt);
+
+			hitFunc(entry, ray, pt, entity, material);
 		}
 		endShadingGroup(grp);
 	}

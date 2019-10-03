@@ -11,7 +11,11 @@ struct PR_LIB_INLINE RayGroup {
 	size_t Size;
 
 	float* Origin[3];
+#ifdef PR_COMPRESS_RAY_DIR
 	snorm16* Direction[2];
+#else
+	float* Direction[3];
+#endif
 	uint32* PixelIndex;
 	uint16* Depth;
 	unorm16* Time;
@@ -49,8 +53,12 @@ private: // Some vectors are not aligned, due to required preprocessing
 	/* SoA style */
 	simd_vector<float> mOrigin[3];
 
+#ifdef PR_COMPRESS_RAY_DIR
 	// OCD Compressed normals
 	std::vector<snorm16> mDirection[2];
+#else
+	simd_vector<float> mDirection[3];
+#endif
 
 	simd_vector<uint32> mPixelIndex;
 

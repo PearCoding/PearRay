@@ -1,8 +1,8 @@
 #pragma once
 
 #include "RenderSettings.h"
-#include "RenderTileStatistics.h"
 #include "RenderStatus.h"
+#include "RenderTileStatistics.h"
 
 #include <condition_variable>
 #include <list>
@@ -13,6 +13,7 @@ namespace PR {
 class HitStream;
 class IEntity;
 class IIntegrator;
+class IMaterial;
 class OutputBuffer;
 class RayStream;
 class RenderTileSession;
@@ -73,6 +74,9 @@ public:
 
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
+
+	IEntity* getEntity(uint32 id) const;
+	IMaterial* getMaterial(uint32 id) const;
 
 	inline OutputBuffer* output() const { return mOutputMap.get(); }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }

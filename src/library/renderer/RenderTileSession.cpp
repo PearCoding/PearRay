@@ -78,8 +78,8 @@ bool RenderTileSession::handleCameraRays()
 void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 										  IEntity*& entity, IMaterial*& material)
 {
-	/*entity   = mTile->context().renderManager()->entityManager()->getObject(grp.EntityID).get();
-	material = mTile->context().renderManager()->materialManager()->getObject(grp.MaterialID).get();*/
+	entity   = mTile->context().getEntity(grp.EntityID);
+	material = mTile->context().getMaterial(grp.MaterialID);
 }
 
 void RenderTileSession::endShadingGroup(const ShadingGroup& grp)

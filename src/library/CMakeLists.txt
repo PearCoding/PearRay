@@ -36,6 +36,7 @@ SET(PR_Src
   geometry/BoundingBox.cpp
   geometry/BoundingBox.h
   geometry/Face.h
+  geometry/GeometryPoint.h
   geometry/Plane.cpp
   geometry/Plane.h
   geometry/Sphere.cpp

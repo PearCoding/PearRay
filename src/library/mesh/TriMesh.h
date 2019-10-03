@@ -80,7 +80,7 @@ public:
 	bool checkCollision(const RayPackage& in, CollisionOutput& out) const;
 
 	void sampleFacePoint(float rnd1, float rnd2, float rnd3,
-						 ShadingPoint& p, float& pdfA) const;
+						 GeometryPoint& p, float& pdfA) const;
 
 private:
 	void buildTree(const std::string& container_file);

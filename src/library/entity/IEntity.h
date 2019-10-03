@@ -8,6 +8,7 @@ class IMaterial;
 class RenderContext;
 struct FacePoint;
 class Sampler;
+class GeometryPoint;
 
 class PR_LIB IEntity : public VirtualEntity {
 public:
@@ -28,7 +29,7 @@ public:
 	virtual std::string dumpInformation() const override;
 
 	// Mandatory Interface
-	virtual bool isLight() const				  = 0;
+	virtual bool isLight() const					   = 0;
 	virtual float surfaceArea(uint32 materialID) const = 0;
 
 	/*virtual void getNormal(const vuint32& primID, const vfloat& u, const vfloat& v,
@@ -36,8 +37,11 @@ public:
 
 	virtual BoundingBox localBoundingBox() const = 0;
 
-	virtual void checkCollision(const Ray& in, SingleCollisionOutput& out) const = 0;
+	virtual void checkCollision(const Ray& in, SingleCollisionOutput& out) const  = 0;
 	virtual void checkCollision(const RayPackage& in, CollisionOutput& out) const = 0;
+
+	virtual void provideGeometryPoint(uint32 faceID, float u, float v,
+									  GeometryPoint& pt) const = 0;
 
 protected:
 	virtual void onFreeze(RenderContext* context) override;

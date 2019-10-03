@@ -2,7 +2,9 @@
 #include "Environment.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
+#include "geometry/GeometryPoint.h"
 #include "math/Projection.h"
+#include "math/Tangent.h"
 #include "registry/Registry.h"
 
 namespace PR {
@@ -108,6 +110,20 @@ public:
 		out.EntityID	= id();
 		out.FaceID		= 0;
 		out.MaterialID  = mMaterialID;
+	}
+
+	void provideGeometryPoint(uint32, float u, float v,
+							  GeometryPoint& pt) const override
+	{
+		Eigen::Vector3f p = transform() * mSphere_Cache.surfacePoint(u, v);
+		Eigen::Vector3f n = directionMatrix() * mSphere_Cache.normalPoint(u, v);
+		Eigen::Vector3f t, b;
+		Tangent::frame(n, t, b);
+
+		pt.setPosition(p);
+		pt.setTangentFrame(n, t, b);
+		pt.setUV(Eigen::Vector2f(u, v));
+		pt.MaterialID = mMaterialID;
 	}
 
 protected:

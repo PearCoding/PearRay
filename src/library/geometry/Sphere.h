@@ -30,6 +30,9 @@ public:
 
 	inline bool isValid() const { return mRadius > 0; }
 
+	Eigen::Vector3f normalPoint(float u, float v) const;
+	Eigen::Vector3f surfacePoint(float u, float v) const;
+
 	inline bool contains(const Eigen::Vector3f& point) const
 	{
 		return (mPosition - point).squaredNorm() <= mRadius * mRadius;

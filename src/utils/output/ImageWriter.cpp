@@ -6,7 +6,7 @@
 
 #include <OpenImageIO/imageio.h>
 
-OIIO_NAMESPACE_USING;
+OIIO_NAMESPACE_USING
 
 namespace PR {
 ImageWriter::ImageWriter()

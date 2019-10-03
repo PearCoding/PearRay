@@ -42,19 +42,18 @@ public:
 	void onPass(RenderTileSession& session, uint32 pass) override
 	{
 		while (session.handleCameraRays()) {
-			session.handleHits([&](const HitEntry& entry, IEntity* entity, IMaterial* material) {
+			session.handleHits([&](const HitEntry& entry,
+								   const Ray& ray, const GeometryPoint& pt,
+								   IEntity* entity, IMaterial* material) {
 				session.tile()->statistics().addEntityHitCount();
 
-				Ray ray = session.getCoherentRay(entry.RayID);
+				ShadingPoint spt;
+				spt.Ray		 = ray;
+				spt.Geometry = pt;
 
-				ShadingPoint pt;
-				pt.WavelengthIndex = ray.WavelengthIndex;
-				pt.Radiance		   = ray.Direction[ray.WavelengthIndex];
-				pt.UVW[0]		   = entry.UV[0];
-				pt.UVW[1]		   = entry.UV[1];
-				pt.UVW[2]		   = 0;
+				spt.Radiance = pt.Ng[ray.WavelengthIndex];
 
-				session.pushFragment(ray.PixelIndex, pt);
+				session.pushFragment(ray.PixelIndex, spt);
 			});
 		}
 	}

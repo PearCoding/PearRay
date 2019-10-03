@@ -240,4 +240,14 @@ void RenderContext::onNextPass()
 	if (clear)
 		mOutputMap->clear();
 }
+
+IEntity* RenderContext::getEntity(uint32 id) const
+{
+	return mScene->entities()[id].get();
+}
+
+IMaterial* RenderContext::getMaterial(uint32 id) const {
+	// TODO
+	return nullptr;
+}
 } // namespace PR

@@ -22,7 +22,7 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 
 float ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
-	return mValue[ctx.WavelengthIndex];
+	return mValue[ctx.Ray.WavelengthIndex];
 }
 
 /////////////////////////////////////

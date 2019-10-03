@@ -193,8 +193,10 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 
 	ray.WavelengthIndex = sample.WavelengthIndex;
 	ray.Weight			= 0;
+	ray.Time			= sample.Time;
+	ray.Flags			= 0;
 
-	ray.normalize();
+	//ray.normalize();
 	ray.setupInverse();
 
 	return ray;

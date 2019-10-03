@@ -57,16 +57,17 @@ void OutputBuffer::clear()
 
 void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 {
-	float oldSample = getSampleCount(pixelIndex, s.WavelengthIndex);
+	uint32 channel = s.Ray.WavelengthIndex;
+	float oldSample = getSampleCount(pixelIndex, channel);
 	float t			= 1.0f / (oldSample + 1.0f);
 
 	// Spectral
-	mSpectral->blendFragment(pixelIndex, s.WavelengthIndex, s.Radiance, t);
+	mSpectral->blendFragment(pixelIndex, channel, s.Radiance, t);
 
 	// TODO:
 
 	// Increase sample count
-	incSampleCount(pixelIndex, s.WavelengthIndex);
+	incSampleCount(pixelIndex, channel);
 }
 
 } // namespace PR

@@ -18,7 +18,7 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
 
-		/*for (size_t i = 0; i < grp.Size; ++i) {
+		for (size_t i = 0; i < grp.Size; ++i) {
 			Ray ray  = grp.getRay(i);
 			mKDTree->checkCollision(ray, outS,
 											   [this](const Ray& in2, uint64 index, SingleCollisionOutput& out2) {
@@ -42,7 +42,7 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 				nonHit(ray);
 			}
 		}
-		continue;*/
+		continue;
 
 		// In some cases the group size will be not a multiply of the simd bandwith.
 		// The internal stream is always a multiply therefore garbage may be traced

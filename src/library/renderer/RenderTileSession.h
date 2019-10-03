@@ -1,17 +1,17 @@
 #pragma once
 
 #include "Random.h"
+#include "entity/IEntity.h"
 #include "ray/RayPackage.h"
 #include "ray/RayStream.h"
-#include "renderer/RenderTileStatistics.h"
 #include "renderer/RenderTile.h"
+#include "renderer/RenderTileStatistics.h"
 #include "trace/HitStream.h"
 #include "trace/ShadowHit.h"
 
 namespace PR {
 
 class RenderTile;
-class IEntity;
 class IMaterial;
 class ShadingPoint;
 
@@ -53,7 +53,7 @@ public:
 	inline size_t maxBufferCount() const;
 
 	template <typename Func>
-	inline void handleHits(Func hitFunc);
+	inline void handleHits(Func hitFunc, bool coherent = true);
 
 	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt) const;
 

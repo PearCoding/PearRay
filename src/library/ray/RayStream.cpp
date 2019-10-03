@@ -4,6 +4,12 @@
 
 namespace PR {
 
+#ifdef PR_COMPRESS_RAY_DIR
+constexpr int DIR_C_S = 2;
+#else
+constexpr int DIR_C_S = 3;
+#endif
+
 Ray RayGroup::getRay(size_t id) const
 {
 	PR_ASSERT(id < Size, "Invalid access!");
@@ -12,9 +18,14 @@ Ray RayGroup::getRay(size_t id) const
 	for (int i = 0; i < 3; ++i)
 		ray.Origin[i] = Origin[i][id];
 
+#ifdef PR_COMPRESS_RAY_DIR
 	float d0 = from_snorm16(Direction[0][id]);
 	float d1 = from_snorm16(Direction[1][id]);
 	from_oct(d0, d1, ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+#else
+	for (int i = 0; i < 3; ++i)
+		ray.Direction[i] = Direction[i][id];
+#endif
 
 	ray.Depth			= Depth[id];
 	ray.PixelIndex		= PixelIndex[id];
@@ -33,12 +44,12 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 	PR_ASSERT(id < Size, "Invalid access!");
 
 	RayPackage ray;
-	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
 
 	for (int j = 0; j < 3; ++j)
 		ray.Origin[j] = simdpp::load(&Origin[j][id]);
 
-	// Decompress
+#ifdef PR_COMPRESS_RAY_DIR
+	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
 	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
 		from_oct(
 			from_snorm16(Direction[0][id + k]),
@@ -48,14 +59,19 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 
 	for (int j = 0; j < 3; ++j)
 		ray.Direction[j] = simdpp::load(&dir[j][0]);
+#else
+	for (int j = 0; j < 3; ++j)
+		ray.Direction[j] = simdpp::load(&Direction[j][id]);
+#endif
 
 	load_from_container_linear(ray.Depth, Depth, id);
 	load_from_container_linear(ray.PixelIndex, PixelIndex, id);
 
+	PR_SIMD_ALIGN float t[PR_SIMD_BANDWIDTH];
 	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
-		dir[0][k] = from_unorm16(Time[id + k]);
+		t[k] = from_unorm16(Time[id + k]);
 	}
-	ray.Time = simdpp::load(&dir[0][0]);
+	ray.Time = simdpp::load(&t[0]);
 
 	load_from_container_linear(ray.WavelengthIndex, WavelengthIndex, id);
 	load_from_container_linear(ray.Flags, Flags, id);
@@ -73,7 +89,7 @@ RayStream::RayStream(size_t raycount)
 {
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i].reserve(mSize);
-	for (int i = 0; i < 2; ++i)
+	for (int i = 0; i < DIR_C_S; ++i)
 		mDirection[i].reserve(mSize);
 
 	mPixelIndex.reserve(mSize);
@@ -95,9 +111,14 @@ void RayStream::add(const Ray& ray)
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i].emplace_back(ray.Origin[i]);
 
+#ifdef PR_COMPRESS_RAY_DIR
 	octNormal16 n(ray.Direction[0], ray.Direction[1], ray.Direction[2]);
 	for (int i = 0; i < 2; ++i)
 		mDirection[i].emplace_back(n(i));
+#else
+	for (int i = 0; i < 3; ++i)
+		mDirection[i].emplace_back(ray.Direction[i]);
+#endif
 
 	mDepth.emplace_back(ray.Depth);
 	mPixelIndex.emplace_back(ray.PixelIndex);
@@ -117,7 +138,7 @@ void RayStream::reset()
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i].clear();
 
-	for (int i = 0; i < 2; ++i)
+	for (int i = 0; i < DIR_C_S; ++i)
 		mDirection[i].clear();
 
 	mDepth.clear();
@@ -142,11 +163,10 @@ RayGroup RayStream::getNextGroup()
 	grp.Coherent = false; //TODO
 	grp.Size	 = mWeight.size();
 
-	grp.Origin[0]		= &mOrigin[0].data()[mCurrentPos];
-	grp.Origin[1]		= &mOrigin[1].data()[mCurrentPos];
-	grp.Origin[2]		= &mOrigin[2].data()[mCurrentPos];
-	grp.Direction[0]	= &mDirection[0].data()[mCurrentPos];
-	grp.Direction[1]	= &mDirection[1].data()[mCurrentPos];
+	for (int i = 0; i < 3; ++i)
+		grp.Origin[i] = &mOrigin[i].data()[mCurrentPos];
+	for (int i = 0; i < DIR_C_S; ++i)
+		grp.Direction[i] = &mDirection[i].data()[mCurrentPos];
 	grp.PixelIndex		= &mPixelIndex.data()[mCurrentPos];
 	grp.Depth			= &mDepth.data()[mCurrentPos];
 	grp.Time			= &mTime.data()[mCurrentPos];
@@ -174,9 +194,14 @@ Ray RayStream::getRay(size_t id) const
 	for (int i = 0; i < 3; ++i)
 		ray.Origin[i] = mOrigin[i][id];
 
+#ifdef PR_COMPRESS_RAY_DIR
 	float d0 = from_snorm16(mDirection[0][id]);
 	float d1 = from_snorm16(mDirection[1][id]);
 	from_oct(d0, d1, ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+#else
+	for (int i = 0; i < 3; ++i)
+		ray.Direction[i] = mDirection[i][id];
+#endif
 
 	ray.Depth			= mDepth[id];
 	ray.PixelIndex		= mPixelIndex[id];
