@@ -18,6 +18,8 @@ public:
 	void clear();
 	void rebuild();
 
+	void addAxis();
+
 protected:
 	void initializeGL() override;
 	void paintGL() override;

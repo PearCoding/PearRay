@@ -2,7 +2,9 @@
 
 #include "ui_MainWindow.h"
 #include <QMainWindow>
+#include <QPointer>
 
+class SceneWindow;
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
@@ -27,6 +29,10 @@ private:
 	void readSettings();
 	void writeSettings();
 
+	void setupSceneWindow();
+
 	Ui::MainWindowClass ui;
 	QString mLastDir;
+
+	QPointer<SceneWindow> mCurrentSceneWindow;
 };

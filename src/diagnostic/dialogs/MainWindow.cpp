@@ -1,7 +1,6 @@
 #include "MainWindow.h"
-#include "CNTWindow.h"
 #include "EXRWindow.h"
-#include "RDMPWindow.h"
+#include "SceneWindow.h"
 
 #include <fstream>
 
@@ -18,6 +17,7 @@
 
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
+	, mCurrentSceneWindow(nullptr)
 {
 	ui.setupUi(this);
 
@@ -107,18 +107,11 @@ void MainWindow::openFile(const QString& file)
 	QFileInfo info(file);
 
 	if (info.suffix() == "cnt") {
-		CNTWindow* cnt = new CNTWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(cnt);
-
-		cnt->show();
-		cnt->openFile(file);
+		setupSceneWindow();
+		mCurrentSceneWindow->openCNTFile(file);
 	} else if (info.suffix() == "rdmp") {
-		RDMPWindow* w = new RDMPWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(w);
-
-		w->show();
-		w->openFile(file);
-
+		setupSceneWindow();
+		mCurrentSceneWindow->openRDMPFile(file);
 	} else if (info.suffix() == "exr") {
 		EXRWindow* w = new EXRWindow(ui.mdiArea);
 		ui.mdiArea->addSubWindow(w);
@@ -130,12 +123,10 @@ void MainWindow::openFile(const QString& file)
 
 void MainWindow::openRDMPDir(const QString& dir)
 {
-	RDMPWindow* w = new RDMPWindow(ui.mdiArea);
-	ui.mdiArea->addSubWindow(w);
-
-	w->show();
-	w->openDir(dir);
+	setupSceneWindow();
+	mCurrentSceneWindow->openRDMPDir(dir);
 }
+
 void MainWindow::about()
 {
 	QMessageBox::about(this, tr("About PearRayDiagnostic"),
@@ -156,4 +147,13 @@ void MainWindow::about()
 void MainWindow::openWebsite()
 {
 	QDesktopServices::openUrl(QUrl("http://pearcoding.eu/projects/pearray"));
+}
+
+void MainWindow::setupSceneWindow()
+{
+	if (!mCurrentSceneWindow) {
+		mCurrentSceneWindow = new SceneWindow(ui.mdiArea);
+		ui.mdiArea->addSubWindow(mCurrentSceneWindow);
+		mCurrentSceneWindow->show();
+	}
 }

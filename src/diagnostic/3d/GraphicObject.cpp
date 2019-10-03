@@ -27,6 +27,9 @@ void GraphicObject::clear()
 
 void GraphicObject::rebuild()
 {
+	if(!mProgram)
+		initializeGL();
+
 	// VAO
 	mVAO = std::make_unique<QOpenGLVertexArrayObject>();
 	if (!mVAO->create()) {
@@ -130,11 +133,7 @@ void GraphicObject::paintGL(const QMatrix4x4& worldView)
 	if (!mVAO)
 		return;
 
-	if (!mProgram)
-		initializeGL();
-
 	QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
-	f->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (mVertices.empty())
 		return;

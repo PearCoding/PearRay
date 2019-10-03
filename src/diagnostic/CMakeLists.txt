@@ -16,13 +16,22 @@ SET(Src
   3d/GraphicObject.cpp
   3d/OrbitCamera.cpp
   cnt/Container.cpp
-  dialogs/CNTWindow.cpp
   dialogs/EXRWindow.cpp
   dialogs/MainWindow.cpp
-  dialogs/RDMPWindow.cpp
+  dialogs/SceneWindow.cpp
   exr/EXRFile.cpp
+  properties/ColorProperty.cpp
+  properties/DoubleProperty.cpp
+  properties/GroupProperty.cpp
+  properties/IntProperty.cpp
+  properties/IProperty.cpp
+  properties/PropertyTable.cpp
+  properties/SelectionProperty.cpp
+  properties/TextProperty.cpp
   rdmp/RayArray.cpp
+  widgets/ColorButton.cpp
   widgets/ImageView.cpp
+  widgets/PropertyView.cpp
   widgets/View3DWidget.cpp)
 
 SET(Hdr
@@ -30,20 +39,28 @@ SET(Hdr
   3d/GraphicObject.h
   3d/OrbitCamera.h
   cnt/Container.h
-  dialogs/CNTWindow.h
   dialogs/EXRWindow.h
   dialogs/MainWindow.h
-  dialogs/RDMPWindow.h
+  dialogs/SceneWindow.h
   exr/EXRFile.h
+  properties/ColorProperty.h
+  properties/DoubleProperty.h
+  properties/GroupProperty.h
+  properties/IntProperty.h
+  properties/IProperty.h
+  properties/PropertyTable.h
+  properties/SelectionProperty.h
+  properties/TextProperty.h
   rdmp/RayArray.h
+  widgets/ColorButton.h
   widgets/ImageView.h
+  widgets/PropertyView.h
   widgets/View3DWidget.h)
 
 SET(Fms
-  ui/CNTWindow.ui
   ui/EXRWindow.ui
   ui/MainWindow.ui
-  ui/RDMPWindow.ui)
+  ui/SceneWindow.ui)
 
 SET(Res
   resources/icons.qrc)
