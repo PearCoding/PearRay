@@ -33,6 +33,8 @@ public:
 	Eigen::Vector3f normalPoint(float u, float v) const;
 	Eigen::Vector3f surfacePoint(float u, float v) const;
 
+	Eigen::Vector2f project(const Eigen::Vector3f& p) const;
+
 	inline bool contains(const Eigen::Vector3f& point) const
 	{
 		return (mPosition - point).squaredNorm() <= mRadius * mRadius;
@@ -62,4 +64,4 @@ private:
 	Eigen::Vector3f mPosition;
 	float mRadius;
 };
-}
+} // namespace PR

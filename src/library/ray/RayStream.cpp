@@ -174,7 +174,7 @@ RayGroup RayStream::getNextGroup()
 	grp.Flags			= &mFlags.data()[mCurrentPos];
 	grp.Weight			= &mWeight.data()[mCurrentPos];
 
-	mCurrentPos = mWeight.size(); //TODO
+	mCurrentPos += grp.Size;
 
 	return grp;
 }

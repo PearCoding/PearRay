@@ -10,6 +10,8 @@ struct PR_LIB_INLINE ShadingGroup {
 	uint32 MaterialID;
 	size_t Start;
 	size_t End;
+
+	inline size_t size() const { return End - Start + 1; }
 };
 
 } // namespace PR

@@ -58,25 +58,32 @@ void OutputBuffer::clear()
 #define _3D_S(ch, v)                \
 	if (mInt3D[ch])                 \
 		for (int i = 0; i < 3; ++i) \
-	mInt3D[ch]->blendFragment(pixelIndex, channel * 3 + i, v[i], t)
+	mInt3D[ch]->blendFragment(pixelIndex, i, v[i], ft)
 
 #define _1D_S(ch, v) \
 	if (mInt1D[ch])  \
-	mInt1D[ch]->blendFragment(pixelIndex, channel, v, t)
+	mInt1D[ch]->blendFragment(pixelIndex, 0, v, ft)
 
 #define _C_S(ch, v)      \
 	if (mIntCounter[ch]) \
-	mIntCounter[ch]->blendFragment(pixelIndex, i, v, t)
+	mIntCounter[ch]->blendFragment(pixelIndex, 0, v, ft)
+
 void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 {
-	uint32 channel  = s.Ray.WavelengthIndex;
-	float oldSample = getSampleCount(pixelIndex, channel);
-	float t			= 1.0f / (oldSample + 1.0f);
+	const uint32 channel   = s.Ray.WavelengthIndex;
+	const uint32 oldSample = getSampleCount(pixelIndex, channel);
+	const float t		   = 1.0f / (oldSample + 1.0f);
+
+	// Use accumulative sample count for special AOVs
+	uint32 oldFullSample = 0;
+	for (uint32 i = 0; i < mIntCounter[V_Samples]->channels(); ++i)
+		oldFullSample += mIntCounter[V_Samples]->getFragment(pixelIndex, i);
+	const float ft = 1.0f / (oldFullSample + 1.0f);
 
 	// Spectral
 	mSpectral->blendFragment(pixelIndex, channel, s.Radiance, t);
 
-	/*_3D_S(V_Position, s.Geometry.P);
+	_3D_S(V_Position, s.Geometry.P);
 	_3D_S(V_Normal, s.Ns);
 	_3D_S(V_NormalG, s.Geometry.Ng);
 	_3D_S(V_Tangent, s.Nx);
@@ -87,7 +94,7 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 
 	_1D_S(V_Depth, s.Depth2);
 	_1D_S(V_Time, s.Ray.Time);
-	_1D_S(V_Material, s.Geometry.MaterialID);*/
+	_1D_S(V_Material, s.Geometry.MaterialID);
 
 	// Increase sample count
 	incSampleCount(pixelIndex, channel);

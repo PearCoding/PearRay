@@ -32,6 +32,12 @@
 			:gamma 'none'
 			:mapper 'none'
 		)
+		(channel
+			:type 'ng'
+		)
+		(channel
+			:type 'uv'
+		)
 	)
 	(output
 		:name 'depth'

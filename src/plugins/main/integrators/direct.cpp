@@ -51,7 +51,7 @@ public:
 				spt.Ray		 = ray;
 				spt.Geometry = pt;
 
-				spt.Radiance = pt.Ng[ray.WavelengthIndex];
+				spt.Radiance = 1;
 
 				session.pushFragment(ray.PixelIndex, spt);
 			});

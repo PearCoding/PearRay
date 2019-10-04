@@ -142,7 +142,7 @@ OutputBuffer::Variable3D typeToVariable3D(const std::string& str)
 		return OutputBuffer::V_3D_COUNT; // AS UNKNOWN
 }
 
-void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
+void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 {
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		DL::Data dataD = group.at(i);
@@ -236,44 +236,44 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 								switch (var3D) {
 								default:
 								case OutputBuffer::V_Position:
-									spec.Name[0] = "p_x";
-									spec.Name[1] = "p_y";
-									spec.Name[2] = "p_z";
+									spec.Name[0] = "p.x";
+									spec.Name[1] = "p.y";
+									spec.Name[2] = "p.z";
 									break;
 								case OutputBuffer::V_Normal:
-									spec.Name[0] = "n_x";
-									spec.Name[1] = "n_y";
-									spec.Name[2] = "n_z";
+									spec.Name[0] = "n.x";
+									spec.Name[1] = "n.y";
+									spec.Name[2] = "n.z";
 									break;
 								case OutputBuffer::V_NormalG:
-									spec.Name[0] = "ng_x";
-									spec.Name[1] = "ng_y";
-									spec.Name[2] = "ng_z";
+									spec.Name[0] = "ng.x";
+									spec.Name[1] = "ng.y";
+									spec.Name[2] = "ng.z";
 									break;
 								case OutputBuffer::V_Tangent:
-									spec.Name[0] = "nx_x";
-									spec.Name[1] = "nx_y";
-									spec.Name[2] = "nx_z";
+									spec.Name[0] = "nx.x";
+									spec.Name[1] = "nx.y";
+									spec.Name[2] = "nx.z";
 									break;
 								case OutputBuffer::V_Bitangent:
-									spec.Name[0] = "ny_x";
-									spec.Name[1] = "ny_y";
-									spec.Name[2] = "ny_z";
+									spec.Name[0] = "ny.x";
+									spec.Name[1] = "ny.y";
+									spec.Name[2] = "ny.z";
 									break;
 								case OutputBuffer::V_View:
-									spec.Name[0] = "v_x";
-									spec.Name[1] = "v_y";
-									spec.Name[2] = "v_z";
+									spec.Name[0] = "v.x";
+									spec.Name[1] = "v.y";
+									spec.Name[2] = "v.z";
 									break;
 								case OutputBuffer::V_UVW:
-									spec.Name[0] = "uv_u";
-									spec.Name[1] = "uv_v";
-									spec.Name[2] = "uv_w";
+									spec.Name[0] = "uv.u";
+									spec.Name[1] = "uv.v";
+									spec.Name[2] = "uv.w";
 									break;
 								case OutputBuffer::V_DPDT:
-									spec.Name[0] = "dpdt_x";
-									spec.Name[1] = "dpdt_y";
-									spec.Name[2] = "dpdt_z";
+									spec.Name[0] = "dpdt.x";
+									spec.Name[1] = "dpdt.y";
+									spec.Name[2] = "dpdt.z";
 									break;
 								}
 

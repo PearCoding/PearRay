@@ -156,7 +156,7 @@ bool EXRFile::open(const QString& filename)
 		if (channels.find("B") != channels.end())
 			list << "B";
 
-		layerMap["_color"] = list;
+		layerMap["Color"] = list;
 	}
 
 	for (auto i = channels.begin(); i != channels.end(); ++i) {

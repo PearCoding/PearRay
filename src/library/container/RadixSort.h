@@ -35,7 +35,6 @@ template <typename VT, typename S>
 inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32 last)
 {
 	uint32 s = last - first + 1;
-	VT mask  = 1 << (32 - clz(s));
-	return radixSort(visitor, swapper, first, last, mask);
+	return radixSort(visitor, swapper, first, last, vem(s));
 }
 } // namespace PR

@@ -75,6 +75,7 @@ public:
 	{
 		using namespace simdpp;
 		out.HitDistance = make_float(std::numeric_limits<float>::infinity());
+		vfloat zero		= make_zero();
 
 		struct PR_SIMD_ALIGN _stackdata {
 			kdNodeCollider* node;
@@ -154,7 +155,8 @@ public:
 				tmp.HitDistance = make_float(std::numeric_limits<float>::infinity());
 
 				checkCollisionCallback(in, entity, tmp);
-				const bfloat hits = tmp.HitDistance < out.HitDistance;
+				const bfloat hits = (tmp.HitDistance < out.HitDistance)
+									& (tmp.HitDistance > zero);
 
 				out.blendFrom(tmp, hits);
 			}

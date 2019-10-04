@@ -47,7 +47,7 @@ inline void RenderTileSession::handleHits(Func hitFunc, bool coherent)
 		IMaterial* material = nullptr;
 		startShadingGroup(grp, entity, material);
 
-		for (uint32 i = grp.Start; i < grp.End; ++i) {
+		for (uint32 i = grp.Start; i <= grp.End; ++i) {
 			HitEntry entry;
 			entry.Flags		  = mHitStream->flags(i);
 			entry.RayID		  = mHitStream->rayID(i);

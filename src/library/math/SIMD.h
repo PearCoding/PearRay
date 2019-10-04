@@ -117,6 +117,58 @@ inline void sincos(float v, float& s, float& c)
 	c = std::cos(v);
 }
 
+template <uint32 N>
+inline void atan2(const simdpp::float32<N>& y, const simdpp::float32<N>& x,
+				  simdpp::float32<N>& res)
+{
+	PR_SIMD_ALIGN
+	float y_v[N];
+	PR_SIMD_ALIGN
+	float x_v[N];
+
+	PR_SIMD_ALIGN
+	float res_v[N];
+
+	simdpp::store(y_v, y);
+	simdpp::store(x_v, x);
+	for (uint32 i = 0; i < N; ++i) {
+		res_v[i] = std::atan2(y_v[i], x_v[i]);
+	}
+	res = simdpp::load(res_v);
+}
+
+template <uint32 N>
+inline void asin(const simdpp::float32<N>& x,
+				 simdpp::float32<N>& res)
+{
+	PR_SIMD_ALIGN
+	float x_v[N];
+
+	PR_SIMD_ALIGN
+	float res_v[N];
+
+	simdpp::store(x_v, x);
+	for (uint32 i = 0; i < N; ++i)
+		res_v[i] = std::asin(x_v[i]);
+	res = simdpp::load(res_v);
+}
+
+template <uint32 N>
+inline void acos(const simdpp::float32<N>& x,
+				 simdpp::float32<N>& res)
+{
+	PR_SIMD_ALIGN
+	float x_v[N];
+
+	PR_SIMD_ALIGN
+	float res_v[N];
+
+	simdpp::store(x_v, x);
+	for (uint32 i = 0; i < N; ++i)
+		res_v[i] = std::acos(x_v[i]);
+	res = simdpp::load(res_v);
+}
+
 template <typename T1, typename T2, typename T3>
 inline void crossV(const T1& a1, const T1& a2, const T1& a3,
 				   const T2& b1, const T2& b2, const T2& b3,

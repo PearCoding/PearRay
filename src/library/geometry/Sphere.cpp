@@ -65,6 +65,11 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 
 	if (t0 >= PR_SPHERE_INTERSECT_EPSILON) {
 		out.HitDistance = t0;
+
+		// Setup UV
+		float px, py, pz;
+		in.t(t0, px, py, pz);
+		Eigen::Vector2f uv = project(Eigen::Vector3f(px, py, pz));
 	}
 }
 
@@ -94,6 +99,17 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	vfloat t1 = blend(t0t, t1t, d);
 
 	out.HitDistance = blend(t1, t0, t0 < PR_SPHERE_INTERSECT_EPSILON);
+
+	// Project
+	vfloat px, py, pz;
+	in.t(out.HitDistance, px, py, pz);
+	vfloat nx = mPosition(0) - px;
+	vfloat ny = py - mPosition(1);
+	vfloat nz = mPosition(2) - pz;
+	atan2(nz, nx, out.UV[0]);
+	asin(ny, out.UV[1]);
+	out.UV[0] = 0.5f + out.UV[0] * PR_1_PI * 0.5f;
+	out.UV[1] = 0.5f - out.UV[1] * PR_1_PI;
 
 	const vfloat inf = make_float(std::numeric_limits<float>::infinity());
 	out.HitDistance  = blend(out.HitDistance, inf, valid);
@@ -126,5 +142,10 @@ Eigen::Vector3f Sphere::normalPoint(float u, float v) const
 Eigen::Vector3f Sphere::surfacePoint(float u, float v) const
 {
 	return normalPoint(u, v) * mRadius;
+}
+
+Eigen::Vector2f Sphere::project(const Eigen::Vector3f& p) const
+{
+	return Projection::sphereUV(p - mPosition);
 }
 } // namespace PR

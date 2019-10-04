@@ -199,8 +199,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	for (uint32 y = 0; y < rh; ++y) {
 		for (uint32 x = 0; x < rw; ++x) {
 			uint32 id		  = x * channelCount;
-			const uint32 id1d = y * rw + x;
-			const uint32 id3d = id1d * 3;
 
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
@@ -230,9 +228,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
 
 				if (channel) {
-					Eigen::Vector3f a(channel->ptr()[id3d],
-									  channel->ptr()[id3d + 1],
-									  channel->ptr()[id3d + 2]);
+					Eigen::Vector3f a(channel->getFragment(x, y, 0),
+									  channel->getFragment(x, y, 1),
+									  channel->getFragment(x, y, 2));
 
 					float r = a(0);
 					float g = a(1);
@@ -290,7 +288,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
 
 				if (channel) {
-					float r = channel->ptr()[id1d];
+					float r = channel->getFragment(x, y, 0);
 					switch (sett.TMM) {
 					default:
 					case TMM_None:
@@ -328,7 +326,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
 
 				if (channel) {
-					float r = channel->ptr()[id1d];
+					float r = channel->getFragment(x, y, 0);
 					switch (sett.TMM) {
 					default:
 						break;

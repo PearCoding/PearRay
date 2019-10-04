@@ -49,9 +49,9 @@ void HitStream::sort()
 		std::swap(mFlags[a], mFlags[b]);
 	};
 
-	// TODO: Maybe get maximum mask?
+	uint32 mask = vem(currentSize());
 	radixSort(mEntityID.data(), op,
-			  0, currentSize() - 1);
+			  0, currentSize() - 1, mask);
 
 	size_t end = currentSize();
 	for (size_t i = 0; i < end;) {
@@ -65,7 +65,7 @@ void HitStream::sort()
 
 		if (s > 2) {
 			radixSort(mMaterialID.data(), op,
-					  start, i - 1, (uint32)(1 << 31));
+					  start, i - 1, mask);
 		}
 	}
 }

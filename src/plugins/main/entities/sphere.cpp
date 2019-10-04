@@ -117,6 +117,8 @@ public:
 	{
 		Eigen::Vector3f p = transform() * mSphere_Cache.surfacePoint(u, v);
 		Eigen::Vector3f n = directionMatrix() * mSphere_Cache.normalPoint(u, v);
+		n.normalize();
+
 		Eigen::Vector3f t, b;
 		Tangent::frame(n, t, b);
 
