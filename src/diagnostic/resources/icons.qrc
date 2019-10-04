@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
+        <file alias="scene_icon">category-24px.svg</file>
+        <file alias="image_icon">image-24px.svg</file>
         <file>ic_pan_tool_black_24dp_2x.png</file>
         <file>ic_play_arrow_black_24dp_2x.png</file>
         <file>ic_stop_black_24dp_2x.png</file>

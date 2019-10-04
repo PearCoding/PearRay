@@ -9,6 +9,7 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QImageWriter>
+#include <QMdiSubWindow>
 #include <QMessageBox>
 #include <QSettings>
 
@@ -114,8 +115,9 @@ void MainWindow::openFile(const QString& file)
 		mCurrentSceneWindow->openRDMPFile(file);
 	} else if (info.suffix() == "exr") {
 		EXRWindow* w = new EXRWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(w);
+		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
+		win->setWindowIcon(QIcon(":/image_icon"));
 		w->show();
 		w->openFile(file);
 	}
@@ -153,7 +155,9 @@ void MainWindow::setupSceneWindow()
 {
 	if (!mCurrentSceneWindow) {
 		mCurrentSceneWindow = new SceneWindow(ui.mdiArea);
-		ui.mdiArea->addSubWindow(mCurrentSceneWindow);
+		QMdiSubWindow* win  = ui.mdiArea->addSubWindow(mCurrentSceneWindow);
+
+		win->setWindowIcon(QIcon(":/scene_icon"));
 		mCurrentSceneWindow->show();
 	}
 }

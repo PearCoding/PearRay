@@ -58,10 +58,7 @@ public:
 
 	inline void incSampleCount(uint32 pixelIndex, uint32 channel)
 	{
-		mIntCounter[V_Samples]->setFragment(
-			pixelIndex,
-			channel,
-			mIntCounter[V_Samples]->getFragment(pixelIndex, channel) + 1);
+		mIntCounter[V_Samples]->getFragment(pixelIndex, channel) += 1;
 	}
 
 	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable1D var) const

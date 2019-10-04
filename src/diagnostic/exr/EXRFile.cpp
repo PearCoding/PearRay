@@ -52,9 +52,8 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 		if (!((1 << i) & channelMask))
 			continue;
 
-		for (float f : mData[i]) {
+		for (float f : mData[i])
 			maximum = std::max(maximum, f);
-		}
 	}
 
 	float scale = 255;

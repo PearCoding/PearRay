@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "buffer/FrameBuffer.h"
 
 namespace PR {
 enum ToneColorMode {
@@ -35,8 +35,8 @@ public:
 		 */
 	ToneMapper();
 
-	void map(const float* specIn, float* rgbOut,
-			 size_t specElems, size_t rgbElems, size_t pixelCount) const;
+	void map(const float* specIn, size_t specElems, size_t specElemPitch,
+			 float* rgbOut, size_t rgbElems, size_t pixelCount) const;
 	void mapOnlyMapper(const float* rgbIn, float* rgbOut,
 					   size_t rgbElems, size_t pixelCount) const;
 

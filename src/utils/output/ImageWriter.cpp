@@ -210,12 +210,14 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 				else
 					channel = mRenderer->output()->getSpectralChannel(sett.LPE);
 
+				const float* ptr = channel->ptr();
 				toneMapper.setColorMode(sett.TCM);
 				toneMapper.setGammaMode(sett.TGM);
 				toneMapper.setMapperMode(sett.TMM);
-				toneMapper.map(channel->ptr(), &line[id],
-							   mRenderer->spectrumDescriptor()->samples(), 3,
-							   1); // RGB
+				toneMapper.map(&ptr[y * channel->width() + x],
+							   channel->channels(),
+							   channel->channelPitch(),
+							   &line[id], 3, 1); // RGB
 
 				id += 3;
 			}

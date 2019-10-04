@@ -4,10 +4,10 @@
 #include "SpectrumDescriptor.h"
 
 namespace PR {
-void RGBConverter::convert(uint32 samples, const float* src, float& x, float& y, float& z)
+void RGBConverter::convert(uint32 samples, uint32 elemPitch, const float* src, float& x, float& y, float& z)
 {
 	float X, Y, Z;
-	XYZConverter::convertXYZ(samples, src, X, Y, Z);
+	XYZConverter::convertXYZ(samples, elemPitch, src, X, Y, Z);
 	fromXYZ(X, Y, Z, x, y, z);
 }
 

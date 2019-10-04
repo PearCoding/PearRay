@@ -43,7 +43,7 @@ inline T Registry::getForObject(RegistryGroup grp, uint32 id, const URI& relUri,
 	base.setPath(stream.str());
 
 	const URI absURI = URI::makeAbsolute(relUri, base);
-	if (!useGlobalFallback)
+	if (exists(absURI) || !useGlobalFallback)
 		return get<T>(absURI, def);
 	else
 		return get<T>(URI::makeAbsolute(relUri, getGroupPrefix(RG_GLOBAL)), def);

@@ -53,8 +53,8 @@ ColorBuffer& ColorBuffer::operator=(ColorBuffer&& other)
 
 void ColorBuffer::map(const ToneMapper& mapper, const float* specIn, uint32 samples)
 {
-	mapper.map(specIn, mData->Ptr,
-			   samples, mData->Mode == CBM_RGB ? 3 : 4, mData->Width * mData->Height);
+	mapper.map(specIn, samples, 1,
+			   mData->Ptr, mData->Mode == CBM_RGB ? 3 : 4, mData->Width * mData->Height);
 }
 
 void ColorBuffer::mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn)

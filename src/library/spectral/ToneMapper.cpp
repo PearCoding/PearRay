@@ -1,9 +1,7 @@
 #include "ToneMapper.h"
-#include "Spectrum.h"
-
 #include "Logger.h"
-
 #include "RGBConverter.h"
+#include "Spectrum.h"
 #include "XYZConverter.h"
 
 constexpr float REINHARD_RATIO = 0.32f;
@@ -15,8 +13,8 @@ ToneMapper::ToneMapper()
 {
 }
 
-void ToneMapper::map(const float* specIn, float* out,
-					 size_t specElems, size_t rgbElems, size_t pixelCount) const
+void ToneMapper::map(const float* specIn, size_t specElems, size_t specElemPitch,
+					 float* out, size_t rgbElems, size_t pixelCount) const
 {
 	for (size_t i = 0; i < pixelCount; ++i) {
 		float r, g, b;
@@ -24,17 +22,17 @@ void ToneMapper::map(const float* specIn, float* out,
 		// Map 1: Spec to RGB
 		switch (mColorMode) {
 		case TCM_SRGB:
-			RGBConverter::convert(specElems, &specIn[i * specElems], r, g, b);
+			RGBConverter::convert(specElems, specElemPitch, &specIn[i], r, g, b);
 			break;
 		case TCM_XYZ:
-			XYZConverter::convertXYZ(specElems, &specIn[i * specElems], r, g, b);
+			XYZConverter::convertXYZ(specElems, specElemPitch, &specIn[i], r, g, b);
 			break;
 		case TCM_XYZ_NORM:
-			XYZConverter::convert(specElems, &specIn[i * specElems], r, g);
+			XYZConverter::convert(specElems, specElemPitch, &specIn[i], r, g);
 			b = 1 - r - g;
 			break;
 		case TCM_LUMINANCE:
-			RGBConverter::convert(specElems, &specIn[i * specElems], r, g, b);
+			RGBConverter::convert(specElems, specElemPitch, &specIn[i], r, g, b);
 			r = RGBConverter::luminance(r, g, b);
 			g = r;
 			b = r;
