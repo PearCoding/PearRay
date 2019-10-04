@@ -25,10 +25,14 @@ public:
 	inline Eigen::Vector3f normal() const { return mNormal_Cache; }
 	inline Eigen::Vector3f center() const
 	{
-		return mPosition + mXAxis * 0.5f + mYAxis * 0.5f;
+		return surfacePoint(0.5f, 0.5f);
 	}
 
 	inline float surfaceArea() const { return mSurfaceArea_Cache; }
+	inline Eigen::Vector3f surfacePoint(float u, float v) const
+	{
+		return mPosition + mXAxis * u + mYAxis * v;
+	}
 
 	inline bool isValid() const
 	{

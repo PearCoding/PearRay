@@ -7,6 +7,23 @@ class PR_LIB Projection {
 	PR_CLASS_NON_CONSTRUCTABLE(Projection);
 
 public:
+	static inline Eigen::Vector3f safePosition(const Eigen::Vector3f& pos,
+											   const Eigen::Vector3f& dir)
+	{
+		constexpr float RayOffsetEpsilon = 0.000001f;
+		Eigen::Vector3f off				 = dir * RayOffsetEpsilon;
+		Eigen::Vector3f posOff			 = pos + off;
+
+		for (int i = 0; i < 3; ++i) {
+			if (off(i) > 0)
+				posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::max());
+			else if (off(i) < 0)
+				posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::lowest());
+		}
+
+		return posOff;
+	}
+
 	// Map [0, 1] uniformly to [min, max] as integers! (max is included)
 	template <typename T>
 	static inline T map(float u, T min, T max)

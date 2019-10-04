@@ -1,9 +1,9 @@
+#include "geometry/Plane.h"
+#include "Environment.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
-
-#include "geometry/Plane.h"
-
 #include "math/Projection.h"
+#include "math/Tangent.h"
 #include "registry/Registry.h"
 
 namespace PR {
@@ -13,9 +13,9 @@ public:
 	ENTITY_CLASS
 
 	PlaneEntity(uint32 id, const std::string& name,
-				const Eigen::Vector3f& p0, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
+				const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
 		: IEntity(id, name)
-		, mPlane(p0, xAxis, yAxis)
+		, mPlane(Eigen::Vector3f(0, 0, 0), xAxis, yAxis)
 		, mMaterialID(0)
 		, mLightID(0)
 		, mPDF_Cache(0.0f)
@@ -69,18 +69,42 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
-		mPlane.intersects(in, out);
-		out.EntityID   = simdpp::make_uint(id());
-		out.FaceID	 = simdpp::make_uint(0);
-		out.MaterialID = simdpp::make_uint(mMaterialID);
+		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+
+		mPlane.intersects(in_local, out);
+
+		out.HitDistance = in_local.distanceTransformed(out.HitDistance, transform().matrix(), in);
+		out.EntityID	= simdpp::make_uint(id());
+		out.FaceID		= simdpp::make_uint(0);
+		out.MaterialID  = simdpp::make_uint(mMaterialID);
 	}
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
-		mPlane.intersects(in, out);
-		out.EntityID   = id();
-		out.FaceID	 = 0;
-		out.MaterialID = mMaterialID;
+		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+
+		mPlane.intersects(in_local, out);
+
+		out.HitDistance = in_local.distanceTransformed(out.HitDistance, transform().matrix(), in);
+		out.EntityID	= id();
+		out.FaceID		= 0;
+		out.MaterialID  = mMaterialID;
+	}
+
+	void provideGeometryPoint(uint32, float u, float v,
+							  GeometryPoint& pt) const override
+	{
+		Eigen::Vector3f p = transform() * mPlane.surfacePoint(u, v);
+		Eigen::Vector3f n = directionMatrix() * mPlane.normal();
+		n.normalize();
+
+		Eigen::Vector3f t, b;
+		Tangent::frame(n, t, b);
+
+		pt.setPosition(p);
+		pt.setTangentFrame(n, t, b);
+		pt.setUV(Eigen::Vector2f(u, v));
+		pt.MaterialID = mMaterialID;
 	}
 
 protected:
@@ -102,16 +126,16 @@ private:
 
 class PlaneEntityFactory : public IEntityFactory {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Registry& reg)
+	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
 	{
+		const auto& reg = env.registry();
+
 		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
-		Eigen::Vector3f pos   = reg.getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "position",
-																  Eigen::Vector3f(0, 0, 0));
 		Eigen::Vector3f xAxis = reg.getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "x_axis",
 																  Eigen::Vector3f(1, 0, 0));
 		Eigen::Vector3f yAxis = reg.getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "y_axis",
 																  Eigen::Vector3f(0, 1, 0));
-		return std::make_shared<PlaneEntity>(id, name, pos, xAxis, yAxis);
+		return std::make_shared<PlaneEntity>(id, name, xAxis, yAxis);
 	}
 
 	const std::vector<std::string>& getNames() const

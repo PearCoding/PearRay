@@ -1,3 +1,4 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
+PR_ADD_PLUGIN(int_ambientocclusion CPP ambientocclusion.cpp)
 PR_ADD_PLUGIN(int_direct CPP direct.cpp)

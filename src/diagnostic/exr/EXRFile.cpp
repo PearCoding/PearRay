@@ -60,13 +60,15 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 	if (maximum > 1)
 		scale /= maximum;
 
+	auto map = [](float v, float s) { return std::abs(v) * s; };
+
 	// Copy to image
 	switch (mData.size()) {
 	case 1: // Grayscale
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[x] = mData[0][y * mWidth + x] * scale;
+				ptr[x] = map(mData[0][y * mWidth + x], scale);
 			}
 		}
 		break;
@@ -74,8 +76,12 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[3 * x]	 = (channelMask & 0x1) ? mData[0][y * mWidth + x] * scale : 0;
-				ptr[3 * x + 1] = (channelMask & 0x2) ? mData[1][y * mWidth + x] * scale : 0;
+				ptr[3 * x] = (channelMask & 0x1)
+								 ? map(mData[0][y * mWidth + x], scale)
+								 : 0;
+				ptr[3 * x + 1] = (channelMask & 0x2)
+									 ? map(mData[1][y * mWidth + x], scale)
+									 : 0;
 				ptr[3 * x + 2] = 0;
 			}
 		}
@@ -84,9 +90,15 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[3 * x]	 = (channelMask & 0x1) ? mData[0][y * mWidth + x] * scale : 0;
-				ptr[3 * x + 1] = (channelMask & 0x2) ? mData[1][y * mWidth + x] * scale : 0;
-				ptr[3 * x + 2] = (channelMask & 0x4) ? mData[2][y * mWidth + x] * scale : 0;
+				ptr[3 * x] = (channelMask & 0x1)
+								 ? map(mData[0][y * mWidth + x], scale)
+								 : 0;
+				ptr[3 * x + 1] = (channelMask & 0x2)
+									 ? map(mData[1][y * mWidth + x], scale)
+									 : 0;
+				ptr[3 * x + 2] = (channelMask & 0x4)
+									 ? map(mData[2][y * mWidth + x], scale)
+									 : 0;
 			}
 		}
 		break;
@@ -94,10 +106,18 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[4 * x]	 = (channelMask & 0x1) ? mData[0][y * mWidth + x] * scale : 0;
-				ptr[4 * x + 1] = (channelMask & 0x2) ? mData[1][y * mWidth + x] * scale : 0;
-				ptr[4 * x + 2] = (channelMask & 0x4) ? mData[2][y * mWidth + x] * scale : 0;
-				ptr[4 * x + 3] = (channelMask & 0x8) ? mData[3][y * mWidth + x] * scale : 0;
+				ptr[4 * x] = (channelMask & 0x1)
+								 ? map(mData[0][y * mWidth + x], scale)
+								 : 0;
+				ptr[4 * x + 1] = (channelMask & 0x2)
+									 ? map(mData[1][y * mWidth + x], scale)
+									 : 0;
+				ptr[4 * x + 2] = (channelMask & 0x4)
+									 ? map(mData[2][y * mWidth + x], scale)
+									 : 0;
+				ptr[4 * x + 3] = (channelMask & 0x8)
+									 ? map(mData[3][y * mWidth + x], scale)
+									 : 0;
 			}
 		}
 		break;

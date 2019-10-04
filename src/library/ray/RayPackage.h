@@ -73,9 +73,9 @@ struct PR_LIB_INLINE RayPackageBase {
 	}
 
 	/* Advance with t, transform position with matrix and calculate new position to given other base. */
-	inline V distance_transformed(const V& t_local,
-								  const Eigen::Matrix4f& local_to_global,
-								  const RayPackageBase<V, IV>& global_other) const
+	inline V distanceTransformed(const V& t_local,
+								 const Eigen::Matrix4f& local_to_global,
+								 const RayPackageBase<V, IV>& global_other) const
 	{
 		V px, py, pz;
 		this->t(t_local, px, py, pz);
@@ -90,6 +90,22 @@ struct PR_LIB_INLINE RayPackageBase {
 		pz = pz2 - global_other.Origin[2];
 
 		return magnitudeV(px, py, pz);
+	}
+
+	inline RayPackageBase<V, IV> next(const V& ox, const V& oy, const V& oz,
+									  const V& dx, const V& dy, const V& dz) const
+	{
+		RayPackageBase<V, IV> other;
+		other = *this;
+
+		other.Origin[0]	= ox;
+		other.Origin[1]	= oy;
+		other.Origin[2]	= oz;
+		other.Direction[0] = dx;
+		other.Direction[1] = dy;
+		other.Direction[2] = dz;
+
+		return other;
 	}
 };
 

@@ -86,8 +86,8 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 	_3D_S(V_Position, s.Geometry.P);
 	_3D_S(V_Normal, s.Ns);
 	_3D_S(V_NormalG, s.Geometry.Ng);
-	_3D_S(V_Tangent, s.Nx);
-	_3D_S(V_Bitangent, s.Ny);
+	_3D_S(V_Tangent, s.Geometry.Nx);// Fixme(LATER): Should be the shading tangent!
+	_3D_S(V_Bitangent, s.Geometry.Ny);
 	_3D_S(V_View, s.Ray.Direction);
 	_3D_S(V_UVW, s.Geometry.UVW);
 	_3D_S(V_DPDT, s.Geometry.dPdT);

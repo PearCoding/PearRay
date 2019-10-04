@@ -2,12 +2,12 @@
 	:name 'example_sphere'
 	:camera 'Camera'
 	; Settings
-	(registry '/renderer/film/width' 200)
-	(registry '/renderer/film/height' 200)
-	(registry '/renderer/common/type' 'direct')
+	(registry '/renderer/film/width' 500)
+	(registry '/renderer/film/height' 500)
+	(registry '/renderer/common/type' 'occlusion')
 	(registry '/renderer/common/max_ray_depth' 8)
 	(registry '/renderer/common/tile/mode' 0)
-	(registry '/renderer/common/sampler/aa/count' 2)
+	(registry '/renderer/common/sampler/aa/count' 4)
 	(registry '/renderer/common/sampler/aa/type' 3)
 	(registry '/renderer/common/sampler/lens/count' 1)
 	(registry '/renderer/common/sampler/lens/type' 3)
@@ -36,6 +36,12 @@
 			:type 'ng'
 		)
 		(channel
+			:type 'nx'
+		)
+		(channel
+			:type 'ny'
+		)
+		(channel
 			:type 'uv'
 		)
 	)
@@ -58,9 +64,9 @@
 		:localUp [0,-1,0]
 		:localRight [1,0,0]
 		:transform [1,0,0,0,
-0,1,0,0,
-0,0,1,0,
-0,0,0,1]
+		0,1,0,0,
+		0,0,1,0,
+		0,0,0,1]
 	)
 	; Entity Sphere
 	(entity
@@ -69,9 +75,21 @@
 		:material 'Material'
 		:radius 1
 		:transform [1,0,0,0,
-0,1,0,0,
-0,0,1,-4,
-0,0,0,1]
+		0,1,0,0,
+		0,0,1,-4,
+		0,0,0,1]
+	)
+	; Entity Plane
+	(entity
+		:name 'Ground'
+		:type 'plane'
+		:material 'Material'
+		:x_axis [8,0,0]
+		:y_axis [0,0,-8]
+		:transform [1,0,0,-4,
+		0,1,0,-0.85,
+		0,0,1,1,
+		0,0,0,1]
 	)
 	; Materials
 	(spectrum
