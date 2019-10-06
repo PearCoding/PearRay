@@ -1,7 +1,6 @@
-# PearRay [![GitHub Version](https://img.shields.io/github/release/PearCoding/PearRay.svg)]() [![GitHub Tag](https://img.shields.io/github/tag/PearCoding/PearRay.svg)]()
+# PearRay [![GitHub Tag](https://img.shields.io/github/tag/PearCoding/PearRay.svg)]() [![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/PearCoding/PearRay/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/issues)
-[![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
 [![Coverage Status](https://coveralls.io/repos/github/PearCoding/PearRay/badge.svg?branch=master)](https://coveralls.io/github/PearCoding/PearRay?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/48a91c3c277d4aa4ae76ff940e4bcf07)](https://www.codacy.com/app/PearCoding/PearRay?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=PearCoding/PearRay&amp;utm_campaign=Badge_Grade)\
 ![CMake 3.1](https://img.shields.io/badge/CMake-3.1+-green.svg)
@@ -14,7 +13,7 @@
 
 Experimental high accurate spectral stream path and ray tracer with Bidirect Raytracing, Distribution Raytracing and Photon Mapping support.
 
- :exclamation: **This is experimental software. API changes regularly. Don't use on big projects (yet)**
+ :exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)!**
 
 ## Blender Addon
 There is an open source (still experimental) blender integration addon available [here](https://github.com/PearCoding/PearRay-Blender).
