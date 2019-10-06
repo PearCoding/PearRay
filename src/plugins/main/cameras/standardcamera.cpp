@@ -22,14 +22,14 @@ public:
 	void setHeight(float h);
 	float height() const;
 
-	void setLocalDirection(const Eigen::Vector3f& d);
-	Eigen::Vector3f localDirection() const;
+	void setLocalDirection(const Vector3f& d);
+	Vector3f localDirection() const;
 
-	void setLocalRight(const Eigen::Vector3f& d);
-	Eigen::Vector3f localRight() const;
+	void setLocalRight(const Vector3f& d);
+	Vector3f localRight() const;
 
-	void setLocalUp(const Eigen::Vector3f& d);
-	Eigen::Vector3f localUp() const;
+	void setLocalUp(const Vector3f& d);
+	Vector3f localUp() const;
 
 	// Depth of Field
 	void setFStop(float f);
@@ -50,8 +50,7 @@ protected:
 private:
 	void constructRay(float nx, float ny,
 					  float r1, float r2,
-					  float& ox, float& oy, float& oz,
-					  float& dx, float& dy, float& dz) const;
+					  Vector3f& o, Vector3f& d) const;
 
 	float mWidth;
 	float mHeight;
@@ -59,19 +58,19 @@ private:
 	float mFStop;
 	float mApertureRadius;
 
-	Eigen::Vector3f mLocalDirection;
-	Eigen::Vector3f mLocalRight;
-	Eigen::Vector3f mLocalUp;
+	Vector3f mLocalDirection;
+	Vector3f mLocalRight;
+	Vector3f mLocalUp;
 
 	// Cache:
-	Eigen::Vector3f mDirection_Cache;
-	Eigen::Vector3f mRight_Cache;
-	Eigen::Vector3f mUp_Cache;
+	Vector3f mDirection_Cache;
+	Vector3f mRight_Cache;
+	Vector3f mUp_Cache;
 
 	bool mHasDOF_Cache;
-	Eigen::Vector3f mFocalDistance_Cache;
-	Eigen::Vector3f mXApertureRadius_Cache;
-	Eigen::Vector3f mYApertureRadius_Cache;
+	Vector3f mFocalDistance_Cache;
+	Vector3f mXApertureRadius_Cache;
+	Vector3f mYApertureRadius_Cache;
 };
 
 ////////////////////
@@ -134,32 +133,32 @@ void StandardCamera::setFStop(float f)
 	mFStop = f;
 }
 
-void StandardCamera::setLocalDirection(const Eigen::Vector3f& d)
+void StandardCamera::setLocalDirection(const Vector3f& d)
 {
 	mLocalDirection = d;
 }
 
-Eigen::Vector3f StandardCamera::localDirection() const
+Vector3f StandardCamera::localDirection() const
 {
 	return mLocalDirection;
 }
 
-void StandardCamera::setLocalRight(const Eigen::Vector3f& d)
+void StandardCamera::setLocalRight(const Vector3f& d)
 {
 	mLocalRight = d;
 }
 
-Eigen::Vector3f StandardCamera::localRight() const
+Vector3f StandardCamera::localRight() const
 {
 	return mLocalRight;
 }
 
-void StandardCamera::setLocalUp(const Eigen::Vector3f& d)
+void StandardCamera::setLocalUp(const Vector3f& d)
 {
 	mLocalUp = d;
 }
 
-Eigen::Vector3f StandardCamera::localUp() const
+Vector3f StandardCamera::localUp() const
 {
 	return mLocalUp;
 }
@@ -188,8 +187,7 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 
 	Ray ray;
 	constructRay(nx, ny, sample.R[0], sample.R[1],
-				 ray.Origin[0], ray.Origin[1], ray.Origin[2],
-				 ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+				 ray.Origin, ray.Direction);
 
 	ray.WavelengthIndex = sample.WavelengthIndex;
 	ray.Weight			= 0;
@@ -204,44 +202,26 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 
 void StandardCamera::constructRay(float nx, float ny,
 								  float r1, float r2,
-								  float& ox, float& oy, float& oz,
-								  float& dx, float& dy, float& dz) const
+								  Vector3f& o, Vector3f& d) const
 {
-	const Eigen::Vector3f pos = transform().translation();
-
-	const float vx = mRight_Cache(0) * nx + mUp_Cache(0) * ny + mFocalDistance_Cache(0);
-	const float vy = mRight_Cache(1) * nx + mUp_Cache(1) * ny + mFocalDistance_Cache(1);
-	const float vz = mRight_Cache(2) * nx + mUp_Cache(2) * ny + mFocalDistance_Cache(2);
+	const Vector3f pos = transform().translation();
+	const Vector3f v   = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
 
 	if (mHasDOF_Cache) {
 		const float t = 2 * PR_PI * r1;
-		float s, c;
-		sincos(t, s, c);
+		float s		  = std::sin(t);
+		float c		  = std::cos(t);
 
-		float ex = mXApertureRadius_Cache(0) * r2 * s + mYApertureRadius_Cache(0) * r2 * c;
-		float ey = mXApertureRadius_Cache(1) * r2 * s + mYApertureRadius_Cache(1) * r2 * c;
-		float ez = mXApertureRadius_Cache(2) * r2 * s + mYApertureRadius_Cache(2) * r2 * c;
+		const Vector3f e = mXApertureRadius_Cache * r2 * s + mYApertureRadius_Cache * r2 * c;
 
-		ox = pos(0) + ex;
-		oy = pos(1) + ey;
-		oz = pos(2) + ez;
-
-		dx = vx - ex;
-		dy = vy - ey;
-		dz = vz - ez;
-
-		normalizeV(dx, dy, dz);
+		o = pos + e;
+		d = v - e;
 	} else {
-		ox = pos(0);
-		oy = pos(1);
-		oz = pos(2);
-
-		dx = vx;
-		dy = vy;
-		dz = vz;
-
-		normalizeV(dx, dy, dz);
+		o = pos;
+		d = v;
 	}
+
+	d.normalize();
 }
 
 // Cache
@@ -257,8 +237,8 @@ void StandardCamera::onFreeze(RenderContext* context)
 
 	if (std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) { // No depth of field
 		mFocalDistance_Cache   = mDirection_Cache;
-		mXApertureRadius_Cache = Eigen::Vector3f(0, 0, 0);
-		mYApertureRadius_Cache = Eigen::Vector3f(0, 0, 0);
+		mXApertureRadius_Cache = Vector3f(0, 0, 0);
+		mYApertureRadius_Cache = Vector3f(0, 0, 0);
 		mRight_Cache *= 0.5f * mWidth;
 		mUp_Cache *= 0.5f * mHeight;
 		mHasDOF_Cache = false;
@@ -283,9 +263,9 @@ public:
 		std::string name = env.registry().getForObject<std::string>(RG_CAMERA, uuid, "name", "__unnamed__");
 
 		auto cam = std::make_shared<StandardCamera>(id, name);
-		cam->setLocalDirection(env.registry().getForObject<Eigen::Vector3f>(RG_CAMERA, uuid, "localDirection", Eigen::Vector3f(0, 0, 1)));
-		cam->setLocalUp(env.registry().getForObject<Eigen::Vector3f>(RG_CAMERA, uuid, "localUp", Eigen::Vector3f(0, 1, 0)));
-		cam->setLocalRight(env.registry().getForObject<Eigen::Vector3f>(RG_CAMERA, uuid, "localRight", Eigen::Vector3f(1, 0, 0)));
+		cam->setLocalDirection(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localDirection", Vector3f(0, 0, 1)));
+		cam->setLocalUp(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localUp", Vector3f(0, 1, 0)));
+		cam->setLocalRight(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localRight", Vector3f(1, 0, 0)));
 
 		return cam;
 	}

@@ -31,24 +31,6 @@ PR_TEST("insert")
 	PR_CHECK_EQ(extract(0, i1), 42);
 }
 
-PR_TEST("dot")
-{
-	float f1 = dotV(1, 1, 1, 2, 2, 2);
-	PR_CHECK_NEARLY_EQ(f1, 6);
-}
-
-PR_TEST("cross")
-{
-	float f1, f2, f3;
-	crossV(1, 2, 3,
-		   -7, 8, 9,
-		   f1, f2, f3);
-
-	PR_CHECK_NEARLY_EQ(f1, -6);
-	PR_CHECK_NEARLY_EQ(f2, -30);
-	PR_CHECK_NEARLY_EQ(f3, 22);
-}
-
 PR_TEST("load_from_container_linear")
 {
 	float c[4] = { 0, 1, 2, 3 };

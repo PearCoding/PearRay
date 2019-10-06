@@ -8,28 +8,28 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	Plane();
-	Plane(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
+	Plane(const Vector3f& pos, const Vector3f& xAxis, const Vector3f& yAxis);
 	Plane(float width, float height);
 
-	inline Eigen::Vector3f position() const { return mPosition; }
-	inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
+	inline Vector3f position() const { return mPosition; }
+	inline void setPosition(const Vector3f& pos) { mPosition = pos; }
 
-	inline Eigen::Vector3f xAxis() const { return mXAxis; }
-	void setXAxis(const Eigen::Vector3f& xAxis);
+	inline Vector3f xAxis() const { return mXAxis; }
+	void setXAxis(const Vector3f& xAxis);
 
-	inline Eigen::Vector3f yAxis() const { return mYAxis; }
-	void setYAxis(const Eigen::Vector3f& yAxis);
+	inline Vector3f yAxis() const { return mYAxis; }
+	void setYAxis(const Vector3f& yAxis);
 
-	void setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis);
+	void setAxis(const Vector3f& xAxis, const Vector3f& yAxis);
 
-	inline Eigen::Vector3f normal() const { return mNormal_Cache; }
-	inline Eigen::Vector3f center() const
+	inline Vector3f normal() const { return mNormal_Cache; }
+	inline Vector3f center() const
 	{
 		return surfacePoint(0.5f, 0.5f);
 	}
 
 	inline float surfaceArea() const { return mSurfaceArea_Cache; }
-	inline Eigen::Vector3f surfacePoint(float u, float v) const
+	inline Vector3f surfacePoint(float u, float v) const
 	{
 		return mPosition + mXAxis * u + mYAxis * v;
 	}
@@ -39,14 +39,13 @@ public:
 		return mXAxis.squaredNorm() * mYAxis.squaredNorm() > 0;
 	}
 
-	bool contains(const Eigen::Vector3f& point) const;
+	bool contains(const Vector3f& point) const;
 
 	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
 	void intersects(const RayPackage& in, CollisionOutput& out) const;
 
-	Eigen::Vector2f project(const Eigen::Vector3f& point) const;
-	void projectV(const vfloat& px, const vfloat& py, const vfloat& pz,
-				  vfloat& u, vfloat& v) const;
+	Vector2f project(const Vector3f& point) const;
+	Vector2fv project(const Vector3fv& point) const;
 
 	inline BoundingBox toBoundingBox() const
 	{
@@ -60,12 +59,12 @@ public:
 private:
 	void recache();
 
-	Eigen::Vector3f mPosition;
-	Eigen::Vector3f mXAxis;
-	Eigen::Vector3f mYAxis;
+	Vector3f mPosition;
+	Vector3f mXAxis;
+	Vector3f mYAxis;
 
 	// Cache
-	Eigen::Vector3f mNormal_Cache;
+	Vector3f mNormal_Cache;
 	float mSurfaceArea_Cache;
 	float mInvXLenSqr_Cache;
 	float mInvYLenSqr_Cache;

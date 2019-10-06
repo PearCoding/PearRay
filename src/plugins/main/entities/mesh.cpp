@@ -38,7 +38,7 @@ public:
 			Eigen::Matrix3f sca;
 			transform().computeRotationScaling((Eigen::Matrix3f*)nullptr, &sca);
 
-			const auto s = flags() & EF_LocalArea ? Eigen::Vector3f(1, 1, 1) : sca.diagonal();
+			const auto s = flags() & EF_LocalArea ? Vector3f(1, 1, 1) : sca.diagonal();
 
 			const float a = s(0) * mRadius;
 			const float b = s(1) * mRadius;
@@ -74,8 +74,8 @@ public:
 
 	BoundingBox localBoundingBox() const override
 	{
-		return BoundingBox(Eigen::Vector3f(mRadius, mRadius, mRadius),
-						   Eigen::Vector3f(-mRadius, -mRadius, -mRadius));
+		return BoundingBox(Vector3f(mRadius, mRadius, mRadius),
+						   Vector3f(-mRadius, -mRadius, -mRadius));
 	}
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
@@ -108,7 +108,7 @@ protected:
 		const float area = surfaceArea(0);
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 
-		mSphere_Cache = Sphere(Eigen::Vector3f(0, 0, 0), mRadius);
+		mSphere_Cache = Sphere(Vector3f(0, 0, 0), mRadius);
 	}
 
 private:

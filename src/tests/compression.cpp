@@ -25,27 +25,27 @@ PR_TEST("snorm16")
 
 PR_TEST("oct 1")
 {
-	Eigen::Vector3f d(1, 0, 0);
-	Eigen::Vector2f o = to_oct(d);
-	Eigen::Vector3f r = from_oct(o);
+	Vector3f d(1, 0, 0);
+	Vector2f o = to_oct(d);
+	Vector3f r = from_oct(o);
 
 	PR_CHECK_NEARLY_EQ(r, d);
 }
 
 PR_TEST("oct 2")
 {
-	Eigen::Vector3f d(0, -1, 0);
-	Eigen::Vector2f o = to_oct(d);
-	Eigen::Vector3f r = from_oct(o);
+	Vector3f d(0, -1, 0);
+	Vector2f o = to_oct(d);
+	Vector3f r = from_oct(o);
 
 	PR_CHECK_NEARLY_EQ(r, d);
 }
 
 PR_TEST("oct 3")
 {
-	Eigen::Vector3f d(0.707107f, 0, 0.707107f);
-	Eigen::Vector2f o = to_oct(d);
-	Eigen::Vector3f r = from_oct(o);
+	Vector3f d(0.707107f, 0, 0.707107f);
+	Vector2f o = to_oct(d);
+	Vector3f r = from_oct(o);
 
 	PR_CHECK_NEARLY_EQ(r, d);
 }

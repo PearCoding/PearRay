@@ -1,6 +1,7 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "math/Projection.h"
+#include "math/Tangent.h"
 #include "path/LightPath.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
@@ -54,20 +55,12 @@ public:
 				size_t occlusions = 0;
 				float pdf;
 				for (size_t i = 0; i < mSampleCount; ++i) {
-					Eigen::Vector2f rnd  = random.get2D();
-					Eigen::Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-					Eigen::Vector3f ndir = Projection::tangent_align(
-						Eigen::Vector3f(pt.Ng[0], pt.Ng[1], pt.Ng[2]),
-						Eigen::Vector3f(pt.Nx[0], pt.Nx[1], pt.Nx[2]),
-						Eigen::Vector3f(pt.Ny[0], pt.Ny[1], pt.Ny[2]),
-						dir);
+					Vector2f rnd  = random.get2D();
+					Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
+					Vector3f ndir = Tangent::align(pt.Ng, pt.Nx, pt.Ny,
+												   dir);
 
-					Eigen::Vector3f no = Projection::safePosition(
-						Eigen::Vector3f(pt.P[0], pt.P[1], pt.P[2]),
-						ndir);
-
-					Ray n = ray.next(no(0), no(1), no(2),
-									 ndir(0), ndir(1), ndir(2));
+					Ray n = ray.next(pt.P, ndir);
 
 					ShadowHit hit = session.traceShadowRay(n);
 					if (hit.Successful)
@@ -98,7 +91,7 @@ class IntAOFactory : public IIntegratorFactory {
 public:
 	std::shared_ptr<IIntegrator> create() override
 	{
-		size_t sample_count = 100;
+		size_t sample_count = 20;
 		return std::make_shared<IntAO>(sample_count);
 	}
 

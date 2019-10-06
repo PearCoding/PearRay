@@ -14,7 +14,7 @@ Sphere::Sphere()
 {
 }
 
-Sphere::Sphere(const Eigen::Vector3f& pos, float radius)
+Sphere::Sphere(const Vector3f& pos, float radius)
 	: mPosition(pos)
 	, mRadius(radius)
 {
@@ -39,14 +39,12 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 	out.HitDistance = std::numeric_limits<float>::infinity();
 
 	// C - O
-	const float Lx = mPosition(0) - in.Origin[0];
-	const float Ly = mPosition(1) - in.Origin[1];
-	const float Lz = mPosition(2) - in.Origin[2];
+	const Vector3f L = mPosition - in.Origin;
 
-	const float S  = dotV(Lx, Ly, Lz, in.Direction[0], in.Direction[1], in.Direction[2]); // L . D
-	const float L2 = dotV(Lx, Ly, Lz, Lx, Ly, Lz);										  // L . L
-	const float R2 = mRadius * mRadius;													  // R^2
-	const float M2 = L2 - S * S;														  // L . L - S^2
+	const float S  = L.dot(in.Direction);
+	const float L2 = L.squaredNorm();
+	const float R2 = mRadius * mRadius;
+	const float M2 = L2 - S * S;
 
 	if ((S < 0 && // when object behind ray
 		 L2 > R2)
@@ -67,9 +65,10 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 		out.HitDistance = t0;
 
 		// Setup UV
-		float px, py, pz;
-		in.t(t0, px, py, pz);
-		Eigen::Vector2f uv = project(Eigen::Vector3f(px, py, pz));
+		Vector3f p  = in.t(t0);
+		Vector2f uv = project(p);
+		out.UV[0]   = uv(0);
+		out.UV[1]   = uv(1);
 	}
 }
 
@@ -77,15 +76,11 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	using namespace simdpp;
 
-	// C - O
-	const vfloat Lx = mPosition(0) - in.Origin[0];
-	const vfloat Ly = mPosition(1) - in.Origin[1];
-	const vfloat Lz = mPosition(2) - in.Origin[2];
-
-	const vfloat S  = dotV(Lx, Ly, Lz, in.Direction[0], in.Direction[1], in.Direction[2]); // L . D
-	const vfloat L2 = dotV(Lx, Ly, Lz, Lx, Ly, Lz);										   // L . L
-	const float R2  = mRadius * mRadius;												   // R^2
-	const vfloat M2 = L2 - S * S;														   // L . L - S^2
+	const Vector3fv L = promote(mPosition) - in.Origin;
+	const vfloat S	= L.dot(in.Direction);
+	const vfloat L2   = L.squaredNorm();
+	const float R2	= mRadius * mRadius;
+	const vfloat M2   = L2 - S * S;
 
 	const bfloat valid = ((S >= 0) | (L2 <= R2)) & (M2 <= R2);
 
@@ -101,21 +96,17 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	out.HitDistance = blend(t1, t0, t0 < PR_SPHERE_INTERSECT_EPSILON);
 
 	// Project
-	vfloat px, py, pz;
-	in.t(out.HitDistance, px, py, pz);
-	vfloat nx = mPosition(0) - px;
-	vfloat ny = py - mPosition(1);
-	vfloat nz = mPosition(2) - pz;
-	atan2(nz, nx, out.UV[0]);
-	asin(ny, out.UV[1]);
-	out.UV[0] = 0.5f + out.UV[0] * PR_1_PI * 0.5f;
-	out.UV[1] = 0.5f - out.UV[1] * PR_1_PI;
+	Vector3fv p  = in.t(t0);
+	Vector2fv uv = project(p);
+	out.UV[0]	= uv(0);
+	out.UV[1]	= uv(1);
 
-	const vfloat inf = make_float(std::numeric_limits<float>::infinity());
-	out.HitDistance  = blend(out.HitDistance, inf, valid);
+	const vfloat inf = fill_vector(std::numeric_limits<float>::infinity());
+	out.HitDistance  = blend(out.HitDistance, inf,
+							 valid & (out.HitDistance >= PR_SPHERE_INTERSECT_EPSILON));
 }
 
-void Sphere::combine(const Eigen::Vector3f& point)
+void Sphere::combine(const Vector3f& point)
 {
 	float f = (mPosition - point).squaredNorm();
 	if (f > mRadius * mRadius)
@@ -134,18 +125,23 @@ void Sphere::combine(const Sphere& other)
 		mRadius = std::sqrt(f);
 }
 
-Eigen::Vector3f Sphere::normalPoint(float u, float v) const
+Vector3f Sphere::normalPoint(float u, float v) const
 {
 	return Projection::sphere_coord(u * 2 * M_PI, v * M_PI);
 }
 
-Eigen::Vector3f Sphere::surfacePoint(float u, float v) const
+Vector3f Sphere::surfacePoint(float u, float v) const
 {
 	return normalPoint(u, v) * mRadius;
 }
 
-Eigen::Vector2f Sphere::project(const Eigen::Vector3f& p) const
+Vector2f Sphere::project(const Vector3f& p) const
 {
-	return Projection::sphereUV(p - mPosition);
+	return Projection::sphereUV<float>(p - mPosition);
+}
+
+Vector2fv Sphere::project(const Vector3fv& p) const
+{
+	return Projection::sphereUV<vfloat>(p - promote(mPosition));
 }
 } // namespace PR

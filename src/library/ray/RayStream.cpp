@@ -15,16 +15,16 @@ Ray RayGroup::getRay(size_t id) const
 	PR_ASSERT(id < Size, "Invalid access!");
 
 	Ray ray;
-	for (int i = 0; i < 3; ++i)
-		ray.Origin[i] = Origin[i][id];
+	ray.Origin = Vector3f(Origin[0][id], Origin[1][id], Origin[2][id]);
 
 #ifdef PR_COMPRESS_RAY_DIR
 	float d0 = from_snorm16(Direction[0][id]);
 	float d1 = from_snorm16(Direction[1][id]);
-	from_oct(d0, d1, ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+	float d[3];
+	from_oct(d0, d1, d[0], d[1], d[2]);
+	ray.Direction = Vector3f(d[0], d[1], d[2]);
 #else
-	for (int i = 0; i < 3; ++i)
-		ray.Direction[i] = Direction[i][id];
+	ray.Direction = Vector3f(Direction[0][id], Direction[1][id], Direction[2][id]);
 #endif
 
 	ray.Depth			= Depth[id];
@@ -44,9 +44,9 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 	PR_ASSERT(id < Size, "Invalid access!");
 
 	RayPackage ray;
-
-	for (int j = 0; j < 3; ++j)
-		ray.Origin[j] = simdpp::load(&Origin[j][id]);
+	ray.Origin = Vector3fv(simdpp::load(&Origin[0][id]),
+						   simdpp::load(&Origin[1][id]),
+						   simdpp::load(&Origin[2][id]));
 
 #ifdef PR_COMPRESS_RAY_DIR
 	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
@@ -57,11 +57,13 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 			dir[0][k], dir[1][k], dir[2][k]);
 	}
 
-	for (int j = 0; j < 3; ++j)
-		ray.Direction[j] = simdpp::load(&dir[j][0]);
+	ray.Direction = Vector3fv(simdpp::load(&dir[0][0]),
+							  simdpp::load(&dir[1][0]),
+							  simdpp::load(&dir[2][0]));
 #else
-	for (int j = 0; j < 3; ++j)
-		ray.Direction[j] = simdpp::load(&Direction[j][id]);
+	ray.Direction = Vector3fv(simdpp::load(&Direction[0][id]),
+							  simdpp::load(&Direction[1][id]),
+							  simdpp::load(&Direction[2][id]));
 #endif
 
 	load_from_container_linear(ray.Depth, Depth, id);
@@ -191,16 +193,22 @@ Ray RayStream::getRay(size_t id) const
 	PR_ASSERT(id < currentSize(), "Invalid access!");
 
 	Ray ray;
-	for (int i = 0; i < 3; ++i)
-		ray.Origin[i] = mOrigin[i][id];
+	ray.Origin = Vector3f(mOrigin[0][id],
+						  mOrigin[1][id],
+						  mOrigin[2][id]);
 
 #ifdef PR_COMPRESS_RAY_DIR
 	float d0 = from_snorm16(mDirection[0][id]);
 	float d1 = from_snorm16(mDirection[1][id]);
-	from_oct(d0, d1, ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+	float dir[3];
+	from_oct(d0, d1, dir[0], dir[1], dir[2]);
+	ray.Direction = Vector3f(dir[0],
+							 dir[1],
+							 dir[2]);
 #else
-	for (int i = 0; i < 3; ++i)
-		ray.Direction[i] = mDirection[i][id];
+	ray.Direction = Vector3f(mDirection[0][id],
+							 mDirection[1][id],
+							 mDirection[2][id]);
 #endif
 
 	ray.Depth			= mDepth[id];

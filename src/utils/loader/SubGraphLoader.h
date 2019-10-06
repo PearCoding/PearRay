@@ -4,7 +4,6 @@
 #include <string>
 
 namespace PR {
-class IMesh;
 
 class Environment;
 class PR_LIB_UTILS SubGraphLoader {

@@ -13,7 +13,7 @@ class PR_LIB_INLINE Triangle {
 
 public:
 	inline static BoundingBox getBoundingBox(
-		const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& p3)
+		const Vector3f& p1, const Vector3f& p2, const Vector3f& p3)
 	{
 		BoundingBox box(p1, p2);
 		box.combine(p3);
@@ -23,76 +23,51 @@ public:
 	}
 
 	template <typename T>
-	inline static T surfaceArea(
-		const T& p1x, const T& p1y, const T& p1z,
-		const T& p2x, const T& p2y, const T& p2z,
-		const T& p3x, const T& p3y, const T& p3z)
+	inline static T surfaceArea(const Vector3t<T>& p1,
+								const Vector3t<T>& p2,
+								const Vector3t<T>& p3)
 	{
 		using namespace simdpp;
 
-		const T e12x = p2x - p1x;
-		const T e12y = p2y - p1y;
-		const T e12z = p2z - p1z;
-
-		const T e13x = p3x - p1x;
-		const T e13y = p3y - p1y;
-		const T e13z = p3z - p1z;
-
-		T c1, c2, c3;
-		crossV(e12x, e12y, e12z, e13x, e13y, e13z, c1, c2, c3);
-		return 0.5f * sqrt(dotV(c1, c2, c3, c1, c2, c3));
+		const auto e12 = p2 - p1;
+		const auto e13 = p3 - p1;
+		return 0.5f * e12.cross(e13).norm();
 	}
 
 	// SIMD
 	// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-	template <typename T, typename R>
-	inline static typename RayTemplate<R>::bool_t intersect(const R& in,
-															const T& p1x, const T& p1y, const T& p1z,
-															const T& p2x, const T& p2y, const T& p2z,
-															const T& p3x, const T& p3y, const T& p3z,
-															typename RayTemplate<R>::float_t& u,
-															typename RayTemplate<R>::float_t& v,
-															typename RayTemplate<R>::float_t& t)
+	template <typename T>
+	inline static typename VectorTemplate<T>::bool_t intersect(
+		const RayPackageBase<T>& in,
+		const Vector3t<T>& p1,
+		const Vector3t<T>& p2,
+		const Vector3t<T>& p3,
+		Vector2t<T>& uv,
+		T& t)
 	{
 		using namespace simdpp;
-		using ifloat = typename RayTemplate<R>::float_t;
-		using ibool  = typename RayTemplate<R>::bool_t;
+		using ibool = typename VectorTemplate<T>::bool_t;
 
-		const T e12x = p2x - p1x;
-		const T e12y = p2y - p1y;
-		const T e12z = p2z - p1z;
+		const Vector3t<T> e12 = p2 - p1;
+		const Vector3t<T> e13 = p3 - p1;
 
-		const T e13x = p3x - p1x;
-		const T e13y = p3y - p1y;
-		const T e13z = p3z - p1z;
+		const Vector3t<T> q = in.Direction.cross(e13);
+		const T a			= q.dot(e12);
 
-		ifloat q1, q2, q3;
-		crossV(in.Direction[0], in.Direction[1], in.Direction[2],
-			   e13x, e13y, e13z,
-			   q1, q2, q3);
+		const T f			= 1.0f / a;
+		const Vector3t<T> s = in.Origin - p1;
+		uv(0)				= f * s.dot(q);
 
-		const ifloat a = dotV(q1, q2, q3, e12x, e12y, e12z);
+		const ibool uoutside = (uv(0) < 0) | (uv(0) > 1);
 
-		const ifloat f  = 1.0f / a;
-		const ifloat s1 = in.Origin[0] - p1x;
-		const ifloat s2 = in.Origin[1] - p1y;
-		const ifloat s3 = in.Origin[2] - p1z;
+		const Vector3t<T> r = s.cross(e12);
+		uv(1)				= f * in.Direction.dot(r);
 
-		u = f * dotV(s1, s2, s3, q1, q2, q3);
+		const ibool voutside = (uv(1) < 0) | (uv(0) + uv(1) > 1);
 
-		const ibool uoutside = (u < 0) | (u > 1);
-
-		ifloat r1, r2, r3;
-		crossV(s1, s2, s3,
-			   e12x, e12y, e12z,
-			   r1, r2, r3);
-
-		v = f * dotV(in.Direction[0], in.Direction[1], in.Direction[2], r1, r2, r3);
-
-		const ibool voutside = (v < 0) | (u + v > 1);
-
-		t = f * dotV(r1, r2, r3, e13x, e13y, e13z);
-		return b_and(b_and(b_not(uoutside), b_not(voutside)), (t >= PR_TRIANGLE_INTERSECT_EPSILON));
+		t = f * r.dot(e13);
+		return b_and(b_and(b_not(uoutside), b_not(voutside)),
+					 (t >= PR_TRIANGLE_INTERSECT_EPSILON));
 	}
 };
 } // namespace PR

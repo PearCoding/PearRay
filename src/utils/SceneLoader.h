@@ -27,7 +27,7 @@ public:
 													   const std::string& source,
 													   const std::string& pluginPath = "");
 
-	static Eigen::Vector3f getVector(const DL::DataGroup& arr, bool& ok);
+	static Vector3f getVector(const DL::DataGroup& arr, bool& ok);
 	static Eigen::Matrix4f getMatrix(const DL::DataGroup& arr, bool& ok);
 	static Eigen::Quaternionf getRotation(const DL::Data& data, bool& ok);
 

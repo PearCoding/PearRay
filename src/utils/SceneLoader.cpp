@@ -231,9 +231,9 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 			entity->setTransform(t);
 	} else {
 		bool ok;
-		Eigen::Vector3f pos;
+		Vector3f pos;
 		Eigen::Quaternionf rot;
-		Eigen::Vector3f sca;
+		Vector3f sca;
 
 		if (posD.type() == DL::Data::T_Group) {
 			pos = getVector(posD.getGroup(), ok);
@@ -251,7 +251,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 
 		if (ok && scaleD.isNumber()) {
 			float s = scaleD.getNumber();
-			sca		= Eigen::Vector3f(s, s, s);
+			sca		= Vector3f(s, s, s);
 		} else if (ok && scaleD.type() == DL::Data::T_Group) {
 			sca = getVector(scaleD.getGroup(), ok);
 
@@ -353,9 +353,9 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 			camera->setTransform(t);
 	} else {
 		bool ok;
-		Eigen::Vector3f pos;
+		Vector3f pos;
 		Eigen::Quaternionf rot;
-		Eigen::Vector3f sca;
+		Vector3f sca;
 
 		if (posD.type() == DL::Data::T_Group) {
 			pos = getVector(posD.getGroup(), ok);
@@ -373,7 +373,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 
 		if (ok && scaleD.isNumber()) {
 			float s = scaleD.getNumber();
-			sca		= Eigen::Vector3f(s, s, s);
+			sca		= Vector3f(s, s, s);
 		} else if (ok && scaleD.type() == DL::Data::T_Group) {
 			sca = getVector(scaleD.getGroup(), ok);
 
@@ -777,13 +777,13 @@ Eigen::Matrix4f SceneLoader::getMatrix(const DL::DataGroup& grp, bool& ok)
 	return Eigen::Matrix4f::Identity();
 }
 
-Eigen::Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
+Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
 {
-	Eigen::Vector3f res(0, 0, 0);
+	Vector3f res(0, 0, 0);
 
 	if (arr.anonymousCount() == 2) {
 		if (arr.at(0).isNumber() && arr.at(1).isNumber()) {
-			res = Eigen::Vector3f(arr.at(0).getNumber(),
+			res = Vector3f(arr.at(0).getNumber(),
 								  arr.at(1).getNumber(),
 								  0);
 
@@ -793,7 +793,7 @@ Eigen::Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
 		}
 	} else if (arr.anonymousCount() == 3) {
 		if (arr.at(0).isNumber() && arr.at(1).isNumber() && arr.at(2).isNumber()) {
-			res = Eigen::Vector3f(arr.at(0).getNumber(),
+			res = Vector3f(arr.at(0).getNumber(),
 								  arr.at(1).getNumber(),
 								  arr.at(2).getNumber());
 
@@ -827,9 +827,9 @@ Eigen::Quaternionf SceneLoader::getRotation(const DL::Data& data, bool& ok)
 			float y = grp.at(1).getNumber() * PR_PI / 180;
 			float z = grp.at(2).getNumber() * PR_PI / 180;
 
-			Eigen::AngleAxisf ax(x, Eigen::Vector3f::UnitX());
-			Eigen::AngleAxisf ay(y, Eigen::Vector3f::UnitY());
-			Eigen::AngleAxisf az(z, Eigen::Vector3f::UnitZ());
+			Eigen::AngleAxisf ax(x, Vector3f::UnitX());
+			Eigen::AngleAxisf ay(y, Vector3f::UnitY());
+			Eigen::AngleAxisf az(z, Vector3f::UnitZ());
 
 			ok = true;
 			return az * ay * ax;

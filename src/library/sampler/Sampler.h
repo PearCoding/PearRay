@@ -8,8 +8,8 @@ public:
 	virtual ~Sampler() = default;
 
 	virtual float generate1D(uint32 index)			 = 0;
-	virtual Eigen::Vector2f generate2D(uint32 index) = 0;
-	virtual Eigen::Vector3f generate3D(uint32 index) = 0;
+	virtual Vector2f generate2D(uint32 index) = 0;
+	virtual Vector3f generate3D(uint32 index) = 0;
 
 	virtual void generate1Dv(uint32 index, vfloat& s1)
 	{

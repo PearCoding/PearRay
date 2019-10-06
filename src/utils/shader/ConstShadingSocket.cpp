@@ -27,9 +27,9 @@ float ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 
 /////////////////////////////////////
 
-ConstVectorShadingSocket::ConstVectorShadingSocket(const Eigen::Vector3f& f)
+ConstVectorShadingSocket::ConstVectorShadingSocket(const Vector3f& f)
 	: FloatVectorShadingSocket()
-	, mValue(f(0),f(1),f(2))
+	, mValue(f)
 {
 }
 

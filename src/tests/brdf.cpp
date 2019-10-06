@@ -13,43 +13,43 @@ using namespace PR;
 PR_BEGIN_TESTCASE(BRDF)
 PR_TEST("Reflection")
 {
-	auto N = Eigen::Vector3f(0, 1, 0);
-	auto V = Eigen::Vector3f(1, -1, 0).normalized();
+	auto N = Vector3f(0, 1, 0);
+	auto V = Vector3f(1, -1, 0).normalized();
 
 	auto R = Reflection::reflect(V.dot(N), N, V);
 
-	PR_CHECK_NEARLY_EQ(R, Eigen::Vector3f(V(0), -V(1), V(2)));
+	PR_CHECK_NEARLY_EQ(R, Vector3f(V(0), -V(1), V(2)));
 }
 
 PR_TEST("Refraction")
 {
-	auto N = Eigen::Vector3f(0, 1, 0);
-	auto V = Eigen::Vector3f(1, -1, 0).normalized();
+	auto N = Vector3f(0, 1, 0);
+	auto V = Vector3f(1, -1, 0).normalized();
 
 	auto R = Reflection::refract(0.9, V.dot(N), N, V);
 
-	PR_CHECK_NEARLY_EQ(R, Eigen::Vector3f(0.636396, -0.771362, 0));
+	PR_CHECK_NEARLY_EQ(R, Vector3f(0.636396, -0.771362, 0));
 }
 
 PR_TEST("Is Inside")
 {
-	auto N = Eigen::Vector3f(0, 1, 0);
+	auto N = Vector3f(0, 1, 0);
 
-	auto V1 = Eigen::Vector3f(-1, 1, 0).normalized();
+	auto V1 = Vector3f(-1, 1, 0).normalized();
 	PR_CHECK_TRUE(Reflection::is_inside(V1.dot(N)));
 
-	auto V2 = Eigen::Vector3f(-1, -1, 0).normalized();
+	auto V2 = Vector3f(-1, -1, 0).normalized();
 	PR_CHECK_FALSE(Reflection::is_inside(V2.dot(N)));
 }
 
 PR_TEST("Face Forward")
 {
-	auto N = Eigen::Vector3f(0, 1, 0);
+	auto N = Vector3f(0, 1, 0);
 
-	auto V1 = Eigen::Vector3f(-1, 1, 0).normalized();
-	PR_CHECK_NEARLY_EQ(Reflection::faceforward(V1.dot(N), N), Eigen::Vector3f(0, -1, 0));
+	auto V1 = Vector3f(-1, 1, 0).normalized();
+	PR_CHECK_NEARLY_EQ(Reflection::faceforward(V1.dot(N), N), Vector3f(0, -1, 0));
 
-	auto V2 = Eigen::Vector3f(-1, -1, 0).normalized();
+	auto V2 = Vector3f(-1, -1, 0).normalized();
 	PR_CHECK_NEARLY_EQ(Reflection::faceforward(V2.dot(N), N), N);
 }
 

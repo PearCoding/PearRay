@@ -2,12 +2,12 @@
 	:name 'example_sphere'
 	:camera 'Camera'
 	; Settings
-	(registry '/renderer/film/width' 500)
-	(registry '/renderer/film/height' 500)
+	(registry '/renderer/film/width' 400)
+	(registry '/renderer/film/height' 400)
 	(registry '/renderer/common/type' 'occlusion')
 	(registry '/renderer/common/max_ray_depth' 8)
 	(registry '/renderer/common/tile/mode' 0)
-	(registry '/renderer/common/sampler/aa/count' 4)
+	(registry '/renderer/common/sampler/aa/count' 2)
 	(registry '/renderer/common/sampler/aa/type' 3)
 	(registry '/renderer/common/sampler/lens/count' 1)
 	(registry '/renderer/common/sampler/lens/type' 3)

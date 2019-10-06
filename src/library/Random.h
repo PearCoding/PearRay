@@ -125,19 +125,19 @@ public:
 #endif
 	}
 
-	inline Eigen::Vector2f get2D()
+	inline Vector2f get2D()
 	{
-		return Eigen::Vector2f(getFloat(), getFloat());
+		return Vector2f(getFloat(), getFloat());
 	}
 
-	inline Eigen::Vector3f get3D()
+	inline Vector3f get3D()
 	{
-		return Eigen::Vector3f(getFloat(), getFloat(), getFloat());
+		return Vector3f(getFloat(), getFloat(), getFloat());
 	}
 
-	inline Eigen::Vector4f get4D()
+	inline Vector4f get4D()
 	{
-		return Eigen::Vector4f(getFloat(), getFloat(), getFloat(), getFloat());
+		return Vector4f(getFloat(), getFloat(), getFloat(), getFloat());
 	}
 
 	inline vuint32 get32v()

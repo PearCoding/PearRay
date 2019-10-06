@@ -22,7 +22,7 @@ PR_TEST("Store")
 	pht.Position[0] = 0;
 	pht.Position[1] = 1;
 	pht.Position[2] = 2;
-	
+
 	for(uint64 k = 0; k < PHOTONS; ++k) {
 		map.store(pht);
 	}
@@ -42,7 +42,7 @@ PR_TEST("Search")
 
 	Photon::Photon pht;
 	Random random(42);
-	
+
 	for(uint64 k = 0; k < PHOTONS; ++k) {
 		pht.Position[0] = random.getFloat();
 		pht.Position[1] = random.getFloat();
@@ -52,7 +52,7 @@ PR_TEST("Search")
 
 	Photon::PhotonSphere sphere;
 	sphere.MaxPhotons = PHOTONS;
-	sphere.Center = Eigen::Vector3f(0,0,0);
+	sphere.Center = Vector3f(0,0,0);
 	sphere.Distance2 = 4;
 
 	auto emptyAccum = [&](Spectrum& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2){};
@@ -64,7 +64,7 @@ PR_TEST("Search")
 		found);
 	PR_CHECK_EQ(found, sphere.MaxPhotons);
 
-	sphere.Center = Eigen::Vector3f(5,0,0);
+	sphere.Center = Vector3f(5,0,0);
 	map.estimateSphere(spec, sphere,
 		emptyAccum,
 		found);

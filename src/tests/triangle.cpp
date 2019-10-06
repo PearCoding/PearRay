@@ -8,23 +8,24 @@ using namespace PR;
 PR_BEGIN_TESTCASE(Triangle)
 PR_TEST("Intersects CCW")
 {
-	RayPackage in;
-	in.Origin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
-	in.Origin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
-	in.Origin[2] = simdpp::make_float(-1, -1, -1, -1);
-
-	in.Direction[0] = simdpp::make_float(0);
-	in.Direction[1] = simdpp::make_float(0);
-	in.Direction[2] = simdpp::make_float(1);
+	RayPackage in(Vector3fv(simdpp::make_float(0.5, 0.25, 0, 0.6),
+							simdpp::make_float(0.5, 0.75, 0, 0.6),
+							simdpp::make_float(-1, -1, -1, -1)),
+				  Vector3fv(simdpp::make_float(0),
+							simdpp::make_float(0),
+							simdpp::make_float(1)));
 
 	in.setupInverse();
-	
-	vfloat u, v, t;
+
+	const Vector3fv p0 = Vector3fv(vfloat(0), vfloat(0), vfloat(0));
+	const Vector3fv p1 = Vector3fv(vfloat(1), vfloat(0), vfloat(0));
+	const Vector3fv p2 = Vector3fv(vfloat(0), vfloat(1), vfloat(0));
+
+	Vector2fv uv;
+	vfloat t;
 	const bfloat res = Triangle::intersect(in,
-										   0, 0, 0,
-										   1, 0, 0,
-										   0, 1, 0,
-										   u, v, t);
+										   p0, p1, p2,
+										   uv, t);
 
 	PR_CHECK_TRUE(any(res));
 	PR_CHECK_FALSE(all(res));
@@ -37,23 +38,24 @@ PR_TEST("Intersects CCW")
 
 PR_TEST("Intersects CW")
 {
-	RayPackage in;
-	in.Origin[0] = simdpp::make_float(0.5, 0.25, 0, 0.6);
-	in.Origin[1] = simdpp::make_float(0.5, 0.75, 0, 0.6);
-	in.Origin[2] = simdpp::make_float(-1, -1, -1, -1);
-
-	in.Direction[0] = simdpp::make_float(0);
-	in.Direction[1] = simdpp::make_float(0);
-	in.Direction[2] = simdpp::make_float(1);
+	RayPackage in(Vector3fv(simdpp::make_float(0.5, 0.25, 0, 0.6),
+							simdpp::make_float(0.5, 0.75, 0, 0.6),
+							simdpp::make_float(-1, -1, -1, -1)),
+				  Vector3fv(simdpp::make_float(0),
+							simdpp::make_float(0),
+							simdpp::make_float(1)));
 
 	in.setupInverse();
 
-	vfloat u, v, t;
+	const Vector3fv p0 = Vector3fv(vfloat(0), vfloat(0), vfloat(0));
+	const Vector3fv p1 = Vector3fv(vfloat(0), vfloat(1), vfloat(0));
+	const Vector3fv p2 = Vector3fv(vfloat(1), vfloat(0), vfloat(0));
+
+	Vector2fv uv;
+	vfloat t;
 	const bfloat res = Triangle::intersect(in,
-										   0, 0, 0,
-										   0, 1, 0,
-										   1, 0, 0,
-										   u, v, t);
+										   p0, p1, p2,
+										   uv, t);
 
 	PR_CHECK_TRUE(any(res));
 	PR_CHECK_FALSE(all(res));

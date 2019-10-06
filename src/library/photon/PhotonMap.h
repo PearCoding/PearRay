@@ -17,9 +17,9 @@ namespace Photon {
 struct PhotonSphere // Setup for the estimation query
 {
 	uint64 MaxPhotons;
-	Eigen::Vector3f Normal;
+	Vector3f Normal;
 	float SqueezeWeight;
-	Eigen::Vector3f Center;
+	Vector3f Center;
 	float Distance2;
 };
 

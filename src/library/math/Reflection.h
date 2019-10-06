@@ -33,7 +33,7 @@ public:
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-	inline static Eigen::Vector3f reflect(float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
+	inline static Vector3f reflect(float NdotV, const Vector3f& N, const Vector3f& V)
 	{
 		if (is_inside(NdotV)) // Backfacing
 			return (V + N * 2 * NdotV).normalized();
@@ -50,7 +50,7 @@ public:
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-	inline static Eigen::Vector3f refract(float eta, float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V)
+	inline static Vector3f refract(float eta, float NdotV, const Vector3f& N, const Vector3f& V)
 	{
 		const float NdotT = refraction_angle(NdotV, eta);
 
@@ -69,13 +69,13 @@ public:
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-	inline static Eigen::Vector3f refract(float eta, float NdotV, const Eigen::Vector3f& N, const Eigen::Vector3f& V, bool& total)
+	inline static Vector3f refract(float eta, float NdotV, const Vector3f& N, const Vector3f& V, bool& total)
 	{
 		const float NdotT = refraction_angle(NdotV, eta);
 
 		total = NdotT < 0.0f;
 		if (total) //TOTAL REFLECTION
-			return Eigen::Vector3f(0, 0, 0);
+			return Vector3f(0, 0, 0);
 		else
 			return refract(eta, NdotV, NdotT, N, V);
 	}
@@ -90,8 +90,8 @@ public:
 		* @param V Unit vector pointing TO the surface point.
 		* @return Unit vector pointing FROM the surface point outwards.
 		*/
-	inline static Eigen::Vector3f refract(float eta, float NdotV, float NdotT,
-										  const Eigen::Vector3f& N, const Eigen::Vector3f& V)
+	inline static Vector3f refract(float eta, float NdotV, float NdotT,
+										  const Vector3f& N, const Vector3f& V)
 	{
 		const float t = -eta * NdotV - NdotT;
 		return (V * eta + N * t).normalized();
@@ -101,7 +101,7 @@ public:
 		* @param NdotV dot product between normal and incident view vector
 		* @param N Normal of the surface point.
 		*/
-	inline static Eigen::Vector3f faceforward(float NdotV, const Eigen::Vector3f& N)
+	inline static Vector3f faceforward(float NdotV, const Vector3f& N)
 	{
 		return is_inside(NdotV) ? -N : N;
 	}
@@ -120,7 +120,7 @@ public:
 		* @param L Unit vector pointing FROM the surface point outwards.
 		* @return Unit vector pointing FROM the surface point outwards. (Between L and V)
 		 */
-	inline static Eigen::Vector3f halfway(const Eigen::Vector3f& V, const Eigen::Vector3f& L)
+	inline static Vector3f halfway(const Vector3f& V, const Vector3f& L)
 	{
 		return (L - V).normalized();
 	}

@@ -25,7 +25,7 @@ public:
 	};
 
 	BoundingBox();
-	BoundingBox(const Eigen::Vector3f& upperbound, const Eigen::Vector3f& lowerbound);
+	BoundingBox(const Vector3f& upperbound, const Vector3f& lowerbound);
 	BoundingBox(float width, float height, float depth);
 
 	BoundingBox(const BoundingBox& other) = default;
@@ -33,15 +33,15 @@ public:
 	BoundingBox& operator=(const BoundingBox& other) = default;
 	BoundingBox& operator=(BoundingBox&& other) = default;
 
-	inline const Eigen::Vector3f& upperBound() const { return mUpperBound; }
-	inline Eigen::Vector3f& upperBound() { return mUpperBound; }
-	inline void setUpperBound(const Eigen::Vector3f& bound) { mUpperBound = bound; }
+	inline const Vector3f& upperBound() const { return mUpperBound; }
+	inline Vector3f& upperBound() { return mUpperBound; }
+	inline void setUpperBound(const Vector3f& bound) { mUpperBound = bound; }
 
-	inline const Eigen::Vector3f& lowerBound() const { return mLowerBound; }
-	inline Eigen::Vector3f& lowerBound() { return mLowerBound; }
-	inline void setLowerBound(const Eigen::Vector3f& bound) { mLowerBound = bound; }
+	inline const Vector3f& lowerBound() const { return mLowerBound; }
+	inline Vector3f& lowerBound() { return mLowerBound; }
+	inline void setLowerBound(const Vector3f& bound) { mLowerBound = bound; }
 
-	inline Eigen::Vector3f center() const
+	inline Vector3f center() const
 	{
 		return mLowerBound + (mUpperBound - mLowerBound) * 0.5f;
 	}
@@ -107,7 +107,7 @@ public:
 	 */
 	void inflate(float eps = 0.0001f, bool maxDir = false);
 
-	inline bool contains(const Eigen::Vector3f& point) const
+	inline bool contains(const Vector3f& point) const
 	{
 		return (mUpperBound.array() <= point.array()).all() && (mLowerBound.array() >= point.array()).all();
 	}
@@ -129,18 +129,18 @@ public:
 	};
 	IntersectionRangeV intersectsRange(const RayPackage& in) const;
 
-	FaceSide getIntersectionSide(const Eigen::Vector3f& intersection) const;
+	FaceSide getIntersectionSide(const Vector3f& intersection) const;
 
-	void combine(const Eigen::Vector3f& point);
+	void combine(const Vector3f& point);
 	void combine(const BoundingBox& other);
 
-	inline void shift(const Eigen::Vector3f& point)
+	inline void shift(const Vector3f& point)
 	{
 		mUpperBound += point;
 		mLowerBound += point;
 	}
 
-	inline BoundingBox combined(const Eigen::Vector3f& point) const
+	inline BoundingBox combined(const Vector3f& point) const
 	{
 		BoundingBox tmp = *this;
 		tmp.combine(point);
@@ -154,7 +154,7 @@ public:
 		return tmp;
 	}
 
-	inline BoundingBox shifted(const Eigen::Vector3f& point) const
+	inline BoundingBox shifted(const Vector3f& point) const
 	{
 		BoundingBox tmp = *this;
 		tmp.shift(point);
@@ -164,7 +164,7 @@ public:
 	Plane getFace(FaceSide side) const;
 
 private:
-	Eigen::Vector3f mUpperBound;
-	Eigen::Vector3f mLowerBound;
+	Vector3f mUpperBound;
+	Vector3f mLowerBound;
 };
 } // namespace PR

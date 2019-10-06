@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include <Eigen/Dense>
 
 namespace PR {
 class Material;
@@ -14,12 +13,12 @@ public:
 	{
 	}
 
-	Eigen::Vector3f V[3];
-	Eigen::Vector3f N[3];
-	Eigen::Vector2f UV[3];
+	Vector3f V[3];
+	Vector3f N[3];
+	Vector2f UV[3];
 
 	inline void interpolate(float u, float v,
-							Eigen::Vector3f& vec, Eigen::Vector3f& norm, Eigen::Vector2f& uv) const
+							Vector3f& vec, Vector3f& norm, Vector2f& uv) const
 	{
 		vec = V[1] * u + V[2] * v + V[0] * (1 - u - v);
 
@@ -31,4 +30,4 @@ public:
 
 	uint32 MaterialSlot;
 };
-}
+} // namespace PR

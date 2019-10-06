@@ -22,20 +22,20 @@ float StratifiedSampler::generate1D(uint32 index)
 }
 
 // Need better strategy for 2D and 3D
-Eigen::Vector2f StratifiedSampler::generate2D(uint32 index)
+Vector2f StratifiedSampler::generate2D(uint32 index)
 {
 	auto x = Projection::stratified(mRandom.getFloat(), index % m2D_X, mSamples);
 	auto y = Projection::stratified(mRandom.getFloat(), index / m2D_X, mSamples);
 
-	return Eigen::Vector2f(x, y);
+	return Vector2f(x, y);
 }
 
-Eigen::Vector3f StratifiedSampler::generate3D(uint32 index)
+Vector3f StratifiedSampler::generate3D(uint32 index)
 {
 	auto x = Projection::stratified(mRandom.getFloat(), index, mSamples);
 	auto y = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
 	auto z = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
 
-	return Eigen::Vector3f(x, y, z);
+	return Vector3f(x, y, z);
 }
 }

@@ -7,8 +7,6 @@
 #include <vector>
 
 namespace PR {
-class ToneMapper;
-
 struct IM_ChannelSetting1D {
 	std::string Name;
 	OutputBuffer::Variable1D Variable;

@@ -66,7 +66,7 @@ std::ostream& Logger::startEntry(LogLevel level) {
 std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c) {
 	if (mIgnore)
 		return 0;
-		
+
 	if (!mLogger.isQuiet())
 		std::cout.put(c);
 
@@ -79,17 +79,17 @@ std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c)
 	return 0;
 }
 
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v) {
+std::ostream& operator << (std::ostream& stream, const Vector2f& v) {
 	stream << v.x() << ", " << v.y();
 	return stream;
 }
 
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v) {
+std::ostream& operator << (std::ostream& stream, const Vector2i& v) {
 	stream << v.x() << ", " << v.y();
 	return stream;
 }
 
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v) {
+std::ostream& operator << (std::ostream& stream, const Vector3f& v) {
 	stream << v.x() << ", " << v.y() << ", " << v.z();
 	return stream;
 }

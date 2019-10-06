@@ -75,7 +75,7 @@ inline Face TriMesh::getFace(uint32 index) const
 			f.UV[j](0) = mUVs[0][ind[j]];
 			f.UV[j](1) = mUVs[1][ind[j]];
 		} else {
-			f.UV[j] = Eigen::Vector2f(0, 0);
+			f.UV[j] = Vector2f(0, 0);
 		}
 	}
 

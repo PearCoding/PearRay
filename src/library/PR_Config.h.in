@@ -225,48 +225,51 @@
 
 namespace PR
 {
-	inline void pr_Noop()
-	{
-	}
+inline void pr_Noop()
+{
+}
 
-	typedef signed char int8;
-	typedef unsigned char uint8;
+typedef signed char int8;
+typedef unsigned char uint8;
 
-	typedef signed short int16;
-	typedef unsigned short uint16;
+typedef signed short int16;
+typedef unsigned short uint16;
 
-	typedef signed int int32;
-	typedef unsigned int uint32;
+typedef signed int int32;
+typedef unsigned int uint32;
 
 #if defined __GLIBC_HAVE_LONG_LONG
-	__extension__ typedef signed long long int int64;
-	__extension__ typedef unsigned long long int uint64;
+__extension__ typedef signed long long int int64;
+__extension__ typedef unsigned long long int uint64;
 #else
-	typedef signed long int int64;
-	typedef unsigned long int uint64;
+typedef signed long int int64;
+typedef unsigned long int uint64;
 #endif
 
-	typedef std::chrono::high_resolution_clock::time_point TimePoint;
-	typedef uint32 EntityID;
-	typedef uint32 DataRefID;
+typedef std::chrono::high_resolution_clock::time_point TimePoint;
+typedef uint32 EntityID;
+typedef uint32 DataRefID;
 
-	constexpr float PR_EPSILON = 0.00001f;
+constexpr float PR_EPSILON = 0.00001f;
 
 #ifdef M_PI
-	constexpr float PR_PI = M_PI;
+constexpr float PR_PI = M_PI;
 #else
-	constexpr float PR_PI = 3.14159265358979323846;
+constexpr float PR_PI = 3.14159265358979323846;
 #endif
 
 #ifdef M_1_PI
-	constexpr float PR_1_PI = M_1_PI;
+constexpr float PR_1_PI = M_1_PI;
 #else
-	constexpr float PR_1_PI = 1/PR_PI;
+constexpr float PR_1_PI = 1/PR_PI;
 #endif
 
-	constexpr float PR_NM_TO_M_F = 1e-9f;
-	constexpr double PR_NM_TO_M = 1e-9;
+constexpr float PR_NM_TO_M_F = 1e-9f;
+constexpr double PR_NM_TO_M = 1e-9;
 
-	constexpr size_t INTERSECTION_GROUP_SIZE = 64;
-	constexpr size_t MATERIAL_GROUP_SIZE = 64;
+constexpr size_t INTERSECTION_GROUP_SIZE = 64;
+constexpr size_t MATERIAL_GROUP_SIZE = 64;
+
 }
+
+#include "VectorGlue.inl"

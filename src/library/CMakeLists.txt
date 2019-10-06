@@ -11,6 +11,7 @@ SET(PR_Src
   LogListener.h
   Random.h
   Variant.h
+  VectorGlue.inl
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h
   buffer/FrameBuffer.h
@@ -63,7 +64,6 @@ SET(PR_Src
   math/SIMathUtils.h
   math/SphereMap.h
   math/Tangent.h
-  math/Vector.h
   mesh/TriMesh.cpp
   mesh/TriMesh.h
   mesh/TriMesh.inl

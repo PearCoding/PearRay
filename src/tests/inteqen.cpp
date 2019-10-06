@@ -49,7 +49,7 @@ PR_TEST("Equal Energy")
 		while (!renderer->isFinished()) {
 		}
 
-		renderer->output()->getFragment(Eigen::Vector2i(SPX, SPY), diOutput);
+		renderer->output()->getFragment(Vector2i(SPX, SPY), diOutput);
 	}
 
 	std::cout << "Bi-Direct>" << std::endl;
@@ -65,7 +65,7 @@ PR_TEST("Equal Energy")
 		while (!renderer->isFinished()) {
 		}
 
-		renderer->output()->getFragment(Eigen::Vector2i(SPX, SPY), bidiOutput);
+		renderer->output()->getFragment(Vector2i(SPX, SPY), bidiOutput);
 	}
 
 	std::cout << "PPM>" << std::endl;
@@ -82,7 +82,7 @@ PR_TEST("Equal Energy")
 		while (!renderer->isFinished()) {
 		}
 
-		renderer->output()->getFragment(Eigen::Vector2i(SPX, SPY), ppmOutput);
+		renderer->output()->getFragment(Vector2i(SPX, SPY), ppmOutput);
 	}
 
 	const float dif   = diOutput.luminousFlux();

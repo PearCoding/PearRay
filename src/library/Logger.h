@@ -65,9 +65,9 @@ private:
 	std::ostream mStream;
 };
 
-PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v);
-PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v);
-PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Vector2f& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Vector2i& v);
+PR_LIB std::ostream& operator << (std::ostream& stream, const Vector3f& v);
 PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v);
 }
 

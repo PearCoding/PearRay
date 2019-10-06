@@ -47,7 +47,7 @@ PR_TEST("Direct Integrator")
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
 			Spectrum spec(renderFactory->spectrumDescriptor());
-			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
+			renderer->output()->getFragment(Vector2i(xpos[i], ypos[i]), spec);
 			output1.push_back(spec);
 		}
 	}
@@ -63,7 +63,7 @@ PR_TEST("Direct Integrator")
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
 			Spectrum spec(renderFactory->spectrumDescriptor());
-			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
+			renderer->output()->getFragment(Vector2i(xpos[i], ypos[i]), spec);
 			output2.push_back(spec);
 		}
 	}
@@ -73,7 +73,7 @@ PR_TEST("Direct Integrator")
 	uint32 i = 0;
 	while(it1 != output1.end() && it2 != output2.end()) {
 		const float dif = Spectrum(*it1 - *it2).sqrSum();
-		std::cout << "DI [" << xpos[i] << "|" << ypos[i] << "] " << dif 
+		std::cout << "DI [" << xpos[i] << "|" << ypos[i] << "] " << dif
 				  << " (" << it1->max() << "|" << it2->max() << ")" << std::endl;
 		PR_CHECK_NEARLY_EQ_EPS(dif, 0, EPS);
 
@@ -108,7 +108,7 @@ PR_TEST("Bi-Direct Integrator")
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
 			Spectrum spec(renderFactory->spectrumDescriptor());
-			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
+			renderer->output()->getFragment(Vector2i(xpos[i], ypos[i]), spec);
 			output1.push_back(spec);
 		}
 	}
@@ -124,7 +124,7 @@ PR_TEST("Bi-Direct Integrator")
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i) {
 			Spectrum spec(renderFactory->spectrumDescriptor());
-			renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]), spec);
+			renderer->output()->getFragment(Vector2i(xpos[i], ypos[i]), spec);
 			output2.push_back(spec);
 		}
 	}
@@ -134,7 +134,7 @@ PR_TEST("Bi-Direct Integrator")
 	uint32 i = 0;
 	while(it1 != output1.end() && it2 != output2.end()) {
 		const float dif = Spectrum(*it1 - *it2).sqrSum();
-		std::cout << "BIDI [" << xpos[i] << "|" << ypos[i] << "] " << dif 
+		std::cout << "BIDI [" << xpos[i] << "|" << ypos[i] << "] " << dif
 				  << " (" << it1->max() << "|" << it2->max() << ")" << std::endl;
 		PR_CHECK_NEARLY_EQ_EPS(dif, 0, EPS);
 
@@ -175,7 +175,7 @@ PR_TEST("Bi-Direct Integrator")
 		}
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i)
-			output1[i] = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]));
+			output1[i] = renderer->output()->getFragment(Vector2i(xpos[i], ypos[i]));
 	}
 
 	{ // 2
@@ -193,7 +193,7 @@ PR_TEST("Bi-Direct Integrator")
 		}
 
 		for (uint32 i  = 0; i < POS_COUNT; ++i)
-			output2[i] = renderer->output()->getFragment(Eigen::Vector2i(xpos[i], ypos[i]));
+			output2[i] = renderer->output()->getFragment(Vector2i(xpos[i], ypos[i]));
 	}
 
 	for (uint32 i = 0; i < POS_COUNT; ++i) {

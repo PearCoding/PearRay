@@ -154,23 +154,23 @@ float HaltonQMCSampler::generate1D(uint32 index)
 		return halton(index, mBaseX);
 }
 
-Eigen::Vector2f HaltonQMCSampler::generate2D(uint32 index)
+Vector2f HaltonQMCSampler::generate2D(uint32 index)
 {
 	if (index < mSamples)
-		return Eigen::Vector2f(mBaseXSamples[index % mSamples], mBaseYSamples[index % mSamples]);
+		return Vector2f(mBaseXSamples[index % mSamples], mBaseYSamples[index % mSamples]);
 	else // To allow adaptive methods with higher samples
-		return Eigen::Vector2f(halton(index, mBaseX),
+		return Vector2f(halton(index, mBaseX),
 							   halton(index, mBaseY));
 }
 
-Eigen::Vector3f HaltonQMCSampler::generate3D(uint32 index)
+Vector3f HaltonQMCSampler::generate3D(uint32 index)
 {
 	if (index < mSamples)
-		return Eigen::Vector3f(mBaseXSamples[index % mSamples],
+		return Vector3f(mBaseXSamples[index % mSamples],
 							   mBaseYSamples[index % mSamples],
 							   mBaseZSamples[index % mSamples]);
 	else // To allow adaptive methods with higher samples
-		return Eigen::Vector3f(halton(index, mBaseX),
+		return Vector3f(halton(index, mBaseX),
 							   halton(index, mBaseY),
 							   halton(index, mBaseZ));
 }

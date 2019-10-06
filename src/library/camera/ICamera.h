@@ -6,7 +6,7 @@
 
 namespace PR {
 struct CameraSample {
-	Eigen::Vector2i SensorSize; // Full Size (Width and Height)
+	Vector2i SensorSize; // Full Size (Width and Height)
 	float Pixel[2];
 	float R[2];
 	uint32 PixelIndex;

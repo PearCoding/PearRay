@@ -71,13 +71,13 @@ void TriMesh::buildTree(const std::string& file)
 								const uint32 ind2 = mesh->mIndices[1][f];
 								const uint32 ind3 = mesh->mIndices[2][f];
 
-								Eigen::Vector3f p1 = Eigen::Vector3f(mesh->mVertices[0][ind1],
+								Vector3f p1 = Vector3f(mesh->mVertices[0][ind1],
 																	mesh->mVertices[1][ind1],
 																	mesh->mVertices[2][ind1]);
-								Eigen::Vector3f p2 = Eigen::Vector3f(mesh->mVertices[0][ind2],
+								Vector3f p2 = Vector3f(mesh->mVertices[0][ind2],
 																	mesh->mVertices[1][ind2],
 																	mesh->mVertices[2][ind2]);
-								Eigen::Vector3f p3 = Eigen::Vector3f(mesh->mVertices[0][ind3],
+								Vector3f p3 = Vector3f(mesh->mVertices[0][ind3],
 																	mesh->mVertices[1][ind3],
 																	mesh->mVertices[2][ind3]);
 								return Triangle::getBoundingBox(p1,p2,p3); },
@@ -117,30 +117,28 @@ void TriMesh::loadTree(const std::string& file)
 		mBoundingBox = mKDTree->boundingBox();
 }
 
-float TriMesh::faceArea(uint32 f, const Eigen::Affine3f& transform) const
+float TriMesh::faceArea(uint32 f, const Eigen::Affine3f& tm) const
 {
 	const uint32 ind1 = mIndices[0][f];
 	const uint32 ind2 = mIndices[1][f];
 	const uint32 ind3 = mIndices[2][f];
 
-	float p1x, p1y, p1z;
-	transformV(transform.matrix(),
-			   mVertices[0][ind1], mVertices[1][ind1], mVertices[2][ind1],
-			   p1x, p1y, p1z);
+	const Vector3f p1 = Transform::apply(tm.matrix(),
+										 Vector3f(mVertices[0][ind1],
+												  mVertices[1][ind1],
+												  mVertices[2][ind1]));
 
-	float p2x, p2y, p2z;
-	transformV(transform.matrix(),
-			   mVertices[0][ind2], mVertices[1][ind2], mVertices[2][ind2],
-			   p2x, p2y, p2z);
+	const Vector3f p2 = Transform::apply(tm.matrix(),
+										 Vector3f(mVertices[0][ind2],
+												  mVertices[1][ind2],
+												  mVertices[2][ind2]));
 
-	float p3x, p3y, p3z;
-	transformV(transform.matrix(),
-			   mVertices[0][ind3], mVertices[1][ind3], mVertices[2][ind3],
-			   p3x, p3y, p3z);
+	const Vector3f p3 = Transform::apply(tm.matrix(),
+										 Vector3f(mVertices[0][ind3],
+												  mVertices[1][ind3],
+												  mVertices[2][ind3]));
 
-	return Triangle::surfaceArea(p1x, p1y, p1z,
-								 p2x, p2y, p2z,
-								 p3x, p3y, p3z);
+	return Triangle::surfaceArea(p1, p2, p3);
 }
 
 float TriMesh::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
@@ -183,12 +181,14 @@ bool TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 							 const uint32 i2 = mIndices[1][f];
 							 const uint32 i3 = mIndices[2][f];
 
-							 float u, v, t;
-							 bool hit = Triangle::intersect(in2,
-															mVertices[0][i1], mVertices[1][i1], mVertices[2][i1],
-															mVertices[0][i2], mVertices[1][i2], mVertices[2][i2],
-															mVertices[0][i3], mVertices[1][i3], mVertices[2][i3],
-															u, v, t); // Major bottleneck!
+							 float t;
+							 Vector2f uv;
+							 bool hit = Triangle::intersect(
+								 in2,
+								 Vector3f(mVertices[0][i1], mVertices[1][i1], mVertices[2][i1]),
+								 Vector3f(mVertices[0][i2], mVertices[1][i2], mVertices[2][i2]),
+								 Vector3f(mVertices[0][i3], mVertices[1][i3], mVertices[2][i3]),
+								 uv, t); // Major bottleneck!
 
 							 if (!hit)
 								 return;
@@ -197,12 +197,12 @@ bool TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 
 							 if (features() & TMF_HAS_UV) {
 								 for (int i = 0; i < 2; ++i)
-									 out2.UV[i] = mUVs[i][i2] * u
-												  + mUVs[i][i3] * v
-												  + mUVs[i][i1] * (1 - u - v);
+									 out2.UV[i] = mUVs[i][i2] * uv(0)
+												  + mUVs[i][i3] * uv(1)
+												  + mUVs[i][i1] * (1 - uv(0) - uv(1));
 							 } else {
-								 out2.UV[0] = u;
-								 out2.UV[1] = v;
+								 out2.UV[0] = uv(0);
+								 out2.UV[1] = uv(1);
 							 }
 
 							 if (features() & TMF_HAS_MATERIAL)
@@ -221,30 +221,43 @@ bool TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 	return mKDTree
 		->checkCollision(in, out,
 						 [this](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
-							 vfloat u, v, t;
+							 Vector2fv uv;
+							 vfloat t;
 
 							 const uint32 i1 = mIndices[0][f];
 							 const uint32 i2 = mIndices[1][f];
 							 const uint32 i3 = mIndices[2][f];
 
-							 bfloat hits = Triangle::intersect(in2,
-															   mVertices[0][i1], mVertices[1][i1], mVertices[2][i1],
-															   mVertices[0][i2], mVertices[1][i2], mVertices[2][i2],
-															   mVertices[0][i3], mVertices[1][i3], mVertices[2][i3],
-															   u, v,
-															   t); // Major bottleneck!
+							 const Vector3fv p0 = promote(
+								 Vector3f(mVertices[0][i1],
+										  mVertices[1][i1],
+										  mVertices[2][i1]));
+							 const Vector3fv p1 = promote(
+								 Vector3f(mVertices[0][i2],
+										  mVertices[1][i2],
+										  mVertices[2][i2]));
+							 const Vector3fv p2 = promote(
+								 Vector3f(mVertices[0][i3],
+										  mVertices[1][i3],
+										  mVertices[2][i3]));
+
+							 bfloat hits = Triangle::intersect(
+								 in2,
+								 p0, p1, p2,
+								 uv,
+								 t); // Major bottleneck!
 
 							 const vfloat inf = simdpp::make_float(std::numeric_limits<float>::infinity());
 							 out2.HitDistance = simdpp::blend(t, inf, hits);
 
 							 if (features() & TMF_HAS_UV) {
 								 for (int i = 0; i < 2; ++i)
-									 out2.UV[i] = mUVs[i][i2] * u
-												  + mUVs[i][i3] * v
-												  + mUVs[i][i1] * (1 - u - v);
+									 out2.UV[i] = mUVs[i][i2] * uv(0)
+												  + mUVs[i][i3] * uv(1)
+												  + mUVs[i][i1] * (1 - uv(0) - uv(1));
 							 } else {
-								 out2.UV[0] = u;
-								 out2.UV[1] = v;
+								 out2.UV[0] = uv(0);
+								 out2.UV[1] = uv(1);
 							 }
 
 							 if (features() & TMF_HAS_MATERIAL)
@@ -265,25 +278,20 @@ float TriMesh::collisionCost() const
 void TriMesh::sampleFacePoint(float rnd1, float rnd2, float rnd3,
 							  GeometryPoint& p, float& pdfA) const
 {
-	uint32 fi		  = (rnd1 * (faceCount() - 1));
-	Eigen::Vector2f b = Projection::triangle(rnd2, rnd3);
+	uint32 fi  = (rnd1 * (faceCount() - 1));
+	Vector2f b = Projection::triangle(rnd2, rnd3);
 
 	Face f = getFace(fi);
 
-	Eigen::Vector3f po, ng;
-	Eigen::Vector2f uvw;
-	f.interpolate(b(0), b(1), po, ng, uvw);
+	Vector3f po, ng;
+	Vector2f uv;
+	f.interpolate(b(0), b(1), po, ng, uv);
 
-	p.P[0]		 = po(0);
-	p.P[1]		 = po(1);
-	p.P[2]		 = po(2);
-	p.Ng[0]		 = ng(0);
-	p.Ng[1]		 = ng(1);
-	p.Ng[2]		 = ng(2);
-	p.UVW[0]	 = uvw(0);
-	p.UVW[1]	 = uvw(1);
+	p.P			 = po;
+	p.Ng		 = ng;
+	p.UVW		 = Vector3f(uv(0), uv(1), 0);
 	p.MaterialID = f.MaterialSlot;
 
-	pdfA = 1.0f / (mIndices[0].size() * Triangle::surfaceArea(f.V[0](0), f.V[0](1), f.V[0](2), f.V[1](0), f.V[1](1), f.V[1](2), f.V[2](0), f.V[2](1), f.V[2](2)));
+	pdfA = 1.0f / (mIndices[0].size() * Triangle::surfaceArea(f.V[0], f.V[1], f.V[2]));
 }
 } // namespace PR

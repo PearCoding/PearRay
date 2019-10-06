@@ -131,7 +131,7 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	const float y = py + (aa(1) - 0.5f + mContext.offsetY());
 
 	CameraSample cameraSample;
-	cameraSample.SensorSize		 = Eigen::Vector2i(mFullWidth, mFullHeight);
+	cameraSample.SensorSize		 = Vector2i(mFullWidth, mFullHeight);
 	cameraSample.Pixel[0]		 = x;
 	cameraSample.Pixel[1]		 = y;
 	cameraSample.R[0]			 = lens(0);

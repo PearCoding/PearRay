@@ -30,9 +30,9 @@ PR_TEST("Size")
 PR_TEST("Bounds")
 {
 	BoundingBox box(2, 2, 2);
-	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(-1, -1, -1));
-	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(1, 1, 1));
-	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(-1, -1, -1));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(1, 1, 1));
+	PR_CHECK_EQ(box.center(), Vector3f(0, 0, 0));
 }
 
 PR_TEST("Clip Inside")
@@ -44,7 +44,7 @@ PR_TEST("Clip Inside")
 	PR_CHECK_EQ(box.width(), 2);
 	PR_CHECK_EQ(box.height(), 2);
 	PR_CHECK_EQ(box.depth(), 2);
-	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.center(), Vector3f(0, 0, 0));
 }
 
 PR_TEST("Clip Outside")
@@ -56,224 +56,213 @@ PR_TEST("Clip Outside")
 	PR_CHECK_EQ(box.width(), 1);
 	PR_CHECK_EQ(box.height(), 1);
 	PR_CHECK_EQ(box.depth(), 1);
-	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.center(), Vector3f(0, 0, 0));
 }
 
 PR_TEST("Clip Zero")
 {
-	BoundingBox box(Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(1, 1, 1));
-	BoundingBox parent(Eigen::Vector3f(-1, -1, -1), Eigen::Vector3f(0, 0, 0));
+	BoundingBox box(Vector3f(0, 0, 0), Vector3f(1, 1, 1));
+	BoundingBox parent(Vector3f(-1, -1, -1), Vector3f(0, 0, 0));
 
 	box.clipBy(parent);
 	PR_CHECK_EQ(box.width(), 0);
 	PR_CHECK_EQ(box.height(), 0);
 	PR_CHECK_EQ(box.depth(), 0);
-	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(0, 0, 0));
-	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(0, 0, 0));
 }
 
 PR_TEST("Clip Left Half")
 {
-	BoundingBox box(Eigen::Vector3f(0, 1, 2), Eigen::Vector3f(2, 3, 4));
-	BoundingBox parent(Eigen::Vector3f(-1, 0, 1), Eigen::Vector3f(1, 2, 3));
+	BoundingBox box(Vector3f(0, 1, 2), Vector3f(2, 3, 4));
+	BoundingBox parent(Vector3f(-1, 0, 1), Vector3f(1, 2, 3));
 
 	box.clipBy(parent);
 	PR_CHECK_EQ(box.width(), 1);
 	PR_CHECK_EQ(box.height(), 1);
 	PR_CHECK_EQ(box.depth(), 1);
-	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(0, 1, 2));
-	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(1, 2, 3));
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(0, 1, 2));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(1, 2, 3));
 }
 
 PR_TEST("Clip Right Half")
 {
-	BoundingBox box(Eigen::Vector3f(-2, -3, -4), Eigen::Vector3f(1, 0, -1));
-	BoundingBox parent(Eigen::Vector3f(-1, -2, -3), Eigen::Vector3f(1, 2, 3));
+	BoundingBox box(Vector3f(-2, -3, -4), Vector3f(1, 0, -1));
+	BoundingBox parent(Vector3f(-1, -2, -3), Vector3f(1, 2, 3));
 
 	box.clipBy(parent);
 	PR_CHECK_EQ(box.width(), 2);
 	PR_CHECK_EQ(box.height(), 2);
 	PR_CHECK_EQ(box.depth(), 2);
-	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(-1, -2, -3));
-	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(1, 0, -1));
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(-1, -2, -3));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(1, 0, -1));
 }
 
 PR_TEST("Inflate")
 {
 	BoundingBox box(0, 0, 0);
 	box.inflate(0.1);
-	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(-0.1, -0.1, -0.1));
-	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(0.1, 0.1, 0.1));
-	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(-0.1, -0.1, -0.1));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(0.1, 0.1, 0.1));
+	PR_CHECK_EQ(box.center(), Vector3f(0, 0, 0));
 }
 
 PR_TEST("Inflate Max")
 {
 	BoundingBox box(0, 0, 0);
 	box.inflate(0.1, true);
-	PR_CHECK_EQ(box.lowerBound(), Eigen::Vector3f(0, 0, 0));
-	PR_CHECK_EQ(box.upperBound(), Eigen::Vector3f(0.1, 0.1, 0.1));
-	PR_CHECK_EQ(box.center(), Eigen::Vector3f(0.05, 0.05, 0.05));
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(0, 0, 0));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(0.1, 0.1, 0.1));
+	PR_CHECK_EQ(box.center(), Vector3f(0.05, 0.05, 0.05));
 }
 
 PR_TEST("Intersects Left")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(-2, 0, 0,
-			1, 0, 0);
+	Ray ray(Vector3f(-2, 0, 0),
+			Vector3f(1, 0, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Left);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Left);
 }
 
 PR_TEST("Intersects Right Inside")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, 0, 0,
-			1, 0, 0);
+	Ray ray(Vector3f(0, 0, 0),
+			Vector3f(1, 0, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Right);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Right);
 }
 
 PR_TEST("Intersects Right")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(2, 0, 0,
-			-1, 0, 0);
+	Ray ray(Vector3f(2, 0, 0),
+			Vector3f(-1, 0, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Right);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Right);
 }
 
 PR_TEST("Intersects Front")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, 0, -2,
-			0, 0, 1);
+	Ray ray(Vector3f(0, 0, -2),
+			Vector3f(0, 0, 1));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Front);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Front);
 }
 
 PR_TEST("Intersects Back Inside")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, 0, 0,
-			0, 0, 1);
+	Ray ray(Vector3f(0, 0, 0),
+			Vector3f(0, 0, 1));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Back);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Back);
 }
 
 PR_TEST("Intersects Back")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, 0, 2,
-			0, 0, -1);
+	Ray ray(Vector3f(0, 0, 2),
+			Vector3f(0, 0, -1));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Back);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Back);
 }
 
 PR_TEST("Intersects Bottom")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, -2, 0,
-			0, 1, 0);
+	Ray ray(Vector3f(0, -2, 0),
+			Vector3f(0, 1, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Bottom);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Bottom);
 }
 
 PR_TEST("Intersects Top Inside")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, 0, 0,
-			0, 1, 0);
+	Ray ray(Vector3f(0, 0, 0),
+			Vector3f(0, 1, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Top);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Top);
 }
 
 PR_TEST("Intersects Top")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(0, 2, 0,
-			0, -1, 0);
+	Ray ray(Vector3f(0, 2, 0),
+			Vector3f(0, -1, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Top);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Top);
 }
 
 PR_TEST("Intersects Complex")
 {
-	Eigen::Vector3f point = Eigen::Vector3f(0, 1, 0);
+	Vector3f point = Vector3f(0, 1, 0);
 	BoundingBox box(2, 2, 2);
-	Ray ray(1, 2, 0,
-			-1, -1, 0);
+	Ray ray(Vector3f(1, 2, 0),
+			Vector3f(-1, -1, 0));
 
 	SingleCollisionOutput s;
 	box.intersects(ray, s);
 	PR_CHECK_TRUE(s.HitDistance < std::numeric_limits<float>::infinity());
 
-	float px, py, pz;
-	ray.t(s.HitDistance, px, py, pz);
-
-	PR_CHECK_NEARLY_EQ(Eigen::Vector3f(px, py, pz), point);
-	PR_CHECK_EQ(box.getIntersectionSide(Eigen::Vector3f(px, py, pz)), BoundingBox::FS_Top);
+	Vector3f p = ray.t(s.HitDistance);
+	PR_CHECK_NEARLY_EQ(p, point);
+	PR_CHECK_EQ(box.getIntersectionSide(p), BoundingBox::FS_Top);
 }
 
 PR_TEST("Intersects Range")
 {
 	BoundingBox box(2, 2, 2);
-	Ray ray(-2, 0, 0,
-			1, 0, 0);
+	Ray ray(Vector3f(-2, 0, 0),
+			Vector3f(1, 0, 0));
 
 	BoundingBox::IntersectionRange s = box.intersectsRange(ray);
 	PR_CHECK_TRUE(s.Successful);
@@ -285,7 +274,7 @@ PR_TEST("Face Front")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Front);
-	PR_CHECK_EQ(plane.normal(), Eigen::Vector3f(0, 0, 1));
+	PR_CHECK_EQ(plane.normal(), Vector3f(0, 0, 1));
 	PR_CHECK_NEARLY_EQ(plane.position()(2), -3 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
 	PR_CHECK_EQ(plane.yAxis().norm(), 2);
@@ -295,7 +284,7 @@ PR_TEST("Face Back")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Back);
-	PR_CHECK_EQ(plane.normal(), Eigen::Vector3f(0, 0, -1));
+	PR_CHECK_EQ(plane.normal(), Vector3f(0, 0, -1));
 	PR_CHECK_NEARLY_EQ(plane.position()(2), 3 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
 	PR_CHECK_EQ(plane.yAxis().norm(), 2);
@@ -305,7 +294,7 @@ PR_TEST("Face Left")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Left);
-	PR_CHECK_EQ(plane.normal(), Eigen::Vector3f(1, 0, 0));
+	PR_CHECK_EQ(plane.normal(), Vector3f(1, 0, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(0), -1 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 3);
 	PR_CHECK_EQ(plane.yAxis().norm(), 2);
@@ -315,7 +304,7 @@ PR_TEST("Face Right")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Right);
-	PR_CHECK_EQ(plane.normal(), Eigen::Vector3f(-1, 0, 0));
+	PR_CHECK_EQ(plane.normal(), Vector3f(-1, 0, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(0), 1 / 2.0f);
 	PR_CHECK_EQ(plane.xAxis().norm(), 3);
 	PR_CHECK_EQ(plane.yAxis().norm(), 2);
@@ -325,7 +314,7 @@ PR_TEST("Face Top")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Top);
-	PR_CHECK_EQ(plane.normal(), Eigen::Vector3f(0, -1, 0));
+	PR_CHECK_EQ(plane.normal(), Vector3f(0, -1, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(1), 1);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
 	PR_CHECK_EQ(plane.yAxis().norm(), 3);
@@ -335,7 +324,7 @@ PR_TEST("Face Bottom")
 {
 	BoundingBox box(1, 2, 3);
 	Plane plane = box.getFace(BoundingBox::FS_Bottom);
-	PR_CHECK_EQ(plane.normal(), Eigen::Vector3f(0, 1, 0));
+	PR_CHECK_EQ(plane.normal(), Vector3f(0, 1, 0));
 	PR_CHECK_NEARLY_EQ(plane.position()(1), -1);
 	PR_CHECK_EQ(plane.xAxis().norm(), 1);
 	PR_CHECK_EQ(plane.yAxis().norm(), 3);

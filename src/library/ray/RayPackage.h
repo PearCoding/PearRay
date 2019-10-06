@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/SIMD.h"
+#include "math/Transform.h"
 
 namespace PR {
 
@@ -8,56 +9,50 @@ enum RayFlags {
 	RF_BackgroundHit = 0x80 // Special flag for use in ray stream to indicate miss
 };
 
-template <typename V, typename IV>
+template <typename V>
 struct PR_LIB_INLINE RayPackageBase {
 	typedef V FloatingType;
-	typedef IV IntegerType;
+	typedef typename VectorTemplate<V>::uint32_t IntegerType;
 
-	V Origin[3];
-	V Direction[3];
-	V InvDirection[3];
+	Vector3t<V> Origin		 = Vector3t<V>(V(0), V(0), V(0));
+	Vector3t<V> Direction	= Vector3t<V>(V(0), V(0), V(0));
+	Vector3t<V> InvDirection = Vector3t<V>(V(0), V(0), V(0));
 
-	V Weight;
-	V Time;
-	IV Depth;
-	IV Flags;
-	IV WavelengthIndex;
-	IV PixelIndex;
+	V Weight					= V(0);
+	V Time						= V(0);
+	IntegerType Depth			= IntegerType(0);
+	IntegerType Flags			= IntegerType(0);
+	IntegerType WavelengthIndex = IntegerType(0);
+	IntegerType PixelIndex		= IntegerType(0);
 
 	RayPackageBase() = default;
-	inline RayPackageBase(const V& ox, const V& oy, const V& oz,
-						  const V& dx, const V& dy, const V& dz)
-		: Origin{ ox, oy, oz }
-		, Direction{ dx, dy, dz }
+	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d)
+		: Origin(o)
+		, Direction(d)
 	{
 		setupInverse();
 	}
 
 	inline void setupInverse()
 	{
-		for (int i = 0; i < 3; ++i)
-			InvDirection[i] = 1.0 / Direction[i];
+		InvDirection = Direction.cwiseInverse();
 	}
 
 	inline void normalize()
 	{
-		V n = 1.0 / (Direction[0] * Direction[0] + Direction[1] * Direction[1] + Direction[2] * Direction[2]);
-
-		for (int i = 0; i < 3; ++i)
-			Direction[i] = Direction[i] * n;
+		// We could use Eigen::...::normalize() but this has a check z > 0
+		// we have to avoid.
+		Direction /= Direction.norm();
 	}
 
-	inline RayPackageBase<V, IV> transform(const Eigen::Matrix4f& oM, const Eigen::Matrix3f& dM) const
+	inline RayPackageBase<V> transform(const Eigen::Matrix4f& oM,
+									   const Eigen::Matrix3f& dM) const
 	{
-		RayPackageBase<V, IV> other;
+		RayPackageBase<V> other;
 		other = *this;
 
-		transformV(oM,
-				   Origin[0], Origin[1], Origin[2],
-				   other.Origin[0], other.Origin[1], other.Origin[2]);
-		transformV(dM,
-				   Direction[0], Direction[1], Direction[2],
-				   other.Direction[0], other.Direction[1], other.Direction[2]);
+		other.Origin	= Transform::apply(oM, Origin);
+		other.Direction = Transform::apply(dM, Direction);
 
 		other.normalize();
 		other.setupInverse();
@@ -65,55 +60,53 @@ struct PR_LIB_INLINE RayPackageBase {
 		return other;
 	}
 
-	inline void t(const V& t, V& px, V& py, V& pz) const
+	inline RayPackageBase<V> transformAffine(const Eigen::Matrix4f& oM,
+											 const Eigen::Matrix3f& dM) const
 	{
-		px = Origin[0] + t * Direction[0];
-		py = Origin[1] + t * Direction[1];
-		pz = Origin[2] + t * Direction[2];
+		RayPackageBase<V> other;
+		other = *this;
+
+		other.Origin	= Transform::applyAffine(oM, Origin);
+		other.Direction = Transform::apply(dM, Direction);
+
+		other.normalize();
+		other.setupInverse();
+
+		return other;
+	}
+
+	inline Vector3t<V> t(const V& t) const
+	{
+		return Origin + t * Direction;
 	}
 
 	/* Advance with t, transform position with matrix and calculate new position to given other base. */
 	inline V distanceTransformed(const V& t_local,
 								 const Eigen::Matrix4f& local_to_global,
-								 const RayPackageBase<V, IV>& global_other) const
+								 const RayPackageBase<V>& global_other) const
 	{
-		V px, py, pz;
-		this->t(t_local, px, py, pz);
+		auto p  = this->t(t_local);
+		auto p2 = Transform::apply(local_to_global, p); // TODO: Assume Affine?
 
-		V px2, py2, pz2;
-		transformV(local_to_global,
-				   px, py, pz,
-				   px2, py2, pz2);
-
-		px = px2 - global_other.Origin[0];
-		py = py2 - global_other.Origin[1];
-		pz = pz2 - global_other.Origin[2];
-
-		return magnitudeV(px, py, pz);
+		return (p2 - global_other.Origin).norm();
 	}
 
-	inline RayPackageBase<V, IV> next(const V& ox, const V& oy, const V& oz,
-									  const V& dx, const V& dy, const V& dz) const
+	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d) const
 	{
-		RayPackageBase<V, IV> other;
+		RayPackageBase<V> other;
 		other = *this;
 
-		other.Origin[0]	= ox;
-		other.Origin[1]	= oy;
-		other.Origin[2]	= oz;
-		other.Direction[0] = dx;
-		other.Direction[1] = dy;
-		other.Direction[2] = dz;
+		other.Origin	= Transform::safePosition(o, d);
+		other.Direction = d;
+		other.Depth += V(1);
+
+		other.setupInverse();
 
 		return other;
 	}
 };
 
-typedef RayPackageBase<vfloat, vuint32> RayPackage;
-typedef RayPackageBase<float, uint32> Ray;
-
-template <typename T>
-struct RayTemplate : public VectorTemplate<typename T::FloatingType> {
-};
+typedef RayPackageBase<vfloat> RayPackage;
+typedef RayPackageBase<float> Ray;
 
 } // namespace PR

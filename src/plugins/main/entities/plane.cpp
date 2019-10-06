@@ -13,9 +13,9 @@ public:
 	ENTITY_CLASS
 
 	PlaneEntity(uint32 id, const std::string& name,
-				const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
+				const Vector3f& xAxis, const Vector3f& yAxis)
 		: IEntity(id, name)
-		, mPlane(Eigen::Vector3f(0, 0, 0), xAxis, yAxis)
+		, mPlane(Vector3f(0, 0, 0), xAxis, yAxis)
 		, mMaterialID(0)
 		, mLightID(0)
 		, mPDF_Cache(0.0f)
@@ -94,16 +94,13 @@ public:
 	void provideGeometryPoint(uint32, float u, float v,
 							  GeometryPoint& pt) const override
 	{
-		Eigen::Vector3f p = transform() * mPlane.surfacePoint(u, v);
-		Eigen::Vector3f n = directionMatrix() * mPlane.normal();
-		n.normalize();
+		pt.P  = transform() * mPlane.surfacePoint(u, v);
+		pt.Ng = directionMatrix() * mPlane.normal();
+		pt.Ng.normalize();
 
-		Eigen::Vector3f t, b;
-		Tangent::frame(n, t, b);
+		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
 
-		pt.setPosition(p);
-		pt.setTangentFrame(n, t, b);
-		pt.setUV(Eigen::Vector2f(u, v));
+		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
 	}
 
@@ -130,11 +127,11 @@ public:
 	{
 		const auto& reg = env.registry();
 
-		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
-		Eigen::Vector3f xAxis = reg.getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "x_axis",
-																  Eigen::Vector3f(1, 0, 0));
-		Eigen::Vector3f yAxis = reg.getForObject<Eigen::Vector3f>(RG_ENTITY, uuid, "y_axis",
-																  Eigen::Vector3f(0, 1, 0));
+		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
+		Vector3f xAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "x_axis",
+													  Vector3f(1, 0, 0));
+		Vector3f yAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "y_axis",
+													  Vector3f(0, 1, 0));
 		return std::make_shared<PlaneEntity>(id, name, xAxis, yAxis);
 	}
 

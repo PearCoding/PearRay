@@ -10,13 +10,13 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	Sphere();
-	Sphere(const Eigen::Vector3f& pos, float radius);
+	Sphere(const Vector3f& pos, float radius);
 
 	Sphere(const Sphere& other);
 	Sphere& operator=(const Sphere& other);
 
-	inline Eigen::Vector3f position() const { return mPosition; }
-	inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
+	inline Vector3f position() const { return mPosition; }
+	inline void setPosition(const Vector3f& pos) { mPosition = pos; }
 
 	inline float radius() const { return mRadius; }
 	inline void setRadius(float f)
@@ -30,12 +30,13 @@ public:
 
 	inline bool isValid() const { return mRadius > 0; }
 
-	Eigen::Vector3f normalPoint(float u, float v) const;
-	Eigen::Vector3f surfacePoint(float u, float v) const;
+	Vector3f normalPoint(float u, float v) const;
+	Vector3f surfacePoint(float u, float v) const;
 
-	Eigen::Vector2f project(const Eigen::Vector3f& p) const;
+	Vector2f project(const Vector3f& p) const;
+	Vector2fv project(const Vector3fv& p) const;
 
-	inline bool contains(const Eigen::Vector3f& point) const
+	inline bool contains(const Vector3f& point) const
 	{
 		return (mPosition - point).squaredNorm() <= mRadius * mRadius;
 	}
@@ -43,10 +44,10 @@ public:
 	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
 	void intersects(const RayPackage& in, CollisionOutput& out) const;
 
-	void combine(const Eigen::Vector3f& point);
+	void combine(const Vector3f& point);
 	void combine(const Sphere& other);
 
-	inline Sphere combined(const Eigen::Vector3f& point) const
+	inline Sphere combined(const Vector3f& point) const
 	{
 		Sphere tmp = *this;
 		tmp.combine(point);
@@ -61,7 +62,7 @@ public:
 	}
 
 private:
-	Eigen::Vector3f mPosition;
+	Vector3f mPosition;
 	float mRadius;
 };
 } // namespace PR

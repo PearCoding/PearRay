@@ -49,7 +49,7 @@ std::string VirtualEntity::dumpInformation() const
 	mTransform.computeRotationScaling(&rot, &sca);
 
 	Eigen::Quaternionf quat(rot);
-	Eigen::Vector3f scav = sca.diagonal();
+	Vector3f scav = sca.diagonal();
 
 	std::stringstream stream;
 	stream << "<VirtualEntity> [" << mID << "]: " << std::endl

@@ -15,8 +15,8 @@ public:
 	~HaltonQMCSampler();
 
 	float generate1D(uint32 index) const override;
-	Eigen::Vector2f generate2D(uint32 index) const override;
-	Eigen::Vector3f generate3D(uint32 index) const override;
+	Vector2f generate2D(uint32 index) const override;
+	Vector3f generate3D(uint32 index) const override;
 
 	void generate1Dv(uint32 index, vfloat& s1) const override;
 	void generate2Dv(uint32 index, vfloat& s1, vfloat& s1) const override;

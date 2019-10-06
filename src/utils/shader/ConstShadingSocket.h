@@ -1,6 +1,5 @@
 #pragma once
 
-#include "math/Vector.h"
 #include "shader/ShadingSocket.h"
 #include "spectral/Spectrum.h"
 
@@ -25,7 +24,7 @@ private:
 
 class PR_LIB_UTILS ConstVectorShadingSocket : public FloatVectorShadingSocket {
 public:
-	explicit ConstVectorShadingSocket(const Eigen::Vector3f& f);
+	explicit ConstVectorShadingSocket(const Vector3f& f);
 	float eval(uint32 channel, const ShadingPoint& ctx) const override;
 
 private:

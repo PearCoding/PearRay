@@ -10,15 +10,6 @@ namespace PR {
 template <typename T>
 using simd_vector = std::vector<T, boost::alignment::aligned_allocator<T, PR_SIMD_ALIGNMENT_PARAM>>;
 
-/* Regardless of optimal size, we have to enforce same components for all vectorized types*/
-constexpr size_t PR_SIMD_BANDWIDTH = SIMDPP_FAST_FLOAT32_SIZE;
-using vfloat					   = simdpp::float32<PR_SIMD_BANDWIDTH>;
-using vint32					   = simdpp::int32<PR_SIMD_BANDWIDTH>;
-using vuint32					   = simdpp::uint32<PR_SIMD_BANDWIDTH>;
-using bfloat					   = simdpp::mask_float32<PR_SIMD_BANDWIDTH>;
-using bint32					   = simdpp::mask_int32<PR_SIMD_BANDWIDTH>;
-using buint32					   = bint32;
-
 template <typename V>
 struct VectorTemplate {
 };
@@ -41,18 +32,18 @@ struct VectorTemplate<float> {
 
 inline bool any(const bfloat& a)
 {
-	return simdpp::reduce_or(simdpp::bit_cast<vuint32>(a));
+	return simdpp::reduce_or(simdpp::bit_cast<vuint32::Base>(a));
 }
 
 inline bool all(const bfloat& a)
 {
-	return simdpp::reduce_and(simdpp::bit_cast<vuint32>(a));
+	return simdpp::reduce_and(simdpp::bit_cast<vuint32::Base>(a));
 }
 
 template <unsigned int K>
 inline bool extract(const bfloat& a)
 {
-	return simdpp::extract<K>(simdpp::bit_cast<vuint32>(a)) != 0;
+	return simdpp::extract<K>(simdpp::bit_cast<vuint32::Base>(a)) != 0;
 }
 
 template <typename T>
@@ -86,148 +77,6 @@ inline auto b_or(const T1& v1, const T2& v2)
 inline bool b_or(bool v1, bool v2)
 {
 	return v1 || v2;
-}
-
-// TODO: Better solution?
-template <uint32 N>
-inline void sincos(const simdpp::float32<N>& v,
-				   simdpp::float32<N>& s, simdpp::float32<N>& c)
-{
-	PR_SIMD_ALIGN
-	float vals[N];
-
-	PR_SIMD_ALIGN
-	float sd[N];
-	PR_SIMD_ALIGN
-	float cd[N];
-
-	simdpp::store(vals, v);
-	for (uint32 i = 0; i < N; ++i) {
-		sd[i] = std::sin(vals[i]);
-		cd[i] = std::cos(vals[i]);
-	}
-
-	s = simdpp::load(sd);
-	c = simdpp::load(cd);
-}
-
-inline void sincos(float v, float& s, float& c)
-{
-	s = std::sin(v);
-	c = std::cos(v);
-}
-
-template <uint32 N>
-inline void atan2(const simdpp::float32<N>& y, const simdpp::float32<N>& x,
-				  simdpp::float32<N>& res)
-{
-	PR_SIMD_ALIGN
-	float y_v[N];
-	PR_SIMD_ALIGN
-	float x_v[N];
-
-	PR_SIMD_ALIGN
-	float res_v[N];
-
-	simdpp::store(y_v, y);
-	simdpp::store(x_v, x);
-	for (uint32 i = 0; i < N; ++i) {
-		res_v[i] = std::atan2(y_v[i], x_v[i]);
-	}
-	res = simdpp::load(res_v);
-}
-
-template <uint32 N>
-inline void asin(const simdpp::float32<N>& x,
-				 simdpp::float32<N>& res)
-{
-	PR_SIMD_ALIGN
-	float x_v[N];
-
-	PR_SIMD_ALIGN
-	float res_v[N];
-
-	simdpp::store(x_v, x);
-	for (uint32 i = 0; i < N; ++i)
-		res_v[i] = std::asin(x_v[i]);
-	res = simdpp::load(res_v);
-}
-
-template <uint32 N>
-inline void acos(const simdpp::float32<N>& x,
-				 simdpp::float32<N>& res)
-{
-	PR_SIMD_ALIGN
-	float x_v[N];
-
-	PR_SIMD_ALIGN
-	float res_v[N];
-
-	simdpp::store(x_v, x);
-	for (uint32 i = 0; i < N; ++i)
-		res_v[i] = std::acos(x_v[i]);
-	res = simdpp::load(res_v);
-}
-
-template <typename T1, typename T2, typename T3>
-inline void crossV(const T1& a1, const T1& a2, const T1& a3,
-				   const T2& b1, const T2& b2, const T2& b3,
-				   T3& c1, T3& c2, T3& c3)
-{
-	c1 = a2 * b3 - a3 * b2;
-	c2 = a3 * b1 - a1 * b3;
-	c3 = a1 * b2 - a2 * b1;
-}
-
-template <typename T1, typename T2>
-inline T1 dotV(const T1& a1, const T1& a2, const T1& a3,
-			   const T2& b1, const T2& b2, const T2& b3)
-{
-	return a1 * b1 + a2 * b2 + a3 * b3;
-}
-
-template <typename T>
-inline T magnitudeV(T& a1, T& a2, T& a3)
-{
-	using namespace simdpp;
-	return sqrt(dotV(a1, a2, a3, a1, a2, a3));
-}
-
-template <typename T>
-inline void normalizeV(T& a1, T& a2, T& a3)
-{
-	using namespace simdpp;
-
-	T h = 1 / magnitudeV(a1, a2, a3);
-	a1  = a1 * h;
-	a2  = a2 * h;
-	a3  = a3 * h;
-}
-
-template <typename T>
-inline void transformV(const Eigen::Matrix3f& m,
-					   const T& a1, const T& a2, const T& a3,
-					   T& b1, T& b2, T& b3)
-{
-	b1 = m(0, 0) * a1 + m(0, 1) * a2 + m(0, 2) * a3;
-	b2 = m(1, 0) * a1 + m(1, 1) * a2 + m(1, 2) * a3;
-	b3 = m(2, 0) * a1 + m(2, 1) * a2 + m(2, 2) * a3;
-}
-
-template <typename T>
-inline void transformV(const Eigen::Matrix4f& m,
-					   const T& a1, const T& a2, const T& a3,
-					   T& b1, T& b2, T& b3)
-{
-	b1 = m(0, 0) * a1 + m(0, 1) * a2 + m(0, 2) * a3 + m(0, 3);
-	b2 = m(1, 0) * a1 + m(1, 1) * a2 + m(1, 2) * a3 + m(1, 3);
-	b3 = m(2, 0) * a1 + m(2, 1) * a2 + m(2, 2) * a3 + m(2, 3);
-
-	const T h = 1.0 / (m(3, 0) * a1 + m(3, 1) * a2 + m(3, 2) * a3 + m(3, 3));
-
-	b1 = b1 * h;
-	b2 = b2 * h;
-	b3 = b3 * h;
 }
 
 template <typename C, unsigned N>

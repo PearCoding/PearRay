@@ -13,7 +13,6 @@
 #include "material/MaterialManager.h"
 #include "mesh/TriMesh.h"
 #include "plugin/PluginManager.h"
-#include "registry/Registry.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
 #include "scene/Scene.h"

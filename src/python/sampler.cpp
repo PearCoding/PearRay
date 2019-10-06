@@ -17,14 +17,14 @@ public:
 		PYBIND11_OVERLOAD_PURE(float, Sampler, generate1D, index);
 	}
 
-	inline Eigen::Vector2f generate2D(uint32 index) override
+	inline Vector2f generate2D(uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(Eigen::Vector2f, Sampler, generate2D, index);
+		PYBIND11_OVERLOAD_PURE(Vector2f, Sampler, generate2D, index);
 	}
 
-	inline Eigen::Vector3f generate3D(uint32 index) override
+	inline Vector3f generate3D(uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(Eigen::Vector3f, Sampler, generate3D, index);
+		PYBIND11_OVERLOAD_PURE(Vector3f, Sampler, generate3D, index);
 	}
 };
 

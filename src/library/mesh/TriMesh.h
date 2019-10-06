@@ -4,7 +4,6 @@
 #include "geometry/Face.h"
 #include "geometry/FacePackage.h"
 #include "geometry/Triangle.h"
-#include "math/Vector.h"
 #include "shader/ShadingPoint.h"
 
 #include <Eigen/Geometry>

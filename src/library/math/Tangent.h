@@ -1,69 +1,47 @@
 #pragma once
 
-#include "math/SIMD.h"
+#include "PR_Config.h"
 
 namespace PR {
-class PR_LIB_INLINE Tangent {
-	PR_CLASS_NON_CONSTRUCTABLE(Tangent);
+namespace Tangent {
 
-public:
-	// Align v on N
-	static inline Eigen::Vector3f align(const Eigen::Vector3f& N, const Eigen::Vector3f& V)
-	{
-		return align(N, V, Eigen::Vector3f(0, 0, 1));
-	}
+// N Orientation Z+
+inline void frame(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
+{
+	const Vector3f t = std::abs(N(0)) > 0.99f ? Vector3f(0, 1, 0) : Vector3f(1, 0, 0);
+	Nx				 = N.cross(t).normalized();
+	Ny				 = N.cross(Nx).normalized();
+}
 
-	static inline Eigen::Vector3f align(const Eigen::Vector3f& N, const Eigen::Vector3f& V, const Eigen::Vector3f& axis)
-	{
-		const float dot = N.dot(axis);
-		if (dot + 1 < PR_EPSILON)
-			return -V;
-		else if (dot < 1)
-			return Eigen::Quaternionf::FromTwoVectors(axis, N) * V;
+inline void frame(const Vector3fv& N, Vector3fv& Nx, Vector3fv& Ny)
+{
+	bfloat mask = abs(N(0)) > vfloat(0.99f);
 
-		return V;
-	}
+	const Vector3fv t = Vector3fv(blend(vfloat(1), vfloat(0), mask),
+								  blend(vfloat(0), vfloat(1), mask),
+								  vfloat(0));
 
-	// N Orientation Z+
-	static inline void frame(const Eigen::Vector3f& N, Eigen::Vector3f& T, Eigen::Vector3f& B)
-	{
-		Eigen::Vector3f t = std::abs(N(0)) > 0.99f ? Eigen::Vector3f(0, 1, 0) : Eigen::Vector3f(1, 0, 0);
-		T				  = N.cross(t).normalized();
-		B				  = N.cross(T).normalized();
-	}
+	Nx = N.cross(t);
+	Nx /= Nx.norm();
+	Ny = N.cross(Nx);
+	Ny /= Ny.norm();
+}
 
-	static inline Eigen::Vector3f _align(const Eigen::Vector3f& N, const Eigen::Vector3f& V)
-	{
-		Eigen::Vector3f X, Y;
-		frame(N, X, Y);
-		return align(N, X, Y, V);
-	}
+template <typename T>
+inline Vector3t<T> align(const Vector3t<T>& N,
+						 const Vector3t<T>& Nx, const Vector3t<T>& Ny,
+						 const Vector3t<T>& V)
+{
+	return N * V(2) + Ny * V(1) + Nx * V(0);
+}
 
-	static inline Eigen::Vector3f align(const Eigen::Vector3f& N,
-										const Eigen::Vector3f& Nx, const Eigen::Vector3f& Ny, const Eigen::Vector3f& V)
-	{
-		return N * V(2) + Ny * V(1) + Nx * V(0);
-	}
-
-	// SIMD
-	static inline void frameV(const vfloat& N1, const vfloat& N2, const vfloat& N3,
-							  vfloat& Nx1, vfloat& Nx2, vfloat& Nx3,
-							  vfloat& Ny1, vfloat& Ny2, vfloat& Ny3)
-	{
-		using namespace simdpp;
-
-		bfloat m  = abs(N1) > 0.99f;
-		vfloat zero = make_float(0);
-		vfloat one = make_float(1);
-
-		vfloat t1 = blend(zero, one, m);
-		vfloat t2 = blend(one, zero, m);
-		vfloat t3 = zero;
-
-		crossV(N1, N2, N3, t1, t2, t3, Nx1, Nx2, Nx3);
-		normalizeV(Nx1, Nx2, Nx3);
-		crossV(N1, N2, N3, Nx1, Nx2, Nx3, Ny1, Ny2, Ny3);
-		normalizeV(Ny1, Ny2, Ny3);
-	}
-};
+// Align v on N
+template <typename T>
+inline Vector3t<T> align(const Vector3t<T>& N, const Vector3t<T>& V)
+{
+	Vector3t<T> nx, ny;
+	frame(N, nx, ny);
+	return align(N, nx, ny, V);
+}
+} // namespace Tangent
 } // namespace PR

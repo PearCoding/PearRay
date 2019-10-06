@@ -75,11 +75,11 @@ inline void to_oct(float ix, float iy, float iz, float& ox, float& oy)
 	}
 }
 
-inline Eigen::Vector2f to_oct(const Eigen::Vector3f& v)
+inline Vector2f to_oct(const Vector3f& v)
 {
 	float ox, oy;
 	to_oct(v(0), v(1), v(2), ox, oy);
-	return Eigen::Vector2f(ox, oy);
+	return Vector2f(ox, oy);
 }
 
 inline void from_oct(float ix, float iy, float& ox, float& oy, float& oz)
@@ -102,11 +102,11 @@ inline void from_oct(float ix, float iy, float& ox, float& oy, float& oz)
 	oz /= a;
 }
 
-inline Eigen::Vector3f from_oct(const Eigen::Vector2f& d)
+inline Vector3f from_oct(const Vector2f& d)
 {
 	float ox, oy, oz;
 	from_oct(d(0), d(1), ox, oy, oz);
-	return Eigen::Vector3f(ox, oy, oz);
+	return Vector3f(ox, oy, oz);
 }
 
 // Class for oct compression
@@ -130,7 +130,7 @@ public:
 		mValue[1] = to_snorm<T>(d1);
 	}
 
-	inline explicit octNormal(const Eigen::Vector3f& p)
+	inline explicit octNormal(const Vector3f& p)
 		: octNormal(p(0), p(1), p(2))
 	{
 	}
@@ -138,9 +138,9 @@ public:
 	octNormal& operator=(const octNormal& other) = default;
 	octNormal& operator=(octNormal&& other) = default;
 
-	inline octNormal& operator=(const Eigen::Vector3f& p)
+	inline octNormal& operator=(const Vector3f& p)
 	{
-		const Eigen::Vector2f d = to_oct(p);
+		const Vector2f d = to_oct(p);
 		mValue[0]				= to_snorm<T>(d(0));
 		mValue[1]				= to_snorm<T>(d(1));
 
@@ -169,14 +169,14 @@ public:
 	}
 
 	// Convert
-	inline operator Eigen::Vector3f() const
+	inline operator Vector3f() const
 	{
 		return toVector();
 	}
 
-	inline Eigen::Vector3f toVector() const
+	inline Vector3f toVector() const
 	{
-		return from_oct(Eigen::Vector2f(
+		return from_oct(Vector2f(
 			from_snorm<T>(mValue[0]), from_snorm<T>(mValue[1])));
 	}
 };

@@ -132,7 +132,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
-				Eigen::Vector3f v(channel->getFragment(x, y, 0),
+				Vector3f v(channel->getFragment(x, y, 0),
 								  channel->getFragment(x, y, 1),
 								  channel->getFragment(x, y, 2));
 
@@ -228,7 +228,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
 
 				if (channel) {
-					Eigen::Vector3f a(channel->getFragment(x, y, 0),
+					Vector3f a(channel->getFragment(x, y, 0),
 									  channel->getFragment(x, y, 1),
 									  channel->getFragment(x, y, 2));
 

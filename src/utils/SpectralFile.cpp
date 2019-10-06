@@ -1,4 +1,5 @@
 #include "SpectralFile.h"
+#include "spectral/Spectrum.h"
 #include "spectral/SpectrumDescriptor.h"
 
 #include <boost/iostreams/device/file.hpp>
@@ -80,7 +81,7 @@ void SpectralFile::save(const std::string& path, bool compress) const
 
 	namespace io = boost::iostreams;
 	io::filtering_ostream out;
-	if(compress)
+	if (compress)
 		out.push(io::zlib_compressor());
 	out.push(io::file_sink(path));
 

@@ -30,7 +30,7 @@ void setup_shader(py::module& m)
 		.def(py::init<const Spectrum&>());
 
 	py::class_<ConstVectorShaderOutput, VectorShaderOutput, std::shared_ptr<ConstVectorShaderOutput>>(m, "ConstVectorShaderOutput")
-		.def(py::init<const Eigen::Vector3f&>());
+		.def(py::init<const Vector3f&>());
 
 	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarShaderOutput >
 	//     ("ImageScalarOutput", py::init<float>())
@@ -39,7 +39,7 @@ void setup_shader(py::module& m)
 	//     ("ImageSpectralOutput", py::init<const PR::Spectrum&>())
 	// ;
 	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorShaderOutput >
-	//     ("ImageVectorOutput", py::init<const Eigen::Vector3f&>())
+	//     ("ImageVectorOutput", py::init<const Vector3f&>())
 	// ;
 }
 } // namespace PRPY

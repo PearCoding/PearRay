@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Logger.h"
-#include "PluginManager.h"
 
 #include <map>
 #include <typeinfo>

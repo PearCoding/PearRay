@@ -43,7 +43,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 					}
 
 					bool ok;
-					Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
+					Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 					if (ok) {
 						for (int i = 0; i < 3; ++i)
@@ -62,7 +62,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 					}
 
 					bool ok;
-					Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
+					Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 					if (ok) {
 						for (int i = 0; i < 3; ++i)
@@ -81,7 +81,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::
 					}
 
 					bool ok;
-					Eigen::Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
+					Vector3f v = SceneLoader::getVector(attrValD.getGroup(), ok);
 
 					if (ok) {
 						for (int i = 0; i < 2; ++i)

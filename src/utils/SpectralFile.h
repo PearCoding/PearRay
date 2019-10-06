@@ -1,9 +1,10 @@
 #pragma once
 
-#include "spectral/Spectrum.h"
+#include "PR_Config.h"
 
 namespace PR {
 
+class Spectrum;
 class SpectrumDescriptor;
 class PR_LIB_UTILS SpectralFile {
 public:
