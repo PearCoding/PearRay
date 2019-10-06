@@ -12,7 +12,9 @@
 ![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)
 
-Experimental high accurate spectral path and ray tracer with Bidirect Raytracing, Distribution Raytracing and Photon Mapping support.
+Experimental high accurate spectral stream path and ray tracer with Bidirect Raytracing, Distribution Raytracing and Photon Mapping support.
+
+ :exclamation: **This is experimental software. API changes regularly. Don't use on big projects (yet)**
 
 ## Blender Addon
 There is an open source (still experimental) blender integration addon available [here](https://github.com/PearCoding/PearRay-Blender).
@@ -20,14 +22,16 @@ There is an open source (still experimental) blender integration addon available
 ## Dependencies
  - Boost http://www.boost.org/
  - Eigen3 http://eigen.tuxfamily.org
- - tinyobjloader https://github.com/syoyo/tinyobjloader (included into source)
+ - tinyobjloader https://github.com/syoyo/tinyobjloader (submodule)
+ - simdpp https://github.com/p12tic/libsimdpp (submodule)
+ - DataLisp https://github.com/PearCoding/DataLisp (submodule)
  - OpenImageIO https://sites.google.com/site/openimageio/home
  - Intel Threading Building Blocks https://www.threadingbuildingblocks.org/
 
 ### Optional
  - OSL https://github.com/imageworks/OpenShadingLanguage
  - Qt https://www.qt.io/
- - pybind11 https://github.com/pybind/pybind11
+ - pybind11 https://github.com/pybind/pybind11 (submodule)
 
 ## Wiki
 See [Wiki](https://github.com/PearCoding/PearRay/wiki) for more information, examples and tutorials.
