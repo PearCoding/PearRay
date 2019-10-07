@@ -24,10 +24,8 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 	out.HitDistance = std::numeric_limits<float>::infinity();
 
 	// C - O
-	const Vector3f L = -in.Origin;
-
-	const float S  = L.dot(in.Direction);
-	const float L2 = L.squaredNorm();
+	const float S  = -in.Origin.dot(in.Direction);
+	const float L2 = in.Origin.squaredNorm();
 	const float R2 = mRadius * mRadius;
 	const float M2 = L2 - S * S;
 
@@ -61,11 +59,10 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	using namespace simdpp;
 
-	const Vector3fv L = -in.Origin;
-	const vfloat S	= L.dot(in.Direction);
-	const vfloat L2   = L.squaredNorm();
-	const vfloat R2   = vfloat(mRadius * mRadius);
-	const vfloat M2   = L2 - S * S;
+	const vfloat S  = -in.Origin.dot(in.Direction);
+	const vfloat L2 = in.Origin.squaredNorm();
+	const vfloat R2 = vfloat(mRadius * mRadius);
+	const vfloat M2 = L2 - S * S;
 
 	const bfloat valid = ((S >= 0) | (L2 <= R2)) & (M2 <= R2);
 

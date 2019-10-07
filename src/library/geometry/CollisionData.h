@@ -5,21 +5,21 @@
 namespace PR {
 
 struct PR_LIB_INLINE SingleCollisionOutput {
-	float HitDistance;
-	uint32 MaterialID;
-	uint32 EntityID;
-	uint32 FaceID;
-	float UV[2];
-	uint32 Flags;
+	float HitDistance = std::numeric_limits<float>::infinity();
+	uint32 MaterialID = 0;
+	uint32 EntityID   = 0;
+	uint32 FaceID	 = 0;
+	float UV[2]		  = { 0, 0 };
+	uint32 Flags	  = 0;
 };
 
 struct PR_LIB_INLINE CollisionOutput {
-	vfloat HitDistance;
-	vuint32 MaterialID;
-	vuint32 EntityID;
-	vuint32 FaceID;
-	vfloat UV[2];
-	vuint32 Flags;
+	vfloat HitDistance = vfloat(std::numeric_limits<float>::infinity());
+	vuint32 MaterialID = vuint32(0);
+	vuint32 EntityID   = vuint32(0);
+	vuint32 FaceID	 = vuint32(0);
+	vfloat UV[2]	   = { vfloat(0), vfloat(0) };
+	vuint32 Flags	  = vuint32(0);
 
 	inline void blendFrom(const CollisionOutput& other, simdpp::mask_float32v mask)
 	{

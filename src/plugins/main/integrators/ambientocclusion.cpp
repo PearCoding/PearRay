@@ -71,7 +71,7 @@ public:
 				spt.Ray		 = ray;
 				spt.Geometry = pt;
 
-				spt.Radiance = 1 - occlusions / (float)mSampleCount;
+				spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 
 				session.pushFragment(ray.PixelIndex, spt);
 			});

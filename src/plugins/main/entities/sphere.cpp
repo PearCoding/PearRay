@@ -101,7 +101,6 @@ public:
 	{
 		pt.P  = transform() * mSphere.surfacePoint(u, v);
 		pt.Ng = directionMatrix() * mSphere.normalPoint(u, v);
-		//pt.Ng.normalize();
 
 		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
 

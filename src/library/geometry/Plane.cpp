@@ -70,7 +70,6 @@ void Plane::setAxis(const Vector3f& xAxis, const Vector3f& yAxis)
 
 BoundingBox Plane::toLocalBoundingBox() const
 {
-
 	BoundingBox box(mXAxis + mYAxis, Vector3f(0, 0, 0));
 	box.inflate(EPSILON_BOUND);
 	return box;
@@ -101,7 +100,7 @@ void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 		const float t = pn / ln;
 
 		if (t > PR_PLANE_INTERSECT_EPSILON) {
-			auto p = in.t(t) - mPosition;
+			const Vector3f p = in.t(t) - mPosition;
 
 			out.UV[0] = p.dot(mXAxis) * mInvXLenSqr_Cache;
 			out.UV[1] = p.dot(mYAxis) * mInvYLenSqr_Cache;
@@ -121,8 +120,8 @@ void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 
 	const vfloat inf = make_float(std::numeric_limits<float>::infinity());
 
-	const auto NV = promote(mNormal_Cache);
-	const auto PV = promote(mPosition);
+	const Vector3fv NV = promote(mNormal_Cache);
+	const Vector3fv PV = promote(mPosition);
 
 	vfloat ln = in.Direction.dot(NV);
 	vfloat pn = (PV - in.Origin).dot(NV);

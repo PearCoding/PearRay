@@ -44,11 +44,8 @@
 		(channel
 			:type 'uv'
 		)
-	)
-	(output
-		:name 'depth'
 		(channel
-			:type 'depth'
+			:type 'p'
 		)
 	)
 	; Camera

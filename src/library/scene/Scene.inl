@@ -1,6 +1,6 @@
 namespace PR {
 
-#define PR_FORCE_SINGLE_TRACE
+// #define PR_FORCE_SINGLE_TRACE
 
 template <typename Func, uint32 K>
 inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutput& out,

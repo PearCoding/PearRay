@@ -90,7 +90,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 			std::shared_ptr<Environment> env;
 			try {
 				env = std::make_shared<Environment>(wrkDir, spectrumDescriptor, pluginPath);
-			} catch (BadRenderEnvironment e) {
+			} catch (const BadRenderEnvironment& e) {
 				return nullptr;
 			}
 
@@ -784,8 +784,8 @@ Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
 	if (arr.anonymousCount() == 2) {
 		if (arr.at(0).isNumber() && arr.at(1).isNumber()) {
 			res = Vector3f(arr.at(0).getNumber(),
-								  arr.at(1).getNumber(),
-								  0);
+						   arr.at(1).getNumber(),
+						   0);
 
 			ok = true;
 		} else {
@@ -794,8 +794,8 @@ Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
 	} else if (arr.anonymousCount() == 3) {
 		if (arr.at(0).isNumber() && arr.at(1).isNumber() && arr.at(2).isNumber()) {
 			res = Vector3f(arr.at(0).getNumber(),
-								  arr.at(1).getNumber(),
-								  arr.at(2).getNumber());
+						   arr.at(1).getNumber(),
+						   arr.at(2).getNumber());
 
 			ok = true;
 		} else {
@@ -977,7 +977,6 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 										 const DL::DataGroup& group, Environment* env)
 {
-	auto& reg = env->registry();
 	for (const auto& entry : group.getNamedEntries()) {
 		if (entry.key() == "transform"
 			|| entry.key() == "position"

@@ -46,21 +46,29 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 		image = QImage(mWidth, mHeight, expectedFormat);
 	}
 
-	// Retrieve image wide maximum
+	// Retrieve image wide maximum/minimum
+	// TODO: Better channel based?
+	float minimum = std::numeric_limits<float>::infinity();
 	float maximum = 0;
 	for (size_t i = 0; i < (size_t)mData.size(); ++i) {
 		if (!((1 << i) & channelMask))
 			continue;
 
-		for (float f : mData[i])
-			maximum = std::max(maximum, f);
+		for (float f : mData[i]) {
+			minimum = std::min(minimum, std::abs(f));
+			maximum = std::max(maximum, std::abs(f));
+		}
 	}
 
-	float scale = 255;
-	if (maximum > 1)
-		scale /= maximum;
+	if (minimum < 1)
+		minimum = 0;
 
-	auto map = [](float v, float s) { return std::abs(v) * s; };
+	if (maximum < 1)
+		maximum = 1;
+
+	const float scale = 255 / (maximum - minimum);
+
+	auto map = [&](float v) { return (std::abs(v) - minimum) * scale; };
 
 	// Copy to image
 	switch (mData.size()) {
@@ -68,7 +76,7 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 		for (size_t y = 0; y < mHeight; ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[x] = map(mData[0][y * mWidth + x], scale);
+				ptr[x] = map(mData[0][y * mWidth + x]);
 			}
 		}
 		break;
@@ -77,10 +85,10 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
 				ptr[3 * x] = (channelMask & 0x1)
-								 ? map(mData[0][y * mWidth + x], scale)
+								 ? map(mData[0][y * mWidth + x])
 								 : 0;
 				ptr[3 * x + 1] = (channelMask & 0x2)
-									 ? map(mData[1][y * mWidth + x], scale)
+									 ? map(mData[1][y * mWidth + x])
 									 : 0;
 				ptr[3 * x + 2] = 0;
 			}
@@ -91,13 +99,13 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
 				ptr[3 * x] = (channelMask & 0x1)
-								 ? map(mData[0][y * mWidth + x], scale)
+								 ? map(mData[0][y * mWidth + x])
 								 : 0;
 				ptr[3 * x + 1] = (channelMask & 0x2)
-									 ? map(mData[1][y * mWidth + x], scale)
+									 ? map(mData[1][y * mWidth + x])
 									 : 0;
 				ptr[3 * x + 2] = (channelMask & 0x4)
-									 ? map(mData[2][y * mWidth + x], scale)
+									 ? map(mData[2][y * mWidth + x])
 									 : 0;
 			}
 		}
@@ -107,16 +115,16 @@ void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
 			uchar* ptr = image.scanLine(y);
 			for (size_t x = 0; x < mWidth; ++x) {
 				ptr[4 * x] = (channelMask & 0x1)
-								 ? map(mData[0][y * mWidth + x], scale)
+								 ? map(mData[0][y * mWidth + x])
 								 : 0;
 				ptr[4 * x + 1] = (channelMask & 0x2)
-									 ? map(mData[1][y * mWidth + x], scale)
+									 ? map(mData[1][y * mWidth + x])
 									 : 0;
 				ptr[4 * x + 2] = (channelMask & 0x4)
-									 ? map(mData[2][y * mWidth + x], scale)
+									 ? map(mData[2][y * mWidth + x])
 									 : 0;
 				ptr[4 * x + 3] = (channelMask & 0x8)
-									 ? map(mData[3][y * mWidth + x], scale)
+									 ? map(mData[3][y * mWidth + x])
 									 : 0;
 			}
 		}

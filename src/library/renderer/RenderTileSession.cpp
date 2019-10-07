@@ -68,7 +68,7 @@ bool RenderTileSession::handleCameraRays()
 	}
 
 	mTile->context().scene()->traceCoherentRays(*mCoherentRayStream, *mHitStream,
-												[&](const Ray& ray) {
+												[&](const Ray&) {
 													mTile->statistics().addBackgroundHitCount();
 												});
 
@@ -88,6 +88,7 @@ void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 
 ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 {
+	mTile->statistics().addShadowRayCount();
 	return mTile->context().scene()->traceShadowRay(ray);
 }
 

@@ -79,9 +79,6 @@
 # define PR_BUILDVARIANT_NAME "Debug"
 # define PR_BUILD_STRING PR_NAME_STRING " " PR_VERSION_STRING " build variant " PR_BUILDVARIANT_NAME " on " __DATE__  " at " __TIME__ " with " PR_CC_NAME " { OS: " PR_OS_NAME "; Last change: " __TIMESTAMP__ "}\n"
 #else
-# ifndef PR_RELEASE
-#  define PR_RELEASE
-# endif
 # define PR_BUILDVARIANT_NAME "Release"
 # define PR_BUILD_STRING PR_NAME_STRING " " PR_VERSION_STRING " build variant " PR_BUILDVARIANT_NAME " { OS: " PR_OS_NAME " }\n"
 #endif
@@ -102,7 +99,7 @@
 	std::cerr << "[PEARRAY] ASSERT | " << __FILE__ \
 		<< ":" << __LINE__ << " " << PR_FUNCTION_NAME \
 		<< " | " << (msg) << std::endl
-# ifdef PR_RELEASE
+# ifndef PR_DEBUG
 #  define PR_ASSERT(cond, msg) \
 	do { \
 	  if(!(cond)) { \

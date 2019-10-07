@@ -5,17 +5,18 @@
 namespace PR {
 namespace Tangent {
 
+#define PR_TANGENT_EPS (0.9999f)
 // N Orientation Z+
 inline void frame(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
 {
-	const Vector3f t = std::abs(N(0)) > 0.99f ? Vector3f(0, 1, 0) : Vector3f(1, 0, 0);
+	const Vector3f t = abs(N(0)) > PR_TANGENT_EPS ? Vector3f(0, 1, 0) : Vector3f(1, 0, 0);
 	Nx				 = N.cross(t).normalized();
 	Ny				 = N.cross(Nx).normalized();
 }
 
 inline void frame(const Vector3fv& N, Vector3fv& Nx, Vector3fv& Ny)
 {
-	bfloat mask = abs(N(0)) > vfloat(0.99f);
+	bfloat mask = abs(N(0)) > vfloat(PR_TANGENT_EPS);
 
 	const Vector3fv t = Vector3fv(blend(vfloat(1), vfloat(0), mask),
 								  blend(vfloat(0), vfloat(1), mask),

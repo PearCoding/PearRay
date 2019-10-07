@@ -46,27 +46,22 @@ void BoundingBox::inflate(float eps, bool maxDir)
 
 void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	out.HitDistance = std::numeric_limits<float>::infinity();
+	out.HitDistance		  = std::numeric_limits<float>::infinity();
 	const Vector3f invDir = in.Direction.cwiseInverse();
 
-	float entry, exit;
+	float entry = -std::numeric_limits<float>::infinity();
+	float exit  = std::numeric_limits<float>::infinity();
 	for (int i = 0; i < 3; ++i) {
 		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
 		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-		if (i == 0) {
-			entry = std::min(vmin, vmax);
-			exit  = std::max(vmin, vmax);
-		} else {
-			entry = std::max(std::min(vmin, vmax), entry);
-			exit  = std::min(std::max(vmin, vmax), exit);
-		}
+		entry = std::max(std::min(vmin, vmax), entry);
+		exit  = std::min(std::max(vmin, vmax), exit);
 	}
 
 	float minE = entry <= 0 ? exit : entry;
-	if (exit >= entry && minE > PR_EPSILON) {
+	if (exit >= entry && minE > PR_EPSILON)
 		out.HitDistance = minE;
-	}
 }
 
 void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
@@ -74,18 +69,14 @@ void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 	using namespace simdpp;
 	const Vector3fv invDir = in.Direction.cwiseInverse();
 
-	float32v entry, exit;
+	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
+	vfloat exit  = vfloat(std::numeric_limits<float>::infinity());
 	for (int i = 0; i < 3; ++i) {
-		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const float32v vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
+		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-		if (i == 0) {
-			entry = min(vmin, vmax);
-			exit  = max(vmin, vmax);
-		} else {
-			entry = max(min(vmin, vmax), entry);
-			exit  = min(max(vmin, vmax), exit);
-		}
+		entry = max(min(vmin, vmax), entry);
+		exit  = min(max(vmin, vmax), exit);
 	}
 
 	const float32v inf = make_float(std::numeric_limits<float>::infinity());

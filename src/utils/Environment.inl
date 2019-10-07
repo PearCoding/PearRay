@@ -98,7 +98,7 @@ inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& 
 {
 	try {
 		return boost::get<std::shared_ptr<Socket>>(mNamedShadingSocket.at(name));
-	} catch (boost::bad_get e) {
+	} catch (const boost::bad_get& e) {
 		return std::shared_ptr<Socket>();
 	}
 }
