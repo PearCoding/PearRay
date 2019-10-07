@@ -25,13 +25,19 @@ inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutpu
 		nonHit(grp.getRay(id));
 	}
 }
+
 template <typename Func>
 void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 
+#ifdef PR_FORCE_SINGLE_TRACE
+	Ray in;
+	SingleCollisionOutput out;
+#else
 	RayPackage in;
 	CollisionOutput out;
+#endif
 
 	// First sort all rays
 	rays.sort();
@@ -41,6 +47,39 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 	hits.reset();
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
+
+#ifdef PR_FORCE_SINGLE_TRACE
+		for (size_t i = 0;
+			 i < grp.Size;
+			 ++i) {
+			in = grp.getRay(i);
+
+			// Check for collisions
+			mKDTree
+				->checkCollision(in, out,
+								 [this](const Ray& in2, uint64 index,
+										SingleCollisionOutput& out2) {
+									 mEntities[index]->checkCollision(in2, out2);
+								 });
+
+			float hitD = sout.HitDistance;
+			if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
+				HitEntry entry;
+				entry.RayID		  = i;
+				entry.MaterialID  = sout.MaterialID;
+				entry.EntityID	= sout.EntityID;
+				entry.PrimitiveID = sout.FaceID;
+				entry.UV[0]		  = sout.UV[0];
+				entry.UV[1]		  = sout.UV[1];
+				entry.Flags		  = sout.Flags;
+
+				PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
+				hits.add(entry);
+			} else {
+				nonHit(in);
+			}
+		}
+#else  //PR_FORCE_SINGLE_TRACE
 
 		// In some cases the group size will be not a multiply of the simd bandwith.
 		// The internal stream is always a multiply therefore garbage may be traced
@@ -64,6 +103,7 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 			_sceneCheckHit<Func, 2>(grp, i, out, hits, nonHit);
 			_sceneCheckHit<Func, 3>(grp, i, out, hits, nonHit);
 		}
+#endif //PR_FORCE_SINGLE_TRACE
 	}
 }
 

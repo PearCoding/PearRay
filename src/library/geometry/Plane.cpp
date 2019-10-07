@@ -129,14 +129,15 @@ void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 
 	out.HitDistance = pn / ln;
 
-	auto p = in.t(out.HitDistance) - PV;
+	Vector3fv p = in.t(out.HitDistance) - PV;
 
 	out.UV[0] = p.dot(promote(mXAxis)) * mInvXLenSqr_Cache;
 	out.UV[1] = p.dot(promote(mYAxis)) * mInvYLenSqr_Cache;
 
-	mask_float32v succ = (out.UV[0] >= 0) & (out.UV[0] <= 1)
-						 & (out.UV[1] >= 0) & (out.UV[1] <= 1)
-						 & (out.HitDistance > PR_PLANE_INTERSECT_EPSILON);
+	bfloat succ = (out.UV[0] >= 0) & (out.UV[0] <= 1)
+				  & (out.UV[1] >= 0) & (out.UV[1] <= 1)
+				  & (out.HitDistance > PR_PLANE_INTERSECT_EPSILON)
+				  & (abs(ln) > PR_PLANE_INTERSECT_EPSILON);
 	out.HitDistance = blend(out.HitDistance, inf, succ);
 }
 

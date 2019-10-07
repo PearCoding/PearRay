@@ -96,9 +96,8 @@ public:
 	{
 		pt.P  = transform() * mPlane.surfacePoint(u, v);
 		pt.Ng = directionMatrix() * mPlane.normal();
-		pt.Ng.normalize();
-
-		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
+		pt.Nx = directionMatrix() * mPlane.xAxis().normalized();
+		pt.Ny = directionMatrix() * mPlane.yAxis().normalized();
 
 		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
