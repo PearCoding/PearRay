@@ -29,7 +29,7 @@ public:
 		return *this;
 	}
 
-	inline VectorBase(T f)
+	inline explicit VectorBase(T f)
 		: Base(fill_vector(f))
 	{
 	}
@@ -37,29 +37,34 @@ public:
 	template <class E>
 	inline VectorBase& operator+=(const V<N, E>& a)
 	{
-		*this = *this + a;
+		*this = *this + a.eval();
 		return *this;
 	}
 
 	template <class E>
 	inline VectorBase& operator-=(const V<N, E>& a)
 	{
-		*this = *this - a;
+		*this = *this - a.eval();
 		return *this;
 	}
 
 	template <class E>
 	inline VectorBase& operator*=(const V<N, E>& a)
 	{
-		*this = *this * a;
+		*this = *this * a.eval();
 		return *this;
 	}
 
 	template <class E>
 	inline VectorBase& operator/=(const V<N, E>& a)
 	{
-		*this = *this / a;
+		*this = *this / a.eval();
 		return *this;
+	}
+
+	inline VectorBase operator-() const
+	{
+		return VectorBase<N, T, V>(simdpp::neg(*this));
 	}
 };
 
@@ -104,9 +109,11 @@ using Vector4fv = Vector4t<vfloat>;
 using Vector4iv = Vector4t<vint32>;
 
 /* Utility functions */
+using std::abs;
 inline vfloat abs(const vfloat& o) { return simdpp::abs(o); }
 inline vint32 abs(const vint32& o) { return simdpp::abs(o); }
 
+using std::sqrt;
 inline vfloat sqrt(const vfloat& o) { return simdpp::sqrt(o); }
 
 using std::sin;
@@ -119,7 +126,7 @@ inline vnfloat<N> sin(const simdpp::float32<N, E>& x)
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(x_v, x);
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::sin(x_v[i]);
 
@@ -136,7 +143,7 @@ inline vnfloat<N> cos(const simdpp::float32<N, E>& x)
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(x_v, x);
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::cos(x_v[i]);
 
@@ -153,7 +160,7 @@ inline vnfloat<N> tan(const simdpp::float32<N, E>& x)
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(x_v, x);
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::tan(x_v[i]);
 
@@ -170,7 +177,7 @@ inline vnfloat<N> asin(const simdpp::float32<N, E>& x)
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(x_v, x);
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::asin(x_v[i]);
 
@@ -187,7 +194,7 @@ inline vnfloat<N> acos(const simdpp::float32<N, E>& x)
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(x_v, x);
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::acos(x_v[i]);
 
@@ -204,7 +211,7 @@ inline vnfloat<N> atan(const simdpp::float32<N, E>& x)
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(x_v, x);
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::atan(x_v[i]);
 
@@ -224,8 +231,8 @@ inline vnfloat<N> atan2(const simdpp::float32<N, E1>& y,
 	PR_SIMD_ALIGN
 	float res_v[N];
 
-	simdpp::store(y_v, y);
-	simdpp::store(x_v, x);
+	simdpp::store(y_v, y.eval());
+	simdpp::store(x_v, x.eval());
 	for (uint32 i = 0; i < N; ++i)
 		res_v[i] = std::atan2(y_v[i], x_v[i]);
 

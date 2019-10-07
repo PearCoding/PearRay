@@ -52,6 +52,7 @@ PUSH_TEST(kdtree kdtree.cpp)
 PUSH_TEST(simd simd.cpp)
 PUSH_TEST(compression compression.cpp)
 PUSH_TEST(tangent tangent.cpp)
+PUSH_TEST(vector vector.cpp)
 
 IF(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)

@@ -16,7 +16,7 @@ public:
 
 	SphereEntity(uint32 id, const std::string& name, float r)
 		: IEntity(id, name)
-		, mRadius(r)
+		, mSphere(r)
 		, mMaterialID(0)
 		, mLightID(0)
 		, mPDF_Cache(0.0f)
@@ -42,9 +42,9 @@ public:
 
 			const auto s = flags() & EF_LocalArea ? Vector3f(1, 1, 1) : sca.diagonal();
 
-			const float a = s(0) * mRadius;
-			const float b = s(1) * mRadius;
-			const float c = s(2) * mRadius;
+			const float a = s(0) * mSphere.radius();
+			const float b = s(1) * mSphere.radius();
+			const float c = s(2) * mSphere.radius();
 
 			// Knud Thomsen’s Formula
 			const float t = (std::pow(a * b, P) + std::pow(a * c, P) + std::pow(b * c, P)) / 3;
@@ -54,29 +54,9 @@ public:
 		}
 	}
 
-	void setMaterialID(uint32 m)
-	{
-		mMaterialID = m;
-	}
-
-	uint32 materialID() const
-	{
-		return mMaterialID;
-	}
-
-	void setRadius(float f)
-	{
-		mRadius = f;
-	}
-
-	float radius() const
-	{
-		return mRadius;
-	}
-
 	bool isCollidable() const override
 	{
-		return mRadius >= PR_EPSILON;
+		return mSphere.radius() >= PR_EPSILON;
 	}
 
 	float collisionCost() const override
@@ -86,16 +66,18 @@ public:
 
 	BoundingBox localBoundingBox() const override
 	{
-		return BoundingBox(Vector3f(mRadius, mRadius, mRadius),
-						   Vector3f(-mRadius, -mRadius, -mRadius));
+		return BoundingBox(Vector3f(mSphere.radius(), mSphere.radius(), mSphere.radius()),
+						   Vector3f(-mSphere.radius(), -mSphere.radius(), -mSphere.radius()));
 	}
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
 		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
-		mSphere_Cache.intersects(in_local, out);
+		mSphere.intersects(in_local, out);
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance, transform().matrix(), in);
+		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
+													   transform().matrix(),
+													   in);
 		out.EntityID	= simdpp::make_uint(id());
 		out.FaceID		= simdpp::make_uint(0);
 		out.MaterialID  = simdpp::make_uint(mMaterialID);
@@ -104,9 +86,11 @@ public:
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
 		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
-		mSphere_Cache.intersects(in_local, out);
+		mSphere.intersects(in_local, out);
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance, transform().matrix(), in);
+		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
+													   transform().matrix(),
+													   in);
 		out.EntityID	= id();
 		out.FaceID		= 0;
 		out.MaterialID  = mMaterialID;
@@ -115,9 +99,9 @@ public:
 	void provideGeometryPoint(uint32, float u, float v,
 							  GeometryPoint& pt) const override
 	{
-		pt.P  = transform() * mSphere_Cache.surfacePoint(u, v);
-		pt.Ng = directionMatrix() * mSphere_Cache.normalPoint(u, v);
-		pt.Ng.normalize();
+		pt.P  = transform() * mSphere.surfacePoint(u, v);
+		pt.Ng = directionMatrix() * mSphere.normalPoint(u, v);
+		//pt.Ng.normalize();
 
 		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
 
@@ -132,16 +116,13 @@ protected:
 
 		const float area = surfaceArea(0);
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
-
-		mSphere_Cache = Sphere(Vector3f(0, 0, 0), mRadius);
 	}
 
 private:
-	float mRadius;
+	Sphere mSphere;
 	uint32 mMaterialID;
 	uint32 mLightID;
 
-	Sphere mSphere_Cache;
 	float mPDF_Cache;
 };
 

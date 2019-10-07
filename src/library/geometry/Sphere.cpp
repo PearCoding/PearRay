@@ -1,37 +1,22 @@
 #include "Sphere.h"
 #include "CollisionData.h"
 
-#include "math/Projection.h"
 #include "math/SIMD.h"
+#include "math/Spherical.h"
 
 #include <utility>
 
 #define PR_SPHERE_INTERSECT_EPSILON (1e-5f)
 namespace PR {
 Sphere::Sphere()
-	: mPosition(0, 0, 0)
-	, mRadius(1)
+	: mRadius(1)
 {
 }
 
-Sphere::Sphere(const Vector3f& pos, float radius)
-	: mPosition(pos)
-	, mRadius(radius)
+Sphere::Sphere(float radius)
+	: mRadius(radius)
 {
 	PR_ASSERT(radius > 0, "radius has to be bigger than 0. Check it before construction!");
-}
-
-Sphere::Sphere(const Sphere& other)
-{
-	mPosition = other.mPosition;
-	mRadius   = other.mRadius;
-}
-
-Sphere& Sphere::operator=(const Sphere& other)
-{
-	mPosition = other.mPosition;
-	mRadius   = other.mRadius;
-	return *this;
 }
 
 void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
@@ -39,7 +24,7 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 	out.HitDistance = std::numeric_limits<float>::infinity();
 
 	// C - O
-	const Vector3f L = mPosition - in.Origin;
+	const Vector3f L = -in.Origin;
 
 	const float S  = L.dot(in.Direction);
 	const float L2 = L.squaredNorm();
@@ -76,10 +61,10 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	using namespace simdpp;
 
-	const Vector3fv L = promote(mPosition) - in.Origin;
+	const Vector3fv L = -in.Origin;
 	const vfloat S	= L.dot(in.Direction);
 	const vfloat L2   = L.squaredNorm();
-	const float R2	= mRadius * mRadius;
+	const vfloat R2   = vfloat(mRadius * mRadius);
 	const vfloat M2   = L2 - S * S;
 
 	const bfloat valid = ((S >= 0) | (L2 <= R2)) & (M2 <= R2);
@@ -108,7 +93,7 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 
 void Sphere::combine(const Vector3f& point)
 {
-	float f = (mPosition - point).squaredNorm();
+	float f = point.squaredNorm();
 	if (f > mRadius * mRadius)
 		mRadius = std::sqrt(f);
 }
@@ -120,14 +105,12 @@ void Sphere::combine(const Sphere& other)
 		return;
 	}
 
-	float f = (mPosition - other.mPosition).squaredNorm() + other.mRadius;
-	if (f > mRadius * mRadius)
-		mRadius = std::sqrt(f);
+	mRadius = std::max(mRadius, other.mRadius);
 }
 
 Vector3f Sphere::normalPoint(float u, float v) const
 {
-	return Projection::sphere_coord(u * 2 * M_PI, v * M_PI);
+	return Spherical::cartesian_from_uv<float>(u, v);
 }
 
 Vector3f Sphere::surfacePoint(float u, float v) const
@@ -137,11 +120,11 @@ Vector3f Sphere::surfacePoint(float u, float v) const
 
 Vector2f Sphere::project(const Vector3f& p) const
 {
-	return Projection::sphereUV<float>(p - mPosition);
+	return Spherical::uv_from_point(p);
 }
 
 Vector2fv Sphere::project(const Vector3fv& p) const
 {
-	return Projection::sphereUV<vfloat>(p - promote(mPosition));
+	return Spherical::uv_from_point(p);
 }
 } // namespace PR

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "Spherical.h"
 
 namespace PR {
 namespace Projection {
@@ -15,14 +15,6 @@ inline float stratified(float u, int index, int groups, float min = 0, float max
 {
 	float range = (max - min) / groups;
 	return min + u * range + index * range;
-}
-
-template <typename T>
-inline Vector2t<T> sphereUV(const Vector3t<T>& V)
-{
-	T u = T(0.5f) + atan2(V(2), V(0)) * PR_1_PI * 0.5f;
-	T v = T(0.5f) - asin(T(0) - V(1)) * PR_1_PI;
-	return Vector2t<T>(u, v);
 }
 
 // Projections
@@ -50,26 +42,11 @@ inline float sphere_pdf()
 	return PR_1_PI * 0.25f;
 }
 
-// theta [0, PI]
-// phi [0, 2*PI]
-inline Vector3f sphere_coord(float theta, float phi)
-{
-	const float thSin = std::sin(theta);
-	const float thCos = std::cos(theta);
-
-	const float phSin = std::sin(phi);
-	const float phCos = std::cos(phi);
-
-	return Vector3f(thSin * phCos,
-					thSin * phSin,
-					thCos);
-}
-
 // Orientation +Z
 inline Vector3f hemi(float u1, float u2, float& pdf)
 {
 	pdf = PR_1_PI;
-	return sphere_coord(u1 * PR_PI * 0.5f, u2 * 2 * PR_PI);
+	return Spherical::cartesian(u1 * PR_PI * 0.5f, u2 * 2 * PR_PI);
 }
 
 // Cosine weighted

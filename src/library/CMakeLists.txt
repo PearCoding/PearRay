@@ -63,6 +63,7 @@ SET(PR_Src
   math/SIMathStd.h
   math/SIMathUtils.h
   math/SphereMap.h
+  math/Spherical.h
   math/Tangent.h
   mesh/TriMesh.cpp
   mesh/TriMesh.h

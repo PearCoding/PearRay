@@ -1,5 +1,7 @@
 namespace PR {
 
+#define PR_FORCE_SINGLE_TRACE
+
 template <typename Func, uint32 K>
 inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutput& out,
 						   HitStream& hits, Func nonHit)
@@ -62,16 +64,16 @@ void Scene::traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) con
 									 mEntities[index]->checkCollision(in2, out2);
 								 });
 
-			float hitD = sout.HitDistance;
+			float hitD = out.HitDistance;
 			if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 				HitEntry entry;
 				entry.RayID		  = i;
-				entry.MaterialID  = sout.MaterialID;
-				entry.EntityID	= sout.EntityID;
-				entry.PrimitiveID = sout.FaceID;
-				entry.UV[0]		  = sout.UV[0];
-				entry.UV[1]		  = sout.UV[1];
-				entry.Flags		  = sout.Flags;
+				entry.MaterialID  = out.MaterialID;
+				entry.EntityID	= out.EntityID;
+				entry.PrimitiveID = out.FaceID;
+				entry.UV[0]		  = out.UV[0];
+				entry.UV[1]		  = out.UV[1];
+				entry.Flags		  = out.Flags;
 
 				PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 				hits.add(entry);

@@ -5,18 +5,17 @@
 namespace PR {
 class SingleCollisionOutput;
 class CollisionOutput;
+
+/* Origin based sphere */
 class PR_LIB Sphere {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	Sphere();
-	Sphere(const Vector3f& pos, float radius);
+	Sphere(float radius);
 
-	Sphere(const Sphere& other);
-	Sphere& operator=(const Sphere& other);
-
-	inline Vector3f position() const { return mPosition; }
-	inline void setPosition(const Vector3f& pos) { mPosition = pos; }
+	Sphere(const Sphere& other) = default;
+	Sphere& operator=(const Sphere& other) = default;
 
 	inline float radius() const { return mRadius; }
 	inline void setRadius(float f)
@@ -38,7 +37,7 @@ public:
 
 	inline bool contains(const Vector3f& point) const
 	{
-		return (mPosition - point).squaredNorm() <= mRadius * mRadius;
+		return point.squaredNorm() <= mRadius * mRadius;
 	}
 
 	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
@@ -62,7 +61,6 @@ public:
 	}
 
 private:
-	Vector3f mPosition;
 	float mRadius;
 };
 } // namespace PR

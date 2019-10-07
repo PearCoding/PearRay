@@ -58,7 +58,7 @@ public:
 
 	inline float diameter() const { return (mUpperBound - mLowerBound).norm(); }
 
-	inline Sphere outerSphere()
+	/*inline Sphere outerSphere()
 	{
 		return Sphere(center(),
 					  std::max(width(), std::max(height(), depth())) * 0.5f * 1.73205080757f);
@@ -68,7 +68,7 @@ public:
 	{
 		return Sphere(center(),
 					  std::max(width(), std::max(height(), depth())) * 0.5f);
-	}
+	}*/
 
 	inline float volume() const { return width() * height() * depth(); }
 	inline float surfaceArea() const
