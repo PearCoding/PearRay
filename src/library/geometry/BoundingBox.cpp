@@ -47,11 +47,12 @@ void BoundingBox::inflate(float eps, bool maxDir)
 void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
 	out.HitDistance = std::numeric_limits<float>::infinity();
+	const Vector3f invDir = in.Direction.cwiseInverse();
 
 	float entry, exit;
 	for (int i = 0; i < 3; ++i) {
-		const float vmin = (lowerBound()(i) - in.Origin[i]) * in.InvDirection[i];
-		const float vmax = (upperBound()(i) - in.Origin[i]) * in.InvDirection[i];
+		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
 		if (i == 0) {
 			entry = std::min(vmin, vmax);
@@ -71,11 +72,12 @@ void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	using namespace simdpp;
+	const Vector3fv invDir = in.Direction.cwiseInverse();
 
 	float32v entry, exit;
 	for (int i = 0; i < 3; ++i) {
-		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * in.InvDirection[i];
-		const float32v vmax = (upperBound()(i) - in.Origin[i]) * in.InvDirection[i];
+		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float32v vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
 		if (i == 0) {
 			entry = min(vmin, vmax);
@@ -95,10 +97,11 @@ void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 {
 	BoundingBox::IntersectionRange r;
+	const Vector3f invDir = in.Direction.cwiseInverse();
 
 	for (int i = 0; i < 3; ++i) {
-		const float vmin = (lowerBound()(i) - in.Origin[i]) * in.InvDirection[i];
-		const float vmax = (upperBound()(i) - in.Origin[i]) * in.InvDirection[i];
+		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
 		if (i == 0) {
 			r.Entry = std::min(vmin, vmax);
@@ -119,10 +122,11 @@ BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& i
 	using namespace simdpp;
 
 	BoundingBox::IntersectionRangeV r;
+	const Vector3fv invDir = in.Direction.cwiseInverse();
 
 	for (int i = 0; i < 3; ++i) {
-		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * in.InvDirection[i];
-		const float32v vmax = (upperBound()(i) - in.Origin[i]) * in.InvDirection[i];
+		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float32v vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
 		if (i == 0) {
 			r.Entry = min(vmin, vmax);

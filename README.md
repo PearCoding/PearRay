@@ -13,7 +13,7 @@
 
 Experimental high accurate spectral stream path and ray tracer with Bidirect Raytracing, Distribution Raytracing and Photon Mapping support.
 
- :exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)!**
+:exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)!**
 
 ## Blender Addon
 There is an open source (still experimental) blender integration addon available [here](https://github.com/PearCoding/PearRay-Blender).

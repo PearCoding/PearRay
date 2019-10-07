@@ -74,8 +74,9 @@ public:
 							   CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
-		out.HitDistance = make_float(std::numeric_limits<float>::infinity());
-		vfloat zero		= make_zero();
+		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
+		vfloat zero			   = make_zero();
+		const Vector3fv invDir = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
 			kdNodeCollider* node;
@@ -105,9 +106,9 @@ public:
 			while (!currentN->isLeaf) {
 				kdInnerNodeCollider* innerN = reinterpret_cast<kdInnerNodeCollider*>(currentN);
 				const vfloat splitM			= innerN->splitPos - in.Origin[innerN->axis];
-				const vfloat t				= splitM * in.InvDirection[innerN->axis];
+				const vfloat t				= splitM * invDir[innerN->axis];
 
-				const bfloat dirMask = in.InvDirection[innerN->axis] < 0;
+				const bfloat dirMask = invDir[innerN->axis] < 0;
 				const bfloat minHit  = minT <= t;
 				const bfloat maxHit  = maxT >= t;
 
@@ -175,7 +176,8 @@ public:
 							   CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
-		out.HitDistance = std::numeric_limits<float>::infinity();
+		out.HitDistance		  = std::numeric_limits<float>::infinity();
+		const Vector3f invDir = in.Direction.cwiseInverse();
 
 		struct _stackdata {
 			kdNodeCollider* node;
@@ -205,7 +207,7 @@ public:
 			while (!currentN->isLeaf) {
 				kdInnerNodeCollider* innerN = reinterpret_cast<kdInnerNodeCollider*>(currentN);
 				const float t				= (innerN->splitPos - in.Origin[innerN->axis])
-								* in.InvDirection[innerN->axis];
+								* invDir[innerN->axis];
 
 				const bool side = (innerN->splitPos > in.Origin[innerN->axis])
 								  || (std::abs(innerN->splitPos - in.Origin[innerN->axis]) <= PR_EPSILON && in.Direction[innerN->axis] <= 0);

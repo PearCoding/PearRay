@@ -16,7 +16,6 @@ struct PR_LIB_INLINE RayPackageBase {
 
 	Vector3t<V> Origin		 = Vector3t<V>(V(0), V(0), V(0));
 	Vector3t<V> Direction	= Vector3t<V>(V(0), V(0), V(0));
-	Vector3t<V> InvDirection = Vector3t<V>(V(0), V(0), V(0));
 
 	V Weight					= V(0);
 	V Time						= V(0);
@@ -30,12 +29,6 @@ struct PR_LIB_INLINE RayPackageBase {
 		: Origin(o)
 		, Direction(d)
 	{
-		setupInverse();
-	}
-
-	inline void setupInverse()
-	{
-		InvDirection = Direction.cwiseInverse();
 	}
 
 	inline void normalize()
@@ -55,7 +48,6 @@ struct PR_LIB_INLINE RayPackageBase {
 		other.Direction = Transform::apply(dM, Direction);
 
 		other.normalize();
-		other.setupInverse();
 
 		return other;
 	}
@@ -70,7 +62,6 @@ struct PR_LIB_INLINE RayPackageBase {
 		other.Direction = Transform::apply(dM, Direction);
 
 		other.normalize();
-		other.setupInverse();
 
 		return other;
 	}
@@ -99,8 +90,6 @@ struct PR_LIB_INLINE RayPackageBase {
 		other.Origin	= Transform::safePosition(o, d);
 		other.Direction = d;
 		other.Depth += V(1);
-
-		other.setupInverse();
 
 		return other;
 	}

@@ -15,8 +15,6 @@ PR_TEST("Intersects CCW")
 							simdpp::make_float(0),
 							simdpp::make_float(1)));
 
-	in.setupInverse();
-
 	const Vector3fv p0 = Vector3fv(vfloat(0), vfloat(0), vfloat(0));
 	const Vector3fv p1 = Vector3fv(vfloat(1), vfloat(0), vfloat(0));
 	const Vector3fv p2 = Vector3fv(vfloat(0), vfloat(1), vfloat(0));
@@ -44,8 +42,6 @@ PR_TEST("Intersects CW")
 				  Vector3fv(simdpp::make_float(0),
 							simdpp::make_float(0),
 							simdpp::make_float(1)));
-
-	in.setupInverse();
 
 	const Vector3fv p0 = Vector3fv(vfloat(0), vfloat(0), vfloat(0));
 	const Vector3fv p1 = Vector3fv(vfloat(0), vfloat(1), vfloat(0));

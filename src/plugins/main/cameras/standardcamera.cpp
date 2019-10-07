@@ -195,7 +195,6 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 	ray.Flags			= 0;
 
 	//ray.normalize();
-	ray.setupInverse();
 
 	return ray;
 }

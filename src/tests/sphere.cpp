@@ -44,8 +44,6 @@ PR_TEST("Intersects [Package]")
 							  simdpp::make_float(0, 0, 0, 1),
 							  simdpp::make_float(0, 0, 0, 0)));
 
-	rays.setupInverse();
-
 	CollisionOutput s;
 	sphere.intersects(rays, s);
 	const float INF = std::numeric_limits<float>::infinity();

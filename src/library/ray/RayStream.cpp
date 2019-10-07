@@ -35,7 +35,6 @@ Ray RayGroup::getRay(size_t id) const
 	ray.Weight			= Weight[id];
 
 	ray.normalize();
-	ray.setupInverse();
 	return ray;
 }
 
@@ -80,7 +79,6 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 	load_from_container_linear(ray.Weight, Weight, id);
 
 	ray.normalize();
-	ray.setupInverse();
 
 	return ray;
 }
@@ -219,7 +217,6 @@ Ray RayStream::getRay(size_t id) const
 	ray.Weight			= mWeight[id];
 
 	ray.normalize();
-	ray.setupInverse();
 	return ray;
 }
 
