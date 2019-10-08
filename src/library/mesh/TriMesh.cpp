@@ -307,11 +307,10 @@ void TriMesh::provideGeometryPoint(uint32 faceID, float u, float v,
 	Vector2f uv;
 	f.interpolate(u, v, pt.P, pt.Ng, uv);
 
-	if (features() & TMF_HAS_UV) {
-		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);// TODO
-	} else {
+	if (features() & TMF_HAS_UV)
+		f.tangentFromUV(pt.Nx, pt.Ny);
+	else
 		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
-	}
 
 	pt.UVW = Vector3f(uv(0), uv(1), 0);
 	pt.MaterialID = f.MaterialSlot;
