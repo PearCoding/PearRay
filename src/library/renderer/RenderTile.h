@@ -148,5 +148,7 @@ private:
 	RenderTileStatistics mStatistics;
 
 	const RenderContext& mContext;
+
+	std::unique_ptr<struct RenderTileCache> mCache;
 };
 } // namespace PR

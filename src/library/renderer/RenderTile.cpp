@@ -11,6 +11,15 @@
 #include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
+struct RenderTileCache {
+	uint32 AASample = 100000;
+	Vector2f AA;
+	uint32 LensSample = 100000;
+	Vector2f Lens;
+	uint32 TimeSample = 100000;
+	float Time;
+};
+
 static std::unique_ptr<Sampler> createSampler(SamplerMode mode, Random& random, uint32 samples)
 {
 	switch (mode) {
@@ -54,6 +63,7 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	, mTimeSampleCount(context.settings().timeSampleCount)
 	, mSpectralSampleCount(context.settings().spectralSampleCount)
 	, mContext(context)
+	, mCache(new RenderTileCache)
 {
 	PR_ASSERT(mWidth > 0, "Invalid tile width");
 	PR_ASSERT(mHeight > 0, "Invalid tile height");
@@ -113,14 +123,30 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 {
 	statistics().addPixelSampleCount();
 
-	const uint32 aasample		= sample / (mLensSampleCount * mTimeSampleCount * mSpectralSampleCount);
-	const uint32 lenssample		= (sample % (mLensSampleCount * mTimeSampleCount * mSpectralSampleCount)) / (mTimeSampleCount * mSpectralSampleCount);
-	const uint32 timesample		= (sample % (mTimeSampleCount * mSpectralSampleCount)) / mSpectralSampleCount;
 	const uint32 spectralsample = sample % mSpectralSampleCount;
+	sample /= mSpectralSampleCount;
+	const uint32 timesample = sample % mTimeSampleCount;
+	sample /= mTimeSampleCount;
+	const uint32 lenssample = sample % mLensSampleCount;
+	sample /= mLensSampleCount;
+	const uint32 aasample = sample;
 
-	const auto aa   = aaSampler()->generate2D(aasample);
-	const auto lens = lensSampler()->generate2D(lenssample);
-	const float t   = mTimeAlpha * timeSampler()->generate1D(timesample) + mTimeBeta;
+	if (mCache->AASample != aasample) {
+		mCache->AA = aaSampler()->generate2D(aasample);
+		mCache->AA(0) += mContext.offsetX() - 0.5f;
+		mCache->AA(1) += mContext.offsetY() - 0.5f;
+		mCache->AASample = aasample;
+	}
+
+	if (mCache->LensSample != lenssample) {
+		mCache->Lens	   = lensSampler()->generate2D(lenssample);
+		mCache->LensSample = lenssample;
+	}
+
+	if (mCache->TimeSample != timesample) {
+		mCache->Time	   = mTimeAlpha * timeSampler()->generate1D(timesample) + mTimeBeta;
+		mCache->TimeSample = timesample;
+	}
 
 	uint32 waveInd = spectralsample;
 	if (mContext.settings().spectralProcessMode != SPM_LINEAR) {
@@ -130,16 +156,13 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 												* mContext.spectrumDescriptor()->samples()));
 	}
 
-	const float x = px + (aa(0) - 0.5f + mContext.offsetX());
-	const float y = py + (aa(1) - 0.5f + mContext.offsetY());
-
 	CameraSample cameraSample;
 	cameraSample.SensorSize		 = Vector2i(mFullWidth, mFullHeight);
-	cameraSample.Pixel[0]		 = x;
-	cameraSample.Pixel[1]		 = y;
-	cameraSample.R[0]			 = lens(0);
-	cameraSample.R[1]			 = lens(1);
-	cameraSample.Time			 = t;
+	cameraSample.Pixel[0]		 = px + mCache->AA(0);
+	cameraSample.Pixel[1]		 = py + mCache->AA(1);
+	cameraSample.R[0]			 = mCache->Lens(0);
+	cameraSample.R[1]			 = mCache->Lens(1);
+	cameraSample.Time			 = mCache->Time;
 	cameraSample.WavelengthIndex = waveInd;
 
 	return mContext.scene()->activeCamera()->constructRay(cameraSample);

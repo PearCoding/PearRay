@@ -45,6 +45,7 @@ public:
 	void clear();
 
 	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt);
+	void pushBackgroundFragment(uint32 pixelIndex, uint32 channel);
 
 	inline void setSampleCount(uint32 pixelIndex, uint32 channel, uint32 sample)
 	{

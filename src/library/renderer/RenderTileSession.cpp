@@ -59,18 +59,22 @@ bool RenderTileSession::handleCameraRays()
 		}
 	}
 
-	{
+	/*{
 		std::stringstream sstream;
 		sstream << "rays_t" << mTile->index()
 				<< "_p" << (mCurrentY * w + mCurrentX)
 				<< "_s" << mTile->samplesRendered() << ".rdmp";
 		mCoherentRayStream->dump(sstream.str());
-	}
+	}*/
 
-	mTile->context().scene()->traceCoherentRays(*mCoherentRayStream, *mHitStream,
-												[&](const Ray&) {
-													mTile->statistics().addBackgroundHitCount();
-												});
+	mTile->context().scene()->traceCoherentRays(
+		*mCoherentRayStream,
+		*mHitStream,
+		[&](const Ray& ray) {
+			mTile->statistics().addBackgroundHitCount();
+			mTile->context().output()->pushBackgroundFragment(ray.PixelIndex,
+															  ray.WavelengthIndex);
+		});
 
 	return true;
 }
