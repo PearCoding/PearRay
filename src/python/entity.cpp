@@ -1,9 +1,5 @@
+#include "entity/IEntity.h"
 #include "entity/VirtualEntity.h"
-#include "entity/RenderEntity.h"
-#include "material/Material.h"
-#include "ray/Ray.h"
-#include "sampler/Sampler.h"
-#include "shader/FacePoint.h"
 
 #include "pypearray.h"
 
@@ -30,13 +26,12 @@ void setup_entity(py::module& m)
 		.value("DEBUG", EF_Debug)
 		.value("LOCALAREA", EF_LocalArea);
 
-	py::class_<RenderEntity, std::shared_ptr<RenderEntity>, VirtualEntity>(m, "RenderEntity")
-		//.def(py::init<uint32, std::string>())
-		.def("isLight", &RenderEntity::isLight)
-		.def("surfaceArea", &RenderEntity::surfaceArea)
-		.def("isCollidable", &RenderEntity::isCollidable)
-		.def("collisionCost", &RenderEntity::collisionCost)
-		.def("localBoundingBox", &RenderEntity::localBoundingBox)
-		.def("worldBoundingBox", &RenderEntity::worldBoundingBox);
+	py::class_<IEntity, std::shared_ptr<IEntity>, VirtualEntity>(m, "IEntity")
+		.def("isLight", &IEntity::isLight)
+		.def("surfaceArea", &IEntity::surfaceArea)
+		.def("isCollidable", &IEntity::isCollidable)
+		.def("collisionCost", &IEntity::collisionCost)
+		.def("localBoundingBox", &IEntity::localBoundingBox)
+		.def("worldBoundingBox", &IEntity::worldBoundingBox);
 }
 } // namespace PRPY

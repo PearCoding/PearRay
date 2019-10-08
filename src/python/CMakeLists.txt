@@ -5,14 +5,13 @@ SET(Src
   entity.cpp
   environment.cpp
   geometry.cpp
-  light.cpp
+  infinitelight.cpp
   logger.cpp
   material.cpp
   math.cpp
   module.cpp
   output.cpp
   registry.cpp
-  renderentities.cpp
   renderer.cpp
   sampler.cpp
   scene.cpp
@@ -21,7 +20,7 @@ SET(Src
   spectral.cpp
   status.cpp
   tonemapper.cpp)
-SET(Hdr 
+SET(Hdr
   pypearray.h)
 
 include_directories(../utils)

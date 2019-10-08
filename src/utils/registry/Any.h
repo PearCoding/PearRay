@@ -83,6 +83,7 @@ protected:
 	_CAST_S(uint32)
 	_CAST_S(int64)
 	_CAST_S(uint64)
+	_CAST_S(bool)
 
 	template <typename T>
 	inline typename std::enable_if<std::is_enum<T>::value, void>::type
@@ -138,6 +139,7 @@ protected:
 	_STR_S(uint32)
 	_STR_S(int64)
 	_STR_S(uint64)
+	_STR_S(bool)
 
 	template <typename T>
 	inline typename std::enable_if<std::is_enum<T>::value, std::string>::type
