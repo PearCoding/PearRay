@@ -68,7 +68,9 @@ public:
 		return mBoundingBox;
 	}
 
-	// Package Version
+	// Package Version (Coherent)
+	// FIXME: This is not for coherent rays
+	// FIXME: Not working properly
 	template <typename CheckCollisionCallback>
 	inline bool checkCollision(const RayPackage& in, CollisionOutput& out,
 							   CheckCollisionCallback checkCollisionCallback) const

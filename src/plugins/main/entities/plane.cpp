@@ -73,7 +73,8 @@ public:
 
 		mPlane.intersects(in_local, out);
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance, transform().matrix(), in);
+		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
+													   transform().matrix(), in);
 		out.EntityID	= simdpp::make_uint(id());
 		out.FaceID		= simdpp::make_uint(0);
 		out.MaterialID  = simdpp::make_uint(mMaterialID);
@@ -85,7 +86,8 @@ public:
 
 		mPlane.intersects(in_local, out);
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance, transform().matrix(), in);
+		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
+													   transform().matrix(), in);
 		out.EntityID	= id();
 		out.FaceID		= 0;
 		out.MaterialID  = mMaterialID;

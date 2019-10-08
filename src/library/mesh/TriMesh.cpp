@@ -4,6 +4,8 @@
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
 #include "math/Projection.h"
+#include "math/Tangent.h"
+#include "sampler/SplitSample.h"
 
 #include <fstream>
 
@@ -275,11 +277,13 @@ float TriMesh::collisionCost() const
 	return faceCount();
 }
 
-void TriMesh::sampleFacePoint(float rnd1, float rnd2, float rnd3,
+void TriMesh::sampleFacePoint(const Vector2f& rnd,
 							  GeometryPoint& p, float& pdfA) const
 {
-	uint32 fi  = (rnd1 * (faceCount() - 1));
-	Vector2f b = Projection::triangle(rnd2, rnd3);
+	SplitSample2D smp(rnd, 0, faceCount());
+
+	uint32 fi  = smp.integral1();
+	Vector2f b = Projection::triangle(smp.uniform1(), smp.uniform2());
 
 	Face f = getFace(fi);
 
@@ -293,5 +297,23 @@ void TriMesh::sampleFacePoint(float rnd1, float rnd2, float rnd3,
 	p.MaterialID = f.MaterialSlot;
 
 	pdfA = 1.0f / (mIndices[0].size() * Triangle::surfaceArea(f.V[0], f.V[1], f.V[2]));
+}
+
+void TriMesh::provideGeometryPoint(uint32 faceID, float u, float v,
+								   GeometryPoint& pt) const
+{
+	Face f = getFace(faceID);
+
+	Vector2f uv;
+	f.interpolate(u, v, pt.P, pt.Ng, uv);
+
+	if (features() & TMF_HAS_UV) {
+		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);// TODO
+	} else {
+		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
+	}
+
+	pt.UVW = Vector3f(uv(0), uv(1), 0);
+	pt.MaterialID = f.MaterialSlot;
 }
 } // namespace PR

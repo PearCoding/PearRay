@@ -78,8 +78,11 @@ public:
 	bool checkCollision(const Ray& in, SingleCollisionOutput& out) const;
 	bool checkCollision(const RayPackage& in, CollisionOutput& out) const;
 
-	void sampleFacePoint(float rnd1, float rnd2, float rnd3,
+	void sampleFacePoint(const Vector2f& rnd,
 						 GeometryPoint& p, float& pdfA) const;
+
+	void provideGeometryPoint(uint32 faceID, float u, float v,
+							  GeometryPoint& pt) const;
 
 private:
 	void buildTree(const std::string& container_file);

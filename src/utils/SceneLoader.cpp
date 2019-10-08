@@ -1,37 +1,28 @@
 #include "SceneLoader.h"
 #include "Environment.h"
 #include "Logger.h"
-
-#include "entity/EntityManager.h"
-#include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
-
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraFactory.h"
-
-#include "infinitelight/IInfiniteLight.h"
-#include "infinitelight/IInfiniteLightFactory.h"
-#include "infinitelight/InfiniteLightManager.h"
-
-#include "material/IMaterial.h"
-#include "material/IMaterialFactory.h"
-#include "material/MaterialManager.h"
-
 #include "emission/EmissionManager.h"
 #include "emission/IEmission.h"
 #include "emission/IEmissionFactory.h"
-
-#include "parser/mesh/TriMeshInlineParser.h"
-
-#include "parser/texture/TextureParser.h"
-
+#include "entity/EntityManager.h"
+#include "entity/IEntity.h"
+#include "entity/IEntityFactory.h"
+#include "infinitelight/IInfiniteLight.h"
+#include "infinitelight/IInfiniteLightFactory.h"
+#include "infinitelight/InfiniteLightManager.h"
 #include "loader/WavefrontLoader.h"
-
+#include "material/IMaterial.h"
+#include "material/IMaterialFactory.h"
+#include "material/MaterialManager.h"
+#include "mesh/TriMesh.h"
+#include "parser/mesh/TriMeshInlineParser.h"
+#include "parser/texture/TextureParser.h"
+#include "shader/ConstShadingSocket.h"
 #include "spectral/RGBConverter.h"
 #include "spectral/SpectrumDescriptor.h"
-
-#include "shader/ConstShadingSocket.h"
 
 #include "DataLisp.h"
 
@@ -606,6 +597,10 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	}
 
 	PR_ASSERT(mesh, "After here it shouldn't be null");
+
+	std::stringstream str;
+	str << env->workingDir() << "/" << name << ".cnt";
+	mesh->build(str.str());
 	env->addMesh(name, mesh);
 }
 
