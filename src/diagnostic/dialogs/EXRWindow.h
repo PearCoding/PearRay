@@ -17,6 +17,7 @@ public:
 
 private slots:
 	void layerChanged();
+	void exportImage();
 
 private:
 	void updateImage(int layerID);

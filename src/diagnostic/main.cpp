@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QSplashScreen>
 #include <QSurfaceFormat>
 
 // We do not link to the library, only include the configuration file!
@@ -41,9 +42,16 @@ int main(int argc, char** argv)
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
 
+	QPixmap pixmap(":/splash.svg");
+	QSplashScreen splash(pixmap, Qt::WindowStaysOnTopHint);
+	splash.show();
+
 	// Main Window
 	MainWindow w;
 	w.show();
+
+	splash.repaint();
+	app.processEvents();
 
 	if (!parser.positionalArguments().empty()) {
 		QFileInfo info(parser.positionalArguments().first());
@@ -55,5 +63,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
+
+	splash.finish(&w);
 	return app.exec();
 }

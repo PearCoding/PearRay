@@ -13,8 +13,14 @@ public:
 
 	void setLayer(const std::shared_ptr<EXRLayer>& layer);
 
+	void exportImage(const QString& path) const;
+
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
+
+public slots:
+	void resetView();
+	void zoomToOriginalSize();
 
 protected:
 	void paintEvent(QPaintEvent* event) override;

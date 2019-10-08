@@ -36,11 +36,37 @@ ImageView::~ImageView()
 {
 }
 
+void ImageView::resetView()
+{
+	float zw = width() / (float)mImage.width();
+	float zh = (height() - BAR_HEIGHT) / (float)mImage.height();
+
+	mZoom  = std::min(zw, zh);
+	mDelta = QPointF(0, 0);
+
+	cacheImage();
+	repaint();
+}
+
+void ImageView::zoomToOriginalSize()
+{
+	mZoom  = 1;
+	mDelta = QPointF(0, 0);
+
+	cacheImage();
+	repaint();
+}
+
 void ImageView::setLayer(const std::shared_ptr<EXRLayer>& layer)
 {
 	mChannelMask = 0xFF;
 	mEXRLayer	= layer;
 	updateImage();
+}
+
+void ImageView::exportImage(const QString& path) const
+{
+	mImage.save(path);
 }
 
 QSize ImageView::minimumSizeHint() const
@@ -83,6 +109,8 @@ void ImageView::paintEvent(QPaintEvent* event)
 	int dx = (width() - mPixmap.width()) / 2 + mDelta.x();
 	int dy = (height() - mPixmap.height() - BAR_HEIGHT) / 2 + mDelta.y();
 	painter.drawPixmap(dx, dy + BAR_HEIGHT, mPixmap);
+
+	event->accept();
 }
 
 // Cache background
@@ -163,8 +191,8 @@ void ImageView::wheelEvent(QWheelEvent* event)
 
 void ImageView::cacheImage()
 {
-	mPixmap = QPixmap::fromImage(mImage.scaled(width() * mZoom,
-											   (height() - BAR_HEIGHT) * mZoom,
+	mPixmap = QPixmap::fromImage(mImage.scaled(mImage.width() * mZoom,
+											   mImage.height() * mZoom,
 											   Qt::KeepAspectRatio,
 											   Qt::FastTransformation));
 }

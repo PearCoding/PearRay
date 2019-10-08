@@ -18,5 +18,6 @@
         <file>ic_replay_black_24dp_2x.png</file>
         <file>zoom_cursor.png</file>
         <file>icon.png</file>
+        <file>splash.svg</file>
     </qresource>
 </RCC>
