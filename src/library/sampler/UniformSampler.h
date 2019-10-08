@@ -10,7 +10,6 @@ public:
 
 	float generate1D(uint32 index) override;
 	Vector2f generate2D(uint32 index) override;
-	Vector3f generate3D(uint32 index) override;
 
 private:
 	Random& mRandom;
@@ -18,9 +17,5 @@ private:
 
 	uint32 m2D_X;
 	uint32 m2D_Y;
-
-	uint32 m3D_X;
-	uint32 m3D_Y;
-	uint32 m3D_Z;
 };
 }

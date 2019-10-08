@@ -1,9 +1,10 @@
 #include "RenderTile.h"
 #include "RenderContext.h"
 #include "camera/ICamera.h"
-#include "sampler/HaltonQMCSampler.h"
+#include "sampler/HaltonSampler.h"
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/RandomSampler.h"
+#include "sampler/SobolSampler.h"
 #include "sampler/StratifiedSampler.h"
 #include "sampler/UniformSampler.h"
 #include "scene/Scene.h"
@@ -22,8 +23,10 @@ static std::unique_ptr<Sampler> createSampler(SamplerMode mode, Random& random, 
 	default:
 	case SM_MULTI_JITTER:
 		return std::make_unique<MultiJitteredSampler>(random, samples);
-	case SM_HALTON_QMC:
-		return std::make_unique<HaltonQMCSampler>(samples);
+	case SM_HALTON:
+		return std::make_unique<HaltonSampler>(samples);
+	case SM_SOBOL:
+		return std::make_unique<SobolSampler>(samples);
 	}
 }
 

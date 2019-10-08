@@ -8,7 +8,8 @@ enum SamplerMode {
 	SM_UNIFORM,
 	SM_JITTER,
 	SM_MULTI_JITTER,
-	SM_HALTON_QMC
+	SM_HALTON,
+	SM_SOBOL
 };
 
 enum DebugMode {

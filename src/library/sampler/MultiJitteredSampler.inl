@@ -37,14 +37,6 @@ Vector2f MultiJitteredSampler::generate2D(uint32 index)
 	return r;
 }
 
-// Not really uniform!
-Vector3f MultiJitteredSampler::generate3D(uint32 index)
-{
-	auto x  = generate1D(index);
-	auto yz = generate2D(index);
-	return Vector3f(x, yz(0), yz(1));
-}
-
 uint32 MultiJitteredSampler::permute(uint32 i, uint32 l, uint32 p)
 {
 	uint32 w = l - 1;

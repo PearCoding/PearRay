@@ -109,11 +109,20 @@ SET(PR_Src
   renderer/RenderTileSession.h
   renderer/RenderTileSession.inl
   renderer/RenderTileStatistics.cpp
-  sampler/HaltonQMCSampler.cpp
+  sampler/HaltonSampler.cpp
+  sampler/HaltonSampler.h
   sampler/MultiJitteredSampler.cpp
+  sampler/MultiJitteredSampler.h
   sampler/RandomSampler.cpp
+  sampler/RandomSampler.h
+  sampler/Sampler.h
+  sampler/SobolSampler.cpp
+  sampler/SobolSampler.h
+  sampler/SplitSample.h
   sampler/StratifiedSampler.cpp
+  sampler/StratifiedSampler.h
   sampler/UniformSampler.cpp
+  sampler/UniformSampler.h
   scene/Scene.cpp
   scene/Scene.h
   scene/Scene.inl

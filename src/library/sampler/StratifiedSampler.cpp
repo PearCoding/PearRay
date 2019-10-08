@@ -29,13 +29,4 @@ Vector2f StratifiedSampler::generate2D(uint32 index)
 
 	return Vector2f(x, y);
 }
-
-Vector3f StratifiedSampler::generate3D(uint32 index)
-{
-	auto x = Projection::stratified(mRandom.getFloat(), index, mSamples);
-	auto y = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
-	auto z = Projection::stratified(mRandom.getFloat(), mRandom.get32(0, mSamples), mSamples);
-
-	return Vector3f(x, y, z);
-}
 }
