@@ -234,7 +234,8 @@ void StandardCamera::onFreeze(RenderContext* context)
 
 	PR_LOG(L_INFO) << name() << ": Dir[" << mDirection_Cache << "] Right[" << mRight_Cache << "] Up[" << mUp_Cache << "]" << std::endl;
 
-	if (std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) { // No depth of field
+	// No depth of field
+	if (std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) {
 		mFocalDistance_Cache   = mDirection_Cache;
 		mXApertureRadius_Cache = Vector3f(0, 0, 0);
 		mYApertureRadius_Cache = Vector3f(0, 0, 0);
@@ -262,9 +263,16 @@ public:
 		std::string name = env.registry().getForObject<std::string>(RG_CAMERA, uuid, "name", "__unnamed__");
 
 		auto cam = std::make_shared<StandardCamera>(id, name);
+
 		cam->setLocalDirection(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localDirection", Vector3f(0, 0, 1)));
 		cam->setLocalUp(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localUp", Vector3f(0, 1, 0)));
 		cam->setLocalRight(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localRight", Vector3f(1, 0, 0)));
+
+		cam->setWidth(env.registry().getForObject<float>(RG_CAMERA, uuid, "width", 1));
+		cam->setHeight(env.registry().getForObject<float>(RG_CAMERA, uuid, "height", 1));
+
+		cam->setApertureRadius(env.registry().getForObject<float>(RG_CAMERA, uuid, "apertureRadius", 1));
+		cam->setFStop(env.registry().getForObject<float>(RG_CAMERA, uuid, "fstop", 0));
 
 		return cam;
 	}
