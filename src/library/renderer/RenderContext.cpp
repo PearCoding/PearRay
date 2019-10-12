@@ -73,7 +73,7 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	/* Setup entities */
 	for (auto entity : mScene->entities()) {
 		if (entity->isLight())
-			mLights.push_back(entity.get());
+			mLights.push_back(entity);
 	}
 
 	// Get other informations
@@ -243,10 +243,11 @@ void RenderContext::onNextPass()
 
 IEntity* RenderContext::getEntity(uint32 id) const
 {
-	return mScene->entities()[id].get();
+	return mScene->entities().at(id).get();
 }
 
-IMaterial* RenderContext::getMaterial(uint32 id) const {
+IMaterial* RenderContext::getMaterial(uint32 id) const
+{
 	// TODO
 	return nullptr;
 }

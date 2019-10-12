@@ -6,6 +6,7 @@
 
 namespace PR {
 
+class ICamera;
 class RenderContext;
 class Sampler;
 class PR_LIB RenderTile {
@@ -109,7 +110,7 @@ public:
 		return mStatistics;
 	}
 
-	inline const RenderContext& context() const
+	inline const RenderContext* context() const
 	{
 		return mContext;
 	}
@@ -147,7 +148,8 @@ private:
 
 	RenderTileStatistics mStatistics;
 
-	const RenderContext& mContext;
+	const RenderContext* const mContext;
+	const ICamera* const mCamera;
 
 	std::unique_ptr<struct RenderTileCache> mCache;
 };

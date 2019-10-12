@@ -51,7 +51,7 @@ void setup_output(py::module& m)
 		.def("fill", &FrameBufferFloat::fill)
 		.def_property_readonly("channels", &FrameBufferFloat::channels);
 
-	auto scope = py::class_<OutputBuffer>(m, "OutputBuffer");
+	auto scope = py::class_<OutputBuffer, std::shared_ptr<OutputBuffer>>(m, "OutputBuffer");
 	scope.def("clear", &OutputBuffer::clear)
 		.def("sampleCount", &OutputBuffer::getSampleCount)
 		.def("channel",

@@ -1,7 +1,9 @@
+#include "integrator/IIntegrator.h"
 #include "material/IMaterial.h"
 #include "mesh/TriMesh.h"
-#include "spectral/SpectrumDescriptor.h"
 #include "renderer/RenderContext.h"
+#include "renderer/RenderFactory.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include "Environment.h"
 #include "SceneLoader.h"
@@ -13,7 +15,7 @@ namespace PRPY {
 void setup_environment(py::module& m)
 {
 	py::class_<Environment, std::shared_ptr<Environment>>(m, "Environment")
-		.def(py::init< std::string, const std::shared_ptr<SpectrumDescriptor>&, std::string>())
+		.def(py::init<std::string, const std::shared_ptr<SpectrumDescriptor>&, std::string>())
 		.def("getSpectrum", &Environment::getSpectrum)
 		.def("hasSpectrum", &Environment::hasSpectrum)
 		.def("addSpectrum", &Environment::addSpectrum)
@@ -25,10 +27,12 @@ void setup_environment(py::module& m)
 		.def("hasMesh", &Environment::hasMesh)
 		.def("addMesh", &Environment::addMesh)
 		// TODO: Sockets
-		.def_property_readonly("registry", (Registry& (Environment::*)())&Environment::registry)
+		.def_property_readonly("registry", (Registry & (Environment::*)()) & Environment::registry)
 		.def("dumpInformation", &Environment::dumpInformation)
 		.def("setup", &Environment::setup)
-		.def("save", &Environment::save);
+		.def("save", &Environment::save)
+		.def("createSelectedIntegrator", &Environment::createSelectedIntegrator)
+		.def("createRenderFactory", &Environment::createRenderFactory);
 
 	py::class_<SceneLoader>(m, "SceneLoader")
 		.def_static("loadFromString", &SceneLoader::loadFromString)

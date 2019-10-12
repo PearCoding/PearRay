@@ -70,15 +70,16 @@ public:
 	inline const RenderSettings& settings() const { return mRenderSettings; }
 
 	// Light
-	inline const std::vector<IEntity*>& lights() const { return mLights; }
+	inline const std::vector<std::shared_ptr<IEntity>>& lights() const { return mLights; }
 
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
 
+	// (Dont expose to the Python API (or use std::shared_ptr))
 	IEntity* getEntity(uint32 id) const;
 	IMaterial* getMaterial(uint32 id) const;
 
-	inline OutputBuffer* output() const { return mOutputMap.get(); }
+	inline std::shared_ptr<OutputBuffer> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
 
@@ -103,9 +104,9 @@ private:
 
 	std::shared_ptr<Scene> mScene;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
-	std::unique_ptr<OutputBuffer> mOutputMap;
+	std::shared_ptr<OutputBuffer> mOutputMap;
 
-	std::vector<IEntity*> mLights;
+	std::vector<std::shared_ptr<IEntity>> mLights;
 
 	std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;

@@ -23,8 +23,8 @@
 #include "Logger.h"
 
 #include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/regex.hpp>
 
 namespace PR {
 Environment::Environment(const std::string& workdir,
@@ -171,18 +171,20 @@ std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 		return nullptr;
 	}
 
-	auto integrator = intfact->create();
+	auto integrator = intfact->create(0, 0, *this);
 	if (!integrator) {
 		PR_LOG(L_ERROR) << "Integrator " << intMode
 						<< " implementation is broken! Please contact plugin developer." << std::endl;
 		return nullptr;
 	}
+	mIntegratorManager->addObject(integrator);
+
 	return integrator;
 }
 
 std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 {
-	const auto& entities = mEntityManager->getAll();
+	auto entities = mEntityManager->getAll();
 	if (entities.empty()) {
 		PR_LOG(L_ERROR) << "No entities available!" << std::endl;
 		return nullptr;

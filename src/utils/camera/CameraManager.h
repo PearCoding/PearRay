@@ -10,7 +10,7 @@ public:
 	virtual ~CameraManager();
 
 	inline void setActiveCamera(uint32 id) { mActiveCamera = id; }
-	inline std::shared_ptr<ICamera> getActiveCamera() const { return getObject(mActiveCamera); }
+	inline std::shared_ptr<ICamera> getActiveCamera() const { return hasActiveCamera() ? getObject(mActiveCamera) : nullptr; }
 	inline bool hasActiveCamera() const { return mActiveCamera < mObjects.size(); }
 
 private:

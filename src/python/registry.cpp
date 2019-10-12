@@ -49,11 +49,15 @@ void setup_registry(py::module& m)
 		GET_METHOD("getString", "getByGroupString", "getForObjectString", std::string);
 
 	py::enum_<RegistryGroup>(m, "RegistryGroup")
+		.value("NONE", RG_NONE)
 		.value("GLOBAL", RG_GLOBAL)
-		.value("ENTITY", RG_ENTITY)
-		.value("INTEGRATOR", RG_INTEGRATOR)
 		.value("MATERIAL", RG_MATERIAL)
-		.value("RENDERER", RG_RENDERER);
+		.value("EMISSION", RG_EMISSION)
+		.value("ENTITY", RG_ENTITY)
+		.value("CAMERA", RG_CAMERA)
+		.value("INFINITELIGHT", RG_INFINITELIGHT)
+		.value("RENDERER", RG_RENDERER)
+		.value("INTEGRATOR", RG_INTEGRATOR);
 
 	py::class_<URI>(m, "URI")
 		.def(py::init<>())

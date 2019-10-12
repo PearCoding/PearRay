@@ -25,7 +25,7 @@ RenderTileSession::~RenderTileSession()
 
 IEntity* RenderTileSession::getEntity(uint32 id) const
 {
-	return mTile->context().scene()->entities()[id].get();
+	return mTile->context()->scene()->entities()[id].get();
 }
 
 bool RenderTileSession::handleCameraRays()
@@ -53,7 +53,7 @@ bool RenderTileSession::handleCameraRays()
 
 			Ray ray		   = mTile->constructCameraRay(fx, fy,
 												   mTile->samplesRendered());
-			ray.PixelIndex = fy * mTile->context().width() + fx;
+			ray.PixelIndex = fy * mTile->context()->width() + fx;
 
 			enqueueCoherentRay(ray);
 		}
@@ -67,12 +67,12 @@ bool RenderTileSession::handleCameraRays()
 		mCoherentRayStream->dump(sstream.str());
 	}*/
 
-	mTile->context().scene()->traceCoherentRays(
+	mTile->context()->scene()->traceCoherentRays(
 		*mCoherentRayStream,
 		*mHitStream,
 		[&](const Ray& ray) {
 			mTile->statistics().addBackgroundHitCount();
-			mTile->context().output()->pushBackgroundFragment(ray.PixelIndex,
+			mTile->context()->output()->pushBackgroundFragment(ray.PixelIndex,
 															  ray.WavelengthIndex);
 		});
 
@@ -82,8 +82,8 @@ bool RenderTileSession::handleCameraRays()
 void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 										  IEntity*& entity, IMaterial*& material)
 {
-	entity   = mTile->context().getEntity(grp.EntityID);
-	material = mTile->context().getMaterial(grp.MaterialID);
+	entity   = mTile->context()->getEntity(grp.EntityID);
+	material = mTile->context()->getMaterial(grp.MaterialID);
 }
 
 void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
@@ -93,11 +93,11 @@ void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 {
 	mTile->statistics().addShadowRayCount();
-	return mTile->context().scene()->traceShadowRay(ray);
+	return mTile->context()->scene()->traceShadowRay(ray);
 }
 
 void RenderTileSession::pushFragment(const uint32 pixelIndex, const ShadingPoint& pt) const
 {
-	mTile->context().output()->pushFragment(pixelIndex, pt);
+	mTile->context()->output()->pushFragment(pixelIndex, pt);
 }
 } // namespace PR

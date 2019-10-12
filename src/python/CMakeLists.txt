@@ -19,7 +19,8 @@ SET(Src
   shader.cpp
   spectral.cpp
   status.cpp
-  tonemapper.cpp)
+  tonemapper.cpp
+  integrator.cpp)
 SET(Hdr
   pypearray.h)
 

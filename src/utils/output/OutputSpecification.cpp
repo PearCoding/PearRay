@@ -72,7 +72,7 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	OutputBuffer* output = renderer->output();
+	std::shared_ptr<OutputBuffer> output = renderer->output();
 
 	for (const File& file : mFiles) {
 		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {

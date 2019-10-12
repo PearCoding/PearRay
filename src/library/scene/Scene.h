@@ -46,7 +46,7 @@ private:
 	std::shared_ptr<ICamera> mActiveCamera;
 	std::vector<std::shared_ptr<IEntity>> mEntities;
 
-	class kdTreeCollider* mKDTree;
+	std::unique_ptr<class kdTreeCollider> mKDTree;
 	BoundingBox mBoundingBox;
 };
 } // namespace PR

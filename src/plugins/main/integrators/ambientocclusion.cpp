@@ -1,3 +1,4 @@
+#include "Environment.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "math/Projection.h"
@@ -89,9 +90,11 @@ private:
 
 class IntAOFactory : public IIntegratorFactory {
 public:
-	std::shared_ptr<IIntegrator> create() override
+	std::shared_ptr<IIntegrator> create(uint32, uint32, const Environment& env) override
 	{
-		size_t sample_count = 20;
+		const Registry& reg = env.registry();
+		size_t sample_count = reg.getByGroup<size_t>(RG_INTEGRATOR, "ao/sample_count", 10);
+
 		return std::make_shared<IntAO>(sample_count);
 	}
 

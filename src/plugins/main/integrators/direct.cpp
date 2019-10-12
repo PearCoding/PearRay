@@ -69,7 +69,7 @@ private:
 
 class IntDirectFactory : public IIntegratorFactory {
 public:
-	std::shared_ptr<IIntegrator> create() override
+	std::shared_ptr<IIntegrator> create(uint32, uint32, const Environment& env) override
 	{
 		return std::make_shared<IntDirect>();
 	}

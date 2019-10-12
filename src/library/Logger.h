@@ -20,8 +20,14 @@ class PR_LIB Logger {
 public:
 	class PR_LIB StreamBuf final : public std::streambuf {
 	public:
-		inline StreamBuf(Logger& logger, bool ignore) : std::streambuf(), mLogger(logger), mIgnore(ignore) {}
+		inline StreamBuf(Logger& logger, bool ignore)
+			: std::streambuf()
+			, mLogger(logger)
+			, mIgnore(ignore)
+		{
+		}
 		std::streambuf::int_type overflow(std::streambuf::int_type c);
+
 	private:
 		Logger& mLogger;
 		bool mIgnore;
@@ -49,7 +55,8 @@ public:
 		return log;
 	}
 
-	static inline std::ostream& log(LogLevel level) {
+	static inline std::ostream& log(LogLevel level)
+	{
 		return instance().startEntry(level);
 	}
 
@@ -64,12 +71,7 @@ private:
 	StreamBuf mStreamBuf;
 	std::ostream mStream;
 };
-
-PR_LIB std::ostream& operator << (std::ostream& stream, const Vector2f& v);
-PR_LIB std::ostream& operator << (std::ostream& stream, const Vector2i& v);
-PR_LIB std::ostream& operator << (std::ostream& stream, const Vector3f& v);
-PR_LIB std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v);
-}
+} // namespace PR
 
 #define PR_LOGGER (PR::Logger::instance())
 #define PR_LOG(l) (PR::Logger::log((l)))

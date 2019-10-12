@@ -62,29 +62,30 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	, mLensSampleCount(context.settings().lensSampleCount)
 	, mTimeSampleCount(context.settings().timeSampleCount)
 	, mSpectralSampleCount(context.settings().spectralSampleCount)
-	, mContext(context)
+	, mContext(&context)
+	, mCamera(context.scene()->activeCamera().get())
 	, mCache(new RenderTileCache)
 {
 	PR_ASSERT(mWidth > 0, "Invalid tile width");
 	PR_ASSERT(mHeight > 0, "Invalid tile height");
 
 	mAASampler = createSampler(
-		mContext.settings().aaSampler,
+		mContext->settings().aaSampler,
 		mRandom, mAASampleCount);
 
 	mLensSampler = createSampler(
-		mContext.settings().lensSampler,
+		mContext->settings().lensSampler,
 		mRandom, mLensSampleCount);
 
 	mTimeSampler = createSampler(
-		mContext.settings().timeSampler,
+		mContext->settings().timeSampler,
 		mRandom, mTimeSampleCount);
 
 	mSpectralSampler = createSampler(
-		mContext.settings().spectralSampler,
+		mContext->settings().spectralSampler,
 		mRandom, mSpectralSampleCount);
 
-	switch (mContext.settings().timeMappingMode) {
+	switch (mContext->settings().timeMappingMode) {
 	default:
 	case TMM_CENTER:
 		mTimeAlpha = 1;
@@ -100,7 +101,7 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 		break;
 	}
 
-	const float f = mContext.settings().timeScale;
+	const float f = mContext->settings().timeScale;
 	mTimeAlpha *= f;
 	mTimeBeta *= f;
 }
@@ -133,8 +134,8 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 
 	if (mCache->AASample != aasample) {
 		mCache->AA = aaSampler()->generate2D(aasample);
-		mCache->AA(0) += mContext.offsetX() - 0.5f;
-		mCache->AA(1) += mContext.offsetY() - 0.5f;
+		mCache->AA(0) += mContext->offsetX() - 0.5f;
+		mCache->AA(1) += mContext->offsetY() - 0.5f;
 		mCache->AASample = aasample;
 	}
 
@@ -149,11 +150,11 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	}
 
 	uint32 waveInd = spectralsample;
-	if (mContext.settings().spectralProcessMode != SPM_LINEAR) {
+	if (mContext->settings().spectralProcessMode != SPM_LINEAR) {
 		float specInd = spectralSampler()->generate1D(spectralsample);
-		waveInd		  = std::min<uint32>(mContext.spectrumDescriptor()->samples() - 1,
+		waveInd		  = std::min<uint32>(mContext->spectrumDescriptor()->samples() - 1,
 									 std::floor(specInd
-												* mContext.spectrumDescriptor()->samples()));
+												* mContext->spectrumDescriptor()->samples()));
 	}
 
 	CameraSample cameraSample;
@@ -165,6 +166,6 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	cameraSample.Time			 = mCache->Time;
 	cameraSample.WavelengthIndex = waveInd;
 
-	return mContext.scene()->activeCamera()->constructRay(cameraSample);
+	return mCamera->constructRay(cameraSample);
 }
 } // namespace PR

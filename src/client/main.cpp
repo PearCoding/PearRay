@@ -95,8 +95,10 @@ int main(int argc, char** argv)
 	// Render per image tile
 	PR::ToneMapper toneMapper;
 	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
-		auto renderer = renderFactory->create(integrator,
-											  i, options.ImageTileXCount, options.ImageTileYCount);
+		auto renderer = renderFactory->create(
+			integrator,
+			i,
+			options.ImageTileXCount, options.ImageTileYCount);
 
 		if (!renderer) {
 			PR_LOG(PR::L_ERROR) << "Unable to create renderer!" << std::endl;

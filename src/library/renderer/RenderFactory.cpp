@@ -21,12 +21,13 @@ RenderFactory::~RenderFactory()
 {
 }
 
-std::shared_ptr<RenderContext> RenderFactory::create(const std::shared_ptr<IIntegrator>& integrator,
-													 uint32 index, uint32 itx, uint32 ity) const
+std::shared_ptr<RenderContext> RenderFactory::create(
+	const std::shared_ptr<IIntegrator>& integrator,
+	uint32 index, uint32 itx, uint32 ity) const
 {
 	if (!integrator) {
 		PR_LOG(L_ERROR) << "No integrator given!" << std::endl;
-		return std::shared_ptr<RenderContext>();
+		return nullptr;
 	}
 
 	PR_ASSERT(itx > 0, "Image tile count x has to be greater 0");

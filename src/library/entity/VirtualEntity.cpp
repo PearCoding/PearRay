@@ -30,12 +30,12 @@ void VirtualEntity::onFreeze(RenderContext*)
 	mTransform.computeRotationScaling(&rot, &sca);
 	//mTransform.computeScalingRotation(&sca, &rot);
 
-	PR_LOG(L_INFO) << mName << ": P[" << mTransform.translation() << "] R[" << Eigen::Quaternionf(rot) << "] S[" << sca.diagonal() << "]" << std::endl;
+	PR_LOG(L_INFO) << mName << ": P[" << mTransform.translation() << "] R[" << Eigen::Quaternionf(rot).coeffs() << "] S[" << sca.diagonal() << "]" << std::endl;
 
 	Eigen::Matrix3f irot;
 	Eigen::Matrix3f isca;
 	mInvTransformCache.computeRotationScaling(&irot, &isca);
-	PR_LOG(L_INFO) << " IP[" << mInvTransformCache.translation() << "] IR[" << Eigen::Quaternionf(irot) << "] IS[" << isca.diagonal() << "]" << std::endl;
+	PR_LOG(L_INFO) << " IP[" << mInvTransformCache.translation() << "] IR[" << Eigen::Quaternionf(irot).coeffs() << "] IS[" << isca.diagonal() << "]" << std::endl;
 
 	if (sca.squaredNorm() <= PR_EPSILON)
 		PR_LOG(L_WARNING) << "VirtualEntity " << mName << " has zero scale attribute" << std::endl;

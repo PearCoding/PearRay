@@ -25,8 +25,13 @@ void setup_renderer(py::module& m);
 void setup_tonemapper(py::module& m);
 void setup_environment(py::module& m);
 void setup_registry(py::module& m);
+void setup_integrator(py::module& m);
 }
 
+/* ATTENTION
+ * Don't expose Type* getFoo() when smart pointers are involved!
+ * See https://pybind11.readthedocs.io/en/stable/advanced/smart_ptrs.html
+ */
 //----------
 PYBIND11_MODULE(pypearray, m)
 {
@@ -51,5 +56,6 @@ PYBIND11_MODULE(pypearray, m)
 	PRPY::setup_status(m);
 	PRPY::setup_renderer(m);
 	PRPY::setup_tonemapper(m);
+	PRPY::setup_integrator(m);
 	PRPY::setup_environment(m);
 }

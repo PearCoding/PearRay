@@ -28,10 +28,6 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 
 Scene::~Scene()
 {
-	if (mKDTree) {
-		delete mKDTree;
-		mKDTree = nullptr;
-	}
 }
 
 void Scene::buildTree(const std::string& file)
@@ -56,13 +52,8 @@ void Scene::buildTree(const std::string& file)
 
 void Scene::loadTree(const std::string& file)
 {
-	if (mKDTree) {
-		delete mKDTree;
-		mKDTree = nullptr;
-	}
-
 	std::ifstream stream(file);
-	mKDTree = new kdTreeCollider;
+	mKDTree.reset(new kdTreeCollider);
 	mKDTree->load(stream);
 	if (!mKDTree->isEmpty())
 		mBoundingBox = mKDTree->boundingBox();
