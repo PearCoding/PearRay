@@ -1,7 +1,9 @@
 #include "geometry/Plane.h"
 #include "Environment.h"
+#include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
+#include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
 #include "registry/Registry.h"
@@ -13,11 +15,12 @@ public:
 	ENTITY_CLASS
 
 	PlaneEntity(uint32 id, const std::string& name,
-				const Vector3f& xAxis, const Vector3f& yAxis)
+				const Vector3f& xAxis, const Vector3f& yAxis,
+				int32 matID, int32 lightID)
 		: IEntity(id, name)
 		, mPlane(Vector3f(0, 0, 0), xAxis, yAxis)
-		, mMaterialID(0)
-		, mLightID(0)
+		, mMaterialID(matID)
+		, mLightID(lightID)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -30,26 +33,15 @@ public:
 
 	bool isLight() const override
 	{
-		return mLightID != 0;
+		return mLightID >= 0;
 	}
 
 	float surfaceArea(uint32 id) const override
 	{
-		if (id == 0 || id == mMaterialID) {
+		if (id == 0 || mMaterialID < 0 || id == mMaterialID)
 			return mPlane.surfaceArea();
-		} else {
+		else
 			return 0;
-		}
-	}
-
-	void setMaterialID(uint32 m)
-	{
-		mMaterialID = m;
-	}
-
-	uint32 materialID() const
-	{
-		return mMaterialID;
 	}
 
 	bool isCollidable() const override
@@ -95,7 +87,7 @@ public:
 
 	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
 	{
-		pdf = 1.0f / mPlane.surfaceArea();
+		pdf = mPDF_Cache;
 		return transform() * mPlane.surfacePoint(rnd(0), rnd(1));
 	}
 
@@ -107,8 +99,17 @@ public:
 		pt.Nx = directionMatrix() * mPlane.xAxis().normalized();
 		pt.Ny = directionMatrix() * mPlane.yAxis().normalized();
 
+		pt.N.normalize();
+		pt.Nx.normalize();
+		pt.Ny.normalize();
+
 		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
+	}
+
+	inline void centerOn()
+	{
+		mPlane.setPosition(-0.5f * mPlane.xAxis() - 0.5f * mPlane.yAxis());
 	}
 
 protected:
@@ -122,8 +123,8 @@ protected:
 
 private:
 	Plane mPlane;
-	uint32 mMaterialID;
-	uint32 mLightID;
+	int32 mMaterialID;
+	int32 mLightID;
 
 	float mPDF_Cache;
 };
@@ -134,12 +135,31 @@ public:
 	{
 		const auto& reg = env.registry();
 
-		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
+		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
+														 "__unnamed__");
 		Vector3f xAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "x_axis",
 													  Vector3f(1, 0, 0));
 		Vector3f yAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "y_axis",
 													  Vector3f(0, 1, 0));
-		return std::make_shared<PlaneEntity>(id, name, xAxis, yAxis);
+
+		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
+		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+
+		int32 matID					   = -1;
+		std::shared_ptr<IMaterial> mat = env.getMaterial(matName);
+		if (mat)
+			matID = mat->id();
+
+		int32 emsID					   = -1;
+		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
+		if (ems)
+			emsID = ems->id();
+
+		auto obj = std::make_shared<PlaneEntity>(id, name, xAxis, yAxis, matID, emsID);
+		if (reg.getForObject<bool>(RG_ENTITY, uuid, "centering", false))
+			obj->centerOn();
+
+		return obj;
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -71,14 +71,11 @@ public:
 
 				ShadingPoint spt;
 				spt.Ray		 = ray;
-				spt.Geometry = pt;
-				spt.Ns		 = pt.N;
-				spt.Nx		 = pt.Nx;
-				spt.Ny		 = pt.Ny;
+				spt.setByIdentity(pt);
 
 				spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 
-				session.pushFragment(ray.PixelIndex, spt, stdPath);
+				session.pushFragment(spt, stdPath);
 			});
 		}
 	}

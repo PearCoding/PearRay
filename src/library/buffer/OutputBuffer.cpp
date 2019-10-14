@@ -123,8 +123,8 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 	if (filter(s.Radiance))
 		mSpectral->blendFragment(pixelIndex, channel, s.Radiance, t);
 
-	_3D_S(V_Position, s.Geometry.P);
-	_3D_S(V_Normal, s.Ns);
+	_3D_S(V_Position, s.P);
+	_3D_S(V_Normal, s.N);
 	_3D_S(V_NormalG, s.Geometry.N);
 	_3D_S(V_Tangent, s.Nx);
 	_3D_S(V_Bitangent, s.Ny);
@@ -132,7 +132,6 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 	_3D_S(V_UVW, s.Geometry.UVW);
 	_3D_S(V_DPDT, s.Geometry.dPdT);
 
-	_1D_S(V_Depth, s.Depth2);
 	_1D_S(V_Time, s.Ray.Time);
 	_1D_S(V_Material, s.Geometry.MaterialID);
 

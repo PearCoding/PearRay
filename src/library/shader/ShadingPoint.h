@@ -1,8 +1,7 @@
 #pragma once
 
-#include "PR_Config.h"
-#include "ray/RayPackage.h"
 #include "geometry/GeometryPoint.h"
+#include "ray/RayPackage.h"
 
 namespace PR {
 enum ShaderPointFlags {
@@ -19,8 +18,8 @@ public:
 	GeometryPoint Geometry;
 	PR::Ray Ray;
 
-	Vector3f Pd; // Position after displacement
-	Vector3f Ns; // Shading normal - Front facing
+	Vector3f P; // Position after displacement
+	Vector3f N; // Shading normal - Front facing
 
 	// Normal Tangent Frame
 	Vector3f Nx;
@@ -30,12 +29,19 @@ public:
 	float Radiance;
 
 	// Some other utility variables
-	float Depth2; // Squared!
-	float NgdotV;
-	float NdotV;
 	uint32 Flags;
 
 	uint32 EntityID;
 	uint32 PrimID;
+
+	// Set shading terms without transformation
+	inline void setByIdentity(const GeometryPoint& pt)
+	{
+		Geometry = pt;
+		P		 = pt.P;
+		N		 = pt.N;
+		Nx		 = pt.Nx;
+		Ny		 = pt.Ny;
+	}
 };
 } // namespace PR

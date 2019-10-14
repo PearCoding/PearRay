@@ -56,7 +56,8 @@ public:
 	template <typename Func>
 	inline void handleHits(Func hitFunc, bool coherent = true);
 
-	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt, const LightPath& path) const;
+	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
+	void pushNonHitFragment(const ShadingPoint& pt) const;
 
 	IEntity* pickRandomLight(Vector3f& pos, float& pdf) const;
 

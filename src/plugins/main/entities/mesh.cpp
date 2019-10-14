@@ -1,6 +1,8 @@
 #include "Environment.h"
+#include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
+#include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "mesh/TriMesh.h"
 #include "sampler/SplitSample.h"
@@ -94,6 +96,10 @@ public:
 		pt.Nx = directionMatrix() * pt.Nx;
 		pt.Ny = directionMatrix() * pt.Ny;
 
+		pt.N.normalize();
+		pt.Nx.normalize();
+		pt.Ny.normalize();
+
 		pt.MaterialID = 0; //TODO
 	}
 
@@ -116,6 +122,21 @@ public:
 		const Registry& reg   = env.registry();
 		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		std::string mesh_name = reg.getForObject<std::string>(RG_ENTITY, uuid, "mesh", "");
+
+		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
+		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+
+		int32 matID					   = -1;
+		std::shared_ptr<IMaterial> mat = env.getMaterial(matName);
+		if (mat)
+			matID = mat->id();
+
+		int32 emsID					   = -1;
+		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
+		if (ems)
+			emsID = ems->id();
+
+		// TODO: Add emission and mat
 
 		if (!env.hasMesh(mesh_name))
 			return nullptr;

@@ -3,6 +3,7 @@
 #include "RenderTile.h"
 #include "buffer/OutputBuffer.h"
 #include "scene/Scene.h"
+#include "shader/ShadingPoint.h"
 
 namespace PR {
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
@@ -96,10 +97,16 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 	return mTile->context()->scene()->traceShadowRay(ray);
 }
 
-void RenderTileSession::pushFragment(const uint32 pixelIndex, const ShadingPoint& pt,
+void RenderTileSession::pushFragment(const ShadingPoint& pt,
 									 const LightPath& path) const
 {
-	mTile->context()->output()->pushFragment(pixelIndex, pt, path);
+	mTile->context()->output()->pushFragment(pt.Ray.PixelIndex, pt, path);
+}
+
+void RenderTileSession::pushNonHitFragment(const ShadingPoint& pt) const
+{
+	mTile->context()->output()->pushBackgroundFragment(
+		pt.Ray.PixelIndex, pt.Ray.WavelengthIndex);
 }
 
 IEntity* RenderTileSession::pickRandomLight(Vector3f& pos, float& pdf) const
@@ -114,8 +121,8 @@ IEntity* RenderTileSession::pickRandomLight(Vector3f& pos, float& pdf) const
 	pdf			= 1.0f / lights.size();
 
 	IEntity* light = lights.at(pick).get();
-	float pdf2;
 
+	float pdf2;
 	pos = light->pickRandomPoint(mTile->random().get2D(), pdf2);
 	pdf *= pdf2;
 

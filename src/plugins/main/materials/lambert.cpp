@@ -31,8 +31,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession& session) const override
 	{
-		float NdotL		   = in.Outgoing.dot(in.Point.Ns);
-		out.Weight		   = mAlbedo->eval(in.Point);
+		float NdotL		   = std::abs(in.Outgoing.dot(in.Point.N));
+		out.Weight		   = mAlbedo->eval(in.Point) * PR_1_PI;
 		out.PDF_S_Forward  = Projection::cos_hemi_pdf(NdotL);
 		out.PDF_S_Backward = Projection::cos_hemi_pdf(NdotL);
 	}
@@ -42,7 +42,7 @@ public:
 	{
 		float pdf;
 		out.Outgoing	   = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
-		out.Weight		   = mAlbedo->eval(in.Point);
+		out.Weight		   = mAlbedo->eval(in.Point) * PR_1_PI;
 		out.Type		   = MST_DiffuseReflection;
 		out.PDF_S_Backward = pdf;
 		out.PDF_S_Forward  = pdf;

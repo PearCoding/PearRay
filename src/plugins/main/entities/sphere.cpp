@@ -101,7 +101,7 @@ public:
 
 	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
 	{
-		pdf = mSphere.surfaceArea();
+		pdf = mPDF_Cache;
 		return transform() * mSphere.surfacePoint(rnd(0), rnd(1));
 	}
 
@@ -110,6 +110,7 @@ public:
 	{
 		pt.P = transform() * mSphere.surfacePoint(u, v);
 		pt.N = directionMatrix() * mSphere.normalPoint(u, v);
+		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
