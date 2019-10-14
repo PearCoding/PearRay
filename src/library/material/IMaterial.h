@@ -20,7 +20,7 @@ enum MaterialScatteringType : uint32 {
 // Evaluation
 struct PR_LIB_INLINE MaterialEvalInput {
 	ShadingPoint Point;
-	float Outgoing[3];
+	Vector3f Outgoing;
 };
 
 struct PR_LIB_INLINE MaterialEvalOutput {
@@ -32,11 +32,11 @@ struct PR_LIB_INLINE MaterialEvalOutput {
 // Sampling
 struct PR_LIB_INLINE MaterialSampleInput {
 	ShadingPoint Point;
-	float RND[2];
+	Vector2f RND;
 };
 
 struct PR_LIB_INLINE MaterialSampleOutput {
-	float Outgoing[3];
+	Vector3f Outgoing;
 	float Weight;
 	float PDF_S_Forward;
 	float PDF_S_Backward;

@@ -1,73 +1,81 @@
-#include "lambert.h"
 #include "Environment.h"
+#include "material/IMaterial.h"
+#include "material/IMaterialFactory.h"
 #include "math/Projection.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
+#include "shader/ShadingSocket.h"
 
 #include <sstream>
 
 namespace PR {
-LambertMaterial::LambertMaterial(uint32 id)
-	: IMaterial(id)
-	, mAlbedo(nullptr)
-{
-}
 
-std::shared_ptr<FloatSpectralShadingSocket> LambertMaterial::albedo() const
-{
-	return mAlbedo;
-}
+class LambertMaterial : public IMaterial {
+public:
+	LambertMaterial(uint32 id, const std::shared_ptr<FloatSpectralShadingSocket>& alb)
+		: IMaterial(id)
+		, mAlbedo(alb)
+	{
+	}
 
-void LambertMaterial::setAlbedo(const std::shared_ptr<FloatSpectralShadingSocket>& diffSpec)
-{
-	mAlbedo = diffSpec;
-}
+	virtual ~LambertMaterial() = default;
 
-void LambertMaterial::startGroup(size_t size, const RenderTileSession& session)
-{
-}
+	void startGroup(size_t size, const RenderTileSession& session) override
+	{
+	}
 
-void LambertMaterial::endGroup()
-{
-}
+	void endGroup() override
+	{
+	}
 
-void LambertMaterial::eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
-						   const RenderTileSession& session) const
-{
-	out.Weight		   = mAlbedo->eval(in.Point);
-	out.PDF_S_Forward  = PR_1_PI;
-	out.PDF_S_Backward = PR_1_PI;
-}
+	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
+			  const RenderTileSession& session) const override
+	{
+		float NdotL		   = in.Outgoing.dot(in.Point.Ns);
+		out.Weight		   = mAlbedo->eval(in.Point);
+		out.PDF_S_Forward  = Projection::cos_hemi_pdf(NdotL);
+		out.PDF_S_Backward = Projection::cos_hemi_pdf(NdotL);
+	}
 
-void LambertMaterial::sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
-							 const RenderTileSession& session) const
-{
-	out.Weight = 0;
-	out.Type   = MST_DiffuseReflection;
+	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
+				const RenderTileSession& session) const override
+	{
+		float pdf;
+		out.Outgoing	   = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
+		out.Weight		   = mAlbedo->eval(in.Point);
+		out.Type		   = MST_DiffuseReflection;
+		out.PDF_S_Backward = pdf;
+		out.PDF_S_Forward  = pdf;
+	}
 
-	// TODO:
-}
+	std::string dumpInformation() const override
+	{
+		std::stringstream stream;
 
-std::string LambertMaterial::dumpInformation() const
-{
-	std::stringstream stream;
+		stream << std::boolalpha << IMaterial::dumpInformation()
+			   << "  <DiffuseMaterial>:" << std::endl
+			   << "    HasAlbedo: " << (mAlbedo ? "true" : "false") << std::endl;
 
-	stream << std::boolalpha << IMaterial::dumpInformation()
-		   << "  <DiffuseMaterial>:" << std::endl
-		   << "    HasAlbedo: " << (mAlbedo ? "true" : "false") << std::endl;
+		return stream.str();
+	}
 
-	return stream.str();
-}
+protected:
+	void onFreeze(RenderContext* context) override
+	{
+	}
 
-void LambertMaterial::onFreeze(RenderContext* context)
-{
-}
+private:
+	std::shared_ptr<FloatSpectralShadingSocket> mAlbedo;
+};
 
 class LambertMaterialFactory : public IMaterialFactory {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
 	{
-		return std::make_shared<LambertMaterial>(id);
+		return std::make_shared<LambertMaterial>(
+			id,
+			std::make_shared<ConstSpectralShadingSocket>(
+				Spectrum(env.spectrumDescriptor(), 1)));
 	}
 
 	const std::vector<std::string>& getNames() const

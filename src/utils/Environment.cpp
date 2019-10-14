@@ -190,6 +190,12 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		return nullptr;
 	}
 
+	auto materials = mMaterialManager->getAll();
+	if (materials.empty()) {
+		PR_LOG(L_ERROR) << "No materials available!" << std::endl;
+		return nullptr;
+	}
+
 	std::shared_ptr<ICamera> activeCamera = mCameraManager->getActiveCamera();
 	if (!activeCamera) {
 		PR_LOG(L_ERROR) << "No camera available!" << std::endl;
@@ -198,6 +204,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
 														   entities,
+														   materials,
 														   mWorkingDir + "/scene.cnt");
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;

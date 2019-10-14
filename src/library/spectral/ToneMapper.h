@@ -35,7 +35,7 @@ public:
 		 */
 	ToneMapper();
 
-	void map(const float* specIn, size_t specElems, size_t specElemPitch,
+	void map(const float* specIn, size_t specElems,
 			 float* rgbOut, size_t rgbElems, size_t pixelCount) const;
 	void mapOnlyMapper(const float* rgbIn, float* rgbOut,
 					   size_t rgbElems, size_t pixelCount) const;

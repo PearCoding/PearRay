@@ -23,7 +23,10 @@ ImageWriter::~ImageWriter()
 void ImageWriter::init(const std::shared_ptr<RenderContext>& renderer)
 {
 	// Delete if resolution changed.
-	if (mRenderer && (!renderer || (mRenderer->width() != renderer->width() || mRenderer->height() != renderer->height()))) {
+	if (mRenderer
+		&& (!renderer
+			|| mRenderer->width() != renderer->width()
+			|| mRenderer->height() != renderer->height())) {
 		if (mRGBData) {
 			delete[] mRGBData;
 			mRGBData = nullptr;
@@ -133,8 +136,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
 				Vector3f v(channel->getFragment(x, y, 0),
-								  channel->getFragment(x, y, 1),
-								  channel->getFragment(x, y, 2));
+						   channel->getFragment(x, y, 1),
+						   channel->getFragment(x, y, 2));
 
 				invMax3d[sett.Variable] = std::max(invMax3d[sett.Variable],
 												   v.squaredNorm());
@@ -198,7 +201,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	out->open(file, spec);
 	for (uint32 y = 0; y < rh; ++y) {
 		for (uint32 x = 0; x < rw; ++x) {
-			uint32 id		  = x * channelCount;
+			uint32 id = x * channelCount;
 
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
@@ -214,7 +217,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 				toneMapper.setMapperMode(sett.TMM);
 				toneMapper.map(&ptr[y * channel->width() + x],
 							   channel->channels(),
-							   channel->channelPitch(),
 							   &line[id], 3, 1); // RGB
 
 				id += 3;
@@ -229,8 +231,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 
 				if (channel) {
 					Vector3f a(channel->getFragment(x, y, 0),
-									  channel->getFragment(x, y, 1),
-									  channel->getFragment(x, y, 2));
+							   channel->getFragment(x, y, 1),
+							   channel->getFragment(x, y, 2));
 
 					float r = a(0);
 					float g = a(1);

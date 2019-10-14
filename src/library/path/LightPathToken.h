@@ -15,6 +15,7 @@ enum ScatteringType {
 enum ScatteringEvent {
 	SE_DIFFUSE = 0,
 	SE_SPECULAR,
+	SE_NONE,
 	_SE_COUNT
 };
 

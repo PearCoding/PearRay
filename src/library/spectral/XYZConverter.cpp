@@ -7,13 +7,13 @@
 namespace PR {
 #include "xyz.inl"
 
-void XYZConverter::convertXYZ(uint32 samples, uint32 elemPitch,
+void XYZConverter::convertXYZ(uint32 samples,
 							  const float* src, float& X, float& Y, float& Z)
 {
 	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) { // Direct XYZ
-		X = src[0 * elemPitch];
-		Y = src[1 * elemPitch];
-		Z = src[2 * elemPitch];
+		X = src[0];
+		Y = src[1];
+		Z = src[2];
 	} else {
 		PR_ASSERT(samples == PR_SPECTRAL_WAVELENGTH_SAMPLES, "XYZ Converter only works with standard spectral type");
 
@@ -23,8 +23,8 @@ void XYZConverter::convertXYZ(uint32 samples, uint32 elemPitch,
 
 #ifdef PR_XYZ_LINEAR_INTERP
 		for (uint32 i = 0; i < samples - 1; ++i) {
-			const float val1 = src[i * elemPitch];
-			const float val2 = src[(i + 1) * elemPitch];
+			const float val1 = src[i];
+			const float val2 = src[i + 1];
 
 			X += val1 * NM_TO_X[i] + val2 * NM_TO_X[i + 1];
 			Y += val1 * NM_TO_Y[i] + val2 * NM_TO_Y[i + 1];
@@ -51,11 +51,11 @@ void XYZConverter::convertXYZ(uint32 samples, uint32 elemPitch,
 	}
 }
 
-void XYZConverter::convert(uint32 samples, uint32 elemPitch,
+void XYZConverter::convert(uint32 samples,
 						   const float* src, float& x, float& y)
 {
 	float X, Y, Z;
-	convertXYZ(samples, elemPitch, src, X, Y, Z);
+	convertXYZ(samples, src, X, Y, Z);
 
 	float m = X + Y + Z;
 	if (m != 0) {

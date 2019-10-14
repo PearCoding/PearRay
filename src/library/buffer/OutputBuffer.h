@@ -8,6 +8,7 @@
 namespace PR {
 class RenderContext;
 struct ShadingPoint;
+class LightPath;
 
 class PR_LIB OutputBuffer {
 public:
@@ -44,7 +45,7 @@ public:
 
 	void clear();
 
-	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt);
+	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt, const LightPath& path);
 	void pushBackgroundFragment(uint32 pixelIndex, uint32 channel);
 
 	inline void setSampleCount(uint32 pixelIndex, uint32 channel, uint32 sample)

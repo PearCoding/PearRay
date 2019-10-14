@@ -12,34 +12,44 @@ class Spectrum;
 class ToneMapper;
 class PR_LIB ColorBuffer {
 public:
-	ColorBuffer(uint32 width, uint32 height, ColorBufferMode mode = CBM_RGBA);
-	ColorBuffer(const ColorBuffer& other);
-	ColorBuffer(ColorBuffer&& other);
+	ColorBuffer(size_t width, size_t height, ColorBufferMode mode = CBM_RGBA);
 	virtual ~ColorBuffer();
 
-	ColorBuffer& operator=(const ColorBuffer& other);
-	ColorBuffer& operator=(ColorBuffer&& other);
+	ColorBuffer(const ColorBuffer& other) = default;
+	ColorBuffer& operator=(const ColorBuffer& other) = default;
 
-	void map(const ToneMapper& mapper, const float* specIn, uint32 samples);
+	ColorBuffer(ColorBuffer&& other) = default;
+	ColorBuffer& operator=(ColorBuffer&& other) = default;
+
+	void map(const ToneMapper& mapper, const float* specIn, size_t samples);
 	void mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn);
 
-	inline uint32 width() const { return mData->Width; }
-	inline uint32 height() const { return mData->Height; }
+	inline size_t width() const { return mData->Width; }
+	inline size_t height() const { return mData->Height; }
+	inline size_t channels() const { return mode() == CBM_RGB ? 3 : 4; }
 	inline ColorBufferMode mode() const { return mData->Mode; }
+
+	inline size_t widthPitch() const { return channels() * channelPitch(); }
+	inline size_t heightPitch() const { return width() * widthPitch(); }
+	inline size_t channelPitch() const { return 1; }
+
+	inline size_t widthBytePitch() const { return widthPitch() * sizeof(float); }
+	inline size_t heightBytePitch() const { return heightPitch() * sizeof(float); }
+	inline size_t channelBytePitch() const { return channelPitch() * sizeof(float); }
 
 	inline float* ptr() { return mData->Ptr; }
 
 private:
 	struct _Data {
-		_Data(uint32 width, uint32 height, ColorBufferMode mode);
+		_Data(size_t width, size_t height, ColorBufferMode mode);
 		~_Data();
 
-		uint32 Width;
-		uint32 Height;
+		size_t Width;
+		size_t Height;
 		ColorBufferMode Mode;
 		float* Ptr;
 	};
 
 	std::shared_ptr<_Data> mData;
 };
-}
+} // namespace PR

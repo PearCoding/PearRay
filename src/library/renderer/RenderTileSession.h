@@ -14,6 +14,7 @@ namespace PR {
 class RenderTile;
 class IMaterial;
 class ShadingPoint;
+class LightPath;
 
 class PR_LIB RenderTileSession {
 public:
@@ -55,7 +56,9 @@ public:
 	template <typename Func>
 	inline void handleHits(Func hitFunc, bool coherent = true);
 
-	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt) const;
+	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt, const LightPath& path) const;
+
+	IEntity* pickRandomLight(Vector3f& pos, float& pdf) const;
 
 private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);

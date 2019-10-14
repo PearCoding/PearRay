@@ -13,7 +13,7 @@ ToneMapper::ToneMapper()
 {
 }
 
-void ToneMapper::map(const float* specIn, size_t specElems, size_t specElemPitch,
+void ToneMapper::map(const float* specIn, size_t specElems,
 					 float* out, size_t rgbElems, size_t pixelCount) const
 {
 	for (size_t i = 0; i < pixelCount; ++i) {
@@ -22,17 +22,17 @@ void ToneMapper::map(const float* specIn, size_t specElems, size_t specElemPitch
 		// Map 1: Spec to RGB
 		switch (mColorMode) {
 		case TCM_SRGB:
-			RGBConverter::convert(specElems, specElemPitch, &specIn[i], r, g, b);
+			RGBConverter::convert(specElems, &specIn[i * specElems], r, g, b);
 			break;
 		case TCM_XYZ:
-			XYZConverter::convertXYZ(specElems, specElemPitch, &specIn[i], r, g, b);
+			XYZConverter::convertXYZ(specElems, &specIn[i * specElems], r, g, b);
 			break;
 		case TCM_XYZ_NORM:
-			XYZConverter::convert(specElems, specElemPitch, &specIn[i], r, g);
+			XYZConverter::convert(specElems, &specIn[i * specElems], r, g);
 			b = 1 - r - g;
 			break;
 		case TCM_LUMINANCE:
-			RGBConverter::convert(specElems, specElemPitch, &specIn[i], r, g, b);
+			RGBConverter::convert(specElems, &specIn[i * specElems], r, g, b);
 			r = RGBConverter::luminance(r, g, b);
 			g = r;
 			b = r;
@@ -141,6 +141,8 @@ void ToneMapper::mapOnlyMapper(const float* rgbIn, float* rgbOut,
 		rgbOut[i * rgbElems]	 = r;
 		rgbOut[i * rgbElems + 1] = g;
 		rgbOut[i * rgbElems + 2] = b;
+		if (rgbElems == 4)
+			rgbOut[i * rgbElems + 3] = 1;
 	}
 }
 } // namespace PR

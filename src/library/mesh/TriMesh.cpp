@@ -292,7 +292,7 @@ void TriMesh::sampleFacePoint(const Vector2f& rnd,
 	f.interpolate(b(0), b(1), po, ng, uv);
 
 	p.P			 = po;
-	p.Ng		 = ng;
+	p.N			 = ng;
 	p.UVW		 = Vector3f(uv(0), uv(1), 0);
 	p.MaterialID = f.MaterialSlot;
 
@@ -305,14 +305,14 @@ void TriMesh::provideGeometryPoint(uint32 faceID, float u, float v,
 	Face f = getFace(faceID);
 
 	Vector2f uv;
-	f.interpolate(u, v, pt.P, pt.Ng, uv);
+	f.interpolate(u, v, pt.P, pt.N, uv);
 
-	if (features() & TMF_HAS_UV)
+	/*if (features() & TMF_HAS_UV)
 		f.tangentFromUV(pt.Nx, pt.Ny);
-	else
-		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
+	else*/
+	Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
-	pt.UVW = Vector3f(uv(0), uv(1), 0);
+	pt.UVW		  = Vector3f(uv(0), uv(1), 0);
 	pt.MaterialID = f.MaterialSlot;
 }
 } // namespace PR

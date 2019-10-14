@@ -11,11 +11,9 @@ struct PR_LIB_INLINE GeometryPoint {
 public:
 	// Point of sample
 	Vector3f P;
-	Vector3f Pd;   // Position after displacement
 	Vector3f dPdT; // Velocity of P
 
-	Vector3f Ng; // Geometric normal.
-	Vector3f Nd; // Normal after displacement
+	Vector3f N;
 
 	// Normal Tangent Frame
 	Vector3f Nx;

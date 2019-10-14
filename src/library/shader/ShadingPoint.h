@@ -10,7 +10,7 @@ enum ShaderPointFlags {
 };
 
 /*
-Shading context (SOA)
+Shading context
 - Depending on the function not all fields are reasonable filled.
 - View dependent!
 */
@@ -19,11 +19,12 @@ public:
 	GeometryPoint Geometry;
 	PR::Ray Ray;
 
-	float Ns[3]; // Shading normal - Front facing
+	Vector3f Pd; // Position after displacement
+	Vector3f Ns; // Shading normal - Front facing
 
 	// Normal Tangent Frame
-	float Nx[3];
-	float Ny[3];
+	Vector3f Nx;
+	Vector3f Ny;
 
 	// Spectral
 	float Radiance;

@@ -10,9 +10,11 @@ public:
 	~LightPath() = default;
 
 	void addToken(const LightPathToken& token);
-	
+
 	inline size_t currentSize() const { return mTokens.size(); }
 	const LightPathToken& token(size_t index) const { return mTokens[index]; }
+
+	static LightPath createCDL(uint32 diffuseCount = 1);
 
 private:
 	std::vector<LightPathToken> mTokens;

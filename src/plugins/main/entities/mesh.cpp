@@ -3,6 +3,7 @@
 #include "entity/IEntityFactory.h"
 #include "math/Projection.h"
 #include "mesh/TriMesh.h"
+#include "sampler/SplitSample.h"
 
 namespace PR {
 
@@ -74,13 +75,22 @@ public:
 		out.MaterialID  = 0; //TODO
 	}
 
+	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
+	{
+		SplitSample2D split(rnd, 0, mMesh->faceCount());
+		Face face = mMesh->getFace(split.integral1());
+
+		pdf = 1.0f / (mMesh->faceCount() * face.surfaceArea());
+		return transform() * face.interpolateVertices(rnd(0), rnd(1));
+	}
+
 	void provideGeometryPoint(uint32 faceID, float u, float v,
 							  GeometryPoint& pt) const override
 	{
 		mMesh->provideGeometryPoint(faceID, u, v, pt);
 
 		pt.P  = transform() * pt.P;
-		pt.Ng = directionMatrix() * pt.Ng;
+		pt.N  = directionMatrix() * pt.N;
 		pt.Nx = directionMatrix() * pt.Nx;
 		pt.Ny = directionMatrix() * pt.Ny;
 

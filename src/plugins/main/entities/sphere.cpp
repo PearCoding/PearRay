@@ -1,8 +1,10 @@
 #include "geometry/Sphere.h"
 #include "Environment.h"
+#include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
 #include "geometry/GeometryPoint.h"
+#include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
 #include "registry/Registry.h"
@@ -14,11 +16,12 @@ class SphereEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	SphereEntity(uint32 id, const std::string& name, float r)
+	SphereEntity(uint32 id, const std::string& name, float r,
+				 int32 matID, int32 lightID)
 		: IEntity(id, name)
 		, mSphere(r)
-		, mMaterialID(0)
-		, mLightID(0)
+		, mMaterialID(matID)
+		, mLightID(lightID)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -31,12 +34,12 @@ public:
 
 	bool isLight() const override
 	{
-		return mLightID != 0;
+		return mLightID >= 0;
 	}
 
 	float surfaceArea(uint32 id) const override
 	{
-		if (id == 0 || id == mMaterialID) {
+		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID) {
 			Eigen::Matrix3f sca;
 			transform().computeRotationScaling((Eigen::Matrix3f*)nullptr, &sca);
 
@@ -56,7 +59,7 @@ public:
 
 	bool isCollidable() const override
 	{
-		return mSphere.radius() >= PR_EPSILON;
+		return mMaterialID > 0 && mSphere.radius() >= PR_EPSILON;
 	}
 
 	float collisionCost() const override
@@ -96,13 +99,19 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
+	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
+	{
+		pdf = mSphere.surfaceArea();
+		return transform() * mSphere.surfacePoint(rnd(0), rnd(1));
+	}
+
 	void provideGeometryPoint(uint32, float u, float v,
 							  GeometryPoint& pt) const override
 	{
-		pt.P  = transform() * mSphere.surfacePoint(u, v);
-		pt.Ng = directionMatrix() * mSphere.normalPoint(u, v);
+		pt.P = transform() * mSphere.surfacePoint(u, v);
+		pt.N = directionMatrix() * mSphere.normalPoint(u, v);
 
-		Tangent::frame(pt.Ng, pt.Nx, pt.Ny);
+		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
 		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
@@ -119,8 +128,8 @@ protected:
 
 private:
 	Sphere mSphere;
-	uint32 mMaterialID;
-	uint32 mLightID;
+	int32 mMaterialID;
+	int32 mLightID;
 
 	float mPDF_Cache;
 };
@@ -132,7 +141,21 @@ public:
 		const auto& reg  = env.registry();
 		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		float r			 = reg.getForObject<float>(RG_ENTITY, uuid, "radius", 1.0f);
-		return std::make_shared<SphereEntity>(id, name, r);
+
+		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
+		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+
+		int32 matID					   = -1;
+		std::shared_ptr<IMaterial> mat = env.getMaterial(matName);
+		if (mat)
+			matID = mat->id();
+
+		int32 emsID					   = -1;
+		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
+		if (ems)
+			emsID = ems->id();
+
+		return std::make_shared<SphereEntity>(id, name, r, matID, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const

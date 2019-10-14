@@ -10,4 +10,17 @@ void LightPath::addToken(const LightPathToken& token)
 {
 	mTokens.emplace_back(token);
 }
+
+LightPath LightPath::createCDL(uint32 diffuseCount)
+{
+	LightPath path(2 + diffuseCount);
+
+	path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
+
+	for (uint32 i = 0; i < diffuseCount; ++i)
+		path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+
+	path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+	return path;
+}
 } // namespace PR

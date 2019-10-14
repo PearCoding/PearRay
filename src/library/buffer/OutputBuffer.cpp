@@ -55,21 +55,60 @@ void OutputBuffer::clear()
 		p.second->clear();
 }
 
-#define _3D_S(ch, v)                \
+#define _3D_S_B(ch, v)              \
 	if (mInt3D[ch])                 \
 		for (int i = 0; i < 3; ++i) \
 	mInt3D[ch]->blendFragment(pixelIndex, i, v[i], ft)
 
-#define _1D_S(ch, v) \
-	if (mInt1D[ch])  \
+#define _3D_S_L(ch, v)                                               \
+	for (auto pair : mLPE_3D[ch]) {                                  \
+		if (pair.first.match(path)) {                                \
+			for (int i = 0; i < 3; ++i)                              \
+				pair.second->blendFragment(pixelIndex, i, v[i], ft); \
+		}                                                            \
+	}
+
+#define _3D_S(ch, v) \
+	_3D_S_L(ch, v)   \
+	_3D_S_B(ch, v)
+
+#define _1D_S_B(ch, v) \
+	if (mInt1D[ch])    \
 	mInt1D[ch]->blendFragment(pixelIndex, 0, v, ft)
 
-#define _C_S(ch, v)      \
+#define _1D_S_L(ch, v)                                        \
+	for (auto pair : mLPE_1D[ch]) {                           \
+		if (pair.first.match(path)) {                         \
+			pair.second->blendFragment(pixelIndex, 0, v, ft); \
+		}                                                     \
+	}
+
+#define _1D_S(ch, v) \
+	_1D_S_L(ch, v)   \
+	_1D_S_B(ch, v)
+
+#define _C_S_B(ch, v)    \
 	if (mIntCounter[ch]) \
 	mIntCounter[ch]->blendFragment(pixelIndex, 0, v, ft)
 
-void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
+#define _C_S_L(ch, v)                                         \
+	for (auto pair : mLPE_Counter[ch]) {                      \
+		if (pair.first.match(path)) {                         \
+			pair.second->blendFragment(pixelIndex, 0, v, ft); \
+		}                                                     \
+	}
+
+#define _C_S(ch, v) \
+	_C_S_L(ch, v)   \
+	_C_S_B(ch, v)
+
+void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
+								const LightPath& path)
 {
+	const auto filter = [](float spec) {
+		return spec >= 0 && std::isfinite(spec);
+	};
+
 	const uint32 channel   = s.Ray.WavelengthIndex;
 	const uint32 oldSample = getSampleCount(pixelIndex, channel);
 	const float t		   = 1.0f / (oldSample + 1.0f);
@@ -80,14 +119,15 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 		oldFullSample += mIntCounter[V_Samples]->getFragment(pixelIndex, i);
 	const float ft = 1.0f / (oldFullSample + 1.0f);
 
-	// Spectral
-	mSpectral->blendFragment(pixelIndex, channel, s.Radiance, t);
+	// Filter weird radiance (maybe put a flag somewhere!)
+	if (filter(s.Radiance))
+		mSpectral->blendFragment(pixelIndex, channel, s.Radiance, t);
 
 	_3D_S(V_Position, s.Geometry.P);
 	_3D_S(V_Normal, s.Ns);
-	_3D_S(V_NormalG, s.Geometry.Ng);
-	_3D_S(V_Tangent, s.Geometry.Nx); // Fixme(LATER): Should be the shading tangent!
-	_3D_S(V_Bitangent, s.Geometry.Ny);
+	_3D_S(V_NormalG, s.Geometry.N);
+	_3D_S(V_Tangent, s.Nx);
+	_3D_S(V_Bitangent, s.Ny);
 	_3D_S(V_View, s.Ray.Direction);
 	_3D_S(V_UVW, s.Geometry.UVW);
 	_3D_S(V_DPDT, s.Geometry.dPdT);
@@ -95,6 +135,15 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s)
 	_1D_S(V_Depth, s.Depth2);
 	_1D_S(V_Time, s.Ray.Time);
 	_1D_S(V_Material, s.Geometry.MaterialID);
+
+	// LPE
+	if (filter(s.Radiance)) {
+		for (auto pair : mLPE_Spectral) {
+			if (pair.first.match(path)) {
+				pair.second->blendFragment(pixelIndex, channel, s.Radiance, t);
+			}
+		}
+	}
 
 	// Increase sample count
 	incSampleCount(pixelIndex, channel);

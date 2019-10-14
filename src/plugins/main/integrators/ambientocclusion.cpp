@@ -46,6 +46,7 @@ public:
 	void onPass(RenderTileSession& session, uint32) override
 	{
 		Random& random = session.tile()->random();
+		LightPath stdPath = LightPath::createCDL(1);
 
 		while (session.handleCameraRays()) {
 			session.handleHits([&](const HitEntry&,
@@ -58,7 +59,7 @@ public:
 				for (size_t i = 0; i < mSampleCount; ++i) {
 					Vector2f rnd  = random.get2D();
 					Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-					Vector3f ndir = Tangent::align(pt.Ng, pt.Nx, pt.Ny,
+					Vector3f ndir = Tangent::align(pt.N, pt.Nx, pt.Ny,
 												   dir);
 
 					Ray n = ray.next(pt.P, ndir);
@@ -71,10 +72,13 @@ public:
 				ShadingPoint spt;
 				spt.Ray		 = ray;
 				spt.Geometry = pt;
+				spt.Ns		 = pt.N;
+				spt.Nx		 = pt.Nx;
+				spt.Ny		 = pt.Ny;
 
 				spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 
-				session.pushFragment(ray.PixelIndex, spt);
+				session.pushFragment(ray.PixelIndex, spt, stdPath);
 			});
 		}
 	}

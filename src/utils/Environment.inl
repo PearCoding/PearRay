@@ -26,7 +26,7 @@ inline void Environment::addSpectrum(const std::string& name, const Spectrum& sp
 
 inline std::shared_ptr<IEmission> Environment::getEmission(const std::string& name) const
 {
-	return mEmissions.at(name);
+	return hasEmission(name) ? mEmissions.at(name) : nullptr;
 }
 
 inline bool Environment::hasEmission(const std::string& name) const
@@ -48,7 +48,7 @@ inline size_t Environment::emissionCount() const
 
 inline std::shared_ptr<IMaterial> Environment::getMaterial(const std::string& name) const
 {
-	return mMaterials.at(name);
+	return hasMaterial(name) ? mMaterials.at(name) : nullptr;
 }
 
 inline bool Environment::hasMaterial(const std::string& name) const
@@ -70,7 +70,7 @@ inline size_t Environment::materialCount() const
 
 inline std::shared_ptr<TriMesh> Environment::getMesh(const std::string& name) const
 {
-	return mMeshes.at(name);
+	return hasMesh(name) ? mMeshes.at(name) : nullptr;
 }
 
 inline bool Environment::hasMesh(const std::string& name) const

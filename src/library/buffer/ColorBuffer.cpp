@@ -3,7 +3,7 @@
 #include "spectral/ToneMapper.h"
 
 namespace PR {
-ColorBuffer::_Data::_Data(uint32 width, uint32 height, ColorBufferMode mode)
+ColorBuffer::_Data::_Data(size_t width, size_t height, ColorBufferMode mode)
 	: Width(width)
 	, Height(height)
 	, Mode(mode)
@@ -20,18 +20,8 @@ ColorBuffer::_Data::~_Data()
 	delete[] Ptr;
 }
 
-ColorBuffer::ColorBuffer(uint32 width, uint32 height, ColorBufferMode mode)
+ColorBuffer::ColorBuffer(size_t width, size_t height, ColorBufferMode mode)
 	: mData(std::make_shared<_Data>(width, height, mode))
-{
-}
-
-ColorBuffer::ColorBuffer(const ColorBuffer& other)
-	: mData(other.mData)
-{
-}
-
-ColorBuffer::ColorBuffer(ColorBuffer&& other)
-	: mData(std::move(other.mData))
 {
 }
 
@@ -39,27 +29,15 @@ ColorBuffer::~ColorBuffer()
 {
 }
 
-ColorBuffer& ColorBuffer::operator=(const ColorBuffer& other)
+void ColorBuffer::map(const ToneMapper& mapper, const float* specIn, size_t samples)
 {
-	mData = other.mData;
-	return *this;
-}
-
-ColorBuffer& ColorBuffer::operator=(ColorBuffer&& other)
-{
-	mData = std::move(other.mData);
-	return *this;
-}
-
-void ColorBuffer::map(const ToneMapper& mapper, const float* specIn, uint32 samples)
-{
-	mapper.map(specIn, samples, 1,
-			   mData->Ptr, mData->Mode == CBM_RGB ? 3 : 4, mData->Width * mData->Height);
+	mapper.map(specIn, samples,
+			   mData->Ptr, channels(), mData->Width * mData->Height);
 }
 
 void ColorBuffer::mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn)
 {
 	mapper.mapOnlyMapper(rgbIn, mData->Ptr,
-						 mData->Mode == CBM_RGB ? 3 : 4, mData->Width * mData->Height);
+						 channels(), mData->Width * mData->Height);
 }
 } // namespace PR

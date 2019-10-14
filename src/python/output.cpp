@@ -14,13 +14,13 @@ void setup_output(py::module& m)
 				s.ptr(),
 				sizeof(uint32),
 				py::format_descriptor<uint32>::format(),
-				2,
+				3,
 				std::vector<size_t>({ s.height(),
 									  s.width(),
 									  s.channels() }),
-				std::vector<size_t>({ s.width() * s.channels() * sizeof(uint64),
-									  s.channels() * sizeof(uint64),
-									  sizeof(uint32) }));
+				std::vector<size_t>({ s.heightBytePitch(),
+									  s.widthBytePitch(),
+									  s.channelBytePitch() }));
 		})
 		.def_property("neverClear", &FrameBufferUInt32::isNeverCleared, &FrameBufferUInt32::setNeverClear)
 		.def("setFragment", py::overload_cast<size_t, size_t, size_t, const uint32&>(&FrameBufferUInt32::setFragment))
@@ -40,9 +40,9 @@ void setup_output(py::module& m)
 				std::vector<size_t>({ s.height(),
 									  s.width(),
 									  s.channels() }),
-				std::vector<size_t>({ s.width() * s.channels() * sizeof(float),
-									  s.channels() * sizeof(float),
-									  sizeof(float) }));
+				std::vector<size_t>({ s.heightBytePitch(),
+									  s.widthBytePitch(),
+									  s.channelBytePitch() }));
 		})
 		.def_property("neverClear", &FrameBufferFloat::isNeverCleared, &FrameBufferFloat::setNeverClear)
 		.def("setFragment", py::overload_cast<size_t, size_t, size_t, const float&>(&FrameBufferFloat::setFragment))

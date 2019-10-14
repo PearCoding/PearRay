@@ -93,11 +93,17 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
+	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
+	{
+		pdf = 1.0f / mPlane.surfaceArea();
+		return transform() * mPlane.surfacePoint(rnd(0), rnd(1));
+	}
+
 	void provideGeometryPoint(uint32, float u, float v,
 							  GeometryPoint& pt) const override
 	{
 		pt.P  = transform() * mPlane.surfacePoint(u, v);
-		pt.Ng = directionMatrix() * mPlane.normal();
+		pt.N  = directionMatrix() * mPlane.normal();
 		pt.Nx = directionMatrix() * mPlane.xAxis().normalized();
 		pt.Ny = directionMatrix() * mPlane.yAxis().normalized();
 

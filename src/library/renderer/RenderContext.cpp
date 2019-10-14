@@ -81,6 +81,7 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	mSamplesPerPixel = mRenderSettings.samplesPerPixel();
 
 	PR_LOG(L_INFO) << "Rendering with: " << std::endl;
+	PR_LOG(L_INFO) << "  Lights: " << mLights.size() << std::endl;
 	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount << std::endl;
@@ -248,7 +249,6 @@ IEntity* RenderContext::getEntity(uint32 id) const
 
 IMaterial* RenderContext::getMaterial(uint32 id) const
 {
-	// TODO
-	return nullptr;
+	return mScene->materials().at(id).get();
 }
 } // namespace PR

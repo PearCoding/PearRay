@@ -14,11 +14,11 @@ class PR_LIB RGBConverter {
 
 public:
 	/* D65 sRGB (linear) */
-	static void convert(uint32 samples, uint32 elemPitch,
+	static void convert(uint32 samples,
 						const float* src, float& x, float& y, float& z);
 	static inline void convert(const Spectrum& s, float& x, float& y, float& z)
 	{
-		convert(s.samples(), 1, s.c_ptr(), x, y, z);
+		convert(s.samples(), s.c_ptr(), x, y, z);
 	}
 
 	static void toXYZ(float r, float g, float b, float& x, float& y, float& z);

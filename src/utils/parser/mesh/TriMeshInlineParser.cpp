@@ -8,7 +8,8 @@
 #include "DataLisp.h"
 
 namespace PR {
-std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment* env, const DL::DataGroup& group) const
+std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment*,
+													const DL::DataGroup& group) const
 {
 	std::vector<float> positionAttr[3];
 	std::vector<float> normalAttr[3];

@@ -24,7 +24,8 @@ public:
 		mRadiance = spec;
 	}
 
-	void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const override
+	void eval(const LightEvalInput& in, LightEvalOutput& out,
+			  const RenderTileSession& session) const override
 	{
 		out.Weight = mRadiance->eval(in.Point);
 	}

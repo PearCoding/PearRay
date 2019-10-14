@@ -1,13 +1,10 @@
 #pragma once
 
-#include "math/SIMD.h"
+#include "PR_Config.h"
+#include <vector>
 
 namespace PR {
-/* This framebuffer uses a channel * height * width structure
- * to better utilize SIMD channel independent loading and storing
- * It also expands width and height to be a multiply of the simd bandwidth
- */
-template <typename T, typename VT>
+template <typename T>
 class PR_LIB FrameBuffer {
 	PR_CLASS_NON_COPYABLE(FrameBuffer);
 
@@ -17,47 +14,31 @@ public:
 		: mWidth(width)
 		, mHeight(height)
 		, mChannels(channels)
-		, mChannelPitch(width * height + (width * height) % PR_SIMD_BANDWIDTH)
 		, mClearValue(clear_value)
 		, mNeverClear(never_clear)
 		, mData()
 	{
-		mData.resize(mChannels * mChannelPitch);
+		mData.resize(mWidth * mHeight * mChannels);
 	}
 
 	inline ~FrameBuffer()
 	{
 	}
 
-	inline size_t width() const
-	{
-		return mWidth;
-	}
+	inline size_t width() const { return mWidth; }
+	inline size_t widthPitch() const { return channels() * channelPitch(); }
+	inline size_t widthBytePitch() const { return widthPitch() * sizeof(T); }
 
-	inline size_t height() const
-	{
-		return mHeight;
-	}
+	inline size_t height() const { return mHeight; }
+	inline size_t heightPitch() const { return width() * widthPitch(); }
+	inline size_t heightBytePitch() const { return heightPitch() * sizeof(T); }
 
-	inline size_t channels() const
-	{
-		return mChannels;
-	}
+	inline size_t channels() const { return mChannels; }
+	inline size_t channelPitch() const { return 1; }
+	inline size_t channelBytePitch() const { return channelPitch() * sizeof(T); }
 
-	inline size_t channelPitch() const
-	{
-		return mChannelPitch;
-	}
-
-	inline void setNeverClear(bool b)
-	{
-		mNeverClear = b;
-	}
-
-	inline bool isNeverCleared() const
-	{
-		return mNeverClear;
-	}
+	inline void setNeverClear(bool b) { mNeverClear = b; }
+	inline bool isNeverCleared() const { return mNeverClear; }
 
 	inline void setFragment(size_t px, size_t py, size_t channel, const T& v)
 	{
@@ -92,7 +73,7 @@ public:
 				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
-		mData[channel * mChannelPitch + pixelindex] = v;
+		getFragment(pixelindex, channel) = v;
 	}
 
 	inline const T& getFragment(size_t pixelindex, size_t channel = 0) const
@@ -101,7 +82,7 @@ public:
 				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
-		return mData[channel * mChannelPitch + pixelindex];
+		return mData[channel + pixelindex * widthPitch()];
 	}
 
 	inline T& getFragment(size_t pixelindex, size_t channel = 0)
@@ -110,7 +91,7 @@ public:
 				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
-		return mData[channel * mChannelPitch + pixelindex];
+		return mData[channel + pixelindex * widthPitch()];
 	}
 
 	inline void blendFragment(uint32 pixelIndex, size_t channel,
@@ -120,39 +101,8 @@ public:
 										   + newValue * t;
 	}
 
-	// SIMD versions
-	inline void setFragment(const vuint32& pixelIndex, size_t channel, const VT& v)
-	{
-		store_into_container(pixelIndex, mData, v, channel * mChannelPitch);
-	}
-
-	inline VT getFragment(const vuint32& pixelIndex, size_t channel = 0) const
-	{
-		return load_from_container(pixelIndex, mData, channel * mChannelPitch);
-	}
-
-	inline void blendFragment(const vuint32& pixelIndex, size_t channel,
-							  const VT& newValue, const vfloat& blendFactor)
-	{
-		// Better performance then using load and store
-		for_each_v([&](uint32 i) {
-			uint32 pi = extract(i, pixelIndex);
-			T v		  = extract(i, newValue);
-			float t   = extract(i, blendFactor);
-
-			getFragment(pi, channel) = getFragment(pi, channel) * (1 - t) + v * t;
-		});
-	}
-
-	inline const T* ptr() const
-	{
-		return mData.data();
-	}
-
-	inline T* ptr()
-	{
-		return mData.data();
-	}
+	inline const T* ptr() const { return mData.data(); }
+	inline T* ptr() { return mData.data(); }
 
 	inline void clear(bool force = false)
 	{
@@ -169,13 +119,12 @@ private:
 	size_t mWidth;
 	size_t mHeight;
 	size_t mChannels;
-	size_t mChannelPitch;
 	T mClearValue;
 	bool mNeverClear;
 
-	simd_vector<T> mData;
+	std::vector<T> mData;
 };
 
-typedef FrameBuffer<float, vfloat> FrameBufferFloat;
-typedef FrameBuffer<uint32, vuint32> FrameBufferUInt32;
+typedef FrameBuffer<float> FrameBufferFloat;
+typedef FrameBuffer<uint32> FrameBufferUInt32;
 } // namespace PR

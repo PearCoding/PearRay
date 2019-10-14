@@ -73,7 +73,7 @@ bool RenderTileSession::handleCameraRays()
 		[&](const Ray& ray) {
 			mTile->statistics().addBackgroundHitCount();
 			mTile->context()->output()->pushBackgroundFragment(ray.PixelIndex,
-															  ray.WavelengthIndex);
+															   ray.WavelengthIndex);
 		});
 
 	return true;
@@ -96,8 +96,29 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 	return mTile->context()->scene()->traceShadowRay(ray);
 }
 
-void RenderTileSession::pushFragment(const uint32 pixelIndex, const ShadingPoint& pt) const
+void RenderTileSession::pushFragment(const uint32 pixelIndex, const ShadingPoint& pt,
+									 const LightPath& path) const
 {
-	mTile->context()->output()->pushFragment(pixelIndex, pt);
+	mTile->context()->output()->pushFragment(pixelIndex, pt, path);
+}
+
+IEntity* RenderTileSession::pickRandomLight(Vector3f& pos, float& pdf) const
+{
+	const auto& lights = mTile->context()->lights();
+	if (lights.empty()) {
+		pdf = 0;
+		return nullptr;
+	}
+
+	size_t pick = mTile->random().get32(0, lights.size());
+	pdf			= 1.0f / lights.size();
+
+	IEntity* light = lights.at(pick).get();
+	float pdf2;
+
+	pos = light->pickRandomPoint(mTile->random().get2D(), pdf2);
+	pdf *= pdf2;
+
+	return light;
 }
 } // namespace PR
