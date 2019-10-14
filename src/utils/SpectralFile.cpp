@@ -87,6 +87,7 @@ void SpectralFile::save(const std::string& path, bool compress) const
 
 	out.put('P').put('R').put('4').put('2');
 
+	// Image header
 	uint32 tmp = mData->Descriptor->samples();
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 	tmp = mData->Width;
@@ -94,6 +95,17 @@ void SpectralFile::save(const std::string& path, bool compress) const
 	tmp = mData->Height;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
+	// Wavelength data
+	const auto& wavelengths = mData->Descriptor->getWavelengths();
+	out.write(reinterpret_cast<const char*>(wavelengths.data()),
+			  wavelengths.size() * sizeof(float));
+
+	// Luminous factor data
+	const auto& lmbs = mData->Descriptor->getLuminousFactors();
+	out.write(reinterpret_cast<const char*>(lmbs.data()),
+			  lmbs.size() * sizeof(float));
+
+	// Image content
 	out.write(reinterpret_cast<const char*>(mData->Ptr), sizeof(float) * mData->Height * mData->Width * mData->Descriptor->samples());
 }
 
@@ -123,7 +135,12 @@ SpectralFile SpectralFile::open(const std::string& path, bool compressed)
 	if (samplingCount == 0 || width == 0 || height == 0)
 		throw std::runtime_error("Invalid file");
 
-	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(samplingCount, 0, 0); // TODO: Get lambda information
+	std::vector<float> wavelengths(samplingCount);
+	std::vector<float> luminous(samplingCount);
+	in.read(reinterpret_cast<char*>(wavelengths.data()), wavelengths.size() * sizeof(float));
+	in.read(reinterpret_cast<char*>(luminous.data()), luminous.size() * sizeof(float));
+
+	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(wavelengths, luminous);
 
 	SpectralFile f(desc, width, height);
 	for (uint32 y = 0; y < height; ++y) {

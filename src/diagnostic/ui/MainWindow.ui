@@ -143,11 +143,6 @@
     <string>F2</string>
    </property>
   </action>
-  <action name="actionOpenEXRFile">
-   <property name="text">
-    <string>Open EXR file</string>
-   </property>
-  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>

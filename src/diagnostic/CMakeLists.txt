@@ -19,7 +19,9 @@ SET(Src
   dialogs/EXRWindow.cpp
   dialogs/MainWindow.cpp
   dialogs/SceneWindow.cpp
-  exr/EXRFile.cpp
+  dialogs/SpecWindow.cpp
+  io/EXRFile.cpp
+  io/SpecFile.cpp
   properties/ColorProperty.cpp
   properties/DoubleProperty.cpp
   properties/GroupProperty.cpp
@@ -42,7 +44,9 @@ SET(Hdr
   dialogs/EXRWindow.h
   dialogs/MainWindow.h
   dialogs/SceneWindow.h
-  exr/EXRFile.h
+  dialogs/SpecWindow.h
+  io/EXRFile.h
+  io/SpecFile.h
   properties/ColorProperty.h
   properties/DoubleProperty.h
   properties/GroupProperty.h
@@ -60,7 +64,8 @@ SET(Hdr
 SET(Fms
   ui/EXRWindow.ui
   ui/MainWindow.ui
-  ui/SceneWindow.ui)
+  ui/SceneWindow.ui
+  ui/SpecWindow.ui)
 
 SET(Res
   resources/icons.qrc)
@@ -76,6 +81,6 @@ SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 cmake_policy(SET CMP0020 OLD)
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
-target_link_libraries(prdiag Qt5::Widgets ${OPENEXR_LIBRARIES})
+target_link_libraries(prdiag Qt5::Widgets ${OPENEXR_LIBRARIES} ${Boost_LIBRARIES})
 set_target_properties(prdiag PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(prdiag PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

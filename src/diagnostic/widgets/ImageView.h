@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QWidget>
 #include <QSignalMapper>
+#include <QWidget>
 #include <memory>
 
 class EXRLayer;
+class SpecFile;
 class ImageView : public QWidget {
 	Q_OBJECT
 public:
@@ -12,6 +13,7 @@ public:
 	virtual ~ImageView();
 
 	void setLayer(const std::shared_ptr<EXRLayer>& layer);
+	void setSpecFile(const std::shared_ptr<SpecFile>& file);
 
 	void exportImage(const QString& path) const;
 
@@ -30,29 +32,30 @@ protected:
 	void wheelEvent(QWheelEvent* event) override;
 
 private slots:
-    void showContextMenu(const QPoint& p);
-    void onContextMenuClick(QObject* obj);
+	void showContextMenu(const QPoint& p);
+	void onContextMenuClick(QObject* obj);
 
 private:
-    void updateImage();
-    void cacheImage();
+	void updateImage();
+	void cacheImage();
 
-    QPoint mapToPixel(const QPoint& pos) const;
-    bool isValidPixel(const QPoint& pixel) const;
-    QString valueAt(const QPoint& pixel) const;
+	QPoint mapToPixel(const QPoint& pos) const;
+	bool isValidPixel(const QPoint& pixel) const;
+	QString valueAt(const QPoint& pixel) const;
 
-    float mZoom;
+	float mZoom;
 	QPointF mDelta;
-    quint8 mChannelMask;
+	quint8 mChannelMask;
 
-    QPoint mLastPos;
-    QPoint mLastPixel;
+	QPoint mLastPos;
+	QPoint mLastPixel;
 
 	QImage mImage;
 	QPixmap mPixmap;
 	QPixmap mBackground;
 
 	std::shared_ptr<EXRLayer> mEXRLayer;
+	std::shared_ptr<SpecFile> mSpecFile;
 
-    QSignalMapper mSignalMapper;
+	QSignalMapper mSignalMapper;
 };

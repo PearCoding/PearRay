@@ -1,5 +1,5 @@
 #include "EXRWindow.h"
-#include "exr/EXRFile.h"
+#include "io/EXRFile.h"
 
 #include <QFileDialog>
 #include <QStandardPaths>
