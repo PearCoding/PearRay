@@ -133,6 +133,7 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 	_3D_S(V_DPDT, s.Geometry.dPdT);
 
 	_1D_S(V_Time, s.Ray.Time);
+	_1D_S(V_Depth, std::sqrt(s.Depth2));
 	_1D_S(V_Material, s.Geometry.MaterialID);
 
 	// LPE

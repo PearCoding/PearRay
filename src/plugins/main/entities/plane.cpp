@@ -85,10 +85,11 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
-	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
+	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const override
 	{
-		pdf = mPDF_Cache;
-		return transform() * mPlane.surfacePoint(rnd(0), rnd(1));
+		pdf	= mPDF_Cache;
+		faceID = 0;
+		return rnd;
 	}
 
 	void provideGeometryPoint(uint32, float u, float v,
@@ -105,6 +106,8 @@ public:
 
 		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
+		pt.EmissionID = mLightID;
+		pt.DisplaceID = 0;
 	}
 
 	inline void centerOn()

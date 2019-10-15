@@ -37,9 +37,10 @@ public:
 	virtual void checkCollision(const Ray& in, SingleCollisionOutput& out) const  = 0;
 	virtual void checkCollision(const RayPackage& in, CollisionOutput& out) const = 0;
 
-	virtual Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const = 0;
+	virtual Vector2f pickRandomPoint(const Vector2f& rnd,
+									 uint32& faceID, float& pdf) const = 0;
 	virtual void provideGeometryPoint(uint32 faceID, float u, float v,
-									  GeometryPoint& pt) const  = 0;
+									  GeometryPoint& pt) const		   = 0;
 
 protected:
 	virtual void onFreeze(RenderContext* context) override;

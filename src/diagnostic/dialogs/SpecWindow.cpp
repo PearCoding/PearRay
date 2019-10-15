@@ -23,7 +23,7 @@ void SpecWindow::openFile(const QString& str)
 	std::shared_ptr<SpecFile> file = std::make_shared<SpecFile>();
 	if (file->open(str)) {
 		ui.sizeLabel->setText(QString("%1x%2").arg(file->width()).arg(file->height()));
-		ui.imageWidget->setSpecFile(file);
+		ui.imageWidget->setView(file);
 
 		setWindowTitle(QString("[Spec] %1").arg(str));
 	}

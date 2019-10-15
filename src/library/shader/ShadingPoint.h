@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geometry/GeometryPoint.h"
+#include "math/Reflection.h"
 #include "ray/RayPackage.h"
 
 namespace PR {
@@ -30,18 +31,31 @@ public:
 
 	// Some other utility variables
 	uint32 Flags;
+	float Depth2;
+	float NdotV;
 
 	uint32 EntityID;
 	uint32 PrimID;
 
 	// Set shading terms without transformation
-	inline void setByIdentity(const GeometryPoint& pt)
+	inline void setByIdentity(const PR::Ray& ray, const GeometryPoint& pt)
 	{
+		Ray		 = ray;
 		Geometry = pt;
 		P		 = pt.P;
-		N		 = pt.N;
-		Nx		 = pt.Nx;
-		Ny		 = pt.Ny;
+		Depth2   = (ray.Origin - P).squaredNorm();
+
+		NdotV = ray.Direction.dot(pt.N);
+		if (Reflection::is_inside(NdotV)) { // TODO: Check!
+			N	 = -pt.N;
+			Nx	= pt.Nx;
+			Ny	= -pt.Ny;
+			NdotV = -NdotV;
+		} else {
+			N  = pt.N;
+			Nx = pt.Nx;
+			Ny = pt.Ny;
+		}
 	}
 };
 } // namespace PR

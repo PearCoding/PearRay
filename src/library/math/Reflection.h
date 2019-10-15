@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include <Eigen/Dense>
 
 namespace PR {
 class PR_LIB Reflection {

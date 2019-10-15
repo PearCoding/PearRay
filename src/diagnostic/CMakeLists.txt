@@ -21,6 +21,7 @@ SET(Src
   dialogs/SceneWindow.cpp
   dialogs/SpecWindow.cpp
   io/EXRFile.cpp
+  io/ImageBufferView.cpp
   io/SpecFile.cpp
   properties/ColorProperty.cpp
   properties/DoubleProperty.cpp
@@ -34,6 +35,7 @@ SET(Src
   widgets/ColorButton.cpp
   widgets/ImageView.cpp
   widgets/PropertyView.cpp
+  widgets/RangeSlider.cpp
   widgets/View3DWidget.cpp)
 
 SET(Hdr
@@ -46,6 +48,7 @@ SET(Hdr
   dialogs/SceneWindow.h
   dialogs/SpecWindow.h
   io/EXRFile.h
+  io/ImageBufferView.h
   io/SpecFile.h
   properties/ColorProperty.h
   properties/DoubleProperty.h
@@ -59,6 +62,7 @@ SET(Hdr
   widgets/ColorButton.h
   widgets/ImageView.h
   widgets/PropertyView.h
+  widgets/RangeSlider.h
   widgets/View3DWidget.h)
 
 SET(Fms

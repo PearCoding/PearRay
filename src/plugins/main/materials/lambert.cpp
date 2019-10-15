@@ -72,10 +72,20 @@ class LambertMaterialFactory : public IMaterialFactory {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
 	{
-		return std::make_shared<LambertMaterial>(
-			id,
-			std::make_shared<ConstSpectralShadingSocket>(
-				Spectrum(env.spectrumDescriptor(), 1)));
+		const Registry& reg = env.registry();
+
+		const std::string albedoName = reg.getForObject<std::string>(
+			RG_MATERIAL, uuid, "albedo", "");
+
+		std::shared_ptr<FloatSpectralShadingSocket> albedoS;
+		if (env.hasShadingSocket(albedoName))
+			albedoS = env.getShadingSocket<FloatSpectralShadingSocket>(albedoName);
+
+		if (!albedoS)
+			albedoS = std::make_shared<ConstSpectralShadingSocket>(
+				Spectrum(env.spectrumDescriptor(), 1));
+
+		return std::make_shared<LambertMaterial>(id, albedoS);
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -24,5 +24,7 @@ public:
 	Vector3f dUVW; // Pixel footprint
 
 	uint32 MaterialID;
+	uint32 EmissionID;
+	uint32 DisplaceID;// TODO
 };
 } // namespace PR

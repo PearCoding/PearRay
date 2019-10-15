@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QImage>
+#include "ImageBufferView.h"
 #include <QVector>
 
 #include <memory>
 
-class SpecFile {
+class SpecFile : public ImageBufferView {
 public:
 	SpecFile();
 	~SpecFile();
@@ -14,17 +14,18 @@ public:
 
 	inline QVector<float>& data() { return mData; }
 	inline QVector<QString>& channelNames() { return mChannelNames; }
-	inline const QString& name() const { return mName; }
-	inline size_t width() const { return mWidth; }
-	inline size_t height() const { return mHeight; }
-	inline size_t channelCount() const { return mChannelNames.size(); }
 
-	inline float value(size_t x, size_t y, size_t channel) const
+	const QString& name() const override { return mName; }
+	size_t width() const override { return mWidth; }
+	size_t height() const override { return mHeight; }
+	size_t channelCount() const override { return mChannelNames.size(); }
+	size_t viewChannelCount() const override { return 1; }
+	const QString& channelName(size_t c) const override { return mChannelNames.at(c); }
+
+	float value(size_t x, size_t y, size_t channel) const override
 	{
 		return mData[y * mWidth * channelCount() + x * channelCount() + channel];
 	}
-
-	void fillImage(QImage& image, quint32 channel) const;
 
 private:
 	QString mName;

@@ -75,10 +75,6 @@ public:
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
 
-	// (Dont expose to the Python API (or use std::shared_ptr))
-	IEntity* getEntity(uint32 id) const;
-	IMaterial* getMaterial(uint32 id) const;
-
 	inline std::shared_ptr<OutputBuffer> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }

@@ -70,8 +70,7 @@ public:
 				}
 
 				ShadingPoint spt;
-				spt.Ray		 = ray;
-				spt.setByIdentity(pt);
+				spt.setByIdentity(ray, pt);
 
 				spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 

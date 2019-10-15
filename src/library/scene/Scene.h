@@ -15,6 +15,7 @@ namespace PR {
 class ICamera;
 class IEntity;
 class IMaterial;
+class IEmission;
 class RenderContext;
 
 class RayStream;
@@ -25,11 +26,13 @@ public:
 	Scene(const std::shared_ptr<ICamera>& activeCamera,
 		  const std::vector<std::shared_ptr<IEntity>>& entities,
 		  const std::vector<std::shared_ptr<IMaterial>>& materials,
+		  const std::vector<std::shared_ptr<IEmission>>& emissions,
 		  const std::string& cntFile);
 	virtual ~Scene();
 
 	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
 	const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
+	const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
@@ -49,6 +52,7 @@ private:
 	std::shared_ptr<ICamera> mActiveCamera;
 	std::vector<std::shared_ptr<IEntity>> mEntities;
 	std::vector<std::shared_ptr<IMaterial>> mMaterials;
+	std::vector<std::shared_ptr<IEmission>> mEmissions;
 
 	std::unique_ptr<class kdTreeCollider> mKDTree;
 	BoundingBox mBoundingBox;

@@ -26,7 +26,23 @@ RenderTileSession::~RenderTileSession()
 
 IEntity* RenderTileSession::getEntity(uint32 id) const
 {
-	return mTile->context()->scene()->entities()[id].get();
+	return id < mTile->context()->scene()->entities().size()
+			   ? mTile->context()->scene()->entities()[id].get()
+			   : nullptr;
+}
+
+IMaterial* RenderTileSession::getMaterial(uint32 id) const
+{
+	return id < mTile->context()->scene()->materials().size()
+			   ? mTile->context()->scene()->materials()[id].get()
+			   : nullptr;
+}
+
+IEmission* RenderTileSession::getEmission(uint32 id) const
+{
+	return id < mTile->context()->scene()->emissions().size()
+			   ? mTile->context()->scene()->emissions()[id].get()
+			   : nullptr;
 }
 
 bool RenderTileSession::handleCameraRays()
@@ -83,8 +99,8 @@ bool RenderTileSession::handleCameraRays()
 void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 										  IEntity*& entity, IMaterial*& material)
 {
-	entity   = mTile->context()->getEntity(grp.EntityID);
-	material = mTile->context()->getMaterial(grp.MaterialID);
+	entity   = getEntity(grp.EntityID);
+	material = getMaterial(grp.MaterialID);
 }
 
 void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
@@ -109,7 +125,7 @@ void RenderTileSession::pushNonHitFragment(const ShadingPoint& pt) const
 		pt.Ray.PixelIndex, pt.Ray.WavelengthIndex);
 }
 
-IEntity* RenderTileSession::pickRandomLight(Vector3f& pos, float& pdf) const
+IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const
 {
 	const auto& lights = mTile->context()->lights();
 	if (lights.empty()) {
@@ -122,8 +138,11 @@ IEntity* RenderTileSession::pickRandomLight(Vector3f& pos, float& pdf) const
 
 	IEntity* light = lights.at(pick).get();
 
-	float pdf2;
-	pos = light->pickRandomPoint(mTile->random().get2D(), pdf2);
+	float pdf2	= 0;
+	uint32 faceID = 0;
+	Vector2f uv   = light->pickRandomPoint(mTile->random().get2D(), faceID, pdf2);
+
+	light->provideGeometryPoint(faceID, uv(0), uv(1), pt);
 	pdf *= pdf2;
 
 	return light;

@@ -1,6 +1,5 @@
 #include "ImageView.h"
-#include "io/EXRFile.h"
-#include "io/SpecFile.h"
+#include "io/ImageBufferView.h"
 
 #include <QMouseEvent>
 #include <QPainter>
@@ -21,6 +20,7 @@ ImageView::ImageView(QWidget* parent)
 	: QWidget(parent)
 	, mZoom(1)
 	, mChannelMask(0xFF)
+	, mChannelOffset(0)
 	, mLastPixel(0, 0)
 {
 	setContextMenuPolicy(Qt::CustomContextMenu);
@@ -58,20 +58,13 @@ void ImageView::zoomToOriginalSize()
 	repaint();
 }
 
-void ImageView::setLayer(const std::shared_ptr<EXRLayer>& layer)
+void ImageView::setView(const std::shared_ptr<ImageBufferView>& view)
 {
-	mChannelMask = 0xFF;
-	mEXRLayer	= layer;
-	mSpecFile.reset();
+	mChannelMask   = 0xFF;
+	mChannelOffset = 0;
+	mView		   = view;
 	updateImage();
-}
-
-void ImageView::setSpecFile(const std::shared_ptr<SpecFile>& file)
-{
-	mChannelMask = 0;
-	mEXRLayer.reset();
-	mSpecFile = file;
-	updateImage();
+	updateGeometry();
 }
 
 void ImageView::exportImage(const QString& path) const
@@ -107,9 +100,10 @@ void ImageView::paintEvent(QPaintEvent* event)
 					 QString::number(mLastPixel.y()),
 					 QTextOption(Qt::AlignCenter));
 
-	if (mSpecFile) {
+	bool additionalField = mView->viewChannelCount() == 1;
+	if (additionalField) {
 		painter.drawText(QRect(BAR_POS_W + 1, 0, BAR_POS_W / 2 - 1, BAR_HEIGHT - 1),
-						 QString::number(mChannelMask),
+						 QString::number(mChannelOffset),
 						 QTextOption(Qt::AlignCenter));
 
 		painter.drawLine(BAR_POS_W + BAR_POS_W / 2, 0,
@@ -118,7 +112,7 @@ void ImageView::paintEvent(QPaintEvent* event)
 
 	// Value Field
 	QString valS = valueAt(mLastPixel);
-	painter.drawText(QRect(BAR_POS_W + (mSpecFile ? BAR_POS_W / 2 : 0), 0,
+	painter.drawText(QRect(BAR_POS_W + (additionalField ? BAR_POS_W / 2 : 0), 0,
 						   width() - BAR_POS_W - 1, BAR_HEIGHT - 1),
 					 valS, QTextOption(Qt::AlignCenter));
 
@@ -223,12 +217,12 @@ void ImageView::cacheImage()
 
 void ImageView::showContextMenu(const QPoint& p)
 {
-	if (mEXRLayer) {
-		QMenu contextMenu(tr("Channels"), this);
+	QMenu contextMenu(tr("Channels"), this);
 
-		for (size_t i = 0; i < (size_t)mEXRLayer->data().size(); ++i) {
+	if (mView->viewChannelCount() != 1) {
+		for (size_t i = 0; i < mView->channelCount(); ++i) {
 			QAction* action = new QAction(
-				mEXRLayer->channelNames()[i],
+				mView->channelName(i),
 				this);
 			action->setCheckable(true);
 			action->setChecked(mChannelMask & (1 << i));
@@ -239,14 +233,10 @@ void ImageView::showContextMenu(const QPoint& p)
 			mSignalMapper.setMapping(action, action);
 			contextMenu.addAction(action);
 		}
-
-		contextMenu.exec(mapToGlobal(p));
-	} else if (mSpecFile) {
-		QMenu contextMenu(tr("Wavelengths"), this);
-
-		for (size_t i = 0; i < mSpecFile->channelCount(); ++i) {
+	} else {
+		for (size_t i = 0; i < mView->channelCount(); ++i) {
 			QAction* action = new QAction(
-				mSpecFile->channelNames()[i],
+				mView->channelName(i),
 				this);
 			action->setData(QVariant::fromValue(i));
 
@@ -255,9 +245,9 @@ void ImageView::showContextMenu(const QPoint& p)
 			mSignalMapper.setMapping(action, action);
 			contextMenu.addAction(action);
 		}
-
-		contextMenu.exec(mapToGlobal(p));
 	}
+
+	contextMenu.exec(mapToGlobal(p));
 }
 
 void ImageView::onContextMenuClick(QObject* obj)
@@ -269,27 +259,24 @@ void ImageView::onContextMenuClick(QObject* obj)
 	size_t id = act->data().toUInt();
 
 	quint8 oldMask = mChannelMask;
-	if (mEXRLayer) {
+	quint32 oldOff = mChannelOffset;
+	if (mView->viewChannelCount() != 1) {
 		if (act->isChecked())
 			mChannelMask |= (1 << id);
 		else
 			mChannelMask &= ~(1 << id);
-	} else if (mSpecFile) {
-		mChannelMask = id;
+	} else {
+		mChannelOffset = id;
 	}
 
-	if (oldMask != mChannelMask)
+	if (oldMask != mChannelMask
+		|| oldOff != mChannelOffset)
 		updateImage();
 }
 
 void ImageView::updateImage()
 {
-	if (mEXRLayer) {
-		mEXRLayer->fillImage(mImage, mChannelMask);
-	} else if (mSpecFile) {
-		// mChannelMask is not really a mask here
-		mSpecFile->fillImage(mImage, mChannelMask);
-	}
+	mView->fillImage(mImage, IVM_CLAMP, mChannelOffset, mChannelMask);
 	cacheImage();
 	repaint();
 }
@@ -315,16 +302,9 @@ bool ImageView::isValidPixel(const QPoint& pixel) const
 QString ImageView::valueAt(const QPoint& pixel) const
 {
 	QString str;
-	if (mEXRLayer) {
-		for (size_t i = 0; i < (size_t)mEXRLayer->data().size(); ++i) {
-			float v = mEXRLayer->value(pixel.x(), pixel.y(), i);
-			str += QString::number(v, 'g', 2) + " ";
-		}
-	} else if (mSpecFile) {
-		for (size_t i = 0; i < (size_t)mSpecFile->channelCount(); ++i) {
-			float v = mSpecFile->value(pixel.x(), pixel.y(), i);
-			str += QString::number(v, 'g', 2) + " ";
-		}
+	for (size_t i = 0; i < (size_t)mView->channelCount(); ++i) {
+		float v = mView->value(pixel.x(), pixel.y(), i);
+		str += QString::number(v, 'g', 2) + " ";
 	}
 
 	return str;

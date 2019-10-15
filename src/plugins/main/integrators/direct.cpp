@@ -1,3 +1,4 @@
+#include "emission/IEmission.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "material/IMaterial.h"
@@ -53,32 +54,43 @@ public:
 				session.tile()->statistics().addEntityHitCount();
 
 				ShadingPoint spt;
-				spt.Ray = ray;
-				spt.setByIdentity(pt);
+				spt.setByIdentity(ray, pt);
 				spt.Radiance = 1;
 
 				// Pick light and point
 				float pdfA;
-				Vector3f pos;
-				IEntity* light = session.pickRandomLight(pos, pdfA);
+				GeometryPoint lightPt;
+				IEntity* light = session.pickRandomLight(lightPt, pdfA);
 				if (!light)
 					return;
+				IEmission* ems = session.getEmission(lightPt.EmissionID);
+				if (!ems)
+					return;
 
-				Vector3f L		 = (pos - spt.P);
+				Vector3f L		 = (lightPt.P - spt.P);
 				const float sqrD = L.squaredNorm();
 				L.normalize();
-				const float cosD = std::abs(L.dot(spt.N));
-				const float pdfS = MSI::toSolidAngle(pdfA, sqrD, cosD);
+				const float cosO = std::abs(L.dot(lightPt.N));
+				const float cosI = std::max(0.0f, L.dot(spt.N));
+				const float pdfS = MSI::toSolidAngle(pdfA, sqrD, cosO);
 
 				// Trace shadow ray
 				Ray shadow			= ray.next(spt.P, L);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (pdfS < PR_EPSILON
+					|| cosI < PR_EPSILON
 					|| !shadowHit.Successful
 					|| shadowHit.EntityID != light->id()) {
 					spt.Radiance = 0;
 				} else {
-					// Evaluate
+					// Evaluate light
+					LightEvalInput inL;
+					inL.Point.setByIdentity(shadow, lightPt); // Todo??
+					LightEvalOutput outL;
+					ems->eval(inL, outL, session);
+					spt.Radiance *= outL.Weight;
+
+					// Evaluate surface
 					MaterialEvalInput in;
 					in.Point	= spt;
 					in.Outgoing = L;
@@ -86,7 +98,7 @@ public:
 					MaterialEvalOutput out;
 					material->eval(in, out, session);
 
-					spt.Radiance *= out.Weight * cosD / pdfS;
+					spt.Radiance *= out.Weight * cosI / pdfS;
 				}
 
 				session.pushFragment(spt, stdPath);

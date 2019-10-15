@@ -8,7 +8,8 @@
 
 EXRLayer::EXRLayer(const QString& name, size_t channels,
 				   size_t width, size_t height)
-	: mName(name)
+	: ImageBufferView()
+	, mName(name)
 	, mData(channels)
 	, mChannelNames(channels)
 	, mWidth(width)
@@ -18,118 +19,6 @@ EXRLayer::EXRLayer(const QString& name, size_t channels,
 
 EXRLayer::~EXRLayer()
 {
-}
-
-static QImage::Format channelToFormat(size_t channelCount)
-{
-	switch (channelCount) {
-	case 1:
-		return QImage::Format_Grayscale8;
-	case 2:
-	case 3:
-		return QImage::Format_RGB888;
-	case 4:
-		return QImage::Format_RGBA8888;
-	default:
-		return QImage::Format_Invalid;
-	}
-}
-
-void EXRLayer::fillImage(QImage& image, quint8 channelMask) const
-{
-	const QImage::Format expectedFormat = channelToFormat(mData.size());
-	if (expectedFormat == QImage::Format_Invalid)
-		return;
-
-	if (image.width() != (int)mWidth || image.height() != (int)mHeight
-		|| image.format() != expectedFormat) {
-		image = QImage(mWidth, mHeight, expectedFormat);
-	}
-
-	// Retrieve image wide maximum/minimum
-	// TODO: Better channel based?
-	float minimum = std::numeric_limits<float>::infinity();
-	float maximum = 0;
-	for (size_t i = 0; i < (size_t)mData.size(); ++i) {
-		if (!((1 << i) & channelMask))
-			continue;
-
-		for (float f : mData[i]) {
-			minimum = std::min(minimum, std::abs(f));
-			maximum = std::max(maximum, std::abs(f));
-		}
-	}
-
-	if (minimum < 1)
-		minimum = 0;
-
-	if (maximum < 1)
-		maximum = 1;
-
-	const float scale = 255 / (maximum - minimum);
-
-	auto map = [&](float v) { return (std::abs(v) - minimum) * scale; };
-
-	// Copy to image
-	switch (mData.size()) {
-	case 1: // Grayscale
-		for (size_t y = 0; y < mHeight; ++y) {
-			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[x] = map(mData[0][y * mWidth + x]);
-			}
-		}
-		break;
-	case 2: // RGB
-		for (size_t y = 0; y < mHeight; ++y) {
-			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[3 * x] = (channelMask & 0x1)
-								 ? map(mData[0][y * mWidth + x])
-								 : 0;
-				ptr[3 * x + 1] = (channelMask & 0x2)
-									 ? map(mData[1][y * mWidth + x])
-									 : 0;
-				ptr[3 * x + 2] = 0;
-			}
-		}
-		break;
-	case 3: // RGB
-		for (size_t y = 0; y < mHeight; ++y) {
-			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[3 * x] = (channelMask & 0x1)
-								 ? map(mData[0][y * mWidth + x])
-								 : 0;
-				ptr[3 * x + 1] = (channelMask & 0x2)
-									 ? map(mData[1][y * mWidth + x])
-									 : 0;
-				ptr[3 * x + 2] = (channelMask & 0x4)
-									 ? map(mData[2][y * mWidth + x])
-									 : 0;
-			}
-		}
-		break;
-	case 4: // RGBA
-		for (size_t y = 0; y < mHeight; ++y) {
-			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < mWidth; ++x) {
-				ptr[4 * x] = (channelMask & 0x1)
-								 ? map(mData[0][y * mWidth + x])
-								 : 0;
-				ptr[4 * x + 1] = (channelMask & 0x2)
-									 ? map(mData[1][y * mWidth + x])
-									 : 0;
-				ptr[4 * x + 2] = (channelMask & 0x4)
-									 ? map(mData[2][y * mWidth + x])
-									 : 0;
-				ptr[4 * x + 3] = (channelMask & 0x8)
-									 ? map(mData[3][y * mWidth + x])
-									 : 0;
-			}
-		}
-		break;
-	}
 }
 
 //////////////////////////////////

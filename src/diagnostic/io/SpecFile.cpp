@@ -5,51 +5,14 @@
 #include <boost/iostreams/filtering_stream.hpp>
 
 SpecFile::SpecFile()
-	: mWidth(0)
+	: ImageBufferView()
+	, mWidth(0)
 	, mHeight(0)
 {
 }
 
 SpecFile::~SpecFile()
 {
-}
-
-void SpecFile::fillImage(QImage& image, quint32 channel) const
-{
-	const QImage::Format expectedFormat = QImage::Format_Grayscale8;
-	if (expectedFormat == QImage::Format_Invalid)
-		return;
-
-	if (image.width() != (int)mWidth || image.height() != (int)mHeight
-		|| image.format() != expectedFormat) {
-		image = QImage(mWidth, mHeight, expectedFormat);
-	}
-
-	// Retrieve image wide maximum/minimum
-	float minimum = std::numeric_limits<float>::infinity();
-	float maximum = 0;
-	for (size_t i = 0; i < (size_t)width() * height(); ++i) {
-		const float f = mData[i * channelCount() + channel];
-		minimum		  = std::min(minimum, std::abs(f));
-		maximum		  = std::max(maximum, std::abs(f));
-	}
-
-	if (minimum < 1)
-		minimum = 0;
-
-	if (maximum < 1)
-		maximum = 1;
-
-	const float scale = 255 / (maximum - minimum);
-
-	auto map = [&](float v) { return (std::abs(v) - minimum) * scale; };
-
-	for (size_t y = 0; y < mHeight; ++y) {
-		uchar* ptr = image.scanLine(y);
-		for (size_t x = 0; x < mWidth; ++x) {
-			ptr[x] = map(mData[y * mWidth * channelCount() + x * channelCount() + channel]);
-		}
-	}
 }
 
 bool SpecFile::open(const QString& file)

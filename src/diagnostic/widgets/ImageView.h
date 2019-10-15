@@ -4,16 +4,14 @@
 #include <QWidget>
 #include <memory>
 
-class EXRLayer;
-class SpecFile;
+class ImageBufferView;
 class ImageView : public QWidget {
 	Q_OBJECT
 public:
 	ImageView(QWidget* parent = nullptr);
 	virtual ~ImageView();
 
-	void setLayer(const std::shared_ptr<EXRLayer>& layer);
-	void setSpecFile(const std::shared_ptr<SpecFile>& file);
+	void setView(const std::shared_ptr<ImageBufferView>& view);
 
 	void exportImage(const QString& path) const;
 
@@ -46,6 +44,7 @@ private:
 	float mZoom;
 	QPointF mDelta;
 	quint8 mChannelMask;
+	quint32 mChannelOffset;
 
 	QPoint mLastPos;
 	QPoint mLastPixel;
@@ -54,8 +53,7 @@ private:
 	QPixmap mPixmap;
 	QPixmap mBackground;
 
-	std::shared_ptr<EXRLayer> mEXRLayer;
-	std::shared_ptr<SpecFile> mSpecFile;
+	std::shared_ptr<ImageBufferView> mView;
 
 	QSignalMapper mSignalMapper;
 };

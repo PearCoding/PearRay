@@ -54,7 +54,7 @@ void EXRWindow::updateImage(int layerID)
 	if (layerID >= mFile->layers().size())
 		return;
 
-	ui.imageWidget->setLayer(mFile->layers()[layerID]);
+	ui.imageWidget->setView(mFile->layers()[layerID]);
 }
 
 void EXRWindow::exportImage()

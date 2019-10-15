@@ -14,9 +14,12 @@ public:
 	ENTITY_CLASS
 
 	MeshEntity(uint32 id, const std::string& name,
-			   const std::shared_ptr<TriMesh>& mesh)
+			   const std::shared_ptr<TriMesh>& mesh,
+			   const std::vector<uint32>& materials,
+			   int32 lightID)
 		: IEntity(id, name)
-		, mLightID(0)
+		, mLightID(lightID)
+		, mMaterials(materials)
 		, mMesh(mesh)
 	{
 		PR_ASSERT(mesh->isBuilt(), "Expect mesh to be built!");
@@ -77,13 +80,14 @@ public:
 		out.MaterialID  = 0; //TODO
 	}
 
-	Vector3f pickRandomPoint(const Vector2f& rnd, float& pdf) const override
+	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const override
 	{
 		SplitSample2D split(rnd, 0, mMesh->faceCount());
+		faceID	= split.integral1();
 		Face face = mMesh->getFace(split.integral1());
 
 		pdf = 1.0f / (mMesh->faceCount() * face.surfaceArea());
-		return transform() * face.interpolateVertices(rnd(0), rnd(1));
+		return Vector2f(rnd(0), rnd(1));
 	}
 
 	void provideGeometryPoint(uint32 faceID, float u, float v,
@@ -100,7 +104,11 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.MaterialID = 0; //TODO
+		pt.MaterialID = pt.MaterialID < mMaterials.size()
+							? mMaterials.at(pt.MaterialID)
+							: 0;
+		pt.EmissionID = mLightID;
+		pt.DisplaceID = 0;
 	}
 
 protected:
@@ -112,6 +120,7 @@ protected:
 private:
 	uint32 mLightID;
 
+	std::vector<uint32> mMaterials;
 	std::shared_ptr<TriMesh> mMesh;
 };
 
@@ -123,25 +132,28 @@ public:
 		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		std::string mesh_name = reg.getForObject<std::string>(RG_ENTITY, uuid, "mesh", "");
 
-		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
-		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+		std::vector<std::string> matNames = reg.getForObject<std::vector<std::string>>(
+			RG_ENTITY, uuid, "materials", std::vector<std::string>());
 
-		int32 matID					   = -1;
-		std::shared_ptr<IMaterial> mat = env.getMaterial(matName);
-		if (mat)
-			matID = mat->id();
+		std::vector<uint32> materials;
+		for (std::string n : matNames) {
+			std::shared_ptr<IMaterial> mat = env.getMaterial(n);
+			if (mat)
+				materials.push_back(mat->id());
+		}
 
+		std::string emsName = reg.getForObject<std::string>(
+			RG_ENTITY, uuid, "emission", "");
 		int32 emsID					   = -1;
 		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
 		if (ems)
 			emsID = ems->id();
 
-		// TODO: Add emission and mat
-
 		if (!env.hasMesh(mesh_name))
 			return nullptr;
 		else
-			return std::make_shared<MeshEntity>(id, name, env.getMesh(mesh_name));
+			return std::make_shared<MeshEntity>(id, name, env.getMesh(mesh_name),
+												materials, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const

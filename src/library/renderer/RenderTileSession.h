@@ -13,6 +13,7 @@ namespace PR {
 
 class RenderTile;
 class IMaterial;
+class IEmission;
 class ShadingPoint;
 class LightPath;
 
@@ -40,6 +41,8 @@ public:
 	}
 
 	IEntity* getEntity(uint32 id) const;
+	IMaterial* getMaterial(uint32 id) const;
+	IEmission* getEmission(uint32 id) const;
 
 	bool handleCameraRays();
 
@@ -59,7 +62,7 @@ public:
 	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushNonHitFragment(const ShadingPoint& pt) const;
 
-	IEntity* pickRandomLight(Vector3f& pos, float& pdf) const;
+	IEntity* pickRandomLight(GeometryPoint& pt, float& pdf) const;
 
 private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);
