@@ -67,6 +67,12 @@ void ImageView::setView(const std::shared_ptr<ImageBufferView>& view)
 	updateGeometry();
 }
 
+void ImageView::setMapper(const ToneMapper& mapper)
+{
+	mMapper = mapper;
+	updateImage();
+}
+
 void ImageView::exportImage(const QString& path) const
 {
 	mImage.save(path);
@@ -276,7 +282,7 @@ void ImageView::onContextMenuClick(QObject* obj)
 
 void ImageView::updateImage()
 {
-	mView->fillImage(mImage, IVM_CLAMP, mChannelOffset, mChannelMask);
+	mView->fillImage(mImage, mMapper, mChannelOffset, mChannelMask);
 	cacheImage();
 	repaint();
 }

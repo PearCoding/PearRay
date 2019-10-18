@@ -36,6 +36,7 @@ SET(Src
   widgets/ImageView.cpp
   widgets/PropertyView.cpp
   widgets/RangeSlider.cpp
+  widgets/ToneMapperEditor.cpp
   widgets/View3DWidget.cpp)
 
 SET(Hdr
@@ -50,6 +51,7 @@ SET(Hdr
   io/EXRFile.h
   io/ImageBufferView.h
   io/SpecFile.h
+  mapper/ToneMapper.h
   properties/ColorProperty.h
   properties/DoubleProperty.h
   properties/GroupProperty.h
@@ -63,13 +65,15 @@ SET(Hdr
   widgets/ImageView.h
   widgets/PropertyView.h
   widgets/RangeSlider.h
+  widgets/ToneMapperEditor.h
   widgets/View3DWidget.h)
 
 SET(Fms
   ui/EXRWindow.ui
   ui/MainWindow.ui
   ui/SceneWindow.ui
-  ui/SpecWindow.ui)
+  ui/SpecWindow.ui
+  ui/ToneMapperEditor.ui)
 
 SET(Res
   resources/icons.qrc)

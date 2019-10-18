@@ -12,17 +12,20 @@ public:
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
 
-public slots:
-	void setLeft(float f);
-	void setRight(float f);
-	void setMin(float f);
-	void setMax(float f);
+	inline float leftValue() const { return mLeft; }
+	inline float rightValue() const { return mRight; }
+	inline float minValue() const { return mMin; }
+	inline float maxValue() const { return mMax; }
 
-	void fitFull();
+public slots:
+	void setLeftValue(float f);
+	void setRightValue(float f);
+	void setMinValue(float f);
+	void setMaxValue(float f);
 
 signals:
-	void leftChanged(float);
-	void rightChanged(float);
+	void leftValueChanged(float);
+	void rightValueChanged(float);
 
 protected:
 	void paintEvent(QPaintEvent* event) override;
@@ -38,6 +41,8 @@ private:
 		quint32 SlideEnd;
 	};
 	DrawStyle calculateStyle() const;
+
+	void pan(int dx);
 
 	float mLeft;
 	float mRight;

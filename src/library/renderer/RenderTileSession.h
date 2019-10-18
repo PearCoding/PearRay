@@ -1,11 +1,14 @@
 #pragma once
 
 #include "Random.h"
+#include "buffer/OutputBuffer.h"
 #include "entity/IEntity.h"
 #include "ray/RayPackage.h"
 #include "ray/RayStream.h"
+#include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileStatistics.h"
+#include "scene/Scene.h"
 #include "trace/HitStream.h"
 #include "trace/ShadowHit.h"
 
@@ -20,8 +23,7 @@ class LightPath;
 class PR_LIB RenderTileSession {
 public:
 	RenderTileSession(uint32 threadIndex, RenderTile* tile,
-					  RayStream* rayCoherentStream,
-					  RayStream* rayIncoherentStream,
+					  RayStream* rayStream,
 					  HitStream* hitStream);
 	~RenderTileSession();
 
@@ -46,18 +48,17 @@ public:
 
 	bool handleCameraRays();
 
-	inline void enqueueCoherentRay(const Ray& ray);
-	inline bool enoughCoherentRaySpace(size_t requested = 1) const;
-	inline Ray getCoherentRay(size_t id) const;
-	inline void enqueueIncoherentRay(const Ray& ray);
-	inline bool enoughIncoherentRaySpace(size_t requested = 1) const;
-	inline Ray getIncoherentRay(size_t id) const;
+	inline void enqueueRay(const Ray& ray);
+	inline bool enoughRaySpace(size_t requested = 1) const;
+	inline void sendRay(size_t id, const Ray& ray);
+	inline Ray getRay(size_t id) const;
+
 	ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline size_t maxBufferCount() const;
 
 	template <typename Func>
-	inline void handleHits(Func hitFunc, bool coherent = true);
+	inline void handleHits(Func hitFunc);
 
 	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushNonHitFragment(const ShadingPoint& pt) const;
@@ -72,8 +73,7 @@ private:
 
 	uint32 mThread;
 	RenderTile* mTile;
-	RayStream* mCoherentRayStream;
-	RayStream* mIncoherentRayStream;
+	RayStream* mRayStream;
 	HitStream* mHitStream;
 
 	uint32 mCurrentX;

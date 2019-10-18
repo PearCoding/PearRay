@@ -12,6 +12,7 @@ SpecWindow::SpecWindow(QWidget* parent)
 	connect(ui.resetViewButton, SIGNAL(clicked()), ui.imageWidget, SLOT(resetView()));
 	connect(ui.originalScaleButton, SIGNAL(clicked()), ui.imageWidget, SLOT(zoomToOriginalSize()));
 	connect(ui.exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
+	connect(ui.toneMapperEditor, SIGNAL(changed()), this, SLOT(updateMapper()));
 }
 
 SpecWindow::~SpecWindow()
@@ -25,8 +26,17 @@ void SpecWindow::openFile(const QString& str)
 		ui.sizeLabel->setText(QString("%1x%2").arg(file->width()).arg(file->height()));
 		ui.imageWidget->setView(file);
 
+		float min, max;
+		file->getMinMax(min, max);
+		ui.toneMapperEditor->setMinMax(min, max);
+
 		setWindowTitle(QString("[Spec] %1").arg(str));
 	}
+}
+
+void SpecWindow::updateMapper()
+{
+	ui.imageWidget->setMapper(ui.toneMapperEditor->constructMapper());
 }
 
 void SpecWindow::exportImage()

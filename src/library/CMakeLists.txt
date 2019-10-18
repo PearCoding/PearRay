@@ -19,6 +19,7 @@ SET(PR_Src
   buffer/OutputBuffer.h
   camera/ICamera.cpp
   camera/ICamera.h
+  container/IndexSort.h
   container/kdTreeBuilder.cpp
   container/kdTreeBuilder.h
   container/kdTreeBuilderNaive.cpp

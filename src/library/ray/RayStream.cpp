@@ -1,8 +1,13 @@
 #include "RayStream.h"
+#include "container/IndexSort.h"
+#include <algorithm>
+#include <numeric>
 
 #include <fstream>
 
 namespace PR {
+
+constexpr uint8 RAY_INVALID = 0xFF;
 
 #ifdef PR_COMPRESS_RAY_DIR
 constexpr int DIR_C_S = 2;
@@ -83,6 +88,8 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 	return ray;
 }
 
+/////////////////////////////////////////////////////////
+
 RayStream::RayStream(size_t raycount)
 	: mSize(raycount + raycount % PR_SIMD_BANDWIDTH)
 	, mCurrentPos(0)
@@ -104,7 +111,7 @@ RayStream::~RayStream()
 {
 }
 
-void RayStream::add(const Ray& ray)
+void RayStream::addRay(const Ray& ray)
 {
 	PR_ASSERT(!isFull(), "Check before adding!");
 
@@ -128,9 +135,60 @@ void RayStream::add(const Ray& ray)
 	mWeight.emplace_back(ray.Weight);
 }
 
+void RayStream::setRay(size_t id, const Ray& ray)
+{
+	PR_ASSERT(id < currentSize(), "Check before adding!");
+
+	for (int i = 0; i < 3; ++i)
+		mOrigin[i][id] = ray.Origin[i];
+
+#ifdef PR_COMPRESS_RAY_DIR
+	octNormal16 n(ray.Direction[0], ray.Direction[1], ray.Direction[2]);
+	for (int i = 0; i < 2; ++i)
+		mDirection[i][id] = n(i);
+#else
+	for (int i = 0; i < 3; ++i)
+		mDirection[i][id] = ray.Direction[i];
+#endif
+
+	mDepth[id]			 = ray.Depth;
+	mPixelIndex[id]		 = ray.PixelIndex;
+	mTime[id]			 = to_unorm16(ray.Time);
+	mWavelengthIndex[id] = ray.WavelengthIndex;
+	mFlags[id]			 = ray.Flags & ~RF_BackgroundHit;
+	mWeight[id]			 = ray.Weight;
+}
+void RayStream::invalidateRay(size_t id)
+{
+
+	PR_ASSERT(id < currentSize(), "Check before adding!");
+	mFlags[id] = RAY_INVALID;
+}
+
 void RayStream::sort()
 {
+	std::vector<size_t> index(currentSize());
+	std::iota(index.begin(), index.end(), 0);
+
+	// Extract invalid entries out!
+	auto inv_start = std::partition_point(index.begin(), index.end(), [&](size_t ind) {
+		return mFlags[ind] != RAY_INVALID;
+	});
+
+	// Check coherence
 	// TODO
+
+	// Rearrange arrays
+	sortByIndex(
+		[&](size_t oldI, size_t newI) {
+			std::swap(mDepth[oldI], mDepth[newI]);
+			std::swap(mPixelIndex[oldI], mPixelIndex[newI]);
+			std::swap(mTime[oldI], mTime[newI]);
+			std::swap(mWavelengthIndex[oldI], mWavelengthIndex[newI]);
+			std::swap(mFlags[oldI], mFlags[newI]);
+			std::swap(mWeight[oldI], mWeight[newI]);
+		},
+		index);
 }
 
 void RayStream::reset()

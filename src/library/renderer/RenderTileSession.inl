@@ -1,46 +1,44 @@
 namespace PR {
-inline void RenderTileSession::enqueueCoherentRay(const Ray& ray)
+inline void RenderTileSession::enqueueRay(const Ray& ray)
 {
-	PR_ASSERT(enoughCoherentRaySpace(), "Check space requirement first!");
-	mCoherentRayStream->add(ray);
-	mTile->statistics().addCoherentRayCount();
+	PR_ASSERT(enoughRaySpace(), "Check space requirement first!");
+	mRayStream->addRay(ray);
+	mTile->statistics().addRayCount();
 }
 
-inline bool RenderTileSession::enoughCoherentRaySpace(size_t requested) const
+inline bool RenderTileSession::enoughRaySpace(size_t requested) const
 {
-	return mCoherentRayStream->enoughSpace(requested);
+	return mRayStream->enoughSpace(requested);
 }
 
-inline Ray RenderTileSession::getCoherentRay(size_t id) const
+inline void RenderTileSession::sendRay(size_t id, const Ray& ray)
 {
-	return mCoherentRayStream->getRay(id);
+	mRayStream->setRay(id, ray);
+	mTile->statistics().addRayCount();
 }
 
-inline void RenderTileSession::enqueueIncoherentRay(const Ray& ray)
+inline Ray RenderTileSession::getRay(size_t id) const
 {
-	PR_ASSERT(enoughIncoherentRaySpace(), "Check space requirement first!");
-	mIncoherentRayStream->add(ray);
-	mTile->statistics().addIncoherentRayCount();
-}
-
-inline bool RenderTileSession::enoughIncoherentRaySpace(size_t requested) const
-{
-	return mIncoherentRayStream->enoughSpace(requested);
-}
-
-inline Ray RenderTileSession::getIncoherentRay(size_t id) const
-{
-	return mIncoherentRayStream->getRay(id);
+	return mRayStream->getRay(id);
 }
 
 inline size_t RenderTileSession::maxBufferCount() const
 {
-	return mCoherentRayStream->maxSize();
+	return mRayStream->maxSize();
 }
 
 template <typename Func>
-inline void RenderTileSession::handleHits(Func hitFunc, bool coherent)
+inline void RenderTileSession::handleHits(Func hitFunc)
 {
+	mTile->context()->scene()->traceRays(
+		*mRayStream,
+		*mHitStream,
+		[&](const Ray& ray) {
+			mTile->statistics().addBackgroundHitCount();
+			mTile->context()->output()->pushBackgroundFragment(ray.PixelIndex,
+															   ray.WavelengthIndex);
+		});
+
 	while (mHitStream->hasNextGroup()) {
 		ShadingGroup grp	= mHitStream->getNextGroup();
 		IEntity* entity		= nullptr;
@@ -57,9 +55,9 @@ inline void RenderTileSession::handleHits(Func hitFunc, bool coherent)
 			entry.UV[0]		  = mHitStream->uv(0, i);
 			entry.UV[1]		  = mHitStream->uv(1, i);
 
-			Ray ray = (coherent)
-						  ? mCoherentRayStream->getRay(entry.RayID)
-						  : mIncoherentRayStream->getRay(entry.RayID);
+			Ray ray = mRayStream->getRay(entry.RayID);
+			// This ray is now used up!
+			mRayStream->invalidateRay(entry.RayID);
 
 			GeometryPoint pt;
 			entity->provideGeometryPoint(entry.PrimitiveID, entry.UV[0], entry.UV[1], pt);

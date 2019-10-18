@@ -13,6 +13,7 @@ EXRWindow::EXRWindow(QWidget* parent)
 	connect(ui.resetViewButton, SIGNAL(clicked()), ui.imageWidget, SLOT(resetView()));
 	connect(ui.originalScaleButton, SIGNAL(clicked()), ui.imageWidget, SLOT(zoomToOriginalSize()));
 	connect(ui.exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
+	connect(ui.toneMapperEditor, SIGNAL(changed()), this, SLOT(updateMapper()));
 
 	mFile = std::make_unique<EXRFile>();
 }
@@ -49,12 +50,22 @@ void EXRWindow::layerChanged()
 	updateImage(row);
 }
 
+void EXRWindow::updateMapper()
+{
+	ui.imageWidget->setMapper(ui.toneMapperEditor->constructMapper());
+}
+
 void EXRWindow::updateImage(int layerID)
 {
 	if (layerID >= mFile->layers().size())
 		return;
 
-	ui.imageWidget->setView(mFile->layers()[layerID]);
+	auto layer = mFile->layers()[layerID];
+	ui.imageWidget->setView(layer);
+
+	float min, max;
+	layer->getMinMax(min, max);
+	ui.toneMapperEditor->setMinMax(min, max);
 }
 
 void EXRWindow::exportImage()
@@ -64,8 +75,8 @@ void EXRWindow::exportImage()
 
 	QString file = QFileDialog::getSaveFileName(this, tr("Save Image"),
 												loc.isEmpty()
-												? QDir::currentPath()
-												: loc.last(),
+													? QDir::currentPath()
+													: loc.last(),
 												tr("Images (*.png *.xpm *.jpg)"));
 
 	if (!file.isEmpty()) {

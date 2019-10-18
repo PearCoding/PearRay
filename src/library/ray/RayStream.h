@@ -5,7 +5,7 @@
 #include "ray/RayPackage.h"
 
 namespace PR {
-struct PR_LIB_INLINE RayGroup {
+struct PR_LIB RayGroup {
 	class RayStream* Stream;
 	bool Coherent;
 	size_t Size;
@@ -39,8 +39,10 @@ public:
 	inline size_t maxSize() const { return mSize; }
 	inline size_t currentSize() const { return mWeight.size(); }
 
-	void add(const Ray& ray);
+	void addRay(const Ray& ray);
+	void setRay(size_t id, const Ray& ray);
 	Ray getRay(size_t id) const;
+	void invalidateRay(size_t id);
 
 	void sort();
 	void reset();

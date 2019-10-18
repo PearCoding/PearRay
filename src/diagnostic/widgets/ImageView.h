@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mapper/ToneMapper.h"
+
 #include <QSignalMapper>
 #include <QWidget>
 #include <memory>
@@ -12,6 +14,7 @@ public:
 	virtual ~ImageView();
 
 	void setView(const std::shared_ptr<ImageBufferView>& view);
+	void setMapper(const ToneMapper& mapper);
 
 	void exportImage(const QString& path) const;
 
@@ -54,6 +57,7 @@ private:
 	QPixmap mBackground;
 
 	std::shared_ptr<ImageBufferView> mView;
+	ToneMapper mMapper;
 
 	QSignalMapper mSignalMapper;
 };

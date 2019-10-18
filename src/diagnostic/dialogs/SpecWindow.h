@@ -16,6 +16,7 @@ public:
 
 private slots:
 	void exportImage();
+	void updateMapper();
 
 private:
 	Ui::SpecWindowClass ui;

@@ -1,4 +1,5 @@
 #include "ImageBufferView.h"
+#include "mapper/ToneMapper.h"
 
 static QImage::Format channelToFormat(size_t channelCount)
 {
@@ -15,7 +16,7 @@ static QImage::Format channelToFormat(size_t channelCount)
 	}
 }
 
-void ImageBufferView::fillImage(QImage& image, ImageViewMap mapper,
+void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 								quint32 channelOffset, quint8 channelMask) const
 {
 	const QImage::Format expectedFormat = channelToFormat(viewChannelCount());
@@ -27,39 +28,7 @@ void ImageBufferView::fillImage(QImage& image, ImageViewMap mapper,
 		image = QImage(width(), height(), expectedFormat);
 	}
 
-	// Retrieve image wide maximum/minimum
-	float minimum = std::numeric_limits<float>::infinity();
-	float maximum = -std::numeric_limits<float>::infinity();
-	for (size_t y = 0; y < height(); ++y) {
-		for (size_t x = 0; x < width(); ++x) {
-			for (size_t c = 0; c < channelCount(); ++c) {
-				if (!(channelMask & (1 << c)))
-					continue;
-
-				float f = value(x, y, c);
-				minimum = std::min(minimum, f);
-				maximum = std::max(maximum, f);
-			}
-		}
-	}
-
-	float scale;
-	if (maximum - minimum < 1) {
-		minimum = 0;
-		maximum = 1;
-		scale   = 1;
-	} else {
-		scale = 1 / (maximum - minimum);
-	}
-	scale *= 255;
-
-	float off = 0;
-	if (minimum < 0) {
-		scale /= 2;
-		off = 0.5f;
-	}
-
-	auto map = [&](float v) { return (v - minimum) * scale + off; };
+	auto map = [&](float v) { return static_cast<quint8>(mapper.map(v) * 255); };
 
 	// Copy to image
 	switch (viewChannelCount()) {
@@ -120,5 +89,23 @@ void ImageBufferView::fillImage(QImage& image, ImageViewMap mapper,
 			}
 		}
 		break;
+	}
+}
+
+void ImageBufferView::getMinMax(float& min, float& max, quint8 channelMask) const
+{
+	min = std::numeric_limits<float>::infinity();
+	max = -std::numeric_limits<float>::infinity();
+	for (size_t y = 0; y < height(); ++y) {
+		for (size_t x = 0; x < width(); ++x) {
+			for (size_t c = 0; c < channelCount(); ++c) {
+				if (!(channelMask & (1 << c)))
+					continue;
+
+				float f = value(x, y, c);
+				min = std::min(min, f);
+				max = std::max(max, f);
+			}
+		}
 	}
 }

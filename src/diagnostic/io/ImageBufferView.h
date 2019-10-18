@@ -2,12 +2,7 @@
 
 #include <QImage>
 
-enum ImageViewMap {
-	IVM_CLAMP,
-	IVM_ABS,
-	IVM_RESCALE
-};
-
+class ToneMapper;
 class ImageBufferView {
 public:
 	virtual const QString& name() const						 = 0;
@@ -19,6 +14,8 @@ public:
 
 	virtual float value(size_t x, size_t y, size_t channel) const = 0;
 
-	void fillImage(QImage& image, ImageViewMap mapper = IVM_CLAMP,
+	void fillImage(QImage& image, const ToneMapper& mapper,
 				   quint32 channelOffset = 0, quint8 channelMask = 0xFF) const;
+
+	void getMinMax(float& min, float& max, quint8 channelMask = 0xFF) const;
 };

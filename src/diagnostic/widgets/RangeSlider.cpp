@@ -60,46 +60,40 @@ QSize RangeSlider::sizeHint() const
 	return QSize(MIN_W + w, BAR_H);
 }
 
-void RangeSlider::setLeft(float f)
+void RangeSlider::setLeftValue(float f)
 {
 	float old = mLeft;
 	mLeft	 = qMax(mMin, qMin(mRight, f));
 	if (old != mLeft)
-		emit leftChanged(mLeft);
+		emit leftValueChanged(mLeft);
 }
 
-void RangeSlider::setRight(float f)
+void RangeSlider::setRightValue(float f)
 {
 	float old = mRight;
 	mRight	= qMin(mMax, qMax(mLeft, f));
 	if (old != mRight)
-		emit rightChanged(mRight);
+		emit rightValueChanged(mRight);
 }
 
-void RangeSlider::setMin(float f)
+void RangeSlider::setMinValue(float f)
 {
 	mMin = f;
 	if (mMin > mMax)
 		qSwap(mMin, mMax);
 
-	setLeft(mLeft);
-	setRight(mRight);
+	setLeftValue(mLeft);
+	setRightValue(mRight);
 }
 
-void RangeSlider::setMax(float f)
+void RangeSlider::setMaxValue(float f)
 {
 	mMax = f;
 	if (mMin > mMax)
 		qSwap(mMin, mMax);
 
-	setLeft(mLeft);
-	setRight(mRight);
-}
-
-void RangeSlider::fitFull()
-{
-	setLeft(mMin);
-	setRight(mMax);
+	setLeftValue(mLeft);
+	setRightValue(mRight);
 }
 
 constexpr QRgb KNOB_C  = qRgb(78, 167, 245);
@@ -174,29 +168,16 @@ void RangeSlider::mouseMoveEvent(QMouseEvent* event)
 	if (event->buttons() & Qt::LeftButton) {
 		switch (mCurrentOperation) {
 		case MO_KNOB_LEFT:
-			setLeft(posToValue(event->x()));
+			setLeftValue(posToValue(event->x()));
 			repaint();
 			break;
 		case MO_KNOB_RIGHT:
-			setRight(posToValue(event->x()));
+			setRightValue(posToValue(event->x()));
 			repaint();
 			break;
 		case MO_PAN: {
-			int dx   = event->globalX() - mLastX;
-			float df = dx / (float)wcw;
-
-			if (dx < 0) {
-				float ddf = qMin(0.0f, (mLeft - mMin) + df);
-				setLeft(mLeft + df);
-				setRight(mRight + df - ddf);
-				repaint();
-			} else if (dx > 0) {
-				float ddf = qMin(0.0f, (mMax - mRight) - df);
-				setRight(mRight + df);
-				setLeft(mLeft + df + ddf);
-				repaint();
-			}
-
+			int dx = event->globalX() - mLastX;
+			pan(dx);
 			mLastX = event->globalX();
 		} break;
 		default:
@@ -207,4 +188,22 @@ void RangeSlider::mouseMoveEvent(QMouseEvent* event)
 
 void RangeSlider::wheelEvent(QWheelEvent* event)
 {
+	pan(event->delta() / 15);
+}
+
+void RangeSlider::pan(int dx)
+{
+	float df = dx / (float)(width() - MIN_W);
+
+	if (dx < 0) {
+		float ddf = qMin(0.0f, (mLeft - mMin) + df);
+		setLeftValue(mLeft + df);
+		setRightValue(mRight + df - ddf);
+		repaint();
+	} else if (dx > 0) {
+		float ddf = qMin(0.0f, (mMax - mRight) - df);
+		setRightValue(mRight + df);
+		setLeftValue(mLeft + df + ddf);
+		repaint();
+	}
 }

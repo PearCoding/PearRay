@@ -37,15 +37,17 @@ public:
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
 	template <typename Func>
-	inline void traceCoherentRays(RayStream& rays, HitStream& hits, Func nonHit) const;
-	template <typename Func>
-	inline void traceIncoherentRays(RayStream& rays, HitStream& hits, Func nonHit) const;
-
+	inline void traceRays(RayStream& rays, HitStream& hits, Func nonHit) const;
 	inline ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
 
 private:
+	template <typename Func>
+	inline void traceCoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit) const;
+	template <typename Func>
+	inline void traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit) const;
+
 	void buildTree(const std::string& file);
 	void loadTree(const std::string& file);
 

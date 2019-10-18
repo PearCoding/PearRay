@@ -7,13 +7,11 @@
 
 namespace PR {
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
-									 RayStream* rayCoherentStream,
-									 RayStream* rayIncoherentStream,
+									 RayStream* rayStream,
 									 HitStream* hitStream)
 	: mThread(thread)
 	, mTile(tile)
-	, mCoherentRayStream(rayCoherentStream)
-	, mIncoherentRayStream(rayIncoherentStream)
+	, mRayStream(rayStream)
 	, mHitStream(hitStream)
 	, mCurrentX(0)
 	, mCurrentY(0)
@@ -53,7 +51,7 @@ bool RenderTileSession::handleCameraRays()
 	if (mCurrentY >= h)
 		return false;
 
-	mCoherentRayStream->reset();
+	mRayStream->reset();
 
 	for (; mCurrentY < h; ++mCurrentY) {
 		const uint32 fy = mCurrentY + mTile->sy();
@@ -63,7 +61,7 @@ bool RenderTileSession::handleCameraRays()
 			mCurrentX = 0;
 
 		for (; mCurrentX < w; ++mCurrentX) {
-			if (!enoughCoherentRaySpace(1))
+			if (!enoughRaySpace(1))
 				break;
 
 			const uint32 fx = mCurrentX + mTile->sx();
@@ -72,7 +70,7 @@ bool RenderTileSession::handleCameraRays()
 												   mTile->samplesRendered());
 			ray.PixelIndex = fy * mTile->context()->width() + fx;
 
-			enqueueCoherentRay(ray);
+			enqueueRay(ray);
 		}
 	}
 
@@ -83,15 +81,6 @@ bool RenderTileSession::handleCameraRays()
 				<< "_s" << mTile->samplesRendered() << ".rdmp";
 		mCoherentRayStream->dump(sstream.str());
 	}*/
-
-	mTile->context()->scene()->traceCoherentRays(
-		*mCoherentRayStream,
-		*mHitStream,
-		[&](const Ray& ray) {
-			mTile->statistics().addBackgroundHitCount();
-			mTile->context()->output()->pushBackgroundFragment(ray.PixelIndex,
-															   ray.WavelengthIndex);
-		});
 
 	return true;
 }
