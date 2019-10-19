@@ -91,10 +91,13 @@ void setup_output(py::module& m)
 	py::enum_<OutputBuffer::Variable1D>(scope, "Variable1D")
 		.value("DEPTH", OutputBuffer::V_Depth)
 		.value("TIME", OutputBuffer::V_Time)
-		.value("MATERIAL", OutputBuffer::V_Material);
+		.value("ENTITY_ID", OutputBuffer::V_EntityID)
+		.value("MATERIAL_ID", OutputBuffer::V_MaterialID)
+		.value("EMISSION_ID", OutputBuffer::V_EmissionID)
+		.value("DISPLACE_ID", OutputBuffer::V_DisplaceID);
 
 	py::enum_<OutputBuffer::VariableCounter>(scope, "VariableCounter")
-		.value("ID", OutputBuffer::V_ID)
+		.value("FEEDBACK", OutputBuffer::V_Feedback)
 		.value("SAMPLES", OutputBuffer::V_Samples);
 }
 } // namespace PRPY

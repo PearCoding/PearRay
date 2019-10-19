@@ -89,7 +89,7 @@ struct PR_LIB_INLINE RayPackageBase {
 
 		other.Origin	= Transform::safePosition(o, d);
 		other.Direction = d;
-		other.Depth += V(1);
+		other.Depth += IntegerType(1);
 
 		return other;
 	}

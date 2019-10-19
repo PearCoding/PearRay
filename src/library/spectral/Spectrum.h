@@ -108,7 +108,7 @@ public:
 			setValue(i, slo(i));
 		}
 	}
-	
+
 	template <typename T>
 	inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> operator=(const T& slo);
 	template <typename T>
@@ -146,6 +146,8 @@ private:
 	};
 	std::shared_ptr<Spectrum_Internal> mInternal;
 };
+
+inline std::ostream& operator<<(std::ostream& o, const Spectrum& spec);
 
 } // namespace PR
 

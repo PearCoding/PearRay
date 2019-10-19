@@ -141,7 +141,11 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 
 	_1D_S(V_Time, s.Ray.Time);
 	_1D_S(V_Depth, std::sqrt(s.Depth2));
-	_1D_S(V_Material, s.Geometry.MaterialID);
+
+	_1D_S(V_EntityID, s.EntityID);
+	_1D_S(V_MaterialID, s.Geometry.MaterialID);
+	_1D_S(V_EmissionID, s.Geometry.EmissionID);
+	_1D_S(V_DisplaceID, s.Geometry.DisplaceID);
 
 	// LPE
 	if (!isInvalid) {
@@ -154,9 +158,9 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 
 	if (isInvalid) {
 		pushFeedbackFragment(pixelIndex, channel,
-						  (isNaN ? OF_NaN : 0)
-							  | (isInf ? OF_Infinite : 0)
-							  | (isNeg ? OF_Negative : 0));
+							 (isNaN ? OF_NaN : 0)
+								 | (isInf ? OF_Infinite : 0)
+								 | (isNeg ? OF_Negative : 0));
 	}
 
 	// Increase sample count

@@ -45,13 +45,14 @@ public:
 
 	void perHit(RenderTileSession& session, const HitEntry&,
 				const Ray& ray, const GeometryPoint& pt,
-				IEntity*, IMaterial* material)
+				IEntity* entity, IMaterial* material)
 	{
 		LightPath stdPath = LightPath::createCDL(1);
 		session.tile()->statistics().addEntityHitCount();
 
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
+		spt.EntityID = entity->id();
 		spt.Radiance = 1;
 
 		// Pick light and point
@@ -62,7 +63,7 @@ public:
 			return;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
 		if (!ems) {
-			session.pushFeedbackFragment(ray, OF_MissingMaterial);
+			session.pushFeedbackFragment(ray, OF_MissingEmission);
 			return;
 		}
 
@@ -84,6 +85,7 @@ public:
 		} else {
 			// Evaluate light
 			LightEvalInput inL;
+			inL.Entity = light;
 			inL.Point.setByIdentity(shadow, lightPt); // Todo??
 			LightEvalOutput outL;
 			ems->eval(inL, outL, session);

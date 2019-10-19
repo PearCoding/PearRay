@@ -51,7 +51,7 @@ public:
 		while (session.handleCameraRays()) {
 			session.handleHits([&](const HitEntry&,
 								   const Ray& ray, const GeometryPoint& pt,
-								   IEntity*, IMaterial*) {
+								   IEntity* entity, IMaterial*) {
 				session.tile()->statistics().addEntityHitCount();
 
 				size_t occlusions = 0;
@@ -71,6 +71,7 @@ public:
 
 				ShadingPoint spt;
 				spt.setByIdentity(ray, pt);
+				spt.EntityID = entity->id();
 
 				spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 

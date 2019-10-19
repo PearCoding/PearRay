@@ -145,7 +145,7 @@ inline Spectrum& Spectrum::operator/=(const Spectrum& spec)
 
 inline Spectrum& Spectrum::operator/=(float f)
 {
-	const float inv = 1.0f/f;
+	const float inv = 1.0f / f;
 	return (*this *= inv);
 }
 
@@ -385,4 +385,14 @@ inline Lazy::enable_if_slo_t<T, T, void> Spectrum::copyFrom(const T& slo)
 	}
 }
 
+inline std::ostream& operator<<(std::ostream& o, const Spectrum& spec)
+{
+	o << "[";
+	for (size_t i = 0; i < spec.samples() - 1; ++i) {
+		o << spec[i] << " ";
+	}
+	o << spec[spec.samples() - 1] << "]";
+
+	return o;
+}
 } // namespace PR

@@ -717,6 +717,8 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		}
 	}
 
+	PR_LOG(L_INFO) << spec << std::endl;
+
 	env->addSpectrum(name, spec);
 }
 

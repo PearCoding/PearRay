@@ -32,7 +32,7 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
 	}
 
-	mInit		= true;
+	mInit = true;
 
 	if (context && !mWorkingDir.empty()) {
 		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
@@ -100,21 +100,25 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 
 OutputBuffer::Variable1D typeToVariable1D(const std::string& str)
 {
-	if (str == "depth" || str == "d")
+	if (str == "id" || str == "entity")
+		return OutputBuffer::V_EntityID;
+	else if (str == "mat" || str == "material")
+		return OutputBuffer::V_MaterialID;
+	else if (str == "emission")
+		return OutputBuffer::V_EmissionID;
+	else if (str == "displace")
+		return OutputBuffer::V_DisplaceID;
+	else if (str == "depth" || str == "d")
 		return OutputBuffer::V_Depth;
 	else if (str == "time" || str == "t")
 		return OutputBuffer::V_Time;
-	else if (str == "material" || str == "mat" || str == "m")
-		return OutputBuffer::V_Material;
 	else
 		return OutputBuffer::V_1D_COUNT; // AS UNKNOWN
 }
 
 OutputBuffer::VariableCounter typeToVariableCounter(const std::string& str)
 {
-	if (str == "id")
-		return OutputBuffer::V_ID;
-	else if (str == "samples" || str == "s")
+	if (str == "samples" || str == "s")
 		return OutputBuffer::V_Samples;
 	else if (str == "feedback" || str == "f" || str == "error")
 		return OutputBuffer::V_Feedback;
@@ -293,8 +297,17 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								case OutputBuffer::V_Time:
 									spec.Name = "time";
 									break;
-								case OutputBuffer::V_Material:
-									spec.Name = "mat";
+								case OutputBuffer::V_EntityID:
+									spec.Name = "entity_id";
+									break;
+								case OutputBuffer::V_MaterialID:
+									spec.Name = "material_id";
+									break;
+								case OutputBuffer::V_EmissionID:
+									spec.Name = "emission_id";
+									break;
+								case OutputBuffer::V_DisplaceID:
+									spec.Name = "displace_id";
 									break;
 								}
 								file.Settings1D.push_back(spec);
@@ -305,9 +318,6 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 
 								switch (varCounter) {
 								default:
-								case OutputBuffer::V_ID:
-									spec.Name = "id";
-									break;
 								case OutputBuffer::V_Samples:
 									spec.Name = "samples";
 									break;

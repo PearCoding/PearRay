@@ -26,16 +26,18 @@ public:
 	};
 
 	enum Variable1D {
-		V_Depth = 0,
+		V_EntityID = 0,
+		V_MaterialID,
+		V_EmissionID,
+		V_DisplaceID,
+		V_Depth,
 		V_Time,
-		V_Material,
 
 		V_1D_COUNT
 	};
 
 	enum VariableCounter {
-		V_ID = 0,
-		V_Samples,
+		V_Samples = 0,
 		V_Feedback,
 
 		V_COUNTER_COUNT

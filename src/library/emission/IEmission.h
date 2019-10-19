@@ -11,6 +11,7 @@ class RenderTileSession;
 // Evaluation
 struct PR_LIB_INLINE LightEvalInput {
 	ShadingPoint Point;
+	class IEntity* Entity;
 };
 
 struct PR_LIB_INLINE LightEvalOutput {

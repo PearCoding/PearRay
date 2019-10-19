@@ -26,6 +26,7 @@ public:
 
 	static float luminance(float r, float g, float b);
 	static void gamma(float& x, float& y, float& z);
+	static void linearize(float& x, float& y, float& z);
 
 	static void toSpec(Spectrum& spec, float x, float y, float z);
 	static float toSpecIndex(uint32 samples, uint32 index, float x, float y, float z);

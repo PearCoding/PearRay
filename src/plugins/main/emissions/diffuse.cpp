@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "emission/IEmission.h"
 #include "emission/IEmissionFactory.h"
+#include "entity/IEntity.h"
 #include "math/Projection.h"
 #include "registry/Registry.h"
 #include "shader/ConstShadingSocket.h"
@@ -17,8 +18,7 @@ public:
 	void eval(const LightEvalInput& in, LightEvalOutput& out,
 			  const RenderTileSession& session) const override
 	{
-		out.Weight = mRadiance->eval(in.Point)
-					 / (/*2 * PR_PI */ in.Point.Depth2);
+		out.Weight = mRadiance->eval(in.Point) / in.Entity->surfaceArea();
 	}
 
 	void onFreeze(RenderContext* context) override
@@ -35,7 +35,8 @@ public:
 	{
 		const Registry& reg = env.registry();
 
-		const std::string radianceName = reg.getForObject<std::string>(RG_EMISSION, uuid, "radiance", "");
+		const std::string radianceName = reg.getForObject<std::string>(RG_EMISSION, uuid,
+																	   "radiance", "");
 
 		return std::make_shared<DiffuseEmission>(id, env.getSpectralShadingSocket(radianceName, 1));
 	}
