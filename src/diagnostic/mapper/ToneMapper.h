@@ -17,7 +17,7 @@ public:
 	{
 		if (mIsAbsolute) {
 			float max = std::max(std::abs(mMin), std::abs(mMax));
-			return std::min(std::abs(val), max) / (2 * max);
+			return std::min(std::abs(val), max) / max;
 		} else {
 			return std::abs((std::min(mMax, std::max(mMin, val)) - mMin) / (mMax - mMin));
 		}

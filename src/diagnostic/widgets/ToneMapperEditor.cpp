@@ -23,6 +23,14 @@ void ToneMapperEditor::setMinMax(float min, float max)
 {
 	ui.rangeSlider->setMinValue(min);
 	ui.rangeSlider->setMaxValue(max);
+	valueChanged();
+}
+
+void ToneMapperEditor::setToNormal()
+{
+	ui.rangeSlider->setLeftValue(0.0f);
+	ui.rangeSlider->setRightValue(1.0f);
+	ui.rangeSlider->repaint();
 }
 
 ToneMapper ToneMapperEditor::constructMapper() const
@@ -38,9 +46,7 @@ ToneMapper ToneMapperEditor::constructMapper() const
 
 void ToneMapperEditor::normalButtonPushed()
 {
-	ui.rangeSlider->setLeftValue(0.0f);
-	ui.rangeSlider->setRightValue(1.0f);
-	ui.rangeSlider->repaint();
+	setToNormal();
 }
 
 void ToneMapperEditor::fitButtonPushed()

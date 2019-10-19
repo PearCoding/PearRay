@@ -14,6 +14,7 @@ public:
 	~ToneMapperEditor();
 
 	void setMinMax(float min, float max);
+	void setToNormal();
 	ToneMapper constructMapper() const;
 
 signals:

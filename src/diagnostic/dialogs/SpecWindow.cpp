@@ -29,6 +29,7 @@ void SpecWindow::openFile(const QString& str)
 		float min, max;
 		file->getMinMax(min, max);
 		ui.toneMapperEditor->setMinMax(min, max);
+		ui.toneMapperEditor->setToNormal();
 
 		setWindowTitle(QString("[Spec] %1").arg(str));
 	}

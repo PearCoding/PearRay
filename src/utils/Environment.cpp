@@ -16,6 +16,7 @@
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
 #include "scene/Scene.h"
+#include "shader/ConstShadingSocket.h"
 #include "spectral/RGBConverter.h"
 #include "spectral/SpectrumDescriptor.h"
 #include "spectral/XYZConverter.h"
@@ -338,5 +339,17 @@ void Environment::freeze(const std::shared_ptr<RenderContext>& ctx)
 
 	for (auto e : mCameraManager->getAll())
 		e->freeze(ctx.get());
+}
+
+std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
+	const std::string& name, float def) const
+{
+	if (hasShadingSocket(name))
+		return getShadingSocket<FloatSpectralShadingSocket>(name);
+
+	if (hasSpectrum(name))
+		return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(name));
+
+	return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, def));
 }
 } // namespace PR

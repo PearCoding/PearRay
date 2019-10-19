@@ -36,6 +36,7 @@ public:
 	enum VariableCounter {
 		V_ID = 0,
 		V_Samples,
+		V_Feedback,
 
 		V_COUNTER_COUNT
 	};
@@ -47,6 +48,7 @@ public:
 
 	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt, const LightPath& path);
 	void pushBackgroundFragment(uint32 pixelIndex, uint32 channel);
+	void pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint32 feedback);
 
 	inline void setSampleCount(uint32 pixelIndex, uint32 channel, uint32 sample)
 	{

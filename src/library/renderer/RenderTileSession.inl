@@ -59,6 +59,9 @@ inline void RenderTileSession::handleHits(Func hitFunc)
 			// This ray is now used up!
 			mRayStream->invalidateRay(entry.RayID);
 
+			if(!material)
+				pushFeedbackFragment(ray, OF_MissingMaterial);
+
 			GeometryPoint pt;
 			entity->provideGeometryPoint(entry.PrimitiveID, entry.UV[0], entry.UV[1], pt);
 

@@ -14,6 +14,7 @@ SET(PR_Src
   VectorGlue.inl
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h
+  buffer/Feedback.h
   buffer/FrameBuffer.h
   buffer/OutputBuffer.cpp
   buffer/OutputBuffer.h

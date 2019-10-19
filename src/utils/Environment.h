@@ -84,6 +84,9 @@ public:
 	template <typename Socket>
 	inline bool isShadingSocket(const std::string& name) const;
 
+	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
+		const std::string& name, float def = 1) const;
+
 	inline OIIO::TextureSystem* textureSystem();
 
 	inline void setWorkingDir(const std::string& dir);

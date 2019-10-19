@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Random.h"
+#include "buffer/Feedback.h"
 #include "buffer/OutputBuffer.h"
 #include "entity/IEntity.h"
 #include "ray/RayPackage.h"
@@ -62,6 +63,7 @@ public:
 
 	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushNonHitFragment(const ShadingPoint& pt) const;
+	void pushFeedbackFragment(const Ray& ray, uint32 feedback) const;
 
 	IEntity* pickRandomLight(GeometryPoint& pt, float& pdf) const;
 

@@ -77,15 +77,7 @@ public:
 		const std::string albedoName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "albedo", "");
 
-		std::shared_ptr<FloatSpectralShadingSocket> albedoS;
-		if (env.hasShadingSocket(albedoName))
-			albedoS = env.getShadingSocket<FloatSpectralShadingSocket>(albedoName);
-
-		if (!albedoS)
-			albedoS = std::make_shared<ConstSpectralShadingSocket>(
-				Spectrum(env.spectrumDescriptor(), 1));
-
-		return std::make_shared<LambertMaterial>(id, albedoS);
+		return std::make_shared<LambertMaterial>(id, env.getSpectralShadingSocket(albedoName, 1));
 	}
 
 	const std::vector<std::string>& getNames() const

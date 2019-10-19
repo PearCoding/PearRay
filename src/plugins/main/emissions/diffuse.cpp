@@ -18,7 +18,7 @@ public:
 			  const RenderTileSession& session) const override
 	{
 		out.Weight = mRadiance->eval(in.Point)
-					 / (PR_PI * in.Point.Depth2);
+					 / (/*2 * PR_PI */ in.Point.Depth2);
 	}
 
 	void onFreeze(RenderContext* context) override
@@ -37,15 +37,7 @@ public:
 
 		const std::string radianceName = reg.getForObject<std::string>(RG_EMISSION, uuid, "radiance", "");
 
-		std::shared_ptr<FloatSpectralShadingSocket> radianceS;
-		if (env.hasShadingSocket(radianceName))
-			radianceS = env.getShadingSocket<FloatSpectralShadingSocket>(radianceName);
-
-		if (!radianceS)
-			radianceS = std::make_shared<ConstSpectralShadingSocket>(
-				Spectrum(env.spectrumDescriptor(), 1));
-
-		return std::make_shared<DiffuseEmission>(id, radianceS);
+		return std::make_shared<DiffuseEmission>(id, env.getSpectralShadingSocket(radianceName, 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

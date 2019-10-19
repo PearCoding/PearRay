@@ -74,5 +74,7 @@ private: // Some vectors are not aligned, due to required preprocessing
 
 	size_t mSize;
 	size_t mCurrentPos;
+
+	size_t mLastInvPos;
 };
 } // namespace PR

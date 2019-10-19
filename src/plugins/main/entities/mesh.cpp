@@ -33,7 +33,7 @@ public:
 
 	bool isLight() const override
 	{
-		return mLightID != 0;
+		return mLightID >= 0;
 	}
 
 	float surfaceArea(uint32 id) const override
@@ -118,7 +118,7 @@ protected:
 	}
 
 private:
-	uint32 mLightID;
+	int32 mLightID;
 
 	std::vector<uint32> mMaterials;
 	std::shared_ptr<TriMesh> mMesh;

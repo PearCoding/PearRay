@@ -85,9 +85,6 @@ QT5_ADD_RESOURCES(Res_Rcc ${Res})
 SET(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
 SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
-# disable autolinking to qtmain
-cmake_policy(SET CMP0020 OLD)
-
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(prdiag Qt5::Widgets ${OPENEXR_LIBRARIES} ${Boost_LIBRARIES})
 set_target_properties(prdiag PROPERTIES VERSION ${PR_Version})

@@ -93,6 +93,7 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 RayStream::RayStream(size_t raycount)
 	: mSize(raycount + raycount % PR_SIMD_BANDWIDTH)
 	, mCurrentPos(0)
+	, mLastInvPos(0)
 {
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i].reserve(mSize);
@@ -175,6 +176,8 @@ void RayStream::sort()
 		return mFlags[ind] != RAY_INVALID;
 	});
 
+	mLastInvPos = std::distance(index.begin(), inv_start);
+
 	// Check coherence
 	// TODO
 
@@ -219,7 +222,7 @@ RayGroup RayStream::getNextGroup()
 	RayGroup grp;
 	grp.Stream   = this;
 	grp.Coherent = false; //TODO
-	grp.Size	 = mWeight.size();
+	grp.Size	 = mLastInvPos;
 
 	for (int i = 0; i < 3; ++i)
 		grp.Origin[i] = &mOrigin[i].data()[mCurrentPos];
@@ -244,8 +247,6 @@ size_t RayStream::getMemoryUsage() const
 
 Ray RayStream::getRay(size_t id) const
 {
-	// FIXME: What happens if we sort?
-
 	PR_ASSERT(id < currentSize(), "Invalid access!");
 
 	Ray ray;

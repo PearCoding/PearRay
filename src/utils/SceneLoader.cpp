@@ -23,6 +23,7 @@
 #include "shader/ConstShadingSocket.h"
 #include "spectral/RGBConverter.h"
 #include "spectral/SpectrumDescriptor.h"
+#include "spectral/XYZConverter.h"
 
 #include "DataLisp.h"
 
@@ -30,7 +31,7 @@
 #include <fstream>
 #include <sstream>
 
-/* This source code has many repetative code lines. Better refactoring needed! */
+/* This source code has many repetitive code lines. Better refactoring needed! */
 namespace PR {
 std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& wrkDir,
 													   const std::string& path,
@@ -66,17 +67,25 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
 			return nullptr;
 		} else {
-
 			DL::Data renderWidthD  = top.getFromKey("renderWidth");
 			DL::Data renderHeightD = top.getFromKey("renderHeight");
 			DL::Data cropD		   = top.getFromKey("crop");
-			DL::Data rgbD		   = top.getFromKey("rgb");
+			DL::Data spectrumD	 = top.getFromKey("spectrum");
 
 			std::shared_ptr<SpectrumDescriptor> spectrumDescriptor;
-			if (rgbD.type() == DL::Data::T_Bool && !rgbD.getBool())
-				spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
-			else
-				spectrumDescriptor = SpectrumDescriptor::createTriplet();
+			if (spectrumD.type() == DL::Data::T_String) {
+				std::string spectrum = spectrumD.getString();
+				std::transform(spectrum.begin(), spectrum.end(), spectrum.begin(), ::tolower);
+
+				if (spectrum == "xyz") {
+					spectrumDescriptor = SpectrumDescriptor::createTriplet();
+				} else if (spectrum == "spectral") {
+					spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
+				}
+			}
+
+			if (!spectrumDescriptor)
+				spectrumDescriptor = SpectrumDescriptor::createDefault();
 
 			std::shared_ptr<Environment> env;
 			try {
@@ -650,16 +659,24 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 					spec.setValue(i, fieldD.getNumber());
 			}
 		} else if (grp.id() == "rgb") {
-			if (grp.anonymousCount() == 3 && grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber()) {
+			if (grp.anonymousCount() == 3
+				&& grp.isAllAnonymousNumber()) {
 				RGBConverter::toSpec(spec,
 									 grp.at(0).getNumber(),
 									 grp.at(1).getNumber(),
 									 grp.at(2).getNumber());
 			}
 		} else if (grp.id() == "xyz") {
-			// TODO
+			if (grp.anonymousCount() == 3
+				&& grp.isAllAnonymousNumber()) {
+				XYZConverter::toSpec(spec,
+									 grp.at(0).getNumber(),
+									 grp.at(1).getNumber(),
+									 grp.at(2).getNumber());
+			}
 		} else if (grp.id() == "temperature" || grp.id() == "blackbody") { // Luminance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
+				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
 			}
@@ -669,6 +686,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			}
 		} else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw") { // Radiance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
+				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 			}
 
@@ -677,6 +695,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			}
 		} else if (grp.id() == "temperature_norm" || grp.id() == "blackbody_norm") { // Luminance Norm
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
+				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
 				spec.normalize();
@@ -687,6 +706,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 			}
 		} else if (grp.id() == "temperature_raw_norm" || grp.id() == "blackbody_raw_norm") { // Radiance Norm
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
+				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.normalize();
 			}

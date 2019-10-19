@@ -203,8 +203,8 @@ void StandardCamera::constructRay(float nx, float ny,
 								  float r1, float r2,
 								  Vector3f& o, Vector3f& d) const
 {
-	const Vector3f pos = transform().translation();
-	const Vector3f v   = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
+	o = transform().translation();
+	d = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
 
 	if (mHasDOF_Cache) {
 		const float t = 2 * PR_PI * r1;
@@ -213,11 +213,8 @@ void StandardCamera::constructRay(float nx, float ny,
 
 		const Vector3f e = mXApertureRadius_Cache * r2 * s + mYApertureRadius_Cache * r2 * c;
 
-		o = pos + e;
-		d = v - e;
-	} else {
-		o = pos;
-		d = v;
+		o += e;
+		d -= e;
 	}
 
 	d.normalize();

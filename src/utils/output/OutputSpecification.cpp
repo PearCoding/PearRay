@@ -116,6 +116,8 @@ OutputBuffer::VariableCounter typeToVariableCounter(const std::string& str)
 		return OutputBuffer::V_ID;
 	else if (str == "samples" || str == "s")
 		return OutputBuffer::V_Samples;
+	else if (str == "feedback" || str == "f" || str == "error")
+		return OutputBuffer::V_Feedback;
 	else
 		return OutputBuffer::V_COUNTER_COUNT; // AS UNKNOWN
 }
@@ -301,13 +303,16 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								spec.TMM	  = tmm;
 								spec.Variable = varCounter;
 
-								switch (var1D) {
+								switch (varCounter) {
 								default:
 								case OutputBuffer::V_ID:
 									spec.Name = "id";
 									break;
 								case OutputBuffer::V_Samples:
 									spec.Name = "samples";
+									break;
+								case OutputBuffer::V_Feedback:
+									spec.Name = "feedback";
 									break;
 								}
 								file.SettingsCounter.push_back(spec);

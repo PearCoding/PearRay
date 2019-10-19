@@ -2,6 +2,7 @@
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "buffer/OutputBuffer.h"
+#include "material/IMaterial.h"
 #include "scene/Scene.h"
 #include "shader/ShadingPoint.h"
 
@@ -90,10 +91,16 @@ void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 {
 	entity   = getEntity(grp.EntityID);
 	material = getMaterial(grp.MaterialID);
+
+	if (material)
+		material->startGroup(grp.size(), *this);
 }
 
 void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 {
+	IMaterial* material = getMaterial(grp.MaterialID);
+	if (material)
+		material->endGroup();
 }
 
 ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
@@ -112,6 +119,12 @@ void RenderTileSession::pushNonHitFragment(const ShadingPoint& pt) const
 {
 	mTile->context()->output()->pushBackgroundFragment(
 		pt.Ray.PixelIndex, pt.Ray.WavelengthIndex);
+}
+
+void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) const
+{
+	mTile->context()->output()->pushFeedbackFragment(
+		ray.PixelIndex, ray.WavelengthIndex, feedback);
 }
 
 IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const

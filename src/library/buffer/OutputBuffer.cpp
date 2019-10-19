@@ -1,4 +1,5 @@
 #include "OutputBuffer.h"
+#include "Feedback.h"
 #include "renderer/RenderContext.h"
 #include "shader/ShadingPoint.h"
 #include "spectral/SpectrumDescriptor.h"
@@ -13,6 +14,12 @@ OutputBuffer::OutputBuffer(RenderContext* renderer)
 		  0.0f))
 {
 	mIntCounter[V_Samples] = std::make_shared<FrameBufferUInt32>(
+		renderer->spectrumDescriptor()->samples(),
+		renderer->width(),
+		renderer->height(),
+		0);
+
+	mIntCounter[V_Feedback] = std::make_shared<FrameBufferUInt32>(
 		renderer->spectrumDescriptor()->samples(),
 		renderer->width(),
 		renderer->height(),
@@ -105,9 +112,10 @@ void OutputBuffer::clear()
 void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 								const LightPath& path)
 {
-	const auto filter = [](float spec) {
-		return spec >= 0 && std::isfinite(spec);
-	};
+	const bool isInf	 = std::isinf(s.Radiance);
+	const bool isNaN	 = std::isnan(s.Radiance);
+	const bool isNeg	 = s.Radiance < 0;
+	const bool isInvalid = isInf || isNaN || isNeg;
 
 	const uint32 channel   = s.Ray.WavelengthIndex;
 	const uint32 oldSample = getSampleCount(pixelIndex, channel);
@@ -119,8 +127,7 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 		oldFullSample += mIntCounter[V_Samples]->getFragment(pixelIndex, i);
 	const float ft = 1.0f / (oldFullSample + 1.0f);
 
-	// Filter weird radiance (maybe put a flag somewhere!)
-	if (filter(s.Radiance))
+	if (!isInvalid)
 		mSpectral->blendFragment(pixelIndex, channel, s.Radiance, t);
 
 	_3D_S(V_Position, s.P);
@@ -137,7 +144,7 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 	_1D_S(V_Material, s.Geometry.MaterialID);
 
 	// LPE
-	if (filter(s.Radiance)) {
+	if (!isInvalid) {
 		for (auto pair : mLPE_Spectral) {
 			if (pair.first.match(path)) {
 				pair.second->blendFragment(pixelIndex, channel, s.Radiance, t);
@@ -145,8 +152,22 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 		}
 	}
 
+	if (isInvalid) {
+		pushFeedbackFragment(pixelIndex, channel,
+						  (isNaN ? OF_NaN : 0)
+							  | (isInf ? OF_Infinite : 0)
+							  | (isNeg ? OF_Negative : 0));
+	}
+
 	// Increase sample count
 	incSampleCount(pixelIndex, channel);
+}
+
+void OutputBuffer::pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint32 feedback)
+{
+	PR_ASSERT(mIntCounter[V_Feedback], "Feedback buffer has to be available!");
+
+	mIntCounter[V_Feedback]->getFragment(pixelIndex, channel) |= feedback;
 }
 
 void OutputBuffer::pushBackgroundFragment(uint32 pixelIndex, uint32 channel)

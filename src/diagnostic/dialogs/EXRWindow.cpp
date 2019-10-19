@@ -66,6 +66,7 @@ void EXRWindow::updateImage(int layerID)
 	float min, max;
 	layer->getMinMax(min, max);
 	ui.toneMapperEditor->setMinMax(min, max);
+	ui.toneMapperEditor->setToNormal();
 }
 
 void EXRWindow::exportImage()

@@ -10,11 +10,11 @@ constexpr uint32 PR_SPECTRAL_WAVELENGTH_STEP	= 5;   // nm
 constexpr uint32 PR_SPECTRAL_WAVELENGTH_SAMPLES = (PR_SPECTRAL_WAVELENGTH_END - PR_SPECTRAL_WAVELENGTH_START) / PR_SPECTRAL_WAVELENGTH_STEP + 1;
 
 constexpr uint32 PR_SPECTRAL_TRIPLET_SAMPLES = 3;
-// Based on D50 and sRGB
+// Based on D50 and CIE XYZ
 // FIXME: Have a better and configurable approach
-constexpr float PR_SPECTRAL_TRIPLET_X_LAMBDA = 612.5f; // nm
-constexpr float PR_SPECTRAL_TRIPLET_Y_LAMBDA = 546.8f; // nm
-constexpr float PR_SPECTRAL_TRIPLET_Z_LAMBDA = 464.6f; // nm
+constexpr float PR_SPECTRAL_TRIPLET_X_LAMBDA = -500.2f; // nm
+constexpr float PR_SPECTRAL_TRIPLET_Y_LAMBDA = 522.1f; // nm
+constexpr float PR_SPECTRAL_TRIPLET_Z_LAMBDA = 477.1f; // nm
 
 class PR_LIB SpectrumDescriptor {
 public:
