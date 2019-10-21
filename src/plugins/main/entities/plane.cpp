@@ -144,6 +144,8 @@ public:
 													  Vector3f(1, 0, 0));
 		Vector3f yAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "y_axis",
 													  Vector3f(0, 1, 0));
+		float width		 = reg.getForObject<float>(RG_ENTITY, uuid, "width", 1);
+		float height	 = reg.getForObject<float>(RG_ENTITY, uuid, "height", 1);
 
 		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
 		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
@@ -158,7 +160,7 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		auto obj = std::make_shared<PlaneEntity>(id, name, xAxis, yAxis, matID, emsID);
+		auto obj = std::make_shared<PlaneEntity>(id, name, width*xAxis, height*yAxis, matID, emsID);
 		if (reg.getForObject<bool>(RG_ENTITY, uuid, "centering", false))
 			obj->centerOn();
 

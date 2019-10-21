@@ -983,6 +983,24 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 				arr[i] = grp.at(i).getNumber();
 
 			varAddReg(reg, regGroup, uuid, hasID, key, arr);
+		} else if (grp.isArray()) {
+			std::vector<std::string> arr(grp.anonymousCount());
+			bool good = true;
+			for (size_t i = 0; i < grp.anonymousCount(); ++i) {
+				DL::Data entry = grp.at(i);
+				if (entry.type() != DL::Data::T_String) {
+					good = false;
+					break;
+				}
+				arr[i] = grp.at(i).getString();
+			}
+
+			if (good)
+				varAddReg(reg, regGroup, uuid, hasID, key, arr);
+			else
+				PR_LOG(L_ERROR) << "Invalid registry array type." << std::endl;
+		} else {
+			PR_LOG(L_ERROR) << "Invalid registry group type." << std::endl;
 		}
 	} break;
 	default:

@@ -50,7 +50,8 @@ public:
 		std::stringstream stream;
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
-			   << "  <GlassMaterial>:" << std::endl;
+			   << "  <GlassMaterial>:" << std::endl
+			   << "    Specularity: " << (mSpecularity ? mSpecularity->dumpInformation() : "NONE") << std::endl;
 
 		return stream.str();
 	}

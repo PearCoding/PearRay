@@ -11,7 +11,6 @@ void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 	rays.sort();
 
 	// Split stream into specific groups
-	// TODO: Currently only one group is present
 	hits.reset();
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();

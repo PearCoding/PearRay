@@ -65,7 +65,13 @@ public:
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
 													   transform().matrix(), in);
 		out.EntityID	= simdpp::make_uint(id());
-		out.MaterialID  = simdpp::make_uint(0); //TODO
+
+		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i) {
+			insert(i, out.MaterialID,
+				   extract(i, out.MaterialID) < mMaterials.size()
+					   ? mMaterials.at(extract(i, out.MaterialID))
+					   : 0);
+		}
 	}
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
@@ -77,7 +83,9 @@ public:
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
 													   transform().matrix(), in);
 		out.EntityID	= id();
-		out.MaterialID  = 0; //TODO
+		out.MaterialID  = out.MaterialID < mMaterials.size()
+							 ? mMaterials.at(out.MaterialID)
+							 : 0;
 	}
 
 	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const override

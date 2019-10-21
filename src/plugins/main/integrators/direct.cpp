@@ -50,6 +50,9 @@ public:
 		LightPath stdPath = LightPath::createCDL(1);
 		session.tile()->statistics().addEntityHitCount();
 
+		if(!material)
+			return;
+
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
 		spt.EntityID = entity->id();
@@ -70,7 +73,7 @@ public:
 		Vector3f L		 = (lightPt.P - spt.P);
 		const float sqrD = L.squaredNorm();
 		L.normalize();
-		const float cosO = std::abs(L.dot(lightPt.N));
+		const float cosO = std::max(0.0f, -L.dot(lightPt.N));
 		const float cosI = std::max(0.0f, L.dot(spt.N));
 		const float pdfS = MSI::toSolidAngle(pdfA, sqrD, cosO);
 
@@ -95,13 +98,13 @@ public:
 			MaterialEvalInput in;
 			in.Point	= spt;
 			in.Outgoing = L;
-
 			MaterialEvalOutput out;
 			material->eval(in, out, session);
 
-			spt.Radiance *= out.Weight * cosI / pdfS;
+			spt.Radiance *= out.Weight * (cosI / pdfS);
 		}
 
+		spt.Geometry.MaterialID = material->id();
 		session.pushFragment(spt, stdPath);
 	}
 

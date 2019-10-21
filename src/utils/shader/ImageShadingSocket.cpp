@@ -36,4 +36,11 @@ float ImageShadingSocket::eval(const ShadingPoint& ctx) const
 
 	return res;
 }
+
+std::string ImageShadingSocket::dumpInformation() const
+{
+	std::stringstream sstream;
+	sstream << mFilename;
+	return sstream.str();
+}
 } // namespace PR

@@ -54,7 +54,7 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <DiffuseMaterial>:" << std::endl
-			   << "    HasAlbedo: " << (mAlbedo ? "true" : "false") << std::endl;
+			   << "    Albedo: " << (mAlbedo ? mAlbedo->dumpInformation() : "NONE") << std::endl;
 
 		return stream.str();
 	}
