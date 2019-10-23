@@ -11,6 +11,7 @@ struct CameraSample {
 	float R[2];
 	uint32 PixelIndex;
 	float Time;
+	float Weight;
 	uint32 WavelengthIndex;
 };
 

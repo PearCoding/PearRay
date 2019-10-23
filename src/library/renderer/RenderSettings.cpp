@@ -4,6 +4,7 @@ namespace PR {
 RenderSettings::RenderSettings()
 	: seed(42)
 	, maxRayDepth(8)
+	, maxParallelRays(10000)
 	, aaSampleCount(1)
 	, lensSampleCount(1)
 	, timeSampleCount(1)

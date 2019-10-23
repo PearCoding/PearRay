@@ -28,7 +28,7 @@ public:
 					  HitStream* hitStream);
 	~RenderTileSession();
 
-	inline uint32 thread() const
+	inline uint32 threadID() const
 	{
 		return mThread;
 	}
@@ -58,8 +58,8 @@ public:
 
 	inline size_t maxBufferCount() const;
 
-	template <typename Func>
-	inline void handleHits(Func hitFunc);
+	template <typename Func1, typename Func2>
+	inline void handleHits(Func1 nonhitFunc, Func2 hitFunc);
 
 	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushNonHitFragment(const ShadingPoint& pt) const;

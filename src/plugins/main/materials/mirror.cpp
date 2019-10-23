@@ -2,6 +2,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
+#include "math/Reflection.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
 #include "shader/ShadingSocket.h"
@@ -43,6 +44,7 @@ public:
 		out.Type		   = MST_SpecularReflection;
 		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
 		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
+		out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
 	}
 
 	std::string dumpInformation() const override

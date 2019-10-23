@@ -40,7 +40,7 @@ struct PR_LIB_INLINE MaterialSampleOutput {
 	float Weight;
 	float PDF_S_Forward;
 	float PDF_S_Backward;
-	uint32 Type;
+	MaterialScatteringType Type;
 };
 
 class PR_LIB IMaterial : public IFreezable {

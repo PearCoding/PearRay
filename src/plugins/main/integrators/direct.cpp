@@ -1,10 +1,11 @@
+#include "Environment.h"
 #include "buffer/Feedback.h"
 #include "emission/IEmission.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "material/IMaterial.h"
 #include "math/MSI.h"
-#include "path/LightPath.h"
+#include "path/LightPathBuffer.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
@@ -15,59 +16,96 @@
 namespace PR {
 class IntDirect : public IIntegrator {
 public:
-	IntDirect()
+	IntDirect(size_t lightSamples)
 		: IIntegrator()
+		, mLightSampleCount(lightSamples)
 	{
 	}
 
 	virtual ~IntDirect() = default;
 
-	void init(RenderContext*) override
+	void onInit(RenderContext* context) override
 	{
+		mLPBs.resize(context->threads());
 	}
 
-	void onStart() override
+	void onThreadStart(RenderContext* context, size_t index) override
 	{
+		mLPBs[index] = std::make_unique<LightPathBuffer>(context->settings().maxParallelRays,
+														 context->settings().maxRayDepth);
 	}
 
-	void onNextPass(uint32, bool&) override
+	void scatterLight(RenderTileSession& session, LightPathBuffer& lpb,
+					  const HitEntry& entry, const ShadingPoint& spt,
+					  IMaterial* material, bool& scattered, bool& isDelta)
 	{
+		constexpr int MIN_DEPTH			= 4; //Minimum level of depth which russian roulette will apply
+		constexpr float DEPTH_DROP_RATE = 0.90f;
+
+		const float scatProb  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.Depth - MIN_DEPTH));
+		const size_t maxDepth = session.tile()->context()->settings().maxRayDepth;
+
+		scattered = false;
+		isDelta   = false;
+
+		// Sample BxDF
+		MaterialSampleInput in;
+		in.Point = spt;
+		in.RND   = session.tile()->random().get2D();
+		MaterialSampleOutput out;
+		material->sample(in, out, session);
+
+		const float cosI = std::abs(out.Outgoing.dot(spt.N));
+		if (std::isinf(out.PDF_S_Forward)) {
+			isDelta			  = true;
+			out.PDF_S_Forward = 1;
+		}
+
+		if (cosI > PR_EPSILON
+			&& spt.Ray.Depth + 1 < maxDepth
+			&& session.tile()->random().getFloat() <= scatProb) {
+			Ray next = spt.Ray.next(spt.P, out.Outgoing);
+			next.Weight *= out.Weight * cosI / (scatProb * out.PDF_S_Forward);
+
+			if (next.Weight > PR_EPSILON) {
+				LightPathBufferEntry pathEntry;
+				switch (out.Type) {
+				case MST_DiffuseReflection:
+					pathEntry.Flags = LPBEF_EVENT_DIFFUSE | LPBEF_SCATTER_REFLECTION;
+					break;
+				case MST_DiffuseTransmission:
+					pathEntry.Flags = LPBEF_EVENT_DIFFUSE;
+					break;
+				case MST_SpecularReflection:
+					pathEntry.Flags = LPBEF_SCATTER_REFLECTION;
+					break;
+				case MST_SpecularTransmission:
+					pathEntry.Flags = 0;
+					break;
+				}
+				pathEntry.LabelIndex = 0; // TODO
+				lpb.add(spt.Ray.SessionIndex, pathEntry);
+
+				session.sendRay(entry.RayID, next);
+				scattered = true;
+			}
+		}
 	}
 
-	void onEnd() override
+	float directLight(RenderTileSession& session, const ShadingPoint& spt,
+					  IMaterial* material,
+					  float& pdfS_Light, float& pdfS_Mat)
 	{
-	}
-
-	bool needNextPass(uint32 i) const override
-	{
-		return i == 0;
-	}
-
-	void perHit(RenderTileSession& session, const HitEntry&,
-				const Ray& ray, const GeometryPoint& pt,
-				IEntity* entity, IMaterial* material)
-	{
-		LightPath stdPath = LightPath::createCDL(1);
-		session.tile()->statistics().addEntityHitCount();
-
-		if(!material)
-			return;
-
-		ShadingPoint spt;
-		spt.setByIdentity(ray, pt);
-		spt.EntityID = entity->id();
-		spt.Radiance = 1;
-
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
 		IEntity* light = session.pickRandomLight(lightPt, pdfA);
 		if (!light)
-			return;
+			return 0;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
 		if (!ems) {
-			session.pushFeedbackFragment(ray, OF_MissingEmission);
-			return;
+			session.pushFeedbackFragment(spt.Ray, OF_MissingEmission);
+			return 0;
 		}
 
 		Vector3f L		 = (lightPt.P - spt.P);
@@ -75,16 +113,16 @@ public:
 		L.normalize();
 		const float cosO = std::max(0.0f, -L.dot(lightPt.N));
 		const float cosI = std::max(0.0f, L.dot(spt.N));
-		const float pdfS = MSI::toSolidAngle(pdfA, sqrD, cosO);
+		pdfS_Light		 = MSI::toSolidAngle(pdfA, sqrD, cosO);
 
 		// Trace shadow ray
-		Ray shadow			= ray.next(spt.P, L);
+		Ray shadow			= spt.Ray.next(spt.P, L);
 		ShadowHit shadowHit = session.traceShadowRay(shadow);
-		if (pdfS < PR_EPSILON
+		if (pdfS_Light < PR_EPSILON
 			|| cosI < PR_EPSILON
 			|| !shadowHit.Successful
 			|| shadowHit.EntityID != light->id()) {
-			spt.Radiance = 0;
+			return 0;
 		} else {
 			// Evaluate light
 			LightEvalInput inL;
@@ -92,7 +130,6 @@ public:
 			inL.Point.setByIdentity(shadow, lightPt); // Todo??
 			LightEvalOutput outL;
 			ems->eval(inL, outL, session);
-			spt.Radiance *= outL.Weight;
 
 			// Evaluate surface
 			MaterialEvalInput in;
@@ -100,23 +137,83 @@ public:
 			in.Outgoing = L;
 			MaterialEvalOutput out;
 			material->eval(in, out, session);
+			pdfS_Mat = out.PDF_S_Forward;
 
-			spt.Radiance *= out.Weight * (cosI / pdfS);
+			return outL.Weight * out.Weight * cosI;
+		}
+	}
+
+	bool perHit(RenderTileSession& session, LightPathBuffer& lpb,
+				const HitEntry& entry,
+				const Ray& ray, const GeometryPoint& pt,
+				IEntity* entity, IMaterial* material)
+	{
+		session.tile()->statistics().addEntityHitCount();
+
+		if (entity->isLight()) // Lights are directly traced
+			return false;
+		if (!material)
+			return false;
+
+		LightPath currentPath = lpb.getPath(ray.SessionIndex);
+
+		ShadingPoint spt;
+		spt.setByIdentity(ray, pt);
+		spt.EntityID = entity->id();
+		spt.Radiance = 1;
+
+		// Scatter Light
+		bool scattered = false;
+		bool isDelta   = false;
+		scatterLight(session, lpb, entry, spt, material, scattered, isDelta);
+
+		// Direct Light
+		if (!isDelta) {
+			const float factor = 1.0f / mLightSampleCount;
+			for (size_t i = 0; i < mLightSampleCount; ++i) {
+				float pdf_s_mat = 0, pdf_s_light = 0;
+				float weight = directLight(session, spt,
+										   material,
+										   pdf_s_light, pdf_s_mat);
+
+				if (weight > PR_EPSILON
+					&& pdf_s_light > PR_EPSILON) {
+					spt.Radiance = factor * weight / pdf_s_light;
+					session.pushFragment(spt,
+										 currentPath.concated(
+											 LightPathToken(ST_EMISSIVE, SE_NONE)));
+				}
+			}
 		}
 
-		spt.Geometry.MaterialID = material->id();
-		session.pushFragment(spt, stdPath);
+		return scattered;
 	}
 
 	// Per thread
 	void onPass(RenderTileSession& session, uint32) override
 	{
 		while (session.handleCameraRays()) {
-			session.handleHits([&](const HitEntry& entry,
-								   const Ray& ray, const GeometryPoint& pt,
-								   IEntity* entity, IMaterial* material) {
-				perHit(session, entry, ray, pt, entity, material);
-			});
+			mLPBs.at(session.threadID())->reset();
+			float rerun = true;
+
+			while (rerun) {
+				rerun = false;
+				session.handleHits(
+					[&](const Ray& ray) {
+						session.tile()->statistics().addBackgroundHitCount();
+						session.tile()->context()->output()->pushBackgroundFragment(ray.PixelIndex,
+																					ray.WavelengthIndex);
+						// TODO
+					},
+					[&](const HitEntry& entry,
+						const Ray& ray, const GeometryPoint& pt,
+						IEntity* entity, IMaterial* material) {
+						float scattered = perHit(session, *mLPBs.at(session.threadID()).get(),
+												 entry, ray, pt, entity, material);
+						if (scattered)
+							rerun = true;
+					});
+			}
 		}
 	}
 
@@ -126,14 +223,20 @@ public:
 	}
 
 private:
-	std::vector<LightPath> mLightPaths;
+	std::vector<std::unique_ptr<LightPathBuffer>> mLPBs;
+
+	size_t mLightSampleCount;
 };
 
 class IntDirectFactory : public IIntegratorFactory {
 public:
 	std::shared_ptr<IIntegrator> create(uint32, uint32, const Environment& env) override
 	{
-		return std::make_shared<IntDirect>();
+		const Registry& reg = env.registry();
+
+		size_t lightsamples   = reg.getByGroup<size_t>(RG_INTEGRATOR, "direct/light/sample_count", 4);
+
+		return std::make_shared<IntDirect>(lightsamples);
 	}
 
 	const std::vector<std::string>& getNames() const override

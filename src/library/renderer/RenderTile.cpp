@@ -164,6 +164,7 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	cameraSample.R[0]			 = mCache->Lens(0);
 	cameraSample.R[1]			 = mCache->Lens(1);
 	cameraSample.Time			 = mCache->Time;
+	cameraSample.Weight			 = 1.0f / (mTimeSampleCount * mLensSampleCount * mAASampleCount);
 	cameraSample.WavelengthIndex = waveInd;
 
 	return mCamera->constructRay(cameraSample);

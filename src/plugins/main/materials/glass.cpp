@@ -1,7 +1,9 @@
 #include "Environment.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
+#include "math/Fresnel.h"
 #include "math/Projection.h"
+#include "math/Reflection.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
 #include "shader/ShadingSocket.h"
@@ -12,15 +14,18 @@ namespace PR {
 
 class GlassMaterial : public IMaterial {
 public:
-	GlassMaterial(uint32 id, const std::shared_ptr<FloatSpectralShadingSocket>& alb)
+	GlassMaterial(uint32 id,
+				  const std::shared_ptr<FloatSpectralShadingSocket>& alb,
+				  const std::shared_ptr<FloatSpectralShadingSocket>& ior)
 		: IMaterial(id)
 		, mSpecularity(alb)
+		, mIOR(ior)
 	{
 	}
 
 	virtual ~GlassMaterial() = default;
 
-	void startGroup(size_t size, const RenderTileSession& session) override
+	void startGroup(size_t, const RenderTileSession&) override
 	{
 	}
 
@@ -28,8 +33,19 @@ public:
 	{
 	}
 
+	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
+	{
+		float n1 = 1;
+		float n2 = mIOR->eval(spt);
+		if (spt.Flags & SPF_Inside)
+			std::swap(n1, n2);
+
+		eta = n1 / n2;
+		return Fresnel::dielectric(spt.NdotV, n1, n2);
+	}
+
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
-			  const RenderTileSession& session) const override
+			  const RenderTileSession&) const override
 	{
 		out.Weight		   = mSpecularity->eval(in.Point);
 		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
@@ -37,10 +53,28 @@ public:
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
-				const RenderTileSession& session) const override
+				const RenderTileSession&) const override
 	{
-		out.Weight		   = mSpecularity->eval(in.Point);
-		out.Type		   = MST_SpecularReflection; // For now
+		float eta;
+		const float F = fresnelTerm(in.Point, eta);
+
+		if (in.RND[0] <= F) {
+			out.Weight   = mSpecularity->eval(in.Point) * F;
+			out.Type	 = MST_SpecularReflection;
+			out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
+		} else {
+			const float NdotT = Reflection::refraction_angle(in.Point.NdotV, eta);
+			out.Weight		  = mSpecularity->eval(in.Point) * (1 - F);
+
+			if (NdotT < 0) { // TOTAL REFLECTION
+				out.Type	 = MST_SpecularReflection;
+				out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
+			} else {
+				out.Type	 = MST_SpecularTransmission;
+				out.Outgoing = Reflection::refract(eta, in.Point.NdotV, NdotT, in.Point.N, in.Point.Ray.Direction);
+			}
+		}
+
 		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
 		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
 	}
@@ -51,18 +85,20 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <GlassMaterial>:" << std::endl
-			   << "    Specularity: " << (mSpecularity ? mSpecularity->dumpInformation() : "NONE") << std::endl;
+			   << "    Specularity: " << (mSpecularity ? mSpecularity->dumpInformation() : "NONE") << std::endl
+			   << "    IOR: " << (mIOR ? mIOR->dumpInformation() : "NONE") << std::endl;
 
 		return stream.str();
 	}
 
 protected:
-	void onFreeze(RenderContext* context) override
+	void onFreeze(RenderContext*) override
 	{
 	}
 
 private:
 	std::shared_ptr<FloatSpectralShadingSocket> mSpecularity;
+	std::shared_ptr<FloatSpectralShadingSocket> mIOR;
 };
 
 class GlassMaterialFactory : public IMaterialFactory {
@@ -74,7 +110,12 @@ public:
 		const std::string specName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "specularity", "");
 
-		return std::make_shared<GlassMaterial>(id, env.getSpectralShadingSocket(specName, 1));
+		const std::string iorName = reg.getForObject<std::string>(
+			RG_MATERIAL, uuid, "index", "");
+
+		return std::make_shared<GlassMaterial>(id,
+											   env.getSpectralShadingSocket(specName, 1),
+											   env.getSpectralShadingSocket(iorName, 1.55f));
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -6,6 +6,9 @@
 #include <fstream>
 
 namespace PR {
+/* This implementation has a huge amount of code-repetition, due to multiple arrays...
+* --> FIXME: Doing more abstract interfaces would solve this problem, but speed is very important here.
+*/
 
 constexpr uint8 RAY_INVALID = 0xFF;
 
@@ -34,6 +37,7 @@ Ray RayGroup::getRay(size_t id) const
 
 	ray.Depth			= Depth[id];
 	ray.PixelIndex		= PixelIndex[id];
+	ray.SessionIndex	= SessionIndex[id];
 	ray.Time			= from_unorm16(Time[id]);
 	ray.WavelengthIndex = WavelengthIndex[id];
 	ray.Flags			= Flags[id];
@@ -72,6 +76,7 @@ RayPackage RayGroup::getRayPackage(size_t id) const
 
 	load_from_container_linear(ray.Depth, Depth, id);
 	load_from_container_linear(ray.PixelIndex, PixelIndex, id);
+	load_from_container_linear(ray.SessionIndex, SessionIndex, id);
 
 	PR_SIMD_ALIGN float t[PR_SIMD_BANDWIDTH];
 	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
@@ -101,6 +106,7 @@ RayStream::RayStream(size_t raycount)
 		mDirection[i].reserve(mSize);
 
 	mPixelIndex.reserve(mSize);
+	mSessionIndex.reserve(mSize);
 	mDepth.reserve(mSize);
 	mTime.reserve(mSize);
 	mWavelengthIndex.reserve(mSize);
@@ -130,6 +136,7 @@ void RayStream::addRay(const Ray& ray)
 
 	mDepth.emplace_back(ray.Depth);
 	mPixelIndex.emplace_back(ray.PixelIndex);
+	mSessionIndex.emplace_back(ray.SessionIndex);
 	mTime.emplace_back(to_unorm16(ray.Time));
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags & ~RF_BackgroundHit);
@@ -154,6 +161,7 @@ void RayStream::setRay(size_t id, const Ray& ray)
 
 	mDepth[id]			 = ray.Depth;
 	mPixelIndex[id]		 = ray.PixelIndex;
+	mSessionIndex[id]	= ray.SessionIndex;
 	mTime[id]			 = to_unorm16(ray.Time);
 	mWavelengthIndex[id] = ray.WavelengthIndex;
 	mFlags[id]			 = ray.Flags & ~RF_BackgroundHit;
@@ -176,6 +184,7 @@ void RayStream::sort()
 		return mFlags[ind] != RAY_INVALID;
 	});
 
+	mCurrentPos = 0;
 	mLastInvPos = std::distance(index.begin(), inv_start);
 
 	// Check coherence
@@ -186,6 +195,7 @@ void RayStream::sort()
 		[&](size_t oldI, size_t newI) {
 			std::swap(mDepth[oldI], mDepth[newI]);
 			std::swap(mPixelIndex[oldI], mPixelIndex[newI]);
+			std::swap(mSessionIndex[oldI], mSessionIndex[newI]);
 			std::swap(mTime[oldI], mTime[newI]);
 			std::swap(mWavelengthIndex[oldI], mWavelengthIndex[newI]);
 			std::swap(mFlags[oldI], mFlags[newI]);
@@ -204,6 +214,7 @@ void RayStream::reset()
 
 	mDepth.clear();
 	mPixelIndex.clear();
+	mSessionIndex.clear();
 	mTime.clear();
 	mWavelengthIndex.clear();
 	mFlags.clear();
@@ -229,6 +240,7 @@ RayGroup RayStream::getNextGroup()
 	for (int i = 0; i < DIR_C_S; ++i)
 		grp.Direction[i] = &mDirection[i].data()[mCurrentPos];
 	grp.PixelIndex		= &mPixelIndex.data()[mCurrentPos];
+	grp.SessionIndex	= &mSessionIndex.data()[mCurrentPos];
 	grp.Depth			= &mDepth.data()[mCurrentPos];
 	grp.Time			= &mTime.data()[mCurrentPos];
 	grp.WavelengthIndex = &mWavelengthIndex.data()[mCurrentPos];
@@ -270,6 +282,7 @@ Ray RayStream::getRay(size_t id) const
 
 	ray.Depth			= mDepth[id];
 	ray.PixelIndex		= mPixelIndex[id];
+	ray.SessionIndex	= mSessionIndex[id];
 	ray.Time			= from_unorm16(mTime[id]);
 	ray.WavelengthIndex = mWavelengthIndex[id];
 	ray.Flags			= mFlags[id];

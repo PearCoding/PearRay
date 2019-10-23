@@ -52,21 +52,6 @@ public:
 	void pushBackgroundFragment(uint32 pixelIndex, uint32 channel);
 	void pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint32 feedback);
 
-	inline void setSampleCount(uint32 pixelIndex, uint32 channel, uint32 sample)
-	{
-		mIntCounter[V_Samples]->setFragment(pixelIndex, channel, sample);
-	}
-
-	inline uint32 getSampleCount(uint32 pixelIndex, uint32 channel) const
-	{
-		return mIntCounter[V_Samples]->getFragment(pixelIndex, channel);
-	}
-
-	inline void incSampleCount(uint32 pixelIndex, uint32 channel)
-	{
-		mIntCounter[V_Samples]->getFragment(pixelIndex, channel) += 1;
-	}
-
 	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable1D var) const
 	{
 		return mInt1D[var];

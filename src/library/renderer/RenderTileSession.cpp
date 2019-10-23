@@ -54,6 +54,7 @@ bool RenderTileSession::handleCameraRays()
 
 	mRayStream->reset();
 
+	size_t session_id = 0;
 	for (; mCurrentY < h; ++mCurrentY) {
 		const uint32 fy = mCurrentY + mTile->sy();
 
@@ -67,11 +68,13 @@ bool RenderTileSession::handleCameraRays()
 
 			const uint32 fx = mCurrentX + mTile->sx();
 
-			Ray ray		   = mTile->constructCameraRay(fx, fy,
-												   mTile->samplesRendered());
-			ray.PixelIndex = fy * mTile->context()->width() + fx;
+			Ray ray			 = mTile->constructCameraRay(fx, fy,
+												 mTile->samplesRendered());
+			ray.PixelIndex   = fy * mTile->context()->width() + fx;
+			ray.SessionIndex = session_id;
 
 			enqueueRay(ray);
+			++session_id;
 		}
 	}
 

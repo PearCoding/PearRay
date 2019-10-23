@@ -11,6 +11,12 @@ void LightPath::addToken(const LightPathToken& token)
 	mTokens.emplace_back(token);
 }
 
+void LightPath::concat(const LightPath& other)
+{
+	for (size_t i = 0; i < other.currentSize(); ++i)
+		addToken(other.token(i));
+}
+
 LightPath LightPath::createCDL(uint32 diffuseCount)
 {
 	LightPath path(2 + diffuseCount);

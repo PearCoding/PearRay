@@ -14,8 +14,8 @@ struct PR_LIB_INLINE RayPackageBase {
 	typedef V FloatingType;
 	typedef typename VectorTemplate<V>::uint32_t IntegerType;
 
-	Vector3t<V> Origin		 = Vector3t<V>(V(0), V(0), V(0));
-	Vector3t<V> Direction	= Vector3t<V>(V(0), V(0), V(0));
+	Vector3t<V> Origin	= Vector3t<V>(V(0), V(0), V(0));
+	Vector3t<V> Direction = Vector3t<V>(V(0), V(0), V(0));
 
 	V Weight					= V(0);
 	V Time						= V(0);
@@ -23,6 +23,7 @@ struct PR_LIB_INLINE RayPackageBase {
 	IntegerType Flags			= IntegerType(0);
 	IntegerType WavelengthIndex = IntegerType(0);
 	IntegerType PixelIndex		= IntegerType(0);
+	IntegerType SessionIndex	= IntegerType(0);
 
 	RayPackageBase() = default;
 	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d)

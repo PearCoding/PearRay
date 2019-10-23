@@ -27,17 +27,13 @@ inline size_t RenderTileSession::maxBufferCount() const
 	return mRayStream->maxSize();
 }
 
-template <typename Func>
-inline void RenderTileSession::handleHits(Func hitFunc)
+template <typename Func1, typename Func2>
+inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 {
 	mTile->context()->scene()->traceRays(
 		*mRayStream,
 		*mHitStream,
-		[&](const Ray& ray) {
-			mTile->statistics().addBackgroundHitCount();
-			mTile->context()->output()->pushBackgroundFragment(ray.PixelIndex,
-															   ray.WavelengthIndex);
-		});
+		nonhitFunc);
 
 	while (mHitStream->hasNextGroup()) {
 		ShadingGroup grp	= mHitStream->getNextGroup();
@@ -59,7 +55,7 @@ inline void RenderTileSession::handleHits(Func hitFunc)
 			// This ray is now used up!
 			mRayStream->invalidateRay(entry.RayID);
 
-			if(!material)
+			if (!material)
 				pushFeedbackFragment(ray, OF_MissingMaterial);
 
 			GeometryPoint pt;

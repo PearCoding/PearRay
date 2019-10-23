@@ -17,6 +17,7 @@ struct PR_LIB RayGroup {
 	float* Direction[3];
 #endif
 	uint32* PixelIndex;
+	uint32* SessionIndex;
 	uint16* Depth;
 	unorm16* Time;
 	uint8* WavelengthIndex;
@@ -34,7 +35,7 @@ public:
 
 	inline bool isFull() const { return currentSize() >= maxSize(); }
 	inline bool enoughSpace(size_t requested = 1) const { return currentSize() + requested <= maxSize(); }
-	inline bool hasNextGroup() const { return mCurrentPos < currentSize(); }
+	inline bool hasNextGroup() const { return mCurrentPos < mLastInvPos; }
 
 	inline size_t maxSize() const { return mSize; }
 	inline size_t currentSize() const { return mWeight.size(); }
@@ -63,6 +64,7 @@ private: // Some vectors are not aligned, due to required preprocessing
 #endif
 
 	simd_vector<uint32> mPixelIndex;
+	simd_vector<uint32> mSessionIndex;
 
 	// TODO: Ray Differentials
 	std::vector<uint16> mDepth;

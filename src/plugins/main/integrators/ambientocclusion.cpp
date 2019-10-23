@@ -21,62 +21,47 @@ public:
 
 	virtual ~IntAO() = default;
 
-	void init(RenderContext*) override
-	{
-	}
-
-	void onStart() override
-	{
-	}
-
-	void onNextPass(uint32, bool&) override
-	{
-	}
-
-	void onEnd() override
-	{
-	}
-
-	bool needNextPass(uint32 i) const override
-	{
-		return i == 0;
-	}
-
 	// Per thread
 	void onPass(RenderTileSession& session, uint32) override
 	{
-		Random& random = session.tile()->random();
+		Random& random	= session.tile()->random();
 		LightPath stdPath = LightPath::createCDL(1);
 
 		while (session.handleCameraRays()) {
-			session.handleHits([&](const HitEntry&,
-								   const Ray& ray, const GeometryPoint& pt,
-								   IEntity* entity, IMaterial*) {
-				session.tile()->statistics().addEntityHitCount();
+			session.handleHits(
+				[&](const Ray& ray) {
+					session.tile()->statistics().addBackgroundHitCount();
+					session.tile()->context()->output()->pushBackgroundFragment(ray.PixelIndex,
+																				ray.WavelengthIndex);
+				},
+				[&](const HitEntry&,
+					const Ray& ray, const GeometryPoint& pt,
+					IEntity* entity, IMaterial*) {
+					session.tile()->statistics().addEntityHitCount();
 
-				size_t occlusions = 0;
-				float pdf;
-				for (size_t i = 0; i < mSampleCount; ++i) {
-					Vector2f rnd  = random.get2D();
-					Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-					Vector3f ndir = Tangent::align(pt.N, pt.Nx, pt.Ny,
-												   dir);
+					size_t occlusions = 0;
+					float pdf;
+					for (size_t i = 0; i < mSampleCount; ++i) {
+						Vector2f rnd  = random.get2D();
+						Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
+						Vector3f ndir = Tangent::align(pt.N, pt.Nx, pt.Ny,
+													   dir);
 
-					Ray n = ray.next(pt.P, ndir);
+						Ray n = ray.next(pt.P, ndir);
 
-					ShadowHit hit = session.traceShadowRay(n);
-					if (hit.Successful)
-						++occlusions;
-				}
+						ShadowHit hit = session.traceShadowRay(n);
+						if (hit.Successful)
+							++occlusions;
+					}
 
-				ShadingPoint spt;
-				spt.setByIdentity(ray, pt);
-				spt.EntityID = entity->id();
+					ShadingPoint spt;
+					spt.setByIdentity(ray, pt);
+					spt.EntityID = entity->id();
 
-				spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
+					spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 
-				session.pushFragment(spt, stdPath);
-			});
+					session.pushFragment(spt, stdPath);
+				});
 		}
 	}
 

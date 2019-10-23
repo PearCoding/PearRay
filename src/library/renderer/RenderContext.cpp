@@ -112,7 +112,7 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	mTileMap->init(*this, mRenderSettings.tileMode);
 
 	// Init modules
-	mIntegrator->init(this);
+	mIntegrator->onInit(this);
 
 	mOutputMap->clear();
 

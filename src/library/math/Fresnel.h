@@ -10,7 +10,7 @@ public:
 	static inline float dielectric(float NdotV, float n1, float n2)
 	{
 		// Snells Law
-		const float NdotT = Reflection::refraction_angle(NdotV, n1/n2);
+		const float NdotT = Reflection::refraction_angle(NdotV, n1 / n2);
 
 		if (NdotT < 0)
 			return 1;
@@ -22,9 +22,9 @@ public:
 	{
 		/*if(NdotV*NdotT <= PR_EPSILON)
 			return 1;*/
-		
-		const float para = (n1 * NdotV - n2 * NdotT) / (n1 * NdotV + n2 * NdotT);
-		const float perp = (n1 * NdotT - n2 * NdotV) / (n1 * NdotT + n2 * NdotV);
+
+		const float para = (-n1 * NdotV - n2 * NdotT) / (-n1 * NdotV + n2 * NdotT);
+		const float perp = (n1 * NdotT + n2 * NdotV) / (n1 * NdotT - n2 * NdotV);
 
 		return (para * para + perp * perp) / 2.0f;
 	}
@@ -64,4 +64,4 @@ public:
 		return (t * t) * (t * t) * t;
 	}
 };
-}
+} // namespace PR

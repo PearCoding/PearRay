@@ -53,7 +53,6 @@ void setup_output(py::module& m)
 
 	auto scope = py::class_<OutputBuffer, std::shared_ptr<OutputBuffer>>(m, "OutputBuffer");
 	scope.def("clear", &OutputBuffer::clear)
-		.def("sampleCount", &OutputBuffer::getSampleCount)
 		.def("channel",
 			 (std::shared_ptr<FrameBufferFloat>(OutputBuffer::*)(OutputBuffer::Variable1D) const) & OutputBuffer::getChannel)
 		.def("channel",

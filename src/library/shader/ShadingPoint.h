@@ -44,13 +44,15 @@ public:
 		Geometry = pt;
 		P		 = pt.P;
 		Depth2   = (ray.Origin - P).squaredNorm();
+		Flags	= 0;
 
 		NdotV = ray.Direction.dot(pt.N);
-		if (Reflection::is_inside(NdotV)) { // TODO: Check!
+		if (Reflection::is_inside(NdotV)) {
 			N	 = -pt.N;
 			Nx	= pt.Nx;
 			Ny	= -pt.Ny;
 			NdotV = -NdotV;
+			Flags |= SPF_Inside;
 		} else {
 			N  = pt.N;
 			Nx = pt.Nx;

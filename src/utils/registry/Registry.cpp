@@ -143,7 +143,15 @@ std::string Registry::dump() const
 	std::stringstream stream;
 	for (const std::pair<URI, Any>& p : elems) {
 		std::string c = p.second.cast<std::string>();
-		stream << p.first.str() << " [" << boost::core::demangle(p.second.typeName()) << "]"
+
+		// Simplify for standard types
+		std::string typeName;
+		if (strcmp(p.second.typeName(), typeid(std::string).name()) == 0)
+			typeName = "string";
+		else
+			typeName = boost::core::demangle(p.second.typeName());
+
+		stream << p.first.str() << " [" << typeName << "]"
 			   << " = " << c << std::endl;
 	}
 

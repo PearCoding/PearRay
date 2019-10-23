@@ -11,14 +11,20 @@ public:
 	explicit IIntegrator();
 	virtual ~IIntegrator();
 
-	virtual void init(RenderContext* renderer) = 0;
+	// Main thread
+	virtual void onInit(RenderContext*) {}
 
-	virtual void onStart()						   = 0;
-	virtual void onNextPass(uint32 i, bool& clean) = 0; // Not the main thread!
-	virtual void onEnd()						   = 0;
-	virtual bool needNextPass(uint32 i) const	  = 0;
+	virtual void onStart() {}
+	virtual void onEnd() {}
 
-	// Per thread
+	virtual bool needNextPass(uint32 i) const { return i == 0; }
+
+	// For each working thread
+	virtual void onThreadStart(RenderContext*, size_t) {}
+	virtual void onThreadEnd(RenderContext*, size_t) {}
+
+	virtual void onNextPass(uint32, bool&) {}
+
 	virtual void onPass(RenderTileSession& session, uint32 pass) = 0;
 	virtual RenderStatus status() const							 = 0;
 };

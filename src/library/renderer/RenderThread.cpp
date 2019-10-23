@@ -14,19 +14,19 @@ RenderThread::RenderThread(uint32 index, RenderContext* renderer)
 	, mThreadIndex(index)
 	, mRenderer(renderer)
 	, mTile(nullptr)
-	, mStreamElementCount(100000)
 {
 	PR_ASSERT(renderer, "RenderThread needs valid renderer");
 }
 
 void RenderThread::main()
 {
-	RayStream rays(mStreamElementCount);
-	HitStream hits(mStreamElementCount);
+	RayStream rays(mRenderer->settings().maxParallelRays);
+	HitStream hits(mRenderer->settings().maxParallelRays);
 
 	size_t pass		= 0;
 	auto integrator = mRenderer->integrator();
 
+	integrator->onThreadStart(mRenderer, mThreadIndex);
 	while (integrator->needNextPass(pass) && !shouldStop()) {
 		mTile = mRenderer->getNextTile();
 
@@ -49,5 +49,6 @@ void RenderThread::main()
 
 		pass++;
 	}
+	integrator->onThreadEnd(mRenderer, mThreadIndex);
 }
 } // namespace PR

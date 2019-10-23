@@ -11,6 +11,7 @@ public:
 	// Common integrator entries
 	uint64 seed;
 	uint32 maxRayDepth;
+	size_t maxParallelRays;
 
 	uint64 aaSampleCount;
 	uint64 lensSampleCount;
