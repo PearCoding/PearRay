@@ -71,8 +71,14 @@
 #endif
 
 // Check if C++14
-#if __cplusplus < 201300
-# warning PearRay requires C++14 to compile successfully
+#ifdef PR_CC_MSC
+# if _MSVC_LANG < 201402
+#  pragma message("PearRay requires C++14 to compile successfully")
+# endif
+#else
+# if __cplusplus < 201300
+#  warning PearRay requires C++14 to compile successfully
+# endif
 #endif
 
 #if defined(PR_DEBUG)
