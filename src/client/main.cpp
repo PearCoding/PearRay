@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	}
 
 	PR::FileLogListener fileLogListener;
-	fileLogListener.open(logFile.native());
+	fileLogListener.open(logFile.string());
 	PR_LOGGER.addListener(&fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);

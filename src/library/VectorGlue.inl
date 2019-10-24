@@ -16,7 +16,7 @@ public:
 	using Base::Base;
 	using Base::operator=;
 
-	template <class E>
+	/*template <class E>
 	inline VectorBase(const V<N, E>& b)
 		: Base(b)
 	{
@@ -27,6 +27,22 @@ public:
 	{
 		*this = VectorBase<N, T, V>(a);
 		return *this;
+	}*/
+
+	inline VectorBase(const Base& b)
+		: Base(b)
+	{
+	}
+
+	inline VectorBase& operator=(const Base& a)
+	{
+		*this = VectorBase<N, T, V>(a);
+		return *this;
+	}
+
+	inline VectorBase()
+		: VectorBase(T(0))
+	{
 	}
 
 	inline explicit VectorBase(T f)

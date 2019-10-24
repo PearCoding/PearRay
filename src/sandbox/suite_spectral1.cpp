@@ -41,7 +41,7 @@ static void save_spec(const std::string& path,
 		}
 	}
 
-	ImageOutput* out = ImageOutput::create(path);
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -51,8 +51,6 @@ static void save_spec(const std::string& path,
 	out->open(path, imgSpec);
 	out->write_image(TypeDesc::UINT8, pixels.data());
 	out->close();
-
-	ImageOutput::destroy(out);
 }
 
 static void save_image(const std::string& path,
@@ -79,7 +77,7 @@ static void save_image(const std::string& path,
 		}
 	}
 
-	ImageOutput* out = ImageOutput::create(path);
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -89,8 +87,6 @@ static void save_image(const std::string& path,
 	out->open(path, spec);
 	out->write_image(TypeDesc::UINT8, pixels);
 	out->close();
-
-	ImageOutput::destroy(out);
 }
 
 static float maxE = 0;

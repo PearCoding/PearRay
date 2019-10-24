@@ -111,7 +111,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	spec.attribute("IPTC:ProgramVersion", PR_VERSION_STRING);
 
 	// Create file
-	ImageOutput* out = ImageOutput::create(file);
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(file);
 	if (!out)
 		return false;
 
@@ -194,7 +194,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	float* line = new float[channelCount * rw];
 	if (!line) { // TODO: Add single token variant!
 		PR_LOG(L_ERROR) << "Not enough memory for image output!" << std::endl;
-		ImageOutput::destroy(out);
 		return false;
 	}
 
@@ -348,7 +347,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	out->close();
 
 	delete[] line;
-	ImageOutput::destroy(out);
 
 	return true;
 }

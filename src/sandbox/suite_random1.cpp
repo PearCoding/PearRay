@@ -58,7 +58,7 @@ void rnd_seed(uint64 seed)
 		path = stream.str();
 	}
 
-	ImageOutput* out = ImageOutput::create(path);
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -68,8 +68,6 @@ void rnd_seed(uint64 seed)
 	out->open(path, spec);
 	out->write_image(TypeDesc::UINT8, pixels);
 	out->close();
-
-	ImageOutput::destroy(out);
 }
 void suite_random1()
 {
