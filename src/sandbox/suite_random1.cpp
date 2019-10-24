@@ -58,7 +58,11 @@ void rnd_seed(uint64 seed)
 		path = stream.str();
 	}
 
+#if OIIO_PLUGIN_VERSION >= 22
 	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
+#else
+	ImageOutput* out = ImageOutput::create(path);
+#endif
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -68,6 +72,10 @@ void rnd_seed(uint64 seed)
 	out->open(path, spec);
 	out->write_image(TypeDesc::UINT8, pixels);
 	out->close();
+
+#if OIIO_PLUGIN_VERSION < 22
+	ImageOutput::destroy(out);
+#endif
 }
 void suite_random1()
 {

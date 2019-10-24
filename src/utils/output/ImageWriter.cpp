@@ -110,8 +110,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	spec.attribute("Software", "PearRay " PR_VERSION_STRING);
 	spec.attribute("IPTC:ProgramVersion", PR_VERSION_STRING);
 
-	// Create file
+// Create file
+#if OIIO_PLUGIN_VERSION >= 22
 	std::unique_ptr<ImageOutput> out = ImageOutput::create(file);
+#else
+	ImageOutput* out = ImageOutput::create(file);
+#endif
 	if (!out)
 		return false;
 
@@ -194,6 +198,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	float* line = new float[channelCount * rw];
 	if (!line) { // TODO: Add single token variant!
 		PR_LOG(L_ERROR) << "Not enough memory for image output!" << std::endl;
+
+#if OIIO_PLUGIN_VERSION < 22
+		ImageOutput::destroy(out);
+#endif
 		return false;
 	}
 
@@ -347,6 +355,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	out->close();
 
 	delete[] line;
+
+#if OIIO_PLUGIN_VERSION < 22
+	ImageOutput::destroy(out);
+#endif
 
 	return true;
 }

@@ -41,7 +41,11 @@ static void save_spec(const std::string& path,
 		}
 	}
 
+#if OIIO_PLUGIN_VERSION >= 22
 	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
+#else
+	ImageOutput* out = ImageOutput::create(path);
+#endif
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -51,6 +55,10 @@ static void save_spec(const std::string& path,
 	out->open(path, imgSpec);
 	out->write_image(TypeDesc::UINT8, pixels.data());
 	out->close();
+
+#if OIIO_PLUGIN_VERSION < 22
+	ImageOutput::destroy(out);
+#endif
 }
 
 static void save_image(const std::string& path,
@@ -77,7 +85,11 @@ static void save_image(const std::string& path,
 		}
 	}
 
+#if OIIO_PLUGIN_VERSION >= 22
 	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
+#else
+	ImageOutput* out = ImageOutput::create(path);
+#endif
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -87,6 +99,10 @@ static void save_image(const std::string& path,
 	out->open(path, spec);
 	out->write_image(TypeDesc::UINT8, pixels);
 	out->close();
+
+#if OIIO_PLUGIN_VERSION < 22
+	ImageOutput::destroy(out);
+#endif
 }
 
 static float maxE = 0;
