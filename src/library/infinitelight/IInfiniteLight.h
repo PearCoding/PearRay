@@ -1,27 +1,31 @@
 #pragma once
 
 #include "entity/VirtualEntity.h"
-#include "emission/IEmission.h"
-#include "math/SIMD.h"
-#include <memory>
+#include "shader/ShadingPoint.h"
 
 namespace PR {
-class RenderTileSession;
+struct PR_LIB_INLINE InfiniteLightSampleInput {
+	ShadingPoint Point;
+	Vector2f RND;
+};
 
+struct PR_LIB_INLINE InfiniteLightSampleOutput {
+	float Weight;
+	float PDF_S;
+	Vector3f Outgoing;
+};
+
+class RenderTileSession;
 class PR_LIB IInfiniteLight : public VirtualEntity {
 public:
 	IInfiniteLight(uint32 id, const std::string& name);
 	virtual ~IInfiniteLight() {}
 
-	virtual void startGroup(size_t size, const RenderTileSession& session) = 0;
-	virtual void endGroup()											   = 0;
-
 	/*
-		Evaluate the light based on incident direction and point information.
+		Sample the light with point information.
 	*/
-	virtual void eval(const LightEvalInput& in, LightEvalOutput& out, const RenderTileSession& session) const = 0;
+	virtual void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out, const RenderTileSession& session) const = 0;
 
 	virtual std::string dumpInformation() const;
 };
 } // namespace PR
-

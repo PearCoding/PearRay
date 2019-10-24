@@ -1,4 +1,5 @@
 #include "BoundingBox.h"
+#include "CollisionData.h"
 #include "Plane.h"
 
 #include <utility>

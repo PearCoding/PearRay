@@ -18,11 +18,13 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 			 const std::vector<std::shared_ptr<IEntity>>& entities,
 			 const std::vector<std::shared_ptr<IMaterial>>& materials,
 			 const std::vector<std::shared_ptr<IEmission>>& emissions,
+			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
 			 const std::string& cntFile)
 	: mActiveCamera(activeCamera)
 	, mEntities(entities)
 	, mMaterials(materials)
 	, mEmissions(emissions)
+	, mInfLights(infLights)
 	, mKDTree(nullptr)
 {
 	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure \"" << cntFile << "\"" << std::endl;

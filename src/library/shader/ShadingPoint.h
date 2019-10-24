@@ -2,6 +2,7 @@
 
 #include "geometry/GeometryPoint.h"
 #include "math/Reflection.h"
+#include "math/Tangent.h"
 #include "ray/RayPackage.h"
 
 namespace PR {
@@ -47,16 +48,13 @@ public:
 		Flags	= 0;
 
 		NdotV = ray.Direction.dot(pt.N);
+		N	 = pt.N;
+		Nx	= pt.Nx;
+		Ny	= pt.Ny;
 		if (Reflection::is_inside(NdotV)) {
-			N	 = -pt.N;
-			Nx	= pt.Nx;
-			Ny	= -pt.Ny;
+			Tangent::invert_frame(N, Nx, Ny);
 			NdotV = -NdotV;
 			Flags |= SPF_Inside;
-		} else {
-			N  = pt.N;
-			Nx = pt.Nx;
-			Ny = pt.Ny;
 		}
 	}
 };

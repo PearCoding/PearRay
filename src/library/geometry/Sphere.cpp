@@ -1,7 +1,6 @@
 #include "Sphere.h"
 #include "CollisionData.h"
 
-#include "math/SIMD.h"
 #include "math/Spherical.h"
 
 #include <utility>

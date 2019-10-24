@@ -2,7 +2,6 @@
 #include "Logger.h"
 #include "SpectralFile.h"
 #include "renderer/RenderContext.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include <OpenImageIO/imageio.h>
 

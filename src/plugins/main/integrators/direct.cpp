@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "buffer/Feedback.h"
 #include "emission/IEmission.h"
+#include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "material/IMaterial.h"
@@ -33,6 +34,45 @@ public:
 	{
 		mLPBs[index] = std::make_unique<LightPathBuffer>(context->settings().maxParallelRays,
 														 context->settings().maxRayDepth);
+	}
+
+	float infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
+						IInfiniteLight* infLight, IMaterial* material,
+						float& pdfS_Light, float& pdfS_Mat)
+	{
+		InfiniteLightSampleInput inL;
+		inL.Point = spt;
+		inL.RND   = session.tile()->random().get2D();
+		InfiniteLightSampleOutput outL;
+		infLight->sample(inL, outL, session);
+
+		if (std::isinf(outL.PDF_S))
+			outL.PDF_S = 1;
+
+		const float cosI = std::abs(outL.Outgoing.dot(spt.N));
+		if (cosI < PR_EPSILON
+			|| outL.Weight < PR_EPSILON
+			|| outL.PDF_S < PR_EPSILON) {
+			return 0;
+		} else {
+			// Trace shadow ray
+			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
+			ShadowHit shadowHit = session.traceShadowRay(shadow);
+			if (shadowHit.Successful)
+				return 0;
+
+			// Evaluate surface
+			MaterialEvalInput in;
+			in.Point	= spt;
+			in.Outgoing = outL.Outgoing;
+			MaterialEvalOutput out;
+			material->eval(in, out, session);
+
+			pdfS_Light = outL.PDF_S;
+			pdfS_Mat   = out.PDF_S_Forward;
+
+			return outL.Weight * out.Weight * cosI;
+		}
 	}
 
 	void scatterLight(RenderTileSession& session, LightPathBuffer& lpb,
@@ -186,6 +226,25 @@ public:
 			}
 		}
 
+		// Infinite Lights
+		if (!isDelta) {
+			for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+				float pdf_s_mat = 0, pdf_s_light = 0;
+				float weight = infiniteLight(session, spt,
+											 light.get(), material,
+											 pdf_s_light, pdf_s_mat);
+
+				if (weight > PR_EPSILON
+					&& pdf_s_light > PR_EPSILON
+					&& pdf_s_mat > PR_EPSILON) {
+					spt.Radiance = weight / (pdf_s_light * pdf_s_mat);
+					session.pushFragment(spt,
+										 currentPath.concated(
+											 LightPathToken(ST_BACKGROUND, SE_NONE)));
+				}
+			}
+		}
+
 		return scattered;
 	}
 
@@ -234,7 +293,7 @@ public:
 	{
 		const Registry& reg = env.registry();
 
-		size_t lightsamples   = reg.getByGroup<size_t>(RG_INTEGRATOR, "direct/light/sample_count", 4);
+		size_t lightsamples = reg.getByGroup<size_t>(RG_INTEGRATOR, "direct/light/sample_count", 4);
 
 		return std::make_shared<IntDirect>(lightsamples);
 	}

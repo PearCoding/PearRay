@@ -1,5 +1,8 @@
 #include "container/kdTreeBuilderNaive.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace PR {
 
 enum Side {

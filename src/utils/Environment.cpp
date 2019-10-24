@@ -81,6 +81,14 @@ void Environment::dumpInformation() const
 		PR_LOG(L_INFO) << p->name() << ":" << std::endl
 					   << p->dumpInformation() << std::endl;
 
+	/*for (auto p : mEmissionManager->getAll())
+		PR_LOG(L_INFO) << p->name() << ":" << std::endl
+					   << p->dumpInformation() << std::endl;*/
+
+	for (auto p : mInfiniteLightManager->getAll())
+		PR_LOG(L_INFO) << p->name() << ":" << std::endl
+					   << p->dumpInformation() << std::endl;
+
 	for (auto p : mMaterials)
 		PR_LOG(L_INFO) << p.first << ":" << std::endl
 					   << p.second->dumpInformation() << std::endl;
@@ -198,6 +206,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 	}
 
 	auto emissions = mEmissionManager->getAll();
+	auto inflights = mInfiniteLightManager->getAll();
 
 	std::shared_ptr<ICamera> activeCamera = mCameraManager->getActiveCamera();
 	if (!activeCamera) {
@@ -209,6 +218,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 														   entities,
 														   materials,
 														   emissions,
+														   inflights,
 														   mWorkingDir + "/scene.cnt");
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;
@@ -223,35 +233,40 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		RG_RENDERER,
 		"common/seed",
 		42);
-	fct->settings().maxRayDepth			= std::max<uint32>(1,
-												   mRegistry.getByGroup<uint32>(
-													   RG_RENDERER,
-													   "common/max_ray_depth",
-													   1));
-	fct->settings().aaSampleCount		= std::max<uint64>(1,
-													   mRegistry.getByGroup<uint64>(
-														   RG_RENDERER,
-														   "common/sampler/aa/count",
-														   1));
-	fct->settings().lensSampleCount		= std::max<uint64>(1,
-													   mRegistry.getByGroup<uint64>(
-														   RG_RENDERER,
-														   "common/sampler/lens/count",
-														   1));
-	fct->settings().timeSampleCount		= std::max<uint64>(1,
-													   mRegistry.getByGroup<uint64>(
-														   RG_RENDERER,
-														   "common/sampler/time/count",
-														   1));
-	fct->settings().spectralSampleCount = std::max<uint64>(1,
-														   mRegistry.getByGroup<uint64>(
-															   RG_RENDERER,
-															   "common/sampler/spectral/count",
-															   1));
-	fct->settings().aaSampler			= mRegistry.getByGroup<SamplerMode>(
-		  RG_RENDERER,
-		  "common/sampler/aa/type",
-		  SM_MULTI_JITTER);
+	fct->settings().maxRayDepth = std::max<uint32>(
+		1,
+		mRegistry.getByGroup<uint32>(
+			RG_RENDERER,
+			"common/max_ray_depth",
+			1));
+	fct->settings().aaSampleCount = std::max<uint64>(
+		1,
+		mRegistry.getByGroup<uint64>(
+			RG_RENDERER,
+			"common/sampler/aa/count",
+			1));
+	fct->settings().lensSampleCount = std::max<uint64>(
+		1,
+		mRegistry.getByGroup<uint64>(
+			RG_RENDERER,
+			"common/sampler/lens/count",
+			1));
+	fct->settings().timeSampleCount = std::max<uint64>(
+		1,
+		mRegistry.getByGroup<uint64>(
+			RG_RENDERER,
+			"common/sampler/time/count",
+			1));
+	fct->settings().spectralSampleCount = std::max<uint64>(
+		1,
+		mRegistry.getByGroup<uint64>(
+			RG_RENDERER,
+			"common/sampler/spectral/count",
+			1));
+	fct->settings().aaSampler = mRegistry.getByGroup<SamplerMode>(
+		RG_RENDERER,
+		"common/sampler/aa/type",
+		SM_MULTI_JITTER);
 	fct->settings().lensSampler = mRegistry.getByGroup<SamplerMode>(
 		RG_RENDERER,
 		"common/sampler/lens/type",
@@ -280,40 +295,46 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		RG_RENDERER,
 		"common/tile/mode",
 		TM_LINEAR);
-	fct->settings().filmWidth  = std::max<uint32>(1,
-												  mRegistry.getByGroup<uint32>(
-													  RG_RENDERER,
-													  "film/width",
-													  1920));
-	fct->settings().filmHeight = std::max<uint32>(1,
-												  mRegistry.getByGroup<uint32>(
-													  RG_RENDERER,
-													  "film/height",
-													  1080));
-	fct->settings().cropMinX   = std::max<float>(0,
-												 std::min<float>(1,
-																 mRegistry.getByGroup<uint32>(
-																	 RG_RENDERER,
-																	 "film/crop/min_x",
-																	 0)));
-	fct->settings().cropMaxX   = std::max<float>(0,
-												 std::min<float>(1,
-																 mRegistry.getByGroup<uint32>(
-																	 RG_RENDERER,
-																	 "film/crop/max_x",
-																	 1)));
-	fct->settings().cropMinY   = std::max<float>(0,
-												 std::min<float>(1,
-																 mRegistry.getByGroup<uint32>(
-																	 RG_RENDERER,
-																	 "film/crop/min_y",
-																	 0)));
-	fct->settings().cropMaxY   = std::max<float>(0,
-												 std::min<float>(1,
-																 mRegistry.getByGroup<uint32>(
-																	 RG_RENDERER,
-																	 "film/crop/max_y",
-																	 1)));
+	fct->settings().filmWidth = std::max<uint32>(
+		1,
+		mRegistry.getByGroup<uint32>(
+			RG_RENDERER,
+			"film/width",
+			1920));
+	fct->settings().filmHeight = std::max<uint32>(
+		1,
+		mRegistry.getByGroup<uint32>(
+			RG_RENDERER,
+			"film/height",
+			1080));
+	fct->settings().cropMinX = std::max<float>(
+		0,
+		std::min<float>(1,
+						mRegistry.getByGroup<uint32>(
+							RG_RENDERER,
+							"film/crop/min_x",
+							0)));
+	fct->settings().cropMaxX = std::max<float>(
+		0,
+		std::min<float>(1,
+						mRegistry.getByGroup<uint32>(
+							RG_RENDERER,
+							"film/crop/max_x",
+							1)));
+	fct->settings().cropMinY = std::max<float>(
+		0,
+		std::min<float>(1,
+						mRegistry.getByGroup<uint32>(
+							RG_RENDERER,
+							"film/crop/min_y",
+							0)));
+	fct->settings().cropMaxY = std::max<float>(
+		0,
+		std::min<float>(1,
+						mRegistry.getByGroup<uint32>(
+							RG_RENDERER,
+							"film/crop/max_y",
+							1)));
 
 	// If using linear mode, overwrite sample size by actual spectrum size
 	if (fct->settings().spectralProcessMode == SPM_LINEAR) {

@@ -16,6 +16,7 @@ class ICamera;
 class IEntity;
 class IMaterial;
 class IEmission;
+class IInfiniteLight;
 class RenderContext;
 
 class RayStream;
@@ -27,12 +28,14 @@ public:
 		  const std::vector<std::shared_ptr<IEntity>>& entities,
 		  const std::vector<std::shared_ptr<IMaterial>>& materials,
 		  const std::vector<std::shared_ptr<IEmission>>& emissions,
+		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
 		  const std::string& cntFile);
 	virtual ~Scene();
 
 	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
 	const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
 	const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
+	const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
@@ -55,6 +58,7 @@ private:
 	std::vector<std::shared_ptr<IEntity>> mEntities;
 	std::vector<std::shared_ptr<IMaterial>> mMaterials;
 	std::vector<std::shared_ptr<IEmission>> mEmissions;
+	std::vector<std::shared_ptr<IInfiniteLight>> mInfLights;
 
 	std::unique_ptr<class kdTreeCollider> mKDTree;
 	BoundingBox mBoundingBox;

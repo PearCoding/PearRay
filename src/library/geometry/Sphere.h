@@ -3,8 +3,8 @@
 #include "ray/RayPackage.h"
 
 namespace PR {
-class SingleCollisionOutput;
-class CollisionOutput;
+struct SingleCollisionOutput;
+struct CollisionOutput;
 
 /* Origin based sphere */
 class PR_LIB Sphere {

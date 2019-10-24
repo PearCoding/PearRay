@@ -3,6 +3,7 @@
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
+#include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
@@ -160,7 +161,7 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		auto obj = std::make_shared<PlaneEntity>(id, name, width*xAxis, height*yAxis, matID, emsID);
+		auto obj = std::make_shared<PlaneEntity>(id, name, width * xAxis, height * yAxis, matID, emsID);
 		if (reg.getForObject<bool>(RG_ENTITY, uuid, "centering", false))
 			obj->centerOn();
 

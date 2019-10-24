@@ -1,6 +1,5 @@
 #include "Plane.h"
-
-#include "math/SIMD.h"
+#include "CollisionData.h"
 
 namespace PR {
 #define PR_PLANE_INTERSECT_EPSILON (PR_EPSILON)

@@ -1,9 +1,6 @@
 #pragma once
 
-#include "CollisionData.h"
 #include "Sphere.h"
-#include "ray/RayPackage.h"
-#include <Eigen/Geometry>
 
 namespace PR {
 class Plane;

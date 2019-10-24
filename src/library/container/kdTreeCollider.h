@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geometry/BoundingBox.h"
+#include "geometry/CollisionData.h"
 #include "math/SIMD.h"
 #include "ray/RayPackage.h"
 

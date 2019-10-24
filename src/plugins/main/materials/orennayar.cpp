@@ -3,6 +3,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
+#include "math/Tangent.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
 #include "shader/ShadingSocket.h"
@@ -69,7 +70,9 @@ public:
 				const RenderTileSession& session) const override
 	{
 		float pdf;
-		out.Outgoing	   = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
+		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
+		Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+
 		float NdotL		   = std::abs(out.Outgoing.dot(in.Point.N));
 		out.Weight		   = calc(out.Outgoing, NdotL, in.Point);
 		out.Type		   = MST_DiffuseReflection;

@@ -2,6 +2,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
+#include "math/Tangent.h"
 #include "renderer/RenderContext.h"
 #include "shader/ConstShadingSocket.h"
 #include "shader/ShadingSocket.h"
@@ -41,7 +42,9 @@ public:
 				const RenderTileSession& session) const override
 	{
 		float pdf;
-		out.Outgoing	   = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
+		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
+		Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+
 		out.Weight		   = mAlbedo->eval(in.Point) * PR_1_PI;
 		out.Type		   = MST_DiffuseReflection;
 		out.PDF_S_Backward = pdf;

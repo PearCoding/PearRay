@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 
 PROJECT(PearRay)
 
@@ -53,6 +53,7 @@ option(PR_USE_SSE4 "Use SSE4_1 simd support." ON)
 option(PR_USE_AVX "Use AVX simd support." OFF)
 option(PR_USE_AVX2 "Use AVX2 simd support." OFF)
 option(PR_USE_AVX512 "Use AVX512F simd support." OFF)
+option(PR_USE_IWYU "Use include-what-you-use while building" OFF)
 
 option(VERBOSE "Show debug information." OFF)
 option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
@@ -87,6 +88,15 @@ ENDIF()
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
+
+# IWYU
+IF(PR_USE_IWYU)
+	find_program(IWYU_PATH NAMES include-what-you-use iwyu)
+	IF(IWYU_PATH)
+		MESSAGE(STATUS "Using IWYU ${IWYU_PATH}")
+		SET(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+	ENDIF()
+ENDIF()
 
 IF(PR_WITH_PYTHON)
 	add_subdirectory(external/pybind11)

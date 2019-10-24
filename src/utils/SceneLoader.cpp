@@ -176,6 +176,67 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	addRegistryEntry(RG_NONE, 0, false, key, value, env);
 }
 
+void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
+									 const std::shared_ptr<PR::VirtualEntity>& entity, Environment* env)
+{
+	DL::Data transformD = group.getFromKey("transform");
+	DL::Data posD		= group.getFromKey("position");
+	DL::Data rotD		= group.getFromKey("rotation");
+	DL::Data scaleD		= group.getFromKey("scale");
+
+	if (transformD.type() == DL::Data::T_Group) {
+		bool ok;
+		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
+		//t.makeAffine();
+
+		if (!ok)
+			PR_LOG(L_WARNING) << "Couldn't set transform for entity " << entity->name() << std::endl;
+		else
+			entity->setTransform(t);
+	} else {
+		bool ok;
+		Vector3f pos;
+		Eigen::Quaternionf rot;
+		Vector3f sca;
+
+		if (posD.type() == DL::Data::T_Group) {
+			pos = getVector(posD.getGroup(), ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set position for entity " << entity->name() << std::endl;
+		}
+
+		if (ok && rotD.type() == DL::Data::T_Group) {
+			rot = getRotation(rotD, ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set rotation for entity " << entity->name() << std::endl;
+		}
+
+		if (ok && scaleD.isNumber()) {
+			float s = scaleD.getNumber();
+			sca		= Vector3f(s, s, s);
+		} else if (ok && scaleD.type() == DL::Data::T_Group) {
+			sca = getVector(scaleD.getGroup(), ok);
+
+			if (!ok)
+				PR_LOG(L_WARNING) << "Couldn't set scale for entity " << entity->name() << std::endl;
+		}
+
+		if (!ok) {
+			return;
+		} else {
+			rot.normalize();
+
+			VirtualEntity::Transform trans;
+			trans.fromPositionOrientationScale(pos, rot, sca);
+			trans.makeAffine();
+
+			entity->setTransform(trans);
+		}
+	}
+}
+
 void SceneLoader::addEntity(const DL::DataGroup& group,
 							const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
 {
@@ -184,10 +245,6 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 
 	DL::Data nameD		= group.getFromKey("name");
 	DL::Data typeD		= group.getFromKey("type");
-	DL::Data transformD = group.getFromKey("transform");
-	DL::Data posD		= group.getFromKey("position");
-	DL::Data rotD		= group.getFromKey("rotation");
-	DL::Data scaleD		= group.getFromKey("scale");
 	DL::Data localAreaD = group.getFromKey("local_area");
 
 	populateObjectRegistry(RG_ENTITY, id, group, env);
@@ -219,58 +276,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		return;
 	}
 
-	// Setup transform
-	if (transformD.type() == DL::Data::T_Group) {
-		bool ok;
-		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
-		//t.makeAffine();
-
-		if (!ok)
-			PR_LOG(L_WARNING) << "Couldn't set transform for entity " << name << std::endl;
-		else
-			entity->setTransform(t);
-	} else {
-		bool ok;
-		Vector3f pos;
-		Eigen::Quaternionf rot;
-		Vector3f sca;
-
-		if (posD.type() == DL::Data::T_Group) {
-			pos = getVector(posD.getGroup(), ok);
-
-			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set position for entity " << name << std::endl;
-		}
-
-		if (ok && rotD.type() == DL::Data::T_Group) {
-			rot = getRotation(rotD, ok);
-
-			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set rotation for entity " << name << std::endl;
-		}
-
-		if (ok && scaleD.isNumber()) {
-			float s = scaleD.getNumber();
-			sca		= Vector3f(s, s, s);
-		} else if (ok && scaleD.type() == DL::Data::T_Group) {
-			sca = getVector(scaleD.getGroup(), ok);
-
-			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set scale for entity " << name << std::endl;
-		}
-
-		if (!ok) {
-			return;
-		} else {
-			rot.normalize();
-
-			VirtualEntity::Transform trans;
-			trans.fromPositionOrientationScale(pos, rot, sca);
-			trans.makeAffine();
-
-			entity->setTransform(trans);
-		}
-	}
+	setupVirtualEntity(group, entity, env);
 
 	if (parent) {
 		entity->setTransform(parent->transform() * entity->transform());
@@ -301,12 +307,8 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 	auto manag		= env->cameraManager();
 	const uint32 id = manag->nextID();
 
-	DL::Data nameD		= group.getFromKey("name");
-	DL::Data typeD		= group.getFromKey("type");
-	DL::Data transformD = group.getFromKey("transform");
-	DL::Data posD		= group.getFromKey("position");
-	DL::Data rotD		= group.getFromKey("rotation");
-	DL::Data scaleD		= group.getFromKey("scale");
+	DL::Data nameD = group.getFromKey("name");
+	DL::Data typeD = group.getFromKey("type");
 
 	populateObjectRegistry(RG_CAMERA, id, group, env);
 
@@ -341,58 +343,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	// Setup transform
-	if (transformD.type() == DL::Data::T_Group) {
-		bool ok;
-		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
-		//t.makeAffine();
-
-		if (!ok)
-			PR_LOG(L_WARNING) << "Couldn't set transform for camera " << name << std::endl;
-		else
-			camera->setTransform(t);
-	} else {
-		bool ok;
-		Vector3f pos;
-		Eigen::Quaternionf rot;
-		Vector3f sca;
-
-		if (posD.type() == DL::Data::T_Group) {
-			pos = getVector(posD.getGroup(), ok);
-
-			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set position for camera " << name << std::endl;
-		}
-
-		if (ok && rotD.type() == DL::Data::T_Group) {
-			rot = getRotation(rotD, ok);
-
-			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set rotation for camera " << name << std::endl;
-		}
-
-		if (ok && scaleD.isNumber()) {
-			float s = scaleD.getNumber();
-			sca		= Vector3f(s, s, s);
-		} else if (ok && scaleD.type() == DL::Data::T_Group) {
-			sca = getVector(scaleD.getGroup(), ok);
-
-			if (!ok)
-				PR_LOG(L_WARNING) << "Couldn't set scale for camera " << name << std::endl;
-		}
-
-		if (!ok) {
-			return;
-		} else {
-			rot.normalize();
-
-			VirtualEntity::Transform trans;
-			trans.fromPositionOrientationScale(pos, rot, sca);
-			trans.makeAffine();
-
-			camera->setTransform(trans);
-		}
-	}
+	setupVirtualEntity(group, camera, env);
 
 	manag->addObject(camera);
 }
@@ -427,6 +378,8 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		PR_LOG(L_ERROR) << "Could not create light of type " << type << std::endl;
 		return;
 	}
+
+	setupVirtualEntity(group, light, env);
 
 	env->infiniteLightManager()->addObject(light);
 }

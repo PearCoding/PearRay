@@ -1,6 +1,6 @@
 #include "ColorBuffer.h"
-#include "spectral/Spectrum.h"
 #include "spectral/ToneMapper.h"
+#include <algorithm>
 
 namespace PR {
 ColorBuffer::_Data::_Data(size_t width, size_t height, ColorBufferMode mode)
