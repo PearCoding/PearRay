@@ -118,12 +118,6 @@ void RenderTileSession::pushFragment(const ShadingPoint& pt,
 	mTile->context()->output()->pushFragment(pt.Ray.PixelIndex, pt, path);
 }
 
-void RenderTileSession::pushNonHitFragment(const ShadingPoint& pt) const
-{
-	mTile->context()->output()->pushBackgroundFragment(
-		pt.Ray.PixelIndex, pt.Ray.WavelengthIndex);
-}
-
 void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) const
 {
 	mTile->context()->output()->pushFeedbackFragment(

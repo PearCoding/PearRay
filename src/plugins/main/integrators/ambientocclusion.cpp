@@ -29,10 +29,8 @@ public:
 
 		while (session.handleCameraRays()) {
 			session.handleHits(
-				[&](const Ray& ray) {
+				[&](const Ray&) {
 					session.tile()->statistics().addBackgroundHitCount();
-					session.tile()->context()->output()->pushBackgroundFragment(ray.PixelIndex,
-																				ray.WavelengthIndex);
 				},
 				[&](const HitEntry&,
 					const Ray& ray, const GeometryPoint& pt,

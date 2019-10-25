@@ -16,6 +16,14 @@ public:
 	{
 	}
 
+	bool isBackground() const override { return true; }
+
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out, const RenderTileSession& session) const override
+	{
+		out.Weight = mRadiance->eval(in.Point);
+		out.PDF_S  = PR_1_PI;
+	}
+
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession& session) const override
 	{

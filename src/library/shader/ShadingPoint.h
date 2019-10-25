@@ -7,7 +7,8 @@
 
 namespace PR {
 enum ShaderPointFlags {
-	SPF_Inside = 0x1
+	SPF_Inside = 0x1,
+	SPF_Background = 0x2
 };
 
 /*

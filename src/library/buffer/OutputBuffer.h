@@ -49,7 +49,6 @@ public:
 	void clear();
 
 	void pushFragment(uint32 pixelIndex, const ShadingPoint& pt, const LightPath& path);
-	void pushBackgroundFragment(uint32 pixelIndex, uint32 channel);
 	void pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint32 feedback);
 
 	inline std::shared_ptr<FrameBufferFloat> getChannel(Variable1D var) const

@@ -13,6 +13,11 @@ OutputBuffer::OutputBuffer(RenderContext* renderer)
 		  renderer->height(),
 		  0.0f))
 {
+	mIntCounter[V_Samples] = std::make_shared<FrameBufferUInt32>(
+		renderer->spectrumDescriptor()->samples(),
+		renderer->width(),
+		renderer->height(),
+		0);
 	mIntCounter[V_Feedback] = std::make_shared<FrameBufferUInt32>(
 		renderer->spectrumDescriptor()->samples(),
 		renderer->width(),
@@ -56,52 +61,37 @@ void OutputBuffer::clear()
 		p.second->clear();
 }
 
-#define _3D_S_B(ch, v)              \
+#define _3D_S_B(ch, v, t)           \
 	if (mInt3D[ch])                 \
 		for (int i = 0; i < 3; ++i) \
-	mInt3D[ch]->getFragment(pixelIndex, i) += v[i]
+	mInt3D[ch]->blendFragment(pixelIndex, i, v[i], t)
 
-#define _3D_S_L(ch, v)                                           \
-	for (auto pair : mLPE_3D[ch]) {                              \
-		if (pair.first.match(path)) {                            \
-			for (int i = 0; i < 3; ++i)                          \
-				pair.second->getFragment(pixelIndex, i) += v[i]; \
-		}                                                        \
+#define _3D_S_L(ch, v, t)                                           \
+	for (auto pair : mLPE_3D[ch]) {                                 \
+		if (pair.first.match(path)) {                               \
+			for (int i = 0; i < 3; ++i)                             \
+				pair.second->blendFragment(pixelIndex, i, v[i], t); \
+		}                                                           \
 	}
 
-#define _3D_S(ch, v) \
-	_3D_S_L(ch, v)   \
-	_3D_S_B(ch, v)
+#define _3D_S(ch, v, t) \
+	_3D_S_L(ch, v, t)   \
+	_3D_S_B(ch, v, t)
 
-#define _1D_S_B(ch, v) \
-	if (mInt1D[ch])    \
-	mInt1D[ch]->getFragment(pixelIndex, 0) += v
+#define _1D_S_B(ch, v, t) \
+	if (mInt1D[ch])       \
+	mInt1D[ch]->blendFragment(pixelIndex, 0, v, t)
 
-#define _1D_S_L(ch, v)                                    \
-	for (auto pair : mLPE_1D[ch]) {                       \
-		if (pair.first.match(path)) {                     \
-			pair.second->getFragment(pixelIndex, 0) += v; \
-		}                                                 \
+#define _1D_S_L(ch, v, t)                                    \
+	for (auto pair : mLPE_1D[ch]) {                          \
+		if (pair.first.match(path)) {                        \
+			pair.second->blendFragment(pixelIndex, 0, v, t); \
+		}                                                    \
 	}
 
-#define _1D_S(ch, v) \
-	_1D_S_L(ch, v)   \
-	_1D_S_B(ch, v)
-
-#define _C_S_B(ch, v)    \
-	if (mIntCounter[ch]) \
-	mIntCounter[ch]->getFragment(pixelIndex, 0) += v
-
-#define _C_S_L(ch, v)                                     \
-	for (auto pair : mLPE_Counter[ch]) {                  \
-		if (pair.first.match(path)) {                     \
-			pair.second->getFragment(pixelIndex, 0) += v; \
-		}                                                 \
-	}
-
-#define _C_S(ch, v) \
-	_C_S_L(ch, v)   \
-	_C_S_B(ch, v)
+#define _1D_S(ch, v, t) \
+	_1D_S_L(ch, v, t)   \
+	_1D_S_B(ch, v, t)
 
 void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 								const LightPath& path)
@@ -117,22 +107,29 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 	if (!isInvalid)
 		mSpectral->getFragment(pixelIndex, channel) += W * s.Radiance;
 
-	_3D_S(V_Position, W * s.P);
-	_3D_S(V_Normal, W * s.N);
-	_3D_S(V_NormalG, W * s.Geometry.N);
-	_3D_S(V_Tangent, W * s.Nx);
-	_3D_S(V_Bitangent, W * s.Ny);
-	_3D_S(V_View, W * s.Ray.Direction);
-	_3D_S(V_UVW, W * s.Geometry.UVW);
-	_3D_S(V_DPDT, W * s.Geometry.dPdT);
+	if (!(s.Flags & SPF_Background)) {
+		size_t sampleCount = 0;
+		for (size_t i = 0; i < mIntCounter[V_Samples]->channels(); ++i)
+			sampleCount = mIntCounter[V_Samples]->getFragment(pixelIndex, channel);
+		float blend = 1.0f / (sampleCount + 1.0f);
 
-	_1D_S(V_Time, W * s.Ray.Time);
-	_1D_S(V_Depth, W * std::sqrt(s.Depth2));
+		_3D_S(V_Position, s.P, blend);
+		_3D_S(V_Normal, s.N, blend);
+		_3D_S(V_NormalG, s.Geometry.N, blend);
+		_3D_S(V_Tangent, s.Nx, blend);
+		_3D_S(V_Bitangent, s.Ny, blend);
+		_3D_S(V_View, s.Ray.Direction, blend);
+		_3D_S(V_UVW, s.Geometry.UVW, blend);
+		_3D_S(V_DPDT, s.Geometry.dPdT, blend);
 
-	_1D_S(V_EntityID, W * s.EntityID);
-	_1D_S(V_MaterialID, W * s.Geometry.MaterialID);
-	_1D_S(V_EmissionID, W * s.Geometry.EmissionID);
-	_1D_S(V_DisplaceID, W * s.Geometry.DisplaceID);
+		_1D_S(V_Time, s.Ray.Time, blend);
+		_1D_S(V_Depth, std::sqrt(s.Depth2), blend);
+
+		_1D_S(V_EntityID, s.EntityID, blend);
+		_1D_S(V_MaterialID, s.Geometry.MaterialID, blend);
+		_1D_S(V_EmissionID, s.Geometry.EmissionID, blend);
+		_1D_S(V_DisplaceID, s.Geometry.DisplaceID, blend);
+	}
 
 	// LPE
 	if (!isInvalid) {
@@ -150,8 +147,7 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 								 | (isNeg ? OF_Negative : 0));
 	}
 
-	if (mIntCounter[V_Samples])
-		mIntCounter[V_Samples]->getFragment(pixelIndex, channel) += 1;
+	mIntCounter[V_Samples]->getFragment(pixelIndex, channel) += 1;
 }
 
 void OutputBuffer::pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint32 feedback)
@@ -159,12 +155,6 @@ void OutputBuffer::pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint3
 	PR_ASSERT(mIntCounter[V_Feedback], "Feedback buffer has to be available!");
 
 	mIntCounter[V_Feedback]->getFragment(pixelIndex, channel) |= feedback;
-}
-
-void OutputBuffer::pushBackgroundFragment(uint32 pixelIndex, uint32 channel)
-{
-	if (mIntCounter[V_Samples])
-		mIntCounter[V_Samples]->getFragment(pixelIndex, channel) += 1;
 }
 
 } // namespace PR

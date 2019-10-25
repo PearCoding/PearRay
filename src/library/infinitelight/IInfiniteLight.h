@@ -4,6 +4,15 @@
 #include "shader/ShadingPoint.h"
 
 namespace PR {
+struct PR_LIB_INLINE InfiniteLightEvalInput {
+	ShadingPoint Point;
+};
+
+struct PR_LIB_INLINE InfiniteLightEvalOutput {
+	float Weight;
+	float PDF_S;
+};
+
 struct PR_LIB_INLINE InfiniteLightSampleInput {
 	ShadingPoint Point;
 	Vector2f RND;
@@ -21,6 +30,9 @@ public:
 	IInfiniteLight(uint32 id, const std::string& name);
 	virtual ~IInfiniteLight() {}
 
+	virtual bool isBackground() const { return false; }
+
+	virtual void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out, const RenderTileSession& session) const = 0;
 	/*
 		Sample the light with point information.
 	*/

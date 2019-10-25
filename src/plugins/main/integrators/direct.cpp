@@ -229,6 +229,9 @@ public:
 		// Infinite Lights
 		if (!isDelta) {
 			for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+				if (light->isBackground())
+					continue;
+
 				float pdf_s_mat = 0, pdf_s_light = 0;
 				float weight = infiniteLight(session, spt,
 											 light.get(), material,
@@ -237,7 +240,7 @@ public:
 				if (weight > PR_EPSILON
 					&& pdf_s_light > PR_EPSILON
 					&& pdf_s_mat > PR_EPSILON) {
-					spt.Radiance = weight / (pdf_s_light * pdf_s_mat);
+					spt.Radiance = weight / pdf_s_light;
 					session.pushFragment(spt,
 										 currentPath.concated(
 											 LightPathToken(ST_BACKGROUND, SE_NONE)));
@@ -260,9 +263,24 @@ public:
 				session.handleHits(
 					[&](const Ray& ray) {
 						session.tile()->statistics().addBackgroundHitCount();
-						session.tile()->context()->output()->pushBackgroundFragment(ray.PixelIndex,
-																					ray.WavelengthIndex);
-						// TODO
+
+						LightPath currentPath = mLPBs.at(session.threadID())->getPath(ray.SessionIndex);
+						for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+							if (!light->isBackground())
+								continue;
+
+							// Only the ray is fixed (Should be handled better!)
+							InfiniteLightEvalInput in;
+							in.Point.Ray   = ray;
+							in.Point.Flags = SPF_Background;
+							InfiniteLightEvalOutput out;
+							light->eval(in, out, session);
+
+							in.Point.Radiance = out.Weight;
+							session.pushFragment(in.Point,
+												 currentPath.concated(
+													 LightPathToken(ST_BACKGROUND, SE_NONE)));
+						}
 					},
 					[&](const HitEntry& entry,
 						const Ray& ray, const GeometryPoint& pt,

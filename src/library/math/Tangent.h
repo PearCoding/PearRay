@@ -11,7 +11,7 @@ inline Vector3f orthogonal_tangent(const Vector3f& N)
 	if (N(2) < -PR_TANGENT_EPS)
 		return Vector3f(1, 0, 0);
 	else if (N(2) < PR_TANGENT_EPS)
-		return Eigen::Quaternionf::FromTwoVectors(Vector3f(0, 0, 1), N) * Vector3f(1, 0, 0);
+		return (Eigen::Quaternionf::FromTwoVectors(Vector3f(0, 0, 1), N) * Vector3f(1, 0, 0)).normalized();
 	else
 		return Vector3f(1, 0, 0);
 }

@@ -62,7 +62,6 @@ public:
 	inline void handleHits(Func1 nonhitFunc, Func2 hitFunc);
 
 	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
-	void pushNonHitFragment(const ShadingPoint& pt) const;
 	void pushFeedbackFragment(const Ray& ray, uint32 feedback) const;
 
 	IEntity* pickRandomLight(GeometryPoint& pt, float& pdf) const;
