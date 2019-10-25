@@ -52,6 +52,8 @@ SET(PR_Src
   material/IMaterial.cpp
   material/IMaterial.h
   material/IMaterial.inl
+  material/IMaterialData.h
+  material/IMaterialType.h
   math/Compression.h
   math/Fresnel.h
   math/Generator.h

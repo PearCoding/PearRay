@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "material/IMaterialType.h"
 
 namespace PR {
 enum ScatteringType {
@@ -24,11 +24,34 @@ struct PR_LIB_INLINE LightPathToken {
 	ScatteringEvent Event;
 	size_t LabelIndex;
 
-	inline LightPathToken(ScatteringType type, ScatteringEvent event, size_t labelIndex = 0)
+	inline LightPathToken(ScatteringType type = ST_CAMERA, ScatteringEvent event = SE_NONE, size_t labelIndex = 0)
 		: Type(type)
 		, Event(event)
 		, LabelIndex(labelIndex)
 	{
+	}
+
+	inline LightPathToken(MaterialScatteringType type, size_t labelIndex = 0)
+		: LabelIndex(labelIndex)
+	{
+		switch (type) {
+		case MST_DiffuseReflection:
+			Type  = ST_REFLECTION;
+			Event = SE_DIFFUSE;
+			break;
+		case MST_DiffuseTransmission:
+			Type  = ST_REFRACTION;
+			Event = SE_DIFFUSE;
+			break;
+		case MST_SpecularReflection:
+			Type  = ST_REFLECTION;
+			Event = SE_SPECULAR;
+			break;
+		case MST_SpecularTransmission:
+			Type  = ST_REFRACTION;
+			Event = SE_SPECULAR;
+			break;
+		}
 	}
 };
 } // namespace PR

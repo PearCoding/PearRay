@@ -36,6 +36,7 @@ public:
 		out.Weight		   = mAlbedo->eval(in.Point) * PR_1_PI;
 		out.PDF_S_Forward  = Projection::cos_hemi_pdf(NdotL);
 		out.PDF_S_Backward = Projection::cos_hemi_pdf(NdotL);
+		out.Type		   = MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

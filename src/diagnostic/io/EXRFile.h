@@ -25,6 +25,8 @@ public:
 		return mData[channel][y * mWidth + x];
 	}
 
+	void ensureRightOrder();
+
 private:
 	QString mName;
 	QVector<QVector<float>> mData;

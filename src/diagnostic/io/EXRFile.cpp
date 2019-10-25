@@ -21,6 +21,18 @@ EXRLayer::~EXRLayer()
 {
 }
 
+void EXRLayer::ensureRightOrder()
+{
+	if (mChannelNames.size() != 3)
+		return;
+
+	if (mChannelNames[0] != "B" || mChannelNames[2] != "R")
+		return;
+
+	std::swap(mChannelNames[0], mChannelNames[2]);
+	std::swap(mData[0], mData[2]);
+}
+
 //////////////////////////////////
 
 EXRFile::EXRFile()
@@ -198,5 +210,8 @@ bool EXRFile::open(const QString& filename)
 		mLayers.push_back(layer);
 	}
 
+	for (auto layer : mLayers) {
+		layer->ensureRightOrder();
+	}
 	return true;
 }

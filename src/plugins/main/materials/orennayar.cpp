@@ -62,6 +62,7 @@ public:
 	{
 		float NdotL		   = std::abs(in.Outgoing.dot(in.Point.N));
 		out.Weight		   = calc(in.Outgoing, NdotL, in.Point);
+		out.Type		   = MST_DiffuseReflection;
 		out.PDF_S_Forward  = Projection::cos_hemi_pdf(NdotL);
 		out.PDF_S_Backward = Projection::cos_hemi_pdf(NdotL);
 	}

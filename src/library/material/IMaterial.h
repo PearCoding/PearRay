@@ -1,48 +1,10 @@
 #pragma once
 
 #include "IFreezable.h"
-#include "math/SIMD.h"
-#include "shader/ShadingGroup.h"
-#include "shader/ShadingPoint.h"
-#include <memory>
+#include "IMaterialData.h"
 
 namespace PR {
 class RenderTileSession;
-
-/* A material having a diffuse path should never have a specular path and vice versa! */
-enum MaterialScatteringType : uint32 {
-	MST_DiffuseReflection = 0,
-	MST_SpecularReflection,
-	MST_DiffuseTransmission,
-	MST_SpecularTransmission
-};
-
-// Evaluation
-struct PR_LIB_INLINE MaterialEvalInput {
-	ShadingPoint Point;
-	Vector3f Outgoing;
-};
-
-struct PR_LIB_INLINE MaterialEvalOutput {
-	float Weight;
-	float PDF_S_Forward;
-	float PDF_S_Backward;
-};
-
-// Sampling
-struct PR_LIB_INLINE MaterialSampleInput {
-	ShadingPoint Point;
-	Vector2f RND;
-};
-
-struct PR_LIB_INLINE MaterialSampleOutput {
-	Vector3f Outgoing;
-	float Weight;
-	float PDF_S_Forward;
-	float PDF_S_Backward;
-	MaterialScatteringType Type;
-};
-
 class PR_LIB IMaterial : public IFreezable {
 public:
 	IMaterial(uint32 id);

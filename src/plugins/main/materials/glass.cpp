@@ -50,6 +50,11 @@ public:
 		out.Weight		   = mSpecularity->eval(in.Point);
 		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
 		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
+
+		if (in.Outgoing.dot(in.Point.N) < 0)
+			out.Type = MST_SpecularTransmission;
+		else
+			out.Type = MST_SpecularReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

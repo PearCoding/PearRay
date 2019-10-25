@@ -36,7 +36,7 @@ public:
 														 context->settings().maxRayDepth);
 	}
 
-	float infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
+	float infiniteLight(RenderTileSession& session, const ShadingPoint& spt, LightPathToken& token,
 						IInfiniteLight* infLight, IMaterial* material,
 						float& pdfS_Light, float& pdfS_Mat)
 	{
@@ -70,6 +70,7 @@ public:
 
 			pdfS_Light = outL.PDF_S;
 			pdfS_Mat   = out.PDF_S_Forward;
+			token	  = LightPathToken(out.Type);
 
 			return outL.Weight * out.Weight * cosI;
 		}
@@ -132,7 +133,7 @@ public:
 		}
 	}
 
-	float directLight(RenderTileSession& session, const ShadingPoint& spt,
+	float directLight(RenderTileSession& session, const ShadingPoint& spt, LightPathToken& token,
 					  IMaterial* material,
 					  float& pdfS_Light, float& pdfS_Mat)
 	{
@@ -179,6 +180,8 @@ public:
 			material->eval(in, out, session);
 			pdfS_Mat = out.PDF_S_Forward;
 
+			token = LightPathToken(out.Type);
+
 			return outL.Weight * out.Weight * cosI;
 		}
 	}
@@ -211,17 +214,20 @@ public:
 		if (!isDelta) {
 			const float factor = 1.0f / mLightSampleCount;
 			for (size_t i = 0; i < mLightSampleCount; ++i) {
+				LightPathToken token;
 				float pdf_s_mat = 0, pdf_s_light = 0;
-				float weight = directLight(session, spt,
+				float weight = directLight(session, spt, token,
 										   material,
 										   pdf_s_light, pdf_s_mat);
 
 				if (weight > PR_EPSILON
 					&& pdf_s_light > PR_EPSILON) {
 					spt.Radiance = factor * weight / pdf_s_light;
-					session.pushFragment(spt,
-										 currentPath.concated(
-											 LightPathToken(ST_EMISSIVE, SE_NONE)));
+
+					LightPath path = currentPath;
+					path.concat(token);
+					path.concat(LightPathToken(ST_EMISSIVE, SE_NONE));
+					session.pushFragment(spt, path);
 				}
 			}
 		}
@@ -232,8 +238,9 @@ public:
 				if (light->isBackground())
 					continue;
 
+				LightPathToken token;
 				float pdf_s_mat = 0, pdf_s_light = 0;
-				float weight = infiniteLight(session, spt,
+				float weight = infiniteLight(session, spt, token,
 											 light.get(), material,
 											 pdf_s_light, pdf_s_mat);
 
@@ -241,9 +248,11 @@ public:
 					&& pdf_s_light > PR_EPSILON
 					&& pdf_s_mat > PR_EPSILON) {
 					spt.Radiance = weight / pdf_s_light;
-					session.pushFragment(spt,
-										 currentPath.concated(
-											 LightPathToken(ST_BACKGROUND, SE_NONE)));
+
+					LightPath path = currentPath;
+					path.concat(token);
+					path.concat(LightPathToken(ST_BACKGROUND, SE_NONE));
+					session.pushFragment(spt, path);
 				}
 			}
 		}
