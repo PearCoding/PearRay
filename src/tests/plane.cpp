@@ -1,4 +1,5 @@
 #include "geometry/Plane.h"
+#include "geometry/CollisionData.h"
 
 #include "Test.h"
 

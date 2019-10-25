@@ -149,42 +149,50 @@ public:
 	}
 
 	// User
-	inline void registerLPEChannel(Variable1D var,
+	inline size_t registerLPEChannel(Variable1D var,
 								   const LightPathExpression& expr,
 								   const std::shared_ptr<FrameBufferFloat>& output)
 	{
 		PR_ASSERT(expr.isValid(), "Given expression has to be valid");
 		PR_ASSERT(output, "Given output has to be valid");
 		PR_ASSERT(output->channels() == 1, "Invalid channel count");
+		size_t id = mLPE_1D[var].size();
 		mLPE_1D[var].emplace_back(std::make_pair(expr, output));
+		return id;
 	}
 
-	inline void registerLPEChannel(VariableCounter var,
+	inline size_t registerLPEChannel(VariableCounter var,
 								   const LightPathExpression& expr,
 								   const std::shared_ptr<FrameBufferUInt32>& output)
 	{
 		PR_ASSERT(expr.isValid(), "Given expression has to be valid");
 		PR_ASSERT(output, "Given output has to be valid");
 		PR_ASSERT(output->channels() == 1, "Invalid channel count");
+		size_t id = mLPE_Counter[var].size();
 		mLPE_Counter[var].emplace_back(std::make_pair(expr, output));
+		return id;
 	}
 
-	inline void registerLPEChannel(Variable3D var,
+	inline size_t registerLPEChannel(Variable3D var,
 								   const LightPathExpression& expr,
 								   const std::shared_ptr<FrameBufferFloat>& output)
 	{
 		PR_ASSERT(expr.isValid(), "Given expression has to be valid");
 		PR_ASSERT(output, "Given output has to be valid");
 		PR_ASSERT(output->channels() == 3, "Invalid channel count");
+		size_t id = mLPE_3D[var].size();
 		mLPE_3D[var].emplace_back(std::make_pair(expr, output));
+		return id;
 	}
 
-	inline void registerLPEChannel(const LightPathExpression& expr,
+	inline size_t registerLPEChannel(const LightPathExpression& expr,
 								   const std::shared_ptr<FrameBufferFloat>& output)
 	{
 		PR_ASSERT(expr.isValid(), "Given expression has to be valid");
 		PR_ASSERT(output, "Given output has to be valid");
+		size_t id = mLPE_Spectral.size();
 		mLPE_Spectral.emplace_back(std::make_pair(expr, output));
+		return id;
 	}
 
 private:

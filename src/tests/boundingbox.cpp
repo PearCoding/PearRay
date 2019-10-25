@@ -1,4 +1,5 @@
 #include "geometry/BoundingBox.h"
+#include "geometry/CollisionData.h"
 #include "geometry/Plane.h"
 
 #include "Test.h"

@@ -42,6 +42,8 @@ private:
 	struct FileSpectral {
 		std::string Name;
 		bool Compress;
+		int LPE = -1;
+		std::string LPE_S;
 	};
 
 	std::list<File> mFiles;

@@ -74,26 +74,49 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 	mImageWriter.init(renderer);
 	std::shared_ptr<OutputBuffer> output = renderer->output();
 
-	for (const File& file : mFiles) {
-		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {
-			if (!output->getChannel(cs3d.Variable))
-				output->registerChannel(cs3d.Variable,
-										std::make_shared<FrameBufferFloat>(
-											3, renderer->width(), renderer->height(), 0.0f));
+	for (File& file : mFiles) {
+		for (IM_ChannelSetting3D& cs3d : file.Settings3D) {
+			if (!output->getChannel(cs3d.Variable)) {
+				auto ptr = std::make_shared<FrameBufferFloat>(
+					3, renderer->width(), renderer->height(), 0.0f);
+
+				if (cs3d.LPE_S.empty())
+					output->registerChannel(cs3d.Variable, ptr);
+				else
+					cs3d.LPE = output->registerLPEChannel(cs3d.Variable, LightPathExpression(cs3d.LPE_S), ptr);
+			}
 		}
 
-		for (const IM_ChannelSetting1D& cs1d : file.Settings1D) {
-			if (!output->getChannel(cs1d.Variable))
-				output->registerChannel(cs1d.Variable,
-										std::make_shared<FrameBufferFloat>(
-											1, renderer->width(), renderer->height(), 0));
+		for (IM_ChannelSetting1D& cs1d : file.Settings1D) {
+			if (!output->getChannel(cs1d.Variable)) {
+				auto ptr = std::make_shared<FrameBufferFloat>(
+					1, renderer->width(), renderer->height(), 0);
+
+				if (cs1d.LPE_S.empty())
+					output->registerChannel(cs1d.Variable, ptr);
+				else
+					cs1d.LPE = output->registerLPEChannel(cs1d.Variable, LightPathExpression(cs1d.LPE_S), ptr);
+			}
 		}
 
-		for (const IM_ChannelSettingCounter& cs : file.SettingsCounter) {
-			if (!output->getChannel(cs.Variable))
-				output->registerChannel(cs.Variable,
-										std::make_shared<FrameBufferUInt32>(
-											1, renderer->width(), renderer->height(), 0));
+		for (IM_ChannelSettingCounter& cs : file.SettingsCounter) {
+			if (!output->getChannel(cs.Variable)) {
+				auto ptr = std::make_shared<FrameBufferUInt32>(
+					1, renderer->width(), renderer->height(), 0);
+
+				if (cs.LPE_S.empty())
+					output->registerChannel(cs.Variable, ptr);
+				else
+					cs.LPE = output->registerLPEChannel(cs.Variable, LightPathExpression(cs.LPE_S), ptr);
+			}
+		}
+
+		for (IM_ChannelSettingSpec& ss : file.SettingsSpectral) {
+			auto ptr = std::make_shared<FrameBufferFloat>(
+				output->getSpectralChannel()->channels(), renderer->width(), renderer->height(), 0);
+
+			if (!ss.LPE_S.empty())
+				ss.LPE = output->registerLPEChannel(LightPathExpression(ss.LPE_S), ptr);
 		}
 	}
 }
@@ -174,6 +197,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 						DL::Data colorD		  = channel.getFromKey("color");
 						DL::Data gammaD		  = channel.getFromKey("gamma");
 						DL::Data mapperD	  = channel.getFromKey("mapper");
+						DL::Data lpeD		  = channel.getFromKey("lpe");
 
 						if (typeD.type() != DL::Data::T_String)
 							continue;
@@ -221,12 +245,26 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								tmm = TMM_Normalized;
 						}
 
+						std::string lpe = "";
+						if (lpeD.type() == DL::Data::T_String) {
+							lpe = lpeD.getString();
+							if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
+								PR_LOG(L_ERROR) << "Invalid LPE " << lpe << ". Skipping entry" << std::endl;
+								lpe = "";
+							}
+						}
+
 						if (type == "rgb" || type == "color") {
 							IM_ChannelSettingSpec spec;
 							spec.Elements = 0; //TODO
 							spec.TCM	  = tcm;
 							spec.TGM	  = tgm;
 							spec.TMM	  = tmm;
+							spec.LPE_S	= lpe;
+							spec.LPE	  = -1;
+
+							if (!lpe.empty())
+								spec.Name = spec.Name + "[" + lpe + "]";
 							file.SettingsSpectral.push_back(spec);
 						} else {
 							OutputBuffer::Variable3D var3D			 = typeToVariable3D(type);
@@ -238,6 +276,8 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								spec.Elements = 0; //TODO
 								spec.TMM	  = tmm;
 								spec.Variable = var3D;
+								spec.LPE_S	= lpe;
+								spec.LPE	  = -1;
 
 								switch (var3D) {
 								default:
@@ -283,11 +323,19 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 									break;
 								}
 
+								if (!lpe.empty()) {
+									spec.Name[0] = spec.Name[0] + "[" + lpe + "]";
+									spec.Name[1] = spec.Name[1] + "[" + lpe + "]";
+									spec.Name[2] = spec.Name[2] + "[" + lpe + "]";
+								}
+
 								file.Settings3D.push_back(spec);
 							} else if (var1D != OutputBuffer::V_1D_COUNT) {
 								IM_ChannelSetting1D spec;
 								spec.TMM	  = tmm;
 								spec.Variable = var1D;
+								spec.LPE_S	= lpe;
+								spec.LPE	  = -1;
 
 								switch (var1D) {
 								default:
@@ -310,11 +358,16 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 									spec.Name = "displace_id";
 									break;
 								}
+
+								if (!lpe.empty())
+									spec.Name = spec.Name + "[" + lpe + "]";
 								file.Settings1D.push_back(spec);
 							} else if (varCounter != OutputBuffer::V_COUNTER_COUNT) {
 								IM_ChannelSettingCounter spec;
 								spec.TMM	  = tmm;
 								spec.Variable = varCounter;
+								spec.LPE_S	= lpe;
+								spec.LPE	  = -1;
 
 								switch (varCounter) {
 								default:
@@ -325,6 +378,9 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 									spec.Name = "feedback";
 									break;
 								}
+
+								if (!lpe.empty())
+									spec.Name = spec.Name + "[" + lpe + "]";
 								file.SettingsCounter.push_back(spec);
 							} else {
 								PR_LOG(L_ERROR) << "Unknown channel type " << type;
@@ -337,10 +393,21 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 			} else if (entry.id() == "output_spectral") {
 				DL::Data nameD	 = entry.getFromKey("name");
 				DL::Data compressD = entry.getFromKey("compress");
+				DL::Data lpeD	  = entry.getFromKey("lpe");
 				if (nameD.type() == DL::Data::T_String) {
 					FileSpectral spec;
 					spec.Name	 = nameD.getString();
 					spec.Compress = compressD.type() == DL::Data::T_Bool ? compressD.getBool() : true;
+					spec.LPE_S	= "";
+					spec.LPE	  = -1;
+
+					if (lpeD.type() == DL::Data::T_String) {
+						spec.LPE_S = lpeD.getString();
+						if (!spec.LPE_S.empty() && !LightPathExpression(spec.LPE_S).isValid()) {
+							PR_LOG(L_ERROR) << "Invalid LPE " << spec.LPE_S << ". Skipping spectral file" << std::endl;
+							spec.LPE_S = "";
+						}
+					}
 					mSpectralFiles.push_back(spec);
 				}
 			}
@@ -376,7 +443,12 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 
 	for (const FileSpectral& f : mSpectralFiles) {
 		const std::string filename = dir + "/" + f.Name + ".spec";
-		if (!mImageWriter.save_spectral(filename, renderer->output()->getSpectralChannel(), f.Compress))
+
+		auto channel = renderer->output()->getSpectralChannel();
+		if (f.LPE >= 0)
+			channel = renderer->output()->getSpectralChannel(f.LPE);
+
+		if (!mImageWriter.save_spectral(filename, channel, f.Compress))
 			PR_LOG(L_ERROR) << "Couldn't save spectral file " << filename << std::endl;
 
 		if (force)

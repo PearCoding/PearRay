@@ -33,8 +33,24 @@ EXRFile::~EXRFile()
 {
 }
 
+static QString escapeString(const QString& str)
+{
+	int s = str.indexOf('[');
+	int e = str.lastIndexOf(']');
+
+	if (s < 0 || e < 0)
+		return str;
+	else {
+		QString tmp = str;
+		tmp.remove(s, e - s + 1);
+		return tmp;
+	}
+}
+
 bool EXRFile::open(const QString& filename)
 {
+	static const QString SPEC_NAME = "Color";
+
 	using namespace OPENEXR_IMF_NAMESPACE;
 	using namespace IMATH_NAMESPACE;
 
@@ -73,13 +89,13 @@ bool EXRFile::open(const QString& filename)
 		if (channels.find("B") != channels.end())
 			list << "B";
 
-		layerMap["Color"] = list;
+		layerMap[SPEC_NAME] = list;
 	}
 
 	for (auto i = channels.begin(); i != channels.end(); ++i) {
-		QString name = i.name();
+		QString name = escapeString(i.name());
 		if (name != "R" && name != "G" && name != "B" && !name.contains('.')) {
-			layerMap[name] = QStringList(name);
+			layerMap[i.name()] = QStringList(i.name());
 		}
 	}
 
@@ -88,6 +104,10 @@ bool EXRFile::open(const QString& filename)
 	for (std::set<string>::const_iterator i = layers.begin(); i != layers.end(); ++i) {
 		ChannelList::ConstIterator layerBegin, layerEnd;
 		channels.channelsInLayer(*i, layerBegin, layerEnd);
+
+		// Some single layer can be added twice, we filter them out!
+		if (!escapeString(layerBegin.name()).contains('.'))
+			continue;
 
 		QStringList list;
 		for (ChannelList::ConstIterator j = layerBegin; j != layerEnd; ++j) {
@@ -113,11 +133,12 @@ bool EXRFile::open(const QString& filename)
 		size_t k = 0;
 		for (QString ch : it.value()) {
 			QString plainChannelName;
-			int pointPos = ch.indexOf('.');
+			QString ech  = escapeString(ch);
+			int pointPos = ech.indexOf('.');
 			if (pointPos < 0) {
 				plainChannelName = ch;
 			} else {
-				plainChannelName = ch.mid(pointPos + 1);
+				plainChannelName = ch.mid((ch.size() - ech.size()) + pointPos + 1);
 			}
 
 			layer->channelNames()[k] = plainChannelName;

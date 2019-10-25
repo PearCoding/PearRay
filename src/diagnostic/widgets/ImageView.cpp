@@ -9,7 +9,7 @@
 
 constexpr int BAR_HEIGHT = 20;
 constexpr int BAR_POS_W  = 100;
-constexpr int MIN_S		 = 5;
+constexpr int MIN_S		 = 400;
 
 constexpr float PAN_W  = 0.4f;
 constexpr float ZOOM_W = 1.05f;
@@ -80,7 +80,11 @@ void ImageView::exportImage(const QString& path) const
 
 QSize ImageView::minimumSizeHint() const
 {
-	return QSize(MIN_S, BAR_HEIGHT + MIN_S);
+	if (!mImage.isNull()) {
+		return QSize(qMin(mImage.width(), MIN_S), BAR_HEIGHT + qMin(mImage.height(), MIN_S));
+	} else {
+		return QSize(MIN_S, BAR_HEIGHT + MIN_S);
+	}
 }
 
 QSize ImageView::sizeHint() const
