@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 	QSurfaceFormat::setDefaultFormat(format);
 
 	QPixmap pixmap(":/splash.svg");
-	QSplashScreen splash(pixmap, Qt::WindowStaysOnTopHint);
+	QSplashScreen splash(pixmap);
 	splash.show();
 
 	// Main Window
@@ -51,6 +51,7 @@ int main(int argc, char** argv)
 	w.show();
 
 	splash.repaint();
+	splash.raise();
 	app.processEvents();
 
 	if (!parser.positionalArguments().empty()) {
@@ -64,6 +65,7 @@ int main(int argc, char** argv)
 		}
 	}
 
+	w.raise();
 	splash.finish(&w);
 	return app.exec();
 }
