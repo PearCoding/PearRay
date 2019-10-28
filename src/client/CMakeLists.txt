@@ -18,12 +18,10 @@ IF(ASIO_FOUND)
 ENDIF()
 
 add_executable(pearray ${PR_Src} ${PR_Hdr})
-target_link_libraries(pearray pr_lib)
-target_link_libraries(pearray pr_lib_utils)
+target_link_libraries(pearray PRIVATE pr_lib)
+target_link_libraries(pearray PRIVATE pr_lib_utils)
+#target_link_libraries(pearray PRIVATE Boost::program_options)
 
-IF(ASIO_FOUND)
-	target_link_libraries(pearray pr_lib_network)
-ENDIF()
 
 set_target_properties(pearray PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(pearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

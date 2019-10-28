@@ -320,7 +320,7 @@ public:
 	{
 		const Registry& reg = env.registry();
 
-		size_t lightsamples = reg.getByGroup<size_t>(RG_INTEGRATOR, "direct/light/sample_count", 4);
+		size_t lightsamples = (size_t)reg.getByGroup<uint32>(RG_INTEGRATOR, "direct/light/sample_count", 4);
 
 		return std::make_shared<IntDirect>(lightsamples);
 	}

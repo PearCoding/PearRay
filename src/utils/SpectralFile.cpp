@@ -3,7 +3,9 @@
 #include "spectral/SpectrumDescriptor.h"
 
 #include <boost/iostreams/device/file.hpp>
+#ifdef PR_COMPRESS_SPEC_FILES
 #include <boost/iostreams/filter/zlib.hpp>
+#endif
 #include <boost/iostreams/filtering_stream.hpp>
 #include <stdexcept>
 
@@ -81,8 +83,10 @@ void SpectralFile::save(const std::string& path, bool compress) const
 
 	namespace io = boost::iostreams;
 	io::filtering_ostream out;
+#ifdef PR_COMPRESS_SPEC_FILES
 	if (compress)
 		out.push(io::zlib_compressor());
+#endif
 	out.push(io::file_sink(path));
 
 	out.put('P').put('R').put('4').put('2');
@@ -113,8 +117,10 @@ SpectralFile SpectralFile::open(const std::string& path, bool compressed)
 {
 	namespace io = boost::iostreams;
 	io::filtering_istream in;
+#ifdef PR_COMPRESS_SPEC_FILES
 	if (compressed)
 		in.push(io::zlib_decompressor());
+#endif
 	in.push(io::file_source(path));
 
 	char c1, c2, c3, c4;

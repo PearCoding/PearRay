@@ -917,7 +917,7 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 
 	switch (value.type()) {
 	case DL::Data::T_Integer:
-		varAddReg(reg, regGroup, uuid, hasID, key, value.getInt());
+		varAddReg<int64>(reg, regGroup, uuid, hasID, key, value.getInt());
 		break;
 	case DL::Data::T_Float:
 		varAddReg(reg, regGroup, uuid, hasID, key, value.getFloat());

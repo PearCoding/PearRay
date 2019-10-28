@@ -6,7 +6,7 @@
 #include "renderer/RenderContext.h"
 
 namespace PR {
-class PR_LIB StandardCamera : public ICamera {
+class StandardCamera : public ICamera {
 public:
 	ENTITY_CLASS
 

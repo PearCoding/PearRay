@@ -7,7 +7,7 @@
 
 namespace PR {
 class RenderContext;
-struct ShadingPoint;
+class ShadingPoint;
 class LightPath;
 
 class PR_LIB OutputBuffer {

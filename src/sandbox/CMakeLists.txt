@@ -13,19 +13,11 @@ SET(PR_Main_Hdr
 SET(PR_Hdr ${PR_Main_Hdr}
 )
 
-if(OSL_FOUND)
-  include_directories(../osl)
-	set(DEFS "${DEFS};WITH_OSL")
-endif()
-	
 add_executable(pr_sandbox ${PR_Src} ${PR_Hdr})
-target_link_libraries(pr_sandbox pr_lib)
-target_link_libraries(pr_sandbox ${DL_TARGET})
-target_link_libraries(pr_sandbox ${OIIO_LIBRARIES})
-
-if(OSL_FOUND)
-	target_link_libraries(pr_sandbox pr_lib_osl)
-endif()
+target_link_libraries(pr_sandbox PRIVATE pr_lib)
+#target_link_libraries(pr_sandbox PRIVATE Boost::program_options)
+target_link_libraries(pr_sandbox PRIVATE ${DL_TARGET})
+target_link_libraries(pr_sandbox PRIVATE ${OIIO_LIBRARIES})
 
 set_target_properties(pr_sandbox PROPERTIES VERSION ${PR_Version})
 target_compile_definitions(pr_sandbox PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")

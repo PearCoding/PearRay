@@ -5,7 +5,7 @@ PROJECT(PearRay)
 #SETS
 SET(VENDOR "PearRay project 2015-2020")
 SET(VERSION_MAJOR 0)
-SET(VERSION_MINOR 11)
+SET(VERSION_MINOR 12)
 SET(VERSION_HEX 0x0011)
 SET(PR_Version ${VERSION_MAJOR}.${VERSION_MINOR})
 
@@ -44,6 +44,7 @@ option(PR_WITH_EXTRA_PLUGINS "Compile extra plugins." ON)
 option(PR_WITH_DIAGNOSTIC "Compile the additional PearRayDiagnostic Viewer based on the QT library. Useful if no exr viewer is available" ON)
 option(PR_BUILD_TESTS "Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON "Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
+option(PR_COMPRESS_SPEC_FILES "Compress spectral files with boost::zlib" ON)
 option(PR_GENERATE_COVERAGE "Generate coverage for debug builds - Currently only supported with the GCC compiler." ON)
 option(PR_BUILD_DOCUMENTATION "Build documentation with doxygen." ON)
 option(PR_CPP_CHECK "Do style check with cpplint." OFF)
@@ -61,9 +62,9 @@ option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(Boost_USE_MULTITHREADED ON)
-#set(BOOST_ALL_DYN_LINK ON)
 
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
+#add_definitions(-DBOOST_ALL_NO_LIB)
 
 IF(PR_WITH_DIAGNOSTIC)
 	find_package(Qt5Widgets)

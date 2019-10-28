@@ -189,11 +189,11 @@ store_into_container(const simdpp::uint32<N>& indices,
 // -> Smart optimization will deduce nested if clausels
 
 // ---- extract
-template <unsigned int K>
+template <size_t K>
 class runtime_extract_H {
 public:
 	template <class... ArgTypes>
-	inline auto operator()(unsigned int i, ArgTypes&&... args)
+	inline auto operator()(size_t i, ArgTypes&&... args)
 	{
 		if (i == K)
 			return simdpp::extract<K>(std::forward<ArgTypes>(args)...);
@@ -206,7 +206,7 @@ template <>
 class runtime_extract_H<0> {
 public:
 	template <class... ArgTypes>
-	inline auto operator()(unsigned int i, ArgTypes&&... args)
+	inline auto operator()(size_t i, ArgTypes&&... args)
 	{
 		if (i == 0)
 			return simdpp::extract<0>(std::forward<ArgTypes>(args)...);
@@ -226,11 +226,11 @@ inline uint32 extract(size_t i, const vuint32& v)
 }
 
 // ------ insert
-template <unsigned int K>
+template <size_t K>
 class runtime_insert_H {
 public:
 	template <class... ArgTypes>
-	inline auto operator()(unsigned int i, ArgTypes&&... args)
+	inline auto operator()(size_t i, ArgTypes&&... args)
 	{
 		if (i == K)
 			return simdpp::insert<K>(std::forward<ArgTypes>(args)...);
@@ -243,7 +243,7 @@ template <>
 class runtime_insert_H<0> {
 public:
 	template <class... ArgTypes>
-	inline auto operator()(unsigned int i, ArgTypes&&... args)
+	inline auto operator()(size_t i, ArgTypes&&... args)
 	{
 		if (i == 0)
 			return simdpp::insert<0>(std::forward<ArgTypes>(args)...);

@@ -162,9 +162,9 @@ SET(PR_Src
 
 add_library(pr_lib SHARED ${PR_Src})
 if(NOT WIN32)
-  target_link_libraries(pr_lib ${CMAKE_DL_LIBS} pthread)
+  target_link_libraries(pr_lib PUBLIC ${CMAKE_DL_LIBS} pthread)
 endif()
-target_link_libraries(pr_lib ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+target_link_libraries(pr_lib PUBLIC ${TBB_LIBRARIES})
 
 set_target_properties(pr_lib PROPERTIES VERSION ${PR_Version})
 set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)

@@ -24,7 +24,7 @@ public:
 		mRadius = f;
 	}
 
-	inline float volume() const { return (PR_PI * 4.0 / 3) * mRadius * mRadius * mRadius; }
+	inline float volume() const { return (PR_PI * 4.0f / 3) * mRadius * mRadius * mRadius; }
 	inline float surfaceArea() const { return PR_PI * 4 * mRadius * mRadius; }
 
 	inline bool isValid() const { return mRadius > 0; }

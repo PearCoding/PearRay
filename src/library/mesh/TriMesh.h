@@ -61,7 +61,7 @@ public:
 	void build(const std::string& container_file, bool loadOnly = false);
 	inline bool isBuilt() const { return mKDTree != nullptr; }
 
-	float faceArea(uint32 f, const Eigen::Affine3f& transform) const;
+	float faceArea(size_t f, const Eigen::Affine3f& transform) const;
 	float surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const;
 	float surfaceArea(const Eigen::Affine3f& transform) const;
 

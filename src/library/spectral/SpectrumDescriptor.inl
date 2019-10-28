@@ -26,7 +26,7 @@ inline SpectrumDescriptor::SpectrumDescriptor(const std::vector<float>& waveleng
 	PR_ASSERT(wavelengths.size() == lfactors.size(), "Amount of wavelengths and luminous factors have to be the same.");
 }
 
-inline uint32 SpectrumDescriptor::samples() const
+inline size_t SpectrumDescriptor::samples() const
 {
 	return mWavelengths.size();
 }
@@ -41,27 +41,27 @@ inline const std::vector<float>& SpectrumDescriptor::getLuminousFactors() const
 	return mLuminousFactor;
 }
 
-inline float SpectrumDescriptor::wavelength(uint32 index) const
+inline float SpectrumDescriptor::wavelength(size_t index) const
 {
 	return mWavelengths.at(index);
 }
 
-inline void SpectrumDescriptor::setWavelength(uint32 index, float lambda)
+inline void SpectrumDescriptor::setWavelength(size_t index, float lambda)
 {
 	mWavelengths[index] = lambda;
 }
 
-inline float SpectrumDescriptor::luminousFactor(uint32 index) const
+inline float SpectrumDescriptor::luminousFactor(size_t index) const
 {
 	return mLuminousFactor.at(index);
 }
 
-inline void SpectrumDescriptor::setLuminousFactor(uint32 index, float factor)
+inline void SpectrumDescriptor::setLuminousFactor(size_t index, float factor)
 {
 	mLuminousFactor[index] = factor;
 }
 
-inline float SpectrumDescriptor::integralDelta(uint32 i) const
+inline float SpectrumDescriptor::integralDelta(size_t i) const
 {
 	PR_ASSERT(i < samples(), "Invalid integral delta call");
 

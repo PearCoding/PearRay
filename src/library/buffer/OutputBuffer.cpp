@@ -80,12 +80,12 @@ void OutputBuffer::clear()
 
 #define _1D_S_B(ch, v, t) \
 	if (mInt1D[ch])       \
-	mInt1D[ch]->blendFragment(pixelIndex, 0, v, t)
+	mInt1D[ch]->blendFragment(pixelIndex, 0, static_cast<float>(v), t)
 
 #define _1D_S_L(ch, v, t)                                    \
 	for (auto pair : mLPE_1D[ch]) {                          \
 		if (pair.first.match(path)) {                        \
-			pair.second->blendFragment(pixelIndex, 0, v, t); \
+			pair.second->blendFragment(pixelIndex, 0, static_cast<float>(v), t); \
 		}                                                    \
 	}
 

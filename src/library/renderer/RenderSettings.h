@@ -45,22 +45,22 @@ public:
 
 	inline uint32 cropWidth() const
 	{
-		return (cropMaxX - cropMinX) * filmWidth;
+		return static_cast<uint32>((cropMaxX - cropMinX) * filmWidth);
 	}
 
 	inline uint32 cropHeight() const
 	{
-		return (cropMaxY - cropMinY) * filmHeight;
+		return static_cast<uint32>((cropMaxY - cropMinY) * filmHeight);
 	}
 
 	inline uint32 cropOffsetX() const
 	{
-		return cropMinX * filmWidth;
+		return static_cast<uint32>(cropMinX * filmWidth);
 	}
 
 	inline uint32 cropOffsetY() const
 	{
-		return cropMinY * filmHeight;
+		return static_cast<uint32>(cropMinY * filmHeight);
 	}
 };
 } // namespace PR

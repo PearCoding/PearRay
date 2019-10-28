@@ -22,18 +22,18 @@ public:
 	inline explicit SpectrumDescriptor(const std::vector<float>& wavelengths);
 	inline SpectrumDescriptor(const std::vector<float>& wavelengths, const std::vector<float>& lfactors);
 
-	inline uint32 samples() const;
+	inline size_t samples() const;
 
 	inline const std::vector<float>& getWavelengths() const;
 	inline const std::vector<float>& getLuminousFactors() const;
 
-	inline float wavelength(uint32 index) const;
-	inline void setWavelength(uint32 index, float lambda);
+	inline float wavelength(size_t index) const;
+	inline void setWavelength(size_t index, float lambda);
 
-	inline float luminousFactor(uint32 index) const;
-	inline void setLuminousFactor(uint32 index, float lambda);
+	inline float luminousFactor(size_t index) const;
+	inline void setLuminousFactor(size_t index, float lambda);
 
-	inline float integralDelta(uint32 index) const;
+	inline float integralDelta(size_t index) const;
 
 	inline bool isTriplet() const;
 	inline bool isStandardSpectral() const;

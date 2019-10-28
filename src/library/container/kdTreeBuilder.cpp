@@ -15,20 +15,20 @@ enum Side {
 struct kdNodeBuilder {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	kdNodeBuilder(uint32 id, bool leaf, const BoundingBox& b)
+	kdNodeBuilder(size_t id, bool leaf, const BoundingBox& b)
 		: id(id)
 		, isLeaf(leaf)
 		, boundingBox(b)
 	{
 	}
 
-	uint32 id;
+	size_t id;
 	const bool isLeaf;
 	BoundingBox boundingBox;
 };
 
 struct kdInnerNodeBuilder : public kdNodeBuilder {
-	kdInnerNodeBuilder(uint32 id, uint8 axis, float sp,
+	kdInnerNodeBuilder(size_t id, uint8 axis, float sp,
 					   kdNodeBuilder* l, kdNodeBuilder* r, const BoundingBox& b)
 		: kdNodeBuilder(id, false, b)
 		, axis(axis)
@@ -496,7 +496,7 @@ void kdTreeBuilder::build(size_t size)
 		return;
 	}
 
-	mMaxDepth = std::ceil(8 + 3 * 1.5 * std::log2(size));
+	mMaxDepth = (uint32)std::ceil(8 + 3 * 1.5 * std::log2(size));
 
 	std::vector<Primitive*> primitives;		// Will be cleared to save memory
 	std::vector<Primitive*> primitivesCopy; // Copy to be deleted later

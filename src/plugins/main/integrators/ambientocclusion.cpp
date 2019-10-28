@@ -77,7 +77,7 @@ public:
 	std::shared_ptr<IIntegrator> create(uint32, uint32, const Environment& env) override
 	{
 		const Registry& reg = env.registry();
-		size_t sample_count = reg.getByGroup<size_t>(RG_INTEGRATOR, "ao/sample_count", 10);
+		size_t sample_count = (size_t)reg.getByGroup<uint32>(RG_INTEGRATOR, "ao/sample_count", 10);
 
 		return std::make_shared<IntAO>(sample_count);
 	}

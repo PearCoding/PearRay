@@ -9,7 +9,7 @@
 
 namespace PR {
 // Internal
-Spectrum::Spectrum_Internal::Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data)
+Spectrum::Spectrum_Internal::Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float* data)
 	: Descriptor(descriptor)
 	, Start(start)
 	, End(end)
@@ -18,7 +18,7 @@ Spectrum::Spectrum_Internal::Spectrum_Internal(const std::shared_ptr<SpectrumDes
 {
 }
 
-Spectrum::Spectrum_Internal::Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end)
+Spectrum::Spectrum_Internal::Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end)
 	: Descriptor(descriptor)
 	, Start(start)
 	, End(end)
@@ -46,18 +46,18 @@ Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, float 
 {
 }
 
-Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end)
+Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end)
 	: mInternal(std::make_shared<Spectrum_Internal>(descriptor, start, end))
 {
 }
 
-Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float initial)
+Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float initial)
 	: Spectrum(descriptor, start, end)
 {
 	fill(initial);
 }
 
-Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data)
+Spectrum::Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float* data)
 	: mInternal(std::make_shared<Spectrum_Internal>(descriptor, start, end, data))
 {
 }
@@ -72,14 +72,14 @@ Spectrum Spectrum::clone() const
 constexpr float CANDELA = 683.002f;
 void Spectrum::weightPhotometric()
 {
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) * descriptor()->luminousFactor(i + spectralStart()) * CANDELA);
 }
 
 float Spectrum::luminousFlux_nm() const
 {
 	float flux = 0;
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		flux += value(i) * descriptor()->luminousFactor(i + spectralStart()) * descriptor()->integralDelta(i + spectralStart());
 
 	return flux * CANDELA;
@@ -109,7 +109,7 @@ Spectrum Spectrum::blackbody(const std::shared_ptr<SpectrumDescriptor>& desc, fl
 {
 	SI::TemperatureU<long double, 0> T(temp);
 	Spectrum spec(desc);
-	for (uint32 i = 0; i < desc->samples(); ++i) {
+	for (size_t i = 0; i < desc->samples(); ++i) {
 		long double lambda = desc->wavelength(i) * PR_NM_TO_M_F;
 		spec.setValue(i, static_cast<float>(
 							 (long double)blackbody_eq(

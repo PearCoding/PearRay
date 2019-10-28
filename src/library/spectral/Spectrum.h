@@ -11,9 +11,9 @@ class PR_LIB Spectrum {
 public:
 	explicit Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor);
 	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, float initial);
-	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end);
-	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float initial);
-	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float initial);
+	Spectrum(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float* data);
 
 	virtual ~Spectrum() = default;
 
@@ -27,22 +27,22 @@ public:
 	Spectrum clone() const;
 
 	// Simple Properties
-	inline uint32 samples() const;
-	inline uint32 spectralStart() const;
-	inline uint32 spectralEnd() const;
+	inline size_t samples() const;
+	inline size_t spectralStart() const;
+	inline size_t spectralEnd() const;
 
 	inline std::shared_ptr<SpectrumDescriptor> descriptor() const;
 	inline bool isExternal() const;
 
 	// Simple Access
-	inline void setValue(uint32 index, float v);
-	inline float value(uint32 index) const;
+	inline void setValue(size_t index, float v);
+	inline float value(size_t index) const;
 
-	inline const float& operator[](uint32 index) const;
-	inline float& operator[](uint32 index);
+	inline const float& operator[](size_t index) const;
+	inline float& operator[](size_t index);
 
-	inline const float& operator()(uint32 index) const;
-	inline float& operator()(uint32 index);
+	inline const float& operator()(size_t index) const;
+	inline float& operator()(size_t index);
 
 	inline float* ptr();
 	inline const float* c_ptr() const;
@@ -62,7 +62,7 @@ public:
 
 	// Fill Functions
 	inline void fill(float v);
-	inline void fill(uint32 si, uint32 ei, float v);
+	inline void fill(size_t si, size_t ei, float v);
 	inline void clear();
 
 	// Apply Functions
@@ -104,7 +104,7 @@ public:
 	inline Spectrum(const T& slo)
 		: Spectrum(slo.descriptor(), slo.spectralStart(), slo.spectralEnd())
 	{
-		for (uint32 i = 0; i < samples(); ++i) {
+		for (size_t i = 0; i < samples(); ++i) {
 			setValue(i, slo(i));
 		}
 	}
@@ -135,13 +135,13 @@ public:
 private:
 	struct Spectrum_Internal {
 		std::shared_ptr<SpectrumDescriptor> Descriptor;
-		uint32 Start;
-		uint32 End;
+		size_t Start;
+		size_t End;
 		bool External;
 		float* Data;
 
-		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end, float* data);
-		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, uint32 start, uint32 end);
+		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float* data);
+		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end);
 		~Spectrum_Internal();
 	};
 	std::shared_ptr<Spectrum_Internal> mInternal;

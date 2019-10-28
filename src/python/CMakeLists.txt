@@ -26,14 +26,10 @@ SET(Hdr
 
 include_directories(../utils)
 
-
-add_library(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray PRIVATE pybind11::module)
+pybind11_add_module(pypearray SHARED ${Src} ${Hdr})
 target_link_libraries(pypearray PRIVATE pr_lib)
 target_link_libraries(pypearray PRIVATE pr_lib_utils)
 set_target_properties(pypearray PROPERTIES VERSION ${PR_Version})
-set_target_properties(pypearray PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
-                                         SUFFIX "${PYTHON_MODULE_EXTENSION}")
 set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "")# Disable suffix for this target
 target_compile_definitions(pypearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 

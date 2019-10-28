@@ -1,7 +1,9 @@
 #include "SpecFile.h"
 
 #include <boost/iostreams/device/file.hpp>
+#ifdef PR_COMPRESS_SPEC_FILES
 #include <boost/iostreams/filter/zlib.hpp>
+#endif
 #include <boost/iostreams/filtering_stream.hpp>
 
 SpecFile::SpecFile()
@@ -19,7 +21,9 @@ bool SpecFile::open(const QString& file)
 {
 	namespace io = boost::iostreams;
 	io::filtering_istream in;
+#ifdef PR_COMPRESS_SPEC_FILES
 	in.push(io::zlib_decompressor());
+#endif
 	in.push(io::file_source(file.toStdString()));
 
 	char c1, c2, c3, c4;

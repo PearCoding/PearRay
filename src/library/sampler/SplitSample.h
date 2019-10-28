@@ -16,11 +16,11 @@ public:
 
 		uint32 s = end1 - start1;
 		mU1		 = std::modf(u(0) * s, &k);
-		mI1		 = k;
+		mI1		 = static_cast<uint32>(k);
 
 		s   = end2 - start2;
 		mU2 = std::modf(u(1) * s, &k);
-		mI2 = k;
+		mI2 = static_cast<uint32>(k);
 	}
 
 	inline SplitSample2D(const Vector2f& u,

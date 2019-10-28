@@ -119,7 +119,7 @@ void TriMesh::loadTree(const std::string& file)
 		mBoundingBox = mKDTree->boundingBox();
 }
 
-float TriMesh::faceArea(uint32 f, const Eigen::Affine3f& tm) const
+float TriMesh::faceArea(size_t f, const Eigen::Affine3f& tm) const
 {
 	const uint32 ind1 = mIndices[0][f];
 	const uint32 ind2 = mIndices[1][f];
@@ -274,13 +274,13 @@ bool TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 
 float TriMesh::collisionCost() const
 {
-	return faceCount();
+	return static_cast<float>(faceCount());
 }
 
 void TriMesh::sampleFacePoint(const Vector2f& rnd,
 							  GeometryPoint& p, float& pdfA) const
 {
-	SplitSample2D smp(rnd, 0, faceCount());
+	SplitSample2D smp(rnd, 0, (uint32)faceCount());
 
 	uint32 fi  = smp.integral1();
 	Vector2f b = Projection::triangle(smp.uniform1(), smp.uniform2());

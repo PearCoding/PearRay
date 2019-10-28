@@ -221,7 +221,15 @@
 # define SIMDPP_ARCH_X86_AVX512F
 #endif
 
+#ifdef PR_CC_MSC
+# pragma warning( push )
+# pragma warning( disable : 4244 ) 
+#endif
 #include <simdpp/simd.h>
+#ifdef PR_CC_MSC
+# pragma warning( pop )
+#endif
+
 // Always align at the 8 byte border regardless of the underlying bandwidth
 #define PR_SIMD_ALIGNMENT_PARAM (32)
 #define PR_SIMD_ALIGN alignas(PR_SIMD_ALIGNMENT_PARAM)
@@ -256,9 +264,9 @@ typedef uint32 DataRefID;
 constexpr float PR_EPSILON = 0.00001f;
 
 #ifdef M_PI
-constexpr float PR_PI = M_PI;
+constexpr float PR_PI = static_cast<float>(M_PI);
 #else
-constexpr float PR_PI = 3.14159265358979323846;
+constexpr float PR_PI = static_cast<float>(3.14159265358979323846);
 #endif
 
 #ifdef M_1_PI
