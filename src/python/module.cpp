@@ -1,4 +1,6 @@
 #include "pypearray.h"
+#include "Version.h"
+
 #include <sstream>
 
 std::tuple<int,int> version()

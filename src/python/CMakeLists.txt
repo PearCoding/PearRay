@@ -1,5 +1,3 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
-
 SET(Src
   camera.cpp
   entity.cpp
@@ -29,7 +27,6 @@ include_directories(../utils)
 pybind11_add_module(pypearray SHARED ${Src} ${Hdr})
 target_link_libraries(pypearray PRIVATE pr_lib)
 target_link_libraries(pypearray PRIVATE pr_lib_utils)
-set_target_properties(pypearray PROPERTIES VERSION ${PR_Version})
 set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "")# Disable suffix for this target
 target_compile_definitions(pypearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 

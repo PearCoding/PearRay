@@ -1,5 +1,3 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
-
 SET(PR_Src
   PR_Config.h.in
   FileLogListener.cpp
@@ -165,10 +163,9 @@ if(NOT WIN32)
   target_link_libraries(pr_lib PUBLIC ${CMAKE_DL_LIBS} pthread)
 endif()
 target_link_libraries(pr_lib PUBLIC ${TBB_LIBRARIES})
-
-set_target_properties(pr_lib PROPERTIES VERSION ${PR_Version})
 set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)
-target_compile_definitions(pr_lib PRIVATE "${DEFS};PR_LIB_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
+target_compile_definitions(pr_lib PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")
+target_compile_definitions(pr_lib PRIVATE "PR_LIB_BUILD")
 
 IF(PR_CPP_CHECK)
 add_cpplint_target(pr_lib_cppcheck "${PR_Src}")

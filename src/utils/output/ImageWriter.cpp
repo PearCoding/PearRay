@@ -1,5 +1,6 @@
 #include "ImageWriter.h"
 #include "Logger.h"
+#include "Version.h"
 #include "SpectralFile.h"
 #include "renderer/RenderContext.h"
 

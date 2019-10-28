@@ -2,6 +2,7 @@
 #include "EXRWindow.h"
 #include "SceneWindow.h"
 #include "SpecWindow.h"
+#include "Version.h"
 
 #include <fstream>
 

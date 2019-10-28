@@ -1,13 +1,31 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
+cmake_minimum_required(VERSION 3.1...3.15)
 
-PROJECT(PearRay)
+if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+endif()
+
+PROJECT(PearRay
+	VERSION 0.12
+	DESCRIPTION "Experimental raytracer")
 
 #SETS
 SET(VENDOR "PearRay project 2015-2020")
-SET(VERSION_MAJOR 0)
-SET(VERSION_MINOR 12)
-SET(VERSION_HEX 0x0011)
-SET(PR_Version ${VERSION_MAJOR}.${VERSION_MINOR})
+
+# Get the current working branch
+execute_process(
+  COMMAND git rev-parse --abbrev-ref HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Get the latest abbreviated commit hash of the working branch
+execute_process(
+  COMMAND git log -1 --format=%h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_REVISION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
    SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
@@ -57,7 +75,6 @@ option(PR_USE_AVX512 "Use AVX512F simd support." OFF)
 option(PR_USE_IWYU "Use include-what-you-use while building" OFF)
 
 option(VERBOSE "Show debug information." OFF)
-option(OIIO_LINK_STATIC "Link the static OpenImageIO libraries" OFF)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -74,14 +91,6 @@ find_package(OpenImageIO REQUIRED)
 find_package(OpenEXR REQUIRED)
 find_package(TBB REQUIRED)
 
-IF(OIIO_LINK_STATIC)# If static, the dependencies of OIIO has to be included aswell.
-	find_package(PNG REQUIRED)
-	find_package(JPEG REQUIRED)
-	find_package(TIFF REQUIRED)
-	SET(OIIO_LIBRARIES ${PNG_LIBRARIES} ${JPEG_LIBRARIES}
-	 ${TIFF_LIBRARIES} ${OPENEXR_LIBRARIES} ${OIIO_LIBRARIES})
-ENDIF()
-
 IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)
 	coveralls_turn_on_coverage()
@@ -93,7 +102,7 @@ link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 # Python API
 IF(PR_WITH_PYTHON)
 	add_subdirectory(external/pybind11)
-	SET(PR_HAS_PYTHON_API ON)
+	set(PR_HAS_PYTHON_API ON)
 ENDIF()
 
 # Due to problems with OpenEXR and C++17 we still use C++14 (Aug 2018)
@@ -102,24 +111,16 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 IF(NOT PR_WITH_ASSERTS)
-	SET(DEFS ${DEFS} DL_NO_ASSERTS PM_NO_ASSERTS PR_NO_ASSERTS)
+	add_definitions(-DDL_NO_ASSERTS -DPR_NO_ASSERTS)
 ENDIF()
 
 #CONFIGURE
 SET(DL_TARGET "datalisp")
 add_subdirectory(external/DataLisp)
 
-SET(DEFS_DEBUG "${DEFS_DEBUG};PR_DEBUG")
-
-IF(WIN32)
-	SET(DEFS ${DEFS} OPENEXR_DLL)
-ENDIF()
-
-IF(OIIO_LINK_STATIC)
-	SET(DEFS "${DEFS};OIIO_STATIC_BUILD")
-ENDIF()
-
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
+configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
 			external/tinyobjloader external/libsimdpp

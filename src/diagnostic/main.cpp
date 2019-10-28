@@ -1,4 +1,5 @@
 #include "dialogs/MainWindow.h"
+#include "Version.h"
 
 #include <QApplication>
 #include <QCommandLineParser>

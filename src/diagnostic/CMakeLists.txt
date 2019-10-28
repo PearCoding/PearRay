@@ -1,5 +1,3 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
-
 MESSAGE(STATUS "Building PearRayDiagnostic")
 MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 
@@ -87,8 +85,8 @@ SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(prdiag PRIVATE Qt5::Widgets ${OPENEXR_LIBRARIES})
-set_target_properties(prdiag PROPERTIES VERSION ${PR_Version})
+target_link_libraries(prdiag PRIVATE Boost::iostreams)
 target_compile_definitions(prdiag PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 if(PR_COMPRESS_SPEC_FILES)
-target_compile_definitions(prdiag PRIVATE "PR_COMPRESS_SPEC_FILES")
+  target_compile_definitions(prdiag PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()

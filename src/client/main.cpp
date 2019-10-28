@@ -1,17 +1,14 @@
 #include "Environment.h"
+#include "FileLogListener.h"
 #include "Logger.h"
+#include "ProgramSettings.h"
 #include "SceneLoader.h"
-
+#include "Version.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderTileStatistics.h"
-
 #include "spectral/SpectrumDescriptor.h"
 #include "spectral/ToneMapper.h"
-
-#include "FileLogListener.h"
-
-#include "ProgramSettings.h"
 
 #include <boost/filesystem.hpp>
 

@@ -1,5 +1,3 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
-
 if(VERBOSE)
 	message(STATUS "Enabling Testing")
 endif()
@@ -22,7 +20,6 @@ FUNCTION(PUSH_TEST name files)
 		IF(__args_USES_UTILS)
 			target_link_libraries(${TARGET} pr_lib_utils)
 		ENDIF()
-		set_target_properties(${TARGET} PROPERTIES VERSION ${PR_Version})
 		target_compile_definitions(${TARGET} PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 		IF(NOT __args_NO_ADD)
 			add_test(NAME ${name} COMMAND ${TARGET})

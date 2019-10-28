@@ -45,7 +45,7 @@ inline float sphere_pdf()
 // Orientation +Z
 inline Vector3f hemi(float u1, float u2, float& pdf)
 {
-	pdf = PR_1_PI;
+	pdf = PR_1_PI * 0.5f;
 	return Spherical::cartesian(u1 * PR_PI * 0.5f, u2 * 2 * PR_PI);
 }
 
