@@ -4,31 +4,13 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
-PROJECT(PearRay
+project(PearRay
 	VERSION 0.12
 	DESCRIPTION "Experimental raytracer")
 
 #SETS
-SET(VENDOR "PearRay project 2015-2020")
-
-# Get the current working branch
-execute_process(
-  COMMAND git rev-parse --abbrev-ref HEAD
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_BRANCH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-# Get the latest abbreviated commit hash of the working branch
-execute_process(
-  COMMAND git log -1 --format=%h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_REVISION
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
-   SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
+   	SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 else()
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/)
 endif()
@@ -36,6 +18,9 @@ endif()
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 SET(CMAKE_DEBUG_POSTFIX  "_d")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
+
+SET(VENDOR "PearRay project 2015-2020")
+include(Git)
 
 #CHECKS
 MESSAGE(STATUS "Building PearRay ${PR_Version}")
@@ -65,19 +50,18 @@ option(PR_BUILD_TESTS_PYTHON "Build tests for the python API. Requires PR_BUILD_
 option(PR_COMPRESS_SPEC_FILES "Compress spectral files with boost::zlib" ON)
 option(PR_GENERATE_COVERAGE "Generate coverage for debug builds - Currently only supported with the GCC compiler." ON)
 option(PR_BUILD_DOCUMENTATION "Build documentation with doxygen." ON)
-option(PR_CPP_CHECK "Do style check with cpplint." OFF)
 option(PR_USE_SSE3 "Use SSE3 simd support." ON)
 option(PR_USE_SSSE3 "Use SSSE3 simd support." ON)
 option(PR_USE_SSE4 "Use SSE4_1 simd support." ON)
 option(PR_USE_AVX "Use AVX simd support." OFF)
 option(PR_USE_AVX2 "Use AVX2 simd support." OFF)
 option(PR_USE_AVX512 "Use AVX512F simd support." OFF)
-option(PR_USE_IWYU "Use include-what-you-use while building" OFF)
 
 option(VERBOSE "Show debug information." OFF)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+include(ExtraUtils)
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Boost_USE_MULTITHREADED ON)
 
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
@@ -126,54 +110,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			external/tinyobjloader external/libsimdpp
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS} ${OPENEXR_INCLUDE_DIR}
 			src/library src/utils)
-
-# Setup CPPLINT
-IF(PR_CPP_CHECK)
-	SET(PR_CPPLINT_CMD "cpplint" CACHE FILEPATH "cpplint python script")
-
-	set(PR_CPPLINT_STYLE)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/braces,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/tab,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/line_length,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/comments,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-whitespace/indent,)
-	#set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_order,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/namespaces,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include_what_you_use,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-build/include,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-legal/copyright,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-readability/namespace,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-readability/todo,)
-	set(PR_CPPLINT_STYLE ${PR_CPPLINT_STYLE}-runtime/references,)
-
-	function(add_cpplint_target TARGET_NAME SOURCES_LIST)
-	add_custom_target(${TARGET_NAME}
-		COMMAND "${CMAKE_COMMAND}" -E chdir
-				"${CMAKE_CURRENT_SOURCE_DIR}"
-				"${PR_CPPLINT_CMD}"
-				"--filter=${PR_CPPLINT_STYLE}"
-				"--counting=detailed"
-				"--extensions=cpp,h,inl"
-				"--headers=h,inl"
-				"--linelength=80"
-				${SOURCES_LIST}
-		DEPENDS ${SOURCES_LIST}
-		COMMENT "Checking C++ Style ${TARGET_NAME}"
-		VERBATIM)
-	add_dependencies(cppcheck ${TARGET_NAME})
-	endfunction()
-
-	add_custom_target(cppcheck)
-ENDIF()
-
-# IWYU
-IF(PR_USE_IWYU)
-	find_program(IWYU_PATH NAMES include-what-you-use iwyu)
-	IF(IWYU_PATH)
-		MESSAGE(STATUS "Using IWYU ${IWYU_PATH}")
-		SET(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-	ENDIF()
-ENDIF()
 
 # Libraries
 add_subdirectory(src/library)

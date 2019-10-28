@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "FileLogListener.h"
 #include "ProgramSettings.h"
+#include "Version.h"
 
 #include <boost/filesystem.hpp>
 
