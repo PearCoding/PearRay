@@ -19,3 +19,5 @@ target_link_libraries(pr_sandbox PRIVATE Boost::program_options Boost::filesyste
 target_link_libraries(pr_sandbox PRIVATE ${DL_TARGET})
 target_link_libraries(pr_sandbox PRIVATE ${OIIO_LIBRARIES})
 target_compile_definitions(pr_sandbox PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
+add_lto(pr_sandbox)
+strip_binary(pr_sandbox)

@@ -17,9 +17,9 @@ void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 		RayGroup grp = rays.getNextGroup();
 
 		if (grp.isCoherent())
-			traceCoherentRays(grp, hits, nonHit);
+			traceCoherentRays(rays, grp, hits, nonHit);
 		else
-			traceIncoherentRays(grp, hits, nonHit);
+			traceIncoherentRays(rays, grp, hits, nonHit);
 	}
 }
 
@@ -46,15 +46,16 @@ inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutpu
 		PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 		hits.add(entry);
 	} else {
-		nonHit(grp.stream()->linearID(id + grp.offset()), grp.getRay(id));
+		nonHit(id + grp.offset(), grp.getRay(id));
 	}
 }
 
 template <typename Func>
-void Scene::traceCoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit) const
+void Scene::traceCoherentRays(RayStream& rays, const RayGroup& grp,
+							  HitStream& hits, Func nonHit) const
 {
 #ifdef PR_FORCE_SINGLE_TRACE
-	traceIncoherentRays(grp, hits, nonHit);
+	traceIncoherentRays(rays, grp, hits, nonHit);
 #else
 	RayPackage in;
 	CollisionOutput out;
@@ -75,7 +76,8 @@ void Scene::traceCoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit)
 				mEntities[index]->checkCollision(in2, out2);
 			});
 
-		static_assert(PR_SIMD_BANDWIDTH == 4, "This implementation onyl works with bandwidth 4");
+		static_assert(PR_SIMD_BANDWIDTH == 4,
+					  "This implementation only works with bandwidth 4");
 		_sceneCheckHit<Func, 0>(grp, i, out, hits, nonHit);
 		_sceneCheckHit<Func, 1>(grp, i, out, hits, nonHit);
 		_sceneCheckHit<Func, 2>(grp, i, out, hits, nonHit);
@@ -85,7 +87,8 @@ void Scene::traceCoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit)
 }
 
 template <typename Func>
-void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit) const
+void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
+								HitStream& hits, Func nonHit) const
 {
 	Ray in;
 	SingleCollisionOutput out;
@@ -94,6 +97,7 @@ void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHi
 		 i < grp.size();
 		 ++i) {
 		in = grp.getRay(i);
+		rays.invalidateRay(i + grp.offset());
 
 		// Check for collisions
 		mKDTree->checkCollision(
@@ -118,7 +122,7 @@ void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHi
 			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 			hits.add(entry);
 		} else {
-			nonHit(grp.stream()->linearID(i + grp.offset()), in);
+			nonHit(i + grp.offset(), in);
 		}
 	}
 }

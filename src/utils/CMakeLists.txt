@@ -61,7 +61,5 @@ target_compile_definitions(pr_lib_utils PRIVATE "${DEFS};PR_LIB_UTILS_BUILD" "$<
 if(PR_COMPRESS_SPEC_FILES)
 target_compile_definitions(pr_lib_utils PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()
-
-IF(PR_CPP_CHECK)
-  add_cpplint_target(pr_lib_utils_cppcheck "${PR_Src}")
-ENDIF()
+add_lto(pr_lib_utils)
+strip_binary(pr_lib_utils)

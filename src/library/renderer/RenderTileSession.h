@@ -43,6 +43,11 @@ public:
 		return mHitStream;
 	}
 
+	inline RayStream* rayStream() const
+	{
+		return mRayStream;
+	}
+
 	IEntity* getEntity(uint32 id) const;
 	IMaterial* getMaterial(uint32 id) const;
 	IEmission* getEmission(uint32 id) const;

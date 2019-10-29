@@ -47,9 +47,11 @@ public:
 
 private:
 	template <typename Func>
-	inline void traceCoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit) const;
+	inline void traceCoherentRays(RayStream& rays, const RayGroup& grp,
+								  HitStream& hits, Func nonHit) const;
 	template <typename Func>
-	inline void traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit) const;
+	inline void traceIncoherentRays(RayStream& rays, const RayGroup& grp,
+									HitStream& hits, Func nonHit) const;
 
 	void buildTree(const std::string& file);
 	void loadTree(const std::string& file);

@@ -36,6 +36,7 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 		*mHitStream,
 		nonhitFunc);
 
+	mHitStream->sort();
 	while (mHitStream->hasNextGroup()) {
 		ShadingGroup grp	= mHitStream->getNextGroup();
 		IEntity* entity		= nullptr;
@@ -45,8 +46,6 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 		for (uint32 i = grp.Start; i <= grp.End; ++i) {
 			HitEntry entry = mHitStream->get(i);
 			Ray ray		   = mRayStream->getRay(entry.SessionRayID);
-			// This ray is now used up!
-			mRayStream->invalidateRay(entry.SessionRayID);
 
 			if (!material)
 				pushFeedbackFragment(ray, OF_MissingMaterial);

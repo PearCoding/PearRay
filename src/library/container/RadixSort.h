@@ -10,6 +10,9 @@ namespace PR {
 template <typename VT, typename S>
 inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32 last, VT mask)
 {
+	if(first == last)
+		return;
+
 	uint32 end0 = first;
 	uint32 end1 = last;
 
@@ -34,7 +37,10 @@ inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32
 template <typename VT, typename S>
 inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32 last)
 {
+	if(first == last)
+		return;
+
 	uint32 s = last - first + 1;
-	return radixSort(visitor, swapper, first, last, vem(s));
+	radixSort(visitor, swapper, first, last, vem(s));
 }
 } // namespace PR

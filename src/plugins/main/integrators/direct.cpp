@@ -260,9 +260,10 @@ public:
 			while (rerun) {
 				rerun = false;
 				session.handleHits(
-					[&](size_t ray_id, const Ray& ray) {
+					[&](size_t session_ray_id, const Ray& ray) {
 						session.tile()->statistics().addBackgroundHitCount();
 
+						const size_t ray_id   = session.rayStream()->linearID(session_ray_id);
 						LightPath currentPath = mLPBs.at(session.threadID())->getPath(ray_id);
 						for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 							if (!light->isBackground())

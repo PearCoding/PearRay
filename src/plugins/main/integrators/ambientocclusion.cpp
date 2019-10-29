@@ -37,12 +37,16 @@ public:
 					IEntity* entity, IMaterial*) {
 					session.tile()->statistics().addEntityHitCount();
 
+					ShadingPoint spt;
+					spt.setByIdentity(ray, pt);
+					spt.EntityID = entity->id();
+
 					size_t occlusions = 0;
 					float pdf;
 					for (size_t i = 0; i < mSampleCount; ++i) {
 						Vector2f rnd  = random.get2D();
 						Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-						Vector3f ndir = Tangent::align(pt.N, pt.Nx, pt.Ny,
+						Vector3f ndir = Tangent::align(spt.N, spt.Nx, spt.Ny,
 													   dir);
 
 						Ray n = ray.next(pt.P, ndir);
@@ -51,10 +55,6 @@ public:
 						if (hit.Successful)
 							++occlusions;
 					}
-
-					ShadingPoint spt;
-					spt.setByIdentity(ray, pt);
-					spt.EntityID = entity->id();
 
 					spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
 

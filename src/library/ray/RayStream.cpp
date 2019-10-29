@@ -6,8 +6,6 @@
 #include <fstream>
 
 namespace PR {
-constexpr uint8 RAY_INVALID = 0xFF;
-
 #ifdef PR_COMPRESS_RAY_DIR
 constexpr int DIR_C_S = 2;
 #else
@@ -98,17 +96,11 @@ void RayStream::setRay(size_t id, const Ray& ray)
 	mWeight[cid]		  = ray.Weight;
 }
 
-void RayStream::invalidateRay(size_t id)
-{
-	PR_ASSERT(id < currentSize(), "Check before adding!");
-	mFlags[mInternalIndex[id]] = RAY_INVALID;
-}
-
 void RayStream::sort()
 {
 	// Extract invalid entries out!
 	auto inv_start = std::partition_point(mInternalIndex.begin(), mInternalIndex.end(), [&](size_t ind) {
-		return mFlags[ind] != RAY_INVALID;
+		return mFlags[ind] != PR_INVALID_RAY_FLAG;
 	});
 
 	mCurrentPos = 0;

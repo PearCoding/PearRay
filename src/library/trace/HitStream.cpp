@@ -1,6 +1,13 @@
 #include "HitStream.h"
+
+//FIXME: RadixSort has a bug which chrashes the software!
+//#define PR_USE_RADIXSORT
+
+#ifdef PR_USE_RADIXSORT
 #include "container/RadixSort.h"
-#include "math/SIMD.h"
+#else
+#include "container/QuickSort.h"
+#endif
 
 namespace PR {
 
@@ -54,6 +61,9 @@ HitEntry HitStream::get(size_t index) const
 
 void HitStream::sort()
 {
+	if (currentSize() == 0)
+		return;
+
 	// Swapping the whole context is quite heavy,
 	// but a single vector solution requires additional memory
 	auto op = [&](size_t a, size_t b) {
@@ -67,9 +77,14 @@ void HitStream::sort()
 		std::swap(mFlags[a], mFlags[b]);
 	};
 
+#ifdef PR_USE_RADIXSORT
 	uint32 mask = vem(currentSize());
 	radixSort(mEntityID.data(), op,
 			  0, currentSize() - 1, mask);
+#else
+	quickSort(mEntityID.data(), op,
+			  0, currentSize() - 1);
+#endif
 
 	size_t end = currentSize();
 	for (size_t i = 0; i < end;) {
@@ -82,8 +97,13 @@ void HitStream::sort()
 		size_t s = i - start;
 
 		if (s > 2) {
+#ifdef PR_USE_RADIXSORT
 			radixSort(mMaterialID.data(), op,
 					  start, i - 1, mask);
+#else
+			quickSort(mMaterialID.data(), op,
+					  start, i - 1);
+#endif
 		}
 	}
 }

@@ -56,6 +56,8 @@ option(PR_USE_SSE4 "Use SSE4_1 simd support." ON)
 option(PR_USE_AVX "Use AVX simd support." OFF)
 option(PR_USE_AVX2 "Use AVX2 simd support." OFF)
 option(PR_USE_AVX512 "Use AVX512F simd support." OFF)
+option(PR_USE_LTO "Use linked time optimization if available." ON)
+option(PR_USE_LTO_ONLY_RELEASE "Use linked time optimization on release builds only." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 
@@ -109,7 +111,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS} ${OPENEXR_INCLUDE_DIR}
 			src/library src/utils)
 
-# Extra utils
+# Extras
+include(Strip)
+include(LTO)
 include(ExtraUtils)
 
 # Libraries

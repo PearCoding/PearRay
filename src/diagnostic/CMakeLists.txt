@@ -90,3 +90,5 @@ target_compile_definitions(prdiag PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DE
 if(PR_COMPRESS_SPEC_FILES)
   target_compile_definitions(prdiag PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()
+add_lto(prdiag)
+strip_binary(prdiag)

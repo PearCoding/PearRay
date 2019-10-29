@@ -25,6 +25,7 @@ SET(PR_Src
   container/kdTreeBuilderNaive.h
   container/kdTreeCollider.cpp
   container/kdTreeCollider.h
+  container/QuickSort.h
   container/RadixSort.h
   entity/IEntity.cpp
   entity/IEntity.h
@@ -166,7 +167,5 @@ target_link_libraries(pr_lib PUBLIC ${TBB_LIBRARIES})
 set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(pr_lib PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")
 target_compile_definitions(pr_lib PRIVATE "PR_LIB_BUILD")
-
-IF(PR_CPP_CHECK)
-add_cpplint_target(pr_lib_cppcheck "${PR_Src}")
-ENDIF()
+add_lto(pr_lib)
+strip_binary(pr_lib)

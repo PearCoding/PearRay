@@ -8,10 +8,8 @@ function(PR_ADD_PLUGIN NAME)
   target_link_libraries(${TARGET} pr_lib pr_lib_utils)
   set_target_properties(${TARGET} PROPERTIES CXX_VISIBILITY_PRESET hidden)
   target_compile_definitions(${TARGET} PRIVATE "${DEFS};PR_PLUGIN_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
-
-  IF(PR_CPP_CHECK)
-    add_cpplint_target(${TARGET}_cppcheck "${_args_CPP}")
-  ENDIF()
+  add_lto(${TARGET})
+  strip_binary(${TARGET})
 
   add_dependencies(pr_plugins ${TARGET})
 endfunction()
