@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "entity/IEntity.h"
 namespace PR {
 inline bool IEntity::isRenderable() const
 {

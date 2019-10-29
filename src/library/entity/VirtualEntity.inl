@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "entity/VirtualEntity.h"
 namespace PR {
 inline uint32 VirtualEntity::id() const
 {

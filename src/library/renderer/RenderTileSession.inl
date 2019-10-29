@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "renderer/RenderTileSession.h"
 namespace PR {
 inline void RenderTileSession::enqueueRay(const Ray& ray)
 {

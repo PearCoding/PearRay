@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "sampler/MultiJitteredSampler.h"
 namespace PR {
 float MultiJitteredSampler::generate1D(uint32 index)
 {

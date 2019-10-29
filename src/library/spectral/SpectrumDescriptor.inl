@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "spectral/SpectrumDescriptor.h"
 namespace PR {
 inline SpectrumDescriptor::SpectrumDescriptor(uint32 samples, float lstart, float lend)
 	: mWavelengths(samples)

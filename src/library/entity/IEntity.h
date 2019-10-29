@@ -4,7 +4,7 @@
 #include "geometry/BoundingBox.h"
 
 namespace PR {
-class GeometryPoint;
+struct GeometryPoint;
 class PR_LIB IEntity : public VirtualEntity {
 public:
 	IEntity(uint32 id, const std::string& name);

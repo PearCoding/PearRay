@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "PR_Config.h"
 namespace PR {
 
 /* Regardless of optimal size, we have to enforce same components for all vectorized types*/

@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "material/IMaterial.h"
 namespace PR {
 inline uint32 IMaterial::id() const
 {

@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "scene/Scene.h"
 namespace PR {
 
 // FIXME: Coherent ray tracing is still buggy

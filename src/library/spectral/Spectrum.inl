@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "spectral/Spectrum.h"
 namespace PR {
 
 // Simple Properties

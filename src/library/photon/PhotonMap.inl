@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "photon/PhotonMap.h"
 namespace PR {
 namespace Photon {
 PhotonMap::PhotonMap(float gridDelta)

@@ -1,4 +1,4 @@
-// IWYU pragma: private
+// IWYU pragma: private, include "mesh/TriMesh.h"
 namespace PR {
 
 inline void TriMesh::setVertices(const std::vector<float>& vx,
