@@ -81,7 +81,8 @@ if(CMAKE_VERSION VERSION_GREATER 3.8)
                 "--filter=${PR_CPPLINT_STYLE}"
                 "--counting=detailed"
                 "--extensions=cpp,h,inl"
-                "--headers=h,inl")
+                "--headers=h,inl"
+                "--quiet")
         endif()
     endif()
 endif()
@@ -99,11 +100,18 @@ if(CMAKE_VERSION VERSION_GREATER 3.10)
         if(CPPCHECK_EXECUTABLE)
             MESSAGE(STATUS "Using cppcheck ${CPPCHECK_EXECUTABLE}")
             if(WIN32)
-                set(ARCH_ARGS "-DWIN32;-D_MSC_VER")
+                set(ARCH_ARGS "-DWIN32" "-D_MSC_VER")
             else()
-                set(ARCH_ARGS "-Dlinux;-D__GNUC__")
+                set(ARCH_ARGS "-Dlinux" "-D__GNUC__")
             endif()
-            set(CMAKE_CXX_CPPCHECK "${CPPCHECK_EXECUTABLE};${ARCH_ARGS};--suppress=preprocessorErrorDirective")
+            set(CMAKE_CXX_CPPCHECK "${CPPCHECK_EXECUTABLE}" ${ARCH_ARGS}
+                "--quiet"
+                "--enable=warning,style,performance,portability,unusedFunction"
+                "--suppress=preprocessorErrorDirective"
+                "--library=std"
+                "--library=qt"
+                #"--library=boost"
+                )
         endif()
     endif()
 endif()
