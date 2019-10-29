@@ -21,7 +21,7 @@ public:
 
 	virtual ~LambertMaterial() = default;
 
-	void startGroup(size_t size, const RenderTileSession& session) override
+	void startGroup(size_t, const RenderTileSession&) override
 	{
 	}
 
@@ -30,17 +30,16 @@ public:
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
-			  const RenderTileSession& session) const override
+			  const RenderTileSession&) const override
 	{
-		float NdotL		   = std::abs(in.Outgoing.dot(in.Point.N));
 		out.Weight		   = mAlbedo->eval(in.Point) * PR_1_PI;
-		out.PDF_S_Forward  = Projection::cos_hemi_pdf(NdotL);
-		out.PDF_S_Backward = Projection::cos_hemi_pdf(NdotL);
+		out.PDF_S_Forward  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
+		out.PDF_S_Backward = Projection::cos_hemi_pdf(std::abs(in.NdotL));
 		out.Type		   = MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
-				const RenderTileSession& session) const override
+				const RenderTileSession&) const override
 	{
 		float pdf;
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
@@ -64,7 +63,7 @@ public:
 	}
 
 protected:
-	void onFreeze(RenderContext* context) override
+	void onFreeze(RenderContext*) override
 	{
 	}
 

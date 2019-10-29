@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 
 // Simple Properties

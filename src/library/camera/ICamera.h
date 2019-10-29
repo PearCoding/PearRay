@@ -1,7 +1,6 @@
 #pragma once
 
 #include "entity/VirtualEntity.h"
-#include "math/SIMD.h"
 #include "ray/RayPackage.h"
 
 namespace PR {

@@ -8,7 +8,6 @@ enum ColorBufferMode {
 	CBM_RGBA
 };
 
-class Spectrum;
 class ToneMapper;
 class PR_LIB ColorBuffer {
 public:

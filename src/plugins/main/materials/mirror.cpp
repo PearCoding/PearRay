@@ -21,7 +21,7 @@ public:
 
 	virtual ~MirrorMaterial() = default;
 
-	void startGroup(size_t size, const RenderTileSession& session) override
+	void startGroup(size_t, const RenderTileSession&) override
 	{
 	}
 
@@ -30,7 +30,7 @@ public:
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
-			  const RenderTileSession& session) const override
+			  const RenderTileSession&) const override
 	{
 		out.Weight		   = mSpecularity->eval(in.Point);
 		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
@@ -39,7 +39,7 @@ public:
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
-				const RenderTileSession& session) const override
+				const RenderTileSession&) const override
 	{
 		out.Weight		   = mSpecularity->eval(in.Point);
 		out.Type		   = MST_SpecularReflection;

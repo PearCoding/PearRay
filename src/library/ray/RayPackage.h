@@ -1,6 +1,5 @@
 #pragma once
 
-#include "math/SIMD.h"
 #include "math/Transform.h"
 
 namespace PR {
@@ -23,7 +22,6 @@ struct PR_LIB_INLINE RayPackageBase {
 	IntegerType Flags			= IntegerType(0);
 	IntegerType WavelengthIndex = IntegerType(0);
 	IntegerType PixelIndex		= IntegerType(0);
-	IntegerType SessionIndex	= IntegerType(0);
 
 	RayPackageBase() = default;
 	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d)

@@ -1,5 +1,4 @@
-#pragma once
-
+// IWYU pragma: private
 namespace PR {
 inline Thread::Thread()
 	: mState(S_Waiting)

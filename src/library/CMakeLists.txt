@@ -56,7 +56,7 @@ SET(PR_Src
   math/Fresnel.h
   math/Generator.h
   math/HemiMap.h
-  math/MSI.h
+  math/ImportanceSampling.h
   math/Projection.h
   math/ProjectionMap.h
   math/Reflection.h

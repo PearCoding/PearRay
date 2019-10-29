@@ -8,6 +8,7 @@ namespace PR {
 // Evaluation
 struct PR_LIB_INLINE MaterialEvalInput {
 	ShadingPoint Point;
+	float NdotL;
 	Vector3f Outgoing;
 };
 

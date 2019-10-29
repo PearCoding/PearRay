@@ -23,6 +23,7 @@ public:
 	inline size_t maxSize() const { return mSize; }
 	inline size_t currentSize() const { return mRayID.size(); }
 	void add(const HitEntry& entry);
+	HitEntry get(size_t index) const;
 
 	/* Sort order:
 	ENTITY_ID,
@@ -34,26 +35,9 @@ public:
 
 	size_t getMemoryUsage() const;
 
-	inline uint32& rayID(size_t index) { return mRayID[index]; }
-	inline uint32 rayID(size_t index) const { return mRayID[index]; }
-
-	inline uint32& materialID(size_t index) { return mMaterialID[index]; }
-	inline uint32 materialID(size_t index) const { return mMaterialID[index]; }
-
-	inline uint32& entityID(size_t index) { return mEntityID[index]; }
-	inline uint32 entityID(size_t index) const { return mEntityID[index]; }
-
-	inline uint32& primitiveID(size_t index) { return mPrimitiveID[index]; }
-	inline uint32 primitiveID(size_t index) const { return mPrimitiveID[index]; }
-
-	inline float& uv(size_t elem, size_t index) { return mUV[elem][index]; }
-	inline float uv(size_t elem, size_t index) const { return mUV[elem][index]; }
-
-	inline uint8& flags(size_t index) { return mFlags[index]; }
-	inline uint8 flags(size_t index) const { return mFlags[index]; }
-
 private:
 	std::vector<uint32> mRayID;
+	std::vector<uint32> mSessionRayID;
 	std::vector<uint32> mMaterialID;
 	std::vector<uint32> mEntityID;
 	std::vector<uint32> mPrimitiveID;

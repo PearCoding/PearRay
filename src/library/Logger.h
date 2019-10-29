@@ -2,7 +2,7 @@
 
 #include "PR_Config.h"
 #include <list>
-#include <string>
+#include <streambuf>
 
 namespace PR {
 enum LogLevel {

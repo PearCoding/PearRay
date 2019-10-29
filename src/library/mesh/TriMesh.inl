@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 
 inline void TriMesh::setVertices(const std::vector<float>& vx,

@@ -1,4 +1,5 @@
 #include "container/kdTreeBuilder.h"
+#include <vector>
 
 namespace PR {
 enum SplitPlane {

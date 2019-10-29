@@ -1,5 +1,4 @@
-#pragma once
-
+// IWYU pragma: private
 namespace PR {
 inline uint32 VirtualEntity::id() const
 {

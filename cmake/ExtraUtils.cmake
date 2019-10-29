@@ -4,8 +4,27 @@ if(CMAKE_VERSION VERSION_GREATER 3.6)
     IF(PR_USE_IWYU)
         find_program(IWYU_EXECUTABLE NAMES include-what-you-use iwyu)
         IF(IWYU_EXECUTABLE)
+            get_filename_component(IWYU_DIR ${IWYU_EXECUTABLE} DIRECTORY)
+            file(TO_NATIVE_PATH "${IWYU_DIR}/../share/include-what-you-use" IWYU_SHARE_DIR)
+            set(IWYU_MAPPINGS_DIR "${IWYU_SHARE_DIR}"
+                CACHE PATH "Directory containing default mappings for iwyu")
+
+            set(IWYU_ARGS
+            "-Xiwyu" "--no_comments"
+            "-Xiwyu" "--mapping_file=${CMAKE_CURRENT_SOURCE_DIR}/tools/iwyu.imp")
+
+            if(EXISTS "${IWYU_MAPPINGS_DIR}")
+                set(IWYU_ARGS ${IWYU_ARGS}
+                "-Xiwyu" "--mapping_file=${IWYU_MAPPINGS_DIR}/iwyu.gcc.imp"
+                "-Xiwyu" "--mapping_file=${IWYU_MAPPINGS_DIR}/libcxx.imp"
+                "-Xiwyu" "--mapping_file=${IWYU_MAPPINGS_DIR}/boost-all.imp"
+                "-Xiwyu" "--mapping_file=${IWYU_MAPPINGS_DIR}/qt5_4.imp")
+            else()
+                MESSAGE(WARNING "IWYU default mappings could not be added!")
+            endif()
+
             MESSAGE(STATUS "Using IWYU ${IWYU_EXECUTABLE}")
-            SET(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_EXECUTABLE})
+            SET(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_EXECUTABLE} ${IWYU_ARGS})
         ENDIF()
     ENDIF()
 

@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 
 /* Regardless of optimal size, we have to enforce same components for all vectorized types*/
@@ -99,6 +100,27 @@ using vuint32 = vnuint32<PR_SIMD_BANDWIDTH>;
 using bfloat  = simdpp::mask_float32<PR_SIMD_BANDWIDTH>;
 using bint32  = simdpp::mask_int32<PR_SIMD_BANDWIDTH>;
 using buint32 = bint32;
+
+/* SFINAE Structure */
+template <typename V>
+struct VectorTemplate {
+};
+
+template <>
+struct VectorTemplate<vfloat> {
+	using float_t  = vfloat;
+	using bool_t   = bfloat;
+	using int32_t  = vint32;
+	using uint32_t = vuint32;
+};
+
+template <>
+struct VectorTemplate<float> {
+	using float_t  = float;
+	using bool_t   = bool;
+	using int32_t  = int32;
+	using uint32_t = uint32;
+};
 
 /* Variadic vector types */
 template <typename T>

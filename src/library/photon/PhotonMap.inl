@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 namespace Photon {
 PhotonMap::PhotonMap(float gridDelta)

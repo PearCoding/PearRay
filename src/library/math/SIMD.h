@@ -10,26 +10,6 @@ namespace PR {
 template <typename T>
 using simd_vector = std::vector<T, boost::alignment::aligned_allocator<T, PR_SIMD_ALIGNMENT_PARAM>>;
 
-template <typename V>
-struct VectorTemplate {
-};
-
-template <>
-struct VectorTemplate<vfloat> {
-	using float_t  = vfloat;
-	using bool_t   = bfloat;
-	using int32_t  = vint32;
-	using uint32_t = vuint32;
-};
-
-template <>
-struct VectorTemplate<float> {
-	using float_t  = float;
-	using bool_t   = bool;
-	using int32_t  = int32;
-	using uint32_t = uint32;
-};
-
 inline bool any(const bfloat& a)
 {
 	return simdpp::reduce_or(simdpp::bit_cast<vuint32::Base>(a));
@@ -142,6 +122,38 @@ load_from_container(const simdpp::uint32<N>& indices,
 	simdpp::store(ind, indices);
 	for (uint32 i = 0; i < N; ++i) {
 		data[i] = container[ind[i] + off];
+	}
+
+	return simdpp::load(data);
+}
+
+template <typename C, unsigned N = PR_SIMD_BANDWIDTH>
+inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value, simdpp::float32<N>>
+load_from_container_with_indices(const std::vector<size_t>& indices,
+								 uint32 ioff,
+								 const C& container)
+{
+	PR_SIMD_ALIGN
+	float data[N];
+
+	for (uint32 i = 0; i < N && i + ioff < indices.size(); ++i) {
+		data[i] = container[indices[i + ioff]];
+	}
+
+	return simdpp::load(data);
+}
+
+template <typename C, unsigned N = PR_SIMD_BANDWIDTH>
+inline std::enable_if_t<!std::is_floating_point<typename C::value_type>::value, simdpp::uint32<N>>
+load_from_container_with_indices(const std::vector<size_t>& indices,
+								 uint32 ioff,
+								 const C& container)
+{
+	PR_SIMD_ALIGN
+	uint32 data[N];
+
+	for (uint32 i = 0; i < N && i + ioff < indices.size(); ++i) {
+		data[i] = container[indices[i + ioff]];
 	}
 
 	return simdpp::load(data);

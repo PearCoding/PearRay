@@ -1,5 +1,4 @@
-#pragma once
-
+// IWYU pragma: private
 namespace PR {
 inline bool IEntity::isRenderable() const
 {

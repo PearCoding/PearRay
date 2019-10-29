@@ -5,7 +5,7 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "material/IMaterial.h"
-#include "math/MSI.h"
+#include "math/ImportanceSampling.h"
 #include "path/LightPathBuffer.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
@@ -13,6 +13,8 @@
 #include "shader/ShadingPoint.h"
 
 #include "Logger.h"
+
+#define MSI(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
 namespace PR {
 class IntDirect : public IIntegrator {
@@ -37,8 +39,7 @@ public:
 	}
 
 	float infiniteLight(RenderTileSession& session, const ShadingPoint& spt, LightPathToken& token,
-						IInfiniteLight* infLight, IMaterial* material,
-						float& pdfS_Light, float& pdfS_Mat)
+						IInfiniteLight* infLight, IMaterial* material)
 	{
 		InfiniteLightSampleInput inL;
 		inL.Point = spt;
@@ -49,8 +50,8 @@ public:
 		if (std::isinf(outL.PDF_S))
 			outL.PDF_S = 1;
 
-		const float cosI = std::abs(outL.Outgoing.dot(spt.N));
-		if (cosI < PR_EPSILON
+		const float cosI = outL.Outgoing.dot(spt.N);
+		if (std::abs(cosI) < PR_EPSILON
 			|| outL.Weight < PR_EPSILON
 			|| outL.PDF_S < PR_EPSILON) {
 			return 0;
@@ -65,14 +66,12 @@ public:
 			MaterialEvalInput in;
 			in.Point	= spt;
 			in.Outgoing = outL.Outgoing;
+			in.NdotL	= cosI;
 			MaterialEvalOutput out;
 			material->eval(in, out, session);
+			token = LightPathToken(out.Type);
 
-			pdfS_Light = outL.PDF_S;
-			pdfS_Mat   = out.PDF_S_Forward;
-			token	  = LightPathToken(out.Type);
-
-			return outL.Weight * out.Weight * cosI;
+			return outL.Weight * out.Weight * std::abs(cosI) / outL.PDF_S;
 		}
 	}
 
@@ -85,6 +84,7 @@ public:
 
 		const float scatProb  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.Depth - MIN_DEPTH));
 		const size_t maxDepth = session.tile()->context()->settings().maxRayDepth;
+		const float emsArea   = session.tile()->context()->emissiveSurfaceArea();
 
 		scattered = false;
 		isDelta   = false;
@@ -106,7 +106,10 @@ public:
 			&& spt.Ray.Depth + 1 < maxDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
 			Ray next = spt.Ray.next(spt.P, out.Outgoing);
-			next.Weight *= out.Weight * cosI / (scatProb * out.PDF_S_Forward);
+
+			// This is only a bad approximation
+			float msi = isDelta ? 1.0f : MSI(mLightSampleCount, 1 / emsArea, 1, out.PDF_S_Forward);
+			next.Weight *= msi * out.Weight * cosI / (scatProb * out.PDF_S_Forward);
 
 			if (next.Weight > PR_EPSILON) {
 				LightPathBufferEntry pathEntry;
@@ -125,17 +128,15 @@ public:
 					break;
 				}
 				pathEntry.LabelIndex = 0; // TODO
-				lpb.add(spt.Ray.SessionIndex, pathEntry);
-
-				session.sendRay(entry.RayID, next);
+				lpb.add(entry.RayID, pathEntry);
+				session.sendRay(entry.SessionRayID, next);
 				scattered = true;
 			}
 		}
 	}
 
 	float directLight(RenderTileSession& session, const ShadingPoint& spt, LightPathToken& token,
-					  IMaterial* material,
-					  float& pdfS_Light, float& pdfS_Mat)
+					  IMaterial* material)
 	{
 		// Pick light and point
 		float pdfA;
@@ -153,14 +154,14 @@ public:
 		const float sqrD = L.squaredNorm();
 		L.normalize();
 		const float cosO = std::max(0.0f, -L.dot(lightPt.N));
-		const float cosI = std::max(0.0f, L.dot(spt.N));
-		pdfS_Light		 = MSI::toSolidAngle(pdfA, sqrD, cosO);
+		const float cosI = L.dot(spt.N);
+		float pdfS		 = IS::toSolidAngle(pdfA, sqrD, cosO);
 
 		// Trace shadow ray
 		Ray shadow			= spt.Ray.next(spt.P, L);
 		ShadowHit shadowHit = session.traceShadowRay(shadow);
-		if (pdfS_Light < PR_EPSILON
-			|| cosI < PR_EPSILON
+		if (pdfS < PR_EPSILON
+			|| std::abs(cosI) < PR_EPSILON
 			|| !shadowHit.Successful
 			|| shadowHit.EntityID != light->id()) {
 			return 0;
@@ -176,13 +177,14 @@ public:
 			MaterialEvalInput in;
 			in.Point	= spt;
 			in.Outgoing = L;
+			in.NdotL	= cosI;
 			MaterialEvalOutput out;
 			material->eval(in, out, session);
-			pdfS_Mat = out.PDF_S_Forward;
-
 			token = LightPathToken(out.Type);
 
-			return outL.Weight * out.Weight * cosI;
+			float msi_weight = MSI(mLightSampleCount, pdfS, 1, out.PDF_S_Forward);
+
+			return msi_weight * outL.Weight * out.Weight * std::abs(cosI) / pdfS;
 		}
 	}
 
@@ -198,7 +200,7 @@ public:
 		if (!material)
 			return false;
 
-		LightPath currentPath = lpb.getPath(ray.SessionIndex);
+		LightPath currentPath = lpb.getPath(entry.RayID);
 
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
@@ -215,15 +217,9 @@ public:
 			const float factor = 1.0f / mLightSampleCount;
 			for (size_t i = 0; i < mLightSampleCount; ++i) {
 				LightPathToken token;
-				float pdf_s_mat = 0, pdf_s_light = 0;
-				float weight = directLight(session, spt, token,
-										   material,
-										   pdf_s_light, pdf_s_mat);
+				spt.Radiance = factor * directLight(session, spt, token, material);
 
-				if (weight > PR_EPSILON
-					&& pdf_s_light > PR_EPSILON) {
-					spt.Radiance = factor * weight / pdf_s_light;
-
+				if (spt.Radiance > PR_EPSILON) {
 					LightPath path = currentPath;
 					path.concat(token);
 					path.concat(LightPathToken(ST_EMISSIVE, SE_NONE));
@@ -239,16 +235,10 @@ public:
 					continue;
 
 				LightPathToken token;
-				float pdf_s_mat = 0, pdf_s_light = 0;
-				float weight = infiniteLight(session, spt, token,
-											 light.get(), material,
-											 pdf_s_light, pdf_s_mat);
+				spt.Radiance = infiniteLight(session, spt, token,
+											 light.get(), material);
 
-				if (weight > PR_EPSILON
-					&& pdf_s_light > PR_EPSILON
-					&& pdf_s_mat > PR_EPSILON) {
-					spt.Radiance = weight / pdf_s_light;
-
+				if (spt.Radiance > PR_EPSILON) {
 					LightPath path = currentPath;
 					path.concat(token);
 					path.concat(LightPathToken(ST_BACKGROUND, SE_NONE));
@@ -270,10 +260,10 @@ public:
 			while (rerun) {
 				rerun = false;
 				session.handleHits(
-					[&](const Ray& ray) {
+					[&](size_t ray_id, const Ray& ray) {
 						session.tile()->statistics().addBackgroundHitCount();
 
-						LightPath currentPath = mLPBs.at(session.threadID())->getPath(ray.SessionIndex);
+						LightPath currentPath = mLPBs.at(session.threadID())->getPath(ray_id);
 						for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 							if (!light->isBackground())
 								continue;

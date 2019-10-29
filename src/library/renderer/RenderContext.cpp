@@ -10,7 +10,6 @@
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
 #include "material/IMaterial.h"
-#include "math/MSI.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
 #include "scene/Scene.h"
@@ -31,6 +30,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 	, mScene(scene)
 	, mSpectrumDescriptor(specDesc)
 	, mOutputMap()
+	, mEmissiveSurfaceArea(0.0f)
 	, mTileMap()
 	, mIncrementalCurrentSample(0)
 	, mRenderSettings(settings)
@@ -71,9 +71,12 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
 
 	/* Setup entities */
+	mEmissiveSurfaceArea = 0.0f;
 	for (auto entity : mScene->entities()) {
-		if (entity->isLight())
+		if (entity->isLight()) {
+			mEmissiveSurfaceArea += entity->surfaceArea();
 			mLights.push_back(entity);
+		}
 	}
 
 	// Get other informations
@@ -87,6 +90,10 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Spectral Samples: " << mRenderSettings.spectralSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Full Samples: " << mSamplesPerPixel << std::endl;
+	PR_LOG(L_INFO) << "  Emissive Area: " << mEmissiveSurfaceArea << std::endl;
+
+	if (mEmissiveSurfaceArea < PR_EPSILON)
+		mEmissiveSurfaceArea = 1;
 
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();

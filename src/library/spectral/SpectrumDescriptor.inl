@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 inline SpectrumDescriptor::SpectrumDescriptor(uint32 samples, float lstart, float lend)
 	: mWavelengths(samples)

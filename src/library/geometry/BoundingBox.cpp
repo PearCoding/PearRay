@@ -2,8 +2,6 @@
 #include "CollisionData.h"
 #include "Plane.h"
 
-#include <utility>
-
 namespace PR {
 BoundingBox::BoundingBox()
 	: mUpperBound(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity())

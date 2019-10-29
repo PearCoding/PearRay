@@ -196,8 +196,6 @@ public:
 	}
 
 private:
-	RenderContext* mRenderer;
-
 	std::shared_ptr<FrameBufferFloat> mSpectral;
 	std::shared_ptr<FrameBufferFloat> mInt3D[V_3D_COUNT];
 	std::shared_ptr<FrameBufferFloat> mInt1D[V_1D_COUNT];

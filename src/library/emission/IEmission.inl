@@ -1,3 +1,4 @@
+// IWYU pragma: private
 #pragma once
 
 namespace PR {

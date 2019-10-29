@@ -1,0 +1,13 @@
+[
+    { include: ["\"Core\"", private, "<Eigen/Dense>", public] },
+    { include: ["\"LU\"", private, "<Eigen/Dense>", public] },
+    { include: ["\"Cholesky\"", private, "<Eigen/Dense>", public] },
+    { include: ["\"QR\"", private, "<Eigen/Dense>", public] },
+    { include: ["\"SVD\"", private, "<Eigen/Dense>", public] },
+    { include: ["\"Geometry\"", private, "<Eigen/Dense>", public] },
+    { include: ["\"Eigenvalues\"", private, "<Eigen/Dense>", public] },
+    { include: ["@<simdpp/.*>", private, "<simdpp/simd.h>", public] },
+    { include: ["@\"simdpp/.*\"", private, "<simdpp/simd.h>", public] },
+    { include: ["<bits/std_abs.h>", private, "<cmath>", public] },
+    { include: ["<bits/shared_ptr.h>", private, "<memory>", public] }
+]

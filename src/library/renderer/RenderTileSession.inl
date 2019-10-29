@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 inline void RenderTileSession::enqueueRay(const Ray& ray)
 {
@@ -42,18 +43,10 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 		startShadingGroup(grp, entity, material);
 
 		for (uint32 i = grp.Start; i <= grp.End; ++i) {
-			HitEntry entry;
-			entry.Flags		  = mHitStream->flags(i);
-			entry.RayID		  = mHitStream->rayID(i);
-			entry.MaterialID  = grp.MaterialID;
-			entry.EntityID	= grp.EntityID;
-			entry.PrimitiveID = mHitStream->primitiveID(i);
-			entry.UV[0]		  = mHitStream->uv(0, i);
-			entry.UV[1]		  = mHitStream->uv(1, i);
-
-			Ray ray = mRayStream->getRay(entry.RayID);
+			HitEntry entry = mHitStream->get(i);
+			Ray ray		   = mRayStream->getRay(entry.SessionRayID);
 			// This ray is now used up!
-			mRayStream->invalidateRay(entry.RayID);
+			mRayStream->invalidateRay(entry.SessionRayID);
 
 			if (!material)
 				pushFeedbackFragment(ray, OF_MissingMaterial);

@@ -4,12 +4,7 @@
 #include "geometry/BoundingBox.h"
 
 namespace PR {
-class IMaterial;
-class RenderContext;
-struct FacePoint;
-class Sampler;
 class GeometryPoint;
-
 class PR_LIB IEntity : public VirtualEntity {
 public:
 	IEntity(uint32 id, const std::string& name);

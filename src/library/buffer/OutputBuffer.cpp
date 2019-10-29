@@ -6,8 +6,7 @@
 
 namespace PR {
 OutputBuffer::OutputBuffer(RenderContext* renderer)
-	: mRenderer(renderer)
-	, mSpectral(new FrameBufferFloat(
+	: mSpectral(new FrameBufferFloat(
 		  renderer->spectrumDescriptor()->samples(),
 		  renderer->width(),
 		  renderer->height(),

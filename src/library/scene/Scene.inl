@@ -1,3 +1,4 @@
+// IWYU pragma: private
 namespace PR {
 
 // FIXME: Coherent ray tracing is still buggy
@@ -15,7 +16,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
 
-		if (grp.Coherent)
+		if (grp.isCoherent())
 			traceCoherentRays(grp, hits, nonHit);
 		else
 			traceIncoherentRays(grp, hits, nonHit);
@@ -27,24 +28,25 @@ inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutpu
 						   HitStream& hits, Func nonHit)
 {
 	const uint32 id = off + K;
-	if (id >= grp.Size) // Ignore bad tails
+	if (id >= grp.size()) // Ignore bad tails
 		return;
 
 	float hitD = simdpp::extract<K>(out.HitDistance);
 	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 		HitEntry entry;
-		entry.RayID		  = id;
-		entry.MaterialID  = simdpp::extract<K>(out.MaterialID);
-		entry.EntityID	= simdpp::extract<K>(out.EntityID);
-		entry.PrimitiveID = simdpp::extract<K>(out.FaceID);
-		entry.UV[0]		  = simdpp::extract<K>(out.UV[0]);
-		entry.UV[1]		  = simdpp::extract<K>(out.UV[1]);
-		entry.Flags		  = simdpp::extract<K>(out.Flags);
+		entry.SessionRayID = id + grp.offset();
+		entry.RayID		   = grp.stream()->linearID(entry.SessionRayID);
+		entry.MaterialID   = simdpp::extract<K>(out.MaterialID);
+		entry.EntityID	 = simdpp::extract<K>(out.EntityID);
+		entry.PrimitiveID  = simdpp::extract<K>(out.FaceID);
+		entry.UV[0]		   = simdpp::extract<K>(out.UV[0]);
+		entry.UV[1]		   = simdpp::extract<K>(out.UV[1]);
+		entry.Flags		   = simdpp::extract<K>(out.Flags);
 
 		PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 		hits.add(entry);
 	} else {
-		nonHit(grp.getRay(id));
+		nonHit(grp.stream()->linearID(id + grp.offset()), grp.getRay(id));
 	}
 }
 
@@ -61,7 +63,7 @@ void Scene::traceCoherentRays(const RayGroup& grp, HitStream& hits, Func nonHit)
 	// The internal stream is always a multiply therefore garbage may be traced
 	// but no internal data will be corrupted.
 	for (size_t i = 0;
-		 i < grp.Size;
+		 i < grp.size();
 		 i += PR_SIMD_BANDWIDTH) {
 		in = grp.getRayPackage(i);
 
@@ -89,7 +91,7 @@ void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHi
 	SingleCollisionOutput out;
 
 	for (size_t i = 0;
-		 i < grp.Size;
+		 i < grp.size();
 		 ++i) {
 		in = grp.getRay(i);
 
@@ -104,18 +106,19 @@ void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits, Func nonHi
 		float hitD = out.HitDistance;
 		if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 			HitEntry entry;
-			entry.RayID		  = i;
-			entry.MaterialID  = out.MaterialID;
-			entry.EntityID	= out.EntityID;
-			entry.PrimitiveID = out.FaceID;
-			entry.UV[0]		  = out.UV[0];
-			entry.UV[1]		  = out.UV[1];
-			entry.Flags		  = out.Flags;
+			entry.SessionRayID = i + grp.offset();
+			entry.RayID		   = grp.stream()->linearID(entry.SessionRayID);
+			entry.MaterialID   = out.MaterialID;
+			entry.EntityID	 = out.EntityID;
+			entry.PrimitiveID  = out.FaceID;
+			entry.UV[0]		   = out.UV[0];
+			entry.UV[1]		   = out.UV[1];
+			entry.Flags		   = out.Flags;
 
 			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 			hits.add(entry);
 		} else {
-			nonHit(in);
+			nonHit(grp.stream()->linearID(i + grp.offset()), in);
 		}
 	}
 }

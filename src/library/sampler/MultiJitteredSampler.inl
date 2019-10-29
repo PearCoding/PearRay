@@ -1,5 +1,4 @@
-#pragma once
-
+// IWYU pragma: private
 namespace PR {
 float MultiJitteredSampler::generate1D(uint32 index)
 {

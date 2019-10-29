@@ -29,7 +29,7 @@ public:
 
 		while (session.handleCameraRays()) {
 			session.handleHits(
-				[&](const Ray&) {
+				[&](size_t, const Ray&) {
 					session.tile()->statistics().addBackgroundHitCount();
 				},
 				[&](const HitEntry&,

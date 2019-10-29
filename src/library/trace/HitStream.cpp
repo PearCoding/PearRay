@@ -9,6 +9,7 @@ HitStream::HitStream(size_t size)
 	, mCurrentPos(0)
 {
 	mRayID.reserve(mSize);
+	mSessionRayID.reserve(mSize);
 	mMaterialID.reserve(mSize);
 	mEntityID.reserve(mSize);
 	mPrimitiveID.reserve(mSize);
@@ -27,6 +28,7 @@ void HitStream::add(const HitEntry& entry)
 	PR_ASSERT(!isFull(), "Check before adding!");
 
 	mRayID.emplace_back(entry.RayID);
+	mSessionRayID.emplace_back(entry.SessionRayID);
 	mMaterialID.emplace_back(entry.MaterialID);
 	mEntityID.emplace_back(entry.EntityID);
 	mPrimitiveID.emplace_back(entry.PrimitiveID);
@@ -35,12 +37,28 @@ void HitStream::add(const HitEntry& entry)
 	mFlags.emplace_back(entry.Flags);
 }
 
+HitEntry HitStream::get(size_t index) const
+{
+	HitEntry entry;
+	entry.Flags		   = mFlags[index];
+	entry.RayID		   = mRayID[index];
+	entry.SessionRayID = mSessionRayID[index];
+	entry.MaterialID   = mMaterialID[index];
+	entry.EntityID	 = mEntityID[index];
+	entry.PrimitiveID  = mPrimitiveID[index];
+	entry.UV[0]		   = mUV[0][index];
+	entry.UV[1]		   = mUV[1][index];
+
+	return entry;
+}
+
 void HitStream::sort()
 {
 	// Swapping the whole context is quite heavy,
 	// but a single vector solution requires additional memory
 	auto op = [&](size_t a, size_t b) {
 		std::swap(mRayID[a], mRayID[b]);
+		std::swap(mSessionRayID[a], mSessionRayID[b]);
 		std::swap(mMaterialID[a], mMaterialID[b]);
 		std::swap(mEntityID[a], mEntityID[b]);
 		std::swap(mPrimitiveID[a], mPrimitiveID[b]);
@@ -73,6 +91,7 @@ void HitStream::sort()
 void HitStream::reset()
 {
 	mRayID.clear();
+	mSessionRayID.clear();
 	mMaterialID.clear();
 	mEntityID.clear();
 	mPrimitiveID.clear();
@@ -105,7 +124,7 @@ ShadingGroup HitStream::getNextGroup()
 
 size_t HitStream::getMemoryUsage() const
 {
-	return mSize * (4 * sizeof(uint32) + 2 * sizeof(float) + sizeof(uint8));
+	return mSize * (5 * sizeof(uint32) + 2 * sizeof(float) + sizeof(uint8));
 }
 
 } // namespace PR

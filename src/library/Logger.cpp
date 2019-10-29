@@ -1,9 +1,7 @@
 #include "Logger.h"
 #include "LogListener.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string>
+#include <iostream>
 
 namespace PR {
 Logger::Logger()

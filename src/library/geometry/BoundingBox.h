@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Sphere.h"
+#include "ray/RayPackage.h"
 
 namespace PR {
 class Plane;
+struct SingleCollisionOutput;
+struct CollisionOutput;
 
 /**
  * A axis aligned bounding box (AABB)
@@ -54,18 +56,6 @@ public:
 	inline float longestEdge() const { return std::max(width(), std::max(height(), depth())); }
 
 	inline float diameter() const { return (mUpperBound - mLowerBound).norm(); }
-
-	/*inline Sphere outerSphere()
-	{
-		return Sphere(center(),
-					  std::max(width(), std::max(height(), depth())) * 0.5f * 1.73205080757f);
-	}
-
-	inline Sphere innerSphere()
-	{
-		return Sphere(center(),
-					  std::max(width(), std::max(height(), depth())) * 0.5f);
-	}*/
 
 	inline float volume() const { return width() * height() * depth(); }
 	inline float surfaceArea() const

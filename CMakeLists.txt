@@ -59,8 +59,6 @@ option(PR_USE_AVX512 "Use AVX512F simd support." OFF)
 
 option(VERBOSE "Show debug information." OFF)
 
-include(ExtraUtils)
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Boost_USE_MULTITHREADED ON)
 
@@ -98,7 +96,7 @@ IF(NOT PR_WITH_ASSERTS)
 	add_definitions(-DDL_NO_ASSERTS -DPR_NO_ASSERTS)
 ENDIF()
 
-#CONFIGURE
+# Configure
 SET(DL_TARGET "datalisp")
 add_subdirectory(external/DataLisp)
 
@@ -110,6 +108,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
 			external/tinyobjloader external/libsimdpp
 			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS} ${OPENEXR_INCLUDE_DIR}
 			src/library src/utils)
+
+# Extra utils
+include(ExtraUtils)
 
 # Libraries
 add_subdirectory(src/library)

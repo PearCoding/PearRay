@@ -5,27 +5,33 @@
 #include "ray/RayPackage.h"
 
 namespace PR {
-struct PR_LIB RayGroup {
-	class RayStream* Stream;
-	bool Coherent;
-	size_t Size;
+class RayStream;
+class PR_LIB RayGroup {
+private:
+	friend RayStream;
 
-	float* Origin[3];
-#ifdef PR_COMPRESS_RAY_DIR
-	snorm16* Direction[2];
-#else
-	float* Direction[3];
-#endif
-	uint32* PixelIndex;
-	uint32* SessionIndex;
-	uint16* Depth;
-	unorm16* Time;
-	uint8* WavelengthIndex;
-	uint8* Flags;
-	float* Weight;
+	RayGroup(const RayStream* stream, size_t offset, size_t size, bool coherent);
 
-	Ray getRay(size_t id) const;
-	RayPackage getRayPackage(size_t id) const;
+public:
+	~RayGroup()				  = default;
+	RayGroup(const RayGroup&) = default;
+	RayGroup(RayGroup&&)	  = default;
+	RayGroup& operator=(const RayGroup&) = default;
+	RayGroup& operator=(RayGroup&&) = default;
+
+	inline Ray getRay(size_t id) const;
+	inline RayPackage getRayPackage(size_t id) const;
+
+	inline size_t offset() const { return mOffset; }
+	inline size_t size() const { return mSize; }
+	inline bool isCoherent() const { return mCoherent; }
+	inline const RayStream* stream() const { return mStream; }
+
+private:
+	const RayStream* mStream;
+	size_t mOffset;
+	size_t mSize;
+	bool mCoherent;
 };
 
 class PR_LIB RayStream {
@@ -40,9 +46,12 @@ public:
 	inline size_t maxSize() const { return mSize; }
 	inline size_t currentSize() const { return mWeight.size(); }
 
+	inline size_t linearID(size_t id) const { return mInternalIndex.at(id); }
+
 	void addRay(const Ray& ray);
 	void setRay(size_t id, const Ray& ray);
 	Ray getRay(size_t id) const;
+	RayPackage getRayPackage(size_t id) const;
 	void invalidateRay(size_t id);
 
 	void sort();
@@ -54,17 +63,16 @@ public:
 
 private: // Some vectors are not aligned, due to required preprocessing
 	/* SoA style */
-	simd_vector<float> mOrigin[3];
+	std::vector<float> mOrigin[3];
 
 #ifdef PR_COMPRESS_RAY_DIR
 	// OCD Compressed normals
 	std::vector<snorm16> mDirection[2];
 #else
-	simd_vector<float> mDirection[3];
+	std::vector<float> mDirection[3];
 #endif
 
-	simd_vector<uint32> mPixelIndex;
-	simd_vector<uint32> mSessionIndex;
+	std::vector<uint32> mPixelIndex;
 
 	// TODO: Ray Differentials
 	std::vector<uint16> mDepth;
@@ -72,11 +80,23 @@ private: // Some vectors are not aligned, due to required preprocessing
 	std::vector<uint8> mWavelengthIndex;
 	std::vector<uint8> mFlags;
 
-	simd_vector<float> mWeight;
+	std::vector<float> mWeight;
+	std::vector<size_t> mInternalIndex;
 
 	size_t mSize;
 	size_t mCurrentPos;
-
 	size_t mLastInvPos;
 };
+
+inline Ray RayGroup::getRay(size_t id) const
+{
+	PR_ASSERT(id < mSize, "Invalid access!");
+	return mStream->getRay(id + mOffset);
+}
+
+inline RayPackage RayGroup::getRayPackage(size_t id) const
+{
+	PR_ASSERT(id < mSize, "Invalid access!");
+	return mStream->getRayPackage(id + mOffset);
+}
 } // namespace PR
