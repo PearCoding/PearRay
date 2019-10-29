@@ -65,7 +65,7 @@ void RayStream::addRay(const Ray& ray)
 	mPixelIndex.emplace_back(ray.PixelIndex);
 	mTime.emplace_back(to_unorm16(ray.Time));
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
-	mFlags.emplace_back(ray.Flags & ~RF_BackgroundHit);
+	mFlags.emplace_back(ray.Flags & ~RF_Invalid);
 	mWeight.emplace_back(ray.Weight);
 	mInternalIndex.emplace_back(mInternalIndex.size());
 }
@@ -92,16 +92,17 @@ void RayStream::setRay(size_t id, const Ray& ray)
 	mPixelIndex[cid]	  = ray.PixelIndex;
 	mTime[cid]			  = to_unorm16(ray.Time);
 	mWavelengthIndex[cid] = ray.WavelengthIndex;
-	mFlags[cid]			  = ray.Flags & ~RF_BackgroundHit;
+	mFlags[cid]			  = ray.Flags & ~RF_Invalid;
 	mWeight[cid]		  = ray.Weight;
 }
 
 void RayStream::sort()
 {
 	// Extract invalid entries out!
-	auto inv_start = std::partition_point(mInternalIndex.begin(), mInternalIndex.end(), [&](size_t ind) {
-		return mFlags[ind] != PR_INVALID_RAY_FLAG;
-	});
+	auto inv_start = std::partition(mInternalIndex.begin(), mInternalIndex.end(),
+									[&](size_t ind) {
+										return (mFlags[ind] & RF_Invalid) == 0;
+									});
 
 	mCurrentPos = 0;
 	mLastInvPos = std::distance(mInternalIndex.begin(), inv_start);
@@ -182,7 +183,7 @@ Ray RayStream::getRay(size_t id) const
 	ray.PixelIndex		= mPixelIndex[cid];
 	ray.Time			= from_unorm16(mTime[cid]);
 	ray.WavelengthIndex = mWavelengthIndex[cid];
-	ray.Flags			= mFlags[cid];
+	ray.Flags			= mFlags[cid] & ~RF_Invalid;
 	ray.Weight			= mWeight[cid];
 
 	ray.normalize();
@@ -226,7 +227,7 @@ RayPackage RayStream::getRayPackage(size_t id) const
 	ray.Time = simdpp::load(&t[0]);
 
 	ray.WavelengthIndex = load_from_container_with_indices(mInternalIndex, id, mWavelengthIndex);
-	ray.Flags			= load_from_container_with_indices(mInternalIndex, id, mFlags);
+	ray.Flags			= load_from_container_with_indices(mInternalIndex, id, mFlags) & vuint32(~RF_Invalid);
 	ray.Weight			= load_from_container_with_indices(mInternalIndex, id, mWeight);
 
 	ray.normalize();

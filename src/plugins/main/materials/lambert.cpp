@@ -43,7 +43,7 @@ public:
 	{
 		float pdf;
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
-		Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 		out.Weight		   = mAlbedo->eval(in.Point) * PR_1_PI;
 		out.Type		   = MST_DiffuseReflection;

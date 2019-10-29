@@ -106,6 +106,8 @@ void HitStream::sort()
 #endif
 		}
 	}
+
+	mCurrentPos = 0;
 }
 
 void HitStream::reset()

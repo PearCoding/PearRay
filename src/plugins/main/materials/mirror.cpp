@@ -60,7 +60,7 @@ public:
 	}
 
 protected:
-	void onFreeze(RenderContext* context) override
+	void onFreeze(RenderContext*) override
 	{
 	}
 

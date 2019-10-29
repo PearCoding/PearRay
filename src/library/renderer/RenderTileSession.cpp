@@ -53,7 +53,9 @@ bool RenderTileSession::handleCameraRays()
 		return false;
 
 	mRayStream->reset();
+	mHitStream->reset();
 
+	bool forceBreak = false;
 	for (; mCurrentY < h; ++mCurrentY) {
 		const uint32 fy = mCurrentY + mTile->sy();
 
@@ -62,8 +64,10 @@ bool RenderTileSession::handleCameraRays()
 			mCurrentX = 0;
 
 		for (; mCurrentX < w; ++mCurrentX) {
-			if (!enoughRaySpace(1))
+			if (!enoughRaySpace(1)) {
+				forceBreak = true;
 				break;
+			}
 
 			const uint32 fx = mCurrentX + mTile->sx();
 
@@ -73,6 +77,9 @@ bool RenderTileSession::handleCameraRays()
 
 			enqueueRay(ray);
 		}
+
+		if (forceBreak)
+			break;
 	}
 
 	/*{

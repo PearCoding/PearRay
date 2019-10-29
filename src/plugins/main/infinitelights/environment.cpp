@@ -18,19 +18,20 @@ public:
 
 	bool isBackground() const override { return true; }
 
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out, const RenderTileSession& session) const override
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
 	{
 		out.Weight = mRadiance->eval(in.Point);
 		out.PDF_S  = PR_1_PI;
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession& session) const override
+				const RenderTileSession&) const override
 	{
 		out.Weight = mRadiance->eval(in.Point);
 		float pdf;
 		out.Outgoing = Projection::hemi(in.RND[0], in.RND[1], pdf);
-		Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 		out.PDF_S = pdf;
 	}

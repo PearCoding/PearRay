@@ -4,8 +4,6 @@
 #include "math/SIMD.h"
 #include "ray/RayPackage.h"
 
-#define PR_INVALID_RAY_FLAG (0xFF)
-
 namespace PR {
 class RayStream;
 class PR_LIB RayGroup {
@@ -105,6 +103,6 @@ inline RayPackage RayGroup::getRayPackage(size_t id) const
 inline void RayStream::invalidateRay(size_t id)
 {
 	PR_ASSERT(id < currentSize(), "Check before adding!");
-	mFlags[linearID(id)] = PR_INVALID_RAY_FLAG;
+	mFlags[linearID(id)] |= RF_Invalid;
 }
 } // namespace PR

@@ -18,14 +18,15 @@ public:
 	{
 	}
 
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out, const RenderTileSession& session) const override
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+	const RenderTileSession&) const override
 	{
 		out.Weight = mRadiance->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession& session) const override
+				const RenderTileSession&) const override
 	{
 		out.Weight   = mRadiance->eval(in.Point);
 		out.Outgoing = mDirection_Cache;

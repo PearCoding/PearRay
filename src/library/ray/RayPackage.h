@@ -4,8 +4,8 @@
 
 namespace PR {
 
-enum RayFlags {
-	RF_BackgroundHit = 0x80 // Special flag for use in ray stream to indicate miss
+enum RayFlags : uint32 {
+	RF_Invalid = 0x80
 };
 
 template <typename V>
