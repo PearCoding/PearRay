@@ -48,9 +48,9 @@ inline float refraction_angle(float NdotV, float eta)
 */
 inline Vector3f reflect(float NdotV, const Vector3f& N, const Vector3f& V)
 {
-	if (is_inside(NdotV)) // Backfacing
+	/*if (is_inside(NdotV)) // Backfacing
 		return (V + N * 2 * NdotV).normalized();
-	else
+	else*/
 		return (V - N * 2 * NdotV).normalized();
 }
 

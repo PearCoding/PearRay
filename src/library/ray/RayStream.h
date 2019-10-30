@@ -75,11 +75,12 @@ private: // Some vectors are not aligned, due to required preprocessing
 	std::vector<uint32> mPixelIndex;
 
 	// TODO: Ray Differentials
-	std::vector<uint16> mDepth;
+	std::vector<uint16> mIterationDepth;
 	std::vector<unorm16> mTime;
 	std::vector<uint8> mWavelengthIndex;
 	std::vector<uint8> mFlags;
 
+	std::vector<float> mNdotL;
 	std::vector<float> mWeight;
 	std::vector<size_t> mInternalIndex;
 

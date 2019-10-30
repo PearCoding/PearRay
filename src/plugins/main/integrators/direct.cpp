@@ -16,6 +16,16 @@
 
 #define MSI(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
+/* Based on Path Integral formulation: (here length k)
+ * L(x0->x1)G(x0<->x1)f(x1)/p(x0)
+ * |*| f(x2)cos(N2,x1<-x2)/p_(x1|x2)
+ * |*| ...
+ * |*| f(x(k-1))cos(N(k-1),x(k-2)<-x(k-1))/p_(x(k-2)|x(k-1))
+ * |*| W(xk)
+ *
+ * p(xi) is the pdf with respect to the area
+ * p_(xi) is the pdf with respect to the solid angle (not projected solid angle!)
+ */
 namespace PR {
 class IntDirect : public IIntegrator {
 public:
@@ -50,14 +60,12 @@ public:
 		if (std::isinf(outL.PDF_S))
 			outL.PDF_S = 1;
 
-		const float cosI = outL.Outgoing.dot(spt.N);
-		if (std::abs(cosI) < PR_EPSILON
-			|| outL.Weight < PR_EPSILON
+		if (outL.Weight < PR_EPSILON
 			|| outL.PDF_S < PR_EPSILON) {
 			return 0;
 		} else {
 			// Trace shadow ray
-			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
+			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing, 1);
 			ShadowHit shadowHit = session.traceShadowRay(shadow);
 			if (shadowHit.Successful)
 				return 0;
@@ -66,12 +74,12 @@ public:
 			MaterialEvalInput in;
 			in.Point	= spt;
 			in.Outgoing = outL.Outgoing;
-			in.NdotL	= cosI;
+			in.NdotL	= outL.Outgoing.dot(spt.N);
 			MaterialEvalOutput out;
 			material->eval(in, out, session);
 			token = LightPathToken(out.Type);
 
-			return outL.Weight * out.Weight * std::abs(cosI) / outL.PDF_S;
+			return outL.Weight * out.Weight * std::abs(spt.Ray.NdotL) / outL.PDF_S;
 		}
 	}
 
@@ -79,12 +87,14 @@ public:
 					  const HitEntry& entry, const ShadingPoint& spt,
 					  IMaterial* material, bool& scattered, bool& isDelta)
 	{
-		constexpr int MIN_DEPTH			= 4; //Minimum level of depth which russian roulette will apply
+		constexpr int MIN_DEPTH			= 4; //Minimum level of depth after which russian roulette will apply
 		constexpr float DEPTH_DROP_RATE = 0.90f;
 
-		const float scatProb  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.Depth - MIN_DEPTH));
+		const float scatProb  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
 		const size_t maxDepth = session.tile()->context()->settings().maxRayDepth;
-		const float emsArea   = session.tile()->context()->emissiveSurfaceArea();
+
+		// This is only a bad approximation
+		const float lightSamplePdfApprox = 1.0f / session.tile()->context()->emissiveSurfaceArea();
 
 		scattered = false;
 		isDelta   = false;
@@ -96,20 +106,19 @@ public:
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
-		const float cosI = std::abs(out.Outgoing.dot(spt.N));
 		if (std::isinf(out.PDF_S_Forward)) {
 			isDelta			  = true;
 			out.PDF_S_Forward = 1;
 		}
 
-		if (cosI > PR_EPSILON
-			&& spt.Ray.Depth + 1 < maxDepth
+		const float NdotL = out.Outgoing.dot(spt.N);
+		if (out.PDF_S_Forward > PR_EPSILON
+			&& spt.Ray.IterationDepth + 1 < maxDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
-			Ray next = spt.Ray.next(spt.P, out.Outgoing);
+			Ray next = spt.Ray.next(spt.P, out.Outgoing, NdotL);
 
-			// This is only a bad approximation
-			float msi = isDelta ? 1.0f : MSI(mLightSampleCount, 1 / emsArea, 1, out.PDF_S_Forward);
-			next.Weight *= msi * out.Weight * cosI / (scatProb * out.PDF_S_Forward);
+			float msi = isDelta ? 1.0f : MSI(mLightSampleCount, lightSamplePdfApprox, 1, out.PDF_S_Forward);
+			next.Weight *= msi * out.Weight / (scatProb * out.PDF_S_Forward);
 
 			if (next.Weight > PR_EPSILON) {
 				LightPathBufferEntry pathEntry;
@@ -155,14 +164,17 @@ public:
 		L.normalize();
 		const float cosO = std::max(0.0f, -L.dot(lightPt.N));
 		const float cosI = L.dot(spt.N);
-		float pdfS		 = IS::toSolidAngle(pdfA, sqrD, cosO);
+		float GEOM		 = std::abs(cosO) /* std::abs(cosI)*/ / sqrD;
+
+		if (GEOM < PR_EPSILON
+			|| sqrD < PR_EPSILON
+			|| pdfA < PR_EPSILON)
+			return 0;
 
 		// Trace shadow ray
-		Ray shadow			= spt.Ray.next(spt.P, L);
+		Ray shadow			= spt.Ray.next(spt.P, L, 1);
 		ShadowHit shadowHit = session.traceShadowRay(shadow);
-		if (pdfS < PR_EPSILON
-			|| std::abs(cosI) < PR_EPSILON
-			|| !shadowHit.Successful
+		if (!shadowHit.Successful
 			|| shadowHit.EntityID != light->id()) {
 			return 0;
 		} else {
@@ -182,9 +194,9 @@ public:
 			material->eval(in, out, session);
 			token = LightPathToken(out.Type);
 
-			float msi_weight = MSI(mLightSampleCount, pdfS, 1, out.PDF_S_Forward);
+			float msi_weight = MSI(mLightSampleCount, pdfA, 1, out.PDF_S_Forward);
 
-			return msi_weight * outL.Weight * out.Weight * std::abs(cosI) / pdfS;
+			return msi_weight * outL.Weight * out.Weight * GEOM / pdfA;
 		}
 	}
 
@@ -195,17 +207,42 @@ public:
 	{
 		session.tile()->statistics().addEntityHitCount();
 
-		if (entity->isLight()) // Lights are directly traced
+		// Early drop out for invalid splashes
+		if (!entity->isLight() && !material)
 			return false;
-		if (!material)
-			return false;
-
-		LightPath currentPath = lpb.getPath(entry.RayID);
 
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
 		spt.EntityID = entity->id();
 		spt.Radiance = 1;
+
+		LightPath currentPath = lpb.getPath(entry.RayID);
+
+		// Only consider camera rays, as everything else is too noisy
+		if (entity->isLight()
+			&& spt.Ray.IterationDepth == 0
+			&& spt.Depth2 > PR_EPSILON) {
+			IEmission* ems = session.getEmission(spt.Geometry.EmissionID);
+			if (ems) {
+				// Evaluate light
+				LightEvalInput inL;
+				inL.Entity = entity;
+				inL.Point  = spt;
+				LightEvalOutput outL;
+				ems->eval(inL, outL, session);
+
+				const float prevGEOM = std::abs(spt.NdotV) /* std::abs(spt.Ray.NdotL)*/ / spt.Depth2;
+				spt.Radiance = outL.Weight * prevGEOM;
+
+				if (spt.Radiance > PR_EPSILON)
+					session.pushFragment(spt,
+										 currentPath.concated(
+											 LightPathToken(ST_EMISSIVE, SE_NONE)));
+			}
+		}
+
+		if (!material)
+			return false;
 
 		// Scatter Light
 		bool scattered = false;
@@ -276,7 +313,7 @@ public:
 							InfiniteLightEvalOutput out;
 							light->eval(in, out, session);
 
-							in.Point.Radiance = out.Weight;
+							in.Point.Radiance = out.Weight /* std::abs(ray.NdotL)*/;
 							session.pushFragment(in.Point,
 												 currentPath.concated(
 													 LightPathToken(ST_BACKGROUND, SE_NONE)));

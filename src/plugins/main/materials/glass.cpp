@@ -62,21 +62,22 @@ public:
 	{
 		float eta;
 		const float F = fresnelTerm(in.Point, eta);
+		out.Weight	= mSpecularity->eval(in.Point); // The weight is independent of the fresnel term
 
 		if (in.RND[0] <= F) {
-			out.Weight   = mSpecularity->eval(in.Point) * F;
 			out.Type	 = MST_SpecularReflection;
-			out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
+			out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N,
+											   in.Point.Ray.Direction);
 		} else {
 			const float NdotT = Reflection::refraction_angle(in.Point.NdotV, eta);
-			out.Weight		  = mSpecularity->eval(in.Point) * (1 - F);
 
 			if (NdotT < 0) { // TOTAL REFLECTION
 				out.Type	 = MST_SpecularReflection;
-				out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
+				out.Outgoing = Reflection::reflect(-in.Point.NdotV, -in.Point.N, in.Point.Ray.Direction);
 			} else {
 				out.Type	 = MST_SpecularTransmission;
-				out.Outgoing = Reflection::refract(eta, in.Point.NdotV, NdotT, in.Point.N, in.Point.Ray.Direction);
+				out.Outgoing = Reflection::refract(eta, in.Point.NdotV, NdotT,
+												   in.Point.N, in.Point.Ray.Direction);
 			}
 		}
 

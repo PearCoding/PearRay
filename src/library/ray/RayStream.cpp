@@ -33,10 +33,11 @@ RayStream::RayStream(size_t raycount)
 		mDirection[i].reserve(mSize);
 
 	mPixelIndex.reserve(mSize);
-	mDepth.reserve(mSize);
+	mIterationDepth.reserve(mSize);
 	mTime.reserve(mSize);
 	mWavelengthIndex.reserve(mSize);
 	mFlags.reserve(mSize);
+	mNdotL.reserve(mSize);
 	mWeight.reserve(mSize);
 	mInternalIndex.reserve(mSize);
 }
@@ -61,11 +62,12 @@ void RayStream::addRay(const Ray& ray)
 		mDirection[i].emplace_back(ray.Direction[i]);
 #endif
 
-	mDepth.emplace_back(ray.Depth);
+	mIterationDepth.emplace_back(ray.IterationDepth);
 	mPixelIndex.emplace_back(ray.PixelIndex);
 	mTime.emplace_back(to_unorm16(ray.Time));
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags & ~RF_Invalid);
+	mNdotL.emplace_back(ray.NdotL);
 	mWeight.emplace_back(ray.Weight);
 	mInternalIndex.emplace_back(mInternalIndex.size());
 }
@@ -88,11 +90,12 @@ void RayStream::setRay(size_t id, const Ray& ray)
 		mDirection[i][cid] = ray.Direction[i];
 #endif
 
-	mDepth[cid]			  = ray.Depth;
+	mIterationDepth[cid]  = ray.IterationDepth;
 	mPixelIndex[cid]	  = ray.PixelIndex;
 	mTime[cid]			  = to_unorm16(ray.Time);
 	mWavelengthIndex[cid] = ray.WavelengthIndex;
 	mFlags[cid]			  = ray.Flags & ~RF_Invalid;
+	mNdotL[cid]			  = ray.NdotL;
 	mWeight[cid]		  = ray.Weight;
 }
 
@@ -119,11 +122,12 @@ void RayStream::reset()
 	for (int i = 0; i < DIR_C_S; ++i)
 		mDirection[i].clear();
 
-	mDepth.clear();
+	mIterationDepth.clear();
 	mPixelIndex.clear();
 	mTime.clear();
 	mWavelengthIndex.clear();
 	mFlags.clear();
+	mNdotL.clear();
 	mWeight.clear();
 	mInternalIndex.clear();
 
@@ -179,12 +183,13 @@ Ray RayStream::getRay(size_t id) const
 							 mDirection[2][cid]);
 #endif
 
-	ray.Depth			= mDepth[cid];
+	ray.IterationDepth  = mIterationDepth[cid];
 	ray.PixelIndex		= mPixelIndex[cid];
 	ray.Time			= from_unorm16(mTime[cid]);
 	ray.WavelengthIndex = mWavelengthIndex[cid];
 	ray.Flags			= mFlags[cid] & ~RF_Invalid;
 	ray.Weight			= mWeight[cid];
+	ray.NdotL			= mNdotL[cid];
 
 	ray.normalize();
 	return ray;
@@ -216,8 +221,8 @@ RayPackage RayStream::getRayPackage(size_t id) const
 							  load_from_container_with_indices(mInternalIndex, id, mDirection[2]));
 #endif
 
-	ray.Depth	  = load_from_container_with_indices(mInternalIndex, id, mDepth);
-	ray.PixelIndex = load_from_container_with_indices(mInternalIndex, id, mPixelIndex);
+	ray.IterationDepth = load_from_container_with_indices(mInternalIndex, id, mIterationDepth);
+	ray.PixelIndex	 = load_from_container_with_indices(mInternalIndex, id, mPixelIndex);
 
 	PR_SIMD_ALIGN float t[PR_SIMD_BANDWIDTH];
 	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {

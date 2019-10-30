@@ -33,28 +33,24 @@ public:
 	{
 	}
 
+	// https://mimosa-pudica.net/improved-oren-nayar.html
 	inline float calc(const Vector3f& L, float NdotL, const ShadingPoint& spt) const
 	{
 		float roughness = mRoughness->eval(spt);
+		roughness *= roughness;
 
-		float weight = mAlbedo->eval(spt) * PR_1_PI;
+		float weight = mAlbedo->eval(spt);
 
-		if (roughness > PR_EPSILON) { // orennayar
-			const float angleVN  = std::cos(-spt.NdotV);
-			const float angleLN  = std::cos(NdotL);
-			const float or_alpha = std::max(angleLN, angleVN);
-			const float or_beta  = std::min(angleLN, angleVN);
+		if (roughness > PR_EPSILON) {
+			const float s = NdotL * spt.NdotV - L.dot(spt.Ray.Direction);
+			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, -spt.NdotV);
 
-			const float A = 1 - 0.5f * roughness / (roughness + 0.57f);
+			const float A = 1 - 0.5f * roughness / (roughness + 0.33f) + 0.17f * weight * roughness / (roughness + 0.13f);
 			const float B = 0.45f * roughness / (roughness + 0.09f);
-			const float C = std::sin(or_alpha) * std::tan(or_beta);
-
-			const float gamma = (spt.Ray.Direction - spt.N * spt.NdotV).dot(L - spt.N * NdotL);
-
-			weight *= (A + B * C * std::max(0.0f, gamma));
+			weight *= (A + B * s / t);
 		}
 
-		return weight;
+		return weight * PR_1_PI * std::abs(NdotL);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,

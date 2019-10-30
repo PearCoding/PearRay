@@ -191,6 +191,7 @@ Ray StandardCamera::constructRay(const CameraSample& sample) const
 
 	ray.WavelengthIndex = sample.WavelengthIndex;
 	ray.Weight			= sample.Weight;
+	ray.NdotL			= 1;
 	ray.Time			= sample.Time;
 	ray.Flags			= 0;
 
