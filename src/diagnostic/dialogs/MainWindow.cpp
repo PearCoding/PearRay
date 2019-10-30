@@ -16,7 +16,7 @@
 #include <QSettings>
 
 // We do not link to the library, only include the configuration file!
-#include "PR_Config.h"
+#include "Version.h"
 
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)

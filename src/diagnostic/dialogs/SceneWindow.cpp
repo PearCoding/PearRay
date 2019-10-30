@@ -13,9 +13,6 @@
 #include <QMessageBox>
 #include <QSettings>
 
-// We do not link to the library, only include the configuration file!
-#include "PR_Config.h"
-
 SceneWindow::SceneWindow(QWidget* parent)
 	: QWidget(parent)
 {

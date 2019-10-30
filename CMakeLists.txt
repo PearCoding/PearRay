@@ -105,10 +105,10 @@ add_subdirectory(external/DataLisp)
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${EIGEN3_INCLUDE_DIR}
+include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
 			external/tinyobjloader external/libsimdpp
-			${OIIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${TBB_INCLUDE_DIRS} ${OPENEXR_INCLUDE_DIR}
+			${OIIO_INCLUDE_DIR} ${OPENEXR_INCLUDE_DIR}
 			src/library src/utils)
 
 # Extras

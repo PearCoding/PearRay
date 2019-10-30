@@ -8,7 +8,7 @@
 #include <QSurfaceFormat>
 
 // We do not link to the library, only include the configuration file!
-#include "PR_Config.h"
+#include "Version.h"
 
 int main(int argc, char** argv)
 {

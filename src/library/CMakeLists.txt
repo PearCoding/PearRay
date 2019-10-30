@@ -1,4 +1,5 @@
 SET(PR_Src
+  Build.h
   PR_Config.h.in
   FileLogListener.cpp
   FileLogListener.h
@@ -163,7 +164,7 @@ add_library(pr_lib SHARED ${PR_Src})
 if(NOT WIN32)
   target_link_libraries(pr_lib PUBLIC ${CMAKE_DL_LIBS} pthread)
 endif()
-target_link_libraries(pr_lib PUBLIC ${TBB_LIBRARIES})
+target_link_libraries(pr_lib PUBLIC Eigen3::Eigen tbb)
 set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(pr_lib PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")
 target_compile_definitions(pr_lib PRIVATE "PR_LIB_BUILD")
