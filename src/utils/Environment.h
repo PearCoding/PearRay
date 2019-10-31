@@ -32,7 +32,7 @@ using ShadingSocketVariantPtr = boost::variant<
 	std::shared_ptr<FloatSpectralShadingSocket>,
 	std::shared_ptr<FloatVectorShadingSocket>>;
 
-class PR_LIB_UTILS BadRenderEnvironment : public std::exception {
+class BadRenderEnvironment : public std::exception {
 public:
 	const char* what() const throw()
 	{
