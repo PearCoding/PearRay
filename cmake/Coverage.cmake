@@ -1,0 +1,17 @@
+file(GLOB_RECURSE HDR_FILES_LIBRARY "src/library/*.h")
+file(GLOB_RECURSE HDR_FILES_PYTHON "src/python/*.h")
+file(GLOB_RECURSE HDR_FILES_UTILS "src/utils/*.h")
+
+file(GLOB_RECURSE HDR_IN_FILES_LIBRARY "src/library/*.inl")
+file(GLOB_RECURSE HDR_IN_FILES_PYTHON "src/python/*.inl")
+file(GLOB_RECURSE HDR_IN_FILES_UTILS "src/utils/*.inl")
+
+file(GLOB_RECURSE SRC_FILES_LIBRARY "src/library/*.cpp")
+file(GLOB_RECURSE SRC_FILES_PYTHON "src/python/*.cpp")
+file(GLOB_RECURSE SRC_FILES_UTILS "src/utils/*.cpp")
+
+SET(CV_FILES ${HDR_FILES_LIBRARY} ${HDR_FILES_PYTHON} ${HDR_FILES_UTILS}
+		${HDR_IN_FILES_LIBRARY} ${HDR_IN_FILES_PYTHON} ${HDR_IN_FILES_UTILS}
+		${SRC_FILES_LIBRARY} ${SRC_FILES_PYTHON} ${SRC_FILES_UTILS})
+
+coveralls_setup("${CV_FILES}" ON)

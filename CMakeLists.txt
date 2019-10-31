@@ -23,7 +23,7 @@ SET(VENDOR "PearRay project 2015-2020")
 include(Git)
 
 #CHECKS
-MESSAGE(STATUS "Building PearRay ${PR_Version}")
+MESSAGE(STATUS "Building PearRay ${PearRay_VERSION}")
 
 IF(MINGW)
 	MESSAGE(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
@@ -65,14 +65,16 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(Boost_USE_MULTITHREADED ON)
 
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
-#add_definitions(-DBOOST_ALL_NO_LIB)
+if(WIN32)
+	add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
+endif()
 
 IF(PR_WITH_DIAGNOSTIC)
 	find_package(Qt5Widgets)
 ENDIF()
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)
-find_package(OpenEXR REQUIRED)
+find_package(OpenEXR COMPONENTS IlmImf IlmImfUtil REQUIRED)
 find_package(TBB REQUIRED)
 
 IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
@@ -149,35 +151,11 @@ IF(PR_BUILD_TESTS)
 ENDIF()
 
 # DOCUMENTATION
-IF(PR_BUILD_DOCUMENTATION)
-  find_package(Doxygen)
-  IF(DOXYGEN_FOUND)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tools/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-    add_custom_target(doc_pearray
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
-  )
-  ENDIF()
-ENDIF()
+if(PR_BUILD_DOCUMENTATION)
+  include(Documentation)
+endif()
 
 # Coverage
-IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
-file(GLOB_RECURSE HDR_FILES_LIBRARY "src/library/*.h")
-file(GLOB_RECURSE HDR_FILES_PYTHON "src/python/*.h")
-file(GLOB_RECURSE HDR_FILES_UTILS "src/utils/*.h")
-
-file(GLOB_RECURSE HDR_IN_FILES_LIBRARY "src/library/*.inl")
-file(GLOB_RECURSE HDR_IN_FILES_PYTHON "src/python/*.inl")
-file(GLOB_RECURSE HDR_IN_FILES_UTILS "src/utils/*.inl")
-
-file(GLOB_RECURSE SRC_FILES_LIBRARY "src/library/*.cpp")
-file(GLOB_RECURSE SRC_FILES_PYTHON "src/python/*.cpp")
-file(GLOB_RECURSE SRC_FILES_UTILS "src/utils/*.cpp")
-
-SET(CV_FILES ${HDR_FILES_LIBRARY} ${HDR_FILES_PYTHON} ${HDR_FILES_UTILS}
-		${HDR_IN_FILES_LIBRARY} ${HDR_IN_FILES_PYTHON} ${HDR_IN_FILES_UTILS}
-		${SRC_FILES_LIBRARY} ${SRC_FILES_PYTHON} ${SRC_FILES_UTILS})
-
-coveralls_setup("${CV_FILES}" ON)
-ENDIF()
+if(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
+	include(Coverage)
+endif()
