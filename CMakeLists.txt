@@ -101,7 +101,10 @@ IF(NOT PR_WITH_ASSERTS)
 ENDIF()
 
 # Configure
-SET(DL_TARGET "datalisp")
+set(DL_WITH_TOOLS OFF CACHE BOOL "")
+set(DL_WITH_PYTHON OFF CACHE BOOL "")
+set(DL_BUILD_TESTS OFF CACHE BOOL "")
+set(DL_BUILD_DOCUMENTATION OFF CACHE BOOL "")
 add_subdirectory(external/DataLisp)
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
