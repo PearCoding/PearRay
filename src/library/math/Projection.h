@@ -49,6 +49,11 @@ inline Vector3f hemi(float u1, float u2, float& pdf)
 	return Spherical::cartesian(u1 * PR_PI * 0.5f, u2 * 2 * PR_PI);
 }
 
+inline float hemi_pdf()
+{
+	return PR_1_PI * 0.25f;
+}
+
 // Cosine weighted
 // Orientation +Z
 inline Vector3f cos_hemi(float u1, float u2, float& pdf)

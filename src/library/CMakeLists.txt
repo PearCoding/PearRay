@@ -66,6 +66,7 @@ SET(PR_Src
   math/SIMathConstants.h
   math/SIMathStd.h
   math/SIMathUtils.h
+  math/Specular.h
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
