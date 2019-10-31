@@ -108,13 +108,14 @@ configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
 			external/tinyobjloader external/libsimdpp
-			${OIIO_INCLUDE_DIR} ${OPENEXR_INCLUDE_DIR}
+			${OIIO_INCLUDE_DIR}
 			src/library src/utils)
 
 # Extras
 include(Strip)
 include(LTO)
 include(ExtraUtils)
+include(Deploy)
 
 # Libraries
 add_subdirectory(src/library)

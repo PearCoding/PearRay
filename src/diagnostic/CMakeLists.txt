@@ -84,7 +84,7 @@ SET(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
 SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
-target_link_libraries(prdiag PRIVATE Qt5::Widgets ${OPENEXR_LIBRARIES})
+target_link_libraries(prdiag PRIVATE Qt5::Widgets OpenEXR::All)
 target_link_libraries(prdiag PRIVATE Boost::iostreams)
 target_compile_definitions(prdiag PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 if(PR_COMPRESS_SPEC_FILES)
@@ -92,3 +92,7 @@ if(PR_COMPRESS_SPEC_FILES)
 endif()
 add_lto(prdiag)
 strip_binary(prdiag)
+
+target_setup_deploy(prdiag QT RECURSIVE LIBRARIES 
+	OpenEXR::All
+	Boost::iostreams)

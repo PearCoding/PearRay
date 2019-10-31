@@ -22,7 +22,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		out.Weight = mRadiance->eval(in.Point);
-		out.PDF_S  = PR_1_PI;
+		out.PDF_S  = 0.5f * PR_1_PI;
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,

@@ -139,7 +139,7 @@ bool EXRFile::open(const QString& filename)
 			mWidth, mHeight);
 
 		// Fill framebuffer with layer.channel information
-		QVector<QPair<int, half*>> halfFormat;
+		//QVector<QPair<int, half*>> halfFormat;
 		FrameBuffer frameBuffer;
 
 		size_t k = 0;
@@ -169,7 +169,7 @@ bool EXRFile::open(const QString& filename)
 										 1, 1,
 										 0.0));
 				break;
-			case HALF: {
+			/*case HALF: {
 				QPair<int, half*> p;
 				p.first  = k;
 				p.second = new half[size];
@@ -182,7 +182,7 @@ bool EXRFile::open(const QString& filename)
 										 sizeof(p.second[0]) * mWidth,
 										 1, 1,
 										 0.0));
-			} break;
+			} break;*/
 			case UINT:
 				qCritical() << "EXR: No support for uint channels";
 				break;
@@ -198,14 +198,14 @@ bool EXRFile::open(const QString& filename)
 		file.readPixels(dw.min.y, dw.max.y);
 
 		// Convert half to float!
-		for (auto p : halfFormat) {
+		/*for (auto p : halfFormat) {
 			float* ptr = layer->data()[p.first].data();
 
 			for (size_t i = 0; i < size; ++i) {
 				ptr[i] = p.second[i];
 			}
 			delete[] p.second;
-		}
+		}*/
 
 		mLayers.push_back(layer);
 	}

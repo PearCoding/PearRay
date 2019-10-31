@@ -15,9 +15,9 @@ namespace sc = std::chrono;
 
 typedef void (*SuiteCallback)();
 
-void suite_projection1();
-void suite_spectral1();
-void suite_random1();
+extern void suite_projection1();
+extern void suite_spectral1();
+extern void suite_random1();
 
 struct Suite
 {
