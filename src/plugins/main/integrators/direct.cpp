@@ -106,19 +106,19 @@ public:
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
-		if (std::isinf(out.PDF_S_Forward)) {
+		if (std::isinf(out.PDF_S)) {
 			isDelta			  = true;
-			out.PDF_S_Forward = 1;
+			out.PDF_S = 1;
 		}
 
 		const float NdotL = out.Outgoing.dot(spt.N);
-		if (out.PDF_S_Forward > PR_EPSILON
+		if (out.PDF_S > PR_EPSILON
 			&& spt.Ray.IterationDepth + 1 < maxDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
 			Ray next = spt.Ray.next(spt.P, out.Outgoing, NdotL);
 
-			float msi = isDelta ? 1.0f : MSI(mLightSampleCount, lightSamplePdfApprox, 1, out.PDF_S_Forward);
-			next.Weight *= msi * out.Weight / (scatProb * out.PDF_S_Forward);
+			float msi = isDelta ? 1.0f : MSI(mLightSampleCount, lightSamplePdfApprox, 1, out.PDF_S);
+			next.Weight *= msi * out.Weight / (scatProb * out.PDF_S);
 
 			if (next.Weight > PR_EPSILON) {
 				LightPathBufferEntry pathEntry;
@@ -194,7 +194,7 @@ public:
 			material->eval(in, out, session);
 			token = LightPathToken(out.Type);
 
-			float msi_weight = MSI(mLightSampleCount, pdfA, 1, out.PDF_S_Forward);
+			float msi_weight = MSI(mLightSampleCount, pdfA, 1, out.PDF_S);
 
 			return msi_weight * outL.Weight * out.Weight * GEOM / pdfA;
 		}

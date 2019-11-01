@@ -362,15 +362,80 @@ void Environment::freeze(const std::shared_ptr<RenderContext>& ctx)
 		e->freeze(ctx.get());
 }
 
+/* Allows input of:
+ FLOAT
+ SPECTRUM_NAME
+ SOCKET_NAME
+*/
 std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
 	const std::string& name, float def) const
 {
-	if (hasShadingSocket(name))
-		return getShadingSocket<FloatSpectralShadingSocket>(name);
+	try {
+		float val = std::stof(name);
+		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, val));
+	} catch (const std::invalid_argument&) {
+		// Nothing
+	}
+
+	if (hasShadingSocket(name)) {
+		auto socket = getShadingSocket<FloatSpectralShadingSocket>(name);
+		if (socket)
+			return socket;
+	}
 
 	if (hasSpectrum(name))
 		return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(name));
 
 	return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, def));
+}
+
+/* Allows input of:
+ FLOAT
+ SPECTRUM_NAME
+ SOCKET_NAME
+*/
+std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
+	const std::string& name, const Spectrum& def) const
+{
+	try {
+		float val = std::stof(name);
+		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, val));
+	} catch (const std::invalid_argument&) {
+		// Nothing
+	}
+
+	if (hasShadingSocket(name)) {
+		auto socket = getShadingSocket<FloatSpectralShadingSocket>(name);
+		if (socket)
+			return socket;
+	}
+
+	if (hasSpectrum(name))
+		return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(name));
+
+	return std::make_shared<ConstSpectralShadingSocket>(def);
+}
+
+/* Allows input of:
+ FLOAT
+ SOCKET_NAME
+*/
+std::shared_ptr<FloatScalarShadingSocket> Environment::getScalarShadingSocket(
+	const std::string& name, float def) const
+{
+	try {
+		float val = std::stof(name);
+		return std::make_shared<ConstScalarShadingSocket>(val);
+	} catch (const std::invalid_argument&) {
+		// Nothing
+	}
+
+	if (hasShadingSocket(name)) {
+		auto socket = getShadingSocket<FloatScalarShadingSocket>(name);
+		if (socket)
+			return socket;
+	}
+
+	return std::make_shared<ConstScalarShadingSocket>(def);
 }
 } // namespace PR

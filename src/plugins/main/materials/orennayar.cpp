@@ -58,8 +58,7 @@ public:
 	{
 		out.Weight		   = calc(in.Outgoing, std::abs(in.NdotL), in.Point);
 		out.Type		   = MST_DiffuseReflection;
-		out.PDF_S_Forward  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
-		out.PDF_S_Backward = Projection::cos_hemi_pdf(std::abs(in.NdotL));
+		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -72,8 +71,7 @@ public:
 		float NdotL		   = std::abs(out.Outgoing.dot(in.Point.N));
 		out.Weight		   = calc(out.Outgoing, NdotL, in.Point);
 		out.Type		   = MST_DiffuseReflection;
-		out.PDF_S_Backward = pdf;
-		out.PDF_S_Forward  = pdf;
+		out.PDF_S  = pdf;
 	}
 
 	std::string dumpInformation() const override

@@ -14,8 +14,7 @@ struct PR_LIB_INLINE MaterialEvalInput {
 
 struct PR_LIB_INLINE MaterialEvalOutput {
 	float Weight;
-	float PDF_S_Forward;
-	float PDF_S_Backward;
+	float PDF_S;
 	MaterialScatteringType Type;
 };
 
@@ -28,8 +27,7 @@ struct PR_LIB_INLINE MaterialSampleInput {
 struct PR_LIB_INLINE MaterialSampleOutput {
 	Vector3f Outgoing;
 	float Weight;
-	float PDF_S_Forward;
-	float PDF_S_Backward;
+	float PDF_S;
 	MaterialScatteringType Type;
 };
 } // namespace PR

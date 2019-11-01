@@ -22,17 +22,18 @@ inline Vector2t<T> uv_from_point(const Vector3t<T>& V)
 // theta [0, PI]
 // phi [0, 2*PI]
 template <typename T>
-inline Vector3t<T> cartesian(const T& theta, const T& phi)
+inline Vector3t<T> cartesian(const T& thSin, const T& thCos, const T& phSin, const T& phCos)
 {
-	const T thSin = sin(theta);
-	const T thCos = cos(theta);
-
-	const T phSin = sin(phi);
-	const T phCos = cos(phi);
-
 	return Vector3t<T>(thSin * phCos,
 					   thSin * phSin,
 					   thCos);
+}
+
+template <typename T>
+inline Vector3t<T> cartesian(const T& theta, const T& phi)
+{
+	return cartesian(sin(theta), cos(theta),
+					 sin(phi), cos(phi));
 }
 
 // u,v [0, 1]

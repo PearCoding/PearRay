@@ -26,8 +26,6 @@ class PR_LIB TriMesh {
 	PR_CLASS_NON_COPYABLE(TriMesh);
 
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	TriMesh();
 	~TriMesh();
 
@@ -35,10 +33,6 @@ public:
 							const std::vector<float>& vy, const std::vector<float>& vz);
 	inline void setNormals(const std::vector<float>& vx,
 						   const std::vector<float>& vy, const std::vector<float>& vz);
-	inline void setTangents(const std::vector<float>& vx,
-							const std::vector<float>& vy, const std::vector<float>& vz);
-	inline void setBitangents(const std::vector<float>& vx,
-							  const std::vector<float>& vy, const std::vector<float>& vz);
 	inline void setUVs(const std::vector<float>& u,
 					   const std::vector<float>& v);
 	inline void setVelocities(const std::vector<float>& vx,
@@ -94,8 +88,6 @@ private:
 	uint32 mFeatures;
 	std::vector<float> mVertices[3];
 	std::vector<float> mNormals[3];
-	std::vector<float> mTangents[3];
-	std::vector<float> mBitangents[3];
 	std::vector<float> mUVs[2];
 	std::vector<float> mVelocities[3];
 	std::vector<uint32> mMaterials;

@@ -33,8 +33,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		out.Weight		   = mSpecularity->eval(in.Point);
-		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
-		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
+		out.PDF_S  = std::numeric_limits<float>::infinity();
 		out.Type		   = MST_SpecularReflection;
 	}
 
@@ -43,8 +42,7 @@ public:
 	{
 		out.Weight		   = mSpecularity->eval(in.Point);
 		out.Type		   = MST_SpecularReflection;
-		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
-		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
+		out.PDF_S  = std::numeric_limits<float>::infinity();
 		out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
 	}
 

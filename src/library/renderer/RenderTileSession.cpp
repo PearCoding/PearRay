@@ -64,7 +64,7 @@ bool RenderTileSession::handleCameraRays()
 			mCurrentX = 0;
 
 		for (; mCurrentX < w; ++mCurrentX) {
-			if (!enoughRaySpace(1)) {
+			if (!enoughRaySpace(1) || mTile->context()->isStopping()) {
 				forceBreak = true;
 				break;
 			}
@@ -90,7 +90,7 @@ bool RenderTileSession::handleCameraRays()
 		mCoherentRayStream->dump(sstream.str());
 	}*/
 
-	return true;
+	return !mTile->context()->isStopping();
 }
 
 void RenderTileSession::startShadingGroup(const ShadingGroup& grp,

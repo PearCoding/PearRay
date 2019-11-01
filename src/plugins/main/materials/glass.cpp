@@ -48,8 +48,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		out.Weight		   = mSpecularity->eval(in.Point);
-		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
-		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
+		out.PDF_S  = std::numeric_limits<float>::infinity();
 
 		if (in.NdotL < 0)
 			out.Type = MST_SpecularTransmission;
@@ -81,8 +80,7 @@ public:
 			}
 		}
 
-		out.PDF_S_Backward = std::numeric_limits<float>::infinity();
-		out.PDF_S_Forward  = std::numeric_limits<float>::infinity();
+		out.PDF_S  = std::numeric_limits<float>::infinity();
 	}
 
 	std::string dumpInformation() const override

@@ -33,8 +33,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		out.Weight		   = mAlbedo->eval(in.Point) * std::abs(in.NdotL) * PR_1_PI;
-		out.PDF_S_Forward  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
-		out.PDF_S_Backward = Projection::cos_hemi_pdf(std::abs(in.NdotL));
+		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
 		out.Type		   = MST_DiffuseReflection;
 	}
 
@@ -47,8 +46,7 @@ public:
 
 		out.Weight		   = mAlbedo->eval(in.Point) * std::abs(in.Point.N.dot(out.Outgoing)) * PR_1_PI;
 		out.Type		   = MST_DiffuseReflection;
-		out.PDF_S_Backward = pdf;
-		out.PDF_S_Forward  = pdf;
+		out.PDF_S  = pdf;
 	}
 
 	std::string dumpInformation() const override

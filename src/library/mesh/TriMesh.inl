@@ -17,22 +17,6 @@ inline void TriMesh::setNormals(const std::vector<float>& vx,
 	mNormals[2] = vz;
 }
 
-inline void TriMesh::setTangents(const std::vector<float>& vx,
-								 const std::vector<float>& vy, const std::vector<float>& vz)
-{
-	mTangents[0] = vx;
-	mTangents[1] = vy;
-	mTangents[2] = vz;
-}
-
-inline void TriMesh::setBitangents(const std::vector<float>& vx,
-								   const std::vector<float>& vy, const std::vector<float>& vz)
-{
-	mBitangents[0] = vx;
-	mBitangents[1] = vy;
-	mBitangents[2] = vz;
-}
-
 inline void TriMesh::setUVs(const std::vector<float>& u,
 							const std::vector<float>& v)
 {

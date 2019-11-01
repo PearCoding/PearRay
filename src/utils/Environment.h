@@ -86,6 +86,10 @@ public:
 
 	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
 		const std::string& name, float def = 1) const;
+	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
+		const std::string& name, const Spectrum& def) const;
+	std::shared_ptr<FloatScalarShadingSocket> getScalarShadingSocket(
+		const std::string& name, float def = 1) const;
 
 	inline OIIO::TextureSystem* textureSystem();
 
