@@ -51,9 +51,9 @@ if(OpenImageIO_INCLUDE_DIR)
   set(OpenImageIO_VERSION "${OpenImageIO_VERSION_MAJOR}.${OpenImageIO_VERSION_MINOR}.${OpenImageIO_VERSION_PATCH}")
 endif()
 
-function(_OpenImageIO_FIND_LIB setname names)
+function(_OpenImageIO_FIND_LIB setname)
   find_library(${setname}
-    NAMES ${names}
+    NAMES ${ARGN}
     HINTS
       ENV OPENIMAGEIO_HOME OIIO_HOME
     PATH_SUFFIXES lib
@@ -73,7 +73,7 @@ set(_OpenImageIO_Util_DEPS Core)
 set(_OpenImageIO_Util_LIBNAMES OpenImageIO_Util)
 
 
-# If COMPONENTS ARE NOT GIVEN, set it to default
+# If COMPONENTS are not given, set it to default
 if(NOT OpenImageIO_FIND_COMPONENTS)
   set(OpenImageIO_FIND_COMPONENTS ${_OpenImageIO_COMPONENTS})
 endif()
@@ -83,6 +83,8 @@ foreach(component ${OpenImageIO_FIND_COMPONENTS})
     message(ERROR "Unknown component ${component}")
   endif()
 
+  set(_release_names )
+  set(_debug_names )
   foreach(_n ${_OpenImageIO_${component}_LIBNAMES})
     set(_release_names ${_release_names} "${_n}")
     set(_debug_names ${_debug_names} "${_n}d" "${_n}_d")
@@ -90,7 +92,7 @@ foreach(component ${OpenImageIO_FIND_COMPONENTS})
 
   _OpenImageIO_FIND_LIB(OpenImageIO_${component}_LIBRARY_RELEASE ${_release_names})
   if(OpenImageIO_${component}_LIBRARY_RELEASE)
-    _OpenImageIO_FIND_LIB(OpenImageIO_${component}_LIBRARY_DEBUG ${_debug_names})
+    _OpenImageIO_FIND_LIB(OpenImageIO_${component}_LIBRARY_DEBUG ${_debug_names} ${_release_names})
     if(NOT OpenImageIO_${component}_LIBRARY_DEBUG)
       set(OpenImageIO_${component}_LIBRARY_DEBUG "${OpenImageIO_${component}_LIBRARY_RELEASE}")
     endif()
@@ -115,22 +117,25 @@ endforeach(component)
 # Setup targets
 foreach(component ${OpenImageIO_FIND_COMPONENTS})
   if(OpenImageIO_${component}_FOUND)
-    set(_lib_release "${OpenImageIO_${component}_LIBRARY_RELEASE}")
-    set(_lib_debug "${OpenImageIO_${component}_LIBRARY_DEBUG}")
+    set(_deps )
 
     foreach(dependency ${_OpenImageIO_${component}_DEPS})
-      set(_lib_release ${_lib_release} "${OpenImageIO_${dependency}_LIBRARY_RELEASE}")
-      set(_lib_debug ${_lib_debug} "${OpenImageIO_${dependency}_LIBRARY_DEBUG}")
+      set(_deps ${_deps} OpenImageIO::${component})
     endforeach(dependency)
 
     add_library(OpenImageIO::${component} SHARED IMPORTED)
     set_target_properties(OpenImageIO::${component} PROPERTIES
-      ## TODO: Set this to a proper value
-      IMPORTED_LOCATION_RELEASE ${_lib_release}
-      IMPORTED_LOCATION_DEBUG ${_lib_debug}
-      IMPORTED_IMPLIB_RELEASE ${_lib_release}
-      IMPORTED_IMPLIB_DEBUG ${_lib_debug}
-      INTERFACE_INCLUDE_DIRECTORIES ${OpenImageIO_INCLUDE_DIRS}
+      IMPORTED_LOCATION_RELEASE         "${OpenImageIO_${component}_LIBRARY_RELEASE}"
+      IMPORTED_LOCATION_MINSIZEREL      "${OpenImageIO_${component}_LIBRARY_RELEASE}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenImageIO_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_DEBUG           "${OpenImageIO_${component}_LIBRARY_DEBUG}"
+      ## TODO: Set this to a proper value (on windows -> dll)
+      IMPORTED_IMPLIB_RELEASE           "${OpenImageIO_${component}_LIBRARY_RELEASE}"
+      IMPORTED_IMPLIB_MINSIZEREL        "${OpenImageIO_${component}_LIBRARY_RELEASE}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${OpenImageIO_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_DEBUG             "${OpenImageIO_${component}_LIBRARY_DEBUG}"
+      INTERFACE_LINK_LIBRARIES          "${_deps}"
+      INTERFACE_INCLUDE_DIRECTORIES     "${OpenImageIO_INCLUDE_DIRS}"
     )
   endif()
 endforeach(component)

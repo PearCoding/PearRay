@@ -23,6 +23,8 @@
 
 #include "Logger.h"
 
+#include <OpenImageIO/texture.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/regex.hpp>
@@ -41,6 +43,7 @@ Environment::Environment(const std::string& workdir,
 	, mEmissionManager(std::make_shared<EmissionManager>())
 	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
 	, mIntegratorManager(std::make_shared<IntegratorManager>())
+	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
 	registry().setByGroup(RG_RENDERER, "plugins/path", plugdir);
@@ -72,7 +75,7 @@ Environment::Environment(const std::string& workdir,
 
 Environment::~Environment()
 {
-	OIIO::TextureSystem::destroy(mTextureSystem);
+	OIIO::TextureSystem::destroy((OIIO::TextureSystem*)mTextureSystem);
 }
 
 void Environment::dumpInformation() const
@@ -362,41 +365,34 @@ void Environment::freeze(const std::shared_ptr<RenderContext>& ctx)
 		e->freeze(ctx.get());
 }
 
-/* Allows input of:
- FLOAT
- SPECTRUM_NAME
- SOCKET_NAME
-*/
 std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
 	const std::string& name, float def) const
 {
-	try {
-		float val = std::stof(name);
-		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, val));
-	} catch (const std::invalid_argument&) {
-		// Nothing
-	}
-
-	if (hasShadingSocket(name)) {
-		auto socket = getShadingSocket<FloatSpectralShadingSocket>(name);
-		if (socket)
-			return socket;
-	}
-
-	if (hasSpectrum(name))
-		return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(name));
-
-	return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, def));
+	auto socket = lookupSpectralShadingSocket(name);
+	if (socket)
+		return socket;
+	else
+		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, def));
 }
 
-/* Allows input of:
- FLOAT
- SPECTRUM_NAME
- SOCKET_NAME
-*/
 std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
 	const std::string& name, const Spectrum& def) const
 {
+	auto socket = lookupSpectralShadingSocket(name);
+	if (socket)
+		return socket;
+	else
+		return std::make_shared<ConstSpectralShadingSocket>(def);
+}
+
+/* Allows input of:
+ FLOAT
+ SPECTRUM_NAME
+ SOCKET_NAME
+*/
+std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
+	const std::string& name) const
+{
 	try {
 		float val = std::stof(name);
 		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, val));
@@ -404,24 +400,38 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocke
 		// Nothing
 	}
 
-	if (hasShadingSocket(name)) {
-		auto socket = getShadingSocket<FloatSpectralShadingSocket>(name);
-		if (socket)
-			return socket;
+	if (name.find_first_of("{t} ") == 0) {
+		std::string tname = name.substr(4);
+
+		if (hasShadingSocket(tname)) {
+			auto socket = getShadingSocket<FloatSpectralShadingSocket>(tname);
+			if (socket)
+				return socket;
+		}
 	}
 
 	if (hasSpectrum(name))
 		return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(name));
 
-	return std::make_shared<ConstSpectralShadingSocket>(def);
+	return nullptr;
+}
+
+std::shared_ptr<FloatScalarShadingSocket> Environment::getScalarShadingSocket(
+	const std::string& name, float def) const
+{
+	auto socket = lookupScalarShadingSocket(name);
+	if (socket)
+		return socket;
+	else
+		return std::make_shared<ConstScalarShadingSocket>(def);
 }
 
 /* Allows input of:
  FLOAT
  SOCKET_NAME
 */
-std::shared_ptr<FloatScalarShadingSocket> Environment::getScalarShadingSocket(
-	const std::string& name, float def) const
+std::shared_ptr<FloatScalarShadingSocket> Environment::lookupScalarShadingSocket(
+	const std::string& name) const
 {
 	try {
 		float val = std::stof(name);
@@ -430,12 +440,16 @@ std::shared_ptr<FloatScalarShadingSocket> Environment::getScalarShadingSocket(
 		// Nothing
 	}
 
-	if (hasShadingSocket(name)) {
-		auto socket = getShadingSocket<FloatScalarShadingSocket>(name);
-		if (socket)
-			return socket;
+	if (name.find_first_of("{t} ") == 0) {
+		std::string tname = name.substr(4);
+
+		if (hasShadingSocket(tname)) {
+			auto socket = getShadingSocket<FloatScalarShadingSocket>(tname);
+			if (socket)
+				return socket;
+		}
 	}
 
-	return std::make_shared<ConstScalarShadingSocket>(def);
+	return nullptr;
 }
 } // namespace PR

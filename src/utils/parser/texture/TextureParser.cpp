@@ -156,34 +156,18 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		return;
 	}
 
-	// TODO
-	/*if (type == "scalar" || type == "grayscale") {
-		if (env->hasScalarShaderOutput(name)) {
-			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
-			return;
-		}
-
-		auto output = std::make_shared<ImageScalarShaderOutput>(env->textureSystem(), opts, filename);
-		env->addShaderOutput(name, output);
-	} else*/
-	if (type == "color" || type == "spectral") {
+	if (type == "scalar"
+		|| type == "grayscale"
+		|| type == "color"
+		|| type == "spectral") {
 		if (env->hasShadingSocket(name)) {
 			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
 
-		auto output = std::make_shared<ImageShadingSocket>(env->textureSystem(), opts, filename);
+		auto output = std::make_shared<ImageShadingSocket>((OIIO::TextureSystem*)env->textureSystem(), opts, filename);
 		env->addShadingSocket(name, output);
-	} /*else if (type == "vector") {
-		if (env->hasVectorShaderOutput(name)) {
-			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
-			return;
-		}
-
-		auto output = std::make_shared<ImageVectorShaderOutput>(env->textureSystem(), opts, filename);
-		env->addShaderOutput(name, output);
-	}*/
-	else {
+	} else {
 		PR_LOG(L_ERROR) << "No known type given for texture " << name << std::endl;
 		return;
 	}

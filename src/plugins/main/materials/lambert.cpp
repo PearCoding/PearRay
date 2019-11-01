@@ -32,9 +32,9 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight		   = mAlbedo->eval(in.Point) * std::abs(in.NdotL) * PR_1_PI;
+		out.Weight = mAlbedo->eval(in.Point) * std::abs(in.NdotL) * PR_1_PI;
 		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
-		out.Type		   = MST_DiffuseReflection;
+		out.Type   = MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -44,8 +44,8 @@ public:
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
 		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
-		out.Weight		   = mAlbedo->eval(in.Point) * std::abs(in.Point.N.dot(out.Outgoing)) * PR_1_PI;
-		out.Type		   = MST_DiffuseReflection;
+		out.Weight = mAlbedo->eval(in.Point) * std::abs(in.Point.N.dot(out.Outgoing)) * PR_1_PI;
+		out.Type   = MST_DiffuseReflection;
 		out.PDF_S  = pdf;
 	}
 

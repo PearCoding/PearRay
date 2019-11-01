@@ -1,9 +1,6 @@
 #include "ImageShadingSocket.h"
 
 #include "Logger.h"
-#include "math/SIMD.h"
-
-#define PR_OIIO_HAS_BATCH_SUPPORT (OIIO_VERSION_MAJOR >= 1 && OIIO_VERSION_MINOR >= 9)
 
 namespace PR {
 ImageShadingSocket::ImageShadingSocket(OIIO::TextureSystem* tsys,
@@ -16,14 +13,20 @@ ImageShadingSocket::ImageShadingSocket(OIIO::TextureSystem* tsys,
 {
 	PR_ASSERT(tsys, "Given texture system has to be valid");
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
+
+	// TODO: Use this!
+	mHandle = mTextureSystem->get_texture_handle(mFilename);
+	PR_ASSERT(mHandle, "Image handle should not be NULL");
 }
 
 float ImageShadingSocket::eval(const ShadingPoint& ctx) const
 {
+	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
+
 	float res;
 	OIIO::TextureOpt ops = mTextureOptions;
 	ops.firstchannel	 = ctx.Ray.WavelengthIndex;
-	ops.subimage		 = ctx.PrimID;
+	//ops.subimage		 = ctx.PrimID;
 
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.Geometry.UVW[0], ctx.Geometry.UVW[1],

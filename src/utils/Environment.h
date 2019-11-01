@@ -5,7 +5,6 @@
 #include "shader/ShadingSocket.h"
 #include "spectral/Spectrum.h"
 
-#include <OpenImageIO/texture.h>
 #include <boost/variant.hpp>
 
 #include <list>
@@ -91,7 +90,7 @@ public:
 	std::shared_ptr<FloatScalarShadingSocket> getScalarShadingSocket(
 		const std::string& name, float def = 1) const;
 
-	inline OIIO::TextureSystem* textureSystem();
+	inline void* textureSystem();
 
 	inline void setWorkingDir(const std::string& dir);
 	inline std::string workingDir() const;
@@ -109,6 +108,11 @@ public:
 	std::shared_ptr<RenderFactory> createRenderFactory() const;
 
 private:
+	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
+		const std::string& name) const;
+	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
+		const std::string& name) const;
+
 	void freeze(const std::shared_ptr<RenderContext>& ctx);
 	void loadPlugins(const std::string& basedir);
 	void loadOnePlugin(const std::string& name);
@@ -133,7 +137,7 @@ private:
 	std::map<std::string, std::shared_ptr<TriMesh>> mMeshes;
 	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSocket;
 
-	OIIO::TextureSystem* mTextureSystem;
+	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;
 };
 } // namespace PR

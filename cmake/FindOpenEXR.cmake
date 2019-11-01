@@ -49,9 +49,9 @@ if(OpenEXR_INCLUDE_DIR)
   set(OpenEXR_VERSION "${OpenEXR_VERSION_MAJOR}.${OpenEXR_VERSION_MINOR}.${OpenEXR_VERSION_PATCH}")
 endif()
 
-function(_OpenEXR_FIND_LIB setname names)
+function(_OpenEXR_FIND_LIB setname)
   find_library(${setname}
-    NAMES ${names}
+    NAMES ${ARGN}
     HINTS
       ENV OPENEXR_HOME
     PATH_SUFFIXES lib
@@ -80,7 +80,7 @@ foreach(component ${OpenEXR_FIND_COMPONENTS})
 
   _OpenEXR_FIND_LIB(OpenEXR_${component}_LIBRARY_RELEASE ${component})
   if(OpenEXR_${component}_LIBRARY_RELEASE)
-    _OpenEXR_FIND_LIB(OpenEXR_${component}_LIBRARY_DEBUG ${component}d ${component}_d)
+    _OpenEXR_FIND_LIB(OpenEXR_${component}_LIBRARY_DEBUG ${component}d ${component}_d ${component})
     if(NOT OpenEXR_${component}_LIBRARY_DEBUG)
       set(OpenEXR_${component}_LIBRARY_DEBUG "${OpenEXR_${component}_LIBRARY_RELEASE}")
     endif()
@@ -105,22 +105,25 @@ endforeach(component)
 # Setup targets
 foreach(component ${OpenEXR_FIND_COMPONENTS})
   if(OpenEXR_${component}_FOUND)
-    set(_lib_release "${OpenEXR_${component}_LIBRARY_RELEASE}")
-    set(_lib_debug "${OpenEXR_${component}_LIBRARY_DEBUG}")
+  set(_deps )
 
-    foreach(dependency ${_OpenEXR_${component}_DEPS})
-      set(_lib_release ${_lib_release} "${OpenEXR_${dependency}_LIBRARY_RELEASE}")
-      set(_lib_debug ${_lib_debug} "${OpenEXR_${dependency}_LIBRARY_DEBUG}")
-    endforeach(dependency)
+  foreach(dependency ${OpenEXR_${component}_DEPS})
+    set(_deps ${_deps} OpenEXR::${component})
+  endforeach(dependency)
 
     add_library(OpenEXR::${component} SHARED IMPORTED)
     set_target_properties(OpenEXR::${component} PROPERTIES
-      ## TODO: Set this to a proper value
-      IMPORTED_LOCATION_RELEASE ${_lib_release}
-      IMPORTED_LOCATION_DEBUG ${_lib_debug}
-      IMPORTED_IMPLIB_RELEASE ${_lib_release}
-      IMPORTED_IMPLIB_DEBUG ${_lib_debug}
-      INTERFACE_INCLUDE_DIRECTORIES ${OpenEXR_INCLUDE_DIRS}
+      ## TODO: Set this to a proper value (on windows -> dll)
+      IMPORTED_LOCATION_RELEASE         "${OpenEXR_${component}_LIBRARY_RELEASE}"
+      IMPORTED_LOCATION_MINSIZEREL      "${OpenEXR_${component}_LIBRARY_RELEASE}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${OpenEXR_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_DEBUG           "${OpenEXR_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELEASE           "${OpenEXR_${component}_LIBRARY_RELEASE}"
+      IMPORTED_IMPLIB_MINSIZEREL        "${OpenEXR_${component}_LIBRARY_RELEASE}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${OpenEXR_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_DEBUG             "${OpenEXR_${component}_LIBRARY_DEBUG}"
+      INTERFACE_LINK_LIBRARIES          "${_deps}"
+      INTERFACE_INCLUDE_DIRECTORIES     "${OpenEXR_INCLUDE_DIRS}"
     )
   endif()
 endforeach(component)

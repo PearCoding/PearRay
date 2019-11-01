@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shader/ShadingSocket.h"
+
 #include <OpenImageIO/texture.h>
 
 namespace PR {
@@ -14,6 +15,7 @@ public:
 
 private:
 	OIIO::ustring mFilename;
+	void* mHandle;
 	OIIO::TextureOpt mTextureOptions;
 	OIIO::TextureSystem* mTextureSystem;
 };

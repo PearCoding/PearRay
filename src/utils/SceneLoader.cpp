@@ -952,6 +952,14 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 				varAddReg(reg, regGroup, uuid, hasID, key, arr);
 			else
 				PR_LOG(L_ERROR) << "Invalid registry array type." << std::endl;
+		} else if (grp.id() == "texture") {
+			if (grp.anonymousCount() == 1 && grp.at(0).type() == DL::Data::T_String) {
+				std::stringstream stream;
+				stream << "{t} " << grp.at(0).getString();
+				varAddReg(reg, regGroup, uuid, hasID, key, stream.str());
+			} else {
+				PR_LOG(L_ERROR) << "Invalid texture registry type." << std::endl;
+			}
 		} else {
 			PR_LOG(L_ERROR) << "Invalid registry group type." << std::endl;
 		}

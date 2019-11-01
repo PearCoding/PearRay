@@ -114,7 +114,7 @@ inline bool Environment::isShadingSocket(const std::string& name) const
 	return hasShadingSocket(name) && getShadingSocket<Socket>(name);
 }
 
-inline OIIO::TextureSystem* Environment::textureSystem() { return mTextureSystem; }
+inline void* Environment::textureSystem() { return mTextureSystem; }
 
 inline void Environment::setWorkingDir(const std::string& dir) { mWorkingDir = dir; }
 inline std::string Environment::workingDir() const { return mWorkingDir; }
