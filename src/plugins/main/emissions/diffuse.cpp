@@ -15,11 +15,11 @@ public:
 	{
 	}
 
-	// Given in luminous flux (cd*sr)
+	// Given in luminous flux (cd/m^2)
 	void eval(const LightEvalInput& in, LightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = mRadiance->eval(in.Point) / (in.Entity->surfaceArea() * 2 * PR_PI);
+		out.Weight = 2 * PR_PI * mRadiance->eval(in.Point) / (in.Entity->surfaceArea());
 	}
 
 	void onFreeze(RenderContext*) override

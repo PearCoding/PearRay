@@ -107,8 +107,13 @@ public:
 
 		switch (mFresnelMode) {
 		default:
-		case FM_Dielectric:
+		case FM_Dielectric: {
+			float n1 = 1;
+			float n2 = ior;
+			if (point.Flags & SPF_Inside)
+				std::swap(n1, n2);
 			return Fresnel::dielectric(-point.NdotV, 1, ior);
+		}
 		case FM_Conductor: {
 			float a = mConductorAbsorption->eval(point);
 
@@ -121,13 +126,15 @@ public:
 	{
 		const Eigen::Vector3f H = Reflection::halfway(point.Ray.Direction, L);
 		const float NdotH		= point.N.dot(H);
+		const float NdotV		= -point.NdotV;
 
-		if (NdotH <= PR_EPSILON) {
+		if (NdotH <= PR_EPSILON
+			|| NdotV <= PR_EPSILON
+			|| NdotL <= PR_EPSILON) {
 			pdf = 0;
 			return 0.0f;
 		}
-		const float m1	= mRoughnessX->eval(point);
-		const float NdotV = -point.NdotV;
+		const float m1 = mRoughnessX->eval(point);
 
 		float G;
 		switch (mGeometricMode) {
@@ -194,7 +201,7 @@ public:
 			Spec = evalSpec(in.Point, in.Outgoing, in.NdotL, out.PDF_S);
 		}
 
-		out.PDF_S = PR_1_PI * (1 - F) + out.PDF_S * F;
+		out.PDF_S  = PR_1_PI * (1 - F) + out.PDF_S * F;
 		out.Weight = Diff * (1 - F) + Spec * F;
 		out.Weight *= std::abs(in.NdotL);
 		out.Type = MST_DiffuseReflection;
@@ -203,6 +210,7 @@ public:
 	void sampleDiffusePath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
 	{
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
+		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 		out.Weight   = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
 		out.Type	 = MST_DiffuseReflection;
 	}
@@ -274,7 +282,7 @@ public:
 		Vector3f H   = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny,
 									  Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi));
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
-		float NdotL  = in.Point.N.dot(out.Outgoing);
+		float NdotL  = std::abs(in.Point.N.dot(out.Outgoing));
 		if (NdotL > PR_EPSILON)
 			out.PDF_S = std::min(std::max(out.PDF_S / (-4 * NdotL * in.Point.NdotV), 0.0f), 1.0f);
 		else
@@ -283,7 +291,7 @@ public:
 		out.Type = MST_SpecularReflection;
 
 		float _ignore;
-		out.Weight = evalSpec(in.Point, out.Outgoing, NdotL, _ignore) * std::abs(NdotL);
+		out.Weight = evalSpec(in.Point, out.Outgoing, NdotL, _ignore) * NdotL;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -295,13 +303,15 @@ public:
 			sampleSpecularPath(in, out);
 			out.PDF_S /= F;
 			out.Type = MST_SpecularReflection;
+		} else if (mFresnelMode == FM_Conductor) {
+			// Absorp
+			out.Weight = 0.0f;
+			out.PDF_S  = 0.0f;
 		} else {
 			sampleDiffusePath(in, out);
 			out.PDF_S /= 1.0f - F;
 			out.Type = MST_DiffuseReflection;
 		}
-
-		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 	}
 
 	std::string dumpInformation() const override
