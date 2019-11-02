@@ -59,6 +59,7 @@ SET(PR_Src
   math/Generator.h
   math/HemiMap.h
   math/ImportanceSampling.h
+  math/Microfacet.h
   math/Projection.h
   math/ProjectionMap.h
   math/Reflection.h
@@ -66,7 +67,6 @@ SET(PR_Src
   math/SIMathConstants.h
   math/SIMathStd.h
   math/SIMathUtils.h
-  math/Specular.h
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h

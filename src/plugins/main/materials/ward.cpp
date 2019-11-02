@@ -1,9 +1,9 @@
 #include "Environment.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
+#include "math/Microfacet.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
-#include "math/Specular.h"
 #include "math/Spherical.h"
 #include "renderer/RenderContext.h"
 #include "shader/ShadingSocket.h"
@@ -49,10 +49,10 @@ public:
 		const float HdotY = in.Point.Ny.dot(H);
 
 		float spec = std::min(1.0f,
-							  Specular::ward(mRoughnessX->eval(in.Point),
-											 mRoughnessY->eval(in.Point),
-											 -in.Point.NdotV, in.NdotL, NdotH,
-											 HdotX, HdotY));
+							  Microfacet::ward(mRoughnessX->eval(in.Point),
+											   mRoughnessY->eval(in.Point),
+											   -in.Point.NdotV, in.NdotL, NdotH,
+											   HdotX, HdotY));
 
 		const float refl = mReflectivity->eval(in.Point);
 		out.Weight		 = mAlbedo->eval(in.Point) * (1 - refl) + spec * mSpecularity->eval(in.Point) * refl;

@@ -41,13 +41,13 @@ public:
 			std::swap(n1, n2);
 
 		eta = n1 / n2;
-		return Fresnel::dielectric(spt.NdotV, n1, n2);
+		return Fresnel::dielectric(-spt.NdotV, n1, n2);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight		   = mSpecularity->eval(in.Point);
+		out.Weight = mSpecularity->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
 
 		if (in.NdotL < 0)
@@ -80,7 +80,7 @@ public:
 			}
 		}
 
-		out.PDF_S  = std::numeric_limits<float>::infinity();
+		out.PDF_S = std::numeric_limits<float>::infinity();
 	}
 
 	std::string dumpInformation() const override

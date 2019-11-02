@@ -4,13 +4,14 @@
 
 namespace PR {
 namespace Fresnel {
+/* V is outgoing! -> NdotV is positive! */
 inline float dielectric(float NdotV, float NdotT, float n1, float n2)
 {
 	/*if(NdotV*NdotT <= PR_EPSILON)
 			return 1;*/
 
-	const float para = (-n1 * NdotV - n2 * NdotT) / (-n1 * NdotV + n2 * NdotT);
-	const float perp = (n1 * NdotT + n2 * NdotV) / (n1 * NdotT - n2 * NdotV);
+	const float para = (n1 * NdotV - n2 * NdotT) / (n1 * NdotV + n2 * NdotT);
+	const float perp = (n1 * NdotT - n2 * NdotV) / (n1 * NdotT + n2 * NdotV);
 
 	return (para * para + perp * perp) / 2.0f;
 }

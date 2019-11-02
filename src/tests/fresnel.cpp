@@ -17,7 +17,7 @@ PR_BEGIN_TESTCASE(Dielectric)
 }*/
 PR_TEST("One Dot")
 {
-	float R = Fresnel::dielectric(-1,1,1);
+	float R = Fresnel::dielectric(1,1,1);
 	PR_CHECK_NEARLY_EQ(R, 0);
 }
 PR_END_TESTCASE()
