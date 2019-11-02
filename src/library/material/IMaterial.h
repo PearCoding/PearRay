@@ -25,6 +25,8 @@ public:
 	*/
 	virtual void sample(const MaterialSampleInput& in, MaterialSampleOutput& out, const RenderTileSession& session) const = 0;
 
+	virtual bool hasDeltaDistribution() const { return false; }
+
 	inline bool canBeShaded() const;
 	inline void enableShading(bool b);
 

@@ -141,6 +141,8 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 			mEntities[index]->checkCollision(in2, out2);
 		});
 
+	hit.UV[0]		= out.UV[0];
+	hit.UV[1]		= out.UV[1];
 	hit.EntityID	= out.EntityID;
 	hit.PrimitiveID = out.FaceID;
 

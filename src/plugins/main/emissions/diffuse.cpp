@@ -19,7 +19,7 @@ public:
 	void eval(const LightEvalInput& in, LightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = 2 * PR_PI * mRadiance->eval(in.Point) / (in.Entity->surfaceArea());
+		out.Weight = mRadiance->eval(in.Point);
 	}
 
 	void onFreeze(RenderContext*) override

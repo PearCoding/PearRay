@@ -134,7 +134,9 @@ public:
 			pdf = 0;
 			return 0.0f;
 		}
-		const float m1 = mRoughnessX->eval(point);
+
+		float m1 = mRoughnessX->eval(point);
+		m1 *= m1;
 
 		float G;
 		switch (mGeometricMode) {
@@ -172,7 +174,8 @@ public:
 			if (mRoughnessX == mRoughnessY) {
 				D = Microfacet::ndf_ggx(NdotH, m1);
 			} else {
-				const float m2 = mRoughnessY->eval(point);
+				float m2 = mRoughnessY->eval(point);
+				m2 *= m2;
 
 				const float XdotH = std::abs(point.Nx.dot(H));
 				const float YdotH = std::abs(point.Ny.dot(H));
@@ -217,7 +220,8 @@ public:
 
 	void sampleSpecularPath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
 	{
-		const float m1 = mRoughnessX->eval(in.Point);
+		float m1 = mRoughnessX->eval(in.Point);
+		m1 *= m1;
 
 		float cosTheta, sinTheta; // V samples
 		float cosPhi, sinPhi;	 // U samples
@@ -258,6 +262,7 @@ public:
 				r2	 = alpha2;
 			} else {
 				float m2 = mRoughnessY->eval(in.Point);
+				m2 *= m2;
 
 				float phi = std::atan(m2 / m1 * std::tan(PR_PI + 2 * PR_PI * in.RND[0])) + PR_PI * std::floor(2 * in.RND[0] + 0.5f);
 
@@ -304,7 +309,7 @@ public:
 			out.PDF_S /= F;
 			out.Type = MST_SpecularReflection;
 		} else if (mFresnelMode == FM_Conductor) {
-			// Absorp
+			// Absorb
 			out.Weight = 0.0f;
 			out.PDF_S  = 0.0f;
 		} else {

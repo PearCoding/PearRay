@@ -30,7 +30,7 @@ public:
 	IInfiniteLight(uint32 id, const std::string& name);
 	virtual ~IInfiniteLight() {}
 
-	virtual bool isBackground() const { return false; }
+	virtual bool hasDeltaDistribution() const { return false; }
 
 	virtual void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out, const RenderTileSession& session) const = 0;
 	/*

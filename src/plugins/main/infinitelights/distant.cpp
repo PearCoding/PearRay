@@ -18,8 +18,10 @@ public:
 	{
 	}
 
+	bool hasDeltaDistribution() const { return true; }
+
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
-	const RenderTileSession&) const override
+			  const RenderTileSession&) const override
 	{
 		out.Weight = mRadiance->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();

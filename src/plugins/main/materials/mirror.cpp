@@ -29,20 +29,22 @@ public:
 	{
 	}
 
+	bool hasDeltaDistribution() const override { return true; }
+
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight		   = mSpecularity->eval(in.Point);
+		out.Weight = mSpecularity->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
-		out.Type		   = MST_SpecularReflection;
+		out.Type   = MST_SpecularReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Weight		   = mSpecularity->eval(in.Point);
-		out.Type		   = MST_SpecularReflection;
-		out.PDF_S  = std::numeric_limits<float>::infinity();
+		out.Weight   = mSpecularity->eval(in.Point);
+		out.Type	 = MST_SpecularReflection;
+		out.PDF_S	= std::numeric_limits<float>::infinity();
 		out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
 	}
 

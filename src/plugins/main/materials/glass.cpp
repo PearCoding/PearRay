@@ -33,6 +33,8 @@ public:
 	{
 	}
 
+	bool hasDeltaDistribution() const override { return true; }
+
 	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
 	{
 		float n1 = 1;
