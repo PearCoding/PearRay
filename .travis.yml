@@ -1,13 +1,13 @@
 language: cpp
 compiler:
-  gcc
-  clang
+  - gcc
+  - clang
 dist: bionic
 env:
   global:
     - PYTHON=3.6
     - MAKE_FLAGS=-j4
-    - CXXFLAGS="-Wall -Wextra -march=native"
+    - CXXFLAGS="-O0 -Wall -Wextra -march=native"
 addons:
   apt:
     update: true
@@ -32,7 +32,7 @@ before_script:
   - mkdir build
   - cd build
   - lcov --directory . --zerocounters
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DPYBIND11_PYTHON_VERSION=$PYTHON ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPYBIND11_PYTHON_VERSION=$PYTHON ..
 script:
   - make $MAKE_FLAGS
   - make test || true
