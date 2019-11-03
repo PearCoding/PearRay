@@ -10,7 +10,7 @@ addons:
   apt:
     update: true
 before_install:
-  - sudo apt-get -y install lcov qtbase5-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-iostreams-dev libboost-thread-dev libopenexr-dev libtbb-dev libeigen3-dev libopenimageio-dev
+  - sudo apt-get -y install lcov qtbase5-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-iostreams-dev libboost-thread-dev libopenexr-dev libtbb-dev libeigen3-dev libopenimageio-dev libpython3-dev
 install:
 before_script:
   - $CXX --version
