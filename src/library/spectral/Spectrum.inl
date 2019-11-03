@@ -1,17 +1,18 @@
+// IWYU pragma: private, include "spectral/Spectrum.h"
 namespace PR {
 
 // Simple Properties
-inline uint32 Spectrum::samples() const
+inline size_t Spectrum::samples() const
 {
 	return spectralEnd() - spectralStart();
 }
 
-inline uint32 Spectrum::spectralStart() const
+inline size_t Spectrum::spectralStart() const
 {
 	return mInternal->Start;
 }
 
-inline uint32 Spectrum::spectralEnd() const
+inline size_t Spectrum::spectralEnd() const
 {
 	return mInternal->End;
 }
@@ -27,37 +28,37 @@ inline bool Spectrum::isExternal() const
 }
 
 // Simple Access
-inline void Spectrum::setValue(uint32 index, float v)
+inline void Spectrum::setValue(size_t index, float v)
 {
 	PR_ASSERT(index < samples(), "Bad access");
 	mInternal->Data[index] = v;
 }
 
-inline float Spectrum::value(uint32 index) const
+inline float Spectrum::value(size_t index) const
 {
 	PR_ASSERT(index < samples(), "Bad access");
 	return mInternal->Data[index];
 }
 
-inline const float& Spectrum::operator[](uint32 index) const
+inline const float& Spectrum::operator[](size_t index) const
 {
 	PR_ASSERT(index < samples(), "Bad access");
 	return mInternal->Data[index];
 }
 
-inline float& Spectrum::operator[](uint32 index)
+inline float& Spectrum::operator[](size_t index)
 {
 	PR_ASSERT(index < samples(), "Bad access");
 	return mInternal->Data[index];
 }
 
-inline const float& Spectrum::operator()(uint32 index) const
+inline const float& Spectrum::operator()(size_t index) const
 {
 	PR_ASSERT(index < samples(), "Bad access");
 	return mInternal->Data[index];
 }
 
-inline float& Spectrum::operator()(uint32 index)
+inline float& Spectrum::operator()(size_t index)
 {
 	PR_ASSERT(index < samples(), "Bad access");
 	return mInternal->Data[index];
@@ -99,7 +100,7 @@ inline Spectrum& Spectrum::operator+=(const Spectrum& spec)
 {
 	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
 
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) + spec.value(i));
 
 	return *this;
@@ -109,7 +110,7 @@ inline Spectrum& Spectrum::operator-=(const Spectrum& spec)
 {
 	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
 
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) - spec.value(i));
 
 	return *this;
@@ -119,7 +120,7 @@ inline Spectrum& Spectrum::operator*=(const Spectrum& spec)
 {
 	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
 
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) * spec.value(i));
 
 	return *this;
@@ -127,7 +128,7 @@ inline Spectrum& Spectrum::operator*=(const Spectrum& spec)
 
 inline Spectrum& Spectrum::operator*=(float f)
 {
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) * f);
 
 	return *this;
@@ -137,7 +138,7 @@ inline Spectrum& Spectrum::operator/=(const Spectrum& spec)
 {
 	PR_ASSERT(spec.samples() == samples(), "Need same spectrum types");
 
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) / spec.value(i));
 
 	return *this;
@@ -145,7 +146,7 @@ inline Spectrum& Spectrum::operator/=(const Spectrum& spec)
 
 inline Spectrum& Spectrum::operator/=(float f)
 {
-	const float inv = 1.0f/f;
+	const float inv = 1.0f / f;
 	return (*this *= inv);
 }
 
@@ -157,9 +158,9 @@ inline void Spectrum::fill(float v)
 	}
 }
 
-inline void Spectrum::fill(uint32 si, uint32 ei, float v)
+inline void Spectrum::fill(size_t si, size_t ei, float v)
 {
-	for (uint32 i = si; i < samples() && i < ei; ++i) {
+	for (size_t i = si; i < samples() && i < ei; ++i) {
 		setValue(i, v);
 	}
 }
@@ -174,7 +175,7 @@ inline float Spectrum::max() const
 {
 	float h = 0;
 
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		if (h < std::abs(value(i)))
 			h = std::abs(value(i));
 	}
@@ -186,7 +187,7 @@ inline float Spectrum::min() const
 {
 	float h = std::numeric_limits<float>::max();
 
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		if (h > std::abs(value(i)))
 			h = std::abs(value(i));
 	}
@@ -197,7 +198,7 @@ inline float Spectrum::min() const
 inline float Spectrum::avg() const
 {
 	float h = 0;
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		h += value(i);
 
 	return h / samples();
@@ -206,7 +207,7 @@ inline float Spectrum::avg() const
 inline float Spectrum::sum() const
 {
 	float h = 0;
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		h += value(i);
 
 	return h;
@@ -215,7 +216,7 @@ inline float Spectrum::sum() const
 inline float Spectrum::sqrSum() const
 {
 	float h = 0;
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		h += value(i) * value(i);
 
 	return h;
@@ -224,7 +225,7 @@ inline float Spectrum::sqrSum() const
 // Detect Functions
 inline bool Spectrum::hasNaN() const
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		if (std::isnan(value(i)))
 			return true;
 	}
@@ -234,7 +235,7 @@ inline bool Spectrum::hasNaN() const
 
 inline bool Spectrum::hasInf() const
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		if (std::isinf(value(i)))
 			return true;
 	}
@@ -244,7 +245,7 @@ inline bool Spectrum::hasInf() const
 
 inline bool Spectrum::hasNegative() const
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		if (value(i) < 0.0f)
 			return true;
 	}
@@ -254,7 +255,7 @@ inline bool Spectrum::hasNegative() const
 
 inline bool Spectrum::isOnlyZero(float eps) const
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		if (std::abs(value(i)) > eps)
 			return false;
 	}
@@ -269,20 +270,20 @@ inline void Spectrum::normalize()
 
 	if (h > PR_EPSILON) {
 		float sh = 1 / h;
-		for (uint32 i = 0; i < samples(); ++i)
+		for (size_t i = 0; i < samples(); ++i)
 			setValue(i, value(i) * sh);
 	}
 }
 
 inline void Spectrum::clamp(float start, float end)
 {
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, value(i) > end ? end : (value(i) < start ? start : value(i)));
 }
 
 inline void Spectrum::sqrt()
 {
-	for (uint32 i = 0; i < samples(); ++i)
+	for (size_t i = 0; i < samples(); ++i)
 		setValue(i, std::sqrt(value(i)));
 }
 
@@ -327,7 +328,7 @@ inline Spectrum Spectrum::gray(const std::shared_ptr<SpectrumDescriptor>& desc, 
 template <typename T>
 inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator=(const T& slo)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, slo(i));
 	}
 	return *this;
@@ -336,7 +337,7 @@ inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator=(c
 template <typename T>
 inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator+=(const T& slo)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, value(i) + slo(i));
 	}
 	return *this;
@@ -345,7 +346,7 @@ inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator+=(
 template <typename T>
 inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator-=(const T& slo)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, value(i) - slo(i));
 	}
 	return *this;
@@ -354,7 +355,7 @@ inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator-=(
 template <typename T>
 inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator*=(const T& slo)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, value(i) * slo(i));
 	}
 	return *this;
@@ -363,7 +364,7 @@ inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator*=(
 template <typename T>
 inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator/=(const T& slo)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, value(i) / slo(i));
 	}
 	return *this;
@@ -372,7 +373,7 @@ inline std::enable_if_t<Lazy::is_slo<T>::value, Spectrum&> Spectrum::operator/=(
 template <typename T>
 inline Lazy::enable_if_slo_t<T, T, void> Spectrum::lerp(const T& slo, float t)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, value(i) * (1 - t) + slo(i) * t);
 	}
 }
@@ -380,9 +381,19 @@ inline Lazy::enable_if_slo_t<T, T, void> Spectrum::lerp(const T& slo, float t)
 template <typename T>
 inline Lazy::enable_if_slo_t<T, T, void> Spectrum::copyFrom(const T& slo)
 {
-	for (uint32 i = 0; i < samples(); ++i) {
+	for (size_t i = 0; i < samples(); ++i) {
 		setValue(i, slo(i));
 	}
 }
 
+inline std::ostream& operator<<(std::ostream& o, const Spectrum& spec)
+{
+	o << "[";
+	for (size_t i = 0; i < spec.samples() - 1; ++i) {
+		o << spec[i] << " ";
+	}
+	o << spec[spec.samples() - 1] << "]";
+
+	return o;
+}
 } // namespace PR

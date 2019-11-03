@@ -1,7 +1,7 @@
 #pragma once
 
 #include "renderer/RenderEnums.h"
-#include "renderer/RenderStatistics.h"
+#include "renderer/RenderTileStatistics.h"
 
 #include <vector>
 
@@ -21,7 +21,7 @@ public:
 	RenderTile* getNextTile(uint32 maxSample);
 	void reset();
 
-	RenderStatistics statistics() const;
+	RenderTileStatistics statistics() const;
 
 private:
 	uint32 mTileXCount;

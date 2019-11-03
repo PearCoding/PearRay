@@ -7,7 +7,8 @@
 namespace PR {
 #include "xyz.inl"
 
-void XYZConverter::convertXYZ(uint32 samples, const float* src, float& X, float& Y, float& Z)
+void XYZConverter::convertXYZ(uint32 samples,
+							  const float* src, float& X, float& Y, float& Z)
 {
 	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) { // Direct XYZ
 		X = src[0];
@@ -30,8 +31,8 @@ void XYZConverter::convertXYZ(uint32 samples, const float* src, float& X, float&
 			Z += val1 * NM_TO_Z[i] + val2 * NM_TO_Z[i + 1];
 		}
 #else
-		for (uint32 i = 0; i < samples - 1; ++i) {
-			const float val1 = src[i];
+		for (uint32 i = 0; i < samples; ++i) {
+			const float val1 = src[i * elemPitch];
 			X += val1 * NM_TO_X[i];
 			Y += val1 * NM_TO_Y[i];
 			Z += val1 * NM_TO_Z[i];
@@ -50,7 +51,8 @@ void XYZConverter::convertXYZ(uint32 samples, const float* src, float& X, float&
 	}
 }
 
-void XYZConverter::convert(uint32 samples, const float* src, float& x, float& y)
+void XYZConverter::convert(uint32 samples,
+						   const float* src, float& x, float& y)
 {
 	float X, Y, Z;
 	convertXYZ(samples, src, X, Y, Z);
@@ -81,9 +83,9 @@ namespace _xyz2spec {
 }
 
 // We have the right ordering
-void barycentricTriangle(double px, double py,
-						 double x1, double y1, double x2, double y2, double x3, double y3, double invDet,
-						 double& s, double& t)
+void PR_LIB barycentricTriangle(double px, double py,
+								double x1, double y1, double x2, double y2, double x3, double y3, double invDet,
+								double& s, double& t)
 {
 	s = (py * x1 - py * x3 - px * y1 + px * y3 - x1 * y3 + x3 * y1) * invDet;
 	t = -(py * x1 - py * x2 - px * y1 + px * y2 - x1 * y2 + x2 * y1) * invDet;
@@ -184,4 +186,4 @@ float XYZConverter::toSpecIndex(uint32 samples, uint32 index, float x, float y, 
 		return (s1[index] * (1 - s - t) + s2[index] * s + s3[index] * t) * b;
 	}
 }
-}
+} // namespace PR

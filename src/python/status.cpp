@@ -8,7 +8,7 @@ void setup_status(py::module& m)
 {
 	py::class_<RenderStatus>(m, "RenderStatus")
 		.def_property_readonly("percentage", &RenderStatus::percentage)
-		.def("__getitem__", [](RenderStatus& s, const std::string& unique_name) {
+		.def("__getitem__", [](const RenderStatus& s, const std::string& unique_name) {
 			Variant var = s.getField(unique_name);
 			switch (var.type()) {
 			case Variant::T_Bool:

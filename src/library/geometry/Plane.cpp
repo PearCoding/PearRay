@@ -1,6 +1,5 @@
 #include "Plane.h"
-
-#include "ray/Ray.h"
+#include "CollisionData.h"
 
 namespace PR {
 #define PR_PLANE_INTERSECT_EPSILON (PR_EPSILON)
@@ -17,7 +16,7 @@ Plane::Plane()
 {
 }
 
-Plane::Plane(const Eigen::Vector3f& pos, const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
+Plane::Plane(const Vector3f& pos, const Vector3f& xAxis, const Vector3f& yAxis)
 	: mPosition(pos)
 	, mXAxis(xAxis)
 	, mYAxis(yAxis)
@@ -49,19 +48,19 @@ void Plane::recache()
 	mInvYLenSqr_Cache = 1 / mYAxis.squaredNorm();
 }
 
-void Plane::setXAxis(const Eigen::Vector3f& v)
+void Plane::setXAxis(const Vector3f& v)
 {
 	mXAxis = v;
 	recache();
 }
 
-void Plane::setYAxis(const Eigen::Vector3f& v)
+void Plane::setYAxis(const Vector3f& v)
 {
 	mYAxis = v;
 	recache();
 }
 
-void Plane::setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
+void Plane::setAxis(const Vector3f& xAxis, const Vector3f& yAxis)
 {
 	mXAxis = xAxis;
 	mYAxis = yAxis;
@@ -70,18 +69,14 @@ void Plane::setAxis(const Eigen::Vector3f& xAxis, const Eigen::Vector3f& yAxis)
 
 BoundingBox Plane::toLocalBoundingBox() const
 {
-	
-
-	BoundingBox box(mXAxis + mYAxis, Eigen::Vector3f(0, 0, 0));
+	BoundingBox box(mXAxis + mYAxis, Vector3f(0, 0, 0));
 	box.inflate(EPSILON_BOUND);
 	return box;
 }
 
-bool Plane::contains(const Eigen::Vector3f& point) const
+bool Plane::contains(const Vector3f& point) const
 {
-	
-
-	Eigen::Vector3f p = point - mPosition;
+	Vector3f p = point - mPosition;
 	if (p.dot(mNormal_Cache) <= std::numeric_limits<float>::epsilon()) // Is on the plane
 	{
 		float u = mXAxis.dot(p) * mInvXLenSqr_Cache;
@@ -93,43 +88,70 @@ bool Plane::contains(const Eigen::Vector3f& point) const
 	return false;
 }
 
-Plane::Intersection Plane::intersects(const Ray& ray) const
+void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	
+	out.HitDistance = std::numeric_limits<float>::infinity();
 
-	Plane::Intersection r;
-	float ln = ray.direction().dot(mNormal_Cache);
-	float pn = (mPosition - ray.origin()).dot(mNormal_Cache);
+	float ln = in.Direction.dot(mNormal_Cache);
+	float pn = (mPosition - in.Origin).dot(mNormal_Cache);
 
-	r.Successful = false;
-	if (std::abs(ln) <= PR_PLANE_INTERSECT_EPSILON) // Parallel or on the plane
-	{
-		return r;
-	} else {
-		r.T = pn / ln;
+	if (std::abs(ln) > PR_PLANE_INTERSECT_EPSILON) {
+		const float t = pn / ln;
 
-		if (r.T < PR_PLANE_INTERSECT_EPSILON) {
-			return r;
-		} else {
-			r.Position = ray.origin() + ray.direction() * r.T;
-			r.UV	= project(r.Position);
+		if (t > PR_PLANE_INTERSECT_EPSILON) {
+			const Vector3f p = in.t(t) - mPosition;
 
-			if (r.UV.x() >= 0 && r.UV.x() <= 1 && r.UV.y() >= 0 && r.UV.y() <= 1) {
-				r.Successful = true;
-				return r;
+			out.UV[0] = p.dot(mXAxis) * mInvXLenSqr_Cache;
+			out.UV[1] = p.dot(mYAxis) * mInvYLenSqr_Cache;
+
+			if (out.UV[0] >= 0 && out.UV[0] <= 1
+				&& out.UV[1] >= 0 && out.UV[1] <= 1) {
+				out.HitDistance = t;
+				return;
 			}
 		}
-		return r;
 	}
 }
 
-Eigen::Vector2f Plane::project(const Eigen::Vector3f& point) const
+void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 {
-	
+	using namespace simdpp;
 
-	Eigen::Vector3f p = point - mPosition;
-	return Eigen::Vector2f(
+	const vfloat inf = make_float(std::numeric_limits<float>::infinity());
+
+	const Vector3fv NV = promote(mNormal_Cache);
+	const Vector3fv PV = promote(mPosition);
+
+	vfloat ln = in.Direction.dot(NV);
+	vfloat pn = (PV - in.Origin).dot(NV);
+
+	out.HitDistance = pn / ln;
+
+	Vector3fv p = in.t(out.HitDistance) - PV;
+
+	out.UV[0] = p.dot(promote(mXAxis)) * mInvXLenSqr_Cache;
+	out.UV[1] = p.dot(promote(mYAxis)) * mInvYLenSqr_Cache;
+
+	bfloat succ = (out.UV[0] >= 0) & (out.UV[0] <= 1)
+				  & (out.UV[1] >= 0) & (out.UV[1] <= 1)
+				  & (out.HitDistance > PR_PLANE_INTERSECT_EPSILON)
+				  & (abs(ln) > PR_PLANE_INTERSECT_EPSILON);
+	out.HitDistance = blend(out.HitDistance, inf, succ);
+}
+
+Vector2f Plane::project(const Vector3f& point) const
+{
+	Vector3f p = point - mPosition;
+	return Vector2f(
 		mXAxis.dot(p) * mInvXLenSqr_Cache,
 		mYAxis.dot(p) * mInvYLenSqr_Cache);
 }
+
+Vector2fv Plane::project(const Vector3fv& point) const
+{
+	Vector3fv p = point - promote(mPosition);
+	return Vector2fv(
+		promote(mXAxis).dot(p) * mInvXLenSqr_Cache,
+		promote(mYAxis).dot(p) * mInvYLenSqr_Cache);
 }
+} // namespace PR

@@ -1,22 +1,21 @@
 #pragma once
 
-#include "PR_Config.h"
-#include <Eigen/Dense>
+#include "ray/RayPackage.h"
 
 namespace PR {
-class Ray;
+struct SingleCollisionOutput;
+struct CollisionOutput;
+
+/* Origin based sphere */
 class PR_LIB Sphere {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	Sphere();
-	Sphere(const Eigen::Vector3f& pos, float radius);
+	Sphere(float radius);
 
-	Sphere(const Sphere& other);
-	Sphere& operator=(const Sphere& other);
-
-	inline Eigen::Vector3f position() const { return mPosition; }
-	inline void setPosition(const Eigen::Vector3f& pos) { mPosition = pos; }
+	Sphere(const Sphere& other) = default;
+	Sphere& operator=(const Sphere& other) = default;
 
 	inline float radius() const { return mRadius; }
 	inline void setRadius(float f)
@@ -25,27 +24,29 @@ public:
 		mRadius = f;
 	}
 
-	inline float volume() const { return (PR_PI * 4.0 / 3) * mRadius * mRadius * mRadius; }
+	inline float volume() const { return (PR_PI * 4.0f / 3) * mRadius * mRadius * mRadius; }
 	inline float surfaceArea() const { return PR_PI * 4 * mRadius * mRadius; }
 
 	inline bool isValid() const { return mRadius > 0; }
 
-	inline bool contains(const Eigen::Vector3f& point) const
+	Vector3f normalPoint(float u, float v) const;
+	Vector3f surfacePoint(float u, float v) const;
+
+	Vector2f project(const Vector3f& p) const;
+	Vector2fv project(const Vector3fv& p) const;
+
+	inline bool contains(const Vector3f& point) const
 	{
-		return (mPosition - point).squaredNorm() <= mRadius * mRadius;
+		return point.squaredNorm() <= mRadius * mRadius;
 	}
 
-	struct Intersection {
-		bool Successful;
-		Eigen::Vector3f Position;
-		float T;
-	};
-	Intersection intersects(const Ray& ray) const;
+	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
+	void intersects(const RayPackage& in, CollisionOutput& out) const;
 
-	void combine(const Eigen::Vector3f& point);
+	void combine(const Vector3f& point);
 	void combine(const Sphere& other);
 
-	inline Sphere combined(const Eigen::Vector3f& point) const
+	inline Sphere combined(const Vector3f& point) const
 	{
 		Sphere tmp = *this;
 		tmp.combine(point);
@@ -60,7 +61,6 @@ public:
 	}
 
 private:
-	Eigen::Vector3f mPosition;
 	float mRadius;
 };
-}
+} // namespace PR

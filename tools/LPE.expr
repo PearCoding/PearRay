@@ -1,0 +1,65 @@
+%token STRING;
+%token INTEGER;
+
+%start FullExp;
+%%
+
+FullExp		: "C" Expr
+		;
+
+Expr		: Term Expr
+		| Term
+		;
+
+Term		: Token Op
+		| Group Op
+		| OrGroup Op
+		;
+
+Group		: "(" Expr ")"
+		;
+
+OrGroup		: "[" OrGroupList "]"
+		| "[" "^" OrGroupList "]"
+		;
+
+OrGroupList	: Token Op OrGroupList
+		| Token Op
+		;
+
+Token		: "D"
+		| "S"
+		| "E"
+		| "L"
+		| "B"
+		| "."
+		| SpecifiedToken
+		;
+
+SpecifiedToken	: "<" Type Event Label ">"
+		| "<" Type Event ">"
+		;
+
+Type		: "E"
+		| "L"
+		| "B"
+		| "R"
+		| "T"
+		| "."
+		;
+
+Event		: "D"
+		| "S"
+		| "."
+		;
+
+Label		: "\"" STRING "\""
+		;
+
+Op		: /* EMPTY */
+		| "*"
+		| "+"
+		| "?"
+		| "{" INTEGER "}"
+		| "{" INTEGER "," INTEGER "}"
+		;

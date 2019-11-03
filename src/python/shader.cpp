@@ -1,13 +1,9 @@
-#include "material/Material.h"
-#include "shader/ShaderOutput.h"
+#include "material/IMaterial.h"
+#include "shader/ShadingSocket.h"
 
 // Implementations
-#include "shader/ConstScalarOutput.h"
-#include "shader/ConstSpectralOutput.h"
-#include "shader/ConstVectorOutput.h"
-#include "shader/ImageScalarOutput.h"
-#include "shader/ImageSpectralOutput.h"
-#include "shader/ImageVectorOutput.h"
+#include "shader/ConstShadingSocket.h"
+#include "shader/ImageShadingSocket.h"
 
 #include "pypearray.h"
 
@@ -16,30 +12,30 @@ namespace PRPY {
 
 void setup_shader(py::module& m)
 {
-	py::class_<ScalarShaderOutput, std::shared_ptr<ScalarShaderOutput>>(m, "ScalarShaderOutput");
+	py::class_<FloatScalarShadingSocket, std::shared_ptr<FloatScalarShadingSocket>>(m, "FloatScalarShadingSocket");
 
-	py::class_<SpectrumShaderOutput, std::shared_ptr<SpectrumShaderOutput>>(m, "SpectrumShaderOutput");
+	py::class_<FloatSpectralShadingSocket, std::shared_ptr<FloatSpectralShadingSocket>>(m, "FloatSpectralShadingSocket");
 
-	py::class_<VectorShaderOutput, std::shared_ptr<VectorShaderOutput>>(m, "VectorShaderOutput");
+	py::class_<FloatVectorShadingSocket, std::shared_ptr<FloatVectorShadingSocket>>(m, "FloatVectorShadingSocket");
 
 	// Implementations
-	py::class_<ConstScalarShaderOutput, ScalarShaderOutput, std::shared_ptr<ConstScalarShaderOutput>>(m, "ConstScalarShaderOutput")
+	py::class_<ConstScalarShadingSocket, FloatScalarShadingSocket, std::shared_ptr<ConstScalarShadingSocket>>(m, "ConstScalarShadingSocket")
 		.def(py::init<float>());
 
-	py::class_<ConstSpectrumShaderOutput, SpectrumShaderOutput, std::shared_ptr<ConstSpectrumShaderOutput>>(m, "ConstSpectrumShaderOutput")
+	py::class_<ConstSpectralShadingSocket, FloatSpectralShadingSocket, std::shared_ptr<ConstSpectralShadingSocket>>(m, "ConstSpectralShadingSocket")
 		.def(py::init<const Spectrum&>());
 
-	py::class_<ConstVectorShaderOutput, VectorShaderOutput, std::shared_ptr<ConstVectorShaderOutput>>(m, "ConstVectorShaderOutput")
-		.def(py::init<const Eigen::Vector3f&>());
+	py::class_<ConstVectorShadingSocket, FloatVectorShadingSocket, std::shared_ptr<ConstVectorShadingSocket>>(m, "ConstVectorShadingSocket")
+		.def(py::init<const Vector3f&>());
 
-	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarShaderOutput >
+	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarShadingSocket >
 	//     ("ImageScalarOutput", py::init<float>())
 	// ;
-	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectrumShaderOutput >
+	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectralShadingSocket >
 	//     ("ImageSpectralOutput", py::init<const PR::Spectrum&>())
 	// ;
-	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorShaderOutput >
-	//     ("ImageVectorOutput", py::init<const Eigen::Vector3f&>())
+	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorShadingSocket >
+	//     ("ImageVectorOutput", py::init<const Vector3f&>())
 	// ;
 }
 } // namespace PRPY

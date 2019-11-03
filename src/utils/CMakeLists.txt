@@ -1,123 +1,67 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
-SET(PR_Main_Src
+SET(PR_Src
   Environment.cpp
-  SceneLoader.cpp
-  SpectralFile.cpp)
-SET(PR_Loader_Src
-  loader/WavefrontLoader.cpp)
-SOURCE_GROUP("Source Files\\Loader" FILES ${PR_Loader_Src})
-SET(PR_Parser_Entity_Src
-  parser/entity/BoundaryParser.cpp
-  parser/entity/CameraParser.cpp
-  parser/entity/CoordinateAxisParser.cpp
-  parser/entity/MeshParser.cpp
-  parser/entity/PlaneParser.cpp
-  parser/entity/SphereParser.cpp)
-SOURCE_GROUP("Source Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Src})
-SET(PR_Parser_Light_Src
-  parser/light/DistantLightParser.cpp
-  parser/light/EnvironmentLightParser.cpp)
-SOURCE_GROUP("Source Files\\Parser\\Light" FILES ${PR_Parser_Light_Src})
-SET(PR_Parser_Material_Src
-  parser/material/BlinnPhongMaterialParser.cpp
-  parser/material/CookTorranceMaterialParser.cpp
-  parser/material/DiffuseMaterialParser.cpp
-  parser/material/GlassMaterialParser.cpp
-  parser/material/GridMaterialParser.cpp
-  parser/material/MirrorMaterialParser.cpp
-  parser/material/OrenNayarMaterialParser.cpp
-  parser/material/WardMaterialParser.cpp)
-SOURCE_GROUP("Source Files\\Parser\\Material" FILES ${PR_Parser_Material_Src})
-SET(PR_Parser_Mesh_Src
-  parser/mesh/TriMeshInlineParser.cpp)
-SOURCE_GROUP("Source Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Src})
-SET(PR_Parser_Texture_Src
-  parser/texture/TextureParser.cpp)
-SOURCE_GROUP("Source Files\\Parser\\Texture" FILES ${PR_Parser_Texture_Src})
-SET(PR_Output_Src
-  output/ImageWriter.cpp
-  output/OutputSpecification.cpp)
-SOURCE_GROUP("Source Files\\Output" FILES ${PR_Output_Src})
-SET(PR_Shader_Src
-  shader/ImageScalarOutput.cpp
-  shader/ImageSpectralOutput.cpp
-  shader/ImageVectorOutput.cpp)
-SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
-SET(PR_Src ${PR_Main_Src} ${PR_Loader_Src} ${PR_Parser_Entity_Src} ${PR_Parser_Material_Src}
-  ${PR_Shader_Src} ${PR_Output_Src} ${PR_Parser_Mesh_Src} ${PR_Parser_Light_Src}
-  ${PR_Parser_Texture_Src}
-)
-
-SET(PR_Main_Hdr
   Environment.h
+  Environment.inl
+  SceneLoader.cpp
   SceneLoader.h
-  SpectralFile.h)
-SET(PR_Loader_Hdr
+  SpectralFile.cpp
+  SpectralFile.h
+  camera/CameraManager.cpp
+  camera/CameraManager.h
+  entity/EntityManager.cpp
+  entity/EntityManager.h
+  entity/IEntityFactory.h
+  emission/IEmissionFactory.h
+  emission/EmissionManager.cpp
+  emission/EmissionManager.h
+  infinitelight/IInfiniteLightFactory.h
+  infinitelight/InfiniteLightManager.cpp
+  infinitelight/InfiniteLightManager.h
+  integrator/IIntegratorFactory.h
+  integrator/IntegratorManager.cpp
+  integrator/IntegratorManager.h
   loader/SubGraphLoader.h
-  loader/WavefrontLoader.h)
-SOURCE_GROUP("Header Files\\Loader" FILES ${PR_Loader_Hdr})
-SET(PR_Parser_Entity_Hdr
-  parser/entity/BoundaryParser.h
-  parser/entity/CameraParser.h
-  parser/entity/CoordinateAxisParser.h
-  parser/entity/EntityParser.h
-  parser/entity/MeshParser.h
-  parser/entity/PlaneParser.h
-  parser/entity/SphereParser.h)
-SOURCE_GROUP("Header Files\\Parser\\Entity" FILES ${PR_Parser_Entity_Hdr})
-SET(PR_Parser_Light_Hdr
-  parser/light/DistantLightParser.h
-  parser/light/EnvironmentLightParser.h)
-SOURCE_GROUP("Header Files\\Parser\\Light" FILES ${PR_Parser_Light_Hdr})
-SET(PR_Parser_Material_Hdr
-  parser/material/BlinnPhongMaterialParser.h
-  parser/material/CookTorranceMaterialParser.h
-  parser/material/DiffuseMaterialParser.h
-  parser/material/GlassMaterialParser.h
-  parser/material/GridMaterialParser.h
-  parser/material/MaterialParser.h
-  parser/material/MirrorMaterialParser.h
-  parser/material/OrenNayarMaterialParser.h
-  parser/material/WardMaterialParser.h)
-SOURCE_GROUP("Header Files\\Parser\\Material" FILES ${PR_Parser_Material_Hdr})
-SET(PR_Parser_Mesh_Hdr
-  parser/mesh/TriMeshInlineParser.h)
-SOURCE_GROUP("Header Files\\Parser\\Mesh" FILES ${PR_Parser_Mesh_Hdr})
-SET(PR_Parser_Texture_Hdr
-  parser/texture/TextureParser.h)
-SOURCE_GROUP("Header Files\\Parser\\Texture" FILES ${PR_Parser_Texture_Hdr})
-SET(PR_Output_Hdr
+  loader/WavefrontLoader.cpp
+  loader/WavefrontLoader.h
+  material/IMaterialFactory.h
+  material/MaterialManager.cpp
+  material/MaterialManager.h
+  parser/mesh/TriMeshInlineParser.cpp
+  parser/mesh/TriMeshInlineParser.h
+  parser/texture/TextureParser.cpp
+  parser/texture/TextureParser.h
+  plugin/AbstractManager.h
+  plugin/Plugin.h
+  plugin/PluginManager.cpp
+  plugin/PluginManager.h
+  output/ImageWriter.cpp
   output/ImageWriter.h
-  output/OutputSpecification.h)
-SOURCE_GROUP("Header Files\\Output" FILES ${PR_Output_Hdr})
-SET(PR_Shader_Hdr
-  shader/ImageScalarOutput.h
-  shader/ImageSpectralOutput.h
-  shader/ImageVectorOutput.h)
-SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
-SET(PR_Hdr ${PR_Main_Hdr} ${PR_Loader_Hdr} ${PR_Parser_Entity_Hdr} ${PR_Parser_Material_Hdr}
-  ${PR_Shader_Hdr} ${PR_Output_Hdr} ${PR_Parser_Mesh_Hdr} ${PR_Parser_Light_Hdr}
-  ${PR_Parser_Texture_Hdr}
+  output/OutputSpecification.cpp
+  output/OutputSpecification.h
+  registry/Any.h
+  registry/Registry.cpp
+  registry/Registry.h
+  registry/Registry.inl
+  registry/URI.cpp
+  registry/URI.h
+  registry/URI.inl
+  shader/ConstShadingSocket.cpp
+  shader/ConstShadingSocket.h
+  shader/ImageShadingSocket.cpp
+  shader/ImageShadingSocket.h)
+
+add_library(pr_lib_utils SHARED ${PR_Src})
+target_link_libraries(pr_lib_utils
+  PUBLIC
+    pr_lib Boost::iostreams Boost::regex Boost::filesystem
+  PRIVATE
+    datalisp OpenImageIO::Core OpenImageIO::Util
 )
+set_target_properties(pr_lib_utils PROPERTIES CXX_VISIBILITY_PRESET hidden)
+target_compile_definitions(pr_lib_utils PRIVATE "PR_LIB_UTILS_BUILD")
 
-if(OSL_FOUND)
-  include_directories(../osl)
-	set(DEFS "${DEFS};WITH_OSL")
+if(PR_COMPRESS_SPEC_FILES)
+target_compile_definitions(pr_lib_utils PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()
-	
-add_library(pr_lib_utils SHARED ${PR_Src} ${PR_Hdr})
-target_link_libraries(pr_lib_utils pr_lib)
-target_link_libraries(pr_lib_utils ${DL_TARGET})
-target_link_libraries(pr_lib_utils ${OIIO_LIBRARIES})
-
-if(OSL_FOUND)
-	target_link_libraries(pr_lib_utils pr_lib_osl)
-endif()
-
-set_target_properties(pr_lib_utils PROPERTIES VERSION ${PR_Version})
-target_compile_definitions(pr_lib_utils PRIVATE "${DEFS};PR_LIB_UTILS_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
-
-IF(PR_CPP_CHECK)
-  add_cpplint_target(pr_lib_utils_cppcheck "${PR_Src};${PR_Hdr}")
-ENDIF()
+add_lto(pr_lib_utils)
+strip_binary(pr_lib_utils)

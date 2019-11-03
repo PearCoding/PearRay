@@ -2,6 +2,8 @@
 
 #include "Test.h"
 
+#include <ctime>
+
 using namespace PR;
 
 constexpr uint64 BOUND_CHECK_N = 10000000;

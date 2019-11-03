@@ -9,14 +9,13 @@ class DataGroup;
 
 namespace PR {
 class ToneMapper;
-class RenderFactory;
-
 class Environment;
+
 class PR_LIB_UTILS OutputSpecification {
 	PR_CLASS_NON_COPYABLE(OutputSpecification);
 
 public:
-	OutputSpecification();
+	OutputSpecification(const std::string& wrkDir);
 	virtual ~OutputSpecification();
 
 	void init(const std::shared_ptr<RenderContext>& context);
@@ -35,7 +34,7 @@ private:
 
 	struct File {
 		std::string Name;
-		IM_ChannelSettingSpec* SettingsSpectral;
+		std::vector<IM_ChannelSettingSpec> SettingsSpectral;
 		std::vector<IM_ChannelSetting1D> Settings1D;
 		std::vector<IM_ChannelSettingCounter> SettingsCounter;
 		std::vector<IM_ChannelSetting3D> Settings3D;
@@ -43,6 +42,8 @@ private:
 	struct FileSpectral {
 		std::string Name;
 		bool Compress;
+		int LPE = -1;
+		std::string LPE_S;
 	};
 
 	std::list<File> mFiles;

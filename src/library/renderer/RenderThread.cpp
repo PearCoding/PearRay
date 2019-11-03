@@ -1,11 +1,13 @@
 #include "RenderThread.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
-#include "RenderSession.h"
-
-#include "integrator/Integrator.h"
+#include "RenderTileSession.h"
+#include "integrator/IIntegrator.h"
+#include "ray/RayStream.h"
+#include "trace/HitStream.h"
 
 #include "Logger.h"
+
 namespace PR {
 RenderThread::RenderThread(uint32 index, RenderContext* renderer)
 	: Thread()
@@ -18,14 +20,22 @@ RenderThread::RenderThread(uint32 index, RenderContext* renderer)
 
 void RenderThread::main()
 {
-	size_t pass			   = 0;
-	Integrator* integrator = mRenderer->integrator();
+	RayStream rays(mRenderer->settings().maxParallelRays);
+	HitStream hits(mRenderer->settings().maxParallelRays);
 
+	size_t pass		= 0;
+	auto integrator = mRenderer->integrator();
+
+	integrator->onThreadStart(mRenderer, mThreadIndex);
 	while (integrator->needNextPass(pass) && !shouldStop()) {
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
-			integrator->onPass(RenderSession(mThreadIndex, mTile), pass);
+			RenderTileSession session(mThreadIndex, mTile,
+									  &rays, &hits);
+			mStatistics.addTileCount();
+
+			integrator->onPass(session, pass);
 			mTile->inc();
 
 			mTile->setWorking(false);
@@ -39,5 +49,6 @@ void RenderThread::main()
 
 		pass++;
 	}
+	integrator->onThreadEnd(mRenderer, mThreadIndex);
 }
-}
+} // namespace PR

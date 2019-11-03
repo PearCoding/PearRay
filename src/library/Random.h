@@ -1,7 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
-#include <Eigen/Dense>
+#include "math/SIMD.h"
 
 /**
  * Available random algorithms
@@ -29,8 +28,8 @@ private:
 	std::uniform_int_distribution<uint64> mDistributionUInt64;
 #elif PR_RANDOM_ALGORITHM == 1
 	uint64 mState;
-	uint64 mInc;
-	uint64 mSeed;
+	const uint64 mInc;
+	const uint64 mSeed;
 
 	static constexpr uint64 MULT = 0x5851f42d4c957f2dULL; //6364136223846793005ULL
 #else
@@ -126,19 +125,37 @@ public:
 #endif
 	}
 
-	inline Eigen::Vector2f get2D()
+	inline Vector2f get2D()
 	{
-		return Eigen::Vector2f(getFloat(), getFloat());
+		return Vector2f(getFloat(), getFloat());
 	}
 
-	inline Eigen::Vector3f get3D()
+	inline Vector3f get3D()
 	{
-		return Eigen::Vector3f(getFloat(), getFloat(), getFloat());
+		return Vector3f(getFloat(), getFloat(), getFloat());
 	}
 
-	inline Eigen::Vector4f get4D()
+	inline Vector4f get4D()
 	{
-		return Eigen::Vector4f(getFloat(), getFloat(), getFloat(), getFloat());
+		return Vector4f(getFloat(), getFloat(), getFloat(), getFloat());
+	}
+
+	inline vuint32 get32v()
+	{
+		PR_SIMD_ALIGN uint32 r[PR_SIMD_BANDWIDTH];
+		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i)
+			r[i] = get32();
+
+		return simdpp::load(r);
+	}
+
+	inline vfloat getFloatv()
+	{
+		PR_SIMD_ALIGN float r[PR_SIMD_BANDWIDTH];
+		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i)
+			r[i] = getFloat();
+
+		return simdpp::load(r);
 	}
 };
 } // namespace PR

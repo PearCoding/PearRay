@@ -10,11 +10,12 @@
 namespace PR {
 using namespace PR;
 
-#define LOCK_FILE_NAME ".pearray_lock"
-#define LOCK_IMG_FILE_NAME ".pearray_img_lock"
+constexpr static const char* LOCK_FILE_NAME		= "/.pearray_lock";
+constexpr static const char* LOCK_IMG_FILE_NAME = "/.pearray_img_lock";
 
-OutputSpecification::OutputSpecification()
+OutputSpecification::OutputSpecification(const std::string& wrkDir)
 	: mInit(false)
+	, mWorkingDir(wrkDir)
 {
 }
 
@@ -26,35 +27,28 @@ OutputSpecification::~OutputSpecification()
 void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 {
 	if (mInit && !mWorkingDir.empty()) {
-		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
+		std::string f = mWorkingDir + LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
 	}
 
-	mInit		= true;
-	mWorkingDir = context->workingDir();
+	mInit = true;
 
 	if (context && !mWorkingDir.empty()) {
 		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
 
 		// Setup lock directory
-		if (!boost::filesystem::create_directory(mWorkingDir + "/" LOCK_FILE_NAME))
-			PR_LOG(L_WARNING) << "Couldn't create lock directory " << mWorkingDir << "/" LOCK_FILE_NAME ". Maybe already running?" << std::endl;
+		if (!boost::filesystem::create_directory(mWorkingDir + LOCK_FILE_NAME))
+			PR_LOG(L_WARNING) << "Couldn't create lock directory " << mWorkingDir << LOCK_FILE_NAME << ". Maybe already running?" << std::endl;
 
-		if (!boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
-			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << "/" LOCK_IMG_FILE_NAME "!" << std::endl;
+		if (!boost::filesystem::remove(mWorkingDir + LOCK_IMG_FILE_NAME)) // Remove it now
+			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
 	}
 }
 
 void OutputSpecification::deinit()
 {
 	mImageWriter.deinit();
-
-	for (const File& file : mFiles) {
-		if (file.SettingsSpectral)
-			delete file.SettingsSpectral;
-	}
-
 	mFiles.clear();
 	mSpectralFiles.clear();
 
@@ -62,7 +56,7 @@ void OutputSpecification::deinit()
 		return;
 
 	if (!mWorkingDir.empty()) {
-		std::string f = mWorkingDir + "/" LOCK_FILE_NAME;
+		std::string f = mWorkingDir + LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f;
 	}
@@ -78,78 +72,174 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	OutputMap* output = renderer->output();
+	std::shared_ptr<OutputBuffer> output = renderer->output();
 
-	Eigen::Vector3f zero(0, 0, 0);
-	for (const File& file : mFiles) {
-		for (const IM_ChannelSetting3D& cs3d : file.Settings3D) {
-			if (!output->getChannel(cs3d.Variable))
-				output->registerChannel(cs3d.Variable, std::make_shared<FrameBufferFloat>(3, 0.0f));
+	for (File& file : mFiles) {
+		for (IM_ChannelSetting3D& cs3d : file.Settings3D) {
+			if (!cs3d.LPE_S.empty() || !output->getChannel(cs3d.Variable)) {
+				auto ptr = std::make_shared<FrameBufferFloat>(
+					3, renderer->width(), renderer->height(), 0.0f);
+
+				if (cs3d.LPE_S.empty())
+					output->registerChannel(cs3d.Variable, ptr);
+				else
+					cs3d.LPE = output->registerLPEChannel(cs3d.Variable, LightPathExpression(cs3d.LPE_S), ptr);
+			}
 		}
 
-		for (const IM_ChannelSetting1D& cs1d : file.Settings1D) {
-			if (!output->getChannel(cs1d.Variable))
-				output->registerChannel(cs1d.Variable, std::make_shared<FrameBufferFloat>(1, 0));
+		for (IM_ChannelSetting1D& cs1d : file.Settings1D) {
+			if (!cs1d.LPE_S.empty() || !output->getChannel(cs1d.Variable)) {
+				auto ptr = std::make_shared<FrameBufferFloat>(
+					1, renderer->width(), renderer->height(), 0);
+
+				if (cs1d.LPE_S.empty())
+					output->registerChannel(cs1d.Variable, ptr);
+				else
+					cs1d.LPE = output->registerLPEChannel(cs1d.Variable, LightPathExpression(cs1d.LPE_S), ptr);
+			}
 		}
 
-		for (const IM_ChannelSettingCounter& cs : file.SettingsCounter) {
-			if (!output->getChannel(cs.Variable))
-				output->registerChannel(cs.Variable, std::make_shared<FrameBufferUInt64>(1, 0));
+		for (IM_ChannelSettingCounter& cs : file.SettingsCounter) {
+			if (!cs.LPE_S.empty() || !output->getChannel(cs.Variable)) {
+				auto ptr = std::make_shared<FrameBufferUInt32>(
+					1, renderer->width(), renderer->height(), 0);
+
+				if (cs.LPE_S.empty())
+					output->registerChannel(cs.Variable, ptr);
+				else
+					cs.LPE = output->registerLPEChannel(cs.Variable, LightPathExpression(cs.LPE_S), ptr);
+			}
+		}
+
+		for (IM_ChannelSettingSpec& ss : file.SettingsSpectral) {
+			auto ptr = std::make_shared<FrameBufferFloat>(
+				output->getSpectralChannel()->channels(), renderer->width(), renderer->height(), 0);
+
+			if (!ss.LPE_S.empty())
+				ss.LPE = output->registerLPEChannel(LightPathExpression(ss.LPE_S), ptr);
 		}
 	}
 }
 
-OutputMap::Variable1D typeToVariable1D(const std::string& str)
+static struct {
+	const char* Str;
+	OutputBuffer::Variable1D Var;
+} _s_var1d[] = {
+	{ "entity_id", OutputBuffer::V_EntityID },
+	{ "entity", OutputBuffer::V_EntityID },
+	{ "id", OutputBuffer::V_EntityID },
+	{ "material_id", OutputBuffer::V_MaterialID },
+	{ "material", OutputBuffer::V_MaterialID },
+	{ "mat", OutputBuffer::V_MaterialID },
+	{ "emission_id", OutputBuffer::V_EmissionID },
+	{ "emission", OutputBuffer::V_EmissionID },
+	{ "displace_id", OutputBuffer::V_DisplaceID },
+	{ "displace", OutputBuffer::V_DisplaceID },
+	{ "depth", OutputBuffer::V_Depth },
+	{ "d", OutputBuffer::V_Depth },
+	{ "time", OutputBuffer::V_Time },
+	{ "t", OutputBuffer::V_Time },
+	{ nullptr, OutputBuffer::V_1D_COUNT },
+};
+
+static struct {
+	const char* Str;
+	OutputBuffer::VariableCounter Var;
+} _s_varC[] = {
+	{ "samples", OutputBuffer::V_Samples },
+	{ "s", OutputBuffer::V_Samples },
+	{ "feedback", OutputBuffer::V_Feedback },
+	{ "f", OutputBuffer::V_Feedback },
+	{ "error", OutputBuffer::V_Feedback },
+	{ nullptr, OutputBuffer::V_COUNTER_COUNT },
+};
+
+static struct {
+	const char* Str;
+	OutputBuffer::Variable3D Var;
+} _s_var3d[] = {
+	{ "position", OutputBuffer::V_Position },
+	{ "pos", OutputBuffer::V_Position },
+	{ "p", OutputBuffer::V_Position },
+	{ "normal", OutputBuffer::V_Normal },
+	{ "norm", OutputBuffer::V_Normal },
+	{ "n", OutputBuffer::V_Normal },
+	{ "normal_geometric", OutputBuffer::V_NormalG },
+	{ "ng", OutputBuffer::V_NormalG },
+	{ "tangent", OutputBuffer::V_Tangent },
+	{ "tan", OutputBuffer::V_Tangent },
+	{ "nx", OutputBuffer::V_Tangent },
+	{ "bitangent", OutputBuffer::V_Bitangent },
+	{ "binormal", OutputBuffer::V_Bitangent },
+	{ "bi", OutputBuffer::V_Bitangent },
+	{ "ny", OutputBuffer::V_Bitangent },
+	{ "view", OutputBuffer::V_View },
+	{ "v", OutputBuffer::V_View },
+	{ "texture", OutputBuffer::V_UVW },
+	{ "uvw", OutputBuffer::V_UVW },
+	{ "uv", OutputBuffer::V_UVW },
+	{ "tex", OutputBuffer::V_UVW },
+	{ "velocity", OutputBuffer::V_DPDT },
+	{ "movement", OutputBuffer::V_DPDT },
+	{ "dpdt", OutputBuffer::V_DPDT },
+	{ nullptr, OutputBuffer::V_3D_COUNT },
+};
+
+OutputBuffer::Variable1D typeToVariable1D(const std::string& str)
 {
-	if (str == "depth" || str == "d")
-		return OutputMap::V_Depth;
-	else if (str == "time" || str == "t")
-		return OutputMap::V_Time;
-	else if (str == "material" || str == "mat" || str == "m")
-		return OutputMap::V_Material;
-	else
-		return OutputMap::V_1D_COUNT; // AS UNKNOWN
+	for (size_t i = 0; _s_var1d[i].Str; ++i) {
+		if (str == _s_var1d[i].Str)
+			return _s_var1d[i].Var;
+	}
+	return OutputBuffer::V_1D_COUNT; // AS UNKNOWN
 }
 
-OutputMap::VariableCounter typeToVariableCounter(const std::string& str)
+std::string variableToString(OutputBuffer::Variable1D var)
 {
-	if (str == "id")
-		return OutputMap::V_ID;
-	else if (str == "samples" || str == "s")
-		return OutputMap::V_Samples;
-	else
-		return OutputMap::V_COUNTER_COUNT; // AS UNKNOWN
+	for (size_t i = 0; _s_var1d[i].Str; ++i) {
+		if (var == _s_var1d[i].Var)
+			return _s_var1d[i].Str;
+	}
+	return ""; // AS UNKNOWN
 }
 
-OutputMap::Variable3D typeToVariable3D(const std::string& str)
+OutputBuffer::VariableCounter typeToVariableCounter(const std::string& str)
 {
-	if (str == "position" || str == "pos" || str == "p")
-		return OutputMap::V_Position;
-	else if (str == "normal" || str == "norm" || str == "n")
-		return OutputMap::V_Normal;
-	else if (str == "geometric_normal" || str == "ng")
-		return OutputMap::V_NormalG;
-	else if (str == "tangent" || str == "tan" || str == "nx")
-		return OutputMap::V_Tangent;
-	else if (str == "bitangent" || str == "binormal" || str == "bi" || str == "ny")
-		return OutputMap::V_Bitangent;
-	else if (str == "view" || str == "v")
-		return OutputMap::V_View;
-	else if (str == "uv" || str == "texture" || str == "uvw" || str == "tex")
-		return OutputMap::V_UVW;
-	else if (str == "dpdu")
-		return OutputMap::V_DPDU;
-	else if (str == "dpdv")
-		return OutputMap::V_DPDV;
-	else if (str == "dpdw")
-		return OutputMap::V_DPDW;
-	else if (str == "velocity" || str == "movement" || str == "dpdt")
-		return OutputMap::V_DPDT;
-	else
-		return OutputMap::V_3D_COUNT; // AS UNKNOWN
+	for (size_t i = 0; _s_varC[i].Str; ++i) {
+		if (str == _s_varC[i].Str)
+			return _s_varC[i].Var;
+	}
+	return OutputBuffer::V_COUNTER_COUNT; // AS UNKNOWN
 }
 
-void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
+std::string variableToString(OutputBuffer::VariableCounter var)
+{
+	for (size_t i = 0; _s_varC[i].Str; ++i) {
+		if (var == _s_varC[i].Var)
+			return _s_varC[i].Str;
+	}
+	return ""; // AS UNKNOWN
+}
+
+OutputBuffer::Variable3D typeToVariable3D(const std::string& str)
+{
+	for (size_t i = 0; _s_var3d[i].Str; ++i) {
+		if (str == _s_var3d[i].Str)
+			return _s_var3d[i].Var;
+	}
+	return OutputBuffer::V_3D_COUNT; // AS UNKNOWN
+}
+
+std::string variableToString(OutputBuffer::Variable3D var)
+{
+	for (size_t i = 0; _s_var3d[i].Str; ++i) {
+		if (var == _s_var3d[i].Var)
+			return _s_var3d[i].Str;
+	}
+	return "UNKNOWN";
+}
+
+void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 {
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		DL::Data dataD = group.at(i);
@@ -163,8 +253,7 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 					continue;
 
 				File file;
-				file.SettingsSpectral = nullptr;
-				file.Name			  = nameD.getString();
+				file.Name = nameD.getString();
 
 				for (size_t i = 0; i < entry.anonymousCount(); ++i) {
 					DL::Data channelD = entry.at(i);
@@ -176,6 +265,7 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 						DL::Data colorD		  = channel.getFromKey("color");
 						DL::Data gammaD		  = channel.getFromKey("gamma");
 						DL::Data mapperD	  = channel.getFromKey("mapper");
+						DL::Data lpeD		  = channel.getFromKey("lpe");
 
 						if (typeD.type() != DL::Data::T_String)
 							continue;
@@ -223,118 +313,67 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 								tmm = TMM_Normalized;
 						}
 
+						std::string lpe = "";
+						if (lpeD.type() == DL::Data::T_String) {
+							lpe = lpeD.getString();
+							if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
+								PR_LOG(L_ERROR) << "Invalid LPE " << lpe << ". Skipping entry" << std::endl;
+								lpe = "";
+							}
+						}
+
 						if (type == "rgb" || type == "color") {
-							if (file.SettingsSpectral)
-								delete file.SettingsSpectral;
+							IM_ChannelSettingSpec spec;
+							spec.Elements = 0; //TODO
+							spec.TCM	  = tcm;
+							spec.TGM	  = tgm;
+							spec.TMM	  = tmm;
+							spec.LPE_S	= lpe;
+							spec.LPE	  = -1;
 
-							file.SettingsSpectral			= new IM_ChannelSettingSpec;
-							file.SettingsSpectral->Elements = 0; //TODO
-							file.SettingsSpectral->TCM		= tcm;
-							file.SettingsSpectral->TGM		= tgm;
-							file.SettingsSpectral->TMM		= tmm;
+							if (!lpe.empty())
+								spec.Name = spec.Name + "[" + lpe + "]";
+							file.SettingsSpectral.push_back(spec);
 						} else {
-							OutputMap::Variable3D var3D			  = typeToVariable3D(type);
-							OutputMap::Variable1D var1D			  = typeToVariable1D(type);
-							OutputMap::VariableCounter varCounter = typeToVariableCounter(type);
+							OutputBuffer::Variable3D var3D			 = typeToVariable3D(type);
+							OutputBuffer::Variable1D var1D			 = typeToVariable1D(type);
+							OutputBuffer::VariableCounter varCounter = typeToVariableCounter(type);
 
-							if (var3D != OutputMap::V_3D_COUNT) {
+							if (var3D != OutputBuffer::V_3D_COUNT) {
 								IM_ChannelSetting3D spec;
 								spec.Elements = 0; //TODO
 								spec.TMM	  = tmm;
 								spec.Variable = var3D;
+								spec.LPE_S	= lpe;
+								spec.LPE	  = -1;
 
-								switch (var3D) {
-								default:
-								case OutputMap::V_Position:
-									spec.Name[0] = "p_x";
-									spec.Name[1] = "p_y";
-									spec.Name[2] = "p_z";
-									break;
-								case OutputMap::V_Normal:
-									spec.Name[0] = "n_x";
-									spec.Name[1] = "n_y";
-									spec.Name[2] = "n_z";
-									break;
-								case OutputMap::V_NormalG:
-									spec.Name[0] = "ng_x";
-									spec.Name[1] = "ng_y";
-									spec.Name[2] = "ng_z";
-									break;
-								case OutputMap::V_Tangent:
-									spec.Name[0] = "nx_x";
-									spec.Name[1] = "nx_y";
-									spec.Name[2] = "nx_z";
-									break;
-								case OutputMap::V_Bitangent:
-									spec.Name[0] = "ny_x";
-									spec.Name[1] = "ny_y";
-									spec.Name[2] = "ny_z";
-									break;
-								case OutputMap::V_View:
-									spec.Name[0] = "v_x";
-									spec.Name[1] = "v_y";
-									spec.Name[2] = "v_z";
-									break;
-								case OutputMap::V_UVW:
-									spec.Name[0] = "uv_u";
-									spec.Name[1] = "uv_v";
-									spec.Name[2] = "uv_w";
-									break;
-								case OutputMap::V_DPDU:
-									spec.Name[0] = "dpdu_x";
-									spec.Name[1] = "dpdu_y";
-									spec.Name[2] = "dpdu_z";
-									break;
-								case OutputMap::V_DPDV:
-									spec.Name[0] = "dpdv_x";
-									spec.Name[1] = "dpdv_y";
-									spec.Name[2] = "dpdv_z";
-									break;
-								case OutputMap::V_DPDW:
-									spec.Name[0] = "dpdw_x";
-									spec.Name[1] = "dpdw_y";
-									spec.Name[2] = "dpdw_z";
-									break;
-								case OutputMap::V_DPDT:
-									spec.Name[0] = "dpdt_x";
-									spec.Name[1] = "dpdt_y";
-									spec.Name[2] = "dpdt_z";
-									break;
-								}
+								std::string name = variableToString(var3D);
+								if (!lpe.empty())
+									name = name + "[" + lpe + "]";
+								spec.Name[0] = name + ".x";
+								spec.Name[1] = name + ".y";
+								spec.Name[2] = name + ".z";
 
 								file.Settings3D.push_back(spec);
-							} else if (var1D != OutputMap::V_1D_COUNT) {
+							} else if (var1D != OutputBuffer::V_1D_COUNT) {
 								IM_ChannelSetting1D spec;
 								spec.TMM	  = tmm;
 								spec.Variable = var1D;
-
-								switch (var1D) {
-								default:
-								case OutputMap::V_Depth:
-									spec.Name = "depth";
-									break;
-								case OutputMap::V_Time:
-									spec.Name = "time";
-									break;
-								case OutputMap::V_Material:
-									spec.Name = "mat";
-									break;
-								}
+								spec.LPE_S	= lpe;
+								spec.LPE	  = -1;
+								spec.Name	 = variableToString(var1D);
+								if (!lpe.empty())
+									spec.Name = spec.Name + "[" + lpe + "]";
 								file.Settings1D.push_back(spec);
-							} else if (varCounter != OutputMap::V_COUNTER_COUNT) {
+							} else if (varCounter != OutputBuffer::V_COUNTER_COUNT) {
 								IM_ChannelSettingCounter spec;
 								spec.TMM	  = tmm;
 								spec.Variable = varCounter;
-
-								switch (var1D) {
-								default:
-								case OutputMap::V_ID:
-									spec.Name = "id";
-									break;
-								case OutputMap::V_Samples:
-									spec.Name = "samples";
-									break;
-								}
+								spec.LPE_S	= lpe;
+								spec.LPE	  = -1;
+								spec.Name	 = variableToString(varCounter);
+								if (!lpe.empty())
+									spec.Name = spec.Name + "[" + lpe + "]";
 								file.SettingsCounter.push_back(spec);
 							} else {
 								PR_LOG(L_ERROR) << "Unknown channel type " << type;
@@ -345,12 +384,23 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 
 				mFiles.push_back(file);
 			} else if (entry.id() == "output_spectral") {
-				DL::Data nameD = entry.getFromKey("name");
+				DL::Data nameD	 = entry.getFromKey("name");
 				DL::Data compressD = entry.getFromKey("compress");
+				DL::Data lpeD	  = entry.getFromKey("lpe");
 				if (nameD.type() == DL::Data::T_String) {
 					FileSpectral spec;
-					spec.Name = nameD.getString();
+					spec.Name	 = nameD.getString();
 					spec.Compress = compressD.type() == DL::Data::T_Bool ? compressD.getBool() : true;
+					spec.LPE_S	= "";
+					spec.LPE	  = -1;
+
+					if (lpeD.type() == DL::Data::T_String) {
+						spec.LPE_S = lpeD.getString();
+						if (!spec.LPE_S.empty() && !LightPathExpression(spec.LPE_S).isValid()) {
+							PR_LOG(L_ERROR) << "Invalid LPE " << spec.LPE_S << ". Skipping spectral file" << std::endl;
+							spec.LPE_S = "";
+						}
+					}
 					mSpectralFiles.push_back(spec);
 				}
 			}
@@ -358,9 +408,10 @@ void OutputSpecification::parse(Environment* env, const DL::DataGroup& group)
 	}
 }
 
-void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
+void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
+							   ToneMapper& toneMapper, bool force) const
 {
-	if (!force && !boost::filesystem::create_directory(mWorkingDir + "/" LOCK_IMG_FILE_NAME))
+	if (!force && !boost::filesystem::create_directory(mWorkingDir + LOCK_IMG_FILE_NAME))
 		return;
 
 	std::string resultDir = "/results";
@@ -385,14 +436,19 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer, T
 
 	for (const FileSpectral& f : mSpectralFiles) {
 		const std::string filename = dir + "/" + f.Name + ".spec";
-		if (!mImageWriter.save_spectral(filename, renderer->output()->getSpectralChannel(), f.Compress))
+
+		auto channel = renderer->output()->getSpectralChannel();
+		if (f.LPE >= 0)
+			channel = renderer->output()->getSpectralChannel(f.LPE);
+
+		if (!mImageWriter.save_spectral(filename, channel, f.Compress))
 			PR_LOG(L_ERROR) << "Couldn't save spectral file " << filename << std::endl;
 
 		if (force)
 			PR_LOG(L_INFO) << "Saved file " << filename << std::endl;
 	}
 
-	if (!force && !boost::filesystem::remove(mWorkingDir + "/" LOCK_IMG_FILE_NAME)) // Remove it now
-		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << "/" LOCK_IMG_FILE_NAME "!" << std::endl;
+	if (!force && !boost::filesystem::remove(mWorkingDir + LOCK_IMG_FILE_NAME)) // Remove it now
+		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
 }
 } // namespace PR

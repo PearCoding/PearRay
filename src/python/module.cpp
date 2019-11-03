@@ -1,4 +1,6 @@
 #include "pypearray.h"
+#include "Version.h"
+
 #include <sstream>
 
 std::tuple<int,int> version()
@@ -18,16 +20,20 @@ void setup_output(py::module& m);
 void setup_scene(py::module& m);
 void setup_geometry(py::module& m);
 void setup_camera(py::module& m);
-void setup_renderentities(py::module& m);
-void setup_light(py::module& m);
+void setup_infinitelight(py::module& m);
 void setup_sampler(py::module& m);
 void setup_status(py::module& m);
 void setup_renderer(py::module& m);
 void setup_tonemapper(py::module& m);
 void setup_environment(py::module& m);
 void setup_registry(py::module& m);
+void setup_integrator(py::module& m);
 }
 
+/* ATTENTION
+ * Don't expose Type* getFoo() when smart pointers are involved!
+ * See https://pybind11.readthedocs.io/en/stable/advanced/smart_ptrs.html
+ */
 //----------
 PYBIND11_MODULE(pypearray, m)
 {
@@ -44,8 +50,7 @@ PYBIND11_MODULE(pypearray, m)
 	PRPY::setup_material(m);
 	PRPY::setup_entity(m);
 	PRPY::setup_camera(m);
-	PRPY::setup_renderentities(m);
-	PRPY::setup_light(m);
+	PRPY::setup_infinitelight(m);
 	PRPY::setup_scene(m);
 	PRPY::setup_registry(m);
 	PRPY::setup_settings(m);
@@ -53,5 +58,6 @@ PYBIND11_MODULE(pypearray, m)
 	PRPY::setup_status(m);
 	PRPY::setup_renderer(m);
 	PRPY::setup_tonemapper(m);
+	PRPY::setup_integrator(m);
 	PRPY::setup_environment(m);
 }

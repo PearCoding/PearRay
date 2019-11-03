@@ -17,10 +17,10 @@ void rnd_seed(uint64 seed)
 	Random random(finalSeed);
 
 	const int xres = 32, yres = 32;
-	uint32 data[xres * yres];
+	uint64 data[xres * yres];
 	unsigned char pixels[xres * yres];
 
-	std::memset(data, 0, sizeof(uint32) * xres * yres);
+	std::memset(data, 0, sizeof(uint64) * xres * yres);
 	for (uint64 i = 0; i < ITERATIONS; ++i) {
 		uint32 x = random.get32(0, xres);
 		uint32 y = random.get32(0, yres);
@@ -28,7 +28,7 @@ void rnd_seed(uint64 seed)
 		data[y * xres + x] += 1;
 	}
 
-	uint32 max = 0;
+	uint64 max = 0;
 	for (uint32 i = 0; i < xres; ++i) {
 		for (uint32 j = 0; j < yres; ++j) {
 			max = std::max(data[j * xres + i], max);
@@ -42,7 +42,8 @@ void rnd_seed(uint64 seed)
 
 	for (uint32 i = 0; i < xres; ++i) {
 		for (uint32 j = 0; j < yres; ++j) {
-			pixels[j * xres + i] = std::max<uint32>(0, std::min<uint32>(255, 255 * data[j * xres + i] / (float)max));
+			pixels[j * xres + i] = std::min<uint32>(255,
+													255 * (data[j * xres + i] / (float)max));
 		}
 	}
 
@@ -57,7 +58,11 @@ void rnd_seed(uint64 seed)
 		path = stream.str();
 	}
 
+#if OIIO_PLUGIN_VERSION >= 22
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
+#else
 	ImageOutput* out = ImageOutput::create(path);
+#endif
 	if (!out) {
 		std::cout << "Couldn't save image " << path << std::endl;
 		return;
@@ -68,7 +73,9 @@ void rnd_seed(uint64 seed)
 	out->write_image(TypeDesc::UINT8, pixels);
 	out->close();
 
+#if OIIO_PLUGIN_VERSION < 22
 	ImageOutput::destroy(out);
+#endif
 }
 void suite_random1()
 {

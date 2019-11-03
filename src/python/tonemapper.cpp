@@ -19,9 +19,9 @@ void setup_tonemapper(py::module& m)
 		.value("RGBA", CBM_RGBA);
 
 	py::class_<ColorBuffer>(m, "ColorBuffer", py::buffer_protocol())
-		.def(py::init<uint32, uint32, ColorBufferMode>(), py::arg("width"), py::arg("height"), py::arg("mode") = CBM_RGBA)
+		.def(py::init<uint32, uint32, ColorBufferMode>(),
+			 py::arg("width"), py::arg("height"), py::arg("mode") = CBM_RGBA)
 		.def_buffer([](ColorBuffer& s) -> py::buffer_info { // Allow buffer use
-			size_t elems = s.mode() == CBM_RGB ? 3 : 4;
 			return py::buffer_info(
 				s.ptr(),
 				sizeof(float),
@@ -29,13 +29,12 @@ void setup_tonemapper(py::module& m)
 				3,
 				std::vector<size_t>({ s.height(),
 									  s.width(),
-									  elems }),
-				std::vector<size_t>({ s.width() * elems * sizeof(float),
-									  elems * sizeof(float),
-									  sizeof(float) }));
+									  s.channels() }),
+				std::vector<size_t>({ s.heightBytePitch(),
+									  s.widthBytePitch(),
+									  s.channelBytePitch() }));
 		})
 		.def("map", [](ColorBuffer& c, const ToneMapper& mapper, Array specIn) {
-			// specIn
 			py::buffer_info info1 = specIn.request();
 			if (info1.format != py::format_descriptor<float>::format())
 				throw std::runtime_error("Incompatible format: expected a float array!");
@@ -46,29 +45,28 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
-			if (info1.shape[0] != c.height() || info1.shape[1] != c.width())
+			if ((size_t)info1.shape[0] != c.height()
+				|| (size_t)info1.shape[1] != c.width())
 				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
 
 			c.map(mapper, (float*)info1.ptr, info1.shape[2]);
 		})
 		.def("mapOnlyMapper", [](ColorBuffer& c, const ToneMapper& mapper, Array rgbIn) {
-			ssize_t elems = c.mode() == CBM_RGB ? 3 : 4;
-
-			// rgbIn
 			py::buffer_info info1 = rgbIn.request();
 			if (info1.format != py::format_descriptor<float>::format())
 				throw std::runtime_error("Incompatible format: expected a float array!");
 
 			if (info1.ndim != 3)
-				throw std::runtime_error("Incompatible buffer dimension. Expected 2d");
+				throw std::runtime_error("Incompatible buffer dimension. Expected 3d");
 
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
-			if (info1.shape[0] != c.height() || info1.shape[1] != c.width())
+			if ((size_t)info1.shape[0] != c.height()
+				|| (size_t)info1.shape[1] != c.width())
 				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
 
-			if (info1.shape[2] != elems)
+			if ((size_t)info1.shape[2] != c.channels())
 				throw std::runtime_error("Incompatible shape: Expected RGB(A) in inner most dimension");
 
 			c.mapOnlyMapper(mapper, (float*)info1.ptr);
@@ -78,7 +76,7 @@ void setup_tonemapper(py::module& m)
 		.def_property_readonly("height", &ColorBuffer::height);
 
 	py::class_<ToneMapper>(m, "ToneMapper")
-		.def(py::init<uint32,uint32>())
+		.def(py::init<>())
 		.def("map", [](ToneMapper& tm, Array specIn, size_t elems) {
 			// specIn
 			py::buffer_info info1 = specIn.request();
@@ -91,20 +89,21 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
-			if (info1.shape[0] != tm.height() || info1.shape[1] != tm.width())
-				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
-
 			// rgbOut
-			float* mem = new float[tm.width() * tm.height() * elems];
-			tm.map((float*)info1.ptr, mem, info1.shape[2], elems);
+			float* mem = new float[info1.shape[0] * info1.shape[1] * elems];
+			tm.map((float*)info1.ptr, info1.shape[2],
+				   mem, elems,
+				   info1.shape[0] * info1.shape[1]);
 
 			py::capsule free_when_done(mem, [](void* f) {
 				delete[] reinterpret_cast<float*>(f);
 			});
 
 			return py::array_t<float>(
-				std::vector<size_t>({ tm.height(), tm.width(), elems }),
-				std::vector<size_t>({ tm.width() * elems * sizeof(float), elems * sizeof(float), sizeof(float) }),
+				std::vector<size_t>({ (size_t)info1.shape[1], (size_t)info1.shape[0], elems }),
+				std::vector<size_t>({ info1.shape[1] * elems * sizeof(float),
+									  elems * sizeof(float),
+									  sizeof(float) }),
 				mem,
 				free_when_done);
 		})
@@ -120,31 +119,31 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
-			if (info1.shape[0] != tm.height() || info1.shape[1] != tm.width())
-				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
-
 			if (info1.shape[2] != (ssize_t)elems)
 				throw std::runtime_error("Incompatible shape: Expected RGB in inner most dimension");
 
+			if (info1.strides[2] != sizeof(float))
+				throw std::runtime_error("Incompatible format: Expected float stride in the inner most dimension");
+
 			// rgbOut
-			float* mem = new float[tm.width() * tm.height() * elems]; // Other way??
-			tm.mapOnlyMapper((float*)info1.ptr, mem, elems);
+			float* mem = new float[info1.shape[0] * info1.shape[1] * elems]; // Other way??
+			tm.mapOnlyMapper((float*)info1.ptr, mem, elems, info1.shape[0] * info1.shape[1]);
 
 			py::capsule free_when_done(mem, [](void* f) {
 				delete[] reinterpret_cast<float*>(f);
 			});
 
 			return py::array_t<float>(
-				std::vector<size_t>({ tm.height(), tm.width(), elems }),
-				std::vector<size_t>({ tm.width() * elems * sizeof(float), elems * sizeof(float), sizeof(float) }),
+				std::vector<size_t>({ (size_t)info1.shape[0], (size_t)info1.shape[1], elems }),
+				std::vector<size_t>({ info1.shape[1] * elems * sizeof(float),
+									  elems * sizeof(float),
+									  sizeof(float) }),
 				mem,
 				free_when_done);
 		})
 		.def_property("colorMode", &ToneMapper::colorMode, &ToneMapper::setColorMode)
 		.def_property("gammaMode", &ToneMapper::gammaMode, &ToneMapper::setGammaMode)
-		.def_property("mapperMode", &ToneMapper::mapperMode, &ToneMapper::setMapperMode)
-		.def_property_readonly("width", &ToneMapper::width)
-		.def_property_readonly("height", &ToneMapper::height);
+		.def_property("mapperMode", &ToneMapper::mapperMode, &ToneMapper::setMapperMode);
 
 	py::enum_<ToneColorMode>(m, "ToneColorMode")
 		.value("SRGB", TCM_SRGB)

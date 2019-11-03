@@ -1,0 +1,12 @@
+[
+    { ref: "Eigen3.imp" },
+
+    { include: ["@<simdpp/.*>", private, "<simdpp/simd.h>", public] },
+    { include: ["@\"simdpp/.*\"", private, "<simdpp/simd.h>", public] },
+
+    { include: ["<bits/std_abs.h>", private, "<cmath>", public] },
+    { include: ["<bits/shared_ptr.h>", private, "<memory>", public] },
+    { include: ["<bits/types/clock_t.h>", private, "<chrono>", public] },
+    { include: ["<bits/types/struct_tm.h>", private, "<chrono>", public] },
+    { include: ["<bits/types/time_t.h>", private, "<chrono>", public] }
+]

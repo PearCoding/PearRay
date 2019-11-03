@@ -1,8 +1,9 @@
+#include "sampler/Sampler.h"
 #include "Random.h"
-#include "sampler/HaltonQMCSampler.h"
+#include "sampler/HaltonSampler.h"
 #include "sampler/MultiJitteredSampler.h"
 #include "sampler/RandomSampler.h"
-#include "sampler/Sampler.h"
+#include "sampler/SobolSampler.h"
 #include "sampler/StratifiedSampler.h"
 #include "sampler/UniformSampler.h"
 
@@ -17,14 +18,9 @@ public:
 		PYBIND11_OVERLOAD_PURE(float, Sampler, generate1D, index);
 	}
 
-	inline Eigen::Vector2f generate2D(uint32 index) override
+	inline Vector2f generate2D(uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(Eigen::Vector2f, Sampler, generate2D, index);
-	}
-
-	inline Eigen::Vector3f generate3D(uint32 index) override
-	{
-		PYBIND11_OVERLOAD_PURE(Eigen::Vector3f, Sampler, generate3D, index);
+		PYBIND11_OVERLOAD_PURE(Vector2f, Sampler, generate2D, index);
 	}
 };
 
@@ -32,12 +28,11 @@ void setup_sampler(py::module& m)
 {
 	py::class_<Sampler, SamplerWrap>(m, "Sampler")
 		.def("generate1D", &Sampler::generate1D)
-		.def("generate2D", &Sampler::generate2D)
-		.def("generate3D", &Sampler::generate3D);
+		.def("generate2D", &Sampler::generate2D);
 
-	py::class_<HaltonQMCSampler, Sampler>(m, "HaltonQMCSampler")
-		.def(py::init<uint32, bool, uint32, uint32, uint32>(),
-			 py::arg("samples"), py::arg("adaptive") = false, py::arg("baseX") = 13, py::arg("baseY") = 47, py::arg("baseZ") = 89);
+	py::class_<HaltonSampler, Sampler>(m, "HaltonSampler")
+		.def(py::init<uint32, uint32, uint32>(),
+			 py::arg("samples"), py::arg("baseX") = 13, py::arg("baseY") = 47);
 
 	py::class_<MultiJitteredSampler, Sampler>(m, "MultiJitteredSampler")
 		.def(py::init<Random&, uint32>());
@@ -47,6 +42,9 @@ void setup_sampler(py::module& m)
 
 	py::class_<StratifiedSampler, Sampler>(m, "StratifiedSampler")
 		.def(py::init<Random&, uint32>());
+
+	py::class_<SobolSampler, Sampler>(m, "SobolSampler")
+		.def(py::init<uint32, uint32, uint32>());
 
 	py::class_<UniformSampler, Sampler>(m, "UniformSampler")
 		.def(py::init<Random&, uint32>());
@@ -63,4 +61,4 @@ void setup_sampler(py::module& m)
 		.def("get3D", &Random::get3D)
 		.def("get4D", &Random::get4D);
 }
-}
+} // namespace PRPY

@@ -1,5 +1,4 @@
-#pragma once
-
+// IWYU pragma: private, include "sampler/MultiJitteredSampler.h"
 namespace PR {
 float MultiJitteredSampler::generate1D(uint32 index)
 {
@@ -16,7 +15,7 @@ float MultiJitteredSampler::generate1D(uint32 index)
 	return r;
 }
 
-Eigen::Vector2f MultiJitteredSampler::generate2D(uint32 index)
+Vector2f MultiJitteredSampler::generate2D(uint32 index)
 {
 	uint32 newIndex = index % mSamples;
 
@@ -32,17 +31,9 @@ Eigen::Vector2f MultiJitteredSampler::generate2D(uint32 index)
 	float jy = mRandom.getFloat();
 #endif
 
-	auto r = Eigen::Vector2f((newIndex % m2D_X + (sy + jx) / m2D_Y) / m2D_X,
+	auto r = Vector2f((newIndex % m2D_X + (sy + jx) / m2D_Y) / m2D_X,
 							 (newIndex / m2D_X + (sx + jy) / m2D_X) / m2D_Y);
 	return r;
-}
-
-// Not really uniform!
-Eigen::Vector3f MultiJitteredSampler::generate3D(uint32 index)
-{
-	auto x  = generate1D(index);
-	auto yz = generate2D(index);
-	return Eigen::Vector3f(x, yz(0), yz(1));
 }
 
 uint32 MultiJitteredSampler::permute(uint32 i, uint32 l, uint32 p)

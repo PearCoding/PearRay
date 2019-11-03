@@ -1,196 +1,149 @@
 #pragma once
 
-#define PR_STRINGIFY(str)	#str
+#define PR_STRINGIFY(str) #str
 #define PR_DOUBLEQUOTE(str) PR_STRINGIFY(str)
-
-#define PR_NAME_STRING		PR_DOUBLEQUOTE(${CMAKE_PROJECT_NAME})
-#define PR_VENDOR_STRING	PR_DOUBLEQUOTE(${VENDOR})
-
-#define PR_VERSION_MAJOR	${VERSION_MAJOR}
-#define PR_VERSION_MINOR	${VERSION_MINOR}
-#define PR_VERSION_STRING 	PR_DOUBLEQUOTE(${VERSION_MAJOR}) "." PR_DOUBLEQUOTE(${VERSION_MINOR})
-#define PR_VERSION			${VERSION_HEX}
-#define PR_VERSION_CHECK(major, minor) (((major) << 8) | (minor))
-
-#define PR_APP_TITLE		"PearRay - (C) PearCoding"
 
 //OS
 #if defined(__linux) || defined(linux)
-# define PR_OS_LINUX
-# define PR_OS_NAME "Linux"
+#define PR_OS_LINUX
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__) || defined(__TOS_WIN__)
-# define PR_OS_WINDOWS
-# if !defined(Win64) && !defined(_WIN64)
-#  define PR_OS_WINDOWS_32
-#  define PR_OS_NAME "Microsoft Windows 32 Bit"
-# else
-#  define PR_OS_WINDOWS_64
-#  define PR_OS_NAME "Microsoft Windows 64 Bit"
-# endif
+#define PR_OS_WINDOWS
+#if !defined(Win64) && !defined(_WIN64)
+#define PR_OS_WINDOWS_32
 #else
-# error Your operating system is currently not supported
+#define PR_OS_WINDOWS_64
+#endif
+#else
+#error Your operating system is currently not supported
 #endif
 
 //Compiler
 #if defined(__CYGWIN__)
-# define PR_CC_CYGWIN
-# define PR_CC_NAME "Cygwin"
+#define PR_CC_CYGWIN
 #endif
 
 #if defined(__GNUC__)
-# define PR_CC_GNU
-# define PR_CC_NAME "GNU C/C++"
+#define PR_CC_GNU
 #endif
 
 #if defined(__MINGW32__)
-# define PR_CC_MINGW32
-# if !defined(PR_CC_GNU)
-#  define PR_CC_NAME "MinGW 32"
-# else
-#  undef PR_CC_NAME
-#  define PR_CC_NAME "GNU C/C++(MinGW 32)"
-# endif
+#define PR_CC_MINGW32
 #endif
 
 #if defined(__INTEL_COMPILER)
-# define PR_CC_INTEL
-# ifdef PR_CC_NAME
-#  undef PR_CC_NAME
-# endif
-# define PR_CC_NAME "Intel C/C++"
+#define PR_CC_INTEL
 #endif
 
 #if defined(_MSC_VER)
-# define PR_CC_MSC
-# define PR_CC_NAME "Microsoft Visual C++"
-# pragma warning(disable: 4251 4996)
+#define PR_CC_MSC
+#pragma warning(disable : 4251 4996)
 #endif
 
-#if !defined(PR_CC_NAME)
-# define PR_CC_NAME "Unknown compiler"
+// Check if C++14
+#ifdef PR_CC_MSC
+#if _MSVC_LANG < 201402
+#pragma message("PearRay requires C++14 to compile successfully")
 #endif
-
-#if defined(PR_DEBUG)
-# define PR_BUILDVARIANT_NAME "Debug"
-# define PR_BUILD_STRING PR_NAME_STRING " " PR_VERSION_STRING " build variant " PR_BUILDVARIANT_NAME " on " __DATE__  " at " __TIME__ " with " PR_CC_NAME " { OS: " PR_OS_NAME "; Last change: " __TIMESTAMP__ "}\n"
 #else
-# ifndef PR_RELEASE
-#  define PR_RELEASE
-# endif
-# define PR_BUILDVARIANT_NAME "Release"
-# define PR_BUILD_STRING PR_NAME_STRING " " PR_VERSION_STRING " build variant " PR_BUILDVARIANT_NAME " { OS: " PR_OS_NAME " }\n"
+#if __cplusplus < 201300
+#warning PearRay requires C++14 to compile successfully
+#endif
 #endif
 
 #define PR_ALIGN(x) alignas(x)
 
 #ifdef PR_CC_MSC
-# define PR_DEBUG_BREAK() __debugbreak()
-#else//FIXME: Really use cpu dependent assembler?
-# define PR_DEBUG_BREAK() __asm__ __volatile__ ("int $0x03")
+#define PR_DEBUG_BREAK() __debugbreak()
+#else //FIXME: Really use cpu dependent assembler?
+#define PR_DEBUG_BREAK() __asm__ __volatile__("int $0x03")
 #endif
 
 #define PR_FUNCTION_NAME __func__
 
 #ifndef PR_NO_ASSERTS
-# include <assert.h>
-# define _PR_ASSERT_MSG(msg) \
-	std::cerr << "[PEARRAY] ASSERT | " << __FILE__ \
-		<< ":" << __LINE__ << " " << PR_FUNCTION_NAME \
-		<< " | " << (msg) << std::endl
-# ifdef PR_RELEASE
-#  define PR_ASSERT(cond, msg) \
-	do { \
-	  if(!(cond)) { \
-	  	_PR_ASSERT_MSG((msg)); \
-		std::abort(); \
-	  } \
-	} while(false)
-# else
-#  define PR_ASSERT(cond, msg) \
-	do { \
-	  if(!(cond)) { \
-	  	_PR_ASSERT_MSG((msg)); \
-		PR_DEBUG_BREAK(); \
-		std::abort(); \
-	  } \
-	} while(false)
-# endif
+#include <assert.h>
+#define _PR_ASSERT_MSG(msg)                                 \
+	std::cerr << "[PEARRAY] ASSERT | " << __FILE__          \
+			  << ":" << __LINE__ << " " << PR_FUNCTION_NAME \
+			  << " | " << (msg) << std::endl
+#ifndef PR_DEBUG
+#define PR_ASSERT(cond, msg)       \
+	do {                           \
+		if (!(cond)) {             \
+			_PR_ASSERT_MSG((msg)); \
+			std::abort();          \
+		}                          \
+	} while (false)
 #else
-# define PR_ASSERT(cond, msg) PR::pr_Noop()
+#define PR_ASSERT(cond, msg)       \
+	do {                           \
+		if (!(cond)) {             \
+			_PR_ASSERT_MSG((msg)); \
+			PR_DEBUG_BREAK();      \
+			std::abort();          \
+		}                          \
+	} while (false)
+#endif
+#else
+#define PR_ASSERT(cond, msg) PR::pr_Noop()
 #endif
 
 #define PR_CLASS_NON_MOVEABLE(C) \
-	private: \
-		C(C&&) = delete; \
-		C& operator=(C&&) = delete
+private:                         \
+	C(C&&)	 = delete;         \
+	C& operator=(C&&) = delete
 
-#define PR_CLASS_NON_COPYABLE(C) \
-	private: \
-		C(const C&) = delete; \
-		C& operator=(const C&) = delete; \
-		PR_CLASS_NON_MOVEABLE(C)
+#define PR_CLASS_NON_COPYABLE(C)     \
+private:                             \
+	C(const C&) = delete;            \
+	C& operator=(const C&) = delete; \
+	PR_CLASS_NON_MOVEABLE(C)
 
 #define PR_CLASS_NON_CONSTRUCTABLE(C) \
-	private: \
-		C() = delete; \
-		PR_CLASS_NON_COPYABLE(C)
+private:                              \
+	C() = delete;                     \
+	PR_CLASS_NON_COPYABLE(C)
 
-#define PR_CLASS_STACK_ONLY(C) \
-	private: \
-		static void *operator new(size_t) = delete; \
-		static void *operator new[](size_t) = delete; \
-		static void operator delete(void*) = delete; \
-		static void operator delete[](void*) = delete
+#define PR_CLASS_STACK_ONLY(C)                     \
+private:                                           \
+	static void* operator new(size_t)	= delete; \
+	static void* operator new[](size_t)  = delete; \
+	static void operator delete(void*)   = delete; \
+	static void operator delete[](void*) = delete
 
 #if !defined(PR_LIB_STATIC)
-# if defined(PR_OS_WINDOWS)
-#  define PR_EXPORT __declspec(dllexport)
-#  define PR_IMPORT __declspec(dllimport)
-# elif defined(PR_OS_LINUX)
-#  define PR_EXPORT __attribute__((visibility ("default")))
-#  define PR_IMPORT
-# else
-#  error Unsupported operating system
-# endif
+#if defined(PR_OS_WINDOWS)
+#define PR_EXPORT __declspec(dllexport)
+#define PR_IMPORT __declspec(dllimport)
+#elif defined(PR_OS_LINUX)
+#define PR_EXPORT __attribute__((visibility("default")))
+#define PR_IMPORT
 #else
-# define PR_EXPORT
-# define PR_IMPORT
+#error Unsupported operating system
+#endif
+#else
+#define PR_EXPORT
+#define PR_IMPORT
 #endif
 
 #if defined(PR_LIB_BUILD)
-# define PR_LIB PR_EXPORT
+#define PR_LIB PR_EXPORT
 #else
-# define PR_LIB PR_IMPORT
+#define PR_LIB PR_IMPORT
 #endif
 #define PR_LIB_INLINE
 
 #if defined(PR_LIB_UTILS_BUILD)
-# define PR_LIB_UTILS PR_EXPORT
+#define PR_LIB_UTILS PR_EXPORT
 #else
-# define PR_LIB_UTILS PR_IMPORT
+#define PR_LIB_UTILS PR_IMPORT
 #endif
 #define PR_LIB_UTILS_INLINE
 
-#if defined(PR_LIB_OSL_BUILD)
-# define PR_LIB_OSL PR_EXPORT
-#else
-# define PR_LIB_OSL PR_IMPORT
-#endif
-#define PR_LIB_OSL_INLINE
+#define PR_PLUGIN_API_VERSION 1
+#define PR_PLUGIN_EXPORT PR_EXPORT
 
-#if defined(PR_LIB_NETWORK_BUILD)
-# define PR_LIB_NETWORK PR_EXPORT
-#else
-# define PR_LIB_NETWORK PR_IMPORT
-#endif
-#define PR_LIB_NETWORK_INLINE
-
-// Some other configs
-#define PR_TRIANGLE_INTERSECTION_TECHNIQUE (${TRIANGLE_TECHNIQUE})
-
-// Includes
 #include <iostream>
-#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <memory>
@@ -199,47 +152,92 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-namespace PR
+// SIMD
+// Always enable SSE2... everything below is too old anyway
+#define SIMDPP_ARCH_X86_SSE2
+#cmakedefine PR_USE_SSE3
+#ifdef PR_USE_SSE3
+#define SIMDPP_ARCH_X86_SSE3
+#endif
+#cmakedefine PR_USE_SSSE3
+#ifdef PR_USE_SSSE3
+#define SIMDPP_ARCH_X86_SSSE3
+#endif
+#cmakedefine PR_USE_SSE4
+#ifdef PR_USE_SSE4
+#define SIMDPP_ARCH_X86_SSE4_1
+#endif
+#cmakedefine PR_USE_AVX
+#ifdef PR_USE_AVX
+#define SIMDPP_ARCH_X86_AVX
+#endif
+#cmakedefine PR_USE_AVX2
+#ifdef PR_USE_AVX2
+#define SIMDPP_ARCH_X86_AVX2
+#endif
+#cmakedefine PR_USE_AVX512
+#ifdef PR_USE_AVX512
+#define SIMDPP_ARCH_X86_AVX512F
+#endif
+
+#ifdef PR_CC_MSC
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#endif
+#include <simdpp/simd.h>
+#ifdef PR_CC_MSC
+#pragma warning(pop)
+#endif
+
+// Always align at the 8 byte border regardless of the underlying bandwidth
+#define PR_SIMD_ALIGNMENT_PARAM (32)
+#define PR_SIMD_ALIGN alignas(PR_SIMD_ALIGNMENT_PARAM)
+
+namespace PR {
+inline void pr_Noop()
 {
-	inline void pr_Noop()
-	{
-	}
-	
-	typedef signed char int8;
-	typedef unsigned char uint8;
+}
 
-	typedef signed short int16;
-	typedef unsigned short uint16;
+typedef signed char int8;
+typedef unsigned char uint8;
 
-	typedef signed int int32;
-	typedef unsigned int uint32;
+typedef signed short int16;
+typedef unsigned short uint16;
+
+typedef signed int int32;
+typedef unsigned int uint32;
 
 #if defined __GLIBC_HAVE_LONG_LONG
-	__extension__ typedef signed long long int int64;
-	__extension__ typedef unsigned long long int uint64;
+__extension__ typedef signed long long int int64;
+__extension__ typedef unsigned long long int uint64;
 #else
-	typedef signed long int int64;
-	typedef unsigned long int uint64;
+typedef signed long int int64;
+typedef unsigned long int uint64;
 #endif
-	
-	typedef std::chrono::high_resolution_clock::time_point TimePoint;
-	typedef uint32 EntityID;
-	typedef uint32 DataRefID;
 
-	constexpr float PR_EPSILON = 0.00001f;
+typedef uint32 EntityID;
+typedef uint32 DataRefID;
+
+constexpr float PR_EPSILON = 0.00001f;
 
 #ifdef M_PI
-	constexpr float PR_PI = M_PI;
+constexpr float PR_PI = static_cast<float>(M_PI);
 #else
-	constexpr float PR_PI = 3.14159265358979323846;
+constexpr float PR_PI   = static_cast<float>(3.14159265358979323846);
 #endif
 
 #ifdef M_1_PI
-	constexpr float PR_1_PI = M_1_PI;
+constexpr float PR_1_PI = M_1_PI;
 #else
-	constexpr float PR_1_PI = 1/PR_PI;
+constexpr float PR_1_PI = 1 / PR_PI;
 #endif
 
-	constexpr float PR_NM_TO_M_F = 1e-9f;
-	constexpr double PR_NM_TO_M = 1e-9;
-}
+constexpr float PR_NM_TO_M_F = 1e-9f;
+constexpr double PR_NM_TO_M  = 1e-9;
+
+constexpr size_t INTERSECTION_GROUP_SIZE = 64;
+constexpr size_t MATERIAL_GROUP_SIZE	 = 64;
+
+} // namespace PR
+
+#include "VectorGlue.inl"

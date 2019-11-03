@@ -10,16 +10,18 @@ class PR_LIB XYZConverter {
 
 public:
 	//len(src) == SAMPLING_COUNT
-	static void convert(uint32 samples, const float* src, float& x, float& y);
+	static void convert(uint32 samples,
+						const float* src, float& x, float& y);
 	static inline void convert(const Spectrum& s, float& x, float& y)
 	{
 		convert(s.samples(), s.c_ptr(), x, y);
 	}
 
-	static float luminance(float x, float y, float z) { return y; }
+	static float luminance(float, float y, float) { return y; }
 
 	//len(src) == SAMPLING_COUNT
-	static void convertXYZ(uint32 samples, const float* src, float& X, float& Y, float& Z);
+	static void convertXYZ(uint32 samples,
+						   const float* src, float& X, float& Y, float& Z);
 	static inline void convertXYZ(const Spectrum& s, float& X, float& Y, float& Z)
 	{
 		convertXYZ(s.samples(), s.c_ptr(), X, Y, Z);
@@ -35,4 +37,4 @@ public:
 	static void toSpec(Spectrum& spec, float x, float y, float z);
 	static float toSpecIndex(uint32 samples, uint32 index, float x, float y, float z);
 };
-}
+} // namespace PR

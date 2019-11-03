@@ -28,7 +28,7 @@ void setup_spectral(py::module& m)
 				std::vector<size_t>({ sizeof(float) }));
 		})
 		.def("fill", (void (Spectrum::*)(float)) & Spectrum::fill)
-		.def("fill", (void (Spectrum::*)(uint32, uint32, float)) & Spectrum::fill)
+		.def("fill", (void (Spectrum::*)(size_t, size_t, float)) & Spectrum::fill)
 		.def("clear", &Spectrum::clear)
 		.def_property_readonly("max", &Spectrum::max)
 		.def_property_readonly("min", &Spectrum::min)

@@ -1,4 +1,5 @@
 #include "container/kdTreeBuilder.h"
+#include <vector>
 
 namespace PR {
 enum SplitPlane {
@@ -15,20 +16,20 @@ enum Side {
 struct kdNodeBuilder {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	kdNodeBuilder(uint32 id, bool leaf, const BoundingBox& b)
+	kdNodeBuilder(size_t id, bool leaf, const BoundingBox& b)
 		: id(id)
 		, isLeaf(leaf)
 		, boundingBox(b)
 	{
 	}
 
-	uint32 id;
+	size_t id;
 	const bool isLeaf;
 	BoundingBox boundingBox;
 };
 
 struct kdInnerNodeBuilder : public kdNodeBuilder {
-	kdInnerNodeBuilder(uint32 id, uint8 axis, float sp,
+	kdInnerNodeBuilder(size_t id, uint8 axis, float sp,
 					   kdNodeBuilder* l, kdNodeBuilder* r, const BoundingBox& b)
 		: kdNodeBuilder(id, false, b)
 		, axis(axis)
@@ -376,9 +377,9 @@ static void classify(const std::vector<Event>& events, const std::vector<Primiti
 }
 
 inline static kdNodeBuilder* createLeafNode(void* observer,
-										   kdTreeBuilder::AddedCallback addedCallback,
-										   std::vector<Primitive*>& objs,
-										   const BoundingBox& V)
+											kdTreeBuilder::AddedCallback addedCallback,
+											std::vector<Primitive*>& objs,
+											const BoundingBox& V)
 {
 	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(-1, V);
 	for (auto obj : objs) {
@@ -436,6 +437,8 @@ static kdNodeBuilder* buildNode(void* observer,
 	std::vector<Event> leftBothEvents, rightBothEvents;
 	for (const Event& e : events) {
 		switch (e.primitive->side) {
+		case S_Both:
+			break;
 		case S_Left:
 			leftOnlyEvents.push_back(e);
 			break;
@@ -494,7 +497,7 @@ void kdTreeBuilder::build(size_t size)
 		return;
 	}
 
-	mMaxDepth = std::ceil(8 + 3 * 1.5 * std::log2(size));
+	mMaxDepth = (uint32)std::ceil(8 + 3 * 1.5 * std::log2(size));
 
 	std::vector<Primitive*> primitives;		// Will be cleared to save memory
 	std::vector<Primitive*> primitivesCopy; // Copy to be deleted later

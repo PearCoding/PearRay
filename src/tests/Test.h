@@ -1,8 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
 
 #include <iostream>
 #include <list>
@@ -89,9 +87,9 @@ std::string _prt_test_string<M>(const M& val) { return _prt_test_string_V(val); 
 _PRT_DEF_STRUCT(Eigen::Matrix2f)
 _PRT_DEF_STRUCT(Eigen::Matrix3f)
 _PRT_DEF_STRUCT(Eigen::Matrix4f)
-_PRT_DEF_STRUCT(Eigen::Vector2f)
-_PRT_DEF_STRUCT(Eigen::Vector3f)
-_PRT_DEF_STRUCT(Eigen::Vector4f)
+_PRT_DEF_STRUCT(PR::Vector2f)
+_PRT_DEF_STRUCT(PR::Vector3f)
+_PRT_DEF_STRUCT(PR::Vector4f)
 
 #undef _PRT_DEF_STRUCT
 
@@ -152,7 +150,7 @@ namespace PRT
 			mCount++;
 		}
 
-		inline bool end() const 
+		inline bool end() const
 		{
 			std::cout << "Test '" << mName << "':" << std::endl;
 			int i = 1;

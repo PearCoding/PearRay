@@ -1,56 +1,37 @@
 #include "Sphere.h"
+#include "CollisionData.h"
 
-#include "ray/Ray.h"
+#include "math/Spherical.h"
 
 #include <utility>
 
 #define PR_SPHERE_INTERSECT_EPSILON (1e-5f)
 namespace PR {
 Sphere::Sphere()
-	: mPosition(0, 0, 0)
-	, mRadius(1)
+	: mRadius(1)
 {
 }
 
-Sphere::Sphere(const Eigen::Vector3f& pos, float radius)
-	: mPosition(pos)
-	, mRadius(radius)
+Sphere::Sphere(float radius)
+	: mRadius(radius)
 {
 	PR_ASSERT(radius > 0, "radius has to be bigger than 0. Check it before construction!");
 }
 
-Sphere::Sphere(const Sphere& other)
+void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	mPosition = other.mPosition;
-	mRadius   = other.mRadius;
-}
+	out.HitDistance = std::numeric_limits<float>::infinity();
 
-Sphere& Sphere::operator=(const Sphere& other)
-{
-	mPosition = other.mPosition;
-	mRadius   = other.mRadius;
-	return *this;
-}
+	// C - O
+	const float S  = -in.Origin.dot(in.Direction);
+	const float L2 = in.Origin.squaredNorm();
+	const float R2 = mRadius * mRadius;
+	const float M2 = L2 - S * S;
 
-Sphere::Intersection Sphere::intersects(const Ray& ray) const
-{
-	
-	Sphere::Intersection r;
-	r.Successful = false;
-
-	const Eigen::Vector3f L = mPosition - ray.origin(); // C - O
-	const float S			= L.dot(ray.direction());   // L . D
-	const float L2			= L.squaredNorm();			// L . L
-	const float R2			= mRadius * mRadius;		// R^2
-
-	if (S < 0 && // when object behind ray
-		L2 > R2)
-		return r;
-
-	const float M2 = L2 - S * S; // L . L - S^2
-
-	if (M2 > R2)
-		return r;
+	if ((S < 0 && // when object behind ray
+		 L2 > R2)
+		|| (M2 > R2))
+		return;
 
 	const float Q = std::sqrt(R2 - M2);
 
@@ -63,35 +44,83 @@ Sphere::Intersection Sphere::intersects(const Ray& ray) const
 		t0 = t1;
 
 	if (t0 >= PR_SPHERE_INTERSECT_EPSILON) {
-		r.T			 = t0;
-		r.Position		 = ray.origin() + ray.direction() * r.T;
-		r.Successful = true;
-		return r;
-	} else {
-		return r;
+		out.HitDistance = t0;
+
+		// Setup UV
+		Vector3f p  = in.t(t0);
+		Vector2f uv = project(p);
+		out.UV[0]   = uv(0);
+		out.UV[1]   = uv(1);
 	}
 }
 
-void Sphere::combine(const Eigen::Vector3f& point)
+void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 {
-	
+	using namespace simdpp;
 
-	float f = (mPosition - point).squaredNorm();
+	const vfloat S  = -in.Origin.dot(in.Direction);
+	const vfloat L2 = in.Origin.squaredNorm();
+	const vfloat R2 = vfloat(mRadius * mRadius);
+	const vfloat M2 = L2 - S * S;
+
+	const bfloat valid = ((S >= 0) | (L2 <= R2)) & (M2 <= R2);
+
+	const vfloat Q = sqrt(R2 - M2);
+
+	const vfloat t0t = S - Q;
+	const vfloat t1t = S + Q;
+	const bfloat d   = t0t > t1t;
+
+	vfloat t0 = blend(t1t, t0t, d);
+	vfloat t1 = blend(t0t, t1t, d);
+
+	out.HitDistance = blend(t1, t0, t0 < PR_SPHERE_INTERSECT_EPSILON);
+
+	// Project
+	Vector3fv p  = in.t(t0);
+	Vector2fv uv = project(p);
+	out.UV[0]	= uv(0);
+	out.UV[1]	= uv(1);
+
+	const vfloat inf = fill_vector(std::numeric_limits<float>::infinity());
+	out.HitDistance  = blend(out.HitDistance, inf,
+							 valid & (out.HitDistance >= PR_SPHERE_INTERSECT_EPSILON));
+}
+
+void Sphere::combine(const Vector3f& point)
+{
+	float f = point.squaredNorm();
 	if (f > mRadius * mRadius)
 		mRadius = std::sqrt(f);
 }
 
 void Sphere::combine(const Sphere& other)
 {
-	
-
 	if (!isValid()) {
 		*this = other;
 		return;
 	}
 
-	float f = (mPosition - other.mPosition).squaredNorm() + other.mRadius;
-	if (f > mRadius * mRadius)
-		mRadius = std::sqrt(f);
+	mRadius = std::max(mRadius, other.mRadius);
 }
+
+Vector3f Sphere::normalPoint(float u, float v) const
+{
+	return Spherical::cartesian_from_uv<float>(u, v);
 }
+
+Vector3f Sphere::surfacePoint(float u, float v) const
+{
+	return normalPoint(u, v) * mRadius;
+}
+
+Vector2f Sphere::project(const Vector3f& p) const
+{
+	return Spherical::uv_from_point(p);
+}
+
+Vector2fv Sphere::project(const Vector3fv& p) const
+{
+	return Spherical::uv_from_point(p);
+}
+} // namespace PR

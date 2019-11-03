@@ -84,7 +84,7 @@ void validate(boost::any& v,
 BEGIN_ENUM_OPTION(DisplayDriverOption)
 {
 	{"image", DDO_Image},
-	{"net", DDO_Network},
+	//{"net", DDO_Network},
 	{nullptr, DDO_Image}
 };
 
@@ -102,6 +102,7 @@ po::options_description setup_cmd_options()
 		("progress,p", po::value<PR::uint32>()->implicit_value(1),
 			"Show progress (regardless if quiet or not)")
 		("information,I", "Print additional scene information into log file (and perhabs into console)")
+		("registry", "Shows the content of the internal registry")
 
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>()->default_value("./scene"), "Output directory")
@@ -109,6 +110,7 @@ po::options_description setup_cmd_options()
 			po::value<EnumOption<DisplayDriverOption> >()->default_value(
 				EnumOption<DisplayDriverOption>::get_default()),
 		 	(std::string("Display Driver Mode [") + EnumOption<DisplayDriverOption>::get_names() + "]").c_str())
+		("pluginpath", po::value<std::string>(), "Additional plugin path")
 	;		
 
 	po::options_description network_d("Network");
@@ -203,6 +205,18 @@ bool ProgramSettings::parse(int argc, char** argv)
 		return false;
 	}
 
+	PluginPath = "";
+	if(vm.count("pluginpath"))
+	{
+		PluginPath = vm["pluginpath"].as<std::string>();
+
+		if(!bf::is_directory(PluginPath)) {
+			std::cout << "Given plugin path '" << PluginPath 
+				<< "' is not a valid directory" << std::endl;
+			return false;
+		}
+	}
+
 	// Setup output directory
 	const bf::path relativePath = vm["output"].as<std::string>();
 	if(!bf::exists(relativePath))
@@ -233,6 +247,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	else
 		ShowProgress = 0;
 	ShowInformation = (vm.count("information") != 0);
+	ShowRegistry = (vm.count("registry") != 0);
 
 	DDO = vm["display"].as<EnumOption<DisplayDriverOption> >();
 

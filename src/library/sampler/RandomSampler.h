@@ -8,9 +8,8 @@ public:
 	explicit RandomSampler(Random& random);
 	~RandomSampler();
 
-	inline float generate1D(uint32 index) override { return mRandom.getFloat(); }
-	inline Eigen::Vector2f generate2D(uint32 index) override { return mRandom.get2D(); }
-	inline Eigen::Vector3f generate3D(uint32 index) override { return mRandom.get3D(); }
+	inline float generate1D(uint32) override { return mRandom.getFloat(); }
+	inline Vector2f generate2D(uint32) override { return mRandom.get2D(); }
 
 private:
 	Random& mRandom;

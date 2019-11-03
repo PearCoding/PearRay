@@ -1,293 +1,173 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-
-SET(PR_Main_Src
-  CTP.cpp
-  IFreezable.cpp
-  FileLogListener.cpp
-  Logger.cpp)
-SET(PR_Buffer_Src
-  buffer/ColorBuffer.cpp)
-SOURCE_GROUP("Source Files\\Buffer" FILES ${PR_Buffer_Src})
-SET(PR_Camera_Src
-  camera/Camera.cpp
-  camera/StandardCamera.cpp)
-SOURCE_GROUP("Source Files\\Camera" FILES ${PR_Camera_Src})
-SET(PR_Container_Src 
-  container/kdTreeBuilder.cpp
-  container/kdTreeBuilderNaive.cpp
-  container/kdTreeCollider.cpp
-  )
-SOURCE_GROUP("Source Files\\Container" FILES ${PR_Container_Src})
-SET(PR_Entity_Src
-  entity/BoundaryEntity.cpp
-  entity/CoordinateAxisEntity.cpp
-  entity/Entity.cpp
-  entity/MeshEntity.cpp
-  entity/PlaneEntity.cpp
-  entity/RenderEntity.cpp
-  entity/SphereEntity.cpp)
-SOURCE_GROUP("Source Files\\Entity" FILES ${PR_Entity_Src})
-SET(PR_Geometry_Src
-  geometry/BoundingBox.cpp
-  geometry/Plane.cpp
-  geometry/Sphere.cpp
-  geometry/TriMesh.cpp)
-SOURCE_GROUP("Source Files\\Geometry" FILES ${PR_Geometry_Src})
-SET(PR_Integrator_Src
-  integrator/AOIntegrator.cpp
-  integrator/BiDirectIntegrator.cpp
-  integrator/DebugIntegrator.cpp
-  integrator/DirectIntegrator.cpp
-  integrator/Integrator.cpp
-  integrator/OnePassIntegrator.cpp
-  integrator/PPMIntegrator.cpp)
-SOURCE_GROUP("Source Files\\Integrator" FILES ${PR_Integrator_Src})
-SET(PR_Light_Src
-  light/DistantLight.cpp
-  light/EnvironmentLight.cpp)
-SOURCE_GROUP("Source Files\\Light" FILES ${PR_Light_Src})
-SET(PR_Material_Src
-  material/BlinnPhongMaterial.cpp
-  material/CookTorranceMaterial.cpp
-  material/DiffuseMaterial.cpp
-  material/GlassMaterial.cpp
-  material/GridMaterial.cpp
-  material/Material.cpp
-  material/MirrorMaterial.cpp
-  material/OrenNayarMaterial.cpp
-  material/WardMaterial.cpp)
-SOURCE_GROUP("Source Files\\Material" FILES ${PR_Material_Src})
-SET(PR_Math_Src ) 
-SOURCE_GROUP("Source Files\\Math" FILES ${PR_Math_Src})
-SET(PR_Photon_Src )
-SOURCE_GROUP("Source Files\\Photon" FILES ${PR_Photon_Src})
-SET(PR_Ray_Src
-  ray/Ray.cpp)
-SOURCE_GROUP("Source Files\\Ray" FILES ${PR_Ray_Src})
-SET(PR_Registry_Src
-  registry/Registry.cpp
-  registry/URI.cpp)
-SOURCE_GROUP("Source Files\\Registry" FILES ${PR_Registry_Src})
-SET(PR_Renderer_Src
-  renderer/OutputMap.cpp
-  renderer/RenderContext.cpp
-  renderer/RenderFactory.cpp
-  renderer/RenderSession.cpp
-  renderer/RenderSettings.cpp
-  renderer/RenderStatistics.cpp
-  renderer/RenderStatus.cpp
-  renderer/RenderTile.cpp
-  renderer/RenderTileMap.cpp
-  renderer/RenderThread.cpp)
-SOURCE_GROUP("Source Files\\Renderer" FILES ${PR_Renderer_Src})
-SET(PR_Sampler_Src
-  sampler/HaltonQMCSampler.cpp
-  sampler/MultiJitteredSampler.cpp
-  sampler/RandomSampler.cpp
-  sampler/StratifiedSampler.cpp
-  sampler/UniformSampler.cpp)
-SOURCE_GROUP("Source Files\\Sampler" FILES ${PR_Sampler_Src})
-SET(PR_Scene_Src
-  scene/Scene.cpp
-  scene/SceneFactory.cpp)
-SOURCE_GROUP("Source Files\\Scene" FILES ${PR_Scene_Src})
-SET(PR_Spectral_Src
-  spectral/IntensityConverter.cpp
-  spectral/RGBConverter.cpp
-  spectral/Spectrum.cpp
-  spectral/SpectrumDescriptor.cpp
-  spectral/ToneMapper.cpp
-  spectral/XYZConverter.cpp)
-SOURCE_GROUP("Source Files\\Spectral" FILES ${PR_Spectral_Src})
-SET(PR_Shader_Src
-  shader/ConstScalarOutput.cpp
-  shader/ConstSpectralOutput.cpp
-  shader/ConstVectorOutput.cpp
-)
-SOURCE_GROUP("Source Files\\Shader" FILES ${PR_Shader_Src})
-SET(PR_Thread_Src
-  thread/Thread.cpp)
-SOURCE_GROUP("Source Files\\Thread" FILES ${PR_Thread_Src})
-SET(PR_Src ${PR_Main_Src} ${PR_Geometry_Src} ${PR_Loader_Src}
-  ${PR_Entity_Src} ${PR_Ray_Src} ${PR_Scene_Src}
-  ${PR_Renderer_Src} ${PR_Spectral_Src} ${PR_Material_Src}
-  ${PR_Thread_Src} ${PR_Camera_Src} ${PR_Sampler_Src}
-  ${PR_Photon_Src} ${PR_Integrator_Src} ${PR_Shader_Src} 
-  ${PR_Affector_Src} ${PR_Math_Src} ${PR_Buffer_Src}
-  ${PR_Light_Src} ${PR_Container_Src} ${PR_Registry_Src}
-)
-
-SET(PR_Main_Hdr
-  CTP.h
+SET(PR_Src
+  Build.h
   PR_Config.h.in
+  FileLogListener.cpp
   FileLogListener.h
+  IFreezable.cpp
   IFreezable.h
+  Logger.cpp
   Logger.h
   LogListener.h
   Random.h
-  SIMath.h
-  SIMathUtils.h
-  Variant.h)
-SET(PR_Buffer_Hdr
+  Variant.h
+  VectorGlue.inl
+  buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h
-  buffer/FrameBuffer.h)
-SOURCE_GROUP("Header Files\\Buffer" FILES ${PR_Buffer_Hdr})
-SET(PR_Camera_Hdr
-  camera/Camera.h
-  camera/StandardCamera.h)
-SOURCE_GROUP("Header Files\\Camera" FILES ${PR_Camera_Hdr})
-SET(PR_Container_Hdr
+  buffer/Feedback.h
+  buffer/FrameBuffer.h
+  buffer/OutputBuffer.cpp
+  buffer/OutputBuffer.h
+  camera/ICamera.cpp
+  camera/ICamera.h
+  container/IndexSort.h
+  container/kdTreeBuilder.cpp
   container/kdTreeBuilder.h
+  container/kdTreeBuilderNaive.cpp
   container/kdTreeBuilderNaive.h
-  container/kdTreeCollider.h)
-SOURCE_GROUP("Header Files\\Container" FILES ${PR_Container_Hdr})
-SET(PR_Entity_Hdr
-  entity/BoundaryEntity.h
-  entity/CoordinateAxisEntity.h
-  entity/Entity.h
-  entity/Entity.inl
-  entity/PlaneEntity.h
-  entity/MeshEntity.h
-  entity/RenderEntity.h
-  entity/SphereEntity.h)
-SOURCE_GROUP("Header Files\\Entity" FILES ${PR_Entity_Hdr})
-SET(PR_Geometry_Hdr
+  container/kdTreeCollider.cpp
+  container/kdTreeCollider.h
+  container/QuickSort.h
+  container/RadixSort.h
+  entity/IEntity.cpp
+  entity/IEntity.h
+  entity/IEntity.inl
+  entity/VirtualEntity.cpp
+  entity/VirtualEntity.h
+  entity/VirtualEntity.inl
+  emission/IEmission.cpp
+  emission/IEmission.h
+  geometry/BoundingBox.cpp
   geometry/BoundingBox.h
   geometry/Face.h
+  geometry/GeometryPoint.h
+  geometry/Plane.cpp
   geometry/Plane.h
+  geometry/Sphere.cpp
   geometry/Sphere.h
   geometry/Triangle.h
-  geometry/TriMesh.h
-  geometry/TriMesh.inl
-  geometry/Vector.h)
-SOURCE_GROUP("Header Files\\Geometry" FILES ${PR_Geometry_Hdr})
-SET(PR_Integrator_Hdr
-  integrator/AOIntegrator.h
-  integrator/BiDirectIntegrator.h
-  integrator/DebugIntegrator.h
-  integrator/DirectIntegrator.h
-  integrator/Integrator.h
-  integrator/OnePassIntegrator.h
-  integrator/PPMIntegrator.h)
-SOURCE_GROUP("Header Files\\Integrator" FILES ${PR_Integrator_Hdr})
-SET(PR_Light_Hdr
-  light/DistantLight.h
-  light/EnvironmentLight.h
-  light/IInfiniteLight.h)
-SOURCE_GROUP("Header Files\\Light" FILES ${PR_Light_Hdr})
-SET(PR_Material_Hdr 
-  material/BlinnPhongMaterial.h
-  material/BRDF.h
-  material/BRDF.inl
-  material/CookTorranceMaterial.h
-  material/DiffuseMaterial.h
-  material/GlassMaterial.h
-  material/GridMaterial.h
-  material/Material.h
-  material/Material.inl
-  material/MirrorMaterial.h
-  material/OrenNayarMaterial.h
-  material/WardMaterial.h)
-SOURCE_GROUP("Header Files\\Material" FILES ${PR_Material_Hdr})
-SET(PR_Math_Hdr
-  math/AutoDiff.h
-  math/AutoDiff.inl
-  math/AutoDiff_ADLO.inl
-  math/AutoDiff_Operators.inl
-  math/AutoDiff_Scalar.inl
-  math/AutoDiff_Vector.inl
+  infinitelight/IInfiniteLight.cpp
+  infinitelight/IInfiniteLight.h
+  integrator/IIntegrator.cpp
+  integrator/IIntegrator.h
+  material/IMaterial.cpp
+  material/IMaterial.h
+  material/IMaterial.inl
+  material/IMaterialData.h
+  material/IMaterialType.h
+  math/Compression.h
   math/Fresnel.h
   math/Generator.h
   math/HemiMap.h
-  math/MSI.h
+  math/ImportanceSampling.h
+  math/Microfacet.h
   math/Projection.h
   math/ProjectionMap.h
   math/Reflection.h
-  math/SphereMap.h)
-SOURCE_GROUP("Header Files\\Math" FILES ${PR_Math_Hdr})
-SET(PR_Photon_Hdr
+  math/SIMath.h
+  math/SIMathConstants.h
+  math/SIMathStd.h
+  math/SIMathUtils.h
+  math/SphereMap.h
+  math/Spherical.h
+  math/Tangent.h
+  mesh/TriMesh.cpp
+  mesh/TriMesh.h
+  mesh/TriMesh.inl
+  path/LightPath.cpp
+  path/LightPath.h
+  path/LightPathBuffer.cpp
+  path/LightPathBuffer.h
+  path/LightPathExpression.cpp
+  path/LightPathExpression.h
+  path/LightPathManager.cpp
+  path/LightPathManager.h
+  path/LightPathToken.h
+  path/LPE_Automaton.cpp
+  path/LPE_Automaton.h
+  path/LPE_Parser.cpp
+  path/LPE_Parser.h
+  path/LPE_RegExpr.cpp
+  path/LPE_RegExpr.h
+  path/LPE_RegState.h
   photon/Photon.h
   photon/PhotonMap.h
-  photon/PhotonMap.inl)
-SOURCE_GROUP("Header Files\\Photon" FILES ${PR_Photon_Hdr})
-SET(PR_Ray_Hdr
-  ray/Ray.h
-  ray/Ray.inl)
-SOURCE_GROUP("Header Files\\Ray" FILES ${PR_Ray_Hdr})
-SET(PR_Registry_Hdr
-  registry/Any.h
-  registry/Registry.h
-  registry/Registry.inl
-  registry/URI.h
-  registry/URI.inl)
-SOURCE_GROUP("Header Files\\Registry" FILES ${PR_Registry_Hdr})
-SET(PR_Renderer_Hdr
-  renderer/OutputMap.h
+  photon/PhotonMap.inl
+  ray/RayStream.cpp
+  ray/RayStream.h
+  renderer/RenderContext.cpp
   renderer/RenderContext.h
   renderer/RenderEnums.h
+  renderer/RenderFactory.cpp
   renderer/RenderFactory.h
-  renderer/RenderSession.h
   renderer/RenderSettings.h
-  renderer/RenderStatistics.h
+  renderer/RenderTileStatistics.h
   renderer/RenderStatus.h
+  renderer/RenderSettings.cpp
+  renderer/RenderStatus.cpp
+  renderer/RenderThread.cpp
+  renderer/RenderThread.h
+  renderer/RenderThreadStatistics.cpp
+  renderer/RenderThreadStatistics.h
+  renderer/RenderTile.cpp
   renderer/RenderTile.h
+  renderer/RenderTileMap.cpp
   renderer/RenderTileMap.h
-  renderer/RenderThread.h)
-SOURCE_GROUP("Header Files\\Renderer" FILES ${PR_Renderer_Hdr})
-SET(PR_Sampler_Hdr
-  sampler/HaltonQMCSampler.h
+  renderer/RenderTileSession.cpp
+  renderer/RenderTileSession.h
+  renderer/RenderTileSession.inl
+  renderer/RenderTileStatistics.cpp
+  sampler/HaltonSampler.cpp
+  sampler/HaltonSampler.h
+  sampler/MultiJitteredSampler.cpp
   sampler/MultiJitteredSampler.h
+  sampler/RandomSampler.cpp
   sampler/RandomSampler.h
   sampler/Sampler.h
+  sampler/SobolSampler.cpp
+  sampler/SobolSampler.h
+  sampler/SplitSample.h
+  sampler/StratifiedSampler.cpp
   sampler/StratifiedSampler.h
-  sampler/UniformSampler.h)
-SOURCE_GROUP("Header Files\\Sampler" FILES ${PR_Sampler_Hdr})
-SET(PR_Scene_Hdr
+  sampler/UniformSampler.cpp
+  sampler/UniformSampler.h
+  scene/Scene.cpp
   scene/Scene.h
-  scene/SceneFactory.h)
-SOURCE_GROUP("Header Files\\Scene" FILES ${PR_Scene_Hdr})
-SET(PR_Spectral_Hdr
+  scene/Scene.inl
+  spectral/IntensityConverter.cpp
   spectral/IntensityConverter.h
+  spectral/RGBConverter.cpp
   spectral/RGBConverter.h
+  spectral/Spectrum.cpp
   spectral/Spectrum.h
   spectral/Spectrum.inl
+  spectral/SpectrumDescriptor.cpp
   spectral/SpectrumDescriptor.h
   spectral/SpectrumDescriptor.inl
   spectral/SpectrumLazyOperator.h
+  spectral/ToneMapper.cpp
   spectral/ToneMapper.h
+  spectral/XYZConverter.cpp
+  spectral/XYZConverter.h
   spectral/xyz2spec.inl
-  spectral/XYZConverter.h)
-SOURCE_GROUP("Header Files\\Spectral" FILES ${PR_Spectral_Hdr})
-SET(PR_Shader_Hdr
-  shader/ConstScalarOutput.h
-  shader/ConstSpectralOutput.h
-  shader/ConstVectorOutput.h
-  shader/FacePoint.h
-  shader/ShaderClosure.h
-  shader/ShaderOutput.h)
-SOURCE_GROUP("Header Files\\Shader" FILES ${PR_Shader_Hdr})
-SET(PR_Thread_Hdr
+  shader/ShadingGroup.h
+  shader/ShadingPoint.h
+  shader/ShadingSocket.h
+  thread/Thread.cpp
   thread/Thread.h
-  thread/Thread.inl)
-SOURCE_GROUP("Header Files\\Thread" FILES ${PR_Thread_Hdr})
-SET(PR_Hdr ${PR_Main_Hdr} ${PR_Geometry_Hdr} ${PR_Loader_Hdr}
-  ${PR_Entity_Hdr} ${PR_Ray_Hdr} ${PR_Scene_Hdr}
-  ${PR_Renderer_Hdr} ${PR_Spectral_Hdr} ${PR_Material_Hdr}
-  ${PR_Thread_Hdr} ${PR_Camera_Hdr} ${PR_Sampler_Hdr}
-  ${PR_Photon_Hdr} ${PR_Integrator_Hdr} ${PR_Shader_Hdr}
-  ${PR_Affector_Hdr} ${PR_Math_Hdr} ${PR_Buffer_Hdr}
-  ${PR_Light_Hdr} ${PR_Registry_Hdr}
+  thread/Thread.inl
+  trace/HitEntry.h
+  trace/HitStream.cpp
+  trace/HitStream.h
+  trace/ShadowHit.h
 )
-  	
-add_library(pr_lib SHARED ${PR_Src} ${PR_Hdr} ${PR_CL})
+
+add_library(pr_lib SHARED ${PR_Src})
 if(NOT WIN32)
-  target_link_libraries(pr_lib pthread )
+  target_link_libraries(pr_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 endif()
-target_link_libraries(pr_lib ${Boost_LIBRARIES} ${TBB_LIBRARIES})
-
-set_target_properties(pr_lib PROPERTIES VERSION ${PR_Version})
-target_compile_definitions(pr_lib PRIVATE "${DEFS};PR_LIB_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
-
-IF(PR_CPP_CHECK)
-add_cpplint_target(pr_lib_cppcheck "${PR_Src};${PR_Hdr}")
-ENDIF()
+target_link_libraries(pr_lib PUBLIC Eigen3::Eigen tbb)
+set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)
+target_compile_definitions(pr_lib PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")
+target_compile_definitions(pr_lib PRIVATE "PR_LIB_BUILD")
+add_lto(pr_lib)
+strip_binary(pr_lib)

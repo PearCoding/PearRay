@@ -1,11 +1,6 @@
 #pragma once
 
 #include "geometry/BoundingBox.h"
-
-#include <algorithm>
-#include <iterator>
-#include <list>
-#include <vector>
 #include <ostream>
 
 /*
@@ -80,7 +75,7 @@ public:
 
 private:
 	void statElementsNode(struct kdNodeBuilder* node, size_t& sumV, float root_volume, uint32 depth);
-	
+
 	struct kdNodeBuilder* mRoot;
 
 	void* mObserver;

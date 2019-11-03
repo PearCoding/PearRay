@@ -1,9 +1,13 @@
 [submodule "external/pybind11"]
 	path = external/pybind11
 	url = git://github.com/pybind/pybind11.git
+	branch = stable
 [submodule "external/tinyobjloader"]
 	path = external/tinyobjloader
 	url = git://github.com/syoyo/tinyobjloader.git
 [submodule "external/DataLisp"]
 	path = external/DataLisp
 	url = git://github.com/PearCoding/DataLisp.git
+[submodule "external/libsimdpp"]
+	path = external/libsimdpp
+	url = git://github.com/p12tic/libsimdpp.git

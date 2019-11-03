@@ -1,9 +1,6 @@
 #include "BoundingBox.h"
+#include "CollisionData.h"
 #include "Plane.h"
-
-#include "ray/Ray.h"
-
-#include <utility>
 
 namespace PR {
 BoundingBox::BoundingBox()
@@ -12,7 +9,7 @@ BoundingBox::BoundingBox()
 {
 }
 
-BoundingBox::BoundingBox(const Eigen::Vector3f& upperbound, const Eigen::Vector3f& lowerbound)
+BoundingBox::BoundingBox(const Vector3f& upperbound, const Vector3f& lowerbound)
 	: mUpperBound(upperbound.array().max(lowerbound.array()).matrix())
 	, mLowerBound(lowerbound.array().min(upperbound.array()).matrix())
 {
@@ -29,7 +26,7 @@ BoundingBox::BoundingBox(float width, float height, float depth)
 
 void BoundingBox::inflate(float eps, bool maxDir)
 {
-	Eigen::Vector3f diff = (mUpperBound - mLowerBound).cwiseAbs();
+	Vector3f diff = (mUpperBound - mLowerBound).cwiseAbs();
 
 	if (maxDir) {
 		for (int i = 0; i < 3; ++i) {
@@ -46,66 +43,99 @@ void BoundingBox::inflate(float eps, bool maxDir)
 	}
 }
 
-BoundingBox::Intersection BoundingBox::intersects(const Ray& ray) const
+void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	BoundingBox::Intersection r;
+	out.HitDistance		  = std::numeric_limits<float>::infinity();
+	const Vector3f invDir = in.Direction.cwiseInverse();
 
-	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
-	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
-	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
+	float entry = -std::numeric_limits<float>::infinity();
+	float exit  = std::numeric_limits<float>::infinity();
+	for (int i = 0; i < 3; ++i) {
+		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
-	const float tmax = vmin.array().max(vmax.array()).minCoeff();
-
-	r.T = tmin <= 0 ? tmax : tmin;
-	if (tmax >= tmin && r.T > PR_EPSILON) {
-		r.Position   = ray.origin() + ray.direction() * r.T;
-		r.Successful = true;
-	} else {
-		r.Successful = false;
+		entry = std::max(std::min(vmin, vmax), entry);
+		exit  = std::min(std::max(vmin, vmax), exit);
 	}
 
-	return r;
+	float minE = entry <= 0 ? exit : entry;
+	if (exit >= entry && minE > PR_EPSILON)
+		out.HitDistance = minE;
 }
 
-bool BoundingBox::intersectsSimple(const Ray& ray) const
+void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 {
-	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
-	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
-	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
+	using namespace simdpp;
+	const Vector3fv invDir = in.Direction.cwiseInverse();
 
-	const float tmin = vmin.array().min(vmax.array()).maxCoeff();
-	const float tmax = vmin.array().max(vmax.array()).minCoeff();
+	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
+	vfloat exit  = vfloat(std::numeric_limits<float>::infinity());
+	for (int i = 0; i < 3; ++i) {
+		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-	const float t = tmin <= 0 ? tmax : tmin;
-	return tmax >= tmin && t > PR_EPSILON;
+		entry = max(min(vmin, vmax), entry);
+		exit  = min(max(vmin, vmax), exit);
+	}
+
+	const float32v inf = make_float(std::numeric_limits<float>::infinity());
+	out.HitDistance	= blend(exit, entry, entry < 0);
+	out.HitDistance	= blend(out.HitDistance, inf,
+							   (exit >= entry) & (out.HitDistance > PR_EPSILON));
 }
 
-BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& ray) const
+BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 {
 	BoundingBox::IntersectionRange r;
+	const Vector3f invDir = in.Direction.cwiseInverse();
 
-	const Eigen::Vector3f idir = ray.direction().cwiseInverse();
-	const Eigen::Vector3f vmin = (lowerBound() - ray.origin()).cwiseProduct(idir);
-	const Eigen::Vector3f vmax = (upperBound() - ray.origin()).cwiseProduct(idir);
+	for (int i = 0; i < 3; ++i) {
+		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-	r.Entry = vmin.array().min(vmax.array()).maxCoeff();
-	r.Exit  = vmin.array().max(vmax.array()).minCoeff();
-
-	const float t = r.Entry <= 0 ? r.Exit : r.Entry;
-	if (r.Exit >= r.Entry && t > PR_EPSILON) {
-		r.Successful = true;
-	} else {
-		r.Successful = false;
+		if (i == 0) {
+			r.Entry = std::min(vmin, vmax);
+			r.Exit  = std::max(vmin, vmax);
+		} else {
+			r.Entry = std::max(std::min(vmin, vmax), r.Entry);
+			r.Exit  = std::min(std::max(vmin, vmax), r.Exit);
+		}
 	}
+
+	r.Successful = (r.Exit >= r.Entry && r.Exit > PR_EPSILON);
 
 	return r;
 }
 
-BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Intersection& intersection) const
+BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& in) const
 {
-	const Eigen::Vector3f minDist = (intersection.Position - lowerBound()).cwiseAbs();
-	const Eigen::Vector3f maxDist = (intersection.Position - upperBound()).cwiseAbs();
+	using namespace simdpp;
+
+	BoundingBox::IntersectionRangeV r;
+	const Vector3fv invDir = in.Direction.cwiseInverse();
+
+	for (int i = 0; i < 3; ++i) {
+		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const float32v vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
+
+		if (i == 0) {
+			r.Entry = min(vmin, vmax);
+			r.Exit  = max(vmin, vmax);
+		} else {
+			r.Entry = max(min(vmin, vmax), r.Entry);
+			r.Exit  = min(max(vmin, vmax), r.Exit);
+		}
+	}
+
+	r.Successful = (r.Exit >= r.Entry) & (r.Exit > PR_EPSILON);
+
+	return r;
+}
+
+BoundingBox::FaceSide BoundingBox::getIntersectionSide(const Vector3f& intersection) const
+{
+	const Vector3f minDist = (intersection - lowerBound()).cwiseAbs();
+	const Vector3f maxDist = (intersection - upperBound()).cwiseAbs();
 
 	BoundingBox::FaceSide side = FS_Left;
 	float f					   = minDist(0);
@@ -139,38 +169,38 @@ BoundingBox::FaceSide BoundingBox::getIntersectionSide(const BoundingBox::Inters
 
 Plane BoundingBox::getFace(FaceSide side) const
 {
-	const Eigen::Vector3f diff = upperBound() - lowerBound();
+	const Vector3f diff = upperBound() - lowerBound();
 
 	switch (side) {
 	default:
 	case FS_Front:
 		return Plane(lowerBound(),
-					 Eigen::Vector3f(diff(0), 0, 0),
-					 Eigen::Vector3f(0, diff(1), 0));
+					 Vector3f(diff(0), 0, 0),
+					 Vector3f(0, diff(1), 0));
 	case FS_Back:
-		return Plane(Eigen::Vector3f(upperBound()(0), lowerBound()(1), upperBound()(2)),
-					 Eigen::Vector3f(-diff(0), 0, 0),
-					 Eigen::Vector3f(0, diff(1), 0));
+		return Plane(Vector3f(upperBound()(0), lowerBound()(1), upperBound()(2)),
+					 Vector3f(-diff(0), 0, 0),
+					 Vector3f(0, diff(1), 0));
 	case FS_Left:
-		return Plane(Eigen::Vector3f(lowerBound()(0), lowerBound()(1), upperBound()(2)),
-					 Eigen::Vector3f(0, 0, -diff(2)),
-					 Eigen::Vector3f(0, diff(1), 0));
+		return Plane(Vector3f(lowerBound()(0), lowerBound()(1), upperBound()(2)),
+					 Vector3f(0, 0, -diff(2)),
+					 Vector3f(0, diff(1), 0));
 	case FS_Right:
-		return Plane(Eigen::Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
-					 Eigen::Vector3f(0, 0, diff(2)),
-					 Eigen::Vector3f(0, diff(1), 0));
+		return Plane(Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
+					 Vector3f(0, 0, diff(2)),
+					 Vector3f(0, diff(1), 0));
 	case FS_Top:
-		return Plane(Eigen::Vector3f(lowerBound()(0), upperBound()(1), lowerBound()(2)),
-					 Eigen::Vector3f(diff(0), 0, 0),
-					 Eigen::Vector3f(0, 0, diff(2)));
+		return Plane(Vector3f(lowerBound()(0), upperBound()(1), lowerBound()(2)),
+					 Vector3f(diff(0), 0, 0),
+					 Vector3f(0, 0, diff(2)));
 	case FS_Bottom:
-		return Plane(Eigen::Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
-					 Eigen::Vector3f(-diff(0), 0, 0),
-					 Eigen::Vector3f(0, 0, diff(2)));
+		return Plane(Vector3f(upperBound()(0), lowerBound()(1), lowerBound()(2)),
+					 Vector3f(-diff(0), 0, 0),
+					 Vector3f(0, 0, diff(2)));
 	}
 }
 
-void BoundingBox::combine(const Eigen::Vector3f& point)
+void BoundingBox::combine(const Vector3f& point)
 {
 	mUpperBound = mUpperBound.array().max(point.array()).matrix();
 	mLowerBound = mLowerBound.array().min(point.array()).matrix();

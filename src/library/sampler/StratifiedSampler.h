@@ -9,8 +9,7 @@ public:
 	~StratifiedSampler();
 
 	float generate1D(uint32 index) override;
-	Eigen::Vector2f generate2D(uint32 index) override;
-	Eigen::Vector3f generate3D(uint32 index) override;
+	Vector2f generate2D(uint32 index) override;
 
 private:
 	Random& mRandom;

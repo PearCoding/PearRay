@@ -2,198 +2,144 @@
 
 #include "output/OutputSpecification.h"
 #include "registry/Registry.h"
-#include "scene/SceneFactory.h"
-#include "shader/ShaderOutput.h"
+#include "shader/ShadingSocket.h"
 #include "spectral/Spectrum.h"
 
-#include <OpenImageIO/texture.h>
+#include <boost/variant.hpp>
 
 #include <list>
 #include <map>
 #include <utility>
 
 namespace PR {
-class Camera;
-class Material;
+class IEmission;
+class IMaterial;
 class TriMesh;
 class SpectrumDescriptor;
+class PluginManager;
+class MaterialManager;
+class EmissionManager;
+class EntityManager;
+class CameraManager;
+class InfiniteLightManager;
+class IntegratorManager;
+class IIntegrator;
+class RenderFactory;
+
+using ShadingSocketVariantPtr = boost::variant<
+	std::shared_ptr<FloatScalarShadingSocket>,
+	std::shared_ptr<FloatSpectralShadingSocket>,
+	std::shared_ptr<FloatVectorShadingSocket>>;
+
+class BadRenderEnvironment : public std::exception {
+public:
+	const char* what() const throw()
+	{
+		return "Bad Render Environment";
+	}
+};
 
 class PR_LIB_UTILS Environment {
 public:
-	explicit Environment(const std::shared_ptr<SpectrumDescriptor>& desc, const std::string& name);
+	explicit Environment(const std::string& workdir,
+						 const std::shared_ptr<SpectrumDescriptor>& specDesc,
+						 const std::string& plugdir,
+						 bool useStandardLib = true);
 	virtual ~Environment();
 
-	inline SceneFactory& sceneFactory()
-	{
-		return mSceneFactory;
-	}
+	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const;
 
-	inline const SceneFactory& sceneFactory() const
-	{
-		return mSceneFactory;
-	}
+	inline std::shared_ptr<PluginManager> pluginManager() const;
+	inline std::shared_ptr<MaterialManager> materialManager() const;
+	inline std::shared_ptr<EntityManager> entityManager() const;
+	inline std::shared_ptr<CameraManager> cameraManager() const;
+	inline std::shared_ptr<EmissionManager> emissionManager() const;
+	inline std::shared_ptr<InfiniteLightManager> infiniteLightManager() const;
+	inline std::shared_ptr<IntegratorManager> integratorManager() const;
 
-	inline const std::shared_ptr<SpectrumDescriptor>& spectrumDescriptor() const
-	{
-		return mSpectrumDescriptor;
-	}
+	inline Spectrum getSpectrum(const std::string& name) const;
+	inline bool hasSpectrum(const std::string& name) const;
+	inline void addSpectrum(const std::string& name, const Spectrum& spec);
 
-	inline Spectrum getSpectrum(const std::string& name) const
-	{
-		return mSpectrums.at(name);
-	}
+	inline std::shared_ptr<IEmission> getEmission(const std::string& name) const;
+	inline bool hasEmission(const std::string& name) const;
+	inline void addEmission(const std::string& name, const std::shared_ptr<IEmission>& mat);
+	inline size_t emissionCount() const;
 
-	inline bool hasSpectrum(const std::string& name) const
-	{
-		return mSpectrums.count(name) != 0;
-	}
+	inline std::shared_ptr<IMaterial> getMaterial(const std::string& name) const;
+	inline bool hasMaterial(const std::string& name) const;
+	inline void addMaterial(const std::string& name, const std::shared_ptr<IMaterial>& mat);
+	inline size_t materialCount() const;
 
-	inline void addSpectrum(const std::string& name, const Spectrum& spec)
-	{
-		mSpectrums.insert(std::make_pair(name, spec));
-	}
+	inline std::shared_ptr<TriMesh> getMesh(const std::string& name) const;
+	inline bool hasMesh(const std::string& name) const;
+	inline void addMesh(const std::string& name, const std::shared_ptr<TriMesh>& m);
 
-	inline std::shared_ptr<Material> getMaterial(const std::string& name) const
-	{
-		return mMaterials.at(name);
-	}
+	inline void addShadingSocket(const std::string& name,
+								 const ShadingSocketVariantPtr& output);
+	template <typename Socket>
+	inline std::shared_ptr<Socket> getShadingSocket(const std::string& name) const;
+	inline bool hasShadingSocket(const std::string& name) const;
+	template <typename Socket>
+	inline bool isShadingSocket(const std::string& name) const;
 
-	inline bool hasMaterial(const std::string& name) const
-	{
-		return mMaterials.count(name) != 0;
-	}
+	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
+		const std::string& name, float def = 1) const;
+	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
+		const std::string& name, const Spectrum& def) const;
+	std::shared_ptr<FloatScalarShadingSocket> getScalarShadingSocket(
+		const std::string& name, float def = 1) const;
 
-	inline void addMaterial(const std::string& name, const std::shared_ptr<Material>& mat)
-	{
-		PR_ASSERT(mat, "Given material has to be valid");
-		PR_ASSERT(!hasMaterial(name), "Given name should be unique");
-		mMaterials[name] = mat;
-	}
+	inline void* textureSystem();
 
-	inline size_t materialCount() const
-	{
-		return mMaterials.size();
-	}
+	inline void setWorkingDir(const std::string& dir);
+	inline std::string workingDir() const;
 
-	inline std::shared_ptr<TriMesh> getMesh(const std::string& name) const
-	{
-		return mMeshes.at(name);
-	}
-
-	inline bool hasMesh(const std::string& name) const
-	{
-		return mMeshes.count(name) != 0;
-	}
-
-	inline void addMesh(const std::string& name, const std::shared_ptr<PR::TriMesh>& m)
-	{
-		PR_ASSERT(m, "Given mesh has to be valid");
-		PR_ASSERT(!hasMesh(name), "Given name should be unique");
-		mMeshes[name] = m;
-	}
-
-	inline void addShaderOutput(const std::string& name,
-								const std::shared_ptr<PR::ScalarShaderOutput>& output)
-	{
-		PR_ASSERT(output, "Given output has to be valid");
-		PR_ASSERT(!hasScalarShaderOutput(name), "Given name should be unique");
-		mNamedScalarShaderOutputs[name] = output;
-	}
-
-	inline std::shared_ptr<PR::ScalarShaderOutput> getScalarShaderOutput(const std::string& name) const
-	{
-		return mNamedScalarShaderOutputs.at(name);
-	}
-
-	inline bool hasScalarShaderOutput(const std::string& name) const
-	{
-		return mNamedScalarShaderOutputs.count(name) != 0;
-	}
-
-	inline void addShaderOutput(const std::string& name,
-								const std::shared_ptr<PR::SpectrumShaderOutput>& output)
-	{
-		PR_ASSERT(output, "Given output has to be valid");
-		PR_ASSERT(!hasSpectrumShaderOutput(name), "Given name should be unique");
-		mNamedSpectrumShaderOutputs[name] = output;
-	}
-
-	inline std::shared_ptr<PR::SpectrumShaderOutput> getSpectrumShaderOutput(const std::string& name) const
-	{
-		return mNamedSpectrumShaderOutputs.at(name);
-	}
-
-	inline bool hasSpectrumShaderOutput(const std::string& name) const
-	{
-		return mNamedSpectrumShaderOutputs.count(name) != 0;
-	}
-
-	inline void addShaderOutput(const std::string& name,
-								const std::shared_ptr<PR::VectorShaderOutput>& output)
-	{
-		PR_ASSERT(output, "Given output has to be valid");
-		PR_ASSERT(!hasVectorShaderOutput(name), "Given name should be unique");
-		mNamedVectorShaderOutputs[name] = output;
-	}
-
-	inline std::shared_ptr<PR::VectorShaderOutput> getVectorShaderOutput(const std::string& name) const
-	{
-		return mNamedVectorShaderOutputs.at(name);
-	}
-
-	inline bool hasVectorShaderOutput(const std::string& name) const
-	{
-		return mNamedVectorShaderOutputs.count(name) != 0;
-	}
-
-	inline OIIO::TextureSystem* textureSystem()
-	{
-		return mTextureSystem;
-	}
-
-	uint32 renderWidth() const;
-	void setRenderWidth(uint32 i);
-	uint32 renderHeight() const;
-	void setRenderHeight(uint32 i);
-
-	void setCrop(float xmin, float xmax, float ymin, float ymax);
-	float cropMinX() const;
-	float cropMaxX() const;
-	float cropMinY() const;
-	float cropMaxY() const;
-
-	inline OutputSpecification& outputSpecification()
-	{
-		return mOutputSpecification;
-	}
-
-	inline const std::shared_ptr<Registry>& registry() const
-	{
-		return mRegistry;
-	}
+	inline OutputSpecification& outputSpecification();
+	inline const Registry& registry() const;
+	inline Registry& registry();
 
 	void dumpInformation() const;
 
 	void setup(const std::shared_ptr<RenderContext>& renderer);
 	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
-	std::shared_ptr<RenderFactory> createRenderFactory(const std::string& workingDir) const;
+	std::shared_ptr<IIntegrator> createSelectedIntegrator() const;
+	std::shared_ptr<RenderFactory> createRenderFactory() const;
+
 private:
-	SceneFactory mSceneFactory;
+	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
+		const std::string& name) const;
+	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
+		const std::string& name) const;
 
-	std::shared_ptr<Registry> mRegistry;
+	void freeze(const std::shared_ptr<RenderContext>& ctx);
+	void loadPlugins(const std::string& basedir);
+	void loadOnePlugin(const std::string& name);
+
+	Registry mRegistry;
+
+	std::string mWorkingDir;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
-	
+
+	// Order matters: PluginManager should be before other managers
+	std::shared_ptr<PluginManager> mPluginManager;
+	std::shared_ptr<MaterialManager> mMaterialManager;
+	std::shared_ptr<EntityManager> mEntityManager;
+	std::shared_ptr<CameraManager> mCameraManager;
+	std::shared_ptr<EmissionManager> mEmissionManager;
+	std::shared_ptr<InfiniteLightManager> mInfiniteLightManager;
+	std::shared_ptr<IntegratorManager> mIntegratorManager;
+
 	std::map<std::string, PR::Spectrum> mSpectrums;
-	std::map<std::string, std::shared_ptr<Material>> mMaterials;
-
+	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
+	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<TriMesh>> mMeshes;
+	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSocket;
 
-	std::map<std::string, std::shared_ptr<ScalarShaderOutput>> mNamedScalarShaderOutputs;
-	std::map<std::string, std::shared_ptr<SpectrumShaderOutput>> mNamedSpectrumShaderOutputs;
-	std::map<std::string, std::shared_ptr<VectorShaderOutput>> mNamedVectorShaderOutputs;
-
-	OIIO::TextureSystem* mTextureSystem;
+	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;
 };
 } // namespace PR
+
+#include "Environment.inl"

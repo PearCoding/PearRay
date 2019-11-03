@@ -53,7 +53,7 @@ public:
 	}
 
 	// u1, u2 in [0, 1]
-	inline Eigen::Vector3f sample(float u1, float u2, float& pdf) const
+	inline Vector3f sample(float u1, float u2, float& pdf) const
 	{
 		uint32 i = mProj.sample(u1, u2, pdf);
 
@@ -68,7 +68,7 @@ public:
 
 	// Randomize output aswell
 	// u1, u2, u3, u4 in [0, 1]
-	inline Eigen::Vector3f sample(float u1, float u2, float u3, float u4, float& pdf) const
+	inline Vector3f sample(float u1, float u2, float u3, float u4, float& pdf) const
 	{
 		uint32 i = mProj.sample(u1, u2, pdf);
 

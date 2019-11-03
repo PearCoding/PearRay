@@ -1,9 +1,7 @@
 #include "Logger.h"
 #include "LogListener.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string>
+#include <iostream>
 
 namespace PR {
 Logger::Logger()
@@ -47,7 +45,8 @@ void Logger::removeListener(LogListener* listener)
 	mListener.remove(listener);
 }
 
-std::ostream& Logger::startEntry(LogLevel level) {
+std::ostream& Logger::startEntry(LogLevel level)
+{
 	if ((int)level < (int)verbosity())
 		return mEmptyStream;
 
@@ -63,10 +62,11 @@ std::ostream& Logger::startEntry(LogLevel level) {
 	return mStream;
 }
 
-std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c) {
+std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c)
+{
 	if (mIgnore)
 		return 0;
-		
+
 	if (!mLogger.isQuiet())
 		std::cout.put(c);
 
@@ -78,25 +78,4 @@ std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c)
 
 	return 0;
 }
-
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector2f& v) {
-	stream << v.x() << ", " << v.y();
-	return stream;
-}
-
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector2i& v) {
-	stream << v.x() << ", " << v.y();
-	return stream;
-}
-
-std::ostream& operator << (std::ostream& stream, const Eigen::Vector3f& v) {
-	stream << v.x() << ", " << v.y() << ", " << v.z();
-	return stream;
-}
-
-std::ostream& operator << (std::ostream& stream, const Eigen::Quaternionf& v) {
-	stream << v.w() << ", " << v.x() << ", " << v.y() << ", " << v.z();
-	return stream;
-}
-
-}
+} // namespace PR

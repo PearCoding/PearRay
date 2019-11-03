@@ -1,0 +1,3 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
+
+PR_ADD_PLUGIN(ems_diffuse CPP diffuse.cpp)

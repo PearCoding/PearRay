@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Random.h"
-#include "ray/Ray.h"
-#include "renderer/RenderStatistics.h"
+#include "ray/RayPackage.h"
+#include "renderer/RenderTileStatistics.h"
 
 namespace PR {
 
+class ICamera;
 class RenderContext;
 class Sampler;
 class PR_LIB RenderTile {
@@ -17,97 +18,33 @@ public:
 	void inc();
 	void reset();
 
-	Ray constructCameraRay(const Eigen::Vector2i& pixel, uint32 sample);
+	Ray constructCameraRay(uint32 px, uint32 py, uint32 sample);
 
-	inline bool isWorking() const
-	{
-		return mWorking;
-	}
+	inline bool isWorking() const { return mWorking; }
+	inline void setWorking(bool b) { mWorking = b; }
 
-	inline void setWorking(bool b)
-	{
-		mWorking = b;
-	}
+	inline uint32 sx() const { return mSX; }
+	inline uint32 sy() const { return mSY; }
+	inline uint32 ex() const { return mEX; }
+	inline uint32 ey() const { return mEY; }
+	inline uint32 width() const { return mWidth; }
+	inline uint32 height() const { return mHeight; }
+	inline uint32 index() const { return mIndex; }
 
-	inline uint32 sx() const
-	{
-		return mSX;
-	}
+	inline bool isFinished() const { return mSamplesRendered >= mMaxSamples; }
+	inline uint32 samplesRendered() const { return mSamplesRendered; }
 
-	inline uint32 sy() const
-	{
-		return mSY;
-	}
+	inline Random& random() { return mRandom; }
 
-	inline uint32 ex() const
-	{
-		return mEX;
-	}
+	inline Sampler* aaSampler() const { return mAASampler.get(); }
+	inline Sampler* lensSampler() const { return mLensSampler.get(); }
+	inline Sampler* timeSampler() const { return mTimeSampler.get(); }
+	inline Sampler* spectralSampler() const { return mSpectralSampler.get(); }
 
-	inline uint32 ey() const
-	{
-		return mEY;
-	}
+	inline const RenderTileStatistics& statistics() const { return mStatistics; }
+	inline RenderTileStatistics& statistics() { return mStatistics; }
 
-	inline uint32 width() const
-	{
-		return mWidth;
-	}
-
-	inline uint32 height() const
-	{
-		return mHeight;
-	}
-
-	inline uint32 index() const
-	{
-		return mIndex;
-	}
-
-	inline bool isFinished() const
-	{
-		return mSamplesRendered >= mMaxSamples;
-	}
-
-	inline uint32 samplesRendered() const
-	{
-		return mSamplesRendered;
-	}
-
-	inline Random& random()
-	{
-		return mRandom;
-	}
-
-	inline Sampler* aaSampler() const
-	{
-		return mAASampler.get();
-	}
-
-	inline Sampler* lensSampler() const
-	{
-		return mLensSampler.get();
-	}
-
-	inline Sampler* timeSampler() const
-	{
-		return mTimeSampler.get();
-	}
-
-	inline Sampler* spectralSampler() const
-	{
-		return mSpectralSampler.get();
-	}
-
-	inline const RenderStatistics& statistics() const
-	{
-		return mStatistics;
-	}
-
-	inline RenderStatistics& statistics()
-	{
-		return mStatistics;
-	}
+	inline const RenderContext* context() const { return mContext; }
 
 private:
 	bool mWorking;
@@ -140,8 +77,11 @@ private:
 	float mTimeAlpha;
 	float mTimeBeta;
 
-	RenderStatistics mStatistics;
+	RenderTileStatistics mStatistics;
 
-	const RenderContext& mContext;
+	const RenderContext* const mContext;
+	const ICamera* const mCamera;
+
+	std::unique_ptr<struct RenderTileCache> mCache;
 };
-}
+} // namespace PR

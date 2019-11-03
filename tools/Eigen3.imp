@@ -1,0 +1,22 @@
+[
+    { symbol: ["Eigen::Vector2f", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Vector2i", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Vector3f", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Vector3i", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Vector4f", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Vector4i", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Matrix", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Matrix2f", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Matrix3f", private, "<Eigen/Dense>", public] },
+    { symbol: ["Eigen::Matrix4f", private, "<Eigen/Dense>", public] },
+
+    { symbol: ["Eigen::Affine3f", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::AngleAxisf", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::Transform", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::Translation", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::Translation3f", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::Scaling", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::Quaternion", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::QuaternionBase", private, "<Eigen/Geometry>", public] },
+    { symbol: ["Eigen::Quaternionf", private, "<Eigen/Geometry>", public] },
+]

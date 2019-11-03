@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "FileLogListener.h"
 #include "ProgramSettings.h"
+#include "Version.h"
 
 #include <boost/filesystem.hpp>
 
@@ -14,9 +15,9 @@ namespace sc = std::chrono;
 
 typedef void (*SuiteCallback)();
 
-void suite_projection1();
-void suite_spectral1();
-void suite_random1();
+extern void suite_projection1();
+extern void suite_spectral1();
+extern void suite_random1();
 
 struct Suite
 {
@@ -47,7 +48,7 @@ int main(int argc, char** argv)
 	const bf::path logFile = sstream.str();
 
 	PR::FileLogListener fileLogListener;
-	fileLogListener.open(logFile.native());
+	fileLogListener.open(logFile.string());
 	PR_LOGGER.addListener(&fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);

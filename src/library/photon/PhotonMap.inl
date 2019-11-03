@@ -1,3 +1,4 @@
+// IWYU pragma: private, include "photon/PhotonMap.h"
 namespace PR {
 namespace Photon {
 PhotonMap::PhotonMap(float gridDelta)
@@ -26,7 +27,7 @@ void PhotonMap::estimateSphere(Spectrum& spec, const PhotonSphere& sphere, Accum
 {
 	estimate<AccumFunction>(spec, sphere,
 							[](const Photon& pht, const PhotonSphere& sph, float& dist2) {
-								Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
+								Vector3f V = Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
 								dist2			  = V.squaredNorm();
 								const float d	 = V.dot(sph.Normal);
 								const float r	 = sph.Distance2 * (1 - std::abs(d)) + sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
@@ -40,7 +41,7 @@ void PhotonMap::estimateDome(Spectrum& spec, const PhotonSphere& sphere, AccumFu
 {
 	estimate<AccumFunction>(spec, sphere,
 							[](const Photon& pht, const PhotonSphere& sph, float& dist2) {
-								Eigen::Vector3f V = Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
+								Vector3f V = Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]) - sph.Center;
 								dist2			  = V.squaredNorm();
 								const float d	 = V.dot(sph.Normal);
 								const float r	 = sph.Distance2 * (1 - std::abs(d)) + sph.Distance2 * std::abs(d) * (1 - sph.SqueezeWeight);
@@ -120,7 +121,7 @@ void PhotonMap::store(const Photon& pht)
 	(*acc).second.push_back(pht);
 #endif
 
-	mBox.combine(Eigen::Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]));
+	mBox.combine(Vector3f(pht.Position[0], pht.Position[1], pht.Position[2]));
 }
 
 typename PhotonMap::KeyCoord PhotonMap::toCoords(float x, float y, float z) const
