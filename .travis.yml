@@ -10,7 +10,7 @@ addons:
   apt:
     update: true
 before_install:
-  - sudo apt-get -y install lcov qtbase5-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-iostreams-dev libboost-thread-dev libopenexr-dev libtbb-dev libeigen3-dev libopenimageio-dev libpython3-dev
+  - sudo apt-get -y install lcov qtbase5-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-iostreams-dev libboost-thread-dev libopenexr-dev libtbb-dev libeigen3-dev libopenimageio-dev
 install:
 before_script:
   - $CXX --version
@@ -18,7 +18,7 @@ before_script:
   - mkdir build
   - cd build
   - lcov --directory . --zerocounters
-  - cmake -E env CXXFLAGS="-O0" cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake -E env CXXFLAGS="-O0" cmake -DCMAKE_BUILD_TYPE=Debug -DPYBIND11_PYTHON_VERSION="3.7" ..
 script:
   - make $MAKEFLAGS
   - make test || true
