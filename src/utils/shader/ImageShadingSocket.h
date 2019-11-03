@@ -18,5 +18,7 @@ private:
 	void* mHandle;
 	OIIO::TextureOpt mTextureOptions;
 	OIIO::TextureSystem* mTextureSystem;
+
+	bool mIsPtex;
 };
 } // namespace PR

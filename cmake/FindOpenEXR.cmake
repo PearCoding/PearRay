@@ -63,10 +63,12 @@ endfunction()
 set(_OpenEXR_COMPONENTS
   IlmImf
   IlmImfUtil
+  Half
 )
 
 set(_OpenEXR_IlmImf_DEPS )
-set(_OpenEXR_IlmImfUtil_DEPS IlmImf)
+set(_OpenEXR_IlmImfUtil_DEPS IlmImf Half)
+set(_OpenEXR_Half_DEPS )
 
 # If COMPONENTS ARE NOT GIVEN, set it to default
 if(NOT OpenEXR_FIND_COMPONENTS)
