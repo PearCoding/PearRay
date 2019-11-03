@@ -3,24 +3,33 @@ compiler:
   gcc
   clang
 dist: bionic
-sudo: true
-cache:
-  - apt
+env: PYTHON=3.6
 addons:
   apt:
     update: true
-before_install:
-  - sudo apt-get -y install lcov qtbase5-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-iostreams-dev libboost-thread-dev libopenexr-dev libtbb-dev libeigen3-dev libopenimageio-dev
-install:
+    packages:
+      - lcov
+      - qtbase5-dev
+      - libboost-filesystem-dev
+      - libboost-program-options-dev
+      - libboost-system-dev
+      - libboost-iostreams-dev
+      - libboost-thread-dev
+      - libeigen3-dev
+      - libopenexr-dev
+      - libtbb-dev
+      - libopenimageio-dev
+      - python3.6-dev
+      - python3.6-venv
 before_script:
   - $CXX --version
   - cmake --version
   - mkdir build
   - cd build
   - lcov --directory . --zerocounters
-  - cmake -E env CXXFLAGS="-O0" cmake -DCMAKE_BUILD_TYPE=Debug -DPYBIND11_PYTHON_VERSION="3.7" ..
+  - cmake -E env CXXFLAGS="-O0" cmake -DCMAKE_BUILD_TYPE=Debug -DPYBIND11_PYTHON_VERSION=$PYTHON ..
 script:
-  - make $MAKEFLAGS
+  - make -j4
   - make test || true
   - make coveralls
 branches:
