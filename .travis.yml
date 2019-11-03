@@ -3,7 +3,11 @@ compiler:
   gcc
   clang
 dist: bionic
-env: PYTHON=3.6
+env:
+  global:
+    - PYTHON=3.6
+    - MAKE_FLAGS=-j4
+    - CXXFLAGS="-Wall -Wextra -march=native"
 addons:
   apt:
     update: true
@@ -27,9 +31,9 @@ before_script:
   - mkdir build
   - cd build
   - lcov --directory . --zerocounters
-  - cmake -E env CXXFLAGS="-O0" cmake -DCMAKE_BUILD_TYPE=Debug -DPYBIND11_PYTHON_VERSION=$PYTHON ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPYBIND11_PYTHON_VERSION=$PYTHON ..
 script:
-  - make -j4
+  - make $MAKE_FLAGS
   - make test || true
   - make coveralls
 branches:
