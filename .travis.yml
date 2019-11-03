@@ -25,6 +25,7 @@ addons:
       - libopenimageio-dev
       - python3.6-dev
       - python3.6-venv
+      - python3-numpy
 before_script:
   - $CXX --version
   - cmake --version
@@ -35,7 +36,7 @@ before_script:
 script:
   - make $MAKE_FLAGS
   - make test || true
-  - make coveralls
+  - make coveralls || true
 branches:
   only:
   - master
