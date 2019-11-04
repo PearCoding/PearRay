@@ -25,7 +25,5 @@ private:
 	RenderContext* mRenderer;
 	RenderTile* mTile;
 	RenderThreadStatistics mStatistics;
-
-	size_t mStreamElementCount;
 };
 } // namespace PR

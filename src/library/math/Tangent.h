@@ -41,7 +41,7 @@ inline void invert_frame(Vector3f& N, Vector3f& Nx, Vector3f& Ny)
 {
 	N  = -N;
 	Nx = -Nx;
-	Ny = Ny;
+	//Ny = Ny;
 }
 
 template <typename T>

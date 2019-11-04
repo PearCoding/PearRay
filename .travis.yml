@@ -35,8 +35,9 @@ before_script:
   - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPYBIND11_PYTHON_VERSION=$PYTHON ..
 script:
   - make $MAKE_FLAGS
-  - make test || true
-  - make coveralls || true
+after_success:
+  - make test
+  - make coveralls
 branches:
   only:
   - master

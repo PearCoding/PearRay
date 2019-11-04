@@ -8,7 +8,7 @@
 class EXRLayer : public ImageBufferView {
 public:
 	EXRLayer(const QString& name, size_t channels, size_t width, size_t height);
-	~EXRLayer();
+	virtual ~EXRLayer();
 
 	inline QVector<QVector<float>>& data() { return mData; }
 	inline QVector<QString>& channelNames() { return mChannelNames; }

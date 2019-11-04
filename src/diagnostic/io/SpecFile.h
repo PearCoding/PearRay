@@ -8,7 +8,7 @@
 class SpecFile : public ImageBufferView {
 public:
 	SpecFile();
-	~SpecFile();
+	virtual ~SpecFile();
 
 	bool open(const QString& file);
 
