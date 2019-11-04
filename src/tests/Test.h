@@ -12,13 +12,13 @@
 template<typename T1, typename T2>
 bool _prt_test_eq(const T1& v1, const T2& v2)
 {
-	return v1 == v2;
+	return v1 == (T1)v2;
 }
 
 template<typename T1, typename T2>
 bool _prt_test_greater(const T1& v1, const T2& v2)
 {
-	return v1 > v2;
+	return v1 > (T1)v2;
 }
 
 template<typename T1, typename T2>

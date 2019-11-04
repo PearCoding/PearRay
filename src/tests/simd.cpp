@@ -8,10 +8,10 @@ PR_BEGIN_TESTCASE(SIMD)
 PR_TEST("extract")
 {
 	vfloat f1 = simdpp::make_float(0, 1, 2, 3);
-	PR_CHECK_NEARLY_EQ(extract(0, f1), 0);
-	PR_CHECK_NEARLY_EQ(extract(1, f1), 1);
-	PR_CHECK_NEARLY_EQ(extract(2, f1), 2);
-	PR_CHECK_NEARLY_EQ(extract(3, f1), 3);
+	PR_CHECK_NEARLY_EQ(extract(0, f1), 0.0f);
+	PR_CHECK_NEARLY_EQ(extract(1, f1), 1.0f);
+	PR_CHECK_NEARLY_EQ(extract(2, f1), 2.0f);
+	PR_CHECK_NEARLY_EQ(extract(3, f1), 3.0f);
 
 	vuint32 i1 = simdpp::make_uint(0, 1, 2, 3);
 	PR_CHECK_EQ(extract(0, i1), 0);
@@ -24,7 +24,7 @@ PR_TEST("insert")
 {
 	vfloat f1 = simdpp::make_float(0, 1, 2, 3);
 	f1		  = insert(0, f1, 42);
-	PR_CHECK_NEARLY_EQ(extract(0, f1), 42);
+	PR_CHECK_NEARLY_EQ(extract(0, f1), 42.0f);
 
 	vuint32 i1 = simdpp::make_uint(0, 1, 2, 3);
 	i1		   = insert(0, i1, 42);
@@ -38,10 +38,10 @@ PR_TEST("load_from_container_linear")
 	vfloat f1;
 	load_from_container_linear(f1, c);
 
-	PR_CHECK_NEARLY_EQ(extract(0, f1), 0);
-	PR_CHECK_NEARLY_EQ(extract(1, f1), 1);
-	PR_CHECK_NEARLY_EQ(extract(2, f1), 2);
-	PR_CHECK_NEARLY_EQ(extract(3, f1), 3);
+	PR_CHECK_NEARLY_EQ(extract(0, f1), 0.0f);
+	PR_CHECK_NEARLY_EQ(extract(1, f1), 1.0f);
+	PR_CHECK_NEARLY_EQ(extract(2, f1), 2.0f);
+	PR_CHECK_NEARLY_EQ(extract(3, f1), 3.0f);
 }
 
 PR_TEST("load_from_container")
@@ -51,10 +51,10 @@ PR_TEST("load_from_container")
 
 	vfloat f1 = load_from_container(ind, c);
 
-	PR_CHECK_NEARLY_EQ(extract(0, f1), 0);
-	PR_CHECK_NEARLY_EQ(extract(1, f1), 1);
-	PR_CHECK_NEARLY_EQ(extract(2, f1), 2);
-	PR_CHECK_NEARLY_EQ(extract(3, f1), 3);
+	PR_CHECK_NEARLY_EQ(extract(0, f1), 0.0f);
+	PR_CHECK_NEARLY_EQ(extract(1, f1), 1.0f);
+	PR_CHECK_NEARLY_EQ(extract(2, f1), 2.0f);
+	PR_CHECK_NEARLY_EQ(extract(3, f1), 3.0f);
 }
 
 PR_TEST("store_into_container")
@@ -65,10 +65,10 @@ PR_TEST("store_into_container")
 
 	store_into_container(ind, c, f1);
 
-	PR_CHECK_NEARLY_EQ(c[0], 0);
-	PR_CHECK_NEARLY_EQ(c[2], 1);
-	PR_CHECK_NEARLY_EQ(c[4], 2);
-	PR_CHECK_NEARLY_EQ(c[6], 3);
+	PR_CHECK_NEARLY_EQ(c[0], 0.0f);
+	PR_CHECK_NEARLY_EQ(c[2], 1.0f);
+	PR_CHECK_NEARLY_EQ(c[4], 2.0f);
+	PR_CHECK_NEARLY_EQ(c[6], 3.0f);
 }
 
 PR_END_TESTCASE()

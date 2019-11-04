@@ -9,17 +9,17 @@ PR_BEGIN_TESTCASE(Plane)
 PR_TEST("Size")
 {
 	Plane plane(10, 10);
-	PR_CHECK_EQ(plane.xAxis().norm(), 10);
-	PR_CHECK_EQ(plane.yAxis().norm(), 10);
-	PR_CHECK_EQ(plane.surfaceArea(), 100);
+	PR_CHECK_EQ(plane.xAxis().norm(), 10.0f);
+	PR_CHECK_EQ(plane.yAxis().norm(), 10.0f);
+	PR_CHECK_EQ(plane.surfaceArea(), 100.0f);
 }
 
 PR_TEST("Axis")
 {
 	Plane plane(Vector3f(0, 0, 0), Vector3f(10, 0, 0), Vector3f(0, 10, 0));
-	PR_CHECK_EQ(plane.xAxis().norm(), 10);
-	PR_CHECK_EQ(plane.yAxis().norm(), 10);
-	PR_CHECK_EQ(plane.surfaceArea(), 100);
+	PR_CHECK_EQ(plane.xAxis().norm(), 10.0f);
+	PR_CHECK_EQ(plane.yAxis().norm(), 10.0f);
+	PR_CHECK_EQ(plane.surfaceArea(), 100.0f);
 }
 
 PR_TEST("Normal")
@@ -71,9 +71,9 @@ PR_TEST("Intersects 1")
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
 
-	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
-	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5);
-	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5);
+	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
+	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5f);
 }
 
 PR_TEST("Intersects 2")
@@ -97,9 +97,9 @@ PR_TEST("Intersects 3")
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
 
-	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
-	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5);
-	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5);
+	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
+	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5f);
 }
 
 PR_TEST("Intersects 4")
@@ -111,9 +111,9 @@ PR_TEST("Intersects 4")
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
 
-	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
-	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5);
-	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5);
+	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
+	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5f);
 }
 
 PR_END_TESTCASE()
