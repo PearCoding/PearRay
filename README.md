@@ -3,10 +3,11 @@
 [![GitHub issues](https://img.shields.io/github/issues/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/issues)
 [![Coverage Status](https://coveralls.io/repos/github/PearCoding/PearRay/badge.svg?branch=master)](https://coveralls.io/github/PearCoding/PearRay?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/48a91c3c277d4aa4ae76ff940e4bcf07)](https://www.codacy.com/app/PearCoding/PearRay?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=PearCoding/PearRay&amp;utm_campaign=Badge_Grade)\
-![CMake 3.1](https://img.shields.io/badge/CMake-3.1+-green.svg)
+![CMake 3.9](https://img.shields.io/badge/CMake-3.9+-green.svg)
 ![Language](https://img.shields.io/badge/language-c++-blue.svg)
 ![C++ Standard](https://img.shields.io/badge/std-c++14-blue.svg)
-![GCC 4.9](https://img.shields.io/badge/GCC-4.9+-blue.svg)
+![GCC 5](https://img.shields.io/badge/GCC-5+-blue.svg)
+![Clang 3.4](https://img.shields.io/badge/Clang-3.4+-blue.svg)
 ![Language](https://img.shields.io/badge/language-Python-orange.svg)
 ![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)

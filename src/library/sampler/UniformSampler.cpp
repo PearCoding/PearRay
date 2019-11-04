@@ -2,9 +2,8 @@
 #include "math/Projection.h"
 
 namespace PR {
-UniformSampler::UniformSampler(Random& random, uint32 samples)
+UniformSampler::UniformSampler(uint32 samples)
 	: Sampler()
-	, mRandom(random)
 	, mSamples(samples)
 {
 	m2D_X = std::sqrt(samples);

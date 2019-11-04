@@ -179,7 +179,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment*,
 		for (int k = 0; k < 3; ++k)
 			faces[k].reserve(vertexCount / 3);
 
-		for (size_t j = 0; vertexCount; ++j) {
+		for (size_t j = 0; j < vertexCount; ++j) {
 			faces[j % 3].push_back(j);
 		}
 	} else {

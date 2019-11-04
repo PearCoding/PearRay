@@ -39,7 +39,7 @@ public:
 
 	float surfaceArea(uint32 id) const override
 	{
-		if (id == 0 || mMaterialID < 0 || id == mMaterialID)
+		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
 			return mPlane.surfaceArea();
 		else
 			return 0;

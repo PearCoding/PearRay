@@ -18,7 +18,7 @@ public:
 	{
 	}
 
-	bool hasDeltaDistribution() const { return true; }
+	bool hasDeltaDistribution() const override { return true; }
 
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override

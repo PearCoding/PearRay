@@ -6,7 +6,7 @@
 
 namespace PR {
 namespace LPE {
-/* Primarily based on 
+/* Primarily based on
 	https://www.codeguru.com/cpp/cpp/cpp_mfc/parsing/article.php/c4093/Write-Your-Own-Regular-Expression-Parser.htm
 * The initial implementation is changed to allow better dfa optimization and complements
 */
@@ -158,7 +158,7 @@ void RegExpr::connect_to_initial(const std::shared_ptr<RegState>& state,
 {
 	for (auto& s : tbl) {
 		if (s->isInitial())
-			state->addTransition(Token(), s);
+			state->addTransition(token, s);
 	}
 }
 
@@ -168,7 +168,7 @@ void RegExpr::connect_from_final(const std::shared_ptr<RegState>& state,
 {
 	for (auto& s : tbl) {
 		if (s->isFinal())
-			s->addTransition(Token(), state);
+			s->addTransition(token, state);
 	}
 }
 
@@ -181,7 +181,7 @@ void RegExpr::connect_to_self(const Token& token,
 			if (s->isInitial()) {
 				for (auto& t : tbl) {
 					if (t->isFinal())
-						s->addTransition(Token(), t);
+						s->addTransition(token, t);
 				}
 			}
 		}
@@ -190,7 +190,7 @@ void RegExpr::connect_to_self(const Token& token,
 			if (s->isFinal()) {
 				for (auto& t : tbl) {
 					if (t->isInitial())
-						s->addTransition(Token(), t);
+						s->addTransition(token, t);
 				}
 			}
 		}

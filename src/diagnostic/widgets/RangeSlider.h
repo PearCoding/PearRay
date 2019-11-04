@@ -35,10 +35,10 @@ protected:
 
 private:
 	struct DrawStyle {
-		quint32 LeftKnobStart;
-		quint32 RightKnobStart;
-		quint32 SlideStart;
-		quint32 SlideEnd;
+		int LeftKnobStart;
+		int RightKnobStart;
+		int SlideStart;
+		int SlideEnd;
 	};
 	DrawStyle calculateStyle() const;
 

@@ -177,7 +177,7 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 }
 
 void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
-									 const std::shared_ptr<PR::VirtualEntity>& entity, Environment* env)
+									 const std::shared_ptr<PR::VirtualEntity>& entity, Environment* /*env*/)
 {
 	DL::Data transformD = group.getFromKey("transform");
 	DL::Data posD		= group.getFromKey("position");
@@ -185,7 +185,7 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 	DL::Data scaleD		= group.getFromKey("scale");
 
 	if (transformD.type() == DL::Data::T_Group) {
-		bool ok;
+		bool ok = false;
 		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
 		//t.makeAffine();
 
@@ -194,7 +194,7 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 		else
 			entity->setTransform(t);
 	} else {
-		bool ok;
+		bool ok = false;
 		Vector3f pos;
 		Eigen::Quaternionf rot;
 		Vector3f sca;

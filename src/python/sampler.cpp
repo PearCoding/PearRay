@@ -47,7 +47,7 @@ void setup_sampler(py::module& m)
 		.def(py::init<uint32, uint32, uint32>());
 
 	py::class_<UniformSampler, Sampler>(m, "UniformSampler")
-		.def(py::init<Random&, uint32>());
+		.def(py::init<uint32>());
 
 	py::class_<Random>(m, "Random")
 		.def(py::init<uint64>())

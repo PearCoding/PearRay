@@ -37,7 +37,7 @@ inline void frame(const Vector3fv& N, Vector3fv& Nx, Vector3fv& Ny)
 	Ny /= Ny.norm();
 }
 
-inline void invert_frame(Vector3f& N, Vector3f& Nx, Vector3f& Ny)
+inline void invert_frame(Vector3f& N, Vector3f& Nx, Vector3f& /*Ny*/)
 {
 	N  = -N;
 	Nx = -Nx;

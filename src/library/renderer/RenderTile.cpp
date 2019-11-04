@@ -26,7 +26,7 @@ static std::unique_ptr<Sampler> createSampler(SamplerMode mode, Random& random, 
 	case SM_RANDOM:
 		return std::make_unique<RandomSampler>(random);
 	case SM_UNIFORM:
-		return std::make_unique<UniformSampler>(random, samples);
+		return std::make_unique<UniformSampler>(samples);
 	case SM_JITTER:
 		return std::make_unique<StratifiedSampler>(random, samples);
 	default:

@@ -155,7 +155,6 @@ void RangeSlider::mousePressEvent(QMouseEvent* event)
 void RangeSlider::mouseMoveEvent(QMouseEvent* event)
 {
 	const size_t wcw = width() - MIN_W;
-	DrawStyle sty	= calculateStyle();
 
 	auto posToValue = [&](int x) {
 		return qMin(1.0f, qMax(0.0f,
