@@ -1,13 +1,5 @@
 language: cpp
-compiler:
-  - gcc
-  - clang
 dist: bionic
-env:
-  global:
-    - PYTHON=3.6
-    - MAKE_FLAGS=-j4
-    - CXXFLAGS="-Wall -Wextra -march=native"
 addons:
   apt:
     update: true
@@ -26,20 +18,36 @@ addons:
       - python3.6-dev
       - python3.6-venv
       - python3-numpy
+      - python2.7-dev
+      - python-virtualenv
+      - python-numpy
+jobs:
+  fast_finish: true
+  include:
+    - compiler: gcc
+      env: USE_COVERAGE=ON PYTHON=3.6
+    - compiler: gcc
+      env: USE_COVERAGE=OFF PYTHON=2.7
+    - compiler: clang
+      env: USE_COVERAGE=OFF PYTHON=3.6
+env:
+  global:
+    - MAKE_FLAGS=-j4
+    - CXXFLAGS="-Wall -Wextra -march=native"
 before_script:
   - $CXX --version
   - cmake --version
   - mkdir build
   - cd build
-  - lcov --directory . --zerocounters
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO_ONLY_RELEASE=ON -DPYBIND11_PYTHON_VERSION=$PYTHON ..
+  - if [ $USE_COVERAGE == ON ]; then lcov --directory . --zerocounters; fi
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_USE_LTO_ONLY_RELEASE=ON -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON ..
 script:
   - make $MAKE_FLAGS
 after_success:
   - ctest --output-on-failure
-  - make coveralls
-branches:
-  only:
-  - master
+  - if [ $USE_COVERAGE == ON ]; then make coveralls; fi
+#branches:
+#  only:
+#  - master
 notifications:
   email: false
