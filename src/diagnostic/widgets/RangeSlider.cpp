@@ -18,6 +18,7 @@ RangeSlider::RangeSlider(float min, float max, QWidget* parent)
 	, mMin(min)
 	, mMax(max)
 	, mCurrentOperation(MO_NONE)
+	, mLastX(0)
 	, mPickDelta(0)
 {
 }

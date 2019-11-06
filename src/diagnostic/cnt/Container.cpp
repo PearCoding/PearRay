@@ -29,7 +29,7 @@ struct InnerNode : public Node {
 };
 
 struct LeafNode : public Node {
-	LeafNode(unsigned int id)
+	explicit LeafNode(unsigned int id)
 		: Node(id, true)
 	{
 	}
@@ -38,6 +38,7 @@ struct LeafNode : public Node {
 Container::Container()
 	: mDepth(0)
 	, mNodeCount(0)
+	, mInnerCount(0)
 	, mRoot(nullptr)
 {
 }
@@ -46,11 +47,11 @@ static void deleteNode(Node* node)
 {
 	if (node) {
 		if (node->isLeaf)
-			delete (LeafNode*)node;
+			delete reinterpret_cast<LeafNode*>(node);
 		else {
-			deleteNode(((InnerNode*)node)->left);
-			deleteNode(((InnerNode*)node)->right);
-			delete (InnerNode*)node;
+			deleteNode(reinterpret_cast<InnerNode*>(node)->left);
+			deleteNode(reinterpret_cast<InnerNode*>(node)->right);
+			delete reinterpret_cast<InnerNode*>(node);
 		}
 	}
 }

@@ -42,6 +42,11 @@ struct SF_Data {
 			delete[] Ptr;
 		}
 	}
+
+	SF_Data(const SF_Data&) = default;
+	SF_Data(SF_Data&&)		= default;
+	SF_Data& operator=(const SF_Data&) = default;
+	SF_Data& operator=(SF_Data&&) = default;
 };
 
 SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height)

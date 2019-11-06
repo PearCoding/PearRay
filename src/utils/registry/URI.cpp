@@ -108,7 +108,7 @@ URI URI::makeAbsolute(const URI& p, const URI& base)
 				else // .. is part of the path
 					newPath += p.path();
 			} else if (*it == '/') {
-				it++;
+				++it;
 				if (it != p.path().cend())
 					newPath.append(it, p.path().cend()); // TODO: Recursive?
 			} else {									 // . is part of the path

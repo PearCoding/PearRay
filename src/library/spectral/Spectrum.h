@@ -143,6 +143,11 @@ private:
 		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end, float* data);
 		Spectrum_Internal(const std::shared_ptr<SpectrumDescriptor>& descriptor, size_t start, size_t end);
 		~Spectrum_Internal();
+
+		Spectrum_Internal(const Spectrum_Internal& other) = default;
+		Spectrum_Internal(Spectrum_Internal&& other)	  = default;
+		Spectrum_Internal& operator=(const Spectrum_Internal& other) = default;
+		Spectrum_Internal& operator=(Spectrum_Internal&& other) = default;
 	};
 	std::shared_ptr<Spectrum_Internal> mInternal;
 };

@@ -93,11 +93,11 @@ static void deleteNode(kdNodeBuilder* node)
 {
 	if (node) {
 		if (node->isLeaf)
-			delete (kdLeafNodeBuilder*)node;
+			delete reinterpret_cast<kdLeafNodeBuilder*>(node);
 		else {
-			deleteNode(((kdInnerNodeBuilder*)node)->left);
-			deleteNode(((kdInnerNodeBuilder*)node)->right);
-			delete (kdInnerNodeBuilder*)node;
+			deleteNode(reinterpret_cast<kdInnerNodeBuilder*>(node)->left);
+			deleteNode(reinterpret_cast<kdInnerNodeBuilder*>(node)->right);
+			delete reinterpret_cast<kdInnerNodeBuilder*>(node);
 		}
 	}
 }
@@ -120,7 +120,7 @@ void kdTreeBuilder::statElementsNode(kdNodeBuilder* node, size_t& sumV, float ro
 	++mNodeCount;
 
 	if (node->isLeaf) {
-		kdLeafNodeBuilder* leaf = (kdLeafNodeBuilder*)node;
+		kdLeafNodeBuilder* leaf = reinterpret_cast<kdLeafNodeBuilder*>(node);
 		++mLeafCount;
 
 		mMaxElementsPerLeaf = std::max(mMaxElementsPerLeaf, leaf->objects.size());
@@ -131,7 +131,7 @@ void kdTreeBuilder::statElementsNode(kdNodeBuilder* node, size_t& sumV, float ro
 		mExpectedLeavesVisited += ratio;
 		mExpectedObjectsIntersected += leaf->objects.size() * ratio;
 	} else {
-		kdInnerNodeBuilder* inner = (kdInnerNodeBuilder*)node;
+		kdInnerNodeBuilder* inner = reinterpret_cast<kdInnerNodeBuilder*>(node);
 		if (inner->left) {
 			statElementsNode(inner->left, sumV, root_volume, depth + 1);
 		}

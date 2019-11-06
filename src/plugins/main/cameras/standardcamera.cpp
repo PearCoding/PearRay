@@ -84,6 +84,7 @@ StandardCamera::StandardCamera(uint32 id, const std::string& name)
 	, mLocalDirection(0, 0, 1)
 	, mLocalRight(1, 0, 0)
 	, mLocalUp(0, 1, 0)
+	, mHasDOF_Cache(false)
 {
 }
 

@@ -6,9 +6,9 @@ StratifiedSampler::StratifiedSampler(Random& random, uint32 samples)
 	: Sampler()
 	, mRandom(random)
 	, mSamples(samples)
+	, m2D_X(std::sqrt(samples))
+	, m2D_Y((mSamples + m2D_X - 1) / m2D_X)
 {
-	m2D_X = std::sqrt(samples);
-	m2D_Y = (mSamples + m2D_X - 1) / m2D_X;
 }
 
 StratifiedSampler::~StratifiedSampler()
@@ -29,4 +29,4 @@ Vector2f StratifiedSampler::generate2D(uint32 index)
 
 	return Vector2f(x, y);
 }
-}
+} // namespace PR

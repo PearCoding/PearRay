@@ -48,7 +48,7 @@ option(PR_WITH_DIAGNOSTIC 		"Compile the additional PearRayDiagnostic Viewer bas
 option(PR_BUILD_TESTS 			"Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON 	"Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
 option(PR_COMPRESS_SPEC_FILES 	"Compress spectral files with boost::zlib" ON)
-option(PR_GENERATE_COVERAGE 	"Generate coverage for debug builds - Currently only supported with the GCC compiler." ON)
+option(PR_GENERATE_COVERAGE 	"Generate coverage for debug builds - Currently only supported with the GCC compiler." OFF)
 option(PR_BUILD_DOCUMENTATION 	"Build documentation with doxygen." ON)
 option(PR_USE_SSE3 				"Use SSE3 simd support." ON)
 option(PR_USE_SSSE3 			"Use SSSE3 simd support." ON)
@@ -58,6 +58,7 @@ option(PR_USE_AVX2 				"Use AVX2 simd support." OFF)
 option(PR_USE_AVX512 			"Use AVX512F simd support." OFF)
 option(PR_USE_LTO 				"Use linked time optimization if available." ON)
 option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds only." OFF)
+option(PR_USE_CCACHE 			"Use ccache if available." ON)
 
 find_package(Threads REQUIRED)
 
@@ -80,6 +81,10 @@ find_package(TBB REQUIRED)
 IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)
 	coveralls_turn_on_coverage()
+ENDIF()
+
+IF(PR_USE_CCACHE)
+	include(CCache)
 ENDIF()
 
 #DEFINITIONS AND FLAGS

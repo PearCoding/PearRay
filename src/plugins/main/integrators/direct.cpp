@@ -29,7 +29,7 @@
 namespace PR {
 class IntDirect : public IIntegrator {
 public:
-	IntDirect(size_t lightSamples)
+	explicit IntDirect(size_t lightSamples)
 		: IIntegrator()
 		, mLightSampleCount(lightSamples)
 	{

@@ -13,7 +13,7 @@
 namespace PR {
 class IntAO : public IIntegrator {
 public:
-	IntAO(size_t sample_count)
+	explicit IntAO(size_t sample_count)
 		: IIntegrator()
 		, mSampleCount(sample_count)
 	{
