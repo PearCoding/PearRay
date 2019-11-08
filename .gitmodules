@@ -5,9 +5,12 @@
 [submodule "external/tinyobjloader"]
 	path = external/tinyobjloader
 	url = git://github.com/syoyo/tinyobjloader.git
+	branch = master
 [submodule "external/DataLisp"]
 	path = external/DataLisp
 	url = git://github.com/PearCoding/DataLisp.git
+	branch = master
 [submodule "external/libsimdpp"]
 	path = external/libsimdpp
 	url = git://github.com/p12tic/libsimdpp.git
+	branch = master

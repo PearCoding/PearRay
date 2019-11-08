@@ -3,6 +3,7 @@
 #include "PR_Config.h"
 
 #include <vector>
+#include <array>
 
 namespace PR {
 // Bezier Spline

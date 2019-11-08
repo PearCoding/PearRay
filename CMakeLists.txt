@@ -76,7 +76,7 @@ ENDIF()
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
-find_package(TBB REQUIRED)
+find_package(TBB REQUIRED NO_MODULE)
 
 IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)
@@ -122,6 +122,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			src/library src/utils)
 
 # Extras
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 include(Strip)
 include(LTO)
 include(ExtraUtils)

@@ -123,6 +123,10 @@ void Environment::loadPlugins(const std::string& basedir)
 			continue;
 
 		const std::string filename = entry.path().stem().string();
+		const std::string ext = entry.path().extension().string();
+
+		if (ext != ".so" && ext != ".dll")
+			continue;
 
 		boost::smatch what;
 		if (boost::regex_match(filename, what, e)) {

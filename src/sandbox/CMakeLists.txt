@@ -21,5 +21,6 @@ if(NOT WIN32)
 endif()
 target_link_libraries(pr_sandbox PRIVATE datalisp)
 target_link_libraries(pr_sandbox PRIVATE OpenImageIO::Core OpenImageIO::Util)
+target_include_directories(pr_sandbox PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
 add_lto(pr_sandbox)
 strip_binary(pr_sandbox)

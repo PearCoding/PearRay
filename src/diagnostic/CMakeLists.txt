@@ -1,9 +1,6 @@
 MESSAGE(STATUS "Building PearRayDiagnostic")
 MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 
-include_directories(${Qt5Widgets_INCLUDE_DIRS})
-add_definitions(${Qt5Widgets_DEFINITIONS})
-
 IF(CMAKE_COMPILER_IS_GNUCXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 ENDIF()
@@ -92,6 +89,6 @@ endif()
 add_lto(prdiag)
 strip_binary(prdiag)
 
-#target_setup_deploy(prdiag QT RECURSIVE LIBRARIES
-#	OpenEXR::All
-#	Boost::iostreams)q
+target_setup_deploy(prdiag QT RECURSIVE LIBRARIES
+	OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::Half
+	Boost::iostreams)
