@@ -1,9 +1,8 @@
 #pragma once
 
-#include <iostream>
-
 #include <QVector>
 #include <QVector3D>
+#include <QFile>
 
 /* kdTree Node container! */
 class Container {
@@ -41,7 +40,7 @@ public:
         return mInnerCount;
     }
 
-	bool load(std::istream& stream);
+	bool load(QFile& file);
 
     void populate(QVector<QVector3D>& vertices, QVector<unsigned int>& indices, int maxDepth) const;
 

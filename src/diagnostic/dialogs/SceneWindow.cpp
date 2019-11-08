@@ -12,6 +12,8 @@
 #include <QImageWriter>
 #include <QMessageBox>
 #include <QSettings>
+#include <QFile>
+#include <QDataStream>
 
 SceneWindow::SceneWindow(QWidget* parent)
 	: QWidget(parent)
@@ -36,11 +38,11 @@ void SceneWindow::clear()
 
 void SceneWindow::openCNTFile(const QString& str)
 {
-	std::ifstream stream(str.toStdString());
+	QFile file(str);
 
 	CNTObj obj;
 	obj.Container = std::make_shared<Container>();
-	if (obj.Container->load(stream)) {
+	if (file.exists() && obj.Container->load(file)) {
 		obj.Object = std::make_shared<GraphicObject>();
 		obj.Container->populate(obj.Object->vertices(), obj.Object->indices(), obj.Container->depth());
 
@@ -60,8 +62,8 @@ void SceneWindow::openRDMPFile(const QString& str)
 	RDMPObj obj;
 	obj.RayArray = std::make_shared<RayArray>();
 
-	std::ifstream stream(str.toStdString());
-	if (stream && obj.RayArray->load(stream)) {
+	QFile file(str);
+	if (file.exists() && obj.RayArray->load(file)) {
 		obj.Object = std::make_shared<GraphicObject>(true);
 
 		obj.RayArray->populate(obj.Object->vertices(),
@@ -89,9 +91,8 @@ void SceneWindow::openRDMPDir(const QString& str)
 
 	bool ok = true;
 	for (QFileInfo filename : files) {
-		//qDebug() << filename.filePath();
-		std::ifstream stream(filename.filePath().toStdString());
-		if (!stream || !obj.RayArray->load(stream, DEFAULT_SKIP)) {
+		QFile file(filename.filePath());
+		if (!file.exists() || !obj.RayArray->load(file, DEFAULT_SKIP)) {
 			ok = false;
 			break;
 		}

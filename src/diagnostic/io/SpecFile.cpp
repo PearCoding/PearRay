@@ -1,10 +1,11 @@
 #include "SpecFile.h"
 
-#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
 #ifdef PR_COMPRESS_SPEC_FILES
 #include <boost/iostreams/filter/zlib.hpp>
 #endif
 #include <boost/iostreams/filtering_stream.hpp>
+#include <boost/filesystem.hpp>
 
 SpecFile::SpecFile()
 	: ImageBufferView()
@@ -24,7 +25,9 @@ bool SpecFile::open(const QString& file)
 #ifdef PR_COMPRESS_SPEC_FILES
 	in.push(io::zlib_decompressor());
 #endif
-	in.push(io::file_source(file.toStdString()));
+
+	boost::filesystem::wpath path = file.toStdWString();
+	in.push(io::file_descriptor_source(path));
 
 	char c1, c2, c3, c4;
 	in.get(c1);

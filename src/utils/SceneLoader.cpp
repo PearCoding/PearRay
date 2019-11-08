@@ -1,6 +1,7 @@
 #include "SceneLoader.h"
 #include "Environment.h"
 #include "Logger.h"
+#include "Platform.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraFactory.h"
@@ -37,7 +38,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& wrkDir
 													   const std::string& path,
 													   const std::string& pluginPath)
 {
-	std::ifstream stream(path);
+	std::ifstream stream(encodePath(path));
 	std::string str((std::istreambuf_iterator<char>(stream)),
 					std::istreambuf_iterator<char>());
 
@@ -185,7 +186,7 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 	DL::Data scaleD		= group.getFromKey("scale");
 
 	if (transformD.type() == DL::Data::T_Group) {
-		bool ok = false;
+		bool ok					   = false;
 		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
 		//t.makeAffine();
 

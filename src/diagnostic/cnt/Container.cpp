@@ -1,5 +1,7 @@
 #include "Container.h"
 
+#include <QTextStream>
+
 struct Node {
 	Node(unsigned int id, bool leaf)
 		: id(id)
@@ -62,7 +64,7 @@ Container::~Container()
 		deleteNode(mRoot);
 }
 
-static void loadNode(std::istream& stream, Node*& node, size_t depth,
+static void loadNode(QTextStream& stream, Node*& node, size_t depth,
 					 unsigned int& nodeCount, unsigned int& innerCount, unsigned int& maxDepth)
 {
 	if (depth > maxDepth)
@@ -100,18 +102,20 @@ static void loadNode(std::istream& stream, Node*& node, size_t depth,
 	}
 }
 
-bool Container::load(std::istream& stream)
+bool Container::load(QFile& file)
 {
 	if (mRoot) {
 		deleteNode(mRoot);
 		mRoot = nullptr;
 	}
 
+	QTextStream stream(&file);
+
 	mNodeCount  = 0;
 	mInnerCount = 0;
 	mDepth		= 0;
 
-	std::string identifier;
+	QString identifier;
 	stream >> identifier;
 	if (identifier != "pearray_kdtree") {
 		return false;

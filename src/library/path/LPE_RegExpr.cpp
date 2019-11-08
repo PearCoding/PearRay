@@ -1,6 +1,7 @@
 #include "LPE_RegExpr.h"
 
 #include "Logger.h"
+#include "Platform.h"
 
 #include <fstream>
 
@@ -519,7 +520,7 @@ std::string RegExpr::dumpTableToDot(const FSATable& tbl)
 void RegExpr::saveTableToDot(const std::string& filename, const FSATable& tbl)
 {
 	std::ofstream dotFile;
-	dotFile.open(filename);
+	dotFile.open(encodePath(filename));
 	dotFile << RegExpr::dumpTableToDot(tbl);
 	dotFile.close();
 }

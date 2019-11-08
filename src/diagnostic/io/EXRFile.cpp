@@ -5,6 +5,7 @@
 #include <OpenEXR/ImfTestFile.h>
 
 #include <QDebug>
+#include <QFile>
 
 EXRLayer::EXRLayer(const QString& name, size_t channels,
 				   size_t width, size_t height)
@@ -35,6 +36,41 @@ void EXRLayer::ensureRightOrder()
 
 //////////////////////////////////
 
+using namespace OPENEXR_IMF_NAMESPACE;
+class QIStream : public IStream {
+public:
+	QIStream(const QString& filename)
+		: IStream(filename.toUtf8().data())
+		, mFile(filename)
+	{
+		mFile.open(QIODevice::ReadOnly);
+	}
+
+	bool read(char c[], int n) override
+	{
+		return mFile.read(c, n) == n;
+	}
+
+	Int64 tellg() override
+	{
+		return mFile.pos();
+	}
+
+	void seekg(Int64 pos) override
+	{
+		mFile.seek(pos);
+	}
+
+	void clear() override
+	{
+		mFile.unsetError();
+	}
+
+private:
+	QString mFilename;
+	QFile mFile;
+};
+
 EXRFile::EXRFile()
 	: mWidth(0)
 	, mHeight(0)
@@ -63,18 +99,17 @@ bool EXRFile::open(const QString& filename)
 {
 	static const QString SPEC_NAME = "Color";
 
-	using namespace OPENEXR_IMF_NAMESPACE;
 	using namespace IMATH_NAMESPACE;
 
-	const std::string filenameS = filename.toStdString();
-	bool tiled					= false;
+	QIStream stream(filename);
+	bool tiled = false;
 
-	if (!isOpenExrFile(filenameS.c_str(), tiled))
+	if (!isOpenExrFile(stream, tiled))
 		return false;
 	if (tiled)
 		return false;
 
-	InputFile file(filenameS.c_str());
+	InputFile file(stream);
 
 	/*if (!file.isComplete())
 		return false;*/
@@ -193,7 +228,7 @@ bool EXRFile::open(const QString& filename)
 			++k;
 		}
 
-		if(frameBuffer.begin() == frameBuffer.end())
+		if (frameBuffer.begin() == frameBuffer.end())
 			return false;
 
 		// Load framebuffer

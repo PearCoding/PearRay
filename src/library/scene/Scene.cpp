@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "Platform.h"
 #include "camera/ICamera.h"
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
@@ -52,13 +53,13 @@ void Scene::buildTree(const std::string& file)
 	builder.setCostElementWise(true);
 	builder.build(count);
 
-	std::ofstream stream(file);
+	std::ofstream stream(encodePath(file));
 	builder.save(stream);
 }
 
 void Scene::loadTree(const std::string& file)
 {
-	std::ifstream stream(file);
+	std::ifstream stream(encodePath(file));
 	mKDTree.reset(new kdTreeCollider);
 	mKDTree->load(stream);
 	if (!mKDTree->isEmpty())

@@ -1,9 +1,8 @@
 #pragma once
 
-#include <iostream>
-
 #include <QVector3D>
 #include <QVector>
+#include <QFile>
 
 struct Ray {
 	QVector3D Origin;
@@ -16,7 +15,7 @@ public:
 	virtual ~RayArray();
 
 	void clear();
-	bool load(std::istream& stream, quint32 step = 1);
+	bool load(QFile& file, quint32 step = 1);
 	void populate(QVector<QVector3D>& vertices,
 				  QVector<QVector3D>& colors,
 				  QVector<unsigned int>& indices) const;

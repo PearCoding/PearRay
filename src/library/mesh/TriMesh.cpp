@@ -1,5 +1,6 @@
 #include "TriMesh.h"
 #include "Logger.h"
+#include "Platform.h"
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
@@ -89,7 +90,7 @@ void TriMesh::buildTree(const std::string& file)
 					});
 	builder.build(faceCount());
 
-	std::ofstream stream(file, std::ios::out | std::ios::trunc);
+	std::ofstream stream(encodePath(file), std::ios::out | std::ios::trunc);
 	builder.save(stream);
 
 	PR_LOG(L_INFO) << "Mesh KDtree [depth="
@@ -112,7 +113,7 @@ void TriMesh::loadTree(const std::string& file)
 		mKDTree = nullptr;
 	}
 
-	std::ifstream stream(file);
+	std::ifstream stream(encodePath(file));
 	mKDTree = new kdTreeCollider;
 	mKDTree->load(stream);
 	if (!mKDTree->isEmpty())

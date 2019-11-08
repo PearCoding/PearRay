@@ -1,8 +1,9 @@
 #include "RayStream.h"
+#include "Platform.h"
 #include "container/IndexSort.h"
+
 #include <algorithm>
 #include <numeric>
-
 #include <fstream>
 
 namespace PR {
@@ -244,7 +245,7 @@ RayPackage RayStream::getRayPackage(size_t id) const
 void RayStream::dump(const std::string& file) const
 {
 	std::ofstream stream;
-	stream.open(file, std::ios::out | std::ios::binary);
+	stream.open(encodePath(file), std::ios::out | std::ios::binary);
 	if (!stream)
 		return;
 
