@@ -63,6 +63,7 @@ option(PR_USE_CCACHE 			"Use ccache if available." ON)
 find_package(Threads REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
 set(Boost_USE_MULTITHREADED ON)
 
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
@@ -76,7 +77,7 @@ ENDIF()
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
-find_package(TBB REQUIRED NO_MODULE)
+find_package(TBB REQUIRED COMPONENTS tbb)
 
 IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)

@@ -163,11 +163,17 @@ SET(PR_Src
   trace/ShadowHit.h
 )
 
+if(${CMAKE_VERSION} VERSION_LESS 3.11)
+  set(_BOOST_HEADERS Boost::boost)
+else()
+  set(_BOOST_HEADERS Boost::headers)
+endif()
+
 add_library(pr_lib SHARED ${PR_Src})
 if(NOT WIN32)
   target_link_libraries(pr_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 endif()
-target_link_libraries(pr_lib PUBLIC Boost::headers Eigen3::Eigen TBB::tbb)
+target_link_libraries(pr_lib PUBLIC ${_BOOST_HEADERS} Eigen3::Eigen TBB::tbb)
 set_target_properties(pr_lib PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(pr_lib PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")
 target_compile_definitions(pr_lib PRIVATE "PR_LIB_BUILD")
