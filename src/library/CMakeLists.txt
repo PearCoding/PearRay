@@ -163,7 +163,7 @@ SET(PR_Src
   trace/ShadowHit.h
 )
 
-if(${CMAKE_VERSION} VERSION_LESS 3.11)
+if(${CMAKE_VERSION} VERSION_LESS 3.15)
   set(_BOOST_HEADERS Boost::boost)
 else()
   set(_BOOST_HEADERS Boost::headers)
