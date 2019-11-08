@@ -8,6 +8,8 @@ SET(PR_Src
   Logger.cpp
   Logger.h
   LogListener.h
+  Platform.h
+  Platform.cpp
   Random.h
   Variant.h
   VectorGlue.inl
