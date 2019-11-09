@@ -223,69 +223,27 @@ public:
 		float m1 = mRoughnessX->eval(in.Point);
 		m1 *= m1;
 
-		float cosTheta, sinTheta; // V samples
-		float cosPhi, sinPhi;	 // U samples
+		Vector3f O;
 		switch (mDistributionMode) {
-		case DM_Blinn: {
-			if (m1 <= PR_EPSILON)
-				cosTheta = 1;
-			else
-				cosTheta = std::pow(1 - in.RND[1], 1 / (2 * m1 * m1));
-
-			sinPhi = std::sin(2 * PR_PI * in.RND[0]);
-			cosPhi = std::cos(2 * PR_PI * in.RND[0]);
-
-			if (m1 <= PR_EPSILON)
-				out.PDF_S = 1;
-			else
-				out.PDF_S = 4 * PR_PI * m1 * m1 * (1 - in.RND[1]) / cosTheta;
-		} break;
+		case DM_Blinn:
+			O = Microfacet::sample_ndf_blinn(in.RND[0], in.RND[1], m1, out.PDF_S);
+			break;
 		default:
-		case DM_Beckmann: {
-			float t  = 1 / (1 - m1 * m1 * std::log(1 - in.RND[1]));
-			cosTheta = std::sqrt(t);
-			sinPhi   = std::sin(2 * PR_PI * in.RND[0]);
-			cosPhi   = std::cos(2 * PR_PI * in.RND[0]);
-
-			if (m1 <= PR_EPSILON)
-				out.PDF_S = 1;
-			else
-				out.PDF_S = PR_1_PI / (m1 * m1 * cosTheta * cosTheta * cosTheta) * (1 - in.RND[1]);
-		} break;
-		case DM_GGX: {
-			float r2;
-			float alpha2;
+		case DM_Beckmann:
+			O = Microfacet::sample_ndf_beckmann(in.RND[0], in.RND[1], m1, out.PDF_S);
+			break;
+		case DM_GGX:
 			if (mRoughnessX == mRoughnessY) {
-				sinPhi = std::sin(2 * PR_PI * in.RND[0]);
-				cosPhi = std::cos(2 * PR_PI * in.RND[0]);
-				alpha2 = m1 * m1;
-				r2	 = alpha2;
+				O = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, out.PDF_S);
 			} else {
 				float m2 = mRoughnessY->eval(in.Point);
 				m2 *= m2;
-
-				float phi = std::atan(m2 / m1 * std::tan(PR_PI + 2 * PR_PI * in.RND[0])) + PR_PI * std::floor(2 * in.RND[0] + 0.5f);
-
-				sinPhi = std::sin(phi);
-				cosPhi = std::cos(phi);
-
-				float f1 = cosPhi / m1;
-				float f2 = sinPhi / m2;
-				alpha2   = 1 / (f1 * f1 + f2 * f2);
-				r2		 = m1 * m2;
+				O = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, m2, out.PDF_S);
 			}
-
-			float t2 = alpha2 * in.RND[1] / (1 - in.RND[1]);
-			cosTheta = std::max(0.001f, 1.0f / std::sqrt(1 + t2));
-
-			float s   = 1 + t2 / alpha2;
-			out.PDF_S = PR_1_PI / (r2 * cosTheta * cosTheta * cosTheta * s * s);
-		} break;
+			break;
 		}
 
-		sinTheta	 = std::sqrt(1 - cosTheta * cosTheta);
-		Vector3f H   = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny,
-									  Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi));
+		Vector3f H   = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, O);
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
 		float NdotL  = std::abs(in.Point.N.dot(out.Outgoing));
 		if (NdotL > PR_EPSILON)
