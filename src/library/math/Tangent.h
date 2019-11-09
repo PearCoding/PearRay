@@ -5,6 +5,26 @@
 namespace PR {
 namespace Tangent {
 
+// Functions applying to the TBN matrix
+template <typename T>
+inline Vector3t<T> fromTangentSpace(const Vector3t<T>& N,
+									const Vector3t<T>& Nx, const Vector3t<T>& Ny,
+									const Vector3t<T>& V)
+{
+	return N * V(2) + Ny * V(1) + Nx * V(0);
+}
+
+template <typename T>
+inline Vector3t<T> toTangentSpace(const Vector3t<T>& N,
+								  const Vector3t<T>& Nx, const Vector3t<T>& Ny,
+								  const Vector3t<T>& V)
+{
+	return Vector3t<T>(
+		N(0) * V(2) + Ny(0) * V(1) + Nx(0) * V(0),
+		N(1) * V(2) + Ny(1) * V(1) + Nx(1) * V(0),
+		N(2) * V(2) + Ny(2) * V(1) + Nx(2) * V(0));
+}
+
 #define PR_TANGENT_EPS (0.9999f)
 inline Vector3f orthogonal_tangent(const Vector3f& N)
 {
@@ -44,21 +64,14 @@ inline void invert_frame(Vector3f& N, Vector3f& Nx, Vector3f& /*Ny*/)
 	//Ny = Ny;
 }
 
-template <typename T>
-inline Vector3t<T> align(const Vector3t<T>& N,
-						 const Vector3t<T>& Nx, const Vector3t<T>& Ny,
-						 const Vector3t<T>& V)
-{
-	return N * V(2) + Ny * V(1) + Nx * V(0);
-}
-
 // Align v on N
 template <typename T>
 inline Vector3t<T> align(const Vector3t<T>& N, const Vector3t<T>& V)
 {
 	Vector3t<T> nx, ny;
 	frame(N, nx, ny);
-	return align(N, nx, ny, V);
+	return fromTangentSpace(N, nx, ny, V);
 }
+
 } // namespace Tangent
 } // namespace PR

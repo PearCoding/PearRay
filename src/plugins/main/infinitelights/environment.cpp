@@ -29,7 +29,7 @@ public:
 		out.Weight = mRadiance->eval(in.Point);
 		float pdf;
 		out.Outgoing = Projection::hemi(in.RND[0], in.RND[1], pdf);
-		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 		out.PDF_S = pdf;
 	}

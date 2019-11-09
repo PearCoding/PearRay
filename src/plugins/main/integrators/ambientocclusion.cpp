@@ -46,8 +46,8 @@ public:
 					for (size_t i = 0; i < mSampleCount; ++i) {
 						Vector2f rnd  = random.get2D();
 						Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-						Vector3f ndir = Tangent::align(spt.N, spt.Nx, spt.Ny,
-													   dir);
+						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
+																  dir);
 
 						Ray n = ray.next(pt.P, ndir);
 

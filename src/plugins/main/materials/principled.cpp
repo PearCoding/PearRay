@@ -91,7 +91,7 @@ public:
 							  float HdotL, float NdotH, float HdotX, float HdotY,
 							  float roughness, float aniso) const
 	{
-		float aspect = std::sqrt(1 - aniso * 0.9f);
+		float aspect = aniso > 1.0f ? std::sqrt(1 - aniso * 0.9f) : 1.0f;
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
@@ -156,14 +156,14 @@ public:
 		const float csheen = mix(1.0f, tint, sheenTint);
 
 		float diffTerm = diffuseTerm(point, NdotL, HdotL, roughness);
-		float ssTerm   = subsurfaceTerm(point, NdotL, HdotL, roughness);
+		float ssTerm   = subsurface > PR_EPSILON ? subsurfaceTerm(point, NdotL, HdotL, roughness) : 0.0f;
 		float specTerm = specularTerm(point, cspec,
 									  VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
 									  roughness, anisotropic);
-		float ccTerm   = clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH);
+		float ccTerm   = clearcoat > PR_EPSILON ? clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH) : 0.0f;
 		float shTerm   = sheenTerm(sheen * csheen, HdotL);
 
-		return PR_1_PI * (mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
+		return (PR_1_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
 			   + specTerm
 			   + ccTerm * clearcoat;
 	}
@@ -175,7 +175,7 @@ public:
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
 		float anisotropic	= mAnisotropic->eval(in.Point);
-		float roughness		 = mRoughness->eval(in.Point);
+		float roughness		 = std::max(0.01f, mRoughness->eval(in.Point));
 		float metallic		 = mMetallic->eval(in.Point);
 		float spec			 = mSpecular->eval(in.Point);
 		float specTint		 = mSpecularTint->eval(in.Point);
@@ -198,21 +198,24 @@ public:
 			out.Type = MST_SpecularReflection;
 	}
 
-	void sampleDiffusePath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
+	void sampleDiffusePath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out) const
 	{
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Projection::cos_hemi(u, v, out.PDF_S);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 		out.Type	 = MST_DiffuseReflection;
 	}
 
-	void sampleSpecularPath(const MaterialSampleInput& in, MaterialSampleOutput& out, float roughness, float aniso) const
+	void sampleSpecularPath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out, float roughness, float aniso) const
 	{
 		float aspect = std::sqrt(1 - aniso * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		out.Outgoing = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], ax, ay, out.PDF_S);
-		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		Vector3f nV  = Tangent::toTangentSpace<float>(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
+		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, out.PDF_S);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		// Reflect incoming ray by the calculated half vector
+		out.Outgoing = Reflection::reflect(out.Outgoing.dot(in.Point.Ray.Direction), out.Outgoing, in.Point.Ray.Direction);
 		out.Type	 = MST_SpecularReflection;
 	}
 
@@ -234,10 +237,10 @@ public:
 
 		float weight = (1 - roughness) * std::max(0.1f, metallic);
 		if (in.RND[0] < weight) {
-			sampleSpecularPath(in, out, roughness, anisotropic);
+			sampleSpecularPath(in, in.RND[0] / weight, in.RND[1], out, roughness, anisotropic);
 			out.PDF_S *= weight;
 		} else {
-			sampleDiffusePath(in, out);
+			sampleDiffusePath(in, (in.RND[0] - weight) / (1 - weight), in.RND[1], out);
 			out.PDF_S *= (1 - weight);
 		}
 

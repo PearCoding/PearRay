@@ -8,6 +8,60 @@ namespace Microfacet {
  * This also means that NdotL, NdotV and NdotH can not be negative!
  */
 
+////////////////////////////////
+// Geometric Terms
+
+inline float g_implicit(float NdotV, float NdotL)
+{
+	return NdotV * NdotL;
+}
+
+inline float g_neumann(float NdotV, float NdotL)
+{
+	return NdotV * NdotL / std::max(NdotV, NdotL);
+}
+
+inline float g_kelemen(float NdotV, float NdotL, float VdotH)
+{
+	return NdotV * NdotL / (VdotH * VdotH);
+}
+
+inline float g_cook_torrance(float NdotV, float NdotL, float NdotH, float VdotH)
+{
+	return std::min(1.0f, 2 * NdotH * std::min(NdotV, NdotL) / VdotH);
+}
+
+inline float g_1_schlick(float NdotK, float roughness)
+{
+	const float k = roughness * std::sqrt(PR_1_PI * 2.0f);
+	return NdotK / (NdotK * (1 - k) + k);
+}
+
+inline float g_1_walter(float NdotK, float roughness)
+{
+	const float a = roughness * std::sqrt(1 - NdotK * NdotK) / NdotK;
+	return a >= 1.6f
+			   ? 1.0f
+			   : (3.535f * a + 2.181f * a * a) / (1 + 2.276f * a + 2.577f * a * a);
+}
+
+// 1/(4*NdotV*NdotL) already multiplied out
+inline float g_1_smith(float NdotK, float roughness)
+{
+	const float a = roughness * roughness;
+	const float b = NdotK * NdotK;
+	return 1.0f / (NdotK + std::sqrt(a + b - a * b));
+}
+
+// 1/(4*NdotV*NdotL) already multiplied out
+inline float g_1_smith(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
+{
+	const float kx = KdotX * roughnessX;
+	const float ky = KdotY * roughnessY;
+	const float b  = NdotK * NdotK;
+	return 1.0f / (NdotK + std::sqrt(kx * kx + ky * ky + b));
+}
+
 /////////////////////////////////
 // Distribution Terms
 
@@ -143,58 +197,47 @@ inline float pdf_ggx(float NdotH, float roughnessX, float roughnessY)
 	return PR_1_PI / (roughnessX * roughnessY * NdotH * NdotH * NdotH * 4);
 }
 
-////////////////////////////////
-// Geometric Terms
+// Based on:
+// Journal of Computer Graphics Techniques Vol. 7, No. 4, 2018 http://jcgt.org.
+// Sampling the GGX Distribution of Visible Normals. Eric Heitz
 
-inline float g_implicit(float NdotV, float NdotL)
+inline float pdf_ggx_vndf(float NdotV, float VdotX, float VdotY,
+						  float VdotH, float NdotH, float HdotX, float HdotY,
+						  float roughnessX, float roughnessY)
 {
-	return NdotV * NdotL;
+	const float Dv = g_1_smith(NdotV, VdotX, VdotY, roughnessX, roughnessY) * VdotH * ndf_ggx(NdotH, HdotX, HdotY, roughnessX, roughnessY);
+	return Dv / (4 * VdotH);
 }
 
-inline float g_neumann(float NdotV, float NdotL)
+// nV is in sample space!
+inline Vector3f sample_ggx_vndf(float u0, float u1,
+								const Vector3f& nV,
+								float roughnessX, float roughnessY, float& pdf)
 {
-	return NdotV * NdotL / std::max(NdotV, NdotL);
-}
+	// Section 3.2: transforming the view direction to the hemisphere configuration
+	const Vector3f Vh = Vector3f(roughnessX * nV(0), roughnessY * nV(1), nV(2)).normalized();
 
-inline float g_kelemen(float NdotV, float NdotL, float VdotH)
-{
-	return NdotV * NdotL / (VdotH * VdotH);
-}
+	// Section 4.1: orthonormal basis (with special case if cross product is zero)
+	float lensq = Vh(0) * Vh(0) + Vh(1) * Vh(1);
+	Vector3f T1 = lensq > PR_EPSILON ? Vector3f(-Vh(1), Vh(0), 0) / std::sqrt(lensq) : Vector3f(1, 0, 0);
+	Vector3f T2 = Vh.cross(T1);
 
-inline float g_cook_torrance(float NdotV, float NdotL, float NdotH, float VdotH)
-{
-	return std::min(1.0f, 2 * NdotH * std::min(NdotV, NdotL) / VdotH);
-}
+	// Section 4.2: parameterization of the projected area
+	float r   = std::sqrt(u0);
+	float phi = 2.0 * PR_PI * u1;
+	float t1  = r * std::cos(phi);
+	float t2  = r * std::sin(phi);
+	float s   = 0.5 * (1.0 + Vh(2));
+	t2		  = (1.0 - s) * std::sqrt(1.0 - t1 * t1) + s * t2;
 
-inline float g_1_schlick(float NdotK, float roughness)
-{
-	const float k = roughness * std::sqrt(PR_1_PI * 2.0f);
-	return NdotK / (NdotK * (1 - k) + k);
-}
+	// Section 4.3: reprojection onto hemisphere
+	Vector3f Nh = t1 * T1 + t2 * T2 + std::sqrt(std::max(0.0f, 1.0f - t1 * t1 - t2 * t2)) * Vh;
 
-inline float g_1_walter(float NdotK, float roughness)
-{
-	const float a = roughness * std::sqrt(1 - NdotK * NdotK) / NdotK;
-	return a >= 1.6f
-			   ? 1.0f
-			   : (3.535f * a + 2.181f * a * a) / (1 + 2.276f * a + 2.577f * a * a);
-}
+	// Section 3.4: transforming the normal back to the ellipsoid configuration
+	Vector3f H = Vector3f(roughnessX * Nh(0), roughnessY * Nh(1), std::max(0.0f, Nh(2))).normalized();
 
-// 1/(4*NdotV*NdotL) already multiplied out
-inline float g_1_smith(float NdotK, float roughness)
-{
-	const float a = roughness * roughness;
-	const float b = NdotK * NdotK;
-	return 1.0f / (NdotK + std::sqrt(a + b - a * b));
-}
-
-// 1/(4*NdotV*NdotL) already multiplied out
-inline float g_1_smith(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
-{
-	const float kx = KdotX * roughnessX;
-	const float ky = KdotY * roughnessY;
-	const float b  = NdotK * NdotK;
-	return 1.0f / (NdotK + std::sqrt(kx * kx + ky * ky + b));
+	pdf = pdf_ggx_vndf(nV(2), nV(0), nV(1), nV.dot(H), H(2), H(0), H(1), roughnessX, roughnessY);
+	return H;
 }
 
 //////////////////////////////

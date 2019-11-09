@@ -210,15 +210,15 @@ public:
 		out.Type = MST_DiffuseReflection;
 	}
 
-	void sampleDiffusePath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
+	void sampleDiffusePath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out) const
 	{
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Projection::cos_hemi(u, v, out.PDF_S);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 		out.Weight   = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
 		out.Type	 = MST_DiffuseReflection;
 	}
 
-	void sampleSpecularPath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
+	void sampleSpecularPath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out) const
 	{
 		float m1 = mRoughnessX->eval(in.Point);
 		m1 *= m1;
@@ -226,24 +226,24 @@ public:
 		Vector3f O;
 		switch (mDistributionMode) {
 		case DM_Blinn:
-			O = Microfacet::sample_ndf_blinn(in.RND[0], in.RND[1], m1, out.PDF_S);
+			O = Microfacet::sample_ndf_blinn(u, v, m1, out.PDF_S);
 			break;
 		default:
 		case DM_Beckmann:
-			O = Microfacet::sample_ndf_beckmann(in.RND[0], in.RND[1], m1, out.PDF_S);
+			O = Microfacet::sample_ndf_beckmann(u, v, m1, out.PDF_S);
 			break;
 		case DM_GGX:
 			if (mRoughnessX == mRoughnessY) {
-				O = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, out.PDF_S);
+				O = Microfacet::sample_ndf_ggx(u, v, m1, out.PDF_S);
 			} else {
 				float m2 = mRoughnessY->eval(in.Point);
 				m2 *= m2;
-				O = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], m1, m2, out.PDF_S);
+				O = Microfacet::sample_ndf_ggx(u, v, m1, m2, out.PDF_S);
 			}
 			break;
 		}
 
-		Vector3f H   = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, O);
+		Vector3f H   = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, O);
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
 		float NdotL  = std::abs(in.Point.N.dot(out.Outgoing));
 		if (NdotL > PR_EPSILON)
@@ -263,7 +263,7 @@ public:
 		float F = fresnelTerm(in.Point);
 
 		if (in.RND[0] <= F) {
-			sampleSpecularPath(in, out);
+			sampleSpecularPath(in, in.RND[0] / F, in.RND[1], out);
 			out.PDF_S *= F;
 			out.Type = MST_SpecularReflection;
 		} else if (mFresnelMode == FM_Conductor) {
@@ -271,7 +271,7 @@ public:
 			out.Weight = 0.0f;
 			out.PDF_S  = 0.0f;
 		} else {
-			sampleDiffusePath(in, out);
+			sampleDiffusePath(in, (in.RND[0] - F) / (1 - F), in.RND[1], out);
 			out.PDF_S *= 1.0f - F;
 			out.Type = MST_DiffuseReflection;
 		}

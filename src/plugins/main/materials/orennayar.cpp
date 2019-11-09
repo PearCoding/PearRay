@@ -56,8 +56,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight		   = calc(in.Outgoing, std::abs(in.NdotL), in.Point);
-		out.Type		   = MST_DiffuseReflection;
+		out.Weight = calc(in.Outgoing, std::abs(in.NdotL), in.Point);
+		out.Type   = MST_DiffuseReflection;
 		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
 	}
 
@@ -66,12 +66,12 @@ public:
 	{
 		float pdf;
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
-		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
-		float NdotL		   = std::abs(out.Outgoing.dot(in.Point.N));
-		out.Weight		   = calc(out.Outgoing, NdotL, in.Point);
-		out.Type		   = MST_DiffuseReflection;
-		out.PDF_S  = pdf;
+		float NdotL = std::abs(out.Outgoing.dot(in.Point.N));
+		out.Weight  = calc(out.Outgoing, NdotL, in.Point);
+		out.Type	= MST_DiffuseReflection;
+		out.PDF_S   = pdf;
 	}
 
 	std::string dumpInformation() const override
