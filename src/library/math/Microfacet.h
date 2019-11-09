@@ -188,6 +188,15 @@ inline float g_1_smith(float NdotK, float roughness)
 	return 1.0f / (NdotK + std::sqrt(a + b - a * b));
 }
 
+// 1/(4*NdotV*NdotL) already multiplied out
+inline float g_1_smith(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
+{
+	const float kx = KdotX * roughnessX;
+	const float ky = KdotY * roughnessY;
+	const float b  = NdotK * NdotK;
+	return 1.0f / (NdotK + std::sqrt(kx * kx + ky * ky + b));
+}
+
 //////////////////////////////
 // Other kinds
 

@@ -34,6 +34,11 @@ float ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 	return mValue[ctx.Ray.WavelengthIndex];
 }
 
+float ConstSpectralShadingSocket::relativeLuminance(const ShadingPoint&) const
+{
+	return mValue.relativeLuminance();
+}
+
 std::string ConstSpectralShadingSocket::dumpInformation() const
 {
 	std::stringstream sstream;

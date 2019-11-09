@@ -1,4 +1,5 @@
 #include "ImageShadingSocket.h"
+#include "spectral/RGBConverter.h"
 
 #include "Logger.h"
 
@@ -55,6 +56,26 @@ float ImageShadingSocket::eval(const ShadingPoint& ctx) const
 	}
 
 	return res;
+}
+
+float ImageShadingSocket::relativeLuminance(const ShadingPoint& ctx) const
+{
+	OIIO::TextureOpt ops = mTextureOptions;
+
+	if (mIsPtex)
+		ops.subimage = ctx.PrimID;
+
+	float rgb[3];
+	if (!mTextureSystem->texture(mFilename, ops,
+								 ctx.Geometry.UVW[0], ctx.Geometry.UVW[1],
+								 0, 0, 0, 0,
+								 3, &rgb[0])) {
+		std::string err = mTextureSystem->geterror();
+		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;
+		return 0;
+	}
+
+	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
 }
 
 std::string ImageShadingSocket::dumpInformation() const

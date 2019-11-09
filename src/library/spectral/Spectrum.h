@@ -91,6 +91,7 @@ public:
 	void weightPhotometric();
 	float luminousFlux_nm() const;
 	inline double luminousFlux() const { return luminousFlux_nm() * PR_NM_TO_M; }
+	float relativeLuminance() const;
 
 	// Standard Constructor
 	inline static Spectrum black(const std::shared_ptr<SpectrumDescriptor>& desc);

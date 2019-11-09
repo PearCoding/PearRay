@@ -73,7 +73,7 @@ constexpr float CANDELA = 683.002f;
 void Spectrum::weightPhotometric()
 {
 	for (size_t i = 0; i < samples(); ++i)
-		setValue(i, value(i) * descriptor()->luminousFactor(i + spectralStart()) * CANDELA);
+		setValue(i, value(i) * descriptor()->luminousFactor(i + spectralStart()));
 }
 
 float Spectrum::luminousFlux_nm() const
@@ -83,6 +83,15 @@ float Spectrum::luminousFlux_nm() const
 		flux += value(i) * descriptor()->luminousFactor(i + spectralStart()) * descriptor()->integralDelta(i + spectralStart());
 
 	return flux * CANDELA;
+}
+
+float Spectrum::relativeLuminance() const
+{
+	float flux = 0;
+	for (size_t i = 0; i < samples(); ++i)
+		flux += value(i) * descriptor()->luminousFactor(i + spectralStart());
+
+	return flux;
 }
 
 // Has to be in double!
@@ -119,4 +128,4 @@ Spectrum Spectrum::blackbody(const std::shared_ptr<SpectrumDescriptor>& desc, fl
 
 	return spec;
 }
-}
+} // namespace PR

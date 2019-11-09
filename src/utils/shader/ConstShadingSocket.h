@@ -18,6 +18,7 @@ class PR_LIB_UTILS ConstSpectralShadingSocket : public FloatSpectralShadingSocke
 public:
 	explicit ConstSpectralShadingSocket(const Spectrum& f);
 	float eval(const ShadingPoint& ctx) const override;
+	float relativeLuminance(const ShadingPoint& ctx) const override;
 	std::string dumpInformation() const override;
 
 private:

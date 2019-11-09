@@ -14,7 +14,9 @@
 namespace PR {
 
 /* Based on the paper:
-BURLEY, Brent; STUDIOS, Walt Disney Animation. Physically-based shading at disney. In: ACM SIGGRAPH. 2012. S. 1-7.
+	BURLEY, Brent; STUDIOS, Walt Disney Animation. Physically-based shading at disney. In: ACM SIGGRAPH. 2012. S. 1-7.
+	and code:
+	https://github.com/wdas/brdf/blob/master/src/brdfs/disney.brdf
 */
 
 class PrincipledMaterial : public IMaterial {
@@ -56,38 +58,47 @@ public:
 	{
 	}
 
+	template <typename T>
+	static inline T mix(const T& v0, const T& v1, float t)
+	{
+		return (1 - t) * v0 + t * v1;
+	}
+
 	inline float diffuseTerm(const ShadingPoint& point, float NdotL, float HdotL, float roughness) const
 	{
 		float fd90 = 0.5f + 2 * HdotL * HdotL * roughness;
-		float lk   = 1 - NdotL;
-		lk		   = lk * lk * lk * lk * lk;
+		float lk   = Fresnel::schlick_term(NdotL);
+		float vk   = Fresnel::schlick_term(-point.NdotV);
 
-		float vk = 1 + point.NdotV;
-		vk		 = vk * vk * vk * vk * vk;
-
-		return PR_1_PI * (1 + (fd90 - 1) * lk) * (1 + (fd90 - 1) * vk);
+		return mix(1.0f, fd90, lk) * mix(1.0f, fd90, vk);
 	}
 
+	// Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
 	inline float subsurfaceTerm(const ShadingPoint& point, float NdotL, float HdotL, float roughness) const
 	{
 		float fss90 = HdotL * HdotL * roughness;
-		float lk	= 1 - NdotL;
-		lk			= lk * lk * lk * lk * lk;
+		float lk	= Fresnel::schlick_term(NdotL);
+		float vk	= Fresnel::schlick_term(-point.NdotV);
 
-		float vk = 1 + point.NdotV;
-		vk		 = vk * vk * vk * vk * vk;
+		float fss = mix(1.0f, fss90, lk) * mix(1.0f, fss90, vk);
 
-		float fss = (1 + (fss90 - 1) * lk) * (1 + (fss90 - 1) * vk);
-
-		return PR_1_PI * 1.25f * (fss * (1.0f / (NdotL - point.NdotV) - 0.5f) + 0.5f);
+		return 1.25f * (fss * (1.0f / (NdotL - point.NdotV) - 0.5f) + 0.5f);
 	}
 
-	inline float specularTerm(const ShadingPoint& point, float spec, float NdotL, float HdotL, float NdotH, float roughness) const
+	inline float specularTerm(const ShadingPoint& point, float spec,
+							  float VdotX, float VdotY,
+							  float NdotL, float LdotX, float LdotY,
+							  float HdotL, float NdotH, float HdotX, float HdotY,
+							  float roughness, float aniso) const
 	{
-		float D  = Microfacet::ndf_ggx(NdotH, roughness);
-		float fh = std::pow(std::min(1.0f, std::max(0.0f, 1 - HdotL)), 5.0f);
-		float F  = (1 - fh) * spec + fh;
-		float G  = Microfacet::g_1_smith(NdotL, roughness) * Microfacet::g_1_smith(-point.NdotV, roughness);
+		float aspect = std::sqrt(1 - aniso * 0.9f);
+		float ax	 = std::max(0.001f, roughness * roughness / aspect);
+		float ay	 = std::max(0.001f, roughness * roughness * aspect);
+
+		float D  = Microfacet::ndf_ggx(NdotH, HdotX, HdotY, ax, ay);
+		float hk = Fresnel::schlick_term(HdotL);
+		float F  = mix(spec, 1.0f, hk);
+		float G  = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.NdotV, VdotX, VdotY, ax, ay);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return D * F * G;
@@ -96,27 +107,29 @@ public:
 	inline float clearcoatTerm(const ShadingPoint& point, float gloss, float NdotL, float HdotL, float NdotH) const
 	{
 		// This is fixed by definition
-		static float F0 = 0.04f;
+		static float F0 = 0.04f; // IOR 1.5
 		static float R  = 0.25f;
 
-		float D  = Microfacet::ndf_ggx(NdotH, 0.1f * (1 - gloss) + 0.001f * gloss);
-		float fh = std::pow(std::min(1.0f, std::max(0.0f, 1 - HdotL)), 5.0f);
-		float F  = (1 - fh) * F0 + fh;
+		float D  = Microfacet::ndf_ggx(NdotH, mix(0.1f, 0.001f, gloss));
+		float hk = Fresnel::schlick_term(HdotL);
+		float F  = mix(F0, 1.0f, hk);
 		float G  = Microfacet::g_1_smith(NdotL, R) * Microfacet::g_1_smith(-point.NdotV, R);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
-		return D * F * G;
+		return R * D * F * G;
 	}
 
 	inline float sheenTerm(float sheen, float HdotL) const
 	{
-		float fh = std::pow(std::min(1.0f, std::max(0.0f, 1 - HdotL)), 5.0f);
-		return fh * sheen;
+		float hk = Fresnel::schlick_term(HdotL);
+		return hk * sheen;
 	}
 
 	float evalBRDF(const ShadingPoint& point, const Vector3f& L,
 				   float base,
+				   float lum,
 				   float subsurface,
+				   float anisotropic,
 				   float roughness,
 				   float metallic,
 				   float spec,
@@ -126,31 +139,42 @@ public:
 				   float clearcoat,
 				   float clearcoatGloss) const
 	{
+		const float VdotX = -point.Nx.dot(point.Ray.Direction);
+		const float VdotY = -point.Ny.dot(point.Ray.Direction);
+		const float NdotL = point.N.dot(L);
+		const float LdotX = point.Nx.dot(L);
+		const float LdotY = point.Ny.dot(L);
+
 		const Eigen::Vector3f H = Reflection::halfway(point.Ray.Direction, L);
-		const float NdotL		= point.N.dot(L);
 		const float NdotH		= point.N.dot(H);
 		const float HdotL		= L.dot(H);
+		const float HdotX		= point.Nx.dot(H);
+		const float HdotY		= point.Ny.dot(H);
+
+		const float tint   = lum > PR_EPSILON ? base / lum : 1;
+		const float cspec  = mix(spec * 0.08f * mix(1.0f, tint, specTint), base, metallic);
+		const float csheen = mix(1.0f, tint, sheenTint);
 
 		float diffTerm = diffuseTerm(point, NdotL, HdotL, roughness);
 		float ssTerm   = subsurfaceTerm(point, NdotL, HdotL, roughness);
-		float specTerm = specularTerm(point, spec, NdotL, HdotL, NdotH, roughness);
+		float specTerm = specularTerm(point, cspec,
+									  VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
+									  roughness, anisotropic);
 		float ccTerm   = clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH);
-		float shTerm   = sheenTerm(sheen, HdotL);
+		float shTerm   = sheenTerm(sheen * csheen, HdotL);
 
-		const float diffuse  = base * ((1 - subsurface) * diffTerm + subsurface * ssTerm);
-		const float specular = specTerm * ((1 - specTint) + specTint * base)
-							   + ccTerm * clearcoat;
-
-		return diffuse * (1 - metallic)
-			   + specular
-			   + shTerm * (1 - metallic) * ((1 - sheenTint) + sheenTint * base);
+		return PR_1_PI * (mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
+			   + specTerm
+			   + ccTerm * clearcoat;
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		float base			 = mBaseColor->eval(in.Point);
+		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
+		float anisotropic	= mAnisotropic->eval(in.Point);
 		float roughness		 = mRoughness->eval(in.Point);
 		float metallic		 = mMetallic->eval(in.Point);
 		float spec			 = mSpecular->eval(in.Point);
@@ -161,12 +185,12 @@ public:
 		float clearcoatGloss = mClearcoatGloss->eval(in.Point);
 
 		out.Weight = evalBRDF(in.Point, in.Outgoing,
-							  base, subsurface, roughness, metallic, spec, specTint,
+							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(in.NdotL);
 
-		float weight = 1 - roughness;
-		out.PDF_S	= Projection::cos_hemi_pdf(in.NdotL) * (1 - weight) + Microfacet::pdf_ggx(in.NdotL, roughness) * weight; // Use NdotH instead of NdotL!
+		float weight = (1 - roughness) * std::max(0.1f, metallic);
+		out.PDF_S	= mix(Projection::cos_hemi_pdf(in.NdotL), Microfacet::pdf_ggx(in.NdotL, roughness), weight); // Use NdotH instead of NdotL!
 
 		if (metallic < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -181,9 +205,13 @@ public:
 		out.Type	 = MST_DiffuseReflection;
 	}
 
-	void sampleSpecularPath(const MaterialSampleInput& in, MaterialSampleOutput& out, float roughness) const
+	void sampleSpecularPath(const MaterialSampleInput& in, MaterialSampleOutput& out, float roughness, float aniso) const
 	{
-		out.Outgoing = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], roughness, out.PDF_S);
+		float aspect = std::sqrt(1 - aniso * 0.9f);
+		float ax	 = std::max(0.001f, roughness * roughness / aspect);
+		float ay	 = std::max(0.001f, roughness * roughness * aspect);
+
+		out.Outgoing = Microfacet::sample_ndf_ggx(in.RND[0], in.RND[1], ax, ay, out.PDF_S);
 		out.Outgoing = Tangent::align(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 		out.Type	 = MST_SpecularReflection;
 	}
@@ -192,7 +220,9 @@ public:
 				const RenderTileSession&) const override
 	{
 		float base			 = mBaseColor->eval(in.Point);
+		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
+		float anisotropic	= mAnisotropic->eval(in.Point);
 		float roughness		 = mRoughness->eval(in.Point);
 		float metallic		 = mMetallic->eval(in.Point);
 		float spec			 = mSpecular->eval(in.Point);
@@ -202,14 +232,17 @@ public:
 		float clearcoat		 = mClearcoat->eval(in.Point);
 		float clearcoatGloss = mClearcoatGloss->eval(in.Point);
 
-		float weight = 1 - roughness;
-		if (in.RND[0] < weight)
-			sampleSpecularPath(in, out, roughness);
-		else
+		float weight = (1 - roughness) * std::max(0.1f, metallic);
+		if (in.RND[0] < weight) {
+			sampleSpecularPath(in, out, roughness, anisotropic);
+			//out.PDF_S *= weight;
+		} else {
 			sampleDiffusePath(in, out);
+			//out.PDF_S *= (1 - weight);
+		}
 
 		out.Weight = evalBRDF(in.Point, out.Outgoing,
-							  base, subsurface, roughness, metallic, spec, specTint,
+							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(in.Point.N.dot(out.Outgoing));
 	}
