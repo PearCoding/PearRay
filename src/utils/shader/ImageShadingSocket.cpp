@@ -39,23 +39,28 @@ float ImageShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
 
-	float res;
+	float rgb[3];
 	OIIO::TextureOpt ops = mTextureOptions;
-	ops.firstchannel	 = ctx.Ray.WavelengthIndex;
-
 	if (mIsPtex)
 		ops.subimage = ctx.PrimID;
 
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.Geometry.UVW[0], ctx.Geometry.UVW[1],
 								 0, 0, 0, 0,
-								 1, &res)) {
+								 1, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup texture: " << err << std::endl;
 		return 0;
 	}
 
-	return res;
+	// TODO: Add spectral support!
+
+	float xyz[3];
+	RGBConverter::toXYZ(rgb[0], rgb[1], rgb[2], xyz[0], xyz[1], xyz[2]);
+	if (ctx.Ray.WavelengthIndex > 2)
+		return rgb[0];
+	else
+		return rgb[ctx.Ray.WavelengthIndex];
 }
 
 float ImageShadingSocket::relativeLuminance(const ShadingPoint& ctx) const

@@ -264,7 +264,7 @@ public:
 
 		if (in.RND[0] <= F) {
 			sampleSpecularPath(in, out);
-			out.PDF_S /= F;
+			out.PDF_S *= F;
 			out.Type = MST_SpecularReflection;
 		} else if (mFresnelMode == FM_Conductor) {
 			// Absorb
@@ -272,7 +272,7 @@ public:
 			out.PDF_S  = 0.0f;
 		} else {
 			sampleDiffusePath(in, out);
-			out.PDF_S /= 1.0f - F;
+			out.PDF_S *= 1.0f - F;
 			out.Type = MST_DiffuseReflection;
 		}
 	}

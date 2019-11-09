@@ -235,10 +235,10 @@ public:
 		float weight = (1 - roughness) * std::max(0.1f, metallic);
 		if (in.RND[0] < weight) {
 			sampleSpecularPath(in, out, roughness, anisotropic);
-			//out.PDF_S *= weight;
+			out.PDF_S *= weight;
 		} else {
 			sampleDiffusePath(in, out);
-			//out.PDF_S *= (1 - weight);
+			out.PDF_S *= (1 - weight);
 		}
 
 		out.Weight = evalBRDF(in.Point, out.Outgoing,

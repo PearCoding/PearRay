@@ -71,6 +71,14 @@ void setup_tonemapper(py::module& m)
 
 			c.mapOnlyMapper(mapper, (float*)info1.ptr);
 		})
+		.def("asLinearWithChannels", [](const ColorBuffer& c) {
+			return py::array_t<float>(
+				std::vector<size_t>({ c.width() * c.height(), c.channels() }),
+				std::vector<size_t>({ c.widthBytePitch(),
+									  c.channelBytePitch() }),
+				c.ptr());
+		})
+		.def("flipY", &ColorBuffer::flipY)
 		.def_property_readonly("mode", &ColorBuffer::mode)
 		.def_property_readonly("width", &ColorBuffer::width)
 		.def_property_readonly("height", &ColorBuffer::height);

@@ -15,7 +15,6 @@ std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createTriplet()
 		std::vector<float>{ xf, yf, zf });
 }
 
-constexpr float CANDELA = 683.002f;
 std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createStandardSpectral()
 {
 	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(PR_SPECTRAL_WAVELENGTH_SAMPLES, PR_SPECTRAL_WAVELENGTH_START, PR_SPECTRAL_WAVELENGTH_END);

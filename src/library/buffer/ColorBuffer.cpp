@@ -31,13 +31,27 @@ ColorBuffer::~ColorBuffer()
 
 void ColorBuffer::map(const ToneMapper& mapper, const float* specIn, size_t samples)
 {
+	PR_ASSERT(mData, "Expected valid buffer");
 	mapper.map(specIn, samples,
 			   mData->Ptr, channels(), mData->Width * mData->Height);
 }
 
 void ColorBuffer::mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn)
 {
+	PR_ASSERT(mData, "Expected valid buffer");
 	mapper.mapOnlyMapper(rgbIn, mData->Ptr,
 						 channels(), mData->Width * mData->Height);
+}
+
+void ColorBuffer::flipY()
+{
+	PR_ASSERT(mData, "Expected valid buffer");
+	const int h	 = (int)height();
+	const int elems = (int)heightPitch();
+	for (int i = 0; i < h / 2; ++i) {
+		float* ptr1 = &mData->Ptr[i * elems];
+		float* ptr2 = &mData->Ptr[(h - i - 1) * elems];
+		std::swap_ranges(ptr1, ptr1 + elems, ptr2);
+	}
 }
 } // namespace PR

@@ -23,6 +23,8 @@ public:
 	void map(const ToneMapper& mapper, const float* specIn, size_t samples);
 	void mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn);
 
+	void flipY();
+
 	inline size_t width() const { return mData->Width; }
 	inline size_t height() const { return mData->Height; }
 	inline size_t channels() const { return mode() == CBM_RGB ? 3 : 4; }
@@ -36,6 +38,8 @@ public:
 	inline size_t heightBytePitch() const { return heightPitch() * sizeof(float); }
 	inline size_t channelBytePitch() const { return channelPitch() * sizeof(float); }
 
+	inline float at(size_t i) const { return i < width() * height() * channels() ? mData->Ptr[i] : 0.0f; }
+	inline const float* ptr() const { return mData->Ptr; }
 	inline float* ptr() { return mData->Ptr; }
 
 private:
