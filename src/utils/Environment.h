@@ -2,7 +2,7 @@
 
 #include "output/OutputSpecification.h"
 #include "registry/Registry.h"
-#include "shader/ShadingSocket.h"
+#include "shader/Socket.h"
 #include "spectral/Spectrum.h"
 
 #include <boost/variant.hpp>
@@ -90,6 +90,18 @@ public:
 	std::shared_ptr<FloatScalarShadingSocket> getScalarShadingSocket(
 		const std::string& name, float def = 1) const;
 
+	inline std::shared_ptr<FloatSpectralMapSocket> getMapSocket(const std::string& name) const;
+	inline bool hasMapSocket(const std::string& name) const;
+	inline void addMapSocket(const std::string& name,
+							 const std::shared_ptr<FloatSpectralMapSocket>& m);
+
+	std::shared_ptr<FloatSpectralMapSocket> getSpectralMapSocket(
+		const std::string& name,
+		float def = 1) const;
+	std::shared_ptr<FloatSpectralMapSocket> getSpectralMapSocket(
+		const std::string& name,
+		const Spectrum& def) const;
+
 	inline void* textureSystem();
 
 	inline void setWorkingDir(const std::string& dir);
@@ -135,7 +147,8 @@ private:
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<TriMesh>> mMeshes;
-	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSocket;
+	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSockets;
+	std::map<std::string, std::shared_ptr<FloatSpectralMapSocket>> mNamedMapSockets;
 
 	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;

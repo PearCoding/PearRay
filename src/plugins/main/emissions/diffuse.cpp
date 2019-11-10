@@ -4,7 +4,6 @@
 #include "entity/IEntity.h"
 #include "math/Projection.h"
 #include "registry/Registry.h"
-#include "shader/ConstShadingSocket.h"
 
 namespace PR {
 class DiffuseEmission : public IEmission {

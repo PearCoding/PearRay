@@ -1,9 +1,9 @@
 #include "material/IMaterial.h"
-#include "shader/ShadingSocket.h"
+#include "shader/Socket.h"
 
 // Implementations
-#include "shader/ConstShadingSocket.h"
-#include "shader/ImageShadingSocket.h"
+#include "shader/ConstSocket.h"
+#include "shader/ImageMapSocket.h"
 
 #include "pypearray.h"
 

@@ -45,17 +45,19 @@ SET(PR_Src
   registry/URI.cpp
   registry/URI.h
   registry/URI.inl
-  shader/ConstShadingSocket.cpp
-  shader/ConstShadingSocket.h
-  shader/ImageShadingSocket.cpp
-  shader/ImageShadingSocket.h)
+  shader/ConstSocket.cpp
+  shader/ConstSocket.h
+  shader/ImageMapSocket.cpp
+  shader/ImageMapSocket.h
+  shader/MapShadingSocket.cpp
+  shader/MapShadingSocket.h)
 
 add_library(pr_lib_utils SHARED ${PR_Src})
 target_link_libraries(pr_lib_utils
   PUBLIC
     pr_lib Boost::iostreams Boost::regex Boost::filesystem
   PRIVATE
-    datalisp OpenImageIO::Core OpenImageIO::Util 
+    datalisp OpenImageIO::Core OpenImageIO::Util
 )
 set_target_properties(pr_lib_utils PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_utils PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h

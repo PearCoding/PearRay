@@ -5,8 +5,6 @@
 #include "math/Projection.h"
 #include "math/Reflection.h"
 #include "renderer/RenderContext.h"
-#include "shader/ConstShadingSocket.h"
-#include "shader/ShadingSocket.h"
 
 #include <sstream>
 

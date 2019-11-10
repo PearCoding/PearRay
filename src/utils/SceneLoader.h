@@ -1,7 +1,7 @@
 #pragma once
 
 #include "registry/Registry.h"
-#include "shader/ShadingSocket.h"
+#include "shader/Socket.h"
 
 #include <map>
 #include <string>
@@ -32,6 +32,8 @@ public:
 	static Eigen::Quaternionf getRotation(const DL::Data& data, bool& ok);
 
 	static std::shared_ptr<FloatSpectralShadingSocket> getSpectralOutput(
+		Environment* env, const DL::Data& data, bool allowScalar = false);
+	static std::shared_ptr<FloatSpectralMapSocket> getSpectralMapOutput(
 		Environment* env, const DL::Data& data, bool allowScalar = false);
 	static std::shared_ptr<FloatScalarShadingSocket> getScalarOutput(
 		Environment* env, const DL::Data& data);

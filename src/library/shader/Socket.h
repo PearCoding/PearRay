@@ -3,6 +3,14 @@
 #include "ShadingPoint.h"
 
 namespace PR {
+struct MapSocketCoord {
+	Vector2f UV;
+	Vector2f dUV = Vector2f(0, 0);
+	size_t Index = 0;
+	size_t Face = 0;
+};
+
+///////////////////
 template <typename T>
 class PR_LIB_INLINE ScalarShadingSocket {
 public:
@@ -16,18 +24,24 @@ public:
 using FloatScalarShadingSocket = ScalarShadingSocket<float>;
 
 ///////////////////
-template <typename T>
-class PR_LIB_INLINE SpectralShadingSocket {
+template <typename M, typename T>
+class PR_LIB_INLINE SpectralSocket {
 public:
-	SpectralShadingSocket()			 = default;
-	virtual ~SpectralShadingSocket() = default;
+	SpectralSocket()		  = default;
+	virtual ~SpectralSocket() = default;
 
-	virtual T eval(const ShadingPoint& ctx) const = 0;
-	virtual T relativeLuminance(const ShadingPoint& ctx) const = 0;
-	virtual std::string dumpInformation() const   = 0;
+	virtual T eval(const M& ctx) const				= 0;
+	virtual T relativeLuminance(const M& ctx) const = 0;
+	virtual Vector2i queryRecommendedSize() const   = 0;
+	virtual std::string dumpInformation() const		= 0;
 };
 
+template <typename T>
+using SpectralShadingSocket		 = SpectralSocket<ShadingPoint, T>;
 using FloatSpectralShadingSocket = SpectralShadingSocket<float>;
+template <typename T>
+using SpectralMapSocket		 = SpectralSocket<MapSocketCoord, T>;
+using FloatSpectralMapSocket = SpectralMapSocket<float>;
 
 ///////////////////
 template <typename T>

@@ -8,8 +8,8 @@ namespace Spherical {
 template <typename T>
 inline Vector2t<T> uv_from_normal(const Vector3t<T>& N)
 {
-	T u = acos(N(2)) * PR_1_PI;
-	T v = (T(1) + atan2(N(1), N(0)) * PR_1_PI) * 0.5f;
+	T u = (T(1) + atan2(N(1), N(0)) * PR_1_PI) * 0.5f;
+	T v = acos(N(2)) * PR_1_PI;
 	return Vector2t<T>(u, v);
 }
 
@@ -40,7 +40,7 @@ inline Vector3t<T> cartesian(const T& theta, const T& phi)
 template <typename T>
 inline Vector3t<T> cartesian_from_uv(const T& u, const T& v)
 {
-	return cartesian(u * PR_PI, (2 * v - T(1)) * PR_PI);
+	return cartesian(v * PR_PI, u * 2 * PR_PI);
 }
 
 } // namespace Spherical

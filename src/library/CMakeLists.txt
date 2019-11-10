@@ -22,6 +22,7 @@ SET(PR_Src
   camera/ICamera.cpp
   camera/ICamera.h
   container/IndexSort.h
+  container/Interval.h
   container/kdTreeBuilder.cpp
   container/kdTreeBuilder.h
   container/kdTreeBuilderNaive.cpp
@@ -118,6 +119,10 @@ SET(PR_Src
   renderer/RenderTileSession.h
   renderer/RenderTileSession.inl
   renderer/RenderTileStatistics.cpp
+  sampler/Distribution1D.cpp
+  sampler/Distribution1D.h
+  sampler/Distribution2D.cpp
+  sampler/Distribution2D.h
   sampler/HaltonSampler.cpp
   sampler/HaltonSampler.h
   sampler/MultiJitteredSampler.cpp
@@ -153,7 +158,7 @@ SET(PR_Src
   spectral/xyz2spec.inl
   shader/ShadingGroup.h
   shader/ShadingPoint.h
-  shader/ShadingSocket.h
+  shader/Socket.h
   thread/Thread.cpp
   thread/Thread.h
   thread/Thread.inl

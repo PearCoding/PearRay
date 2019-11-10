@@ -4,7 +4,6 @@
 #include "math/Projection.h"
 #include "math/Tangent.h"
 #include "registry/Registry.h"
-#include "shader/ConstShadingSocket.h"
 
 namespace PR {
 class DistantLight : public IInfiniteLight {

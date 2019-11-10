@@ -1,4 +1,4 @@
-#include "ConstShadingSocket.h"
+#include "ConstSocket.h"
 
 #include <sstream>
 
@@ -39,7 +39,42 @@ float ConstSpectralShadingSocket::relativeLuminance(const ShadingPoint&) const
 	return mValue.relativeLuminance();
 }
 
+Vector2i ConstSpectralShadingSocket::queryRecommendedSize() const
+{
+	return Vector2i(1, 1);
+}
+
 std::string ConstSpectralShadingSocket::dumpInformation() const
+{
+	std::stringstream sstream;
+	sstream << mValue;
+	return sstream.str();
+}
+
+/////////////////////////////////////
+
+ConstSpectralMapSocket::ConstSpectralMapSocket(const Spectrum& f)
+	: FloatSpectralMapSocket()
+	, mValue(f)
+{
+}
+
+float ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
+{
+	return mValue[ctx.Index];
+}
+
+float ConstSpectralMapSocket::relativeLuminance(const MapSocketCoord&) const
+{
+	return mValue.relativeLuminance();
+}
+
+Vector2i ConstSpectralMapSocket::queryRecommendedSize() const
+{
+	return Vector2i(1, 1);
+}
+
+std::string ConstSpectralMapSocket::dumpInformation() const
 {
 	std::stringstream sstream;
 	sstream << mValue;

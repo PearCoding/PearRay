@@ -1,13 +1,13 @@
-#include "ImageShadingSocket.h"
+#include "ImageMapSocket.h"
 #include "spectral/RGBConverter.h"
 
 #include "Logger.h"
 
 namespace PR {
-ImageShadingSocket::ImageShadingSocket(OIIO::TextureSystem* tsys,
-									   const OIIO::TextureOpt& options,
-									   const std::string& filename)
-	: FloatSpectralShadingSocket()
+ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
+							   const OIIO::TextureOpt& options,
+							   const std::string& filename)
+	: FloatSpectralMapSocket()
 	, mFilename(filename)
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
@@ -35,19 +35,21 @@ ImageShadingSocket::ImageShadingSocket(OIIO::TextureSystem* tsys,
 	}
 }
 
-float ImageShadingSocket::eval(const ShadingPoint& ctx) const
+float ImageMapSocket::eval(const MapSocketCoord& ctx) const
 {
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
 
-	float rgb[3];
 	OIIO::TextureOpt ops = mTextureOptions;
-	if (mIsPtex)
-		ops.subimage = ctx.PrimID;
 
+	if (mIsPtex)
+		ops.subimage = ctx.Face;
+
+	float rgb[3];
 	if (!mTextureSystem->texture(mFilename, ops,
-								 ctx.Geometry.UVW[0], ctx.Geometry.UVW[1],
-								 0, 0, 0, 0,
-								 1, &rgb[0])) {
+								 ctx.UV(0), ctx.UV(1),
+								 0,0,0,0,
+								 //ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
+								 3, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup texture: " << err << std::endl;
 		return 0;
@@ -57,23 +59,26 @@ float ImageShadingSocket::eval(const ShadingPoint& ctx) const
 
 	float xyz[3];
 	RGBConverter::toXYZ(rgb[0], rgb[1], rgb[2], xyz[0], xyz[1], xyz[2]);
-	if (ctx.Ray.WavelengthIndex > 2)
+	if (ctx.Index > 2)
 		return rgb[0];
 	else
-		return rgb[ctx.Ray.WavelengthIndex];
+		return rgb[ctx.Index];
 }
 
-float ImageShadingSocket::relativeLuminance(const ShadingPoint& ctx) const
+float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 {
+	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
+
 	OIIO::TextureOpt ops = mTextureOptions;
 
 	if (mIsPtex)
-		ops.subimage = ctx.PrimID;
+		ops.subimage = ctx.Face;
 
 	float rgb[3];
 	if (!mTextureSystem->texture(mFilename, ops,
-								 ctx.Geometry.UVW[0], ctx.Geometry.UVW[1],
-								 0, 0, 0, 0,
+								 ctx.UV(0), ctx.UV(1),
+								 0,0,0,0,
+								 //ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
 								 3, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;
@@ -83,7 +88,17 @@ float ImageShadingSocket::relativeLuminance(const ShadingPoint& ctx) const
 	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
 }
 
-std::string ImageShadingSocket::dumpInformation() const
+Vector2i ImageMapSocket::queryRecommendedSize() const
+{
+	const OIIO::ImageSpec* spec = mTextureSystem->imagespec(mFilename);
+	if (spec) {
+		return Vector2i(spec->width, spec->height);
+	} else {
+		return Vector2i(1, 1);
+	}
+}
+
+std::string ImageMapSocket::dumpInformation() const
 {
 	std::stringstream sstream;
 	sstream << mFilename;

@@ -5,8 +5,6 @@
 #include "math/Projection.h"
 #include "math/Tangent.h"
 #include "renderer/RenderContext.h"
-#include "shader/ConstShadingSocket.h"
-#include "shader/ShadingSocket.h"
 
 #include <sstream>
 
@@ -105,14 +103,12 @@ public:
 		const std::string albedoName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "albedo", "");
 
-		float roughness
-			= reg.getForObject<float>(RG_MATERIAL, uuid, "roughness", 0.0f);
-		std::shared_ptr<FloatSpectralShadingSocket> roughnessS
-			= std::make_shared<ConstSpectralShadingSocket>(Spectrum(env.spectrumDescriptor(), roughness));
+		const std::string roughnessName = reg.getForObject<std::string>(
+			RG_MATERIAL, uuid, "roughness", "");
 
 		return std::make_shared<OrenNayarMaterial>(id,
 												   env.getSpectralShadingSocket(albedoName, 1),
-												   roughnessS);
+												   env.getSpectralShadingSocket(roughnessName, 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

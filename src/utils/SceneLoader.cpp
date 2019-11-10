@@ -21,7 +21,7 @@
 #include "mesh/TriMesh.h"
 #include "parser/mesh/TriMeshInlineParser.h"
 #include "parser/texture/TextureParser.h"
-#include "shader/ConstShadingSocket.h"
+#include "shader/ConstSocket.h"
 #include "spectral/RGBConverter.h"
 #include "spectral/SpectrumDescriptor.h"
 #include "spectral/XYZConverter.h"

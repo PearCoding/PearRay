@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shader/ShadingSocket.h"
+#include "shader/Socket.h"
 #include "spectral/Spectrum.h"
 
 namespace PR {
@@ -19,6 +19,19 @@ public:
 	explicit ConstSpectralShadingSocket(const Spectrum& f);
 	float eval(const ShadingPoint& ctx) const override;
 	float relativeLuminance(const ShadingPoint& ctx) const override;
+	Vector2i queryRecommendedSize() const override;
+	std::string dumpInformation() const override;
+
+private:
+	Spectrum mValue;
+};
+
+class PR_LIB_UTILS ConstSpectralMapSocket : public FloatSpectralMapSocket {
+public:
+	explicit ConstSpectralMapSocket(const Spectrum& f);
+	float eval(const MapSocketCoord& ctx) const override;
+	float relativeLuminance(const MapSocketCoord& ctx) const override;
+	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
 private:

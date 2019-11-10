@@ -16,7 +16,8 @@
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
 #include "scene/Scene.h"
-#include "shader/ConstShadingSocket.h"
+#include "shader/ConstSocket.h"
+#include "shader/MapShadingSocket.h"
 #include "spectral/RGBConverter.h"
 #include "spectral/SpectrumDescriptor.h"
 #include "spectral/XYZConverter.h"
@@ -123,7 +124,7 @@ void Environment::loadPlugins(const std::string& basedir)
 			continue;
 
 		const std::string filename = entry.path().stem().string();
-		const std::string ext = entry.path().extension().string();
+		const std::string ext	  = entry.path().extension().string();
 
 		if (ext != ".so" && ext != ".dll")
 			continue;
@@ -411,6 +412,10 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 			auto socket = getShadingSocket<FloatSpectralShadingSocket>(tname);
 			if (socket)
 				return socket;
+		} else if(hasMapSocket(tname)) {
+			auto socket = getMapSocket(tname);
+			if (socket)
+				return std::make_shared<MapShadingSocket>(socket);
 		}
 	}
 
@@ -455,5 +460,40 @@ std::shared_ptr<FloatScalarShadingSocket> Environment::lookupScalarShadingSocket
 	}
 
 	return nullptr;
+}
+
+///////////////////
+std::shared_ptr<FloatSpectralMapSocket> Environment::getSpectralMapSocket(
+	const std::string& name,
+	float def) const
+{
+	return getSpectralMapSocket(name, Spectrum(mSpectrumDescriptor, def));
+}
+
+std::shared_ptr<FloatSpectralMapSocket> Environment::getSpectralMapSocket(
+	const std::string& name,
+	const Spectrum& def) const
+{
+	try {
+		float val = std::stof(name);
+		return std::make_shared<ConstSpectralMapSocket>(Spectrum(mSpectrumDescriptor, val));
+	} catch (const std::invalid_argument&) {
+		// Nothing
+	}
+
+	if (name.find_first_of("{t} ") == 0) {
+		std::string tname = name.substr(4);
+
+		if (hasMapSocket(tname)) {
+			auto socket = getMapSocket(tname);
+			if (socket)
+				return socket;
+		}
+	}
+
+	if (hasSpectrum(name))
+		return std::make_shared<ConstSpectralMapSocket>(getSpectrum(name));
+
+	return std::make_shared<ConstSpectralMapSocket>(def);
 }
 } // namespace PR

@@ -90,14 +90,14 @@ inline void Environment::addShadingSocket(const std::string& name,
 {
 	//PR_ASSERT(output, "Given output has to be valid");
 	PR_ASSERT(!hasShadingSocket(name), "Given name should be unique");
-	mNamedShadingSocket[name] = output;
+	mNamedShadingSockets[name] = output;
 }
 
 template <typename Socket>
 inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& name) const
 {
 	try {
-		return boost::get<std::shared_ptr<Socket>>(mNamedShadingSocket.at(name));
+		return boost::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
 	} catch (const boost::bad_get& e) {
 		return std::shared_ptr<Socket>();
 	}
@@ -105,13 +105,31 @@ inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& 
 
 inline bool Environment::hasShadingSocket(const std::string& name) const
 {
-	return mNamedShadingSocket.count(name) != 0;
+	return mNamedShadingSockets.count(name) != 0;
 }
 
 template <typename Socket>
 inline bool Environment::isShadingSocket(const std::string& name) const
 {
 	return hasShadingSocket(name) && getShadingSocket<Socket>(name);
+}
+
+inline std::shared_ptr<FloatSpectralMapSocket> Environment::getMapSocket(
+	const std::string& name) const
+{
+	return mNamedMapSockets.at(name);
+}
+
+inline bool Environment::hasMapSocket(const std::string& name) const
+{
+	return mNamedMapSockets.count(name) != 0;
+}
+
+inline void Environment::addMapSocket(const std::string& name,
+						 const std::shared_ptr<FloatSpectralMapSocket>& m)
+{
+	PR_ASSERT(!hasMapSocket(name), "Given name should be unique");
+	mNamedMapSockets[name] = m;
 }
 
 inline void* Environment::textureSystem() { return mTextureSystem; }

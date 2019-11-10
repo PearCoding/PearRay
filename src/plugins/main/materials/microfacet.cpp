@@ -7,7 +7,6 @@
 #include "math/Reflection.h"
 #include "math/Spherical.h"
 #include "renderer/RenderContext.h"
-#include "shader/ShadingSocket.h"
 
 #include <sstream>
 
