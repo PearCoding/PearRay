@@ -46,8 +46,8 @@ float ImageMapSocket::eval(const MapSocketCoord& ctx) const
 
 	float rgb[3];
 	if (!mTextureSystem->texture(mFilename, ops,
-								 ctx.UV(0), ctx.UV(1),
-								 0,0,0,0,
+								 ctx.UV(0), 1 - ctx.UV(1),
+								 0, 0, 0, 0,
 								 //ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
 								 3, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();
@@ -76,8 +76,8 @@ float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 
 	float rgb[3];
 	if (!mTextureSystem->texture(mFilename, ops,
-								 ctx.UV(0), ctx.UV(1),
-								 0,0,0,0,
+								 ctx.UV(0), 1 - ctx.UV(1),
+								 0, 0, 0, 0,
 								 //ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
 								 3, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();

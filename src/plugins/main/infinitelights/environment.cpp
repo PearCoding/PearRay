@@ -22,7 +22,7 @@ public:
 
 			mDistribution->generate([&](size_t x, size_t y) {
 				float u = x / (float)recSize(0);
-				float v = y / (float)recSize(1);
+				float v = 1 - y / (float)recSize(1);
 
 				float sinTheta = std::sin(PR_PI * (y + 0.5f) / recSize(1));
 
@@ -40,6 +40,7 @@ public:
 	{
 		MapSocketCoord coord;
 		coord.UV	= Spherical::uv_from_normal(in.Point.Ray.Direction);
+		coord.UV(1) = 1 - coord.UV(1);
 		coord.Index = in.Point.Ray.WavelengthIndex;
 
 		out.Weight = mRadiance->eval(coord);
@@ -56,11 +57,12 @@ public:
 
 			MapSocketCoord coord;
 			coord.UV	= uv;
+			coord.UV(1) = 1 - coord.UV(1);
 			coord.Index = in.Point.Ray.WavelengthIndex;
 			out.Weight  = mRadiance->eval(coord);
 
 			const float sinTheta = std::sin(uv(1) * PR_PI);
-			if(sinTheta > PR_EPSILON)
+			if (sinTheta > PR_EPSILON)
 				out.PDF_S = 0.0f;
 			else
 				out.PDF_S /= (2 * PR_PI * PR_PI * sinTheta);
@@ -70,6 +72,7 @@ public:
 
 			MapSocketCoord coord;
 			coord.UV	= in.RND;
+			coord.UV(1) = 1 - coord.UV(1);
 			coord.Index = in.Point.Ray.WavelengthIndex;
 			out.Weight  = mRadiance->eval(coord);
 		}
