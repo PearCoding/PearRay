@@ -52,7 +52,7 @@ public:
 	inline bool isValid() const;
 
 	void clear();
-	void build(const std::string& container_file, bool loadOnly = false);
+	void build(const std::wstring& container_file, bool loadOnly = false);
 	inline bool isBuilt() const { return mKDTree != nullptr; }
 
 	float faceArea(size_t f, const Eigen::Affine3f& transform) const;
@@ -79,8 +79,8 @@ public:
 							  GeometryPoint& pt) const;
 
 private:
-	void buildTree(const std::string& container_file);
-	void loadTree(const std::string& container_file);
+	void buildTree(const std::wstring& container_file);
+	void loadTree(const std::wstring& container_file);
 
 	BoundingBox mBoundingBox;
 	class kdTreeCollider* mKDTree;

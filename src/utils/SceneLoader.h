@@ -20,12 +20,12 @@ class PR_LIB_UTILS SceneLoader {
 	PR_CLASS_NON_CONSTRUCTABLE(SceneLoader);
 
 public:
-	static std::shared_ptr<Environment> loadFromFile(const std::string& wrkDir,
-													 const std::string& path,
-													 const std::string& pluginPath = "");
-	static std::shared_ptr<Environment> loadFromString(const std::string& wrkDir,
+	static std::shared_ptr<Environment> loadFromFile(const std::wstring& wrkDir,
+													 const std::wstring& path,
+													 const std::wstring& pluginPath = L"");
+	static std::shared_ptr<Environment> loadFromString(const std::wstring& wrkDir,
 													   const std::string& source,
-													   const std::string& pluginPath = "");
+													   const std::wstring& pluginPath = L"");
 
 	static Vector3f getVector(const DL::DataGroup& arr, bool& ok);
 	static Eigen::Matrix4f getMatrix(const DL::DataGroup& arr, bool& ok);

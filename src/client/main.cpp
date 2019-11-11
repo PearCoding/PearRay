@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 #else
 	sstream << "pr_" << t << ".log";
 #endif
-	const bf::path logFile = options.OutputDir + "/" + sstream.str();
+	const bf::path logFile = options.OutputDir / sstream.str();
 
 	// If the plugin path is empty, use the current working directory
 	if (options.PluginPath.empty()) {
@@ -64,7 +64,9 @@ int main(int argc, char** argv)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) " << PR_VENDOR_STRING << std::endl;
 
 	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(
-		options.OutputDir, options.InputFile, options.PluginPath);
+		options.OutputDir.generic_wstring(),
+		options.InputFile.generic_wstring(),
+		options.PluginPath.generic_wstring());
 
 	if (!env) {
 		if (!options.IsQuiet)

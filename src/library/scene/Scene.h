@@ -29,7 +29,7 @@ public:
 		  const std::vector<std::shared_ptr<IMaterial>>& materials,
 		  const std::vector<std::shared_ptr<IEmission>>& emissions,
 		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
-		  const std::string& cntFile);
+		  const std::wstring& cntFile);
 	virtual ~Scene();
 
 	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
@@ -53,8 +53,8 @@ private:
 	inline void traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 									HitStream& hits, Func nonHit) const;
 
-	void buildTree(const std::string& file);
-	void loadTree(const std::string& file);
+	void buildTree(const std::wstring& file);
+	void loadTree(const std::wstring& file);
 
 	std::shared_ptr<ICamera> mActiveCamera;
 	std::vector<std::shared_ptr<IEntity>> mEntities;

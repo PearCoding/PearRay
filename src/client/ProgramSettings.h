@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PR_Config.h"
-#include <string>
+#include <boost/filesystem.hpp>
 
 enum DisplayDriverOption
 {
@@ -12,9 +12,9 @@ enum DisplayDriverOption
 class ProgramSettings
 {
 public:
-	std::string InputFile;
-	std::string OutputDir;
-	std::string PluginPath;
+	boost::filesystem::path InputFile;
+	boost::filesystem::path OutputDir;
+	boost::filesystem::path PluginPath;
 
 	bool IsVerbose;
 	bool IsQuiet;

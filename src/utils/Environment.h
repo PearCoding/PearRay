@@ -41,9 +41,9 @@ public:
 
 class PR_LIB_UTILS Environment {
 public:
-	explicit Environment(const std::string& workdir,
+	explicit Environment(const std::wstring& workdir,
 						 const std::shared_ptr<SpectrumDescriptor>& specDesc,
-						 const std::string& plugdir,
+						 const std::wstring& plugdir,
 						 bool useStandardLib = true);
 	virtual ~Environment();
 
@@ -104,8 +104,8 @@ public:
 
 	inline void* textureSystem();
 
-	inline void setWorkingDir(const std::string& dir);
-	inline std::string workingDir() const;
+	inline void setWorkingDir(const std::wstring& dir);
+	inline std::wstring workingDir() const;
 
 	inline OutputSpecification& outputSpecification();
 	inline const Registry& registry() const;
@@ -126,12 +126,12 @@ private:
 		const std::string& name) const;
 
 	void freeze(const std::shared_ptr<RenderContext>& ctx);
-	void loadPlugins(const std::string& basedir);
-	void loadOnePlugin(const std::string& name);
+	void loadPlugins(const std::wstring& basedir);
+	void loadOnePlugin(const std::wstring& name);
 
 	Registry mRegistry;
 
-	std::string mWorkingDir;
+	std::wstring mWorkingDir;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 
 	// Order matters: PluginManager should be before other managers

@@ -7,8 +7,6 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/positional_options.hpp>
 
-#include <boost/filesystem.hpp>
-
 #include <iostream>
 
 using namespace PR;
@@ -235,10 +233,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		std::cout << "Invalid output path given." << std::endl;
 		return false;
 	}
-	OutputDir = directoryPath.string();
-	// Remove trailing slashes
-	if(!OutputDir.empty() && OutputDir.back() == '/')
-		OutputDir.pop_back();
+	OutputDir = directoryPath;
 
 	IsVerbose = (vm.count("verbose") != 0);
 	IsQuiet = (vm.count("quiet") != 0);

@@ -7,6 +7,11 @@
 
 namespace PR {
 #ifdef PR_OS_WINDOWS
+std::wstring encodePath(const std::wstring& path)
+{
+	return path;
+}
+
 std::wstring encodePath(const std::string& path)
 {
 	std::wstring ret;
@@ -18,7 +23,13 @@ std::wstring encodePath(const std::string& path)
 	return ret;
 }
 #else
-std::string encodePath(const std::string& path) {
+std::string encodePath(const std::wstring& path)
+{
+	return std::string(path.begin(), path.end());
+}
+
+std::string encodePath(const std::string& path)
+{
 	return path;
 }
 #endif

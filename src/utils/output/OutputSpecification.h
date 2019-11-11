@@ -15,7 +15,7 @@ class PR_LIB_UTILS OutputSpecification {
 	PR_CLASS_NON_COPYABLE(OutputSpecification);
 
 public:
-	OutputSpecification(const std::string& wrkDir);
+	OutputSpecification(const std::wstring& wrkDir);
 	virtual ~OutputSpecification();
 
 	void init(const std::shared_ptr<RenderContext>& context);
@@ -29,7 +29,7 @@ public:
 
 private:
 	bool mInit;
-	std::string mWorkingDir;
+	std::wstring mWorkingDir;
 	ImageWriter mImageWriter;
 
 	struct File {

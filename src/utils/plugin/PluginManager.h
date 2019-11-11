@@ -9,19 +9,19 @@ namespace PR {
 class Registry;
 class PR_LIB_UTILS PluginManager {
 public:
-	std::shared_ptr<IPlugin> load(const std::string& path, const Registry& reg,
+	std::shared_ptr<IPlugin> load(const std::wstring& path, const Registry& reg,
 								  bool useFallbacks = true);
 
-	std::shared_ptr<IPlugin> get(const std::string& path) const;
-	bool has(const std::string& path) const;
+	std::shared_ptr<IPlugin> get(const std::wstring& path) const;
+	bool has(const std::wstring& path) const;
 
-	void unload(const std::string& path);
+	void unload(const std::wstring& path);
 	void unloadAll();
 
 	std::string dumpInformation() const;
 
 private:
-	bool try_load(const std::string& path, const Registry& reg, bool useFallbacks);
+	bool try_load(const std::wstring& path, const Registry& reg, bool useFallbacks);
 
 	struct PluginLibPair {
 		std::shared_ptr<IPlugin> Plugin;
@@ -32,6 +32,6 @@ private:
 			Library.unload();
 		}
 	};
-	std::map<std::string, PluginLibPair> mLibraries;
+	std::map<std::wstring, PluginLibPair> mLibraries;
 };
 } // namespace PR

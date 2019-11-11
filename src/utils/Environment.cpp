@@ -31,9 +31,9 @@
 #include <boost/regex.hpp>
 
 namespace PR {
-Environment::Environment(const std::string& workdir,
+Environment::Environment(const std::wstring& workdir,
 						 const std::shared_ptr<SpectrumDescriptor>& specDesc,
-						 const std::string& plugdir,
+						 const std::wstring& plugdir,
 						 bool useStandardLib)
 	: mWorkingDir(workdir)
 	, mSpectrumDescriptor(specDesc)
@@ -110,12 +110,12 @@ void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMappe
 	mOutputSpecification.save(renderer, toneMapper, force);
 }
 
-void Environment::loadPlugins(const std::string& basedir)
+void Environment::loadPlugins(const std::wstring& basedir)
 {
 #ifdef PR_DEBUG
-	static const boost::regex e("(lib)?pr_pl_([\\w_]+)_d");
+	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
 #else
-	static const boost::regex e("(lib)?pr_pl_([\\w_]+)");
+	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)");
 #endif
 
 	for (auto& entry :
@@ -123,33 +123,30 @@ void Environment::loadPlugins(const std::string& basedir)
 		if (!boost::filesystem::is_regular_file(entry))
 			continue;
 
-		const std::string filename = entry.path().stem().string();
-		const std::string ext	  = entry.path().extension().string();
+		const std::wstring filename = entry.path().stem().generic_wstring();
+		const std::wstring ext		= entry.path().extension().generic_wstring();
 
-		if (ext != ".so" && ext != ".dll")
+		if (ext != L".so" && ext != L".dll")
 			continue;
 
-		boost::smatch what;
+		boost::wsmatch what;
 		if (boost::regex_match(filename, what, e)) {
-
 #ifndef PR_DEBUG
 			// Ignore debug builds
-			if (filename.substr(filename.size() - 2, 2) == "_d")
+			if (filename.substr(filename.size() - 2, 2) == L"_d")
 				continue;
 #endif
 
-			loadOnePlugin(entry.path().string());
+			loadOnePlugin(entry.path().generic_wstring());
 		}
 	}
 }
 
-void Environment::loadOnePlugin(const std::string& name)
+void Environment::loadOnePlugin(const std::wstring& name)
 {
 	auto plugin = mPluginManager->load(name, mRegistry);
-	if (!plugin) {
-		PR_LOG(L_ERROR) << "Could not load plugin " << name << std::endl;
+	if (!plugin)
 		return;
-	}
 
 	switch (plugin->type()) {
 	case PT_INTEGRATOR:
@@ -171,7 +168,7 @@ void Environment::loadOnePlugin(const std::string& name)
 		mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityFactory>(plugin));
 		break;
 	default:
-		PR_LOG(L_ERROR) << "Plugin " << name << " has unknown plugin type." << std::endl;
+		PR_LOG(L_ERROR) << "Plugin " << boost::filesystem::path(name) << " has unknown plugin type." << std::endl;
 		return;
 	}
 }
@@ -227,7 +224,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 														   materials,
 														   emissions,
 														   inflights,
-														   mWorkingDir + "/scene.cnt");
+														   mWorkingDir + L"/scene.cnt");
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;
 		return nullptr;

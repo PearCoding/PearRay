@@ -1,10 +1,11 @@
 #include "ImageWriter.h"
 #include "Logger.h"
-#include "Version.h"
 #include "SpectralFile.h"
+#include "Version.h"
 #include "renderer/RenderContext.h"
 
 #include <OpenImageIO/imageio.h>
+#include <boost/filesystem.hpp>
 
 OIIO_NAMESPACE_USING
 
@@ -49,7 +50,7 @@ void ImageWriter::deinit()
 	mRenderer = nullptr;
 }
 
-bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
+bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					   const std::vector<IM_ChannelSettingSpec>& chSpec,
 					   const std::vector<IM_ChannelSetting1D>& ch1d,
 					   const std::vector<IM_ChannelSettingCounter>& chcounter,
@@ -68,7 +69,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 		return false;
 
 	ImageSpec spec(rw, rh,
-				   channelCount, TypeDesc::FLOAT);
+				   (int)channelCount, TypeDesc::FLOAT);
 	spec.full_x		 = 0;
 	spec.full_y		 = 0;
 	spec.full_width  = mRenderer->settings().filmWidth;
@@ -110,11 +111,12 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	spec.attribute("Software", "PearRay " PR_VERSION_STRING);
 	spec.attribute("IPTC:ProgramVersion", PR_VERSION_STRING);
 
+	const std::string utfFilename = boost::filesystem::path(file).generic_string();
 // Create file
 #if OIIO_PLUGIN_VERSION >= 22
-	std::unique_ptr<ImageOutput> out = ImageOutput::create(file);
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(utfFilename);
 #else
-	ImageOutput* out = ImageOutput::create(file);
+	ImageOutput* out = ImageOutput::create(utfFilename);
 #endif
 	if (!out)
 		return false;
@@ -205,7 +207,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 		return false;
 	}
 
-	out->open(file, spec);
+	out->open(utfFilename, spec);
 	for (uint32 y = 0; y < rh; ++y) {
 		for (uint32 x = 0; x < rw; ++x) {
 			uint32 id = x * channelCount;
@@ -363,7 +365,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::string& file,
 	return true;
 }
 
-bool ImageWriter::save_spectral(const std::string& file,
+bool ImageWriter::save_spectral(const std::wstring& file,
 								const std::shared_ptr<FrameBufferFloat>& spec,
 								bool compress) const
 {

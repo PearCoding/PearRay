@@ -93,7 +93,7 @@ URI URI::makeAbsolute(const URI& p, const URI& base)
 	std::string newPath = base.path();
 	PR_ASSERT(!newPath.empty(), "Absolute base path can not be empty");
 
-	if (*newPath.end() != '/')
+	if (newPath.back() != '/')
 		newPath += '/';
 
 	std::string::const_iterator it = p.path().cbegin();

@@ -9,7 +9,7 @@ constexpr static char PR_PLUGIN_ENV_VAR_SEPERATOR = ':';
 constexpr static const char* PR_PLUGIN_REG_VAR	= "plugins/path";
 constexpr static char PR_PLUGIN_REG_VAR_SEPERATOR = ':';
 
-bool PluginManager::try_load(const std::string& path, const Registry& reg, bool useFallbacks)
+bool PluginManager::try_load(const std::wstring& path, const Registry& reg, bool useFallbacks)
 {
 	if (has(path)) {
 		return true;
@@ -56,9 +56,9 @@ bool PluginManager::try_load(const std::string& path, const Registry& reg, bool 
 			}
 		}
 	}
-
+	
 	if (!lib) {
-		PR_LOG(L_ERROR) << "Could not load plugin " << path << std::endl;
+		PR_LOG(L_ERROR) << "Could not load plugin " << op << std::endl;
 		return false;
 	}
 
@@ -70,22 +70,22 @@ bool PluginManager::try_load(const std::string& path, const Registry& reg, bool 
 	}
 
 	if (!ptr) {
-		PR_LOG(L_ERROR) << "Could not get plugin interface for " << path << std::endl;
+		PR_LOG(L_ERROR) << "Could not get plugin interface for " << op << std::endl;
 		return false;
 	}
 
 	if (ptr->APIVersion < PR_PLUGIN_API_VERSION) {
-		PR_LOG(L_ERROR) << "Plugin " << path << " has API version less " << PR_PLUGIN_API_VERSION << std::endl;
+		PR_LOG(L_ERROR) << "Plugin " << op << " has API version less " << PR_PLUGIN_API_VERSION << std::endl;
 		return false;
 	}
 
 	if (ptr->APIVersion > PR_PLUGIN_API_VERSION) {
-		PR_LOG(L_ERROR) << "Plugin " << path << " has API version greater " << PR_PLUGIN_API_VERSION << ". It is from the future :O" << std::endl;
+		PR_LOG(L_ERROR) << "Plugin " << op << " has API version greater " << PR_PLUGIN_API_VERSION << ". It is from the future :O" << std::endl;
 		return false;
 	}
 
 	if (!ptr->InitFunction) {
-		PR_LOG(L_ERROR) << "Plugin " << path << " has no valid init function!" << std::endl;
+		PR_LOG(L_ERROR) << "Plugin " << op << " has no valid init function!" << std::endl;
 		return false;
 	}
 
@@ -95,17 +95,26 @@ bool PluginManager::try_load(const std::string& path, const Registry& reg, bool 
 	return true;
 }
 
-std::shared_ptr<IPlugin> PluginManager::load(const std::string& path, const Registry& reg, bool useFallbacks)
+std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Registry& reg, bool useFallbacks)
 {
 #ifdef PR_DEBUG
-	if (!try_load(path + "_d", reg, useFallbacks)) {
-		if (!try_load(path, reg, useFallbacks)) {
+	boost::filesystem::path p = path;
+	if (!try_load(path, reg, useFallbacks)) {
+		std::wstring rel_name	= p.stem().generic_wstring();
+		size_t pos			  = rel_name.find_last_of(L"_d");
+		if (pos == std::wstring::npos)
+			return nullptr;
+
+		rel_name.erase(pos, 2);
+
+		boost::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
+		if (!try_load(release_path.generic_wstring(), reg, useFallbacks)) {
 			return nullptr;
 		} else {
 			return get(path);
 		}
 	} else {
-		return get(path + "_d");
+		return get(path);
 	}
 #else
 	if (!try_load(path, reg, useFallbacks))
@@ -115,7 +124,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::string& path, const Regi
 #endif
 }
 
-void PluginManager::unload(const std::string& path)
+void PluginManager::unload(const std::wstring& path)
 {
 	mLibraries.erase(path);
 }
@@ -130,7 +139,7 @@ std::string PluginManager::dumpInformation() const
 	return "";
 }
 
-std::shared_ptr<IPlugin> PluginManager::get(const std::string& path) const
+std::shared_ptr<IPlugin> PluginManager::get(const std::wstring& path) const
 {
 	if (has(path))
 		return mLibraries.at(path).Plugin;
@@ -138,7 +147,7 @@ std::shared_ptr<IPlugin> PluginManager::get(const std::string& path) const
 		return nullptr;
 }
 
-bool PluginManager::has(const std::string& path) const
+bool PluginManager::has(const std::wstring& path) const
 {
 	return mLibraries.count(path);
 }

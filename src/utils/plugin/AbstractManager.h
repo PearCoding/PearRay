@@ -13,7 +13,7 @@ public:
 	AbstractManager()		   = default;
 	virtual ~AbstractManager() = default;
 
-	inline uint32 nextID() const { return size(); }
+	inline uint32 nextID() const { return (uint32)size(); }
 
 	inline uint32 addObject(const std::shared_ptr<OBJ>& mat)
 	{

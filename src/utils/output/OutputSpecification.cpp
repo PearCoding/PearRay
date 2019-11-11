@@ -13,7 +13,7 @@ using namespace PR;
 constexpr static const char* LOCK_FILE_NAME		= "/.pearray_lock";
 constexpr static const char* LOCK_IMG_FILE_NAME = "/.pearray_img_lock";
 
-OutputSpecification::OutputSpecification(const std::string& wrkDir)
+OutputSpecification::OutputSpecification(const std::wstring& wrkDir)
 	: mInit(false)
 	, mWorkingDir(wrkDir)
 {
@@ -27,7 +27,8 @@ OutputSpecification::~OutputSpecification()
 void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 {
 	if (mInit && !mWorkingDir.empty()) {
-		std::string f = mWorkingDir + LOCK_FILE_NAME;
+		auto workDir   = boost::filesystem::canonical(mWorkingDir);
+		auto f = workDir / LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
 	}
@@ -35,14 +36,15 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	mInit = true;
 
 	if (context && !mWorkingDir.empty()) {
-		mWorkingDir = boost::filesystem::canonical(mWorkingDir).string();
+		auto workDir = boost::filesystem::canonical(mWorkingDir);
+		mWorkingDir  = workDir.generic_wstring();
 
 		// Setup lock directory
-		if (!boost::filesystem::create_directory(mWorkingDir + LOCK_FILE_NAME))
-			PR_LOG(L_WARNING) << "Couldn't create lock directory " << mWorkingDir << LOCK_FILE_NAME << ". Maybe already running?" << std::endl;
+		if (!boost::filesystem::create_directory(workDir / LOCK_FILE_NAME))
+			PR_LOG(L_WARNING) << "Couldn't create lock directory " << workDir << LOCK_FILE_NAME << ". Maybe already running?" << std::endl;
 
-		if (!boost::filesystem::remove(mWorkingDir + LOCK_IMG_FILE_NAME)) // Remove it now
-			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
+		if (!boost::filesystem::remove(workDir / LOCK_IMG_FILE_NAME)) // Remove it now
+			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << workDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
 	}
 }
 
@@ -56,7 +58,8 @@ void OutputSpecification::deinit()
 		return;
 
 	if (!mWorkingDir.empty()) {
-		std::string f = mWorkingDir + LOCK_FILE_NAME;
+		auto workDir  = boost::filesystem::canonical(mWorkingDir);
+		auto f		 = workDir / LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f;
 	}
@@ -411,44 +414,46 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 							   ToneMapper& toneMapper, bool force) const
 {
-	if (!force && !boost::filesystem::create_directory(mWorkingDir + LOCK_IMG_FILE_NAME))
+	boost::filesystem::path path = mWorkingDir;
+
+	if (!force && !boost::filesystem::create_directory(path / LOCK_IMG_FILE_NAME))
 		return;
 
-	std::string resultDir = "/results";
+	std::wstring resultDir = L"/results";
 	if (renderer->index() > 0) {
-		std::stringstream stream;
-		stream << resultDir << "_" << renderer->index();
+		std::wstringstream stream;
+		stream << resultDir << L"_" << renderer->index();
 		resultDir = stream.str();
 	}
 
-	const std::string dir = mWorkingDir + resultDir;
-	boost::filesystem::create_directory(dir); // Doesn't matter if it works or not
+	const auto outputDir = path / resultDir;
+	boost::filesystem::create_directory(outputDir); // Doesn't matter if it works or not
 
 	for (const File& f : mFiles) {
-		const std::string filename = dir + "/" + f.Name + ".exr";
-		if (!mImageWriter.save(toneMapper, filename,
+		auto file = outputDir / (f.Name + ".exr");
+		if (!mImageWriter.save(toneMapper, file.generic_wstring(),
 							   f.SettingsSpectral, f.Settings1D, f.SettingsCounter, f.Settings3D))
-			PR_LOG(L_ERROR) << "Couldn't save image file " << filename << std::endl;
+			PR_LOG(L_ERROR) << "Couldn't save image file " << file << std::endl;
 
 		if (force)
-			PR_LOG(L_INFO) << "Saved file " << filename << std::endl;
+			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
 	}
 
 	for (const FileSpectral& f : mSpectralFiles) {
-		const std::string filename = dir + "/" + f.Name + ".spec";
+		auto file = outputDir / (f.Name + ".spec");
 
 		auto channel = renderer->output()->getSpectralChannel();
 		if (f.LPE >= 0)
 			channel = renderer->output()->getSpectralChannel(f.LPE);
 
-		if (!mImageWriter.save_spectral(filename, channel, f.Compress))
-			PR_LOG(L_ERROR) << "Couldn't save spectral file " << filename << std::endl;
+		if (!mImageWriter.save_spectral(file.generic_wstring(), channel, f.Compress))
+			PR_LOG(L_ERROR) << "Couldn't save spectral file " << file << std::endl;
 
 		if (force)
-			PR_LOG(L_INFO) << "Saved file " << filename << std::endl;
+			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
 	}
 
-	if (!force && !boost::filesystem::remove(mWorkingDir + LOCK_IMG_FILE_NAME)) // Remove it now
-		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << mWorkingDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
+	if (!force && !boost::filesystem::remove(path / LOCK_IMG_FILE_NAME)) // Remove it now
+		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << (path / LOCK_IMG_FILE_NAME) << "!" << std::endl;
 }
 } // namespace PR

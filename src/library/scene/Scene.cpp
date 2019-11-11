@@ -11,6 +11,7 @@
 #include "Logger.h"
 
 #include <fstream>
+#include <boost/filesystem.hpp>
 
 #define BUILDER kdTreeBuilder
 
@@ -20,7 +21,7 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 			 const std::vector<std::shared_ptr<IMaterial>>& materials,
 			 const std::vector<std::shared_ptr<IEmission>>& emissions,
 			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
-			 const std::string& cntFile)
+			 const std::wstring& cntFile)
 	: mActiveCamera(activeCamera)
 	, mEntities(entities)
 	, mMaterials(materials)
@@ -28,7 +29,7 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 	, mInfLights(infLights)
 	, mKDTree(nullptr)
 {
-	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure \"" << cntFile << "\"" << std::endl;
+	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure \"" << boost::filesystem::path(cntFile) << "\"" << std::endl;
 	buildTree(cntFile);
 	loadTree(cntFile);
 }
@@ -37,7 +38,7 @@ Scene::~Scene()
 {
 }
 
-void Scene::buildTree(const std::string& file)
+void Scene::buildTree(const std::wstring& file)
 {
 	size_t count = mEntities.size();
 	PR_LOG(L_INFO) << count << " Entities" << std::endl;
@@ -57,7 +58,7 @@ void Scene::buildTree(const std::string& file)
 	builder.save(stream);
 }
 
-void Scene::loadTree(const std::string& file)
+void Scene::loadTree(const std::wstring& file)
 {
 	std::ifstream stream(encodePath(file));
 	mKDTree.reset(new kdTreeCollider);

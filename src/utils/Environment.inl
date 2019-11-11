@@ -98,7 +98,7 @@ inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& 
 {
 	try {
 		return boost::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
-	} catch (const boost::bad_get& e) {
+	} catch (const boost::bad_get&) {
 		return std::shared_ptr<Socket>();
 	}
 }
@@ -134,8 +134,8 @@ inline void Environment::addMapSocket(const std::string& name,
 
 inline void* Environment::textureSystem() { return mTextureSystem; }
 
-inline void Environment::setWorkingDir(const std::string& dir) { mWorkingDir = dir; }
-inline std::string Environment::workingDir() const { return mWorkingDir; }
+inline void Environment::setWorkingDir(const std::wstring& dir) { mWorkingDir = dir; }
+inline std::wstring Environment::workingDir() const { return mWorkingDir; }
 
 inline OutputSpecification& Environment::outputSpecification() { return mOutputSpecification; }
 inline const Registry& Environment::registry() const { return mRegistry; }

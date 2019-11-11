@@ -52,13 +52,13 @@ public:
 	void init(const std::shared_ptr<RenderContext>& renderer);
 	void deinit();
 
-	bool save(ToneMapper& toneMapper, const std::string& file,
+	bool save(ToneMapper& toneMapper, const std::wstring& file,
 			  const std::vector<IM_ChannelSettingSpec>& spec,
 			  const std::vector<IM_ChannelSetting1D>& ch1d,
 			  const std::vector<IM_ChannelSettingCounter>& chcounter,
 			  const std::vector<IM_ChannelSetting3D>& ch3d) const;
 
-	bool save_spectral(const std::string& file,
+	bool save_spectral(const std::wstring& file,
 					   const std::shared_ptr<FrameBufferFloat>& spec,
 					   bool compress) const;
 

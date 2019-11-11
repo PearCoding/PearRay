@@ -32,7 +32,7 @@ void TriMesh::clear()
 	}
 }
 
-void TriMesh::build(const std::string& container_file, bool loadOnly)
+void TriMesh::build(const std::wstring& container_file, bool loadOnly)
 {
 	PR_ASSERT(isValid(), "Mesh has to be valid before build()!");
 
@@ -66,7 +66,7 @@ void TriMesh::build(const std::string& container_file, bool loadOnly)
 	}
 }
 
-void TriMesh::buildTree(const std::string& file)
+void TriMesh::buildTree(const std::wstring& file)
 {
 	BUILDER builder(this, [](void* observer, uint64 f) {
 								TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
@@ -106,7 +106,7 @@ void TriMesh::buildTree(const std::string& file)
 				   << "]]" << std::endl;
 }
 
-void TriMesh::loadTree(const std::string& file)
+void TriMesh::loadTree(const std::wstring& file)
 {
 	if (mKDTree) {
 		delete mKDTree;

@@ -31,12 +31,13 @@
 #include <Eigen/SVD>
 #include <fstream>
 #include <sstream>
+#include <boost/filesystem.hpp>
 
 /* This source code has many repetitive code lines. Better refactoring needed! */
 namespace PR {
-std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& wrkDir,
-													   const std::string& path,
-													   const std::string& pluginPath)
+std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& wrkDir,
+													   const std::wstring& path,
+													   const std::wstring& pluginPath)
 {
 	std::ifstream stream(encodePath(path));
 	std::string str((std::istreambuf_iterator<char>(stream)),
@@ -45,9 +46,9 @@ std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::string& wrkDir
 	return loadFromString(wrkDir, str, pluginPath);
 }
 
-std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkDir,
+std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrkDir,
 														 const std::string& source,
-														 const std::string& pluginPath)
+														 const std::wstring& pluginPath)
 {
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
@@ -91,7 +92,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& wrkD
 			std::shared_ptr<Environment> env;
 			try {
 				env = std::make_shared<Environment>(wrkDir, spectrumDescriptor, pluginPath);
-			} catch (const BadRenderEnvironment& e) {
+			} catch (const BadRenderEnvironment&) {
 				return nullptr;
 			}
 
@@ -561,9 +562,10 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 
 	PR_ASSERT(mesh, "After here it shouldn't be null");
 
-	std::stringstream str;
-	str << env->workingDir() << "/" << name << ".cnt";
-	mesh->build(str.str());
+	boost::filesystem::path path = env->workingDir();
+	path /= (name+".cnt");
+
+	mesh->build(path.generic_wstring());
 	env->addMesh(name, mesh);
 }
 
@@ -671,7 +673,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		}
 	}
 
-	PR_LOG(L_INFO) << spec << std::endl;
+	//PR_LOG(L_INFO) << spec << std::endl;
 
 	env->addSpectrum(name, spec);
 }
