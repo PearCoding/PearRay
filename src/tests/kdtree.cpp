@@ -60,7 +60,7 @@ PR_TEST("Two Half")
 	PR_CHECK_TRUE(mesh.isValid());
 
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build("tmp1.cnt", false);
+	mesh.build(L"tmp1.cnt", false);
 
 	RayPackage in;
 	in.Origin[0] = simdpp::make_float(-1.5, 1.5, 0, 0.6);
@@ -118,7 +118,7 @@ PR_TEST("Overlap")
 	PR_CHECK_TRUE(mesh.isValid());
 
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build("tmp2.cnt", false);
+	mesh.build(L"tmp2.cnt", false);
 
 	RayPackage in;
 	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 5);
@@ -177,7 +177,7 @@ PR_TEST("UV")
 	PR_CHECK_TRUE(mesh.isValid());
 
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build("tmp3.cnt", false);
+	mesh.build(L"tmp3.cnt", false);
 
 	PR_CHECK_TRUE(mesh.features() & TMF_HAS_UV);
 
@@ -227,7 +227,7 @@ PR_TEST("Single Intersection")
 	PR_CHECK_TRUE(mesh.isValid());
 
 	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build("tmp1.cnt", false);
+	mesh.build(L"tmp1.cnt", false);
 
 	Ray in;
 	in.Origin[0] = -1.5;
