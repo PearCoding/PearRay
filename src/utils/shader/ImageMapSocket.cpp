@@ -12,6 +12,7 @@ ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
 	, mIsPtex(false)
+	, mIsLinear(true)
 {
 	PR_ASSERT(tsys, "Given texture system has to be valid");
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
@@ -24,6 +25,9 @@ ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
 	if (!spec) {
 		PR_LOG(L_FATAL) << "Couldn't lookup texture specification of image " << mFilename << std::endl;
 	} else {
+		if (spec->get_string_attribute("oiio.ColorSpace") == "sRGB")
+			mIsLinear = false;
+
 		const OIIO::ImageIOParameter* ptex = spec->find_attribute("ptex:meshType", OIIO::TypeDesc::TypeString);
 		if (ptex && ptex->type() == OIIO::TypeDesc::TypeString) {
 			mIsPtex = true;
@@ -37,25 +41,8 @@ ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
 
 float ImageMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
-
-	OIIO::TextureOpt ops = mTextureOptions;
-
-	if (mIsPtex)
-		ops.subimage = ctx.Face;
-
 	float rgb[3];
-	if (!mTextureSystem->texture(mFilename, ops,
-								 ctx.UV(0), 1 - ctx.UV(1),
-								 0, 0, 0, 0,
-								 //ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
-								 3, &rgb[0])) {
-		std::string err = mTextureSystem->geterror();
-		PR_LOG(L_ERROR) << "Couldn't lookup texture: " << err << std::endl;
-		return 0;
-	}
-
-	// TODO: Add spectral support!
+	lookup(ctx, rgb);
 
 	float xyz[3];
 	RGBConverter::toXYZ(rgb[0], rgb[1], rgb[2], xyz[0], xyz[1], xyz[2]);
@@ -67,6 +54,14 @@ float ImageMapSocket::eval(const MapSocketCoord& ctx) const
 
 float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 {
+	float rgb[3];
+	lookup(ctx, rgb);
+	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
+}
+
+void ImageMapSocket::lookup(const MapSocketCoord& ctx, float rgb[3]) const
+{
+
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
 
 	OIIO::TextureOpt ops = mTextureOptions;
@@ -74,7 +69,6 @@ float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 	if (mIsPtex)
 		ops.subimage = ctx.Face;
 
-	float rgb[3];
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.UV(0), 1 - ctx.UV(1),
 								 0, 0, 0, 0,
@@ -82,10 +76,14 @@ float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 								 3, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;
-		return 0;
+		rgb[0] = 0.0f;
+		rgb[1] = 0.0f;
+		rgb[2] = 0.0f;
+		return;
 	}
 
-	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
+	if (!mIsLinear)
+		RGBConverter::linearize(rgb[0], rgb[1], rgb[2]);
 }
 
 Vector2i ImageMapSocket::queryRecommendedSize() const
@@ -100,8 +98,12 @@ Vector2i ImageMapSocket::queryRecommendedSize() const
 
 std::string ImageMapSocket::dumpInformation() const
 {
-	std::stringstream sstream;
-	sstream << mFilename;
-	return sstream.str();
+	std::stringstream stream;
+	stream << mFilename;
+	if(!mIsLinear)
+		stream << " [NonLinear]";
+	if(mIsPtex)
+		stream << " [Ptex]";
+	return stream.str();
 }
 } // namespace PR

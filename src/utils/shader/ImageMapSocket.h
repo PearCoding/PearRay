@@ -16,11 +16,14 @@ public:
 	std::string dumpInformation() const override;
 
 private:
+	void lookup(const MapSocketCoord& x, float rgb[3]) const;
+
 	OIIO::ustring mFilename;
 	void* mHandle;
 	OIIO::TextureOpt mTextureOptions;
 	OIIO::TextureSystem* mTextureSystem;
 
 	bool mIsPtex;
+	bool mIsLinear;
 };
 } // namespace PR
