@@ -40,9 +40,9 @@ public:
 	inline const Transform& transform() const;
 	inline const Transform& invTransform() const;
 
-	/* Matrix to be used by directions/normals */
-	inline const Eigen::Matrix3f& directionMatrix() const;
-	inline const Eigen::Matrix3f& invDirectionMatrix() const;
+	/* Matrix to be used by normals */
+	inline const Eigen::Matrix3f& normalMatrix() const;
+	inline const Eigen::Matrix3f& invNormalMatrix() const;
 
 	virtual std::string dumpInformation() const;
 

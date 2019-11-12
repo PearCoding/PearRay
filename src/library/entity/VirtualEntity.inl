@@ -51,13 +51,13 @@ inline const VirtualEntity::Transform& VirtualEntity::invTransform() const
 	return mInvTransformCache;
 }
 
-inline const Eigen::Matrix3f& VirtualEntity::directionMatrix() const
+inline const Eigen::Matrix3f& VirtualEntity::normalMatrix() const
 {
 	PR_ASSERT(isFrozen(), "Access outside frozen environment!");
 	return mNormalMatrixCache;
 }
 
-inline const Eigen::Matrix3f& VirtualEntity::invDirectionMatrix() const
+inline const Eigen::Matrix3f& VirtualEntity::invNormalMatrix() const
 {
 	PR_ASSERT(isFrozen(), "Access outside frozen environment!");
 	return mInvNormalMatrixCache;

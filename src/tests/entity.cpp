@@ -36,18 +36,17 @@ PR_TEST("matrix")
 	PR_CHECK_EQ(entity.transform().matrix(), Eigen::Matrix4f::Identity());
 }
 
-PR_TEST("direction matrix")
+PR_TEST("normal matrix")
 {
 	VirtualEntity entity(0, "Test");
-	entity.freeze(nullptr); // Exploit: VirtualEntity (not RenderEntity) does not make use of the parameter!
-	PR_CHECK_EQ(entity.directionMatrix(), Eigen::Matrix3f::Identity());
+	entity.freeze(nullptr); // Exploit: VirtualEntity (not IEntity) does not make use of the parameter!
+	PR_CHECK_EQ(entity.normalMatrix(), Eigen::Matrix3f::Identity());
 }
 
 PR_TEST("nonuniform scale")
 {
 	VirtualEntity::Transform trans;
     trans.fromPositionOrientationScale(Vector3f(0, 1, 1), Eigen::Quaternionf(Eigen::AngleAxisf(0.5f*PR_PI, Vector3f::UnitZ())), Vector3f(1, 2, 1));
-	//trans = Eigen::Translation3f(0,1,1) * Eigen::Quaternionf(Eigen::AngleAxisf(0.5f*PR_PI, Vector3f::UnitZ())) * Eigen::Scaling(Vector3f(1, 2, 1));
 
 	Vector3f pos(1, 1, 1);
 	Vector3f res = trans * pos;

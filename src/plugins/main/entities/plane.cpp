@@ -62,7 +62,7 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
-		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
 		mPlane.intersects(in_local, out);
 
@@ -75,7 +75,7 @@ public:
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
-		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
 		mPlane.intersects(in_local, out);
 
@@ -97,9 +97,9 @@ public:
 							  GeometryPoint& pt) const override
 	{
 		pt.P  = transform() * mPlane.surfacePoint(u, v);
-		pt.N  = directionMatrix() * mPlane.normal();
-		pt.Nx = directionMatrix() * mPlane.xAxis().normalized();
-		pt.Ny = directionMatrix() * mPlane.yAxis().normalized();
+		pt.N  = normalMatrix() * mPlane.normal();
+		pt.Nx = normalMatrix() * mPlane.xAxis().normalized();
+		pt.Ny = normalMatrix() * mPlane.yAxis().normalized();
 
 		pt.N.normalize();
 		pt.Nx.normalize();

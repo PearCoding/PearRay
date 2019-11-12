@@ -4,7 +4,6 @@
 
 #include "Logger.h"
 
-
 namespace PR {
 VirtualEntity::VirtualEntity(uint32 id, const std::string& name)
 	: IFreezable()
@@ -39,6 +38,9 @@ void VirtualEntity::onFreeze(RenderContext*)
 
 	if (sca.squaredNorm() <= PR_EPSILON)
 		PR_LOG(L_WARNING) << "VirtualEntity " << mName << " has zero scale attribute" << std::endl;
+
+	if (std::abs((sca * isca).sum() - 3) > PR_EPSILON)
+		PR_LOG(L_WARNING) << "VirtualEntity " << mName << " scale and inverse scale do not match" << std::endl;
 }
 
 std::string VirtualEntity::dumpInformation() const
@@ -68,4 +70,4 @@ std::string VirtualEntity::dumpInformation() const
 
 	return stream.str();
 }
-}
+} // namespace PR

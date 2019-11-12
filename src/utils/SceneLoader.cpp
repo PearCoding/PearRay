@@ -189,7 +189,7 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 	if (transformD.type() == DL::Data::T_Group) {
 		bool ok					   = false;
 		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
-		//t.makeAffine();
+		t.makeAffine();
 
 		if (!ok)
 			PR_LOG(L_WARNING) << "Couldn't set transform for entity " << entity->name() << std::endl;

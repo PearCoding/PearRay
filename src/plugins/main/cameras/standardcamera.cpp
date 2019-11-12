@@ -227,9 +227,9 @@ void StandardCamera::onFreeze(RenderContext* context)
 {
 	ICamera::onFreeze(context);
 
-	mDirection_Cache = (directionMatrix() * mLocalDirection).normalized();
-	mRight_Cache	 = (directionMatrix() * mLocalRight).normalized();
-	mUp_Cache		 = (directionMatrix() * mLocalUp).normalized();
+	mDirection_Cache = (normalMatrix() * mLocalDirection).normalized();
+	mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();
+	mUp_Cache		 = (normalMatrix() * mLocalUp).normalized();
 
 	PR_LOG(L_INFO) << name() << ": Dir[" << mDirection_Cache << "] Right[" << mRight_Cache << "] Up[" << mUp_Cache << "]" << std::endl;
 

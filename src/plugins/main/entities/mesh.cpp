@@ -59,7 +59,7 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
-		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
@@ -77,7 +77,7 @@ public:
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
-		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
@@ -105,9 +105,9 @@ public:
 		mMesh->provideGeometryPoint(faceID, u, v, pt);
 
 		pt.P  = transform() * pt.P;
-		pt.N  = directionMatrix() * pt.N;
-		pt.Nx = directionMatrix() * pt.Nx;
-		pt.Ny = directionMatrix() * pt.Ny;
+		pt.N  = normalMatrix() * pt.N;
+		pt.Nx = normalMatrix() * pt.Nx;
+		pt.Ny = normalMatrix() * pt.Ny;
 
 		pt.N.normalize();
 		pt.Nx.normalize();

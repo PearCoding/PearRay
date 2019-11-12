@@ -52,7 +52,7 @@ protected:
 	{
 		VirtualEntity::onFreeze(context);
 
-		mDirection_Cache = directionMatrix() * (-mDirection);
+		mDirection_Cache = normalMatrix() * (-mDirection);
 		mDirection_Cache.normalize();
 	}
 

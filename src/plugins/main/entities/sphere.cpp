@@ -76,7 +76,7 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
-		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mSphere.intersects(in_local, out);
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -89,7 +89,7 @@ public:
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
-		auto in_local = in.transform(invTransform().matrix(), invDirectionMatrix());
+		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mSphere.intersects(in_local, out);
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -111,7 +111,7 @@ public:
 							  GeometryPoint& pt) const override
 	{
 		pt.P = transform() * mSphere.surfacePoint(u, v);
-		pt.N = directionMatrix() * mSphere.normalPoint(u, v);
+		pt.N = normalMatrix() * mSphere.normalPoint(u, v);
 		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);

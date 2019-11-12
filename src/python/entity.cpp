@@ -17,8 +17,8 @@ void setup_entity(py::module& m)
 		.def_property("flags", &VirtualEntity::flags, &VirtualEntity::setFlags)
 		.def_property_readonly("transform", &VirtualEntity::transform)
 		.def_property_readonly("invTransform", &VirtualEntity::invTransform)
-		.def_property_readonly("directionMatrix", &VirtualEntity::directionMatrix)
-		.def_property_readonly("invDirectionMatrix", &VirtualEntity::invDirectionMatrix)
+		.def_property_readonly("normalMatrix", &VirtualEntity::normalMatrix)
+		.def_property_readonly("invNormalMatrix", &VirtualEntity::invNormalMatrix)
 		.def_property_readonly("frozen", &VirtualEntity::isFrozen)
 		.def("dumpInformation", &VirtualEntity::dumpInformation);
 
