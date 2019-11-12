@@ -1,23 +1,21 @@
 #pragma once
 
 #include "Sampler.h"
-#include "math/SIMD.h"
 
 namespace PR {
 
 class PR_LIB SobolSampler : public Sampler {
 public:
-	explicit SobolSampler(uint32 samples,
-						  uint32 baseX = 13, uint32 baseY = 47);
+	explicit SobolSampler(Random& random, uint32 samples);
 	~SobolSampler();
 
 	float generate1D(uint32 index) override;
 	Vector2f generate2D(uint32 index) override;
 
 private:
-	uint32 mSamples;
+	Random& mRandom;
 
-	simd_vector<float> mBaseXSamples;
-	simd_vector<float> mBaseYSamples;
+	std::vector<float> mSamples1D;
+	std::vector<Vector2f> mSamples2D;
 };
 } // namespace PR

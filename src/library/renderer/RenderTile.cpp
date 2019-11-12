@@ -26,7 +26,7 @@ static std::unique_ptr<Sampler> createSampler(SamplerMode mode, Random& random, 
 	case SM_HALTON:
 		return std::make_unique<HaltonSampler>(samples);
 	case SM_SOBOL:
-		return std::make_unique<SobolSampler>(samples);
+		return std::make_unique<SobolSampler>(random, samples);
 	}
 }
 

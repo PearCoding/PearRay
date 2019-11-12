@@ -44,7 +44,7 @@ void setup_sampler(py::module& m)
 		.def(py::init<Random&, uint32>());
 
 	py::class_<SobolSampler, Sampler>(m, "SobolSampler")
-		.def(py::init<uint32, uint32, uint32>());
+		.def(py::init<Random&, uint32>());
 
 	py::class_<UniformSampler, Sampler>(m, "UniformSampler")
 		.def(py::init<uint32>());

@@ -55,6 +55,16 @@ public:
 	{
 	}
 
+	// UniformRandomBitGenerator interface
+	typedef uint64 result_type;
+	static size_t min() { return 0; }
+	static size_t max() { return std::numeric_limits<uint64>::max(); }
+	uint64 operator()()
+	{
+		return get64();
+	}
+
+	// Standard interface
 	inline uint32 get32()
 	{
 #if PR_RANDOM_ALGORITHM == 0
