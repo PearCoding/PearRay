@@ -3,8 +3,8 @@
 #include "container/IndexSort.h"
 
 #include <algorithm>
-#include <numeric>
 #include <fstream>
+#include <numeric>
 
 namespace PR {
 #ifdef PR_COMPRESS_RAY_DIR
@@ -39,7 +39,8 @@ RayStream::RayStream(size_t raycount)
 	mWavelengthIndex.reserve(mSize);
 	mFlags.reserve(mSize);
 	mNdotL.reserve(mSize);
-	mWeight.reserve(mSize);
+	for (int i = 0; i < 3; ++i)
+		mWeight[i].reserve(mSize);
 	mInternalIndex.reserve(mSize);
 }
 
@@ -69,7 +70,8 @@ void RayStream::addRay(const Ray& ray)
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags & ~RF_Invalid);
 	mNdotL.emplace_back(ray.NdotL);
-	mWeight.emplace_back(ray.Weight);
+	for (int i = 0; i < 3; ++i)
+		mWeight[i].emplace_back(ray.Weight(i));
 	mInternalIndex.emplace_back(mInternalIndex.size());
 }
 
@@ -97,7 +99,8 @@ void RayStream::setRay(size_t id, const Ray& ray)
 	mWavelengthIndex[cid] = ray.WavelengthIndex;
 	mFlags[cid]			  = ray.Flags & ~RF_Invalid;
 	mNdotL[cid]			  = ray.NdotL;
-	mWeight[cid]		  = ray.Weight;
+	for (int i = 0; i < 3; ++i)
+		mWeight[i][cid] = ray.Weight(i);
 }
 
 void RayStream::sort()
@@ -129,7 +132,8 @@ void RayStream::reset()
 	mWavelengthIndex.clear();
 	mFlags.clear();
 	mNdotL.clear();
-	mWeight.clear();
+	for (int i = 0; i < 3; ++i)
+		mWeight[i].clear();
 	mInternalIndex.clear();
 
 	mCurrentPos = 0;
@@ -189,7 +193,9 @@ Ray RayStream::getRay(size_t id) const
 	ray.Time			= from_unorm16(mTime[cid]);
 	ray.WavelengthIndex = mWavelengthIndex[cid];
 	ray.Flags			= mFlags[cid] & ~RF_Invalid;
-	ray.Weight			= mWeight[cid];
+	ray.Weight			= ColorTriplet(mWeight[0][cid],
+							   mWeight[1][cid],
+							   mWeight[2][cid]);
 	ray.NdotL			= mNdotL[cid];
 
 	ray.normalize();
@@ -234,7 +240,10 @@ RayPackage RayStream::getRayPackage(size_t id) const
 
 	ray.WavelengthIndex = load_from_container_with_indices(mInternalIndex, id, mWavelengthIndex);
 	ray.Flags			= load_from_container_with_indices(mInternalIndex, id, mFlags) & vuint32(~RF_Invalid);
-	ray.Weight			= load_from_container_with_indices(mInternalIndex, id, mWeight);
+
+	ray.Weight = ColorTripletV(load_from_container_with_indices(mInternalIndex, id, mWeight[0]),
+							   load_from_container_with_indices(mInternalIndex, id, mWeight[1]),
+							   load_from_container_with_indices(mInternalIndex, id, mWeight[2]));
 
 	ray.normalize();
 

@@ -7,7 +7,7 @@ struct MapSocketCoord {
 	Vector2f UV;
 	Vector2f dUV = Vector2f(0, 0);
 	size_t Index = 0;
-	size_t Face = 0;
+	size_t Face  = 0;
 };
 
 ///////////////////
@@ -30,10 +30,10 @@ public:
 	SpectralSocket()		  = default;
 	virtual ~SpectralSocket() = default;
 
-	virtual T eval(const M& ctx) const				= 0;
-	virtual T relativeLuminance(const M& ctx) const = 0;
-	virtual Vector2i queryRecommendedSize() const   = 0;
-	virtual std::string dumpInformation() const		= 0;
+	virtual ColorTripletBase<T> eval(const M& ctx) const = 0;
+	virtual T relativeLuminance(const M& ctx) const		 = 0;
+	virtual Vector2i queryRecommendedSize() const		 = 0;
+	virtual std::string dumpInformation() const			 = 0;
 };
 
 template <typename T>
@@ -50,8 +50,8 @@ public:
 	VectorShadingSocket()		   = default;
 	virtual ~VectorShadingSocket() = default;
 
-	virtual T eval(uint32 channel, const ShadingPoint& ctx) const = 0;
-	virtual std::string dumpInformation() const					  = 0;
+	virtual Vector3t<T> eval(const ShadingPoint& ctx) const = 0;
+	virtual std::string dumpInformation() const				= 0;
 };
 
 using FloatVectorShadingSocket = VectorShadingSocket<float>;

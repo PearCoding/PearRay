@@ -29,9 +29,12 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 {
 }
 
-float ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
+ColorTriplet ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
-	return mValue[ctx.Ray.WavelengthIndex];
+	uint32 index = ctx.Ray.WavelengthIndex;
+	return ColorTriplet(mValue[index],
+						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
+						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f);
 }
 
 float ConstSpectralShadingSocket::relativeLuminance(const ShadingPoint&) const
@@ -59,9 +62,11 @@ ConstSpectralMapSocket::ConstSpectralMapSocket(const Spectrum& f)
 {
 }
 
-float ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
+ColorTriplet ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	return mValue[ctx.Index];
+	return ColorTriplet(mValue[ctx.Index],
+						ctx.Index + 1 < mValue.samples() ? mValue[ctx.Index + 1] : 0.0f,
+						ctx.Index + 2 < mValue.samples() ? mValue[ctx.Index + 2] : 0.0f);
 }
 
 float ConstSpectralMapSocket::relativeLuminance(const MapSocketCoord&) const
@@ -89,9 +94,9 @@ ConstVectorShadingSocket::ConstVectorShadingSocket(const Vector3f& f)
 {
 }
 
-float ConstVectorShadingSocket::eval(uint32 channel, const ShadingPoint&) const
+Vector3f ConstVectorShadingSocket::eval(const ShadingPoint&) const
 {
-	return mValue(channel);
+	return mValue;
 }
 
 std::string ConstVectorShadingSocket::dumpInformation() const

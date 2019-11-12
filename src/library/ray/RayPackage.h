@@ -1,11 +1,13 @@
 #pragma once
 
 #include "math/Transform.h"
+#include "spectral/ColorTriplet.h"
 
 namespace PR {
 
 enum RayFlags : uint32 {
-	RF_Invalid = 0x80
+	RF_Monochrome = 0x01,
+	RF_Invalid	= 0x80
 };
 
 template <typename V>
@@ -17,7 +19,7 @@ struct PR_LIB_INLINE RayPackageBase {
 	Vector3t<V> Direction = Vector3t<V>(V(0), V(0), V(0));
 
 	FloatingType NdotL			= FloatingType(1);
-	FloatingType Weight			= FloatingType(0);
+	ColorTripletBase<V> Weight  = ColorTripletBase<V>(V(0), V(0), V(0));
 	FloatingType Time			= FloatingType(0);
 	IntegerType IterationDepth  = IntegerType(0);
 	IntegerType Flags			= IntegerType(0);
@@ -25,7 +27,8 @@ struct PR_LIB_INLINE RayPackageBase {
 	IntegerType PixelIndex		= IntegerType(0);
 
 	RayPackageBase() = default;
-	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d, const FloatingType& ndotl = FloatingType(1))
+	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d,
+						  const FloatingType& ndotl = FloatingType(1))
 		: Origin(o)
 		, Direction(d)
 		, NdotL(ndotl)
@@ -83,7 +86,8 @@ struct PR_LIB_INLINE RayPackageBase {
 		return (p2 - global_other.Origin).norm();
 	}
 
-	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d, const FloatingType& ndotl = FloatingType(1)) const
+	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d,
+								  const FloatingType& ndotl = FloatingType(1)) const
 	{
 		RayPackageBase<V> other;
 		other = *this;

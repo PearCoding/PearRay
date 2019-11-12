@@ -10,13 +10,13 @@ public:
 	ImageMapSocket(OIIO::TextureSystem* tsys,
 				   const OIIO::TextureOpt& options,
 				   const std::string& filename);
-	float eval(const MapSocketCoord& ctx) const override;
+	ColorTriplet eval(const MapSocketCoord& ctx) const override;
 	float relativeLuminance(const MapSocketCoord& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
 private:
-	void lookup(const MapSocketCoord& x, float rgb[3]) const;
+	void lookup(const MapSocketCoord& x, ColorTriplet& rgb) const;
 
 	OIIO::ustring mFilename;
 	void* mHandle;

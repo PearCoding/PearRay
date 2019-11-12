@@ -262,12 +262,6 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 			RG_RENDERER,
 			"common/sampler/time/count",
 			1));
-	fct->settings().spectralSampleCount = std::max<uint64>(
-		1,
-		mRegistry.getByGroup<uint64>(
-			RG_RENDERER,
-			"common/sampler/spectral/count",
-			1));
 	fct->settings().aaSampler = mRegistry.getByGroup<SamplerMode>(
 		RG_RENDERER,
 		"common/sampler/aa/type",
@@ -280,14 +274,6 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		RG_RENDERER,
 		"common/sampler/time/type",
 		SM_MULTI_JITTER);
-	fct->settings().spectralSampler = mRegistry.getByGroup<SamplerMode>(
-		RG_RENDERER,
-		"common/sampler/spectral/type",
-		SM_MULTI_JITTER);
-	fct->settings().spectralProcessMode = mRegistry.getByGroup<SpectralProcessMode>(
-		RG_RENDERER,
-		"common/sampler/spectral/mode",
-		SPM_LINEAR);
 	fct->settings().timeMappingMode = mRegistry.getByGroup<TimeMappingMode>(
 		RG_RENDERER,
 		"common/sampler/time/mapping",
@@ -340,11 +326,6 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 							RG_RENDERER,
 							"film/crop/max_y",
 							1)));
-
-	// If using linear mode, overwrite sample size by actual spectrum size
-	if (fct->settings().spectralProcessMode == SPM_LINEAR) {
-		fct->settings().spectralSampleCount = mSpectrumDescriptor->samples();
-	}
 	return fct;
 }
 

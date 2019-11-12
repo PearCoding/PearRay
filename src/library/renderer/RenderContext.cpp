@@ -88,7 +88,6 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount << std::endl;
-	PR_LOG(L_INFO) << "  Spectral Samples: " << mRenderSettings.spectralSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Full Samples: " << mSamplesPerPixel << std::endl;
 	PR_LOG(L_INFO) << "  Emissive Area: " << mEmissiveSurfaceArea << std::endl;
 

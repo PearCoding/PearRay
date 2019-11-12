@@ -84,20 +84,20 @@ public:
 		return 1.25f * (fss * (1.0f / (NdotL - point.NdotV) - 0.5f) + 0.5f);
 	}
 
-	inline float specularTerm(const ShadingPoint& point, float spec,
-							  float VdotX, float VdotY,
-							  float NdotL, float LdotX, float LdotY,
-							  float HdotL, float NdotH, float HdotX, float HdotY,
-							  float roughness, float aniso) const
+	inline ColorTriplet specularTerm(const ShadingPoint& point, const ColorTriplet& spec,
+									 float VdotX, float VdotY,
+									 float NdotL, float LdotX, float LdotY,
+									 float HdotL, float NdotH, float HdotX, float HdotY,
+									 float roughness, float aniso) const
 	{
 		float aspect = aniso > 1.0f ? std::sqrt(1 - aniso * 0.9f) : 1.0f;
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		float D  = Microfacet::ndf_ggx(NdotH, HdotX, HdotY, ax, ay);
-		float hk = Fresnel::schlick_term(HdotL);
-		float F  = mix(spec, 1.0f, hk);
-		float G  = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.NdotV, VdotX, VdotY, ax, ay);
+		float D		   = Microfacet::ndf_ggx(NdotH, HdotX, HdotY, ax, ay);
+		float hk	   = Fresnel::schlick_term(HdotL);
+		ColorTriplet F = mix<ColorTriplet>(spec, ColorTriplet::Ones(), hk);
+		float G		   = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.NdotV, VdotX, VdotY, ax, ay);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return D * F * G;
@@ -118,25 +118,25 @@ public:
 		return R * D * F * G;
 	}
 
-	inline float sheenTerm(float sheen, float HdotL) const
+	inline ColorTriplet sheenTerm(const ColorTriplet& sheen, float HdotL) const
 	{
 		float hk = Fresnel::schlick_term(HdotL);
 		return hk * sheen;
 	}
 
-	float evalBRDF(const ShadingPoint& point, const Vector3f& L,
-				   float base,
-				   float lum,
-				   float subsurface,
-				   float anisotropic,
-				   float roughness,
-				   float metallic,
-				   float spec,
-				   float specTint,
-				   float sheen,
-				   float sheenTint,
-				   float clearcoat,
-				   float clearcoatGloss) const
+	ColorTriplet evalBRDF(const ShadingPoint& point, const Vector3f& L,
+						  const ColorTriplet& base,
+						  float lum,
+						  float subsurface,
+						  float anisotropic,
+						  float roughness,
+						  float metallic,
+						  float spec,
+						  float specTint,
+						  float sheen,
+						  float sheenTint,
+						  float clearcoat,
+						  float clearcoatGloss) const
 	{
 		const float VdotX = -point.Nx.dot(point.Ray.Direction);
 		const float VdotY = -point.Ny.dot(point.Ray.Direction);
@@ -150,27 +150,32 @@ public:
 		const float HdotX		= point.Nx.dot(H);
 		const float HdotY		= point.Ny.dot(H);
 
-		const float tint   = lum > PR_EPSILON ? base / lum : 1;
-		const float cspec  = mix(spec * 0.08f * mix(1.0f, tint, specTint), base, metallic);
-		const float csheen = mix(1.0f, tint, sheenTint);
+		const ColorTriplet tint = lum > PR_EPSILON
+									  ? ColorTriplet(base / lum)
+									  : ColorTriplet::Ones();
+		const ColorTriplet cspec = mix<ColorTriplet>(
+			spec * 0.08f * mix<ColorTriplet>(ColorTriplet::Ones(), tint, specTint),
+			base,
+			metallic);
+		const ColorTriplet csheen = mix<ColorTriplet>(ColorTriplet::Ones(), tint, sheenTint);
 
-		float diffTerm = diffuseTerm(point, NdotL, HdotL, roughness);
-		float ssTerm   = subsurface > PR_EPSILON ? subsurfaceTerm(point, NdotL, HdotL, roughness) : 0.0f;
-		float specTerm = specularTerm(point, cspec,
-									  VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
-									  roughness, anisotropic);
-		float ccTerm   = clearcoat > PR_EPSILON ? clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH) : 0.0f;
-		float shTerm   = sheenTerm(sheen * csheen, HdotL);
+		float diffTerm		  = diffuseTerm(point, NdotL, HdotL, roughness);
+		float ssTerm		  = subsurface > PR_EPSILON ? subsurfaceTerm(point, NdotL, HdotL, roughness) : 0.0f;
+		ColorTriplet specTerm = specularTerm(point, cspec,
+											 VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
+											 roughness, anisotropic);
+		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH) : 0.0f;
+		ColorTriplet shTerm   = sheenTerm(sheen * csheen, HdotL);
 
 		return (PR_1_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
 			   + specTerm
-			   + ccTerm * clearcoat;
+			   + ColorTriplet(ccTerm) * clearcoat;
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		float base			 = mBaseColor->eval(in.Point);
+		ColorTriplet base	= mBaseColor->eval(in.Point);
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
 		float anisotropic	= mAnisotropic->eval(in.Point);
@@ -221,7 +226,7 @@ public:
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		float base			 = mBaseColor->eval(in.Point);
+		ColorTriplet base	= mBaseColor->eval(in.Point);
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
 		float anisotropic	= mAnisotropic->eval(in.Point);

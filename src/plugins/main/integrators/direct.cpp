@@ -48,8 +48,9 @@ public:
 														 context->settings().maxRayDepth);
 	}
 
-	float infiniteLight(RenderTileSession& session, const ShadingPoint& spt, LightPathToken& token,
-						IInfiniteLight* infLight, IMaterial* material)
+	ColorTriplet infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
+							   LightPathToken& token,
+							   IInfiniteLight* infLight, IMaterial* material)
 	{
 		InfiniteLightSampleInput inL;
 		inL.Point = spt;
@@ -60,15 +61,14 @@ public:
 		if (infLight->hasDeltaDistribution())
 			outL.PDF_S = 1;
 
-		if (outL.Weight < PR_EPSILON
-			|| outL.PDF_S < PR_EPSILON) {
-			return 0;
+		if (outL.PDF_S < PR_EPSILON) {
+			return ColorTriplet::Zero();
 		} else {
 			// Trace shadow ray
 			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing, 1);
 			ShadowHit shadowHit = session.traceShadowRay(shadow);
 			if (shadowHit.Successful)
-				return 0;
+				return ColorTriplet::Zero();
 
 			// Evaluate surface
 			MaterialEvalInput in;
@@ -112,7 +112,7 @@ public:
 			Ray next = spt.Ray.next(spt.P, out.Outgoing, NdotL);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
 
-			if (next.Weight > PR_EPSILON) {
+			if (!next.Weight.isZero()) {
 				LightPathBufferEntry pathEntry;
 				switch (out.Type) {
 				case MST_DiffuseReflection:
@@ -136,21 +136,22 @@ public:
 		}
 	}
 
-	float directLight(RenderTileSession& session, const ShadingPoint& spt, LightPathToken& token,
-					  IMaterial* material)
+	ColorTriplet directLight(RenderTileSession& session, const ShadingPoint& spt,
+							 LightPathToken& token,
+							 IMaterial* material)
 	{
-		float Li = 0;
+		ColorTriplet Li = ColorTriplet::Zero();
 
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
 		IEntity* light = session.pickRandomLight(lightPt, pdfA);
 		if (!light)
-			return 0;
+			return Li;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
 		if (!ems) {
 			session.pushFeedbackFragment(spt.Ray, OF_MissingEmission);
-			return 0;
+			return Li;
 		}
 
 		// (1) Sample light
@@ -165,7 +166,7 @@ public:
 				|| cosO < PR_EPSILON
 				|| sqrD < PR_EPSILON
 				|| pdfA < PR_EPSILON)
-				return 0;
+				return Li;
 
 			// Trace shadow ray
 			Ray shadow			= spt.Ray.next(spt.P, L, 1);
@@ -173,7 +174,7 @@ public:
 
 			if (!shadowHit.Successful
 				|| shadowHit.EntityID != light->id()) {
-				return 0;
+				return Li;
 			} else {
 				// Evaluate light
 				LightEvalInput inL;
@@ -196,8 +197,8 @@ public:
 			}
 		}
 
-		if (Li < PR_EPSILON)
-			return 0.0f;
+		if (!Li.isZero())
+			return Li;
 
 		// (2) Sample BRDF
 		{
@@ -209,7 +210,7 @@ public:
 			token = LightPathToken(outS.Type);
 
 			if (outS.PDF_S > PR_EPSILON
-				&& outS.Weight > PR_EPSILON) {
+				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing, 1);
@@ -252,7 +253,7 @@ public:
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
 		spt.EntityID = entity->id();
-		spt.Radiance = 1;
+		spt.Radiance = ColorTriplet::Ones();
 
 		LightPath currentPath = lpb.getPath(entry.RayID);
 
@@ -272,7 +273,7 @@ public:
 				const float prevGEOM = std::abs(spt.NdotV) /* std::abs(spt.Ray.NdotL)*/ / spt.Depth2;
 				spt.Radiance		 = outL.Weight * prevGEOM;
 
-				if (spt.Radiance > PR_EPSILON)
+				if (!spt.Radiance.isZero())
 					session.pushFragment(spt,
 										 currentPath.concated(
 											 LightPathToken(ST_EMISSIVE, SE_NONE)));
@@ -293,7 +294,7 @@ public:
 				LightPathToken token;
 				spt.Radiance = factor * directLight(session, spt, token, material);
 
-				if (spt.Radiance > PR_EPSILON) {
+				if (!spt.Radiance.isZero()) {
 					LightPath path = currentPath;
 					path.concat(token);
 					path.concat(LightPathToken(ST_EMISSIVE, SE_NONE));
@@ -307,7 +308,7 @@ public:
 				spt.Radiance = infiniteLight(session, spt, token,
 											 light.get(), material);
 
-				if (spt.Radiance > PR_EPSILON) {
+				if (!spt.Radiance.isZero()) {
 					LightPath path = currentPath;
 					path.concat(token);
 					path.concat(LightPathToken(ST_BACKGROUND, SE_NONE));

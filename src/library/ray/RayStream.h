@@ -44,7 +44,7 @@ public:
 	inline bool hasNextGroup() const { return mCurrentPos < mLastInvPos; }
 
 	inline size_t maxSize() const { return mSize; }
-	inline size_t currentSize() const { return mWeight.size(); }
+	inline size_t currentSize() const { return mPixelIndex.size(); }
 
 	inline size_t linearID(size_t id) const { return mInternalIndex.at(id); }
 
@@ -81,7 +81,7 @@ private: // Some vectors are not aligned, due to required preprocessing
 	std::vector<uint8> mFlags;
 
 	std::vector<float> mNdotL;
-	std::vector<float> mWeight;
+	std::vector<float> mWeight[3];
 	std::vector<size_t> mInternalIndex;
 
 	size_t mSize;

@@ -9,7 +9,7 @@ struct PR_LIB_INLINE InfiniteLightEvalInput {
 };
 
 struct PR_LIB_INLINE InfiniteLightEvalOutput {
-	float Weight;
+	ColorTriplet Weight;
 	float PDF_S;
 };
 
@@ -19,7 +19,7 @@ struct PR_LIB_INLINE InfiniteLightSampleInput {
 };
 
 struct PR_LIB_INLINE InfiniteLightSampleOutput {
-	float Weight;
+	ColorTriplet Weight;
 	float PDF_S;
 	Vector3f Outgoing;
 };

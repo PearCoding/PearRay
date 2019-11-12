@@ -39,7 +39,6 @@ public:
 	inline Sampler* aaSampler() const { return mAASampler.get(); }
 	inline Sampler* lensSampler() const { return mLensSampler.get(); }
 	inline Sampler* timeSampler() const { return mTimeSampler.get(); }
-	inline Sampler* spectralSampler() const { return mSpectralSampler.get(); }
 
 	inline const RenderTileStatistics& statistics() const { return mStatistics; }
 	inline RenderTileStatistics& statistics() { return mStatistics; }
@@ -66,12 +65,10 @@ private:
 	std::unique_ptr<Sampler> mAASampler;
 	std::unique_ptr<Sampler> mLensSampler;
 	std::unique_ptr<Sampler> mTimeSampler;
-	std::unique_ptr<Sampler> mSpectralSampler;
 
 	const uint32 mAASampleCount;
 	const uint32 mLensSampleCount;
 	const uint32 mTimeSampleCount;
-	const uint32 mSpectralSampleCount;
 
 	// t = t'*alpha + beta
 	float mTimeAlpha;
@@ -81,7 +78,5 @@ private:
 
 	const RenderContext* const mContext;
 	const ICamera* const mCamera;
-
-	std::unique_ptr<struct RenderTileCache> mCache;
 };
 } // namespace PR

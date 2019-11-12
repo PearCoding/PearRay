@@ -7,18 +7,18 @@
 namespace PR {
 OutputBuffer::OutputBuffer(RenderContext* renderer)
 	: mSpectral(new FrameBufferFloat(
-		  renderer->spectrumDescriptor()->samples(),
+		  std::max<size_t>(3, renderer->spectrumDescriptor()->samples()),
 		  renderer->width(),
 		  renderer->height(),
 		  0.0f))
 {
 	mIntCounter[V_Samples] = std::make_shared<FrameBufferUInt32>(
-		renderer->spectrumDescriptor()->samples(),
+		1,
 		renderer->width(),
 		renderer->height(),
 		0);
 	mIntCounter[V_Feedback] = std::make_shared<FrameBufferUInt32>(
-		renderer->spectrumDescriptor()->samples(),
+		1,
 		renderer->width(),
 		renderer->height(),
 		0);
@@ -81,11 +81,11 @@ void OutputBuffer::clear()
 	if (mInt1D[ch])       \
 	mInt1D[ch]->blendFragment(pixelIndex, 0, static_cast<float>(v), t)
 
-#define _1D_S_L(ch, v, t)                                    \
-	for (auto pair : mLPE_1D[ch]) {                          \
-		if (pair.first.match(path)) {                        \
+#define _1D_S_L(ch, v, t)                                                        \
+	for (auto pair : mLPE_1D[ch]) {                                              \
+		if (pair.first.match(path)) {                                            \
 			pair.second->blendFragment(pixelIndex, 0, static_cast<float>(v), t); \
-		}                                                    \
+		}                                                                        \
 	}
 
 #define _1D_S(ch, v, t) \
@@ -95,22 +95,29 @@ void OutputBuffer::clear()
 void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 								const LightPath& path)
 {
-	const bool isInf	 = std::isinf(s.Radiance);
-	const bool isNaN	 = std::isnan(s.Radiance);
-	const bool isNeg	 = s.Radiance < 0;
-	const bool isInvalid = isInf || isNaN || isNeg;
+	const bool isMono		 = (s.Ray.Flags & RF_Monochrome);
+	const uint32 channels	= isMono ? 1 : 3;
+	const uint32 monochannel = isMono ? s.Ray.WavelengthIndex : 0;
 
-	const uint32 channel = s.Ray.WavelengthIndex;
-	const float W		 = s.Ray.Weight;
+	bool isInf	 = false;
+	bool isNaN	 = false;
+	bool isNeg	 = false;
+	bool isInvalid = false;
+	for (uint32 i = 0; i < channels && !isInvalid; ++i) {
+		isInf	 = std::isinf(s.Radiance[i]);
+		isNaN	 = std::isnan(s.Radiance[i]);
+		isNeg	 = s.Radiance[i] < 0;
+		isInvalid = isInf || isNaN || isNeg;
+	}
 
-	if (!isInvalid)
-		mSpectral->getFragment(pixelIndex, channel) += W * s.Radiance;
+	if (!isInvalid) {
+		for (uint32 i = 0; i < channels; ++i)
+			mSpectral->getFragment(pixelIndex, monochannel + i) += s.Ray.Weight[i] * s.Radiance[i];
+	}
 
 	if (!(s.Flags & SPF_Background)) {
-		size_t sampleCount = 0;
-		for (size_t i = 0; i < mIntCounter[V_Samples]->channels(); ++i)
-			sampleCount = mIntCounter[V_Samples]->getFragment(pixelIndex, channel);
-		float blend = 1.0f / (sampleCount + 1.0f);
+		size_t sampleCount = mIntCounter[V_Samples]->getFragment(pixelIndex, 0);
+		float blend		   = 1.0f / (sampleCount + 1.0f);
 
 		_3D_S(V_Position, s.P, blend);
 		_3D_S(V_Normal, s.N, blend);
@@ -134,26 +141,29 @@ void OutputBuffer::pushFragment(uint32 pixelIndex, const ShadingPoint& s,
 	if (!isInvalid) {
 		for (auto pair : mLPE_Spectral) {
 			if (pair.first.match(path)) {
-				pair.second->getFragment(pixelIndex, channel) += W * s.Radiance;
+				for (uint32 i = 0; i < channels; ++i) {
+					pair.second->getFragment(pixelIndex, monochannel + i)
+						+= s.Ray.Weight[i] * s.Radiance[i];
+				}
 			}
 		}
 	}
 
 	if (isInvalid) {
-		pushFeedbackFragment(pixelIndex, channel,
+		pushFeedbackFragment(pixelIndex,
 							 (isNaN ? OF_NaN : 0)
 								 | (isInf ? OF_Infinite : 0)
 								 | (isNeg ? OF_Negative : 0));
 	}
 
-	mIntCounter[V_Samples]->getFragment(pixelIndex, channel) += 1;
+	mIntCounter[V_Samples]->getFragment(pixelIndex, 0) += 1;
 }
 
-void OutputBuffer::pushFeedbackFragment(uint32 pixelIndex, uint32 channel, uint32 feedback)
+void OutputBuffer::pushFeedbackFragment(uint32 pixelIndex, uint32 feedback)
 {
 	PR_ASSERT(mIntCounter[V_Feedback], "Feedback buffer has to be available!");
 
-	mIntCounter[V_Feedback]->getFragment(pixelIndex, channel) |= feedback;
+	mIntCounter[V_Feedback]->getFragment(pixelIndex, 0) |= feedback;
 }
 
 } // namespace PR

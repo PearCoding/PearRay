@@ -39,27 +39,24 @@ ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
 	}
 }
 
-float ImageMapSocket::eval(const MapSocketCoord& ctx) const
+ColorTriplet ImageMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	float rgb[3];
+	ColorTriplet rgb;
 	lookup(ctx, rgb);
 
 	float xyz[3];
 	RGBConverter::toXYZ(rgb[0], rgb[1], rgb[2], xyz[0], xyz[1], xyz[2]);
-	if (ctx.Index > 2)
-		return rgb[0];
-	else
-		return rgb[ctx.Index];
+	return ColorTriplet(xyz[0], xyz[1], xyz[2]);
 }
 
 float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 {
-	float rgb[3];
+	ColorTriplet rgb;
 	lookup(ctx, rgb);
 	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
 }
 
-void ImageMapSocket::lookup(const MapSocketCoord& ctx, float rgb[3]) const
+void ImageMapSocket::lookup(const MapSocketCoord& ctx, ColorTriplet& rgb) const
 {
 
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");

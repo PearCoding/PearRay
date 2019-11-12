@@ -14,7 +14,7 @@ class OrenNayarMaterial : public IMaterial {
 public:
 	OrenNayarMaterial(uint32 id,
 					  const std::shared_ptr<FloatSpectralShadingSocket>& alb,
-					  const std::shared_ptr<FloatSpectralShadingSocket>& rough)
+					  const std::shared_ptr<FloatScalarShadingSocket>& rough)
 		: IMaterial(id)
 		, mAlbedo(alb)
 		, mRoughness(rough)
@@ -32,20 +32,21 @@ public:
 	}
 
 	// https://mimosa-pudica.net/improved-oren-nayar.html
-	inline float calc(const Vector3f& L, float NdotL, const ShadingPoint& spt) const
+	inline ColorTriplet calc(const Vector3f& L, float NdotL, const ShadingPoint& spt) const
 	{
 		float roughness = mRoughness->eval(spt);
 		roughness *= roughness;
 
-		float weight = mAlbedo->eval(spt);
+		ColorTriplet weight = mAlbedo->eval(spt);
 
 		if (roughness > PR_EPSILON) {
 			const float s = NdotL * spt.NdotV - L.dot(spt.Ray.Direction);
 			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, -spt.NdotV);
 
-			const float A = 1 - 0.5f * roughness / (roughness + 0.33f) + 0.17f * weight * roughness / (roughness + 0.13f);
+			const ColorTriplet A = ColorTriplet::Ones() * (1 - 0.5f * roughness / (roughness + 0.33f))
+								   + 0.17f * weight * roughness / (roughness + 0.13f);
 			const float B = 0.45f * roughness / (roughness + 0.09f);
-			weight *= (A + B * s / t);
+			weight *= A + ColorTriplet::Ones() * (B * s / t);
 		}
 
 		return weight * PR_1_PI * std::abs(NdotL);
@@ -91,7 +92,7 @@ protected:
 
 private:
 	std::shared_ptr<FloatSpectralShadingSocket> mAlbedo;
-	std::shared_ptr<FloatSpectralShadingSocket> mRoughness;
+	std::shared_ptr<FloatScalarShadingSocket> mRoughness;
 };
 
 class OrenNayarMaterialFactory : public IMaterialFactory {
@@ -108,7 +109,7 @@ public:
 
 		return std::make_shared<OrenNayarMaterial>(id,
 												   env.getSpectralShadingSocket(albedoName, 1),
-												   env.getSpectralShadingSocket(roughnessName, 0.5f));
+												   env.getScalarShadingSocket(roughnessName, 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

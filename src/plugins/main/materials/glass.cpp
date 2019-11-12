@@ -10,6 +10,7 @@
 
 namespace PR {
 
+// TODO: Add ior branching
 class GlassMaterial : public IMaterial {
 public:
 	GlassMaterial(uint32 id,
@@ -35,8 +36,9 @@ public:
 
 	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
 	{
+		const auto ior = mIOR->eval(spt);
 		float n1 = 1;
-		float n2 = mIOR->eval(spt);
+		float n2 = ior.maxCoeff();
 		if (spt.Flags & SPF_Inside)
 			std::swap(n1, n2);
 

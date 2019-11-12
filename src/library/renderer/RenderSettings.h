@@ -16,14 +16,10 @@ public:
 	uint64 aaSampleCount;
 	uint64 lensSampleCount;
 	uint64 timeSampleCount;
-	uint64 spectralSampleCount;
 
 	SamplerMode aaSampler;
 	SamplerMode lensSampler;
 	SamplerMode timeSampler;
-	SamplerMode spectralSampler;
-
-	SpectralProcessMode spectralProcessMode;
 
 	TimeMappingMode timeMappingMode;
 	float timeScale;
@@ -40,7 +36,7 @@ public:
 	// Easy access
 	inline uint64 samplesPerPixel() const
 	{
-		return aaSampleCount * lensSampleCount * timeSampleCount * spectralSampleCount;
+		return aaSampleCount * lensSampleCount * timeSampleCount;
 	}
 
 	inline uint32 cropWidth() const

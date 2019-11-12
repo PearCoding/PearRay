@@ -102,7 +102,8 @@ public:
 
 	float fresnelTerm(const ShadingPoint& point) const
 	{
-		const float ior = mIOR->eval(point);
+		// TODO: Add branching!
+		const float ior = mIOR->eval(point).maxCoeff();
 
 		switch (mFresnelMode) {
 		default:
@@ -185,7 +186,7 @@ public:
 		}
 
 		pdf = 0.25f * D / (NdotV * NdotL);
-		return mSpecularity->eval(point) * (0.25f * D * G) / (NdotV * NdotL);
+		return (0.25f * D * G) / (NdotV * NdotL);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -193,14 +194,14 @@ public:
 	{
 		float F = fresnelTerm(in.Point);
 
-		float Diff = 0;
+		ColorTriplet Diff = ColorTriplet::Zero();
 		if (mFresnelMode != FM_Conductor && F < 1) {
 			Diff = PR_1_PI * mAlbedo->eval(in.Point);
 		}
 
-		float Spec = 0;
+		ColorTriplet Spec = ColorTriplet::Zero();
 		if (F > PR_EPSILON && -in.NdotL * in.Point.NdotV > PR_EPSILON) {
-			Spec = evalSpec(in.Point, in.Outgoing, in.NdotL, out.PDF_S);
+			Spec = mSpecularity->eval(in.Point) * evalSpec(in.Point, in.Outgoing, in.NdotL, out.PDF_S);
 		}
 
 		out.PDF_S  = PR_1_PI * (1 - F) + out.PDF_S * F;
@@ -253,7 +254,7 @@ public:
 		out.Type = MST_SpecularReflection;
 
 		float _ignore;
-		out.Weight = evalSpec(in.Point, out.Outgoing, NdotL, _ignore) * NdotL;
+		out.Weight = mSpecularity->eval(in.Point) * evalSpec(in.Point, out.Outgoing, NdotL, _ignore) * NdotL;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

@@ -140,6 +140,7 @@ SET(PR_Src
   scene/Scene.cpp
   scene/Scene.h
   scene/Scene.inl
+  spectral/ColorTriplet.h
   spectral/IntensityConverter.cpp
   spectral/IntensityConverter.h
   spectral/RGBConverter.cpp

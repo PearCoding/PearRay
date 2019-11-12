@@ -125,7 +125,7 @@ void RenderTileSession::pushFragment(const ShadingPoint& pt,
 void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) const
 {
 	mTile->context()->output()->pushFeedbackFragment(
-		ray.PixelIndex, ray.WavelengthIndex, feedback);
+		ray.PixelIndex, feedback);
 }
 
 IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const

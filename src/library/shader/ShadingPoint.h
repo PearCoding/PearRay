@@ -29,7 +29,7 @@ public:
 	Vector3f Ny;
 
 	// Spectral
-	float Radiance;
+	ColorTriplet Radiance;
 
 	// Some other utility variables
 	uint32 Flags;
