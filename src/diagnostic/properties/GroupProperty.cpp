@@ -27,5 +27,6 @@ void GroupProperty::save()
 
 QWidget* GroupProperty::editorWidget(QWidget* parent)
 {
+	Q_UNUSED(parent);
 	return nullptr;
 }

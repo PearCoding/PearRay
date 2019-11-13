@@ -16,6 +16,5 @@ private:
 	uint32 mSamples;
 
 	uint32 m2D_X;
-	uint32 m2D_Y;
 };
 }

@@ -4,7 +4,7 @@
 
 namespace PR {
 
-struct PR_LIB_INLINE SingleCollisionOutput {
+struct PR_LIB SingleCollisionOutput {
 	float HitDistance = std::numeric_limits<float>::infinity();
 	uint32 MaterialID = 0;
 	uint32 EntityID   = 0;
@@ -13,7 +13,7 @@ struct PR_LIB_INLINE SingleCollisionOutput {
 	uint32 Flags	  = 0;
 };
 
-struct PR_LIB_INLINE CollisionOutput {
+struct PR_LIB CollisionOutput {
 	vfloat HitDistance = vfloat(std::numeric_limits<float>::infinity());
 	vuint32 MaterialID = vuint32(0);
 	vuint32 EntityID   = vuint32(0);

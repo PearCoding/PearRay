@@ -145,14 +145,12 @@ private:                                           \
 #else
 #define PR_LIB PR_IMPORT
 #endif
-#define PR_LIB_INLINE
 
 #if defined(PR_LIB_UTILS_BUILD)
 #define PR_LIB_UTILS PR_EXPORT
 #else
 #define PR_LIB_UTILS PR_IMPORT
 #endif
-#define PR_LIB_UTILS_INLINE
 
 #define PR_PLUGIN_API_VERSION 1
 #define PR_PLUGIN_EXPORT PR_EXPORT

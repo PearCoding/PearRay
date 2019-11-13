@@ -9,7 +9,7 @@ enum LightPathBufferEntryFlags : uint32 {
 	LPBEF_EVENT_DIFFUSE		 = 0x2
 };
 
-struct PR_LIB_INLINE LightPathBufferEntry {
+struct PR_LIB LightPathBufferEntry {
 	uint32 Flags;
 	uint32 LabelIndex;
 

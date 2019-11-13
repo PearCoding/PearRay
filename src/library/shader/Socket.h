@@ -12,7 +12,7 @@ struct MapSocketCoord {
 
 ///////////////////
 template <typename T>
-class PR_LIB_INLINE ScalarShadingSocket {
+class PR_LIB ScalarShadingSocket {
 public:
 	ScalarShadingSocket()		   = default;
 	virtual ~ScalarShadingSocket() = default;
@@ -25,7 +25,7 @@ using FloatScalarShadingSocket = ScalarShadingSocket<float>;
 
 ///////////////////
 template <typename M, typename T>
-class PR_LIB_INLINE SpectralSocket {
+class PR_LIB SpectralSocket {
 public:
 	SpectralSocket()		  = default;
 	virtual ~SpectralSocket() = default;
@@ -45,7 +45,7 @@ using FloatSpectralMapSocket = SpectralMapSocket<float>;
 
 ///////////////////
 template <typename T>
-class PR_LIB_INLINE VectorShadingSocket {
+class PR_LIB VectorShadingSocket {
 public:
 	VectorShadingSocket()		   = default;
 	virtual ~VectorShadingSocket() = default;

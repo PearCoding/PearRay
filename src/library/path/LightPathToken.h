@@ -19,7 +19,7 @@ enum ScatteringEvent {
 	_SE_COUNT
 };
 
-struct PR_LIB_INLINE LightPathToken {
+struct PR_LIB LightPathToken {
 	ScatteringType Type;
 	ScatteringEvent Event;
 	size_t LabelIndex;

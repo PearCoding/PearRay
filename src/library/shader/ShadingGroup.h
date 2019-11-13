@@ -4,7 +4,7 @@
 
 namespace PR {
 class HitStream;
-struct PR_LIB_INLINE ShadingGroup {
+struct PR_LIB ShadingGroup {
 	HitStream* Stream;
 	uint32 EntityID;
 	uint32 MaterialID;

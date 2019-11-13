@@ -8,7 +8,7 @@ namespace PR {
  * http://www.drdobbs.com/architecture-and-design/algorithm-improvement-through-performanc/220300654
  */
 template <typename VT, typename S>
-inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32 last, VT mask)
+inline void PR_LIB radixSort(VT* visitor, S swapper, uint32 first, uint32 last, VT mask)
 {
 	if(first == last)
 		return;
@@ -35,7 +35,7 @@ inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32
 }
 
 template <typename VT, typename S>
-inline void PR_LIB_INLINE radixSort(VT* visitor, S swapper, uint32 first, uint32 last)
+inline void PR_LIB radixSort(VT* visitor, S swapper, uint32 first, uint32 last)
 {
 	if(first == last)
 		return;

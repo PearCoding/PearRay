@@ -68,7 +68,7 @@ fixed_tokens_value(T* t, unsigned min, unsigned max)
 template<class T>
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              EnumOption<T>* target_type, int)
+              EnumOption<T>* /*target_type*/, int)
 {
     po::validators::check_first_occurrence(v);
     std::string s = po::validators::get_single_string(values);
@@ -109,7 +109,7 @@ po::options_description setup_cmd_options()
 				EnumOption<DisplayDriverOption>::get_default()),
 		 	(std::string("Display Driver Mode [") + EnumOption<DisplayDriverOption>::get_names() + "]").c_str())
 		("pluginpath", po::value<std::string>(), "Additional plugin path")
-	;		
+	;
 
 	po::options_description network_d("Network");
 	network_d.add_options()
@@ -131,7 +131,7 @@ po::options_description setup_cmd_options()
 	thread_d.add_options()
 		("threads,t", po::value<PR::uint32>(),
 			"Amount of threads used for processing. Set 0 for automatic detection.")
-		("rtx", po::value<PR::uint32>(), 
+		("rtx", po::value<PR::uint32>(),
 			"Amount of horizontal tiles used in threading")
 		("rty", po::value<PR::uint32>(),
 			"Amount of vertical tiles used in threading")
@@ -139,7 +139,7 @@ po::options_description setup_cmd_options()
 
 	po::options_description scene_d("Scene[*]");
 	scene_d.add_options()
-		("itx", po::value<PR::uint32>(), 
+		("itx", po::value<PR::uint32>(),
 			"Amount of horizontal image tiles used in rendering")
 		("ity", po::value<PR::uint32>(),
 			"Amount of vertical image tiles used in rendering")
@@ -170,7 +170,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	{
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;
-	}    
+	}
 
 	// Handle help
 	if (vm.count("help"))
@@ -209,7 +209,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		PluginPath = vm["pluginpath"].as<std::string>();
 
 		if(!bf::is_directory(PluginPath)) {
-			std::cout << "Given plugin path '" << PluginPath 
+			std::cout << "Given plugin path '" << PluginPath
 				<< "' is not a valid directory" << std::endl;
 			return false;
 		}

@@ -18,7 +18,7 @@
 #endif
 
 namespace PR {
-class PR_LIB_INLINE Random {
+class PR_LIB Random {
 private:
 #if PR_RANDOM_ALGORITHM == 0
 	std::default_random_engine mGenerator;

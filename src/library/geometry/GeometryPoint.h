@@ -7,7 +7,7 @@ namespace PR {
 Geometry context (SOA)
 - View independent!
 */
-struct PR_LIB_INLINE GeometryPoint {
+struct PR_LIB GeometryPoint {
 	// Point of sample
 	Vector3f P;
 	Vector3f dPdT; // Velocity of P

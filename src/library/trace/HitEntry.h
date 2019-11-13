@@ -3,7 +3,7 @@
 #include "PR_Config.h"
 
 namespace PR {
-struct PR_LIB_INLINE HitEntry {
+struct PR_LIB HitEntry {
 public:
 	uint32 RayID		= 0;
 	uint32 SessionRayID = 0;

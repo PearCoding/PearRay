@@ -103,6 +103,7 @@ constexpr QRgb SLIDE_P = qRgb(27, 91, 148);
 
 void RangeSlider::paintEvent(QPaintEvent* event)
 {
+	Q_UNUSED(event);
 	size_t h	  = height();
 	DrawStyle sty = calculateStyle();
 

@@ -8,7 +8,7 @@
 
 namespace PR {
 template <class OBJ, class FAC>
-class PR_LIB_INLINE AbstractManager {
+class PR_LIB_UTILS AbstractManager {
 public:
 	AbstractManager()		   = default;
 	virtual ~AbstractManager() = default;

@@ -16,7 +16,7 @@ Shading context
 - Depending on the function not all fields are reasonable filled.
 - View dependent!
 */
-class PR_LIB_INLINE ShadingPoint {
+class PR_LIB ShadingPoint {
 public:
 	GeometryPoint Geometry;
 	PR::Ray Ray;

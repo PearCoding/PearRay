@@ -111,7 +111,7 @@ inline Vector3f from_oct(const Vector2f& d)
 
 // Class for oct compression
 template <typename T>
-class PR_LIB_INLINE octNormal {
+class PR_LIB octNormal {
 private:
 	T mValue[2];
 

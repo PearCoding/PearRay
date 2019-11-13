@@ -4,21 +4,21 @@
 #include "shader/ShadingPoint.h"
 
 namespace PR {
-struct PR_LIB_INLINE InfiniteLightEvalInput {
+struct PR_LIB InfiniteLightEvalInput {
 	ShadingPoint Point;
 };
 
-struct PR_LIB_INLINE InfiniteLightEvalOutput {
+struct PR_LIB InfiniteLightEvalOutput {
 	ColorTriplet Weight;
 	float PDF_S;
 };
 
-struct PR_LIB_INLINE InfiniteLightSampleInput {
+struct PR_LIB InfiniteLightSampleInput {
 	ShadingPoint Point;
 	Vector2f RND;
 };
 
-struct PR_LIB_INLINE InfiniteLightSampleOutput {
+struct PR_LIB InfiniteLightSampleOutput {
 	ColorTriplet Weight;
 	float PDF_S;
 	Vector3f Outgoing;

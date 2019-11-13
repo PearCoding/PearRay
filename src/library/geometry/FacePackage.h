@@ -3,7 +3,7 @@
 #include "math/SIMD.h"
 
 namespace PR {
-class PR_LIB_INLINE FacePackage {
+class PR_LIB FacePackage {
 public:
 	vfloat Vx[3];
 	vfloat Vy[3];

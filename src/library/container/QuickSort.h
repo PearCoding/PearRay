@@ -7,7 +7,7 @@ namespace PR {
 /* Generic inplace quick sort algorithm
  */
 template <typename VT, typename S>
-inline void PR_LIB_INLINE quickSort(VT* visitor, S swapper, uint32 first, uint32 last)
+inline void PR_LIB quickSort(VT* visitor, S swapper, uint32 first, uint32 last)
 {
 	if (first >= last)
 		return;

@@ -4,7 +4,7 @@
 
 namespace PR {
 /* Simple Variant type. */
-class PR_LIB_INLINE Variant {
+class PR_LIB Variant {
 public:
 	enum Type {
 		T_Bool   = 0,

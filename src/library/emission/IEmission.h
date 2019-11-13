@@ -9,12 +9,12 @@ namespace PR {
 class RenderTileSession;
 
 // Evaluation
-struct PR_LIB_INLINE LightEvalInput {
+struct PR_LIB LightEvalInput {
 	ShadingPoint Point;
 	class IEntity* Entity;
 };
 
-struct PR_LIB_INLINE LightEvalOutput {
+struct PR_LIB LightEvalOutput {
 	ColorTriplet Weight;
 };
 

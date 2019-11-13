@@ -224,7 +224,7 @@ static inline float SAH(float costIntersection, const BoundingBox& V,
 }
 
 static void classify(const std::vector<PrimitiveNaive*>& objs,
-					 uint32 dim, float v,
+					 uint32 dim,
 					 const BoundingBox& vl, const BoundingBox& vr,
 					 uint32& nl, uint32& nr, uint32& np)
 {
@@ -280,7 +280,7 @@ static void findSplit(float costIntersection, const std::vector<PrimitiveNaive*>
 					continue;
 
 				uint32 nl, nr, np;
-				classify(objs, dim, v, vl, vr, nl, nr, np);
+				classify(objs, dim, vl, vr, nl, nr, np);
 
 				SidePlaneNaive side;
 				const float c = SAH(costIntersection, V, nl, nr, np, side, vl, vr);
@@ -372,7 +372,7 @@ static kdNodeBuilderNaive* buildNode(void* observer,
 	}
 
 	uint32 nl, nr, np;
-	classify(objs, dim, v, vl, vr, nl, nr, np);
+	classify(objs, dim, vl, vr, nl, nr, np);
 
 	// Distribute
 	std::vector<PrimitiveNaive*> left, right;

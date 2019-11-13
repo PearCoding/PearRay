@@ -4,7 +4,7 @@
 #include "ray/RayPackage.h"
 
 namespace PR {
-struct CameraSample {
+struct PR_LIB CameraSample {
 	Vector2i SensorSize; // Full Size (Width and Height)
 	float Pixel[2];
 	float R[2];

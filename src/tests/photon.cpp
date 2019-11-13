@@ -55,7 +55,7 @@ PR_TEST("Search")
 	sphere.Center = Vector3f(0,0,0);
 	sphere.Distance2 = 4;
 
-	auto emptyAccum = [&](Spectrum& accum, const Photon::Photon& photon, const Photon::PhotonSphere& sp, float d2){};
+	auto emptyAccum = [&](Spectrum&, const Photon::Photon&, const Photon::PhotonSphere&, float){};
 	PR::Spectrum spec(SpectrumDescriptor::createStandardSpectral());
 	size_t found;
 

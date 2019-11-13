@@ -16,7 +16,7 @@ enum PluginType {
 	PT_INTEGRATOR,
 };
 
-class PR_LIB_INLINE IPlugin {
+class PR_LIB_UTILS IPlugin {
 public:
 	IPlugin()		   = default;
 	virtual ~IPlugin() = default;
@@ -27,7 +27,7 @@ public:
 
 typedef IPlugin* (*GetFactoryPluginPtr)();
 
-struct PR_LIB_INLINE PluginInterface {
+struct PR_LIB_UTILS PluginInterface {
 	int APIVersion;
 	const char* FileName;
 	const char* ClassName;
@@ -40,7 +40,7 @@ struct PR_LIB_INLINE PluginInterface {
 #define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                    \
 	class entityType;                                                                                         \
 	class Environment;                                                                                        \
-	class PR_LIB_INLINE className : public IPlugin {                                                          \
+	class PR_LIB_UTILS className : public IPlugin {                                                          \
 	public:                                                                                                   \
 		className()																				   = default; \
 		virtual ~className()																	   = default; \
