@@ -12,6 +12,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_environment(py::module& m)
 {
 	py::class_<Environment, std::shared_ptr<Environment>>(m, "Environment")

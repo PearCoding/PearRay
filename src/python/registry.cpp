@@ -30,6 +30,7 @@ namespace PRPY {
 	GET_METHOD_V2(n2, T) \
 	GET_METHOD_V3(n3, T)
 
+PR_NO_SANITIZE_ADDRESS
 void setup_registry(py::module& m)
 {
 	py::class_<Registry, std::shared_ptr<Registry>>(m, "Registry")

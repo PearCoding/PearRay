@@ -1,14 +1,12 @@
 #pragma once
 
 #include "BoundingBox.h"
-#include "math/SIMD.h"
+#include "TriangleIntersection.h"
 
 #include <utility>
 
-#define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
-
 namespace PR {
-class PR_LIB_INLINE Triangle {
+class PR_LIB Triangle {
 	PR_CLASS_NON_CONSTRUCTABLE(Triangle);
 
 public:
@@ -45,29 +43,7 @@ public:
 		Vector2t<T>& uv,
 		T& t)
 	{
-		using namespace simdpp;
-		using ibool = typename VectorTemplate<T>::bool_t;
-
-		const Vector3t<T> e12 = p2 - p1;
-		const Vector3t<T> e13 = p3 - p1;
-
-		const Vector3t<T> q = in.Direction.cross(e13);
-		const T a			= q.dot(e12);
-
-		const T f			= 1.0f / a;
-		const Vector3t<T> s = in.Origin - p1;
-		uv(0)				= f * s.dot(q);
-
-		const ibool uoutside = (uv(0) < 0) | (uv(0) > 1);
-
-		const Vector3t<T> r = s.cross(e12);
-		uv(1)				= f * in.Direction.dot(r);
-
-		const ibool voutside = (uv(1) < 0) | (uv(0) + uv(1) > 1);
-
-		t = f * r.dot(e13);
-		return b_and(b_and(b_not(uoutside), b_not(voutside)),
-					 (t >= PR_TRIANGLE_INTERSECT_EPSILON));
+		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
 	}
 };
 } // namespace PR

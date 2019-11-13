@@ -35,6 +35,7 @@ void setup_integrator(py::module& m);
  * See https://pybind11.readthedocs.io/en/stable/advanced/smart_ptrs.html
  */
 //----------
+PR_NO_SANITIZE_ADDRESS
 PYBIND11_MODULE(pypearray, m)
 {
 	m.doc() = "PearRay Python API";

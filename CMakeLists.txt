@@ -79,11 +79,6 @@ find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
-IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
-	include(Coveralls)
-	coveralls_turn_on_coverage()
-ENDIF()
-
 IF(PR_USE_CCACHE)
 	include(CCache)
 ENDIF()
@@ -129,6 +124,11 @@ include(Strip)
 include(LTO)
 include(ExtraUtils)
 include(Deploy)
+
+IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
+	include(Coveralls)
+	coveralls_turn_on_coverage()
+ENDIF()
 
 # Libraries
 add_subdirectory(src/library)

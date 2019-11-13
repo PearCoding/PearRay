@@ -11,6 +11,7 @@
 using namespace PR;
 namespace PRPY {
 
+PR_NO_SANITIZE_ADDRESS
 void setup_renderer(py::module& m)
 {
 	py::class_<RenderFactory, std::shared_ptr<RenderFactory>>(m, "RenderFactory")

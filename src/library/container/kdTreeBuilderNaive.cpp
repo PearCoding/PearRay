@@ -5,22 +5,22 @@
 
 namespace PR {
 
-enum Side {
+enum SideNaive {
 	S_Left = 0,
 	S_Right,
 	S_Both,
 	S_Planar
 };
 
-enum SidePlane {
+enum SidePlaneNaive {
 	SP_Left,
 	SP_Right
 };
 
-struct kdNodeBuilder {
+struct kdNodeBuilderNaive {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	kdNodeBuilder(uint32 id, bool leaf, const BoundingBox& b)
+	kdNodeBuilderNaive(uint32 id, bool leaf, const BoundingBox& b)
 		: id(id)
 		, isLeaf(leaf)
 		, boundingBox(b)
@@ -32,10 +32,10 @@ struct kdNodeBuilder {
 	BoundingBox boundingBox;
 };
 
-struct kdInnerNodeBuilder : public kdNodeBuilder {
-	kdInnerNodeBuilder(uint32 id, uint8 axis, float sp,
-					   kdNodeBuilder* l, kdNodeBuilder* r, const BoundingBox& b)
-		: kdNodeBuilder(id, false, b)
+struct kdInnerNodeBuilderNaive : public kdNodeBuilderNaive {
+	kdInnerNodeBuilderNaive(uint32 id, uint8 axis, float sp,
+					   kdNodeBuilderNaive* l, kdNodeBuilderNaive* r, const BoundingBox& b)
+		: kdNodeBuilderNaive(id, false, b)
 		, axis(axis)
 		, splitPos(sp)
 		, left(l)
@@ -45,21 +45,21 @@ struct kdInnerNodeBuilder : public kdNodeBuilder {
 
 	const uint8 axis;
 	const float splitPos;
-	kdNodeBuilder* left;
-	kdNodeBuilder* right;
+	kdNodeBuilderNaive* left;
+	kdNodeBuilderNaive* right;
 };
 
-struct kdLeafNodeBuilder : public kdNodeBuilder {
-	kdLeafNodeBuilder(uint32 id, const BoundingBox& b)
-		: kdNodeBuilder(id, true, b)
+struct kdLeafNodeBuilderNaive : public kdNodeBuilderNaive {
+	kdLeafNodeBuilderNaive(uint32 id, const BoundingBox& b)
+		: kdNodeBuilderNaive(id, true, b)
 	{
 	}
 
 	std::vector<uint64> objects;
 };
 
-struct Primitive {
-	Primitive(uint64 d, const BoundingBox& box)
+struct PrimitiveNaive {
+	PrimitiveNaive(uint64 d, const BoundingBox& box)
 		: data(d)
 		, side(S_Both)
 		, box(box)
@@ -67,7 +67,7 @@ struct Primitive {
 	}
 
 	uint64 data;
-	Side side;
+	SideNaive side;
 	BoundingBox box;
 };
 
@@ -96,15 +96,15 @@ kdTreeBuilderNaive::kdTreeBuilderNaive(void* observer,
 
 ////////////////////////////////////////////////////
 
-static void deleteNode(kdNodeBuilder* node)
+static void deleteNode(kdNodeBuilderNaive* node)
 {
 	if (node) {
 		if (node->isLeaf)
-			delete reinterpret_cast<kdLeafNodeBuilder*>(node);
+			delete reinterpret_cast<kdLeafNodeBuilderNaive*>(node);
 		else {
-			deleteNode(reinterpret_cast<kdInnerNodeBuilder*>(node)->left);
-			deleteNode(reinterpret_cast<kdInnerNodeBuilder*>(node)->right);
-			delete reinterpret_cast<kdInnerNodeBuilder*>(node);
+			deleteNode(reinterpret_cast<kdInnerNodeBuilderNaive*>(node)->left);
+			deleteNode(reinterpret_cast<kdInnerNodeBuilderNaive*>(node)->right);
+			delete reinterpret_cast<kdInnerNodeBuilderNaive*>(node);
 		}
 	}
 }
@@ -124,14 +124,14 @@ const BoundingBox& kdTreeBuilderNaive::boundingBox() const
 
 ////////////////////////////////////////////////////
 
-void kdTreeBuilderNaive::statElementsNode(kdNodeBuilder* node, size_t& sumV, float root_volume, uint32 depth)
+void kdTreeBuilderNaive::statElementsNode(kdNodeBuilderNaive* node, size_t& sumV, float root_volume, uint32 depth)
 {
 	mDepth   = std::max(depth, mDepth);
 	node->id = mNodeCount;
 	++mNodeCount;
 
 	if (node->isLeaf) {
-		kdLeafNodeBuilder* leaf = reinterpret_cast<kdLeafNodeBuilder*>(node);
+		kdLeafNodeBuilderNaive* leaf = reinterpret_cast<kdLeafNodeBuilderNaive*>(node);
 		++mLeafCount;
 
 		mMaxElementsPerLeaf = std::max(mMaxElementsPerLeaf, leaf->objects.size());
@@ -142,7 +142,7 @@ void kdTreeBuilderNaive::statElementsNode(kdNodeBuilder* node, size_t& sumV, flo
 		mExpectedLeavesVisited += ratio;
 		mExpectedObjectsIntersected += leaf->objects.size() * ratio;
 	} else {
-		kdInnerNodeBuilder* inner = reinterpret_cast<kdInnerNodeBuilder*>(node);
+		kdInnerNodeBuilderNaive* inner = reinterpret_cast<kdInnerNodeBuilderNaive*>(node);
 		if (inner->left) {
 			statElementsNode(inner->left, sumV, root_volume, depth + 1);
 		}
@@ -157,12 +157,12 @@ void kdTreeBuilderNaive::statElementsNode(kdNodeBuilder* node, size_t& sumV, flo
 
 ////////////////////////////////////////////////////
 
-static void cleanupNode(kdNodeBuilder*& node)
+static void cleanupNode(kdNodeBuilderNaive*& node)
 {
 	if (node->isLeaf) {
 		return; // Ignore leafs
 	} else {
-		kdInnerNodeBuilder* innerN = reinterpret_cast<kdInnerNodeBuilder*>(node);
+		kdInnerNodeBuilderNaive* innerN = reinterpret_cast<kdInnerNodeBuilderNaive*>(node);
 
 		PR_ASSERT(innerN->left || innerN->right, "Expected atleast one node to be valid!");
 		if (innerN->left && !innerN->right) {
@@ -205,7 +205,7 @@ static inline float cost(float costIntersection, float PL, float PR, size_t NL, 
 }
 
 static inline float SAH(float costIntersection, const BoundingBox& V,
-						size_t nl, size_t nr, size_t np, SidePlane& side,
+						size_t nl, size_t nr, size_t np, SidePlaneNaive& side,
 						const BoundingBox& vl, const BoundingBox& vr)
 {
 	const float pl = probability(vl, V);
@@ -223,7 +223,7 @@ static inline float SAH(float costIntersection, const BoundingBox& V,
 	}
 }
 
-static void classify(const std::vector<Primitive*>& objs,
+static void classify(const std::vector<PrimitiveNaive*>& objs,
 					 uint32 dim, float v,
 					 const BoundingBox& vl, const BoundingBox& vr,
 					 uint32& nl, uint32& nr, uint32& np)
@@ -258,9 +258,9 @@ static void classify(const std::vector<Primitive*>& objs,
 	}
 }
 
-static void findSplit(float costIntersection, const std::vector<Primitive*>& objs,
+static void findSplit(float costIntersection, const std::vector<PrimitiveNaive*>& objs,
 					  const BoundingBox& V,
-					  int& dim_out, float& v_out, float& c_out, SidePlane& side_out,
+					  int& dim_out, float& v_out, float& c_out, SidePlaneNaive& side_out,
 					  BoundingBox& vl_out, BoundingBox& vr_out)
 {
 	for (auto p : objs) {
@@ -282,7 +282,7 @@ static void findSplit(float costIntersection, const std::vector<Primitive*>& obj
 				uint32 nl, nr, np;
 				classify(objs, dim, v, vl, vr, nl, nr, np);
 
-				SidePlane side;
+				SidePlaneNaive side;
 				const float c = SAH(costIntersection, V, nl, nr, np, side, vl, vr);
 
 				if (c < c_out) {
@@ -298,8 +298,8 @@ static void findSplit(float costIntersection, const std::vector<Primitive*>& obj
 	}
 }
 
-static void distributeObjects(const std::vector<Primitive*>& objs, SidePlane side,
-							  std::vector<Primitive*>& left, std::vector<Primitive*>& right)
+static void distributeObjects(const std::vector<PrimitiveNaive*>& objs, SidePlaneNaive side,
+							  std::vector<PrimitiveNaive*>& left, std::vector<PrimitiveNaive*>& right)
 {
 	for (auto obj : objs) {
 		switch (obj->side) {
@@ -323,12 +323,12 @@ static void distributeObjects(const std::vector<Primitive*>& objs, SidePlane sid
 	}
 }
 
-inline static kdNodeBuilder* createLeafNode(void* observer,
+inline static kdNodeBuilderNaive* createLeafNode(void* observer,
 										   kdTreeBuilderNaive::AddedCallback addedCallback,
-										   std::vector<Primitive*>& objs,
+										   std::vector<PrimitiveNaive*>& objs,
 										   const BoundingBox& V)
 {
-	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(-1, V);
+	kdLeafNodeBuilderNaive* leaf = new kdLeafNodeBuilderNaive(-1, V);
 	for (auto obj : objs) {
 		leaf->objects.push_back(obj->data);
 		if (addedCallback)
@@ -337,10 +337,10 @@ inline static kdNodeBuilder* createLeafNode(void* observer,
 	return leaf;
 }
 
-static kdNodeBuilder* buildNode(void* observer,
+static kdNodeBuilderNaive* buildNode(void* observer,
 								kdTreeBuilderNaive::CostCallback costCallback,
 								kdTreeBuilderNaive::AddedCallback addedCallback,
-								std::vector<Primitive*>& objs,
+								std::vector<PrimitiveNaive*>& objs,
 								const BoundingBox& V, uint32 depth, uint32 maxDepth, bool elementWise)
 {
 	if (objs.empty() || V.surfaceArea() <= PR_EPSILON || depth > maxDepth) {
@@ -363,7 +363,7 @@ static kdNodeBuilder* buildNode(void* observer,
 	int dim = 0;
 	float v = 0;
 	float c = std::numeric_limits<float>::infinity();
-	SidePlane side;
+	SidePlaneNaive side;
 	BoundingBox vl, vr;
 	findSplit(costIntersection, objs, V, dim, v, c, side, vl, vr);
 
@@ -375,15 +375,15 @@ static kdNodeBuilder* buildNode(void* observer,
 	classify(objs, dim, v, vl, vr, nl, nr, np);
 
 	// Distribute
-	std::vector<Primitive*> left, right;
+	std::vector<PrimitiveNaive*> left, right;
 	left.reserve(nl + (side == SP_Left ? np : 0));
 	right.reserve(nr + (side == SP_Right ? np : 0));
 	distributeObjects(objs, side, left, right);
 
 	// Cleanup for memory
-	std::vector<Primitive*>().swap(objs);
+	std::vector<PrimitiveNaive*>().swap(objs);
 
-	return new kdInnerNodeBuilder(-1, dim, v,
+	return new kdInnerNodeBuilderNaive(-1, dim, v,
 								  buildNode(observer, costCallback, addedCallback, left, vl, depth + 1, maxDepth, elementWise),
 								  buildNode(observer, costCallback, addedCallback, right, vr, depth + 1, maxDepth, elementWise),
 								  V);
@@ -399,7 +399,7 @@ void kdTreeBuilderNaive::build(size_t size)
 	else if (size == 1) {
 		uint64 e = 0;
 
-		auto leaf = new kdLeafNodeBuilder(mNodeCount, mGetBoundingBox(mObserver, e));
+		auto leaf = new kdLeafNodeBuilderNaive(mNodeCount, mGetBoundingBox(mObserver, e));
 		leaf->objects.push_back(e);
 
 		mMaxDepth = 1;
@@ -410,12 +410,12 @@ void kdTreeBuilderNaive::build(size_t size)
 
 	mMaxDepth = std::ceil(8 + 1.5 * std::log2(size));
 
-	std::vector<Primitive*> primitives;		// Will be cleared to save memory
-	std::vector<Primitive*> primitivesCopy; // Copy to be deleted later
+	std::vector<PrimitiveNaive*> primitives;		// Will be cleared to save memory
+	std::vector<PrimitiveNaive*> primitivesCopy; // Copy to be deleted later
 
 	BoundingBox V;
 	for (size_t it = 0; it < size; ++it) {
-		auto prim = new Primitive(it, mGetBoundingBox(mObserver, it));
+		auto prim = new PrimitiveNaive(it, mGetBoundingBox(mObserver, it));
 		primitives.push_back(prim);
 		primitivesCopy.push_back(prim);
 		V.combine(prim->box);
@@ -457,18 +457,18 @@ void kdTreeBuilderNaive::build(size_t size)
 
 ////////////////////////////////////////////////////
 
-static void saveNode(std::ostream& stream, kdNodeBuilder* node)
+static void saveNode(std::ostream& stream, kdNodeBuilderNaive* node)
 {
 	stream << node->id << " " << static_cast<uint32>(node->isLeaf ? 1 : 0);
 	if (node->isLeaf) {
-		kdLeafNodeBuilder* leafN = reinterpret_cast<kdLeafNodeBuilder*>(node);
+		kdLeafNodeBuilderNaive* leafN = reinterpret_cast<kdLeafNodeBuilderNaive*>(node);
 		stream << " " << leafN->objects.size();
 		for (const auto& entity : leafN->objects) {
 			stream << " " << entity;
 		}
 		stream << std::endl;
 	} else {
-		kdInnerNodeBuilder* innerN = reinterpret_cast<kdInnerNodeBuilder*>(node);
+		kdInnerNodeBuilderNaive* innerN = reinterpret_cast<kdInnerNodeBuilderNaive*>(node);
 		stream << " " << static_cast<uint32>(innerN->axis)
 			   << " " << innerN->splitPos
 			   << " " << innerN->left->id

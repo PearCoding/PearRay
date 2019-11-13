@@ -4,6 +4,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_material(py::module& m)
 {
 	py::class_<IMaterial, std::shared_ptr<IMaterial>>(m, "IMaterial")

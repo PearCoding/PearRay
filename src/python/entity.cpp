@@ -7,6 +7,7 @@ using namespace PR;
 
 namespace PRPY {
 
+PR_NO_SANITIZE_ADDRESS
 void setup_entity(py::module& m)
 {
 	py::class_<VirtualEntity, std::shared_ptr<VirtualEntity>>(m, "VirtualEntity")

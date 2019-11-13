@@ -4,6 +4,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_status(py::module& m)
 {
 	py::class_<RenderStatus>(m, "RenderStatus")

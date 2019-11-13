@@ -6,6 +6,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_spectral(py::module& m)
 {
 	py::class_<SpectrumDescriptor, std::shared_ptr<SpectrumDescriptor>>(m, "SpectrumDescriptor")

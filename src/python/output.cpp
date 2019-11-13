@@ -5,6 +5,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_output(py::module& m)
 {
 	py::class_<FrameBufferUInt32, std::shared_ptr<FrameBufferUInt32>>(m, "FrameBufferUInt32", py::buffer_protocol())

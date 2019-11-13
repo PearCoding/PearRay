@@ -27,10 +27,10 @@ RangeSlider::~RangeSlider()
 {
 }
 
-constexpr size_t BAR_H	= 20;
-constexpr size_t KNOB_W   = 10;
-constexpr size_t BORDER_W = 5;
-constexpr size_t MIN_W	= BORDER_W * 2 + KNOB_W * 2;
+constexpr int BAR_H	= 20;
+constexpr int KNOB_W   = 10;
+constexpr int BORDER_W = 5;
+constexpr int MIN_W	= BORDER_W * 2 + KNOB_W * 2;
 
 RangeSlider::DrawStyle RangeSlider::calculateStyle() const
 {

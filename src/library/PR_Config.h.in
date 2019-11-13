@@ -26,6 +26,10 @@
 #define PR_CC_GNU
 #endif
 
+#if defined(__clang__)
+#define PR_CC_CLANG
+#endif
+
 #if defined(__MINGW32__)
 #define PR_CC_MINGW32
 #endif
@@ -111,15 +115,25 @@ private:                                           \
 	static void operator delete(void*)   = delete; \
 	static void operator delete[](void*) = delete
 
+#if defined(PR_CC_GNU) || defined (PR_CC_CLANG)
+# define PR_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+# define PR_NO_SANITIZE_THREAD __attribute__((no_sanitize_thread))
+# define PR_NO_SANITIZE_UNDEFINED __attribute__((no_sanitize_undefined))
+#else
+# define PR_NO_SANITIZE_ADDRESS
+# define PR_NO_SANITIZE_THREAD
+# define PR_NO_SANITIZE_UNDEFINED
+#endif
+
 #if !defined(PR_LIB_STATIC)
-#if defined(PR_OS_WINDOWS)
+#if defined(PR_CC_MSC)
 #define PR_EXPORT __declspec(dllexport)
 #define PR_IMPORT __declspec(dllimport)
-#elif defined(PR_OS_LINUX)
+#elif defined(PR_CC_GNU) || defined (PR_CC_CLANG)
 #define PR_EXPORT __attribute__((visibility("default")))
 #define PR_IMPORT
 #else
-#error Unsupported operating system
+#error Unsupported compiler
 #endif
 #else
 #define PR_EXPORT

@@ -4,6 +4,8 @@
 #include "ray/RayPackage.h"
 #include "renderer/RenderTileStatistics.h"
 
+#include <atomic>
+
 namespace PR {
 
 class ICamera;
@@ -15,8 +17,8 @@ public:
 			   const RenderContext& context, uint32 index);
 	~RenderTile();
 
-	void inc();
-	void reset();
+	inline void inc() { mSamplesRendered++; }
+	inline void reset() { mSamplesRendered = 0; }
 
 	Ray constructCameraRay(uint32 px, uint32 py, uint32 sample);
 
@@ -46,7 +48,7 @@ public:
 	inline const RenderContext* context() const { return mContext; }
 
 private:
-	bool mWorking;
+	std::atomic<bool> mWorking;
 
 	const uint32 mSX;
 	const uint32 mSY;
@@ -59,7 +61,7 @@ private:
 	const uint32 mIndex;
 	const uint32 mMaxSamples;
 
-	uint32 mSamplesRendered;
+	std::atomic<uint32> mSamplesRendered;
 
 	Random mRandom;
 	std::unique_ptr<Sampler> mAASampler;

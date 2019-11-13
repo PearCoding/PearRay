@@ -74,9 +74,9 @@ public:
 	void save(std::ostream& stream) const;
 
 private:
-	void statElementsNode(struct kdNodeBuilder* node, size_t& sumV, float root_volume, uint32 depth);
+	void statElementsNode(struct kdNodeBuilderNaive* node, size_t& sumV, float root_volume, uint32 depth);
 
-	struct kdNodeBuilder* mRoot;
+	struct kdNodeBuilderNaive* mRoot;
 
 	void* mObserver;
 

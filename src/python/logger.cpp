@@ -20,6 +20,7 @@ public:
 	}
 };
 
+PR_NO_SANITIZE_ADDRESS
 void setup_logger(py::module& m)
 {
 	py::class_<LogListener, LogListenerWrap>(m, "LogListener")

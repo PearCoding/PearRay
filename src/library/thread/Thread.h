@@ -89,7 +89,7 @@ private:
 	static std::atomic<uint32> sThreadCount;
 	//static std::mutex sGeneralThreadMutex;
 
-	_State mState;
+	std::atomic<_State> mState;
 	std::thread* mThread;
 
 	bool mShouldStop;

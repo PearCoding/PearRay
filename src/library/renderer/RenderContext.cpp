@@ -52,13 +52,13 @@ RenderContext::~RenderContext()
 
 void RenderContext::reset()
 {
+	for (RenderThread* thread : mThreads)
+		delete thread;
+
 	mShouldStop				  = false;
 	mThreadsWaitingForPass	= 0;
 	mCurrentPass			  = 0;
 	mIncrementalCurrentSample = 0;
-
-	for (RenderThread* thread : mThreads)
-		delete thread;
 
 	mThreads.clear();
 	mLights.clear();

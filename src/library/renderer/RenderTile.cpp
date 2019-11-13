@@ -94,16 +94,6 @@ RenderTile::~RenderTile()
 {
 }
 
-void RenderTile::inc()
-{
-	mSamplesRendered++;
-}
-
-void RenderTile::reset()
-{
-	mSamplesRendered = 0;
-}
-
 Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 {
 	statistics().addPixelSampleCount();

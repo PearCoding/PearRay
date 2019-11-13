@@ -6,6 +6,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_scene(py::module& m)
 {
 	py::class_<Scene, std::shared_ptr<Scene>>(m, "Scene")

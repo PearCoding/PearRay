@@ -24,6 +24,7 @@ public:
 	}
 };
 
+PR_NO_SANITIZE_ADDRESS
 void setup_sampler(py::module& m)
 {
 	py::class_<Sampler, SamplerWrap>(m, "Sampler")

@@ -5,7 +5,7 @@ function(PR_ADD_PLUGIN NAME)
   set(TARGET pr_pl_${NAME})
 
   add_library(${TARGET} MODULE ${_args_CPP})
-  target_link_libraries(${TARGET} pr_lib pr_lib_utils)
+  target_link_libraries(${TARGET} PRIVATE pr_lib pr_lib_utils)
   set_target_properties(${TARGET} PROPERTIES CXX_VISIBILITY_PRESET hidden)
   target_compile_definitions(${TARGET} PRIVATE "${DEFS};PR_PLUGIN_BUILD" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
   add_lto(${TARGET})

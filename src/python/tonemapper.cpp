@@ -10,6 +10,7 @@
 
 using namespace PR;
 namespace PRPY {
+PR_NO_SANITIZE_ADDRESS
 void setup_tonemapper(py::module& m)
 {
 	typedef py::array_t<float, py::array::c_style | py::array::forcecast> Array;

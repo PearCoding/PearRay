@@ -10,6 +10,7 @@
 using namespace PR;
 namespace PRPY {
 
+PR_NO_SANITIZE_ADDRESS
 void setup_shader(py::module& m)
 {
 	py::class_<FloatScalarShadingSocket, std::shared_ptr<FloatScalarShadingSocket>>(m, "FloatScalarShadingSocket");

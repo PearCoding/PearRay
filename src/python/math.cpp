@@ -6,6 +6,7 @@
 using namespace PR;
 namespace PRPY {
 
+PR_NO_SANITIZE_ADDRESS
 void setup_math(py::module& m)
 {
 	typedef Eigen::Quaternion<float, 0> Quat;
