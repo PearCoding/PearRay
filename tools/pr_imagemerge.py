@@ -15,20 +15,20 @@ import re;
 
 def run_tool(input1, input2, output):
     args = [input1,
-        input2, 
+        input2,
         "--add",
         "-o",
         output
     ]
 
     try:
-        _process = subprocess.call([TOOL] + args)
+        subprocess.call([TOOL] + args)
     except OSError:
         print("Could not execute '%s'" % TOOL)
 
 # Main
 if __name__=='__main__':
-    
+
     if len(sys.argv) != 2:
         print("Not enough arguments given. Need a pearray output directory")
         exit()

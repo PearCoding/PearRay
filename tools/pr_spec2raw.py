@@ -5,13 +5,12 @@
 # pr_spec2xyz INPUT OUTPUT
 
 import sys
-import os
 import struct
 import pypearray as pr
 
 # Main
 if __name__=='__main__':
-    
+
     if len(sys.argv) != 3:
         print("Not enough arguments given. Need an input and output file")
         exit()

@@ -5,7 +5,6 @@
 # To understand how to use it, use
 #   pr_sobolgen --help
 
-import sys
 import argparse
 
 
