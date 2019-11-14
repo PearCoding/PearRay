@@ -59,6 +59,8 @@ option(PR_USE_AVX512 			"Use AVX512F simd support." OFF)
 option(PR_USE_LTO 				"Use linked time optimization if available." ON)
 option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds only." OFF)
 option(PR_USE_CCACHE 			"Use ccache if available." ON)
+# march should be default, as we use simdpp
+option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
 
 find_package(Threads REQUIRED)
 
@@ -129,6 +131,15 @@ IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)
 	coveralls_turn_on_coverage()
 ENDIF()
+
+# march
+if(PR_OPTIMIZE_FOR_NATIVE)
+include(CheckCXXCompilerFlag)
+	CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+	if(COMPILER_SUPPORTS_MARCH_NATIVE)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+	endif()
+endif()
 
 # Libraries
 add_subdirectory(src/library)
