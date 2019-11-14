@@ -2,6 +2,7 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/PearCoding/PearRay/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/issues)
 [![Coverage Status](https://coveralls.io/repos/github/PearCoding/PearRay/badge.svg?branch=master)](https://coveralls.io/github/PearCoding/PearRay?branch=master)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/PearCoding/PearRay.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/PearCoding/PearRay/alerts/)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/48a91c3c277d4aa4ae76ff940e4bcf07)](https://www.codacy.com/app/PearCoding/PearRay?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=PearCoding/PearRay&amp;utm_campaign=Badge_Grade)\
 ![CMake 3.9](https://img.shields.io/badge/CMake-3.9+-green.svg)
 ![Language](https://img.shields.io/badge/language-c++-blue.svg)
