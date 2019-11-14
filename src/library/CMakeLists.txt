@@ -10,6 +10,8 @@ SET(PR_Src
   LogListener.h
   Platform.h
   Platform.cpp
+  Profiler.h
+  Profiler.cpp
   Random.h
   Variant.h
   VectorGlue.inl
