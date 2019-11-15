@@ -59,7 +59,7 @@ inline bool b_or(bool v1, bool v2)
 	return v1 || v2;
 }
 
-template <typename C, size_t N>
+template <typename C, unsigned N>
 inline void load_from_container_linear(simdpp::float32<N>& out,
 									   const C& container,
 									   size_t off = 0)
@@ -74,7 +74,7 @@ inline void load_from_container_linear(simdpp::float32<N>& out,
 	out = simdpp::load(data);
 }
 
-template <typename C, size_t N>
+template <typename C, unsigned N>
 inline void load_from_container_linear(simdpp::uint32<N>& out,
 									   const C& container,
 									   size_t off = 0)
@@ -89,7 +89,7 @@ inline void load_from_container_linear(simdpp::uint32<N>& out,
 	out = simdpp::load(data);
 }
 
-template <typename C, size_t N>
+template <typename C, unsigned N>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value, simdpp::float32<N>>
 load_from_container(const simdpp::uint32<N>& indices,
 					const C& container,
@@ -108,7 +108,7 @@ load_from_container(const simdpp::uint32<N>& indices,
 	return simdpp::load(data);
 }
 
-template <typename C, size_t N>
+template <typename C, unsigned N>
 inline std::enable_if_t<std::is_integral<typename C::value_type>::value, simdpp::uint32<N>>
 load_from_container(const simdpp::uint32<N>& indices,
 					const C& container,
@@ -127,7 +127,7 @@ load_from_container(const simdpp::uint32<N>& indices,
 	return simdpp::load(data);
 }
 
-template <typename C, size_t N = PR_SIMD_BANDWIDTH>
+template <typename C, unsigned N = PR_SIMD_BANDWIDTH>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value, simdpp::float32<N>>
 load_from_container_with_indices(const std::vector<size_t>& indices,
 								 size_t ioff,
@@ -143,7 +143,7 @@ load_from_container_with_indices(const std::vector<size_t>& indices,
 	return simdpp::load(data);
 }
 
-template <typename C, size_t N = PR_SIMD_BANDWIDTH>
+template <typename C, unsigned N = PR_SIMD_BANDWIDTH>
 inline std::enable_if_t<!std::is_floating_point<typename C::value_type>::value, simdpp::uint32<N>>
 load_from_container_with_indices(const std::vector<size_t>& indices,
 								 size_t ioff,
@@ -159,7 +159,7 @@ load_from_container_with_indices(const std::vector<size_t>& indices,
 	return simdpp::load(data);
 }
 
-template <typename C, size_t N>
+template <typename C, unsigned N>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value>
 store_into_container(const simdpp::uint32<N>& indices,
 					 C& container,
@@ -178,7 +178,7 @@ store_into_container(const simdpp::uint32<N>& indices,
 	}
 }
 
-template <typename C, size_t N>
+template <typename C, unsigned N>
 inline std::enable_if_t<std::is_integral<typename C::value_type>::value>
 store_into_container(const simdpp::uint32<N>& indices,
 					 C& container,
