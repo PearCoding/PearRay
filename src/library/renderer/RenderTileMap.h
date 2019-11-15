@@ -11,10 +11,10 @@ class RenderContext;
 class RenderTile;
 class PR_LIB RenderTileMap {
 public:
-	RenderTileMap(uint32 xcount, uint32 ycount, uint32 tilewidth, uint32 tileheight);
+	RenderTileMap(size_t xcount, size_t ycount, size_t tilewidth, size_t tileheight);
 	~RenderTileMap();
 
-	inline uint32 tileCount() const { return mTileMap.size(); }
+	inline size_t tileCount() const { return mTileMap.size(); }
 
 	void init(const RenderContext& context, TileMode mode);
 
@@ -24,10 +24,10 @@ public:
 	RenderTileStatistics statistics() const;
 
 private:
-	uint32 mTileXCount;
-	uint32 mTileYCount;
-	uint32 mTileWidth;
-	uint32 mTileHeight;
+	size_t mTileXCount;
+	size_t mTileYCount;
+	size_t mTileWidth;
+	size_t mTileHeight;
 	std::vector<RenderTile*> mTileMap;
 };
 }

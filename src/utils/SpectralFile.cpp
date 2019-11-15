@@ -14,12 +14,12 @@ namespace PR {
 
 struct SF_Data {
 	std::shared_ptr<SpectrumDescriptor> Descriptor;
-	uint32 Width;
-	uint32 Height;
+	size_t Width;
+	size_t Height;
 	bool External;
 	float* Ptr;
 
-	SF_Data(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height)
+	SF_Data(const std::shared_ptr<SpectrumDescriptor>& desc, size_t width, size_t height)
 		: Descriptor(desc)
 		, Width(width)
 		, Height(height)
@@ -28,7 +28,7 @@ struct SF_Data {
 		Ptr = new float[width * height * desc->samples()];
 	}
 
-	SF_Data(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height, float* data)
+	SF_Data(const std::shared_ptr<SpectrumDescriptor>& desc, size_t width, size_t height, float* data)
 		: Descriptor(desc)
 		, Width(width)
 		, Height(height)
@@ -50,12 +50,12 @@ struct SF_Data {
 	SF_Data& operator=(SF_Data&&) = default;
 };
 
-SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height)
+SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, size_t width, size_t height)
 	: mData(std::make_shared<SF_Data>(desc, width, height))
 {
 }
 
-SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, uint32 width, uint32 height, float* data, bool copy)
+SpectralFile::SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, size_t width, size_t height, float* data, bool copy)
 {
 	if (copy) {
 		mData = std::make_shared<SF_Data>(desc, width, height);
@@ -69,14 +69,14 @@ SpectralFile::~SpectralFile()
 {
 }
 
-void SpectralFile::set(uint32 row, uint32 column, const Spectrum& spec)
+void SpectralFile::set(size_t row, size_t column, const Spectrum& spec)
 {
 	PR_ASSERT(column < mData->Width && row < mData->Height, "Access out of bound");
 
 	spec.copyTo(&mData->Ptr[row * mData->Width * mData->Descriptor->samples() + column * mData->Descriptor->samples()]);
 }
 
-void SpectralFile::get(uint32 row, uint32 column, Spectrum& spec) const
+void SpectralFile::get(size_t row, size_t column, Spectrum& spec) const
 {
 	PR_ASSERT(column < mData->Width && row < mData->Height, "Access out of bound");
 
@@ -100,9 +100,9 @@ void SpectralFile::save(const std::wstring& path, bool compress) const
 	// Image header
 	uint32 tmp = mData->Descriptor->samples();
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-	tmp = mData->Width;
+	tmp = (uint32)mData->Width;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
-	tmp = mData->Height;
+	tmp = (uint32)mData->Height;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
 	// Wavelength data
@@ -171,12 +171,12 @@ const std::shared_ptr<SpectrumDescriptor>& SpectralFile::descriptor() const
 	return mData->Descriptor;
 }
 
-uint32 SpectralFile::width() const
+size_t SpectralFile::width() const
 {
 	return mData ? mData->Width : 0;
 }
 
-uint32 SpectralFile::height() const
+size_t SpectralFile::height() const
 {
 	return mData ? mData->Height : 0;
 }

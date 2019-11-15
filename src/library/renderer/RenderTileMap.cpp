@@ -6,7 +6,7 @@
 
 #include "Logger.h"
 namespace PR {
-RenderTileMap::RenderTileMap(uint32 xcount, uint32 ycount, uint32 tilewidth, uint32 tileheight)
+RenderTileMap::RenderTileMap(size_t xcount, size_t ycount, size_t tilewidth, size_t tileheight)
 	: mTileXCount(xcount)
 	, mTileYCount(ycount)
 	, mTileWidth(tilewidth)
@@ -38,18 +38,18 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 	switch (mode) {
 	default:
 	case TM_LINEAR:
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = 0; j < mTileXCount; ++j) {
-				uint32 sx = j * mTileWidth;
-				uint32 sy = i * mTileHeight;
+		for (size_t i = 0; i < mTileYCount; ++i) {
+			for (size_t j = 0; j < mTileXCount; ++j) {
+				size_t sx = j * mTileWidth;
+				size_t sy = i * mTileHeight;
 
 				if (sx < context.width() - 1
 					&& sy < context.height() - 1) {
 					mTileMap[i * mTileXCount + j] = new RenderTile(
 						sx,
 						sy,
-						std::min(context.width(), sx + mTileWidth),
-						std::min(context.height(), sy + mTileHeight),
+						std::min<uint32>(context.width(), sx + mTileWidth),
+						std::min<uint32>(context.height(), sy + mTileHeight),
 						context, i * mTileXCount + j);
 				} else {
 					mTileMap[i * mTileXCount + j] = nullptr;
@@ -58,20 +58,20 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 		}
 		break;
 	case TM_TILE: {
-		uint32 k = 0;
+		size_t k = 0;
 		// Even
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = ((i % 2) ? 1 : 0); j < mTileXCount; j += 2) {
-				uint32 sx = j * mTileWidth;
-				uint32 sy = i * mTileHeight;
+		for (size_t i = 0; i < mTileYCount; ++i) {
+			for (size_t j = ((i % 2) ? 1 : 0); j < mTileXCount; j += 2) {
+				size_t sx = j * mTileWidth;
+				size_t sy = i * mTileHeight;
 
 				if (sx < context.width() - 1
 					&& sy < context.height() - 1) {
 					mTileMap[k] = new RenderTile(
 						sx,
 						sy,
-						std::min(context.width(), sx + mTileWidth),
-						std::min(context.height(), sy + mTileHeight),
+						std::min<uint32>(context.width(), sx + mTileWidth),
+						std::min<uint32>(context.height(), sy + mTileHeight),
 						context, k);
 				} else {
 					mTileMap[k] = nullptr;
@@ -80,18 +80,18 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 			}
 		}
 		// Odd
-		for (uint32 i = 0; i < mTileYCount; ++i) {
-			for (uint32 j = ((i % 2) ? 0 : 1); j < mTileXCount; j += 2) {
-				uint32 sx = j * mTileWidth;
-				uint32 sy = i * mTileHeight;
+		for (size_t i = 0; i < mTileYCount; ++i) {
+			for (size_t j = ((i % 2) ? 0 : 1); j < mTileXCount; j += 2) {
+				size_t sx = j * mTileWidth;
+				size_t sy = i * mTileHeight;
 
 				if (sx < context.width() - 1
 					&& sy < context.height() - 1) {
 					mTileMap[k] = new RenderTile(
 						sx,
 						sy,
-						std::min(context.width(), sx + mTileWidth),
-						std::min(context.height(), sy + mTileHeight),
+						std::min<uint32>(context.width(), sx + mTileWidth),
+						std::min<uint32>(context.height(), sy + mTileHeight),
 						context, k);
 				} else {
 					mTileMap[k] = nullptr;
@@ -102,7 +102,7 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 	} break;
 	case TM_SPIRAL: {
 		MinRadiusGenerator<2> generator(std::max(mTileXCount / 2, mTileYCount / 2));
-		uint32 i = 0;
+		size_t i = 0;
 		while (generator.hasNext()) {
 			const auto p  = generator.next();
 			const auto tx = mTileXCount / 2 + p[0];
@@ -114,8 +114,8 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 					mTileMap[i] = new RenderTile(
 						tx * mTileWidth,
 						ty * mTileHeight,
-						std::min(context.width(), tx * mTileWidth + mTileWidth),
-						std::min(context.height(), ty * mTileHeight + mTileHeight),
+						std::min<uint32>(context.width(), tx * mTileWidth + mTileWidth),
+						std::min<uint32>(context.height(), ty * mTileHeight + mTileHeight),
 						context, i);
 				} else {
 					mTileMap[i] = nullptr;
@@ -129,8 +129,8 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 
 RenderTile* RenderTileMap::getNextTile(uint32 maxSample)
 {
-	for (uint32 i = 0; i < mTileYCount; ++i) {
-		for (uint32 j = 0; j < mTileXCount; ++j) {
+	for (size_t i = 0; i < mTileYCount; ++i) {
+		for (size_t j = 0; j < mTileXCount; ++j) {
 			// TODO: Better check up for AS
 			if (mTileMap[i * mTileXCount + j]
 				&& mTileMap[i * mTileXCount + j]->samplesRendered() < maxSample
@@ -148,8 +148,8 @@ RenderTile* RenderTileMap::getNextTile(uint32 maxSample)
 RenderTileStatistics RenderTileMap::statistics() const
 {
 	RenderTileStatistics s;
-	for (uint32 i = 0; i < mTileYCount; ++i) {
-		for (uint32 j = 0; j < mTileXCount; ++j) {
+	for (size_t i = 0; i < mTileYCount; ++i) {
+		for (size_t j = 0; j < mTileXCount; ++j) {
 			s += mTileMap[i * mTileXCount + j]->statistics();
 		}
 	}
@@ -158,8 +158,8 @@ RenderTileStatistics RenderTileMap::statistics() const
 
 void RenderTileMap::reset()
 {
-	for (uint32 i = 0; i < mTileYCount; ++i)
-		for (uint32 j = 0; j < mTileXCount; ++j)
+	for (size_t i = 0; i < mTileYCount; ++i)
+		for (size_t j = 0; j < mTileXCount; ++j)
 			mTileMap[i * mTileXCount + j]->reset();
 }
 } // namespace PR

@@ -47,16 +47,16 @@ constexpr float LIN_F1 = 12.92f;
 constexpr float LIN_F2 = 1.055f;
 void RGBConverter::gamma(float& x, float& y, float& z)
 {
-	x = (x <= GAM_T) ? LIN_F1 * x : (LIN_F2 * pow(x, 1 / POW_F) - LIN_O);
-	y = (y <= GAM_T) ? LIN_F1 * y : (LIN_F2 * pow(y, 1 / POW_F) - LIN_O);
-	z = (z <= GAM_T) ? LIN_F1 * z : (LIN_F2 * pow(z, 1 / POW_F) - LIN_O);
+	x = (x <= GAM_T) ? LIN_F1 * x : (LIN_F2 * std::pow(x, 1 / POW_F) - LIN_O);
+	y = (y <= GAM_T) ? LIN_F1 * y : (LIN_F2 * std::pow(y, 1 / POW_F) - LIN_O);
+	z = (z <= GAM_T) ? LIN_F1 * z : (LIN_F2 * std::pow(z, 1 / POW_F) - LIN_O);
 }
 
 void RGBConverter::linearize(float& x, float& y, float& z)
 {
-	x = (x <= LIN_T) ? x / LIN_F1 * x : pow((x + LIN_O) / LIN_F2, POW_F);
-	y = (y <= LIN_T) ? y / LIN_F1 * y : pow((y + LIN_O) / LIN_F2, POW_F);
-	z = (z <= LIN_T) ? z / LIN_F1 * z : pow((z + LIN_O) / LIN_F2, POW_F);
+	x = (x <= LIN_T) ? x / LIN_F1 * x : std::pow((x + LIN_O) / LIN_F2, POW_F);
+	y = (y <= LIN_T) ? y / LIN_F1 * y : std::pow((y + LIN_O) / LIN_F2, POW_F);
+	z = (z <= LIN_T) ? z / LIN_F1 * z : std::pow((z + LIN_O) / LIN_F2, POW_F);
 }
 
 void RGBConverter::toSpec(Spectrum& spec, float r, float g, float b)
