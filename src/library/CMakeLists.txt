@@ -97,6 +97,7 @@ SET(PR_Src
   photon/Photon.h
   photon/PhotonMap.h
   photon/PhotonMap.inl
+  ray/RayPackage.h
   ray/RayStream.cpp
   ray/RayStream.h
   renderer/RenderContext.cpp

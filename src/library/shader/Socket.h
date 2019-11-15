@@ -12,7 +12,7 @@ struct MapSocketCoord {
 
 ///////////////////
 template <typename T>
-class PR_LIB ScalarShadingSocket {
+class ScalarShadingSocket {
 public:
 	ScalarShadingSocket()		   = default;
 	virtual ~ScalarShadingSocket() = default;
@@ -20,12 +20,11 @@ public:
 	virtual T eval(const ShadingPoint& ctx) const = 0;
 	virtual std::string dumpInformation() const   = 0;
 };
-
 using FloatScalarShadingSocket = ScalarShadingSocket<float>;
 
 ///////////////////
 template <typename M, typename T>
-class PR_LIB SpectralSocket {
+class SpectralSocket {
 public:
 	SpectralSocket()		  = default;
 	virtual ~SpectralSocket() = default;
@@ -45,7 +44,7 @@ using FloatSpectralMapSocket = SpectralMapSocket<float>;
 
 ///////////////////
 template <typename T>
-class PR_LIB VectorShadingSocket {
+class VectorShadingSocket {
 public:
 	VectorShadingSocket()		   = default;
 	virtual ~VectorShadingSocket() = default;

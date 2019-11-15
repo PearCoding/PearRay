@@ -136,7 +136,7 @@ IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const
 		return nullptr;
 	}
 
-	size_t pick = mTile->random().get32(0, lights.size());
+	size_t pick = mTile->random().get32(0, (uint32)lights.size());
 	pdf			= 1.0f / lights.size();
 
 	IEntity* light = lights.at(pick).get();

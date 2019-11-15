@@ -86,19 +86,19 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 				if (cs3d.LPE_S.empty())
 					output->registerChannel(cs3d.Variable, ptr);
 				else
-					cs3d.LPE = output->registerLPEChannel(cs3d.Variable, LightPathExpression(cs3d.LPE_S), ptr);
+					cs3d.LPE = (int)output->registerLPEChannel(cs3d.Variable, LightPathExpression(cs3d.LPE_S), ptr);
 			}
 		}
 
 		for (IM_ChannelSetting1D& cs1d : file.Settings1D) {
 			if (!cs1d.LPE_S.empty() || !output->getChannel(cs1d.Variable)) {
 				auto ptr = std::make_shared<FrameBufferFloat>(
-					1, renderer->width(), renderer->height(), 0);
+					1, renderer->width(), renderer->height(), 0.0f);
 
 				if (cs1d.LPE_S.empty())
 					output->registerChannel(cs1d.Variable, ptr);
 				else
-					cs1d.LPE = output->registerLPEChannel(cs1d.Variable, LightPathExpression(cs1d.LPE_S), ptr);
+					cs1d.LPE = (int)output->registerLPEChannel(cs1d.Variable, LightPathExpression(cs1d.LPE_S), ptr);
 			}
 		}
 
@@ -110,16 +110,16 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 				if (cs.LPE_S.empty())
 					output->registerChannel(cs.Variable, ptr);
 				else
-					cs.LPE = output->registerLPEChannel(cs.Variable, LightPathExpression(cs.LPE_S), ptr);
+					cs.LPE = (int)output->registerLPEChannel(cs.Variable, LightPathExpression(cs.LPE_S), ptr);
 			}
 		}
 
 		for (IM_ChannelSettingSpec& ss : file.SettingsSpectral) {
 			auto ptr = std::make_shared<FrameBufferFloat>(
-				output->getSpectralChannel()->channels(), renderer->width(), renderer->height(), 0);
+				output->getSpectralChannel()->channels(), renderer->width(), renderer->height(), 0.0f);
 
 			if (!ss.LPE_S.empty())
-				ss.LPE = output->registerLPEChannel(LightPathExpression(ss.LPE_S), ptr);
+				ss.LPE = (int)output->registerLPEChannel(LightPathExpression(ss.LPE_S), ptr);
 		}
 	}
 }

@@ -51,6 +51,9 @@ private:
 		size_t Height;
 		ColorBufferMode Mode;
 		float* Ptr;
+
+		_Data(const _Data& other) = delete;
+		_Data& operator=(const _Data& other) = delete;
 	};
 
 	std::shared_ptr<_Data> mData;

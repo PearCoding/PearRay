@@ -64,7 +64,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	const uint32 cx = mRenderer->offsetX();
 	const uint32 cy = mRenderer->offsetY();
 
-	const uint32 channelCount = chSpec.size() * 3 + ch1d.size() + chcounter.size() + ch3d.size() * 3;
+	const size_t channelCount = chSpec.size() * 3 + ch1d.size() + chcounter.size() + ch3d.size() * 3;
 	if (channelCount == 0)
 		return false;
 
@@ -123,11 +123,11 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 	// Calculate maximums for some mapper techniques
 	float invMax3d[OutputBuffer::V_3D_COUNT];
-	std::fill_n(invMax3d, OutputBuffer::V_3D_COUNT, 0);
+	std::fill_n(invMax3d, OutputBuffer::V_3D_COUNT, 0.0f);
 	float invMax1d[OutputBuffer::V_1D_COUNT];
-	std::fill_n(invMax1d, OutputBuffer::V_1D_COUNT, 0);
+	std::fill_n(invMax1d, OutputBuffer::V_1D_COUNT, 0.0f);
 	float invMaxCounter[OutputBuffer::V_COUNTER_COUNT];
-	std::fill_n(invMax1d, OutputBuffer::V_COUNTER_COUNT, 0);
+	std::fill_n(invMax1d, OutputBuffer::V_COUNTER_COUNT, 0.0f);
 
 	for (const IM_ChannelSetting3D& sett : ch3d) {
 		std::shared_ptr<FrameBufferFloat> channel;
@@ -187,8 +187,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
-				invMaxCounter[sett.Variable] = std::max<uint64>(invMaxCounter[sett.Variable],
-																channel->getFragment(x, y, 0));
+				invMaxCounter[sett.Variable] = std::max<float>(invMaxCounter[sett.Variable],
+																static_cast<float>(channel->getFragment(x, y, 0)));
 			}
 		}
 
@@ -210,7 +210,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	out->open(utfFilename, spec);
 	for (uint32 y = 0; y < rh; ++y) {
 		for (uint32 x = 0; x < rw; ++x) {
-			uint32 id = x * channelCount;
+			size_t id = x * channelCount;
 
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
@@ -337,7 +337,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
 
 				if (channel) {
-					float r = channel->getFragment(x, y, 0);
+					float r = static_cast<float>(channel->getFragment(x, y, 0));
 					switch (sett.TMM) {
 					default:
 						break;

@@ -23,12 +23,12 @@ inline BoundingBox IEntity::worldBoundingBox() const
 		return calcWorldBoundingBox();
 }
 
-inline uint32 IEntity::containerID() const
+inline size_t IEntity::containerID() const
 {
 	return mContainerID;
 }
 
-inline void IEntity::setContainerID(uint32 id)
+inline void IEntity::setContainerID(size_t id)
 {
 	mContainerID = id;
 }

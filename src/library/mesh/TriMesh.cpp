@@ -68,7 +68,7 @@ void TriMesh::build(const std::wstring& container_file, bool loadOnly)
 
 void TriMesh::buildTree(const std::wstring& file)
 {
-	BUILDER builder(this, [](void* observer, uint64 f) {
+	BUILDER builder(this, [](void* observer, size_t f) {
 								TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
 								const uint32 ind1 = mesh->mIndices[0][f];
 								const uint32 ind2 = mesh->mIndices[1][f];
@@ -84,7 +84,7 @@ void TriMesh::buildTree(const std::wstring& file)
 																	mesh->mVertices[1][ind3],
 																	mesh->mVertices[2][ind3]);
 								return Triangle::getBoundingBox(p1,p2,p3); },
-					[](void* observer, uint64) {
+					[](void* observer, size_t) {
 						TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
 						return mesh->intersectionTestCost();
 					});

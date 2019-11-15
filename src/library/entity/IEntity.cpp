@@ -49,7 +49,8 @@ std::string IEntity::dumpInformation() const
 		   << "  <RenderEntity>: " << std::endl
 		   << "    IsLight:       " << (isLight() ? "true" : "false") << std::endl
 		   << "    IsCollidable:  " << (isCollidable() ? "true" : "false") << std::endl
-		   << "    CollisionCost: " << collisionCost() << std::endl;
+		   << "    CollisionCost: " << collisionCost() << std::endl
+		   << "    ContainerID:   " << containerID() << std::endl;
 
 	return stream.str();
 }

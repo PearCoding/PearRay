@@ -11,7 +11,7 @@ enum RayFlags : uint32 {
 };
 
 template <typename V>
-struct PR_LIB RayPackageBase {
+struct RayPackageBase {
 	typedef V FloatingType;
 	typedef typename VectorTemplate<V>::uint32_t IntegerType;
 

@@ -11,8 +11,8 @@ EXRLayer::EXRLayer(const QString& name, size_t channels,
 				   size_t width, size_t height)
 	: ImageBufferView()
 	, mName(name)
-	, mData(channels)
-	, mChannelNames(channels)
+	, mData((int)channels)
+	, mChannelNames((int)channels)
 	, mWidth(width)
 	, mHeight(height)
 {
@@ -39,7 +39,7 @@ void EXRLayer::ensureRightOrder()
 using namespace OPENEXR_IMF_NAMESPACE;
 class QIStream : public IStream {
 public:
-	QIStream(const QString& filename)
+	explicit QIStream(const QString& filename)
 		: IStream(filename.toUtf8().data())
 		, mFile(filename)
 	{
@@ -177,7 +177,7 @@ bool EXRFile::open(const QString& filename)
 		QVector<QPair<int, half*>> halfFormat;
 		FrameBuffer frameBuffer;
 
-		size_t k = 0;
+		int k = 0;
 		for (QString ch : it.value()) {
 			QString plainChannelName;
 			QString ech  = escapeString(ch);
@@ -189,7 +189,7 @@ bool EXRFile::open(const QString& filename)
 			}
 
 			layer->channelNames()[k] = plainChannelName;
-			layer->data()[k].resize(size);
+			layer->data()[k].resize((int)size);
 
 			const Channel* channel = channels.findChannel(ch.toStdString());
 			float* ptr			   = layer->data()[k].data();

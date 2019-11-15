@@ -6,15 +6,15 @@ namespace PR {
 class PR_LIB SplitSample2D {
 public:
 	inline SplitSample2D(const Vector2f& u,
-					uint32 start1, uint32 end1,
-					uint32 start2, uint32 end2)
+						 size_t start1, size_t end1,
+						 size_t start2, size_t end2)
 	{
 		PR_ASSERT(start1 < end1, "Expect end to be bigger then start");
 		PR_ASSERT(start2 < end2, "Expect end to be bigger then start");
 
 		float k;
 
-		uint32 s = end1 - start1;
+		size_t s = end1 - start1;
 		mU1		 = std::modf(u(0) * s, &k);
 		mI1		 = static_cast<uint32>(k);
 
@@ -24,7 +24,7 @@ public:
 	}
 
 	inline SplitSample2D(const Vector2f& u,
-					uint32 start, uint32 end)
+					size_t start, size_t end)
 		: SplitSample2D(u, start, end, start, end)
 	{
 	}

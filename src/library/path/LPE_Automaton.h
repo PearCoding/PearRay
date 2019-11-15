@@ -17,7 +17,7 @@ public:
 	std::string dumpTable() const;
 
 private:
-	uint32 nextState(uint32 currentState, const LightPathToken& token, bool& success) const;
+	size_t nextState(size_t currentState, const LightPathToken& token, bool& success) const;
 
 	// SoA
 	// {Label Block}
@@ -33,7 +33,7 @@ private:
 	// {State Block} = States
 	std::vector<bool> mSB_IsFinal;
 
-	uint32 mStartingState;
+	size_t mStartingState;
 };
 } // namespace LPE
 } // namespace PR

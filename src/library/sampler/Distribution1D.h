@@ -24,7 +24,7 @@ public:
 	float sampleContinuous(float u, float& pdf, size_t* offset = nullptr) const;
 	float continuousPdf(float u, size_t* offset = nullptr) const;
 
-	int sampleDiscrete(float u, float& pdf) const;
+	size_t sampleDiscrete(float u, float& pdf) const;
 	float discretePdf(float u) const;
 
 private:

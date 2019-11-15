@@ -11,7 +11,7 @@ constexpr uint64 BOUND_CHECK_N = 10000000;
 PR_BEGIN_TESTCASE(Random)
 PR_TEST("seed")
 {
-	uint32 seed = std::time(nullptr);
+	uint32 seed = (uint32)std::time(nullptr);
 	Random r1(seed);
 	Random r2(seed);
 
@@ -21,7 +21,7 @@ PR_TEST("seed")
 
 PR_TEST("float")
 {
-	Random r(std::time(nullptr));
+	Random r((uint64)std::time(nullptr));
 
 	bool outofbound = false;
 	for(uint64 i = 0; i < BOUND_CHECK_N; ++i)
@@ -39,7 +39,7 @@ PR_TEST("float")
 
 PR_TEST("double")
 {
-	Random r(std::time(nullptr));
+	Random r((uint64)std::time(nullptr));
 
 	bool outofbound = false;
 	for(uint64 i = 0; i < BOUND_CHECK_N; ++i)

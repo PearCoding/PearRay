@@ -98,7 +98,7 @@ URI URI::makeAbsolute(const URI& p, const URI& base)
 
 	std::string::const_iterator it = p.path().cbegin();
 	if (*it == '.') {
-		it++;
+		++it;
 		if (it != p.path().cend()) {
 			if (*it == '.') // Potential Directory Up... -> Currently not supported :(
 			{

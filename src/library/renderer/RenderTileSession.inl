@@ -43,7 +43,7 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 		IMaterial* material = nullptr;
 		startShadingGroup(grp, entity, material);
 
-		for (uint32 i = grp.Start; i <= grp.End; ++i) {
+		for (size_t i = grp.Start; i <= grp.End; ++i) {
 			HitEntry entry = mHitStream->get(i);
 			Ray ray		   = mRayStream->getRay(entry.SessionRayID);
 

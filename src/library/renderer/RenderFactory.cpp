@@ -34,8 +34,8 @@ std::shared_ptr<RenderContext> RenderFactory::create(
 	PR_ASSERT(ity > 0, "Image tile count y has to be greater 0");
 	PR_ASSERT(index < itx * ity, "Index has to be in bounds");
 
-	uint32 itw = std::ceil(mSettings.cropWidth() / static_cast<float>(itx));
-	uint32 ith = std::ceil(mSettings.cropHeight() / static_cast<float>(ity));
+	uint32 itw = static_cast<uint32>(std::ceil(mSettings.cropWidth() / static_cast<float>(itx)));
+	uint32 ith = static_cast<uint32>(std::ceil(mSettings.cropHeight() / static_cast<float>(ity)));
 	uint32 ix  = index % itx;
 	uint32 iy  = index / itx;
 	uint32 x   = ix * itw;

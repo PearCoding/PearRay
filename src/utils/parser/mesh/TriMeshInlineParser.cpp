@@ -158,7 +158,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment*,
 				return nullptr;
 			}
 
-			materials.push_back(index);
+			materials.push_back(static_cast<uint32>(index));
 		}
 	}
 
@@ -179,7 +179,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment*,
 		for (int k = 0; k < 3; ++k)
 			faces[k].reserve(vertexCount / 3);
 
-		for (size_t j = 0; j < vertexCount; ++j) {
+		for (uint32 j = 0; j < static_cast<uint32>(vertexCount); ++j) {
 			faces[j % 3].push_back(j);
 		}
 	} else {
@@ -211,7 +211,7 @@ std::shared_ptr<TriMesh> TriMeshInlineParser::parse(Environment*,
 				return nullptr;
 			}
 
-			faces[j % 3].push_back(val);
+			faces[j % 3].push_back(static_cast<uint32>(val));
 		}
 	}
 

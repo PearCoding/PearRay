@@ -156,13 +156,13 @@ PR_TEST("UV")
 	addVertex<float>(1, 1, 1, vertices);
 
 	std::vector<float> uvs[2];
-	addVertex<float>(0.1, 0.1, uvs);
-	addVertex<float>(0.2, 0.2, uvs);
-	addVertex<float>(0.3, 0.3, uvs);
+	addVertex<float>(0.1f, 0.1f, uvs);
+	addVertex<float>(0.2f, 0.2f, uvs);
+	addVertex<float>(0.3f, 0.3f, uvs);
 
-	addVertex<float>(0.4, 0.4, uvs);
-	addVertex<float>(0.5, 0.5, uvs);
-	addVertex<float>(0.6, 0.6, uvs);
+	addVertex<float>(0.4f, 0.4f, uvs);
+	addVertex<float>(0.5f, 0.5f, uvs);
+	addVertex<float>(0.6f, 0.6f, uvs);
 
 	std::vector<uint32> faces[3];
 	addVertex<uint32>(0, 1, 2, faces);

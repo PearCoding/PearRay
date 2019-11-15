@@ -301,28 +301,28 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 	fct->settings().cropMinX = std::max<float>(
 		0,
 		std::min<float>(1,
-						mRegistry.getByGroup<uint32>(
+						(float)mRegistry.getByGroup<uint32>(
 							RG_RENDERER,
 							"film/crop/min_x",
 							0)));
 	fct->settings().cropMaxX = std::max<float>(
 		0,
 		std::min<float>(1,
-						mRegistry.getByGroup<uint32>(
+						(float)mRegistry.getByGroup<uint32>(
 							RG_RENDERER,
 							"film/crop/max_x",
 							1)));
 	fct->settings().cropMinY = std::max<float>(
 		0,
 		std::min<float>(1,
-						mRegistry.getByGroup<uint32>(
+						(float)mRegistry.getByGroup<uint32>(
 							RG_RENDERER,
 							"film/crop/min_y",
 							0)));
 	fct->settings().cropMaxY = std::max<float>(
 		0,
 		std::min<float>(1,
-						mRegistry.getByGroup<uint32>(
+						(float)mRegistry.getByGroup<uint32>(
 							RG_RENDERER,
 							"film/crop/max_y",
 							1)));

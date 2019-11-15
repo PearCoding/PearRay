@@ -57,7 +57,7 @@ float Distribution1D::continuousPdf(float u, size_t* offset) const
 	return mValues[off] / mIntegral;
 }
 
-int Distribution1D::sampleDiscrete(float u, float& pdf) const
+size_t Distribution1D::sampleDiscrete(float u, float& pdf) const
 {
 	size_t off = Interval::find(mCDF.size(), [&](int index) {
 		return mCDF[index] <= u;

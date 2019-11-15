@@ -110,8 +110,8 @@ void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 		float hitD = out.HitDistance;
 		if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 			HitEntry entry;
-			entry.SessionRayID = i + grp.offset();
-			entry.RayID		   = grp.stream()->linearID(entry.SessionRayID);
+			entry.SessionRayID = static_cast<uint32>(i + grp.offset());
+			entry.RayID		   = static_cast<uint32>(grp.stream()->linearID(entry.SessionRayID));
 			entry.MaterialID   = out.MaterialID;
 			entry.EntityID	 = out.EntityID;
 			entry.PrimitiveID  = out.FaceID;

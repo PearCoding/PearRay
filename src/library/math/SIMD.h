@@ -59,41 +59,41 @@ inline bool b_or(bool v1, bool v2)
 	return v1 || v2;
 }
 
-template <typename C, unsigned N>
+template <typename C, size_t N>
 inline void load_from_container_linear(simdpp::float32<N>& out,
 									   const C& container,
-									   uint32 off = 0)
+									   size_t off = 0)
 {
 	PR_SIMD_ALIGN
 	float data[N];
 
-	for (uint32 i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i) {
 		data[i] = container[off + i];
 	}
 
 	out = simdpp::load(data);
 }
 
-template <typename C, unsigned N>
+template <typename C, size_t N>
 inline void load_from_container_linear(simdpp::uint32<N>& out,
 									   const C& container,
-									   uint32 off = 0)
+									   size_t off = 0)
 {
 	PR_SIMD_ALIGN
 	uint32 data[N];
 
-	for (uint32 i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i) {
 		data[i] = container[off + i];
 	}
 
 	out = simdpp::load(data);
 }
 
-template <typename C, unsigned N>
+template <typename C, size_t N>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value, simdpp::float32<N>>
 load_from_container(const simdpp::uint32<N>& indices,
 					const C& container,
-					uint32 off = 0)
+					size_t off = 0)
 {
 	PR_SIMD_ALIGN
 	uint32 ind[N];
@@ -101,18 +101,18 @@ load_from_container(const simdpp::uint32<N>& indices,
 	float data[N];
 
 	simdpp::store(ind, indices);
-	for (uint32 i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i) {
 		data[i] = container[ind[i] + off];
 	}
 
 	return simdpp::load(data);
 }
 
-template <typename C, unsigned N>
+template <typename C, size_t N>
 inline std::enable_if_t<std::is_integral<typename C::value_type>::value, simdpp::uint32<N>>
 load_from_container(const simdpp::uint32<N>& indices,
 					const C& container,
-					uint32 off = 0)
+					size_t off = 0)
 {
 	PR_SIMD_ALIGN
 	uint32 ind[N];
@@ -120,51 +120,51 @@ load_from_container(const simdpp::uint32<N>& indices,
 	uint32 data[N];
 
 	simdpp::store(ind, indices);
-	for (uint32 i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i) {
 		data[i] = container[ind[i] + off];
 	}
 
 	return simdpp::load(data);
 }
 
-template <typename C, unsigned N = PR_SIMD_BANDWIDTH>
+template <typename C, size_t N = PR_SIMD_BANDWIDTH>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value, simdpp::float32<N>>
 load_from_container_with_indices(const std::vector<size_t>& indices,
-								 uint32 ioff,
+								 size_t ioff,
 								 const C& container)
 {
 	PR_SIMD_ALIGN
 	float data[N];
 
-	for (uint32 i = 0; i < N && i + ioff < indices.size(); ++i) {
+	for (size_t i = 0; i < N && i + ioff < indices.size(); ++i) {
 		data[i] = container[indices[i + ioff]];
 	}
 
 	return simdpp::load(data);
 }
 
-template <typename C, unsigned N = PR_SIMD_BANDWIDTH>
+template <typename C, size_t N = PR_SIMD_BANDWIDTH>
 inline std::enable_if_t<!std::is_floating_point<typename C::value_type>::value, simdpp::uint32<N>>
 load_from_container_with_indices(const std::vector<size_t>& indices,
-								 uint32 ioff,
+								 size_t ioff,
 								 const C& container)
 {
 	PR_SIMD_ALIGN
 	uint32 data[N];
 
-	for (uint32 i = 0; i < N && i + ioff < indices.size(); ++i) {
+	for (size_t i = 0; i < N && i + ioff < indices.size(); ++i) {
 		data[i] = container[indices[i + ioff]];
 	}
 
 	return simdpp::load(data);
 }
 
-template <typename C, unsigned N>
+template <typename C, size_t N>
 inline std::enable_if_t<std::is_floating_point<typename C::value_type>::value>
 store_into_container(const simdpp::uint32<N>& indices,
 					 C& container,
 					 const simdpp::float32<N>& val,
-					 uint32 off = 0)
+					 size_t off = 0)
 {
 	PR_SIMD_ALIGN
 	uint32 ind[N];
@@ -173,17 +173,17 @@ store_into_container(const simdpp::uint32<N>& indices,
 
 	simdpp::store(ind, indices);
 	simdpp::store(data, val);
-	for (uint32 i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i) {
 		container[ind[i] + off] = data[i];
 	}
 }
 
-template <typename C, unsigned N>
+template <typename C, size_t N>
 inline std::enable_if_t<std::is_integral<typename C::value_type>::value>
 store_into_container(const simdpp::uint32<N>& indices,
 					 C& container,
 					 const simdpp::uint32<N>& val,
-					 uint32 off = 0)
+					 size_t off = 0)
 {
 	PR_SIMD_ALIGN
 	uint32 ind[N];
@@ -192,7 +192,7 @@ store_into_container(const simdpp::uint32<N>& indices,
 
 	simdpp::store(ind, indices);
 	simdpp::store(data, val);
-	for (uint32 i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i) {
 		container[ind[i] + off] = data[i];
 	}
 }

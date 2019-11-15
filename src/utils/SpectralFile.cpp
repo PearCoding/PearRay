@@ -98,7 +98,7 @@ void SpectralFile::save(const std::wstring& path, bool compress) const
 	out.put('P').put('R').put('4').put('2');
 
 	// Image header
-	uint32 tmp = mData->Descriptor->samples();
+	uint32 tmp = static_cast<uint32>(mData->Descriptor->samples());
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 	tmp = (uint32)mData->Width;
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));

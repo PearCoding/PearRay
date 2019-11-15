@@ -18,11 +18,11 @@ public:
 	size_t height() const override { return mHeight; }
 	size_t channelCount() const override { return mChannelNames.size(); }
 	size_t viewChannelCount() const override { return channelCount(); }
-	const QString& channelName(size_t c) const override { return mChannelNames.at(c); }
+	const QString& channelName(size_t c) const override { return mChannelNames.at((int)c); }
 
 	float value(size_t x, size_t y, size_t channel) const override
 	{
-		return mData[channel][y * mWidth + x];
+		return mData[(int)channel][static_cast<int>(y * mWidth + x)];
 	}
 
 	void ensureRightOrder();

@@ -12,8 +12,8 @@ public:
 
 	bool isRenderable() const override;
 
-	uint32 containerID() const;
-	void setContainerID(uint32 id);
+	inline size_t containerID() const;
+	inline void setContainerID(size_t id);
 
 	inline BoundingBox worldBoundingBox() const;
 
@@ -41,7 +41,7 @@ protected:
 	virtual void onFreeze(RenderContext* context) override;
 
 private:
-	uint32 mContainerID; // To which (latest) container node it belongs
+	size_t mContainerID; // To which (latest) container node it belongs
 	BoundingBox calcWorldBoundingBox() const;
 	BoundingBox mWorldBoundingBox_Cache;
 };

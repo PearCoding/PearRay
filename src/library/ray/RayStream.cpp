@@ -258,7 +258,7 @@ void RayStream::dump(const std::string& file) const
 	if (!stream)
 		return;
 
-	uint64 size = currentSize();
+	uint64 size = static_cast<uint64>(currentSize());
 	stream.write((char*)&size, sizeof(size));
 
 	for (size_t i = 0; i < size; ++i) {

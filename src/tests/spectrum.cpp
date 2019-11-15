@@ -217,14 +217,14 @@ PR_TEST("<-> sRGB [Blue]")
 PR_TEST("<-> sRGB [Custom]")
 {
 	PR::Spectrum spec(SpectrumDescriptor::createStandardSpectral());
-	PR::RGBConverter::toSpec(spec, 0.8, 0.5, 0.2);
+	PR::RGBConverter::toSpec(spec, 0.8f, 0.5f, 0.2f);
 	float R, G, B;
 	PR::RGBConverter::convert(spec, R, G, B);
-	PR_CHECK_NEARLY_EQ_EPS(R, 0.8, SPEC_EPS);
-	PR_CHECK_NEARLY_EQ_EPS(G, 0.5, SPEC_EPS);
-	PR_CHECK_NEARLY_EQ_EPS(B, 0.2, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(R, 0.8f, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(G, 0.5f, SPEC_EPS);
+	PR_CHECK_NEARLY_EQ_EPS(B, 0.2f, SPEC_EPS);
 
-	const float q = (R - 0.8) * (R - 0.8) + (G - 0.5) * (G - 0.5) + (B - 0.2) * (B - 0.2);
+	const float q = (R - 0.8f) * (R - 0.8f) + (G - 0.5f) * (G - 0.5f) + (B - 0.2f) * (B - 0.2f);
 	std::cout << "Error [Custom]: " << q << std::endl;
 }
 

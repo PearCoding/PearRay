@@ -17,7 +17,8 @@ std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createTriplet()
 
 std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createStandardSpectral()
 {
-	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(PR_SPECTRAL_WAVELENGTH_SAMPLES, PR_SPECTRAL_WAVELENGTH_START, PR_SPECTRAL_WAVELENGTH_END);
+	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(PR_SPECTRAL_WAVELENGTH_SAMPLES,
+		static_cast<float>(PR_SPECTRAL_WAVELENGTH_START), static_cast<float>(PR_SPECTRAL_WAVELENGTH_END));
 
 	for (uint32 i = 0; i < PR_SPECTRAL_WAVELENGTH_SAMPLES; ++i) {
 		desc->setLuminousFactor(i, NM_TO_Y[i]);

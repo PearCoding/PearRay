@@ -7,7 +7,7 @@
 namespace PR {
 #include "xyz.inl"
 
-void XYZConverter::convertXYZ(uint32 samples,
+void XYZConverter::convertXYZ(size_t samples,
 							  const float* src, float& X, float& Y, float& Z)
 {
 	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) { // Direct XYZ
@@ -22,7 +22,7 @@ void XYZConverter::convertXYZ(uint32 samples,
 		Z = 0;
 
 #ifdef PR_XYZ_LINEAR_INTERP
-		for (uint32 i = 0; i < samples - 1; ++i) {
+		for (size_t i = 0; i < samples - 1; ++i) {
 			const float val1 = src[i];
 			const float val2 = src[i + 1];
 
@@ -31,7 +31,7 @@ void XYZConverter::convertXYZ(uint32 samples,
 			Z += val1 * NM_TO_Z[i] + val2 * NM_TO_Z[i + 1];
 		}
 #else
-		for (uint32 i = 0; i < samples; ++i) {
+		for (size_t i = 0; i < samples; ++i) {
 			const float val1 = src[i * elemPitch];
 			X += val1 * NM_TO_X[i];
 			Y += val1 * NM_TO_Y[i];
@@ -51,7 +51,7 @@ void XYZConverter::convertXYZ(uint32 samples,
 	}
 }
 
-void XYZConverter::convert(uint32 samples,
+void XYZConverter::convert(size_t samples,
 						   const float* src, float& x, float& y)
 {
 	float X, Y, Z;
@@ -156,15 +156,15 @@ void XYZConverter::toSpec(Spectrum& spec, float x, float y, float z)
 			return;
 		}
 
-		for (uint32 i = 0; i < spec.samples(); ++i) {
-			spec.setValue(i, s1[i] * (1 - s - t) + s2[i] * s + s3[i] * t);
+		for (size_t i = 0; i < spec.samples(); ++i) {
+			spec.setValue(i, static_cast<float>(s1[i] * (1 - s - t) + s2[i] * s + s3[i] * t));
 		}
 
 		spec *= b;
 	}
 }
 
-float XYZConverter::toSpecIndex(uint32 samples, uint32 index, float x, float y, float z)
+float XYZConverter::toSpecIndex(size_t samples, size_t index, float x, float y, float z)
 {
 	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) {
 		return (index == 0) ? x : (index == 1 ? y : z);
@@ -183,7 +183,7 @@ float XYZConverter::toSpecIndex(uint32 samples, uint32 index, float x, float y, 
 		if (!findRegion(nx, ny, s, t, s1, s2, s3))
 			return 0.0f;
 
-		return (s1[index] * (1 - s - t) + s2[index] * s + s3[index] * t) * b;
+		return static_cast<float>((s1[index] * (1 - s - t) + s2[index] * s + s3[index] * t) * b);
 	}
 }
 } // namespace PR

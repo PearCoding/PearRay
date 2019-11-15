@@ -33,7 +33,7 @@ static void save_spec(const std::string& path,
 			pixels[0 * xres * 3 + i * 3 + 1] = 255;
 			pixels[0 * xres * 3 + i * 3 + 2] = 0;
 		} else {
-			const uint32 y = yres - std::min<uint32>(yres - 1, std::max<uint32>(0, yres * f / MAX_INTENSITY)) - 1;
+			const uint32 y = yres - std::min<uint32>(yres - 1, std::max<uint32>(0, static_cast<uint32>(yres * f / MAX_INTENSITY))) - 1;
 
 			pixels[y * xres * 3 + i * 3 + 0] = 0;
 			pixels[y * xres * 3 + i * 3 + 1] = 0;
@@ -51,7 +51,7 @@ static void save_spec(const std::string& path,
 		return;
 	}
 
-	ImageSpec imgSpec(xres, yres, channels, TypeDesc::UINT8);
+	ImageSpec imgSpec((int)xres, (int)yres, (int)channels, TypeDesc::UINT8);
 	out->open(path, imgSpec);
 	out->write_image(TypeDesc::UINT8, pixels.data());
 	out->close();
@@ -95,7 +95,7 @@ static void save_image(const std::string& path,
 		return;
 	}
 
-	ImageSpec spec(xres, yres, channels, TypeDesc::UINT8);
+	ImageSpec spec((int)xres, (int)yres, (int)channels, TypeDesc::UINT8);
 	out->open(path, spec);
 	out->write_image(TypeDesc::UINT8, pixels);
 	out->close();

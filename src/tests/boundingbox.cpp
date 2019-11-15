@@ -102,19 +102,19 @@ PR_TEST("Clip Right Half")
 PR_TEST("Inflate")
 {
 	BoundingBox box(0, 0, 0);
-	box.inflate(0.1);
-	PR_CHECK_EQ(box.lowerBound(), Vector3f(-0.1, -0.1, -0.1));
-	PR_CHECK_EQ(box.upperBound(), Vector3f(0.1, 0.1, 0.1));
+	box.inflate(0.1f);
+	PR_CHECK_EQ(box.lowerBound(), Vector3f(-0.1f, -0.1f, -0.1f));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(0.1f, 0.1f, 0.1f));
 	PR_CHECK_EQ(box.center(), Vector3f(0, 0, 0));
 }
 
 PR_TEST("Inflate Max")
 {
 	BoundingBox box(0, 0, 0);
-	box.inflate(0.1, true);
+	box.inflate(0.1f, true);
 	PR_CHECK_EQ(box.lowerBound(), Vector3f(0, 0, 0));
-	PR_CHECK_EQ(box.upperBound(), Vector3f(0.1, 0.1, 0.1));
-	PR_CHECK_EQ(box.center(), Vector3f(0.05, 0.05, 0.05));
+	PR_CHECK_EQ(box.upperBound(), Vector3f(0.1f, 0.1f, 0.1f));
+	PR_CHECK_EQ(box.center(), Vector3f(0.05f, 0.05f, 0.05f));
 }
 
 PR_TEST("Intersects Left")

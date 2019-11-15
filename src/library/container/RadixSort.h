@@ -8,13 +8,13 @@ namespace PR {
  * http://www.drdobbs.com/architecture-and-design/algorithm-improvement-through-performanc/220300654
  */
 template <typename VT, typename S>
-inline void PR_LIB radixSort(VT* visitor, S swapper, uint32 first, uint32 last, VT mask)
+inline void radixSort(VT* visitor, S swapper, size_t first, size_t last, VT mask)
 {
 	if(first == last)
 		return;
 
-	uint32 end0 = first;
-	uint32 end1 = last;
+	size_t end0 = first;
+	size_t end1 = last;
 
 	while (end0 <= end1) {
 		if (0 == (mask & visitor[end0])) {
@@ -35,12 +35,12 @@ inline void PR_LIB radixSort(VT* visitor, S swapper, uint32 first, uint32 last, 
 }
 
 template <typename VT, typename S>
-inline void PR_LIB radixSort(VT* visitor, S swapper, uint32 first, uint32 last)
+inline void radixSort(VT* visitor, S swapper, size_t first, size_t last)
 {
 	if(first == last)
 		return;
 
-	uint32 s = last - first + 1;
-	radixSort(visitor, swapper, first, last, vem(s));
+	size_t s = last - first + 1;
+	radixSort(visitor, swapper, first, last, vem((uint32)s));
 }
 } // namespace PR

@@ -64,7 +64,7 @@ void ImageMapSocket::lookup(const MapSocketCoord& ctx, ColorTriplet& rgb) const
 	OIIO::TextureOpt ops = mTextureOptions;
 
 	if (mIsPtex)
-		ops.subimage = ctx.Face;
+		ops.subimage = static_cast<int>(ctx.Face);
 
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.UV(0), 1 - ctx.UV(1),

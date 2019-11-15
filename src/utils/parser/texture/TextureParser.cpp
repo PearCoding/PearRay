@@ -131,7 +131,7 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 	}
 
 	if (anisoD.type() == DL::Data::T_Integer) {
-		opts.anisotropic = anisoD.getInt();
+		opts.anisotropic = static_cast<int>(anisoD.getInt());
 	}
 
 	std::string filename;

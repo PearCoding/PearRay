@@ -22,9 +22,9 @@ public:
 
 	inline std::shared_ptr<SpectrumDescriptor> descriptor() const { return mArg1.descriptor(); }
 
-	inline uint32 samples() const { return mArg1.samples(); }
-	inline uint32 spectralStart() const { return mArg1.spectralStart(); }
-	inline uint32 spectralEnd() const { return mArg1.spectralEnd(); }
+	inline size_t samples() const { return mArg1.samples(); }
+	inline size_t spectralStart() const { return mArg1.spectralStart(); }
+	inline size_t spectralEnd() const { return mArg1.spectralEnd(); }
 
 protected:
 	T1 mArg1;
@@ -38,7 +38,7 @@ public:
 		, mArg2(arg2)
 	{
 	}
-	inline float operator()(uint32 i) const { return SLO_UnaryBase<T1>::mArg1(i) + mArg2(i); }
+	inline float operator()(size_t i) const { return SLO_UnaryBase<T1>::mArg1(i) + mArg2(i); }
 
 private:
 	T2 mArg2;
@@ -52,7 +52,7 @@ public:
 		, mArg2(arg2)
 	{
 	}
-	inline float operator()(uint32 i) const { return SLO_UnaryBase<T1>::mArg1(i) - mArg2(i); }
+	inline float operator()(size_t i) const { return SLO_UnaryBase<T1>::mArg1(i) - mArg2(i); }
 
 private:
 	T2 mArg2;
@@ -66,7 +66,7 @@ public:
 		, mArg2(arg2)
 	{
 	}
-	inline float operator()(uint32 i) const { return SLO_UnaryBase<T1>::mArg1(i) * mArg2(i); }
+	inline float operator()(size_t i) const { return SLO_UnaryBase<T1>::mArg1(i) * mArg2(i); }
 
 private:
 	T2 mArg2;
@@ -80,7 +80,7 @@ public:
 		, mArg2(arg2)
 	{
 	}
-	inline float operator()(uint32 i) const { return SLO_UnaryBase<T1>::mArg1(i) / mArg2(i); }
+	inline float operator()(size_t i) const { return SLO_UnaryBase<T1>::mArg1(i) / mArg2(i); }
 
 private:
 	T2 mArg2;
@@ -96,7 +96,7 @@ public:
 	{
 	}
 
-	inline float operator()(uint32 i) const { return SLO_UnaryBase<T1>::mArg1(i) * mArg2; }
+	inline float operator()(size_t i) const { return SLO_UnaryBase<T1>::mArg1(i) * mArg2; }
 
 private:
 	T2 mArg2;
@@ -110,7 +110,7 @@ public:
 		, mArg2(arg2)
 	{
 	}
-	inline float operator()(uint32 i) const { return mArg2 / SLO_UnaryBase<T1>::mArg1(i); }
+	inline float operator()(size_t i) const { return mArg2 / SLO_UnaryBase<T1>::mArg1(i); }
 
 private:
 	T2 mArg2;
@@ -124,7 +124,7 @@ public:
 		: SLO_UnaryBase<T1>(arg1)
 	{
 	}
-	inline float operator()(uint32 i) const { return -SLO_UnaryBase<T1>::mArg1(i); }
+	inline float operator()(size_t i) const { return -SLO_UnaryBase<T1>::mArg1(i); }
 };
 
 template <typename T>
@@ -210,7 +210,7 @@ inline PR::Lazy::enable_if_slo_t<T1, T2, bool> operator==(const T1& v1, const T2
 	if (v1.samples() != v2.samples())
 		return false;
 
-	for (PR::uint32 i = 0; i < v1.samples(); ++i) {
+	for (size_t i = 0; i < v1.samples(); ++i) {
 		if (v1(i) != v2(i))
 			return false;
 	}

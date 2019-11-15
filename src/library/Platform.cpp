@@ -15,10 +15,10 @@ std::wstring encodePath(const std::wstring& path)
 std::wstring encodePath(const std::string& path)
 {
 	std::wstring ret;
-	int len = MultiByteToWideChar(CP_UTF8, 0, path.c_str(), path.length(), NULL, 0);
+	int len = MultiByteToWideChar(CP_UTF8, 0, path.c_str(), (int)path.length(), NULL, 0);
 	if (len > 0) {
 		ret.resize(len);
-		MultiByteToWideChar(CP_UTF8, 0, path.c_str(), path.length(), &ret[0], len);
+		MultiByteToWideChar(CP_UTF8, 0, path.c_str(), (int)path.length(), &ret[0], len);
 	}
 	return ret;
 }

@@ -148,6 +148,8 @@ std::string Registry::dump() const
 		std::string typeName;
 		if (strcmp(p.second.typeName(), typeid(std::string).name()) == 0)
 			typeName = "string";
+		else if (strcmp(p.second.typeName(), typeid(std::wstring).name()) == 0)
+			typeName = "wstring";
 		else
 			typeName = boost::core::demangle(p.second.typeName());
 

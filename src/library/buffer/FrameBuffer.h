@@ -5,7 +5,7 @@
 
 namespace PR {
 template <typename T>
-class PR_LIB FrameBuffer {
+class FrameBuffer {
 	PR_CLASS_NON_COPYABLE(FrameBuffer);
 
 public:

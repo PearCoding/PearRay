@@ -7,13 +7,13 @@ namespace PR {
 /* Generic inplace quick sort algorithm
  */
 template <typename VT, typename S>
-inline void PR_LIB quickSort(VT* visitor, S swapper, uint32 first, uint32 last)
+inline void quickSort(VT* visitor, S swapper, size_t first, size_t last)
 {
 	if (first >= last)
 		return;
 
-	uint32 i = first;
-	uint32 j = last - 1;
+	size_t i = first;
+	size_t j = last - 1;
 	VT pivot = visitor[last];
 
 	do {

@@ -39,7 +39,7 @@ bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 		for (uint32 t = 0; t < _ST_COUNT; ++t) {
 			for (uint32 e = 0; e < _SE_COUNT; ++e) {
 				const size_t index   = INSIDE_BLOCK_INDEX(id, t, e);
-				const uint32 lblAddr = mLB_LabelIndices.size();
+				const size_t lblAddr = mLB_LabelIndices.size();
 				bool foundLabeled	= false;
 				bool foundEmpty		 = false;
 				for (const auto& trans : s->transitions()) {
@@ -91,9 +91,9 @@ bool Automaton::match(const LightPath& path) const
 {
 	bool success;
 
-	uint32 currentState = mStartingState;
-	for (uint32 i = 0; i < path.currentSize(); ++i) {
-		uint32 ns = nextState(currentState, path.token(i), success);
+	size_t currentState = mStartingState;
+	for (size_t i = 0; i < path.currentSize(); ++i) {
+		size_t ns = nextState(currentState, path.token(i), success);
 
 		//PR_LOG(L_INFO) << currentState << " -> <" << path.token(i).Type << "," << path.token(i).Event << "> -> " << ns << std::endl;
 		currentState = ns;
@@ -104,7 +104,7 @@ bool Automaton::match(const LightPath& path) const
 	return mSB_IsFinal[currentState];
 }
 
-uint32 Automaton::nextState(uint32 currentState, const LightPathToken& token, bool& success) const
+size_t Automaton::nextState(size_t currentState, const LightPathToken& token, bool& success) const
 {
 	success		 = false;
 	size_t index = INSIDE_BLOCK_INDEX(currentState, token.Type, token.Event);

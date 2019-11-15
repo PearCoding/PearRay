@@ -42,7 +42,7 @@ public:
 	inline uint32 width() const { return mWidth; }
 	inline uint32 height() const { return mHeight; }
 
-	uint32 tileCount() const;
+	size_t tileCount() const;
 
 	// tcx = tile count x
 	// tcy = tile count y

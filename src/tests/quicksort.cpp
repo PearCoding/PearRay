@@ -10,18 +10,18 @@ PR_TEST("Sorted")
 {
 	constexpr size_t SIZE = 1000;
 	std::vector<uint32> data(SIZE);
-	for (size_t i = 0; i < SIZE; ++i) {
+	for (uint32 i = 0; i < (uint32)SIZE; ++i) {
 		data[i] = i;
 	}
 
 	quickSort(data.data(),
-			  [&](uint32 a, uint32 b) {
+			  [&](size_t a, size_t b) {
 				  std::swap(data[a], data[b]);
 			  },
 			  0, SIZE - 1);
 
 	bool sorted = true;
-	for (size_t i = 0; i < SIZE; ++i) {
+	for (uint32 i = 0; i < (uint32)SIZE; ++i) {
 		if (data[i] != i) {
 			sorted = false;
 			break;
@@ -35,18 +35,18 @@ PR_TEST("Unsorted")
 {
 	constexpr size_t SIZE = 1000;
 	std::vector<uint32> data(SIZE);
-	for (size_t i = 0; i < SIZE; ++i) {
+	for (uint32 i = 0; i < (uint32)SIZE; ++i) {
 		data[i] = rand();
 	}
 
 	quickSort(data.data(),
-			  [&](uint32 a, uint32 b) {
+			  [&](size_t a, size_t b) {
 				  std::swap(data[a], data[b]);
 			  },
 			  0, SIZE - 1);
 
 	bool sorted = true;
-	for (size_t i = 0; i < SIZE-1; ++i) {
+	for (uint32 i = 0; i < (uint32)SIZE - 1; ++i) {
 		if (data[i] > data[i+1]) {
 			sorted = false;
 			break;

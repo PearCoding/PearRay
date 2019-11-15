@@ -46,16 +46,16 @@ struct kdInnerNodeBuilder : public kdNodeBuilder {
 };
 
 struct kdLeafNodeBuilder : public kdNodeBuilder {
-	kdLeafNodeBuilder(uint32 id, const BoundingBox& b)
+	kdLeafNodeBuilder(size_t id, const BoundingBox& b)
 		: kdNodeBuilder(id, true, b)
 	{
 	}
 
-	std::vector<uint64> objects;
+	std::vector<size_t> objects;
 };
 
 struct Primitive {
-	Primitive(uint64 d, const BoundingBox& box)
+	Primitive(size_t d, const BoundingBox& box)
 		: data(d)
 		, side(S_Both)
 		, box(box)
@@ -63,7 +63,7 @@ struct Primitive {
 		//PR_ASSERT(data, "Primitive needs a valid data entry");
 	}
 
-	uint64 data;
+	size_t data;
 	Side side;
 	BoundingBox box;
 };

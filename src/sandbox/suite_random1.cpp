@@ -12,7 +12,7 @@ namespace bf = boost::filesystem;
 constexpr uint64 ITERATIONS = 10000000;
 void rnd_seed(uint64 seed)
 {
-	uint64 finalSeed = seed != 0 ? seed : time(NULL);
+	uint64 finalSeed = seed != 0 ? seed : (uint64)time(NULL);
 
 	Random random(finalSeed);
 
@@ -43,7 +43,7 @@ void rnd_seed(uint64 seed)
 	for (uint32 i = 0; i < xres; ++i) {
 		for (uint32 j = 0; j < yres; ++j) {
 			pixels[j * xres + i] = std::min<uint32>(255,
-													255 * (data[j * xres + i] / (float)max));
+													static_cast<uint32>(255 * (data[j * xres + i] / (float)max)));
 		}
 	}
 

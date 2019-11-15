@@ -23,7 +23,7 @@ void RenderThread::main()
 	RayStream rays(mRenderer->settings().maxParallelRays);
 	HitStream hits(mRenderer->settings().maxParallelRays);
 
-	size_t pass		= 0;
+	uint32 pass		= 0;
 	auto integrator = mRenderer->integrator();
 
 	integrator->onThreadStart(mRenderer, mThreadIndex);

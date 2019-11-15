@@ -1,6 +1,6 @@
 // IWYU pragma: private, include "spectral/SpectrumDescriptor.h"
 namespace PR {
-inline SpectrumDescriptor::SpectrumDescriptor(uint32 samples, float lstart, float lend)
+inline SpectrumDescriptor::SpectrumDescriptor(size_t samples, float lstart, float lend)
 	: mWavelengths(samples)
 	, mLuminousFactor(samples)
 {
@@ -9,7 +9,7 @@ inline SpectrumDescriptor::SpectrumDescriptor(uint32 samples, float lstart, floa
 
 	const float range = lend - lstart;
 	const float step  = range / (samples - 1);
-	for (uint32 i = 0; i < samples; ++i) {
+	for (size_t i = 0; i < samples; ++i) {
 		mWavelengths[i] = lstart + i * step;
 	}
 }

@@ -37,7 +37,7 @@ public:
 	{
 		const auto dur = std::chrono::high_resolution_clock::now() - mStart;
 		++(*mCounter.Total);
-		*mCounter.TimeSpentMicroSec += std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+		*mCounter.TimeSpentMicroSec += (uint64)std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
 	}
 
 private:

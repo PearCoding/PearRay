@@ -14,7 +14,7 @@ struct EntryDescription {
 	uint32 Line;
 	std::string Category;
 
-	EntryDescription(const std::string& name, const std::string& function, const std::string& file, uint32 line, const std::string& category)
+	inline EntryDescription(const std::string& name, const std::string& function, const std::string& file, uint32 line, const std::string& category)
 		: Name(name)
 		, Function(function)
 		, File(file)
@@ -28,7 +28,7 @@ struct CounterEntry {
 	Profiler::InternalCounter* CounterPtr;
 	EntryDescription Desc;
 
-	CounterEntry(Profiler::InternalCounter* counter, const EntryDescription& desc)
+	inline CounterEntry(Profiler::InternalCounter* counter, const EntryDescription& desc)
 		: CounterPtr(counter)
 		, Desc(desc)
 	{
@@ -40,7 +40,7 @@ struct TimeCounterEntry {
 	Profiler::InternalCounter* TimeSpentCounterPtr;
 	EntryDescription Desc;
 
-	TimeCounterEntry(Profiler::InternalCounter* totalCounter,
+	inline TimeCounterEntry(Profiler::InternalCounter* totalCounter,
 					 Profiler::InternalCounter* timeSpentCounter,
 					 const EntryDescription& desc)
 		: TotalCounterPtr(totalCounter)
@@ -56,7 +56,7 @@ struct ThreadData {
 	std::vector<TimeCounterEntry> TimeCounterEntries;
 	std::vector<std::shared_ptr<Profiler::InternalCounter>> InternalCounters;
 
-	ThreadData(const std::string& name)
+	inline explicit ThreadData(const std::string& name)
 		: Name(name)
 	{
 	}
@@ -67,12 +67,12 @@ static std::vector<ThreadData> sThreadData;
 
 ThreadData* getCurrentThreadData()
 {
-	thread_local int32 id = -1;
+	thread_local int64 id = -1;
 	if (id < 0) {
 		std::stringstream stream;
 		stream << "Thread " << std::this_thread::get_id();
 
-		id = sThreadData.size();
+		id = static_cast<int64>(sThreadData.size());
 		sThreadData.emplace_back(stream.str());
 
 		return &sThreadData[id];

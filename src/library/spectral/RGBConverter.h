@@ -14,7 +14,7 @@ class PR_LIB RGBConverter {
 
 public:
 	/* D65 sRGB (linear) */
-	static void convert(uint32 samples,
+	static void convert(size_t samples,
 						const float* src, float& x, float& y, float& z);
 	static inline void convert(const Spectrum& s, float& x, float& y, float& z)
 	{
@@ -29,6 +29,6 @@ public:
 	static void linearize(float& x, float& y, float& z);
 
 	static void toSpec(Spectrum& spec, float x, float y, float z);
-	static float toSpecIndex(uint32 samples, uint32 index, float x, float y, float z);
+	static float toSpecIndex(size_t samples, size_t index, float x, float y, float z);
 };
 } // namespace PR

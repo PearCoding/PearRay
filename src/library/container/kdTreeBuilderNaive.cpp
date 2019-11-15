@@ -20,20 +20,20 @@ enum SidePlaneNaive {
 struct kdNodeBuilderNaive {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	kdNodeBuilderNaive(uint32 id, bool leaf, const BoundingBox& b)
+	kdNodeBuilderNaive(size_t id, bool leaf, const BoundingBox& b)
 		: id(id)
 		, isLeaf(leaf)
 		, boundingBox(b)
 	{
 	}
 
-	uint32 id;
+	size_t id;
 	const bool isLeaf;
 	BoundingBox boundingBox;
 };
 
 struct kdInnerNodeBuilderNaive : public kdNodeBuilderNaive {
-	kdInnerNodeBuilderNaive(uint32 id, uint8 axis, float sp,
+	kdInnerNodeBuilderNaive(size_t id, uint8 axis, float sp,
 					   kdNodeBuilderNaive* l, kdNodeBuilderNaive* r, const BoundingBox& b)
 		: kdNodeBuilderNaive(id, false, b)
 		, axis(axis)
@@ -50,23 +50,23 @@ struct kdInnerNodeBuilderNaive : public kdNodeBuilderNaive {
 };
 
 struct kdLeafNodeBuilderNaive : public kdNodeBuilderNaive {
-	kdLeafNodeBuilderNaive(uint32 id, const BoundingBox& b)
+	kdLeafNodeBuilderNaive(size_t id, const BoundingBox& b)
 		: kdNodeBuilderNaive(id, true, b)
 	{
 	}
 
-	std::vector<uint64> objects;
+	std::vector<size_t> objects;
 };
 
 struct PrimitiveNaive {
-	PrimitiveNaive(uint64 d, const BoundingBox& box)
+	PrimitiveNaive(size_t d, const BoundingBox& box)
 		: data(d)
 		, side(S_Both)
 		, box(box)
 	{
 	}
 
-	uint64 data;
+	size_t data;
 	SideNaive side;
 	BoundingBox box;
 };
@@ -127,7 +127,7 @@ const BoundingBox& kdTreeBuilderNaive::boundingBox() const
 void kdTreeBuilderNaive::statElementsNode(kdNodeBuilderNaive* node, size_t& sumV, float root_volume, uint32 depth)
 {
 	mDepth   = std::max(depth, mDepth);
-	node->id = mNodeCount;
+	node->id = static_cast<uint32>(mNodeCount);
 	++mNodeCount;
 
 	if (node->isLeaf) {
@@ -408,7 +408,7 @@ void kdTreeBuilderNaive::build(size_t size)
 		return;
 	}
 
-	mMaxDepth = std::ceil(8 + 1.5 * std::log2(size));
+	mMaxDepth = static_cast<uint32>(std::ceil(8 + 1.5 * std::log2(size)));
 
 	std::vector<PrimitiveNaive*> primitives;		// Will be cleared to save memory
 	std::vector<PrimitiveNaive*> primitivesCopy; // Copy to be deleted later

@@ -10,7 +10,7 @@ class PR_LIB XYZConverter {
 
 public:
 	//len(src) == SAMPLING_COUNT
-	static void convert(uint32 samples,
+	static void convert(size_t samples,
 						const float* src, float& x, float& y);
 	static inline void convert(const Spectrum& s, float& x, float& y)
 	{
@@ -20,7 +20,7 @@ public:
 	static float luminance(float, float y, float) { return y; }
 
 	//len(src) == SAMPLING_COUNT
-	static void convertXYZ(uint32 samples,
+	static void convertXYZ(size_t samples,
 						   const float* src, float& X, float& Y, float& Z);
 	static inline void convertXYZ(const Spectrum& s, float& X, float& Y, float& Z)
 	{
@@ -35,6 +35,6 @@ public:
 	}
 
 	static void toSpec(Spectrum& spec, float x, float y, float z);
-	static float toSpecIndex(uint32 samples, uint32 index, float x, float y, float z);
+	static float toSpecIndex(size_t samples, size_t index, float x, float y, float z);
 };
 } // namespace PR

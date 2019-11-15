@@ -867,8 +867,8 @@ static uint32 voxelTable[576][2] = {
 
 int pointToVoxel(float x, float y)
 {
-	int ix = (x / 0.750000) * 24;
-	int iy = (y / 0.850000) * 24;
+	int ix = static_cast<int>((x / 0.750000f) * 24);
+	int iy = static_cast<int>((y / 0.850000f) * 24);
 	if (ix < 0 || ix >= 24 || iy < 0 || iy >= 24)
 		return -1;
 

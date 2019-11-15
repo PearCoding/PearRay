@@ -10,12 +10,12 @@ PR_TEST("Sorted")
 {
 	constexpr size_t SIZE = 1000;
 	std::vector<uint32> data(SIZE);
-	for (size_t i = 0; i < SIZE; ++i) {
+	for (uint32 i = 0; i < (uint32)SIZE; ++i) {
 		data[i] = i;
 	}
 
 	radixSort(data.data(),
-			  [&](uint32 a, uint32 b) {
+			  [&](size_t a, size_t b) {
 				  std::swap(data[a], data[b]);
 			  },
 			  0, SIZE - 1, (uint32)(1 << 31));
@@ -40,7 +40,7 @@ PR_TEST("Unsorted")
 	}
 
 	radixSort(data.data(),
-			  [&](uint32 a, uint32 b) {
+			  [&](size_t a, size_t b) {
 				  std::swap(data[a], data[b]);
 			  },
 			  0, SIZE - 1, (uint32)(1 << 31));

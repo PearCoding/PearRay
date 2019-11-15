@@ -9,9 +9,9 @@
 namespace PR {
 class PR_LIB kdTreeBuilderNaive {
 public:
-	typedef BoundingBox (*GetBoundingBoxCallback)(void*, uint64);
-	typedef float (*CostCallback)(void*, uint64);
-	typedef void (*AddedCallback)(void*, uint64, uint32 id);
+	typedef BoundingBox (*GetBoundingBoxCallback)(void*, size_t);
+	typedef float (*CostCallback)(void*, size_t);
+	typedef void (*AddedCallback)(void*, size_t, size_t id);
 
 	kdTreeBuilderNaive(void* observer,
 				  GetBoundingBoxCallback getBoundingBox,

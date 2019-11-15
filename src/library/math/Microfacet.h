@@ -224,11 +224,11 @@ inline Vector3f sample_ggx_vndf(float u0, float u1,
 
 	// Section 4.2: parameterization of the projected area
 	float r   = std::sqrt(u0);
-	float phi = 2.0 * PR_PI * u1;
+	float phi = 2.0f * PR_PI * u1;
 	float t1  = r * std::cos(phi);
 	float t2  = r * std::sin(phi);
-	float s   = 0.5 * (1.0 + Vh(2));
-	t2		  = (1.0 - s) * std::sqrt(1.0 - t1 * t1) + s * t2;
+	float s   = 0.5f * (1.0f + Vh(2));
+	t2		  = (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * t2;
 
 	// Section 4.3: reprojection onto hemisphere
 	Vector3f Nh = t1 * T1 + t2 * T2 + std::sqrt(std::max(0.0f, 1.0f - t1 * t1 - t2 * t2)) * Vh;

@@ -6,7 +6,7 @@ StratifiedSampler::StratifiedSampler(Random& random, uint32 samples)
 	: Sampler()
 	, mRandom(random)
 	, mSamples(samples)
-	, m2D_X(std::sqrt(samples))
+	, m2D_X(static_cast<uint32>(std::sqrt(samples)))
 {
 }
 

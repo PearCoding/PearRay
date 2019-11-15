@@ -44,11 +44,11 @@ void Scene::buildTree(const std::wstring& file)
 	PR_LOG(L_INFO) << count << " Entities" << std::endl;
 
 	BUILDER builder(this,
-					[](void* data, uint64 index) { return reinterpret_cast<Scene*>(data)->mEntities[index]->worldBoundingBox(); },
-					[](void* data, uint64 index) {
+					[](void* data, size_t index) { return reinterpret_cast<Scene*>(data)->mEntities[index]->worldBoundingBox(); },
+					[](void* data, size_t index) {
 						return reinterpret_cast<Scene*>(data)->mEntities[index]->collisionCost();
 					},
-					[](void* data, uint64 index, uint32 id) {
+					[](void* data, size_t index, size_t id) {
 						reinterpret_cast<Scene*>(data)->mEntities[index]->setContainerID(id);
 					});
 	builder.setCostElementWise(true);

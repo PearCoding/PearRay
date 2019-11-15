@@ -57,7 +57,7 @@ void PhotonMap::estimate(Spectrum& spec, const PhotonSphere& sphere,
 	found = 0;
 
 	KeyCoord centerCoord = toCoords(sphere.Center(0), sphere.Center(1), sphere.Center(2));
-	const int32 rad		 = std::max<int32>(0, std::ceil(std::sqrt(sphere.Distance2) * mInvGridDelta)) + 1;
+	const int32 rad		 = std::max<int32>(0, (int32)std::ceil(std::sqrt(sphere.Distance2) * mInvGridDelta)) + 1;
 	const int32 rad2	 = rad * rad;
 
 	float dist2;

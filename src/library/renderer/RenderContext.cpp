@@ -114,10 +114,10 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	// Calculate tile sizes, etc.
 	uint32 ptcx = std::max<uint32>(1, tcx);
 	uint32 ptcy = std::max<uint32>(1, tcy);
-	uint32 ptcw = std::max<uint32>(1, std::floor(mWidth / static_cast<float>(ptcx)));
-	uint32 ptch = std::max<uint32>(1, std::floor(mHeight / static_cast<float>(ptcy)));
-	ptcx		= std::ceil(mWidth / static_cast<float>(ptcw));
-	ptcy		= std::ceil(mHeight / static_cast<float>(ptch));
+	uint32 ptcw = std::max<uint32>(1, (uint32)std::floor(mWidth / static_cast<float>(ptcx)));
+	uint32 ptch = std::max<uint32>(1, (uint32)std::floor(mHeight / static_cast<float>(ptcy)));
+	ptcx		= static_cast<uint32>(std::ceil(mWidth / static_cast<float>(ptcw)));
+	ptcy		= static_cast<uint32>(std::ceil(mHeight / static_cast<float>(ptch)));
 
 	mTileMap = std::make_unique<RenderTileMap>(ptcx, ptcy, ptcw, ptch);
 	mTileMap->init(*this, mRenderSettings.tileMode);
@@ -148,7 +148,7 @@ void RenderContext::notifyEnd()
 		mIntegrator->onEnd();
 }
 
-uint32 RenderContext::tileCount() const
+size_t RenderContext::tileCount() const
 {
 	return mTileMap->tileCount();
 }
