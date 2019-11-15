@@ -3,12 +3,6 @@
 #include "PR_Config.h"
 #include <boost/filesystem.hpp>
 
-enum DisplayDriverOption
-{
-	DDO_Image,
-	DDO_Network
-};
-
 class ProgramSettings
 {
 public:
@@ -22,11 +16,7 @@ public:
 	bool ShowInformation;
 	bool ShowRegistry;
 
-	DisplayDriverOption DDO;
-
-	// Network
-	std::string NetIP;
-	PR::uint16 NetPort;
+	bool Profile;
 
 	// Image
 	float ImgUpdate;

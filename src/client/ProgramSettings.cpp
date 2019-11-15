@@ -13,79 +13,6 @@ using namespace PR;
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
 
-// Utils
-// see http://stackoverflow.com/questions/8175723/vector-arguments-in-boost-program-options
-template< typename T, typename charT = char >
-class fixed_tokens_typed_value : public po::typed_value< T, charT >
-{
-   	typedef po::typed_value< T, charT > base;
-
-   	unsigned mMin, mMax;
-public:
-   	fixed_tokens_typed_value(T * t, unsigned min, unsigned max ) :
-	   base( t ), mMin(min), mMax(max)
-	{
-    	base::multitoken();
-   	}
-
-   	virtual fixed_tokens_typed_value* min_tokens( unsigned min )
-	{
-       	mMin = min;
-       	return this;
-   	}
-
-   	inline unsigned min_tokens() const { return mMin; }
-
-   	virtual fixed_tokens_typed_value* max_tokens( unsigned max )
-	{
-       	mMax = max;
-       	return this;
-   	}
-
-  	inline unsigned max_tokens() const { return mMax; }
-
-    inline base* zero_tokens() {
-       	mMin = mMax = 0;
-       	base::zero_tokens();
-       	return *this;
-   	}
-};
-
-template< typename T >
-fixed_tokens_typed_value< T >*
-fixed_tokens_value(unsigned min, unsigned max)
-{
-    return new fixed_tokens_typed_value< T >(nullptr, min, max );
-}
-
-template< typename T >
-fixed_tokens_typed_value< T >*
-fixed_tokens_value(T* t, unsigned min, unsigned max)
-{
-    return new fixed_tokens_typed_value< T >(t, min, max);
-}
-
-template<class T>
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              EnumOption<T>* /*target_type*/, int)
-{
-    po::validators::check_first_occurrence(v);
-    std::string s = po::validators::get_single_string(values);
-	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-	if(EnumOption<T>::has(s))
-		v = boost::any(EnumOption<T>(EnumOption<T>::get_value(s)));
-	else
-        throw po::validation_error(po::validation_error::invalid_option_value);
-}
-
-BEGIN_ENUM_OPTION(DisplayDriverOption)
-{
-	{"image", DDO_Image},
-	//{"net", DDO_Network},
-	{nullptr, DDO_Image}
-};
-
 constexpr PR::uint32 DEF_THREAD_COUNT = 0;
 constexpr PR::uint32 DEF_THREAD_TILE_X = 8;
 constexpr PR::uint32 DEF_THREAD_TILE_Y = 8;
@@ -97,6 +24,9 @@ po::options_description setup_cmd_options()
 		("help,h", "Produce this help message")
 		("quiet,q", "Do not print messages into console")
 		("verbose,v", "Print detailed information into log file (and perhabs into console)")
+#ifdef PR_WITH_PROFILER
+		("profile,P", "Profile execution and dump results into a file")
+#endif
 		("progress,p", po::value<PR::uint32>()->implicit_value(1),
 			"Show progress (regardless if quiet or not)")
 		("information,I", "Print additional scene information into log file (and perhabs into console)")
@@ -104,19 +34,7 @@ po::options_description setup_cmd_options()
 
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>()->default_value("./scene"), "Output directory")
-		("display",
-			po::value<EnumOption<DisplayDriverOption> >()->default_value(
-				EnumOption<DisplayDriverOption>::get_default()),
-		 	(std::string("Display Driver Mode [") + EnumOption<DisplayDriverOption>::get_names() + "]").c_str())
 		("pluginpath", po::value<std::string>(), "Additional plugin path")
-	;
-
-	po::options_description network_d("Network");
-	network_d.add_options()
-		("net-ip", po::value<std::string>()->default_value("localhost"),
-			"IP address for network interface when network mode is used.")
-		("net-port", po::value<PR::uint16>()->default_value(4242),
-			"Port for network interface when network mode is used.")
 	;
 
 	po::options_description image_d("Image");
@@ -148,7 +66,6 @@ po::options_description setup_cmd_options()
 	po::options_description all_d("Allowed options");
 	all_d.add(general_d);
 	all_d.add(image_d);
-	all_d.add(network_d);
 	all_d.add(thread_d);
 	all_d.add(scene_d);
 
@@ -237,18 +154,15 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 	IsVerbose = (vm.count("verbose") != 0);
 	IsQuiet = (vm.count("quiet") != 0);
-	if(vm.count("progress"))
-		ShowProgress = vm["progress"].as<PR::uint32>();
-	else
-		ShowProgress = 0;
+	ShowProgress = vm.count("progress") ? vm["progress"].as<PR::uint32>() : 0;
 	ShowInformation = (vm.count("information") != 0);
 	ShowRegistry = (vm.count("registry") != 0);
 
-	DDO = vm["display"].as<EnumOption<DisplayDriverOption> >();
-
-	// Network
-	NetIP = vm["net-ip"].as<std::string>();
-	NetPort = vm["net-port"].as<PR::uint16>();
+#ifdef PR_WITH_PROFILER
+	Profile = (vm.count("registry") != 0);
+#else
+	Profile = false;
+#endif
 
 	// Image
 	ImgUpdate = vm["img-update"].as<float>();

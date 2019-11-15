@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "FileLogListener.h"
 #include "Logger.h"
+#include "Profiler.h"
 #include "ProgramSettings.h"
 #include "SceneLoader.h"
 #include "Version.h"
@@ -38,6 +39,9 @@ int main(int argc, char** argv)
 	ProgramSettings options;
 	if (!options.parse(argc, argv))
 		return -1;
+
+	if(options.Profile)
+		PR::Profiler::start(20);
 
 	time_t t = time(NULL);
 	std::stringstream sstream;
@@ -141,7 +145,7 @@ int main(int argc, char** argv)
 			}
 
 			auto span_img = sc::duration_cast<sc::milliseconds>(end - start_img);
-			if (options.DDO == DDO_Image && options.ImgUpdate > 0 && span_img.count() > options.ImgUpdate * 1000) {
+			if (options.ImgUpdate > 0 && span_img.count() > options.ImgUpdate * 1000) {
 				env->save(renderer, toneMapper, false);
 				start_img = end;
 			}
@@ -170,6 +174,9 @@ int main(int argc, char** argv)
 	}
 
 	env->outputSpecification().deinit();
+
+	if(options.Profile)
+		PR::Profiler::stop();
 
 	return 0;
 }

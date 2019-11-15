@@ -58,11 +58,11 @@
 
 #ifdef PR_CC_MSC
 #define PR_DEBUG_BREAK() __debugbreak()
+#define PR_FUNCTION_NAME __FUNCSIG__
 #else //FIXME: Really use cpu dependent assembler?
 #define PR_DEBUG_BREAK() __asm__ __volatile__("int $0x03")
+#define PR_FUNCTION_NAME __PRETTY_FUNCTION__
 #endif
-
-#define PR_FUNCTION_NAME __func__
 
 #ifndef PR_NO_ASSERTS
 #include <assert.h>
@@ -200,6 +200,9 @@ private:                                           \
 #ifdef PR_CC_MSC
 #pragma warning(pop)
 #endif
+
+// Add profiler tokens
+#cmakedefine PR_WITH_PROFILER
 
 // Always align at the 8 byte border regardless of the underlying bandwidth
 #define PR_SIMD_ALIGNMENT_PARAM (32)

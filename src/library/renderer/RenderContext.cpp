@@ -1,5 +1,6 @@
 #include "RenderContext.h"
 #include "Logger.h"
+#include "Profiler.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
 #include "RenderTileMap.h"
@@ -52,6 +53,8 @@ RenderContext::~RenderContext()
 
 void RenderContext::reset()
 {
+	PR_PROFILE_THIS;
+
 	for (RenderThread* thread : mThreads)
 		delete thread;
 
@@ -66,6 +69,8 @@ void RenderContext::reset()
 
 void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 {
+	PR_PROFILE_THIS;
+
 	reset();
 
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
@@ -137,6 +142,8 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 
 void RenderContext::notifyEnd()
 {
+	PR_PROFILE_THIS;
+
 	if (isFinished() && mIntegrator)
 		mIntegrator->onEnd();
 }
@@ -148,6 +155,8 @@ uint32 RenderContext::tileCount() const
 
 std::list<RenderTile*> RenderContext::currentTiles() const
 {
+	PR_PROFILE_THIS;
+
 	std::list<RenderTile*> list;
 	for (RenderThread* thread : mThreads) {
 		RenderTile* tile = thread->currentTile();
@@ -159,6 +168,8 @@ std::list<RenderTile*> RenderContext::currentTiles() const
 
 void RenderContext::waitForNextPass()
 {
+	PR_PROFILE_THIS;
+
 	std::unique_lock<std::mutex> lk(mPassMutex);
 	mThreadsWaitingForPass++;
 
@@ -179,6 +190,8 @@ void RenderContext::waitForNextPass()
 
 bool RenderContext::isFinished() const
 {
+	PR_PROFILE_THIS;
+
 	for (RenderThread* thread : mThreads) {
 		if (thread->state() != Thread::S_Stopped)
 			return false;
@@ -189,12 +202,16 @@ bool RenderContext::isFinished() const
 
 void RenderContext::waitForFinish()
 {
+	PR_PROFILE_THIS;
+
 	while (!isFinished())
 		std::this_thread::yield();
 }
 
 void RenderContext::stop()
 {
+	PR_PROFILE_THIS;
+
 	mShouldStop = true;
 
 	for (RenderThread* thread : mThreads)
@@ -203,6 +220,8 @@ void RenderContext::stop()
 
 RenderTile* RenderContext::getNextTile()
 {
+	PR_PROFILE_THIS;
+
 	std::lock_guard<std::mutex> guard(mTileMutex);
 
 	RenderTile* tile = nullptr;
@@ -225,6 +244,8 @@ RenderTileStatistics RenderContext::statistics() const
 
 RenderStatus RenderContext::status() const
 {
+	PR_PROFILE_THIS;
+
 	RenderTileStatistics s = statistics();
 
 	RenderStatus status = mIntegrator->status();
@@ -237,6 +258,8 @@ RenderStatus RenderContext::status() const
 
 void RenderContext::onNextPass()
 {
+	PR_PROFILE_THIS;
+
 	mTileMap->reset();
 
 	bool clear = false;
