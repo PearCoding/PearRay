@@ -13,14 +13,17 @@ struct PR_LIB EntryDescription {
 	std::string Function;
 	std::string File;
 	uint32 Line;
+	uint32 ThreadID;
 	std::string Category;
 
 	inline EntryDescription(const std::string& name, const std::string& function,
-							const std::string& file, uint32 line, const std::string& category)
+							const std::string& file, uint32 line, uint32 threadID,
+							const std::string& category)
 		: Name(name)
 		, Function(function)
 		, File(file)
 		, Line(line)
+		, ThreadID(threadID)
 		, Category(category)
 	{
 	}
@@ -67,7 +70,7 @@ private:
 class PR_LIB Event {
 public:
 	inline Event(const std::string& name, const std::string& function, const std::string& file, uint32 line, const std::string& category)
-		: mDesc(name, function, file, line, category)
+		: mDesc(name, function, file, line, 0, category)
 		, mCounter(registerTimeCounter(&mDesc))
 	{
 	}
@@ -90,8 +93,10 @@ private:
 #define PR_PROFILE(name, func, file, line, cat)                                                            \
 	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME(line)((name), (func), (file), (line), (cat)); \
 	_PR_PROFILE_UNIQUE_NAME(line).scope()
+#define PR_PROFILE_THREAD(name) PR::Profile::setThreadName((name))
 #else
 #define PR_PROFILE(name, func, file, line, cat)
+#define PR_PROFILE_THREAD(name)
 #endif
 
 #define PR_PROFILE_THIS PR_PROFILE("", PR_FUNCTION_NAME, __FILE__, __LINE__, "")

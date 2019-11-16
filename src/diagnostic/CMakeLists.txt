@@ -13,11 +13,16 @@ SET(Src
   cnt/Container.cpp
   dialogs/EXRWindow.cpp
   dialogs/MainWindow.cpp
+  dialogs/ProfWindow.cpp
   dialogs/SceneWindow.cpp
   dialogs/SpecWindow.cpp
   io/EXRFile.cpp
   io/ImageBufferView.cpp
+  io/ProfFile.cpp
   io/SpecFile.cpp
+  plot/PlotGraph.cpp
+  prof/ProfTreeItem.cpp
+  prof/ProfTreeModel.cpp
   properties/ColorProperty.cpp
   properties/DoubleProperty.cpp
   properties/GroupProperty.cpp
@@ -29,6 +34,7 @@ SET(Src
   rdmp/RayArray.cpp
   widgets/ColorButton.cpp
   widgets/ImageView.cpp
+  widgets/PlotWidget.cpp
   widgets/PropertyView.cpp
   widgets/RangeSlider.cpp
   widgets/ToneMapperEditor.cpp
@@ -41,12 +47,18 @@ SET(Hdr
   cnt/Container.h
   dialogs/EXRWindow.h
   dialogs/MainWindow.h
+  dialogs/ProfWindow.h
   dialogs/SceneWindow.h
   dialogs/SpecWindow.h
   io/EXRFile.h
   io/ImageBufferView.h
+  io/ProfFile.h
   io/SpecFile.h
   mapper/ToneMapper.h
+  plot/IValueProvider.h
+  plot/PlotGraph.h
+  prof/ProfTreeItem.h
+  prof/ProfTreeModel.h
   properties/ColorProperty.h
   properties/DoubleProperty.h
   properties/GroupProperty.h
@@ -58,6 +70,7 @@ SET(Hdr
   rdmp/RayArray.h
   widgets/ColorButton.h
   widgets/ImageView.h
+  widgets/PlotWidget.h
   widgets/PropertyView.h
   widgets/RangeSlider.h
   widgets/ToneMapperEditor.h
@@ -66,6 +79,7 @@ SET(Hdr
 SET(Fms
   ui/EXRWindow.ui
   ui/MainWindow.ui
+  ui/ProfWindow.ui
   ui/SceneWindow.ui
   ui/SpecWindow.ui
   ui/ToneMapperEditor.ui)

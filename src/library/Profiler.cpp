@@ -37,13 +37,15 @@ struct TimeCounterEntry {
 };
 
 struct ThreadData {
+	uint32 ID;
 	std::string Name;
 	std::vector<CounterEntry> CounterEntries;
 	std::vector<TimeCounterEntry> TimeCounterEntries;
 	std::vector<std::shared_ptr<Profiler::InternalCounter>> InternalCounters;
 
-	inline explicit ThreadData(const std::string& name)
-		: Name(name)
+	inline explicit ThreadData(uint32 id, const std::string& name)
+		: ID(id)
+		, Name(name)
 	{
 	}
 };
@@ -58,7 +60,7 @@ ThreadData* getCurrentThreadData()
 		stream << "Thread " << std::this_thread::get_id();
 
 		id = static_cast<int64>(sThreadData.size());
-		sThreadData.emplace_back(stream.str());
+		sThreadData.emplace_back(id, stream.str());
 
 		return &sThreadData[id];
 	} else {
@@ -68,10 +70,13 @@ ThreadData* getCurrentThreadData()
 
 // Save to make sure that dll unloads don't affect the profiler
 static std::unordered_map<const EntryDescription*, EntryDescription> sSavedEntries;
-void saveDescription(const EntryDescription* desc)
+void saveDescription(const ThreadData* data, const EntryDescription* desc)
 {
-	if (sSavedEntries.count(desc) == 0)
-		sSavedEntries.insert(std::make_pair(desc, *desc));
+	if (sSavedEntries.count(desc) == 0) {
+		EntryDescription copy = *desc;
+		copy.ThreadID		  = data->ID;
+		sSavedEntries.insert(std::make_pair(desc, copy));
+	}
 }
 
 void setThreadName(const std::string& name)
@@ -86,7 +91,7 @@ InternalCounter* registerCounter(const EntryDescription* desc)
 
 	std::lock_guard<std::mutex> guard(sThreadMutex);
 	ThreadData* data = getCurrentThreadData();
-	saveDescription(desc);
+	saveDescription(data, desc);
 
 	auto counter = std::make_shared<InternalCounter>(0);
 	data->InternalCounters.emplace_back(counter);
@@ -101,7 +106,7 @@ InternalTimeCounter registerTimeCounter(const EntryDescription* desc)
 
 	std::lock_guard<std::mutex> guard(sThreadMutex);
 	ThreadData* data = getCurrentThreadData();
-	saveDescription(desc);
+	saveDescription(data, desc);
 
 	auto totalCounter = std::make_shared<InternalCounter>(0);
 	data->InternalCounters.emplace_back(totalCounter);
@@ -115,13 +120,11 @@ InternalTimeCounter registerTimeCounter(const EntryDescription* desc)
 
 struct ProfileCounterSample {
 	const EntryDescription* Desc;
-	size_t ThreadID;
 	uint64 Value;
 };
 
 struct ProfileTimeCounterSample {
 	const EntryDescription* Desc;
-	size_t ThreadID;
 	uint64 ValueTotal;
 	uint64 ValueDuration;
 };
@@ -166,9 +169,8 @@ static void profileThread(uint32 samplesPerSecond)
 		for (const ThreadData& data : sThreadData) {
 			for (const CounterEntry& entry : data.CounterEntries) {
 				ProfileCounterSample sample;
-				sample.Value	= *entry.CounterPtr;
-				sample.Desc		= entry.Desc;
-				sample.ThreadID = threadID;
+				sample.Value = *entry.CounterPtr;
+				sample.Desc  = entry.Desc;
 				page->Counters.push_back(sample);
 			}
 			for (const TimeCounterEntry& entry : data.TimeCounterEntries) {
@@ -176,7 +178,6 @@ static void profileThread(uint32 samplesPerSecond)
 				sample.ValueTotal	= *entry.TotalCounterPtr;
 				sample.ValueDuration = *entry.TimeSpentCounterPtr;
 				sample.Desc			 = entry.Desc;
-				sample.ThreadID		 = threadID;
 				page->TimeCounters.push_back(sample);
 			}
 			++threadID;
@@ -192,6 +193,7 @@ static void profileThread(uint32 samplesPerSecond)
 static std::unique_ptr<std::thread> sProfileThread;
 void start(uint32 samplesPerSecond, int32 /*networkPort*/)
 {
+	setThreadName("Main");
 	sProfileThread = std::make_unique<std::thread>(profileThread, samplesPerSecond);
 }
 
@@ -217,6 +219,7 @@ static void writeDesc(std::ofstream& stream, const EntryDescription& desc)
 	writeStr(stream, desc.Function);
 	writeStr(stream, desc.File);
 	stream.write(reinterpret_cast<const char*>(&desc.Line), sizeof(desc.Line));
+	stream.write(reinterpret_cast<const char*>(&desc.ThreadID), sizeof(desc.ThreadID));
 	writeStr(stream, desc.Category);
 }
 
@@ -231,13 +234,15 @@ bool dumpToFile(const std::wstring& filename)
 	for (const ThreadData& data : sThreadData) {
 		for (const CounterEntry& entry : data.CounterEntries) {
 			if (id_map.count(entry.Desc) == 0) {
-				id_map[entry.Desc] = id_map.size();
+				auto id			   = id_map.size();
+				id_map[entry.Desc] = id;
 				++events;
 			}
 		}
 		for (const TimeCounterEntry& entry : data.TimeCounterEntries) {
 			if (id_map.count(entry.Desc) == 0) {
-				id_map[entry.Desc] = id_map.size();
+				auto id			   = id_map.size();
+				id_map[entry.Desc] = id;
 				++events;
 			}
 		}
@@ -247,9 +252,18 @@ bool dumpToFile(const std::wstring& filename)
 	if (!stream)
 		return false;
 
-	// Write events
+	// Write header
 	static const char* HEADER = "PR_PROFILE";
 	stream.write(HEADER, 10);
+
+	// Write thread information
+	uint64 threads = sThreadData.size();
+	stream.write(reinterpret_cast<const char*>(&threads), sizeof(threads));
+	for (const ThreadData& data : sThreadData) {
+		writeStr(stream, data.Name);
+	}
+
+	// Write events
 	stream.write(reinterpret_cast<const char*>(&events), sizeof(events));
 
 	for (const ThreadData& data : sThreadData) {
@@ -280,8 +294,6 @@ bool dumpToFile(const std::wstring& filename)
 
 			uint64 descID = (uint64)id_map[counter.Desc];
 			stream.write(reinterpret_cast<const char*>(&descID), sizeof(descID));
-			uint64 threadID = (uint64)counter.ThreadID;
-			stream.write(reinterpret_cast<const char*>(&threadID), sizeof(threadID));
 			stream.write(reinterpret_cast<const char*>(&counter.Value), sizeof(counter.Value));
 		}
 
@@ -293,8 +305,6 @@ bool dumpToFile(const std::wstring& filename)
 
 			uint64 descID = (uint64)id_map[timeCounter.Desc];
 			stream.write(reinterpret_cast<const char*>(&descID), sizeof(descID));
-			uint64 threadID = (uint64)timeCounter.ThreadID;
-			stream.write(reinterpret_cast<const char*>(&threadID), sizeof(threadID));
 			stream.write(reinterpret_cast<const char*>(&timeCounter.ValueTotal),
 						 sizeof(timeCounter.ValueTotal));
 			stream.write(reinterpret_cast<const char*>(&timeCounter.ValueDuration),

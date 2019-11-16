@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "EXRWindow.h"
+#include "ProfWindow.h"
 #include "SceneWindow.h"
 #include "SpecWindow.h"
 #include "Version.h"
@@ -76,7 +77,7 @@ void MainWindow::openFile()
 
 	QString file = QFileDialog::getOpenFileName(this, tr("Open File"),
 												mLastDir,
-												tr("Supported Files (*.cnt *.rdmp *.exr *.spec);;CNT Files (*.cnt);;RDMP Files (*.rdmp);;EXR Files (*.exr);;Spectral Files (*.spec)"));
+												tr("Supported Files (*.cnt *.rdmp *.exr *.spec *.prof);;CNT Files (*.cnt);;RDMP Files (*.rdmp);;EXR Files (*.exr);;Spectral Files (*.spec);;Profile Files (*.prof)"));
 
 	if (!file.isEmpty()) {
 		openFile(file);
@@ -127,6 +128,13 @@ void MainWindow::openFile(const QString& file)
 		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
 		win->setWindowIcon(QIcon(":/image_icon"));
+		w->show();
+		w->openFile(file);
+	} else if (info.suffix() == "prof") {
+		ProfWindow* w	  = new ProfWindow(ui.mdiArea);
+		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
+
+		win->setWindowIcon(QIcon(":/timeline_icon"));
 		w->show();
 		w->openFile(file);
 	}

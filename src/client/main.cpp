@@ -34,6 +34,7 @@ void printStatus(const PR::RenderStatus& status)
 			  << std::endl;
 }
 
+constexpr PR::uint32 PROFILE_SAMPLE_RATE = 10;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
@@ -41,7 +42,7 @@ int main(int argc, char** argv)
 		return -1;
 
 	if (options.Profile)
-		PR::Profiler::start(5);
+		PR::Profiler::start(PROFILE_SAMPLE_RATE);
 
 	time_t t = time(NULL);
 	std::stringstream sstream;
