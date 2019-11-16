@@ -7,22 +7,41 @@
 
 namespace PR {
 namespace Profiler {
-// Internal interface
-void PR_LIB setThreadName(const std::string& name);
+// Structs
+struct PR_LIB EntryDescription {
+	std::string Name;
+	std::string Function;
+	std::string File;
+	uint32 Line;
+	std::string Category;
 
+	inline EntryDescription(const std::string& name, const std::string& function,
+							const std::string& file, uint32 line, const std::string& category)
+		: Name(name)
+		, Function(function)
+		, File(file)
+		, Line(line)
+		, Category(category)
+	{
+	}
+};
 typedef std::atomic<uint64> InternalCounter;
-InternalCounter* registerCounter(const std::string& name, const std::string& function, const std::string& file, uint32 line, const std::string& category);
 
-struct InternalTimeCounter {
+struct PR_LIB InternalTimeCounter {
 	InternalCounter* Total;
 	InternalCounter* TimeSpentMicroSec;
 };
-InternalTimeCounter registerTimeCounter(const std::string& name, const std::string& function, const std::string& file, uint32 line, const std::string& category);
+
+// Internal interface
+void PR_LIB setThreadName(const std::string& name);
+
+PR_LIB InternalCounter* registerCounter(const EntryDescription* desc);
+PR_LIB InternalTimeCounter registerTimeCounter(const EntryDescription* desc);
 
 void PR_LIB start(uint32 samplesPerSecond, int32 networkPort = -1);
 void PR_LIB stop();
 
-void PR_LIB dumpToFile(const std::wstring& filename);
+bool PR_LIB dumpToFile(const std::wstring& filename);
 
 // Event structure
 class PR_LIB EventScope {
@@ -48,7 +67,8 @@ private:
 class PR_LIB Event {
 public:
 	inline Event(const std::string& name, const std::string& function, const std::string& file, uint32 line, const std::string& category)
-		: mCounter(registerTimeCounter(name, function, file, line, category))
+		: mDesc(name, function, file, line, category)
+		, mCounter(registerTimeCounter(&mDesc))
 	{
 	}
 
@@ -58,6 +78,7 @@ public:
 	}
 
 private:
+	const EntryDescription mDesc;
 	InternalTimeCounter mCounter;
 };
 } // namespace Profiler
@@ -66,8 +87,8 @@ private:
 #define _PR_PROFILE_UNIQUE_NAME(line) __profile__##line
 
 #ifdef PR_WITH_PROFILER
-#define PR_PROFILE(name, func, file, line, cat)                                                  \
-	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME(line)(name, func, file, line, cat); \
+#define PR_PROFILE(name, func, file, line, cat)                                                            \
+	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME(line)((name), (func), (file), (line), (cat)); \
 	_PR_PROFILE_UNIQUE_NAME(line).scope()
 #else
 #define PR_PROFILE(name, func, file, line, cat)

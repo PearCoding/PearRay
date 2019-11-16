@@ -308,7 +308,7 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 		nr[dim] -= onPlane;
 		nr[dim] -= endOnPlane;
 
-		SplitPlane side;
+		SplitPlane side = SP_Left;
 		BoundingBox vl;
 		BoundingBox vr;
 		const float c = SAH(costIntersection, V, dim, v, nl[dim], nr[dim], np[dim], side, vl, vr);

@@ -159,7 +159,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 	ShowRegistry = (vm.count("registry") != 0);
 
 #ifdef PR_WITH_PROFILER
-	Profile = (vm.count("registry") != 0);
+	Profile = (vm.count("profile") != 0);
 #else
 	Profile = false;
 #endif

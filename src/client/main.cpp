@@ -40,8 +40,8 @@ int main(int argc, char** argv)
 	if (!options.parse(argc, argv))
 		return -1;
 
-	if(options.Profile)
-		PR::Profiler::start(20);
+	if (options.Profile)
+		PR::Profiler::start(5);
 
 	time_t t = time(NULL);
 	std::stringstream sstream;
@@ -66,6 +66,9 @@ int main(int argc, char** argv)
 
 	if (!options.IsQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) " << PR_VENDOR_STRING << std::endl;
+
+	if (options.Profile)
+		PR_LOG(PR::L_INFO) << "Profiling enabled" << std::endl;
 
 	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(
 		options.OutputDir.generic_wstring(),
@@ -175,8 +178,12 @@ int main(int argc, char** argv)
 
 	env->outputSpecification().deinit();
 
-	if(options.Profile)
+	if (options.Profile) {
 		PR::Profiler::stop();
+		const bf::path profFile = options.OutputDir / "pr_profile.prof";
+		if (!PR::Profiler::dumpToFile(profFile.generic_wstring()))
+			PR_LOG(PR::L_ERROR) << "Could not write profile data to " << profFile << std::endl;
+	}
 
 	return 0;
 }
