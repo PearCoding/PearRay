@@ -1,7 +1,7 @@
 #include "ProfTreeItem.h"
 #include "io/ProfFile.h"
 
-#include <QDateTime>
+#include <QDebug>
 
 ProfTreeItem::ProfTreeItem(const std::shared_ptr<ProfTreeItem>& parent, QString name, ProfFile* file, int index)
 	: std::enable_shared_from_this<ProfTreeItem>()
@@ -17,6 +17,27 @@ ProfTreeItem::ProfTreeItem(const std::shared_ptr<ProfTreeItem>& parent, QString 
 
 ProfTreeItem::~ProfTreeItem()
 {
+}
+
+static int indexOfEntry(const QVector<ProfTimeCounterEntry>& entries,
+						quint64 t)
+{
+	if (entries.isEmpty() || entries.front().TimePointMicroSec > t)
+		return -1;
+
+	int L = 0;
+	int R = entries.size();
+
+	while (L < R) {
+		int h		 = (L + R) / 2;
+		quint64 time = entries.at(h).TimePointMicroSec;
+		if (time < t)
+			L = h + 1;
+		else
+			R = h;
+	}
+
+	return std::min(entries.size() - 1, L);
 }
 
 quint64 ProfTreeItem::totalValue() const
@@ -43,6 +64,87 @@ quint64 ProfTreeItem::totalDuration() const
 		}
 		return value;
 	}
+}
+
+quint64 ProfTreeItem::totalValue(quint64 t) const
+{
+	if (isLeaf()) {
+		int index = indexOfEntry(mFile->entry(mIndex).TimeCounterEntries, t);
+		if (index < 0)
+			return 0;
+		else
+			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDuration;
+	} else {
+		quint64 value = 0;
+		for (const auto& child : mChildren) {
+			value = child->totalValue(t);
+		}
+		return value;
+	}
+}
+
+quint64 ProfTreeItem::totalDuration(quint64 t) const
+{
+	if (isLeaf()) {
+		int index = indexOfEntry(mFile->entry(mIndex).TimeCounterEntries, t);
+		if (index < 0)
+			return 0;
+		else
+			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalValue;
+	} else {
+		quint64 value = 0;
+		for (const auto& child : mChildren) {
+			value = child->totalDuration(t);
+		}
+		return value;
+	}
+}
+
+template <typename T>
+static void mergeSortedArrays(QVector<T>& a, const QVector<T>& b)
+{
+	if (a.isEmpty()) {
+		a = b;
+		return;
+	}
+
+	int ai = 0;
+	for (int bi = 0; bi < b.size();) {
+		if (ai < a.size()) {
+			if (a.at(ai) == b.at(bi)) { // Ignore
+				++ai;
+				++bi;
+			} else if (a.at(ai) < b.at(bi)) {
+				++ai;
+				// Fix bi
+			} else {
+				a.insert(ai, b.at(bi));
+				++ai;
+				++bi;
+			}
+		} else {
+			a.append(b.at(bi));
+			++ai;
+			++bi;
+		}
+	}
+}
+
+QVector<quint64> ProfTreeItem::timePoints() const
+{
+	QVector<quint64> points;
+	if (isLeaf()) {
+		points.reserve(mFile->entry(mIndex).TimeCounterEntries.size());
+		for (const auto& entry : mFile->entry(mIndex).TimeCounterEntries)
+			points.append(entry.TimePointMicroSec);
+	} else {
+		for (const auto& child : mChildren) {
+			mergeSortedArrays(points, child->timePoints());
+		}
+	}
+
+	//qDebug() << points;
+	return points;
 }
 
 std::shared_ptr<ProfTreeItem> ProfTreeItem::child(int row) const

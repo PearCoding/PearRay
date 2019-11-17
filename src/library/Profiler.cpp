@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
+using namespace std::chrono;
+
 namespace PR {
 namespace Profiler {
 struct CounterEntry {
@@ -130,7 +132,7 @@ struct ProfileTimeCounterSample {
 };
 
 struct ProfileSamplePage {
-	std::chrono::high_resolution_clock::time_point TimePoint;
+	high_resolution_clock::time_point TimePoint;
 	std::vector<ProfileCounterSample> Counters;
 	std::vector<ProfileTimeCounterSample> TimeCounters;
 };
@@ -138,18 +140,20 @@ struct ProfileSamplePage {
 static std::vector<std::unique_ptr<ProfileSamplePage>> sProfilePages;
 static std::atomic<bool> sProfileRun(false);
 static std::mutex sProfileMutex;
+static uint64 sProfileStartTime = 0;
 static void profileThread(uint32 samplesPerSecond)
 {
-	sProfileRun = true;
+	sProfileRun		  = true;
+	sProfileStartTime = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
 	ProfileSamplePage* lastPage = nullptr;
-	const auto ms				= std::chrono::milliseconds(1000 / samplesPerSecond);
-	auto start					= std::chrono::high_resolution_clock::now();
+	const auto ms				= milliseconds(1000 / samplesPerSecond);
+	auto start					= high_resolution_clock::now();
 	while (sProfileRun) {
-		auto now  = std::chrono::high_resolution_clock::now();
+		auto now  = high_resolution_clock::now();
 		auto diff = now - start;
 
-		if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < ms) {
+		if (duration_cast<milliseconds>(diff) < ms) {
 			std::this_thread::sleep_for(ms);
 			continue;
 		}
@@ -284,7 +288,7 @@ bool dumpToFile(const std::wstring& filename)
 	uint64 pages = (uint64)sProfilePages.size();
 	stream.write(reinterpret_cast<const char*>(&pages), sizeof(pages));
 	for (const auto& page : sProfilePages) {
-		uint64 timePoint = std::chrono::duration_cast<std::chrono::microseconds>(page->TimePoint.time_since_epoch()).count();
+		uint64 timePoint = duration_cast<microseconds>(page->TimePoint.time_since_epoch()).count() - sProfileStartTime;
 		stream.write(reinterpret_cast<const char*>(&timePoint), sizeof(timePoint));
 
 		uint64 counterCount = (uint64)page->Counters.size();

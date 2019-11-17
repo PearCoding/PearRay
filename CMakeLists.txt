@@ -74,9 +74,10 @@ if(WIN32)
 	add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
 endif()
 
-IF(PR_WITH_DIAGNOSTIC)
-	find_package(Qt5Widgets)
-ENDIF()
+if(PR_WITH_DIAGNOSTIC)
+	find_package(Qt5 COMPONENTS Core Widgets Charts REQUIRED)
+endif()
+
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)

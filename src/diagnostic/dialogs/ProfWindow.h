@@ -2,6 +2,7 @@
 
 #include "ui_ProfWindow.h"
 #include <QWidget>
+#include <QSignalMapper>
 
 #include <memory>
 
@@ -16,12 +17,16 @@ public:
 
 	void openFile(const QString& str);
 
+private slots:
+	void onItemContextMenu(const QPoint& p);
+	void onItemShowPlot(QObject* obj);
+
 private:
 	void setupModel();
-	void setupThreadList();
-	void setupPlot();
 	Ui::ProfWindowClass ui;
 
 	std::shared_ptr<ProfFile> mContext;
 	std::shared_ptr<ProfTreeModel> mTreeModel;
+
+	QSignalMapper mSignalMapper;
 };

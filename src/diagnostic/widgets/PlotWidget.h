@@ -1,33 +1,28 @@
 #pragma once
 
-#include <QWidget>
-#include <memory>
+#include <QtCharts/QChartView>
+#include <QtCharts/QLineSeries>
 
-class ImageBufferView;
-class PlotWidget : public QWidget {
+QT_CHARTS_USE_NAMESPACE
+
+class ProfTreeItem;
+class PlotWidget : public QChartView {
 	Q_OBJECT
 public:
 	PlotWidget(QWidget* parent = nullptr);
 	virtual ~PlotWidget();
 
-	QSize minimumSizeHint() const override;
-	QSize sizeHint() const override;
+	void addTimeGraph(ProfTreeItem* root);
+	void removeTimeGraph(ProfTreeItem* item);
+	bool hasTimeGraph(ProfTreeItem* item) const;
 
 protected:
-	void paintEvent(QPaintEvent* event) override;
-	void resizeEvent(QResizeEvent* event) override;
-	void mousePressEvent(QMouseEvent* event) override;
-	void mouseMoveEvent(QMouseEvent* event) override;
-	void wheelEvent(QWheelEvent* event) override;
+	void keyPressEvent(QKeyEvent* event);
 
 private:
-	void updatePlot();
-	void cachePlot();
+	QAbstractAxis* mAxisX;
+	QAbstractAxis* mTimeAxisY;
+	QAbstractAxis* mValueAxisY;
 
-	float mZoom;
-	QPointF mDelta;
-	QPoint mLastPos;
-
-	QPixmap mPixmap;
-	QPixmap mBackground;
+	QHash<ProfTreeItem*, QLineSeries*> mMapper;
 };

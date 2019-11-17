@@ -20,6 +20,8 @@ public:
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 	int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
+	const QVector<std::shared_ptr<ProfTreeItem>>& roots() const { return mFiles; }
+
 private:
 	void setupData();
 	QVector<std::shared_ptr<ProfTreeItem>> mFiles;

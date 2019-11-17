@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QPixmap>
 #include <QVariant>
 #include <QVector>
 
@@ -23,6 +24,11 @@ public:
 	quint64 totalValue() const;
 	quint64 totalDuration() const;
 
+	quint64 totalValue(quint64 t) const;
+	quint64 totalDuration(quint64 t) const;
+
+	QVector<quint64> timePoints() const;
+
 	inline void setName(const QString& name) { mName = name; }
 	inline const QString& name() const { return mName; }
 
@@ -38,6 +44,9 @@ public:
 	QVariant data(int column) const;
 	int row() const;
 
+	inline void setCustomIcon(const QPixmap& p) { mCustomIcon = p; }
+	inline const QPixmap& customIcon() const { return mCustomIcon; }
+
 private:
 	QString mName;
 	std::shared_ptr<ProfTreeItem> mParent;
@@ -45,4 +54,6 @@ private:
 
 	ProfFile* mFile;
 	int mIndex;
+
+	QPixmap mCustomIcon;
 };

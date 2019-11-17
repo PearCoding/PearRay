@@ -17,11 +17,18 @@ QVariant ProfTreeModel::data(const QModelIndex& index, int role) const
 	if (!index.isValid())
 		return QVariant();
 
-	if (role != Qt::DisplayRole)
-		return QVariant();
-
 	ProfTreeItem* item = static_cast<ProfTreeItem*>(index.internalPointer());
-	return item->data(index.column());
+	switch (role) {
+	default:
+		return QVariant();
+	case Qt::DecorationRole:
+		if (index.column() == 0 && !item->customIcon().isNull())
+			return item->customIcon();
+		else
+			return QVariant();
+	case Qt::DisplayRole:
+		return item->data(index.column());
+	}
 }
 
 Qt::ItemFlags ProfTreeModel::flags(const QModelIndex& index) const

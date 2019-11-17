@@ -20,7 +20,6 @@ SET(Src
   io/ImageBufferView.cpp
   io/ProfFile.cpp
   io/SpecFile.cpp
-  plot/PlotGraph.cpp
   prof/ProfTreeItem.cpp
   prof/ProfTreeModel.cpp
   properties/ColorProperty.cpp
@@ -55,8 +54,6 @@ SET(Hdr
   io/ProfFile.h
   io/SpecFile.h
   mapper/ToneMapper.h
-  plot/IValueProvider.h
-  plot/PlotGraph.h
   prof/ProfTreeItem.h
   prof/ProfTreeModel.h
   properties/ColorProperty.h
@@ -95,7 +92,7 @@ SET(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
 SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
-target_link_libraries(prdiag PRIVATE Qt5::Widgets OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::Half)
+target_link_libraries(prdiag PRIVATE Qt5::Widgets Qt5::Charts OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::Half)
 target_link_libraries(prdiag PRIVATE Boost::iostreams Boost::filesystem)
 if(PR_COMPRESS_SPEC_FILES)
   target_compile_definitions(prdiag PRIVATE "PR_COMPRESS_SPEC_FILES")

@@ -1,119 +1,121 @@
 #include "PlotWidget.h"
+#include "prof/ProfTreeItem.h"
 
-#include <QMouseEvent>
-#include <QPainter>
-#include <QWheelEvent>
+#include <QtCharts/QDateTimeAxis>
+#include <QtCharts/QValueAxis>
 
-#include <QMenu>
-
-constexpr float PAN_W  = 0.4f;
-constexpr float ZOOM_W = 1.05f;
-
-constexpr int GRID_S = 100;
+#include <QDateTime>
+#include <QDebug>
 
 PlotWidget::PlotWidget(QWidget* parent)
-	: QWidget(parent)
-	, mZoom(1)
+	: QChartView(parent)
 {
-	setMouseTracking(true);
+	setRubberBand(QChartView::RectangleRubberBand);
+	chart()->legend()->hide();
+
+	QDateTimeAxis* axisX = new QDateTimeAxis;
+	axisX->setTitleText("Time");
+	axisX->setFormat("HH:mm:ss.zzz");
+	//axisX->setTickCount(10);
+	chart()->addAxis(axisX, Qt::AlignBottom);
+	mAxisX = axisX;
+
+	QDateTimeAxis* timeAxisY = new QDateTimeAxis;
+	timeAxisY->setTitleText("Duration");
+	timeAxisY->setFormat("HH:mm:ss.zzz");
+	//timeAxisY->setTickCount(10);
+	chart()->addAxis(timeAxisY, Qt::AlignLeft);
+	mTimeAxisY = timeAxisY;
+
+	QValueAxis* valAxisY = new QValueAxis;
+	valAxisY->setTitleText("Calls");
+	chart()->addAxis(valAxisY, Qt::AlignLeft);
+	mValueAxisY = valAxisY;
+
+	setRenderHint(QPainter::Antialiasing);
 }
 
 PlotWidget::~PlotWidget()
 {
 }
 
-QSize PlotWidget::minimumSizeHint() const
+void PlotWidget::addTimeGraph(ProfTreeItem* item)
 {
-	return QSize(10, 10);
-}
+	int currentType = ProfTreeItem::C_TotalDuration;
 
-QSize PlotWidget::sizeHint() const
-{
-	return minimumSizeHint();
-}
-
-void PlotWidget::paintEvent(QPaintEvent* event)
-{
-	QPainter painter(this);
-	painter.drawPixmap(0, 0, mBackground);
-
-	event->accept();
-}
-
-// Cache background
-void PlotWidget::resizeEvent(QResizeEvent* event)
-{
-	QPainter painter;
-	mBackground = QPixmap(event->size());
-
-	painter.begin(&mBackground);
-
-	// Background
-	const size_t gx = mBackground.width() / GRID_S + 1;
-	const size_t gy = mBackground.height() / GRID_S + 1;
-
-	painter.setPen(Qt::NoPen);
-	for (size_t y = 0; y < gy; ++y) {
-		int dx = (y % 2) ? 0 : GRID_S;
-		int py = y * GRID_S;
-
-		painter.setBrush(QBrush(Qt::white));
-		for (size_t x = 0; x < gx; ++x)
-			painter.drawRect(dx + x * GRID_S * 2, py,
-							 GRID_S, GRID_S);
-
-		painter.setBrush(QBrush(qRgb(240,240,240)));
-		for (size_t x = 0; x < gx; ++x)
-			painter.drawRect(GRID_S - dx + x * GRID_S * 2, py,
-							 GRID_S, GRID_S);
-	}
-	painter.end();
-}
-
-void PlotWidget::mousePressEvent(QMouseEvent* event)
-{
-	if ((event->buttons() & Qt::LeftButton)
-		|| (event->buttons() & Qt::MiddleButton)) {
-		mLastPos = event->globalPos();
-	}
-}
-
-void PlotWidget::mouseMoveEvent(QMouseEvent* event)
-{
-	if ((event->buttons() & Qt::LeftButton)
-		|| (event->buttons() & Qt::MiddleButton)) {
-		QPointF d = mLastPos - event->globalPos();
-
-		mDelta += -d * PAN_W;
-		mLastPos = event->globalPos();
+	QLineSeries* series = new QLineSeries;
+	series->setName(item->name());
+	for (quint64 t : item->timePoints()) {
+		switch (currentType) {
+		case ProfTreeItem::C_TotalValue:
+			series->append(t / 1000, item->totalValue(t));
+			break;
+		case ProfTreeItem::C_TotalDuration:
+			series->append(t / 1000, item->totalDuration(t) / 1000);
+			break;
+		case ProfTreeItem::C_AverageDuration:
+			series->append(t / 1000, item->totalDuration(t) / (qreal)(1000 * item->totalValue(t)));
+			break;
+		default:
+			return;
+		}
 	}
 
-	repaint();
+	chart()->addSeries(series); // Takes ownership!
+
+	series->attachAxis(mAxisX);
+	if (currentType == ProfTreeItem::C_TotalValue)
+		series->attachAxis(mValueAxisY);
+	else
+		series->attachAxis(mTimeAxisY);
+
+	mMapper.insert(item, series);
+
+	QPixmap icon(8, 8);
+	icon.fill(series->color());
+	item->setCustomIcon(icon);
 }
 
-void PlotWidget::wheelEvent(QWheelEvent* event)
+void PlotWidget::removeTimeGraph(ProfTreeItem* item)
 {
-	float delta = event->angleDelta().y();
+	Q_ASSERT(mMapper.contains(item));
 
-	if (delta < 0)
-		mZoom /= ZOOM_W;
-	else if (delta > 0)
-		mZoom *= ZOOM_W;
+	QLineSeries* series = mMapper[item];
+	chart()->removeSeries(series);
+	delete series;
 
-	event->accept();
-
-	cachePlot();
-	repaint();
+	item->setCustomIcon(QPixmap());
+	mMapper.remove(item);
 }
 
-void PlotWidget::cachePlot()
+bool PlotWidget::hasTimeGraph(ProfTreeItem* item) const
 {
-	// TODO
+	return mMapper.contains(item);
 }
 
-void PlotWidget::updatePlot()
+void PlotWidget::keyPressEvent(QKeyEvent* event)
 {
-	// TODO
-	cachePlot();
-	repaint();
+	switch (event->key()) {
+	case Qt::Key_Plus:
+		chart()->zoomIn();
+		break;
+	case Qt::Key_Minus:
+		chart()->zoomOut();
+		break;
+	case Qt::Key_Left:
+		chart()->scroll(-10, 0);
+		break;
+	case Qt::Key_Right:
+		chart()->scroll(10, 0);
+		break;
+	case Qt::Key_Up:
+		chart()->scroll(0, 10);
+		break;
+	case Qt::Key_Down:
+		chart()->scroll(0, -10);
+		break;
+	default:
+		QGraphicsView::keyPressEvent(event);
+		break;
+	}
 }
