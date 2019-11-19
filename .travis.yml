@@ -6,6 +6,7 @@ addons:
     packages:
       - lcov
       - qtbase5-dev
+      - libqt5charts5-dev
       - libboost-filesystem-dev
       - libboost-program-options-dev
       - libboost-system-dev
