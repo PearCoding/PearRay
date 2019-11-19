@@ -10,9 +10,11 @@ namespace PR {
 class EnvironmentLight : public IInfiniteLight {
 public:
 	EnvironmentLight(uint32 id, const std::string& name,
-					 const std::shared_ptr<FloatSpectralMapSocket>& spec)
+					 const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					 const std::shared_ptr<FloatSpectralMapSocket>& background)
 		: IInfiniteLight(id, name)
 		, mRadiance(spec)
+		, mBackground(background)
 	{
 		Vector2i recSize = spec->queryRecommendedSize();
 		if (recSize(0) > 1 && recSize(1) > 1) {
@@ -43,7 +45,7 @@ public:
 		coord.UV(1) = 1 - coord.UV(1);
 		coord.Index = in.Point.Ray.WavelengthIndex;
 
-		out.Weight = mRadiance->eval(coord);
+		out.Weight = mBackground->eval(coord);
 		out.PDF_S  = 0.5f * PR_1_PI;
 	}
 
@@ -102,7 +104,11 @@ protected:
 
 private:
 	std::unique_ptr<Distribution2D> mDistribution;
+
+	// Radiance is used for sampling, background is used when a ray hits the background
+	// Most of the time both are the same
 	std::shared_ptr<FloatSpectralMapSocket> mRadiance;
+	std::shared_ptr<FloatSpectralMapSocket> mBackground;
 };
 
 class EnvironmentLightFactory : public IInfiniteLightFactory {
@@ -111,12 +117,21 @@ public:
 	{
 		const Registry& reg = env.registry();
 
-		const std::string name		   = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-															   "name", "__unknown");
-		const std::string radianceName = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-																	   "radiance", "");
+		const std::string name			 = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
+																 "name", "__unknown");
+		const std::string radianceName   = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
+																		 "radiance", "");
+		const std::string backgroundName = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
+																		 "background", "");
 
-		return std::make_shared<EnvironmentLight>(id, name, env.getSpectralMapSocket(radianceName, 1));
+		auto rad = env.getSpectralMapSocket(radianceName, 1);
+		std::shared_ptr<FloatSpectralMapSocket> background;
+		if (backgroundName.empty())
+			background = rad;
+		else
+			background = env.getSpectralMapSocket(backgroundName, 1);
+
+		return std::make_shared<EnvironmentLight>(id, name, rad, background);
 	}
 
 	const std::vector<std::string>& getNames() const override
