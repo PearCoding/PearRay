@@ -2,6 +2,7 @@
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
+#include <QSignalMapper>
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -21,7 +22,11 @@ public slots:
 	void resetView();
 
 protected:
-	void keyPressEvent(QKeyEvent* event);
+	void keyPressEvent(QKeyEvent* event) override;
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
+	void mouseMoveEvent(QMouseEvent* event) override;
+	void wheelEvent(QWheelEvent* event) override;
 
 private:
 	void fixRange(QLineSeries* series);
@@ -32,4 +37,7 @@ private:
 
 	int mShowMode;
 	QHash<ProfTreeItem*, QLineSeries*> mMapper;
+
+	QPointF mLastPos;
+	bool mDragging;
 };

@@ -4,8 +4,10 @@
 #include <QtCharts/QDateTimeAxis>
 #include <QtCharts/QValueAxis>
 
+#include <QApplication>
 #include <QDateTime>
 #include <QDebug>
+#include <QToolTip>
 
 ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 	: QChartView(parent)
@@ -13,23 +15,30 @@ ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 	, mTimeAxisY(nullptr)
 	, mValueAxisY(nullptr)
 	, mShowMode(0)
+	, mDragging(false)
 {
-	setRubberBand(QChartView::RectangleRubberBand);
+	setMouseTracking(true);
+	chart()->setTheme(QChart::ChartThemeBlueCerulean);
 	chart()->legend()->hide();
 
 	QDateTimeAxis* axisX = new QDateTimeAxis;
 	axisX->setTitleText("Time [ms]");
 	axisX->setFormat("mm:ss.zzz");
+	axisX->setRange(QDateTime::fromMSecsSinceEpoch(0),
+					QDateTime::fromMSecsSinceEpoch(10));
 	mAxisX = axisX;
 	chart()->addAxis(axisX, Qt::AlignBottom); // Takes ownership
 
 	QDateTimeAxis* timeAxisY = new QDateTimeAxis;
 	timeAxisY->setTitleText("Duration [ms]");
 	timeAxisY->setFormat("mm:ss.zzz");
+	timeAxisY->setRange(QDateTime::fromMSecsSinceEpoch(0),
+						QDateTime::fromMSecsSinceEpoch(10));
 	mTimeAxisY = timeAxisY;
 
 	QValueAxis* valAxisY = new QValueAxis;
 	valAxisY->setTitleText("Calls");
+	valAxisY->setRange(0, 10);
 	mValueAxisY = valAxisY;
 
 	setShowMode(0);
@@ -38,14 +47,12 @@ ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 
 ProfPlotWidget::~ProfPlotWidget()
 {
+	// One axis is not in ownership of QChart, therefore we destroy it ourselves...
 	if (mShowMode == ProfTreeItem::C_TotalValue)
-		chart()->removeAxis(mValueAxisY);
+		delete mTimeAxisY; // Uses Value axis, destroy Time Axis
 	else if (mShowMode == ProfTreeItem::C_TotalDuration
 			 || mShowMode == ProfTreeItem::C_AverageDuration)
-		chart()->removeAxis(mTimeAxisY);
-
-	delete mValueAxisY;
-	delete mTimeAxisY;
+		delete mValueAxisY; // Uses Time axis, destroy Value Axis
 }
 
 void ProfPlotWidget::addTimeGraph(ProfTreeItem* item)
@@ -119,10 +126,72 @@ void ProfPlotWidget::keyPressEvent(QKeyEvent* event)
 	case Qt::Key_Down:
 		chart()->scroll(0, -10);
 		break;
+	case Qt::Key_R:
+		resetView();
+		break;
 	default:
-		QGraphicsView::keyPressEvent(event);
+		QChartView::keyPressEvent(event);
 		break;
 	}
+}
+
+void ProfPlotWidget::mousePressEvent(QMouseEvent* event)
+{
+	if (event->buttons() & Qt::MiddleButton) {
+		mDragging = true;
+		mLastPos  = event->screenPos();
+		QApplication::setOverrideCursor(Qt::ClosedHandCursor);
+		event->accept();
+	} else {
+		QChartView::mousePressEvent(event);
+	}
+}
+
+void ProfPlotWidget::mouseReleaseEvent(QMouseEvent* event)
+{
+	if (mDragging && !(event->buttons() & Qt::MiddleButton)) {
+		mDragging = false;
+		QApplication::restoreOverrideCursor();
+		event->accept();
+	} else {
+		QChartView::mouseReleaseEvent(event);
+	}
+}
+
+void ProfPlotWidget::mouseMoveEvent(QMouseEvent* event)
+{
+	if (mDragging && (event->buttons() & Qt::MiddleButton)) {
+		auto delta = event->screenPos() - mLastPos;
+		mLastPos   = event->screenPos();
+		chart()->scroll(-delta.x(), delta.y());
+		event->accept();
+	} else {
+		QChartView::mouseMoveEvent(event);
+	}
+
+	// Show tooltip
+	QPointF pos = chart()->mapToScene(event->localPos());
+	if (!chart()->plotArea().contains(pos) || chart()->series().isEmpty())
+		return;
+
+	QPointF val = chart()->mapToValue(pos);
+	QToolTip::showText(
+		event->globalPos(),
+		QString("[%1, %2]").arg(val.x()).arg(val.y()),
+		this,
+		rect());
+}
+
+void ProfPlotWidget::wheelEvent(QWheelEvent* event)
+{
+	if (chart()->series().isEmpty())
+		return;
+
+	constexpr float ZOOM_FACTOR = 1.5f;
+	if (event->delta() < 0)
+		chart()->zoom(1 / ZOOM_FACTOR);
+	else if (event->delta() > 0)
+		chart()->zoom(ZOOM_FACTOR);
 }
 
 void ProfPlotWidget::setShowMode(int mode)
@@ -193,24 +262,5 @@ void ProfPlotWidget::fixRange(QLineSeries* series)
 
 void ProfPlotWidget::resetView()
 {
-	qreal maxX = 10, maxY = 10;
-	for (QAbstractSeries* series : chart()->series()) {
-		QLineSeries* line = qobject_cast<QLineSeries*>(series);
-		if (!line)
-			continue;
-
-		for (const auto& p : line->points()) {
-			maxX = std::max(maxX, p.x());
-			maxY = std::max(maxY, p.y());
-		}
-	}
-
-	mAxisX->setRange(QDateTime::fromMSecsSinceEpoch(0),
-					 QDateTime::fromMSecsSinceEpoch(maxX));
-
-	if (mShowMode == ProfTreeItem::C_TotalValue)
-		mValueAxisY->setRange(0, maxY);
-	else
-		mTimeAxisY->setRange(QDateTime::fromMSecsSinceEpoch(0),
-							 QDateTime::fromMSecsSinceEpoch(maxY));
+	chart()->zoomReset();
 }

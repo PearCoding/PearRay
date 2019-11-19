@@ -46,7 +46,7 @@ quint64 ProfTreeItem::totalValue() const
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
-			value = child->totalValue();
+			value += child->totalValue();
 		}
 		return value;
 	}
@@ -59,7 +59,7 @@ quint64 ProfTreeItem::totalDuration() const
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
-			value = child->totalDuration();
+			value += child->totalDuration();
 		}
 		return value;
 	}
@@ -76,7 +76,7 @@ quint64 ProfTreeItem::totalValue(quint64 t) const
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
-			value = child->totalValue(t);
+			value += child->totalValue(t);
 		}
 		return value;
 	}
@@ -93,7 +93,7 @@ quint64 ProfTreeItem::totalDuration(quint64 t) const
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
-			value = child->totalDuration(t);
+			value += child->totalDuration(t);
 		}
 		return value;
 	}
