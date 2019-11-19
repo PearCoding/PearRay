@@ -54,6 +54,8 @@ template <typename Func>
 void Scene::traceCoherentRays(RayStream& rays, const RayGroup& grp,
 							  HitStream& hits, Func nonHit) const
 {
+	PR_PROFILE_THIS;
+
 #ifdef PR_FORCE_SINGLE_TRACE
 	traceIncoherentRays(rays, grp, hits, nonHit);
 #else
@@ -90,6 +92,8 @@ template <typename Func>
 void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 								HitStream& hits, Func nonHit) const
 {
+	PR_PROFILE_THIS;
+
 	Ray in;
 	SingleCollisionOutput out;
 
@@ -129,6 +133,8 @@ void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 
 ShadowHit Scene::traceShadowRay(const Ray& in) const
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 
 	SingleCollisionOutput out;

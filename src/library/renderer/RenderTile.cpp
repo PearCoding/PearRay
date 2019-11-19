@@ -1,4 +1,5 @@
 #include "RenderTile.h"
+#include "Profiler.h"
 #include "RenderContext.h"
 #include "camera/ICamera.h"
 #include "sampler/HaltonSampler.h"
@@ -96,6 +97,8 @@ RenderTile::~RenderTile()
 
 Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 {
+	PR_PROFILE_THIS;
+
 	statistics().addPixelSampleCount();
 
 	const uint32 timesample = sample % mTimeSampleCount;

@@ -1,8 +1,8 @@
 #include "RenderTileMap.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
-
 #include "math/Generator.h"
+#include "Profiler.h"
 
 #include "Logger.h"
 namespace PR {
@@ -25,6 +25,8 @@ RenderTileMap::~RenderTileMap()
 
 void RenderTileMap::init(const RenderContext& context, TileMode mode)
 {
+	PR_PROFILE_THIS;
+
 	// Clear previous data
 	for (RenderTile* tile : mTileMap) {
 		if(tile)
@@ -129,6 +131,8 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 
 RenderTile* RenderTileMap::getNextTile(uint32 maxSample)
 {
+	PR_PROFILE_THIS;
+
 	for (uint32 i = 0; i < mTileYCount; ++i) {
 		for (uint32 j = 0; j < mTileXCount; ++j) {
 			// TODO: Better check up for AS
@@ -147,6 +151,8 @@ RenderTile* RenderTileMap::getNextTile(uint32 maxSample)
 
 RenderTileStatistics RenderTileMap::statistics() const
 {
+	PR_PROFILE_THIS;
+
 	RenderTileStatistics s;
 	for (uint32 i = 0; i < mTileYCount; ++i) {
 		for (uint32 j = 0; j < mTileXCount; ++j) {
@@ -158,6 +164,8 @@ RenderTileStatistics RenderTileMap::statistics() const
 
 void RenderTileMap::reset()
 {
+	PR_PROFILE_THIS;
+
 	for (uint32 i = 0; i < mTileYCount; ++i)
 		for (uint32 j = 0; j < mTileXCount; ++j)
 			mTileMap[i * mTileXCount + j]->reset();

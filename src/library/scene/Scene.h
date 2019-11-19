@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Profiler.h"
 #include "container/kdTreeCollider.h"
 #include "entity/IEntity.h"
 #include "geometry/BoundingBox.h"

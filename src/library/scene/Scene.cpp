@@ -40,6 +40,8 @@ Scene::~Scene()
 
 void Scene::buildTree(const std::wstring& file)
 {
+	PR_PROFILE_THIS;
+
 	size_t count = mEntities.size();
 	PR_LOG(L_INFO) << count << " Entities" << std::endl;
 
@@ -60,6 +62,8 @@ void Scene::buildTree(const std::wstring& file)
 
 void Scene::loadTree(const std::wstring& file)
 {
+	PR_PROFILE_THIS;
+
 	std::ifstream stream(encodePath(file));
 	mKDTree.reset(new kdTreeCollider);
 	mKDTree->load(stream);

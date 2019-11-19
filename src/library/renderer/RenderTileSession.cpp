@@ -1,4 +1,5 @@
 #include "RenderTileSession.h"
+#include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "buffer/OutputBuffer.h"
@@ -46,6 +47,8 @@ IEmission* RenderTileSession::getEmission(uint32 id) const
 
 bool RenderTileSession::handleCameraRays()
 {
+	PR_PROFILE_THIS;
+
 	const uint32 w = mTile->width();
 	const uint32 h = mTile->height();
 
@@ -96,6 +99,8 @@ bool RenderTileSession::handleCameraRays()
 void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 										  IEntity*& entity, IMaterial*& material)
 {
+	PR_PROFILE_THIS;
+
 	entity   = getEntity(grp.EntityID);
 	material = getMaterial(grp.MaterialID);
 
@@ -105,6 +110,8 @@ void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 
 void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 {
+	PR_PROFILE_THIS;
+
 	IMaterial* material = getMaterial(grp.MaterialID);
 	if (material)
 		material->endGroup();
@@ -112,6 +119,8 @@ void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 
 ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 {
+	PR_PROFILE_THIS;
+
 	mTile->statistics().addShadowRayCount();
 	return mTile->context()->scene()->traceShadowRay(ray);
 }
@@ -119,17 +128,23 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 void RenderTileSession::pushFragment(const ShadingPoint& pt,
 									 const LightPath& path) const
 {
+	PR_PROFILE_THIS;
+
 	mTile->context()->output()->pushFragment(pt.Ray.PixelIndex, pt, path);
 }
 
 void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) const
 {
+	PR_PROFILE_THIS;
+
 	mTile->context()->output()->pushFeedbackFragment(
 		ray.PixelIndex, feedback);
 }
 
 IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const
 {
+	PR_PROFILE_THIS;
+
 	const auto& lights = mTile->context()->lights();
 	if (lights.empty()) {
 		pdf = 0;

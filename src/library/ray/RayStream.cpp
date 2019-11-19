@@ -1,6 +1,7 @@
 #include "RayStream.h"
 #include "Platform.h"
 #include "container/IndexSort.h"
+#include "Profiler.h"
 
 #include <algorithm>
 #include <fstream>
@@ -50,6 +51,8 @@ RayStream::~RayStream()
 
 void RayStream::addRay(const Ray& ray)
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(!isFull(), "Check before adding!");
 
 	for (int i = 0; i < 3; ++i)
@@ -77,6 +80,8 @@ void RayStream::addRay(const Ray& ray)
 
 void RayStream::setRay(size_t id, const Ray& ray)
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(id < currentSize(), "Check before adding!");
 
 	size_t cid = mInternalIndex[id];
@@ -105,6 +110,8 @@ void RayStream::setRay(size_t id, const Ray& ray)
 
 void RayStream::sort()
 {
+	PR_PROFILE_THIS;
+
 	// Extract invalid entries out!
 	auto inv_start = std::partition(mInternalIndex.begin(), mInternalIndex.end(),
 									[&](size_t ind) {
@@ -120,6 +127,8 @@ void RayStream::sort()
 
 void RayStream::reset()
 {
+	PR_PROFILE_THIS;
+
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i].clear();
 
@@ -145,6 +154,8 @@ void RayStream::reset()
  */
 RayGroup RayStream::getNextGroup()
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(hasNextGroup(), "Never call when not available");
 
 	RayGroup grp(this, 0, mLastInvPos, false);
@@ -165,6 +176,8 @@ size_t RayStream::getMemoryUsage() const
 
 Ray RayStream::getRay(size_t id) const
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(id < currentSize(), "Invalid access!");
 
 	const size_t cid = mInternalIndex[id];
@@ -204,6 +217,8 @@ Ray RayStream::getRay(size_t id) const
 
 RayPackage RayStream::getRayPackage(size_t id) const
 {
+	PR_PROFILE_THIS;
+
 	RayPackage ray;
 	ray.Origin = Vector3fv(load_from_container_with_indices(mInternalIndex, id, mOrigin[0]),
 						   load_from_container_with_indices(mInternalIndex, id, mOrigin[1]),

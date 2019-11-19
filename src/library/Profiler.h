@@ -93,7 +93,7 @@ private:
 #define PR_PROFILE(name, func, file, line, cat)                                                            \
 	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME(line)((name), (func), (file), (line), (cat)); \
 	_PR_PROFILE_UNIQUE_NAME(line).scope()
-#define PR_PROFILE_THREAD(name) PR::Profile::setThreadName((name))
+#define PR_PROFILE_THREAD(name) PR::Profiler::setThreadName((name))
 #else
 #define PR_PROFILE(name, func, file, line, cat)
 #define PR_PROFILE_THREAD(name)

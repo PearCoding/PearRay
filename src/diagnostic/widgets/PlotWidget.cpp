@@ -15,15 +15,23 @@ PlotWidget::PlotWidget(QWidget* parent)
 
 	QDateTimeAxis* axisX = new QDateTimeAxis;
 	axisX->setTitleText("Time");
-	axisX->setFormat("HH:mm:ss.zzz");
+	axisX->setFormat("mm:ss.zzz");
 	//axisX->setTickCount(10);
+	axisX->setRange(QDateTime::fromMSecsSinceEpoch(0),
+					QDateTime::fromMSecsSinceEpoch(10));
+	/*QValueAxis* axisX = new QValueAxis;
+	axisX->setTitleText("Time");*/
 	chart()->addAxis(axisX, Qt::AlignBottom);
 	mAxisX = axisX;
 
 	QDateTimeAxis* timeAxisY = new QDateTimeAxis;
 	timeAxisY->setTitleText("Duration");
-	timeAxisY->setFormat("HH:mm:ss.zzz");
+	timeAxisY->setFormat("mm:ss.zzz");
+	timeAxisY->setRange(QDateTime::fromMSecsSinceEpoch(0),
+						QDateTime::fromMSecsSinceEpoch(10));
 	//timeAxisY->setTickCount(10);
+	/*QValueAxis* timeAxisY = new QValueAxis;
+	timeAxisY->setTitleText("Time");*/
 	chart()->addAxis(timeAxisY, Qt::AlignLeft);
 	mTimeAxisY = timeAxisY;
 
@@ -61,13 +69,29 @@ void PlotWidget::addTimeGraph(ProfTreeItem* item)
 		}
 	}
 
+	qreal maxX = 0, maxY = 0;
+	for (const auto& p : series->points()) {
+		maxX = std::max(maxX, p.x());
+		maxY = std::max(maxY, p.y());
+	}
+
 	chart()->addSeries(series); // Takes ownership!
 
 	series->attachAxis(mAxisX);
-	if (currentType == ProfTreeItem::C_TotalValue)
+	if (reinterpret_cast<QDateTimeAxis*>(mAxisX)->max()
+		< QDateTime::fromMSecsSinceEpoch(maxX))
+		mAxisX->setMax(QDateTime::fromMSecsSinceEpoch(maxX));
+
+	if (currentType == ProfTreeItem::C_TotalValue) {
 		series->attachAxis(mValueAxisY);
-	else
+		if (reinterpret_cast<QValueAxis*>(mValueAxisY)->max() < maxY)
+			mValueAxisY->setMax(maxY);
+	} else {
 		series->attachAxis(mTimeAxisY);
+		if (reinterpret_cast<QDateTimeAxis*>(mTimeAxisY)->max()
+			< QDateTime::fromMSecsSinceEpoch(maxY))
+			mTimeAxisY->setMax(QDateTime::fromMSecsSinceEpoch(maxY));
+	}
 
 	mMapper.insert(item, series);
 

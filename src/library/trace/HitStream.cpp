@@ -1,4 +1,5 @@
 #include "HitStream.h"
+#include "Profiler.h"
 
 //FIXME: RadixSort has a bug which chrashes the software!
 //#define PR_USE_RADIXSORT
@@ -32,6 +33,8 @@ HitStream::~HitStream()
 
 void HitStream::add(const HitEntry& entry)
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(!isFull(), "Check before adding!");
 
 	mRayID.emplace_back(entry.RayID);
@@ -46,6 +49,8 @@ void HitStream::add(const HitEntry& entry)
 
 HitEntry HitStream::get(size_t index) const
 {
+	PR_PROFILE_THIS;
+
 	HitEntry entry;
 	entry.Flags		   = mFlags[index];
 	entry.RayID		   = mRayID[index];
@@ -61,6 +66,8 @@ HitEntry HitStream::get(size_t index) const
 
 void HitStream::sort()
 {
+	PR_PROFILE_THIS;
+
 	if (currentSize() == 0)
 		return;
 
@@ -112,6 +119,8 @@ void HitStream::sort()
 
 void HitStream::reset()
 {
+	PR_PROFILE_THIS;
+
 	mRayID.clear();
 	mSessionRayID.clear();
 	mMaterialID.clear();
@@ -126,6 +135,8 @@ void HitStream::reset()
 
 ShadingGroup HitStream::getNextGroup()
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(hasNextGroup(), "Never call when not available");
 	ShadingGroup grp;
 	grp.Stream	 = this;
