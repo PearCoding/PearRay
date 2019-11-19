@@ -109,6 +109,9 @@ bool Container::load(QFile& file)
 		mRoot = nullptr;
 	}
 
+	if(!file.open(QIODevice::ReadOnly))
+		return false;
+
 	QTextStream stream(&file);
 
 	mNodeCount  = 0;

@@ -33,7 +33,7 @@ public:
 	inline const QString& name() const { return mName; }
 
 	inline void setParent(const std::shared_ptr<ProfTreeItem>& parent) { mParent = parent; }
-	inline const std::shared_ptr<ProfTreeItem> parent() const { return mParent; }
+	inline std::shared_ptr<ProfTreeItem> parent() const { return mParent; }
 
 	void addChild(const std::shared_ptr<ProfTreeItem>& item);
 	void removeChild(const std::shared_ptr<ProfTreeItem>& item);

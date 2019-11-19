@@ -18,6 +18,8 @@ public:
 	void openFile(const QString& str);
 
 private slots:
+	void exportImage();
+
 	void onItemContextMenu(const QPoint& p);
 	void onItemShowPlot(QObject* obj);
 

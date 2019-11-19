@@ -9,52 +9,54 @@
 
 ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 	: QChartView(parent)
+	, mAxisX(nullptr)
+	, mTimeAxisY(nullptr)
+	, mValueAxisY(nullptr)
+	, mShowMode(0)
 {
 	setRubberBand(QChartView::RectangleRubberBand);
 	chart()->legend()->hide();
 
 	QDateTimeAxis* axisX = new QDateTimeAxis;
-	axisX->setTitleText("Time");
+	axisX->setTitleText("Time [ms]");
 	axisX->setFormat("mm:ss.zzz");
-	//axisX->setTickCount(10);
-	axisX->setRange(QDateTime::fromMSecsSinceEpoch(0),
-					QDateTime::fromMSecsSinceEpoch(10));
-	/*QValueAxis* axisX = new QValueAxis;
-	axisX->setTitleText("Time");*/
-	chart()->addAxis(axisX, Qt::AlignBottom);
 	mAxisX = axisX;
+	chart()->addAxis(axisX, Qt::AlignBottom); // Takes ownership
 
 	QDateTimeAxis* timeAxisY = new QDateTimeAxis;
-	timeAxisY->setTitleText("Duration");
+	timeAxisY->setTitleText("Duration [ms]");
 	timeAxisY->setFormat("mm:ss.zzz");
-	timeAxisY->setRange(QDateTime::fromMSecsSinceEpoch(0),
-						QDateTime::fromMSecsSinceEpoch(10));
-	//timeAxisY->setTickCount(10);
-	/*QValueAxis* timeAxisY = new QValueAxis;
-	timeAxisY->setTitleText("Time");*/
-	chart()->addAxis(timeAxisY, Qt::AlignLeft);
 	mTimeAxisY = timeAxisY;
 
 	QValueAxis* valAxisY = new QValueAxis;
 	valAxisY->setTitleText("Calls");
-	chart()->addAxis(valAxisY, Qt::AlignLeft);
 	mValueAxisY = valAxisY;
 
+	setShowMode(0);
 	setRenderHint(QPainter::Antialiasing);
 }
 
 ProfPlotWidget::~ProfPlotWidget()
 {
+	if (mShowMode == ProfTreeItem::C_TotalValue)
+		chart()->removeAxis(mValueAxisY);
+	else if (mShowMode == ProfTreeItem::C_TotalDuration
+			 || mShowMode == ProfTreeItem::C_AverageDuration)
+		chart()->removeAxis(mTimeAxisY);
+
+	delete mValueAxisY;
+	delete mTimeAxisY;
 }
 
 void ProfPlotWidget::addTimeGraph(ProfTreeItem* item)
 {
-	int currentType = ProfTreeItem::C_TotalDuration;
+	Q_ASSERT(item);
+	Q_ASSERT(!mMapper.contains(item));
 
 	QLineSeries* series = new QLineSeries;
 	series->setName(item->name());
 	for (quint64 t : item->timePoints()) {
-		switch (currentType) {
+		switch (mShowMode) {
 		case ProfTreeItem::C_TotalValue:
 			series->append(t / 1000, item->totalValue(t));
 			break;
@@ -69,33 +71,12 @@ void ProfPlotWidget::addTimeGraph(ProfTreeItem* item)
 		}
 	}
 
-	qreal maxX = 0, maxY = 0;
-	for (const auto& p : series->points()) {
-		maxX = std::max(maxX, p.x());
-		maxY = std::max(maxY, p.y());
-	}
-
 	chart()->addSeries(series); // Takes ownership!
-
-	series->attachAxis(mAxisX);
-	if (reinterpret_cast<QDateTimeAxis*>(mAxisX)->max()
-		< QDateTime::fromMSecsSinceEpoch(maxX))
-		mAxisX->setMax(QDateTime::fromMSecsSinceEpoch(maxX));
-
-	if (currentType == ProfTreeItem::C_TotalValue) {
-		series->attachAxis(mValueAxisY);
-		if (reinterpret_cast<QValueAxis*>(mValueAxisY)->max() < maxY)
-			mValueAxisY->setMax(maxY);
-	} else {
-		series->attachAxis(mTimeAxisY);
-		if (reinterpret_cast<QDateTimeAxis*>(mTimeAxisY)->max()
-			< QDateTime::fromMSecsSinceEpoch(maxY))
-			mTimeAxisY->setMax(QDateTime::fromMSecsSinceEpoch(maxY));
-	}
+	fixRange(series);
 
 	mMapper.insert(item, series);
 
-	QPixmap icon(8, 8);
+	QPixmap icon(12, 12);
 	icon.fill(series->color());
 	item->setCustomIcon(icon);
 }
@@ -142,4 +123,94 @@ void ProfPlotWidget::keyPressEvent(QKeyEvent* event)
 		QGraphicsView::keyPressEvent(event);
 		break;
 	}
+}
+
+void ProfPlotWidget::setShowMode(int mode)
+{
+	// Remove previous axis
+	if (mShowMode == ProfTreeItem::C_TotalValue)
+		chart()->removeAxis(mValueAxisY);
+	else if (mShowMode == ProfTreeItem::C_TotalDuration
+			 || mShowMode == ProfTreeItem::C_AverageDuration)
+		chart()->removeAxis(mTimeAxisY);
+
+	mShowMode = mode + ProfTreeItem::C_TotalValue; // C_Name is not valid
+
+	switch (mShowMode) {
+	case ProfTreeItem::C_TotalValue:
+		chart()->setTitle("Total Calls");
+		break;
+	case ProfTreeItem::C_TotalDuration:
+		chart()->setTitle("Total Duration");
+		break;
+	case ProfTreeItem::C_AverageDuration:
+		chart()->setTitle("Average Duration");
+		break;
+	}
+
+	if (mShowMode == ProfTreeItem::C_TotalValue)
+		chart()->addAxis(mValueAxisY, Qt::AlignLeft);
+	else
+		chart()->addAxis(mTimeAxisY, Qt::AlignLeft);
+
+	QList<ProfTreeItem*> keys = mMapper.keys();
+
+	mMapper.clear();
+	chart()->removeAllSeries();
+
+	for (ProfTreeItem* key : keys)
+		addTimeGraph(key);
+
+	resetView();
+}
+
+void ProfPlotWidget::fixRange(QLineSeries* series)
+{
+	Q_ASSERT(series);
+
+	qreal maxX = 0, maxY = 0;
+	for (const auto& p : series->points()) {
+		maxX = std::max(maxX, p.x());
+		maxY = std::max(maxY, p.y());
+	}
+
+	series->attachAxis(mAxisX);
+	if (reinterpret_cast<QDateTimeAxis*>(mAxisX)->max()
+		< QDateTime::fromMSecsSinceEpoch(maxX))
+		mAxisX->setMax(QDateTime::fromMSecsSinceEpoch(maxX));
+
+	if (mShowMode == ProfTreeItem::C_TotalValue) {
+		series->attachAxis(mValueAxisY);
+		if (reinterpret_cast<QValueAxis*>(mValueAxisY)->max() < maxY)
+			mValueAxisY->setMax(maxY);
+	} else {
+		series->attachAxis(mTimeAxisY);
+		if (reinterpret_cast<QDateTimeAxis*>(mTimeAxisY)->max()
+			< QDateTime::fromMSecsSinceEpoch(maxY))
+			mTimeAxisY->setMax(QDateTime::fromMSecsSinceEpoch(maxY));
+	}
+}
+
+void ProfPlotWidget::resetView()
+{
+	qreal maxX = 10, maxY = 10;
+	for (QAbstractSeries* series : chart()->series()) {
+		QLineSeries* line = qobject_cast<QLineSeries*>(series);
+		if (!line)
+			continue;
+
+		for (const auto& p : line->points()) {
+			maxX = std::max(maxX, p.x());
+			maxY = std::max(maxY, p.y());
+		}
+	}
+
+	mAxisX->setRange(QDateTime::fromMSecsSinceEpoch(0),
+					 QDateTime::fromMSecsSinceEpoch(maxX));
+
+	if (mShowMode == ProfTreeItem::C_TotalValue)
+		mValueAxisY->setRange(0, maxY);
+	else
+		mTimeAxisY->setRange(QDateTime::fromMSecsSinceEpoch(0),
+							 QDateTime::fromMSecsSinceEpoch(maxY));
 }

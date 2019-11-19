@@ -10,9 +10,8 @@ ProfTreeItem::ProfTreeItem(const std::shared_ptr<ProfTreeItem>& parent, QString 
 	, mFile(file)
 	, mIndex(index)
 {
-	if (isLeaf()) {
+	if (isLeaf())
 		Q_ASSERT(!mFile->entry(mIndex).TimeCounterEntries.isEmpty());
-	}
 }
 
 ProfTreeItem::~ProfTreeItem()
@@ -46,7 +45,7 @@ quint64 ProfTreeItem::totalValue() const
 		return mFile->entry(mIndex).TimeCounterEntries.last().TotalValue;
 	} else {
 		quint64 value = 0;
-		for (const auto& child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
 			value = child->totalValue();
 		}
 		return value;
@@ -59,7 +58,7 @@ quint64 ProfTreeItem::totalDuration() const
 		return mFile->entry(mIndex).TimeCounterEntries.last().TotalDuration;
 	} else {
 		quint64 value = 0;
-		for (const auto& child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
 			value = child->totalDuration();
 		}
 		return value;
@@ -76,7 +75,7 @@ quint64 ProfTreeItem::totalValue(quint64 t) const
 			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDuration;
 	} else {
 		quint64 value = 0;
-		for (const auto& child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
 			value = child->totalValue(t);
 		}
 		return value;
@@ -93,7 +92,7 @@ quint64 ProfTreeItem::totalDuration(quint64 t) const
 			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalValue;
 	} else {
 		quint64 value = 0;
-		for (const auto& child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
 			value = child->totalDuration(t);
 		}
 		return value;
@@ -135,12 +134,11 @@ QVector<quint64> ProfTreeItem::timePoints() const
 	QVector<quint64> points;
 	if (isLeaf()) {
 		points.reserve(mFile->entry(mIndex).TimeCounterEntries.size());
-		for (const auto& entry : mFile->entry(mIndex).TimeCounterEntries)
+		for (const ProfTimeCounterEntry& entry : mFile->entry(mIndex).TimeCounterEntries)
 			points.append(entry.TimePointMicroSec);
 	} else {
-		for (const auto& child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren)
 			mergeSortedArrays(points, child->timePoints());
-		}
 	}
 
 	//qDebug() << points;

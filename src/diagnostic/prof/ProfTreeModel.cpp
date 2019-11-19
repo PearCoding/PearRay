@@ -43,6 +43,8 @@ QVariant ProfTreeModel::data(const QModelIndex& index, int role) const
 		} else {
 			return item->data(index.column());
 		}
+	case Qt::UserRole: // Return void pointer to item
+		return QVariant::fromValue<void*>(static_cast<void*>(item));
 	}
 }
 
