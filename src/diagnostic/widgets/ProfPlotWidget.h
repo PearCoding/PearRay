@@ -1,10 +1,18 @@
 #pragma once
 
+#include <QSignalMapper>
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
-#include <QSignalMapper>
 
 QT_CHARTS_USE_NAMESPACE
+
+enum ProfShowMode {
+	PSM_TotalCalls = 0,
+	PSM_DeltaCalls,
+	PSM_TotalDuration,
+	PSM_DeltaDuration,
+	PSM_AverageDuration
+};
 
 class ProfTreeItem;
 class ProfPlotWidget : public QChartView {
@@ -30,12 +38,17 @@ protected:
 
 private:
 	void fixRange(QLineSeries* series);
+	void setupCurrentMode();
+	inline bool isUsingValueAxis() const
+	{
+		return mShowMode == PSM_TotalCalls || mShowMode == PSM_DeltaCalls;
+	}
 
 	QAbstractAxis* mAxisX;
 	QAbstractAxis* mTimeAxisY;
 	QAbstractAxis* mValueAxisY;
 
-	int mShowMode;
+	ProfShowMode mShowMode;
 	QHash<ProfTreeItem*, QLineSeries*> mMapper;
 
 	QPointF mLastPos;

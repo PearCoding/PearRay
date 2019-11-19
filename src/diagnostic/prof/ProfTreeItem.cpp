@@ -25,18 +25,20 @@ static int indexOfEntry(const QVector<ProfTimeCounterEntry>& entries,
 		return -1;
 
 	int L = 0;
-	int R = entries.size();
+	int R = entries.size() - 1;
 
-	while (L < R) {
+	while (L <= R) {
 		int h		 = (L + R) / 2;
 		quint64 time = entries.at(h).TimePointMicroSec;
 		if (time < t)
 			L = h + 1;
+		else if (time == t)
+			return h;
 		else
-			R = h;
+			R = h - 1;
 	}
 
-	return std::min(entries.size() - 1, L);
+	return std::min(entries.size() - 1, std::min(L, R));
 }
 
 quint64 ProfTreeItem::totalValue() const
@@ -72,7 +74,7 @@ quint64 ProfTreeItem::totalValue(quint64 t) const
 		if (index < 0)
 			return 0;
 		else
-			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDuration;
+			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalValue;
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
@@ -89,7 +91,7 @@ quint64 ProfTreeItem::totalDuration(quint64 t) const
 		if (index < 0)
 			return 0;
 		else
-			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalValue;
+			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDuration;
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {

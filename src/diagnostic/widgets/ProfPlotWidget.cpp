@@ -14,7 +14,7 @@ ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 	, mAxisX(nullptr)
 	, mTimeAxisY(nullptr)
 	, mValueAxisY(nullptr)
-	, mShowMode(0)
+	, mShowMode(PSM_DeltaCalls)
 	, mDragging(false)
 {
 	setMouseTracking(true);
@@ -41,17 +41,16 @@ ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 	valAxisY->setRange(0, 10);
 	mValueAxisY = valAxisY;
 
-	setShowMode(0);
+	setupCurrentMode();
 	setRenderHint(QPainter::Antialiasing);
 }
 
 ProfPlotWidget::~ProfPlotWidget()
 {
 	// One axis is not in ownership of QChart, therefore we destroy it ourselves...
-	if (mShowMode == ProfTreeItem::C_TotalValue)
+	if (isUsingValueAxis())
 		delete mTimeAxisY; // Uses Value axis, destroy Time Axis
-	else if (mShowMode == ProfTreeItem::C_TotalDuration
-			 || mShowMode == ProfTreeItem::C_AverageDuration)
+	else
 		delete mValueAxisY; // Uses Time axis, destroy Value Axis
 }
 
@@ -64,13 +63,19 @@ void ProfPlotWidget::addTimeGraph(ProfTreeItem* item)
 	series->setName(item->name());
 	for (quint64 t : item->timePoints()) {
 		switch (mShowMode) {
-		case ProfTreeItem::C_TotalValue:
+		case PSM_TotalCalls:
 			series->append(t / 1000, item->totalValue(t));
 			break;
-		case ProfTreeItem::C_TotalDuration:
+		case PSM_DeltaCalls:
+			series->append(t / 1000, item->totalValue(t) - (qint64)item->totalValue(t - 1));
+			break;
+		case PSM_TotalDuration:
 			series->append(t / 1000, item->totalDuration(t) / 1000);
 			break;
-		case ProfTreeItem::C_AverageDuration:
+		case PSM_DeltaDuration:
+			series->append(t / 1000, (item->totalDuration(t) - (qint64)item->totalDuration(t - 1)) / 1000);
+			break;
+		case PSM_AverageDuration:
 			series->append(t / 1000, item->totalDuration(t) / (qreal)(1000 * item->totalValue(t)));
 			break;
 		default:
@@ -197,27 +202,37 @@ void ProfPlotWidget::wheelEvent(QWheelEvent* event)
 void ProfPlotWidget::setShowMode(int mode)
 {
 	// Remove previous axis
-	if (mShowMode == ProfTreeItem::C_TotalValue)
+	if (isUsingValueAxis())
 		chart()->removeAxis(mValueAxisY);
-	else if (mShowMode == ProfTreeItem::C_TotalDuration
-			 || mShowMode == ProfTreeItem::C_AverageDuration)
+	else
 		chart()->removeAxis(mTimeAxisY);
 
-	mShowMode = mode + ProfTreeItem::C_TotalValue; // C_Name is not valid
+	mShowMode = (ProfShowMode)mode;
+	setupCurrentMode();
+	resetView();
+}
 
+void ProfPlotWidget::setupCurrentMode()
+{
 	switch (mShowMode) {
-	case ProfTreeItem::C_TotalValue:
+	case PSM_TotalCalls:
 		chart()->setTitle("Total Calls");
 		break;
-	case ProfTreeItem::C_TotalDuration:
+	case PSM_DeltaCalls:
+		chart()->setTitle("Delta Calls");
+		break;
+	case PSM_TotalDuration:
 		chart()->setTitle("Total Duration");
 		break;
-	case ProfTreeItem::C_AverageDuration:
+	case PSM_DeltaDuration:
+		chart()->setTitle("Delta Duration");
+		break;
+	case PSM_AverageDuration:
 		chart()->setTitle("Average Duration");
 		break;
 	}
 
-	if (mShowMode == ProfTreeItem::C_TotalValue)
+	if (isUsingValueAxis())
 		chart()->addAxis(mValueAxisY, Qt::AlignLeft);
 	else
 		chart()->addAxis(mTimeAxisY, Qt::AlignLeft);
@@ -229,8 +244,6 @@ void ProfPlotWidget::setShowMode(int mode)
 
 	for (ProfTreeItem* key : keys)
 		addTimeGraph(key);
-
-	resetView();
 }
 
 void ProfPlotWidget::fixRange(QLineSeries* series)
@@ -248,7 +261,7 @@ void ProfPlotWidget::fixRange(QLineSeries* series)
 		< QDateTime::fromMSecsSinceEpoch(maxX))
 		mAxisX->setMax(QDateTime::fromMSecsSinceEpoch(maxX));
 
-	if (mShowMode == ProfTreeItem::C_TotalValue) {
+	if (isUsingValueAxis()) {
 		series->attachAxis(mValueAxisY);
 		if (reinterpret_cast<QValueAxis*>(mValueAxisY)->max() < maxY)
 			mValueAxisY->setMax(maxY);
@@ -263,4 +276,26 @@ void ProfPlotWidget::fixRange(QLineSeries* series)
 void ProfPlotWidget::resetView()
 {
 	chart()->zoomReset();
+
+	// Make sure range is fit
+	qreal maxX = 10, maxY = 10;
+	for (QAbstractSeries* series : chart()->series()) {
+		QLineSeries* line = qobject_cast<QLineSeries*>(series);
+		if (!line)
+			continue;
+
+		for (const auto& p : line->points()) {
+			maxX = std::max(maxX, p.x());
+			maxY = std::max(maxY, p.y());
+		}
+	}
+
+	mAxisX->setRange(QDateTime::fromMSecsSinceEpoch(0),
+					 QDateTime::fromMSecsSinceEpoch(maxX));
+
+	if (isUsingValueAxis())
+		mValueAxisY->setRange(0, maxY);
+	else
+		mTimeAxisY->setRange(QDateTime::fromMSecsSinceEpoch(0),
+							 QDateTime::fromMSecsSinceEpoch(maxY));
 }

@@ -65,6 +65,9 @@
           </property>
           <item>
            <widget class="QComboBox" name="showModeCB">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
             <item>
              <property name="text">
               <string>Total Calls</string>
@@ -72,7 +75,17 @@
             </item>
             <item>
              <property name="text">
+              <string>Delta Calls</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Total Duration</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Delta Duration</string>
              </property>
             </item>
             <item>

@@ -14,13 +14,13 @@ ProfWindow::ProfWindow(QWidget* parent)
 	ui.setupUi(this);
 
 	ui.splitter->setStretchFactor(0, 10);
-	//ui.splitter->setStretchFactor(1,1);
 
 	ui.treeView->setContextMenuPolicy(Qt::CustomContextMenu);
 	ui.treeView->setSortingEnabled(true);
 	connect(ui.treeView, SIGNAL(customContextMenuRequested(const QPoint&)),
 			this, SLOT(onItemContextMenu(const QPoint&)));
 
+	ui.plotWidget->setShowMode(ui.showModeCB->currentIndex());// Enforce to be up to date with the ui
 	connect(ui.showModeCB, SIGNAL(currentIndexChanged(int)),
 			ui.plotWidget, SLOT(setShowMode(int)));
 	connect(ui.resetViewButton, SIGNAL(clicked()), ui.plotWidget, SLOT(resetView()));
