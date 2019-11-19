@@ -6,11 +6,11 @@
 QT_CHARTS_USE_NAMESPACE
 
 class ProfTreeItem;
-class PlotWidget : public QChartView {
+class ProfPlotWidget : public QChartView {
 	Q_OBJECT
 public:
-	PlotWidget(QWidget* parent = nullptr);
-	virtual ~PlotWidget();
+	ProfPlotWidget(QWidget* parent = nullptr);
+	virtual ~ProfPlotWidget();
 
 	void addTimeGraph(ProfTreeItem* root);
 	void removeTimeGraph(ProfTreeItem* item);

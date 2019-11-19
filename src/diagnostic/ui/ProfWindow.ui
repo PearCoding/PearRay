@@ -22,7 +22,7 @@
      <property name="childrenCollapsible">
       <bool>false</bool>
      </property>
-     <widget class="PlotWidget" name="plotWidget" native="true">
+     <widget class="ProfPlotWidget" name="plotWidget" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -56,9 +56,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>ProfPlotWidget</class>
    <extends>QWidget</extends>
-   <header>widgets/PlotWidget.h</header>
+   <header>widgets/ProfPlotWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

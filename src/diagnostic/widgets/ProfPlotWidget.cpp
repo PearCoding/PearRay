@@ -1,4 +1,4 @@
-#include "PlotWidget.h"
+#include "ProfPlotWidget.h"
 #include "prof/ProfTreeItem.h"
 
 #include <QtCharts/QDateTimeAxis>
@@ -7,7 +7,7 @@
 #include <QDateTime>
 #include <QDebug>
 
-PlotWidget::PlotWidget(QWidget* parent)
+ProfPlotWidget::ProfPlotWidget(QWidget* parent)
 	: QChartView(parent)
 {
 	setRubberBand(QChartView::RectangleRubberBand);
@@ -43,11 +43,11 @@ PlotWidget::PlotWidget(QWidget* parent)
 	setRenderHint(QPainter::Antialiasing);
 }
 
-PlotWidget::~PlotWidget()
+ProfPlotWidget::~ProfPlotWidget()
 {
 }
 
-void PlotWidget::addTimeGraph(ProfTreeItem* item)
+void ProfPlotWidget::addTimeGraph(ProfTreeItem* item)
 {
 	int currentType = ProfTreeItem::C_TotalDuration;
 
@@ -100,7 +100,7 @@ void PlotWidget::addTimeGraph(ProfTreeItem* item)
 	item->setCustomIcon(icon);
 }
 
-void PlotWidget::removeTimeGraph(ProfTreeItem* item)
+void ProfPlotWidget::removeTimeGraph(ProfTreeItem* item)
 {
 	Q_ASSERT(mMapper.contains(item));
 
@@ -112,12 +112,12 @@ void PlotWidget::removeTimeGraph(ProfTreeItem* item)
 	mMapper.remove(item);
 }
 
-bool PlotWidget::hasTimeGraph(ProfTreeItem* item) const
+bool ProfPlotWidget::hasTimeGraph(ProfTreeItem* item) const
 {
 	return mMapper.contains(item);
 }
 
-void PlotWidget::keyPressEvent(QKeyEvent* event)
+void ProfPlotWidget::keyPressEvent(QKeyEvent* event)
 {
 	switch (event->key()) {
 	case Qt::Key_Plus:

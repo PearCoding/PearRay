@@ -33,7 +33,7 @@ SET(Src
   rdmp/RayArray.cpp
   widgets/ColorButton.cpp
   widgets/ImageView.cpp
-  widgets/PlotWidget.cpp
+  widgets/ProfPlotWidget.cpp
   widgets/PropertyView.cpp
   widgets/RangeSlider.cpp
   widgets/ToneMapperEditor.cpp
@@ -67,7 +67,7 @@ SET(Hdr
   rdmp/RayArray.h
   widgets/ColorButton.h
   widgets/ImageView.h
-  widgets/PlotWidget.h
+  widgets/ProfPlotWidget.h
   widgets/PropertyView.h
   widgets/RangeSlider.h
   widgets/ToneMapperEditor.h

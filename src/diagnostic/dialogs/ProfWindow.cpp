@@ -3,18 +3,20 @@
 #include "prof/ProfTreeModel.h"
 
 #include <QFileDialog>
-#include <QStandardPaths>
 #include <QMenu>
+#include <QSortFilterProxyModel>
+#include <QStandardPaths>
 
 ProfWindow::ProfWindow(QWidget* parent)
 	: QWidget(parent)
 {
 	ui.setupUi(this);
 
-	ui.splitter->setStretchFactor(0,10);
+	ui.splitter->setStretchFactor(0, 10);
 	//ui.splitter->setStretchFactor(1,1);
 
 	ui.treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+	ui.treeView->setSortingEnabled(true);
 	connect(ui.treeView, SIGNAL(customContextMenuRequested(const QPoint&)),
 			this, SLOT(onItemContextMenu(const QPoint&)));
 
@@ -40,7 +42,10 @@ void ProfWindow::setupModel()
 {
 	mTreeModel = std::make_shared<ProfTreeModel>(mContext);
 
-	ui.treeView->setModel(mTreeModel.get());
+	QSortFilterProxyModel* sortProxy = new QSortFilterProxyModel(this);
+	sortProxy->setSourceModel(mTreeModel.get());
+
+	ui.treeView->setModel(sortProxy);
 	ui.treeView->expandToDepth(0);
 	ui.treeView->resizeColumnToContents(0);
 }

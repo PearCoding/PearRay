@@ -26,8 +26,23 @@ QVariant ProfTreeModel::data(const QModelIndex& index, int role) const
 			return item->customIcon();
 		else
 			return QVariant();
+	case Qt::ToolTipRole:
+		if (index.column() == 0)
+			return item->data(ProfTreeItem::C_Name);
+		else
+			return QVariant();
 	case Qt::DisplayRole:
-		return item->data(index.column());
+		if (index.column() == 0) { // Cut very long names
+			QString name			= item->data(index.column()).toString();
+			constexpr int MAX_S_LEN = 120;
+			if (name.size() >= MAX_S_LEN) {
+				return name.left(MAX_S_LEN) + "...";
+			} else {
+				return name;
+			}
+		} else {
+			return item->data(index.column());
+		}
 	}
 }
 
