@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
@@ -59,6 +60,8 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
+		PR_PROFILE_THIS;
+
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mMesh->checkCollision(in_local, out);
 
@@ -77,6 +80,8 @@ public:
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
+		PR_PROFILE_THIS;
+
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mMesh->checkCollision(in_local, out);
 
@@ -91,6 +96,8 @@ public:
 
 	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const override
 	{
+		PR_PROFILE_THIS;
+
 		SplitSample2D split(rnd, 0, mMesh->faceCount());
 		faceID	= split.integral1();
 		Face face = mMesh->getFace(split.integral1());
@@ -102,6 +109,8 @@ public:
 	void provideGeometryPoint(uint32 faceID, float u, float v,
 							  GeometryPoint& pt) const override
 	{
+		PR_PROFILE_THIS;
+
 		mMesh->provideGeometryPoint(faceID, u, v, pt);
 
 		pt.P  = transform() * pt.P;

@@ -21,7 +21,6 @@ private slots:
 	void exportImage();
 
 	void onItemContextMenu(const QPoint& p);
-	void onItemShowPlot(QObject* obj);
 
 private:
 	void setupModel();
@@ -29,6 +28,4 @@ private:
 
 	std::shared_ptr<ProfFile> mContext;
 	std::shared_ptr<ProfTreeModel> mTreeModel;
-
-	QSignalMapper mSignalMapper;
 };

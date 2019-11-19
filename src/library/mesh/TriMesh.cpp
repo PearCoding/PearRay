@@ -1,6 +1,7 @@
 #include "TriMesh.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "Profiler.h"
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
@@ -34,6 +35,8 @@ void TriMesh::clear()
 
 void TriMesh::build(const std::wstring& container_file, bool loadOnly)
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(isValid(), "Mesh has to be valid before build()!");
 
 	// Build internal KDtree
@@ -68,6 +71,8 @@ void TriMesh::build(const std::wstring& container_file, bool loadOnly)
 
 void TriMesh::buildTree(const std::wstring& file)
 {
+	PR_PROFILE_THIS;
+
 	BUILDER builder(this, [](void* observer, size_t f) {
 								TriMesh* mesh = reinterpret_cast<TriMesh*>(observer);
 								const uint32 ind1 = mesh->mIndices[0][f];
@@ -108,6 +113,8 @@ void TriMesh::buildTree(const std::wstring& file)
 
 void TriMesh::loadTree(const std::wstring& file)
 {
+	PR_PROFILE_THIS;
+
 	if (mKDTree) {
 		delete mKDTree;
 		mKDTree = nullptr;
@@ -176,6 +183,8 @@ float TriMesh::surfaceArea(const Eigen::Affine3f& transform) const
 
 bool TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	return mKDTree
 		->checkCollision(in, out,
@@ -220,6 +229,8 @@ bool TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 
 bool TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 {
+	PR_PROFILE_THIS;
+
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
 	return mKDTree
 		->checkCollision(in, out,
@@ -281,6 +292,8 @@ float TriMesh::collisionCost() const
 void TriMesh::sampleFacePoint(const Vector2f& rnd,
 							  GeometryPoint& p, float& pdfA) const
 {
+	PR_PROFILE_THIS;
+
 	SplitSample2D smp(rnd, 0, (uint32)faceCount());
 
 	uint32 fi  = smp.integral1();
@@ -303,6 +316,8 @@ void TriMesh::sampleFacePoint(const Vector2f& rnd,
 void TriMesh::provideGeometryPoint(uint32 faceID, float u, float v,
 								   GeometryPoint& pt) const
 {
+	PR_PROFILE_THIS;
+
 	Face f = getFace(faceID);
 
 	Vector2f local_uv;

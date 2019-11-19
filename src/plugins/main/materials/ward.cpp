@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Microfacet.h"
@@ -41,6 +42,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		const Vector3f H = Reflection::halfway(in.Point.Ray.Direction, in.Outgoing);
 
 		const float NdotH = in.Point.N.dot(H);
@@ -120,6 +123,8 @@ public:
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		const float refl = mReflectivity->eval(in.Point);
 
 		if (in.RND[0] <= refl) {

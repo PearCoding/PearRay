@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Fresnel.h"
@@ -175,6 +176,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		ColorTriplet base	= mBaseColor->eval(in.Point);
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
@@ -226,6 +229,8 @@ public:
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		ColorTriplet base	= mBaseColor->eval(in.Point);
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);

@@ -1,5 +1,6 @@
 #include "geometry/Plane.h"
 #include "Environment.h"
+#include "Profiler.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
@@ -62,6 +63,8 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
 	{
+		PR_PROFILE_THIS;
+
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
 		mPlane.intersects(in_local, out);
@@ -75,6 +78,8 @@ public:
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
 	{
+		PR_PROFILE_THIS;
+
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
 		mPlane.intersects(in_local, out);
@@ -96,6 +101,8 @@ public:
 	void provideGeometryPoint(uint32, float u, float v,
 							  GeometryPoint& pt) const override
 	{
+		PR_PROFILE_THIS;
+
 		pt.P  = transform() * mPlane.surfacePoint(u, v);
 		pt.N  = normalMatrix() * mPlane.normal();
 		pt.Nx = normalMatrix() * mPlane.xAxis().normalized();

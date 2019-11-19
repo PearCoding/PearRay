@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Fresnel.h"
@@ -37,8 +38,8 @@ public:
 	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
 	{
 		const auto ior = mIOR->eval(spt);
-		float n1 = 1;
-		float n2 = ior.maxCoeff();
+		float n1	   = 1;
+		float n2	   = ior.maxCoeff();
 		if (spt.Flags & SPF_Inside)
 			std::swap(n1, n2);
 
@@ -49,6 +50,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		out.Weight = mSpecularity->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
 
@@ -61,6 +64,8 @@ public:
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		float eta;
 		const float F = fresnelTerm(in.Point, eta);
 		out.Weight	= mSpecularity->eval(in.Point); // The weight is independent of the fresnel term

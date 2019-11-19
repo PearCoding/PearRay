@@ -4,9 +4,9 @@
 
 #include <QFileDialog>
 #include <QMenu>
+#include <QPixmap>
 #include <QSortFilterProxyModel>
 #include <QStandardPaths>
-#include <QPixmap>
 
 ProfWindow::ProfWindow(QWidget* parent)
 	: QWidget(parent)
@@ -20,14 +20,11 @@ ProfWindow::ProfWindow(QWidget* parent)
 	connect(ui.treeView, SIGNAL(customContextMenuRequested(const QPoint&)),
 			this, SLOT(onItemContextMenu(const QPoint&)));
 
-	ui.plotWidget->setShowMode(ui.showModeCB->currentIndex());// Enforce to be up to date with the ui
+	ui.plotWidget->setShowMode(ui.showModeCB->currentIndex()); // Enforce to be up to date with the ui
 	connect(ui.showModeCB, SIGNAL(currentIndexChanged(int)),
 			ui.plotWidget, SLOT(setShowMode(int)));
 	connect(ui.resetViewButton, SIGNAL(clicked()), ui.plotWidget, SLOT(resetView()));
 	connect(ui.exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
-
-	connect(&mSignalMapper, SIGNAL(mapped(QObject*)),
-			this, SLOT(onItemShowPlot(QObject*)));
 }
 
 ProfWindow::~ProfWindow()
@@ -53,7 +50,8 @@ void ProfWindow::setupModel()
 
 	ui.treeView->setModel(sortProxy);
 	ui.treeView->expandToDepth(0);
-	ui.treeView->resizeColumnToContents(0);
+	for (int i = 0; i < mTreeModel->columnCount(); ++i)
+		ui.treeView->resizeColumnToContents(i);
 }
 
 void ProfWindow::exportImage()
@@ -75,39 +73,44 @@ void ProfWindow::exportImage()
 
 void ProfWindow::onItemContextMenu(const QPoint& point)
 {
-	QModelIndex index = ui.treeView->indexAt(point);
-	if (!index.isValid())
-		return;
-
-	ProfTreeItem* item = static_cast<ProfTreeItem*>(index.data(Qt::UserRole).value<void*>());
-	if (!item)
+	if (mContext->entryCount() == 0)
 		return;
 
 	QMenu contextMenu("Plot", this);
-	QAction* action = new QAction("Show Plot", this);
-	action->setCheckable(true);
-	action->setChecked(ui.plotWidget->hasTimeGraph(item));
-	action->setData(QVariant::fromValue(static_cast<void*>(item)));
 
-	connect(action, SIGNAL(triggered()), &mSignalMapper, SLOT(map()));
-	mSignalMapper.setMapping(action, action);
+	// Item dependent actions
+	QModelIndex index = ui.treeView->indexAt(point);
+	if (index.isValid()) {
+		ProfTreeItem* item = static_cast<ProfTreeItem*>(index.data(Qt::UserRole).value<void*>());
+		if (item) {
+			QAction* actionShow = new QAction("Show Plot", this);
+			actionShow->setCheckable(true);
+			actionShow->setChecked(ui.plotWidget->hasTimeGraph(item));
 
-	contextMenu.addAction(action);
+			connect(actionShow, &QAction::triggered, [=]() {
+				if (!ui.plotWidget->hasTimeGraph(item))
+					ui.plotWidget->addTimeGraph(item);
+				else
+					ui.plotWidget->removeTimeGraph(item);
+			});
+
+			contextMenu.addAction(actionShow);
+			contextMenu.addSeparator();
+		}
+	}
+
+	// General actions
+	QAction* actionCollapseAll = new QAction("Collapse All", this);
+	connect(actionCollapseAll, &QAction::triggered, ui.treeView, &QTreeView::collapseAll);
+	contextMenu.addAction(actionCollapseAll);
+
+	QAction* actionExpandFunctions = new QAction("Expand Functions", this);
+	connect(actionExpandFunctions, &QAction::triggered, [=]() { ui.treeView->expandToDepth(0); });
+	contextMenu.addAction(actionExpandFunctions);
+
+	QAction* actionExpandAll = new QAction("Expand All", this);
+	connect(actionExpandAll, &QAction::triggered, ui.treeView, &QTreeView::expandAll);
+	contextMenu.addAction(actionExpandAll);
+
 	contextMenu.exec(ui.treeView->mapToGlobal(point));
-}
-
-void ProfWindow::onItemShowPlot(QObject* obj)
-{
-	QAction* act = qobject_cast<QAction*>(obj);
-	if (!act)
-		return;
-
-	ProfTreeItem* item = static_cast<ProfTreeItem*>(act->data().value<void*>());
-	if (!item)
-		return;
-
-	if (!ui.plotWidget->hasTimeGraph(item))
-		ui.plotWidget->addTimeGraph(item);
-	else
-		ui.plotWidget->removeTimeGraph(item);
 }

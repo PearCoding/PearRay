@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "buffer/Feedback.h"
 #include "emission/IEmission.h"
 #include "infinitelight/IInfiniteLight.h"
@@ -52,6 +53,8 @@ public:
 							   LightPathToken& token,
 							   IInfiniteLight* infLight, IMaterial* material)
 	{
+		PR_PROFILE_THIS;
+
 		InfiniteLightSampleInput inL;
 		inL.Point = spt;
 		inL.RND   = session.tile()->random().get2D();
@@ -87,6 +90,8 @@ public:
 					  const HitEntry& entry, const ShadingPoint& spt,
 					  IMaterial* material, bool& scattered)
 	{
+		PR_PROFILE_THIS;
+
 		constexpr int MIN_DEPTH			= 4; //Minimum level of depth after which russian roulette will apply
 		constexpr float DEPTH_DROP_RATE = 0.90f;
 
@@ -140,6 +145,8 @@ public:
 							 LightPathToken& token,
 							 IMaterial* material)
 	{
+		PR_PROFILE_THIS;
+
 		ColorTriplet Li = ColorTriplet::Zero();
 
 		// Pick light and point
@@ -244,6 +251,8 @@ public:
 				const Ray& ray, const GeometryPoint& pt,
 				IEntity* entity, IMaterial* material)
 	{
+		PR_PROFILE_THIS;
+
 		session.tile()->statistics().addEntityHitCount();
 
 		// Early drop out for invalid splashes
@@ -323,6 +332,8 @@ public:
 	// Per thread
 	void onPass(RenderTileSession& session, uint32) override
 	{
+		PR_PROFILE_THIS;
+
 		while (session.handleCameraRays()) {
 			mLPBs.at(session.threadID())->reset();
 			float rerun = true;
@@ -331,6 +342,7 @@ public:
 				rerun = false;
 				session.handleHits(
 					[&](size_t session_ray_id, const Ray& ray) {
+						PR_PROFILE_THIS;
 						session.tile()->statistics().addBackgroundHitCount();
 
 						/*if (ray.IterationDepth != 0)

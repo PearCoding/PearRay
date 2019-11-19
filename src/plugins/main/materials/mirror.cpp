@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
@@ -32,6 +33,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		out.Weight = mSpecularity->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
 		out.Type   = MST_SpecularReflection;
@@ -40,6 +43,8 @@ public:
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		out.Weight   = mSpecularity->eval(in.Point);
 		out.Type	 = MST_SpecularReflection;
 		out.PDF_S	= std::numeric_limits<float>::infinity();

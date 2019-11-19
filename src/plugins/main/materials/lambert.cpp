@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
@@ -30,6 +31,8 @@ public:
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		out.Weight = mAlbedo->eval(in.Point) * std::abs(in.NdotL) * PR_1_PI;
 		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
 		out.Type   = MST_DiffuseReflection;
@@ -38,6 +41,8 @@ public:
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
+		PR_PROFILE_THIS;
+
 		float pdf;
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);

@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Profiler.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "math/Projection.h"
@@ -24,6 +25,8 @@ public:
 	// Per thread
 	void onPass(RenderTileSession& session, uint32) override
 	{
+		PR_PROFILE_THIS;
+
 		Random& random	= session.tile()->random();
 		LightPath stdPath = LightPath::createCDL(1);
 
@@ -35,6 +38,7 @@ public:
 				[&](const HitEntry&,
 					const Ray& ray, const GeometryPoint& pt,
 					IEntity* entity, IMaterial*) {
+					PR_PROFILE_THIS;
 					session.tile()->statistics().addEntityHitCount();
 
 					ShadingPoint spt;
