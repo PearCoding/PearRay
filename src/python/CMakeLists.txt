@@ -18,7 +18,8 @@ SET(Src
   spectral.cpp
   status.cpp
   tonemapper.cpp
-  integrator.cpp)
+  integrator.cpp
+  profile.cpp)
 SET(Hdr
   pypearray.h)
 

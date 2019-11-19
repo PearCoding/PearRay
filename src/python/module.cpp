@@ -28,6 +28,7 @@ void setup_tonemapper(py::module& m);
 void setup_environment(py::module& m);
 void setup_registry(py::module& m);
 void setup_integrator(py::module& m);
+void setup_profiler(py::module& m);
 }
 
 /* ATTENTION
@@ -61,4 +62,5 @@ PYBIND11_MODULE(pypearray, m)
 	PRPY::setup_tonemapper(m);
 	PRPY::setup_integrator(m);
 	PRPY::setup_environment(m);
+	PRPY::setup_profiler(m);
 }
