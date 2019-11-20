@@ -47,6 +47,7 @@ SET(PR_Src
   geometry/GeometryPoint.h
   geometry/Plane.cpp
   geometry/Plane.h
+  geometry/Quad.h
   geometry/Sphere.cpp
   geometry/Sphere.h
   geometry/Triangle.h
@@ -75,6 +76,9 @@ SET(PR_Src
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
+  mesh/MeshContainer.cpp
+  mesh/MeshContainer.h
+  mesh/MeshContainer.inl
   mesh/TriMesh.cpp
   mesh/TriMesh.h
   mesh/TriMesh.inl

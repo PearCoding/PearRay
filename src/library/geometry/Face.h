@@ -1,38 +1,49 @@
 #pragma once
 
+#include "Quad.h"
 #include "Triangle.h"
 
 namespace PR {
-class Material;
 class PR_LIB Face {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	Face()
-		: MaterialSlot(0)
+		: IsQuad(false)
+		, MaterialSlot(0)
 	{
 	}
 
-	Vector3f V[3];
-	Vector3f N[3];
-	Vector2f UV[3];
+	Vector3f V[4];
+	Vector3f N[4];
+	Vector2f UV[4];
 
 	inline Vector3f interpolateVertices(const Vector2f& local_uv) const
 	{
-		return V[1] * local_uv(0) + V[2] * local_uv(1) + V[0] * (1 - local_uv(0) - local_uv(1));
+		if (IsQuad)
+			return Quad::interpolate(V[0], V[1], V[2], V[3], local_uv);
+		else
+			return Triangle::interpolate(V[0], V[1], V[2], local_uv);
 	}
 
 	// Local UV!
 	inline Vector3f interpolateNormals(const Vector2f& local_uv) const
 	{
-		return N[1] * local_uv(0) + N[2] * local_uv(1) + N[0] * (1 - local_uv(0) - local_uv(1));
+		if (IsQuad)
+			return Quad::interpolate(N[0], N[1], N[2], N[3], local_uv);
+		else
+			return Triangle::interpolate(N[0], N[1], N[2], local_uv);
 	}
 
 	inline Vector2f interpolateUVs(const Vector2f& local_uv) const
 	{
-		return UV[1] * local_uv(0) + UV[2] * local_uv(1) + UV[0] * (1 - local_uv(0) - local_uv(1));
+		if (IsQuad)
+			return Quad::interpolate(UV[0], UV[1], UV[2], UV[3], local_uv);
+		else
+			return Triangle::interpolate(UV[0], UV[1], UV[2], local_uv);
 	}
 
+	// FIXME: Quad?
 	inline Vector2f mapGlobalToLocalUV(const Vector2f& uv) const
 	{
 		Vector2f duv1 = UV[1] - UV[0];
@@ -48,7 +59,10 @@ public:
 
 	inline float surfaceArea() const
 	{
-		return Triangle::surfaceArea(V[0], V[1], V[2]);
+		if (IsQuad)
+			return Quad::surfaceArea(V[0], V[1], V[2], V[3]);
+		else
+			return Triangle::surfaceArea(V[0], V[1], V[2]);
 	}
 
 	inline void interpolate(const Vector2f& local_uv,
@@ -60,6 +74,7 @@ public:
 	}
 
 	// Based on http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/#tangent-and-bitangent
+	// For quads, we still do it the "triangle way"
 	inline void tangentFromUV(const Vector3f& n, Vector3f& nx, Vector3f& ny) const
 	{
 		Vector3f dp1 = V[1] - V[0];
@@ -76,6 +91,7 @@ public:
 		ny = n.cross(nx);
 	}
 
+	bool IsQuad;
 	uint32 MaterialSlot;
 };
 } // namespace PR

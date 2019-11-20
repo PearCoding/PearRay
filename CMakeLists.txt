@@ -83,6 +83,7 @@ find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
+# Optional
 IF(PR_USE_CCACHE)
 	include(CCache)
 ENDIF()

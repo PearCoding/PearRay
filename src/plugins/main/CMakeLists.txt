@@ -1,4 +1,3 @@
-add_definitions(-DPR_PLUGIN_VERSION="1.0")
 add_subdirectory(cameras)
 add_subdirectory(entities)
 add_subdirectory(infinitelights)
