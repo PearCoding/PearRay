@@ -1,7 +1,7 @@
 #include "ImageBufferView.h"
 #include "mapper/ToneMapper.h"
 
-static QImage::Format channelToFormat(size_t channelCount)
+static QImage::Format channelToFormat(int channelCount)
 {
 	switch (channelCount) {
 	case 1:
@@ -33,17 +33,17 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 	// Copy to image
 	switch (viewChannelCount()) {
 	case 1: // Grayscale
-		for (size_t y = 0; y < height(); ++y) {
+		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < width(); ++x) {
+			for (int x = 0; x < width(); ++x) {
 				ptr[x] = map(value(x, y, channelOffset + 0));
 			}
 		}
 		break;
 	case 2: // RGB
-		for (size_t y = 0; y < height(); ++y) {
+		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < width(); ++x) {
+			for (int x = 0; x < width(); ++x) {
 				ptr[3 * x] = (channelMask & 0x1)
 								 ? map(value(x, y, channelOffset + 0))
 								 : 0;
@@ -55,9 +55,9 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 		}
 		break;
 	case 3: // RGB
-		for (size_t y = 0; y < height(); ++y) {
+		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < width(); ++x) {
+			for (int x = 0; x < width(); ++x) {
 				ptr[3 * x] = (channelMask & 0x1)
 								 ? map(value(x, y, channelOffset + 0))
 								 : 0;
@@ -71,9 +71,9 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 		}
 		break;
 	case 4: // RGBA
-		for (size_t y = 0; y < height(); ++y) {
+		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
-			for (size_t x = 0; x < width(); ++x) {
+			for (int x = 0; x < width(); ++x) {
 				ptr[4 * x] = (channelMask & 0x1)
 								 ? map(value(x, y, channelOffset + 0))
 								 : 0;
@@ -96,9 +96,9 @@ void ImageBufferView::getMinMax(float& min, float& max, quint8 channelMask) cons
 {
 	min = std::numeric_limits<float>::infinity();
 	max = -std::numeric_limits<float>::infinity();
-	for (size_t y = 0; y < height(); ++y) {
-		for (size_t x = 0; x < width(); ++x) {
-			for (size_t c = 0; c < channelCount(); ++c) {
+	for (int y = 0; y < height(); ++y) {
+		for (int x = 0; x < width(); ++x) {
+			for (int c = 0; c < channelCount(); ++c) {
 				if (!(channelMask & (1 << c)))
 					continue;
 

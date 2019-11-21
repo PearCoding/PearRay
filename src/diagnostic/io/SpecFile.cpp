@@ -44,8 +44,8 @@ bool SpecFile::open(const QString& file)
 	in.read(reinterpret_cast<char*>(&width), sizeof(width));
 	in.read(reinterpret_cast<char*>(&height), sizeof(height));
 
-	mWidth  = width;
-	mHeight = height;
+	mWidth  = static_cast<int>(width);
+	mHeight = static_cast<int>(height);
 
 	if (samplingCount == 0 || width == 0 || height == 0)
 		return false;

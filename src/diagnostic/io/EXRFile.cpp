@@ -7,8 +7,8 @@
 #include <QDebug>
 #include <QFile>
 
-EXRLayer::EXRLayer(const QString& name, size_t channels,
-				   size_t width, size_t height)
+EXRLayer::EXRLayer(const QString& name, int channels,
+				   int width, int height)
 	: ImageBufferView()
 	, mName(name)
 	, mData((int)channels)

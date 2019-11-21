@@ -28,7 +28,7 @@ bool RayArray::load(QFile& file, quint32 step)
 
 	mRays.reserve(mRays.size() + size);
 
-	const size_t off = (step - 1) * sizeof(float) * 6;
+	const int off = (static_cast<int>(step) - 1) * sizeof(float) * 6;
 	for (quint32 i = 0; i < size; ++i) {
 		Ray ray;
 		stream >> ray.Origin[0] >> ray.Origin[1] >> ray.Origin[2];
@@ -58,7 +58,7 @@ void RayArray::populate(QVector<QVector3D>& vertices,
 	indices.reserve(mRays.size() * 2);
 
 	for (const Ray& ray : mRays) {
-		size_t id = vertices.size();
+		int id = vertices.size();
 		vertices.append(ray.Origin);
 		vertices.append(ray.Origin + ray.Direction * L);
 

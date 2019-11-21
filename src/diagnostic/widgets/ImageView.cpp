@@ -156,21 +156,21 @@ void ImageView::resizeEvent(QResizeEvent* event)
 					 BAR_POS_W, BAR_HEIGHT - 1);
 
 	// Background
-	const size_t gx = (mBackground.width() / (2 * GRID_S) + 1);
-	const size_t gy = (mBackground.height() - BAR_HEIGHT) / GRID_S + 1;
+	const int gx = (mBackground.width() / (2 * GRID_S) + 1);
+	const int gy	= (mBackground.height() - BAR_HEIGHT) / GRID_S + 1;
 
 	painter.setPen(Qt::NoPen);
-	for (size_t y = 0; y < gy; ++y) {
+	for (int y = 0; y < gy; ++y) {
 		int dx = (y % 2) ? 0 : GRID_S;
 		int py = BAR_HEIGHT + y * GRID_S;
 
 		painter.setBrush(QBrush(Qt::white));
-		for (size_t x = 0; x < gx; ++x)
+		for (int x = 0; x < gx; ++x)
 			painter.drawRect(dx + x * GRID_S * 2, py,
 							 GRID_S, GRID_S);
 
 		painter.setBrush(QBrush(Qt::lightGray));
-		for (size_t x = 0; x < gx; ++x)
+		for (int x = 0; x < gx; ++x)
 			painter.drawRect(GRID_S - dx + x * GRID_S * 2, py,
 							 GRID_S, GRID_S);
 	}
@@ -230,7 +230,7 @@ void ImageView::showContextMenu(const QPoint& p)
 	QMenu contextMenu(tr("Channels"), this);
 
 	if (mView->viewChannelCount() != 1) {
-		for (size_t i = 0; i < mView->channelCount(); ++i) {
+		for (int i = 0; i < mView->channelCount(); ++i) {
 			QAction* action = new QAction(
 				mView->channelName(i),
 				this);
@@ -244,7 +244,7 @@ void ImageView::showContextMenu(const QPoint& p)
 			contextMenu.addAction(action);
 		}
 	} else {
-		for (size_t i = 0; i < mView->channelCount(); ++i) {
+		for (int i = 0; i < mView->channelCount(); ++i) {
 			QAction* action = new QAction(
 				mView->channelName(i),
 				this);
@@ -266,7 +266,7 @@ void ImageView::onContextMenuClick(QObject* obj)
 	if (!act)
 		return;
 
-	size_t id = act->data().toUInt();
+	uint id = act->data().toUInt();
 
 	quint8 oldMask = mChannelMask;
 	quint32 oldOff = mChannelOffset;
@@ -312,7 +312,7 @@ bool ImageView::isValidPixel(const QPoint& pixel) const
 QString ImageView::valueAt(const QPoint& pixel) const
 {
 	QString str;
-	for (size_t i = 0; i < (size_t)mView->channelCount(); ++i) {
+	for (int i = 0; i < mView->channelCount(); ++i) {
 		float v = mView->value(pixel.x(), pixel.y(), i);
 		str += QString::number(v, 'g', 2) + " ";
 	}

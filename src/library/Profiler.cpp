@@ -144,7 +144,7 @@ static uint64 sProfileStartTime = 0;
 static void profileThread(uint32 samplesPerSecond)
 {
 	sProfileRun		  = true;
-	sProfileStartTime = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
+	sProfileStartTime = static_cast<uint64>(duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count());
 
 	ProfileSamplePage* lastPage = nullptr;
 	const auto ms				= milliseconds(1000 / samplesPerSecond);
@@ -211,7 +211,7 @@ void stop()
 
 static void writeStr(std::ofstream& stream, const std::string& str)
 {
-	uint32 strLen = str.size();
+	uint32 strLen = static_cast<uint32>(str.size());
 	stream.write(reinterpret_cast<const char*>(&strLen), sizeof(strLen));
 	if (strLen > 0)
 		stream.write(str.c_str(), sizeof(char) * strLen);
@@ -261,7 +261,7 @@ bool dumpToFile(const std::wstring& filename)
 	stream.write(HEADER, 10);
 
 	// Write thread information
-	uint64 threads = sThreadData.size();
+	uint64 threads = static_cast<uint64>(sThreadData.size());
 	stream.write(reinterpret_cast<const char*>(&threads), sizeof(threads));
 	for (const ThreadData& data : sThreadData) {
 		writeStr(stream, data.Name);
@@ -288,7 +288,7 @@ bool dumpToFile(const std::wstring& filename)
 	uint64 pages = (uint64)sProfilePages.size();
 	stream.write(reinterpret_cast<const char*>(&pages), sizeof(pages));
 	for (const auto& page : sProfilePages) {
-		uint64 timePoint = duration_cast<microseconds>(page->TimePoint.time_since_epoch()).count() - sProfileStartTime;
+		uint64 timePoint = static_cast<uint64>(duration_cast<microseconds>(page->TimePoint.time_since_epoch()).count()) - sProfileStartTime;
 		stream.write(reinterpret_cast<const char*>(&timePoint), sizeof(timePoint));
 
 		uint64 counterCount = (uint64)page->Counters.size();

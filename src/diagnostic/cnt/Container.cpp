@@ -65,7 +65,7 @@ Container::~Container()
 }
 
 static void loadNode(QTextStream& stream, Node*& node, size_t depth,
-					 unsigned int& nodeCount, unsigned int& innerCount, unsigned int& maxDepth)
+					 size_t& nodeCount, size_t& innerCount, size_t& maxDepth)
 {
 	if (depth > maxDepth)
 		maxDepth = depth;
@@ -167,7 +167,7 @@ static void drawPlane(QVector<QVector3D>& vertices, QVector<unsigned int>& indic
 }
 
 static void drawNode(QVector<QVector3D>& vertices, QVector<unsigned int>& indices,
-					 Node* node, size_t depth, unsigned int maxDepth,
+					 Node* node, size_t depth, size_t maxDepth,
 					 const QVector3D& lowerBound, const QVector3D& upperBound)
 {
 	if (depth > maxDepth)
@@ -212,13 +212,13 @@ static void drawNode(QVector<QVector3D>& vertices, QVector<unsigned int>& indice
 		drawNode(vertices, indices, innerN->right, depth + 1, maxDepth, lowSplit, upperBound);
 	}
 }
-void Container::populate(QVector<QVector3D>& vertices, QVector<unsigned int>& indices, int maxDepth) const
+void Container::populate(QVector<QVector3D>& vertices, QVector<unsigned int>& indices, size_t maxDepth) const
 {
 	vertices.clear();
 	indices.clear();
 
-	vertices.reserve(4 * mInnerCount + 8);
-	indices.reserve(8 * mInnerCount + 12);
+	vertices.reserve(4 * static_cast<int>(mInnerCount) + 8);
+	indices.reserve(8 * static_cast<int>(mInnerCount) + 12);
 
 	// Bounding Box
 	drawPlane(vertices, indices,

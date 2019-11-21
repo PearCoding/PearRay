@@ -57,7 +57,7 @@ QSize RangeSlider::minimumSizeHint() const
 
 QSize RangeSlider::sizeHint() const
 {
-	size_t w = std::ceil(mMax - mMin);
+	int w = std::ceil(mMax - mMin);
 	return QSize(MIN_W + w, BAR_H);
 }
 
@@ -104,7 +104,7 @@ constexpr QRgb SLIDE_P = qRgb(27, 91, 148);
 void RangeSlider::paintEvent(QPaintEvent* event)
 {
 	Q_UNUSED(event);
-	size_t h	  = height();
+	int h	  = height();
 	DrawStyle sty = calculateStyle();
 
 	QPainter painter(this);
