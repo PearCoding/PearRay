@@ -52,6 +52,8 @@ private:
 	std::shared_ptr<ProfTreeItem> mParent;
 	QVector<std::shared_ptr<ProfTreeItem>> mChildren;
 
+	mutable QVector<quint64> mTimePoints_Cached;
+
 	ProfFile* mFile;
 	int mIndex;
 

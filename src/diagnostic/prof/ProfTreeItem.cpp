@@ -133,18 +133,18 @@ static void mergeSortedArrays(QVector<T>& a, const QVector<T>& b)
 
 QVector<quint64> ProfTreeItem::timePoints() const
 {
-	QVector<quint64> points;
-	if (isLeaf()) {
-		points.reserve(mFile->entry(mIndex).TimeCounterEntries.size());
-		for (const ProfTimeCounterEntry& entry : mFile->entry(mIndex).TimeCounterEntries)
-			points.append(entry.TimePointMicroSec);
-	} else {
-		for (std::shared_ptr<ProfTreeItem> child : mChildren)
-			mergeSortedArrays(points, child->timePoints());
+	if (mTimePoints_Cached.isEmpty()) {
+		if (isLeaf()) {
+			mTimePoints_Cached.reserve(mFile->entry(mIndex).TimeCounterEntries.size());
+			for (const ProfTimeCounterEntry& entry : mFile->entry(mIndex).TimeCounterEntries)
+				mTimePoints_Cached.append(entry.TimePointMicroSec);
+		} else {
+			for (std::shared_ptr<ProfTreeItem> child : mChildren)
+				mergeSortedArrays(mTimePoints_Cached, child->timePoints());
+		}
 	}
 
-	//qDebug() << points;
-	return points;
+	return mTimePoints_Cached;
 }
 
 std::shared_ptr<ProfTreeItem> ProfTreeItem::child(int row) const
