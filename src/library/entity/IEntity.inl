@@ -17,7 +17,7 @@ inline float IEntity::collisionCost() const
 
 inline BoundingBox IEntity::worldBoundingBox() const
 {
-	if (isFrozen())
+	if (mWorldBoundingBox_Cache.isValid())
 		return mWorldBoundingBox_Cache;
 	else
 		return calcWorldBoundingBox();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/VirtualEntity.h"
+#include "entity/ITransformable.h"
 #include "shader/ShadingPoint.h"
 
 namespace PR {
@@ -25,7 +25,7 @@ struct PR_LIB InfiniteLightSampleOutput {
 };
 
 class RenderTileSession;
-class PR_LIB IInfiniteLight : public VirtualEntity {
+class PR_LIB IInfiniteLight : public ITransformable {
 public:
 	IInfiniteLight(uint32 id, const std::string& name);
 	virtual ~IInfiniteLight() {}

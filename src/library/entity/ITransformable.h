@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IFreezable.h"
+#include "IObject.h"
 
 #include <string>
 
@@ -13,13 +13,12 @@ enum EntityFlags {
 #define ENTITY_CLASS \
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-class RenderContext;
-class PR_LIB VirtualEntity : public IFreezable {
+class PR_LIB ITransformable : public IObject {
 public:
 	ENTITY_CLASS
 
-	VirtualEntity(uint32 id, const std::string& name);
-	virtual ~VirtualEntity();
+	ITransformable(uint32 id, const std::string& name);
+	virtual ~ITransformable();
 
 	inline uint32 id() const;
 
@@ -46,8 +45,8 @@ public:
 
 	virtual std::string dumpInformation() const;
 
-protected:
-	virtual void onFreeze(RenderContext* context) override;
+	// IObject
+	virtual void beforeSceneBuild() override;
 
 private:
 	std::string mName;
@@ -56,10 +55,11 @@ private:
 
 	Transform mTransform;
 
+	void cache();
 	Transform mInvTransformCache;
 	Eigen::Matrix3f mNormalMatrixCache;
 	Eigen::Matrix3f mInvNormalMatrixCache;
 };
 } // namespace PR
 
-#include "VirtualEntity.inl"
+#include "ITransformable.inl"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IMaterialType.h"
+#include "MaterialType.h"
 #include "shader/ShadingPoint.h"
 
 namespace PR {

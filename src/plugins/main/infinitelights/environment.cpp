@@ -96,12 +96,6 @@ public:
 		return stream.str();
 	}
 
-protected:
-	void onFreeze(RenderContext* context) override
-	{
-		VirtualEntity::onFreeze(context);
-	}
-
 private:
 	std::unique_ptr<Distribution2D> mDistribution;
 

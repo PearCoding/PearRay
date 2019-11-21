@@ -1,12 +1,12 @@
-#include "VirtualEntity.h"
+#include "ITransformable.h"
 
 #include <sstream>
 
 #include "Logger.h"
 
 namespace PR {
-VirtualEntity::VirtualEntity(uint32 id, const std::string& name)
-	: IFreezable()
+ITransformable::ITransformable(uint32 id, const std::string& name)
+	: IObject()
 	, mName(name)
 	, mID(id)
 	, mFlags(0)
@@ -14,16 +14,12 @@ VirtualEntity::VirtualEntity(uint32 id, const std::string& name)
 {
 }
 
-VirtualEntity::~VirtualEntity()
+ITransformable::~ITransformable()
 {
 }
 
-void VirtualEntity::onFreeze(RenderContext*)
+void ITransformable::beforeSceneBuild()
 {
-	mInvTransformCache	= mTransform.inverse();
-	mNormalMatrixCache	= mTransform.linear().inverse().transpose();
-	mInvNormalMatrixCache = mNormalMatrixCache.inverse();
-
 	Eigen::Matrix3f rot;
 	Eigen::Matrix3f sca;
 	mTransform.computeRotationScaling(&rot, &sca);
@@ -37,13 +33,20 @@ void VirtualEntity::onFreeze(RenderContext*)
 	PR_LOG(L_INFO) << " IP[" << mInvTransformCache.translation() << "] IR[" << Eigen::Quaternionf(irot).coeffs() << "] IS[" << isca.diagonal() << "]" << std::endl;
 
 	if (sca.squaredNorm() <= PR_EPSILON)
-		PR_LOG(L_WARNING) << "VirtualEntity " << mName << " has zero scale attribute" << std::endl;
+		PR_LOG(L_WARNING) << "ITransformable " << mName << " has zero scale attribute" << std::endl;
 
 	if (std::abs((sca * isca).sum() - 3) > PR_EPSILON)
-		PR_LOG(L_WARNING) << "VirtualEntity " << mName << " scale and inverse scale do not match" << std::endl;
+		PR_LOG(L_WARNING) << "ITransformable " << mName << " scale and inverse scale do not match" << std::endl;
 }
 
-std::string VirtualEntity::dumpInformation() const
+void ITransformable::cache()
+{
+	mInvTransformCache	= mTransform.inverse();
+	mNormalMatrixCache	= mTransform.linear().inverse().transpose();
+	mInvNormalMatrixCache = mNormalMatrixCache.inverse();
+}
+
+std::string ITransformable::dumpInformation() const
 {
 	const auto pos = mTransform.translation();
 	Eigen::Matrix3f rot;
@@ -54,7 +57,7 @@ std::string VirtualEntity::dumpInformation() const
 	Vector3f scav = sca.diagonal();
 
 	std::stringstream stream;
-	stream << "<VirtualEntity> [" << mID << "]: " << std::endl
+	stream << "<ITransformable> [" << mID << "]: " << std::endl
 		   << "  Position:        {" << pos(0)
 		   << "|" << pos(1)
 		   << "|" << pos(2) << "}" << std::endl

@@ -48,8 +48,5 @@ script:
 after_success:
   - ctest --output-on-failure
   - if [ $USE_COVERAGE == ON ]; then make coveralls; fi
-#branches:
-#  only:
-#  - master
 notifications:
   email: false

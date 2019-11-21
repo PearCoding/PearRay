@@ -107,4 +107,10 @@ float MeshContainer::surfaceArea(const Eigen::Affine3f& transform) const
 	}
 	return a;
 }
+
+void MeshContainer::triangulate()
+{
+	// FIXME: TODO!!!
+	PR_ASSERT(quadCount() == 0, "Triangulation is not yet implemented!");
+}
 } // namespace PR

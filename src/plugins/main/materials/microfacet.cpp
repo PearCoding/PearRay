@@ -323,11 +323,6 @@ public:
 		return stream.str();
 	}
 
-protected:
-	void onFreeze(RenderContext*) override
-	{
-	}
-
 private:
 	FresnelMode mFresnelMode;
 	DistributionMode mDistributionMode;

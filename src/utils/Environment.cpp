@@ -11,7 +11,7 @@
 #include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshContainer.h"
 #include "plugin/PluginManager.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
@@ -102,7 +102,6 @@ void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 {
 	PR_LOG(L_INFO) << "Initializing output" << std::endl;
 	mOutputSpecification.setup(renderer);
-	freeze(renderer);
 }
 
 void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
@@ -329,25 +328,6 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 	return fct;
 }
 
-void Environment::freeze(const std::shared_ptr<RenderContext>& ctx)
-{
-	PR_LOG(L_INFO) << "Freezing scene" << std::endl;
-	for (auto e : mEmissionManager->getAll())
-		e->freeze(ctx.get());
-
-	for (auto e : mMaterialManager->getAll())
-		e->freeze(ctx.get());
-
-	for (auto e : mInfiniteLightManager->getAll())
-		e->freeze(ctx.get());
-
-	for (auto e : mEntityManager->getAll())
-		e->freeze(ctx.get());
-
-	for (auto e : mCameraManager->getAll())
-		e->freeze(ctx.get());
-}
-
 std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
 	const std::string& name, float def) const
 {
@@ -390,7 +370,7 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 			auto socket = getShadingSocket<FloatSpectralShadingSocket>(tname);
 			if (socket)
 				return socket;
-		} else if(hasMapSocket(tname)) {
+		} else if (hasMapSocket(tname)) {
 			auto socket = getMapSocket(tname);
 			if (socket)
 				return std::make_shared<MapShadingSocket>(socket);

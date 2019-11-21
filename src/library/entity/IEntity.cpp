@@ -3,7 +3,7 @@
 
 namespace PR {
 IEntity::IEntity(uint32 id, const std::string& name)
-	: VirtualEntity(id, name)
+	: ITransformable(id, name)
 	, mContainerID(0)
 {
 }
@@ -32,9 +32,9 @@ BoundingBox IEntity::calcWorldBoundingBox() const
 	);
 }
 
-void IEntity::onFreeze(RenderContext* context)
+void IEntity::beforeSceneBuild()
 {
-	VirtualEntity::onFreeze(context);
+	ITransformable::beforeSceneBuild();
 
 	mWorldBoundingBox_Cache = calcWorldBoundingBox();
 
@@ -45,7 +45,7 @@ void IEntity::onFreeze(RenderContext* context)
 std::string IEntity::dumpInformation() const
 {
 	std::stringstream stream;
-	stream << VirtualEntity::dumpInformation()
+	stream << ITransformable::dumpInformation()
 		   << "  <RenderEntity>: " << std::endl
 		   << "    IsLight:       " << (isLight() ? "true" : "false") << std::endl
 		   << "    IsCollidable:  " << (isCollidable() ? "true" : "false") << std::endl

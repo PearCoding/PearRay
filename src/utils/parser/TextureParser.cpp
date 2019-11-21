@@ -64,17 +64,17 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 	DL::Data anisoD				= group.getFromKey("anisotropic");
 
 	OIIO::TextureOpt opts;
-	if (wrapModeD.type() == DL::Data::T_String) {
+	if (wrapModeD.type() == DL::DT_String) {
 		std::string wrap = wrapModeD.getString();
 		std::transform(wrap.begin(), wrap.end(), wrap.begin(), ::tolower);
 		opts.swrap = parseWrap(wrap);
 		opts.twrap = parseWrap(wrap);
 		opts.rwrap = parseWrap(wrap);
-	} else if (wrapModeD.type() == DL::Data::T_Group) {
+	} else if (wrapModeD.type() == DL::DT_Group) {
 		DL::DataGroup arr = wrapModeD.getGroup();
 		for (uint32 i = 0; i < 3 && i < arr.anonymousCount(); ++i) {
 			DL::Data dat = arr.at(i);
-			if (dat.type() == DL::Data::T_String) {
+			if (dat.type() == DL::DT_String) {
 				std::string wrap = dat.getString();
 				std::transform(wrap.begin(), wrap.end(), wrap.begin(), ::tolower);
 				switch (i) {
@@ -92,13 +92,13 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		}
 	}
 
-	if (mipModeD.type() == DL::Data::T_String) {
+	if (mipModeD.type() == DL::DT_String) {
 		std::string mip = mipModeD.getString();
 		std::transform(mip.begin(), mip.end(), mip.begin(), ::tolower);
 		opts.mipmode = parseMIP(mip);
 	}
 
-	if (interpolationModeD.type() == DL::Data::T_String) {
+	if (interpolationModeD.type() == DL::DT_String) {
 		std::string interp = interpolationModeD.getString();
 		std::transform(interp.begin(), interp.end(), interp.begin(), ::tolower);
 		opts.interpmode = parseInterpolation(interp);
@@ -109,7 +109,7 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		opts.sblur = f;
 		opts.tblur = f;
 		opts.rblur = f;
-	} else if (blurD.type() == DL::Data::T_Group) {
+	} else if (blurD.type() == DL::DT_Group) {
 		DL::DataGroup arr = blurD.getGroup();
 		for (uint32 i = 0; i < 3 && i < arr.anonymousCount(); ++i) {
 			DL::Data dat = arr.at(i);
@@ -130,12 +130,12 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		}
 	}
 
-	if (anisoD.type() == DL::Data::T_Integer) {
+	if (anisoD.type() == DL::DT_Integer) {
 		opts.anisotropic = static_cast<int>(anisoD.getInt());
 	}
 
 	std::string filename;
-	if (filenameD.type() == DL::Data::T_String) {
+	if (filenameD.type() == DL::DT_String) {
 		filename = filenameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "No valid filename given for texture " << name << std::endl;
@@ -148,7 +148,7 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 	}
 
 	std::string type;
-	if (typeD.type() == DL::Data::T_String) {
+	if (typeD.type() == DL::DT_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "VirtualEntity.h"
+#include "ITransformable.h"
 #include "geometry/BoundingBox.h"
 
 namespace PR {
 struct GeometryPoint;
-class PR_LIB IEntity : public VirtualEntity {
+class PR_LIB IEntity : public ITransformable {
 public:
 	IEntity(uint32 id, const std::string& name);
 	virtual ~IEntity();
@@ -37,8 +37,8 @@ public:
 	virtual void provideGeometryPoint(uint32 faceID, float u, float v,
 									  GeometryPoint& pt) const		   = 0;
 
-protected:
-	virtual void onFreeze(RenderContext* context) override;
+	// IObject
+	virtual void beforeSceneBuild() override;
 
 private:
 	size_t mContainerID; // To which (latest) container node it belongs

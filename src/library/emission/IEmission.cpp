@@ -4,7 +4,7 @@
 
 namespace PR {
 IEmission::IEmission(uint32 id)
-	: IFreezable()
+	: IObject()
 	, mID(id)
 {
 }

@@ -90,12 +90,6 @@ public:
 		// TODO
 	}
 
-protected:
-	void onFreeze(RenderContext* context) override
-	{
-		IEntity::onFreeze(context);
-	}
-
 private:
 	int32 mLightID;
 

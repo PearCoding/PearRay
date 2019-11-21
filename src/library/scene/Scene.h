@@ -46,6 +46,8 @@ public:
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
 
+	void beforeRender(RenderContext*ctx);
+	void afterRender(RenderContext*ctx);
 private:
 	template <typename Func>
 	inline void traceCoherentRays(RayStream& rays, const RayGroup& grp,

@@ -4,7 +4,7 @@
 
 namespace PR {
 IMaterial::IMaterial(uint32 id)
-	: IFreezable()
+	: IObject()
 	, mCanBeShaded(true)
 	, mShadow(true)
 	, mSelfShadow(true)

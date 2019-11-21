@@ -1,36 +1,47 @@
 #include "Environment.h"
+#include "Logger.h"
+#include "Platform.h"
 #include "Profiler.h"
+#include "container/kdTreeBuilder.h"
+#include "container/kdTreeBuilderNaive.h"
+#include "container/kdTreeCollider.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshContainer.h"
 #include "sampler/SplitSample.h"
+
+#include <boost/filesystem.hpp>
+
+#define BUILDER kdTreeBuilder
 
 namespace PR {
 
-class MeshEntity : public IEntity {
+class TriMeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	MeshEntity(uint32 id, const std::string& name,
-			   const std::shared_ptr<TriMesh>& mesh,
-			   const std::vector<uint32>& materials,
-			   int32 lightID)
+	TriMeshEntity(uint32 id, const std::string& name,
+				  const std::wstring& cnt_file, bool load_only,
+				  const std::shared_ptr<MeshContainer>& mesh,
+				  const std::vector<uint32>& materials,
+				  int32 lightID)
 		: IEntity(id, name)
+		, mCNTFile(cnt_file)
+		, mLoadOnly(load_only)
 		, mLightID(lightID)
 		, mMaterials(materials)
 		, mMesh(mesh)
 	{
-		PR_ASSERT(mesh->isBuilt(), "Expect mesh to be built!");
 	}
-	virtual ~MeshEntity() {}
+	virtual ~TriMeshEntity() {}
 
 	std::string type() const override
 	{
-		return "mesh";
+		return "trimesh";
 	}
 
 	bool isLight() const override
@@ -45,17 +56,17 @@ public:
 
 	bool isCollidable() const override
 	{
-		return mMesh->isValid() && mMesh->isBuilt();
+		return mMesh->isValid() && mKDTree;
 	}
 
 	float collisionCost() const override
 	{
-		return mMesh->collisionCost();
+		return static_cast<float>(mMesh->faceCount());
 	}
 
 	BoundingBox localBoundingBox() const override
 	{
-		return mMesh->boundingBox();
+		return mBoundingBox;
 	}
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
@@ -63,7 +74,47 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh->checkCollision(in_local, out);
+		mKDTree
+			->checkCollision(in_local, out,
+							 [this](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
+								 Vector2fv uv;
+								 vfloat t;
+
+								 const uint32 ind1 = mMesh->indices()[3 * f];
+								 const uint32 ind2 = mMesh->indices()[3 * f + 1];
+								 const uint32 ind3 = mMesh->indices()[3 * f + 2];
+
+								 const Vector3fv p0 = promote(mMesh->vertex(ind1));
+								 const Vector3fv p1 = promote(mMesh->vertex(ind2));
+								 const Vector3fv p2 = promote(mMesh->vertex(ind3));
+
+								 bfloat hits = Triangle::intersect(
+									 in2,
+									 p0, p1, p2,
+									 uv,
+									 t); // Major bottleneck!
+
+								 const vfloat inf = simdpp::make_float(std::numeric_limits<float>::infinity());
+								 out2.HitDistance = simdpp::blend(t, inf, hits);
+
+								 if (mMesh->features() & MF_HAS_UV) {
+									 for (int i = 0; i < 2; ++i)
+										 out2.UV[i] = mMesh->uvs(i)[ind2] * uv(0)
+													  + mMesh->uvs(i)[ind3] * uv(1)
+													  + mMesh->uvs(i)[ind1] * (1 - uv(0) - uv(1));
+								 } else {
+									 out2.UV[0] = uv(0);
+									 out2.UV[1] = uv(1);
+								 }
+
+								 if (mMesh->features() & MF_HAS_MATERIAL)
+									 out2.MaterialID = simdpp::make_uint(mMaterials[f]); // Has to be updated in entity!
+								 else
+									 out2.MaterialID = simdpp::make_uint(0);
+
+								 out2.FaceID = simdpp::make_uint(f);
+								 //out2.EntityID; Ignore
+							 });
 
 		// out.FaceID is set inside mesh
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -83,7 +134,42 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh->checkCollision(in_local, out);
+		mKDTree
+			->checkCollision(in, out,
+							 [this](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
+								 const uint32 ind1 = mMesh->indices()[3 * f];
+								 const uint32 ind2 = mMesh->indices()[3 * f + 1];
+								 const uint32 ind3 = mMesh->indices()[3 * f + 2];
+
+								 float t;
+								 Vector2f uv;
+								 bool hit = Triangle::intersect(
+									 in2,
+									 mMesh->vertex(ind1), mMesh->vertex(ind2), mMesh->vertex(ind3),
+									 uv, t); // Major bottleneck!
+
+								 if (!hit)
+									 return;
+								 else
+									 out2.HitDistance = t;
+
+								 if (mMesh->features() & MF_HAS_UV) {
+									 auto v		= Triangle::interpolate(mMesh->uv(ind1), mMesh->uv(ind2), mMesh->uv(ind3), uv);
+									 out2.UV[0] = v(0);
+									 out2.UV[1] = v(1);
+								 } else {
+									 out2.UV[0] = uv(0);
+									 out2.UV[1] = uv(1);
+								 }
+
+								 if (mMesh->features() & MF_HAS_MATERIAL)
+									 out2.MaterialID = mMaterials[f]; // Has to be updated in entity!
+								 else
+									 out2.MaterialID = 0;
+
+								 out2.FaceID = f;
+								 //out2.EntityID; Ignore
+							 });
 
 		// out.FaceID is set inside mesh
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -111,7 +197,24 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		mMesh->provideGeometryPoint(faceID, u, v, pt);
+		Face f = mMesh->getFace(faceID);
+
+		Vector2f local_uv;
+		if (mMesh->features() & MF_HAS_UV)
+			local_uv = f.mapGlobalToLocalUV(Vector2f(u, v));
+		else
+			local_uv = Vector2f(u, v);
+
+		Vector2f uv;
+		f.interpolate(local_uv, pt.P, pt.N, uv);
+
+		if (mMesh->features() & MF_HAS_UV)
+			f.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+		else
+			Tangent::frame(pt.N, pt.Nx, pt.Ny);
+
+		pt.UVW		  = Vector3f(uv(0), uv(1), 0);
+		pt.MaterialID = f.MaterialSlot;
 
 		pt.P  = transform() * pt.P;
 		pt.N  = normalMatrix() * pt.N;
@@ -129,20 +232,73 @@ public:
 		pt.DisplaceID = 0;
 	}
 
-protected:
-	void onFreeze(RenderContext* context) override
+	void beforeSceneBuild() override
 	{
-		IEntity::onFreeze(context);
+		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]";
+
+		mMesh->triangulate();
+		if (!mLoadOnly)
+			buildTree();
+
+		loadTree();
 	}
 
 private:
+	void buildTree()
+	{
+		BUILDER builder(this, [](void* observer, size_t f) {
+								MeshContainer* mesh = reinterpret_cast<MeshContainer*>(observer);
+								const uint32 ind1 = mesh->indices()[3*f];
+								const uint32 ind2 = mesh->indices()[3*f+1];
+								const uint32 ind3 = mesh->indices()[3*f+2];
+
+								Vector3f p1 = mesh->vertex(ind1);
+								Vector3f p2 = mesh->vertex(ind2);
+								Vector3f p3 = mesh->vertex(ind3);
+								return Triangle::getBoundingBox(p1,p2,p3); },
+						[](void*, size_t) {
+							return 4.0f;
+						});
+		builder.build(mMesh->faceCount());
+
+		std::ofstream stream(encodePath(mCNTFile), std::ios::out | std::ios::trunc);
+		builder.save(stream);
+
+		PR_LOG(L_INFO) << "Mesh KDtree [depth="
+					   << builder.depth()
+					   << ", elements=" << mMesh->faceCount()
+					   << ", leafs=" << builder.leafCount()
+					   << ", elementsPerLeaf=[avg:" << builder.avgElementsPerLeaf()
+					   << ", min:" << builder.minElementsPerLeaf()
+					   << ", max:" << builder.maxElementsPerLeaf()
+					   << ", ET:" << builder.expectedTraversalSteps()
+					   << ", EL:" << builder.expectedLeavesVisited()
+					   << ", EI:" << builder.expectedObjectsIntersected()
+					   << "]]" << std::endl;
+	}
+
+	void loadTree()
+	{
+		std::ifstream stream(encodePath(mCNTFile));
+		mKDTree = std::make_unique<kdTreeCollider>();
+		mKDTree->load(stream);
+		if (!mKDTree->isEmpty())
+			mBoundingBox = mKDTree->boundingBox();
+	}
+
+	std::wstring mCNTFile;
+	bool mLoadOnly;
+
+	BoundingBox mBoundingBox;
+	std::unique_ptr<kdTreeCollider> mKDTree;
+
 	int32 mLightID;
 
 	std::vector<uint32> mMaterials;
-	std::shared_ptr<TriMesh> mMesh;
+	std::shared_ptr<MeshContainer> mMesh;
 };
 
-class MeshEntityFactory : public IEntityFactory {
+class TriMeshEntityFactory : public IEntityFactory {
 public:
 	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
 	{
@@ -167,11 +323,23 @@ public:
 		if (ems)
 			emsID = ems->id();
 
+		std::wstring customCNT = reg.getForObject<std::wstring>(RG_ENTITY, uuid, "cnt", L"");
+
+		boost::filesystem::path path;
+		if (customCNT.empty()) {
+			path = env.workingDir();
+			path /= (name + ".cnt");
+		} else {
+			path = boost::filesystem::absolute(customCNT, env.workingDir());
+		}
+
 		if (!env.hasMesh(mesh_name))
 			return nullptr;
 		else
-			return std::make_shared<MeshEntity>(id, name, env.getMesh(mesh_name),
-												materials, emsID);
+			return std::make_shared<TriMeshEntity>(id, name,
+												   path.generic_wstring(), !customCNT.empty(),
+												   env.getMesh(mesh_name),
+												   materials, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const
@@ -187,4 +355,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::MeshEntityFactory, "ent_mesh", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::TriMeshEntityFactory, "ent_mesh", PR_PLUGIN_VERSION)

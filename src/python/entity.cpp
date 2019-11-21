@@ -1,5 +1,5 @@
 #include "entity/IEntity.h"
-#include "entity/VirtualEntity.h"
+#include "entity/ITransformable.h"
 
 #include "pypearray.h"
 
@@ -10,24 +10,23 @@ namespace PRPY {
 PR_NO_SANITIZE_ADDRESS
 void setup_entity(py::module& m)
 {
-	py::class_<VirtualEntity, std::shared_ptr<VirtualEntity>>(m, "VirtualEntity")
+	py::class_<ITransformable, std::shared_ptr<ITransformable>>(m, "ITransformable")
 		.def(py::init<uint32, std::string>())
-		.def_property_readonly("id", &VirtualEntity::id)
-		.def_property("name", &VirtualEntity::name, &VirtualEntity::setName)
-		.def_property_readonly("type", &VirtualEntity::type)
-		.def_property("flags", &VirtualEntity::flags, &VirtualEntity::setFlags)
-		.def_property_readonly("transform", &VirtualEntity::transform)
-		.def_property_readonly("invTransform", &VirtualEntity::invTransform)
-		.def_property_readonly("normalMatrix", &VirtualEntity::normalMatrix)
-		.def_property_readonly("invNormalMatrix", &VirtualEntity::invNormalMatrix)
-		.def_property_readonly("frozen", &VirtualEntity::isFrozen)
-		.def("dumpInformation", &VirtualEntity::dumpInformation);
+		.def_property_readonly("id", &ITransformable::id)
+		.def_property("name", &ITransformable::name, &ITransformable::setName)
+		.def_property_readonly("type", &ITransformable::type)
+		.def_property("flags", &ITransformable::flags, &ITransformable::setFlags)
+		.def_property_readonly("transform", &ITransformable::transform)
+		.def_property_readonly("invTransform", &ITransformable::invTransform)
+		.def_property_readonly("normalMatrix", &ITransformable::normalMatrix)
+		.def_property_readonly("invNormalMatrix", &ITransformable::invNormalMatrix)
+		.def("dumpInformation", &ITransformable::dumpInformation);
 
 	py::enum_<EntityFlags>(m, "EntityFlags")
 		.value("DEBUG", EF_Debug)
 		.value("LOCALAREA", EF_LocalArea);
 
-	py::class_<IEntity, std::shared_ptr<IEntity>, VirtualEntity>(m, "IEntity")
+	py::class_<IEntity, std::shared_ptr<IEntity>, ITransformable>(m, "IEntity")
 		.def("isLight", &IEntity::isLight)
 		.def("surfaceArea", &IEntity::surfaceArea)
 		.def("isCollidable", &IEntity::isCollidable)

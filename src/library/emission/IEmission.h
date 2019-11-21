@@ -1,7 +1,6 @@
 #pragma once
 
-#include "IFreezable.h"
-#include "math/SIMD.h"
+#include "IObject.h"
 #include "shader/ShadingPoint.h"
 #include <memory>
 
@@ -18,7 +17,7 @@ struct PR_LIB LightEvalOutput {
 	ColorTriplet Weight;
 };
 
-class PR_LIB IEmission : public IFreezable {
+class PR_LIB IEmission : public IObject {
 public:
 	IEmission(uint32 id);
 	virtual ~IEmission() {}

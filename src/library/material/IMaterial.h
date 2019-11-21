@@ -1,11 +1,11 @@
 #pragma once
 
-#include "IFreezable.h"
-#include "IMaterialData.h"
+#include "IObject.h"
+#include "MaterialData.h"
 
 namespace PR {
 class RenderTileSession;
-class PR_LIB IMaterial : public IFreezable {
+class PR_LIB IMaterial : public IObject {
 public:
 	IMaterial(uint32 id);
 	virtual ~IMaterial() {}

@@ -22,6 +22,7 @@ inline void MeshContainer::setUVs(const std::vector<float>& u,
 {
 	mUVs[0] = u;
 	mUVs[1] = v;
+	mFeatures |= MF_HAS_UV;
 }
 
 inline void MeshContainer::setVelocities(const std::vector<float>& vx,
@@ -30,11 +31,18 @@ inline void MeshContainer::setVelocities(const std::vector<float>& vx,
 	mVelocities[0] = vx;
 	mVelocities[1] = vy;
 	mVelocities[2] = vz;
+	mFeatures |= MF_HAS_VELOCITY;
 }
 
 inline void MeshContainer::setIndices(const std::vector<uint32>& indices)
 {
 	mIndices = indices;
+}
+
+inline void MeshContainer::setMaterials(const std::vector<uint32>& f)
+{
+	mMaterials = f;
+	mFeatures |= MF_HAS_MATERIAL;
 }
 
 inline size_t MeshContainer::faceVertexCount(size_t face) const
@@ -47,7 +55,7 @@ inline size_t MeshContainer::faceVertexCount(size_t face) const
 inline Face MeshContainer::getFace(uint32 index) const
 {
 	size_t faceElems = faceVertexCount(index);
-	uint32 indInd = mFaceOffset[index];
+	uint32 indInd	= mFaceOffset[index];
 
 	Face f;
 	f.IsQuad			= (faceElems == 4);

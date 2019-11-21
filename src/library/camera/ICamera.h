@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/VirtualEntity.h"
+#include "entity/ITransformable.h"
 #include "ray/RayPackage.h"
 
 namespace PR {
@@ -14,7 +14,7 @@ struct PR_LIB CameraSample {
 	uint32 WavelengthIndex;
 };
 
-class PR_LIB ICamera : public VirtualEntity {
+class PR_LIB ICamera : public ITransformable {
 public:
 	ENTITY_CLASS
 

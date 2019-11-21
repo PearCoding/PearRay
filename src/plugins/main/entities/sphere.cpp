@@ -129,11 +129,8 @@ public:
 		pt.DisplaceID = 0;
 	}
 
-protected:
-	void onFreeze(RenderContext* context) override
+	void beforeSceneBuild() override
 	{
-		IEntity::onFreeze(context);
-
 		const float area = surfaceArea(0);
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 	}

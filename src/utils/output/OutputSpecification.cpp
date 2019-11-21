@@ -247,12 +247,12 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
 		DL::Data dataD = group.at(i);
 
-		if (dataD.type() == DL::Data::T_Group) {
+		if (dataD.type() == DL::DT_Group) {
 			DL::DataGroup entry = dataD.getGroup();
 
 			if (entry.id() == "output") {
 				DL::Data nameD = entry.getFromKey("name");
-				if (nameD.type() != DL::Data::T_String)
+				if (nameD.type() != DL::DT_String)
 					continue;
 
 				File file;
@@ -261,7 +261,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 				for (size_t i = 0; i < entry.anonymousCount(); ++i) {
 					DL::Data channelD = entry.at(i);
 
-					if (channelD.type() == DL::Data::T_Group
+					if (channelD.type() == DL::DT_Group
 						&& channelD.getGroup().id() == "channel") {
 						DL::DataGroup channel = channelD.getGroup();
 						DL::Data typeD		  = channel.getFromKey("type");
@@ -270,14 +270,14 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 						DL::Data mapperD	  = channel.getFromKey("mapper");
 						DL::Data lpeD		  = channel.getFromKey("lpe");
 
-						if (typeD.type() != DL::Data::T_String)
+						if (typeD.type() != DL::DT_String)
 							continue;
 
 						std::string type = typeD.getString();
 						std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 
 						ToneColorMode tcm = TCM_SRGB;
-						if (colorD.type() == DL::Data::T_String) {
+						if (colorD.type() == DL::DT_String) {
 							std::string color = colorD.getString();
 							std::transform(color.begin(), color.end(), color.begin(), ::tolower);
 							if (color == "xyz")
@@ -289,7 +289,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 						}
 
 						ToneGammaMode tgm = TGM_SRGB;
-						if (gammaD.type() == DL::Data::T_String) {
+						if (gammaD.type() == DL::DT_String) {
 							std::string gamma = gammaD.getString();
 							std::transform(gamma.begin(), gamma.end(), gamma.begin(), ::tolower);
 							if (gamma == "none")
@@ -297,7 +297,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 						}
 
 						ToneMapperMode tmm = TMM_None;
-						if (mapperD.type() == DL::Data::T_String) {
+						if (mapperD.type() == DL::DT_String) {
 							std::string mapper = mapperD.getString();
 							std::transform(mapper.begin(), mapper.end(), mapper.begin(), ::tolower);
 							if (mapper == "reinhard")
@@ -317,7 +317,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 						}
 
 						std::string lpe = "";
-						if (lpeD.type() == DL::Data::T_String) {
+						if (lpeD.type() == DL::DT_String) {
 							lpe = lpeD.getString();
 							if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
 								PR_LOG(L_ERROR) << "Invalid LPE " << lpe << ". Skipping entry" << std::endl;
@@ -390,14 +390,14 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 				DL::Data nameD	 = entry.getFromKey("name");
 				DL::Data compressD = entry.getFromKey("compress");
 				DL::Data lpeD	  = entry.getFromKey("lpe");
-				if (nameD.type() == DL::Data::T_String) {
+				if (nameD.type() == DL::DT_String) {
 					FileSpectral spec;
 					spec.Name	 = nameD.getString();
-					spec.Compress = compressD.type() == DL::Data::T_Bool ? compressD.getBool() : true;
+					spec.Compress = compressD.type() == DL::DT_Bool ? compressD.getBool() : true;
 					spec.LPE_S	= "";
 					spec.LPE	  = -1;
 
-					if (lpeD.type() == DL::Data::T_String) {
+					if (lpeD.type() == DL::DT_String) {
 						spec.LPE_S = lpeD.getString();
 						if (!spec.LPE_S.empty() && !LightPathExpression(spec.LPE_S).isValid()) {
 							PR_LOG(L_ERROR) << "Invalid LPE " << spec.LPE_S << ". Skipping spectral file" << std::endl;

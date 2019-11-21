@@ -21,10 +21,6 @@ public:
 		out.Weight = mRadiance->eval(in.Point);
 	}
 
-	void onFreeze(RenderContext*) override
-	{
-	}
-
 private:
 	std::shared_ptr<FloatSpectralShadingSocket> mRadiance;
 };

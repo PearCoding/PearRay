@@ -26,10 +26,16 @@ SET(PR_Src
   material/IMaterialFactory.h
   material/MaterialManager.cpp
   material/MaterialManager.h
-  parser/mesh/TriMeshInlineParser.cpp
-  parser/mesh/TriMeshInlineParser.h
-  parser/texture/TextureParser.cpp
-  parser/texture/TextureParser.h
+  parser/MathParser.cpp
+  parser/MathParser.h
+  parser/MeshParser.cpp
+  parser/MeshParser.h
+  parser/SocketParser.cpp
+  parser/SocketParser.h
+  parser/SpectralParser.cpp
+  parser/SpectralParser.h
+  parser/TextureParser.cpp
+  parser/TextureParser.h
   plugin/AbstractManager.h
   plugin/Plugin.h
   plugin/PluginManager.cpp

@@ -3,8 +3,7 @@ SET(PR_Src
   PR_Config.h.in
   FileLogListener.cpp
   FileLogListener.h
-  IFreezable.cpp
-  IFreezable.h
+  IObject.h
   Logger.cpp
   Logger.h
   LogListener.h
@@ -36,9 +35,9 @@ SET(PR_Src
   entity/IEntity.cpp
   entity/IEntity.h
   entity/IEntity.inl
-  entity/VirtualEntity.cpp
-  entity/VirtualEntity.h
-  entity/VirtualEntity.inl
+  entity/ITransformable.cpp
+  entity/ITransformable.h
+  entity/ITransformable.inl
   emission/IEmission.cpp
   emission/IEmission.h
   geometry/BoundingBox.cpp
@@ -58,8 +57,8 @@ SET(PR_Src
   material/IMaterial.cpp
   material/IMaterial.h
   material/IMaterial.inl
-  material/IMaterialData.h
-  material/IMaterialType.h
+  material/MaterialData.h
+  material/MaterialType.h
   math/Compression.h
   math/Fresnel.h
   math/Generator.h
@@ -79,9 +78,6 @@ SET(PR_Src
   mesh/MeshContainer.cpp
   mesh/MeshContainer.h
   mesh/MeshContainer.inl
-  mesh/TriMesh.cpp
-  mesh/TriMesh.h
-  mesh/TriMesh.inl
   path/LightPath.cpp
   path/LightPath.h
   path/LightPathBuffer.cpp

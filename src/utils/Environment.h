@@ -14,7 +14,7 @@
 namespace PR {
 class IEmission;
 class IMaterial;
-class TriMesh;
+class MeshContainer;
 class SpectrumDescriptor;
 class PluginManager;
 class MaterialManager;
@@ -71,9 +71,9 @@ public:
 	inline void addMaterial(const std::string& name, const std::shared_ptr<IMaterial>& mat);
 	inline size_t materialCount() const;
 
-	inline std::shared_ptr<TriMesh> getMesh(const std::string& name) const;
+	inline std::shared_ptr<MeshContainer> getMesh(const std::string& name) const;
 	inline bool hasMesh(const std::string& name) const;
-	inline void addMesh(const std::string& name, const std::shared_ptr<TriMesh>& m);
+	inline void addMesh(const std::string& name, const std::shared_ptr<MeshContainer>& m);
 
 	inline void addShadingSocket(const std::string& name,
 								 const ShadingSocketVariantPtr& output);
@@ -125,7 +125,6 @@ private:
 	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
 		const std::string& name) const;
 
-	void freeze(const std::shared_ptr<RenderContext>& ctx);
 	void loadPlugins(const std::wstring& basedir);
 	void loadOnePlugin(const std::wstring& name);
 
@@ -146,7 +145,7 @@ private:
 	std::map<std::string, PR::Spectrum> mSpectrums;
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
-	std::map<std::string, std::shared_ptr<TriMesh>> mMeshes;
+	std::map<std::string, std::shared_ptr<MeshContainer>> mMeshes;
 	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSockets;
 	std::map<std::string, std::shared_ptr<FloatSpectralMapSocket>> mNamedMapSockets;
 

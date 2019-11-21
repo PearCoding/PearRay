@@ -1,7 +1,6 @@
 #pragma once
 
 #include "registry/Registry.h"
-#include "shader/Socket.h"
 
 #include <map>
 #include <string>
@@ -12,7 +11,7 @@ class DataGroup;
 } // namespace DL
 
 namespace PR {
-class VirtualEntity;
+class ITransformable;
 class IMesh;
 
 class Environment;
@@ -27,25 +26,12 @@ public:
 													   const std::string& source,
 													   const std::wstring& pluginPath = L"");
 
-	static Vector3f getVector(const DL::DataGroup& arr, bool& ok);
-	static Eigen::Matrix4f getMatrix(const DL::DataGroup& arr, bool& ok);
-	static Eigen::Quaternionf getRotation(const DL::Data& data, bool& ok);
-
-	static std::shared_ptr<FloatSpectralShadingSocket> getSpectralOutput(
-		Environment* env, const DL::Data& data, bool allowScalar = false);
-	static std::shared_ptr<FloatSpectralMapSocket> getSpectralMapOutput(
-		Environment* env, const DL::Data& data, bool allowScalar = false);
-	static std::shared_ptr<FloatScalarShadingSocket> getScalarOutput(
-		Environment* env, const DL::Data& data);
-	static std::shared_ptr<FloatVectorShadingSocket> getVectorOutput(
-		Environment* env, const DL::Data& data);
-
 private:
 	static void addRegistryEntry(const DL::DataGroup& group, Environment* env);
-	static void setupVirtualEntity(const DL::DataGroup& group,
-								   const std::shared_ptr<PR::VirtualEntity>& entity, Environment* env);
+	static void setupTransformable(const DL::DataGroup& group,
+								   const std::shared_ptr<PR::ITransformable>& entity, Environment* env);
 	static void addEntity(const DL::DataGroup& group,
-						  const std::shared_ptr<VirtualEntity>& parent, Environment* env);
+						  const std::shared_ptr<ITransformable>& parent, Environment* env);
 	static void addCamera(const DL::DataGroup& group, Environment* env);
 	static void addLight(const DL::DataGroup& group, Environment* env);
 	static void addEmission(const DL::DataGroup& group, Environment* env);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "material/IMaterialType.h"
+#include "material/MaterialType.h"
 
 namespace PR {
 enum ScatteringType {

@@ -1,6 +1,6 @@
 #include "integrator/IIntegrator.h"
 #include "material/IMaterial.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshContainer.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "spectral/SpectrumDescriptor.h"

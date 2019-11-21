@@ -280,11 +280,6 @@ public:
 		return stream.str();
 	}
 
-protected:
-	void onFreeze(RenderContext*) override
-	{
-	}
-
 private:
 	std::shared_ptr<FloatSpectralShadingSocket> mBaseColor;
 	std::shared_ptr<FloatScalarShadingSocket> mSpecular;

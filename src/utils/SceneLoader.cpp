@@ -18,20 +18,18 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "material/MaterialManager.h"
-#include "mesh/TriMesh.h"
-#include "parser/mesh/TriMeshInlineParser.h"
-#include "parser/texture/TextureParser.h"
-#include "shader/ConstSocket.h"
-#include "spectral/RGBConverter.h"
+#include "parser/MathParser.h"
+#include "parser/MeshParser.h"
+#include "parser/SpectralParser.h"
+#include "parser/TextureParser.h"
 #include "spectral/SpectrumDescriptor.h"
-#include "spectral/XYZConverter.h"
 
 #include "DataLisp.h"
 
 #include <Eigen/SVD>
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include <sstream>
-#include <boost/filesystem.hpp>
 
 /* This source code has many repetitive code lines. Better refactoring needed! */
 namespace PR {
@@ -75,7 +73,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 			DL::Data spectrumD	 = top.getFromKey("spectrum");
 
 			std::shared_ptr<SpectrumDescriptor> spectrumDescriptor;
-			if (spectrumD.type() == DL::Data::T_String) {
+			if (spectrumD.type() == DL::DT_String) {
 				std::string spectrum = spectrumD.getString();
 				std::transform(spectrum.begin(), spectrum.end(), spectrum.begin(), ::tolower);
 
@@ -100,7 +98,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
 
-				if (dataD.type() == DL::Data::T_Group) {
+				if (dataD.type() == DL::DT_Group) {
 					DL::DataGroup entry = dataD.getGroup();
 					if (entry.id() == "registry") {
 						addRegistryEntry(entry, env.get());
@@ -115,7 +113,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
 
-				if (dataD.type() == DL::Data::T_Group) {
+				if (dataD.type() == DL::DT_Group) {
 					DL::DataGroup entry = dataD.getGroup();
 
 					if (entry.id() == "spectrum")
@@ -133,7 +131,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
 
-				if (dataD.type() == DL::Data::T_Group) {
+				if (dataD.type() == DL::DT_Group) {
 					DL::DataGroup entry = dataD.getGroup();
 
 					if (entry.id() == "material")
@@ -147,7 +145,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
 
-				if (dataD.type() == DL::Data::T_Group) {
+				if (dataD.type() == DL::DT_Group) {
 					DL::DataGroup entry = dataD.getGroup();
 
 					if (entry.id() == "entity")
@@ -167,7 +165,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 {
 	if (group.anonymousCount() != 2
-		|| group.at(0).type() != DL::Data::T_String) {
+		|| group.at(0).type() != DL::DT_String) {
 		PR_LOG(L_ERROR) << "Invalid registry entry." << std::endl;
 		return;
 	}
@@ -178,17 +176,17 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	addRegistryEntry(RG_NONE, 0, false, key, value, env);
 }
 
-void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
-									 const std::shared_ptr<PR::VirtualEntity>& entity, Environment* /*env*/)
+void SceneLoader::setupTransformable(const DL::DataGroup& group,
+									 const std::shared_ptr<PR::ITransformable>& entity, Environment* /*env*/)
 {
 	DL::Data transformD = group.getFromKey("transform");
 	DL::Data posD		= group.getFromKey("position");
 	DL::Data rotD		= group.getFromKey("rotation");
 	DL::Data scaleD		= group.getFromKey("scale");
 
-	if (transformD.type() == DL::Data::T_Group) {
+	if (transformD.type() == DL::DT_Group) {
 		bool ok					   = false;
-		VirtualEntity::Transform t = VirtualEntity::Transform(getMatrix(transformD.getGroup(), ok));
+		ITransformable::Transform t = ITransformable::Transform(MathParser::getMatrix(transformD.getGroup(), ok));
 		t.makeAffine();
 
 		if (!ok)
@@ -201,15 +199,15 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 		Eigen::Quaternionf rot;
 		Vector3f sca;
 
-		if (posD.type() == DL::Data::T_Group) {
-			pos = getVector(posD.getGroup(), ok);
+		if (posD.type() == DL::DT_Group) {
+			pos = MathParser::getVector(posD.getGroup(), ok);
 
 			if (!ok)
 				PR_LOG(L_WARNING) << "Couldn't set position for entity " << entity->name() << std::endl;
 		}
 
-		if (ok && rotD.type() == DL::Data::T_Group) {
-			rot = getRotation(rotD, ok);
+		if (ok && rotD.type() == DL::DT_Group) {
+			rot = MathParser::getRotation(rotD, ok);
 
 			if (!ok)
 				PR_LOG(L_WARNING) << "Couldn't set rotation for entity " << entity->name() << std::endl;
@@ -218,8 +216,8 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 		if (ok && scaleD.isNumber()) {
 			float s = scaleD.getNumber();
 			sca		= Vector3f(s, s, s);
-		} else if (ok && scaleD.type() == DL::Data::T_Group) {
-			sca = getVector(scaleD.getGroup(), ok);
+		} else if (ok && scaleD.type() == DL::DT_Group) {
+			sca = MathParser::getVector(scaleD.getGroup(), ok);
 
 			if (!ok)
 				PR_LOG(L_WARNING) << "Couldn't set scale for entity " << entity->name() << std::endl;
@@ -230,7 +228,7 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 		} else {
 			rot.normalize();
 
-			VirtualEntity::Transform trans;
+			ITransformable::Transform trans;
 			trans.fromPositionOrientationScale(pos, rot, sca);
 			trans.makeAffine();
 
@@ -240,7 +238,7 @@ void SceneLoader::setupVirtualEntity(const DL::DataGroup& group,
 }
 
 void SceneLoader::addEntity(const DL::DataGroup& group,
-							const std::shared_ptr<PR::VirtualEntity>& parent, Environment* env)
+							const std::shared_ptr<PR::ITransformable>& parent, Environment* env)
 {
 	auto manag		= env->entityManager();
 	const uint32 id = manag->nextID();
@@ -252,13 +250,13 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	populateObjectRegistry(RG_ENTITY, id, group, env);
 
 	std::string name;
-	if (nameD.type() == DL::Data::T_String)
+	if (nameD.type() == DL::DT_String)
 		name = nameD.getString();
 	else
 		name = "UNKNOWN";
 
 	std::string type;
-	if (typeD.type() != DL::Data::T_String) {
+	if (typeD.type() != DL::DT_String) {
 		PR_LOG(L_ERROR) << "Entity " << name << " couldn't be load. No valid type given." << std::endl;
 		return;
 	} else {
@@ -278,13 +276,13 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		return;
 	}
 
-	setupVirtualEntity(group, entity, env);
+	setupTransformable(group, entity, env);
 
 	if (parent) {
 		entity->setTransform(parent->transform() * entity->transform());
 	}
 
-	if (localAreaD.type() == DL::Data::T_Bool) {
+	if (localAreaD.type() == DL::DT_Bool) {
 		if (localAreaD.getBool())
 			entity->setFlags(entity->flags() | EF_LocalArea);
 		else
@@ -295,7 +293,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	manag->addObject(entity);
 
 	for (size_t i = 0; i < group.anonymousCount(); ++i) {
-		if (group.at(i).type() == DL::Data::T_Group) {
+		if (group.at(i).type() == DL::DT_Group) {
 			DL::DataGroup child = group.at(i).getGroup();
 
 			if (child.id() == "entity")
@@ -315,13 +313,13 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 	populateObjectRegistry(RG_CAMERA, id, group, env);
 
 	std::string name;
-	if (nameD.type() == DL::Data::T_String)
+	if (nameD.type() == DL::DT_String)
 		name = nameD.getString();
 	else
 		name = "UNKNOWN";
 
 	std::string type;
-	if (typeD.type() != DL::Data::T_String) {
+	if (typeD.type() != DL::DT_String) {
 		if (typeD.isValid()) {
 			PR_LOG(L_ERROR) << "No valid camera type set" << std::endl;
 			return;
@@ -345,7 +343,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	setupVirtualEntity(group, camera, env);
+	setupTransformable(group, camera, env);
 
 	manag->addObject(camera);
 }
@@ -361,7 +359,7 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 
 	std::string type;
 
-	if (typeD.type() == DL::Data::T_String) {
+	if (typeD.type() == DL::DT_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
@@ -381,7 +379,7 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	setupVirtualEntity(group, light, env);
+	setupTransformable(group, light, env);
 
 	env->infiniteLightManager()->addObject(light);
 }
@@ -397,7 +395,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 	DL::Data typeD = group.getFromKey("type");
 
 	std::string name;
-	if (nameD.type() == DL::Data::T_String) {
+	if (nameD.type() == DL::DT_String) {
 		name = nameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "No emission name set" << std::endl;
@@ -410,7 +408,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 	}
 
 	std::string type;
-	if (typeD.type() == DL::Data::T_String) {
+	if (typeD.type() == DL::DT_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
@@ -455,7 +453,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 	std::string name;
 	std::string type;
 
-	if (nameD.type() == DL::Data::T_String) {
+	if (nameD.type() == DL::DT_String) {
 		name = nameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "No material name set" << std::endl;
@@ -467,7 +465,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (typeD.type() == DL::Data::T_String) {
+	if (typeD.type() == DL::DT_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
@@ -487,16 +485,16 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (shadeableD.type() == DL::Data::T_Bool)
+	if (shadeableD.type() == DL::DT_Bool)
 		mat->enableShading(shadeableD.getBool());
 
-	if (shadowD.type() == DL::Data::T_Bool)
+	if (shadowD.type() == DL::DT_Bool)
 		mat->enableShadow(shadowD.getBool());
 
-	if (selfShadowD.type() == DL::Data::T_Bool)
+	if (selfShadowD.type() == DL::DT_Bool)
 		mat->enableSelfShadow(selfShadowD.getBool());
 
-	if (cameraVisibleD.type() == DL::Data::T_Bool)
+	if (cameraVisibleD.type() == DL::DT_Bool)
 		mat->enableCameraVisibility(cameraVisibleD.getBool());
 
 	env->addMaterial(name, mat);
@@ -509,7 +507,7 @@ void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
 
 	std::string name;
 
-	if (nameD.type() == DL::Data::T_String) {
+	if (nameD.type() == DL::DT_String) {
 		name = nameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "No texture name set" << std::endl;
@@ -528,7 +526,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	std::string name;
 	std::string type;
 
-	if (nameD.type() == DL::Data::T_String) {
+	if (nameD.type() == DL::DT_String) {
 		name = nameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "No mesh name set" << std::endl;
@@ -540,7 +538,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (typeD.type() == DL::Data::T_String) {
+	if (typeD.type() == DL::DT_String) {
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
@@ -552,20 +550,13 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		}
 	}
 
-	TriMeshInlineParser parser;
-	auto mesh = parser.parse(env, group);
+	auto mesh = MeshParser::parse(env, group);
 
 	if (!mesh) {
 		PR_LOG(L_ERROR) << "Mesh " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
 		return;
 	}
 
-	PR_ASSERT(mesh, "After here it shouldn't be null");
-
-	boost::filesystem::path path = env->workingDir();
-	path /= (name+".cnt");
-
-	mesh->build(path.generic_wstring());
 	env->addMesh(name, mesh);
 }
 
@@ -575,7 +566,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 	DL::Data dataD = group.getFromKey("data");
 
 	std::string name;
-	if (nameD.type() == DL::Data::T_String) {
+	if (nameD.type() == DL::DT_String) {
 		name = nameD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "Couldn't get name for spectral entry." << std::endl;
@@ -587,94 +578,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	Spectrum spec(env->spectrumDescriptor());
-	if (dataD.type() == DL::Data::T_Group) {
-		DL::DataGroup grp = dataD.getGroup();
-		if (grp.isArray()) {
-			for (size_t i = 0; i < grp.anonymousCount() && i < spec.samples(); ++i) {
-				if (grp.at(i).isNumber())
-					spec.setValue(i, grp.at(i).getNumber());
-				else
-					PR_LOG(L_WARNING) << "Couldn't set spectrum entry at index " << i << std::endl;
-			}
-		} else if (grp.id() == "field") {
-			DL::Data defaultD = grp.getFromKey("default");
-
-			if (defaultD.isNumber()) {
-				for (uint32 i = 0; i < spec.samples(); ++i) {
-					spec.setValue(i, defaultD.getNumber());
-				}
-			}
-
-			for (uint32 i = 0;
-				 i < grp.anonymousCount() && i < spec.samples();
-				 ++i) {
-				DL::Data fieldD = grp.at(i);
-
-				if (fieldD.isNumber())
-					spec.setValue(i, fieldD.getNumber());
-			}
-		} else if (grp.id() == "rgb") {
-			if (grp.anonymousCount() == 3
-				&& grp.isAllAnonymousNumber()) {
-				RGBConverter::toSpec(spec,
-									 grp.at(0).getNumber(),
-									 grp.at(1).getNumber(),
-									 grp.at(2).getNumber());
-			}
-		} else if (grp.id() == "xyz") {
-			if (grp.anonymousCount() == 3
-				&& grp.isAllAnonymousNumber()) {
-				XYZConverter::toSpec(spec,
-									 grp.at(0).getNumber(),
-									 grp.at(1).getNumber(),
-									 grp.at(2).getNumber());
-			}
-		} else if (grp.id() == "temperature" || grp.id() == "blackbody") { // Luminance
-			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
-				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
-				spec.weightPhotometric();
-			}
-
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
-				spec *= grp.at(1).getNumber();
-			}
-		} else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw") { // Radiance
-			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
-				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
-			}
-
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
-				spec *= grp.at(1).getNumber();
-			}
-		} else if (grp.id() == "temperature_norm" || grp.id() == "blackbody_norm") { // Luminance Norm
-			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
-				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
-				spec.weightPhotometric();
-				spec.normalize();
-			}
-
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
-				spec *= grp.at(1).getNumber();
-			}
-		} else if (grp.id() == "temperature_raw_norm" || grp.id() == "blackbody_raw_norm") { // Radiance Norm
-			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
-				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
-				spec.normalize();
-			}
-
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
-				spec *= grp.at(1).getNumber();
-			}
-		}
-	}
-
-	//PR_LOG(L_INFO) << spec << std::endl;
-
+	Spectrum spec = SpectralParser::getSpectrum(env->spectrumDescriptor(), dataD);
 	env->addSpectrum(name, spec);
 }
 
@@ -686,15 +590,15 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	DL::Data fileD		= group.getFromKey("file");
 
 	std::string name;
-	if (nameD.type() == DL::Data::T_String)
+	if (nameD.type() == DL::DT_String)
 		name = nameD.getString();
 
 	std::map<std::string, std::string> overrides;
-	if (overridesD.type() == DL::Data::T_String)
+	if (overridesD.type() == DL::DT_String)
 		overrides[""] = overridesD.getString();
 
 	std::string file;
-	if (fileD.type() == DL::Data::T_String) {
+	if (fileD.type() == DL::DT_String) {
 		file = fileD.getString();
 	} else {
 		PR_LOG(L_ERROR) << "Couldn't get file for subgraph entry." << std::endl;
@@ -702,7 +606,7 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	}
 
 	std::string loader;
-	if (loaderD.type() == DL::Data::T_String) {
+	if (loaderD.type() == DL::DT_String) {
 		loader = loaderD.getString();
 	} else {
 		PR_LOG(L_WARNING) << "No valid loader set. Assuming 'obj'." << std::endl;
@@ -714,192 +618,13 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 
 		WavefrontLoader loader(overrides);
 
-		if (flipNormalD.type() == DL::Data::T_Bool)
+		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());
 
 		loader.load(file, env);
 	} else {
 		PR_LOG(L_ERROR) << "Unknown " << loader << " loader." << std::endl;
 	}
-}
-
-Eigen::Matrix4f SceneLoader::getMatrix(const DL::DataGroup& grp, bool& ok)
-{
-	ok = false;
-	if (grp.anonymousCount() == 16) {
-		ok = true;
-		for (int i = 0; i < 16; ++i) {
-			if (!grp.at(i).isNumber()) {
-				ok = false;
-				break;
-			}
-		}
-
-		if (ok) {
-			Eigen::Matrix4f m;
-			for (int i = 0; i < 4; ++i) {
-				for (int j = 0; j < 4; ++j) {
-					m(i, j) = grp.at(i * 4 + j).getNumber();
-				}
-			}
-
-			return m;
-		}
-	}
-
-	return Eigen::Matrix4f::Identity();
-}
-
-Vector3f SceneLoader::getVector(const DL::DataGroup& arr, bool& ok)
-{
-	Vector3f res(0, 0, 0);
-
-	if (arr.anonymousCount() == 2) {
-		if (arr.at(0).isNumber() && arr.at(1).isNumber()) {
-			res = Vector3f(arr.at(0).getNumber(),
-						   arr.at(1).getNumber(),
-						   0);
-
-			ok = true;
-		} else {
-			ok = false;
-		}
-	} else if (arr.anonymousCount() == 3) {
-		if (arr.at(0).isNumber() && arr.at(1).isNumber() && arr.at(2).isNumber()) {
-			res = Vector3f(arr.at(0).getNumber(),
-						   arr.at(1).getNumber(),
-						   arr.at(2).getNumber());
-
-			ok = true;
-		} else {
-			ok = false;
-		}
-	} else {
-		ok = false;
-	}
-
-	return res;
-}
-
-Eigen::Quaternionf SceneLoader::getRotation(const DL::Data& data, bool& ok)
-{
-	if (data.type() == DL::Data::T_Group) {
-		DL::DataGroup grp = data.getGroup();
-		if (grp.isArray() && grp.anonymousCount() == 4) {
-			if (grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber() && grp.at(3).isNumber()) {
-				ok = true;
-				return Eigen::Quaternionf(grp.at(0).getNumber(),
-										  grp.at(1).getNumber(),
-										  grp.at(2).getNumber(),
-										  grp.at(3).getNumber());
-			} else {
-				ok = false;
-			}
-		} else if (grp.id() == "euler" && grp.anonymousCount() == 3 && grp.at(0).isNumber() && grp.at(1).isNumber() && grp.at(2).isNumber()) {
-			float x = grp.at(0).getNumber() * PR_PI / 180;
-			float y = grp.at(1).getNumber() * PR_PI / 180;
-			float z = grp.at(2).getNumber() * PR_PI / 180;
-
-			Eigen::AngleAxisf ax(x, Vector3f::UnitX());
-			Eigen::AngleAxisf ay(y, Vector3f::UnitY());
-			Eigen::AngleAxisf az(z, Vector3f::UnitZ());
-
-			ok = true;
-			return az * ay * ax;
-		}
-	}
-
-	return Eigen::Quaternionf::Identity();
-}
-
-std::shared_ptr<FloatSpectralShadingSocket> SceneLoader::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
-{
-	if (allowScalar && dataD.isNumber()) {
-		return std::make_shared<ConstSpectralShadingSocket>(
-			Spectrum(env->spectrumDescriptor(), dataD.getNumber()));
-	} else if (dataD.type() == DL::Data::T_String) {
-		if (env->hasSpectrum(dataD.getString()))
-			return std::make_shared<ConstSpectralShadingSocket>(env->getSpectrum(dataD.getString()));
-		else
-			PR_LOG(L_WARNING) << "Couldn't find spectrum " << dataD.getString() << " for material" << std::endl;
-	} else if (dataD.type() == DL::Data::T_Group) {
-		std::string name = dataD.getGroup().id();
-
-		if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
-			DL::Data nameD = dataD.getGroup().at(0);
-			if (nameD.type() == DL::Data::T_String) {
-				if (env->isShadingSocket<FloatSpectralShadingSocket>(nameD.getString()))
-					return env->getShadingSocket<FloatSpectralShadingSocket>(nameD.getString());
-				else
-					PR_LOG(L_WARNING) << "Unknown spectral texture " << nameD.getString() << "." << std::endl;
-			}
-		} else {
-			PR_LOG(L_WARNING) << "Unknown data entry." << std::endl;
-		}
-	} else if (dataD.isValid()) {
-		PR_LOG(L_WARNING) << "Unknown texture entry." << std::endl;
-	}
-
-	return nullptr;
-}
-
-std::shared_ptr<FloatScalarShadingSocket> SceneLoader::getScalarOutput(Environment* env, const DL::Data& dataD)
-{
-	if (dataD.isNumber()) {
-		return std::make_shared<ConstScalarShadingSocket>(dataD.getNumber());
-	} else if (dataD.type() == DL::Data::T_Group) {
-		std::string name = dataD.getGroup().id();
-
-		if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
-			DL::Data nameD = dataD.getGroup().at(0);
-			if (nameD.type() == DL::Data::T_String) {
-				if (env->isShadingSocket<FloatScalarShadingSocket>(nameD.getString()))
-					return env->getShadingSocket<FloatScalarShadingSocket>(nameD.getString());
-				else
-					PR_LOG(L_WARNING) << "Unknown scalar texture " << nameD.getString() << "." << std::endl;
-			}
-		} else {
-			PR_LOG(L_WARNING) << "Unknown data entry." << std::endl;
-		}
-	} else if (dataD.isValid()) {
-		PR_LOG(L_WARNING) << "Unknown texture entry." << std::endl;
-	}
-
-	return nullptr;
-}
-
-std::shared_ptr<FloatVectorShadingSocket> SceneLoader::getVectorOutput(Environment* env, const DL::Data& dataD)
-{
-	if (dataD.type() == DL::Data::T_Group) {
-		if (dataD.getGroup().isArray()) {
-			bool ok;
-			const auto vec = getVector(dataD.getGroup(), ok);
-
-			if (ok) {
-				return std::make_shared<ConstVectorShadingSocket>(vec);
-			} else {
-				PR_LOG(L_WARNING) << "Invalid vector entry." << std::endl;
-			}
-		} else {
-			std::string name = dataD.getGroup().id();
-
-			if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
-				DL::Data nameD = dataD.getGroup().at(0);
-				if (nameD.type() == DL::Data::T_String) {
-					if (env->isShadingSocket<FloatVectorShadingSocket>(nameD.getString()))
-						return env->getShadingSocket<FloatVectorShadingSocket>(nameD.getString());
-					else
-						PR_LOG(L_WARNING) << "Unknown vector texture " << nameD.getString() << std::endl;
-				}
-			} else {
-				PR_LOG(L_WARNING) << "Unknown data entry." << std::endl;
-			}
-		}
-	} else if (dataD.isValid()) {
-		PR_LOG(L_WARNING) << "Unknown texture entry." << std::endl;
-	}
-
-	return nullptr;
 }
 
 template <typename T>
@@ -919,19 +644,19 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 	Registry& reg = env->registry();
 
 	switch (value.type()) {
-	case DL::Data::T_Integer:
+	case DL::DT_Integer:
 		varAddReg<int64>(reg, regGroup, uuid, hasID, key, (int64)value.getInt());
 		break;
-	case DL::Data::T_Float:
+	case DL::DT_Float:
 		varAddReg(reg, regGroup, uuid, hasID, key, value.getFloat());
 		break;
-	case DL::Data::T_Bool:
+	case DL::DT_Bool:
 		varAddReg(reg, regGroup, uuid, hasID, key, value.getBool());
 		break;
-	case DL::Data::T_String:
+	case DL::DT_String:
 		varAddReg(reg, regGroup, uuid, hasID, key, value.getString());
 		break;
-	case DL::Data::T_Group: {
+	case DL::DT_Group: {
 		DL::DataGroup grp = value.getGroup();
 		if (grp.isArray() && grp.isAllNumber()) {
 			std::vector<float> arr(grp.anonymousCount());
@@ -944,7 +669,7 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 			bool good = true;
 			for (size_t i = 0; i < grp.anonymousCount(); ++i) {
 				DL::Data entry = grp.at(i);
-				if (entry.type() != DL::Data::T_String) {
+				if (entry.type() != DL::DT_String) {
 					good = false;
 					break;
 				}
@@ -956,7 +681,7 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 			else
 				PR_LOG(L_ERROR) << "Invalid registry array type." << std::endl;
 		} else if (grp.id() == "texture") {
-			if (grp.anonymousCount() == 1 && grp.at(0).type() == DL::Data::T_String) {
+			if (grp.anonymousCount() == 1 && grp.at(0).type() == DL::DT_String) {
 				std::stringstream stream;
 				stream << "{t} " << grp.at(0).getString();
 				varAddReg(reg, regGroup, uuid, hasID, key, stream.str());
@@ -983,7 +708,7 @@ void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 			|| entry.key() == "scale")
 			continue; // Skip those entries
 
-		if (entry.type() != DL::Data::T_None)
+		if (entry.type() != DL::DT_None)
 			addRegistryEntry(regGroup, id, true, entry.key(), entry, env);
 	}
 }

@@ -1,9 +1,7 @@
 #include "WavefrontLoader.h"
-#include "geometry/Face.h"
-#include "mesh/TriMesh.h"
-
 #include "Environment.h"
 #include "Logger.h"
+#include "mesh/MeshContainer.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -39,7 +37,7 @@ void WavefrontLoader::load(const std::string& file, Environment* env)
 			PR_LOG(L_ERROR) << "Wavefront file: " << err << std::endl;
 		}
 
-		std::vector<uint32> indices[3];
+		std::vector<uint32> indices;
 		std::vector<float> vertices[3];
 		std::vector<float> normals[3];
 		std::vector<float> uvs[2];
@@ -90,20 +88,16 @@ void WavefrontLoader::load(const std::string& file, Environment* env)
 		}
 
 		const tinyobj::shape_t& shape = shapes[0];
-		indices[0].reserve(shape.mesh.indices.size() / 3);
-		indices[1].reserve(shape.mesh.indices.size() / 3);
-		indices[2].reserve(shape.mesh.indices.size() / 3);
+		indices.reserve(shape.mesh.indices.size());
+		for (size_t i = 0; i < shape.mesh.indices.size(); ++i)
+			indices.push_back(shape.mesh.indices.at(i).vertex_index);
 
-		// TODO: Only support vertex indices!
-		for (size_t i = 0; i < shape.mesh.indices.size() / 3; ++i)
-			for (size_t k = 0; k < 3; ++k)
-				indices[k].push_back(shape.mesh.indices[3 * i + k].vertex_index);
-
-		auto mesh = std::make_shared<TriMesh>();
+		auto mesh = std::make_shared<MeshContainer>();
 		mesh->setVertices(vertices[0], vertices[1], vertices[2]);
 		mesh->setNormals(normals[0], normals[1], normals[2]);
 		mesh->setUVs(uvs[0], uvs[1]);
-		mesh->setIndices(indices[0], indices[1], indices[2]);
+		mesh->setIndices(indices);
+		mesh->setFaceVertexCount(std::vector<uint8>(shape.mesh.indices.size() / 3, 3));
 
 		std::string name = shape.name;
 		if (mOverrides.count(shape.name))

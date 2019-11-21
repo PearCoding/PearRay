@@ -2,7 +2,7 @@
 
 namespace PR {
 ICamera::ICamera(uint32 id, const std::string& name)
-	: VirtualEntity(id, name)
+	: ITransformable(id, name)
 {
 }
 

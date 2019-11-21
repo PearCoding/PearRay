@@ -44,8 +44,7 @@ public:
 	// VirtualEntity
 	std::string type() const override;
 
-protected:
-	void onFreeze(RenderContext* context) override; // Cache
+	void beforeSceneBuild() override; // Cache
 
 private:
 	void constructRay(float nx, float ny,
@@ -181,8 +180,6 @@ float StandardCamera::apertureRadius() const
 
 Ray StandardCamera::constructRay(const CameraSample& sample) const
 {
-	PR_ASSERT(isFrozen(), "has to be frozen");
-
 	const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.x() - 0.5f);
 	const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.y() - 0.5f);
 
@@ -223,9 +220,9 @@ void StandardCamera::constructRay(float nx, float ny,
 }
 
 // Cache
-void StandardCamera::onFreeze(RenderContext* context)
+void StandardCamera::beforeSceneBuild()
 {
-	ICamera::onFreeze(context);
+	ICamera::beforeSceneBuild();
 
 	mDirection_Cache = (normalMatrix() * mLocalDirection).normalized();
 	mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();

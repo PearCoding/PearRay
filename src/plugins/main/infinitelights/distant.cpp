@@ -47,10 +47,9 @@ public:
 		return stream.str();
 	}
 
-protected:
-	void onFreeze(RenderContext* context) override
+	void beforeSceneBuild() override
 	{
-		VirtualEntity::onFreeze(context);
+		IObject::beforeSceneBuild();
 
 		mDirection_Cache = normalMatrix() * (-mDirection);
 		mDirection_Cache.normalize();

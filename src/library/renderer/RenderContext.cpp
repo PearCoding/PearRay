@@ -75,6 +75,8 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
 
+	mScene->beforeRender(this);
+
 	/* Setup entities */
 	mEmissiveSurfaceArea = 0.0f;
 	for (auto entity : mScene->entities()) {
@@ -146,6 +148,8 @@ void RenderContext::notifyEnd()
 
 	if (isFinished() && mIntegrator)
 		mIntegrator->onEnd();
+
+	mScene->afterRender(this);
 }
 
 size_t RenderContext::tileCount() const

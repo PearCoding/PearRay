@@ -9,12 +9,12 @@ class DataGroup;
 }
 
 namespace PR {
-class TriMesh;
+class MeshContainer;
 
 class SceneLoader;
 class Environment;
-class TriMeshInlineParser {
+class MeshParser {
 public:
-	std::shared_ptr<PR::TriMesh> parse(Environment* env, const DL::DataGroup& group) const;
+	static std::shared_ptr<PR::MeshContainer> parse(Environment* env, const DL::DataGroup& group);
 };
 } // namespace PR
