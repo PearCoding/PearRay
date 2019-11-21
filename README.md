@@ -1,4 +1,5 @@
-# PearRay [![GitHub Tag](https://img.shields.io/github/tag/PearCoding/PearRay.svg)]() [![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
+# PearRay [![GitHub Tag](https://img.shields.io/github/tag/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/releases) [![Build Status](https://travis-ci.org/PearCoding/PearRay.svg?branch=master)](https://travis-ci.org/PearCoding/PearRay)
+
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/PearCoding/PearRay/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/PearCoding/PearRay.svg)](https://github.com/PearCoding/PearRay/issues)
 [![Coverage Status](https://coveralls.io/repos/github/PearCoding/PearRay/badge.svg?branch=master)](https://coveralls.io/github/PearCoding/PearRay?branch=master)
@@ -18,21 +19,26 @@ Experimental high accurate spectral stream path and ray tracer with Bidirect Ray
 :exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)** :exclamation:
 
 ## Blender Addon
+
 There is an open source (still experimental) blender integration addon available [here](https://github.com/PearCoding/PearRay-Blender).
 
 ## Dependencies
- - Boost http://www.boost.org/
- - Eigen3 http://eigen.tuxfamily.org
- - tinyobjloader https://github.com/syoyo/tinyobjloader (submodule)
- - simdpp https://github.com/p12tic/libsimdpp (submodule)
- - DataLisp https://github.com/PearCoding/DataLisp (submodule)
- - OpenImageIO https://sites.google.com/site/openimageio/home
- - Intel Threading Building Blocks https://www.threadingbuildingblocks.org/
+
+- Boost <http://www.boost.org/>
+- Eigen3 <http://eigen.tuxfamily.org>
+- tinyobjloader <https://github.com/syoyo/tinyobjloader> (submodule)
+- simdpp <https://github.com/p12tic/libsimdpp> (submodule)
+- DataLisp <https://github.com/PearCoding/DataLisp> (submodule)
+- OpenImageIO <https://sites.google.com/site/openimageio/home>
+- Intel Threading Building Blocks <https://www.threadingbuildingblocks.org/>
 
 ### Optional
- - OSL https://github.com/imageworks/OpenShadingLanguage
- - Qt https://www.qt.io/
- - pybind11 https://github.com/pybind/pybind11 (submodule)
+
+- OpenSubdiv <https://github.com/PixarAnimationStudios/OpenSubdiv>
+- OSL <https://github.com/imageworks/OpenShadingLanguage>
+- Qt <https://www.qt.io/>
+- pybind11 <https://github.com/pybind/pybind11> (submodule)
 
 ## Wiki
+
 See [Wiki](https://github.com/PearCoding/PearRay/wiki) for more information, examples and tutorials.

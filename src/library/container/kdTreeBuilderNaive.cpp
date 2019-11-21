@@ -34,7 +34,7 @@ struct kdNodeBuilderNaive {
 
 struct kdInnerNodeBuilderNaive : public kdNodeBuilderNaive {
 	kdInnerNodeBuilderNaive(size_t id, uint8 axis, float sp,
-					   kdNodeBuilderNaive* l, kdNodeBuilderNaive* r, const BoundingBox& b)
+							kdNodeBuilderNaive* l, kdNodeBuilderNaive* r, const BoundingBox& b)
 		: kdNodeBuilderNaive(id, false, b)
 		, axis(axis)
 		, splitPos(sp)
@@ -324,9 +324,9 @@ static void distributeObjects(const std::vector<PrimitiveNaive*>& objs, SidePlan
 }
 
 inline static kdNodeBuilderNaive* createLeafNode(void* observer,
-										   kdTreeBuilderNaive::AddedCallback addedCallback,
-										   std::vector<PrimitiveNaive*>& objs,
-										   const BoundingBox& V)
+												 kdTreeBuilderNaive::AddedCallback addedCallback,
+												 std::vector<PrimitiveNaive*>& objs,
+												 const BoundingBox& V)
 {
 	kdLeafNodeBuilderNaive* leaf = new kdLeafNodeBuilderNaive(-1, V);
 	for (auto obj : objs) {
@@ -338,10 +338,10 @@ inline static kdNodeBuilderNaive* createLeafNode(void* observer,
 }
 
 static kdNodeBuilderNaive* buildNode(void* observer,
-								kdTreeBuilderNaive::CostCallback costCallback,
-								kdTreeBuilderNaive::AddedCallback addedCallback,
-								std::vector<PrimitiveNaive*>& objs,
-								const BoundingBox& V, uint32 depth, uint32 maxDepth, bool elementWise)
+									 kdTreeBuilderNaive::CostCallback costCallback,
+									 kdTreeBuilderNaive::AddedCallback addedCallback,
+									 std::vector<PrimitiveNaive*>& objs,
+									 const BoundingBox& V, uint32 depth, uint32 maxDepth, bool elementWise)
 {
 	if (objs.empty() || V.surfaceArea() <= PR_EPSILON || depth > maxDepth) {
 		// Empty leaf or very tiny volume or max depth.
@@ -360,10 +360,10 @@ static kdNodeBuilderNaive* buildNode(void* observer,
 		costIntersection /= objs.size();
 	}
 
-	int dim = 0;
-	float v = 0;
-	float c = std::numeric_limits<float>::infinity();
-	SidePlaneNaive side;
+	int dim				= 0;
+	float v				= 0;
+	float c				= std::numeric_limits<float>::infinity();
+	SidePlaneNaive side = SP_Left;
 	BoundingBox vl, vr;
 	findSplit(costIntersection, objs, V, dim, v, c, side, vl, vr);
 
@@ -384,9 +384,9 @@ static kdNodeBuilderNaive* buildNode(void* observer,
 	std::vector<PrimitiveNaive*>().swap(objs);
 
 	return new kdInnerNodeBuilderNaive(-1, dim, v,
-								  buildNode(observer, costCallback, addedCallback, left, vl, depth + 1, maxDepth, elementWise),
-								  buildNode(observer, costCallback, addedCallback, right, vr, depth + 1, maxDepth, elementWise),
-								  V);
+									   buildNode(observer, costCallback, addedCallback, left, vl, depth + 1, maxDepth, elementWise),
+									   buildNode(observer, costCallback, addedCallback, right, vr, depth + 1, maxDepth, elementWise),
+									   V);
 }
 
 void kdTreeBuilderNaive::build(size_t size)
@@ -410,7 +410,7 @@ void kdTreeBuilderNaive::build(size_t size)
 
 	mMaxDepth = static_cast<uint32>(std::ceil(8 + 1.5 * std::log2(size)));
 
-	std::vector<PrimitiveNaive*> primitives;		// Will be cleared to save memory
+	std::vector<PrimitiveNaive*> primitives;	 // Will be cleared to save memory
 	std::vector<PrimitiveNaive*> primitivesCopy; // Copy to be deleted later
 
 	BoundingBox V;

@@ -1,8 +1,8 @@
 #include "RenderTileMap.h"
+#include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "math/Generator.h"
-#include "Profiler.h"
 
 #include "Logger.h"
 namespace PR {
@@ -18,7 +18,7 @@ RenderTileMap::RenderTileMap(uint32 xcount, uint32 ycount, uint32 tilewidth, uin
 RenderTileMap::~RenderTileMap()
 {
 	for (RenderTile* tile : mTileMap) {
-		if(tile)
+		if (tile)
 			delete tile;
 	}
 }
@@ -29,13 +29,13 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 
 	// Clear previous data
 	for (RenderTile* tile : mTileMap) {
-		if(tile)
+		if (tile)
 			delete tile;
 	}
 	mTileMap.clear();
 
 	// New data
-	mTileMap.resize(mTileXCount * mTileYCount, nullptr);
+	mTileMap.resize(mTileXCount * static_cast<size_t>(mTileYCount), nullptr);
 
 	switch (mode) {
 	default:

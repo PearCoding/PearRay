@@ -32,7 +32,7 @@ public:
 	inline void setFlags(uint8 f);
 	inline uint8 flags() const;
 
-	// FIXME: Unfortunatly we have to disable alignment for the transformations.
+	// Unfortunately we have to disable alignment for the transformations.
 	// A SIGSEV is raised in release build otherwise.
 	// It may be a bug in Eigen or somewhere in my own code.
 	typedef Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign> Transform;
