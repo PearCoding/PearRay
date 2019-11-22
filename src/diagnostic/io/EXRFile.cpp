@@ -119,7 +119,7 @@ bool EXRFile::open(const QString& filename)
 	mWidth   = dw.max.x - dw.min.x + 1;
 	mHeight  = dw.max.y - dw.min.y + 1;
 
-	size_t size = mWidth * mHeight;
+	int size = mWidth * mHeight;
 
 	// Get layers
 	const ChannelList& channels = file.header().channels();
@@ -189,7 +189,7 @@ bool EXRFile::open(const QString& filename)
 			}
 
 			layer->channelNames()[k] = plainChannelName;
-			layer->data()[k].resize((int)size);
+			layer->data()[k].resize(size);
 
 			const Channel* channel = channels.findChannel(ch.toStdString());
 			float* ptr			   = layer->data()[k].data();
@@ -239,7 +239,7 @@ bool EXRFile::open(const QString& filename)
 		for (auto p : halfFormat) {
 			float* ptr = layer->data()[p.first].data();
 
-			for (size_t i = 0; i < size; ++i) {
+			for (int i = 0; i < size; ++i) {
 				ptr[i] = p.second[i];
 			}
 			delete[] p.second;
