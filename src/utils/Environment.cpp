@@ -1,5 +1,5 @@
 #include "Environment.h"
-
+#include "CacheManager.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "emission/EmissionManager.h"
@@ -44,6 +44,7 @@ Environment::Environment(const std::wstring& workdir,
 	, mEmissionManager(std::make_shared<EmissionManager>())
 	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
 	, mIntegratorManager(std::make_shared<IntegratorManager>())
+	, mCacheManager(std::make_shared<CacheManager>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
@@ -111,6 +112,9 @@ void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMappe
 
 void Environment::loadPlugins(const std::wstring& basedir)
 {
+	// First load possible embedded plugins
+	mPluginManager->loadEmbeddedPlugins();
+
 #ifdef PR_DEBUG
 	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
 #else

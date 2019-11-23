@@ -100,4 +100,4 @@ public:
 
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::IntAOFactory, "int_ambientocclusion", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::IntAOFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

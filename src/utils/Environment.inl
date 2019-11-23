@@ -8,6 +8,7 @@ inline std::shared_ptr<CameraManager> Environment::cameraManager() const { retur
 inline std::shared_ptr<EmissionManager> Environment::emissionManager() const { return mEmissionManager; }
 inline std::shared_ptr<InfiniteLightManager> Environment::infiniteLightManager() const { return mInfiniteLightManager; }
 inline std::shared_ptr<IntegratorManager> Environment::integratorManager() const { return mIntegratorManager; }
+inline std::shared_ptr<CacheManager> Environment::cacheManager() const { return mCacheManager; }
 
 inline Spectrum Environment::getSpectrum(const std::string& name) const
 {
@@ -126,7 +127,7 @@ inline bool Environment::hasMapSocket(const std::string& name) const
 }
 
 inline void Environment::addMapSocket(const std::string& name,
-						 const std::shared_ptr<FloatSpectralMapSocket>& m)
+									  const std::shared_ptr<FloatSpectralMapSocket>& m)
 {
 	PR_ASSERT(!hasMapSocket(name), "Given name should be unique");
 	mNamedMapSockets[name] = m;

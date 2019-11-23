@@ -1,3 +1,4 @@
+#include "CacheManager.h"
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
@@ -234,6 +235,8 @@ public:
 
 	void beforeSceneBuild() override
 	{
+		IEntity::beforeSceneBuild();
+
 		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]";
 
 		mMesh->triangulate();
@@ -326,20 +329,28 @@ public:
 		std::wstring customCNT = reg.getForObject<std::wstring>(RG_ENTITY, uuid, "cnt", L"");
 
 		boost::filesystem::path path;
+		bool load_only = false;
 		if (customCNT.empty()) {
-			path = env.workingDir();
-			path /= (name + ".cnt");
+			path = env.cacheManager()->requestFile("mesh", name + ".cnt", load_only);
 		} else {
-			path = boost::filesystem::absolute(customCNT, env.workingDir());
+			path	  = boost::filesystem::absolute(customCNT, env.workingDir());
+			load_only = true;
 		}
 
 		if (!env.hasMesh(mesh_name))
 			return nullptr;
-		else
+		else {
+			auto mesh = env.getMesh(mesh_name);
+			if (!mesh->isValid()) {
+				PR_LOG(L_ERROR) << "Mesh " << mesh_name << " is invalid." << std::endl;
+				return nullptr;
+			}
+
 			return std::make_shared<TriMeshEntity>(id, name,
-												   path.generic_wstring(), !customCNT.empty(),
-												   env.getMesh(mesh_name),
+												   path.generic_wstring(), load_only,
+												   mesh,
 												   materials, emsID);
+		}
 	}
 
 	const std::vector<std::string>& getNames() const
@@ -355,4 +366,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::TriMeshEntityFactory, "ent_mesh", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::TriMeshEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

@@ -1,3 +1,1 @@
-
-
 PR_ADD_PLUGIN(cam_standardcamera CPP standardcamera.cpp)

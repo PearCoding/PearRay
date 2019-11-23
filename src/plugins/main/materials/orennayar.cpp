@@ -125,4 +125,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::OrenNayarMaterialFactory, "mat_orennayar", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::OrenNayarMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

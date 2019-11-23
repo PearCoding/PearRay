@@ -35,8 +35,10 @@ public:
 
 		auto names = ptr->getNames();
 		for (const std::string& alias : names) {
-			if (mFactories.count(alias))
-				PR_LOG(L_WARNING) << "Name " << alias << " already in use! Replacing it." << std::endl;
+			if (mFactories.count(alias)) {
+				PR_LOG(L_WARNING) << "Name " << alias << " already in use! Ignoring it." << std::endl;
+				continue;
+			}
 
 			mFactories[alias] = ptr;
 		}

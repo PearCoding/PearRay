@@ -137,4 +137,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::GlassMaterialFactory, "mat_glass", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::GlassMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

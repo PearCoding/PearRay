@@ -144,4 +144,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::SubdivMeshEntityFactory, "ent_subdiv", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::SubdivMeshEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

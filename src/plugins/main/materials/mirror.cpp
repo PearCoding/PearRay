@@ -91,4 +91,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::MirrorMaterialFactory, "mat_mirror", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::MirrorMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

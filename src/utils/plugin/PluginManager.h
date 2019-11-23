@@ -2,13 +2,15 @@
 
 #include "Plugin.h"
 #include <boost/dll.hpp>
-#include <map>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace PR {
 
 class Registry;
 class PR_LIB_UTILS PluginManager {
 public:
+	void loadEmbeddedPlugins();
 	std::shared_ptr<IPlugin> load(const std::wstring& path, const Registry& reg,
 								  bool useFallbacks = true);
 
@@ -21,7 +23,8 @@ public:
 	std::string dumpInformation() const;
 
 private:
-	bool try_load(const std::wstring& path, const Registry& reg, bool useFallbacks);
+	bool tryLoad(const std::wstring& path, const Registry& reg, bool useFallbacks);
+	bool loadInterface(const std::string& name, class PluginInterface* interface);
 
 	struct PluginLibPair {
 		std::shared_ptr<IPlugin> Plugin;
@@ -32,6 +35,7 @@ private:
 			Library.unload();
 		}
 	};
-	std::map<std::wstring, PluginLibPair> mLibraries;
+	std::unordered_map<std::wstring, PluginLibPair> mLibraries;
+	std::unordered_set<std::string> mEmbeddedPlugins;
 };
 } // namespace PR

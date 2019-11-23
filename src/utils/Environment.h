@@ -25,6 +25,7 @@ class InfiniteLightManager;
 class IntegratorManager;
 class IIntegrator;
 class RenderFactory;
+class CacheManager;
 
 using ShadingSocketVariantPtr = boost::variant<
 	std::shared_ptr<FloatScalarShadingSocket>,
@@ -56,6 +57,7 @@ public:
 	inline std::shared_ptr<EmissionManager> emissionManager() const;
 	inline std::shared_ptr<InfiniteLightManager> infiniteLightManager() const;
 	inline std::shared_ptr<IntegratorManager> integratorManager() const;
+	inline std::shared_ptr<CacheManager> cacheManager() const;
 
 	inline Spectrum getSpectrum(const std::string& name) const;
 	inline bool hasSpectrum(const std::string& name) const;
@@ -141,6 +143,7 @@ private:
 	std::shared_ptr<EmissionManager> mEmissionManager;
 	std::shared_ptr<InfiniteLightManager> mInfiniteLightManager;
 	std::shared_ptr<IntegratorManager> mIntegratorManager;
+	std::shared_ptr<CacheManager> mCacheManager;
 
 	std::map<std::string, PR::Spectrum> mSpectrums;
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;

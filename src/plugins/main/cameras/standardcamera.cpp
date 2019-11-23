@@ -286,4 +286,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::StandardCameraFactory, "cam_standardcamera", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::StandardCameraFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

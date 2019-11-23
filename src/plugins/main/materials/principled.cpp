@@ -350,4 +350,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::PrincipledMaterialFactory, "mat_principled", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::PrincipledMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

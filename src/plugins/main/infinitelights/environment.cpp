@@ -141,4 +141,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::EnvironmentLightFactory, "inf_environment", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::EnvironmentLightFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

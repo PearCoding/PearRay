@@ -8,6 +8,8 @@ project(PearRay
 	VERSION 0.12
 	DESCRIPTION "Experimental raytracer")
 
+set(PR_PLUGIN_VERSION "1.0")
+
 #SETS
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
    	SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
@@ -44,6 +46,7 @@ option(PR_WITH_UTILITY_LIBRARY 	"Compile utility library. Strongly recommended!"
 option(PR_WITH_CLIENT 			"Compile commandline client. Strongly recommended!" ON)
 option(PR_WITH_MAIN_PLUGINS 	"Compile main plugins. Recommended!" ON)
 option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins." ON)
+option(PR_EMBED_PLUGINS			"Embed plugins into utility library" ON)
 option(PR_WITH_DIAGNOSTIC 		"Compile the additional PearRayDiagnostic Viewer based on the QT library. Useful if no exr viewer is available" ON)
 option(PR_WITH_PROFILER 		"Compile with internal profiler." ON)
 option(PR_BUILD_TESTS 			"Build tests." ON)
@@ -62,6 +65,7 @@ option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds 
 option(PR_USE_CCACHE 			"Use ccache if available." ON)
 # march should be default, as we use simdpp
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
+option(BUILD_SHARED_LIBS		"Build shared library" ON)
 
 find_package(Threads REQUIRED)
 
@@ -147,11 +151,19 @@ endif()
 # Libraries
 add_subdirectory(src/library)
 
+# If embedded, plugins have to be imported first, as they are added TO pr_lib_utils
+if(PR_EMBED_PLUGINS)
+add_subdirectory(src/plugins)
+endif()
+
 IF(PR_WITH_UTILITY_LIBRARY)
 	add_subdirectory(src/utils)
 ENDIF(PR_WITH_UTILITY_LIBRARY)
 
+# If not embedded, plugins have to be imported later, as they are depended ON pr_lib_utils
+if(NOT PR_EMBED_PLUGINS)
 add_subdirectory(src/plugins)
+endif()
 
 IF(PR_HAS_PYTHON_API)
 	add_subdirectory(src/python)

@@ -415,4 +415,4 @@ public:
 
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::IntDirectFactory, "int_direct", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::IntDirectFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

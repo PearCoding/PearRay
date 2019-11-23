@@ -425,4 +425,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::MicrofacetMaterialFactory, "mat_microfacet", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::MicrofacetMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

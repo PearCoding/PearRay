@@ -215,4 +215,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::WardMaterialFactory, "mat_ward", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::WardMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

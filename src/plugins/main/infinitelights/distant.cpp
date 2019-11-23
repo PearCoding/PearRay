@@ -90,4 +90,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::DistantLightFactory, "inf_distant", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::DistantLightFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

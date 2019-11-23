@@ -125,7 +125,6 @@ private:                                           \
 #define PR_NO_SANITIZE_UNDEFINED
 #endif
 
-#if !defined(PR_LIB_STATIC)
 #if defined(PR_CC_MSC)
 #define PR_EXPORT __declspec(dllexport)
 #define PR_IMPORT __declspec(dllimport)
@@ -135,21 +134,25 @@ private:                                           \
 #else
 #error Unsupported compiler
 #endif
-#else
-#define PR_EXPORT
-#define PR_IMPORT
-#endif
 
+#ifndef PR_LIB_STATIC
 #if defined(PR_LIB_BUILD)
 #define PR_LIB PR_EXPORT
 #else
 #define PR_LIB PR_IMPORT
 #endif
+#else
+#define PR_LIB
+#endif
 
+#ifndef PR_LIB_UTILS_STATIC
 #if defined(PR_LIB_UTILS_BUILD)
 #define PR_LIB_UTILS PR_EXPORT
 #else
 #define PR_LIB_UTILS PR_IMPORT
+#endif
+#else
+#define PR_LIB_UTILS
 #endif
 
 #define PR_PLUGIN_API_VERSION 1

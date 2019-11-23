@@ -125,6 +125,8 @@ public:
 
 	void beforeSceneBuild() override
 	{
+		IEntity::beforeSceneBuild();
+
 		const float area = surfaceArea(0);
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 	}
@@ -185,4 +187,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::PlaneEntityFactory, "ent_plane", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::PlaneEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

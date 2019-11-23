@@ -31,18 +31,22 @@ jobs:
   fast_finish: true
   include:
     - compiler: gcc
-      env: USE_COVERAGE=ON PYTHON=3.6
+      env: USE_COVERAGE=ON PYTHON=3.6 EMBED_PLUGINS=OFF
     - compiler: gcc
-      env: USE_COVERAGE=OFF PYTHON=2.7
+      env: USE_COVERAGE=ON PYTHON=3.6 EMBED_PLUGINS=ON
+    - compiler: gcc
+      env: USE_COVERAGE=OFF PYTHON=2.7 EMBED_PLUGINS=OFF
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.6
+      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=OFF
+    - compiler: clang
+      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=ON
 before_script:
   - $CXX --version
   - cmake --version
   - mkdir build
   - cd build
   - if [ $USE_COVERAGE == ON ]; then lcov --directory . --zerocounters; fi
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_USE_LTO_ONLY_RELEASE=ON -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_USE_LTO_ONLY_RELEASE=ON -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON -DPR_EMBED_PLUGINS=$EMBED_PLUGINS ..
 script:
   - make $MAKE_FLAGS
 after_success:

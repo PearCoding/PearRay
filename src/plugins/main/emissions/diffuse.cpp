@@ -50,4 +50,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::DiffuseEmissionFactory, "ems_diffuse", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::DiffuseEmissionFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

@@ -1,5 +1,3 @@
-
-
 PR_ADD_PLUGIN(mat_lambert CPP lambert.cpp)
 PR_ADD_PLUGIN(mat_orennayar CPP orennayar.cpp)
 PR_ADD_PLUGIN(mat_glass CPP glass.cpp)

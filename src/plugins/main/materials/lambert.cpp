@@ -92,4 +92,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::LambertMaterialFactory, "mat_lambert", PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::LambertMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

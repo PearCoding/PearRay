@@ -9,7 +9,7 @@ constexpr static char PR_PLUGIN_ENV_VAR_SEPERATOR = ':';
 constexpr static const char* PR_PLUGIN_REG_VAR	= "plugins/path";
 constexpr static char PR_PLUGIN_REG_VAR_SEPERATOR = ':';
 
-bool PluginManager::try_load(const std::wstring& path, const Registry& reg, bool useFallbacks)
+bool PluginManager::tryLoad(const std::wstring& path, const Registry& reg, bool useFallbacks)
 {
 	if (has(path)) {
 		return true;
@@ -56,7 +56,7 @@ bool PluginManager::try_load(const std::wstring& path, const Registry& reg, bool
 			}
 		}
 	}
-	
+
 	if (!lib) {
 		PR_LOG(L_ERROR) << "Could not load plugin " << op << std::endl;
 		return false;
@@ -64,30 +64,13 @@ bool PluginManager::try_load(const std::wstring& path, const Registry& reg, bool
 
 	PluginInterface* ptr = nullptr;
 	try {
-		ptr = &lib.get<PluginInterface>(PR_DOUBLEQUOTE(PR_PLUGIN_API_INTERFACE_NAME));
+		ptr = &lib.get<PluginInterface>(PR_DOUBLEQUOTE(PR_PLUGIN_API_INTERFACE_NAME_CORE));
 	} catch (const boost::system::system_error& e) {
 		PR_LOG(L_DEBUG) << "Internal error: " << e.what() << std::endl;
 	}
 
-	if (!ptr) {
-		PR_LOG(L_ERROR) << "Could not get plugin interface for " << op << std::endl;
+	if (!loadInterface(op.generic_string(), ptr))
 		return false;
-	}
-
-	if (ptr->APIVersion < PR_PLUGIN_API_VERSION) {
-		PR_LOG(L_ERROR) << "Plugin " << op << " has API version less " << PR_PLUGIN_API_VERSION << std::endl;
-		return false;
-	}
-
-	if (ptr->APIVersion > PR_PLUGIN_API_VERSION) {
-		PR_LOG(L_ERROR) << "Plugin " << op << " has API version greater " << PR_PLUGIN_API_VERSION << ". It is from the future :O" << std::endl;
-		return false;
-	}
-
-	if (!ptr->InitFunction) {
-		PR_LOG(L_ERROR) << "Plugin " << op << " has no valid init function!" << std::endl;
-		return false;
-	}
 
 	mLibraries.emplace(
 		std::make_pair(path,
@@ -99,8 +82,8 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Reg
 {
 #ifdef PR_DEBUG
 	boost::filesystem::path p = path;
-	if (!try_load(path, reg, useFallbacks)) {
-		std::wstring rel_name	= p.stem().generic_wstring();
+	if (!tryLoad(path, reg, useFallbacks)) {
+		std::wstring rel_name = p.stem().generic_wstring();
 		size_t pos			  = rel_name.find_last_of(L"_d");
 		if (pos == std::wstring::npos)
 			return nullptr;
@@ -108,7 +91,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Reg
 		rel_name.erase(pos, 2);
 
 		boost::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
-		if (!try_load(release_path.generic_wstring(), reg, useFallbacks)) {
+		if (!tryLoad(release_path.generic_wstring(), reg, useFallbacks)) {
 			return nullptr;
 		} else {
 			return get(path);
@@ -117,7 +100,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Reg
 		return get(path);
 	}
 #else
-	if (!try_load(path, reg, useFallbacks))
+	if (!tryLoad(path, reg, useFallbacks))
 		return nullptr;
 	else
 		return get(path);
@@ -150,5 +133,46 @@ std::shared_ptr<IPlugin> PluginManager::get(const std::wstring& path) const
 bool PluginManager::has(const std::wstring& path) const
 {
 	return mLibraries.count(path);
+}
+
+#include "_pr_embedded_plugins.h"
+
+void PluginManager::loadEmbeddedPlugins()
+{
+	for (int i = 0; __embedded_plugins[i].Name; ++i) {
+		PR_LOG(L_DEBUG) << "Loading embedded plugin " << __embedded_plugins[i].Name << std::endl;
+		if (loadInterface(__embedded_plugins[i].Name, __embedded_plugins[i].Interface))
+			mEmbeddedPlugins.insert(__embedded_plugins[i].Interface->PluginName);
+	}
+}
+
+bool PluginManager::loadInterface(const std::string& name, PluginInterface* ptr)
+{
+	if (!ptr) {
+		PR_LOG(L_ERROR) << "Could not get plugin interface for " << name << std::endl;
+		return false;
+	}
+
+	if (mEmbeddedPlugins.count(ptr->PluginName) > 0) {
+		PR_LOG(L_INFO) << "Ignoring plugin " << name << ". Already embedded" << std::endl;
+		return false;
+	}
+
+	if (ptr->APIVersion < PR_PLUGIN_API_VERSION) {
+		PR_LOG(L_ERROR) << "Plugin " << name << " has API version less " << PR_PLUGIN_API_VERSION << std::endl;
+		return false;
+	}
+
+	if (ptr->APIVersion > PR_PLUGIN_API_VERSION) {
+		PR_LOG(L_ERROR) << "Plugin " << name << " has API version greater " << PR_PLUGIN_API_VERSION << ". It is from the future :O" << std::endl;
+		return false;
+	}
+
+	if (!ptr->InitFunction) {
+		PR_LOG(L_ERROR) << "Plugin " << name << " has no valid init function!" << std::endl;
+		return false;
+	}
+
+	return true;
 }
 } // namespace PR
