@@ -214,7 +214,7 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 	me->setNormals(normalAttr[0], normalAttr[1], normalAttr[2]);
 	me->setUVs(uvAttr[0], uvAttr[1]);
 	me->setVelocities(velocityAttr[0], velocityAttr[1], velocityAttr[2]);
-	me->setMaterials(materials);
+	me->setMaterialSlots(materials);
 	me->setIndices(indices);
 	me->setFaceVertexCount(verticesPerFace);
 

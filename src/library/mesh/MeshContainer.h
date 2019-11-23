@@ -34,7 +34,7 @@ public:
 	inline void setUVs(const std::vector<float>& u,
 					   const std::vector<float>& v);
 	inline const std::vector<float>& uvs(size_t dim) const { return mUVs[dim]; }
-	inline Vector2f uv(size_t ind) const { return Vector2f(mUVs[0][ind], mUVs[1][ind]); }
+	inline Vector2f uv(size_t ind) const { return (features() & MF_HAS_UV) ? Vector2f(mUVs[0][ind], mUVs[1][ind]) : Vector2f(0, 0); }
 
 	inline void setVelocities(const std::vector<float>& vx,
 							  const std::vector<float>& vy, const std::vector<float>& vz);
@@ -45,11 +45,12 @@ public:
 	inline const std::vector<uint32>& indices() const { return mIndices; }
 
 	void setFaceVertexCount(const std::vector<uint8>& faceVertexCount);
-	inline const std::vector<uint32>& faceOffset() const { return mFaceOffset; }
 	inline size_t faceVertexCount(size_t face) const;
+	inline const std::vector<uint32>& faceIndexOffset() const { return mFaceIndexOffset; }
 
-	inline void setMaterials(const std::vector<uint32>& f);
-	inline const std::vector<uint32>& materials() const { return mMaterials; }
+	inline void setMaterialSlots(const std::vector<uint32>& f);
+	inline const std::vector<uint32>& materialSlots() const { return mMaterialSlots; }
+	inline uint32 materialSlot(size_t index) const { return (features() & MF_HAS_MATERIAL) ? mMaterialSlots.at(index) : 0; }
 
 	inline uint32 features() const { return mFeatures; }
 
@@ -75,9 +76,9 @@ private:
 	std::vector<float> mNormals[3];
 	std::vector<float> mUVs[2];
 	std::vector<float> mVelocities[3];
-	std::vector<uint32> mMaterials;
+	std::vector<uint32> mMaterialSlots;
 	std::vector<uint32> mIndices;
-	std::vector<uint32> mFaceOffset; // Only triangles and quads supported
+	std::vector<uint32> mFaceIndexOffset; // Only triangles and quads supported
 
 	size_t mTriangleCount;
 	size_t mQuadCount;

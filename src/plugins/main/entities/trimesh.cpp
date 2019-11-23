@@ -165,11 +165,7 @@ public:
 									 out2.UV[1] = uv(1);
 								 }
 
-								 if (mMesh->features() & MF_HAS_MATERIAL)
-									 out2.MaterialID = mMaterials[f]; // Has to be updated in entity!
-								 else
-									 out2.MaterialID = 0;
-
+								 out2.MaterialID = mMesh->materialSlot(f); // Has to be updated in entity!
 								 out2.FaceID = f;
 								 //out2.EntityID; Ignore
 							 });
@@ -216,20 +212,19 @@ public:
 		else
 			Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
-		pt.UVW		  = Vector3f(uv(0), uv(1), 0);
-		pt.MaterialID = f.MaterialSlot;
-
-		pt.P  = transform() * pt.P;
-		pt.N  = normalMatrix() * pt.N;
-		pt.Nx = normalMatrix() * pt.Nx;
-		pt.Ny = normalMatrix() * pt.Ny;
+		// Global
+		pt.P   = transform() * pt.P;
+		pt.N   = normalMatrix() * pt.N;
+		pt.Nx  = normalMatrix() * pt.Nx;
+		pt.Ny  = normalMatrix() * pt.Ny;
+		pt.UVW = Vector3f(uv(0), uv(1), 0);
 
 		pt.N.normalize();
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.MaterialID = pt.MaterialID < mMaterials.size()
-							? mMaterials.at(pt.MaterialID)
+		pt.MaterialID = f.MaterialSlot < mMaterials.size()
+							? mMaterials.at(f.MaterialSlot)
 							: 0;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;
