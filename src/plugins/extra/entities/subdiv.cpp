@@ -29,7 +29,7 @@ public:
 
 	std::string type() const override
 	{
-		return "mesh";
+		return "subdivmesh";
 	}
 
 	bool isLight() const override

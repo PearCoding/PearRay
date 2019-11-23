@@ -29,28 +29,30 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 	, mInfLights(infLights)
 	, mKDTree(nullptr)
 {
+	PR_LOG(L_DEBUG) << "Setup before scene build..." << std::endl;
 	mActiveCamera->beforeSceneBuild();
-	for (auto o : mEntities)
-		o->beforeSceneBuild();
-	for (auto o : mMaterials)
-		o->beforeSceneBuild();
 	for (auto o : mEmissions)
 		o->beforeSceneBuild();
 	for (auto o : mInfLights)
 		o->beforeSceneBuild();
+	for (auto o : mMaterials)
+		o->beforeSceneBuild();
+	for (auto o : mEntities)
+		o->beforeSceneBuild();
 
-	PR_LOG(L_INFO) << "Starting to build global space-partitioning structure \"" << boost::filesystem::path(cntFile) << "\"" << std::endl;
+	PR_LOG(L_DEBUG) << "Starting to build global space-partitioning structure " << boost::filesystem::path(cntFile) << std::endl;
 	buildTree(cntFile);
 	loadTree(cntFile);
 
+	PR_LOG(L_DEBUG) << "Setup after scene build..." << std::endl;
 	mActiveCamera->afterSceneBuild(this);
-	for (auto o : mEntities)
-		o->afterSceneBuild(this);
-	for (auto o : mMaterials)
-		o->afterSceneBuild(this);
 	for (auto o : mEmissions)
 		o->afterSceneBuild(this);
 	for (auto o : mInfLights)
+		o->afterSceneBuild(this);
+	for (auto o : mMaterials)
+		o->afterSceneBuild(this);
+	for (auto o : mEntities)
 		o->afterSceneBuild(this);
 }
 
@@ -59,27 +61,31 @@ Scene::~Scene()
 }
 void Scene::beforeRender(RenderContext* ctx)
 {
+	PR_LOG(L_DEBUG) << "Setup before render start..." << std::endl;
+
 	mActiveCamera->beforeRender(ctx);
-	for (auto o : mEntities)
-		o->beforeRender(ctx);
-	for (auto o : mMaterials)
-		o->beforeRender(ctx);
 	for (auto o : mEmissions)
 		o->beforeRender(ctx);
 	for (auto o : mInfLights)
+		o->beforeRender(ctx);
+	for (auto o : mMaterials)
+		o->beforeRender(ctx);
+	for (auto o : mEntities)
 		o->beforeRender(ctx);
 }
 
 void Scene::afterRender(RenderContext* ctx)
 {
+	PR_LOG(L_DEBUG) << "Setup after render stop..." << std::endl;
+
 	mActiveCamera->afterRender(ctx);
-	for (auto o : mEntities)
-		o->afterRender(ctx);
-	for (auto o : mMaterials)
-		o->afterRender(ctx);
 	for (auto o : mEmissions)
 		o->afterRender(ctx);
 	for (auto o : mInfLights)
+		o->afterRender(ctx);
+	for (auto o : mMaterials)
+		o->afterRender(ctx);
+	for (auto o : mEntities)
 		o->afterRender(ctx);
 }
 

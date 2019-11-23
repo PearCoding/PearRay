@@ -3,7 +3,8 @@
 
 namespace PR {
 MeshContainer::MeshContainer()
-	: mTriangleCount(0)
+	: mFeatures(0)
+	, mTriangleCount(0)
 	, mQuadCount(0)
 {
 }
@@ -106,6 +107,14 @@ float MeshContainer::surfaceArea(const Eigen::Affine3f& transform) const
 		a += faceArea(counter, transform);
 	}
 	return a;
+}
+BoundingBox MeshContainer::constructBoundingBox() const
+{
+	BoundingBox box;
+	for (size_t i = 0; i < nodeCount(); ++i)
+		box.combine(vertex(i));
+
+	return box;
 }
 
 void MeshContainer::triangulate()

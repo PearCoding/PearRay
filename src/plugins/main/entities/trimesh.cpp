@@ -136,7 +136,7 @@ public:
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 		mKDTree
-			->checkCollision(in, out,
+			->checkCollision(in_local, out,
 							 [this](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
 								 const uint32 ind1 = mMesh->indices()[3 * f];
 								 const uint32 ind2 = mMesh->indices()[3 * f + 1];
@@ -155,7 +155,9 @@ public:
 									 out2.HitDistance = t;
 
 								 if (mMesh->features() & MF_HAS_UV) {
-									 auto v		= Triangle::interpolate(mMesh->uv(ind1), mMesh->uv(ind2), mMesh->uv(ind3), uv);
+									 auto v = Triangle::interpolate(
+										 mMesh->uv(ind1), mMesh->uv(ind2), mMesh->uv(ind3),
+										 uv);
 									 out2.UV[0] = v(0);
 									 out2.UV[1] = v(1);
 								 } else {
@@ -235,8 +237,6 @@ public:
 
 	void beforeSceneBuild() override
 	{
-		IEntity::beforeSceneBuild();
-
 		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]";
 
 		mMesh->triangulate();
@@ -244,12 +244,14 @@ public:
 			buildTree();
 
 		loadTree();
+
+		IEntity::beforeSceneBuild();
 	}
 
 private:
 	void buildTree()
 	{
-		BUILDER builder(this, [](void* observer, size_t f) {
+		BUILDER builder(mMesh.get(), [](void* observer, size_t f) {
 								MeshContainer* mesh = reinterpret_cast<MeshContainer*>(observer);
 								const uint32 ind1 = mesh->indices()[3*f];
 								const uint32 ind2 = mesh->indices()[3*f+1];

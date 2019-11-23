@@ -22,7 +22,7 @@ std::wstring CacheManager::requestFile(const std::string& grp, const std::string
 				   [](char c) { return std::tolower(c); });
 
 	boost::filesystem::path root = mWorkingDir;
-	root						 = root / dir;
+	root						 = root / "cache" / dir;
 
 	boost::system::error_code error_code;
 	boost::filesystem::create_directories(root, error_code);

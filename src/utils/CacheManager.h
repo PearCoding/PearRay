@@ -10,6 +10,11 @@ public:
 
 	void clear();
 	std::wstring requestFile(const std::string& grp, const std::string& name, bool& exists);
+	inline std::wstring requestFile(const std::string& grp, const std::string& name)
+	{
+		bool _ignore;
+		return requestFile(grp, name, _ignore);
+	}
 
 private:
 	std::wstring mWorkingDir;

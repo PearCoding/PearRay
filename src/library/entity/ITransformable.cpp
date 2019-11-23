@@ -12,6 +12,7 @@ ITransformable::ITransformable(uint32 id, const std::string& name)
 	, mFlags(0)
 	, mTransform(Transform::Identity())
 {
+	cache();
 }
 
 ITransformable::~ITransformable()
@@ -20,17 +21,23 @@ ITransformable::~ITransformable()
 
 void ITransformable::beforeSceneBuild()
 {
+	IObject::beforeSceneBuild();
+
 	Eigen::Matrix3f rot;
 	Eigen::Matrix3f sca;
 	mTransform.computeRotationScaling(&rot, &sca);
 	//mTransform.computeScalingRotation(&sca, &rot);
 
-	PR_LOG(L_INFO) << mName << ": P[" << mTransform.translation() << "] R[" << Eigen::Quaternionf(rot).coeffs() << "] S[" << sca.diagonal() << "]" << std::endl;
+	PR_LOG(L_INFO) << mName << ": P" << Vector3f(mTransform.translation())
+				   << " R" << Eigen::Quaternionf(rot)
+				   << " S" << Vector3f(sca.diagonal()) << std::endl;
 
 	Eigen::Matrix3f irot;
 	Eigen::Matrix3f isca;
 	mInvTransformCache.computeRotationScaling(&irot, &isca);
-	PR_LOG(L_INFO) << " IP[" << mInvTransformCache.translation() << "] IR[" << Eigen::Quaternionf(irot).coeffs() << "] IS[" << isca.diagonal() << "]" << std::endl;
+	PR_LOG(L_INFO) << " IP" << Vector3f(mInvTransformCache.translation())
+				   << " IR" << Eigen::Quaternionf(irot)
+				   << " IS" << Vector3f(isca.diagonal()) << std::endl;
 
 	if (sca.squaredNorm() <= PR_EPSILON)
 		PR_LOG(L_WARNING) << "ITransformable " << mName << " has zero scale attribute" << std::endl;
@@ -48,7 +55,7 @@ void ITransformable::cache()
 
 std::string ITransformable::dumpInformation() const
 {
-	const auto pos = mTransform.translation();
+	const Vector3f pos = mTransform.translation();
 	Eigen::Matrix3f rot;
 	Eigen::Matrix3f sca;
 	mTransform.computeRotationScaling(&rot, &sca);
@@ -58,16 +65,9 @@ std::string ITransformable::dumpInformation() const
 
 	std::stringstream stream;
 	stream << "<ITransformable> [" << mID << "]: " << std::endl
-		   << "  Position:        {" << pos(0)
-		   << "|" << pos(1)
-		   << "|" << pos(2) << "}" << std::endl
-		   << "  Scale:           {" << scav(0)
-		   << "|" << scav(1)
-		   << "|" << scav(2) << "}" << std::endl
-		   << "  Rotation:        {" << quat.x()
-		   << "|" << quat.y()
-		   << "|" << quat.z()
-		   << "|" << quat.w() << "}" << std::endl
+		   << "  Position:        " << pos << std::endl
+		   << "  Scale:           " << scav << std::endl
+		   << "  Rotation:        " << quat << std::endl
 		   << "  Flag&Debug:      " << ((mFlags & EF_Debug) != 0 ? "true" : "false") << std::endl
 		   << "  Flag&LocalArea:  " << ((mFlags & EF_LocalArea) != 0 ? "true" : "false") << std::endl;
 

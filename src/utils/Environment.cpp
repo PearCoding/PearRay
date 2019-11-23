@@ -145,7 +145,7 @@ void Environment::loadPlugins(const std::wstring& basedir)
 		}
 	}
 
-	// Load into respective manager
+	// Load into respective managers
 	for (auto plugin : mPluginManager->plugins()) {
 		switch (plugin->type()) {
 		case PT_INTEGRATOR:
@@ -218,12 +218,14 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		return nullptr;
 	}
 
+	std::wstring scene_cnt = mCacheManager->requestFile("scene", "global.cnt");
+
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
 														   entities,
 														   materials,
 														   emissions,
 														   inflights,
-														   mWorkingDir + L"/scene.cnt");
+														   scene_cnt);
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;
 		return nullptr;

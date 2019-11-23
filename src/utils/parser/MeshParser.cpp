@@ -152,9 +152,13 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 		PR_LOG(L_ERROR) << "No faces given!" << std::endl;
 		return nullptr;
 	} else {
-		indices.reserve(facesGrp.anonymousCount() * 3); // Minimum triangles
-		verticesPerFace.reserve(facesGrp.anonymousCount());
+		if (hasMaterials && materialsGrp.anonymousCount() != facesGrp.anonymousCount()) {
+			PR_LOG(L_ERROR) << "Given material index count is not equal to face count." << std::endl;
+			return nullptr;
+		}
 
+		size_t triCount  = 0;
+		size_t quadCount = 0;
 		for (size_t j = 0; j < facesGrp.anonymousCount(); ++j) {
 			DL::Data iD = facesGrp.at(j);
 
@@ -171,14 +175,25 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 			}
 
 			if (!grp.isAllOfType(DL::DT_Integer)) {
-				PR_LOG(L_ERROR) << "Given index is invalid." << std::endl;
+				PR_LOG(L_ERROR) << "Given index is not integer." << std::endl;
 				return nullptr;
 			}
 
-			if (grp.anonymousCount() != 3 && grp.anonymousCount() != 4) {
-				PR_LOG(L_ERROR) << "Only triangle or quad faces supported." << std::endl;
+			if (grp.anonymousCount() == 3) {
+				++triCount;
+			} else if (grp.anonymousCount() == 4) {
+				++quadCount;
+			} else {
+				PR_LOG(L_ERROR) << "Only triangle or quad faces are supported." << std::endl;
 				return nullptr;
 			}
+		}
+
+		indices.reserve(triCount * 3 + quadCount * 4);
+		verticesPerFace.reserve(facesGrp.anonymousCount());
+
+		for (size_t j = 0; j < facesGrp.anonymousCount(); ++j) {
+			DL::DataGroup grp = facesGrp.at(j).getGroup();
 
 			for (size_t d = 0; d < grp.anonymousCount(); ++d) {
 				int val = grp.at(d).getInt();
@@ -203,11 +218,15 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 	me->setIndices(indices);
 	me->setFaceVertexCount(verticesPerFace);
 
-	if (me->isValid()) {
-		return me;
-	} else {
+	if (!me->isValid()) {
 		PR_LOG(L_ERROR) << "Loaded mesh is invalid." << std::endl;
 		return nullptr;
 	}
+
+	DL::Data triangulateD = group.getFromKey("triangulate");
+	if (triangulateD.type() == DL::DT_Bool && triangulateD.getBool())
+		me->triangulate();
+
+	return me;
 }
 } // namespace PR

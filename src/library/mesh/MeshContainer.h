@@ -66,6 +66,7 @@ public:
 
 	inline bool isValid() const;
 
+	BoundingBox constructBoundingBox() const;
 	void triangulate();
 
 private:

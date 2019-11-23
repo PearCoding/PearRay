@@ -22,7 +22,8 @@ inline void MeshContainer::setUVs(const std::vector<float>& u,
 {
 	mUVs[0] = u;
 	mUVs[1] = v;
-	mFeatures |= MF_HAS_UV;
+	if (!u.empty() && !v.empty())
+		mFeatures |= MF_HAS_UV;
 }
 
 inline void MeshContainer::setVelocities(const std::vector<float>& vx,
@@ -31,7 +32,8 @@ inline void MeshContainer::setVelocities(const std::vector<float>& vx,
 	mVelocities[0] = vx;
 	mVelocities[1] = vy;
 	mVelocities[2] = vz;
-	mFeatures |= MF_HAS_VELOCITY;
+	if (!vx.empty() && !vy.empty() && !vz.empty())
+		mFeatures |= MF_HAS_VELOCITY;
 }
 
 inline void MeshContainer::setIndices(const std::vector<uint32>& indices)
@@ -42,20 +44,23 @@ inline void MeshContainer::setIndices(const std::vector<uint32>& indices)
 inline void MeshContainer::setMaterials(const std::vector<uint32>& f)
 {
 	mMaterials = f;
-	mFeatures |= MF_HAS_MATERIAL;
+	if (!f.empty())
+		mFeatures |= MF_HAS_MATERIAL;
 }
 
 inline size_t MeshContainer::faceVertexCount(size_t face) const
 {
-	return (face + 1) < mFaceOffset.size()
-			   ? mIndices.size() - mFaceOffset[face]
-			   : mFaceOffset[face + 1] - mFaceOffset[face];
+	return (face + 1) >= mFaceOffset.size()
+			   ? static_cast<size_t>(mIndices.size() - static_cast<int32>(mFaceOffset[face]))
+			   : static_cast<size_t>(mFaceOffset[face + 1] - static_cast<int32>(mFaceOffset[face]));
 }
 
 inline Face MeshContainer::getFace(uint32 index) const
 {
 	size_t faceElems = faceVertexCount(index);
-	uint32 indInd	= mFaceOffset[index];
+	PR_ASSERT(faceElems == 3 || faceElems == 4, "Only triangles and quads are supported.");
+
+	uint32 indInd = mFaceOffset[index];
 
 	Face f;
 	f.IsQuad			= (faceElems == 4);
