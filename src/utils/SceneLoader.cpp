@@ -185,7 +185,7 @@ void SceneLoader::setupTransformable(const DL::DataGroup& group,
 	DL::Data scaleD		= group.getFromKey("scale");
 
 	if (transformD.type() == DL::DT_Group) {
-		bool ok					   = false;
+		bool ok						= false;
 		ITransformable::Transform t = ITransformable::Transform(MathParser::getMatrix(transformD.getGroup(), ok));
 		t.makeAffine();
 
@@ -307,16 +307,16 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 	auto manag		= env->cameraManager();
 	const uint32 id = manag->nextID();
 
-	DL::Data nameD = group.getFromKey("name");
+	//DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
 
 	populateObjectRegistry(RG_CAMERA, id, group, env);
 
-	std::string name;
+	/*std::string name;
 	if (nameD.type() == DL::DT_String)
 		name = nameD.getString();
 	else
-		name = "UNKNOWN";
+		name = "UNKNOWN";*/
 
 	std::string type;
 	if (typeD.type() != DL::DT_String) {
@@ -521,11 +521,8 @@ void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
 void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 {
 	DL::Data nameD = group.getFromKey("name");
-	DL::Data typeD = group.getFromKey("type");
 
 	std::string name;
-	std::string type;
-
 	if (nameD.type() == DL::DT_String) {
 		name = nameD.getString();
 	} else {
@@ -538,22 +535,10 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (typeD.type() == DL::DT_String) {
-		type = typeD.getString();
-		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
-	} else {
-		if (typeD.isValid()) {
-			PR_LOG(L_ERROR) << "No valid mesh type set" << std::endl;
-			return;
-		} else {
-			type = "triangles";
-		}
-	}
-
 	auto mesh = MeshParser::parse(env, group);
 
 	if (!mesh) {
-		PR_LOG(L_ERROR) << "Mesh " << name << " couldn't be load. Error in " << typeD.getString() << " type parser." << std::endl;
+		PR_LOG(L_ERROR) << "Mesh " << name << " couldn't be load" << std::endl;
 		return;
 	}
 
@@ -584,14 +569,9 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 
 void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 {
-	DL::Data nameD		= group.getFromKey("name");
 	DL::Data overridesD = group.getFromKey("overrides");
 	DL::Data loaderD	= group.getFromKey("loader");
 	DL::Data fileD		= group.getFromKey("file");
-
-	std::string name;
-	if (nameD.type() == DL::DT_String)
-		name = nameD.getString();
 
 	std::map<std::string, std::string> overrides;
 	if (overridesD.type() == DL::DT_String)

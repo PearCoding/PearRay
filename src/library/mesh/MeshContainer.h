@@ -46,7 +46,9 @@ public:
 
 	void setFaceVertexCount(const std::vector<uint8>& faceVertexCount);
 	inline size_t faceVertexCount(size_t face) const;
-	inline const std::vector<uint32>& faceIndexOffset() const { return mFaceIndexOffset; }
+	std::vector<uint32> faceVertexCounts() const;
+
+	inline const std::vector<uint32>& faceIndexOffsets() const { return mFaceIndexOffset; }
 
 	inline void setMaterialSlots(const std::vector<uint32>& f);
 	inline const std::vector<uint32>& materialSlots() const { return mMaterialSlots; }

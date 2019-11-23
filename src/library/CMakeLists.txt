@@ -78,6 +78,8 @@ SET(PR_Src
   mesh/MeshContainer.cpp
   mesh/MeshContainer.h
   mesh/MeshContainer.inl
+  mesh/TriMesh.cpp
+  mesh/TriMesh.h
   path/LightPath.cpp
   path/LightPath.h
   path/LightPathBuffer.cpp

@@ -37,6 +37,16 @@ void MeshContainer::setFaceVertexCount(const std::vector<uint8>& faceVertexCount
 	}
 }
 
+std::vector<uint32> MeshContainer::faceVertexCounts() const
+{
+	std::vector<uint32> array;
+	array.reserve(mFaceIndexOffset.size());
+	for (size_t i = 0; i < mFaceIndexOffset.size(); ++i)
+		array.push_back(faceVertexCount(i));
+
+	return array;
+}
+
 float MeshContainer::faceArea(size_t f, const Eigen::Affine3f& tm) const
 {
 	PR_PROFILE_THIS;
@@ -108,6 +118,7 @@ float MeshContainer::surfaceArea(const Eigen::Affine3f& transform) const
 	}
 	return a;
 }
+
 BoundingBox MeshContainer::constructBoundingBox() const
 {
 	BoundingBox box;
@@ -119,7 +130,55 @@ BoundingBox MeshContainer::constructBoundingBox() const
 
 void MeshContainer::triangulate()
 {
-	// FIXME: TODO!!!
-	PR_ASSERT(quadCount() == 0, "Triangulation is not yet implemented!");
+	if (quadCount() == 0)
+		return;
+
+	size_t new_facecount = triangleCount() + quadCount() * 2;
+
+	std::vector<uint32> new_indices(new_facecount * 3);
+	std::vector<uint32> new_faceIndexOffset(new_facecount);
+	std::vector<uint32> new_mats;
+	if (mFeatures & MF_HAS_MATERIAL)
+		new_mats.resize(new_faceIndexOffset.size());
+
+	size_t indC = 0;
+	size_t facC = 0;
+
+	for (size_t face = 0; face < faceCount(); ++face) {
+		bool isQuad   = faceVertexCount(face) == 4;
+		size_t indInd = mFaceIndexOffset[face];
+
+		// Triangle
+		new_indices[indC]		  = mIndices[indInd];
+		new_indices[indC + 1]	 = mIndices[indInd + 1];
+		new_indices[indC + 2]	 = mIndices[indInd + 2];
+		new_faceIndexOffset[facC] = indC;
+		if (mFeatures & MF_HAS_MATERIAL)
+			new_mats[facC] = mMaterialSlots[face];
+		indC += 3;
+		++facC;
+
+		if (isQuad) {
+			// Second triangle
+			new_indices[indC]	 = mIndices[indInd];
+			new_indices[indC + 1] = mIndices[indInd + 2];
+			new_indices[indC + 2] = mIndices[indInd + 3];
+
+			new_faceIndexOffset[facC] = indC;
+			if (mFeatures & MF_HAS_MATERIAL)
+				new_mats[facC] = mMaterialSlots[face];
+			indC += 3;
+			++facC;
+		}
+	}
+
+	PR_ASSERT(new_facecount * 3 == indC, "Wrong triangulation!");
+	PR_ASSERT(new_facecount == facC, "Wrong triangulation!");
+
+	mTriangleCount   = facC;
+	mQuadCount		 = 0;
+	mIndices		 = new_indices;
+	mFaceIndexOffset = new_faceIndexOffset;
+	mMaterialSlots   = new_mats;
 }
 } // namespace PR
