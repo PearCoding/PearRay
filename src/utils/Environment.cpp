@@ -121,6 +121,7 @@ void Environment::loadPlugins(const std::wstring& basedir)
 	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)");
 #endif
 
+	// Load dlls
 	for (auto& entry :
 		 boost::make_iterator_range(boost::filesystem::directory_iterator(basedir), {})) {
 		if (!boost::filesystem::is_regular_file(entry))
@@ -140,39 +141,34 @@ void Environment::loadPlugins(const std::wstring& basedir)
 				continue;
 #endif
 
-			loadOnePlugin(entry.path().generic_wstring());
+			mPluginManager->load(entry.path().generic_wstring(), mRegistry);
 		}
 	}
-}
 
-void Environment::loadOnePlugin(const std::wstring& name)
-{
-	auto plugin = mPluginManager->load(name, mRegistry);
-	if (!plugin)
-		return;
-
-	switch (plugin->type()) {
-	case PT_INTEGRATOR:
-		mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorFactory>(plugin));
-		break;
-	case PT_CAMERA:
-		mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraFactory>(plugin));
-		break;
-	case PT_MATERIAL:
-		mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialFactory>(plugin));
-		break;
-	case PT_EMISSION:
-		mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionFactory>(plugin));
-		break;
-	case PT_INFINITELIGHT:
-		mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightFactory>(plugin));
-		break;
-	case PT_ENTITY:
-		mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityFactory>(plugin));
-		break;
-	default:
-		PR_LOG(L_ERROR) << "Plugin " << boost::filesystem::path(name) << " has unknown plugin type." << std::endl;
-		return;
+	// Load into respective manager
+	for (auto plugin : mPluginManager->plugins()) {
+		switch (plugin->type()) {
+		case PT_INTEGRATOR:
+			mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorFactory>(plugin));
+			break;
+		case PT_CAMERA:
+			mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraFactory>(plugin));
+			break;
+		case PT_MATERIAL:
+			mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialFactory>(plugin));
+			break;
+		case PT_EMISSION:
+			mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionFactory>(plugin));
+			break;
+		case PT_INFINITELIGHT:
+			mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightFactory>(plugin));
+			break;
+		case PT_ENTITY:
+			mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityFactory>(plugin));
+			break;
+		default:
+			break;
+		}
 	}
 }
 

@@ -11,10 +11,6 @@ constexpr static char PR_PLUGIN_REG_VAR_SEPERATOR = ':';
 
 bool PluginManager::tryLoad(const std::wstring& path, const Registry& reg, bool useFallbacks)
 {
-	if (has(path)) {
-		return true;
-	}
-
 	auto load = [](const boost::filesystem::path& p) -> boost::dll::shared_library {
 		try {
 			PR_LOG(L_DEBUG) << "Trying to load plugin " << p << std::endl;
@@ -72,9 +68,11 @@ bool PluginManager::tryLoad(const std::wstring& path, const Registry& reg, bool 
 	if (!loadInterface(op.generic_string(), ptr))
 		return false;
 
+	auto plugin = std::shared_ptr<IPlugin>(ptr->InitFunction());
 	mLibraries.emplace(
-		std::make_pair(path,
-					   PluginLibPair{ std::shared_ptr<IPlugin>(ptr->InitFunction()), lib }));
+		std::make_pair(ptr->PluginName,
+					   PluginLibPair{ plugin, path, lib }));
+
 	return true;
 }
 
@@ -94,20 +92,20 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Reg
 		if (!tryLoad(release_path.generic_wstring(), reg, useFallbacks)) {
 			return nullptr;
 		} else {
-			return get(path);
+			return getFromPath(path);
 		}
 	} else {
-		return get(path);
+		return getFromPath(path);
 	}
 #else
 	if (!tryLoad(path, reg, useFallbacks))
 		return nullptr;
 	else
-		return get(path);
+		return getFromPath(path);
 #endif
 }
 
-void PluginManager::unload(const std::wstring& path)
+void PluginManager::unload(const std::string& path)
 {
 	mLibraries.erase(path);
 }
@@ -122,17 +120,27 @@ std::string PluginManager::dumpInformation() const
 	return "";
 }
 
-std::shared_ptr<IPlugin> PluginManager::get(const std::wstring& path) const
+std::shared_ptr<IPlugin> PluginManager::get(const std::string& name) const
 {
-	if (has(path))
-		return mLibraries.at(path).Plugin;
+	if (has(name))
+		return mLibraries.at(name).Plugin;
 	else
 		return nullptr;
 }
 
-bool PluginManager::has(const std::wstring& path) const
+std::shared_ptr<IPlugin> PluginManager::getFromPath(const std::wstring& path) const
 {
-	return mLibraries.count(path);
+	for (const auto& p : mLibraries) {
+		if (p.second.Path == path)
+			return p.second.Plugin;
+	}
+
+	return nullptr;
+}
+
+bool PluginManager::has(const std::string& name) const
+{
+	return mLibraries.count(name);
 }
 
 #include "_pr_embedded_plugins.h"
@@ -140,9 +148,14 @@ bool PluginManager::has(const std::wstring& path) const
 void PluginManager::loadEmbeddedPlugins()
 {
 	for (int i = 0; __embedded_plugins[i].Name; ++i) {
+		auto ptr = __embedded_plugins[i].Interface;
 		PR_LOG(L_DEBUG) << "Loading embedded plugin " << __embedded_plugins[i].Name << std::endl;
-		if (loadInterface(__embedded_plugins[i].Name, __embedded_plugins[i].Interface))
-			mEmbeddedPlugins.insert(__embedded_plugins[i].Interface->PluginName);
+		if (loadInterface(__embedded_plugins[i].Name, ptr)) {
+			auto plugin = std::shared_ptr<IPlugin>(ptr->InitFunction());
+			mLibraries.emplace(
+				std::make_pair(ptr->PluginName,
+							   PluginLibPair{ plugin, L"", boost::dll::shared_library() }));
+		}
 	}
 }
 
@@ -153,8 +166,8 @@ bool PluginManager::loadInterface(const std::string& name, PluginInterface* ptr)
 		return false;
 	}
 
-	if (mEmbeddedPlugins.count(ptr->PluginName) > 0) {
-		PR_LOG(L_INFO) << "Ignoring plugin " << name << ". Already embedded" << std::endl;
+	if (has(ptr->PluginName)) {
+		PR_LOG(L_INFO) << "Ignoring plugin " << name << ". Already loaded" << std::endl;
 		return false;
 	}
 
@@ -174,5 +187,16 @@ bool PluginManager::loadInterface(const std::string& name, PluginInterface* ptr)
 	}
 
 	return true;
+}
+
+std::vector<std::shared_ptr<IPlugin>> PluginManager::plugins() const
+{
+	std::vector<std::shared_ptr<IPlugin>> list;
+	list.reserve(mLibraries.size());
+
+	for (const auto& p : mLibraries) {
+		list.push_back(p.second.Plugin);
+	}
+	return list;
 }
 } // namespace PR

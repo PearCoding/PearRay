@@ -33,8 +33,6 @@ jobs:
     - compiler: gcc
       env: USE_COVERAGE=ON PYTHON=3.6 EMBED_PLUGINS=OFF
     - compiler: gcc
-      env: USE_COVERAGE=ON PYTHON=3.6 EMBED_PLUGINS=ON
-    - compiler: gcc
       env: USE_COVERAGE=OFF PYTHON=2.7 EMBED_PLUGINS=OFF
     - compiler: clang
       env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=OFF

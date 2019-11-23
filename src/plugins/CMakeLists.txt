@@ -58,26 +58,3 @@ ENDIF(PR_WITH_MAIN_PLUGINS)
 IF(PR_WITH_EXTRA_PLUGINS)
   add_subdirectory(extra)
 ENDIF(PR_WITH_EXTRA_PLUGINS)
-
-# Setup embedded plugins
-get_property(_embedded_plugins GLOBAL PROPERTY _pr_embedded_plugins)
-get_property(_embedded_plugins_src GLOBAL PROPERTY _pr_embedded_plugins_src)
-if(_embedded_plugins)
-  message(STATUS "Embedding plugins: ${_embedded_plugins}")
-endif(_embedded_plugins)
-
-set(dst "${CMAKE_BINARY_DIR}/_pr_embedded_plugins.h")
-set(_gen_file "extern \"C\" \{ ")
-foreach(_e ${_embedded_plugins})
-  set(_gen_file "${_gen_file}extern PR::PluginInterface _pr_exports_${_e};")
-endforeach()
-
-set(_gen_file "${_gen_file}\}\nstruct\{ const char* Name; PR::PluginInterface* Interface;\} __embedded_plugins[] =\{")
-foreach(_e ${_embedded_plugins})
-  set(_gen_file "${_gen_file}\{\"${_e}\", &_pr_exports_${_e}\},")
-endforeach()
-set(_gen_file "${_gen_file}\{nullptr,nullptr\}\};")
-
-file(GENERATE OUTPUT ${dst} CONTENT "${_gen_file}")
-
-set_property(GLOBAL PROPERTY _pr_embedded_plugins_src ${_embedded_plugins_src} "${dst}")

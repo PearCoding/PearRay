@@ -60,23 +60,12 @@ SET(PR_Src
   shader/MapShadingSocket.cpp
   shader/MapShadingSocket.h)
 
-# Setup embedded plugins
-get_property(_embedded_plugins GLOBAL PROPERTY _pr_embedded_plugins)
-get_property(_embedded_plugins_src GLOBAL PROPERTY _pr_embedded_plugins_src)
-get_property(_embedded_plugins_libs GLOBAL PROPERTY _pr_embedded_plugins_libs)
-foreach(_pl ${_embedded_plugins})
-  get_property(_embedded_plugins_${_pl}_src GLOBAL PROPERTY _pr_embedded_plugins_${_pl}_src)
-  # Has to be set in the same directory as the target
-  set_source_files_properties(${_embedded_plugins_${_pl}_src} PROPERTIES
-  COMPILE_DEFINITIONS "PR_EMBED_PLUGIN;_PR_PLUGIN_NAME=${_pl};PR_PLUGIN_VERSION=\"${PR_PLUGIN_VERSION}\"")
-endforeach()
-
-add_library(pr_lib_utils SHARED ${PR_Src} ${_embedded_plugins_src})
+add_library(pr_lib_utils SHARED ${PR_Src})
 target_link_libraries(pr_lib_utils
   PUBLIC
     pr_lib Boost::iostreams Boost::regex Boost::filesystem
   PRIVATE
-    ${_embedded_plugins_libs} datalisp OpenImageIO::Core OpenImageIO::Util
+    datalisp OpenImageIO::Core OpenImageIO::Util
 )
 set_target_properties(pr_lib_utils PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_utils PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
@@ -88,5 +77,8 @@ target_compile_definitions(pr_lib_utils PRIVATE "PR_LIB_UTILS_BUILD")
 if(PR_COMPRESS_SPEC_FILES)
 target_compile_definitions(pr_lib_utils PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()
+
+include(SetupEmbeddedPlugins)
+add_embedded_plugins(pr_lib_utils)
 add_lto(pr_lib_utils)
 strip_binary(pr_lib_utils)

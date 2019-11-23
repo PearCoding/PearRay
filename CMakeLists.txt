@@ -92,6 +92,8 @@ IF(PR_USE_CCACHE)
 	include(CCache)
 ENDIF()
 
+find_package(OpenSubdiv COMPONENTS CPU)
+
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 

@@ -128,7 +128,7 @@ private:
 		const std::string& name) const;
 
 	void loadPlugins(const std::wstring& basedir);
-	void loadOnePlugin(const std::wstring& name);
+
 
 	Registry mRegistry;
 
