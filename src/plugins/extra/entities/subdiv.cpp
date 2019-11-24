@@ -150,7 +150,6 @@ public:
 
 private:
 	std::wstring mCNTFile;
-	bool mLoadOnly;
 
 	int32 mLightID;
 	std::vector<uint32> mMaterials;

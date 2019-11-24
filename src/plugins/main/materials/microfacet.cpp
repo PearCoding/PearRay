@@ -113,7 +113,7 @@ public:
 			float n2 = ior;
 			if (point.Flags & SPF_Inside)
 				std::swap(n1, n2);
-			return Fresnel::dielectric(-point.NdotV, 1, ior);
+			return Fresnel::dielectric(-point.NdotV, n1, n2);
 		}
 		case FM_Conductor: {
 			float a = mConductorAbsorption->eval(point);
