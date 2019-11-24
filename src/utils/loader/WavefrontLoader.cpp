@@ -37,71 +37,51 @@ void WavefrontLoader::load(const std::string& file, Environment* env)
 			PR_LOG(L_ERROR) << "Wavefront file: " << err << std::endl;
 		}
 
-		std::vector<uint32> indices;
-		std::vector<float> vertices[3];
-		std::vector<float> normals[3];
-		std::vector<float> uvs[2];
-
 		if (attrib.vertices.empty()) {
 			PR_LOG(L_ERROR) << "Wavefront file: No vertices given!" << std::endl;
 			return;
-		} else {
-			vertices[0].reserve(attrib.vertices.size() / 3);
-			vertices[1].reserve(attrib.vertices.size() / 3);
-			vertices[2].reserve(attrib.vertices.size() / 3);
-
-			for (size_t i = 0; i < attrib.vertices.size() / 3; ++i)
-				for (size_t k = 0; k < 3; ++k)
-					vertices[k].push_back(attrib.vertices[3 * i + k]);
 		}
 
-		if (attrib.normals.size() != attrib.vertices.size()) {
-			PR_LOG(L_ERROR) << "Wavefront file: No valid normals given!" << std::endl;
-			return;
-		} else {
-			const float inv = mFlipNormal ? -1.0f : 1.0f;
-			normals[0].reserve(attrib.normals.size() / 3);
-			normals[1].reserve(attrib.normals.size() / 3);
-			normals[2].reserve(attrib.normals.size() / 3);
-
-			for (size_t i = 0; i < attrib.normals.size() / 3; ++i)
-				for (size_t k = 0; k < 3; ++k)
-					normals[k].push_back(inv * attrib.normals[3 * i + k]);
+		bool hasNorms = (attrib.normals.size() == attrib.vertices.size());
+		if (hasNorms && mFlipNormal) {
+			if (mFlipNormal) {
+				for (size_t i = 0; i < attrib.normals.size(); ++i)
+					attrib.normals[i] *= -1;
+			}
 		}
 
-		if (attrib.texcoords.size() / 2 == vertices[0].size()) {
-			uvs[0].reserve(attrib.texcoords.size() / 2);
-			uvs[1].reserve(attrib.texcoords.size() / 2);
-
-			for (size_t i = 0; i < attrib.texcoords.size() / 2; ++i)
-				for (size_t k = 0; k < 2; ++k)
-					uvs[k].push_back(attrib.texcoords[2 * i + k]);
-		}
-
-		if (shapes.size() > 1) {
-			PR_LOG(L_WARNING) << "Wavefront file: Only one shape per file supported. Ignoring others!" << std::endl;
-		}
+		bool hasCoords = (attrib.texcoords.size() / 2 == attrib.vertices.size() / 3);
 
 		if (shapes.empty()) {
 			PR_LOG(L_ERROR) << "Wavefront file: No shape given!" << std::endl;
 			return;
 		}
 
-		const tinyobj::shape_t& shape = shapes[0];
-		indices.reserve(shape.mesh.indices.size());
-		for (size_t i = 0; i < shape.mesh.indices.size(); ++i)
-			indices.push_back(shape.mesh.indices.at(i).vertex_index);
+		size_t indices_count = 0;
+		for (size_t sh = 0; sh < shapes.size(); ++sh)
+			indices_count += shapes[sh].mesh.indices.size();
+
+		std::vector<uint32> indices;
+		indices.reserve(indices_count);
+		for (size_t sh = 0; sh < shapes.size(); ++sh) {
+			for (size_t i = 0; i < shapes[sh].mesh.indices.size(); ++i)
+				indices.push_back(shapes[sh].mesh.indices.at(i).vertex_index);
+		}
 
 		auto mesh = std::make_shared<MeshContainer>();
-		mesh->setVertices(vertices[0], vertices[1], vertices[2]);
-		mesh->setNormals(normals[0], normals[1], normals[2]);
-		mesh->setUVs(uvs[0], uvs[1]);
+		mesh->setVertices(attrib.vertices);
 		mesh->setIndices(indices);
-		mesh->setFaceVertexCount(std::vector<uint8>(shape.mesh.indices.size() / 3, 3));
+		mesh->setFaceVertexCount(std::vector<uint8>(indices_count / 3, 3));
+		if (hasNorms)
+			mesh->setNormals(attrib.normals);
+		else
+			mesh->buildNormals();
+		if (hasCoords)
+			mesh->setUVs(attrib.texcoords);
 
-		std::string name = shape.name;
-		if (mOverrides.count(shape.name))
-			name = mOverrides[shape.name];
+		std::string name = shapes[0].name;
+		if (mOverrides.count(shapes[0].name))
+			name = mOverrides[shapes[0].name];
 
 		int i			 = 1;
 		std::string next = name;

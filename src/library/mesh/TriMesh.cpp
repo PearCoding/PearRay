@@ -119,10 +119,13 @@ void TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 							 out2.HitDistance = simdpp::blend(t, inf, hits);
 
 							 if (mContainer->features() & MF_HAS_UV) {
+								 Vector2f uv0 = mContainer->uv(ind1);
+								 Vector2f uv1 = mContainer->uv(ind2);
+								 Vector2f uv2 = mContainer->uv(ind3);
 								 for (int i = 0; i < 2; ++i)
-									 out2.UV[i] = mContainer->uvs(i)[ind2] * uv(0)
-												  + mContainer->uvs(i)[ind3] * uv(1)
-												  + mContainer->uvs(i)[ind1] * (1 - uv(0) - uv(1));
+									 out2.UV[i] = uv1(i) * uv(0)
+												  + uv2(i) * uv(1)
+												  + uv0(i) * (1 - uv(0) - uv(1));
 							 } else {
 								 out2.UV[0] = uv(0);
 								 out2.UV[1] = uv(1);
@@ -161,7 +164,7 @@ void TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 								 out2.HitDistance = t;
 
 							 if (mContainer->features() & MF_HAS_UV) {
-								 auto v = Triangle::interpolate(
+								 Vector2f v = Triangle::interpolate(
 									 mContainer->uv(ind1), mContainer->uv(ind2), mContainer->uv(ind3),
 									 uv);
 								 out2.UV[0] = v(0);
@@ -198,6 +201,9 @@ void TriMesh::provideGeometryPoint(uint32 faceID, float u, float v, GeometryPoin
 		local_uv = f.mapGlobalToLocalUV(Vector2f(u, v));
 	else
 		local_uv = Vector2f(u, v);
+
+	local_uv(0) = std::min(1.0f, std::max(0.0f, local_uv(0)));
+	local_uv(1) = std::min(1.0f, std::max(0.0f, local_uv(1)));
 
 	Vector2f uv;
 	f.interpolate(local_uv, pt.P, pt.N, uv);

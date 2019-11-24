@@ -1,38 +1,27 @@
 // IWYU pragma: private, include "mesh/MeshContainer.h"
 namespace PR {
 
-inline void MeshContainer::setVertices(const std::vector<float>& vx,
-									   const std::vector<float>& vy, const std::vector<float>& vz)
+inline void MeshContainer::setVertices(const std::vector<float>& verts)
 {
-	mVertices[0] = vx;
-	mVertices[1] = vy;
-	mVertices[2] = vz;
+	mVertices = verts;
 }
 
-inline void MeshContainer::setNormals(const std::vector<float>& vx,
-									  const std::vector<float>& vy, const std::vector<float>& vz)
+inline void MeshContainer::setNormals(const std::vector<float>& norms)
 {
-	mNormals[0] = vx;
-	mNormals[1] = vy;
-	mNormals[2] = vz;
+	mNormals = norms;
 }
 
-inline void MeshContainer::setUVs(const std::vector<float>& u,
-								  const std::vector<float>& v)
+inline void MeshContainer::setUVs(const std::vector<float>& uvs)
 {
-	mUVs[0] = u;
-	mUVs[1] = v;
-	if (!u.empty() && !v.empty())
+	mUVs = uvs;
+	if (!uvs.empty())
 		mFeatures |= MF_HAS_UV;
 }
 
-inline void MeshContainer::setVelocities(const std::vector<float>& vx,
-										 const std::vector<float>& vy, const std::vector<float>& vz)
+inline void MeshContainer::setVelocities(const std::vector<float>& velocities)
 {
-	mVelocities[0] = vx;
-	mVelocities[1] = vy;
-	mVelocities[2] = vz;
-	if (!vx.empty() && !vy.empty() && !vz.empty())
+	mVelocities = velocities;
+	if (!velocities.empty())
 		mFeatures |= MF_HAS_VELOCITY;
 }
 
@@ -84,12 +73,9 @@ inline bool MeshContainer::isValid() const
 {
 	return faceCount() > 0
 		   && (triangleCount() * 3 + quadCount() * 4) == mIndices.size()
-		   && mVertices[0].size() >= 3
-		   && mVertices[0].size() == mVertices[1].size()
-		   && mVertices[1].size() == mVertices[2].size()
-		   && mVertices[0].size() == mNormals[0].size()
-		   && mNormals[0].size() == mNormals[1].size()
-		   && mNormals[1].size() == mNormals[2].size();
+		   && nodeCount() > 3
+		   && (mVertices.size() % 3) == 0
+		   && mVertices.size() == mNormals.size();
 }
 
 } // namespace PR

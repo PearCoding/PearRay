@@ -157,62 +157,10 @@ private:
 	TriMesh mMesh;
 };
 
-template <typename T, int N>
-class DataWalker {
-public:
-	std::array<std::vector<T>, N> Array;
-	inline DataWalker(const std::array<std::vector<T>, N>& array)
-		: Array(array)
-	{
-	}
-
-	struct Vertex {
-		size_t Index;
-		DataWalker* Walker;
-		inline Vertex(size_t index, DataWalker* walker)
-			: Index(index)
-			, Walker(walker)
-		{
-			PR_ASSERT(walker, "Expected valid walker!");
-		}
-
-		Vertex(const Vertex& other) = default;
-
-		inline Vertex& operator=(const Vertex& other)
-		{
-			for (int i = 0; i < N; ++i)
-				Walker->Array[i][Index] = other.Walker->Array[i][other.Index];
-			return *this;
-		}
-
-		inline void Clear(void* = nullptr)
-		{
-			for (int i = 0; i < N; ++i)
-				Walker->Array[i][Index] = T(0);
-		}
-
-		inline void AddWithWeight(Vertex const& src, float weight)
-		{
-			for (int i = 0; i < N; ++i)
-				Walker->Array[i][Index] += weight * src.Walker->Array[i][src.Index];
-		}
-	};
-
-	Vertex operator[](size_t index)
-	{
-		return Vertex(index, this);
-	}
-
-	Vertex operator[](size_t index) const
-	{
-		return Vertex(index, const_cast<DataWalker*>(this));
-	}
-};
-
 using namespace OpenSubdiv;
 class SubdivMeshEntityFactory : public IEntityFactory {
 public:
-	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshContainer>& originalMesh, int maxLevel)
+	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshContainer>& originalMesh, int maxLevel, bool adaptive)
 	{
 		auto vertsPerFace   = originalMesh->faceVertexCounts();
 		const auto& indices = originalMesh->indices();
@@ -226,80 +174,145 @@ public:
 		auto type = Sdc::SCHEME_CATMARK;
 		Sdc::Options sdc_options;
 		sdc_options.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_EDGE_ONLY);
+		sdc_options.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_NONE);
 
 		Far::TopologyRefiner* refiner = Far::TopologyRefinerFactory<Far::TopologyDescriptor>::Create(
 			desc,
 			Far::TopologyRefinerFactory<Far::TopologyDescriptor>::Options(type, sdc_options));
 
-		// Uniform
-		refiner->RefineUniform(OpenSubdiv::Far::TopologyRefiner::UniformOptions(maxLevel));
+		if (!adaptive) {
+			Far::TopologyRefiner::UniformOptions ref_opts(maxLevel);
+			ref_opts.fullTopologyInLastLevel = true;
+			refiner->RefineUniform(ref_opts);
+		} else {
+			Far::TopologyRefiner::AdaptiveOptions ref_opts(maxLevel);
+			ref_opts.orderVerticesFromFacesFirst = true;
+			refiner->RefineAdaptive(ref_opts);
+		}
 
 		return refiner;
 	}
 
-	Far::StencilTable const* setupStencilTable(Far::TopologyRefiner* refiner)
+	Far::StencilTable const* setupStencilTable(Far::TopologyRefiner* refiner, int interp)
 	{
 		Far::StencilTableFactory::Options stencil_options;
 		stencil_options.generateIntermediateLevels = false;
 		stencil_options.generateOffsets			   = true;
+		stencil_options.interpolationMode		   = interp;
 
-		return OpenSubdiv::Far::StencilTableFactory::Create(*refiner, stencil_options);
+		return Far::StencilTableFactory::Create(*refiner, stencil_options);
 	}
 
-	std::shared_ptr<MeshContainer> refineMesh(const std::shared_ptr<MeshContainer>& originalMesh, int maxLevel)
+	Osd::CpuVertexBuffer* refineData(const float* source, size_t elems, size_t vertices, Far::StencilTable const* stencilTable)
+	{
+		Osd::BufferDescriptor srcDesc(0, elems, elems);
+		Osd::CpuVertexBuffer* srcbuffer = Osd::CpuVertexBuffer::Create(elems, vertices);
+		Osd::BufferDescriptor dstDesc(0, elems, elems);
+		Osd::CpuVertexBuffer* dstbuffer = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
+
+		srcbuffer->UpdateData(source, 0, vertices);
+
+#if defined(OPENSUBDIV_HAS_OPENMP)
+		Osd::OmpEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+#elif defined(OPENSUBDIV_HAS_TBB)
+		Osd::TbbEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+#else
+		Osd::CpuEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+#endif
+
+		delete srcbuffer;
+		return dstbuffer;
+	}
+
+	void refineVertexData(const std::shared_ptr<MeshContainer>& originalMesh,
+						  std::shared_ptr<MeshContainer>& refineMesh,
+						  Far::StencilTable const* stencilTable)
+	{
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3,
+												  originalMesh->nodeCount(), stencilTable);
+
+		std::vector<float> dstVerts(3 * stencilTable->GetNumStencils());
+		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
+		refineMesh->setVertices(dstVerts);
+
+		delete buffer;
+	}
+
+	void refineUVData(const std::shared_ptr<MeshContainer>& originalMesh,
+					  std::shared_ptr<MeshContainer>& refineMesh,
+					  Far::StencilTable const* stencilTable)
+	{
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2,
+												  originalMesh->nodeCount(), stencilTable);
+
+		std::vector<float> dstVerts(2 * stencilTable->GetNumStencils());
+		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
+		refineMesh->setUVs(dstVerts);
+
+		delete buffer;
+	}
+
+	// TODO: Check
+	void refineVelocityData(const std::shared_ptr<MeshContainer>& originalMesh,
+							std::shared_ptr<MeshContainer>& refineMesh,
+							Far::StencilTable const* stencilTable)
+	{
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3,
+												  originalMesh->nodeCount(), stencilTable);
+
+		std::vector<float> dstVerts(3 * stencilTable->GetNumStencils());
+		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
+		refineMesh->setVelocities(dstVerts);
+
+		delete buffer;
+	}
+
+	// TODO: Material support
+	std::shared_ptr<MeshContainer> refineMesh(const std::shared_ptr<MeshContainer>& originalMesh, int maxLevel, bool adaptive)
 	{
 		if (maxLevel < 1)
 			return originalMesh;
 
-		Far::TopologyRefiner* refiner		  = setupRefiner(originalMesh, maxLevel);
-		Far::StencilTable const* stencilTable = setupStencilTable(refiner);
+		Far::TopologyRefiner* refiner		  = setupRefiner(originalMesh, maxLevel, adaptive);
+		Far::StencilTable const* stencilTable = setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_VERTEX);
 
-		int nstencils = stencilTable->GetNumStencils();
-
-		// Refine vertex data
-		std::vector<float> v[3]  = { originalMesh->vertices(0), originalMesh->vertices(1), originalMesh->vertices(2) };
-		std::vector<float> n[3]  = { originalMesh->normals(0), originalMesh->normals(1), originalMesh->normals(2) };
-		std::vector<float> uv[2] = { originalMesh->uvs(0), originalMesh->uvs(1) };
-
-		for (int i = 0; i < 3; ++i) {
-			v[i].resize(nstencils);
-			n[i].resize(nstencils);
-			if (originalMesh->features() & MF_HAS_MATERIAL && i < 2)
-				uv[i].resize(nstencils);
-		}
-
-		DataWalker<float, 6> src({ originalMesh->vertices(0), originalMesh->vertices(1), originalMesh->vertices(2),
-								   originalMesh->normals(0), originalMesh->normals(1), originalMesh->normals(2) });
-		DataWalker<float, 6> dst({ v[0], v[1], v[2],
-								   n[0], n[1], n[2] });
-		stencilTable->UpdateValues(src, dst);
-
-		OpenSubdiv::Far::TopologyLevel const& refLevel = refiner->GetLevel(maxLevel);
+		Far::TopologyLevel const& refLevel = refiner->GetLevel(maxLevel);
 		std::vector<uint32> new_indices(refLevel.GetNumFaceVertices());
 		std::vector<uint8> new_vertsPerFace(refLevel.GetNumFaces());
 
-		PR_ASSERT(refLevel.GetNumVertices() == nstencils, "Expected to be same!");
+		PR_ASSERT(refLevel.GetNumVertices() == stencilTable->GetNumStencils(), "Expected to be same!");
 
-		PR_LOG(L_INFO) << "Subdivision(L=" << maxLevel << ") from V=" << originalMesh->nodeCount() << " F=" << originalMesh->faceCount() << " I=" << originalMesh->indices().size()
-					   << " to V=" << nstencils << " F=" << new_vertsPerFace.size() << " I=" << new_indices.size() << std::endl;
+		PR_LOG(L_INFO) << "Subdivision(L=" << maxLevel << ") [V=" << originalMesh->nodeCount() << " F=" << originalMesh->faceCount() << " I=" << originalMesh->indices().size()
+					   << "] -> [V=" << refLevel.GetNumVertices() << " F=" << new_vertsPerFace.size() << " I=" << new_indices.size() << "]" << std::endl;
 		size_t indC = 0;
 		for (int face = 0; face < refLevel.GetNumFaces(); ++face) {
-			OpenSubdiv::Far::ConstIndexArray fverts = refLevel.GetFaceVertices(face);
-			new_vertsPerFace[face]					= fverts.size();
+			Far::ConstIndexArray fverts = refLevel.GetFaceVertices(face);
+			new_vertsPerFace[face]		= fverts.size();
 
 			for (int i = 0; i < fverts.size(); ++i)
 				new_indices[indC++] = fverts[i];
 		}
-
 		delete refiner;
 		PR_ASSERT(indC == new_indices.size(), "Invalid subdivision calculation");
 
 		// Setup mesh
 		std::shared_ptr<MeshContainer> refineMesh = std::make_shared<MeshContainer>();
-		refineMesh->setVertices(v[0], v[1], v[2]);
-		refineMesh->setNormals(n[0], n[1], n[2]);
+
 		refineMesh->setIndices(new_indices);
 		refineMesh->setFaceVertexCount(new_vertsPerFace);
+		refineVertexData(originalMesh, refineMesh, stencilTable);
+		refineMesh->buildNormals();
+
+		if (originalMesh->features() & MF_HAS_UV)
+			refineUVData(originalMesh, refineMesh, stencilTable);
+
+		/*if(originalMesh->features() & MF_HAS_MATERIAL)
+			refineMaterialData(originalMesh, refineMesh, faceStencilTable);*/
+
+		if (originalMesh->features() & MF_HAS_VELOCITY)
+			refineVelocityData(originalMesh, refineMesh, stencilTable);
+
+		delete stencilTable;
 
 		return refineMesh;
 	}
@@ -328,6 +341,7 @@ public:
 			emsID = ems->id();
 
 		int maxSubdivision = reg.getForObject<int>(RG_ENTITY, uuid, "max_subdivision", 4);
+		bool adaptive	  = reg.getForObject<bool>(RG_ENTITY, uuid, "adaptive", false);
 
 		std::shared_ptr<MeshContainer> originalMesh = env.getMesh(mesh_name);
 		if (!originalMesh)
@@ -338,7 +352,7 @@ public:
 			return nullptr;
 		}
 
-		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, maxSubdivision);
+		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, maxSubdivision, adaptive);
 		return std::make_shared<SubdivMeshEntity>(id, name,
 												  env.cacheManager()->requestFile("mesh", name + ".cnt"),
 												  refinedMesh,

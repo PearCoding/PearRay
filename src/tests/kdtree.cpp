@@ -11,19 +11,19 @@ constexpr float CUSTOM_INTERSECTION_TEST_COST = 10000000;
 
 template <typename T>
 inline void addVertex(T p1, T p2, T p3,
-					  std::vector<T>* c)
+					  std::vector<T>& c)
 {
-	c[0].emplace_back(p1);
-	c[1].emplace_back(p2);
-	c[2].emplace_back(p3);
+	c.emplace_back(p1);
+	c.emplace_back(p2);
+	c.emplace_back(p3);
 }
 
 template <typename T>
 inline void addVertex(T p1, T p2,
-					  std::vector<T>* c)
+					  std::vector<T>& c)
 {
-	c[0].emplace_back(p1);
-	c[1].emplace_back(p2);
+	c.emplace_back(p1);
+	c.emplace_back(p2);
 }
 
 PR_BEGIN_TESTCASE(KDTree)
@@ -39,7 +39,7 @@ PR_BEGIN_TESTCASE(KDTree)
  */
 PR_TEST("Two Half")
 {
-	std::vector<float> vertices[3];
+	std::vector<float> vertices;
 	addVertex<float>(-2, 0, 0, vertices);
 	addVertex<float>(-1, 1, 0, vertices);
 	addVertex<float>(-1, 0, 0, vertices);
@@ -49,8 +49,8 @@ PR_TEST("Two Half")
 	addVertex<float>(2, 1, 0, vertices);
 
 	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
-	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
-	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setVertices(vertices);
+	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
 	cnt->setFaceVertexCount({ 3, 3 });
 
@@ -86,7 +86,7 @@ PR_TEST("Two Half")
 
 PR_TEST("Overlap")
 {
-	std::vector<float> vertices[3];
+	std::vector<float> vertices;
 	addVertex<float>(0, 0, -1, vertices);
 	addVertex<float>(1, 0, -1, vertices);
 	addVertex<float>(1, 1, 0, vertices);
@@ -100,8 +100,8 @@ PR_TEST("Overlap")
 	addVertex<float>(1, 1, 2, vertices);
 
 	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
-	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
-	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setVertices(vertices);
+	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 	cnt->setFaceVertexCount({ 3, 3, 3 });
 
@@ -139,7 +139,7 @@ PR_TEST("Overlap")
 
 PR_TEST("UV")
 {
-	std::vector<float> vertices[3];
+	std::vector<float> vertices;
 	addVertex<float>(0, 0, -1, vertices);
 	addVertex<float>(1, 0, -1, vertices);
 	addVertex<float>(1, 1, 0, vertices);
@@ -148,7 +148,7 @@ PR_TEST("UV")
 	addVertex<float>(1, 0, 1, vertices);
 	addVertex<float>(1, 1, 1, vertices);
 
-	std::vector<float> uvs[2];
+	std::vector<float> uvs;
 	addVertex<float>(0.1f, 0.1f, uvs);
 	addVertex<float>(0.2f, 0.2f, uvs);
 	addVertex<float>(0.3f, 0.3f, uvs);
@@ -158,9 +158,9 @@ PR_TEST("UV")
 	addVertex<float>(0.6f, 0.6f, uvs);
 
 	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
-	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
-	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
-	cnt->setUVs(uvs[0], uvs[1]);
+	cnt->setVertices(vertices);
+	cnt->setNormals(vertices); // Bad normals, but we do not care
+	cnt->setUVs(uvs);
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
 	cnt->setFaceVertexCount({ 3, 3 });
 
@@ -195,7 +195,7 @@ PR_TEST("UV")
 
 PR_TEST("Single Intersection")
 {
-	std::vector<float> vertices[3];
+	std::vector<float> vertices;
 	addVertex<float>(-2, 0, 0, vertices);
 	addVertex<float>(-1, 1, 0, vertices);
 	addVertex<float>(-1, 0, 0, vertices);
@@ -205,8 +205,8 @@ PR_TEST("Single Intersection")
 	addVertex<float>(2, 1, 0, vertices);
 
 	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
-	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
-	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setVertices(vertices);
+	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
 	cnt->setFaceVertexCount({ 3, 3 });
 	PR_CHECK_TRUE(cnt->isValid());

@@ -13,6 +13,49 @@ MeshContainer::~MeshContainer()
 {
 }
 
+void MeshContainer::buildNormals()
+{
+	mNormals.resize(mVertices.size());
+	std::fill(mNormals.begin(), mNormals.end(), 0.0f);
+
+	for (size_t face = 0; face < faceCount(); ++face) {
+		size_t indInd = mFaceIndexOffset[face];
+		size_t elems  = faceVertexCount(face);
+
+		Vector3f n;
+		if (elems == 4) {
+			Vector3f p0 = vertex(mIndices[indInd]);
+			Vector3f p1 = vertex(mIndices[indInd + 1]);
+			Vector3f p2 = vertex(mIndices[indInd + 2]);
+			Vector3f p3 = vertex(mIndices[indInd + 3]);
+
+			n = (p2 - p0).cross(p3 - p1).normalized();
+		} else {
+			Vector3f p0 = vertex(mIndices[indInd]);
+			Vector3f p1 = vertex(mIndices[indInd + 1]);
+			Vector3f p2 = vertex(mIndices[indInd + 2]);
+
+			n = (p1 - p0).cross(p2 - p0).normalized();
+		}
+
+		for (size_t k = 0; k < elems; ++k) {
+			uint32 index			= mIndices[indInd + k];
+			mNormals[3 * index]		= n(0);
+			mNormals[3 * index + 1] = n(1);
+			mNormals[3 * index + 2] = n(2);
+		}
+	}
+
+	// Normalize
+	for (size_t i = 0; i < mNormals.size() / 3; ++i) {
+		Vector3f n = Vector3f(mNormals[3 * i], mNormals[3 * i + 1], mNormals[3 * i + 2]);
+		n.normalize();
+		mNormals[3 * i]		= n(0);
+		mNormals[3 * i + 1] = n(1);
+		mNormals[3 * i + 2] = n(2);
+	}
+}
+
 void MeshContainer::setFaceVertexCount(const std::vector<uint8>& faceVertexCount)
 {
 	PR_PROFILE_THIS;
@@ -59,28 +102,28 @@ float MeshContainer::faceArea(size_t f, const Eigen::Affine3f& tm) const
 	const uint32 ind3 = mIndices[off + 2];
 
 	const Vector3f p1 = Transform::apply(tm.matrix(),
-										 Vector3f(mVertices[0][ind1],
-												  mVertices[1][ind1],
-												  mVertices[2][ind1]));
+										 Vector3f(mVertices[3 * ind1],
+												  mVertices[3 * ind1 + 1],
+												  mVertices[3 * ind1 + 2]));
 
 	const Vector3f p2 = Transform::apply(tm.matrix(),
-										 Vector3f(mVertices[0][ind2],
-												  mVertices[1][ind2],
-												  mVertices[2][ind2]));
+										 Vector3f(mVertices[3 * ind2],
+												  mVertices[3 * ind2 + 1],
+												  mVertices[3 * ind2 + 2]));
 
 	const Vector3f p3 = Transform::apply(tm.matrix(),
-										 Vector3f(mVertices[0][ind3],
-												  mVertices[1][ind3],
-												  mVertices[2][ind3]));
+										 Vector3f(mVertices[3 * ind3],
+												  mVertices[3 * ind3 + 1],
+												  mVertices[3 * ind3 + 2]));
 
 	if (faceElems == 3)
 		return Triangle::surfaceArea(p1, p2, p3);
 	else {
 		const uint32 ind4 = mIndices[off + 3];
 		const Vector3f p4 = Transform::apply(tm.matrix(),
-											 Vector3f(mVertices[0][ind4],
-													  mVertices[1][ind4],
-													  mVertices[2][ind4]));
+											 Vector3f(mVertices[3 * ind4],
+													  mVertices[3 * ind4 + 1],
+													  mVertices[3 * ind4 + 2]));
 		return Quad::surfaceArea(p1, p2, p3, p4);
 	}
 }

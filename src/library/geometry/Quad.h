@@ -40,7 +40,7 @@ public:
 		return Triangle::surfaceArea(p1, p2, p3) + Triangle::surfaceArea(p1, p3, p4);
 	}
 
-	template <typename T>
+	/*template <typename T>
 	inline static typename VectorTemplate<T>::bool_t intersect(
 		const RayPackageBase<T>& in,
 		const Vector3t<T>& p1,
@@ -52,6 +52,6 @@ public:
 	{
 		// TODO
 		return false;
-	}
+	}*/
 };
 } // namespace PR

@@ -8,9 +8,11 @@
 namespace PR {
 
 template <int D>
-static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp, std::vector<float>* attr)
+static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp, std::vector<float>& attr)
 {
 	static_assert(D > 0 && D <= 3, "Invalid dimension given");
+
+	attr.reserve(attr.size() + grp.anonymousCount() * D);
 
 	for (size_t j = 0; j < grp.anonymousCount(); ++j) {
 		DL::Data attrValD = grp.at(j);
@@ -24,7 +26,7 @@ static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp,
 
 		if (ok) {
 			for (int i = 0; i < D; ++i)
-				attr[i].push_back(v[i]);
+				attr.push_back(v[i]);
 		} else {
 			PR_LOG(L_ERROR) << "Mesh " << attrname << " attribute entry is invalid." << std::endl;
 			return false;
@@ -37,10 +39,10 @@ static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp,
 std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 												 const DL::DataGroup& group)
 {
-	std::vector<float> positionAttr[3];
-	std::vector<float> normalAttr[3];
-	std::vector<float> velocityAttr[3];
-	std::vector<float> uvAttr[2];
+	std::vector<float> positionAttr;
+	std::vector<float> normalAttr;
+	std::vector<float> velocityAttr;
+	std::vector<float> uvAttr;
 	// TODO: More attributes!
 
 	// First get vertex attributes
@@ -101,22 +103,22 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 	}
 
 	// Check validity
-	if (positionAttr[0].empty()) {
+	if (positionAttr.empty()) {
 		PR_LOG(L_ERROR) << "No position attribute given." << std::endl;
 		return nullptr;
 	}
 
-	if (normalAttr[0].empty() || normalAttr[0].size() != positionAttr[0].size()) {
-		PR_LOG(L_ERROR) << "Normal attribute does not match position attribute in size or is empty." << std::endl;
+	if (!normalAttr.empty() && normalAttr.size() != positionAttr.size()) {
+		PR_LOG(L_ERROR) << "Normal attribute does not match position attribute in size." << std::endl;
 		return nullptr;
 	}
 
-	if (!uvAttr[0].empty() && uvAttr[0].size() != positionAttr[0].size()) {
+	if (!uvAttr.empty() && uvAttr.size() / 2 != positionAttr.size() / 3) {
 		PR_LOG(L_ERROR) << "Texture attribute does not match position attribute in size." << std::endl;
 		return nullptr;
 	}
 
-	if (!velocityAttr[0].empty() && velocityAttr[0].size() != positionAttr[0].size()) {
+	if (!velocityAttr.empty() && velocityAttr.size() != positionAttr.size()) {
 		PR_LOG(L_ERROR) << "Velocity attribute does not match position attribute in size." << std::endl;
 		return nullptr;
 	}
@@ -147,7 +149,7 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 	// Get indices (faces)
 	std::vector<uint32> indices;
 	std::vector<uint8> verticesPerFace;
-	const size_t vertexCount = positionAttr[0].size();
+	const size_t vertexCount = positionAttr.size() / 3;
 	if (!hasFaces) {
 		PR_LOG(L_ERROR) << "No faces given!" << std::endl;
 		return nullptr;
@@ -210,13 +212,16 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 	}
 
 	auto me = std::make_shared<MeshContainer>();
-	me->setVertices(positionAttr[0], positionAttr[1], positionAttr[2]);
-	me->setNormals(normalAttr[0], normalAttr[1], normalAttr[2]);
-	me->setUVs(uvAttr[0], uvAttr[1]);
-	me->setVelocities(velocityAttr[0], velocityAttr[1], velocityAttr[2]);
+	me->setVertices(positionAttr);
+	me->setNormals(normalAttr);
+	me->setUVs(uvAttr);
+	me->setVelocities(velocityAttr);
 	me->setMaterialSlots(materials);
 	me->setIndices(indices);
 	me->setFaceVertexCount(verticesPerFace);
+
+	if (normalAttr.empty())
+		me->buildNormals();
 
 	if (!me->isValid()) {
 		PR_LOG(L_ERROR) << "Loaded mesh is invalid." << std::endl;

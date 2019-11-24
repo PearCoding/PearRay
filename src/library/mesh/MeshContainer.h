@@ -21,25 +21,22 @@ public:
 	MeshContainer();
 	~MeshContainer();
 
-	inline void setVertices(const std::vector<float>& vx,
-							const std::vector<float>& vy, const std::vector<float>& vz);
-	inline const std::vector<float>& vertices(size_t dim) const { return mVertices[dim]; }
-	inline Vector3f vertex(size_t ind) const { return Vector3f(mVertices[0][ind], mVertices[1][ind], mVertices[2][ind]); }
+	inline void setVertices(const std::vector<float>& vertices);
+	inline const std::vector<float>& vertices() const { return mVertices; }
+	inline Vector3f vertex(size_t ind) const { return Vector3f(mVertices[3 * ind], mVertices[3 * ind + 1], mVertices[3 * ind + 2]); }
 
-	inline void setNormals(const std::vector<float>& vx,
-						   const std::vector<float>& vy, const std::vector<float>& vz);
-	inline const std::vector<float>& normals(size_t dim) const { return mNormals[dim]; }
-	inline Vector3f normal(size_t ind) const { return Vector3f(mNormals[0][ind], mNormals[1][ind], mNormals[2][ind]); }
+	inline void setNormals(const std::vector<float>& normals);
+	inline const std::vector<float>& normals() const { return mNormals; }
+	inline Vector3f normal(size_t ind) const { return Vector3f(mNormals[3 * ind], mNormals[3 * ind + 1], mNormals[3 * ind + 2]); }
+	void buildNormals();
 
-	inline void setUVs(const std::vector<float>& u,
-					   const std::vector<float>& v);
-	inline const std::vector<float>& uvs(size_t dim) const { return mUVs[dim]; }
-	inline Vector2f uv(size_t ind) const { return (features() & MF_HAS_UV) ? Vector2f(mUVs[0][ind], mUVs[1][ind]) : Vector2f(0, 0); }
+	inline void setUVs(const std::vector<float>& uvs);
+	inline const std::vector<float>& uvs() const { return mUVs; }
+	inline Vector2f uv(size_t ind) const { return (features() & MF_HAS_UV) ? Vector2f(mUVs[2 * ind], mUVs[2 * ind + 1]) : Vector2f(0, 0); }
 
-	inline void setVelocities(const std::vector<float>& vx,
-							  const std::vector<float>& vy, const std::vector<float>& vz);
-	inline const std::vector<float>& velocities(size_t dim) const { return mVelocities[dim]; }
-	inline Vector3f velocity(size_t ind) const { return Vector3f(mVelocities[0][ind], mVelocities[1][ind], mVelocities[2][ind]); }
+	inline void setVelocities(const std::vector<float>& velocities);
+	inline const std::vector<float>& velocities() const { return mVelocities; }
+	inline Vector3f velocity(size_t ind) const { return (features() & MF_HAS_VELOCITY) ? Vector3f(mVelocities[3 * ind], mVelocities[3 * ind + 1], mVelocities[3 * ind + 2]) : Vector3f(0, 0, 0); }
 
 	inline void setIndices(const std::vector<uint32>& indices);
 	inline const std::vector<uint32>& indices() const { return mIndices; }
@@ -56,7 +53,7 @@ public:
 
 	inline uint32 features() const { return mFeatures; }
 
-	inline size_t nodeCount() const { return mVertices[0].size(); }
+	inline size_t nodeCount() const { return mVertices.size() / 3; }
 	inline size_t triangleCount() const { return mTriangleCount; }
 	inline size_t quadCount() const { return mQuadCount; }
 	inline size_t faceCount() const { return triangleCount() + quadCount(); }
@@ -76,10 +73,10 @@ public:
 
 private:
 	uint32 mFeatures;
-	std::vector<float> mVertices[3];
-	std::vector<float> mNormals[3];
-	std::vector<float> mUVs[2];
-	std::vector<float> mVelocities[3];
+	std::vector<float> mVertices;   //3 floats
+	std::vector<float> mNormals;	//3 floats
+	std::vector<float> mUVs;		// 2 floats
+	std::vector<float> mVelocities; //3 floats
 	std::vector<uint32> mMaterialSlots;
 	std::vector<uint32> mIndices;
 	std::vector<uint32> mFaceIndexOffset; // Only triangles and quads supported
