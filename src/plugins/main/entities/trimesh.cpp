@@ -131,7 +131,7 @@ public:
 
 	void beforeSceneBuild() override
 	{
-		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]";
+		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]" << std::endl;
 
 		if (!mLoadOnly)
 			mMesh.build(mCNTFile);

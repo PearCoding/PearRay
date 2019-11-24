@@ -228,7 +228,7 @@ void StandardCamera::beforeSceneBuild()
 	mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();
 	mUp_Cache		 = (normalMatrix() * mLocalUp).normalized();
 
-	PR_LOG(L_INFO) << name() << ": Dir[" << mDirection_Cache << "] Right[" << mRight_Cache << "] Up[" << mUp_Cache << "]" << std::endl;
+	PR_LOG(L_INFO) << name() << ": Dir" << mDirection_Cache << " Right" << mRight_Cache << " Up" << mUp_Cache << std::endl;
 
 	// No depth of field
 	if (std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) {
@@ -246,9 +246,9 @@ void StandardCamera::beforeSceneBuild()
 		mUp_Cache *= 0.5f * mHeight * (mFStop + 1);
 		mHasDOF_Cache = true;
 
-		PR_LOG(L_INFO) << "    FocalDistance[" << mFocalDistance_Cache
-					   << "] XAperature[" << mXApertureRadius_Cache
-					   << "] YAperature[" << mYApertureRadius_Cache << "]" << std::endl;
+		PR_LOG(L_INFO) << "    FocalDistance" << mFocalDistance_Cache
+					   << " XAperature" << mXApertureRadius_Cache
+					   << " YAperature" << mYApertureRadius_Cache << std::endl;
 	}
 }
 

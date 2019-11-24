@@ -12,6 +12,8 @@ void setup_profiler(py::module& m)
 		   [](int samples) {
 #ifdef PR_WITH_PROFILER
 			   Profiler::start(samples);
+#else
+			   (void)samples;
 #endif
 		   },
 		   py::arg("samplesPerSecond") = 10);
@@ -27,6 +29,8 @@ void setup_profiler(py::module& m)
 		   [](const std::wstring& filename) {
 #ifdef PR_WITH_PROFILER
 			   Profiler::dumpToFile(filename);
+#else
+			   (void)filename;
 #endif
 		   });
 }

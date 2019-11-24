@@ -1,5 +1,6 @@
 #pragma once
 
+// clang-format off
 #define PR_NAME_STRING		"${PROJECT_NAME}"
 #define PR_VENDOR_STRING	"${VENDOR}"
 
@@ -12,3 +13,4 @@
 
 #define PR_GIT_BRANCH 	    "${GIT_BRANCH}"
 #define PR_GIT_REVISION 	"${GIT_REVISION}"
+// clang-format on

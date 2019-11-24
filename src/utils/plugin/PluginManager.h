@@ -27,7 +27,7 @@ public:
 
 private:
 	bool tryLoad(const std::wstring& path, const Registry& reg, bool useFallbacks);
-	bool loadInterface(const std::string& name, class PluginInterface* interface);
+	bool loadInterface(const std::string& name, struct PluginInterface* interface);
 
 	struct PluginLibPair {
 		std::shared_ptr<IPlugin> Plugin;

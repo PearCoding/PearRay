@@ -48,19 +48,16 @@ PR_TEST("Two Half")
 	addVertex<float>(1, 1, 0, vertices);
 	addVertex<float>(2, 1, 0, vertices);
 
-	std::vector<uint32> faces[3];
-	addVertex<uint32>(0, 1, 2, faces);
-	addVertex<uint32>(3, 4, 5, faces);
+	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
+	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
+	cnt->setFaceVertexCount({ 3, 3 });
 
-	TriMesh mesh;
-	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
-	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
-	mesh.setIndices(faces[0], faces[1], faces[2]);
+	PR_CHECK_TRUE(cnt->isValid());
 
-	PR_CHECK_TRUE(mesh.isValid());
-
-	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build(L"tmp1.cnt", false);
+	TriMesh mesh(cnt);
+	mesh.build(L"tmp1.cnt");
 
 	RayPackage in;
 	in.Origin[0] = simdpp::make_float(-1.5, 1.5, 0, 0.6);
@@ -102,23 +99,19 @@ PR_TEST("Overlap")
 	addVertex<float>(1, 0, 3, vertices);
 	addVertex<float>(1, 1, 2, vertices);
 
-	std::vector<uint32> faces[3];
-	addVertex<uint32>(0, 1, 2, faces);
-	addVertex<uint32>(3, 4, 5, faces);
-	addVertex<uint32>(6, 7, 8, faces);
+	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
+	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setIndices({ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+	cnt->setFaceVertexCount({ 3, 3, 3 });
 
-	TriMesh mesh;
-	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
-	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
-	mesh.setIndices(faces[0], faces[1], faces[2]);
+	PR_CHECK_TRUE(cnt->isValid());
 
-	PR_CHECK_EQ(mesh.nodeCount(), 9);
-	PR_CHECK_EQ(mesh.faceCount(), 3);
+	PR_CHECK_EQ(cnt->nodeCount(), 9);
+	PR_CHECK_EQ(cnt->faceCount(), 3);
 
-	PR_CHECK_TRUE(mesh.isValid());
-
-	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build(L"tmp2.cnt", false);
+	TriMesh mesh(cnt);
+	mesh.build(L"tmp2.cnt");
 
 	RayPackage in;
 	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 5);
@@ -164,22 +157,18 @@ PR_TEST("UV")
 	addVertex<float>(0.5f, 0.5f, uvs);
 	addVertex<float>(0.6f, 0.6f, uvs);
 
-	std::vector<uint32> faces[3];
-	addVertex<uint32>(0, 1, 2, faces);
-	addVertex<uint32>(3, 4, 5, faces);
+	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
+	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setUVs(uvs[0], uvs[1]);
+	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
+	cnt->setFaceVertexCount({ 3, 3 });
 
-	TriMesh mesh;
-	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
-	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
-	mesh.setUVs(uvs[0], uvs[1]);
-	mesh.setIndices(faces[0], faces[1], faces[2]);
+	PR_CHECK_TRUE(cnt->isValid());
+	PR_CHECK_TRUE(cnt->features() & MF_HAS_UV);
 
-	PR_CHECK_TRUE(mesh.isValid());
-
-	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build(L"tmp3.cnt", false);
-
-	PR_CHECK_TRUE(mesh.features() & TMF_HAS_UV);
+	TriMesh mesh(cnt);
+	mesh.build(L"tmp3.cnt");
 
 	RayPackage in;
 	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 0.6);
@@ -215,19 +204,15 @@ PR_TEST("Single Intersection")
 	addVertex<float>(1, 1, 0, vertices);
 	addVertex<float>(2, 1, 0, vertices);
 
-	std::vector<uint32> faces[3];
-	addVertex<uint32>(0, 1, 2, faces);
-	addVertex<uint32>(3, 4, 5, faces);
+	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	cnt->setVertices(vertices[0], vertices[1], vertices[2]);
+	cnt->setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
+	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
+	cnt->setFaceVertexCount({ 3, 3 });
+	PR_CHECK_TRUE(cnt->isValid());
 
-	TriMesh mesh;
-	mesh.setVertices(vertices[0], vertices[1], vertices[2]);
-	mesh.setNormals(vertices[0], vertices[1], vertices[2]); // Bad normals, but we do not care
-	mesh.setIndices(faces[0], faces[1], faces[2]);
-
-	PR_CHECK_TRUE(mesh.isValid());
-
-	mesh.setIntersectionTestCost(CUSTOM_INTERSECTION_TEST_COST);
-	mesh.build(L"tmp1.cnt", false);
+	TriMesh mesh(cnt);
+	mesh.build(L"tmp1.cnt");
 
 	Ray in;
 	in.Origin[0] = -1.5;

@@ -60,6 +60,8 @@ public:
 	inline size_t triangleCount() const { return mTriangleCount; }
 	inline size_t quadCount() const { return mQuadCount; }
 	inline size_t faceCount() const { return triangleCount() + quadCount(); }
+	inline bool isOnlyTriangular() const { return triangleCount() > 0 && quadCount() == 0; }
+	inline bool isOnlyQuadrangular() const { return triangleCount() == 0 && quadCount() > 0; }
 
 	inline Face getFace(uint32 index) const;
 
