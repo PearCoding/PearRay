@@ -10,11 +10,8 @@ class DataGroup;
 
 namespace PR {
 class MeshContainer;
-
-class SceneLoader;
-class Environment;
 class MeshParser {
 public:
-	static std::shared_ptr<PR::MeshContainer> parse(Environment* env, const DL::DataGroup& group);
+	static std::shared_ptr<MeshContainer> parse(const DL::DataGroup& group);
 };
 } // namespace PR

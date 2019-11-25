@@ -40,6 +40,7 @@ private:
 	static void addSpectrum(const DL::DataGroup& group, Environment* env);
 	static void addSubGraph(const DL::DataGroup& group, Environment* env);
 	static void addMesh(const DL::DataGroup& group, Environment* env);
+	static void addCurveGroup(const DL::DataGroup& group, Environment* env);
 
 	static void addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
 								 const std::string& key, const DL::Data& group,

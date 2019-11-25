@@ -36,8 +36,7 @@ static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp,
 	return true;
 }
 
-std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
-												 const DL::DataGroup& group)
+std::shared_ptr<MeshContainer> MeshParser::parse(const DL::DataGroup& group)
 {
 	std::vector<float> positionAttr;
 	std::vector<float> normalAttr;

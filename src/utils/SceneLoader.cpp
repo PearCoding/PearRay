@@ -18,6 +18,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "material/MaterialManager.h"
+#include "parser/CurveParser.h"
 #include "parser/MathParser.h"
 #include "parser/MeshParser.h"
 #include "parser/SpectralParser.h"
@@ -535,7 +536,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto mesh = MeshParser::parse(env, group);
+	auto mesh = MeshParser::parse(group);
 
 	if (!mesh) {
 		PR_LOG(L_ERROR) << "Mesh " << name << " couldn't be load" << std::endl;
@@ -543,6 +544,33 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	}
 
 	env->addMesh(name, mesh);
+}
+
+void SceneLoader::addCurveGroup(const DL::DataGroup& group, Environment* env)
+{
+	DL::Data nameD = group.getFromKey("name");
+
+	std::string name;
+	if (nameD.type() == DL::DT_String) {
+		name = nameD.getString();
+	} else {
+		PR_LOG(L_ERROR) << "No curve group name set" << std::endl;
+		return;
+	}
+
+	if (env->hasCurveGroup(name)) {
+		PR_LOG(L_ERROR) << "Curve group name already set" << std::endl;
+		return;
+	}
+
+	auto curve = CurveParser::parse(group);
+
+	if (!curve) {
+		PR_LOG(L_ERROR) << "Curve group " << name << " couldn't be load" << std::endl;
+		return;
+	}
+
+	env->addCurveGroup(name, curve);
 }
 
 void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)

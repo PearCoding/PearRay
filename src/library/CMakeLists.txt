@@ -32,6 +32,9 @@ SET(PR_Src
   container/kdTreeCollider.h
   container/QuickSort.h
   container/RadixSort.h
+  curve/Curve.h
+  curve/CurveContainer.h
+  curve/CurveContainer.cpp
   entity/IEntity.cpp
   entity/IEntity.h
   entity/IEntity.inl

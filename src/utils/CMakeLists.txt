@@ -28,6 +28,8 @@ SET(PR_Src
   material/IMaterialFactory.h
   material/MaterialManager.cpp
   material/MaterialManager.h
+  parser/CurveParser.cpp
+  parser/CurveParser.h
   parser/MathParser.cpp
   parser/MathParser.h
   parser/MeshParser.cpp

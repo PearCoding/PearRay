@@ -6,9 +6,6 @@
 
 using namespace PR;
 
-// Make sure the tree builder gives each triangle his own volume
-constexpr float CUSTOM_INTERSECTION_TEST_COST = 10000000;
-
 template <typename T>
 inline void addVertex(T p1, T p2, T p3,
 					  std::vector<T>& c)
