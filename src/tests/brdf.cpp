@@ -1,5 +1,5 @@
 #include "Test.h"
-#include "material/BRDF.h"
+#include "math/Microfacet.h"
 #include "math/Reflection.h"
 
 using namespace PR;
@@ -64,7 +64,7 @@ PR_TEST("Blinn NDF")
 	float alpha = 0.5f;
 	float sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES; ++i) {
-		float d = BRDF::ndf_blinn(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_blinn(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -80,7 +80,7 @@ PR_TEST("Blinn NDF")
 	alpha = 0.001f;
 	sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES; ++i) {
-		float d = BRDF::ndf_blinn(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_blinn(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -96,7 +96,7 @@ PR_TEST("Blinn NDF")
 	alpha = 1;
 	sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES; ++i) {
-		float d = BRDF::ndf_blinn(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_blinn(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -122,7 +122,7 @@ PR_TEST("Beckmann NDF")
 	float alpha = 0.5f;
 	float sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES; ++i) {
-		float d = BRDF::ndf_beckmann(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_beckmann(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -138,7 +138,7 @@ PR_TEST("Beckmann NDF")
 	alpha = 0.001f;
 	sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES; ++i) {
-		float d = BRDF::ndf_beckmann(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_beckmann(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -154,7 +154,7 @@ PR_TEST("Beckmann NDF")
 	alpha = 1;
 	sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES - 1; ++i) {
-		float d = BRDF::ndf_beckmann(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_beckmann(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -180,7 +180,7 @@ PR_TEST("GGX ISO NDF")
 	float alpha = 0.5f;
 	float sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES - 1; ++i) {
-		float d = BRDF::ndf_ggx_iso(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_ggx(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -196,7 +196,7 @@ PR_TEST("GGX ISO NDF")
 	alpha = 0.001f;
 	sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES - 1; ++i) {
-		float d = BRDF::ndf_ggx_iso(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_ggx(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif
@@ -212,7 +212,7 @@ PR_TEST("GGX ISO NDF")
 	alpha = 1;
 	sum   = 0;
 	for (uint32 i = 1; i < MAX_SAMPLES - 1; ++i) {
-		float d = BRDF::ndf_ggx_iso(i * SAMPLE_STEP, alpha);
+		float d = Microfacet::ndf_ggx(i * SAMPLE_STEP, alpha);
 #ifdef PR_TEST_VERBOSE
 		std::cout << "[" << i << "|" << i * SAMPLE_STEP << "-> " << d << "] ";
 #endif

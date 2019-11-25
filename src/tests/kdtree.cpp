@@ -55,13 +55,17 @@ PR_TEST("Two Half")
 	cnt->setFaceVertexCount({ 3, 3 });
 
 	PR_CHECK_TRUE(cnt->isValid());
+	PR_CHECK_EQ(cnt->nodeCount(), 6);
+	PR_CHECK_EQ(cnt->faceCount(), 2);
+	PR_CHECK_EQ(cnt->triangleCount(), 2);
+	PR_CHECK_EQ(cnt->quadCount(), 0);
 
 	TriMesh mesh(cnt);
 	mesh.build(L"tmp1.cnt");
 
 	RayPackage in;
-	in.Origin[0] = simdpp::make_float(-1.5, 1.5, 0, 0.6);
-	in.Origin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
+	in.Origin[0] = simdpp::make_float(-1.5f, 1.5f, 0, 0.6f);
+	in.Origin[1] = simdpp::make_float(0.5f, 0.5f, 0.5f, 0.6f);
 	in.Origin[2] = simdpp::make_float(1, 1, 1, 1);
 
 	in.Direction[0] = simdpp::make_float(0);
@@ -106,16 +110,17 @@ PR_TEST("Overlap")
 	cnt->setFaceVertexCount({ 3, 3, 3 });
 
 	PR_CHECK_TRUE(cnt->isValid());
-
 	PR_CHECK_EQ(cnt->nodeCount(), 9);
 	PR_CHECK_EQ(cnt->faceCount(), 3);
+	PR_CHECK_EQ(cnt->triangleCount(), 3);
+	PR_CHECK_EQ(cnt->quadCount(), 0);
 
 	TriMesh mesh(cnt);
 	mesh.build(L"tmp2.cnt");
 
 	RayPackage in;
-	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 5);
-	in.Origin[1] = simdpp::make_float(0.5, 0.5, 0.5, 5);
+	in.Origin[0] = simdpp::make_float(0.75f, 0.75f, 0, 5);
+	in.Origin[1] = simdpp::make_float(0.5f, 0.5f, 0.5f, 5);
 	in.Origin[2] = simdpp::make_float(2, -2, 1, 1);
 
 	in.Direction[0] = simdpp::make_float(0);
@@ -126,6 +131,7 @@ PR_TEST("Overlap")
 	mesh.checkCollision(in, out);
 
 	// From top to bottom
+	// FIXME: There is a bug in the parallel tracing!
 	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
 	PR_CHECK_EQ(extract<0>(out.FaceID), 1);
 
@@ -166,13 +172,17 @@ PR_TEST("UV")
 
 	PR_CHECK_TRUE(cnt->isValid());
 	PR_CHECK_TRUE(cnt->features() & MF_HAS_UV);
+	PR_CHECK_EQ(cnt->nodeCount(), 6);
+	PR_CHECK_EQ(cnt->faceCount(), 2);
+	PR_CHECK_EQ(cnt->triangleCount(), 2);
+	PR_CHECK_EQ(cnt->quadCount(), 0);
 
 	TriMesh mesh(cnt);
 	mesh.build(L"tmp3.cnt");
 
 	RayPackage in;
-	in.Origin[0] = simdpp::make_float(0.75, 0.75, 0, 0.6);
-	in.Origin[1] = simdpp::make_float(0.5, 0.5, 0.5, 0.6);
+	in.Origin[0] = simdpp::make_float(0.75f, 0.75f, 0, 0.6f);
+	in.Origin[1] = simdpp::make_float(0.5f, 0.5f, 0.5f, 0.6f);
 	in.Origin[2] = simdpp::make_float(2, -2, -1, -1);
 
 	in.Direction[0] = simdpp::make_float(0);
@@ -209,7 +219,12 @@ PR_TEST("Single Intersection")
 	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
 	cnt->setFaceVertexCount({ 3, 3 });
+
 	PR_CHECK_TRUE(cnt->isValid());
+	PR_CHECK_EQ(cnt->nodeCount(), 6);
+	PR_CHECK_EQ(cnt->faceCount(), 2);
+	PR_CHECK_EQ(cnt->triangleCount(), 2);
+	PR_CHECK_EQ(cnt->quadCount(), 0);
 
 	TriMesh mesh(cnt);
 	mesh.build(L"tmp1.cnt");
@@ -229,6 +244,47 @@ PR_TEST("Single Intersection")
 	// Left triangle
 	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
 	PR_CHECK_EQ(out.FaceID, 0);
+}
+
+PR_TEST("Single Intersection Overlap")
+{
+	std::vector<float> vertices;
+	addVertex<float>(0, 0, -1, vertices);
+	addVertex<float>(1, 0, -1, vertices);
+	addVertex<float>(1, 1, 0, vertices);
+
+	addVertex<float>(0, 0, 0, vertices);
+	addVertex<float>(1, 0, 1, vertices);
+	addVertex<float>(1, 1, 1, vertices);
+
+	addVertex<float>(0, 0, 3, vertices);
+	addVertex<float>(1, 0, 3, vertices);
+	addVertex<float>(1, 1, 2, vertices);
+
+	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	cnt->setVertices(vertices);
+	cnt->setNormals(vertices); // Bad normals, but we do not care
+	cnt->setIndices({ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+	cnt->setFaceVertexCount({ 3, 3, 3 });
+
+	PR_CHECK_TRUE(cnt->isValid());
+	PR_CHECK_EQ(cnt->nodeCount(), 9);
+	PR_CHECK_EQ(cnt->faceCount(), 3);
+	PR_CHECK_EQ(cnt->triangleCount(), 3);
+	PR_CHECK_EQ(cnt->quadCount(), 0);
+
+	TriMesh mesh(cnt);
+	mesh.build(L"tmp2.cnt");
+
+	Ray in;
+	in.Origin	= Vector3f(0.75f, 0.5f, 2);
+	in.Direction = Vector3f(0, 0, -1);
+
+	SingleCollisionOutput out;
+	mesh.checkCollision(in, out);
+
+	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
+	PR_CHECK_EQ(out.FaceID, 1);
 }
 
 PR_END_TESTCASE()
