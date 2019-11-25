@@ -24,6 +24,7 @@ public:
 class FileLogListenerWrap : public FileLogListener {
 public:
 	using FileLogListener::FileLogListener;
+
 	void startEntry(LogLevel level) override
 	{
 		PYBIND11_OVERLOAD(void, FileLogListener, startEntry, level);
@@ -60,4 +61,4 @@ void setup_logger(py::module& m)
 		.value("ERROR", L_ERROR)
 		.value("FATAL", L_FATAL);
 }
-}
+} // namespace PRPY

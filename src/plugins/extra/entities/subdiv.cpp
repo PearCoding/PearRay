@@ -191,9 +191,10 @@ public:
 		desc.numFaces			= static_cast<int>(originalMesh->faceCount());
 		desc.numVertices		= static_cast<int>(originalMesh->nodeCount());
 		desc.numVertsPerFace	= (const int*)vertsPerFace.data();
-		desc.vertIndicesPerFace = (const int*)indices.data();
+		desc.vertIndicesPerFace = (const Far::Index*)indices.data();
 
-		static_assert(sizeof(uint32) == sizeof(int), "Above code is depending on it. (Maybe fix it!)");
+		static_assert(sizeof(uint32) == sizeof(int) && sizeof(uint32) == sizeof(Far::Index),
+					  "Above code is depending on it. (Maybe fix it!)");
 
 		if (originalMesh->features() & MF_HAS_MATERIAL) {
 			fvarChannels[0].numValues = static_cast<int>(originalMesh->faceCount());
@@ -206,7 +207,7 @@ public:
 					fvarIndices.push_back(static_cast<uint32>(f));
 			}
 
-			fvarChannels[0].valueIndices = (const int*)fvarIndices.data();
+			fvarChannels[0].valueIndices = (const Far::Index*)fvarIndices.data();
 
 			desc.numFVarChannels = 1;
 			desc.fvarChannels	= fvarChannels;
@@ -257,20 +258,24 @@ public:
 		return Far::StencilTableFactory::Create(*refiner, stencil_options);
 	}
 
-	Osd::CpuVertexBuffer* refineData(const float* source, int elems, int vertices,
-									 OpenSubdivComputationMode mode, Far::StencilTable const* stencilTable,
+	Osd::CpuVertexBuffer* refineData(const float* source, int elems,
+									 OpenSubdivComputationMode mode,
+									 Far::TopologyRefiner* refiner, Far::StencilTable const* stencilTable,
 									 Osd::CpuVertexBuffer** limit = nullptr)
 	{
+		int coarseElems = refiner->GetLevel(0).GetNumVertices();
+		int refElems	= refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
+
 		Osd::BufferDescriptor srcDesc(0, elems, elems);
-		Osd::CpuVertexBuffer* srcbuffer = Osd::CpuVertexBuffer::Create(elems, vertices);
-		srcbuffer->UpdateData(source, 0, vertices);
+		Osd::CpuVertexBuffer* srcbuffer = Osd::CpuVertexBuffer::Create(elems, coarseElems);
+		srcbuffer->UpdateData(source, 0, coarseElems);
 
 		Osd::BufferDescriptor dstDesc(0, elems, elems);
-		Osd::CpuVertexBuffer* dstbuffer = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
+		Osd::CpuVertexBuffer* dstbuffer = Osd::CpuVertexBuffer::Create(elems, refElems);
 
 		if (limit) {
-			limit[0] = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
-			limit[1] = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
+			limit[0] = Osd::CpuVertexBuffer::Create(elems, refElems);
+			limit[1] = Osd::CpuVertexBuffer::Create(elems, refElems);
 			switch (mode) {
 			default:
 			case OSCM_CPU:
@@ -313,14 +318,14 @@ public:
 	void refineVertexData(const std::shared_ptr<MeshContainer>& originalMesh,
 						  std::shared_ptr<MeshContainer>& refineMesh,
 						  OpenSubdivComputationMode mode,
+						  Far::TopologyRefiner* refiner,
 						  Far::StencilTable const* stencilTable)
 	{
 		PR_PROFILE_THIS;
 
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3,
-												  static_cast<int>(originalMesh->nodeCount()), mode, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3, mode, refiner, stencilTable);
 
-		std::vector<float> dstVerts(3 * stencilTable->GetNumStencils());
+		std::vector<float> dstVerts(3 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
 		refineMesh->setVertices(dstVerts);
 
@@ -330,14 +335,14 @@ public:
 	void refineUVData(const std::shared_ptr<MeshContainer>& originalMesh,
 					  std::shared_ptr<MeshContainer>& refineMesh,
 					  OpenSubdivComputationMode mode,
+					  Far::TopologyRefiner* refiner,
 					  Far::StencilTable const* stencilTable)
 	{
 		PR_PROFILE_THIS;
 
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2,
-												  static_cast<int>(originalMesh->nodeCount()), mode, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2, mode, refiner, stencilTable);
 
-		std::vector<float> dstVerts(2 * stencilTable->GetNumStencils());
+		std::vector<float> dstVerts(2 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
 		refineMesh->setUVs(dstVerts);
 
@@ -348,14 +353,14 @@ public:
 	void refineVelocityData(const std::shared_ptr<MeshContainer>& originalMesh,
 							std::shared_ptr<MeshContainer>& refineMesh,
 							OpenSubdivComputationMode mode,
+							Far::TopologyRefiner* refiner,
 							Far::StencilTable const* stencilTable)
 	{
 		PR_PROFILE_THIS;
 
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3,
-												  static_cast<int>(originalMesh->nodeCount()), mode, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3, mode, refiner, stencilTable);
 
-		std::vector<float> dstVerts(3 * stencilTable->GetNumStencils());
+		std::vector<float> dstVerts(3 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
 		refineMesh->setVelocities(dstVerts);
 
@@ -366,8 +371,8 @@ public:
 	void refineMaterialData(const std::shared_ptr<MeshContainer>& originalMesh,
 							std::shared_ptr<MeshContainer>& refineMesh,
 							OpenSubdivComputationMode mode,
-							Far::StencilTable const* stencilTable,
-							Far::TopologyRefiner* refiner)
+							Far::TopologyRefiner* refiner,
+							Far::StencilTable const* stencilTable)
 	{
 		PR_PROFILE_THIS;
 		Far::TopologyLevel const& refLevel = refiner->GetLevel(refiner->GetMaxLevel());
@@ -380,8 +385,7 @@ public:
 			slotsAsFloat[i] = static_cast<float>(v);
 		}
 
-		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1,
-												  static_cast<int>(originalMesh->nodeCount()), mode, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1, mode, refiner, stencilTable);
 
 		std::vector<float> dstVerts(refLevel.GetNumFVarValues());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -413,13 +417,11 @@ public:
 														? setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_FACE_VARYING)
 														: nullptr;
 
-		Far::TopologyLevel const& refLevel = refiner->GetLevel(opts.MaxLevel);
+		Far::TopologyLevel const& refLevel = refiner->GetLevel(refiner->GetMaxLevel());
 		std::vector<uint32> new_indices(refLevel.GetNumFaceVertices());
 		std::vector<uint8> new_vertsPerFace(refLevel.GetNumFaces());
 
-		PR_ASSERT(refLevel.GetNumVertices() == stencilTable->GetNumStencils(), "Expected to be same!");
-
-		PR_LOG(L_INFO) << "Subdivision(L=" << opts.MaxLevel << ") [V=" << originalMesh->nodeCount() << " F=" << originalMesh->faceCount() << " I=" << originalMesh->indices().size()
+		PR_LOG(L_INFO) << "Subdivision(L=" << opts.MaxLevel << "/" << refiner->GetMaxLevel() << ") [V=" << originalMesh->nodeCount() << " F=" << originalMesh->faceCount() << " I=" << originalMesh->indices().size()
 					   << "] -> [V=" << refLevel.GetNumVertices() << " F=" << new_vertsPerFace.size() << " I=" << new_indices.size() << "]" << std::endl;
 		size_t indC = 0;
 		for (int face = 0; face < refLevel.GetNumFaces(); ++face) {
@@ -436,18 +438,18 @@ public:
 
 		refineMesh->setIndices(new_indices);
 		refineMesh->setFaceVertexCount(new_vertsPerFace);
-		refineVertexData(originalMesh, refineMesh, opts.ComputationMode, stencilTable);
+		refineVertexData(originalMesh, refineMesh, opts.ComputationMode, refiner, stencilTable);
 		// TODO: Add normals based on limit
 		refineMesh->buildNormals();
 
 		if (originalMesh->features() & MF_HAS_UV)
-			refineUVData(originalMesh, refineMesh, opts.ComputationMode, uvStencilTable);
+			refineUVData(originalMesh, refineMesh, opts.ComputationMode, refiner, uvStencilTable);
 
 		if (originalMesh->features() & MF_HAS_MATERIAL)
-			refineMaterialData(originalMesh, refineMesh, opts.ComputationMode, fvarStencilTable, refiner);
+			refineMaterialData(originalMesh, refineMesh, opts.ComputationMode, refiner, fvarStencilTable);
 
 		if (originalMesh->features() & MF_HAS_VELOCITY)
-			refineVelocityData(originalMesh, refineMesh, opts.ComputationMode, stencilTable);
+			refineVelocityData(originalMesh, refineMesh, opts.ComputationMode, refiner, stencilTable);
 
 		// Remove buffers
 		std::vector<uint32> null;
@@ -501,8 +503,7 @@ public:
 		else if (scheme == "bilinear")
 			opts.Scheme = Sdc::SCHEME_BILINEAR;
 		else if (scheme == "loop")
-			opts.Scheme = Sdc::SCHEME_CATMARK;
-		//opts.Scheme = Sdc::SCHEME_LOOP; // FIXME: This crashes
+			opts.Scheme = Sdc::SCHEME_LOOP;
 
 		// Boundary Interpolation
 		std::transform(boundaryInterpolation.begin(), boundaryInterpolation.end(), boundaryInterpolation.begin(), ::tolower);
@@ -543,6 +544,9 @@ public:
 			PR_LOG(L_ERROR) << "Mesh " << mesh_name << " is invalid." << std::endl;
 			return nullptr;
 		}
+
+		if (opts.Scheme == Sdc::SCHEME_LOOP)// Scheme Loop accepts triangle data only
+			originalMesh->triangulate();
 
 		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, opts);
 		return std::make_shared<SubdivMeshEntity>(id, name,
