@@ -2,6 +2,7 @@
 #include "Logger.h"
 
 #include <boost/filesystem.hpp>
+#include <cctype>
 
 namespace PR {
 CacheManager::CacheManager(const std::wstring& workingDir)

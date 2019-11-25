@@ -10,6 +10,7 @@
 #include "mesh/TriMesh.h"
 
 #include <boost/filesystem.hpp>
+#include <cctype>
 
 #include <opensubdiv/far/stencilTableFactory.h>
 #include <opensubdiv/far/topologyDescriptor.h>
@@ -157,12 +158,22 @@ private:
 };
 
 using namespace OpenSubdiv;
+struct SubdivisionOptions {
+	int MaxLevel			  = 4;
+	bool Adaptive			  = false;
+	int Scheme				  = Sdc::SCHEME_CATMARK;
+	int BoundaryInterpolation = Sdc::Options::VTX_BOUNDARY_EDGE_ONLY;
+	int FVarInterpolation	 = Sdc::Options::FVAR_LINEAR_ALL;
+	int UVInterpolation		  = Far::StencilTableFactory::INTERPOLATE_VARYING;
+	bool LimitNormals		  = true;
+};
+
 class SubdivMeshEntityFactory : public IEntityFactory {
 public:
 	Far::TopologyDescriptor::FVarChannel fvarChannels[1];
 	std::vector<uint32> fvarIndices;
 
-	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshContainer>& originalMesh, int maxLevel, bool adaptive)
+	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshContainer>& originalMesh, const SubdivisionOptions& opts)
 	{
 		PR_PROFILE_THIS;
 
@@ -170,21 +181,20 @@ public:
 		const auto& indices = originalMesh->indices();
 
 		Far::TopologyDescriptor desc;
-		desc.numFaces			= originalMesh->faceCount();
-		desc.numVertices		= originalMesh->nodeCount();
+		desc.numFaces			= static_cast<int>(originalMesh->faceCount());
+		desc.numVertices		= static_cast<int>(originalMesh->nodeCount());
 		desc.numVertsPerFace	= (const int*)vertsPerFace.data();
 		desc.vertIndicesPerFace = (const int*)indices.data();
 
 		if (originalMesh->features() & MF_HAS_MATERIAL) {
-
-			fvarChannels[0].numValues = originalMesh->faceCount();
+			fvarChannels[0].numValues = static_cast<int>(originalMesh->faceCount());
 
 			fvarIndices.clear();
 			fvarIndices.reserve(originalMesh->indices().size());
 			for (size_t f = 0; f < originalMesh->faceCount(); ++f) {
 				size_t elems = originalMesh->faceVertexCount(f);
 				for (size_t i = 0; i < elems; ++i)
-					fvarIndices.push_back(f);
+					fvarIndices.push_back(static_cast<uint32>(f));
 			}
 
 			fvarChannels[0].valueIndices = (const int*)fvarIndices.data();
@@ -193,26 +203,38 @@ public:
 			desc.fvarChannels	= fvarChannels;
 		}
 
-		auto type = Sdc::SCHEME_CATMARK;
 		Sdc::Options sdc_options;
-		sdc_options.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_EDGE_ONLY);
-		sdc_options.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_NONE);
+		sdc_options.SetVtxBoundaryInterpolation((Sdc::Options::VtxBoundaryInterpolation)opts.BoundaryInterpolation);
+		sdc_options.SetFVarLinearInterpolation((Sdc::Options::FVarLinearInterpolation)opts.FVarInterpolation);
 
 		Far::TopologyRefiner* refiner = Far::TopologyRefinerFactory<Far::TopologyDescriptor>::Create(
 			desc,
-			Far::TopologyRefinerFactory<Far::TopologyDescriptor>::Options(type, sdc_options));
+			Far::TopologyRefinerFactory<Far::TopologyDescriptor>::Options((Sdc::SchemeType)opts.Scheme, sdc_options));
 
-		if (!adaptive) {
-			Far::TopologyRefiner::UniformOptions ref_opts(maxLevel);
+		if (!opts.Adaptive) {
+			Far::TopologyRefiner::UniformOptions ref_opts(opts.MaxLevel);
 			ref_opts.fullTopologyInLastLevel = true;
 			refiner->RefineUniform(ref_opts);
 		} else {
-			Far::TopologyRefiner::AdaptiveOptions ref_opts(maxLevel);
-			ref_opts.orderVerticesFromFacesFirst = true;
+			Far::TopologyRefiner::AdaptiveOptions ref_opts(opts.MaxLevel);
+			//ref_opts.orderVerticesFromFacesFirst = true;
+			ref_opts.considerFVarChannels = (originalMesh->features() & MF_HAS_MATERIAL);
 			refiner->RefineAdaptive(ref_opts);
 		}
 
 		return refiner;
+	}
+
+	Far::LimitStencilTable const* setupLimitStencilTable(Far::TopologyRefiner* refiner, int interp)
+	{
+		Far::LimitStencilTableFactory::Options stencil_options;
+		stencil_options.interpolationMode	  = interp;
+		stencil_options.generate1stDerivatives = true;
+		stencil_options.generate2ndDerivatives = false;
+
+		// TODO
+		//return Far::LimitStencilTableFactory::Create(*refiner, stencil_options);
+		return nullptr;
 	}
 
 	Far::StencilTable const* setupStencilTable(Far::TopologyRefiner* refiner, int interp)
@@ -225,22 +247,34 @@ public:
 		return Far::StencilTableFactory::Create(*refiner, stencil_options);
 	}
 
-	Osd::CpuVertexBuffer* refineData(const float* source, size_t elems, size_t vertices, Far::StencilTable const* stencilTable)
+	Osd::CpuVertexBuffer* refineData(const float* source, int elems, int vertices, Far::StencilTable const* stencilTable, Osd::CpuVertexBuffer** limit = nullptr)
 	{
 		Osd::BufferDescriptor srcDesc(0, elems, elems);
 		Osd::CpuVertexBuffer* srcbuffer = Osd::CpuVertexBuffer::Create(elems, vertices);
+		srcbuffer->UpdateData(source, 0, vertices);
+
 		Osd::BufferDescriptor dstDesc(0, elems, elems);
 		Osd::CpuVertexBuffer* dstbuffer = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
 
-		srcbuffer->UpdateData(source, 0, vertices);
-
+		if (limit) {
+			limit[0] = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
+			limit[1] = Osd::CpuVertexBuffer::Create(elems, stencilTable->GetNumStencils());
 #if defined(OPENSUBDIV_HAS_OPENMP)
-		Osd::OmpEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+			Osd::OmpEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, limit[0], dstDesc, limit[1], dstDesc, (Far::LimitStencilTable const*)stencilTable);
 #elif defined(OPENSUBDIV_HAS_TBB)
-		Osd::TbbEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+			Osd::TbbEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, limit[0], dstDesc, limit[1], dstDesc, (Far::LimitStencilTable const*)stencilTable);
 #else
-		Osd::CpuEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+			Osd::CpuEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, limit[0], dstDesc, limit[1], dstDesc, (Far::LimitStencilTable const*)stencilTable);
 #endif
+		} else {
+#if defined(OPENSUBDIV_HAS_OPENMP)
+			Osd::OmpEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+#elif defined(OPENSUBDIV_HAS_TBB)
+			Osd::TbbEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+#else
+			Osd::CpuEvaluator::EvalStencils(srcbuffer, srcDesc, dstbuffer, dstDesc, stencilTable);
+#endif
+		}
 
 		delete srcbuffer;
 		return dstbuffer;
@@ -253,7 +287,7 @@ public:
 		PR_PROFILE_THIS;
 
 		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3,
-												  originalMesh->nodeCount(), stencilTable);
+												  static_cast<int>(originalMesh->nodeCount()), stencilTable);
 
 		std::vector<float> dstVerts(3 * stencilTable->GetNumStencils());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -269,7 +303,7 @@ public:
 		PR_PROFILE_THIS;
 
 		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2,
-												  originalMesh->nodeCount(), stencilTable);
+												  static_cast<int>(originalMesh->nodeCount()), stencilTable);
 
 		std::vector<float> dstVerts(2 * stencilTable->GetNumStencils());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -286,7 +320,7 @@ public:
 		PR_PROFILE_THIS;
 
 		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3,
-												  originalMesh->nodeCount(), stencilTable);
+												  static_cast<int>(originalMesh->nodeCount()), stencilTable);
 
 		std::vector<float> dstVerts(3 * stencilTable->GetNumStencils());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -309,18 +343,18 @@ public:
 		for (size_t i = 0; i < slotsAsFloat.size(); ++i) {
 			uint32 v		= originalMesh->materialSlot(i);
 			max				= std::max(max, v);
-			slotsAsFloat[i] = v;
+			slotsAsFloat[i] = static_cast<float>(v);
 		}
 
 		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1,
-												  originalMesh->nodeCount(), stencilTable);
+												  static_cast<int>(originalMesh->nodeCount()), stencilTable);
 
 		std::vector<float> dstVerts(refLevel.GetNumFVarValues());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
 
 		std::vector<uint32> slots(refineMesh->faceCount());
 		for (size_t i = 0; i < slots.size(); ++i) {
-			Far::ConstIndexArray fverts = refLevel.GetFaceFVarValues(i);
+			Far::ConstIndexArray fverts = refLevel.GetFaceFVarValues(static_cast<Far::Index>(i));
 			PR_ASSERT(fverts.size() > 0, "Invalid return by GetFaceFVarValues");
 			slots[i] = std::min(max, std::max(0u, static_cast<uint32>(std::floor(dstVerts[fverts[0]]))));
 		}
@@ -329,26 +363,29 @@ public:
 		delete buffer;
 	}
 
-	std::shared_ptr<MeshContainer> refineMesh(const std::shared_ptr<MeshContainer>& originalMesh, int maxLevel, bool adaptive)
+	std::shared_ptr<MeshContainer> refineMesh(const std::shared_ptr<MeshContainer>& originalMesh, const SubdivisionOptions& opts)
 	{
 		PR_PROFILE_THIS;
 
-		if (maxLevel < 1)
+		if (opts.MaxLevel < 1)
 			return originalMesh;
 
-		Far::TopologyRefiner* refiner			  = setupRefiner(originalMesh, maxLevel, adaptive);
-		Far::StencilTable const* stencilTable	 = setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_VERTEX);
+		Far::TopologyRefiner* refiner			= setupRefiner(originalMesh, opts);
+		Far::StencilTable const* stencilTable   = setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_VERTEX);
+		Far::StencilTable const* uvStencilTable = stencilTable;
+		if ((originalMesh->features() & MF_HAS_UV) && opts.UVInterpolation != Far::StencilTableFactory::INTERPOLATE_VERTEX)
+			uvStencilTable = setupStencilTable(refiner, opts.UVInterpolation);
 		Far::StencilTable const* fvarStencilTable = (originalMesh->features() & MF_HAS_MATERIAL)
 														? setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_FACE_VARYING)
 														: nullptr;
 
-		Far::TopologyLevel const& refLevel = refiner->GetLevel(maxLevel);
+		Far::TopologyLevel const& refLevel = refiner->GetLevel(opts.MaxLevel);
 		std::vector<uint32> new_indices(refLevel.GetNumFaceVertices());
 		std::vector<uint8> new_vertsPerFace(refLevel.GetNumFaces());
 
 		PR_ASSERT(refLevel.GetNumVertices() == stencilTable->GetNumStencils(), "Expected to be same!");
 
-		PR_LOG(L_INFO) << "Subdivision(L=" << maxLevel << ") [V=" << originalMesh->nodeCount() << " F=" << originalMesh->faceCount() << " I=" << originalMesh->indices().size()
+		PR_LOG(L_INFO) << "Subdivision(L=" << opts.MaxLevel << ") [V=" << originalMesh->nodeCount() << " F=" << originalMesh->faceCount() << " I=" << originalMesh->indices().size()
 					   << "] -> [V=" << refLevel.GetNumVertices() << " F=" << new_vertsPerFace.size() << " I=" << new_indices.size() << "]" << std::endl;
 		size_t indC = 0;
 		for (int face = 0; face < refLevel.GetNumFaces(); ++face) {
@@ -366,10 +403,11 @@ public:
 		refineMesh->setIndices(new_indices);
 		refineMesh->setFaceVertexCount(new_vertsPerFace);
 		refineVertexData(originalMesh, refineMesh, stencilTable);
+		// TODO: Add normals based on limit
 		refineMesh->buildNormals();
 
 		if (originalMesh->features() & MF_HAS_UV)
-			refineUVData(originalMesh, refineMesh, stencilTable);
+			refineUVData(originalMesh, refineMesh, uvStencilTable);
 
 		if (originalMesh->features() & MF_HAS_MATERIAL)
 			refineMaterialData(originalMesh, refineMesh, fvarStencilTable, refiner);
@@ -382,6 +420,8 @@ public:
 		fvarIndices.swap(null);
 
 		delete refiner;
+		if (stencilTable != uvStencilTable)
+			delete uvStencilTable;
 		delete stencilTable;
 		if (fvarStencilTable)
 			delete fvarStencilTable;
@@ -412,8 +452,54 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		int maxSubdivision = reg.getForObject<int>(RG_ENTITY, uuid, "max_subdivision", 4);
-		bool adaptive	  = reg.getForObject<bool>(RG_ENTITY, uuid, "adaptive", false);
+		SubdivisionOptions opts;
+		opts.MaxLevel					  = std::max(1, reg.getForObject<int>(RG_ENTITY, uuid, "max_level", opts.MaxLevel));
+		opts.Adaptive					  = reg.getForObject<bool>(RG_ENTITY, uuid, "adaptive", opts.Adaptive);
+		std::string scheme				  = reg.getForObject<std::string>(RG_ENTITY, uuid, "scheme", "");
+		std::string boundaryInterpolation = reg.getForObject<std::string>(RG_ENTITY, uuid, "boundary_interpolation", "");
+		std::string uvInterpolation		  = reg.getForObject<std::string>(RG_ENTITY, uuid, "uv_interpolation", "");
+		std::string fVarInterpolation	 = reg.getForObject<std::string>(RG_ENTITY, uuid, "fvar_interpolation", "");
+
+		// Scheme
+		std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
+		if (scheme == "catmark")
+			opts.Scheme = Sdc::SCHEME_CATMARK;
+		else if (scheme == "bilinear")
+			opts.Scheme = Sdc::SCHEME_BILINEAR;
+		else if (scheme == "loop")
+			opts.Scheme = Sdc::SCHEME_CATMARK;
+		//opts.Scheme = Sdc::SCHEME_LOOP; // FIXME: This crashes
+
+		// Boundary Interpolation
+		std::transform(boundaryInterpolation.begin(), boundaryInterpolation.end(), boundaryInterpolation.begin(), ::tolower);
+		if (boundaryInterpolation == "none")
+			opts.BoundaryInterpolation = Sdc::Options::VTX_BOUNDARY_NONE;
+		else if (boundaryInterpolation == "edge_only")
+			opts.BoundaryInterpolation = Sdc::Options::VTX_BOUNDARY_EDGE_ONLY;
+		else if (boundaryInterpolation == "edge_and_corner")
+			opts.BoundaryInterpolation = Sdc::Options::VTX_BOUNDARY_EDGE_AND_CORNER;
+
+		// FVar Interpolation
+		std::transform(fVarInterpolation.begin(), fVarInterpolation.end(), fVarInterpolation.begin(), ::tolower);
+		if (fVarInterpolation == "none")
+			opts.FVarInterpolation = Sdc::Options::FVAR_LINEAR_NONE;
+		else if (fVarInterpolation == "corners_only")
+			opts.FVarInterpolation = Sdc::Options::FVAR_LINEAR_CORNERS_ONLY;
+		else if (fVarInterpolation == "corners_plus1")
+			opts.FVarInterpolation = Sdc::Options::FVAR_LINEAR_CORNERS_PLUS1;
+		else if (fVarInterpolation == "corners_plus2")
+			opts.FVarInterpolation = Sdc::Options::FVAR_LINEAR_CORNERS_PLUS2;
+		else if (fVarInterpolation == "boundaries")
+			opts.FVarInterpolation = Sdc::Options::FVAR_LINEAR_BOUNDARIES;
+		else if (fVarInterpolation == "all")
+			opts.FVarInterpolation = Sdc::Options::FVAR_LINEAR_ALL;
+
+		// UV Interpolation
+		std::transform(uvInterpolation.begin(), uvInterpolation.end(), uvInterpolation.begin(), ::tolower);
+		if (uvInterpolation == "vertex")
+			opts.UVInterpolation = Far::StencilTableFactory::INTERPOLATE_VERTEX;
+		else if (uvInterpolation == "varying")
+			opts.UVInterpolation = Far::StencilTableFactory::INTERPOLATE_VARYING;
 
 		std::shared_ptr<MeshContainer> originalMesh = env.getMesh(mesh_name);
 		if (!originalMesh)
@@ -424,7 +510,7 @@ public:
 			return nullptr;
 		}
 
-		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, maxSubdivision, adaptive);
+		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, opts);
 		return std::make_shared<SubdivMeshEntity>(id, name,
 												  env.cacheManager()->requestFile("mesh", name + ".cnt"),
 												  refinedMesh,

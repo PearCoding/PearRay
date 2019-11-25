@@ -1,5 +1,6 @@
 #include <thread>
 
+#include "FileLogListener.h"
 #include "LogListener.h"
 #include "Logger.h"
 
@@ -20,12 +21,30 @@ public:
 	}
 };
 
+class FileLogListenerWrap : public FileLogListener {
+public:
+	using FileLogListener::FileLogListener;
+	void startEntry(LogLevel level) override
+	{
+		PYBIND11_OVERLOAD(void, FileLogListener, startEntry, level);
+	}
+
+	void writeEntry(int c) override
+	{
+		PYBIND11_OVERLOAD(void, FileLogListener, writeEntry, c);
+	}
+};
+
 PR_NO_SANITIZE_ADDRESS
 void setup_logger(py::module& m)
 {
 	py::class_<LogListener, LogListenerWrap>(m, "LogListener")
 		.def("startEntry", &LogListener::startEntry)
 		.def("writeEntry", &LogListener::writeEntry);
+
+	py::class_<FileLogListener, LogListener, FileLogListenerWrap>(m, "FileLogListener")
+		.def(py::init<>())
+		.def("open", &FileLogListener::open);
 
 	py::class_<Logger>(m, "Logger")
 		.def_property_readonly_static("instance", [](const py::object&) -> Logger& { return Logger::instance(); }, py::return_value_policy::reference)

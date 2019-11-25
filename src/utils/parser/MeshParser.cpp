@@ -198,7 +198,7 @@ std::shared_ptr<MeshContainer> MeshParser::parse(Environment*,
 			DL::DataGroup grp = facesGrp.at(j).getGroup();
 
 			for (size_t d = 0; d < grp.anonymousCount(); ++d) {
-				int val = grp.at(d).getInt();
+				int32 val = static_cast<int32>(grp.at(d).getInt());
 
 				if (val < 0 || (size_t)val >= vertexCount) {
 					PR_LOG(L_ERROR) << "Given index range is invalid." << std::endl;

@@ -15,6 +15,8 @@ MeshContainer::~MeshContainer()
 
 void MeshContainer::buildNormals()
 {
+	PR_PROFILE_THIS;
+
 	mNormals.resize(mVertices.size());
 	std::fill(mNormals.begin(), mNormals.end(), 0.0f);
 
@@ -85,7 +87,7 @@ std::vector<uint32> MeshContainer::faceVertexCounts() const
 	std::vector<uint32> array;
 	array.reserve(mFaceIndexOffset.size());
 	for (size_t i = 0; i < mFaceIndexOffset.size(); ++i)
-		array.push_back(faceVertexCount(i));
+		array.push_back(static_cast<uint32>(faceVertexCount(i)));
 
 	return array;
 }
@@ -173,6 +175,8 @@ BoundingBox MeshContainer::constructBoundingBox() const
 
 void MeshContainer::triangulate()
 {
+	PR_PROFILE_THIS;
+
 	if (quadCount() == 0)
 		return;
 
@@ -195,7 +199,7 @@ void MeshContainer::triangulate()
 		new_indices[indC]		  = mIndices[indInd];
 		new_indices[indC + 1]	 = mIndices[indInd + 1];
 		new_indices[indC + 2]	 = mIndices[indInd + 2];
-		new_faceIndexOffset[facC] = indC;
+		new_faceIndexOffset[facC] = static_cast<uint32>(indC);
 		if (mFeatures & MF_HAS_MATERIAL)
 			new_mats[facC] = mMaterialSlots[face];
 		indC += 3;
@@ -207,7 +211,7 @@ void MeshContainer::triangulate()
 			new_indices[indC + 1] = mIndices[indInd + 2];
 			new_indices[indC + 2] = mIndices[indInd + 3];
 
-			new_faceIndexOffset[facC] = indC;
+			new_faceIndexOffset[facC] = static_cast<uint32>(indC);
 			if (mFeatures & MF_HAS_MATERIAL)
 				new_mats[facC] = mMaterialSlots[face];
 			indC += 3;
