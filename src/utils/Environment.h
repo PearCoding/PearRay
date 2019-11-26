@@ -14,7 +14,6 @@
 namespace PR {
 class IEmission;
 class IMaterial;
-class CurveContainer;
 class MeshContainer;
 class SpectrumDescriptor;
 class PluginManager;
@@ -77,10 +76,6 @@ public:
 	inline std::shared_ptr<MeshContainer> getMesh(const std::string& name) const;
 	inline bool hasMesh(const std::string& name) const;
 	inline void addMesh(const std::string& name, const std::shared_ptr<MeshContainer>& m);
-
-	inline std::shared_ptr<CurveContainer> getCurveGroup(const std::string& name) const;
-	inline bool hasCurveGroup(const std::string& name) const;
-	inline void addCurveGroup(const std::string& name, const std::shared_ptr<CurveContainer>& m);
 
 	inline void addShadingSocket(const std::string& name,
 								 const ShadingSocketVariantPtr& output);
@@ -153,7 +148,6 @@ private:
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<MeshContainer>> mMeshes;
-	std::map<std::string, std::shared_ptr<CurveContainer>> mCurves;
 	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSockets;
 	std::map<std::string, std::shared_ptr<FloatSpectralMapSocket>> mNamedMapSockets;
 

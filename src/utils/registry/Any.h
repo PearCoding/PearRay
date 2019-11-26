@@ -8,6 +8,7 @@
 #include <vector>
 
 #define _PR_ANY_ARRAY_DELIMITER L" "
+#define _PR_ANY_ARRAY_2_DELIMITER L";"
 
 /* A simple any class implementation.
  * Not as versatile as boost::any
@@ -149,6 +150,26 @@ protected:
 		}
 	}
 
+	template <typename T>
+	inline void fromString(const std::wstring& str, std::vector<std::vector<T>>& v) const
+	{
+		size_t last = 0;
+		size_t next = 0;
+		while ((next = str.find(_PR_ANY_ARRAY_2_DELIMITER, last)) != std::wstring::npos) {
+			std::vector<T> tmp;
+			fromString(str.substr(last, next - last), tmp);
+			v.push_back(tmp);
+			last = next + 1;
+		}
+
+		std::wstring l = str.substr(last);
+		if (!l.empty()) {
+			std::vector<T> tmp;
+			fromString(l, tmp);
+			v.push_back(tmp);
+		}
+	}
+
 	template <typename T, int R, int C>
 	inline void fromString(const std::wstring& str, Eigen::Matrix<T, R, C>& v) const
 	{
@@ -187,6 +208,17 @@ protected:
 		std::wstring str;
 		for (const T& e : v) {
 			str += toString(e) + _PR_ANY_ARRAY_DELIMITER;
+		}
+
+		return str;
+	}
+
+	template <typename T>
+	inline std::wstring toString(const std::vector<std::vector<T>>& v) const
+	{
+		std::wstring str;
+		for (const T& e : v) {
+			str += toString(e) + _PR_ANY_ARRAY_2_DELIMITER;
 		}
 
 		return str;

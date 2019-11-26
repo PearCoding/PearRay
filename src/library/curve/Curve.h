@@ -34,6 +34,7 @@ public:
 	inline size_t degree() const { return mPoints.empty() ? 0 : mPoints.size() - 1; }
 	inline bool isValid() const { return degree() > 0; }
 
+	inline void setPoints(const PointList& p) { mPoints = p; }
 	inline PointList& points() { return mPoints; }
 	inline const PointList& points() const { return mPoints; }
 	inline V point(size_t i) const

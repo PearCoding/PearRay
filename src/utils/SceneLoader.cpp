@@ -546,33 +546,6 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 	env->addMesh(name, mesh);
 }
 
-void SceneLoader::addCurveGroup(const DL::DataGroup& group, Environment* env)
-{
-	DL::Data nameD = group.getFromKey("name");
-
-	std::string name;
-	if (nameD.type() == DL::DT_String) {
-		name = nameD.getString();
-	} else {
-		PR_LOG(L_ERROR) << "No curve group name set" << std::endl;
-		return;
-	}
-
-	if (env->hasCurveGroup(name)) {
-		PR_LOG(L_ERROR) << "Curve group name already set" << std::endl;
-		return;
-	}
-
-	auto curve = CurveParser::parse(group);
-
-	if (!curve) {
-		PR_LOG(L_ERROR) << "Curve group " << name << " couldn't be load" << std::endl;
-		return;
-	}
-
-	env->addCurveGroup(name, curve);
-}
-
 void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 {
 	DL::Data nameD = group.getFromKey("name");

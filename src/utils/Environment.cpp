@@ -2,7 +2,6 @@
 #include "CacheManager.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
-#include "curve/CurveContainer.h"
 #include "emission/EmissionManager.h"
 #include "emission/IEmission.h"
 #include "entity/EntityManager.h"

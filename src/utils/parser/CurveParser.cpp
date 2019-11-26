@@ -1,7 +1,6 @@
 #include "CurveParser.h"
 #include "Logger.h"
 #include "MathParser.h"
-#include "curve/CurveContainer.h"
 
 #include "DataLisp.h"
 
@@ -56,26 +55,5 @@ Curve3 CurveParser::parse3D(const DL::DataGroup& group)
 	}
 
 	return curve;
-}
-
-std::shared_ptr<CurveContainer> CurveParser::parse(const DL::DataGroup& group)
-{
-	std::vector<Curve3> curves;
-	if (!group.isAllAnonymousOfType(DL::DT_Group)) {
-		PR_LOG(L_ERROR) << "Curve container contains invalid entries." << std::endl;
-		return nullptr;
-	}
-
-	curves.reserve(group.anonymousCount());
-	for (size_t i = 0; i < group.anonymousCount(); ++i) {
-		Curve3 curve = parse3D(group);
-		if (!curve.isValid()) {
-			PR_LOG(L_ERROR) << "Curve container has an invalid entry." << std::endl;
-			return nullptr;
-		}
-		curves.emplace_back(std::move(curve));
-	}
-
-	return std::make_shared<CurveContainer>(curves);
 }
 } // namespace PR

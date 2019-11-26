@@ -33,8 +33,6 @@ SET(PR_Src
   container/QuickSort.h
   container/RadixSort.h
   curve/Curve.h
-  curve/CurveContainer.h
-  curve/CurveContainer.cpp
   entity/IEntity.cpp
   entity/IEntity.h
   entity/IEntity.inl
@@ -148,6 +146,14 @@ SET(PR_Src
   scene/Scene.cpp
   scene/Scene.h
   scene/Scene.inl
+  serialization/BufferSerializer.h
+  serialization/BufferSerializer.cpp
+  serialization/FileSerializer.h
+  serialization/FileSerializer.cpp
+  serialization/ISerializable.h
+  serialization/Serializer.h
+  serialization/Serializer.cpp
+  serialization/Serializer.inl
   spectral/ColorTriplet.h
   spectral/IntensityConverter.cpp
   spectral/IntensityConverter.h

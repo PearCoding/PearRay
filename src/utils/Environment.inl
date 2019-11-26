@@ -86,23 +86,6 @@ inline void Environment::addMesh(const std::string& name, const std::shared_ptr<
 	mMeshes[name] = m;
 }
 
-inline std::shared_ptr<CurveContainer> Environment::getCurveGroup(const std::string& name) const
-{
-	return hasCurveGroup(name) ? mCurves.at(name) : nullptr;
-}
-
-inline bool Environment::hasCurveGroup(const std::string& name) const
-{
-	return mCurves.count(name) != 0;
-}
-
-inline void Environment::addCurveGroup(const std::string& name, const std::shared_ptr<CurveContainer>& m)
-{
-	PR_ASSERT(m, "Given curve group has to be valid");
-	PR_ASSERT(!hasCurveGroup(name), "Given name should be unique");
-	mCurves[name] = m;
-}
-
 inline void Environment::addShadingSocket(const std::string& name,
 										  const ShadingSocketVariantPtr& output)
 {

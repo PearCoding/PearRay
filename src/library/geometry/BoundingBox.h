@@ -89,10 +89,22 @@ public:
 		mLowerBound = mLowerBound.array().max(other.mLowerBound.array()).min(other.mUpperBound.array()).matrix();
 		mUpperBound = mUpperBound.array().max(other.mLowerBound.array()).min(other.mUpperBound.array()).matrix();
 	}
+
 	/* Make sure bounding box has a valid volume.
 	 * @param maxDir If true, will inflate in max direction, otherwise max and min direction.
 	 */
 	void inflate(float eps = 0.0001f, bool maxDir = false);
+
+	/**
+	 * @brief Expand boundingbox of the given amount in each dimension
+	 *
+	 * @param amount Scale factor
+	 */
+	inline void expand(float amount)
+	{
+		mUpperBound += Vector3f(amount, amount, amount);
+		mLowerBound -= Vector3f(amount, amount, amount);
+	}
 
 	inline bool contains(const Vector3f& point) const
 	{
