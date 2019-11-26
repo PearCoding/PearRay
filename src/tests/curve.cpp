@@ -42,6 +42,17 @@ PR_TEST("3D proj 2D")
 	PR_CHECK_NEARLY_EQ(curve.eval(1), Vector3f(3, 1, 0));
 }
 
+PR_TEST("Derivative")
+{
+	Curve2 curve({ Vector2f(1, 1), Vector2f(3, 1), Vector2f(4, 2), Vector2f(6, 3) });
+
+	Vector2f ds = 3 * (curve.point(1) - curve.point(0));
+	Vector2f de = 3 * (curve.point(3) - curve.point(2));
+	PR_CHECK_NEARLY_EQ(curve.evalDerivative(0), ds);
+	PR_CHECK_NEARLY_EQ(curve.evalDerivative(0.5f), Vector2f(4.5f, 2.25f));
+	PR_CHECK_NEARLY_EQ(curve.evalDerivative(1), de);
+}
+
 PR_END_TESTCASE()
 
 // MAIN
