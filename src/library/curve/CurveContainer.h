@@ -26,8 +26,10 @@ public:
 			box.combine(p);
 		return box;
 	}
+	static BoundingBox boundingBox(const Curve3& curve, float uMin, float uMax);
 
 	BoundingBox constructBoundingBox() const;
+	BoundingBox constructBoundingBox(float uMin, float uMax) const;
 
 private:
 	std::vector<Curve3> mCurves;

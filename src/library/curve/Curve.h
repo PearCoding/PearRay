@@ -55,8 +55,8 @@ public:
 			return V();
 
 		size_t n = degree();
-		V v		 = V();
-		for (size_t i = 0; i < n; ++i) {
+		V v		 = bernstein(t, 0, n - 1) * (point(1) - point(0));
+		for (size_t i = 1; i < n; ++i) {
 			v += bernstein(t, (int)i, n - 1) * (point(i + 1) - point(i));
 		}
 
@@ -65,11 +65,23 @@ public:
 
 	inline V evalBlossom(const std::vector<float>& params) const
 	{
-		PR_ASSERT(params.size() != degree(), "Expected params to be of the same size as the degree of the curve");
+		PR_ASSERT(params.size() == degree(),
+				  "Expected params to be of the same size as the degree of the curve");
 		if (mPoints.empty())
 			return V();
 
-		return deCasteljau(params, 0, degree());
+		return deCasteljau(params.data(), 0, degree());
+	}
+
+	template <size_t N>
+	inline V evalBlossom(const std::array<float, N>& params) const
+	{
+		PR_ASSERT(params.size() == degree(),
+				  "Expected params to be of the same size as the degree of the curve");
+		if (mPoints.empty())
+			return V();
+
+		return deCasteljau(params.data(), 0, degree());
 	}
 
 private:
@@ -83,12 +95,12 @@ private:
 		}
 	}
 
-	inline V deCasteljau(const std::vector<float>& params, int i, size_t k) const
+	inline V deCasteljau(const float* params, int i, size_t k) const
 	{
 		if (k == 0) {
 			return point(i);
 		} else {
-			const float t = params.at(k - 1);
+			const float t = params[k - 1];
 			return (1 - t) * deCasteljau(params, i, k - 1)
 				   + t * deCasteljau(params, i + 1, k - 1);
 		}

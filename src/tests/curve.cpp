@@ -53,6 +53,16 @@ PR_TEST("Derivative")
 	PR_CHECK_NEARLY_EQ(curve.evalDerivative(1), de);
 }
 
+PR_TEST("Blossom")
+{
+	Curve2 curve({ Vector2f(1, 1), Vector2f(3, 1), Vector2f(4, 2), Vector2f(6, 3) });
+
+	PR_CHECK_NEARLY_EQ(curve.evalBlossom({0,0,0}), curve.point(0));
+	PR_CHECK_NEARLY_EQ(curve.evalBlossom({0,0,1}), curve.point(1));
+	PR_CHECK_NEARLY_EQ(curve.evalBlossom({0,1,1}), curve.point(2));
+	PR_CHECK_NEARLY_EQ(curve.evalBlossom({1,1,1}), curve.point(3));
+}
+
 PR_END_TESTCASE()
 
 // MAIN
