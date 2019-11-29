@@ -66,7 +66,7 @@ function(coveralls_setup _COVERAGE_SRCS _COVERALLS_UPLOAD)
 		COMMAND ${CMAKE_COMMAND} -DPROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}" -P "${_CMAKE_SCRIPT_PATH}/CoverallsClear.cmake"
 
 		# Run regress tests.
-		COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+		COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure || true
 
 		# Generate Gcov and translate it into coveralls JSON.
 		# We do this by executing an external CMake script.
