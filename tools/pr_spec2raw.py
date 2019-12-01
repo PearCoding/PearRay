@@ -9,7 +9,7 @@ import struct
 import pypearray as pr
 
 # Main
-if __name__=='__main__':
+if __name__ == '__main__':
 
     if len(sys.argv) != 3:
         print("Not enough arguments given. Need an input and output file")
@@ -21,8 +21,8 @@ if __name__=='__main__':
     inputFile = pr.SpectralFile.open(input)
 
     with open(output, 'wb') as f:
-        for i in range(1,inputFile.height):
-            for j in range(1,inputFile.width):
-                spec = inputFile[i-1,j-1]
-                for k in range(1,pr.Spectrum.SAMPLING_COUNT):
+        for i in range(1, inputFile.height):
+            for j in range(1, inputFile.width):
+                spec = inputFile[i-1, j-1]
+                for k in range(1, pr.Spectrum.SAMPLING_COUNT):
                     f.write(struct.pack("!f", spec[k-1]))
