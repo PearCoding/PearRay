@@ -152,7 +152,7 @@ public:
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
-		IEntity* light = session.pickRandomLight(lightPt, pdfA);
+		IEntity* light = session.pickRandomLight(spt.Ray.Direction, lightPt, pdfA);
 		if (!light)
 			return Li;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
@@ -226,7 +226,7 @@ public:
 					&& shadowHit.EntityID == light->id()) {
 					// Retrive geometry information from the new point
 					GeometryPoint nlightPt;
-					light->provideGeometryPoint(shadowHit.PrimitiveID, shadowHit.UV[0], shadowHit.UV[1], nlightPt);
+					light->provideGeometryPoint(shadow.Direction, shadowHit.PrimitiveID, shadowHit.UV[0], shadowHit.UV[1], nlightPt);
 
 					if (-shadow.Direction.dot(nlightPt.N) > PR_EPSILON) {
 						// Evaluate light

@@ -8,6 +8,7 @@
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
+#include "math/Transform.h"
 
 #include <boost/filesystem.hpp>
 
@@ -44,8 +45,7 @@ public:
 
 	float surfaceArea(uint32 /*id*/) const override
 	{
-		// TODO
-		return 1.0f;
+		return mApproxSurfaceArea;
 	}
 
 	bool isCollidable() const override
@@ -93,19 +93,11 @@ public:
 		Tangent::frame(in.Direction, dx, dy);
 
 		// Project to 2d plane
-		Eigen::Matrix4f mat;
-		mat.block<3, 1>(0, 0) = dx.cross(in.Direction);
-		mat.block<3, 1>(0, 1) = in.Direction.cross(mat.block<3, 1>(0, 0));
-		mat.block<3, 1>(0, 2) = in_local.Direction;
-		mat.block<3, 1>(0, 3) = in_local.Origin;
-		mat.block<1, 4>(3, 0) = Vector4f(0, 0, 0, 1);
-		Eigen::Matrix4f proj  = mat.inverse();
+		Eigen::Matrix3f proj = PR::Transform::orthogonalInverse(PR::Transform::orthogonalMatrix(dy, dx, in_local.Direction));
 
 		T projectedCurve = mCurve;
-		for (size_t i = 0; i <= projectedCurve.degree(); ++i) {
-			Vector4f projP			   = proj * Vector4f(mCurve.point(i)(0), mCurve.point(i)(1), mCurve.point(i)(2), 1.0f);
-			projectedCurve.points()[i] = Vector3f(projP(0), projP(1), projP(2)) / projP(3);
-		}
+		for (size_t i = 0; i <= projectedCurve.degree(); ++i)
+			projectedCurve.points()[i] = proj * (mCurve.point(i) - in_local.Origin);
 
 		// Calculate max depth
 		float l0 = 0;
@@ -131,52 +123,82 @@ public:
 		}
 	}
 
-	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& /*faceID*/, float& pdf) const override
+	Vector2f pickRandomPoint(const Vector3f&, const Vector2f& rnd,
+							 uint32& /*faceID*/, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
 		pdf = 1 / surfaceArea(0);
 		return rnd;
 	}
 
-	void provideGeometryPoint(uint32 /*faceID*/, float u, float v,
+	void provideGeometryPoint(const Vector3f& view, uint32 /*faceID*/, float u, float v,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		float width = mWidth(0) * (1 - u) + mWidth(1) * u;
-		// TODO: Require ray information to make is view aligned
-		pt.P  = mCurve.startPoint(); //mCurve.eval(u) /*+ mCurve.evalDerivative(u) * (1 - 2 * v) * width / 2*/;
-		pt.N  = Vector3f(0, 0, 1);
-		pt.Nx = Vector3f(1, 0, 0);
-		pt.Ny = Vector3f(0, 1, 0);
+		float width = lerpWidth(u);
+		Vector3f ny = mCurve.evalDerivative(u).cross(invTransform().linear() * view).normalized();
+		pt.P		= mCurve.eval(u) + ny * (0.5f - v) * width;
 
 		// Global
-		pt.P  = transform() * pt.P;
-		pt.N  = normalMatrix() * pt.N;
-		pt.Nx = normalMatrix() * pt.Nx;
-		pt.Ny = normalMatrix() * pt.Ny;
+		pt.P = transform() * pt.P;
+		pt.N = -view;
+		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
 		pt.N.normalize();
 		pt.Nx.normalize();
 		pt.Ny.normalize();
+
+		pt.UVW = Vector3f(u, v, 0.0f);
 
 		pt.MaterialID = mMaterialID;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;
 	}
 
+	void beforeSceneBuild() override
+	{
+		PR_PROFILE_THIS;
+
+		IEntity::beforeSceneBuild();
+
+		mApproxSurfaceArea = 0.0f;
+		constexpr size_t N = 50;
+		for (size_t i = 0; i < N; ++i) {
+			float a = i / (float)N;
+			float b = (i + 1) / (float)N;
+
+			Vector3f pA = mCurve.eval(a);
+			Vector3f pB = mCurve.eval(b);
+
+			float wA = lerpWidth(a);
+			float wB = lerpWidth(b);
+
+			float dist  = (pB - pA).norm();
+			float qArea = std::min(wA, wB) * dist;
+			float tArea = 0.5f * std::abs(wA - wB) * dist;
+			mApproxSurfaceArea += qArea + tArea;
+		}
+	}
+
 private:
+	inline float lerpWidth(float t) const
+	{
+		return mWidth(0) * (1 - t) + mWidth(1) * t;
+	}
+
 	bool recursiveCheck(const Ray& in, SingleCollisionOutput& out,
 						const T& curve,
 						float uMin, float uMax, size_t depth) const
 	{
+		PR_PROFILE_THIS;
+
 		// Culling
 		BoundingBox box;
 		for (size_t i = 0; i < curve.degree() + 1; ++i)
 			box.combine(curve.point(i));
 
-		float width = std::max(mWidth(0) * (1 - uMin) + mWidth(1) * uMin,
-							   mWidth(0) * (1 - uMax) + mWidth(1) * uMax);
+		float width = std::max(lerpWidth(uMin), lerpWidth(uMax));
 		box.expand(width / 2);
 
 		box.intersects(Ray(Vector3f(0, 0, -1), Vector3f(0, 0, 1)), out);
@@ -211,7 +233,7 @@ private:
 
 			// U coordinate
 			float u		   = std::max(uMin, std::min(uMax, uMin * (1 - w) + uMax * w));
-			float hitwidth = mWidth(0) * (1 - u) + mWidth(1) * u;
+			float hitwidth = lerpWidth(u);
 
 			// Intersection point
 			Vector3f p  = curve.eval(std::min(1.0f, std::max(0.0f, w)));
@@ -242,6 +264,8 @@ private:
 	int32 mMaterialID;
 	T mCurve;
 	Vector2f mWidth;
+
+	float mApproxSurfaceArea;
 };
 
 class CurveEntityFactory : public IEntityFactory {
@@ -291,6 +315,22 @@ public:
 			for (size_t i = 0; i <= curve.degree(); ++i)
 				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
 			return std::make_shared<CurveEntity<CubicCurve3>>(id, name,
+															  curve, width,
+															  matID, emsID);
+		}
+		case 4: {
+			FixedCurve3<5> curve;
+			for (size_t i = 0; i <= curve.degree(); ++i)
+				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
+			return std::make_shared<CurveEntity<FixedCurve3<5>>>(id, name,
+															  curve, width,
+															  matID, emsID);
+		}
+		case 5: {
+			FixedCurve3<6> curve;
+			for (size_t i = 0; i <= curve.degree(); ++i)
+				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
+			return std::make_shared<CurveEntity<FixedCurve3<6>>>(id, name,
 															  curve, width,
 															  matID, emsID);
 		}

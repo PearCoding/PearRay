@@ -111,13 +111,14 @@ public:
 							 : 0;
 	}
 
-	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const override
+	Vector2f pickRandomPoint(const Vector3f& /*view*/, const Vector2f& rnd,
+							 uint32& faceID, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
 		return mMesh.pickRandomPoint(rnd, faceID, pdf);
 	}
 
-	void provideGeometryPoint(uint32 faceID, float u, float v,
+	void provideGeometryPoint(const Vector3f&, uint32 faceID, float u, float v,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
@@ -545,7 +546,7 @@ public:
 			return nullptr;
 		}
 
-		if (opts.Scheme == Sdc::SCHEME_LOOP)// Scheme Loop accepts triangle data only
+		if (opts.Scheme == Sdc::SCHEME_LOOP) // Scheme Loop accepts triangle data only
 			originalMesh->triangulate();
 
 		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, opts);

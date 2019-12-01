@@ -91,14 +91,15 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
-	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const override
+	Vector2f pickRandomPoint(const Vector3f&, const Vector2f& rnd,
+							 uint32& faceID, float& pdf) const override
 	{
 		pdf	= mPDF_Cache;
 		faceID = 0;
 		return rnd;
 	}
 
-	void provideGeometryPoint(uint32, float u, float v,
+	void provideGeometryPoint(const Vector3f&, uint32, float u, float v,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;

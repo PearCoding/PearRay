@@ -57,5 +57,20 @@ inline Vector3t<T> apply(const Eigen::Matrix4f& m, const Vector3t<T>& p)
 	Vector3t<T> b = applyAffine(m, p);
 	return b / (m(3, 0) * p(0) + m(3, 1) * p(1) + m(3, 2) * p(2) + m(3, 3));
 }
+
+inline Eigen::Matrix3f orthogonalMatrix(const Vector3f& c0, const Vector3f& c1, const Vector3f& c2)
+{
+	Eigen::Matrix3f mat;
+	mat.col(0) = c0;
+	mat.col(1) = c1;
+	mat.col(2) = c2;
+
+	return mat;
+}
+
+inline Eigen::Matrix3f orthogonalInverse(const Eigen::Matrix3f& mat)
+{
+	return mat.transpose();
+}
 } // namespace Transform
 } // namespace PR

@@ -141,7 +141,7 @@ void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) co
 		ray.PixelIndex, feedback);
 }
 
-IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const
+IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const
 {
 	PR_PROFILE_THIS;
 
@@ -158,9 +158,9 @@ IEntity* RenderTileSession::pickRandomLight(GeometryPoint& pt, float& pdf) const
 
 	float pdf2	= 0;
 	uint32 faceID = 0;
-	Vector2f uv   = light->pickRandomPoint(mTile->random().get2D(), faceID, pdf2);
+	Vector2f uv   = light->pickRandomPoint(view, mTile->random().get2D(), faceID, pdf2);
 
-	light->provideGeometryPoint(faceID, uv(0), uv(1), pt);
+	light->provideGeometryPoint(view, faceID, uv(0), uv(1), pt);
 	pdf *= pdf2;
 
 	return light;

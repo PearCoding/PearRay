@@ -48,11 +48,13 @@ std::string IEntity::dumpInformation() const
 {
 	std::stringstream stream;
 	stream << ITransformable::dumpInformation()
-		   << "  <RenderEntity>: " << std::endl
+		   << "  <IEntity>: " << std::endl
 		   << "    IsLight:       " << (isLight() ? "true" : "false") << std::endl
 		   << "    IsCollidable:  " << (isCollidable() ? "true" : "false") << std::endl
 		   << "    CollisionCost: " << collisionCost() << std::endl
-		   << "    ContainerID:   " << containerID() << std::endl;
+		   << "    ContainerID:   " << containerID() << std::endl
+		   << "    SurfaceArea:   " << surfaceArea() << std::endl
+		   << "    BBVolume:      " << worldBoundingBox().volume() << std::endl;;
 
 	return stream.str();
 }

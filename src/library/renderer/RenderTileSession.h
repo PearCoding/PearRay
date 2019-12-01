@@ -70,7 +70,7 @@ public:
 	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(const Ray& ray, uint32 feedback) const;
 
-	IEntity* pickRandomLight(GeometryPoint& pt, float& pdf) const;
+	IEntity* pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const;
 
 private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);

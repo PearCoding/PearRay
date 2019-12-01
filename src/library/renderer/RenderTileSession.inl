@@ -51,7 +51,7 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 				pushFeedbackFragment(ray, OF_MissingMaterial);
 
 			GeometryPoint pt;
-			entity->provideGeometryPoint(entry.PrimitiveID, entry.UV[0], entry.UV[1], pt);
+			entity->provideGeometryPoint(ray.Direction, entry.PrimitiveID, entry.UV[0], entry.UV[1], pt);
 
 			hitFunc(entry, ray, pt, entity, material);
 		}
