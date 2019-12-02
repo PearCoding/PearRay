@@ -7,6 +7,10 @@
 #
 # Calling convection: <OSL/oslversion.h>
 
+if(OSL_FOUND)
+  return()
+endif()
+
 SET(OSL_FOUND FALSE)
 SET(OSL_INCLUDE_DIRS)
 SET(OSL_OSLCOMP_LIBRARY)
@@ -22,11 +26,11 @@ SET(_osl_search_paths ~/Library/Frameworks
   /opt
   /usr
   ${CMAKE_LIBRARY_PATH})
-  
+
 find_path(OSL_INCLUDE_DIR OSL/oslversion.h
   HINTS
     ENV OSL_DIR
-  PATH_SUFFIXES include local/include 
+  PATH_SUFFIXES include local/include
   PATHS
   ${_osl_search_paths}
 )

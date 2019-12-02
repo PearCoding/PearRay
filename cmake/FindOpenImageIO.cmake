@@ -10,6 +10,10 @@
 #
 # Calling convection: <OpenImageIO/version.h>
 
+if(OpenImageIO_FOUND)
+  return()
+endif()
+
 SET(OpenImageIO_FOUND FALSE)
 SET(OpenImageIO_INCLUDE_DIRS)
 SET(OpenImageIO_LIBRARIES)

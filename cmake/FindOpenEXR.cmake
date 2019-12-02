@@ -10,6 +10,10 @@
 #
 # Calling convection: <OpenEXR/OpenEXRConfig.h>
 
+if(OpenEXR_FOUND)
+  return()
+endif()
+
 SET(OpenEXR_FOUND FALSE)
 SET(OpenEXR_INCLUDE_DIRS)
 SET(OpenEXR_LIBRARIES)

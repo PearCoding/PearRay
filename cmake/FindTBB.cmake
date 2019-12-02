@@ -9,6 +9,10 @@
 #
 # Calling convection: <tbb/tbb_stddef.h>
 
+if(TBB_FOUND)
+  return()
+endif()
+
 SET(TBB_FOUND FALSE)
 SET(TBB_INCLUDE_DIRS)
 SET(TBB_LIBRARIES)
