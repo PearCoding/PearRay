@@ -245,21 +245,21 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 			RG_RENDERER,
 			"common/max_ray_depth",
 			1));
-	fct->settings().aaSampleCount = std::max<uint64>(
+	fct->settings().aaSampleCount = std::max<uint32>(
 		1,
-		mRegistry.getByGroup<uint64>(
+		mRegistry.getByGroup<uint32>(
 			RG_RENDERER,
 			"common/sampler/aa/count",
 			1));
-	fct->settings().lensSampleCount = std::max<uint64>(
+	fct->settings().lensSampleCount = std::max<uint32>(
 		1,
-		mRegistry.getByGroup<uint64>(
+		mRegistry.getByGroup<uint32>(
 			RG_RENDERER,
 			"common/sampler/lens/count",
 			1));
-	fct->settings().timeSampleCount = std::max<uint64>(
+	fct->settings().timeSampleCount = std::max<uint32>(
 		1,
-		mRegistry.getByGroup<uint64>(
+		mRegistry.getByGroup<uint32>(
 			RG_RENDERER,
 			"common/sampler/time/count",
 			1));

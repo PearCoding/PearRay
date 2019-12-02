@@ -79,11 +79,7 @@ public:
 	inline std::shared_ptr<OutputBuffer> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
-
-	// Useful settings
-	inline uint32 maxRayDepth() const { return mMaxRayDepth; }
-	inline uint64 samplesPerPixel() const { return mSamplesPerPixel; }
-
+	
 protected:
 	RenderTile* getNextTile();
 
@@ -108,7 +104,7 @@ private:
 
 	std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;
-	uint64 mIncrementalCurrentSample;
+	uint32 mIncrementalCurrentSample;
 	std::list<RenderThread*> mThreads;
 
 	const RenderSettings mRenderSettings;
@@ -121,8 +117,5 @@ private:
 	uint32 mCurrentPass;
 
 	bool mShouldStop;
-
-	uint32 mMaxRayDepth;
-	uint64 mSamplesPerPixel;
 };
 } // namespace PR

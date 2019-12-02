@@ -90,7 +90,7 @@ public:
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
 		Vector3f dx, dy;
-		Tangent::frame(in.Direction, dx, dy);
+		Tangent::frame(in_local.Direction, dx, dy);
 
 		// Project to 2d plane
 		Eigen::Matrix3f proj = PR::Transform::orthogonalInverse(PR::Transform::orthogonalMatrix(dy, dx, in_local.Direction));
@@ -109,7 +109,7 @@ public:
 		}
 
 		float eps		= std::max(mWidth(0), mWidth(1)) / 20.f;
-		float fr0		= std::log(1.41421356237f * 12.0f * l0 / (8.0f * eps)) / std::log(4);
+		float fr0		= static_cast<float>(std::log(1.41421356237f * 12.0f * l0 / (8.0f * eps)) / std::log(4));
 		size_t maxDepth = static_cast<size_t>(std::max(0, std::min(10, (int)std::round(fr0))));
 
 		if (!recursiveCheck(in_local, out, projectedCurve, 0, 1, maxDepth))
@@ -301,39 +301,23 @@ public:
 		if (ems)
 			emsID = static_cast<int32>(ems->id());
 
+#define _CURVE(D)                                                                                       \
+	case D: {                                                                                           \
+		FixedCurve3<D + 1> curve;                                                                       \
+		for (size_t i = 0; i <= curve.degree(); ++i)                                                    \
+			curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);          \
+		return std::make_shared<CurveEntity<FixedCurve3<D + 1>>>(id, name, curve, width, matID, emsID); \
+	}
+
 		switch (degree) {
-		case 2: {
-			QuadraticCurve3 curve;
-			for (size_t i = 0; i <= curve.degree(); ++i)
-				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
-			return std::make_shared<CurveEntity<QuadraticCurve3>>(id, name,
-																  curve, width,
-																  matID, emsID);
-		}
-		case 3: {
-			CubicCurve3 curve;
-			for (size_t i = 0; i <= curve.degree(); ++i)
-				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
-			return std::make_shared<CurveEntity<CubicCurve3>>(id, name,
-															  curve, width,
-															  matID, emsID);
-		}
-		case 4: {
-			FixedCurve3<5> curve;
-			for (size_t i = 0; i <= curve.degree(); ++i)
-				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
-			return std::make_shared<CurveEntity<FixedCurve3<5>>>(id, name,
-															  curve, width,
-															  matID, emsID);
-		}
-		case 5: {
-			FixedCurve3<6> curve;
-			for (size_t i = 0; i <= curve.degree(); ++i)
-				curve.points()[i] = Vector3f(points[3 * i], points[3 * i + 1], points[3 * i + 2]);
-			return std::make_shared<CurveEntity<FixedCurve3<6>>>(id, name,
-															  curve, width,
-															  matID, emsID);
-		}
+			_CURVE(2)
+			_CURVE(3)
+			_CURVE(4)
+			_CURVE(5)
+			_CURVE(6)
+			_CURVE(7)
+			_CURVE(8)
+			_CURVE(9)
 		default: {
 			Curve3::PointList list(degree + 1);
 			for (size_t i = 0; i < list.size(); ++i)

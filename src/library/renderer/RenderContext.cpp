@@ -87,15 +87,12 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	}
 
 	// Get other informations
-	mMaxRayDepth	 = mRenderSettings.maxRayDepth;
-	mSamplesPerPixel = mRenderSettings.samplesPerPixel();
-
 	PR_LOG(L_INFO) << "Rendering with: " << std::endl;
 	PR_LOG(L_INFO) << "  Lights: " << mLights.size() << std::endl;
 	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount << std::endl;
 	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount << std::endl;
-	PR_LOG(L_INFO) << "  Full Samples: " << mSamplesPerPixel << std::endl;
+	PR_LOG(L_INFO) << "  Full Samples: " << mRenderSettings.samplesPerPixel() << std::endl;
 	PR_LOG(L_INFO) << "  Emissive Area: " << mEmissiveSurfaceArea << std::endl;
 
 	if (mEmissiveSurfaceArea < PR_EPSILON)
@@ -231,8 +228,9 @@ RenderTile* RenderContext::getNextTile()
 	RenderTile* tile = nullptr;
 
 	// Try till we find a tile or all samples are already rendered
-	while (tile == nullptr && mIncrementalCurrentSample <= mSamplesPerPixel) {
-		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, mSamplesPerPixel));
+	const uint32 samplesPerPixel = mRenderSettings.samplesPerPixel();
+	while (tile == nullptr && mIncrementalCurrentSample <= samplesPerPixel) {
+		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, samplesPerPixel));
 		if (tile == nullptr) {
 			mIncrementalCurrentSample++;
 		}

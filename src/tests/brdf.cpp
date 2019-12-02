@@ -26,9 +26,9 @@ PR_TEST("Refraction")
 	auto N = Vector3f(0, 1, 0);
 	auto V = Vector3f(1, -1, 0).normalized();
 
-	auto R = Reflection::refract(0.9, V.dot(N), N, V);
+	auto R = Reflection::refract(0.9f, V.dot(N), N, V);
 
-	PR_CHECK_NEARLY_EQ(R, Vector3f(0.636396, -0.771362, 0));
+	PR_CHECK_NEARLY_EQ(R, Vector3f(0.636396f, -0.771362f, 0));
 }
 
 PR_TEST("Is Inside")

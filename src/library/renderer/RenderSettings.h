@@ -13,9 +13,9 @@ public:
 	uint32 maxRayDepth;
 	size_t maxParallelRays;
 
-	uint64 aaSampleCount;
-	uint64 lensSampleCount;
-	uint64 timeSampleCount;
+	uint32 aaSampleCount;
+	uint32 lensSampleCount;
+	uint32 timeSampleCount;
 
 	SamplerMode aaSampler;
 	SamplerMode lensSampler;
@@ -34,7 +34,7 @@ public:
 	float cropMaxY;
 
 	// Easy access
-	inline uint64 samplesPerPixel() const
+	inline uint32 samplesPerPixel() const
 	{
 		return aaSampleCount * lensSampleCount * timeSampleCount;
 	}

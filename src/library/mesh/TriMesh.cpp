@@ -175,7 +175,7 @@ void TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 							 }
 
 							 out2.MaterialID = mContainer->materialSlot(f); // Has to be updated in entity!
-							 out2.FaceID	 = f;
+							 out2.FaceID	 = static_cast<uint32>(f);// TODO: Maybe change to 64bit?
 							 //out2.EntityID; Ignore
 						 });
 }

@@ -198,8 +198,6 @@ public:
 					  "Above code is depending on it. (Maybe fix it!)");
 
 		if (originalMesh->features() & MF_HAS_MATERIAL) {
-			fvarChannels[0].numValues = static_cast<int>(originalMesh->faceCount());
-
 			fvarIndices.clear();
 			fvarIndices.reserve(originalMesh->indices().size());
 			for (size_t f = 0; f < originalMesh->faceCount(); ++f) {
@@ -208,6 +206,9 @@ public:
 					fvarIndices.push_back(static_cast<uint32>(f));
 			}
 
+			PR_ASSERT(originalMesh->indices().size() == fvarIndices.size(), "Invalid index calculation");
+
+			fvarChannels[0].numValues	= static_cast<int>(fvarIndices.size());
 			fvarChannels[0].valueIndices = (const Far::Index*)fvarIndices.data();
 
 			desc.numFVarChannels = 1;
@@ -260,12 +261,11 @@ public:
 	}
 
 	Osd::CpuVertexBuffer* refineData(const float* source, int elems,
+									 int coarseElems, int refElems,
 									 OpenSubdivComputationMode mode,
 									 Far::TopologyRefiner* refiner, Far::StencilTable const* stencilTable,
 									 Osd::CpuVertexBuffer** limit = nullptr)
 	{
-		int coarseElems = refiner->GetLevel(0).GetNumVertices();
-		int refElems	= refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
 
 		Osd::BufferDescriptor srcDesc(0, elems, elems);
 		Osd::CpuVertexBuffer* srcbuffer = Osd::CpuVertexBuffer::Create(elems, coarseElems);
@@ -324,7 +324,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3, mode, refiner, stencilTable);
+		int coarseElems				 = refiner->GetLevel(0).GetNumVertices();
+		int refElems				 = refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3, coarseElems, refElems, mode, refiner, stencilTable);
 
 		std::vector<float> dstVerts(3 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -341,7 +343,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2, mode, refiner, stencilTable);
+		int coarseElems				 = refiner->GetLevel(0).GetNumVertices();
+		int refElems				 = refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2, coarseElems, refElems, mode, refiner, stencilTable);
 
 		std::vector<float> dstVerts(2 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -359,7 +363,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3, mode, refiner, stencilTable);
+		int coarseElems				 = refiner->GetLevel(0).GetNumVertices();
+		int refElems				 = refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3, coarseElems, refElems, mode, refiner, stencilTable);
 
 		std::vector<float> dstVerts(3 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -378,6 +384,9 @@ public:
 		PR_PROFILE_THIS;
 		Far::TopologyLevel const& refLevel = refiner->GetLevel(refiner->GetMaxLevel());
 
+		int coarseElems = refiner->GetLevel(0).GetNumFVarValues();
+		int refElems	= refLevel.GetNumFVarValues();
+
 		std::vector<float> slotsAsFloat(originalMesh->faceCount());
 		uint32 max = 0;
 		for (size_t i = 0; i < slotsAsFloat.size(); ++i) {
@@ -386,11 +395,9 @@ public:
 			slotsAsFloat[i] = static_cast<float>(v);
 		}
 
-		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1, mode, refiner, stencilTable);
-
-		std::vector<float> dstVerts(refLevel.GetNumFVarValues());
-		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
-
+		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1, (int)slotsAsFloat.size(), refElems, mode, refiner, stencilTable);
+		
+		const float* dstVerts = buffer->BindCpuBuffer();
 		std::vector<uint32> slots(refineMesh->faceCount());
 		for (size_t i = 0; i < slots.size(); ++i) {
 			Far::ConstIndexArray fverts = refLevel.GetFaceFVarValues(static_cast<Far::Index>(i));
