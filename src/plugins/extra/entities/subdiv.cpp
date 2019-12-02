@@ -263,7 +263,7 @@ public:
 	Osd::CpuVertexBuffer* refineData(const float* source, int elems,
 									 int coarseElems, int refElems,
 									 OpenSubdivComputationMode mode,
-									 Far::TopologyRefiner* refiner, Far::StencilTable const* stencilTable,
+									 Far::StencilTable const* stencilTable,
 									 Osd::CpuVertexBuffer** limit = nullptr)
 	{
 
@@ -326,7 +326,7 @@ public:
 
 		int coarseElems				 = refiner->GetLevel(0).GetNumVertices();
 		int refElems				 = refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3, coarseElems, refElems, mode, refiner, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->vertices().data(), 3, coarseElems, refElems, mode, stencilTable);
 
 		std::vector<float> dstVerts(3 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -345,7 +345,7 @@ public:
 
 		int coarseElems				 = refiner->GetLevel(0).GetNumVertices();
 		int refElems				 = refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2, coarseElems, refElems, mode, refiner, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->uvs().data(), 2, coarseElems, refElems, mode, stencilTable);
 
 		std::vector<float> dstVerts(2 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -365,7 +365,7 @@ public:
 
 		int coarseElems				 = refiner->GetLevel(0).GetNumVertices();
 		int refElems				 = refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices();
-		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3, coarseElems, refElems, mode, refiner, stencilTable);
+		Osd::CpuVertexBuffer* buffer = refineData(originalMesh->velocities().data(), 3, coarseElems, refElems, mode, stencilTable);
 
 		std::vector<float> dstVerts(3 * refiner->GetLevel(refiner->GetMaxLevel()).GetNumVertices());
 		memcpy(dstVerts.data(), buffer->BindCpuBuffer(), sizeof(float) * dstVerts.size());
@@ -384,7 +384,7 @@ public:
 		PR_PROFILE_THIS;
 		Far::TopologyLevel const& refLevel = refiner->GetLevel(refiner->GetMaxLevel());
 
-		int coarseElems = refiner->GetLevel(0).GetNumFVarValues();
+		//int coarseElems = refiner->GetLevel(0).GetNumFVarValues();
 		int refElems	= refLevel.GetNumFVarValues();
 
 		std::vector<float> slotsAsFloat(originalMesh->faceCount());
@@ -395,8 +395,8 @@ public:
 			slotsAsFloat[i] = static_cast<float>(v);
 		}
 
-		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1, (int)slotsAsFloat.size(), refElems, mode, refiner, stencilTable);
-		
+		Osd::CpuVertexBuffer* buffer = refineData(slotsAsFloat.data(), 1, (int)slotsAsFloat.size(), refElems, mode, stencilTable);
+
 		const float* dstVerts = buffer->BindCpuBuffer();
 		std::vector<uint32> slots(refineMesh->faceCount());
 		for (size_t i = 0; i < slots.size(); ++i) {
