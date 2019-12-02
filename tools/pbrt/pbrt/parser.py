@@ -2,7 +2,8 @@ from .tokenizer import Tokenizer
 
 
 class Operation:
-    def __init__(self, action, operand, params):
+    def __init__(self, filename, action, operand, params):
+        self.filename = filename
         self.action = action
         self.operand = operand
         self.parameters = params
@@ -84,6 +85,7 @@ class Parser:
         token = tokenizer.current()
         params = {}
         while Parser.isParameterName(token):
+            tokenizer.next()
             params[token] = self.parse_parameter(tokenizer)
             token = tokenizer.current()
 
@@ -97,9 +99,8 @@ class Parser:
         tokenizer.next()
         return action
 
-    def parse(self, source):
+    def parse(self, filename, source):
         tokenizer = Tokenizer(source)
-        #print(tokenizer._tokens)
 
         operations = []
         while True:
@@ -112,7 +113,7 @@ class Parser:
             if operand is not None:
                 params = self.parse_parameter_list(tokenizer)
 
-            operations.append(Operation(action, operand, params))
+            operations.append(Operation(filename, action, operand, params))
 
         return operations
 

@@ -1,6 +1,3 @@
-import re
-
-
 class Tokenizer:
     def __init__(self, source):
         self._tokens = []
