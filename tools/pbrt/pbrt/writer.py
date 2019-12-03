@@ -1,15 +1,16 @@
 class Writer:
-    def __init__(self, file, useTabs=True):
+    def __init__(self, file, indent=True):
         self.file = file
-        self.useTabs = useTabs
+        self.indent = indent
         self.currentLevel = 0
+        self.indentObj = "  "
 
 
     def write(self, content):
         prefix = ""
-        if self.useTabs:
+        if self.indent:
             for i in range(self.currentLevel):
-                prefix = prefix + "\t"
+                prefix = prefix + self.indentObj
 
         self.file.write(prefix + content + "\n")
 

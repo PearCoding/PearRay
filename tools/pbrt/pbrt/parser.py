@@ -74,7 +74,10 @@ class Parser:
             if not Parser.isListEnd(token):
                 print("Bad list end")
             tokenizer.next() # Skip ]
-            return paramList
+            if len(paramList) == 1:
+                return paramList[0]
+            else:
+                return paramList
         elif Parser.isParameter(token):
             tokenizer.next()
             return Parser.getParameter(token)
@@ -86,7 +89,7 @@ class Parser:
         params = {}
         while Parser.isParameterName(token):
             tokenizer.next()
-            params[token] = self.parse_parameter(tokenizer)
+            params[Parser.getParameter(token)] = self.parse_parameter(tokenizer)
             token = tokenizer.current()
 
         return params
