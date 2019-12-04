@@ -22,6 +22,8 @@ SET(PR_Src
   integrator/IIntegratorFactory.h
   integrator/IntegratorManager.cpp
   integrator/IntegratorManager.h
+  loader/PlyLoader.cpp
+  loader/PlyLoader.h
   loader/SubGraphLoader.h
   loader/WavefrontLoader.cpp
   loader/WavefrontLoader.h

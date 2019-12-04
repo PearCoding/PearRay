@@ -4,10 +4,10 @@
 #include <map>
 
 namespace PR {
-class PR_LIB_UTILS WavefrontLoader : public SubGraphLoader {
+class PR_LIB_UTILS PlyLoader : public SubGraphLoader {
 public:
-	explicit WavefrontLoader(const std::map<std::string, std::string>& overrides);
-	~WavefrontLoader();
+	explicit PlyLoader(const std::string& name);
+	~PlyLoader();
 
 	inline float scale() const
 	{
@@ -27,7 +27,7 @@ public:
 	void load(const std::wstring& file, Environment* env) override;
 
 private:
-	std::map<std::string, std::string> mOverrides;
+	std::string mName;
 	float mScale;
 	bool mFlipNormal;
 };

@@ -12,6 +12,8 @@ class Operator:
         self.coords = {}
         self.transformStack = [np.identity(4)]
         self.currentObject = ""
+        self.currentMaterial = ""
+        self.objectCount = 0
 
     def apply(self, operations):
         # print(str(operations))
@@ -27,10 +29,14 @@ class Operator:
     def mat2str(mat):
         return "[" + ",".join(",".join(str(f) for f in row) for row in mat) + "]"
 
+    @staticmethod
+    def resolve_filename(base, filename):
+        file_dir = os.path.dirname(base)
+        return filename if os.path.isabs(
+            filename) else os.path.join(file_dir, filename)
+
     def op_Include(self, op):
-        file_dir = os.path.dirname(op.filename)
-        inc_file = op.operand if os.path.isabs(
-            op.operand) else os.path.join(file_dir, op.operand)
+        inc_file = Operator.resolve_filename(op.filename, op.operand)
 
         operations = None
         try:
@@ -76,11 +82,11 @@ class Operator:
                                              [0, 0, 0, 1]]))
 
     def op_Transform(self, op):
-        self.transformStack[-1] = np.array([op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]])
+        self.transformStack[-1] = np.transpose(np.array([op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]]))
         print(self.transformStack[-1])
 
     def op_ConcatTransform(self, op):
-        self.applyTransform(np.array([op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]]))
+        self.applyTransform(np.transpose(np.array([op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]])))
 
     def op_CoordinateSystem(self, op):
         self.coords[op.operand[0]] = self.transformStack[-1]
@@ -89,7 +95,7 @@ class Operator:
         self.transformStack[-1] = self.coords[op.operand[0]]
 
     def op_Camera(self, op):
-        self.coords['camera'] = self.transformStack[-1]
+        self.coords['camera'] = np.linalg.inv(self.transformStack[-1])
 
         # Only support one camera
         self.w.write(":camera 'Camera'")
@@ -97,11 +103,12 @@ class Operator:
         self.w.goIn()
         self.w.write(":name 'Camera'")
         self.w.write(":type 'standard'")
-        self.w.write(":transform %s" % Operator.mat2str(self.transformStack[-1]))
+        self.w.write(":transform %s" % Operator.mat2str(self.coords['camera']))
         self.w.goOut()
         self.w.write(")")
 
     def op_WorldBegin(self, op):
+        self.op_Identity(op)
         self.coords['world'] = self.transformStack[-1]
 
     def op_WorldEnd(self, op):
@@ -204,20 +211,93 @@ class Operator:
     def op_Texture(self, op):
         pass # TODO
 
+    @staticmethod
+    def unpackColor(col):
+        if isinstance(col,list):
+            return "(rgb %f %f %f)" % (col[0], col[1], col[2])
+        else:
+            return "(rgb %f %f %f)" % (col, col, col)
+
     def op_Material(self, op):
-        pass # TODO
+        mat_type = op.parameters['string type']
+        if mat_type == "matte":
+            color = Operator.unpackColor(op.parameters['rgb Kd'])
+            self.w.write("(material")
+            self.w.goIn()
+            self.w.write(":type 'diffuse'")
+            self.w.write(":name '%s'" % op.operand)
+            self.w.write(":albedo %s" % color)
+            self.w.goOut()
+            self.w.write(")")
+        else:
+            print("No support of materials of type %s available" % op.operand)
+
+        self.currentMaterial = op.operand
 
     def op_MakeNamedMaterial(self, op):
-        pass # TODO
+        self.op_Material(op)# Same in our case
 
     def op_NamedMaterial(self, op):
-        pass # TODO
+        self.currentMaterial = op.operand
 
     def op_LightSource(self, op):
-        pass # TODO
+        if op.operand == "point":
+            pass # TODO
+        elif op.operand == "distant":
+            D = np.array(op.parameters['point to']) - np.array(op.parameters['point from'])
+            D = D/np.linalg.norm(D, ord=2)
+            color = Operator.unpackColor(op.parameters['rgb L'])
+
+            self.w.write("(light")
+            self.w.goIn()
+            self.w.write(":type 'distant'")
+            self.w.write(":direction [%f, %f, %f]" % (D[0], D[1], D[2]))
+            self.w.write(":radiance %s" % color)
+            self.w.goOut()
+            self.w.write(")")
+        else:
+            print("No support of light sources of type %s available" % op.operand)
 
     def op_AreaLightSource(self, op):
         pass # TODO
 
     def op_Shape(self, op):
-        pass # TODO
+        if op.operand == "plymesh":
+            inc_file = Operator.resolve_filename(op.filename, op.parameters['string filename'])
+            self.w.write("(embed")
+            self.w.goIn()
+            self.w.write(":loader 'ply'")
+            self.w.write(":file '%s'" % inc_file)
+            self.w.write(":name 'object_%i_mesh'" % self.objectCount)
+            self.w.goOut()
+            self.w.write(")")
+
+            self.w.write("(entity")
+            self.w.goIn()
+            self.w.write(":name 'object_%i'" % self.objectCount)
+            self.w.write(":type 'mesh'")
+            self.w.write(":material '%s'" % self.currentMaterial)
+            self.w.write(":mesh 'object_%i_mesh'" % self.objectCount)
+            self.w.write(":transform %s" % Operator.mat2str(self.transformStack[-1]))
+            self.w.goOut()
+            self.w.write(")")
+            self.objectCount += 1
+        elif op.operand == "trianglemesh":
+            pass# TODO
+        elif op.operand == "loopsubdiv":
+            pass# TODO
+        elif op.operand == "curve":
+            pass# TODO
+        elif op.operand == "sphere":
+            self.w.write("(entity")
+            self.w.goIn()
+            self.w.write(":name 'object_%i'" % self.objectCount)
+            self.w.write(":type 'sphere'")
+            self.w.write(":material '%s'" % self.currentMaterial)
+            self.w.write(":radius %f" % op.parameters['radius'])
+            self.w.write(":transform %s" % Operator.mat2str(self.transformStack[-1]))
+            self.w.goOut()
+            self.w.write(")")
+            self.objectCount += 1
+        else:
+            print("No support of shapes of type %s available" % op.operand)

@@ -14,6 +14,7 @@
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightFactory.h"
 #include "infinitelight/InfiniteLightManager.h"
+#include "loader/PlyLoader.h"
 #include "loader/WavefrontLoader.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
@@ -121,7 +122,7 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 						addSpectrum(entry, env.get());
 					else if (entry.id() == "texture")
 						addTexture(entry, env.get());
-					else if (entry.id() == "graph")
+					else if (entry.id() == "graph" || entry.id() == "embed")
 						addSubGraph(entry, env.get());
 					else if (entry.id() == "mesh")
 						addMesh(entry, env.get());
@@ -570,17 +571,13 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 
 void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 {
-	DL::Data overridesD = group.getFromKey("overrides");
-	DL::Data loaderD	= group.getFromKey("loader");
-	DL::Data fileD		= group.getFromKey("file");
+	DL::Data loaderD = group.getFromKey("loader");
+	DL::Data fileD   = group.getFromKey("file");
 
-	std::map<std::string, std::string> overrides;
-	if (overridesD.type() == DL::DT_String)
-		overrides[""] = overridesD.getString();
-
-	std::string file;
+	std::wstring file;
 	if (fileD.type() == DL::DT_String) {
-		file = fileD.getString();
+		std::string f = fileD.getString();
+		file		  = std::wstring(f.begin(), f.end());
 	} else {
 		PR_LOG(L_ERROR) << "Couldn't get file for subgraph entry." << std::endl;
 		return;
@@ -595,9 +592,24 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	}
 
 	if (loader == "obj") {
+		DL::Data overridesD = group.getFromKey("overrides");
+		std::map<std::string, std::string> overrides;
+		if (overridesD.type() == DL::DT_String)
+			overrides[""] = overridesD.getString();
+
 		DL::Data flipNormalD = group.getFromKey("flipNormal");
 
 		WavefrontLoader loader(overrides);
+
+		if (flipNormalD.type() == DL::DT_Bool)
+			loader.flipNormal(flipNormalD.getBool());
+
+		loader.load(file, env);
+	} else if (loader == "ply") {
+		DL::Data flipNormalD = group.getFromKey("flipNormal");
+		DL::Data nameD		 = group.getFromKey("name");
+
+		PlyLoader loader(nameD.type() == DL::DT_String ? nameD.getString() : "");
 
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());

@@ -1,6 +1,7 @@
 #include "WavefrontLoader.h"
 #include "Environment.h"
 #include "Logger.h"
+#include "Platform.h"
 #include "mesh/MeshContainer.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -18,7 +19,7 @@ WavefrontLoader::~WavefrontLoader()
 {
 }
 
-void WavefrontLoader::load(const std::string& file, Environment* env)
+void WavefrontLoader::load(const std::wstring& file, Environment* env)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -26,7 +27,8 @@ void WavefrontLoader::load(const std::string& file, Environment* env)
 	std::string warn;
 	std::string err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file.c_str())) {
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+						  std::string(file.begin(), file.end()).c_str())) {
 		PR_LOG(L_ERROR) << "Error reading Wavefront file: " << err << std::endl;
 	} else {
 		if (!warn.empty()) {
