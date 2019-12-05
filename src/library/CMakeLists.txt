@@ -48,6 +48,7 @@ SET(PR_Src
   geometry/Plane.cpp
   geometry/Plane.h
   geometry/Quad.h
+  geometry/Quadric.h
   geometry/Sphere.cpp
   geometry/Sphere.h
   geometry/Triangle.h

@@ -19,7 +19,7 @@ inline Vector2f uv_from_normal(const Vector3f& N)
 inline Vector2fv uv_from_normal(const Vector3fv& N)
 {
 	vfloat u = atan2(N(1), N(0)) * PR_1_PI;
-	u		 = blend(u + 2, u, u < 0) / 2;
+	u		 = simdpp::blend(u + 2, u, u < 0) / 2;
 
 	vfloat v = acos(N(2)) * PR_1_PI;
 	return Vector2fv(u, v);

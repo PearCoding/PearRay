@@ -65,7 +65,6 @@ void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 
 void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 {
-	using namespace simdpp;
 	const Vector3fv invDir = in.Direction.cwiseInverse();
 
 	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
@@ -78,9 +77,9 @@ void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 		exit  = min(max(vmin, vmax), exit);
 	}
 
-	const float32v inf = make_float(std::numeric_limits<float>::infinity());
-	out.HitDistance	= blend(exit, entry, entry < 0);
-	out.HitDistance	= blend(out.HitDistance, inf,
+	const simdpp::float32v inf = simdpp::make_float(std::numeric_limits<float>::infinity());
+	out.HitDistance	= simdpp::blend(exit, entry, entry < 0);
+	out.HitDistance			   = simdpp::blend(out.HitDistance, inf,
 							   (exit >= entry) & (out.HitDistance > PR_EPSILON));
 }
 

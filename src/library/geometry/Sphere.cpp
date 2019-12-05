@@ -56,8 +56,6 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 
 void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 {
-	using namespace simdpp;
-
 	const vfloat S  = -in.Origin.dot(in.Direction);
 	const vfloat L2 = in.Origin.squaredNorm();
 	const vfloat R2 = vfloat(mRadius * mRadius);
@@ -74,7 +72,7 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	vfloat t0 = blend(t1t, t0t, d);
 	vfloat t1 = blend(t0t, t1t, d);
 
-	out.HitDistance = blend(t1, t0, t0 < PR_SPHERE_INTERSECT_EPSILON);
+	out.HitDistance = simdpp::blend(t1, t0, t0 < PR_SPHERE_INTERSECT_EPSILON);
 
 	// Project
 	Vector3fv p  = in.t(t0);
@@ -83,7 +81,7 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	out.UV[1]	= uv(1);
 
 	const vfloat inf = fill_vector(std::numeric_limits<float>::infinity());
-	out.HitDistance  = blend(out.HitDistance, inf,
+	out.HitDistance  = simdpp::blend(out.HitDistance, inf,
 							 valid & (out.HitDistance >= PR_SPHERE_INTERSECT_EPSILON));
 }
 
