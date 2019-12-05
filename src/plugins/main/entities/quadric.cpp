@@ -42,7 +42,7 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 id) const override
+	float surfaceArea(uint32 /*id*/) const override
 	{
 		// TODO
 		return 0;
@@ -84,9 +84,11 @@ public:
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		float t;
+		float t = std::numeric_limits<float>::infinity();
 		if (Quadric::intersect(mParameters, in_local, t)) {
-		
+			Vector3f p = in_local.t(t);
+			if (mBoundingBox.contains(p))
+				out.HitDistance = t;
 		}
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
