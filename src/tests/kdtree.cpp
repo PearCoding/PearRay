@@ -192,8 +192,8 @@ PR_TEST("UV")
 	// From top to bottom
 	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
 	PR_CHECK_EQ(extract<0>(out.FaceID), 1);
-	PR_CHECK_GREAT(extract<0>(out.UV[0]), 0);
-	PR_CHECK_GREAT(extract<0>(out.UV[1]), 0);
+	PR_CHECK_GREAT(extract<0>(out.Parameter[0]), 0);
+	PR_CHECK_GREAT(extract<0>(out.Parameter[1]), 0);
 
 	PR_CHECK_FALSE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
 	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());

@@ -156,11 +156,11 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 
 	IEntity* light = lights.at(pick).get();
 
-	float pdf2	= 0;
-	uint32 faceID = 0;
-	Vector2f uv   = light->pickRandomPoint(view, mTile->random().get2D(), faceID, pdf2);
+	float pdf2	 = 0;
+	uint32 faceID  = 0;
+	Vector3f param = light->pickRandomParameterPoint(view, mTile->random().get2D(), faceID, pdf2);
 
-	light->provideGeometryPoint(view, faceID, uv(0), uv(1), pt);
+	light->provideGeometryPoint(view, faceID, param, pt);
 	pdf *= pdf2;
 
 	return light;

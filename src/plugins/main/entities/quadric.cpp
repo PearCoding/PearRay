@@ -87,8 +87,10 @@ public:
 		float t = std::numeric_limits<float>::infinity();
 		if (Quadric::intersect(mParameters, in_local, t)) {
 			Vector3f p = in_local.t(t);
-			if (mBoundingBox.contains(p))
+			if (mBoundingBox.contains(p)) {
+				out.Parameter   = { p(0), p(1), p(2) };
 				out.HitDistance = t;
+			}
 		}
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -98,31 +100,34 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
-	Vector2f pickRandomPoint(const Vector3f&, const Vector2f& rnd,
-							 uint32& faceID, float& pdf) const override
+	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
+									  uint32& faceID, float& pdf) const override
 	{
 		// TODO
 		pdf	= 1.0f;
 		faceID = 0;
-		return rnd;
+		return Vector3f(rnd(0), rnd(1), 0);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, float u, float v,
+	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		// TODO
-		pt.P  = transform() * Vector3f(0, 0, 0);
-		pt.N  = normalMatrix() * Vector3f(0, 0, 1);
-		pt.Nx = normalMatrix() * Vector3f(1, 0, 0);
-		pt.Ny = normalMatrix() * Vector3f(0, 1, 0);
+		pt.P = transform() * parameter;
+		pt.N = normalMatrix() * Quadric::normal(mParameters, parameter);
+
+		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
 		pt.N.normalize();
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.UVW		  = Vector3f(u, v, 0);
+		pt.N.normalize();
+		pt.Nx.normalize();
+		pt.Ny.normalize();
+
+		pt.UVW		  = parameter; // Not a real uvw value
 		pt.MaterialID = mMaterialID;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;

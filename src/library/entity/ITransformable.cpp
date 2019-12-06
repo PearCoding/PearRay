@@ -28,16 +28,16 @@ void ITransformable::beforeSceneBuild()
 	mTransform.computeRotationScaling(&rot, &sca);
 	//mTransform.computeScalingRotation(&sca, &rot);
 
-	PR_LOG(L_INFO) << mName << ": P" << Vector3f(mTransform.translation())
-				   << " R" << Eigen::Quaternionf(rot)
-				   << " S" << Vector3f(sca.diagonal()) << std::endl;
+	PR_LOG(L_INFO) << mName << ": P" << PR_FMT_MAT(mTransform.translation())
+				   << " R" << PR_FMT_MAT(Eigen::Quaternionf(rot))
+				   << " S" << PR_FMT_MAT(sca.diagonal()) << std::endl;
 
 	Eigen::Matrix3f irot;
 	Eigen::Matrix3f isca;
 	mInvTransformCache.computeRotationScaling(&irot, &isca);
-	PR_LOG(L_INFO) << " IP" << Vector3f(mInvTransformCache.translation())
-				   << " IR" << Eigen::Quaternionf(irot)
-				   << " IS" << Vector3f(isca.diagonal()) << std::endl;
+	PR_LOG(L_INFO) << " IP" << PR_FMT_MAT(mInvTransformCache.translation())
+				   << " IR" << PR_FMT_MAT(Eigen::Quaternionf(irot))
+				   << " IS" << PR_FMT_MAT(isca.diagonal()) << std::endl;
 
 	if (sca.squaredNorm() <= PR_EPSILON)
 		PR_LOG(L_WARNING) << "ITransformable " << mName << " has zero scale attribute" << std::endl;
@@ -65,9 +65,9 @@ std::string ITransformable::dumpInformation() const
 
 	std::stringstream stream;
 	stream << "<ITransformable> [" << mID << "]: " << std::endl
-		   << "  Position:        " << pos << std::endl
-		   << "  Scale:           " << scav << std::endl
-		   << "  Rotation:        " << quat << std::endl
+		   << "  Position:        " << PR_FMT_MAT(pos) << std::endl
+		   << "  Scale:           " << PR_FMT_MAT(scav) << std::endl
+		   << "  Rotation:        " << PR_FMT_MAT(quat) << std::endl
 		   << "  Flag&Debug:      " << ((mFlags & EF_Debug) != 0 ? "true" : "false") << std::endl
 		   << "  Flag&LocalArea:  " << ((mFlags & EF_LocalArea) != 0 ? "true" : "false") << std::endl;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "MatrixFormat.h"
 
 #include <iostream>
 #include <list>
@@ -69,9 +69,7 @@ double _prt_diff_V(const Eigen::MatrixBase<Derived>& val, const Eigen::MatrixBas
 template<typename Derived>
 std::string _prt_test_string_V(const Eigen::MatrixBase<Derived>& val)
 {
-	std::stringstream stream;
-	stream << val;
-	return stream.str();
+	return PR_FMT_MAT(val);
 }
 
 #define _PRT_DEF_STRUCT(M) \

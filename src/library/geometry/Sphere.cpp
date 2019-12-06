@@ -49,8 +49,8 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 		// Setup UV
 		Vector3f p  = in.t(t0);
 		Vector2f uv = project(p);
-		out.UV[0]   = uv(0);
-		out.UV[1]   = uv(1);
+		out.Parameter[0]   = uv(0);
+		out.Parameter[1]   = uv(1);
 	}
 }
 
@@ -77,8 +77,8 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	// Project
 	Vector3fv p  = in.t(t0);
 	Vector2fv uv = project(p);
-	out.UV[0]	= uv(0);
-	out.UV[1]	= uv(1);
+	out.Parameter[0]	= uv(0);
+	out.Parameter[1]	= uv(1);
 
 	const vfloat inf = fill_vector(std::numeric_limits<float>::infinity());
 	out.HitDistance  = simdpp::blend(out.HitDistance, inf,

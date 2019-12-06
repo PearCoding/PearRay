@@ -27,8 +27,9 @@ public:
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const;
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const;
-	Vector2f pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const;
-	void provideGeometryPoint(uint32 faceID, float u, float v, GeometryPoint& pt) const;
+
+	Vector3f pickRandomParameterPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const;
+	void provideGeometryPoint(uint32 faceID, const Vector3f& parameter, GeometryPoint& pt) const;
 
 private:
 	BoundingBox mBoundingBox;

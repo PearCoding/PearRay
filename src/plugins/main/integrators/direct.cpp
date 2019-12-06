@@ -226,7 +226,8 @@ public:
 					&& shadowHit.EntityID == light->id()) {
 					// Retrive geometry information from the new point
 					GeometryPoint nlightPt;
-					light->provideGeometryPoint(shadow.Direction, shadowHit.PrimitiveID, shadowHit.UV[0], shadowHit.UV[1], nlightPt);
+					light->provideGeometryPoint(shadow.Direction, shadowHit.PrimitiveID,
+												Vector3f(shadowHit.Parameter[0], shadowHit.Parameter[1], shadowHit.Parameter[2]), nlightPt);
 
 					if (-shadow.Direction.dot(nlightPt.N) > PR_EPSILON) {
 						// Evaluate light

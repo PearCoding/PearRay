@@ -101,11 +101,11 @@ void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 		if (t > PR_PLANE_INTERSECT_EPSILON) {
 			const Vector3f p = in.t(t) - mPosition;
 
-			out.UV[0] = p.dot(mXAxis) * mInvXLenSqr_Cache;
-			out.UV[1] = p.dot(mYAxis) * mInvYLenSqr_Cache;
+			out.Parameter[0] = p.dot(mXAxis) * mInvXLenSqr_Cache;
+			out.Parameter[1] = p.dot(mYAxis) * mInvYLenSqr_Cache;
 
-			if (out.UV[0] >= 0 && out.UV[0] <= 1
-				&& out.UV[1] >= 0 && out.UV[1] <= 1) {
+			if (out.Parameter[0] >= 0 && out.Parameter[0] <= 1
+				&& out.Parameter[1] >= 0 && out.Parameter[1] <= 1) {
 				out.HitDistance = t;
 				return;
 			}
@@ -129,11 +129,11 @@ void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 
 	Vector3fv p = in.t(out.HitDistance) - PV;
 
-	out.UV[0] = p.dot(promote(mXAxis)) * mInvXLenSqr_Cache;
-	out.UV[1] = p.dot(promote(mYAxis)) * mInvYLenSqr_Cache;
+	out.Parameter[0] = p.dot(promote(mXAxis)) * mInvXLenSqr_Cache;
+	out.Parameter[1] = p.dot(promote(mYAxis)) * mInvYLenSqr_Cache;
 
-	bfloat succ = (out.UV[0] >= 0) & (out.UV[0] <= 1)
-				  & (out.UV[1] >= 0) & (out.UV[1] <= 1)
+	bfloat succ = (out.Parameter[0] >= 0) & (out.Parameter[0] <= 1)
+				  & (out.Parameter[1] >= 0) & (out.Parameter[1] <= 1)
 				  & (out.HitDistance > PR_PLANE_INTERSECT_EPSILON)
 				  & (abs(ln) > PR_PLANE_INTERSECT_EPSILON);
 	out.HitDistance = blend(out.HitDistance, inf, succ);

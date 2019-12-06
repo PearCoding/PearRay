@@ -123,12 +123,12 @@ void TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 								 Vector2f uv1 = mContainer->uv(ind2);
 								 Vector2f uv2 = mContainer->uv(ind3);
 								 for (int i = 0; i < 2; ++i)
-									 out2.UV[i] = uv1(i) * uv(0)
-												  + uv2(i) * uv(1)
-												  + uv0(i) * (1 - uv(0) - uv(1));
+									 out2.Parameter[i] = uv1(i) * uv(0)
+														 + uv2(i) * uv(1)
+														 + uv0(i) * (1 - uv(0) - uv(1));
 							 } else {
-								 out2.UV[0] = uv(0);
-								 out2.UV[1] = uv(1);
+								 out2.Parameter[0] = uv(0);
+								 out2.Parameter[1] = uv(1);
 							 }
 
 							 if (mContainer->features() & MF_HAS_MATERIAL)
@@ -167,20 +167,20 @@ void TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 								 Vector2f v = Triangle::interpolate(
 									 mContainer->uv(ind1), mContainer->uv(ind2), mContainer->uv(ind3),
 									 uv);
-								 out2.UV[0] = v(0);
-								 out2.UV[1] = v(1);
+								 out2.Parameter[0] = v(0);
+								 out2.Parameter[1] = v(1);
 							 } else {
-								 out2.UV[0] = uv(0);
-								 out2.UV[1] = uv(1);
+								 out2.Parameter[0] = uv(0);
+								 out2.Parameter[1] = uv(1);
 							 }
 
 							 out2.MaterialID = mContainer->materialSlot(f); // Has to be updated in entity!
-							 out2.FaceID	 = static_cast<uint32>(f);// TODO: Maybe change to 64bit?
-							 //out2.EntityID; Ignore
+							 out2.FaceID	 = static_cast<uint32>(f);		// TODO: Maybe change to 64bit?
+																			//out2.EntityID; Ignore
 						 });
 }
 
-Vector2f TriMesh::pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const
+Vector3f TriMesh::pickRandomParameterPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const
 {
 	PR_PROFILE_THIS;
 
@@ -189,11 +189,14 @@ Vector2f TriMesh::pickRandomPoint(const Vector2f& rnd, uint32& faceID, float& pd
 	Face face = mContainer->getFace(split.integral1());
 
 	pdf = 1.0f / (mContainer->faceCount() * face.surfaceArea());
-	return Vector2f(rnd(0), rnd(1));
+	return Vector3f(rnd(0), rnd(1), 0);
 }
 
-void TriMesh::provideGeometryPoint(uint32 faceID, float u, float v, GeometryPoint& pt) const
+void TriMesh::provideGeometryPoint(uint32 faceID, const Vector3f& parameter, GeometryPoint& pt) const
 {
+	const float u = parameter[0];
+	const float v = parameter[1];
+
 	Face f = mContainer->getFace(faceID);
 
 	Vector2f local_uv;

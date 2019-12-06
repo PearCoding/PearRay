@@ -6,7 +6,7 @@ namespace PR {
 struct PR_LIB ShadowHit {
 public:
 	bool Successful;
-	float UV[2];
+	Vector3f Parameter;
 	uint32 EntityID;
 	uint32 PrimitiveID;
 };

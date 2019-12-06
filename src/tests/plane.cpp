@@ -72,8 +72,8 @@ PR_TEST("Intersects 1")
 	plane.intersects(ray, s);
 
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
-	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5f);
-	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
 }
 
 PR_TEST("Intersects 2")
@@ -98,8 +98,8 @@ PR_TEST("Intersects 3")
 	plane.intersects(ray, s);
 
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
-	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5f);
-	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
 }
 
 PR_TEST("Intersects 4")
@@ -112,8 +112,8 @@ PR_TEST("Intersects 4")
 	plane.intersects(ray, s);
 
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
-	PR_CHECK_NEARLY_EQ(s.UV[0], 0.5f);
-	PR_CHECK_NEARLY_EQ(s.UV[1], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
+	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
 }
 
 PR_END_TESTCASE()

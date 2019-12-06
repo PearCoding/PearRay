@@ -39,9 +39,9 @@ inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutpu
 		entry.MaterialID   = simdpp::extract<K>(out.MaterialID);
 		entry.EntityID	 = simdpp::extract<K>(out.EntityID);
 		entry.PrimitiveID  = simdpp::extract<K>(out.FaceID);
-		entry.UV[0]		   = simdpp::extract<K>(out.UV[0]);
-		entry.UV[1]		   = simdpp::extract<K>(out.UV[1]);
-		entry.Flags		   = simdpp::extract<K>(out.Flags);
+		for (int i = 0; i < 3; ++i)
+			entry.Parameter[i] = simdpp::extract<K>(out.Parameter[i]);
+		entry.Flags = simdpp::extract<K>(out.Flags);
 
 		PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 		hits.add(entry);
@@ -119,9 +119,9 @@ void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 			entry.MaterialID   = out.MaterialID;
 			entry.EntityID	 = out.EntityID;
 			entry.PrimitiveID  = out.FaceID;
-			entry.UV[0]		   = out.UV[0];
-			entry.UV[1]		   = out.UV[1];
-			entry.Flags		   = out.Flags;
+			for (int i = 0; i < 3; ++i)
+				entry.Parameter[i] = out.Parameter[i];
+			entry.Flags = out.Flags;
 
 			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 			hits.add(entry);
@@ -147,8 +147,8 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 			mEntities[index]->checkCollision(in2, out2);
 		});
 
-	hit.UV[0]		= out.UV[0];
-	hit.UV[1]		= out.UV[1];
+	for (int i = 0; i < 3; ++i)
+		hit.Parameter[i] = out.Parameter[i];
 	hit.EntityID	= out.EntityID;
 	hit.PrimitiveID = out.FaceID;
 

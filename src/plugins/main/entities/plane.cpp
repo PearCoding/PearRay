@@ -91,18 +91,21 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
-	Vector2f pickRandomPoint(const Vector3f&, const Vector2f& rnd,
-							 uint32& faceID, float& pdf) const override
+	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
+									  uint32& faceID, float& pdf) const override
 	{
 		pdf	= mPDF_Cache;
 		faceID = 0;
-		return rnd;
+		return Vector3f(rnd(0), rnd(1), 0);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, float u, float v,
+	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
+
+		float u = parameter[0];
+		float v = parameter[1];
 
 		pt.P  = transform() * mPlane.surfacePoint(u, v);
 		pt.N  = normalMatrix() * mPlane.normal();

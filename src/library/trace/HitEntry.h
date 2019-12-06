@@ -10,7 +10,7 @@ public:
 	uint32 MaterialID   = 0;
 	uint32 EntityID		= 0;
 	uint32 PrimitiveID  = 0;
-	float UV[2]			= { 0, 0 };
+	Vector3f Parameter  = { 0, 0, 0 };
 	uint8 Flags			= 0;
 };
 } // namespace PR

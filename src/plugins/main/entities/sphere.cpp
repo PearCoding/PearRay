@@ -105,32 +105,34 @@ public:
 		out.MaterialID  = mMaterialID;
 	}
 
-	Vector2f pickRandomPoint(const Vector3f& view, const Vector2f& rnd,
-							 uint32& faceID, float& pdf) const override
+	Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
+									  uint32& faceID, float& pdf) const override
 	{
 		pdf	= mPDF_Cache;
 		faceID = 0;
 
 		Vector3f kv = invTransform().linear() * view;
 		Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
-		if (kv.dot(n) > 0)
-			return Spherical::uv_from_normal(Vector3f(-n));
 
-		return rnd;
+		Vector2f uv = rnd;
+		if (kv.dot(n) > 0)
+			uv = Spherical::uv_from_normal(Vector3f(-n));
+
+		return Vector3f(uv(0), uv(1), 0);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, float u, float v,
+	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		pt.P = transform() * mSphere.surfacePoint(u, v);
-		pt.N = normalMatrix() * mSphere.normalPoint(u, v);
+		pt.P = transform() * mSphere.surfacePoint(parameter[0], parameter[1]);
+		pt.N = normalMatrix() * mSphere.normalPoint(parameter[0], parameter[1]);
 		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
-		pt.UVW		  = Vector3f(u, v, 0);
+		pt.UVW		  = parameter;
 		pt.MaterialID = mMaterialID;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;
@@ -143,7 +145,7 @@ public:
 		const float area = surfaceArea(0);
 		// We only consider view side of the sphere,
 		// therefore only half of the surface is considered in sampling.
-		mPDF_Cache		 = 0.5f * (area > PR_EPSILON ? 1.0f / area : 0);
+		mPDF_Cache = 0.5f * (area > PR_EPSILON ? 1.0f / area : 0);
 	}
 
 private:

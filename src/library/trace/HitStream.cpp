@@ -21,9 +21,8 @@ HitStream::HitStream(size_t size)
 	mMaterialID.reserve(mSize);
 	mEntityID.reserve(mSize);
 	mPrimitiveID.reserve(mSize);
-	for (int i = 0; i < 2; ++i) {
-		mUV[i].reserve(mSize);
-	}
+	for (int i = 0; i < 3; ++i)
+		mParameter[i].reserve(mSize);
 	mFlags.reserve(mSize);
 }
 
@@ -42,8 +41,8 @@ void HitStream::add(const HitEntry& entry)
 	mMaterialID.emplace_back(entry.MaterialID);
 	mEntityID.emplace_back(entry.EntityID);
 	mPrimitiveID.emplace_back(entry.PrimitiveID);
-	mUV[0].emplace_back(entry.UV[0]);
-	mUV[1].emplace_back(entry.UV[1]);
+	for (int i = 0; i < 3; ++i)
+		mParameter[i].emplace_back(entry.Parameter[i]);
 	mFlags.emplace_back(entry.Flags);
 }
 
@@ -58,8 +57,8 @@ HitEntry HitStream::get(size_t index) const
 	entry.MaterialID   = mMaterialID[index];
 	entry.EntityID	 = mEntityID[index];
 	entry.PrimitiveID  = mPrimitiveID[index];
-	entry.UV[0]		   = mUV[0][index];
-	entry.UV[1]		   = mUV[1][index];
+	for (int i = 0; i < 3; ++i)
+		entry.Parameter[i] = mParameter[i][index];
 
 	return entry;
 }
@@ -79,8 +78,8 @@ void HitStream::sort()
 		std::swap(mMaterialID[a], mMaterialID[b]);
 		std::swap(mEntityID[a], mEntityID[b]);
 		std::swap(mPrimitiveID[a], mPrimitiveID[b]);
-		std::swap(mUV[0][a], mUV[0][b]);
-		std::swap(mUV[1][a], mUV[1][b]);
+		for (int i = 0; i < 3; ++i)
+			std::swap(mParameter[i][a], mParameter[i][b]);
 		std::swap(mFlags[a], mFlags[b]);
 	};
 
@@ -126,8 +125,8 @@ void HitStream::reset()
 	mMaterialID.clear();
 	mEntityID.clear();
 	mPrimitiveID.clear();
-	mUV[0].clear();
-	mUV[1].clear();
+	for (int i = 0; i < 3; ++i)
+		mParameter[i].clear();
 	mFlags.clear();
 
 	mCurrentPos = 0;

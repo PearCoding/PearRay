@@ -123,18 +123,21 @@ public:
 		}
 	}
 
-	Vector2f pickRandomPoint(const Vector3f&, const Vector2f& rnd,
-							 uint32& /*faceID*/, float& pdf) const override
+	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
+									  uint32& /*faceID*/, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
 		pdf = 1 / surfaceArea(0);
-		return rnd;
+		return Vector3f(rnd(0), rnd(1), 0);
 	}
 
-	void provideGeometryPoint(const Vector3f& view, uint32 /*faceID*/, float u, float v,
+	void provideGeometryPoint(const Vector3f& view, uint32 /*faceID*/, const Vector3f& parameter,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
+
+		float u = parameter[0];
+		float v = parameter[1];
 
 		float width = lerpWidth(u);
 		Vector3f ny = mCurve.evalDerivative(u).cross(invTransform().linear() * view).normalized();
@@ -252,9 +255,9 @@ private:
 						  ? 0.5f + dist / hitwidth
 						  : 0.5f - dist / hitwidth;
 
-			out.UV[0]		= u;
-			out.UV[1]		= v;
-			out.HitDistance = p(2);
+			out.Parameter[0] = u;
+			out.Parameter[1] = v;
+			out.HitDistance  = p(2);
 
 			return true;
 		}

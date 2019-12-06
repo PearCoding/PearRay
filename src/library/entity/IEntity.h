@@ -32,11 +32,11 @@ public:
 	virtual void checkCollision(const Ray& in, SingleCollisionOutput& out) const  = 0;
 	virtual void checkCollision(const RayPackage& in, CollisionOutput& out) const = 0;
 
-	virtual Vector2f pickRandomPoint(const Vector3f& view, const Vector2f& rnd,
-									 uint32& faceID, float& pdf) const = 0;
+	virtual Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
+											  uint32& faceID, float& pdf) const = 0;
 	virtual void provideGeometryPoint(const Vector3f& view,
-									  uint32 faceID, float u, float v,
-									  GeometryPoint& pt) const		   = 0;
+									  uint32 faceID, const Vector3f& parameter,
+									  GeometryPoint& pt) const					= 0;
 
 	// IObject
 	virtual void beforeSceneBuild() override;

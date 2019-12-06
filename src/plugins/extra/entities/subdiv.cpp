@@ -111,19 +111,19 @@ public:
 							 : 0;
 	}
 
-	Vector2f pickRandomPoint(const Vector3f& /*view*/, const Vector2f& rnd,
-							 uint32& faceID, float& pdf) const override
+	Vector3f pickRandomParameterPoint(const Vector3f& /*view*/, const Vector2f& rnd,
+									  uint32& faceID, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
-		return mMesh.pickRandomPoint(rnd, faceID, pdf);
+		return mMesh.pickRandomParameterPoint(rnd, faceID, pdf);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32 faceID, float u, float v,
+	void provideGeometryPoint(const Vector3f&, uint32 faceID, const Vector3f& parameter,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		mMesh.provideGeometryPoint(faceID, u, v, pt);
+		mMesh.provideGeometryPoint(faceID, parameter, pt);
 
 		// Global
 		pt.P  = transform() * pt.P;
@@ -385,7 +385,7 @@ public:
 		Far::TopologyLevel const& refLevel = refiner->GetLevel(refiner->GetMaxLevel());
 
 		//int coarseElems = refiner->GetLevel(0).GetNumFVarValues();
-		int refElems	= refLevel.GetNumFVarValues();
+		int refElems = refLevel.GetNumFVarValues();
 
 		std::vector<float> slotsAsFloat(originalMesh->faceCount());
 		uint32 max = 0;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "MatrixFormat.h"
 #include <list>
 #include <streambuf>
 
@@ -72,36 +72,6 @@ private:
 	std::ostream mStream;
 };
 } // namespace PR
-
-template <int N>
-inline std::ostream& operator<<(std::ostream& s, const Eigen::Matrix<float, N, 1>& m)
-{
-	static const Eigen::IOFormat sEigenFormatRowV(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "[", "]");
-	s << m.format(sEigenFormatRowV);
-	return s;
-}
-
-template <int N>
-inline std::ostream& operator<<(std::ostream& s, const Eigen::Matrix<float, 1, N>& m)
-{
-	static const Eigen::IOFormat sEigenFormatColV(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "{", "}", "", "");
-	s << m.format(sEigenFormatColV);
-	return s;
-}
-
-template <int R, int C>
-inline std::ostream& operator<<(std::ostream& s, const Eigen::Matrix<float, R, C>& m)
-{
-	static const Eigen::IOFormat sEigenFormatMat(Eigen::StreamPrecision, 0, ", ", ", ", "{", "}", "[", "]");
-	s << m.format(sEigenFormatMat);
-	return s;
-}
-
-inline std::ostream& operator<<(std::ostream& s, const Eigen::Quaternionf& m)
-{
-	s << m.coeffs();
-	return s;
-}
 
 #define PR_LOGGER (PR::Logger::instance())
 #define PR_LOG(l) (PR::Logger::log((l)))
