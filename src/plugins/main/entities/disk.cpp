@@ -1,6 +1,5 @@
-#include "geometry/Quadric.h"
+#include "geometry/Disk.h"
 #include "Environment.h"
-#include "Logger.h"
 #include "Profiler.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
@@ -11,30 +10,27 @@
 #include "math/Tangent.h"
 #include "registry/Registry.h"
 
-#include <array>
-
 namespace PR {
 
-class QuadricEntity : public IEntity {
+class DiskEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	QuadricEntity(uint32 id, const std::string& name,
-				  const std::array<float, 10>& parameters,
-				  const Vector3f& minB, const Vector3f& maxB,
-				  int32 matID, int32 lightID)
+	DiskEntity(uint32 id, const std::string& name,
+			   float radius,
+			   int32 matID, int32 lightID)
 		: IEntity(id, name)
-		, mBoundingBox(minB, maxB)
-		, mParameters(parameters)
+		, mDisk(radius)
 		, mMaterialID(matID)
 		, mLightID(lightID)
+		, mPDF_Cache(0.0f)
 	{
 	}
-	virtual ~QuadricEntity() {}
+	virtual ~DiskEntity() {}
 
 	std::string type() const override
 	{
-		return "quadric";
+		return "disk";
 	}
 
 	bool isLight() const override
@@ -42,25 +38,27 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 /*id*/) const override
+	float surfaceArea(uint32 id) const override
 	{
-		// TODO
-		return 0;
+		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+			return mDisk.surfaceArea();
+		else
+			return 0;
 	}
 
 	bool isCollidable() const override
 	{
-		return mBoundingBox.isValid();
+		return mDisk.isValid();
 	}
 
 	float collisionCost() const override
 	{
-		return 3;
+		return 1;
 	}
 
 	BoundingBox localBoundingBox() const override
 	{
-		return mBoundingBox;
+		return mDisk.toBoundingBox();
 	}
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
@@ -69,7 +67,7 @@ public:
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		// TODO
+		mDisk.intersects(in_local, out);
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
 													   transform().matrix(), in);
@@ -84,11 +82,7 @@ public:
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		float t = std::numeric_limits<float>::infinity();
-		if (Quadric::intersect(mParameters, in_local, t)) {
-			out.Parameter = in_local.t(t);
-			out.HitDistance = t;
-		}
+		mDisk.intersects(in_local, out);
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
 													   transform().matrix(), in);
@@ -100,8 +94,7 @@ public:
 	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
 									  uint32& faceID, float& pdf) const override
 	{
-		// TODO
-		pdf	= 1.0f;
+		pdf	= mPDF_Cache;
 		faceID = 0;
 		return Vector3f(rnd(0), rnd(1), 0);
 	}
@@ -111,8 +104,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		pt.P = transform() * parameter;
-		pt.N = normalMatrix() * Quadric::normal(mParameters, parameter);
+		float u = parameter[0];
+		float v = parameter[1];
+
+		pt.P = transform() * mDisk.surfacePoint(u, v);
+		pt.N = normalMatrix() * mDisk.normal();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
@@ -120,38 +116,37 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.UVW = parameter.cwiseAbs();
-		if (pt.UVW(2) < PR_EPSILON) {
-			pt.UVW(0) /= pt.UVW(2);
-			pt.UVW(1) /= pt.UVW(2);
-			pt.UVW(2) = 0;
-		}
+		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;
 	}
 
-private:
-	BoundingBox mBoundingBox;
-	std::array<float, 10> mParameters;
+	void beforeSceneBuild() override
+	{
+		IEntity::beforeSceneBuild();
 
+		const float area = surfaceArea(0);
+		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
+	}
+
+private:
+	Disk mDisk;
 	int32 mMaterialID;
 	int32 mLightID;
+
+	float mPDF_Cache;
 };
 
-class QuadricEntityFactory : public IEntityFactory {
+class DiskEntityFactory : public IEntityFactory {
 public:
 	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
 	{
 		const auto& reg = env.registry();
 
-		std::string name		  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
-														  "__unnamed__");
-		std::vector<float> params = reg.getForObject<std::vector<float>>(RG_ENTITY, uuid, "parameters", std::vector<float>());
-		Vector3f minB			  = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "min",
-												   Vector3f(-1, -1, -1));
-		Vector3f maxB			  = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "max",
-												   Vector3f(1, 1, 1));
+		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
+														 "__unnamed__");
+		float radius	 = reg.getForObject<float>(RG_ENTITY, uuid, "radius", 1);
 
 		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
 		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
@@ -166,24 +161,12 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		std::array<float, 10> parameters;
-		if (params.size() == 3)
-			parameters = { params[0], params[1], params[2], 0, 0, 0, 0, 0, 0, 0 };
-		else if (params.size() == 4)
-			parameters = { params[0], params[1], params[2], 0, 0, 0, 0, 0, 0, params[3] };
-		else if (params.size() == 10)
-			parameters = { params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9] };
-		else {
-			PR_LOG(L_ERROR) << "Invalid quadric parameters given" << std::endl;
-			return nullptr;
-		}
-
-		return std::make_shared<QuadricEntity>(id, name, parameters, minB, maxB, matID, emsID);
+		return std::make_shared<DiskEntity>(id, name, radius, matID, emsID);
 	}
 
 	const std::vector<std::string>& getNames() const
 	{
-		static std::vector<std::string> names({ "quadric" });
+		static std::vector<std::string> names({ "disk" });
 		return names;
 	}
 
@@ -194,4 +177,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::QuadricEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::DiskEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

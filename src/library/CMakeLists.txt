@@ -44,6 +44,8 @@ SET(PR_Src
   emission/IEmission.h
   geometry/BoundingBox.cpp
   geometry/BoundingBox.h
+  geometry/Disk.cpp
+  geometry/Disk.h
   geometry/Face.h
   geometry/GeometryPoint.h
   geometry/Plane.cpp

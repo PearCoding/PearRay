@@ -376,12 +376,12 @@ static void classify(const std::vector<Event>& events, const std::vector<Primiti
 	}
 }
 
-inline static kdNodeBuilder* createLeafNode(void* observer,
+inline static kdNodeBuilder* createLeafNode(size_t& nodeCount, void* observer,
 											kdTreeBuilder::AddedCallback addedCallback,
 											std::vector<Primitive*>& objs,
 											const BoundingBox& V)
 {
-	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(-1, V);
+	kdLeafNodeBuilder* leaf = new kdLeafNodeBuilder(nodeCount++, V);
 	for (auto obj : objs) {
 		leaf->objects.push_back(obj->data);
 		if (addedCallback)
@@ -390,7 +390,7 @@ inline static kdNodeBuilder* createLeafNode(void* observer,
 	return leaf;
 }
 
-static kdNodeBuilder* buildNode(void* observer,
+static kdNodeBuilder* buildNode(size_t& nodeCount, void* observer,
 								kdTreeBuilder::CostCallback costCallback,
 								kdTreeBuilder::AddedCallback addedCallback,
 								std::vector<Event>& events, std::vector<Primitive*>& objs,
@@ -399,7 +399,7 @@ static kdNodeBuilder* buildNode(void* observer,
 	if (objs.empty() || V.surfaceArea() <= PR_EPSILON || depth > maxDepth) {
 		// Empty leaf or very tiny volume or max depth.
 		// Just give up and make a leaf.
-		return createLeafNode(observer, addedCallback, objs, V);
+		return createLeafNode(nodeCount, observer, addedCallback, objs, V);
 	}
 
 	float costIntersection;
@@ -421,9 +421,8 @@ static kdNodeBuilder* buildNode(void* observer,
 
 	findSplit(costIntersection, events, objs, V, dim, v, c, side, vl, vr);
 
-	if (c > objs.size() * costIntersection) {
-		return createLeafNode(observer, addedCallback, objs, V);
-	}
+	if (c > objs.size() * costIntersection)
+		return createLeafNode(nodeCount, observer, addedCallback, objs, V);
 
 	classify(events, objs, dim, v, side);
 
@@ -472,9 +471,11 @@ static kdNodeBuilder* buildNode(void* observer,
 	std::vector<Event>().swap(events);
 	std::vector<Primitive*>().swap(objs);
 
-	return new kdInnerNodeBuilder(-1, dim, v,
-								  buildNode(observer, costCallback, addedCallback, leftEvents, left, vl, depth + 1, maxDepth, elementWise),
-								  buildNode(observer, costCallback, addedCallback, rightEvents, right, vr, depth + 1, maxDepth, elementWise),
+	return new kdInnerNodeBuilder(nodeCount++, dim, v,
+								  buildNode(nodeCount, observer, costCallback, addedCallback,
+											leftEvents, left, vl, depth + 1, maxDepth, elementWise),
+								  buildNode(nodeCount, observer, costCallback, addedCallback,
+											rightEvents, right, vr, depth + 1, maxDepth, elementWise),
 								  V);
 }
 
@@ -491,9 +492,10 @@ void kdTreeBuilder::build(size_t size)
 		auto leaf = new kdLeafNodeBuilder(mNodeCount, mGetBoundingBox(mObserver, e));
 		leaf->objects.push_back(e);
 
-		mMaxDepth = 1;
-		mDepth	= 1;
-		mRoot	 = leaf;
+		mMaxDepth  = 1;
+		mDepth	 = 1;
+		mRoot	  = leaf;
+		mNodeCount = 1;
 		return;
 	}
 
@@ -520,7 +522,7 @@ void kdTreeBuilder::build(size_t size)
 		generateEvents(obj, V, events);
 	std::sort(events.begin(), events.end());
 
-	mRoot = buildNode(mObserver, mCostCallback, mAddedCallback,
+	mRoot = buildNode(mNodeCount, mObserver, mCostCallback, mAddedCallback,
 					  events, primitives, V, 0,
 					  mMaxDepth, mElementWise);
 
