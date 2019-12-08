@@ -4,12 +4,14 @@ namespace PR {
 BufferSerializer::BufferSerializer(uint32 version)
 	: Serializer(false, version)
 	, mBuffer(nullptr)
+	, mIt(0)
 {
 }
 
 BufferSerializer::BufferSerializer(std::vector<uint8>* buffer, bool readmode, uint32 version)
 	: Serializer(readmode, version)
 	, mBuffer(buffer)
+	, mIt(0)
 {
 	open(buffer, readmode);
 }

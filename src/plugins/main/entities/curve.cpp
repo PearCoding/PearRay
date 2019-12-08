@@ -28,6 +28,7 @@ public:
 		, mMaterialID(materialID)
 		, mCurve(curve)
 		, mWidth(width)
+		, mApproxSurfaceArea(0.0f)
 	{
 	}
 
