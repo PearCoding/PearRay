@@ -147,10 +147,9 @@ using Vector4fv = Vector4t<vfloat>;
 using Vector4iv = Vector4t<vint32>;
 
 /* Utility functions */
-inline float blend(float trueCase, float falseCase, bool mask) {
-	return mask ? trueCase : falseCase;
-}
+inline float blend(float trueCase, float falseCase, bool mask) { return mask ? trueCase : falseCase; }
 inline vfloat blend(vfloat trueCase, vfloat falseCase, bfloat mask) { return simdpp::blend(trueCase, falseCase, mask); }
+inline vuint32 blend(vuint32 trueCase, vuint32 falseCase, buint32 mask) { return simdpp::blend(trueCase, falseCase, mask); }
 inline vint32 blend(vint32 trueCase, vint32 falseCase, bint32 mask) { return simdpp::blend(trueCase, falseCase, mask); }
 
 using std::abs;

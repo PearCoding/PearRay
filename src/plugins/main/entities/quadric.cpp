@@ -67,9 +67,20 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
+		auto in_local	 = in.transformAffine(invTransform().matrix(), invTransform().linear());
+		auto range		  = localBoundingBox().intersectsRange(in_local);
+		bfloat validRange = range.Entry < 0;
+		range.Entry		  = blend(vfloat(0), range.Entry, validRange);
 
-		// TODO
+		vfloat t;
+		bfloat valid = Quadric::intersect<vfloat>(mParameters,
+												  in_local.Origin + range.Entry * in_local.Direction,
+												  in_local.Direction, t);
+		valid		 = b_and(b_and(valid, t <= range.Exit), range.Successful);
+		t += range.Entry;
+
+		out.Parameter   = in_local.t(t);
+		out.HitDistance = blend(t, vfloat(std::numeric_limits<float>::infinity()), valid);
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
 													   transform().matrix(), in);
@@ -84,10 +95,21 @@ public:
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		float t = std::numeric_limits<float>::infinity();
-		if (Quadric::intersect(mParameters, in_local, t)) {
-			out.Parameter = in_local.t(t);
-			out.HitDistance = t;
+		out.HitDistance = std::numeric_limits<float>::infinity();
+		auto range		= localBoundingBox().intersectsRange(in_local);
+		if (range.Entry < 0)
+			range.Entry = 0;
+
+		float t;
+		if (range.Successful
+			&& Quadric::intersect<float>(mParameters,
+										 in_local.Origin + range.Entry * in_local.Direction,
+										 in_local.Direction, t)) {
+			t += range.Entry;
+			if (t <= range.Exit) {
+				out.Parameter   = in_local.t(t);
+				out.HitDistance = t;
+			}
 		}
 
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,

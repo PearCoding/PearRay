@@ -1,6 +1,5 @@
 #pragma once
 
-#include "BoundingBox.h"
 #include "math/SIMD.h"
 
 #include <Eigen/Eigenvalues>
@@ -8,7 +7,7 @@
 
 namespace PR {
 /* Unbounded quadric
-* Ax^2 + By^2 + Cz^2 +2Dxy + 2Exz + 2Fyz + 2Gx + 2Hy + 2Iz + J = 0
+* Ax^2 + By^2 + Cz^2 +Dxy + Exz + Fyz + Gx + Hy + Iz + J = 0
 */
 class PR_LIB Quadric {
 	PR_CLASS_NON_CONSTRUCTABLE(Quadric);
@@ -28,10 +27,12 @@ public:
 	template <typename T>
 	inline static typename VectorTemplate<T>::bool_t intersect(
 		const ParameterArray& parameters,
-		const RayPackageBase<T>& in,
+		const Vector3t<T>& origin,
+		const Vector3t<T>& direction,
 		T& t)
 	{
-		constexpr T INT_EPS = T(1e-6f);
+		typedef typename VectorTemplate<T>::bool_t BOOL;
+		static const T INT_EPS = T(1e-6f);
 
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -44,23 +45,24 @@ public:
 		const float I = parameters[8];
 		const float J = parameters[9];
 
-		T a = A * in.Direction[0] * in.Direction[0] + B * in.Direction[1] * in.Direction[1] + C * in.Direction[2] * in.Direction[2]
-			  + D * in.Direction[0] * in.Direction[1] + E * in.Direction[0] * in.Direction[2] + F * in.Direction[1] * in.Direction[2];
-		T b = 2 * A * in.Origin[0] * in.Direction[0] + 2 * B * in.Origin[1] * in.Direction[1] + 2 * C * in.Origin[2] * in.Direction[2]
-			  + D * (in.Origin[0] * in.Direction[1] + in.Origin[1] * in.Direction[0]) + E * (in.Origin[0] * in.Direction[2] + in.Origin[2] * in.Direction[0]) + F * (in.Origin[1] * in.Direction[2] + in.Origin[2] * in.Direction[1])
-			  + G * in.Direction[0] + H * in.Direction[1] + I * in.Direction[2];
-		T c = A * in.Origin[0] * in.Origin[0] + B * in.Origin[1] * in.Origin[1] + C * in.Origin[2] * in.Origin[2]
-			  + D * in.Origin[0] * in.Origin[1] + E * in.Origin[0] * in.Origin[2] + F * in.Origin[1] * in.Origin[2]
-			  + G * in.Origin[0] + H * in.Origin[1] + I * in.Origin[2] + J;
+		T a = A * direction[0] * direction[0] + B * direction[1] * direction[1] + C * direction[2] * direction[2]
+			  + D * direction[0] * direction[1] + E * direction[0] * direction[2] + F * direction[1] * direction[2];
+		T b = 2 * A * origin[0] * direction[0] + 2 * B * origin[1] * direction[1] + 2 * C * origin[2] * direction[2]
+			  + D * (origin[0] * direction[1] + origin[1] * direction[0]) + E * (origin[0] * direction[2] + origin[2] * direction[0]) + F * (origin[1] * direction[2] + origin[2] * direction[1])
+			  + G * direction[0] + H * direction[1] + I * direction[2];
+		T c = A * origin[0] * origin[0] + B * origin[1] * origin[1] + C * origin[2] * origin[2]
+			  + D * origin[0] * origin[1] + E * origin[0] * origin[2] + F * origin[1] * origin[2]
+			  + G * origin[0] + H * origin[1] + I * origin[2] + J;
 
-		auto linear  = a == 0;
+		BOOL linear  = abs(a) < PR_EPSILON;
 		T lin		 = -c / b;
 		T discrim	= b * b - 4 * a * c;
-		auto invalid = discrim < 0;
+		BOOL invalid = discrim < 0;
 		discrim		 = sqrt(discrim);
 		T qu1		 = (-b - discrim) / (2 * a);
 		T qu2		 = (-b + discrim) / (2 * a);
-		T qu		 = blend(qu2, qu1, qu1 < INT_EPS);
+		BOOL behind  = qu1 < INT_EPS;
+		T qu		 = blend(qu2, qu1, behind);
 
 		t = blend(lin, blend(T(std::numeric_limits<float>::infinity()), qu, invalid), linear);
 

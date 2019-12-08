@@ -34,11 +34,11 @@ PR_TEST("Normal sphere")
 PR_TEST("Intersection sphere")
 {
 	float t;
-	bool b = Quadric::intersect(SPHERE, Ray(Vector3f(0, 0, -2), Vector3f(0, 0, 1)), t);
+	bool b = Quadric::intersect(SPHERE, Vector3f(0, 0, -2), Vector3f(0, 0, 1), t);
 	PR_CHECK_TRUE(b);
 	PR_CHECK_NEARLY_EQ(t, 1);
 
-	b = Quadric::intersect(SPHERE, Ray(Vector3f(0, 0, -2), Vector3f(0, 1, 0)), t);
+	b = Quadric::intersect(SPHERE, Vector3f(0, 0, -2), Vector3f(0, 1, 0), t);
 	PR_CHECK_FALSE(b);
 }
 
