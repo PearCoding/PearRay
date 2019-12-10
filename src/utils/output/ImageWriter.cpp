@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "SpectralFile.h"
 #include "Version.h"
+#include "buffer/OutputBuffer.h"
 #include "renderer/RenderContext.h"
 
 #include <OpenImageIO/imageio.h>
@@ -122,19 +123,21 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		return false;
 
 	// Calculate maximums for some mapper techniques
-	float invMax3d[OutputBuffer::V_3D_COUNT];
-	std::fill_n(invMax3d, OutputBuffer::V_3D_COUNT, 0.0f);
-	float invMax1d[OutputBuffer::V_1D_COUNT];
-	std::fill_n(invMax1d, OutputBuffer::V_1D_COUNT, 0.0f);
-	float invMaxCounter[OutputBuffer::V_COUNTER_COUNT];
-	std::fill_n(invMax1d, OutputBuffer::V_COUNTER_COUNT, 0.0f);
+	float invMax3d[AOV_3D_COUNT];
+	std::fill_n(invMax3d, AOV_3D_COUNT, 0.0f);
+	float invMax1d[AOV_1D_COUNT];
+	std::fill_n(invMax1d, AOV_1D_COUNT, 0.0f);
+	float invMaxCounter[AOV_COUNTER_COUNT];
+	std::fill_n(invMax1d, AOV_COUNTER_COUNT, 0.0f);
+
+	const OutputBufferData& data = mRenderer->output()->data();
 
 	for (const IM_ChannelSetting3D& sett : ch3d) {
 		std::shared_ptr<FrameBufferFloat> channel;
 		if (sett.LPE < 0)
-			channel = mRenderer->output()->getChannel(sett.Variable);
+			channel = data.getInternalChannel_3D(sett.Variable);
 		else
-			channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+			channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
@@ -157,9 +160,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	for (const IM_ChannelSetting1D& sett : ch1d) {
 		std::shared_ptr<FrameBufferFloat> channel;
 		if (sett.LPE < 0)
-			channel = mRenderer->output()->getChannel(sett.Variable);
+			channel = data.getInternalChannel_1D(sett.Variable);
 		else
-			channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+			channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
@@ -178,9 +181,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	for (const IM_ChannelSettingCounter& sett : chcounter) {
 		std::shared_ptr<FrameBufferUInt32> channel;
 		if (sett.LPE < 0)
-			channel = mRenderer->output()->getChannel(sett.Variable);
+			channel = data.getInternalChannel_Counter(sett.Variable);
 		else
-			channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+			channel = data.getLPEChannel_Counter(sett.Variable, sett.LPE);
 
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
@@ -188,7 +191,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		for (uint32 y = 0; y < rh; ++y) {
 			for (uint32 x = 0; x < rw; ++x) {
 				invMaxCounter[sett.Variable] = std::max<float>(invMaxCounter[sett.Variable],
-																static_cast<float>(channel->getFragment(x, y, 0)));
+															   static_cast<float>(channel->getFragment(x, y, 0)));
 			}
 		}
 
@@ -216,9 +219,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
 				std::shared_ptr<FrameBufferFloat> channel;
 				if (sett.LPE < 0)
-					channel = mRenderer->output()->getSpectralChannel();
+					channel = data.getInternalChannel_Spectral();
 				else
-					channel = mRenderer->output()->getSpectralChannel(sett.LPE);
+					channel = data.getLPEChannel_Spectral(sett.LPE);
 
 				const float* ptr = channel->ptr();
 				toneMapper.setColorMode(sett.TCM);
@@ -234,9 +237,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 			for (const IM_ChannelSetting3D& sett : ch3d) {
 				std::shared_ptr<FrameBufferFloat> channel;
 				if (sett.LPE < 0)
-					channel = mRenderer->output()->getChannel(sett.Variable);
+					channel = data.getInternalChannel_3D(sett.Variable);
 				else
-					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+					channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
 				if (channel) {
 					Vector3f a(channel->getFragment(x, y, 0),
@@ -294,9 +297,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 			for (const IM_ChannelSetting1D& sett : ch1d) {
 				std::shared_ptr<FrameBufferFloat> channel;
 				if (sett.LPE < 0)
-					channel = mRenderer->output()->getChannel(sett.Variable);
+					channel = data.getInternalChannel_1D(sett.Variable);
 				else
-					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+					channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
 				if (channel) {
 					float r = channel->getFragment(x, y, 0);
@@ -332,9 +335,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 			for (const IM_ChannelSettingCounter& sett : chcounter) {
 				std::shared_ptr<FrameBufferUInt32> channel;
 				if (sett.LPE < 0)
-					channel = mRenderer->output()->getChannel(sett.Variable);
+					channel = data.getInternalChannel_Counter(sett.Variable);
 				else
-					channel = mRenderer->output()->getChannel(sett.Variable, sett.LPE);
+					channel = data.getLPEChannel_Counter(sett.Variable, sett.LPE);
 
 				if (channel) {
 					float r = static_cast<float>(channel->getFragment(x, y, 0));

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "buffer/AOV.h"
 #include "buffer/FrameBuffer.h"
-#include "buffer/OutputBuffer.h"
 #include "spectral/ToneMapper.h"
 #include <string>
 #include <vector>
@@ -9,7 +9,7 @@
 namespace PR {
 struct IM_ChannelSetting1D {
 	std::string Name;
-	OutputBuffer::Variable1D Variable;
+	AOV1D Variable;
 	ToneMapperMode TMM; //TODO: Not implemented
 	int LPE = -1;
 	std::string LPE_S;
@@ -17,7 +17,7 @@ struct IM_ChannelSetting1D {
 
 struct IM_ChannelSettingCounter {
 	std::string Name;
-	OutputBuffer::VariableCounter Variable;
+	AOVCounter Variable;
 	ToneMapperMode TMM; //TODO: Not implemented
 	int LPE = -1;
 	std::string LPE_S;
@@ -25,7 +25,7 @@ struct IM_ChannelSettingCounter {
 
 struct IM_ChannelSetting3D {
 	std::string Name[3];
-	OutputBuffer::Variable3D Variable;
+	AOV3D Variable;
 	unsigned char Elements; //TODO: Not implemented
 	ToneMapperMode TMM;		//TODO: Not implemented
 	int LPE = -1;
@@ -42,6 +42,7 @@ struct IM_ChannelSettingSpec {
 	std::string LPE_S;
 };
 
+class RenderContext;
 class PR_LIB_UTILS ImageWriter {
 	PR_CLASS_NON_COPYABLE(ImageWriter);
 

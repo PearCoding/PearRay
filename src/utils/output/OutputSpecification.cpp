@@ -1,5 +1,6 @@
 #include "OutputSpecification.h"
 #include "Logger.h"
+#include "buffer/OutputBuffer.h"
 #include "renderer/RenderContext.h"
 
 #include <boost/filesystem.hpp>
@@ -27,8 +28,8 @@ OutputSpecification::~OutputSpecification()
 void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 {
 	if (mInit && !mWorkingDir.empty()) {
-		auto workDir   = boost::filesystem::canonical(mWorkingDir);
-		auto f = workDir / LOCK_FILE_NAME;
+		auto workDir = boost::filesystem::canonical(mWorkingDir);
+		auto f		 = workDir / LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
 	}
@@ -58,7 +59,7 @@ void OutputSpecification::deinit()
 		return;
 
 	if (!mWorkingDir.empty()) {
-		auto workDir  = boost::filesystem::canonical(mWorkingDir);
+		auto workDir = boost::filesystem::canonical(mWorkingDir);
 		auto f		 = workDir / LOCK_FILE_NAME;
 		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
 			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f;
@@ -75,129 +76,130 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	std::shared_ptr<OutputBuffer> output = renderer->output();
+	OutputBufferData& data = renderer->output()->data();
 
 	for (File& file : mFiles) {
 		for (IM_ChannelSetting3D& cs3d : file.Settings3D) {
-			if (!cs3d.LPE_S.empty() || !output->getChannel(cs3d.Variable)) {
-				auto ptr = std::make_shared<FrameBufferFloat>(
-					3, renderer->width(), renderer->height(), 0.0f);
-
+			if (!cs3d.LPE_S.empty() || !data.hasInternalChannel_3D(cs3d.Variable)) {
 				if (cs3d.LPE_S.empty())
-					output->registerChannel(cs3d.Variable, ptr);
-				else
-					cs3d.LPE = (int)output->registerLPEChannel(cs3d.Variable, LightPathExpression(cs3d.LPE_S), ptr);
+					data.requestInternalChannel_3D(cs3d.Variable);
+				else {
+					size_t id;
+					data.requestLPEChannel_3D(cs3d.Variable, LightPathExpression(cs3d.LPE_S), id);
+					cs3d.LPE = (int)id;
+				}
 			}
 		}
 
 		for (IM_ChannelSetting1D& cs1d : file.Settings1D) {
-			if (!cs1d.LPE_S.empty() || !output->getChannel(cs1d.Variable)) {
-				auto ptr = std::make_shared<FrameBufferFloat>(
-					1, renderer->width(), renderer->height(), 0.0f);
-
+			if (!cs1d.LPE_S.empty() || !data.hasInternalChannel_1D(cs1d.Variable)) {
 				if (cs1d.LPE_S.empty())
-					output->registerChannel(cs1d.Variable, ptr);
-				else
-					cs1d.LPE = (int)output->registerLPEChannel(cs1d.Variable, LightPathExpression(cs1d.LPE_S), ptr);
+					data.requestInternalChannel_1D(cs1d.Variable);
+				else {
+					size_t id;
+					data.requestLPEChannel_1D(cs1d.Variable, LightPathExpression(cs1d.LPE_S), id);
+					cs1d.LPE = (int)id;
+				}
 			}
 		}
 
 		for (IM_ChannelSettingCounter& cs : file.SettingsCounter) {
-			if (!cs.LPE_S.empty() || !output->getChannel(cs.Variable)) {
-				auto ptr = std::make_shared<FrameBufferUInt32>(
-					1, renderer->width(), renderer->height(), 0);
-
+			if (!cs.LPE_S.empty() || !data.hasInternalChannel_Counter(cs.Variable)) {
 				if (cs.LPE_S.empty())
-					output->registerChannel(cs.Variable, ptr);
-				else
-					cs.LPE = (int)output->registerLPEChannel(cs.Variable, LightPathExpression(cs.LPE_S), ptr);
+					data.requestInternalChannel_Counter(cs.Variable);
+				else {
+					size_t id;
+					data.requestLPEChannel_Counter(cs.Variable, LightPathExpression(cs.LPE_S), id);
+					cs.LPE = (int)id;
+				}
 			}
 		}
 
 		for (IM_ChannelSettingSpec& ss : file.SettingsSpectral) {
-			auto ptr = std::make_shared<FrameBufferFloat>(
-				output->getSpectralChannel()->channels(), renderer->width(), renderer->height(), 0.0f);
-
-			if (!ss.LPE_S.empty())
-				ss.LPE = (int)output->registerLPEChannel(LightPathExpression(ss.LPE_S), ptr);
+			if (!ss.LPE_S.empty()) {
+				size_t id;
+				data.requestLPEChannel_Spectral(LightPathExpression(ss.LPE_S), id);
+				ss.LPE = (int)id;
+			}
 		}
 	}
 }
 
 static struct {
 	const char* Str;
-	OutputBuffer::Variable1D Var;
+	AOV1D Var;
 } _s_var1d[] = {
-	{ "entity_id", OutputBuffer::V_EntityID },
-	{ "entity", OutputBuffer::V_EntityID },
-	{ "id", OutputBuffer::V_EntityID },
-	{ "material_id", OutputBuffer::V_MaterialID },
-	{ "material", OutputBuffer::V_MaterialID },
-	{ "mat", OutputBuffer::V_MaterialID },
-	{ "emission_id", OutputBuffer::V_EmissionID },
-	{ "emission", OutputBuffer::V_EmissionID },
-	{ "displace_id", OutputBuffer::V_DisplaceID },
-	{ "displace", OutputBuffer::V_DisplaceID },
-	{ "depth", OutputBuffer::V_Depth },
-	{ "d", OutputBuffer::V_Depth },
-	{ "time", OutputBuffer::V_Time },
-	{ "t", OutputBuffer::V_Time },
-	{ nullptr, OutputBuffer::V_1D_COUNT },
+	{ "entity_id", AOV_EntityID },
+	{ "entity", AOV_EntityID },
+	{ "id", AOV_EntityID },
+	{ "material_id", AOV_MaterialID },
+	{ "material", AOV_MaterialID },
+	{ "mat", AOV_MaterialID },
+	{ "emission_id", AOV_EmissionID },
+	{ "emission", AOV_EmissionID },
+	{ "displace_id", AOV_DisplaceID },
+	{ "displace", AOV_DisplaceID },
+	{ "depth", AOV_Depth },
+	{ "d", AOV_Depth },
+	{ "time", AOV_Time },
+	{ "t", AOV_Time },
+	{ nullptr, AOV_1D_COUNT },
 };
 
 static struct {
 	const char* Str;
-	OutputBuffer::VariableCounter Var;
+	AOVCounter Var;
 } _s_varC[] = {
-	{ "samples", OutputBuffer::V_Samples },
-	{ "s", OutputBuffer::V_Samples },
-	{ "feedback", OutputBuffer::V_Feedback },
-	{ "f", OutputBuffer::V_Feedback },
-	{ "error", OutputBuffer::V_Feedback },
-	{ nullptr, OutputBuffer::V_COUNTER_COUNT },
+	{ "sample_count", AOV_SampleCount },
+	{ "samples", AOV_SampleCount },
+	{ "s", AOV_SampleCount },
+	{ "feedback", AOV_Feedback },
+	{ "f", AOV_Feedback },
+	{ "error", AOV_Feedback },
+	{ nullptr, AOV_COUNTER_COUNT },
 };
 
 static struct {
 	const char* Str;
-	OutputBuffer::Variable3D Var;
+	AOV3D Var;
 } _s_var3d[] = {
-	{ "position", OutputBuffer::V_Position },
-	{ "pos", OutputBuffer::V_Position },
-	{ "p", OutputBuffer::V_Position },
-	{ "normal", OutputBuffer::V_Normal },
-	{ "norm", OutputBuffer::V_Normal },
-	{ "n", OutputBuffer::V_Normal },
-	{ "normal_geometric", OutputBuffer::V_NormalG },
-	{ "ng", OutputBuffer::V_NormalG },
-	{ "tangent", OutputBuffer::V_Tangent },
-	{ "tan", OutputBuffer::V_Tangent },
-	{ "nx", OutputBuffer::V_Tangent },
-	{ "bitangent", OutputBuffer::V_Bitangent },
-	{ "binormal", OutputBuffer::V_Bitangent },
-	{ "bi", OutputBuffer::V_Bitangent },
-	{ "ny", OutputBuffer::V_Bitangent },
-	{ "view", OutputBuffer::V_View },
-	{ "v", OutputBuffer::V_View },
-	{ "texture", OutputBuffer::V_UVW },
-	{ "uvw", OutputBuffer::V_UVW },
-	{ "uv", OutputBuffer::V_UVW },
-	{ "tex", OutputBuffer::V_UVW },
-	{ "velocity", OutputBuffer::V_DPDT },
-	{ "movement", OutputBuffer::V_DPDT },
-	{ "dpdt", OutputBuffer::V_DPDT },
-	{ nullptr, OutputBuffer::V_3D_COUNT },
+	{ "position", AOV_Position },
+	{ "pos", AOV_Position },
+	{ "p", AOV_Position },
+	{ "normal", AOV_Normal },
+	{ "norm", AOV_Normal },
+	{ "n", AOV_Normal },
+	{ "normal_geometric", AOV_NormalG },
+	{ "ng", AOV_NormalG },
+	{ "tangent", AOV_Tangent },
+	{ "tan", AOV_Tangent },
+	{ "nx", AOV_Tangent },
+	{ "bitangent", AOV_Bitangent },
+	{ "binormal", AOV_Bitangent },
+	{ "bi", AOV_Bitangent },
+	{ "ny", AOV_Bitangent },
+	{ "view", AOV_View },
+	{ "v", AOV_View },
+	{ "texture", AOV_UVW },
+	{ "uvw", AOV_UVW },
+	{ "uv", AOV_UVW },
+	{ "tex", AOV_UVW },
+	{ "velocity", AOV_DPDT },
+	{ "movement", AOV_DPDT },
+	{ "dpdt", AOV_DPDT },
+	{ nullptr, AOV_3D_COUNT },
 };
 
-OutputBuffer::Variable1D typeToVariable1D(const std::string& str)
+AOV1D typeToVariable1D(const std::string& str)
 {
 	for (size_t i = 0; _s_var1d[i].Str; ++i) {
 		if (str == _s_var1d[i].Str)
 			return _s_var1d[i].Var;
 	}
-	return OutputBuffer::V_1D_COUNT; // AS UNKNOWN
+	return AOV_1D_COUNT; // AS UNKNOWN
 }
 
-std::string variableToString(OutputBuffer::Variable1D var)
+std::string variableToString(AOV1D var)
 {
 	for (size_t i = 0; _s_var1d[i].Str; ++i) {
 		if (var == _s_var1d[i].Var)
@@ -206,16 +208,16 @@ std::string variableToString(OutputBuffer::Variable1D var)
 	return ""; // AS UNKNOWN
 }
 
-OutputBuffer::VariableCounter typeToVariableCounter(const std::string& str)
+AOVCounter typeToVariableCounter(const std::string& str)
 {
 	for (size_t i = 0; _s_varC[i].Str; ++i) {
 		if (str == _s_varC[i].Str)
 			return _s_varC[i].Var;
 	}
-	return OutputBuffer::V_COUNTER_COUNT; // AS UNKNOWN
+	return AOV_COUNTER_COUNT; // AS UNKNOWN
 }
 
-std::string variableToString(OutputBuffer::VariableCounter var)
+std::string variableToString(AOVCounter var)
 {
 	for (size_t i = 0; _s_varC[i].Str; ++i) {
 		if (var == _s_varC[i].Var)
@@ -224,16 +226,16 @@ std::string variableToString(OutputBuffer::VariableCounter var)
 	return ""; // AS UNKNOWN
 }
 
-OutputBuffer::Variable3D typeToVariable3D(const std::string& str)
+AOV3D typeToVariable3D(const std::string& str)
 {
 	for (size_t i = 0; _s_var3d[i].Str; ++i) {
 		if (str == _s_var3d[i].Str)
 			return _s_var3d[i].Var;
 	}
-	return OutputBuffer::V_3D_COUNT; // AS UNKNOWN
+	return AOV_3D_COUNT; // AS UNKNOWN
 }
 
-std::string variableToString(OutputBuffer::Variable3D var)
+std::string variableToString(AOV3D var)
 {
 	for (size_t i = 0; _s_var3d[i].Str; ++i) {
 		if (var == _s_var3d[i].Var)
@@ -338,11 +340,11 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								spec.Name = spec.Name + "[" + lpe + "]";
 							file.SettingsSpectral.push_back(spec);
 						} else {
-							OutputBuffer::Variable3D var3D			 = typeToVariable3D(type);
-							OutputBuffer::Variable1D var1D			 = typeToVariable1D(type);
-							OutputBuffer::VariableCounter varCounter = typeToVariableCounter(type);
+							AOV3D var3D			  = typeToVariable3D(type);
+							AOV1D var1D			  = typeToVariable1D(type);
+							AOVCounter varCounter = typeToVariableCounter(type);
 
-							if (var3D != OutputBuffer::V_3D_COUNT) {
+							if (var3D != AOV_3D_COUNT) {
 								IM_ChannelSetting3D spec;
 								spec.Elements = 0; //TODO
 								spec.TMM	  = tmm;
@@ -358,7 +360,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								spec.Name[2] = name + ".z";
 
 								file.Settings3D.push_back(spec);
-							} else if (var1D != OutputBuffer::V_1D_COUNT) {
+							} else if (var1D != AOV_1D_COUNT) {
 								IM_ChannelSetting1D spec;
 								spec.TMM	  = tmm;
 								spec.Variable = var1D;
@@ -368,7 +370,7 @@ void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
 								if (!lpe.empty())
 									spec.Name = spec.Name + "[" + lpe + "]";
 								file.Settings1D.push_back(spec);
-							} else if (varCounter != OutputBuffer::V_COUNTER_COUNT) {
+							} else if (varCounter != AOV_COUNTER_COUNT) {
 								IM_ChannelSettingCounter spec;
 								spec.TMM	  = tmm;
 								spec.Variable = varCounter;
@@ -439,12 +441,13 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
 	}
 
+	const OutputBufferData& data = renderer->output()->data();
 	for (const FileSpectral& f : mSpectralFiles) {
 		auto file = outputDir / (f.Name + ".spec");
 
-		auto channel = renderer->output()->getSpectralChannel();
+		auto channel = data.getInternalChannel_Spectral();
 		if (f.LPE >= 0)
-			channel = renderer->output()->getSpectralChannel(f.LPE);
+			channel = data.getLPEChannel_Spectral(f.LPE);
 
 		if (!mImageWriter.save_spectral(file.generic_wstring(), channel, f.Compress))
 			PR_LOG(L_ERROR) << "Couldn't save spectral file " << file << std::endl;

@@ -15,12 +15,16 @@ SET(PR_Src
   Random.h
   Variant.h
   VectorGlue.inl
+  buffer/AOV.h
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h
   buffer/Feedback.h
   buffer/FrameBuffer.h
   buffer/OutputBuffer.cpp
   buffer/OutputBuffer.h
+  buffer/OutputBufferData.cpp
+  buffer/OutputBufferData.h
+  buffer/OutputBufferData.inl
   camera/ICamera.cpp
   camera/ICamera.h
   container/IndexSort.h

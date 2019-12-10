@@ -15,6 +15,7 @@
 #include "math/Reflection.h"
 #include "scene/Scene.h"
 #include "shader/ShadingPoint.h"
+#include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
@@ -43,7 +44,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 	PR_ASSERT(mSpectrumDescriptor, "Spectrum Descriptor can not be NULL!");
 	reset();
 
-	mOutputMap = std::make_unique<OutputBuffer>(this);
+	mOutputMap = std::make_unique<OutputBuffer>(width(), height(), mSpectrumDescriptor->samples());
 }
 
 RenderContext::~RenderContext()
