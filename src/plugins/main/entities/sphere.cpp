@@ -115,7 +115,7 @@ public:
 		Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
 
 		Vector2f uv = rnd;
-		if (kv.dot(n) > 0)
+		if (kv.dot(n) < 0)
 			uv = Spherical::uv_from_normal(Vector3f(-n));
 
 		return Vector3f(uv(0), uv(1), 0);

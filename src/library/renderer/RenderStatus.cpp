@@ -2,7 +2,7 @@
 
 namespace PR {
 RenderStatus::RenderStatus()
-	: mPercentage(0)
+	: mPercentage(-1)
 {
 }
 

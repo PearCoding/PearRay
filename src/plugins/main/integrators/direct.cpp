@@ -135,7 +135,7 @@ public:
 				}
 				pathEntry.LabelIndex = 0; // TODO
 				lpb.add(entry.RayID, pathEntry);
-				session.sendRay(entry.SessionRayID, next);
+				session.bounceRay(entry.SessionRayID, next);
 				scattered = true;
 			}
 		}

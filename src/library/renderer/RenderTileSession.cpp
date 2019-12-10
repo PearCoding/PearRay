@@ -78,7 +78,7 @@ bool RenderTileSession::handleCameraRays()
 												   mTile->samplesRendered());
 			ray.PixelIndex = fy * mTile->context()->width() + fx;
 
-			enqueueRay(ray);
+			enqueueCameraRay(ray);
 		}
 
 		if (forceBreak)

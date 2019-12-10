@@ -55,9 +55,10 @@ public:
 
 	bool handleCameraRays();
 
-	inline void enqueueRay(const Ray& ray);
+	inline void enqueueCameraRay(const Ray& ray);
+	inline void enqueueLightRay(const Ray& ray);
 	inline bool enoughRaySpace(size_t requested = 1) const;
-	inline void sendRay(size_t id, const Ray& ray);
+	inline void bounceRay(size_t id, const Ray& ray);
 	inline Ray getRay(size_t id) const;
 
 	ShadowHit traceShadowRay(const Ray& ray) const;

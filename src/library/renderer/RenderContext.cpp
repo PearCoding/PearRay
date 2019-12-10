@@ -249,12 +249,24 @@ RenderStatus RenderContext::status() const
 	PR_PROFILE_THIS;
 
 	RenderTileStatistics s = statistics();
+	RenderStatus status	= mIntegrator->status();
 
-	RenderStatus status = mIntegrator->status();
+	// Approximate percentage if not given by the integrator
+	if (status.percentage() < 0) {
+		const size_t maxPixelSampleCount = mRenderSettings.samplesPerPixel() * mWidth * mHeight;
+		status.setPercentage(s.pixelSampleCount() / (float)maxPixelSampleCount);
+	}
+
 	status.setField("global.ray_count", s.rayCount());
+	status.setField("global.camera_ray_count", s.cameraRayCount());
+	status.setField("global.light_ray_count", s.lightRayCount());
+	status.setField("global.bounce_ray_count", s.bounceRayCount());
+	status.setField("global.shadow_ray_count", s.shadowRayCount());
 	status.setField("global.pixel_sample_count", s.pixelSampleCount());
 	status.setField("global.entity_hit_count", s.entityHitCount());
 	status.setField("global.background_hit_count", s.backgroundHitCount());
+	status.setField("global.current_pass", (uint64)mCurrentPass);
+
 	return status;
 }
 

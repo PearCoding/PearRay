@@ -1,10 +1,17 @@
 // IWYU pragma: private, include "renderer/RenderTileSession.h"
 namespace PR {
-inline void RenderTileSession::enqueueRay(const Ray& ray)
+inline void RenderTileSession::enqueueCameraRay(const Ray& ray)
 {
 	PR_ASSERT(enoughRaySpace(), "Check space requirement first!");
 	mRayStream->addRay(ray);
-	mTile->statistics().addRayCount();
+	mTile->statistics().addCameraRayCount();
+}
+
+inline void RenderTileSession::enqueueLightRay(const Ray& ray)
+{
+	PR_ASSERT(enoughRaySpace(), "Check space requirement first!");
+	mRayStream->addRay(ray);
+	mTile->statistics().addLightRayCount();
 }
 
 inline bool RenderTileSession::enoughRaySpace(size_t requested) const
@@ -12,10 +19,10 @@ inline bool RenderTileSession::enoughRaySpace(size_t requested) const
 	return mRayStream->enoughSpace(requested);
 }
 
-inline void RenderTileSession::sendRay(size_t id, const Ray& ray)
+inline void RenderTileSession::bounceRay(size_t id, const Ray& ray)
 {
 	mRayStream->setRay(id, ray);
-	mTile->statistics().addRayCount();
+	mTile->statistics().addBounceRayCount();
 }
 
 inline Ray RenderTileSession::getRay(size_t id) const

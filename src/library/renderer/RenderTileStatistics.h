@@ -9,8 +9,16 @@ public:
 
 	RenderTileStatistics& operator+=(const RenderTileStatistics& other);
 
-	inline void addRayCount(uint64 i = 1) { mRayCount += i; }
-	inline uint64 rayCount() const { return mRayCount + shadowRayCount(); }
+	inline uint64 rayCount() const { return cameraRayCount() + lightRayCount() + bounceRayCount() + shadowRayCount(); }
+
+	inline void addCameraRayCount(uint64 i = 1) { mCameraRayCount += i; }
+	inline uint64 cameraRayCount() const { return mCameraRayCount; }
+
+	inline void addLightRayCount(uint64 i = 1) { mLightRayCount += i; }
+	inline uint64 lightRayCount() const { return mLightRayCount; }
+
+	inline void addBounceRayCount(uint64 i = 1) { mBounceRayCount += i; }
+	inline uint64 bounceRayCount() const { return mBounceRayCount; }
 
 	inline void addShadowRayCount(uint32 i = 1) { mShadowRayCount += i; }
 	inline uint64 shadowRayCount() const { return mShadowRayCount; }
@@ -25,7 +33,9 @@ public:
 	inline uint64 backgroundHitCount() const { return mBackgroundHitCount; }
 
 private:
-	uint64 mRayCount;
+	uint64 mCameraRayCount;
+	uint64 mLightRayCount;
+	uint64 mBounceRayCount;
 	uint64 mShadowRayCount;
 	uint64 mPixelSampleCount;
 	uint64 mEntityHitCount;
