@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Sampler.h"
+#include "ISampler.h"
 
 namespace PR {
-class PR_LIB StratifiedSampler : public Sampler {
+class PR_LIB StratifiedSampler : public ISampler {
 public:
 	StratifiedSampler(Random& random, uint32 samples);
 	~StratifiedSampler();

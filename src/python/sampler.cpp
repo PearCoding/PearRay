@@ -1,4 +1,4 @@
-#include "sampler/Sampler.h"
+#include "sampler/ISampler.h"
 #include "Random.h"
 #include "sampler/HaltonSampler.h"
 #include "sampler/MultiJitteredSampler.h"
@@ -11,43 +11,43 @@
 
 using namespace PR;
 namespace PRPY {
-class SamplerWrap : public Sampler {
+class SamplerWrap : public ISampler {
 public:
 	inline float generate1D(uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(float, Sampler, generate1D, index);
+		PYBIND11_OVERLOAD_PURE(float, ISampler, generate1D, index);
 	}
 
 	inline Vector2f generate2D(uint32 index) override
 	{
-		PYBIND11_OVERLOAD_PURE(Vector2f, Sampler, generate2D, index);
+		PYBIND11_OVERLOAD_PURE(Vector2f, ISampler, generate2D, index);
 	}
 };
 
 PR_NO_SANITIZE_ADDRESS
 void setup_sampler(py::module& m)
 {
-	py::class_<Sampler, SamplerWrap>(m, "Sampler")
-		.def("generate1D", &Sampler::generate1D)
-		.def("generate2D", &Sampler::generate2D);
+	py::class_<ISampler, SamplerWrap>(m, "ISampler")
+		.def("generate1D", &ISampler::generate1D)
+		.def("generate2D", &ISampler::generate2D);
 
-	py::class_<HaltonSampler, Sampler>(m, "HaltonSampler")
+	py::class_<HaltonSampler, ISampler>(m, "HaltonSampler")
 		.def(py::init<uint32, uint32, uint32>(),
 			 py::arg("samples"), py::arg("baseX") = 13, py::arg("baseY") = 47);
 
-	py::class_<MultiJitteredSampler, Sampler>(m, "MultiJitteredSampler")
+	py::class_<MultiJitteredSampler, ISampler>(m, "MultiJitteredSampler")
 		.def(py::init<Random&, uint32>());
 
-	py::class_<RandomSampler, Sampler>(m, "RandomSampler")
+	py::class_<RandomSampler, ISampler>(m, "RandomSampler")
 		.def(py::init<Random&>());
 
-	py::class_<StratifiedSampler, Sampler>(m, "StratifiedSampler")
+	py::class_<StratifiedSampler, ISampler>(m, "StratifiedSampler")
 		.def(py::init<Random&, uint32>());
 
-	py::class_<SobolSampler, Sampler>(m, "SobolSampler")
+	py::class_<SobolSampler, ISampler>(m, "SobolSampler")
 		.def(py::init<Random&, uint32>());
 
-	py::class_<UniformSampler, Sampler>(m, "UniformSampler")
+	py::class_<UniformSampler, ISampler>(m, "UniformSampler")
 		.def(py::init<uint32>());
 
 	py::class_<Random>(m, "Random")

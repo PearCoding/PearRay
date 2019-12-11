@@ -4,6 +4,8 @@
 
 namespace PR {
 class IFilter;
+class ISampler;
+class Random;
 
 /** @brief Bridge class to extract common information from the registry. */
 class PR_LIB RenderSettings {
@@ -19,13 +21,17 @@ public:
 	uint32 lensSampleCount;
 	uint32 timeSampleCount;
 
-	SamplerMode aaSampler;
-	SamplerMode lensSampler;
-	SamplerMode timeSampler;
+	std::string aaSampler;
+	std::string lensSampler;
+	std::string timeSampler;
 
 	TimeMappingMode timeMappingMode;
 	float timeScale;
 	TileMode tileMode;
+
+	std::shared_ptr<ISampler> createAASampler(Random& random) const;
+	std::shared_ptr<ISampler> createLensSampler(Random& random) const;
+	std::shared_ptr<ISampler> createTimeSampler(Random& random) const;
 
 	// Film entries
 	uint32 filmWidth;

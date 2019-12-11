@@ -52,6 +52,12 @@ SET(PR_Src
   filter/BlockFilter.h
   filter/FilterFactory.h
   filter/FilterFactory.cpp
+  filter/GaussianFilter.cpp
+  filter/GaussianFilter.h
+  filter/LanczosFilter.cpp
+  filter/LanczosFilter.h
+  filter/MitchellFilter.cpp
+  filter/MitchellFilter.h
   filter/TriangleFilter.cpp
   filter/TriangleFilter.h
   geometry/BoundingBox.cpp
@@ -151,7 +157,9 @@ SET(PR_Src
   sampler/MultiJitteredSampler.h
   sampler/RandomSampler.cpp
   sampler/RandomSampler.h
-  sampler/Sampler.h
+  sampler/ISampler.h
+  sampler/SamplerFactory.cpp
+  sampler/SamplerFactory.h
   sampler/SobolSampler.cpp
   sampler/SobolSampler.h
   sampler/SplitSample.h

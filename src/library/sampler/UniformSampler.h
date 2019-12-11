@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Sampler.h"
+#include "ISampler.h"
 
 namespace PR {
-class PR_LIB UniformSampler : public Sampler {
+class PR_LIB UniformSampler : public ISampler {
 public:
 	UniformSampler(uint32 samples);
 	~UniformSampler();

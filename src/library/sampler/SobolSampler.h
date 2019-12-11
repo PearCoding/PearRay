@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Sampler.h"
+#include "ISampler.h"
 
 namespace PR {
 
-class PR_LIB SobolSampler : public Sampler {
+class PR_LIB SobolSampler : public ISampler {
 public:
 	explicit SobolSampler(Random& random, uint32 samples);
 	~SobolSampler();

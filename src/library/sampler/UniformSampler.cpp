@@ -3,7 +3,7 @@
 
 namespace PR {
 UniformSampler::UniformSampler(uint32 samples)
-	: Sampler()
+	: ISampler()
 	, mSamples(samples)
 	, m2D_X(static_cast<uint32>(std::sqrt(samples)))
 	, m2D_Y((mSamples + m2D_X - 1) / m2D_X)

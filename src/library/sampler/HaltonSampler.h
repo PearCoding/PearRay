@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Sampler.h"
+#include "ISampler.h"
 #include "math/SIMD.h"
 
 namespace PR {
@@ -8,7 +8,7 @@ namespace PR {
 	  Quasi-MonteCarlo Sampling based on the Halton Sequence
 	  https://en.wikipedia.org/wiki/Halton_sequence
 	*/
-class PR_LIB HaltonSampler : public Sampler {
+class PR_LIB HaltonSampler : public ISampler {
 public:
 	explicit HaltonSampler(uint32 samples,
 						   uint32 baseX = 13, uint32 baseY = 47);

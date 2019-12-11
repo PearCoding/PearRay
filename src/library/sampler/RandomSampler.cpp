@@ -2,7 +2,7 @@
 
 namespace PR {
 RandomSampler::RandomSampler(Random& random)
-	: Sampler()
+	: ISampler()
 	, mRandom(random)
 {
 }

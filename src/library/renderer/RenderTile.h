@@ -10,7 +10,7 @@ namespace PR {
 
 class ICamera;
 class RenderContext;
-class Sampler;
+class ISampler;
 class PR_LIB RenderTile {
 public:
 	RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
@@ -38,9 +38,9 @@ public:
 
 	inline Random& random() { return mRandom; }
 
-	inline Sampler* aaSampler() const { return mAASampler.get(); }
-	inline Sampler* lensSampler() const { return mLensSampler.get(); }
-	inline Sampler* timeSampler() const { return mTimeSampler.get(); }
+	inline ISampler* aaSampler() const { return mAASampler.get(); }
+	inline ISampler* lensSampler() const { return mLensSampler.get(); }
+	inline ISampler* timeSampler() const { return mTimeSampler.get(); }
 
 	inline const RenderTileStatistics& statistics() const { return mStatistics; }
 	inline RenderTileStatistics& statistics() { return mStatistics; }
@@ -64,9 +64,9 @@ private:
 	std::atomic<uint32> mSamplesRendered;
 
 	Random mRandom;
-	std::unique_ptr<Sampler> mAASampler;
-	std::unique_ptr<Sampler> mLensSampler;
-	std::unique_ptr<Sampler> mTimeSampler;
+	std::shared_ptr<ISampler> mAASampler;
+	std::shared_ptr<ISampler> mLensSampler;
+	std::shared_ptr<ISampler> mTimeSampler;
 
 	const uint32 mAASampleCount;
 	const uint32 mLensSampleCount;

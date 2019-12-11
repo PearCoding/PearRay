@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Sampler.h"
+#include "ISampler.h"
 
 namespace PR {
 #define PR_MJS_USE_RANDOM
@@ -9,7 +9,7 @@ namespace PR {
 	  Correlated Multi-Jittered Sampling
 	  by Andrew Kensler
 	*/
-class PR_LIB MultiJitteredSampler : public Sampler {
+class PR_LIB MultiJitteredSampler : public ISampler {
 public:
 	MultiJitteredSampler(Random& random, uint32 samples);
 	~MultiJitteredSampler() = default;

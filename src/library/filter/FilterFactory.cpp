@@ -1,5 +1,8 @@
 #include "FilterFactory.h"
 #include "BlockFilter.h"
+#include "GaussianFilter.h"
+#include "LanczosFilter.h"
+#include "MitchellFilter.h"
 #include "TriangleFilter.h"
 
 namespace PR {
@@ -11,6 +14,12 @@ std::shared_ptr<IFilter> FilterFactory::createFilter(FilterType type, size_t rad
 		return std::make_shared<BlockFilter>(radius);
 	case FT_Triangle:
 		return std::make_shared<TriangleFilter>(radius);
+	case FT_Gaussian:
+		return std::make_shared<GaussianFilter>(radius);
+	case FT_Lanczos:
+		return std::make_shared<LanczosFilter>(radius);
+	case FT_Mitchell:
+		return std::make_shared<MitchellFilter>(radius);
 	}
 }
 
@@ -24,6 +33,12 @@ static struct {
 	{ "const", FT_Block },
 	{ "constant", FT_Block },
 	{ "triangle", FT_Triangle },
+	{ "gaussian", FT_Gaussian },
+	{ "gauss", FT_Gaussian },
+	{ "blur", FT_Gaussian },
+	{ "lanczos", FT_Lanczos },
+	{ "sinc", FT_Lanczos },
+	{ "mitchell", FT_Mitchell },
 	{ nullptr, FT_Block }
 };
 

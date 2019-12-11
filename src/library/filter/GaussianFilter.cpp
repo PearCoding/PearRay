@@ -1,7 +1,7 @@
-#include "TriangleFilter.h"
+#include "GaussianFilter.h"
 
 namespace PR {
-float TriangleFilter::evalWeight(float x, float y) const
+float GaussianFilter::evalWeight(float x, float y) const
 {
 	if (mRadius == 0)
 		return 1;
@@ -12,17 +12,20 @@ float TriangleFilter::evalWeight(float x, float y) const
 	return mCache.at(iy * (mRadius + 1) + ix);
 }
 
-void TriangleFilter::cache()
+void GaussianFilter::cache()
 {
 	const size_t halfSize = mRadius + 1;
 	mCache.resize(halfSize * halfSize);
 
+	auto gauss = [](float x, float alpha) { return std::exp(-alpha * x * x); };
+
+	const float dev2  = 0.2f;
+	const float alpha = 1 / (2 * dev2);
+
 	float sum = 0;
 	for (size_t y = 0; y < halfSize; ++y) {
-		const float fy = mRadius - y;
 		for (size_t x = 0; x < halfSize; ++x) {
-			const float fx			 = mRadius - x;
-			mCache[y * halfSize + x] = fx * fy;
+			mCache[y * halfSize + x] = gauss(y / (float)mRadius, alpha) * gauss(x / (float)mRadius, alpha);
 			sum += mCache[y * halfSize + x];
 		}
 	}

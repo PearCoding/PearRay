@@ -16,7 +16,7 @@ static float halton(uint32 index, uint32 base)
 
 HaltonSampler::HaltonSampler(uint32 samples,
 							 uint32 baseX, uint32 baseY)
-	: Sampler()
+	: ISampler()
 	, mSamples(samples)
 	, mBaseXSamples(samples)
 	, mBaseYSamples(samples)

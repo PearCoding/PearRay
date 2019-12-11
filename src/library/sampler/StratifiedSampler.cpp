@@ -3,7 +3,7 @@
 
 namespace PR {
 StratifiedSampler::StratifiedSampler(Random& random, uint32 samples)
-	: Sampler()
+	: ISampler()
 	, mRandom(random)
 	, mSamples(samples)
 	, m2D_X(static_cast<uint32>(std::sqrt(samples)))

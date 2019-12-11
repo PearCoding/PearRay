@@ -22,7 +22,9 @@ OutputBufferBucket::~OutputBufferBucket()
 void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 									  const LightPath& path)
 {
-	const size_t filterRadius = mFilter->radius();
+	const int32 filterRadius = mFilter->radius();
+	x += filterRadius;
+	y += filterRadius;
 
 	const bool isMono		 = (s.Ray.Flags & RF_Monochrome);
 	const uint32 channels	= isMono ? 1 : 3;
@@ -63,36 +65,19 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 		}
 	};
 
-	for (uint32 py = y - filterRadius; py <= y + filterRadius; ++py) {
-		for (uint32 px = x - filterRadius; px <= x + filterRadius; ++px) {
+	const uint32 sx = std::max<uint32>(0, (int32)x - (int32)filterRadius);
+	const uint32 ex = std::min<uint32>(x + filterRadius, extendedWidth() - 1);
+	const uint32 sy = std::max<uint32>(0, (int32)y - (int32)filterRadius);
+	const uint32 ey = std::min<uint32>(y + filterRadius, extendedHeight() - 1);
+
+	for (uint32 py = sy; py <= ey; ++py) {
+		for (uint32 px = sx; px <= ex; ++px) {
 			const float filterWeight = mFilter->evalWeight((int32)px - (int32)x, (int32)py - (int32)y);
 
 			if (!isInvalid) {
 				for (uint32 i = 0; i < channels; ++i)
 					mData.getInternalChannel_Spectral()->getFragment(px, py, monochannel + i)
 						+= s.Ray.Weight[i] * s.Radiance[i] * filterWeight;
-			}
-
-			if (!(s.Flags & SPF_Background)) {
-				size_t sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(px, py, 0);
-				float blend		   = filterWeight * 1.0f / (sampleCount + 1.0f);
-
-				blend3D(px, py, AOV_Position, s.P, blend);
-				blend3D(px, py, AOV_Normal, s.N, blend);
-				blend3D(px, py, AOV_NormalG, s.Geometry.N, blend);
-				blend3D(px, py, AOV_Tangent, s.Nx, blend);
-				blend3D(px, py, AOV_Bitangent, s.Ny, blend);
-				blend3D(px, py, AOV_View, s.Ray.Direction, blend);
-				blend3D(px, py, AOV_UVW, s.Geometry.UVW, blend);
-				blend3D(px, py, AOV_DPDT, s.Geometry.dPdT, blend);
-
-				blend1D(px, py, AOV_Time, s.Ray.Time, blend);
-				blend1D(px, py, AOV_Depth, std::sqrt(s.Depth2), blend);
-
-				blend1D(px, py, AOV_EntityID, s.EntityID, blend);
-				blend1D(px, py, AOV_MaterialID, s.Geometry.MaterialID, blend);
-				blend1D(px, py, AOV_EmissionID, s.Geometry.EmissionID, blend);
-				blend1D(px, py, AOV_DisplaceID, s.Geometry.DisplaceID, blend);
 			}
 
 			// LPE
@@ -106,14 +91,35 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 					}
 				}
 			}
-
-			mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(px, py, 0) += 1;
 		}
 	}
 
 	// Independent of filter
+	if (!(s.Flags & SPF_Background)) {
+		size_t sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(x, y, 0);
+		float blend		   = 1.0f / (sampleCount + 1.0f);
+
+		blend3D(x, y, AOV_Position, s.P, blend);
+		blend3D(x, y, AOV_Normal, s.N, blend);
+		blend3D(x, y, AOV_NormalG, s.Geometry.N, blend);
+		blend3D(x, y, AOV_Tangent, s.Nx, blend);
+		blend3D(x, y, AOV_Bitangent, s.Ny, blend);
+		blend3D(x, y, AOV_View, s.Ray.Direction, blend);
+		blend3D(x, y, AOV_UVW, s.Geometry.UVW, blend);
+		blend3D(x, y, AOV_DPDT, s.Geometry.dPdT, blend);
+
+		blend1D(x, y, AOV_Time, s.Ray.Time, blend);
+		blend1D(x, y, AOV_Depth, std::sqrt(s.Depth2), blend);
+
+		blend1D(x, y, AOV_EntityID, s.EntityID, blend);
+		blend1D(x, y, AOV_MaterialID, s.Geometry.MaterialID, blend);
+		blend1D(x, y, AOV_EmissionID, s.Geometry.EmissionID, blend);
+		blend1D(x, y, AOV_DisplaceID, s.Geometry.DisplaceID, blend);
+	}
+
+	mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(x, y, 0) += 1;
 	if (isInvalid) {
-		pushFeedbackFragment(x, y,
+		pushFeedbackFragment(x - filterRadius, y - filterRadius,
 							 (isNaN ? OF_NaN : 0)
 								 | (isInf ? OF_Infinite : 0)
 								 | (isNeg ? OF_Negative : 0));
@@ -122,11 +128,10 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 
 void OutputBufferBucket::pushFeedbackFragment(uint32 x, uint32 y, uint32 feedback)
 {
-	const size_t offX = (mExtendedWidth - mOriginalWidth) / 2;
-	const size_t offY = (mExtendedHeight - mOriginalHeight) / 2;
+	const size_t off = mFilter->radius();
 
 	PR_ASSERT(mData.hasInternalChannel_Counter(AOV_Feedback), "Feedback buffer has to be available!");
-	mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(x + offX, y + offY, 0) |= feedback;
+	mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(x + off, y + off, 0) |= feedback;
 }
 
 } // namespace PR

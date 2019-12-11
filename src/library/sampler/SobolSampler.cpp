@@ -16,7 +16,7 @@ static size_t irfz(uint32 n)
 }
 
 SobolSampler::SobolSampler(Random& random, uint32 samples)
-	: Sampler()
+	: ISampler()
 	, mRandom(random)
 {
 	PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");

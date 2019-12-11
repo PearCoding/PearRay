@@ -263,18 +263,18 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 			RG_RENDERER,
 			"common/sampler/time/count",
 			1));
-	fct->settings().aaSampler = mRegistry.getByGroup<SamplerMode>(
+	fct->settings().aaSampler = mRegistry.getByGroup<std::string>(
 		RG_RENDERER,
 		"common/sampler/aa/type",
-		SM_MULTI_JITTER);
-	fct->settings().lensSampler = mRegistry.getByGroup<SamplerMode>(
+		"");
+	fct->settings().lensSampler = mRegistry.getByGroup<std::string>(
 		RG_RENDERER,
 		"common/sampler/lens/type",
-		SM_MULTI_JITTER);
-	fct->settings().timeSampler = mRegistry.getByGroup<SamplerMode>(
+		"");
+	fct->settings().timeSampler = mRegistry.getByGroup<std::string>(
 		RG_RENDERER,
 		"common/sampler/time/type",
-		SM_MULTI_JITTER);
+		"");
 	fct->settings().timeMappingMode = mRegistry.getByGroup<TimeMappingMode>(
 		RG_RENDERER,
 		"common/sampler/time/mapping",
@@ -287,6 +287,16 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		RG_RENDERER,
 		"common/tile/mode",
 		TM_LINEAR);
+	fct->settings().pixelFilter = mRegistry.getByGroup<std::string>(
+		RG_RENDERER,
+		"common/pixel/filter",
+		"");
+	fct->settings().pixelFilterRadius = std::max<uint32>(
+		0,
+		mRegistry.getByGroup<uint32>(
+			RG_RENDERER,
+			"common/pixel/radius",
+			1));
 	fct->settings().filmWidth = std::max<uint32>(
 		1,
 		mRegistry.getByGroup<uint32>(

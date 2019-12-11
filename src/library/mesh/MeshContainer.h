@@ -15,7 +15,7 @@ class Normal;
 class UV;
 class Vertex;
 struct FacePoint;
-class Sampler;
+class ISampler;
 class PR_LIB MeshContainer {
 public:
 	MeshContainer();

@@ -64,6 +64,14 @@
 #define PR_FUNCTION_NAME __PRETTY_FUNCTION__
 #endif
 
+#if defined(PR_CC_GNU) || defined(PR_CC_CLANG)
+#define PR_LIKELY(x) __builtin_expect(!!(x), 1)
+#define PR_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define PR_LIKELY(x) (x)
+#define PR_UNLIKELY(x) (x)
+#endif
+
 #ifndef PR_NO_ASSERTS
 #include <assert.h>
 #define _PR_ASSERT_MSG(msg)                                 \
@@ -71,21 +79,21 @@
 			  << ":" << __LINE__ << " " << PR_FUNCTION_NAME \
 			  << " | " << (msg) << std::endl
 #ifndef PR_DEBUG
-#define PR_ASSERT(cond, msg)       \
-	do {                           \
-		if (!(cond)) {             \
-			_PR_ASSERT_MSG((msg)); \
-			std::abort();          \
-		}                          \
+#define PR_ASSERT(cond, msg)        \
+	do {                            \
+		if (PR_UNLIKELY(!(cond))) { \
+			_PR_ASSERT_MSG((msg));  \
+			std::abort();           \
+		}                           \
 	} while (false)
 #else
-#define PR_ASSERT(cond, msg)       \
-	do {                           \
-		if (!(cond)) {             \
-			_PR_ASSERT_MSG((msg)); \
-			PR_DEBUG_BREAK();      \
-			std::abort();          \
-		}                          \
+#define PR_ASSERT(cond, msg)        \
+	do {                            \
+		if (PR_UNLIKELY(!(cond))) { \
+			_PR_ASSERT_MSG((msg));  \
+			PR_DEBUG_BREAK();       \
+			std::abort();           \
+		}                           \
 	} while (false)
 #endif
 #else
@@ -158,8 +166,8 @@ private:                                           \
 #define PR_PLUGIN_API_VERSION 1
 #define PR_PLUGIN_EXPORT PR_EXPORT
 
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <memory>

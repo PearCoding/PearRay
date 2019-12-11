@@ -2,35 +2,11 @@
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "camera/ICamera.h"
-#include "sampler/HaltonSampler.h"
-#include "sampler/MultiJitteredSampler.h"
-#include "sampler/RandomSampler.h"
-#include "sampler/SobolSampler.h"
-#include "sampler/StratifiedSampler.h"
-#include "sampler/UniformSampler.h"
+#include "sampler/ISampler.h"
 #include "scene/Scene.h"
 #include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
-static std::unique_ptr<Sampler> createSampler(SamplerMode mode, Random& random, uint32 samples)
-{
-	switch (mode) {
-	case SM_RANDOM:
-		return std::make_unique<RandomSampler>(random);
-	case SM_UNIFORM:
-		return std::make_unique<UniformSampler>(samples);
-	case SM_JITTER:
-		return std::make_unique<StratifiedSampler>(random, samples);
-	default:
-	case SM_MULTI_JITTER:
-		return std::make_unique<MultiJitteredSampler>(random, samples);
-	case SM_HALTON:
-		return std::make_unique<HaltonSampler>(samples);
-	case SM_SOBOL:
-		return std::make_unique<SobolSampler>(random, samples);
-	}
-}
-
 RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 					   const RenderContext& context, uint32 index)
 	: mWorking(false)
@@ -58,17 +34,9 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	PR_ASSERT(mWidth > 0, "Invalid tile width");
 	PR_ASSERT(mHeight > 0, "Invalid tile height");
 
-	mAASampler = createSampler(
-		mContext->settings().aaSampler,
-		mRandom, mAASampleCount);
-
-	mLensSampler = createSampler(
-		mContext->settings().lensSampler,
-		mRandom, mLensSampleCount);
-
-	mTimeSampler = createSampler(
-		mContext->settings().timeSampler,
-		mRandom, mTimeSampleCount);
+	mAASampler   = mContext->settings().createAASampler(mRandom);
+	mLensSampler = mContext->settings().createLensSampler(mRandom);
+	mTimeSampler = mContext->settings().createTimeSampler(mRandom);
 
 	switch (mContext->settings().timeMappingMode) {
 	default:
@@ -107,13 +75,13 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	sample /= mLensSampleCount;
 	const uint32 aasample = sample;
 
-	Vector2f AA = aaSampler()->generate2D(aasample);
+	Vector2f AA = mAASampler->generate2D(aasample);
 	AA(0) += mContext->offsetX() - 0.5f;
 	AA(1) += mContext->offsetY() - 0.5f;
 
-	Vector2f Lens = lensSampler()->generate2D(lenssample);
+	Vector2f Lens = mLensSampler->generate2D(lenssample);
 
-	float Time = mTimeAlpha * timeSampler()->generate1D(timesample) + mTimeBeta;
+	float Time = mTimeAlpha * mTimeSampler->generate1D(timesample) + mTimeBeta;
 
 	CameraSample cameraSample;
 	cameraSample.SensorSize		 = Vector2i(mFullWidth, mFullHeight);

@@ -57,45 +57,56 @@ std::shared_ptr<OutputBufferBucket> OutputBuffer::createBucket(size_t width, siz
 	return bucket;
 }
 
-// TODO: Merge with blending?
 void OutputBuffer::mergeBucket(size_t ox, size_t oy,
 							   const std::shared_ptr<OutputBufferBucket>& bucket)
 {
 	std::lock_guard<std::mutex> guard(mMergeMutex);
 
 	const int32 off = mFilter->radius();
-	ox				= std::max(0, (int32)ox - off);
-	oy				= std::max(0, (int32)oy - off);
+	int32 px		= (int32)ox - off;
+	int32 py		= (int32)oy - off;
 
-	mData.mSpectral->addBlock(ox, oy, *bucket->data().mSpectral);
+	ox = std::max(0, px);
+	oy = std::max(0, py);
+
+	const size_t dx = -std::min(0, px);
+	const size_t dy = -std::min(0, py);
+
+	mData.mSpectral->addBlock(ox, oy, dx, dy, *bucket->data().mSpectral);
 	for (size_t k = 0; k < mData.mLPE_Spectral.size(); ++k)
-		mData.mLPE_Spectral[k].second->addBlock(ox, oy, *bucket->data().mLPE_Spectral[k].second);
+		mData.mLPE_Spectral[k].second->addBlock(ox, oy, dx, dy, *bucket->data().mLPE_Spectral[k].second);
 
 	for (int i = 0; i < AOV_3D_COUNT; ++i) {
 		if (mData.mInt3D[i])
-			mData.mInt3D[i]->addBlock(ox, oy, *bucket->data().mInt3D[i]);
+			mData.mInt3D[i]->addBlock(ox, oy, dx, dy, *bucket->data().mInt3D[i]);
 
 		for (size_t k = 0; k < mData.mLPE_3D[i].size(); ++k)
-			mData.mLPE_3D[i][k].second->addBlock(ox, oy, *bucket->data().mLPE_3D[i][k].second);
+			mData.mLPE_3D[i][k].second->addBlock(ox, oy, dx, dy, *bucket->data().mLPE_3D[i][k].second);
 	}
 
 	for (int i = 0; i < AOV_1D_COUNT; ++i) {
 		if (mData.mInt1D[i])
-			mData.mInt1D[i]->addBlock(ox, oy, *bucket->data().mInt1D[i]);
+			mData.mInt1D[i]->addBlock(ox, oy, dx, dy, *bucket->data().mInt1D[i]);
 
 		for (size_t k = 0; k < mData.mLPE_1D[i].size(); ++k)
-			mData.mLPE_1D[i][k].second->addBlock(ox, oy, *bucket->data().mLPE_1D[i][k].second);
+			mData.mLPE_1D[i][k].second->addBlock(ox, oy, dx, dy, *bucket->data().mLPE_1D[i][k].second);
 	}
 
 	for (int i = 0; i < AOV_COUNTER_COUNT; ++i) {
 		if (i == AOV_Feedback) {
-			// TODO
-		} else {
 			if (mData.mIntCounter[i])
-				mData.mIntCounter[i]->addBlock(ox, oy, *bucket->data().mIntCounter[i]);
+				mData.mIntCounter[i]->applyBlock(ox, oy, dx, dy, *bucket->data().mIntCounter[i],
+												 [](uint32 pre, uint32 val) { return pre | val; });
 
 			for (size_t k = 0; k < mData.mLPE_Counter[i].size(); ++k)
-				mData.mLPE_Counter[i][k].second->addBlock(ox, oy, *bucket->data().mLPE_Counter[i][k].second);
+				mData.mLPE_Counter[i][k].second->applyBlock(ox, oy, dx, dy, *bucket->data().mLPE_Counter[i][k].second,
+															[](uint32 pre, uint32 val) { return pre | val; });
+		} else {
+			if (mData.mIntCounter[i])
+				mData.mIntCounter[i]->addBlock(ox, oy, dx, dy, *bucket->data().mIntCounter[i]);
+
+			for (size_t k = 0; k < mData.mLPE_Counter[i].size(); ++k)
+				mData.mLPE_Counter[i][k].second->addBlock(ox, oy, dx, dy, *bucket->data().mLPE_Counter[i][k].second);
 		}
 	}
 
@@ -103,22 +114,22 @@ void OutputBuffer::mergeBucket(size_t ox, size_t oy,
 	for (auto aI = mData.mCustom3D.begin(), bI = bucket->data().mCustom3D.begin();
 		 aI != mData.mCustom3D.end();
 		 ++aI, ++bI) {
-		aI->second->addBlock(ox, oy, *bI->second);
+		aI->second->addBlock(ox, oy, dx, dy, *bI->second);
 	}
 	for (auto aI = mData.mCustom1D.begin(), bI = bucket->data().mCustom1D.begin();
 		 aI != mData.mCustom1D.end();
 		 ++aI, ++bI) {
-		aI->second->addBlock(ox, oy, *bI->second);
+		aI->second->addBlock(ox, oy, dx, dy, *bI->second);
 	}
 	for (auto aI = mData.mCustomCounter.begin(), bI = bucket->data().mCustomCounter.begin();
 		 aI != mData.mCustomCounter.end();
 		 ++aI, ++bI) {
-		aI->second->addBlock(ox, oy, *bI->second);
+		aI->second->addBlock(ox, oy, dx, dy, *bI->second);
 	}
 	for (auto aI = mData.mCustomSpectral.begin(), bI = bucket->data().mCustomSpectral.begin();
 		 aI != mData.mCustomSpectral.end();
 		 ++aI, ++bI) {
-		aI->second->addBlock(ox, oy, *bI->second);
+		aI->second->addBlock(ox, oy, dx, dy, *bI->second);
 	}
 }
 
