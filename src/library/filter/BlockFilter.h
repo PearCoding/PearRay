@@ -11,7 +11,7 @@ public:
 	}
 
 	size_t radius() const override { return mRadius; }
-	float evalWeight(float, float) const { return 1.0f / ((2 * mRadius + 1) * (2 * mRadius + 1)); }
+	float evalWeight(float, float) const override { return 1.0f / ((2 * mRadius + 1) * (2 * mRadius + 1)); }
 
 private:
 	size_t mRadius;

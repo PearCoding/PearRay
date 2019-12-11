@@ -13,7 +13,7 @@ public:
 	}
 
 	size_t radius() const override { return mRadius; }
-	float evalWeight(float, float) const;
+	float evalWeight(float, float) const override;
 
 private:
 	void cache();
