@@ -1,4 +1,5 @@
 #include "RenderSettings.h"
+#include "filter/FilterFactory.h"
 
 namespace PR {
 RenderSettings::RenderSettings()
@@ -20,7 +21,14 @@ RenderSettings::RenderSettings()
 	, cropMaxX(1)
 	, cropMinY(0)
 	, cropMaxY(1)
+	, pixelFilterRadius(1)
+	, pixelFilter("triangle")
 {
+}
+
+std::shared_ptr<IFilter> RenderSettings::createPixelFilter() const
+{
+	return FilterFactory::createFilter(pixelFilter, pixelFilterRadius);
 }
 
 } // namespace PR

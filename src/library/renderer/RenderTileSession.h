@@ -25,6 +25,7 @@ class LightPath;
 class PR_LIB RenderTileSession {
 public:
 	RenderTileSession(uint32 threadIndex, RenderTile* tile,
+					  const std::shared_ptr<OutputBufferBucket>& bucket,
 					  RayStream* rayStream,
 					  HitStream* hitStream);
 	~RenderTileSession();
@@ -77,10 +78,13 @@ private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);
 	void endShadingGroup(const ShadingGroup& grp);
 
+	std::pair<uint32, uint32> localCoordinates(uint32 pixelIndex) const;
+
 	uint32 currentIndex() const;
 
 	uint32 mThread;
 	RenderTile* mTile;
+	std::shared_ptr<OutputBufferBucket> mBucket;
 	RayStream* mRayStream;
 	HitStream* mHitStream;
 

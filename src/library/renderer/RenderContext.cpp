@@ -44,7 +44,9 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 	PR_ASSERT(mSpectrumDescriptor, "Spectrum Descriptor can not be NULL!");
 	reset();
 
-	mOutputMap = std::make_unique<OutputBuffer>(width(), height(), mSpectrumDescriptor->samples());
+	mOutputMap = std::make_unique<OutputBuffer>(
+		settings.createPixelFilter(),
+		width(), height(), mSpectrumDescriptor->samples());
 }
 
 RenderContext::~RenderContext()
@@ -153,6 +155,16 @@ void RenderContext::notifyEnd()
 size_t RenderContext::tileCount() const
 {
 	return mTileMap->tileCount();
+}
+
+size_t RenderContext::tileWidth() const
+{
+	return mTileMap->tileWidth();
+}
+
+size_t RenderContext::tileHeight() const
+{
+	return mTileMap->tileHeight();
 }
 
 std::list<RenderTile*> RenderContext::currentTiles() const

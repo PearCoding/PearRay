@@ -22,6 +22,8 @@ SET(PR_Src
   buffer/FrameBuffer.h
   buffer/OutputBuffer.cpp
   buffer/OutputBuffer.h
+  buffer/OutputBufferBucket.cpp
+  buffer/OutputBufferBucket.h
   buffer/OutputBufferData.cpp
   buffer/OutputBufferData.h
   buffer/OutputBufferData.inl
@@ -46,6 +48,12 @@ SET(PR_Src
   entity/ITransformable.inl
   emission/IEmission.cpp
   emission/IEmission.h
+  filter/IFilter.h
+  filter/BlockFilter.h
+  filter/FilterFactory.h
+  filter/FilterFactory.cpp
+  filter/TriangleFilter.cpp
+  filter/TriangleFilter.h
   geometry/BoundingBox.cpp
   geometry/BoundingBox.h
   geometry/Disk.cpp

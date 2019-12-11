@@ -29,7 +29,7 @@ public:
 	OutputBufferData(size_t width, size_t height, size_t specChannels);
 	~OutputBufferData();
 
-	void clear();
+	void clear(bool force=false);
 
 	// Internal
 	inline bool hasInternalChannel_1D(AOV1D var) const;

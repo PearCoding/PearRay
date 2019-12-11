@@ -3,6 +3,8 @@
 #include "RenderEnums.h"
 
 namespace PR {
+class IFilter;
+
 /** @brief Bridge class to extract common information from the registry. */
 class PR_LIB RenderSettings {
 public:
@@ -58,5 +60,9 @@ public:
 	{
 		return static_cast<uint32>(cropMinY * filmHeight);
 	}
+
+	size_t pixelFilterRadius;
+	std::string pixelFilter;
+	std::shared_ptr<IFilter> createPixelFilter() const;
 };
 } // namespace PR

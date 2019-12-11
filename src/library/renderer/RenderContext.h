@@ -43,6 +43,8 @@ public:
 	inline uint32 height() const { return mHeight; }
 
 	size_t tileCount() const;
+	size_t tileWidth() const;
+	size_t tileHeight() const;
 
 	// tcx = tile count x
 	// tcy = tile count y
@@ -79,7 +81,7 @@ public:
 	inline std::shared_ptr<OutputBuffer> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
-	
+
 protected:
 	RenderTile* getNextTile();
 

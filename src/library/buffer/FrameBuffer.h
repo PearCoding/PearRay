@@ -94,11 +94,56 @@ public:
 		return mData[channel + pixelindex * widthPitch()];
 	}
 
+	inline void blendFragment(size_t px, size_t py, size_t channel,
+							  const T& newValue, float t)
+	{
+		T& val = getFragment(px, py, channel);
+		val	= val * (1 - t) + newValue * t;
+	}
+
 	inline void blendFragment(uint32 pixelIndex, size_t channel,
 							  const T& newValue, float t)
 	{
 		getFragment(pixelIndex, channel) = getFragment(pixelIndex, channel) * (1 - t)
 										   + newValue * t;
+	}
+
+	inline void addBlock(size_t dst_x, size_t dst_y,
+						 size_t dst_w, size_t dst_h,
+						 size_t src_x, size_t src_y,
+						 size_t src_w, size_t src_h,
+						 const FrameBuffer<T>& block)
+	{
+		size_t src_ex = std::min(src_w + src_x, block.width());
+		size_t src_ey = std::min(src_h + src_y, block.height());
+
+		size_t dst_ex = std::min(dst_w + dst_x, width());
+		size_t dst_ey = std::min(dst_h + dst_y, height());
+
+		size_t w = std::min(dst_ex - dst_x, src_ex - src_x);
+		size_t h = std::min(dst_ey - dst_y, src_ey - src_y);
+
+		for (size_t y = 0; y < h; ++y)
+			for (size_t x = 0; x < w; ++x)
+				for (size_t ch = 0; ch < block.channels(); ++ch)
+					getFragment(dst_x + x, dst_y + y, ch) += block.getFragment(src_x + x, src_y + y, ch);
+	}
+
+	inline void addBlock(size_t dst_x, size_t dst_y,
+						 size_t src_x, size_t src_y,
+						 const FrameBuffer<T>& block)
+	{
+		addBlock(dst_x, dst_y,
+				 width(), height(),
+				 src_x, src_y,
+				 block.width(), block.height(),
+				 block);
+	}
+
+	inline void addBlock(size_t dst_x, size_t dst_y,
+						 const FrameBuffer<T>& block)
+	{
+		addBlock(dst_x, dst_y, 0, 0, block);
 	}
 
 	inline const T* ptr() const { return mData.data(); }

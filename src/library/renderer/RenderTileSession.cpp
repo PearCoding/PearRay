@@ -3,16 +3,19 @@
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "buffer/OutputBuffer.h"
+#include "buffer/OutputBufferBucket.h"
 #include "material/IMaterial.h"
 #include "scene/Scene.h"
 #include "shader/ShadingPoint.h"
 
 namespace PR {
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
+									 const std::shared_ptr<OutputBufferBucket>& bucket,
 									 RayStream* rayStream,
 									 HitStream* hitStream)
 	: mThread(thread)
 	, mTile(tile)
+	, mBucket(bucket)
 	, mRayStream(rayStream)
 	, mHitStream(hitStream)
 	, mCurrentX(0)
@@ -125,20 +128,35 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 	return mTile->context()->scene()->traceShadowRay(ray);
 }
 
+std::pair<uint32, uint32> RenderTileSession::localCoordinates(uint32 pixelIndex) const
+{
+	uint32 gpx = pixelIndex % mTile->context()->width();
+	uint32 gpy = pixelIndex / mTile->context()->width();
+
+	PR_ASSERT(gpx >= mTile->sx() && gpx < mTile->ex(),
+			  "Invalid fragment push operation");
+	PR_ASSERT(gpy >= mTile->sy() && gpy < mTile->ey(),
+			  "Invalid fragment push operation");
+
+	uint32 lpx = gpx - (int32)mTile->sx();
+	uint32 lpy = gpy - (int32)mTile->sy();
+
+	return std::make_pair(lpx, lpy);
+}
+
 void RenderTileSession::pushFragment(const ShadingPoint& pt,
 									 const LightPath& path) const
 {
 	PR_PROFILE_THIS;
-
-	mTile->context()->output()->pushFragment(pt.Ray.PixelIndex, pt, path);
+	auto coords = localCoordinates(pt.Ray.PixelIndex);
+	mBucket->pushFragment(coords.first, coords.second, pt, path);
 }
 
 void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) const
 {
 	PR_PROFILE_THIS;
-
-	mTile->context()->output()->pushFeedbackFragment(
-		ray.PixelIndex, feedback);
+	auto coords = localCoordinates(ray.PixelIndex);
+	mBucket->pushFeedbackFragment(coords.first, coords.second, feedback);
 }
 
 IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const

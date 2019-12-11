@@ -15,6 +15,10 @@ public:
 	~RenderTileMap();
 
 	inline size_t tileCount() const { return mTileMap.size(); }
+	inline uint32 tileXCount() const { return mTileXCount; }
+	inline uint32 tileYCount() const { return mTileYCount; }
+	inline uint32 tileWidth() const { return mTileWidth; }
+	inline uint32 tileHeight() const { return mTileHeight; }
 
 	void init(const RenderContext& context, TileMode mode);
 
@@ -30,4 +34,4 @@ private:
 	uint32 mTileHeight;
 	std::vector<RenderTile*> mTileMap;
 };
-}
+} // namespace PR

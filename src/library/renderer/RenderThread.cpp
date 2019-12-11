@@ -3,6 +3,7 @@
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "RenderTileSession.h"
+#include "buffer/OutputBufferBucket.h"
 #include "integrator/IIntegrator.h"
 #include "ray/RayStream.h"
 #include "trace/HitStream.h"
@@ -31,18 +32,23 @@ void RenderThread::main()
 	uint32 pass		= 0;
 	auto integrator = mRenderer->integrator();
 
+	std::shared_ptr<OutputBufferBucket> bucket = mRenderer->output()->createBucket(mRenderer->tileWidth(), mRenderer->tileHeight());
+
 	integrator->onThreadStart(mRenderer, mThreadIndex);
 	while (integrator->needNextPass(pass) && !shouldStop()) {
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
 			RenderTileSession session(mThreadIndex, mTile,
+									  bucket,
 									  &rays, &hits);
 			mStatistics.addTileCount();
 
+			bucket->clear(true);
 			integrator->onPass(session, pass);
-			mTile->inc();
+			mRenderer->output()->mergeBucket(mTile->sx(), mTile->sy(), bucket);
 
+			mTile->inc();
 			mTile->setWorking(false);
 			mTile = mRenderer->getNextTile();
 		}
