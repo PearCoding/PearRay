@@ -91,7 +91,7 @@ public:
 									 float HdotL, float NdotH, float HdotX, float HdotY,
 									 float roughness, float aniso) const
 	{
-		float aspect = aniso > 1.0f ? std::sqrt(1 - aniso * 0.9f) : 1.0f;
+		float aspect = std::sqrt(1 - aniso * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
@@ -321,7 +321,7 @@ public:
 		const std::string clearcoatName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "clearcoat", "");
 		const std::string clearcoatTintName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "clearcoat_tint", "");
+			RG_MATERIAL, uuid, "clearcoat_gloss", "");
 
 		return std::make_shared<PrincipledMaterial>(id,
 													env.getSpectralShadingSocket(baseColorName, 1.0f),

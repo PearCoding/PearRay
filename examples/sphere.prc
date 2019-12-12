@@ -8,18 +8,11 @@
 	(registry '/renderer/common/max_ray_depth' 8)
 	(registry '/renderer/common/tile/mode' 0)
 	(registry '/renderer/common/sampler/aa/count' 2)
-	(registry '/renderer/common/sampler/aa/type' 3)
 	(registry '/renderer/common/sampler/lens/count' 1)
-	(registry '/renderer/common/sampler/lens/type' 3)
 	(registry '/renderer/common/sampler/time/count' 1)
-	(registry '/renderer/common/sampler/time/type' 3)
 	(registry '/renderer/common/sampler/time/mapping' 0)
 	(registry '/renderer/common/sampler/time/scale' 1.0)
-	(registry '/renderer/common/sampler/spectral/count' 1)
-	(registry '/renderer/common/sampler/spectral/type' 3)
 	(registry '/renderer/integrator/direct/light/sample_count' 4)
-	(registry '/renderer/integrator/bidirect/light/max_depth' 1)
-	(registry '/renderer/integrator/bidirect/light/sample_count' 1)
 	(registry '/renderer/integrator/ao/sample_count' 16)
 	; Outputs
 	(output
