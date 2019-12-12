@@ -4,6 +4,7 @@
 
 #include <Eigen/Eigenvalues>
 #include <utility>
+#include <array>
 
 namespace PR {
 /* Unbounded quadric
