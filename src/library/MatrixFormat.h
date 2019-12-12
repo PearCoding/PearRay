@@ -3,40 +3,24 @@
 #include "PR_Config.h"
 
 namespace PR {
-template <int _Rows, int _Options, int _MaxRows, int _MaxCols>
-inline std::string matrix2String(const Eigen::Matrix<float, _Rows, 1, _Options, _MaxRows, _MaxCols>& m)
+template <typename OtherDerived>
+inline std::string matrix2String(const Eigen::DenseBase<OtherDerived>& m)
 {
 	static const Eigen::IOFormat sEigenFormatRowV(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "[", "]");
-
-	std::stringstream s;
-	s << m.format(sEigenFormatRowV);
-	return s.str();
-}
-
-template <int _Cols, int _Options, int _MaxRows, int _MaxCols>
-inline std::string matrix2String(const Eigen::Matrix<float, 1, _Cols, _Options, _MaxRows, _MaxCols>& m)
-{
 	static const Eigen::IOFormat sEigenFormatColV(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "{", "}", "", "");
-
-	std::stringstream s;
-	s << m.format(sEigenFormatColV);
-	return s.str();
-}
-
-template <int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-inline std::string matrix2String(const Eigen::Matrix<float, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& m)
-{
 	static const Eigen::IOFormat sEigenFormatMat(Eigen::StreamPrecision, 0, ", ", ", ", "{", "}", "[", "]");
 
-	std::stringstream s;
-	s << m.format(sEigenFormatMat);
-	return s.str();
-}
+	std::stringstream stream;
+	if (m.rows() == 1 && m.cols() == 1)
+		stream << m(0);
+	else if (m.rows() == 1)
+		stream << m.format(sEigenFormatColV);
+	else if (m.cols() == 1)
+		stream << m.format(sEigenFormatRowV);
+	else
+		stream << m.format(sEigenFormatMat);
 
-template <typename OtherDerived>
-inline std::string matrix2String(const Eigen::MatrixBase<OtherDerived>& m)
-{
-	return matrix2String(m.eval());
+	return stream.str();
 }
 
 inline std::string matrix2String(const Eigen::Quaternionf& m)
