@@ -24,6 +24,7 @@ public:
 		, mSphere(r)
 		, mMaterialID(matID)
 		, mLightID(lightID)
+		, mOptimizeSampling(true)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -115,7 +116,7 @@ public:
 		Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
 
 		Vector2f uv = rnd;
-		if (kv.dot(n) < 0)
+		if (mOptimizeSampling && kv.dot(n) > PR_EPSILON)
 			uv = Spherical::uv_from_normal(Vector3f(-n));
 
 		return Vector3f(uv(0), uv(1), 0);
@@ -138,20 +139,26 @@ public:
 		pt.DisplaceID = 0;
 	}
 
+	inline void optimizeSampling(bool b) { mOptimizeSampling = b; }
 	void beforeSceneBuild() override
 	{
 		IEntity::beforeSceneBuild();
 
 		const float area = surfaceArea(0);
+
+		mPDF_Cache = area > PR_EPSILON ? 1.0f / area : 0;
+
 		// We only consider view side of the sphere,
 		// therefore only half of the surface is considered in sampling.
-		mPDF_Cache = 0.5f * (area > PR_EPSILON ? 1.0f / area : 0);
+		if (mOptimizeSampling)
+			mPDF_Cache /= 2;
 	}
 
 private:
 	Sphere mSphere;
 	int32 mMaterialID;
 	int32 mLightID;
+	bool mOptimizeSampling;
 
 	float mPDF_Cache;
 };
@@ -177,7 +184,9 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		return std::make_shared<SphereEntity>(id, name, r, matID, emsID);
+		auto obj = std::make_shared<SphereEntity>(id, name, r, matID, emsID);
+		obj->optimizeSampling(reg.getForObject<bool>(RG_ENTITY, uuid, "optimize_sampling", true));
+		return obj;
 	}
 
 	const std::vector<std::string>& getNames() const

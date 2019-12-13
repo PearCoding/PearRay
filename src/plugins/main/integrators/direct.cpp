@@ -18,6 +18,8 @@
 #define MSI(n1, p1, n2, p2) IS::power_term((n1), (p1), (n2), (p2))
 
 /* Based on Path Integral formulation: (here length k)
+ * f(x) is the brdf. In our case a material already includes the cosine factor f(x)cos(N,x)
+ *
  * L(x0->x1)G(x0<->x1)f(x1)/p(x0)
  * |*| f(x2)cos(N2,x1<-x2)/p_(x1|x2)
  * |*| ...
@@ -33,6 +35,7 @@ public:
 	explicit IntDirect(size_t lightSamples)
 		: IIntegrator()
 		, mLightSampleCount(lightSamples)
+		, mMSIEnabled(true)
 	{
 	}
 
@@ -68,7 +71,7 @@ public:
 			return ColorTriplet::Zero();
 		} else {
 			// Trace shadow ray
-			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing, 1);
+			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
 			ShadowHit shadowHit = session.traceShadowRay(shadow);
 			if (shadowHit.Successful)
 				return ColorTriplet::Zero();
@@ -86,9 +89,9 @@ public:
 		}
 	}
 
-	void scatterLight(RenderTileSession& session, LightPathBuffer& lpb,
-					  const HitEntry& entry, const ShadingPoint& spt,
-					  IMaterial* material, bool& scattered)
+	void scatterLight(RenderTileSession& session, LightPath& path,
+					  const ShadingPoint& spt,
+					  IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
@@ -97,8 +100,6 @@ public:
 
 		const float scatProb  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
 		const size_t maxDepth = session.tile()->context()->settings().maxRayDepth;
-
-		scattered = false;
 
 		// Sample BxDF
 		MaterialSampleInput in;
@@ -110,33 +111,38 @@ public:
 		if (material->hasDeltaDistribution())
 			out.PDF_S = 1;
 
-		const float NdotL = out.Outgoing.dot(spt.N);
+		//const float NdotL = out.Outgoing.dot(spt.N);
 		if (out.PDF_S > PR_EPSILON
 			&& spt.Ray.IterationDepth + 1 < maxDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
-			Ray next = spt.Ray.next(spt.P, out.Outgoing, NdotL);
+			Ray next = spt.Ray.next(spt.P, out.Outgoing);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
 
 			if (!next.Weight.isZero()) {
-				LightPathBufferEntry pathEntry;
-				switch (out.Type) {
-				case MST_DiffuseReflection:
-					pathEntry.Flags = LPBEF_EVENT_DIFFUSE | LPBEF_SCATTER_REFLECTION;
-					break;
-				case MST_DiffuseTransmission:
-					pathEntry.Flags = LPBEF_EVENT_DIFFUSE;
-					break;
-				case MST_SpecularReflection:
-					pathEntry.Flags = LPBEF_SCATTER_REFLECTION;
-					break;
-				case MST_SpecularTransmission:
-					pathEntry.Flags = 0;
-					break;
+				path.addToken(LightPathToken(out.Type));
+
+				GeometryPoint npt;
+				IEntity* nentity;
+				IMaterial* nmaterial;
+				if (session.traceBounceRay(next, npt, nentity, nmaterial))
+					eval(session, path, next, npt, nentity, nmaterial);
+			} else {
+				session.tile()->statistics().addBackgroundHitCount();
+
+				for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+					if (light->hasDeltaDistribution())
+						continue;
+
+					// Only the ray is fixed (Should be handled better!)
+					InfiniteLightEvalInput lin;
+					lin.Point.Ray   = next;
+					lin.Point.Flags = SPF_Background;
+					InfiniteLightEvalOutput lout;
+					light->eval(lin, lout, session);
+
+					in.Point.Radiance = lout.Weight;
+					session.pushFragment(in.Point, path.concated(LightPathToken(ST_CAMERA, SE_NONE)));
 				}
-				pathEntry.LabelIndex = 0; // TODO
-				lpb.add(entry.RayID, pathEntry);
-				session.bounceRay(entry.SessionRayID, next);
-				scattered = true;
 			}
 		}
 	}
@@ -152,7 +158,7 @@ public:
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
-		IEntity* light = session.pickRandomLight(spt.Ray.Direction, lightPt, pdfA);
+		IEntity* light = session.pickRandomLight(spt.N, lightPt, pdfA);
 		if (!light)
 			return Li;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
@@ -176,7 +182,7 @@ public:
 				return Li;
 
 			// Trace shadow ray
-			Ray shadow			= spt.Ray.next(spt.P, L, 1);
+			Ray shadow			= spt.Ray.next(spt.P, L);
 			ShadowHit shadowHit = session.traceShadowRay(shadow);
 
 			if (!shadowHit.Successful
@@ -198,13 +204,13 @@ public:
 				MaterialEvalOutput out;
 				material->eval(in, out, session);
 
-				float msi = MSI(1, pdfA, 1, out.PDF_S);
+				float msi = mMSIEnabled ? MSI(1, pdfA, 1, out.PDF_S) : 1.0f;
 
 				Li = outL.Weight * out.Weight * msi / pdfA;
 			}
 		}
 
-		if (!Li.isZero())
+		if (!mMSIEnabled || !Li.isZero())
 			return Li;
 
 		// (2) Sample BRDF
@@ -220,7 +226,7 @@ public:
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
-				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing, 1);
+				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (shadowHit.Successful
 					&& shadowHit.EntityID == light->id()) {
@@ -247,10 +253,9 @@ public:
 		return Li;
 	}
 
-	bool perHit(RenderTileSession& session, LightPathBuffer& lpb,
-				const HitEntry& entry,
-				const Ray& ray, const GeometryPoint& pt,
-				IEntity* entity, IMaterial* material)
+	void eval(RenderTileSession& session, LightPath& path,
+			  const Ray& ray, const GeometryPoint& pt,
+			  IEntity* entity, IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
@@ -258,14 +263,12 @@ public:
 
 		// Early drop out for invalid splashes
 		if (!entity->isLight() && !material)
-			return false;
+			return;
 
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
 		spt.EntityID = entity->id();
 		spt.Radiance = ColorTriplet::Ones();
-
-		LightPath currentPath = lpb.getPath(entry.RayID);
 
 		// Only consider camera rays, as everything else produces too much noise
 		if (entity->isLight()
@@ -280,22 +283,19 @@ public:
 				LightEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				const float prevGEOM = std::abs(spt.NdotV) /* std::abs(spt.Ray.NdotL)*/ / spt.Depth2;
+				const float prevGEOM = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 / spt.Depth2;
 				spt.Radiance		 = outL.Weight * prevGEOM;
 
 				if (!spt.Radiance.isZero())
-					session.pushFragment(spt,
-										 currentPath.concated(
-											 LightPathToken(ST_EMISSIVE, SE_NONE)));
+					session.pushFragment(spt, path.concated(LightPathToken(ST_EMISSIVE, SE_NONE)));
 			}
 		}
 
 		if (!material)
-			return false;
+			return;
 
 		// Scatter Light
-		bool scattered = false;
-		scatterLight(session, lpb, entry, spt, material, scattered);
+		scatterLight(session, path, spt, material);
 
 		if (!material->hasDeltaDistribution()) {
 			// Direct Light
@@ -305,10 +305,10 @@ public:
 				spt.Radiance = factor * directLight(session, spt, token, material);
 
 				if (!spt.Radiance.isZero()) {
-					LightPath path = currentPath;
-					path.concat(token);
-					path.concat(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushFragment(spt, path);
+					LightPath new_path = path;
+					new_path.concat(token);
+					new_path.concat(LightPathToken(ST_EMISSIVE, SE_NONE));
+					session.pushFragment(spt, new_path);
 				}
 			}
 
@@ -319,15 +319,13 @@ public:
 											 light.get(), material);
 
 				if (!spt.Radiance.isZero()) {
-					LightPath path = currentPath;
-					path.concat(token);
-					path.concat(LightPathToken(ST_BACKGROUND, SE_NONE));
-					session.pushFragment(spt, path);
+					LightPath new_path = path;
+					new_path.concat(token);
+					new_path.concat(LightPathToken(ST_BACKGROUND, SE_NONE));
+					session.pushFragment(spt, new_path);
 				}
 			}
 		}
-
-		return scattered;
 	}
 
 	// Per thread
@@ -335,48 +333,37 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		const size_t maxPathSize = session.tile()->context()->settings().maxRayDepth + 2;
+
+		LightPath cb = LightPath::createCB();
 		while (session.handleCameraRays()) {
-			mLPBs.at(session.threadID())->reset();
-			float rerun = true;
+			session.handleHits(
+				[&](size_t /*session_ray_id*/, const Ray& ray) {
+					PR_PROFILE_THIS;
+					session.tile()->statistics().addBackgroundHitCount();
 
-			while (rerun) {
-				rerun = false;
-				session.handleHits(
-					[&](size_t session_ray_id, const Ray& ray) {
-						PR_PROFILE_THIS;
-						session.tile()->statistics().addBackgroundHitCount();
+					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+						if (light->hasDeltaDistribution())
+							continue;
 
-						/*if (ray.IterationDepth != 0)
-							return;*/
+						// Only the ray is fixed (Should be handled better!)
+						InfiniteLightEvalInput in;
+						in.Point.Ray   = ray;
+						in.Point.Flags = SPF_Background;
+						InfiniteLightEvalOutput out;
+						light->eval(in, out, session);
 
-						const size_t ray_id   = session.rayStream()->linearID(session_ray_id);
-						LightPath currentPath = mLPBs.at(session.threadID())->getPath(ray_id);
-						for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-							if (light->hasDeltaDistribution())
-								continue;
-
-							// Only the ray is fixed (Should be handled better!)
-							InfiniteLightEvalInput in;
-							in.Point.Ray   = ray;
-							in.Point.Flags = SPF_Background;
-							InfiniteLightEvalOutput out;
-							light->eval(in, out, session);
-
-							in.Point.Radiance = out.Weight /* std::abs(ray.NdotL)*/;
-							session.pushFragment(in.Point,
-												 currentPath.concated(
-													 LightPathToken(ST_BACKGROUND, SE_NONE)));
-						}
-					},
-					[&](const HitEntry& entry,
-						const Ray& ray, const GeometryPoint& pt,
-						IEntity* entity, IMaterial* material) {
-						float scattered = perHit(session, *mLPBs.at(session.threadID()).get(),
-												 entry, ray, pt, entity, material);
-						if (scattered)
-							rerun = true;
-					});
-			}
+						in.Point.Radiance = out.Weight;
+						session.pushFragment(in.Point, cb);
+					}
+				},
+				[&](const HitEntry& /*entry*/,
+					const Ray& ray, const GeometryPoint& pt,
+					IEntity* entity, IMaterial* material) {
+					LightPath path(maxPathSize);
+					path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
+					eval(session, path, ray, pt, entity, material);
+				});
 		}
 	}
 
@@ -385,10 +372,13 @@ public:
 		return RenderStatus();
 	}
 
+	inline void enableMSI(bool b) { mMSIEnabled = b; }
+
 private:
 	std::vector<std::unique_ptr<LightPathBuffer>> mLPBs;
 
 	size_t mLightSampleCount;
+	bool mMSIEnabled;
 };
 
 class IntDirectFactory : public IIntegratorFactory {
@@ -399,7 +389,9 @@ public:
 
 		size_t lightsamples = (size_t)reg.getByGroup<uint32>(RG_INTEGRATOR, "direct/light/sample_count", 4);
 
-		return std::make_shared<IntDirect>(lightsamples);
+		auto obj = std::make_shared<IntDirect>(lightsamples);
+		obj->enableMSI(reg.getByGroup<bool>(RG_INTEGRATOR, "direct/msi/enabled", true));
+		return obj;
 	}
 
 	const std::vector<std::string>& getNames() const override

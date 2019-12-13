@@ -31,7 +31,10 @@ public:
 		return tmp;
 	}
 
+	// Camera -> n*Diffuse -> Light
 	static LightPath createCDL(uint32 diffuseCount = 1);
+	// Camera -> Background
+	static LightPath createCB();
 
 private:
 	std::vector<LightPathToken> mTokens;

@@ -94,40 +94,49 @@ void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 {
 	PR_PROFILE_THIS;
 
-	Ray in;
-	SingleCollisionOutput out;
-
 	for (size_t i = 0;
 		 i < grp.size();
 		 ++i) {
-		in = grp.getRay(i);
+		Ray in = grp.getRay(i);
 		rays.invalidateRay(i + grp.offset());
 
-		// Check for collisions
-		mKDTree->checkCollision(
-			in, out,
-			[this](const Ray& in2, uint64 index,
-				   SingleCollisionOutput& out2) {
-				mEntities[index]->checkCollision(in2, out2);
-			});
-
-		float hitD = out.HitDistance;
-		if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
-			HitEntry entry;
+		HitEntry entry;
+		if (traceRay(in, entry)) {
 			entry.SessionRayID = static_cast<uint32>(i + grp.offset());
 			entry.RayID		   = static_cast<uint32>(grp.stream()->linearID(entry.SessionRayID));
-			entry.MaterialID   = out.MaterialID;
-			entry.EntityID	 = out.EntityID;
-			entry.PrimitiveID  = out.FaceID;
-			for (int i = 0; i < 3; ++i)
-				entry.Parameter[i] = out.Parameter[i];
-			entry.Flags = out.Flags;
-
 			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 			hits.add(entry);
 		} else {
 			nonHit(i + grp.offset(), in);
 		}
+	}
+}
+
+bool Scene::traceRay(const Ray& in, HitEntry& entry) const
+{
+	PR_PROFILE_THIS;
+
+	SingleCollisionOutput out;
+	mKDTree->checkCollision(
+		in, out,
+		[this](const Ray& in2, uint64 index,
+			   SingleCollisionOutput& out2) {
+			mEntities[index]->checkCollision(in2, out2);
+		});
+
+	float hitD = out.HitDistance;
+	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
+		entry.SessionRayID = 0;
+		entry.RayID		   = 0;
+		entry.MaterialID   = out.MaterialID;
+		entry.EntityID	 = out.EntityID;
+		entry.PrimitiveID  = out.FaceID;
+		for (int i = 0; i < 3; ++i)
+			entry.Parameter[i] = out.Parameter[i];
+		entry.Flags = out.Flags;
+		return true;
+	} else {
+		return false;
 	}
 }
 

@@ -19,6 +19,9 @@ OutputBufferBucket::~OutputBufferBucket()
 {
 }
 
+// Uncomment this to allow all rays to contribute to AOVs outside spectrals
+//#define PR_ALL_RAYS_CONTRIBUTE
+
 void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 									  const LightPath& path)
 {
@@ -43,11 +46,11 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 
 	const auto blend1D = [&](uint32 ix, uint32 iy, AOV1D var, float val, float blend) {
 		if (mData.mInt1D[var])
-			mData.mInt1D[var]->blendFragment(ix, iy, 0, val, blend);
+			mData.mInt1D[var]->blendFragment(ix, iy, 0, s.Ray.Weight[0] * val, blend);
 
 		for (auto pair : mData.mLPE_1D[var]) {
 			if (pair.first.match(path)) {
-				pair.second->blendFragment(ix, iy, 0, val, blend);
+				pair.second->blendFragment(ix, iy, 0, s.Ray.Weight[0] * val, blend);
 			}
 		}
 	};
@@ -55,12 +58,12 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 	const auto blend3D = [&](uint32 ix, uint32 iy, AOV3D var, const Vector3f& val, float blend) {
 		if (mData.mInt3D[var])
 			for (size_t i = 0; i < 3; ++i)
-				mData.mInt3D[var]->blendFragment(ix, iy, i, val(i), blend);
+				mData.mInt3D[var]->blendFragment(ix, iy, i, s.Ray.Weight[i] * val(i), blend);
 
 		for (auto pair : mData.mLPE_3D[var]) {
 			if (pair.first.match(path)) {
 				for (size_t i = 0; i < 3; ++i)
-					pair.second->blendFragment(ix, iy, i, val(i), blend);
+					pair.second->blendFragment(ix, iy, i, s.Ray.Weight[i] * val(i), blend);
 			}
 		}
 	};
@@ -94,30 +97,38 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 		}
 	}
 
-	// Independent of filter
-	if (!(s.Flags & SPF_Background)) {
-		size_t sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(x, y, 0);
-		float blend		   = 1.0f / (sampleCount + 1.0f);
+#ifndef PR_ALL_RAYS_CONTRIBUTE
+	if (s.Ray.IterationDepth == 0) {
+#endif
+		// Independent of filter
+		if (!(s.Flags & SPF_Background)) {
+			size_t sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(x, y, 0);
+			float blend		   = 1.0f / (sampleCount + 1.0f);
 
-		blend3D(x, y, AOV_Position, s.P, blend);
-		blend3D(x, y, AOV_Normal, s.N, blend);
-		blend3D(x, y, AOV_NormalG, s.Geometry.N, blend);
-		blend3D(x, y, AOV_Tangent, s.Nx, blend);
-		blend3D(x, y, AOV_Bitangent, s.Ny, blend);
-		blend3D(x, y, AOV_View, s.Ray.Direction, blend);
-		blend3D(x, y, AOV_UVW, s.Geometry.UVW, blend);
-		blend3D(x, y, AOV_DPDT, s.Geometry.dPdT, blend);
+			blend3D(x, y, AOV_Position, s.P, blend);
+			blend3D(x, y, AOV_Normal, s.N, blend);
+			blend3D(x, y, AOV_NormalG, s.Geometry.N, blend);
+			blend3D(x, y, AOV_Tangent, s.Nx, blend);
+			blend3D(x, y, AOV_Bitangent, s.Ny, blend);
+			blend3D(x, y, AOV_View, s.Ray.Direction, blend);
+			blend3D(x, y, AOV_UVW, s.Geometry.UVW, blend);
+			blend3D(x, y, AOV_DPDT, s.Geometry.dPdT, blend);
 
-		blend1D(x, y, AOV_Time, s.Ray.Time, blend);
-		blend1D(x, y, AOV_Depth, std::sqrt(s.Depth2), blend);
+			blend1D(x, y, AOV_Time, s.Ray.Time, blend);
+			blend1D(x, y, AOV_Depth, std::sqrt(s.Depth2), blend);
 
-		blend1D(x, y, AOV_EntityID, s.EntityID, blend);
-		blend1D(x, y, AOV_MaterialID, s.Geometry.MaterialID, blend);
-		blend1D(x, y, AOV_EmissionID, s.Geometry.EmissionID, blend);
-		blend1D(x, y, AOV_DisplaceID, s.Geometry.DisplaceID, blend);
+			blend1D(x, y, AOV_EntityID, s.EntityID, blend);
+			blend1D(x, y, AOV_MaterialID, s.Geometry.MaterialID, blend);
+			blend1D(x, y, AOV_EmissionID, s.Geometry.EmissionID, blend);
+			blend1D(x, y, AOV_DisplaceID, s.Geometry.DisplaceID, blend);
+		}
+
+		mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(x, y, 0) += 1;
+
+#ifndef PR_ALL_RAYS_CONTRIBUTE
 	}
+#endif
 
-	mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(x, y, 0) += 1;
 	if (isInvalid) {
 		pushFeedbackFragment(x - filterRadius, y - filterRadius,
 							 (isNaN ? OF_NaN : 0)

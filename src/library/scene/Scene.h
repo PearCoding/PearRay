@@ -42,12 +42,14 @@ public:
 
 	template <typename Func>
 	inline void traceRays(RayStream& rays, HitStream& hits, Func nonHit) const;
+	inline bool traceRay(const Ray& ray, HitEntry& entry) const;
 	inline ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
 
-	void beforeRender(RenderContext*ctx);
-	void afterRender(RenderContext*ctx);
+	void beforeRender(RenderContext* ctx);
+	void afterRender(RenderContext* ctx);
+
 private:
 	template <typename Func>
 	inline void traceCoherentRays(RayStream& rays, const RayGroup& grp,

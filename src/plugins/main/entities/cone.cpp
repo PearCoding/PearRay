@@ -26,6 +26,7 @@ public:
 		, mHeight(height)
 		, mMaterialID(matID)
 		, mLightID(lightID)
+		, mOffset(0, 0, 0)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -75,6 +76,7 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
+		in_local.Origin += promote(mOffset);
 
 		mDisk.intersects(in_local, out);
 
@@ -107,6 +109,7 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
+		in_local.Origin += mOffset;
 
 		mDisk.intersects(in_local, out);
 
@@ -159,11 +162,11 @@ public:
 		float v = parameter[1];
 
 		if (face == 0) { // Disk
-			pt.P   = transform() * mDisk.surfacePoint(u, v);
+			pt.P   = transform() * (mDisk.surfacePoint(u, v) - mOffset);
 			pt.N   = normalMatrix() * (-mDisk.normal());
 			pt.UVW = Vector3f(u, v, 0);
 		} else {
-			pt.P = transform() * parameter;
+			pt.P = transform() * (parameter - mOffset);
 			pt.N = normalMatrix() * Quadric::normal(constructConeParameters(), parameter);
 			// TODO: Better uv
 			pt.UVW = parameter.cwiseAbs();
@@ -193,6 +196,11 @@ public:
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 	}
 
+	inline void centerOn()
+	{
+		mOffset = Vector3f(0, 0, mHeight / 2);
+	}
+
 private:
 	inline Quadric::ParameterArray constructConeParameters() const
 	{
@@ -207,6 +215,7 @@ private:
 
 	int32 mMaterialID;
 	int32 mLightID;
+	Vector3f mOffset;
 
 	float mPDF_Cache;
 }; // namespace PR
@@ -235,7 +244,11 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		return std::make_shared<ConeEntity>(id, name, radius, height, matID, emsID);
+		auto obj = std::make_shared<ConeEntity>(id, name, radius, height, matID, emsID);
+		if (reg.getForObject<bool>(RG_ENTITY, uuid, "center_on", false))
+			obj->centerOn();
+
+		return obj;
 	}
 
 	const std::vector<std::string>& getNames() const

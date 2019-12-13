@@ -120,6 +120,27 @@ void RenderTileSession::endShadingGroup(const ShadingGroup& grp)
 		material->endGroup();
 }
 
+bool RenderTileSession::traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const
+{
+	PR_PROFILE_THIS;
+	mTile->statistics().addBounceRayCount();
+
+	HitEntry entry;
+	if (!mTile->context()->scene()->traceRay(ray, entry))
+		return false;
+
+	entity = getEntity(entry.EntityID);
+	if (!entity)
+		return false;
+
+	material = getMaterial(entry.MaterialID);
+
+	entity->provideGeometryPoint(ray.Direction, entry.PrimitiveID,
+								 Vector3f(entry.Parameter[0], entry.Parameter[1], entry.Parameter[2]), pt);
+
+	return true;
+}
+
 ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 {
 	PR_PROFILE_THIS;

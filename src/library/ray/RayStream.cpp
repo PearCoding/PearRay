@@ -39,7 +39,6 @@ RayStream::RayStream(size_t raycount)
 	mTime.reserve(mSize);
 	mWavelengthIndex.reserve(mSize);
 	mFlags.reserve(mSize);
-	mNdotL.reserve(mSize);
 	for (int i = 0; i < 3; ++i)
 		mWeight[i].reserve(mSize);
 	mInternalIndex.reserve(mSize);
@@ -72,7 +71,6 @@ void RayStream::addRay(const Ray& ray)
 	mTime.emplace_back(to_unorm16(ray.Time));
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags & ~RF_Invalid);
-	mNdotL.emplace_back(ray.NdotL);
 	for (int i = 0; i < 3; ++i)
 		mWeight[i].emplace_back(ray.Weight(i));
 	mInternalIndex.emplace_back(mInternalIndex.size());
@@ -103,7 +101,6 @@ void RayStream::setRay(size_t id, const Ray& ray)
 	mTime[cid]			  = to_unorm16(ray.Time);
 	mWavelengthIndex[cid] = ray.WavelengthIndex;
 	mFlags[cid]			  = ray.Flags & ~RF_Invalid;
-	mNdotL[cid]			  = ray.NdotL;
 	for (int i = 0; i < 3; ++i)
 		mWeight[i][cid] = ray.Weight(i);
 }
@@ -140,7 +137,6 @@ void RayStream::reset()
 	mTime.clear();
 	mWavelengthIndex.clear();
 	mFlags.clear();
-	mNdotL.clear();
 	for (int i = 0; i < 3; ++i)
 		mWeight[i].clear();
 	mInternalIndex.clear();
@@ -171,7 +167,7 @@ RayGroup RayStream::getNextGroup()
 
 size_t RayStream::getMemoryUsage() const
 {
-	return mSize * (3 * sizeof(float) + COMPRES_MEM + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + 2 * sizeof(uint8) + sizeof(float) + sizeof(size_t));
+	return mSize * (3 * sizeof(float) + COMPRES_MEM + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + 2 * sizeof(uint8) + sizeof(size_t));
 }
 
 Ray RayStream::getRay(size_t id) const
@@ -209,7 +205,6 @@ Ray RayStream::getRay(size_t id) const
 	ray.Weight			= ColorTriplet(mWeight[0][cid],
 							   mWeight[1][cid],
 							   mWeight[2][cid]);
-	ray.NdotL			= mNdotL[cid];
 
 	ray.normalize();
 	return ray;

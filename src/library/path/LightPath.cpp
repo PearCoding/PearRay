@@ -29,4 +29,12 @@ LightPath LightPath::createCDL(uint32 diffuseCount)
 	path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
 	return path;
 }
+
+LightPath LightPath::createCB()
+{
+	LightPath path(2);
+	path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
+	path.addToken(LightPathToken(ST_BACKGROUND, SE_NONE));
+	return path;
+}
 } // namespace PR

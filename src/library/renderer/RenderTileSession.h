@@ -59,9 +59,9 @@ public:
 	inline void enqueueCameraRay(const Ray& ray);
 	inline void enqueueLightRay(const Ray& ray);
 	inline bool enoughRaySpace(size_t requested = 1) const;
-	inline void bounceRay(size_t id, const Ray& ray);
 	inline Ray getRay(size_t id) const;
 
+	bool traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
 	ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline size_t maxBufferCount() const;

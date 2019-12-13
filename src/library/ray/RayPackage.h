@@ -18,7 +18,6 @@ struct RayPackageBase {
 	Vector3t<V> Origin	= Vector3t<V>(V(0), V(0), V(0));
 	Vector3t<V> Direction = Vector3t<V>(V(0), V(0), V(0));
 
-	FloatingType NdotL			= FloatingType(1);
 	ColorTripletBase<V> Weight  = ColorTripletBase<V>(V(0), V(0), V(0));
 	FloatingType Time			= FloatingType(0);
 	IntegerType IterationDepth  = IntegerType(0);
@@ -27,11 +26,9 @@ struct RayPackageBase {
 	IntegerType PixelIndex		= IntegerType(0);
 
 	RayPackageBase() = default;
-	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d,
-						  const FloatingType& ndotl = FloatingType(1))
+	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d)
 		: Origin(o)
 		, Direction(d)
-		, NdotL(ndotl)
 	{
 	}
 
@@ -86,15 +83,13 @@ struct RayPackageBase {
 		return (p2 - global_other.Origin).norm();
 	}
 
-	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d,
-								  const FloatingType& ndotl = FloatingType(1)) const
+	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d) const
 	{
 		RayPackageBase<V> other;
 		other = *this;
 
 		other.Origin	= Transform::safePosition(o, d);
 		other.Direction = d;
-		other.NdotL		= ndotl;
 		other.IterationDepth += IntegerType(1);
 
 		return other;

@@ -19,12 +19,6 @@ inline bool RenderTileSession::enoughRaySpace(size_t requested) const
 	return mRayStream->enoughSpace(requested);
 }
 
-inline void RenderTileSession::bounceRay(size_t id, const Ray& ray)
-{
-	mRayStream->setRay(id, ray);
-	mTile->statistics().addBounceRayCount();
-}
-
 inline Ray RenderTileSession::getRay(size_t id) const
 {
 	return mRayStream->getRay(id);
