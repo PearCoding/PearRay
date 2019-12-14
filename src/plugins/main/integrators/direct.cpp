@@ -283,7 +283,7 @@ public:
 				LightEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				const float prevGEOM = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 / spt.Depth2;
+				const float prevGEOM = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
 				spt.Radiance		 = outL.Weight * prevGEOM;
 
 				if (!spt.Radiance.isZero())

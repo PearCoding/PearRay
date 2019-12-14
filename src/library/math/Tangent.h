@@ -19,10 +19,7 @@ inline Vector3t<T> toTangentSpace(const Vector3t<T>& N,
 								  const Vector3t<T>& Nx, const Vector3t<T>& Ny,
 								  const Vector3t<T>& V)
 {
-	return Vector3t<T>(
-		N(0) * V(2) + Ny(0) * V(1) + Nx(0) * V(0),
-		N(1) * V(2) + Ny(1) * V(1) + Nx(1) * V(0),
-		N(2) * V(2) + Ny(2) * V(1) + Nx(2) * V(0));
+	return Vector3t<T>(Nx(2), Ny(2), N(2)) * V(2) + Vector3t<T>(Nx(1), Ny(1), N(1)) * V(1) + Vector3t<T>(Nx(0), Ny(0), N(0)) * V(0);
 }
 
 #define PR_TANGENT_EPS (0.9999f)

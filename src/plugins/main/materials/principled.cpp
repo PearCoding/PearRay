@@ -220,10 +220,16 @@ public:
 
 		Vector3f nV  = Tangent::toTangentSpace<float>(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
 		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, out.PDF_S);
+		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, out.PDF_S);
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		//PR_ASSERT(out.Outgoing.dot(in.Point.N) > 0, "Expected reflection!");
+
 		// Reflect incoming ray by the calculated half vector
 		out.Outgoing = Reflection::reflect(out.Outgoing.dot(in.Point.Ray.Direction), out.Outgoing, in.Point.Ray.Direction);
-		out.Type	 = MST_SpecularReflection;
+		out.Outgoing.normalize();
+		out.PDF_S *= 4 * std::abs(out.Outgoing.dot(in.Point.Ray.Direction));
+
+		out.Type = MST_SpecularReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -244,14 +250,11 @@ public:
 		float clearcoat		 = mClearcoat->eval(in.Point);
 		float clearcoatGloss = mClearcoatGloss->eval(in.Point);
 
-		float weight = (1 - roughness) * std::max(0.1f, metallic);
-		if (in.RND[0] < weight) {
+		float weight = (1 - roughness) /* std::max(0.1f, metallic)*/;
+		if (in.RND[0] < weight)
 			sampleSpecularPath(in, in.RND[0] / weight, in.RND[1], out, roughness, anisotropic);
-			out.PDF_S *= weight;
-		} else {
+		else
 			sampleDiffusePath(in, (in.RND[0] - weight) / (1 - weight), in.RND[1], out);
-			out.PDF_S *= (1 - weight);
-		}
 
 		out.Weight = evalBRDF(in.Point, out.Outgoing,
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
