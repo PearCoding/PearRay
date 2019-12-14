@@ -8,6 +8,7 @@ public:
 	std::string Mode;
 	bool IsVerbose;
 	bool IsQuiet;
+	bool HelpMode;
 
 	bool parse(int argc, char** argv);
 };

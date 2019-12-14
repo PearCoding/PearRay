@@ -77,9 +77,10 @@ void rnd_seed(uint64 seed)
 	ImageOutput::destroy(out);
 #endif
 }
-void suite_random1()
+
+void suite_random()
 {
-	bf::create_directory("results/random1");
+	bf::create_directory("results/random");
 
 	rnd_seed(0);
 	rnd_seed(42);

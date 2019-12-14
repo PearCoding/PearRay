@@ -23,7 +23,6 @@ public:
 		, mPlane(Vector3f(0, 0, 0), xAxis, yAxis)
 		, mMaterialID(matID)
 		, mLightID(lightID)
-		, mDoublesided(true)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -100,7 +99,7 @@ public:
 		return Vector3f(rnd(0), rnd(1), 0);
 	}
 
-	void provideGeometryPoint(const Vector3f& view, uint32, const Vector3f& parameter,
+	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
@@ -117,9 +116,6 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		if (mDoublesided && pt.N.dot(view) > PR_EPSILON)
-			Tangent::invert_frame(pt.N, pt.Nx, pt.Ny);
-
 		pt.UVW		  = Vector3f(u, v, 0);
 		pt.MaterialID = mMaterialID;
 		pt.EmissionID = mLightID;
@@ -129,11 +125,6 @@ public:
 	inline void centerOn()
 	{
 		mPlane.setPosition(-0.5f * mPlane.xAxis() - 0.5f * mPlane.yAxis());
-	}
-
-	inline void makeDoublesided(bool b = true)
-	{
-		mDoublesided = b;
 	}
 
 	void beforeSceneBuild() override
@@ -148,7 +139,6 @@ private:
 	Plane mPlane;
 	int32 mMaterialID;
 	int32 mLightID;
-	bool mDoublesided;
 
 	float mPDF_Cache;
 };
@@ -184,8 +174,6 @@ public:
 		auto obj = std::make_shared<PlaneEntity>(id, name, width * xAxis, height * yAxis, matID, emsID);
 		if (reg.getForObject<bool>(RG_ENTITY, uuid, "centering", false))
 			obj->centerOn();
-
-		obj->makeDoublesided(reg.getForObject<bool>(RG_ENTITY, uuid, "doublesided", true));
 
 		return obj;
 	}

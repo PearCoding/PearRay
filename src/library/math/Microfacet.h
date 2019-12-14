@@ -59,7 +59,18 @@ inline float g_1_smith(float NdotK, float KdotX, float KdotY, float roughnessX, 
 	const float kx = KdotX * roughnessX;
 	const float ky = KdotY * roughnessY;
 	const float b  = NdotK * NdotK;
-	return 1.0f / (NdotK + std::sqrt(kx * kx + ky * ky + b));
+
+	const float denom = NdotK + std::sqrt(kx * kx + ky * ky + b);
+	if (denom <= PR_EPSILON)
+		return 0.0f;
+	else
+		return 1.0f / denom;
+}
+
+// Not optimized
+inline float g_1_smith_nopt(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
+{
+	return 2 * NdotK * g_1_smith(NdotK, KdotX, KdotY, roughnessX, roughnessY);
 }
 
 /////////////////////////////////
@@ -86,7 +97,10 @@ inline float ndf_ggx(float NdotH, float roughness)
 	const float inv	= dot2 * (alpha2 - 1) + 1;
 	const float inv_t2 = inv * inv;
 
-	return alpha2 * PR_1_PI / inv_t2;
+	if (inv_t2 <= PR_EPSILON)
+		return 0.0f;
+	else
+		return alpha2 * PR_1_PI / inv_t2;
 }
 
 inline float ndf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, float roughnessY)
@@ -94,7 +108,11 @@ inline float ndf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, fl
 	const float t = HdotX * HdotX / (roughnessX * roughnessX)
 					+ HdotY * HdotY / (roughnessY * roughnessY)
 					+ NdotH * NdotH;
-	return PR_1_PI / (roughnessX * roughnessY * t * t);
+	const float denom = roughnessX * roughnessY * t * t;
+	if (denom <= PR_EPSILON)
+		return 0.0f;
+	else
+		return PR_1_PI / denom;
 }
 
 ////////////////////////////////
@@ -205,8 +223,8 @@ inline float pdf_ggx_vndf(float NdotV, float VdotX, float VdotY,
 						  float VdotH, float NdotH, float HdotX, float HdotY,
 						  float roughnessX, float roughnessY)
 {
-	const float Dv = g_1_smith(NdotV, VdotX, VdotY, roughnessX, roughnessY) * VdotH * ndf_ggx(NdotH, HdotX, HdotY, roughnessX, roughnessY);
-	return Dv / (4 * VdotH);
+	const float Dv = g_1_smith_nopt(NdotV, VdotX, VdotY, roughnessX, roughnessY) * VdotH * ndf_ggx(NdotH, HdotX, HdotY, roughnessX, roughnessY);
+	return Dv / NdotV;
 }
 
 // nV is in sample space!
@@ -236,7 +254,8 @@ inline Vector3f sample_ggx_vndf(float u0, float u1,
 	// Section 3.4: transforming the normal back to the ellipsoid configuration
 	Vector3f H = Vector3f(roughnessX * Nh(0), roughnessY * Nh(1), std::max(0.0f, Nh(2))).normalized();
 
-	pdf = pdf_ggx_vndf(nV(2), nV(0), nV(1), nV.dot(H), H(2), H(0), H(1), roughnessX, roughnessY);
+	pdf = pdf_ggx_vndf(nV(2), nV(0), nV(1), std::max(0.0f, nV.dot(H)),
+					   H(2), H(0), H(1), roughnessX, roughnessY);
 	return H;
 }
 

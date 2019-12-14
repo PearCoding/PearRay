@@ -1,3 +1,4 @@
+#include "image_io.h"
 #include "Logger.h"
 
 #include "spectral/RGBConverter.h"
@@ -9,11 +10,55 @@
 #include <sstream>
 
 OIIO_NAMESPACE_USING
-using namespace PR;
 namespace bf = boost::filesystem;
 
-static void save_spec(const std::string& path,
-					  const Spectrum& spec)
+namespace PR {
+void save_normalized_gray(const std::string& path, size_t xres, size_t yres, const std::vector<float>& data)
+{
+	float max = 0;
+	for (size_t i = 0; i < data.size(); ++i)
+		max = std::max(max, data[i]);
+
+	if (max <= 1.0f) {
+		save_gray(path, xres, yres, data);
+	} else {
+		std::vector<float> copy = data;
+		for (size_t i = 0; i < data.size(); ++i)
+			copy[i] /= max;
+
+		save_gray(path, xres, yres, copy);
+	}
+}
+
+void save_gray(const std::string& path, size_t xres, size_t yres, const std::vector<float>& data)
+{
+	save_image(path, xres, yres, data, 1);
+}
+
+void save_image(const std::string& path, size_t xres, size_t yres, const std::vector<float>& data, size_t channels)
+{
+#if OIIO_PLUGIN_VERSION >= 22
+	std::unique_ptr<ImageOutput> out = ImageOutput::create(path);
+#else
+	ImageOutput* out = ImageOutput::create(path);
+#endif
+	if (!out) {
+		std::cout << "Couldn't save image " << path << std::endl;
+		return;
+	}
+
+	ImageSpec spec((int)xres, (int)yres, (int)channels, TypeDesc::FLOAT);
+	out->open(path, spec);
+	out->write_image(TypeDesc::FLOAT, data.data());
+	out->close();
+
+#if OIIO_PLUGIN_VERSION < 22
+	ImageOutput::destroy(out);
+#endif
+}
+
+void save_spec(const std::string& path,
+			   const Spectrum& spec)
 {
 	constexpr float MAX_INTENSITY = 2.0f;
 	const size_t xres = spec.samples(), yres = 100;
@@ -61,9 +106,9 @@ static void save_spec(const std::string& path,
 #endif
 }
 
-static void save_image(const std::string& path,
-					   float r, float g, float b,
-					   float r2, float g2, float b2)
+void save_color_preview(const std::string& path,
+						float r, float g, float b,
+						float r2, float g2, float b2)
 {
 	const size_t xres = 32, yres = 32;
 	const size_t channels = 3;
@@ -104,51 +149,4 @@ static void save_image(const std::string& path,
 	ImageOutput::destroy(out);
 #endif
 }
-
-static float maxE = 0;
-static float minE = std::numeric_limits<float>::infinity();
-
-static void handle_color(float r, float g, float b, std::ofstream& log)
-{
-	std::shared_ptr<SpectrumDescriptor> desc = SpectrumDescriptor::createStandardSpectral();
-	Spectrum spec(desc);
-
-	PR::RGBConverter::toSpec(spec, r, g, b);
-	float R, G, B;
-	PR::RGBConverter::convert(spec, R, G, B);
-
-	float err = std::sqrt(std::pow(r - R, 2) + std::pow(g - G, 2) + std::pow(b - B, 2));
-	log << "[" << r << "," << g << "," << b << "]=" << err << std::endl;
-	maxE = std::max(err, maxE);
-	minE = std::min(err, minE);
-
-	std::stringstream stream;
-	stream << "results/spectral1/"
-		   << int(r * 255) << "_" << int(g * 255) << "_" << int(b * 255);
-	save_image(stream.str() + ".png", r, g, b, R, G, B);
-	save_spec(stream.str() + "_spec.png", spec);
-}
-
-void suite_spectral1()
-{
-	bf::create_directory("results/spectral1");
-
-	std::ofstream log("results/spectral1/errors.log");
-
-	maxE = 0;
-	minE = std::numeric_limits<float>::infinity();
-
-	constexpr size_t count = 11;
-	constexpr float step   = 1.0f / (count - 1);
-	for (size_t r = 0; r < count; ++r) {
-		for (size_t g = 0; g < count; ++g) {
-			for (size_t b = 0; b < count; ++b) {
-				handle_color(r * step, g * step, b * step, log);
-			}
-		}
-	}
-
-	log << std::endl
-		<< "MAX = " << maxE << std::endl
-		<< "MIN = " << minE << std::endl;
-}
+} // namespace PR

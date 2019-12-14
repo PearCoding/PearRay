@@ -11,10 +11,12 @@ class EnvironmentLight : public IInfiniteLight {
 public:
 	EnvironmentLight(uint32 id, const std::string& name,
 					 const std::shared_ptr<FloatSpectralMapSocket>& spec,
-					 const std::shared_ptr<FloatSpectralMapSocket>& background)
+					 const std::shared_ptr<FloatSpectralMapSocket>& background,
+					 float factor)
 		: IInfiniteLight(id, name)
 		, mRadiance(spec)
 		, mBackground(background)
+		, mRadianceFactor(factor)
 	{
 		Vector2i recSize = spec->queryRecommendedSize();
 		if (recSize(0) > 1 && recSize(1) > 1) {
@@ -32,7 +34,8 @@ public:
 				coord.UV  = Vector2f(u, v);
 				coord.dUV = filterSize;
 
-				return sinTheta * mRadiance->relativeLuminance(coord);
+				const float val = sinTheta * mRadiance->relativeLuminance(coord);
+				return (val <= PR_EPSILON) ? 0.0f : val;
 			});
 		}
 	}
@@ -46,7 +49,14 @@ public:
 		coord.Index = in.Point.Ray.WavelengthIndex;
 
 		out.Weight = mBackground->eval(coord);
-		out.PDF_S  = 0.5f * PR_1_PI;
+
+		if (mDistribution) {
+			const float sinTheta = std::sin(coord.UV(1) * PR_PI);
+			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
+			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+		} else {
+			out.PDF_S = Projection::hemi_pdf();
+		}
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
@@ -61,13 +71,11 @@ public:
 			coord.UV	= uv;
 			coord.UV(1) = 1 - coord.UV(1);
 			coord.Index = in.Point.Ray.WavelengthIndex;
-			out.Weight  = mRadiance->eval(coord);
+			out.Weight  = mRadianceFactor * mRadiance->eval(coord);
 
-			const float sinTheta = std::sin(uv(1) * PR_PI);
-			if (sinTheta > PR_EPSILON)
-				out.PDF_S = 0.0f;
-			else
-				out.PDF_S /= (2 * PR_PI * PR_PI * sinTheta);
+			const float sinTheta = std::sin((1 - uv(1)) * PR_PI);
+			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
+			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
 		} else {
 			out.Outgoing = Projection::hemi(in.RND[0], in.RND[1], out.PDF_S);
 			out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
@@ -76,7 +84,7 @@ public:
 			coord.UV	= in.RND;
 			coord.UV(1) = 1 - coord.UV(1);
 			coord.Index = in.Point.Ray.WavelengthIndex;
-			out.Weight  = mRadiance->eval(coord);
+			out.Weight  = mRadianceFactor * mRadiance->eval(coord);
 		}
 	}
 
@@ -86,7 +94,9 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <EnvironmentLight>:" << std::endl
-			   << "    Radiance:     " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl;
+			   << "    Radiance:     " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
+			   << "    Background:   " << (mBackground ? mBackground->dumpInformation() : "NONE") << std::endl
+			   << "    Factor:       " << mRadianceFactor << std::endl;
 		if (mDistribution) {
 			stream << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl;
 		} else {
@@ -103,6 +113,7 @@ private:
 	// Most of the time both are the same
 	std::shared_ptr<FloatSpectralMapSocket> mRadiance;
 	std::shared_ptr<FloatSpectralMapSocket> mBackground;
+	float mRadianceFactor;
 };
 
 class EnvironmentLightFactory : public IInfiniteLightFactory {
@@ -117,6 +128,8 @@ public:
 																		 "radiance", "");
 		const std::string backgroundName = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
 																		 "background", "");
+		const float factor				 = std::max(0.0000001f, reg.getForObject<float>(RG_INFINITELIGHT, uuid,
+																			"factor", 1.0f));
 
 		auto rad = env.getSpectralMapSocket(radianceName, 1);
 		std::shared_ptr<FloatSpectralMapSocket> background;
@@ -125,7 +138,7 @@ public:
 		else
 			background = env.getSpectralMapSocket(backgroundName, 1);
 
-		return std::make_shared<EnvironmentLight>(id, name, rad, background);
+		return std::make_shared<EnvironmentLight>(id, name, rad, background, factor);
 	}
 
 	const std::vector<std::string>& getNames() const override

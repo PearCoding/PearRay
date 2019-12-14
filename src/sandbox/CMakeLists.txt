@@ -1,14 +1,17 @@
 
 SET(PR_Main_Src
+  image_io.cpp
   main.cpp
   ProgramSettings.cpp
-  suite_projection1.cpp
-  suite_random1.cpp
-  suite_spectral1.cpp)
+  suite_principled.cpp
+  suite_projection.cpp
+  suite_random.cpp
+  suite_spectral.cpp)
 SET(PR_Src ${PR_Main_Src}
 )
 
 SET(PR_Main_Hdr
+  image_io.h
   ProgramSettings.h)
 SET(PR_Hdr ${PR_Main_Hdr}
 )

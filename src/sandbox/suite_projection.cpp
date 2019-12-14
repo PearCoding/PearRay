@@ -8,11 +8,11 @@
 using namespace PR;
 namespace bf = boost::filesystem;
 
-void suite_projection1()
+void suite_projection()
 {
-    bf::create_directory("results/projection1");
+    bf::create_directory("results/projection");
 
-    std::ofstream outfile("results/projection1/cos_hemi.cvs");
+    std::ofstream outfile("results/projection/cos_hemi.cvs");
 
     constexpr float step=0.01f;
 

@@ -126,22 +126,23 @@ public:
 				IMaterial* nmaterial;
 				if (session.traceBounceRay(next, npt, nentity, nmaterial))
 					eval(session, path, next, npt, nentity, nmaterial);
-			} else {
-				session.tile()->statistics().addBackgroundHitCount();
+				else {
+					session.tile()->statistics().addBackgroundHitCount();
 
-				for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-					if (light->hasDeltaDistribution())
-						continue;
+					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+						if (light->hasDeltaDistribution())
+							continue;
 
-					// Only the ray is fixed (Should be handled better!)
-					InfiniteLightEvalInput lin;
-					lin.Point.Ray   = next;
-					lin.Point.Flags = SPF_Background;
-					InfiniteLightEvalOutput lout;
-					light->eval(lin, lout, session);
+						// Only the ray is fixed (Should be handled better!)
+						InfiniteLightEvalInput lin;
+						lin.Point.Ray   = next;
+						lin.Point.Flags = SPF_Background;
+						InfiniteLightEvalOutput lout;
+						light->eval(lin, lout, session);
 
-					in.Point.Radiance = lout.Weight;
-					session.pushFragment(in.Point, path.concated(LightPathToken(ST_CAMERA, SE_NONE)));
+						in.Point.Radiance = lout.Weight;
+						session.pushFragment(in.Point, path.concated(LightPathToken(ST_CAMERA, SE_NONE)));
+					}
 				}
 			}
 		}
