@@ -67,7 +67,7 @@ public:
 		if (infLight->hasDeltaDistribution())
 			outL.PDF_S = 1;
 
-		if (outL.PDF_S < PR_EPSILON) {
+		if (outL.PDF_S <= PR_EPSILON) {
 			return ColorTriplet::Zero();
 		} else {
 			// Trace shadow ray

@@ -29,6 +29,5 @@ public:
 	static void linearize(float& x, float& y, float& z);
 
 	static void toSpec(Spectrum& spec, float x, float y, float z);
-	static float toSpecIndex(size_t samples, size_t index, float x, float y, float z);
 };
 } // namespace PR

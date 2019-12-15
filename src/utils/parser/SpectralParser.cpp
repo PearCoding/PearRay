@@ -44,6 +44,14 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 									 grp.at(1).getNumber(),
 									 grp.at(2).getNumber());
 			}
+		} else if (grp.id() == "illum" || grp.id() == "illumination") {
+			if (grp.anonymousCount() == 3
+				&& grp.isAllAnonymousNumber()) {
+				XYZConverter::toSpec(spec,
+									 grp.at(0).getNumber(),
+									 grp.at(1).getNumber(),
+									 grp.at(2).getNumber());
+			}
 		} else if (grp.id() == "xyz") {
 			if (grp.anonymousCount() == 3
 				&& grp.isAllAnonymousNumber()) {

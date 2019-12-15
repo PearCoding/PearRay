@@ -68,8 +68,7 @@ void ImageMapSocket::lookup(const MapSocketCoord& ctx, ColorTriplet& rgb) const
 
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.UV(0), 1 - ctx.UV(1),
-								 0, 0, 0, 0,
-								 //ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
+								 ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
 								 3, &rgb[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;

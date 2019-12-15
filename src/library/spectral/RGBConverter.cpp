@@ -66,12 +66,4 @@ void RGBConverter::toSpec(Spectrum& spec, float r, float g, float b)
 
 	XYZConverter::toSpec(spec, x, y, z);
 }
-
-float RGBConverter::toSpecIndex(size_t samples, size_t index, float r, float g, float b)
-{
-	float x, y, z;
-	toXYZ(r, g, b, x, y, z);
-
-	return XYZConverter::toSpecIndex(samples, index, x, y, z);
-}
 } // namespace PR

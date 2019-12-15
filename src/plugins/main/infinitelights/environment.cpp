@@ -2,6 +2,7 @@
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightFactory.h"
 #include "math/Projection.h"
+#include "math/Spherical.h"
 #include "math/Tangent.h"
 #include "registry/Registry.h"
 #include "sampler/Distribution2D.h"

@@ -33,9 +33,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mAlbedo->eval(in.Point) * std::abs(in.NdotL) * PR_1_PI;
-		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
-		out.Type   = MST_DiffuseReflection;
+		const float dot = std::max(0.0f, in.NdotL);
+		out.Weight		= mAlbedo->eval(in.Point) * dot * PR_1_PI;
+		out.PDF_S		= Projection::cos_hemi_pdf(dot);
+		out.Type		= MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -47,7 +48,7 @@ public:
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
-		out.Weight = mAlbedo->eval(in.Point) * std::abs(in.Point.N.dot(out.Outgoing)) * PR_1_PI;
+		out.Weight = mAlbedo->eval(in.Point) * std::max(0.0f, in.Point.N.dot(out.Outgoing)) * PR_1_PI;
 		out.Type   = MST_DiffuseReflection;
 		out.PDF_S  = pdf;
 	}

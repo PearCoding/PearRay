@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Spherical.h"
+#include "PR_Config.h"
 
 namespace PR {
 namespace Projection {
@@ -21,20 +21,13 @@ inline float stratified(float u, int index, int groups, float min = 0, float max
 // Uniform [0, 1]
 inline Vector3f sphere(float u1, float u2, float& pdf)
 {
-	const float t1   = 2 * PR_PI * u1;
-	const float t2   = 2 * std::sqrt(u2 + u2 * u2);
-	const float norm = 1.0f / std::sqrt(1 + 8 * u2 * u2);
-
-	const float thSin = std::sin(t1);
-	const float thCos = std::cos(t1);
-
-	const float x = t2 * thCos;
-	const float y = t2 * thSin;
-	const float z = 1 - 2.0f * u2;
+	const float z		 = 1 - 2 * u1;
+	const float sinTheta = std::sqrt(std::max(0.0f, 1.0f - z * z));
+	const float phi		 = 2 * PR_PI * u2;
 
 	pdf = PR_1_PI * 0.25f;
 
-	return Vector3f(x * norm, y * norm, z * norm);
+	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), z);
 }
 
 inline float sphere_pdf()
@@ -45,13 +38,17 @@ inline float sphere_pdf()
 // Orientation +Z
 inline Vector3f hemi(float u1, float u2, float& pdf)
 {
+	float sinTheta = std::sqrt(std::max(0.0f, 1.0f - u1 * u1));
+	float phi	  = 2 * PR_PI * u2;
+
 	pdf = PR_1_PI * 0.5f;
-	return Spherical::cartesian(u1 * PR_PI * 0.5f, u2 * 2 * PR_PI);
+
+	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), u1);
 }
 
 inline float hemi_pdf()
 {
-	return PR_1_PI * 0.25f;
+	return PR_1_PI * 0.5f;
 }
 
 // Cosine weighted

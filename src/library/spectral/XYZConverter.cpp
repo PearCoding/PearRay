@@ -163,27 +163,4 @@ void XYZConverter::toSpec(Spectrum& spec, float x, float y, float z)
 		spec *= b;
 	}
 }
-
-float XYZConverter::toSpecIndex(size_t samples, size_t index, float x, float y, float z)
-{
-	if (samples == PR_SPECTRAL_TRIPLET_SAMPLES) {
-		return (index == 0) ? x : (index == 1 ? y : z);
-	} else {
-		PR_ASSERT(samples == PR_SPECTRAL_WAVELENGTH_SAMPLES, "XYZ Converter only works with standard spectral type");
-
-		const float b  = x + y + z; // Brightness
-		const float nx = x / b;
-		const float ny = y / b;
-
-		double s, t;
-		const float* s1 = nullptr;
-		const float* s2 = nullptr;
-		const float* s3 = nullptr;
-
-		if (!findRegion(nx, ny, s, t, s1, s2, s3))
-			return 0.0f;
-
-		return static_cast<float>((s1[index] * (1 - s - t) + s2[index] * s + s3[index] * t) * b);
-	}
-}
 } // namespace PR

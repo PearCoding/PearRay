@@ -8,6 +8,7 @@
 #include "geometry/GeometryPoint.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
+#include "math/Spherical.h"
 #include "math/Tangent.h"
 #include "registry/Registry.h"
 

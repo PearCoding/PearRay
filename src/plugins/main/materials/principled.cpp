@@ -157,7 +157,7 @@ public:
 
 		const ColorTriplet tint = lum > PR_EPSILON
 									  ? ColorTriplet(base / lum)
-									  : ColorTriplet::Ones();
+									  : ColorTriplet::Zero();
 		const ColorTriplet cspec = mix<ColorTriplet>(
 			spec * 0.08f * mix<ColorTriplet>(ColorTriplet::Ones(), tint, specTint),
 			base,
@@ -205,8 +205,7 @@ public:
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 		out.PDF_S	= Microfacet::pdf_ggx(in.NdotL, ax, ay); // Use NdotH instead of NdotL!
 
-		float weight = (1 - roughness);
-		if (weight < 0.5f)
+		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
 		else
 			out.Type = MST_SpecularReflection;
@@ -258,14 +257,12 @@ public:
 		float clearcoat		 = mClearcoat->eval(in.Point);
 		float clearcoatGloss = mClearcoatGloss->eval(in.Point);
 
-		float weight = (1 - roughness);
-
 		sampleSpecularPath(in, in.RND[0] /* / weight*/, in.RND[1], out, roughness, anisotropic);
 
-		if (weight < in.RND[0])
-			out.Type = MST_SpecularReflection;
-		else
+		if (roughness < in.RND[0])
 			out.Type = MST_DiffuseReflection;
+		else
+			out.Type = MST_SpecularReflection;
 
 		out.Weight = evalBRDF(in.Point, out.Outgoing,
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
