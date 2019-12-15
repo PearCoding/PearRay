@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "MatrixFormat.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightFactory.h"
 #include "math/Projection.h"
@@ -22,14 +23,14 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = mRadiance->eval(in.Point);
+		out.Weight = PR_PI * mRadiance->eval(in.Point);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Weight   = mRadiance->eval(in.Point);
+		out.Weight   = PR_PI * mRadiance->eval(in.Point);
 		out.Outgoing = mDirection_Cache;
 		out.PDF_S	= std::numeric_limits<float>::infinity();
 	}
@@ -41,8 +42,8 @@ public:
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <DistantLight>:" << std::endl
 			   << "    Radiance: " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
-			   << "    LocalDirection: " << mDirection << std::endl
-			   << "    GlobalDirection: " << mDirection_Cache << std::endl;
+			   << "    LocalDirection: " << PR_FMT_MAT(mDirection) << std::endl
+			   << "    GlobalDirection: " << PR_FMT_MAT(mDirection_Cache) << std::endl;
 
 		return stream.str();
 	}
@@ -74,7 +75,8 @@ public:
 		const Vector3f direction	   = reg.getForObject<Vector3f>(RG_INFINITELIGHT, uuid,
 																"direction", Vector3f(0, 0, 1));
 
-		return std::make_shared<DistantLight>(id, name, direction, env.getSpectralShadingSocket(radianceName, 1));
+		return std::make_shared<DistantLight>(id, name, direction,
+											  env.getSpectralShadingSocket(radianceName, 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

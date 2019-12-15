@@ -11,9 +11,9 @@ MapShadingSocket::MapShadingSocket(const std::shared_ptr<FloatSpectralMapSocket>
 ColorTriplet MapShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	MapSocketCoord coord;
-	coord.UV   = Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);
-	coord.Face = ctx.PrimID;
-	// TODO: Wavelength Index
+	coord.UV	= Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);
+	coord.Face  = ctx.PrimID;
+	coord.Index = ctx.Ray.WavelengthIndex;
 
 	return mMap->eval(coord);
 }
@@ -21,8 +21,9 @@ ColorTriplet MapShadingSocket::eval(const ShadingPoint& ctx) const
 float MapShadingSocket::relativeLuminance(const ShadingPoint& ctx) const
 {
 	MapSocketCoord coord;
-	coord.UV   = Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);
-	coord.Face = ctx.PrimID;
+	coord.UV	= Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);
+	coord.Face  = ctx.PrimID;
+	coord.Index = ctx.Ray.WavelengthIndex;
 
 	return mMap->relativeLuminance(coord);
 }

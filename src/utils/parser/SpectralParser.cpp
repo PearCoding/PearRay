@@ -62,44 +62,36 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 			}
 		} else if (grp.id() == "temperature" || grp.id() == "blackbody") { // Luminance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
 			}
 
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
+			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber())
 				spec *= grp.at(1).getNumber();
-			}
 		} else if (grp.id() == "temperature_raw" || grp.id() == "blackbody_raw") { // Radiance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 			}
 
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
+			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber())
 				spec *= grp.at(1).getNumber();
-			}
 		} else if (grp.id() == "temperature_norm" || grp.id() == "blackbody_norm") { // Luminance Norm
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.weightPhotometric();
 				spec.normalize();
 			}
 
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
+			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber())
 				spec *= grp.at(1).getNumber();
-			}
 		} else if (grp.id() == "temperature_raw_norm" || grp.id() == "blackbody_raw_norm") { // Radiance Norm
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {
-				// TODO: Should use sRGB, then convert to standard spec
 				spec = Spectrum::blackbody(spec.descriptor(), std::max(0.0f, grp.at(0).getNumber()));
 				spec.normalize();
 			}
 
-			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber()) {
+			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber())
 				spec *= grp.at(1).getNumber();
-			}
 		}
 	}
 

@@ -31,7 +31,7 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 
 ColorTriplet ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
-	uint32 index = ctx.Ray.WavelengthIndex;
+	const uint32 index = ctx.Ray.WavelengthIndex;
 	return ColorTriplet(mValue[index],
 						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
 						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f);
@@ -64,9 +64,10 @@ ConstSpectralMapSocket::ConstSpectralMapSocket(const Spectrum& f)
 
 ColorTriplet ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	return ColorTriplet(mValue[ctx.Index],
-						ctx.Index + 1 < mValue.samples() ? mValue[ctx.Index + 1] : 0.0f,
-						ctx.Index + 2 < mValue.samples() ? mValue[ctx.Index + 2] : 0.0f);
+	const uint32 index = ctx.Index;
+	return ColorTriplet(mValue[index],
+						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
+						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f);
 }
 
 float ConstSpectralMapSocket::relativeLuminance(const MapSocketCoord&) const
