@@ -266,7 +266,7 @@ RenderStatus RenderContext::status() const
 
 	// Approximate percentage if not given by the integrator
 	if (status.percentage() < 0) {
-		const size_t maxPixelSampleCount = mRenderSettings.samplesPerPixel() * mWidth * mHeight;
+		const uint32 maxPixelSampleCount = mRenderSettings.samplesPerPixel() * mWidth * mHeight;
 		status.setPercentage(s.pixelSampleCount() / (float)maxPixelSampleCount);
 	}
 
