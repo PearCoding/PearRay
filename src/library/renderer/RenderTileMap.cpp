@@ -156,7 +156,8 @@ RenderTileStatistics RenderTileMap::statistics() const
 	RenderTileStatistics s;
 	for (uint32 i = 0; i < mTileYCount; ++i) {
 		for (uint32 j = 0; j < mTileXCount; ++j) {
-			s += mTileMap[i * mTileXCount + j]->statistics();
+			if (mTileMap[i * mTileXCount + j])
+				s += mTileMap[i * mTileXCount + j]->statistics();
 		}
 	}
 	return s;
@@ -168,6 +169,7 @@ void RenderTileMap::reset()
 
 	for (uint32 i = 0; i < mTileYCount; ++i)
 		for (uint32 j = 0; j < mTileXCount; ++j)
-			mTileMap[i * mTileXCount + j]->reset();
+			if (mTileMap[i * mTileXCount + j])
+				mTileMap[i * mTileXCount + j]->reset();
 }
 } // namespace PR
