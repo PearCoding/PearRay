@@ -36,7 +36,7 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 				if (fieldD.isNumber())
 					spec.setValue(i, fieldD.getNumber());
 			}
-		} else if (grp.id() == "rgb") {
+		} else if (grp.id() == "illum" || grp.id() == "illumination") {
 			if (grp.anonymousCount() == 3
 				&& grp.isAllAnonymousNumber()) {
 				RGBConverter::toSpec(spec,
@@ -44,10 +44,18 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 									 grp.at(1).getNumber(),
 									 grp.at(2).getNumber());
 			}
-		} else if (grp.id() == "illum" || grp.id() == "illumination") {
+		} else if (grp.id() == "refl" || grp.id() == "reflective") {
 			if (grp.anonymousCount() == 3
 				&& grp.isAllAnonymousNumber()) {
 				XYZConverter::toSpec(spec,
+									 grp.at(0).getNumber(),
+									 grp.at(1).getNumber(),
+									 grp.at(2).getNumber());
+			}
+		} else if (grp.id() == "refl_rgb" || grp.id() == "reflective_rgb") {
+			if (grp.anonymousCount() == 3
+				&& grp.isAllAnonymousNumber()) {
+				RGBConverter::toSpec(spec,
 									 grp.at(0).getNumber(),
 									 grp.at(1).getNumber(),
 									 grp.at(2).getNumber());
@@ -92,6 +100,9 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 
 			if (grp.anonymousCount() >= 2 && grp.at(1).isNumber())
 				spec *= grp.at(1).getNumber();
+		} else {
+			PR_LOG(L_WARNING) << "Couldn't construct spectrum. Unknown type "
+							  << grp.id() << std::endl;
 		}
 	}
 

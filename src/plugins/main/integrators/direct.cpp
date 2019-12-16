@@ -288,7 +288,8 @@ public:
 				spt.Radiance		 = outL.Weight * prevGEOM;
 
 				if (!spt.Radiance.isZero())
-					session.pushFragment(spt, path.concated(LightPathToken(ST_EMISSIVE, SE_NONE)));
+					session.pushFragment(spt, path.concated(
+												  LightPathToken(ST_EMISSIVE, SE_NONE)));
 			}
 		}
 

@@ -25,21 +25,35 @@ static inline float mitchell(float x, float B, float C)
 }
 void MitchellFilter::cache()
 {
+	if (mRadius == 0)
+		return;
+
 	const size_t halfSize = mRadius + 1;
 	mCache.resize(halfSize * halfSize);
 
-	auto filter = [=](float x) { return mitchell(2 * x / (mRadius + 1), 1 / 3.0f, 1 / 3.0f); };
+	auto filter = [=](float x) { return mitchell(2 * x / mRadius, 1 / 3.0f, 1 / 3.0f); };
 
-	float sum = 0;
+	float sum1 = 0.0f;
+	float sum2 = 0.0f;
+	float sum4 = 0.0f;
 	for (size_t y = 0; y < halfSize; ++y) {
 		for (size_t x = 0; x < halfSize; ++x) {
-			mCache[y * halfSize + x] = filter(y) * filter(x);
-			sum += mCache[y * halfSize + x];
+			const float r			 = std::sqrt(x * x + y * y);
+			const float val			 = filter(r);
+			mCache[y * halfSize + x] = val;
+
+			if (y == 0 && x == 0)
+				sum1 += val;
+			else if (y == 0 || x == 0)
+				sum2 += val;
+			else
+				sum4 += val;
 		}
 	}
 
+	float norm = 1.0f / (sum1 + 2 * sum2 + 4 * sum4);
 	for (size_t y = 0; y < halfSize; ++y)
 		for (size_t x = 0; x < halfSize; ++x)
-			mCache[y * halfSize + x] /= sum;
+			mCache[y * halfSize + x] *= norm;
 }
 } // namespace PR
