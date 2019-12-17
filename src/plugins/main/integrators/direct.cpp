@@ -52,6 +52,7 @@ public:
 														 context->settings().maxRayDepth);
 	}
 
+	// TODO: Add MSI to this part?
 	ColorTriplet infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
 							   LightPathToken& token,
 							   IInfiniteLight* infLight, IMaterial* material)
@@ -170,15 +171,15 @@ public:
 
 		// (1) Sample light
 		{
-			Vector3f L		 = (lightPt.P - spt.P);
-			const float sqrD = L.squaredNorm();
+			Vector3f L = (lightPt.P - spt.P);
+			//const float sqrD = L.squaredNorm();
 			L.normalize();
-			const float cosO = std::max(0.0f, -L.dot(lightPt.N));
+			//const float cosO = std::max(0.0f, -L.dot(lightPt.N));
 			const float cosI = L.dot(spt.N);
 
 			if (std::abs(cosI) < PR_EPSILON
-				|| cosO < PR_EPSILON
-				|| sqrD < PR_EPSILON
+				//|| cosO < PR_EPSILON
+				//|| sqrD < PR_EPSILON
 				|| pdfA < PR_EPSILON)
 				return Li;
 
@@ -193,7 +194,7 @@ public:
 				// Evaluate light
 				LightEvalInput inL;
 				inL.Entity = light;
-				inL.Point.setByIdentity(shadow, lightPt); // Todo??
+				inL.Point.setByIdentity(shadow, lightPt);
 				LightEvalOutput outL;
 				ems->eval(inL, outL, session);
 
@@ -206,8 +207,7 @@ public:
 				material->eval(in, out, session);
 
 				float msi = mMSIEnabled ? MSI(1, pdfA, 1, out.PDF_S) : 1.0f;
-
-				Li = outL.Weight * out.Weight * msi / pdfA;
+				Li		  = outL.Weight * out.Weight * msi / pdfA;
 			}
 		}
 
@@ -233,14 +233,15 @@ public:
 					&& shadowHit.EntityID == light->id()) {
 					// Retrive geometry information from the new point
 					GeometryPoint nlightPt;
-					light->provideGeometryPoint(shadow.Direction, shadowHit.PrimitiveID,
-												Vector3f(shadowHit.Parameter[0], shadowHit.Parameter[1], shadowHit.Parameter[2]), nlightPt);
+					light->provideGeometryPoint(
+						shadow.Direction, shadowHit.PrimitiveID,
+						Vector3f(shadowHit.Parameter[0], shadowHit.Parameter[1], shadowHit.Parameter[2]), nlightPt);
 
-					if (-shadow.Direction.dot(nlightPt.N) > PR_EPSILON) {
+					if (std::abs(shadow.Direction.dot(nlightPt.N)) > PR_EPSILON) {
 						// Evaluate light
 						LightEvalInput inL;
 						inL.Entity = light;
-						inL.Point.setByIdentity(shadow, nlightPt); // Todo??
+						inL.Point.setByIdentity(shadow, nlightPt);
 						LightEvalOutput outL;
 						ems->eval(inL, outL, session);
 

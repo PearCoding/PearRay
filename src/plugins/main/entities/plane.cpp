@@ -109,8 +109,8 @@ public:
 
 		pt.P  = transform() * mPlane.surfacePoint(u, v);
 		pt.N  = normalMatrix() * mPlane.normal();
-		pt.Nx = normalMatrix() * mPlane.xAxis().normalized();
-		pt.Ny = normalMatrix() * mPlane.yAxis().normalized();
+		pt.Nx = normalMatrix() * mPlane.xAxis();
+		pt.Ny = normalMatrix() * mPlane.yAxis();
 
 		pt.N.normalize();
 		pt.Nx.normalize();

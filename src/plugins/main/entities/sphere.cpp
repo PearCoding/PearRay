@@ -113,12 +113,14 @@ public:
 		pdf	= mPDF_Cache;
 		faceID = 0;
 
-		Vector3f kv = invTransform().linear() * view;
-		Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
-
 		Vector2f uv = rnd;
-		if (mOptimizeSampling && kv.dot(n) > PR_EPSILON)
-			uv = Spherical::uv_from_normal(Vector3f(-n));
+		if (mOptimizeSampling) {
+			Vector3f kv = invTransform().linear() * view;
+			Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
+
+			if (kv.dot(n) > PR_EPSILON)
+				uv = Spherical::uv_from_normal(Vector3f(-n));
+		}
 
 		return Vector3f(uv(0), uv(1), 0);
 	}

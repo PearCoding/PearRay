@@ -28,15 +28,15 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 		image = QImage(width(), height(), expectedFormat);
 	}
 
-	auto map = [&](float v) { return static_cast<quint8>(mapper.map(v) * 255); };
-
 	// Copy to image
 	switch (viewChannelCount()) {
 	case 1: // Grayscale
 		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (int x = 0; x < width(); ++x) {
-				ptr[x] = map(value(x, y, channelOffset + 0));
+				const float g = value(x, y, channelOffset + 0);
+				ptr[x]		  = static_cast<quint8>(
+					   std::max(0.0f, std::min(0.0f, mapper.map(g))) * 255);
 			}
 		}
 		break;
@@ -44,13 +44,14 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (int x = 0; x < width(); ++x) {
-				ptr[3 * x] = (channelMask & 0x1)
-								 ? map(value(x, y, channelOffset + 0))
-								 : 0;
-				ptr[3 * x + 1] = (channelMask & 0x2)
-									 ? map(value(x, y, channelOffset + 1))
-									 : 0;
-				ptr[3 * x + 2] = 0;
+				float cx = mapper.map(value(x, y, channelOffset + 0));
+				float cy = mapper.map(value(x, y, channelOffset + 1));
+				float cz = 0.0f;
+				float cr, cg, cb;
+				mapper.formatTriplet(cx, cy, cz, cr, cg, cb);
+				ptr[3 * x]	 = (channelMask & 0x1) ? static_cast<quint8>(cr * 255) : 0;
+				ptr[3 * x + 1] = (channelMask & 0x2) ? static_cast<quint8>(cg * 255) : 0;
+				ptr[3 * x + 2] = (channelMask & 0x4) ? static_cast<quint8>(cb * 255) : 0;
 			}
 		}
 		break;
@@ -58,15 +59,14 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (int x = 0; x < width(); ++x) {
-				ptr[3 * x] = (channelMask & 0x1)
-								 ? map(value(x, y, channelOffset + 0))
-								 : 0;
-				ptr[3 * x + 1] = (channelMask & 0x2)
-									 ? map(value(x, y, channelOffset + 1))
-									 : 0;
-				ptr[3 * x + 2] = (channelMask & 0x4)
-									 ? map(value(x, y, channelOffset + 2))
-									 : 0;
+				float cx = mapper.map(value(x, y, channelOffset + 0));
+				float cy = mapper.map(value(x, y, channelOffset + 1));
+				float cz = mapper.map(value(x, y, channelOffset + 2));
+				float cr, cg, cb;
+				mapper.formatTriplet(cx, cy, cz, cr, cg, cb);
+				ptr[3 * x]	 = (channelMask & 0x1) ? static_cast<quint8>(cr * 255) : 0;
+				ptr[3 * x + 1] = (channelMask & 0x2) ? static_cast<quint8>(cg * 255) : 0;
+				ptr[3 * x + 2] = (channelMask & 0x4) ? static_cast<quint8>(cb * 255) : 0;
 			}
 		}
 		break;
@@ -74,18 +74,16 @@ void ImageBufferView::fillImage(QImage& image, const ToneMapper& mapper,
 		for (int y = 0; y < height(); ++y) {
 			uchar* ptr = image.scanLine(y);
 			for (int x = 0; x < width(); ++x) {
-				ptr[4 * x] = (channelMask & 0x1)
-								 ? map(value(x, y, channelOffset + 0))
-								 : 0;
-				ptr[4 * x + 1] = (channelMask & 0x2)
-									 ? map(value(x, y, channelOffset + 1))
-									 : 0;
-				ptr[4 * x + 2] = (channelMask & 0x4)
-									 ? map(value(x, y, channelOffset + 2))
-									 : 0;
-				ptr[4 * x + 3] = (channelMask & 0x8)
-									 ? map(value(x, y, channelOffset + 3))
-									 : 0;
+				float cx = mapper.map(value(x, y, channelOffset + 0));
+				float cy = mapper.map(value(x, y, channelOffset + 1));
+				float cz = mapper.map(value(x, y, channelOffset + 2));
+				float cr, cg, cb;
+				mapper.formatTriplet(cx, cy, cz, cr, cg, cb);
+				const float a  = (channelMask & 0x8) ? value(x, y, channelOffset + 3) : 0;
+				ptr[4 * x]	 = (channelMask & 0x1) ? static_cast<quint8>(cr * 255) : 0;
+				ptr[4 * x + 1] = (channelMask & 0x2) ? static_cast<quint8>(cg * 255) : 0;
+				ptr[4 * x + 2] = (channelMask & 0x4) ? static_cast<quint8>(cb * 255) : 0;
+				ptr[4 * x + 3] = static_cast<quint8>(std::max(0.0f, std::min(0.0f, a)) * 255);
 			}
 		}
 		break;
@@ -103,8 +101,8 @@ void ImageBufferView::getMinMax(float& min, float& max, quint8 channelMask) cons
 					continue;
 
 				float f = value(x, y, c);
-				min = std::min(min, f);
-				max = std::max(max, f);
+				min		= std::min(min, f);
+				max		= std::max(max, f);
 			}
 		}
 	}

@@ -13,6 +13,8 @@ ToneMapperEditor::ToneMapperEditor(QWidget* parent)
 
 	connect(ui.normalButton, SIGNAL(clicked()), this, SLOT(normalButtonPushed()));
 	connect(ui.fitButton, SIGNAL(clicked()), this, SLOT(fitButtonPushed()));
+	connect(ui.formatToCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
+	connect(ui.formatFromCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
 }
 
 ToneMapperEditor::~ToneMapperEditor()
@@ -40,6 +42,8 @@ ToneMapper ToneMapperEditor::constructMapper() const
 	mapper.setMin(ui.rangeSlider->leftValue());
 	mapper.setMax(ui.rangeSlider->rightValue());
 	mapper.enableAbsolute(ui.absoluteCB->isChecked());
+	mapper.setTripletFormat((ColorFormat)ui.formatFromCB->currentIndex(),
+							(ColorFormat)ui.formatToCB->currentIndex());
 
 	return mapper;
 }
