@@ -31,8 +31,21 @@ private:
 
 	void setupSceneWindow();
 
+	void setupRecentMenu();
+
+	void updateRecentFiles(const QString& path);
+	void setupRecentFiles();
+
+	void updateRecentDirs(const QString& path);
+	void setupRecentDirs();
+
 	Ui::MainWindowClass ui;
 	QString mLastDir;
+
+	QStringList mLastFiles;
+	QStringList mLastDirs;
+	QVector<QAction*> mLastFileActions;
+	QVector<QAction*> mLastDirActions;
 
 	QPointer<SceneWindow> mCurrentSceneWindow;
 };
