@@ -14,6 +14,7 @@ EXRWindow::EXRWindow(QWidget* parent)
 	connect(ui.originalScaleButton, SIGNAL(clicked()), ui.imageWidget, SLOT(zoomToOriginalSize()));
 	connect(ui.exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
 	connect(ui.toneMapperEditor, SIGNAL(changed()), this, SLOT(updateMapper()));
+	connect(ui.toneMapperEditor, SIGNAL(formatChanged()), this, SLOT(updateMapperFormat()));
 
 	mFile = std::make_unique<EXRFile>();
 }
@@ -55,6 +56,13 @@ void EXRWindow::updateMapper()
 	ui.imageWidget->setMapper(ui.toneMapperEditor->constructMapper());
 }
 
+void EXRWindow::updateMapperFormat()
+{
+	float min, max;
+	ui.imageWidget->view()->getMappedMinMax(min, max, ui.toneMapperEditor->constructMapper());
+	ui.toneMapperEditor->setMinMax(min, max);
+}
+
 void EXRWindow::updateImage(int layerID)
 {
 	if (layerID >= mFile->layers().size())
@@ -63,10 +71,12 @@ void EXRWindow::updateImage(int layerID)
 	auto layer = mFile->layers()[layerID];
 	ui.imageWidget->setView(layer);
 
-	float min, max;
-	layer->getMinMax(min, max);
-	ui.toneMapperEditor->setMinMax(min, max);
+	ui.toneMapperEditor->blockSignals(true);
 	ui.toneMapperEditor->setToNormal();
+	updateMapperFormat();
+	ui.toneMapperEditor->setToNormal();
+	ui.toneMapperEditor->blockSignals(false);
+	updateMapper();
 }
 
 void EXRWindow::exportImage()

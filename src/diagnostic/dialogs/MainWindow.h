@@ -25,6 +25,8 @@ private slots:
 	void openFile();
 	void openRDMPDir();
 
+	void openRecentFile();
+	void openRecentDir();
 private:
 	void readSettings();
 	void writeSettings();
@@ -33,11 +35,11 @@ private:
 
 	void setupRecentMenu();
 
-	void updateRecentFiles(const QString& path);
-	void setupRecentFiles();
+	void addToRecentFiles(const QString& path);
+	void updateRecentFiles();
 
-	void updateRecentDirs(const QString& path);
-	void setupRecentDirs();
+	void addToRecentDirs(const QString& path);
+	void updateRecentDirs();
 
 	Ui::MainWindowClass ui;
 	QString mLastDir;

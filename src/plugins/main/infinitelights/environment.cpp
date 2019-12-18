@@ -56,7 +56,7 @@ public:
 			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
-			out.PDF_S = Projection::hemi_pdf();
+			out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(in.Point.Ray.Direction)));
 		}
 	}
 
@@ -78,7 +78,7 @@ public:
 			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
 		} else {
-			out.Outgoing = Projection::hemi(in.RND[0], in.RND[1], out.PDF_S);
+			out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
 			out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 			MapSocketCoord coord;

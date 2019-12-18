@@ -39,7 +39,7 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 		} else if (grp.id() == "illum" || grp.id() == "illumination") {
 			if (grp.anonymousCount() == 3
 				&& grp.isAllAnonymousNumber()) {
-				XYZConverter::toSpec(spec,
+				RGBConverter::toSpec(spec,
 									 grp.at(0).getNumber(),
 									 grp.at(1).getNumber(),
 									 grp.at(2).getNumber());
@@ -47,7 +47,7 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 		} else if (grp.id() == "refl" || grp.id() == "reflective") {
 			if (grp.anonymousCount() == 3
 				&& grp.isAllAnonymousNumber()) {
-				RGBConverter::toSpec(spec,
+				XYZConverter::toSpec(spec,
 									 grp.at(0).getNumber(),
 									 grp.at(1).getNumber(),
 									 grp.at(2).getNumber());

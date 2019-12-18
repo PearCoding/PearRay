@@ -65,8 +65,8 @@ void MainWindow::readSettings()
 	mLastDirs  = settings.value("last_dirs").toStringList();
 	settings.endGroup();
 
-	setupRecentFiles();
-	setupRecentDirs();
+	updateRecentFiles();
+	updateRecentDirs();
 }
 
 void MainWindow::writeSettings()
@@ -147,7 +147,7 @@ void MainWindow::openFile(const QString& file)
 		w->openFile(file);
 	}
 
-	updateRecentFiles(file);
+	addToRecentFiles(file);
 
 	QApplication::restoreOverrideCursor();
 }
@@ -157,7 +157,7 @@ void MainWindow::openRDMPDir(const QString& dir)
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	setupSceneWindow();
 	mCurrentSceneWindow->openRDMPDir(dir);
-	updateRecentDirs(dir);
+	addToRecentDirs(dir);
 	QApplication::restoreOverrideCursor();
 }
 
@@ -201,7 +201,7 @@ void MainWindow::setupRecentMenu()
 	for (int i = 0; i < MAX_LAST_FILES; ++i) {
 		QAction* action = new QAction("");
 		connect(action, &QAction::triggered,
-				[&]() { openFile(mLastFiles.at(i)); });
+				this, &MainWindow::openRecentFile);
 
 		ui.menuRecentFiles->addAction(action);
 		mLastFileActions.append(action);
@@ -210,14 +210,14 @@ void MainWindow::setupRecentMenu()
 	for (int i = 0; i < MAX_LAST_FILES; ++i) {
 		QAction* action = new QAction("");
 		connect(action, &QAction::triggered,
-				[&]() { openRDMPDir(mLastDirs.at(i)); });
+				this, &MainWindow::openRecentDir);
 
 		ui.menuRecentFiles->addAction(action);
 		mLastDirActions.append(action);
 	}
 }
 
-void MainWindow::updateRecentFiles(const QString& path)
+void MainWindow::addToRecentFiles(const QString& path)
 {
 	mLastDir = QFileInfo(path).dir().path();
 
@@ -228,10 +228,10 @@ void MainWindow::updateRecentFiles(const QString& path)
 	if (mLastFiles.size() > MAX_LAST_FILES)
 		mLastFiles.pop_back();
 
-	setupRecentFiles();
+	updateRecentFiles();
 }
 
-void MainWindow::setupRecentFiles()
+void MainWindow::updateRecentFiles()
 {
 	for (int i = 0; i < MAX_LAST_FILES; ++i) {
 		if (i < mLastFiles.size()) {
@@ -243,7 +243,7 @@ void MainWindow::setupRecentFiles()
 	}
 }
 
-void MainWindow::updateRecentDirs(const QString& path)
+void MainWindow::addToRecentDirs(const QString& path)
 {
 	mLastDir = QFileInfo(path).dir().path();
 
@@ -254,10 +254,10 @@ void MainWindow::updateRecentDirs(const QString& path)
 	if (mLastDirs.size() > MAX_LAST_FILES)
 		mLastDirs.pop_back();
 
-	setupRecentDirs();
+	updateRecentDirs();
 }
 
-void MainWindow::setupRecentDirs()
+void MainWindow::updateRecentDirs()
 {
 	for (int i = 0; i < MAX_LAST_FILES; ++i) {
 		if (i < mLastDirs.size()) {
@@ -267,4 +267,20 @@ void MainWindow::setupRecentDirs()
 			mLastDirActions[i]->setVisible(false);
 		}
 	}
+}
+
+void MainWindow::openRecentFile()
+{
+	QAction* action = qobject_cast<QAction*>(sender());
+	if (!action)
+		return;
+	openFile(action->text());
+}
+
+void MainWindow::openRecentDir()
+{
+	QAction* action = qobject_cast<QAction*>(sender());
+	if (!action)
+		return;
+	openRDMPDir(action->text());
 }

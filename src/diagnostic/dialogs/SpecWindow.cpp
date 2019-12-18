@@ -13,6 +13,7 @@ SpecWindow::SpecWindow(QWidget* parent)
 	connect(ui.originalScaleButton, SIGNAL(clicked()), ui.imageWidget, SLOT(zoomToOriginalSize()));
 	connect(ui.exportImageButton, SIGNAL(clicked()), this, SLOT(exportImage()));
 	connect(ui.toneMapperEditor, SIGNAL(changed()), this, SLOT(updateMapper()));
+	connect(ui.toneMapperEditor, SIGNAL(formatChanged()), this, SLOT(updateMapperFormat()));
 }
 
 SpecWindow::~SpecWindow()
@@ -26,10 +27,12 @@ void SpecWindow::openFile(const QString& str)
 		ui.sizeLabel->setText(QString("%1x%2").arg(file->width()).arg(file->height()));
 		ui.imageWidget->setView(file);
 
-		float min, max;
-		file->getMinMax(min, max);
-		ui.toneMapperEditor->setMinMax(min, max);
+		ui.toneMapperEditor->blockSignals(true);
 		ui.toneMapperEditor->setToNormal();
+		updateMapperFormat();
+		ui.toneMapperEditor->setToNormal();
+		ui.toneMapperEditor->blockSignals(false);
+		updateMapper();
 
 		setWindowTitle(QString("[Spec] %1").arg(str));
 	}
@@ -38,6 +41,13 @@ void SpecWindow::openFile(const QString& str)
 void SpecWindow::updateMapper()
 {
 	ui.imageWidget->setMapper(ui.toneMapperEditor->constructMapper());
+}
+
+void SpecWindow::updateMapperFormat()
+{
+	float min, max;
+	ui.imageWidget->view()->getMappedMinMax(min, max, ui.toneMapperEditor->constructMapper());
+	ui.toneMapperEditor->setMinMax(min, max);
 }
 
 void SpecWindow::exportImage()

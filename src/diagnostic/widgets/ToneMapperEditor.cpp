@@ -13,8 +13,12 @@ ToneMapperEditor::ToneMapperEditor(QWidget* parent)
 
 	connect(ui.normalButton, SIGNAL(clicked()), this, SLOT(normalButtonPushed()));
 	connect(ui.fitButton, SIGNAL(clicked()), this, SLOT(fitButtonPushed()));
-	connect(ui.formatToCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
-	connect(ui.formatFromCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(changed()));
+
+	connect(ui.formatToCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(formatChanged()));
+	connect(ui.formatFromCB, SIGNAL(currentIndexChanged(int)), this, SIGNAL(formatChanged()));
+
+	connect(ui.gammaCB, SIGNAL(stateChanged(int)), this, SIGNAL(formatChanged()));
+	connect(ui.gammaSB, SIGNAL(valueChanged(double)), this, SIGNAL(formatChanged()));
 }
 
 ToneMapperEditor::~ToneMapperEditor()
@@ -44,6 +48,11 @@ ToneMapper ToneMapperEditor::constructMapper() const
 	mapper.enableAbsolute(ui.absoluteCB->isChecked());
 	mapper.setTripletFormat((ColorFormat)ui.formatFromCB->currentIndex(),
 							(ColorFormat)ui.formatToCB->currentIndex());
+
+	if (ui.gammaCB->isChecked())
+		mapper.setGamma(ui.gammaSB->value());
+	else
+		mapper.setGamma(-1);
 
 	return mapper;
 }

@@ -13,6 +13,7 @@ public:
 	ImageView(QWidget* parent = nullptr);
 	virtual ~ImageView();
 
+	inline std::shared_ptr<ImageBufferView> view() const { return mView; }
 	void setView(const std::shared_ptr<ImageBufferView>& view);
 	void setMapper(const ToneMapper& mapper);
 

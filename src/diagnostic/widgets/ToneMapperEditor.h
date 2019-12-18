@@ -19,6 +19,7 @@ public:
 
 signals:
 	void changed();
+	void formatChanged();
 
 private slots:
 	void valueChanged();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 enum ColorFormat {
 	CF_XYZ = 0,
@@ -15,19 +16,10 @@ public:
 		, mIsAbsolute(false)
 		, mTripletFormatFrom(CF_XYZ)
 		, mTripletFormatTo(CF_XYZ)
+		, mGamma(-1)
 	{
 	}
 	~ToneMapper() = default;
-
-	inline float map(float val) const
-	{
-		if (mIsAbsolute) {
-			float max = std::max(std::abs(mMin), std::abs(mMax));
-			return std::min(std::abs(val), max) / max;
-		} else {
-			return std::abs((std::min(mMax, std::max(mMin, val)) - mMin) / (mMax - mMin));
-		}
-	}
 
 	inline void setMax(float f) { mMax = f; }
 	inline void setMin(float f) { mMin = f; }
@@ -39,7 +31,22 @@ public:
 		mTripletFormatTo   = formatTo;
 	}
 
-	inline void formatTriplet(float x, float y, float z, float& r, float& g, float& b) const
+	inline void setGamma(float gamma) { mGamma = gamma; }
+
+	inline void formatOnlyTriplet(float x, float y, float z, float& r, float& g, float& b) const
+	{
+		if (mTripletFormatFrom == mTripletFormatTo) {
+			r = x;
+			g = y;
+			b = z;
+		} else {
+			float tx, ty, tz;
+			formatTriplet(mTripletFormatFrom, x, y, z, tx, ty, tz);
+			formatTriplet(mTripletFormatTo, tx, ty, tz, r, g, b);
+		}
+	}
+
+	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
 	{
 		if (mTripletFormatFrom == mTripletFormatTo) {
 			r = x;
@@ -51,9 +58,9 @@ public:
 			formatTriplet(mTripletFormatTo, tx, ty, tz, r, g, b);
 		}
 
-		r = std::max(0.0f, std::min(1.0f, r));
-		g = std::max(0.0f, std::min(1.0f, g));
-		b = std::max(0.0f, std::min(1.0f, b));
+		r = clamp(applyGamma(clamp(map(r))));
+		g = clamp(applyGamma(clamp(map(g))));
+		b = clamp(applyGamma(clamp(map(b))));
 	}
 
 private:
@@ -76,9 +83,27 @@ private:
 		}
 	}
 
+	inline float map(float val) const
+	{
+		if (mIsAbsolute) {
+			float max = std::max(std::abs(mMin), std::abs(mMax));
+			return std::min(std::abs(val), max) / max;
+		} else {
+			return std::abs((std::min(mMax, std::max(mMin, val)) - mMin) / (mMax - mMin));
+		}
+	}
+
+	float clamp(float x) const { return std::max(0.0f, std::min(1.0f, x)); }
+
+	float applyGamma(float x) const
+	{
+		return mGamma <= 0.0f ? x : std::pow(x, mGamma);
+	}
+
 	float mMin;
 	float mMax;
 	bool mIsAbsolute;
 	ColorFormat mTripletFormatFrom;
 	ColorFormat mTripletFormatTo;
+	float mGamma;
 };
