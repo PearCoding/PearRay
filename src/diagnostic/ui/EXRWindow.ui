@@ -146,7 +146,6 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2"/>
         </widget>
        </item>
        <item>

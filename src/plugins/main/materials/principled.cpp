@@ -228,14 +228,14 @@ public:
 			out.PDF_S = 0.0f; // Drop sample
 
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
-		if (out.Outgoing.dot(in.Point.N) < 0)
+		if (out.Outgoing.dot(in.Point.N) <= PR_EPSILON)
 			out.PDF_S = 0;
 
 		// Reflect incoming ray by the calculated half vector
 		out.Outgoing = Reflection::reflect(out.Outgoing.dot(in.Point.Ray.Direction), out.Outgoing, in.Point.Ray.Direction);
 		out.Outgoing.normalize();
 
-		if (out.Outgoing.dot(in.Point.N) < PR_EPSILON)
+		if (out.Outgoing.dot(in.Point.N) <= PR_EPSILON)
 			out.PDF_S = 0;
 	}
 

@@ -280,6 +280,10 @@ public:
 			out.PDF_S *= 1.0f - F;
 			out.Type = MST_DiffuseReflection;
 		}
+
+		// No translucent
+		if (out.Outgoing.dot(in.Point.N) < PR_EPSILON)
+			out.PDF_S = 0;
 	}
 
 	std::string dumpInformation() const override
