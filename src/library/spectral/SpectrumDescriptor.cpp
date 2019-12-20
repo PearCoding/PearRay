@@ -1,34 +1,27 @@
 #include "SpectrumDescriptor.h"
-
-#include "RGBConverter.h"
+#include "RGBSpectrumDescriptor.h"
+#include "XYZSpectrumDescriptor.h"
 
 namespace PR {
-#include "xyz.inl"
 
-std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createTriplet()
+std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createXYZTriplet()
 {
-	float xf, yf, zf;
-	RGBConverter::toXYZ(PR_LUMINOSITY_RED, PR_LUMINOSITY_GREEN, PR_LUMINOSITY_BLUE, xf, yf, zf); // Standard Luminosity Factors
+	return std::make_shared<XYZSpectrumDescriptor>();
+}
 
-	return std::make_shared<SpectrumDescriptor>(
-		std::vector<float>{ PR_SPECTRAL_TRIPLET_X_LAMBDA, PR_SPECTRAL_TRIPLET_Y_LAMBDA, PR_SPECTRAL_TRIPLET_Z_LAMBDA },
-		std::vector<float>{ xf, yf, zf });
+std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createSRGBTriplet()
+{
+	return std::make_shared<RGBSpectrumDescriptor>();
 }
 
 std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createStandardSpectral()
 {
-	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(PR_SPECTRAL_WAVELENGTH_SAMPLES,
-		static_cast<float>(PR_SPECTRAL_WAVELENGTH_START), static_cast<float>(PR_SPECTRAL_WAVELENGTH_END));
-
-	for (uint32 i = 0; i < PR_SPECTRAL_WAVELENGTH_SAMPLES; ++i) {
-		desc->setLuminousFactor(i, NM_TO_Y[i]);
-	}
-
-	return desc;
+	PR_ASSERT(false, "Spectral not implemented!");
+	return nullptr;
 }
 
 std::shared_ptr<SpectrumDescriptor> SpectrumDescriptor::createDefault()
 {
-	return createTriplet();
+	return createSRGBTriplet();
 }
 } // namespace PR

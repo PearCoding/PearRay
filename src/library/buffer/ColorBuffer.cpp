@@ -29,10 +29,12 @@ ColorBuffer::~ColorBuffer()
 {
 }
 
-void ColorBuffer::map(const ToneMapper& mapper, const float* specIn, size_t samples)
+void ColorBuffer::map(const ToneMapper& mapper,
+					  const std::shared_ptr<SpectrumDescriptor>& desc,
+					  const float* specIn)
 {
 	PR_ASSERT(mData, "Expected valid buffer");
-	mapper.map(specIn, samples,
+	mapper.map(desc, specIn,
 			   mData->Ptr, channels(), mData->Width * mData->Height);
 }
 
@@ -46,7 +48,7 @@ void ColorBuffer::mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn)
 void ColorBuffer::flipY()
 {
 	PR_ASSERT(mData, "Expected valid buffer");
-	const int h	 = (int)height();
+	const int h		= (int)height();
 	const int elems = (int)heightPitch();
 	for (int i = 0; i < h / 2; ++i) {
 		float* ptr1 = &mData->Ptr[i * elems];

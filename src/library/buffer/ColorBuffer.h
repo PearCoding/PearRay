@@ -9,6 +9,7 @@ enum ColorBufferMode {
 };
 
 class ToneMapper;
+class SpectrumDescriptor;
 class PR_LIB ColorBuffer {
 public:
 	ColorBuffer(size_t width, size_t height, ColorBufferMode mode = CBM_RGBA);
@@ -20,7 +21,9 @@ public:
 	ColorBuffer(ColorBuffer&& other) = default;
 	ColorBuffer& operator=(ColorBuffer&& other) = default;
 
-	void map(const ToneMapper& mapper, const float* specIn, size_t samples);
+	void map(const ToneMapper& mapper,
+			 const std::shared_ptr<SpectrumDescriptor>& desc,
+			 const float* specIn);
 	void mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn);
 
 	void flipY();

@@ -3,6 +3,8 @@
 #include "math/Transform.h"
 #include "spectral/ColorTriplet.h"
 
+#define PR_RAY_CACHE_MOMENTUM
+
 namespace PR {
 
 enum RayFlags : uint32 {
@@ -25,11 +27,18 @@ struct RayPackageBase {
 	IntegerType WavelengthIndex = IntegerType(0);
 	IntegerType PixelIndex		= IntegerType(0);
 
+private:
+	bool Cached = false;
+#ifdef PR_RAY_CACHE_MOMENTUM
+	Vector3t<V> Momentum_Cache;
+#endif
+public:
 	RayPackageBase() = default;
 	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d)
 		: Origin(o)
 		, Direction(d)
 	{
+		cache();
 	}
 
 	inline void normalize()
@@ -37,6 +46,7 @@ struct RayPackageBase {
 		// We could use Eigen::...::normalize() but this has a check z > 0
 		// we have to avoid.
 		Direction /= Direction.norm();
+		cache();
 	}
 
 	inline RayPackageBase<V> transform(const Eigen::Matrix4f& oM,
@@ -72,13 +82,32 @@ struct RayPackageBase {
 		return Origin + t * Direction;
 	}
 
+	inline Vector3t<V> momentum() const
+	{
+#ifdef PR_RAY_CACHE_MOMENTUM
+		PR_ASSERT(Cached, "Cache first!");
+		return Momentum_Cache;
+#else
+		return Direction.cross(Origin);
+#endif
+	}
+
+	inline void cache()
+	{
+#ifdef PR_RAY_CACHE_MOMENTUM
+		Momentum_Cache = Direction.cross(Origin);
+#endif
+
+		Cached = true;
+	}
+
 	/* Advance with t, transform position with matrix and calculate new position to given other base. */
 	inline V distanceTransformed(const V& t_local,
 								 const Eigen::Matrix4f& local_to_global,
 								 const RayPackageBase<V>& global_other) const
 	{
 		auto p  = this->t(t_local);
-		auto p2 = Transform::apply(local_to_global, p); // TODO: Assume Affine?
+		auto p2 = Transform::applyAffine(local_to_global, p);
 
 		return (p2 - global_other.Origin).norm();
 	}
@@ -91,6 +120,8 @@ struct RayPackageBase {
 		other.Origin	= Transform::safePosition(o, d);
 		other.Direction = d;
 		other.IterationDepth += IntegerType(1);
+
+		other.cache();
 
 		return other;
 	}

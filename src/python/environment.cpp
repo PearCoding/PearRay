@@ -33,7 +33,8 @@ void setup_environment(py::module& m)
 		.def("setup", &Environment::setup)
 		.def("save", &Environment::save)
 		.def("createSelectedIntegrator", &Environment::createSelectedIntegrator)
-		.def("createRenderFactory", &Environment::createRenderFactory);
+		.def("createRenderFactory", &Environment::createRenderFactory)
+		.def_property_readonly("spectrumDescriptor", &Environment::spectrumDescriptor);
 
 	py::class_<SceneLoader>(m, "SceneLoader")
 		.def_static("loadFromString", &SceneLoader::loadFromString)

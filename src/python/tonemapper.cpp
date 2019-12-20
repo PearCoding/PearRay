@@ -2,6 +2,7 @@
 #include "buffer/ColorBuffer.h"
 #include "buffer/FrameBuffer.h"
 #include "spectral/Spectrum.h"
+#include "spectral/SpectrumDescriptor.h"
 
 #include "SpectralFile.h"
 
@@ -35,7 +36,10 @@ void setup_tonemapper(py::module& m)
 									  s.widthBytePitch(),
 									  s.channelBytePitch() }));
 		})
-		.def("map", [](ColorBuffer& c, const ToneMapper& mapper, Array specIn) {
+		.def("map", [](ColorBuffer& c,
+					   const ToneMapper& mapper,
+					   const std::shared_ptr<SpectrumDescriptor>& desc,
+					   Array specIn) {
 			py::buffer_info info1 = specIn.request();
 			if (info1.format != py::format_descriptor<float>::format())
 				throw std::runtime_error("Incompatible format: expected a float array!");
@@ -46,11 +50,14 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
+			if (info1.shape[2] != (ssize_t)desc->samples())
+				throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
+
 			if ((size_t)info1.shape[0] != c.height()
 				|| (size_t)info1.shape[1] != c.width())
 				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
 
-			c.map(mapper, (float*)info1.ptr, info1.shape[2]);
+			c.map(mapper, desc, (float*)info1.ptr);
 		})
 		.def("mapOnlyMapper", [](ColorBuffer& c, const ToneMapper& mapper, Array rgbIn) {
 			py::buffer_info info1 = rgbIn.request();
@@ -86,7 +93,9 @@ void setup_tonemapper(py::module& m)
 
 	py::class_<ToneMapper>(m, "ToneMapper")
 		.def(py::init<>())
-		.def("map", [](ToneMapper& tm, Array specIn, size_t elems) {
+		.def("map", [](ToneMapper& tm,
+					   const std::shared_ptr<SpectrumDescriptor>& desc,
+					   Array specIn, size_t elems) {
 			// specIn
 			py::buffer_info info1 = specIn.request();
 			if (info1.format != py::format_descriptor<float>::format())
@@ -98,9 +107,13 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
+			if (info1.shape[2] != (ssize_t)desc->samples())
+				throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
+
 			// rgbOut
 			float* mem = new float[info1.shape[0] * info1.shape[1] * elems];
-			tm.map((float*)info1.ptr, info1.shape[2],
+			tm.map(desc,
+				   (float*)info1.ptr,
 				   mem, elems,
 				   info1.shape[0] * info1.shape[1]);
 

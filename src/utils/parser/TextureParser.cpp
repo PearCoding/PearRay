@@ -166,7 +166,9 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		}
 
 		auto output = std::make_shared<ImageMapSocket>(
-			(OIIO::TextureSystem*)env->textureSystem(), opts, filename);
+			env->spectrumDescriptor(),
+			(OIIO::TextureSystem*)env->textureSystem(),
+			opts, filename);
 		env->addMapSocket(name, output);
 	} else {
 		PR_LOG(L_ERROR) << "No known type given for texture " << name << std::endl;

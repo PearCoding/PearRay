@@ -8,6 +8,7 @@ class Spectrum;
 class SpectrumDescriptor;
 class PR_LIB_UTILS SpectralFile {
 public:
+	SpectralFile() = default;
 	SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, size_t width, size_t height);
 	SpectralFile(const std::shared_ptr<SpectrumDescriptor>& desc, size_t width, size_t height, float* data, bool copy = false);
 	virtual ~SpectralFile();

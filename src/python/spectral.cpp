@@ -6,15 +6,61 @@
 
 using namespace PR;
 namespace PRPY {
+class SpectrumDescriptorWrap : public SpectrumDescriptor {
+public:
+	virtual size_t samples() const override
+	{
+		PYBIND11_OVERLOAD_PURE(size_t, SpectrumDescriptor, samples);
+	}
+
+	virtual float wavelength(size_t index) const override
+	{
+		PYBIND11_OVERLOAD_PURE(float, SpectrumDescriptor, wavelength, index);
+	}
+
+	virtual float luminousFactor(size_t index) const override
+	{
+		PYBIND11_OVERLOAD_PURE(float, SpectrumDescriptor, luminousFactor, index);
+	}
+
+	virtual float integralDelta(size_t index) const override
+	{
+		PYBIND11_OVERLOAD_PURE(float, SpectrumDescriptor, integralDelta, index);
+	}
+
+	virtual int tag() const override
+	{
+		PYBIND11_OVERLOAD_PURE(int, SpectrumDescriptor, tag);
+	}
+
+	virtual void convertSpectrum(Spectrum& dst, const Spectrum& src) override
+	{
+		PYBIND11_OVERLOAD_PURE(void, SpectrumDescriptor, convertSpectrum, dst, src);
+	}
+
+	virtual ColorTriplet convertTriplet(
+		const std::shared_ptr<SpectrumDescriptor>& other,
+		const ColorTriplet& spec) override
+	{
+		PYBIND11_OVERLOAD_PURE(ColorTriplet, SpectrumDescriptor, convertTriplet, other, spec);
+	}
+};
+
 PR_NO_SANITIZE_ADDRESS
 void setup_spectral(py::module& m)
 {
-	py::class_<SpectrumDescriptor, std::shared_ptr<SpectrumDescriptor>>(m, "SpectrumDescriptor")
-		.def(py::init<uint32, float, float>())
+	py::class_<SpectrumDescriptor, SpectrumDescriptorWrap, std::shared_ptr<SpectrumDescriptor>>(m, "SpectrumDescriptor")
 		.def_property_readonly("samples", &SpectrumDescriptor::samples)
-		.def_property_readonly("isTriplet", &SpectrumDescriptor::isTriplet)
-		.def_property_readonly("isStandardSpectral", &SpectrumDescriptor::isStandardSpectral)
-		.def_static("createTriplet", &SpectrumDescriptor::createTriplet)
+		.def_property_readonly("tag", &SpectrumDescriptor::tag)
+		.def("wavelength", &SpectrumDescriptor::wavelength)
+		.def("luminousFactor", &SpectrumDescriptor::luminousFactor)
+		.def("integralDelta", &SpectrumDescriptor::integralDelta)
+		.def("convertSpectrum", &SpectrumDescriptor::convertSpectrum)
+		// Not exposed. ColorTriplet should not be used outside internal engine.
+		//.def("convertTriplet", &SpectrumDescriptor::convertTriplet)
+		.def_static("createXYZTriplet", &SpectrumDescriptor::createXYZTriplet)
+		.def_static("createSRGBTriplet", &SpectrumDescriptor::createSRGBTriplet)
+		.def_static("createDefault", &SpectrumDescriptor::createDefault)
 		.def_static("createStandardSpectral", &SpectrumDescriptor::createStandardSpectral);
 
 	py::class_<Spectrum>(m, "Spectrum", py::buffer_protocol())

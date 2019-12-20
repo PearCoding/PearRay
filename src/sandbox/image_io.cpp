@@ -2,6 +2,7 @@
 #include "Logger.h"
 
 #include "spectral/RGBConverter.h"
+#include "spectral/Spectrum.h"
 #include "spectral/SpectrumDescriptor.h"
 
 #include <OpenImageIO/imageio.h>

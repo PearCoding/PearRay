@@ -227,8 +227,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				toneMapper.setColorMode(sett.TCM);
 				toneMapper.setGammaMode(sett.TGM);
 				toneMapper.setMapperMode(sett.TMM);
-				toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()],
-							   channel->channels(),
+				toneMapper.map(mRenderer->spectrumDescriptor(),
+							   &ptr[y * channel->heightPitch() + x * channel->widthPitch()],
 							   &line[id], 3, 1); // RGB
 
 				id += 3;

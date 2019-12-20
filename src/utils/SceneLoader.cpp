@@ -80,7 +80,9 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 				std::transform(spectrum.begin(), spectrum.end(), spectrum.begin(), ::tolower);
 
 				if (spectrum == "xyz") {
-					spectrumDescriptor = SpectrumDescriptor::createTriplet();
+					spectrumDescriptor = SpectrumDescriptor::createXYZTriplet();
+				} else if (spectrum == "rgb" || spectrum == "srgb") {
+					spectrumDescriptor = SpectrumDescriptor::createSRGBTriplet();
 				} else if (spectrum == "spectral") {
 					spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
 				}

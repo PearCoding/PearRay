@@ -5,6 +5,8 @@
 
 #include <utility>
 
+#define PR_TRIANGLE_INTERSECTION_METHOD 1
+
 namespace PR {
 class PR_LIB Triangle {
 	PR_CLASS_NON_CONSTRUCTABLE(Triangle);
@@ -48,7 +50,11 @@ public:
 		Vector2t<T>& uv,
 		T& t)
 	{
+#if PR_TRIANGLE_INTERSECTION_METHOD == 0
 		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
+#elif PR_TRIANGLE_INTERSECTION_METHOD == 1
+		return TriangleIntersection::intersectPI_NonOpt(in, p1, p2, p3, uv, t);
+#endif
 	}
 };
 } // namespace PR

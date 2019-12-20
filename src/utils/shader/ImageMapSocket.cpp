@@ -4,13 +4,16 @@
 #include "Logger.h"
 
 namespace PR {
-ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
+ImageMapSocket::ImageMapSocket(const std::shared_ptr<SpectrumDescriptor>& desc,
+							   OIIO::TextureSystem* tsys,
 							   const OIIO::TextureOpt& options,
 							   const std::string& filename)
 	: FloatSpectralMapSocket()
 	, mFilename(filename)
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
+	, mImageDescriptor(SpectrumDescriptor::createSRGBTriplet())
+	, mEngineDescriptor(desc)
 	, mIsPtex(false)
 	, mIsLinear(true)
 {
@@ -43,14 +46,12 @@ ColorTriplet ImageMapSocket::eval(const MapSocketCoord& ctx) const
 {
 	ColorTriplet rgb;
 	lookup(ctx, rgb);
-
-	float xyz[3];
-	RGBConverter::toXYZ(rgb[0], rgb[1], rgb[2], xyz[0], xyz[1], xyz[2]);
-	return ColorTriplet(xyz[0], xyz[1], xyz[2]);
+	return mEngineDescriptor->convertTriplet(mImageDescriptor, rgb);
 }
 
 float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 {
+	// TODO
 	ColorTriplet rgb;
 	lookup(ctx, rgb);
 	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
@@ -58,7 +59,6 @@ float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 
 void ImageMapSocket::lookup(const MapSocketCoord& ctx, ColorTriplet& rgb) const
 {
-
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
 
 	OIIO::TextureOpt ops = mTextureOptions;
@@ -96,9 +96,9 @@ std::string ImageMapSocket::dumpInformation() const
 {
 	std::stringstream stream;
 	stream << mFilename;
-	if(!mIsLinear)
+	if (!mIsLinear)
 		stream << " [NonLinear]";
-	if(mIsPtex)
+	if (mIsPtex)
 		stream << " [Ptex]";
 	return stream.str();
 }

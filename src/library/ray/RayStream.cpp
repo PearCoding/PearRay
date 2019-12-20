@@ -207,6 +207,7 @@ Ray RayStream::getRay(size_t id) const
 							   mWeight[2][cid]);
 
 	ray.normalize();
+
 	return ray;
 }
 

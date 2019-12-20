@@ -1,7 +1,5 @@
 #include "SpectralParser.h"
 #include "Logger.h"
-#include "spectral/RGBConverter.h"
-#include "spectral/XYZConverter.h"
 
 #include "DataLisp.h"
 
@@ -37,36 +35,16 @@ Spectrum SpectralParser::getSpectrum(const std::shared_ptr<SpectrumDescriptor>& 
 					spec.setValue(i, fieldD.getNumber());
 			}
 		} else if (grp.id() == "illum" || grp.id() == "illumination") {
-			if (grp.anonymousCount() == 3
+			if (grp.anonymousCount() == spec.samples()
 				&& grp.isAllAnonymousNumber()) {
-				RGBConverter::toSpec(spec,
-									 grp.at(0).getNumber(),
-									 grp.at(1).getNumber(),
-									 grp.at(2).getNumber());
+				for (size_t i = 0; i < spec.samples(); ++i)
+					spec[i] = grp.at(i).getNumber();
 			}
 		} else if (grp.id() == "refl" || grp.id() == "reflective") {
-			if (grp.anonymousCount() == 3
+			if (grp.anonymousCount() == spec.samples()
 				&& grp.isAllAnonymousNumber()) {
-				XYZConverter::toSpec(spec,
-									 grp.at(0).getNumber(),
-									 grp.at(1).getNumber(),
-									 grp.at(2).getNumber());
-			}
-		} else if (grp.id() == "refl_rgb" || grp.id() == "reflective_rgb") {
-			if (grp.anonymousCount() == 3
-				&& grp.isAllAnonymousNumber()) {
-				RGBConverter::toSpec(spec,
-									 grp.at(0).getNumber(),
-									 grp.at(1).getNumber(),
-									 grp.at(2).getNumber());
-			}
-		} else if (grp.id() == "xyz") {
-			if (grp.anonymousCount() == 3
-				&& grp.isAllAnonymousNumber()) {
-				XYZConverter::toSpec(spec,
-									 grp.at(0).getNumber(),
-									 grp.at(1).getNumber(),
-									 grp.at(2).getNumber());
+				for (size_t i = 0; i < spec.samples(); ++i)
+					spec[i] = grp.at(i).getNumber();
 			}
 		} else if (grp.id() == "temperature" || grp.id() == "blackbody") { // Luminance
 			if (grp.anonymousCount() >= 1 && grp.at(0).isNumber()) {

@@ -6,8 +6,8 @@
 #ifdef PR_COMPRESS_SPEC_FILES
 #include <boost/iostreams/filter/zlib.hpp>
 #endif
-#include <boost/iostreams/filtering_stream.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 #include <stdexcept>
 
 namespace PR {
@@ -106,14 +106,16 @@ void SpectralFile::save(const std::wstring& path, bool compress) const
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
 	// Wavelength data
-	const auto& wavelengths = mData->Descriptor->getWavelengths();
-	out.write(reinterpret_cast<const char*>(wavelengths.data()),
-			  wavelengths.size() * sizeof(float));
+	for (size_t i = 0; i < mData->Descriptor->samples(); ++i) {
+		float f = mData->Descriptor->wavelength(i);
+		out.write(reinterpret_cast<const char*>(&f), sizeof(float));
+	}
 
 	// Luminous factor data
-	const auto& lmbs = mData->Descriptor->getLuminousFactors();
-	out.write(reinterpret_cast<const char*>(lmbs.data()),
-			  lmbs.size() * sizeof(float));
+	for (size_t i = 0; i < mData->Descriptor->samples(); ++i) {
+		float f = mData->Descriptor->luminousFactor(i);
+		out.write(reinterpret_cast<const char*>(&f), sizeof(float));
+	}
 
 	// Image content
 	out.write(reinterpret_cast<const char*>(mData->Ptr), sizeof(float) * mData->Height * mData->Width * mData->Descriptor->samples());
@@ -152,7 +154,9 @@ SpectralFile SpectralFile::open(const std::wstring& path, bool compressed)
 	in.read(reinterpret_cast<char*>(wavelengths.data()), wavelengths.size() * sizeof(float));
 	in.read(reinterpret_cast<char*>(luminous.data()), luminous.size() * sizeof(float));
 
-	std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(wavelengths, luminous);
+	throw std::runtime_error("Not implemented!");
+
+	/*std::shared_ptr<SpectrumDescriptor> desc = std::make_shared<SpectrumDescriptor>(wavelengths, luminous);
 
 	SpectralFile f(desc, width, height);
 	for (uint32 y = 0; y < height; ++y) {
@@ -163,7 +167,8 @@ SpectralFile SpectralFile::open(const std::wstring& path, bool compressed)
 		}
 	}
 
-	return f;
+	return f;*/
+	return SpectralFile();
 }
 
 const std::shared_ptr<SpectrumDescriptor>& SpectralFile::descriptor() const

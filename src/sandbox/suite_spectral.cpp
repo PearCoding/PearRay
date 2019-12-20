@@ -2,6 +2,7 @@
 #include "image_io.h"
 
 #include "spectral/RGBConverter.h"
+#include "spectral/Spectrum.h"
 #include "spectral/SpectrumDescriptor.h"
 
 #include <boost/filesystem.hpp>
@@ -16,7 +17,8 @@ static float minE = std::numeric_limits<float>::infinity();
 
 static void handle_color(float r, float g, float b, std::ofstream& log)
 {
-	std::shared_ptr<SpectrumDescriptor> desc = SpectrumDescriptor::createStandardSpectral();
+	// TODO
+	/*std::shared_ptr<SpectrumDescriptor> desc = SpectrumDescriptor::createStandardSpectral();
 	Spectrum spec(desc);
 
 	PR::RGBConverter::toSpec(spec, r, g, b);
@@ -32,7 +34,7 @@ static void handle_color(float r, float g, float b, std::ofstream& log)
 	stream << "results/spectral1/"
 		   << int(r * 255) << "_" << int(g * 255) << "_" << int(b * 255);
 	save_color_preview(stream.str() + ".png", r, g, b, R, G, B);
-	save_spec(stream.str() + "_spec.png", spec);
+	save_spec(stream.str() + "_spec.png", spec);*/
 }
 
 void suite_spectral()

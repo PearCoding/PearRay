@@ -179,22 +179,21 @@ SET(PR_Src
   serialization/Serializer.cpp
   serialization/Serializer.inl
   spectral/ColorTriplet.h
-  spectral/IntensityConverter.cpp
-  spectral/IntensityConverter.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h
+  spectral/RGBSpectrumDescriptor.cpp
+  spectral/RGBSpectrumDescriptor.h
   spectral/Spectrum.cpp
   spectral/Spectrum.h
   spectral/Spectrum.inl
   spectral/SpectrumDescriptor.cpp
   spectral/SpectrumDescriptor.h
-  spectral/SpectrumDescriptor.inl
   spectral/SpectrumLazyOperator.h
+  spectral/SpectrumTag.h
   spectral/ToneMapper.cpp
   spectral/ToneMapper.h
-  spectral/XYZConverter.cpp
-  spectral/XYZConverter.h
-  spectral/xyz2spec.inl
+  spectral/XYZSpectrumDescriptor.cpp
+  spectral/XYZSpectrumDescriptor.h
   shader/ShadingGroup.h
   shader/ShadingPoint.h
   shader/Socket.h

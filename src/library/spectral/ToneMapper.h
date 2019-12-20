@@ -26,16 +26,15 @@ enum ToneMapperMode {
 	TMM_Normalized
 };
 
+class SpectrumDescriptor;
 class PR_LIB ToneMapper {
 	PR_CLASS_NON_COPYABLE(ToneMapper);
 
 public:
-	/**
-		 * @brief Constructs a ToneMapper
-		 */
 	ToneMapper();
 
-	void map(const float* specIn, size_t specElems,
+	void map(const std::shared_ptr<SpectrumDescriptor>& desc,
+			 const float* specIn,
 			 float* rgbOut, size_t rgbElems, size_t pixelCount) const;
 	void mapOnlyMapper(const float* rgbIn, float* rgbOut,
 					   size_t rgbElems, size_t pixelCount) const;

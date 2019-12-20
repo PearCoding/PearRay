@@ -18,9 +18,7 @@
 #include "scene/Scene.h"
 #include "shader/ConstSocket.h"
 #include "shader/MapShadingSocket.h"
-#include "spectral/RGBConverter.h"
 #include "spectral/SpectrumDescriptor.h"
-#include "spectral/XYZConverter.h"
 
 #include "Logger.h"
 
@@ -52,11 +50,16 @@ Environment::Environment(const std::wstring& workdir,
 	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
+		std::shared_ptr<SpectrumDescriptor> rgbDesc = SpectrumDescriptor::createSRGBTriplet();
 		//Defaults
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
-			Spectrum c(specDesc);
-			RGBConverter::toSpec(c, r, g, b);
-			mSpectrums.insert(std::make_pair(name, c));
+			Spectrum c(rgbDesc);
+			c[0] = r;
+			c[1] = g;
+			c[2] = b;
+			Spectrum d(specDesc);
+			specDesc->convertSpectrum(d, c);
+			mSpectrums.insert(std::make_pair(name, d));
 		};
 
 		addColor("black", 0, 0, 0);

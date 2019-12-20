@@ -1,17 +1,6 @@
 #include "RGBConverter.h"
-#include "XYZConverter.h"
-
-#include "SpectrumDescriptor.h"
 
 namespace PR {
-// D65 sRGB
-void RGBConverter::convert(size_t samples, const float* src, float& x, float& y, float& z)
-{
-	float X, Y, Z;
-	XYZConverter::convertXYZ(samples, src, X, Y, Z);
-	fromXYZ(X, Y, Z, x, y, z);
-}
-
 void RGBConverter::toXYZ(float r, float g, float b, float& x, float& y, float& z)
 {
 	x = 4.123908e-01f * r + 3.575843e-01f * g + 1.804808e-01f * b;
@@ -57,13 +46,5 @@ void RGBConverter::linearize(float& x, float& y, float& z)
 	x = (x <= LIN_T) ? x / LIN_F1 * x : std::pow((x + LIN_O) / LIN_F2, POW_F);
 	y = (y <= LIN_T) ? y / LIN_F1 * y : std::pow((y + LIN_O) / LIN_F2, POW_F);
 	z = (z <= LIN_T) ? z / LIN_F1 * z : std::pow((z + LIN_O) / LIN_F2, POW_F);
-}
-
-void RGBConverter::toSpec(Spectrum& spec, float r, float g, float b)
-{
-	float x, y, z;
-	toXYZ(r, g, b, x, y, z);
-
-	XYZConverter::toSpec(spec, x, y, z);
 }
 } // namespace PR
