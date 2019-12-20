@@ -56,5 +56,25 @@ public:
 		return TriangleIntersection::intersectPI_NonOpt(in, p1, p2, p3, uv, t);
 #endif
 	}
+
+	template <typename T>
+	inline static typename VectorTemplate<T>::bool_t intersect(
+		const RayPackageBase<T>& in,
+		const Vector3t<T>& p1,
+		const Vector3t<T>& p2,
+		const Vector3t<T>& p3,
+		const Vector3t<T>& N,
+		const Vector3t<T>& m1, // Momentum
+		const Vector3t<T>& m2,
+		const Vector3t<T>& m3,
+		Vector2t<T>& uv,
+		T& t)
+	{
+#if PR_TRIANGLE_INTERSECTION_METHOD == 0
+		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
+#elif PR_TRIANGLE_INTERSECTION_METHOD == 1
+		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, N, m1, m2, m3, uv, t);
+#endif
+	}
 };
 } // namespace PR

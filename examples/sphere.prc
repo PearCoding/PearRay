@@ -7,7 +7,7 @@
 	(registry '/renderer/common/type' 'occlusion')
 	(registry '/renderer/common/max_ray_depth' 8)
 	(registry '/renderer/common/tile/mode' 0)
-	(registry '/renderer/common/sampler/aa/count' 2)
+	(registry '/renderer/common/sampler/aa/count' 32)
 	(registry '/renderer/common/sampler/lens/count' 1)
 	(registry '/renderer/common/sampler/time/count' 1)
 	(registry '/renderer/common/sampler/time/mapping' 0)
@@ -82,7 +82,7 @@
 	; Materials
 	(spectrum
 		:name 'Material_diffuse_color'
-		:data (rgb 0 0.800000 0.800000)
+		:data (refl 0 0.800000 0.800000)
 	)
 	(material
 		:name 'Material'

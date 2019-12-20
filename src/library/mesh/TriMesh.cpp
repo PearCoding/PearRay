@@ -13,11 +13,27 @@
 
 #define BUILDER kdTreeBuilder
 
+//#define PR_TRIMESH_USE_CACHE
+
 namespace PR {
+struct TriMeshCache {
+	std::vector<float> FaceNormal_Cache;
+	std::vector<float> FaceMomentum_Cache[3];
+
+	TriMeshCache(size_t facecount)
+	{
+		FaceNormal_Cache.resize(3 * facecount);
+		FaceMomentum_Cache[0].resize(3 * facecount);
+		FaceMomentum_Cache[1].resize(3 * facecount);
+		FaceMomentum_Cache[2].resize(3 * facecount);
+	}
+};
+
 TriMesh::TriMesh(const std::shared_ptr<MeshContainer>& mesh_container)
 	: mContainer(mesh_container)
 {
 	mContainer->triangulate(); // Make sure it is only triangles!
+	cache();
 }
 
 TriMesh::~TriMesh()
@@ -109,11 +125,33 @@ void TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 							 const Vector3fv p1 = promote(mContainer->vertex(ind2));
 							 const Vector3fv p2 = promote(mContainer->vertex(ind3));
 
+#ifdef PR_TRIMESH_USE_CACHE
+							 const Vector3f N  = Vector3f(mCache->FaceNormal_Cache[3 * f + 0],
+														  mCache->FaceNormal_Cache[3 * f + 1],
+														  mCache->FaceNormal_Cache[3 * f + 2]);
+							 const Vector3f m0 = Vector3f(mCache->FaceMomentum_Cache[0][3 * f + 0],
+														  mCache->FaceMomentum_Cache[0][3 * f + 1],
+														  mCache->FaceMomentum_Cache[0][3 * f + 2]);
+							 const Vector3f m1 = Vector3f(mCache->FaceMomentum_Cache[1][3 * f + 0],
+														  mCache->FaceMomentum_Cache[1][3 * f + 1],
+														  mCache->FaceMomentum_Cache[1][3 * f + 2]);
+							 const Vector3f m2 = Vector3f(mCache->FaceMomentum_Cache[2][3 * f + 0],
+														  mCache->FaceMomentum_Cache[2][3 * f + 1],
+														  mCache->FaceMomentum_Cache[2][3 * f + 2]);
+
+							 bfloat hits = Triangle::intersect(
+								 in2,
+								 p0, p1, p2,
+								 promote(N), promote(m0), promote(m1), promote(m2),
+								 uv,
+								 t); // Major bottleneck!
+#else
 							 bfloat hits = Triangle::intersect(
 								 in2,
 								 p0, p1, p2,
 								 uv,
 								 t); // Major bottleneck!
+#endif
 
 							 const vfloat inf = simdpp::make_float(std::numeric_limits<float>::infinity());
 							 out2.HitDistance = simdpp::blend(t, inf, hits);
@@ -153,10 +191,32 @@ void TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 
 							 float t;
 							 Vector2f uv;
+#ifdef PR_TRIMESH_USE_CACHE
+							 const Vector3f N  = Vector3f(mCache->FaceNormal_Cache[3 * f + 0],
+														  mCache->FaceNormal_Cache[3 * f + 1],
+														  mCache->FaceNormal_Cache[3 * f + 2]);
+							 const Vector3f m0 = Vector3f(mCache->FaceMomentum_Cache[0][3 * f + 0],
+														  mCache->FaceMomentum_Cache[0][3 * f + 1],
+														  mCache->FaceMomentum_Cache[0][3 * f + 2]);
+							 const Vector3f m1 = Vector3f(mCache->FaceMomentum_Cache[1][3 * f + 0],
+														  mCache->FaceMomentum_Cache[1][3 * f + 1],
+														  mCache->FaceMomentum_Cache[1][3 * f + 2]);
+							 const Vector3f m2 = Vector3f(mCache->FaceMomentum_Cache[2][3 * f + 0],
+														  mCache->FaceMomentum_Cache[2][3 * f + 1],
+														  mCache->FaceMomentum_Cache[2][3 * f + 2]);
+
+							 bool hit = Triangle::intersect(
+								 in2,
+								 mContainer->vertex(ind1), mContainer->vertex(ind2), mContainer->vertex(ind3),
+								 N, m0, m1, m2,
+								 uv,
+								 t); // Major bottleneck!
+#else
 							 bool hit = Triangle::intersect(
 								 in2,
 								 mContainer->vertex(ind1), mContainer->vertex(ind2), mContainer->vertex(ind3),
 								 uv, t); // Major bottleneck!
+#endif
 
 							 if (!hit)
 								 return;
@@ -217,6 +277,38 @@ void TriMesh::provideGeometryPoint(uint32 faceID, const Vector3f& parameter, Geo
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
 	pt.UVW = Vector3f(uv(0), uv(1), 0);
+}
+
+void TriMesh::cache()
+{
+#ifdef PR_TRIMESH_USE_CACHE
+	mCache = std::make_unique<TriMeshCache>(mContainer->faceCount());
+
+	for (size_t f = 0; f < mContainer->faceCount(); ++f) {
+		const uint32 ind1 = mContainer->indices()[3 * f];
+		const uint32 ind2 = mContainer->indices()[3 * f + 1];
+		const uint32 ind3 = mContainer->indices()[3 * f + 2];
+
+		const Vector3f p0 = mContainer->vertex(ind1);
+		const Vector3f p1 = mContainer->vertex(ind2);
+		const Vector3f p2 = mContainer->vertex(ind3);
+
+		// Cache momentum based on pluecker coordinates
+		Vector3f m0 = p0.cross(p1);
+		Vector3f m1 = p1.cross(p2);
+		Vector3f m2 = p2.cross(p0);
+
+		// Cache face normal. The normal is not normalized and carries the 2*area in the norm
+		Vector3f N = (p1 - p0).cross(p2 - p0);
+
+		for (size_t i = 0; i < 3; ++i) {
+			mCache->FaceNormal_Cache[3 * f + i]	  = N(i);
+			mCache->FaceMomentum_Cache[0][3 * f + i] = m0(i);
+			mCache->FaceMomentum_Cache[1][3 * f + i] = m1(i);
+			mCache->FaceMomentum_Cache[2][3 * f + i] = m2(i);
+		}
+	}
+#endif
 }
 
 } // namespace PR

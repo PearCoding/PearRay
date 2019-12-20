@@ -137,5 +137,78 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	return vfloat(0) == vfloat(1);
 }
 
+// Pluecker based intersection method
+// Optimized variant -> Everything is cached!
+inline PR_LIB bool intersectPI_Opt(
+	const Ray& in,
+	const Vector3f& p0,
+	const Vector3f& p1,
+	const Vector3f& p2,
+	const Vector3f& N,
+	const Vector3f& m0,
+	const Vector3f& m1,
+	const Vector3f& m2,
+	Vector2f& uv,
+	float& t)
+{
+	Vector3f dR = in.Direction;
+	Vector3f mR = in.momentum();
+
+	// Edge 1
+	Vector3f d0 = p0 - p1;
+	//Vector3f m0 = p0.cross(p1);
+	float s0  = d0.dot(mR) + m0.dot(dR);
+	bool sign = std::signbit(s0);
+
+	// Edge 2
+	Vector3f d2 = p2 - p0;
+	//Vector3f m2 = p2.cross(p0);
+	float s2 = d2.dot(mR) + m2.dot(dR);
+	if (std::signbit(s2) != sign)
+		return false;
+
+	// Edge 3
+	Vector3f d1 = p1 - p2;
+	//Vector3f m1 = p1.cross(p2);
+	float s1 = d1.dot(mR) + m1.dot(dR);
+	if (std::signbit(s1) != sign)
+		return false;
+
+	// Normal
+	//Vector3f N = -d0.cross(d2);
+	float k = dR.dot(N);
+	if (std::abs(k) <= PR_EPSILON)
+		return false;
+
+	// Intersection value
+	t = (p0 - in.Origin).dot(N) / k;
+	if (t <= PR_TRIANGLE_INTERSECT_EPSILON)
+		return false;
+
+	// UV calculation!
+	Vector3f p = in.t(t);
+	float a2   = N.squaredNorm();
+
+	uv(0) = std::sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
+	uv(1) = std::sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
+
+	return true;
+}
+
+inline PR_LIB bfloat intersectPI_Opt(
+	const RayPackage& in,
+	const Vector3fv& p1,
+	const Vector3fv& p2,
+	const Vector3fv& p3,
+	const Vector3fv& N,
+	const Vector3fv& m0,
+	const Vector3fv& m1,
+	const Vector3fv& m2,
+	Vector2fv& uv,
+	vfloat& t)
+{
+	// TODO
+	return vfloat(0) == vfloat(1);
+}
 } // namespace TriangleIntersection
 } // namespace PR

@@ -35,5 +35,8 @@ private:
 	BoundingBox mBoundingBox;
 	std::unique_ptr<kdTreeCollider> mKDTree;
 	std::shared_ptr<MeshContainer> mContainer;
+
+	void cache();
+	std::unique_ptr<struct TriMeshCache> mCache;
 };
 } // namespace PR
