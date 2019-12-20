@@ -80,8 +80,8 @@ bool ProfFile::open(const QString& filename)
 
 			ProfTimeCounterEntry entry;
 			file.read(reinterpret_cast<char*>(&entry.TotalValue), sizeof(entry.TotalValue));
-			file.read(reinterpret_cast<char*>(&entry.TotalDuration), sizeof(entry.TotalDuration));
-			entry.TimePointMicroSec = timepoint;
+			file.read(reinterpret_cast<char*>(&entry.TotalDurationNS), sizeof(entry.TotalDurationNS));
+			entry.TimePointMS = timepoint;
 
 			mEntries[descID].TimeCounterEntries.push_back(entry);
 		}
@@ -95,7 +95,7 @@ bool ProfFile::open(const QString& filename)
 				  });
 		std::sort(entry.TimeCounterEntries.begin(), entry.TimeCounterEntries.end(),
 				  [](const ProfTimeCounterEntry& a, const ProfTimeCounterEntry& b) {
-					  return a.TimePointMicroSec < b.TimePointMicroSec;
+					  return a.TimePointMS < b.TimePointMS;
 				  });
 	}
 

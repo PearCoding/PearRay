@@ -21,7 +21,7 @@ ProfTreeItem::~ProfTreeItem()
 static int indexOfEntry(const QVector<ProfTimeCounterEntry>& entries,
 						quint64 t)
 {
-	if (entries.isEmpty() || entries.front().TimePointMicroSec > t)
+	if (entries.isEmpty() || entries.front().TimePointMS > t)
 		return -1;
 
 	int L = 0;
@@ -29,7 +29,7 @@ static int indexOfEntry(const QVector<ProfTimeCounterEntry>& entries,
 
 	while (L <= R) {
 		int h		 = (L + R) / 2;
-		quint64 time = entries.at(h).TimePointMicroSec;
+		quint64 time = entries.at(h).TimePointMS;
 		if (time < t)
 			L = h + 1;
 		else if (time == t)
@@ -57,7 +57,7 @@ quint64 ProfTreeItem::totalValue() const
 quint64 ProfTreeItem::totalDuration() const
 {
 	if (isLeaf()) {
-		return mFile->entry(mIndex).TimeCounterEntries.last().TotalDuration;
+		return mFile->entry(mIndex).TimeCounterEntries.last().TotalDurationNS;
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
@@ -91,7 +91,7 @@ quint64 ProfTreeItem::totalDuration(quint64 t) const
 		if (index < 0)
 			return 0;
 		else
-			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDuration;
+			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDurationNS;
 	} else {
 		quint64 value = 0;
 		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
@@ -137,7 +137,7 @@ QVector<quint64> ProfTreeItem::timePoints() const
 		if (isLeaf()) {
 			mTimePoints_Cached.reserve(mFile->entry(mIndex).TimeCounterEntries.size());
 			for (const ProfTimeCounterEntry& entry : mFile->entry(mIndex).TimeCounterEntries)
-				mTimePoints_Cached.append(entry.TimePointMicroSec);
+				mTimePoints_Cached.append(entry.TimePointMS);
 		} else {
 			for (std::shared_ptr<ProfTreeItem> child : mChildren)
 				mergeSortedArrays(mTimePoints_Cached, child->timePoints());
@@ -157,6 +157,8 @@ std::shared_ptr<ProfTreeItem> ProfTreeItem::child(int row) const
 
 QString durationToString(quint64 dur)
 {
+	quint64 nanosecs = dur % 1000;
+	dur /= 1000;
 	quint64 micsecs = dur % 1000;
 	dur /= 1000;
 	quint64 milsecs = dur % 1000;
@@ -168,11 +170,11 @@ QString durationToString(quint64 dur)
 	quint64 hours = dur;
 
 	if (hours > 0)
-		return QString("%1:%2:%3.%4.%5").arg(hours, 2, 10, QChar('0')).arg(mins, 2, 10, QChar('0')).arg(secs, 2, 10, QChar('0')).arg(milsecs, 3, 10, QChar('0')).arg(micsecs, 3, 10, QChar('0'));
+		return QString("%1:%2:%3.%4.%5.%6").arg(hours, 2, 10, QChar('0')).arg(mins, 2, 10, QChar('0')).arg(secs, 2, 10, QChar('0')).arg(milsecs, 3, 10, QChar('0')).arg(nanosecs, 3, 10, QChar('0')).arg(micsecs, 3, 10, QChar('0'));
 	else if (mins > 0)
-		return QString("%1:%2.%3.%4").arg(mins, 2, 10, QChar('0')).arg(secs, 2, 10, QChar('0')).arg(milsecs, 3, 10, QChar('0')).arg(micsecs, 3, 10, QChar('0'));
+		return QString("%1:%2.%3.%4.%5").arg(mins, 2, 10, QChar('0')).arg(secs, 2, 10, QChar('0')).arg(milsecs, 3, 10, QChar('0')).arg(micsecs, 3, 10, QChar('0')).arg(nanosecs, 3, 10, QChar('0'));
 	else
-		return QString("%1.%2.%3").arg(secs, 2, 10, QChar('0')).arg(milsecs, 3, 10, QChar('0')).arg(micsecs, 3, 10, QChar('0'));
+		return QString("%1.%2.%3.%4").arg(secs, 2, 10, QChar('0')).arg(milsecs, 3, 10, QChar('0')).arg(micsecs, 3, 10, QChar('0')).arg(nanosecs, 3, 10, QChar('0'));
 }
 
 QVariant ProfTreeItem::data(int column) const

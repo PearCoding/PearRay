@@ -140,11 +140,11 @@ struct ProfileSamplePage {
 static std::vector<std::unique_ptr<ProfileSamplePage>> sProfilePages;
 static std::atomic<bool> sProfileRun(false);
 static std::mutex sProfileMutex;
-static uint64 sProfileStartTime = 0;
+static high_resolution_clock::time_point sProfileStartTime;
 static void profileThread(uint32 samplesPerSecond)
 {
 	sProfileRun		  = true;
-	sProfileStartTime = static_cast<uint64>(duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count());
+	sProfileStartTime = high_resolution_clock::now();
 
 	ProfileSamplePage* lastPage = nullptr;
 	const auto ms				= milliseconds(1000 / samplesPerSecond);
@@ -288,7 +288,7 @@ bool dumpToFile(const std::wstring& filename)
 	uint64 pages = (uint64)sProfilePages.size();
 	stream.write(reinterpret_cast<const char*>(&pages), sizeof(pages));
 	for (const auto& page : sProfilePages) {
-		uint64 timePoint = static_cast<uint64>(duration_cast<microseconds>(page->TimePoint.time_since_epoch()).count()) - sProfileStartTime;
+		uint64 timePoint = static_cast<uint64>(duration_cast<microseconds>(page->TimePoint - sProfileStartTime).count());
 		stream.write(reinterpret_cast<const char*>(&timePoint), sizeof(timePoint));
 
 		uint64 counterCount = (uint64)page->Counters.size();

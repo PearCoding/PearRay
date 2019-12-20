@@ -32,7 +32,7 @@ typedef std::atomic<uint64> InternalCounter;
 
 struct PR_LIB InternalTimeCounter {
 	InternalCounter* Total;
-	InternalCounter* TimeSpentMicroSec;
+	InternalCounter* TimeSpentNS;
 };
 
 // Internal interface
@@ -59,7 +59,7 @@ public:
 	{
 		const auto dur = std::chrono::high_resolution_clock::now() - mStart;
 		++(*mCounter.Total);
-		*mCounter.TimeSpentMicroSec += (uint64)std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+		*mCounter.TimeSpentNS += (uint64)std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count();
 	}
 
 private:

@@ -9,8 +9,8 @@ struct ProfCounterEntry {
 
 struct ProfTimeCounterEntry {
 	quint64 TotalValue;
-	quint64 TotalDuration;
-	quint64 TimePointMicroSec;
+	quint64 TotalDurationNS;
+	quint64 TimePointMS;
 };
 
 struct ProfEntry {

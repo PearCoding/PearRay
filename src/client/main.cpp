@@ -68,8 +68,11 @@ int main(int argc, char** argv)
 	if (!options.IsQuiet)
 		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) " << PR_VENDOR_STRING << std::endl;
 
-	if (options.Profile)
-		PR_LOG(PR::L_INFO) << "Profiling enabled" << std::endl;
+	if (options.Profile) {
+		PR_LOG(PR::L_INFO) << "Profiling enabled (TpS: "
+						   << std::chrono::high_resolution_clock::period::den
+						   << ")" << std::endl;
+	}
 
 	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(
 		options.OutputDir.generic_wstring(),

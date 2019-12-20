@@ -4,8 +4,21 @@
 import subprocess
 import sys
 import os
+import time
 import argparse
 from timeit import default_timer as timer
+
+
+def beep():
+    notes = [(0.25,440), (0.25,480), (0.25,440), (0.25,480), (0.25,440), (0.25,480), (0.25,440), (0.5,520)]
+
+    try:
+        import winsound
+        for i in range(len(notes)):
+            winsound.Beep(notes[i][1], notes[i][0]*1000)
+    except:
+        for i in range(len(notes)):
+            os.system('play -nq -t alsa synth {} sine {}'.format(notes[i][0], notes[i][1]))
 
 
 if __name__ == '__main__':
@@ -17,6 +30,7 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--threads", help="Number of threads", metavar='N', type=int, default=0)
     parser.add_argument("-q", "--quite", help="Be quite", action="store_true")
     parser.add_argument("--superquite", help="Be super quite", action="store_true")
+    parser.add_argument("-b", "--beep", help="Beep when done", action="store_true")
 
     args = parser.parse_args()
 
@@ -56,3 +70,6 @@ if __name__ == '__main__':
         print("Full: %f s | Avg: %f s" % (full_time, avg))
     res_file.write("Full = %f s\n" % full_time)
     res_file.write("Avg = %f s\n" % avg)
+
+    if args.beep:
+        beep()
