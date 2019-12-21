@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SpectrumDescriptor.h"
 
 namespace PR {

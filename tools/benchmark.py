@@ -4,7 +4,6 @@
 import subprocess
 import sys
 import os
-import time
 import argparse
 from timeit import default_timer as timer
 
@@ -16,7 +15,7 @@ def beep():
         import winsound
         for i in range(len(notes)):
             winsound.Beep(notes[i][1], notes[i][0]*1000)
-    except:
+    except Exception:
         for i in range(len(notes)):
             os.system('play -nq -t alsa synth {} sine {}'.format(notes[i][0], notes[i][1]))
 
