@@ -152,6 +152,10 @@ inline vfloat blend(vfloat trueCase, vfloat falseCase, bfloat mask) { return sim
 inline vuint32 blend(vuint32 trueCase, vuint32 falseCase, buint32 mask) { return simdpp::blend(trueCase, falseCase, mask); }
 inline vint32 blend(vint32 trueCase, vint32 falseCase, bint32 mask) { return simdpp::blend(trueCase, falseCase, mask); }
 
+using std::signbit;
+inline bfloat signbit(const vfloat& v) { return v < vfloat(0); }
+inline bint32 signbit(const vint32& v) { return v < vint32(0); }
+
 using std::abs;
 inline vfloat abs(const vfloat& o) { return simdpp::abs(o); }
 inline vint32 abs(const vint32& o) { return simdpp::abs(o); }

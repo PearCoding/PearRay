@@ -140,19 +140,19 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	Vector3fv d0 = p0 - p1;
 	Vector3fv m0 = p0.cross(p1);
 	vfloat s0	= d0.dot(mR) + m0.dot(dR);
-	vfloat si	= sign(s0);
+	bfloat si	= signbit(s0);
 
 	// Edge 2
 	Vector3fv d2 = p2 - p0;
 	Vector3fv m2 = p2.cross(p0);
 	vfloat s2	= d2.dot(mR) + m2.dot(dR);
-	bfloat neq1   = b_not(b_and(sign(s2),si));
+	bfloat neq1  = (signbit(s2) ^ si);
 
 	// Edge 3
 	Vector3fv d1 = p1 - p2;
 	Vector3fv m1 = p1.cross(p2);
 	vfloat s1	= d1.dot(mR) + m1.dot(dR);
-	bfloat neq2   = (sign(s1) != si);
+	bfloat neq2  = (signbit(s1) ^ si);
 
 	// Normal
 	Vector3fv N = -d0.cross(d2);
@@ -170,7 +170,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	uv(0) = sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
 	uv(1) = sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
 
-	return b_not(b_or(behind, b_or(kiv, b_or(neq1, neq2))));
+	return ~(behind | kiv | neq1 | neq2);
 }
 
 // Pluecker based intersection method
@@ -249,17 +249,17 @@ inline PR_LIB bfloat intersectPI_Opt(
 	// Edge 1
 	Vector3fv d0 = p0 - p1;
 	vfloat s0	= d0.dot(mR) + m0.dot(dR);
-	vfloat si	= sign(s0);
+	bfloat si	= signbit(s0);
 
 	// Edge 2
 	Vector3fv d2 = p2 - p0;
 	vfloat s2	= d2.dot(mR) + m2.dot(dR);
-	bfloat neq1  = (sign(s2) != si);
+	bfloat neq1  = (signbit(s2) ^ si);
 
 	// Edge 3
 	Vector3fv d1 = p1 - p2;
 	vfloat s1	= d1.dot(mR) + m1.dot(dR);
-	bfloat neq2  = (sign(s1) != si);
+	bfloat neq2  = (signbit(s1) ^ si);
 
 	// Normal
 	vfloat k   = dR.dot(N);
@@ -276,7 +276,7 @@ inline PR_LIB bfloat intersectPI_Opt(
 	uv(0) = sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
 	uv(1) = sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
 
-	return b_not(b_or(behind, b_or(kiv, b_or(neq1, neq2))));
+	return ~(behind | kiv | neq1 | neq2);
 }
 } // namespace TriangleIntersection
 } // namespace PR
