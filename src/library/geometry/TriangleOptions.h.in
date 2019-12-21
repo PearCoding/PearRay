@@ -1,0 +1,8 @@
+#pragma once
+
+// Use cache inside TriMesh
+#cmakedefine PR_TRIANGLE_USE_CACHE
+
+// 0 Moeller
+// 1 Pluecker
+#define PR_TRIANGLE_INTERSECTION_METHOD ${PR_TRIANGLE_INTERSECTION_METHOD}

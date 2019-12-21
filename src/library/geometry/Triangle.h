@@ -2,10 +2,9 @@
 
 #include "BoundingBox.h"
 #include "TriangleIntersection.h"
+#include "TriangleOptions.h"
 
 #include <utility>
-
-#define PR_TRIANGLE_INTERSECTION_METHOD 1
 
 namespace PR {
 class PR_LIB Triangle {
@@ -71,6 +70,10 @@ public:
 		T& t)
 	{
 #if PR_TRIANGLE_INTERSECTION_METHOD == 0
+		(void)N;
+		(void)m1;
+		(void)m2;
+		(void)m3;
 		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
 		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, N, m1, m2, m3, uv, t);

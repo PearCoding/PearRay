@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "Platform.h"
 #include "Profiler.h"
+#include "TriangleOptions.h"
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
@@ -12,8 +13,6 @@
 #include <fstream>
 
 #define BUILDER kdTreeBuilder
-
-//#define PR_TRIMESH_USE_CACHE
 
 namespace PR {
 struct TriMeshCache {
@@ -125,7 +124,7 @@ void TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 							 const Vector3fv p1 = promote(mContainer->vertex(ind2));
 							 const Vector3fv p2 = promote(mContainer->vertex(ind3));
 
-#ifdef PR_TRIMESH_USE_CACHE
+#ifdef PR_TRIANGLE_USE_CACHE
 							 const Vector3f N  = Vector3f(mCache->FaceNormal_Cache[3 * f + 0],
 														  mCache->FaceNormal_Cache[3 * f + 1],
 														  mCache->FaceNormal_Cache[3 * f + 2]);
@@ -191,7 +190,7 @@ void TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 
 							 float t;
 							 Vector2f uv;
-#ifdef PR_TRIMESH_USE_CACHE
+#ifdef PR_TRIANGLE_USE_CACHE
 							 const Vector3f N  = Vector3f(mCache->FaceNormal_Cache[3 * f + 0],
 														  mCache->FaceNormal_Cache[3 * f + 1],
 														  mCache->FaceNormal_Cache[3 * f + 2]);
@@ -281,7 +280,7 @@ void TriMesh::provideGeometryPoint(uint32 faceID, const Vector3f& parameter, Geo
 
 void TriMesh::cache()
 {
-#ifdef PR_TRIMESH_USE_CACHE
+#ifdef PR_TRIANGLE_USE_CACHE
 	mCache = std::make_unique<TriMeshCache>(mContainer->faceCount());
 
 	for (size_t f = 0; f < mContainer->faceCount(); ++f) {
@@ -302,7 +301,7 @@ void TriMesh::cache()
 		Vector3f N = (p1 - p0).cross(p2 - p0);
 
 		for (size_t i = 0; i < 3; ++i) {
-			mCache->FaceNormal_Cache[3 * f + i]	  = N(i);
+			mCache->FaceNormal_Cache[3 * f + i]		 = N(i);
 			mCache->FaceMomentum_Cache[0][3 * f + i] = m0(i);
 			mCache->FaceMomentum_Cache[1][3 * f + i] = m1(i);
 			mCache->FaceMomentum_Cache[2][3 * f + i] = m2(i);

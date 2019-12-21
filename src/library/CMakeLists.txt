@@ -73,6 +73,8 @@ SET(PR_Src
   geometry/Sphere.cpp
   geometry/Sphere.h
   geometry/Triangle.h
+  geometry/TriangleIntersection.h
+  geometry/TriangleOptions.h.in
   infinitelight/IInfiniteLight.cpp
   infinitelight/IInfiniteLight.h
   integrator/IIntegrator.cpp

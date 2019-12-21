@@ -29,52 +29,13 @@
 			:gamma 'none'
 			:mapper 'none'
 		)
-		(channel
-			:type 'depth'
-		)
-		(channel
-			:type 'n'
-		)
-		(channel
-			:type 'uvw'
-		)
-		(channel
-			:type 'ng'
-		)
-		(channel
-			:type 'nx'
-		)
-		(channel
-			:type 'ny'
-		)
-		(channel
-			:type 'feedback'
-		)
-		(channel
-			:type 'color'
-			:color 'xyz'
-			:gamma 'none'
-			:mapper 'none'
-			:lpe 'CDE'
-		)
-		(channel
-			:type 'color'
-			:color 'xyz'
-			:gamma 'none'
-			:mapper 'none'
-			:lpe 'CSDE'
-		)
-		(channel
-			:type 'color'
-			:color 'xyz'
-			:gamma 'none'
-			:mapper 'none'
-			:lpe 'CE'
-		)
-		(channel
-			:type 'n'
-			:lpe 'CE'
-		)
+		(channel :type 'depth')
+		(channel :type 'n')
+		(channel :type 'uvw')
+		(channel :type 'ng')
+		(channel :type 'nx')
+		(channel :type 'ny')
+		(channel :type 'feedback')
 	)
 	; Camera
 	(camera

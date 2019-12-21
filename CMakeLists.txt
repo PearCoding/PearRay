@@ -65,6 +65,11 @@ option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds 
 option(PR_USE_CCACHE 			"Use ccache if available." ON)
 # march should be default, as we use simdpp
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
+
+# Algorithm options
+option(PR_TRIANGLE_USE_CACHE	"Use cache mechanism to potentially speed up intersection" ON)
+set(PR_TRIANGLE_INTERSECTION_METHOD 1 CACHE STRING "0 = Moeller-Trumbore, 1 = Pluecker")
+
 option(BUILD_SHARED_LIBS		"Build shared library" ON)
 
 find_package(Threads REQUIRED)
@@ -121,6 +126,7 @@ add_subdirectory(external/DataLisp)
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
+configure_file(src/library/geometry/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/TriangleOptions.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
