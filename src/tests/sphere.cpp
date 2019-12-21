@@ -15,7 +15,7 @@ PR_TEST("UV (0,0)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u,v));
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u, v));
 }
 PR_TEST("UV (1,0)")
 {
@@ -23,7 +23,7 @@ PR_TEST("UV (1,0)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(0,v));// Ambiguous
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(0, v)); // Ambiguous
 }
 PR_TEST("UV (0,1)")
 {
@@ -31,7 +31,7 @@ PR_TEST("UV (0,1)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(0.5,v));// Ambiguous
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(0.5, v)); // Ambiguous
 }
 PR_TEST("UV (1,1)")
 {
@@ -39,7 +39,7 @@ PR_TEST("UV (1,1)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(0.5,v));// Ambiguous
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(0.5, v)); // Ambiguous
 }
 PR_TEST("UV (0.5,0.5)")
 {
@@ -47,7 +47,7 @@ PR_TEST("UV (0.5,0.5)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u,v));
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u, v));
 }
 PR_TEST("UV (0.75,0.25)")
 {
@@ -55,7 +55,7 @@ PR_TEST("UV (0.75,0.25)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u,v));
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u, v));
 }
 PR_TEST("UV (0.25,0.75)")
 {
@@ -63,7 +63,7 @@ PR_TEST("UV (0.25,0.75)")
 	auto n = Spherical::cartesian_from_uv(u, v);
 
 	Vector2f ruv = Spherical::uv_from_normal(n);
-	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u,v));
+	PR_CHECK_NEARLY_EQ(ruv, Vector2f(u, v));
 }
 PR_END_TESTCASE()
 
@@ -83,6 +83,17 @@ PR_TEST("Intersects")
 	SingleCollisionOutput s;
 	sphere.intersects(ray, s);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
+}
+
+PR_TEST("Intersects Behind")
+{
+	Sphere sphere(1);
+	Ray ray(Vector3f(-2, 0, 0),
+			Vector3f(-2, 0, 0));
+
+	SingleCollisionOutput s;
+	sphere.intersects(ray, s);
+	PR_CHECK_EQ(s.HitDistance, std::numeric_limits<float>::infinity());
 }
 
 PR_TEST("Intersects Inside")

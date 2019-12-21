@@ -69,6 +69,8 @@ PR_TEST("Two Half")
 	in.Direction[1] = simdpp::make_float(0);
 	in.Direction[2] = simdpp::make_float(-1);
 
+	in.cache();
+
 	CollisionOutput out;
 	mesh.checkCollision(in, out);
 
@@ -123,6 +125,8 @@ PR_TEST("Overlap")
 	in.Direction[0] = simdpp::make_float(0);
 	in.Direction[1] = simdpp::make_float(0);
 	in.Direction[2] = simdpp::make_float(-1, 1, 1, 1);
+
+	in.cache();
 
 	CollisionOutput out;
 	mesh.checkCollision(in, out);
@@ -186,6 +190,8 @@ PR_TEST("UV")
 	in.Direction[1] = simdpp::make_float(0);
 	in.Direction[2] = simdpp::make_float(-1);
 
+	in.cache();
+
 	CollisionOutput out;
 	mesh.checkCollision(in, out);
 
@@ -234,6 +240,7 @@ PR_TEST("Single Intersection")
 	in.Direction[0] = 0;
 	in.Direction[1] = 0;
 	in.Direction[2] = -1;
+	in.cache();
 
 	SingleCollisionOutput out;
 	mesh.checkCollision(in, out);
@@ -276,6 +283,7 @@ PR_TEST("Single Intersection Overlap")
 	Ray in;
 	in.Origin	= Vector3f(0.75f, 0.5f, 2);
 	in.Direction = Vector3f(0, 0, -1);
+	in.cache();
 
 	SingleCollisionOutput out;
 	mesh.checkCollision(in, out);

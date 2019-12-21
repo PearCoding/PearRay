@@ -9,7 +9,7 @@ using namespace PR;
 PR_BEGIN_TESTCASE(Spectrum_Lazy)
 PR_TEST("Add")
 {
-	auto desc = SpectrumDescriptor::createStandardSpectral();
+	auto desc = SpectrumDescriptor::createDefault();
 	Spectrum spec1 = Spectrum::gray(desc, 0.5f);
 	Spectrum spec2 = Spectrum::gray(desc, 0.5f);
 
@@ -24,7 +24,7 @@ PR_TEST("Add")
 }
 PR_TEST("Sub")
 {
-	auto desc = SpectrumDescriptor::createStandardSpectral();
+	auto desc = SpectrumDescriptor::createDefault();
 	Spectrum spec1 = Spectrum::gray(desc, 0.5f);
 	Spectrum spec2 = Spectrum::gray(desc, 0.5f);
 
@@ -39,7 +39,7 @@ PR_TEST("Sub")
 }
 PR_TEST("Mul")
 {
-	auto desc = SpectrumDescriptor::createStandardSpectral();
+	auto desc = SpectrumDescriptor::createDefault();
 	Spectrum spec1 = Spectrum::gray(desc, 0.5f);
 	Spectrum spec2 = Spectrum::gray(desc, 0.5f);
 
@@ -54,7 +54,7 @@ PR_TEST("Mul")
 }
 PR_TEST("Div")
 {
-	auto desc = SpectrumDescriptor::createStandardSpectral();
+	auto desc = SpectrumDescriptor::createDefault();
 	Spectrum spec1 = Spectrum::gray(desc, 0.5f);
 	Spectrum spec2 = Spectrum::gray(desc, 0.5f);
 
@@ -69,7 +69,7 @@ PR_TEST("Div")
 }
 PR_TEST("Scale")
 {
-	auto desc = SpectrumDescriptor::createStandardSpectral();
+	auto desc = SpectrumDescriptor::createDefault();
 	Spectrum spec1 = Spectrum::gray(desc, 0.5f);
 
 	auto l1 = Lazy::SLO_Scale<decltype(spec1), float>(spec1, 2);
@@ -83,7 +83,7 @@ PR_TEST("Scale")
 }
 PR_TEST("InvScale")
 {
-	auto desc = SpectrumDescriptor::createStandardSpectral();
+	auto desc = SpectrumDescriptor::createDefault();
 	Spectrum spec1 = Spectrum::gray(desc, 0.5f);
 
 	auto l1 = Lazy::SLO_InvScale<decltype(spec1), float>(spec1, 1);

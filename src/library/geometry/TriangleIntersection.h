@@ -127,14 +127,50 @@ inline PR_LIB bool intersectPI_NonOpt(
 
 inline PR_LIB bfloat intersectPI_NonOpt(
 	const RayPackage& in,
+	const Vector3fv& p0,
 	const Vector3fv& p1,
 	const Vector3fv& p2,
-	const Vector3fv& p3,
 	Vector2fv& uv,
 	vfloat& t)
 {
-	// TODO
-	return vfloat(0) == vfloat(1);
+	Vector3fv dR = in.Direction;
+	Vector3fv mR = in.momentum();
+
+	// Edge 1
+	Vector3fv d0 = p0 - p1;
+	Vector3fv m0 = p0.cross(p1);
+	vfloat s0	= d0.dot(mR) + m0.dot(dR);
+	vfloat si	= sign(s0);
+
+	// Edge 2
+	Vector3fv d2 = p2 - p0;
+	Vector3fv m2 = p2.cross(p0);
+	vfloat s2	= d2.dot(mR) + m2.dot(dR);
+	bfloat neq1   = b_not(b_and(sign(s2),si));
+
+	// Edge 3
+	Vector3fv d1 = p1 - p2;
+	Vector3fv m1 = p1.cross(p2);
+	vfloat s1	= d1.dot(mR) + m1.dot(dR);
+	bfloat neq2   = (sign(s1) != si);
+
+	// Normal
+	Vector3fv N = -d0.cross(d2);
+	vfloat k	= dR.dot(N);
+	bfloat kiv  = (abs(k) <= PR_EPSILON);
+
+	// Intersection value
+	t			  = (p0 - in.Origin).dot(N) / k;
+	bfloat behind = (t <= PR_TRIANGLE_INTERSECT_EPSILON);
+
+	// UV calculation!
+	Vector3fv p = in.t(t);
+	vfloat a2   = N.squaredNorm();
+
+	uv(0) = sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
+	uv(1) = sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
+
+	return b_not(b_or(behind, b_or(kiv, b_or(neq1, neq2))));
 }
 
 // Pluecker based intersection method
@@ -197,9 +233,9 @@ inline PR_LIB bool intersectPI_Opt(
 
 inline PR_LIB bfloat intersectPI_Opt(
 	const RayPackage& in,
+	const Vector3fv& p0,
 	const Vector3fv& p1,
 	const Vector3fv& p2,
-	const Vector3fv& p3,
 	const Vector3fv& N,
 	const Vector3fv& m0,
 	const Vector3fv& m1,
@@ -207,8 +243,40 @@ inline PR_LIB bfloat intersectPI_Opt(
 	Vector2fv& uv,
 	vfloat& t)
 {
-	// TODO
-	return vfloat(0) == vfloat(1);
+	Vector3fv dR = in.Direction;
+	Vector3fv mR = in.momentum();
+
+	// Edge 1
+	Vector3fv d0 = p0 - p1;
+	vfloat s0	= d0.dot(mR) + m0.dot(dR);
+	vfloat si	= sign(s0);
+
+	// Edge 2
+	Vector3fv d2 = p2 - p0;
+	vfloat s2	= d2.dot(mR) + m2.dot(dR);
+	bfloat neq1  = (sign(s2) != si);
+
+	// Edge 3
+	Vector3fv d1 = p1 - p2;
+	vfloat s1	= d1.dot(mR) + m1.dot(dR);
+	bfloat neq2  = (sign(s1) != si);
+
+	// Normal
+	vfloat k   = dR.dot(N);
+	bfloat kiv = (abs(k) <= PR_EPSILON);
+
+	// Intersection value
+	t			  = (p0 - in.Origin).dot(N) / k;
+	bfloat behind = (t <= PR_TRIANGLE_INTERSECT_EPSILON);
+
+	// UV calculation!
+	Vector3fv p = in.t(t);
+	vfloat a2   = N.squaredNorm();
+
+	uv(0) = sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
+	uv(1) = sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
+
+	return b_not(b_or(behind, b_or(kiv, b_or(neq1, neq2))));
 }
 } // namespace TriangleIntersection
 } // namespace PR

@@ -56,7 +56,7 @@ PR_TEST("Search")
 	sphere.Distance2 = 4;
 
 	auto emptyAccum = [&](Spectrum&, const Photon::Photon&, const Photon::PhotonSphere&, float){};
-	PR::Spectrum spec(SpectrumDescriptor::createStandardSpectral());
+	PR::Spectrum spec(SpectrumDescriptor::createDefault());
 	size_t found;
 
 	map.estimateSphere(spec, sphere,

@@ -88,8 +88,10 @@ void MainWindow::openFile()
 												mLastDir,
 												tr("Supported Files (*.cnt *.rdmp *.exr *.spec *.prof);;CNT Files (*.cnt);;RDMP Files (*.rdmp);;EXR Files (*.exr);;Spectral Files (*.spec);;Profile Files (*.prof)"));
 
-	if (!file.isEmpty())
+	if (!file.isEmpty()) {
+		QApplication::processEvents();
 		openFile(file);
+	}
 }
 
 void MainWindow::openRDMPDir()
@@ -104,6 +106,7 @@ void MainWindow::openRDMPDir()
 													mLastDir);
 
 	if (!dir.isEmpty()) {
+		QApplication::processEvents();
 		openRDMPDir(dir);
 
 		QDir d2 = QDir(dir);
