@@ -19,7 +19,7 @@ struct TriMeshCache {
 	std::vector<float> FaceNormal_Cache;
 	std::vector<float> FaceMomentum_Cache[3];
 
-	TriMeshCache(size_t facecount)
+	explicit TriMeshCache(size_t facecount)
 	{
 		FaceNormal_Cache.resize(3 * facecount);
 		FaceMomentum_Cache[0].resize(3 * facecount);

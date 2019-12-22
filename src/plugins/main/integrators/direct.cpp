@@ -52,42 +52,87 @@ public:
 														 context->settings().maxRayDepth);
 	}
 
-	// TODO: Add MSI to this part?
 	ColorTriplet infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
 							   LightPathToken& token,
 							   IInfiniteLight* infLight, IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
-		InfiniteLightSampleInput inL;
-		inL.Point = spt;
-		inL.RND   = session.tile()->random().get2D();
-		InfiniteLightSampleOutput outL;
-		infLight->sample(inL, outL, session);
+		ColorTriplet LiL = ColorTriplet::Zero();
+		float msiL = 0.0f;
+		ColorTriplet LiS = ColorTriplet::Zero();
+		float msiS = 0.0f;
 
-		if (infLight->hasDeltaDistribution())
-			outL.PDF_S = 1;
+		const bool allowMSI = mMSIEnabled && !infLight->hasDeltaDistribution();
 
-		if (outL.PDF_S <= PR_EPSILON) {
-			return ColorTriplet::Zero();
-		} else {
-			// Trace shadow ray
-			Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
-			ShadowHit shadowHit = session.traceShadowRay(shadow);
-			if (shadowHit.Successful)
-				return ColorTriplet::Zero();
+		// (1) Sample light
+		{
+			InfiniteLightSampleInput inL;
+			inL.Point = spt;
+			inL.RND   = session.tile()->random().get2D();
+			InfiniteLightSampleOutput outL;
+			infLight->sample(inL, outL, session);
 
-			// Evaluate surface
-			MaterialEvalInput in;
-			in.Point	= spt;
-			in.Outgoing = outL.Outgoing;
-			in.NdotL	= outL.Outgoing.dot(spt.N);
-			MaterialEvalOutput out;
-			material->eval(in, out, session);
-			token = LightPathToken(out.Type);
+			if (infLight->hasDeltaDistribution())
+				outL.PDF_S = 1;
 
-			return outL.Weight * out.Weight / outL.PDF_S;
+			if (outL.PDF_S <= PR_EPSILON) {
+				return LiL;
+			} else {
+				// Trace shadow ray
+				Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
+				ShadowHit shadowHit = session.traceShadowRay(shadow);
+				if (shadowHit.Successful)
+					return LiL;
+
+				// Evaluate surface
+				MaterialEvalInput in;
+				in.Point	= spt;
+				in.Outgoing = outL.Outgoing;
+				in.NdotL	= outL.Outgoing.dot(spt.N);
+				MaterialEvalOutput out;
+				material->eval(in, out, session);
+				token = LightPathToken(out.Type);
+
+				msiL = allowMSI ? MSI(1, outL.PDF_S, 1, out.PDF_S) : 1.0f;
+				LiL  = outL.Weight * out.Weight / outL.PDF_S;
+			}
 		}
+
+		if (!allowMSI || LiL.isZero())
+			return LiL;
+
+		// (2) Sample BRDF
+		{
+			MaterialSampleInput inS;
+			inS.Point = spt;
+			inS.RND   = session.tile()->random().get2D();
+			MaterialSampleOutput outS;
+			material->sample(inS, outS, session);
+			token = LightPathToken(outS.Type);
+
+			if (outS.PDF_S > PR_EPSILON
+				&& !outS.Weight.isZero()) {
+
+				// Trace shadow ray
+				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
+				ShadowHit shadowHit = session.traceShadowRay(shadow);
+				if (!shadowHit.Successful) {
+					InfiniteLightEvalInput inL;
+					inL.Point = spt;
+					InfiniteLightEvalOutput outL;
+					infLight->eval(inL, outL, session);
+
+					msiS = MSI(1, outL.PDF_S, 1, outS.PDF_S);
+					LiS  = outL.Weight * outS.Weight / outS.PDF_S;
+				}
+			}
+		}
+
+		if (msiS <= PR_EPSILON || LiS.isZero())
+			return LiL;
+		else
+			return LiL * msiL + LiS * msiS;
 	}
 
 	void scatterLight(RenderTileSession& session, LightPath& path,
@@ -125,9 +170,14 @@ public:
 				GeometryPoint npt;
 				IEntity* nentity;
 				IMaterial* nmaterial;
-				if (session.traceBounceRay(next, npt, nentity, nmaterial))
-					eval(session, path, next, npt, nentity, nmaterial);
-				else {
+				if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
+					/*ShadingPoint snpt;
+					snpt.setByIdentity(next, npt);
+					const float NdotV = std::abs(snpt.NdotV);
+					next.Weight *= NdotV/snpt.Depth2;
+					if (!next.Weight.isZero())*/
+						eval(session, path, next, npt, nentity, nmaterial);
+				} else {
 					session.tile()->statistics().addBackgroundHitCount();
 
 					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
@@ -211,7 +261,7 @@ public:
 			}
 		}
 
-		if (!mMSIEnabled || !Li.isZero())
+		if (!mMSIEnabled || Li.isZero())
 			return Li;
 
 		// (2) Sample BRDF

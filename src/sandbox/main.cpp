@@ -19,6 +19,7 @@ extern void suite_principled();
 extern void suite_projection();
 extern void suite_spectral();
 extern void suite_random();
+extern void suite_material();
 
 struct Suite {
 	const char* Name;
@@ -30,6 +31,7 @@ Suite suites[] = {
 	{ "projection", suite_projection },
 	{ "random", suite_random },
 	{ "spectral", suite_spectral },
+	{ "material", suite_material },
 	{ nullptr, nullptr }
 };
 

@@ -24,6 +24,7 @@ class LightPath;
 
 class PR_LIB RenderTileSession {
 public:
+	RenderTileSession();// Dummy session!
 	RenderTileSession(uint32 threadIndex, RenderTile* tile,
 					  const std::shared_ptr<OutputBufferBucket>& bucket,
 					  RayStream* rayStream,

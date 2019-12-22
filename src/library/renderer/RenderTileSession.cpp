@@ -9,6 +9,17 @@
 #include "shader/ShadingPoint.h"
 
 namespace PR {
+RenderTileSession::RenderTileSession()
+	: mThread(0)
+	, mTile(nullptr)
+	, mBucket()
+	, mRayStream(nullptr)
+	, mHitStream(nullptr)
+	, mCurrentX(0)
+	, mCurrentY(0)
+{
+}
+
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
 									 const std::shared_ptr<OutputBufferBucket>& bucket,
 									 RayStream* rayStream,
