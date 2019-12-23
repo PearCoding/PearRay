@@ -12,6 +12,7 @@
 import gdb
 import re
 
+
 class _SpectrumEntryIterator(object):
 	"Internal Spectrum Entry Interator"
 
@@ -23,7 +24,7 @@ class _SpectrumEntryIterator(object):
 		return self
 
 	def next(self):
-                return self.__next__()  # Python 2.x compatibility
+		return self.__next__()  # Python 2.x compatibility
 
 	def __next__(self):
 		entry = self.currentEntry
@@ -32,6 +33,7 @@ class _SpectrumEntryIterator(object):
 
 		self.currentEntry = self.currentEntry + 1
 		return entry
+
 
 class SpectrumPrinter:
 	"Print PR::Spectrum"
@@ -63,8 +65,31 @@ class SpectrumPrinter:
 		return "PR::Spectrum[%d] (data ptr: %s)" % (self.entries, self.data)
 
 
+class VPrinter:
+	"Print vfloat/vuint32/vint32"
+
+	def __init__(self, val):
+		"Extract all the necessary information"
+
+		self.data = []
+		self.data.append(val['d_'][0])
+		self.data.append(val['d_'][1])
+		self.data.append(val['d_'][2])
+		self.data.append(val['d_'][3])
+
+	def to_string(self):
+		return "[%s]" % (",".join(str(f) for f in self.data))
+
+
 def build_pearray_dictionary ():
 	pretty_printers_dict[re.compile('^PR::Spectrum$')] = lambda val: SpectrumPrinter(val)
+	pretty_printers_dict[re.compile('PR::vfloat')] = lambda val: VPrinter(val)
+	pretty_printers_dict[re.compile('^simdpp::\\w+::float32<4, void>$')] = lambda val: VPrinter(val)
+	pretty_printers_dict[re.compile('^PR::vint32$')] = lambda val: VPrinter(val)
+	pretty_printers_dict[re.compile('^simdpp::\\w+::int32<4, void>$')] = lambda val: VPrinter(val)
+	pretty_printers_dict[re.compile('^PR::vuint32$')] = lambda val: VPrinter(val)
+	pretty_printers_dict[re.compile('^simdpp::\\w+::uint32<4, void>$')] = lambda val: VPrinter(val)
+
 
 def register_pearray_printers(obj):
 	"Register pearray pretty-printers with objfile Obj"
@@ -72,6 +97,7 @@ def register_pearray_printers(obj):
 	if obj is None:
 		obj = gdb
 	obj.pretty_printers.append(lookup_function)
+
 
 def lookup_function(val):
 	"Look-up and return a pretty-printer that can print va."
@@ -87,12 +113,13 @@ def lookup_function(val):
 	if typename is None:
 		return None
 
+	#print(typename)
 	for function in pretty_printers_dict:
 		if function.search(typename):
 			return pretty_printers_dict[function](val)
 
 	return None
 
-pretty_printers_dict = {}
 
+pretty_printers_dict = {}
 build_pearray_dictionary ()
