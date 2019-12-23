@@ -53,5 +53,15 @@ struct PR_LIB LightPathToken {
 			break;
 		}
 	}
+
+	LightPathToken(const LightPathToken& other) = default;
+	LightPathToken(LightPathToken&& other)		= default;
+
+	LightPathToken& operator=(const LightPathToken& other) = default;
+	LightPathToken& operator=(LightPathToken&& other) = default;
+
+	static inline LightPathToken Camera() { return LightPathToken(ST_CAMERA, SE_NONE); }
+	static inline LightPathToken Background() { return LightPathToken(ST_BACKGROUND, SE_NONE); }
+	static inline LightPathToken Emissive() { return LightPathToken(ST_EMISSIVE, SE_NONE); }
 };
 } // namespace PR

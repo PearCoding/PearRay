@@ -7,7 +7,7 @@
 #include "integrator/IIntegratorFactory.h"
 #include "material/IMaterial.h"
 #include "math/ImportanceSampling.h"
-#include "path/LightPathBuffer.h"
+#include "path/LightPath.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
@@ -40,17 +40,6 @@ public:
 	}
 
 	virtual ~IntDirect() = default;
-
-	void onInit(RenderContext* context) override
-	{
-		mLPBs.resize(context->threads());
-	}
-
-	void onThreadStart(RenderContext* context, size_t index) override
-	{
-		mLPBs[index] = std::make_unique<LightPathBuffer>(context->settings().maxParallelRays,
-														 context->settings().maxRayDepth);
-	}
 
 	ColorTriplet infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
 							   LightPathToken& token,
@@ -165,7 +154,7 @@ public:
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
 
 			if (!next.Weight.isZero()) {
-				path.addToken(std::move(LightPathToken(out.Type)));
+				path.addToken(LightPathToken(out.Type)); // (1)
 
 				GeometryPoint npt;
 				IEntity* nentity;
@@ -180,7 +169,7 @@ public:
 				} else {
 					session.tile()->statistics().addBackgroundHitCount();
 
-					path.addToken(std::move(LightPathToken(ST_BACKGROUND, SE_NONE)));
+					path.addToken(LightPathToken::Background());
 					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 						if (light->hasDeltaDistribution())
 							continue;
@@ -192,11 +181,12 @@ public:
 						InfiniteLightEvalOutput lout;
 						light->eval(lin, lout, session);
 
-						in.Point.Radiance = lout.Weight;
-						session.pushFragment(in.Point, path);
+						session.pushSpectralFragment(lout.Weight, next, path);
 					}
 					path.popToken();
 				}
+
+				path.popToken(); // (1)
 			}
 		}
 	}
@@ -217,7 +207,7 @@ public:
 			return Li;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
 		if (!ems) {
-			session.pushFeedbackFragment(spt.Ray, OF_MissingEmission);
+			session.pushFeedbackFragment(OF_MissingEmission, spt.Ray);
 			return Li;
 		}
 
@@ -322,7 +312,7 @@ public:
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
 		spt.EntityID = entity->id();
-		spt.Radiance = ColorTriplet::Ones();
+		session.pushSPFragment(spt, path); // Close path?
 
 		// Only consider camera rays, as everything else produces too much noise
 		if (entity->isLight()
@@ -337,12 +327,12 @@ public:
 				LightEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				const float prevGEOM = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
-				spt.Radiance		 = outL.Weight * prevGEOM;
+				const float prevGEOM  = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
+				ColorTriplet radiance = outL.Weight * prevGEOM;
 
-				if (!spt.Radiance.isZero()) {
-					path.addToken(std::move(LightPathToken(ST_EMISSIVE, SE_NONE)));
-					session.pushFragment(spt, path);
+				if (!radiance.isZero()) {
+					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+					session.pushSpectralFragment(radiance, spt.Ray, path);
 					path.popToken();
 				}
 			}
@@ -359,12 +349,12 @@ public:
 			const float factor = 1.0f / mLightSampleCount;
 			for (size_t i = 0; i < mLightSampleCount; ++i) {
 				LightPathToken token;
-				spt.Radiance = factor * directLight(session, spt, token, material);
+				ColorTriplet radiance = factor * directLight(session, spt, token, material);
 
-				if (!spt.Radiance.isZero()) {
+				if (!radiance.isZero()) {
 					path.addToken(token);
-					path.addToken(std::move(LightPathToken(ST_EMISSIVE, SE_NONE)));
-					session.pushFragment(spt, path);
+					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+					session.pushSpectralFragment(radiance, spt.Ray, path);
 					path.popToken(2);
 				}
 			}
@@ -372,13 +362,13 @@ public:
 			// Infinite Lights
 			for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 				LightPathToken token;
-				spt.Radiance = infiniteLight(session, spt, token,
-											 light.get(), material);
+				ColorTriplet radiance = infiniteLight(session, spt, token,
+													  light.get(), material);
 
-				if (!spt.Radiance.isZero()) {
+				if (!radiance.isZero()) {
 					path.addToken(token);
-					path.addToken(std::move(LightPathToken(ST_BACKGROUND, SE_NONE)));
-					session.pushFragment(spt, path);
+					path.addToken(LightPathToken::Background());
+					session.pushSpectralFragment(radiance, spt.Ray, path);
 					path.popToken(2);
 				}
 			}
@@ -394,6 +384,7 @@ public:
 
 		LightPath cb = LightPath::createCB();
 		LightPath path(maxPathSize);
+		path.addToken(LightPathToken::Camera());
 		while (session.handleCameraRays()) {
 			session.handleHits(
 				[&](size_t /*session_ray_id*/, const Ray& ray) {
@@ -411,16 +402,14 @@ public:
 						InfiniteLightEvalOutput out;
 						light->eval(in, out, session);
 
-						in.Point.Radiance = out.Weight;
-						session.pushFragment(in.Point, cb);
+						session.pushSpectralFragment(out.Weight, ray, cb);
 					}
 				},
 				[&](const HitEntry& /*entry*/,
 					const Ray& ray, const GeometryPoint& pt,
 					IEntity* entity, IMaterial* material) {
-					path.reset();
-					path.addToken(std::move(LightPathToken(ST_CAMERA, SE_NONE)));
 					eval(session, path, ray, pt, entity, material);
+					PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");
 				});
 		}
 	}
@@ -433,8 +422,6 @@ public:
 	inline void enableMSI(bool b) { mMSIEnabled = b; }
 
 private:
-	std::vector<std::unique_ptr<LightPathBuffer>> mLPBs;
-
 	size_t mLightSampleCount;
 	bool mMSIEnabled;
 };

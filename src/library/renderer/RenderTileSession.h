@@ -24,7 +24,7 @@ class LightPath;
 
 class PR_LIB RenderTileSession {
 public:
-	RenderTileSession();// Dummy session!
+	RenderTileSession(); // Dummy session!
 	RenderTileSession(uint32 threadIndex, RenderTile* tile,
 					  const std::shared_ptr<OutputBufferBucket>& bucket,
 					  RayStream* rayStream,
@@ -70,8 +70,10 @@ public:
 	template <typename Func1, typename Func2>
 	inline void handleHits(Func1 nonhitFunc, Func2 hitFunc);
 
-	void pushFragment(const ShadingPoint& pt, const LightPath& path) const;
-	void pushFeedbackFragment(const Ray& ray, uint32 feedback) const;
+	void pushSpectralFragment(const ColorTriplet& spec, const Ray& ray,
+							  const LightPath& path) const;
+	void pushSPFragment(const ShadingPoint& pt, const LightPath& path) const;
+	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
 	IEntity* pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const;
 

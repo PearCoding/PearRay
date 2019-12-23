@@ -176,15 +176,24 @@ std::pair<uint32, uint32> RenderTileSession::localCoordinates(uint32 pixelIndex)
 	return std::make_pair(lpx, lpy);
 }
 
-void RenderTileSession::pushFragment(const ShadingPoint& pt,
-									 const LightPath& path) const
+void RenderTileSession::pushSpectralFragment(const ColorTriplet& spec, const Ray& ray,
+											 const LightPath& path) const
+{
+	PR_PROFILE_THIS;
+	auto coords = localCoordinates(ray.PixelIndex);
+	mBucket->pushSpectralFragment(coords.first, coords.second, spec * ray.Weight,
+								  ray.WavelengthIndex, ray.Flags & RF_Monochrome, path);
+}
+
+void RenderTileSession::pushSPFragment(const ShadingPoint& pt,
+									   const LightPath& path) const
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(pt.Ray.PixelIndex);
-	mBucket->pushFragment(coords.first, coords.second, pt, path);
+	mBucket->pushSPFragment(coords.first, coords.second, pt, path);
 }
 
-void RenderTileSession::pushFeedbackFragment(const Ray& ray, uint32 feedback) const
+void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) const
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);

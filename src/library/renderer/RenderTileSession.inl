@@ -49,7 +49,7 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 			Ray ray		   = mRayStream->getRay(entry.SessionRayID);
 
 			if (!material)
-				pushFeedbackFragment(ray, OF_MissingMaterial);
+				pushFeedbackFragment(OF_MissingMaterial, ray);
 
 			GeometryPoint pt;
 			entity->provideGeometryPoint(ray.Direction, entry.PrimitiveID,

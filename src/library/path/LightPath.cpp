@@ -11,20 +11,20 @@ LightPath LightPath::createCDL(uint32 diffuseCount)
 {
 	LightPath path(2 + diffuseCount);
 
-	path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
+	path.addToken(LightPathToken::Camera());
 
 	for (uint32 i = 0; i < diffuseCount; ++i)
 		path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
 
-	path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+	path.addToken(LightPathToken::Emissive());
 	return path;
 }
 
 LightPath LightPath::createCB()
 {
 	LightPath path(2);
-	path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
-	path.addToken(LightPathToken(ST_BACKGROUND, SE_NONE));
+	path.addToken(LightPathToken::Camera());
+	path.addToken(LightPathToken::Background());
 	return path;
 }
 } // namespace PR

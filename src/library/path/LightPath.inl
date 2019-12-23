@@ -39,6 +39,11 @@ inline void LightPath::reset()
 	mCurrentPos = 0;
 }
 
+inline bool LightPath::isEmpty() const
+{
+	return mCurrentPos == 0;
+}
+
 inline size_t LightPath::containerSize() const
 {
 	return mTokens.size();
@@ -46,7 +51,7 @@ inline size_t LightPath::containerSize() const
 
 inline size_t LightPath::currentSize() const
 {
-	return mCurrentPos < mTokens.size() ? mCurrentPos + 1 : mTokens.size();
+	return mCurrentPos;
 }
 
 const LightPathToken& LightPath::token(size_t index) const

@@ -60,9 +60,11 @@ public:
 							++occlusions;
 					}
 
-					spt.Radiance = 1.0f - occlusions / (float)mSampleCount;
+					ColorTriplet radiance = ColorTriplet::Ones();
+					radiance *= 1.0f - occlusions / (float)mSampleCount;
 
-					session.pushFragment(spt, stdPath);
+					session.pushSPFragment(spt, stdPath);
+					session.pushSpectralFragment(radiance, ray, stdPath);
 				});
 		}
 	}

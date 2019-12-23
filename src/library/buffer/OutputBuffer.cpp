@@ -54,6 +54,8 @@ std::shared_ptr<OutputBufferBucket> OutputBuffer::createBucket(size_t width, siz
 	for (const auto& p : mData.mLPE_Spectral)
 		bucket->data().requestLPEChannel_Spectral(p.first, tmp);
 
+	bucket->cache();
+
 	return bucket;
 }
 
