@@ -59,9 +59,9 @@ public:
 		PR_PROFILE_THIS;
 
 		ColorTriplet LiL = ColorTriplet::Zero();
-		float msiL = 0.0f;
+		float msiL		 = 0.0f;
 		ColorTriplet LiS = ColorTriplet::Zero();
-		float msiS = 0.0f;
+		float msiS		 = 0.0f;
 
 		const bool allowMSI = mMSIEnabled && !infLight->hasDeltaDistribution();
 
@@ -165,7 +165,7 @@ public:
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
 
 			if (!next.Weight.isZero()) {
-				path.addToken(LightPathToken(out.Type));
+				path.addToken(std::move(LightPathToken(out.Type)));
 
 				GeometryPoint npt;
 				IEntity* nentity;
@@ -176,10 +176,11 @@ public:
 					const float NdotV = std::abs(snpt.NdotV);
 					next.Weight *= NdotV/snpt.Depth2;
 					if (!next.Weight.isZero())*/
-						eval(session, path, next, npt, nentity, nmaterial);
+					eval(session, path, next, npt, nentity, nmaterial);
 				} else {
 					session.tile()->statistics().addBackgroundHitCount();
 
+					path.addToken(std::move(LightPathToken(ST_BACKGROUND, SE_NONE)));
 					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 						if (light->hasDeltaDistribution())
 							continue;
@@ -192,8 +193,9 @@ public:
 						light->eval(lin, lout, session);
 
 						in.Point.Radiance = lout.Weight;
-						session.pushFragment(in.Point, path.concated(LightPathToken(ST_CAMERA, SE_NONE)));
+						session.pushFragment(in.Point, path);
 					}
+					path.popToken();
 				}
 			}
 		}
@@ -338,9 +340,11 @@ public:
 				const float prevGEOM = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
 				spt.Radiance		 = outL.Weight * prevGEOM;
 
-				if (!spt.Radiance.isZero())
-					session.pushFragment(spt, path.concated(
-												  LightPathToken(ST_EMISSIVE, SE_NONE)));
+				if (!spt.Radiance.isZero()) {
+					path.addToken(std::move(LightPathToken(ST_EMISSIVE, SE_NONE)));
+					session.pushFragment(spt, path);
+					path.popToken();
+				}
 			}
 		}
 
@@ -358,10 +362,10 @@ public:
 				spt.Radiance = factor * directLight(session, spt, token, material);
 
 				if (!spt.Radiance.isZero()) {
-					LightPath new_path = path;
-					new_path.concat(token);
-					new_path.concat(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushFragment(spt, new_path);
+					path.addToken(token);
+					path.addToken(std::move(LightPathToken(ST_EMISSIVE, SE_NONE)));
+					session.pushFragment(spt, path);
+					path.popToken(2);
 				}
 			}
 
@@ -372,10 +376,10 @@ public:
 											 light.get(), material);
 
 				if (!spt.Radiance.isZero()) {
-					LightPath new_path = path;
-					new_path.concat(token);
-					new_path.concat(LightPathToken(ST_BACKGROUND, SE_NONE));
-					session.pushFragment(spt, new_path);
+					path.addToken(token);
+					path.addToken(std::move(LightPathToken(ST_BACKGROUND, SE_NONE)));
+					session.pushFragment(spt, path);
+					path.popToken(2);
 				}
 			}
 		}
@@ -389,6 +393,7 @@ public:
 		const size_t maxPathSize = session.tile()->context()->settings().maxRayDepth + 2;
 
 		LightPath cb = LightPath::createCB();
+		LightPath path(maxPathSize);
 		while (session.handleCameraRays()) {
 			session.handleHits(
 				[&](size_t /*session_ray_id*/, const Ray& ray) {
@@ -413,8 +418,8 @@ public:
 				[&](const HitEntry& /*entry*/,
 					const Ray& ray, const GeometryPoint& pt,
 					IEntity* entity, IMaterial* material) {
-					LightPath path(maxPathSize);
-					path.addToken(LightPathToken(ST_CAMERA, SE_NONE));
+					path.reset();
+					path.addToken(std::move(LightPathToken(ST_CAMERA, SE_NONE)));
 					eval(session, path, ray, pt, entity, material);
 				});
 		}

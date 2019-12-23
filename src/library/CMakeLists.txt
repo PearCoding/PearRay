@@ -107,6 +107,7 @@ SET(PR_Src
   mesh/TriMesh.h
   path/LightPath.cpp
   path/LightPath.h
+  path/LightPath.inl
   path/LightPathBuffer.cpp
   path/LightPathBuffer.h
   path/LightPathExpression.cpp

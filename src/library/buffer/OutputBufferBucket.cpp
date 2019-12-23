@@ -73,23 +73,24 @@ void OutputBufferBucket::pushFragment(uint32 x, uint32 y, const ShadingPoint& s,
 	const uint32 sy = std::max<uint32>(0, (int32)y - (int32)filterRadius);
 	const uint32 ey = std::min<uint32>(y + filterRadius, extendedHeight() - 1);
 
-	for (uint32 py = sy; py <= ey; ++py) {
-		for (uint32 px = sx; px <= ex; ++px) {
-			const float filterWeight = mFilter->evalWeight((int32)px - (int32)x, (int32)py - (int32)y);
+	const ColorTriplet fullRadiance = s.Ray.Weight * s.Radiance;
+	if (!isInvalid) {
+		for (uint32 py = sy; py <= ey; ++py) {
+			for (uint32 px = sx; px <= ex; ++px) {
+				const float filterWeight = mFilter->evalWeight((int32)px - (int32)x,
+															   (int32)py - (int32)y);
 
-			if (!isInvalid) {
+				const ColorTriplet weightedRad = filterWeight * fullRadiance;
 				for (uint32 i = 0; i < channels; ++i)
 					mData.getInternalChannel_Spectral()->getFragment(px, py, monochannel + i)
-						+= s.Ray.Weight[i] * s.Radiance[i] * filterWeight;
-			}
+						+= weightedRad[i];
 
-			// LPE
-			if (!isInvalid) {
+				// LPE
 				for (auto pair : mData.mLPE_Spectral) {
 					if (pair.first.match(path)) {
 						for (uint32 i = 0; i < channels; ++i) {
 							pair.second->getFragment(px, py, monochannel + i)
-								+= filterWeight * s.Ray.Weight[i] * s.Radiance[i];
+								+= weightedRad[i];
 						}
 					}
 				}
