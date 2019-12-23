@@ -10,6 +10,20 @@ namespace PR {
 template <typename T>
 using simd_vector = std::vector<T, boost::alignment::aligned_allocator<T, PR_SIMD_ALIGNMENT_PARAM>>;
 
+inline uint32 countNegativeValues(const vfloat& v)
+{
+	uint32 r = 0;
+	simdpp::for_each(v, [&](float f) { if(f < 0) ++r; });
+	return r;
+}
+
+inline uint32 countNegativeValues(const vint32& v)
+{
+	uint32 r = 0;
+	simdpp::for_each(v, [&](int32 f) { if(f < 0) ++r; });
+	return r;
+}
+
 inline bool any(const bfloat& a)
 {
 	return simdpp::reduce_or(simdpp::bit_cast<vuint32::Base>(a));

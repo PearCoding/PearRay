@@ -3,8 +3,6 @@
 
 namespace PR {
 
-/* TODO: Notify id to entities for debug purposes! */
-
 kdTreeCollider::kdTreeCollider()
 	: mRoot(nullptr)
 	, mNodeCount(0)

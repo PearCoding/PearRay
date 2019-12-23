@@ -126,7 +126,7 @@ public:
 				} else if (!any(hitLeft)) {
 					currentN = innerN->right;
 				} else {
-					const uint32 negCount = reduce_add(to_uint32(sign(splitM)));
+					const uint32 negCount = countNegativeValues(splitM);
 
 					if (negCount <= 2) {
 						stack[stackPos].node = innerN->right;
@@ -212,8 +212,8 @@ public:
 				const float t				= (innerN->splitPos - in.Origin[innerN->axis])
 								* invDir[innerN->axis];
 
-				const bool side = (innerN->splitPos > in.Origin[innerN->axis])
-								  || (std::abs(innerN->splitPos - in.Origin[innerN->axis]) <= PR_EPSILON && in.Direction[innerN->axis] <= 0);
+				const bool side = (innerN->splitPos > in.Origin[innerN->axis]);
+
 				kdNodeCollider* nearN = side ? innerN->left : innerN->right;
 				kdNodeCollider* farN  = side ? innerN->right : innerN->left;
 

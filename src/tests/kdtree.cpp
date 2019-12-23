@@ -5,6 +5,7 @@
 #include "Test.h"
 
 using namespace PR;
+using namespace simdpp;
 
 template <typename T>
 inline void addVertex(T p1, T p2, T p3,
@@ -61,13 +62,13 @@ PR_TEST("Two Half")
 	mesh.build(L"tmp1.cnt");
 
 	RayPackage in;
-	in.Origin[0] = simdpp::make_float(-1.5f, 1.5f, 0, 0.6f);
-	in.Origin[1] = simdpp::make_float(0.5f, 0.5f, 0.5f, 0.6f);
-	in.Origin[2] = simdpp::make_float(1, 1, 1, 1);
+	in.Origin[0] = make_float(-1.5f, 1.5f, 0, 0.6f);
+	in.Origin[1] = make_float(0.5f, 0.5f, 0.5f, 0.6f);
+	in.Origin[2] = make_float(1, 1, 1, 1);
 
-	in.Direction[0] = simdpp::make_float(0);
-	in.Direction[1] = simdpp::make_float(0);
-	in.Direction[2] = simdpp::make_float(-1);
+	in.Direction[0] = make_float(0);
+	in.Direction[1] = make_float(0);
+	in.Direction[2] = make_float(-1);
 
 	in.cache();
 
@@ -118,13 +119,13 @@ PR_TEST("Overlap")
 	mesh.build(L"tmp2.cnt");
 
 	RayPackage in;
-	in.Origin[0] = simdpp::make_float(0.75f, 0.75f, 0, 5);
-	in.Origin[1] = simdpp::make_float(0.5f, 0.5f, 0.5f, 5);
-	in.Origin[2] = simdpp::make_float(2, -2, 1, 1);
+	in.Origin[0] = make_float(0.75f, 0.75f, 0, 5);
+	in.Origin[1] = make_float(0.5f, 0.5f, 0.5f, 5);
+	in.Origin[2] = make_float(2, -2, 1, 1);
 
-	in.Direction[0] = simdpp::make_float(0);
-	in.Direction[1] = simdpp::make_float(0);
-	in.Direction[2] = simdpp::make_float(-1, 1, 1, 1);
+	in.Direction[0] = make_float(0);
+	in.Direction[1] = make_float(0);
+	in.Direction[2] = make_float(-1, 1, 1, 1);
 
 	in.cache();
 
@@ -182,13 +183,13 @@ PR_TEST("UV")
 	mesh.build(L"tmp3.cnt");
 
 	RayPackage in;
-	in.Origin[0] = simdpp::make_float(0.75f, 0.75f, 0, 0.6f);
-	in.Origin[1] = simdpp::make_float(0.5f, 0.5f, 0.5f, 0.6f);
-	in.Origin[2] = simdpp::make_float(2, -2, -1, -1);
+	in.Origin[0] = make_float(0.75f, 0.75f, 0, 0.6f);
+	in.Origin[1] = make_float(0.5f, 0.5f, 0.5f, 0.6f);
+	in.Origin[2] = make_float(2, -2, -1, -1);
 
-	in.Direction[0] = simdpp::make_float(0);
-	in.Direction[1] = simdpp::make_float(0);
-	in.Direction[2] = simdpp::make_float(-1);
+	in.Direction[0] = make_float(0);
+	in.Direction[1] = make_float(0);
+	in.Direction[2] = make_float(-1);
 
 	in.cache();
 
