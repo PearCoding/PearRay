@@ -71,11 +71,13 @@ class SIMDPrinter:
 	def __init__(self, val, inner_type):
 		"Extract all the necessary information"
 
+		ptr_type = gdb.lookup_type("%s" % inner_type).pointer()
+		ptr = val.address.reinterpret_cast(ptr_type)
 		self.data = []
-		self.data.append(val['d_'][0])
-		self.data.append(val['d_'][1])
-		self.data.append(val['d_'][2])
-		self.data.append(val['d_'][3])
+		self.data.append(ptr[0])
+		self.data.append(ptr[1])
+		self.data.append(ptr[2])
+		self.data.append(ptr[3])
 
 	def to_string(self):
 		return "[%s]" % (",".join(str(f) for f in self.data))
