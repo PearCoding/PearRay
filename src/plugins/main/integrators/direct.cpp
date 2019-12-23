@@ -15,7 +15,7 @@
 
 #include "Logger.h"
 
-#define MSI(n1, p1, n2, p2) IS::power_term((n1), (p1), (n2), (p2))
+#define MSI(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
 /* Based on Path Integral formulation: (here length k)
  * f(x) is the brdf. In our case a material already includes the cosine factor f(x)cos(N,x)
@@ -126,9 +126,12 @@ public:
 
 	void scatterLight(RenderTileSession& session, LightPath& path,
 					  const ShadingPoint& spt,
-					  IMaterial* material)
+					  IMaterial* material,
+					  bool& infLightHandled)
 	{
 		PR_PROFILE_THIS;
+
+		infLightHandled = false;
 
 		constexpr int MIN_DEPTH			= 4; //Minimum level of depth after which russian roulette will apply
 		constexpr float DEPTH_DROP_RATE = 0.90f;
@@ -160,14 +163,10 @@ public:
 				IEntity* nentity;
 				IMaterial* nmaterial;
 				if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
-					/*ShadingPoint snpt;
-					snpt.setByIdentity(next, npt);
-					const float NdotV = std::abs(snpt.NdotV);
-					next.Weight *= NdotV/snpt.Depth2;
-					if (!next.Weight.isZero())*/
 					eval(session, path, next, npt, nentity, nmaterial);
 				} else {
 					session.tile()->statistics().addBackgroundHitCount();
+					infLightHandled = true;
 
 					path.addToken(LightPathToken::Background());
 					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
@@ -197,33 +196,36 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ColorTriplet Li = ColorTriplet::Zero();
+		ColorTriplet LiL = ColorTriplet::Zero();
+		float msiL		 = 0.0f;
+		ColorTriplet LiS = ColorTriplet::Zero();
+		float msiS		 = 0.0f;
 
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
 		IEntity* light = session.pickRandomLight(spt.N, lightPt, pdfA);
 		if (!light)
-			return Li;
+			return LiL;
 		IEmission* ems = session.getEmission(lightPt.EmissionID);
 		if (!ems) {
 			session.pushFeedbackFragment(OF_MissingEmission, spt.Ray);
-			return Li;
+			return LiL;
 		}
 
 		// (1) Sample light
 		{
-			Vector3f L = (lightPt.P - spt.P);
-			//const float sqrD = L.squaredNorm();
+			Vector3f L		 = (lightPt.P - spt.P);
+			const float sqrD = L.squaredNorm();
 			L.normalize();
-			//const float cosO = std::max(0.0f, -L.dot(lightPt.N));
+			const float cosO = std::abs(L.dot(lightPt.N));
 			const float cosI = L.dot(spt.N);
 
 			if (std::abs(cosI) < PR_EPSILON
 				//|| cosO < PR_EPSILON
 				//|| sqrD < PR_EPSILON
 				|| pdfA < PR_EPSILON)
-				return Li;
+				return LiL;
 
 			// Trace shadow ray
 			Ray shadow			= spt.Ray.next(spt.P, L);
@@ -231,7 +233,7 @@ public:
 
 			if (!shadowHit.Successful
 				|| shadowHit.EntityID != light->id()) {
-				return Li;
+				return LiL;
 			} else {
 				// Evaluate light
 				LightEvalInput inL;
@@ -248,13 +250,14 @@ public:
 				MaterialEvalOutput out;
 				material->eval(in, out, session);
 
-				float msi = mMSIEnabled ? MSI(1, pdfA, 1, out.PDF_S) : 1.0f;
-				Li		  = outL.Weight * out.Weight * msi / pdfA;
+				const float pdfS = IS::toSolidAngle(pdfA, sqrD, cosO);
+				msiL			 = mMSIEnabled ? MSI(1, pdfS, 1, out.PDF_S) : 1.0f;
+				LiL				 = outL.Weight * out.Weight / pdfA;
 			}
 		}
 
-		if (!mMSIEnabled || Li.isZero())
-			return Li;
+		if (!mMSIEnabled || LiL.isZero())
+			return LiL;
 
 		// (2) Sample BRDF
 		{
@@ -287,14 +290,21 @@ public:
 						LightEvalOutput outL;
 						ems->eval(inL, outL, session);
 
-						float msi = MSI(1, 1 / light->surfaceArea(), 1, outS.PDF_S);
-						Li += outL.Weight * outS.Weight * msi / outS.PDF_S;
+						const float pdfS = IS::toSolidAngle(
+							1 / light->surfaceArea(),
+							(shadow.Origin - nlightPt.P).squaredNorm(),
+							std::abs(shadow.Direction.dot(nlightPt.N)));
+						msiS = MSI(1, pdfS, 1, outS.PDF_S);
+						LiS  = outL.Weight * outS.Weight / outS.PDF_S;
 					}
 				}
 			}
 		}
 
-		return Li;
+		if (msiS <= PR_EPSILON || LiS.isZero())
+			return LiL;
+		else
+			return LiL * msiL + LiS * msiS;
 	}
 
 	void eval(RenderTileSession& session, LightPath& path,
@@ -312,7 +322,7 @@ public:
 		ShadingPoint spt;
 		spt.setByIdentity(ray, pt);
 		spt.EntityID = entity->id();
-		session.pushSPFragment(spt, path); // Close path?
+		session.pushSPFragment(spt, path);
 
 		// Only consider camera rays, as everything else produces too much noise
 		if (entity->isLight()
@@ -342,7 +352,8 @@ public:
 			return;
 
 		// Scatter Light
-		scatterLight(session, path, spt, material);
+		bool infLightHandled;
+		scatterLight(session, path, spt, material, infLightHandled);
 
 		if (!material->hasDeltaDistribution()) {
 			// Direct Light
@@ -361,6 +372,9 @@ public:
 
 			// Infinite Lights
 			for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+				if (infLightHandled && !light->hasDeltaDistribution()) // Already handled in scatter equation
+					continue;
+
 				LightPathToken token;
 				ColorTriplet radiance = infiniteLight(session, spt, token,
 													  light.get(), material);

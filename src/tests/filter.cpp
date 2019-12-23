@@ -10,7 +10,7 @@ constexpr size_t WIDTH[RAD_COUNT]  = { RADIUS[0] * 2 + 1, RADIUS[1] * 2 + 1 };
 
 float sumFilter(const std::shared_ptr<IFilter>& filter)
 {
-	float sum;
+	float sum = 0.0f;
 	for (int i = -(int)filter->radius(); i <= (int)filter->radius(); ++i)
 		for (int j = -(int)filter->radius(); j <= (int)filter->radius(); ++j)
 			sum += filter->evalWeight(i, j);

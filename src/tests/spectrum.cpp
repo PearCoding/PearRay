@@ -6,8 +6,6 @@
 
 using namespace PR;
 
-constexpr double SPEC_EPS = 0.00001;
-
 PR_BEGIN_TESTCASE(Spectrum)
 PR_TEST("Set/Get")
 {
