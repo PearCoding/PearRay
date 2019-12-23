@@ -37,7 +37,6 @@ static ShadingPoint standardSP(const Vector3f& V = Vector3f(0, 0, -1))
 	spt.Ray.Origin	= Vector3f(0, 0, 1);
 	spt.NdotV		  = spt.Ray.Direction.dot(spt.N);
 	spt.Depth2		  = 1;
-	spt.Radiance	  = ColorTriplet::Ones();
 	return spt;
 }
 
