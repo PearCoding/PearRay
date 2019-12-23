@@ -65,10 +65,10 @@ class SpectrumPrinter:
 		return "PR::Spectrum[%d] (data ptr: %s)" % (self.entries, self.data)
 
 
-class VPrinter:
+class SIMDPrinter:
 	"Print vfloat/vuint32/vint32"
 
-	def __init__(self, val):
+	def __init__(self, val, inner_type):
 		"Extract all the necessary information"
 
 		self.data = []
@@ -80,15 +80,19 @@ class VPrinter:
 	def to_string(self):
 		return "[%s]" % (",".join(str(f) for f in self.data))
 
+	#def display_hint(self):
+#		return 'array'
+
+	def children(self):
+		l = list((str(c), value) for c, value in enumerate(self.data))
+		return iter(l)
+
 
 def build_pearray_dictionary ():
 	pretty_printers_dict[re.compile('^PR::Spectrum$')] = lambda val: SpectrumPrinter(val)
-	pretty_printers_dict[re.compile('PR::vfloat')] = lambda val: VPrinter(val)
-	pretty_printers_dict[re.compile('^simdpp::\\w+::float32<4, void>$')] = lambda val: VPrinter(val)
-	pretty_printers_dict[re.compile('^PR::vint32$')] = lambda val: VPrinter(val)
-	pretty_printers_dict[re.compile('^simdpp::\\w+::int32<4, void>$')] = lambda val: VPrinter(val)
-	pretty_printers_dict[re.compile('^PR::vuint32$')] = lambda val: VPrinter(val)
-	pretty_printers_dict[re.compile('^simdpp::\\w+::uint32<4, void>$')] = lambda val: VPrinter(val)
+	pretty_printers_dict[re.compile('^PR::VectorBase<4, float')] = lambda val: SIMDPrinter(val, 'float')
+	pretty_printers_dict[re.compile('^PR::VectorBase<4, int')] = lambda val: SIMDPrinter(val, 'int')
+	pretty_printers_dict[re.compile('^PR::VectorBase<4, unsigned int')] = lambda val: SIMDPrinter(val, 'unsigned int')
 
 
 def register_pearray_printers(obj):
