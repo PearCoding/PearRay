@@ -354,9 +354,11 @@ static void classify(const std::vector<Event>& events, const std::vector<Primiti
 		obj->side = S_Both;
 	}
 
+#ifndef PR_NO_ASSERTS
 	for (const Event& e : events) {
 		PR_ASSERT(e.primitive->side == S_Both, "Expected primitive to be S_Both");
 	}
+#endif
 
 	for (const Event& e : events) {
 		if (e.dim != dim)

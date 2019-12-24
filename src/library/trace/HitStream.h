@@ -37,7 +37,6 @@ public:
 
 private:
 	std::vector<uint32> mRayID;
-	std::vector<uint32> mSessionRayID;
 	std::vector<uint32> mMaterialID;
 	std::vector<uint32> mEntityID;
 	std::vector<uint32> mPrimitiveID;

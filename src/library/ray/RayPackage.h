@@ -9,7 +9,9 @@ namespace PR {
 
 enum RayFlags : uint32 {
 	RF_Monochrome = 0x01,
-	RF_Invalid	= 0x80
+	RF_Camera	 = 0x10,
+	RF_Light	  = 0x20,
+	RF_Shadow	 = 0x40
 };
 
 template <typename V>

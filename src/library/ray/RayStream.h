@@ -41,20 +41,15 @@ public:
 
 	inline bool isFull() const { return currentSize() >= maxSize(); }
 	inline bool enoughSpace(size_t requested = 1) const { return currentSize() + requested <= maxSize(); }
-	inline bool hasNextGroup() const { return mCurrentPos < mLastInvPos; }
+	inline bool hasNextGroup() const { return mCurrentPos < currentSize(); }
 
 	inline size_t maxSize() const { return mSize; }
 	inline size_t currentSize() const { return mPixelIndex.size(); }
 
-	inline size_t linearID(size_t id) const { return mInternalIndex.at(id); }
-
 	void addRay(const Ray& ray);
-	void setRay(size_t id, const Ray& ray);
 	Ray getRay(size_t id) const;
 	RayPackage getRayPackage(size_t id) const;
-	inline void invalidateRay(size_t id);
 
-	void sort();
 	void reset();
 	RayGroup getNextGroup();
 
@@ -82,11 +77,9 @@ private: // Some vectors are not aligned, due to required preprocessing
 
 	std::vector<float> mNdotL;
 	std::vector<float> mWeight[3];
-	std::vector<size_t> mInternalIndex;
 
 	size_t mSize;
 	size_t mCurrentPos;
-	size_t mLastInvPos;
 };
 
 inline Ray RayGroup::getRay(size_t id) const
@@ -99,11 +92,5 @@ inline RayPackage RayGroup::getRayPackage(size_t id) const
 {
 	PR_ASSERT(id < mSize, "Invalid access!");
 	return mStream->getRayPackage(id + mOffset);
-}
-
-inline void RayStream::invalidateRay(size_t id)
-{
-	PR_ASSERT(id < currentSize(), "Check before adding!");
-	mFlags[linearID(id)] |= RF_Invalid;
 }
 } // namespace PR

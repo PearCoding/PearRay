@@ -7,8 +7,6 @@ template <typename Func>
 void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 {
 	PR_ASSERT(mKDTree, "kdTree has to be valid");
-	// First sort all rays
-	rays.sort();
 
 	// Split stream into specific groups
 	hits.reset();
@@ -16,14 +14,14 @@ void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 		RayGroup grp = rays.getNextGroup();
 
 		if (grp.isCoherent())
-			traceCoherentRays(rays, grp, hits, nonHit);
+			traceCoherentRays(grp, hits, nonHit);
 		else
-			traceIncoherentRays(rays, grp, hits, nonHit);
+			traceIncoherentRays(grp, hits, nonHit);
 	}
 }
 
 template <typename Func, uint32 K>
-inline void _sceneCheckHit(RayStream& rays, const RayGroup& grp,
+inline void _sceneCheckHit(const RayGroup& grp,
 						   uint32 off, const CollisionOutput& out,
 						   HitStream& hits, Func nonHit)
 {
@@ -31,16 +29,13 @@ inline void _sceneCheckHit(RayStream& rays, const RayGroup& grp,
 	if (id >= grp.size()) // Ignore bad tails
 		return;
 
-	rays.invalidateRay(id + grp.offset());
-
 	float hitD = simdpp::extract<K>(out.HitDistance);
 	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 		HitEntry entry;
-		entry.SessionRayID = id + grp.offset();
-		entry.RayID		   = grp.stream()->linearID(entry.SessionRayID);
-		entry.MaterialID   = simdpp::extract<K>(out.MaterialID);
-		entry.EntityID	 = simdpp::extract<K>(out.EntityID);
-		entry.PrimitiveID  = simdpp::extract<K>(out.FaceID);
+		entry.RayID		  = id + grp.offset();
+		entry.MaterialID  = simdpp::extract<K>(out.MaterialID);
+		entry.EntityID	= simdpp::extract<K>(out.EntityID);
+		entry.PrimitiveID = simdpp::extract<K>(out.FaceID);
 		for (int i = 0; i < 3; ++i)
 			entry.Parameter[i] = simdpp::extract<K>(out.Parameter[i]);
 		entry.Flags = simdpp::extract<K>(out.Flags);
@@ -53,13 +48,13 @@ inline void _sceneCheckHit(RayStream& rays, const RayGroup& grp,
 }
 
 template <typename Func>
-void Scene::traceCoherentRays(RayStream& rays, const RayGroup& grp,
+void Scene::traceCoherentRays(const RayGroup& grp,
 							  HitStream& hits, Func nonHit) const
 {
 	PR_PROFILE_THIS;
 
 #ifdef PR_FORCE_SINGLE_TRACE
-	traceIncoherentRays(rays, grp, hits, nonHit);
+	traceIncoherentRays(grp, hits, nonHit);
 #else
 	RayPackage in;
 	CollisionOutput out;
@@ -82,16 +77,16 @@ void Scene::traceCoherentRays(RayStream& rays, const RayGroup& grp,
 
 		static_assert(PR_SIMD_BANDWIDTH == 4,
 					  "This implementation only works with bandwidth 4");
-		_sceneCheckHit<Func, 0>(rays, grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 1>(rays, grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 2>(rays, grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 3>(rays, grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 0>(grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 1>(grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 2>(grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 3>(grp, i, out, hits, nonHit);
 	}
 #endif //PR_FORCE_SINGLE_TRACE
 }
 
 template <typename Func>
-void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
+void Scene::traceIncoherentRays(const RayGroup& grp,
 								HitStream& hits, Func nonHit) const
 {
 	PR_PROFILE_THIS;
@@ -100,12 +95,9 @@ void Scene::traceIncoherentRays(RayStream& rays, const RayGroup& grp,
 		 i < grp.size();
 		 ++i) {
 		Ray in = grp.getRay(i);
-		rays.invalidateRay(i + grp.offset());
-
 		HitEntry entry;
 		if (traceRay(in, entry)) {
-			entry.SessionRayID = static_cast<uint32>(i + grp.offset());
-			entry.RayID		   = static_cast<uint32>(grp.stream()->linearID(entry.SessionRayID));
+			entry.RayID = static_cast<uint32>(i + grp.offset());
 			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 			hits.add(entry);
 		} else {
@@ -128,11 +120,10 @@ bool Scene::traceRay(const Ray& in, HitEntry& entry) const
 
 	float hitD = out.HitDistance;
 	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
-		entry.SessionRayID = 0;
-		entry.RayID		   = 0;
-		entry.MaterialID   = out.MaterialID;
-		entry.EntityID	 = out.EntityID;
-		entry.PrimitiveID  = out.FaceID;
+		entry.RayID		  = 0;
+		entry.MaterialID  = out.MaterialID;
+		entry.EntityID	= out.EntityID;
+		entry.PrimitiveID = out.FaceID;
 		for (int i = 0; i < 3; ++i)
 			entry.Parameter[i] = out.Parameter[i];
 		entry.Flags = out.Flags;
