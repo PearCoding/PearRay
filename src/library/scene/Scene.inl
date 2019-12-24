@@ -1,8 +1,7 @@
 // IWYU pragma: private, include "scene/Scene.h"
 namespace PR {
 
-// FIXME: Coherent ray tracing is still buggy
-#define PR_FORCE_SINGLE_TRACE
+//#define PR_FORCE_SINGLE_TRACE
 
 template <typename Func>
 void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
@@ -24,12 +23,15 @@ void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 }
 
 template <typename Func, uint32 K>
-inline void _sceneCheckHit(const RayGroup& grp, uint32 off, const CollisionOutput& out,
+inline void _sceneCheckHit(RayStream& rays, const RayGroup& grp,
+						   uint32 off, const CollisionOutput& out,
 						   HitStream& hits, Func nonHit)
 {
 	const uint32 id = off + K;
 	if (id >= grp.size()) // Ignore bad tails
 		return;
+
+	rays.invalidateRay(id + grp.offset());
 
 	float hitD = simdpp::extract<K>(out.HitDistance);
 	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
@@ -80,10 +82,10 @@ void Scene::traceCoherentRays(RayStream& rays, const RayGroup& grp,
 
 		static_assert(PR_SIMD_BANDWIDTH == 4,
 					  "This implementation only works with bandwidth 4");
-		_sceneCheckHit<Func, 0>(grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 1>(grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 2>(grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 3>(grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 0>(rays, grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 1>(rays, grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 2>(rays, grp, i, out, hits, nonHit);
+		_sceneCheckHit<Func, 3>(rays, grp, i, out, hits, nonHit);
 	}
 #endif //PR_FORCE_SINGLE_TRACE
 }

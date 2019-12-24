@@ -68,11 +68,27 @@ class SpectrumPrinter:
 class SIMDPrinter:
 	"Print vfloat/vuint32/vint32"
 
-	def __init__(self, val, inner_type):
+	def __init__(self, val):
 		"Extract all the necessary information"
 
-		ptr_type = gdb.lookup_type("%s" % inner_type).pointer()
-		ptr = val.address.reinterpret_cast(ptr_type)
+		vector_type = str(val.type.unqualified())
+
+		inner_type = None
+		if vector_type == 'PR::vfloat':
+			inner_type = 'float'
+		elif vector_type == 'PR::vint32':
+			inner_type = 'int'
+		elif vector_type == 'PR::vuint32':
+			inner_type = 'unsigned int'
+		else:
+			match = re.match('^PR::VectorBase<4, (\\w+),', vector_type)
+			if match is None:
+				print("ERROR: Unknown vector type %s" % str(vector_type))
+			else:
+				inner_type = match[1]
+
+		ptr_type = gdb.lookup_type(inner_type).pointer()
+		ptr = val['d_'].address.reinterpret_cast(ptr_type)
 		self.data = []
 		self.data.append(ptr[0])
 		self.data.append(ptr[1])
@@ -80,52 +96,46 @@ class SIMDPrinter:
 		self.data.append(ptr[3])
 
 	def to_string(self):
-		return "[%s]" % (",".join(str(f) for f in self.data))
+		return ("[%s]" % (",".join(str(f) for f in self.data)))
 
-	#def display_hint(self):
-#		return 'array'
+	def display_hint(self):
+		return 'array'
 
 	def children(self):
 		l = list((str(c), value) for c, value in enumerate(self.data))
 		return iter(l)
 
 
-def build_pearray_dictionary ():
-	pretty_printers_dict[re.compile('^PR::Spectrum$')] = lambda val: SpectrumPrinter(val)
-	pretty_printers_dict[re.compile('^PR::VectorBase<4, float')] = lambda val: SIMDPrinter(val, 'float')
-	pretty_printers_dict[re.compile('^PR::VectorBase<4, int')] = lambda val: SIMDPrinter(val, 'int')
-	pretty_printers_dict[re.compile('^PR::VectorBase<4, unsigned int')] = lambda val: SIMDPrinter(val, 'unsigned int')
+# TODO: Add support for custom matrix sizes
+class EigenSIMDPrinter:
+	"Print Vector3fv, Vector3iv"
+
+	def __init__(self, val):
+		"Extract all the necessary information"
+
+		dataptr = val['m_storage']['m_data']['array']
+		self.data = [dataptr[0], dataptr[1], dataptr[2]]
+
+	def to_string(self):
+		return self.data
+
+	def display_hint(self):
+		return 'array'
+
+	def children(self):
+		l = list((str(c), value) for c, value in enumerate(self.data))
+		return iter(l)
+
+
+def build_pretty_printer ():
+	pp = gdb.printing.RegexpCollectionPrettyPrinter("pearray")
+	pp.add_printer('Spectrum', '^PR::Spectrum$', SpectrumPrinter)
+	pp.add_printer('VectorBase', '^PR::VectorBase', SIMDPrinter)
+	pp.add_printer('VectorV', 'Eigen::Matrix<PR::VectorBase', EigenSIMDPrinter)
+	return pp
 
 
 def register_pearray_printers(obj):
-	"Register pearray pretty-printers with objfile Obj"
-
-	if obj is None:
-		obj = gdb
-	obj.pretty_printers.append(lookup_function)
-
-
-def lookup_function(val):
-	"Look-up and return a pretty-printer that can print va."
-
-	type = val.type
-
-	if type.code == gdb.TYPE_CODE_REF:
-		type = type.target()
-
-	type = type.unqualified().strip_typedefs()
-
-	typename = type.tag
-	if typename is None:
-		return None
-
-	#print(typename)
-	for function in pretty_printers_dict:
-		if function.search(typename):
-			return pretty_printers_dict[function](val)
-
-	return None
-
-
-pretty_printers_dict = {}
-build_pearray_dictionary ()
+	gdb.printing.register_pretty_printer(
+		gdb.current_objfile() if obj is None else obj,
+		build_pretty_printer())

@@ -69,16 +69,15 @@ public:
 		return mBoundingBox;
 	}
 
-	// Package Version (Coherent)
-	// FIXME: This is not for coherent rays
-	// FIXME: Not working properly
+	// Package Version
+	// No coherent optimization
 	template <typename CheckCollisionCallback>
 	inline bool checkCollision(const RayPackage& in, CollisionOutput& out,
 							   CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
 		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
-		vfloat zero			   = make_zero();
+		const vfloat zero	  = make_zero();
 		const Vector3fv invDir = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
@@ -112,14 +111,15 @@ public:
 				const vfloat t				= splitM * invDir[innerN->axis];
 
 				const bfloat dirMask = invDir[innerN->axis] < 0;
+				const bfloat eqMask = (in.Direction[innerN->axis]) <= PR_EPSILON;
 				const bfloat minHit  = minT <= t;
 				const bfloat maxHit  = maxT >= t;
 
 				const bfloat valid = minT <= maxT;
 				const bfloat hit   = blend(minHit, maxHit, dirMask);
 
-				const bfloat hitRight = valid & hit;
-				const bfloat hitLeft  = valid & ~hit;
+				const bfloat hitRight = valid & hit | eqMask;
+				const bfloat hitLeft  = valid & ~hit | eqMask;
 
 				if (!any(hitRight)) {
 					currentN = innerN->left;
