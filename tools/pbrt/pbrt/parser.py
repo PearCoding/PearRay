@@ -36,8 +36,12 @@ class Parser:
             return False
 
     @staticmethod
+    def isNumber(token):
+        return Parser.isFloat(token) or Parser.isInteger(token)
+
+    @staticmethod
     def isParameter(token):
-        return token is not None and (token.startswith('"') or Parser.isFloat(token) or Parser.isInteger(token))
+        return token is not None and (token.startswith('"') or Parser.isNumber(token))
 
     @staticmethod
     def isParameterName(token):
@@ -74,6 +78,16 @@ class Parser:
             if not Parser.isListEnd(token):
                 print("Bad list end")
             tokenizer.next() # Skip ]
+            if len(paramList) == 1:
+                return paramList[0]
+            else:
+                return paramList
+        elif token is not None and Parser.isNumber(token):
+            # For lookAt and transform actions which uses no [ ]
+            paramList = []
+            while token is not None and Parser.isNumber(token):
+                paramList.append(Parser.getParameter(token))
+                token = tokenizer.next()
             if len(paramList) == 1:
                 return paramList[0]
             else:
