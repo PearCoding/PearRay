@@ -684,7 +684,7 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 				PR_LOG(L_ERROR) << "Invalid texture registry type." << std::endl;
 			}
 		} else {
-			PR_LOG(L_ERROR) << "Invalid registry group type." << std::endl;
+			PR_LOG(L_ERROR) << "Invalid registry group type: " << grp.id() << std::endl;
 		}
 	} break;
 	default:

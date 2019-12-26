@@ -29,6 +29,7 @@ public:
 	inline const std::vector<float>& normals() const { return mNormals; }
 	inline Vector3f normal(size_t ind) const { return Vector3f(mNormals[3 * ind], mNormals[3 * ind + 1], mNormals[3 * ind + 2]); }
 	void buildNormals();
+	void flipNormals();
 
 	inline void setUVs(const std::vector<float>& uvs);
 	inline const std::vector<float>& uvs() const { return mUVs; }

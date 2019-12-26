@@ -56,7 +56,7 @@ struct Header {
 	inline bool hasVertices() const { return XElem >= 0 && YElem >= 0 && ZElem >= 0; }
 	inline bool hasNormals() const { return NXElem >= 0 && NYElem >= 0 && NZElem >= 0; }
 	inline bool hasUVs() const { return UElem >= 0 && VElem >= 0; }
-	inline bool hasIndices() const { return IndElem; }
+	inline bool hasIndices() const { return IndElem >= 0; }
 };
 
 std::shared_ptr<MeshContainer> read(std::fstream& stream, const Header& header, bool ascii)
@@ -287,7 +287,7 @@ void PlyLoader::load(const std::wstring& file, Environment* env)
 
 				std::string name;
 				sstream >> name;
-				if (countType != "uchar" || indType != "int") {
+				if (countType != "uchar" && indType != "int" && indType != "uint8") {
 					PR_LOG(L_WARNING) << "Only 'property list uchar int' is supported" << std::endl;
 					continue;
 				}

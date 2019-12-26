@@ -1,22 +1,5 @@
 from .tokenizer import Tokenizer
-
-
-class Operation:
-    def __init__(self, filename, action, operand, params):
-        self.filename = filename
-        self.action = action
-        self.operand = operand
-        self.parameters = params
-
-    def hasOperand(self):
-        return self.operand is not None
-
-    def param(self, name):
-        return self.parameters[name]
-
-    def __repr__(self):
-        return "<%s[%s]: %s>" % (self.action, self.operand, self.parameters)
-
+from .operation import Operation
 
 class Parser:
     @staticmethod
@@ -56,7 +39,7 @@ class Parser:
         elif Parser.isFloat(token):
             return float(token)
         else:
-            print("Invalid parameter given")
+            print("ERROR: Invalid parameter given")
             return None
 
     @staticmethod
@@ -67,7 +50,8 @@ class Parser:
     def isListEnd(token):
         return token is not None and token.startswith(']')
 
-    def parse_parameter(self, tokenizer):
+    @staticmethod
+    def parse_parameter(tokenizer):
         token = tokenizer.current()
         if Parser.isListStart(token):
             token = tokenizer.next()
@@ -76,7 +60,7 @@ class Parser:
                 paramList.append(Parser.getParameter(token))
                 token = tokenizer.next()
             if not Parser.isListEnd(token):
-                print("Bad list end")
+                print("ERROR: Bad list end")
             tokenizer.next() # Skip ]
             if len(paramList) == 1:
                 return paramList[0]
@@ -98,39 +82,39 @@ class Parser:
         else:
             return None
 
-    def parse_parameter_list(self, tokenizer):
+    @staticmethod
+    def parse_parameter_list(tokenizer):
         token = tokenizer.current()
         params = {}
         while Parser.isParameterName(token):
             tokenizer.next()
-            params[Parser.getParameter(token)] = self.parse_parameter(tokenizer)
+            params[Parser.getParameter(token)] = Parser.parse_parameter(tokenizer)
             token = tokenizer.current()
 
         return params
 
-    def parse_operand(self, tokenizer):
-        return self.parse_parameter(tokenizer)
+    @staticmethod
+    def parse_operand(tokenizer):
+        return Parser.parse_parameter(tokenizer)
 
-    def parse_action(self, tokenizer):
+    @staticmethod
+    def parse_action(tokenizer):
         action = tokenizer.current()
         tokenizer.next()
         return action
 
-    def parse(self, filename, source):
-        tokenizer = Tokenizer(source)
+    @staticmethod
+    def parse(filename, file):
+        tokenizer = Tokenizer(file)
 
-        operations = []
         while True:
-            action = self.parse_action(tokenizer)
+            action = Parser.parse_action(tokenizer)
             if action is None:
                 break
 
-            operand = self.parse_operand(tokenizer)
+            operand = Parser.parse_operand(tokenizer)
             params = {}
             if operand is not None:
-                params = self.parse_parameter_list(tokenizer)
+                params = Parser.parse_parameter_list(tokenizer)
 
-            operations.append(Operation(filename, action, operand, params))
-
-        return operations
-
+            yield Operation(filename, action, operand, params)

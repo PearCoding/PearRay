@@ -1,7 +1,6 @@
 #pragma once
 
 #include "BoundingBox.h"
-#include "Triangle.h"
 
 #include <utility>
 
@@ -37,7 +36,8 @@ public:
 								const Vector3t<T>& p3,
 								const Vector3t<T>& p4)
 	{
-		return Triangle::surfaceArea(p1, p2, p3) + Triangle::surfaceArea(p1, p3, p4);
+		// Assuming convex quad
+		return 0.5f * (p3 - p1).cross(p4 - p2).norm();
 	}
 
 	/*template <typename T>

@@ -41,7 +41,7 @@ TriMesh::~TriMesh()
 
 float TriMesh::surfaceArea(uint32 id) const
 {
-	return mContainer->surfaceArea(id, Eigen::Affine3f());
+	return mContainer->surfaceArea(id, Eigen::Affine3f::Identity());
 }
 
 bool TriMesh::isCollidable() const

@@ -58,6 +58,14 @@ void MeshContainer::buildNormals()
 	}
 }
 
+void MeshContainer::flipNormals()
+{
+	PR_PROFILE_THIS;
+
+	for (size_t i = 0; i < mNormals.size(); ++i)
+		mNormals[i] *= -1;
+}
+
 void MeshContainer::setFaceVertexCount(const std::vector<uint8>& faceVertexCount)
 {
 	PR_PROFILE_THIS;
@@ -103,29 +111,17 @@ float MeshContainer::faceArea(size_t f, const Eigen::Affine3f& tm) const
 	const uint32 ind2 = mIndices[off + 1];
 	const uint32 ind3 = mIndices[off + 2];
 
-	const Vector3f p1 = Transform::apply(tm.matrix(),
-										 Vector3f(mVertices[3 * ind1],
-												  mVertices[3 * ind1 + 1],
-												  mVertices[3 * ind1 + 2]));
+	const Vector3f p1 = Transform::apply(tm.matrix(), vertex(ind1));
 
-	const Vector3f p2 = Transform::apply(tm.matrix(),
-										 Vector3f(mVertices[3 * ind2],
-												  mVertices[3 * ind2 + 1],
-												  mVertices[3 * ind2 + 2]));
+	const Vector3f p2 = Transform::apply(tm.matrix(), vertex(ind2));
 
-	const Vector3f p3 = Transform::apply(tm.matrix(),
-										 Vector3f(mVertices[3 * ind3],
-												  mVertices[3 * ind3 + 1],
-												  mVertices[3 * ind3 + 2]));
+	const Vector3f p3 = Transform::apply(tm.matrix(), vertex(ind3));
 
 	if (faceElems == 3)
 		return Triangle::surfaceArea(p1, p2, p3);
 	else {
 		const uint32 ind4 = mIndices[off + 3];
-		const Vector3f p4 = Transform::apply(tm.matrix(),
-											 Vector3f(mVertices[3 * ind4],
-													  mVertices[3 * ind4 + 1],
-													  mVertices[3 * ind4 + 2]));
+		const Vector3f p4 = Transform::apply(tm.matrix(), vertex(ind4));
 		return Quad::surfaceArea(p1, p2, p3, p4);
 	}
 }
@@ -144,9 +140,8 @@ float MeshContainer::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) 
 	float a		   = 0;
 	size_t counter = 0;
 	for (uint32 mat : mMaterialSlots) {
-		if (mat == slot) {
+		if (mat == slot)
 			a += faceArea(counter, transform);
-		}
 
 		++counter;
 	}
@@ -158,9 +153,8 @@ float MeshContainer::surfaceArea(const Eigen::Affine3f& transform) const
 	PR_PROFILE_THIS;
 
 	float a = 0;
-	for (size_t counter = 0; counter < faceCount(); ++counter) {
+	for (size_t counter = 0; counter < faceCount(); ++counter)
 		a += faceArea(counter, transform);
-	}
 	return a;
 }
 
@@ -222,7 +216,7 @@ void MeshContainer::triangulate()
 	PR_ASSERT(new_facecount * 3 == indC, "Wrong triangulation!");
 	PR_ASSERT(new_facecount == facC, "Wrong triangulation!");
 
-	mTriangleCount   = facC;
+	mTriangleCount   = new_facecount;
 	mQuadCount		 = 0;
 	mIndices		 = new_indices;
 	mFaceIndexOffset = new_faceIndexOffset;
