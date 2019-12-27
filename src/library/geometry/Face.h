@@ -2,6 +2,7 @@
 
 #include "Quad.h"
 #include "Triangle.h"
+#include "math/Tangent.h"
 
 namespace PR {
 class PR_LIB Face {
@@ -86,6 +87,10 @@ public:
 		Vector2f duv2 = UV[2] - UV[0];
 
 		const float det = duv1(0) * duv2(1) - duv1(1) * duv2(0);
+		if (det <= PR_EPSILON) { // Fallback
+			Tangent::frame(n, nx, ny);
+			return;
+		}
 
 		nx = (dp1 * duv2(1) - dp2 * duv1(1)) / det;
 		nx = nx - n * n.dot(nx);

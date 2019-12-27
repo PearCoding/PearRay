@@ -65,30 +65,27 @@ public:
 			if (infLight->hasDeltaDistribution())
 				outL.PDF_S = 1;
 
-			if (outL.PDF_S <= PR_EPSILON) {
-				return LiL;
-			} else {
+			if (outL.PDF_S > PR_EPSILON) {
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
-				if (shadowHit.Successful)
-					return LiL;
+				if (!shadowHit.Successful) {
+					// Evaluate surface
+					MaterialEvalInput in;
+					in.Point	= spt;
+					in.Outgoing = outL.Outgoing;
+					in.NdotL	= outL.Outgoing.dot(spt.N);
+					MaterialEvalOutput out;
+					material->eval(in, out, session);
+					token = LightPathToken(out.Type);
 
-				// Evaluate surface
-				MaterialEvalInput in;
-				in.Point	= spt;
-				in.Outgoing = outL.Outgoing;
-				in.NdotL	= outL.Outgoing.dot(spt.N);
-				MaterialEvalOutput out;
-				material->eval(in, out, session);
-				token = LightPathToken(out.Type);
-
-				msiL = allowMSI ? MSI(1, outL.PDF_S, 1, out.PDF_S) : 1.0f;
-				LiL  = outL.Weight * out.Weight / outL.PDF_S;
+					msiL = allowMSI ? MSI(1, outL.PDF_S, 1, out.PDF_S) : 1.0f;
+					LiL  = outL.Weight * out.Weight / outL.PDF_S;
+				}
 			}
 		}
 
-		if (!allowMSI || LiL.isZero())
+		if (!allowMSI)
 			return LiL;
 
 		// (2) Sample BRDF
@@ -120,6 +117,8 @@ public:
 
 		if (msiS <= PR_EPSILON || LiS.isZero())
 			return LiL;
+		else if (msiL <= PR_EPSILON || LiL.isZero())
+			return LiS;
 		else
 			return LiL * msiL + LiS * msiS;
 	}

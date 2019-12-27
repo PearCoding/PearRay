@@ -155,18 +155,8 @@ void TriMesh::checkCollision(const RayPackage& in, CollisionOutput& out) const
 							 const vfloat inf = simdpp::make_float(std::numeric_limits<float>::infinity());
 							 out2.HitDistance = simdpp::blend(t, inf, hits);
 
-							 if (mContainer->features() & MF_HAS_UV) {
-								 Vector2f uv0 = mContainer->uv(ind1);
-								 Vector2f uv1 = mContainer->uv(ind2);
-								 Vector2f uv2 = mContainer->uv(ind3);
-								 for (int i = 0; i < 2; ++i)
-									 out2.Parameter[i] = uv1(i) * uv(0)
-														 + uv2(i) * uv(1)
-														 + uv0(i) * (1 - uv(0) - uv(1));
-							 } else {
-								 out2.Parameter[0] = uv(0);
-								 out2.Parameter[1] = uv(1);
-							 }
+							 out2.Parameter[0] = uv(0);
+							 out2.Parameter[1] = uv(1);
 
 							 if (mContainer->features() & MF_HAS_MATERIAL)
 								 out2.MaterialID = simdpp::make_uint(mContainer->materialSlot(f)); // Has to be updated in entity!
@@ -222,16 +212,8 @@ void TriMesh::checkCollision(const Ray& in, SingleCollisionOutput& out) const
 							 else
 								 out2.HitDistance = t;
 
-							 if (mContainer->features() & MF_HAS_UV) {
-								 Vector2f v = Triangle::interpolate(
-									 mContainer->uv(ind1), mContainer->uv(ind2), mContainer->uv(ind3),
-									 uv);
-								 out2.Parameter[0] = v(0);
-								 out2.Parameter[1] = v(1);
-							 } else {
-								 out2.Parameter[0] = uv(0);
-								 out2.Parameter[1] = uv(1);
-							 }
+							 out2.Parameter[0] = uv(0);
+							 out2.Parameter[1] = uv(1);
 
 							 out2.MaterialID = mContainer->materialSlot(f); // Has to be updated in entity!
 							 out2.FaceID	 = static_cast<uint32>(f);		// TODO: Maybe change to 64bit?
@@ -253,22 +235,10 @@ Vector3f TriMesh::pickRandomParameterPoint(const Vector2f& rnd, uint32& faceID, 
 
 void TriMesh::provideGeometryPoint(uint32 faceID, const Vector3f& parameter, GeometryPoint& pt) const
 {
-	const float u = parameter[0];
-	const float v = parameter[1];
-
 	Face f = mContainer->getFace(faceID);
 
-	Vector2f local_uv;
-	if (mContainer->features() & MF_HAS_UV)
-		local_uv = f.mapGlobalToLocalUV(Vector2f(u, v));
-	else
-		local_uv = Vector2f(u, v);
-
-	local_uv(0) = std::min(1.0f, std::max(0.0f, local_uv(0)));
-	local_uv(1) = std::min(1.0f, std::max(0.0f, local_uv(1)));
-
 	Vector2f uv;
-	f.interpolate(local_uv, pt.P, pt.N, uv);
+	f.interpolate(Vector2f(parameter[0], parameter[1]), pt.P, pt.N, uv);
 
 	if (mContainer->features() & MF_HAS_UV)
 		f.tangentFromUV(pt.N, pt.Nx, pt.Ny);

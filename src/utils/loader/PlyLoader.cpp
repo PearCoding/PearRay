@@ -141,9 +141,12 @@ std::shared_ptr<MeshContainer> read(std::fstream& stream, const Header& header, 
 		vertices.push_back(z);
 
 		if (header.hasNormals()) {
-			normals.push_back(nx);
-			normals.push_back(ny);
-			normals.push_back(nz);
+			float norm = sqrt(nx * nx + ny * ny + nz * nz);
+			if (norm <= PR_EPSILON)
+				norm = 1.0f;
+			normals.push_back(nx / norm);
+			normals.push_back(ny / norm);
+			normals.push_back(nz / norm);
 		}
 
 		if (header.hasUVs()) {
