@@ -220,42 +220,37 @@ public:
 			const float cosO = std::abs(L.dot(lightPt.N));
 			const float cosI = L.dot(spt.N);
 
-			if (std::abs(cosI) < PR_EPSILON
-				//|| cosO < PR_EPSILON
-				//|| sqrD < PR_EPSILON
-				|| pdfA < PR_EPSILON)
-				return LiL;
+			if (std::abs(cosI) >= PR_EPSILON
+				&& pdfA >= PR_EPSILON) {
 
-			// Trace shadow ray
-			Ray shadow			= spt.Ray.next(spt.P, L);
-			ShadowHit shadowHit = session.traceShadowRay(shadow);
+				// Trace shadow ray
+				Ray shadow			= spt.Ray.next(spt.P, L);
+				ShadowHit shadowHit = session.traceShadowRay(shadow);
 
-			if (!shadowHit.Successful
-				|| shadowHit.EntityID != light->id()) {
-				return LiL;
-			} else {
-				// Evaluate light
-				LightEvalInput inL;
-				inL.Entity = light;
-				inL.Point.setByIdentity(shadow, lightPt);
-				LightEvalOutput outL;
-				ems->eval(inL, outL, session);
+				if (shadowHit.Successful && shadowHit.EntityID == light->id()) {
+					// Evaluate light
+					LightEvalInput inL;
+					inL.Entity = light;
+					inL.Point.setByIdentity(shadow, lightPt);
+					LightEvalOutput outL;
+					ems->eval(inL, outL, session);
 
-				// Evaluate surface
-				MaterialEvalInput in;
-				in.Point	= spt;
-				in.Outgoing = L;
-				in.NdotL	= cosI;
-				MaterialEvalOutput out;
-				material->eval(in, out, session);
+					// Evaluate surface
+					MaterialEvalInput in;
+					in.Point	= spt;
+					in.Outgoing = L;
+					in.NdotL	= cosI;
+					MaterialEvalOutput out;
+					material->eval(in, out, session);
 
-				const float pdfS = IS::toSolidAngle(pdfA, sqrD, cosO);
-				msiL			 = mMSIEnabled ? MSI(1, pdfS, 1, out.PDF_S) : 1.0f;
-				LiL				 = outL.Weight * out.Weight / pdfA;
+					const float pdfS = IS::toSolidAngle(pdfA, sqrD, cosO);
+					msiL			 = mMSIEnabled ? MSI(1, pdfS, 1, out.PDF_S) : 1.0f;
+					LiL				 = outL.Weight * out.Weight / pdfA;
+				}
 			}
 		}
 
-		if (!mMSIEnabled || LiL.isZero())
+		if (!mMSIEnabled)
 			return LiL;
 
 		// (2) Sample BRDF
@@ -302,6 +297,8 @@ public:
 
 		if (msiS <= PR_EPSILON || LiS.isZero())
 			return LiL;
+		else if (msiL <= PR_EPSILON || LiL.isZero())
+			return LiS;
 		else
 			return LiL * msiL + LiS * msiS;
 	}
