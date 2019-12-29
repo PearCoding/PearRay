@@ -323,7 +323,7 @@ class Operator:
         self.w.goIn()
         self.w.write(":type 'color'")
         self.w.write(":color 'rgb'")
-        self.w.write(":gamma 'srgb'")
+        self.w.write(":gamma 'none'")
         self.w.write(":mapper 'none'")
         self.w.goOut()
         self.w.write(")")

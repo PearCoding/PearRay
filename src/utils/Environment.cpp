@@ -200,18 +200,8 @@ std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 
 std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 {
-	auto entities = mEntityManager->getAll();
-	if (entities.empty()) {
-		PR_LOG(L_ERROR) << "No entities available!" << std::endl;
-		return nullptr;
-	}
-
+	auto entities  = mEntityManager->getAll();
 	auto materials = mMaterialManager->getAll();
-	if (materials.empty()) {
-		PR_LOG(L_ERROR) << "No materials available!" << std::endl;
-		return nullptr;
-	}
-
 	auto emissions = mEmissionManager->getAll();
 	auto inflights = mInfiniteLightManager->getAll();
 

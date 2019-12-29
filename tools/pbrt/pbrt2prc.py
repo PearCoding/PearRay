@@ -35,6 +35,8 @@ def parseArgs():
                         default=False, help="Skip Camera Generation")
     parser.add_argument('--skipReg', action='store_true',
                         default=False, help="Skip Registry Generation")
+    parser.add_argument('--skipWorld', action='store_true',
+                        default=False, help="Skip Registry Generation")
     parser.add_argument('--singleFile', action='store_true',
                         default=False, help="Produce one single file")
 
@@ -51,14 +53,16 @@ if __name__ == '__main__':
     with open(main_file, "w") as output_file:
         with open(args.input, "r") as input_file:
             writer = pbrt.Writer(output_file)
-            writer.write("(scene")
-            writer.goIn()
+            if not args.skipWorld:
+                writer.write("(scene")
+                writer.goIn()
 
             operator = pbrt.Operator(writer, args, os.path.dirname(os.path.abspath(args.input)))
             for op in pbrt.Parser.parse(args.input, input_file):
                 #print(op)
                 operator.apply(op)
 
-            writer.goOut()
-            writer.write(")")
+            if not args.skipWorld:
+                writer.goOut()
+                writer.write(")")
 

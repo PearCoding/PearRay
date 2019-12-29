@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Logger.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightFactory.h"
 #include "math/Projection.h"
@@ -24,6 +25,8 @@ public:
 			mDistribution = std::make_unique<Distribution2D>(recSize(0), recSize(1));
 
 			const Vector2f filterSize(1.0f / recSize(0), 1.0f / recSize(1));
+
+			PR_LOG(L_INFO) << "Generating 2d environment distribution of " << name << std::endl;
 
 			mDistribution->generate([&](size_t x, size_t y) {
 				float u = x / (float)recSize(0);

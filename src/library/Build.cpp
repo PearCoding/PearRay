@@ -82,14 +82,14 @@ std::string getBuildString()
 	constexpr bool hasAsserts  = true;
 #endif
 #ifdef PR_WITH_PROFILER
-	constexpr bool hasProfiler = false;
-#else
 	constexpr bool hasProfiler = true;
+#else
+	constexpr bool hasProfiler = false;
 #endif
 #ifdef PR_TRIANGLE_USE_CACHE
-	constexpr bool hasTriCache = false;
-#else
 	constexpr bool hasTriCache = true;
+#else
+	constexpr bool hasTriCache = false;
 #endif
 
 	std::stringstream stream;
