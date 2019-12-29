@@ -1,5 +1,6 @@
 #include "ProgramSettings.h"
 #include "EnumOption.h"
+#include "Build.h"
 
 #include <boost/program_options/cmdline.hpp>
 #include <boost/program_options/options_description.hpp>
@@ -23,6 +24,7 @@ po::options_description setup_cmd_options()
 	general_d.add_options()
 		("help,h", "Produce this help message")
 		("quiet,q", "Do not print messages into console")
+		("version", "Show version and exit")
 		("verbose,v", "Print detailed information into log file (and perhabs into console)")
 #ifdef PR_WITH_PROFILER
 		("profile,P", "Profile execution and dump results into a file")
@@ -94,7 +96,14 @@ bool ProgramSettings::parse(int argc, char** argv)
 	{
 		std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki/PearRayCLI\n" << std::endl;
 		std::cout << all_d << std::endl;
-		exit(1);
+		exit(0);
+	}
+
+	// Handle version
+	if (vm.count("version"))
+	{
+		std::cout << Build::getBuildString() << std::endl;
+		exit(0);
 	}
 
 	// Defaults

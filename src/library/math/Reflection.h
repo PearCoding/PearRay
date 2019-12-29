@@ -9,7 +9,7 @@ namespace Reflection {
 */
 inline bool is_inside(float NdotV)
 {
-	return NdotV > 0.0f;
+	return NdotV > PR_EPSILON;
 }
 
 /**

@@ -47,6 +47,30 @@ inline void _sceneCheckHit(const RayGroup& grp,
 	}
 }
 
+template <uint32 C>
+class _sceneCheckHitCallee {
+public:
+	template <typename Func>
+	inline void operator()(const RayGroup& grp,
+						   uint32 off, const CollisionOutput& out,
+						   HitStream& hits, Func nonHit)
+	{
+		_sceneCheckHit<Func, C - 1>(grp, off, out, hits, nonHit);
+		_sceneCheckHitCallee<C - 1>()(grp, off, out, hits, nonHit);
+	}
+};
+
+template <>
+class _sceneCheckHitCallee<0> {
+public:
+	template <typename Func>
+	inline void operator()(const RayGroup&,
+						   uint32, const CollisionOutput&,
+						   HitStream&, Func)
+	{
+	}
+};
+
 template <typename Func>
 void Scene::traceCoherentRays(const RayGroup& grp,
 							  HitStream& hits, Func nonHit) const
@@ -75,12 +99,7 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 				mEntities[index]->checkCollision(in2, out2);
 			});
 
-		static_assert(PR_SIMD_BANDWIDTH == 4,
-					  "This implementation only works with bandwidth 4");
-		_sceneCheckHit<Func, 0>(grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 1>(grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 2>(grp, i, out, hits, nonHit);
-		_sceneCheckHit<Func, 3>(grp, i, out, hits, nonHit);
+		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
 	}
 #endif //PR_FORCE_SINGLE_TRACE
 }

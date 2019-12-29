@@ -1,4 +1,5 @@
 SET(PR_Src
+  Build.cpp
   Build.h
   PR_Config.h.in
   FileLogListener.cpp

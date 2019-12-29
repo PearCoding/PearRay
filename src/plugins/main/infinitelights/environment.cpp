@@ -49,7 +49,10 @@ public:
 		coord.UV(1) = 1 - coord.UV(1);
 		coord.Index = in.Point.Ray.WavelengthIndex;
 
-		out.Weight = mBackground->eval(coord);
+		if (in.Point.Ray.IterationDepth == 0)
+			out.Weight = mBackground->eval(coord);
+		else
+			out.Weight = mRadiance->eval(coord);
 
 		if (mDistribution) {
 			const float sinTheta = std::sin(coord.UV(1) * PR_PI);

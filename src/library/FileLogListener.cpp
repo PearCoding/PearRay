@@ -21,7 +21,7 @@ FileLogListener::~FileLogListener()
 void FileLogListener::open(const std::string& file)
 {
 	mStream.open(file.c_str(), std::ios::out);
-	mStream << "Build: " << PR_BUILD_STRING << std::endl;
+	mStream << "Build: " << Build::getBuildString() << std::endl;
 }
 
 void FileLogListener::startEntry(LogLevel level)

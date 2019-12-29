@@ -33,7 +33,7 @@ PR_TEST("insert")
 
 PR_TEST("load_from_container_linear")
 {
-	float c[4] = { 0, 1, 2, 3 };
+	float c[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
 	vfloat f1;
 	load_from_container_linear(f1, c);
