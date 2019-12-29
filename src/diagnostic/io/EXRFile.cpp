@@ -239,17 +239,15 @@ bool EXRFile::open(const QString& filename)
 		for (auto p : halfFormat) {
 			float* ptr = layer->data()[p.first].data();
 
-			for (int i = 0; i < size; ++i) {
+			for (int i = 0; i < size; ++i)
 				ptr[i] = p.second[i];
-			}
 			delete[] p.second;
 		}
 
 		mLayers.push_back(layer);
 	}
 
-	for (auto layer : mLayers) {
+	for (auto layer : mLayers)
 		layer->ensureRightOrder();
-	}
 	return true;
 }

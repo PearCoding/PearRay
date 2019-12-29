@@ -93,7 +93,7 @@ SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(prdiag PRIVATE Qt5::Widgets Qt5::Charts OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::Half)
-target_link_libraries(prdiag PRIVATE Boost::iostreams Boost::filesystem)
+target_link_libraries(prdiag PRIVATE Boost::iostreams Boost::filesystem TBB::tbb)
 if(PR_COMPRESS_SPEC_FILES)
   target_compile_definitions(prdiag PRIVATE "PR_COMPRESS_SPEC_FILES")
 endif()
