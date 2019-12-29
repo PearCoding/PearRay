@@ -17,6 +17,10 @@ static float minE = std::numeric_limits<float>::infinity();
 
 static void handle_color(float r, float g, float b, std::ofstream& log)
 {
+	(void)r;
+	(void)g;
+	(void)b;
+	(void)log;
 	// TODO
 	/*std::shared_ptr<SpectrumDescriptor> desc = SpectrumDescriptor::createStandardSpectral();
 	Spectrum spec(desc);
