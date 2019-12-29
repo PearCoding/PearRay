@@ -6,10 +6,10 @@ namespace PR {
 namespace Interval {
 // Interval has to be sorted
 template <typename Predicate>
-size_t find(size_t size, const Predicate& pred)
+int find(int size, const Predicate& pred)
 {
 	int first = 0;
-	int len   = (int)size;
+	int len   = size;
 
 	while (len > 0) {
 		int half   = len / 2;
@@ -22,7 +22,7 @@ size_t find(size_t size, const Predicate& pred)
 		}
 	}
 
-	return (size_t)std::max(0, std::min(first - 1, (int)size - 2));
+	return std::max(0, std::min(first - 1, size - 2));
 }
 } // namespace Interval
 } // namespace PR

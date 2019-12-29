@@ -28,9 +28,9 @@ inline void LightPath::popToken()
 	--mCurrentPos;
 }
 
-inline void LightPath::popToken(size_t n)
+inline void LightPath::popToken(int n)
 {
-	for (size_t i = 0; i < n; ++i)
+	for (int i = 0; i < n; ++i)
 		popToken();
 }
 
@@ -54,7 +54,7 @@ inline size_t LightPath::currentSize() const
 	return mCurrentPos;
 }
 
-const LightPathToken& LightPath::token(size_t index) const
+const LightPathToken& LightPath::token(int index) const
 {
 	return mTokens[index];
 }

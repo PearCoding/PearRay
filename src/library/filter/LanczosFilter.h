@@ -6,19 +6,19 @@
 namespace PR {
 class PR_LIB LanczosFilter : public IFilter {
 public:
-	explicit LanczosFilter(size_t radius = 1)
+	explicit LanczosFilter(int radius = 1)
 		: mRadius(radius)
 	{
 		cache();
 	}
 
-	size_t radius() const override { return mRadius; }
+	int radius() const override { return mRadius; }
 	float evalWeight(float, float) const override;
 
 private:
 	void cache();
 
-	size_t mRadius;
+	int mRadius;
 	std::vector<float> mCache;
 };
 } // namespace PR

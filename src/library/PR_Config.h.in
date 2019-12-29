@@ -252,9 +252,6 @@ static_assert(sizeof(uint32) == 4, "Invalid bytesize configuration");
 static_assert(sizeof(int64) == 8, "Invalid bytesize configuration");
 static_assert(sizeof(uint64) == 8, "Invalid bytesize configuration");
 
-typedef uint32 EntityID;
-typedef uint32 DataRefID;
-
 constexpr float PR_EPSILON = 0.00001f;
 
 #ifdef M_PI
@@ -271,9 +268,6 @@ constexpr float PR_1_PI = 1 / PR_PI;
 
 constexpr float PR_NM_TO_M_F = 1e-9f;
 constexpr double PR_NM_TO_M  = 1e-9;
-
-constexpr size_t INTERSECTION_GROUP_SIZE = 64;
-constexpr size_t MATERIAL_GROUP_SIZE	 = 64;
 
 } // namespace PR
 

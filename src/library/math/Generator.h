@@ -15,16 +15,16 @@ namespace PR {
 template <int D>
 class MinRadiusGenerator {
 public:
-	constexpr static uint32 Dimension = D;
-	typedef std::array<int32, Dimension> point_type;
+	constexpr static int Dimension = D;
+	typedef std::array<int, Dimension> point_type;
 
-	explicit MinRadiusGenerator(uint32 radius)
+	explicit MinRadiusGenerator(int radius)
 		: mRadius(radius)
 	{
 		mVisited.reserve(static_cast<size_t>(std::pow(2 * radius + 1, Dimension)));
 
 		point_type p;
-		for (uint32 i = 0; i < Dimension; ++i)
+		for (int i = 0; i < Dimension; ++i)
 			p[i] = 0;
 
 		mQueue.push(p);
@@ -50,22 +50,20 @@ public:
 		mQueue.pop();
 
 		point_type c = p;
-		for (uint32 i = 0; i < Dimension; ++i) {
-			if (p[i] < (int32)mRadius) {
+		for (int i = 0; i < Dimension; ++i) {
+			if (p[i] < mRadius) {
 				c[i] = p[i] + 1;
 
-				if (!mVisited.count(c)) // Not concurrent!
-				{
+				if (!mVisited.count(c)) { // Not concurrent!
 					mQueue.push(c);
 					mVisited.insert(c);
 				}
 			}
 
-			if (p[i] > -(int32)mRadius) {
+			if (p[i] > -mRadius) {
 				c[i] = p[i] - 1;
 
-				if (!mVisited.count(c)) // Not concurrent!
-				{
+				if (!mVisited.count(c)) { // Not concurrent!
 					mQueue.push(c);
 					mVisited.insert(c);
 				}
@@ -86,7 +84,7 @@ private:
 		}
 	};
 
-	const uint32 mRadius;
+	const int mRadius;
 	std::queue<point_type> mQueue;
 	std::unordered_set<point_type, PointHash> mVisited;
 };

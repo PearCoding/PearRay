@@ -7,13 +7,13 @@ LightPath::LightPath(size_t expectedSize)
 	mTokens.reserve(expectedSize);
 }
 
-LightPath LightPath::createCDL(uint32 diffuseCount)
+LightPath LightPath::createCDL(size_t diffuseCount)
 {
 	LightPath path(2 + diffuseCount);
 
 	path.addToken(LightPathToken::Camera());
 
-	for (uint32 i = 0; i < diffuseCount; ++i)
+	for (size_t i = 0; i < diffuseCount; ++i)
 		path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
 
 	path.addToken(LightPathToken::Emissive());

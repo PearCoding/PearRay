@@ -15,12 +15,12 @@ public:
 	LightPath& operator=(const LightPath& other) = default;
 	LightPath& operator=(LightPath&& other) = default;
 
-	inline const LightPathToken& token(size_t index) const;
+	inline const LightPathToken& token(int index) const;
 
 	inline void addToken(const LightPathToken& token);
 	inline void addToken(LightPathToken&& token);
 	inline void popToken();
-	inline void popToken(size_t n);
+	inline void popToken(int n);
 	inline void reset();
 
 	inline bool isEmpty() const;
@@ -28,7 +28,7 @@ public:
 	inline size_t currentSize() const;
 
 	// Camera -> n*Diffuse -> Light
-	static LightPath createCDL(uint32 diffuseCount = 1);
+	static LightPath createCDL(size_t diffuseCount = 1);
 	// Camera -> Background
 	static LightPath createCB();
 

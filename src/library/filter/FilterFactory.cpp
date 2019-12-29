@@ -6,7 +6,7 @@
 #include "TriangleFilter.h"
 
 namespace PR {
-std::shared_ptr<IFilter> FilterFactory::createFilter(FilterType type, size_t radius)
+std::shared_ptr<IFilter> FilterFactory::createFilter(FilterType type, int radius)
 {
 	switch (type) {
 	default:
@@ -42,7 +42,7 @@ static struct {
 	{ nullptr, FT_Block }
 };
 
-std::shared_ptr<IFilter> FilterFactory::createFilter(const std::string& type, size_t radius)
+std::shared_ptr<IFilter> FilterFactory::createFilter(const std::string& type, int radius)
 {
 	std::string name = type;
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);

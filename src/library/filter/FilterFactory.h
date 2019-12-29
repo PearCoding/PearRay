@@ -14,7 +14,7 @@ enum FilterType {
 class IFilter;
 class PR_LIB FilterFactory {
 public:
-	static std::shared_ptr<IFilter> createFilter(FilterType type, size_t radius);
-	static std::shared_ptr<IFilter> createFilter(const std::string& type, size_t radius);
+	static std::shared_ptr<IFilter> createFilter(FilterType type, int radius);
+	static std::shared_ptr<IFilter> createFilter(const std::string& type, int radius);
 };
 } // namespace PR
