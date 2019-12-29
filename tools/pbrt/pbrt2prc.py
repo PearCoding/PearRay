@@ -6,9 +6,8 @@
 # Not everything has a meaningful counterpart, some information is skipped
 
 # Use:
-# pr_pbrt2prc INPUT OUTPUT
+# pbrt2prc INPUT OUTPUT
 
-import sys
 import os
 import pbrt
 import argparse
