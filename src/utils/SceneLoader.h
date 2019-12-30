@@ -27,6 +27,10 @@ public:
 													   const std::wstring& pluginPath = L"");
 
 private:
+	static std::shared_ptr<Environment> createEnvironment(const std::vector<DL::DataGroup>& groups,
+														  const std::wstring& wrkDir,
+														  const std::wstring& pluginPath);
+	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, Environment* env);
 	static void addRegistryEntry(const DL::DataGroup& group, Environment* env);
 	static void setupTransformable(const DL::DataGroup& group,
 								   const std::shared_ptr<PR::ITransformable>& entity, Environment* env);
@@ -39,6 +43,7 @@ private:
 	static void addTexture(const DL::DataGroup& group, Environment* env);
 	static void addSpectrum(const DL::DataGroup& group, Environment* env);
 	static void addSubGraph(const DL::DataGroup& group, Environment* env);
+	static void addInclude(const DL::DataGroup& group, Environment* env);
 	static void addMesh(const DL::DataGroup& group, Environment* env);
 
 	static void addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
@@ -46,5 +51,7 @@ private:
 								 Environment* env);
 	static void populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 									   const DL::DataGroup& group, Environment* env);
+
+	static void include(const std::string& filename, Environment* env);
 };
 } // namespace PR

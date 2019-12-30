@@ -24,7 +24,7 @@ public:
 
 	void setup(const std::shared_ptr<RenderContext>& renderer);
 
-	void parse(Environment* env, const DL::DataGroup& group);
+	void parse(Environment* env, const std::vector<DL::DataGroup>& groups);
 	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
 private:

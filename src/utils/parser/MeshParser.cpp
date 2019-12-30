@@ -69,7 +69,7 @@ std::shared_ptr<MeshContainer> MeshParser::parse(const DL::DataGroup& group)
 			} else if (attrTypeD.getString() == "n") {
 				if (!loadAttribute<3>("normal", grp, normalAttr))
 					return nullptr;
-			} else if (attrTypeD.getString() == "t") {
+			} else if (attrTypeD.getString() == "t" || attrTypeD.getString() == "uv") {
 				if (!loadAttribute<2>("texture", grp, uvAttr))
 					return nullptr;
 			} else if (attrTypeD.getString() == "dp") {
@@ -78,7 +78,7 @@ std::shared_ptr<MeshContainer> MeshParser::parse(const DL::DataGroup& group)
 			} else if (attrTypeD.getString() == "u") {
 				PR_LOG(L_WARNING) << "User attributes currently not supported." << std::endl;
 			} else {
-				PR_LOG(L_ERROR) << "Unknown mesh attribute." << std::endl;
+				PR_LOG(L_ERROR) << "Unknown mesh attribute '" << attrTypeD.getString() << "'." << std::endl;
 				return nullptr;
 			}
 		} else if (grp.id() == "faces") {

@@ -244,170 +244,164 @@ std::string variableToString(AOV3D var)
 	return "UNKNOWN";
 }
 
-void OutputSpecification::parse(Environment*, const DL::DataGroup& group)
+void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& groups)
 {
-	for (size_t i = 0; i < group.anonymousCount(); ++i) {
-		DL::Data dataD = group.at(i);
+	for (const auto& entry : groups) {
+		if (entry.id() == "output") {
+			DL::Data nameD = entry.getFromKey("name");
+			if (nameD.type() != DL::DT_String)
+				continue;
 
-		if (dataD.type() == DL::DT_Group) {
-			DL::DataGroup entry = dataD.getGroup();
+			File file;
+			file.Name = nameD.getString();
 
-			if (entry.id() == "output") {
-				DL::Data nameD = entry.getFromKey("name");
-				if (nameD.type() != DL::DT_String)
-					continue;
+			for (size_t i = 0; i < entry.anonymousCount(); ++i) {
+				DL::Data channelD = entry.at(i);
 
-				File file;
-				file.Name = nameD.getString();
+				if (channelD.type() == DL::DT_Group
+					&& channelD.getGroup().id() == "channel") {
+					DL::DataGroup channel = channelD.getGroup();
+					DL::Data typeD		  = channel.getFromKey("type");
+					DL::Data colorD		  = channel.getFromKey("color");
+					DL::Data gammaD		  = channel.getFromKey("gamma");
+					DL::Data mapperD	  = channel.getFromKey("mapper");
+					DL::Data lpeD		  = channel.getFromKey("lpe");
 
-				for (size_t i = 0; i < entry.anonymousCount(); ++i) {
-					DL::Data channelD = entry.at(i);
+					if (typeD.type() != DL::DT_String)
+						continue;
 
-					if (channelD.type() == DL::DT_Group
-						&& channelD.getGroup().id() == "channel") {
-						DL::DataGroup channel = channelD.getGroup();
-						DL::Data typeD		  = channel.getFromKey("type");
-						DL::Data colorD		  = channel.getFromKey("color");
-						DL::Data gammaD		  = channel.getFromKey("gamma");
-						DL::Data mapperD	  = channel.getFromKey("mapper");
-						DL::Data lpeD		  = channel.getFromKey("lpe");
+					std::string type = typeD.getString();
+					std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 
-						if (typeD.type() != DL::DT_String)
-							continue;
+					ToneColorMode tcm = TCM_SRGB;
+					if (colorD.type() == DL::DT_String) {
+						std::string color = colorD.getString();
+						std::transform(color.begin(), color.end(), color.begin(), ::tolower);
+						if (color == "xyz")
+							tcm = TCM_XYZ;
+						else if (color == "norm_xyz")
+							tcm = TCM_XYZ_NORM;
+						else if (color == "lum" || color == "luminance" || color == "gray")
+							tcm = TCM_LUMINANCE;
+					}
 
-						std::string type = typeD.getString();
-						std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+					ToneGammaMode tgm = TGM_SRGB;
+					if (gammaD.type() == DL::DT_String) {
+						std::string gamma = gammaD.getString();
+						std::transform(gamma.begin(), gamma.end(), gamma.begin(), ::tolower);
+						if (gamma == "none")
+							tgm = TGM_None;
+					}
 
-						ToneColorMode tcm = TCM_SRGB;
-						if (colorD.type() == DL::DT_String) {
-							std::string color = colorD.getString();
-							std::transform(color.begin(), color.end(), color.begin(), ::tolower);
-							if (color == "xyz")
-								tcm = TCM_XYZ;
-							else if (color == "norm_xyz")
-								tcm = TCM_XYZ_NORM;
-							else if (color == "lum" || color == "luminance" || color == "gray")
-								tcm = TCM_LUMINANCE;
+					ToneMapperMode tmm = TMM_None;
+					if (mapperD.type() == DL::DT_String) {
+						std::string mapper = mapperD.getString();
+						std::transform(mapper.begin(), mapper.end(), mapper.begin(), ::tolower);
+						if (mapper == "reinhard")
+							tmm = TMM_Simple_Reinhard;
+						else if (mapper == "clamp")
+							tmm = TMM_Clamp;
+						else if (mapper == "absolute" || mapper == "abs")
+							tmm = TMM_Abs;
+						else if (mapper == "positive" || mapper == "pos")
+							tmm = TMM_Positive;
+						else if (mapper == "negative" || mapper == "neg")
+							tmm = TMM_Negative;
+						else if (mapper == "spherical")
+							tmm = TMM_Spherical;
+						else if (mapper == "normalize" || mapper == "normalized" || mapper == "norm")
+							tmm = TMM_Normalized;
+					}
+
+					std::string lpe = "";
+					if (lpeD.type() == DL::DT_String) {
+						lpe = lpeD.getString();
+						if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
+							PR_LOG(L_ERROR) << "Invalid LPE " << lpe << ". Skipping entry" << std::endl;
+							lpe = "";
 						}
+					}
 
-						ToneGammaMode tgm = TGM_SRGB;
-						if (gammaD.type() == DL::DT_String) {
-							std::string gamma = gammaD.getString();
-							std::transform(gamma.begin(), gamma.end(), gamma.begin(), ::tolower);
-							if (gamma == "none")
-								tgm = TGM_None;
-						}
+					if (type == "rgb" || type == "color") {
+						IM_ChannelSettingSpec spec;
+						spec.Elements = 0; //TODO
+						spec.TCM	  = tcm;
+						spec.TGM	  = tgm;
+						spec.TMM	  = tmm;
+						spec.LPE_S	= lpe;
+						spec.LPE	  = -1;
 
-						ToneMapperMode tmm = TMM_None;
-						if (mapperD.type() == DL::DT_String) {
-							std::string mapper = mapperD.getString();
-							std::transform(mapper.begin(), mapper.end(), mapper.begin(), ::tolower);
-							if (mapper == "reinhard")
-								tmm = TMM_Simple_Reinhard;
-							else if (mapper == "clamp")
-								tmm = TMM_Clamp;
-							else if (mapper == "absolute" || mapper == "abs")
-								tmm = TMM_Abs;
-							else if (mapper == "positive" || mapper == "pos")
-								tmm = TMM_Positive;
-							else if (mapper == "negative" || mapper == "neg")
-								tmm = TMM_Negative;
-							else if (mapper == "spherical")
-								tmm = TMM_Spherical;
-							else if (mapper == "normalize" || mapper == "normalized" || mapper == "norm")
-								tmm = TMM_Normalized;
-						}
+						if (!lpe.empty())
+							spec.Name = spec.Name + "[" + lpe + "]";
+						file.SettingsSpectral.push_back(spec);
+					} else {
+						AOV3D var3D			  = typeToVariable3D(type);
+						AOV1D var1D			  = typeToVariable1D(type);
+						AOVCounter varCounter = typeToVariableCounter(type);
 
-						std::string lpe = "";
-						if (lpeD.type() == DL::DT_String) {
-							lpe = lpeD.getString();
-							if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
-								PR_LOG(L_ERROR) << "Invalid LPE " << lpe << ". Skipping entry" << std::endl;
-								lpe = "";
-							}
-						}
-
-						if (type == "rgb" || type == "color") {
-							IM_ChannelSettingSpec spec;
+						if (var3D != AOV_3D_COUNT) {
+							IM_ChannelSetting3D spec;
 							spec.Elements = 0; //TODO
-							spec.TCM	  = tcm;
-							spec.TGM	  = tgm;
 							spec.TMM	  = tmm;
+							spec.Variable = var3D;
 							spec.LPE_S	= lpe;
 							spec.LPE	  = -1;
 
+							std::string name = variableToString(var3D);
+							if (!lpe.empty())
+								name = name + "[" + lpe + "]";
+							spec.Name[0] = name + ".x";
+							spec.Name[1] = name + ".y";
+							spec.Name[2] = name + ".z";
+
+							file.Settings3D.push_back(spec);
+						} else if (var1D != AOV_1D_COUNT) {
+							IM_ChannelSetting1D spec;
+							spec.TMM	  = tmm;
+							spec.Variable = var1D;
+							spec.LPE_S	= lpe;
+							spec.LPE	  = -1;
+							spec.Name	 = variableToString(var1D);
 							if (!lpe.empty())
 								spec.Name = spec.Name + "[" + lpe + "]";
-							file.SettingsSpectral.push_back(spec);
+							file.Settings1D.push_back(spec);
+						} else if (varCounter != AOV_COUNTER_COUNT) {
+							IM_ChannelSettingCounter spec;
+							spec.TMM	  = tmm;
+							spec.Variable = varCounter;
+							spec.LPE_S	= lpe;
+							spec.LPE	  = -1;
+							spec.Name	 = variableToString(varCounter);
+							if (!lpe.empty())
+								spec.Name = spec.Name + "[" + lpe + "]";
+							file.SettingsCounter.push_back(spec);
 						} else {
-							AOV3D var3D			  = typeToVariable3D(type);
-							AOV1D var1D			  = typeToVariable1D(type);
-							AOVCounter varCounter = typeToVariableCounter(type);
-
-							if (var3D != AOV_3D_COUNT) {
-								IM_ChannelSetting3D spec;
-								spec.Elements = 0; //TODO
-								spec.TMM	  = tmm;
-								spec.Variable = var3D;
-								spec.LPE_S	= lpe;
-								spec.LPE	  = -1;
-
-								std::string name = variableToString(var3D);
-								if (!lpe.empty())
-									name = name + "[" + lpe + "]";
-								spec.Name[0] = name + ".x";
-								spec.Name[1] = name + ".y";
-								spec.Name[2] = name + ".z";
-
-								file.Settings3D.push_back(spec);
-							} else if (var1D != AOV_1D_COUNT) {
-								IM_ChannelSetting1D spec;
-								spec.TMM	  = tmm;
-								spec.Variable = var1D;
-								spec.LPE_S	= lpe;
-								spec.LPE	  = -1;
-								spec.Name	 = variableToString(var1D);
-								if (!lpe.empty())
-									spec.Name = spec.Name + "[" + lpe + "]";
-								file.Settings1D.push_back(spec);
-							} else if (varCounter != AOV_COUNTER_COUNT) {
-								IM_ChannelSettingCounter spec;
-								spec.TMM	  = tmm;
-								spec.Variable = varCounter;
-								spec.LPE_S	= lpe;
-								spec.LPE	  = -1;
-								spec.Name	 = variableToString(varCounter);
-								if (!lpe.empty())
-									spec.Name = spec.Name + "[" + lpe + "]";
-								file.SettingsCounter.push_back(spec);
-							} else {
-								PR_LOG(L_ERROR) << "Unknown channel type " << type;
-							}
+							PR_LOG(L_ERROR) << "Unknown channel type " << type;
 						}
 					}
 				}
+			}
 
-				mFiles.push_back(file);
-			} else if (entry.id() == "output_spectral") {
-				DL::Data nameD	 = entry.getFromKey("name");
-				DL::Data compressD = entry.getFromKey("compress");
-				DL::Data lpeD	  = entry.getFromKey("lpe");
-				if (nameD.type() == DL::DT_String) {
-					FileSpectral spec;
-					spec.Name	 = nameD.getString();
-					spec.Compress = compressD.type() == DL::DT_Bool ? compressD.getBool() : true;
-					spec.LPE_S	= "";
-					spec.LPE	  = -1;
+			mFiles.push_back(file);
+		} else if (entry.id() == "output_spectral") {
+			DL::Data nameD	 = entry.getFromKey("name");
+			DL::Data compressD = entry.getFromKey("compress");
+			DL::Data lpeD	  = entry.getFromKey("lpe");
+			if (nameD.type() == DL::DT_String) {
+				FileSpectral spec;
+				spec.Name	 = nameD.getString();
+				spec.Compress = compressD.type() == DL::DT_Bool ? compressD.getBool() : true;
+				spec.LPE_S	= "";
+				spec.LPE	  = -1;
 
-					if (lpeD.type() == DL::DT_String) {
-						spec.LPE_S = lpeD.getString();
-						if (!spec.LPE_S.empty() && !LightPathExpression(spec.LPE_S).isValid()) {
-							PR_LOG(L_ERROR) << "Invalid LPE " << spec.LPE_S << ". Skipping spectral file" << std::endl;
-							spec.LPE_S = "";
-						}
+				if (lpeD.type() == DL::DT_String) {
+					spec.LPE_S = lpeD.getString();
+					if (!spec.LPE_S.empty() && !LightPathExpression(spec.LPE_S).isValid()) {
+						PR_LOG(L_ERROR) << "Invalid LPE " << spec.LPE_S << ". Skipping spectral file" << std::endl;
+						spec.LPE_S = "";
 					}
-					mSpectralFiles.push_back(spec);
 				}
+				mSpectralFiles.push_back(spec);
 			}
 		}
 	}

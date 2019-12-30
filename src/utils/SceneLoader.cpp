@@ -33,17 +33,21 @@
 #include <fstream>
 #include <sstream>
 
-/* This source code has many repetitive code lines. Better refactoring needed! */
 namespace PR {
 std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& wrkDir,
 													   const std::wstring& path,
 													   const std::wstring& pluginPath)
 {
 	std::ifstream stream(encodePath(path));
-	std::string str((std::istreambuf_iterator<char>(stream)),
-					std::istreambuf_iterator<char>());
+	DL::SourceLogger logger;
+	DL::DataLisp dataLisp(&logger);
+	DL::DataContainer container;
 
-	return loadFromString(wrkDir, str, pluginPath);
+	dataLisp.parse(&stream);
+	dataLisp.build(container);
+
+	auto entries = container.getTopGroups();
+	return createEnvironment(entries, wrkDir, pluginPath);
 }
 
 std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrkDir,
@@ -58,12 +62,18 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 	dataLisp.build(container);
 
 	auto entries = container.getTopGroups();
+	return createEnvironment(entries, wrkDir, pluginPath);
+}
 
-	if (entries.empty()) {
+std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL::DataGroup>& groups,
+															const std::wstring& wrkDir,
+															const std::wstring& pluginPath)
+{
+	if (groups.empty()) {
 		PR_LOG(L_ERROR) << "DataLisp file does not contain valid entries" << std::endl;
 		return nullptr;
 	} else {
-		DL::DataGroup top = entries.front();
+		DL::DataGroup top = groups.front();
 
 		if (top.id() != "scene") {
 			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
@@ -98,71 +108,64 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 				return nullptr;
 			}
 
-			// Registry information
+			std::vector<DL::DataGroup> groups;
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
-
-				if (dataD.type() == DL::DT_Group) {
-					DL::DataGroup entry = dataD.getGroup();
-					if (entry.id() == "registry") {
-						addRegistryEntry(entry, env.get());
-					}
-				}
+				if (dataD.type() == DL::DT_Group)
+					groups.push_back(dataD.getGroup());
 			}
-
-			// Output information
-			env->outputSpecification().parse(env.get(), top);
-
-			// First independent information
-			for (size_t i = 0; i < top.anonymousCount(); ++i) {
-				DL::Data dataD = top.at(i);
-
-				if (dataD.type() == DL::DT_Group) {
-					DL::DataGroup entry = dataD.getGroup();
-
-					if (entry.id() == "spectrum")
-						addSpectrum(entry, env.get());
-					else if (entry.id() == "texture")
-						addTexture(entry, env.get());
-					else if (entry.id() == "graph" || entry.id() == "embed")
-						addSubGraph(entry, env.get());
-					else if (entry.id() == "mesh")
-						addMesh(entry, env.get());
-				}
-			}
-
-			// Now semi-dependent information
-			for (size_t i = 0; i < top.anonymousCount(); ++i) {
-				DL::Data dataD = top.at(i);
-
-				if (dataD.type() == DL::DT_Group) {
-					DL::DataGroup entry = dataD.getGroup();
-
-					if (entry.id() == "material")
-						addMaterial(entry, env.get());
-					else if (entry.id() == "emission")
-						addEmission(entry, env.get());
-				}
-			}
-
-			// Now entities and lights
-			for (size_t i = 0; i < top.anonymousCount(); ++i) {
-				DL::Data dataD = top.at(i);
-
-				if (dataD.type() == DL::DT_Group) {
-					DL::DataGroup entry = dataD.getGroup();
-
-					if (entry.id() == "entity")
-						addEntity(entry, nullptr, env.get());
-					else if (entry.id() == "light")
-						addLight(entry, env.get());
-					else if (entry.id() == "camera")
-						addCamera(entry, env.get());
-				}
-			}
-
+			setupEnvironment(groups, env.get());
 			return env;
 		}
+	}
+}
+
+void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Environment* env)
+{
+	// Registry information
+	for (const DL::DataGroup& entry : groups) {
+		if (entry.id() == "registry") {
+			addRegistryEntry(entry, env);
+		}
+	}
+
+	// Output information
+	env->outputSpecification().parse(env, groups);
+
+	// Includees
+	for (const DL::DataGroup& entry : groups) {
+		if (entry.id() == "include")
+			addInclude(entry, env);
+	}
+
+	// Independent information
+	for (const DL::DataGroup& entry : groups) {
+		if (entry.id() == "spectrum")
+			addSpectrum(entry, env);
+		else if (entry.id() == "texture")
+			addTexture(entry, env);
+		else if (entry.id() == "mesh")
+			addMesh(entry, env);
+		else if (entry.id() == "graph" || entry.id() == "embed")
+			addSubGraph(entry, env);
+	}
+
+	// Now semi-dependent information
+	for (const DL::DataGroup& entry : groups) {
+		if (entry.id() == "material")
+			addMaterial(entry, env);
+		else if (entry.id() == "emission")
+			addEmission(entry, env);
+	}
+
+	// Now entities and lights
+	for (const DL::DataGroup& entry : groups) {
+		if (entry.id() == "entity")
+			addEntity(entry, nullptr, env);
+		else if (entry.id() == "light")
+			addLight(entry, env);
+		else if (entry.id() == "camera")
+			addCamera(entry, env);
 	}
 }
 
@@ -620,6 +623,32 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 	} else {
 		PR_LOG(L_ERROR) << "Unknown " << loader << " loader." << std::endl;
 	}
+}
+
+void SceneLoader::addInclude(const DL::DataGroup& group, Environment* env)
+{
+	if (group.anonymousCount() == 1 && group.isAllAnonymousOfType(DL::DT_String)) {
+		include(group.at(0).getString(), env);
+	} else {
+		PR_LOG(L_ERROR) << "Invalid include directive." << std::endl;
+	}
+}
+
+void SceneLoader::include(const std::string& path, Environment* env)
+{
+	PR_LOG(L_DEBUG) << "Including " << path << std::endl;
+
+	std::ifstream stream(encodePath(path));
+	std::string str((std::istreambuf_iterator<char>(stream)),
+					std::istreambuf_iterator<char>());
+	DL::SourceLogger logger;
+	DL::DataLisp dataLisp(&logger);
+	DL::DataContainer container;
+
+	dataLisp.parse(str);
+	dataLisp.build(container);
+
+	setupEnvironment(container.getTopGroups(), env);
 }
 
 template <typename T>
