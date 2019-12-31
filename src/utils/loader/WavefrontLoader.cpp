@@ -2,7 +2,8 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
-#include "mesh/MeshContainer.h"
+#include "mesh/MeshBase.h"
+#include "mesh/TriMesh.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -70,7 +71,7 @@ void WavefrontLoader::load(const std::wstring& file, Environment* env)
 				indices.push_back(shapes[sh].mesh.indices.at(i).vertex_index);
 		}
 
-		auto mesh = std::make_shared<MeshContainer>();
+		auto mesh = std::make_shared<MeshBase>();
 		mesh->setVertices(attrib.vertices);
 		mesh->setIndices(indices);
 		mesh->setFaceVertexCount(std::vector<uint8>(indices_count / 3, 3));
@@ -97,7 +98,9 @@ void WavefrontLoader::load(const std::wstring& file, Environment* env)
 		if (env->hasMesh(next))
 			PR_LOG(L_ERROR) << "Mesh " << next << " already in use." << std::endl;
 
-		env->addMesh(next, mesh);
+		bool useCache = mesh->nodeCount() > 1000000;
+		mesh->triangulate();
+		env->addMesh(next, std::make_shared<TriMesh>(next, mesh, env->cache(), useCache));
 		PR_LOG(L_INFO) << "Added mesh " << next << std::endl;
 	}
 }

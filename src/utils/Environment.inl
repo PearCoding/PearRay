@@ -8,7 +8,8 @@ inline std::shared_ptr<CameraManager> Environment::cameraManager() const { retur
 inline std::shared_ptr<EmissionManager> Environment::emissionManager() const { return mEmissionManager; }
 inline std::shared_ptr<InfiniteLightManager> Environment::infiniteLightManager() const { return mInfiniteLightManager; }
 inline std::shared_ptr<IntegratorManager> Environment::integratorManager() const { return mIntegratorManager; }
-inline std::shared_ptr<CacheManager> Environment::cacheManager() const { return mCacheManager; }
+inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { return mResourceManager; }
+inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 
 inline Spectrum Environment::getSpectrum(const std::string& name) const
 {
@@ -69,7 +70,7 @@ inline size_t Environment::materialCount() const
 	return mMaterials.size();
 }
 
-inline std::shared_ptr<MeshContainer> Environment::getMesh(const std::string& name) const
+inline std::shared_ptr<Mesh> Environment::getMesh(const std::string& name) const
 {
 	return hasMesh(name) ? mMeshes.at(name) : nullptr;
 }
@@ -79,7 +80,7 @@ inline bool Environment::hasMesh(const std::string& name) const
 	return mMeshes.count(name) != 0;
 }
 
-inline void Environment::addMesh(const std::string& name, const std::shared_ptr<MeshContainer>& m)
+inline void Environment::addMesh(const std::string& name, const std::shared_ptr<Mesh>& m)
 {
 	PR_ASSERT(m, "Given mesh has to be valid");
 	PR_ASSERT(!hasMesh(name), "Given name should be unique");

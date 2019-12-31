@@ -1,42 +1,23 @@
 #pragma once
 
-#include "MeshContainer.h"
-
-#include <vector>
+#include "Mesh.h"
 
 namespace PR {
-class kdTreeCollider;
-struct GeometryPoint;
-
 // Simple collidable mesh
-class PR_LIB TriMesh {
+class PR_LIB TriMesh : public Mesh {
 public:
-	TriMesh(const std::shared_ptr<MeshContainer>& mesh_container);
-	~TriMesh();
+	TriMesh(const std::string& name,
+			const std::shared_ptr<MeshBase>& mesh_base,
+			const std::shared_ptr<Cache>& cache,
+			bool useCache);
+	virtual ~TriMesh();
 
-	inline std::shared_ptr<MeshContainer> container() const { return mContainer; }
-
-	float surfaceArea(uint32 id) const;
-	bool isCollidable() const;
-	float collisionCost() const;
-
-	void build(const std::wstring& cnt_file);
-	void load(const std::wstring& cnt_file);
-
-	BoundingBox localBoundingBox() const;
-
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const;
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const;
-
-	Vector3f pickRandomParameterPoint(const Vector2f& rnd, uint32& faceID, float& pdf) const;
-	void provideGeometryPoint(uint32 faceID, const Vector3f& parameter, GeometryPoint& pt) const;
+protected:
+	void checkCollisionLocal(const RayPackage& in, CollisionOutput& out) override;
+	void checkCollisionLocal(const Ray& in, SingleCollisionOutput& out) override;
 
 private:
-	BoundingBox mBoundingBox;
-	std::unique_ptr<kdTreeCollider> mKDTree;
-	std::shared_ptr<MeshContainer> mContainer;
-
-	void cache();
-	std::unique_ptr<struct TriMeshCache> mCache;
+	void setup();
+	std::unique_ptr<struct TriMeshInternal> mInternal;
 };
 } // namespace PR

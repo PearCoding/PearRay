@@ -1,5 +1,7 @@
+#include "cache/Cache.h"
 #include "geometry/CollisionData.h"
 #include "math/SIMD.h"
+#include "mesh/MeshBase.h"
 #include "mesh/TriMesh.h"
 
 #include "Test.h"
@@ -7,6 +9,7 @@
 using namespace PR;
 using namespace simdpp;
 
+std::shared_ptr<Cache> sCache = std::make_shared<Cache>(L"./");
 template <typename T>
 inline void addVertex(T p1, T p2, T p3,
 					  std::vector<T>& c)
@@ -46,7 +49,7 @@ PR_TEST("Two Half")
 	addVertex<float>(1, 1, 0, vertices);
 	addVertex<float>(2, 1, 0, vertices);
 
-	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
 	cnt->setVertices(vertices);
 	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
@@ -58,8 +61,7 @@ PR_TEST("Two Half")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh(cnt);
-	mesh.build(L"tmp1.cnt");
+	TriMesh mesh("tmp1", cnt, sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(-1.5f, 1.5f, 0, 0.6f);
@@ -103,7 +105,7 @@ PR_TEST("Overlap")
 	addVertex<float>(1, 0, 3, vertices);
 	addVertex<float>(1, 1, 2, vertices);
 
-	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
 	cnt->setVertices(vertices);
 	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
@@ -115,8 +117,7 @@ PR_TEST("Overlap")
 	PR_CHECK_EQ(cnt->triangleCount(), 3);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh(cnt);
-	mesh.build(L"tmp2.cnt");
+	TriMesh mesh("tmp2", cnt, sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(0.75f, 0.75f, 0, 5);
@@ -165,7 +166,7 @@ PR_TEST("UV")
 	addVertex<float>(0.5f, 0.5f, uvs);
 	addVertex<float>(0.6f, 0.6f, uvs);
 
-	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
 	cnt->setVertices(vertices);
 	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setUVs(uvs);
@@ -179,8 +180,7 @@ PR_TEST("UV")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh(cnt);
-	mesh.build(L"tmp3.cnt");
+	TriMesh mesh("tmp3", cnt, sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(0.75f, 0.75f, 0, 0.6f);
@@ -218,7 +218,7 @@ PR_TEST("Single Intersection")
 	addVertex<float>(1, 1, 0, vertices);
 	addVertex<float>(2, 1, 0, vertices);
 
-	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
 	cnt->setVertices(vertices);
 	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5 });
@@ -230,8 +230,7 @@ PR_TEST("Single Intersection")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh(cnt);
-	mesh.build(L"tmp1.cnt");
+	TriMesh mesh("tmp4", cnt, sCache, false);
 
 	Ray in;
 	in.Origin[0] = -1.5;
@@ -266,7 +265,7 @@ PR_TEST("Single Intersection Overlap")
 	addVertex<float>(1, 0, 3, vertices);
 	addVertex<float>(1, 1, 2, vertices);
 
-	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
 	cnt->setVertices(vertices);
 	cnt->setNormals(vertices); // Bad normals, but we do not care
 	cnt->setIndices({ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
@@ -278,8 +277,7 @@ PR_TEST("Single Intersection Overlap")
 	PR_CHECK_EQ(cnt->triangleCount(), 3);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh(cnt);
-	mesh.build(L"tmp2.cnt");
+	TriMesh mesh("tmp5", cnt, sCache, false);
 
 	Ray in;
 	in.Origin	= Vector3f(0.75f, 0.5f, 2);

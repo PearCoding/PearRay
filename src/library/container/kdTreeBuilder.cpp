@@ -582,6 +582,9 @@ static void saveNode(std::ostream& stream, kdNodeBuilder* node)
 void kdTreeBuilder::save(std::ostream& stream) const
 {
 	stream << "pearray_kdtree" << std::endl;
+	if (!mRoot)
+		return;
+
 	for (int i = 0; i < 3; ++i) {
 		stream << mRoot->boundingBox.lowerBound()(i)
 			   << " " << mRoot->boundingBox.upperBound()(i) << std::endl;

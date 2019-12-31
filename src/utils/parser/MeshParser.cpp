@@ -1,7 +1,7 @@
 #include "MeshParser.h"
 #include "Logger.h"
 #include "MathParser.h"
-#include "mesh/MeshContainer.h"
+#include "mesh/MeshBase.h"
 
 #include "DataLisp.h"
 
@@ -36,7 +36,7 @@ static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp,
 	return true;
 }
 
-std::shared_ptr<MeshContainer> MeshParser::parse(const DL::DataGroup& group)
+std::shared_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 {
 	std::vector<float> positionAttr;
 	std::vector<float> normalAttr;
@@ -210,7 +210,7 @@ std::shared_ptr<MeshContainer> MeshParser::parse(const DL::DataGroup& group)
 		}
 	}
 
-	auto me = std::make_shared<MeshContainer>();
+	auto me = std::make_shared<MeshBase>();
 	me->setVertices(positionAttr);
 	me->setNormals(normalAttr);
 	me->setUVs(uvAttr);

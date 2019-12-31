@@ -14,7 +14,7 @@
 namespace PR {
 class IEmission;
 class IMaterial;
-class MeshContainer;
+class Mesh;
 class SpectrumDescriptor;
 class PluginManager;
 class MaterialManager;
@@ -25,7 +25,8 @@ class InfiniteLightManager;
 class IntegratorManager;
 class IIntegrator;
 class RenderFactory;
-class CacheManager;
+class ResourceManager;
+class Cache;
 
 using ShadingSocketVariantPtr = boost::variant<
 	std::shared_ptr<FloatScalarShadingSocket>,
@@ -57,7 +58,8 @@ public:
 	inline std::shared_ptr<EmissionManager> emissionManager() const;
 	inline std::shared_ptr<InfiniteLightManager> infiniteLightManager() const;
 	inline std::shared_ptr<IntegratorManager> integratorManager() const;
-	inline std::shared_ptr<CacheManager> cacheManager() const;
+	inline std::shared_ptr<ResourceManager> resourceManager() const;
+	inline std::shared_ptr<Cache> cache() const;
 
 	inline Spectrum getSpectrum(const std::string& name) const;
 	inline bool hasSpectrum(const std::string& name) const;
@@ -73,9 +75,9 @@ public:
 	inline void addMaterial(const std::string& name, const std::shared_ptr<IMaterial>& mat);
 	inline size_t materialCount() const;
 
-	inline std::shared_ptr<MeshContainer> getMesh(const std::string& name) const;
+	inline std::shared_ptr<Mesh> getMesh(const std::string& name) const;
 	inline bool hasMesh(const std::string& name) const;
-	inline void addMesh(const std::string& name, const std::shared_ptr<MeshContainer>& m);
+	inline void addMesh(const std::string& name, const std::shared_ptr<Mesh>& m);
 
 	inline void addShadingSocket(const std::string& name,
 								 const ShadingSocketVariantPtr& output);
@@ -142,12 +144,14 @@ private:
 	std::shared_ptr<EmissionManager> mEmissionManager;
 	std::shared_ptr<InfiniteLightManager> mInfiniteLightManager;
 	std::shared_ptr<IntegratorManager> mIntegratorManager;
-	std::shared_ptr<CacheManager> mCacheManager;
+	std::shared_ptr<ResourceManager> mResourceManager;
+
+	std::shared_ptr<Cache> mCache;
 
 	std::map<std::string, PR::Spectrum> mSpectrums;
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
-	std::map<std::string, std::shared_ptr<MeshContainer>> mMeshes;
+	std::map<std::string, std::shared_ptr<Mesh>> mMeshes;
 	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSockets;
 	std::map<std::string, std::shared_ptr<FloatSpectralMapSocket>> mNamedMapSockets;
 

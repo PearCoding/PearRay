@@ -1,6 +1,6 @@
 #include "integrator/IIntegrator.h"
 #include "material/IMaterial.h"
-#include "mesh/MeshContainer.h"
+#include "mesh/MeshBase.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "spectral/SpectrumDescriptor.h"
@@ -24,9 +24,9 @@ void setup_environment(py::module& m)
 		.def("hasMaterial", &Environment::hasMaterial)
 		.def("addMaterial", &Environment::addMaterial)
 		.def_property_readonly("materialCount", &Environment::materialCount)
-		.def("getMesh", &Environment::getMesh)
-		.def("hasMesh", &Environment::hasMesh)
-		.def("addMesh", &Environment::addMesh)
+		//.def("getMesh", &Environment::getMesh)
+		//.def("hasMesh", &Environment::hasMesh)
+		//.def("addMesh", &Environment::addMesh)
 		// TODO: Sockets
 		.def_property_readonly("registry", (Registry & (Environment::*)()) & Environment::registry)
 		.def("dumpInformation", &Environment::dumpInformation)

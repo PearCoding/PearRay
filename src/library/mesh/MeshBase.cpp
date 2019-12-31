@@ -1,19 +1,18 @@
-#include "MeshContainer.h"
+#include "MeshBase.h"
 #include "Profiler.h"
+#include "serialization/FileSerializer.h"
 
 namespace PR {
-MeshContainer::MeshContainer()
-	: mFeatures(0)
-	, mTriangleCount(0)
-	, mQuadCount(0)
+MeshBase::MeshBase()
+	: mInfo()
 {
 }
 
-MeshContainer::~MeshContainer()
+MeshBase::~MeshBase()
 {
 }
 
-void MeshContainer::buildNormals()
+void MeshBase::buildNormals()
 {
 	PR_PROFILE_THIS;
 
@@ -58,7 +57,7 @@ void MeshContainer::buildNormals()
 	}
 }
 
-void MeshContainer::flipNormals()
+void MeshBase::flipNormals()
 {
 	PR_PROFILE_THIS;
 
@@ -66,13 +65,13 @@ void MeshContainer::flipNormals()
 		mNormals[i] *= -1;
 }
 
-void MeshContainer::setFaceVertexCount(const std::vector<uint8>& faceVertexCount)
+void MeshBase::setFaceVertexCount(const std::vector<uint8>& faceVertexCount)
 {
 	PR_PROFILE_THIS;
 
 	mFaceIndexOffset.resize(faceVertexCount.size());
-	mTriangleCount = 0;
-	mQuadCount	 = 0;
+	mInfo.TriangleCount = 0;
+	mInfo.QuadCount		= 0;
 
 	uint32 counter = 0;
 	for (size_t i = 0; i < faceVertexCount.size(); ++i) {
@@ -80,9 +79,9 @@ void MeshContainer::setFaceVertexCount(const std::vector<uint8>& faceVertexCount
 		uint32 faceElems	= static_cast<uint32>(faceVertexCount.at(i));
 
 		if (faceElems == 3)
-			++mTriangleCount;
+			++mInfo.TriangleCount;
 		else if (faceElems == 4)
-			++mQuadCount;
+			++mInfo.QuadCount;
 		else
 			PR_ASSERT(false, "Only triangles and quads supported");
 
@@ -90,7 +89,7 @@ void MeshContainer::setFaceVertexCount(const std::vector<uint8>& faceVertexCount
 	}
 }
 
-std::vector<uint32> MeshContainer::faceVertexCounts() const
+std::vector<uint32> MeshBase::faceVertexCounts() const
 {
 	std::vector<uint32> array;
 	array.reserve(mFaceIndexOffset.size());
@@ -100,7 +99,7 @@ std::vector<uint32> MeshContainer::faceVertexCounts() const
 	return array;
 }
 
-float MeshContainer::faceArea(size_t f, const Eigen::Affine3f& tm) const
+float MeshBase::faceArea(size_t f, const Eigen::Affine3f& tm) const
 {
 	PR_PROFILE_THIS;
 
@@ -126,7 +125,7 @@ float MeshContainer::faceArea(size_t f, const Eigen::Affine3f& tm) const
 	}
 }
 
-float MeshContainer::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
+float MeshBase::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) const
 {
 	PR_PROFILE_THIS;
 
@@ -148,7 +147,7 @@ float MeshContainer::surfaceArea(uint32 slot, const Eigen::Affine3f& transform) 
 	return a;
 }
 
-float MeshContainer::surfaceArea(const Eigen::Affine3f& transform) const
+float MeshBase::surfaceArea(const Eigen::Affine3f& transform) const
 {
 	PR_PROFILE_THIS;
 
@@ -158,7 +157,7 @@ float MeshContainer::surfaceArea(const Eigen::Affine3f& transform) const
 	return a;
 }
 
-BoundingBox MeshContainer::constructBoundingBox() const
+BoundingBox MeshBase::constructBoundingBox() const
 {
 	BoundingBox box;
 	for (size_t i = 0; i < nodeCount(); ++i)
@@ -167,7 +166,7 @@ BoundingBox MeshContainer::constructBoundingBox() const
 	return box;
 }
 
-void MeshContainer::triangulate()
+void MeshBase::triangulate()
 {
 	PR_PROFILE_THIS;
 
@@ -179,7 +178,7 @@ void MeshContainer::triangulate()
 	std::vector<uint32> new_indices(new_facecount * 3);
 	std::vector<uint32> new_faceIndexOffset(new_facecount);
 	std::vector<uint32> new_mats;
-	if (mFeatures & MF_HAS_MATERIAL)
+	if (mInfo.Features & MF_HAS_MATERIAL)
 		new_mats.resize(new_faceIndexOffset.size());
 
 	size_t indC = 0;
@@ -194,7 +193,7 @@ void MeshContainer::triangulate()
 		new_indices[indC + 1]	 = mIndices[indInd + 1];
 		new_indices[indC + 2]	 = mIndices[indInd + 2];
 		new_faceIndexOffset[facC] = static_cast<uint32>(indC);
-		if (mFeatures & MF_HAS_MATERIAL)
+		if (mInfo.Features & MF_HAS_MATERIAL)
 			new_mats[facC] = mMaterialSlots[face];
 		indC += 3;
 		++facC;
@@ -206,7 +205,7 @@ void MeshContainer::triangulate()
 			new_indices[indC + 2] = mIndices[indInd + 3];
 
 			new_faceIndexOffset[facC] = static_cast<uint32>(indC);
-			if (mFeatures & MF_HAS_MATERIAL)
+			if (mInfo.Features & MF_HAS_MATERIAL)
 				new_mats[facC] = mMaterialSlots[face];
 			indC += 3;
 			++facC;
@@ -216,10 +215,45 @@ void MeshContainer::triangulate()
 	PR_ASSERT(new_facecount * 3 == indC, "Wrong triangulation!");
 	PR_ASSERT(new_facecount == facC, "Wrong triangulation!");
 
-	mTriangleCount   = new_facecount;
-	mQuadCount		 = 0;
-	mIndices		 = new_indices;
-	mFaceIndexOffset = new_faceIndexOffset;
-	mMaterialSlots   = new_mats;
+	mInfo.TriangleCount = new_facecount;
+	mInfo.QuadCount		= 0;
+	mIndices			= new_indices;
+	mFaceIndexOffset	= new_faceIndexOffset;
+	mMaterialSlots		= new_mats;
+}
+
+void MeshBase::serialize(Serializer& serializer)
+{
+	serializer | mInfo.Features
+		| mInfo.NodeCount
+		| mInfo.TriangleCount
+		| mInfo.QuadCount
+		| mVertices
+		| mNormals
+		| mUVs
+		| mVelocities
+		| mMaterialSlots
+		| mIndices
+		| mFaceIndexOffset
+		| mUserVertexAttribs
+		| mUserFaceAttribs;
+}
+
+size_t MeshBase::addUserVertexAttrib(const std::vector<float>& cnt)
+{
+	PR_ASSERT(cnt.size() == 3 * nodeCount(), "Expected vertex attribute to have the same count of vertices");
+
+	size_t id = mUserVertexAttribs.size();
+	mUserVertexAttribs.push_back(cnt);
+	return id;
+}
+
+size_t MeshBase::addUserFaceAttrib(const std::vector<float>& cnt)
+{
+	PR_ASSERT(cnt.size() == 3 * faceCount(), "Expected face attribute to have the same count of vertices");
+
+	size_t id = mUserFaceAttribs.size();
+	mUserFaceAttribs.push_back(cnt);
+	return id;
 }
 } // namespace PR

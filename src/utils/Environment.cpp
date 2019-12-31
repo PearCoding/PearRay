@@ -1,5 +1,6 @@
 #include "Environment.h"
-#include "CacheManager.h"
+#include "ResourceManager.h"
+#include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "emission/EmissionManager.h"
@@ -11,7 +12,7 @@
 #include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
-#include "mesh/MeshContainer.h"
+#include "mesh/Mesh.h"
 #include "plugin/PluginManager.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
@@ -42,7 +43,8 @@ Environment::Environment(const std::wstring& workdir,
 	, mEmissionManager(std::make_shared<EmissionManager>())
 	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
 	, mIntegratorManager(std::make_shared<IntegratorManager>())
-	, mCacheManager(std::make_shared<CacheManager>(workdir))
+	, mResourceManager(std::make_shared<ResourceManager>(workdir))
+	, mCache(std::make_shared<Cache>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
@@ -211,7 +213,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		return nullptr;
 	}
 
-	std::wstring scene_cnt = mCacheManager->requestFile("scene", "global.cnt");
+	std::wstring scene_cnt = mResourceManager->requestFile("scene", "global.cnt");
 
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
 														   entities,

@@ -1,7 +1,7 @@
-#include "CacheManager.h"
 #include "Environment.h"
 #include "Logger.h"
 #include "Profiler.h"
+#include "ResourceManager.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
@@ -32,12 +32,10 @@ public:
 	ENTITY_CLASS
 
 	SubdivMeshEntity(uint32 id, const std::string& name,
-					 const std::wstring& cnt_file,
-					 const std::shared_ptr<MeshContainer>& mesh,
+					 const std::shared_ptr<Mesh>& mesh,
 					 const std::vector<uint32>& materials,
 					 int32 lightID)
 		: IEntity(id, name)
-		, mCNTFile(cnt_file)
 		, mLightID(lightID)
 		, mMaterials(materials)
 		, mMesh(mesh)
@@ -57,22 +55,22 @@ public:
 
 	float surfaceArea(uint32 id) const override
 	{
-		return mMesh.surfaceArea(id);
+		return mMesh->surfaceArea(id);
 	}
 
 	bool isCollidable() const override
 	{
-		return mMesh.isCollidable();
+		return mMesh->isCollidable();
 	}
 
 	float collisionCost() const override
 	{
-		return mMesh.collisionCost();
+		return mMesh->collisionCost();
 	}
 
 	BoundingBox localBoundingBox() const override
 	{
-		return mMesh.localBoundingBox();
+		return mMesh->localBoundingBox();
 	}
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
@@ -80,7 +78,7 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh.checkCollision(in_local, out);
+		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -100,7 +98,7 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh.checkCollision(in_local, out);
+		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -115,7 +113,7 @@ public:
 									  uint32& faceID, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
-		return mMesh.pickRandomParameterPoint(rnd, faceID, pdf);
+		return mMesh->pickRandomParameterPoint(rnd, faceID, pdf);
 	}
 
 	void provideGeometryPoint(const Vector3f&, uint32 faceID, const Vector3f& parameter,
@@ -123,7 +121,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		mMesh.provideGeometryPoint(faceID, parameter, pt);
+		mMesh->provideGeometryPoint(faceID, parameter, pt);
 
 		// Global
 		pt.P  = transform() * pt.P;
@@ -142,20 +140,10 @@ public:
 		pt.DisplaceID = 0;
 	}
 
-	void beforeSceneBuild() override
-	{
-		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]" << std::endl;
-
-		mMesh.build(mCNTFile);
-		IEntity::beforeSceneBuild();
-	}
-
 private:
-	std::wstring mCNTFile;
-
 	int32 mLightID;
 	std::vector<uint32> mMaterials;
-	TriMesh mMesh;
+	std::shared_ptr<Mesh> mMesh;
 };
 
 enum OpenSubdivComputationMode {
@@ -181,7 +169,7 @@ public:
 	Far::TopologyDescriptor::FVarChannel fvarChannels[1];
 	std::vector<uint32> fvarIndices;
 
-	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshContainer>& originalMesh, const SubdivisionOptions& opts)
+	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshBase>& originalMesh, const SubdivisionOptions& opts)
 	{
 		PR_PROFILE_THIS;
 
@@ -316,8 +304,8 @@ public:
 		return dstbuffer;
 	}
 
-	void refineVertexData(const std::shared_ptr<MeshContainer>& originalMesh,
-						  std::shared_ptr<MeshContainer>& refineMesh,
+	void refineVertexData(const std::shared_ptr<MeshBase>& originalMesh,
+						  std::shared_ptr<MeshBase>& refineMesh,
 						  OpenSubdivComputationMode mode,
 						  Far::TopologyRefiner* refiner,
 						  Far::StencilTable const* stencilTable)
@@ -335,8 +323,8 @@ public:
 		delete buffer;
 	}
 
-	void refineUVData(const std::shared_ptr<MeshContainer>& originalMesh,
-					  std::shared_ptr<MeshContainer>& refineMesh,
+	void refineUVData(const std::shared_ptr<MeshBase>& originalMesh,
+					  std::shared_ptr<MeshBase>& refineMesh,
 					  OpenSubdivComputationMode mode,
 					  Far::TopologyRefiner* refiner,
 					  Far::StencilTable const* stencilTable)
@@ -355,8 +343,8 @@ public:
 	}
 
 	// TODO: Check
-	void refineVelocityData(const std::shared_ptr<MeshContainer>& originalMesh,
-							std::shared_ptr<MeshContainer>& refineMesh,
+	void refineVelocityData(const std::shared_ptr<MeshBase>& originalMesh,
+							std::shared_ptr<MeshBase>& refineMesh,
 							OpenSubdivComputationMode mode,
 							Far::TopologyRefiner* refiner,
 							Far::StencilTable const* stencilTable)
@@ -375,8 +363,8 @@ public:
 	}
 
 	// Approach without all convert buffers possible?
-	void refineMaterialData(const std::shared_ptr<MeshContainer>& originalMesh,
-							std::shared_ptr<MeshContainer>& refineMesh,
+	void refineMaterialData(const std::shared_ptr<MeshBase>& originalMesh,
+							std::shared_ptr<MeshBase>& refineMesh,
 							OpenSubdivComputationMode mode,
 							Far::TopologyRefiner* refiner,
 							Far::StencilTable const* stencilTable)
@@ -409,7 +397,7 @@ public:
 		delete buffer;
 	}
 
-	std::shared_ptr<MeshContainer> refineMesh(const std::shared_ptr<MeshContainer>& originalMesh, const SubdivisionOptions& opts)
+	std::shared_ptr<MeshBase> refineMesh(const std::shared_ptr<MeshBase>& originalMesh, const SubdivisionOptions& opts)
 	{
 		PR_PROFILE_THIS;
 
@@ -442,7 +430,7 @@ public:
 		PR_ASSERT(indC == new_indices.size(), "Invalid subdivision calculation");
 
 		// Setup mesh
-		std::shared_ptr<MeshContainer> refineMesh = std::make_shared<MeshContainer>();
+		std::shared_ptr<MeshBase> refineMesh = std::make_shared<MeshBase>();
 
 		refineMesh->setIndices(new_indices);
 		refineMesh->setFaceVertexCount(new_vertsPerFace);
@@ -544,7 +532,8 @@ public:
 		else if (uvInterpolation == "varying")
 			opts.UVInterpolation = Far::StencilTableFactory::INTERPOLATE_VARYING;
 
-		std::shared_ptr<MeshContainer> originalMesh = env.getMesh(mesh_name);
+		std::shared_ptr<Mesh> mesh			   = env.getMesh(mesh_name);
+		std::shared_ptr<MeshBase> originalMesh = mesh->base_unsafe();
 		if (!originalMesh)
 			return nullptr;
 
@@ -556,10 +545,12 @@ public:
 		if (opts.Scheme == Sdc::SCHEME_LOOP) // Scheme Loop accepts triangle data only
 			originalMesh->triangulate();
 
-		std::shared_ptr<MeshContainer> refinedMesh = refineMesh(originalMesh, opts);
+		std::shared_ptr<MeshBase> refinedMesh = refineMesh(originalMesh, opts);
+		refinedMesh->triangulate();
+		std::shared_ptr<TriMesh> newMesh = std::make_shared<TriMesh>(mesh->name() + "_subdiv", refinedMesh, mesh->cache(),
+																	 refinedMesh->nodeCount() > 1000000);
 		return std::make_shared<SubdivMeshEntity>(id, name,
-												  env.cacheManager()->requestFile("mesh", name + ".cnt"),
-												  refinedMesh,
+												  newMesh,
 												  materials, emsID);
 	}
 

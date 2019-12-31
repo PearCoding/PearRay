@@ -3,7 +3,7 @@
 #include "Serializer.h"
 
 namespace PR {
-class PR_LIB FileSerializer : Serializer {
+class PR_LIB FileSerializer : public Serializer {
 	PR_CLASS_NON_COPYABLE(FileSerializer);
 
 public:
@@ -13,6 +13,8 @@ public:
 
 	bool open(const std::wstring& path, bool readmode);
 	void close();
+
+	size_t memoryFootprint() const;
 
 	// Interface
 	virtual bool isValid() const override;

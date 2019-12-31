@@ -3,7 +3,7 @@
 #include "Serializer.h"
 
 namespace PR {
-class PR_LIB BufferSerializer : Serializer {
+class PR_LIB BufferSerializer : public Serializer {
 	PR_CLASS_NON_COPYABLE(BufferSerializer);
 
 public:

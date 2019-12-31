@@ -2,7 +2,8 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
-#include "mesh/MeshContainer.h"
+#include "mesh/MeshBase.h"
+#include "mesh/TriMesh.h"
 
 #include <climits>
 #include <fstream>
@@ -59,7 +60,7 @@ struct Header {
 	inline bool hasIndices() const { return IndElem >= 0; }
 };
 
-std::shared_ptr<MeshContainer> read(std::fstream& stream, const Header& header, bool ascii)
+std::shared_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool ascii)
 {
 	const auto readFloat = [&]() {
 		float val;
@@ -206,7 +207,7 @@ std::shared_ptr<MeshContainer> read(std::fstream& stream, const Header& header, 
 	}
 
 	// Build
-	std::shared_ptr<MeshContainer> cnt = std::make_shared<MeshContainer>();
+	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
 	cnt->setVertices(vertices);
 	if (header.hasNormals())
 		cnt->setNormals(normals);
@@ -311,10 +312,13 @@ void PlyLoader::load(const std::wstring& file, Environment* env)
 		return;
 	}
 
-	header.SwitchEndianness			   = (method == "binary_big_endian");
-	std::shared_ptr<MeshContainer> cnt = read(stream, header, (method == "ascii"));
+	header.SwitchEndianness		  = (method == "binary_big_endian");
+	std::shared_ptr<MeshBase> cnt = read(stream, header, (method == "ascii"));
 
-	if (cnt)
-		env->addMesh(mName, cnt);
+	if (cnt) {
+		bool useCache = cnt->nodeCount() > 1000000;
+		cnt->triangulate();
+		env->addMesh(mName, std::make_shared<TriMesh>(mName, cnt, env->cache(), useCache));
+	}
 }
 } // namespace PR

@@ -1,50 +1,51 @@
-// IWYU pragma: private, include "mesh/MeshContainer.h"
+// IWYU pragma: private, include "mesh/MeshBase.h"
 namespace PR {
 
-inline void MeshContainer::setVertices(const std::vector<float>& verts)
+inline void MeshBase::setVertices(const std::vector<float>& verts)
 {
-	mVertices = verts;
+	mVertices		= verts;
+	mInfo.NodeCount = verts.size() / 3;
 }
 
-inline void MeshContainer::setNormals(const std::vector<float>& norms)
+inline void MeshBase::setNormals(const std::vector<float>& norms)
 {
 	mNormals = norms;
 }
 
-inline void MeshContainer::setUVs(const std::vector<float>& uvs)
+inline void MeshBase::setUVs(const std::vector<float>& uvs)
 {
 	mUVs = uvs;
 	if (!uvs.empty())
-		mFeatures |= MF_HAS_UV;
+		mInfo.Features |= MF_HAS_UV;
 }
 
-inline void MeshContainer::setVelocities(const std::vector<float>& velocities)
+inline void MeshBase::setVelocities(const std::vector<float>& velocities)
 {
 	mVelocities = velocities;
 	if (!velocities.empty())
-		mFeatures |= MF_HAS_VELOCITY;
+		mInfo.Features |= MF_HAS_VELOCITY;
 }
 
-inline void MeshContainer::setIndices(const std::vector<uint32>& indices)
+inline void MeshBase::setIndices(const std::vector<uint32>& indices)
 {
 	mIndices = indices;
 }
 
-inline void MeshContainer::setMaterialSlots(const std::vector<uint32>& f)
+inline void MeshBase::setMaterialSlots(const std::vector<uint32>& f)
 {
 	mMaterialSlots = f;
 	if (!f.empty())
-		mFeatures |= MF_HAS_MATERIAL;
+		mInfo.Features |= MF_HAS_MATERIAL;
 }
 
-inline size_t MeshContainer::faceVertexCount(size_t face) const
+inline size_t MeshBase::faceVertexCount(size_t face) const
 {
 	return (face + 1) >= mFaceIndexOffset.size()
 			   ? static_cast<size_t>(mIndices.size() - static_cast<int32>(mFaceIndexOffset[face]))
 			   : static_cast<size_t>(mFaceIndexOffset[face + 1] - static_cast<int32>(mFaceIndexOffset[face]));
 }
 
-inline Face MeshContainer::getFace(uint32 index) const
+inline Face MeshBase::getFace(uint32 index) const
 {
 	size_t faceElems = faceVertexCount(index);
 	PR_ASSERT(faceElems == 3 || faceElems == 4, "Only triangles and quads are supported.");
@@ -69,7 +70,7 @@ inline Face MeshContainer::getFace(uint32 index) const
 	return f;
 }
 
-inline bool MeshContainer::isValid() const
+inline bool MeshBase::isValid() const
 {
 	return faceCount() > 0
 		   && (triangleCount() * 3 + quadCount() * 4) == mIndices.size()

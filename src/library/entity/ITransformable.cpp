@@ -35,9 +35,9 @@ void ITransformable::beforeSceneBuild()
 	Eigen::Matrix3f irot;
 	Eigen::Matrix3f isca;
 	mInvTransformCache.computeRotationScaling(&irot, &isca);
-	PR_LOG(L_INFO) << " IP" << PR_FMT_MAT(mInvTransformCache.translation())
-				   << " IR" << PR_FMT_MAT(Eigen::Quaternionf(irot))
-				   << " IS" << PR_FMT_MAT(isca.diagonal()) << std::endl;
+	PR_LOG(L_DEBUG) << " IP" << PR_FMT_MAT(mInvTransformCache.translation())
+					<< " IR" << PR_FMT_MAT(Eigen::Quaternionf(irot))
+					<< " IS" << PR_FMT_MAT(isca.diagonal()) << std::endl;
 
 	if (sca.squaredNorm() <= PR_EPSILON)
 		PR_LOG(L_WARNING) << "ITransformable " << mName << " has zero scale attribute" << std::endl;

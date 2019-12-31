@@ -1,25 +1,24 @@
 #pragma once
 
 #include "geometry/Face.h"
+#include "mesh/MeshInfo.h"
+#include "serialization/ISerializable.h"
 
 #include <vector>
 
 namespace PR {
-enum MeshFeatures : uint32 {
-	MF_HAS_UV		= 0x1,
-	MF_HAS_VELOCITY = 0x2,
-	MF_HAS_MATERIAL = 0x4
-};
-
 class Normal;
 class UV;
 class Vertex;
 struct FacePoint;
 class ISampler;
-class PR_LIB MeshContainer {
+class PR_LIB MeshBase : public ISerializable {
 public:
-	MeshContainer();
-	~MeshContainer();
+	MeshBase();
+	~MeshBase();
+
+	// ISerializable
+	void serialize(Serializer& serializer) override;
 
 	inline void setVertices(const std::vector<float>& vertices);
 	inline const std::vector<float>& vertices() const { return mVertices; }
@@ -28,8 +27,6 @@ public:
 	inline void setNormals(const std::vector<float>& normals);
 	inline const std::vector<float>& normals() const { return mNormals; }
 	inline Vector3f normal(size_t ind) const { return Vector3f(mNormals[3 * ind], mNormals[3 * ind + 1], mNormals[3 * ind + 2]); }
-	void buildNormals();
-	void flipNormals();
 
 	inline void setUVs(const std::vector<float>& uvs);
 	inline const std::vector<float>& uvs() const { return mUVs; }
@@ -52,11 +49,11 @@ public:
 	inline const std::vector<uint32>& materialSlots() const { return mMaterialSlots; }
 	inline uint32 materialSlot(size_t index) const { return (features() & MF_HAS_MATERIAL) ? mMaterialSlots.at(index) : 0; }
 
-	inline uint32 features() const { return mFeatures; }
-
-	inline size_t nodeCount() const { return mVertices.size() / 3; }
-	inline size_t triangleCount() const { return mTriangleCount; }
-	inline size_t quadCount() const { return mQuadCount; }
+	inline const MeshInfo& info() const { return mInfo; }
+	inline uint32 features() const { return mInfo.Features; }
+	inline size_t nodeCount() const { return mInfo.NodeCount; }
+	inline size_t triangleCount() const { return mInfo.TriangleCount; }
+	inline size_t quadCount() const { return mInfo.QuadCount; }
 	inline size_t faceCount() const { return triangleCount() + quadCount(); }
 	inline bool isOnlyTriangular() const { return triangleCount() > 0 && quadCount() == 0; }
 	inline bool isOnlyQuadrangular() const { return triangleCount() == 0 && quadCount() > 0; }
@@ -70,10 +67,19 @@ public:
 	inline bool isValid() const;
 
 	BoundingBox constructBoundingBox() const;
+
+	size_t addUserVertexAttrib(const std::vector<float>& cnt);
+	inline std::vector<float>& userVertexAttrib(size_t id) { return mUserVertexAttribs.at(id); }
+	size_t addUserFaceAttrib(const std::vector<float>& cnt);
+	inline std::vector<float>& userFaceAttrib(size_t id) { return mUserFaceAttribs.at(id); }
+
+	// Modifiers
+	void buildNormals();
+	void flipNormals();
 	void triangulate();
 
 private:
-	uint32 mFeatures;
+	MeshInfo mInfo;
 	std::vector<float> mVertices;   //3 floats
 	std::vector<float> mNormals;	//3 floats
 	std::vector<float> mUVs;		// 2 floats
@@ -82,9 +88,9 @@ private:
 	std::vector<uint32> mIndices;
 	std::vector<uint32> mFaceIndexOffset; // Only triangles and quads supported
 
-	size_t mTriangleCount;
-	size_t mQuadCount;
+	std::vector<std::vector<float>> mUserVertexAttribs;
+	std::vector<std::vector<float>> mUserFaceAttribs;
 };
 } // namespace PR
 
-#include "MeshContainer.inl"
+#include "MeshBase.inl"

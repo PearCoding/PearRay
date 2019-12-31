@@ -1,6 +1,6 @@
 SET(PR_Src
-  CacheManager.cpp
-  CacheManager.h
+  ResourceManager.cpp
+  ResourceManager.h
   Environment.cpp
   Environment.h
   Environment.inl

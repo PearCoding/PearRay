@@ -1,41 +1,43 @@
-#include "mesh/TriMesh.h"
-#include "CacheManager.h"
+#include "mesh/Mesh.h"
 #include "Environment.h"
 #include "Logger.h"
 #include "Profiler.h"
+#include "ResourceManager.h"
+#include "cache/ISerializeCachable.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
+#include "mesh/TriMesh.h"
 
 #include <boost/filesystem.hpp>
 
 namespace PR {
 
-class TriMeshEntity : public IEntity {
+class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
 
-	TriMeshEntity(uint32 id, const std::string& name,
-				  const std::wstring& cnt_file, bool load_only,
-				  const std::shared_ptr<MeshContainer>& mesh,
-				  const std::vector<uint32>& materials,
-				  int32 lightID)
+	MeshEntity(uint32 id, const std::string& name,
+			   const std::shared_ptr<Mesh>& mesh,
+			   const std::vector<uint32>& materials,
+			   int32 lightID)
 		: IEntity(id, name)
-		, mCNTFile(cnt_file)
-		, mLoadOnly(load_only)
 		, mLightID(lightID)
 		, mMaterials(materials)
 		, mMesh(mesh)
+		, mUseCache(false)
 	{
 	}
-	virtual ~TriMeshEntity() {}
+	virtual ~MeshEntity() {}
+
+	inline void useCache(bool b) { mUseCache = b; }
 
 	std::string type() const override
 	{
-		return "trimesh";
+		return "mesh";
 	}
 
 	bool isLight() const override
@@ -45,22 +47,22 @@ public:
 
 	float surfaceArea(uint32 id) const override
 	{
-		return mMesh.surfaceArea(id);
+		return mMesh->surfaceArea(id);
 	}
 
 	bool isCollidable() const override
 	{
-		return mMesh.isCollidable();
+		return mMesh->isCollidable();
 	}
 
 	float collisionCost() const override
 	{
-		return mMesh.collisionCost();
+		return mMesh->collisionCost();
 	}
 
 	BoundingBox localBoundingBox() const override
 	{
-		return mMesh.localBoundingBox();
+		return mMesh->localBoundingBox();
 	}
 
 	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
@@ -68,7 +70,7 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh.checkCollision(in_local, out);
+		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -88,7 +90,7 @@ public:
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh.checkCollision(in_local, out);
+		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
@@ -103,7 +105,7 @@ public:
 									  uint32& faceID, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
-		return mMesh.pickRandomParameterPoint(rnd, faceID, pdf);
+		return mMesh->pickRandomParameterPoint(rnd, faceID, pdf);
 	}
 
 	void provideGeometryPoint(const Vector3f&, uint32 faceID, const Vector3f& parameter,
@@ -111,7 +113,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		mMesh.provideGeometryPoint(faceID, parameter, pt);
+		mMesh->provideGeometryPoint(faceID, parameter, pt);
 
 		// Global
 		pt.P  = transform() * pt.P;
@@ -130,28 +132,14 @@ public:
 		pt.DisplaceID = 0;
 	}
 
-	void beforeSceneBuild() override
-	{
-		PR_LOG(L_INFO) << "Caching mesh " << name() << " [" << boost::filesystem::path(mCNTFile) << "]" << std::endl;
-
-		if (!mLoadOnly)
-			mMesh.build(mCNTFile);
-		else
-			mMesh.load(mCNTFile);
-
-		IEntity::beforeSceneBuild();
-	}
-
 private:
-	std::wstring mCNTFile;
-	bool mLoadOnly;
-
 	int32 mLightID;
 	std::vector<uint32> mMaterials;
-	TriMesh mMesh;
+	std::shared_ptr<Mesh> mMesh;
+	bool mUseCache;
 };
 
-class TriMeshEntityFactory : public IEntityFactory {
+class MeshEntityFactory : public IEntityFactory {
 public:
 	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
 	{
@@ -176,30 +164,13 @@ public:
 		if (ems)
 			emsID = ems->id();
 
-		std::wstring customCNT = reg.getForObject<std::wstring>(RG_ENTITY, uuid, "cnt", L"");
-
-		boost::filesystem::path path;
-		bool load_only = false;
-		if (customCNT.empty()) {
-			path = env.cacheManager()->requestFile("mesh", name + ".cnt", load_only);
-		} else {
-			path	  = boost::filesystem::absolute(customCNT, env.workingDir());
-			load_only = true;
-		}
-
 		if (!env.hasMesh(mesh_name))
 			return nullptr;
 		else {
 			auto mesh = env.getMesh(mesh_name);
-			if (!mesh->isValid()) {
-				PR_LOG(L_ERROR) << "Mesh " << mesh_name << " is invalid." << std::endl;
-				return nullptr;
-			}
-
-			return std::make_shared<TriMeshEntity>(id, name,
-												   path.generic_wstring(), load_only,
-												   mesh,
-												   materials, emsID);
+			return std::make_shared<MeshEntity>(id, name,
+												mesh,
+												materials, emsID);
 		}
 	}
 
@@ -216,4 +187,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::TriMeshEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::MeshEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

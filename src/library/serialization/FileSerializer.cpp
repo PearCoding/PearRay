@@ -6,6 +6,7 @@
 namespace PR {
 struct FileSerializerInternal {
 	std::fstream File;
+	size_t MemoryFootprint = 0;
 };
 
 FileSerializer::FileSerializer(uint32 version)
@@ -24,6 +25,11 @@ FileSerializer::FileSerializer(const std::wstring& path, bool readmode, uint32 v
 FileSerializer::~FileSerializer()
 {
 	close();
+}
+
+size_t FileSerializer::memoryFootprint() const
+{
+	return mInternal->MemoryFootprint;
 }
 
 bool FileSerializer::open(const std::wstring& path, bool readmode)
@@ -65,6 +71,7 @@ void FileSerializer::writeRaw(const uint8* data, size_t elems, size_t elemSize)
 	PR_ASSERT(!isReadMode(), "Trying to write into a read serializer!");
 
 	const size_t size = elems * elemSize;
+	mInternal->MemoryFootprint += size;
 	mInternal->File.write(reinterpret_cast<const char*>(data), size);
 }
 
@@ -74,6 +81,7 @@ void FileSerializer::readRaw(uint8* data, size_t elems, size_t elemSize)
 	PR_ASSERT(isReadMode(), "Trying to read from a write serializer!");
 
 	const size_t size = elems * elemSize;
+	mInternal->MemoryFootprint += size;
 	mInternal->File.read(reinterpret_cast<char*>(data), size);
 }
 

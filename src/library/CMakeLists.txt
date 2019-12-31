@@ -28,6 +28,11 @@ SET(PR_Src
   buffer/OutputBufferData.cpp
   buffer/OutputBufferData.h
   buffer/OutputBufferData.inl
+  cache/ICachable.h
+  cache/Cache.h
+  cache/Cache.cpp
+  cache/ISerializeCachable.h
+  cache/ISerializeCachable.cpp
   camera/ICamera.cpp
   camera/ICamera.h
   container/IndexSort.h
@@ -101,9 +106,12 @@ SET(PR_Src
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
-  mesh/MeshContainer.cpp
-  mesh/MeshContainer.h
-  mesh/MeshContainer.inl
+  mesh/Mesh.cpp
+  mesh/Mesh.h
+  mesh/MeshBase.cpp
+  mesh/MeshBase.h
+  mesh/MeshBase.inl
+  mesh/MeshInfo.h
   mesh/TriMesh.cpp
   mesh/TriMesh.h
   path/LightPath.cpp

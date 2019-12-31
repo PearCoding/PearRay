@@ -2,6 +2,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraFactory.h"
@@ -19,6 +20,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "material/MaterialManager.h"
+#include "mesh/TriMesh.h"
 #include "parser/CurveParser.h"
 #include "parser/MathParser.h"
 #include "parser/MeshParser.h"
@@ -542,6 +544,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
+	env->cache()->unloadAll(); // Make sure there is enough space
 	auto mesh = MeshParser::parse(group);
 
 	if (!mesh) {
@@ -549,7 +552,15 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	env->addMesh(name, mesh);
+	bool useCache	  = mesh->nodeCount() > 1000000;
+	DL::Data useCacheD = group.getFromKey("cache");
+	if (useCacheD.type() == DL::DT_Bool)
+		useCache = useCacheD.getBool();
+
+	if (useCache)
+		PR_LOG(L_INFO) << "Using cache for " << name << std::endl;
+	mesh->triangulate();
+	env->addMesh(name, std::make_shared<TriMesh>(name, mesh, env->cache(), useCache));
 }
 
 void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
@@ -596,6 +607,7 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 		loader = "obj";
 	}
 
+	env->cache()->unloadAll(); // Make sure there is enough space
 	if (loader == "obj") {
 		DL::Data overridesD = group.getFromKey("overrides");
 		std::map<std::string, std::string> overrides;
