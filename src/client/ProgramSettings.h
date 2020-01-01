@@ -29,5 +29,7 @@ public:
 	PR::uint32 ImageTileXCount;
 	PR::uint32 ImageTileYCount;
 
+	PR::uint32 CacheMode;
+	
 	bool parse(int argc, char** argv);
 };

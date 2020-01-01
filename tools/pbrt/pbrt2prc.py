@@ -23,6 +23,10 @@ def parseArgs():
                         default=False, help="Do not print any informative messages")
     parser.add_argument('--skipMesh', action='store_true',
                         default=False, help="Skip Mesh Conversion")
+    parser.add_argument('--skipCurve', action='store_true',
+                        default=False, help="Skip Curve Generation")
+    parser.add_argument('--skipPrim', action='store_true',
+                        default=False, help="Skip Primitive Generation")
     parser.add_argument('--skipInstance', action='store_true',
                         default=False, help="Skip Instanced Generation")
     parser.add_argument('--skipLight', action='store_true',
@@ -36,7 +40,7 @@ def parseArgs():
     parser.add_argument('--skipReg', action='store_true',
                         default=False, help="Skip Registry Generation")
     parser.add_argument('--skipWorld', action='store_true',
-                        default=False, help="Skip Registry Generation")
+                        default=False, help="Skip World Generation")
     parser.add_argument('--singleFile', action='store_true',
                         default=False, help="Produce one single file")
 

@@ -16,6 +16,7 @@ ISerializeCachable::ISerializeCachable(const std::string& name,
 	, mAccessCount(0)
 	, mCache(cache)
 	, mUseCache(useCache)
+	, mOnceUnloaded(false)
 {
 	if (mUseCache) {
 		PR_LOG(L_DEBUG) << name << " is cached" << std::endl;
@@ -39,6 +40,7 @@ void ISerializeCachable::load()
 	if (mIsLoaded)
 		return;
 
+	PR_LOG(L_DEBUG) << "CACHE: Loading " << name() << std::endl;
 	beforeLoad();
 	handle(true);
 	mIsLoaded = true;
@@ -50,8 +52,12 @@ void ISerializeCachable::unload()
 	if (!mIsLoaded)
 		return;
 
+	PR_LOG(L_DEBUG) << "CACHE: Unloading " << name() << std::endl;
 	beforeUnload();
-	handle(false);
+	if (!mOnceUnloaded) {
+		mOnceUnloaded = true;
+		handle(false);
+	}
 	mIsLoaded = false;
 	afterUnload();
 }

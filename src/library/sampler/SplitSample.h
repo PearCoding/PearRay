@@ -16,15 +16,15 @@ public:
 
 		size_t s = end1 - start1;
 		mU1		 = std::modf(u(0) * s, &k);
-		mI1		 = static_cast<uint32>(k);
+		mI1		 = std::min<uint32>(static_cast<uint32>(k), end1 - 1);
 
 		s   = end2 - start2;
 		mU2 = std::modf(u(1) * s, &k);
-		mI2 = static_cast<uint32>(k);
+		mI2 = std::min<uint32>(static_cast<uint32>(k), end2 - 1);
 	}
 
 	inline SplitSample2D(const Vector2f& u,
-					size_t start, size_t end)
+						 size_t start, size_t end)
 		: SplitSample2D(u, start, end, start, end)
 	{
 	}

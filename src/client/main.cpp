@@ -74,10 +74,13 @@ int main(int argc, char** argv)
 						   << ")" << std::endl;
 	}
 
+	PR::SceneLoader::LoadOptions opts;
+	opts.WorkingDir						 = options.OutputDir.generic_wstring();
+	opts.PluginPath						 = options.PluginPath.generic_wstring();
+	opts.CacheMode						 = options.CacheMode;
 	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(
-		options.OutputDir.generic_wstring(),
 		options.InputFile.generic_wstring(),
-		options.PluginPath.generic_wstring());
+		opts);
 
 	if (!env) {
 		if (!options.IsQuiet)

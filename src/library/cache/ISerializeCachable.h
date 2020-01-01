@@ -65,5 +65,6 @@ private:
 
 	std::shared_ptr<Cache> mCache;
 	bool mUseCache;
+	bool mOnceUnloaded;
 };
 } // namespace PR

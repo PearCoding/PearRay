@@ -99,7 +99,7 @@ Vector3f Mesh::pickRandomParameterPoint(const Vector2f& rnd, uint32& faceID, flo
 	SplitSample2D split(rnd, 0, mInfo.faceCount());
 	faceID = split.integral1();
 
-	Face face = doWork([&]() { return mBase->getFace(split.integral1()); });
+	Face face = doWork([&]() { return mBase->getFace(faceID); });
 	pdf		  = 1.0f / (mInfo.faceCount() * face.surfaceArea());
 
 	return Vector3f(rnd(0), rnd(1), 0);

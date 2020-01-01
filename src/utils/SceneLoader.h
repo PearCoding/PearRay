@@ -20,17 +20,18 @@ class PR_LIB_UTILS SceneLoader {
 	PR_CLASS_NON_CONSTRUCTABLE(SceneLoader);
 
 public:
-	static std::shared_ptr<Environment> loadFromFile(const std::wstring& wrkDir,
-													 const std::wstring& path,
-													 const std::wstring& pluginPath = L"");
-	static std::shared_ptr<Environment> loadFromString(const std::wstring& wrkDir,
-													   const std::string& source,
-													   const std::wstring& pluginPath = L"");
+	struct LoadOptions {
+		std::wstring WorkingDir;
+		std::wstring PluginPath;
+		uint32 CacheMode;
+	};
+
+	static std::shared_ptr<Environment> loadFromFile(const std::wstring& path, const LoadOptions& opts);
+	static std::shared_ptr<Environment> loadFromString(const std::string& source, const LoadOptions& opts);
 
 private:
 	static std::shared_ptr<Environment> createEnvironment(const std::vector<DL::DataGroup>& groups,
-														  const std::wstring& wrkDir,
-														  const std::wstring& pluginPath, 
+														  const LoadOptions& opts,
 														  SceneLoadContext& ctx);
 	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx);
 	static void addRegistryEntry(const DL::DataGroup& group, SceneLoadContext& ctx);

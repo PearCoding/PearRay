@@ -36,9 +36,7 @@
 #include <sstream>
 
 namespace PR {
-std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& wrkDir,
-													   const std::wstring& path,
-													   const std::wstring& pluginPath)
+std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& path, const LoadOptions& opts)
 {
 	std::ifstream stream(encodePath(path));
 	DL::SourceLogger logger;
@@ -52,12 +50,10 @@ std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& wrkDi
 
 	SceneLoadContext ctx;
 	ctx.FileStack.push_back(path);
-	return createEnvironment(entries, wrkDir, pluginPath, ctx);
+	return createEnvironment(entries, opts, ctx);
 }
 
-std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrkDir,
-														 const std::string& source,
-														 const std::wstring& pluginPath)
+std::shared_ptr<Environment> SceneLoader::loadFromString(const std::string& source, const LoadOptions& opts)
 {
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
@@ -69,12 +65,11 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 	auto entries = container.getTopGroups();
 
 	SceneLoadContext ctx;
-	return createEnvironment(entries, wrkDir, pluginPath, ctx);
+	return createEnvironment(entries, opts, ctx);
 }
 
 std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL::DataGroup>& groups,
-															const std::wstring& wrkDir,
-															const std::wstring& pluginPath,
+															const LoadOptions& opts,
 															SceneLoadContext& ctx)
 {
 	if (groups.empty()) {
@@ -111,10 +106,12 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 
 			std::shared_ptr<Environment> env;
 			try {
-				env = std::make_shared<Environment>(wrkDir, spectrumDescriptor, pluginPath);
+				env = std::make_shared<Environment>(opts.WorkingDir, spectrumDescriptor, opts.PluginPath);
 			} catch (const BadRenderEnvironment&) {
 				return nullptr;
 			}
+
+			env->cache()->setMode(static_cast<CacheMode>(opts.CacheMode));
 
 			std::vector<DL::DataGroup> groups;
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {

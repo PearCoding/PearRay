@@ -59,8 +59,10 @@ class Operator:
 
         old_writer = self.w
         if not self.options.singleFile:
-            rel_file = os.path.relpath(os.path.abspath(inc_file), self.globalDir)
-            output_file = os.path.join(self.options.output, os.path.splitext(rel_file)[0]+'.prc')
+            rel_file = os.path.relpath(
+                os.path.abspath(inc_file), self.globalDir)
+            output_file = os.path.join(
+                self.options.output, os.path.splitext(rel_file)[0]+'.prc')
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
             self.w.write("(include '%s')" % output_file)
@@ -81,8 +83,9 @@ class Operator:
         self.contextStack[-1].transform = np.identity(4)
 
     def applyTransform(self, mat):
-        self.contextStack[-1].transform = np.dot(self.contextStack[-1].transform, mat)
-        #print(self.contextStack[-1].transform)
+        self.contextStack[-1].transform = np.dot(
+            self.contextStack[-1].transform, mat)
+        # print(self.contextStack[-1].transform)
 
     def op_Translate(self, op):
         self.applyTransform(np.array([[1, 0, 0, op.operand[0]],
@@ -99,8 +102,10 @@ class Operator:
         z = op.operand[3]
 
         self.applyTransform(np.array([[co+x*x*(1-co), x*y*(1-co)-z*si, x*z*(1-co)+y*si, 0],
-                                      [y*x*(1-co)+z*si, co+y*y*(1-co), y*z*(1-co)-x*si, 0],
-                                      [z*x*(1-co)-y*si, z*y*(1-co)+x*si, co+z*z*(1-co), 0],
+                                      [y*x*(1-co)+z*si, co+y*y*(1-co),
+                                       y*z*(1-co)-x*si, 0],
+                                      [z*x*(1-co)-y*si, z*y*(1-co) +
+                                       x*si, co+z*z*(1-co), 0],
                                       [0, 0, 0, 1]]))
 
     def op_Scale(self, op):
@@ -110,20 +115,35 @@ class Operator:
                                       [0, 0, 0, 1]]))
 
     def op_Transform(self, op):
-        self.contextStack[-1].transform = np.transpose(np.array([op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]]))
-        #print(self.contextStack[-1].transform)
+        self.contextStack[-1].transform = np.transpose(np.array(
+            [op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]]))
+        # print(self.contextStack[-1].transform)
 
     def op_ConcatTransform(self, op):
-        self.applyTransform(np.transpose(np.array([op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]])))
+        self.applyTransform(np.transpose(np.array(
+            [op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]])))
+
+    @staticmethod
+    def normVec(v):
+        norm = np.linalg.norm(v)
+        if norm == 0:
+            return v
+        return v / norm
 
     def op_LookAt(self, op):
-        right = op.operand[0:3]
-        up = op.operand[3:6]
-        front = op.operand[6:9]
-        self.applyTransform(np.array([[right[0], up[0], front[0], 0],
-                                      [right[1], up[1], front[1], 0],
-                                      [right[2], up[2], front[2], 0],
-                                      [0, 0, 0, 1]]))
+        pos = np.array(op.operand[0:3])
+        lookPos = np.array(op.operand[3:6])
+        up = np.array(op.operand[6:9])
+
+        dir = Operator.normVec(lookPos-pos)
+        right = Operator.normVec(np.cross(Operator.normVec(up), dir, axis=0))
+        up = np.cross(dir, right, axis=0)
+
+        CM = np.array([[right[0], up[0], dir[0], pos[0]],
+                       [right[1], up[1], dir[1], pos[1]],
+                       [right[2], up[2], dir[2], pos[2]],
+                       [0, 0, 0, 1]])
+        self.applyTransform(np.linalg.inv(CM))
 
     def op_CoordinateSystem(self, op):
         self.coords[op.operand] = self.contextStack[-1].transform
@@ -132,14 +152,14 @@ class Operator:
         self.contextStack[-1].transform = self.coords[op.operand]
 
     def op_Camera(self, op):
-        cam_mat =  np.linalg.inv(self.contextStack[-1].transform)
+        cam_mat = np.linalg.inv(self.contextStack[-1].transform)
 
         w = 1
         if 'fov' in op.parameters:
             w = math.tan(math.radians(op.parameters['fov']))
 
         cam_mat = np.dot(cam_mat, np.array([[1, 0, 0, 0],
-                                            [0,-1, 0, 0],
+                                            [0, -1, 0, 0],
                                             [0, 0, 1, 0],
                                             [0, 0, 0, 1]]))
         self.coords['camera'] = cam_mat
@@ -208,7 +228,8 @@ class Operator:
             if shape[3] != '':
                 self.w.write(":emission '%s'" % shape[3])
             self.w.write(":mesh '%s'" % shape[1])
-            self.w.write(":transform %s" % Operator.mat2str(self.contextStack[-1].transform))
+            self.w.write(":transform %s" % Operator.mat2str(
+                self.contextStack[-1].transform))
             self.w.goOut()
             self.w.write(")")
         elif shape[0] == 'sphere':
@@ -221,7 +242,8 @@ class Operator:
             if shape[3] != '':
                 self.w.write(":emission '%s'" % shape[3])
             self.w.write(":radius %f" % shape[1])
-            self.w.write(":transform %s" % Operator.mat2str(self.contextStack[-1].transform))
+            self.w.write(":transform %s" % Operator.mat2str(
+                self.contextStack[-1].transform))
             self.w.goOut()
             self.w.write(")")
         self.objectCount += 1
@@ -247,18 +269,24 @@ class Operator:
         if self.options.skipReg:
             return
 
-        self.w.write("(registry '/renderer/common/type' 'direct')")# Ignore type for now
-        self.w.write("(registry '/renderer/common/max_ray_depth' %i)" % op.parameters['maxdepth'])
+        # Ignore type for now
+        self.w.write("(registry '/renderer/common/type' 'direct')")
+        self.w.write("(registry '/renderer/common/max_ray_depth' %i)" %
+                     op.parameters['maxdepth'])
 
     def writeSampler(self, sampler, pixel_count):
         if self.options.skipReg:
             return
 
-        self.w.write("(registry '/renderer/common/sampler/aa/type' '%s')" % sampler)
-        self.w.write("(registry '/renderer/common/sampler/aa/count' %i)" % pixel_count)
-        self.w.write("(registry '/renderer/common/sampler/lens/type' '%s')" % sampler)
+        self.w.write(
+            "(registry '/renderer/common/sampler/aa/type' '%s')" % sampler)
+        self.w.write(
+            "(registry '/renderer/common/sampler/aa/count' %i)" % pixel_count)
+        self.w.write(
+            "(registry '/renderer/common/sampler/lens/type' '%s')" % sampler)
         self.w.write("(registry '/renderer/common/sampler/lens/count' 1)")
-        self.w.write("(registry '/renderer/common/sampler/time/type' '%s')" % sampler)
+        self.w.write(
+            "(registry '/renderer/common/sampler/time/type' '%s')" % sampler)
         self.w.write("(registry '/renderer/common/sampler/time/count' 1)")
 
     def op_Sampler(self, op):
@@ -276,13 +304,15 @@ class Operator:
             self.writeSampler("sobol", count)
 
     def op_Accelerator(self, op):
-        pass # Ignoring for now
+        pass  # Ignoring for now
 
     def writeFilter(self, filter, pixel_count):
         if self.options.skipReg:
             return
-        self.w.write("(registry '/renderer/common/pixel/filter' '%s')" % filter)
-        self.w.write("(registry '/renderer/common/pixel/radius' %i)" % pixel_count)
+        self.w.write(
+            "(registry '/renderer/common/pixel/filter' '%s')" % filter)
+        self.w.write(
+            "(registry '/renderer/common/pixel/radius' %i)" % pixel_count)
 
     def op_PixelFilter(self, op):
         if self.options.skipReg:
@@ -313,7 +343,8 @@ class Operator:
             print("ERROR: Only support image output!")
             return
 
-        filename = os.path.splitext(os.path.basename(op.parameters["filename"]))[0]
+        filename = os.path.splitext(
+            os.path.basename(op.parameters["filename"]))[0]
         self.w.write(":renderWidth %i" % op.parameters["xresolution"])
         self.w.write(":renderHeight %i" % op.parameters["yresolution"])
         self.w.write("(output")
@@ -333,13 +364,13 @@ class Operator:
         self.w.write(")")
 
     def op_MakeNamedMedium(self, op):
-        pass # Ignoring for now
+        pass  # Ignoring for now
 
     def op_MediumInterface(self, op):
-        pass # Ignoring for now
+        pass  # Ignoring for now
 
     def op_Texture(self, op):
-        pass # TODO
+        pass  # TODO
 
     def unpackRefl(self, col):
         name = "spec_%i" % self.specCount
@@ -416,11 +447,12 @@ class Operator:
             self.w.write(":specular_tint %f" % op.parameters['speculartint'])
             self.w.write(":metallic %f" % op.parameters['metallic'])
             self.w.write(":clearcoat %f" % op.parameters['clearcoat'])
-            self.w.write(":clearcoat_gloss %f" % op.parameters['clearcoatgloss'])
+            self.w.write(":clearcoat_gloss %f" %
+                         op.parameters['clearcoatgloss'])
             self.w.write(":anisotropic %f" % op.parameters['anisotropic'])
             self.w.write(":sheen %f" % op.parameters['sheen'])
             self.w.write(":sheen_tint %f" % op.parameters['sheentint'])
-            #TODO: 'eta', 'scatterdistance' ?
+            # TODO: 'eta', 'scatterdistance' ?
             self.w.goOut()
             self.w.write(")")
         else:
@@ -429,7 +461,7 @@ class Operator:
         self.currentMaterial = op.operand
 
     def op_MakeNamedMaterial(self, op):
-        self.op_Material(op)# Same in our case
+        self.op_Material(op)  # Same in our case
 
     def op_NamedMaterial(self, op):
         self.currentMaterial = op.operand
@@ -439,7 +471,7 @@ class Operator:
             return
 
         if op.operand == "point":
-            pass # TODO
+            pass  # TODO
         elif op.operand == "infinite":
             tex_name = self.setupTexture(op.filename, op.parameters['mapname'])
             self.w.write("(light")
@@ -450,7 +482,7 @@ class Operator:
             self.w.write(")")
         elif op.operand == "distant":
             D = np.array(op.parameters['to']) - np.array(op.parameters['from'])
-            D = D/np.linalg.norm(D, ord = 2)
+            D = D/np.linalg.norm(D, ord=2)
             color = self.unpackIllum(op.parameters['L'])
 
             self.w.write("(light")
@@ -479,7 +511,8 @@ class Operator:
             self.w.goOut()
             self.w.write(")")
         else:
-            print("ERROR: No support of area light sources of type %s available" % op.operand)
+            print(
+                "ERROR: No support of area light sources of type %s available" % op.operand)
 
     def writeVectors(self, vecs, elemS):
         elmsW = 0
@@ -487,7 +520,8 @@ class Operator:
 
         line = ""
         for i in range(le):
-            line += "[%s]," % (",".join(str(v) for v in vecs[elemS*i:elemS*(i+1)]))
+            line += "[%s]," % (",".join(str(v)
+                                        for v in vecs[elemS*i:elemS*(i+1)]))
             elmsW += 1
             if elmsW > 200:
                 self.w.write(line)
@@ -498,16 +532,15 @@ class Operator:
             self.w.write(line)
 
     def op_Shape(self, op):
-        if self.options.skipMesh:
-            return
-
         isDef = self.currentObject != ''
-
         name = "shape_%i" % self.shapeCount
-        self.shapeCount += 1
 
         if op.operand == "plymesh":
-            inc_file = Operator.resolveFilename(op.filename, op.parameters['filename'])
+            if self.options.skipMesh:
+                return
+
+            inc_file = Operator.resolveFilename(
+                op.filename, op.parameters['filename'])
             self.w.write("(embed")
             self.w.goIn()
             self.w.write(":loader 'ply'")
@@ -516,12 +549,17 @@ class Operator:
             self.w.goOut()
             self.w.write(")")
 
-            shape = ('mesh', name, self.currentMaterial, self.contextStack[-1].areaLight)
+            shape = ('mesh', name, self.currentMaterial,
+                     self.contextStack[-1].areaLight)
             if isDef:
                 self.objectShapeAssoc[self.currentObject].append(shape)
             else:
                 self.writeShape(shape)
+            self.shapeCount += 1
         elif op.operand == "trianglemesh":
+            if self.options.skipMesh:
+                return
+
             points = op.parameters['P']
             normals = op.parameters.get('N')
             uv = op.parameters.get('st')
@@ -558,20 +596,28 @@ class Operator:
             self.w.goOut()
             self.w.write(")")
 
-            shape = ('mesh', name, self.currentMaterial, self.contextStack[-1].areaLight)
+            shape = ('mesh', name, self.currentMaterial,
+                     self.contextStack[-1].areaLight)
             if isDef:
                 self.objectShapeAssoc[self.currentObject].append(shape)
             else:
                 self.writeShape(shape)
+            self.shapeCount += 1
         elif op.operand == "loopsubdiv":
             print("ERROR: loopsubdiv - Not yet supported")
         elif op.operand == "curve":
+            if self.options.skipCurve:
+                return
             print("ERROR: curve - Not yet supported")
         elif op.operand == "sphere":
-            shape = ('sphere', op.parameters['radius'], self.currentMaterial, self.contextStack[-1].areaLight)
+            if self.options.skipPrim:
+                return
+            shape = ('sphere', op.parameters['radius'],
+                     self.currentMaterial, self.contextStack[-1].areaLight)
             if isDef:
                 self.objectShapeAssoc[self.currentObject].append(shape)
             else:
                 self.writeShape(shape)
+            self.shapeCount += 1
         else:
             print("ERROR: No support of shapes of type %s available" % op.operand)
