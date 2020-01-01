@@ -564,7 +564,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	if (useCacheD.type() == DL::DT_Bool)
 		useCache = useCacheD.getBool();
 
-	ctx.Env->addMesh(name, std::make_shared<TriMesh>(name, mesh, ctx.Env->cache(), useCache));
+	ctx.Env->addMesh(name, std::make_shared<TriMesh>(name, std::move(mesh), ctx.Env->cache(), useCache));
 }
 
 void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)

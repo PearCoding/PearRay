@@ -12,6 +12,6 @@ namespace PR {
 class MeshBase;
 class MeshParser {
 public:
-	static std::shared_ptr<MeshBase> parse(const DL::DataGroup& group);
+	static std::unique_ptr<MeshBase> parse(const DL::DataGroup& group);
 };
 } // namespace PR

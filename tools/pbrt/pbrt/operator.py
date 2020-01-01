@@ -12,6 +12,12 @@ class Operator:
             self.transform = np.identity(4)
             self.areaLight = ""
 
+        def copy(self):
+            ctx = Operator.Context()
+            ctx.transform = np.copy(self.transform)
+            ctx.areaLight = self.areaLight
+            return ctx
+
     def __init__(self, writer, opts, global_dir):
         self.options = opts
         self.globalDir = global_dir
@@ -83,9 +89,9 @@ class Operator:
         self.contextStack[-1].transform = np.identity(4)
 
     def applyTransform(self, mat):
-        self.contextStack[-1].transform = np.dot(
+        self.contextStack[-1].transform = np.matmul(
             self.contextStack[-1].transform, mat)
-        # print(self.contextStack[-1].transform)
+        #print(self.contextStack[-1].transform)
 
     def op_Translate(self, op):
         self.applyTransform(np.array([[1, 0, 0, op.operand[0]],
@@ -114,14 +120,18 @@ class Operator:
                                       [0, 0, op.operand[2], 0],
                                       [0, 0, 0, 1]]))
 
-    def op_Transform(self, op):
-        self.contextStack[-1].transform = np.transpose(np.array(
+    @staticmethod
+    def matFromOp(op):
+        return np.transpose(np.array(
             [op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]]))
+
+    def op_Transform(self, op):
+        self.contextStack[-1].transform = Operator.matFromOp(op)
         # print(self.contextStack[-1].transform)
 
     def op_ConcatTransform(self, op):
-        self.applyTransform(np.transpose(np.array(
-            [op.operand[0:4], op.operand[4:8], op.operand[8:12], op.operand[12:16]])))
+        self.applyTransform(Operator.matFromOp(op))
+        #print(self.contextStack[-1].transform)
 
     @staticmethod
     def normVec(v):
@@ -146,10 +156,10 @@ class Operator:
         self.applyTransform(np.linalg.inv(CM))
 
     def op_CoordinateSystem(self, op):
-        self.coords[op.operand] = self.contextStack[-1].transform
+        self.coords[op.operand] = np.copy(self.contextStack[-1].transform)
 
     def op_CoordinateSysTransform(self, op):
-        self.contextStack[-1].transform = self.coords[op.operand]
+        self.contextStack[-1].transform = np.copy(self.coords[op.operand])
 
     def op_Camera(self, op):
         cam_mat = np.linalg.inv(self.contextStack[-1].transform)
@@ -181,14 +191,14 @@ class Operator:
 
     def op_WorldBegin(self, op):
         self.op_Identity(op)
-        self.coords['world'] = self.contextStack[-1].transform
+        self.coords['world'] = np.copy(self.contextStack[-1].transform)
 
     def op_WorldEnd(self, op):
         while len(self.contextStack) != 1:
             self.contextStack.pop()
 
     def op_AttributeBegin(self, op):
-        self.contextStack.append(self.contextStack[-1])
+        self.contextStack.append(self.contextStack[-1].copy())
 
     def op_AttributeEnd(self, op):
         if len(self.contextStack) == 1:

@@ -63,7 +63,7 @@ struct Header {
 	inline bool hasIndices() const { return IndElem >= 0; }
 };
 
-std::shared_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool ascii)
+std::unique_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool ascii)
 {
 	const auto readFloat = [&]() {
 		float val;
@@ -210,7 +210,7 @@ std::shared_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool 
 	}
 
 	// Build
-	std::shared_ptr<MeshBase> cnt = std::make_shared<MeshBase>();
+	std::unique_ptr<MeshBase> cnt = std::make_unique<MeshBase>();
 	cnt->setVertices(vertices);
 	if (header.hasNormals())
 		cnt->setNormals(normals);
@@ -316,12 +316,12 @@ void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 	}
 
 	header.SwitchEndianness		  = (method == "binary_big_endian");
-	std::shared_ptr<MeshBase> cnt = read(stream, header, (method == "ascii"));
+	std::unique_ptr<MeshBase> cnt = read(stream, header, (method == "ascii"));
 
 	if (cnt) {
 		cnt->triangulate();
-		ctx.Env->addMesh(mName, std::make_shared<TriMesh>(mName, cnt, ctx.Env->cache(),
-														  ctx.Env->cache()->shouldCacheMesh(cnt->nodeCount(), static_cast<CacheMode>(mCacheMode))));
+		bool useCache = ctx.Env->cache()->shouldCacheMesh(cnt->nodeCount(), static_cast<CacheMode>(mCacheMode));
+		ctx.Env->addMesh(mName, std::make_shared<TriMesh>(mName, std::move(cnt), ctx.Env->cache(), useCache));
 	}
 }
 } // namespace PR

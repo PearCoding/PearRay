@@ -18,11 +18,11 @@
 
 namespace PR {
 Mesh::Mesh(const std::string& name,
-		   const std::shared_ptr<MeshBase>& mesh_base,
-		   const std::shared_ptr<Cache>& cache, 
+		   std::unique_ptr<MeshBase>&& mesh_base,
+		   const std::shared_ptr<Cache>& cache,
 		   bool useCache)
 	: ISerializeCachable(name, cache, useCache)
-	, mBase(mesh_base)
+	, mBase(std::move(mesh_base))
 {
 	setup();
 }
@@ -54,6 +54,7 @@ void Mesh::serialize(Serializer& serializer)
 void Mesh::beforeLoad()
 {
 	loadCollider();
+	mBase = std::make_unique<MeshBase>();
 }
 
 void Mesh::afterLoad()
@@ -65,6 +66,7 @@ void Mesh::afterLoad()
 void Mesh::afterUnload()
 {
 	mCollider.reset();
+	mBase.reset();
 }
 
 BoundingBox Mesh::localBoundingBox() const

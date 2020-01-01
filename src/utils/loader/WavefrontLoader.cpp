@@ -74,7 +74,7 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 				indices.push_back(shapes[sh].mesh.indices.at(i).vertex_index);
 		}
 
-		auto mesh = std::make_shared<MeshBase>();
+		auto mesh = std::make_unique<MeshBase>();
 		mesh->setVertices(attrib.vertices);
 		mesh->setIndices(indices);
 		mesh->setFaceVertexCount(std::vector<uint8>(indices_count / 3, 3));
@@ -102,8 +102,8 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 			PR_LOG(L_ERROR) << "Mesh " << next << " already in use." << std::endl;
 
 		mesh->triangulate();
-		ctx.Env->addMesh(next, std::make_shared<TriMesh>(next, mesh, ctx.Env->cache(),
-														 ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode))));
+		bool useCache = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode));
+		ctx.Env->addMesh(next, std::make_shared<TriMesh>(next, std::move(mesh), ctx.Env->cache(), useCache));
 		PR_LOG(L_INFO) << "Added mesh " << next << std::endl;
 	}
 }

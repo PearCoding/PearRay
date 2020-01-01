@@ -36,7 +36,7 @@ static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp,
 	return true;
 }
 
-std::shared_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
+std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 {
 	std::vector<float> positionAttr;
 	std::vector<float> normalAttr;
@@ -210,7 +210,7 @@ std::shared_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 		}
 	}
 
-	auto me = std::make_shared<MeshBase>();
+	auto me = std::make_unique<MeshBase>();
 	me->setVertices(positionAttr);
 	me->setNormals(normalAttr);
 	me->setUVs(uvAttr);

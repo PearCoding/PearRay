@@ -7,7 +7,7 @@ namespace PR {
 class PR_LIB TriMesh : public Mesh {
 public:
 	TriMesh(const std::string& name,
-			const std::shared_ptr<MeshBase>& mesh_base,
+			std::unique_ptr<MeshBase>&& mesh_base,
 			const std::shared_ptr<Cache>& cache,
 			bool useCache);
 	virtual ~TriMesh();

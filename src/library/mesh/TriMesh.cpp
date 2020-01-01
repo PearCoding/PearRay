@@ -19,10 +19,10 @@ struct TriMeshInternal {
 };
 
 TriMesh::TriMesh(const std::string& name,
-				 const std::shared_ptr<MeshBase>& mesh_base,
+				 std::unique_ptr<MeshBase>&& mesh_base,
 				 const std::shared_ptr<Cache>& cache,
 				 bool useCache)
-	: Mesh(name, mesh_base, cache, useCache)
+	: Mesh(name, std::move(mesh_base), cache, useCache)
 	, mInternal(std::make_unique<TriMeshInternal>())
 {
 	setup();

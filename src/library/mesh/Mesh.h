@@ -11,7 +11,7 @@ struct GeometryPoint;
 class PR_LIB Mesh : public ISerializeCachable {
 public:
 	Mesh(const std::string& name,
-		 const std::shared_ptr<MeshBase>& mesh_base,
+		 std::unique_ptr<MeshBase>&& mesh_base,
 		 const std::shared_ptr<Cache>& cache,
 		 bool useCache);
 	virtual ~Mesh();
@@ -29,7 +29,7 @@ public:
 	void provideGeometryPoint(uint32 faceID, const Vector3f& parameter, GeometryPoint& pt);
 
 	// Use this only when sure it is loaded
-	inline std::shared_ptr<MeshBase> base_unsafe() const { return mBase; }
+	inline MeshBase* base_unsafe() const { return mBase.get(); }
 
 protected:
 	virtual void checkCollisionLocal(const RayPackage& in, CollisionOutput& out) = 0;
@@ -43,7 +43,7 @@ protected:
 
 protected:
 	std::shared_ptr<kdTreeCollider> mCollider;
-	std::shared_ptr<MeshBase> mBase;
+	std::unique_ptr<MeshBase> mBase;
 
 private:
 	void constructCollider();

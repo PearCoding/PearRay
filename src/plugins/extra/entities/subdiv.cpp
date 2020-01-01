@@ -3,6 +3,7 @@
 #include "Profiler.h"
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
+#include "cache/Cache.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
@@ -170,7 +171,7 @@ public:
 	Far::TopologyDescriptor::FVarChannel fvarChannels[1];
 	std::vector<uint32> fvarIndices;
 
-	Far::TopologyRefiner* setupRefiner(const std::shared_ptr<MeshBase>& originalMesh, const SubdivisionOptions& opts)
+	Far::TopologyRefiner* setupRefiner(const MeshBase* originalMesh, const SubdivisionOptions& opts)
 	{
 		PR_PROFILE_THIS;
 
@@ -305,8 +306,8 @@ public:
 		return dstbuffer;
 	}
 
-	void refineVertexData(const std::shared_ptr<MeshBase>& originalMesh,
-						  std::shared_ptr<MeshBase>& refineMesh,
+	void refineVertexData(const MeshBase* originalMesh,
+						  std::unique_ptr<MeshBase>& refineMesh,
 						  OpenSubdivComputationMode mode,
 						  Far::TopologyRefiner* refiner,
 						  Far::StencilTable const* stencilTable)
@@ -324,8 +325,8 @@ public:
 		delete buffer;
 	}
 
-	void refineUVData(const std::shared_ptr<MeshBase>& originalMesh,
-					  std::shared_ptr<MeshBase>& refineMesh,
+	void refineUVData(const MeshBase* originalMesh,
+					  std::unique_ptr<MeshBase>& refineMesh,
 					  OpenSubdivComputationMode mode,
 					  Far::TopologyRefiner* refiner,
 					  Far::StencilTable const* stencilTable)
@@ -344,8 +345,8 @@ public:
 	}
 
 	// TODO: Check
-	void refineVelocityData(const std::shared_ptr<MeshBase>& originalMesh,
-							std::shared_ptr<MeshBase>& refineMesh,
+	void refineVelocityData(const MeshBase* originalMesh,
+							std::unique_ptr<MeshBase>& refineMesh,
 							OpenSubdivComputationMode mode,
 							Far::TopologyRefiner* refiner,
 							Far::StencilTable const* stencilTable)
@@ -364,8 +365,8 @@ public:
 	}
 
 	// Approach without all convert buffers possible?
-	void refineMaterialData(const std::shared_ptr<MeshBase>& originalMesh,
-							std::shared_ptr<MeshBase>& refineMesh,
+	void refineMaterialData(const MeshBase* originalMesh,
+							std::unique_ptr<MeshBase>& refineMesh,
 							OpenSubdivComputationMode mode,
 							Far::TopologyRefiner* refiner,
 							Far::StencilTable const* stencilTable)
@@ -398,12 +399,11 @@ public:
 		delete buffer;
 	}
 
-	std::shared_ptr<MeshBase> refineMesh(const std::shared_ptr<MeshBase>& originalMesh, const SubdivisionOptions& opts)
+	std::unique_ptr<MeshBase> refineMesh(const MeshBase* originalMesh, const SubdivisionOptions& opts)
 	{
 		PR_PROFILE_THIS;
 
-		if (opts.MaxLevel < 1)
-			return originalMesh;
+		PR_ASSERT(opts.MaxLevel >= 1, "No refinement done!");
 
 		Far::TopologyRefiner* refiner			= setupRefiner(originalMesh, opts);
 		Far::StencilTable const* stencilTable   = setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_VERTEX);
@@ -431,7 +431,7 @@ public:
 		PR_ASSERT(indC == new_indices.size(), "Invalid subdivision calculation");
 
 		// Setup mesh
-		std::shared_ptr<MeshBase> refineMesh = std::make_shared<MeshBase>();
+		std::unique_ptr<MeshBase> refineMesh = std::make_unique<MeshBase>();
 
 		refineMesh->setIndices(new_indices);
 		refineMesh->setFaceVertexCount(new_vertsPerFace);
@@ -533,8 +533,14 @@ public:
 		else if (uvInterpolation == "varying")
 			opts.UVInterpolation = Far::StencilTableFactory::INTERPOLATE_VARYING;
 
-		std::shared_ptr<Mesh> mesh			   = ctx.Env->getMesh(mesh_name);
-		std::shared_ptr<MeshBase> originalMesh = mesh->base_unsafe();
+		std::shared_ptr<Mesh> mesh = ctx.Env->getMesh(mesh_name);
+		if (opts.MaxLevel < 1) {
+			return std::make_shared<SubdivMeshEntity>(id, name,
+													  mesh,
+													  materials, emsID);
+		}
+
+		MeshBase* originalMesh = mesh->base_unsafe();
 		if (!originalMesh)
 			return nullptr;
 
@@ -546,10 +552,11 @@ public:
 		if (opts.Scheme == Sdc::SCHEME_LOOP) // Scheme Loop accepts triangle data only
 			originalMesh->triangulate();
 
-		std::shared_ptr<MeshBase> refinedMesh = refineMesh(originalMesh, opts);
+		std::unique_ptr<MeshBase> refinedMesh = refineMesh(originalMesh, opts);
 		refinedMesh->triangulate();
-		std::shared_ptr<TriMesh> newMesh = std::make_shared<TriMesh>(mesh->name() + "_subdiv", refinedMesh, mesh->cache(),
-																	 refinedMesh->nodeCount() > 1000000);
+		bool useCache					 = mesh->cache()->shouldCacheMesh(refinedMesh->nodeCount());
+		std::shared_ptr<TriMesh> newMesh = std::make_shared<TriMesh>(mesh->name() + "_subdiv", std::move(refinedMesh),
+																	 mesh->cache(), useCache);
 		return std::make_shared<SubdivMeshEntity>(id, name,
 												  newMesh,
 												  materials, emsID);
