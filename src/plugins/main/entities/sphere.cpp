@@ -1,6 +1,7 @@
 #include "geometry/Sphere.h"
 #include "Environment.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
@@ -168,9 +169,9 @@ private:
 
 class SphereEntityFactory : public IEntityFactory {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const auto& reg  = env.registry();
+		const auto& reg  = ctx.Env->registry();
 		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		float r			 = reg.getForObject<float>(RG_ENTITY, uuid, "radius", 1.0f);
 
@@ -178,12 +179,12 @@ public:
 		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
 
 		int32 matID					   = -1;
-		std::shared_ptr<IMaterial> mat = env.getMaterial(matName);
+		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
 		if (mat)
 			matID = mat->id();
 
 		int32 emsID					   = -1;
-		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
+		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();
 

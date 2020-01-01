@@ -49,7 +49,10 @@ std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& wrkDi
 	dataLisp.build(container);
 
 	auto entries = container.getTopGroups();
-	return createEnvironment(entries, wrkDir, pluginPath);
+
+	SceneLoadContext ctx;
+	ctx.FileStack.push_back(path);
+	return createEnvironment(entries, wrkDir, pluginPath, ctx);
 }
 
 std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrkDir,
@@ -64,12 +67,15 @@ std::shared_ptr<Environment> SceneLoader::loadFromString(const std::wstring& wrk
 	dataLisp.build(container);
 
 	auto entries = container.getTopGroups();
-	return createEnvironment(entries, wrkDir, pluginPath);
+
+	SceneLoadContext ctx;
+	return createEnvironment(entries, wrkDir, pluginPath, ctx);
 }
 
 std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL::DataGroup>& groups,
 															const std::wstring& wrkDir,
-															const std::wstring& pluginPath)
+															const std::wstring& pluginPath,
+															SceneLoadContext& ctx)
 {
 	if (groups.empty()) {
 		PR_LOG(L_ERROR) << "DataLisp file does not contain valid entries" << std::endl;
@@ -116,62 +122,64 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 				if (dataD.type() == DL::DT_Group)
 					groups.push_back(dataD.getGroup());
 			}
-			setupEnvironment(groups, env.get());
+
+			ctx.Env = env.get();
+			setupEnvironment(groups, ctx);
 			return env;
 		}
 	}
 }
 
-void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Environment* env)
+void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx)
 {
 	// Registry information
 	for (const DL::DataGroup& entry : groups) {
 		if (entry.id() == "registry") {
-			addRegistryEntry(entry, env);
+			addRegistryEntry(entry, ctx);
 		}
 	}
 
 	// Output information
-	env->outputSpecification().parse(env, groups);
+	ctx.Env->outputSpecification().parse(ctx.Env, groups);
 
 	// Includees
 	for (const DL::DataGroup& entry : groups) {
 		if (entry.id() == "include")
-			addInclude(entry, env);
+			addInclude(entry, ctx);
 	}
 
 	// Independent information
 	for (const DL::DataGroup& entry : groups) {
 		if (entry.id() == "spectrum")
-			addSpectrum(entry, env);
+			addSpectrum(entry, ctx);
 		else if (entry.id() == "texture")
-			addTexture(entry, env);
+			addTexture(entry, ctx);
 		else if (entry.id() == "mesh")
-			addMesh(entry, env);
+			addMesh(entry, ctx);
 		else if (entry.id() == "graph" || entry.id() == "embed")
-			addSubGraph(entry, env);
+			addSubGraph(entry, ctx);
 	}
 
 	// Now semi-dependent information
 	for (const DL::DataGroup& entry : groups) {
 		if (entry.id() == "material")
-			addMaterial(entry, env);
+			addMaterial(entry, ctx);
 		else if (entry.id() == "emission")
-			addEmission(entry, env);
+			addEmission(entry, ctx);
 	}
 
 	// Now entities and lights
 	for (const DL::DataGroup& entry : groups) {
 		if (entry.id() == "entity")
-			addEntity(entry, nullptr, env);
+			addEntity(entry, nullptr, ctx);
 		else if (entry.id() == "light")
-			addLight(entry, env);
+			addLight(entry, ctx);
 		else if (entry.id() == "camera")
-			addCamera(entry, env);
+			addCamera(entry, ctx);
 	}
 }
 
-void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addRegistryEntry(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	if (group.anonymousCount() != 2
 		|| group.at(0).type() != DL::DT_String) {
@@ -182,11 +190,11 @@ void SceneLoader::addRegistryEntry(const DL::DataGroup& group, Environment* env)
 	std::string key = group.at(0).getString();
 	DL::Data value  = group.at(1);
 
-	addRegistryEntry(RG_NONE, 0, false, key, value, env);
+	addRegistryEntry(RG_NONE, 0, false, key, value, ctx);
 }
 
 void SceneLoader::setupTransformable(const DL::DataGroup& group,
-									 const std::shared_ptr<PR::ITransformable>& entity, Environment* /*env*/)
+									 const std::shared_ptr<PR::ITransformable>& entity, SceneLoadContext& /*ctx*/)
 {
 	DL::Data transformD = group.getFromKey("transform");
 	DL::Data posD		= group.getFromKey("position");
@@ -247,16 +255,16 @@ void SceneLoader::setupTransformable(const DL::DataGroup& group,
 }
 
 void SceneLoader::addEntity(const DL::DataGroup& group,
-							const std::shared_ptr<PR::ITransformable>& parent, Environment* env)
+							const std::shared_ptr<PR::ITransformable>& parent, SceneLoadContext& ctx)
 {
-	auto manag		= env->entityManager();
+	auto manag		= ctx.Env->entityManager();
 	const uint32 id = manag->nextID();
 
 	DL::Data nameD		= group.getFromKey("name");
 	DL::Data typeD		= group.getFromKey("type");
 	DL::Data localAreaD = group.getFromKey("local_area");
 
-	populateObjectRegistry(RG_ENTITY, id, group, env);
+	populateObjectRegistry(RG_ENTITY, id, group, ctx);
 
 	std::string name;
 	if (nameD.type() == DL::DT_String)
@@ -279,13 +287,13 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		return;
 	}
 
-	auto entity = fac->create(id, id, *env);
+	auto entity = fac->create(id, id, ctx);
 	if (!entity) {
 		PR_LOG(L_ERROR) << "Could not create entity of type " << type << std::endl;
 		return;
 	}
 
-	setupTransformable(group, entity, env);
+	setupTransformable(group, entity, ctx);
 
 	if (parent) {
 		entity->setTransform(parent->transform() * entity->transform());
@@ -306,20 +314,20 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 			DL::DataGroup child = group.at(i).getGroup();
 
 			if (child.id() == "entity")
-				addEntity(child, entity, env);
+				addEntity(child, entity, ctx);
 		}
 	}
 }
 
-void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addCamera(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= env->cameraManager();
+	auto manag		= ctx.Env->cameraManager();
 	const uint32 id = manag->nextID();
 
 	//DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
 
-	populateObjectRegistry(RG_CAMERA, id, group, env);
+	populateObjectRegistry(RG_CAMERA, id, group, ctx);
 
 	/*std::string name;
 	if (nameD.type() == DL::DT_String)
@@ -346,23 +354,23 @@ void SceneLoader::addCamera(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto camera = fac->create(id, id, *env);
+	auto camera = fac->create(id, id, ctx);
 	if (!camera) {
 		PR_LOG(L_ERROR) << "Could not create camera of type " << type << std::endl;
 		return;
 	}
 
-	setupTransformable(group, camera, env);
+	setupTransformable(group, camera, ctx);
 
 	manag->addObject(camera);
 }
 
-void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= env->infiniteLightManager();
+	auto manag		= ctx.Env->infiniteLightManager();
 	const uint32 id = manag->nextID();
 
-	populateObjectRegistry(RG_INFINITELIGHT, id, group, env);
+	populateObjectRegistry(RG_INFINITELIGHT, id, group, ctx);
 
 	DL::Data typeD = group.getFromKey("type");
 
@@ -382,23 +390,23 @@ void SceneLoader::addLight(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto light = fac->create(id, id, *env);
+	auto light = fac->create(id, id, ctx);
 	if (!light) {
 		PR_LOG(L_ERROR) << "Could not create light of type " << type << std::endl;
 		return;
 	}
 
-	setupTransformable(group, light, env);
+	setupTransformable(group, light, ctx);
 
-	env->infiniteLightManager()->addObject(light);
+	ctx.Env->infiniteLightManager()->addObject(light);
 }
 
-void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= env->emissionManager();
+	auto manag		= ctx.Env->emissionManager();
 	const uint32 id = manag->nextID();
 
-	populateObjectRegistry(RG_EMISSION, id, group, env);
+	populateObjectRegistry(RG_EMISSION, id, group, ctx);
 
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
@@ -411,7 +419,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (env->hasEmission(name)) {
+	if (ctx.Env->hasEmission(name)) {
 		PR_LOG(L_ERROR) << "Emission name already set" << std::endl;
 		return;
 	}
@@ -435,21 +443,21 @@ void SceneLoader::addEmission(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto emission = fac->create(id, id, *env);
+	auto emission = fac->create(id, id, ctx);
 	if (!emission) {
 		PR_LOG(L_ERROR) << "Could not create emission of type " << type << std::endl;
 		return;
 	}
 
-	env->addEmission(name, emission);
+	ctx.Env->addEmission(name, emission);
 	manag->addObject(emission);
 }
 
-void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	auto manag		= env->materialManager();
+	auto manag		= ctx.Env->materialManager();
 	const uint32 id = manag->nextID();
-	populateObjectRegistry(RG_MATERIAL, id, group, env);
+	populateObjectRegistry(RG_MATERIAL, id, group, ctx);
 
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data typeD = group.getFromKey("type");
@@ -469,7 +477,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (env->hasMaterial(name)) {
+	if (ctx.Env->hasMaterial(name)) {
 		PR_LOG(L_ERROR) << "Material name already set" << std::endl;
 		return;
 	}
@@ -488,7 +496,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	auto mat = fac->create(id, id, *env);
+	auto mat = fac->create(id, id, ctx);
 	if (!mat) {
 		PR_LOG(L_ERROR) << "Could not create material of type " << type << std::endl;
 		return;
@@ -506,11 +514,11 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, Environment* env)
 	if (cameraVisibleD.type() == DL::DT_Bool)
 		mat->enableCameraVisibility(cameraVisibleD.getBool());
 
-	env->addMaterial(name, mat);
+	ctx.Env->addMaterial(name, mat);
 	manag->addObject(mat);
 }
 
-void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addTexture(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	DL::Data nameD = group.getFromKey("name");
 
@@ -524,10 +532,10 @@ void SceneLoader::addTexture(const DL::DataGroup& group, Environment* env)
 	}
 
 	TextureParser parser;
-	parser.parse(env, name, group); // Will be added to env here
+	parser.parse(ctx.Env, name, group); // Will be added to ctx here
 }
 
-void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	DL::Data nameD = group.getFromKey("name");
 
@@ -539,12 +547,12 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (env->hasMesh(name)) {
+	if (ctx.Env->hasMesh(name)) {
 		PR_LOG(L_ERROR) << "Mesh name already set" << std::endl;
 		return;
 	}
 
-	env->cache()->unloadAll(); // Make sure there is enough space
+	ctx.Env->cache()->unloadAll(); // Make sure there is enough space
 	auto mesh = MeshParser::parse(group);
 
 	if (!mesh) {
@@ -552,18 +560,17 @@ void SceneLoader::addMesh(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	bool useCache	  = mesh->nodeCount() > 1000000;
+	mesh->triangulate();
+
+	bool useCache	  = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount());
 	DL::Data useCacheD = group.getFromKey("cache");
 	if (useCacheD.type() == DL::DT_Bool)
 		useCache = useCacheD.getBool();
 
-	if (useCache)
-		PR_LOG(L_INFO) << "Using cache for " << name << std::endl;
-	mesh->triangulate();
-	env->addMesh(name, std::make_shared<TriMesh>(name, mesh, env->cache(), useCache));
+	ctx.Env->addMesh(name, std::make_shared<TriMesh>(name, mesh, ctx.Env->cache(), useCache));
 }
 
-void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	DL::Data nameD = group.getFromKey("name");
 	DL::Data dataD = group.getFromKey("data");
@@ -576,16 +583,16 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, Environment* env)
 		return;
 	}
 
-	if (env->hasSpectrum(name)) {
+	if (ctx.Env->hasSpectrum(name)) {
 		PR_LOG(L_ERROR) << "Spectrum name already set" << std::endl;
 		return;
 	}
 
-	Spectrum spec = SpectralParser::getSpectrum(env->spectrumDescriptor(), dataD);
-	env->addSpectrum(name, spec);
+	Spectrum spec = SpectralParser::getSpectrum(ctx.Env->spectrumDescriptor(), dataD);
+	ctx.Env->addSpectrum(name, spec);
 }
 
-void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	DL::Data loaderD = group.getFromKey("loader");
 	DL::Data fileD   = group.getFromKey("file");
@@ -607,7 +614,7 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 		loader = "obj";
 	}
 
-	env->cache()->unloadAll(); // Make sure there is enough space
+	ctx.Env->cache()->unloadAll(); // Make sure there is enough space
 	if (loader == "obj") {
 		DL::Data overridesD = group.getFromKey("overrides");
 		std::map<std::string, std::string> overrides;
@@ -615,40 +622,53 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, Environment* env)
 			overrides[""] = overridesD.getString();
 
 		DL::Data flipNormalD = group.getFromKey("flipNormal");
+		DL::Data cacheD		 = group.getFromKey("cache");
 
 		WavefrontLoader loader(overrides);
 
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());
 
-		loader.load(file, env);
+		if (cacheD.type() == DL::DT_Bool)
+			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
+
+		loader.load(file, ctx);
 	} else if (loader == "ply") {
 		DL::Data flipNormalD = group.getFromKey("flipNormal");
 		DL::Data nameD		 = group.getFromKey("name");
+		DL::Data cacheD		 = group.getFromKey("cache");
 
 		PlyLoader loader(nameD.type() == DL::DT_String ? nameD.getString() : "");
 
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());
 
-		loader.load(file, env);
+		if (cacheD.type() == DL::DT_Bool)
+			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
+
+		loader.load(file, ctx);
 	} else {
 		PR_LOG(L_ERROR) << "Unknown " << loader << " loader." << std::endl;
 	}
 }
 
-void SceneLoader::addInclude(const DL::DataGroup& group, Environment* env)
+void SceneLoader::addInclude(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	if (group.anonymousCount() == 1 && group.isAllAnonymousOfType(DL::DT_String)) {
-		include(group.at(0).getString(), env);
+		include(group.at(0).getString(), ctx);
 	} else {
 		PR_LOG(L_ERROR) << "Invalid include directive." << std::endl;
 	}
 }
 
-void SceneLoader::include(const std::string& path, Environment* env)
+void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 {
 	PR_LOG(L_DEBUG) << "Including " << path << std::endl;
+	const std::wstring wpath = boost::filesystem::path(path).generic_wstring();
+	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), wpath) != ctx.FileStack.end()) {
+		PR_LOG(L_ERROR) << "Include file " << path << " already included! " << std::endl;
+		return;
+	}
 
 	std::ifstream stream(encodePath(path));
 	std::string str((std::istreambuf_iterator<char>(stream)),
@@ -660,7 +680,10 @@ void SceneLoader::include(const std::string& path, Environment* env)
 	dataLisp.parse(str);
 	dataLisp.build(container);
 
-	setupEnvironment(container.getTopGroups(), env);
+	ctx.FileStack.push_back(wpath);
+	setupEnvironment(container.getTopGroups(), ctx);
+	PR_ASSERT(ctx.FileStack.size() >= 1, "Invalid push/pop count");
+	ctx.FileStack.pop_back();
 }
 
 template <typename T>
@@ -675,9 +698,9 @@ static void varAddReg(Registry& reg, RegistryGroup regGroup, uint32 uuid, bool h
 
 void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
 								   const std::string& key, const DL::Data& value,
-								   Environment* env)
+								   SceneLoadContext& ctx)
 {
-	Registry& reg = env->registry();
+	Registry& reg = ctx.Env->registry();
 
 	switch (value.type()) {
 	case DL::DT_Integer:
@@ -735,7 +758,7 @@ void SceneLoader::addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool has
 }
 
 void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
-										 const DL::DataGroup& group, Environment* env)
+										 const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	for (const auto& entry : group.getNamedEntries()) {
 		if (entry.key() == "transform"
@@ -745,7 +768,7 @@ void SceneLoader::populateObjectRegistry(RegistryGroup regGroup, uint32 id,
 			continue; // Skip those entries
 
 		if (entry.type() != DL::DT_None)
-			addRegistryEntry(regGroup, id, true, entry.key(), entry, env);
+			addRegistryEntry(regGroup, id, true, entry.key(), entry, ctx);
 	}
 }
 } // namespace PR

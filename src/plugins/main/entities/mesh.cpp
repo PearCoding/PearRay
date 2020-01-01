@@ -3,6 +3,7 @@
 #include "Logger.h"
 #include "Profiler.h"
 #include "ResourceManager.h"
+#include "SceneLoadContext.h"
 #include "cache/ISerializeCachable.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
@@ -141,9 +142,9 @@ private:
 
 class MeshEntityFactory : public IEntityFactory {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const Registry& reg   = env.registry();
+		const Registry& reg   = ctx.Env->registry();
 		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		std::string mesh_name = reg.getForObject<std::string>(RG_ENTITY, uuid, "mesh", "");
 
@@ -152,7 +153,7 @@ public:
 
 		std::vector<uint32> materials;
 		for (std::string n : matNames) {
-			std::shared_ptr<IMaterial> mat = env.getMaterial(n);
+			std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(n);
 			if (mat)
 				materials.push_back(mat->id());
 		}
@@ -160,14 +161,14 @@ public:
 		std::string emsName = reg.getForObject<std::string>(
 			RG_ENTITY, uuid, "emission", "");
 		int32 emsID					   = -1;
-		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
+		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();
 
-		if (!env.hasMesh(mesh_name))
+		if (!ctx.Env->hasMesh(mesh_name))
 			return nullptr;
 		else {
-			auto mesh = env.getMesh(mesh_name);
+			auto mesh = ctx.Env->getMesh(mesh_name);
 			return std::make_shared<MeshEntity>(id, name,
 												mesh,
 												materials, emsID);

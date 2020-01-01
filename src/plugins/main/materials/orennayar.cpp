@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
@@ -97,9 +98,9 @@ private:
 
 class OrenNayarMaterialFactory : public IMaterialFactory {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string albedoName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "albedo", "");
@@ -108,8 +109,8 @@ public:
 			RG_MATERIAL, uuid, "roughness", "");
 
 		return std::make_shared<OrenNayarMaterial>(id,
-												   env.getSpectralShadingSocket(albedoName, 1),
-												   env.getScalarShadingSocket(roughnessName, 0.5f));
+												   ctx.Env->getSpectralShadingSocket(albedoName, 1),
+												   ctx.Env->getScalarShadingSocket(roughnessName, 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

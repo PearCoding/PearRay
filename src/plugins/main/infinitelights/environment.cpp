@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Logger.h"
+#include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightFactory.h"
 #include "math/Projection.h"
@@ -125,9 +126,9 @@ private:
 
 class EnvironmentLightFactory : public IInfiniteLightFactory {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, uint32 uuid, const Environment& env) override
+	std::shared_ptr<IInfiniteLight> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string name			 = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
 																 "name", "__unknown");
@@ -138,12 +139,12 @@ public:
 		const float factor				 = std::max(0.0000001f, reg.getForObject<float>(RG_INFINITELIGHT, uuid,
 																			"factor", 1.0f));
 
-		auto rad = env.getSpectralMapSocket(radianceName, 1);
+		auto rad = ctx.Env->getSpectralMapSocket(radianceName, 1);
 		std::shared_ptr<FloatSpectralMapSocket> background;
 		if (backgroundName.empty())
 			background = rad;
 		else
-			background = env.getSpectralMapSocket(backgroundName, 1);
+			background = ctx.Env->getSpectralMapSocket(backgroundName, 1);
 
 		return std::make_shared<EnvironmentLight>(id, name, rad, background, factor);
 	}

@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Logger.h"
+#include "SceneLoadContext.h"
 #include "image_io.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
@@ -129,13 +130,16 @@ static void handle_material_case(const std::string& name,
 // Specific materials
 static void mat_lambert(Environment& env)
 {
+	SceneLoadContext ctx;
+	ctx.Env = &env;
+
 	Registry& reg   = env.registry();
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
 	auto fac		= manag->getFactory("lambert");
 
 	reg.setForObject(RG_MATERIAL, id, "albedo", std::string("white"));
-	auto mat = fac->create(id, id, env);
+	auto mat = fac->create(id, id, ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate lambert material!" << std::endl;
 		return;
@@ -145,6 +149,9 @@ static void mat_lambert(Environment& env)
 
 static void mat_orennayar(Environment& env)
 {
+	SceneLoadContext ctx;
+	ctx.Env = &env;
+
 	Registry& reg   = env.registry();
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
@@ -153,7 +160,7 @@ static void mat_orennayar(Environment& env)
 	reg.setForObject(RG_MATERIAL, id, "albedo", std::string("white"));
 	{
 		reg.setForObject(RG_MATERIAL, id, "roughness", 1.0f);
-		auto mat = fac->create(id, id, env);
+		auto mat = fac->create(id, id, ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -162,7 +169,7 @@ static void mat_orennayar(Environment& env)
 	}
 	{
 		reg.setForObject(RG_MATERIAL, id, "roughness", 0.5f);
-		auto mat = fac->create(id, id, env);
+		auto mat = fac->create(id, id, ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -171,7 +178,7 @@ static void mat_orennayar(Environment& env)
 	}
 	{
 		reg.setForObject(RG_MATERIAL, id, "roughness", 0.0f);
-		auto mat = fac->create(id, id, env);
+		auto mat = fac->create(id, id, ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -182,6 +189,9 @@ static void mat_orennayar(Environment& env)
 
 static void mat_principled_p(Environment& env, float roughness, float specular)
 {
+	SceneLoadContext ctx;
+	ctx.Env = &env;
+
 	Registry& reg   = env.registry();
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
@@ -191,7 +201,7 @@ static void mat_principled_p(Environment& env, float roughness, float specular)
 	reg.setForObject(RG_MATERIAL, id, "roughness", roughness);
 	reg.setForObject(RG_MATERIAL, id, "specular", specular);
 
-	auto mat = fac->create(id, id, env);
+	auto mat = fac->create(id, id, ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 		return;

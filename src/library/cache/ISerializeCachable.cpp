@@ -1,5 +1,6 @@
 #include "ISerializeCachable.h"
 #include "Cache.h"
+#include "Logger.h"
 #include "serialization/FileSerializer.h"
 
 #include <boost/filesystem.hpp>
@@ -16,8 +17,10 @@ ISerializeCachable::ISerializeCachable(const std::string& name,
 	, mCache(cache)
 	, mUseCache(useCache)
 {
-	if (mUseCache)
+	if (mUseCache) {
+		PR_LOG(L_DEBUG) << name << " is cached" << std::endl;
 		cache->add(this);
+	}
 }
 
 ISerializeCachable::~ISerializeCachable()

@@ -2,6 +2,8 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "SceneLoadContext.h"
+#include "cache/Cache.h"
 #include "mesh/MeshBase.h"
 #include "mesh/TriMesh.h"
 
@@ -32,6 +34,7 @@ PlyLoader::PlyLoader(const std::string& name)
 	: mName(name)
 	, mScale(1)
 	, mFlipNormal(false)
+	, mCacheMode(CM_Auto)
 {
 }
 
@@ -223,7 +226,7 @@ std::shared_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool 
 	return cnt;
 }
 
-void PlyLoader::load(const std::wstring& file, Environment* env)
+void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 {
 	std::fstream stream(encodePath(file), std::ios::in | std::ios::binary);
 	if (!stream)
@@ -316,9 +319,9 @@ void PlyLoader::load(const std::wstring& file, Environment* env)
 	std::shared_ptr<MeshBase> cnt = read(stream, header, (method == "ascii"));
 
 	if (cnt) {
-		bool useCache = cnt->nodeCount() > 1000000;
 		cnt->triangulate();
-		env->addMesh(mName, std::make_shared<TriMesh>(mName, cnt, env->cache(), useCache));
+		ctx.Env->addMesh(mName, std::make_shared<TriMesh>(mName, cnt, ctx.Env->cache(),
+														  ctx.Env->cache()->shouldCacheMesh(cnt->nodeCount(), static_cast<CacheMode>(mCacheMode))));
 	}
 }
 } // namespace PR

@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "ResourceManager.h"
+#include "SceneLoadContext.h"
 #include "cache/Cache.h"
 #include "camera/CameraManager.h"
 #include "camera/ICamera.h"
@@ -189,7 +190,9 @@ std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 		return nullptr;
 	}
 
-	auto integrator = intfact->create(0, 0, *this);
+	SceneLoadContext ctx;
+	ctx.Env			= const_cast<Environment*>(this);
+	auto integrator = intfact->create(0, 0, ctx);
 	if (!integrator) {
 		PR_LOG(L_ERROR) << "Integrator " << intMode
 						<< " implementation is broken! Please contact plugin developer." << std::endl;
@@ -213,7 +216,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 		return nullptr;
 	}
 
-	std::wstring scene_cnt = mResourceManager->requestFile("scene", "global.cnt");
+	std::wstring scene_cnt = mResourceManager->requestFile("scene", "global", ".cnt");
 
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
 														   entities,

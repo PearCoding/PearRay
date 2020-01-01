@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "MatrixFormat.h"
+#include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightFactory.h"
 #include "math/Projection.h"
@@ -64,9 +65,9 @@ private:
 
 class DistantLightFactory : public IInfiniteLightFactory {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, uint32 uuid, const Environment& env) override
+	std::shared_ptr<IInfiniteLight> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string name		   = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
 															   "name", "__unknown");
@@ -76,7 +77,7 @@ public:
 																"direction", Vector3f(0, 0, 1));
 
 		return std::make_shared<DistantLight>(id, name, direction,
-											  env.getSpectralShadingSocket(radianceName, 1));
+											  ctx.Env->getSpectralShadingSocket(radianceName, 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

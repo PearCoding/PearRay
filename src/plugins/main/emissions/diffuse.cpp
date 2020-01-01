@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "emission/IEmissionFactory.h"
 #include "entity/IEntity.h"
@@ -27,14 +28,14 @@ private:
 
 class DiffuseEmissionFactory : public IEmissionFactory {
 public:
-	std::shared_ptr<IEmission> create(uint32 id, uint32 uuid, const Environment& env) override
+	std::shared_ptr<IEmission> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string radianceName = reg.getForObject<std::string>(RG_EMISSION, uuid,
 																	   "radiance", "");
 
-		return std::make_shared<DiffuseEmission>(id, env.getSpectralShadingSocket(radianceName, 1));
+		return std::make_shared<DiffuseEmission>(id, ctx.Env->getSpectralShadingSocket(radianceName, 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

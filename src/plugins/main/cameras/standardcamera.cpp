@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Logger.h"
+#include "SceneLoadContext.h"
 #include "camera/ICamera.h"
 #include "camera/ICameraFactory.h"
 #include "ray/RayPackage.h"
@@ -178,21 +179,22 @@ private:
 
 class StandardCameraFactory : public ICameraFactory {
 public:
-	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		std::string name = env.registry().getForObject<std::string>(RG_CAMERA, uuid, "name", "__unnamed__");
+		Registry& reg	= ctx.Env->registry();
+		std::string name = reg.getForObject<std::string>(RG_CAMERA, uuid, "name", "__unnamed__");
 
 		auto cam = std::make_shared<StandardCamera>(id, name);
 
-		cam->setLocalDirection(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localDirection", Vector3f(0, 0, 1)));
-		cam->setLocalUp(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localUp", Vector3f(0, 1, 0)));
-		cam->setLocalRight(env.registry().getForObject<Vector3f>(RG_CAMERA, uuid, "localRight", Vector3f(1, 0, 0)));
+		cam->setLocalDirection(reg.getForObject<Vector3f>(RG_CAMERA, uuid, "localDirection", Vector3f(0, 0, 1)));
+		cam->setLocalUp(reg.getForObject<Vector3f>(RG_CAMERA, uuid, "localUp", Vector3f(0, 1, 0)));
+		cam->setLocalRight(reg.getForObject<Vector3f>(RG_CAMERA, uuid, "localRight", Vector3f(1, 0, 0)));
 
-		cam->setWidth(env.registry().getForObject<float>(RG_CAMERA, uuid, "width", 1));
-		cam->setHeight(env.registry().getForObject<float>(RG_CAMERA, uuid, "height", 1));
+		cam->setWidth(reg.getForObject<float>(RG_CAMERA, uuid, "width", 1));
+		cam->setHeight(reg.getForObject<float>(RG_CAMERA, uuid, "height", 1));
 
-		cam->setApertureRadius(env.registry().getForObject<float>(RG_CAMERA, uuid, "apertureRadius", 1));
-		cam->setFStop(env.registry().getForObject<float>(RG_CAMERA, uuid, "fstop", 0));
+		cam->setApertureRadius(reg.getForObject<float>(RG_CAMERA, uuid, "apertureRadius", 1));
+		cam->setFStop(reg.getForObject<float>(RG_CAMERA, uuid, "fstop", 0));
 
 		return cam;
 	}

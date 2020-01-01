@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Fresnel.h"
@@ -307,9 +308,9 @@ private:
 
 class PrincipledMaterialFactory : public IMaterialFactory {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string baseColorName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "base_color", "");
@@ -335,17 +336,17 @@ public:
 			RG_MATERIAL, uuid, "clearcoat_gloss", "");
 
 		return std::make_shared<PrincipledMaterial>(id,
-													env.getSpectralShadingSocket(baseColorName, 1.0f),
-													env.getScalarShadingSocket(specularName, 0.5f),
-													env.getScalarShadingSocket(specularTintName, 0.0f),
-													env.getScalarShadingSocket(roughnessName, 0.5f),
-													env.getScalarShadingSocket(anisotropicName, 0.0f),
-													env.getScalarShadingSocket(subsurfaceName, 0.0f),
-													env.getScalarShadingSocket(metallicName, 0.0f),
-													env.getScalarShadingSocket(sheenName, 0.0f),
-													env.getScalarShadingSocket(sheenTintName, 0.0f),
-													env.getScalarShadingSocket(clearcoatName, 0.0f),
-													env.getScalarShadingSocket(clearcoatTintName, 0.0f));
+													ctx.Env->getSpectralShadingSocket(baseColorName, 1.0f),
+													ctx.Env->getScalarShadingSocket(specularName, 0.5f),
+													ctx.Env->getScalarShadingSocket(specularTintName, 0.0f),
+													ctx.Env->getScalarShadingSocket(roughnessName, 0.5f),
+													ctx.Env->getScalarShadingSocket(anisotropicName, 0.0f),
+													ctx.Env->getScalarShadingSocket(subsurfaceName, 0.0f),
+													ctx.Env->getScalarShadingSocket(metallicName, 0.0f),
+													ctx.Env->getScalarShadingSocket(sheenName, 0.0f),
+													ctx.Env->getScalarShadingSocket(sheenTintName, 0.0f),
+													ctx.Env->getScalarShadingSocket(clearcoatName, 0.0f),
+													ctx.Env->getScalarShadingSocket(clearcoatTintName, 0.0f));
 	}
 
 	const std::vector<std::string>& getNames() const

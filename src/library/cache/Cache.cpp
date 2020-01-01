@@ -6,6 +6,7 @@ namespace PR {
 Cache::Cache(const std::wstring& workDir)
 	: mCacheDir(workDir + L"/cache/")
 	, mMaxMemoryUsage(4ULL * 1024 * 1024 * 1024) // 4 GB
+	, mMode(CM_Auto)
 	, mCurrentMemoryUsage(0)
 {
 	boost::filesystem::create_directories(mCacheDir);
@@ -52,4 +53,25 @@ void Cache::unloadAll()
 	mCurrentMemoryUsage = 0;
 }
 
+bool Cache::shouldCacheMesh(size_t nodecount, CacheMode local) const
+{
+	constexpr size_t MID = 500000;
+	switch (mMode) {
+	case CM_None:
+		return false;
+	case CM_All:
+		return true;
+	default:
+	case CM_Auto:
+		switch (local) {
+		case CM_None:
+			return false;
+		case CM_All:
+			return true;
+		default:
+		case CM_Auto:
+			return nodecount >= MID;
+		}
+	}
+}
 } // namespace PR

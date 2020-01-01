@@ -35,7 +35,7 @@ protected:
 	virtual void checkCollisionLocal(const RayPackage& in, CollisionOutput& out) = 0;
 	virtual void checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)  = 0;
 
-	void serialize(Serializer& serializer);
+	void serialize(Serializer& serializer) override;
 
 	void beforeLoad() override;
 	void afterLoad() override;

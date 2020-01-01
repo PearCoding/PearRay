@@ -2,6 +2,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityFactory.h"
@@ -274,9 +275,9 @@ private:
 
 class CurveEntityFactory : public IEntityFactory {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 		std::string name	= reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
 		uint32 degree		= (uint32)std::max(
 			  1,
@@ -294,14 +295,14 @@ public:
 		std::string matName = reg.getForObject<std::string>(
 			RG_ENTITY, uuid, "material", "");
 		int32 matID					   = -1;
-		std::shared_ptr<IMaterial> mat = env.getMaterial(matName);
+		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
 		if (mat)
 			matID = static_cast<int32>(mat->id());
 
 		std::string emsName = reg.getForObject<std::string>(
 			RG_ENTITY, uuid, "emission", "");
 		int32 emsID					   = -1;
-		std::shared_ptr<IEmission> ems = env.getEmission(emsName);
+		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = static_cast<int32>(ems->id());
 

@@ -15,7 +15,7 @@ class ISampler;
 class PR_LIB MeshBase : public ISerializable {
 public:
 	MeshBase();
-	~MeshBase();
+	virtual ~MeshBase();
 
 	// ISerializable
 	void serialize(Serializer& serializer) override;

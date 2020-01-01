@@ -9,26 +9,16 @@ public:
 	explicit PlyLoader(const std::string& name);
 	~PlyLoader();
 
-	inline float scale() const
-	{
-		return mScale;
-	}
+	inline void setScale(float f) { mScale = f; }
+	inline void flipNormal(bool b) { mFlipNormal = b; }
+	inline void setCacheMode(int cm) { mCacheMode = cm; }
 
-	inline void setScale(float f)
-	{
-		mScale = f;
-	}
-
-	inline void flipNormal(bool b)
-	{
-		mFlipNormal = b;
-	}
-
-	void load(const std::wstring& file, Environment* env) override;
+	void load(const std::wstring& file, const SceneLoadContext& ctx) override;
 
 private:
 	std::string mName;
 	float mScale;
 	bool mFlipNormal;
+	int mCacheMode;
 };
 } // namespace PR

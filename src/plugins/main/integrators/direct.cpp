@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "buffer/Feedback.h"
 #include "emission/IEmission.h"
 #include "infinitelight/IInfiniteLight.h"
@@ -438,9 +439,9 @@ private:
 
 class IntDirectFactory : public IIntegratorFactory {
 public:
-	std::shared_ptr<IIntegrator> create(uint32, uint32, const Environment& env) override
+	std::shared_ptr<IIntegrator> create(uint32, uint32, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		size_t lightsamples = (size_t)reg.getByGroup<uint32>(RG_INTEGRATOR, "direct/light/sample_count", 4);
 

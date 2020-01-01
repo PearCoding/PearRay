@@ -6,6 +6,12 @@
 #include <tbb/concurrent_priority_queue.h>
 
 namespace PR {
+enum CacheMode {
+	CM_None = 0,
+	CM_Auto,
+	CM_All
+};
+
 class ICachable;
 class PR_LIB Cache {
 public:
@@ -33,6 +39,11 @@ public:
 
 	inline size_t loadedEntityCount() const { return mEntities.size(); }
 
+	inline CacheMode mode() const { return mMode; }
+	inline void setMode(CacheMode mode) { mMode = mode; }
+
+	bool shouldCacheMesh(size_t nodecount, CacheMode local = CM_Auto) const;
+
 private:
 	struct Comparator {
 		bool operator()(const ICachable* lhs, const ICachable* rhs) const
@@ -45,6 +56,7 @@ private:
 	// This two variable do not change while working -> No thread safety needed
 	const std::wstring mCacheDir;
 	size_t mMaxMemoryUsage;
+	CacheMode mMode;
 
 	std::atomic<size_t> mCurrentMemoryUsage;
 };

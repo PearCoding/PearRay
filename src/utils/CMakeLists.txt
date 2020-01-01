@@ -4,6 +4,7 @@ SET(PR_Src
   Environment.cpp
   Environment.h
   Environment.inl
+  SceneLoadContext.h
   SceneLoader.cpp
   SceneLoader.h
   SpectralFile.cpp

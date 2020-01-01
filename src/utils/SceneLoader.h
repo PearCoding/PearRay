@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SceneLoadContext.h"
 #include "registry/Registry.h"
 
 #include <map>
@@ -29,29 +30,30 @@ public:
 private:
 	static std::shared_ptr<Environment> createEnvironment(const std::vector<DL::DataGroup>& groups,
 														  const std::wstring& wrkDir,
-														  const std::wstring& pluginPath);
-	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, Environment* env);
-	static void addRegistryEntry(const DL::DataGroup& group, Environment* env);
+														  const std::wstring& pluginPath, 
+														  SceneLoadContext& ctx);
+	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx);
+	static void addRegistryEntry(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void setupTransformable(const DL::DataGroup& group,
-								   const std::shared_ptr<PR::ITransformable>& entity, Environment* env);
+								   const std::shared_ptr<PR::ITransformable>& entity, SceneLoadContext& ctx);
 	static void addEntity(const DL::DataGroup& group,
-						  const std::shared_ptr<ITransformable>& parent, Environment* env);
-	static void addCamera(const DL::DataGroup& group, Environment* env);
-	static void addLight(const DL::DataGroup& group, Environment* env);
-	static void addEmission(const DL::DataGroup& group, Environment* env);
-	static void addMaterial(const DL::DataGroup& group, Environment* env);
-	static void addTexture(const DL::DataGroup& group, Environment* env);
-	static void addSpectrum(const DL::DataGroup& group, Environment* env);
-	static void addSubGraph(const DL::DataGroup& group, Environment* env);
-	static void addInclude(const DL::DataGroup& group, Environment* env);
-	static void addMesh(const DL::DataGroup& group, Environment* env);
+						  const std::shared_ptr<ITransformable>& parent, SceneLoadContext& ctx);
+	static void addCamera(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addLight(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addEmission(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addTexture(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addInclude(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addMesh(const DL::DataGroup& group, SceneLoadContext& ctx);
 
 	static void addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
 								 const std::string& key, const DL::Data& group,
-								 Environment* env);
+								 SceneLoadContext& ctx);
 	static void populateObjectRegistry(RegistryGroup regGroup, uint32 id,
-									   const DL::DataGroup& group, Environment* env);
+									   const DL::DataGroup& group, SceneLoadContext& ctx);
 
-	static void include(const std::string& filename, Environment* env);
+	static void include(const std::string& filename, SceneLoadContext& ctx);
 };
 } // namespace PR

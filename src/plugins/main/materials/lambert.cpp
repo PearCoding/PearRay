@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Projection.h"
@@ -70,14 +71,14 @@ private:
 
 class LambertMaterialFactory : public IMaterialFactory {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string albedoName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "albedo", "");
 
-		return std::make_shared<LambertMaterial>(id, env.getSpectralShadingSocket(albedoName, 1));
+		return std::make_shared<LambertMaterial>(id, ctx.Env->getSpectralShadingSocket(albedoName, 1));
 	}
 
 	const std::vector<std::string>& getNames() const

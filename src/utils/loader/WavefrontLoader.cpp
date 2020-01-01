@@ -2,6 +2,8 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "SceneLoadContext.h"
+#include "cache/Cache.h"
 #include "mesh/MeshBase.h"
 #include "mesh/TriMesh.h"
 
@@ -13,6 +15,7 @@ WavefrontLoader::WavefrontLoader(const std::map<std::string, std::string>& overr
 	: mOverrides(overrides)
 	, mScale(1)
 	, mFlipNormal(false)
+	, mCacheMode(CM_Auto)
 {
 }
 
@@ -20,7 +23,7 @@ WavefrontLoader::~WavefrontLoader()
 {
 }
 
-void WavefrontLoader::load(const std::wstring& file, Environment* env)
+void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -88,19 +91,19 @@ void WavefrontLoader::load(const std::wstring& file, Environment* env)
 
 		int i			 = 1;
 		std::string next = name;
-		while (env->hasMesh(next) && i < 1000) {
+		while (ctx.Env->hasMesh(next) && i < 1000) {
 			std::stringstream stream;
 			stream << name << "_" << i;
 			next = stream.str();
 			i++;
 		}
 
-		if (env->hasMesh(next))
+		if (ctx.Env->hasMesh(next))
 			PR_LOG(L_ERROR) << "Mesh " << next << " already in use." << std::endl;
 
-		bool useCache = mesh->nodeCount() > 1000000;
 		mesh->triangulate();
-		env->addMesh(next, std::make_shared<TriMesh>(next, mesh, env->cache(), useCache));
+		ctx.Env->addMesh(next, std::make_shared<TriMesh>(next, mesh, ctx.Env->cache(),
+														 ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode))));
 		PR_LOG(L_INFO) << "Added mesh " << next << std::endl;
 	}
 }

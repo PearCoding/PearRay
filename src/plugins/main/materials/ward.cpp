@@ -1,5 +1,6 @@
 #include "Environment.h"
 #include "Profiler.h"
+#include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialFactory.h"
 #include "math/Microfacet.h"
@@ -163,9 +164,9 @@ private:
 
 class WardMaterialFactory : public IMaterialFactory {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const Environment& env)
+	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = env.registry();
+		const Registry& reg = ctx.Env->registry();
 
 		const std::string albedoName = reg.getForObject<std::string>(
 			RG_MATERIAL, uuid, "albedo", "");
@@ -182,7 +183,7 @@ public:
 			RG_MATERIAL, uuid, "roughness", "");
 
 		if (!roughnessName.empty()) {
-			roughnessX = env.getScalarShadingSocket(roughnessName, 0.5f);
+			roughnessX = ctx.Env->getScalarShadingSocket(roughnessName, 0.5f);
 			roughnessY = roughnessX;
 		} else {
 			const std::string roughnessXName = reg.getForObject<std::string>(
@@ -191,14 +192,14 @@ public:
 			const std::string roughnessYName = reg.getForObject<std::string>(
 				RG_MATERIAL, uuid, "roughness_y", "");
 
-			roughnessX = env.getScalarShadingSocket(roughnessXName, 0.5f);
-			roughnessY = env.getScalarShadingSocket(roughnessYName, 0.5f);
+			roughnessX = ctx.Env->getScalarShadingSocket(roughnessXName, 0.5f);
+			roughnessY = ctx.Env->getScalarShadingSocket(roughnessYName, 0.5f);
 		}
 
 		return std::make_shared<WardMaterial>(id,
-											  env.getSpectralShadingSocket(albedoName, 1),
-											  env.getSpectralShadingSocket(specName, 1),
-											  env.getScalarShadingSocket(reflName, 1),
+											  ctx.Env->getSpectralShadingSocket(albedoName, 1),
+											  ctx.Env->getSpectralShadingSocket(specName, 1),
+											  ctx.Env->getScalarShadingSocket(reflName, 1),
 											  roughnessX, roughnessY);
 	}
 
