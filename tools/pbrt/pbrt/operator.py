@@ -91,7 +91,7 @@ class Operator:
     def applyTransform(self, mat):
         self.contextStack[-1].transform = np.matmul(
             self.contextStack[-1].transform, mat)
-        #print(self.contextStack[-1].transform)
+        # print(self.contextStack[-1].transform)
 
     def op_Translate(self, op):
         self.applyTransform(np.array([[1, 0, 0, op.operand[0]],
@@ -131,7 +131,7 @@ class Operator:
 
     def op_ConcatTransform(self, op):
         self.applyTransform(Operator.matFromOp(op))
-        #print(self.contextStack[-1].transform)
+        # print(self.contextStack[-1].transform)
 
     @staticmethod
     def normVec(v):
@@ -447,13 +447,15 @@ class Operator:
             self.w.write(")")
         elif mat_type == "disney":
             color = self.unpackRefl(op.parameters['color'])
+            eta = op.parameters['eta']
+            spec = ((eta - 1) / (eta + 1))**2
             self.w.write("(material")
             self.w.goIn()
             self.w.write(":type 'principled'")
             self.w.write(":name '%s'" % op.operand)
             self.w.write(":base '%s'" % color)
             self.w.write(":roughness %f" % op.parameters['roughness'])
-            self.w.write(":specular %f" % op.parameters['spectrans'])
+            self.w.write(":specular %f" % spec)
             self.w.write(":specular_tint %f" % op.parameters['speculartint'])
             self.w.write(":metallic %f" % op.parameters['metallic'])
             self.w.write(":clearcoat %f" % op.parameters['clearcoat'])
@@ -462,7 +464,7 @@ class Operator:
             self.w.write(":anisotropic %f" % op.parameters['anisotropic'])
             self.w.write(":sheen %f" % op.parameters['sheen'])
             self.w.write(":sheen_tint %f" % op.parameters['sheentint'])
-            # TODO: 'eta', 'scatterdistance' ?
+            # TODO: 'spectrans', 'scatterdistance' ?
             self.w.goOut()
             self.w.write(")")
         else:
