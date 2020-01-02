@@ -110,6 +110,10 @@ void OutputBufferBucket::pushSpectralFragment(uint32 x, uint32 y, const ColorTri
 void OutputBufferBucket::pushSPFragment(uint32 x, uint32 y, const ShadingPoint& s,
 										const LightPath& path)
 {
+	const int32 off = mFilter->radius();
+	x += off;
+	y += off;
+
 	const auto blend1D = [&](uint32 ix, uint32 iy, AOV1D var, float val, float blend) {
 		if (mData.mInt1D[var])
 			mData.mInt1D[var]->blendFragment(ix, iy, 0, s.Ray.Weight[0] * val, blend);
