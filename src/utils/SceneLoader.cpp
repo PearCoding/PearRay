@@ -113,15 +113,15 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 
 			env->cache()->setMode(static_cast<CacheMode>(opts.CacheMode));
 
-			std::vector<DL::DataGroup> groups;
+			std::vector<DL::DataGroup> inner_groups;
 			for (size_t i = 0; i < top.anonymousCount(); ++i) {
 				DL::Data dataD = top.at(i);
 				if (dataD.type() == DL::DT_Group)
-					groups.push_back(dataD.getGroup());
+					inner_groups.push_back(dataD.getGroup());
 			}
 
 			ctx.Env = env.get();
-			setupEnvironment(groups, ctx);
+			setupEnvironment(inner_groups, ctx);
 			return env;
 		}
 	}
@@ -208,10 +208,10 @@ void SceneLoader::setupTransformable(const DL::DataGroup& group,
 		else
 			entity->setTransform(t);
 	} else {
-		bool ok = false;
-		Vector3f pos;
-		Eigen::Quaternionf rot;
-		Vector3f sca;
+		bool ok				   = true;
+		Vector3f pos		   = Vector3f(0, 0, 0);
+		Eigen::Quaternionf rot = Eigen::Quaternionf::Identity();
+		Vector3f sca		   = Vector3f(1, 1, 1);
 
 		if (posD.type() == DL::DT_Group) {
 			pos = MathParser::getVector(posD.getGroup(), ok);
@@ -550,7 +550,14 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Env->cache()->unloadAll(); // Make sure there is enough space
-	auto mesh = MeshParser::parse(group);
+
+	std::unique_ptr<MeshBase> mesh;
+	try {
+		mesh = MeshParser::parse(group);
+	} catch (const std::bad_alloc& ex) {
+		PR_LOG(L_ERROR) << "Out of memory to load mesh " << name << std::endl;
+		return;
+	}
 
 	if (!mesh) {
 		PR_LOG(L_ERROR) << "Mesh " << name << " couldn't be load" << std::endl;
@@ -629,7 +636,11 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 		if (cacheD.type() == DL::DT_Bool)
 			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
 
-		loader.load(file, ctx);
+		try {
+			loader.load(file, ctx);
+		} catch (const std::bad_alloc& ex) {
+			PR_LOG(L_ERROR) << "Out of memory to load subgraph " << fileD.getString() << std::endl;
+		}
 	} else if (loader == "ply") {
 		DL::Data flipNormalD = group.getFromKey("flipNormal");
 		DL::Data nameD		 = group.getFromKey("name");
@@ -643,7 +654,11 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 		if (cacheD.type() == DL::DT_Bool)
 			loader.setCacheMode(cacheD.getBool() ? CM_All : CM_None);
 
-		loader.load(file, ctx);
+		try {
+			loader.load(file, ctx);
+		} catch (const std::bad_alloc& ex) {
+			PR_LOG(L_ERROR) << "Out of memory to load subgraph " << fileD.getString() << std::endl;
+		}
 	} else {
 		PR_LOG(L_ERROR) << "Unknown " << loader << " loader." << std::endl;
 	}

@@ -10,7 +10,7 @@
 #include "math/Tangent.h"
 #include "mesh/MeshBase.h"
 #include "sampler/SplitSample.h"
-#include "serialization/Serializer.h"
+#include "serialization/FileSerializer.h"
 
 #include <fstream>
 
@@ -48,7 +48,11 @@ float Mesh::collisionCost() const
 
 void Mesh::serialize(Serializer& serializer)
 {
-	mBase->serialize(serializer);
+	try {
+		mBase->serialize(serializer);
+	} catch (const std::bad_alloc& ex) {
+		PR_LOG(L_FATAL) << "Out of memory to load mesh " << name() << std::endl;
+	}
 }
 
 void Mesh::beforeLoad()
@@ -147,8 +151,8 @@ void Mesh::constructCollider()
 	builder.build(mBase->faceCount());
 
 	std::wstring cnt_file = this->cacheFileNoExt() + L".cnt";
-	std::ofstream stream(encodePath(cnt_file), std::ios::out | std::ios::trunc);
-	builder.save(stream);
+	FileSerializer serializer(cnt_file, false);
+	builder.save(serializer);
 
 	PR_LOG(L_INFO) << "Mesh " << name() << " KDtree [depth="
 				   << builder.depth()
@@ -166,9 +170,9 @@ void Mesh::constructCollider()
 void Mesh::loadCollider()
 {
 	std::wstring cnt_file = this->cacheFileNoExt() + L".cnt";
-	std::ifstream stream(encodePath(cnt_file));
+	FileSerializer serializer(cnt_file, true);
 	mCollider = std::make_shared<kdTreeCollider>();
-	mCollider->load(stream);
+	mCollider->load(serializer);
 	if (!mCollider->isEmpty())
 		mBoundingBox = mCollider->boundingBox();
 }

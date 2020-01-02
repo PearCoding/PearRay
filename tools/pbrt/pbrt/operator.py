@@ -33,6 +33,7 @@ class Operator:
         self.specCount = 0
         self.textureCount = 0
         self.objectShapeAssoc = {}
+        self.includes = {}
 
     def apply(self, op):
         try:
@@ -63,12 +64,25 @@ class Operator:
         if not self.options.quite:
             print("Including: %s" % inc_file)
 
+        if inc_file not in self.includes:
+            self.includes[inc_file] = 1
+        else:
+            self.includes[inc_file] += 1
+            if self.options.skipRepetitiveIncludes:
+                if not self.options.quite:
+                    print("Skipping include: %s" % inc_file)
+                return
+
         old_writer = self.w
         if not self.options.singleFile:
             rel_file = os.path.relpath(
                 os.path.abspath(inc_file), self.globalDir)
+
+            post_fix = '' if self.includes[inc_file] == 1 else '_%i' % (
+                self.includes[inc_file])
+
             output_file = os.path.join(
-                self.options.output, os.path.splitext(rel_file)[0]+'.prc')
+                self.options.output, os.path.splitext(rel_file)[0]+post_fix+'.prc')
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
             self.w.write("(include '%s')" % output_file)
@@ -382,7 +396,7 @@ class Operator:
     def op_Texture(self, op):
         pass  # TODO
 
-    def unpackRefl(self, col):
+    def unpackSpec(self, col, spec_type):
         name = "spec_%i" % self.specCount
         self.specCount += 1
 
@@ -390,27 +404,19 @@ class Operator:
         self.w.goIn()
         self.w.write(":name '%s'" % name)
         if isinstance(col, list):
-            self.w.write(":data (refl %f %f %f)" % (col[0], col[1], col[2]))
+            self.w.write(":data (%s %f %f %f)" %
+                         (spec_type, col[0], col[1], col[2]))
         else:
-            self.w.write(":data (refl %f %f %f)" % (col, col, col))
+            self.w.write(":data (%s %f %f %f)" % (spec_type, col, col, col))
         self.w.goOut()
         self.w.write(")")
         return name
+
+    def unpackRefl(self, col):
+        return self.unpackSpec(col, 'refl')
 
     def unpackIllum(self, col):
-        name = "spec_%i" % self.specCount
-        self.specCount += 1
-
-        self.w.write("(spectrum")
-        self.w.goIn()
-        self.w.write(":name '%s'" % name)
-        if isinstance(col, list):
-            self.w.write(":data (illum %f %f %f)" % (col[0], col[1], col[2]))
-        else:
-            self.w.write(":data (illum %f %f %f)" % (col, col, col))
-        self.w.goOut()
-        self.w.write(")")
-        return name
+        return self.unpackSpec(col, 'illum')
 
     def setupTexture(self, base, filename):
         if self.options.skipTex:

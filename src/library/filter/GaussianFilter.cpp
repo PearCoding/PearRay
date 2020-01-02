@@ -18,7 +18,7 @@ void GaussianFilter::cache()
 		return;
 
 	const int halfSize = mRadius + 1;
-	mCache.resize(halfSize * halfSize);
+	mCache.resize(halfSize * (size_t)halfSize);
 
 	auto gauss = [](float x, float alpha) {
 		return x <= 1.0f ? std::exp(-alpha * x * x) : 0.0f;

@@ -1,4 +1,5 @@
 #include "container/kdTreeBuilder.h"
+#include "serialization/Serializer.h"
 #include <vector>
 
 namespace PR {
@@ -24,7 +25,7 @@ struct kdNodeBuilder {
 	}
 
 	size_t id;
-	const bool isLeaf;
+	bool isLeaf;
 	BoundingBox boundingBox;
 };
 
@@ -39,8 +40,8 @@ struct kdInnerNodeBuilder : public kdNodeBuilder {
 	{
 	}
 
-	const uint8 axis;
-	const float splitPos;
+	uint8 axis;
+	float splitPos;
 	kdNodeBuilder* left;
 	kdNodeBuilder* right;
 };
@@ -556,39 +557,35 @@ void kdTreeBuilder::build(size_t size)
 
 /////////////////////////////////////////////
 
-static void saveNode(std::ostream& stream, kdNodeBuilder* node)
+static void saveNode(Serializer& stream, kdNodeBuilder* node)
 {
-	stream << node->id << " " << static_cast<uint32>(node->isLeaf ? 1 : 0);
+	stream | node->id | node->isLeaf;
 	if (node->isLeaf) {
-		kdLeafNodeBuilder* leafN = reinterpret_cast<kdLeafNodeBuilder*>(node);
-		stream << " " << leafN->objects.size();
-		for (const auto& entity : leafN->objects) {
-			stream << " " << entity;
-		}
-		stream << std::endl;
+		stream | reinterpret_cast<kdLeafNodeBuilder*>(node)->objects;
 	} else {
 		kdInnerNodeBuilder* innerN = reinterpret_cast<kdInnerNodeBuilder*>(node);
-		stream << " " << static_cast<uint32>(innerN->axis)
-			   << " " << innerN->splitPos
-			   << " " << innerN->left->id
-			   << " " << innerN->right->id
-			   << std::endl;
+		stream | innerN->axis
+			| innerN->splitPos
+			| innerN->left->id
+			| innerN->right->id;
 
 		saveNode(stream, innerN->left);
 		saveNode(stream, innerN->right);
 	}
 }
 
-void kdTreeBuilder::save(std::ostream& stream) const
+void kdTreeBuilder::save(Serializer& stream) const
 {
-	stream << "pearray_kdtree" << std::endl;
+	PR_ASSERT(!stream.isReadMode(), "Expected stream to be in write mode");
+	std::string ident = "pearray_kdtree";
+	stream | ident;
+	
 	if (!mRoot)
 		return;
 
-	for (int i = 0; i < 3; ++i) {
-		stream << mRoot->boundingBox.lowerBound()(i)
-			   << " " << mRoot->boundingBox.upperBound()(i) << std::endl;
-	}
+	stream | mRoot->boundingBox.lowerBound();
+	stream | mRoot->boundingBox.upperBound();
+
 	saveNode(stream, mRoot);
 }
 

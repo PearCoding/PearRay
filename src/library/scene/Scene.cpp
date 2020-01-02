@@ -7,6 +7,7 @@
 #include "infinitelight/IInfiniteLight.h"
 #include "material/IMaterial.h"
 #include "renderer/RenderContext.h"
+#include "serialization/FileSerializer.h"
 
 #include "Logger.h"
 
@@ -107,17 +108,27 @@ void Scene::buildTree(const std::wstring& file)
 	builder.setCostElementWise(true);
 	builder.build(count);
 
-	std::ofstream stream(encodePath(file));
-	builder.save(stream);
+	FileSerializer serializer(file, false);
+	if (!serializer.isValid()) {
+		PR_LOG(L_ERROR) << "Could not open " << boost::filesystem::path(file) << " to write scene cnt" << std::endl;
+		return;
+	}
+	builder.save(serializer);
 }
 
 void Scene::loadTree(const std::wstring& file)
 {
 	PR_PROFILE_THIS;
 
-	std::ifstream stream(encodePath(file));
 	mKDTree.reset(new kdTreeCollider);
-	mKDTree->load(stream);
+
+	FileSerializer serializer(file, true);
+	if (!serializer.isValid()) {
+		PR_LOG(L_ERROR) << "Could not open " << boost::filesystem::path(file) << " to read scene cnt" << std::endl;
+		return;
+	}
+
+	mKDTree->load(serializer);
 	if (!mKDTree->isEmpty())
 		mBoundingBox = mKDTree->boundingBox();
 }

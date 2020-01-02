@@ -11,8 +11,6 @@ ResourceManager::ResourceManager(const std::wstring& workingDir)
 {
 	boost::filesystem::create_directories(boost::filesystem::path(workingDir) / "cache" / "mesh");
 	boost::filesystem::create_directories(boost::filesystem::path(workingDir) / "cache" / "scene");
-	boost::filesystem::create_directories(boost::filesystem::path(workingDir) / "cache" / "tex");
-	boost::filesystem::create_directories(boost::filesystem::path(workingDir) / "cache" / "io");
 	boost::filesystem::create_directories(boost::filesystem::path(workingDir) / "cache" / "node");
 }
 
@@ -29,7 +27,7 @@ std::wstring ResourceManager::requestFile(const std::string& grp, const std::str
 	boost::system::error_code error_code;
 	boost::filesystem::create_directories(root, error_code);
 	if (error_code) {
-		PR_LOG(L_ERROR) << "Error in resource manager: " << error_code.message();
+		PR_LOG(L_ERROR) << "Error in resource manager [create_directories]: " << error_code.message() << std::endl;
 		return L"";
 	}
 
@@ -38,8 +36,9 @@ std::wstring ResourceManager::requestFile(const std::string& grp, const std::str
 	std::wstring path = root.generic_wstring();
 	updateNeeded	  = !boost::filesystem::exists(root, error_code);
 	if (error_code) {
-		PR_LOG(L_ERROR) << "Error in resource manager: " << error_code.message();
-		return L"";
+		updateNeeded = true;
+		//PR_LOG(L_ERROR) << "Error in resource manager [exists]: " << error_code.message() << std::endl;
+		//return L"";
 	}
 
 	size_t id = generateID(grp, name); // Without extension!
@@ -63,10 +62,10 @@ void ResourceManager::addDependency(const std::string& grp, const std::string& n
 {
 	boost::system::error_code error_code;
 	if (!boost::filesystem::exists(path, error_code))
-		PR_LOG(L_WARNING) << "Given dependency " << boost::filesystem::path(path) << " does not even exists!";
+		PR_LOG(L_WARNING) << "Given dependency " << boost::filesystem::path(path) << " does not even exists!" << std::endl;
 
 	if (error_code)
-		PR_LOG(L_ERROR) << "Error in resource manager: " << error_code.message();
+		PR_LOG(L_ERROR) << "Error in resource manager [exists]: " << error_code.message() << std::endl;
 
 	size_t id = generateID(grp, name);
 	mDependencies.emplace(std::make_pair(id, path));
@@ -82,19 +81,20 @@ bool ResourceManager::checkDependencies(size_t id, const std::wstring& req_file)
 			return true;
 
 		if (error_code) {
-			PR_LOG(L_ERROR) << "Error in resource manager: " << error_code.message();
-			continue;
+			return true;
+			/*PR_LOG(L_ERROR) << "Error in resource manager [exists]: " << error_code.message() << std::endl;
+			continue;*/
 		}
 
 		std::time_t dep_time = boost::filesystem::last_write_time(dependency, error_code);
 		if (error_code) {
-			PR_LOG(L_ERROR) << "Error in resource manager: " << error_code.message();
+			PR_LOG(L_ERROR) << "Error in resource manager [last_write_time]: " << error_code.message() << std::endl;
 			continue;
 		}
 
 		std::time_t file_time = boost::filesystem::last_write_time(req_file, error_code);
 		if (error_code) {
-			PR_LOG(L_ERROR) << "Error in resource manager: " << error_code.message();
+			PR_LOG(L_ERROR) << "Error in resource manager [last_write_time]: " << error_code.message() << std::endl;
 			continue;
 		}
 

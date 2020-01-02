@@ -29,7 +29,7 @@ void MitchellFilter::cache()
 		return;
 
 	const int halfSize = mRadius + 1;
-	mCache.resize(halfSize * halfSize);
+	mCache.resize(halfSize * (size_t)halfSize);
 
 	auto filter = [=](float x) { return mitchell(2 * x / mRadius, 1 / 3.0f, 1 / 3.0f); };
 

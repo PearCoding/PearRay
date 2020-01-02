@@ -41,6 +41,8 @@ def parseArgs():
                         default=False, help="Skip Registry Generation")
     parser.add_argument('--skipWorld', action='store_true',
                         default=False, help="Skip World Generation")
+    parser.add_argument('--skipRepetitiveIncludes', action='store_true',
+                        default=False, help="Skip repetitive include statements")
     parser.add_argument('--singleFile', action='store_true',
                         default=False, help="Produce one single file")
 

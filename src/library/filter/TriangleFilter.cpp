@@ -18,7 +18,7 @@ void TriangleFilter::cache()
 		return;
 
 	const int halfSize = mRadius + 1;
-	mCache.resize(halfSize * halfSize);
+	mCache.resize(halfSize * (size_t)halfSize);
 
 	float sum1 = 0.0f;
 	float sum2 = 0.0f;

@@ -17,7 +17,7 @@ inline static float sinc(float x) { return PR_1_PI * std::sin(PR_PI * x) / x; }
 void LanczosFilter::cache()
 {
 	const int halfSize = mRadius + 1;
-	mCache.resize(halfSize * halfSize);
+	mCache.resize(halfSize * (size_t)halfSize);
 
 	auto lanczos = [&](float x) { return x <= PR_EPSILON
 											 ? 1.0f

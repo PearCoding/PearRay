@@ -226,6 +226,14 @@ std::unique_ptr<MeshBase> read(std::fstream& stream, const Header& header, bool 
 	return cnt;
 }
 
+static inline bool isAllowedVertIndType(const std::string& str)
+{
+	return str == "uchar"
+		   || str == "int"
+		   || str == "uint8"
+		   || str == "uint";
+}
+
 void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 {
 	std::fstream stream(encodePath(file), std::ios::in | std::ios::binary);
@@ -294,7 +302,7 @@ void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 
 				std::string name;
 				sstream >> name;
-				if (countType != "uchar" && indType != "int" && indType != "uint8") {
+				if (!isAllowedVertIndType(countType)) {
 					PR_LOG(L_WARNING) << "Only 'property list uchar int' is supported" << std::endl;
 					continue;
 				}
@@ -302,8 +310,8 @@ void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 				if (name == "vertex_indices")
 					header.IndElem = facePropCounter - 1;
 			} else {
-				PR_LOG(L_ERROR) << "Only float or list properties allowed" << std::endl;
-				return;
+				PR_LOG(L_WARNING) << "Only float or list properties allowed. Ignoring..." << std::endl;
+				++header.VertexPropCount;
 			}
 		} else if (action == "end_header")
 			break;

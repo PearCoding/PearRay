@@ -15,7 +15,7 @@
 #endif
 
 namespace PR {
-
+class Serializer;
 class PR_LIB kdTreeCollider {
 public:
 	struct kdNodeCollider {
@@ -256,7 +256,7 @@ public:
 		return out.HitDistance < std::numeric_limits<float>::infinity();
 	}
 
-	void load(std::istream& stream);
+	void load(Serializer& stream);
 
 private:
 	kdNodeCollider* mRoot;
