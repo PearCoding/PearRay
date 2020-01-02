@@ -18,9 +18,12 @@ def parseArgs():
         description="Converts a subset of the PBRT project files into PearRay's own file format.")
 
     parser.add_argument('input', help="Input file")
-    parser.add_argument('-o', '--output', default=os.getcwd(), help="Output directory")
+    parser.add_argument('-o', '--output', default=os.getcwd(),
+                        help="Output directory")
     parser.add_argument('-q', '--quite', action='store_true',
                         default=False, help="Do not print any informative messages")
+    parser.add_argument('--include_offset', default='./',
+                        help="Include offset")
     parser.add_argument('--skipMesh', action='store_true',
                         default=False, help="Skip Mesh Conversion")
     parser.add_argument('--skipCurve', action='store_true',
@@ -48,6 +51,7 @@ def parseArgs():
 
     return parser.parse_args()
 
+
 # Main
 if __name__ == '__main__':
     args = parseArgs()
@@ -63,12 +67,12 @@ if __name__ == '__main__':
                 writer.write("(scene")
                 writer.goIn()
 
-            operator = pbrt.Operator(writer, args, os.path.dirname(os.path.abspath(args.input)))
+            operator = pbrt.Operator(
+                writer, args, os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(args.input)), args.include_offset)))
             for op in pbrt.Parser.parse(args.input, input_file):
-                #print(op)
+                # print(op)
                 operator.apply(op)
 
             if not args.skipWorld:
                 writer.goOut()
                 writer.write(")")
-

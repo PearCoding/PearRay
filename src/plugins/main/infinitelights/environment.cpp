@@ -15,11 +15,14 @@ public:
 	EnvironmentLight(uint32 id, const std::string& name,
 					 const std::shared_ptr<FloatSpectralMapSocket>& spec,
 					 const std::shared_ptr<FloatSpectralMapSocket>& background,
-					 float factor)
+					 float factor,
+					 const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mRadiance(spec)
 		, mBackground(background)
 		, mRadianceFactor(factor)
+		, mTransform(trans)
+		, mInvTransform(trans.inverse())
 	{
 		Vector2i recSize = spec->queryRecommendedSize();
 		if (recSize(0) > 1 && recSize(1) > 1) {
@@ -49,7 +52,9 @@ public:
 			  const RenderTileSession&) const override
 	{
 		MapSocketCoord coord;
-		coord.UV	= Spherical::uv_from_normal(in.Point.Ray.Direction);
+		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+
+		coord.UV	= Spherical::uv_from_normal(dir);
 		coord.UV(1) = 1 - coord.UV(1);
 		coord.Index = in.Point.Ray.WavelengthIndex;
 
@@ -63,7 +68,7 @@ public:
 			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
-			out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(in.Point.Ray.Direction)));
+			out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
 		}
 	}
 
@@ -73,7 +78,7 @@ public:
 		if (mDistribution) {
 			Vector2f uv  = mDistribution->sampleContinuous(in.RND, out.PDF_S);
 			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
-			out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+			out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 			MapSocketCoord coord;
 			coord.UV	= uv;
@@ -86,7 +91,7 @@ public:
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
 		} else {
 			out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-			out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+			out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 			MapSocketCoord coord;
 			coord.UV	= in.RND;
@@ -122,6 +127,8 @@ private:
 	std::shared_ptr<FloatSpectralMapSocket> mRadiance;
 	std::shared_ptr<FloatSpectralMapSocket> mBackground;
 	float mRadianceFactor;
+	Eigen::Matrix3f mTransform;
+	Eigen::Matrix3f mInvTransform;
 };
 
 class EnvironmentLightFactory : public IInfiniteLightFactory {
@@ -146,7 +153,13 @@ public:
 		else
 			background = ctx.Env->getSpectralMapSocket(backgroundName, 1);
 
-		return std::make_shared<EnvironmentLight>(id, name, rad, background, factor);
+		Eigen::Matrix3f trans	 = Eigen::Matrix3f::Identity();
+		std::vector<float> transR = reg.getForObject<std::vector<float>>(RG_INFINITELIGHT, uuid,
+																		 "orientation", std::vector<float>());
+		if (transR.size() == 9)
+			trans = Eigen::Map<Eigen::Matrix3f>(transR.data());
+
+		return std::make_shared<EnvironmentLight>(id, name, rad, background, factor, trans);
 	}
 
 	const std::vector<std::string>& getNames() const override

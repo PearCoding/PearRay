@@ -47,16 +47,15 @@ class Operator:
     def mat2str(mat):
         return "[" + ", ".join(", ".join(str(f) for f in row) for row in mat) + "]"
 
-    @staticmethod
-    def resolveFilename(base, filename):
+    def resolveFilename(self, base, filename):
         file_dir = os.path.dirname(base) if os.path.isfile(base) else base
         return filename if os.path.isabs(
-            filename) else os.path.join(file_dir, filename)
+            filename) else os.path.normpath(os.path.join(os.path.join(file_dir, self.options.include_offset), filename))
 
     def resolveInclude(self, base, filename):
-        inc_file = Operator.resolveFilename(base, filename)
+        inc_file = self.resolveFilename(base, filename)
         if not os.path.exists(inc_file):
-            inc_file = Operator.resolveFilename(self.globalDir, filename)
+            inc_file = self.resolveFilename(self.globalDir, filename)
         return inc_file
 
     def op_Include(self, op):
@@ -84,6 +83,9 @@ class Operator:
             output_file = os.path.join(
                 self.options.output, os.path.splitext(rel_file)[0]+post_fix+'.prc')
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+            if not self.options.quite:
+                print("-> %s" % output_file)
 
             self.w.write("(include '%s')" % output_file)
             self.w.flush()
@@ -251,6 +253,10 @@ class Operator:
                 self.w.write(":materials ['%s']" % shape[2])
             if shape[3] != '':
                 self.w.write(":emission '%s'" % shape[3])
+                if shape[2] == '':
+                    self.w.write(":camera_visible false")
+                    self.w.write(":light_visible false")
+                    self.w.write(":bounce_visible false")
             self.w.write(":mesh '%s'" % shape[1])
             self.w.write(":transform %s" % Operator.mat2str(
                 self.contextStack[-1].transform))
@@ -265,6 +271,10 @@ class Operator:
                 self.w.write(":material '%s'" % shape[2])
             if shape[3] != '':
                 self.w.write(":emission '%s'" % shape[3])
+                if shape[2] == '':
+                    self.w.write(":camera_visible false")
+                    self.w.write(":light_visible false")
+                    self.w.write(":bounce_visible false")
             self.w.write(":radius %f" % shape[1])
             self.w.write(":transform %s" % Operator.mat2str(
                 self.contextStack[-1].transform))
@@ -557,7 +567,7 @@ class Operator:
             if self.options.skipMesh:
                 return
 
-            inc_file = Operator.resolveFilename(
+            inc_file = self.resolveFilename(
                 op.filename, op.parameters['filename'])
             self.w.write("(embed")
             self.w.goIn()
