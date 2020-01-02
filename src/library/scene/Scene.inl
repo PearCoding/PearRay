@@ -96,7 +96,11 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 			in, out,
 			[this](const RayPackage& in2, uint64 index,
 				   CollisionOutput& out2) {
-				mEntities[index]->checkCollision(in2, out2);
+				const IEntity* entity = mEntities[index].get();
+				entity->checkCollision(in2, out2);
+				out2.HitDistance = blend(out2.HitDistance,
+										 vfloat(std::numeric_limits<float>::infinity()),
+										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
@@ -134,7 +138,11 @@ bool Scene::traceRay(const Ray& in, HitEntry& entry) const
 		in, out,
 		[this](const Ray& in2, uint64 index,
 			   SingleCollisionOutput& out2) {
-			mEntities[index]->checkCollision(in2, out2);
+			const IEntity* entity = mEntities[index].get();
+			if (entity->visibilityFlags() & in2.Flags)
+				entity->checkCollision(in2, out2);
+			else
+				out2.HitDistance = std::numeric_limits<float>::infinity();
 		});
 
 	float hitD = out.HitDistance;
@@ -165,7 +173,11 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 		in, out,
 		[this](const Ray& in2, uint64 index,
 			   SingleCollisionOutput& out2) {
-			mEntities[index]->checkCollision(in2, out2);
+			const IEntity* entity = mEntities[index].get();
+			if (entity->visibilityFlags() & in2.Flags)
+				entity->checkCollision(in2, out2);
+			else
+				out2.HitDistance = std::numeric_limits<float>::infinity();
 		});
 
 	for (int i = 0; i < 3; ++i)

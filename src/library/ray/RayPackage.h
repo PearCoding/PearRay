@@ -8,10 +8,12 @@
 namespace PR {
 
 enum RayFlags : uint32 {
-	RF_Monochrome = 0x01,
-	RF_Camera	 = 0x10,
-	RF_Light	  = 0x20,
-	RF_Shadow	 = 0x40
+	// Matches EntityVisibilityFlags
+	RF_Camera	 = 0x01,
+	RF_Light	  = 0x02,
+	RF_Bounce	 = 0x04,
+	RF_Shadow	 = 0x08,
+	RF_Monochrome = 0x10
 };
 
 template <typename V>

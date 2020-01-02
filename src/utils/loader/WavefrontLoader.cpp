@@ -11,8 +11,8 @@
 #include "tiny_obj_loader.h"
 
 namespace PR {
-WavefrontLoader::WavefrontLoader(const std::map<std::string, std::string>& overrides)
-	: mOverrides(overrides)
+WavefrontLoader::WavefrontLoader(const std::string& override_name)
+	: mName(override_name)
 	, mScale(1)
 	, mFlipNormal(false)
 	, mCacheMode(CM_Auto)
@@ -86,8 +86,8 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 			mesh->setUVs(attrib.texcoords);
 
 		std::string name = shapes[0].name;
-		if (mOverrides.count(shapes[0].name))
-			name = mOverrides[shapes[0].name];
+		if (!mName.empty())
+			name = mName;
 
 		int i			 = 1;
 		std::string next = name;

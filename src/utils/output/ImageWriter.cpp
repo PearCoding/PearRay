@@ -124,11 +124,11 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 	// Calculate maximums for some mapper techniques
 	float invMax3d[AOV_3D_COUNT];
-	std::fill_n(invMax3d, AOV_3D_COUNT, 0.0f);
+	std::fill_n(invMax3d, AOV_3D_COUNT, 1.0f);
 	float invMax1d[AOV_1D_COUNT];
-	std::fill_n(invMax1d, AOV_1D_COUNT, 0.0f);
+	std::fill_n(invMax1d, AOV_1D_COUNT, 1.0f);
 	float invMaxCounter[AOV_COUNTER_COUNT];
-	std::fill_n(invMax1d, AOV_COUNTER_COUNT, 0.0f);
+	std::fill_n(invMax1d, AOV_COUNTER_COUNT, 1.0f);
 
 	const OutputBufferData& data = mRenderer->output()->data();
 

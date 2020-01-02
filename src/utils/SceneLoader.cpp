@@ -111,6 +111,23 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 				return nullptr;
 			}
 
+			if (renderWidthD.type() == DL::DT_Integer)
+				env->registry().setByGroup(RG_RENDERER, "film/width", renderWidthD.getInt());
+
+			if (renderHeightD.type() == DL::DT_Integer)
+				env->registry().setByGroup(RG_RENDERER, "film/height", renderHeightD.getInt());
+
+			if (cropD.type() == DL::DT_Group) {
+				DL::DataGroup crop = cropD.getGroup();
+				if (crop.anonymousCount() == 4 && crop.isAllAnonymousNumber()) {
+					Registry& reg = env->registry();
+					reg.setByGroup(RG_RENDERER, "film/crop/min_x", crop.at(0).getNumber());
+					reg.setByGroup(RG_RENDERER, "film/crop/max_x", crop.at(1).getNumber());
+					reg.setByGroup(RG_RENDERER, "film/crop/min_y", crop.at(2).getNumber());
+					reg.setByGroup(RG_RENDERER, "film/crop/max_y", crop.at(3).getNumber());
+				}
+			}
+
 			env->cache()->setMode(static_cast<CacheMode>(opts.CacheMode));
 
 			std::vector<DL::DataGroup> inner_groups;
@@ -257,9 +274,13 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	auto manag		= ctx.Env->entityManager();
 	const uint32 id = manag->nextID();
 
-	DL::Data nameD		= group.getFromKey("name");
-	DL::Data typeD		= group.getFromKey("type");
-	DL::Data localAreaD = group.getFromKey("local_area");
+	DL::Data nameD			= group.getFromKey("name");
+	DL::Data typeD			= group.getFromKey("type");
+	DL::Data localAreaD		= group.getFromKey("local_area");
+	DL::Data cameraVisibleD = group.getFromKey("camera_visible");
+	DL::Data lightVisibleD  = group.getFromKey("light_visible");
+	DL::Data bounceVisibleD = group.getFromKey("bounce_visible");
+	DL::Data shadowVisibleD = group.getFromKey("shadow_visible");
 
 	populateObjectRegistry(RG_ENTITY, id, group, ctx);
 
@@ -302,6 +323,13 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		else
 			entity->setFlags(entity->flags() & ~(uint8)EF_LocalArea);
 	}
+
+	uint8 visFlags = 0;
+	visFlags |= (cameraVisibleD.type() != DL::DT_Bool || cameraVisibleD.getBool()) ? (uint8)EVF_Camera : 0;
+	visFlags |= (lightVisibleD.type() != DL::DT_Bool || lightVisibleD.getBool()) ? (uint8)EVF_Light : 0;
+	visFlags |= (bounceVisibleD.type() != DL::DT_Bool || bounceVisibleD.getBool()) ? (uint8)EVF_Bounce : 0;
+	visFlags |= (shadowVisibleD.type() != DL::DT_Bool || shadowVisibleD.getBool()) ? (uint8)EVF_Shadow : 0;
+	entity->setVisibilityFlags(visFlags);
 
 	// Add to scene
 	manag->addObject(entity);
@@ -620,15 +648,11 @@ void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 	ctx.Env->cache()->unloadAll(); // Make sure there is enough space
 	if (loader == "obj") {
-		DL::Data overridesD = group.getFromKey("overrides");
-		std::map<std::string, std::string> overrides;
-		if (overridesD.type() == DL::DT_String)
-			overrides[""] = overridesD.getString();
-
+		DL::Data nameD		 = group.getFromKey("name");
 		DL::Data flipNormalD = group.getFromKey("flipNormal");
 		DL::Data cacheD		 = group.getFromKey("cache");
 
-		WavefrontLoader loader(overrides);
+		WavefrontLoader loader(nameD.type() == DL::DT_String ? nameD.getString() : "");
 
 		if (flipNormalD.type() == DL::DT_Bool)
 			loader.flipNormal(flipNormalD.getBool());

@@ -69,6 +69,7 @@ public:
 			if (outL.PDF_S > PR_EPSILON) {
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					// Evaluate surface
@@ -103,6 +104,7 @@ public:
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					InfiniteLightEvalInput inL;
@@ -155,6 +157,7 @@ public:
 			&& session.tile()->random().getFloat() <= scatProb) {
 			Ray next = spt.Ray.next(spt.P, out.Outgoing);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
+			next.Flags = RF_Bounce | (spt.Ray.Flags & RF_Monochrome);
 
 			if (!next.Weight.isZero()) {
 				path.addToken(LightPathToken(out.Type)); // (1)
@@ -226,6 +229,7 @@ public:
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, L);
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 
 				if (shadowHit.Successful && shadowHit.EntityID == light->id()) {
@@ -268,6 +272,7 @@ public:
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (shadowHit.Successful
 					&& shadowHit.EntityID == light->id()) {

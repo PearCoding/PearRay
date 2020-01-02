@@ -6,7 +6,7 @@
 namespace PR {
 class PR_LIB_UTILS WavefrontLoader : public SubGraphLoader {
 public:
-	explicit WavefrontLoader(const std::map<std::string, std::string>& overrides);
+	explicit WavefrontLoader(const std::string& override_name);
 	~WavefrontLoader();
 
 	inline void setScale(float f) { mScale = f; }
@@ -16,7 +16,7 @@ public:
 	void load(const std::wstring& file, const SceneLoadContext& ctx) override;
 
 private:
-	std::map<std::string, std::string> mOverrides;
+	std::string mName;
 	float mScale;
 	bool mFlipNormal;
 	int mCacheMode;

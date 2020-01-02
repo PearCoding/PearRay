@@ -54,7 +54,8 @@ public:
 						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
 																  dir);
 
-						Ray n = ray.next(pt.P, ndir);
+						Ray n   = ray.next(pt.P, ndir);
+						n.Flags = RF_Shadow | (ray.Flags & RF_Monochrome);
 
 						ShadowHit hit = session.traceShadowRay(n);
 						if (hit.Successful)

@@ -92,7 +92,7 @@ public:
 		ray.WavelengthIndex = sample.WavelengthIndex;
 		ray.Weight			= ColorTriplet(sample.Weight, sample.Weight, sample.Weight);
 		ray.Time			= sample.Time;
-		ray.Flags			= 0;
+		ray.Flags			= RF_Camera;
 
 		//ray.normalize();
 

@@ -4,6 +4,14 @@
 #include "geometry/BoundingBox.h"
 
 namespace PR {
+enum EntityVisibilityFlag : uint8 {
+	EVF_Camera = 0x1,
+	EVF_Light  = 0x2,
+	EVF_Bounce = 0x4,
+	EVF_Shadow = 0x8,
+	EVF_All	= EVF_Camera | EVF_Light | EVF_Bounce | EVF_Shadow
+};
+
 struct GeometryPoint;
 class PR_LIB IEntity : public ITransformable {
 public:
@@ -14,6 +22,9 @@ public:
 
 	inline size_t containerID() const;
 	inline void setContainerID(size_t id);
+
+	inline uint8 visibilityFlags() const;
+	inline void setVisibilityFlags(uint8 flags);
 
 	inline BoundingBox worldBoundingBox() const;
 
@@ -43,6 +54,7 @@ public:
 
 private:
 	size_t mContainerID; // To which (latest) container node it belongs
+	uint8 mVisibilityFlags;
 	BoundingBox calcWorldBoundingBox() const;
 	BoundingBox mWorldBoundingBox_Cache;
 };

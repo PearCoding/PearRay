@@ -14,4 +14,7 @@ inline BoundingBox IEntity::worldBoundingBox() const
 
 inline size_t IEntity::containerID() const { return mContainerID; }
 inline void IEntity::setContainerID(size_t id) { mContainerID = id; }
+
+inline uint8 IEntity::visibilityFlags() const { return mVisibilityFlags; }
+inline void IEntity::setVisibilityFlags(uint8 flags) { mVisibilityFlags = flags; }
 } // namespace PR
