@@ -135,6 +135,8 @@ void Mesh::setup()
 
 void Mesh::constructCollider()
 {
+	PR_LOG(L_INFO) << "Mesh " << name() << " Memory Footprint: " << mBase->memoryFootprint() / 1024.0 << "kb" << std::endl;
+
 	BUILDER builder(mBase.get(), [](void* observer, size_t f) {
 								MeshBase* mesh = reinterpret_cast<MeshBase*>(observer);
 								const uint32 ind1 = mesh->indices()[3*f];

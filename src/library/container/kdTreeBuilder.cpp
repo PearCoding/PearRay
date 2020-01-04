@@ -14,23 +14,25 @@ enum Side {
 	S_Both
 };
 
+using NodeID = uint32;
+
 struct kdNodeBuilder {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	kdNodeBuilder(size_t id, bool leaf, const BoundingBox& b)
+	kdNodeBuilder(NodeID id, bool leaf, const BoundingBox& b)
 		: id(id)
 		, isLeaf(leaf)
 		, boundingBox(b)
 	{
 	}
 
-	size_t id;
-	bool isLeaf;
+	NodeID id;
+	uint8 isLeaf;
 	BoundingBox boundingBox;
 };
 
 struct kdInnerNodeBuilder : public kdNodeBuilder {
-	kdInnerNodeBuilder(size_t id, uint8 axis, float sp,
+	kdInnerNodeBuilder(NodeID id, uint8 axis, float sp,
 					   kdNodeBuilder* l, kdNodeBuilder* r, const BoundingBox& b)
 		: kdNodeBuilder(id, false, b)
 		, axis(axis)
@@ -47,16 +49,16 @@ struct kdInnerNodeBuilder : public kdNodeBuilder {
 };
 
 struct kdLeafNodeBuilder : public kdNodeBuilder {
-	kdLeafNodeBuilder(size_t id, const BoundingBox& b)
+	kdLeafNodeBuilder(NodeID id, const BoundingBox& b)
 		: kdNodeBuilder(id, true, b)
 	{
 	}
 
-	std::vector<size_t> objects;
+	std::vector<NodeID> objects;
 };
 
 struct Primitive {
-	Primitive(size_t d, const BoundingBox& box)
+	Primitive(NodeID d, const BoundingBox& box)
 		: data(d)
 		, side(S_Both)
 		, box(box)
@@ -64,7 +66,7 @@ struct Primitive {
 		//PR_ASSERT(data, "Primitive needs a valid data entry");
 	}
 
-	size_t data;
+	NodeID data;
 	Side side;
 	BoundingBox box;
 };
@@ -225,7 +227,7 @@ enum EventType : uint8 {
 
 struct Event {
 	Primitive* primitive;
-	int dim;
+	uint8 dim;
 	float v;
 	EventType type;
 
@@ -237,7 +239,7 @@ struct Event {
 	{
 	}
 
-	Event(Primitive* prim, int dim, float v, EventType t)
+	Event(Primitive* prim, uint8 dim, float v, EventType t)
 		: primitive(prim)
 		, dim(dim)
 		, v(v)
@@ -268,7 +270,7 @@ static void generateEvents(Primitive* p, const BoundingBox& V, std::vector<Event
 
 static void findSplit(float costIntersection, const std::vector<Event>& events,
 					  const std::vector<Primitive*>& objs, const BoundingBox& V,
-					  int& dim_out, float& v_out, float& c_out, SplitPlane& side_out,
+					  uint8& dim_out, float& v_out, float& c_out, SplitPlane& side_out,
 					  BoundingBox& vl_out, BoundingBox& vr_out)
 {
 	PR_ASSERT(std::is_sorted(events.begin(), events.end()), "Expected sorted events list");
@@ -279,7 +281,7 @@ static void findSplit(float costIntersection, const std::vector<Event>& events,
 
 	for (size_t j = 0; j < events.size();) {
 		const float v		= events[j].v;
-		const int dim		= events[j].dim;
+		const uint8 dim		= events[j].dim;
 		size_t onPlane		= 0;
 		size_t startOnPlane = 0;
 		size_t endOnPlane   = 0;
@@ -349,7 +351,7 @@ static void distributeObjects(const std::vector<Primitive*>& objs,
 }
 
 static void classify(const std::vector<Event>& events, const std::vector<Primitive*>& objs,
-					 int dim, float v, SplitPlane side)
+					 uint8 dim, float v, SplitPlane side)
 {
 	for (auto& obj : objs) {
 		obj->side = S_Both;
@@ -416,7 +418,7 @@ static kdNodeBuilder* buildNode(size_t& nodeCount, void* observer,
 		costIntersection /= objs.size();
 	}
 
-	int dim			= 0;
+	uint8 dim		= 0;
 	float v			= 0;
 	float c			= std::numeric_limits<float>::infinity();
 	SplitPlane side = SP_Left;
@@ -559,7 +561,7 @@ void kdTreeBuilder::build(size_t size)
 
 static void saveNode(Serializer& stream, kdNodeBuilder* node)
 {
-	stream | node->id | node->isLeaf;
+	stream | node->isLeaf;
 	if (node->isLeaf) {
 		stream | reinterpret_cast<kdLeafNodeBuilder*>(node)->objects;
 	} else {
@@ -579,7 +581,7 @@ void kdTreeBuilder::save(Serializer& stream) const
 	PR_ASSERT(!stream.isReadMode(), "Expected stream to be in write mode");
 	std::string ident = "pearray_kdtree";
 	stream | ident;
-	
+
 	if (!mRoot)
 		return;
 

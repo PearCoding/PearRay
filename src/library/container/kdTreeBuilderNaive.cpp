@@ -18,23 +18,25 @@ enum SidePlaneNaive {
 	SP_Right
 };
 
+using NodeID = uint32;
+
 struct kdNodeBuilderNaive {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	kdNodeBuilderNaive(size_t id, bool leaf, const BoundingBox& b)
+	kdNodeBuilderNaive(NodeID id, bool leaf, const BoundingBox& b)
 		: id(id)
 		, isLeaf(leaf)
 		, boundingBox(b)
 	{
 	}
 
-	size_t id;
+	NodeID id;
 	bool isLeaf;
 	BoundingBox boundingBox;
 };
 
 struct kdInnerNodeBuilderNaive : public kdNodeBuilderNaive {
-	kdInnerNodeBuilderNaive(size_t id, uint8 axis, float sp,
+	kdInnerNodeBuilderNaive(NodeID id, uint8 axis, float sp,
 							kdNodeBuilderNaive* l, kdNodeBuilderNaive* r, const BoundingBox& b)
 		: kdNodeBuilderNaive(id, false, b)
 		, axis(axis)
@@ -51,23 +53,23 @@ struct kdInnerNodeBuilderNaive : public kdNodeBuilderNaive {
 };
 
 struct kdLeafNodeBuilderNaive : public kdNodeBuilderNaive {
-	kdLeafNodeBuilderNaive(size_t id, const BoundingBox& b)
+	kdLeafNodeBuilderNaive(NodeID id, const BoundingBox& b)
 		: kdNodeBuilderNaive(id, true, b)
 	{
 	}
 
-	std::vector<size_t> objects;
+	std::vector<NodeID> objects;
 };
 
 struct PrimitiveNaive {
-	PrimitiveNaive(size_t d, const BoundingBox& box)
+	PrimitiveNaive(NodeID d, const BoundingBox& box)
 		: data(d)
 		, side(S_Both)
 		, box(box)
 	{
 	}
 
-	size_t data;
+	NodeID data;
 	SideNaive side;
 	BoundingBox box;
 };
@@ -460,7 +462,7 @@ void kdTreeBuilderNaive::build(size_t size)
 
 static void saveNode(Serializer& stream, kdNodeBuilderNaive* node)
 {
-	stream | node->id | node->isLeaf;
+	stream | node->isLeaf;
 	if (node->isLeaf) {
 		stream | reinterpret_cast<kdLeafNodeBuilderNaive*>(node)->objects;
 	} else {

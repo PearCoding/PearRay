@@ -31,16 +31,27 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 	std::string warn;
 	std::string err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-						  std::string(file.begin(), file.end()).c_str())) {
+	std::ifstream stream;
+	stream.open(encodePath(file), std::ios::in);
+	if (!stream) {
+		PR_LOG(L_ERROR) << "Wavefront file: Could not open file" << std::endl;
+	}
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, &stream)) {
 		PR_LOG(L_ERROR) << "Error reading Wavefront file: " << err << std::endl;
 	} else {
+		stream.close();
+
 		if (!warn.empty()) {
 			PR_LOG(L_WARNING) << "Wavefront file: " << warn << std::endl;
 		}
 
 		if (!err.empty()) {
 			PR_LOG(L_ERROR) << "Wavefront file: " << err << std::endl;
+		}
+
+		if (shapes.size() > 1) {
+			PR_LOG(L_WARNING) << "Wavefront file: Contains multiple shapes. Will be combined to one " << std::endl;
 		}
 
 		if (attrib.vertices.empty()) {
@@ -75,36 +86,29 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 		}
 
 		auto mesh = std::make_unique<MeshBase>();
-		mesh->setVertices(attrib.vertices);
-		mesh->setIndices(indices);
-		mesh->setFaceVertexCount(std::vector<uint8>(indices_count / 3, 3));
+		mesh->setVertices(std::move(attrib.vertices));
+		mesh->setIndices(std::move(indices));
+		mesh->assumeTriangular(indices_count / 3);
+
 		if (hasNorms)
-			mesh->setNormals(attrib.normals);
+			mesh->setNormals(std::move(attrib.normals));
 		else
 			mesh->buildNormals();
+
 		if (hasCoords)
-			mesh->setUVs(attrib.texcoords);
+			mesh->setUVs(std::move(attrib.texcoords));
 
 		std::string name = shapes[0].name;
 		if (!mName.empty())
 			name = mName;
 
-		int i			 = 1;
-		std::string next = name;
-		while (ctx.Env->hasMesh(next) && i < 1000) {
-			std::stringstream stream;
-			stream << name << "_" << i;
-			next = stream.str();
-			i++;
-		}
-
-		if (ctx.Env->hasMesh(next))
-			PR_LOG(L_ERROR) << "Mesh " << next << " already in use." << std::endl;
+		if (ctx.Env->hasMesh(name))
+			PR_LOG(L_ERROR) << "Mesh " << name << " already in use." << std::endl;
 
 		mesh->triangulate();
 		bool useCache = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode));
-		ctx.Env->addMesh(next, std::make_shared<TriMesh>(next, std::move(mesh), ctx.Env->cache(), useCache));
-		PR_LOG(L_INFO) << "Added mesh " << next << std::endl;
+		ctx.Env->addMesh(name, std::make_shared<TriMesh>(name, std::move(mesh), ctx.Env->cache(), useCache));
+		PR_LOG(L_INFO) << "Added mesh " << name << std::endl;
 	}
 }
 } // namespace PR

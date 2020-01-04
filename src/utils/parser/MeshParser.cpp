@@ -32,17 +32,12 @@ static bool loadAttribute(const std::string& attrname, const DL::DataGroup& grp,
 			return false;
 		}
 	}
-
 	return true;
 }
 
 std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 {
-	std::vector<float> positionAttr;
-	std::vector<float> normalAttr;
-	std::vector<float> velocityAttr;
-	std::vector<float> uvAttr;
-	// TODO: More attributes!
+	auto me = std::make_unique<MeshBase>();
 
 	// First get vertex attributes
 	DL::DataGroup facesGrp;
@@ -57,30 +52,41 @@ std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 			return nullptr;
 		}
 
-		const DL::DataGroup& grp = d.getGroup();
+		DL::DataGroup& grp = d.getGroup();
 		if (grp.id() == "attribute") {
 			DL::Data attrTypeD = grp.getFromKey("type");
 			if (attrTypeD.type() != DL::DT_String) {
 				PR_LOG(L_ERROR) << "Mesh attribute has no valid type." << std::endl;
 				return nullptr;
 			} else if (attrTypeD.getString() == "p") {
-				if (!loadAttribute<3>("position", grp, positionAttr))
+				std::vector<float> arr;
+				if (!loadAttribute<3>("position", grp, arr))
 					return nullptr;
+				me->setVertices(std::move(arr));
 			} else if (attrTypeD.getString() == "n") {
-				if (!loadAttribute<3>("normal", grp, normalAttr))
+				std::vector<float> arr;
+				if (!loadAttribute<3>("normal", grp, arr))
 					return nullptr;
+				me->setNormals(std::move(arr));
 			} else if (attrTypeD.getString() == "t" || attrTypeD.getString() == "uv") {
-				if (!loadAttribute<2>("texture", grp, uvAttr))
+				std::vector<float> arr;
+				if (!loadAttribute<2>("texture", grp, arr))
 					return nullptr;
+				me->setUVs(std::move(arr));
 			} else if (attrTypeD.getString() == "dp") {
-				if (!loadAttribute<3>("velocity", grp, velocityAttr))
+				std::vector<float> arr;
+				if (!loadAttribute<3>("velocity", grp, arr))
 					return nullptr;
+				me->setVelocities(std::move(arr));
 			} else if (attrTypeD.getString() == "u") {
 				PR_LOG(L_WARNING) << "User attributes currently not supported." << std::endl;
 			} else {
 				PR_LOG(L_ERROR) << "Unknown mesh attribute '" << attrTypeD.getString() << "'." << std::endl;
 				return nullptr;
 			}
+
+			// Will not be used anywhere -> Clear for memory space
+			grp.clear();
 		} else if (grp.id() == "faces") {
 			if (hasFaces) {
 				PR_LOG(L_WARNING) << "Faces already set for mesh." << std::endl;
@@ -101,30 +107,9 @@ std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 		}
 	}
 
-	// Check validity
-	if (positionAttr.empty()) {
-		PR_LOG(L_ERROR) << "No position attribute given." << std::endl;
-		return nullptr;
-	}
-
-	if (!normalAttr.empty() && normalAttr.size() != positionAttr.size()) {
-		PR_LOG(L_ERROR) << "Normal attribute does not match position attribute in size." << std::endl;
-		return nullptr;
-	}
-
-	if (!uvAttr.empty() && uvAttr.size() / 2 != positionAttr.size() / 3) {
-		PR_LOG(L_ERROR) << "Texture attribute does not match position attribute in size." << std::endl;
-		return nullptr;
-	}
-
-	if (!velocityAttr.empty() && velocityAttr.size() != positionAttr.size()) {
-		PR_LOG(L_ERROR) << "Velocity attribute does not match position attribute in size." << std::endl;
-		return nullptr;
-	}
-
 	// Face attributes
-	std::vector<uint32> materials;
 	if (hasMaterials) {
+		std::vector<uint32> materials;
 		materials.reserve(materialsGrp.anonymousCount());
 		for (size_t j = 0; j < materialsGrp.anonymousCount(); j++) {
 			DL::Data indexD = materialsGrp.at(j);
@@ -143,23 +128,24 @@ std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 
 			materials.push_back(static_cast<uint32>(index));
 		}
+		// Will not be used anywhere -> Clear for memory space
+		materialsGrp.clear();
+		me->setMaterialSlots(std::move(materials));
 	}
 
 	// Get indices (faces)
-	std::vector<uint32> indices;
-	std::vector<uint8> verticesPerFace;
-	const size_t vertexCount = positionAttr.size() / 3;
 	if (!hasFaces) {
 		PR_LOG(L_ERROR) << "No faces given!" << std::endl;
 		return nullptr;
 	} else {
-		if (hasMaterials && materialsGrp.anonymousCount() != facesGrp.anonymousCount()) {
+		if (hasMaterials && me->materialSlots().size() != facesGrp.anonymousCount()) {
 			PR_LOG(L_ERROR) << "Given material index count is not equal to face count." << std::endl;
 			return nullptr;
 		}
 
-		size_t triCount  = 0;
-		size_t quadCount = 0;
+		const size_t vertexCount = me->nodeCount();
+		size_t triCount			 = 0;
+		size_t quadCount		 = 0;
 		for (size_t j = 0; j < facesGrp.anonymousCount(); ++j) {
 			DL::Data iD = facesGrp.at(j);
 
@@ -190,8 +176,15 @@ std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 			}
 		}
 
+		bool needsVPF	= triCount != 0 && quadCount != 0;
+		size_t facecount = triCount + quadCount;
+
+		std::vector<uint32> indices;
 		indices.reserve(triCount * 3 + quadCount * 4);
-		verticesPerFace.reserve(facesGrp.anonymousCount());
+
+		std::vector<uint8> verticesPerFace;
+		if (needsVPF)
+			verticesPerFace.reserve(facecount);
 
 		for (size_t j = 0; j < facesGrp.anonymousCount(); ++j) {
 			DL::DataGroup grp = facesGrp.at(j).getGroup();
@@ -206,20 +199,28 @@ std::unique_ptr<MeshBase> MeshParser::parse(const DL::DataGroup& group)
 				indices.push_back(static_cast<uint32>(val));
 			}
 
-			verticesPerFace.push_back(static_cast<uint8>(grp.anonymousCount()));
+			if (needsVPF)
+				verticesPerFace.push_back(static_cast<uint8>(grp.anonymousCount()));
+		}
+
+		// Will not be used anywhere -> Clear for memory space
+		facesGrp.clear();
+
+		me->setIndices(std::move(indices));
+		if (!verticesPerFace.empty())
+			me->setFaceVertexCount(std::move(verticesPerFace));
+		else {
+			if (quadCount == 0)
+				me->assumeTriangular(facecount);
+			else if (triCount == 0)
+				me->assumeQuadrangular(facecount);
+			else {
+				PR_ASSERT(false, "Should not be reached!");
+			}
 		}
 	}
 
-	auto me = std::make_unique<MeshBase>();
-	me->setVertices(positionAttr);
-	me->setNormals(normalAttr);
-	me->setUVs(uvAttr);
-	me->setVelocities(velocityAttr);
-	me->setMaterialSlots(materials);
-	me->setIndices(indices);
-	me->setFaceVertexCount(verticesPerFace);
-
-	if (normalAttr.empty())
+	if (me->normals().empty())
 		me->buildNormals();
 
 	if (!me->isValid()) {

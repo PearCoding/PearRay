@@ -36,22 +36,21 @@ static void loadNode(Serializer& stream, kdTreeCollider::kdNodeCollider*& node,
 					 size_t& nodeCount)
 {
 	++nodeCount;
-	size_t id = 0;
-	bool leaf = false;
-	stream | id | leaf;
+	uint8 leaf = 0;
+	stream | leaf;
 
 	if (leaf) {
-		kdTreeCollider::kdLeafNodeCollider* leafN = new kdTreeCollider::kdLeafNodeCollider(id);
+		kdTreeCollider::kdLeafNodeCollider* leafN = new kdTreeCollider::kdLeafNodeCollider();
 		stream | leafN->objects;
 		node = leafN;
 	} else {
 		uint8 axis;
 		float splitPos;
-		size_t idLeft, idRight;
+		kdTreeCollider::NodeID idLeft, idRight;
 		stream | axis | splitPos | idLeft | idRight;
 
 		kdTreeCollider::kdInnerNodeCollider* innerN
-			= new kdTreeCollider::kdInnerNodeCollider(id, axis, splitPos, nullptr, nullptr);
+			= new kdTreeCollider::kdInnerNodeCollider(axis, splitPos, nullptr, nullptr);
 		node = innerN;
 
 		loadNode(stream, innerN->left, nodeCount);

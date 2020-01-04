@@ -716,11 +716,14 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	if (!mesh) {
-		PR_LOG(L_ERROR) << "[Loader] Mesh " << name << " couldn't be load" << std::endl;
+		PR_LOG(L_ERROR) << "[Loader] Mesh " << name << " could not be load" << std::endl;
 		return;
 	}
 
-	mesh->triangulate();
+	if (!mesh->isOnlyTriangular()) {
+		PR_LOG(L_WARNING) << "[Loader] Mesh " << name << " has to be triangulated" << std::endl;
+		mesh->triangulate();
+	}
 
 	bool useCache	  = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount());
 	DL::Data useCacheD = group.getFromKey("cache");

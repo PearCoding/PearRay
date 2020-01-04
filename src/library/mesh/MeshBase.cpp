@@ -12,6 +12,7 @@ MeshBase::~MeshBase()
 {
 }
 
+// Faster variants for triangle, quads only structures?
 void MeshBase::buildNormals()
 {
 	PR_PROFILE_THIS;
@@ -20,7 +21,7 @@ void MeshBase::buildNormals()
 	std::fill(mNormals.begin(), mNormals.end(), 0.0f);
 
 	for (size_t face = 0; face < faceCount(); ++face) {
-		size_t indInd = mFaceIndexOffset[face];
+		size_t indInd = faceIndexOffset(face);
 		size_t elems  = faceVertexCount(face);
 
 		Vector3f n;
@@ -92,9 +93,9 @@ void MeshBase::setFaceVertexCount(const std::vector<uint8>& faceVertexCount)
 std::vector<uint32> MeshBase::faceVertexCounts() const
 {
 	std::vector<uint32> array;
-	array.reserve(mFaceIndexOffset.size());
-	for (size_t i = 0; i < mFaceIndexOffset.size(); ++i)
-		array.push_back(static_cast<uint32>(faceVertexCount(i)));
+	array.resize(faceCount());
+	for (size_t i = 0; i < array.size(); ++i)
+		array[i] = static_cast<uint32>(faceVertexCount(i));
 
 	return array;
 }
@@ -105,15 +106,13 @@ float MeshBase::faceArea(size_t f, const Eigen::Affine3f& tm) const
 
 	size_t faceElems = faceVertexCount(f);
 
-	uint32 off		  = mFaceIndexOffset[f];
+	uint32 off		  = faceIndexOffset(f);
 	const uint32 ind1 = mIndices[off];
 	const uint32 ind2 = mIndices[off + 1];
 	const uint32 ind3 = mIndices[off + 2];
 
 	const Vector3f p1 = Transform::apply(tm.matrix(), vertex(ind1));
-
 	const Vector3f p2 = Transform::apply(tm.matrix(), vertex(ind2));
-
 	const Vector3f p3 = Transform::apply(tm.matrix(), vertex(ind3));
 
 	if (faceElems == 3)
@@ -176,23 +175,21 @@ void MeshBase::triangulate()
 	size_t new_facecount = triangleCount() + quadCount() * 2;
 
 	std::vector<uint32> new_indices(new_facecount * 3);
-	std::vector<uint32> new_faceIndexOffset(new_facecount);
 	std::vector<uint32> new_mats;
 	if (mInfo.Features & MF_HAS_MATERIAL)
-		new_mats.resize(new_faceIndexOffset.size());
+		new_mats.resize(new_facecount);
 
 	size_t indC = 0;
 	size_t facC = 0;
 
 	for (size_t face = 0; face < faceCount(); ++face) {
 		bool isQuad   = faceVertexCount(face) == 4;
-		size_t indInd = mFaceIndexOffset[face];
+		size_t indInd = faceIndexOffset(face);
 
 		// Triangle
-		new_indices[indC]		  = mIndices[indInd];
-		new_indices[indC + 1]	 = mIndices[indInd + 1];
-		new_indices[indC + 2]	 = mIndices[indInd + 2];
-		new_faceIndexOffset[facC] = static_cast<uint32>(indC);
+		new_indices[indC]	 = mIndices[indInd];
+		new_indices[indC + 1] = mIndices[indInd + 1];
+		new_indices[indC + 2] = mIndices[indInd + 2];
 		if (mInfo.Features & MF_HAS_MATERIAL)
 			new_mats[facC] = mMaterialSlots[face];
 		indC += 3;
@@ -204,7 +201,6 @@ void MeshBase::triangulate()
 			new_indices[indC + 1] = mIndices[indInd + 2];
 			new_indices[indC + 2] = mIndices[indInd + 3];
 
-			new_faceIndexOffset[facC] = static_cast<uint32>(indC);
 			if (mInfo.Features & MF_HAS_MATERIAL)
 				new_mats[facC] = mMaterialSlots[face];
 			indC += 3;
@@ -218,7 +214,7 @@ void MeshBase::triangulate()
 	mInfo.TriangleCount = new_facecount;
 	mInfo.QuadCount		= 0;
 	mIndices			= new_indices;
-	mFaceIndexOffset	= new_faceIndexOffset;
+	mFaceIndexOffset	= std::vector<uint32>();
 	mMaterialSlots		= new_mats;
 }
 
@@ -255,5 +251,25 @@ size_t MeshBase::addUserFaceAttrib(const std::vector<float>& cnt)
 	size_t id = mUserFaceAttribs.size();
 	mUserFaceAttribs.push_back(cnt);
 	return id;
+}
+
+template <typename T>
+static inline size_t vectorSize(const std::vector<T>& ptr)
+{
+	return sizeof(T) * ptr.size();
+}
+size_t MeshBase::memoryFootprint() const
+{
+	size_t size = vectorSize(mVertices);
+	size += vectorSize(mNormals);
+	size += vectorSize(mUVs);
+	size += vectorSize(mVelocities);
+	size += vectorSize(mIndices);
+	size += vectorSize(mFaceIndexOffset);
+	for (const auto& v : mUserVertexAttribs)
+		size += vectorSize(v);
+	for (const auto& v : mUserFaceAttribs)
+		size += vectorSize(v);
+	return size;
 }
 } // namespace PR

@@ -18,21 +18,21 @@ namespace PR {
 class Serializer;
 class PR_LIB kdTreeCollider {
 public:
+	using NodeID = uint32;
+
 	struct kdNodeCollider {
-		kdNodeCollider(uint32 id, bool leaf)
-			: id(id)
-			, isLeaf(leaf)
+		kdNodeCollider(bool leaf)
+			: isLeaf(leaf)
 		{
 		}
 
-		const uint32 id;
-		const bool isLeaf;
+		const uint8 isLeaf;
 	};
 
 	struct kdInnerNodeCollider : public kdNodeCollider {
-		kdInnerNodeCollider(uint32 id, uint8 axis, float sp,
+		kdInnerNodeCollider(uint8 axis, float sp,
 							kdNodeCollider* l, kdNodeCollider* r)
-			: kdNodeCollider(id, false)
+			: kdNodeCollider(false)
 			, axis(axis)
 			, splitPos(sp)
 			, left(l)
@@ -47,12 +47,12 @@ public:
 	};
 
 	struct kdLeafNodeCollider : public kdNodeCollider {
-		kdLeafNodeCollider(uint32 id)
-			: kdNodeCollider(id, true)
+		kdLeafNodeCollider()
+			: kdNodeCollider(true)
 		{
 		}
 
-		std::vector<uint64> objects;
+		std::vector<NodeID> objects;
 	};
 
 public:
