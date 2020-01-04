@@ -40,8 +40,6 @@ def parseArgs():
                         default=False, help="Skip Texture Generation")
     parser.add_argument('--skipCamera', action='store_true',
                         default=False, help="Skip Camera Generation")
-    parser.add_argument('--skipReg', action='store_true',
-                        default=False, help="Skip Registry Generation")
     parser.add_argument('--skipWorld', action='store_true',
                         default=False, help="Skip World Generation")
     parser.add_argument('--skipRepetitiveIncludes', action='store_true',

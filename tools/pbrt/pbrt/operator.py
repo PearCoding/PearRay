@@ -300,31 +300,28 @@ class Operator:
             self.writeShape(shape)
 
     def op_Integrator(self, op):
-        if self.options.skipReg:
+        if self.options.skipWorld:
             return
 
         # Ignore type for now
-        self.w.write("(registry '/renderer/common/type' 'direct')")
-        self.w.write("(registry '/renderer/common/max_ray_depth' %i)" %
-                     op.parameters['maxdepth'])
+        self.w.write("(integrator")
+        self.w.goIn()
+        self.w.write(":type 'direct'")
+        self.w.write(":max_ray_depth %i" % op.parameters['maxdepth'])
+        self.w.goOut()
+        self.w.write(")")
 
     def writeSampler(self, sampler, pixel_count):
-        if self.options.skipReg:
-            return
-
-        self.w.write(
-            "(registry '/renderer/common/sampler/aa/type' '%s')" % sampler)
-        self.w.write(
-            "(registry '/renderer/common/sampler/aa/count' %i)" % pixel_count)
-        self.w.write(
-            "(registry '/renderer/common/sampler/lens/type' '%s')" % sampler)
-        self.w.write("(registry '/renderer/common/sampler/lens/count' 1)")
-        self.w.write(
-            "(registry '/renderer/common/sampler/time/type' '%s')" % sampler)
-        self.w.write("(registry '/renderer/common/sampler/time/count' 1)")
+        self.w.write("(sampler")
+        self.w.goIn()
+        self.w.write(":slot 'aa'")
+        self.w.write(":type '%s'" % sampler)
+        self.w.write(":sample_count %i" % pixel_count)
+        self.w.goOut()
+        self.w.write(")")
 
     def op_Sampler(self, op):
-        if self.options.skipReg:
+        if self.options.skipWorld:
             return
 
         count = op.parameters["pixelsamples"]
@@ -341,15 +338,16 @@ class Operator:
         pass  # Ignoring for now
 
     def writeFilter(self, filter, pixel_count):
-        if self.options.skipReg:
-            return
-        self.w.write(
-            "(registry '/renderer/common/pixel/filter' '%s')" % filter)
-        self.w.write(
-            "(registry '/renderer/common/pixel/radius' %i)" % pixel_count)
+        self.w.write("(filter")
+        self.w.goIn()
+        self.w.write(":slot 'pixel'")
+        self.w.write(":type '%s'" % filter)
+        self.w.write(":radius %i" % pixel_count)
+        self.w.goOut()
+        self.w.write(")")
 
     def op_PixelFilter(self, op):
-        if self.options.skipReg:
+        if self.options.skipWorld:
             return
 
         xwidth = op.parameters["xwidth"]
@@ -370,7 +368,7 @@ class Operator:
             self.writeFilter("mitchell", count)
 
     def op_Film(self, op):
-        if self.options.skipReg:
+        if self.options.skipWorld:
             return
 
         if op.operand != "image":
