@@ -8,7 +8,7 @@ SET(PR_Src
   Logger.cpp
   Logger.h
   LogListener.h
-  MatrixFormat.h
+  PrettyPrint.h
   Platform.h
   Platform.cpp
   Profiler.h

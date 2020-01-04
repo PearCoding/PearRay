@@ -4,6 +4,7 @@ import math
 
 from .parser import Parser
 from .writer import Writer
+from . import objexport
 
 
 class Operator:
@@ -590,37 +591,54 @@ class Operator:
             normals = op.parameters.get('N')
             uv = op.parameters.get('st')
             inds = op.parameters['indices']
-            self.w.write("(mesh")
-            self.w.goIn()
-            self.w.write(":name '%s'" % name)
-            # Vertices
-            self.w.write("(attribute :type 'p'")
-            self.w.goIn()
-            self.writeVectors(points, 3)
-            self.w.goOut()
-            self.w.write(")")
-            # Normals
-            if normals is not None:
-                self.w.write("(attribute :type 'n'")
+            if self.options.embedMesh or len(points) < 1000:
+                self.w.write("(mesh")
                 self.w.goIn()
-                self.writeVectors(normals, 3)
+                self.w.write(":name '%s'" % name)
+                # Vertices
+                self.w.write("(attribute :type 'p'")
+                self.w.goIn()
+                self.writeVectors(points, 3)
                 self.w.goOut()
                 self.w.write(")")
-            # UV
-            if uv is not None:
-                self.w.write("(attribute :type 'uv'")
+                # Normals
+                if normals is not None:
+                    self.w.write("(attribute :type 'n'")
+                    self.w.goIn()
+                    self.writeVectors(normals, 3)
+                    self.w.goOut()
+                    self.w.write(")")
+                # UV
+                if uv is not None:
+                    self.w.write("(attribute :type 'uv'")
+                    self.w.goIn()
+                    self.writeVectors(uv, 2)
+                    self.w.goOut()
+                    self.w.write(")")
+                # Faces
+                self.w.write("(faces")
                 self.w.goIn()
-                self.writeVectors(uv, 2)
+                self.writeVectors(inds, 3)
                 self.w.goOut()
                 self.w.write(")")
-            # Faces
-            self.w.write("(faces")
-            self.w.goIn()
-            self.writeVectors(inds, 3)
-            self.w.goOut()
-            self.w.write(")")
-            self.w.goOut()
-            self.w.write(")")
+                self.w.goOut()
+                self.w.write(")")
+            else:  # Obj file
+                rel_file = os.path.relpath(
+                    os.path.abspath(op.filename), self.globalDir)
+                obj_file = os.path.join(
+                    self.options.output,
+                    os.path.join(os.path.dirname(rel_file), name + '.obj'))
+                if not self.options.quite:
+                    print("Exporting mesh to %s" % obj_file)
+                objexport.export(obj_file, points, normals, uv, inds)
+                self.w.write("(embed")
+                self.w.goIn()
+                self.w.write(":loader 'obj'")
+                self.w.write(":file '%s'" % obj_file)
+                self.w.write(":name '%s'" % name)
+                self.w.goOut()
+                self.w.write(")")
 
             shape = ('mesh', name, self.currentMaterial,
                      self.contextStack[-1].areaLight)

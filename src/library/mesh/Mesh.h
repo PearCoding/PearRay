@@ -42,7 +42,7 @@ protected:
 	void afterUnload() override;
 
 protected:
-	std::shared_ptr<kdTreeCollider> mCollider;
+	std::unique_ptr<kdTreeCollider> mCollider;
 	std::unique_ptr<MeshBase> mBase;
 
 private:

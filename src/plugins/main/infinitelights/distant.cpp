@@ -1,5 +1,5 @@
 #include "Environment.h"
-#include "MatrixFormat.h"
+#include "PrettyPrint.h"
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"

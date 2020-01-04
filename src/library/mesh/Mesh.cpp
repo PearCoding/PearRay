@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include "Logger.h"
 #include "Platform.h"
+#include "PrettyPrint.h"
 #include "Profiler.h"
 #include "TriangleOptions.h"
 #include "container/kdTreeBuilder.h"
@@ -135,7 +136,7 @@ void Mesh::setup()
 
 void Mesh::constructCollider()
 {
-	PR_LOG(L_INFO) << "Mesh " << name() << " Memory Footprint: " << mBase->memoryFootprint() / 1024.0 << "kb" << std::endl;
+	PR_LOG(L_INFO) << "Mesh " << name() << " Memory Footprint: " << PR_FMT_MEM(mBase->memoryFootprint()) << std::endl;
 
 	BUILDER builder(mBase.get(), [](void* observer, size_t f) {
 								MeshBase* mesh = reinterpret_cast<MeshBase*>(observer);
@@ -173,7 +174,7 @@ void Mesh::loadCollider()
 {
 	std::wstring cnt_file = this->cacheFileNoExt() + L".cnt";
 	FileSerializer serializer(cnt_file, true);
-	mCollider = std::make_shared<kdTreeCollider>();
+	mCollider = std::make_unique<kdTreeCollider>();
 	mCollider->load(serializer);
 	if (!mCollider->isEmpty())
 		mBoundingBox = mCollider->boundingBox();

@@ -28,6 +28,33 @@ inline std::string matrix2String(const Eigen::Quaternionf& m)
 	return matrix2String(m.coeffs());
 }
 
+inline std::string memsize2String(size_t size)
+{
+	std::stringstream stream;
+	if (size < 1024) {
+		stream << size << "b";
+		return stream.str();
+	}
+
+	size /= 1024;
+
+	if (size < 1024) {
+		stream << size << "kb";
+		return stream.str();
+	}
+
+	size /= 1024;
+
+	if (size < 1024) {
+		stream << size << "Mb";
+		return stream.str();
+	}
+
+	stream << (size / 1024) << "Gb";
+	return stream.str();
+}
+
 } // namespace PR
 
 #define PR_FMT_MAT(m) PR::matrix2String((m))
+#define PR_FMT_MEM(s) PR::memsize2String((s))

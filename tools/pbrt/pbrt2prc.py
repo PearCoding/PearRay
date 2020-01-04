@@ -46,6 +46,8 @@ def parseArgs():
                         default=False, help="Skip repetitive include statements")
     parser.add_argument('--singleFile', action='store_true',
                         default=False, help="Produce one single file")
+    parser.add_argument('--embedMesh', action='store_true',
+                        default=False, help="Embed mesh into prc. Not recommended")
 
     return parser.parse_args()
 
