@@ -2,24 +2,24 @@
 	:name 'box_test_scene'
 	:renderWidth 1920
 	:renderHeight 1080
-	:camera 'Camera'
 	:spectrum 'srgb'
-	; Settings
-	(registry '/renderer/common/type' "direct")
-	(registry '/renderer/common/max_ray_depth' 4)
-	(registry '/renderer/common/tile/mode' "linear")
-	(registry '/renderer/common/sampler/aa/count' 32)
-	(registry '/renderer/common/sampler/aa/type' "sobol")
-	(registry '/renderer/common/sampler/lens/count' 1)
-	(registry '/renderer/common/sampler/lens/type' "multi_jitter")
-	(registry '/renderer/common/sampler/time/count' 1)
-	(registry '/renderer/common/sampler/time/type' "multi_jitter")
-	(registry '/renderer/common/sampler/time/mapping' "center")
-	(registry '/renderer/common/sampler/time/scale' 1.0)
-	(registry '/renderer/common/pixel/filter' "mitchell")
-	(registry '/renderer/common/pixel/radius' 1)
-	(registry '/renderer/integrator/direct/light/sample_count' 1)
-	(registry '/renderer/integrator/direct/msi/enabled' true)
+
+	(sampler 
+	  :slot 'aa'
+	  :type 'sobol'
+	  :sample_count 8
+	)
+	(filter 
+	  :slot 'pixel'
+	  :type 'mitchell'
+	  :radius 1
+	)
+	(integrator 
+	  :type 'direct'
+	  :max_ray_depth 4
+	  :light_sample_count 1
+	  :msi true
+	)
 	; Outputs
 	(output
 		:name 'image'

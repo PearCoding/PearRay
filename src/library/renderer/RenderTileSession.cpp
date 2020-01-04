@@ -73,6 +73,7 @@ bool RenderTileSession::handleCameraRays()
 	mHitStream->reset();
 
 	bool forceBreak = false;
+	const uint32 iterCount = mTile->iterationCount();
 	for (; mCurrentY < h; ++mCurrentY) {
 		const uint32 fy = mCurrentY + mTile->sy();
 
@@ -88,8 +89,7 @@ bool RenderTileSession::handleCameraRays()
 
 			const uint32 fx = mCurrentX + mTile->sx();
 
-			Ray ray		   = mTile->constructCameraRay(fx, fy,
-												   mTile->samplesRendered());
+			Ray ray		   = mTile->constructCameraRay(fx, fy, iterCount);
 			ray.PixelIndex = fy * mTile->context()->width() + fx;
 
 			enqueueCameraRay(ray);

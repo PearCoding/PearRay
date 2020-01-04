@@ -8,15 +8,21 @@
 #include "emission/IEmission.h"
 #include "entity/EntityManager.h"
 #include "entity/IEntity.h"
+#include "filter/FilterManager.h"
+#include "filter/IFilterPlugin.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/InfiniteLightManager.h"
 #include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "mesh/Mesh.h"
+#include "parameter/Parameter.h"
+
 #include "plugin/PluginManager.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderSettings.h"
+#include "sampler/ISamplerPlugin.h"
+#include "sampler/SamplerManager.h"
 #include "scene/Scene.h"
 #include "shader/ConstSocket.h"
 #include "shader/MapShadingSocket.h"
@@ -37,19 +43,20 @@ Environment::Environment(const std::wstring& workdir,
 						 bool useStandardLib)
 	: mWorkingDir(workdir)
 	, mSpectrumDescriptor(specDesc)
-	, mPluginManager(std::make_shared<PluginManager>())
+	, mPluginManager(std::make_shared<PluginManager>(plugdir))
 	, mMaterialManager(std::make_shared<MaterialManager>())
 	, mEntityManager(std::make_shared<EntityManager>())
 	, mCameraManager(std::make_shared<CameraManager>())
 	, mEmissionManager(std::make_shared<EmissionManager>())
 	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
 	, mIntegratorManager(std::make_shared<IntegratorManager>())
+	, mFilterManager(std::make_shared<FilterManager>())
+	, mSamplerManager(std::make_shared<SamplerManager>())
 	, mResourceManager(std::make_shared<ResourceManager>(workdir))
 	, mCache(std::make_shared<Cache>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
-	registry().setByGroup(RG_RENDERER, "plugins/path", plugdir);
 	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
@@ -147,7 +154,7 @@ void Environment::loadPlugins(const std::wstring& basedir)
 				continue;
 #endif
 
-			mPluginManager->load(entry.path().generic_wstring(), mRegistry);
+			mPluginManager->load(entry.path().generic_wstring());
 		}
 	}
 
@@ -155,22 +162,28 @@ void Environment::loadPlugins(const std::wstring& basedir)
 	for (auto plugin : mPluginManager->plugins()) {
 		switch (plugin->type()) {
 		case PT_INTEGRATOR:
-			mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorFactory>(plugin));
+			mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorPlugin>(plugin));
 			break;
 		case PT_CAMERA:
-			mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraFactory>(plugin));
+			mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraPlugin>(plugin));
 			break;
 		case PT_MATERIAL:
-			mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialFactory>(plugin));
+			mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialPlugin>(plugin));
 			break;
 		case PT_EMISSION:
-			mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionFactory>(plugin));
+			mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionPlugin>(plugin));
 			break;
 		case PT_INFINITELIGHT:
-			mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightFactory>(plugin));
+			mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightPlugin>(plugin));
 			break;
 		case PT_ENTITY:
-			mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityFactory>(plugin));
+			mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityPlugin>(plugin));
+			break;
+		case PT_FILTER:
+			mFilterManager->addFactory(std::dynamic_pointer_cast<IFilterPlugin>(plugin));
+			break;
+		case PT_SAMPLER:
+			mSamplerManager->addFactory(std::dynamic_pointer_cast<ISamplerPlugin>(plugin));
 			break;
 		default:
 			break;
@@ -180,30 +193,15 @@ void Environment::loadPlugins(const std::wstring& basedir)
 
 std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 {
-	const std::string intMode = mRegistry.getByGroup<std::string>(RG_RENDERER,
-																  "common/type",
-																  "direct");
-	auto intfact			  = mIntegratorManager->getFactory(intMode);
-	if (!intfact) {
-		PR_LOG(L_ERROR) << "Integrator " << intMode
-						<< " not found!" << std::endl;
-		return nullptr;
-	}
-
-	SceneLoadContext ctx;
-	ctx.Env			= const_cast<Environment*>(this);
-	auto integrator = intfact->create(0, 0, ctx);
+	const auto integrator = mRenderSettings.createIntegrator();
 	if (!integrator) {
-		PR_LOG(L_ERROR) << "Integrator " << intMode
-						<< " implementation is broken! Please contact plugin developer." << std::endl;
+		PR_LOG(L_ERROR) << "Integrator not found!" << std::endl;
 		return nullptr;
 	}
-	mIntegratorManager->addObject(integrator);
-
 	return integrator;
 }
 
-std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
+std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 {
 	auto entities  = mEntityManager->getAll();
 	auto materials = mMaterialManager->getAll();
@@ -232,130 +230,119 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory() const
 	std::shared_ptr<RenderFactory> fct = std::make_shared<RenderFactory>(scene,
 																		 mSpectrumDescriptor);
 
-	// Populate settings from the registry
-	fct->settings().seed = mRegistry.getByGroup<uint64>(
-		RG_RENDERER,
-		"common/seed",
-		42);
-	fct->settings().maxRayDepth = std::max<uint32>(
-		1,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"common/max_ray_depth",
-			1));
-	fct->settings().aaSampleCount = std::max<uint32>(
-		1,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"common/sampler/aa/count",
-			1));
-	fct->settings().lensSampleCount = std::max<uint32>(
-		1,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"common/sampler/lens/count",
-			1));
-	fct->settings().timeSampleCount = std::max<uint32>(
-		1,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"common/sampler/time/count",
-			1));
-	fct->settings().aaSampler = mRegistry.getByGroup<std::string>(
-		RG_RENDERER,
-		"common/sampler/aa/type",
-		"");
-	fct->settings().lensSampler = mRegistry.getByGroup<std::string>(
-		RG_RENDERER,
-		"common/sampler/lens/type",
-		"");
-	fct->settings().timeSampler = mRegistry.getByGroup<std::string>(
-		RG_RENDERER,
-		"common/sampler/time/type",
-		"");
-	fct->settings().timeMappingMode = mRegistry.getByGroup<TimeMappingMode>(
-		RG_RENDERER,
-		"common/sampler/time/mapping",
-		TMM_RIGHT);
-	fct->settings().timeScale = mRegistry.getByGroup<float>(
-		RG_RENDERER,
-		"common/sampler/time/scale",
-		1.0);
-	fct->settings().tileMode = mRegistry.getByGroup<TileMode>(
-		RG_RENDERER,
-		"common/tile/mode",
-		TM_LINEAR);
-	fct->settings().pixelFilter = mRegistry.getByGroup<std::string>(
-		RG_RENDERER,
-		"common/pixel/filter",
-		"");
-	fct->settings().pixelFilterRadius = std::max<uint32>(
-		0,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"common/pixel/radius",
-			1));
-	fct->settings().filmWidth = std::max<uint32>(
-		1,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"film/width",
-			1920));
-	fct->settings().filmHeight = std::max<uint32>(
-		1,
-		mRegistry.getByGroup<uint32>(
-			RG_RENDERER,
-			"film/height",
-			1080));
-	fct->settings().cropMinX = std::max<float>(
-		0,
-		std::min<float>(1,
-						(float)mRegistry.getByGroup<uint32>(
-							RG_RENDERER,
-							"film/crop/min_x",
-							0)));
-	fct->settings().cropMaxX = std::max<float>(
-		0,
-		std::min<float>(1,
-						(float)mRegistry.getByGroup<uint32>(
-							RG_RENDERER,
-							"film/crop/max_x",
-							1)));
-	fct->settings().cropMinY = std::max<float>(
-		0,
-		std::min<float>(1,
-						(float)mRegistry.getByGroup<uint32>(
-							RG_RENDERER,
-							"film/crop/min_y",
-							0)));
-	fct->settings().cropMaxY = std::max<float>(
-		0,
-		std::min<float>(1,
-						(float)mRegistry.getByGroup<uint32>(
-							RG_RENDERER,
-							"film/crop/max_y",
-							1)));
+	setupDefaultSampler();
+	if (!mRenderSettings.aaSamplerFactory || !mRenderSettings.lensSamplerFactory || !mRenderSettings.timeSamplerFactory)
+		return nullptr;
+
+	setupDefaultFilter();
+	if (!mRenderSettings.pixelFilterFactory)
+		return nullptr;
+
+	fct->settings() = mRenderSettings;
 	return fct;
 }
 
-std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
-	const std::string& name, float def) const
+void Environment::setupDefaultSampler()
 {
-	auto socket = lookupSpectralShadingSocket(name);
-	if (socket)
-		return socket;
-	else
-		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, def));
+	constexpr uint64 DEF_AA_SC   = 128;
+	constexpr uint64 DEF_LENS_SC = 1;
+	constexpr uint64 DEF_TIME_SC = 1;
+
+	if (!mRenderSettings.aaSamplerFactory) {
+		PR_LOG(L_WARNING) << "No AA sampler selected. Using sobol sampler" << std::endl;
+		auto plugin = mSamplerManager->getFactory("sobol");
+		if (!plugin) {
+			PR_LOG(L_ERROR) << "No sobol sampler found" << std::endl;
+			return;
+		}
+
+		ParameterGroup params;
+		params.addParameter("sample_count", Parameter::fromUInt(DEF_AA_SC));
+
+		SceneLoadContext ctx;
+		ctx.Env		   = this;
+		ctx.Parameters = params;
+
+		mRenderSettings.aaSamplerFactory = plugin->create(mSamplerManager->nextID(), ctx);
+		mSamplerManager->addObject(mRenderSettings.aaSamplerFactory);
+		if (!mRenderSettings.aaSamplerFactory) {
+			PR_LOG(L_ERROR) << "Could not create sobol sampler" << std::endl;
+			return;
+		}
+	}
+
+	if (!mRenderSettings.lensSamplerFactory) {
+		PR_LOG(L_WARNING) << "No lens sampler selected. Using sobol sampler" << std::endl;
+		auto plugin = mSamplerManager->getFactory("sobol");
+		if (!plugin) {
+			PR_LOG(L_ERROR) << "No sobol sampler found" << std::endl;
+			return;
+		}
+
+		ParameterGroup params;
+		params.addParameter("sample_count", Parameter::fromUInt(DEF_TIME_SC));
+
+		SceneLoadContext ctx;
+		ctx.Env		   = this;
+		ctx.Parameters = params;
+
+		mRenderSettings.lensSamplerFactory = plugin->create(mSamplerManager->nextID(), ctx);
+		mSamplerManager->addObject(mRenderSettings.lensSamplerFactory);
+		if (!mRenderSettings.lensSamplerFactory) {
+			PR_LOG(L_ERROR) << "Could not create sobol sampler" << std::endl;
+			return;
+		}
+	}
+
+	if (!mRenderSettings.timeSamplerFactory) {
+		PR_LOG(L_WARNING) << "No time sampler selected. Using sobol sampler" << std::endl;
+		auto plugin = mSamplerManager->getFactory("sobol");
+		if (!plugin) {
+			PR_LOG(L_ERROR) << "No sobol sampler found" << std::endl;
+			return;
+		}
+
+		ParameterGroup params;
+		params.addParameter("sample_count", Parameter::fromUInt(DEF_LENS_SC));
+
+		SceneLoadContext ctx;
+		ctx.Env		   = this;
+		ctx.Parameters = params;
+
+		mRenderSettings.timeSamplerFactory = plugin->create(mSamplerManager->nextID(), ctx);
+		mSamplerManager->addObject(mRenderSettings.timeSamplerFactory);
+		if (!mRenderSettings.timeSamplerFactory) {
+			PR_LOG(L_ERROR) << "Could not create sobol sampler" << std::endl;
+			return;
+		}
+	}
 }
 
-std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocket(
-	const std::string& name, const Spectrum& def) const
+void Environment::setupDefaultFilter()
 {
-	auto socket = lookupSpectralShadingSocket(name);
-	if (socket)
-		return socket;
-	else
-		return std::make_shared<ConstSpectralShadingSocket>(def);
+	constexpr int DEF_R = 1;
+	if (!mRenderSettings.pixelFilterFactory) {
+		PR_LOG(L_WARNING) << "No pixel filter selected. Creating mitchell filter" << std::endl;
+		auto plugin = mFilterManager->getFactory("mitchell");
+		if (!plugin) {
+			PR_LOG(L_ERROR) << "No mitchell filter found" << std::endl;
+			return;
+		}
+
+		ParameterGroup params;
+		params.addParameter("radius", Parameter::fromInt(DEF_R));
+
+		SceneLoadContext ctx;
+		ctx.Env		   = this;
+		ctx.Parameters = params;
+
+		mRenderSettings.pixelFilterFactory = plugin->create(mFilterManager->nextID(), ctx);
+		mFilterManager->addObject(mRenderSettings.pixelFilterFactory);
+		if (!mRenderSettings.pixelFilterFactory) {
+			PR_LOG(L_ERROR) << "Could not create mitchell filter" << std::endl;
+			return;
+		}
+	}
 }
 
 /* Allows input of:
@@ -364,43 +351,41 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::getSpectralShadingSocke
  SOCKET_NAME
 */
 std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
-	const std::string& name) const
+	const Parameter& parameter, float def) const
 {
-	try {
-		float val = std::stof(name);
-		return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, val));
-	} catch (const std::invalid_argument&) {
-		// Nothing
-	}
-
-	if (name.find_first_of("{t} ") == 0) {
-		std::string tname = name.substr(4);
-
-		if (hasShadingSocket(tname)) {
-			auto socket = getShadingSocket<FloatSpectralShadingSocket>(tname);
-			if (socket)
-				return socket;
-		} else if (hasMapSocket(tname)) {
-			auto socket = getMapSocket(tname);
-			if (socket)
-				return std::make_shared<MapShadingSocket>(socket);
-		}
-	}
-
-	if (hasSpectrum(name))
-		return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(name));
-
-	return nullptr;
+	return lookupSpectralShadingSocket(parameter, Spectrum(mSpectrumDescriptor, def));
 }
 
-std::shared_ptr<FloatScalarShadingSocket> Environment::getScalarShadingSocket(
-	const std::string& name, float def) const
+std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
+	const Parameter& parameter, const Spectrum& def) const
 {
-	auto socket = lookupScalarShadingSocket(name);
-	if (socket)
-		return socket;
-	else
-		return std::make_shared<ConstScalarShadingSocket>(def);
+	switch (parameter.type()) {
+	default:
+		return std::make_shared<ConstSpectralShadingSocket>(def);
+	case PT_Int:
+	case PT_UInt:
+	case PT_Number:
+		if (parameter.isArray())
+			return std::make_shared<ConstSpectralShadingSocket>(def);
+		else
+			return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, parameter.getNumber(0.0f)));
+	case PT_String:
+		if (parameter.flags() & PF_Texture) {
+			std::string tname = parameter.getString("");
+
+			if (hasMapSocket(tname)) {
+				auto socket = getMapSocket(tname);
+				if (socket)
+					return std::make_shared<MapShadingSocket>(socket);
+			}
+		} else {
+			std::string sname = parameter.getString("");
+
+			if (hasSpectrum(sname))
+				return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(sname));
+		}
+		return std::make_shared<ConstSpectralShadingSocket>(def);
+	}
 }
 
 /* Allows input of:
@@ -408,60 +393,70 @@ std::shared_ptr<FloatScalarShadingSocket> Environment::getScalarShadingSocket(
  SOCKET_NAME
 */
 std::shared_ptr<FloatScalarShadingSocket> Environment::lookupScalarShadingSocket(
-	const std::string& name) const
+	const Parameter& parameter, float def) const
 {
-	try {
-		float val = std::stof(name);
-		return std::make_shared<ConstScalarShadingSocket>(val);
-	} catch (const std::invalid_argument&) {
-		// Nothing
-	}
+	switch (parameter.type()) {
+	default:
+		return std::make_shared<ConstScalarShadingSocket>(def);
+	case PT_Int:
+	case PT_UInt:
+	case PT_Number:
+		if (parameter.isArray())
+			return std::make_shared<ConstScalarShadingSocket>(def);
+		else
+			return std::make_shared<ConstScalarShadingSocket>(parameter.getNumber(def));
+	case PT_String:
+		if (parameter.flags() & PF_Node) {
+			std::string tname = parameter.getString("");
 
-	if (name.find_first_of("{t} ") == 0) {
-		std::string tname = name.substr(4);
-
-		if (hasShadingSocket(tname)) {
-			auto socket = getShadingSocket<FloatScalarShadingSocket>(tname);
-			if (socket)
-				return socket;
+			if (hasShadingSocket(tname)) {
+				auto socket = getShadingSocket<FloatScalarShadingSocket>(tname);
+				if (socket)
+					return socket;
+			}
 		}
+		return std::make_shared<ConstScalarShadingSocket>(def);
 	}
-
-	return nullptr;
 }
 
 ///////////////////
-std::shared_ptr<FloatSpectralMapSocket> Environment::getSpectralMapSocket(
-	const std::string& name,
+std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
+	const Parameter& parameter,
 	float def) const
 {
-	return getSpectralMapSocket(name, Spectrum(mSpectrumDescriptor, def));
+	return lookupSpectralMapSocket(parameter, Spectrum(mSpectrumDescriptor, def));
 }
 
-std::shared_ptr<FloatSpectralMapSocket> Environment::getSpectralMapSocket(
-	const std::string& name,
+std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
+	const Parameter& parameter,
 	const Spectrum& def) const
 {
-	try {
-		float val = std::stof(name);
-		return std::make_shared<ConstSpectralMapSocket>(Spectrum(mSpectrumDescriptor, val));
-	} catch (const std::invalid_argument&) {
-		// Nothing
-	}
+	switch (parameter.type()) {
+	default:
+		return std::make_shared<ConstSpectralMapSocket>(def);
+	case PT_Int:
+	case PT_UInt:
+	case PT_Number:
+		if (parameter.isArray())
+			return std::make_shared<ConstSpectralMapSocket>(def);
+		else
+			return std::make_shared<ConstSpectralMapSocket>(Spectrum(mSpectrumDescriptor, parameter.getNumber(0.0f)));
+	case PT_String:
+		if (parameter.flags() & PF_Texture) {
+			std::string tname = parameter.getString("");
 
-	if (name.find_first_of("{t} ") == 0) {
-		std::string tname = name.substr(4);
+			if (hasMapSocket(tname)) {
+				auto socket = getMapSocket(tname);
+				if (socket)
+					return socket;
+			}
+		} else {
+			std::string sname = parameter.getString("");
 
-		if (hasMapSocket(tname)) {
-			auto socket = getMapSocket(tname);
-			if (socket)
-				return socket;
+			if (hasSpectrum(sname))
+				return std::make_shared<ConstSpectralMapSocket>(getSpectrum(sname));
 		}
+		return std::make_shared<ConstSpectralMapSocket>(def);
 	}
-
-	if (hasSpectrum(name))
-		return std::make_shared<ConstSpectralMapSocket>(getSpectrum(name));
-
-	return std::make_shared<ConstSpectralMapSocket>(def);
 }
 } // namespace PR

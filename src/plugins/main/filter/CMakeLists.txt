@@ -1,0 +1,5 @@
+PR_ADD_PLUGIN(fil_block CPP BlockFilter.cpp)
+PR_ADD_PLUGIN(fil_gaussian CPP GaussianFilter.cpp)
+PR_ADD_PLUGIN(fil_lanczos CPP LanczosFilter.cpp)
+PR_ADD_PLUGIN(fil_mitchell CPP MitchellFilter.cpp)
+PR_ADD_PLUGIN(fil_triangle CPP TriangleFilter.cpp)

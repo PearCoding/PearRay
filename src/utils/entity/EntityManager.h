@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IEntityFactory.h"
+#include "IEntityPlugin.h"
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB_UTILS EntityManager : public AbstractManager<IEntity, IEntityFactory> {
+class PR_LIB_UTILS EntityManager : public AbstractManager<IEntity, IEntityPlugin> {
 public:
 	EntityManager();
 	virtual ~EntityManager();

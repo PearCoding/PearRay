@@ -55,17 +55,7 @@ SET(PR_Src
   emission/IEmission.cpp
   emission/IEmission.h
   filter/IFilter.h
-  filter/BlockFilter.h
-  filter/FilterFactory.h
-  filter/FilterFactory.cpp
-  filter/GaussianFilter.cpp
-  filter/GaussianFilter.h
-  filter/LanczosFilter.cpp
-  filter/LanczosFilter.h
-  filter/MitchellFilter.cpp
-  filter/MitchellFilter.h
-  filter/TriangleFilter.cpp
-  filter/TriangleFilter.h
+  filter/IFilterFactory.h
   geometry/BoundingBox.cpp
   geometry/BoundingBox.h
   geometry/Disk.cpp
@@ -85,6 +75,7 @@ SET(PR_Src
   infinitelight/IInfiniteLight.h
   integrator/IIntegrator.cpp
   integrator/IIntegrator.h
+  integrator/IIntegratorFactory.h
   material/IMaterial.cpp
   material/IMaterial.h
   material/IMaterial.inl
@@ -163,22 +154,9 @@ SET(PR_Src
   sampler/Distribution1D.h
   sampler/Distribution2D.cpp
   sampler/Distribution2D.h
-  sampler/HaltonSampler.cpp
-  sampler/HaltonSampler.h
-  sampler/MultiJitteredSampler.cpp
-  sampler/MultiJitteredSampler.h
-  sampler/RandomSampler.cpp
-  sampler/RandomSampler.h
   sampler/ISampler.h
-  sampler/SamplerFactory.cpp
-  sampler/SamplerFactory.h
-  sampler/SobolSampler.cpp
-  sampler/SobolSampler.h
+  sampler/ISamplerFactory.h
   sampler/SplitSample.h
-  sampler/StratifiedSampler.cpp
-  sampler/StratifiedSampler.h
-  sampler/UniformSampler.cpp
-  sampler/UniformSampler.h
   scene/Scene.cpp
   scene/Scene.h
   scene/Scene.inl

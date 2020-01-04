@@ -19,15 +19,16 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	, mFullWidth(context.settings().filmWidth)
 	, mFullHeight(context.settings().filmHeight)
 	, mIndex(index)
-	, mMaxSamples(context.settings().samplesPerPixel() * mWidth * mHeight)
-	, mSamplesRendered(0)
+	, mMaxPixelSamples(mWidth * mHeight)
+	, mPixelSamplesRendered(0)
+	, mIterationCount(0)
 	, mRandom(context.settings().seed + index)
 	, mAASampler(nullptr)
 	, mLensSampler(nullptr)
 	, mTimeSampler(nullptr)
-	, mAASampleCount(context.settings().aaSampleCount)
-	, mLensSampleCount(context.settings().lensSampleCount)
-	, mTimeSampleCount(context.settings().timeSampleCount)
+	, mAASampleCount(0)
+	, mLensSampleCount(0)
+	, mTimeSampleCount(0)
 	, mContext(&context)
 	, mCamera(context.scene()->activeCamera().get())
 {
@@ -37,6 +38,11 @@ RenderTile::RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
 	mAASampler   = mContext->settings().createAASampler(mRandom);
 	mLensSampler = mContext->settings().createLensSampler(mRandom);
 	mTimeSampler = mContext->settings().createTimeSampler(mRandom);
+
+	mAASampleCount   = mAASampler->maxSamples();
+	mLensSampleCount = mLensSampler->maxSamples();
+	mTimeSampleCount = mTimeSampler->maxSamples();
+	mMaxPixelSamples *= mAASampleCount * mLensSampleCount * mTimeSampleCount;
 
 	switch (mContext->settings().timeMappingMode) {
 	default:
@@ -68,6 +74,7 @@ Ray RenderTile::constructCameraRay(uint32 px, uint32 py, uint32 sample)
 	PR_PROFILE_THIS;
 
 	statistics().addPixelSampleCount();
+	++mPixelSamplesRendered;
 
 	const uint32 timesample = sample % mTimeSampleCount;
 	sample /= mTimeSampleCount;

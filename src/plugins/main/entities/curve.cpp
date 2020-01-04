@@ -5,11 +5,12 @@
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Transform.h"
+
 
 #include <boost/filesystem.hpp>
 
@@ -273,34 +274,29 @@ private:
 	float mApproxSurfaceArea;
 };
 
-class CurveEntityFactory : public IEntityFactory {
+class CurveEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = ctx.Env->registry();
-		std::string name	= reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
-		uint32 degree		= (uint32)std::max(
-			  1,
-			  reg.getForObject<int>(RG_ENTITY, uuid, "degree", 3));
+		const ParameterGroup& params = ctx.Parameters;
+		std::string name			 = params.getString("name", "__unnamed__");
+		uint32 degree				 = (uint32)std::max(1, (int)params.getInt("degree", 3));
 
-		std::vector<float> points = reg.getForObject<std::vector<float>>(
-			RG_ENTITY, uuid, "points", std::vector<float>());
+		std::vector<float> points = params.getNumberArray("points");
 		if (points.size() != (degree + 1) * 3) {
 			PR_LOG(L_ERROR) << "Curve " << name << " is invalid. Expected " << (degree + 1) * 3 << " entries in points" << std::endl;
 			return nullptr;
 		}
 
-		Vector2f width = reg.getForObject<Vector2f>(RG_ENTITY, uuid, "width", Vector2f(1, 1));
+		Vector2f width = params.getVector2f("width", Vector2f(1, 1));
 
-		std::string matName = reg.getForObject<std::string>(
-			RG_ENTITY, uuid, "material", "");
+		std::string matName			   = params.getString("material", "");
 		int32 matID					   = -1;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
 		if (mat)
 			matID = static_cast<int32>(mat->id());
 
-		std::string emsName = reg.getForObject<std::string>(
-			RG_ENTITY, uuid, "emission", "");
+		std::string emsName			   = params.getString("emission", "");
 		int32 emsID					   = -1;
 		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
@@ -348,4 +344,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::CurveEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::CurveEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

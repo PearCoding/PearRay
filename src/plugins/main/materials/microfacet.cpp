@@ -3,11 +3,12 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
-#include "material/IMaterialFactory.h"
+#include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
 #include "math/Spherical.h"
+
 #include "renderer/RenderContext.h"
 
 #include <sstream>
@@ -340,50 +341,26 @@ private:
 	std::shared_ptr<FloatScalarShadingSocket> mConductorAbsorption;
 }; // namespace PR
 
-class MicrofacetMaterialFactory : public IMaterialFactory {
+class MicrofacetMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		const std::string fMStr = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "fresnel_mode", "");
-
-		const std::string gMStr = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "geometric_mode", "");
-
-		const std::string dMStr = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "distribution_mode", "");
-
-		const std::string albedoName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "albedo", "");
-
-		const std::string specName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "specularity", "");
-
-		const std::string iorName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "index", "");
-
-		const std::string conductorName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "conductor_absorption", "");
+		const std::string fMStr = params.getString("fresnel_mode", "");
+		const std::string gMStr = params.getString("geometric_mode", "");
+		const std::string dMStr = params.getString("distribution_mode", "");
 
 		std::shared_ptr<FloatScalarShadingSocket> roughnessX;
 		std::shared_ptr<FloatScalarShadingSocket> roughnessY;
-		const std::string roughnessName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "roughness", "");
+		const auto roughnessP = params.getParameter("roughness");
 
-		if (!roughnessName.empty()) {
-			roughnessX = ctx.Env->getScalarShadingSocket(roughnessName, 0.5f);
+		if (roughnessP.isValid()) {
+			roughnessX = ctx.Env->lookupScalarShadingSocket(roughnessP, 0.5f);
 			roughnessY = roughnessX;
 		} else {
-			const std::string roughnessXName = reg.getForObject<std::string>(
-				RG_MATERIAL, uuid, "roughness_x", "");
-
-			const std::string roughnessYName = reg.getForObject<std::string>(
-				RG_MATERIAL, uuid, "roughness_y", "");
-
-			roughnessX = ctx.Env->getScalarShadingSocket(roughnessXName, 0.5f);
-			roughnessY = ctx.Env->getScalarShadingSocket(roughnessYName, 0.5f);
+			roughnessX = ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness_x"), 0.5f);
+			roughnessY = ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness_y"), 0.5f);
 		}
 
 		FresnelMode fm		= FM_Dielectric;
@@ -410,11 +387,11 @@ public:
 
 		return std::make_shared<MicrofacetMaterial>(id,
 													fm, dm, gm,
-													ctx.Env->getSpectralShadingSocket(albedoName, 1),
-													ctx.Env->getSpectralShadingSocket(specName, 1),
-													ctx.Env->getSpectralShadingSocket(iorName, 1.55f),
+													ctx.Env->lookupSpectralShadingSocket(params.getParameter("albedo"), 1),
+													ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1),
+													ctx.Env->lookupSpectralShadingSocket(params.getParameter("index"), 1.55f),
 													roughnessX, roughnessY,
-													ctx.Env->getScalarShadingSocket(conductorName, 0.5f));
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("conductor_absorption"), 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const
@@ -430,4 +407,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::MicrofacetMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::MicrofacetMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

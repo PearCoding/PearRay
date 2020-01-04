@@ -17,12 +17,17 @@ public:
 			   const RenderContext& context, uint32 index);
 	~RenderTile();
 
-	inline void inc() { mSamplesRendered++; }
-	inline void reset() { mSamplesRendered = 0; }
+	inline void incIteration() { ++mIterationCount; }
+	inline void reset()
+	{
+		mPixelSamplesRendered = 0;
+		mIterationCount		  = 0;
+	}
 
 	Ray constructCameraRay(uint32 px, uint32 py, uint32 sample);
 
 	inline bool isWorking() const { return mWorking; }
+	inline bool accuire() { return !mWorking.exchange(true); }
 	inline void setWorking(bool b) { mWorking = b; }
 
 	inline uint32 sx() const { return mSX; }
@@ -33,8 +38,10 @@ public:
 	inline uint32 height() const { return mHeight; }
 	inline uint32 index() const { return mIndex; }
 
-	inline bool isFinished() const { return mSamplesRendered >= mMaxSamples; }
-	inline uint32 samplesRendered() const { return mSamplesRendered; }
+	inline bool isFinished() const { return mPixelSamplesRendered >= mMaxPixelSamples; }
+	inline uint32 maxPixelSamples() const { return mMaxPixelSamples; }
+	inline uint32 pixelSamplesRendered() const { return mPixelSamplesRendered; }
+	inline uint32 iterationCount() const { return mIterationCount; }
 
 	inline Random& random() { return mRandom; }
 
@@ -59,18 +66,19 @@ private:
 	const uint32 mFullWidth;
 	const uint32 mFullHeight;
 	const uint32 mIndex;
-	const uint32 mMaxSamples;
+	uint32 mMaxPixelSamples;
 
-	std::atomic<uint32> mSamplesRendered;
+	std::atomic<uint32> mPixelSamplesRendered;
+	std::atomic<uint32> mIterationCount;
 
 	Random mRandom;
 	std::shared_ptr<ISampler> mAASampler;
 	std::shared_ptr<ISampler> mLensSampler;
 	std::shared_ptr<ISampler> mTimeSampler;
 
-	const uint32 mAASampleCount;
-	const uint32 mLensSampleCount;
-	const uint32 mTimeSampleCount;
+	uint32 mAASampleCount;
+	uint32 mLensSampleCount;
+	uint32 mTimeSampleCount;
 
 	// t = t'*alpha + beta
 	float mTimeAlpha;

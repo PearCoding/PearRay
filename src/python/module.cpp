@@ -26,7 +26,6 @@ void setup_status(py::module& m);
 void setup_renderer(py::module& m);
 void setup_tonemapper(py::module& m);
 void setup_environment(py::module& m);
-void setup_registry(py::module& m);
 void setup_integrator(py::module& m);
 void setup_profiler(py::module& m);
 }
@@ -54,7 +53,6 @@ PYBIND11_MODULE(pypearray, m)
 	PRPY::setup_camera(m);
 	PRPY::setup_infinitelight(m);
 	PRPY::setup_scene(m);
-	PRPY::setup_registry(m);
 	PRPY::setup_settings(m);
 	PRPY::setup_output(m);
 	PRPY::setup_status(m);

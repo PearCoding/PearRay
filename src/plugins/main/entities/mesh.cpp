@@ -7,11 +7,12 @@
 #include "cache/ISerializeCachable.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "mesh/TriMesh.h"
+
 
 #include <boost/filesystem.hpp>
 
@@ -140,16 +141,16 @@ private:
 	bool mUseCache;
 };
 
-class MeshEntityFactory : public IEntityFactory {
+class MeshEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg   = ctx.Env->registry();
-		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
-		std::string mesh_name = reg.getForObject<std::string>(RG_ENTITY, uuid, "mesh", "");
+		const ParameterGroup& params = ctx.Parameters;
 
-		std::vector<std::string> matNames = reg.getForObject<std::vector<std::string>>(
-			RG_ENTITY, uuid, "materials", std::vector<std::string>());
+		std::string name	  = params.getString("name", "__unnamed__");
+		std::string mesh_name = params.getString("mesh", "");
+
+		std::vector<std::string> matNames = params.getStringArray("materials");
 
 		std::vector<uint32> materials;
 		for (std::string n : matNames) {
@@ -158,8 +159,7 @@ public:
 				materials.push_back(mat->id());
 		}
 
-		std::string emsName = reg.getForObject<std::string>(
-			RG_ENTITY, uuid, "emission", "");
+		std::string emsName			   = params.getString("emission", "");
 		int32 emsID					   = -1;
 		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
@@ -188,4 +188,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::MeshEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::MeshEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

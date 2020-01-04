@@ -3,9 +3,10 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
-#include "material/IMaterialFactory.h"
+#include "material/IMaterialPlugin.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
+
 #include "renderer/RenderContext.h"
 
 #include <sstream>
@@ -96,21 +97,14 @@ private:
 	std::shared_ptr<FloatScalarShadingSocket> mRoughness;
 };
 
-class OrenNayarMaterialFactory : public IMaterialFactory {
+class OrenNayarMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = ctx.Env->registry();
-
-		const std::string albedoName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "albedo", "");
-
-		const std::string roughnessName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "roughness", "");
-
+		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<OrenNayarMaterial>(id,
-												   ctx.Env->getSpectralShadingSocket(albedoName, 1),
-												   ctx.Env->getScalarShadingSocket(roughnessName, 0.5f));
+												   ctx.Env->lookupSpectralShadingSocket(params.getParameter("albedo"), 1),
+												   ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness"), 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const
@@ -126,4 +120,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::OrenNayarMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::OrenNayarMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

@@ -3,8 +3,10 @@
 #include "SceneLoadContext.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
+#include "integrator/IIntegratorPlugin.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
+
 #include "path/LightPath.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
@@ -82,12 +84,26 @@ private:
 
 class IntAOFactory : public IIntegratorFactory {
 public:
-	std::shared_ptr<IIntegrator> create(uint32, uint32, const SceneLoadContext& ctx) override
+	IntAOFactory(const ParameterGroup& params)
+		: mParams(params)
 	{
-		const Registry& reg = ctx.Env->registry();
-		size_t sample_count = (size_t)reg.getByGroup<uint32>(RG_INTEGRATOR, "ao/sample_count", 10);
+	}
 
+	std::shared_ptr<IIntegrator> createInstance() const override
+	{
+		size_t sample_count = (size_t)mParams.getUInt("sample_count", 10);
 		return std::make_shared<IntAO>(sample_count);
+	}
+
+private:
+	ParameterGroup mParams;
+};
+
+class IntAOFactoryFactory : public IIntegratorPlugin {
+public:
+	std::shared_ptr<IIntegratorFactory> create(uint32, const SceneLoadContext& ctx) override
+	{
+		return std::make_shared<IntAOFactory>(ctx.Parameters);
 	}
 
 	const std::vector<std::string>& getNames() const override
@@ -104,4 +120,4 @@ public:
 
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::IntAOFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::IntAOFactoryFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

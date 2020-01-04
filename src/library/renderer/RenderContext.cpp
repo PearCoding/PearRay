@@ -34,7 +34,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 	, mOutputMap()
 	, mEmissiveSurfaceArea(0.0f)
 	, mTileMap()
-	, mIncrementalCurrentSample(0)
+	, mIncrementalCurrentIteration(0)
 	, mRenderSettings(settings)
 	, mIntegrator(integrator)
 	, mShouldStop(false)
@@ -64,7 +64,7 @@ void RenderContext::reset()
 	mShouldStop				  = false;
 	mThreadsWaitingForPass	= 0;
 	mCurrentPass			  = 0;
-	mIncrementalCurrentSample = 0;
+	mIncrementalCurrentIteration = 0;
 
 	mThreads.clear();
 	mLights.clear();
@@ -92,10 +92,6 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 	// Get other informations
 	PR_LOG(L_INFO) << "Rendering with: " << std::endl;
 	PR_LOG(L_INFO) << "  Lights: " << mLights.size() << std::endl;
-	PR_LOG(L_INFO) << "  AA Samples: " << mRenderSettings.aaSampleCount << std::endl;
-	PR_LOG(L_INFO) << "  Lens Samples: " << mRenderSettings.lensSampleCount << std::endl;
-	PR_LOG(L_INFO) << "  Time Samples: " << mRenderSettings.timeSampleCount << std::endl;
-	PR_LOG(L_INFO) << "  Full Samples: " << mRenderSettings.samplesPerPixel() << std::endl;
 	PR_LOG(L_INFO) << "  Emissive Area: " << mEmissiveSurfaceArea << std::endl;
 
 	if (mEmissiveSurfaceArea < PR_EPSILON)
@@ -241,12 +237,10 @@ RenderTile* RenderContext::getNextTile()
 	RenderTile* tile = nullptr;
 
 	// Try till we find a tile or all samples are already rendered
-	const uint32 samplesPerPixel = mRenderSettings.samplesPerPixel();
-	while (tile == nullptr && mIncrementalCurrentSample <= samplesPerPixel) {
-		tile = mTileMap->getNextTile(std::min(mIncrementalCurrentSample, samplesPerPixel));
-		if (tile == nullptr) {
-			mIncrementalCurrentSample++;
-		}
+	while (tile == nullptr && !mTileMap->allFinished()) {
+		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
+		if (tile == nullptr)
+			++mIncrementalCurrentIteration;
 	}
 
 	return tile;
@@ -265,10 +259,8 @@ RenderStatus RenderContext::status() const
 	RenderStatus status	= mIntegrator->status();
 
 	// Approximate percentage if not given by the integrator
-	if (status.percentage() < 0) {
-		const uint32 maxPixelSampleCount = mRenderSettings.samplesPerPixel() * mWidth * mHeight;
-		status.setPercentage(s.pixelSampleCount() / (float)maxPixelSampleCount);
-	}
+	if (status.percentage() < 0)
+		status.setPercentage(mTileMap->percentage());
 
 	status.setField("global.ray_count", s.rayCount());
 	status.setField("global.camera_ray_count", s.cameraRayCount());
@@ -292,7 +284,7 @@ void RenderContext::onNextPass()
 	bool clear = false;
 	mIntegrator->onNextPass(mCurrentPass + 1, clear);
 
-	mIncrementalCurrentSample = 0;
+	mIncrementalCurrentIteration = 0;
 
 	if (clear)
 		mOutputMap->clear();

@@ -22,10 +22,12 @@ public:
 
 	void init(const RenderContext& context, TileMode mode);
 
-	RenderTile* getNextTile(uint32 maxSample);
+	RenderTile* getNextTile(uint32 maxIter);
+	bool allFinished() const;
 	void reset();
 
 	RenderTileStatistics statistics() const;
+	float percentage() const;
 
 private:
 	uint32 mTileXCount;

@@ -2,10 +2,10 @@
 #include "MatrixFormat.h"
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
-#include "infinitelight/IInfiniteLightFactory.h"
+#include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-#include "registry/Registry.h"
+
 
 namespace PR {
 class DistantLight : public IInfiniteLight {
@@ -63,21 +63,17 @@ private:
 	Vector3f mDirection_Cache;
 };
 
-class DistantLightFactory : public IInfiniteLightFactory {
+class DistantLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(uint32 id, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		const std::string name		   = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-															   "name", "__unknown");
-		const std::string radianceName = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-																	   "radiance", "");
-		const Vector3f direction	   = reg.getForObject<Vector3f>(RG_INFINITELIGHT, uuid,
-																"direction", Vector3f(0, 0, 1));
+		const std::string name   = params.getString("name", "__unknown");
+		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
 		return std::make_shared<DistantLight>(id, name, direction,
-											  ctx.Env->getSpectralShadingSocket(radianceName, 1));
+											  ctx.Env->lookupSpectralShadingSocket(params.getParameter("radiance"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

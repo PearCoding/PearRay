@@ -6,10 +6,11 @@
 #include "cache/Cache.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "mesh/TriMesh.h"
+
 
 #include <boost/filesystem.hpp>
 #include <cctype>
@@ -166,7 +167,7 @@ struct SubdivisionOptions {
 	OpenSubdivComputationMode ComputationMode = OSCM_OPENMP;
 };
 
-class SubdivMeshEntityFactory : public IEntityFactory {
+class SubdivMeshEntityPlugin : public IEntityPlugin {
 public:
 	Far::TopologyDescriptor::FVarChannel fvarChannels[1];
 	std::vector<uint32> fvarIndices;
@@ -462,14 +463,14 @@ public:
 		return refineMesh;
 	}
 
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg   = ctx.Env->registry();
-		std::string name	  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name", "__unnamed__");
-		std::string mesh_name = reg.getForObject<std::string>(RG_ENTITY, uuid, "mesh", "");
+		const ParameterGroup& params = ctx.Parameters;
 
-		std::vector<std::string> matNames = reg.getForObject<std::vector<std::string>>(
-			RG_ENTITY, uuid, "materials", std::vector<std::string>());
+		std::string name	  = params.getString("name", "__unnamed__");
+		std::string mesh_name = params.getString("mesh", "");
+
+		std::vector<std::string> matNames = params.getStringArray("materials");
 
 		std::vector<uint32> materials;
 		for (std::string n : matNames) {
@@ -478,20 +479,19 @@ public:
 				materials.push_back(mat->id());
 		}
 
-		std::string emsName = reg.getForObject<std::string>(
-			RG_ENTITY, uuid, "emission", "");
+		std::string emsName			   = params.getString("emission", "");
 		int32 emsID					   = -1;
 		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();
 
 		SubdivisionOptions opts;
-		opts.MaxLevel					  = std::max(1, reg.getForObject<int>(RG_ENTITY, uuid, "max_level", opts.MaxLevel));
-		opts.Adaptive					  = reg.getForObject<bool>(RG_ENTITY, uuid, "adaptive", opts.Adaptive);
-		std::string scheme				  = reg.getForObject<std::string>(RG_ENTITY, uuid, "scheme", "");
-		std::string boundaryInterpolation = reg.getForObject<std::string>(RG_ENTITY, uuid, "boundary_interpolation", "");
-		std::string uvInterpolation		  = reg.getForObject<std::string>(RG_ENTITY, uuid, "uv_interpolation", "");
-		std::string fVarInterpolation	 = reg.getForObject<std::string>(RG_ENTITY, uuid, "fvar_interpolation", "");
+		opts.MaxLevel					  = std::max(1, (int)params.getInt("max_level", opts.MaxLevel));
+		opts.Adaptive					  = params.getBool("adaptive", opts.Adaptive);
+		std::string scheme				  = params.getString("scheme", "");
+		std::string boundaryInterpolation = params.getString("boundary_interpolation", "");
+		std::string uvInterpolation		  = params.getString("uv_interpolation", "");
+		std::string fVarInterpolation	 = params.getString("fvar_interpolation", "");
 
 		// Scheme
 		std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
@@ -575,4 +575,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::SubdivMeshEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::SubdivMeshEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

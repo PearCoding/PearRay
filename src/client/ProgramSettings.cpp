@@ -34,7 +34,6 @@ po::options_description setup_cmd_options()
 		("progress,p", po::value<PR::uint32>()->implicit_value(1),
 			"Show progress (regardless if quiet or not)")
 		("information,I", "Print additional scene information into log file (and perhabs into console)")
-		("registry", "Shows the content of the internal registry")
 
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>()->default_value("./scene"), "Output directory")
@@ -166,7 +165,6 @@ bool ProgramSettings::parse(int argc, char** argv)
 	IsQuiet			= (vm.count("quiet") != 0);
 	ShowProgress	= vm.count("progress") ? vm["progress"].as<PR::uint32>() : 0;
 	ShowInformation = (vm.count("information") != 0);
-	ShowRegistry	= (vm.count("registry") != 0);
 
 #ifdef PR_WITH_PROFILER
 	Profile = (vm.count("profile") != 0);

@@ -6,8 +6,10 @@
 #include "infinitelight/IInfiniteLight.h"
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
+#include "integrator/IIntegratorPlugin.h"
 #include "material/IMaterial.h"
 #include "math/ImportanceSampling.h"
+
 #include "path/LightPath.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
@@ -33,9 +35,10 @@
 namespace PR {
 class IntDirect : public IIntegrator {
 public:
-	explicit IntDirect(size_t lightSamples)
+	explicit IntDirect(size_t lightSamples, size_t maxRayDepth)
 		: IIntegrator()
 		, mLightSampleCount(lightSamples)
+		, mMaxRayDepth(maxRayDepth)
 		, mMSIEnabled(true)
 	{
 	}
@@ -138,8 +141,7 @@ public:
 		constexpr int MIN_DEPTH			= 4; //Minimum level of depth after which russian roulette will apply
 		constexpr float DEPTH_DROP_RATE = 0.90f;
 
-		const float scatProb  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
-		const size_t maxDepth = session.tile()->context()->settings().maxRayDepth;
+		const float scatProb = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
 
 		// Sample BxDF
 		MaterialSampleInput in;
@@ -153,7 +155,7 @@ public:
 
 		//const float NdotL = out.Outgoing.dot(spt.N);
 		if (out.PDF_S > PR_EPSILON
-			&& spt.Ray.IterationDepth + 1 < maxDepth
+			&& spt.Ray.IterationDepth + 1 < mMaxRayDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
 			Ray next = spt.Ray.next(spt.P, out.Outgoing);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
@@ -396,7 +398,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const size_t maxPathSize = session.tile()->context()->settings().maxRayDepth + 2;
+		const size_t maxPathSize = mMaxRayDepth + 2;
 
 		LightPath cb = LightPath::createCB();
 		LightPath path(maxPathSize);
@@ -438,21 +440,37 @@ public:
 	inline void enableMSI(bool b) { mMSIEnabled = b; }
 
 private:
-	size_t mLightSampleCount;
+	const size_t mLightSampleCount;
+	const size_t mMaxRayDepth;
 	bool mMSIEnabled;
 };
 
 class IntDirectFactory : public IIntegratorFactory {
 public:
-	std::shared_ptr<IIntegrator> create(uint32, uint32, const SceneLoadContext& ctx) override
+	IntDirectFactory(const ParameterGroup& params)
+		: mParams(params)
 	{
-		const Registry& reg = ctx.Env->registry();
+	}
 
-		size_t lightsamples = (size_t)reg.getByGroup<uint32>(RG_INTEGRATOR, "direct/light/sample_count", 4);
+	std::shared_ptr<IIntegrator> createInstance() const override
+	{
+		size_t lightsamples = (size_t)mParams.getUInt("light_sample_count", 1);
+		size_t maxraydepth  = (size_t)mParams.getUInt("max_ray_depth", 4);
 
-		auto obj = std::make_shared<IntDirect>(lightsamples);
-		obj->enableMSI(reg.getByGroup<bool>(RG_INTEGRATOR, "direct/msi/enabled", true));
+		auto obj = std::make_shared<IntDirect>(lightsamples, maxraydepth);
+		obj->enableMSI(mParams.getBool("msi", true));
 		return obj;
+	}
+
+private:
+	ParameterGroup mParams;
+};
+
+class IntDirectFactoryFactory : public IIntegratorPlugin {
+public:
+	std::shared_ptr<IIntegratorFactory> create(uint32, const SceneLoadContext& ctx) override
+	{
+		return std::make_shared<IntDirectFactory>(ctx.Parameters);
 	}
 
 	const std::vector<std::string>& getNames() const override
@@ -469,4 +487,4 @@ public:
 
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::IntDirectFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::IntDirectFactoryFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

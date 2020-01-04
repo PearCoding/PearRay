@@ -1,0 +1,6 @@
+PR_ADD_PLUGIN(sam_halton CPP HaltonSampler.cpp)
+PR_ADD_PLUGIN(sam_mjitt CPP MultiJitteredSampler.cpp)
+PR_ADD_PLUGIN(sam_rand CPP RandomSampler.cpp)
+PR_ADD_PLUGIN(sam_sobol CPP SobolSampler.cpp SobolSamplerData.inl)
+PR_ADD_PLUGIN(sam_stratified CPP StratifiedSampler.cpp)
+PR_ADD_PLUGIN(sam_uniform CPP UniformSampler.cpp)

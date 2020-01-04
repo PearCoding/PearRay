@@ -1,15 +1,16 @@
 #include "PluginManager.h"
 #include "Logger.h"
-#include "registry/Registry.h"
 
 namespace PR {
 constexpr static const char* PR_PLUGIN_ENV_VAR	= "PR_PLUGIN_PATH";
 constexpr static char PR_PLUGIN_ENV_VAR_SEPERATOR = ':';
 
-constexpr static const char* PR_PLUGIN_REG_VAR	= "plugins/path";
-constexpr static char PR_PLUGIN_REG_VAR_SEPERATOR = ':';
+PluginManager::PluginManager(const std::wstring& pluginDir)
+	: mPluginDir(pluginDir)
+{
+}
 
-bool PluginManager::tryLoad(const std::wstring& path, const Registry& reg, bool useFallbacks)
+bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
 {
 	auto load = [](const boost::filesystem::path& p) -> boost::dll::shared_library {
 		try {
@@ -25,18 +26,9 @@ bool PluginManager::tryLoad(const std::wstring& path, const Registry& reg, bool 
 	const boost::filesystem::path op = path;
 	auto lib						 = load(op);
 
-	// 1 Fallback -> Use registry entry for parent directory
-	if (!lib && !op.is_absolute() && useFallbacks) {
-		std::string regPluginPath = reg.getByGroup<std::string>(RG_RENDERER, PR_PLUGIN_REG_VAR, "");
-		if (!regPluginPath.empty()) {
-			std::istringstream stream(regPluginPath);
-			std::string current_path;
-			while (std::getline(stream, current_path, PR_PLUGIN_REG_VAR_SEPERATOR)) {
-				lib = load(current_path / op);
-				if (lib)
-					break;
-			}
-		}
+	// 1 Fallback -> Use plugin directory for parent directory
+	if (!lib && !op.is_absolute() && useFallbacks && !mPluginDir.empty()) {
+		lib = load(mPluginDir / op);
 	}
 
 	// 2 Fallback -> Use environment variables
@@ -76,11 +68,11 @@ bool PluginManager::tryLoad(const std::wstring& path, const Registry& reg, bool 
 	return true;
 }
 
-std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Registry& reg, bool useFallbacks)
+std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, bool useFallbacks)
 {
 #ifdef PR_DEBUG
 	boost::filesystem::path p = path;
-	if (!tryLoad(path, reg, useFallbacks)) {
+	if (!tryLoad(path, useFallbacks)) {
 		std::wstring rel_name = p.stem().generic_wstring();
 		size_t pos			  = rel_name.find_last_of(L"_d");
 		if (pos == std::wstring::npos)
@@ -89,7 +81,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Reg
 		rel_name.erase(pos, 2);
 
 		boost::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
-		if (!tryLoad(release_path.generic_wstring(), reg, useFallbacks)) {
+		if (!tryLoad(release_path.generic_wstring(), useFallbacks)) {
 			return nullptr;
 		} else {
 			return getFromPath(path);
@@ -98,7 +90,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, const Reg
 		return getFromPath(path);
 	}
 #else
-	if (!tryLoad(path, reg, useFallbacks))
+	if (!tryLoad(path, useFallbacks))
 		return nullptr;
 	else
 		return getFromPath(path);

@@ -4,12 +4,12 @@
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-#include "registry/Registry.h"
+
 
 namespace PR {
 
@@ -139,18 +139,17 @@ private:
 	float mPDF_Cache;
 };
 
-class DiskEntityFactory : public IEntityFactory {
+class DiskEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const auto& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
-														 "__unnamed__");
-		float radius	 = reg.getForObject<float>(RG_ENTITY, uuid, "radius", 1);
+		std::string name = params.getString("name", "__unnamed__");
+		float radius	 = params.getNumber("radius", 1);
 
-		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
-		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+		std::string emsName = params.getString("emission", "");
+		std::string matName = params.getString("material", "");
 
 		int32 matID					   = -1;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
@@ -178,4 +177,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::DiskEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::DiskEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

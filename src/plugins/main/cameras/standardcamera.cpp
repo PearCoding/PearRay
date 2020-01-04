@@ -2,7 +2,8 @@
 #include "Logger.h"
 #include "SceneLoadContext.h"
 #include "camera/ICamera.h"
-#include "camera/ICameraFactory.h"
+#include "camera/ICameraPlugin.h"
+
 #include "ray/RayPackage.h"
 #include "renderer/RenderContext.h"
 
@@ -177,24 +178,24 @@ private:
 	Vector3f mYApertureRadius_Cache;
 };
 
-class StandardCameraFactory : public ICameraFactory {
+class StandardICameraPlugin : public ICameraPlugin {
 public:
-	std::shared_ptr<ICamera> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<ICamera> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		Registry& reg	= ctx.Env->registry();
-		std::string name = reg.getForObject<std::string>(RG_CAMERA, uuid, "name", "__unnamed__");
+		const ParameterGroup& params = ctx.Parameters;
+		std::string name			 = params.getString("name", "__unnamed__");
 
 		auto cam = std::make_shared<StandardCamera>(id, name);
 
-		cam->setLocalDirection(reg.getForObject<Vector3f>(RG_CAMERA, uuid, "localDirection", Vector3f(0, 0, 1)));
-		cam->setLocalUp(reg.getForObject<Vector3f>(RG_CAMERA, uuid, "localUp", Vector3f(0, 1, 0)));
-		cam->setLocalRight(reg.getForObject<Vector3f>(RG_CAMERA, uuid, "localRight", Vector3f(1, 0, 0)));
+		cam->setLocalDirection(params.getVector3f("localDirection", Vector3f(0, 0, 1)));
+		cam->setLocalUp(params.getVector3f("localUp", Vector3f(0, 1, 0)));
+		cam->setLocalRight(params.getVector3f("localRight", Vector3f(1, 0, 0)));
 
-		cam->setWidth(reg.getForObject<float>(RG_CAMERA, uuid, "width", 1));
-		cam->setHeight(reg.getForObject<float>(RG_CAMERA, uuid, "height", 1));
+		cam->setWidth(params.getNumber("width", 1));
+		cam->setHeight(params.getNumber("height", 1));
 
-		cam->setApertureRadius(reg.getForObject<float>(RG_CAMERA, uuid, "apertureRadius", 1));
-		cam->setFStop(reg.getForObject<float>(RG_CAMERA, uuid, "fstop", 0));
+		cam->setApertureRadius(params.getNumber("apertureRadius", 1));
+		cam->setFStop(params.getNumber("fstop", 0));
 
 		return cam;
 	}
@@ -212,4 +213,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::StandardCameraFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::StandardICameraPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

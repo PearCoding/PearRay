@@ -7,11 +7,12 @@
 
 namespace PR {
 
-class Registry;
 class PR_LIB_UTILS PluginManager {
 public:
+	explicit PluginManager(const std::wstring& pluginDir);
+
 	void loadEmbeddedPlugins();
-	std::shared_ptr<IPlugin> load(const std::wstring& path, const Registry& reg,
+	std::shared_ptr<IPlugin> load(const std::wstring& path,
 								  bool useFallbacks = true);
 
 	std::shared_ptr<IPlugin> get(const std::string& name) const;
@@ -26,7 +27,7 @@ public:
 	std::vector<std::shared_ptr<IPlugin>> plugins() const;
 
 private:
-	bool tryLoad(const std::wstring& path, const Registry& reg, bool useFallbacks);
+	bool tryLoad(const std::wstring& path, bool useFallbacks);
 	bool loadInterface(const std::string& name, struct PluginInterface* interface);
 
 	struct PluginLibPair {
@@ -42,5 +43,6 @@ private:
 		}
 	};
 	std::unordered_map<std::string, PluginLibPair> mLibraries;
+	std::wstring mPluginDir;
 };
 } // namespace PR

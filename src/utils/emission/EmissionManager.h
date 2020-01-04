@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IEmissionFactory.h"
+#include "IEmissionPlugin.h"
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB_UTILS EmissionManager : public AbstractManager<IEmission, IEmissionFactory> {
+class PR_LIB_UTILS EmissionManager : public AbstractManager<IEmission, IEmissionPlugin> {
 public:
 	EmissionManager();
 	virtual ~EmissionManager();

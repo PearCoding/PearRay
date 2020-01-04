@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SceneLoadContext.h"
-#include "registry/Registry.h"
 
 #include <map>
 #include <string>
@@ -14,6 +13,7 @@ class DataGroup;
 namespace PR {
 class ITransformable;
 class IMesh;
+class ParameterGroup;
 
 class Environment;
 class PR_LIB_UTILS SceneLoader {
@@ -34,11 +34,13 @@ private:
 														  const LoadOptions& opts,
 														  SceneLoadContext& ctx);
 	static void setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx);
-	static void addRegistryEntry(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void setupTransformable(const DL::DataGroup& group,
 								   const std::shared_ptr<PR::ITransformable>& entity, SceneLoadContext& ctx);
 	static void addEntity(const DL::DataGroup& group,
 						  const std::shared_ptr<ITransformable>& parent, SceneLoadContext& ctx);
+	static void addSampler(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addFilter(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addIntegrator(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addCamera(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addLight(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addEmission(const DL::DataGroup& group, SceneLoadContext& ctx);
@@ -49,11 +51,7 @@ private:
 	static void addInclude(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addMesh(const DL::DataGroup& group, SceneLoadContext& ctx);
 
-	static void addRegistryEntry(RegistryGroup regGroup, uint32 uuid, bool hasID,
-								 const std::string& key, const DL::Data& group,
-								 SceneLoadContext& ctx);
-	static void populateObjectRegistry(RegistryGroup regGroup, uint32 id,
-									   const DL::DataGroup& group, SceneLoadContext& ctx);
+	static ParameterGroup populateObjectParameters(const DL::DataGroup& group);
 
 	static void include(const std::string& filename, SceneLoadContext& ctx);
 };

@@ -1,18 +1,12 @@
 #include "RenderSettings.h"
-#include "filter/FilterFactory.h"
-#include "sampler/SamplerFactory.h"
+#include "filter/IFilterFactory.h"
+#include "integrator/IIntegratorFactory.h"
+#include "sampler/ISamplerFactory.h"
 
 namespace PR {
 RenderSettings::RenderSettings()
 	: seed(42)
-	, maxRayDepth(8)
 	, maxParallelRays(10000)
-	, aaSampleCount(1)
-	, lensSampleCount(1)
-	, timeSampleCount(1)
-	, aaSampler("multi_jitter")
-	, lensSampler("multi_jitter")
-	, timeSampler("multi_jitter")
 	, timeMappingMode(TMM_RIGHT)
 	, timeScale(1)
 	, tileMode(TM_LINEAR)
@@ -22,29 +16,35 @@ RenderSettings::RenderSettings()
 	, cropMaxX(1)
 	, cropMinY(0)
 	, cropMaxY(1)
-	, pixelFilterRadius(1)
-	, pixelFilter("gaussian")
+{
+}
+
+RenderSettings::~RenderSettings()
 {
 }
 
 std::shared_ptr<ISampler> RenderSettings::createAASampler(Random& random) const
 {
-	return SamplerFactory::createSampler(aaSampler, random, aaSampleCount);
+	return aaSamplerFactory ? aaSamplerFactory->createInstance(random) : nullptr;
 }
 
 std::shared_ptr<ISampler> RenderSettings::createLensSampler(Random& random) const
 {
-	return SamplerFactory::createSampler(lensSampler, random, lensSampleCount);
+	return lensSamplerFactory ? lensSamplerFactory->createInstance(random) : nullptr;
 }
 
 std::shared_ptr<ISampler> RenderSettings::createTimeSampler(Random& random) const
 {
-	return SamplerFactory::createSampler(timeSampler, random, timeSampleCount);
+	return timeSamplerFactory ? timeSamplerFactory->createInstance(random) : nullptr;
 }
 
 std::shared_ptr<IFilter> RenderSettings::createPixelFilter() const
 {
-	return FilterFactory::createFilter(pixelFilter, pixelFilterRadius);
+	return pixelFilterFactory ? pixelFilterFactory->createInstance() : nullptr;
 }
 
+std::shared_ptr<IIntegrator> RenderSettings::createIntegrator() const
+{
+	return integratorFactory ? integratorFactory->createInstance() : nullptr;
+}
 } // namespace PR

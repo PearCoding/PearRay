@@ -22,6 +22,8 @@ enum PluginType {
 	PT_EMISSION,
 	PT_INFINITELIGHT,
 	PT_INTEGRATOR,
+	PT_FILTER,
+	PT_SAMPLER
 };
 
 class PR_LIB_UTILS IPlugin {
@@ -45,16 +47,16 @@ struct PR_LIB_UTILS PluginInterface {
 };
 } // namespace PR
 
-#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                         \
-	class entityType;                                                                                              \
-	struct SceneLoadContext;                                                                                       \
-	class PR_LIB_UTILS className : public IPlugin {                                                                \
-	public:                                                                                                        \
-		className()																						= default; \
-		virtual ~className()																			= default; \
-		virtual std::shared_ptr<entityType> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) = 0;       \
-		virtual const std::vector<std::string>& getNames() const										= 0;       \
-		inline PluginType type() const override { return typeEnum; }                                               \
+#define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                            \
+	class entityType;                                                                                 \
+	struct SceneLoadContext;                                                                          \
+	class PR_LIB_UTILS className : public IPlugin {                                                   \
+	public:                                                                                           \
+		className()																		   = default; \
+		virtual ~className()															   = default; \
+		virtual std::shared_ptr<entityType> create(uint32 id, const SceneLoadContext& ctx) = 0;       \
+		virtual const std::vector<std::string>& getNames() const						   = 0;       \
+		inline PluginType type() const override { return typeEnum; }                                  \
 	}
 
 #define PR_PLUGIN_INIT(classType, pluginName, pluginVersion)                          \

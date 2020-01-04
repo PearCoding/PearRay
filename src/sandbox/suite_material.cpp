@@ -5,6 +5,7 @@
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "math/Spherical.h"
+
 #include "renderer/RenderTileSession.h"
 #include "shader/ShadingPoint.h"
 #include "spectral/SpectrumDescriptor.h"
@@ -133,13 +134,14 @@ static void mat_lambert(Environment& env)
 	SceneLoadContext ctx;
 	ctx.Env = &env;
 
-	Registry& reg   = env.registry();
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
 	auto fac		= manag->getFactory("lambert");
 
-	reg.setForObject(RG_MATERIAL, id, "albedo", std::string("white"));
-	auto mat = fac->create(id, id, ctx);
+	ParameterGroup params;
+	params.addParameter("albedo", Parameter::fromString("white"));
+	ctx.Parameters = params;
+	auto mat	   = fac->create(id, ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate lambert material!" << std::endl;
 		return;
@@ -152,15 +154,16 @@ static void mat_orennayar(Environment& env)
 	SceneLoadContext ctx;
 	ctx.Env = &env;
 
-	Registry& reg   = env.registry();
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
 	auto fac		= manag->getFactory("orennayar");
 
-	reg.setForObject(RG_MATERIAL, id, "albedo", std::string("white"));
+	ParameterGroup params;
+	ctx.Parameters = params;
+	params.addParameter("albedo", Parameter::fromString("white"));
 	{
-		reg.setForObject(RG_MATERIAL, id, "roughness", 1.0f);
-		auto mat = fac->create(id, id, ctx);
+		params.addParameter("roughness", Parameter::fromNumber(1.0f));
+		auto mat = fac->create(id, ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -168,8 +171,8 @@ static void mat_orennayar(Environment& env)
 		handle_material_case("orennayar_1_0", mat);
 	}
 	{
-		reg.setForObject(RG_MATERIAL, id, "roughness", 0.5f);
-		auto mat = fac->create(id, id, ctx);
+		params.addParameter("roughness", Parameter::fromNumber(0.5f));
+		auto mat = fac->create(id, ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -177,8 +180,8 @@ static void mat_orennayar(Environment& env)
 		handle_material_case("orennayar_0_5", mat);
 	}
 	{
-		reg.setForObject(RG_MATERIAL, id, "roughness", 0.0f);
-		auto mat = fac->create(id, id, ctx);
+		params.addParameter("roughness", Parameter::fromNumber(0.0f));
+		auto mat = fac->create(id, ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -192,16 +195,18 @@ static void mat_principled_p(Environment& env, float roughness, float specular)
 	SceneLoadContext ctx;
 	ctx.Env = &env;
 
-	Registry& reg   = env.registry();
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
 	auto fac		= manag->getFactory("principled");
 
-	reg.setForObject(RG_MATERIAL, id, "base", std::string("white"));
-	reg.setForObject(RG_MATERIAL, id, "roughness", roughness);
-	reg.setForObject(RG_MATERIAL, id, "specular", specular);
+	ParameterGroup params;
+	ctx.Parameters = params;
 
-	auto mat = fac->create(id, id, ctx);
+	params.addParameter("base", Parameter::fromString("white"));
+	params.addParameter("roughness", Parameter::fromNumber(roughness));
+	params.addParameter("specular", Parameter::fromNumber(specular));
+
+	auto mat = fac->create(id, ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 		return;

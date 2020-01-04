@@ -8,6 +8,8 @@ inline std::shared_ptr<CameraManager> Environment::cameraManager() const { retur
 inline std::shared_ptr<EmissionManager> Environment::emissionManager() const { return mEmissionManager; }
 inline std::shared_ptr<InfiniteLightManager> Environment::infiniteLightManager() const { return mInfiniteLightManager; }
 inline std::shared_ptr<IntegratorManager> Environment::integratorManager() const { return mIntegratorManager; }
+inline std::shared_ptr<FilterManager> Environment::filterManager() const { return mFilterManager; }
+inline std::shared_ptr<SamplerManager> Environment::samplerManager() const { return mSamplerManager; }
 inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { return mResourceManager; }
 inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 
@@ -140,7 +142,7 @@ inline void Environment::setWorkingDir(const std::wstring& dir) { mWorkingDir = 
 inline std::wstring Environment::workingDir() const { return mWorkingDir; }
 
 inline OutputSpecification& Environment::outputSpecification() { return mOutputSpecification; }
-inline const Registry& Environment::registry() const { return mRegistry; }
-inline Registry& Environment::registry() { return mRegistry; }
+inline const RenderSettings& Environment::renderSettings() const { return mRenderSettings; }
+inline RenderSettings& Environment::renderSettings() { return mRenderSettings; }
 
 } // namespace PR

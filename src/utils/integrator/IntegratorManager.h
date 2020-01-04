@@ -1,12 +1,12 @@
 #pragma once
 
-#include "IIntegratorFactory.h"
+#include "IIntegratorPlugin.h"
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class IIntegrator;
+class IIntegratorFactory;
 
-class PR_LIB_UTILS IntegratorManager : public AbstractManager<IIntegrator, IIntegratorFactory> {
+class PR_LIB_UTILS IntegratorManager : public AbstractManager<IIntegratorFactory, IIntegratorPlugin> {
 public:
 	IntegratorManager();
 	virtual ~IntegratorManager();

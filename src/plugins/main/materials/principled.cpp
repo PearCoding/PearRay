@@ -2,12 +2,13 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
-#include "material/IMaterialFactory.h"
+#include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
 #include "math/Spherical.h"
+
 #include "renderer/RenderContext.h"
 
 #include <sstream>
@@ -306,47 +307,23 @@ private:
 	std::shared_ptr<FloatScalarShadingSocket> mClearcoatGloss;
 }; // namespace PR
 
-class PrincipledMaterialFactory : public IMaterialFactory {
+class PrincipledMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = ctx.Env->registry();
-
-		const std::string baseColorName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "base_color", "");
-		const std::string specularName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "specular", "");
-		const std::string specularTintName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "specular_tint", "");
-		const std::string roughnessName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "roughness", "");
-		const std::string anisotropicName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "anisotropic", "");
-		const std::string subsurfaceName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "subsurface", "");
-		const std::string metallicName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "metallic", "");
-		const std::string sheenName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "sheen", "");
-		const std::string sheenTintName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "sheen_tint", "");
-		const std::string clearcoatName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "clearcoat", "");
-		const std::string clearcoatTintName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "clearcoat_gloss", "");
-
+		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<PrincipledMaterial>(id,
-													ctx.Env->getSpectralShadingSocket(baseColorName, 1.0f),
-													ctx.Env->getScalarShadingSocket(specularName, 0.5f),
-													ctx.Env->getScalarShadingSocket(specularTintName, 0.0f),
-													ctx.Env->getScalarShadingSocket(roughnessName, 0.5f),
-													ctx.Env->getScalarShadingSocket(anisotropicName, 0.0f),
-													ctx.Env->getScalarShadingSocket(subsurfaceName, 0.0f),
-													ctx.Env->getScalarShadingSocket(metallicName, 0.0f),
-													ctx.Env->getScalarShadingSocket(sheenName, 0.0f),
-													ctx.Env->getScalarShadingSocket(sheenTintName, 0.0f),
-													ctx.Env->getScalarShadingSocket(clearcoatName, 0.0f),
-													ctx.Env->getScalarShadingSocket(clearcoatTintName, 0.0f));
+													ctx.Env->lookupSpectralShadingSocket(params.getParameter("specular"), 1.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("base_color"), 0.5f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("specular_tint"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness"), 0.5f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("anisotropic"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("subsurface"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("metallic"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("sheen"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("sheen_tint"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("clearcoat"), 0.0f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("clearcoat_gloss"), 0.0f));
 	}
 
 	const std::vector<std::string>& getNames() const
@@ -362,4 +339,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::PrincipledMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::PrincipledMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

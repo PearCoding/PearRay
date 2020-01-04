@@ -13,14 +13,17 @@ SET(PR_Src
   camera/CameraManager.h
   entity/EntityManager.cpp
   entity/EntityManager.h
-  entity/IEntityFactory.h
-  emission/IEmissionFactory.h
+  entity/IEntityPlugin.h
+  emission/IEmissionPlugin.h
   emission/EmissionManager.cpp
   emission/EmissionManager.h
-  infinitelight/IInfiniteLightFactory.h
+  filter/IFilterPlugin.h
+  filter/FilterManager.cpp
+  filter/FilterManager.h
+  infinitelight/IInfiniteLightPlugin.h
   infinitelight/InfiniteLightManager.cpp
   infinitelight/InfiniteLightManager.h
-  integrator/IIntegratorFactory.h
+  integrator/IIntegratorPlugin.h
   integrator/IntegratorManager.cpp
   integrator/IntegratorManager.h
   loader/PlyLoader.cpp
@@ -28,9 +31,13 @@ SET(PR_Src
   loader/SubGraphLoader.h
   loader/WavefrontLoader.cpp
   loader/WavefrontLoader.h
-  material/IMaterialFactory.h
+  material/IMaterialPlugin.h
   material/MaterialManager.cpp
   material/MaterialManager.h
+  parameter/Parameter.h
+  parameter/Parameter.inl
+  parameter/ParameterGroup.h
+  parameter/ParameterGroup.inl
   parser/CurveParser.cpp
   parser/CurveParser.h
   parser/MathParser.cpp
@@ -51,13 +58,9 @@ SET(PR_Src
   output/ImageWriter.h
   output/OutputSpecification.cpp
   output/OutputSpecification.h
-  registry/Any.h
-  registry/Registry.cpp
-  registry/Registry.h
-  registry/Registry.inl
-  registry/URI.cpp
-  registry/URI.h
-  registry/URI.inl
+  sampler/ISamplerPlugin.h
+  sampler/SamplerManager.cpp
+  sampler/SamplerManager.h
   shader/ConstSocket.cpp
   shader/ConstSocket.h
   shader/ImageMapSocket.cpp

@@ -106,7 +106,7 @@ private:
 
 	std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;
-	uint32 mIncrementalCurrentSample;
+	uint32 mIncrementalCurrentIteration;
 	std::list<RenderThread*> mThreads;
 
 	const RenderSettings mRenderSettings;

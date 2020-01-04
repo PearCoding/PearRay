@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IMaterialFactory.h"
+#include "IMaterialPlugin.h"
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB_UTILS MaterialManager : public AbstractManager<IMaterial, IMaterialFactory> {
+class PR_LIB_UTILS MaterialManager : public AbstractManager<IMaterial, IMaterialPlugin> {
 public:
 	MaterialManager();
 	virtual ~MaterialManager();

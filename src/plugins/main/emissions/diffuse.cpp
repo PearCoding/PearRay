@@ -1,10 +1,10 @@
 #include "Environment.h"
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
-#include "emission/IEmissionFactory.h"
+#include "emission/IEmissionPlugin.h"
 #include "entity/IEntity.h"
 #include "math/Projection.h"
-#include "registry/Registry.h"
+
 
 namespace PR {
 class DiffuseEmission : public IEmission {
@@ -26,16 +26,12 @@ private:
 	std::shared_ptr<FloatSpectralShadingSocket> mRadiance;
 };
 
-class DiffuseEmissionFactory : public IEmissionFactory {
+class DiffuseEmissionPlugin : public IEmissionPlugin {
 public:
-	std::shared_ptr<IEmission> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) override
+	std::shared_ptr<IEmission> create(uint32 id, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = ctx.Env->registry();
-
-		const std::string radianceName = reg.getForObject<std::string>(RG_EMISSION, uuid,
-																	   "radiance", "");
-
-		return std::make_shared<DiffuseEmission>(id, ctx.Env->getSpectralShadingSocket(radianceName, 1));
+		return std::make_shared<DiffuseEmission>(id,
+												 ctx.Env->lookupSpectralShadingSocket(ctx.Parameters.getParameter("radiance"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const override
@@ -51,4 +47,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::DiffuseEmissionFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::DiffuseEmissionPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

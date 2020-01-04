@@ -1,11 +1,5 @@
 #include "sampler/ISampler.h"
 #include "Random.h"
-#include "sampler/HaltonSampler.h"
-#include "sampler/MultiJitteredSampler.h"
-#include "sampler/RandomSampler.h"
-#include "sampler/SobolSampler.h"
-#include "sampler/StratifiedSampler.h"
-#include "sampler/UniformSampler.h"
 
 #include "pypearray.h"
 
@@ -30,25 +24,6 @@ void setup_sampler(py::module& m)
 	py::class_<ISampler, SamplerWrap>(m, "ISampler")
 		.def("generate1D", &ISampler::generate1D)
 		.def("generate2D", &ISampler::generate2D);
-
-	py::class_<HaltonSampler, ISampler>(m, "HaltonSampler")
-		.def(py::init<uint32, uint32, uint32>(),
-			 py::arg("samples"), py::arg("baseX") = 13, py::arg("baseY") = 47);
-
-	py::class_<MultiJitteredSampler, ISampler>(m, "MultiJitteredSampler")
-		.def(py::init<Random&, uint32>());
-
-	py::class_<RandomSampler, ISampler>(m, "RandomSampler")
-		.def(py::init<Random&>());
-
-	py::class_<StratifiedSampler, ISampler>(m, "StratifiedSampler")
-		.def(py::init<Random&, uint32>());
-
-	py::class_<SobolSampler, ISampler>(m, "SobolSampler")
-		.def(py::init<Random&, uint32>());
-
-	py::class_<UniformSampler, ISampler>(m, "UniformSampler")
-		.def(py::init<uint32>());
 
 	py::class_<Random>(m, "Random")
 		.def(py::init<uint64>())

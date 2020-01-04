@@ -2,11 +2,11 @@
 #include "Logger.h"
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
-#include "infinitelight/IInfiniteLightFactory.h"
+#include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/Projection.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
-#include "registry/Registry.h"
+
 #include "sampler/Distribution2D.h"
 
 namespace PR {
@@ -131,33 +131,24 @@ private:
 	Eigen::Matrix3f mInvTransform;
 };
 
-class EnvironmentLightFactory : public IInfiniteLightFactory {
+class EnvironmentLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(uint32 id, const SceneLoadContext& ctx) override
 	{
-		const Registry& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		const std::string name			 = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-																 "name", "__unknown");
-		const std::string radianceName   = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-																		 "radiance", "");
-		const std::string backgroundName = reg.getForObject<std::string>(RG_INFINITELIGHT, uuid,
-																		 "background", "");
-		const float factor				 = std::max(0.0000001f, reg.getForObject<float>(RG_INFINITELIGHT, uuid,
-																			"factor", 1.0f));
+		const std::string name = params.getString("name", "__unknown");
+		const float factor	 = std::max(0.0000001f, params.getNumber("factor", 1.0f));
 
-		auto rad = ctx.Env->getSpectralMapSocket(radianceName, 1);
+		auto rad		 = ctx.Env->lookupSpectralMapSocket(params.getParameter("radiance"), 1);
+		auto backgroundP = params.getParameter("background");
 		std::shared_ptr<FloatSpectralMapSocket> background;
-		if (backgroundName.empty())
+		if (backgroundP.type() != PT_String)
 			background = rad;
 		else
-			background = ctx.Env->getSpectralMapSocket(backgroundName, 1);
+			background = ctx.Env->lookupSpectralMapSocket(backgroundP, 1);
 
-		Eigen::Matrix3f trans	 = Eigen::Matrix3f::Identity();
-		std::vector<float> transR = reg.getForObject<std::vector<float>>(RG_INFINITELIGHT, uuid,
-																		 "orientation", std::vector<float>());
-		if (transR.size() == 9)
-			trans = Eigen::Map<Eigen::Matrix3f>(transR.data());
+		Eigen::Matrix3f trans = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
 		return std::make_shared<EnvironmentLight>(id, name, rad, background, factor, trans);
 	}

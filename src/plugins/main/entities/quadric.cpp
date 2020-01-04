@@ -5,12 +5,12 @@
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-#include "registry/Registry.h"
+
 
 #include <array>
 
@@ -162,22 +162,19 @@ private:
 	int32 mLightID;
 };
 
-class QuadricEntityFactory : public IEntityFactory {
+class QuadricEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const auto& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		std::string name		  = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
-														  "__unnamed__");
-		std::vector<float> params = reg.getForObject<std::vector<float>>(RG_ENTITY, uuid, "parameters", std::vector<float>());
-		Vector3f minB			  = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "min",
-												   Vector3f(-1, -1, -1));
-		Vector3f maxB			  = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "max",
-												   Vector3f(1, 1, 1));
+		std::string name	  = params.getString("name", "__unnamed__");
+		std::vector<float> qp = params.getNumberArray("parameters");
+		Vector3f minB		  = params.getVector3f("min", Vector3f(-1, -1, -1));
+		Vector3f maxB		  = params.getVector3f("max", Vector3f(1, 1, 1));
 
-		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
-		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+		std::string emsName = params.getString("emission", "");
+		std::string matName = params.getString("material", "");
 
 		int32 matID					   = -1;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
@@ -190,12 +187,12 @@ public:
 			emsID = ems->id();
 
 		std::array<float, 10> parameters;
-		if (params.size() == 3)
-			parameters = { params[0], params[1], params[2], 0, 0, 0, 0, 0, 0, 0 };
-		else if (params.size() == 4)
-			parameters = { params[0], params[1], params[2], 0, 0, 0, 0, 0, 0, params[3] };
-		else if (params.size() == 10)
-			parameters = { params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9] };
+		if (qp.size() == 3)
+			parameters = { qp[0], qp[1], qp[2], 0, 0, 0, 0, 0, 0, 0 };
+		else if (qp.size() == 4)
+			parameters = { qp[0], qp[1], qp[2], 0, 0, 0, 0, 0, 0, qp[3] };
+		else if (qp.size() == 10)
+			parameters = { qp[0], qp[1], qp[2], qp[3], qp[4], qp[5], qp[6], qp[7], qp[8], qp[9] };
 		else {
 			PR_LOG(L_ERROR) << "Invalid quadric parameters given" << std::endl;
 			return nullptr;
@@ -217,4 +214,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::QuadricEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::QuadricEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

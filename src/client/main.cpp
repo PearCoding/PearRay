@@ -98,11 +98,6 @@ int main(int argc, char** argv)
 		return -4;
 	}
 
-	if (options.ShowRegistry && !options.IsQuiet) {
-		std::cout << "Registry:" << std::endl
-				  << env->registry().dump() << std::endl;
-	}
-
 	auto integrator = env->createSelectedIntegrator();
 
 	// Render per image tile

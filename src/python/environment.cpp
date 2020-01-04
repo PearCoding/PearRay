@@ -28,7 +28,6 @@ void setup_environment(py::module& m)
 		//.def("hasMesh", &Environment::hasMesh)
 		//.def("addMesh", &Environment::addMesh)
 		// TODO: Sockets
-		.def_property_readonly("registry", (Registry & (Environment::*)()) & Environment::registry)
 		.def("dumpInformation", &Environment::dumpInformation)
 		.def("setup", &Environment::setup)
 		.def("save", &Environment::save)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "output/OutputSpecification.h"
-#include "registry/Registry.h"
+#include "renderer/RenderSettings.h"
 #include "shader/Socket.h"
 #include "spectral/Spectrum.h"
 
@@ -23,10 +23,13 @@ class EntityManager;
 class CameraManager;
 class InfiniteLightManager;
 class IntegratorManager;
+class FilterManager;
+class SamplerManager;
 class IIntegrator;
 class RenderFactory;
 class ResourceManager;
 class Cache;
+class Parameter;
 
 using ShadingSocketVariantPtr = boost::variant<
 	std::shared_ptr<FloatScalarShadingSocket>,
@@ -58,6 +61,8 @@ public:
 	inline std::shared_ptr<EmissionManager> emissionManager() const;
 	inline std::shared_ptr<InfiniteLightManager> infiniteLightManager() const;
 	inline std::shared_ptr<IntegratorManager> integratorManager() const;
+	inline std::shared_ptr<FilterManager> filterManager() const;
+	inline std::shared_ptr<SamplerManager> samplerManager() const;
 	inline std::shared_ptr<ResourceManager> resourceManager() const;
 	inline std::shared_ptr<Cache> cache() const;
 
@@ -87,23 +92,23 @@ public:
 	template <typename Socket>
 	inline bool isShadingSocket(const std::string& name) const;
 
-	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
-		const std::string& name, float def = 1) const;
-	std::shared_ptr<FloatSpectralShadingSocket> getSpectralShadingSocket(
-		const std::string& name, const Spectrum& def) const;
-	std::shared_ptr<FloatScalarShadingSocket> getScalarShadingSocket(
-		const std::string& name, float def = 1) const;
-
 	inline std::shared_ptr<FloatSpectralMapSocket> getMapSocket(const std::string& name) const;
 	inline bool hasMapSocket(const std::string& name) const;
-	inline void addMapSocket(const std::string& name,
-							 const std::shared_ptr<FloatSpectralMapSocket>& m);
+	inline void addMapSocket(const std::string& name, const std::shared_ptr<FloatSpectralMapSocket>& m);
 
-	std::shared_ptr<FloatSpectralMapSocket> getSpectralMapSocket(
-		const std::string& name,
+	// Lookup functions for easier access
+	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
+		const Parameter& parameter, float def = 1) const;
+	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
+		const Parameter& parameter, const Spectrum& def) const;
+	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
+		const Parameter& parameter, float def = 1) const;
+
+	std::shared_ptr<FloatSpectralMapSocket> lookupSpectralMapSocket(
+		const Parameter& parameter,
 		float def = 1) const;
-	std::shared_ptr<FloatSpectralMapSocket> getSpectralMapSocket(
-		const std::string& name,
+	std::shared_ptr<FloatSpectralMapSocket> lookupSpectralMapSocket(
+		const Parameter& parameter,
 		const Spectrum& def) const;
 
 	inline void* textureSystem();
@@ -112,8 +117,8 @@ public:
 	inline std::wstring workingDir() const;
 
 	inline OutputSpecification& outputSpecification();
-	inline const Registry& registry() const;
-	inline Registry& registry();
+	inline const RenderSettings& renderSettings() const;
+	inline RenderSettings& renderSettings();
 
 	void dumpInformation() const;
 
@@ -121,20 +126,17 @@ public:
 	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force = false) const;
 
 	std::shared_ptr<IIntegrator> createSelectedIntegrator() const;
-	std::shared_ptr<RenderFactory> createRenderFactory() const;
+	std::shared_ptr<RenderFactory> createRenderFactory();
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
-		const std::string& name) const;
-	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
-		const std::string& name) const;
-
 	void loadPlugins(const std::wstring& basedir);
 
-	Registry mRegistry;
+	void setupDefaultSampler();
+	void setupDefaultFilter();
 
 	std::wstring mWorkingDir;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
+	RenderSettings mRenderSettings;
 
 	// Order matters: PluginManager should be before other managers
 	std::shared_ptr<PluginManager> mPluginManager;
@@ -144,6 +146,8 @@ private:
 	std::shared_ptr<EmissionManager> mEmissionManager;
 	std::shared_ptr<InfiniteLightManager> mInfiniteLightManager;
 	std::shared_ptr<IntegratorManager> mIntegratorManager;
+	std::shared_ptr<FilterManager> mFilterManager;
+	std::shared_ptr<SamplerManager> mSamplerManager;
 	std::shared_ptr<ResourceManager> mResourceManager;
 
 	std::shared_ptr<Cache> mCache;

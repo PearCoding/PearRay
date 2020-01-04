@@ -1,19 +1,22 @@
 (scene
 	:name 'example_sphere'
-	:camera 'Camera'
-	; Settings
-	(registry '/renderer/film/width' 400)
-	(registry '/renderer/film/height' 400)
-	(registry '/renderer/common/type' 'occlusion')
-	(registry '/renderer/common/max_ray_depth' 8)
-	(registry '/renderer/common/tile/mode' 0)
-	(registry '/renderer/common/sampler/aa/count' 32)
-	(registry '/renderer/common/sampler/lens/count' 1)
-	(registry '/renderer/common/sampler/time/count' 1)
-	(registry '/renderer/common/sampler/time/mapping' 0)
-	(registry '/renderer/common/sampler/time/scale' 1.0)
-	(registry '/renderer/integrator/direct/light/sample_count' 4)
-	(registry '/renderer/integrator/ao/sample_count' 16)
+	:renderWidth 1000
+	:renderHeight 1000
+	:spectrum 'srgb'
+	(sampler 
+	  :slot 'aa'
+	  :type 'sobol'
+	  :sample_count 32
+	)
+	(filter 
+	  :slot 'pixel'
+	  :type 'mitchell'
+	  :radius 1
+	)
+	(integrator 
+	  :type 'ao'
+	  :sample_count 32
+	)
 	; Outputs
 	(output
 		:name 'image'

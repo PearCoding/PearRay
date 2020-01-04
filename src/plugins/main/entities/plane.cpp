@@ -4,12 +4,12 @@
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-#include "registry/Registry.h"
+
 
 namespace PR {
 
@@ -144,23 +144,20 @@ private:
 	float mPDF_Cache;
 };
 
-class PlaneEntityFactory : public IEntityFactory {
+class PlaneEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const auto& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
-														 "__unnamed__");
-		Vector3f xAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "x_axis",
-													  Vector3f(1, 0, 0));
-		Vector3f yAxis   = reg.getForObject<Vector3f>(RG_ENTITY, uuid, "y_axis",
-													  Vector3f(0, 1, 0));
-		float width		 = reg.getForObject<float>(RG_ENTITY, uuid, "width", 1);
-		float height	 = reg.getForObject<float>(RG_ENTITY, uuid, "height", 1);
+		std::string name = params.getString("name", "__unnamed__");
+		Vector3f xAxis   = params.getVector3f("x_axis", Vector3f(1, 0, 0));
+		Vector3f yAxis   = params.getVector3f("y_axis", Vector3f(0, 1, 0));
+		float width		 = params.getNumber("width", 1);
+		float height	 = params.getNumber("height", 1);
 
-		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
-		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+		std::string emsName = params.getString("emission", "");
+		std::string matName = params.getString("material", "");
 
 		int32 matID					   = -1;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
@@ -173,7 +170,7 @@ public:
 			emsID = ems->id();
 
 		auto obj = std::make_shared<PlaneEntity>(id, name, width * xAxis, height * yAxis, matID, emsID);
-		if (reg.getForObject<bool>(RG_ENTITY, uuid, "centering", false))
+		if (params.getBool("centering", false))
 			obj->centerOn();
 
 		return obj;
@@ -192,4 +189,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::PlaneEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::PlaneEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

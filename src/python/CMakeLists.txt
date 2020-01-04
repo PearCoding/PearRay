@@ -9,7 +9,6 @@ SET(Src
   math.cpp
   module.cpp
   output.cpp
-  registry.cpp
   renderer.cpp
   sampler.cpp
   scene.cpp

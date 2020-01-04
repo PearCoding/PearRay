@@ -3,14 +3,14 @@
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
 #include "entity/IEntity.h"
-#include "entity/IEntityFactory.h"
+#include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "geometry/Disk.h"
 #include "geometry/Quadric.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-#include "registry/Registry.h"
+
 #include "sampler/SplitSample.h"
 
 namespace PR {
@@ -221,19 +221,18 @@ private:
 	float mPDF_Cache;
 }; // namespace PR
 
-class ConeEntityFactory : public IEntityFactory {
+class ConeEntityPlugin : public IEntityPlugin {
 public:
-	std::shared_ptr<IEntity> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const auto& reg = ctx.Env->registry();
+		const ParameterGroup& params = ctx.Parameters;
 
-		std::string name = reg.getForObject<std::string>(RG_ENTITY, uuid, "name",
-														 "__unnamed__");
-		float radius	 = reg.getForObject<float>(RG_ENTITY, uuid, "radius", 1);
-		float height	 = reg.getForObject<float>(RG_ENTITY, uuid, "height", 1);
+		std::string name = params.getString("name", "__unnamed__cone__");
+		float radius	 = params.getNumber("radius", 1);
+		float height	 = params.getNumber("height", 1);
 
-		std::string emsName = reg.getForObject<std::string>(RG_ENTITY, uuid, "emission", "");
-		std::string matName = reg.getForObject<std::string>(RG_ENTITY, uuid, "material", "");
+		std::string emsName = params.getString("emission", "");
+		std::string matName = params.getString("material", "");
 
 		int32 matID					   = -1;
 		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
@@ -246,7 +245,7 @@ public:
 			emsID = ems->id();
 
 		auto obj = std::make_shared<ConeEntity>(id, name, radius, height, matID, emsID);
-		if (reg.getForObject<bool>(RG_ENTITY, uuid, "center_on", false))
+		if (params.getBool("center_on", false))
 			obj->centerOn();
 
 		return obj;
@@ -265,4 +264,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::ConeEntityFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::ConeEntityPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

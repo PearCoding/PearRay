@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ICameraFactory.h"
+#include "ICameraPlugin.h"
 #include "plugin/AbstractManager.h"
 
 namespace PR {
-class PR_LIB_UTILS CameraManager : public AbstractManager<ICamera, ICameraFactory> {
+class PR_LIB_UTILS CameraManager : public AbstractManager<ICamera, ICameraPlugin> {
 public:
 	CameraManager();
 	virtual ~CameraManager();

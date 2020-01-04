@@ -2,10 +2,11 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
-#include "material/IMaterialFactory.h"
+#include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
+
 #include "renderer/RenderContext.h"
 
 #include <sstream>
@@ -108,21 +109,14 @@ private:
 	std::shared_ptr<FloatSpectralShadingSocket> mIOR;
 };
 
-class GlassMaterialFactory : public IMaterialFactory {
+class GlassMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, uint32 uuid, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
 	{
-		const Registry& reg = ctx.Env->registry();
-
-		const std::string specName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "specularity", "");
-
-		const std::string iorName = reg.getForObject<std::string>(
-			RG_MATERIAL, uuid, "index", "");
-
+		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<GlassMaterial>(id,
-											   ctx.Env->getSpectralShadingSocket(specName, 1),
-											   ctx.Env->getSpectralShadingSocket(iorName, 1.55f));
+											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1),
+											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("index"), 1.55f));
 	}
 
 	const std::vector<std::string>& getNames() const
@@ -138,4 +132,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::GlassMaterialFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::GlassMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

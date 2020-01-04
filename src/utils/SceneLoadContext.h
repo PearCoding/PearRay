@@ -1,13 +1,13 @@
 #pragma once
 
-#include "PR_Config.h"
-
-#include <vector>
+#include "parameter/ParameterGroup.h"
 
 namespace PR {
 class Environment;
+class ParameterGroup;
 struct PR_LIB_UTILS SceneLoadContext {
 	Environment* Env = nullptr;
+	ParameterGroup Parameters;
 	std::vector<std::wstring> FileStack;
 
 	inline std::wstring currentFile() const

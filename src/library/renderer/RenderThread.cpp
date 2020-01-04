@@ -42,13 +42,16 @@ void RenderThread::main()
 			RenderTileSession session(mThreadIndex, mTile,
 									  bucket,
 									  &rays, &hits);
+
+			mTile->incIteration();
 			mStatistics.addTileCount();
 
 			bucket->clear(true);
 			integrator->onPass(session, pass);
+			if (shouldStop())
+				break;
 			mRenderer->output()->mergeBucket(mTile->sx(), mTile->sy(), bucket);
 
-			mTile->inc();
 			mTile->setWorking(false);
 			mTile = mRenderer->getNextTile();
 		}

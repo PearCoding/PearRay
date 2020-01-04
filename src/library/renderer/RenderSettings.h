@@ -3,35 +3,29 @@
 #include "RenderEnums.h"
 
 namespace PR {
+class IFilterFactory;
+class ISamplerFactory;
+class IIntegratorFactory;
+
 class IFilter;
 class ISampler;
+class IIntegrator;
+
 class Random;
 
-/** @brief Bridge class to extract common information from the registry. */
-class PR_LIB RenderSettings {
+/** @brief Bridge class to combine common render settings*/
+class PR_LIB RenderSettings final {
 public:
 	explicit RenderSettings();
+	~RenderSettings();
 
 	// Common integrator entries
 	uint64 seed;
-	uint32 maxRayDepth;
 	size_t maxParallelRays;
-
-	uint32 aaSampleCount;
-	uint32 lensSampleCount;
-	uint32 timeSampleCount;
-
-	std::string aaSampler;
-	std::string lensSampler;
-	std::string timeSampler;
 
 	TimeMappingMode timeMappingMode;
 	float timeScale;
 	TileMode tileMode;
-
-	std::shared_ptr<ISampler> createAASampler(Random& random) const;
-	std::shared_ptr<ISampler> createLensSampler(Random& random) const;
-	std::shared_ptr<ISampler> createTimeSampler(Random& random) const;
 
 	// Film entries
 	uint32 filmWidth;
@@ -42,11 +36,6 @@ public:
 	float cropMaxY;
 
 	// Easy access
-	inline uint32 samplesPerPixel() const
-	{
-		return aaSampleCount * lensSampleCount * timeSampleCount;
-	}
-
 	inline uint32 cropWidth() const
 	{
 		return static_cast<uint32>((cropMaxX - cropMinX) * filmWidth);
@@ -67,8 +56,19 @@ public:
 		return static_cast<uint32>(cropMinY * filmHeight);
 	}
 
-	size_t pixelFilterRadius;
-	std::string pixelFilter;
+	// Factories
+	std::shared_ptr<ISamplerFactory> aaSamplerFactory;
+	std::shared_ptr<ISamplerFactory> lensSamplerFactory;
+	std::shared_ptr<ISamplerFactory> timeSamplerFactory;
+
+	std::shared_ptr<IFilterFactory> pixelFilterFactory;
+	std::shared_ptr<IIntegratorFactory> integratorFactory;
+
+	// Easy access
+	std::shared_ptr<ISampler> createAASampler(Random& random) const;
+	std::shared_ptr<ISampler> createLensSampler(Random& random) const;
+	std::shared_ptr<ISampler> createTimeSampler(Random& random) const;
 	std::shared_ptr<IFilter> createPixelFilter() const;
+	std::shared_ptr<IIntegrator> createIntegrator() const;
 };
 } // namespace PR

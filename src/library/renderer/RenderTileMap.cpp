@@ -129,24 +129,35 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 	}
 }
 
-RenderTile* RenderTileMap::getNextTile(uint32 maxSample)
+RenderTile* RenderTileMap::getNextTile(uint32 maxIter)
 {
 	PR_PROFILE_THIS;
 
 	for (uint32 i = 0; i < mTileYCount; ++i) {
 		for (uint32 j = 0; j < mTileXCount; ++j) {
-			// TODO: Better check up for AS
-			if (mTileMap[i * mTileXCount + j]
-				&& mTileMap[i * mTileXCount + j]->samplesRendered() < maxSample
-				&& !mTileMap[i * mTileXCount + j]->isWorking()) {
-				mTileMap[i * mTileXCount + j]->setWorking(true);
-
-				return mTileMap[i * mTileXCount + j];
+			auto tile = mTileMap[i * mTileXCount + j];
+			if (tile && tile->iterationCount() < maxIter && !tile->isFinished()) {
+				if (tile->accuire())
+					return tile;
 			}
 		}
 	}
 
 	return nullptr;
+}
+
+bool RenderTileMap::allFinished() const
+{
+	PR_PROFILE_THIS;
+
+	for (uint32 i = 0; i < mTileYCount; ++i) {
+		for (uint32 j = 0; j < mTileXCount; ++j) {
+			auto tile = mTileMap[i * mTileXCount + j];
+			if (tile && (!tile->isFinished() || tile->isWorking()))
+				return false;
+		}
+	}
+	return true;
 }
 
 RenderTileStatistics RenderTileMap::statistics() const
@@ -161,6 +172,28 @@ RenderTileStatistics RenderTileMap::statistics() const
 		}
 	}
 	return s;
+}
+
+float RenderTileMap::percentage() const
+{
+	PR_PROFILE_THIS;
+
+	uint32 maxSamples	  = 0;
+	uint32 samplesRendered = 0;
+	for (uint32 i = 0; i < mTileYCount; ++i) {
+		for (uint32 j = 0; j < mTileXCount; ++j) {
+			auto tile = mTileMap[i * mTileXCount + j];
+			if (tile) {
+				maxSamples += tile->maxPixelSamples();
+				samplesRendered += tile->pixelSamplesRendered();
+			}
+		}
+	}
+
+	if (maxSamples == 0)
+		return 1.0f;
+	else
+		return samplesRendered / (float)maxSamples;
 }
 
 void RenderTileMap::reset()
