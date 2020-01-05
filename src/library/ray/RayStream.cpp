@@ -103,6 +103,7 @@ RayGroup RayStream::getNextGroup()
 
 	PR_ASSERT(hasNextGroup(), "Never call when not available");
 
+	// FIXME: Coherent rays are broken...
 	RayGroup grp(this, 0, currentSize(), false);
 	mCurrentPos += grp.size();
 	return grp;

@@ -30,13 +30,6 @@
 			:gamma 'none'
 			:mapper 'none'
 		)
-		(channel :type 'depth')
-		(channel :type 'n')
-		(channel :type 'uvw')
-		(channel :type 'ng')
-		(channel :type 'nx')
-		(channel :type 'ny')
-		(channel :type 'feedback')
 	)
 	; Camera
 	(camera
