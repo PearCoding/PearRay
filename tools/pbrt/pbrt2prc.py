@@ -48,6 +48,8 @@ def parseArgs():
                         default=False, help="Produce one single file")
     parser.add_argument('--embedMesh', action='store_true',
                         default=False, help="Embed mesh into prc. Not recommended")
+    parser.add_argument('--lightFactor', type=float,
+                        default=1.0, help="Factor applied to light spectra")
 
     return parser.parse_args()
 

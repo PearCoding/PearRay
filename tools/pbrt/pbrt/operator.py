@@ -4,7 +4,7 @@ import math
 
 from .parser import Parser
 from .writer import Writer
-from . import objexport
+from . import colexport, matexport, objexport
 
 
 class Operator:
@@ -33,6 +33,7 @@ class Operator:
         self.emsCount = 0
         self.specCount = 0
         self.textureCount = 0
+        self.matCount = 0
         self.objectShapeAssoc = {}
         self.includes = {}
 
@@ -183,7 +184,8 @@ class Operator:
 
         w = 1
         if 'fov' in op.parameters:
-            w = math.tan(math.radians(op.parameters['fov']))
+            w = math.radians(op.parameters['fov'])
+            #w = math.tan(math.radians(op.parameters['fov']))
 
         cam_mat = np.dot(cam_mat, np.array([[1, 0, 0, 0],
                                             [0, -1, 0, 0],
@@ -308,7 +310,7 @@ class Operator:
         self.w.write("(integrator")
         self.w.goIn()
         self.w.write(":type 'direct'")
-        self.w.write(":max_ray_depth %i" % op.parameters['maxdepth'])
+        self.w.write(":max_ray_depth %i" % op.parameters.get('maxdepth', 8))
         self.w.goOut()
         self.w.write(")")
 
@@ -405,31 +407,9 @@ class Operator:
     def op_Texture(self, op):
         pass  # TODO
 
-    def unpackSpec(self, col, spec_type):
-        name = "spec_%i" % self.specCount
-        self.specCount += 1
-
-        self.w.write("(spectrum")
-        self.w.goIn()
-        self.w.write(":name '%s'" % name)
-        if isinstance(col, list):
-            self.w.write(":data (%s %f %f %f)" %
-                         (spec_type, col[0], col[1], col[2]))
-        else:
-            self.w.write(":data (%s %f %f %f)" % (spec_type, col, col, col))
-        self.w.goOut()
-        self.w.write(")")
-        return name
-
-    def unpackRefl(self, col):
-        return self.unpackSpec(col, 'refl')
-
-    def unpackIllum(self, col):
-        return self.unpackSpec(col, 'illum')
-
     def setupTexture(self, base, filename):
         if self.options.skipTex:
-            return "'%s'" % self.unpackRefl(1.0)
+            return "'%s'" % colexport.unpackRefl(self, 1.0)
 
         name = "tex_%i" % self.textureCount
         self.textureCount += 1
@@ -449,46 +429,12 @@ class Operator:
     def op_Material(self, op):
         if self.options.skipMat:
             return
-
-        mat_type = op.parameters['type']
-        if mat_type == "matte":
-            color = self.unpackRefl(op.parameters['Kd'])
-            self.w.write("(material")
-            self.w.goIn()
-            self.w.write(":type 'diffuse'")
-            self.w.write(":name '%s'" % op.operand)
-            self.w.write(":albedo '%s'" % color)
-            self.w.goOut()
-            self.w.write(")")
-        elif mat_type == "disney":
-            color = self.unpackRefl(op.parameters['color'])
-            eta = op.parameters['eta']
-            spec = ((eta - 1) / (eta + 1))**2
-            self.w.write("(material")
-            self.w.goIn()
-            self.w.write(":type 'principled'")
-            self.w.write(":name '%s'" % op.operand)
-            self.w.write(":base '%s'" % color)
-            self.w.write(":roughness %f" % op.parameters['roughness'])
-            self.w.write(":specular %f" % spec)
-            self.w.write(":specular_tint %f" % op.parameters['speculartint'])
-            self.w.write(":metallic %f" % op.parameters['metallic'])
-            self.w.write(":clearcoat %f" % op.parameters['clearcoat'])
-            self.w.write(":clearcoat_gloss %f" %
-                         op.parameters['clearcoatgloss'])
-            self.w.write(":anisotropic %f" % op.parameters['anisotropic'])
-            self.w.write(":sheen %f" % op.parameters['sheen'])
-            self.w.write(":sheen_tint %f" % op.parameters['sheentint'])
-            # TODO: 'spectrans', 'scatterdistance' ?
-            self.w.goOut()
-            self.w.write(")")
-        else:
-            print("ERROR: No support of materials of type %s available" % mat_type)
-
-        self.currentMaterial = op.operand
+        self.currentMaterial = matexport.export(self, op, isNamed=False)
 
     def op_MakeNamedMaterial(self, op):
-        self.op_Material(op)  # Same in our case
+        if self.options.skipMat:
+            return
+        self.currentMaterial = matexport.export(self, op, isNamed=True)
 
     def op_NamedMaterial(self, op):
         self.currentMaterial = op.operand
@@ -500,17 +446,25 @@ class Operator:
         if op.operand == "point":
             pass  # TODO
         elif op.operand == "infinite":
-            tex_name = self.setupTexture(op.filename, op.parameters['mapname'])
+            tex_name = None
+            if 'mapname' in op.parameters:
+                tex_name = self.setupTexture(
+                    op.filename, op.parameters['mapname'])
+
             self.w.write("(light")
             self.w.goIn()
             self.w.write(":type 'environment'")
-            self.w.write(":radiance %s" % tex_name)
+            if tex_name is not None:
+                self.w.write(":radiance %s" % tex_name)
+            else:
+                self.w.write(":radiance %s" %
+                             colexport.unpackIllum(self, op.parameters['L']))
             self.w.goOut()
             self.w.write(")")
         elif op.operand == "distant":
             D = np.array(op.parameters['to']) - np.array(op.parameters['from'])
             D = D/np.linalg.norm(D, ord=2)
-            color = self.unpackIllum(op.parameters['L'])
+            color = colexport.unpackIllum(self, op.parameters['L'])
 
             self.w.write("(light")
             self.w.goIn()
@@ -528,7 +482,7 @@ class Operator:
         self.emsCount += 1
 
         if op.operand == 'diffuse':
-            color = self.unpackIllum(op.parameters['L'])
+            color = colexport.unpackIllum(self, op.parameters['L'])
 
             self.w.write("(emission")
             self.w.goIn()
@@ -592,6 +546,7 @@ class Operator:
             uv = op.parameters.get('st')
             inds = op.parameters['indices']
             if self.options.embedMesh or len(points) < 1000:
+                name = name + "_e"
                 self.w.write("(mesh")
                 self.w.goIn()
                 self.w.write(":name '%s'" % name)
@@ -624,6 +579,7 @@ class Operator:
                 self.w.goOut()
                 self.w.write(")")
             else:  # Obj file
+                name = name + "_o"
                 rel_file = os.path.relpath(
                     os.path.abspath(op.filename), self.globalDir)
                 obj_file = os.path.join(
