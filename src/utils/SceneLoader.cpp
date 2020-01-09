@@ -711,7 +711,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	try {
 		mesh = MeshParser::parse(group);
 	} catch (const std::bad_alloc& ex) {
-		PR_LOG(L_ERROR) << "[Loader] Out of memory to load mesh " << name << std::endl;
+		PR_LOG(L_ERROR) << "[Loader] Out of memory to load mesh " << name << ": " << ex.what() << std::endl;
 		return;
 	}
 

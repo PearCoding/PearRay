@@ -34,6 +34,7 @@ SET(PR_Src
   material/IMaterialPlugin.h
   material/MaterialManager.cpp
   material/MaterialManager.h
+  parameter/Parameter.cpp
   parameter/Parameter.h
   parameter/Parameter.inl
   parameter/ParameterGroup.h
