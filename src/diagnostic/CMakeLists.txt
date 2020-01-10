@@ -100,6 +100,6 @@ endif()
 add_lto(prdiag)
 strip_binary(prdiag)
 
-target_setup_deploy(prdiag QT RECURSIVE LIBRARIES
-	OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::Half
-	Boost::iostreams)
+#target_setup_deploy(prdiag QT RECURSIVE LIBRARIES
+#	OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::Half
+#	Boost::iostreams)

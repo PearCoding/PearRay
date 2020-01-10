@@ -42,7 +42,7 @@ public:
 
 	template <typename Func>
 	inline void traceRays(RayStream& rays, HitStream& hits, Func nonHit) const;
-	inline bool traceRay(const Ray& ray, HitEntry& entry) const;
+	inline bool traceSingleRay(const Ray& ray, HitEntry& entry) const;
 	inline ShadowHit traceShadowRay(const Ray& ray) const;
 
 	inline const BoundingBox& boundingBox() const { return mBoundingBox; }

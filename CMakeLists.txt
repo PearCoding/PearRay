@@ -124,6 +124,10 @@ set(DL_BUILD_TESTS OFF CACHE BOOL "")
 set(DL_BUILD_DOCUMENTATION OFF CACHE BOOL "")
 add_subdirectory(external/DataLisp)
 
+# Detect hardware
+add_subdirectory(src/hardware)
+detect_hardware()
+
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 configure_file(src/library/geometry/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/TriangleOptions.h)

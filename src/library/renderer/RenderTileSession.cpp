@@ -137,7 +137,7 @@ bool RenderTileSession::traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntit
 	mTile->statistics().addBounceRayCount();
 
 	HitEntry entry;
-	if (!mTile->context()->scene()->traceRay(ray, entry))
+	if (!mTile->context()->scene()->traceSingleRay(ray, entry))
 		return false;
 
 	entity = getEntity(entry.EntityID);

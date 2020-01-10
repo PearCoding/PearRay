@@ -78,7 +78,19 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 	PR_PROFILE_THIS;
 
 #ifdef PR_FORCE_SINGLE_TRACE
-	traceIncoherentRays(grp, hits, nonHit);
+	for (size_t i = 0;
+		 i < grp.size();
+		 ++i) {
+		Ray in = grp.getRay(i);
+		HitEntry entry;
+		if (traceSingleRay(in, entry)) {
+			entry.RayID = static_cast<uint32>(i + grp.offset());
+			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
+			hits.add(entry);
+		} else {
+			nonHit(i + grp.offset(), in);
+		}
+	}
 #else
 	RayPackage in;
 	CollisionOutput out;
@@ -92,7 +104,7 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 		in = grp.getRayPackage(i);
 
 		// Check for collisions
-		mKDTree->checkCollision(
+		mKDTree->checkCollisionCoherent(
 			in, out,
 			[this](const RayPackage& in2, uint64 index,
 				   CollisionOutput& out2) {
@@ -114,12 +126,13 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 {
 	PR_PROFILE_THIS;
 
+#ifdef PR_FORCE_SINGLE_TRACE
 	for (size_t i = 0;
 		 i < grp.size();
 		 ++i) {
 		Ray in = grp.getRay(i);
 		HitEntry entry;
-		if (traceRay(in, entry)) {
+		if (traceSingleRay(in, entry)) {
 			entry.RayID = static_cast<uint32>(i + grp.offset());
 			PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
 			hits.add(entry);
@@ -127,14 +140,41 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 			nonHit(i + grp.offset(), in);
 		}
 	}
+#else
+	RayPackage in;
+	CollisionOutput out;
+
+	// In some cases the group size will be not a multiply of the simd bandwith.
+	// The internal stream is always a multiply therefore garbage may be traced
+	// but no internal data will be corrupted.
+	for (size_t i = 0;
+		 i < grp.size();
+		 i += PR_SIMD_BANDWIDTH) {
+		in = grp.getRayPackage(i);
+
+		// Check for collisions
+		mKDTree->checkCollisionIncoherent(
+			in, out,
+			[this](const RayPackage& in2, uint64 index,
+				   CollisionOutput& out2) {
+				const IEntity* entity = mEntities[index].get();
+				entity->checkCollision(in2, out2);
+				out2.HitDistance = blend(out2.HitDistance,
+										 vfloat(std::numeric_limits<float>::infinity()),
+										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+			});
+
+		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
+	}
+#endif //PR_FORCE_SINGLE_TRACE
 }
 
-bool Scene::traceRay(const Ray& in, HitEntry& entry) const
+bool Scene::traceSingleRay(const Ray& in, HitEntry& entry) const
 {
 	PR_PROFILE_THIS;
 
 	SingleCollisionOutput out;
-	mKDTree->checkCollision(
+	mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
 			   SingleCollisionOutput& out2) {
@@ -169,7 +209,7 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 	SingleCollisionOutput out;
 	ShadowHit hit;
 
-	hit.Successful = mKDTree->checkCollision(
+	hit.Successful = mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
 			   SingleCollisionOutput& out2) {
