@@ -9,6 +9,7 @@
 #endif
 
 #if defined _OS_LINUX
+// Nothing
 #elif defined _OS_WINDOWS
 #include <intrin.h>
 #endif
@@ -21,15 +22,19 @@ constexpr uint32_t MMX_F  = bit(23);
 constexpr uint32_t SSE_F  = bit(25);
 constexpr uint32_t SSE2_F = bit(26);
 // ECX
-constexpr uint32_t SSE3_F  = bit(0);
-constexpr uint32_t SSSE3_F = bit(9);
-constexpr uint32_t SSE41_F = bit(19);
-constexpr uint32_t SSE42_F = bit(20);
-constexpr uint32_t AVX_F   = bit(28);
+constexpr uint32_t SSE3_F   = bit(0);
+constexpr uint32_t SSSE3_F  = bit(9);
+constexpr uint32_t FMA_F	= bit(12);
+constexpr uint32_t SSE41_F  = bit(19);
+constexpr uint32_t SSE42_F  = bit(20);
+constexpr uint32_t POPCNT_F = bit(23);
+constexpr uint32_t AVX_F	= bit(28);
 
 // (7) (0)
 // EBX
-constexpr uint32_t AVX2_F		  = bit(5);
+constexpr uint32_t HLE_F		= bit(4);
+constexpr uint32_t AVX2_F		= bit(5);
+constexpr uint32_t RTM_F		= bit(11);
 constexpr uint32_t AVX512F_F	= bit(16);
 constexpr uint32_t AVX512DQ_F   = bit(17);
 constexpr uint32_t AVX512IFMA_F = bit(21);
@@ -39,9 +44,9 @@ constexpr uint32_t AVX512CD_F   = bit(28);
 constexpr uint32_t AVX512BW_F   = bit(30);
 constexpr uint32_t AVX512VL_F   = bit(31);
 // ECX
-constexpr uint32_t AVX512VBMI_F	  = bit(1);
+constexpr uint32_t AVX512VBMI_F		 = bit(1);
 constexpr uint32_t AVX512VBMI2_F	 = bit(6);
-constexpr uint32_t AVX512VNNI_F	  = bit(11);
+constexpr uint32_t AVX512VNNI_F		 = bit(11);
 constexpr uint32_t AVX512BITALG_F	= bit(12);
 constexpr uint32_t AVX512VPOPCNTDQ_F = bit(14);
 // EDX
@@ -77,6 +82,13 @@ struct RequestedFeatures {
 	bool AVX5124VNNIW;
 	bool AVX5124FMAPS;
 	bool AVX512BF16;
+
+	// Transactional Synchronization
+	bool HLE;
+	bool RTM;
+
+	bool FMA;
+	bool POPCNT;
 };
 
 struct CPUIDOut {
@@ -89,6 +101,14 @@ struct CPUIDOut {
 inline CPUIDOut i_cpuid(uint32_t eax)
 {
 #if defined _OS_LINUX
+	CPUIDOut out;
+	asm volatile("cpuid"
+				 : "=a"(out.EAX),
+				   "=b"(out.EBX),
+				   "=c"(out.ECX),
+				   "=d"(out.EDX)
+				 : "0"(eax));
+	return out;
 #elif defined _OS_WINDOWS
 	int cpuinfo[4];
 	__cpuid(cpuinfo, eax);
@@ -99,6 +119,14 @@ inline CPUIDOut i_cpuid(uint32_t eax)
 inline CPUIDOut i_cpuid(uint32_t eax, uint32_t ecx)
 {
 #if defined _OS_LINUX
+	CPUIDOut out;
+	asm volatile("cpuid"
+				 : "=a"(out.EAX),
+				   "=b"(out.EBX),
+				   "=c"(out.ECX),
+				   "=d"(out.EDX)
+				 : "0"(eax), "2"(ecx));
+	return out;
 #elif defined _OS_WINDOWS
 	int cpuinfo[4];
 	__cpuidex(cpuinfo, eax, ecx);
@@ -133,7 +161,11 @@ static void printFeatures(const RequestedFeatures& features)
 			  << "AVX512_VPOPCNTDQ: " << features.AVX512VPOPCNTDQ << std::endl
 			  << "AVX512_4VNNIW: " << features.AVX5124VNNIW << std::endl
 			  << "AVX512_4FMAPS: " << features.AVX5124FMAPS << std::endl
-			  << "AVX512_BF16: " << features.AVX512BF16 << std::endl;
+			  << "AVX512_BF16: " << features.AVX512BF16 << std::endl
+			  << "HLE: " << features.HLE << std::endl
+			  << "RTM: " << features.RTM << std::endl
+			  << "FMA: " << features.FMA << std::endl
+			  << "POPCNT: " << features.POPCNT << std::endl;
 }
 
 int main(int /*argc*/, char** /*argv*/)
@@ -146,11 +178,13 @@ int main(int /*argc*/, char** /*argv*/)
 	features.SSE  = c1.EDX & SSE_F;
 	features.SSE2 = c1.EDX & SSE2_F;
 
-	features.SSE3  = c1.ECX & SSE3_F;
-	features.SSSE3 = c1.ECX & SSSE3_F;
-	features.SSE41 = c1.ECX & SSE41_F;
-	features.SSE42 = c1.ECX & SSE42_F;
-	features.AVX   = c1.ECX & AVX_F;
+	features.SSE3   = c1.ECX & SSE3_F;
+	features.SSSE3  = c1.ECX & SSSE3_F;
+	features.SSE41  = c1.ECX & SSE41_F;
+	features.SSE42  = c1.ECX & SSE42_F;
+	features.AVX	= c1.ECX & AVX_F;
+	features.FMA	= c1.ECX & FMA_F;
+	features.POPCNT = c1.ECX & POPCNT_F;
 
 	// Extended Features
 	CPUIDOut c70		= i_cpuid(7, 0);
@@ -173,10 +207,13 @@ int main(int /*argc*/, char** /*argv*/)
 	features.AVX5124VNNIW = c70.EDX & AVX5124VNNIW_F;
 	features.AVX5124FMAPS = c70.EBX & AVX5124FMAPS_F;
 
+	features.HLE = c70.EBX & HLE_F;
+	features.RTM = c70.EBX & RTM_F;
+
 	// Extended Features 2
 	CPUIDOut c71		= i_cpuid(7, 1);
-	features.AVX512BF16 = c70.EBX & AVX512BF16_F;
+	features.AVX512BF16 = c71.EBX & AVX512BF16_F;
 
-    printFeatures(features);
+	printFeatures(features);
 	return 0;
 }
