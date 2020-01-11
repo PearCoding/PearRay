@@ -3,6 +3,9 @@
 #include "TriangleOptions.h"
 #include "Version.h"
 
+#include <vector>
+#include <sstream>
+
 //OS
 #if defined(PR_OS_LINUX)
 #define PR_OS_NAME "Linux"
@@ -55,23 +58,110 @@ namespace Build {
 std::string getCompilerName() { return PR_CC_NAME; }
 std::string getOSName() { return PR_OS_NAME; }
 std::string getBuildVariant() { return PR_BUILDVARIANT_NAME; }
-std::string getSIMDLevel()
+std::string getFeatureSet()
 {
-#if defined SIMDPP_USE_AVX2
-	return "AVX2";
-#elif defined SIMDPP_USE_AVX
-	return "AVX";
-#elif defined SIMDPP_USE_SSE4_1
-	return "SSE4.1"
-#elif defined SIMDPP_USE_SSSE3
-	return "SSSE3";
-#elif defined SIMDPP_USE_SSE3
-	return "SSE3";
-#elif defined SIMDPP_USE_SSE2
-	return "SSE2";
-#else
-	return "None";
+	std::vector<std::string> list;
+// Skip basic features required by x64 anyway
+/*#ifdef PR_HAS_HW_FEATURE_MMX
+	list.emplace_back("MMX");
 #endif
+#ifdef PR_HAS_HW_FEATURE_SSE
+	list.emplace_back("SSE");
+#endif
+#ifdef PR_HAS_HW_FEATURE_SSE2
+	list.emplace_back("SSE2");
+#endif*/
+
+#ifdef PR_HAS_HW_FEATURE_SSE3
+	list.emplace_back("SSE3");
+#endif
+#ifdef PR_HAS_HW_FEATURE_SSSE3
+	list.emplace_back("SSSE3");
+#endif
+#ifdef PR_HAS_HW_FEATURE_SSE4_1
+	list.emplace_back("SSE4.1");
+#endif
+#ifdef PR_HAS_HW_FEATURE_SSE4_2
+	list.emplace_back("SSE4.2");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX
+	list.emplace_back("AVX");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX2
+	list.emplace_back("AVX2");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_F
+	list.emplace_back("AVX512_F");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_DQ
+	list.emplace_back("AVX512_DQ");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_IFMA
+	list.emplace_back("AVX512_IFMA");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_PF
+	list.emplace_back("AVX512_PF");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_ER
+	list.emplace_back("AVX512_ER");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_CD
+	list.emplace_back("AVX512_CD");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_BW
+	list.emplace_back("AVX512_BW");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_VL
+	list.emplace_back("AVX512_VL");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_VBMI
+	list.emplace_back("AVX512_VBMI");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_VBMI2
+	list.emplace_back("AVX512_VBMI2");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_VNNI
+	list.emplace_back("AVX512_VNNI");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_BITALG
+	list.emplace_back("AVX512_BITALG");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_VPOPCNTDQ
+	list.emplace_back("AVX512_VPOPCNTDQ");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_4VNNIW
+	list.emplace_back("AVX512_4VNNIW");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_4FMAPS
+	list.emplace_back("AVX512_4FMAPS");
+#endif
+#ifdef PR_HAS_HW_FEATURE_AVX512_BF16
+	list.emplace_back("AVX512_BF16");
+#endif
+#ifdef PR_HAS_HW_FEATURE_HLE
+	list.emplace_back("HLE");
+#endif
+#ifdef PR_HAS_HW_FEATURE_RTM
+	list.emplace_back("RTM");
+#endif
+#ifdef PR_HAS_HW_FEATURE_FMA
+	list.emplace_back("FMA3");
+#endif
+#ifdef PR_HAS_HW_FEATURE_FMA4
+	list.emplace_back("FMA4");
+#endif
+#ifdef PR_HAS_HW_FEATURE_POPCNT
+	list.emplace_back("POPCNT");
+#endif
+
+	if (list.empty())
+		return "NONE";
+
+	std::stringstream stream;
+	for (size_t i = 0; i < (list.size() - 1); ++i)
+		stream << list.at(i) << "; ";
+	stream << list.back();
+	return stream.str();
 }
 
 std::string getBuildString()
@@ -101,8 +191,8 @@ std::string getBuildString()
 		   << " { OS: " << getOSName()
 		   << "; Branch: " PR_GIT_BRANCH
 		   << "; Rev: " PR_GIT_REVISION
-		   << "} [SIMD: " << getSIMDLevel()
-		   << "; Asserts: " << hasAsserts
+		   << "} [Features:<" << getFeatureSet()
+		   << ">; Asserts: " << hasAsserts
 		   << "; Profile: " << hasProfiler
 		   << "; PackN: " << PR_SIMD_BANDWIDTH
 		   << "; TriCache: " << hasTriCache

@@ -23,11 +23,11 @@ std::string PR_LIB getOSName();
  */
 std::string PR_LIB getBuildVariant();
 /**
- * @brief Returns best feature set of SIMD used inside the software
+ * @brief Returns list of features separated by ';'
  * 
- * @return std::string getSIMDLevel 
+ * @return std::string getFeatureSet()
  */
-std::string PR_LIB getSIMDLevel();
+std::string PR_LIB getFeatureSet();
 /**
  * @brief Composed string representing all important options used while compiling the software
  * 
