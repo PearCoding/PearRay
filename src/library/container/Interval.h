@@ -6,7 +6,7 @@ namespace PR {
 namespace Interval {
 // Interval has to be sorted
 template <typename Predicate>
-int find(int size, const Predicate& pred)
+inline PR_LIB int find(int size, const Predicate& pred)
 {
 	int first = 0;
 	int len   = size;
