@@ -27,17 +27,17 @@ public:
 	Parameter(Parameter&&) = default;
 	Parameter& operator=(Parameter&&) = default;
 
-	inline static Parameter fromBool(bool v);
-	inline static Parameter fromInt(int64 v);
-	inline static Parameter fromUInt(uint64 v);
-	inline static Parameter fromNumber(float v);
-	inline static Parameter fromString(const std::string& v);
+	static Parameter fromBool(bool v);
+	static Parameter fromInt(int64 v);
+	static Parameter fromUInt(uint64 v);
+	static Parameter fromNumber(float v);
+	static Parameter fromString(const std::string& v);
 
-	inline static Parameter fromBoolArray(const std::vector<bool>& v);
-	inline static Parameter fromIntArray(const std::vector<int64> v);
-	inline static Parameter fromUIntArray(const std::vector<uint64> v);
-	inline static Parameter fromNumberArray(const std::vector<float> v);
-	inline static Parameter fromStringArray(const std::vector<std::string>& v);
+	static Parameter fromBoolArray(const std::vector<bool>& v);
+	static Parameter fromIntArray(const std::vector<int64> v);
+	static Parameter fromUIntArray(const std::vector<uint64> v);
+	static Parameter fromNumberArray(const std::vector<float> v);
+	static Parameter fromStringArray(const std::vector<std::string>& v);
 
 	inline bool isValid() const;
 	inline bool isArray() const;

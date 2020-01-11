@@ -70,10 +70,17 @@ public:
 	}
 
 	// Package Version
-	// No coherent optimization
 	template <typename CheckCollisionCallback>
-	inline bool checkCollision(const RayPackage& in, CollisionOutput& out,
-							   CheckCollisionCallback checkCollisionCallback) const
+	inline bool checkCollisionCoherent(const RayPackage& in, CollisionOutput& out,
+									   CheckCollisionCallback checkCollisionCallback) const
+	{
+		// TODO
+		return checkCollisionIncoherent(in, out, checkCollisionCallback);
+	}
+
+	template <typename CheckCollisionCallback>
+	inline bool checkCollisionIncoherent(const RayPackage& in, CollisionOutput& out,
+										 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
 		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
@@ -111,7 +118,7 @@ public:
 				const vfloat t				= splitM * invDir[innerN->axis];
 
 				const bfloat dirMask = invDir[innerN->axis] < 0;
-				const bfloat eqMask = (in.Direction[innerN->axis]) <= PR_EPSILON;
+				const bfloat eqMask  = (in.Direction[innerN->axis]) <= PR_EPSILON;
 				const bfloat minHit  = minT <= t;
 				const bfloat maxHit  = maxT >= t;
 
@@ -175,8 +182,8 @@ public:
 
 	// Single version
 	template <typename CheckCollisionCallback>
-	inline bool checkCollision(const Ray& in, SingleCollisionOutput& out,
-							   CheckCollisionCallback checkCollisionCallback) const
+	inline bool checkCollisionSingle(const Ray& in, SingleCollisionOutput& out,
+									 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
 		out.HitDistance		  = std::numeric_limits<float>::infinity();

@@ -52,7 +52,7 @@ void Mesh::serialize(Serializer& serializer)
 	try {
 		mBase->serialize(serializer);
 	} catch (const std::bad_alloc& ex) {
-		PR_LOG(L_FATAL) << "Out of memory to load mesh " << name() << std::endl;
+		PR_LOG(L_FATAL) << "Out of memory to load mesh " << name() << ": " << ex.what() << std::endl;
 	}
 }
 
