@@ -54,17 +54,25 @@ option(PR_BUILD_TESTS_PYTHON 	"Build tests for the python API. Requires PR_BUILD
 option(PR_COMPRESS_SPEC_FILES 	"Compress spectral files with boost::zlib" ON)
 option(PR_GENERATE_COVERAGE 	"Generate coverage for debug builds - Currently only supported with the GCC compiler." OFF)
 option(PR_BUILD_DOCUMENTATION 	"Build documentation with doxygen." ON)
-option(PR_USE_SSE3 				"Use SSE3 simd support." ON)
-option(PR_USE_SSSE3 			"Use SSSE3 simd support." ON)
-option(PR_USE_SSE4 				"Use SSE4_1 simd support." ON)
-option(PR_USE_AVX 				"Use AVX simd support." OFF)
-option(PR_USE_AVX2 				"Use AVX2 simd support." OFF)
-option(PR_USE_AVX512 			"Use AVX512F simd support." OFF)
 option(PR_USE_LTO 				"Use linked time optimization if available." ON)
 option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds only." OFF)
 option(PR_USE_CCACHE 			"Use ccache if available." ON)
 # march should be default, as we use simdpp
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
+
+option(PR_DISABLE_HW_FEATURE_SSE3 		"Disable SSE3 support" OFF)
+option(PR_DISABLE_HW_FEATURE_SSSE3 		"Disable SSSE3 support" OFF)
+option(PR_DISABLE_HW_FEATURE_SSE4_1 	"Disable SSE4.1 support" OFF)
+option(PR_DISABLE_HW_FEATURE_SSE4_2 	"Disable SSE4.2 support" OFF)
+option(PR_DISABLE_HW_FEATURE_AVX		"Disable AVX support" OFF)
+option(PR_DISABLE_HW_FEATURE_AVX2 		"Disable AVX2 support" OFF)
+option(PR_DISABLE_HW_FEATURE_AVX512F 	"Disable AVX512F support" OFF)
+option(PR_DISABLE_HW_FEATURE_AVX512BW 	"Disable AVX512BW support" OFF)
+option(PR_DISABLE_HW_FEATURE_AVX512DQ 	"Disable AVX512DQ support" OFF)
+option(PR_DISABLE_HW_FEATURE_AVX512VL 	"Disable AVX512VL support" OFF)
+option(PR_DISABLE_HW_FEATURE_POPCNT 	"Disable POPCNT support" OFF)
+option(PR_DISABLE_HW_FEATURE_FMA4 		"Disable FMA4 support" OFF)
+option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 
 # Algorithm options
 option(PR_TRIANGLE_USE_CACHE	"Use cache mechanism to potentially speed up intersection" ON)
@@ -126,9 +134,9 @@ add_subdirectory(external/DataLisp)
 
 # Detect hardware
 add_subdirectory(src/hardware)
-detect_hardware()
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
+configure_file(src/library/PR_HW_ConfigSwitch.inl.in ${CMAKE_CURRENT_BINARY_DIR}/PR_HW_ConfigSwitch.inl)
 configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 configure_file(src/library/geometry/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/TriangleOptions.h)
 

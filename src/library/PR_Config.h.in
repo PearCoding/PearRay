@@ -176,49 +176,10 @@ private:                                           \
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-// SIMD
-// Always enable SSE2... everything below is too old anyway
-#define SIMDPP_ARCH_X86_SSE2
-#cmakedefine PR_USE_SSE3
-#ifdef PR_USE_SSE3
-#define SIMDPP_ARCH_X86_SSE3
-#endif
-#cmakedefine PR_USE_SSSE3
-#ifdef PR_USE_SSSE3
-#define SIMDPP_ARCH_X86_SSSE3
-#endif
-#cmakedefine PR_USE_SSE4
-#ifdef PR_USE_SSE4
-#define SIMDPP_ARCH_X86_SSE4_1
-#endif
-#cmakedefine PR_USE_AVX
-#ifdef PR_USE_AVX
-#define SIMDPP_ARCH_X86_AVX
-#endif
-#cmakedefine PR_USE_AVX2
-#ifdef PR_USE_AVX2
-#define SIMDPP_ARCH_X86_AVX2
-#endif
-#cmakedefine PR_USE_AVX512
-#ifdef PR_USE_AVX512
-#define SIMDPP_ARCH_X86_AVX512F
-#endif
-
-#ifdef PR_CC_MSC
-#pragma warning(push)
-#pragma warning(disable : 4244)
-#endif
-#include <simdpp/simd.h>
-#ifdef PR_CC_MSC
-#pragma warning(pop)
-#endif
+#include "PR_SIMD_Config.inl"
 
 // Add profiler tokens
 #cmakedefine PR_WITH_PROFILER
-
-// Always align at the 8 byte border regardless of the underlying bandwidth
-#define PR_SIMD_ALIGNMENT_PARAM (32)
-#define PR_SIMD_ALIGN alignas(PR_SIMD_ALIGNMENT_PARAM)
 
 namespace PR {
 inline void pr_Noop()

@@ -2,6 +2,8 @@ SET(PR_Src
   Build.cpp
   Build.h
   PR_Config.h.in
+  PR_HW_ConfigSwitch.inl.in
+  PR_SIMD_Config.inl
   FileLogListener.cpp
   FileLogListener.h
   IObject.h
