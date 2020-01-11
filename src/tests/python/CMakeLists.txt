@@ -4,10 +4,10 @@ endif()
 
 find_package(PythonInterp)
 
-IF(NOT PYTHON_EXECUTABLE)
+if(NOT PYTHON_EXECUTABLE)
 	message(WARNING "No Python executable found! Skipping Python test modules.")
 	return()
-ENDIF()
+endif()
 
 FUNCTION(PUSH_PY_TEST name)
 	add_test(NAME ${name}_py

@@ -1,13 +1,13 @@
-SET(PR_Main_Src
+set(PR_Main_Src
   main.cpp
   ProgramSettings.cpp)
-SET(PR_Src ${PR_Main_Src}
+set(PR_Src ${PR_Main_Src}
 )
 
-SET(PR_Main_Hdr
+set(PR_Main_Hdr
   EnumOption.h
   ProgramSettings.h)
-SET(PR_Hdr ${PR_Main_Hdr}
+set(PR_Hdr ${PR_Main_Hdr}
 )
 
 include_directories(../utils)

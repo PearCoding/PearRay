@@ -12,32 +12,32 @@ set(PR_PLUGIN_VERSION "1.0")
 
 #SETS
 if(BUILD_SHARED_LIBS AND WIN32 AND NOT CYGWIN)
-   	SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
+   	set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 else()
-	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/)
+	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/)
 endif()
 
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-SET(CMAKE_DEBUG_POSTFIX  "_d")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+set(CMAKE_DEBUG_POSTFIX  "_d")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
 
-SET(VENDOR "PearRay project 2015-2020")
+set(VENDOR "PearRay project 2015-2020")
 include(Git)
 
 #CHECKS
 MESSAGE(STATUS "Building PearRay ${PearRay_VERSION}")
 
-IF(MINGW)
+if(MINGW)
 	MESSAGE(WARNING "Please don't use MinGW with PearRay, use the MSVC version instead")
-ENDIF()
+endif()
 
-IF(MSYS)
+if(MSYS)
 	MESSAGE(WARNING "Please don't use MSYS with PearRay, use the MSVC version instead")
-ENDIF()
+endif()
 
-IF(CYGWIN)
+if(CYGWIN)
 	MESSAGE(WARNING "Please don't use CYGWIN with PearRay, use the MSVC version instead")
-ENDIF()
+endif()
 
 #PACKAGES
 option(PR_WITH_ASSERTS 			"Compile with asserts on. Disable only in deployment code!" ON)
@@ -60,6 +60,7 @@ option(PR_USE_CCACHE 			"Use ccache if available." ON)
 # march should be default, as we use simdpp
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
 
+# Hardware feature switches
 option(PR_DISABLE_HW_FEATURE_SSE3 		"Disable SSE3 support" OFF)
 option(PR_DISABLE_HW_FEATURE_SSSE3 		"Disable SSSE3 support" OFF)
 option(PR_DISABLE_HW_FEATURE_SSE4_1 	"Disable SSE4.1 support" OFF)
@@ -78,7 +79,7 @@ option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 option(PR_TRIANGLE_USE_CACHE	"Use cache mechanism to potentially speed up intersection" ON)
 set(PR_TRIANGLE_INTERSECTION_METHOD 1 CACHE STRING "0 = Moeller-Trumbore, 1 = Pluecker")
 
-option(BUILD_SHARED_LIBS		"Build shared library" ON)
+option(BUILD_SHARED_LIBS		"Build shared library" OFF)
 
 find_package(Threads REQUIRED)
 
@@ -101,9 +102,9 @@ find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
 # Optional
-IF(PR_USE_CCACHE)
+if(PR_USE_CCACHE)
 	include(CCache)
-ENDIF()
+endif()
 
 find_package(OpenSubdiv COMPONENTS CPU)
 
@@ -111,19 +112,19 @@ find_package(OpenSubdiv COMPONENTS CPU)
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})
 
 # Python API
-IF(PR_WITH_PYTHON)
+if(PR_WITH_PYTHON)
 	add_subdirectory(external/pybind11)
 	set(PR_HAS_PYTHON_API ON)
-ENDIF()
+endif()
 
 # Due to problems with OpenEXR and C++17 we still use C++14 (Aug 2018)
 # set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-IF(NOT PR_WITH_ASSERTS)
+if(NOT PR_WITH_ASSERTS)
 	add_definitions(-DDL_NO_ASSERTS -DPR_NO_ASSERTS)
-ENDIF()
+endif()
 
 # Configure
 set(DL_WITH_TOOLS OFF CACHE BOOL "")
@@ -154,10 +155,10 @@ include(LTO)
 include(ExtraUtils)
 include(Deploy)
 
-IF(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
+if(PR_GENERATE_COVERAGE AND (CMAKE_BUILD_TYPE MATCHES Debug))
 	include(Coveralls)
 	coveralls_turn_on_coverage()
-ENDIF()
+endif()
 
 # march
 include(CheckCXXCompilerFlag)
@@ -192,41 +193,41 @@ add_subdirectory(src/library)
 
 # If embedded, plugins have to be imported first, as they are added TO pr_lib_utils
 if(PR_EMBED_PLUGINS)
-add_subdirectory(src/plugins)
+	add_subdirectory(src/plugins)
 endif()
 
-IF(PR_WITH_UTILITY_LIBRARY)
+if(PR_WITH_UTILITY_LIBRARY)
 	add_subdirectory(src/utils)
-ENDIF(PR_WITH_UTILITY_LIBRARY)
+endif()
 
 # If not embedded, plugins have to be imported later, as they are depended ON pr_lib_utils
 if(NOT PR_EMBED_PLUGINS)
-add_subdirectory(src/plugins)
+	add_subdirectory(src/plugins)
 endif()
 
-IF(PR_HAS_PYTHON_API)
+if(PR_HAS_PYTHON_API)
 	add_subdirectory(src/python)
-ENDIF()
+endif()
 
 # Executables
-IF(PR_WITH_CLIENT)
+if(PR_WITH_CLIENT)
 	add_subdirectory(src/client)
-ENDIF(PR_WITH_CLIENT)
+endif()
 
-IF(${Qt5Widgets_FOUND})
-	IF(PR_WITH_DIAGNOSTIC)
+if(${Qt5Widgets_FOUND})
+	if(PR_WITH_DIAGNOSTIC)
 		add_subdirectory(src/diagnostic)
-	ENDIF()
-ENDIF()
+	endif()
+endif()
 
 # Tests
-IF(PR_BUILD_TESTS)
+if(PR_BUILD_TESTS)
 	add_subdirectory(src/sandbox)
 	enable_testing()
 	add_subdirectory(src/tests)
-ENDIF()
+endif()
 
-# DOCUMENTATION
+# Documentation
 if(PR_BUILD_DOCUMENTATION)
   include(Documentation)
 endif()

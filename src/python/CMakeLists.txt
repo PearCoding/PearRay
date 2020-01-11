@@ -1,4 +1,4 @@
-SET(Src
+set(Src
   camera.cpp
   entity.cpp
   environment.cpp
@@ -19,7 +19,7 @@ SET(Src
   tonemapper.cpp
   integrator.cpp
   profile.cpp)
-SET(Hdr
+set(Hdr
   pypearray.h)
 
 include_directories(../utils)

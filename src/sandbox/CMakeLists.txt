@@ -1,5 +1,5 @@
 
-SET(PR_Main_Src
+set(PR_Main_Src
   image_io.cpp
   main.cpp
   ProgramSettings.cpp
@@ -8,13 +8,13 @@ SET(PR_Main_Src
   suite_projection.cpp
   suite_random.cpp
   suite_spectral.cpp)
-SET(PR_Src ${PR_Main_Src}
+set(PR_Src ${PR_Main_Src}
 )
 
-SET(PR_Main_Hdr
+set(PR_Main_Hdr
   image_io.h
   ProgramSettings.h)
-SET(PR_Hdr ${PR_Main_Hdr}
+set(PR_Hdr ${PR_Main_Hdr}
 )
 
 add_executable(pr_sandbox ${PR_Src} ${PR_Hdr})

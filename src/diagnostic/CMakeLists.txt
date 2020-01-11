@@ -1,11 +1,11 @@
 MESSAGE(STATUS "Building PearRayDiagnostic")
 MESSAGE(STATUS "Using Qt: ${Qt5Widgets_VERSION_STRING}")
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-ENDIF()
+endif()
 
-SET(Src
+set(Src
   main.cpp
   3d/Camera.cpp
   3d/GraphicObject.cpp
@@ -39,7 +39,7 @@ SET(Src
   widgets/ToneMapperEditor.cpp
   widgets/View3DWidget.cpp)
 
-SET(Hdr
+set(Hdr
   3d/Camera.h
   3d/GraphicObject.h
   3d/OrbitCamera.h
@@ -73,7 +73,7 @@ SET(Hdr
   widgets/ToneMapperEditor.h
   widgets/View3DWidget.h)
 
-SET(Fms
+set(Fms
   ui/EXRWindow.ui
   ui/MainWindow.ui
   ui/ProfWindow.ui
@@ -81,14 +81,14 @@ SET(Fms
   ui/SpecWindow.ui
   ui/ToneMapperEditor.ui)
 
-SET(Res
+set(Res
   resources/icons.qrc)
 
 QT5_WRAP_CPP(Hdr_Moc ${Hdr})
 QT5_WRAP_UI(Fms_Hdr ${Fms})
 QT5_ADD_RESOURCES(Res_Rcc ${Res})
 
-SET(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
+set(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
 SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})

@@ -1,4 +1,4 @@
-SET(PR_Src
+set(PR_Src
   ResourceManager.cpp
   ResourceManager.h
   Environment.cpp

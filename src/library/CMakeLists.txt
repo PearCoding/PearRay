@@ -1,4 +1,4 @@
-SET(PR_Src
+set(PR_Src
   Build.cpp
   Build.h
   PR_Config.h.in
