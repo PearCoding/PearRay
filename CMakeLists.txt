@@ -221,10 +221,12 @@ if(${Qt5Widgets_FOUND})
 endif()
 
 # Tests
+include(CTest) 
 if(PR_BUILD_TESTS)
 	add_subdirectory(src/sandbox)
-	enable_testing()
-	add_subdirectory(src/tests)
+	if(BUILD_TESTING)
+		add_subdirectory(src/tests)
+	endif()
 endif()
 
 # Documentation
