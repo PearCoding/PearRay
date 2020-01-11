@@ -10,6 +10,7 @@ namespace PR {
 #define PR_MJS_USE_RANDOM
 
 /*
+Reference:
 	Correlated Multi-Jittered Sampling
 	by Andrew Kensler
 */
@@ -71,6 +72,7 @@ static inline uint32 permute(uint32 i, uint32 l, uint32 p)
 	}
 }
 
+#ifndef PR_MJS_USE_RANDOM
 static inline float randfloat(uint32 i, uint32 p)
 {
 	i ^= p;
@@ -85,6 +87,7 @@ static inline float randfloat(uint32 i, uint32 p)
 	i *= 1 | p >> 18;
 	return i * (1.0f / 4294967808.0f);
 }
+#endif //PR_MJS_USE_RANDOM
 
 class MultiJitteredSampler : public ISampler {
 public:
