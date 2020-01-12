@@ -11,9 +11,8 @@ inline uint32 clz(uint32 v)
 	return __builtin_clz(v);
 #else
 	uint32 r = 0;
-	while (v >>= 1) {
+	while (v >>= 1)
 		r++;
-	}
 	return r;
 #endif
 }

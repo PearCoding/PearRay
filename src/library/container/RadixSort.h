@@ -10,7 +10,7 @@ namespace PR {
 template <typename VT, typename S>
 inline PR_LIB void radixSort(VT* visitor, S swapper, size_t first, size_t last, VT mask)
 {
-	if(first == last)
+	if(first >= last || mask == 0)
 		return;
 
 	size_t end0 = first;
@@ -37,7 +37,7 @@ inline PR_LIB void radixSort(VT* visitor, S swapper, size_t first, size_t last, 
 template <typename VT, typename S>
 inline void radixSort(VT* visitor, S swapper, size_t first, size_t last)
 {
-	if(first == last)
+	if(first >= last)
 		return;
 
 	size_t s = last - first + 1;
