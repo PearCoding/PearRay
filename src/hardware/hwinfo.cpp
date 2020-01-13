@@ -153,22 +153,22 @@ static void printFeatures(const RequestedFeatures& features)
 			  << "SSE4_2: " << features.SSE42 << std::endl
 			  << "AVX: " << features.AVX << std::endl
 			  << "AVX2: " << features.AVX2 << std::endl
-			  << "AVX512_F: " << features.AVX512F << std::endl
-			  << "AVX512_DQ: " << features.AVX512DQ << std::endl
-			  << "AVX512_IFMA: " << features.AVX512IFMA << std::endl
-			  << "AVX512_PF: " << features.AVX512PF << std::endl
-			  << "AVX512_ER: " << features.AVX512ER << std::endl
-			  << "AVX512_CD: " << features.AVX512CD << std::endl
-			  << "AVX512_BW: " << features.AVX512BW << std::endl
-			  << "AVX512_VL: " << features.AVX512VL << std::endl
-			  << "AVX512_VBMI: " << features.AVX512VBMI << std::endl
-			  << "AVX512_VBMI2: " << features.AVX512VBMI2 << std::endl
-			  << "AVX512_VNNI: " << features.AVX512VNNI << std::endl
-			  << "AVX512_BITALG: " << features.AVX512BITALG << std::endl
-			  << "AVX512_VPOPCNTDQ: " << features.AVX512VPOPCNTDQ << std::endl
-			  << "AVX512_4VNNIW: " << features.AVX5124VNNIW << std::endl
-			  << "AVX512_4FMAPS: " << features.AVX5124FMAPS << std::endl
-			  << "AVX512_BF16: " << features.AVX512BF16 << std::endl
+			  << "AVX512F: " << features.AVX512F << std::endl
+			  << "AVX512DQ: " << features.AVX512DQ << std::endl
+			  << "AVX512IFMA: " << features.AVX512IFMA << std::endl
+			  << "AVX512PF: " << features.AVX512PF << std::endl
+			  << "AVX512ER: " << features.AVX512ER << std::endl
+			  << "AVX512CD: " << features.AVX512CD << std::endl
+			  << "AVX512BW: " << features.AVX512BW << std::endl
+			  << "AVX512VL: " << features.AVX512VL << std::endl
+			  << "AVX512VBMI: " << features.AVX512VBMI << std::endl
+			  << "AVX512VBMI2: " << features.AVX512VBMI2 << std::endl
+			  << "AVX512VNNI: " << features.AVX512VNNI << std::endl
+			  << "AVX512BITALG: " << features.AVX512BITALG << std::endl
+			  << "AVX512VPOPCNTDQ: " << features.AVX512VPOPCNTDQ << std::endl
+			  << "AVX512VNNIW: " << features.AVX5124VNNIW << std::endl
+			  << "AVX5124FMAPS: " << features.AVX5124FMAPS << std::endl
+			  << "AVX512BF16: " << features.AVX512BF16 << std::endl
 			  << "HLE: " << features.HLE << std::endl
 			  << "RTM: " << features.RTM << std::endl
 			  << "FMA: " << features.FMA << std::endl
@@ -200,22 +200,22 @@ static void printHeader(const char* filename, const RequestedFeatures& features)
 	p("SSE4_2", features.SSE42);
 	p("AVX", features.AVX);
 	p("AVX2", features.AVX2);
-	p("AVX512_F", features.AVX512F);
-	p("AVX512_DQ", features.AVX512DQ);
-	p("AVX512_IFMA", features.AVX512IFMA);
-	p("AVX512_PF", features.AVX512PF);
-	p("AVX512_ER", features.AVX512ER);
-	p("AVX512_CD", features.AVX512CD);
-	p("AVX512_BW", features.AVX512BW);
-	p("AVX512_VL", features.AVX512VL);
-	p("AVX512_VBMI", features.AVX512VBMI);
-	p("AVX512_VBMI2", features.AVX512VBMI2);
-	p("AVX512_VNNI", features.AVX512VNNI);
-	p("AVX512_BITALG", features.AVX512BITALG);
-	p("AVX512_VPOPCNTDQ", features.AVX512VPOPCNTDQ);
-	p("AVX512_4VNNIW", features.AVX5124VNNIW);
-	p("AVX512_4FMAPS", features.AVX5124FMAPS);
-	p("AVX512_BF16", features.AVX512BF16);
+	p("AVX512F", features.AVX512F);
+	p("AVX512DQ", features.AVX512DQ);
+	p("AVX512IFMA", features.AVX512IFMA);
+	p("AVX512PF", features.AVX512PF);
+	p("AVX512ER", features.AVX512ER);
+	p("AVX512CD", features.AVX512CD);
+	p("AVX512BW", features.AVX512BW);
+	p("AVX512VL", features.AVX512VL);
+	p("AVX512VBMI", features.AVX512VBMI);
+	p("AVX512VBMI2", features.AVX512VBMI2);
+	p("AVX512VNNI", features.AVX512VNNI);
+	p("AVX512BITALG", features.AVX512BITALG);
+	p("AVX512VPOPCNTDQ", features.AVX512VPOPCNTDQ);
+	p("AVX5124VNNIW", features.AVX5124VNNIW);
+	p("AVX5124FMAPS", features.AVX5124FMAPS);
+	p("AVX512BF16", features.AVX512BF16);
 	p("HLE", features.HLE);
 	p("RTM", features.RTM);
 	p("FMA", features.FMA);

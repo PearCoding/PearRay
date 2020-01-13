@@ -205,6 +205,7 @@ else()
 endif()
 
 add_library(pr_lib ${PR_Src})
+add_dependencies(pr_lib prhwinfo)
 if(NOT WIN32)
   target_link_libraries(pr_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 endif()

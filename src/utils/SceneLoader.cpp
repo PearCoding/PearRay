@@ -838,13 +838,11 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 	}
 
 	std::ifstream stream(encodePath(path));
-	std::string str((std::istreambuf_iterator<char>(stream)),
-					std::istreambuf_iterator<char>());
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
 	DL::DataContainer container;
 
-	dataLisp.parse(str);
+	dataLisp.parse(&stream);
 	dataLisp.build(container);
 
 	ctx.FileStack.push_back(wpath);
