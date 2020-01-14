@@ -78,7 +78,7 @@ private:
 
 class MitchellFilterFactory : public IFilterFactory {
 public:
-	MitchellFilterFactory(const ParameterGroup& params)
+	explicit MitchellFilterFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

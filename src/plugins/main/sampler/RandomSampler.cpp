@@ -25,7 +25,7 @@ private:
 
 class RandomSamplerFactory : public ISamplerFactory {
 public:
-	RandomSamplerFactory(const ParameterGroup& params)
+	explicit RandomSamplerFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

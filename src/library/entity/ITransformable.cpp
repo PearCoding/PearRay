@@ -11,6 +11,9 @@ ITransformable::ITransformable(uint32 id, const std::string& name)
 	, mID(id)
 	, mFlags(0)
 	, mTransform(Transform::Identity())
+	, mInvTransformCache(Transform::Identity())
+	, mNormalMatrixCache(Eigen::Matrix3f::Identity())
+	, mInvNormalMatrixCache(Eigen::Matrix3f::Identity())
 {
 	cache();
 }
@@ -23,27 +26,22 @@ void ITransformable::beforeSceneBuild()
 {
 	IObject::beforeSceneBuild();
 
+#ifdef PR_DEBUG
+	// Make some feasibilty checks before scene is build
 	Eigen::Matrix3f rot;
 	Eigen::Matrix3f sca;
 	mTransform.computeRotationScaling(&rot, &sca);
-	//mTransform.computeScalingRotation(&sca, &rot);
-
-	PR_LOG(L_INFO) << mName << ": P" << PR_FMT_MAT(mTransform.translation())
-				   << " R" << PR_FMT_MAT(Eigen::Quaternionf(rot))
-				   << " S" << PR_FMT_MAT(sca.diagonal()) << std::endl;
 
 	Eigen::Matrix3f irot;
 	Eigen::Matrix3f isca;
 	mInvTransformCache.computeRotationScaling(&irot, &isca);
-	PR_LOG(L_DEBUG) << " IP" << PR_FMT_MAT(mInvTransformCache.translation())
-					<< " IR" << PR_FMT_MAT(Eigen::Quaternionf(irot))
-					<< " IS" << PR_FMT_MAT(isca.diagonal()) << std::endl;
 
 	if (sca.squaredNorm() <= PR_EPSILON)
 		PR_LOG(L_WARNING) << "ITransformable " << mName << " has zero scale attribute" << std::endl;
 
 	if (std::abs((sca * isca).sum() - 3) > PR_EPSILON)
 		PR_LOG(L_WARNING) << "ITransformable " << mName << " scale and inverse scale do not match" << std::endl;
+#endif
 }
 
 void ITransformable::cache()

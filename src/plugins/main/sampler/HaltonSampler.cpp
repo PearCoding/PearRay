@@ -69,7 +69,7 @@ private:
 
 class HaltonSamplerFactory : public ISamplerFactory {
 public:
-	HaltonSamplerFactory(const ParameterGroup& params)
+	explicit HaltonSamplerFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

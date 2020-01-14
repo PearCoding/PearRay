@@ -85,7 +85,7 @@ private:
 
 class SobolSamplerFactory : public ISamplerFactory {
 public:
-	SobolSamplerFactory(const ParameterGroup& params)
+	explicit SobolSamplerFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

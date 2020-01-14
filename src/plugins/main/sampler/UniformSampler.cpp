@@ -35,7 +35,7 @@ private:
 
 class UniformSamplerFactory : public ISamplerFactory {
 public:
-	UniformSamplerFactory(const ParameterGroup& params)
+	explicit UniformSamplerFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}
