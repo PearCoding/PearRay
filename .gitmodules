@@ -12,5 +12,5 @@
 	branch = master
 [submodule "external/libsimdpp"]
 	path = external/libsimdpp
-	url = git://github.com/p12tic/libsimdpp.git
+	url = git://github.com/PearCoding/libsimdpp.git
 	branch = master
