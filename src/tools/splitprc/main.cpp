@@ -2,6 +2,7 @@
 
 #include <boost/filesystem.hpp>
 #include <cctype>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
