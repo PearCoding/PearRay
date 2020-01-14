@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
 	size_t expectedFiles = static_cast<size_t>(std::ceil(inputsizekb / (double)options.MinSizeKb));
 	if (!options.IsQuiet && options.IsVerbose)
-		std::cout << "Expect " << expectedFiles << " to be generated" << std::endl;
+		std::cout << "Maximum of " << expectedFiles << " files to be generated" << std::endl;
 
 	const std::string basename = options.InputFile.stem().generic_string();
 	const std::string ext	  = options.InputFile.extension().generic_string();
@@ -210,13 +210,20 @@ int main(int argc, char** argv)
 
 	// Generate include file
 	if (!options.NoIncludeGenerator) {
-		std::stringstream stream;
-		stream << basename << "_inc" << ext;
-		auto inc_path	= options.OutputDir / stream.str();
-		auto output_path = options.OverwriteInput ? options.InputFile : inc_path;
+		if (!options.OverwriteInput) {
+			std::stringstream stream;
+			stream << basename << "_backup" << ext;
+			auto backup_path = options.OutputDir / stream.str();
 
-		std::ofstream output(output_path.string(), std::ios::out);
-		for (size_t i = 0; i < counter; ++i) {
+			if (!options.IsQuiet && options.IsVerbose)
+				std::cout << "Creating backup " << backup_path << std::endl;
+			bf::rename(options.InputFile, backup_path);
+		}
+
+		if (!options.IsQuiet && options.IsVerbose)
+			std::cout << "Creating include file at " << options.InputFile << std::endl;
+		std::ofstream output(options.InputFile.string(), std::ios::out);
+		for (size_t i = 0; i <= counter; ++i) {
 			output << "(include '" << get_output_path(i).generic_string() << "')" << std::endl;
 		}
 	}
