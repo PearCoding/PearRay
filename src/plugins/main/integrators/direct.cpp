@@ -447,7 +447,7 @@ private:
 
 class IntDirectFactory : public IIntegratorFactory {
 public:
-	IntDirectFactory(const ParameterGroup& params)
+	explicit IntDirectFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

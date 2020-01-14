@@ -84,7 +84,7 @@ private:
 
 class IntAOFactory : public IIntegratorFactory {
 public:
-	IntAOFactory(const ParameterGroup& params)
+	explicit IntAOFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

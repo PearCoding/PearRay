@@ -8,7 +8,7 @@
 namespace PR {
 class UniformSampler : public ISampler {
 public:
-	UniformSampler(uint32 samples)
+	explicit UniformSampler(uint32 samples)
 		: ISampler(samples)
 		, m2D_X(static_cast<uint32>(std::sqrt(samples)))
 		, m2D_Y((samples + m2D_X - 1) / m2D_X)
