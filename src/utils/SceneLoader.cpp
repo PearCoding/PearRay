@@ -216,7 +216,6 @@ void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 	std::string slot;
 	if (slotD.type() != DL::DT_String) {
 		slot = "aa";
-		return;
 	} else {
 		slot = slotD.getString();
 		std::transform(slot.begin(), slot.end(), slot.begin(), ::tolower);
@@ -275,7 +274,6 @@ void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 	std::string slot;
 	if (slotD.type() != DL::DT_String) {
 		slot = "pixel";
-		return;
 	} else {
 		slot = slotD.getString();
 		std::transform(slot.begin(), slot.end(), slot.begin(), ::tolower);

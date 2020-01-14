@@ -41,7 +41,7 @@ private:
 
 class StratifiedSamplerFactory : public ISamplerFactory {
 public:
-	StratifiedSamplerFactory(const ParameterGroup& params)
+	explicit StratifiedSamplerFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

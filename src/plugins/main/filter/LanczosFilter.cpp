@@ -69,7 +69,7 @@ private:
 
 class LanczosFilterFactory : public IFilterFactory {
 public:
-	LanczosFilterFactory(const ParameterGroup& params)
+	explicit LanczosFilterFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

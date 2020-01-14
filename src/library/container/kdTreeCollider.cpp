@@ -44,9 +44,9 @@ static void loadNode(Serializer& stream, kdTreeCollider::kdNodeCollider*& node,
 		stream | leafN->objects;
 		node = leafN;
 	} else {
-		uint8 axis;
-		float splitPos;
-		kdTreeCollider::NodeID idLeft, idRight;
+		uint8 axis					  = 0;
+		float splitPos				  = 0.0f;
+		kdTreeCollider::NodeID idLeft = 0, idRight = 0;
 		stream | axis | splitPos | idLeft | idRight;
 
 		kdTreeCollider::kdInnerNodeCollider* innerN

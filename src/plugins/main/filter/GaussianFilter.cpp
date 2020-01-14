@@ -72,7 +72,7 @@ private:
 
 class GaussianFilterFactory : public IFilterFactory {
 public:
-	GaussianFilterFactory(const ParameterGroup& params)
+	explicit GaussianFilterFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

@@ -21,7 +21,7 @@ private:
 
 class BlockFilterFactory : public IFilterFactory {
 public:
-	BlockFilterFactory(const ParameterGroup& params)
+	explicit BlockFilterFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

@@ -65,7 +65,7 @@ private:
 
 class TriangleFilterFactory : public IFilterFactory {
 public:
-	TriangleFilterFactory(const ParameterGroup& params)
+	explicit TriangleFilterFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

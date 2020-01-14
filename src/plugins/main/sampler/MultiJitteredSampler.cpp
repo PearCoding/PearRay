@@ -144,7 +144,7 @@ private:
 
 class MultiJitteredSamplerFactory : public ISamplerFactory {
 public:
-	MultiJitteredSamplerFactory(const ParameterGroup& params)
+	explicit MultiJitteredSamplerFactory(const ParameterGroup& params)
 		: mParams(params)
 	{
 	}

@@ -49,6 +49,7 @@ option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins." ON)
 option(PR_EMBED_PLUGINS			"Embed plugins into utility library" ON)
 option(PR_WITH_DIAGNOSTIC 		"Compile the additional PearRayDiagnostic Viewer based on the QT library. Useful if no exr viewer is available" ON)
 option(PR_WITH_PROFILER 		"Compile with internal profiler." ON)
+option(PR_WITH_EXTRA_TOOLS		"Compile extra small tools." ON)
 option(PR_BUILD_TESTS 			"Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON 	"Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
 option(PR_COMPRESS_SPEC_FILES 	"Compress spectral files with boost::zlib" ON)
@@ -218,6 +219,10 @@ if(${Qt5Widgets_FOUND})
 	if(PR_WITH_DIAGNOSTIC)
 		add_subdirectory(src/diagnostic)
 	endif()
+endif()
+
+if(PR_WITH_EXTRA_TOOLS)
+	add_subdirectory(src/tools)
 endif()
 
 # Tests
