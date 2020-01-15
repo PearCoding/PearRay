@@ -114,8 +114,8 @@ BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& i
 	const Vector3fv invDir = in.Direction.cwiseInverse();
 
 	for (int i = 0; i < 3; ++i) {
-		const float32v vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const float32v vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
+		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
+		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
 		if (i == 0) {
 			r.Entry = min(vmin, vmax);
@@ -126,7 +126,7 @@ BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& i
 		}
 	}
 
-	r.Successful = (r.Exit >= r.Entry) & (r.Exit > PR_EPSILON);
+	r.Successful = (r.Exit >= r.Entry) & (r.Exit > vfloat(PR_EPSILON));
 
 	return r;
 }

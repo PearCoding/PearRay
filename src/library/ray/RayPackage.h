@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/SIMD.h"
 #include "math/Transform.h"
 #include "spectral/ColorTriplet.h"
 
@@ -133,5 +134,26 @@ public:
 
 typedef RayPackageBase<vfloat> RayPackage;
 typedef RayPackageBase<float> Ray;
+
+inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
+{
+	Ray ray;
+	ray.Origin[0]		= extract(i, package.Origin[0]);
+	ray.Origin[1]		= extract(i, package.Origin[1]);
+	ray.Origin[2]		= extract(i, package.Origin[2]);
+	ray.Direction[0]	= extract(i, package.Direction[0]);
+	ray.Direction[1]	= extract(i, package.Direction[1]);
+	ray.Direction[2]	= extract(i, package.Direction[2]);
+	ray.Weight[0]		= extract(i, package.Weight[0]);
+	ray.Weight[1]		= extract(i, package.Weight[1]);
+	ray.Weight[2]		= extract(i, package.Weight[2]);
+	ray.Time			= extract(i, package.Time);
+	ray.IterationDepth  = extract(i, package.IterationDepth);
+	ray.Flags			= extract(i, package.Flags);
+	ray.WavelengthIndex = extract(i, package.WavelengthIndex);
+	ray.PixelIndex		= extract(i, package.PixelIndex);
+	ray.cache();
+	return ray;
+}
 
 } // namespace PR

@@ -31,5 +31,16 @@ struct PR_LIB CollisionOutput {
 			Parameter[i] = blend(other.Parameter[i], Parameter[i], mask);
 		Flags = blend(other.Flags, Flags, mask);
 	}
+
+	inline void insert(uint32 i, const SingleCollisionOutput& single)
+	{
+		HitDistance = PR::insert(i, HitDistance, single.HitDistance);
+		MaterialID  = PR::insert(i, MaterialID, single.MaterialID);
+		EntityID	= PR::insert(i, EntityID, single.EntityID);
+		FaceID		= PR::insert(i, FaceID, single.FaceID);
+		for (int i = 0; i < 3; ++i)
+			Parameter[i] = PR::insert(i, Parameter[i], single.Parameter[i]);
+		Flags = PR::insert(i, Flags, single.Flags);
+	}
 };
 } // namespace PR

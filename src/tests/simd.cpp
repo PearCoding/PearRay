@@ -4,6 +4,16 @@
 
 using namespace PR;
 
+inline vfloat make_float(float v0, float v1, float v2, float v3)
+{
+	if (PR_SIMD_BANDWIDTH == 16)
+		return simdpp::make_float(v0, v1, v2, v3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	else if (PR_SIMD_BANDWIDTH == 8)
+		return simdpp::make_float(v0, v1, v2, v3, 0, 0, 0, 0);
+	else
+		return simdpp::make_float(v0, v1, v2, v3);
+}
+
 PR_BEGIN_TESTCASE(SIMD)
 PR_TEST("extract")
 {
@@ -71,6 +81,38 @@ PR_TEST("store_into_container")
 	PR_CHECK_NEARLY_EQ(c[6], 3.0f);
 }
 
+PR_TEST("Negative Count")
+{
+	vfloat f1 = make_float(-1, 1, 0, -4);
+	vfloat f2 = make_float(-1, 7, 0, 4);
+	vfloat f3 = make_float(2, 1, 0, 4);
+	vfloat f4 = make_float(-1, -1, -4, -4);
+
+	PR_CHECK_EQ(countNegativeValues(f1), 2);
+	PR_CHECK_EQ(countNegativeValues(f2), 1);
+	PR_CHECK_EQ(countNegativeValues(f3), 0);
+	PR_CHECK_EQ(countNegativeValues(f4), 4);
+}
+
+PR_TEST("any")
+{
+	vfloat f1 = simdpp::make_float(0, 1, 2, 3);
+	PR_CHECK_TRUE(any(f1 <= 0));
+	vfloat f2 = simdpp::make_float(3, 1, 2, 3);
+	PR_CHECK_FALSE(any(f2 <= 0));
+	vfloat f3 = simdpp::make_float(0, -1, -2, -3);
+	PR_CHECK_TRUE(any(f3 <= 0));
+}
+
+PR_TEST("all")
+{
+	vfloat f1 = simdpp::make_float(0, 1, 2, 3);
+	PR_CHECK_FALSE(all(f1 <= 0));
+	vfloat f2 = simdpp::make_float(3, 1, 2, 3);
+	PR_CHECK_FALSE(all(f2 <= 0));
+	vfloat f3 = simdpp::make_float(0, -1, -2, -3);
+	PR_CHECK_TRUE(all(f3 <= 0));
+}
 PR_END_TESTCASE()
 
 // MAIN

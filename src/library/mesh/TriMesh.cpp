@@ -89,6 +89,7 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
+									   out2.Parameter[2] = simdpp::make_zero();
 									   out2.MaterialID   = simdpp::make_uint(mBase->materialSlot(f)); // Has to be updated in entity!
 
 									   out2.FaceID = simdpp::make_uint(f);
@@ -148,6 +149,7 @@ void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);
+								   out2.Parameter[2] = 0;
 
 								   out2.MaterialID = mBase->materialSlot(f); // Has to be updated in entity!
 								   out2.FaceID	 = static_cast<uint32>(f); // TODO: Maybe change to 64bit?

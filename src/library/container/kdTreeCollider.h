@@ -85,6 +85,7 @@ public:
 		using namespace simdpp;
 		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
 		const vfloat zero	  = make_zero();
+		//const vfloat eps	   = make_float(PR_EPSILON);
 		const Vector3fv invDir = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
@@ -117,16 +118,13 @@ public:
 				const vfloat splitM			= innerN->splitPos - in.Origin[innerN->axis];
 				const vfloat t				= splitM * invDir[innerN->axis];
 
-				const bfloat dirMask = invDir[innerN->axis] < 0;
-				const bfloat eqMask  = (in.Direction[innerN->axis]) <= PR_EPSILON;
+				const bfloat dirMask = invDir[innerN->axis] < zero;
 				const bfloat minHit  = minT <= t;
 				const bfloat maxHit  = maxT >= t;
 
-				const bfloat valid = minT <= maxT;
-				const bfloat hit   = blend(minHit, maxHit, dirMask);
-
-				const bfloat hitRight = valid & hit | eqMask;
-				const bfloat hitLeft  = valid & ~hit | eqMask;
+				const bfloat valid  = minT <= maxT;
+				const bfloat hitRight = (valid & blend(minHit, maxHit, dirMask));
+				const bfloat hitLeft  = (valid & blend(minHit, maxHit, ~dirMask));
 
 				if (!any(hitRight)) {
 					currentN = innerN->left;
@@ -166,8 +164,7 @@ public:
 				tmp.HitDistance = make_float(std::numeric_limits<float>::infinity());
 
 				checkCollisionCallback(in, entity, tmp);
-				const bfloat hits = (tmp.HitDistance < out.HitDistance)
-									& (tmp.HitDistance > zero);
+				const bfloat hits = (tmp.HitDistance < out.HitDistance);
 
 				out.blendFrom(tmp, hits);
 			}

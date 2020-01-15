@@ -29,9 +29,9 @@ public:
 
 private:
 	const RayStream* mStream;
-	size_t mOffset;
-	size_t mSize;
-	bool mCoherent;
+	const size_t mOffset;
+	const size_t mSize;
+	const bool mCoherent;
 };
 
 class PR_LIB RayStream {

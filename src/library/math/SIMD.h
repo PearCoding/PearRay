@@ -13,7 +13,7 @@ using simd_vector = std::vector<T, boost::alignment::aligned_allocator<T, PR_SIM
 inline uint32 countNegativeValues(const vfloat& v)
 {
 	uint32 r = 0;
-	simdpp::for_each(v, [&](float f) { if(f < 0) ++r; });
+	simdpp::for_each(v, [&](float f) { if(std::signbit(f)) ++r; });
 	return r;
 }
 

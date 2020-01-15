@@ -29,7 +29,7 @@ inline void _sceneCheckHit(const RayGroup& grp,
 	if (id >= grp.size()) // Ignore bad tails
 		return;
 
-	float hitD = simdpp::extract<K>(out.HitDistance);
+	const float hitD = simdpp::extract<K>(out.HitDistance);
 	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 		HitEntry entry;
 		entry.RayID		  = id + grp.offset();
@@ -110,9 +110,9 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 				   CollisionOutput& out2) {
 				const IEntity* entity = mEntities[index].get();
 				entity->checkCollision(in2, out2);
-				out2.HitDistance = blend(out2.HitDistance,
+				/*out2.HitDistance = blend(out2.HitDistance,
 										 vfloat(std::numeric_limits<float>::infinity()),
-										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0))*/;
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
@@ -159,9 +159,9 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 				   CollisionOutput& out2) {
 				const IEntity* entity = mEntities[index].get();
 				entity->checkCollision(in2, out2);
-				out2.HitDistance = blend(out2.HitDistance,
+				/*out2.HitDistance = blend(out2.HitDistance,
 										 vfloat(std::numeric_limits<float>::infinity()),
-										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));*/
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
