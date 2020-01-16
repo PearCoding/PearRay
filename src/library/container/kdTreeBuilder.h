@@ -40,7 +40,7 @@ public:
 
 	const BoundingBox& boundingBox() const;
 
-	void build(size_t size);
+	void build(size_t size, bool withStats = true);
 	void save(Serializer& stream) const;
 
 private:

@@ -127,7 +127,8 @@ void kdTreeBuilder::statElementsNode(kdNodeBuilder* node, size_t& sumV, float ro
 		++mLeafCount;
 
 		mMaxElementsPerLeaf = std::max(mMaxElementsPerLeaf, leaf->objects.size());
-		mMinElementsPerLeaf = std::min(mMinElementsPerLeaf, leaf->objects.size());
+		if (leaf->objects.size() > 0) // Ignore empty leaves
+			mMinElementsPerLeaf = std::min(mMinElementsPerLeaf, leaf->objects.size());
 		sumV += leaf->objects.size();
 
 		const float ratio = leaf->boundingBox.surfaceArea() / root_volume;
@@ -484,7 +485,7 @@ static kdNodeBuilder* buildNode(size_t& nodeCount, void* observer,
 								  V);
 }
 
-void kdTreeBuilder::build(size_t size)
+void kdTreeBuilder::build(size_t size, bool withStats)
 {
 	mDepth	 = 0;
 	mMaxDepth  = 0;
@@ -547,14 +548,17 @@ void kdTreeBuilder::build(size_t size)
 	mExpectedObjectsIntersected = 0;
 
 	mDepth = 0;
-	if (mRoot) {
-		size_t sum = 0;
-		statElementsNode(mRoot, sum, mRoot->boundingBox.surfaceArea(), 1);
-		mAvgElementsPerLeaf = sum / (float)mLeafCount;
-	}
 
-	if (mMaxElementsPerLeaf < mMinElementsPerLeaf)
-		mMinElementsPerLeaf = mMaxElementsPerLeaf;
+	if (withStats) {
+		if (mRoot) {
+			size_t sum = 0;
+			statElementsNode(mRoot, sum, mRoot->boundingBox.surfaceArea(), 1);
+			mAvgElementsPerLeaf = sum / (float)mLeafCount;
+		}
+
+		if (mMaxElementsPerLeaf < mMinElementsPerLeaf)
+			mMinElementsPerLeaf = mMaxElementsPerLeaf;
+	}
 }
 
 /////////////////////////////////////////////

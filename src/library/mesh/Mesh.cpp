@@ -136,7 +136,7 @@ void Mesh::setup()
 
 void Mesh::constructCollider()
 {
-	PR_LOG(L_INFO) << "Mesh " << name() << " Memory Footprint: " << PR_FMT_MEM(mBase->memoryFootprint()) << std::endl;
+	PR_LOG(L_DEBUG) << "Mesh " << name() << " Memory Footprint: " << PR_FMT_MEM(mBase->memoryFootprint()) << std::endl;
 
 	BUILDER builder(mBase.get(), [](void* observer, size_t f) {
 								MeshBase* mesh = reinterpret_cast<MeshBase*>(observer);
@@ -151,23 +151,32 @@ void Mesh::constructCollider()
 					[](void*, size_t) {
 						return 4.0f;
 					});
-	builder.build(mBase->faceCount());
+
+#ifdef PR_DEBUG
+	constexpr bool withStat = true;
+#else
+	constexpr bool withStat = false;
+#endif
+
+	builder.build(mBase->faceCount(), withStat);
 
 	std::wstring cnt_file = this->cacheFileNoExt() + L".cnt";
 	FileSerializer serializer(cnt_file, false);
 	builder.save(serializer);
 
-	PR_LOG(L_INFO) << "Mesh " << name() << " KDtree [depth="
-				   << builder.depth()
-				   << ", elements=" << mBase->faceCount()
-				   << ", leafs=" << builder.leafCount()
-				   << ", elementsPerLeaf=[avg:" << builder.avgElementsPerLeaf()
-				   << ", min:" << builder.minElementsPerLeaf()
-				   << ", max:" << builder.maxElementsPerLeaf()
-				   << ", ET:" << builder.expectedTraversalSteps()
-				   << ", EL:" << builder.expectedLeavesVisited()
-				   << ", EI:" << builder.expectedObjectsIntersected()
-				   << "]]" << std::endl;
+#ifdef PR_DEBUG
+	PR_LOG(L_DEBUG) << "Mesh " << name() << " KDtree [depth="
+					<< builder.depth()
+					<< ", elements=" << mBase->faceCount()
+					<< ", leafs=" << builder.leafCount()
+					<< ", elementsPerLeaf=[avg:" << builder.avgElementsPerLeaf()
+					<< ", min:" << builder.minElementsPerLeaf()
+					<< ", max:" << builder.maxElementsPerLeaf()
+					<< ", ET:" << builder.expectedTraversalSteps()
+					<< ", EL:" << builder.expectedLeavesVisited()
+					<< ", EI:" << builder.expectedObjectsIntersected()
+					<< "]]" << std::endl;
+#endif
 }
 
 void Mesh::loadCollider()

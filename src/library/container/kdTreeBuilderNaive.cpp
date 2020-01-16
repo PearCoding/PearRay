@@ -392,7 +392,7 @@ static kdNodeBuilderNaive* buildNode(void* observer,
 									   V);
 }
 
-void kdTreeBuilderNaive::build(size_t size)
+void kdTreeBuilderNaive::build(size_t size, bool withStats)
 {
 	mDepth	 = 0;
 	mMaxDepth  = 0;
@@ -448,14 +448,16 @@ void kdTreeBuilderNaive::build(size_t size)
 	mExpectedObjectsIntersected = 0;
 
 	mDepth = 0;
-	if (mRoot) {
-		size_t sum = 0;
-		statElementsNode(mRoot, sum, mRoot->boundingBox.surfaceArea(), 1);
-		mAvgElementsPerLeaf = sum / (float)mLeafCount;
-	}
+	if (withStats) {
+		if (mRoot) {
+			size_t sum = 0;
+			statElementsNode(mRoot, sum, mRoot->boundingBox.surfaceArea(), 1);
+			mAvgElementsPerLeaf = sum / (float)mLeafCount;
+		}
 
-	if (mMaxElementsPerLeaf < mMinElementsPerLeaf)
-		mMinElementsPerLeaf = mMaxElementsPerLeaf;
+		if (mMaxElementsPerLeaf < mMinElementsPerLeaf)
+			mMinElementsPerLeaf = mMaxElementsPerLeaf;
+	}
 }
 
 ////////////////////////////////////////////////////
