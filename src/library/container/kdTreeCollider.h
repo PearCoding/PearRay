@@ -83,17 +83,17 @@ public:
 										 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
-		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
-		const vfloat zero	  = make_zero();
+		out.HitDistance   = make_float(std::numeric_limits<float>::infinity());
+		const vfloat zero = make_zero();
 		//const vfloat eps	   = make_float(PR_EPSILON);
 		const Vector3fv invDir = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
-			kdNodeCollider* node;
 			vfloat minT;
 			vfloat maxT;
+			kdNodeCollider* node;
 		};
-		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
+		thread_local static _stackdata stack[PR_KDTREE_MAX_STACK];
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
 		const auto root_in = mBoundingBox.intersectsRange(in);
@@ -119,12 +119,13 @@ public:
 				const vfloat t				= splitM * invDir[innerN->axis];
 
 				const bfloat dirMask = invDir[innerN->axis] < zero;
-				const bfloat minHit  = minT <= t;
-				const bfloat maxHit  = maxT >= t;
+				//const bfloat zdir	= abs(in.Direction[innerN->axis]) < eps;
+				const bfloat minHit = minT <= t;
+				const bfloat maxHit = maxT >= t;
 
-				const bfloat valid  = minT <= maxT;
-				const bfloat hitRight = (valid & blend(minHit, maxHit, dirMask));
-				const bfloat hitLeft  = (valid & blend(minHit, maxHit, ~dirMask));
+				const bfloat valid	= minT <= maxT;
+				const bfloat hitRight = (valid & (blend(minHit, maxHit, dirMask) /*| zdir*/));
+				const bfloat hitLeft  = (valid & (blend(minHit, maxHit, ~dirMask) /*| zdir*/));
 
 				if (!any(hitRight)) {
 					currentN = innerN->left;
@@ -138,6 +139,7 @@ public:
 						stack[stackPos].minT = t;
 						stack[stackPos].maxT = maxT;
 						++stackPos;
+						PR_ASSERT(stackPos <= PR_KDTREE_MAX_STACK, "kdtree stack overflow");
 
 						currentN = innerN->left;
 						maxT	 = t;
@@ -146,6 +148,7 @@ public:
 						stack[stackPos].minT = minT;
 						stack[stackPos].maxT = t;
 						++stackPos;
+						PR_ASSERT(stackPos <= PR_KDTREE_MAX_STACK, "kdtree stack overflow");
 
 						currentN = innerN->right;
 						minT	 = t;
@@ -164,14 +167,15 @@ public:
 				tmp.HitDistance = make_float(std::numeric_limits<float>::infinity());
 
 				checkCollisionCallback(in, entity, tmp);
-				const bfloat hits = (tmp.HitDistance < out.HitDistance);
+				const bfloat hits = (tmp.HitDistance < out.HitDistance)
+									& (tmp.HitDistance > zero);
 
 				out.blendFrom(tmp, hits);
 			}
 
 			// Early termination
 			if (all(out.HitDistance < minT))
-				return true;
+				break;
 		}
 
 		return any(out.HitDistance < std::numeric_limits<float>::infinity());
@@ -254,7 +258,7 @@ public:
 
 			// Early termination
 			if (out.HitDistance < minT)
-				return true;
+				break;
 		}
 
 		return out.HitDistance < std::numeric_limits<float>::infinity();

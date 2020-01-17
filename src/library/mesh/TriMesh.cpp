@@ -84,8 +84,7 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 										   t); // Major bottleneck!
 #endif
 
-									   const vfloat inf = simdpp::make_float(std::numeric_limits<float>::infinity());
-									   out2.HitDistance = simdpp::blend(t, inf, hits);
+									   out2.HitDistance = simdpp::blend(t, out2.HitDistance, hits);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);

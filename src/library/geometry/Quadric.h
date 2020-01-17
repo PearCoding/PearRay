@@ -3,8 +3,8 @@
 #include "math/SIMD.h"
 
 #include <Eigen/Eigenvalues>
-#include <utility>
 #include <array>
+#include <utility>
 
 namespace PR {
 /* Unbounded quadric
@@ -34,6 +34,7 @@ public:
 	{
 		typedef typename VectorTemplate<T>::bool_t BOOL;
 		static const T INT_EPS = T(1e-6f);
+		static const T INF = T(std::numeric_limits<float>::infinity());
 
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -65,9 +66,9 @@ public:
 		BOOL behind  = qu1 < INT_EPS;
 		T qu		 = blend(qu2, qu1, behind);
 
-		t = blend(lin, blend(T(std::numeric_limits<float>::infinity()), qu, invalid), linear);
+		t	 = blend(lin, blend(INF, qu, invalid), linear);
 
-		return b_and(t<std::numeric_limits<float>::infinity(), t> INT_EPS);
+		return b_and(t < INF, (t > INT_EPS));
 	}
 
 	template <typename T>

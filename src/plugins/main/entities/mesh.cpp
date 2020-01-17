@@ -13,7 +13,6 @@
 #include "math/Projection.h"
 #include "mesh/TriMesh.h"
 
-
 #include <boost/filesystem.hpp>
 
 namespace PR {
@@ -80,10 +79,11 @@ public:
 		out.EntityID	= simdpp::make_uint(id());
 
 		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i) {
-			insert(i, out.MaterialID,
-				   extract(i, out.MaterialID) < mMaterials.size()
-					   ? mMaterials.at(extract(i, out.MaterialID))
-					   : 0);
+			uint32 id	  = extract(i, out.MaterialID);
+			out.MaterialID = insert(i, out.MaterialID,
+									id < mMaterials.size()
+										? mMaterials.at(id)
+										: 0);
 		}
 	}
 
@@ -127,9 +127,7 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.MaterialID = pt.MaterialID < mMaterials.size()
-							? mMaterials.at(pt.MaterialID)
-							: 0;
+		pt.MaterialID = pt.MaterialID;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;
 	}

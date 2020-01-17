@@ -1,7 +1,7 @@
 // IWYU pragma: private, include "scene/Scene.h"
 namespace PR {
 
-#define PR_FORCE_SINGLE_TRACE
+//#define PR_FORCE_SINGLE_TRACE
 
 template <typename Func>
 void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
@@ -110,9 +110,9 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 				   CollisionOutput& out2) {
 				const IEntity* entity = mEntities[index].get();
 				entity->checkCollision(in2, out2);
-				/*out2.HitDistance = blend(out2.HitDistance,
+				out2.HitDistance = blend(out2.HitDistance,
 										 vfloat(std::numeric_limits<float>::infinity()),
-										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0))*/;
+										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
@@ -159,9 +159,9 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 				   CollisionOutput& out2) {
 				const IEntity* entity = mEntities[index].get();
 				entity->checkCollision(in2, out2);
-				/*out2.HitDistance = blend(out2.HitDistance,
+				out2.HitDistance = blend(out2.HitDistance,
 										 vfloat(std::numeric_limits<float>::infinity()),
-										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));*/
+										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
