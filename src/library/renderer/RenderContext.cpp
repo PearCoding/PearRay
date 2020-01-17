@@ -61,9 +61,9 @@ void RenderContext::reset()
 	for (RenderThread* thread : mThreads)
 		delete thread;
 
-	mShouldStop				  = false;
-	mThreadsWaitingForPass	= 0;
-	mCurrentPass			  = 0;
+	mShouldStop					 = false;
+	mThreadsWaitingForPass		 = 0;
+	mCurrentPass				 = 0;
 	mIncrementalCurrentIteration = 0;
 
 	mThreads.clear();
@@ -239,11 +239,19 @@ RenderTile* RenderContext::getNextTile()
 	// Try till we find a tile or all samples are already rendered
 	while (tile == nullptr && !mTileMap->allFinished()) {
 		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
-		if (tile == nullptr)
+		if (tile == nullptr) {
 			++mIncrementalCurrentIteration;
+			optimizeTileMap();
+		}
 	}
 
 	return tile;
+}
+
+void RenderContext::optimizeTileMap()
+{
+    // All threads are locked
+	// TODO (Issue #31): Optimize tilemap based on execution time of each tile
 }
 
 RenderTileStatistics RenderContext::statistics() const

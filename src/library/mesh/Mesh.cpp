@@ -136,7 +136,7 @@ void Mesh::setup()
 
 void Mesh::constructCollider()
 {
-	PR_LOG(L_DEBUG) << "Mesh " << name() << " Memory Footprint: " << PR_FMT_MEM(mBase->memoryFootprint()) << std::endl;
+	//PR_LOG(L_DEBUG) << "Mesh " << name() << " Memory Footprint: " << PR_FMT_MEM(mBase->memoryFootprint()) << std::endl;
 
 	BUILDER builder(mBase.get(), [](void* observer, size_t f) {
 								MeshBase* mesh = reinterpret_cast<MeshBase*>(observer);

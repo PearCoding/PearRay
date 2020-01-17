@@ -69,7 +69,7 @@ public:
 		return mBoundingBox;
 	}
 
-	// Package Version
+	// Coherent Package Version
 	template <typename CheckCollisionCallback>
 	inline bool checkCollisionCoherent(const RayPackage& in, CollisionOutput& out,
 									   CheckCollisionCallback checkCollisionCallback) const
@@ -78,6 +78,8 @@ public:
 		return checkCollisionIncoherent(in, out, checkCollisionCallback);
 	}
 
+	// Incoherent Package Version
+	// Based on: Reshetov, Alexander. (2006). Omnidirectional Ray Tracing Traversal Algorithm for kd-trees. 57 - 60. 10.1109/RT.2006.280215.
 	template <typename CheckCollisionCallback>
 	inline bool checkCollisionIncoherent(const RayPackage& in, CollisionOutput& out,
 										 CheckCollisionCallback checkCollisionCallback) const
@@ -93,7 +95,7 @@ public:
 			vfloat maxT;
 			kdNodeCollider* node;
 		};
-		thread_local static _stackdata stack[PR_KDTREE_MAX_STACK];
+		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
 
 		PR_ASSERT(mRoot, "No root given for kdTree!");
 		const auto root_in = mBoundingBox.intersectsRange(in);
@@ -182,6 +184,7 @@ public:
 	}
 
 	// Single version
+	// Based on: Woop, Sven. (2004). A Programmable Hardware Architecture for Real-time Ray Tracing of Coherent Dynamic Scenes.
 	template <typename CheckCollisionCallback>
 	inline bool checkCollisionSingle(const Ray& in, SingleCollisionOutput& out,
 									 CheckCollisionCallback checkCollisionCallback) const
@@ -191,7 +194,7 @@ public:
 		const Vector3f invDir = in.Direction.cwiseInverse();
 
 		struct _stackdata {
-			kdNodeCollider* node;
+			const kdNodeCollider* node;
 			float minT;
 			float maxT;
 		};
@@ -210,24 +213,26 @@ public:
 		++stackPos;
 
 		while (stackPos > 0) {
-			kdNodeCollider* currentN = stack[stackPos - 1].node;
-			float minT				 = stack[stackPos - 1].minT;
-			float maxT				 = stack[stackPos - 1].maxT;
+			const kdNodeCollider* currentN = stack[stackPos - 1].node;
+			float minT					   = stack[stackPos - 1].minT;
+			float maxT					   = stack[stackPos - 1].maxT;
 			--stackPos;
 
 			while (!currentN->isLeaf) {
-				kdInnerNodeCollider* innerN = reinterpret_cast<kdInnerNodeCollider*>(currentN);
-				const float t				= (innerN->splitPos - in.Origin[innerN->axis])
-								* invDir[innerN->axis];
+				const kdInnerNodeCollider* innerN = reinterpret_cast<const kdInnerNodeCollider*>(currentN);
+				const float t					  = (innerN->splitPos - in.Origin[innerN->axis]) * invDir[innerN->axis];
 
-				const bool side = (innerN->splitPos > in.Origin[innerN->axis]);
+				const bool side = (innerN->splitPos >= in.Origin[innerN->axis]);
 
-				kdNodeCollider* nearN = side ? innerN->left : innerN->right;
-				kdNodeCollider* farN  = side ? innerN->right : innerN->left;
+				const kdNodeCollider* nearN = side ? innerN->left : innerN->right;
+				const kdNodeCollider* farN  = side ? innerN->right : innerN->left;
 
-				if (t > maxT || t <= 0) {
+				const bool nearHit = t >= minT || t <= 0;
+				const bool farHit  = t <= maxT && t >= 0;
+
+				if (nearHit && !farHit) {
 					currentN = nearN;
-				} else if (t < minT) {
+				} else if (farHit && !nearHit) {
 					currentN = farN;
 				} else {
 					stack[stackPos].node = farN;
@@ -245,7 +250,7 @@ public:
 			// Traverse leaf
 			PR_ASSERT(currentN->isLeaf, "Expected leaf node!");
 
-			kdLeafNodeCollider* leafN = reinterpret_cast<kdLeafNodeCollider*>(currentN);
+			const kdLeafNodeCollider* leafN = reinterpret_cast<const kdLeafNodeCollider*>(currentN);
 
 			for (uint64 entity : leafN->objects) {
 				tmp.HitDistance = std::numeric_limits<float>::infinity();
@@ -257,7 +262,7 @@ public:
 			}
 
 			// Early termination
-			if (out.HitDistance < minT)
+			if (out.HitDistance <= maxT)
 				break;
 		}
 

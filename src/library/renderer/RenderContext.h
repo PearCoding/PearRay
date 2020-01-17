@@ -90,6 +90,7 @@ protected:
 
 private:
 	void reset();
+	void optimizeTileMap();
 
 	const uint32 mIndex;
 	const uint32 mOffsetX;

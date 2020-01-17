@@ -108,7 +108,7 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 		mesh->triangulate();
 		bool useCache = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode));
 		ctx.Env->addMesh(name, std::make_shared<TriMesh>(name, std::move(mesh), ctx.Env->cache(), useCache));
-		PR_LOG(L_INFO) << "Added mesh " << name << std::endl;
+		PR_LOG(L_DEBUG) << "Added mesh " << name << std::endl;
 	}
 }
 } // namespace PR

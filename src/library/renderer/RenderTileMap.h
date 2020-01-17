@@ -30,6 +30,7 @@ public:
 	float percentage() const;
 
 private:
+	void clearMap();
 	uint32 mTileXCount;
 	uint32 mTileYCount;
 	uint32 mTileWidth;
