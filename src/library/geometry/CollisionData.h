@@ -38,8 +38,8 @@ struct PR_LIB CollisionOutput {
 		MaterialID  = PR::insert(i, MaterialID, single.MaterialID);
 		EntityID	= PR::insert(i, EntityID, single.EntityID);
 		FaceID		= PR::insert(i, FaceID, single.FaceID);
-		for (int i = 0; i < 3; ++i)
-			Parameter[i] = PR::insert(i, Parameter[i], single.Parameter[i]);
+		for (int k = 0; k < 3; ++k)
+			Parameter[k] = PR::insert(i, Parameter[k], single.Parameter[k]);
 		Flags = PR::insert(i, Flags, single.Flags);
 	}
 };
