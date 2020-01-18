@@ -85,8 +85,8 @@ public:
 										 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
-		out.HitDistance   = make_float(std::numeric_limits<float>::infinity());
-		const vfloat zero = make_zero();
+		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
+		const vfloat zero	  = make_zero();
 		//const vfloat eps	   = make_float(PR_EPSILON);
 		const Vector3fv invDir = in.Direction.cwiseInverse();
 
@@ -121,48 +121,60 @@ public:
 				const vfloat t				= splitM * invDir[innerN->axis];
 
 				const bfloat dirMask = invDir[innerN->axis] < zero;
-				//const bfloat zdir	= abs(in.Direction[innerN->axis]) < eps;
-				const bfloat minHit = minT <= t;
-				const bfloat maxHit = maxT >= t;
+				const bfloat minHit = (t >= minT) | (t <= 0);
+				const bfloat maxHit = (t <= maxT) /*& (t >= 0)*/;
 
-				const bfloat valid	= minT <= maxT;
-				const bfloat hitRight = (valid & (blend(minHit, maxHit, dirMask) /*| zdir*/));
-				const bfloat hitLeft  = (valid & (blend(minHit, maxHit, ~dirMask) /*| zdir*/));
+				const bfloat valid	= (minT <= maxT) /*& (abs(in.Direction[innerN->axis]) > eps)*/;
+				const bfloat hitRight = valid & blend(minHit, maxHit, dirMask);
+				const bfloat hitLeft  = valid & blend(minHit, maxHit, ~dirMask);
 
-				if (!any(hitRight)) {
+				const bool anyLeftHit  = any(hitLeft);
+				const bool anyRightHit = any(hitRight);
+
+				if (anyLeftHit && !anyRightHit) {
 					currentN = innerN->left;
-				} else if (!any(hitLeft)) {
+				} else if (!anyLeftHit && anyRightHit) {
 					currentN = innerN->right;
-				} else {
+				} else if (anyLeftHit || anyRightHit) {
 					const uint32 negCount = countNegativeValues(splitM);
+
+					const vfloat lMinT = blend(t, minT, dirMask);
+					const vfloat lMaxT = blend(maxT, t, dirMask);
+					const vfloat rMinT = blend(minT, t, dirMask);
+					const vfloat rMaxT = blend(t, maxT, dirMask);
 
 					if (negCount <= 2) {
 						stack[stackPos].node = innerN->right;
-						stack[stackPos].minT = t;
-						stack[stackPos].maxT = maxT;
+						stack[stackPos].minT = rMinT;
+						stack[stackPos].maxT = rMaxT;
 						++stackPos;
 						PR_ASSERT(stackPos <= PR_KDTREE_MAX_STACK, "kdtree stack overflow");
 
 						currentN = innerN->left;
-						maxT	 = t;
+						minT	 = lMinT;
+						maxT	 = lMaxT;
 					} else {
 						stack[stackPos].node = innerN->left;
-						stack[stackPos].minT = minT;
-						stack[stackPos].maxT = t;
+						stack[stackPos].minT = lMinT;
+						stack[stackPos].maxT = lMaxT;
 						++stackPos;
 						PR_ASSERT(stackPos <= PR_KDTREE_MAX_STACK, "kdtree stack overflow");
 
 						currentN = innerN->right;
-						minT	 = t;
+						minT	 = rMinT;
+						maxT	 = rMaxT;
 					}
+				} else {
+					break;
 				}
 
 				PR_ASSERT(currentN, "Null node not expected!");
 			}
 
-			// Traverse leaf
-			PR_ASSERT(currentN->isLeaf, "Expected leaf node!");
+			if (!currentN->isLeaf)
+				continue;
 
+			// Traverse leaf
 			kdLeafNodeCollider* leafN = reinterpret_cast<kdLeafNodeCollider*>(currentN);
 
 			for (uint64 entity : leafN->objects) {
@@ -176,7 +188,7 @@ public:
 			}
 
 			// Early termination
-			if (all(out.HitDistance < minT))
+			if (all(out.HitDistance <= maxT))
 				break;
 		}
 

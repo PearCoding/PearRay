@@ -1,7 +1,7 @@
 // IWYU pragma: private, include "scene/Scene.h"
 namespace PR {
 
-#define PR_FORCE_SINGLE_TRACE
+//#define PR_FORCE_SINGLE_TRACE
 
 template <typename Func>
 void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const

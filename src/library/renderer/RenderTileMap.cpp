@@ -86,9 +86,8 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 			}
 		}
 		break;
-	case TM_SPIRAL:
+	case TM_SPIRAL: {
 		MinRadiusGenerator<2> generator(std::max(mTileXCount / 2, mTileYCount / 2));
-		uint32 i = 0;
 		while (generator.hasNext()) {
 			const auto p  = generator.next();
 			const auto tx = mTileXCount / 2 + p[0];
@@ -101,7 +100,7 @@ void RenderTileMap::init(const RenderContext& context, TileMode mode)
 							ty * mTileHeight);
 			}
 		}
-		break;
+	} break;
 	}
 }
 
