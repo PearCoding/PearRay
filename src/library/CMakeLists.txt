@@ -1,9 +1,5 @@
 set(PR_Src
-  Build.cpp
-  Build.h
   PR_Config.h.in
-  PR_HW_ConfigSwitch.inl.in
-  PR_SIMD_Config.inl
   FileLogListener.cpp
   FileLogListener.h
   IObject.h
@@ -17,7 +13,6 @@ set(PR_Src
   Profiler.cpp
   Random.h
   Variant.h
-  VectorGlue.inl
   buffer/AOV.h
   buffer/ColorBuffer.cpp
   buffer/ColorBuffer.h
@@ -37,6 +32,14 @@ set(PR_Src
   cache/ISerializeCachable.cpp
   camera/ICamera.cpp
   camera/ICamera.h
+  config/Build.cpp
+  config/Build.h
+  config/Constants.inl
+  config/HW_Switch.inl.in
+  config/SIMD.inl
+  config/Types.inl
+  config/VectorGlue.inl
+  config/Version.h.in
   container/IndexSort.h
   container/Interval.h
   container/kdTreeBuilder.cpp

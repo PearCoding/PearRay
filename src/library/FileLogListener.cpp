@@ -1,9 +1,9 @@
 #include "FileLogListener.h"
-#include "Build.h"
+#include "config/Build.h"
 
 #include <ctime>
-#include <thread>
 #include <iomanip>
+#include <thread>
 
 namespace PR {
 FileLogListener::FileLogListener()
@@ -43,7 +43,8 @@ void FileLogListener::startEntry(LogLevel level)
 			<< Logger::levelString(level) << "] ";
 }
 
-void FileLogListener::writeEntry(int c) {
+void FileLogListener::writeEntry(int c)
+{
 	mStream.put(c);
 }
-}
+} // namespace PR

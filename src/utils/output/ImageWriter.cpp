@@ -1,8 +1,8 @@
 #include "ImageWriter.h"
 #include "Logger.h"
 #include "SpectralFile.h"
-#include "Version.h"
 #include "buffer/OutputBuffer.h"
+#include "config/Build.h"
 #include "renderer/RenderContext.h"
 
 #include <OpenImageIO/imageio.h>
@@ -109,8 +109,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		spec.channelnames.push_back(sett.Name);
 	}
 
-	spec.attribute("Software", "PearRay " PR_VERSION_STRING);
-	spec.attribute("IPTC:ProgramVersion", PR_VERSION_STRING);
+	const std::string versionStr = Build::getVersionString();
+	spec.attribute("Software", "PearRay " + versionStr);
+	spec.attribute("IPTC:ProgramVersion", versionStr);
 
 	const std::string utfFilename = boost::filesystem::path(file).generic_string();
 // Create file

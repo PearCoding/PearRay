@@ -138,8 +138,8 @@ add_subdirectory(external/DataLisp)
 add_subdirectory(src/hardware)
 
 configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
-configure_file(src/library/PR_HW_ConfigSwitch.inl.in ${CMAKE_CURRENT_BINARY_DIR}/PR_HW_ConfigSwitch.inl)
-configure_file(src/library/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
+configure_file(src/library/config/HW_Switch.inl.in ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl)
+configure_file(src/library/config/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
 configure_file(src/library/geometry/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/TriangleOptions.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}

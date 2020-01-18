@@ -1,11 +1,12 @@
+#include "config/Build.h"
 #include "pypearray.h"
-#include "Version.h"
 
 #include <sstream>
 
-std::tuple<int,int> version()
+std::tuple<int, int> version()
 {
-	return std::make_tuple(PR_VERSION_MAJOR, PR_VERSION_MINOR);
+	auto version = PR::Build::getVersion();
+	return std::make_tuple(version.Major, version.Minor);
 }
 
 namespace PRPY {
@@ -28,7 +29,7 @@ void setup_tonemapper(py::module& m);
 void setup_environment(py::module& m);
 void setup_integrator(py::module& m);
 void setup_profiler(py::module& m);
-}
+} // namespace PRPY
 
 /* ATTENTION
  * Don't expose Type* getFoo() when smart pointers are involved!

@@ -3,8 +3,8 @@
 #include "TriangleOptions.h"
 #include "Version.h"
 
-#include <vector>
 #include <sstream>
+#include <vector>
 
 //OS
 #if defined(PR_OS_LINUX)
@@ -55,14 +55,19 @@
 
 namespace PR {
 namespace Build {
+Version getVersion() { return Version{ PR_VERSION_MAJOR, PR_VERSION_MINOR }; }
+std::string getVersionString() { return PR_VERSION_STRING; }
+std::string getGitString() { return PR_GIT_BRANCH " " PR_GIT_REVISION; }
+std::string getCopyrightString() { return PR_NAME_STRING " " PR_VERSION_STRING " (C) " PR_VENDOR_STRING; }
+
 std::string getCompilerName() { return PR_CC_NAME; }
 std::string getOSName() { return PR_OS_NAME; }
 std::string getBuildVariant() { return PR_BUILDVARIANT_NAME; }
 std::string getFeatureSet()
 {
 	std::vector<std::string> list;
-// Skip basic features required by x64 anyway
-/*#ifdef PR_HAS_HW_FEATURE_MMX
+	// Skip basic features required by x64 anyway
+	/*#ifdef PR_HAS_HW_FEATURE_MMX
 	list.emplace_back("MMX");
 #endif
 #ifdef PR_HAS_HW_FEATURE_SSE

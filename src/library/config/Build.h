@@ -4,6 +4,35 @@
 
 namespace PR {
 namespace Build {
+struct PR_LIB Version {
+	uint32 Major;
+	uint32 Minor;
+	inline uint32 asNumber() const { return ((Major) << 8) | (Minor); }
+};
+/**
+ * @brief Returns version of the build
+ * 
+ * @return Version struct containing major and minor version 
+ */
+Version PR_LIB getVersion();
+/**
+ * @brief Returns version of the build as a string
+ * 
+ * @return std::string getVersionString 
+ */
+std::string PR_LIB getVersionString();
+/**
+ * @brief Returns git branch and revision of the build as a string
+ * 
+ * @return std::string getGitString 
+ */
+std::string PR_LIB getGitString();
+/**
+ * @brief Returns copyright of the build as a string
+ * 
+ * @return std::string getCopyrightString 
+ */
+std::string PR_LIB getCopyrightString();
 /**
  * @brief Returns name of compiler used for compiling
  * 

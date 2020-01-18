@@ -1,10 +1,10 @@
 #include "Serializer.h"
-#include "Version.h"
+#include "config/Build.h"
 
 namespace PR {
 Serializer::Serializer(bool readmode, uint32 version)
 	: mReadMode(readmode)
-	, mVersion(version == 0 ? PR_VERSION : version)
+	, mVersion(version == 0 ? Build::getVersion().asNumber() : version)
 {
 }
 

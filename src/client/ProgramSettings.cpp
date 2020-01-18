@@ -1,7 +1,7 @@
 #include "ProgramSettings.h"
-#include "Build.h"
 #include "EnumOption.h"
 #include "cache/Cache.h"
+#include "config/Build.h"
 
 #include <boost/program_options/cmdline.hpp>
 #include <boost/program_options/options_description.hpp>

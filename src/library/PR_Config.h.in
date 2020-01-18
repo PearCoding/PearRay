@@ -97,7 +97,7 @@
 	} while (false)
 #endif
 #else
-#define PR_ASSERT(cond, msg) PR::pr_Noop()
+#define PR_ASSERT(cond, msg) ((void)0)
 #endif
 
 #define PR_CLASS_NON_MOVEABLE(C) \
@@ -166,6 +166,9 @@ private:                                           \
 #define PR_PLUGIN_API_VERSION 1
 #define PR_PLUGIN_EXPORT PR_EXPORT
 
+// Add profiler tokens
+#cmakedefine PR_WITH_PROFILER
+
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -176,60 +179,9 @@ private:                                           \
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-#include "PR_SIMD_Config.inl"
-
-// Add profiler tokens
-#cmakedefine PR_WITH_PROFILER
-
-namespace PR {
-inline void pr_Noop()
-{
-}
-
-/* The intx_t are optional but our system demands them.
- * A system without these types can not use the raytracer
- * due to performance issues anyway.
- */
-
-typedef int8_t int8;
-typedef uint8_t uint8;
-
-typedef int16_t int16;
-typedef uint16_t uint16;
-
-typedef int32_t int32;
-typedef uint32_t uint32;
-
-typedef int64_t int64;
-typedef uint64_t uint64;
-
-// Checks
-static_assert(sizeof(int8) == 1, "Invalid bytesize configuration");
-static_assert(sizeof(uint8) == 1, "Invalid bytesize configuration");
-static_assert(sizeof(int16) == 2, "Invalid bytesize configuration");
-static_assert(sizeof(uint16) == 2, "Invalid bytesize configuration");
-static_assert(sizeof(int32) == 4, "Invalid bytesize configuration");
-static_assert(sizeof(uint32) == 4, "Invalid bytesize configuration");
-static_assert(sizeof(int64) == 8, "Invalid bytesize configuration");
-static_assert(sizeof(uint64) == 8, "Invalid bytesize configuration");
-
-constexpr float PR_EPSILON = 0.00001f;
-
-#ifdef M_PI
-constexpr float PR_PI = static_cast<float>(M_PI);
-#else
-constexpr float PR_PI   = static_cast<float>(3.14159265358979323846);
-#endif
-
-#ifdef M_1_PI
-constexpr float PR_1_PI = M_1_PI;
-#else
-constexpr float PR_1_PI = 1 / PR_PI;
-#endif
-
-constexpr float PR_NM_TO_M_F = 1e-9f;
-constexpr double PR_NM_TO_M  = 1e-9;
-
-} // namespace PR
-
-#include "VectorGlue.inl"
+// clang-format off
+#include "config/SIMD.inl"
+#include "config/Types.inl"
+#include "config/Constants.inl"
+#include "config/VectorGlue.inl"
+// clang-format on

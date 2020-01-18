@@ -4,7 +4,7 @@
 #include "Profiler.h"
 #include "ProgramSettings.h"
 #include "SceneLoader.h"
-#include "Version.h"
+#include "config/Build.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderTileStatistics.h"
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 	PR_LOGGER.setVerbosity(options.IsVerbose ? PR::L_DEBUG : PR::L_INFO);
 
 	if (!options.IsQuiet)
-		std::cout << PR_NAME_STRING << " " << PR_VERSION_STRING << " (C) " << PR_VENDOR_STRING << std::endl;
+		std::cout << PR::Build::getCopyrightString() << std::endl;
 
 	if (options.Profile) {
 		PR_LOG(PR::L_INFO) << "Profiling enabled (TpS: "
