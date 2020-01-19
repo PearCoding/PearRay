@@ -13,7 +13,7 @@ class RenderContext;
 class ISampler;
 class PR_LIB RenderTile {
 public:
-	RenderTile(uint32 sx, uint32 sy, uint32 ex, uint32 ey,
+	RenderTile(const Point2i& start, const Point2i& end,
 			   const RenderContext& context, uint32 index);
 	~RenderTile();
 
@@ -24,18 +24,16 @@ public:
 		mIterationCount		  = 0;
 	}
 
-	Ray constructCameraRay(uint32 px, uint32 py, uint32 sample);
+	Ray constructCameraRay(const Point2i& p, uint32 sample);
 
 	inline bool isWorking() const { return mWorking; }
 	inline bool accuire() { return !mWorking.exchange(true); }
 	inline void setWorking(bool b) { mWorking = b; }
 
-	inline uint32 sx() const { return mSX; }
-	inline uint32 sy() const { return mSY; }
-	inline uint32 ex() const { return mEX; }
-	inline uint32 ey() const { return mEY; }
-	inline uint32 width() const { return mWidth; }
-	inline uint32 height() const { return mHeight; }
+	inline const Point2i& start() const { return mStart; }
+	inline const Point2i& end() const { return mEnd; }
+	inline const Size2i& viewSize() const { return mViewSize; }
+	inline const Size2i& imageSize() const { return mImageSize; }
 	inline uint32 index() const { return mIndex; }
 
 	inline bool isFinished() const { return mPixelSamplesRendered >= mMaxPixelSamples; }
@@ -57,14 +55,10 @@ public:
 private:
 	std::atomic<bool> mWorking;
 
-	const uint32 mSX;
-	const uint32 mSY;
-	const uint32 mEX;
-	const uint32 mEY;
-	const uint32 mWidth;
-	const uint32 mHeight;
-	const uint32 mFullWidth;
-	const uint32 mFullHeight;
+	const Point2i mStart;
+	const Point2i mEnd;
+	const Size2i mViewSize;
+	const Size2i mImageSize;
 	const uint32 mIndex;
 	uint32 mMaxPixelSamples;
 
@@ -88,5 +82,7 @@ private:
 
 	const RenderContext* const mContext;
 	const ICamera* const mCamera;
+	
+	float mWeight_Cache;
 };
 } // namespace PR

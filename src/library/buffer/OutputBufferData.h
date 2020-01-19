@@ -26,10 +26,10 @@ class PR_LIB OutputBufferData {
 	friend class OutputBufferBucket;
 
 public:
-	OutputBufferData(size_t width, size_t height, size_t specChannels);
+	OutputBufferData(const Size2i& size, Size1i specChannels);
 	~OutputBufferData();
 
-	void clear(bool force=false);
+	void clear(bool force = false);
 
 	// Internal
 	inline bool hasInternalChannel_1D(AOV1D var) const;

@@ -9,7 +9,7 @@ class OutputBufferBucket;
 class PR_LIB OutputBuffer {
 public:
 	explicit OutputBuffer(const std::shared_ptr<IFilter>& filter,
-						  size_t width, size_t height, size_t specChannels);
+						  const Size2i& size, Size1i specChannels);
 	~OutputBuffer();
 
 	inline OutputBufferData& data() { return mData; }
@@ -17,8 +17,8 @@ public:
 
 	inline void clear(bool force = false) { mData.clear(force); }
 
-	std::shared_ptr<OutputBufferBucket> createBucket(size_t width, size_t height) const;
-	void mergeBucket(size_t ox, size_t oy, const std::shared_ptr<OutputBufferBucket>& bucket);
+	std::shared_ptr<OutputBufferBucket> createBucket(const Size2i& size) const;
+	void mergeBucket(const Point2i& p, const std::shared_ptr<OutputBufferBucket>& bucket);
 
 private:
 	std::shared_ptr<IFilter> mFilter;

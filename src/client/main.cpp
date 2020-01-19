@@ -20,9 +20,11 @@
 namespace bf = boost::filesystem;
 namespace sc = std::chrono;
 
+using namespace PR;
+
 constexpr int OUTPUT_FIELD_SIZE = 8;
 
-void printStatus(const PR::RenderStatus& status)
+void printStatus(const RenderStatus& status)
 {
 	if (status.hasField("int.feedback"))
 		std::cout << "( " << status.getField("int.feedback").getString() << ")";
@@ -34,7 +36,7 @@ void printStatus(const PR::RenderStatus& status)
 			  << std::endl;
 }
 
-constexpr PR::uint32 PROFILE_SAMPLE_RATE = 10;
+constexpr uint32 PROFILE_SAMPLE_RATE = 10;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
@@ -42,7 +44,7 @@ int main(int argc, char** argv)
 		return -1;
 
 	if (options.Profile)
-		PR::Profiler::start(PROFILE_SAMPLE_RATE);
+		Profiler::start(PROFILE_SAMPLE_RATE);
 
 	time_t t = time(NULL);
 	std::stringstream sstream;
@@ -58,27 +60,27 @@ int main(int argc, char** argv)
 		options.PluginPath = bf::current_path().string();
 	}
 
-	PR::FileLogListener fileLogListener;
+	FileLogListener fileLogListener;
 	fileLogListener.open(logFile.string());
 	PR_LOGGER.addListener(&fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);
-	PR_LOGGER.setVerbosity(options.IsVerbose ? PR::L_DEBUG : PR::L_INFO);
+	PR_LOGGER.setVerbosity(options.IsVerbose ? L_DEBUG : L_INFO);
 
 	if (!options.IsQuiet)
-		std::cout << PR::Build::getCopyrightString() << std::endl;
+		std::cout << Build::getCopyrightString() << std::endl;
 
 	if (options.Profile) {
-		PR_LOG(PR::L_INFO) << "Profiling enabled (TpS: "
-						   << std::chrono::high_resolution_clock::period::den
-						   << ")" << std::endl;
+		PR_LOG(L_INFO) << "Profiling enabled (TpS: "
+					   << std::chrono::high_resolution_clock::period::den
+					   << ")" << std::endl;
 	}
 
-	PR::SceneLoader::LoadOptions opts;
-	opts.WorkingDir						 = options.OutputDir.generic_wstring();
-	opts.PluginPath						 = options.PluginPath.generic_wstring();
-	opts.CacheMode						 = options.CacheMode;
-	std::shared_ptr<PR::Environment> env = PR::SceneLoader::loadFromFile(
+	SceneLoader::LoadOptions opts;
+	opts.WorkingDir					 = options.OutputDir.generic_wstring();
+	opts.PluginPath					 = options.PluginPath.generic_wstring();
+	opts.CacheMode					 = options.CacheMode;
+	std::shared_ptr<Environment> env = SceneLoader::loadFromFile(
 		options.InputFile.generic_wstring(),
 		opts);
 
@@ -101,28 +103,26 @@ int main(int argc, char** argv)
 	auto integrator = env->createSelectedIntegrator();
 
 	// Render per image tile
-	PR::ToneMapper toneMapper;
-	for (PR::uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
+	ToneMapper toneMapper;
+	for (uint32 i = 0; i < options.ImageTileXCount * options.ImageTileYCount; ++i) {
 		auto renderer = renderFactory->create(
 			integrator,
 			i,
-			options.ImageTileXCount, options.ImageTileYCount);
+			Size2i(options.ImageTileXCount, options.ImageTileYCount));
 
 		if (!renderer) {
-			PR_LOG(PR::L_ERROR) << "Unable to create renderer!" << std::endl;
+			PR_LOG(L_ERROR) << "Unable to create renderer!" << std::endl;
 			return -5;
 		}
 
 		env->setup(renderer);
 
 		if (options.ImageTileXCount * options.ImageTileYCount == 1) {
-			PR_LOG(PR::L_INFO) << "Starting rendering of image ["
-							   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
-							   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
+			PR_LOG(L_INFO) << "Starting rendering of image ("
+						   << PR_FMT_MAT(renderer->viewOffset()) << ", " << PR_FMT_MAT(renderer->viewOffset() + renderer->viewSize()) << ")" << std::endl;
 		} else {
-			PR_LOG(PR::L_INFO) << "Starting rendering of image tile " << (renderer->index() + 1) << "/" << (options.ImageTileXCount * options.ImageTileYCount) << "["
-							   << renderer->offsetX() << ", " << (renderer->offsetX() + renderer->width()) << "] x ["
-							   << renderer->offsetY() << ", " << (renderer->offsetY() + renderer->height()) << "]" << std::endl;
+			PR_LOG(L_INFO) << "Starting rendering of image tile " << (renderer->index() + 1) << "/" << (options.ImageTileXCount * options.ImageTileYCount)
+						   << "(" << PR_FMT_MAT(renderer->viewOffset()) << ", " << PR_FMT_MAT(renderer->viewOffset() + renderer->viewSize()) << ")" << std::endl;
 		}
 
 		if (options.ShowInformation)
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 		if (options.ShowProgress)
 			std::cout << "preprocess" << std::endl;
 
-		renderer->start(options.RenderTileXCount, options.RenderTileYCount, options.ThreadCount);
+		renderer->start(options.ThreadCount);
 
 		auto start		= sc::high_resolution_clock::now();
 		auto start_prog = start;
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
 			auto end	   = sc::high_resolution_clock::now();
 			auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
 			if (options.ShowProgress > 0 && span_prog.count() > options.ShowProgress) {
-				PR::RenderStatus status = renderer->status();
+				RenderStatus status = renderer->status();
 
 				std::cout << std::setw(OUTPUT_FIELD_SIZE) << /*std::setfill('0') <<*/ std::setprecision(4) << std::fixed << status.percentage() * 100 << "%"
 						  << " Pass " << renderer->currentPass() + 1;
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
 
 		// Final status
 		if (options.ShowProgress > 0) {
-			PR::RenderStatus status = renderer->status();
+			RenderStatus status = renderer->status();
 			std::cout << "Final";
 			printStatus(status);
 		}
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 			if (!options.IsQuiet && options.ShowProgress && span.count() >= 1)
 				std::cout << std::endl;
 
-			PR_LOG(PR::L_INFO) << "Rendering took " << span.count() << " seconds" << std::endl;
+			PR_LOG(L_INFO) << "Rendering took " << span.count() << " seconds" << std::endl;
 		}
 
 		// Save images
@@ -181,10 +181,10 @@ int main(int argc, char** argv)
 	env->outputSpecification().deinit();
 
 	if (options.Profile) {
-		PR::Profiler::stop();
+		Profiler::stop();
 		const bf::path profFile = options.OutputDir / "pr_profile.prof";
-		if (!PR::Profiler::dumpToFile(profFile.generic_wstring()))
-			PR_LOG(PR::L_ERROR) << "Could not write profile data to " << profFile << std::endl;
+		if (!Profiler::dumpToFile(profFile.generic_wstring()))
+			PR_LOG(L_ERROR) << "Could not write profile data to " << profFile << std::endl;
 	}
 
 	return 0;

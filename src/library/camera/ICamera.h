@@ -5,9 +5,9 @@
 
 namespace PR {
 struct PR_LIB CameraSample {
-	Vector2i SensorSize; // Full Size (Width and Height)
-	float Pixel[2];
-	float R[2];
+	Size2i SensorSize;
+	Point2f Pixel;
+	Point2f Lens;
 	uint32 PixelIndex;
 	float Time;
 	float Weight;

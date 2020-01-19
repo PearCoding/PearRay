@@ -27,8 +27,7 @@ void ImageWriter::init(const std::shared_ptr<RenderContext>& renderer)
 	// Delete if resolution changed.
 	if (mRenderer
 		&& (!renderer
-			|| mRenderer->width() != renderer->width()
-			|| mRenderer->height() != renderer->height())) {
+			|| mRenderer->viewSize() != renderer->viewSize())) {
 		if (mRGBData) {
 			delete[] mRGBData;
 			mRGBData = nullptr;
@@ -38,7 +37,7 @@ void ImageWriter::init(const std::shared_ptr<RenderContext>& renderer)
 	mRenderer = renderer;
 
 	if (mRenderer && !mRGBData)
-		mRGBData = new float[mRenderer->width() * mRenderer->height() * 3];
+		mRGBData = new float[mRenderer->viewSize().area() * 3];
 }
 
 void ImageWriter::deinit()
@@ -60,23 +59,21 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	if (!mRenderer)
 		return false;
 
-	const uint32 rw = mRenderer->width();
-	const uint32 rh = mRenderer->height();
-	const uint32 cx = mRenderer->offsetX();
-	const uint32 cy = mRenderer->offsetY();
+	const Size2i viewSize  = mRenderer->viewSize();
+	const Point2i viewOff = mRenderer->viewOffset();
 
 	const size_t channelCount = chSpec.size() * 3 + ch1d.size() + chcounter.size() + ch3d.size() * 3;
 	if (channelCount == 0)
 		return false;
 
-	ImageSpec spec(rw, rh,
+	ImageSpec spec(viewSize.Width, viewSize.Height,
 				   (int)channelCount, TypeDesc::FLOAT);
 	spec.full_x		 = 0;
 	spec.full_y		 = 0;
 	spec.full_width  = mRenderer->settings().filmWidth;
 	spec.full_height = mRenderer->settings().filmHeight;
-	spec.x			 = cx;
-	spec.y			 = cy;
+	spec.x			 = viewOff.x();
+	spec.y			 = viewOff.y();
 
 	// Channel names
 	spec.channelnames.clear();
@@ -143,11 +140,11 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
-		for (uint32 y = 0; y < rh; ++y) {
-			for (uint32 x = 0; x < rw; ++x) {
-				Vector3f v(channel->getFragment(x, y, 0),
-						   channel->getFragment(x, y, 1),
-						   channel->getFragment(x, y, 2));
+		for (Size1i y = 0; y < viewSize.Height; ++y) {
+			for (Size1i x = 0; x < viewSize.Width; ++x) {
+				Vector3f v(channel->getFragment(Point2i(x, y), 0),
+						   channel->getFragment(Point2i(x, y), 1),
+						   channel->getFragment(Point2i(x, y), 2));
 
 				invMax3d[sett.Variable] = std::max(invMax3d[sett.Variable],
 												   v.squaredNorm());
@@ -168,10 +165,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
-		for (uint32 y = 0; y < rh; ++y) {
-			for (uint32 x = 0; x < rw; ++x) {
+		for (Size1i y = 0; y < viewSize.Height; ++y) {
+			for (Size1i x = 0; x < viewSize.Width; ++x) {
 				invMax1d[sett.Variable] = std::max(invMax1d[sett.Variable],
-												   channel->getFragment(x, y, 0));
+												   channel->getFragment(Point2i(x, y), 0));
 			}
 		}
 
@@ -189,10 +186,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		if (sett.TMM != TMM_Normalized || !channel)
 			continue;
 
-		for (uint32 y = 0; y < rh; ++y) {
-			for (uint32 x = 0; x < rw; ++x) {
+		for (Size1i y = 0; y < viewSize.Height; ++y) {
+			for (Size1i x = 0; x < viewSize.Width; ++x) {
 				invMaxCounter[sett.Variable] = std::max<float>(invMaxCounter[sett.Variable],
-															   static_cast<float>(channel->getFragment(x, y, 0)));
+															   static_cast<float>(channel->getFragment(Point2i(x, y), 0)));
 			}
 		}
 
@@ -201,7 +198,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	}
 
 	// Write content
-	float* line = new float[channelCount * rw];
+	float* line = new float[channelCount * viewSize.Width];
 	if (!line) { // TODO: Add single token variant!
 		PR_LOG(L_ERROR) << "Not enough memory for image output!" << std::endl;
 
@@ -212,9 +209,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	}
 
 	out->open(utfFilename, spec);
-	for (uint32 y = 0; y < rh; ++y) {
-		for (uint32 x = 0; x < rw; ++x) {
-			size_t id = x * channelCount;
+	for (Size1i y = 0; y < viewSize.Height; ++y) {
+		for (Size1i x = 0; x < viewSize.Width; ++x) {
+			size_t id		= x * channelCount;
+			const Point2i p = Point2i(x, y);
 
 			// Spectral
 			for (const IM_ChannelSettingSpec& sett : chSpec) {
@@ -243,9 +241,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
 				if (channel) {
-					Vector3f a(channel->getFragment(x, y, 0),
-							   channel->getFragment(x, y, 1),
-							   channel->getFragment(x, y, 2));
+					Vector3f a(channel->getFragment(p, 0),
+							   channel->getFragment(p, 1),
+							   channel->getFragment(p, 2));
 
 					float r = a(0);
 					float g = a(1);
@@ -303,7 +301,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
 				if (channel) {
-					float r = channel->getFragment(x, y, 0);
+					float r = channel->getFragment(p, 0);
 					switch (sett.TMM) {
 					default:
 					case TMM_None:
@@ -341,7 +339,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = data.getLPEChannel_Counter(sett.Variable, sett.LPE);
 
 				if (channel) {
-					float r = static_cast<float>(channel->getFragment(x, y, 0));
+					float r = static_cast<float>(channel->getFragment(p, 0));
 					switch (sett.TMM) {
 					default:
 						break;
@@ -356,7 +354,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				id += 1;
 			}
 		}
-		out->write_scanline(y + cy, 0, TypeDesc::FLOAT, line);
+		out->write_scanline(y + viewOff.y(), 0, TypeDesc::FLOAT, line);
 	}
 	out->close();
 
@@ -377,7 +375,7 @@ bool ImageWriter::save_spectral(const std::wstring& file,
 		return false;
 
 	SpectralFile specFile(mRenderer->spectrumDescriptor(),
-						  mRenderer->width(), mRenderer->height(), spec->ptr(), false);
+						  mRenderer->viewSize().Width, mRenderer->viewSize().Height, spec->ptr(), false);
 	specFile.save(file, compress);
 
 	return true;

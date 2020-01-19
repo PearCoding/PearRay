@@ -28,23 +28,65 @@ static_assert(sizeof(uint32) == 4, "Invalid bytesize configuration");
 static_assert(sizeof(int64) == 8, "Invalid bytesize configuration");
 static_assert(sizeof(uint64) == 8, "Invalid bytesize configuration");
 
-using Size1 = uint32;
-struct Size2 {
-	Size1 Width;
-	Size1 Height;
+using Point1i = int32;
+using Point2i = Eigen::Array2i;
+using Point3i = Eigen::Array3i;
 
-	inline Size2()
+using Point1f = float;
+using Point2f = Eigen::Array2f;
+using Point3f = Eigen::Array3f;
+
+using Size1i = int32;
+struct Size2i {
+	Size1i Width;
+	Size1i Height;
+
+	inline Size2i()
 		: Width(0)
 		, Height(0)
 	{
 	}
-	inline Size2(Size1 w, Size1 h)
+	inline Size2i(Size1i w, Size1i h)
 		: Width(w)
 		, Height(h)
 	{
 	}
 
-	inline uint32 area() const { return Width * Height; }
+	inline int32 area() const { return Width * Height; }
 	inline bool isValid() const { return area() > 0; }
+
+	inline Point2i asArray() const { return Point2i(Width, Height); }
+	inline static Size2i fromArray(const Point2i& arr) { return Size2i(arr(0), arr(1)); }
+	inline static Size2i fromPoints(const Point2i& start, const Point2i& end) { return Size2i(end(0) - start(0), end(1) - start(1)); }
 };
+
+inline bool operator==(const Size2i& left, const Size2i& right)
+{
+	return left.Width == right.Width && left.Height == right.Height;
 }
+
+inline bool operator!=(const Size2i& left, const Size2i& right)
+{
+	return left.Width != right.Width || left.Height != right.Height;
+}
+
+inline Point2i operator+(const Point2i& left, const Size2i& right)
+{
+	return Point2i(left(0) + right.Width, left(1) + right.Height);
+}
+
+inline Point2i operator+(const Size2i& left, const Point2i& right)
+{
+	return Point2i(left.Width + right(0), left.Height + right(1));
+}
+
+inline Point2i operator-(const Point2i& left, const Size2i& right)
+{
+	return Point2i(left(0) - right.Width, left(1) - right.Height);
+}
+
+inline Point2i operator-(const Size2i& left, const Point2i& right)
+{
+	return Point2i(left.Width - right(0), left.Height - right(1));
+}
+} // namespace PR

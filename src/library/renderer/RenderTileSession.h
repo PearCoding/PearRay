@@ -81,7 +81,7 @@ private:
 	void startShadingGroup(const ShadingGroup& grp, IEntity*& entity, IMaterial*& material);
 	void endShadingGroup(const ShadingGroup& grp);
 
-	std::pair<uint32, uint32> localCoordinates(uint32 pixelIndex) const;
+	Point2i localCoordinates(Point1i pixelIndex) const;
 
 	uint32 currentIndex() const;
 
@@ -91,8 +91,7 @@ private:
 	RayStream* mRayStream;
 	HitStream* mHitStream;
 
-	uint32 mCurrentX;
-	uint32 mCurrentY;
+	Point2i mCurrentPixelPos;
 };
 } // namespace PR
 

@@ -7,24 +7,23 @@ namespace PR {
 class IFilter;
 class PR_LIB OutputBufferBucket {
 	friend class OutputBuffer;
+
 public:
 	explicit OutputBufferBucket(const std::shared_ptr<IFilter>& filter,
-								size_t width, size_t height, size_t specChannels);
+								const Size2i& size, Size1i specChannels);
 	~OutputBufferBucket();
 
 	inline const OutputBufferData& data() const { return mData; }
 
 	inline void clear(bool force = false) { mData.clear(force); }
 
-	void pushSpectralFragment(uint32 x, uint32 y, const ColorTriplet& spec,
+	void pushSpectralFragment(const Point2i& p, const ColorTriplet& spec,
 							  uint32 wavelengthIndex, bool isMono, const LightPath& path);
-	void pushSPFragment(uint32 x, uint32 y, const ShadingPoint& pt, const LightPath& path);
-	void pushFeedbackFragment(uint32 x, uint32 y, uint32 feedback);
+	void pushSPFragment(const Point2i& p, const ShadingPoint& pt, const LightPath& path);
+	void pushFeedbackFragment(const Point2i& p, uint32 feedback);
 
-	inline size_t originalWidth() const { return mOriginalWidth; }
-	inline size_t originalHeight() const { return mOriginalHeight; }
-	inline size_t extendedWidth() const { return mExtendedWidth; }
-	inline size_t extendedHeight() const { return mExtendedHeight; }
+	inline const Size2i& originalSize() const { return mOriginalSize; }
+	inline const Size2i& extendedSize() const { return mExtendedSize; }
 
 protected:
 	void cache();
@@ -32,10 +31,8 @@ protected:
 
 private:
 	const std::shared_ptr<IFilter> mFilter;
-	const size_t mOriginalWidth;
-	const size_t mOriginalHeight;
-	const size_t mExtendedWidth;
-	const size_t mExtendedHeight;
+	const Size2i mOriginalSize;
+	const Size2i mExtendedSize;
 
 	OutputBufferData mData;
 	bool mHasNonSpecLPE;

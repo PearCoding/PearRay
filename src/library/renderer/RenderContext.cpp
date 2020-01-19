@@ -18,17 +18,14 @@
 #include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
-RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
-							 uint32 w, uint32 h,
+RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size2i& viewSize,
 							 const std::shared_ptr<IIntegrator>& integrator,
 							 const std::shared_ptr<Scene>& scene,
 							 const std::shared_ptr<SpectrumDescriptor>& specDesc,
 							 const RenderSettings& settings)
 	: mIndex(index)
-	, mOffsetX(ox)
-	, mOffsetY(oy)
-	, mWidth(w)
-	, mHeight(h)
+	, mViewOffset(viewOffset)
+	, mViewSize(viewSize)
 	, mScene(scene)
 	, mSpectrumDescriptor(specDesc)
 	, mOutputMap()
@@ -46,7 +43,7 @@ RenderContext::RenderContext(uint32 index, uint32 ox, uint32 oy,
 
 	mOutputMap = std::make_unique<OutputBuffer>(
 		settings.createPixelFilter(),
-		width(), height(), mSpectrumDescriptor->samples());
+		viewSize, mSpectrumDescriptor->samples());
 }
 
 RenderContext::~RenderContext()
@@ -70,7 +67,7 @@ void RenderContext::reset()
 	mLights.clear();
 }
 
-void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
+void RenderContext::start(int32 threads)
 {
 	PR_PROFILE_THIS;
 
@@ -109,16 +106,8 @@ void RenderContext::start(uint32 tcx, uint32 tcy, int32 threads)
 		mThreads.push_back(thread);
 	}
 
-	// Calculate tile sizes, etc.
-	uint32 ptcx = std::max<uint32>(1, tcx);
-	uint32 ptcy = std::max<uint32>(1, tcy);
-	uint32 ptcw = std::max<uint32>(1, (uint32)std::floor(mWidth / static_cast<float>(ptcx)));
-	uint32 ptch = std::max<uint32>(1, (uint32)std::floor(mHeight / static_cast<float>(ptcy)));
-	ptcx		= static_cast<uint32>(std::ceil(mWidth / static_cast<float>(ptcw)));
-	ptcy		= static_cast<uint32>(std::ceil(mHeight / static_cast<float>(ptch)));
-
-	mTileMap = std::make_unique<RenderTileMap>(ptcx, ptcy, ptcw, ptch);
-	mTileMap->init(*this, mRenderSettings.tileMode);
+	mTileMap = std::make_unique<RenderTileMap>();
+	mTileMap->init(*this, threadCount, mRenderSettings.tileMode);
 
 	// Init modules
 	mIntegrator->onInit(this);
@@ -153,14 +142,9 @@ size_t RenderContext::tileCount() const
 	return mTileMap->tileCount();
 }
 
-size_t RenderContext::tileWidth() const
+const Size2i& RenderContext::maxTileSize() const
 {
-	return mTileMap->tileWidth();
-}
-
-size_t RenderContext::tileHeight() const
-{
-	return mTileMap->tileHeight();
+	return mTileMap->maxTileSize();
 }
 
 std::list<RenderTile*> RenderContext::currentTiles() const
@@ -250,7 +234,7 @@ RenderTile* RenderContext::getNextTile()
 
 void RenderContext::optimizeTileMap()
 {
-    // All threads are locked
+	// All threads are locked
 	// TODO (Issue #31): Optimize tilemap based on execution time of each tile
 }
 

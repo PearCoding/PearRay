@@ -9,190 +9,180 @@ class FrameBuffer {
 	PR_CLASS_NON_COPYABLE(FrameBuffer);
 
 public:
-	inline FrameBuffer(size_t channels, size_t width, size_t height,
+	inline FrameBuffer(Size1i channels, const Size2i& size,
 					   const T& clear_value = T(), bool never_clear = false)
-		: mWidth(width)
-		, mHeight(height)
+		: mSize(size)
 		, mChannels(channels)
 		, mClearValue(clear_value)
 		, mNeverClear(never_clear)
 		, mData()
 	{
-		mData.resize(mWidth * mHeight * mChannels);
+		mData.resize(mSize.area() * mChannels);
 	}
 
 	inline ~FrameBuffer()
 	{
 	}
 
-	inline size_t width() const { return mWidth; }
-	inline size_t widthPitch() const { return channels() * channelPitch(); }
-	inline size_t widthBytePitch() const { return widthPitch() * sizeof(T); }
+	inline const Size2i& size() const { return mSize; }
 
-	inline size_t height() const { return mHeight; }
-	inline size_t heightPitch() const { return width() * widthPitch(); }
-	inline size_t heightBytePitch() const { return heightPitch() * sizeof(T); }
+	inline Size1i width() const { return mSize.Width; }
+	inline Size1i widthPitch() const { return channels() * channelPitch(); }
+	inline Size1i widthBytePitch() const { return widthPitch() * sizeof(T); }
 
-	inline size_t channels() const { return mChannels; }
-	inline size_t channelPitch() const { return 1; }
-	inline size_t channelBytePitch() const { return channelPitch() * sizeof(T); }
+	inline Size1i height() const { return mSize.Height; }
+	inline Size1i heightPitch() const { return width() * widthPitch(); }
+	inline Size1i heightBytePitch() const { return heightPitch() * sizeof(T); }
+
+	inline Size1i channels() const { return mChannels; }
+	inline Size1i channelPitch() const { return 1; }
+	inline Size1i channelBytePitch() const { return channelPitch() * sizeof(T); }
 
 	inline void setNeverClear(bool b) { mNeverClear = b; }
 	inline bool isNeverCleared() const { return mNeverClear; }
 
-	inline void setFragment(size_t px, size_t py, size_t channel, const T& v)
+	inline void setFragment(const Point2i& p, Size1i channel, const T& v)
 	{
-		PR_ASSERT(px < mWidth,
+		PR_ASSERT(p(0) < mSize.Width,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(py < mHeight,
+		PR_ASSERT(p(1) < mSize.Height,
 				  "y coord has to be between boundaries");
-		setFragment(py * mWidth + px, channel, v);
+		setFragment(p(1) * mSize.Width + p(0), channel, v);
 	}
 
-	inline const T& getFragment(size_t px, size_t py, size_t channel) const
+	inline const T& getFragment(const Point2i& p, Size1i channel) const
 	{
-		PR_ASSERT(px < mWidth,
+		PR_ASSERT(p(0) < mSize.Width,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(py < mHeight,
+		PR_ASSERT(p(1) < mSize.Height,
 				  "y coord has to be between boundaries");
-		return getFragment(py * mWidth + px, channel);
+		return getFragment(p(1) * mSize.Width + p(0), channel);
 	}
 
-	inline T& getFragment(size_t px, size_t py, size_t channel)
+	inline T& getFragment(const Point2i& p, Size1i channel)
 	{
-		PR_ASSERT(px < mWidth,
+		PR_ASSERT(p(0) < mSize.Width,
 				  "x coord has to be between boundaries");
-		PR_ASSERT(py < mHeight,
+		PR_ASSERT(p(1) < mSize.Height,
 				  "y coord has to be between boundaries");
-		return getFragment(py * mWidth + px, channel);
+		return getFragment(p(1) * mSize.Width + p(0), channel);
 	}
 
-	inline void setFragment(size_t pixelindex, size_t channel, const T& v)
+	inline void setFragment(Size1i pixelindex, Size1i channel, const T& v)
 	{
-		PR_ASSERT(pixelindex < mWidth * mHeight,
+		PR_ASSERT(pixelindex < mSize.area(),
 				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		getFragment(pixelindex, channel) = v;
 	}
 
-	inline const T& getFragment(size_t pixelindex, size_t channel = 0) const
+	inline const T& getFragment(Size1i pixelindex, Size1i channel = 0) const
 	{
-		PR_ASSERT(pixelindex < mWidth * mHeight,
+		PR_ASSERT(pixelindex < mSize.area(),
 				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		return mData[channel + pixelindex * widthPitch()];
 	}
 
-	inline T& getFragment(size_t pixelindex, size_t channel = 0)
+	inline T& getFragment(Size1i pixelindex, Size1i channel = 0)
 	{
-		PR_ASSERT(pixelindex < mWidth * mHeight,
+		PR_ASSERT(pixelindex < mSize.Width * mSize.Height,
 				  "pixelindex has to be between boundaries");
 		PR_ASSERT(channel < mChannels,
 				  "channel coord has to be less then maximum");
 		return mData[channel + pixelindex * widthPitch()];
 	}
 
-	inline void blendFragment(size_t px, size_t py, size_t channel,
+	inline void blendFragment(const Point2i& p, Size1i channel,
 							  const T& newValue, float t)
 	{
-		T& val = getFragment(px, py, channel);
+		T& val = getFragment(p, channel);
 		val	= val * (1 - t) + newValue * t;
 	}
 
-	inline void blendFragment(uint32 pixelIndex, size_t channel,
+	inline void blendFragment(Size1i pixelIndex, Size1i channel,
 							  const T& newValue, float t)
 	{
-		getFragment(pixelIndex, channel) = getFragment(pixelIndex, channel) * (1 - t)
-										   + newValue * t;
+		T& val = getFragment(pixelIndex, channel);
+		val	= val * (1 - t) + newValue * t;
 	}
 
-	inline void addBlock(size_t dst_x, size_t dst_y,
-						 size_t dst_w, size_t dst_h,
-						 size_t src_x, size_t src_y,
-						 size_t src_w, size_t src_h,
+	inline void addBlock(const Point2i& dst_off,
+						 const Size2i& dst_size,
+						 const Point2i& src_off,
+						 const Size2i& src_size,
 						 const FrameBuffer<T>& block)
 	{
 		PR_ASSERT(mChannels == block.mChannels, "Expected equal count of channels");
 
-		size_t src_ex = std::min(src_w + src_x, block.width());
-		size_t src_ey = std::min(src_h + src_y, block.height());
+		Point2i src_end = (src_size + src_off).cwiseMin(block.size().asArray());
+		Point2i dst_end = (dst_size + dst_off).cwiseMin(size().asArray());
 
-		size_t dst_ex = std::min(dst_w + dst_x, width());
-		size_t dst_ey = std::min(dst_h + dst_y, height());
+		Point2i size = (dst_end - dst_off).cwiseMin(src_end - src_off);
 
-		size_t w = std::min(dst_ex - dst_x, src_ex - src_x);
-		size_t h = std::min(dst_ey - dst_y, src_ey - src_y);
-
-		for (size_t y = 0; y < h; ++y)
-			for (size_t x = 0; x < w; ++x)
-				for (size_t ch = 0; ch < mChannels; ++ch)
-					getFragment(dst_x + x, dst_y + y, ch) += block.getFragment(src_x + x, src_y + y, ch);
+		for (Size1i y = 0; y < size.y(); ++y)
+			for (Size1i x = 0; x < size.x(); ++x)
+				for (Size1i ch = 0; ch < mChannels; ++ch)
+					getFragment(dst_off + Point2i(x, y), ch) += block.getFragment(src_off + Point2i(x, y), ch);
 	}
 
-	inline void addBlock(size_t dst_x, size_t dst_y,
-						 size_t src_x, size_t src_y,
+	inline void addBlock(const Point2i& dst_off,
+						 const Point2i& src_off,
 						 const FrameBuffer<T>& block)
 	{
-		addBlock(dst_x, dst_y,
-				 width(), height(),
-				 src_x, src_y,
-				 block.width(), block.height(),
+		addBlock(dst_off, size(),
+				 src_off, block.size(),
 				 block);
 	}
 
-	inline void addBlock(size_t dst_x, size_t dst_y,
+	inline void addBlock(const Point2i& dst_off,
 						 const FrameBuffer<T>& block)
 	{
-		addBlock(dst_x, dst_y, 0, 0, block);
+		addBlock(dst_off, Point2i::Zero(), block);
 	}
 
 	template <typename Func>
-	inline void applyBlock(size_t dst_x, size_t dst_y,
-						   size_t dst_w, size_t dst_h,
-						   size_t src_x, size_t src_y,
-						   size_t src_w, size_t src_h,
+	inline void applyBlock(const Point2i& dst_off,
+						   const Size2i& dst_size,
+						   const Point2i& src_off,
+						   const Size2i& src_size,
 						   const FrameBuffer<T>& block,
 						   Func func)
 	{
 		PR_ASSERT(mChannels == block.mChannels, "Expected equal count of channels");
 
-		size_t src_ex = std::min(src_w + src_x, block.width());
-		size_t src_ey = std::min(src_h + src_y, block.height());
+		Point2i src_end = (src_size + src_off).cwiseMin(block.size().asArray());
+		Point2i dst_end = (dst_size + dst_off).cwiseMin(size().asArray());
 
-		size_t dst_ex = std::min(dst_w + dst_x, width());
-		size_t dst_ey = std::min(dst_h + dst_y, height());
+		Point2i size = (dst_end - dst_off).cwiseMin(src_end - src_off);
 
-		size_t w = std::min(dst_ex - dst_x, src_ex - src_x);
-		size_t h = std::min(dst_ey - dst_y, src_ey - src_y);
-
-		for (size_t y = 0; y < h; ++y)
-			for (size_t x = 0; x < w; ++x)
-				for (size_t ch = 0; ch < mChannels; ++ch)
-					getFragment(dst_x + x, dst_y + y, ch) = func(getFragment(dst_x + x, dst_y + y, ch), block.getFragment(src_x + x, src_y + y, ch));
+		for (Size1i y = 0; y < size.y(); ++y)
+			for (Size1i x = 0; x < size.x(); ++x)
+				for (Size1i ch = 0; ch < mChannels; ++ch)
+					getFragment(dst_off + Point2i(x, y), ch) = func(getFragment(dst_off + Point2i(x, y), ch),
+																	 block.getFragment(src_off + Point2i(x, y), ch));
 	}
 
 	template <typename Func>
-	inline void applyBlock(size_t dst_x, size_t dst_y,
-						   size_t src_x, size_t src_y,
+	inline void applyBlock(const Point2i& dst_off,
+						   const Point2i& src_off,
 						   const FrameBuffer<T>& block,
 						   Func func)
 	{
-		applyBlock(dst_x, dst_y,
-				   width(), height(),
-				   src_x, src_y,
-				   block.width(), block.height(),
+		applyBlock(dst_off, size(),
+				   src_off, block.size(),
 				   block,
 				   func);
 	}
 
 	template <typename Func>
-	inline void applyBlock(size_t dst_x, size_t dst_y,
+	inline void applyBlock(const Point2i& dst_off,
 						   const FrameBuffer<T>& block,
 						   Func func)
 	{
-		applyBlock(dst_x, dst_y, 0, 0, block, func);
+		applyBlock(dst_off, Point2i::Zero(), block, func);
 	}
 
 	inline const T* ptr() const { return mData.data(); }
@@ -210,9 +200,8 @@ public:
 	}
 
 private:
-	size_t mWidth;
-	size_t mHeight;
-	size_t mChannels;
+	Size2i mSize;
+	Size1i mChannels;
 	T mClearValue;
 	bool mNeverClear;
 

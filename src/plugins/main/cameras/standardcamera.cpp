@@ -83,11 +83,11 @@ public:
 
 	Ray constructRay(const CameraSample& sample) const override
 	{
-		const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.x() - 0.5f);
-		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.y() - 0.5f);
+		const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.Width - 0.5f);
+		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.Height - 0.5f);
 
 		Ray ray;
-		constructRay(nx, ny, sample.R[0], sample.R[1],
+		constructRay(nx, ny, sample.Lens[0], sample.Lens[1],
 					 ray.Origin, ray.Direction);
 
 		ray.WavelengthIndex = sample.WavelengthIndex;

@@ -16,38 +16,37 @@ void setup_output(py::module& m)
 				sizeof(uint32),
 				py::format_descriptor<uint32>::format(),
 				3,
-				std::vector<size_t>({ s.height(),
+				std::vector<Size1i>({ s.height(),
 									  s.width(),
 									  s.channels() }),
-				std::vector<size_t>({ s.heightBytePitch(),
+				std::vector<Size1i>({ s.heightBytePitch(),
 									  s.widthBytePitch(),
 									  s.channelBytePitch() }));
 		})
 		.def_property("neverClear", &FrameBufferUInt32::isNeverCleared, &FrameBufferUInt32::setNeverClear)
-		.def("setFragment", py::overload_cast<size_t, size_t, size_t, const uint32&>(&FrameBufferUInt32::setFragment))
-		.def("getFragment", py::overload_cast<size_t, size_t, size_t>(&FrameBufferUInt32::getFragment))
+		.def("setFragment", py::overload_cast<const Point2i&, Size1i, const uint32&>(&FrameBufferUInt32::setFragment))
+		.def("getFragment", py::overload_cast<const Point2i&, Size1i>(&FrameBufferUInt32::getFragment))
 		.def("clear", &FrameBufferUInt32::clear)
 		.def("fill", &FrameBufferUInt32::fill)
 		.def_property_readonly("channels", &FrameBufferUInt32::channels);
 
 	py::class_<FrameBufferFloat, std::shared_ptr<FrameBufferFloat>>(m, "FrameBufferFloat", py::buffer_protocol())
-		/*.def(py::init<size_t, size_t, size_t, const float&, bool>(), py::arg("clear_value") = 0.0f, py::arg("never_clear") = false)*/
 		.def_buffer([](FrameBufferFloat& s) -> py::buffer_info { // Allow buffer use
 			return py::buffer_info(
 				s.ptr(),
 				sizeof(float),
 				py::format_descriptor<float>::format(),
 				3,
-				std::vector<size_t>({ s.height(),
+				std::vector<Size1i>({ s.height(),
 									  s.width(),
 									  s.channels() }),
-				std::vector<size_t>({ s.heightBytePitch(),
+				std::vector<Size1i>({ s.heightBytePitch(),
 									  s.widthBytePitch(),
 									  s.channelBytePitch() }));
 		})
 		.def_property("neverClear", &FrameBufferFloat::isNeverCleared, &FrameBufferFloat::setNeverClear)
-		.def("setFragment", py::overload_cast<size_t, size_t, size_t, const float&>(&FrameBufferFloat::setFragment))
-		.def("getFragment", py::overload_cast<size_t, size_t, size_t>(&FrameBufferFloat::getFragment))
+		.def("setFragment", py::overload_cast<const Point2i&, Size1i, const float&>(&FrameBufferFloat::setFragment))
+		.def("getFragment", py::overload_cast<const Point2i&, Size1i>(&FrameBufferFloat::getFragment))
 		.def("clear", &FrameBufferFloat::clear)
 		.def("fill", &FrameBufferFloat::fill)
 		.def_property_readonly("channels", &FrameBufferFloat::channels);

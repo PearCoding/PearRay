@@ -16,13 +16,11 @@ void setup_renderer(py::module& m)
 {
 	py::class_<RenderFactory, std::shared_ptr<RenderFactory>>(m, "RenderFactory")
 		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(const std::shared_ptr<IIntegrator>&) const) & RenderFactory::create)
-		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(const std::shared_ptr<IIntegrator>&, uint32, uint32, uint32) const) & RenderFactory::create);
+		.def("create", (std::shared_ptr<RenderContext>(RenderFactory::*)(const std::shared_ptr<IIntegrator>&, Point1i, const Size2i&) const) &RenderFactory::create);
 
 	py::class_<RenderContext, std::shared_ptr<RenderContext>>(m, "RenderContext")
-		.def_property_readonly("width", &RenderContext::width)
-		.def_property_readonly("height", &RenderContext::height)
-		.def_property_readonly("offsetX", &RenderContext::offsetX)
-		.def_property_readonly("offsetY", &RenderContext::offsetY)
+		.def_property_readonly("viewSize", &RenderContext::viewSize)
+		.def_property_readonly("viewOffset", &RenderContext::viewOffset)
 		.def_property_readonly("index", &RenderContext::index)
 		.def_property_readonly("threads", &RenderContext::threads)
 		.def_property_readonly("finished", &RenderContext::isFinished)
@@ -33,7 +31,7 @@ void setup_renderer(py::module& m)
 		.def_property_readonly("scene", &RenderContext::scene)
 		.def_property_readonly("output", &RenderContext::output)
 		.def_property_readonly("status", &RenderContext::status)
-		.def("start", &RenderContext::start, py::arg("tcx"),  py::arg("tcy"), py::arg("threads") = 0)
+		.def("start", &RenderContext::start, py::arg("threads") = 0)
 		.def("stop", &RenderContext::stop)
 		.def("notifyEnd", &RenderContext::notifyEnd)
 		.def("waitForFinish", &RenderContext::waitForFinish);

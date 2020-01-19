@@ -15,8 +15,7 @@ RenderTileSession::RenderTileSession()
 	, mBucket()
 	, mRayStream(nullptr)
 	, mHitStream(nullptr)
-	, mCurrentX(0)
-	, mCurrentY(0)
+	, mCurrentPixelPos(Point2i::Zero())
 {
 }
 
@@ -29,8 +28,7 @@ RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
 	, mBucket(bucket)
 	, mRayStream(rayStream)
 	, mHitStream(hitStream)
-	, mCurrentX(0)
-	, mCurrentY(0)
+	, mCurrentPixelPos(Point2i::Zero())
 {
 }
 
@@ -63,34 +61,32 @@ bool RenderTileSession::handleCameraRays()
 {
 	PR_PROFILE_THIS;
 
-	const uint32 w = mTile->width();
-	const uint32 h = mTile->height();
+	const Size2i size  = mTile->viewSize();
+	const uint32 slice = mTile->imageSize().Width;
 
-	if (mCurrentY >= h)
+	if (mCurrentPixelPos(1) >= size.Height)
 		return false;
 
 	mRayStream->reset();
 	mHitStream->reset();
 
-	bool forceBreak = false;
+	bool forceBreak		   = false;
 	const uint32 iterCount = mTile->iterationCount();
-	for (; mCurrentY < h; ++mCurrentY) {
-		const uint32 fy = mCurrentY + mTile->sy();
-
+	for (; mCurrentPixelPos(1) < size.Height; ++mCurrentPixelPos(1)) {
 		// Allow continuation
-		if (mCurrentX >= w)
-			mCurrentX = 0;
+		if (mCurrentPixelPos(0) >= size.Width)
+			mCurrentPixelPos(0) = 0;
 
-		for (; mCurrentX < w; ++mCurrentX) {
+		for (; mCurrentPixelPos(0) < size.Width; ++mCurrentPixelPos(0)) {
 			if (!enoughRaySpace(1) || mTile->context()->isStopping()) {
 				forceBreak = true;
 				break;
 			}
 
-			const uint32 fx = mCurrentX + mTile->sx();
+			const Point2i p = mCurrentPixelPos + mTile->start();
 
-			Ray ray		   = mTile->constructCameraRay(fx, fy, iterCount);
-			ray.PixelIndex = fy * mTile->context()->width() + fx;
+			Ray ray		   = mTile->constructCameraRay(p, iterCount);
+			ray.PixelIndex = p(1) * slice + p(0);
 
 			enqueueCameraRay(ray);
 		}
@@ -160,20 +156,18 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 	return mTile->context()->scene()->traceShadowRay(ray);
 }
 
-std::pair<uint32, uint32> RenderTileSession::localCoordinates(uint32 pixelIndex) const
+Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
 {
-	uint32 gpx = pixelIndex % mTile->context()->width();
-	uint32 gpy = pixelIndex / mTile->context()->width();
+	const Size1i slice = mTile->context()->viewSize().Width;
+	Point1i gpx = pixelIndex % slice;
+	Point1i gpy = pixelIndex / slice;
 
-	PR_ASSERT(gpx >= mTile->sx() && gpx < mTile->ex(),
+	PR_ASSERT(gpx >= mTile->start().x() && gpx < mTile->end().x(),
 			  "Invalid fragment push operation");
-	PR_ASSERT(gpy >= mTile->sy() && gpy < mTile->ey(),
+	PR_ASSERT(gpy >= mTile->start().y() && gpy < mTile->end().y(),
 			  "Invalid fragment push operation");
 
-	uint32 lpx = gpx - (int32)mTile->sx();
-	uint32 lpy = gpy - (int32)mTile->sy();
-
-	return std::make_pair(lpx, lpy);
+	return Point2i(gpx, gpy) - mTile->start();
 }
 
 void RenderTileSession::pushSpectralFragment(const ColorTriplet& spec, const Ray& ray,
@@ -181,7 +175,7 @@ void RenderTileSession::pushSpectralFragment(const ColorTriplet& spec, const Ray
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);
-	mBucket->pushSpectralFragment(coords.first, coords.second, spec * ray.Weight,
+	mBucket->pushSpectralFragment(coords, spec * ray.Weight,
 								  ray.WavelengthIndex, ray.Flags & RF_Monochrome, path);
 }
 
@@ -190,14 +184,14 @@ void RenderTileSession::pushSPFragment(const ShadingPoint& pt,
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(pt.Ray.PixelIndex);
-	mBucket->pushSPFragment(coords.first, coords.second, pt, path);
+	mBucket->pushSPFragment(coords, pt, path);
 }
 
 void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) const
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);
-	mBucket->pushFeedbackFragment(coords.first, coords.second, feedback);
+	mBucket->pushFeedbackFragment(coords, feedback);
 }
 
 IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const

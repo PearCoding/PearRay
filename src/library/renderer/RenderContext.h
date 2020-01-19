@@ -28,8 +28,7 @@ class PR_LIB RenderContext {
 	PR_CLASS_NON_COPYABLE(RenderContext);
 
 public:
-	RenderContext(uint32 index, uint32 offx, uint32 offy,
-				  uint32 width, uint32 height,
+	RenderContext(uint32 index, const Point2i& viewOffset, const Size2i& viewSize,
 				  const std::shared_ptr<IIntegrator>& integrator,
 				  const std::shared_ptr<Scene>& scene,
 				  const std::shared_ptr<SpectrumDescriptor>& specDesc,
@@ -37,20 +36,15 @@ public:
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
-	inline uint32 offsetX() const { return mOffsetX; }
-	inline uint32 offsetY() const { return mOffsetY; }
-	inline uint32 width() const { return mWidth; }
-	inline uint32 height() const { return mHeight; }
+	inline const Point2i viewOffset() const { return mViewOffset; }
+	inline const Size2i& viewSize() const { return mViewSize; }
 
 	size_t tileCount() const;
-	size_t tileWidth() const;
-	size_t tileHeight() const;
+	const Size2i& maxTileSize() const;
 
-	// tcx = tile count x
-	// tcy = tile count y
 	// tcx and tcy should be able to divide width and height!
 	// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
-	void start(uint32 tcx, uint32 tcy, int32 threads = 0);
+	void start(int32 threads = 0);
 	void stop();
 	void notifyEnd();
 
@@ -93,10 +87,8 @@ private:
 	void optimizeTileMap();
 
 	const uint32 mIndex;
-	const uint32 mOffsetX;
-	const uint32 mOffsetY;
-	const uint32 mWidth;
-	const uint32 mHeight;
+	const Point2i mViewOffset;
+	const Size2i mViewSize;
 
 	std::shared_ptr<Scene> mScene;
 	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;

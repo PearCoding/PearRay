@@ -16,15 +16,13 @@ public:
 	RenderFactory(const std::shared_ptr<Scene>& scene);
 	virtual ~RenderFactory();
 
-	// index = image index; should be less then itx*ity!
-	// itx = image tile count x
-	// ity = image tile count y
+	// index = image index; should be less then imageTileSize.area()
 	std::shared_ptr<RenderContext> create(const std::shared_ptr<IIntegrator>& integrator,
-										  uint32 index, uint32 itx, uint32 ity) const;
+										  Point1i index, const Size2i& imageTileSize) const;
 	inline std::shared_ptr<RenderContext> create(
 		const std::shared_ptr<IIntegrator>& integrator) const
 	{
-		return create(integrator, 0, 1, 1);
+		return create(integrator, 0, Size2i(1, 1));
 	}
 
 	inline RenderSettings& settings() { return mSettings; }

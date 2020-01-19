@@ -21,7 +21,7 @@ protected:
 	virtual void main();
 
 private:
-	uint32 mThreadIndex;
+	const uint32 mThreadIndex;
 	RenderContext* mRenderer;
 	RenderTile* mTile;
 	RenderThreadStatistics mStatistics;

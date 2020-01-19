@@ -11,16 +11,13 @@ class RenderContext;
 class RenderTile;
 class PR_LIB RenderTileMap {
 public:
-	RenderTileMap(uint32 xcount, uint32 ycount, uint32 tilewidth, uint32 tileheight);
+	RenderTileMap();
 	~RenderTileMap();
 
 	inline size_t tileCount() const { return mTileMap.size(); }
-	inline uint32 tileXCount() const { return mTileXCount; }
-	inline uint32 tileYCount() const { return mTileYCount; }
-	inline uint32 tileWidth() const { return mTileWidth; }
-	inline uint32 tileHeight() const { return mTileHeight; }
+	inline const Size2i& maxTileSize() const { return mMaxTileSize; }
 
-	void init(const RenderContext& context, TileMode mode);
+	void init(const RenderContext& context, uint32 threadcount, TileMode mode);
 
 	RenderTile* getNextTile(uint32 maxIter);
 	bool allFinished() const;
@@ -31,10 +28,8 @@ public:
 
 private:
 	void clearMap();
-	uint32 mTileXCount;
-	uint32 mTileYCount;
-	uint32 mTileWidth;
-	uint32 mTileHeight;
+
+	Size2i mMaxTileSize;
 	std::vector<RenderTile*> mTileMap;
 };
 } // namespace PR

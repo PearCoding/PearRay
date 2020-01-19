@@ -32,7 +32,7 @@ void RenderThread::main()
 	uint32 pass		= 0;
 	auto integrator = mRenderer->integrator();
 
-	std::shared_ptr<OutputBufferBucket> bucket = mRenderer->output()->createBucket(mRenderer->tileWidth(), mRenderer->tileHeight());
+	std::shared_ptr<OutputBufferBucket> bucket = mRenderer->output()->createBucket(mRenderer->maxTileSize());
 
 	integrator->onThreadStart(mRenderer, mThreadIndex);
 	while (integrator->needNextPass(pass) && !shouldStop()) {
@@ -50,7 +50,7 @@ void RenderThread::main()
 			integrator->onPass(session, pass);
 			if (shouldStop())
 				break;
-			mRenderer->output()->mergeBucket(mTile->sx(), mTile->sy(), bucket);
+			mRenderer->output()->mergeBucket(mTile->start(), bucket);
 
 			mTile->setWorking(false);
 			mTile = mRenderer->getNextTile();
