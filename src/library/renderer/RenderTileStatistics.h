@@ -32,6 +32,8 @@ public:
 	inline void addBackgroundHitCount(uint64 i = 1) { mBackgroundHitCount += i; }
 	inline uint64 backgroundHitCount() const { return mBackgroundHitCount; }
 
+	RenderTileStatistics half() const;
+
 private:
 	uint64 mCameraRayCount;
 	uint64 mLightRayCount;

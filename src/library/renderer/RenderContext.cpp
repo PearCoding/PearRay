@@ -31,6 +31,7 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	, mOutputMap()
 	, mEmissiveSurfaceArea(0.0f)
 	, mTileMap()
+	, mThreadsWaitingForIteration(0)
 	, mIncrementalCurrentIteration(0)
 	, mRenderSettings(settings)
 	, mIntegrator(integrator)
@@ -59,6 +60,7 @@ void RenderContext::reset()
 		delete thread;
 
 	mShouldStop					 = false;
+	mThreadsWaitingForIteration  = 0;
 	mThreadsWaitingForPass		 = 0;
 	mCurrentPass				 = 0;
 	mIncrementalCurrentIteration = 0;
@@ -147,15 +149,17 @@ const Size2i& RenderContext::maxTileSize() const
 	return mTileMap->maxTileSize();
 }
 
-std::list<RenderTile*> RenderContext::currentTiles() const
+std::vector<Rect2i> RenderContext::currentTiles() const
 {
 	PR_PROFILE_THIS;
 
-	std::list<RenderTile*> list;
+	std::lock_guard<std::mutex> guard(mTileMutex);
+
+	std::vector<Rect2i> list;
 	for (RenderThread* thread : mThreads) {
 		RenderTile* tile = thread->currentTile();
 		if (tile)
-			list.push_back(tile);
+			list.push_back(Rect2i(tile->start(), tile->viewSize()));
 	}
 	return list;
 }
@@ -210,32 +214,59 @@ void RenderContext::stop()
 
 	for (RenderThread* thread : mThreads)
 		thread->stop();
+
+	// Make sure threads are not inside conditions
+	mIterationCondition.notify_all();
+	mPassCondition.notify_all();
 }
+
+//#define PR_NO_AUTOMATIC_TILING
 
 RenderTile* RenderContext::getNextTile()
 {
 	PR_PROFILE_THIS;
-
+#if defined PR_NO_AUTOMATIC_TILING
 	std::lock_guard<std::mutex> guard(mTileMutex);
+#endif
 
 	RenderTile* tile = nullptr;
 
-	// Try till we find a tile or all samples are already rendered
+	// Try till we find a tile or all samples of this iteration are already rendered
 	while (tile == nullptr && !mTileMap->allFinished()) {
 		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
 		if (tile == nullptr) {
-			++mIncrementalCurrentIteration;
-			optimizeTileMap();
+#if !defined PR_NO_AUTOMATIC_TILING
+			std::unique_lock<std::mutex> lk(mIterationMutex);
+			++mThreadsWaitingForIteration;
+
+			if (mThreadsWaitingForIteration == threads()) {
+				optimizeTileMap();
+#endif
+				++mIncrementalCurrentIteration;
+#if !defined PR_NO_AUTOMATIC_TILING
+				mThreadsWaitingForIteration = 0;
+				lk.unlock();
+
+				mIterationCondition.notify_all();
+			} else {
+				mIterationCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForIteration == 0 || mTileMap->allFinished(); });
+				lk.unlock();
+			}
+#endif
 		}
 	}
+
+#if !defined PR_NO_AUTOMATIC_TILING
+	mIterationCondition.notify_all();
+#endif
 
 	return tile;
 }
 
 void RenderContext::optimizeTileMap()
 {
-	// All threads are locked
-	// TODO (Issue #31): Optimize tilemap based on execution time of each tile
+	std::lock_guard<std::mutex> guard(mTileMutex);
+	mTileMap->optimize();
 }
 
 RenderTileStatistics RenderContext::statistics() const

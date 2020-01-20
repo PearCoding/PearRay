@@ -4,6 +4,7 @@
 #include "renderer/RenderTileStatistics.h"
 
 #include <vector>
+#include <tbb/queuing_rw_mutex.h>
 
 namespace PR {
 
@@ -19,6 +20,9 @@ public:
 
 	void init(const RenderContext& context, uint32 threadcount, TileMode mode);
 
+	// Split tiles to minimize workoverload on single tiles
+	void optimize();
+
 	RenderTile* getNextTile(uint32 maxIter);
 	bool allFinished() const;
 	void reset();
@@ -31,5 +35,8 @@ private:
 
 	Size2i mMaxTileSize;
 	std::vector<RenderTile*> mTileMap;
+
+	using Mutex = tbb::queuing_rw_mutex;
+	mutable Mutex mMutex;
 };
 } // namespace PR

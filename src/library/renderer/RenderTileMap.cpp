@@ -18,6 +18,7 @@ RenderTileMap::~RenderTileMap()
 
 void RenderTileMap::clearMap()
 {
+	Mutex::scoped_lock lock(mMutex, true);
 	for (auto tile : mTileMap)
 		delete tile;
 
@@ -43,11 +44,9 @@ void RenderTileMap::init(const RenderContext& context, uint32 threadcount, TileM
 	// New data
 	mTileMap.reserve(tx * ty);
 	auto addTile = [&](Point1i sx, Point1i sy) {
-		uint32 id	  = (uint32)mTileMap.size();
 		Point2i start = Point2i(sx, sy);
 		Point2i end   = (start + mMaxTileSize).cwiseMin(Point2i(context.viewSize().Width, context.viewSize().Height));
-		auto tile	  = new RenderTile(start, end,
-									context, id);
+		auto tile	 = new RenderTile(start, end, context);
 		mTileMap.emplace_back(tile);
 	};
 
@@ -111,6 +110,7 @@ RenderTile* RenderTileMap::getNextTile(uint32 maxIter)
 {
 	PR_PROFILE_THIS;
 
+	Mutex::scoped_lock lock(mMutex, false);
 	for (auto tile : mTileMap)
 		if (tile && tile->iterationCount() < maxIter && !tile->isFinished())
 			if (tile->accuire())
@@ -123,6 +123,7 @@ bool RenderTileMap::allFinished() const
 {
 	PR_PROFILE_THIS;
 
+	Mutex::scoped_lock lock(mMutex, false);
 	for (auto tile : mTileMap)
 		if (!tile->isFinished() || tile->isWorking())
 			return false;
@@ -133,6 +134,7 @@ RenderTileStatistics RenderTileMap::statistics() const
 {
 	PR_PROFILE_THIS;
 
+	Mutex::scoped_lock lock(mMutex, false);
 	RenderTileStatistics s;
 	for (auto tile : mTileMap)
 		s += tile->statistics();
@@ -143,6 +145,7 @@ float RenderTileMap::percentage() const
 {
 	PR_PROFILE_THIS;
 
+	Mutex::scoped_lock lock(mMutex, false);
 	uint32 maxSamples	  = 0;
 	uint32 samplesRendered = 0;
 	for (auto tile : mTileMap) {
@@ -160,7 +163,59 @@ void RenderTileMap::reset()
 {
 	PR_PROFILE_THIS;
 
+	Mutex::scoped_lock lock(mMutex, false);
 	for (auto tile : mTileMap)
 		tile->reset();
+}
+
+void RenderTileMap::optimize()
+{
+	PR_PROFILE_THIS;
+
+	Mutex::scoped_lock lock(mMutex, true);
+	constexpr Size1i MinTileSize = 4;
+	constexpr int64 MinTimeSpent = 10000; // 10ms
+
+	int64 fullWorkTime = 0;
+	int64 validTiles   = 0;
+	for (auto tile : mTileMap) {
+		if (tile->lastWorkTime().count() > 0) {
+			fullWorkTime += tile->lastWorkTime().count();
+			++validTiles;
+		}
+	}
+
+	if (fullWorkTime == 0)
+		return;
+
+	const int64 thrWorkTime = std::max(MinTimeSpent, (int64)std::floor(fullWorkTime / (double)validTiles));
+	for (auto it = mTileMap.begin(); it != mTileMap.end();) {
+		auto ms = (*it)->lastWorkTime().count();
+		if (ms < thrWorkTime || (*it)->isFinished()) {
+			++it;
+			continue;
+		}
+
+		auto tile = *it;
+
+		// Split tile at the largest dimension
+		const Size2i tileSize = tile->viewSize();
+		const int largeDim	= (tileSize.Width >= tileSize.Height) ? 0 : 1;
+
+		if (tileSize.asArray()(largeDim) <= MinTileSize) {
+			++it;
+			continue;
+		}
+
+		auto tiles = tile->split(largeDim);
+
+		PR_LOG(L_DEBUG) << "Split Tile " << PR_FMT_MAT(tileSize.asArray())
+						<< " into " << PR_FMT_MAT(tiles.first->viewSize().asArray())
+						<< " | " << PR_FMT_MAT(tiles.second->viewSize().asArray()) << std::endl;
+
+		delete tile;
+		it = mTileMap.insert(mTileMap.erase(it), { tiles.first, tiles.second });
+		std::advance(it, 2);
+	}
 }
 } // namespace PR

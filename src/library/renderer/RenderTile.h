@@ -5,8 +5,27 @@
 #include "renderer/RenderTileStatistics.h"
 
 #include <atomic>
+#include <chrono>
 
 namespace PR {
+struct PR_LIB RenderTileContext {
+	std::atomic<uint32> PixelSamplesRendered;
+	std::atomic<uint32> IterationCount;
+	RenderTileStatistics Statistics;
+
+	inline RenderTileContext()
+		: PixelSamplesRendered(0)
+		, IterationCount(0)
+	{
+	}
+
+	inline RenderTileContext(const RenderTileContext& other)
+		: PixelSamplesRendered(other.PixelSamplesRendered.load())
+		, IterationCount(other.IterationCount.load())
+		, Statistics(other.Statistics)
+	{
+	}
+};
 
 class ICamera;
 class RenderContext;
@@ -14,32 +33,33 @@ class ISampler;
 class PR_LIB RenderTile {
 public:
 	RenderTile(const Point2i& start, const Point2i& end,
-			   const RenderContext& context, uint32 index);
+			   const RenderContext& context, const RenderTileContext& tileContext = RenderTileContext());
 	~RenderTile();
 
-	inline void incIteration() { ++mIterationCount; }
+	inline void incIteration() { ++mContext.IterationCount; }
 	inline void reset()
 	{
-		mPixelSamplesRendered = 0;
-		mIterationCount		  = 0;
+		mContext.PixelSamplesRendered = 0;
+		mContext.IterationCount		  = 0;
 	}
 
 	Ray constructCameraRay(const Point2i& p, uint32 sample);
 
 	inline bool isWorking() const { return mWorking; }
-	inline bool accuire() { return !mWorking.exchange(true); }
-	inline void setWorking(bool b) { mWorking = b; }
+	bool accuire();
+	void release();
 
 	inline const Point2i& start() const { return mStart; }
 	inline const Point2i& end() const { return mEnd; }
 	inline const Size2i& viewSize() const { return mViewSize; }
 	inline const Size2i& imageSize() const { return mImageSize; }
-	inline uint32 index() const { return mIndex; }
 
-	inline bool isFinished() const { return mPixelSamplesRendered >= mMaxPixelSamples; }
+	inline bool isFinished() const { return mContext.PixelSamplesRendered >= mMaxPixelSamples; }
 	inline uint32 maxPixelSamples() const { return mMaxPixelSamples; }
-	inline uint32 pixelSamplesRendered() const { return mPixelSamplesRendered; }
-	inline uint32 iterationCount() const { return mIterationCount; }
+	inline uint32 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
+	inline uint32 iterationCount() const { return mContext.IterationCount; }
+
+	std::pair<RenderTile*, RenderTile*> split(int dim) const;
 
 	inline Random& random() { return mRandom; }
 
@@ -47,10 +67,12 @@ public:
 	inline ISampler* lensSampler() const { return mLensSampler.get(); }
 	inline ISampler* timeSampler() const { return mTimeSampler.get(); }
 
-	inline const RenderTileStatistics& statistics() const { return mStatistics; }
-	inline RenderTileStatistics& statistics() { return mStatistics; }
+	inline const RenderTileStatistics& statistics() const { return mContext.Statistics; }
+	inline RenderTileStatistics& statistics() { return mContext.Statistics; }
 
-	inline const RenderContext* context() const { return mContext; }
+	inline const RenderContext* context() const { return mRenderContext; }
+
+	inline std::chrono::microseconds lastWorkTime() const { return mLastWorkTime; }
 
 private:
 	std::atomic<bool> mWorking;
@@ -59,11 +81,11 @@ private:
 	const Point2i mEnd;
 	const Size2i mViewSize;
 	const Size2i mImageSize;
-	const uint32 mIndex;
 	uint32 mMaxPixelSamples;
 
-	std::atomic<uint32> mPixelSamplesRendered;
-	std::atomic<uint32> mIterationCount;
+	RenderTileContext mContext;
+	std::chrono::high_resolution_clock::time_point mWorkStart;
+	std::chrono::microseconds mLastWorkTime;
 
 	Random mRandom;
 	std::shared_ptr<ISampler> mAASampler;
@@ -78,11 +100,9 @@ private:
 	float mTimeAlpha;
 	float mTimeBeta;
 
-	RenderTileStatistics mStatistics;
-
-	const RenderContext* const mContext;
+	const RenderContext* const mRenderContext;
 	const ICamera* const mCamera;
-	
+
 	float mWeight_Cache;
 };
 } // namespace PR

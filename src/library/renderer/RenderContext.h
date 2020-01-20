@@ -58,7 +58,7 @@ public:
 	inline uint32 currentPass() const { return mCurrentPass; }
 
 	// Slow and only copies!
-	std::list<RenderTile*> currentTiles() const;
+	std::vector<Rect2i> currentTiles() const;
 
 	std::shared_ptr<IIntegrator> integrator() const { return mIntegrator; }
 
@@ -97,8 +97,13 @@ private:
 	std::vector<std::shared_ptr<IEntity>> mLights;
 	float mEmissiveSurfaceArea;
 
-	std::mutex mTileMutex;
+	mutable std::mutex mTileMutex;
 	std::unique_ptr<RenderTileMap> mTileMap;
+
+	std::mutex mIterationMutex;
+	std::condition_variable mIterationCondition;
+	uint32 mThreadsWaitingForIteration;
+
 	uint32 mIncrementalCurrentIteration;
 	std::list<RenderThread*> mThreads;
 

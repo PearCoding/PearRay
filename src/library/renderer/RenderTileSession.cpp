@@ -30,6 +30,7 @@ RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
 	, mHitStream(hitStream)
 	, mCurrentPixelPos(Point2i::Zero())
 {
+	bucket->shrinkView(mTile->viewSize());
 }
 
 RenderTileSession::~RenderTileSession()
@@ -159,8 +160,8 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
 {
 	const Size1i slice = mTile->context()->viewSize().Width;
-	Point1i gpx = pixelIndex % slice;
-	Point1i gpy = pixelIndex / slice;
+	Point1i gpx		   = pixelIndex % slice;
+	Point1i gpy		   = pixelIndex / slice;
 
 	PR_ASSERT(gpx >= mTile->start().x() && gpx < mTile->end().x(),
 			  "Invalid fragment push operation");

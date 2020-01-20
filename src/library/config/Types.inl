@@ -53,7 +53,7 @@ struct Size2i {
 	}
 
 	inline int32 area() const { return Width * Height; }
-	inline bool isValid() const { return area() > 0; }
+	inline bool isValid() const { return Width > 0 && Height > 0; }
 
 	inline Point2i asArray() const { return Point2i(Width, Height); }
 	inline static Size2i fromArray(const Point2i& arr) { return Size2i(arr(0), arr(1)); }
@@ -88,5 +88,32 @@ inline Point2i operator-(const Point2i& left, const Size2i& right)
 inline Point2i operator-(const Size2i& left, const Point2i& right)
 {
 	return Point2i(left.Width - right(0), left.Height - right(1));
+}
+
+struct Rect2i {
+	Point2i Origin;
+	Size2i Size;
+
+	inline Rect2i()
+		: Origin(0, 0)
+		, Size(1, 1)
+	{
+	}
+
+	inline Rect2i(const Point2i& origin, const Size2i& size)
+		: Origin(origin)
+		, Size(size)
+	{
+	}
+};
+
+inline bool operator==(const Rect2i& left, const Rect2i& right)
+{
+	return (left.Origin == right.Origin).all() && left.Size == right.Size;
+}
+
+inline bool operator!=(const Rect2i& left, const Rect2i& right)
+{
+	return (left.Origin != right.Origin).any() || left.Size != right.Size;
 }
 } // namespace PR

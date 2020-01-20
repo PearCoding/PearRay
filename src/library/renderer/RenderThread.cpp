@@ -36,6 +36,7 @@ void RenderThread::main()
 
 	integrator->onThreadStart(mRenderer, mThreadIndex);
 	while (integrator->needNextPass(pass) && !shouldStop()) {
+		mTile = nullptr;
 		mTile = mRenderer->getNextTile();
 
 		while (mTile && !shouldStop()) {
@@ -52,7 +53,8 @@ void RenderThread::main()
 				break;
 			mRenderer->output()->mergeBucket(mTile->start(), bucket);
 
-			mTile->setWorking(false);
+			mTile->release();
+			mTile = nullptr;
 			mTile = mRenderer->getNextTile();
 		}
 

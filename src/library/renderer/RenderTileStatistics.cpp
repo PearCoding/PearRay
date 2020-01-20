@@ -24,4 +24,18 @@ RenderTileStatistics& RenderTileStatistics::operator+=(const RenderTileStatistic
 
 	return *this;
 }
+
+RenderTileStatistics RenderTileStatistics::half() const
+{
+	RenderTileStatistics other = *this;
+	other.mCameraRayCount /= 2;
+	other.mLightRayCount /= 2;
+	other.mBounceRayCount /= 2;
+	other.mShadowRayCount /= 2;
+	other.mPixelSampleCount /= 2;
+	other.mEntityHitCount /= 2;
+	other.mBackgroundHitCount /= 2;
+
+	return other;
+}
 } // namespace PR

@@ -9,6 +9,8 @@ OutputBufferBucket::OutputBufferBucket(const std::shared_ptr<IFilter>& filter,
 	: mFilter(filter)
 	, mOriginalSize(size)
 	, mExtendedSize(mOriginalSize.Width + 2 * mFilter->radius(), mOriginalSize.Height + 2 * mFilter->radius())
+	, mViewSize(mOriginalSize)
+	, mExtendedViewSize(mExtendedSize)
 	, mData(mExtendedSize, specChannels)
 	, mHasNonSpecLPE(false)
 {
@@ -16,6 +18,15 @@ OutputBufferBucket::OutputBufferBucket(const std::shared_ptr<IFilter>& filter,
 
 OutputBufferBucket::~OutputBufferBucket()
 {
+}
+
+void OutputBufferBucket::shrinkView(const Size2i& newView)
+{
+	PR_ASSERT(newView.Width <= mOriginalSize.Width, "Width greater then original");
+	PR_ASSERT(newView.Height <= mOriginalSize.Height, "Height greater then original");
+
+	mViewSize		  = newView;
+	mExtendedViewSize = Size2i(newView.Width + 2 * mFilter->radius(), newView.Height + 2 * mFilter->radius());
 }
 
 void OutputBufferBucket::cache()
@@ -72,7 +83,7 @@ void OutputBufferBucket::pushSpectralFragment(const Point2i& p, const ColorTripl
 
 	if (!isInvalid) {
 		const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
-		const Point2i end   = (extendedSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
+		const Point2i end   = (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
 		for (Point1i py = start(1); py <= end(1); ++py) {
 			for (Point1i px = start(0); px <= end(0); ++px) {
 				Point2i sp				 = Point2i(px, py);
