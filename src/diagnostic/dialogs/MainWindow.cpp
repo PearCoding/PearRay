@@ -16,7 +16,7 @@
 #include <QSettings>
 
 // We do not link to the library, only include the configuration file!
-#include "Version.h"
+#include "config/Version.h"
 
 constexpr int MAX_LAST_FILES = 10;
 

@@ -1,7 +1,7 @@
 #include "Build.h"
 #include "Profiler.h"
 #include "TriangleOptions.h"
-#include "Version.h"
+#include "config/Version.h"
 
 #include <sstream>
 #include <vector>
