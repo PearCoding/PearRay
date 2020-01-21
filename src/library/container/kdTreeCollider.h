@@ -85,8 +85,8 @@ public:
 										 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
-		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
-		const vfloat zero	  = make_zero();
+		out.HitDistance   = make_float(std::numeric_limits<float>::infinity());
+		const vfloat zero = make_zero();
 		//const vfloat eps	   = make_float(PR_EPSILON);
 		const Vector3fv invDir = in.Direction.cwiseInverse();
 
@@ -97,7 +97,9 @@ public:
 		};
 		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
 
-		PR_ASSERT(mRoot, "No root given for kdTree!");
+		if (!mRoot) // Empty tree
+			return false;
+
 		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!any(root_in.Successful))
 			return false;
@@ -121,8 +123,8 @@ public:
 				const vfloat t				= splitM * invDir[innerN->axis];
 
 				const bfloat dirMask = invDir[innerN->axis] < zero;
-				const bfloat minHit = (t >= minT) | (t <= 0);
-				const bfloat maxHit = (t <= maxT) /*& (t >= 0)*/;
+				const bfloat minHit  = (t >= minT) | (t <= 0);
+				const bfloat maxHit  = (t <= maxT) /*& (t >= 0)*/;
 
 				const bfloat valid	= (minT <= maxT) /*& (abs(in.Direction[innerN->axis]) > eps)*/;
 				const bfloat hitRight = valid & blend(minHit, maxHit, dirMask);
@@ -212,7 +214,9 @@ public:
 		};
 		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
 
-		PR_ASSERT(mRoot, "No root given for kdTree!");
+		if (!mRoot) // Empty tree
+			return false;
+
 		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!root_in.Successful)
 			return false;

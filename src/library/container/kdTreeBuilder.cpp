@@ -586,9 +586,13 @@ void kdTreeBuilder::save(Serializer& stream) const
 	std::string ident = "pearray_kdtree";
 	stream | ident;
 
-	if (!mRoot)
+	if (!mRoot) {
+		// Empty bounding box
+		BoundingBox emptyBox(0, 0, 0);
+		stream | emptyBox.lowerBound();
+		stream | emptyBox.upperBound();
 		return;
-
+	}
 	stream | mRoot->boundingBox.lowerBound();
 	stream | mRoot->boundingBox.upperBound();
 

@@ -168,7 +168,9 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "multijittered", "jittered", "mjitt", "jitt" });
+		const static std::vector<std::string> names({ "multijittered", "multi_jittered", "jittered",
+													  "multijitter", "multi_jitter", "jitter",
+													  "mjitt", "jitt" });
 		return names;
 	}
 

@@ -33,10 +33,20 @@ void setup_environment(py::module& m)
 		.def("save", &Environment::save)
 		.def("createSelectedIntegrator", &Environment::createSelectedIntegrator)
 		.def("createRenderFactory", &Environment::createRenderFactory)
-		.def_property_readonly("spectrumDescriptor", &Environment::spectrumDescriptor);
+		.def_property_readonly("spectrumDescriptor", &Environment::spectrumDescriptor)
+		.def_property("renderSettings",
+					  [](Environment& env) { return env.renderSettings(); },
+					  [](Environment& env, const RenderSettings& st) { env.renderSettings() = st; },
+					  py::return_value_policy::reference_internal);
 
-	py::class_<SceneLoader>(m, "SceneLoader")
-		.def_static("loadFromString", &SceneLoader::loadFromString)
-		.def_static("loadFromFile", &SceneLoader::loadFromFile);
+	auto sl = py::class_<SceneLoader>(m, "SceneLoader")
+				  .def_static("loadFromString", &SceneLoader::loadFromString)
+				  .def_static("loadFromFile", &SceneLoader::loadFromFile);
+
+	py::class_<SceneLoader::LoadOptions>(sl, "LoadOptions")
+		.def(py::init<>())
+		.def_readwrite("PluginPath", &SceneLoader::LoadOptions::PluginPath)
+		.def_readwrite("WorkingDir", &SceneLoader::LoadOptions::WorkingDir)
+		.def_readwrite("CacheMode", &SceneLoader::LoadOptions::CacheMode);
 }
 } // namespace PRPY

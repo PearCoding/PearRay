@@ -78,6 +78,7 @@ void kdTreeCollider::load(Serializer& stream)
 	stream | mBoundingBox.lowerBound();
 	stream | mBoundingBox.upperBound();
 
-	loadNode(stream, mRoot, mNodeCount);
+	if (mBoundingBox.volume() > PR_EPSILON) // Not empty
+		loadNode(stream, mRoot, mNodeCount);
 }
 } // namespace PR

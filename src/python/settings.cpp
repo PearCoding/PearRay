@@ -9,15 +9,15 @@ PR_NO_SANITIZE_ADDRESS
 void setup_settings(py::module& m)
 {
 	py::class_<RenderSettings>(m, "RenderSettings")
-		.def_readonly("timeMappingMode", &RenderSettings::timeMappingMode)
-		.def_readonly("timeScale", &RenderSettings::timeScale)
-		.def_readonly("filmWidth", &RenderSettings::filmWidth)
-		.def_readonly("filmHeight", &RenderSettings::filmHeight)
-		.def_readonly("cropMaxX", &RenderSettings::cropMaxX)
-		.def_readonly("cropMinX", &RenderSettings::cropMinX)
-		.def_readonly("cropMaxY", &RenderSettings::cropMaxY)
-		.def_readonly("cropMinY", &RenderSettings::cropMinY)
-		.def_readonly("tileMode", &RenderSettings::tileMode);
+		.def_readwrite("timeMappingMode", &RenderSettings::timeMappingMode)
+		.def_readwrite("timeScale", &RenderSettings::timeScale)
+		.def_readwrite("filmWidth", &RenderSettings::filmWidth)
+		.def_readwrite("filmHeight", &RenderSettings::filmHeight)
+		.def_readwrite("cropMaxX", &RenderSettings::cropMaxX)
+		.def_readwrite("cropMinX", &RenderSettings::cropMinX)
+		.def_readwrite("cropMaxY", &RenderSettings::cropMaxY)
+		.def_readwrite("cropMinY", &RenderSettings::cropMinY)
+		.def_readwrite("tileMode", &RenderSettings::tileMode);
 
 	py::enum_<TileMode>(m, "TileMode")
 		.value("LINEAR", TM_LINEAR)
