@@ -18,22 +18,22 @@ inline PR_LIB bool intersectMT(
 	const Vector3f e13 = p3 - p1;
 
 	const Vector3f q = in.Direction.cross(e13);
-	const float a	= q.dot(e12);
+	const float a	 = q.dot(e12);
 
-	if (abs(a) < PR_EPSILON)
+	if (PR_UNLIKELY(abs(a) <= PR_EPSILON))
 		return false;
 
-	const float f	= 1.0f / a;
+	const float f	 = 1.0f / a;
 	const Vector3f s = in.Origin - p1;
 	uv(0)			 = f * s.dot(q);
 
-	if (uv(0) < 0 || uv(0) > 1)
+	if (PR_LIKELY(uv(0) < 0 || uv(0) > 1))
 		return false;
 
 	const Vector3f r = s.cross(e12);
 	uv(1)			 = f * in.Direction.dot(r);
 
-	if (uv(1) < 0 || uv(0) + uv(1) > 1)
+	if (PR_LIKELY(uv(1) < 0 || uv(0) + uv(1) > 1))
 		return false;
 
 	t = f * r.dot(e13);
@@ -54,23 +54,29 @@ inline PR_LIB bfloat intersectMT(
 	const Vector3fv e13 = p3 - p1;
 
 	const Vector3fv q = in.Direction.cross(e13);
-	const vfloat a	= q.dot(e12);
+	const vfloat a	  = q.dot(e12);
 
-	const vfloat f	= 1.0f / a;
+	bfloat valid = abs(a) > PR_EPSILON;
+	if (PR_UNLIKELY(none(valid)))
+		return valid;
+
+	const vfloat f	  = 1.0f / a;
 	const Vector3fv s = in.Origin - p1;
 	uv(0)			  = f * s.dot(q);
 
-	const bfloat uoutside = (uv(0) < 0) | (uv(0) > 1);
+	valid = valid & ((uv(0) >= 0) & (uv(0) <= 1));
+	if (PR_LIKELY(none(valid)))
+		return valid;
 
 	const Vector3fv r = s.cross(e12);
 	uv(1)			  = f * in.Direction.dot(r);
 
-	const bfloat voutside = (uv(1) < 0) | (uv(0) + uv(1) > 1);
+	valid = valid & ((uv(1) >= 0) & (uv(0) + uv(1) <= 1));
 
 	t = f * r.dot(e13);
-	return b_and(b_and(b_not(uoutside), b_not(voutside)),
-				 (t >= PR_TRIANGLE_INTERSECT_EPSILON));
+	return valid & (t >= PR_TRIANGLE_INTERSECT_EPSILON);
 }
+
 // Pluecker based intersection method
 // Non Optimized variant -> Nothing is cached!
 inline PR_LIB bool intersectPI_NonOpt(
@@ -88,31 +94,31 @@ inline PR_LIB bool intersectPI_NonOpt(
 	Vector3f d0 = p0 - p1;
 	Vector3f m0 = p0.cross(p1);
 	float s0	= d0.dot(mR) + m0.dot(dR);
-	bool sign   = std::signbit(s0);
+	bool sign	= std::signbit(s0);
 
 	// Edge 2
 	Vector3f d2 = p2 - p0;
 	Vector3f m2 = p2.cross(p0);
 	float s2	= d2.dot(mR) + m2.dot(dR);
-	if (std::signbit(s2) != sign)
+	if (PR_LIKELY(std::signbit(s2) != sign))
 		return false;
 
 	// Edge 3
 	Vector3f d1 = p1 - p2;
 	Vector3f m1 = p1.cross(p2);
 	float s1	= d1.dot(mR) + m1.dot(dR);
-	if (std::signbit(s1) != sign)
+	if (PR_LIKELY(std::signbit(s1) != sign))
 		return false;
 
 	// Normal
 	Vector3f N = -d0.cross(d2);
-	float k	= dR.dot(N);
-	if (std::abs(k) <= PR_EPSILON)
+	float k	   = dR.dot(N);
+	if (PR_LIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
 	t = (p0 - in.Origin).dot(N) / k;
-	if (t <= PR_TRIANGLE_INTERSECT_EPSILON)
+	if (PR_LIKELY(t <= PR_TRIANGLE_INTERSECT_EPSILON))
 		return false;
 
 	// UV calculation!
@@ -139,38 +145,46 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	// Edge 1
 	Vector3fv d0 = p0 - p1;
 	Vector3fv m0 = p0.cross(p1);
-	vfloat s0	= d0.dot(mR) + m0.dot(dR);
-	bfloat si	= signbit(s0);
+	vfloat s0	 = d0.dot(mR) + m0.dot(dR);
+	bfloat si	 = signbit(s0);
 
 	// Edge 2
 	Vector3fv d2 = p2 - p0;
 	Vector3fv m2 = p2.cross(p0);
-	vfloat s2	= d2.dot(mR) + m2.dot(dR);
-	bfloat neq1  = (signbit(s2) ^ si);
+	vfloat s2	 = d2.dot(mR) + m2.dot(dR);
+	bfloat valid = (signbit(s2) == si);
+	if (PR_LIKELY(none(valid)))
+		return valid;
 
 	// Edge 3
 	Vector3fv d1 = p1 - p2;
 	Vector3fv m1 = p1.cross(p2);
-	vfloat s1	= d1.dot(mR) + m1.dot(dR);
-	bfloat neq2  = (signbit(s1) ^ si);
+	vfloat s1	 = d1.dot(mR) + m1.dot(dR);
+	valid		 = valid & (signbit(s1) == si);
+	if (PR_LIKELY(none(valid)))
+		return valid;
 
 	// Normal
 	Vector3fv N = -d0.cross(d2);
 	vfloat k	= dR.dot(N);
-	bfloat kiv  = (abs(k) <= PR_EPSILON);
+	valid		= valid & (abs(k) > PR_EPSILON);
+	if (PR_UNLIKELY(none(valid)))
+		return valid;
 
 	// Intersection value
-	t			  = (p0 - in.Origin).dot(N) / k;
-	bfloat behind = (t <= PR_TRIANGLE_INTERSECT_EPSILON);
+	t	  = (p0 - in.Origin).dot(N) / k;
+	valid = valid & (t > PR_TRIANGLE_INTERSECT_EPSILON);
+	if (PR_UNLIKELY(none(valid)))
+		return valid;
 
 	// UV calculation!
 	Vector3fv p = in.t(t);
-	vfloat a2   = N.squaredNorm();
+	vfloat a2	= N.squaredNorm();
 
 	uv(0) = sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
 	uv(1) = sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
 
-	return ~(behind | kiv | neq1 | neq2);
+	return valid;
 }
 
 // Pluecker based intersection method
@@ -200,25 +214,25 @@ inline PR_LIB bool intersectPI_Opt(
 	Vector3f d2 = p2 - p0;
 	//Vector3f m2 = p2.cross(p0);
 	float s2 = d2.dot(mR) + m2.dot(dR);
-	if (std::signbit(s2) != sign)
+	if (PR_LIKELY(std::signbit(s2) != sign))
 		return false;
 
 	// Edge 3
 	Vector3f d1 = p1 - p2;
 	//Vector3f m1 = p1.cross(p2);
 	float s1 = d1.dot(mR) + m1.dot(dR);
-	if (std::signbit(s1) != sign)
+	if (PR_LIKELY(std::signbit(s1) != sign))
 		return false;
 
 	// Normal
 	//Vector3f N = -d0.cross(d2);
 	float k = dR.dot(N);
-	if (std::abs(k) <= PR_EPSILON)
+	if (PR_UNLIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
 	t = (p0 - in.Origin).dot(N) / k;
-	if (t <= PR_TRIANGLE_INTERSECT_EPSILON)
+	if (PR_UNLIKELY(t <= PR_TRIANGLE_INTERSECT_EPSILON))
 		return false;
 
 	// UV calculation!
@@ -248,35 +262,43 @@ inline PR_LIB bfloat intersectPI_Opt(
 
 	// Edge 1
 	Vector3fv d0 = p0 - p1;
-	vfloat s0	= d0.dot(mR) + m0.dot(dR);
-	bfloat si	= signbit(s0);
+	vfloat s0	 = d0.dot(mR) + m0.dot(dR);
+	bfloat si	 = signbit(s0);
 
 	// Edge 2
 	Vector3fv d2 = p2 - p0;
-	vfloat s2	= d2.dot(mR) + m2.dot(dR);
-	bfloat neq1  = (signbit(s2) ^ si);
+	vfloat s2	 = d2.dot(mR) + m2.dot(dR);
+	bfloat valid = (signbit(s2) == si);
+	if (PR_LIKELY(none(valid)))
+		return valid;
 
 	// Edge 3
 	Vector3fv d1 = p1 - p2;
-	vfloat s1	= d1.dot(mR) + m1.dot(dR);
-	bfloat neq2  = (signbit(s1) ^ si);
+	vfloat s1	 = d1.dot(mR) + m1.dot(dR);
+	valid		 = valid & (signbit(s1) == si);
+	if (PR_LIKELY(none(valid)))
+		return valid;
 
 	// Normal
-	vfloat k   = dR.dot(N);
-	bfloat kiv = (abs(k) <= PR_EPSILON);
+	vfloat k = dR.dot(N);
+	valid	 = valid & (abs(k) > PR_EPSILON);
+	if (PR_UNLIKELY(none(valid)))
+		return valid;
 
 	// Intersection value
-	t			  = (p0 - in.Origin).dot(N) / k;
-	bfloat behind = (t <= PR_TRIANGLE_INTERSECT_EPSILON);
+	t	  = (p0 - in.Origin).dot(N) / k;
+	valid = valid & (t > PR_TRIANGLE_INTERSECT_EPSILON);
+	if (PR_UNLIKELY(none(valid)))
+		return valid;
 
 	// UV calculation!
 	Vector3fv p = in.t(t);
-	vfloat a2   = N.squaredNorm();
+	vfloat a2	= N.squaredNorm();
 
 	uv(0) = sqrt((p2 - p).cross(p0 - p).squaredNorm() / a2);
 	uv(1) = sqrt((p0 - p).cross(p1 - p).squaredNorm() / a2);
 
-	return ~(behind | kiv | neq1 | neq2);
+	return valid;
 }
 } // namespace TriangleIntersection
 } // namespace PR

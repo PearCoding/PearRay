@@ -34,6 +34,11 @@ inline bool all(const bfloat& a)
 	return simdpp::reduce_and(simdpp::bit_cast<vuint32::Base>(a));
 }
 
+inline bool none(const bfloat& a)
+{
+	return !any(a);
+}
+
 template <unsigned int K>
 inline bool extract(const bfloat& a)
 {
