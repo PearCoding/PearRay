@@ -117,9 +117,14 @@ void MainWindow::openRDMPDir()
 
 void MainWindow::openFile(const QString& file)
 {
-	QApplication::setOverrideCursor(Qt::WaitCursor);
 	QFileInfo info(file);
 
+	if (!info.exists()) {
+		QMessageBox::warning(this, tr("File not found"), tr("File %1 was not found").arg(file));
+		return;
+	}
+
+	QApplication::setOverrideCursor(Qt::WaitCursor);
 	if (info.suffix() == "cnt") {
 		setupSceneWindow();
 		mCurrentSceneWindow->openCNTFile(file);
