@@ -173,8 +173,8 @@ void RenderTileMap::optimize()
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, true);
-	constexpr Size1i MinTileSize = 4;
-	constexpr int64 MinTimeSpent = 10000; // 10ms
+	constexpr Size1i MinTileSize = 8;
+	constexpr int64 MinTimeSpent = 5 * 1000 * 1000; // 5s
 
 	int64 fullWorkTime = 0;
 	int64 validTiles   = 0;
