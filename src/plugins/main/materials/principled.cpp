@@ -313,8 +313,8 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<PrincipledMaterial>(id,
-													ctx.Env->lookupSpectralShadingSocket(params.getParameter("specular"), 1.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("base_color"), 0.5f),
+													ctx.Env->lookupSpectralShadingSocket(params.getParameter("base_color"), 0.8f),
+													ctx.Env->lookupScalarShadingSocket(params.getParameter("specular"), 0.5f),
 													ctx.Env->lookupScalarShadingSocket(params.getParameter("specular_tint"), 0.0f),
 													ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness"), 0.5f),
 													ctx.Env->lookupScalarShadingSocket(params.getParameter("anisotropic"), 0.0f),
