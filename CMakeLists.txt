@@ -78,6 +78,7 @@ option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 
 # Algorithm options
 option(PR_COLLIDER_FORCE_SINGLE_TRACE	"Force single ray tracing in every trace path" OFF)
+option(PR_STREAM_SORT_HITS				"Sort the hit stream to improve cache coherence for heavy shading networks" ON)
 option(PR_TRIANGLE_USE_CACHE			"Use cache mechanism to potentially speed up intersection" ON)
 set(PR_TRIANGLE_INTERSECTION_METHOD 1 CACHE STRING "0 = Moeller-Trumbore, 1 = Pluecker")
 
@@ -142,6 +143,7 @@ configure_file(src/library/PR_Config.h.in ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.
 configure_file(src/library/config/HW_Switch.inl.in ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl)
 configure_file(src/library/config/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
 configure_file(src/library/config/ColliderOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/ColliderOptions.h)
+configure_file(src/library/config/StreamOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/StreamOptions.h)
 configure_file(src/library/config/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/TriangleOptions.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}

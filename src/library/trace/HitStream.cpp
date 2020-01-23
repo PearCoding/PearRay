@@ -1,9 +1,9 @@
 #include "HitStream.h"
 #include "Profiler.h"
+#include "config/StreamOptions.h"
 
 //FIXME: RadixSort has a bug which chrashes the software!
 //#define PR_USE_RADIXSORT
-
 #ifdef PR_USE_RADIXSORT
 #include "container/RadixSort.h"
 #else
@@ -52,7 +52,7 @@ HitEntry HitStream::get(size_t index) const
 	entry.Flags		  = mFlags[index];
 	entry.RayID		  = mRayID[index];
 	entry.MaterialID  = mMaterialID[index];
-	entry.EntityID	= mEntityID[index];
+	entry.EntityID	  = mEntityID[index];
 	entry.PrimitiveID = mPrimitiveID[index];
 	for (int i = 0; i < 3; ++i)
 		entry.Parameter[i] = mParameter[i][index];
@@ -62,6 +62,7 @@ HitEntry HitStream::get(size_t index) const
 
 void HitStream::sort()
 {
+#ifdef PR_STREAM_SORT_HITS
 	PR_PROFILE_THIS;
 
 	if (currentSize() == 0)
@@ -108,6 +109,7 @@ void HitStream::sort()
 #endif
 		}
 	}
+#endif //PR_STREAM_SORT_HITS
 
 	mCurrentPos = 0;
 }
@@ -133,10 +135,10 @@ ShadingGroup HitStream::getNextGroup()
 
 	PR_ASSERT(hasNextGroup(), "Never call when not available");
 	ShadingGroup grp;
-	grp.Stream	 = this;
+	grp.Stream	   = this;
 	grp.EntityID   = mEntityID[mCurrentPos];
 	grp.MaterialID = mMaterialID[mCurrentPos];
-	grp.Start	  = mCurrentPos;
+	grp.Start	   = mCurrentPos;
 
 	while (mCurrentPos < currentSize()
 		   && mEntityID[mCurrentPos] == grp.EntityID
