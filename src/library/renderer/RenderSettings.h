@@ -26,6 +26,7 @@ public:
 	TimeMappingMode timeMappingMode;
 	float timeScale;
 	TileMode tileMode;
+	bool useAdaptiveTiling;
 
 	// Film entries
 	uint32 filmWidth;

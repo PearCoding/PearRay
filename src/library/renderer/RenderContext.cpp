@@ -60,7 +60,7 @@ void RenderContext::reset()
 		delete thread;
 
 	mShouldStop					 = false;
-	mThreadsWaitingForIteration  = 0;
+	mThreadsWaitingForIteration	 = 0;
 	mThreadsWaitingForPass		 = 0;
 	mCurrentPass				 = 0;
 	mIncrementalCurrentIteration = 0;
@@ -69,7 +69,7 @@ void RenderContext::reset()
 	mLights.clear();
 }
 
-void RenderContext::start(int32 threads)
+void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 {
 	PR_PROFILE_THIS;
 
@@ -109,7 +109,7 @@ void RenderContext::start(int32 threads)
 	}
 
 	mTileMap = std::make_unique<RenderTileMap>();
-	mTileMap->init(*this, threadCount, mRenderSettings.tileMode);
+	mTileMap->init(*this, rtx, rty, mRenderSettings.tileMode);
 
 	// Init modules
 	mIntegrator->onInit(this);
@@ -123,7 +123,7 @@ void RenderContext::start(int32 threads)
 		mIntegrator->onNextPass(0, clear);
 	}
 
-	PR_LOG(L_INFO) << "Rendering with " << threadCount << " threads." << std::endl;
+	PR_LOG(L_INFO) << "Rendering with " << threadCount << " threads and " << rtx << "x" << rty << " tiles." << std::endl;
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
@@ -220,45 +220,45 @@ void RenderContext::stop()
 	mPassCondition.notify_all();
 }
 
-//#define PR_NO_AUTOMATIC_TILING
-
 RenderTile* RenderContext::getNextTile()
 {
 	PR_PROFILE_THIS;
-#if defined PR_NO_AUTOMATIC_TILING
-	std::lock_guard<std::mutex> guard(mTileMutex);
-#endif
 
+	std::lock_guard<std::mutex> guard(mTileMutex);
 	RenderTile* tile = nullptr;
 
-	// Try till we find a tile or all samples of this iteration are already rendered
-	while (tile == nullptr && !mTileMap->allFinished()) {
-		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
-		if (tile == nullptr) {
-#if !defined PR_NO_AUTOMATIC_TILING
-			std::unique_lock<std::mutex> lk(mIterationMutex);
-			++mThreadsWaitingForIteration;
+	if (mRenderSettings.useAdaptiveTiling) {
+		// Try till we find a tile or all samples of this iteration are already rendered
+		while (tile == nullptr && !mTileMap->allFinished()) {
+			tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
+			if (tile == nullptr) {
+				std::unique_lock<std::mutex> lk(mIterationMutex);
+				++mThreadsWaitingForIteration;
 
-			if (mThreadsWaitingForIteration == threads()) {
-				optimizeTileMap();
-#endif
-				++mIncrementalCurrentIteration;
-#if !defined PR_NO_AUTOMATIC_TILING
-				mThreadsWaitingForIteration = 0;
-				lk.unlock();
+				if (mThreadsWaitingForIteration == threads()) {
+					optimizeTileMap();
+					++mIncrementalCurrentIteration;
+					mThreadsWaitingForIteration = 0;
+					lk.unlock();
 
-				mIterationCondition.notify_all();
-			} else {
-				mIterationCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForIteration == 0 || mTileMap->allFinished(); });
-				lk.unlock();
+					mIterationCondition.notify_all();
+				} else {
+					mIterationCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForIteration == 0 || mTileMap->allFinished(); });
+					lk.unlock();
+				}
 			}
-#endif
+		}
+
+		mIterationCondition.notify_all();
+	} else {
+		// Try till we find a tile or all samples of this iteration are already rendered
+		while (tile == nullptr && !mTileMap->allFinished()) {
+			tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
+			if (tile == nullptr) {
+				++mIncrementalCurrentIteration;
+			}
 		}
 	}
-
-#if !defined PR_NO_AUTOMATIC_TILING
-	mIterationCondition.notify_all();
-#endif
 
 	return tile;
 }
@@ -279,7 +279,7 @@ RenderStatus RenderContext::status() const
 	PR_PROFILE_THIS;
 
 	RenderTileStatistics s = statistics();
-	RenderStatus status	= mIntegrator->status();
+	RenderStatus status	   = mIntegrator->status();
 
 	// Approximate percentage if not given by the integrator
 	if (status.percentage() < 0)

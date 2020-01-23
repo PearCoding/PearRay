@@ -3,8 +3,8 @@
 #include "renderer/RenderEnums.h"
 #include "renderer/RenderTileStatistics.h"
 
-#include <vector>
 #include <tbb/queuing_rw_mutex.h>
+#include <vector>
 
 namespace PR {
 
@@ -18,7 +18,7 @@ public:
 	inline size_t tileCount() const { return mTileMap.size(); }
 	inline const Size2i& maxTileSize() const { return mMaxTileSize; }
 
-	void init(const RenderContext& context, uint32 threadcount, TileMode mode);
+	void init(const RenderContext& context, uint32 rtx, uint32 rty, TileMode mode);
 
 	// Split tiles to minimize workoverload on single tiles
 	void optimize();

@@ -42,9 +42,9 @@ public:
 	size_t tileCount() const;
 	const Size2i& maxTileSize() const;
 
-	// tcx and tcy should be able to divide width and height!
+	// rtx and rty are the initial render tiles
 	// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
-	void start(int32 threads = 0);
+	void start(uint32 rtx, uint32 rty, int32 threads = 0);
 	void stop();
 	void notifyEnd();
 

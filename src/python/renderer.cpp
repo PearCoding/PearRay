@@ -31,7 +31,7 @@ void setup_renderer(py::module& m)
 		.def_property_readonly("scene", &RenderContext::scene)
 		.def_property_readonly("output", &RenderContext::output)
 		.def_property_readonly("status", &RenderContext::status)
-		.def("start", &RenderContext::start, py::arg("threads") = 0)
+		.def("start", &RenderContext::start, py::arg("rtx"), py::arg("rty"), py::arg("threads") = 0)
 		.def("stop", &RenderContext::stop)
 		.def("notifyEnd", &RenderContext::notifyEnd)
 		.def("waitForFinish", &RenderContext::waitForFinish);

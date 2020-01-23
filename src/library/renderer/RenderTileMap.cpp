@@ -25,15 +25,13 @@ void RenderTileMap::clearMap()
 	mTileMap.clear();
 }
 
-void RenderTileMap::init(const RenderContext& context, uint32 threadcount, TileMode mode)
+void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, TileMode mode)
 {
 	PR_PROFILE_THIS;
 
-	int32 initial_count = std::max<int32>(1, threadcount / 2);
-
 	mMaxTileSize		= context.viewSize();
-	mMaxTileSize.Width  = std::max(2, mMaxTileSize.Width / initial_count);
-	mMaxTileSize.Height = std::max(2, mMaxTileSize.Height / initial_count);
+	mMaxTileSize.Width	= std::max(2, mMaxTileSize.Width / (int)rtx);
+	mMaxTileSize.Height = std::max(2, mMaxTileSize.Height / (int)rty);
 
 	const Size1i tx = std::max<int32>(2, std::ceil(context.viewSize().Width / (float)mMaxTileSize.Width));
 	const Size1i ty = std::max<int32>(2, std::ceil(context.viewSize().Height / (float)mMaxTileSize.Height));
@@ -45,8 +43,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 threadcount, TileM
 	mTileMap.reserve(tx * ty);
 	auto addTile = [&](Point1i sx, Point1i sy) {
 		Point2i start = Point2i(sx, sy);
-		Point2i end   = (start + mMaxTileSize).cwiseMin(Point2i(context.viewSize().Width, context.viewSize().Height));
-		auto tile	 = new RenderTile(start, end, context);
+		Point2i end	  = (start + mMaxTileSize).cwiseMin(Point2i(context.viewSize().Width, context.viewSize().Height));
+		auto tile	  = new RenderTile(start, end, context);
 		mTileMap.emplace_back(tile);
 	};
 
@@ -146,7 +144,7 @@ float RenderTileMap::percentage() const
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	uint32 maxSamples	  = 0;
+	uint32 maxSamples	   = 0;
 	uint32 samplesRendered = 0;
 	for (auto tile : mTileMap) {
 		maxSamples += tile->maxPixelSamples();
@@ -200,7 +198,7 @@ void RenderTileMap::optimize()
 
 		// Split tile at the largest dimension
 		const Size2i tileSize = tile->viewSize();
-		const int largeDim	= (tileSize.Width >= tileSize.Height) ? 0 : 1;
+		const int largeDim	  = (tileSize.Width >= tileSize.Height) ? 0 : 1;
 
 		if (tileSize.asArray()(largeDim) <= MinTileSize) {
 			++it;

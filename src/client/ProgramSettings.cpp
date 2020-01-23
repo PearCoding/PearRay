@@ -54,6 +54,8 @@ po::options_description setup_cmd_options()
 			"Amount of horizontal tiles used in threading")
 		("rty", po::value<PR::uint32>(),
 			"Amount of vertical tiles used in threading")
+		("no-adaptive-tiling",
+			"Disable adaptive tiling used for better thread workload balance. Will improve performance of uniform scenes and makes reproducibility possible")
 	;
 
 	po::options_description scene_d("Scene[*]");
@@ -189,6 +191,8 @@ bool ProgramSettings::parse(int argc, char** argv)
 		ThreadCount = vm["threads"].as<PR::uint32>();
 	else if (!vm.count("config"))
 		ThreadCount = DEF_THREAD_COUNT;
+
+	AdaptiveTiling = (vm.count("no-adaptive-tiling") == 0);
 
 	if (vm.count("itx"))
 		ImageTileXCount = std::max<uint32>(1, vm["itx"].as<PR::uint32>());

@@ -92,6 +92,8 @@ int main(int argc, char** argv)
 		return -2;
 	}
 
+	env->renderSettings().useAdaptiveTiling = options.AdaptiveTiling;
+
 	// Setup renderFactory
 	auto renderFactory = env->createRenderFactory();
 	if (!renderFactory) {
@@ -132,7 +134,7 @@ int main(int argc, char** argv)
 		if (options.ShowProgress)
 			std::cout << "preprocess" << std::endl;
 
-		renderer->start(options.ThreadCount);
+		renderer->start(options.RenderTileXCount, options.RenderTileYCount, options.ThreadCount);
 
 		auto start		= sc::high_resolution_clock::now();
 		auto start_prog = start;
