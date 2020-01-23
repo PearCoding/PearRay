@@ -152,7 +152,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	Vector3fv d2 = p2 - p0;
 	Vector3fv m2 = p2.cross(p0);
 	vfloat s2	 = d2.dot(mR) + m2.dot(dR);
-	bfloat valid = (signbit(s2) == si);
+	bfloat valid = ~(signbit(s2) ^ si);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
@@ -160,7 +160,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	Vector3fv d1 = p1 - p2;
 	Vector3fv m1 = p1.cross(p2);
 	vfloat s1	 = d1.dot(mR) + m1.dot(dR);
-	valid		 = valid & (signbit(s1) == si);
+	valid		 = valid & ~(signbit(s1) ^ si);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
@@ -268,14 +268,14 @@ inline PR_LIB bfloat intersectPI_Opt(
 	// Edge 2
 	Vector3fv d2 = p2 - p0;
 	vfloat s2	 = d2.dot(mR) + m2.dot(dR);
-	bfloat valid = (signbit(s2) == si);
+	bfloat valid = ~(signbit(s2) ^ si);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
 	// Edge 3
 	Vector3fv d1 = p1 - p2;
 	vfloat s1	 = d1.dot(mR) + m1.dot(dR);
-	valid		 = valid & (signbit(s1) == si);
+	valid		 = valid & ~(signbit(s1) ^ si);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 

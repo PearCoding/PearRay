@@ -3,7 +3,7 @@
 #include "Platform.h"
 #include "PrettyPrint.h"
 #include "Profiler.h"
-#include "TriangleOptions.h"
+#include "config/TriangleOptions.h"
 #include "container/kdTreeBuilder.h"
 #include "container/kdTreeBuilderNaive.h"
 #include "container/kdTreeCollider.h"
@@ -138,7 +138,8 @@ void Mesh::constructCollider()
 {
 	//PR_LOG(L_DEBUG) << "Mesh " << name() << " Memory Footprint: " << PR_FMT_MEM(mBase->memoryFootprint()) << std::endl;
 
-	BUILDER builder(mBase.get(), [](void* observer, size_t f) {
+	BUILDER builder(
+		mBase.get(), [](void* observer, size_t f) {
 								MeshBase* mesh = reinterpret_cast<MeshBase*>(observer);
 								const uint32 ind1 = mesh->indices()[3*f];
 								const uint32 ind2 = mesh->indices()[3*f+1];
@@ -148,9 +149,9 @@ void Mesh::constructCollider()
 								Vector3f p2 = mesh->vertex(ind2);
 								Vector3f p3 = mesh->vertex(ind3);
 								return Triangle::getBoundingBox(p1,p2,p3); },
-					[](void*, size_t) {
-						return 4.0f;
-					});
+		[](void*, size_t) {
+			return 4.0f;
+		});
 
 #ifdef PR_DEBUG
 	constexpr bool withStat = true;

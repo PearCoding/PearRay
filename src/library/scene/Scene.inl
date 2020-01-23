@@ -1,8 +1,6 @@
 // IWYU pragma: private, include "scene/Scene.h"
 namespace PR {
 
-//#define PR_FORCE_SINGLE_TRACE
-
 template <typename Func>
 void Scene::traceRays(RayStream& rays, HitStream& hits, Func nonHit) const
 {
@@ -34,7 +32,7 @@ inline void _sceneCheckHit(const RayGroup& grp,
 		HitEntry entry;
 		entry.RayID		  = id + grp.offset();
 		entry.MaterialID  = simdpp::extract<K>(out.MaterialID);
-		entry.EntityID	= simdpp::extract<K>(out.EntityID);
+		entry.EntityID	  = simdpp::extract<K>(out.EntityID);
 		entry.PrimitiveID = simdpp::extract<K>(out.FaceID);
 		for (int i = 0; i < 3; ++i)
 			entry.Parameter[i] = simdpp::extract<K>(out.Parameter[i]);
@@ -77,7 +75,7 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 {
 	PR_PROFILE_THIS;
 
-#ifdef PR_FORCE_SINGLE_TRACE
+#ifdef PR_COLLIDER_FORCE_SINGLE_TRACE
 	for (size_t i = 0;
 		 i < grp.size();
 		 ++i) {
@@ -117,7 +115,7 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
 	}
-#endif //PR_FORCE_SINGLE_TRACE
+#endif //PR_COLLIDER_FORCE_SINGLE_TRACE
 }
 
 template <typename Func>
@@ -126,7 +124,7 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 {
 	PR_PROFILE_THIS;
 
-#ifdef PR_FORCE_SINGLE_TRACE
+#ifdef PR_COLLIDER_FORCE_SINGLE_TRACE
 	for (size_t i = 0;
 		 i < grp.size();
 		 ++i) {
@@ -166,7 +164,7 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
 	}
-#endif //PR_FORCE_SINGLE_TRACE
+#endif //PR_COLLIDER_FORCE_SINGLE_TRACE
 }
 
 bool Scene::traceSingleRay(const Ray& in, HitEntry& entry) const
@@ -189,7 +187,7 @@ bool Scene::traceSingleRay(const Ray& in, HitEntry& entry) const
 	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
 		entry.RayID		  = 0;
 		entry.MaterialID  = out.MaterialID;
-		entry.EntityID	= out.EntityID;
+		entry.EntityID	  = out.EntityID;
 		entry.PrimitiveID = out.FaceID;
 		for (int i = 0; i < 3; ++i)
 			entry.Parameter[i] = out.Parameter[i];

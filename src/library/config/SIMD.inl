@@ -1,5 +1,6 @@
 // IWYU pragma: private, include "PR_Config.h"
 #include "config/HW_Switch.inl"
+#include "config/HW_Features.inl"
 
 // SIMD
 // Always enable SSE2... everything below is too old anyway

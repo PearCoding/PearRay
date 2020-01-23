@@ -1,6 +1,7 @@
 #include "Build.h"
 #include "Profiler.h"
-#include "TriangleOptions.h"
+#include "config/ColliderOptions.h"
+#include "config/TriangleOptions.h"
 #include "config/Version.h"
 
 #include <sstream>
@@ -202,6 +203,9 @@ std::string getBuildString()
 		   << "; PackN: " << PR_SIMD_BANDWIDTH
 		   << "; TriCache: " << hasTriCache
 		   << "; TriIntM: " << PR_TRIANGLE_INTERSECTION_METHOD
+#ifdef PR_COLLIDER_FORCE_SINGLE_TRACE
+		   << "; SINGLE TRACE ONLY"
+#endif
 		   << "]";
 	return stream.str();
 }

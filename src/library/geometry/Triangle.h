@@ -2,7 +2,7 @@
 
 #include "BoundingBox.h"
 #include "TriangleIntersection.h"
-#include "TriangleOptions.h"
+#include "config/TriangleOptions.h"
 
 #include <utility>
 

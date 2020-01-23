@@ -8,6 +8,7 @@
 #include "ray/RayStream.h"
 #include "trace/HitStream.h"
 #include "trace/ShadowHit.h"
+#include "config/ColliderOptions.h"
 
 #include <string>
 #include <vector>

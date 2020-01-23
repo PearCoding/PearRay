@@ -1,0 +1,4 @@
+#pragma once
+
+// Force single ray intersection
+#cmakedefine PR_COLLIDER_FORCE_SINGLE_TRACE

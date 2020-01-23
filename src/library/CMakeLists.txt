@@ -34,9 +34,11 @@ set(PR_Src
   camera/ICamera.h
   config/Build.cpp
   config/Build.h
+  config/ColliderOptions.h.in
   config/Constants.inl
   config/HW_Switch.inl.in
   config/SIMD.inl
+  config/TriangleOptions.h.in
   config/Types.inl
   config/VectorGlue.inl
   config/Version.h.in
@@ -75,7 +77,6 @@ set(PR_Src
   geometry/Sphere.h
   geometry/Triangle.h
   geometry/TriangleIntersection.h
-  geometry/TriangleOptions.h.in
   infinitelight/IInfiniteLight.cpp
   infinitelight/IInfiniteLight.h
   integrator/IIntegrator.cpp

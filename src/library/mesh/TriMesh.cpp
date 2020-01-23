@@ -2,7 +2,7 @@
 #include "Logger.h"
 #include "Platform.h"
 #include "Profiler.h"
-#include "TriangleOptions.h"
+#include "config/TriangleOptions.h"
 #include "container/kdTreeCollider.h"
 #include "geometry/GeometryPoint.h"
 #include "math/Tangent.h"
@@ -35,7 +35,7 @@ TriMesh::~TriMesh()
 void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 {
 #ifdef PR_TRIANGLE_USE_CACHE
-	std::vector<float>& faceNormal	= mBase->userFaceAttrib(mInternal->FaceNormalAttrib);
+	std::vector<float>& faceNormal	  = mBase->userFaceAttrib(mInternal->FaceNormalAttrib);
 	std::vector<float>& faceMomentum0 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[0]);
 	std::vector<float>& faceMomentum1 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[1]);
 	std::vector<float>& faceMomentum2 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[2]);
@@ -57,7 +57,7 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   const Vector3fv p2 = promote(mBase->vertex(ind3));
 
 #ifdef PR_TRIANGLE_USE_CACHE
-									   const Vector3f N  = Vector3f(faceNormal[3 * f + 0],
+									   const Vector3f N	 = Vector3f(faceNormal[3 * f + 0],
 																	faceNormal[3 * f + 1],
 																	faceNormal[3 * f + 2]);
 									   const Vector3f m0 = Vector3f(faceMomentum0[3 * f + 0],
@@ -77,11 +77,11 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 										   uv,
 										   t); // Major bottleneck!
 #else
-									   bfloat hits = Triangle::intersect(
-										   in2,
-										   p0, p1, p2,
-										   uv,
-										   t); // Major bottleneck!
+				bfloat hits = Triangle::intersect(
+					in2,
+					p0, p1, p2,
+					uv,
+					t); // Major bottleneck!
 #endif
 
 									   out2.HitDistance = simdpp::blend(t, out2.HitDistance, hits);
@@ -89,7 +89,7 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
 									   out2.Parameter[2] = simdpp::make_zero();
-									   out2.MaterialID   = simdpp::make_uint(mBase->materialSlot(f)); // Has to be updated in entity!
+									   out2.MaterialID	 = simdpp::make_uint(mBase->materialSlot(f)); // Has to be updated in entity!
 
 									   out2.FaceID = simdpp::make_uint(f);
 									   //out2.EntityID; Ignore
@@ -99,7 +99,7 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 {
 #ifdef PR_TRIANGLE_USE_CACHE
-	std::vector<float>& faceNormal	= mBase->userFaceAttrib(mInternal->FaceNormalAttrib);
+	std::vector<float>& faceNormal	  = mBase->userFaceAttrib(mInternal->FaceNormalAttrib);
 	std::vector<float>& faceMomentum0 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[0]);
 	std::vector<float>& faceMomentum1 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[1]);
 	std::vector<float>& faceMomentum2 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[2]);
@@ -116,7 +116,7 @@ void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 								   float t;
 								   Vector2f uv;
 #ifdef PR_TRIANGLE_USE_CACHE
-								   const Vector3f N  = Vector3f(faceNormal[3 * f + 0],
+								   const Vector3f N	 = Vector3f(faceNormal[3 * f + 0],
 																faceNormal[3 * f + 1],
 																faceNormal[3 * f + 2]);
 								   const Vector3f m0 = Vector3f(faceMomentum0[3 * f + 0],
@@ -135,10 +135,10 @@ void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 									   N, m0, m1, m2,
 									   uv, t); //Major bottleneck!
 #else
-								   bool hit = Triangle::intersect(
-									   in2,
-									   mBase->vertex(ind1), mBase->vertex(ind2), mBase->vertex(ind3),
-									   uv, t); // Major bottleneck!
+				bool hit = Triangle::intersect(
+					in2,
+					mBase->vertex(ind1), mBase->vertex(ind2), mBase->vertex(ind3),
+					uv, t); // Major bottleneck!
 #endif
 
 								   if (!hit)
@@ -151,7 +151,7 @@ void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 								   out2.Parameter[2] = 0;
 
 								   out2.MaterialID = mBase->materialSlot(f); // Has to be updated in entity!
-								   out2.FaceID	 = static_cast<uint32>(f); // TODO: Maybe change to 64bit?
+								   out2.FaceID	   = static_cast<uint32>(f); // TODO: Maybe change to 64bit?
 																			 //out2.EntityID; Ignore
 							   });
 }
@@ -183,7 +183,7 @@ void TriMesh::setup()
 		Vector3f N = (p1 - p0).cross(p2 - p0);
 
 		for (size_t i = 0; i < 3; ++i) {
-			FaceNormal[3 * f + i]	= N(i);
+			FaceNormal[3 * f + i]	 = N(i);
 			FaceMomentum0[3 * f + i] = m0(i);
 			FaceMomentum1[3 * f + i] = m1(i);
 			FaceMomentum2[3 * f + i] = m2(i);
