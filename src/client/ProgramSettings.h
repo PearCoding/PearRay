@@ -12,13 +12,13 @@ public:
 
 	bool IsVerbose;
 	bool IsQuiet;
-	PR::uint32 ShowProgress;
+	PR::uint32 ShowProgress; // In seconds
 	bool ShowInformation;
 
 	bool Profile;
 
 	// Image
-	float ImgUpdate;
+	PR::uint32 ImgUpdate; // In seconds
 	std::string ImgExt;
 
 	// Threading

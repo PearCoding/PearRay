@@ -28,9 +28,7 @@ po::options_description setup_cmd_options()
 		("quiet,q", "Do not print messages into console")
 		("version", "Show version and exit")
 		("verbose,v", "Print detailed information into log file (and perhabs into console)")
-#ifdef PR_WITH_PROFILER
 		("profile,P", "Profile execution and dump results into a file")
-#endif
 		("progress,p", po::value<PR::uint32>()->implicit_value(1),
 			"Show progress (regardless if quiet or not)")
 		("information,I", "Print additional scene information into log file (and perhabs into console)")
@@ -42,7 +40,7 @@ po::options_description setup_cmd_options()
 
 	po::options_description image_d("Image");
 	image_d.add_options()
-		("img-update", po::value<float>()->default_value(0.0f),
+		("img-update", po::value<PR::uint32>()->default_value(0),
 			"Update interval in seconds where image will be saved. 0 disables it.")
 		("img-ext", po::value<std::string>()->default_value("png"),
 			"File extension for image output. Has to be a type supported by OpenImageIO.")
@@ -173,8 +171,8 @@ bool ProgramSettings::parse(int argc, char** argv)
 #endif
 
 	// Image
-	ImgUpdate = vm["img-update"].as<float>();
-	ImgExt	= vm["img-ext"].as<std::string>();
+	ImgUpdate = vm["img-update"].as<PR::uint32>();
+	ImgExt	  = vm["img-ext"].as<std::string>();
 
 	// Thread
 	if (vm.count("rtx"))

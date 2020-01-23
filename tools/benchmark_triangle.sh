@@ -24,7 +24,7 @@ fi
 # PI_CACHED SINGLE
 cmake . -DPR_TRIANGLE_USE_CACHE=ON -DPR_TRIANGLE_INTERSECTION_METHOD=1 -DPR_COLLIDER_FORCE_SINGLE_TRACE=ON  && ninja -j4
 if [ $? -eq 0 ]; then
-    $THIS_DIR/benchmark.py -o benchmarks/PI_CACHED_S -b $@
+    $THIS_DIR/benchmark.py -o benchmarks/PI_CACHED_S $@
 else
     echo "Compile failed"
     exit 1
