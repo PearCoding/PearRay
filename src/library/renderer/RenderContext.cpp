@@ -88,11 +88,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 		}
 	}
 
-	// Get other informations
-	PR_LOG(L_INFO) << "Rendering with: " << std::endl;
-	PR_LOG(L_INFO) << "  Lights: " << mLights.size() << std::endl;
-	PR_LOG(L_INFO) << "  Emissive Area: " << mEmissiveSurfaceArea << std::endl;
-
 	if (mEmissiveSurfaceArea < PR_EPSILON)
 		mEmissiveSurfaceArea = 1;
 
@@ -113,8 +108,19 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 
 	// Init modules
 	mIntegrator->onInit(this);
-
 	mOutputMap->clear();
+
+	// Get other informations
+	PR_LOG(L_INFO) << "Rendering with:  " << std::endl
+				   << "  Threads:       " << threadCount << std::endl
+				   << "  Tiles:         " << rtx << " x " << rty << std::endl
+				   << "  Entities:      " << mScene->entities().size() << std::endl
+				   << "  Lights:        " << mLights.size() << std::endl
+				   << "  Materials:     " << mScene->materials().size() << std::endl
+				   << "  Emissions:     " << mScene->emissions().size() << std::endl
+				   << "  InfLights:     " << mScene->infiniteLights().size() << std::endl
+				   << "  Emissive Area: " << mEmissiveSurfaceArea << std::endl
+				   << "  Scene Extent:  " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl;
 
 	// Start
 	mIntegrator->onStart();
@@ -123,7 +129,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 		mIntegrator->onNextPass(0, clear);
 	}
 
-	PR_LOG(L_INFO) << "Rendering with " << threadCount << " threads and " << rtx << "x" << rty << " tiles." << std::endl;
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
@@ -224,9 +229,7 @@ RenderTile* RenderContext::getNextTile()
 {
 	PR_PROFILE_THIS;
 
-	std::lock_guard<std::mutex> guard(mTileMutex);
 	RenderTile* tile = nullptr;
-
 	if (mRenderSettings.useAdaptiveTiling) {
 		// Try till we find a tile or all samples of this iteration are already rendered
 		while (tile == nullptr && !mTileMap->allFinished()) {
@@ -251,6 +254,7 @@ RenderTile* RenderContext::getNextTile()
 
 		mIterationCondition.notify_all();
 	} else {
+		std::lock_guard<std::mutex> guard(mTileMutex);
 		// Try till we find a tile or all samples of this iteration are already rendered
 		while (tile == nullptr && !mTileMap->allFinished()) {
 			tile = mTileMap->getNextTile(mIncrementalCurrentIteration);

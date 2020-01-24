@@ -30,11 +30,11 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 	PR_PROFILE_THIS;
 
 	mMaxTileSize		= context.viewSize();
-	mMaxTileSize.Width	= std::max(2, mMaxTileSize.Width / (int)rtx);
-	mMaxTileSize.Height = std::max(2, mMaxTileSize.Height / (int)rty);
+	mMaxTileSize.Width	= std::max<int32>(2, std::floor(mMaxTileSize.Width / (float)rtx));
+	mMaxTileSize.Height = std::max<int32>(2, std::floor(mMaxTileSize.Height / (float)rty));
 
-	const Size1i tx = std::max<int32>(2, std::ceil(context.viewSize().Width / (float)mMaxTileSize.Width));
-	const Size1i ty = std::max<int32>(2, std::ceil(context.viewSize().Height / (float)mMaxTileSize.Height));
+	const Size1i tx = std::ceil(context.viewSize().Width / (float)mMaxTileSize.Width);
+	const Size1i ty = std::ceil(context.viewSize().Height / (float)mMaxTileSize.Height);
 
 	// Clear previous data
 	clearMap();

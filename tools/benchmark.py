@@ -51,7 +51,11 @@ if __name__ == '__main__':
     if not os.path.exists(args.output):
         os.makedirs(args.output)
 
-    PR_DEF_ARGS = ["-P", "-t", str(args.threads)]
+    PR_DEF_ARGS = ["-P",
+                   "-t", str(args.threads),
+                   "--no-adaptive-tiling",# Benchmarks have to be reproducable
+                   ]
+                   
     if args.quite:
         PR_DEF_ARGS.append("-q")
     else:
