@@ -18,7 +18,7 @@ Experimental high accurate spectral path and ray tracer.
 
 :exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)** :exclamation:
 
-![Example render by PearRay. Constructed with Blender 2.80](examples/complex.png)
+![Example render by PearRay. Constructed with Blender 2.80](examples/complex.jpeg)
 
 ## Blender Addon
 
