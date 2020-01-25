@@ -14,9 +14,11 @@
 ![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)
 
-Experimental high accurate spectral stream path and ray tracer with Bidirect Raytracing, Distribution Raytracing and Photon Mapping support.
+Experimental high accurate spectral path and ray tracer.
 
 :exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)** :exclamation:
+
+![Example render by PearRay. Constructed with Blender 2.80](examples/complex.png)
 
 ## Blender Addon
 
