@@ -1,4 +1,0 @@
-#pragma once
-
-// Sort the hit stream to improve cache coherence
-#cmakedefine PR_STREAM_SORT_HITS

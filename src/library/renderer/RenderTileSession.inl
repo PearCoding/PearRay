@@ -37,7 +37,7 @@ inline void RenderTileSession::handleHits(Func1 nonhitFunc, Func2 hitFunc)
 		*mHitStream,
 		nonhitFunc);
 
-	mHitStream->sort();
+	mHitStream->setup(mTile->context()->settings().sortHits);
 	while (mHitStream->hasNextGroup()) {
 		ShadingGroup grp	= mHitStream->getNextGroup();
 		IEntity* entity		= nullptr;

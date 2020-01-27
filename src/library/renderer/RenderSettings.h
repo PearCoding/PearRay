@@ -27,6 +27,7 @@ public:
 	float timeScale;
 	TileMode tileMode;
 	bool useAdaptiveTiling;
+	bool sortHits;
 
 	// Film entries
 	uint32 filmWidth;

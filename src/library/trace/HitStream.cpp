@@ -1,6 +1,5 @@
 #include "HitStream.h"
 #include "Profiler.h"
-#include "config/StreamOptions.h"
 
 //FIXME: RadixSort has a bug which chrashes the software!
 //#define PR_USE_RADIXSORT
@@ -60,56 +59,56 @@ HitEntry HitStream::get(size_t index) const
 	return entry;
 }
 
-void HitStream::sort()
+void HitStream::setup(bool sort)
 {
-#ifdef PR_STREAM_SORT_HITS
 	PR_PROFILE_THIS;
 
 	if (currentSize() == 0)
 		return;
 
-	// Swapping the whole context is quite heavy,
-	// but a single vector solution requires additional memory
-	auto op = [&](size_t a, size_t b) {
-		std::swap(mRayID[a], mRayID[b]);
-		std::swap(mMaterialID[a], mMaterialID[b]);
-		std::swap(mEntityID[a], mEntityID[b]);
-		std::swap(mPrimitiveID[a], mPrimitiveID[b]);
-		for (int i = 0; i < 3; ++i)
-			std::swap(mParameter[i][a], mParameter[i][b]);
-		std::swap(mFlags[a], mFlags[b]);
-	};
+	if (sort) {
+		// Swapping the whole context is quite heavy,
+		// but a single vector solution requires additional memory
+		auto op = [&](size_t a, size_t b) {
+			std::swap(mRayID[a], mRayID[b]);
+			std::swap(mMaterialID[a], mMaterialID[b]);
+			std::swap(mEntityID[a], mEntityID[b]);
+			std::swap(mPrimitiveID[a], mPrimitiveID[b]);
+			for (int i = 0; i < 3; ++i)
+				std::swap(mParameter[i][a], mParameter[i][b]);
+			std::swap(mFlags[a], mFlags[b]);
+		};
 
 #ifdef PR_USE_RADIXSORT
-	uint32 mask = vem(currentSize());
-	radixSort(mEntityID.data(), op,
-			  0, currentSize() - 1, mask);
+		uint32 mask = vem(currentSize());
+		radixSort(mEntityID.data(), op,
+				  0, currentSize() - 1, mask);
 #else
-	quickSort(mEntityID.data(), op,
-			  0, currentSize() - 1);
+		quickSort(mEntityID.data(), op,
+				  0, currentSize() - 1);
 #endif
 
-	size_t end = currentSize();
-	for (size_t i = 0; i < end;) {
-		size_t start  = i;
-		uint32 entity = mEntityID[i];
+		size_t end = currentSize();
+		for (size_t i = 0; i < end;) {
+			size_t start  = i;
+			uint32 entity = mEntityID[i];
 
-		while (i < end && mEntityID[i] == entity) {
-			++i;
-		}
-		size_t s = i - start;
+			while (i < end && mEntityID[i] == entity) {
+				++i;
+			}
+			size_t s = i - start;
 
-		if (s > 2) {
+			if (s > 2) {
 #ifdef PR_USE_RADIXSORT
-			radixSort(mMaterialID.data(), op,
-					  start, i - 1, mask);
+				radixSort(mMaterialID.data(), op,
+						  start, i - 1, mask);
 #else
-			quickSort(mMaterialID.data(), op,
-					  start, i - 1);
+				quickSort(mMaterialID.data(), op,
+						  start, i - 1);
 #endif
+			}
 		}
 	}
-#endif //PR_STREAM_SORT_HITS
 
 	mCurrentPos = 0;
 }

@@ -29,7 +29,7 @@ public:
 	ENTITY_ID,
 	MATERIAL_ID
 	*/
-	void sort();
+	void setup(bool sort);
 	void reset();
 	ShadingGroup getNextGroup();
 

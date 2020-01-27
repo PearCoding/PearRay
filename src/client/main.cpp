@@ -93,6 +93,7 @@ int main(int argc, char** argv)
 	}
 
 	env->renderSettings().useAdaptiveTiling = options.AdaptiveTiling;
+	env->renderSettings().sortHits = options.SortHits;
 
 	// Setup renderFactory
 	auto renderFactory = env->createRenderFactory();

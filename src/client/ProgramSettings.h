@@ -24,6 +24,7 @@ public:
 	// Threading
 	PR::uint32 ThreadCount;
 	bool AdaptiveTiling;
+	bool SortHits; 
 	PR::uint32 RenderTileXCount;
 	PR::uint32 RenderTileYCount;
 	PR::uint32 ImageTileXCount;
