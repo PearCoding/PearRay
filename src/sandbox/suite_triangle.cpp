@@ -10,7 +10,6 @@
 #include <sstream>
 
 #include <tbb/blocked_range.h>
-#include <tbb/global_control.h>
 #include <tbb/parallel_for.h>
 
 using namespace PR;
