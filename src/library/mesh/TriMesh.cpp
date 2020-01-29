@@ -14,7 +14,6 @@
 
 namespace PR {
 struct TriMeshInternal {
-	size_t FaceNormalAttrib;
 	size_t FaceMomentumAttrib[3];
 };
 
@@ -35,7 +34,6 @@ TriMesh::~TriMesh()
 void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 {
 #ifdef PR_TRIANGLE_USE_CACHE
-	std::vector<float>& faceNormal	  = mBase->userFaceAttrib(mInternal->FaceNormalAttrib);
 	std::vector<float>& faceMomentum0 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[0]);
 	std::vector<float>& faceMomentum1 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[1]);
 	std::vector<float>& faceMomentum2 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[2]);
@@ -57,9 +55,6 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   const Vector3fv p2 = promote(mBase->vertex(ind3));
 
 #ifdef PR_TRIANGLE_USE_CACHE
-									   const Vector3f N	 = Vector3f(faceNormal[3 * f + 0],
-																	faceNormal[3 * f + 1],
-																	faceNormal[3 * f + 2]);
 									   const Vector3f m0 = Vector3f(faceMomentum0[3 * f + 0],
 																	faceMomentum0[3 * f + 1],
 																	faceMomentum0[3 * f + 2]);
@@ -73,7 +68,7 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   bfloat hits = Triangle::intersect(
 										   in2,
 										   p0, p1, p2,
-										   promote(N), promote(m0), promote(m1), promote(m2),
+										   promote(m0), promote(m1), promote(m2),
 										   uv,
 										   t); // Major bottleneck!
 #else
@@ -99,7 +94,6 @@ void TriMesh::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 {
 #ifdef PR_TRIANGLE_USE_CACHE
-	std::vector<float>& faceNormal	  = mBase->userFaceAttrib(mInternal->FaceNormalAttrib);
 	std::vector<float>& faceMomentum0 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[0]);
 	std::vector<float>& faceMomentum1 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[1]);
 	std::vector<float>& faceMomentum2 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[2]);
@@ -116,9 +110,6 @@ void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 								   float t;
 								   Vector2f uv;
 #ifdef PR_TRIANGLE_USE_CACHE
-								   const Vector3f N	 = Vector3f(faceNormal[3 * f + 0],
-																faceNormal[3 * f + 1],
-																faceNormal[3 * f + 2]);
 								   const Vector3f m0 = Vector3f(faceMomentum0[3 * f + 0],
 																faceMomentum0[3 * f + 1],
 																faceMomentum0[3 * f + 2]);
@@ -132,7 +123,7 @@ void TriMesh::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 								   bool hit = Triangle::intersect(
 									   in2,
 									   mBase->vertex(ind1), mBase->vertex(ind2), mBase->vertex(ind3),
-									   N, m0, m1, m2,
+									   m0, m1, m2,
 									   uv, t); //Major bottleneck!
 #else
 				bool hit = Triangle::intersect(
@@ -160,13 +151,12 @@ void TriMesh::setup()
 {
 #ifdef PR_TRIANGLE_USE_CACHE
 	const size_t facecount = mBase->faceCount();
-	std::vector<float> FaceNormal(3 * facecount);
 	std::vector<float> FaceMomentum0(3 * facecount);
 	std::vector<float> FaceMomentum1(3 * facecount);
 	std::vector<float> FaceMomentum2(3 * facecount);
 
 	for (size_t f = 0; f < facecount; ++f) {
-		const uint32 ind1 = mBase->indices()[3 * f];
+		const uint32 ind1 = mBase->indices()[3 * f + 0];
 		const uint32 ind2 = mBase->indices()[3 * f + 1];
 		const uint32 ind3 = mBase->indices()[3 * f + 2];
 
@@ -179,18 +169,13 @@ void TriMesh::setup()
 		Vector3f m1 = p1.cross(p2);
 		Vector3f m2 = p2.cross(p0);
 
-		// Cache face normal. The normal is not normalized and carries the 2*area in the norm
-		Vector3f N = (p1 - p0).cross(p2 - p0);
-
 		for (size_t i = 0; i < 3; ++i) {
-			FaceNormal[3 * f + i]	 = N(i);
 			FaceMomentum0[3 * f + i] = m0(i);
 			FaceMomentum1[3 * f + i] = m1(i);
 			FaceMomentum2[3 * f + i] = m2(i);
 		}
 	}
 
-	mInternal->FaceNormalAttrib		 = mBase->addUserFaceAttrib(FaceNormal);
 	mInternal->FaceMomentumAttrib[0] = mBase->addUserFaceAttrib(FaceMomentum0);
 	mInternal->FaceMomentumAttrib[1] = mBase->addUserFaceAttrib(FaceMomentum1);
 	mInternal->FaceMomentumAttrib[2] = mBase->addUserFaceAttrib(FaceMomentum2);

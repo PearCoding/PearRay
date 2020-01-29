@@ -62,7 +62,6 @@ public:
 		const Vector3t<T>& p1,
 		const Vector3t<T>& p2,
 		const Vector3t<T>& p3,
-		const Vector3t<T>& N,
 		const Vector3t<T>& m1, // Momentum
 		const Vector3t<T>& m2,
 		const Vector3t<T>& m3,
@@ -76,7 +75,7 @@ public:
 		(void)m3;
 		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
-		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, N, m1, m2, m3, uv, t);
+		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, m1, m2, m3, uv, t);
 #endif
 	}
 };

@@ -9,7 +9,6 @@ const Vector3f P0 = Vector3f(0, 0, 0);
 const Vector3f P1 = Vector3f(1, 0, 0);
 const Vector3f P2 = Vector3f(0, 1, 0);
 
-const Vector3f N  = (P1 - P0).cross(P2 - P0);
 const Vector3f M0 = P0.cross(P1);
 const Vector3f M1 = P1.cross(P2);
 const Vector3f M2 = P2.cross(P0);
@@ -165,7 +164,7 @@ PR_TEST("PI OPT Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectPI_Opt(makeRayPackage(),
 															 promote(P0), promote(P1), promote(P2),
-															 promote(N), promote(M0), promote(M1), promote(M2),
+															 promote(M0), promote(M1), promote(M2),
 															 uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
@@ -179,7 +178,7 @@ PR_TEST("PI OPT Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectPI_Opt(makeRayPackage(),
 															 promote(P0), promote(P2), promote(P1),
-															 -promote(N), -promote(M2), -promote(M1), -promote(M0),
+															 -promote(M2), -promote(M1), -promote(M0),
 															 uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
 	// Inconsistent due to edge errors! Sign can not be determined...
@@ -195,7 +194,7 @@ PR_TEST("PI OPT Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectPI_Opt(makeRay(i),
 															   P0, P1, P2,
-															   N, M0, M1, M2,
+															   M0, M1, M2,
 															   uv, t);
 		if (Res[i]) {
 			PR_CHECK_TRUE(res);
@@ -216,7 +215,7 @@ PR_TEST("PI OPT Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectPI_Opt(makeRay(i),
 															   P0, P2, P1,
-															   -N, -M2, -M1, -M0,
+															   -M2, -M1, -M0,
 															   uv, t);
 		if (Res[i]) {
 			PR_CHECK_TRUE(res);

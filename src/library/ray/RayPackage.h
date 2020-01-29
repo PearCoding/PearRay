@@ -93,14 +93,14 @@ public:
 		PR_ASSERT(Cached, "Cache first!");
 		return Momentum_Cache;
 #else
-		return Direction.cross(Origin);
+		return Origin.cross(Direction);
 #endif
 	}
 
 	inline void cache()
 	{
 #ifdef PR_RAY_CACHE_MOMENTUM
-		Momentum_Cache = Direction.cross(Origin);
+		Momentum_Cache = Origin.cross(Direction);
 #endif
 
 		Cached = true;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "math/SIMD.h"
+#include "ray/RayPackage.h"
 
-#define PR_TRIANGLE_INTERSECT_EPSILON (1e-4f)
+#define PR_TRIANGLE_INTERSECT_EPSILON (PR_EPSILON)
 namespace PR {
 namespace TriangleIntersection {
 // Moeller-Trumbore
@@ -91,27 +91,27 @@ inline PR_LIB bool intersectPI_NonOpt(
 	Vector3f mR = in.momentum();
 
 	// Edge 1
-	Vector3f d0 = p0 - p1;
+	Vector3f d0 = p1 - p0;
 	Vector3f m0 = p0.cross(p1);
 	float s0	= d0.dot(mR) + m0.dot(dR);
 	bool sign	= std::signbit(s0);
 
 	// Edge 2
-	Vector3f d2 = p2 - p0;
+	Vector3f d2 = p0 - p2;
 	Vector3f m2 = p2.cross(p0);
 	float s2	= d2.dot(mR) + m2.dot(dR);
 	if (PR_LIKELY(std::signbit(s2) != sign))
 		return false;
 
 	// Edge 3
-	Vector3f d1 = p1 - p2;
+	Vector3f d1 = p2 - p1;
 	Vector3f m1 = p1.cross(p2);
 	float s1	= d1.dot(mR) + m1.dot(dR);
 	if (PR_LIKELY(std::signbit(s1) != sign))
 		return false;
 
 	// Normal
-	Vector3f N = -d0.cross(d2);
+	Vector3f N = m0 + m1 + m2;
 	float k	   = dR.dot(N);
 	if (PR_LIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
@@ -143,13 +143,13 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	Vector3fv mR = in.momentum();
 
 	// Edge 1
-	Vector3fv d0 = p0 - p1;
+	Vector3fv d0 = p1 - p0;
 	Vector3fv m0 = p0.cross(p1);
 	vfloat s0	 = d0.dot(mR) + m0.dot(dR);
 	bfloat si	 = signbit(s0);
 
 	// Edge 2
-	Vector3fv d2 = p2 - p0;
+	Vector3fv d2 = p0 - p2;
 	Vector3fv m2 = p2.cross(p0);
 	vfloat s2	 = d2.dot(mR) + m2.dot(dR);
 	bfloat valid = ~(signbit(s2) ^ si);
@@ -157,7 +157,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 		return valid;
 
 	// Edge 3
-	Vector3fv d1 = p1 - p2;
+	Vector3fv d1 = p2 - p1;
 	Vector3fv m1 = p1.cross(p2);
 	vfloat s1	 = d1.dot(mR) + m1.dot(dR);
 	valid		 = valid & ~(signbit(s1) ^ si);
@@ -165,7 +165,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 		return valid;
 
 	// Normal
-	Vector3fv N = -d0.cross(d2);
+	Vector3fv N = m0 + m1 + m2;
 	vfloat k	= dR.dot(N);
 	valid		= valid & (abs(k) > PR_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
@@ -194,7 +194,6 @@ inline PR_LIB bool intersectPI_Opt(
 	const Vector3f& p0,
 	const Vector3f& p1,
 	const Vector3f& p2,
-	const Vector3f& N,
 	const Vector3f& m0,
 	const Vector3f& m1,
 	const Vector3f& m2,
@@ -205,28 +204,25 @@ inline PR_LIB bool intersectPI_Opt(
 	Vector3f mR = in.momentum();
 
 	// Edge 1
-	Vector3f d0 = p0 - p1;
-	//Vector3f m0 = p0.cross(p1);
+	Vector3f d0 = p1 - p0;
 	float s0  = d0.dot(mR) + m0.dot(dR);
 	bool sign = std::signbit(s0);
 
 	// Edge 2
-	Vector3f d2 = p2 - p0;
-	//Vector3f m2 = p2.cross(p0);
+	Vector3f d2 = p0 - p2;
 	float s2 = d2.dot(mR) + m2.dot(dR);
 	if (PR_LIKELY(std::signbit(s2) != sign))
 		return false;
 
 	// Edge 3
-	Vector3f d1 = p1 - p2;
-	//Vector3f m1 = p1.cross(p2);
+	Vector3f d1 = p2 - p1;
 	float s1 = d1.dot(mR) + m1.dot(dR);
 	if (PR_LIKELY(std::signbit(s1) != sign))
 		return false;
 
 	// Normal
-	//Vector3f N = -d0.cross(d2);
-	float k = dR.dot(N);
+	Vector3f N = m0 + m1 + m2;
+	float k	   = dR.dot(N);
 	if (PR_UNLIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
 
@@ -250,7 +246,6 @@ inline PR_LIB bfloat intersectPI_Opt(
 	const Vector3fv& p0,
 	const Vector3fv& p1,
 	const Vector3fv& p2,
-	const Vector3fv& N,
 	const Vector3fv& m0,
 	const Vector3fv& m1,
 	const Vector3fv& m2,
@@ -261,27 +256,28 @@ inline PR_LIB bfloat intersectPI_Opt(
 	Vector3fv mR = in.momentum();
 
 	// Edge 1
-	Vector3fv d0 = p0 - p1;
+	Vector3fv d0 = p1 - p0;
 	vfloat s0	 = d0.dot(mR) + m0.dot(dR);
 	bfloat si	 = signbit(s0);
 
 	// Edge 2
-	Vector3fv d2 = p2 - p0;
+	Vector3fv d2 = p0 - p2;
 	vfloat s2	 = d2.dot(mR) + m2.dot(dR);
 	bfloat valid = ~(signbit(s2) ^ si);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
 	// Edge 3
-	Vector3fv d1 = p1 - p2;
+	Vector3fv d1 = p2 - p1;
 	vfloat s1	 = d1.dot(mR) + m1.dot(dR);
 	valid		 = valid & ~(signbit(s1) ^ si);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
 	// Normal
-	vfloat k = dR.dot(N);
-	valid	 = valid & (abs(k) > PR_EPSILON);
+	Vector3fv N = m0 + m1 + m2;
+	vfloat k	= dR.dot(N);
+	valid		= valid & (abs(k) > PR_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
 		return valid;
 
