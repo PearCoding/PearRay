@@ -17,7 +17,7 @@ namespace bf				 = boost::filesystem;
 static const std::string DIR = "results/triangles/";
 constexpr size_t WIDTH		 = 200;
 constexpr size_t HEIGHT		 = 200;
-constexpr float TRI_HEIGHT	 = 0.6f;
+constexpr float TRI_HEIGHT	 = 1.0f;
 constexpr float SCENE_SCALE	 = 1.0f;
 
 constexpr std::array<float, 5> DEGREES = { 0, 30, 45, 60, 90 };
@@ -30,18 +30,16 @@ struct Triangle {
 	Vector3f M0;
 	Vector3f M1;
 	Vector3f M2;
-	Vector3f N;
 };
-static void setup_triangles(std::vector<Triangle>& triangles,
-							const Vector3f& p0, const Vector3f& p1, const Vector3f& p2,
-							size_t depth)
+static void setup_subdivision_triangles(std::vector<Triangle>& triangles,
+										const Vector3f& p0, const Vector3f& p1, const Vector3f& p2,
+										size_t depth)
 {
 	if (depth == 0) {
 		Vector3f m0 = p0.cross(p1);
 		Vector3f m1 = p1.cross(p2);
 		Vector3f m2 = p2.cross(p0);
-		Vector3f N	= (p1 - p0).cross(p2 - p0);
-		triangles.emplace_back(Triangle{ p0, p1, p2, m0, m1, m2, N });
+		triangles.emplace_back(Triangle{ p0, p1, p2, m0, m1, m2 });
 	} else {
 		Vector3f e0 = p1 - p0;
 		Vector3f e1 = p2 - p1;
@@ -61,20 +59,40 @@ static void setup_triangles(std::vector<Triangle>& triangles,
 		switch (dim) {
 		case 0: {
 			Vector3f mid = p0 + 0.5f * e0;
-			setup_triangles(triangles, p0, mid, p2, depth - 1);
-			setup_triangles(triangles, mid, p1, p2, depth - 1);
+			setup_subdivision_triangles(triangles, p0, mid, p2, depth - 1);
+			setup_subdivision_triangles(triangles, mid, p1, p2, depth - 1);
 		} break;
 		case 1: {
 			Vector3f mid = p1 + 0.5f * e1;
-			setup_triangles(triangles, p0, p1, mid, depth - 1);
-			setup_triangles(triangles, p0, mid, p2, depth - 1);
+			setup_subdivision_triangles(triangles, p0, p1, mid, depth - 1);
+			setup_subdivision_triangles(triangles, p0, mid, p2, depth - 1);
 		} break;
 		case 2: {
 			Vector3f mid = p2 + 0.5f * e2;
-			setup_triangles(triangles, mid, p1, p2, depth - 1);
-			setup_triangles(triangles, p0, p1, mid, depth - 1);
+			setup_subdivision_triangles(triangles, mid, p1, p2, depth - 1);
+			setup_subdivision_triangles(triangles, p0, p1, mid, depth - 1);
 		} break;
 		}
+	}
+}
+
+static void setup_overlay_triangles(std::vector<Triangle>& triangles,
+									const Vector3f& p0, const Vector3f& p1, const Vector3f& p2,
+									size_t depth)
+{
+	constexpr float SEP = 0.001f;
+	size_t count		= std::pow(2, depth);
+	triangles.reserve(count);
+
+	for (size_t i = 0; i < count; ++i) {
+		Vector3f d0 = p0 + Vector3f(0, 0, i * SEP);
+		Vector3f d1 = p1 + Vector3f(0, 0, i * SEP);
+		Vector3f d2 = p2 + Vector3f(0, 0, i * SEP);
+
+		Vector3f m0 = d0.cross(d1);
+		Vector3f m1 = d1.cross(d2);
+		Vector3f m2 = d2.cross(d0);
+		triangles.emplace_back(Triangle{ d0, d1, d2, m0, m1, m2 });
 	}
 }
 
@@ -103,12 +121,13 @@ static std::string prettytime(uint64 t)
 }
 
 template <typename Func>
-static void check_triangles(const char* name, const std::vector<Triangle>& triangles,
+static void check_triangles(const std::string& name, const std::vector<Triangle>& triangles,
 							float degree, Func f)
 {
 	tbb::static_partitioner partitioner;
 
-	const float tri_area = 0.5f * SCENE_SCALE * TRI_HEIGHT / triangles.size();
+	// Assuming all triangles are same size
+	const float tri_area = (triangles[0].P1 - triangles[0].P0).cross(triangles[0].P2 - triangles[0].P0).norm() / 2;
 	std::cout << name << "> " << triangles.size() << " [" << (int)degree << "°] TRI AREA: "
 			  << std::setprecision(-1) << std::defaultfloat << tri_area << std::endl;
 
@@ -117,8 +136,11 @@ static void check_triangles(const char* name, const std::vector<Triangle>& trian
 
 	std::vector<float> data(WIDTH * HEIGHT, 0.0f);
 	std::vector<float> ids(WIDTH * HEIGHT, 0.0f);
+	std::vector<float> hits(WIDTH * HEIGHT, 0.0f);
 
-	const auto start = std::chrono::high_resolution_clock::now();
+	size_t totalHits	  = 0.0;
+	size_t pixelsWithHits = 0;
+	const auto start	  = std::chrono::high_resolution_clock::now();
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		const float fy = y / static_cast<float>(HEIGHT - 1);
 
@@ -131,12 +153,16 @@ static void check_triangles(const char* name, const std::vector<Triangle>& trian
 					const Vector3f P = SCENE_SCALE * (Vector3f(fx, fy, 0) - D);
 					const Ray ray	 = Ray(P, D);
 
-					size_t id = 0;
-					float gt  = std::numeric_limits<float>::infinity();
+					size_t hitcount = 0;
+					size_t id		= 0;
+					float gt		= std::numeric_limits<float>::infinity();
 
 					// Normally it is enough to check till found, but for the sake of benchmarking we check all
 					for (size_t i = 0; i < triangles.size(); ++i) {
 						float lt = f(triangles[i], ray);
+						if (lt < std::numeric_limits<float>::infinity())
+							++hitcount;
+
 						if (lt < gt) {
 							id = i;
 							gt = lt;
@@ -146,6 +172,9 @@ static void check_triangles(const char* name, const std::vector<Triangle>& trian
 					if (gt < std::numeric_limits<float>::infinity()) {
 						data[y * WIDTH + x] = gt;
 						ids[y * WIDTH + x]	= id;
+						hits[y * WIDTH + x] = hitcount;
+						totalHits += hitcount;
+						++pixelsWithHits;
 					}
 				}
 			},
@@ -153,24 +182,33 @@ static void check_triangles(const char* name, const std::vector<Triangle>& trian
 
 		std::cout << "\r" << std::setprecision(2) << std::setw(6) << std::fixed << (fy * 100.0f) << "%" << std::flush;
 	}
-	std::cout << std::endl;
+	std::cout << "\r";
 	const auto end = std::chrono::high_resolution_clock::now();
 
+	double avgHits = 0.0;
+	if (pixelsWithHits > 0)
+		avgHits = totalHits / (double)pixelsWithHits;
+
 	const auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-	std::cout << "=> Full: "
+	std::cout << "=> FullT: "
 			  << prettytime(nano) << std::endl
-			  << "   Avg:  "
-			  << prettytime(nano / (WIDTH * HEIGHT * triangles.size())) << std::endl;
+			  << "   AvgT:  "
+			  << prettytime(nano / (WIDTH * HEIGHT * triangles.size())) << std::endl
+			  << "   AvgH:  "
+			  << std::setprecision(8) << std::fixed << avgHits << std::endl
+			  << "   AvgHR: "
+			  << std::setprecision(8) << std::fixed << 100 * avgHits / triangles.size() << "%" << std::endl;
 
 	std::stringstream path_stream;
 	path_stream << DIR << "/" << name << "_" << triangles.size() << "_" << (int)degree;
 	save_normalized_gray(path_stream.str() + "_t.png", WIDTH, HEIGHT, data);
 	save_normalized_gray(path_stream.str() + "_id.png", WIDTH, HEIGHT, ids);
+	save_normalized_gray(path_stream.str() + "_hits.png", WIDTH, HEIGHT, hits);
 }
 
-static void tri_mt(const std::vector<Triangle>& triangles, float degree)
+static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
-	check_triangles("mt", triangles, degree,
+	check_triangles(suffix + "_mt", triangles, degree,
 					[](const Triangle& tri, const Ray& ray) {
 						float t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -179,9 +217,9 @@ static void tri_mt(const std::vector<Triangle>& triangles, float degree)
 					});
 }
 
-static void tri_pi(const std::vector<Triangle>& triangles, float degree)
+static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
-	check_triangles("pi", triangles, degree,
+	check_triangles(suffix + "_pi", triangles, degree,
 					[](const Triangle& tri, const Ray& ray) {
 						float t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -190,9 +228,9 @@ static void tri_pi(const std::vector<Triangle>& triangles, float degree)
 					});
 }
 
-static void tri_pi_opt(const std::vector<Triangle>& triangles, float degree)
+static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
-	check_triangles("pi_opt", triangles, degree,
+	check_triangles(suffix + "_pi_opt", triangles, degree,
 					[](const Triangle& tri, const Ray& ray) {
 						float t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -201,7 +239,7 @@ static void tri_pi_opt(const std::vector<Triangle>& triangles, float degree)
 					});
 }
 
-typedef void (*MAT_FUNC)(const std::vector<Triangle>&, float);
+typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float);
 static MAT_FUNC s_funcs[] = {
 	tri_mt,
 	tri_pi,
@@ -215,14 +253,27 @@ void suite_triangle()
 
 	for (int i = 0; s_funcs[i]; ++i) {
 		for (auto depth : DEPTHS) {
-			std::vector<Triangle> triangles;
-			setup_triangles(triangles,
-							SCENE_SCALE * Vector3f(0, 0, 0),
-							SCENE_SCALE * Vector3f(1, 0, 0),
-							SCENE_SCALE * Vector3f(0.5f, TRI_HEIGHT, 0),
-							depth);
-			for (auto degree : DEGREES)
-				s_funcs[i](triangles, degree);
+			{
+				std::vector<Triangle> triangles;
+				setup_subdivision_triangles(triangles,
+											SCENE_SCALE * Vector3f(0.5f, TRI_HEIGHT, 0),
+											SCENE_SCALE * Vector3f(1, 0, 0),
+											SCENE_SCALE * Vector3f(0, 0, 0),
+											depth);
+				for (auto degree : DEGREES)
+					s_funcs[i]("sub", triangles, degree);
+			}
+			{
+				std::vector<Triangle> triangles;
+				setup_overlay_triangles(triangles,
+										SCENE_SCALE * Vector3f(0.5f, TRI_HEIGHT, 0),
+										SCENE_SCALE * Vector3f(1, 0, 0),
+										SCENE_SCALE * Vector3f(0, 0, 0),
+										depth);
+				for (auto degree : DEGREES)
+					s_funcs[i]("ovl", triangles, degree);
+			}
 		}
+		std::cout << "--------------------------------------------------------" << std::endl;
 	}
 }
