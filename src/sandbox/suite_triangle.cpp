@@ -15,12 +15,12 @@
 using namespace PR;
 namespace bf				 = boost::filesystem;
 static const std::string DIR = "results/triangles/";
-constexpr size_t WIDTH		 = 200;
-constexpr size_t HEIGHT		 = 200;
+constexpr size_t WIDTH		 = 500;
+constexpr size_t HEIGHT		 = 500;
 constexpr float TRI_HEIGHT	 = 1.0f;
 constexpr float SCENE_SCALE	 = 1.0f;
 
-constexpr std::array<float, 5> DEGREES = { 0, 30, 45, 60, 90 };
+constexpr std::array<float, 4> DEGREES = { 0, 30, 60, 90 };
 constexpr std::array<size_t, 5> DEPTHS = { 0, 2, 8, 14, 15 };
 
 struct Triangle {
@@ -142,7 +142,7 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	size_t pixelsWithHits = 0;
 	const auto start	  = std::chrono::high_resolution_clock::now();
 	for (size_t y = 0; y < HEIGHT; ++y) {
-		const float fy = y / static_cast<float>(HEIGHT - 1);
+		const float fy = 1 - y / static_cast<float>(HEIGHT - 1);
 
 		tbb::parallel_for(
 			tbb::blocked_range<size_t>(0, WIDTH),
@@ -180,7 +180,8 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 			},
 			partitioner);
 
-		std::cout << "\r" << std::setprecision(2) << std::setw(6) << std::fixed << (fy * 100.0f) << "%" << std::flush;
+		const float percentage = (1 - fy) * 100.0f;
+		std::cout << "\r" << std::setprecision(2) << std::setw(6) << std::fixed << percentage << "%" << std::flush;
 	}
 	std::cout << "\r";
 	const auto end = std::chrono::high_resolution_clock::now();
