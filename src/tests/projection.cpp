@@ -11,12 +11,12 @@ PR_TEST("Cos Hemi Normalized")
 
 	float pdf1;
 	auto V1 = Projection::cos_hemi(u1, u2, pdf1);
-	PR_CHECK_NEARLY_EQ(V1.squaredNorm(), 1)
+	PR_CHECK_NEARLY_EQ(V1.squaredNorm(), 1);
 
 	for (int i = 0; i < 10; ++i) {
 		float pdf2;
 		auto V2 = Projection::cos_hemi(u1, u2, 1, pdf2);
-		PR_CHECK_NEARLY_EQ(V2.squaredNorm(), 1)
+		PR_CHECK_NEARLY_EQ(V2.squaredNorm(), 1);
 	}
 }
 
