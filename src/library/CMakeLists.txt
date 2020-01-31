@@ -77,6 +77,9 @@ set(PR_Src
   geometry/Sphere.h
   geometry/Triangle.h
   geometry/TriangleIntersection.h
+  geometry/TriangleIntersection_MT.h
+  geometry/TriangleIntersection_PI.h
+  geometry/TriangleIntersection_WT.h
   infinitelight/IInfiniteLight.cpp
   infinitelight/IInfiniteLight.h
   integrator/IIntegrator.cpp

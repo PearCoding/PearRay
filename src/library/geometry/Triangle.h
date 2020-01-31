@@ -53,6 +53,8 @@ public:
 		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
 		return TriangleIntersection::intersectPI_NonOpt(in, p1, p2, p3, uv, t);
+#elif PR_TRIANGLE_INTERSECTION_METHOD == 2
+		return TriangleIntersection::intersectWT(in, p1, p2, p3, uv, t);
 #endif
 	}
 
@@ -76,6 +78,8 @@ public:
 		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
 		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, m1, m2, m3, uv, t);
+#elif PR_TRIANGLE_INTERSECTION_METHOD == 2
+		return TriangleIntersection::intersectWT(in, p1, p2, p3, uv, t);
 #endif
 	}
 };

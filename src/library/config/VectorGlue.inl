@@ -131,26 +131,29 @@ template <typename T>
 using Vector4t = Eigen::Matrix<T, 4, 1>;
 
 /* Precise vector types */
-using Vector2f  = Eigen::Vector2f;
-using Vector2i  = Eigen::Vector2i;
+using Vector2f	= Eigen::Vector2f;
+using Vector2i	= Eigen::Vector2i;
 using Vector2fv = Vector2t<vfloat>;
 using Vector2iv = Vector2t<vint32>;
 
-using Vector3f  = Eigen::Vector3f;
-using Vector3i  = Eigen::Vector3i;
+using Vector3f	= Eigen::Vector3f;
+using Vector3i	= Eigen::Vector3i;
 using Vector3fv = Vector3t<vfloat>;
 using Vector3iv = Vector3t<vint32>;
 
-using Vector4f  = Eigen::Vector4f;
-using Vector4i  = Eigen::Vector4i;
+using Vector4f	= Eigen::Vector4f;
+using Vector4i	= Eigen::Vector4i;
 using Vector4fv = Vector4t<vfloat>;
 using Vector4iv = Vector4t<vint32>;
 
 /* Utility functions */
 inline float blend(float trueCase, float falseCase, bool mask) { return mask ? trueCase : falseCase; }
-inline vfloat blend(vfloat trueCase, vfloat falseCase, bfloat mask) { return simdpp::blend(trueCase, falseCase, mask); }
-inline vuint32 blend(vuint32 trueCase, vuint32 falseCase, buint32 mask) { return simdpp::blend(trueCase, falseCase, mask); }
-inline vint32 blend(vint32 trueCase, vint32 falseCase, bint32 mask) { return simdpp::blend(trueCase, falseCase, mask); }
+template <typename MASK>
+inline vfloat blend(vfloat trueCase, vfloat falseCase, const simdpp::any_vec<PR_SIMD_BANDWIDTH, MASK>& mask) { return simdpp::blend(trueCase, falseCase, mask); }
+template <typename MASK>
+inline vuint32 blend(vuint32 trueCase, vuint32 falseCase, const simdpp::any_vec<PR_SIMD_BANDWIDTH, MASK>& mask) { return simdpp::blend(trueCase, falseCase, mask); }
+template <typename MASK>
+inline vint32 blend(vint32 trueCase, vint32 falseCase, const simdpp::any_vec<PR_SIMD_BANDWIDTH, MASK>& mask) { return simdpp::blend(trueCase, falseCase, mask); }
 
 using std::signbit;
 inline bfloat signbit(const vfloat& v) { return v < vfloat(0); }

@@ -18,8 +18,8 @@ namespace bf				 = boost::filesystem;
 static const std::string DIR = "results/triangles/";
 constexpr size_t WIDTH		 = 500;
 constexpr size_t HEIGHT		 = 500;
-constexpr float TRI_HEIGHT   = 1.0f;
-constexpr float SCENE_SCALE  = 1.0f;
+constexpr float TRI_HEIGHT	 = 1.0f;
+constexpr float SCENE_SCALE	 = 1.0f;
 
 constexpr std::array<float, 4> DEGREES = { 0, 30, 60, 90 };
 constexpr std::array<size_t, 5> DEPTHS = { 0, 2, 8, 14, 15 };
@@ -132,7 +132,7 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	std::cout << name << "> " << triangles.size() << " [" << (int)degree << "°] TRI AREA: "
 			  << std::setprecision(-1) << std::defaultfloat << tri_area << std::endl;
 
-	const float rad  = degree * PR_PI / 180.0f;
+	const float rad	 = degree * PR_PI / 180.0f;
 	const Vector3f D = Vector3f(0, std::sin(rad), std::cos(rad));
 
 	std::vector<float> data(WIDTH * HEIGHT, 0.0f);
@@ -152,7 +152,7 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 					const float fx = x / static_cast<float>(WIDTH - 1);
 
 					const Vector3f P = SCENE_SCALE * (Vector3f(fx, fy, 0) - D);
-					const Ray ray	= Ray(P, D);
+					const Ray ray	 = Ray(P, D);
 
 					size_t hitcount = 0;
 					size_t id		= 0;
@@ -172,7 +172,7 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 
 					if (gt < std::numeric_limits<float>::infinity()) {
 						data[y * WIDTH + x] = gt;
-						ids[y * WIDTH + x]  = id;
+						ids[y * WIDTH + x]	= id;
 						hits[y * WIDTH + x] = hitcount;
 						totalHits += hitcount;
 						++pixelsWithHits;
@@ -219,6 +219,17 @@ static void tri_mt(const std::string& suffix, const std::vector<Triangle>& trian
 					});
 }
 
+static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+{
+	check_triangles(suffix + "_wt", triangles, degree,
+					[](const Triangle& tri, const Ray& ray) {
+						float t = std::numeric_limits<float>::infinity();
+						Vector2f uv;
+						TriangleIntersection::intersectWT(ray, tri.P0, tri.P1, tri.P2, uv, t);
+						return t;
+					});
+}
+
 static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
 	check_triangles(suffix + "_pi", triangles, degree,
@@ -243,6 +254,7 @@ static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& t
 
 typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float);
 static MAT_FUNC s_funcs[] = {
+	tri_wt,
 	tri_mt,
 	tri_pi,
 	tri_pi_opt,
