@@ -182,11 +182,6 @@ std::string getBuildString()
 #else
 	constexpr bool hasProfiler = false;
 #endif
-#ifdef PR_TRIANGLE_USE_CACHE
-	constexpr bool hasTriCache = true;
-#else
-	constexpr bool hasTriCache = false;
-#endif
 
 	std::stringstream stream;
 	stream << std::boolalpha
@@ -201,7 +196,6 @@ std::string getBuildString()
 		   << ">; Asserts: " << hasAsserts
 		   << "; Profile: " << hasProfiler
 		   << "; PackN: " << PR_SIMD_BANDWIDTH
-		   << "; TriCache: " << hasTriCache
 		   << "; TriIntM: " << PR_TRIANGLE_INTERSECTION_METHOD
 #ifdef PR_COLLIDER_FORCE_SINGLE_TRACE
 		   << "; SINGLE TRACE ONLY"

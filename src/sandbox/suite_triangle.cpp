@@ -1,5 +1,6 @@
 #define PR_RAY_CACHE_MOMENTUM
 #include "geometry/TriangleIntersection.h"
+#include "geometry/TriangleIntersection_BW.h"
 #include "image_io.h"
 #include "ray/RayPackage.h"
 
@@ -24,23 +25,42 @@ constexpr float SCENE_SCALE	 = 1.0f;
 constexpr std::array<float, 4> DEGREES = { 0, 30, 60, 90 };
 constexpr std::array<size_t, 5> DEPTHS = { 0, 2, 8, 14, 15 };
 
+using Vector3fS = Eigen::Matrix<float, 3, 1, Eigen::DontAlign>;
 struct Triangle {
-	Vector3f P0;
-	Vector3f P1;
-	Vector3f P2;
-	Vector3f M0;
-	Vector3f M1;
-	Vector3f M2;
+	Vector3fS P0;
+	Vector3fS P1;
+	Vector3fS P2;
+	Vector3fS M0;
+	Vector3fS M1;
+	Vector3fS M2;
+	float BW9Mat[9];
+	int32 BW9FixedColumn;
+	float BW12Mat[12];
 };
+
+static void addTriangle(std::vector<Triangle>& triangles,
+						const Vector3f& p0, const Vector3f& p1, const Vector3f& p2)
+{
+	Triangle tri;
+	tri.P0 = p0;
+	tri.P1 = p1;
+	tri.P2 = p2;
+	tri.M0 = p0.cross(p1);
+	tri.M1 = p1.cross(p2);
+	tri.M2 = p2.cross(p0);
+
+	TriangleIntersection::constructBW9Matrix(p0, p1, p2, tri.BW9Mat, tri.BW9FixedColumn);
+	TriangleIntersection::constructBW12Matrix(p0, p1, p2, tri.BW12Mat);
+
+	triangles.emplace_back(tri);
+}
+
 static void setup_subdivision_triangles(std::vector<Triangle>& triangles,
 										const Vector3f& p0, const Vector3f& p1, const Vector3f& p2,
 										size_t depth)
 {
 	if (depth == 0) {
-		Vector3f m0 = p0.cross(p1);
-		Vector3f m1 = p1.cross(p2);
-		Vector3f m2 = p2.cross(p0);
-		triangles.emplace_back(Triangle{ p0, p1, p2, m0, m1, m2 });
+		addTriangle(triangles, p0, p1, p2);
 	} else {
 		Vector3f e0 = p1 - p0;
 		Vector3f e1 = p2 - p1;
@@ -90,10 +110,7 @@ static void setup_overlay_triangles(std::vector<Triangle>& triangles,
 		Vector3f d1 = p1 + Vector3f(0, 0, i * SEP);
 		Vector3f d2 = p2 + Vector3f(0, 0, i * SEP);
 
-		Vector3f m0 = d0.cross(d1);
-		Vector3f m1 = d1.cross(d2);
-		Vector3f m2 = d2.cross(d0);
-		triangles.emplace_back(Triangle{ d0, d1, d2, m0, m1, m2 });
+		addTriangle(triangles, d0, d1, d2);
 	}
 }
 
@@ -160,13 +177,15 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 
 					// Normally it is enough to check till found, but for the sake of benchmarking we check all
 					for (size_t i = 0; i < triangles.size(); ++i) {
-						float lt = f(triangles[i], ray);
-						if (lt < std::numeric_limits<float>::infinity())
+						float lt;
+						bool hit = f(triangles[i], ray, lt);
+						if (hit) {
 							++hitcount;
 
-						if (lt < gt) {
-							id = i;
-							gt = lt;
+							if (lt < gt) {
+								id = i;
+								gt = lt;
+							}
 						}
 					}
 
@@ -211,53 +230,71 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
 	check_triangles(suffix + "_mt", triangles, degree,
-					[](const Triangle& tri, const Ray& ray) {
-						float t = std::numeric_limits<float>::infinity();
+					[](const Triangle& tri, const Ray& ray, float& t) {
+						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
-						TriangleIntersection::intersectMT(ray, tri.P0, tri.P1, tri.P2, uv, t);
-						return t;
+						return TriangleIntersection::intersectMT(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
 static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
 	check_triangles(suffix + "_wt", triangles, degree,
-					[](const Triangle& tri, const Ray& ray) {
-						float t = std::numeric_limits<float>::infinity();
+					[](const Triangle& tri, const Ray& ray, float& t) {
+						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
-						TriangleIntersection::intersectWT(ray, tri.P0, tri.P1, tri.P2, uv, t);
-						return t;
+						return TriangleIntersection::intersectWT(ray, tri.P0, tri.P1, tri.P2, uv, t);
+					});
+}
+
+static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+{
+	check_triangles(suffix + "_bw9", triangles, degree,
+					[](const Triangle& tri, const Ray& ray, float& t) {
+						t = std::numeric_limits<float>::infinity();
+						Vector2f uv;
+						return TriangleIntersection::intersectBW9(ray, tri.BW9Mat, tri.BW9FixedColumn, uv, t);
+					});
+}
+
+static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+{
+	check_triangles(suffix + "_bw12", triangles, degree,
+					[](const Triangle& tri, const Ray& ray, float& t) {
+						t = std::numeric_limits<float>::infinity();
+						Vector2f uv;
+						return TriangleIntersection::intersectBW12(ray, tri.BW12Mat, uv, t);
 					});
 }
 
 static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
 	check_triangles(suffix + "_pi", triangles, degree,
-					[](const Triangle& tri, const Ray& ray) {
-						float t = std::numeric_limits<float>::infinity();
+					[](const Triangle& tri, const Ray& ray, float& t) {
+						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
-						TriangleIntersection::intersectPI_NonOpt(ray, tri.P0, tri.P1, tri.P2, uv, t);
-						return t;
+						return TriangleIntersection::intersectPI_NonOpt(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
 static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
 {
 	check_triangles(suffix + "_pi_opt", triangles, degree,
-					[](const Triangle& tri, const Ray& ray) {
-						float t = std::numeric_limits<float>::infinity();
+					[](const Triangle& tri, const Ray& ray, float& t) {
+						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
-						TriangleIntersection::intersectPI_Opt(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
-						return t;
+						return TriangleIntersection::intersectPI_Opt(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
 					});
 }
 
 typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float);
 static MAT_FUNC s_funcs[] = {
-	tri_wt,
+	tri_bw12,
+	tri_bw9,
 	tri_mt,
 	tri_pi,
 	tri_pi_opt,
+	tri_wt,
 	nullptr
 };
 

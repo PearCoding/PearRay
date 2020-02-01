@@ -77,6 +77,7 @@ set(PR_Src
   geometry/Sphere.h
   geometry/Triangle.h
   geometry/TriangleIntersection.h
+  geometry/TriangleIntersection_BW.h
   geometry/TriangleIntersection_MT.h
   geometry/TriangleIntersection_PI.h
   geometry/TriangleIntersection_WT.h
@@ -114,10 +115,16 @@ set(PR_Src
   mesh/MeshFactory.cpp
   mesh/MeshFactory.h
   mesh/MeshInfo.h
+  mesh/TriMeshBW9.cpp
+  mesh/TriMeshBW9.h
+  mesh/TriMeshBW12.cpp
+  mesh/TriMeshBW12.h
   mesh/TriMeshMT.cpp
   mesh/TriMeshMT.h
   mesh/TriMeshPI.cpp
   mesh/TriMeshPI.h
+  mesh/TriMeshPIOpt.cpp
+  mesh/TriMeshPIOpt.h
   mesh/TriMeshWT.cpp
   mesh/TriMeshWT.h
   path/LightPath.cpp

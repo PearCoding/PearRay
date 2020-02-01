@@ -1,6 +1,6 @@
 #include "geometry/Triangle.h"
 #include "geometry/TriangleIntersection.h"
-//#include "geometry/TriangleIntersection_BW.h"
+#include "geometry/TriangleIntersection_BW.h"
 #include "math/SIMD.h"
 
 #include "Test.h"
@@ -274,6 +274,148 @@ PR_TEST("WT Intersects CW")
 		const bool res = TriangleIntersection::intersectWT(makeRay(i),
 														   P0, P2, P1,
 														   uv, t);
+		if (Res[i])
+			PR_CHECK_TRUE(res);
+		else
+			PR_CHECK_FALSE(res);
+	}
+}
+
+////////////////////////////////////
+
+PR_TEST("BW 9 Intersects CCW [V]")
+{
+	float mat[9];
+	int fixedColumn;
+	TriangleIntersection::constructBW9Matrix(P0, P1, P2, mat, fixedColumn);
+
+	Vector2fv uv;
+	vfloat t;
+	const bfloat res = TriangleIntersection::intersectBW9(makeRayPackage(),
+														  mat, fixedColumn,
+														  uv, t);
+	PR_CHECK_TRUE(extract<0>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_FALSE(extract<3>(res));
+}
+
+PR_TEST("BW 9 Intersects CW [V]")
+{
+	float mat[9];
+	int fixedColumn;
+	TriangleIntersection::constructBW9Matrix(P0, P1, P2, mat, fixedColumn);
+
+	Vector2fv uv;
+	vfloat t;
+	const bfloat res = TriangleIntersection::intersectBW9(makeRayPackage(),
+														  mat, fixedColumn,
+														  uv, t);
+	PR_CHECK_TRUE(extract<0>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_FALSE(extract<3>(res));
+}
+
+PR_TEST("BW 9 Intersects CCW")
+{
+	float mat[9];
+	int fixedColumn;
+	TriangleIntersection::constructBW9Matrix(P0, P1, P2, mat, fixedColumn);
+
+	for (size_t i = 0; i < 4; ++i) {
+		Vector2f uv;
+		float t;
+		const bool res = TriangleIntersection::intersectBW9(makeRay(i),
+															mat, fixedColumn,
+															uv, t);
+		if (Res[i])
+			PR_CHECK_TRUE(res);
+		else
+			PR_CHECK_FALSE(res);
+	}
+}
+
+PR_TEST("BW 9 Intersects CW")
+{
+	float mat[9];
+	int fixedColumn;
+	TriangleIntersection::constructBW9Matrix(P0, P1, P2, mat, fixedColumn);
+	for (size_t i = 0; i < 4; ++i) {
+		Vector2f uv;
+		float t;
+		const bool res = TriangleIntersection::intersectBW9(makeRay(i),
+															mat, fixedColumn,
+															uv, t);
+		if (Res[i])
+			PR_CHECK_TRUE(res);
+		else
+			PR_CHECK_FALSE(res);
+	}
+}
+
+////////////////////////////////////
+
+PR_TEST("BW 12 Intersects CCW [V]")
+{
+	float mat[12];
+	TriangleIntersection::constructBW12Matrix(P0, P1, P2, mat);
+
+	Vector2fv uv;
+	vfloat t;
+	const bfloat res = TriangleIntersection::intersectBW12(makeRayPackage(),
+														   mat,
+														   uv, t);
+	PR_CHECK_TRUE(extract<0>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_FALSE(extract<3>(res));
+}
+
+PR_TEST("BW 12 Intersects CW [V]")
+{
+	float mat[12];
+	TriangleIntersection::constructBW12Matrix(P0, P1, P2, mat);
+
+	Vector2fv uv;
+	vfloat t;
+	const bfloat res = TriangleIntersection::intersectBW12(makeRayPackage(),
+														   mat,
+														   uv, t);
+	PR_CHECK_TRUE(extract<0>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_FALSE(extract<3>(res));
+}
+
+PR_TEST("BW 12 Intersects CCW")
+{
+	float mat[12];
+	TriangleIntersection::constructBW12Matrix(P0, P1, P2, mat);
+
+	for (size_t i = 0; i < 4; ++i) {
+		Vector2f uv;
+		float t;
+		const bool res = TriangleIntersection::intersectBW12(makeRay(i),
+															 mat,
+															 uv, t);
+		if (Res[i])
+			PR_CHECK_TRUE(res);
+		else
+			PR_CHECK_FALSE(res);
+	}
+}
+
+PR_TEST("BW 12 Intersects CW")
+{
+	float mat[12];
+	TriangleIntersection::constructBW12Matrix(P0, P1, P2, mat);
+	for (size_t i = 0; i < 4; ++i) {
+		Vector2f uv;
+		float t;
+		const bool res = TriangleIntersection::intersectBW12(makeRay(i),
+															 mat,
+															 uv, t);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else

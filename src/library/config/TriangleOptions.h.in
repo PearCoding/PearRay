@@ -1,11 +1,9 @@
 #pragma once
 
-// Use cache inside TriMesh
-#cmakedefine PR_TRIANGLE_USE_CACHE
-
 // 0 Moeller
 // 1 Pluecker
-// 2 Watertight
-// 3 Baldwin-Weber 9
-// 4 Baldwin-Weber 12
+// 2 Pluecker Optimized (Cached)
+// 3 Watertight
+// 4 Baldwin-Weber 9
+// 5 Baldwin-Weber 12
 #define PR_TRIANGLE_INTERSECTION_METHOD ${PR_TRIANGLE_INTERSECTION_METHOD}

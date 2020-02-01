@@ -3,16 +3,20 @@
 #include "Mesh.h"
 
 namespace PR {
-class PR_LIB TriMeshPI : public Mesh {
+class PR_LIB TriMeshBW12 : public Mesh {
 public:
-	TriMeshPI(const std::string& name,
+	TriMeshBW12(const std::string& name,
 			  std::unique_ptr<MeshBase>&& mesh_base,
 			  const std::shared_ptr<Cache>& cache,
 			  bool useCache);
-	virtual ~TriMeshPI();
+	virtual ~TriMeshBW12();
 
 protected:
 	void checkCollisionLocal(const RayPackage& in, CollisionOutput& out) override;
 	void checkCollisionLocal(const Ray& in, SingleCollisionOutput& out) override;
+
+private:
+	void setup();
+	std::unique_ptr<class TriMeshBW12Internal> mInternal;
 };
 } // namespace PR

@@ -78,8 +78,8 @@ option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 
 # Algorithm options
 option(PR_COLLIDER_FORCE_SINGLE_TRACE	"Force single ray tracing in every trace path" OFF)
-option(PR_TRIANGLE_USE_CACHE			"Use cache mechanism to potentially speed up intersection" ON)
-set(PR_TRIANGLE_INTERSECTION_METHOD 1 CACHE STRING "0 = Moeller-Trumbore, 1 = Pluecker")
+set(PR_TRIANGLE_INTERSECTION_METHOD 1 CACHE STRING 
+	"0 = Moeller-Trumbore, 1 = Pluecker, 2 = Pluecker Optimized (Cached), 3 = Watertight, 4 = Baldwin-Weber 9, 5 = Baldwin-Weber 12")
 
 option(BUILD_SHARED_LIBS		"Build shared library" OFF)
 

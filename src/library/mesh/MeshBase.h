@@ -5,6 +5,7 @@
 #include "serialization/ISerializable.h"
 
 #include <vector>
+#include <unordered_map>
 
 namespace PR {
 class Normal;
@@ -80,10 +81,23 @@ public:
 
 	BoundingBox constructBoundingBox() const;
 
-	size_t addUserVertexAttrib(const std::vector<float>& cnt, size_t channels);
+	size_t addUserVertexAttrib(const std::string& name, const std::vector<float>& cnt, size_t channels);
 	inline std::vector<float>& userVertexAttrib(size_t id) { return mUserVertexAttribs.at(id); }
-	size_t addUserFaceAttrib(const std::vector<float>& cnt, size_t channels);
+	size_t addUserFaceAttrib(const std::string& name, const std::vector<float>& cnt, size_t channels);
 	inline std::vector<float>& userFaceAttrib(size_t id) { return mUserFaceAttribs.at(id); }
+
+	size_t addUserVertexAttribU32(const std::string& name, const std::vector<uint32>& cnt, size_t channels);
+	inline std::vector<uint32>& userVertexAttribU32(size_t id) { return mUserVertexAttribsU32.at(id); }
+	size_t addUserFaceAttribU32(const std::string& name, const std::vector<uint32>& cnt, size_t channels);
+	inline std::vector<uint32>& userFaceAttribU32(size_t id) { return mUserFaceAttribsU32.at(id); }
+
+	size_t addUserVertexAttribU8(const std::string& name, const std::vector<uint8>& cnt, size_t channels);
+	inline std::vector<uint8>& userVertexAttribU8(size_t id) { return mUserVertexAttribsU8.at(id); }
+	size_t addUserFaceAttribU8(const std::string& name, const std::vector<uint8>& cnt, size_t channels);
+	inline std::vector<uint8>& userFaceAttribU8(size_t id) { return mUserFaceAttribsU8.at(id); }
+
+	size_t userVertexID(const std::string& name, bool& found) const;
+	size_t userFaceID(const std::string& name, bool& found) const;
 
 	// Modifiers
 	void buildNormals();
@@ -103,6 +117,13 @@ private:
 
 	std::vector<std::vector<float>> mUserVertexAttribs;
 	std::vector<std::vector<float>> mUserFaceAttribs;
+	std::vector<std::vector<uint32>> mUserVertexAttribsU32;
+	std::vector<std::vector<uint32>> mUserFaceAttribsU32;
+	std::vector<std::vector<uint8>> mUserVertexAttribsU8;
+	std::vector<std::vector<uint8>> mUserFaceAttribsU8;
+
+	std::unordered_map<std::string, size_t> mUserVertexID;
+	std::unordered_map<std::string, size_t> mUserFaceID;
 };
 } // namespace PR
 
