@@ -1,5 +1,6 @@
 #include "geometry/Triangle.h"
 #include "geometry/TriangleIntersection.h"
+//#include "geometry/TriangleIntersection_BW.h"
 #include "math/SIMD.h"
 
 #include "Test.h"
@@ -245,9 +246,8 @@ PR_TEST("WT Intersects CW [V]")
 														 promote(P0), promote(P2), promote(P1),
 														 uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
-	// Inconsistent due to edge errors! Sign can not be determined...
-	//PR_CHECK_TRUE(extract<1>(res));
-	//PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
 	PR_CHECK_FALSE(extract<3>(res));
 }
 
