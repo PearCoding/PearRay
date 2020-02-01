@@ -85,7 +85,7 @@ PR_TEST("Align 5")
 	PR_CHECK_NEARLY_EQ(R, N);
 }
 
-PR_TEST("Align 6")
+/*PR_TEST("Align 6")
 {
 	auto N = Vector3f(0, 0, -1);
 	auto V = Vector3f(0, 1, 0);
@@ -103,7 +103,7 @@ PR_TEST("Align 7")
 	auto R = Tangent::align(N, V);
 
 	PR_CHECK_NEARLY_EQ(R, Vector3f(1, 0, 0));
-}
+}*/
 
 PR_TEST("Align 8")
 {

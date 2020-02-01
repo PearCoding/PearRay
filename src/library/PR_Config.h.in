@@ -55,6 +55,7 @@
 #endif
 
 #define PR_ALIGN(x) alignas(x)
+#define PR_UNUSED(expr) do { (void)(expr); } while (false)
 
 #ifdef PR_CC_MSC
 #define PR_DEBUG_BREAK() __debugbreak()
