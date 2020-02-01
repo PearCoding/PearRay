@@ -1,11 +1,11 @@
-#include "TriMesh.h"
+#include "MeshFactory.h"
 #include "TriMeshMT.h"
 #include "TriMeshPI.h"
 #include "TriMeshWT.h"
 #include "config/TriangleOptions.h"
 
 namespace PR {
-std::shared_ptr<Mesh> TriMesh::create(const std::string& name,
+std::shared_ptr<Mesh> MeshFactory::create(const std::string& name,
 									  std::unique_ptr<MeshBase>&& mesh_base,
 									  const std::shared_ptr<Cache>& cache,
 									  bool useCache)

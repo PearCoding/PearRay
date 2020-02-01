@@ -11,7 +11,7 @@
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshFactory.h"
 
 #include <boost/filesystem.hpp>
 

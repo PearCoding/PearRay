@@ -3,7 +3,7 @@
 #include "Mesh.h"
 
 namespace PR {
-class PR_LIB TriMesh {
+class PR_LIB MeshFactory {
 public:
 	static std::shared_ptr<Mesh> create(const std::string& name,
 										std::unique_ptr<MeshBase>&& mesh_base,

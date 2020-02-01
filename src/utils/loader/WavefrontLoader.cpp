@@ -5,7 +5,7 @@
 #include "SceneLoadContext.h"
 #include "cache/Cache.h"
 #include "mesh/MeshBase.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshFactory.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -107,7 +107,7 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 
 		mesh->triangulate();
 		bool useCache = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode));
-		ctx.Env->addMesh(name, TriMesh::create(name, std::move(mesh), ctx.Env->cache(), useCache));
+		ctx.Env->addMesh(name, MeshFactory::create(name, std::move(mesh), ctx.Env->cache(), useCache));
 		PR_LOG(L_DEBUG) << "Added mesh " << name << std::endl;
 	}
 }

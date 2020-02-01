@@ -111,9 +111,9 @@ set(PR_Src
   mesh/MeshBase.cpp
   mesh/MeshBase.h
   mesh/MeshBase.inl
+  mesh/MeshFactory.cpp
+  mesh/MeshFactory.h
   mesh/MeshInfo.h
-  mesh/TriMesh.cpp
-  mesh/TriMesh.h
   mesh/TriMeshMT.cpp
   mesh/TriMeshMT.h
   mesh/TriMeshPI.cpp

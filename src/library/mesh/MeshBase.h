@@ -80,9 +80,9 @@ public:
 
 	BoundingBox constructBoundingBox() const;
 
-	size_t addUserVertexAttrib(const std::vector<float>& cnt);
+	size_t addUserVertexAttrib(const std::vector<float>& cnt, size_t channels);
 	inline std::vector<float>& userVertexAttrib(size_t id) { return mUserVertexAttribs.at(id); }
-	size_t addUserFaceAttrib(const std::vector<float>& cnt);
+	size_t addUserFaceAttrib(const std::vector<float>& cnt, size_t channels);
 	inline std::vector<float>& userFaceAttrib(size_t id) { return mUserFaceAttribs.at(id); }
 
 	// Modifiers
@@ -93,7 +93,7 @@ public:
 private:
 	inline uint32 faceIndexOffset(uint32 f) const;
 	MeshInfo mInfo;
-	std::vector<float> mVertices;   //3 floats
+	std::vector<float> mVertices;	//3 floats
 	std::vector<float> mNormals;	//3 floats
 	std::vector<float> mUVs;		// 2 floats
 	std::vector<float> mVelocities; //3 floats

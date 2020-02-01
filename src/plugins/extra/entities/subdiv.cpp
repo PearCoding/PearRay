@@ -9,7 +9,7 @@
 #include "entity/IEntityPlugin.h"
 #include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshFactory.h"
 
 #include <boost/filesystem.hpp>
 #include <cctype>
@@ -554,7 +554,7 @@ public:
 		std::unique_ptr<MeshBase> refinedMesh = refineMesh(originalMesh, opts);
 		refinedMesh->triangulate();
 		bool useCache				  = mesh->cache()->shouldCacheMesh(refinedMesh->nodeCount());
-		std::shared_ptr<Mesh> newMesh = TriMesh::create(mesh->name() + "_subdiv", std::move(refinedMesh),
+		std::shared_ptr<Mesh> newMesh = MeshFactory::create(mesh->name() + "_subdiv", std::move(refinedMesh),
 														mesh->cache(), useCache);
 		return std::make_shared<SubdivMeshEntity>(id, name,
 												  newMesh,

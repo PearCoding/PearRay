@@ -183,11 +183,11 @@ void MeshBase::triangulate()
 	size_t facC = 0;
 
 	for (size_t face = 0; face < faceCount(); ++face) {
-		bool isQuad   = faceVertexCount(face) == 4;
+		bool isQuad	  = faceVertexCount(face) == 4;
 		size_t indInd = faceIndexOffset(face);
 
 		// Triangle
-		new_indices[indC]	 = mIndices[indInd];
+		new_indices[indC]	  = mIndices[indInd];
 		new_indices[indC + 1] = mIndices[indInd + 1];
 		new_indices[indC + 2] = mIndices[indInd + 2];
 		if (mInfo.Features & MF_HAS_MATERIAL)
@@ -197,7 +197,7 @@ void MeshBase::triangulate()
 
 		if (isQuad) {
 			// Second triangle
-			new_indices[indC]	 = mIndices[indInd];
+			new_indices[indC]	  = mIndices[indInd];
 			new_indices[indC + 1] = mIndices[indInd + 2];
 			new_indices[indC + 2] = mIndices[indInd + 3];
 
@@ -235,18 +235,18 @@ void MeshBase::serialize(Serializer& serializer)
 		| mUserFaceAttribs;
 }
 
-size_t MeshBase::addUserVertexAttrib(const std::vector<float>& cnt)
+size_t MeshBase::addUserVertexAttrib(const std::vector<float>& cnt, size_t channels)
 {
-	PR_ASSERT(cnt.size() == 3 * nodeCount(), "Expected vertex attribute to have the same count of vertices");
+	PR_ASSERT(cnt.size() == channels * nodeCount(), "Expected vertex attribute to have the same count of vertices");
 
 	size_t id = mUserVertexAttribs.size();
 	mUserVertexAttribs.push_back(cnt);
 	return id;
 }
 
-size_t MeshBase::addUserFaceAttrib(const std::vector<float>& cnt)
+size_t MeshBase::addUserFaceAttrib(const std::vector<float>& cnt, size_t channels)
 {
-	PR_ASSERT(cnt.size() == 3 * faceCount(), "Expected face attribute to have the same count of vertices");
+	PR_ASSERT(cnt.size() == channels * faceCount(), "Expected face attribute to have the same count of vertices");
 
 	size_t id = mUserFaceAttribs.size();
 	mUserFaceAttribs.push_back(cnt);

@@ -12,9 +12,9 @@ struct TriMeshPIInternal {
 };
 
 TriMeshPI::TriMeshPI(const std::string& name,
-				 std::unique_ptr<MeshBase>&& mesh_base,
-				 const std::shared_ptr<Cache>& cache,
-				 bool useCache)
+					 std::unique_ptr<MeshBase>&& mesh_base,
+					 const std::shared_ptr<Cache>& cache,
+					 bool useCache)
 	: Mesh(name, std::move(mesh_base), cache, useCache)
 	, mInternal(std::make_unique<TriMeshPIInternal>())
 {
@@ -165,9 +165,9 @@ void TriMeshPI::setup()
 		}
 	}
 
-	mInternal->FaceMomentumAttrib[0] = mBase->addUserFaceAttrib(FaceMomentum0);
-	mInternal->FaceMomentumAttrib[1] = mBase->addUserFaceAttrib(FaceMomentum1);
-	mInternal->FaceMomentumAttrib[2] = mBase->addUserFaceAttrib(FaceMomentum2);
+	mInternal->FaceMomentumAttrib[0] = mBase->addUserFaceAttrib(FaceMomentum0, 3);
+	mInternal->FaceMomentumAttrib[1] = mBase->addUserFaceAttrib(FaceMomentum1, 3);
+	mInternal->FaceMomentumAttrib[2] = mBase->addUserFaceAttrib(FaceMomentum2, 3);
 #endif
 }
 

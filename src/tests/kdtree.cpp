@@ -2,7 +2,7 @@
 #include "geometry/CollisionData.h"
 #include "math/SIMD.h"
 #include "mesh/MeshBase.h"
-#include "mesh/TriMesh.h"
+#include "mesh/MeshFactory.h"
 
 #include "Test.h"
 
@@ -61,7 +61,7 @@ PR_TEST("Two Half")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	auto mesh = TriMesh::create("tmp1", std::move(cnt), sCache, false);
+	auto mesh = MeshFactory::create("tmp1", std::move(cnt), sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(-1.5f, 1.5f, 0, 0.6f);
@@ -117,7 +117,7 @@ PR_TEST("Overlap")
 	PR_CHECK_EQ(cnt->triangleCount(), 3);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	auto mesh = TriMesh::create("tmp2", std::move(cnt), sCache, false);
+	auto mesh = MeshFactory::create("tmp2", std::move(cnt), sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(0.75f, 0.75f, 0, 5);
@@ -180,7 +180,7 @@ PR_TEST("UV")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	auto mesh = TriMesh::create("tmp3", std::move(cnt), sCache, false);
+	auto mesh = MeshFactory::create("tmp3", std::move(cnt), sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(0.75f, 0.75f, 0, 0.6f);
@@ -230,7 +230,7 @@ PR_TEST("Single Intersection")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	auto mesh = TriMesh::create("tmp4", std::move(cnt), sCache, false);
+	auto mesh = MeshFactory::create("tmp4", std::move(cnt), sCache, false);
 
 	Ray in;
 	in.Origin[0] = -1.5;
@@ -277,7 +277,7 @@ PR_TEST("Single Intersection Overlap")
 	PR_CHECK_EQ(cnt->triangleCount(), 3);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	auto mesh = TriMesh::create("tmp5", std::move(cnt), sCache, false);
+	auto mesh = MeshFactory::create("tmp5", std::move(cnt), sCache, false);
 
 	Ray in;
 	in.Origin	 = Vector3f(0.75f, 0.5f, 2);
