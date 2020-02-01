@@ -1,10 +1,6 @@
 #pragma once
 
 #include "BoundingBox.h"
-#include "TriangleIntersection.h"
-#include "config/TriangleOptions.h"
-
-#include <utility>
 
 namespace PR {
 class PR_LIB Triangle {
@@ -38,51 +34,6 @@ public:
 		const auto e12 = p2 - p1;
 		const auto e13 = p3 - p1;
 		return 0.5f * e12.cross(e13).norm();
-	}
-
-	template <typename T>
-	inline static typename VectorTemplate<T>::bool_t intersect(
-		const RayPackageBase<T>& in,
-		const Vector3t<T>& p1,
-		const Vector3t<T>& p2,
-		const Vector3t<T>& p3,
-		Vector2t<T>& uv,
-		T& t)
-	{
-#if PR_TRIANGLE_INTERSECTION_METHOD == 0
-		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 1
-		return TriangleIntersection::intersectPI_NonOpt(in, p1, p2, p3, uv, t);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 2
-		return TriangleIntersection::intersectWT(in, p1, p2, p3, uv, t);
-#endif
-	}
-
-	template <typename T>
-	inline static typename VectorTemplate<T>::bool_t intersect(
-		const RayPackageBase<T>& in,
-		const Vector3t<T>& p1,
-		const Vector3t<T>& p2,
-		const Vector3t<T>& p3,
-		const Vector3t<T>& m1, // Momentum
-		const Vector3t<T>& m2,
-		const Vector3t<T>& m3,
-		Vector2t<T>& uv,
-		T& t)
-	{
-#if PR_TRIANGLE_INTERSECTION_METHOD == 0
-		PR_UNUSED(m1);
-		PR_UNUSED(m2);
-		PR_UNUSED(m3);
-		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 1
-		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, m1, m2, m3, uv, t);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 2
-		PR_UNUSED(m1);
-		PR_UNUSED(m2);
-		PR_UNUSED(m3);
-		return TriangleIntersection::intersectWT(in, p1, p2, p3, uv, t);
-#endif
 	}
 };
 } // namespace PR

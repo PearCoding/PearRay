@@ -61,7 +61,7 @@ PR_TEST("Two Half")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh("tmp1", std::move(cnt), sCache, false);
+	auto mesh = TriMesh::create("tmp1", std::move(cnt), sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(-1.5f, 1.5f, 0, 0.6f);
@@ -75,7 +75,7 @@ PR_TEST("Two Half")
 	in.cache();
 
 	CollisionOutput out;
-	mesh.checkCollision(in, out);
+	mesh->checkCollision(in, out);
 
 	// Left triangle
 	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
@@ -117,7 +117,7 @@ PR_TEST("Overlap")
 	PR_CHECK_EQ(cnt->triangleCount(), 3);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh("tmp2", std::move(cnt), sCache, false);
+	auto mesh = TriMesh::create("tmp2", std::move(cnt), sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(0.75f, 0.75f, 0, 5);
@@ -131,7 +131,7 @@ PR_TEST("Overlap")
 	in.cache();
 
 	CollisionOutput out;
-	mesh.checkCollision(in, out);
+	mesh->checkCollision(in, out);
 
 	// From top to bottom
 	// FIXME: There is a bug in the parallel tracing!
@@ -180,7 +180,7 @@ PR_TEST("UV")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh("tmp3", std::move(cnt), sCache, false);
+	auto mesh = TriMesh::create("tmp3", std::move(cnt), sCache, false);
 
 	RayPackage in;
 	in.Origin[0] = make_float(0.75f, 0.75f, 0, 0.6f);
@@ -194,7 +194,7 @@ PR_TEST("UV")
 	in.cache();
 
 	CollisionOutput out;
-	mesh.checkCollision(in, out);
+	mesh->checkCollision(in, out);
 
 	// From top to bottom
 	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
@@ -230,7 +230,7 @@ PR_TEST("Single Intersection")
 	PR_CHECK_EQ(cnt->triangleCount(), 2);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh("tmp4", std::move(cnt), sCache, false);
+	auto mesh = TriMesh::create("tmp4", std::move(cnt), sCache, false);
 
 	Ray in;
 	in.Origin[0] = -1.5;
@@ -243,7 +243,7 @@ PR_TEST("Single Intersection")
 	in.cache();
 
 	SingleCollisionOutput out;
-	mesh.checkCollision(in, out);
+	mesh->checkCollision(in, out);
 
 	// Left triangle
 	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
@@ -277,15 +277,15 @@ PR_TEST("Single Intersection Overlap")
 	PR_CHECK_EQ(cnt->triangleCount(), 3);
 	PR_CHECK_EQ(cnt->quadCount(), 0);
 
-	TriMesh mesh("tmp5", std::move(cnt), sCache, false);
+	auto mesh = TriMesh::create("tmp5", std::move(cnt), sCache, false);
 
 	Ray in;
-	in.Origin	= Vector3f(0.75f, 0.5f, 2);
+	in.Origin	 = Vector3f(0.75f, 0.5f, 2);
 	in.Direction = Vector3f(0, 0, -1);
 	in.cache();
 
 	SingleCollisionOutput out;
-	mesh.checkCollision(in, out);
+	mesh->checkCollision(in, out);
 
 	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
 	PR_CHECK_EQ(out.FaceID, 1);

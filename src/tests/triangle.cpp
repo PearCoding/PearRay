@@ -1,4 +1,5 @@
 #include "geometry/Triangle.h"
+#include "geometry/TriangleIntersection.h"
 #include "math/SIMD.h"
 
 #include "Test.h"

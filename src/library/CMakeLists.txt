@@ -114,6 +114,12 @@ set(PR_Src
   mesh/MeshInfo.h
   mesh/TriMesh.cpp
   mesh/TriMesh.h
+  mesh/TriMeshMT.cpp
+  mesh/TriMeshMT.h
+  mesh/TriMeshPI.cpp
+  mesh/TriMeshPI.h
+  mesh/TriMeshWT.cpp
+  mesh/TriMeshWT.h
   path/LightPath.cpp
   path/LightPath.h
   path/LightPath.inl

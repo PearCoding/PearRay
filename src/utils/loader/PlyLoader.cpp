@@ -329,7 +329,7 @@ void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
 	if (cnt) {
 		cnt->triangulate();
 		bool useCache = ctx.Env->cache()->shouldCacheMesh(cnt->nodeCount(), static_cast<CacheMode>(mCacheMode));
-		ctx.Env->addMesh(mName, std::make_shared<TriMesh>(mName, std::move(cnt), ctx.Env->cache(), useCache));
+		ctx.Env->addMesh(mName, TriMesh::create(mName, std::move(cnt), ctx.Env->cache(), useCache));
 	}
 }
 } // namespace PR

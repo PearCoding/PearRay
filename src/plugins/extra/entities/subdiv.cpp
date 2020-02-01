@@ -11,7 +11,6 @@
 #include "material/IMaterial.h"
 #include "mesh/TriMesh.h"
 
-
 #include <boost/filesystem.hpp>
 #include <cctype>
 
@@ -107,7 +106,7 @@ public:
 		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
 													   transform().matrix(), in);
 		out.EntityID	= id();
-		out.MaterialID  = out.MaterialID < mMaterials.size()
+		out.MaterialID	= out.MaterialID < mMaterials.size()
 							 ? mMaterials.at(out.MaterialID)
 							 : 0;
 	}
@@ -176,7 +175,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		auto vertsPerFace   = originalMesh->faceVertexCounts();
+		auto vertsPerFace	= originalMesh->faceVertexCounts();
 		const auto& indices = originalMesh->indices();
 
 		Far::TopologyDescriptor desc;
@@ -199,11 +198,11 @@ public:
 
 			PR_ASSERT(originalMesh->indices().size() == fvarIndices.size(), "Invalid index calculation");
 
-			fvarChannels[0].numValues	= static_cast<int>(fvarIndices.size());
+			fvarChannels[0].numValues	 = static_cast<int>(fvarIndices.size());
 			fvarChannels[0].valueIndices = (const Far::Index*)fvarIndices.data();
 
 			desc.numFVarChannels = 1;
-			desc.fvarChannels	= fvarChannels;
+			desc.fvarChannels	 = fvarChannels;
 		}
 
 		Sdc::Options sdc_options;
@@ -407,7 +406,7 @@ public:
 		PR_ASSERT(opts.MaxLevel >= 1, "No refinement done!");
 
 		Far::TopologyRefiner* refiner			= setupRefiner(originalMesh, opts);
-		Far::StencilTable const* stencilTable   = setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_VERTEX);
+		Far::StencilTable const* stencilTable	= setupStencilTable(refiner, Far::StencilTableFactory::INTERPOLATE_VERTEX);
 		Far::StencilTable const* uvStencilTable = stencilTable;
 		if ((originalMesh->features() & MF_HAS_UV) && opts.UVInterpolation != Far::StencilTableFactory::INTERPOLATE_VERTEX)
 			uvStencilTable = setupStencilTable(refiner, opts.UVInterpolation);
@@ -491,7 +490,7 @@ public:
 		std::string scheme				  = params.getString("scheme", "");
 		std::string boundaryInterpolation = params.getString("boundary_interpolation", "");
 		std::string uvInterpolation		  = params.getString("uv_interpolation", "");
-		std::string fVarInterpolation	 = params.getString("fvar_interpolation", "");
+		std::string fVarInterpolation	  = params.getString("fvar_interpolation", "");
 
 		// Scheme
 		std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
@@ -554,9 +553,9 @@ public:
 
 		std::unique_ptr<MeshBase> refinedMesh = refineMesh(originalMesh, opts);
 		refinedMesh->triangulate();
-		bool useCache					 = mesh->cache()->shouldCacheMesh(refinedMesh->nodeCount());
-		std::shared_ptr<TriMesh> newMesh = std::make_shared<TriMesh>(mesh->name() + "_subdiv", std::move(refinedMesh),
-																	 mesh->cache(), useCache);
+		bool useCache				  = mesh->cache()->shouldCacheMesh(refinedMesh->nodeCount());
+		std::shared_ptr<Mesh> newMesh = TriMesh::create(mesh->name() + "_subdiv", std::move(refinedMesh),
+														mesh->cache(), useCache);
 		return std::make_shared<SubdivMeshEntity>(id, name,
 												  newMesh,
 												  materials, emsID);
