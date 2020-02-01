@@ -5,4 +5,6 @@
 
 // 0 Moeller
 // 1 Pluecker
+// 2 Watertight
+// 3 Baldwin-Weber
 #define PR_TRIANGLE_INTERSECTION_METHOD ${PR_TRIANGLE_INTERSECTION_METHOD}

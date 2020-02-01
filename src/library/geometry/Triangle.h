@@ -71,14 +71,16 @@ public:
 		T& t)
 	{
 #if PR_TRIANGLE_INTERSECTION_METHOD == 0
-		(void)N;
-		(void)m1;
-		(void)m2;
-		(void)m3;
+		PR_UNUSED(m1);
+		PR_UNUSED(m2);
+		PR_UNUSED(m3);
 		return TriangleIntersection::intersectMT(in, p1, p2, p3, uv, t);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
 		return TriangleIntersection::intersectPI_Opt(in, p1, p2, p3, m1, m2, m3, uv, t);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 2
+		PR_UNUSED(m1);
+		PR_UNUSED(m2);
+		PR_UNUSED(m3);
 		return TriangleIntersection::intersectWT(in, p1, p2, p3, uv, t);
 #endif
 	}

@@ -22,21 +22,21 @@ inline PR_LIB bool intersectWT(
 	if (ky == 3)
 		ky = 0;
 
-	if (in.Direction[kz] < 0)
+	const float dZ = in.Direction[kz];
+	if (dZ < 0)
 		std::swap(kx, ky);
 
 	const float dX = in.Direction[kx];
 	const float dY = in.Direction[ky];
-	const float dZ = in.Direction[kz];
 
 	const float sx = dX / dZ;
 	const float sy = dY / dZ;
 	const float sz = 1.0f / dZ;
 
 	// We use (1-u-v)*P1 + u*P2 + v*P3 convention
-	Eigen::Vector3f A = p2 - in.Origin;
-	Eigen::Vector3f B = p3 - in.Origin;
-	Eigen::Vector3f C = p1 - in.Origin;
+	Vector3f A = p2 - in.Origin;
+	Vector3f B = p3 - in.Origin;
+	Vector3f C = p1 - in.Origin;
 
 	// Shear
 	const float Ax = A(kx) - sx * A(kz);
@@ -91,15 +91,83 @@ inline PR_LIB bool intersectWT(
 }
 
 inline PR_LIB bfloat intersectWT(
-	const RayPackage& /*in*/,
-	const Vector3fv& /*p1*/,
-	const Vector3fv& /*p2*/,
-	const Vector3fv& /*p3*/,
-	Vector2fv& /*uv*/,
+	const RayPackage& in,
+	const Vector3fv& p1,
+	const Vector3fv& p2,
+	const Vector3fv& p3,
+	Vector2fv& uv,
 	vfloat& t)
 {
-	// TODO
-	return (t >= PR_TRIANGLE_WT_INTERSECT_EPSILON);
+	// TODO: A better swizzling algorithm would work wonders here...
+	auto pick = [](const Vector3fv& a, const vuint32& idx) -> vfloat {
+		return blend(a(0), blend(a(1), a(2), idx == 1), idx == 0);
+	};
+
+	const vuint32 kz = in.maxDirectionIndex();
+	vuint32 kx		 = blend(kz + 1, vuint32(0), kz < 2);
+	vuint32 ky		 = blend(kx + 1, vuint32(0), kx < 2);
+
+	const vfloat dZ = pick(in.Direction, kz);
+
+	// Swap
+	const bfloat sw	  = dZ < 0;
+	const vuint32 tmp = blend(kx, ky, sw);
+	kx				  = blend(ky, kx, sw);
+	ky				  = tmp;
+
+	const vfloat dX = pick(in.Direction, kx);
+	const vfloat dY = pick(in.Direction, ky);
+
+	const vfloat sx = dX / dZ;
+	const vfloat sy = dY / dZ;
+	const vfloat sz = 1.0f / dZ;
+
+	// We use (1-u-v)*P1 + u*P2 + v*P3 convention
+	Vector3fv A = p2 - in.Origin;
+	Vector3fv B = p3 - in.Origin;
+	Vector3fv C = p1 - in.Origin;
+
+	// Shear
+	const vfloat Akz = pick(A, kz);
+	const vfloat Bkz = pick(B, kz);
+	const vfloat Ckz = pick(C, kz);
+
+	const vfloat Ax = pick(A, kx) - sx * Akz;
+	const vfloat Ay = pick(A, ky) - sy * Akz;
+	const vfloat Bx = pick(B, kx) - sx * Bkz;
+	const vfloat By = pick(B, ky) - sy * Bkz;
+	const vfloat Cx = pick(C, kx) - sx * Ckz;
+	const vfloat Cy = pick(C, ky) - sy * Ckz;
+
+	vfloat u = Cx * By - Cy * Bx;
+	vfloat v = Ax * Cy - Ay * Cx;
+	vfloat w = Bx * Ay - By * Ax;
+
+	// Better precision is not provided for SIMD... 
+	bfloat valid = (((u >= 0) & (v >= 0) & (w >= 0)) | ((u <= 0) & (v <= 0) & (w <= 0)));
+	if (none(valid))
+		return valid;
+
+	const vfloat det = u + v + w;
+	valid			 = valid & (abs(det) > PR_TRIANGLE_WT_INTERSECT_EPSILON);
+	if (none(valid))
+		return valid;
+
+	const vfloat Az = sz * Akz;
+	const vfloat Bz = sz * Bkz;
+	const vfloat Cz = sz * Ckz;
+
+	t	  = u * Az + v * Bz + w * Cz;
+	valid = valid & (abs(t) > PR_TRIANGLE_WT_INTERSECT_EPSILON) & (~(signbit(t) ^ signbit(det)));
+	if (none(valid))
+		return valid;
+
+	const vfloat invDet = 1.0f / det;
+	uv[0]				= u * invDet;
+	uv[1]				= v * invDet;
+	t *= invDet;
+
+	return valid & (t >= PR_TRIANGLE_WT_INTERSECT_EPSILON);
 }
 } // namespace TriangleIntersection
 } // namespace PR
