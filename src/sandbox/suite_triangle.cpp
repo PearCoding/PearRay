@@ -138,9 +138,11 @@ static std::string prettytime(uint64 t)
 	return stream.str();
 }
 
+constexpr char CSV_SEP = ';';
+
 template <typename Func>
 static void check_triangles(const std::string& name, const std::vector<Triangle>& triangles,
-							float degree, Func f)
+							float degree, std::ofstream& csv, Func f)
 {
 	tbb::static_partitioner partitioner;
 
@@ -156,7 +158,9 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	std::vector<float> ids(WIDTH * HEIGHT, 0.0f);
 	std::vector<float> hits(WIDTH * HEIGHT, 0.0f);
 
-	size_t totalHits	  = 0.0;
+	size_t totalHits	  = 0;
+	size_t minHits		  = std::numeric_limits<size_t>::max();
+	size_t maxHits		  = 0;
 	size_t pixelsWithHits = 0;
 	const auto start	  = std::chrono::high_resolution_clock::now();
 	for (size_t y = 0; y < HEIGHT; ++y) {
@@ -194,6 +198,8 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 						ids[y * WIDTH + x]	= id;
 						hits[y * WIDTH + x] = hitcount;
 						totalHits += hitcount;
+						maxHits = std::max(maxHits, hitcount);
+						minHits = std::min(minHits, hitcount);
 						++pixelsWithHits;
 					}
 				}
@@ -210,15 +216,22 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	if (pixelsWithHits > 0)
 		avgHits = totalHits / (double)pixelsWithHits;
 
-	const auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	const auto nano	   = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+	const auto avgNano = nano / (WIDTH * HEIGHT * triangles.size());
 	std::cout << "=> FullT: "
 			  << prettytime(nano) << std::endl
 			  << "   AvgT:  "
-			  << prettytime(nano / (WIDTH * HEIGHT * triangles.size())) << std::endl
+			  << prettytime(avgNano) << std::endl
 			  << "   AvgH:  "
 			  << std::setprecision(8) << std::fixed << avgHits << std::endl
 			  << "   AvgHR: "
 			  << std::setprecision(8) << std::fixed << 100 * avgHits / triangles.size() << "%" << std::endl;
+
+	csv << name << CSV_SEP << triangles.size() << CSV_SEP << (int)degree << CSV_SEP
+		<< tri_area << CSV_SEP << pixelsWithHits / (float)WIDTH * HEIGHT << CSV_SEP
+		<< nano << CSV_SEP << avgNano << CSV_SEP
+		<< totalHits << CSV_SEP << (totalHits > 0 ? minHits : 0) << CSV_SEP << maxHits
+		<< std::endl;
 
 	std::stringstream path_stream;
 	path_stream << DIR << "/" << name << "_" << triangles.size() << "_" << (int)degree;
@@ -227,9 +240,9 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	save_normalized_gray(path_stream.str() + "_hits.png", WIDTH, HEIGHT, hits);
 }
 
-static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
 {
-	check_triangles(suffix + "_mt", triangles, degree,
+	check_triangles(suffix + "_mt", triangles, degree, csv,
 					[](const Triangle& tri, const Ray& ray, float& t) {
 						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -237,9 +250,9 @@ static void tri_mt(const std::string& suffix, const std::vector<Triangle>& trian
 					});
 }
 
-static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
 {
-	check_triangles(suffix + "_wt", triangles, degree,
+	check_triangles(suffix + "_wt", triangles, degree, csv,
 					[](const Triangle& tri, const Ray& ray, float& t) {
 						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -247,9 +260,9 @@ static void tri_wt(const std::string& suffix, const std::vector<Triangle>& trian
 					});
 }
 
-static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
 {
-	check_triangles(suffix + "_bw9", triangles, degree,
+	check_triangles(suffix + "_bw9", triangles, degree, csv,
 					[](const Triangle& tri, const Ray& ray, float& t) {
 						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -257,9 +270,9 @@ static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& tria
 					});
 }
 
-static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
 {
-	check_triangles(suffix + "_bw12", triangles, degree,
+	check_triangles(suffix + "_bw12", triangles, degree, csv,
 					[](const Triangle& tri, const Ray& ray, float& t) {
 						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -267,9 +280,9 @@ static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& tri
 					});
 }
 
-static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi", triangles, degree,
+	check_triangles(suffix + "_pi", triangles, degree, csv,
 					[](const Triangle& tri, const Ray& ray, float& t) {
 						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -277,9 +290,9 @@ static void tri_pi(const std::string& suffix, const std::vector<Triangle>& trian
 					});
 }
 
-static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree)
+static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi_opt", triangles, degree,
+	check_triangles(suffix + "_pi_opt", triangles, degree, csv,
 					[](const Triangle& tri, const Ray& ray, float& t) {
 						t = std::numeric_limits<float>::infinity();
 						Vector2f uv;
@@ -287,7 +300,7 @@ static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& t
 					});
 }
 
-typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float);
+typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float, std::ofstream& csv);
 static MAT_FUNC s_funcs[] = {
 	tri_bw12,
 	tri_bw9,
@@ -302,6 +315,15 @@ void suite_triangle()
 {
 	bf::create_directory(DIR);
 
+	std::ofstream csv;
+	csv.open(DIR + "/output.csv");
+	csv << "Name" << CSV_SEP
+		<< "Triangles" << CSV_SEP << "Angle" << CSV_SEP
+		<< "TriangleArea" << CSV_SEP << "TriangleCoverage" << CSV_SEP
+		<< "FullTime" << CSV_SEP << "AvgTime" << CSV_SEP
+		<< "TotalHits" << CSV_SEP << "MinHits" << CSV_SEP << "MaxHits"
+		<< std::endl;
+
 	for (int i = 0; s_funcs[i]; ++i) {
 		for (auto depth : DEPTHS) {
 			{
@@ -312,7 +334,7 @@ void suite_triangle()
 											SCENE_SCALE * Vector3f(0, 0, 0),
 											depth);
 				for (auto degree : DEGREES)
-					s_funcs[i]("sub", triangles, degree);
+					s_funcs[i]("sub", triangles, degree, csv);
 			}
 			{
 				std::vector<Triangle> triangles;
@@ -322,7 +344,7 @@ void suite_triangle()
 										SCENE_SCALE * Vector3f(0, 0, 0),
 										depth);
 				for (auto degree : DEGREES)
-					s_funcs[i]("ovl", triangles, degree);
+					s_funcs[i]("ovl", triangles, degree, csv);
 			}
 		}
 		std::cout << "--------------------------------------------------------" << std::endl;
