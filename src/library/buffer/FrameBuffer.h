@@ -17,7 +17,8 @@ public:
 		, mNeverClear(never_clear)
 		, mData()
 	{
-		mData.resize(mSize.area() * mChannels);
+		PR_ASSERT(mSize.area() * mChannels > 0, "Invalid framebuffer size given");
+		mData.resize(static_cast<size_t>(mSize.area() * mChannels));
 	}
 
 	inline ~FrameBuffer()
@@ -99,14 +100,14 @@ public:
 							  const T& newValue, float t)
 	{
 		T& val = getFragment(p, channel);
-		val	= val * (1 - t) + newValue * t;
+		val	   = val * (1 - t) + newValue * t;
 	}
 
 	inline void blendFragment(Size1i pixelIndex, Size1i channel,
 							  const T& newValue, float t)
 	{
 		T& val = getFragment(pixelIndex, channel);
-		val	= val * (1 - t) + newValue * t;
+		val	   = val * (1 - t) + newValue * t;
 	}
 
 	inline void addBlock(const Point2i& dst_off,
@@ -162,7 +163,7 @@ public:
 			for (Size1i x = 0; x < size.x(); ++x)
 				for (Size1i ch = 0; ch < mChannels; ++ch)
 					getFragment(dst_off + Point2i(x, y), ch) = func(getFragment(dst_off + Point2i(x, y), ch),
-																	 block.getFragment(src_off + Point2i(x, y), ch));
+																	block.getFragment(src_off + Point2i(x, y), ch));
 	}
 
 	template <typename Func>

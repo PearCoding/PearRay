@@ -40,7 +40,8 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 	clearMap();
 
 	// New data
-	mTileMap.reserve(tx * ty);
+	PR_ASSERT(tx * ty > 0, "Expected positive tile size");
+	mTileMap.reserve(static_cast<size_t>(tx * ty));
 	auto addTile = [&](Point1i sx, Point1i sy) {
 		Point2i start = Point2i(sx, sy);
 		Point2i end	  = (start + mMaxTileSize).cwiseMin(Point2i(context.viewSize().Width, context.viewSize().Height));
