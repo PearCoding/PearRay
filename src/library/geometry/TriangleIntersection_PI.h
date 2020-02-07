@@ -23,33 +23,32 @@ inline PR_LIB bool intersectPI_NonOpt(
 	const Vector3f m0 = p0.cross(p1);
 	const float u	  = m0.dot(dR);
 	const float s0	  = d0.dot(mR) + u;
-	const bool sign	  = std::signbit(s0);
 
 	// Edge 2
 	const Vector3f d2 = p0 - p2;
 	const Vector3f m2 = p2.cross(p0);
 	const float v	  = m2.dot(dR);
 	const float s2	  = d2.dot(mR) + v;
-	if (PR_LIKELY(std::signbit(s2) != sign))
-		return false;
 
 	// Edge 3
 	const Vector3f d1 = p2 - p1;
 	const Vector3f m1 = p1.cross(p2);
 	const float w	  = m1.dot(dR);
 	const float s1	  = d1.dot(mR) + w;
-	if (PR_LIKELY(std::signbit(s1) != sign))
+	const bool valid  = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+					   || (std::max(std::max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	if (PR_LIKELY(!valid))
 		return false;
 
 	// Normal
 	const float k = u + v + w;
-	if (PR_LIKELY(abs(k) <= PR_EPSILON))
+	if (PR_UNLIKELY(abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
 	const Vector3f N = m0 + m1 + m2;
 	t				 = (p0 - in.Origin).dot(N) / k;
-	if (PR_LIKELY(t <= PR_TRIANGLE_PI_INTERSECT_EPSILON))
+	if (t <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
 		return false;
 
 	// UV calculation!
@@ -76,23 +75,21 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	const Vector3fv m0 = p0.cross(p1);
 	const vfloat u	   = m0.dot(dR);
 	const vfloat s0	   = d0.dot(mR) + u;
-	const bfloat si	   = signbit(s0);
 
 	// Edge 2
 	const Vector3fv d2 = p0 - p2;
 	const Vector3fv m2 = p2.cross(p0);
 	const vfloat v	   = m2.dot(dR);
 	const vfloat s2	   = d2.dot(mR) + v;
-	bfloat valid	   = ~(signbit(s2) ^ si);
-	if (PR_LIKELY(none(valid)))
-		return valid;
 
 	// Edge 3
 	const Vector3fv d1 = p2 - p1;
 	const Vector3fv m1 = p1.cross(p2);
 	const vfloat w	   = m1.dot(dR);
 	const vfloat s1	   = d1.dot(mR) + w;
-	valid			   = valid & ~(signbit(s1) ^ si);
+
+	bfloat valid = (min(min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+				   | (max(max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
@@ -106,7 +103,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	const Vector3fv N = m0 + m1 + m2;
 	t				  = (p0 - in.Origin).dot(N) / k;
 	valid			  = valid & (t > PR_TRIANGLE_PI_INTERSECT_EPSILON);
-	if (PR_UNLIKELY(none(valid)))
+	if (none(valid))
 		return valid;
 
 	// UV calculation!
@@ -138,20 +135,20 @@ inline PR_LIB bool intersectPI_Opt(
 	const Vector3f d0 = p1 - p0;
 	const float u	  = m0.dot(dR);
 	const float s0	  = d0.dot(mR) + u;
-	const bool sign	  = std::signbit(s0);
 
 	// Edge 2
 	const Vector3f d2 = p0 - p2;
 	const float v	  = m2.dot(dR);
 	const float s2	  = d2.dot(mR) + v;
-	if (PR_LIKELY(std::signbit(s2) != sign))
-		return false;
 
 	// Edge 3
 	const Vector3f d1 = p2 - p1;
 	const float w	  = m1.dot(dR);
 	const float s1	  = d1.dot(mR) + w;
-	if (PR_LIKELY(std::signbit(s1) != sign))
+
+	const bool valid = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+					   || (std::max(std::max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	if (PR_LIKELY(!valid))
 		return false;
 
 	// Determinant
@@ -162,7 +159,7 @@ inline PR_LIB bool intersectPI_Opt(
 	// Intersection value
 	const Vector3f N = m0 + m1 + m2;
 	t				 = (p0 - in.Origin).dot(N) / k;
-	if (PR_UNLIKELY(t <= PR_TRIANGLE_PI_INTERSECT_EPSILON))
+	if (t <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
 		return false;
 
 	// UV calculation!
@@ -191,21 +188,19 @@ inline PR_LIB bfloat intersectPI_Opt(
 	const Vector3fv d0 = p1 - p0;
 	const vfloat u	   = m0.dot(dR);
 	const vfloat s0	   = d0.dot(mR) + u;
-	const bfloat si	   = signbit(s0);
 
 	// Edge 2
 	const Vector3fv d2 = p0 - p2;
 	const vfloat v	   = m2.dot(dR);
 	const vfloat s2	   = d2.dot(mR) + v;
-	bfloat valid	   = ~(signbit(s2) ^ si);
-	if (PR_LIKELY(none(valid)))
-		return valid;
 
 	// Edge 3
 	const Vector3fv d1 = p2 - p1;
 	const vfloat w	   = m1.dot(dR);
 	const vfloat s1	   = d1.dot(mR) + w;
-	valid			   = valid & ~(signbit(s1) ^ si);
+
+	bfloat valid = (min(min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+				   | (max(max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
@@ -219,7 +214,7 @@ inline PR_LIB bfloat intersectPI_Opt(
 	const Vector3fv N = m0 + m1 + m2;
 	t				  = (p0 - in.Origin).dot(N) / k;
 	valid			  = valid & (t > PR_TRIANGLE_PI_INTERSECT_EPSILON);
-	if (PR_UNLIKELY(none(valid)))
+	if (none(valid))
 		return valid;
 
 	// UV calculation!
