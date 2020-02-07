@@ -196,7 +196,7 @@ std::string getBuildString()
 		   << ">; Asserts: " << hasAsserts
 		   << "; Profile: " << hasProfiler
 		   << "; PackN: " << PR_SIMD_BANDWIDTH
-		   << "; TriIntM: " << PR_TRIANGLE_INTERSECTION_METHOD
+		   << "; TriIntM: " << PR_TRIANGLE_INTERSECTION_METHOD_NAME
 #ifdef PR_COLLIDER_FORCE_SINGLE_TRACE
 		   << "; SINGLE TRACE ONLY"
 #endif
