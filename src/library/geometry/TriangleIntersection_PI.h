@@ -21,40 +21,41 @@ inline PR_LIB bool intersectPI_NonOpt(
 	// Edge 1
 	const Vector3f d0 = p1 - p0;
 	const Vector3f m0 = p0.cross(p1);
-	const float u	  = m0.dot(dR);
-	const float s0	  = d0.dot(mR) + u;
+	const float k0	  = m0.dot(dR);
+	const float s0	  = d0.dot(mR) + k0;
 
 	// Edge 2
 	const Vector3f d2 = p0 - p2;
 	const Vector3f m2 = p2.cross(p0);
-	const float v	  = m2.dot(dR);
-	const float s2	  = d2.dot(mR) + v;
+	const float k2	  = m2.dot(dR);
+	const float s2	  = d2.dot(mR) + k2;
 
 	// Edge 3
 	const Vector3f d1 = p2 - p1;
 	const Vector3f m1 = p1.cross(p2);
-	const float w	  = m1.dot(dR);
-	const float s1	  = d1.dot(mR) + w;
-	const bool valid  = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+	const float k1	  = m1.dot(dR);
+	const float s1	  = d1.dot(mR) + k1;
+
+	const bool valid = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
 					   || (std::max(std::max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(!valid))
 		return false;
 
-	// Normal
-	const float k = u + v + w;
-	if (PR_UNLIKELY(abs(k) <= PR_EPSILON))
+	// Denominator
+	const float k = k0 + k1 + k2;
+	if (PR_LIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
 	const Vector3f N = m0 + m1 + m2;
 	t				 = (p0 - in.Origin).dot(N) / k;
-	if (t <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
+	if (PR_LIKELY(t <= PR_TRIANGLE_PI_INTERSECT_EPSILON))
 		return false;
 
 	// UV calculation!
-	const float K = s0 + s1 + s2;
-	uv(0)		  = s0 / K;
-	uv(1)		  = s2 / K;
+	const float S = s0 + s1 + s2;
+	uv(0)		  = s2 / S;
+	uv(1)		  = s0 / S;
 
 	return true;
 }
@@ -73,28 +74,28 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 	// Edge 1
 	const Vector3fv d0 = p1 - p0;
 	const Vector3fv m0 = p0.cross(p1);
-	const vfloat u	   = m0.dot(dR);
-	const vfloat s0	   = d0.dot(mR) + u;
+	const vfloat k0	   = m0.dot(dR);
+	const vfloat s0	   = d0.dot(mR) + k0;
 
 	// Edge 2
 	const Vector3fv d2 = p0 - p2;
 	const Vector3fv m2 = p2.cross(p0);
-	const vfloat v	   = m2.dot(dR);
-	const vfloat s2	   = d2.dot(mR) + v;
+	const vfloat k2	   = m2.dot(dR);
+	const vfloat s2	   = d2.dot(mR) + k2;
 
 	// Edge 3
 	const Vector3fv d1 = p2 - p1;
 	const Vector3fv m1 = p1.cross(p2);
-	const vfloat w	   = m1.dot(dR);
-	const vfloat s1	   = d1.dot(mR) + w;
+	const vfloat k1	   = m1.dot(dR);
+	const vfloat s1	   = d1.dot(mR) + k1;
 
 	bfloat valid = (min(min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
 				   | (max(max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
-	// Normal
-	const vfloat k = u + v + w;
+	// Denominator
+	const vfloat k = k0 + k1 + k2;
 	valid		   = valid & (abs(k) > PR_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
 		return valid;
@@ -107,9 +108,9 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 		return valid;
 
 	// UV calculation!
-	const vfloat K = s0 + s1 + s2;
-	uv(0)		   = s0 / K;
-	uv(1)		   = s2 / K;
+	const vfloat S = s0 + s1 + s2;
+	uv(0)		   = s2 / S;
+	uv(1)		   = s0 / S;
 
 	return valid;
 }
@@ -133,18 +134,18 @@ inline PR_LIB bool intersectPI_Opt(
 
 	// Edge 1
 	const Vector3f d0 = p1 - p0;
-	const float u	  = m0.dot(dR);
-	const float s0	  = d0.dot(mR) + u;
+	const float k0	  = m0.dot(dR);
+	const float s0	  = d0.dot(mR) + k0;
 
 	// Edge 2
 	const Vector3f d2 = p0 - p2;
-	const float v	  = m2.dot(dR);
-	const float s2	  = d2.dot(mR) + v;
+	const float k2	  = m2.dot(dR);
+	const float s2	  = d2.dot(mR) + k2;
 
 	// Edge 3
 	const Vector3f d1 = p2 - p1;
-	const float w	  = m1.dot(dR);
-	const float s1	  = d1.dot(mR) + w;
+	const float k1	  = m1.dot(dR);
+	const float s1	  = d1.dot(mR) + k1;
 
 	const bool valid = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
 					   || (std::max(std::max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
@@ -152,7 +153,7 @@ inline PR_LIB bool intersectPI_Opt(
 		return false;
 
 	// Determinant
-	const float k = u + v + w;
+	const float k = k0 + k1 + k2;
 	if (PR_UNLIKELY(abs(k) <= PR_EPSILON))
 		return false;
 
@@ -164,8 +165,8 @@ inline PR_LIB bool intersectPI_Opt(
 
 	// UV calculation!
 	const float K = s0 + s1 + s2;
-	uv(0)		  = s0 / K;
-	uv(1)		  = s2 / K;
+	uv(0)		  = s2 / K;
+	uv(1)		  = s0 / K;
 
 	return true;
 }
@@ -186,18 +187,18 @@ inline PR_LIB bfloat intersectPI_Opt(
 
 	// Edge 1
 	const Vector3fv d0 = p1 - p0;
-	const vfloat u	   = m0.dot(dR);
-	const vfloat s0	   = d0.dot(mR) + u;
+	const vfloat k0	   = m0.dot(dR);
+	const vfloat s0	   = d0.dot(mR) + k0;
 
 	// Edge 2
 	const Vector3fv d2 = p0 - p2;
-	const vfloat v	   = m2.dot(dR);
-	const vfloat s2	   = d2.dot(mR) + v;
+	const vfloat k2	   = m2.dot(dR);
+	const vfloat s2	   = d2.dot(mR) + k2;
 
 	// Edge 3
 	const Vector3fv d1 = p2 - p1;
-	const vfloat w	   = m1.dot(dR);
-	const vfloat s1	   = d1.dot(mR) + w;
+	const vfloat k1	   = m1.dot(dR);
+	const vfloat s1	   = d1.dot(mR) + k1;
 
 	bfloat valid = (min(min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
 				   | (max(max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
@@ -205,7 +206,7 @@ inline PR_LIB bfloat intersectPI_Opt(
 		return valid;
 
 	// Normal
-	const vfloat k = u + v + w;
+	const vfloat k = k0 + k1 + k2;
 	valid		   = valid & (abs(k) > PR_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
 		return valid;
@@ -219,8 +220,8 @@ inline PR_LIB bfloat intersectPI_Opt(
 
 	// UV calculation!
 	const vfloat K = s0 + s1 + s2;
-	uv(0)		   = s0 / K;
-	uv(1)		   = s2 / K;
+	uv(0)		   = s2 / K;
+	uv(1)		   = s0 / K;
 
 	return valid;
 }
@@ -259,11 +260,11 @@ inline PR_LIB bool intersectPI_Em(
 		return false;
 
 	const Vector3f N = -e0.cross(e1);
-	const float den	 = 2 * N.dot(dR);
+	const float den	 = N.dot(dR);
 	if (abs(den) <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
 		return false;
 
-	const float lt = 2 * lp0.dot(N);
+	const float lt = lp0.dot(N);
 	t			   = lt / den;
 
 	if (t <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
@@ -299,16 +300,16 @@ inline PR_LIB bfloat intersectPI_Em(
 	const vfloat v = e1.cross(lp0 + lp1).dot(dR);
 	const vfloat w = e2.cross(lp1 + lp2).dot(dR);
 
-	bfloat valid = min(min(u, v), w) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON;
-	valid		 = valid | (max(max(u, v), w) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	const bfloat valid = (min(min(u, v), w) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+						 | (max(max(u, v), w) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
 		return valid;
 
 	const Vector3fv N = -e0.cross(e1);
-	const vfloat den  = 2 * N.dot(dR);
-	const vfloat lt	  = 2 * lp0.dot(N);
+	const vfloat den  = N.dot(dR);
+	const vfloat lt	  = lp0.dot(N);
 	t				  = lt / den;
-	const vfloat UVW  = (u + v + w);
+	const vfloat UVW  = u + v + w;
 	uv[0]			  = u / UVW;
 	uv[1]			  = v / UVW;
 	return valid & (den != 0) & (t > PR_TRIANGLE_PI_INTERSECT_EPSILON);

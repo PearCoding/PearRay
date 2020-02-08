@@ -27,6 +27,11 @@ constexpr float SCENE_SCALE	 = 1.0f;
 
 constexpr std::array<float, 4> DEGREES = { 0, 30, 60, 90 };
 constexpr std::array<size_t, 5> DEPTHS = { 0, 2, 8, 14, 15 };
+constexpr std::array<int, 4> HITRATES  = { 0, 30, 60, 100 };
+
+static const Vector3f P0 = SCENE_SCALE * Vector3f(0.5f, TRI_HEIGHT, 0);
+static const Vector3f P1 = SCENE_SCALE * Vector3f(1, 0, 0);
+static const Vector3f P2 = SCENE_SCALE * Vector3f(0, 0, 0);
 
 using Vector3fS = Eigen::Matrix<float, 3, 1, Eigen::DontAlign>;
 struct Triangle {
@@ -100,19 +105,34 @@ static void setup_subdivision_triangles(std::vector<Triangle>& triangles,
 	}
 }
 
-static void setup_overlay_triangles(std::vector<Triangle>& triangles,
-									const Vector3f& p0, const Vector3f& p1, const Vector3f& p2,
-									size_t depth)
+static void setup_overlayed_triangles(std::vector<Triangle>& triangles,
+									  const Vector3f& p0, const Vector3f& p1, const Vector3f& p2,
+									  int hitrate)
 {
-	constexpr float SEP = 0.001f;
-	size_t count		= std::pow(2, depth);
-	triangles.reserve(count);
+	constexpr float SEP			 = 0.001f;
+	constexpr int TRIS			 = 10000;
+	const static Vector3f OFF[4] = { Vector3f(1000, 1000, 0),
+									 Vector3f(-1000, 1000, 0),
+									 Vector3f(1000, -1000, 0),
+									 Vector3f(-1000, -1000, 0) };
+	triangles.reserve(TRIS);
 
-	for (size_t i = 0; i < count; ++i) {
+	int good = TRIS * (hitrate / 100.0f);
+	int bad	 = TRIS - good;
+
+	// Will be hit
+	for (int i = 0; i < good; ++i) {
 		Vector3f d0 = p0 + Vector3f(0, 0, i * SEP);
 		Vector3f d1 = p1 + Vector3f(0, 0, i * SEP);
 		Vector3f d2 = p2 + Vector3f(0, 0, i * SEP);
+		addTriangle(triangles, d0, d1, d2);
+	}
 
+	// Will not be hit
+	for (int i = 0; i < bad; ++i) {
+		Vector3f d0 = p0 + Vector3f(0, 0, i * SEP) + OFF[i % 4];
+		Vector3f d1 = p1 + Vector3f(0, 0, i * SEP) + OFF[i % 4];
+		Vector3f d2 = p2 + Vector3f(0, 0, i * SEP) + OFF[i % 4];
 		addTriangle(triangles, d0, d1, d2);
 	}
 }
@@ -160,16 +180,13 @@ struct HitStat {
 	}
 };
 
-constexpr char CSV_SEP		= ';';
-constexpr int HIT_RATE_BINS = 10;
-
+constexpr char CSV_SEP = ';';
 template <typename Func>
 static void check_triangles(const std::string& name, const std::vector<Triangle>& triangles,
-							float degree, std::ofstream& csv, Func f)
+							float degree, int hitrate, std::ofstream& csv, Func f)
 {
 	tbb::static_partitioner partitioner;
 
-	std::array<HitStat, HIT_RATE_BINS> bins;
 	HitStat total;
 #ifndef _PR_SANDBOX_NO_THREADS
 	std::mutex mutex;
@@ -178,7 +195,10 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	// Assuming all triangles are same size
 	const float tri_area = (triangles[0].P1 - triangles[0].P0).cross(triangles[0].P2 - triangles[0].P0).norm() / 2;
 	std::cout << name << "> " << triangles.size() << " [" << (int)degree << "°] TRI AREA: "
-			  << std::setprecision(-1) << std::defaultfloat << tri_area << std::endl;
+			  << std::setprecision(-1) << std::defaultfloat << tri_area;
+	if (hitrate >= 0)
+		std::cout << " HIT RATE: " << hitrate << "%";
+	std::cout << std::endl;
 
 	const float rad	 = degree * PR_PI / 180.0f;
 	const Vector3f D = Vector3f(0, std::sin(rad), std::cos(rad));
@@ -188,9 +208,21 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	std::vector<float> hits(WIDTH * HEIGHT, 0.0f);
 	std::vector<float> uvs(3 * WIDTH * HEIGHT, 0.0f);
 
+	// Barycentric projection
+	const auto project = [&](double nx, double ny) -> Vector3f {
+		const double sum = nx + ny;
+		const double u	 = nx / sum;
+		const double v	 = ny / sum;
+		const double w	 = 1 - u - v;
+		if (std::isinf(u) || std::isinf(v))
+			return P0 - D;
+		else
+			return P0 * w + P1 * u + P2 * v - D;
+	};
+
 	size_t pixelsWithHits = 0;
 	for (size_t y = 0; y < HEIGHT; ++y) {
-		const float fy = 1 - y / static_cast<float>(HEIGHT - 1);
+		const double fy = 1 - y / static_cast<double>(HEIGHT - 1);
 
 #ifdef _PR_SANDBOX_NO_THREADS
 		tbb::blocked_range<size_t> r(0, WIDTH);
@@ -201,9 +233,9 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 			[&](const tbb::blocked_range<size_t>& r) {
 #endif
 			for (size_t x = r.begin(); x != r.end(); ++x) {
-				const float fx = x / static_cast<float>(WIDTH - 1);
+				const double fx = x / static_cast<double>(WIDTH - 1);
 
-				const Vector3f P = SCENE_SCALE * (Vector3f(fx, fy, 0) - D);
+				const Vector3f P = project(fx, fy);
 				const Ray ray	 = Ray(P, D);
 
 				size_t hitcount = 0;
@@ -238,14 +270,10 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 					uvs[(y * WIDTH + x) * 3 + 1] = uv[1];
 				}
 
-				const float hitRate = hitcount / (float)triangles.size();
-				const size_t bin	= std::min(HIT_RATE_BINS - 1, static_cast<int>(HIT_RATE_BINS * hitRate));
-
 #ifndef _PR_SANDBOX_NO_THREADS
 				mutex.lock();
 #endif
 				total.apply(nano, hitcount);
-				bins[bin].apply(nano, hitcount);
 				if (hitcount > 0)
 					++pixelsWithHits;
 #ifndef _PR_SANDBOX_NO_THREADS
@@ -258,7 +286,7 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 			partitioner);
 #endif
 
-			const float percentage = (1 - fy) * 100.0f;
+			const double percentage = (1 - fy) * 100.0;
 			std::cout << "\r" << std::setprecision(2) << std::setw(6) << std::fixed << percentage << "%" << std::flush;
 	}
 	std::cout << "\r";
@@ -278,94 +306,88 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 			  << std::setprecision(8) << std::fixed << 100 * avgHits / triangles.size() << "%" << std::endl;
 
 	// Add csv entry
-	csv << name << CSV_SEP << triangles.size() << CSV_SEP << (int)degree << CSV_SEP
+	csv << name << CSV_SEP << triangles.size() << CSV_SEP << (int)degree << CSV_SEP << hitrate << CSV_SEP
 		<< tri_area << CSV_SEP << pixelsWithHits / static_cast<float>(WIDTH * HEIGHT) << CSV_SEP
 		<< total.TotalTime << CSV_SEP << (total.TotalTime > 0 ? total.MinTime : 0) << CSV_SEP << total.MaxTime << CSV_SEP
 		<< total.TotalHits << CSV_SEP << (total.TotalHits > 0 ? total.MinHits : 0) << CSV_SEP << total.MaxHits << CSV_SEP;
-
-	for (size_t i = 0; i < bins.size(); ++i) {
-		const auto& bin = bins[i];
-		csv << bin.TotalTime << CSV_SEP << (bin.TotalTime > 0 ? bin.MinTime : 0) << CSV_SEP << bin.MaxTime << CSV_SEP
-			<< bin.TotalHits << CSV_SEP << (bin.TotalHits > 0 ? bin.MinHits : 0) << CSV_SEP << bin.MaxHits;
-		if (i < bins.size() - 1)
-			csv << CSV_SEP;
-	}
-
 	csv << std::endl;
 
 	// Write images
 	std::stringstream path_stream;
 	path_stream << DIR << "/" << name << "_" << triangles.size() << "_" << (int)degree;
+	if (hitrate >= 0)
+		path_stream << "_" << hitrate;
+
 	save_normalized_gray(path_stream.str() + "_t.png", WIDTH, HEIGHT, data);
 	save_normalized_gray(path_stream.str() + "_id.png", WIDTH, HEIGHT, ids);
 	save_normalized_gray(path_stream.str() + "_hits.png", WIDTH, HEIGHT, hits);
 	save_image(path_stream.str() + "_uvs.png", WIDTH, HEIGHT, uvs, 3);
 }
 
-static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_mt", triangles, degree, csv,
+	check_triangles(suffix + "_mt", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectMT(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
-static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_wt", triangles, degree, csv,
+	check_triangles(suffix + "_wt", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectWT(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
-static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_bw9", triangles, degree, csv,
+	check_triangles(suffix + "_bw9", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectBW9(ray, tri.BW9Mat, tri.BW9FixedColumn, uv, t);
 					});
 }
 
-static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_bw12", triangles, degree, csv,
+	check_triangles(suffix + "_bw12", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectBW12(ray, tri.BW12Mat, uv, t);
 					});
 }
 
-static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi", triangles, degree, csv,
+	check_triangles(suffix + "_pi", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectPI_NonOpt(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
-static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi_opt", triangles, degree, csv,
+	check_triangles(suffix + "_pi_opt", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectPI_Opt(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
 					});
 }
 
-static void tri_pi_em(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, std::ofstream& csv)
+static void tri_pi_em(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi_em", triangles, degree, csv,
+	check_triangles(suffix + "_pi_em", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
 						return TriangleIntersection::intersectPI_Em(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
-typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float, std::ofstream& csv);
+typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float, int, std::ofstream& csv);
 static MAT_FUNC s_funcs[] = {
 	tri_bw12,
 	tri_bw9,
@@ -377,6 +399,37 @@ static MAT_FUNC s_funcs[] = {
 	nullptr
 };
 
+void precision_test(std::ofstream& csv)
+{
+	for (int i = 0; s_funcs[i]; ++i) {
+		for (auto depth : DEPTHS) {
+
+			std::vector<Triangle> triangles;
+			setup_subdivision_triangles(triangles,
+										P0, P1, P2,
+										depth);
+			for (auto degree : DEGREES)
+				s_funcs[i]("sub", triangles, degree, -1, csv);
+		}
+		std::cout << "--------------------------------------------------------" << std::endl;
+	}
+}
+
+void hitrate_test(std::ofstream& csv)
+{
+	PR_UNUSED(csv);
+	for (int i = 0; s_funcs[i]; ++i) {
+		for (auto hitrate : HITRATES) {
+			std::vector<Triangle> triangles;
+			setup_overlayed_triangles(triangles,
+									  P0, P1, P2,
+									  hitrate);
+			s_funcs[i]("hr", triangles, 0, hitrate, csv);
+		}
+		std::cout << "--------------------------------------------------------" << std::endl;
+	}
+}
+
 void suite_triangle()
 {
 	bf::create_directory(DIR);
@@ -386,42 +439,12 @@ void suite_triangle()
 
 	// Setup CSV header
 	csv << "Name" << CSV_SEP
-		<< "Triangles" << CSV_SEP << "Angle" << CSV_SEP
+		<< "Triangles" << CSV_SEP << "Angle" << CSV_SEP << "HitRate" << CSV_SEP
 		<< "TriangleArea" << CSV_SEP << "TriangleCoverage" << CSV_SEP
 		<< "TotalTimeNS" << CSV_SEP << "MinTimeNS" << CSV_SEP << "MaxTimeNS" << CSV_SEP
 		<< "TotalHits" << CSV_SEP << "MinHits" << CSV_SEP << "MaxHits" << CSV_SEP;
-	for (size_t i = 0; i < HIT_RATE_BINS; ++i) {
-		csv << "HR_" << i << "_TotalTimeNS" << CSV_SEP << "HR_" << i << "_MinTimeNS" << CSV_SEP << "HR_" << i << "_MaxTimeNS" << CSV_SEP
-			<< "HR_" << i << "_TotalHits" << CSV_SEP << "HR_" << i << "_MinHits" << CSV_SEP << "HR_" << i << "_MaxHits";
-
-		if (i < HIT_RATE_BINS - 1)
-			csv << CSV_SEP;
-	}
 	csv << std::endl;
 
-	for (int i = 0; s_funcs[i]; ++i) {
-		for (auto depth : DEPTHS) {
-			{
-				std::vector<Triangle> triangles;
-				setup_subdivision_triangles(triangles,
-											SCENE_SCALE * Vector3f(0.5f, TRI_HEIGHT, 0),
-											SCENE_SCALE * Vector3f(1, 0, 0),
-											SCENE_SCALE * Vector3f(0, 0, 0),
-											depth);
-				for (auto degree : DEGREES)
-					s_funcs[i]("sub", triangles, degree, csv);
-			}
-			{
-				std::vector<Triangle> triangles;
-				setup_overlay_triangles(triangles,
-										SCENE_SCALE * Vector3f(0.5f, TRI_HEIGHT, 0),
-										SCENE_SCALE * Vector3f(1, 0, 0),
-										SCENE_SCALE * Vector3f(0, 0, 0),
-										depth);
-				for (auto degree : DEGREES)
-					s_funcs[i]("ovl", triangles, degree, csv);
-			}
-		}
-		std::cout << "--------------------------------------------------------" << std::endl;
-	}
+	precision_test(csv);
+	hitrate_test(csv);
 }
