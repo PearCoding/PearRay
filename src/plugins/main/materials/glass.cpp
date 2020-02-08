@@ -18,10 +18,12 @@ class GlassMaterial : public IMaterial {
 public:
 	GlassMaterial(uint32 id,
 				  const std::shared_ptr<FloatSpectralShadingSocket>& alb,
-				  const std::shared_ptr<FloatSpectralShadingSocket>& ior)
+				  const std::shared_ptr<FloatSpectralShadingSocket>& ior,
+				  bool thin)
 		: IMaterial(id)
 		, mSpecularity(alb)
 		, mIOR(ior)
+		, mThin(thin)
 	{
 	}
 
@@ -70,7 +72,7 @@ public:
 
 		float eta;
 		const float F = fresnelTerm(in.Point, eta);
-		out.Weight	= mSpecularity->eval(in.Point); // The weight is independent of the fresnel term
+		out.Weight	  = mSpecularity->eval(in.Point); // The weight is independent of the fresnel term
 
 		if (in.RND[0] <= F) {
 			out.Type	 = MST_SpecularReflection;
@@ -80,8 +82,14 @@ public:
 			const float NdotT = Reflection::refraction_angle(in.Point.NdotV, eta);
 
 			if (NdotT < 0) { // TOTAL REFLECTION
-				out.Type	 = MST_SpecularReflection;
-				out.Outgoing = Reflection::reflect(-in.Point.NdotV, -in.Point.N, in.Point.Ray.Direction);
+				if (mThin) { // Ignore
+					out.PDF_S  = 0;
+					out.Weight = ColorTriplet::Zero();
+					return;
+				} else {
+					out.Type	 = MST_SpecularReflection;
+					out.Outgoing = Reflection::reflect(-in.Point.NdotV, -in.Point.N, in.Point.Ray.Direction);
+				}
 			} else {
 				out.Type	 = MST_SpecularTransmission;
 				out.Outgoing = Reflection::refract(eta, in.Point.NdotV, NdotT,
@@ -107,6 +115,7 @@ public:
 private:
 	std::shared_ptr<FloatSpectralShadingSocket> mSpecularity;
 	std::shared_ptr<FloatSpectralShadingSocket> mIOR;
+	bool mThin;
 };
 
 class GlassMaterialPlugin : public IMaterialPlugin {
@@ -116,7 +125,8 @@ public:
 		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<GlassMaterial>(id,
 											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1),
-											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("index"), 1.55f));
+											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("index"), 1.55f),
+											   params.getBool("thin", false));
 	}
 
 	const std::vector<std::string>& getNames() const
