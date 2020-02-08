@@ -1,0 +1,6 @@
+#pragma once
+
+// clang-format off
+#define PR_GIT_BRANCH 	    "${GIT_BRANCH}"
+#define PR_GIT_REVISION 	"${GIT_REVISION}"
+// clang-format on

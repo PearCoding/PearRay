@@ -1,6 +1,7 @@
 #include "Build.h"
 #include "Profiler.h"
 #include "config/ColliderOptions.h"
+#include "config/Git.h"
 #include "config/TriangleOptions.h"
 #include "config/Version.h"
 

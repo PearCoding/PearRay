@@ -140,6 +140,7 @@ add_subdirectory(src/hardware)
 
 configure_file(src/library/PR_Config.h.in              ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
 configure_file(src/library/config/HW_Switch.inl.in     ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl)
+configure_file(src/library/config/Git.h.in             ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h)
 configure_file(src/library/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
 configure_file(src/library/config/ColliderOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/ColliderOptions.h)
 configure_file(src/library/config/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/TriangleOptions.h)

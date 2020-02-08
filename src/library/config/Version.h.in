@@ -10,7 +10,4 @@
 
 #define PR_VERSION_BUILD(major, minor) (((major) << 8) | (minor))
 #define PR_VERSION			PR_VERSION_BUILD(PR_VERSION_MAJOR, PR_VERSION_MINOR)
-
-#define PR_GIT_BRANCH 	    "${GIT_BRANCH}"
-#define PR_GIT_REVISION 	"${GIT_REVISION}"
 // clang-format on
