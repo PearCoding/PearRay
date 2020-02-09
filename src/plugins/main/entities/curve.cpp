@@ -79,8 +79,8 @@ public:
 
 		// TODO
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
-													   transform().matrix(), in);
+		out.HitDistance = in_local.transformDistance(out.HitDistance,
+													   transform().linear());
 		out.FaceID		= simdpp::make_uint(0);
 		out.EntityID	= simdpp::make_uint(id());
 		out.MaterialID  = simdpp::make_uint(mMaterialID);
@@ -118,8 +118,8 @@ public:
 		if (!recursiveCheck(in_local, out, projectedCurve, 0, 1, maxDepth))
 			out.HitDistance = std::numeric_limits<float>::infinity();
 		else {
-			out.HitDistance = in_local.distanceTransformed(out.HitDistance,
-														   transform().matrix(), in);
+			out.HitDistance = in_local.transformDistance(out.HitDistance,
+														   transform().linear());
 			out.FaceID		= 0;
 			out.EntityID	= id();
 			out.MaterialID  = mMaterialID;

@@ -34,7 +34,7 @@ inline Vector3fv safePosition(const Vector3fv& pos,
 }
 
 template <typename T>
-inline Vector3t<T> apply(const Eigen::Matrix3f& m, const Vector3t<T>& p)
+inline Vector3t<T> applyVector(const Eigen::Ref<const Eigen::Matrix3f>& m, const Vector3t<T>& p)
 {
 	T b1 = m(0, 0) * p(0) + m(0, 1) * p(1) + m(0, 2) * p(2);
 	T b2 = m(1, 0) * p(0) + m(1, 1) * p(1) + m(1, 2) * p(2);
@@ -43,7 +43,7 @@ inline Vector3t<T> apply(const Eigen::Matrix3f& m, const Vector3t<T>& p)
 }
 
 template <typename T>
-inline Vector3t<T> applyAffine(const Eigen::Matrix4f& m, const Vector3t<T>& p)
+inline Vector3t<T> applyAffine(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3t<T>& p)
 {
 	T b1 = m(0, 0) * p(0) + m(0, 1) * p(1) + m(0, 2) * p(2) + m(0, 3);
 	T b2 = m(1, 0) * p(0) + m(1, 1) * p(1) + m(1, 2) * p(2) + m(1, 3);
@@ -52,7 +52,7 @@ inline Vector3t<T> applyAffine(const Eigen::Matrix4f& m, const Vector3t<T>& p)
 }
 
 template <typename T>
-inline Vector3t<T> apply(const Eigen::Matrix4f& m, const Vector3t<T>& p)
+inline Vector3t<T> apply(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3t<T>& p)
 {
 	Vector3t<T> b = applyAffine(m, p);
 	return b / (m(3, 0) * p(0) + m(3, 1) * p(1) + m(3, 2) * p(2) + m(3, 3));
@@ -68,7 +68,7 @@ inline Eigen::Matrix3f orthogonalMatrix(const Vector3f& c0, const Vector3f& c1, 
 	return mat;
 }
 
-inline Eigen::Matrix3f orthogonalInverse(const Eigen::Matrix3f& mat)
+inline Eigen::Matrix3f orthogonalInverse(const Eigen::Ref<const Eigen::Matrix3f>& mat)
 {
 	return mat.transpose();
 }

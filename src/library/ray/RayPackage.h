@@ -60,28 +60,32 @@ public:
 		cache();
 	}
 
-	inline RayPackageBase<V> transform(const Eigen::Matrix4f& oM,
-									   const Eigen::Matrix3f& dM) const
+	inline RayPackageBase<V> transform(const Eigen::Ref<const Eigen::Matrix4f>& oM,
+									   const Eigen::Ref<const Eigen::Matrix3f>& dM) const
 	{
 		RayPackageBase<V> other;
 		other = *this;
 
 		other.Origin	= Transform::apply(oM, Origin);
-		other.Direction = Transform::apply(dM, Direction);
+		other.Direction = Transform::applyVector(dM, Direction);
+		other.MinT		= transformDistance(MinT, dM);
+		other.MaxT		= transformDistance(MaxT, dM);
 
 		other.normalize();
 
 		return other;
 	}
 
-	inline RayPackageBase<V> transformAffine(const Eigen::Matrix4f& oM,
-											 const Eigen::Matrix3f& dM) const
+	inline RayPackageBase<V> transformAffine(const Eigen::Ref<const Eigen::Matrix4f>& oM,
+											 const Eigen::Ref<const Eigen::Matrix3f>& dM) const
 	{
 		RayPackageBase<V> other;
 		other = *this;
 
 		other.Origin	= Transform::applyAffine(oM, Origin);
-		other.Direction = Transform::apply(dM, Direction);
+		other.Direction = Transform::applyVector(dM, Direction);
+		other.MinT		= transformDistance(MinT, dM);
+		other.MaxT		= transformDistance(MaxT, dM);
 
 		other.normalize();
 
@@ -123,15 +127,14 @@ public:
 		Cached = true;
 	}
 
-	/* Advance with t, transform position with matrix and calculate new position to given other base. */
-	inline V distanceTransformed(const V& t_local,
-								 const Eigen::Matrix4f& local_to_global,
-								 const RayPackageBase<V>& global_other) const
+	/* Advance direction with t, transform displacement with direction matrix and calculate norm of result. */
+	inline V transformDistance(const V& t_local,
+								 const Eigen::Ref<const Eigen::Matrix3f>& directionMatrix) const
 	{
-		auto p	= this->t(t_local);
-		auto p2 = Transform::applyAffine(local_to_global, p);
+		const Vector3t<V> dt  = t_local * Direction;
+		const Vector3t<V> dt2 = Transform::applyVector(directionMatrix, dt);
 
-		return (p2 - global_other.Origin).norm();
+		return dt2.norm();
 	}
 
 	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d) const

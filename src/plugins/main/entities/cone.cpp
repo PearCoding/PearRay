@@ -98,8 +98,8 @@ public:
 		out.HitDistance = blend(qu_t, out.HitDistance, valid);
 		out.Parameter   = in_local.t(out.HitDistance);
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
-													   transform().matrix(), in);
+		out.HitDistance = in_local.transformDistance(out.HitDistance,
+													   transform().linear());
 		out.EntityID	= simdpp::make_uint(id());
 		out.FaceID		= simdpp::make_uint(0);
 		out.MaterialID  = simdpp::make_uint(mMaterialID);
@@ -136,8 +136,8 @@ public:
 			out.FaceID = 0;
 		}
 
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
-													   transform().matrix(), in);
+		out.HitDistance = in_local.transformDistance(out.HitDistance,
+													   transform().linear());
 		out.EntityID	= id();
 		out.MaterialID  = mMaterialID;
 	}

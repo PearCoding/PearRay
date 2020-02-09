@@ -83,8 +83,8 @@ public:
 		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
-													   transform().matrix(), in);
+		out.HitDistance = in_local.transformDistance(out.HitDistance,
+													   transform().linear());
 		out.EntityID	= simdpp::make_uint(id());
 
 		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i) {
@@ -103,8 +103,8 @@ public:
 		mMesh->checkCollision(in_local, out);
 
 		// out.FaceID is set inside mesh
-		out.HitDistance = in_local.distanceTransformed(out.HitDistance,
-													   transform().matrix(), in);
+		out.HitDistance = in_local.transformDistance(out.HitDistance,
+													   transform().linear());
 		out.EntityID	= id();
 		out.MaterialID	= out.MaterialID < mMaterials.size()
 							 ? mMaterials.at(out.MaterialID)
