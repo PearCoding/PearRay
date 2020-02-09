@@ -2,7 +2,7 @@
 
 // 0 Moeller
 // 1 Pluecker
-// 2 Pluecker Optimized (Cached)
+// 2 Pluecker Memory (Cached)
 // 3 Watertight
 // 4 Baldwin-Weber 9
 // 5 Baldwin-Weber 12
@@ -14,7 +14,7 @@
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
 # define PR_TRIANGLE_INTERSECTION_METHOD_NAME "PI"
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 2
-# define PR_TRIANGLE_INTERSECTION_METHOD_NAME "PIOp"
+# define PR_TRIANGLE_INTERSECTION_METHOD_NAME "PIMem"
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 3
 # define PR_TRIANGLE_INTERSECTION_METHOD_NAME "WT"
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 4

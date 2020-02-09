@@ -309,8 +309,8 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 	csv << name << CSV_SEP << triangles.size() << CSV_SEP << (int)degree << CSV_SEP << hitrate << CSV_SEP
 		<< tri_area << CSV_SEP << pixelsWithHits / static_cast<float>(WIDTH * HEIGHT) << CSV_SEP
 		<< total.TotalTime << CSV_SEP << (total.TotalTime > 0 ? total.MinTime : 0) << CSV_SEP << total.MaxTime << CSV_SEP
-		<< total.TotalHits << CSV_SEP << (total.TotalHits > 0 ? total.MinHits : 0) << CSV_SEP << total.MaxHits << CSV_SEP;
-	csv << std::endl;
+		<< total.TotalHits << CSV_SEP << (total.TotalHits > 0 ? total.MinHits : 0) << CSV_SEP << total.MaxHits
+		<< std::endl;
 
 	// Write images
 	std::stringstream path_stream;
@@ -442,8 +442,8 @@ void suite_triangle()
 		<< "Triangles" << CSV_SEP << "Angle" << CSV_SEP << "HitRate" << CSV_SEP
 		<< "TriangleArea" << CSV_SEP << "TriangleCoverage" << CSV_SEP
 		<< "TotalTimeNS" << CSV_SEP << "MinTimeNS" << CSV_SEP << "MaxTimeNS" << CSV_SEP
-		<< "TotalHits" << CSV_SEP << "MinHits" << CSV_SEP << "MaxHits" << CSV_SEP;
-	csv << std::endl;
+		<< "TotalHits" << CSV_SEP << "MinHits" << CSV_SEP << "MaxHits"
+		<< std::endl;
 
 	precision_test(csv);
 	hitrate_test(csv);

@@ -51,7 +51,7 @@ inline PR_LIB bool intersectWT(
 	float w = Bx * Ay - By * Ax;
 
 	// Better precision needed:
-	if (u <= PR_EPSILON || v <= PR_EPSILON || w <= PR_EPSILON) {
+	if (u == 0.0f || v == 0.0f || w == 0.0f) {
 		double CxBy = (double)Cx * (double)By;
 		double CyBx = (double)Cy * (double)Bx;
 		u			= (float)(CxBy - CyBx);
@@ -65,7 +65,9 @@ inline PR_LIB bool intersectWT(
 		w			= (float)(BxAy - ByAx);
 	}
 
-	if ((u < 0 || v < 0 || w < 0) && (u > 0 || v > 0 || w > 0))
+	const bool invalid = (std::min(std::min(u, v), w) < -PR_TRIANGLE_WT_INTERSECT_EPSILON)
+						 && (std::max(std::max(u, v), w) > PR_TRIANGLE_WT_INTERSECT_EPSILON);
+	if (PR_LIKELY(invalid))
 		return false;
 
 	const float det = u + v + w;
@@ -143,8 +145,9 @@ inline PR_LIB bfloat intersectWT(
 	vfloat v = Ax * Cy - Ay * Cx;
 	vfloat w = Bx * Ay - By * Ax;
 
-	// Better precision is not provided for SIMD... 
-	bfloat valid = (((u >= 0) & (v >= 0) & (w >= 0)) | ((u <= 0) & (v <= 0) & (w <= 0)));
+	// Better precision is not provided for SIMD...
+	bfloat valid = ~((min(min(u, v), w) < -PR_TRIANGLE_WT_INTERSECT_EPSILON)
+					 & (max(max(u, v), w) > PR_TRIANGLE_WT_INTERSECT_EPSILON));
 	if (none(valid))
 		return valid;
 
