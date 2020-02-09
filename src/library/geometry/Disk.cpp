@@ -20,7 +20,7 @@ void Disk::intersects(const Ray& in, SingleCollisionOutput& out) const
 		return;
 
 	const float t = -in.Origin(2) / in.Direction(2);
-	if (t <= PR_EPSILON)
+	if (!in.isInsideRange(t))
 		return;
 
 	const Vector3f p = in.t(t);
@@ -31,7 +31,7 @@ void Disk::intersects(const Ray& in, SingleCollisionOutput& out) const
 
 	out.HitDistance = t;
 
-	Vector2f proj	= project(p);
+	Vector2f proj	 = project(p);
 	out.Parameter[0] = proj(0);
 	out.Parameter[1] = proj(1);
 }
@@ -39,16 +39,15 @@ void Disk::intersects(const Ray& in, SingleCollisionOutput& out) const
 void Disk::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	const vfloat inf  = vfloat(std::numeric_limits<float>::infinity());
-	out.HitDistance   = in.Origin(2) / in.Direction(2);
+	out.HitDistance	  = in.Origin(2) / in.Direction(2);
 	const Vector3fv p = in.t(out.HitDistance);
-	const vfloat r2   = p(0) * p(0) + p(1) * p(1);
+	const vfloat r2	  = p(0) * p(0) + p(1) * p(1);
 
-	Vector2fv proj   = project(p);
+	Vector2fv proj	 = project(p);
 	out.Parameter[0] = proj(0);
 	out.Parameter[1] = proj(1);
 
-	bfloat succ		= b_and(r2 < mRadius * mRadius,
-						b_and(abs(in.Direction(2)) > PR_EPSILON, out.HitDistance > PR_EPSILON));
+	bfloat succ		= (r2 < mRadius * mRadius) & (abs(in.Direction(2)) > PR_EPSILON) & (in.isInsideRange(out.HitDistance));
 	out.HitDistance = blend(out.HitDistance, inf, succ);
 }
 

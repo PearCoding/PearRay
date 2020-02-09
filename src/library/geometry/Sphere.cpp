@@ -5,7 +5,6 @@
 
 #include <utility>
 
-#define PR_SPHERE_INTERSECT_EPSILON (1e-5f)
 namespace PR {
 Sphere::Sphere()
 	: mRadius(1)
@@ -40,23 +39,23 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 	if (t0 > t1)
 		std::swap(t0, t1);
 
-	if (t0 < PR_SPHERE_INTERSECT_EPSILON)
+	if (!in.isInsideRange(t0))
 		t0 = t1;
 
-	if (t0 >= PR_SPHERE_INTERSECT_EPSILON) {
+	if (in.isInsideRange(t0)) {
 		out.HitDistance = t0;
 
 		// Setup UV
-		Vector3f p  = in.t(t0);
-		Vector2f uv = project(p);
-		out.Parameter[0]   = uv(0);
-		out.Parameter[1]   = uv(1);
+		Vector3f p		 = in.t(t0);
+		Vector2f uv		 = project(p);
+		out.Parameter[0] = uv(0);
+		out.Parameter[1] = uv(1);
 	}
 }
 
 void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 {
-	const vfloat S  = -in.Origin.dot(in.Direction);
+	const vfloat S	= -in.Origin.dot(in.Direction);
 	const vfloat L2 = in.Origin.squaredNorm();
 	const vfloat R2 = vfloat(mRadius * mRadius);
 	const vfloat M2 = L2 - S * S;
@@ -67,22 +66,22 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 
 	const vfloat t0t = S - Q;
 	const vfloat t1t = S + Q;
-	const bfloat d   = t0t > t1t;
+	const bfloat d	 = t0t > t1t;
 
 	vfloat t0 = blend(t1t, t0t, d);
 	vfloat t1 = blend(t0t, t1t, d);
 
-	out.HitDistance = simdpp::blend(t1, t0, t0 < PR_SPHERE_INTERSECT_EPSILON);
+	out.HitDistance = simdpp::blend(t1, t0, ~in.isInsideRange(t0));
 
 	// Project
-	Vector3fv p  = in.t(t0);
-	Vector2fv uv = project(p);
-	out.Parameter[0]	= uv(0);
-	out.Parameter[1]	= uv(1);
+	Vector3fv p		 = in.t(t0);
+	Vector2fv uv	 = project(p);
+	out.Parameter[0] = uv(0);
+	out.Parameter[1] = uv(1);
 
 	const vfloat inf = fill_vector(std::numeric_limits<float>::infinity());
-	out.HitDistance  = simdpp::blend(out.HitDistance, inf,
-							 valid & (out.HitDistance >= PR_SPHERE_INTERSECT_EPSILON));
+	out.HitDistance	 = simdpp::blend(out.HitDistance, inf,
+									 valid & in.isInsideRange(out.HitDistance));
 }
 
 void Sphere::combine(const Vector3f& point)

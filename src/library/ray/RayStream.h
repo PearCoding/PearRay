@@ -75,7 +75,8 @@ private: // Some vectors are not aligned, due to required preprocessing
 	std::vector<uint8> mWavelengthIndex;
 	std::vector<uint8> mFlags;
 
-	std::vector<float> mNdotL;
+	std::vector<float> mMinT;
+	std::vector<float> mMaxT;
 	std::vector<float> mWeight[3];
 
 	size_t mSize;

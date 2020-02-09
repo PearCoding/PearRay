@@ -85,10 +85,9 @@ public:
 										 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
-		out.HitDistance   = make_float(std::numeric_limits<float>::infinity());
-		const vfloat zero = make_zero();
-		//const vfloat eps	   = make_float(PR_EPSILON);
-		const Vector3fv invDir = in.Direction.cwiseInverse();
+		static const vfloat zero = make_zero();
+		out.HitDistance			 = make_float(std::numeric_limits<float>::infinity());
+		const Vector3fv invDir	 = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
 			vfloat minT;
@@ -107,8 +106,8 @@ public:
 		CollisionOutput tmp;
 		size_t stackPos		 = 0;
 		stack[stackPos].node = mRoot;
-		stack[stackPos].minT = root_in.Entry;
-		stack[stackPos].maxT = root_in.Exit;
+		stack[stackPos].minT = max(in.MinT, root_in.Entry);
+		stack[stackPos].maxT = min(in.MaxT, root_in.Exit);
 		++stackPos;
 
 		while (stackPos > 0) {
@@ -123,10 +122,10 @@ public:
 				const vfloat t				= splitM * invDir[innerN->axis];
 
 				const bfloat dirMask = invDir[innerN->axis] < zero;
-				const bfloat minHit  = (t >= minT) | (t <= 0);
-				const bfloat maxHit  = (t <= maxT) /*& (t >= 0)*/;
+				const bfloat minHit	 = (t >= minT) | (t <= 0);
+				const bfloat maxHit	 = (t <= maxT) /*& (t >= 0)*/;
 
-				const bfloat valid	= (minT <= maxT) /*& (abs(in.Direction[innerN->axis]) > eps)*/;
+				const bfloat valid	  = (minT <= maxT) /*& (abs(in.Direction[innerN->axis]) > eps)*/;
 				const bfloat hitRight = valid & blend(minHit, maxHit, dirMask);
 				const bfloat hitLeft  = valid & blend(minHit, maxHit, ~dirMask);
 
@@ -183,8 +182,7 @@ public:
 				tmp.HitDistance = make_float(std::numeric_limits<float>::infinity());
 
 				checkCollisionCallback(in, entity, tmp);
-				const bfloat hits = (tmp.HitDistance < out.HitDistance)
-									& (tmp.HitDistance > zero);
+				const bfloat hits = (tmp.HitDistance < out.HitDistance);
 
 				out.blendFrom(tmp, hits);
 			}
@@ -224,8 +222,8 @@ public:
 		SingleCollisionOutput tmp;
 		size_t stackPos		 = 0;
 		stack[stackPos].node = mRoot;
-		stack[stackPos].minT = root_in.Entry;
-		stack[stackPos].maxT = root_in.Exit;
+		stack[stackPos].minT = std::max(in.MinT, root_in.Entry);
+		stack[stackPos].maxT = std::min(in.MaxT, root_in.Exit);
 		++stackPos;
 
 		while (stackPos > 0) {
@@ -241,7 +239,7 @@ public:
 				const bool side = (innerN->splitPos >= in.Origin[innerN->axis]);
 
 				const kdNodeCollider* nearN = side ? innerN->left : innerN->right;
-				const kdNodeCollider* farN  = side ? innerN->right : innerN->left;
+				const kdNodeCollider* farN	= side ? innerN->right : innerN->left;
 
 				const bool nearHit = t >= minT || t <= 0;
 				const bool farHit  = t <= maxT && t >= 0;
@@ -271,7 +269,6 @@ public:
 			for (uint64 entity : leafN->objects) {
 				tmp.HitDistance = std::numeric_limits<float>::infinity();
 
-				// Check for < 0?
 				checkCollisionCallback(in, entity, tmp);
 				if (tmp.HitDistance < out.HitDistance)
 					out = tmp;

@@ -36,6 +36,8 @@ RayStream::RayStream(size_t raycount)
 	mPixelIndex.reserve(mSize);
 	mIterationDepth.reserve(mSize);
 	mTime.reserve(mSize);
+	mMinT.reserve(mSize);
+	mMaxT.reserve(mSize);
 	mWavelengthIndex.reserve(mSize);
 	mFlags.reserve(mSize);
 	for (int i = 0; i < 3; ++i)
@@ -67,6 +69,8 @@ void RayStream::addRay(const Ray& ray)
 	mIterationDepth.emplace_back(ray.IterationDepth);
 	mPixelIndex.emplace_back(ray.PixelIndex);
 	mTime.emplace_back(to_unorm16(ray.Time));
+	mMinT.emplace_back(ray.MinT);
+	mMaxT.emplace_back(ray.MaxT);
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags);
 	for (int i = 0; i < 3; ++i)
@@ -88,6 +92,8 @@ void RayStream::reset()
 	mTime.clear();
 	mWavelengthIndex.clear();
 	mFlags.clear();
+	mMinT.clear();
+	mMaxT.clear();
 	for (int i = 0; i < 3; ++i)
 		mWeight[i].clear();
 
@@ -117,7 +123,7 @@ RayGroup RayStream::getNextGroup()
 
 size_t RayStream::getMemoryUsage() const
 {
-	return mSize * (3 * sizeof(float) + COMPRES_MEM + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + 2 * sizeof(uint8) + sizeof(size_t));
+	return mSize * (3 * sizeof(float) + COMPRES_MEM + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + 2 * sizeof(uint8) + sizeof(size_t) + 2 * sizeof(float));
 }
 
 Ray RayStream::getRay(size_t id) const
@@ -145,11 +151,13 @@ Ray RayStream::getRay(size_t id) const
 							 mDirection[2][id]);
 #endif
 
-	ray.IterationDepth  = mIterationDepth[id];
+	ray.IterationDepth	= mIterationDepth[id];
 	ray.PixelIndex		= mPixelIndex[id];
 	ray.Time			= from_unorm16(mTime[id]);
 	ray.WavelengthIndex = mWavelengthIndex[id];
 	ray.Flags			= mFlags[id];
+	ray.MinT			= mMinT[id];
+	ray.MaxT			= mMaxT[id];
 	ray.Weight			= ColorTriplet(mWeight[0][id],
 							   mWeight[1][id],
 							   mWeight[2][id]);
@@ -197,6 +205,8 @@ RayPackage RayStream::getRayPackage(size_t id) const
 	load_from_container_linear(ray.WavelengthIndex, mWavelengthIndex, id);
 	load_from_container_linear(ray.Flags, mFlags, id);
 
+	load_from_container_linear(ray.MinT, mMinT, id);
+	load_from_container_linear(ray.MaxT, mMaxT, id);
 	load_from_container_linear(ray.Weight[0], mWeight[0], id);
 	load_from_container_linear(ray.Weight[1], mWeight[1], id);
 	load_from_container_linear(ray.Weight[2], mWeight[2], id);

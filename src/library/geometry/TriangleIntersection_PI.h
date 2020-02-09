@@ -49,7 +49,7 @@ inline PR_LIB bool intersectPI(
 	// Intersection value
 	const Vector3f N = m0 + m1 + m2;
 	t				 = (p0 - in.Origin).dot(N) / k;
-	if (PR_LIKELY(t <= PR_TRIANGLE_PI_INTERSECT_EPSILON))
+	if (PR_LIKELY(!in.isInsideRange(t)))
 		return false;
 
 	// UV calculation!
@@ -103,7 +103,7 @@ inline PR_LIB bfloat intersectPI(
 	// Intersection value
 	const Vector3fv N = m0 + m1 + m2;
 	t				  = (p0 - in.Origin).dot(N) / k;
-	valid			  = valid & (t > PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	valid			  = valid & in.isInsideRange(t);
 	if (none(valid))
 		return valid;
 
@@ -160,7 +160,7 @@ inline PR_LIB bool intersectPI_Mem(
 	// Intersection value
 	const Vector3f N = m0 + m1 + m2;
 	t				 = (p0 - in.Origin).dot(N) / k;
-	if (t <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
+	if (!in.isInsideRange(t))
 		return false;
 
 	// UV calculation!
@@ -214,7 +214,7 @@ inline PR_LIB bfloat intersectPI_Mem(
 	// Intersection value
 	const Vector3fv N = m0 + m1 + m2;
 	t				  = (p0 - in.Origin).dot(N) / k;
-	valid			  = valid & (t > PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	valid			  = valid & in.isInsideRange(t);
 	if (none(valid))
 		return valid;
 
@@ -267,7 +267,7 @@ inline PR_LIB bool intersectPI_Off(
 	const float lt = lp0.dot(N);
 	t			   = lt / den;
 
-	if (t <= PR_TRIANGLE_PI_INTERSECT_EPSILON)
+	if (!in.isInsideRange(t))
 		return false;
 
 	uv = Vector2f(u, v) / (u + v + w);
@@ -312,7 +312,7 @@ inline PR_LIB bfloat intersectPI_Off(
 	const vfloat UVW  = u + v + w;
 	uv[0]			  = u / UVW;
 	uv[1]			  = v / UVW;
-	return valid & (den != 0) & (t > PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	return valid & (den != 0) & in.isInsideRange(t);
 	;
 }
 } // namespace TriangleIntersection

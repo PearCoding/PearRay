@@ -62,7 +62,7 @@ public:
 		{
 			InfiniteLightSampleInput inL;
 			inL.Point = spt;
-			inL.RND   = session.tile()->random().get2D();
+			inL.RND	  = session.tile()->random().get2D();
 			InfiniteLightSampleOutput outL;
 			infLight->sample(inL, outL, session);
 
@@ -85,7 +85,7 @@ public:
 					token = LightPathToken(out.Type);
 
 					msiL = allowMSI ? MSI(1, outL.PDF_S, 1, out.PDF_S) : 1.0f;
-					LiL  = outL.Weight * out.Weight / outL.PDF_S;
+					LiL	 = outL.Weight * out.Weight / outL.PDF_S;
 				}
 			}
 		}
@@ -97,7 +97,7 @@ public:
 		{
 			MaterialSampleInput inS;
 			inS.Point = spt;
-			inS.RND   = session.tile()->random().get2D();
+			inS.RND	  = session.tile()->random().get2D();
 			MaterialSampleOutput outS;
 			material->sample(inS, outS, session);
 			token = LightPathToken(outS.Type);
@@ -107,7 +107,7 @@ public:
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & ~RF_VisibilityMask);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					InfiniteLightEvalInput inL;
@@ -116,7 +116,7 @@ public:
 					infLight->eval(inL, outL, session);
 
 					msiS = MSI(1, outL.PDF_S, 1, outS.PDF_S);
-					LiS  = outL.Weight * outS.Weight / outS.PDF_S;
+					LiS	 = outL.Weight * outS.Weight / outS.PDF_S;
 				}
 			}
 		}
@@ -146,7 +146,7 @@ public:
 		// Sample BxDF
 		MaterialSampleInput in;
 		in.Point = spt;
-		in.RND   = session.tile()->random().get2D();
+		in.RND	 = session.tile()->random().get2D();
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
@@ -159,7 +159,7 @@ public:
 			&& session.tile()->random().getFloat() <= scatProb) {
 			Ray next = spt.Ray.next(spt.P, out.Outgoing);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
-			next.Flags = RF_Bounce | (spt.Ray.Flags & RF_Monochrome);
+			next.Flags = RF_Bounce | (spt.Ray.Flags & ~RF_VisibilityMask);
 
 			if (!next.Weight.isZero()) {
 				path.addToken(LightPathToken(out.Type)); // (1)
@@ -180,7 +180,7 @@ public:
 
 						// Only the ray is fixed (Should be handled better!)
 						InfiniteLightEvalInput lin;
-						lin.Point.Ray   = next;
+						lin.Point.Ray	= next;
 						lin.Point.Flags = SPF_Background;
 						InfiniteLightEvalOutput lout;
 						light->eval(lin, lout, session);
@@ -231,7 +231,8 @@ public:
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, L);
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
+				shadow.MaxT			= std::sqrt(sqrD) + 0.0005f;
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & ~RF_VisibilityMask);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 
 				if (shadowHit.Successful && shadowHit.EntityID == light->id()) {
@@ -264,7 +265,7 @@ public:
 		{
 			MaterialSampleInput inS;
 			inS.Point = spt;
-			inS.RND   = session.tile()->random().get2D();
+			inS.RND	  = session.tile()->random().get2D();
 			MaterialSampleOutput outS;
 			material->sample(inS, outS, session);
 			token = LightPathToken(outS.Type);
@@ -274,7 +275,7 @@ public:
 
 				// Trace shadow ray
 				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
+				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & ~RF_VisibilityMask);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (shadowHit.Successful
 					&& shadowHit.EntityID == light->id()) {
@@ -297,7 +298,7 @@ public:
 							(shadow.Origin - nlightPt.P).squaredNorm(),
 							std::abs(shadow.Direction.dot(nlightPt.N)));
 						msiS = MSI(1, pdfS, 1, outS.PDF_S);
-						LiS  = outL.Weight * outS.Weight / outS.PDF_S;
+						LiS	 = outL.Weight * outS.Weight / outS.PDF_S;
 					}
 				}
 			}
@@ -455,7 +456,7 @@ public:
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
 		size_t lightsamples = (size_t)mParams.getUInt("light_sample_count", 1);
-		size_t maxraydepth  = (size_t)mParams.getUInt("max_ray_depth", 4);
+		size_t maxraydepth	= (size_t)mParams.getUInt("max_ray_depth", 4);
 
 		auto obj = std::make_shared<IntDirect>(lightsamples, maxraydepth);
 		obj->enableMSI(mParams.getBool("msi", true));

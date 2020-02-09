@@ -49,7 +49,7 @@ void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 	const Vector3f invDir = in.Direction.cwiseInverse();
 
 	float entry = -std::numeric_limits<float>::infinity();
-	float exit  = std::numeric_limits<float>::infinity();
+	float exit	= std::numeric_limits<float>::infinity();
 	for (int i = 0; i < 3; ++i) {
 		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
 		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
@@ -59,8 +59,12 @@ void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 	}
 
 	float minE = entry <= 0 ? exit : entry;
-	if (exit >= entry && minE > PR_EPSILON)
-		out.HitDistance = minE;
+	if (exit >= entry) {
+		if (in.isInsideRange(minE))
+			out.HitDistance = minE;
+		else if (in.isInsideRange(exit))
+			out.HitDistance = exit;
+	}
 }
 
 void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
@@ -68,7 +72,7 @@ void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 	const Vector3fv invDir = in.Direction.cwiseInverse();
 
 	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
-	vfloat exit  = vfloat(std::numeric_limits<float>::infinity());
+	vfloat exit	 = vfloat(std::numeric_limits<float>::infinity());
 	for (int i = 0; i < 3; ++i) {
 		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
 		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
@@ -78,9 +82,10 @@ void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 	}
 
 	const simdpp::float32v inf = simdpp::make_float(std::numeric_limits<float>::infinity());
-	out.HitDistance	= simdpp::blend(exit, entry, entry < 0);
-	out.HitDistance			   = simdpp::blend(out.HitDistance, inf,
-							   (exit >= entry) & (out.HitDistance > PR_EPSILON));
+	out.HitDistance			   = simdpp::blend(exit, entry, entry < 0);
+	out.HitDistance			   = simdpp::blend(out.HitDistance,
+									   simdpp::blend(exit, inf, (exit >= entry) & in.isInsideRange(exit)),
+									   (exit >= entry) & in.isInsideRange(out.HitDistance));
 }
 
 BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
@@ -94,14 +99,16 @@ BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 
 		if (i == 0) {
 			r.Entry = std::min(vmin, vmax);
-			r.Exit  = std::max(vmin, vmax);
+			r.Exit	= std::max(vmin, vmax);
 		} else {
 			r.Entry = std::max(std::min(vmin, vmax), r.Entry);
-			r.Exit  = std::min(std::max(vmin, vmax), r.Exit);
+			r.Exit	= std::min(std::max(vmin, vmax), r.Exit);
 		}
 	}
 
-	r.Successful = (r.Exit >= r.Entry && r.Exit > PR_EPSILON);
+	r.Entry		 = std::max(in.MinT, r.Entry);
+	r.Exit		 = std::min(in.MaxT, r.Exit);
+	r.Successful = (r.Exit >= r.Entry && in.isInsideRange(r.Exit));
 
 	return r;
 }
@@ -119,14 +126,16 @@ BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& i
 
 		if (i == 0) {
 			r.Entry = min(vmin, vmax);
-			r.Exit  = max(vmin, vmax);
+			r.Exit	= max(vmin, vmax);
 		} else {
 			r.Entry = max(min(vmin, vmax), r.Entry);
-			r.Exit  = min(max(vmin, vmax), r.Exit);
+			r.Exit	= min(max(vmin, vmax), r.Exit);
 		}
 	}
 
-	r.Successful = (r.Exit >= r.Entry) & (r.Exit > vfloat(PR_EPSILON));
+	r.Entry		 = max(in.MinT, r.Entry);
+	r.Exit		 = min(in.MaxT, r.Exit);
+	r.Successful = (r.Exit >= r.Entry) & in.isInsideRange(r.Exit);
 
 	return r;
 }
@@ -141,22 +150,22 @@ BoundingBox::FaceSide BoundingBox::getIntersectionSide(const Vector3f& intersect
 
 	if (maxDist(0) < f) {
 		side = FS_Right;
-		f	= maxDist(0);
+		f	 = maxDist(0);
 	}
 
 	if (minDist(1) < f) {
 		side = FS_Bottom;
-		f	= minDist(1);
+		f	 = minDist(1);
 	}
 
 	if (maxDist(1) < f) {
 		side = FS_Top;
-		f	= maxDist(1);
+		f	 = maxDist(1);
 	}
 
 	if (minDist(2) < f) {
 		side = FS_Front;
-		f	= minDist(2);
+		f	 = minDist(2);
 	}
 
 	if (maxDist(2) < f) {

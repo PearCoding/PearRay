@@ -2,7 +2,6 @@
 #include "CollisionData.h"
 
 namespace PR {
-#define PR_PLANE_INTERSECT_EPSILON (PR_EPSILON)
 constexpr float EPSILON_BOUND = 0.0001f;
 
 Plane::Plane()
@@ -39,7 +38,7 @@ Plane::Plane(float width, float height)
 
 void Plane::recache()
 {
-	mNormal_Cache	  = mXAxis.cross(mYAxis);
+	mNormal_Cache	   = mXAxis.cross(mYAxis);
 	mSurfaceArea_Cache = mNormal_Cache.norm();
 	mNormal_Cache.normalize();
 
@@ -95,10 +94,10 @@ void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 	float ln = in.Direction.dot(mNormal_Cache);
 	float pn = (mPosition - in.Origin).dot(mNormal_Cache);
 
-	if (std::abs(ln) > PR_PLANE_INTERSECT_EPSILON) {
+	if (std::abs(ln) > PR_EPSILON) {
 		const float t = pn / ln;
 
-		if (t > PR_PLANE_INTERSECT_EPSILON) {
+		if (in.isInsideRange(t)) {
 			const Vector3f p = in.t(t) - mPosition;
 
 			out.Parameter[0] = p.dot(mXAxis) * mInvXLenSqr_Cache;
@@ -134,8 +133,8 @@ void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 
 	bfloat succ = (out.Parameter[0] >= 0) & (out.Parameter[0] <= 1)
 				  & (out.Parameter[1] >= 0) & (out.Parameter[1] <= 1)
-				  & (out.HitDistance > PR_PLANE_INTERSECT_EPSILON)
-				  & (abs(ln) > PR_PLANE_INTERSECT_EPSILON);
+				  & (in.isInsideRange(out.HitDistance))
+				  & (abs(ln) > PR_EPSILON);
 	out.HitDistance = blend(out.HitDistance, inf, succ);
 }
 

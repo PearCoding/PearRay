@@ -79,14 +79,14 @@ inline PR_LIB bool intersectWT(
 	const float Cz = sz * C(kz);
 
 	t = u * Az + v * Bz + w * Cz;
-	if (std::abs(t) >= PR_TRIANGLE_WT_INTERSECT_EPSILON && std::signbit(t) == std::signbit(det)) {
+	if (std::signbit(t) == std::signbit(det)) {
 		const float invDet = 1.0f / det;
 		uv[0]			   = u * invDet;
 		uv[1]			   = v * invDet;
 		//w *= invDet;
 		t *= invDet;
 
-		return (t >= PR_TRIANGLE_WT_INTERSECT_EPSILON);
+		return in.isInsideRange(t);
 	}
 
 	return false;
@@ -161,7 +161,7 @@ inline PR_LIB bfloat intersectWT(
 	const vfloat Cz = sz * Ckz;
 
 	t	  = u * Az + v * Bz + w * Cz;
-	valid = valid & (abs(t) > PR_TRIANGLE_WT_INTERSECT_EPSILON) & (~(signbit(t) ^ signbit(det)));
+	valid = valid & (~(signbit(t) ^ signbit(det)));
 	if (none(valid))
 		return valid;
 
@@ -170,7 +170,7 @@ inline PR_LIB bfloat intersectWT(
 	uv[1]				= v * invDet;
 	t *= invDet;
 
-	return valid & (t >= PR_TRIANGLE_WT_INTERSECT_EPSILON);
+	return valid & in.isInsideRange(t);
 }
 } // namespace TriangleIntersection
 } // namespace PR

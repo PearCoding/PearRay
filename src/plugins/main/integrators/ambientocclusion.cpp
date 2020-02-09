@@ -30,7 +30,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		Random& random	= session.tile()->random();
+		Random& random	  = session.tile()->random();
 		LightPath stdPath = LightPath::createCDL(1);
 
 		while (session.handleCameraRays()) {
@@ -56,8 +56,8 @@ public:
 						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
 																  dir);
 
-						Ray n   = ray.next(pt.P, ndir);
-						n.Flags = RF_Shadow | (ray.Flags & RF_Monochrome);
+						Ray n	= ray.next(pt.P, ndir);
+						n.Flags = RF_Shadow | (ray.Flags & ~RF_VisibilityMask);
 
 						ShadowHit hit = session.traceShadowRay(n);
 						if (hit.Successful)

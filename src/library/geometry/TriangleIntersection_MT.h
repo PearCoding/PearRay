@@ -37,7 +37,7 @@ inline PR_LIB bool intersectMT(
 		return false;
 
 	t = f * r.dot(e13);
-	return t >= PR_TRIANGLE_MT_INTERSECT_EPSILON;
+	return in.isInsideRange(t);
 }
 
 inline PR_LIB bfloat intersectMT(
@@ -74,7 +74,7 @@ inline PR_LIB bfloat intersectMT(
 	valid = valid & ((uv(1) >= 0) & (uv(0) + uv(1) <= 1));
 
 	t = f * r.dot(e13);
-	return valid & (t >= PR_TRIANGLE_MT_INTERSECT_EPSILON);
+	return valid & in.isInsideRange(t);
 }
 } // namespace TriangleIntersection
 } // namespace PR

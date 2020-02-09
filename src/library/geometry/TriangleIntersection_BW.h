@@ -92,7 +92,7 @@ inline PR_LIB bool intersectBW9(
 		const float transD = in.Direction[0] + M[6] * in.Direction[1] + M[7] * in.Direction[2];
 		t				   = -transS / transD;
 
-		if (t <= PR_TRIANGLE_BW_INTERSECT_EPSILON || abs(transD) <= PR_EPSILON)
+		if (!in.isInsideRange(t) || abs(transD) <= PR_EPSILON)
 			return false;
 
 		const Vector3f wr = in.t(t);
@@ -104,7 +104,7 @@ inline PR_LIB bool intersectBW9(
 		const float transD = M[6] * in.Direction[0] + in.Direction[1] + M[7] * in.Direction[2];
 		t				   = -transS / transD;
 
-		if (t <= PR_TRIANGLE_BW_INTERSECT_EPSILON || abs(transD) <= PR_EPSILON)
+		if (!in.isInsideRange(t) || abs(transD) <= PR_EPSILON)
 			return false;
 
 		const Vector3f wr = in.t(t);
@@ -116,7 +116,7 @@ inline PR_LIB bool intersectBW9(
 		const float transD = M[6] * in.Direction[0] + M[7] * in.Direction[1] + in.Direction[2];
 		t				   = -transS / transD;
 
-		if (t <= PR_TRIANGLE_BW_INTERSECT_EPSILON || abs(transD) <= PR_EPSILON)
+		if (!in.isInsideRange(t) || abs(transD) <= PR_EPSILON)
 			return false;
 
 		const Vector3f wr = in.t(t);
@@ -145,7 +145,7 @@ inline PR_LIB bfloat intersectBW9(
 		const vfloat transD = in.Direction[0] + M[6] * in.Direction[1] + M[7] * in.Direction[2];
 		t					= -transS / transD;
 
-		valid = (t > PR_TRIANGLE_BW_INTERSECT_EPSILON) & (abs(transD) > PR_EPSILON);
+		valid = in.isInsideRange(t) & (abs(transD) > PR_EPSILON);
 		if (none(valid))
 			return valid;
 
@@ -158,7 +158,7 @@ inline PR_LIB bfloat intersectBW9(
 		const vfloat transD = M[6] * in.Direction[0] + in.Direction[1] + M[7] * in.Direction[2];
 		t					= -transS / transD;
 
-		valid = (t > PR_TRIANGLE_BW_INTERSECT_EPSILON) & (abs(transD) > PR_EPSILON);
+		valid = in.isInsideRange(t) & (abs(transD) > PR_EPSILON);
 		if (none(valid))
 			return valid;
 
@@ -171,7 +171,7 @@ inline PR_LIB bfloat intersectBW9(
 		const vfloat transD = M[6] * in.Direction[0] + M[7] * in.Direction[1] + in.Direction[2];
 		t					= -transS / transD;
 
-		valid = (t > PR_TRIANGLE_BW_INTERSECT_EPSILON) & (abs(transD) > PR_EPSILON);
+		valid = in.isInsideRange(t) & (abs(transD) > PR_EPSILON);
 		if (none(valid))
 			return valid;
 
@@ -266,7 +266,7 @@ inline PR_LIB bool intersectBW12(
 	const float transD = M[8] * in.Direction[0] + M[9] * in.Direction[1] + M[10] * in.Direction[2];
 	t				   = -transS / transD;
 
-	if (t <= PR_TRIANGLE_BW_INTERSECT_EPSILON || abs(transD) <= PR_EPSILON)
+	if (!in.isInsideRange(t) || abs(transD) <= PR_EPSILON)
 		return false;
 
 	const Vector3f wr = in.t(t);
@@ -287,7 +287,7 @@ inline PR_LIB bfloat intersectBW12(
 	const vfloat transD = M[8] * in.Direction[0] + M[9] * in.Direction[1] + M[10] * in.Direction[2];
 	t					= -transS / transD;
 
-	bfloat valid = (t > PR_TRIANGLE_BW_INTERSECT_EPSILON) & (abs(transD) > PR_EPSILON);
+	bfloat valid = in.isInsideRange(t) & (abs(transD) > PR_EPSILON);
 	if (none(valid))
 		return valid;
 

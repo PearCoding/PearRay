@@ -4,7 +4,7 @@
 #include "math/Transform.h"
 #include "spectral/ColorTriplet.h"
 
-#define PR_RAY_CACHE_MOMENTUM
+#define PR_USE_RAY_CACHE
 
 namespace PR {
 
@@ -14,17 +14,22 @@ enum RayFlags : uint32 {
 	RF_Light	  = 0x02,
 	RF_Bounce	  = 0x04,
 	RF_Shadow	  = 0x08,
-	RF_Monochrome = 0x10
+	RF_Monochrome = 0x10,
+
+	RF_VisibilityMask = RF_Camera | RF_Light | RF_Bounce | RF_Shadow
 };
 
 template <typename V>
 struct RayPackageBase {
-	typedef V FloatingType;
-	typedef typename VectorTemplate<V>::uint32_t IntegerType;
+	using FloatingType = V;
+	using IntegerType  = typename VectorTemplate<V>::uint32_t;
+	using BoolType	   = typename VectorTemplate<V>::bool_t;
 
 	Vector3t<V> Origin	  = Vector3t<V>(V(0), V(0), V(0));
 	Vector3t<V> Direction = Vector3t<V>(V(0), V(0), V(0));
 
+	FloatingType MinT			= FloatingType(PR_EPSILON);
+	FloatingType MaxT			= FloatingType(std::numeric_limits<float>::infinity());
 	ColorTripletBase<V> Weight	= ColorTripletBase<V>(V(0), V(0), V(0));
 	FloatingType Time			= FloatingType(0);
 	IntegerType IterationDepth	= IntegerType(0);
@@ -34,7 +39,7 @@ struct RayPackageBase {
 
 private:
 	bool Cached = false;
-#ifdef PR_RAY_CACHE_MOMENTUM
+#ifdef PR_USE_RAY_CACHE
 	Vector3t<V> Momentum_Cache;
 	IntegerType MaxDirectionIndex_Cache;
 #endif
@@ -90,7 +95,7 @@ public:
 
 	inline Vector3t<V> momentum() const
 	{
-#ifdef PR_RAY_CACHE_MOMENTUM
+#ifdef PR_USE_RAY_CACHE
 		PR_ASSERT(Cached, "Cache first!");
 		return Momentum_Cache;
 #else
@@ -100,7 +105,7 @@ public:
 
 	inline IntegerType maxDirectionIndex() const
 	{
-#ifdef PR_RAY_CACHE_MOMENTUM
+#ifdef PR_USE_RAY_CACHE
 		PR_ASSERT(Cached, "Cache first!");
 		return MaxDirectionIndex_Cache;
 #else
@@ -110,7 +115,7 @@ public:
 
 	inline void cache()
 	{
-#ifdef PR_RAY_CACHE_MOMENTUM
+#ifdef PR_USE_RAY_CACHE
 		Momentum_Cache			= Origin.cross(Direction);
 		MaxDirectionIndex_Cache = calcMaxDirectionIndex();
 #endif
@@ -143,6 +148,11 @@ public:
 		return other;
 	}
 
+	inline BoolType isInsideRange(const V& t) const
+	{
+		return b_and(t >= MinT, t <= MaxT);
+	}
+
 private:
 	inline IntegerType calcMaxDirectionIndex() const
 	{
@@ -152,13 +162,13 @@ private:
 
 		FloatingType maxD = blend(d0, d1, d0 > d1);
 		IntegerType max	  = blend(IntegerType(0), IntegerType(1), d0 > d1);
-		max = blend(max, IntegerType(2), maxD > d2);
+		max				  = blend(max, IntegerType(2), maxD > d2);
 		return max;
 	}
 };
 
-typedef RayPackageBase<vfloat> RayPackage;
-typedef RayPackageBase<float> Ray;
+using RayPackage = RayPackageBase<vfloat>;
+using Ray		 = RayPackageBase<float>;
 
 inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 {
@@ -172,6 +182,8 @@ inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 	ray.Weight[0]		= extract(i, package.Weight[0]);
 	ray.Weight[1]		= extract(i, package.Weight[1]);
 	ray.Weight[2]		= extract(i, package.Weight[2]);
+	ray.MinT			= extract(i, package.MinT);
+	ray.MaxT			= extract(i, package.MaxT);
 	ray.Time			= extract(i, package.Time);
 	ray.IterationDepth	= extract(i, package.IterationDepth);
 	ray.Flags			= extract(i, package.Flags);
