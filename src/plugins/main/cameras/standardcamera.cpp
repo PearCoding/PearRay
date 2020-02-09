@@ -8,6 +8,9 @@
 #include "renderer/RenderContext.h"
 
 namespace PR {
+constexpr float NEAR_DEFAULT = 0.000001f;
+constexpr float FAR_DEFAULT	 = std::numeric_limits<float>::infinity();
+
 class StandardCamera : public ICamera {
 public:
 	ENTITY_CLASS
@@ -18,6 +21,8 @@ public:
 		, mHeight(1)
 		, mFStop(0)
 		, mApertureRadius(0.05f)
+		, mNearT(NEAR_DEFAULT)
+		, mFarT(FAR_DEFAULT)
 		, mLocalDirection(0, 0, 1)
 		, mLocalRight(1, 0, 0)
 		, mLocalUp(0, 1, 0)
@@ -36,50 +41,29 @@ public:
 
 	void setWithAngle(float foh, float fov)
 	{
-		mWidth  = 2 * std::tan(foh / 2);
+		mWidth	= 2 * std::tan(foh / 2);
 		mHeight = 2 * std::tan(fov / 2);
 	}
 
 	void setWithSize(float width, float height)
 	{
-		mWidth  = width;
+		mWidth	= width;
 		mHeight = height;
 	}
 
-	void setWidth(float w)
-	{
-		mWidth = w;
-	}
+	void setWidth(float w) { mWidth = w; }
+	void setHeight(float h) { mHeight = h; }
 
-	void setHeight(float h)
-	{
-		mHeight = h;
-	}
+	void setNear(float v) { mNearT = v; }
+	void setFar(float v) { mFarT = v; }
 
-	void setFStop(float f)
-	{
-		mFStop = f;
-	}
+	void setFStop(float f) { mFStop = f; }
 
-	void setLocalDirection(const Vector3f& d)
-	{
-		mLocalDirection = d;
-	}
+	void setLocalDirection(const Vector3f& d) { mLocalDirection = d; }
+	void setLocalRight(const Vector3f& d) { mLocalRight = d; }
+	void setLocalUp(const Vector3f& d) { mLocalUp = d; }
 
-	void setLocalRight(const Vector3f& d)
-	{
-		mLocalRight = d;
-	}
-
-	void setLocalUp(const Vector3f& d)
-	{
-		mLocalUp = d;
-	}
-
-	void setApertureRadius(float f)
-	{
-		mApertureRadius = f;
-	}
+	void setApertureRadius(float f) { mApertureRadius = f; }
 
 	Ray constructRay(const CameraSample& sample) const override
 	{
@@ -94,6 +78,8 @@ public:
 		ray.Weight			= ColorTriplet(sample.Weight, sample.Weight, sample.Weight);
 		ray.Time			= sample.Time;
 		ray.Flags			= RF_Camera;
+		ray.MinT			= mNearT;
+		ray.MaxT			= mFarT;
 
 		//ray.normalize();
 
@@ -163,6 +149,9 @@ private:
 	float mFStop;
 	float mApertureRadius;
 
+	float mNearT;
+	float mFarT;
+
 	Vector3f mLocalDirection;
 	Vector3f mLocalRight;
 	Vector3f mLocalUp;
@@ -193,6 +182,8 @@ public:
 
 		cam->setWidth(params.getNumber("width", 1));
 		cam->setHeight(params.getNumber("height", 1));
+		cam->setNear(params.getNumber("near", NEAR_DEFAULT));
+		cam->setFar(params.getNumber("far", FAR_DEFAULT));
 
 		cam->setApertureRadius(params.getNumber("apertureRadius", 1));
 		cam->setFStop(params.getNumber("fstop", 0));

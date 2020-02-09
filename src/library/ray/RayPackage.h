@@ -136,12 +136,20 @@ public:
 
 	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d) const
 	{
+		return next(o, d, Flags, MinT, MaxT);
+	}
+
+	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d, const IntegerType& vis_flags, const V& minT, const V& maxT) const
+	{
 		RayPackageBase<V> other;
 		other = *this;
 
 		other.Origin	= Transform::safePosition(o, d);
 		other.Direction = d;
 		other.IterationDepth += IntegerType(1);
+		other.MinT	= minT;
+		other.MaxT	= maxT;
+		other.Flags = vis_flags | (other.Flags & IntegerType(~RF_VisibilityMask));
 
 		other.cache();
 

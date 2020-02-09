@@ -33,6 +33,10 @@
  * p_(xi) is the pdf with respect to the solid angle (not projected solid angle!)
  */
 namespace PR {
+constexpr float SHADOW_RAY_MIN = 0.00001f;
+constexpr float SHADOW_RAY_MAX = std::numeric_limits<float>::infinity();
+constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
+constexpr float BOUNCE_RAY_MAX = std::numeric_limits<float>::infinity();
 class IntDirect : public IIntegrator {
 public:
 	explicit IntDirect(size_t lightSamples, size_t maxRayDepth)
@@ -71,8 +75,7 @@ public:
 
 			if (outL.PDF_S > PR_EPSILON) {
 				// Trace shadow ray
-				Ray shadow			= spt.Ray.next(spt.P, outL.Outgoing);
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & RF_Monochrome);
+				const Ray shadow	= spt.Ray.next(spt.P, outL.Outgoing, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					// Evaluate surface
@@ -106,8 +109,7 @@ public:
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
-				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & ~RF_VisibilityMask);
+				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					InfiniteLightEvalInput inL;
@@ -157,9 +159,8 @@ public:
 		if (out.PDF_S > PR_EPSILON
 			&& spt.Ray.IterationDepth + 1 < mMaxRayDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
-			Ray next = spt.Ray.next(spt.P, out.Outgoing);
+			Ray next = spt.Ray.next(spt.P, out.Outgoing, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
-			next.Flags = RF_Bounce | (spt.Ray.Flags & ~RF_VisibilityMask);
 
 			if (!next.Weight.isZero()) {
 				path.addToken(LightPathToken(out.Type)); // (1)
@@ -230,9 +231,7 @@ public:
 				&& pdfA >= PR_EPSILON) {
 
 				// Trace shadow ray
-				Ray shadow			= spt.Ray.next(spt.P, L);
-				shadow.MaxT			= std::sqrt(sqrD) + 0.0005f;
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & ~RF_VisibilityMask);
+				const Ray shadow	= spt.Ray.next(spt.P, L, RF_Shadow, BOUNCE_RAY_MIN, std::sqrt(sqrD) + 0.0005f);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 
 				if (shadowHit.Successful && shadowHit.EntityID == light->id()) {
@@ -274,8 +273,7 @@ public:
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
-				Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing);
-				shadow.Flags		= RF_Shadow | (spt.Ray.Flags & ~RF_VisibilityMask);
+				const Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (shadowHit.Successful
 					&& shadowHit.EntityID == light->id()) {

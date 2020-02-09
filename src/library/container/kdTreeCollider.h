@@ -86,8 +86,9 @@ public:
 	{
 		using namespace simdpp;
 		static const vfloat zero = make_zero();
-		out.HitDistance			 = make_float(std::numeric_limits<float>::infinity());
-		const Vector3fv invDir	 = in.Direction.cwiseInverse();
+
+		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
+		const Vector3fv invDir = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
 			vfloat minT;
@@ -106,8 +107,8 @@ public:
 		CollisionOutput tmp;
 		size_t stackPos		 = 0;
 		stack[stackPos].node = mRoot;
-		stack[stackPos].minT = max(in.MinT, root_in.Entry);
-		stack[stackPos].maxT = min(in.MaxT, root_in.Exit);
+		stack[stackPos].minT = root_in.Entry;
+		stack[stackPos].maxT = root_in.Exit;
 		++stackPos;
 
 		while (stackPos > 0) {
@@ -222,8 +223,8 @@ public:
 		SingleCollisionOutput tmp;
 		size_t stackPos		 = 0;
 		stack[stackPos].node = mRoot;
-		stack[stackPos].minT = std::max(in.MinT, root_in.Entry);
-		stack[stackPos].maxT = std::min(in.MaxT, root_in.Exit);
+		stack[stackPos].minT = root_in.Entry;
+		stack[stackPos].maxT = root_in.Exit;
 		++stackPos;
 
 		while (stackPos > 0) {
@@ -269,6 +270,7 @@ public:
 			for (uint64 entity : leafN->objects) {
 				tmp.HitDistance = std::numeric_limits<float>::infinity();
 
+				// Check for < 0?
 				checkCollisionCallback(in, entity, tmp);
 				if (tmp.HitDistance < out.HitDistance)
 					out = tmp;
