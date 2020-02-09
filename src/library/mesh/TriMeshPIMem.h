@@ -17,6 +17,6 @@ protected:
 
 private:
 	void setup();
-	std::unique_ptr<class TriMeshPIMemInternal> mInternal;
+	std::unique_ptr<struct TriMeshPIMemInternal> mInternal;
 };
 } // namespace PR
