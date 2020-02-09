@@ -99,9 +99,9 @@ PR_TEST("PI Intersects CCW [V]")
 {
 	Vector2fv uv;
 	vfloat t;
-	const bfloat res = TriangleIntersection::intersectPI_NonOpt(makeRayPackage(),
-																promote(P0), promote(P1), promote(P2),
-																uv, t);
+	const bfloat res = TriangleIntersection::intersectPI(makeRayPackage(),
+														 promote(P0), promote(P1), promote(P2),
+														 uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -112,13 +112,12 @@ PR_TEST("PI Intersects CW [V]")
 {
 	Vector2fv uv;
 	vfloat t;
-	const bfloat res = TriangleIntersection::intersectPI_NonOpt(makeRayPackage(),
-																promote(P0), promote(P2), promote(P1),
-																uv, t);
+	const bfloat res = TriangleIntersection::intersectPI(makeRayPackage(),
+														 promote(P0), promote(P2), promote(P1),
+														 uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
-	// Inconsistent due to edge errors! Sign can not be determined...
-	//PR_CHECK_TRUE(extract<1>(res));
-	//PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
 	PR_CHECK_FALSE(extract<3>(res));
 }
 
@@ -127,9 +126,9 @@ PR_TEST("PI Intersects CCW")
 	for (size_t i = 0; i < 4; ++i) {
 		Vector2f uv;
 		float t;
-		const bool res = TriangleIntersection::intersectPI_NonOpt(makeRay(i),
-																  P0, P1, P2,
-																  uv, t);
+		const bool res = TriangleIntersection::intersectPI(makeRay(i),
+														   P0, P1, P2,
+														   uv, t);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -140,15 +139,11 @@ PR_TEST("PI Intersects CCW")
 PR_TEST("PI Intersects CW")
 {
 	for (size_t i = 0; i < 4; ++i) {
-		// Inconsistent due to edge errors! Sign can not be determined...
-		if (i == 1 || i == 2)
-			continue;
-
 		Vector2f uv;
 		float t;
-		const bool res = TriangleIntersection::intersectPI_NonOpt(makeRay(i),
-																  P0, P2, P1,
-																  uv, t);
+		const bool res = TriangleIntersection::intersectPI(makeRay(i),
+														   P0, P2, P1,
+														   uv, t);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -158,11 +153,11 @@ PR_TEST("PI Intersects CW")
 
 ////////////////////////////////////
 
-PR_TEST("PI OPT Intersects CCW [V]")
+PR_TEST("PI Mem Intersects CCW [V]")
 {
 	Vector2fv uv;
 	vfloat t;
-	const bfloat res = TriangleIntersection::intersectPI_Opt(makeRayPackage(),
+	const bfloat res = TriangleIntersection::intersectPI_Mem(makeRayPackage(),
 															 promote(P0), promote(P1), promote(P2),
 															 promote(M0), promote(M1), promote(M2),
 															 uv, t);
@@ -172,27 +167,26 @@ PR_TEST("PI OPT Intersects CCW [V]")
 	PR_CHECK_FALSE(extract<3>(res));
 }
 
-PR_TEST("PI OPT Intersects CW [V]")
+PR_TEST("PI Mem Intersects CW [V]")
 {
 	Vector2fv uv;
 	vfloat t;
-	const bfloat res = TriangleIntersection::intersectPI_Opt(makeRayPackage(),
+	const bfloat res = TriangleIntersection::intersectPI_Mem(makeRayPackage(),
 															 promote(P0), promote(P2), promote(P1),
 															 -promote(M2), -promote(M1), -promote(M0),
 															 uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
-	// Inconsistent due to edge errors! Sign can not be determined...
-	//PR_CHECK_TRUE(extract<1>(res));
-	//PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
 	PR_CHECK_FALSE(extract<3>(res));
 }
 
-PR_TEST("PI OPT Intersects CCW")
+PR_TEST("PI Mem Intersects CCW")
 {
 	for (size_t i = 0; i < 4; ++i) {
 		Vector2f uv;
 		float t;
-		const bool res = TriangleIntersection::intersectPI_Opt(makeRay(i),
+		const bool res = TriangleIntersection::intersectPI_Mem(makeRay(i),
 															   P0, P1, P2,
 															   M0, M1, M2,
 															   uv, t);
@@ -206,13 +200,9 @@ PR_TEST("PI OPT Intersects CCW")
 PR_TEST("PI OPT Intersects CW")
 {
 	for (size_t i = 0; i < 4; ++i) {
-		// Inconsistent due to edge errors! Sign can not be determined...
-		if (i == 1 || i == 2)
-			continue;
-
 		Vector2f uv;
 		float t;
-		const bool res = TriangleIntersection::intersectPI_Opt(makeRay(i),
+		const bool res = TriangleIntersection::intersectPI_Mem(makeRay(i),
 															   P0, P2, P1,
 															   -M2, -M1, -M0,
 															   uv, t);
@@ -223,44 +213,42 @@ PR_TEST("PI OPT Intersects CW")
 	}
 }
 
-
 ////////////////////////////////////
 
-PR_TEST("PI Em Intersects CCW [V]")
+PR_TEST("PI Off Intersects CCW [V]")
 {
 	Vector2fv uv;
 	vfloat t;
-	const bfloat res = TriangleIntersection::intersectPI_Em(makeRayPackage(),
-																promote(P0), promote(P1), promote(P2),
-																uv, t);
+	const bfloat res = TriangleIntersection::intersectPI_Off(makeRayPackage(),
+															promote(P0), promote(P1), promote(P2),
+															uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
 	PR_CHECK_FALSE(extract<3>(res));
 }
 
-PR_TEST("PI Em Intersects CW [V]")
+PR_TEST("PI Off Intersects CW [V]")
 {
 	Vector2fv uv;
 	vfloat t;
-	const bfloat res = TriangleIntersection::intersectPI_Em(makeRayPackage(),
-																promote(P0), promote(P2), promote(P1),
-																uv, t);
+	const bfloat res = TriangleIntersection::intersectPI_Off(makeRayPackage(),
+															promote(P0), promote(P2), promote(P1),
+															uv, t);
 	PR_CHECK_TRUE(extract<0>(res));
-	// Inconsistent due to edge errors! Sign can not be determined...
-	//PR_CHECK_TRUE(extract<1>(res));
-	//PR_CHECK_TRUE(extract<2>(res));
+	PR_CHECK_TRUE(extract<1>(res));
+	PR_CHECK_TRUE(extract<2>(res));
 	PR_CHECK_FALSE(extract<3>(res));
 }
 
-PR_TEST("PI Em Intersects CCW")
+PR_TEST("PI Off Intersects CCW")
 {
 	for (size_t i = 0; i < 4; ++i) {
 		Vector2f uv;
 		float t;
-		const bool res = TriangleIntersection::intersectPI_Em(makeRay(i),
-																  P0, P1, P2,
-																  uv, t);
+		const bool res = TriangleIntersection::intersectPI_Off(makeRay(i),
+															  P0, P1, P2,
+															  uv, t);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -268,18 +256,14 @@ PR_TEST("PI Em Intersects CCW")
 	}
 }
 
-PR_TEST("PI Em Intersects CW")
+PR_TEST("PI Off Intersects CW")
 {
 	for (size_t i = 0; i < 4; ++i) {
-		// Inconsistent due to edge errors! Sign can not be determined...
-		if (i == 1 || i == 2)
-			continue;
-
 		Vector2f uv;
 		float t;
-		const bool res = TriangleIntersection::intersectPI_Em(makeRay(i),
-																  P0, P2, P1,
-																  uv, t);
+		const bool res = TriangleIntersection::intersectPI_Off(makeRay(i),
+															  P0, P2, P1,
+															  uv, t);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else

@@ -123,8 +123,8 @@ set(PR_Src
   mesh/TriMeshMT.h
   mesh/TriMeshPI.cpp
   mesh/TriMeshPI.h
-  mesh/TriMeshPIOpt.cpp
-  mesh/TriMeshPIOpt.h
+  mesh/TriMeshPIMem.cpp
+  mesh/TriMeshPIMem.h
   mesh/TriMeshWT.cpp
   mesh/TriMeshWT.h
   path/LightPath.cpp

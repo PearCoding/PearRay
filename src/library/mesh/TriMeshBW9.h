@@ -17,6 +17,6 @@ protected:
 
 private:
 	void setup();
-	std::unique_ptr<class TriMeshBW9Internal> mInternal;
+	std::unique_ptr<struct TriMeshBW9Internal> mInternal;
 };
 } // namespace PR

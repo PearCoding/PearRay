@@ -3,13 +3,13 @@
 #include "Mesh.h"
 
 namespace PR {
-class PR_LIB TriMeshPIOpt : public Mesh {
+class PR_LIB TriMeshPIMem : public Mesh {
 public:
-	TriMeshPIOpt(const std::string& name,
+	TriMeshPIMem(const std::string& name,
 			  std::unique_ptr<MeshBase>&& mesh_base,
 			  const std::shared_ptr<Cache>& cache,
 			  bool useCache);
-	virtual ~TriMeshPIOpt();
+	virtual ~TriMeshPIMem();
 
 protected:
 	void checkCollisionLocal(const RayPackage& in, CollisionOutput& out) override;
@@ -17,6 +17,6 @@ protected:
 
 private:
 	void setup();
-	std::unique_ptr<class TriMeshPIOptInternal> mInternal;
+	std::unique_ptr<class TriMeshPIMemInternal> mInternal;
 };
 } // namespace PR

@@ -1,4 +1,4 @@
-#include "TriMeshPIOpt.h"
+#include "TriMeshPIMem.h"
 #include "Profiler.h"
 #include "container/kdTreeCollider.h"
 #include "geometry/GeometryPoint.h"
@@ -7,25 +7,25 @@
 #include "mesh/MeshBase.h"
 
 namespace PR {
-struct TriMeshPIOptInternal {
+struct TriMeshPIMemInternal {
 	size_t FaceMomentumAttrib[3];
 };
 
-TriMeshPIOpt::TriMeshPIOpt(const std::string& name,
+TriMeshPIMem::TriMeshPIMem(const std::string& name,
 						   std::unique_ptr<MeshBase>&& mesh_base,
 						   const std::shared_ptr<Cache>& cache,
 						   bool useCache)
 	: Mesh(name, std::move(mesh_base), cache, useCache)
-	, mInternal(std::make_unique<TriMeshPIOptInternal>())
+	, mInternal(std::make_unique<TriMeshPIMemInternal>())
 {
 	setup();
 }
 
-TriMeshPIOpt::~TriMeshPIOpt()
+TriMeshPIMem::~TriMeshPIMem()
 {
 }
 
-void TriMeshPIOpt::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
+void TriMeshPIMem::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 {
 	std::vector<float>& faceMomentum0 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[0]);
 	std::vector<float>& faceMomentum1 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[1]);
@@ -56,7 +56,7 @@ void TriMeshPIOpt::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 																	faceMomentum2[3 * f + 1],
 																	faceMomentum2[3 * f + 2]);
 
-									   bfloat hits = TriangleIntersection::intersectPI_Opt(
+									   bfloat hits = TriangleIntersection::intersectPI_Mem(
 										   in2, p0, p1, p2,
 										   promote(m0), promote(m1), promote(m2),
 										   uv, t);
@@ -73,7 +73,7 @@ void TriMeshPIOpt::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 								   });
 }
 
-void TriMeshPIOpt::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
+void TriMeshPIMem::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 {
 	std::vector<float>& faceMomentum0 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[0]);
 	std::vector<float>& faceMomentum1 = mBase->userFaceAttrib(mInternal->FaceMomentumAttrib[1]);
@@ -104,7 +104,7 @@ void TriMeshPIOpt::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 																faceMomentum2[3 * f + 1],
 																faceMomentum2[3 * f + 2]);
 
-								   bool hit = TriangleIntersection::intersectPI_Opt(
+								   bool hit = TriangleIntersection::intersectPI_Mem(
 									   in2, p0, p1, p2,
 									   m0, m1, m2,
 									   uv, t);
@@ -124,7 +124,7 @@ void TriMeshPIOpt::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 							   });
 }
 
-void TriMeshPIOpt::setup()
+void TriMeshPIMem::setup()
 {
 	static const char* ATTRIB_MOMENTUM_0 = "pi_opt_momentum_0";
 	static const char* ATTRIB_MOMENTUM_1 = "pi_opt_momentum_1";

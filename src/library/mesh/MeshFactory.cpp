@@ -3,7 +3,7 @@
 #include "TriMeshBW12.h"
 #include "TriMeshMT.h"
 #include "TriMeshPI.h"
-#include "TriMeshPIOpt.h"
+#include "TriMeshPIMem.h"
 #include "TriMeshWT.h"
 #include "config/TriangleOptions.h"
 
@@ -18,7 +18,7 @@ std::shared_ptr<Mesh> MeshFactory::create(const std::string& name,
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 1
 	return std::make_shared<TriMeshPI>(name, std::move(mesh_base), cache, useCache);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 2
-	return std::make_shared<TriMeshPIOpt>(name, std::move(mesh_base), cache, useCache);
+	return std::make_shared<TriMeshPIMem>(name, std::move(mesh_base), cache, useCache);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 3
 	return std::make_shared<TriMeshWT>(name, std::move(mesh_base), cache, useCache);
 #elif PR_TRIANGLE_INTERSECTION_METHOD == 4

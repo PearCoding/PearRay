@@ -365,25 +365,25 @@ static void tri_pi(const std::string& suffix, const std::vector<Triangle>& trian
 	check_triangles(suffix + "_pi", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectPI_NonOpt(ray, tri.P0, tri.P1, tri.P2, uv, t);
+						return TriangleIntersection::intersectPI(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
-static void tri_pi_opt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_pi_mem(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi_opt", triangles, degree, hitrate, csv,
+	check_triangles(suffix + "_pi_mem", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectPI_Opt(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
+						return TriangleIntersection::intersectPI_Mem(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
 					});
 }
 
-static void tri_pi_em(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_pi_off(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
-	check_triangles(suffix + "_pi_em", triangles, degree, hitrate, csv,
+	check_triangles(suffix + "_pi_off", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectPI_Em(ray, tri.P0, tri.P1, tri.P2, uv, t);
+						return TriangleIntersection::intersectPI_Off(ray, tri.P0, tri.P1, tri.P2, uv, t);
 					});
 }
 
@@ -393,8 +393,8 @@ static MAT_FUNC s_funcs[] = {
 	tri_bw9,
 	tri_mt,
 	tri_pi,
-	tri_pi_opt,
-	tri_pi_em,
+	tri_pi_mem,
+	tri_pi_off,
 	tri_wt,
 	nullptr
 };

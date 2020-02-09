@@ -36,7 +36,7 @@ void TriMeshPI::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   const Vector3fv p1 = promote(mBase->vertex(ind2));
 									   const Vector3fv p2 = promote(mBase->vertex(ind3));
 
-				bfloat hits = TriangleIntersection::intersectPI_NonOpt(in2, p0, p1, p2, uv, t);
+									   bfloat hits = TriangleIntersection::intersectPI(in2, p0, p1, p2, uv, t);
 
 									   out2.HitDistance = simdpp::blend(t, out2.HitDistance, hits);
 
@@ -67,7 +67,7 @@ void TriMeshPI::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 								   float t;
 								   Vector2f uv;
 
-				bool hit	= TriangleIntersection::intersectPI_NonOpt(in2, p0, p1, p2, uv, t);
+								   bool hit = TriangleIntersection::intersectPI(in2, p0, p1, p2, uv, t);
 
 								   if (!hit)
 									   return;

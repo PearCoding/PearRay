@@ -7,7 +7,7 @@ namespace PR {
 namespace TriangleIntersection {
 // Pluecker based intersection method
 // Non Optimized variant -> Nothing is cached!
-inline PR_LIB bool intersectPI_NonOpt(
+inline PR_LIB bool intersectPI(
 	const Ray& in,
 	const Vector3f& p0,
 	const Vector3f& p1,
@@ -60,7 +60,7 @@ inline PR_LIB bool intersectPI_NonOpt(
 	return true;
 }
 
-inline PR_LIB bfloat intersectPI_NonOpt(
+inline PR_LIB bfloat intersectPI(
 	const RayPackage& in,
 	const Vector3fv& p0,
 	const Vector3fv& p1,
@@ -118,7 +118,7 @@ inline PR_LIB bfloat intersectPI_NonOpt(
 /////////////////////////////////////////////////////////////////////
 // Pluecker based intersection method
 // Optimized variant -> Everything is cached!
-inline PR_LIB bool intersectPI_Opt(
+inline PR_LIB bool intersectPI_Mem(
 	const Ray& in,
 	const Vector3f& p0,
 	const Vector3f& p1,
@@ -171,7 +171,7 @@ inline PR_LIB bool intersectPI_Opt(
 	return true;
 }
 
-inline PR_LIB bfloat intersectPI_Opt(
+inline PR_LIB bfloat intersectPI_Mem(
 	const RayPackage& in,
 	const Vector3fv& p0,
 	const Vector3fv& p1,
@@ -228,8 +228,8 @@ inline PR_LIB bfloat intersectPI_Opt(
 
 /////////////////////////////////////////////////////////////////////
 // Pluecker based intersection method
-// Intel Embree based variant (https://github.com/embree/embree)
-inline PR_LIB bool intersectPI_Em(
+// Intel Embree based offset variant (https://github.com/embree/embree)
+inline PR_LIB bool intersectPI_Off(
 	const Ray& in,
 	const Vector3f& p0,
 	const Vector3f& p1,
@@ -274,7 +274,7 @@ inline PR_LIB bool intersectPI_Em(
 	return true;
 }
 
-inline PR_LIB bfloat intersectPI_Em(
+inline PR_LIB bfloat intersectPI_Off(
 	const RayPackage& in,
 	const Vector3fv& p0,
 	const Vector3fv& p1,
