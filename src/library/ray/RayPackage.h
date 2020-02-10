@@ -68,8 +68,10 @@ public:
 
 		other.Origin	= Transform::apply(oM, Origin);
 		other.Direction = Transform::applyVector(dM, Direction);
-		other.MinT		= transformDistance(MinT, dM);
-		other.MaxT		= transformDistance(MaxT, dM);
+
+		const V factor = other.Direction.norm();
+		other.MinT	   = vmin(V(PR_EPSILON), MinT * factor);
+		other.MaxT	   = MaxT * factor;
 
 		other.normalize();
 
@@ -84,8 +86,10 @@ public:
 
 		other.Origin	= Transform::applyAffine(oM, Origin);
 		other.Direction = Transform::applyVector(dM, Direction);
-		other.MinT		= transformDistance(MinT, dM);
-		other.MaxT		= transformDistance(MaxT, dM);
+
+		const V factor = other.Direction.norm();
+		other.MinT	   = vmin(V(PR_EPSILON), MinT * factor);
+		other.MaxT	   = MaxT * factor;
 
 		other.normalize();
 
@@ -129,17 +133,12 @@ public:
 
 	/* Advance direction with t, transform displacement with direction matrix and calculate norm of result. */
 	inline V transformDistance(const V& t_local,
-								 const Eigen::Ref<const Eigen::Matrix3f>& directionMatrix) const
+							   const Eigen::Ref<const Eigen::Matrix3f>& directionMatrix) const
 	{
 		const Vector3t<V> dt  = t_local * Direction;
 		const Vector3t<V> dt2 = Transform::applyVector(directionMatrix, dt);
 
 		return dt2.norm();
-	}
-
-	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d) const
-	{
-		return next(o, d, Flags, MinT, MaxT);
 	}
 
 	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d, const IntegerType& vis_flags, const V& minT, const V& maxT) const

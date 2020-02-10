@@ -155,6 +155,16 @@ inline vuint32 blend(vuint32 trueCase, vuint32 falseCase, const simdpp::any_vec<
 template <typename MASK>
 inline vint32 blend(vint32 trueCase, vint32 falseCase, const simdpp::any_vec<PR_SIMD_BANDWIDTH, MASK>& mask) { return simdpp::blend(trueCase, falseCase, mask); }
 
+inline float vmin(float a, float b) { return std::min(a, b); }
+inline vfloat vmin(const vfloat& a, const vfloat& b) { return min(a, b); }
+inline vuint32 vmin(const vuint32& a, const vuint32& b) { return min(a, b); }
+inline vint32 vmin(const vint32& a, const vint32& b) { return min(a, b); }
+
+inline float vmax(float a, float b) { return std::max(a, b); }
+inline vfloat vmax(const vfloat& a, const vfloat& b) { return max(a, b); }
+inline vuint32 vmax(const vuint32& a, const vuint32& b) { return max(a, b); }
+inline vint32 vmax(const vint32& a, const vint32& b) { return max(a, b); }
+
 using std::signbit;
 inline bfloat signbit(const vfloat& v) { return v < vfloat(0); }
 inline bint32 signbit(const vint32& v) { return v < vint32(0); }

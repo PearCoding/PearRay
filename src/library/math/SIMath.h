@@ -41,25 +41,26 @@ struct SIBaseClass {
 // -----------------------------
 template <typename Base, int Coordinate, class L, class M, class T, class I, class K, class N, class J, class R>
 struct SIBase : public SIBaseClass {
-	typedef Base base_t;
+	using base_t						   = Base;
 	static constexpr int coordinate_system = Coordinate;
-	typedef L length_dim;
-	typedef M mass_dim;
-	typedef T time_dim;
-	typedef I current_dim;
-	typedef K temperature_dim;
-	typedef N amount_dim;
-	typedef J luminous_intensity_dim;
-	typedef R radian_dim;
+	using length_dim					   = L;
+	using mass_dim						   = M;
+	using time_dim						   = T;
+	using current_dim					   = I;
+	using temperature_dim				   = K;
+	using amount_dim					   = N;
+	using luminous_intensity_dim		   = J;
+	using radian_dim					   = R;
 
-	typedef std::ratio_add<L,
-						   std::ratio_add<M,
-										  std::ratio_add<T,
-														 std::ratio_add<I,
-																		std::ratio_add<K,
-																					   std::ratio_add<N,
-																									  std::ratio_add<J, R>>>>>>>
-		full_dim;
+	// clang-format off
+	using full_dim = typename std::ratio_add<L,
+					 		  std::ratio_add<M,
+					 		  std::ratio_add<T,
+							  std::ratio_add<I,
+							  std::ratio_add<K,
+							  std::ratio_add<N,
+							  std::ratio_add<J, R>>>>>>>;
+	// clang-format on
 
 	Base Value;
 
@@ -70,7 +71,7 @@ struct SIBase : public SIBaseClass {
 	}
 
 	SIBase(const SIBase& copy) = default;
-	SIBase(SIBase&& copy)	  = default;
+	SIBase(SIBase&& copy)	   = default;
 
 	SIBase& operator=(const SIBase& copy) = default;
 	SIBase& operator=(SIBase&& copy) = default;
@@ -92,42 +93,42 @@ template <class Unit>
 struct is_unit : public std::is_base_of<SIBaseClass, Unit> {
 };
 
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_length : public std::ratio_not_equal<typename Unit::length_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_mass : public std::ratio_not_equal<typename Unit::mass_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_time : public std::ratio_not_equal<typename Unit::time_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_current : public std::ratio_not_equal<typename Unit::current_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_temperature : public std::ratio_not_equal<typename Unit::temperature_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_amount : public std::ratio_not_equal<typename Unit::amount_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_luminous_intensity : public std::ratio_not_equal<typename Unit::luminous_intensity_dim, std::ratio<0, 1>> {
 };
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct has_radian : public std::ratio_not_equal<typename Unit::radian_dim, std::ratio<0, 1>> {
 };
 
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct is_scalar : public std::integral_constant<bool, !(has_length<Unit>::value || has_mass<Unit>::value || has_time<Unit>::value || has_current<Unit>::value || has_temperature<Unit>::value || has_amount<Unit>::value || has_luminous_intensity<Unit>::value || has_radian<Unit>::value)> {
 };
 
-template <class Unit, typename = typename std::enable_if<is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<is_unit<Unit>::value>>
 struct is_transcendental : public std::integral_constant<bool, is_scalar<Unit>::value> {
 };
 } // namespace traits
 
 namespace details {
-template <class Unit1, class Unit2, typename = typename std::enable_if<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>::type>
+template <class Unit1, class Unit2, typename = std::enable_if_t<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>>
 struct unit_op {
 	static_assert(std::is_same<typename Unit1::base_t, typename Unit2::base_t>::value,
 				  "Unit 1 and Unit 2 have not the same underlying base");
@@ -135,56 +136,53 @@ struct unit_op {
 				  "Unit 1 and Unit 2 have not the same underlying coordinate system");
 };
 
-template <class Unit1, class Unit2, typename = typename std::enable_if<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>::type>
+template <class Unit1, class Unit2, typename = std::enable_if_t<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>>
 struct unit_mul : public unit_op<Unit1, Unit2> {
-	typedef SIBase<typename Unit1::base_t, Unit1::coordinate_system,
-				   std::ratio_add<typename Unit1::length_dim, typename Unit2::length_dim>,
-				   std::ratio_add<typename Unit1::mass_dim, typename Unit2::mass_dim>,
-				   std::ratio_add<typename Unit1::time_dim, typename Unit2::time_dim>,
-				   std::ratio_add<typename Unit1::current_dim, typename Unit2::current_dim>,
-				   std::ratio_add<typename Unit1::temperature_dim, typename Unit2::temperature_dim>,
-				   std::ratio_add<typename Unit1::amount_dim, typename Unit2::amount_dim>,
-				   std::ratio_add<typename Unit1::luminous_intensity_dim, typename Unit2::luminous_intensity_dim>,
-				   std::ratio_add<typename Unit1::radian_dim, typename Unit2::radian_dim>>
-		type;
+	using type = SIBase<typename Unit1::base_t, Unit1::coordinate_system,
+						std::ratio_add<typename Unit1::length_dim, typename Unit2::length_dim>,
+						std::ratio_add<typename Unit1::mass_dim, typename Unit2::mass_dim>,
+						std::ratio_add<typename Unit1::time_dim, typename Unit2::time_dim>,
+						std::ratio_add<typename Unit1::current_dim, typename Unit2::current_dim>,
+						std::ratio_add<typename Unit1::temperature_dim, typename Unit2::temperature_dim>,
+						std::ratio_add<typename Unit1::amount_dim, typename Unit2::amount_dim>,
+						std::ratio_add<typename Unit1::luminous_intensity_dim, typename Unit2::luminous_intensity_dim>,
+						std::ratio_add<typename Unit1::radian_dim, typename Unit2::radian_dim>>;
 };
 
-template <class Unit1, class Unit2, typename = typename std::enable_if<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>::type>
+template <class Unit1, class Unit2, typename = std::enable_if_t<traits::is_unit<Unit1>::value && traits::is_unit<Unit2>::value>>
 struct unit_div : public unit_op<Unit1, Unit2> {
-	typedef SIBase<typename Unit1::base_t, Unit1::coordinate_system,
-				   std::ratio_subtract<typename Unit1::length_dim, typename Unit2::length_dim>,
-				   std::ratio_subtract<typename Unit1::mass_dim, typename Unit2::mass_dim>,
-				   std::ratio_subtract<typename Unit1::time_dim, typename Unit2::time_dim>,
-				   std::ratio_subtract<typename Unit1::current_dim, typename Unit2::current_dim>,
-				   std::ratio_subtract<typename Unit1::temperature_dim, typename Unit2::temperature_dim>,
-				   std::ratio_subtract<typename Unit1::amount_dim, typename Unit2::amount_dim>,
-				   std::ratio_subtract<typename Unit1::luminous_intensity_dim, typename Unit2::luminous_intensity_dim>,
-				   std::ratio_subtract<typename Unit1::radian_dim, typename Unit2::radian_dim>>
-		type;
+	using type = SIBase<typename Unit1::base_t, Unit1::coordinate_system,
+						std::ratio_subtract<typename Unit1::length_dim, typename Unit2::length_dim>,
+						std::ratio_subtract<typename Unit1::mass_dim, typename Unit2::mass_dim>,
+						std::ratio_subtract<typename Unit1::time_dim, typename Unit2::time_dim>,
+						std::ratio_subtract<typename Unit1::current_dim, typename Unit2::current_dim>,
+						std::ratio_subtract<typename Unit1::temperature_dim, typename Unit2::temperature_dim>,
+						std::ratio_subtract<typename Unit1::amount_dim, typename Unit2::amount_dim>,
+						std::ratio_subtract<typename Unit1::luminous_intensity_dim, typename Unit2::luminous_intensity_dim>,
+						std::ratio_subtract<typename Unit1::radian_dim, typename Unit2::radian_dim>>;
 };
 
-template <class Unit, class Exp, typename = typename std::enable_if<traits::is_unit<Unit>::value>::type>
+template <class Unit, class Exp, typename = std::enable_if_t<traits::is_unit<Unit>::value>>
 struct unit_pow {
-	typedef SIBase<typename Unit::base_t, Unit::coordinate_system,
-				   std::ratio_multiply<typename Unit::length_dim, Exp>,
-				   std::ratio_multiply<typename Unit::mass_dim, Exp>,
-				   std::ratio_multiply<typename Unit::time_dim, Exp>,
-				   std::ratio_multiply<typename Unit::current_dim, Exp>,
-				   std::ratio_multiply<typename Unit::temperature_dim, Exp>,
-				   std::ratio_multiply<typename Unit::amount_dim, Exp>,
-				   std::ratio_multiply<typename Unit::luminous_intensity_dim, Exp>,
-				   std::ratio_multiply<typename Unit::radian_dim, Exp>>
-		type;
+	using type = SIBase<typename Unit::base_t, Unit::coordinate_system,
+						std::ratio_multiply<typename Unit::length_dim, Exp>,
+						std::ratio_multiply<typename Unit::mass_dim, Exp>,
+						std::ratio_multiply<typename Unit::time_dim, Exp>,
+						std::ratio_multiply<typename Unit::current_dim, Exp>,
+						std::ratio_multiply<typename Unit::temperature_dim, Exp>,
+						std::ratio_multiply<typename Unit::amount_dim, Exp>,
+						std::ratio_multiply<typename Unit::luminous_intensity_dim, Exp>,
+						std::ratio_multiply<typename Unit::radian_dim, Exp>>;
 };
 
-template <class Unit, typename = typename std::enable_if<traits::is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<traits::is_unit<Unit>::value>>
 struct unit_sqrt {
-	typedef typename unit_pow<Unit, std::ratio<1, 2>>::type type;
+	using type = typename unit_pow<Unit, std::ratio<1, 2>>::type;
 };
 
-template <class Unit, typename = typename std::enable_if<traits::is_unit<Unit>::value>::type>
+template <class Unit, typename = std::enable_if_t<traits::is_unit<Unit>::value>>
 struct unit_inv {
-	typedef typename unit_pow<Unit, std::ratio<-1>>::type type;
+	using type = typename unit_pow<Unit, std::ratio<-1>>::type;
 };
 } // namespace details
 
@@ -272,58 +270,34 @@ _SIMATH_DEFINE_UNIT_MUL(LuminousExposure, Illuminance, Time);
 // -----------------------------
 // Operations
 template <typename Unit>
-inline typename std::enable_if<SI::traits::is_unit<Unit>::value, Unit>::type
-operator+(const Unit& v1, const Unit& v2)
-{
-	return v1.Value + v2.Value;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit>::value, Unit>
+operator+(const Unit& v1, const Unit& v2) { return v1.Value + v2.Value; }
 
 template <typename Unit>
-inline typename std::enable_if<SI::traits::is_unit<Unit>::value, Unit>::type
-operator-(const Unit& v1, const Unit& v2)
-{
-	return v1.Value - v2.Value;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit>::value, Unit>
+operator-(const Unit& v1, const Unit& v2) { return v1.Value - v2.Value; }
 
 template <typename Unit1, typename Unit2>
-inline typename std::enable_if<SI::traits::is_unit<Unit1>::value && SI::traits::is_unit<Unit2>::value, typename SI::details::unit_mul<Unit1, Unit2>::type>::type
-operator*(const Unit1& v1, const Unit2& v2)
-{
-	return v1.Value * v2.Value;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit1>::value && SI::traits::is_unit<Unit2>::value, typename SI::details::unit_mul<Unit1, Unit2>::type>
+operator*(const Unit1& v1, const Unit2& v2) { return v1.Value * v2.Value; }
 
 template <typename Unit>
-inline typename std::enable_if<SI::traits::is_unit<Unit>::value, Unit>::type
-operator*(const Unit& v, const typename Unit::base_t& b)
-{
-	return v.Value * b;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit>::value, Unit>
+operator*(const Unit& v, const typename Unit::base_t& b) { return v.Value * b; }
 
 template <typename Unit>
-inline typename std::enable_if<SI::traits::is_unit<Unit>::value, Unit>::type
-operator*(const typename Unit::base_t& b, const Unit& v)
-{
-	return b * v.Value;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit>::value, Unit>
+operator*(const typename Unit::base_t& b, const Unit& v) { return b * v.Value; }
 
 template <typename Unit1, typename Unit2>
-inline typename std::enable_if<SI::traits::is_unit<Unit1>::value && SI::traits::is_unit<Unit2>::value, typename SI::details::unit_div<Unit1, Unit2>::type>::type
-operator/(const Unit1& v1, const Unit2& v2)
-{
-	return v1.Value / v2.Value;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit1>::value && SI::traits::is_unit<Unit2>::value, typename SI::details::unit_div<Unit1, Unit2>::type>
+operator/(const Unit1& v1, const Unit2& v2) { return v1.Value / v2.Value; }
 
 template <typename Unit>
-inline typename std::enable_if<SI::traits::is_unit<Unit>::value, Unit>::type
-operator/(const Unit& v, const typename Unit::base_t& b)
-{
-	return v.Value / b;
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit>::value, Unit>
+operator/(const Unit& v, const typename Unit::base_t& b) { return v.Value / b; }
 
 template <typename Unit>
-inline typename std::enable_if<SI::traits::is_unit<Unit>::value, typename SI::details::unit_inv<Unit>::type>::type
-operator/(const typename Unit::base_t& b, const Unit& v)
-{
-	return b / v.Value;
-}
-}
+inline std::enable_if_t<SI::traits::is_unit<Unit>::value, typename SI::details::unit_inv<Unit>::type>
+operator/(const typename Unit::base_t& b, const Unit& v) { return b / v.Value; }
+} // namespace SI

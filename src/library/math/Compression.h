@@ -24,7 +24,7 @@ inline float from_unorm(T v)
 	return static_cast<float>(v) / std::numeric_limits<T>::max();
 }
 
-typedef uint16 unorm16;
+using unorm16 = uint16;
 inline unorm16 to_unorm16(float f) { return to_unorm<unorm16>(f); }
 inline float from_unorm16(unorm16 s) { return from_unorm<unorm16>(s); }
 
@@ -47,7 +47,7 @@ inline float from_snorm(T v)
 						   1);
 }
 
-typedef int16 snorm16;
+using snorm16 = int16;
 inline snorm16 to_snorm16(float f) { return to_snorm<snorm16>(f); }
 inline float from_snorm16(snorm16 s) { return from_snorm<snorm16>(s); }
 
@@ -141,8 +141,8 @@ public:
 	inline octNormal& operator=(const Vector3f& p)
 	{
 		const Vector2f d = to_oct(p);
-		mValue[0]				= to_snorm<T>(d(0));
-		mValue[1]				= to_snorm<T>(d(1));
+		mValue[0]		 = to_snorm<T>(d(0));
+		mValue[1]		 = to_snorm<T>(d(1));
 
 		return *this;
 	}
@@ -182,6 +182,6 @@ public:
 };
 
 // TODO: Implementation of octNormal24 would be good
-typedef octNormal<int8> octNormal16;
-typedef octNormal<int16> octNormal32;
+using octNormal16 = octNormal<int8>;
+using octNormal32 = octNormal<int16>;
 } // namespace PR
