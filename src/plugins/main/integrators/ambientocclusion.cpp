@@ -56,10 +56,9 @@ public:
 						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
 																  dir);
 
-						Ray n	= ray.next(pt.P, ndir, RF_Shadow, 0.0000001f, std::numeric_limits<float>::infinity());
+						const Ray n = ray.next(pt.P, ndir, RF_Shadow, PR_EPSILON, ray.MaxT);
 
-						ShadowHit hit = session.traceShadowRay(n);
-						if (hit.Successful)
+						if (session.traceOcclusionRay(n))
 							++occlusions;
 					}
 

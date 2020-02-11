@@ -1,0 +1,192 @@
+#include "Environment.h"
+#include "Profiler.h"
+#include "SceneLoadContext.h"
+#include "integrator/IIntegrator.h"
+#include "integrator/IIntegratorFactory.h"
+#include "integrator/IIntegratorPlugin.h"
+#include "math/Projection.h"
+#include "math/Tangent.h"
+
+#include "path/LightPath.h"
+#include "renderer/RenderTile.h"
+#include "renderer/RenderTileSession.h"
+#include "shader/ShadingPoint.h"
+
+#include "Logger.h"
+
+#include <boost/algorithm/string/predicate.hpp>
+
+namespace PR {
+enum VisualFeedbackMode {
+	VFM_ColoredEntityID,
+	VFM_ColoredMaterialID,
+	VFM_ColoredEmissionID,
+	VFM_ColoredDisplaceID,
+	VFM_ColoredPrimitiveID,
+	VFM_ColoredRayID,
+	VFM_ColoredContainerID,
+	VFM_Parameter
+};
+
+static struct {
+	const char* Name;
+	VisualFeedbackMode Mode;
+} _mode[] = {
+	{ "colored_entity_id", VFM_ColoredEntityID },
+	{ "colored_material_id", VFM_ColoredMaterialID },
+	{ "colored_emission_id", VFM_ColoredEmissionID },
+	{ "colored_displace_id", VFM_ColoredDisplaceID },
+	{ "colored_primitive_id", VFM_ColoredPrimitiveID },
+	{ "colored_ray_id", VFM_ColoredRayID },
+	{ "colored_container_id", VFM_ColoredContainerID },
+	{ "parameter", VFM_Parameter },
+	{ "", VFM_ColoredEntityID }
+};
+
+#define _rgb(r, g, b) Vector3f((r) / 255.0f, (g) / 255.0f, (b) / 255.0f)
+
+constexpr int RANDOM_COLOR_COUNT				  = 15;
+static Vector3f sRandomColors[RANDOM_COLOR_COUNT] = {
+	_rgb(169, 104, 54),
+	_rgb(54, 169, 104),
+	_rgb(104, 54, 169),
+
+	_rgb(54, 119, 169),
+	_rgb(169, 54, 119),
+	_rgb(119, 169, 54),
+
+	_rgb(169, 54, 62),
+	_rgb(62, 169, 54),
+	_rgb(54, 62, 169),
+
+	_rgb(62, 169, 54),
+	_rgb(54, 62, 169),
+	_rgb(169, 54, 62),
+
+	_rgb(162, 169, 116),
+	_rgb(116, 162, 169),
+	_rgb(169, 116, 162)
+};
+#undef _rgb
+
+class IntVF : public IIntegrator {
+public:
+	explicit IntVF(VisualFeedbackMode mode)
+		: IIntegrator()
+		, mMode(mode)
+	{
+	}
+
+	virtual ~IntVF() = default;
+
+	// Per thread
+	void onPass(RenderTileSession& session, uint32) override
+	{
+		PR_PROFILE_THIS;
+
+		LightPath stdPath = LightPath::createCDL(1);
+
+		while (session.handleCameraRays()) {
+			session.handleHits(
+				[&](size_t, const Ray&) {
+					session.tile()->statistics().addBackgroundHitCount();
+				},
+				[&](const HitEntry& hitEntry,
+					const Ray& ray, const GeometryPoint& pt,
+					IEntity* entity, IMaterial*) {
+					PR_PROFILE_THIS;
+					session.tile()->statistics().addEntityHitCount();
+
+					ShadingPoint spt;
+					spt.setByIdentity(ray, pt);
+					spt.EntityID = entity->id();
+
+					ColorTriplet radiance = ColorTriplet::Zero();
+					switch (mMode) {
+					case VFM_ColoredEntityID:
+						radiance = sRandomColors[hitEntry.EntityID % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_ColoredMaterialID:
+						radiance = sRandomColors[hitEntry.MaterialID % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_ColoredEmissionID:
+						radiance = sRandomColors[pt.EmissionID % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_ColoredDisplaceID:
+						radiance = sRandomColors[pt.DisplaceID % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_ColoredPrimitiveID:
+						radiance = sRandomColors[hitEntry.PrimitiveID % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_ColoredRayID:
+						radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_ColoredContainerID:
+						radiance = sRandomColors[entity->containerID() % RANDOM_COLOR_COUNT];
+						break;
+					case VFM_Parameter:
+						radiance = hitEntry.Parameter;
+						break;
+					}
+
+					session.pushSPFragment(spt, stdPath);
+					session.pushSpectralFragment(radiance, ray, stdPath);
+				});
+		}
+	}
+
+	RenderStatus status() const override
+	{
+		return RenderStatus();
+	}
+
+private:
+	VisualFeedbackMode mMode;
+};
+
+class IntVFFactory : public IIntegratorFactory {
+public:
+	explicit IntVFFactory(const ParameterGroup& params)
+		: mParams(params)
+	{
+	}
+
+	std::shared_ptr<IIntegrator> createInstance() const override
+	{
+		std::string modeS		= mParams.getString("mode", "");
+		VisualFeedbackMode mode = VFM_Parameter;
+		for (int i = 0; _mode[i].Name; ++i) {
+			if (boost::iequals(_mode[i].Name, modeS)) {
+				mode = _mode[i].Mode;
+				break;
+			}
+		}
+		return std::make_shared<IntVF>(mode);
+	}
+
+private:
+	ParameterGroup mParams;
+};
+
+class IntVFFactoryFactory : public IIntegratorPlugin {
+public:
+	std::shared_ptr<IIntegratorFactory> create(uint32, const SceneLoadContext& ctx) override
+	{
+		return std::make_shared<IntVFFactory>(ctx.Parameters);
+	}
+
+	const std::vector<std::string>& getNames() const override
+	{
+		const static std::vector<std::string> names({ "vf", "visual", "feedback", "visual_feedback", "visualfeedback", "debug" });
+		return names;
+	}
+
+	bool init() override
+	{
+		return true;
+	}
+};
+
+} // namespace PR
+
+PR_PLUGIN_INIT(PR::IntVFFactoryFactory, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

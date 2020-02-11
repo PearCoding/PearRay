@@ -112,7 +112,7 @@ void RenderTileSession::startShadingGroup(const ShadingGroup& grp,
 {
 	PR_PROFILE_THIS;
 
-	entity   = getEntity(grp.EntityID);
+	entity	 = getEntity(grp.EntityID);
 	material = getMaterial(grp.MaterialID);
 
 	if (material)
@@ -155,6 +155,14 @@ ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
 
 	mTile->statistics().addShadowRayCount();
 	return mTile->context()->scene()->traceShadowRay(ray);
+}
+
+bool RenderTileSession::traceOcclusionRay(const Ray& ray) const
+{
+	PR_PROFILE_THIS;
+
+	mTile->statistics().addShadowRayCount(); //Maybe his own category?
+	return mTile->context()->scene()->traceOcclusionRay(ray);
 }
 
 Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
@@ -210,7 +218,7 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 
 	IEntity* light = lights.at(pick).get();
 
-	float pdf2	 = 0;
+	float pdf2	   = 0;
 	uint32 faceID  = 0;
 	Vector3f param = light->pickRandomParameterPoint(view, mTile->random().get2D(), faceID, pdf2);
 

@@ -200,7 +200,8 @@ public:
 	// Based on: Woop, Sven. (2004). A Programmable Hardware Architecture for Real-time Ray Tracing of Coherent Dynamic Scenes.
 	template <typename CheckCollisionCallback>
 	inline bool checkCollisionSingle(const Ray& in, SingleCollisionOutput& out,
-									 CheckCollisionCallback checkCollisionCallback) const
+									 CheckCollisionCallback checkCollisionCallback,
+									 bool stopAtFirstHit = false) const
 	{
 		using namespace simdpp;
 		out.HitDistance		  = std::numeric_limits<float>::infinity();
@@ -272,8 +273,11 @@ public:
 
 				// Check for < 0?
 				checkCollisionCallback(in, entity, tmp);
-				if (tmp.HitDistance < out.HitDistance)
+				if (tmp.HitDistance < out.HitDistance) {
 					out = tmp;
+					if (stopAtFirstHit)
+						return true;
+				}
 			}
 
 			// Early termination

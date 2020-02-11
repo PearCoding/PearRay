@@ -226,4 +226,27 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 	return hit;
 }
 
+bool Scene::traceOcclusionRay(const Ray& in) const
+{
+	PR_PROFILE_THIS;
+
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+
+	SingleCollisionOutput out;
+
+	bool hit = mKDTree->checkCollisionSingle(
+		in, out,
+		[this](const Ray& in2, uint64 index,
+			   SingleCollisionOutput& out2) {
+			const IEntity* entity = mEntities[index].get();
+			if (entity->visibilityFlags() & in2.Flags)
+				entity->checkCollision(in2, out2);
+			else
+				out2.HitDistance = std::numeric_limits<float>::infinity();
+		},
+		true);
+
+	return hit;
+}
+
 } // namespace PR

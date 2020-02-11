@@ -64,6 +64,7 @@ public:
 
 	bool traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
 	ShadowHit traceShadowRay(const Ray& ray) const;
+	bool traceOcclusionRay(const Ray& ray) const;
 
 	inline size_t maxBufferCount() const;
 
