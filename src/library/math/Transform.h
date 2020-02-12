@@ -45,8 +45,8 @@ inline Vector3fv safePosition(const Vector3fv& pos,
 	Vector3fv posOff = pos + offset;
 
 	for (int i = 0; i < 3; ++i) {
-		vfloat add = for_each_assign_v(posOff[i], [&](float val) { return nextFloatUp(val); });
-		vfloat sub = for_each_assign_v(posOff[i], [&](float val) { return nextFloatDown(val); });
+		vfloat add = foreach_assign_v(posOff[i], [&](float val) { return nextFloatUp(val); });
+		vfloat sub = foreach_assign_v(posOff[i], [&](float val) { return nextFloatDown(val); });
 		posOff[i]  = blend(add,
 						   blend(sub, posOff[i], offset[i] < 0),
 						   offset[i] > 0);
@@ -89,7 +89,7 @@ inline Eigen::Matrix3f orthogonalMatrix(const Vector3f& c0, const Vector3f& c1, 
 	return mat;
 }
 
-inline Eigen::Matrix3f orthogonalInverse(const Eigen::Ref<const Eigen::Matrix3f>& mat)
+inline auto orthogonalInverse(const Eigen::Ref<const Eigen::Matrix3f>& mat)
 {
 	return mat.transpose();
 }

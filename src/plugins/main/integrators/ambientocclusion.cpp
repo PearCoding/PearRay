@@ -15,6 +15,7 @@
 #include "Logger.h"
 
 namespace PR {
+constexpr RayFlags UsedRayType = RF_Bounce; // Do not use RF_Shadow, as most lights will be visible. We don't want that
 class IntAO : public IIntegrator {
 public:
 	explicit IntAO(size_t sample_count)
@@ -56,7 +57,7 @@ public:
 						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
 																  dir);
 
-						const Ray n = ray.next(pt.P, ndir, spt.N, RF_Shadow, PR_EPSILON, ray.MaxT);
+						const Ray n = ray.next(pt.P, ndir, spt.N, UsedRayType, PR_EPSILON, ray.MaxT);
 
 						if (session.traceOcclusionRay(n))
 							++occlusions;

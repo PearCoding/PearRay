@@ -43,31 +43,32 @@ static struct {
 	{ "", VFM_ColoredEntityID }
 };
 
-#define _rgb(r, g, b) Vector3f((r) / 255.0f, (g) / 255.0f, (b) / 255.0f)
-
-constexpr int RANDOM_COLOR_COUNT				  = 15;
+constexpr int RANDOM_COLOR_COUNT				  = 23;
 static Vector3f sRandomColors[RANDOM_COLOR_COUNT] = {
-	_rgb(169, 104, 54),
-	_rgb(54, 169, 104),
-	_rgb(104, 54, 169),
-
-	_rgb(54, 119, 169),
-	_rgb(169, 54, 119),
-	_rgb(119, 169, 54),
-
-	_rgb(169, 54, 62),
-	_rgb(62, 169, 54),
-	_rgb(54, 62, 169),
-
-	_rgb(62, 169, 54),
-	_rgb(54, 62, 169),
-	_rgb(169, 54, 62),
-
-	_rgb(162, 169, 116),
-	_rgb(116, 162, 169),
-	_rgb(169, 116, 162)
+	Vector3f(0.450000f, 0.376630f, 0.112500f),
+	Vector3f(0.112500f, 0.450000f, 0.405978f),
+	Vector3f(0.112500f, 0.450000f, 0.229891f),
+	Vector3f(0.450000f, 0.112500f, 0.376630f),
+	Vector3f(0.435326f, 0.450000f, 0.112500f),
+	Vector3f(0.112500f, 0.141848f, 0.450000f),
+	Vector3f(0.435326f, 0.112500f, 0.450000f),
+	Vector3f(0.112500f, 0.450000f, 0.141848f),
+	Vector3f(0.347283f, 0.450000f, 0.112500f),
+	Vector3f(0.450000f, 0.112500f, 0.200543f),
+	Vector3f(0.112500f, 0.229891f, 0.450000f),
+	Vector3f(0.450000f, 0.288587f, 0.112500f),
+	Vector3f(0.347283f, 0.112500f, 0.450000f),
+	Vector3f(0.450000f, 0.112500f, 0.288587f),
+	Vector3f(0.450000f, 0.112500f, 0.112500f),
+	Vector3f(0.450000f, 0.200543f, 0.112500f),
+	Vector3f(0.171196f, 0.450000f, 0.112500f),
+	Vector3f(0.112500f, 0.450000f, 0.317935f),
+	Vector3f(0.259239f, 0.450000f, 0.112500f),
+	Vector3f(0.259239f, 0.112500f, 0.450000f),
+	Vector3f(0.112500f, 0.405978f, 0.450000f),
+	Vector3f(0.171196f, 0.112500f, 0.450000f),
+	Vector3f(0.112500f, 0.317935f, 0.450000f)
 };
-#undef _rgb
 
 class IntVF : public IIntegrator {
 public:

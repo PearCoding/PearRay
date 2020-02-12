@@ -41,14 +41,19 @@ inline PR_LIB bool intersectPI(
 	if (PR_LIKELY(!valid))
 		return false;
 
-	// Denominator
-	const float k = k0 + k1 + k2;
+#if 1
+	const Vector3f N = d2.cross(d0);
+	const float k	 = N.dot(in.Direction);
+#else
+	// This is mathematically correct, but introduces more floating point error... and is therefore unsuitable.
+	const Vector3f N = m0 + m1 + m2;
+	const float k	 = k0 + k1 + k2;
+#endif
 	if (PR_UNLIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
-	const Vector3f N = m0 + m1 + m2;
-	t				 = (p0 - in.Origin).dot(N) / k;
+	t = (p0 - in.Origin).dot(N) / k;
 	if (!in.isInsideRange(t))
 		return false;
 
@@ -95,15 +100,15 @@ inline PR_LIB bfloat intersectPI(
 		return valid;
 
 	// Denominator
-	const vfloat k = k0 + k1 + k2;
-	valid		   = valid & (abs(k) > PR_EPSILON);
+	const Vector3fv N = d2.cross(d0);
+	const vfloat k	  = N.dot(in.Direction);
+	valid			  = valid & (abs(k) > PR_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
 		return valid;
 
 	// Intersection value
-	const Vector3fv N = m0 + m1 + m2;
-	t				  = (p0 - in.Origin).dot(N) / k;
-	valid			  = valid & in.isInsideRange(t);
+	t	  = (p0 - in.Origin).dot(N) / k;
+	valid = valid & in.isInsideRange(t);
 	if (none(valid))
 		return valid;
 
@@ -153,13 +158,13 @@ inline PR_LIB bool intersectPI_Mem(
 		return false;
 
 	// Determinant
-	const float k = k0 + k1 + k2;
+	const Vector3f N = d2.cross(d0);
+	const float k	 = N.dot(in.Direction);
 	if (PR_UNLIKELY(abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
-	const Vector3f N = m0 + m1 + m2;
-	t				 = (p0 - in.Origin).dot(N) / k;
+	t = (p0 - in.Origin).dot(N) / k;
 	if (!in.isInsideRange(t))
 		return false;
 
@@ -206,15 +211,15 @@ inline PR_LIB bfloat intersectPI_Mem(
 		return valid;
 
 	// Normal
-	const vfloat k = k0 + k1 + k2;
-	valid		   = valid & (abs(k) > PR_EPSILON);
+	const Vector3fv N = d2.cross(d0);
+	const vfloat k	  = N.dot(in.Direction);
+	valid			  = valid & (abs(k) > PR_EPSILON);
 	if (PR_UNLIKELY(none(valid)))
 		return valid;
 
 	// Intersection value
-	const Vector3fv N = m0 + m1 + m2;
-	t				  = (p0 - in.Origin).dot(N) / k;
-	valid			  = valid & in.isInsideRange(t);
+	t	  = (p0 - in.Origin).dot(N) / k;
+	valid = valid & in.isInsideRange(t);
 	if (none(valid))
 		return valid;
 

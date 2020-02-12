@@ -293,33 +293,62 @@ inline vuint32 insert(size_t i, const vuint32& v, uint32 f)
 	return runtime_insert_H<PR_SIMD_BANDWIDTH - 1>()(i, v, f);
 }
 
-// for each with index
-template <unsigned int K, typename F>
+// for each
+template <unsigned int K, typename F, typename S>
 class runtime_foreach_H {
 public:
 	template <class... ArgTypes>
-	inline void operator()(F&& f, ArgTypes&&... args)
+	inline void operator()(const S& val, F&& f, ArgTypes&&... args)
 	{
-		std::forward<F>(f)(K, std::forward<ArgTypes>(args)...);
-		runtime_foreach_H<K - 1, F>()(std::forward<F>(f), std::forward<ArgTypes>(args)...);
+		std::forward<F>(f)(simdpp::extract<K>(val), std::forward<ArgTypes>(args)...);
+		runtime_foreach_H<K - 1, F, S>()(val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
 	}
 };
 
-template <typename F>
-class runtime_foreach_H<0, F> {
+template <typename F, typename S>
+class runtime_foreach_H<0, F, S> {
 public:
 	template <class... ArgTypes>
-	inline void operator()(F&& f, ArgTypes&&... args)
+	inline void operator()(const S& val, F&& f, ArgTypes&&... args)
 	{
-		std::forward<F>(f)(0, std::forward<ArgTypes>(args)...);
+		std::forward<F>(f)(simdpp::extract<0>(val), std::forward<ArgTypes>(args)...);
 	}
 };
 
-template <typename F, class... ArgTypes>
-inline auto for_each_v(F&& f, ArgTypes&&... args)
+template <typename F, typename S, class... ArgTypes>
+inline auto foreach_v(const S& val, F&& f, ArgTypes&&... args)
 {
-	return runtime_foreach_H<PR_SIMD_BANDWIDTH - 1, F>()(
-		std::forward<F>(f), std::forward<ArgTypes>(args)...);
+	return runtime_foreach_H<PR_SIMD_BANDWIDTH - 1, F, S>()(
+		val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
+}
+
+// for each with index
+template <unsigned int K, typename F, typename S>
+class runtime_foreach_index_H {
+public:
+	template <class... ArgTypes>
+	inline void operator()(const S& val, F&& f, ArgTypes&&... args)
+	{
+		std::forward<F>(f)(K, simdpp::extract<K>(val), std::forward<ArgTypes>(args)...);
+		runtime_foreach_index_H<K - 1, F, S>()(val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
+	}
+};
+
+template <typename F, typename S>
+class runtime_foreach_index_H<0, F, S> {
+public:
+	template <class... ArgTypes>
+	inline void operator()(const S& val, F&& f, ArgTypes&&... args)
+	{
+		std::forward<F>(f)(0, simdpp::extract<0>(val), std::forward<ArgTypes>(args)...);
+	}
+};
+
+template <typename F, typename S, class... ArgTypes>
+inline auto foreach_i_v(const S& val, F&& f, ArgTypes&&... args)
+{
+	return runtime_foreach_index_H<PR_SIMD_BANDWIDTH - 1, F, S>()(
+		val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
 }
 
 // for each with assignment
@@ -345,7 +374,7 @@ public:
 };
 
 template <typename F, typename S, class... ArgTypes>
-inline auto for_each_assign_v(const S& val, F&& f, ArgTypes&&... args)
+inline auto foreach_assign_v(const S& val, F&& f, ArgTypes&&... args)
 {
 	S tmp;
 	runtime_foreach_assign_H<PR_SIMD_BANDWIDTH - 1, F, S, S>()(
@@ -376,7 +405,7 @@ public:
 };
 
 template <typename F, typename S, class... ArgTypes>
-inline auto for_each_assign_i_v(const S& val, F&& f, ArgTypes&&... args)
+inline auto foreach_assign_i_v(const S& val, F&& f, ArgTypes&&... args)
 {
 	S tmp;
 	runtime_foreach_assign_index_H<PR_SIMD_BANDWIDTH - 1, F, S, S>()(
