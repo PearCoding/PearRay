@@ -71,23 +71,24 @@ public:
 
 	// Coherent Package Version
 	template <typename CheckCollisionCallback>
-	inline bool checkCollisionCoherent(const RayPackage& in, CollisionOutput& out,
+	inline void checkCollisionCoherent(const RayPackage& in, CollisionOutput& out,
 									   CheckCollisionCallback checkCollisionCallback) const
 	{
 		// TODO
-		return checkCollisionIncoherent(in, out, checkCollisionCallback);
+		checkCollisionIncoherent(in, out, checkCollisionCallback);
 	}
 
 	// Incoherent Package Version
 	// Based on: Reshetov, Alexander. (2006). Omnidirectional Ray Tracing Traversal Algorithm for kd-trees. 57 - 60. 10.1109/RT.2006.280215.
 	template <typename CheckCollisionCallback>
-	inline bool checkCollisionIncoherent(const RayPackage& in, CollisionOutput& out,
+	inline void checkCollisionIncoherent(const RayPackage& in, CollisionOutput& out,
 										 CheckCollisionCallback checkCollisionCallback) const
 	{
 		using namespace simdpp;
 		static const vfloat zero = make_zero();
 
 		out.HitDistance		   = make_float(std::numeric_limits<float>::infinity());
+		out.Successful		   = vfloat(0) != vfloat(0);
 		const Vector3fv invDir = in.Direction.cwiseInverse();
 
 		struct PR_SIMD_ALIGN _stackdata {
@@ -98,11 +99,11 @@ public:
 		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
 
 		if (!mRoot) // Empty tree
-			return false;
+			return;
 
 		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!any(root_in.Successful))
-			return false;
+			return;
 
 		CollisionOutput tmp;
 		size_t stackPos		 = 0;
@@ -180,31 +181,27 @@ public:
 			kdLeafNodeCollider* leafN = reinterpret_cast<kdLeafNodeCollider*>(currentN);
 
 			for (uint64 entity : leafN->objects) {
-				tmp.HitDistance = make_float(std::numeric_limits<float>::infinity());
-
 				checkCollisionCallback(in, entity, tmp);
-				const bfloat hits = (tmp.HitDistance < out.HitDistance);
-
-				out.blendFrom(tmp, hits);
+				if (any(tmp.Successful))
+					out.blendFrom(tmp);
 			}
 
 			// Early termination
-			if (all(out.HitDistance <= maxT))
+			if (all(out.Successful & (out.HitDistance <= maxT)))
 				break;
 		}
-
-		return any(out.HitDistance < std::numeric_limits<float>::infinity());
 	}
 
 	// Single version
 	// Based on: Woop, Sven. (2004). A Programmable Hardware Architecture for Real-time Ray Tracing of Coherent Dynamic Scenes.
 	template <typename CheckCollisionCallback>
-	inline bool checkCollisionSingle(const Ray& in, SingleCollisionOutput& out,
+	inline void checkCollisionSingle(const Ray& in, SingleCollisionOutput& out,
 									 CheckCollisionCallback checkCollisionCallback,
 									 bool stopAtFirstHit = false) const
 	{
 		using namespace simdpp;
 		out.HitDistance		  = std::numeric_limits<float>::infinity();
+		out.Successful		  = false;
 		const Vector3f invDir = in.Direction.cwiseInverse();
 
 		struct _stackdata {
@@ -215,11 +212,11 @@ public:
 		thread_local _stackdata stack[PR_KDTREE_MAX_STACK];
 
 		if (!mRoot) // Empty tree
-			return false;
+			return;
 
 		const auto root_in = mBoundingBox.intersectsRange(in);
 		if (!root_in.Successful)
-			return false;
+			return;
 
 		SingleCollisionOutput tmp;
 		size_t stackPos		 = 0;
@@ -269,14 +266,11 @@ public:
 			const kdLeafNodeCollider* leafN = reinterpret_cast<const kdLeafNodeCollider*>(currentN);
 
 			for (uint64 entity : leafN->objects) {
-				tmp.HitDistance = std::numeric_limits<float>::infinity();
-
-				// Check for < 0?
 				checkCollisionCallback(in, entity, tmp);
-				if (tmp.HitDistance < out.HitDistance) {
+				if (tmp.Successful && tmp.HitDistance < out.HitDistance) {
 					out = tmp;
 					if (stopAtFirstHit)
-						return true;
+						return;
 				}
 			}
 
@@ -284,8 +278,6 @@ public:
 			if (out.HitDistance <= maxT)
 				break;
 		}
-
-		return out.HitDistance < std::numeric_limits<float>::infinity();
 	}
 
 	void load(Serializer& stream);

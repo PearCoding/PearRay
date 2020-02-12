@@ -41,11 +41,9 @@ void TriMeshBW9::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   const float* M = &matrices[9 * f];
 									   const int FC	  = (int)fixedColumns[f];
 
-									   bfloat hits = TriangleIntersection::intersectBW9(
+									   out2.Successful = TriangleIntersection::intersectBW9(
 										   in2, M, FC,
-										   uv, t);
-
-									   out2.HitDistance = simdpp::blend(t, out2.HitDistance, hits);
+										   uv, out2.HitDistance);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -66,20 +64,14 @@ void TriMeshBW9::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 	mCollider
 		->checkCollisionSingle(in, out,
 							   [&](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
-								   float t;
 								   Vector2f uv;
 
 								   const float* M = &matrices[9 * f];
 								   const int FC	  = (int)fixedColumns[f];
 
-								   bool hit = TriangleIntersection::intersectBW9(
+								   out2.Successful = TriangleIntersection::intersectBW9(
 									   in2, M, FC,
-									   uv, t);
-
-								   if (!hit)
-									   return;
-								   else
-									   out2.HitDistance = t;
+									   uv, out2.HitDistance);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);

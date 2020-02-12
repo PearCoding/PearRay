@@ -78,16 +78,16 @@ PR_TEST("Two Half")
 	mesh->checkCollision(in, out);
 
 	// Left triangle
-	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(extract<0>(out.Successful));
 	PR_CHECK_EQ(extract<0>(out.FaceID), 0);
 
 	// Right triangle
-	PR_CHECK_TRUE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(extract<1>(out.Successful));
 	PR_CHECK_EQ(extract<1>(out.FaceID), 1);
 
 	// Empty mid space
-	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
-	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<2>(out.Successful));
+	PR_CHECK_FALSE(extract<3>(out.Successful));
 }
 
 PR_TEST("Overlap")
@@ -135,15 +135,15 @@ PR_TEST("Overlap")
 
 	// From top to bottom
 	// FIXME: There is a bug in the parallel tracing!
-	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(extract<0>(out.Successful));
 	PR_CHECK_EQ(extract<0>(out.FaceID), 1);
 
 	// From bottom to top
-	PR_CHECK_TRUE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(extract<1>(out.Successful));
 	PR_CHECK_EQ(extract<1>(out.FaceID), 0);
 
-	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
-	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<2>(out.Successful));
+	PR_CHECK_FALSE(extract<3>(out.Successful));
 }
 
 PR_TEST("UV")
@@ -197,14 +197,14 @@ PR_TEST("UV")
 	mesh->checkCollision(in, out);
 
 	// From top to bottom
-	PR_CHECK_TRUE(extract<0>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(extract<0>(out.Successful));
 	PR_CHECK_EQ(extract<0>(out.FaceID), 1);
 	PR_CHECK_GREAT(extract<0>(out.Parameter[0]), 0);
 	PR_CHECK_GREAT(extract<0>(out.Parameter[1]), 0);
 
-	PR_CHECK_FALSE(extract<1>(out.HitDistance) < std::numeric_limits<float>::infinity());
-	PR_CHECK_FALSE(extract<2>(out.HitDistance) < std::numeric_limits<float>::infinity());
-	PR_CHECK_FALSE(extract<3>(out.HitDistance) < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<1>(out.Successful));
+	PR_CHECK_FALSE(extract<2>(out.Successful));
+	PR_CHECK_FALSE(extract<3>(out.Successful));
 }
 
 PR_TEST("Single Intersection")
@@ -246,7 +246,7 @@ PR_TEST("Single Intersection")
 	mesh->checkCollision(in, out);
 
 	// Left triangle
-	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(out.Successful);
 	PR_CHECK_EQ(out.FaceID, 0);
 }
 
@@ -287,7 +287,7 @@ PR_TEST("Single Intersection Overlap")
 	SingleCollisionOutput out;
 	mesh->checkCollision(in, out);
 
-	PR_CHECK_TRUE(out.HitDistance < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(out.Successful);
 	PR_CHECK_EQ(out.FaceID, 1);
 }
 

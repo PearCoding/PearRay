@@ -89,7 +89,7 @@ bool Plane::contains(const Vector3f& point) const
 
 void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	out.HitDistance = std::numeric_limits<float>::infinity();
+	out.Successful = false;
 
 	float ln = in.Direction.dot(mNormal_Cache);
 	float pn = (mPosition - in.Origin).dot(mNormal_Cache);
@@ -106,6 +106,7 @@ void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 			if (out.Parameter[0] >= 0 && out.Parameter[0] <= 1
 				&& out.Parameter[1] >= 0 && out.Parameter[1] <= 1) {
 				out.HitDistance = t;
+				out.Successful	= true;
 				return;
 			}
 		}
@@ -115,8 +116,6 @@ void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 {
 	using namespace simdpp;
-
-	const vfloat inf = make_float(std::numeric_limits<float>::infinity());
 
 	const Vector3fv NV = promote(mNormal_Cache);
 	const Vector3fv PV = promote(mPosition);
@@ -131,11 +130,10 @@ void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
 	out.Parameter[0] = p.dot(promote(mXAxis)) * mInvXLenSqr_Cache;
 	out.Parameter[1] = p.dot(promote(mYAxis)) * mInvYLenSqr_Cache;
 
-	bfloat succ = (out.Parameter[0] >= 0) & (out.Parameter[0] <= 1)
-				  & (out.Parameter[1] >= 0) & (out.Parameter[1] <= 1)
-				  & (in.isInsideRange(out.HitDistance))
-				  & (abs(ln) > PR_EPSILON);
-	out.HitDistance = blend(out.HitDistance, inf, succ);
+	out.Successful = (out.Parameter[0] >= 0) & (out.Parameter[0] <= 1)
+					 & (out.Parameter[1] >= 0) & (out.Parameter[1] <= 1)
+					 & (in.isInsideRange(out.HitDistance))
+					 & (abs(ln) > PR_EPSILON);
 }
 
 Vector2f Plane::project(const Vector3f& point) const

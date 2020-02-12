@@ -71,6 +71,7 @@ PR_TEST("Intersects 1")
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
 
+	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
@@ -85,7 +86,7 @@ PR_TEST("Intersects 2")
 
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
-	PR_CHECK_FALSE(s.HitDistance < std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(s.Successful);
 }
 
 PR_TEST("Intersects 3")
@@ -97,6 +98,7 @@ PR_TEST("Intersects 3")
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
 
+	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
@@ -111,6 +113,7 @@ PR_TEST("Intersects 4")
 	SingleCollisionOutput s;
 	plane.intersects(ray, s);
 
+	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
@@ -130,12 +133,13 @@ PR_TEST("Intersects [Package]")
 	CollisionOutput s;
 	plane.intersects(rays, s);
 
+	PR_CHECK_TRUE(extract<0>(s.Successful));
 	PR_CHECK_NEARLY_EQ(extract<0>(s.HitDistance), 1.0f);
 	PR_CHECK_NEARLY_EQ(extract<0>(s.Parameter[0]), 0.5f);
 	PR_CHECK_NEARLY_EQ(extract<0>(s.Parameter[1]), 0.5f);
-	PR_CHECK_EQ(extract<1>(s.HitDistance), std::numeric_limits<float>::infinity());
-	PR_CHECK_EQ(extract<2>(s.HitDistance), std::numeric_limits<float>::infinity());
-	PR_CHECK_EQ(extract<3>(s.HitDistance), std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(extract<1>(s.Successful));
+	PR_CHECK_FALSE(extract<2>(s.Successful));
+	PR_CHECK_FALSE(extract<3>(s.Successful));
 }
 
 PR_END_TESTCASE()

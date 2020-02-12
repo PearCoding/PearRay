@@ -47,7 +47,7 @@ public:
 	float surfaceArea(uint32 id) const override
 	{
 		constexpr float K = 150.0f / 360;
-		const float L2	= mHeight * mHeight + mDisk.radius() * mDisk.radius();
+		const float L2	  = mHeight * mHeight + mDisk.radius() * mDisk.radius();
 
 		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
 			return mDisk.surfaceArea() + K * PR_PI * L2;
@@ -96,13 +96,14 @@ public:
 
 		out.FaceID		= blend(vuint32(1), vuint32(0), (buint32)valid);
 		out.HitDistance = blend(qu_t, out.HitDistance, valid);
-		out.Parameter   = in_local.t(out.HitDistance);
+		out.Parameter	= in_local.t(out.HitDistance);
+		out.Successful	= out.Successful | valid;
 
 		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
+													 transform().linear());
 		out.EntityID	= simdpp::make_uint(id());
 		out.FaceID		= simdpp::make_uint(0);
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
+		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
@@ -121,25 +122,25 @@ public:
 		float qu_t;
 		if (range.Successful
 			&& Quadric::intersect<float>(
-				   constructConeParameters(),
-				   in_local.Origin + range.Entry * in_local.Direction,
-				   in_local.Direction,
-				   qu_t)) {
+				constructConeParameters(),
+				in_local.Origin + range.Entry * in_local.Direction,
+				in_local.Direction,
+				qu_t)) {
 
 			qu_t += range.Entry;
-			if (qu_t < out.HitDistance && qu_t <= range.Exit) {
+			if ((!out.Successful || qu_t < out.HitDistance) && qu_t <= range.Exit) {
 				out.FaceID		= 1;
 				out.HitDistance = qu_t;
-				out.Parameter   = in_local.t(out.HitDistance);
+				out.Parameter	= in_local.t(out.HitDistance);
 			}
 		} else {
 			out.FaceID = 0;
 		}
 
 		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
+													 transform().linear());
 		out.EntityID	= id();
-		out.MaterialID  = mMaterialID;
+		out.MaterialID	= mMaterialID;
 	}
 
 	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
@@ -147,7 +148,7 @@ public:
 	{
 		SplitSample2D split(rnd, 0, 2);
 
-		pdf	= mPDF_Cache;
+		pdf	   = mPDF_Cache;
 		faceID = split.integral1();
 		// TODO Specific sampling for disk and cone
 

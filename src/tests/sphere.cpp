@@ -82,6 +82,7 @@ PR_TEST("Intersects")
 
 	SingleCollisionOutput s;
 	sphere.intersects(ray, s);
+	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
 }
 
@@ -93,7 +94,7 @@ PR_TEST("Intersects Behind")
 
 	SingleCollisionOutput s;
 	sphere.intersects(ray, s);
-	PR_CHECK_EQ(s.HitDistance, std::numeric_limits<float>::infinity());
+	PR_CHECK_FALSE(s.Successful);
 }
 
 PR_TEST("Intersects Inside")
@@ -104,6 +105,7 @@ PR_TEST("Intersects Inside")
 
 	SingleCollisionOutput s;
 	sphere.intersects(ray, s);
+	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
 }
 
@@ -119,12 +121,13 @@ PR_TEST("Intersects [Package]")
 
 	CollisionOutput s;
 	sphere.intersects(rays, s);
-	const float INF = std::numeric_limits<float>::infinity();
 
+	PR_CHECK_TRUE(extract<0>(s.Successful));
 	PR_CHECK_NEARLY_EQ(extract<0>(s.HitDistance), 1);
+	PR_CHECK_TRUE(extract<1>(s.Successful));
 	PR_CHECK_NEARLY_EQ(extract<1>(s.HitDistance), 1);
-	PR_CHECK_EQ(extract<2>(s.HitDistance), INF);
-	PR_CHECK_EQ(extract<3>(s.HitDistance), INF);
+	PR_CHECK_FALSE(extract<2>(s.Successful));
+	PR_CHECK_FALSE(extract<3>(s.Successful));
 }
 
 PR_END_TESTCASE()

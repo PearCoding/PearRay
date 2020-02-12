@@ -11,7 +11,6 @@
 #include "math/Projection.h"
 #include "math/Transform.h"
 
-
 #include <boost/filesystem.hpp>
 
 namespace PR {
@@ -80,10 +79,10 @@ public:
 		// TODO
 
 		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
+													 transform().linear());
 		out.FaceID		= simdpp::make_uint(0);
 		out.EntityID	= simdpp::make_uint(id());
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
+		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
@@ -115,14 +114,13 @@ public:
 		float fr0		= static_cast<float>(std::log(1.41421356237f * 12.0f * l0 / (8.0f * eps)) / std::log(4));
 		size_t maxDepth = static_cast<size_t>(std::max(0, std::min(10, (int)std::round(fr0))));
 
-		if (!recursiveCheck(in_local, out, projectedCurve, 0, 1, maxDepth))
-			out.HitDistance = std::numeric_limits<float>::infinity();
-		else {
+		out.Successful = recursiveCheck(in_local, out, projectedCurve, 0, 1, maxDepth);
+		if (out.Successful) {
 			out.HitDistance = in_local.transformDistance(out.HitDistance,
-														   transform().linear());
+														 transform().linear());
 			out.FaceID		= 0;
 			out.EntityID	= id();
-			out.MaterialID  = mMaterialID;
+			out.MaterialID	= mMaterialID;
 		}
 	}
 
@@ -180,7 +178,7 @@ public:
 			float wA = lerpWidth(a);
 			float wB = lerpWidth(b);
 
-			float dist  = (pB - pA).norm();
+			float dist	= (pB - pA).norm();
 			float qArea = std::min(wA, wB) * dist;
 			float tArea = 0.5f * std::abs(wA - wB) * dist;
 			mApproxSurfaceArea += qArea + tArea;
@@ -231,7 +229,7 @@ private:
 
 			// Minimum distance
 			Vector3f dir = e0 - s0;
-			float denom  = dir.block<2, 1>(0, 0).squaredNorm();
+			float denom	 = dir.block<2, 1>(0, 0).squaredNorm();
 			if (std::abs(denom) < PR_EPSILON)
 				return false;
 
@@ -242,7 +240,7 @@ private:
 			float hitwidth = lerpWidth(u);
 
 			// Intersection point
-			Vector3f p  = curve.eval(std::min(1.0f, std::max(0.0f, w)));
+			Vector3f p	= curve.eval(std::min(1.0f, std::max(0.0f, w)));
 			float dist2 = p.block<2, 1>(0, 0).squaredNorm();
 			if (dist2 > hitwidth * hitwidth * 0.25f)
 				return false;
@@ -252,15 +250,15 @@ private:
 
 			// V coordinate
 			Vector3f dp = curve.evalDerivative(std::min(1.0f, std::max(0.0f, w)));
-			float dist  = std::sqrt(dist2);
-			float edge  = p(0) * dp(1) - dp(0) * p(1);
+			float dist	= std::sqrt(dist2);
+			float edge	= p(0) * dp(1) - dp(0) * p(1);
 			float v		= (edge > 0)
 						  ? 0.5f + dist / hitwidth
 						  : 0.5f - dist / hitwidth;
 
 			out.Parameter[0] = u;
 			out.Parameter[1] = v;
-			out.HitDistance  = p(2);
+			out.HitDistance	 = p(2);
 
 			return true;
 		}

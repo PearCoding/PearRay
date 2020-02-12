@@ -19,7 +19,7 @@ Sphere::Sphere(float radius)
 
 void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 {
-	out.HitDistance = std::numeric_limits<float>::infinity();
+	out.Successful = false;
 
 	// C - O
 	const float S  = -in.Origin.dot(in.Direction);
@@ -44,6 +44,7 @@ void Sphere::intersects(const Ray& in, SingleCollisionOutput& out) const
 
 	if (in.isInsideRange(t0)) {
 		out.HitDistance = t0;
+		out.Successful	= true;
 
 		// Setup UV
 		Vector3f p		 = in.t(t0);
@@ -79,9 +80,7 @@ void Sphere::intersects(const RayPackage& in, CollisionOutput& out) const
 	out.Parameter[0] = uv(0);
 	out.Parameter[1] = uv(1);
 
-	const vfloat inf = fill_vector(std::numeric_limits<float>::infinity());
-	out.HitDistance	 = simdpp::blend(out.HitDistance, inf,
-									 valid & in.isInsideRange(out.HitDistance));
+	out.Successful = valid & in.isInsideRange(out.HitDistance);
 }
 
 void Sphere::combine(const Vector3f& point)

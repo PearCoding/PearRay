@@ -25,7 +25,10 @@ enum VisualFeedbackMode {
 	VFM_ColoredPrimitiveID,
 	VFM_ColoredRayID,
 	VFM_ColoredContainerID,
-	VFM_Parameter
+	VFM_RayDirection,
+	VFM_Parameter,
+	VFM_Inside,
+	VFM_NdotV
 };
 
 static struct {
@@ -39,12 +42,15 @@ static struct {
 	{ "colored_primitive_id", VFM_ColoredPrimitiveID },
 	{ "colored_ray_id", VFM_ColoredRayID },
 	{ "colored_container_id", VFM_ColoredContainerID },
+	{ "ray_direction", VFM_RayDirection },
 	{ "parameter", VFM_Parameter },
+	{ "inside", VFM_Inside },
+	{ "ndotv", VFM_NdotV },
 	{ "", VFM_ColoredEntityID }
 };
 
-constexpr int RANDOM_COLOR_COUNT				  = 23;
-static Vector3f sRandomColors[RANDOM_COLOR_COUNT] = {
+constexpr int RANDOM_COLOR_COUNT						= 23;
+static const Vector3f sRandomColors[RANDOM_COLOR_COUNT] = {
 	Vector3f(0.450000f, 0.376630f, 0.112500f),
 	Vector3f(0.112500f, 0.450000f, 0.405978f),
 	Vector3f(0.112500f, 0.450000f, 0.229891f),
@@ -70,11 +76,15 @@ static Vector3f sRandomColors[RANDOM_COLOR_COUNT] = {
 	Vector3f(0.112500f, 0.317935f, 0.450000f)
 };
 
+static const Vector3f TrueColor	 = Vector3f(0, 1, 0);
+static const Vector3f FalseColor = Vector3f(1, 0, 0);
+
 class IntVF : public IIntegrator {
 public:
-	explicit IntVF(VisualFeedbackMode mode)
+	explicit IntVF(VisualFeedbackMode mode, bool applyDot)
 		: IIntegrator()
 		, mMode(mode)
+		, mApplyDot(applyDot)
 	{
 	}
 
@@ -103,31 +113,66 @@ public:
 					spt.EntityID = entity->id();
 
 					ColorTriplet radiance = ColorTriplet::Zero();
+					ColorTriplet weight	  = ColorTriplet::Ones() * abs(spt.NdotV);
 					switch (mMode) {
 					case VFM_ColoredEntityID:
 						radiance = sRandomColors[hitEntry.EntityID % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
 					case VFM_ColoredMaterialID:
 						radiance = sRandomColors[hitEntry.MaterialID % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
 					case VFM_ColoredEmissionID:
 						radiance = sRandomColors[pt.EmissionID % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
 					case VFM_ColoredDisplaceID:
 						radiance = sRandomColors[pt.DisplaceID % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
 					case VFM_ColoredPrimitiveID:
 						radiance = sRandomColors[hitEntry.PrimitiveID % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
 					case VFM_ColoredRayID:
 						radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
 					case VFM_ColoredContainerID:
 						radiance = sRandomColors[entity->containerID() % RANDOM_COLOR_COUNT];
+						if (mApplyDot)
+							radiance *= weight;
 						break;
+					case VFM_RayDirection: {
+						Vector3f rescaledDir = 0.5f * (spt.Ray.Direction + Vector3f(1, 1, 1));
+						radiance			 = ColorTriplet{ rescaledDir[0], rescaledDir[1], rescaledDir[2] };
+						if (mApplyDot)
+							radiance *= weight;
+					} break;
 					case VFM_Parameter:
 						radiance = hitEntry.Parameter;
+						if (mApplyDot)
+							radiance *= weight;
 						break;
+					case VFM_Inside:
+						radiance = (spt.Flags & SPF_Inside) ? TrueColor : FalseColor;
+						if (mApplyDot)
+							radiance *= weight;
+						break;
+					case VFM_NdotV: {
+						const float originalNdotV = spt.Ray.Direction.dot(spt.Geometry.N);
+						if (originalNdotV < 0)
+							radiance = ColorTriplet{ 0, -originalNdotV, 0 };
+						else
+							radiance = ColorTriplet{ originalNdotV, 0, 0 };
+					} break;
 					}
 
 					session.pushSPFragment(spt, stdPath);
@@ -143,6 +188,7 @@ public:
 
 private:
 	VisualFeedbackMode mMode;
+	bool mApplyDot;
 };
 
 class IntVFFactory : public IIntegratorFactory {
@@ -162,7 +208,7 @@ public:
 				break;
 			}
 		}
-		return std::make_shared<IntVF>(mode);
+		return std::make_shared<IntVF>(mode, mParams.getBool("weighting", true));
 	}
 
 private:

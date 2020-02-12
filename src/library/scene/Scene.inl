@@ -27,8 +27,7 @@ inline void _sceneCheckHit(const RayGroup& grp,
 	if (id >= grp.size()) // Ignore bad tails
 		return;
 
-	const float hitD = simdpp::extract<K>(out.HitDistance);
-	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
+	if (simdpp::extract<K>(simdpp::bit_cast<vuint32::Base>(out.Successful))) {
 		HitEntry entry;
 		entry.RayID		  = id + grp.offset();
 		entry.MaterialID  = simdpp::extract<K>(out.MaterialID);
@@ -108,9 +107,7 @@ void Scene::traceCoherentRays(const RayGroup& grp,
 				   CollisionOutput& out2) {
 				const IEntity* entity = mEntities[index].get();
 				entity->checkCollision(in2, out2);
-				out2.HitDistance = blend(out2.HitDistance,
-										 vfloat(std::numeric_limits<float>::infinity()),
-										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+				out2.Successful = out2.Successful & ((vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
@@ -157,9 +154,7 @@ void Scene::traceIncoherentRays(const RayGroup& grp,
 				   CollisionOutput& out2) {
 				const IEntity* entity = mEntities[index].get();
 				entity->checkCollision(in2, out2);
-				out2.HitDistance = blend(out2.HitDistance,
-										 vfloat(std::numeric_limits<float>::infinity()),
-										 (vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+				out2.Successful = out2.Successful & ((vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
 			});
 
 		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits, nonHit);
@@ -180,11 +175,10 @@ bool Scene::traceSingleRay(const Ray& in, HitEntry& entry) const
 			if (entity->visibilityFlags() & in2.Flags)
 				entity->checkCollision(in2, out2);
 			else
-				out2.HitDistance = std::numeric_limits<float>::infinity();
+				out2.Successful = false;
 		});
 
-	float hitD = out.HitDistance;
-	if (hitD > 0 && hitD < std::numeric_limits<float>::infinity()) {
+	if (out.Successful) {
 		entry.RayID		  = 0;
 		entry.MaterialID  = out.MaterialID;
 		entry.EntityID	  = out.EntityID;
@@ -207,7 +201,7 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 	SingleCollisionOutput out;
 	ShadowHit hit;
 
-	hit.Successful = mKDTree->checkCollisionSingle(
+	mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
 			   SingleCollisionOutput& out2) {
@@ -215,9 +209,10 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 			if (entity->visibilityFlags() & in2.Flags)
 				entity->checkCollision(in2, out2);
 			else
-				out2.HitDistance = std::numeric_limits<float>::infinity();
+				out2.Successful = false;
 		});
 
+	hit.Successful = out.Successful;
 	for (int i = 0; i < 3; ++i)
 		hit.Parameter[i] = out.Parameter[i];
 	hit.EntityID	= out.EntityID;
@@ -234,7 +229,7 @@ bool Scene::traceOcclusionRay(const Ray& in) const
 
 	SingleCollisionOutput out;
 
-	bool hit = mKDTree->checkCollisionSingle(
+	mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
 			   SingleCollisionOutput& out2) {
@@ -242,11 +237,10 @@ bool Scene::traceOcclusionRay(const Ray& in) const
 			if (entity->visibilityFlags() & in2.Flags)
 				entity->checkCollision(in2, out2);
 			else
-				out2.HitDistance = std::numeric_limits<float>::infinity();
+				out2.Successful = false;
 		},
 		true);
-
-	return hit;
+	return out.Successful;
 }
 
 } // namespace PR

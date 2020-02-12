@@ -36,7 +36,6 @@ void TriMeshPIMem::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 		->checkCollisionIncoherent(in, out,
 								   [&](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
 									   Vector2fv uv;
-									   vfloat t;
 
 									   const uint32 ind1 = mBase->indices()[3 * f];
 									   const uint32 ind2 = mBase->indices()[3 * f + 1];
@@ -56,12 +55,10 @@ void TriMeshPIMem::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 																	faceMomentum2[3 * f + 1],
 																	faceMomentum2[3 * f + 2]);
 
-									   bfloat hits = TriangleIntersection::intersectPI_Mem(
+									   out2.Successful = TriangleIntersection::intersectPI_Mem(
 										   in2, p0, p1, p2,
 										   promote(m0), promote(m1), promote(m2),
-										   uv, t);
-
-									   out2.HitDistance = simdpp::blend(t, out2.HitDistance, hits);
+										   uv, out2.HitDistance);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -91,7 +88,6 @@ void TriMeshPIMem::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 								   const Vector3f p1 = mBase->vertex(ind2);
 								   const Vector3f p2 = mBase->vertex(ind3);
 
-								   float t;
 								   Vector2f uv;
 
 								   const Vector3f m0 = Vector3f(faceMomentum0[3 * f + 0],
@@ -104,15 +100,10 @@ void TriMeshPIMem::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 																faceMomentum2[3 * f + 1],
 																faceMomentum2[3 * f + 2]);
 
-								   bool hit = TriangleIntersection::intersectPI_Mem(
+								   out2.Successful = TriangleIntersection::intersectPI_Mem(
 									   in2, p0, p1, p2,
 									   m0, m1, m2,
-									   uv, t);
-
-								   if (!hit)
-									   return;
-								   else
-									   out2.HitDistance = t;
+									   uv, out2.HitDistance);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);

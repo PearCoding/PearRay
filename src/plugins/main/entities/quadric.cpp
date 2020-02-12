@@ -75,18 +75,17 @@ public:
 		vfloat t;
 		bfloat valid = Quadric::intersect<vfloat>(mParameters,
 												  in_local.t(range.Entry),
-												  in_local.Direction, t);
-		t += range.Entry;
-		valid = b_and(b_and(valid, t <= range.Exit), range.Successful);
+												  in_local.Direction, out.HitDistance);
+		out.HitDistance += range.Entry;
+		out.Successful = b_and(b_and(valid, out.HitDistance <= range.Exit), range.Successful);
 
-		out.Parameter   = in_local.t(t);
-		out.HitDistance = blend(t, vfloat(std::numeric_limits<float>::infinity()), valid);
+		out.Parameter = in_local.t(out.HitDistance);
 
 		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
+													 transform().linear());
 		out.EntityID	= simdpp::make_uint(id());
 		out.FaceID		= simdpp::make_uint(0);
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
+		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
 	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
@@ -95,8 +94,8 @@ public:
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		out.HitDistance = std::numeric_limits<float>::infinity();
-		auto range		= localBoundingBox().intersectsRange(in_local);
+		out.Successful = false;
+		auto range	   = localBoundingBox().intersectsRange(in_local);
 		if (range.Entry < 0)
 			range.Entry = 0;
 
@@ -107,23 +106,26 @@ public:
 										 in_local.Direction, t)) {
 			t += range.Entry;
 			if (t <= range.Exit) {
-				out.Parameter   = in_local.t(t);
+				out.Parameter	= in_local.t(t);
 				out.HitDistance = t;
+				out.Successful	= true;
 			}
 		}
 
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.FaceID		= 0;
-		out.MaterialID  = mMaterialID;
+		if (out.Successful) {
+			out.HitDistance = in_local.transformDistance(out.HitDistance,
+														 transform().linear());
+			out.EntityID	= id();
+			out.FaceID		= 0;
+			out.MaterialID	= mMaterialID;
+		}
 	}
 
 	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
 									  uint32& faceID, float& pdf) const override
 	{
 		// TODO
-		pdf	= 1.0f;
+		pdf	   = 1.0f;
 		faceID = 0;
 		return Vector3f(rnd(0), rnd(1), 0);
 	}

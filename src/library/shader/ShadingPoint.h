@@ -7,7 +7,7 @@
 
 namespace PR {
 enum ShaderPointFlags {
-	SPF_Inside = 0x1,
+	SPF_Inside	   = 0x1,
 	SPF_Background = 0x2
 };
 
@@ -42,13 +42,13 @@ public:
 		Ray		 = ray;
 		Geometry = pt;
 		P		 = pt.P;
-		Depth2   = (ray.Origin - P).squaredNorm();
-		Flags	= 0;
+		Depth2	 = (ray.Origin - P).squaredNorm();
+		Flags	 = 0;
 
 		NdotV = ray.Direction.dot(pt.N);
-		N	 = pt.N;
-		Nx	= pt.Nx;
-		Ny	= pt.Ny;
+		N	  = pt.N;
+		Nx	  = pt.Nx;
+		Ny	  = pt.Ny;
 		if (Reflection::is_inside(NdotV)) {
 			Tangent::invert_frame(N, Nx, Ny);
 			NdotV = -NdotV;

@@ -25,7 +25,6 @@ void TriMeshWT::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 		->checkCollisionIncoherent(in, out,
 								   [&](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
 									   Vector2fv uv;
-									   vfloat t;
 
 									   const uint32 ind1 = mBase->indices()[3 * f];
 									   const uint32 ind2 = mBase->indices()[3 * f + 1];
@@ -35,9 +34,7 @@ void TriMeshWT::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   const Vector3fv p1 = promote(mBase->vertex(ind2));
 									   const Vector3fv p2 = promote(mBase->vertex(ind3));
 
-									   bfloat hits = TriangleIntersection::intersectWT(in2, p0, p1, p2, uv, t);
-
-									   out2.HitDistance = simdpp::blend(t, out2.HitDistance, hits);
+									   out2.Successful = TriangleIntersection::intersectWT(in2, p0, p1, p2, uv, out2.HitDistance);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -63,15 +60,9 @@ void TriMeshWT::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 								   const Vector3f p1 = mBase->vertex(ind2);
 								   const Vector3f p2 = mBase->vertex(ind3);
 
-								   float t;
 								   Vector2f uv;
 
-								   bool hit = TriangleIntersection::intersectWT(in2, p0, p1, p2, uv, t);
-
-								   if (!hit)
-									   return;
-								   else
-									   out2.HitDistance = t;
+								   out2.Successful = TriangleIntersection::intersectWT(in2, p0, p1, p2, uv, out2.HitDistance);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);
