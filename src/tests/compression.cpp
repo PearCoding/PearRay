@@ -1,5 +1,6 @@
 #include "math/Compression.h"
 
+#define PRT_EPSILON (0.00001f)
 #include "Test.h"
 
 using namespace PR;
