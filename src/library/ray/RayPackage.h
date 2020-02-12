@@ -141,12 +141,13 @@ public:
 		return dt2.norm();
 	}
 
-	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d, const IntegerType& vis_flags, const V& minT, const V& maxT) const
+	inline RayPackageBase<V> next(const Vector3t<V>& o, const Vector3t<V>& d, const Vector3t<V>& N,
+								  const IntegerType& vis_flags, const V& minT, const V& maxT) const
 	{
 		RayPackageBase<V> other;
 		other = *this;
 
-		other.Origin	= Transform::safePosition(o, d);
+		other.Origin	= Transform::safePosition(o, d, N);
 		other.Direction = d;
 		other.IterationDepth += IntegerType(1);
 		other.MinT	= minT;

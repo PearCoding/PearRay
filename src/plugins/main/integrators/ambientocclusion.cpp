@@ -56,7 +56,7 @@ public:
 						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
 																  dir);
 
-						const Ray n = ray.next(pt.P, ndir, RF_Shadow, PR_EPSILON, ray.MaxT);
+						const Ray n = ray.next(pt.P, ndir, spt.N, RF_Shadow, PR_EPSILON, ray.MaxT);
 
 						if (session.traceOcclusionRay(n))
 							++occlusions;

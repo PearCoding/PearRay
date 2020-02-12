@@ -321,4 +321,66 @@ inline auto for_each_v(F&& f, ArgTypes&&... args)
 	return runtime_foreach_H<PR_SIMD_BANDWIDTH - 1, F>()(
 		std::forward<F>(f), std::forward<ArgTypes>(args)...);
 }
+
+// for each with assignment
+template <unsigned int K, typename F, typename S, typename S2>
+class runtime_foreach_assign_H {
+public:
+	template <class... ArgTypes>
+	inline void operator()(S& tmp, const S2& val, F&& f, ArgTypes&&... args)
+	{
+		tmp = simdpp::insert<K>(tmp, std::forward<F>(f)(simdpp::extract<K>(val), std::forward<ArgTypes>(args)...));
+		runtime_foreach_assign_H<K - 1, F, S, S2>()(tmp, val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
+	}
+};
+
+template <typename F, typename S, typename S2>
+class runtime_foreach_assign_H<0, F, S, S2> {
+public:
+	template <class... ArgTypes>
+	inline void operator()(S& tmp, const S2& val, F&& f, ArgTypes&&... args)
+	{
+		tmp = simdpp::insert<0>(tmp, std::forward<F>(f)(simdpp::extract<0>(val), std::forward<ArgTypes>(args)...));
+	}
+};
+
+template <typename F, typename S, class... ArgTypes>
+inline auto for_each_assign_v(const S& val, F&& f, ArgTypes&&... args)
+{
+	S tmp;
+	runtime_foreach_assign_H<PR_SIMD_BANDWIDTH - 1, F, S, S>()(
+		tmp, val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
+	return tmp;
+}
+
+// for each with assignment and index
+template <unsigned int K, typename F, typename S, typename S2>
+class runtime_foreach_assign_index_H {
+public:
+	template <class... ArgTypes>
+	inline void operator()(S& tmp, const S2& val, F&& f, ArgTypes&&... args)
+	{
+		tmp = simdpp::insert<K>(tmp, std::forward<F>(f)(K, simdpp::extract<K>(val), std::forward<ArgTypes>(args)...));
+		runtime_foreach_assign_index_H<K - 1, F, S, S2>()(tmp, val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
+	}
+};
+
+template <typename F, typename S, typename S2>
+class runtime_foreach_assign_index_H<0, F, S, S2> {
+public:
+	template <class... ArgTypes>
+	inline void operator()(S& tmp, const S2& val, F&& f, ArgTypes&&... args)
+	{
+		tmp = simdpp::insert<0>(tmp, std::forward<F>(f)(0, simdpp::extract<0>(val), std::forward<ArgTypes>(args)...));
+	}
+};
+
+template <typename F, typename S, class... ArgTypes>
+inline auto for_each_assign_i_v(const S& val, F&& f, ArgTypes&&... args)
+{
+	S tmp;
+	runtime_foreach_assign_index_H<PR_SIMD_BANDWIDTH - 1, F, S, S>()(
+		tmp, val, std::forward<F>(f), std::forward<ArgTypes>(args)...);
+	return tmp;
+}
 } // namespace PR

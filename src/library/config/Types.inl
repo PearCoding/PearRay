@@ -6,16 +6,16 @@ namespace PR {
  * due to performance issues anyway.
  */
 
-using int8  = int8_t;
+using int8	= int8_t;
 using uint8 = uint8_t;
 
-using int16  = int16_t;
+using int16	 = int16_t;
 using uint16 = uint16_t;
 
-using int32  = int32_t;
+using int32	 = int32_t;
 using uint32 = uint32_t;
 
-using int64  = int64_t;
+using int64	 = int64_t;
 using uint64 = uint64_t;
 
 // Checks
@@ -115,5 +115,49 @@ inline bool operator==(const Rect2i& left, const Rect2i& right)
 inline bool operator!=(const Rect2i& left, const Rect2i& right)
 {
 	return (left.Origin != right.Origin).any() || left.Size != right.Size;
+}
+
+// Float utils
+inline uint32 floatToBits(float f)
+{
+	uint32 ui;
+	memcpy(&ui, &f, sizeof(float));
+	return ui;
+}
+
+inline float bitsToFloat(uint32 ui)
+{
+	float f;
+	memcpy(&f, &ui, sizeof(uint32));
+	return f;
+}
+
+inline float nextFloatUp(float v)
+{
+	if (std::isinf(v) && v > 0.0f)
+		return v;
+	if (v == -0.0f)
+		v = 0.0f;
+
+	uint32 ui = floatToBits(v);
+	if (v >= 0)
+		++ui;
+	else
+		--ui;
+	return bitsToFloat(ui);
+}
+
+inline float nextFloatDown(float v)
+{
+	if (std::isinf(v) && v < 0.0f)
+		return v;
+	if (v == 0.0f)
+		v = -0.0f;
+	uint32 ui = floatToBits(v);
+	if (v > 0)
+		--ui;
+	else
+		++ui;
+	return bitsToFloat(ui);
 }
 } // namespace PR

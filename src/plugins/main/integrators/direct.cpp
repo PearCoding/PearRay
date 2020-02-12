@@ -75,7 +75,7 @@ public:
 
 			if (outL.PDF_S > PR_EPSILON) {
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, outL.Outgoing, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+				const Ray shadow	= spt.Ray.next(spt.P, outL.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					// Evaluate surface
@@ -109,7 +109,7 @@ public:
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (!shadowHit.Successful) {
 					InfiniteLightEvalInput inL;
@@ -159,7 +159,7 @@ public:
 		if (out.PDF_S > PR_EPSILON
 			&& spt.Ray.IterationDepth + 1 < mMaxRayDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
-			Ray next = spt.Ray.next(spt.P, out.Outgoing, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+			Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 			next.Weight *= out.Weight / (scatProb * out.PDF_S);
 
 			if (!next.Weight.isZero()) {
@@ -231,7 +231,7 @@ public:
 				&& pdfA >= PR_EPSILON) {
 
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, L, RF_Shadow, BOUNCE_RAY_MIN, std::sqrt(sqrD) + 0.0005f);
+				const Ray shadow	= spt.Ray.next(spt.P, L, spt.N, RF_Shadow, BOUNCE_RAY_MIN, std::sqrt(sqrD) + 0.0005f);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 
 				if (shadowHit.Successful && shadowHit.EntityID == light->id()) {
@@ -273,7 +273,7 @@ public:
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
-				const Ray shadow			= spt.Ray.next(spt.P, outS.Outgoing, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
 				if (shadowHit.Successful
 					&& shadowHit.EntityID == light->id()) {

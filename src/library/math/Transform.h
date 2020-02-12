@@ -1,36 +1,57 @@
 #pragma once
 
 #include "PR_Config.h"
+#include "SIMD.h"
 
 namespace PR {
 
 namespace Transform {
+
+constexpr float RayOffsetEpsilon = 0.000001f;
 /* Translates original position a little bit
  * in direction of the view to ensure no self intersection.
  */
 inline Vector3f safePosition(const Vector3f& pos,
-							 const Vector3f& dir)
+							 const Vector3f& dir,
+							 const Vector3f& N)
 {
-	constexpr float RayOffsetEpsilon = 0.000001f;
-	Vector3f off					 = dir * RayOffsetEpsilon;
-	Vector3f posOff					 = pos + off;
+	float d			= (N.cwiseAbs() * RayOffsetEpsilon).sum();
+	Vector3f offset = d * N;
+
+	if (dir.dot(N) < 0)
+		offset = -offset;
+	Vector3f posOff = pos + offset;
 
 	for (int i = 0; i < 3; ++i) {
-		if (off(i) > 0)
-			posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::max());
-		else if (off(i) < 0)
-			posOff(i) = std::nextafter(posOff(i), std::numeric_limits<float>::lowest());
+		if (offset[i] > 0)
+			posOff[i] = nextFloatUp(posOff[i]);
+		else if (offset[i] < 0)
+			posOff[i] = nextFloatDown(posOff[i]);
 	}
-
 	return posOff;
 }
 
 inline Vector3fv safePosition(const Vector3fv& pos,
-							  const Vector3fv& dir)
+							  const Vector3fv& dir,
+							  const Vector3fv& N)
 {
-	// FIXME: A bit lackluster....
-	constexpr float RayOffsetEpsilon = 0.000001f;
-	return pos + dir * vfloat(RayOffsetEpsilon);
+	vfloat d		 = (N.cwiseAbs() * vfloat(RayOffsetEpsilon)).sum();
+	Vector3fv offset = d * N;
+
+	bfloat neg		 = dir.dot(N) < 0;
+	offset[0]		 = blend(-offset[0], offset[0], neg);
+	offset[1]		 = blend(-offset[1], offset[1], neg);
+	offset[2]		 = blend(-offset[2], offset[2], neg);
+	Vector3fv posOff = pos + offset;
+
+	for (int i = 0; i < 3; ++i) {
+		vfloat add = for_each_assign_v(posOff[i], [&](float val) { return nextFloatUp(val); });
+		vfloat sub = for_each_assign_v(posOff[i], [&](float val) { return nextFloatDown(val); });
+		posOff[i]  = blend(add,
+						   blend(sub, posOff[i], offset[i] < 0),
+						   offset[i] > 0);
+	}
+	return posOff;
 }
 
 template <typename T>

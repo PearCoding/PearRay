@@ -36,20 +36,20 @@ inline PR_LIB bool intersectPI(
 	const float k1	  = m1.dot(dR);
 	const float s1	  = d1.dot(mR) + k1;
 
-	const bool valid = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
-					   || (std::max(std::max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	const bool valid = (std::min(std::min(s0, s1), s2) > -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+					   || (std::max(std::max(s0, s1), s2) < PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(!valid))
 		return false;
 
 	// Denominator
 	const float k = k0 + k1 + k2;
-	if (PR_LIKELY(std::abs(k) <= PR_EPSILON))
+	if (PR_UNLIKELY(std::abs(k) <= PR_EPSILON))
 		return false;
 
 	// Intersection value
 	const Vector3f N = m0 + m1 + m2;
 	t				 = (p0 - in.Origin).dot(N) / k;
-	if (PR_LIKELY(!in.isInsideRange(t)))
+	if (!in.isInsideRange(t))
 		return false;
 
 	// UV calculation!
@@ -89,8 +89,8 @@ inline PR_LIB bfloat intersectPI(
 	const vfloat k1	   = m1.dot(dR);
 	const vfloat s1	   = d1.dot(mR) + k1;
 
-	bfloat valid = (min(min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
-				   | (max(max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	bfloat valid = (min(min(s0, s1), s2) > -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+				   | (max(max(s0, s1), s2) < PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
@@ -147,8 +147,8 @@ inline PR_LIB bool intersectPI_Mem(
 	const float k1	  = m1.dot(dR);
 	const float s1	  = d1.dot(mR) + k1;
 
-	const bool valid = (std::min(std::min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
-					   || (std::max(std::max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	const bool valid = (std::min(std::min(s0, s1), s2) > -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+					   || (std::max(std::max(s0, s1), s2) < PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(!valid))
 		return false;
 
@@ -200,8 +200,8 @@ inline PR_LIB bfloat intersectPI_Mem(
 	const vfloat k1	   = m1.dot(dR);
 	const vfloat s1	   = d1.dot(mR) + k1;
 
-	bfloat valid = (min(min(s0, s1), s2) >= -PR_TRIANGLE_PI_INTERSECT_EPSILON)
-				   | (max(max(s0, s1), s2) <= PR_TRIANGLE_PI_INTERSECT_EPSILON);
+	bfloat valid = (min(min(s0, s1), s2) > -PR_TRIANGLE_PI_INTERSECT_EPSILON)
+				   | (max(max(s0, s1), s2) < PR_TRIANGLE_PI_INTERSECT_EPSILON);
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
