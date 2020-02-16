@@ -57,8 +57,14 @@ bool ProfFile::open(const QString& filename)
 	file.read(reinterpret_cast<char*>(&signalCount), sizeof(signalCount));
 	for (quint64 i = 0; i < signalCount; ++i) {
 		readString(file);
-		file.skip(sizeof(quint32)); // Thread ID
-		file.skip(sizeof(quint64)); // TimeStamp NS
+
+		quint32 threadID;
+		file.read(reinterpret_cast<char*>(&threadID), sizeof(threadID));
+		Q_UNUSED(threadID);
+
+		quint64 timepoint;
+		file.read(reinterpret_cast<char*>(&timepoint), sizeof(timepoint));
+		Q_UNUSED(timepoint);
 	}
 
 	// (Pages)
