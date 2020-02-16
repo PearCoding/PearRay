@@ -21,7 +21,7 @@ ProfTreeItem::~ProfTreeItem()
 static int indexOfEntry(const QVector<ProfTimeCounterEntry>& entries,
 						quint64 t)
 {
-	if (entries.isEmpty() || entries.front().TimePointMS > t)
+	if (entries.isEmpty() || entries.front().TimePointNS > t)
 		return -1;
 
 	int L = 0;
@@ -29,7 +29,7 @@ static int indexOfEntry(const QVector<ProfTimeCounterEntry>& entries,
 
 	while (L <= R) {
 		int h		 = (L + R) / 2;
-		quint64 time = entries.at(h).TimePointMS;
+		quint64 time = entries.at(h).TimePointNS;
 		if (time < t)
 			L = h + 1;
 		else if (time == t)
@@ -47,9 +47,8 @@ quint64 ProfTreeItem::totalValue() const
 		return mFile->entry(mIndex).TimeCounterEntries.last().TotalValue;
 	} else {
 		quint64 value = 0;
-		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren)
 			value += child->totalValue();
-		}
 		return value;
 	}
 }
@@ -60,9 +59,8 @@ quint64 ProfTreeItem::totalDuration() const
 		return mFile->entry(mIndex).TimeCounterEntries.last().TotalDurationNS;
 	} else {
 		quint64 value = 0;
-		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren)
 			value += child->totalDuration();
-		}
 		return value;
 	}
 }
@@ -77,9 +75,8 @@ quint64 ProfTreeItem::totalValue(quint64 t) const
 			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalValue;
 	} else {
 		quint64 value = 0;
-		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren)
 			value += child->totalValue(t);
-		}
 		return value;
 	}
 }
@@ -94,9 +91,8 @@ quint64 ProfTreeItem::totalDuration(quint64 t) const
 			return mFile->entry(mIndex).TimeCounterEntries.at(index).TotalDurationNS;
 	} else {
 		quint64 value = 0;
-		for (std::shared_ptr<ProfTreeItem> child : mChildren) {
+		for (std::shared_ptr<ProfTreeItem> child : mChildren)
 			value += child->totalDuration(t);
-		}
 		return value;
 	}
 }
@@ -137,7 +133,7 @@ QVector<quint64> ProfTreeItem::timePoints() const
 		if (isLeaf()) {
 			mTimePoints_Cached.reserve(mFile->entry(mIndex).TimeCounterEntries.size());
 			for (const ProfTimeCounterEntry& entry : mFile->entry(mIndex).TimeCounterEntries)
-				mTimePoints_Cached.append(entry.TimePointMS);
+				mTimePoints_Cached.append(entry.TimePointNS);
 		} else {
 			for (std::shared_ptr<ProfTreeItem> child : mChildren)
 				mergeSortedArrays(mTimePoints_Cached, child->timePoints());

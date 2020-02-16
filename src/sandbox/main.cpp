@@ -1,5 +1,6 @@
 #include "FileLogListener.h"
 #include "Logger.h"
+#include "Profiler.h"
 #include "ProgramSettings.h"
 
 #include <boost/filesystem.hpp>
@@ -11,6 +12,7 @@
 
 namespace bf = boost::filesystem;
 namespace sc = std::chrono;
+using namespace PR;
 
 typedef void (*SuiteCallback)();
 
@@ -36,6 +38,7 @@ Suite suites[] = {
 	{ nullptr, nullptr }
 };
 
+constexpr uint32 PROFILE_SAMPLE_RATE = 100;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
@@ -55,6 +58,9 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	if (!options.NoProfiling)
+		Profiler::start(PROFILE_SAMPLE_RATE);
+
 	time_t t = time(NULL);
 	std::stringstream sstream;
 #ifdef PR_DEBUG
@@ -64,12 +70,18 @@ int main(int argc, char** argv)
 #endif
 	const bf::path logFile = sstream.str();
 
-	PR::FileLogListener fileLogListener;
+	FileLogListener fileLogListener;
 	fileLogListener.open(logFile.string());
 	PR_LOGGER.addListener(&fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);
-	PR_LOGGER.setVerbosity(options.IsVerbose ? PR::L_DEBUG : PR::L_INFO);
+	PR_LOGGER.setVerbosity(options.IsVerbose ? L_DEBUG : L_INFO);
+
+	if (!options.NoProfiling) {
+		PR_LOG(L_INFO) << "Profiling enabled (TpS: "
+					   << std::chrono::high_resolution_clock::period::den
+					   << ")" << std::endl;
+	}
 
 	// Create results directory
 	if (!bf::exists("results") || !bf::is_directory("results"))
@@ -92,6 +104,16 @@ int main(int argc, char** argv)
 			std::cout << suites[i].Name << " ";
 		}
 		std::cout << std::endl;
+	}
+
+	if (!options.NoProfiling) {
+		Profiler::stop();
+		const bf::path profFile = "pr_profile.prof";
+		if (!Profiler::dumpToFile(profFile.generic_wstring()))
+			PR_LOG(L_ERROR) << "Could not write profile data to " << profFile << std::endl;
+		const bf::path profJSONFile = "pr_profile.json";
+		if (!Profiler::dumpToJSON(profJSONFile.generic_wstring()))
+			PR_LOG(L_ERROR) << "Could not write profile data to " << profJSONFile << std::endl;
 	}
 
 	return 0;

@@ -10,6 +10,8 @@
 
 using namespace std::chrono;
 
+using TIME_RESOLUTION = nanoseconds;
+
 namespace PR {
 namespace Profiler {
 struct CounterEntry {
@@ -38,11 +40,17 @@ struct TimeCounterEntry {
 	}
 };
 
+struct SignalEntry {
+	std::string Name;
+	high_resolution_clock::time_point TimePoint;
+};
+
 struct ThreadData {
 	uint32 ID;
 	std::string Name;
 	std::vector<CounterEntry> CounterEntries;
 	std::vector<TimeCounterEntry> TimeCounterEntries;
+	std::vector<SignalEntry> SignalEntries;
 	std::vector<std::shared_ptr<Profiler::InternalCounter>> InternalCounters;
 
 	inline explicit ThreadData(uint32 id, const std::string& name)
@@ -85,6 +93,16 @@ void setThreadName(const std::string& name)
 {
 	std::lock_guard<std::mutex> guard(sThreadMutex);
 	getCurrentThreadData()->Name = name;
+}
+
+void emitSignal(const std::string& name)
+{
+	SignalEntry entry;
+	entry.Name		= name;
+	entry.TimePoint = high_resolution_clock::now();
+
+	std::lock_guard<std::mutex> guard(sThreadMutex);
+	getCurrentThreadData()->SignalEntries.emplace_back(entry);
 }
 
 InternalCounter* registerCounter(const EntryDescription* desc)
@@ -174,12 +192,12 @@ static void profileThread(uint32 samplesPerSecond)
 			for (const CounterEntry& entry : data.CounterEntries) {
 				ProfileCounterSample sample;
 				sample.Value = *entry.CounterPtr;
-				sample.Desc  = entry.Desc;
+				sample.Desc	 = entry.Desc;
 				page->Counters.push_back(sample);
 			}
 			for (const TimeCounterEntry& entry : data.TimeCounterEntries) {
 				ProfileTimeCounterSample sample;
-				sample.ValueTotal	= *entry.TotalCounterPtr;
+				sample.ValueTotal	 = *entry.TotalCounterPtr;
 				sample.ValueDuration = *entry.TimeSpentCounterPtr;
 				sample.Desc			 = entry.Desc;
 				page->TimeCounters.push_back(sample);
@@ -209,6 +227,7 @@ void stop()
 	sProfileThread.reset();
 }
 
+/////////////////////////////////// IO
 static void writeStr(std::ofstream& stream, const std::string& str)
 {
 	uint32 strLen = static_cast<uint32>(str.size());
@@ -269,7 +288,6 @@ bool dumpToFile(const std::wstring& filename)
 
 	// Write events
 	stream.write(reinterpret_cast<const char*>(&events), sizeof(events));
-
 	for (const ThreadData& data : sThreadData) {
 		for (const CounterEntry& entry : data.CounterEntries) {
 			PR_ASSERT(id_map.count(entry.Desc) > 0, "Unexpected entry addition");
@@ -283,12 +301,27 @@ bool dumpToFile(const std::wstring& filename)
 		}
 	}
 
+	// Write signals
+	uint64 signalCount = 0;
+	for (const ThreadData& data : sThreadData)
+		signalCount += data.SignalEntries.size();
+
+	stream.write(reinterpret_cast<const char*>(&signalCount), sizeof(signalCount));
+	for (const ThreadData& data : sThreadData) {
+		for (const SignalEntry& entry : data.SignalEntries) {
+			uint64 timePoint = static_cast<uint64>(duration_cast<TIME_RESOLUTION>(entry.TimePoint - sProfileStartTime).count());
+			writeStr(stream, entry.Name);
+			stream.write(reinterpret_cast<const char*>(&data.ID), sizeof(data.ID));
+			stream.write(reinterpret_cast<const char*>(&timePoint), sizeof(timePoint));
+		}
+	}
+
 	// Write pages
 	sProfileMutex.lock();
 	uint64 pages = (uint64)sProfilePages.size();
 	stream.write(reinterpret_cast<const char*>(&pages), sizeof(pages));
 	for (const auto& page : sProfilePages) {
-		uint64 timePoint = static_cast<uint64>(duration_cast<microseconds>(page->TimePoint - sProfileStartTime).count());
+		uint64 timePoint = static_cast<uint64>(duration_cast<TIME_RESOLUTION>(page->TimePoint - sProfileStartTime).count());
 		stream.write(reinterpret_cast<const char*>(&timePoint), sizeof(timePoint));
 
 		uint64 counterCount = (uint64)page->Counters.size();
@@ -319,5 +352,130 @@ bool dumpToFile(const std::wstring& filename)
 
 	return true;
 }
+
+//////////////////////////////////// JSON IO
+static void writeDescJSON(std::ostream& stream, const EntryDescription& desc)
+{
+	stream << "{" << std::endl;
+	stream << "\"Name\": \"" << desc.Name << "\"," << std::endl;
+	stream << "\"Function\": \"" << desc.Function << "\"," << std::endl;
+	stream << "\"File\": \"" << desc.File << "\"," << std::endl;
+	stream << "\"Line\": " << desc.Line << "," << std::endl;
+	stream << "\"Thread\": " << desc.ThreadID << "," << std::endl;
+	stream << "\"Category\": \"" << desc.Category << "\"" << std::endl;
+	stream << "}";
+}
+
+bool dumpToJSON(const std::wstring& filename)
+{
+	std::lock_guard<std::mutex> guard(sThreadMutex);
+
+	std::unordered_map<const EntryDescription*, size_t> id_map;
+
+	// Determine amount of unique events and fill the pointer - id map
+	uint64 events = 0;
+	for (const ThreadData& data : sThreadData) {
+		for (const CounterEntry& entry : data.CounterEntries) {
+			if (id_map.count(entry.Desc) == 0) {
+				auto id			   = id_map.size();
+				id_map[entry.Desc] = id;
+				++events;
+			}
+		}
+		for (const TimeCounterEntry& entry : data.TimeCounterEntries) {
+			if (id_map.count(entry.Desc) == 0) {
+				auto id			   = id_map.size();
+				id_map[entry.Desc] = id;
+				++events;
+			}
+		}
+	}
+
+	std::ofstream stream(encodePath(filename), std::ios::out);
+	if (!stream)
+		return false;
+
+	stream << "{" << std::endl;
+
+	// Write thread information
+	stream << "\"Threads\": [";
+	for (const ThreadData& data : sThreadData)
+		stream << "\"" << data.Name << "\"," << std::endl;
+	stream << "]," << std::endl;
+
+	// Write events
+	stream << "\"Events\": [" << std::endl;
+	for (const ThreadData& data : sThreadData) {
+		for (const CounterEntry& entry : data.CounterEntries) {
+			PR_ASSERT(id_map.count(entry.Desc) > 0, "Unexpected entry addition");
+			PR_ASSERT(sSavedEntries.count(entry.Desc) > 0, "Invalid entry save");
+			writeDescJSON(stream, sSavedEntries.at(entry.Desc));
+			stream << "," << std::endl;
+		}
+		for (const TimeCounterEntry& entry : data.TimeCounterEntries) {
+			PR_ASSERT(id_map.count(entry.Desc) > 0, "Unexpected entry addition");
+			PR_ASSERT(sSavedEntries.count(entry.Desc) > 0, "Invalid entry save");
+			writeDescJSON(stream, sSavedEntries.at(entry.Desc));
+			stream << "," << std::endl;
+		}
+	}
+	stream << "]," << std::endl;
+
+	// Write signals
+	stream << "\"Signals\": [" << std::endl;
+	for (const ThreadData& data : sThreadData) {
+		for (const SignalEntry& entry : data.SignalEntries) {
+			uint64 timePoint = static_cast<uint64>(duration_cast<TIME_RESOLUTION>(entry.TimePoint - sProfileStartTime).count());
+
+			stream << "{" << std::endl
+				   << "\"Name\": \"" << entry.Name << "\"," << std::endl
+				   << "\"Thread\": " << data.ID << "," << std::endl
+				   << "\"TimePoint\": " << timePoint << "," << std::endl
+				   << "}," << std::endl;
+		}
+	}
+	stream << "]," << std::endl;
+
+	// Write pages
+	sProfileMutex.lock();
+	stream << "\"Pages\": [" << std::endl;
+	for (const auto& page : sProfilePages) {
+		uint64 timePoint = static_cast<uint64>(duration_cast<TIME_RESOLUTION>(page->TimePoint - sProfileStartTime).count());
+		stream << "{" << std::endl
+			   << "\"TimePoint\": " << timePoint << "," << std::endl;
+		stream << "\"Counter\": [" << std::endl;
+
+		for (const auto& counter : page->Counters) {
+			PR_ASSERT(id_map.count(counter.Desc) > 0, "Event has to be available");
+
+			uint64 descID = (uint64)id_map[counter.Desc];
+			stream << "{" << std::endl
+				   << "\"Event\": " << descID << "," << std::endl
+				   << "\"Value\": " << counter.Value << "," << std::endl
+				   << "}," << std::endl;
+		}
+		stream << "]," << std::endl;
+
+		stream << "\"TimeCounter\": [" << std::endl;
+		for (const auto& timeCounter : page->TimeCounters) {
+			PR_ASSERT(id_map.count(timeCounter.Desc) > 0, "Event has to be available");
+
+			uint64 descID = (uint64)id_map[timeCounter.Desc];
+			stream << "{" << std::endl
+				   << "\"Event\": " << descID << "," << std::endl
+				   << "\"ValueTotal\": " << timeCounter.ValueTotal << "," << std::endl
+				   << "\"ValueDuration\": " << timeCounter.ValueDuration << "," << std::endl
+				   << "}," << std::endl;
+		}
+		stream << "]" << std::endl
+			   << "}," << std::endl;
+	}
+	stream << "]" << std::endl
+		   << "}" << std::endl;
+	sProfileMutex.unlock();
+
+	return true;
+}
+
 } // namespace Profiler
 } // namespace PR

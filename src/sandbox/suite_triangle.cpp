@@ -1,4 +1,5 @@
 #define PR_RAY_CACHE_MOMENTUM
+#include "Profiler.h"
 #include "geometry/TriangleIntersection.h"
 #include "geometry/TriangleIntersection_BW.h"
 #include "image_io.h"
@@ -326,6 +327,7 @@ static void check_triangles(const std::string& name, const std::vector<Triangle>
 
 static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_mt", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -335,6 +337,7 @@ static void tri_mt(const std::string& suffix, const std::vector<Triangle>& trian
 
 static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_wt", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -344,6 +347,7 @@ static void tri_wt(const std::string& suffix, const std::vector<Triangle>& trian
 
 static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_bw9", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -353,6 +357,7 @@ static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& tria
 
 static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_bw12", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -362,6 +367,7 @@ static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& tri
 
 static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_pi", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -371,6 +377,7 @@ static void tri_pi(const std::string& suffix, const std::vector<Triangle>& trian
 
 static void tri_pi_mem(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_pi_mem", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -380,6 +387,7 @@ static void tri_pi_mem(const std::string& suffix, const std::vector<Triangle>& t
 
 static void tri_pi_off(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
 	check_triangles(suffix + "_pi_off", triangles, degree, hitrate, csv,
 					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
 						t = std::numeric_limits<float>::infinity();
@@ -401,6 +409,8 @@ static MAT_FUNC s_funcs[] = {
 
 void precision_test(std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
+
 	for (int i = 0; s_funcs[i]; ++i) {
 		for (auto depth : DEPTHS) {
 
@@ -417,6 +427,8 @@ void precision_test(std::ofstream& csv)
 
 void hitrate_test(std::ofstream& csv)
 {
+	PR_PROFILE_THIS;
+
 	PR_UNUSED(csv);
 	for (int i = 0; s_funcs[i]; ++i) {
 		for (auto hitrate : HITRATES) {
@@ -432,6 +444,8 @@ void hitrate_test(std::ofstream& csv)
 
 void suite_triangle()
 {
+	PR_PROFILE_THIS;
+
 	bf::create_directory(DIR);
 
 	std::ofstream csv;

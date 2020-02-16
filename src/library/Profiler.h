@@ -37,6 +37,7 @@ struct PR_LIB InternalTimeCounter {
 
 // Internal interface
 void PR_LIB setThreadName(const std::string& name);
+void PR_LIB emitSignal(const std::string& name);
 
 PR_LIB InternalCounter* registerCounter(const EntryDescription* desc);
 PR_LIB InternalTimeCounter registerTimeCounter(const EntryDescription* desc);
@@ -45,6 +46,7 @@ void PR_LIB start(uint32 samplesPerSecond, int32 networkPort = -1);
 void PR_LIB stop();
 
 bool PR_LIB dumpToFile(const std::wstring& filename);
+bool PR_LIB dumpToJSON(const std::wstring& filename);
 
 // Event structure
 class PR_LIB EventScope {
@@ -94,9 +96,11 @@ private:
 	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME(line)((name), (func), (file), (line), (cat)); \
 	_PR_PROFILE_UNIQUE_NAME(line).scope()
 #define PR_PROFILE_THREAD(name) PR::Profiler::setThreadName((name))
+#define PR_PROFILE_SIGNAL(name) PR::Profiler::emitSignal((name))
 #else
-#define PR_PROFILE(name, func, file, line, cat)
-#define PR_PROFILE_THREAD(name)
+#define PR_PROFILE(name, func, file, line, cat) PR_NOOP
+#define PR_PROFILE_THREAD(name) PR_NOOP
+#define PR_PROFILE_SIGNAL(name) PR_NOOP
 #endif
 
 #define PR_PROFILE_THIS PR_PROFILE("", PR_FUNCTION_NAME, __FILE__, __LINE__, "")

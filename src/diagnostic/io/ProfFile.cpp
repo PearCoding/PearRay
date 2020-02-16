@@ -39,21 +39,30 @@ bool ProfFile::open(const QString& filename)
 	}
 
 	// (Description)
-	quint64 entries;
+	quint64 entries = 0;
 	file.read(reinterpret_cast<char*>(&entries), sizeof(entries));
 	for (quint64 i = 0; i < entries; ++i) {
 		ProfEntry entry;
-		entry.Name	 = readString(file);
+		entry.Name	   = readString(file);
 		entry.Function = readString(file);
-		entry.File	 = readString(file);
+		entry.File	   = readString(file);
 		file.read(reinterpret_cast<char*>(&entry.Line), sizeof(entry.Line));
 		file.read(reinterpret_cast<char*>(&entry.ThreadID), sizeof(entry.ThreadID));
 		entry.Category = readString(file);
 		mEntries.push_back(entry);
 	}
 
+	// (Signals)[TODO]
+	quint64 signalCount = 0;
+	file.read(reinterpret_cast<char*>(&signalCount), sizeof(signalCount));
+	for (quint64 i = 0; i < signalCount; ++i) {
+		readString(file);
+		file.skip(sizeof(quint32)); // Thread ID
+		file.skip(sizeof(quint64)); // TimeStamp NS
+	}
+
 	// (Pages)
-	quint64 pages;
+	quint64 pages = 0;
 	file.read(reinterpret_cast<char*>(&pages), sizeof(pages));
 	for (quint64 i = 0; i < pages; ++i) {
 		quint64 timepoint;
@@ -67,7 +76,7 @@ bool ProfFile::open(const QString& filename)
 
 			ProfCounterEntry entry;
 			file.read(reinterpret_cast<char*>(&entry.Value), sizeof(entry.Value));
-			entry.TimePointMicroSec = timepoint;
+			entry.TimePointNS = timepoint;
 
 			mEntries[descID].CounterEntries.push_back(entry);
 		}
@@ -81,7 +90,7 @@ bool ProfFile::open(const QString& filename)
 			ProfTimeCounterEntry entry;
 			file.read(reinterpret_cast<char*>(&entry.TotalValue), sizeof(entry.TotalValue));
 			file.read(reinterpret_cast<char*>(&entry.TotalDurationNS), sizeof(entry.TotalDurationNS));
-			entry.TimePointMS = timepoint;
+			entry.TimePointNS = timepoint;
 
 			mEntries[descID].TimeCounterEntries.push_back(entry);
 		}
@@ -91,11 +100,11 @@ bool ProfFile::open(const QString& filename)
 	for (auto& entry : mEntries) {
 		std::sort(entry.CounterEntries.begin(), entry.CounterEntries.end(),
 				  [](const ProfCounterEntry& a, const ProfCounterEntry& b) {
-					  return a.TimePointMicroSec < b.TimePointMicroSec;
+					  return a.TimePointNS < b.TimePointNS;
 				  });
 		std::sort(entry.TimeCounterEntries.begin(), entry.TimeCounterEntries.end(),
 				  [](const ProfTimeCounterEntry& a, const ProfTimeCounterEntry& b) {
-					  return a.TimePointMS < b.TimePointMS;
+					  return a.TimePointNS < b.TimePointNS;
 				  });
 	}
 

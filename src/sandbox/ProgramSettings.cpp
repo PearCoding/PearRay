@@ -19,6 +19,7 @@ po::options_description setup_cmd_options()
 		("help-mode", "List all available modes")
 		("quiet,q", "Do not print messages into console")
 		("verbose,v", "Print detailed information into log file (and perhabs into console)")
+		("no-profile", "Disable profiling")
 		("mode,m", "Mode of the sandbox")
 	;
 	// clang-format on
@@ -46,10 +47,11 @@ bool ProgramSettings::parse(int argc, char** argv)
 		exit(1);
 	}
 
-	Mode	  = (vm.count("mode") != 0) ? vm["mode"].as<std::string>() : "";
-	HelpMode  = (vm.count("help-mode") != 0);
-	IsVerbose = (vm.count("verbose") != 0);
-	IsQuiet   = (vm.count("quiet") != 0);
+	Mode		= (vm.count("mode") != 0) ? vm["mode"].as<std::string>() : "";
+	HelpMode	= (vm.count("help-mode") != 0);
+	IsVerbose	= (vm.count("verbose") != 0);
+	IsQuiet		= (vm.count("quiet") != 0);
+	NoProfiling = (vm.count("no-profile") != 0);
 
 	return true;
 }

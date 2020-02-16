@@ -55,7 +55,10 @@
 #endif
 
 #define PR_ALIGN(x) alignas(x)
+// clang-format off
 #define PR_UNUSED(expr) do { (void)(expr); } while (false)
+#define PR_NOOP do {} while(false)
+// clang-format on
 
 #ifdef PR_CC_MSC
 #define PR_DEBUG_BREAK() __debugbreak()
@@ -103,7 +106,7 @@
 
 #define PR_CLASS_NON_MOVEABLE(C) \
 private:                         \
-	C(C&&)	 = delete;         \
+	C(C&&)	   = delete;         \
 	C& operator=(C&&) = delete
 
 #define PR_CLASS_NON_COPYABLE(C)     \
@@ -119,9 +122,9 @@ private:                              \
 
 #define PR_CLASS_STACK_ONLY(C)                     \
 private:                                           \
-	static void* operator new(size_t)	= delete; \
-	static void* operator new[](size_t)  = delete; \
-	static void operator delete(void*)   = delete; \
+	static void* operator new(size_t)	 = delete; \
+	static void* operator new[](size_t)	 = delete; \
+	static void operator delete(void*)	 = delete; \
 	static void operator delete[](void*) = delete
 
 #if defined(PR_CC_GNU) || defined(PR_CC_CLANG)

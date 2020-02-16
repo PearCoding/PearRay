@@ -4,13 +4,13 @@
 
 struct ProfCounterEntry {
 	quint64 Value;
-	quint64 TimePointMicroSec;
+	quint64 TimePointNS;
 };
 
 struct ProfTimeCounterEntry {
 	quint64 TotalValue;
 	quint64 TotalDurationNS;
-	quint64 TimePointMS;
+	quint64 TimePointNS;
 };
 
 struct ProfEntry {
