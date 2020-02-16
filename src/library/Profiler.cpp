@@ -167,17 +167,8 @@ static void profileThread(uint32 samplesPerSecond)
 	ProfileSamplePage* lastPage = nullptr;
 	const auto ms				= milliseconds(1000 / samplesPerSecond);
 	auto start					= high_resolution_clock::now();
-	while (sProfileRun) {
-		auto now  = high_resolution_clock::now();
-		auto diff = now - start;
 
-		if (duration_cast<milliseconds>(diff) < ms) {
-			std::this_thread::sleep_for(ms);
-			continue;
-		}
-
-		start = now;
-
+	auto generatePage = [&](const high_resolution_clock::time_point& now) {
 		auto page		= std::make_unique<ProfileSamplePage>();
 		page->TimePoint = now;
 		if (lastPage) {
@@ -209,7 +200,22 @@ static void profileThread(uint32 samplesPerSecond)
 		sProfileMutex.lock();
 		sProfilePages.emplace_back(std::move(page));
 		sProfileMutex.unlock();
+	};
+
+	while (sProfileRun) {
+		auto now  = high_resolution_clock::now();
+		auto diff = now - start;
+
+		if (duration_cast<milliseconds>(diff) < ms) {
+			std::this_thread::sleep_for(ms);
+			continue;
+		}
+
+		start = now;
+		generatePage(now);
 	}
+
+	generatePage(high_resolution_clock::now());
 }
 
 static std::unique_ptr<std::thread> sProfileThread;
@@ -395,16 +401,16 @@ bool dumpToJSON(const std::wstring& filename)
 	if (!stream)
 		return false;
 
-	stream << "{" << std::endl;
+	stream << "{";
 
 	// Write thread information
-	stream << "\"Threads\": [";
+	stream << "\"Threads\":[";
 	for (const ThreadData& data : sThreadData)
 		stream << "\"" << data.Name << "\"," << std::endl;
 	stream << "]," << std::endl;
 
 	// Write events
-	stream << "\"Events\": [" << std::endl;
+	stream << "\"Events\":[" << std::endl;
 	for (const ThreadData& data : sThreadData) {
 		for (const CounterEntry& entry : data.CounterEntries) {
 			PR_ASSERT(id_map.count(entry.Desc) > 0, "Unexpected entry addition");
@@ -422,37 +428,31 @@ bool dumpToJSON(const std::wstring& filename)
 	stream << "]," << std::endl;
 
 	// Write signals
-	stream << "\"Signals\": [" << std::endl;
+	stream << "\"Signals\":[" << std::endl;
 	for (const ThreadData& data : sThreadData) {
 		for (const SignalEntry& entry : data.SignalEntries) {
 			uint64 timePoint = static_cast<uint64>(duration_cast<TIME_RESOLUTION>(entry.TimePoint - sProfileStartTime).count());
 
-			stream << "{" << std::endl
-				   << "\"Name\": \"" << entry.Name << "\"," << std::endl
-				   << "\"Thread\": " << data.ID << "," << std::endl
-				   << "\"TimePoint\": " << timePoint << "," << std::endl
-				   << "}," << std::endl;
+			stream << "{\"Name\":\"" << entry.Name << "\","
+				   << "\"Thread\":" << data.ID << ","
+				   << "\"TimePoint\":" << timePoint << "}" << std::endl;
 		}
 	}
 	stream << "]," << std::endl;
 
 	// Write pages
 	sProfileMutex.lock();
-	stream << "\"Pages\": [" << std::endl;
+	stream << "\"Pages\":[" << std::endl;
 	for (const auto& page : sProfilePages) {
 		uint64 timePoint = static_cast<uint64>(duration_cast<TIME_RESOLUTION>(page->TimePoint - sProfileStartTime).count());
-		stream << "{" << std::endl
-			   << "\"TimePoint\": " << timePoint << "," << std::endl;
-		stream << "\"Counter\": [" << std::endl;
+		stream << "{\"TimePoint\":" << timePoint << "," << std::endl;
+		stream << "\"Counter\":[" << std::endl;
 
 		for (const auto& counter : page->Counters) {
 			PR_ASSERT(id_map.count(counter.Desc) > 0, "Event has to be available");
 
 			uint64 descID = (uint64)id_map[counter.Desc];
-			stream << "{" << std::endl
-				   << "\"Event\": " << descID << "," << std::endl
-				   << "\"Value\": " << counter.Value << "," << std::endl
-				   << "}," << std::endl;
+			stream << "{\"Event\":" << descID << ",\"Value\":" << counter.Value << "}," << std::endl;
 		}
 		stream << "]," << std::endl;
 
@@ -461,17 +461,13 @@ bool dumpToJSON(const std::wstring& filename)
 			PR_ASSERT(id_map.count(timeCounter.Desc) > 0, "Event has to be available");
 
 			uint64 descID = (uint64)id_map[timeCounter.Desc];
-			stream << "{" << std::endl
-				   << "\"Event\": " << descID << "," << std::endl
-				   << "\"ValueTotal\": " << timeCounter.ValueTotal << "," << std::endl
-				   << "\"ValueDuration\": " << timeCounter.ValueDuration << "," << std::endl
-				   << "}," << std::endl;
+			stream << "{\"Event\": " << descID << ","
+				   << "\"ValueTotal\":" << timeCounter.ValueTotal << ","
+				   << "\"ValueDuration\":" << timeCounter.ValueDuration << "}," << std::endl;
 		}
-		stream << "]" << std::endl
-			   << "}," << std::endl;
+		stream << "]}," << std::endl;
 	}
-	stream << "]" << std::endl
-		   << "}" << std::endl;
+	stream << "]}" << std::endl;
 	sProfileMutex.unlock();
 
 	return true;

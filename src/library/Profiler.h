@@ -77,10 +77,7 @@ public:
 	{
 	}
 
-	inline EventScope scope()
-	{
-		return EventScope(mCounter);
-	}
+	inline InternalTimeCounter& counter() { return mCounter; }
 
 private:
 	const EntryDescription mDesc;
@@ -89,12 +86,14 @@ private:
 } // namespace Profiler
 } // namespace PR
 
-#define _PR_PROFILE_UNIQUE_NAME(line) __profile__##line
+#define _PR_PROFILE_UNIQUE_NAME_EVENT(line) __profile__##line
+#define _PR_PROFILE_UNIQUE_NAME_SCOPE(line) __b_profile__##line
 
 #ifdef PR_WITH_PROFILER
-#define PR_PROFILE(name, func, file, line, cat)                                                            \
-	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME(line)((name), (func), (file), (line), (cat)); \
-	_PR_PROFILE_UNIQUE_NAME(line).scope()
+#define PR_PROFILE(name, func, file, line, cat)                                                                               \
+	thread_local PR::Profiler::Event _PR_PROFILE_UNIQUE_NAME_EVENT(line)((name), (func), (file), (line), (cat));              \
+	const auto _PR_PROFILE_UNIQUE_NAME_SCOPE(line) = PR::Profiler::EventScope(_PR_PROFILE_UNIQUE_NAME_EVENT(line).counter()); \
+	PR_UNUSED(_PR_PROFILE_UNIQUE_NAME_SCOPE(line))
 #define PR_PROFILE_THREAD(name) PR::Profiler::setThreadName((name))
 #define PR_PROFILE_SIGNAL(name) PR::Profiler::emitSignal((name))
 #else

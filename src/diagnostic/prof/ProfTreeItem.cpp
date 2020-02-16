@@ -183,7 +183,10 @@ QVariant ProfTreeItem::data(int column) const
 	case C_TotalDuration:
 		return durationToString(totalDuration());
 	case C_AverageDuration:
-		return durationToString(totalDuration() / totalValue());
+		if (totalValue() == 0)
+			return durationToString(0);
+		else
+			return durationToString(totalDuration() / totalValue());
 	default:
 		return QVariant();
 	}
