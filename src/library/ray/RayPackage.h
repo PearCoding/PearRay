@@ -44,7 +44,12 @@ private:
 	IntegerType MaxDirectionIndex_Cache;
 #endif
 public:
-	RayPackageBase() = default;
+	RayPackageBase()							= default;
+	RayPackageBase(const RayPackageBase& other) = default;
+	RayPackageBase(RayPackageBase&& other)		= default;
+	RayPackageBase& operator=(const RayPackageBase& other) = default;
+	RayPackageBase& operator=(RayPackageBase&& other) = default;
+
 	inline RayPackageBase(const Vector3t<V>& o, const Vector3t<V>& d)
 		: Origin(o)
 		, Direction(d)
@@ -202,6 +207,27 @@ inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 	ray.PixelIndex		= extract(i, package.PixelIndex);
 	ray.cache();
 	return ray;
+}
+
+inline void insertIntoRayPackage(uint32 i, RayPackage& package, const Ray& ray)
+{
+	package.Origin[0]		= insert(i, package.Origin[0], ray.Origin[0]);
+	package.Origin[1]		= insert(i, package.Origin[1], ray.Origin[1]);
+	package.Origin[2]		= insert(i, package.Origin[2], ray.Origin[2]);
+	package.Direction[0]	= insert(i, package.Direction[0], ray.Direction[0]);
+	package.Direction[1]	= insert(i, package.Direction[1], ray.Direction[1]);
+	package.Direction[2]	= insert(i, package.Direction[2], ray.Direction[2]);
+	package.Weight[0]		= insert(i, package.Weight[0], ray.Weight[0]);
+	package.Weight[1]		= insert(i, package.Weight[1], ray.Weight[1]);
+	package.Weight[2]		= insert(i, package.Weight[2], ray.Weight[2]);
+	package.MinT			= insert(i, package.MinT, ray.MinT);
+	package.MaxT			= insert(i, package.MaxT, ray.MaxT);
+	package.Time			= insert(i, package.Time, ray.Time);
+	package.IterationDepth	= insert(i, package.IterationDepth, ray.IterationDepth);
+	package.Flags			= insert(i, package.Flags, ray.Flags);
+	package.WavelengthIndex = insert(i, package.WavelengthIndex, ray.WavelengthIndex);
+	package.PixelIndex		= insert(i, package.PixelIndex, ray.PixelIndex);
+	package.cache();
 }
 
 } // namespace PR

@@ -16,7 +16,9 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
-//#define _PR_SANDBOX_NO_THREADS
+//#define _SANDBOX_NO_THREADS
+//#define _SANDBOX_NO_SINGLE_TRACE
+//#define _SANDBOX_NO_PACKAGE_TRACE
 
 using namespace PR;
 namespace bf				 = boost::filesystem;
@@ -25,6 +27,8 @@ constexpr size_t WIDTH		 = 500;
 constexpr size_t HEIGHT		 = 500;
 constexpr float TRI_HEIGHT	 = 1.0f;
 constexpr float SCENE_SCALE	 = 1.0f;
+
+constexpr char CSV_SEP = ';';
 
 constexpr std::array<float, 4> DEGREES = { 0, 30, 60, 90 };
 constexpr std::array<size_t, 5> DEPTHS = { 0, 2, 8, 14, 15 };
@@ -45,6 +49,13 @@ struct Triangle {
 	float BW9Mat[9];
 	int32 BW9FixedColumn;
 	float BW12Mat[12];
+
+	inline Vector3fv P0_v() const { return promote(Vector3f(P0)); }
+	inline Vector3fv P1_v() const { return promote(Vector3f(P1)); }
+	inline Vector3fv P2_v() const { return promote(Vector3f(P2)); }
+	inline Vector3fv M0_v() const { return promote(Vector3f(M0)); }
+	inline Vector3fv M1_v() const { return promote(Vector3f(M1)); }
+	inline Vector3fv M2_v() const { return promote(Vector3f(M2)); }
 };
 
 static void addTriangle(std::vector<Triangle>& triangles,
@@ -179,223 +190,448 @@ struct HitStat {
 		MinHits = std::min(MinHits, hits);
 		MaxHits = std::max(MaxHits, hits);
 	}
+
+	inline void reset()
+	{
+		*this = HitStat();
+	}
 };
 
-constexpr char CSV_SEP = ';';
-template <typename Func>
-static void check_triangles(const std::string& name, const std::vector<Triangle>& triangles,
-							float degree, int hitrate, std::ofstream& csv, Func f)
-{
-	tbb::static_partitioner partitioner;
+class CSVStream {
+private:
+	std::ofstream mStream;
 
-	HitStat total;
-#ifndef _PR_SANDBOX_NO_THREADS
-	std::mutex mutex;
+public:
+	inline explicit CSVStream(const std::string& file)
+	{
+		mStream.open(file);
+	}
+
+	inline void writeHeader()
+	{
+		mStream << "Name" << CSV_SEP << "PackageSize" << CSV_SEP
+				<< "Triangles" << CSV_SEP << "Angle" << CSV_SEP << "HitRate" << CSV_SEP
+				<< "TriangleArea" << CSV_SEP << "TriangleCoverage" << CSV_SEP
+				<< "TotalTimeNS" << CSV_SEP << "MinTimeNS" << CSV_SEP << "MaxTimeNS" << CSV_SEP
+				<< "TotalHits" << CSV_SEP << "MinHits" << CSV_SEP << "MaxHits"
+				<< std::endl;
+	}
+
+	inline void writeEntry(const std::string& name, size_t packageSize, size_t triangleCount,
+						   int degree, int hitrate,
+						   float triangleArea, float coverage,
+						   const HitStat& stat)
+	{
+		mStream << name << CSV_SEP << packageSize << CSV_SEP << triangleCount << CSV_SEP << degree << CSV_SEP << hitrate << CSV_SEP
+				<< triangleArea << CSV_SEP << coverage << CSV_SEP
+				<< stat.TotalTime << CSV_SEP << (stat.TotalTime > 0 ? stat.MinTime : 0) << CSV_SEP << stat.MaxTime << CSV_SEP
+				<< stat.TotalHits << CSV_SEP << (stat.TotalHits > 0 ? stat.MinHits : 0) << CSV_SEP << stat.MaxHits
+				<< std::endl;
+	}
+};
+
+class TriangleCheck {
+private:
+	std::vector<float> mData;
+	std::vector<float> mIds;
+	std::vector<float> mHits;
+	std::vector<float> mUvs;
+
+	const std::vector<Triangle>& mTriangles;
+	std::string mName;
+	float mDegree;
+	int mHitRate;
+
+	Vector3f mRayDirection;
+
+	HitStat mStat;
+	size_t mPixelsWithHits;
+
+	CSVStream& mCSV;
+
+public:
+	inline TriangleCheck(const std::string& name, const std::vector<Triangle>& triangles,
+						 float degree, int hitrate,
+						 CSVStream& csv)
+		: mData(WIDTH * HEIGHT, 0.0f)
+		, mIds(WIDTH * HEIGHT, 0.0f)
+		, mHits(WIDTH * HEIGHT, 0.0f)
+		, mUvs(3 * WIDTH * HEIGHT, 0.0f)
+		, mTriangles(triangles)
+		, mName(name)
+		, mDegree(degree)
+		, mHitRate(hitrate)
+		, mRayDirection(0, std::sin(mDegree * PR_DEG2RAD), std::cos(mDegree * PR_DEG2RAD))
+		, mPixelsWithHits(0)
+		, mCSV(csv)
+	{
+	}
+
+	template <typename Func>
+	inline void processSingle(Func func)
+	{
+#ifdef _SANDBOX_NO_SINGLE_TRACE
+		return;
+#endif
+		mStat.reset();
+		mPixelsWithHits = 0;
+
+#ifndef _SANDBOX_NO_THREADS
+		tbb::static_partitioner partitioner;
+		std::mutex mutex;
 #endif
 
-	// Assuming all triangles are same size
-	const float tri_area = (triangles[0].P1 - triangles[0].P0).cross(triangles[0].P2 - triangles[0].P0).norm() / 2;
-	std::cout << name << "> " << triangles.size() << " [" << (int)degree << "°] TRI AREA: "
-			  << std::setprecision(-1) << std::defaultfloat << tri_area;
-	if (hitrate >= 0)
-		std::cout << " HIT RATE: " << hitrate << "%";
-	std::cout << std::endl;
+		processInfoStart(1);
 
-	const float rad	 = degree * PR_PI / 180.0f;
-	const Vector3f D = Vector3f(0, std::sin(rad), std::cos(rad));
+		for (size_t y = 0; y < HEIGHT; ++y) {
+			const double fy = 1 - y / static_cast<double>(HEIGHT - 1);
 
-	std::vector<float> data(WIDTH * HEIGHT, 0.0f);
-	std::vector<float> ids(WIDTH * HEIGHT, 0.0f);
-	std::vector<float> hits(WIDTH * HEIGHT, 0.0f);
-	std::vector<float> uvs(3 * WIDTH * HEIGHT, 0.0f);
-
-	// Barycentric projection
-	const auto project = [&](double nx, double ny) -> Vector3f {
-		const double sum = nx + ny;
-		const double u	 = nx / sum;
-		const double v	 = ny / sum;
-		const double w	 = 1 - u - v;
-		if (std::isinf(u) || std::isinf(v))
-			return P0 - D;
-		else
-			return P0 * w + P1 * u + P2 * v - D;
-	};
-
-	size_t pixelsWithHits = 0;
-	for (size_t y = 0; y < HEIGHT; ++y) {
-		const double fy = 1 - y / static_cast<double>(HEIGHT - 1);
-
-#ifdef _PR_SANDBOX_NO_THREADS
-		tbb::blocked_range<size_t> r(0, WIDTH);
-		{
+#ifdef _SANDBOX_NO_THREADS
+			tbb::blocked_range<size_t> r(0, WIDTH);
+			{
 #else
 		tbb::parallel_for(
 			tbb::blocked_range<size_t>(0, WIDTH),
 			[&](const tbb::blocked_range<size_t>& r) {
 #endif
-			for (size_t x = r.begin(); x != r.end(); ++x) {
-				const double fx = x / static_cast<double>(WIDTH - 1);
+				for (size_t x = r.begin(); x != r.end(); ++x) {
+					const double fx = x / static_cast<double>(WIDTH - 1);
 
-				const Vector3f P = project(fx, fy);
-				const Ray ray	 = Ray(P, D);
+					const Vector3f P = project(fx, fy);
+					const Ray ray	 = Ray(P, mRayDirection);
 
-				size_t hitcount = 0;
-				size_t id		= 0;
-				Vector2f uv		= Vector2f(0, 0);
-				float gt		= std::numeric_limits<float>::infinity();
+					size_t hitcount = 0;
+					size_t id		= 0;
+					Vector2f uv		= Vector2f(0, 0);
+					float gt		= std::numeric_limits<float>::infinity();
 
-				const auto start = std::chrono::high_resolution_clock::now();
-				// Normally it is enough to check till found, but for the sake of benchmarking we check all
-				for (size_t i = 0; i < triangles.size(); ++i) {
-					float lt;
-					Vector2f luv;
-					bool hit = f(triangles[i], ray, lt, luv);
-					if (hit) {
-						++hitcount;
+					const auto start = std::chrono::high_resolution_clock::now();
+					// Normally it is enough to check till found, but for the sake of benchmarking we check all
+					for (size_t i = 0; i < mTriangles.size(); ++i) {
+						float lt;
+						Vector2f luv;
+						bool hit = func(mTriangles[i], ray, lt, luv);
+						if (hit) {
+							++hitcount;
 
-						if (lt < gt) {
-							id = i;
-							gt = lt;
-							uv = luv;
+							if (lt < gt) {
+								id = i;
+								gt = lt;
+								uv = luv;
+							}
 						}
 					}
-				}
-				const auto end	= std::chrono::high_resolution_clock::now();
-				const auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+					const auto end	= std::chrono::high_resolution_clock::now();
+					const auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-				if (hitcount > 0) {
-					data[y * WIDTH + x]			 = gt;
-					ids[y * WIDTH + x]			 = id;
-					hits[y * WIDTH + x]			 = hitcount;
-					uvs[(y * WIDTH + x) * 3 + 0] = uv[0];
-					uvs[(y * WIDTH + x) * 3 + 1] = uv[1];
-				}
+					if (hitcount > 0)
+						setPoint(x, y, gt, id, hitcount, uv);
 
-#ifndef _PR_SANDBOX_NO_THREADS
-				mutex.lock();
+#ifndef _SANDBOX_NO_THREADS
+					mutex.lock();
 #endif
-				total.apply(nano, hitcount);
-				if (hitcount > 0)
-					++pixelsWithHits;
-#ifndef _PR_SANDBOX_NO_THREADS
-				mutex.unlock();
+					mStat.apply(nano, hitcount);
+					if (hitcount > 0)
+						++mPixelsWithHits;
+#ifndef _SANDBOX_NO_THREADS
+					mutex.unlock();
 #endif
+				}
 			}
-		}
-#ifndef _PR_SANDBOX_NO_THREADS
+#ifndef _SANDBOX_NO_THREADS
 			,
 			partitioner);
 #endif
+			processInfoUpdate(fy);
+		}
+		processInfoEnd();
 
-			const double percentage = (1 - fy) * 100.0;
-			std::cout << "\r" << std::setprecision(2) << std::setw(6) << std::fixed << percentage << "%" << std::flush;
+		writeCSVEntry(1);
+		writeImages(1);
 	}
-	std::cout << "\r";
 
-	double avgHits = 0.0;
-	if (pixelsWithHits > 0)
-		avgHits = total.TotalHits / (double)pixelsWithHits;
+	template <typename Func>
+	inline void processPackage(Func func)
+	{
+#ifdef _SANDBOX_NO_PACKAGE_TRACE
+		return;
+#endif
 
-	const auto avgNano = total.TotalTime / (WIDTH * HEIGHT * triangles.size());
-	std::cout << "=> FullT: "
-			  << prettytime(total.TotalTime) << std::endl
-			  << "   AvgT:  "
-			  << prettytime(avgNano) << std::endl
-			  << "   AvgH:  "
-			  << std::setprecision(8) << std::fixed << avgHits << std::endl
-			  << "   AvgHR: "
-			  << std::setprecision(8) << std::fixed << 100 * avgHits / triangles.size() << "%" << std::endl;
+		mStat.reset();
+		mPixelsWithHits = 0;
 
-	// Add csv entry
-	csv << name << CSV_SEP << triangles.size() << CSV_SEP << (int)degree << CSV_SEP << hitrate << CSV_SEP
-		<< tri_area << CSV_SEP << pixelsWithHits / static_cast<float>(WIDTH * HEIGHT) << CSV_SEP
-		<< total.TotalTime << CSV_SEP << (total.TotalTime > 0 ? total.MinTime : 0) << CSV_SEP << total.MaxTime << CSV_SEP
-		<< total.TotalHits << CSV_SEP << (total.TotalHits > 0 ? total.MinHits : 0) << CSV_SEP << total.MaxHits
-		<< std::endl;
+#ifndef _SANDBOX_NO_THREADS
+		tbb::static_partitioner partitioner;
+		std::mutex mutex;
+#endif
 
-	// Write images
-	std::stringstream path_stream;
-	path_stream << DIR << "/" << name << "_" << triangles.size() << "_" << (int)degree;
-	if (hitrate >= 0)
-		path_stream << "_" << hitrate;
+		processInfoStart(PR_SIMD_BANDWIDTH);
 
-	save_normalized_gray(path_stream.str() + "_t.png", WIDTH, HEIGHT, data);
-	save_normalized_gray(path_stream.str() + "_id.png", WIDTH, HEIGHT, ids);
-	save_normalized_gray(path_stream.str() + "_hits.png", WIDTH, HEIGHT, hits);
-	save_image(path_stream.str() + "_uvs.png", WIDTH, HEIGHT, uvs, 3);
-}
+		const size_t W = WIDTH / PR_SIMD_BANDWIDTH + (WIDTH % PR_SIMD_BANDWIDTH != 0 ? 1 : 0);
+		for (size_t y = 0; y < HEIGHT; ++y) {
+			const double fy = 1 - y / static_cast<double>(HEIGHT - 1);
 
-static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+#ifdef _SANDBOX_NO_THREADS
+			tbb::blocked_range<size_t> r(0, W);
+			{
+#else
+		tbb::parallel_for(
+			tbb::blocked_range<size_t>(0, W),
+			[&](const tbb::blocked_range<size_t>& r) {
+#endif
+				for (size_t tx = r.begin(); tx != r.end(); ++tx) {
+					RayPackage package;
+					for (size_t k = 0; k < PR_SIMD_BANDWIDTH && tx * PR_SIMD_BANDWIDTH + k < WIDTH; ++k) {
+						const double fx = (tx * PR_SIMD_BANDWIDTH + k) / static_cast<double>(WIDTH - 1);
+
+						const Vector3f P = project(fx, fy);
+						const Ray ray	 = Ray(P, mRayDirection);
+						insertIntoRayPackage(k, package, ray);
+					}
+
+					vuint32 hitcount = vuint32(0);
+					vuint32 id		 = vuint32(0);
+					Vector2fv uv	 = promote(Vector2f(0, 0));
+					vfloat gt		 = vfloat(std::numeric_limits<float>::infinity());
+
+					const auto start = std::chrono::high_resolution_clock::now();
+					// Normally it is enough to check till found, but for the sake of benchmarking we check all
+					for (size_t i = 0; i < mTriangles.size(); ++i) {
+						vfloat lt;
+						Vector2fv luv;
+						const bfloat hit   = func(mTriangles[i], package, lt, luv);
+						const bfloat close = hit & (lt < gt);
+
+						hitcount = blend(hitcount + vuint32(1), hitcount, hit);
+						id		 = blend(vuint32(i), id, close);
+						gt		 = blend(lt, gt, close);
+						uv[0]	 = blend(luv[0], uv[0], close);
+						uv[1]	 = blend(luv[1], uv[1], close);
+					}
+					const auto end	= std::chrono::high_resolution_clock::now();
+					const auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+					uint32 fullhitcount = 0;
+					for (size_t k = 0; k < PR_SIMD_BANDWIDTH && tx * PR_SIMD_BANDWIDTH + k < WIDTH; ++k) {
+						uint32 s = extract(k, hitcount);
+						fullhitcount += s;
+						if (s > 0)
+							setPoint(tx * PR_SIMD_BANDWIDTH + k, y,
+									 extract(k, gt), extract(k, id), s,
+									 Vector2f(extract(k, uv[0]), extract(k, uv[1])));
+					}
+
+#ifndef _SANDBOX_NO_THREADS
+					mutex.lock();
+#endif
+					mStat.apply(nano, fullhitcount);
+					for (size_t k = 0; k < PR_SIMD_BANDWIDTH && tx * PR_SIMD_BANDWIDTH + k < WIDTH; ++k) {
+						if (extract(k, hitcount) > 0)
+							++mPixelsWithHits;
+					}
+#ifndef _SANDBOX_NO_THREADS
+					mutex.unlock();
+#endif
+				}
+			}
+#ifndef _SANDBOX_NO_THREADS
+			,
+			partitioner);
+#endif
+			processInfoUpdate(fy);
+		}
+		processInfoEnd();
+
+		writeCSVEntry(PR_SIMD_BANDWIDTH);
+		writeImages(PR_SIMD_BANDWIDTH);
+	}
+
+private:
+	inline void processInfoStart(size_t packageSize) const
+	{
+		std::cout << mName << "[" << packageSize << "]> " << mTriangles.size() << " [" << (int)mDegree << "°] TRI AREA: "
+				  << std::setprecision(-1) << std::defaultfloat << triArea();
+		if (mHitRate >= 0)
+			std::cout << " HIT RATE: " << mHitRate << "%";
+		std::cout << std::endl;
+	}
+
+	inline void processInfoUpdate(float y) const
+	{
+		const double percentage = (1 - y) * 100.0;
+		std::cout << "\r" << std::setprecision(2) << std::setw(6) << std::fixed << percentage << "%" << std::flush;
+	}
+
+	inline void processInfoEnd() const
+	{
+		std::cout << "\r";
+		double avgHits = 0.0;
+		if (mPixelsWithHits > 0)
+			avgHits = mStat.TotalHits / (double)mPixelsWithHits;
+
+		const auto avgNano = mStat.TotalTime / (WIDTH * HEIGHT * mTriangles.size());
+		std::cout << "=> FullT: "
+				  << prettytime(mStat.TotalTime) << std::endl
+				  << "   AvgT:  "
+				  << prettytime(avgNano) << std::endl
+				  << "   AvgH:  "
+				  << std::setprecision(8) << std::fixed << avgHits << std::endl
+				  << "   AvgHR: "
+				  << std::setprecision(8) << std::fixed << 100 * avgHits / mTriangles.size() << "%" << std::endl;
+	}
+
+	inline void writeCSVEntry(size_t packageSize) const
+	{
+		mCSV.writeEntry(mName, packageSize,
+						mTriangles.size(), (int)mDegree, mHitRate,
+						triArea(), mPixelsWithHits / static_cast<float>(WIDTH * HEIGHT),
+						mStat);
+	}
+
+	inline void writeImages(size_t packageSize) const
+	{
+		std::stringstream path_stream;
+		path_stream << DIR << "/" << mName << "_" << packageSize << "_" << mTriangles.size() << "_" << (int)mDegree;
+		if (mHitRate >= 0)
+			path_stream << "_" << mHitRate;
+
+		save_normalized_gray(path_stream.str() + "_t.png", WIDTH, HEIGHT, mData);
+		save_normalized_gray(path_stream.str() + "_id.png", WIDTH, HEIGHT, mIds);
+		save_normalized_gray(path_stream.str() + "_hits.png", WIDTH, HEIGHT, mHits);
+		save_image(path_stream.str() + "_uvs.png", WIDTH, HEIGHT, mUvs, 3);
+	}
+
+	// Assuming all triangles are same size
+	inline float triArea() const
+	{
+		if (mTriangles.empty())
+			return 0;
+		else
+			return (mTriangles[0].P1 - mTriangles[0].P0).cross(mTriangles[0].P2 - mTriangles[0].P0).norm() / 2;
+	}
+
+	inline Vector3f project(double nx, double ny) const
+	{
+		const double sum = nx + ny;
+		const double u	 = nx / sum;
+		const double v	 = ny / sum;
+		const double w	 = 1 - u - v;
+		if (std::isinf(u) || std::isinf(v))
+			return P0 - mRayDirection;
+		else
+			return P0 * w + P1 * u + P2 * v - mRayDirection;
+	};
+
+	inline void setPoint(size_t x, size_t y,
+						 float t, size_t id, size_t hitcount, const Vector2f& uv)
+	{
+		mData[y * WIDTH + x]		  = t;
+		mIds[y * WIDTH + x]			  = id;
+		mHits[y * WIDTH + x]		  = hitcount;
+		mUvs[(y * WIDTH + x) * 3 + 0] = uv[0];
+		mUvs[(y * WIDTH + x) * 3 + 1] = uv[1];
+	}
+};
+
+static void tri_mt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_mt", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectMT(ray, tri.P0, tri.P1, tri.P2, uv, t);
-					});
+	TriangleCheck check(suffix + "_mt", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectMT(ray, tri.P0, tri.P1, tri.P2, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectMT(ray, tri.P0_v(), tri.P1_v(), tri.P2_v(), uv, t);
+	});
 }
 
-static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_wt(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_wt", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectWT(ray, tri.P0, tri.P1, tri.P2, uv, t);
-					});
+	TriangleCheck check(suffix + "_wt", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectWT(ray, tri.P0, tri.P1, tri.P2, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectWT(ray, tri.P0_v(), tri.P1_v(), tri.P2_v(), uv, t);
+	});
 }
 
-static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_bw9(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_bw9", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectBW9(ray, tri.BW9Mat, tri.BW9FixedColumn, uv, t);
-					});
+	TriangleCheck check(suffix + "_bw9", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectBW9(ray, tri.BW9Mat, tri.BW9FixedColumn, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectBW9(ray, tri.BW9Mat, tri.BW9FixedColumn, uv, t);
+	});
 }
 
-static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_bw12(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_bw12", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectBW12(ray, tri.BW12Mat, uv, t);
-					});
+	TriangleCheck check(suffix + "_bw12", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectBW12(ray, tri.BW12Mat, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectBW12(ray, tri.BW12Mat, uv, t);
+	});
 }
 
-static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_pi(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_pi", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectPI(ray, tri.P0, tri.P1, tri.P2, uv, t);
-					});
+	TriangleCheck check(suffix + "_pi", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectPI(ray, tri.P0, tri.P1, tri.P2, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectPI(ray, tri.P0_v(), tri.P1_v(), tri.P2_v(), uv, t);
+	});
 }
 
-static void tri_pi_mem(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_pi_mem(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_pi_mem", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectPI_Mem(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
-					});
+	TriangleCheck check(suffix + "_pi_mem", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectPI_Mem(ray, tri.P0, tri.P1, tri.P2, tri.M0, tri.M1, tri.M2, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectPI_Mem(ray, tri.P0_v(), tri.P1_v(), tri.P2_v(), tri.M0_v(), tri.M1_v(), tri.M2_v(), uv, t);
+	});
 }
 
-static void tri_pi_off(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, std::ofstream& csv)
+static void tri_pi_off(const std::string& suffix, const std::vector<Triangle>& triangles, float degree, int hitrate, CSVStream& csv)
 {
 	PR_PROFILE_THIS;
-	check_triangles(suffix + "_pi_off", triangles, degree, hitrate, csv,
-					[](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
-						t = std::numeric_limits<float>::infinity();
-						return TriangleIntersection::intersectPI_Off(ray, tri.P0, tri.P1, tri.P2, uv, t);
-					});
+	TriangleCheck check(suffix + "_pi_off", triangles, degree, hitrate, csv);
+	check.processSingle([](const Triangle& tri, const Ray& ray, float& t, Vector2f& uv) {
+		t = std::numeric_limits<float>::infinity();
+		return TriangleIntersection::intersectPI_Off(ray, tri.P0, tri.P1, tri.P2, uv, t);
+	});
+	check.processPackage([](const Triangle& tri, const RayPackage& ray, vfloat& t, Vector2fv& uv) {
+		t = vfloat(std::numeric_limits<float>::infinity());
+		return TriangleIntersection::intersectPI_Off(ray, tri.P0_v(), tri.P1_v(), tri.P2_v(), uv, t);
+	});
 }
 
-typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float, int, std::ofstream& csv);
+typedef void (*MAT_FUNC)(const std::string&, const std::vector<Triangle>&, float, int, CSVStream& csv);
 static MAT_FUNC s_funcs[] = {
 	tri_bw12,
 	tri_bw9,
@@ -407,7 +643,7 @@ static MAT_FUNC s_funcs[] = {
 	nullptr
 };
 
-void precision_test(std::ofstream& csv)
+void precision_test(CSVStream& csv)
 {
 	PR_PROFILE_THIS;
 
@@ -425,7 +661,7 @@ void precision_test(std::ofstream& csv)
 	}
 }
 
-void hitrate_test(std::ofstream& csv)
+void hitrate_test(CSVStream& csv)
 {
 	PR_PROFILE_THIS;
 
@@ -448,16 +684,8 @@ void suite_triangle()
 
 	bf::create_directory(DIR);
 
-	std::ofstream csv;
-	csv.open(DIR + "/output.csv");
-
-	// Setup CSV header
-	csv << "Name" << CSV_SEP
-		<< "Triangles" << CSV_SEP << "Angle" << CSV_SEP << "HitRate" << CSV_SEP
-		<< "TriangleArea" << CSV_SEP << "TriangleCoverage" << CSV_SEP
-		<< "TotalTimeNS" << CSV_SEP << "MinTimeNS" << CSV_SEP << "MaxTimeNS" << CSV_SEP
-		<< "TotalHits" << CSV_SEP << "MinHits" << CSV_SEP << "MaxHits"
-		<< std::endl;
+	CSVStream csv(DIR + "/output.csv");
+	csv.writeHeader();
 
 	precision_test(csv);
 	hitrate_test(csv);
