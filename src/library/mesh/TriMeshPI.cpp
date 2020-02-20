@@ -35,7 +35,7 @@ void TriMeshPI::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 									   const Vector3fv p1 = promote(mBase->vertex(ind2));
 									   const Vector3fv p2 = promote(mBase->vertex(ind3));
 
-									   out2.Successful = TriangleIntersection::intersectPI(in2, p0, p1, p2, uv, out2.HitDistance);
+									   out2.Successful = TriangleIntersection::intersectPI(in2, p0, p1, p2, out2.HitDistance, uv);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -63,7 +63,7 @@ void TriMeshPI::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 
 								   Vector2f uv;
 
-								   out2.Successful = TriangleIntersection::intersectPI(in2, p0, p1, p2, uv, out2.HitDistance);
+								   out2.Successful = TriangleIntersection::intersectPI(in2, p0, p1, p2, out2.HitDistance, uv);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);

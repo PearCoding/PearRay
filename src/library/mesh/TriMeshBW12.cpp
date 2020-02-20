@@ -2,7 +2,7 @@
 #include "Profiler.h"
 #include "container/kdTreeCollider.h"
 #include "geometry/GeometryPoint.h"
-#include "geometry/TriangleIntersection_BW.h"
+#include "geometry/TriangleIntersection_BW12.h"
 #include "math/Tangent.h"
 #include "mesh/MeshBase.h"
 
@@ -40,7 +40,7 @@ void TriMeshBW12::checkCollisionLocal(const RayPackage& in, CollisionOutput& out
 
 									   out2.Successful = TriangleIntersection::intersectBW12(
 										   in2, M,
-										   uv, out2.HitDistance);
+										   out2.HitDistance, uv);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -66,7 +66,7 @@ void TriMeshBW12::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 
 								   out2.Successful = TriangleIntersection::intersectBW12(
 									   in2, M,
-									   uv, out2.HitDistance);
+									   out2.HitDistance, uv);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);

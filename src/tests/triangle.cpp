@@ -1,6 +1,5 @@
 #include "geometry/Triangle.h"
 #include "geometry/TriangleIntersection.h"
-#include "geometry/TriangleIntersection_BW.h"
 #include "math/SIMD.h"
 
 #include "Test.h"
@@ -43,7 +42,7 @@ PR_TEST("MT Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectMT(makeRayPackage(),
 														 promote(P0), promote(P1), promote(P2),
-														 uv, t);
+														 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -56,7 +55,7 @@ PR_TEST("MT Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectMT(makeRayPackage(),
 														 promote(P0), promote(P2), promote(P1),
-														 uv, t);
+														 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -70,7 +69,7 @@ PR_TEST("MT Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectMT(makeRay(i),
 														   P0, P1, P2,
-														   uv, t);
+														   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -85,7 +84,7 @@ PR_TEST("MT Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectMT(makeRay(i),
 														   P0, P2, P1,
-														   uv, t);
+														   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -101,7 +100,7 @@ PR_TEST("PI Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectPI(makeRayPackage(),
 														 promote(P0), promote(P1), promote(P2),
-														 uv, t);
+														 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -114,7 +113,7 @@ PR_TEST("PI Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectPI(makeRayPackage(),
 														 promote(P0), promote(P2), promote(P1),
-														 uv, t);
+														 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -128,7 +127,7 @@ PR_TEST("PI Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectPI(makeRay(i),
 														   P0, P1, P2,
-														   uv, t);
+														   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -143,7 +142,7 @@ PR_TEST("PI Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectPI(makeRay(i),
 														   P0, P2, P1,
-														   uv, t);
+														   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -160,7 +159,7 @@ PR_TEST("PI Mem Intersects CCW [V]")
 	const bfloat res = TriangleIntersection::intersectPI_Mem(makeRayPackage(),
 															 promote(P0), promote(P1), promote(P2),
 															 promote(M0), promote(M1), promote(M2),
-															 uv, t);
+															 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -174,7 +173,7 @@ PR_TEST("PI Mem Intersects CW [V]")
 	const bfloat res = TriangleIntersection::intersectPI_Mem(makeRayPackage(),
 															 promote(P0), promote(P2), promote(P1),
 															 -promote(M2), -promote(M1), -promote(M0),
-															 uv, t);
+															 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -189,7 +188,7 @@ PR_TEST("PI Mem Intersects CCW")
 		const bool res = TriangleIntersection::intersectPI_Mem(makeRay(i),
 															   P0, P1, P2,
 															   M0, M1, M2,
-															   uv, t);
+															   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -197,7 +196,7 @@ PR_TEST("PI Mem Intersects CCW")
 	}
 }
 
-PR_TEST("PI OPT Intersects CW")
+PR_TEST("PI Mem Intersects CW")
 {
 	for (size_t i = 0; i < 4; ++i) {
 		Vector2f uv;
@@ -205,7 +204,7 @@ PR_TEST("PI OPT Intersects CW")
 		const bool res = TriangleIntersection::intersectPI_Mem(makeRay(i),
 															   P0, P2, P1,
 															   -M2, -M1, -M0,
-															   uv, t);
+															   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -221,7 +220,7 @@ PR_TEST("PI Off Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectPI_Off(makeRayPackage(),
 															promote(P0), promote(P1), promote(P2),
-															uv, t);
+															t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -234,7 +233,7 @@ PR_TEST("PI Off Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectPI_Off(makeRayPackage(),
 															promote(P0), promote(P2), promote(P1),
-															uv, t);
+															t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -248,7 +247,7 @@ PR_TEST("PI Off Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectPI_Off(makeRay(i),
 															  P0, P1, P2,
-															  uv, t);
+															  t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -263,7 +262,7 @@ PR_TEST("PI Off Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectPI_Off(makeRay(i),
 															  P0, P2, P1,
-															  uv, t);
+															  t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -278,7 +277,7 @@ PR_TEST("WT Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectWT(makeRayPackage(),
 														 promote(P0), promote(P1), promote(P2),
-														 uv, t);
+														 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -291,7 +290,7 @@ PR_TEST("WT Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectWT(makeRayPackage(),
 														 promote(P0), promote(P2), promote(P1),
-														 uv, t);
+														 t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -305,7 +304,7 @@ PR_TEST("WT Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectWT(makeRay(i),
 														   P0, P1, P2,
-														   uv, t);
+														   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -320,7 +319,7 @@ PR_TEST("WT Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectWT(makeRay(i),
 														   P0, P2, P1,
-														   uv, t);
+														   t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -340,7 +339,7 @@ PR_TEST("BW 9 Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectBW9(makeRayPackage(),
 														  mat, fixedColumn,
-														  uv, t);
+														  t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -357,7 +356,7 @@ PR_TEST("BW 9 Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectBW9(makeRayPackage(),
 														  mat, fixedColumn,
-														  uv, t);
+														  t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -375,7 +374,7 @@ PR_TEST("BW 9 Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectBW9(makeRay(i),
 															mat, fixedColumn,
-															uv, t);
+															t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -393,7 +392,7 @@ PR_TEST("BW 9 Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectBW9(makeRay(i),
 															mat, fixedColumn,
-															uv, t);
+															t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -412,7 +411,7 @@ PR_TEST("BW 12 Intersects CCW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectBW12(makeRayPackage(),
 														   mat,
-														   uv, t);
+														   t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -428,7 +427,7 @@ PR_TEST("BW 12 Intersects CW [V]")
 	vfloat t;
 	const bfloat res = TriangleIntersection::intersectBW12(makeRayPackage(),
 														   mat,
-														   uv, t);
+														   t, uv);
 	PR_CHECK_TRUE(extract<0>(res));
 	PR_CHECK_TRUE(extract<1>(res));
 	PR_CHECK_TRUE(extract<2>(res));
@@ -445,7 +444,7 @@ PR_TEST("BW 12 Intersects CCW")
 		float t;
 		const bool res = TriangleIntersection::intersectBW12(makeRay(i),
 															 mat,
-															 uv, t);
+															 t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else
@@ -462,7 +461,7 @@ PR_TEST("BW 12 Intersects CW")
 		float t;
 		const bool res = TriangleIntersection::intersectBW12(makeRay(i),
 															 mat,
-															 uv, t);
+															 t, uv);
 		if (Res[i])
 			PR_CHECK_TRUE(res);
 		else

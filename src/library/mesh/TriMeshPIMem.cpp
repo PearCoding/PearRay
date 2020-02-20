@@ -2,7 +2,7 @@
 #include "Profiler.h"
 #include "container/kdTreeCollider.h"
 #include "geometry/GeometryPoint.h"
-#include "geometry/TriangleIntersection_PI.h"
+#include "geometry/TriangleIntersection_PI_Mem.h"
 #include "math/Tangent.h"
 #include "mesh/MeshBase.h"
 
@@ -58,7 +58,7 @@ void TriMeshPIMem::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 									   out2.Successful = TriangleIntersection::intersectPI_Mem(
 										   in2, p0, p1, p2,
 										   promote(m0), promote(m1), promote(m2),
-										   uv, out2.HitDistance);
+										   out2.HitDistance, uv);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -103,7 +103,7 @@ void TriMeshPIMem::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 								   out2.Successful = TriangleIntersection::intersectPI_Mem(
 									   in2, p0, p1, p2,
 									   m0, m1, m2,
-									   uv, out2.HitDistance);
+									   out2.HitDistance, uv);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);

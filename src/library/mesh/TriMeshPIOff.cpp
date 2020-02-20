@@ -2,7 +2,7 @@
 #include "Profiler.h"
 #include "container/kdTreeCollider.h"
 #include "geometry/GeometryPoint.h"
-#include "geometry/TriangleIntersection_PI.h"
+#include "geometry/TriangleIntersection_PI_Off.h"
 #include "math/Tangent.h"
 #include "mesh/MeshBase.h"
 
@@ -35,7 +35,7 @@ void TriMeshPIOff::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 									   const Vector3fv p1 = promote(mBase->vertex(ind2));
 									   const Vector3fv p2 = promote(mBase->vertex(ind3));
 
-									   out2.Successful = TriangleIntersection::intersectPI_Off(in2, p0, p1, p2, uv, out2.HitDistance);
+									   out2.Successful = TriangleIntersection::intersectPI_Off(in2, p0, p1, p2, out2.HitDistance, uv);
 
 									   out2.Parameter[0] = uv(0);
 									   out2.Parameter[1] = uv(1);
@@ -63,7 +63,7 @@ void TriMeshPIOff::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 
 								   Vector2f uv;
 
-								   out2.Successful = TriangleIntersection::intersectPI_Off(in2, p0, p1, p2, uv, out2.HitDistance);
+								   out2.Successful = TriangleIntersection::intersectPI_Off(in2, p0, p1, p2, out2.HitDistance, uv);
 
 								   out2.Parameter[0] = uv(0);
 								   out2.Parameter[1] = uv(1);

@@ -2,17 +2,15 @@
 
 #include "ray/RayPackage.h"
 
-#define PR_TRIANGLE_WT_INTERSECT_EPSILON (PR_EPSILON)
 namespace PR {
 namespace TriangleIntersection {
 // Watertight (Woop, Benthin, Wald) 2013
-inline PR_LIB bool intersectWT(
+
+namespace details {
+inline PR_LIB bool _intersectBaseWT(
 	const Ray& in,
-	const Vector3f& p1,
-	const Vector3f& p2,
-	const Vector3f& p3,
-	Vector2f& uv,
-	float& t)
+	const Vector3f& p1, const Vector3f& p2, const Vector3f& p3,
+	float& t, float& det, float& u, float& v)
 {
 	const uint32 kz = in.maxDirectionIndex();
 	uint32 kx		= kz + 1;
@@ -46,8 +44,8 @@ inline PR_LIB bool intersectWT(
 	const float Cx = C(kx) - sx * C(kz);
 	const float Cy = C(ky) - sy * C(kz);
 
-	float u = Cx * By - Cy * Bx;
-	float v = Ax * Cy - Ay * Cx;
+	u		= Cx * By - Cy * Bx;
+	v		= Ax * Cy - Ay * Cx;
 	float w = Bx * Ay - By * Ax;
 
 	// Better precision needed:
@@ -65,13 +63,13 @@ inline PR_LIB bool intersectWT(
 		w			= (float)(BxAy - ByAx);
 	}
 
-	const bool invalid = (std::min(std::min(u, v), w) < -PR_TRIANGLE_WT_INTERSECT_EPSILON)
-						 && (std::max(std::max(u, v), w) > PR_TRIANGLE_WT_INTERSECT_EPSILON);
+	const bool invalid = (std::min(std::min(u, v), w) < -PR_EPSILON)
+						 && (std::max(std::max(u, v), w) > PR_EPSILON);
 	if (PR_LIKELY(invalid))
 		return false;
 
-	const float det = u + v + w;
-	if (std::abs(det) < PR_TRIANGLE_WT_INTERSECT_EPSILON)
+	det = u + v + w;
+	if (std::abs(det) < PR_EPSILON)
 		return false;
 
 	const float Az = sz * A(kz);
@@ -79,26 +77,15 @@ inline PR_LIB bool intersectWT(
 	const float Cz = sz * C(kz);
 
 	t = u * Az + v * Bz + w * Cz;
-	if (std::signbit(t) == std::signbit(det)) {
-		const float invDet = 1.0f / det;
-		uv[0]			   = u * invDet;
-		uv[1]			   = v * invDet;
-		//w *= invDet;
-		t *= invDet;
-
-		return in.isInsideRange(t);
-	}
-
-	return false;
+	return std::signbit(t) == std::signbit(det);
 }
 
-inline PR_LIB bfloat intersectWT(
+inline PR_LIB bfloat _intersectBaseWT(
 	const RayPackage& in,
 	const Vector3fv& p1,
 	const Vector3fv& p2,
 	const Vector3fv& p3,
-	Vector2fv& uv,
-	vfloat& t)
+	vfloat& t, vfloat& det, vfloat& u, vfloat& v)
 {
 	// TODO: A better swizzling algorithm would work wonders here...
 	auto pick = [](const Vector3fv& a, const vuint32& idx) -> vfloat {
@@ -141,18 +128,18 @@ inline PR_LIB bfloat intersectWT(
 	const vfloat Cx = pick(C, kx) - sx * Ckz;
 	const vfloat Cy = pick(C, ky) - sy * Ckz;
 
-	vfloat u = Cx * By - Cy * Bx;
-	vfloat v = Ax * Cy - Ay * Cx;
+	u		 = Cx * By - Cy * Bx;
+	v		 = Ax * Cy - Ay * Cx;
 	vfloat w = Bx * Ay - By * Ax;
 
 	// Better precision is not provided for SIMD...
-	bfloat valid = ~((min(min(u, v), w) < -PR_TRIANGLE_WT_INTERSECT_EPSILON)
-					 & (max(max(u, v), w) > PR_TRIANGLE_WT_INTERSECT_EPSILON));
+	bfloat valid = ~((min(min(u, v), w) < -PR_EPSILON)
+					 & (max(max(u, v), w) > PR_EPSILON));
 	if (none(valid))
 		return valid;
 
-	const vfloat det = u + v + w;
-	valid			 = valid & (abs(det) > PR_TRIANGLE_WT_INTERSECT_EPSILON);
+	det	  = u + v + w;
+	valid = valid & (abs(det) > PR_EPSILON);
 	if (none(valid))
 		return valid;
 
@@ -160,8 +147,84 @@ inline PR_LIB bfloat intersectWT(
 	const vfloat Bz = sz * Bkz;
 	const vfloat Cz = sz * Ckz;
 
-	t	  = u * Az + v * Bz + w * Cz;
-	valid = valid & (~(signbit(t) ^ signbit(det)));
+	t = u * Az + v * Bz + w * Cz;
+	return valid & (~(signbit(t) ^ signbit(det)));
+}
+} // namespace details
+
+inline PR_LIB bool intersectLineWT(
+	const Ray& in,
+	const Vector3f& p1, const Vector3f& p2, const Vector3f& p3)
+{
+	float t, det, u, v;
+	return details::_intersectBaseWT(in, p1, p2, p3, t, det, u, v);
+}
+
+inline PR_LIB bool intersectWT(
+	const Ray& in,
+	const Vector3f& p1, const Vector3f& p2, const Vector3f& p3,
+	float& t)
+{
+	float det, u, v;
+	if (details::_intersectBaseWT(in, p1, p2, p3, t, det, u, v)) {
+		const float invDet = 1.0f / det;
+		t *= invDet;
+
+		return in.isInsideRange(t);
+	}
+
+	return false;
+}
+
+inline PR_LIB bool intersectWT(
+	const Ray& in,
+	const Vector3f& p1, const Vector3f& p2, const Vector3f& p3,
+	float& t, Vector2f& uv)
+{
+	float det, u, v;
+	if (details::_intersectBaseWT(in, p1, p2, p3, t, det, u, v)) {
+		const float invDet = 1.0f / det;
+		uv[0]			   = u * invDet;
+		uv[1]			   = v * invDet;
+		t *= invDet;
+
+		return in.isInsideRange(t);
+	}
+
+	return false;
+}
+
+inline PR_LIB bfloat intersectLineWT(
+	const RayPackage& in,
+	const Vector3fv& p1, const Vector3fv& p2, const Vector3fv& p3)
+{
+	vfloat t, det, u, v;
+	return details::_intersectBaseWT(in, p1, p2, p3, t, det, u, v);
+}
+
+inline PR_LIB bfloat intersectWT(
+	const RayPackage& in,
+	const Vector3fv& p1, const Vector3fv& p2, const Vector3fv& p3,
+	vfloat& t)
+{
+	vfloat det, u, v;
+	bfloat valid = details::_intersectBaseWT(in, p1, p2, p3, t, det, u, v);
+	if (none(valid))
+		return valid;
+
+	const vfloat invDet = 1.0f / det;
+	t *= invDet;
+
+	return valid & in.isInsideRange(t);
+}
+
+inline PR_LIB bfloat intersectWT(
+	const RayPackage& in,
+	const Vector3fv& p1, const Vector3fv& p2, const Vector3fv& p3,
+	vfloat& t, Vector2fv& uv)
+{
+	vfloat det, u, v;
+	bfloat valid = details::_intersectBaseWT(in, p1, p2, p3, t, det, u, v);
 	if (none(valid))
 		return valid;
 
