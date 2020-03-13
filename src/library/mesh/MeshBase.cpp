@@ -245,6 +245,7 @@ void MeshBase::serialize(Serializer& serializer)
 size_t MeshBase::addUserVertexAttrib(const std::string& name, const std::vector<float>& cnt, size_t channels)
 {
 	PR_ASSERT(cnt.size() == channels * nodeCount(), "Expected vertex attribute to have the same count of vertices");
+	PR_UNUSED(channels);
 
 	size_t id = mUserVertexAttribs.size();
 	mUserVertexAttribs.push_back(cnt);
@@ -255,6 +256,7 @@ size_t MeshBase::addUserVertexAttrib(const std::string& name, const std::vector<
 size_t MeshBase::addUserFaceAttrib(const std::string& name, const std::vector<float>& cnt, size_t channels)
 {
 	PR_ASSERT(cnt.size() == channels * faceCount(), "Expected face attribute to have the same count of vertices");
+	PR_UNUSED(channels);
 
 	size_t id = mUserFaceAttribs.size();
 	mUserFaceAttribs.push_back(cnt);
@@ -265,6 +267,7 @@ size_t MeshBase::addUserFaceAttrib(const std::string& name, const std::vector<fl
 size_t MeshBase::addUserVertexAttribU32(const std::string& name, const std::vector<uint32>& cnt, size_t channels)
 {
 	PR_ASSERT(cnt.size() == channels * nodeCount(), "Expected vertex attribute to have the same count of vertices");
+	PR_UNUSED(channels);
 
 	size_t id = mUserVertexAttribsU32.size();
 	mUserVertexAttribsU32.push_back(cnt);
@@ -275,6 +278,7 @@ size_t MeshBase::addUserVertexAttribU32(const std::string& name, const std::vect
 size_t MeshBase::addUserFaceAttribU32(const std::string& name, const std::vector<uint32>& cnt, size_t channels)
 {
 	PR_ASSERT(cnt.size() == channels * faceCount(), "Expected face attribute to have the same count of vertices");
+	PR_UNUSED(channels);
 
 	size_t id = mUserFaceAttribsU32.size();
 	mUserFaceAttribsU32.push_back(cnt);
@@ -285,6 +289,7 @@ size_t MeshBase::addUserFaceAttribU32(const std::string& name, const std::vector
 size_t MeshBase::addUserVertexAttribU8(const std::string& name, const std::vector<uint8>& cnt, size_t channels)
 {
 	PR_ASSERT(cnt.size() == channels * nodeCount(), "Expected vertex attribute to have the same count of vertices");
+	PR_UNUSED(channels);
 
 	size_t id = mUserVertexAttribsU8.size();
 	mUserVertexAttribsU8.push_back(cnt);
@@ -295,6 +300,7 @@ size_t MeshBase::addUserVertexAttribU8(const std::string& name, const std::vecto
 size_t MeshBase::addUserFaceAttribU8(const std::string& name, const std::vector<uint8>& cnt, size_t channels)
 {
 	PR_ASSERT(cnt.size() == channels * faceCount(), "Expected face attribute to have the same count of vertices");
+	PR_UNUSED(channels);
 
 	size_t id = mUserFaceAttribsU8.size();
 	mUserFaceAttribsU8.push_back(cnt);
