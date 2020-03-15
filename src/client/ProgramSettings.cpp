@@ -26,6 +26,7 @@ po::options_description setup_cmd_options()
 	general_d.add_options()
 		("help,h", "Produce this help message")
 		("quiet,q", "Do not print messages into console")
+		("no-pretty-console", "Do not use decorations to make console output better")
 		("version", "Show version and exit")
 		("verbose,v", "Print detailed information into log file (and perhabs into console)")
 		("profile,P", "Profile execution and dump results into a file")
@@ -165,6 +166,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 	IsVerbose		= (vm.count("verbose") != 0);
 	IsQuiet			= (vm.count("quiet") != 0);
+	NoPrettyConsole = (vm.count("no-pretty-console") != 0);
 	ShowProgress	= vm.count("progress") ? vm["progress"].as<PR::uint32>() : 0;
 	ShowInformation = (vm.count("information") != 0);
 
@@ -195,7 +197,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		ThreadCount = DEF_THREAD_COUNT;
 
 	AdaptiveTiling = (vm.count("no-adaptive-tiling") == 0);
-	SortHits = (vm.count("no-hit-sorting") == 0);
+	SortHits	   = (vm.count("no-hit-sorting") == 0);
 
 	if (vm.count("itx"))
 		ImageTileXCount = std::max<uint32>(1, vm["itx"].as<PR::uint32>());

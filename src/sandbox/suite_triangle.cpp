@@ -18,7 +18,7 @@
 #include <tbb/parallel_for.h>
 
 //#define _SANDBOX_NO_THREADS
-//#define _SANDBOX_NO_SINGLE_TRACE
+#define _SANDBOX_NO_SINGLE_TRACE
 //#define _SANDBOX_NO_PACKAGE_TRACE
 
 using namespace PR;

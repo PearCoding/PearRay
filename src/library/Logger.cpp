@@ -1,5 +1,5 @@
 #include "Logger.h"
-#include "LogListener.h"
+#include "log/ConsoleLogListener.h"
 
 #include <iostream>
 
@@ -16,6 +16,15 @@ Logger::Logger()
 	, mStreamBuf(*this, false)
 	, mStream(&mStreamBuf)
 {
+	mConsoleLogListener = std::make_shared<ConsoleLogListener>(
+#ifdef PR_OS_LINUX
+		true
+#else
+		false
+#endif
+	);
+
+	addListener(mConsoleLogListener);
 }
 
 Logger::~Logger()
@@ -35,14 +44,36 @@ const char* Logger::levelString(LogLevel l)
 	return levelStr[l];
 }
 
-void Logger::addListener(LogListener* listener)
+void Logger::setQuiet(bool b)
+{
+	if (mQuiet == b)
+		return;
+
+	if (b)
+		addListener(mConsoleLogListener);
+	else
+		removeListener(mConsoleLogListener);
+	mQuiet = b;
+}
+
+void Logger::enableAnsiTerminal(bool b)
+{
+	mConsoleLogListener->enableAnsi(b);
+}
+
+bool Logger::isUsingAnsiTerminal() const
+{
+	return mConsoleLogListener->isUsingAnsi();
+}
+
+void Logger::addListener(const std::shared_ptr<LogListener>& listener)
 {
 	mListener.push_back(listener);
 }
 
-void Logger::removeListener(LogListener* listener)
+void Logger::removeListener(const std::shared_ptr<LogListener>& listener)
 {
-	mListener.remove(listener);
+	mListener.erase(std::remove(mListener.begin(), mListener.end(), listener), mListener.end());
 }
 
 std::ostream& Logger::startEntry(LogLevel level)
@@ -50,14 +81,8 @@ std::ostream& Logger::startEntry(LogLevel level)
 	if ((int)level < (int)verbosity())
 		return mEmptyStream;
 
-	if (!mQuiet)
-		std::cout << "[" << levelStr[level] << "] ";
-
-	for (std::list<LogListener*>::iterator it = mListener.begin();
-		 it != mListener.end();
-		 ++it) {
-		(*it)->startEntry(level);
-	}
+	for (const auto& listener : mListener)
+		listener->startEntry(level);
 
 	return mStream;
 }
@@ -67,14 +92,8 @@ std::streambuf::int_type Logger::StreamBuf::overflow(std::streambuf::int_type c)
 	if (mIgnore)
 		return 0;
 
-	if (!mLogger.isQuiet())
-		std::cout.put(c);
-
-	for (std::list<LogListener*>::iterator it = mLogger.mListener.begin();
-		 it != mLogger.mListener.end();
-		 ++it) {
-		(*it)->writeEntry(c);
-	}
+	for (const auto& listener : mLogger.mListener)
+		listener->writeEntry(c);
 
 	return 0;
 }

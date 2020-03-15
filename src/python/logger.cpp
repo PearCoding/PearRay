@@ -1,7 +1,6 @@
 #include <thread>
 
-#include "FileLogListener.h"
-#include "LogListener.h"
+#include "log/FileLogListener.h"
 #include "Logger.h"
 
 #include "pypearray.h"

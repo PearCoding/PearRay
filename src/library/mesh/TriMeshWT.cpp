@@ -24,6 +24,7 @@ void TriMeshWT::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 	mCollider
 		->checkCollisionIncoherent(in, out,
 								   [&](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
+									   PR_PROFILE_THIS;
 									   Vector2fv uv;
 
 									   const uint32 ind1 = mBase->indices()[3 * f];
@@ -52,6 +53,7 @@ void TriMeshWT::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 	mCollider
 		->checkCollisionSingle(in, out,
 							   [&](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
+								   PR_PROFILE_THIS;
 								   const uint32 ind1 = mBase->indices()[3 * f];
 								   const uint32 ind2 = mBase->indices()[3 * f + 1];
 								   const uint32 ind3 = mBase->indices()[3 * f + 2];

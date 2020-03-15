@@ -1,8 +1,8 @@
 #pragma once
 
 #include "PrettyPrint.h"
-#include <list>
 #include <streambuf>
+#include <vector>
 
 namespace PR {
 enum LogLevel {
@@ -14,6 +14,7 @@ enum LogLevel {
 };
 
 class LogListener;
+class ConsoleLogListener;
 class PR_LIB Logger {
 	PR_CLASS_NON_COPYABLE(Logger);
 
@@ -38,14 +39,17 @@ public:
 
 	static const char* levelString(LogLevel l);
 
-	void addListener(LogListener* listener);
-	void removeListener(LogListener* listener);
+	void addListener(const std::shared_ptr<LogListener>& listener);
+	void removeListener(const std::shared_ptr<LogListener>& listener);
 
 	inline void setVerbosity(LogLevel level) { mVerbosity = level; }
 	inline LogLevel verbosity() const { return mVerbosity; }
 
-	inline void setQuiet(bool b) { mQuiet = b; }
+	void setQuiet(bool b);
 	inline bool isQuiet() const { return mQuiet; }
+
+	void enableAnsiTerminal(bool b);
+	bool isUsingAnsiTerminal() const;
 
 	std::ostream& startEntry(LogLevel level);
 
@@ -61,7 +65,9 @@ public:
 	}
 
 private:
-	std::list<LogListener*> mListener;
+	std::vector<std::shared_ptr<LogListener>> mListener;
+	std::shared_ptr<ConsoleLogListener> mConsoleLogListener;
+
 	LogLevel mVerbosity;
 	bool mQuiet;
 

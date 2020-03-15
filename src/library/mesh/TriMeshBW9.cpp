@@ -35,6 +35,7 @@ void TriMeshBW9::checkCollisionLocal(const RayPackage& in, CollisionOutput& out)
 	mCollider
 		->checkCollisionIncoherent(in, out,
 								   [&](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
+									   PR_PROFILE_THIS;
 									   Vector2fv uv;
 									   vfloat t;
 
@@ -64,6 +65,7 @@ void TriMeshBW9::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 	mCollider
 		->checkCollisionSingle(in, out,
 							   [&](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
+								   PR_PROFILE_THIS;
 								   Vector2f uv;
 
 								   const float* M = &matrices[9 * f];
@@ -85,6 +87,8 @@ void TriMeshBW9::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out)
 
 void TriMeshBW9::setup()
 {
+	PR_PROFILE_THIS;
+
 	static const char* ATTRIB_MATRIX	   = "bw9_matrix";
 	static const char* ATTRIB_FIXED_COLUMN = "bw9_fixed_column";
 

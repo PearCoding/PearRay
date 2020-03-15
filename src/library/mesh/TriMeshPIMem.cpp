@@ -35,6 +35,7 @@ void TriMeshPIMem::checkCollisionLocal(const RayPackage& in, CollisionOutput& ou
 	mCollider
 		->checkCollisionIncoherent(in, out,
 								   [&](const RayPackage& in2, uint64 f, CollisionOutput& out2) {
+									   PR_PROFILE_THIS;
 									   Vector2fv uv;
 
 									   const uint32 ind1 = mBase->indices()[3 * f];
@@ -80,6 +81,7 @@ void TriMeshPIMem::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 	mCollider
 		->checkCollisionSingle(in, out,
 							   [&](const Ray& in2, uint64 f, SingleCollisionOutput& out2) {
+								   PR_PROFILE_THIS;
 								   const uint32 ind1 = mBase->indices()[3 * f];
 								   const uint32 ind2 = mBase->indices()[3 * f + 1];
 								   const uint32 ind3 = mBase->indices()[3 * f + 2];
@@ -117,6 +119,7 @@ void TriMeshPIMem::checkCollisionLocal(const Ray& in, SingleCollisionOutput& out
 
 void TriMeshPIMem::setup()
 {
+	PR_PROFILE_THIS;
 	static const char* ATTRIB_MOMENTUM_0 = "pi_opt_momentum_0";
 	static const char* ATTRIB_MOMENTUM_1 = "pi_opt_momentum_1";
 	static const char* ATTRIB_MOMENTUM_2 = "pi_opt_momentum_2";

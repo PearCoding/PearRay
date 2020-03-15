@@ -78,11 +78,34 @@ option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 
 # Algorithm options
 option(PR_COLLIDER_FORCE_SINGLE_TRACE	"Force single ray tracing in every trace path" OFF)
-set(PR_TRIANGLE_INTERSECTION_METHOD 1 CACHE STRING 
-	"0 = Moeller-Trumbore, 1 = Pluecker, 2 = Pluecker Optimized (Cached), 3 = Watertight, 4 = Baldwin-Weber 9, 5 = Baldwin-Weber 12")
-
 option(BUILD_SHARED_LIBS		"Build shared library" OFF)
 
+# Handle triangle intersection method
+function (ListToString result delim)
+    list(GET ARGV 2 temp)
+    math(EXPR N "${ARGC}-1")
+    foreach(IDX RANGE 3 ${N})
+        list(GET ARGV ${IDX} STR)
+        set(temp "${temp}${delim}${STR}")
+    endforeach()
+    set(${result} "${temp}" PARENT_SCOPE)
+endfunction(ListToString)
+
+set(_PR_TRI_OPTIONS "MT" "PI" "PI_MEM" "PI_OFF" "WT" "BW9" "BW12")
+ListToString(_PR_TRI_OPTIONS_OUT ", " ${_PR_TRI_OPTIONS})
+list(GET _PR_TRI_OPTIONS 0 _PR_TRI_OPTIONS_DEF)
+set(PR_TRIANGLE_INTERSECTION_METHOD "${_PR_TRI_OPTIONS_DEF}" CACHE STRING "One of ${_PR_TRI_OPTIONS_OUT} triangle intersection methods")
+set_property(CACHE PR_TRIANGLE_INTERSECTION_METHOD PROPERTY STRINGS ${_PR_TRI_OPTIONS})
+
+string(STRIP "${PR_TRIANGLE_INTERSECTION_METHOD}" _PR_TRIANGLE_INTERSECTION_METHOD_TMP)
+string(TOUPPER "${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}" _PR_TRIANGLE_INTERSECTION_METHOD_TMP)
+list(FIND _PR_TRI_OPTIONS "${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}" PR_TRIANGLE_INTERSECTION_METHOD_ID)
+if(${PR_TRIANGLE_INTERSECTION_METHOD_ID} LESS 0)
+	message(FATAL_ERROR "Invalid intersection method given. Must be one of ${_PR_TRI_OPTIONS_OUT}")
+endif()
+MESSAGE(STATUS "Using triangle intersection method: ${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}")
+
+# Include packages
 find_package(Threads REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

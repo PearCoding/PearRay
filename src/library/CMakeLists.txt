@@ -1,11 +1,8 @@
 set(PR_Src
   PR_Config.h.in
-  FileLogListener.cpp
-  FileLogListener.h
   IObject.h
   Logger.cpp
   Logger.h
-  LogListener.h
   PrettyPrint.h
   Platform.h
   Platform.cpp
@@ -89,6 +86,11 @@ set(PR_Src
   integrator/IIntegrator.cpp
   integrator/IIntegrator.h
   integrator/IIntegratorFactory.h
+  log/ConsoleLogListener.cpp
+  log/ConsoleLogListener.h
+  log/FileLogListener.cpp
+  log/FileLogListener.h
+  log/LogListener.h
   material/IMaterial.cpp
   material/IMaterial.h
   material/IMaterial.inl

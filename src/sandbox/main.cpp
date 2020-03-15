@@ -1,4 +1,4 @@
-#include "FileLogListener.h"
+#include "log/FileLogListener.h"
 #include "Logger.h"
 #include "Profiler.h"
 #include "ProgramSettings.h"
@@ -70,9 +70,9 @@ int main(int argc, char** argv)
 #endif
 	const bf::path logFile = sstream.str();
 
-	FileLogListener fileLogListener;
-	fileLogListener.open(logFile.string());
-	PR_LOGGER.addListener(&fileLogListener);
+	std::shared_ptr<FileLogListener> fileLogListener = std::make_shared<FileLogListener>();
+	fileLogListener->open(logFile.string());
+	PR_LOGGER.addListener(fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);
 	PR_LOGGER.setVerbosity(options.IsVerbose ? L_DEBUG : L_INFO);

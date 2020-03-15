@@ -1,10 +1,10 @@
 #include "Environment.h"
-#include "FileLogListener.h"
 #include "Logger.h"
 #include "Profiler.h"
 #include "ProgramSettings.h"
 #include "SceneLoader.h"
 #include "config/Build.h"
+#include "log/FileLogListener.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderTileStatistics.h"
@@ -33,8 +33,7 @@ void printStatus(const RenderStatus& status)
 	std::cout << " | S: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
 			  << " R: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
 			  << " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
-			  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt()
-			  << std::endl;
+			  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();
 }
 
 constexpr uint32 PROFILE_SAMPLE_RATE = 10;
@@ -61,11 +60,12 @@ int main(int argc, char** argv)
 		options.PluginPath = bf::current_path().string();
 	}
 
-	FileLogListener fileLogListener;
-	fileLogListener.open(logFile.string());
-	PR_LOGGER.addListener(&fileLogListener);
+	std::shared_ptr<FileLogListener> fileLogListener = std::make_shared<FileLogListener>();
+	fileLogListener->open(logFile.string());
+	PR_LOGGER.addListener(fileLogListener);
 
 	PR_LOGGER.setQuiet(options.IsQuiet);
+	PR_LOGGER.enableAnsiTerminal(!options.NoPrettyConsole);
 	PR_LOGGER.setVerbosity(options.IsVerbose ? L_DEBUG : L_INFO);
 
 	if (!options.IsQuiet)
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 	}
 
 	env->renderSettings().useAdaptiveTiling = options.AdaptiveTiling;
-	env->renderSettings().sortHits = options.SortHits;
+	env->renderSettings().sortHits			= options.SortHits;
 
 	// Setup renderFactory
 	auto renderFactory = env->createRenderFactory();
@@ -148,9 +148,18 @@ int main(int argc, char** argv)
 			if (options.ShowProgress > 0 && span_prog.count() >= options.ShowProgress) {
 				RenderStatus status = renderer->status();
 
-				std::cout << std::setw(OUTPUT_FIELD_SIZE) << /*std::setfill('0') <<*/ std::setprecision(4) << std::fixed << status.percentage() * 100 << "%"
+				if (!options.NoPrettyConsole)
+					std::cout << "\r";
+
+				std::cout << std::setw(OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed
+						  << status.percentage() * 100 << "%"
 						  << " Pass " << renderer->currentPass() + 1;
 				printStatus(status);
+
+				if (options.NoPrettyConsole)
+					std::cout << std::endl;
+				else
+					std::cout << std::flush;
 
 				start_prog = end;
 			}
@@ -165,6 +174,9 @@ int main(int argc, char** argv)
 
 		// Final status
 		if (options.ShowProgress > 0) {
+			if (!options.NoPrettyConsole)
+				std::cout << "\r";
+
 			RenderStatus status = renderer->status();
 			std::cout << "Final";
 			printStatus(status);

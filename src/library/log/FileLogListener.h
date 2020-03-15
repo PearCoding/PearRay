@@ -17,4 +17,4 @@ public:
 private:
 	std::fstream mStream;
 };
-}
+} // namespace PR

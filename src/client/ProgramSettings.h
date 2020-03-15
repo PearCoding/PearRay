@@ -12,6 +12,7 @@ public:
 
 	bool IsVerbose;
 	bool IsQuiet;
+	bool NoPrettyConsole;
 	PR::uint32 ShowProgress; // In seconds
 	bool ShowInformation;
 
