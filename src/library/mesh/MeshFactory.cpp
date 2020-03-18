@@ -14,19 +14,19 @@ std::shared_ptr<Mesh> MeshFactory::create(const std::string& name,
 									  const std::shared_ptr<Cache>& cache,
 									  bool useCache)
 {
-#if PR_TRIANGLE_INTERSECTION_METHOD == 0
+#if PR_TRIANGLE_INTERSECTION_METHOD_ID == 0
 	return std::make_shared<TriMeshMT>(name, std::move(mesh_base), cache, useCache);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 1
+#elif PR_TRIANGLE_INTERSECTION_METHOD_ID == 1
 	return std::make_shared<TriMeshPI>(name, std::move(mesh_base), cache, useCache);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 2
+#elif PR_TRIANGLE_INTERSECTION_METHOD_ID == 2
 	return std::make_shared<TriMeshPIMem>(name, std::move(mesh_base), cache, useCache);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 3
+#elif PR_TRIANGLE_INTERSECTION_METHOD_ID == 3
 	return std::make_shared<TriMeshPIOff>(name, std::move(mesh_base), cache, useCache);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 4
+#elif PR_TRIANGLE_INTERSECTION_METHOD_ID == 4
 	return std::make_shared<TriMeshWT>(name, std::move(mesh_base), cache, useCache);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 5
+#elif PR_TRIANGLE_INTERSECTION_METHOD_ID == 5
 	return std::make_shared<TriMeshBW9>(name, std::move(mesh_base), cache, useCache);
-#elif PR_TRIANGLE_INTERSECTION_METHOD == 6
+#elif PR_TRIANGLE_INTERSECTION_METHOD_ID == 6
 	return std::make_shared<TriMeshBW12>(name, std::move(mesh_base), cache, useCache);
 #else
 #error Invalid triangle intersection method
