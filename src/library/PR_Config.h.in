@@ -71,9 +71,11 @@
 #if defined(PR_CC_GNU) || defined(PR_CC_CLANG)
 #define PR_LIKELY(x) __builtin_expect(!!(x), 1)
 #define PR_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define PR_MAYBE_UNUSED __attribute__((unused))
 #else
 #define PR_LIKELY(x) (x)
 #define PR_UNLIKELY(x) (x)
+#define PR_MAYBE_UNUSED
 #endif
 
 #ifndef PR_NO_ASSERTS

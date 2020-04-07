@@ -112,6 +112,10 @@ set(PR_Src
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
+  memory/MemoryPool.h
+  memory/MemoryPool.inl
+  memory/MemoryStack.h
+  memory/MemoryStack.inl
   mesh/Mesh.cpp
   mesh/Mesh.h
   mesh/MeshBase.cpp

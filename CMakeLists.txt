@@ -125,6 +125,7 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
 find_package(TBB REQUIRED COMPONENTS tbb)
+find_package(ISPC REQUIRED)
 
 # Optional
 if(PR_USE_CCACHE)

@@ -53,6 +53,7 @@ PUSH_TEST(vector vector.cpp)
 PUSH_TEST(curve curve.cpp)
 PUSH_TEST(quadric quadric.cpp)
 PUSH_TEST(parameter parameter.cpp USES_UTILS)
+PUSH_TEST(memory memory.cpp)
 
 if(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)

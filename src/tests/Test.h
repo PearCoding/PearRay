@@ -329,6 +329,34 @@ private:
 		_test->check((value) == false, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
 	} while (false)
 
+#define PR_CHECK_THROW(op)                                                 \
+	do {                                                                   \
+		bool _throwed = false;                                             \
+		try {                                                              \
+			(op);                                                          \
+			_throwed = false;                                              \
+		} catch (...) {                                                    \
+			_throwed = true;                                               \
+		}                                                                  \
+		std::stringstream _stream;                                         \
+		_stream << "Expected an exception but non appeared";               \
+		_test->check(_throwed, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+	} while (false)
+
+#define PR_CHECK_NO_THROW(op)                                               \
+	do {                                                                    \
+		bool _throwed = false;                                              \
+		try {                                                               \
+			(op);                                                           \
+			_throwed = false;                                               \
+		} catch (...) {                                                     \
+			_throwed = true;                                                \
+		}                                                                   \
+		std::stringstream _stream;                                          \
+		_stream << "Expected no exception but one appeared";                \
+		_test->check(!_throwed, _stream.str(), PR_FUNCTION_NAME, __LINE__); \
+	} while (false)
+
 #define PRT_BEGIN_MAIN                      \
 	int main(int /*argc*/, char** /*argv*/) \
 	{                                       \

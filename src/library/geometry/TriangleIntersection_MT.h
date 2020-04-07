@@ -26,13 +26,13 @@ inline PR_LIB bool _intersectBaseMT(
 	const Vector3f s = in.Origin - p1;
 	uv(0)			 = f * s.dot(q);
 
-	if (PR_LIKELY(uv(0) < 0 || uv(0) > 1))
+	if (PR_LIKELY(uv(0) < 0.0f || uv(0) - 1.0f > PR_EPSILON))
 		return false;
 
 	r	  = s.cross(e12);
 	uv(1) = f * in.Direction.dot(r);
 
-	return (uv(1) >= 0 && uv(0) + uv(1) <= 1);
+	return (uv(1) >= 0.0f && uv(0) + uv(1) - 1.0f <= PR_EPSILON);
 }
 
 inline PR_LIB bool _intersectBaseMT(
@@ -71,14 +71,14 @@ inline PR_LIB bfloat _intersectBaseMT(
 	const Vector3fv s = in.Origin - p1;
 	uv(0)			  = f * s.dot(q);
 
-	valid = valid & ((uv(0) >= 0) & (uv(0) <= 1));
+	valid = valid & ((uv(0) >= 0.0f) & (uv(0) - vfloat(1.0f) <= PR_EPSILON));
 	if (PR_LIKELY(none(valid)))
 		return valid;
 
 	r	  = s.cross(e12);
 	uv(1) = f * in.Direction.dot(r);
 
-	return valid & ((uv(1) >= 0) & (uv(0) + uv(1) <= 1));
+	return valid & (uv(1) >= 0.0f) & (uv(0) + uv(1) - vfloat(1.0f) <= PR_EPSILON);
 }
 
 inline PR_LIB bfloat _intersectBaseMT(
