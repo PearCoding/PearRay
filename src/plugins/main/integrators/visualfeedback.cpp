@@ -4,6 +4,7 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "integrator/IIntegratorPlugin.h"
+#include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
 
@@ -28,7 +29,8 @@ enum VisualFeedbackMode {
 	VFM_RayDirection,
 	VFM_Parameter,
 	VFM_Inside,
-	VFM_NdotV
+	VFM_NdotV,
+	VFM_ValidateMaterial
 };
 
 static struct {
@@ -46,6 +48,7 @@ static struct {
 	{ "parameter", VFM_Parameter },
 	{ "inside", VFM_Inside },
 	{ "ndotv", VFM_NdotV },
+	{ "validate_material", VFM_ValidateMaterial },
 	{ "", VFM_ColoredEntityID }
 };
 
@@ -96,6 +99,7 @@ public:
 		PR_PROFILE_THIS;
 
 		LightPath stdPath = LightPath::createCDL(1);
+		Random random(42);
 
 		while (session.handleCameraRays()) {
 			session.handleHits(
@@ -104,7 +108,7 @@ public:
 				},
 				[&](const HitEntry& hitEntry,
 					const Ray& ray, const GeometryPoint& pt,
-					IEntity* entity, IMaterial*) {
+					IEntity* entity, IMaterial* material) {
 					PR_PROFILE_THIS;
 					session.tile()->statistics().addEntityHitCount();
 
@@ -173,6 +177,27 @@ public:
 						else
 							radiance = ColorTriplet{ originalNdotV, 0, 0 };
 					} break;
+					case VFM_ValidateMaterial: {
+						if (material) {
+							MaterialSampleInput samp_in;
+							samp_in.Point = spt;
+							samp_in.RND	  = random.get2D();
+							MaterialSampleOutput samp_out;
+							material->sample(samp_in, samp_out, session);
+
+							MaterialEvalInput eval_in;
+							eval_in.Point	 = spt;
+							eval_in.Outgoing = samp_out.Outgoing;
+							eval_in.NdotL	 = spt.N.dot(eval_in.Outgoing);
+							MaterialEvalOutput eval_out;
+							material->eval(eval_in, eval_out, session);
+
+							const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
+							const float relPDFDiff = std::abs(samp_out.PDF_S - eval_out.PDF_S);
+
+							radiance = ColorTriplet{ 1 - weightDiff, 1 - relPDFDiff, 1 };
+						}
+					}
 					}
 
 					session.pushSPFragment(spt, stdPath);
