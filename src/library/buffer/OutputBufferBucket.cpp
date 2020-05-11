@@ -61,15 +61,18 @@ void OutputBufferBucket::cache()
 //#define PR_ALL_RAYS_CONTRIBUTE
 
 void OutputBufferBucket::pushSpectralFragment(const Point2i& p, const SpectralBlob& spec,
-											  uint32 wavelengthIndex, bool isMono,
+											  const SpectralBlob& wavelengths, bool isMono,
 											  const LightPath& path)
 {
+	// TODO: Add spectral mapper!
+	PR_UNUSED(wavelengths);
+	
 	const int32 filterRadius = mFilter->radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 	const Point2i rp		 = p + filterSize;
 
 	const Size1i channels	 = isMono ? 1 : 3 /*SPECTRAL_BLOB_SIZE*/;
-	const Size1i monochannel = isMono ? wavelengthIndex : 0;
+	const Size1i monochannel = 0;//isMono ? wavelengthIndex : 0;
 
 	bool isInf	   = false;
 	bool isNaN	   = false;

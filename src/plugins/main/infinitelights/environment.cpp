@@ -54,9 +54,9 @@ public:
 		MapSocketCoord coord;
 		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
 
-		coord.UV	= Spherical::uv_from_normal(dir);
-		coord.UV(1) = 1 - coord.UV(1);
-		coord.Index = in.Point.Ray.WavelengthIndex;
+		coord.UV		   = Spherical::uv_from_normal(dir);
+		coord.UV(1)		   = 1 - coord.UV(1);
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
 
 		if (in.Point.Ray.IterationDepth == 0)
 			out.Weight = mBackground->eval(coord);
@@ -65,7 +65,7 @@ public:
 
 		if (mDistribution) {
 			const float sinTheta = std::sin(coord.UV(1) * PR_PI);
-			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
+			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
 			out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
@@ -76,28 +76,28 @@ public:
 				const RenderTileSession&) const override
 	{
 		if (mDistribution) {
-			Vector2f uv  = mDistribution->sampleContinuous(in.RND, out.PDF_S);
+			Vector2f uv	 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
 			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
 			out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 			MapSocketCoord coord;
-			coord.UV	= uv;
-			coord.UV(1) = 1 - coord.UV(1);
-			coord.Index = in.Point.Ray.WavelengthIndex;
-			out.Weight  = mRadianceFactor * mRadiance->eval(coord);
+			coord.UV		   = uv;
+			coord.UV(1)		   = 1 - coord.UV(1);
+			coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+			out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
 
 			const float sinTheta = std::sin((1 - uv(1)) * PR_PI);
-			const float denom	= 2 * PR_PI * PR_PI * sinTheta;
+			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
 		} else {
 			out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
 			out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
 
 			MapSocketCoord coord;
-			coord.UV	= in.RND;
-			coord.UV(1) = 1 - coord.UV(1);
-			coord.Index = in.Point.Ray.WavelengthIndex;
-			out.Weight  = mRadianceFactor * mRadiance->eval(coord);
+			coord.UV		   = in.RND;
+			coord.UV(1)		   = 1 - coord.UV(1);
+			coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+			out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
 		}
 	}
 
@@ -138,7 +138,7 @@ public:
 		const ParameterGroup& params = ctx.Parameters;
 
 		const std::string name = params.getString("name", "__unknown");
-		const float factor	 = std::max(0.0000001f, params.getNumber("factor", 1.0f));
+		const float factor	   = std::max(0.0000001f, params.getNumber("factor", 1.0f));
 
 		auto rad		 = ctx.Env->lookupSpectralMapSocket(params.getParameter("radiance"), 1);
 		auto backgroundP = params.getParameter("background");

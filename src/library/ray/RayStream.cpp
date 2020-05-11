@@ -38,10 +38,11 @@ RayStream::RayStream(size_t raycount)
 	mTime.reserve(mSize);
 	mMinT.reserve(mSize);
 	mMaxT.reserve(mSize);
-	mWavelengthIndex.reserve(mSize);
 	mFlags.reserve(mSize);
-	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
+	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i) {
 		mWeight[i].reserve(mSize);
+		mWavelengthNM[i].reserve(mSize);
+	}
 }
 
 RayStream::~RayStream()
@@ -71,10 +72,12 @@ void RayStream::addRay(const Ray& ray)
 	mTime.emplace_back(to_unorm16(ray.Time));
 	mMinT.emplace_back(ray.MinT);
 	mMaxT.emplace_back(ray.MaxT);
-	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags);
 	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
 		mWeight[i].emplace_back(ray.Weight(i));
+
+	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
+		mWavelengthNM[i].emplace_back(ray.WavelengthNM(i));
 }
 
 void RayStream::reset()
@@ -90,12 +93,13 @@ void RayStream::reset()
 	mIterationDepth.clear();
 	mPixelIndex.clear();
 	mTime.clear();
-	mWavelengthIndex.clear();
 	mFlags.clear();
 	mMinT.clear();
 	mMaxT.clear();
-	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
+	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i) {
 		mWeight[i].clear();
+		mWavelengthNM[i].clear();
+	}
 
 	mCurrentPos = 0;
 }
@@ -123,7 +127,7 @@ RayGroup RayStream::getNextGroup()
 
 size_t RayStream::getMemoryUsage() const
 {
-	return mSize * (3 * sizeof(float) + COMPRES_MEM + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + 2 * sizeof(uint8) + sizeof(size_t) + 2 * sizeof(float));
+	return mSize * (3 * sizeof(float) + COMPRES_MEM + sizeof(uint32) + sizeof(uint16) + sizeof(unorm16) + sizeof(uint8) + sizeof(size_t) + 2 * sizeof(float) + 2 * SPECTRAL_BLOB_SIZE * sizeof(float));
 }
 
 Ray RayStream::getRay(size_t id) const
@@ -151,15 +155,16 @@ Ray RayStream::getRay(size_t id) const
 							 mDirection[2][id]);
 #endif
 
-	ray.IterationDepth	= mIterationDepth[id];
-	ray.PixelIndex		= mPixelIndex[id];
-	ray.Time			= from_unorm16(mTime[id]);
-	ray.WavelengthIndex = mWavelengthIndex[id];
-	ray.Flags			= mFlags[id];
-	ray.MinT			= mMinT[id];
-	ray.MaxT			= mMaxT[id];
+	ray.IterationDepth = mIterationDepth[id];
+	ray.PixelIndex	   = mPixelIndex[id];
+	ray.Time		   = from_unorm16(mTime[id]);
+	ray.Flags		   = mFlags[id];
+	ray.MinT		   = mMinT[id];
+	ray.MaxT		   = mMaxT[id];
 	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
 		ray.Weight[k] = mWeight[k][id];
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		ray.WavelengthNM[k] = mWavelengthNM[k][id];
 
 	ray.normalize();
 
@@ -201,13 +206,14 @@ RayPackage RayStream::getRayPackage(size_t id) const
 		t[k] = from_unorm16(mTime[id + k]);
 	ray.Time = simdpp::load(&t[0]);
 
-	load_from_container_linear(ray.WavelengthIndex, mWavelengthIndex, id);
 	load_from_container_linear(ray.Flags, mFlags, id);
 
 	load_from_container_linear(ray.MinT, mMinT, id);
 	load_from_container_linear(ray.MaxT, mMaxT, id);
 	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
 		load_from_container_linear(ray.Weight[k], mWeight[k], id);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		load_from_container_linear(ray.WavelengthNM[k], mWavelengthNM[k], id);
 
 	ray.normalize();
 

@@ -6,8 +6,8 @@ namespace PR {
 struct MapSocketCoord {
 	Vector2f UV;
 	Vector2f dUV = Vector2f(0, 0);
-	size_t Index = 0;
-	size_t Face  = 0;
+	SpectralBlob WavelengthNM;
+	size_t Face = 0;
 };
 
 ///////////////////
@@ -18,7 +18,7 @@ public:
 	virtual ~ScalarShadingSocket() = default;
 
 	virtual T eval(const ShadingPoint& ctx) const = 0;
-	virtual std::string dumpInformation() const   = 0;
+	virtual std::string dumpInformation() const	  = 0;
 };
 using FloatScalarShadingSocket = ScalarShadingSocket<float>;
 

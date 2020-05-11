@@ -74,12 +74,12 @@ public:
 		constructRay(nx, ny, sample.Lens[0], sample.Lens[1],
 					 ray.Origin, ray.Direction);
 
-		ray.WavelengthIndex = sample.WavelengthIndex;
-		ray.Weight			= SpectralBlob(sample.Weight, sample.Weight, sample.Weight, sample.Weight);
-		ray.Time			= sample.Time;
-		ray.Flags			= RF_Camera;
-		ray.MinT			= mNearT;
-		ray.MaxT			= mFarT;
+		ray.WavelengthNM = sample.WavelengthNM;
+		ray.Weight		 = SpectralBlob(sample.Weight, sample.Weight, sample.Weight, sample.Weight);
+		ray.Time		 = sample.Time;
+		ray.Flags		 = RF_Camera;
+		ray.MinT		 = mNearT;
+		ray.MaxT		 = mFarT;
 
 		//ray.normalize();
 

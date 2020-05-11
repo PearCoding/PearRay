@@ -92,7 +92,9 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	cameraSample.Lens			 = Lens;
 	cameraSample.Time			 = Time;
 	cameraSample.Weight			 = mWeight_Cache;
-	cameraSample.WavelengthIndex = 0;
+
+	// TODO: Real sampling!
+	cameraSample.WavelengthNM = SpectralBlob(540, 620, 700, 780);
 
 	return mCamera->constructRay(cameraSample);
 }

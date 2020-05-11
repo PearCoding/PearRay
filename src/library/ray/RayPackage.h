@@ -1,10 +1,9 @@
 #pragma once
 
+#include "config/TriangleOptions.h"
 #include "math/SIMD.h"
 #include "math/Transform.h"
 #include "spectral/SpectralBlob.h"
-
-#define PR_USE_RAY_CACHE
 
 namespace PR {
 
@@ -28,19 +27,21 @@ struct RayPackageBase {
 	Vector3t<V> Origin	  = Vector3t<V>(V(0), V(0), V(0));
 	Vector3t<V> Direction = Vector3t<V>(V(0), V(0), V(0));
 
-	FloatingType MinT			= FloatingType(PR_EPSILON);
-	FloatingType MaxT			= FloatingType(std::numeric_limits<float>::infinity());
-	SpectralBlobBase<V> Weight	= SpectralBlobBase<V>(V(0), V(0), V(0), V(0));
-	FloatingType Time			= FloatingType(0);
-	IntegerType IterationDepth	= IntegerType(0);
-	IntegerType Flags			= IntegerType(0);
-	IntegerType WavelengthIndex = IntegerType(0);
-	IntegerType PixelIndex		= IntegerType(0);
+	FloatingType MinT				 = FloatingType(PR_EPSILON);
+	FloatingType MaxT				 = FloatingType(std::numeric_limits<float>::infinity());
+	SpectralBlobBase<V> Weight		 = SpectralBlobBase<V>(V(0), V(0), V(0), V(0));
+	FloatingType Time				 = FloatingType(0);
+	IntegerType IterationDepth		 = IntegerType(0);
+	IntegerType Flags				 = IntegerType(0);
+	SpectralBlobBase<V> WavelengthNM = SpectralBlobBase<V>(V(0), V(0), V(0), V(0)); // Hero Quartett, first entry is hero wavelength
+	IntegerType PixelIndex			 = IntegerType(0);
 
 private:
 	bool Cached = false;
-#ifdef PR_USE_RAY_CACHE
+#ifdef PR_RAY_REQUIRE_MOMENTUM
 	Vector3t<V> Momentum_Cache;
+#endif
+#ifdef PR_RAY_REQUIRE_MAX_DIRECTION
 	IntegerType MaxDirectionIndex_Cache;
 #endif
 public:
@@ -108,7 +109,7 @@ public:
 
 	inline Vector3t<V> momentum() const
 	{
-#ifdef PR_USE_RAY_CACHE
+#ifdef PR_RAY_REQUIRE_MOMENTUM
 		PR_ASSERT(Cached, "Cache first!");
 		return Momentum_Cache;
 #else
@@ -118,7 +119,7 @@ public:
 
 	inline IntegerType maxDirectionIndex() const
 	{
-#ifdef PR_USE_RAY_CACHE
+#ifdef PR_RAY_REQUIRE_MAX_DIRECTION
 		PR_ASSERT(Cached, "Cache first!");
 		return MaxDirectionIndex_Cache;
 #else
@@ -128,8 +129,10 @@ public:
 
 	inline void cache()
 	{
-#ifdef PR_USE_RAY_CACHE
-		Momentum_Cache			= Origin.cross(Direction);
+#ifdef PR_RAY_REQUIRE_MOMENTUM
+		Momentum_Cache = Origin.cross(Direction);
+#endif
+#ifdef PR_RAY_REQUIRE_MAX_DIRECTION
 		MaxDirectionIndex_Cache = calcMaxDirectionIndex();
 #endif
 
@@ -197,13 +200,14 @@ inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 	ray.Direction[2] = extract(i, package.Direction[2]);
 	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
 		ray.Weight[k] = extract(i, package.Weight[k]);
-	ray.MinT			= extract(i, package.MinT);
-	ray.MaxT			= extract(i, package.MaxT);
-	ray.Time			= extract(i, package.Time);
-	ray.IterationDepth	= extract(i, package.IterationDepth);
-	ray.Flags			= extract(i, package.Flags);
-	ray.WavelengthIndex = extract(i, package.WavelengthIndex);
-	ray.PixelIndex		= extract(i, package.PixelIndex);
+	ray.MinT		   = extract(i, package.MinT);
+	ray.MaxT		   = extract(i, package.MaxT);
+	ray.Time		   = extract(i, package.Time);
+	ray.IterationDepth = extract(i, package.IterationDepth);
+	ray.Flags		   = extract(i, package.Flags);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		ray.WavelengthNM[k] = extract(i, package.WavelengthNM[k]);
+	ray.PixelIndex = extract(i, package.PixelIndex);
 	ray.cache();
 	return ray;
 }
@@ -218,13 +222,14 @@ inline void insertIntoRayPackage(uint32 i, RayPackage& package, const Ray& ray)
 	package.Direction[2] = insert(i, package.Direction[2], ray.Direction[2]);
 	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
 		package.Weight[k] = insert(i, package.Weight[k], ray.Weight[k]);
-	package.MinT			= insert(i, package.MinT, ray.MinT);
-	package.MaxT			= insert(i, package.MaxT, ray.MaxT);
-	package.Time			= insert(i, package.Time, ray.Time);
-	package.IterationDepth	= insert(i, package.IterationDepth, ray.IterationDepth);
-	package.Flags			= insert(i, package.Flags, ray.Flags);
-	package.WavelengthIndex = insert(i, package.WavelengthIndex, ray.WavelengthIndex);
-	package.PixelIndex		= insert(i, package.PixelIndex, ray.PixelIndex);
+	package.MinT		   = insert(i, package.MinT, ray.MinT);
+	package.MaxT		   = insert(i, package.MaxT, ray.MaxT);
+	package.Time		   = insert(i, package.Time, ray.Time);
+	package.IterationDepth = insert(i, package.IterationDepth, ray.IterationDepth);
+	package.Flags		   = insert(i, package.Flags, ray.Flags);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		package.WavelengthNM[k] = insert(i, package.WavelengthNM[k], ray.WavelengthNM[k]);
+	package.PixelIndex = insert(i, package.PixelIndex, ray.PixelIndex);
 	package.cache();
 }
 

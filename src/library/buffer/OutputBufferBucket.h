@@ -18,7 +18,7 @@ public:
 	inline void clear(bool force = false) { mData.clear(force); }
 
 	void pushSpectralFragment(const Point2i& p, const SpectralBlob& spec,
-							  uint32 wavelengthIndex, bool isMono, const LightPath& path);
+							  const SpectralBlob& wavelengths, bool isMono, const LightPath& path);
 	void pushSPFragment(const Point2i& p, const ShadingPoint& pt, const LightPath& path);
 	void pushFeedbackFragment(const Point2i& p, uint32 feedback);
 

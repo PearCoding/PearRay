@@ -107,7 +107,7 @@ void RenderTileSession::pushSpectralFragment(const SpectralBlob& spec, const Ray
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);
 	mBucket->pushSpectralFragment(coords, spec * ray.Weight,
-								  ray.WavelengthIndex, ray.Flags & RF_Monochrome, path);
+								  ray.WavelengthNM, ray.Flags & RF_Monochrome, path);
 }
 
 void RenderTileSession::pushSPFragment(const ShadingPoint& pt,

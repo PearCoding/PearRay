@@ -32,7 +32,8 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 // TODO: Better way -> Hero Wavelength!
 SpectralBlob ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
-	const uint32 index = ctx.Ray.WavelengthIndex;
+	PR_UNUSED(ctx);
+	const uint32 index = 0;//ctx.Ray.WavelengthIndex;
 	return SpectralBlob(mValue[index],
 						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
 						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f,
@@ -64,9 +65,11 @@ ConstSpectralMapSocket::ConstSpectralMapSocket(const Spectrum& f)
 {
 }
 
+// TODO: Better way -> Hero Wavelength!
 SpectralBlob ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	const uint32 index = ctx.Index;
+	PR_UNUSED(ctx);
+	const uint32 index = 0;//ctx.Ray.WavelengthIndex;
 	return SpectralBlob(mValue[index],
 						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
 						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f,

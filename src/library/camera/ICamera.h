@@ -11,7 +11,7 @@ struct PR_LIB CameraSample {
 	uint32 PixelIndex;
 	float Time;
 	float Weight;
-	uint32 WavelengthIndex;
+	SpectralBlob WavelengthNM;
 };
 
 class PR_LIB ICamera : public ITransformable {

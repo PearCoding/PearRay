@@ -73,12 +73,12 @@ private: // Some vectors are not aligned, due to required preprocessing
 	// TODO: Ray Differentials
 	std::vector<uint16> mIterationDepth;
 	std::vector<unorm16> mTime;
-	std::vector<uint8> mWavelengthIndex;
 	std::vector<uint8> mFlags;
 
 	std::vector<float> mMinT;
 	std::vector<float> mMaxT;
 	std::vector<float> mWeight[SPECTRAL_BLOB_SIZE];
+	std::vector<float> mWavelengthNM[SPECTRAL_BLOB_SIZE];
 
 	size_t mSize;
 	size_t mCurrentPos;
