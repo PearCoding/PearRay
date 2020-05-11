@@ -91,7 +91,7 @@ public:
 			return 1.25f * (fss * (1.0f / f - 0.5f) + 0.5f);
 	}
 
-	inline ColorTriplet specularTerm(const ShadingPoint& point, const ColorTriplet& spec,
+	inline SpectralBlob specularTerm(const ShadingPoint& point, const SpectralBlob& spec,
 									 float VdotX, float VdotY,
 									 float NdotL, float LdotX, float LdotY,
 									 float HdotL, float NdotH, float HdotX, float HdotY,
@@ -103,7 +103,7 @@ public:
 
 		float D		   = Microfacet::ndf_ggx(NdotH, HdotX, HdotY, ax, ay);
 		float hk	   = Fresnel::schlick_term(HdotL);
-		ColorTriplet F = mix<ColorTriplet>(spec, ColorTriplet::Ones(), hk);
+		SpectralBlob F = mix<SpectralBlob>(spec, SpectralBlob::Ones(), hk);
 		float G		   = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.NdotV, VdotX, VdotY, ax, ay);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
@@ -125,14 +125,14 @@ public:
 		return R * D * F * G;
 	}
 
-	inline ColorTriplet sheenTerm(const ColorTriplet& sheen, float HdotL) const
+	inline SpectralBlob sheenTerm(const SpectralBlob& sheen, float HdotL) const
 	{
 		float hk = Fresnel::schlick_term(HdotL);
 		return hk * sheen;
 	}
 
-	ColorTriplet evalBRDF(const ShadingPoint& point, const Vector3f& L,
-						  const ColorTriplet& base,
+	SpectralBlob evalBRDF(const ShadingPoint& point, const Vector3f& L,
+						  const SpectralBlob& base,
 						  float lum,
 						  float subsurface,
 						  float anisotropic,
@@ -157,26 +157,26 @@ public:
 		const float HdotX		= point.Nx.dot(H);
 		const float HdotY		= point.Ny.dot(H);
 
-		const ColorTriplet tint = lum > PR_EPSILON
-									  ? ColorTriplet(base / lum)
-									  : ColorTriplet::Zero();
-		const ColorTriplet cspec = mix<ColorTriplet>(
-			spec * 0.08f * mix<ColorTriplet>(ColorTriplet::Ones(), tint, specTint),
+		const SpectralBlob tint = lum > PR_EPSILON
+									  ? SpectralBlob(base / lum)
+									  : SpectralBlob::Zero();
+		const SpectralBlob cspec = mix<SpectralBlob>(
+			spec * 0.08f * mix<SpectralBlob>(SpectralBlob::Ones(), tint, specTint),
 			base,
 			metallic);
-		const ColorTriplet csheen = mix<ColorTriplet>(ColorTriplet::Ones(), tint, sheenTint);
+		const SpectralBlob csheen = mix<SpectralBlob>(SpectralBlob::Ones(), tint, sheenTint);
 
 		float diffTerm		  = diffuseTerm(point, NdotL, HdotL, roughness);
 		float ssTerm		  = subsurface > PR_EPSILON ? subsurfaceTerm(point, NdotL, HdotL, roughness) : 0.0f;
-		ColorTriplet specTerm = specularTerm(point, cspec,
+		SpectralBlob specTerm = specularTerm(point, cspec,
 											 VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
 											 roughness, anisotropic);
 		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH) : 0.0f;
-		ColorTriplet shTerm   = sheenTerm(sheen * csheen, HdotL);
+		SpectralBlob shTerm   = sheenTerm(sheen * csheen, HdotL);
 
 		return (PR_1_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
 			   + specTerm
-			   + ColorTriplet(ccTerm) * clearcoat;
+			   + SpectralBlob(ccTerm) * clearcoat;
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -184,7 +184,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ColorTriplet base	= mBaseColor->eval(in.Point);
+		SpectralBlob base	= mBaseColor->eval(in.Point);
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
 		float anisotropic	= mAnisotropic->eval(in.Point);
@@ -246,7 +246,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ColorTriplet base	= mBaseColor->eval(in.Point);
+		SpectralBlob base	= mBaseColor->eval(in.Point);
 		float lum			 = mBaseColor->relativeLuminance(in.Point);
 		float subsurface	 = mSubsurface->eval(in.Point);
 		float anisotropic	= mAnisotropic->eval(in.Point);

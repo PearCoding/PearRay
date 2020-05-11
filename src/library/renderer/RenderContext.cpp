@@ -61,8 +61,6 @@ void RenderContext::reset()
 
 	mShouldStop					 = false;
 	mThreadsWaitingForIteration	 = 0;
-	mThreadsWaitingForPass		 = 0;
-	mCurrentPass				 = 0;
 	mIncrementalCurrentIteration = 0;
 
 	mThreads.clear();
@@ -124,11 +122,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 
 	// Start
 	mIntegrator->onStart();
-	if (mIntegrator->needNextPass(0)) {
-		bool clear; // Doesn't matter, as it is already clean.
-		mIntegrator->onNextPass(0, clear);
-	}
-
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
@@ -169,28 +162,6 @@ std::vector<Rect2i> RenderContext::currentTiles() const
 	return list;
 }
 
-void RenderContext::waitForNextPass()
-{
-	PR_PROFILE_THIS;
-
-	std::unique_lock<std::mutex> lk(mPassMutex);
-	mThreadsWaitingForPass++;
-
-	if (mThreadsWaitingForPass == threads()) {
-		if (mIntegrator->needNextPass(mCurrentPass + 1))
-			onNextPass();
-
-		mCurrentPass++;
-		mThreadsWaitingForPass = 0;
-		lk.unlock();
-
-		mPassCondition.notify_all();
-	} else {
-		mPassCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForPass == 0; });
-		lk.unlock();
-	}
-}
-
 bool RenderContext::isFinished() const
 {
 	PR_PROFILE_THIS;
@@ -222,7 +193,6 @@ void RenderContext::stop()
 
 	// Make sure threads are not inside conditions
 	mIterationCondition.notify_all();
-	mPassCondition.notify_all();
 }
 
 RenderTile* RenderContext::getNextTile()
@@ -297,23 +267,7 @@ RenderStatus RenderContext::status() const
 	status.setField("global.pixel_sample_count", s.pixelSampleCount());
 	status.setField("global.entity_hit_count", s.entityHitCount());
 	status.setField("global.background_hit_count", s.backgroundHitCount());
-	status.setField("global.current_pass", (uint64)mCurrentPass);
 
 	return status;
-}
-
-void RenderContext::onNextPass()
-{
-	PR_PROFILE_THIS;
-
-	mTileMap->reset();
-
-	bool clear = false;
-	mIntegrator->onNextPass(mCurrentPass + 1, clear);
-
-	mIncrementalCurrentIteration = 0;
-
-	if (clear)
-		mOutputMap->clear();
 }
 } // namespace PR

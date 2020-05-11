@@ -12,13 +12,13 @@ public:
 				   OIIO::TextureSystem* tsys,
 				   const OIIO::TextureOpt& options,
 				   const std::string& filename);
-	ColorTriplet eval(const MapSocketCoord& ctx) const override;
+	SpectralBlob eval(const MapSocketCoord& ctx) const override;
 	float relativeLuminance(const MapSocketCoord& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
 private:
-	void lookup(const MapSocketCoord& x, ColorTriplet& rgb) const;
+	void lookup(const MapSocketCoord& x, SpectralBlob& rgb) const;
 
 	OIIO::ustring mFilename;
 	void* mHandle;

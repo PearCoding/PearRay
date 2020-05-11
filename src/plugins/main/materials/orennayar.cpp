@@ -35,21 +35,21 @@ public:
 	}
 
 	// https://mimosa-pudica.net/improved-oren-nayar.html
-	inline ColorTriplet calc(const Vector3f& L, float NdotL, const ShadingPoint& spt) const
+	inline SpectralBlob calc(const Vector3f& L, float NdotL, const ShadingPoint& spt) const
 	{
 		float roughness = mRoughness->eval(spt);
 		roughness *= roughness;
 
-		ColorTriplet weight = mAlbedo->eval(spt);
+		SpectralBlob weight = mAlbedo->eval(spt);
 
 		if (roughness > PR_EPSILON) {
 			const float s = NdotL * spt.NdotV - L.dot(spt.Ray.Direction);
 			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, -spt.NdotV);
 
-			const ColorTriplet A = ColorTriplet::Ones() * (1 - 0.5f * roughness / (roughness + 0.33f))
+			const SpectralBlob A = SpectralBlob::Ones() * (1 - 0.5f * roughness / (roughness + 0.33f))
 								   + 0.17f * weight * roughness / (roughness + 0.13f);
 			const float B = 0.45f * roughness / (roughness + 0.09f);
-			weight *= A + ColorTriplet::Ones() * (B * s / t);
+			weight *= A + SpectralBlob::Ones() * (B * s / t);
 		}
 
 		return weight * PR_1_PI * std::abs(NdotL);

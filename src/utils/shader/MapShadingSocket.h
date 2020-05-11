@@ -6,7 +6,7 @@ namespace PR {
 class PR_LIB_UTILS MapShadingSocket : public PR::FloatSpectralShadingSocket {
 public:
 	MapShadingSocket(const std::shared_ptr<FloatSpectralMapSocket>& map);
-	ColorTriplet eval(const ShadingPoint& ctx) const override;
+	SpectralBlob eval(const ShadingPoint& ctx) const override;
 	float relativeLuminance(const ShadingPoint& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;

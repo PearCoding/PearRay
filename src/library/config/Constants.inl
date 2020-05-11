@@ -1,7 +1,8 @@
 // IWYU pragma: private, include "PR_Config.h"
 
 namespace PR {
-constexpr float PR_EPSILON = std::numeric_limits<float>::epsilon();
+constexpr float PR_EPSILON	   = std::numeric_limits<float>::epsilon();
+constexpr uint32 PR_INVALID_ID = std::numeric_limits<uint32>::max();
 
 #ifdef M_PI
 constexpr float PR_PI = static_cast<float>(M_PI);

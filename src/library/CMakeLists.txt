@@ -22,6 +22,11 @@ set(PR_Src
   buffer/OutputBufferData.cpp
   buffer/OutputBufferData.h
   buffer/OutputBufferData.inl
+  bxdf/BxDF.h
+  bxdf/BxDFContainer.cpp
+  bxdf/BxDFContainer.h
+  bxdf/BxDFData.h
+  bxdf/BxDFType.h
   cache/ICachable.h
   cache/Cache.h
   cache/Cache.cpp
@@ -181,8 +186,11 @@ set(PR_Src
   renderer/RenderTileMap.h
   renderer/RenderTileSession.cpp
   renderer/RenderTileSession.h
-  renderer/RenderTileSession.inl
   renderer/RenderTileStatistics.cpp
+  renderer/RenderTileStatistics.h
+  renderer/StreamPipeline.cpp
+  renderer/StreamPipeline.h
+  renderer/StreamPipeline.inl
   sampler/Distribution1D.cpp
   sampler/Distribution1D.h
   sampler/Distribution2D.cpp
@@ -201,7 +209,7 @@ set(PR_Src
   serialization/Serializer.h
   serialization/Serializer.cpp
   serialization/Serializer.inl
-  spectral/ColorTriplet.h
+  spectral/SpectralBlob.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h
   spectral/RGBSpectrumDescriptor.cpp
@@ -217,7 +225,9 @@ set(PR_Src
   spectral/ToneMapper.h
   spectral/XYZSpectrumDescriptor.cpp
   spectral/XYZSpectrumDescriptor.h
+  shader/ShadingGroup.cpp
   shader/ShadingGroup.h
+  shader/ShadingGroupBlock.h
   shader/ShadingPoint.h
   shader/Socket.h
   thread/Thread.cpp

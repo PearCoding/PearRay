@@ -26,45 +26,30 @@ void RenderThread::main()
 	namestream << "Worker " << mThreadIndex;
 	PR_PROFILE_THREAD(namestream.str());
 
-	RayStream rays(mRenderer->settings().maxParallelRays);
-	HitStream hits(mRenderer->settings().maxParallelRays);
+	auto integrator = mRenderer->integrator()->createThreadInstance(mRenderer, mThreadIndex);
+	auto bucket		= mRenderer->output()->createBucket(mRenderer->maxTileSize());
 
-	uint32 pass		= 0;
-	auto integrator = mRenderer->integrator();
+	mTile = nullptr;
+	mTile = mRenderer->getNextTile();
 
-	std::shared_ptr<OutputBufferBucket> bucket = mRenderer->output()->createBucket(mRenderer->maxTileSize());
+	integrator->onStart();
+	while (mTile && !shouldStop()) {
+		RenderTileSession session(mThreadIndex, mTile,
+								  bucket);
 
-	integrator->onThreadStart(mRenderer, mThreadIndex);
-	while (integrator->needNextPass(pass) && !shouldStop()) {
-		mTile = nullptr;
-		mTile = mRenderer->getNextTile();
+		mTile->incIteration();
+		mStatistics.addTileCount();
 
-		while (mTile && !shouldStop()) {
-			RenderTileSession session(mThreadIndex, mTile,
-									  bucket,
-									  &rays, &hits);
-
-			mTile->incIteration();
-			mStatistics.addTileCount();
-
-			bucket->clear(true);
-			integrator->onPass(session, pass);
-			if (shouldStop())
-				break;
-			mRenderer->output()->mergeBucket(mTile->start(), bucket);
-
-			mTile->release();
-			mTile = nullptr;
-			mTile = mRenderer->getNextTile();
-		}
-
+		bucket->clear(true);
+		integrator->onTile(session);
 		if (shouldStop())
 			break;
+		mRenderer->output()->mergeBucket(mTile->start(), bucket);
 
-		mRenderer->waitForNextPass();
-
-		pass++;
+		mTile->release();
+		mTile = nullptr;
+		mTile = mRenderer->getNextTile();
 	}
-	integrator->onThreadEnd(mRenderer, mThreadIndex);
+	integrator->onEnd();
 }
 } // namespace PR

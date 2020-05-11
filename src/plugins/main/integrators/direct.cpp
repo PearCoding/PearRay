@@ -14,6 +14,7 @@
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
+#include "renderer/StreamPipeline.h"
 #include "shader/ShadingPoint.h"
 
 #include "Logger.h"
@@ -37,27 +38,27 @@ constexpr float SHADOW_RAY_MIN = 0.00001f;
 constexpr float SHADOW_RAY_MAX = std::numeric_limits<float>::infinity();
 constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
 constexpr float BOUNCE_RAY_MAX = std::numeric_limits<float>::infinity();
-class IntDirect : public IIntegrator {
+class IntDirectIntance : public IIntegratorInstance {
 public:
-	explicit IntDirect(size_t lightSamples, size_t maxRayDepth)
-		: IIntegrator()
+	explicit IntDirectIntance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
+		: mPipeline(ctx)
 		, mLightSampleCount(lightSamples)
 		, mMaxRayDepth(maxRayDepth)
-		, mMSIEnabled(true)
+		, mMSIEnabled(msi)
 	{
 	}
 
-	virtual ~IntDirect() = default;
+	virtual ~IntDirectIntance() = default;
 
-	ColorTriplet infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
+	SpectralBlob infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
 							   LightPathToken& token,
 							   IInfiniteLight* infLight, IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
-		ColorTriplet LiL = ColorTriplet::Zero();
+		SpectralBlob LiL = SpectralBlob::Zero();
 		float msiL		 = 0.0f;
-		ColorTriplet LiS = ColorTriplet::Zero();
+		SpectralBlob LiS = SpectralBlob::Zero();
 		float msiS		 = 0.0f;
 
 		const bool allowMSI = mMSIEnabled && !infLight->hasDeltaDistribution();
@@ -169,7 +170,9 @@ public:
 				IEntity* nentity;
 				IMaterial* nmaterial;
 				if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
-					eval(session, path, next, npt, nentity, nmaterial);
+					ShadingPoint spt2;
+					spt2.setByIdentity(next, npt);
+					eval(session, path, spt2, nentity, nmaterial);
 				} else {
 					session.tile()->statistics().addBackgroundHitCount();
 					infLightHandled = true;
@@ -196,15 +199,15 @@ public:
 		}
 	}
 
-	ColorTriplet directLight(RenderTileSession& session, const ShadingPoint& spt,
+	SpectralBlob directLight(RenderTileSession& session, const ShadingPoint& spt,
 							 LightPathToken& token,
 							 IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
-		ColorTriplet LiL = ColorTriplet::Zero();
+		SpectralBlob LiL = SpectralBlob::Zero();
 		float msiL		 = 0.0f;
-		ColorTriplet LiS = ColorTriplet::Zero();
+		SpectralBlob LiS = SpectralBlob::Zero();
 		float msiS		 = 0.0f;
 
 		// Pick light and point
@@ -311,7 +314,7 @@ public:
 	}
 
 	void eval(RenderTileSession& session, LightPath& path,
-			  const Ray& ray, const GeometryPoint& pt,
+			  const ShadingPoint& spt,
 			  IEntity* entity, IMaterial* material)
 	{
 		PR_PROFILE_THIS;
@@ -322,9 +325,6 @@ public:
 		if (!entity->isLight() && !material)
 			return;
 
-		ShadingPoint spt;
-		spt.setByIdentity(ray, pt);
-		spt.EntityID = entity->id();
 		session.pushSPFragment(spt, path);
 
 		// Only consider camera rays, as everything else produces too much noise
@@ -341,7 +341,7 @@ public:
 				ems->eval(inL, outL, session);
 
 				const float prevGEOM  = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
-				ColorTriplet radiance = outL.Weight * prevGEOM;
+				SpectralBlob radiance = outL.Weight * prevGEOM;
 
 				if (!radiance.isZero()) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
@@ -363,7 +363,7 @@ public:
 			const float factor = 1.0f / mLightSampleCount;
 			for (size_t i = 0; i < mLightSampleCount; ++i) {
 				LightPathToken token;
-				ColorTriplet radiance = factor * directLight(session, spt, token, material);
+				SpectralBlob radiance = factor * directLight(session, spt, token, material);
 
 				if (!radiance.isZero()) {
 					path.addToken(token);
@@ -379,7 +379,7 @@ public:
 					continue;
 
 				LightPathToken token;
-				ColorTriplet radiance = infiniteLight(session, spt, token,
+				SpectralBlob radiance = infiniteLight(session, spt, token,
 													  light.get(), material);
 
 				if (!radiance.isZero()) {
@@ -392,48 +392,82 @@ public:
 		}
 	}
 
-	// Per thread
-	void onPass(RenderTileSession& session, uint32) override
+	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)
 	{
 		PR_PROFILE_THIS;
-
 		const size_t maxPathSize = mMaxRayDepth + 2;
 
-		LightPath cb = LightPath::createCB();
 		LightPath path(maxPathSize);
 		path.addToken(LightPathToken::Camera());
-		while (session.handleCameraRays()) {
-			session.handleHits(
-				[&](size_t /*session_ray_id*/, const Ray& ray) {
-					PR_PROFILE_THIS;
-					session.tile()->statistics().addBackgroundHitCount();
 
-					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-						if (light->hasDeltaDistribution())
-							continue;
-
-						// Only the ray is fixed (Should be handled better!)
-						InfiniteLightEvalInput in;
-						in.Point.Ray   = ray;
-						in.Point.Flags = SPF_Background;
-						InfiniteLightEvalOutput out;
-						light->eval(in, out, session);
-
-						session.pushSpectralFragment(out.Weight, ray, cb);
-					}
-				},
-				[&](const HitEntry& /*entry*/,
-					const Ray& ray, const GeometryPoint& pt,
-					IEntity* entity, IMaterial* material) {
-					eval(session, path, ray, pt, entity, material);
-					PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");
-				});
+		for (size_t i = 0; i < sg.size(); ++i) {
+			ShadingPoint spt;
+			sg.computeShadingPoint(i, spt);
+			eval(session, path, spt, sg.entity(), sg.material());
+			PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");
 		}
 	}
 
-	RenderStatus status() const override
+	void handleBackground(RenderTileSession& session, const ShadingGroup& sg)
 	{
-		return RenderStatus();
+		PR_PROFILE_THIS;
+		LightPath cb = LightPath::createCB();
+		session.tile()->statistics().addBackgroundHitCount(sg.size());
+		for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+			if (light->hasDeltaDistribution())
+				continue;
+
+			// Only the ray is fixed (Should be handled better!)
+			for (size_t i = 0; i < sg.size(); ++i) {
+				InfiniteLightEvalInput in;
+				sg.extractRay(i, in.Point.Ray);
+				in.Point.Flags = SPF_Background;
+				InfiniteLightEvalOutput out;
+				light->eval(in, out, session);
+
+				session.pushSpectralFragment(out.Weight, in.Point.Ray, cb);
+			}
+		}
+	}
+
+	void onTile(RenderTileSession& session) override
+	{
+		PR_PROFILE_THIS;
+		mPipeline.reset(session.tile());
+
+		while (!mPipeline.isFinished()) {
+			mPipeline.runPipeline();
+			while (mPipeline.hasShadingGroup()) {
+				auto sg = mPipeline.popShadingGroup(session);
+				if (sg.isBackground())
+					handleBackground(session, sg);
+				else
+					handleShadingGroup(session, sg);
+			}
+		}
+	}
+
+private:
+	StreamPipeline mPipeline;
+	const size_t mLightSampleCount;
+	const size_t mMaxRayDepth;
+	bool mMSIEnabled;
+};
+
+class IntDirect : public IIntegrator {
+public:
+	explicit IntDirect(size_t lightSamples, size_t maxRayDepth)
+		: mLightSampleCount(lightSamples)
+		, mMaxRayDepth(maxRayDepth)
+		, mMSIEnabled(true)
+	{
+	}
+
+	virtual ~IntDirect() = default;
+
+	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
+	{
+		return std::make_shared<IntDirectIntance>(ctx, mLightSampleCount, mMaxRayDepth, mMSIEnabled);
 	}
 
 	inline void enableMSI(bool b) { mMSIEnabled = b; }

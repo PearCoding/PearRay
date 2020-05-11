@@ -17,7 +17,7 @@ private:
 class PR_LIB_UTILS ConstSpectralShadingSocket : public FloatSpectralShadingSocket {
 public:
 	explicit ConstSpectralShadingSocket(const Spectrum& f);
-	ColorTriplet eval(const ShadingPoint& ctx) const override;
+	SpectralBlob eval(const ShadingPoint& ctx) const override;
 	float relativeLuminance(const ShadingPoint& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
@@ -29,7 +29,7 @@ private:
 class PR_LIB_UTILS ConstSpectralMapSocket : public FloatSpectralMapSocket {
 public:
 	explicit ConstSpectralMapSocket(const Spectrum& f);
-	ColorTriplet eval(const MapSocketCoord& ctx) const override;
+	SpectralBlob eval(const MapSocketCoord& ctx) const override;
 	float relativeLuminance(const MapSocketCoord& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;

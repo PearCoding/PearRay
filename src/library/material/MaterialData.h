@@ -13,7 +13,7 @@ struct PR_LIB MaterialEvalInput {
 };
 
 struct PR_LIB MaterialEvalOutput {
-	ColorTriplet Weight;
+	SpectralBlob Weight;
 	float PDF_S;
 	MaterialScatteringType Type;
 };
@@ -26,7 +26,7 @@ struct PR_LIB MaterialSampleInput {
 
 struct PR_LIB MaterialSampleOutput {
 	Vector3f Outgoing;
-	ColorTriplet Weight;
+	SpectralBlob Weight;
 	float PDF_S;
 	MaterialScatteringType Type;
 };

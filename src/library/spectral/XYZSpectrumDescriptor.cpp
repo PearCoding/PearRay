@@ -49,14 +49,14 @@ void XYZSpectrumDescriptor::convertSpectrum(Spectrum& dst, const Spectrum& src)
 }
 
 // TODO: This is missing important information
-ColorTriplet XYZSpectrumDescriptor::convertTriplet(const std::shared_ptr<SpectrumDescriptor>& other,
-												   const ColorTriplet& spec)
+SpectralBlob XYZSpectrumDescriptor::convertTriplet(const std::shared_ptr<SpectrumDescriptor>& other,
+												   const SpectralBlob& spec)
 {
 	switch (other->tag()) {
 	case ST_XYZ:
 		return spec;
 	case ST_SRGB: {
-		ColorTriplet newS;
+		SpectralBlob newS;
 		RGBConverter::toXYZ(spec[0], spec[1], spec[2], newS[0], newS[1], newS[2]);
 		return newS;
 	}

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "HitEntry.h"
-#include "shader/ShadingGroup.h"
+#include "shader/ShadingGroupBlock.h"
 #include <array>
 #include <vector>
 
@@ -31,7 +31,7 @@ public:
 	*/
 	void setup(bool sort);
 	void reset();
-	ShadingGroup getNextGroup();
+	ShadingGroupBlock getNextGroup();
 
 	size_t getMemoryUsage() const;
 

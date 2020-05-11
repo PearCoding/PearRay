@@ -75,7 +75,7 @@ public:
 					 ray.Origin, ray.Direction);
 
 		ray.WavelengthIndex = sample.WavelengthIndex;
-		ray.Weight			= ColorTriplet(sample.Weight, sample.Weight, sample.Weight);
+		ray.Weight			= SpectralBlob(sample.Weight, sample.Weight, sample.Weight, sample.Weight);
 		ray.Time			= sample.Time;
 		ray.Flags			= RF_Camera;
 		ray.MinT			= mNearT;

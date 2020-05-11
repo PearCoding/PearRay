@@ -40,7 +40,7 @@ RayStream::RayStream(size_t raycount)
 	mMaxT.reserve(mSize);
 	mWavelengthIndex.reserve(mSize);
 	mFlags.reserve(mSize);
-	for (int i = 0; i < 3; ++i)
+	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
 		mWeight[i].reserve(mSize);
 }
 
@@ -52,7 +52,7 @@ void RayStream::addRay(const Ray& ray)
 {
 	PR_PROFILE_THIS;
 
-	PR_ASSERT(!isFull(), "Check before adding!");
+	//PR_ASSERT(!isFull(), "Check before adding!");
 
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i].emplace_back(ray.Origin[i]);
@@ -73,7 +73,7 @@ void RayStream::addRay(const Ray& ray)
 	mMaxT.emplace_back(ray.MaxT);
 	mWavelengthIndex.emplace_back(ray.WavelengthIndex);
 	mFlags.emplace_back(ray.Flags);
-	for (int i = 0; i < 3; ++i)
+	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
 		mWeight[i].emplace_back(ray.Weight(i));
 }
 
@@ -94,7 +94,7 @@ void RayStream::reset()
 	mFlags.clear();
 	mMinT.clear();
 	mMaxT.clear();
-	for (int i = 0; i < 3; ++i)
+	for (size_t i = 0; i < SPECTRAL_BLOB_SIZE; ++i)
 		mWeight[i].clear();
 
 	mCurrentPos = 0;
@@ -158,9 +158,8 @@ Ray RayStream::getRay(size_t id) const
 	ray.Flags			= mFlags[id];
 	ray.MinT			= mMinT[id];
 	ray.MaxT			= mMaxT[id];
-	ray.Weight			= ColorTriplet(mWeight[0][id],
-							   mWeight[1][id],
-							   mWeight[2][id]);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		ray.Weight[k] = mWeight[k][id];
 
 	ray.normalize();
 
@@ -207,9 +206,8 @@ RayPackage RayStream::getRayPackage(size_t id) const
 
 	load_from_container_linear(ray.MinT, mMinT, id);
 	load_from_container_linear(ray.MaxT, mMaxT, id);
-	load_from_container_linear(ray.Weight[0], mWeight[0], id);
-	load_from_container_linear(ray.Weight[1], mWeight[1], id);
-	load_from_container_linear(ray.Weight[2], mWeight[2], id);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		load_from_container_linear(ray.Weight[k], mWeight[k], id);
 
 	ray.normalize();
 

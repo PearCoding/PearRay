@@ -39,6 +39,7 @@ public:
 	explicit RayStream(size_t size);
 	virtual ~RayStream();
 
+	inline bool isEmpty() const { return currentSize() == 0; }
 	inline bool isFull() const { return currentSize() >= maxSize(); }
 	inline bool enoughSpace(size_t requested = 1) const { return currentSize() + requested <= maxSize(); }
 	inline bool hasNextGroup() const { return mCurrentPos < currentSize(); }
@@ -77,7 +78,7 @@ private: // Some vectors are not aligned, due to required preprocessing
 
 	std::vector<float> mMinT;
 	std::vector<float> mMaxT;
-	std::vector<float> mWeight[3];
+	std::vector<float> mWeight[SPECTRAL_BLOB_SIZE];
 
 	size_t mSize;
 	size_t mCurrentPos;

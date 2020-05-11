@@ -128,12 +128,12 @@ void HitStream::reset()
 	mCurrentPos = 0;
 }
 
-ShadingGroup HitStream::getNextGroup()
+ShadingGroupBlock HitStream::getNextGroup()
 {
 	PR_PROFILE_THIS;
 
 	PR_ASSERT(hasNextGroup(), "Never call when not available");
-	ShadingGroup grp;
+	ShadingGroupBlock grp;
 	grp.Stream	   = this;
 	grp.EntityID   = mEntityID[mCurrentPos];
 	grp.MaterialID = mMaterialID[mCurrentPos];

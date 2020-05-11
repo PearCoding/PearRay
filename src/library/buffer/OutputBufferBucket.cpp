@@ -13,6 +13,7 @@ OutputBufferBucket::OutputBufferBucket(const std::shared_ptr<IFilter>& filter,
 	, mExtendedViewSize(mExtendedSize)
 	, mData(mExtendedSize, specChannels)
 	, mHasNonSpecLPE(false)
+	, mSpectralMapBuffer{ std::vector<float>(specChannels), std::vector<float>(specChannels), std::vector<float>(specChannels) }
 {
 }
 
@@ -59,37 +60,38 @@ void OutputBufferBucket::cache()
 // Uncomment this to allow all rays to contribute to AOVs outside spectrals
 //#define PR_ALL_RAYS_CONTRIBUTE
 
-void OutputBufferBucket::pushSpectralFragment(const Point2i& p, const ColorTriplet& spec,
+void OutputBufferBucket::pushSpectralFragment(const Point2i& p, const SpectralBlob& spec,
 											  uint32 wavelengthIndex, bool isMono,
 											  const LightPath& path)
 {
 	const int32 filterRadius = mFilter->radius();
-	const Size2i filterSize  = Size2i(filterRadius, filterRadius);
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 	const Point2i rp		 = p + filterSize;
 
-	const Size1i channels	= isMono ? 1 : 3;
+	const Size1i channels	 = isMono ? 1 : 3 /*SPECTRAL_BLOB_SIZE*/;
 	const Size1i monochannel = isMono ? wavelengthIndex : 0;
 
-	bool isInf	 = false;
-	bool isNaN	 = false;
-	bool isNeg	 = false;
+	bool isInf	   = false;
+	bool isNaN	   = false;
+	bool isNeg	   = false;
 	bool isInvalid = false;
 	for (Size1i i = 0; i < channels && !isInvalid; ++i) {
-		isInf	 = std::isinf(spec[i]);
-		isNaN	 = std::isnan(spec[i]);
-		isNeg	 = spec[i] < 0;
+		isInf	  = std::isinf(spec[i]);
+		isNaN	  = std::isnan(spec[i]);
+		isNeg	  = spec[i] < 0;
 		isInvalid = isInf || isNaN || isNeg;
 	}
 
 	if (!isInvalid) {
 		const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
-		const Point2i end   = (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
+		const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
 		for (Point1i py = start(1); py <= end(1); ++py) {
 			for (Point1i px = start(0); px <= end(0); ++px) {
 				Point2i sp				 = Point2i(px, py);
 				const float filterWeight = mFilter->evalWeight(sp(0) - rp(0), sp(1) - rp(1));
 
-				const ColorTriplet weightedRad = filterWeight * spec;
+				// TODO Map input color triplet to spectral buffer and than push to spectral frame buffer!
+				const SpectralBlob weightedRad = filterWeight * spec;
 				for (Size1i i = 0; i < channels; ++i)
 					mData.getInternalChannel_Spectral()->getFragment(sp, monochannel + i)
 						+= weightedRad[i];
@@ -117,7 +119,7 @@ void OutputBufferBucket::pushSPFragment(const Point2i& p, const ShadingPoint& s,
 										const LightPath& path)
 {
 	const int32 filterRadius = mFilter->radius();
-	const Size2i filterSize  = Size2i(filterRadius, filterRadius);
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 	const Point2i sp		 = p + filterSize;
 
 	const auto blend1D = [&](const Point2i& ip, AOV1D var, float val, float blend) {
@@ -203,7 +205,7 @@ void OutputBufferBucket::pushSPFragment(const Point2i& p, const ShadingPoint& s,
 void OutputBufferBucket::pushFeedbackFragment(const Point2i& p, uint32 feedback)
 {
 	const int32 filterRadius = mFilter->radius();
-	const Size2i filterSize  = Size2i(filterRadius, filterRadius);
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 	const Point2i sp		 = p + filterSize;
 
 	PR_ASSERT(mData.hasInternalChannel_Counter(AOV_Feedback), "Feedback buffer has to be available!");

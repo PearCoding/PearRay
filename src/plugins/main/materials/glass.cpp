@@ -84,7 +84,7 @@ public:
 			if (NdotT < 0) { // TOTAL REFLECTION
 				if (mThin) { // Ignore
 					out.PDF_S  = 0;
-					out.Weight = ColorTriplet::Zero();
+					out.Weight = SpectralBlob::Zero();
 					return;
 				} else {
 					out.Type	 = MST_SpecularReflection;

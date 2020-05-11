@@ -29,7 +29,7 @@ public:
 	SpectralSocket()		  = default;
 	virtual ~SpectralSocket() = default;
 
-	virtual ColorTripletBase<T> eval(const M& ctx) const = 0;
+	virtual SpectralBlobBase<T> eval(const M& ctx) const = 0;
 	virtual T relativeLuminance(const M& ctx) const		 = 0;
 	virtual Vector2i queryRecommendedSize() const		 = 0;
 	virtual std::string dumpInformation() const			 = 0;

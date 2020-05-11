@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ColorTriplet.h"
+#include "SpectralBlob.h"
 
 namespace PR {
 class Spectrum;
@@ -18,9 +18,9 @@ public:
 	virtual void convertSpectrum(Spectrum& dst,
 								 const Spectrum& src)
 		= 0;
-	virtual ColorTriplet convertTriplet(
+	virtual SpectralBlob convertTriplet(
 		const std::shared_ptr<SpectrumDescriptor>& other,
-		const ColorTriplet& spec)
+		const SpectralBlob& spec)
 		= 0;
 
 	static std::shared_ptr<SpectrumDescriptor> createDefault();

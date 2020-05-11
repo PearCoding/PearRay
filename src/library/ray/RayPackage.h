@@ -2,7 +2,7 @@
 
 #include "math/SIMD.h"
 #include "math/Transform.h"
-#include "spectral/ColorTriplet.h"
+#include "spectral/SpectralBlob.h"
 
 #define PR_USE_RAY_CACHE
 
@@ -30,7 +30,7 @@ struct RayPackageBase {
 
 	FloatingType MinT			= FloatingType(PR_EPSILON);
 	FloatingType MaxT			= FloatingType(std::numeric_limits<float>::infinity());
-	ColorTripletBase<V> Weight	= ColorTripletBase<V>(V(0), V(0), V(0));
+	SpectralBlobBase<V> Weight	= SpectralBlobBase<V>(V(0), V(0), V(0), V(0));
 	FloatingType Time			= FloatingType(0);
 	IntegerType IterationDepth	= IntegerType(0);
 	IntegerType Flags			= IntegerType(0);
@@ -189,15 +189,14 @@ using Ray		 = RayPackageBase<float>;
 inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 {
 	Ray ray;
-	ray.Origin[0]		= extract(i, package.Origin[0]);
-	ray.Origin[1]		= extract(i, package.Origin[1]);
-	ray.Origin[2]		= extract(i, package.Origin[2]);
-	ray.Direction[0]	= extract(i, package.Direction[0]);
-	ray.Direction[1]	= extract(i, package.Direction[1]);
-	ray.Direction[2]	= extract(i, package.Direction[2]);
-	ray.Weight[0]		= extract(i, package.Weight[0]);
-	ray.Weight[1]		= extract(i, package.Weight[1]);
-	ray.Weight[2]		= extract(i, package.Weight[2]);
+	ray.Origin[0]	 = extract(i, package.Origin[0]);
+	ray.Origin[1]	 = extract(i, package.Origin[1]);
+	ray.Origin[2]	 = extract(i, package.Origin[2]);
+	ray.Direction[0] = extract(i, package.Direction[0]);
+	ray.Direction[1] = extract(i, package.Direction[1]);
+	ray.Direction[2] = extract(i, package.Direction[2]);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		ray.Weight[k] = extract(i, package.Weight[k]);
 	ray.MinT			= extract(i, package.MinT);
 	ray.MaxT			= extract(i, package.MaxT);
 	ray.Time			= extract(i, package.Time);
@@ -211,15 +210,14 @@ inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 
 inline void insertIntoRayPackage(uint32 i, RayPackage& package, const Ray& ray)
 {
-	package.Origin[0]		= insert(i, package.Origin[0], ray.Origin[0]);
-	package.Origin[1]		= insert(i, package.Origin[1], ray.Origin[1]);
-	package.Origin[2]		= insert(i, package.Origin[2], ray.Origin[2]);
-	package.Direction[0]	= insert(i, package.Direction[0], ray.Direction[0]);
-	package.Direction[1]	= insert(i, package.Direction[1], ray.Direction[1]);
-	package.Direction[2]	= insert(i, package.Direction[2], ray.Direction[2]);
-	package.Weight[0]		= insert(i, package.Weight[0], ray.Weight[0]);
-	package.Weight[1]		= insert(i, package.Weight[1], ray.Weight[1]);
-	package.Weight[2]		= insert(i, package.Weight[2], ray.Weight[2]);
+	package.Origin[0]	 = insert(i, package.Origin[0], ray.Origin[0]);
+	package.Origin[1]	 = insert(i, package.Origin[1], ray.Origin[1]);
+	package.Origin[2]	 = insert(i, package.Origin[2], ray.Origin[2]);
+	package.Direction[0] = insert(i, package.Direction[0], ray.Direction[0]);
+	package.Direction[1] = insert(i, package.Direction[1], ray.Direction[1]);
+	package.Direction[2] = insert(i, package.Direction[2], ray.Direction[2]);
+	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+		package.Weight[k] = insert(i, package.Weight[k], ray.Weight[k]);
 	package.MinT			= insert(i, package.MinT, ray.MinT);
 	package.MaxT			= insert(i, package.MaxT, ray.MaxT);
 	package.Time			= insert(i, package.Time, ray.Time);

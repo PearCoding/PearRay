@@ -15,10 +15,11 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
+	  :type 'debug'
 	  :max_ray_depth 4
 	  :light_sample_count 1
 	  :msi true
+	  :mode "validate_material"
 	)
 	; Outputs
 	(output

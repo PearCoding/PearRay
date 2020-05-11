@@ -97,14 +97,15 @@ void Scene::buildTree(const std::wstring& file)
 	size_t count = mEntities.size();
 	PR_LOG(L_INFO) << count << " Entities" << std::endl;
 
-	BUILDER builder(this,
-					[](void* data, size_t index) { return reinterpret_cast<Scene*>(data)->mEntities[index]->worldBoundingBox(); },
-					[](void* data, size_t index) {
-						return reinterpret_cast<Scene*>(data)->mEntities[index]->collisionCost();
-					},
-					[](void* data, size_t index, size_t id) {
-						reinterpret_cast<Scene*>(data)->mEntities[index]->setContainerID(id);
-					});
+	BUILDER builder(
+		this,
+		[](void* data, size_t index) { return reinterpret_cast<Scene*>(data)->mEntities[index]->worldBoundingBox(); },
+		[](void* data, size_t index) {
+			return reinterpret_cast<Scene*>(data)->mEntities[index]->collisionCost();
+		},
+		[](void* data, size_t index, size_t id) {
+			reinterpret_cast<Scene*>(data)->mEntities[index]->setContainerID(id);
+		});
 	builder.setCostElementWise(true);
 	builder.build(count);
 
@@ -131,5 +132,124 @@ void Scene::loadTree(const std::wstring& file)
 	mKDTree->load(serializer);
 	if (!mKDTree->isEmpty())
 		mBoundingBox = mKDTree->boundingBox();
+}
+
+void Scene::traceRays(RayStream& rays, HitStream& hits) const
+{
+	PR_ASSERT(mKDTree, "kdTree has to be valid");
+
+	// Split stream into specific groups
+	hits.reset();
+	while (rays.hasNextGroup()) {
+		RayGroup grp = rays.getNextGroup();
+
+		if (grp.isCoherent())
+			traceCoherentRays(grp, hits);
+		else
+			traceIncoherentRays(grp, hits);
+	}
+}
+
+template <uint32 K>
+inline void _sceneCheckHit(const RayGroup& grp,
+						   uint32 off, const CollisionOutput& out,
+						   HitStream& hits)
+{
+	const uint32 id = off + K;
+	if (id >= grp.size()) // Ignore bad tails
+		return;
+
+	bool successful = simdpp::extract<K>(simdpp::bit_cast<vuint32::Base>(out.Successful));
+
+	HitEntry entry;
+	entry.RayID		  = id + grp.offset();
+	entry.MaterialID  = successful ? simdpp::extract<K>(out.MaterialID) : PR_INVALID_ID;
+	entry.EntityID	  = successful ? simdpp::extract<K>(out.EntityID) : PR_INVALID_ID;
+	entry.PrimitiveID = successful ? simdpp::extract<K>(out.FaceID) : PR_INVALID_ID;
+	for (int i = 0; i < 3; ++i)
+		entry.Parameter[i] = simdpp::extract<K>(out.Parameter[i]);
+	entry.Flags = simdpp::extract<K>(out.Flags);
+
+	PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
+	hits.add(entry);
+}
+
+template <uint32 C>
+class _sceneCheckHitCallee {
+public:
+	inline void operator()(const RayGroup& grp,
+						   uint32 off, const CollisionOutput& out,
+						   HitStream& hits)
+	{
+		_sceneCheckHit<C - 1>(grp, off, out, hits);
+		_sceneCheckHitCallee<C - 1>()(grp, off, out, hits);
+	}
+};
+
+template <>
+class _sceneCheckHitCallee<0> {
+public:
+	inline void operator()(const RayGroup&,
+						   uint32, const CollisionOutput&,
+						   HitStream&)
+	{
+	}
+};
+
+void Scene::traceCoherentRays(const RayGroup& grp, HitStream& hits) const
+{
+	PR_PROFILE_THIS;
+
+	RayPackage in;
+	CollisionOutput out;
+
+	// In some cases the group size will be not a multiply of the simd bandwith.
+	// The internal stream is always a multiply therefore garbage may be traced
+	// but no internal data will be corrupted.
+	for (size_t i = 0;
+		 i < grp.size();
+		 i += PR_SIMD_BANDWIDTH) {
+		in = grp.getRayPackage(i);
+
+		// Check for collisions
+		mKDTree->checkCollisionCoherent(
+			in, out,
+			[this](const RayPackage& in2, uint64 index,
+				   CollisionOutput& out2) {
+				const IEntity* entity = mEntities[index].get();
+				entity->checkCollision(in2, out2);
+				out2.Successful = out2.Successful & ((vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+			});
+
+		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits);
+	}
+}
+
+void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits) const
+{
+	PR_PROFILE_THIS;
+	RayPackage in;
+	CollisionOutput out;
+
+	// In some cases the group size will be not a multiply of the simd bandwith.
+	// The internal stream is always a multiply therefore garbage may be traced
+	// but no internal data will be corrupted.
+	for (size_t i = 0;
+		 i < grp.size();
+		 i += PR_SIMD_BANDWIDTH) {
+		in = grp.getRayPackage(i);
+
+		// Check for collisions
+		mKDTree->checkCollisionIncoherent(
+			in, out,
+			[this](const RayPackage& in2, uint64 index,
+				   CollisionOutput& out2) {
+				const IEntity* entity = mEntities[index].get();
+				entity->checkCollision(in2, out2);
+				out2.Successful = out2.Successful & ((vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
+			});
+
+		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits);
+	}
 }
 } // namespace PR

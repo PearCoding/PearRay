@@ -29,12 +29,14 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 {
 }
 
-ColorTriplet ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
+// TODO: Better way -> Hero Wavelength!
+SpectralBlob ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	const uint32 index = ctx.Ray.WavelengthIndex;
-	return ColorTriplet(mValue[index],
+	return SpectralBlob(mValue[index],
 						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
-						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f);
+						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f,
+						index + 3 < mValue.samples() ? mValue[index + 3] : 0.0f);
 }
 
 float ConstSpectralShadingSocket::relativeLuminance(const ShadingPoint&) const
@@ -62,12 +64,13 @@ ConstSpectralMapSocket::ConstSpectralMapSocket(const Spectrum& f)
 {
 }
 
-ColorTriplet ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
+SpectralBlob ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
 {
 	const uint32 index = ctx.Index;
-	return ColorTriplet(mValue[index],
+	return SpectralBlob(mValue[index],
 						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
-						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f);
+						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f,
+						index + 3 < mValue.samples() ? mValue[index + 3] : 0.0f);
 }
 
 float ConstSpectralMapSocket::relativeLuminance(const MapSocketCoord&) const

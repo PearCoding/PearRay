@@ -11,6 +11,7 @@
 #include "path/LightPath.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
+#include "renderer/StreamPipeline.h"
 #include "shader/ShadingPoint.h"
 
 #include "Logger.h"
@@ -52,35 +53,170 @@ static struct {
 	{ "", VFM_ColoredEntityID }
 };
 
-constexpr int RANDOM_COLOR_COUNT						= 23;
-static const Vector3f sRandomColors[RANDOM_COLOR_COUNT] = {
-	Vector3f(0.450000f, 0.376630f, 0.112500f),
-	Vector3f(0.112500f, 0.450000f, 0.405978f),
-	Vector3f(0.112500f, 0.450000f, 0.229891f),
-	Vector3f(0.450000f, 0.112500f, 0.376630f),
-	Vector3f(0.435326f, 0.450000f, 0.112500f),
-	Vector3f(0.112500f, 0.141848f, 0.450000f),
-	Vector3f(0.435326f, 0.112500f, 0.450000f),
-	Vector3f(0.112500f, 0.450000f, 0.141848f),
-	Vector3f(0.347283f, 0.450000f, 0.112500f),
-	Vector3f(0.450000f, 0.112500f, 0.200543f),
-	Vector3f(0.112500f, 0.229891f, 0.450000f),
-	Vector3f(0.450000f, 0.288587f, 0.112500f),
-	Vector3f(0.347283f, 0.112500f, 0.450000f),
-	Vector3f(0.450000f, 0.112500f, 0.288587f),
-	Vector3f(0.450000f, 0.112500f, 0.112500f),
-	Vector3f(0.450000f, 0.200543f, 0.112500f),
-	Vector3f(0.171196f, 0.450000f, 0.112500f),
-	Vector3f(0.112500f, 0.450000f, 0.317935f),
-	Vector3f(0.259239f, 0.450000f, 0.112500f),
-	Vector3f(0.259239f, 0.112500f, 0.450000f),
-	Vector3f(0.112500f, 0.405978f, 0.450000f),
-	Vector3f(0.171196f, 0.112500f, 0.450000f),
-	Vector3f(0.112500f, 0.317935f, 0.450000f)
+constexpr int RANDOM_COLOR_COUNT							= 23;
+static const SpectralBlob sRandomColors[RANDOM_COLOR_COUNT] = {
+	SpectralBlob(0.450000f, 0.376630f, 0.112500f, 1),
+	SpectralBlob(0.112500f, 0.450000f, 0.405978f, 1),
+	SpectralBlob(0.112500f, 0.450000f, 0.229891f, 1),
+	SpectralBlob(0.450000f, 0.112500f, 0.376630f, 1),
+	SpectralBlob(0.435326f, 0.450000f, 0.112500f, 1),
+	SpectralBlob(0.112500f, 0.141848f, 0.450000f, 1),
+	SpectralBlob(0.435326f, 0.112500f, 0.450000f, 1),
+	SpectralBlob(0.112500f, 0.450000f, 0.141848f, 1),
+	SpectralBlob(0.347283f, 0.450000f, 0.112500f, 1),
+	SpectralBlob(0.450000f, 0.112500f, 0.200543f, 1),
+	SpectralBlob(0.112500f, 0.229891f, 0.450000f, 1),
+	SpectralBlob(0.450000f, 0.288587f, 0.112500f, 1),
+	SpectralBlob(0.347283f, 0.112500f, 0.450000f, 1),
+	SpectralBlob(0.450000f, 0.112500f, 0.288587f, 1),
+	SpectralBlob(0.450000f, 0.112500f, 0.112500f, 1),
+	SpectralBlob(0.450000f, 0.200543f, 0.112500f, 1),
+	SpectralBlob(0.171196f, 0.450000f, 0.112500f, 1),
+	SpectralBlob(0.112500f, 0.450000f, 0.317935f, 1),
+	SpectralBlob(0.259239f, 0.450000f, 0.112500f, 1),
+	SpectralBlob(0.259239f, 0.112500f, 0.450000f, 1),
+	SpectralBlob(0.112500f, 0.405978f, 0.450000f, 1),
+	SpectralBlob(0.171196f, 0.112500f, 0.450000f, 1),
+	SpectralBlob(0.112500f, 0.317935f, 0.450000f, 1)
 };
 
-static const Vector3f TrueColor	 = Vector3f(0, 1, 0);
-static const Vector3f FalseColor = Vector3f(1, 0, 0);
+static const SpectralBlob TrueColor	 = SpectralBlob(0, 1, 0, 1);
+static const SpectralBlob FalseColor = SpectralBlob(1, 0, 0, 1);
+
+class IntVFInstance : public IIntegratorInstance {
+public:
+	explicit IntVFInstance(RenderContext* ctx, VisualFeedbackMode mode, bool applyDot)
+		: mPipeline(ctx)
+		, mMode(mode)
+		, mApplyDot(applyDot)
+	{
+	}
+
+	virtual ~IntVFInstance() = default;
+
+	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& grp)
+	{
+		LightPath stdPath = LightPath::createCDL(1);
+		Random random(42);
+		session.tile()->statistics().addEntityHitCount(grp.size());
+		for (size_t i = 0; i < grp.size(); ++i) {
+			ShadingPoint spt;
+			grp.computeShadingPoint(i, spt);
+			HitEntry hitEntry;
+			grp.extractHitEntry(i, hitEntry);
+
+			SpectralBlob radiance = SpectralBlob::Zero();
+			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.NdotV);
+			switch (mMode) {
+			case VFM_ColoredEntityID:
+				radiance = sRandomColors[spt.EntityID % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_ColoredMaterialID:
+				radiance = sRandomColors[spt.Geometry.MaterialID % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_ColoredEmissionID:
+				radiance = sRandomColors[spt.Geometry.EmissionID % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_ColoredDisplaceID:
+				radiance = sRandomColors[spt.Geometry.DisplaceID % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_ColoredPrimitiveID:
+				radiance = sRandomColors[spt.PrimID % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_ColoredRayID:
+				radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_ColoredContainerID:
+				radiance = sRandomColors[grp.entity()->containerID() % RANDOM_COLOR_COUNT];
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_RayDirection: {
+				Vector3f rescaledDir = 0.5f * (spt.Ray.Direction + Vector3f(1, 1, 1));
+				radiance			 = SpectralBlob{ rescaledDir[0], rescaledDir[1], rescaledDir[2], 1 };
+				if (mApplyDot)
+					radiance *= weight;
+			} break;
+			case VFM_Parameter:
+				radiance = SpectralBlob{ hitEntry.Parameter[0], hitEntry.Parameter[1], hitEntry.Parameter[2], 1 };
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_Inside:
+				radiance = (spt.Flags & SPF_Inside) ? TrueColor : FalseColor;
+				if (mApplyDot)
+					radiance *= weight;
+				break;
+			case VFM_NdotV: {
+				const float originalNdotV = spt.Ray.Direction.dot(spt.Geometry.N);
+				if (originalNdotV < 0)
+					radiance = SpectralBlob{ 0, -originalNdotV, 0, 1 };
+				else
+					radiance = SpectralBlob{ originalNdotV, 0, 0, 1 };
+			} break;
+			case VFM_ValidateMaterial: {
+				if (grp.material()) {
+					MaterialSampleInput samp_in;
+					samp_in.Point = spt;
+					samp_in.RND	  = random.get2D();
+					MaterialSampleOutput samp_out;
+					grp.material()->sample(samp_in, samp_out, session);
+
+					MaterialEvalInput eval_in;
+					eval_in.Point	 = spt;
+					eval_in.Outgoing = samp_out.Outgoing;
+					eval_in.NdotL	 = spt.N.dot(eval_in.Outgoing);
+					MaterialEvalOutput eval_out;
+					grp.material()->eval(eval_in, eval_out, session);
+
+					const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
+					const float relPDFDiff = std::abs(samp_out.PDF_S - eval_out.PDF_S);
+
+					radiance = SpectralBlob{ 1 - weightDiff, 1 - relPDFDiff, 1, 1 };
+				}
+			}
+			}
+
+			session.pushSPFragment(spt, stdPath);
+			session.pushSpectralFragment(radiance, spt.Ray, stdPath);
+		}
+	}
+
+	void onTile(RenderTileSession& session) override
+	{
+		PR_PROFILE_THIS;
+
+		mPipeline.reset(session.tile());
+
+		while (!mPipeline.isFinished()) {
+			mPipeline.runPipeline();
+			while (mPipeline.hasShadingGroup()) {
+				auto sg = mPipeline.popShadingGroup(session);
+				if (sg.isBackground())
+					session.tile()->statistics().addBackgroundHitCount(sg.size());
+				else
+					handleShadingGroup(session, sg);
+			}
+		}
+	}
+
+private:
+	StreamPipeline mPipeline;
+	const VisualFeedbackMode mMode;
+	const bool mApplyDot;
+};
 
 class IntVF : public IIntegrator {
 public:
@@ -93,127 +229,14 @@ public:
 
 	virtual ~IntVF() = default;
 
-	// Per thread
-	void onPass(RenderTileSession& session, uint32) override
+	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		PR_PROFILE_THIS;
-
-		LightPath stdPath = LightPath::createCDL(1);
-		Random random(42);
-
-		while (session.handleCameraRays()) {
-			session.handleHits(
-				[&](size_t, const Ray&) {
-					session.tile()->statistics().addBackgroundHitCount();
-				},
-				[&](const HitEntry& hitEntry,
-					const Ray& ray, const GeometryPoint& pt,
-					IEntity* entity, IMaterial* material) {
-					PR_PROFILE_THIS;
-					session.tile()->statistics().addEntityHitCount();
-
-					ShadingPoint spt;
-					spt.setByIdentity(ray, pt);
-					spt.EntityID = entity->id();
-
-					ColorTriplet radiance = ColorTriplet::Zero();
-					ColorTriplet weight	  = ColorTriplet::Ones() * abs(spt.NdotV);
-					switch (mMode) {
-					case VFM_ColoredEntityID:
-						radiance = sRandomColors[hitEntry.EntityID % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_ColoredMaterialID:
-						radiance = sRandomColors[hitEntry.MaterialID % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_ColoredEmissionID:
-						radiance = sRandomColors[pt.EmissionID % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_ColoredDisplaceID:
-						radiance = sRandomColors[pt.DisplaceID % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_ColoredPrimitiveID:
-						radiance = sRandomColors[hitEntry.PrimitiveID % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_ColoredRayID:
-						radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_ColoredContainerID:
-						radiance = sRandomColors[entity->containerID() % RANDOM_COLOR_COUNT];
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_RayDirection: {
-						Vector3f rescaledDir = 0.5f * (spt.Ray.Direction + Vector3f(1, 1, 1));
-						radiance			 = ColorTriplet{ rescaledDir[0], rescaledDir[1], rescaledDir[2] };
-						if (mApplyDot)
-							radiance *= weight;
-					} break;
-					case VFM_Parameter:
-						radiance = hitEntry.Parameter;
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_Inside:
-						radiance = (spt.Flags & SPF_Inside) ? TrueColor : FalseColor;
-						if (mApplyDot)
-							radiance *= weight;
-						break;
-					case VFM_NdotV: {
-						const float originalNdotV = spt.Ray.Direction.dot(spt.Geometry.N);
-						if (originalNdotV < 0)
-							radiance = ColorTriplet{ 0, -originalNdotV, 0 };
-						else
-							radiance = ColorTriplet{ originalNdotV, 0, 0 };
-					} break;
-					case VFM_ValidateMaterial: {
-						if (material) {
-							MaterialSampleInput samp_in;
-							samp_in.Point = spt;
-							samp_in.RND	  = random.get2D();
-							MaterialSampleOutput samp_out;
-							material->sample(samp_in, samp_out, session);
-
-							MaterialEvalInput eval_in;
-							eval_in.Point	 = spt;
-							eval_in.Outgoing = samp_out.Outgoing;
-							eval_in.NdotL	 = spt.N.dot(eval_in.Outgoing);
-							MaterialEvalOutput eval_out;
-							material->eval(eval_in, eval_out, session);
-
-							const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
-							const float relPDFDiff = std::abs(samp_out.PDF_S - eval_out.PDF_S);
-
-							radiance = ColorTriplet{ 1 - weightDiff, 1 - relPDFDiff, 1 };
-						}
-					}
-					}
-
-					session.pushSPFragment(spt, stdPath);
-					session.pushSpectralFragment(radiance, ray, stdPath);
-				});
-		}
-	}
-
-	RenderStatus status() const override
-	{
-		return RenderStatus();
+		return std::make_shared<IntVFInstance>(ctx, mMode, mApplyDot);
 	}
 
 private:
-	VisualFeedbackMode mMode;
-	bool mApplyDot;
+	const VisualFeedbackMode mMode;
+	const bool mApplyDot;
 };
 
 class IntVFFactory : public IIntegratorFactory {

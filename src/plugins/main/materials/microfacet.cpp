@@ -199,12 +199,12 @@ public:
 
 		float F = fresnelTerm(in.Point);
 
-		ColorTriplet Diff = ColorTriplet::Zero();
+		SpectralBlob Diff = SpectralBlob::Zero();
 		if (mFresnelMode != FM_Conductor && F < 1) {
 			Diff = PR_1_PI * mAlbedo->eval(in.Point);
 		}
 
-		ColorTriplet Spec = ColorTriplet::Zero();
+		SpectralBlob Spec = SpectralBlob::Zero();
 		if (F > PR_EPSILON && -in.NdotL * in.Point.NdotV > PR_EPSILON) {
 			Spec = mSpecularity->eval(in.Point) * evalSpec(in.Point, in.Outgoing, in.NdotL, out.PDF_S);
 		}

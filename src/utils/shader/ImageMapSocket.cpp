@@ -42,9 +42,9 @@ ImageMapSocket::ImageMapSocket(const std::shared_ptr<SpectrumDescriptor>& desc,
 	}
 }
 
-ColorTriplet ImageMapSocket::eval(const MapSocketCoord& ctx) const
+SpectralBlob ImageMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	ColorTriplet rgb;
+	SpectralBlob rgb;
 	lookup(ctx, rgb);
 	return mEngineDescriptor->convertTriplet(mImageDescriptor, rgb);
 }
@@ -52,12 +52,12 @@ ColorTriplet ImageMapSocket::eval(const MapSocketCoord& ctx) const
 float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 {
 	// TODO
-	ColorTriplet rgb;
+	SpectralBlob rgb;
 	lookup(ctx, rgb);
 	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
 }
 
-void ImageMapSocket::lookup(const MapSocketCoord& ctx, ColorTriplet& rgb) const
+void ImageMapSocket::lookup(const MapSocketCoord& ctx, SpectralBlob& rgb) const
 {
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
 

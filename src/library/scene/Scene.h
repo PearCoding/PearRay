@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Profiler.h"
+#include "config/ColliderOptions.h"
 #include "container/kdTreeCollider.h"
 #include "entity/IEntity.h"
 #include "geometry/BoundingBox.h"
@@ -8,7 +9,6 @@
 #include "ray/RayStream.h"
 #include "trace/HitStream.h"
 #include "trace/ShadowHit.h"
-#include "config/ColliderOptions.h"
 
 #include <string>
 #include <vector>
@@ -41,8 +41,7 @@ public:
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
-	template <typename Func>
-	inline void traceRays(RayStream& rays, HitStream& hits, Func nonHit) const;
+	void traceRays(RayStream& rays, HitStream& hits) const;
 	inline bool traceSingleRay(const Ray& ray, HitEntry& entry) const;
 	inline ShadowHit traceShadowRay(const Ray& ray) const;
 	inline bool traceOcclusionRay(const Ray& ray) const;
@@ -53,12 +52,8 @@ public:
 	void afterRender(RenderContext* ctx);
 
 private:
-	template <typename Func>
-	inline void traceCoherentRays(const RayGroup& grp,
-								  HitStream& hits, Func nonHit) const;
-	template <typename Func>
-	inline void traceIncoherentRays(const RayGroup& grp,
-									HitStream& hits, Func nonHit) const;
+	inline void traceCoherentRays(const RayGroup& grp, HitStream& hits) const;
+	inline void traceIncoherentRays(const RayGroup& grp, HitStream& hits) const;
 
 	void buildTree(const std::wstring& file);
 	void loadTree(const std::wstring& file);

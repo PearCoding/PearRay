@@ -54,9 +54,6 @@ public:
 
 	size_t threads() const { return mThreads.size(); }
 
-	// Pass control
-	inline uint32 currentPass() const { return mCurrentPass; }
-
 	// Slow and only copies!
 	std::vector<Rect2i> currentTiles() const;
 
@@ -78,9 +75,6 @@ public:
 
 protected:
 	RenderTile* getNextTile();
-
-	void onNextPass();
-	void waitForNextPass(); // Never call it from main thread
 
 private:
 	void reset();
@@ -110,12 +104,6 @@ private:
 	const RenderSettings mRenderSettings;
 
 	std::shared_ptr<IIntegrator> mIntegrator;
-
-	std::mutex mPassMutex;
-	std::condition_variable mPassCondition;
-	uint32 mThreadsWaitingForPass;
-	uint32 mCurrentPass;
-
 	bool mShouldStop;
 };
 } // namespace PR

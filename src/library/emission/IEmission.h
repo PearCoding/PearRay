@@ -14,7 +14,7 @@ struct PR_LIB LightEvalInput {
 };
 
 struct PR_LIB LightEvalOutput {
-	ColorTriplet Weight;
+	SpectralBlob Weight;
 };
 
 class PR_LIB IEmission : public IObject {

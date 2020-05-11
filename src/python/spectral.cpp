@@ -38,11 +38,11 @@ public:
 		PYBIND11_OVERLOAD_PURE(void, SpectrumDescriptor, convertSpectrum, dst, src);
 	}
 
-	virtual ColorTriplet convertTriplet(
+	virtual SpectralBlob convertTriplet(
 		const std::shared_ptr<SpectrumDescriptor>& other,
-		const ColorTriplet& spec) override
+		const SpectralBlob& spec) override
 	{
-		PYBIND11_OVERLOAD_PURE(ColorTriplet, SpectrumDescriptor, convertTriplet, other, spec);
+		PYBIND11_OVERLOAD_PURE(SpectralBlob, SpectrumDescriptor, convertTriplet, other, spec);
 	}
 };
 
@@ -56,7 +56,7 @@ void setup_spectral(py::module& m)
 		.def("luminousFactor", &SpectrumDescriptor::luminousFactor)
 		.def("integralDelta", &SpectrumDescriptor::integralDelta)
 		.def("convertSpectrum", &SpectrumDescriptor::convertSpectrum)
-		// Not exposed. ColorTriplet should not be used outside internal engine.
+		// Not exposed. SpectralBlob should not be used outside internal engine.
 		//.def("convertTriplet", &SpectrumDescriptor::convertTriplet)
 		.def_static("createXYZTriplet", &SpectrumDescriptor::createXYZTriplet)
 		.def_static("createSRGBTriplet", &SpectrumDescriptor::createSRGBTriplet)

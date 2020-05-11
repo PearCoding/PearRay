@@ -1,17 +1,42 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "ShadingGroupBlock.h"
+#include "ray/RayPackage.h"
 
 namespace PR {
-class HitStream;
-struct PR_LIB ShadingGroup {
-	HitStream* Stream;
-	uint32 EntityID;
-	uint32 MaterialID;
-	size_t Start;
-	size_t End;
+class RenderTile;
+class RenderTileSession;
+class StreamPipeline;
+class IEntity;
+class IMaterial;
+class GeometryPoint;
+class ShadingPoint;
+struct HitEntry;
 
-	inline size_t size() const { return End - Start + 1; }
+class PR_LIB ShadingGroup {
+public:
+	ShadingGroup(const ShadingGroupBlock& blck, const StreamPipeline* pipeline, const RenderTileSession& session);
+	~ShadingGroup();
+
+	inline bool isBackground() { return mBlock.MaterialID == PR_INVALID_ID; }
+	inline size_t size() const { return mBlock.size(); }
+
+	inline IEntity* entity() const { return mEntity; }
+	inline IMaterial* material() const { return mMaterial; }
+
+	// Single (slow) access interface
+	void extractHitEntry(size_t i, HitEntry& entry) const;
+	void extractRay(size_t i, Ray& ray) const;
+	void extractGeometryPoint(size_t i, GeometryPoint& pt) const;
+	void computeShadingPoint(size_t i, ShadingPoint& spt) const;
+
+private:
+	ShadingGroupBlock mBlock;
+	const StreamPipeline* mPipeline;
+
+	// Constructed entries
+	IEntity* mEntity;
+	IMaterial* mMaterial;
 };
 
 } // namespace PR

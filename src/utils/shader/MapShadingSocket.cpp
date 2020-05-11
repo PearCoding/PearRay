@@ -8,7 +8,7 @@ MapShadingSocket::MapShadingSocket(const std::shared_ptr<FloatSpectralMapSocket>
 	PR_ASSERT(map, "Given map socket has to be valid");
 }
 
-ColorTriplet MapShadingSocket::eval(const ShadingPoint& ctx) const
+SpectralBlob MapShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	MapSocketCoord coord;
 	coord.UV	= Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);

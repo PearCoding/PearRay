@@ -10,75 +10,94 @@
 #include "path/LightPath.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
+#include "renderer/StreamPipeline.h"
 #include "shader/ShadingPoint.h"
 
 #include "Logger.h"
 
 namespace PR {
 constexpr RayFlags UsedRayType = RF_Bounce; // Do not use RF_Shadow, as most lights will be visible. We don't want that
+class IntAOInstance : public IIntegratorInstance {
+public:
+	explicit IntAOInstance(RenderContext* ctx, size_t sample_count)
+		: mPipeline(ctx)
+		, mSampleCount(sample_count)
+	{
+	}
+
+	virtual ~IntAOInstance() = default;
+
+	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& grp)
+	{
+		Random& random	  = session.tile()->random();
+		LightPath stdPath = LightPath::createCDL(1);
+
+		session.tile()->statistics().addEntityHitCount(grp.size());
+		for (size_t i = 0; i < grp.size(); ++i) {
+			ShadingPoint spt;
+			grp.computeShadingPoint(i, spt);
+
+			size_t occlusions = 0;
+			float pdf;
+			for (size_t i = 0; i < mSampleCount; ++i) {
+				Vector2f rnd  = random.get2D();
+				Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
+				Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
+														  dir);
+
+				const Ray n = spt.Ray.next(spt.Geometry.P, ndir, spt.N, UsedRayType, PR_EPSILON, spt.Ray.MaxT);
+
+				if (session.traceOcclusionRay(n))
+					++occlusions;
+			}
+
+			SpectralBlob radiance = SpectralBlob::Ones();
+			radiance *= 1.0f - occlusions / (float)mSampleCount;
+
+			session.pushSPFragment(spt, stdPath);
+			session.pushSpectralFragment(radiance, spt.Ray, stdPath);
+		}
+	}
+
+	void onTile(RenderTileSession& session) override
+	{
+		PR_PROFILE_THIS;
+
+		mPipeline.reset(session.tile());
+
+		while (!mPipeline.isFinished()) {
+			mPipeline.runPipeline();
+			while (mPipeline.hasShadingGroup()) {
+				auto sg = mPipeline.popShadingGroup(session);
+				if (sg.isBackground())
+					session.tile()->statistics().addBackgroundHitCount(sg.size());
+				else
+					handleShadingGroup(session, sg);
+			}
+		}
+	}
+
+private:
+	StreamPipeline mPipeline;
+	const size_t mSampleCount;
+};
+
 class IntAO : public IIntegrator {
 public:
 	explicit IntAO(size_t sample_count)
-		: IIntegrator()
-		, mSampleCount(sample_count)
+		: mSampleCount(sample_count)
 	{
 	}
 
 	virtual ~IntAO() = default;
 
-	// Per thread
-	void onPass(RenderTileSession& session, uint32) override
+	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		PR_PROFILE_THIS;
-
-		Random& random	  = session.tile()->random();
-		LightPath stdPath = LightPath::createCDL(1);
-
-		while (session.handleCameraRays()) {
-			session.handleHits(
-				[&](size_t, const Ray&) {
-					session.tile()->statistics().addBackgroundHitCount();
-				},
-				[&](const HitEntry&,
-					const Ray& ray, const GeometryPoint& pt,
-					IEntity* entity, IMaterial*) {
-					PR_PROFILE_THIS;
-					session.tile()->statistics().addEntityHitCount();
-
-					ShadingPoint spt;
-					spt.setByIdentity(ray, pt);
-					spt.EntityID = entity->id();
-
-					size_t occlusions = 0;
-					float pdf;
-					for (size_t i = 0; i < mSampleCount; ++i) {
-						Vector2f rnd  = random.get2D();
-						Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-						Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
-																  dir);
-
-						const Ray n = ray.next(pt.P, ndir, spt.N, UsedRayType, PR_EPSILON, ray.MaxT);
-
-						if (session.traceOcclusionRay(n))
-							++occlusions;
-					}
-
-					ColorTriplet radiance = ColorTriplet::Ones();
-					radiance *= 1.0f - occlusions / (float)mSampleCount;
-
-					session.pushSPFragment(spt, stdPath);
-					session.pushSpectralFragment(radiance, ray, stdPath);
-				});
-		}
-	}
-
-	RenderStatus status() const override
-	{
-		return RenderStatus();
+		return std::make_shared<IntAOInstance>(ctx, mSampleCount);
 	}
 
 private:
-	size_t mSampleCount;
+	const size_t mSampleCount;
 };
 
 class IntAOFactory : public IIntegratorFactory {

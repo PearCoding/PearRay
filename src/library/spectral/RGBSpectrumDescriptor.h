@@ -17,8 +17,8 @@ public:
 	virtual int tag() const override;
 
 	virtual void convertSpectrum(Spectrum& dst, const Spectrum& src) override;
-	virtual ColorTriplet convertTriplet(const std::shared_ptr<SpectrumDescriptor>& other,
-										const ColorTriplet& spec) override;
+	virtual SpectralBlob convertTriplet(const std::shared_ptr<SpectrumDescriptor>& other,
+										const SpectralBlob& spec) override;
 };
 
 } // namespace PR

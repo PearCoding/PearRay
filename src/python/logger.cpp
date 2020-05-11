@@ -38,11 +38,11 @@ public:
 PR_NO_SANITIZE_ADDRESS
 void setup_logger(py::module& m)
 {
-	py::class_<LogListener, LogListenerWrap>(m, "LogListener")
+	py::class_<LogListener, std::shared_ptr<LogListener>, LogListenerWrap>(m, "LogListener")
 		.def("startEntry", &LogListener::startEntry)
 		.def("writeEntry", &LogListener::writeEntry);
 
-	py::class_<FileLogListener, LogListener, FileLogListenerWrap>(m, "FileLogListener")
+	py::class_<FileLogListener, LogListener, std::shared_ptr<FileLogListener>, FileLogListenerWrap>(m, "FileLogListener")
 		.def(py::init<>())
 		.def("open", &FileLogListener::open);
 

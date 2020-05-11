@@ -152,8 +152,7 @@ int main(int argc, char** argv)
 					std::cout << "\r";
 
 				std::cout << std::setw(OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed
-						  << status.percentage() * 100 << "%"
-						  << " Pass " << renderer->currentPass() + 1;
+						  << status.percentage() * 100 << "%";
 				printStatus(status);
 
 				if (options.NoPrettyConsole)
