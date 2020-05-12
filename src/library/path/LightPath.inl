@@ -59,4 +59,30 @@ const LightPathToken& LightPath::token(int index) const
 	return mTokens[index];
 }
 
+inline size_t LightPath::packedSizeRequirement() const
+{
+	return (currentSize() + 1) * sizeof(uint32);
+}
+
+inline void LightPath::toPacked(uint8* buffer, size_t size) const
+{
+	PR_UNUSED(size);// Remove warning when asserts are not used
+	PR_ASSERT(size >= packedSizeRequirement(), "Minimum buffer size not satisfied");
+
+	uint32* b = reinterpret_cast<uint32*>(buffer);
+	b[0]	  = currentSize();
+	for (size_t i = 0; i < currentSize(); ++i)
+		b[i + 1] = mTokens[i].toPacked();
+}
+
+inline void LightPath::addFromPacked(const uint8* buffer, size_t size)
+{
+	PR_UNUSED(size);
+	PR_ASSERT(size >= sizeof(uint32), "At least size information is required");
+	const uint32* b = reinterpret_cast<const uint32*>(buffer);
+	uint32 elems	= b[0];
+	PR_ASSERT(size >= (elems + 1) * sizeof(uint32), "Buffer is not well sized");
+	for (uint32 i = 0; i < elems; ++i)
+		addToken(LightPathToken::fromPacked(b[i + 1]));
+}
 } // namespace PR

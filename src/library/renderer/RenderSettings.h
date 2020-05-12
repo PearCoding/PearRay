@@ -29,6 +29,10 @@ public:
 	bool useAdaptiveTiling;
 	bool sortHits;
 
+	float spectralStart;
+	float spectralEnd;
+	uint32 spectralSampleCount;
+
 	// Film entries
 	uint32 filmWidth;
 	uint32 filmHeight;

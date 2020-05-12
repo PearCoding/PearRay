@@ -25,19 +25,21 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	, mAASampleCount(0)
 	, mLensSampleCount(0)
 	, mTimeSampleCount(0)
+	, mSpectralSampleCount(0)
 	, mRenderContext(&context)
 	, mCamera(context.scene()->activeCamera().get())
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 
-	mAASampler   = mRenderContext->settings().createAASampler(mRandom);
+	mAASampler	 = mRenderContext->settings().createAASampler(mRandom);
 	mLensSampler = mRenderContext->settings().createLensSampler(mRandom);
 	mTimeSampler = mRenderContext->settings().createTimeSampler(mRandom);
 
-	mAASampleCount   = mAASampler->maxSamples();
-	mLensSampleCount = mLensSampler->maxSamples();
-	mTimeSampleCount = mTimeSampler->maxSamples();
-	mMaxPixelSamples *= mAASampleCount * mLensSampleCount * mTimeSampleCount;
+	mAASampleCount		 = mAASampler->maxSamples();
+	mLensSampleCount	 = mLensSampler->maxSamples();
+	mTimeSampleCount	 = mTimeSampler->maxSamples();
+	mSpectralSampleCount = mRenderContext->settings().spectralSampleCount; // Spectral samples are traited special
+	mMaxPixelSamples *= mAASampleCount * mLensSampleCount * mTimeSampleCount * mSpectralSampleCount;
 
 	switch (mRenderContext->settings().timeMappingMode) {
 	default:
@@ -55,10 +57,16 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 		break;
 	}
 
+	mSpectralStart = mRenderContext->settings().spectralStart;
+	mSpectralEnd   = mRenderContext->settings().spectralEnd;
+	mSpectralSpan  = mSpectralEnd - mSpectralStart;
+	mSpectralDelta = mSpectralSpan / PR_SPECTRAL_BLOB_SIZE;
+
 	const float f = mRenderContext->settings().timeScale;
 	mTimeAlpha *= f;
 	mTimeBeta *= f;
 
+	// Does not include spectral contribution
 	mWeight_Cache = 1.0f / (mTimeSampleCount * mLensSampleCount * mAASampleCount);
 }
 
@@ -73,6 +81,9 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	statistics().addPixelSampleCount();
 	++mContext.PixelSamplesRendered;
 
+	const uint32 specsample = sample % mSpectralSampleCount;
+	PR_UNUSED(specsample);
+	sample /= mSpectralSampleCount;
 	const uint32 timesample = sample % mTimeSampleCount;
 	sample /= mTimeSampleCount;
 	const uint32 lenssample = sample % mLensSampleCount;
@@ -87,14 +98,20 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	float Time = mTimeAlpha * mTimeSampler->generate1D(timesample) + mTimeBeta;
 
 	CameraSample cameraSample;
-	cameraSample.SensorSize		 = mImageSize;
-	cameraSample.Pixel			 = p.cast<float>() + AA;
-	cameraSample.Lens			 = Lens;
-	cameraSample.Time			 = Time;
-	cameraSample.Weight			 = mWeight_Cache;
+	cameraSample.SensorSize = mImageSize;
+	cameraSample.Pixel		= p.cast<float>() + AA;
+	cameraSample.Lens		= Lens;
+	cameraSample.Time		= Time;
+	cameraSample.Weight		= mWeight_Cache;
 
-	// TODO: Real sampling!
-	cameraSample.WavelengthNM = SpectralBlob(540, 620, 700, 780);
+	// Sample wavelength
+	float start					 = mRandom.getFloat() * mSpectralSpan + mSpectralStart;
+	cameraSample.WavelengthNM(0) = start; // Hero wavelength
+	for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+		cameraSample.WavelengthNM(i) = cameraSample.WavelengthNM(i - 1) + mSpectralDelta;
+		if (cameraSample.WavelengthNM(i) > mSpectralEnd)
+			cameraSample.WavelengthNM(i) -= mSpectralSpan;
+	}
 
 	return mCamera->constructRay(cameraSample);
 }
@@ -121,23 +138,23 @@ std::pair<RenderTile*, RenderTile*> RenderTile::split(int dim) const
 {
 	// Split view size in dim at half
 	Point2i startLeft = start();
-	Point2i endLeft   = end();
+	Point2i endLeft	  = end();
 	endLeft(dim)	  = startLeft(dim) + viewSize().asArray()(dim) / 2;
 
 	Point2i startRight = start();
 	Point2i endRight   = end();
-	startRight(dim)	= endLeft(dim);
+	startRight(dim)	   = endLeft(dim);
 
 	// Construct context of the two tiles
 	RenderTileContext left, right;
-	left.IterationCount  = mContext.IterationCount.load();
+	left.IterationCount	 = mContext.IterationCount.load();
 	right.IterationCount = mContext.IterationCount.load();
 
-	left.PixelSamplesRendered  = mContext.PixelSamplesRendered / 2;
+	left.PixelSamplesRendered = mContext.PixelSamplesRendered / 2;
 	// Sometimes PixelSamplesRendered is not a multiply of 2 -> Fix it
 	right.PixelSamplesRendered = mContext.PixelSamplesRendered / 2 + mContext.PixelSamplesRendered % 2;
 
-	left.Statistics  = mContext.Statistics.half();
+	left.Statistics	 = mContext.Statistics.half();
 	right.Statistics = left.Statistics;
 
 	// Create tiles

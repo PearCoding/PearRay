@@ -32,7 +32,7 @@ size_t FileSerializer::memoryFootprint() const
 	return mInternal->MemoryFootprint;
 }
 
-bool FileSerializer::open(const std::wstring& path, bool readmode)
+bool FileSerializer::open(const std::wstring& path, bool readmode, bool skipVersion)
 {
 	if (mInternal->File.is_open())
 		return false;
@@ -43,12 +43,14 @@ bool FileSerializer::open(const std::wstring& path, bool readmode)
 		return false;
 
 	setReadMode(readmode);
-	if (isReadMode()) {
-		uint32 v = version();
-		read(v);
-		setVersion(v);
-	} else {
-		write(version());
+	if (!skipVersion) {
+		if (isReadMode()) {
+			uint32 v = version();
+			read(v);
+			setVersion(v);
+		} else {
+			write(version());
+		}
 	}
 
 	return true;

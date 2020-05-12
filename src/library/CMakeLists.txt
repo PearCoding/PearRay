@@ -209,11 +209,13 @@ set(PR_Src
   serialization/Serializer.h
   serialization/Serializer.cpp
   serialization/Serializer.inl
-  spectral/SpectralBlob.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h
   spectral/RGBSpectrumDescriptor.cpp
   spectral/RGBSpectrumDescriptor.h
+  spectral/SpectralBlob.h
+  spectral/SpectralUpsampler.cpp
+  spectral/SpectralUpsampler.h
   spectral/Spectrum.cpp
   spectral/Spectrum.h
   spectral/Spectrum.inl

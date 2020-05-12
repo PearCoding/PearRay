@@ -198,14 +198,14 @@ inline Ray extractFromRayPackage(uint32 i, const RayPackage& package)
 	ray.Direction[0] = extract(i, package.Direction[0]);
 	ray.Direction[1] = extract(i, package.Direction[1]);
 	ray.Direction[2] = extract(i, package.Direction[2]);
-	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		ray.Weight[k] = extract(i, package.Weight[k]);
 	ray.MinT		   = extract(i, package.MinT);
 	ray.MaxT		   = extract(i, package.MaxT);
 	ray.Time		   = extract(i, package.Time);
 	ray.IterationDepth = extract(i, package.IterationDepth);
 	ray.Flags		   = extract(i, package.Flags);
-	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		ray.WavelengthNM[k] = extract(i, package.WavelengthNM[k]);
 	ray.PixelIndex = extract(i, package.PixelIndex);
 	ray.cache();
@@ -220,14 +220,14 @@ inline void insertIntoRayPackage(uint32 i, RayPackage& package, const Ray& ray)
 	package.Direction[0] = insert(i, package.Direction[0], ray.Direction[0]);
 	package.Direction[1] = insert(i, package.Direction[1], ray.Direction[1]);
 	package.Direction[2] = insert(i, package.Direction[2], ray.Direction[2]);
-	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		package.Weight[k] = insert(i, package.Weight[k], ray.Weight[k]);
 	package.MinT		   = insert(i, package.MinT, ray.MinT);
 	package.MaxT		   = insert(i, package.MaxT, ray.MaxT);
 	package.Time		   = insert(i, package.Time, ray.Time);
 	package.IterationDepth = insert(i, package.IterationDepth, ray.IterationDepth);
 	package.Flags		   = insert(i, package.Flags, ray.Flags);
-	for (size_t k = 0; k < SPECTRAL_BLOB_SIZE; ++k)
+	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		package.WavelengthNM[k] = insert(i, package.WavelengthNM[k], ray.WavelengthNM[k]);
 	package.PixelIndex = insert(i, package.PixelIndex, ray.PixelIndex);
 	package.cache();

@@ -77,8 +77,8 @@ private: // Some vectors are not aligned, due to required preprocessing
 
 	std::vector<float> mMinT;
 	std::vector<float> mMaxT;
-	std::vector<float> mWeight[SPECTRAL_BLOB_SIZE];
-	std::vector<float> mWavelengthNM[SPECTRAL_BLOB_SIZE];
+	std::vector<float> mWeight[PR_SPECTRAL_BLOB_SIZE];
+	std::vector<float> mWavelengthNM[PR_SPECTRAL_BLOB_SIZE];
 
 	size_t mSize;
 	size_t mCurrentPos;

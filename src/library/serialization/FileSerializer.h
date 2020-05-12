@@ -11,7 +11,7 @@ public:
 	FileSerializer(const std::wstring& path, bool readmode, uint32 version = 0);
 	virtual ~FileSerializer();
 
-	bool open(const std::wstring& path, bool readmode);
+	bool open(const std::wstring& path, bool readmode, bool skipVersion = false);
 	void close();
 
 	size_t memoryFootprint() const;

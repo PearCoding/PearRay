@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ImageWriter.h"
-#include <list>
+#include <vector>
 
 namespace DL {
 class DataGroup;
@@ -10,6 +10,7 @@ class DataGroup;
 namespace PR {
 class ToneMapper;
 class Environment;
+class FileLock;
 
 class PR_LIB_UTILS OutputSpecification {
 	PR_CLASS_NON_COPYABLE(OutputSpecification);
@@ -30,6 +31,9 @@ public:
 private:
 	bool mInit;
 	std::wstring mWorkingDir;
+	std::unique_ptr<FileLock> mRunLock;
+	std::unique_ptr<FileLock> mOutputLock;
+
 	ImageWriter mImageWriter;
 
 	struct File {
@@ -46,7 +50,7 @@ private:
 		std::string LPE_S;
 	};
 
-	std::list<File> mFiles;
-	std::list<FileSpectral> mSpectralFiles;
+	std::vector<File> mFiles;
+	std::vector<FileSpectral> mSpectralFiles;
 };
 } // namespace PR

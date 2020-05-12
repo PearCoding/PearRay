@@ -6,7 +6,7 @@
 namespace PR {
 class PR_LIB LightPath {
 public:
-	LightPath(size_t expectedSize = 64);
+	LightPath(size_t expectedSize = 8);
 	~LightPath() = default;
 
 	LightPath(const LightPath& other) = default;
@@ -31,6 +31,10 @@ public:
 	static LightPath createCDL(size_t diffuseCount = 1);
 	// Camera -> Background
 	static LightPath createCB();
+
+	inline size_t packedSizeRequirement() const;
+	inline void toPacked(uint8* buffer, size_t size) const;
+	inline void addFromPacked(const uint8* buffer, size_t size);
 
 private:
 	std::vector<LightPathToken> mTokens;

@@ -55,6 +55,8 @@ set(PR_Src
   plugin/Plugin.h
   plugin/PluginManager.cpp
   plugin/PluginManager.h
+  output/FileLock.cpp
+  output/FileLock.h
   output/ImageWriter.cpp
   output/ImageWriter.h
   output/OutputSpecification.cpp

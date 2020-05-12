@@ -27,7 +27,7 @@ inline bool StreamPipeline::hasShadingGroup() const { return mHitStream->hasNext
 
 inline ShadingGroup StreamPipeline::popShadingGroup(const RenderTileSession& session) const
 {
-	PR_ASSERT(!hasShadingGroup(), "Trying to pop non existant shading group");
+	PR_ASSERT(hasShadingGroup(), "Trying to pop non existant shading group");
 
 	return ShadingGroup(mHitStream->getNextGroup(), this, session);
 }

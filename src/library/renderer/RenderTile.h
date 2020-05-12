@@ -95,6 +95,13 @@ private:
 	uint32 mAASampleCount;
 	uint32 mLensSampleCount;
 	uint32 mTimeSampleCount;
+	uint32 mSpectralSampleCount;
+
+	// Spectral cache
+	float mSpectralStart;
+	float mSpectralEnd;
+	float mSpectralSpan;
+	float mSpectralDelta;
 
 	// t = t'*alpha + beta
 	float mTimeAlpha;

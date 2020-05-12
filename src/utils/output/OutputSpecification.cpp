@@ -1,4 +1,5 @@
 #include "OutputSpecification.h"
+#include "FileLock.h"
 #include "Logger.h"
 #include "buffer/OutputBuffer.h"
 #include "renderer/RenderContext.h"
@@ -9,10 +10,8 @@
 #include "DataLisp.h"
 
 namespace PR {
-using namespace PR;
-
-constexpr static const char* LOCK_FILE_NAME		= "/.pearray_lock";
-constexpr static const char* LOCK_IMG_FILE_NAME = "/.pearray_img_lock";
+constexpr static const wchar_t* LOCK_RUN_FILE_NAME = L".pearray_run.lock";
+constexpr static const wchar_t* LOCK_OUT_FILE_NAME = L".pearray_out.lock";
 
 OutputSpecification::OutputSpecification(const std::wstring& wrkDir)
 	: mInit(false)
@@ -27,26 +26,23 @@ OutputSpecification::~OutputSpecification()
 
 void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 {
-	if (mInit && !mWorkingDir.empty()) {
-		auto workDir = boost::filesystem::canonical(mWorkingDir);
-		auto f		 = workDir / LOCK_FILE_NAME;
-		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
-			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f << std::endl;
-	}
-
-	mInit = true;
+	std::wstring runlock	= LOCK_RUN_FILE_NAME;
+	std::wstring outputlock = LOCK_OUT_FILE_NAME;
 
 	if (context && !mWorkingDir.empty()) {
 		auto workDir = boost::filesystem::canonical(mWorkingDir);
-		mWorkingDir  = workDir.generic_wstring();
+		mWorkingDir	 = workDir.generic_wstring();
 
-		// Setup lock directory
-		if (!boost::filesystem::create_directory(workDir / LOCK_FILE_NAME))
-			PR_LOG(L_WARNING) << "Couldn't create lock directory " << workDir << LOCK_FILE_NAME << ". Maybe already running?" << std::endl;
-
-		if (!boost::filesystem::remove(workDir / LOCK_IMG_FILE_NAME)) // Remove it now
-			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << workDir << LOCK_IMG_FILE_NAME << "!" << std::endl;
+		runlock	   = (workDir / runlock).generic_wstring();
+		outputlock = (workDir / outputlock).generic_wstring();
 	}
+
+	mRunLock	= std::make_unique<FileLock>(runlock);
+	mOutputLock = std::make_unique<FileLock>(outputlock);
+	mInit		= true;
+
+	if (!mRunLock->lock())
+		PR_LOG(L_ERROR) << "Couldn't create lock " << boost::filesystem::path(runlock) << std::endl;
 }
 
 void OutputSpecification::deinit()
@@ -55,15 +51,8 @@ void OutputSpecification::deinit()
 	mFiles.clear();
 	mSpectralFiles.clear();
 
-	if (!mInit)
-		return;
-
-	if (!mWorkingDir.empty()) {
-		auto workDir = boost::filesystem::canonical(mWorkingDir);
-		auto f		 = workDir / LOCK_FILE_NAME;
-		if (boost::filesystem::exists(f) && !boost::filesystem::remove(f))
-			PR_LOG(L_ERROR) << "Couldn't delete lock directory " << f;
-	}
+	mRunLock.reset();
+	mOutputLock.reset();
 
 	mInit = false;
 }
@@ -328,7 +317,7 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 						spec.TCM	  = tcm;
 						spec.TGM	  = tgm;
 						spec.TMM	  = tmm;
-						spec.LPE_S	= lpe;
+						spec.LPE_S	  = lpe;
 						spec.LPE	  = -1;
 
 						if (!lpe.empty())
@@ -344,7 +333,7 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 							spec.Elements = 0; //TODO
 							spec.TMM	  = tmm;
 							spec.Variable = var3D;
-							spec.LPE_S	= lpe;
+							spec.LPE_S	  = lpe;
 							spec.LPE	  = -1;
 
 							std::string name = variableToString(var3D);
@@ -359,9 +348,9 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 							IM_ChannelSetting1D spec;
 							spec.TMM	  = tmm;
 							spec.Variable = var1D;
-							spec.LPE_S	= lpe;
+							spec.LPE_S	  = lpe;
 							spec.LPE	  = -1;
-							spec.Name	 = variableToString(var1D);
+							spec.Name	  = variableToString(var1D);
 							if (!lpe.empty())
 								spec.Name = spec.Name + "[" + lpe + "]";
 							file.Settings1D.push_back(spec);
@@ -369,9 +358,9 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 							IM_ChannelSettingCounter spec;
 							spec.TMM	  = tmm;
 							spec.Variable = varCounter;
-							spec.LPE_S	= lpe;
+							spec.LPE_S	  = lpe;
 							spec.LPE	  = -1;
-							spec.Name	 = variableToString(varCounter);
+							spec.Name	  = variableToString(varCounter);
 							if (!lpe.empty())
 								spec.Name = spec.Name + "[" + lpe + "]";
 							file.SettingsCounter.push_back(spec);
@@ -384,14 +373,14 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 
 			mFiles.push_back(file);
 		} else if (entry.id() == "output_spectral") {
-			DL::Data nameD	 = entry.getFromKey("name");
+			DL::Data nameD	   = entry.getFromKey("name");
 			DL::Data compressD = entry.getFromKey("compress");
-			DL::Data lpeD	  = entry.getFromKey("lpe");
+			DL::Data lpeD	   = entry.getFromKey("lpe");
 			if (nameD.type() == DL::DT_String) {
 				FileSpectral spec;
-				spec.Name	 = nameD.getString();
+				spec.Name	  = nameD.getString();
 				spec.Compress = compressD.type() == DL::DT_Bool ? compressD.getBool() : true;
-				spec.LPE_S	= "";
+				spec.LPE_S	  = "";
 				spec.LPE	  = -1;
 
 				if (lpeD.type() == DL::DT_String) {
@@ -412,7 +401,7 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 {
 	boost::filesystem::path path = mWorkingDir;
 
-	if (!force && !boost::filesystem::create_directory(path / LOCK_IMG_FILE_NAME))
+	if (!force && !mOutputLock->lock())
 		return;
 
 	std::wstring resultDir = L"/results";
@@ -450,7 +439,6 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
 	}
 
-	if (!force && !boost::filesystem::remove(path / LOCK_IMG_FILE_NAME)) // Remove it now
-		PR_LOG(L_ERROR) << "Couldn't delete lock directory " << (path / LOCK_IMG_FILE_NAME) << "!" << std::endl;
+	mOutputLock->unlock();
 }
 } // namespace PR
