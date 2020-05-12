@@ -1,0 +1,13 @@
+#pragma once
+
+#include "PR_Config.h"
+#include <string>
+
+namespace PR {
+
+struct SceneLoadContext;
+class PR_LIB_LOADER SubGraphLoader {
+public:
+	virtual void load(const std::wstring& file, const SceneLoadContext& ctx) = 0;
+};
+} // namespace PR

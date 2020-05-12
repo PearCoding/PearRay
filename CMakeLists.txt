@@ -42,7 +42,6 @@ endif()
 #PACKAGES
 option(PR_WITH_ASSERTS 			"Compile with asserts on. Disable only in deployment code!" ON)
 option(PR_WITH_PYTHON 			"Compile with python API (using pybind11)." ON)
-option(PR_WITH_UTILITY_LIBRARY 	"Compile utility library. Strongly recommended!" ON)
 option(PR_WITH_CLIENT 			"Compile commandline client. Strongly recommended!" ON)
 option(PR_WITH_MAIN_PLUGINS 	"Compile main plugins. Recommended!" ON)
 option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins." ON)
@@ -163,18 +162,17 @@ add_subdirectory(external/DataLisp)
 # Detect hardware
 add_subdirectory(src/hardware)
 
-configure_file(src/library/PR_Config.h.in              ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
-configure_file(src/library/config/HW_Switch.inl.in     ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl)
-configure_file(src/library/config/Git.h.in             ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h)
-configure_file(src/library/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
-configure_file(src/library/config/ColliderOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/ColliderOptions.h)
-configure_file(src/library/config/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/TriangleOptions.h)
+configure_file(src/base/PR_Config.h.in              ${CMAKE_CURRENT_BINARY_DIR}/PR_Config.h)
+configure_file(src/base/config/HW_Switch.inl.in     ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl)
+configure_file(src/base/config/Git.h.in             ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h)
+configure_file(src/base/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
+configure_file(src/base/config/ColliderOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/ColliderOptions.h)
+configure_file(src/base/config/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/TriangleOptions.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
 			external/tinyobjloader external/libsimdpp
-			${OIIO_INCLUDE_DIR}
-			src/library src/utils)
+			${OIIO_INCLUDE_DIR})
 
 # Extras
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -218,16 +216,15 @@ if(WIN32)
 endif()
 
 # Libraries
-add_subdirectory(src/library)
+add_subdirectory(src/base)
+add_subdirectory(src/core)
 
 # If embedded, plugins have to be imported first, as they are added TO pr_lib_utils
 if(PR_EMBED_PLUGINS)
 	add_subdirectory(src/plugins)
 endif()
 
-if(PR_WITH_UTILITY_LIBRARY)
-	add_subdirectory(src/utils)
-endif()
+add_subdirectory(src/loader)
 
 # If not embedded, plugins have to be imported later, as they are depended ON pr_lib_utils
 if(NOT PR_EMBED_PLUGINS)

@@ -1,0 +1,174 @@
+#pragma once
+
+#define PR_STRINGIFY(str) #str
+#define PR_DOUBLEQUOTE(str) PR_STRINGIFY(str)
+
+//OS
+#if defined(__linux) || defined(linux)
+#define PR_OS_LINUX
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__) || defined(__TOS_WIN__)
+#define PR_OS_WINDOWS
+#if !defined(Win64) && !defined(_WIN64)
+#define PR_OS_WINDOWS_32
+#else
+#define PR_OS_WINDOWS_64
+#endif
+#else
+#error Your operating system is currently not supported
+#endif
+
+//Compiler
+#if defined(__CYGWIN__)
+#define PR_CC_CYGWIN
+#endif
+
+#if defined(__GNUC__)
+#define PR_CC_GNU
+#endif
+
+#if defined(__clang__)
+#define PR_CC_CLANG
+#endif
+
+#if defined(__MINGW32__)
+#define PR_CC_MINGW32
+#endif
+
+#if defined(__INTEL_COMPILER)
+#define PR_CC_INTEL
+#endif
+
+#if defined(_MSC_VER)
+#define PR_CC_MSC
+#pragma warning(disable : 4251 4996)
+#endif
+
+// Check if C++14
+#ifdef PR_CC_MSC
+#if _MSVC_LANG < 201402
+#pragma message("PearRay requires C++14 to compile successfully")
+#endif
+#else
+#if __cplusplus < 201300
+#warning PearRay requires C++14 to compile successfully
+#endif
+#endif
+
+#define PR_ALIGN(x) alignas(x)
+// clang-format off
+#define PR_UNUSED(expr) do { (void)(expr); } while (false)
+#define PR_NOOP do {} while(false)
+// clang-format on
+
+#ifdef PR_CC_MSC
+#define PR_DEBUG_BREAK() __debugbreak()
+#define PR_FUNCTION_NAME __FUNCSIG__
+#else //FIXME: Really use cpu dependent assembler?
+#define PR_DEBUG_BREAK() __asm__ __volatile__("int $0x03")
+#define PR_FUNCTION_NAME __PRETTY_FUNCTION__
+#endif
+
+#if defined(PR_CC_GNU) || defined(PR_CC_CLANG)
+#define PR_LIKELY(x) __builtin_expect(!!(x), 1)
+#define PR_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define PR_MAYBE_UNUSED __attribute__((unused))
+#else
+#define PR_LIKELY(x) (x)
+#define PR_UNLIKELY(x) (x)
+#define PR_MAYBE_UNUSED
+#endif
+
+#ifndef PR_NO_ASSERTS
+#include <assert.h>
+#define _PR_ASSERT_MSG(msg)                                 \
+	std::cerr << "[PEARRAY] ASSERT | " << __FILE__          \
+			  << ":" << __LINE__ << " " << PR_FUNCTION_NAME \
+			  << " | " << (msg) << std::endl
+#ifndef PR_DEBUG
+#define PR_ASSERT(cond, msg)        \
+	do {                            \
+		if (PR_UNLIKELY(!(cond))) { \
+			_PR_ASSERT_MSG((msg));  \
+			std::abort();           \
+		}                           \
+	} while (false)
+#else
+#define PR_ASSERT(cond, msg)        \
+	do {                            \
+		if (PR_UNLIKELY(!(cond))) { \
+			_PR_ASSERT_MSG((msg));  \
+			PR_DEBUG_BREAK();       \
+			std::abort();           \
+		}                           \
+	} while (false)
+#endif
+#else
+#define PR_ASSERT(cond, msg) ((void)0)
+#endif
+
+#define PR_CLASS_NON_MOVEABLE(C) \
+private:                         \
+	C(C&&)	   = delete;         \
+	C& operator=(C&&) = delete
+
+#define PR_CLASS_NON_COPYABLE(C)     \
+private:                             \
+	C(const C&) = delete;            \
+	C& operator=(const C&) = delete; \
+	PR_CLASS_NON_MOVEABLE(C)
+
+#define PR_CLASS_NON_CONSTRUCTABLE(C) \
+private:                              \
+	C() = delete;                     \
+	PR_CLASS_NON_COPYABLE(C)
+
+#define PR_CLASS_STACK_ONLY(C)                     \
+private:                                           \
+	static void* operator new(size_t)	 = delete; \
+	static void* operator new[](size_t)	 = delete; \
+	static void operator delete(void*)	 = delete; \
+	static void operator delete[](void*) = delete
+
+#if defined(PR_CC_GNU) || defined(PR_CC_CLANG)
+#define PR_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#define PR_NO_SANITIZE_THREAD __attribute__((no_sanitize_thread))
+#define PR_NO_SANITIZE_UNDEFINED __attribute__((no_sanitize_undefined))
+#else
+#define PR_NO_SANITIZE_ADDRESS
+#define PR_NO_SANITIZE_THREAD
+#define PR_NO_SANITIZE_UNDEFINED
+#endif
+
+#if defined(PR_CC_MSC)
+#define PR_EXPORT __declspec(dllexport)
+#define PR_IMPORT __declspec(dllimport)
+#elif defined(PR_CC_GNU) || defined(PR_CC_CLANG)
+#define PR_EXPORT __attribute__((visibility("default")))
+#define PR_IMPORT
+#else
+#error Unsupported compiler
+#endif
+
+#define PR_PLUGIN_API_VERSION 1
+#define PR_PLUGIN_EXPORT PR_EXPORT
+
+// Add profiler tokens
+#cmakedefine PR_WITH_PROFILER
+
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+#include <memory>
+
+// Eigen3 Library
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+// clang-format off
+#include "config/Libraries.inl"
+#include "config/SIMD.inl"
+#include "config/Types.inl"
+#include "config/Constants.inl"
+#include "config/VectorGlue.inl"
+// clang-format on

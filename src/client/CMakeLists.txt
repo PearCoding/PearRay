@@ -13,7 +13,6 @@ set(PR_Hdr ${PR_Main_Hdr}
 include_directories(../utils)
 
 add_executable(pearray ${PR_Src} ${PR_Hdr})
-target_link_libraries(pearray PRIVATE pr_lib pr_lib_utils Boost::program_options)
-target_compile_definitions(pearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
+target_link_libraries(pearray PRIVATE pr_lib_loader Boost::program_options)
 add_lto(pearray)
 strip_binary(pearray)

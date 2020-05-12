@@ -25,9 +25,8 @@ set(Hdr
 include_directories(../utils)
 
 pybind11_add_module(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray PRIVATE pr_lib pr_lib_utils OpenImageIO::Core)
+target_link_libraries(pypearray PRIVATE pr_lib_loader OpenImageIO::Core)
 set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "")# Disable suffix for this target
-target_compile_definitions(pypearray PRIVATE "${DEFS}" "$<$<CONFIG:Debug>:${DEFS_DEBUG}>")
 target_include_directories(pypearray PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
 
 #file(COPY python/pearray DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

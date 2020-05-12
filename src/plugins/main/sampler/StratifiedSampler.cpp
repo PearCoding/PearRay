@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace PR {
-class PR_LIB StratifiedSampler : public ISampler {
+class PR_LIB_BASE StratifiedSampler : public ISampler {
 public:
 	StratifiedSampler(Random& random, uint32 samples)
 		: ISampler(samples)
