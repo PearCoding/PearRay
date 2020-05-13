@@ -9,7 +9,7 @@ class RenderTileSession;
 class StreamPipeline;
 class IEntity;
 class IMaterial;
-class GeometryPoint;
+struct GeometryPoint;
 class ShadingPoint;
 struct HitEntry;
 

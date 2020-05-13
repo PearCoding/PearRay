@@ -68,6 +68,9 @@ set(PR_Src
   shader/MapShadingSocket.h)
 
 add_library(pr_lib_loader ${PR_Src})
+if(NOT WIN32)
+  target_link_libraries(pr_lib_loader PUBLIC ${CMAKE_DL_LIBS})
+endif()
 target_link_libraries(pr_lib_loader
   PUBLIC
     pr_lib_core Boost::iostreams Boost::regex

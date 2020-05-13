@@ -51,7 +51,7 @@ void StreamPipeline::runPipeline()
 	fillWithCameraRays();
 
 	// Early exit
-	if (mTile->context()->isStopping())
+	if (mContext->isStopping())
 		return;
 
 	// Swap buffers
@@ -60,16 +60,16 @@ void StreamPipeline::runPipeline()
 
 	// Trace rays
 	mHitStream->reset();
-	mTile->context()->scene()->traceRays(
+	mContext->scene()->traceRays(
 		*mReadRayStream,
 		*mHitStream);
 
 	// Early exit
-	if (mTile->context()->isStopping())
+	if (mContext->isStopping())
 		return;
 
 	// Setup hit stream
-	mHitStream->setup(mTile->context()->settings().sortHits);
+	mHitStream->setup(mContext->settings().sortHits);
 }
 
 void StreamPipeline::fillWithCameraRays()
@@ -85,7 +85,7 @@ void StreamPipeline::fillWithCameraRays()
 			mCurrentPixelPos(0) = 0;
 
 		for (; mCurrentPixelPos(0) < size.Width; ++mCurrentPixelPos(0)) {
-			if (mWriteRayStream->isFull() || mTile->context()->isStopping()) {
+			if (mWriteRayStream->isFull() || mContext->isStopping()) {
 				forceBreak = true;
 				break;
 			}
