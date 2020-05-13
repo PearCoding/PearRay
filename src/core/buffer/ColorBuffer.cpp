@@ -38,13 +38,6 @@ void ColorBuffer::map(const ToneMapper& mapper,
 			   mData->Ptr, channels(), mData->Width * mData->Height);
 }
 
-void ColorBuffer::mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn)
-{
-	PR_ASSERT(mData, "Expected valid buffer");
-	mapper.mapOnlyMapper(rgbIn, mData->Ptr,
-						 channels(), mData->Width * mData->Height);
-}
-
 void ColorBuffer::flipY()
 {
 	PR_ASSERT(mData, "Expected valid buffer");

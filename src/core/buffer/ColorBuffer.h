@@ -24,7 +24,6 @@ public:
 	void map(const ToneMapper& mapper,
 			 const std::shared_ptr<SpectrumDescriptor>& desc,
 			 const float* specIn);
-	void mapOnlyMapper(const ToneMapper& mapper, const float* rgbIn);
 
 	void flipY();
 
