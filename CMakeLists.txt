@@ -141,9 +141,9 @@ if(PR_WITH_PYTHON)
 	set(PR_HAS_PYTHON_API ON)
 endif()
 
-# Due to problems with OpenEXR and C++17 we still use C++14 (Aug 2018)
+# Due to problems with OpenEXR (on Travis) and C++17 we still use C++14 (Aug 2018)
 # set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT PR_WITH_ASSERTS)
