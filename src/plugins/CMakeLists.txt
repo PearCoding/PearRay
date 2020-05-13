@@ -31,7 +31,7 @@ function(PR_ADD_PLUGIN NAME)
     set_property(GLOBAL PROPERTY _pr_embedded_plugins "${_embedded_plugins}" )
   else()# Shared library
     add_library(${TARGET} MODULE ${_args_CPP})
-    target_link_libraries(${TARGET} PRIVATE pr_lib_utils)
+    target_link_libraries(${TARGET} PRIVATE pr_lib_loader)
     set_target_properties(${TARGET} PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
     if(_args_LIBRARIES)
