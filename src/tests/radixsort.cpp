@@ -14,11 +14,12 @@ PR_TEST("Sorted")
 		data[i] = i;
 	}
 
-	radixSort(data.data(),
-			  [&](size_t a, size_t b) {
-				  std::swap(data[a], data[b]);
-			  },
-			  0, SIZE - 1, (uint32)(1 << 31));
+	radixSort(
+		data.data(),
+		[&](size_t a, size_t b) {
+			std::swap(data[a], data[b]);
+		},
+		0, SIZE - 1, (uint32)(1 << 31));
 
 	bool sorted = true;
 	for (size_t i = 0; i < SIZE; ++i) {
@@ -39,15 +40,16 @@ PR_TEST("Unsorted")
 		data[i] = rand();
 	}
 
-	radixSort(data.data(),
-			  [&](size_t a, size_t b) {
-				  std::swap(data[a], data[b]);
-			  },
-			  0, SIZE - 1, (uint32)(1 << 31));
+	radixSort(
+		data.data(),
+		[&](size_t a, size_t b) {
+			std::swap(data[a], data[b]);
+		},
+		0, SIZE - 1, (uint32)(1 << 31));
 
 	bool sorted = true;
-	for (size_t i = 0; i < SIZE-1; ++i) {
-		if (data[i] > data[i+1]) {
+	for (size_t i = 0; i < SIZE - 1; ++i) {
+		if (data[i] > data[i + 1]) {
 			sorted = false;
 			break;
 		}

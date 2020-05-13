@@ -73,6 +73,7 @@ void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
 
 	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
 	vfloat exit	 = vfloat(std::numeric_limits<float>::infinity());
+
 	for (int i = 0; i < 3; ++i) {
 		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
 		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
@@ -93,17 +94,21 @@ BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 	BoundingBox::IntersectionRange r;
 	const Vector3f invDir = in.Direction.cwiseInverse();
 
-	for (int i = 0; i < 3; ++i) {
+	// Leading loop part
+	{
+		const float vmin = (lowerBound()(0) - in.Origin[0]) * invDir[0];
+		const float vmax = (upperBound()(0) - in.Origin[0]) * invDir[0];
+		r.Entry			 = std::min(vmin, vmax);
+		r.Exit			 = std::max(vmin, vmax);
+	}
+
+	PR_UNROLL_LOOP(2)
+	for (int i = 1; i < 3; ++i) {
 		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
 		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-		if (i == 0) {
-			r.Entry = std::min(vmin, vmax);
-			r.Exit	= std::max(vmin, vmax);
-		} else {
-			r.Entry = std::max(std::min(vmin, vmax), r.Entry);
-			r.Exit	= std::min(std::max(vmin, vmax), r.Exit);
-		}
+		r.Entry = std::max(std::min(vmin, vmax), r.Entry);
+		r.Exit	= std::min(std::max(vmin, vmax), r.Exit);
 	}
 
 	r.Entry		 = std::max(in.MinT, r.Entry);
@@ -120,17 +125,21 @@ BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& i
 	BoundingBox::IntersectionRangeV r;
 	const Vector3fv invDir = in.Direction.cwiseInverse();
 
-	for (int i = 0; i < 3; ++i) {
+	// Leading loop part
+	{
+		const vfloat vmin = (lowerBound()(0) - in.Origin[0]) * invDir[0];
+		const vfloat vmax = (upperBound()(0) - in.Origin[0]) * invDir[0];
+		r.Entry			  = min(vmin, vmax);
+		r.Exit			  = max(vmin, vmax);
+	}
+
+	PR_UNROLL_LOOP(2)
+	for (int i = 1; i < 3; ++i) {
 		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
 		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
 
-		if (i == 0) {
-			r.Entry = min(vmin, vmax);
-			r.Exit	= max(vmin, vmax);
-		} else {
-			r.Entry = max(min(vmin, vmax), r.Entry);
-			r.Exit	= min(max(vmin, vmax), r.Exit);
-		}
+		r.Entry = max(min(vmin, vmax), r.Entry);
+		r.Exit	= min(max(vmin, vmax), r.Exit);
 	}
 
 	r.Entry		 = max(in.MinT, r.Entry);

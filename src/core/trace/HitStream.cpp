@@ -1,8 +1,9 @@
 #include "HitStream.h"
 #include "Profiler.h"
 
-//FIXME: RadixSort has a bug which chrashes the software!
-//#define PR_USE_RADIXSORT
+// Prefer radix sort, as it is much more cache friendly in OUR case
+// due to the high swap penalty
+#define PR_USE_RADIXSORT
 #ifdef PR_USE_RADIXSORT
 #include "container/RadixSort.h"
 #else
@@ -80,12 +81,12 @@ void HitStream::setup(bool sort)
 		};
 
 #ifdef PR_USE_RADIXSORT
-		uint32 mask = vem(currentSize());
+		uint32 mask = msb(currentSize());
 		radixSort(mEntityID.data(), op,
 				  0, currentSize() - 1, mask);
 #else
 		quickSort(mEntityID.data(), op,
-				  0, currentSize() - 1);
+				  0, currentSize()- 1);
 #endif
 
 		size_t end = currentSize();
