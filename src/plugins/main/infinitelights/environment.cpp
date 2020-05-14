@@ -10,46 +10,31 @@
 #include "sampler/Distribution2D.h"
 
 namespace PR {
-class EnvironmentLight : public IInfiniteLight {
+// Four variants available
+// -> Distribution + Split
+// -> Distribution
+// -> Split
+// -> None
+
+class EnvironmentLightBase : public IInfiniteLight {
 public:
-	EnvironmentLight(uint32 id, const std::string& name,
-					 const std::shared_ptr<FloatSpectralMapSocket>& spec,
-					 const std::shared_ptr<FloatSpectralMapSocket>& background,
-					 float factor,
-					 const Eigen::Matrix3f& trans)
+	EnvironmentLightBase(uint32 id, const std::string& name,
+						 const std::shared_ptr<FloatSpectralMapSocket>& spec,
+						 const std::shared_ptr<FloatSpectralMapSocket>& background,
+						 const std::shared_ptr<Distribution2D>& distribution,
+						 float factor,
+						 const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
+		, mDistribution(distribution)
 		, mRadiance(spec)
 		, mBackground(background)
 		, mRadianceFactor(factor)
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
 	{
-		Vector2i recSize = spec->queryRecommendedSize();
-		if (recSize(0) > 1 && recSize(1) > 1) {
-			mDistribution = std::make_unique<Distribution2D>(recSize(0), recSize(1));
-
-			const Vector2f filterSize(1.0f / recSize(0), 1.0f / recSize(1));
-
-			PR_LOG(L_INFO) << "Generating 2d environment distribution of " << name << std::endl;
-
-			mDistribution->generate([&](size_t x, size_t y) {
-				float u = x / (float)recSize(0);
-				float v = 1 - y / (float)recSize(1);
-
-				float sinTheta = std::sin(PR_PI * (y + 0.5f) / recSize(1));
-
-				MapSocketCoord coord;
-				coord.UV  = Vector2f(u, v);
-				coord.dUV = filterSize;
-
-				const float val = sinTheta * mRadiance->relativeLuminance(coord);
-				return (val <= PR_EPSILON) ? 0.0f : val;
-			});
-		}
 	}
 
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
-			  const RenderTileSession&) const override
+	inline void evalSD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
 		MapSocketCoord coord;
 		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
@@ -63,42 +48,85 @@ public:
 		else
 			out.Weight = mRadiance->eval(coord);
 
-		if (mDistribution) {
-			const float sinTheta = std::sin(coord.UV(1) * PR_PI);
-			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
-		} else {
-			out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
-		}
+		const float sinTheta = std::sin(coord.UV(1) * PR_PI);
+		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
+		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 	}
 
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
+	inline void evalS(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
-		if (mDistribution) {
-			Vector2f uv	 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
-			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
-			out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		MapSocketCoord coord;
+		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
 
-			MapSocketCoord coord;
-			coord.UV		   = uv;
-			coord.UV(1)		   = 1 - coord.UV(1);
-			coord.WavelengthNM = in.Point.Ray.WavelengthNM;
-			out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
+		coord.UV		   = Spherical::uv_from_normal(dir);
+		coord.UV(1)		   = 1 - coord.UV(1);
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
 
-			const float sinTheta = std::sin((1 - uv(1)) * PR_PI);
-			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
-		} else {
-			out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-			out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		if (in.Point.Ray.IterationDepth == 0)
+			out.Weight = mBackground->eval(coord);
+		else
+			out.Weight = mRadiance->eval(coord);
 
-			MapSocketCoord coord;
-			coord.UV		   = in.RND;
-			coord.UV(1)		   = 1 - coord.UV(1);
-			coord.WavelengthNM = in.Point.Ray.WavelengthNM;
-			out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
-		}
+		out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
+	}
+
+	inline void evalD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
+	{
+		MapSocketCoord coord;
+		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+
+		coord.UV		   = Spherical::uv_from_normal(dir);
+		coord.UV(1)		   = 1 - coord.UV(1);
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+
+		out.Weight = mRadiance->eval(coord);
+
+		const float sinTheta = std::sin(coord.UV(1) * PR_PI);
+		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
+		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+	}
+
+	inline void evalN(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
+	{
+		MapSocketCoord coord;
+		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+
+		coord.UV		   = Spherical::uv_from_normal(dir);
+		coord.UV(1)		   = 1 - coord.UV(1);
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+
+		out.Weight = mRadiance->eval(coord);
+
+		out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
+	}
+
+	inline void sampleD(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
+	{
+		Vector2f uv	 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
+		out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
+		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+
+		MapSocketCoord coord;
+		coord.UV		   = uv;
+		coord.UV(1)		   = 1 - coord.UV(1);
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
+
+		const float sinTheta = std::sin((1 - uv(1)) * PR_PI);
+		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
+		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
+	}
+
+	inline void sampleN(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
+	{
+		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
+		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+
+		MapSocketCoord coord;
+		coord.UV		   = in.RND;
+		coord.UV(1)		   = 1 - coord.UV(1);
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
 	}
 
 	std::string dumpInformation() const override
@@ -106,7 +134,7 @@ public:
 		std::stringstream stream;
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
-			   << "  <EnvironmentLight>:" << std::endl
+			   << "  <EnvironmentDSLight>:" << std::endl
 			   << "    Radiance:     " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
 			   << "    Background:   " << (mBackground ? mBackground->dumpInformation() : "NONE") << std::endl
 			   << "    Factor:       " << mRadianceFactor << std::endl;
@@ -120,15 +148,111 @@ public:
 	}
 
 private:
-	std::unique_ptr<Distribution2D> mDistribution;
+	const std::shared_ptr<Distribution2D> mDistribution;
 
 	// Radiance is used for sampling, background is used when a ray hits the background
 	// Most of the time both are the same
-	std::shared_ptr<FloatSpectralMapSocket> mRadiance;
-	std::shared_ptr<FloatSpectralMapSocket> mBackground;
-	float mRadianceFactor;
-	Eigen::Matrix3f mTransform;
-	Eigen::Matrix3f mInvTransform;
+	const std::shared_ptr<FloatSpectralMapSocket> mRadiance;
+	const std::shared_ptr<FloatSpectralMapSocket> mBackground;
+	const float mRadianceFactor;
+	const Eigen::Matrix3f mTransform;
+	const Eigen::Matrix3f mInvTransform;
+};
+
+class EnvironmentSDLight : public EnvironmentLightBase {
+public:
+	EnvironmentSDLight(uint32 id, const std::string& name,
+					   const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					   const std::shared_ptr<FloatSpectralMapSocket>& background,
+					   const std::shared_ptr<Distribution2D>& dist,
+					   float factor,
+					   const Eigen::Matrix3f& trans)
+		: EnvironmentLightBase(id, name, spec, background, dist, factor, trans)
+	{
+	}
+
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
+	{
+		evalSD(in, out);
+	}
+
+	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
+				const RenderTileSession&) const override
+	{
+		sampleD(in, out);
+	}
+};
+
+class EnvironmentSLight : public EnvironmentLightBase {
+public:
+	EnvironmentSLight(uint32 id, const std::string& name,
+					  const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					  const std::shared_ptr<FloatSpectralMapSocket>& background,
+					  float factor,
+					  const Eigen::Matrix3f& trans)
+		: EnvironmentLightBase(id, name, spec, background, nullptr, factor, trans)
+	{
+	}
+
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
+	{
+		evalS(in, out);
+	}
+
+	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
+				const RenderTileSession&) const override
+	{
+		sampleN(in, out);
+	}
+};
+
+class EnvironmentDLight : public EnvironmentLightBase {
+public:
+	EnvironmentDLight(uint32 id, const std::string& name,
+					  const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					  const std::shared_ptr<Distribution2D>& dist,
+					  float factor,
+					  const Eigen::Matrix3f& trans)
+		: EnvironmentLightBase(id, name, spec, spec, dist, factor, trans)
+	{
+	}
+
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
+	{
+		evalD(in, out);
+	}
+
+	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
+				const RenderTileSession&) const override
+	{
+		sampleD(in, out);
+	}
+};
+
+class EnvironmentNLight : public EnvironmentLightBase {
+public:
+	EnvironmentNLight(uint32 id, const std::string& name,
+					  const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					  float factor,
+					  const Eigen::Matrix3f& trans)
+		: EnvironmentLightBase(id, name, spec, spec, nullptr, factor, trans)
+	{
+	}
+
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
+	{
+		evalN(in, out);
+	}
+
+	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
+				const RenderTileSession&) const override
+	{
+		sampleN(in, out);
+	}
 };
 
 class EnvironmentLightFactory : public IInfiniteLightPlugin {
@@ -150,7 +274,41 @@ public:
 
 		Eigen::Matrix3f trans = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
-		return std::make_shared<EnvironmentLight>(id, name, rad, background, factor, trans);
+		Vector2i recSize = rad->queryRecommendedSize();
+		std::shared_ptr<Distribution2D> dist;
+		if (recSize(0) > 1 && recSize(1) > 1) {
+			dist = std::make_shared<Distribution2D>(recSize(0), recSize(1));
+
+			const Vector2f filterSize(1.0f / recSize(0), 1.0f / recSize(1));
+
+			PR_LOG(L_INFO) << "Generating 2d environment distribution of " << name << std::endl;
+
+			dist->generate([&](size_t x, size_t y) {
+				float u = x / (float)recSize(0);
+				float v = 1 - y / (float)recSize(1);
+
+				float sinTheta = std::sin(PR_PI * (y + 0.5f) / recSize(1));
+
+				MapSocketCoord coord;
+				coord.UV  = Vector2f(u, v);
+				coord.dUV = filterSize;
+
+				const float val = sinTheta * rad->relativeLuminance(coord);
+				return (val <= PR_EPSILON) ? 0.0f : val;
+			});
+		}
+
+		if (dist) {
+			if (rad == background)
+				return std::make_shared<EnvironmentDLight>(id, name, rad, dist, factor, trans);
+			else
+				return std::make_shared<EnvironmentSDLight>(id, name, rad, background, dist, factor, trans);
+		} else {
+			if (rad == background)
+				return std::make_shared<EnvironmentNLight>(id, name, rad, factor, trans);
+			else
+				return std::make_shared<EnvironmentSLight>(id, name, rad, background, factor, trans);
+		}
 	}
 
 	const std::vector<std::string>& getNames() const override
