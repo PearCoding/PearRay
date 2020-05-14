@@ -4,7 +4,7 @@
 #include "SpectrumTag.h"
 
 namespace PR {
-size_t XYZSpectrumDescriptor::samples() const
+Size1i XYZSpectrumDescriptor::samples() const
 {
 	return 3;
 }

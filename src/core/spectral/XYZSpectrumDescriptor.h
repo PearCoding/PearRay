@@ -7,7 +7,7 @@ class PR_LIB_CORE XYZSpectrumDescriptor : public SpectrumDescriptor {
 public:
 	virtual ~XYZSpectrumDescriptor() = default;
 
-	virtual size_t samples() const override;
+	virtual Size1i samples() const override;
 	virtual float wavelength(size_t index) const override;
 	virtual float luminousFactor(size_t index) const override;
 	virtual float integralDelta(size_t index) const override;

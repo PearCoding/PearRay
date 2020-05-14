@@ -8,9 +8,9 @@ using namespace PR;
 namespace PRPY {
 class SpectrumDescriptorWrap : public SpectrumDescriptor {
 public:
-	virtual size_t samples() const override
+	virtual Size1i samples() const override
 	{
-		PYBIND11_OVERLOAD_PURE(size_t, SpectrumDescriptor, samples);
+		PYBIND11_OVERLOAD_PURE(Size1i, SpectrumDescriptor, samples);
 	}
 
 	virtual float wavelength(size_t index) const override
