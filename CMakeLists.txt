@@ -105,16 +105,12 @@ endif()
 MESSAGE(STATUS "Using triangle intersection method: ${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}")
 
 # Include packages
-find_package(Threads REQUIRED)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-set(Boost_USE_MULTITHREADED ON)
+set(CMAKE_INCLUDE_CURRENT_DIR			ON)
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG	ON)
+set(Boost_USE_MULTITHREADED				ON)
 
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
-if(WIN32)
-	add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
-endif()
+link_directories(${Boost_LIBRARY_DIRS})
 
 if(PR_WITH_DIAGNOSTIC)
 	find_package(Qt5 COMPONENTS Core Widgets Charts REQUIRED)

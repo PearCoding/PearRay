@@ -4,7 +4,7 @@
 #include "SpectrumTag.h"
 
 namespace PR {
-size_t RGBSpectrumDescriptor::samples() const
+Size1i RGBSpectrumDescriptor::samples() const
 {
 	return 3;
 }

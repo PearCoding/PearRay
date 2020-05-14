@@ -113,6 +113,10 @@ foreach(component ${OpenEXR_FIND_COMPONENTS})
   if(OpenEXR_${component}_FOUND)
   set(_deps )
 
+  if(TARGET OpenEXR::${component})
+    continue()
+  endif()
+
   foreach(dependency ${OpenEXR_${component}_DEPS})
     set(_deps ${_deps} OpenEXR::${component})
   endforeach(dependency)
@@ -146,6 +150,6 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(OpenEXR
   VERSION_VAR OpenEXR_VERSION
   REQUIRED_VARS OpenEXR_LIBRARIES OpenEXR_INCLUDE_DIRS
-  HANDLE_COMPONENTS)
+)#  HANDLE_COMPONENTS)
 
 mark_as_advanced(OpenEXR_INCLUDE_DIR)

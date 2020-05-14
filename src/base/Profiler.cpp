@@ -64,13 +64,13 @@ static std::mutex sThreadMutex;
 static std::vector<ThreadData> sThreadData;
 ThreadData* getCurrentThreadData()
 {
-	thread_local int64 id = -1;
+	thread_local int32 id = -1;
 	if (id < 0) {
 		std::stringstream stream;
 		stream << "Thread " << std::this_thread::get_id();
 
-		id = static_cast<int64>(sThreadData.size());
-		sThreadData.emplace_back(id, stream.str());
+		id = static_cast<int32>(sThreadData.size());
+		sThreadData.emplace_back(static_cast<uint32>(id), stream.str());
 
 		return &sThreadData[id];
 	} else {

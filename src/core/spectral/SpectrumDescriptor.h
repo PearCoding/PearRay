@@ -8,7 +8,7 @@ class PR_LIB_CORE SpectrumDescriptor {
 public:
 	virtual ~SpectrumDescriptor() = default;
 
-	virtual size_t samples() const					 = 0;
+	virtual Size1i samples() const					 = 0;
 	virtual float wavelength(size_t index) const	 = 0;
 	virtual float luminousFactor(size_t index) const = 0;
 	virtual float integralDelta(size_t index) const  = 0;

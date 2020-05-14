@@ -2,8 +2,6 @@ if(VERBOSE)
 	message(STATUS "Enabling Testing")
 endif()
 
-include_directories(../utils)
-
 set(PRT_Pre Test.h testscene.inl)
 
 FUNCTION(PUSH_TEST name files)

@@ -3,6 +3,8 @@
 #include "OutputBufferData.h"
 #include "spectral/SpectralBlob.h"
 
+#include <array>
+
 namespace PR {
 class IFilter;
 class PR_LIB_CORE OutputBufferBucket {

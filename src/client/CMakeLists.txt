@@ -10,8 +10,6 @@ set(PR_Main_Hdr
 set(PR_Hdr ${PR_Main_Hdr}
 )
 
-include_directories(../utils)
-
 add_executable(pearray ${PR_Src} ${PR_Hdr})
 target_link_libraries(pearray PRIVATE pr_lib_loader Boost::program_options)
 add_lto(pearray)

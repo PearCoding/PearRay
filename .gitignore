@@ -41,3 +41,5 @@ res
 
 # Working on it... Still broken
 tools/spectrum
+/.vs
+/CMakeSettings.json
