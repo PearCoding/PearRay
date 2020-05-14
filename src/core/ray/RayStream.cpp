@@ -26,22 +26,23 @@ RayGroup::RayGroup(const RayStream* stream, size_t offset, size_t size, bool coh
 
 RayStream::RayStream(size_t raycount)
 	: mSize(raycount + raycount % PR_SIMD_BANDWIDTH)
-	, mCurrentPos(0)
+	, mCurrentReadPos(0)
+	, mCurrentWritePos(0)
 {
 	for (int i = 0; i < 3; ++i)
-		mOrigin[i].reserve(mSize);
+		mOrigin[i].resize(mSize);
 	for (int i = 0; i < DIR_C_S; ++i)
-		mDirection[i].reserve(mSize);
+		mDirection[i].resize(mSize);
 
-	mPixelIndex.reserve(mSize);
-	mIterationDepth.reserve(mSize);
-	mTime.reserve(mSize);
-	mMinT.reserve(mSize);
-	mMaxT.reserve(mSize);
-	mFlags.reserve(mSize);
+	mPixelIndex.resize(mSize);
+	mIterationDepth.resize(mSize);
+	mTime.resize(mSize);
+	mMinT.resize(mSize);
+	mMaxT.resize(mSize);
+	mFlags.resize(mSize);
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-		mWeight[i].reserve(mSize);
-		mWavelengthNM[i].reserve(mSize);
+		mWeight[i].resize(mSize);
+		mWavelengthNM[i].resize(mSize);
 	}
 }
 
@@ -54,54 +55,39 @@ void RayStream::addRay(const Ray& ray)
 	PR_PROFILE_THIS;
 
 	//PR_ASSERT(!isFull(), "Check before adding!");
+	// TODO: Add dynamic sizing
 
 	for (int i = 0; i < 3; ++i)
-		mOrigin[i].emplace_back(ray.Origin[i]);
+		mOrigin[i][mCurrentWritePos] = ray.Origin[i];
 
 #ifdef PR_COMPRESS_RAY_DIR
 	octNormal16 n(ray.Direction[0], ray.Direction[1], ray.Direction[2]);
 	for (int i = 0; i < 2; ++i)
-		mDirection[i].emplace_back(n(i));
+		mDirection[i][mCurrentWritePos] = n(i);
 #else
 	for (int i = 0; i < 3; ++i)
-		mDirection[i].emplace_back(ray.Direction[i]);
+		mDirection[i][mCurrentWritePos] = ray.Direction[i];
 #endif
 
-	mIterationDepth.emplace_back(ray.IterationDepth);
-	mPixelIndex.emplace_back(ray.PixelIndex);
-	mTime.emplace_back(to_unorm16(ray.Time));
-	mMinT.emplace_back(ray.MinT);
-	mMaxT.emplace_back(ray.MaxT);
-	mFlags.emplace_back(ray.Flags);
+	mIterationDepth[mCurrentWritePos] = ray.IterationDepth;
+	mPixelIndex[mCurrentWritePos] = ray.PixelIndex;
+	mTime[mCurrentWritePos] = to_unorm16(ray.Time);
+	mMinT[mCurrentWritePos] = ray.MinT;
+	mMaxT[mCurrentWritePos] = ray.MaxT;
+	mFlags[mCurrentWritePos] = ray.Flags;
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-		mWeight[i].emplace_back(ray.Weight(i));
+		mWeight[i][mCurrentWritePos] = ray.Weight(i);
 
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-		mWavelengthNM[i].emplace_back(ray.WavelengthNM(i));
+		mWavelengthNM[i][mCurrentWritePos] = ray.WavelengthNM(i);
+
+	++mCurrentWritePos;
 }
 
 void RayStream::reset()
 {
-	PR_PROFILE_THIS;
-
-	for (int i = 0; i < 3; ++i)
-		mOrigin[i].clear();
-
-	for (int i = 0; i < DIR_C_S; ++i)
-		mDirection[i].clear();
-
-	mIterationDepth.clear();
-	mPixelIndex.clear();
-	mTime.clear();
-	mFlags.clear();
-	mMinT.clear();
-	mMaxT.clear();
-	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-		mWeight[i].clear();
-		mWavelengthNM[i].clear();
-	}
-
-	mCurrentPos = 0;
+	mCurrentWritePos = 0;
+	mCurrentReadPos	 = 0;
 }
 
 /* A algorithm grouping rays together for coherent intersections
@@ -115,7 +101,7 @@ RayGroup RayStream::getNextGroup()
 
 	// TODO: Check coherence
 	RayGroup grp(this, 0, currentSize(), false);
-	mCurrentPos += grp.size();
+	mCurrentReadPos += grp.size();
 	return grp;
 }
 

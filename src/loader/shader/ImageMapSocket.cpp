@@ -31,8 +31,8 @@ ImageMapSocket::ImageMapSocket(const std::shared_ptr<SpectrumDescriptor>& desc,
 		if (spec->get_string_attribute("oiio.ColorSpace") == "sRGB")
 			mIsLinear = false;
 
-		const OIIO::ImageIOParameter* ptex = spec->find_attribute("ptex:meshType", OIIO::TypeDesc::TypeString);
-		if (ptex && ptex->type() == OIIO::TypeDesc::TypeString) {
+		const OIIO::ImageIOParameter* ptex = spec->find_attribute("ptex:meshType", OIIO::TypeDesc::STRING);
+		if (ptex && ptex->type() == OIIO::TypeDesc::STRING) {
 			mIsPtex = true;
 
 			std::string type = spec->get_string_attribute("ptex::meshType");

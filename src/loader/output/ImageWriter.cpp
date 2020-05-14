@@ -8,8 +8,6 @@
 #include <OpenImageIO/imageio.h>
 #include <boost/filesystem.hpp>
 
-OIIO_NAMESPACE_USING
-
 namespace PR {
 ImageWriter::ImageWriter()
 	: mRGBData(nullptr)
@@ -66,8 +64,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	if (channelCount == 0)
 		return false;
 
-	ImageSpec spec(viewSize.Width, viewSize.Height,
-				   (int)channelCount, TypeDesc::FLOAT);
+	OIIO::ImageSpec spec(viewSize.Width, viewSize.Height,
+						 (int)channelCount, OIIO::TypeDesc::FLOAT);
 	spec.full_x		 = 0;
 	spec.full_y		 = 0;
 	spec.full_width	 = mRenderer->settings().filmWidth;
@@ -109,7 +107,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 	const std::string utfFilename = boost::filesystem::path(file).generic_string();
 	// Create file
-	auto out = ImageOutput::create(utfFilename);
+	auto out = OIIO::ImageOutput::create(utfFilename);
 	if (!out)
 		return false;
 
@@ -191,7 +189,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				id += 1;
 			}
 		}
-		out->write_scanline(y + viewOff.y(), 0, TypeDesc::FLOAT, line);
+		out->write_scanline(y + viewOff.y(), 0, OIIO::TypeDesc::FLOAT, line);
 	}
 	out->close();
 

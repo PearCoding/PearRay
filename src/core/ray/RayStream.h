@@ -42,10 +42,10 @@ public:
 	inline bool isEmpty() const { return currentSize() == 0; }
 	inline bool isFull() const { return currentSize() >= maxSize(); }
 	inline bool enoughSpace(size_t requested = 1) const { return currentSize() + requested <= maxSize(); }
-	inline bool hasNextGroup() const { return mCurrentPos < currentSize(); }
+	inline bool hasNextGroup() const { return mCurrentReadPos < currentSize(); }
 
 	inline size_t maxSize() const { return mSize; }
-	inline size_t currentSize() const { return mPixelIndex.size(); }
+	inline size_t currentSize() const { return mCurrentWritePos; }
 
 	void addRay(const Ray& ray);
 	Ray getRay(size_t id) const;
@@ -81,7 +81,8 @@ private: // Some vectors are not aligned, due to required preprocessing
 	std::vector<float> mWavelengthNM[PR_SPECTRAL_BLOB_SIZE];
 
 	size_t mSize;
-	size_t mCurrentPos;
+	size_t mCurrentReadPos;
+	size_t mCurrentWritePos;
 };
 
 inline Ray RayGroup::getRay(size_t id) const

@@ -1,8 +1,6 @@
 #include "EXRFile.h"
 
-#include <OpenEXR/ImfChannelList.h>
-#include <OpenEXR/ImfInputFile.h>
-#include <OpenEXR/ImfTestFile.h>
+#include <OpenImageIO/imageio.h>
 
 #include <QDebug>
 #include <QFile>
@@ -34,43 +32,6 @@ void EXRLayer::ensureRightOrder()
 	std::swap(mData[0], mData[2]);
 }
 
-//////////////////////////////////
-
-using namespace OPENEXR_IMF_NAMESPACE;
-class QIStream : public IStream {
-public:
-	explicit QIStream(const QString& filename)
-		: IStream(filename.toUtf8().data())
-		, mFile(filename)
-	{
-		mFile.open(QIODevice::ReadOnly);
-	}
-
-	bool read(char c[], int n) override
-	{
-		return mFile.read(c, n) == n;
-	}
-
-	Int64 tellg() override
-	{
-		return mFile.pos();
-	}
-
-	void seekg(Int64 pos) override
-	{
-		mFile.seek(pos);
-	}
-
-	void clear() override
-	{
-		mFile.unsetError();
-	}
-
-private:
-	QString mFilename;
-	QFile mFile;
-};
-
 EXRFile::EXRFile()
 	: mWidth(0)
 	, mHeight(0)
@@ -95,73 +56,53 @@ static QString escapeString(const QString& str)
 	}
 }
 
+static void splitChannelString(const QString& str, QString& parent, QString& child)
+{
+	int it = str.indexOf('.');
+	if (it < 0) {
+		parent = str;
+		child  = str;
+	} else {
+		parent = str.left(it);
+		child  = str.right(str.size() - it);
+	}
+}
+
 bool EXRFile::open(const QString& filename)
 {
 	static const QString SPEC_NAME = "Color";
 
-	using namespace IMATH_NAMESPACE;
-
-	QIStream stream(filename);
-	bool tiled = false;
-
-	if (!isOpenExrFile(stream, tiled))
+	const std::string filename_std = filename.toStdString();
+	auto file = OIIO::ImageInput::open(filename_std);
+	if (!file) {
+		qCritical() << "OIIO: Could not open " << filename
+					<< ", error = " << OIIO::geterror().c_str();
 		return false;
-	if (tiled)
-		return false;
+	}
 
-	InputFile file(stream);
+	const OIIO::ImageSpec& spec = file->spec();
 
-	/*if (!file.isComplete())
-		return false;*/
-
-	// Get Header information
-	Box2i dw = file.header().dataWindow();
-	mWidth   = dw.max.x - dw.min.x + 1;
-	mHeight  = dw.max.y - dw.min.y + 1;
-
+	mWidth	 = spec.width;
+	mHeight	 = spec.height;
 	int size = mWidth * mHeight;
 
 	// Get layers
-	const ChannelList& channels = file.header().channels();
-	QMap<QString, QStringList> layerMap;
+	auto channels		 = spec.channelnames;
+	auto channel_formats = spec.channelformats;
 
-	if (channels.find("R") != channels.end()
-		|| channels.find("G") != channels.end()
-		|| channels.find("B") != channels.end()) {
-		QStringList list;
-		if (channels.find("R") != channels.end())
-			list << "R";
-		if (channels.find("G") != channels.end())
-			list << "G";
-		if (channels.find("B") != channels.end())
-			list << "B";
-
-		layerMap[SPEC_NAME] = list;
-	}
-
-	for (auto i = channels.begin(); i != channels.end(); ++i) {
-		QString name = escapeString(i.name());
-		if (name != "R" && name != "G" && name != "B" && !name.contains('.')) {
-			layerMap[i.name()] = QStringList(i.name());
+	QMap<QString, QList<QPair<QString, int>>> layerMap;
+	int counter = 0;
+	for (auto it = channels.begin(); it != channels.end(); ++it) {
+		const QString escaped_name = escapeString(QString::fromStdString(*it));
+		QString parent, child;
+		if (escaped_name == "R" || escaped_name == "G" || escaped_name == "B") {
+			parent = SPEC_NAME;
+			child  = escaped_name;
+		} else {
+			splitChannelString(escaped_name, parent, child);
 		}
-	}
-
-	std::set<std::string> layers;
-	channels.layers(layers);
-	for (std::set<string>::const_iterator i = layers.begin(); i != layers.end(); ++i) {
-		ChannelList::ConstIterator layerBegin, layerEnd;
-		channels.channelsInLayer(*i, layerBegin, layerEnd);
-
-		// Some single layer can be added twice, we filter them out!
-		if (!escapeString(layerBegin.name()).contains('.'))
-			continue;
-
-		QStringList list;
-		for (ChannelList::ConstIterator j = layerBegin; j != layerEnd; ++j) {
-			list << j.name();
-		}
-
-		layerMap[QString::fromStdString(*i)] = list;
+		layerMap[parent] << qMakePair(child, counter);
+		++counter;
 	}
 
 	mLayers.clear();
@@ -173,78 +114,25 @@ bool EXRFile::open(const QString& filename)
 			it.key(), it.value().size(),
 			mWidth, mHeight);
 
-		// Fill framebuffer with layer.channel information
-		QVector<QPair<int, half*>> halfFormat;
-		FrameBuffer frameBuffer;
-
-		int k = 0;
-		for (QString ch : it.value()) {
-			QString plainChannelName;
-			QString ech  = escapeString(ch);
-			int pointPos = ech.indexOf('.');
-			if (pointPos < 0) {
-				plainChannelName = ch;
-			} else {
-				plainChannelName = ch.mid((ch.size() - ech.size()) + pointPos + 1);
+		int nc = 0;
+		for (auto channel = it.value().begin(); channel != it.value().end(); ++channel) {
+			if (!file->read_image(channel->second, channel->second, OIIO::TypeDesc::FLOAT, layer->data()[nc].data())) {
+				qCritical() << "OIIO: Could not read channel " << channel->second << "(" << channel->first << ") from " << filename
+							<< ", error = " << OIIO::geterror().c_str();
+				return false;
 			}
 
-			layer->channelNames()[k] = plainChannelName;
-			layer->data()[k].resize(size);
-
-			const Channel* channel = channels.findChannel(ch.toStdString());
-			float* ptr			   = layer->data()[k].data();
-
-			switch (channel->type) {
-			case FLOAT:
-				frameBuffer.insert(ch.toStdString(),
-								   Slice(FLOAT,
-										 (char*)(ptr - dw.min.x - dw.min.y * mWidth),
-										 sizeof(ptr[0]) * 1,
-										 sizeof(ptr[0]) * mWidth,
-										 1, 1,
-										 0.0));
-				break;
-			case HALF: {
-				QPair<int, half*> p;
-				p.first  = k;
-				p.second = new half[size];
-				halfFormat.append(p);
-
-				frameBuffer.insert(ch.toStdString(),
-								   Slice(HALF,
-										 (char*)(p.second - dw.min.x - dw.min.y * mWidth),
-										 sizeof(p.second[0]) * 1,
-										 sizeof(p.second[0]) * mWidth,
-										 1, 1,
-										 0.0));
-			} break;
-			case UINT:
-				qCritical() << "EXR: No support for uint channels";
-				break;
-			default:
-				break;
-			}
-
-			++k;
-		}
-
-		if (frameBuffer.begin() == frameBuffer.end())
-			return false;
-
-		// Load framebuffer
-		file.setFrameBuffer(frameBuffer);
-		file.readPixels(dw.min.y, dw.max.y);
-
-		// Convert half to float!
-		for (auto p : halfFormat) {
-			float* ptr = layer->data()[p.first].data();
-
-			for (int i = 0; i < size; ++i)
-				ptr[i] = p.second[i];
-			delete[] p.second;
+			layer->channelNames()[nc] = channel->first;
+			++nc;
 		}
 
 		mLayers.push_back(layer);
+	}
+
+	if (!file->close()) {
+		qCritical() << "OIIO: Could not close " << filename
+					<< ", error = " << OIIO::geterror().c_str();
+		return false;
 	}
 
 	for (auto layer : mLayers)

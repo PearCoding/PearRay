@@ -23,7 +23,7 @@ set(Hdr
   pypearray.h)
 
 pybind11_add_module(pypearray SHARED ${Src} ${Hdr})
-target_link_libraries(pypearray PRIVATE pr_lib_loader)
+target_link_libraries(pypearray PRIVATE pr_lib_loader OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util)
 set_target_properties(pypearray PROPERTIES DEBUG_POSTFIX "")# Disable suffix for this target
 #target_include_directories(pypearray PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
 

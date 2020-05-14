@@ -67,14 +67,14 @@ endfunction()
 
 # Allowed components
 set(_OpenImageIO_COMPONENTS
-  Core
-  Util
+  OpenImageIO
+  OpenImageIO_Util
 )
 
-set(_OpenImageIO_Core_DEPS )
-set(_OpenImageIO_Core_LIBNAMES OpenImageIO)
-set(_OpenImageIO_Util_DEPS Core)
-set(_OpenImageIO_Util_LIBNAMES OpenImageIO_Util)
+set(_OpenImageIO_OpenImageIO_DEPS )
+set(_OpenImageIO_OpenImageIO_LIBNAMES OpenImageIO)
+set(_OpenImageIO_OpenImageIO_Util_DEPS Core)
+set(_OpenImageIO_OpenImageIO_Util_LIBNAMES OpenImageIO_Util)
 
 
 # If COMPONENTS are not given, set it to default

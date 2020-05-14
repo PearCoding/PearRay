@@ -10,7 +10,7 @@ inline uint32 clz(uint32 v)
 #ifdef PR_CC_GNU
 	return __builtin_clz(v);
 #elif defined(PR_CC_MSC)
-	retirm __lzcnt(v);
+	return __lzcnt(v);
 #else
 	uint32 r = 0;
 	while (v >>= 1)

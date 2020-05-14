@@ -86,9 +86,9 @@ inline void load_from_container_linear(simdpp::float32<N>& out,
 	PR_SIMD_ALIGN
 	float data[N];
 
-	for (size_t i = 0; i < N; ++i) {
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N; ++i)
 		data[i] = container[off + i];
-	}
 
 	out = simdpp::load(data);
 }
@@ -101,9 +101,9 @@ inline void load_from_container_linear(simdpp::uint32<N>& out,
 	PR_SIMD_ALIGN
 	uint32 data[N];
 
-	for (size_t i = 0; i < N; ++i) {
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N; ++i)
 		data[i] = container[off + i];
-	}
 
 	out = simdpp::load(data);
 }
@@ -120,9 +120,10 @@ load_from_container(const simdpp::uint32<N>& indices,
 	float data[N];
 
 	simdpp::store(ind, indices);
-	for (size_t i = 0; i < N; ++i) {
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N; ++i)
 		data[i] = container[ind[i] + off];
-	}
 
 	return simdpp::load(data);
 }
@@ -139,9 +140,10 @@ load_from_container(const simdpp::uint32<N>& indices,
 	uint32 data[N];
 
 	simdpp::store(ind, indices);
-	for (size_t i = 0; i < N; ++i) {
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N; ++i)
 		data[i] = container[ind[i] + off];
-	}
 
 	return simdpp::load(data);
 }
@@ -155,9 +157,9 @@ load_from_container_with_indices(const std::vector<size_t>& indices,
 	PR_SIMD_ALIGN
 	float data[N];
 
-	for (size_t i = 0; i < N && i + ioff < indices.size(); ++i) {
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N && i + ioff < indices.size(); ++i)
 		data[i] = container[indices[i + ioff]];
-	}
 
 	return simdpp::load(data);
 }
@@ -171,9 +173,9 @@ load_from_container_with_indices(const std::vector<size_t>& indices,
 	PR_SIMD_ALIGN
 	uint32 data[N];
 
-	for (size_t i = 0; i < N && i + ioff < indices.size(); ++i) {
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N && i + ioff < indices.size(); ++i)
 		data[i] = container[indices[i + ioff]];
-	}
 
 	return simdpp::load(data);
 }
@@ -192,9 +194,10 @@ store_into_container(const simdpp::uint32<N>& indices,
 
 	simdpp::store(ind, indices);
 	simdpp::store(data, val);
-	for (size_t i = 0; i < N; ++i) {
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N; ++i)
 		container[ind[i] + off] = data[i];
-	}
 }
 
 template <typename C, unsigned N>
@@ -211,9 +214,10 @@ store_into_container(const simdpp::uint32<N>& indices,
 
 	simdpp::store(ind, indices);
 	simdpp::store(data, val);
-	for (size_t i = 0; i < N; ++i) {
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < N; ++i)
 		container[ind[i] + off] = data[i];
-	}
 }
 
 // Template to Runtime Bounded Range Cast

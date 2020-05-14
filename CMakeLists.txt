@@ -108,6 +108,7 @@ MESSAGE(STATUS "Using triangle intersection method: ${_PR_TRIANGLE_INTERSECTION_
 set(CMAKE_INCLUDE_CURRENT_DIR			ON)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG	ON)
 set(Boost_USE_MULTITHREADED				ON)
+set(Boost_VERBOSE						ON)
 
 if(NOT WIN32)
 	find_package(Threads REQUIRED)
@@ -121,8 +122,7 @@ if(PR_WITH_DIAGNOSTIC)
 endif()
 
 find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
-find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
+find_package(OpenImageIO REQUIRED NO_MODULE)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
 # Optional

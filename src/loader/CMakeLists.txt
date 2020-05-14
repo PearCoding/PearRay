@@ -75,7 +75,7 @@ target_link_libraries(pr_lib_loader
   PUBLIC
     pr_lib_core Boost::iostreams Boost::regex
   PRIVATE
-    datalisp OpenImageIO::Core OpenImageIO::Util
+    datalisp OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util
 )
 set_target_properties(pr_lib_loader PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_loader PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> PRIVATE ${OpenEXR_INCLUDE_DIRS})# For lmathVec.h
