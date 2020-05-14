@@ -88,7 +88,7 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 	const uint32 dz		= COEFFS_N * res * res;
 
 	float coeffs[COEFFS_N];
-#pragma GCC ivdep
+	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
 		// Determine largest entry
 		int largest_entry = 0;
@@ -134,7 +134,7 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 
 void SpectralUpsampler::compute(const float* a, const float* b, const float* c, const float* wavelengths, float* out_weights, size_t elems)
 {
-#pragma GCC ivdep
+	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
 		float x		   = pr_fma(pr_fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
 		float y		   = 1.0f / std::sqrt(pr_fma(x, x, 1.0f));

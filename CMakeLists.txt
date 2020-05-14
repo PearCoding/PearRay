@@ -120,8 +120,6 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED COMPONENTS Core Util)
 find_package(OpenEXR REQUIRED COMPONENTS IlmImf IlmImfUtil Half)
 find_package(TBB REQUIRED COMPONENTS tbb)
-#find_package(ISPC REQUIRED)
-find_package(ISPC)
 
 # Optional
 if(PR_USE_CCACHE)
@@ -140,6 +138,7 @@ if(PR_WITH_PYTHON)
 endif()
 
 # Due to problems with OpenEXR and C++17 we still use C++14 (Aug 2018)
+# (Mai 2020) Update: OpenEXR works now, but Travis has an old version. So keeping it C++14 
 # set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

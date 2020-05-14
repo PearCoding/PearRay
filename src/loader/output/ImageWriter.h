@@ -10,7 +10,6 @@ namespace PR {
 struct IM_ChannelSetting1D {
 	std::string Name;
 	AOV1D Variable;
-	ToneMapperMode TMM; //TODO: Not implemented
 	int LPE = -1;
 	std::string LPE_S;
 };
@@ -18,7 +17,6 @@ struct IM_ChannelSetting1D {
 struct IM_ChannelSettingCounter {
 	std::string Name;
 	AOVCounter Variable;
-	ToneMapperMode TMM; //TODO: Not implemented
 	int LPE = -1;
 	std::string LPE_S;
 };
@@ -26,18 +24,13 @@ struct IM_ChannelSettingCounter {
 struct IM_ChannelSetting3D {
 	std::string Name[3];
 	AOV3D Variable;
-	unsigned char Elements; //TODO: Not implemented
-	ToneMapperMode TMM;		//TODO: Not implemented
 	int LPE = -1;
 	std::string LPE_S;
 };
 
 struct IM_ChannelSettingSpec {
 	std::string Name;
-	unsigned char Elements; //TODO: Not implemented
 	ToneColorMode TCM;
-	ToneGammaMode TGM;
-	ToneMapperMode TMM;
 	int LPE = -1;
 	std::string LPE_S;
 };

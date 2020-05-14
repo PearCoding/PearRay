@@ -1,1 +1,2 @@
 add_subdirectory(splitprc)
+add_subdirectory(img2coeff)

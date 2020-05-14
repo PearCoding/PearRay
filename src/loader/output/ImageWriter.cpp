@@ -87,9 +87,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 			spec.channelnames.push_back(sett.Name + ".G");
 			spec.channelnames.push_back(sett.Name + ".B");
 		}
-
-		if (sett.TGM == TGM_SRGB)
-			spec.attribute("oiio:ColorSpace", "sRGB");
 	}
 
 	for (const IM_ChannelSetting3D& sett : ch3d) {
@@ -111,92 +108,13 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	spec.attribute("IPTC:ProgramVersion", versionStr);
 
 	const std::string utfFilename = boost::filesystem::path(file).generic_string();
-// Create file
-#if OIIO_PLUGIN_VERSION >= 22
-	std::unique_ptr<ImageOutput> out = ImageOutput::create(utfFilename);
-#else
-	ImageOutput* out = ImageOutput::create(utfFilename);
-#endif
+	// Create file
+	auto out = ImageOutput::create(utfFilename);
 	if (!out)
 		return false;
 
-	// Calculate maximums for some mapper techniques
-	float invMax3d[AOV_3D_COUNT];
-	std::fill_n(invMax3d, AOV_3D_COUNT, 1.0f);
-	float invMax1d[AOV_1D_COUNT];
-	std::fill_n(invMax1d, AOV_1D_COUNT, 1.0f);
-	float invMaxCounter[AOV_COUNTER_COUNT];
-	std::fill_n(invMax1d, AOV_COUNTER_COUNT, 1.0f);
-
 	const OutputBufferData& data = mRenderer->output()->data();
-
-	for (const IM_ChannelSetting3D& sett : ch3d) {
-		std::shared_ptr<FrameBufferFloat> channel;
-		if (sett.LPE < 0)
-			channel = data.getInternalChannel_3D(sett.Variable);
-		else
-			channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
-
-		if (sett.TMM != TMM_Normalized || !channel)
-			continue;
-
-		for (Size1i y = 0; y < viewSize.Height; ++y) {
-			for (Size1i x = 0; x < viewSize.Width; ++x) {
-				Vector3f v(channel->getFragment(Point2i(x, y), 0),
-						   channel->getFragment(Point2i(x, y), 1),
-						   channel->getFragment(Point2i(x, y), 2));
-
-				invMax3d[sett.Variable] = std::max(invMax3d[sett.Variable],
-												   v.squaredNorm());
-			}
-		}
-
-		if (invMax3d[sett.Variable] > PR_EPSILON)
-			invMax3d[sett.Variable] = 1.0f / std::sqrt(invMax3d[sett.Variable]);
-	}
-
-	for (const IM_ChannelSetting1D& sett : ch1d) {
-		std::shared_ptr<FrameBufferFloat> channel;
-		if (sett.LPE < 0)
-			channel = data.getInternalChannel_1D(sett.Variable);
-		else
-			channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
-
-		if (sett.TMM != TMM_Normalized || !channel)
-			continue;
-
-		for (Size1i y = 0; y < viewSize.Height; ++y) {
-			for (Size1i x = 0; x < viewSize.Width; ++x) {
-				invMax1d[sett.Variable] = std::max(invMax1d[sett.Variable],
-												   channel->getFragment(Point2i(x, y), 0));
-			}
-		}
-
-		if (invMax1d[sett.Variable] > PR_EPSILON)
-			invMax1d[sett.Variable] = 1.0f / invMax1d[sett.Variable];
-	}
-
-	for (const IM_ChannelSettingCounter& sett : chcounter) {
-		std::shared_ptr<FrameBufferUInt32> channel;
-		if (sett.LPE < 0)
-			channel = data.getInternalChannel_Counter(sett.Variable);
-		else
-			channel = data.getLPEChannel_Counter(sett.Variable, sett.LPE);
-
-		if (sett.TMM != TMM_Normalized || !channel)
-			continue;
-
-		for (Size1i y = 0; y < viewSize.Height; ++y) {
-			for (Size1i x = 0; x < viewSize.Width; ++x) {
-				invMaxCounter[sett.Variable] = std::max<float>(invMaxCounter[sett.Variable],
-															   static_cast<float>(channel->getFragment(Point2i(x, y), 0)));
-			}
-		}
-
-		if (invMaxCounter[sett.Variable] > PR_EPSILON)
-			invMaxCounter[sett.Variable] = 1.0f / invMaxCounter[sett.Variable];
-	}
-
+	
 	// Write content
 	float* line = new float[channelCount * viewSize.Width];
 	if (!line) { // TODO: Add single token variant!
@@ -224,8 +142,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 				const float* ptr = channel->ptr();
 				toneMapper.setColorMode(sett.TCM);
-				toneMapper.setGammaMode(sett.TGM);
-				toneMapper.setMapperMode(sett.TMM);
 				toneMapper.map(mRenderer->spectrumDescriptor(),
 							   &ptr[y * channel->heightPitch() + x * channel->widthPitch()],
 							   &line[id], 3, 1); // RGB
@@ -241,53 +157,9 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					channel = data.getLPEChannel_3D(sett.Variable, sett.LPE);
 
 				if (channel) {
-					Vector3f a(channel->getFragment(p, 0),
-							   channel->getFragment(p, 1),
-							   channel->getFragment(p, 2));
-
-					float r = a(0);
-					float g = a(1);
-					float b = a(2);
-					switch (sett.TMM) {
-					default:
-					case TMM_None:
-					case TMM_Simple_Reinhard:
-						break;
-					case TMM_Normalized:
-						r *= invMax3d[sett.Variable];
-						g *= invMax3d[sett.Variable];
-						b *= invMax3d[sett.Variable];
-						break;
-					case TMM_Clamp:
-						r = std::max(std::abs(r), 0.0f);
-						g = std::max(std::abs(g), 0.0f);
-						b = std::max(std::abs(b), 0.0f);
-						break;
-					case TMM_Abs:
-						r = std::abs(r);
-						g = std::abs(g);
-						b = std::abs(b);
-						break;
-					case TMM_Positive:
-						r = std::max(r, 0.0f);
-						g = std::max(g, 0.0f);
-						b = std::max(b, 0.0f);
-						break;
-					case TMM_Negative:
-						r = std::max(-r, 0.0f);
-						g = std::max(-g, 0.0f);
-						b = std::max(-b, 0.0f);
-						break;
-					case TMM_Spherical:
-						r = 0.5f + 0.5f * std::atan2(b, r) * PR_1_PI;
-						g = 0.5f - std::asin(-g) * PR_1_PI;
-						b = 0;
-						break;
-					}
-
-					line[id]	 = r;
-					line[id + 1] = g;
-					line[id + 2] = b;
+					line[id]	 = channel->getFragment(p, 0);
+					line[id + 1] = channel->getFragment(p, 1);
+					line[id + 2] = channel->getFragment(p, 2);
 				}
 
 				id += 3;
@@ -300,33 +172,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				else
 					channel = data.getLPEChannel_1D(sett.Variable, sett.LPE);
 
-				if (channel) {
-					float r = channel->getFragment(p, 0);
-					switch (sett.TMM) {
-					default:
-					case TMM_None:
-					case TMM_Simple_Reinhard:
-					case TMM_Spherical:
-						break;
-					case TMM_Normalized:
-						r *= invMax1d[sett.Variable];
-						break;
-					case TMM_Clamp:
-						r = std::max(std::abs(r), 0.0f);
-						break;
-					case TMM_Abs:
-						r = std::abs(r);
-						break;
-					case TMM_Positive:
-						r = std::max(r, 0.0f);
-						break;
-					case TMM_Negative:
-						r = std::max(-r, 0.0f);
-						break;
-					}
-
-					line[id] = r;
-				}
+				if (channel)
+					line[id] = channel->getFragment(p, 0);
 
 				id += 1;
 			}
@@ -338,18 +185,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				else
 					channel = data.getLPEChannel_Counter(sett.Variable, sett.LPE);
 
-				if (channel) {
-					float r = static_cast<float>(channel->getFragment(p, 0));
-					switch (sett.TMM) {
-					default:
-						break;
-					case TMM_Normalized:
-						r *= invMaxCounter[sett.Variable];
-						break;
-					}
-
-					line[id] = r;
-				}
+				if (channel)
+					line[id] = static_cast<float>(channel->getFragment(p, 0));
 
 				id += 1;
 			}

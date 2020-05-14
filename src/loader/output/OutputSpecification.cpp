@@ -252,8 +252,6 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 					DL::DataGroup channel = channelD.getGroup();
 					DL::Data typeD		  = channel.getFromKey("type");
 					DL::Data colorD		  = channel.getFromKey("color");
-					DL::Data gammaD		  = channel.getFromKey("gamma");
-					DL::Data mapperD	  = channel.getFromKey("mapper");
 					DL::Data lpeD		  = channel.getFromKey("lpe");
 
 					if (typeD.type() != DL::DT_String)
@@ -274,34 +272,6 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 							tcm = TCM_LUMINANCE;
 					}
 
-					ToneGammaMode tgm = TGM_SRGB;
-					if (gammaD.type() == DL::DT_String) {
-						std::string gamma = gammaD.getString();
-						std::transform(gamma.begin(), gamma.end(), gamma.begin(), ::tolower);
-						if (gamma == "none")
-							tgm = TGM_None;
-					}
-
-					ToneMapperMode tmm = TMM_None;
-					if (mapperD.type() == DL::DT_String) {
-						std::string mapper = mapperD.getString();
-						std::transform(mapper.begin(), mapper.end(), mapper.begin(), ::tolower);
-						if (mapper == "reinhard")
-							tmm = TMM_Simple_Reinhard;
-						else if (mapper == "clamp")
-							tmm = TMM_Clamp;
-						else if (mapper == "absolute" || mapper == "abs")
-							tmm = TMM_Abs;
-						else if (mapper == "positive" || mapper == "pos")
-							tmm = TMM_Positive;
-						else if (mapper == "negative" || mapper == "neg")
-							tmm = TMM_Negative;
-						else if (mapper == "spherical")
-							tmm = TMM_Spherical;
-						else if (mapper == "normalize" || mapper == "normalized" || mapper == "norm")
-							tmm = TMM_Normalized;
-					}
-
 					std::string lpe = "";
 					if (lpeD.type() == DL::DT_String) {
 						lpe = lpeD.getString();
@@ -313,10 +283,7 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 
 					if (type == "rgb" || type == "color") {
 						IM_ChannelSettingSpec spec;
-						spec.Elements = 0; //TODO
 						spec.TCM	  = tcm;
-						spec.TGM	  = tgm;
-						spec.TMM	  = tmm;
 						spec.LPE_S	  = lpe;
 						spec.LPE	  = -1;
 
@@ -330,8 +297,6 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 
 						if (var3D != AOV_3D_COUNT) {
 							IM_ChannelSetting3D spec;
-							spec.Elements = 0; //TODO
-							spec.TMM	  = tmm;
 							spec.Variable = var3D;
 							spec.LPE_S	  = lpe;
 							spec.LPE	  = -1;
@@ -346,7 +311,6 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 							file.Settings3D.push_back(spec);
 						} else if (var1D != AOV_1D_COUNT) {
 							IM_ChannelSetting1D spec;
-							spec.TMM	  = tmm;
 							spec.Variable = var1D;
 							spec.LPE_S	  = lpe;
 							spec.LPE	  = -1;
@@ -356,7 +320,6 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 							file.Settings1D.push_back(spec);
 						} else if (varCounter != AOV_COUNTER_COUNT) {
 							IM_ChannelSettingCounter spec;
-							spec.TMM	  = tmm;
 							spec.Variable = varCounter;
 							spec.LPE_S	  = lpe;
 							spec.LPE	  = -1;

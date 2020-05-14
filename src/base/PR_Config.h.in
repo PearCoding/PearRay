@@ -166,6 +166,7 @@ private:                                           \
 #include <Eigen/Geometry>
 
 // clang-format off
+#include "config/Pragmas.inl"
 #include "config/Libraries.inl"
 #include "config/SIMD.inl"
 #include "config/Types.inl"
