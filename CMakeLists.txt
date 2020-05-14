@@ -109,6 +109,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR			ON)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG	ON)
 set(Boost_USE_MULTITHREADED				ON)
 
+if(NOT WIN32)
+	find_package(Threads REQUIRED)
+endif()
+
 find_package(Boost 1.45 COMPONENTS filesystem system iostreams program_options regex REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
 
