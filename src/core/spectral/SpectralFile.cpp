@@ -107,13 +107,13 @@ void SpectralFile::save(const std::wstring& path, bool compress) const
 	out.write(reinterpret_cast<const char*>(&tmp), sizeof(uint32));
 
 	// Wavelength data
-	for (size_t i = 0; i < mData->Descriptor->samples(); ++i) {
+	for (int i = 0; i < mData->Descriptor->samples(); ++i) {
 		float f = mData->Descriptor->wavelength(i);
 		out.write(reinterpret_cast<const char*>(&f), sizeof(float));
 	}
 
 	// Luminous factor data
-	for (size_t i = 0; i < mData->Descriptor->samples(); ++i) {
+	for (int i = 0; i < mData->Descriptor->samples(); ++i) {
 		float f = mData->Descriptor->luminousFactor(i);
 		out.write(reinterpret_cast<const char*>(&f), sizeof(float));
 	}

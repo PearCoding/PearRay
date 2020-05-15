@@ -118,7 +118,7 @@ Spectrum Spectrum::blackbody(const std::shared_ptr<SpectrumDescriptor>& desc, fl
 {
 	SI::TemperatureU<long double, 0> T(temp);
 	Spectrum spec(desc);
-	for (size_t i = 0; i < desc->samples(); ++i) {
+	for (int i = 0; i < desc->samples(); ++i) {
 		long double lambda = desc->wavelength(i) * PR_NM_TO_M_F;
 		spec.setValue(i, static_cast<float>(
 							 (long double)blackbody_eq(

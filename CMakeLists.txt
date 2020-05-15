@@ -122,7 +122,7 @@ if(PR_WITH_DIAGNOSTIC)
 endif()
 
 find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(OpenImageIO REQUIRED NO_MODULE)
+find_package(OpenImageIO REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
 # Optional

@@ -84,7 +84,6 @@ bool EXRFile::open(const QString& filename)
 
 	mWidth	 = spec.width;
 	mHeight	 = spec.height;
-	int size = mWidth * mHeight;
 
 	// Get layers
 	auto channels		 = spec.channelnames;
