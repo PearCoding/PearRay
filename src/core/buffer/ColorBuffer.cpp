@@ -30,12 +30,10 @@ ColorBuffer::~ColorBuffer()
 }
 
 void ColorBuffer::map(const ToneMapper& mapper,
-					  const std::shared_ptr<SpectrumDescriptor>& desc,
 					  const float* specIn)
 {
 	PR_ASSERT(mData, "Expected valid buffer");
-	mapper.map(desc, specIn,
-			   mData->Ptr, channels(), mData->Width * mData->Height);
+	mapper.map(specIn, mData->Ptr, channels(), mData->Width * mData->Height);
 }
 
 void ColorBuffer::flipY()

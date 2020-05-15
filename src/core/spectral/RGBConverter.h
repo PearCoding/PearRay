@@ -17,6 +17,9 @@ public:
 	static void toXYZ(float r, float g, float b, float& x, float& y, float& z);
 	static void fromXYZ(float x, float y, float z, float& r, float& g, float& b);
 
+	/// Input buffer has to be of size pixelcount*3, output buffer of pixelcount*outElems
+	static void fromXYZ(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelcount);
+
 	static float luminance(float r, float g, float b);
 	static void gamma(float& x, float& y, float& z);
 	static void linearize(float& x, float& y, float& z);

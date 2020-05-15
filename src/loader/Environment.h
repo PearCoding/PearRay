@@ -3,7 +3,7 @@
 #include "output/OutputSpecification.h"
 #include "renderer/RenderSettings.h"
 #include "shader/Socket.h"
-#include "spectral/Spectrum.h"
+#include "spectral/ParametricBlob.h"
 
 #include <boost/variant.hpp>
 
@@ -15,7 +15,6 @@ namespace PR {
 class IEmission;
 class IMaterial;
 class Mesh;
-class SpectrumDescriptor;
 class PluginManager;
 class MaterialManager;
 class EmissionManager;
@@ -47,12 +46,9 @@ public:
 class PR_LIB_LOADER Environment {
 public:
 	explicit Environment(const std::wstring& workdir,
-						 const std::shared_ptr<SpectrumDescriptor>& specDesc,
 						 const std::wstring& plugdir,
 						 bool useStandardLib = true);
 	virtual ~Environment();
-
-	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const;
 
 	inline std::shared_ptr<PluginManager> pluginManager() const;
 	inline std::shared_ptr<MaterialManager> materialManager() const;
@@ -66,9 +62,9 @@ public:
 	inline std::shared_ptr<ResourceManager> resourceManager() const;
 	inline std::shared_ptr<Cache> cache() const;
 
-	inline Spectrum getSpectrum(const std::string& name) const;
+	inline ParametricBlob getSpectrum(const std::string& name) const;
 	inline bool hasSpectrum(const std::string& name) const;
-	inline void addSpectrum(const std::string& name, const Spectrum& spec);
+	inline void addSpectrum(const std::string& name, const ParametricBlob& spec);
 
 	inline std::shared_ptr<IEmission> getEmission(const std::string& name) const;
 	inline bool hasEmission(const std::string& name) const;
@@ -100,7 +96,7 @@ public:
 	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
 		const Parameter& parameter, float def = 1) const;
 	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
-		const Parameter& parameter, const Spectrum& def) const;
+		const Parameter& parameter, const ParametricBlob& def) const;
 	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
 		const Parameter& parameter, float def = 1) const;
 
@@ -109,7 +105,7 @@ public:
 		float def = 1) const;
 	std::shared_ptr<FloatSpectralMapSocket> lookupSpectralMapSocket(
 		const Parameter& parameter,
-		const Spectrum& def) const;
+		const ParametricBlob& def) const;
 
 	inline void* textureSystem();
 
@@ -135,7 +131,6 @@ private:
 	void setupDefaultFilter();
 
 	std::wstring mWorkingDir;
-	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 	RenderSettings mRenderSettings;
 
 	// Order matters: PluginManager should be before other managers
@@ -152,7 +147,7 @@ private:
 
 	std::shared_ptr<Cache> mCache;
 
-	std::map<std::string, PR::Spectrum> mSpectrums;
+	std::map<std::string, ParametricBlob> mSpectrums;
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<Mesh>> mMeshes;

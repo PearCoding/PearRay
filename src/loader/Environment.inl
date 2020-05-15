@@ -1,6 +1,5 @@
 namespace PR {
 
-inline std::shared_ptr<SpectrumDescriptor> Environment::spectrumDescriptor() const { return mSpectrumDescriptor; }
 inline std::shared_ptr<PluginManager> Environment::pluginManager() const { return mPluginManager; }
 inline std::shared_ptr<MaterialManager> Environment::materialManager() const { return mMaterialManager; }
 inline std::shared_ptr<EntityManager> Environment::entityManager() const { return mEntityManager; }
@@ -13,7 +12,7 @@ inline std::shared_ptr<SamplerManager> Environment::samplerManager() const { ret
 inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { return mResourceManager; }
 inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 
-inline Spectrum Environment::getSpectrum(const std::string& name) const
+inline ParametricBlob Environment::getSpectrum(const std::string& name) const
 {
 	return mSpectrums.at(name);
 }
@@ -23,7 +22,7 @@ inline bool Environment::hasSpectrum(const std::string& name) const
 	return mSpectrums.count(name) != 0;
 }
 
-inline void Environment::addSpectrum(const std::string& name, const Spectrum& spec)
+inline void Environment::addSpectrum(const std::string& name, const ParametricBlob& spec)
 {
 	mSpectrums.insert(std::make_pair(name, spec));
 }

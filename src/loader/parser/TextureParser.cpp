@@ -165,8 +165,8 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 			return;
 		}
 
+		// TODO: Prepare image and cache it out if necessary!
 		auto output = std::make_shared<ImageMapSocket>(
-			env->spectrumDescriptor(),
 			(OIIO::TextureSystem*)env->textureSystem(),
 			opts, filename);
 		env->addMapSocket(name, output);

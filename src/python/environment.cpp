@@ -3,7 +3,6 @@
 #include "mesh/MeshBase.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include "Environment.h"
 #include "SceneLoader.h"
@@ -16,7 +15,7 @@ PR_NO_SANITIZE_ADDRESS
 void setup_environment(py::module& m)
 {
 	py::class_<Environment, std::shared_ptr<Environment>>(m, "Environment")
-		.def(py::init<std::wstring, const std::shared_ptr<SpectrumDescriptor>&, std::wstring>())
+		.def(py::init<std::wstring, std::wstring>())
 		.def("getSpectrum", &Environment::getSpectrum)
 		.def("hasSpectrum", &Environment::hasSpectrum)
 		.def("addSpectrum", &Environment::addSpectrum)
@@ -33,7 +32,6 @@ void setup_environment(py::module& m)
 		.def("save", &Environment::save)
 		.def("createSelectedIntegrator", &Environment::createSelectedIntegrator)
 		.def("createRenderFactory", &Environment::createRenderFactory)
-		.def_property_readonly("spectrumDescriptor", &Environment::spectrumDescriptor)
 		.def_property("renderSettings",
 					  [](Environment& env) { return env.renderSettings(); },
 					  [](Environment& env, const RenderSettings& st) { env.renderSettings() = st; },

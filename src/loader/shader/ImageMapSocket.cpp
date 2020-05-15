@@ -1,21 +1,17 @@
 #include "ImageMapSocket.h"
-#include "spectral/RGBConverter.h"
+#include "spectral/SpectralUpsampler.h"
 
 #include "Logger.h"
 
 namespace PR {
-ImageMapSocket::ImageMapSocket(const std::shared_ptr<SpectrumDescriptor>& desc,
-							   OIIO::TextureSystem* tsys,
+ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
 							   const OIIO::TextureOpt& options,
 							   const std::string& filename)
 	: FloatSpectralMapSocket()
 	, mFilename(filename)
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
-	, mImageDescriptor(SpectrumDescriptor::createSRGBTriplet())
-	, mEngineDescriptor(desc)
 	, mIsPtex(false)
-	, mIsLinear(true)
 {
 	PR_ASSERT(tsys, "Given texture system has to be valid");
 	PR_ASSERT(!mFilename.empty(), "Given filename shouldn't be empty");
@@ -28,8 +24,8 @@ ImageMapSocket::ImageMapSocket(const std::shared_ptr<SpectrumDescriptor>& desc,
 	if (!spec) {
 		PR_LOG(L_FATAL) << "Couldn't lookup texture specification of image " << mFilename << std::endl;
 	} else {
-		if (spec->get_string_attribute("oiio.ColorSpace") == "sRGB")
-			mIsLinear = false;
+		if (spec->get_string_attribute("oiio.ColorSpace") != "PRParametric")
+			PR_LOG(L_WARNING) << "Image " << mFilename << " is not parametric " << std::endl;
 
 		const OIIO::ImageIOParameter* ptex = spec->find_attribute("ptex:meshType", OIIO::TypeDesc::STRING);
 		if (ptex && ptex->type() == OIIO::TypeDesc::STRING) {
@@ -44,17 +40,17 @@ ImageMapSocket::ImageMapSocket(const std::shared_ptr<SpectrumDescriptor>& desc,
 
 SpectralBlob ImageMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	SpectralBlob rgb;
-	lookup(ctx, rgb);
-	return mEngineDescriptor->convertTriplet(mImageDescriptor, rgb);
+	SpectralBlob value;
+	lookup(ctx, value);
+	return value;
 }
 
 float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
 {
 	// TODO
-	SpectralBlob rgb;
-	lookup(ctx, rgb);
-	return RGBConverter::luminance(rgb[0], rgb[1], rgb[2]);
+	SpectralBlob value;
+	lookup(ctx, value);
+	return value(0);
 }
 
 void ImageMapSocket::lookup(const MapSocketCoord& ctx, SpectralBlob& rgb) const
@@ -66,20 +62,18 @@ void ImageMapSocket::lookup(const MapSocketCoord& ctx, SpectralBlob& rgb) const
 	if (mIsPtex)
 		ops.subimage = static_cast<int>(ctx.Face);
 
+	ParametricBlob value;
 	if (!mTextureSystem->texture(mFilename, ops,
 								 ctx.UV(0), 1 - ctx.UV(1),
 								 ctx.dUV(0), ctx.dUV(1), ctx.dUV(0), ctx.dUV(1),
-								 3, &rgb[0])) {
+								 3, &value[0])) {
 		std::string err = mTextureSystem->geterror();
 		PR_LOG(L_ERROR) << "Couldn't lookup luminance of texture: " << err << std::endl;
-		rgb[0] = 0.0f;
-		rgb[1] = 0.0f;
-		rgb[2] = 0.0f;
+		rgb = SpectralBlob::Zero();
 		return;
 	}
 
-	if (!mIsLinear)
-		RGBConverter::linearize(rgb[0], rgb[1], rgb[2]);
+	rgb = SpectralUpsampler::compute(value, ctx.WavelengthNM);
 }
 
 Vector2i ImageMapSocket::queryRecommendedSize() const
@@ -96,8 +90,6 @@ std::string ImageMapSocket::dumpInformation() const
 {
 	std::stringstream stream;
 	stream << mFilename;
-	if (!mIsLinear)
-		stream << " [NonLinear]";
 	if (mIsPtex)
 		stream << " [Ptex]";
 	return stream.str();

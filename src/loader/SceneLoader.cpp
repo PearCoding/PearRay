@@ -30,7 +30,6 @@
 #include "parser/SpectralParser.h"
 #include "parser/TextureParser.h"
 #include "sampler/SamplerManager.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include "DataLisp.h"
 
@@ -89,28 +88,10 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			DL::Data renderWidthD  = top.getFromKey("renderWidth");
 			DL::Data renderHeightD = top.getFromKey("renderHeight");
 			DL::Data cropD		   = top.getFromKey("crop");
-			DL::Data spectrumD	   = top.getFromKey("spectrum");
-
-			std::shared_ptr<SpectrumDescriptor> spectrumDescriptor;
-			if (spectrumD.type() == DL::DT_String) {
-				std::string spectrum = spectrumD.getString();
-				std::transform(spectrum.begin(), spectrum.end(), spectrum.begin(), ::tolower);
-
-				if (spectrum == "xyz") {
-					spectrumDescriptor = SpectrumDescriptor::createXYZTriplet();
-				} else if (spectrum == "rgb" || spectrum == "srgb") {
-					spectrumDescriptor = SpectrumDescriptor::createSRGBTriplet();
-				} else if (spectrum == "spectral") {
-					spectrumDescriptor = SpectrumDescriptor::createStandardSpectral();
-				}
-			}
-
-			if (!spectrumDescriptor)
-				spectrumDescriptor = SpectrumDescriptor::createDefault();
 
 			std::shared_ptr<Environment> env;
 			try {
-				env = std::make_shared<Environment>(opts.WorkingDir, spectrumDescriptor, opts.PluginPath);
+				env = std::make_shared<Environment>(opts.WorkingDir, opts.PluginPath);
 			} catch (const BadRenderEnvironment&) {
 				return nullptr;
 			}
@@ -749,7 +730,8 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	Spectrum spec = SpectralParser::getSpectrum(ctx.Env->spectrumDescriptor(), dataD);
+	// TODO
+	const auto spec = SpectralParser::getSpectrum(nullptr, dataD);
 	ctx.Env->addSpectrum(name, spec);
 }
 

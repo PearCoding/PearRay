@@ -136,8 +136,18 @@ void SpectralUpsampler::compute(const float* a, const float* b, const float* c, 
 {
 	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
-		float x		   = pr_fma(pr_fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
-		float y		   = 1.0f / std::sqrt(pr_fma(x, x, 1.0f));
+		const float x  = pr_fma(pr_fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
+		const float y  = 1.0f / std::sqrt(pr_fma(x, x, 1.0f));
+		out_weights[i] = pr_fma(0.5f * x, y, 0.5f);
+	}
+}
+
+void SpectralUpsampler::computeSingle(float a, float b, float c, const float* wavelengths, float* out_weights, size_t elems)
+{
+	PR_OPT_LOOP
+	for (size_t i = 0; i < elems; ++i) {
+		const float x  = pr_fma(pr_fma(a, wavelengths[i], b), wavelengths[i], c);
+		const float y  = 1.0f / std::sqrt(pr_fma(x, x, 1.0f));
 		out_weights[i] = pr_fma(0.5f * x, y, 0.5f);
 	}
 }

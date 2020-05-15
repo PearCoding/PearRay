@@ -1,4 +1,5 @@
 #include "ConstSocket.h"
+#include "spectral/SpectralUpsampler.h"
 
 #include <sstream>
 
@@ -23,7 +24,7 @@ std::string ConstScalarShadingSocket::dumpInformation() const
 
 /////////////////////////////////////
 
-ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
+ConstSpectralShadingSocket::ConstSpectralShadingSocket(const ParametricBlob& f)
 	: FloatSpectralShadingSocket()
 	, mValue(f)
 {
@@ -32,17 +33,13 @@ ConstSpectralShadingSocket::ConstSpectralShadingSocket(const Spectrum& f)
 // TODO: Better way -> Hero Wavelength!
 SpectralBlob ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 {
-	PR_UNUSED(ctx);
-	const uint32 index = 0;//ctx.Ray.WavelengthIndex;
-	return SpectralBlob(mValue[index],
-						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
-						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f,
-						index + 3 < mValue.samples() ? mValue[index + 3] : 0.0f);
+	return SpectralUpsampler::compute(mValue, ctx.Ray.WavelengthNM);
 }
 
 float ConstSpectralShadingSocket::relativeLuminance(const ShadingPoint&) const
 {
-	return mValue.relativeLuminance();
+	// TODO?
+	return mValue(0);
 }
 
 Vector2i ConstSpectralShadingSocket::queryRecommendedSize() const
@@ -59,26 +56,21 @@ std::string ConstSpectralShadingSocket::dumpInformation() const
 
 /////////////////////////////////////
 
-ConstSpectralMapSocket::ConstSpectralMapSocket(const Spectrum& f)
+ConstSpectralMapSocket::ConstSpectralMapSocket(const ParametricBlob& f)
 	: FloatSpectralMapSocket()
 	, mValue(f)
 {
 }
 
-// TODO: Better way -> Hero Wavelength!
 SpectralBlob ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
 {
-	PR_UNUSED(ctx);
-	const uint32 index = 0;//ctx.Ray.WavelengthIndex;
-	return SpectralBlob(mValue[index],
-						index + 1 < mValue.samples() ? mValue[index + 1] : 0.0f,
-						index + 2 < mValue.samples() ? mValue[index + 2] : 0.0f,
-						index + 3 < mValue.samples() ? mValue[index + 3] : 0.0f);
+	return SpectralUpsampler::compute(mValue, ctx.WavelengthNM);
 }
 
 float ConstSpectralMapSocket::relativeLuminance(const MapSocketCoord&) const
 {
-	return mValue.relativeLuminance();
+	// TODO
+	return mValue(0);
 }
 
 Vector2i ConstSpectralMapSocket::queryRecommendedSize() const

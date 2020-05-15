@@ -14,7 +14,6 @@ set(Src
   scene.cpp
   settings.cpp
   shader.cpp
-  spectral.cpp
   status.cpp
   tonemapper.cpp
   integrator.cpp

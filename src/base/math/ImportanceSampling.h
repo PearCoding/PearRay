@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spectral/Spectrum.h"
+#include "PR_Config.h"
 
 namespace PR {
 namespace IS {

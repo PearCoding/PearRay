@@ -2,8 +2,6 @@
 #include "buffer/ColorBuffer.h"
 #include "buffer/FrameBuffer.h"
 #include "spectral/SpectralFile.h"
-#include "spectral/Spectrum.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include "pypearray.h"
 #include <pybind11/numpy.h>
@@ -37,7 +35,6 @@ void setup_tonemapper(py::module& m)
 		})
 		.def("map", [](ColorBuffer& c,
 					   const ToneMapper& mapper,
-					   const std::shared_ptr<SpectrumDescriptor>& desc,
 					   Array specIn) {
 			py::buffer_info info1 = specIn.request();
 			if (info1.format != py::format_descriptor<float>::format())
@@ -49,14 +46,14 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
-			if (info1.shape[2] != (ssize_t)desc->samples())
+			if (info1.shape[2] != (ssize_t)3)
 				throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
 
 			if ((size_t)info1.shape[0] != c.height()
 				|| (size_t)info1.shape[1] != c.width())
 				throw std::runtime_error("Incompatible shape: Outermost dimensions do not equal tone mapper");
 
-			c.map(mapper, desc, (float*)info1.ptr);
+			c.map(mapper, (float*)info1.ptr);
 		})
 		.def("asLinearWithChannels", [](const ColorBuffer& c) {
 			return py::array_t<float>(
@@ -73,7 +70,6 @@ void setup_tonemapper(py::module& m)
 	py::class_<ToneMapper>(m, "ToneMapper")
 		.def(py::init<>())
 		.def("map", [](ToneMapper& tm,
-					   const std::shared_ptr<SpectrumDescriptor>& desc,
 					   Array specIn, size_t elems) {
 			// specIn
 			py::buffer_info info1 = specIn.request();
@@ -86,13 +82,12 @@ void setup_tonemapper(py::module& m)
 			if (info1.itemsize != sizeof(float))
 				throw std::runtime_error("Incompatible format: Expected float item size");
 
-			if (info1.shape[2] != (ssize_t)desc->samples())
+			if (info1.shape[2] != 3)
 				throw std::runtime_error("Incompatible descriptor: Expected sample size is not equal channel count");
 
 			// rgbOut
 			float* mem = new float[info1.shape[0] * info1.shape[1] * elems];
-			tm.map(desc,
-				   (float*)info1.ptr,
+			tm.map((float*)info1.ptr,
 				   mem, elems,
 				   info1.shape[0] * info1.shape[1]);
 

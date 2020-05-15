@@ -24,7 +24,7 @@ void setup_shader(py::module& m)
 		.def(py::init<float>());
 
 	py::class_<ConstSpectralShadingSocket, FloatSpectralShadingSocket, std::shared_ptr<ConstSpectralShadingSocket>>(m, "ConstSpectralShadingSocket")
-		.def(py::init<const Spectrum&>());
+		.def(py::init<const ParametricBlob&>());
 
 	py::class_<ConstVectorShadingSocket, FloatVectorShadingSocket, std::shared_ptr<ConstVectorShadingSocket>>(m, "ConstVectorShadingSocket")
 		.def(py::init<const Vector3f&>());

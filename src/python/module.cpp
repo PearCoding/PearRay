@@ -11,7 +11,6 @@ std::tuple<int, int> version()
 
 namespace PRPY {
 void setup_logger(py::module& m);
-void setup_spectral(py::module& m);
 void setup_entity(py::module& m);
 void setup_shader(py::module& m);
 void setup_math(py::module& m);
@@ -45,7 +44,6 @@ PYBIND11_MODULE(pypearray, m)
 
 	PRPY::setup_math(m);
 	PRPY::setup_logger(m);
-	PRPY::setup_spectral(m);
 	PRPY::setup_sampler(m);
 	PRPY::setup_geometry(m);
 	PRPY::setup_shader(m);

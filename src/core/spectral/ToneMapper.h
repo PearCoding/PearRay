@@ -10,16 +10,15 @@ enum ToneColorMode {
 	TCM_LUMINANCE
 };
 
-class SpectrumDescriptor;
+/// Maps CIE XYZ triplets to another arbitary color space
 class PR_LIB_CORE ToneMapper {
 	PR_CLASS_NON_COPYABLE(ToneMapper);
 
 public:
 	ToneMapper();
 
-	void map(const std::shared_ptr<SpectrumDescriptor>& desc,
-			 const float* specIn,
-			 float* rgbOut, size_t rgbElems, size_t pixelCount) const;
+	/// Maps xyz buffer to rgb buffer. XYZ buffer is of size pixelCount*3, rgb is pixelCount*outElems
+	void map(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelCount) const;
 
 	// Not thread safe!
 	inline ToneColorMode colorMode() const { return mColorMode; }

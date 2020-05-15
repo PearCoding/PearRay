@@ -21,9 +21,7 @@ public:
 	ColorBuffer(ColorBuffer&& other) = default;
 	ColorBuffer& operator=(ColorBuffer&& other) = default;
 
-	void map(const ToneMapper& mapper,
-			 const std::shared_ptr<SpectrumDescriptor>& desc,
-			 const float* specIn);
+	void map(const ToneMapper& mapper, const float* xyzIn);
 
 	void flipY();
 

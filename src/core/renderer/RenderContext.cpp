@@ -15,19 +15,16 @@
 #include "math/Reflection.h"
 #include "scene/Scene.h"
 #include "shader/ShadingPoint.h"
-#include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size2i& viewSize,
 							 const std::shared_ptr<IIntegrator>& integrator,
 							 const std::shared_ptr<Scene>& scene,
-							 const std::shared_ptr<SpectrumDescriptor>& specDesc,
 							 const RenderSettings& settings)
 	: mIndex(index)
 	, mViewOffset(viewOffset)
 	, mViewSize(viewSize)
 	, mScene(scene)
-	, mSpectrumDescriptor(specDesc)
 	, mOutputMap()
 	, mEmissiveSurfaceArea(0.0f)
 	, mTileMap()
@@ -39,12 +36,11 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 {
 	PR_ASSERT(mIntegrator, "Integrator can not be NULL!");
 	PR_ASSERT(mScene, "Scene can not be NULL!");
-	PR_ASSERT(mSpectrumDescriptor, "Spectrum Descriptor can not be NULL!");
 	reset();
 
 	mOutputMap = std::make_unique<OutputBuffer>(
 		settings.createPixelFilter(),
-		viewSize, mSpectrumDescriptor->samples());
+		viewSize, 3); // TODO: Should be encapsulated by an output device
 }
 
 RenderContext::~RenderContext()

@@ -11,8 +11,7 @@ namespace PR {
 std::shared_ptr<FloatSpectralShadingSocket> SocketParser::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
 {
 	if (allowScalar && dataD.isNumber()) {
-		return std::make_shared<ConstSpectralShadingSocket>(
-			Spectrum(env->spectrumDescriptor(), dataD.getNumber()));
+		return std::make_shared<ConstSpectralShadingSocket>(ParametricBlob(dataD.getNumber()));
 	} else if (dataD.type() == DL::DT_String) {
 		if (env->hasSpectrum(dataD.getString()))
 			return std::make_shared<ConstSpectralShadingSocket>(env->getSpectrum(dataD.getString()));

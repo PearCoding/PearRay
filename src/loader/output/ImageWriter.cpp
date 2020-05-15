@@ -112,7 +112,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		return false;
 
 	const OutputBufferData& data = mRenderer->output()->data();
-	
+
 	// Write content
 	float* line = new float[channelCount * viewSize.Width];
 	if (!line) { // TODO: Add single token variant!
@@ -140,8 +140,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 				const float* ptr = channel->ptr();
 				toneMapper.setColorMode(sett.TCM);
-				toneMapper.map(mRenderer->spectrumDescriptor(),
-							   &ptr[y * channel->heightPitch() + x * channel->widthPitch()],
+				toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()],
 							   &line[id], 3, 1); // RGB
 
 				id += 3;
@@ -209,10 +208,12 @@ bool ImageWriter::save_spectral(const std::wstring& file,
 	if (!spec || !mRenderer)
 		return false;
 
-	SpectralFile specFile(mRenderer->spectrumDescriptor(),
+	// TODO
+	PR_UNUSED(file);
+	PR_UNUSED(compress);
+	/*SpectralFile specFile(mRenderer->spectrumDescriptor(),
 						  mRenderer->viewSize().Width, mRenderer->viewSize().Height, spec->ptr(), false);
-	specFile.save(file, compress);
-
+	specFile.save(file, compress);*/
 	return true;
 }
 } // namespace PR

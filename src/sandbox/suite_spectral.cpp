@@ -2,8 +2,6 @@
 #include "image_io.h"
 
 #include "spectral/RGBConverter.h"
-#include "spectral/Spectrum.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include <boost/filesystem.hpp>
 #include <fstream>

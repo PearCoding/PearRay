@@ -2,18 +2,10 @@
 #include "Logger.h"
 #include "RenderContext.h"
 #include "scene/Scene.h"
-#include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
-RenderFactory::RenderFactory(const std::shared_ptr<Scene>& scene,
-							 const std::shared_ptr<SpectrumDescriptor>& specDesc)
-	: mSpectrumDescriptor(specDesc)
-	, mScene(scene)
-{
-}
-
 RenderFactory::RenderFactory(const std::shared_ptr<Scene>& scene)
-	: RenderFactory(scene, SpectrumDescriptor::createDefault())
+	: mScene(scene)
 {
 }
 
@@ -46,7 +38,6 @@ std::shared_ptr<RenderContext> RenderFactory::create(
 										   Size2i(itw, ith),
 										   integrator,
 										   mScene,
-										   mSpectrumDescriptor,
 										   mSettings);
 }
 } // namespace PR

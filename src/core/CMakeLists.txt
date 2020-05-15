@@ -110,9 +110,6 @@ set(PR_Src
   path/LPE_RegExpr.cpp
   path/LPE_RegExpr.h
   path/LPE_RegState.h
-  photon/Photon.h
-  photon/PhotonMap.h
-  photon/PhotonMap.inl
   ray/RayPackage.h
   ray/RayStream.cpp
   ray/RayStream.h
@@ -159,26 +156,16 @@ set(PR_Src
   serialization/Serializer.h
   serialization/Serializer.cpp
   serialization/Serializer.inl
+  spectral/Blackbody.h
+  spectral/cie_coeffs.inl
+  spectral/ParametricBlob.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h
-  spectral/RGBSpectrumDescriptor.cpp
-  spectral/RGBSpectrumDescriptor.h
   spectral/SpectralBlob.h
   spectral/SpectralUpsampler.cpp
   spectral/SpectralUpsampler.h
-  spectral/SpectralFile.cpp
-  spectral/SpectralFile.h
-  spectral/Spectrum.cpp
-  spectral/Spectrum.h
-  spectral/Spectrum.inl
-  spectral/SpectrumDescriptor.cpp
-  spectral/SpectrumDescriptor.h
-  spectral/SpectrumLazyOperator.h
-  spectral/SpectrumTag.h
   spectral/ToneMapper.cpp
   spectral/ToneMapper.h
-  spectral/XYZSpectrumDescriptor.cpp
-  spectral/XYZSpectrumDescriptor.h
   shader/ShadingGroup.cpp
   shader/ShadingGroup.h
   shader/ShadingGroupBlock.h

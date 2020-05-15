@@ -1,7 +1,7 @@
 #pragma once
 
 #include "shader/Socket.h"
-#include "spectral/Spectrum.h"
+#include "spectral/ParametricBlob.h"
 
 namespace PR {
 class PR_LIB_LOADER ConstScalarShadingSocket : public FloatScalarShadingSocket {
@@ -16,26 +16,26 @@ private:
 
 class PR_LIB_LOADER ConstSpectralShadingSocket : public FloatSpectralShadingSocket {
 public:
-	explicit ConstSpectralShadingSocket(const Spectrum& f);
+	explicit ConstSpectralShadingSocket(const ParametricBlob& f);
 	SpectralBlob eval(const ShadingPoint& ctx) const override;
 	float relativeLuminance(const ShadingPoint& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
 private:
-	Spectrum mValue;
+	ParametricBlob mValue;
 };
 
 class PR_LIB_LOADER ConstSpectralMapSocket : public FloatSpectralMapSocket {
 public:
-	explicit ConstSpectralMapSocket(const Spectrum& f);
+	explicit ConstSpectralMapSocket(const ParametricBlob& f);
 	SpectralBlob eval(const MapSocketCoord& ctx) const override;
 	float relativeLuminance(const MapSocketCoord& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
 private:
-	Spectrum mValue;
+	ParametricBlob mValue;
 };
 
 class PR_LIB_LOADER ConstVectorShadingSocket : public FloatVectorShadingSocket {

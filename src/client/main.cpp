@@ -8,7 +8,6 @@
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderTileStatistics.h"
-#include "spectral/SpectrumDescriptor.h"
 #include "spectral/ToneMapper.h"
 
 #include <boost/filesystem.hpp>

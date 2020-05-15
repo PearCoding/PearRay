@@ -21,7 +21,7 @@ class RenderThread;
 class RenderTile;
 class RenderTileMap;
 class Scene;
-class SpectrumDescriptor;
+
 class PR_LIB_CORE RenderContext {
 	friend class RenderThread;
 
@@ -31,7 +31,6 @@ public:
 	RenderContext(uint32 index, const Point2i& viewOffset, const Size2i& viewSize,
 				  const std::shared_ptr<IIntegrator>& integrator,
 				  const std::shared_ptr<Scene>& scene,
-				  const std::shared_ptr<SpectrumDescriptor>& specDesc,
 				  const RenderSettings& settings);
 	virtual ~RenderContext();
 
@@ -71,7 +70,6 @@ public:
 
 	inline std::shared_ptr<OutputBuffer> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
-	inline std::shared_ptr<SpectrumDescriptor> spectrumDescriptor() const { return mSpectrumDescriptor; }
 
 protected:
 	RenderTile* getNextTile();
@@ -85,7 +83,6 @@ private:
 	const Size2i mViewSize;
 
 	std::shared_ptr<Scene> mScene;
-	std::shared_ptr<SpectrumDescriptor> mSpectrumDescriptor;
 	std::shared_ptr<OutputBuffer> mOutputMap;
 
 	std::vector<std::shared_ptr<IEntity>> mLights;

@@ -26,7 +26,6 @@
 #include "scene/Scene.h"
 #include "shader/ConstSocket.h"
 #include "shader/MapShadingSocket.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include "Logger.h"
 
@@ -38,11 +37,9 @@
 
 namespace PR {
 Environment::Environment(const std::wstring& workdir,
-						 const std::shared_ptr<SpectrumDescriptor>& specDesc,
 						 const std::wstring& plugdir,
 						 bool useStandardLib)
 	: mWorkingDir(workdir)
-	, mSpectrumDescriptor(specDesc)
 	, mPluginManager(std::make_shared<PluginManager>(plugdir))
 	, mMaterialManager(std::make_shared<MaterialManager>())
 	, mEntityManager(std::make_shared<EntityManager>())
@@ -60,16 +57,14 @@ Environment::Environment(const std::wstring& workdir,
 	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
-		std::shared_ptr<SpectrumDescriptor> rgbDesc = SpectrumDescriptor::createSRGBTriplet();
 		//Defaults
+		// TODO: Involve upsampler!
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
-			Spectrum c(rgbDesc);
-			c[0] = r;
-			c[1] = g;
-			c[2] = b;
-			Spectrum d(specDesc);
-			specDesc->convertSpectrum(d, c);
-			mSpectrums.insert(std::make_pair(name, d));
+			ParametricBlob params;
+			params[0] = r;
+			params[1] = g;
+			params[2] = b;
+			mSpectrums.insert(std::make_pair(name, params));
 		};
 
 		addColor("black", 0, 0, 0);
@@ -227,8 +222,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 		return nullptr;
 	}
 
-	std::shared_ptr<RenderFactory> fct = std::make_shared<RenderFactory>(scene,
-																		 mSpectrumDescriptor);
+	std::shared_ptr<RenderFactory> fct = std::make_shared<RenderFactory>(scene);
 
 	setupDefaultSampler();
 	if (!mRenderSettings.aaSamplerFactory || !mRenderSettings.lensSamplerFactory || !mRenderSettings.timeSamplerFactory)
@@ -244,7 +238,7 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 
 void Environment::setupDefaultSampler()
 {
-	constexpr uint64 DEF_AA_SC   = 128;
+	constexpr uint64 DEF_AA_SC	 = 128;
 	constexpr uint64 DEF_LENS_SC = 1;
 	constexpr uint64 DEF_TIME_SC = 1;
 
@@ -353,11 +347,11 @@ void Environment::setupDefaultFilter()
 std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
 	const Parameter& parameter, float def) const
 {
-	return lookupSpectralShadingSocket(parameter, Spectrum(mSpectrumDescriptor, def));
+	return lookupSpectralShadingSocket(parameter, ParametricBlob(def));
 }
 
 std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
-	const Parameter& parameter, const Spectrum& def) const
+	const Parameter& parameter, const ParametricBlob& def) const
 {
 	switch (parameter.type()) {
 	default:
@@ -368,7 +362,7 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 		if (parameter.isArray())
 			return std::make_shared<ConstSpectralShadingSocket>(def);
 		else
-			return std::make_shared<ConstSpectralShadingSocket>(Spectrum(mSpectrumDescriptor, parameter.getNumber(0.0f)));
+			return std::make_shared<ConstSpectralShadingSocket>(ParametricBlob(parameter.getNumber(0.0f)));
 	case PT_String:
 		if (parameter.flags() & PF_Texture) {
 			std::string tname = parameter.getString("");
@@ -424,12 +418,12 @@ std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
 	const Parameter& parameter,
 	float def) const
 {
-	return lookupSpectralMapSocket(parameter, Spectrum(mSpectrumDescriptor, def));
+	return lookupSpectralMapSocket(parameter, ParametricBlob(def));
 }
 
 std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
 	const Parameter& parameter,
-	const Spectrum& def) const
+	const ParametricBlob& def) const
 {
 	switch (parameter.type()) {
 	default:
@@ -440,7 +434,7 @@ std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
 		if (parameter.isArray())
 			return std::make_shared<ConstSpectralMapSocket>(def);
 		else
-			return std::make_shared<ConstSpectralMapSocket>(Spectrum(mSpectrumDescriptor, parameter.getNumber(0.0f)));
+			return std::make_shared<ConstSpectralMapSocket>(ParametricBlob(parameter.getNumber(0.0f)));
 	case PT_String:
 		if (parameter.flags() & PF_Texture) {
 			std::string tname = parameter.getString("");

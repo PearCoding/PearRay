@@ -1,14 +1,15 @@
 #pragma once
 
-#include "spectral/Spectrum.h"
+#include "spectral/ParametricBlob.h"
 
 namespace DL {
 class Data;
 } // namespace DL
 
 namespace PR {
+class SpectralUpsampler;
 class SpectralParser {
 public:
-	static Spectrum getSpectrum(const std::shared_ptr<SpectrumDescriptor>& desc, const DL::Data& data);
+	static ParametricBlob getSpectrum(SpectralUpsampler* upsampler, const DL::Data& data);
 };
 } // namespace PR

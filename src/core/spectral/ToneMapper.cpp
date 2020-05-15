@@ -1,8 +1,6 @@
 #include "ToneMapper.h"
 #include "Logger.h"
 #include "RGBConverter.h"
-#include "Spectrum.h"
-#include "SpectrumDescriptor.h"
 
 namespace PR {
 ToneMapper::ToneMapper()
@@ -10,70 +8,48 @@ ToneMapper::ToneMapper()
 {
 }
 
-void ToneMapper::map(const std::shared_ptr<SpectrumDescriptor>& desc,
-					 const float* specIn,
-					 float* out, size_t rgbElems, size_t pixelCount) const
+void ToneMapper::map(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelCount) const
 {
-	std::shared_ptr<SpectrumDescriptor> newDesc;
+	constexpr size_t IElems = 3;
+	PR_ASSERT(outElems >= 3, "Expected atleast an RGB buffer");
+
 	switch (mColorMode) {
 	case TCM_SRGB:
-		newDesc = SpectrumDescriptor::createSRGBTriplet();
-		break;
+		RGBConverter::fromXYZ(xyzIn, rgbOut, outElems, pixelCount);
+		return;
 	case TCM_XYZ:
-	case TCM_XYZ_NORM:
-	case TCM_LUMINANCE:
-		newDesc = SpectrumDescriptor::createXYZTriplet();
-		break;
-	}
-
-	size_t specElems = desc->samples();
-	for (size_t i = 0; i < pixelCount; ++i) {
-		float r, g, b;
-
-		// Map 1: Spec to Triplet
-		switch (mColorMode) {
-		default:
-		case TCM_SRGB: {
-			Spectrum newS(newDesc);
-			newDesc->convertSpectrum(newS,
-									 Spectrum(desc, 0, specElems, const_cast<float*>(&specIn[i * specElems])));
-			r = newS[0];
-			g = newS[1];
-			b = newS[2];
-		} break;
-		case TCM_XYZ: {
-			Spectrum newS(newDesc);
-			newDesc->convertSpectrum(newS,
-									 Spectrum(desc, 0, specElems, const_cast<float*>(&specIn[i * specElems])));
-			r = newS[0];
-			g = newS[1];
-			b = newS[2];
-		} break;
-		case TCM_XYZ_NORM: {
-			Spectrum newS(newDesc);
-			newDesc->convertSpectrum(newS,
-									 Spectrum(desc, 0, specElems, const_cast<float*>(&specIn[i * specElems])));
-			r		= newS[0];
-			g		= newS[1];
-			b		= newS[2];
-			float n = r + g + b;
-			r /= n;
-			g /= n;
-			b /= n;
-		} break;
-		case TCM_LUMINANCE: {
-			Spectrum newS(newDesc);
-			newDesc->convertSpectrum(newS,
-									 Spectrum(desc, 0, specElems, const_cast<float*>(&specIn[i * specElems])));
-			r = newS.luminousFlux();
-			g = r;
-			b = r;
-		} break;
+		if (outElems == 3) {
+			memcpy(rgbOut, xyzIn, sizeof(float) * pixelCount * 3);
+		} else {
+			for (size_t i = 0; i < pixelCount; ++i) {
+				rgbOut[i * outElems + 0] = xyzIn[i * IElems + 0];
+				rgbOut[i * outElems + 1] = xyzIn[i * IElems + 1];
+				rgbOut[i * outElems + 2] = xyzIn[i * IElems + 2];
+			}
 		}
-
-		out[i * rgbElems]	 = r;
-		out[i * rgbElems + 1] = g;
-		out[i * rgbElems + 2] = b;
+		return;
+	case TCM_XYZ_NORM:
+		PR_OPT_LOOP
+		for (size_t i = 0; i < pixelCount; ++i) {
+			const float X = xyzIn[i * IElems + 0];
+			const float Y = xyzIn[i * IElems + 1];
+			const float Z = xyzIn[i * IElems + 2];
+			const float N = X + Y + Z;
+			const float F = N != 0 ? 1.0f / N : 0;
+			rgbOut[i * outElems + 0] *= F;
+			rgbOut[i * outElems + 1] *= F;
+			rgbOut[i * outElems + 2] *= F;
+		}
+		return;
+	case TCM_LUMINANCE:
+		PR_OPT_LOOP
+		for (size_t i = 0; i < pixelCount; ++i) {
+			const float Y			 = xyzIn[i * IElems + 1];
+			rgbOut[i * outElems + 0] = Y;
+			rgbOut[i * outElems + 1] = Y;
+			rgbOut[i * outElems + 2] = Y;
+		}
+		return;
 	}
 }
 } // namespace PR

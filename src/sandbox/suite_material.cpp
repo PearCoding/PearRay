@@ -8,7 +8,6 @@
 
 #include "renderer/RenderTileSession.h"
 #include "shader/ShadingPoint.h"
-#include "spectral/SpectrumDescriptor.h"
 
 #include <boost/filesystem.hpp>
 #include <fstream>
@@ -245,7 +244,7 @@ void suite_material()
 {
 	bf::create_directory(DIR);
 
-	Environment env(L"./", SpectrumDescriptor::createSRGBTriplet(), L"./", true);
+	Environment env(L"./", L"./", true);
 	for (int i = 0; s_funcs[i]; ++i)
 		s_funcs[i](env);
 }

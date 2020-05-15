@@ -4,7 +4,6 @@
 #include "camera/ICamera.h"
 #include "sampler/ISampler.h"
 #include "scene/Scene.h"
-#include "spectral/SpectrumDescriptor.h"
 
 namespace PR {
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
