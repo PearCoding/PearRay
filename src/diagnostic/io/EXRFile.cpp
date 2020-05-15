@@ -73,7 +73,7 @@ bool EXRFile::open(const QString& filename)
 	static const QString SPEC_NAME = "Color";
 
 	const std::string filename_std = filename.toStdString();
-	auto file = OIIO::ImageInput::open(filename_std);
+	auto file					   = OIIO::ImageInput::open(filename_std);
 	if (!file) {
 		qCritical() << "OIIO: Could not open " << filename
 					<< ", error = " << OIIO::geterror().c_str();
@@ -84,6 +84,7 @@ bool EXRFile::open(const QString& filename)
 
 	mWidth	 = spec.width;
 	mHeight	 = spec.height;
+	int size = mWidth * mHeight;
 
 	// Get layers
 	auto channels		 = spec.channelnames;
@@ -115,7 +116,8 @@ bool EXRFile::open(const QString& filename)
 
 		int nc = 0;
 		for (auto channel = it.value().begin(); channel != it.value().end(); ++channel) {
-			if (!file->read_image(channel->second, channel->second, OIIO::TypeDesc::FLOAT, layer->data()[nc].data())) {
+			layer->data()[nc].resize(size);
+			if (!file->read_image(0, 0, channel->second, channel->second, OIIO::TypeDesc::FLOAT, layer->data()[nc].data())) {
 				qCritical() << "OIIO: Could not read channel " << channel->second << "(" << channel->first << ") from " << filename
 							<< ", error = " << OIIO::geterror().c_str();
 				return false;
@@ -131,8 +133,16 @@ bool EXRFile::open(const QString& filename)
 	if (!file->close()) {
 		qCritical() << "OIIO: Could not close " << filename
 					<< ", error = " << OIIO::geterror().c_str();
+
+#if OIIO_PLUGIN_VERSION < 22
+		OIIO::ImageInput::destroy(file);
+#endif
 		return false;
 	}
+
+#if OIIO_PLUGIN_VERSION < 22
+	OIIO::ImageInput::destroy(file);
+#endif
 
 	for (auto layer : mLayers)
 		layer->ensureRightOrder();

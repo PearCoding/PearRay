@@ -119,7 +119,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		PR_LOG(L_ERROR) << "Not enough memory for image output!" << std::endl;
 
 #if OIIO_PLUGIN_VERSION < 22
-		ImageOutput::destroy(out);
+		OIIO::ImageOutput::destroy(out);
 #endif
 		return false;
 	}
@@ -196,7 +196,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	delete[] line;
 
 #if OIIO_PLUGIN_VERSION < 22
-	ImageOutput::destroy(out);
+	OIIO::ImageOutput::destroy(out);
 #endif
 
 	return true;
