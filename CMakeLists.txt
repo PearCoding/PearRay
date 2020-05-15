@@ -108,7 +108,7 @@ MESSAGE(STATUS "Using triangle intersection method: ${_PR_TRIANGLE_INTERSECTION_
 set(CMAKE_INCLUDE_CURRENT_DIR			ON)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG	ON)
 set(Boost_USE_MULTITHREADED				ON)
-set(Boost_VERBOSE						ON)
+#set(Boost_VERBOSE						ON)
 
 if(NOT WIN32)
 	find_package(Threads REQUIRED)

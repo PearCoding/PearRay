@@ -12,7 +12,6 @@ public:
     void unlock();
 
 private:
-    const std::wstring mFilename;
-    int mHandle;
+	std::unique_ptr<struct FileLockInternal> mInternal;
 };
 } // namespace PR

@@ -1,20 +1,40 @@
 #include "FileLock.h"
 #include "Platform.h"
+#include "Logger.h"
 
-// TODO: Add windows support!
 #ifndef PR_OS_WINDOWS
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#else
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Windows.h>
 #endif
 
 namespace PR {
+struct FileLockInternal {
+	std::wstring Filename;
+
+#ifndef PR_OS_WINDOWS
+	int Handle;
+#else
+	HANDLE Handle;
+#endif
+};
+
 FileLock::FileLock(const std::wstring& filepath)
-	: mFilename(filepath)
-	, mHandle(-1)
+	: mInternal(new FileLockInternal())
 {
+	mInternal->Filename = filepath;
+#ifndef PR_OS_WINDOWS
+	mInternal->Handle = -1;
+#else
+	mInternal->Handle = INVALID_HANDLE_VALUE;
+#endif
 }
 
 FileLock::~FileLock()
@@ -24,31 +44,37 @@ FileLock::~FileLock()
 
 bool FileLock::lock()
 {
-	const auto path = encodePath(mFilename);
+	const auto path = encodePath(mInternal->Filename);
 #ifndef PR_OS_WINDOWS
-
-	mode_t m = umask(0);
-	mHandle	 = open(path.c_str(), O_RDWR | O_CREAT, 0666);
+	mode_t m		  = umask(0);
+	mInternal->Handle = open(path.c_str(), O_RDWR | O_CREAT, 0666);
 	umask(m);
-	if (mHandle >= 0 && flock(mHandle, LOCK_EX | LOCK_NB) < 0) {
-		close(mHandle);
-		mHandle = -1;
+	if (mInternal->Handle >= 0 && flock(mInternal->Handle, LOCK_EX | LOCK_NB) < 0) {
+		close(mInternal->Handle);
+		mInternal->Handle = -1;
 	}
+	return mInternal->Handle >= 0;
+#else
+	mInternal->Handle = CreateFileW(path.c_str(), GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+	return (mInternal->Handle != INVALID_HANDLE_VALUE);
 #endif
-
-	return mHandle >= 0;
 }
 
 void FileLock::unlock()
 {
-	if (mHandle < 0)
+	const auto path = encodePath(mInternal->Filename);
+#ifndef PR_OS_WINDOWS
+	if (mInternal->Handle < 0)
 		return;
 
-	const auto path = encodePath(mFilename);
-#ifndef PR_OS_WINDOWS
 	remove(path.c_str());
-	close(mHandle);
-	mHandle = -1;
+	close(mInternal->Handle);
+	mInternal->Handle = -1;
+#else
+	if (mInternal->Handle == INVALID_HANDLE_VALUE)
+		return;
+	CloseHandle(mInternal->Handle);
+	mInternal->Handle = INVALID_HANDLE_VALUE;
 #endif
 }
 } // namespace PR
