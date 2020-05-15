@@ -117,7 +117,12 @@ bool EXRFile::open(const QString& filename)
 		int nc = 0;
 		for (auto channel = it.value().begin(); channel != it.value().end(); ++channel) {
 			layer->data()[nc].resize(size);
+
+#if OIIO_PLUGIN_VERSION < 21
+			if (!file->read_image(channel->second, channel->second, OIIO::TypeDesc::FLOAT, layer->data()[nc].data())) {
+#else
 			if (!file->read_image(0, 0, channel->second, channel->second, OIIO::TypeDesc::FLOAT, layer->data()[nc].data())) {
+#endif
 				qCritical() << "OIIO: Could not read channel " << channel->second << "(" << channel->first << ") from " << filename
 							<< ", error = " << OIIO::geterror().c_str();
 				return false;
