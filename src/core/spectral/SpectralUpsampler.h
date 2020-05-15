@@ -4,6 +4,8 @@
 #include "spectral/SpectralBlob.h"
 
 namespace PR {
+class Serializer;
+
 // Base on Wenzel Jakob and Johannes Hanika. 2019. A Low-Dimensional Function Space for Efficient Spectral Upsampling.
 // In Computer Graphics Forum (Proceedings of Eurographics) 38(2).
 //
@@ -11,7 +13,7 @@ namespace PR {
 // (TODO) Embed at least the sRGB file
 class PR_LIB_CORE SpectralUpsampler {
 public:
-	SpectralUpsampler(const std::wstring& filename);
+	explicit SpectralUpsampler(Serializer& serializer);
 	~SpectralUpsampler();
 
 	void prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems);

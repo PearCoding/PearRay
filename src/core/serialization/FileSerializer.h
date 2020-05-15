@@ -7,11 +7,11 @@ class PR_LIB_CORE FileSerializer : public Serializer {
 	PR_CLASS_NON_COPYABLE(FileSerializer);
 
 public:
-	FileSerializer(uint32 version = 0);
-	FileSerializer(const std::wstring& path, bool readmode, uint32 version = 0);
+	FileSerializer();
+	FileSerializer(const std::wstring& path, bool readmode);
 	virtual ~FileSerializer();
 
-	bool open(const std::wstring& path, bool readmode, bool skipVersion = false);
+	bool open(const std::wstring& path, bool readmode);
 	void close();
 
 	size_t memoryFootprint() const;

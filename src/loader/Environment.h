@@ -29,6 +29,7 @@ class RenderFactory;
 class ResourceManager;
 class Cache;
 class Parameter;
+class SpectralUpsampler;
 
 using ShadingSocketVariantPtr = boost::variant<
 	std::shared_ptr<FloatScalarShadingSocket>,
@@ -124,6 +125,8 @@ public:
 	std::shared_ptr<IIntegrator> createSelectedIntegrator() const;
 	std::shared_ptr<RenderFactory> createRenderFactory();
 
+	inline std::shared_ptr<SpectralUpsampler> defaultSpectralUpsampler() const { return mDefaultSpectralUpsampler; }
+
 private:
 	void loadPlugins(const std::wstring& basedir);
 
@@ -144,6 +147,8 @@ private:
 	std::shared_ptr<FilterManager> mFilterManager;
 	std::shared_ptr<SamplerManager> mSamplerManager;
 	std::shared_ptr<ResourceManager> mResourceManager;
+
+	std::shared_ptr<SpectralUpsampler> mDefaultSpectralUpsampler;
 
 	std::shared_ptr<Cache> mCache;
 

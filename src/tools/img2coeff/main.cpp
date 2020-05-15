@@ -10,7 +10,9 @@
 #include <iostream>
 #include <sstream>
 
+#include "serialization/FileSerializer.h"
 #include "spectral/SpectralUpsampler.h"
+
 #include <OpenImageIO/imageio.h>
 
 namespace po = boost::program_options;
@@ -135,7 +137,7 @@ bool write_output(const std::string& filename, const std::vector<float>& data, i
 	spec.channelnames.push_back("coeff.A");
 	spec.channelnames.push_back("coeff.B");
 	spec.channelnames.push_back("coeff.C");
-	spec.attribute ("oiio:ColorSpace", "Custom");
+	spec.attribute("oiio:ColorSpace", "Custom");
 	spec.attribute("Software", "PearRay img2coeff tool");
 
 	out->open(filename, spec);
@@ -167,7 +169,12 @@ int main(int argc, char** argv)
 	out_data.resize(in_data.size());
 
 	try {
-		PR::SpectralUpsampler upsampler(options.LookupFile.generic_wstring());
+		PR::FileSerializer serializer;
+		if (serializer.open(options.LookupFile.generic_wstring(), true)) {
+			std::cerr << "Error: Could not open " << options.LookupFile << std::endl;
+			return EXIT_FAILURE;
+		}
+		PR::SpectralUpsampler upsampler(serializer);
 
 		std::vector<float> r_buffer(width);
 		std::vector<float> g_buffer(width);

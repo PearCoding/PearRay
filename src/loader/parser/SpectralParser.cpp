@@ -8,6 +8,8 @@ namespace PR {
 
 ParametricBlob SpectralParser::getSpectrum(SpectralUpsampler* upsampler, const DL::Data& dataD)
 {
+	PR_ASSERT(upsampler, "Expected valid upsampler");
+	
 	ParametricBlob blob;
 	if (dataD.type() == DL::DT_Group) {
 		DL::DataGroup grp = dataD.getGroup();

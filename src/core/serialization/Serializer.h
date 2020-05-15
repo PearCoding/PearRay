@@ -21,11 +21,10 @@ class PR_LIB_CORE Serializer {
 	PR_CLASS_NON_COPYABLE(Serializer);
 
 public:
-	explicit Serializer(bool readmode, uint32 version = 0);
+	explicit Serializer(bool readmode);
 	virtual ~Serializer();
 
 	inline bool isReadMode() const;
-	inline uint32 version() const;
 
 	// Write
 	inline void write(bool v);
@@ -86,11 +85,9 @@ public:
 
 protected:
 	inline void setReadMode(bool b) { mReadMode = b; };
-	inline void setVersion(uint32 v) { mVersion = v; };
 
 private:
 	bool mReadMode;
-	uint32 mVersion;
 };
 
 inline Serializer& operator|(Serializer& ser, bool& v);

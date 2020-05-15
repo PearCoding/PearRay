@@ -9,14 +9,14 @@ struct FileSerializerInternal {
 	size_t MemoryFootprint = 0;
 };
 
-FileSerializer::FileSerializer(uint32 version)
-	: Serializer(false, version)
+FileSerializer::FileSerializer()
+	: Serializer(false)
 	, mInternal(std::make_unique<FileSerializerInternal>())
 {
 }
 
-FileSerializer::FileSerializer(const std::wstring& path, bool readmode, uint32 version)
-	: Serializer(readmode, version)
+FileSerializer::FileSerializer(const std::wstring& path, bool readmode)
+	: Serializer(readmode)
 	, mInternal(std::make_unique<FileSerializerInternal>())
 {
 	open(path, readmode);
@@ -32,7 +32,7 @@ size_t FileSerializer::memoryFootprint() const
 	return mInternal->MemoryFootprint;
 }
 
-bool FileSerializer::open(const std::wstring& path, bool readmode, bool skipVersion)
+bool FileSerializer::open(const std::wstring& path, bool readmode)
 {
 	if (mInternal->File.is_open())
 		return false;
@@ -43,15 +43,6 @@ bool FileSerializer::open(const std::wstring& path, bool readmode, bool skipVers
 		return false;
 
 	setReadMode(readmode);
-	if (!skipVersion) {
-		if (isReadMode()) {
-			uint32 v = version();
-			read(v);
-			setVersion(v);
-		} else {
-			write(version());
-		}
-	}
 
 	return true;
 }

@@ -1,19 +1,21 @@
 #include "BufferSerializer.h"
 
 namespace PR {
-BufferSerializer::BufferSerializer(uint32 version)
-	: Serializer(false, version)
+BufferSerializer::BufferSerializer()
+	: Serializer(false)
 	, mBuffer(nullptr)
+	, mSize(0)
 	, mIt(0)
 {
 }
 
-BufferSerializer::BufferSerializer(std::vector<uint8>* buffer, bool readmode, uint32 version)
-	: Serializer(readmode, version)
+BufferSerializer::BufferSerializer(uint8* buffer, size_t size, bool readmode)
+	: Serializer(readmode)
 	, mBuffer(buffer)
+	, mSize(size)
 	, mIt(0)
 {
-	open(buffer, readmode);
+	open(buffer, size, readmode);
 }
 
 BufferSerializer::~BufferSerializer()
@@ -21,21 +23,15 @@ BufferSerializer::~BufferSerializer()
 	close();
 }
 
-bool BufferSerializer::open(std::vector<uint8>* buffer, bool readmode)
+bool BufferSerializer::open(uint8* buffer, size_t size, bool readmode)
 {
 	mBuffer = buffer;
+	mSize	= size;
 	mIt		= 0;
 	if (!mBuffer)
 		return false;
 
 	setReadMode(readmode);
-	if (isReadMode()) {
-		uint32 v = version();
-		read(v);
-		setVersion(v);
-	} else {
-		write(version());
-	}
 
 	return true;
 }
@@ -56,9 +52,13 @@ void BufferSerializer::writeRaw(const uint8* data, size_t elems, size_t elemSize
 	PR_ASSERT(!isReadMode(), "Trying to write into a read serializer!");
 
 	const size_t size = elems * elemSize;
-	mBuffer->reserve(mBuffer->size() + size);
+	if (mIt + size > mSize)
+		return; // TODO: Error?
+
 	for (size_t i = 0; i < size; ++i)
-		mBuffer->emplace_back(data[i]);
+		mBuffer[mIt + i] = data[i];
+
+	mIt += size;
 }
 
 void BufferSerializer::readRaw(uint8* data, size_t elems, size_t elemSize)
@@ -67,11 +67,10 @@ void BufferSerializer::readRaw(uint8* data, size_t elems, size_t elemSize)
 	PR_ASSERT(isReadMode(), "Trying to read from a write serializer!");
 
 	const size_t size = elems * elemSize;
-	if (mBuffer->size() - mIt < size)
-		return;
+	const size_t end  = std::min(mSize, mIt + size);
 
-	for (size_t i = 0; i < size; ++i, ++mIt)
-		data[i] = mBuffer->at(mIt);
+	for (size_t i = 0; mIt < end; ++i, ++mIt)
+		data[i] = mBuffer[mIt];
 }
 
 } // namespace PR

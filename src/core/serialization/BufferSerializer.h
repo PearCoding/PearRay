@@ -7,11 +7,13 @@ class PR_LIB_CORE BufferSerializer : public Serializer {
 	PR_CLASS_NON_COPYABLE(BufferSerializer);
 
 public:
-	BufferSerializer(uint32 version = 0);
-	BufferSerializer(std::vector<uint8>* buffer, bool readmode, uint32 version = 0);
+	BufferSerializer();
+	BufferSerializer(uint8* buffer, size_t size, bool readmode);
 	virtual ~BufferSerializer();
 
-	bool open(std::vector<uint8>* buffer, bool readmode);
+	inline size_t maxSize() const { return mSize; }
+
+	bool open(uint8* buffer, size_t size, bool readmode);
 	void close();
 
 	// Interface
@@ -20,7 +22,8 @@ public:
 	virtual void readRaw(uint8* data, size_t elems, size_t elemSize) override;
 
 private:
-	std::vector<uint8>* mBuffer;
+	uint8* mBuffer;
+	size_t mSize;
 	size_t mIt;
 };
 } // namespace PR

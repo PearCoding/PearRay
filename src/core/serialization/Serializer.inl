@@ -2,7 +2,6 @@
 
 namespace PR {
 inline bool Serializer::isReadMode() const { return mReadMode; }
-inline uint32 Serializer::version() const { return mVersion; }
 
 inline void Serializer::write(bool v)
 {

@@ -27,6 +27,8 @@
 #include "shader/ConstSocket.h"
 #include "shader/MapShadingSocket.h"
 
+#include "DefaultSRGB.h"
+
 #include "Logger.h"
 
 #include <OpenImageIO/texture.h>
@@ -55,15 +57,14 @@ Environment::Environment(const std::wstring& workdir,
 	, mOutputSpecification(workdir)
 {
 	mTextureSystem = OIIO::TextureSystem::create();
+	mDefaultSpectralUpsampler = loadDefaultSpectralUpsampler();
 
 	if (useStandardLib) {
 		//Defaults
 		// TODO: Involve upsampler!
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
 			ParametricBlob params;
-			params[0] = r;
-			params[1] = g;
-			params[2] = b;
+			mDefaultSpectralUpsampler->prepare(&r, &g, &b, &params[0], &params[1], &params[2], 1);
 			mSpectrums.insert(std::make_pair(name, params));
 		};
 

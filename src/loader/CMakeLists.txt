@@ -1,4 +1,6 @@
 set(PR_Src
+  DefaultSRGB.cpp
+  DefaultSRGB.h
   ResourceManager.cpp
   ResourceManager.h
   Environment.cpp
@@ -67,7 +69,12 @@ set(PR_Src
   shader/MapShadingSocket.cpp
   shader/MapShadingSocket.h)
 
-add_library(pr_lib_loader ${PR_Src})
+if(NOT WIN32)
+  enable_language(ASM)
+  set(RC embed/srgb.s)
+endif()
+
+add_library(pr_lib_loader ${PR_Src} ${RC})
 if(NOT WIN32)
   target_link_libraries(pr_lib_loader PUBLIC ${CMAKE_DL_LIBS})
 endif()

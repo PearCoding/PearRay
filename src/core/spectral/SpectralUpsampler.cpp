@@ -1,5 +1,5 @@
 #include "SpectralUpsampler.h"
-#include "serialization/FileSerializer.h"
+#include "serialization/Serializer.h"
 
 namespace PR {
 #include "cie_coeffs.inl"
@@ -11,16 +11,12 @@ struct _SpectralUpsamplerInternal {
 	float* Data;
 };
 
-SpectralUpsampler::SpectralUpsampler(const std::wstring& filename)
+SpectralUpsampler::SpectralUpsampler(Serializer& serializer)
 	: mInternal(new _SpectralUpsamplerInternal())
 {
 	mInternal->Resolution = 0;
 	mInternal->Scale	  = nullptr;
 	mInternal->Data		  = nullptr;
-
-	FileSerializer serializer;
-	if (!serializer.open(filename, true, true))
-		throw std::runtime_error("Could not open spectral coefficients file");
 
 	char header[4];
 	serializer.readRaw(reinterpret_cast<uint8*>(header), 4, sizeof(char));

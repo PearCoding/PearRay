@@ -731,7 +731,7 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	// TODO
-	const auto spec = SpectralParser::getSpectrum(nullptr, dataD);
+	const auto spec = SpectralParser::getSpectrum(ctx.Env->defaultSpectralUpsampler().get(), dataD);
 	ctx.Env->addSpectrum(name, spec);
 }
 
