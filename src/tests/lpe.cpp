@@ -1,5 +1,6 @@
 #include "path/LightPath.h"
 #include "path/LightPathExpression.h"
+#include "path/LightPathView.h"
 
 #include "Test.h"
 
@@ -133,6 +134,31 @@ PR_TEST("[C[^<.S\"Plane\">]+S?B]")
 	LightPathExpression expr("C[^<.S\"Plane\">]+S?B");
 	PR_CHECK_TRUE(expr.isValid());
 }*/
+PR_TEST("Packed")
+{
+	LightPath path; // CDSB
+	path.addToken(LightPathToken::Camera());
+	path.addToken(LightPathToken(ST_REFLECTION, SE_DIFFUSE));
+	path.addToken(LightPathToken(ST_REFRACTION, SE_SPECULAR));
+	path.addToken(LightPathToken::Background());
+
+	size_t size = path.currentSize();
+
+	uint32* buffer = new uint32[size + 1];
+	path.toPacked((uint8*)buffer, (size + 1) * sizeof(uint32));
+
+	PR_CHECK_EQ(path.packedSizeRequirement(), (size + 1) * sizeof(uint32));
+	
+	LightPathView view = LightPathView(buffer);
+	PR_CHECK_EQ(view.currentSize(), size);
+	for (size_t i = 0; i < size; ++i) {
+		PR_CHECK_EQ(view.token(i).Type, path.token(i).Type);
+		PR_CHECK_EQ(view.token(i).Event, path.token(i).Event);
+		PR_CHECK_EQ(view.token(i).LabelIndex, path.token(i).LabelIndex);
+	}
+
+	delete[] buffer;
+}
 
 PR_END_TESTCASE()
 
