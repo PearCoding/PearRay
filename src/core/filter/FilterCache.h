@@ -9,6 +9,9 @@ public:
 		: mRadius(filter->radius())
 		, mCache((2 * mRadius + 1) * (2 * mRadius + 1))
 	{
+		for (int y = -mRadius; y <= mRadius; ++y)
+			for (int x = -mRadius; x <= mRadius; ++x)
+				mCache[(y + mRadius) * (2 * mRadius + 1) + x + mRadius] = filter->evalWeight(x, y);
 	}
 
 	inline int radius() const { return mRadius; }
