@@ -38,9 +38,9 @@ public:
 				xyz[1] += weight[k] * NM_TO_Y[index];
 				xyz[2] += weight[k] * NM_TO_Z[index];
 			} else {
-				xyz[0] += weight[k] * (NM_TO_X[index] * ft + NM_TO_X[index + 1] * (ft + 1));
-				xyz[1] += weight[k] * (NM_TO_Y[index] * ft + NM_TO_Y[index + 1] * (ft + 1));
-				xyz[2] += weight[k] * (NM_TO_Z[index] * ft + NM_TO_Z[index + 1] * (ft + 1));
+				xyz[0] += weight[k] * (NM_TO_X[index] * ft + NM_TO_X[index + 1] * (1 - ft));
+				xyz[1] += weight[k] * (NM_TO_Y[index] * ft + NM_TO_Y[index + 1] * (1 - ft));
+				xyz[2] += weight[k] * (NM_TO_Z[index] * ft + NM_TO_Z[index + 1] * (1 - ft));
 			}
 		}
 	}
