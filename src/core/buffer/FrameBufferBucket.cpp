@@ -76,22 +76,22 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		const bool isMono = entry.Flags & OSEF_Mono;
 
 		SpectralBlob real_weight = entry.Weight;
-		if (isMono) {
+		Size1i channels			 = PR_SPECTRAL_BLOB_SIZE;
+		if (PR_UNLIKELY(isMono)) {
+			channels = 1;
 			PR_OPT_LOOP
 			for (size_t k = 1; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 				real_weight[k] = 0;
 		}
 
-		const Size1i channels = isMono ? 1 : PR_SPECTRAL_BLOB_SIZE;
-
 		bool isInf	   = false;
 		bool isNaN	   = false;
 		bool isNeg	   = false;
 		bool isInvalid = false;
-		for (Size1i i = 0; i < channels && !isInvalid; ++i) {
-			isInf	  = std::isinf(real_weight[i]);
-			isNaN	  = std::isnan(real_weight[i]);
-			isNeg	  = real_weight[i] < 0;
+		for (Size1i k = 0; k < channels && !isInvalid; ++k) {
+			isInf	  = std::isinf(real_weight[k]);
+			isNaN	  = std::isnan(real_weight[k]);
+			isNeg	  = real_weight[k] < 0;
 			isInvalid = isInf || isNaN || isNeg;
 		}
 
@@ -104,19 +104,20 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 			const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
 			for (Point1i py = start(1); py <= end(1); ++py) {
 				for (Point1i px = start(0); px <= end(0); ++px) {
-					Point2i sp				 = Point2i(px, py);
-					const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
-
+					const Point2i sp			 = Point2i(px, py);
+					const float filterWeight	 = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
 					const CIETriplet weightedRad = filterWeight * triplet;
-					for (Size1i i = 0; i < 3; ++i)
-						mData.getInternalChannel_Spectral()->getFragment(sp, i) += weightedRad[i];
+
+					PR_UNROLL_LOOP(3)
+					for (Size1i k = 0; k < 3; ++k)
+						mData.getInternalChannel_Spectral()->getFragment(sp, k) += weightedRad[k];
 
 					// LPE
 					for (auto pair : mData.mLPE_Spectral) {
 						if (pair.first.match(path)) {
-							for (Size1i i = 0; i < 3; ++i) {
-								pair.second->getFragment(sp, i) += weightedRad[i];
-							}
+							PR_UNROLL_LOOP(3)
+							for (Size1i k = 0; k < 3; ++k)
+								pair.second->getFragment(sp, k) += weightedRad[k];
 						}
 					}
 				}
@@ -131,106 +132,134 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 	}
 }
 
+#ifndef PR_ALL_RAYS_CONTRIBUTE
+#define ALL_RAY_CHECK                     \
+	if (entry.SP.Ray.IterationDepth != 0) \
+	continue
+#else
+#define ALL_RAY_CHECK \
+	do {              \
+	} while (false)
+#endif
+
+#define BLEND_1D(var, val)                                                                                    \
+	if (mData.mInt1D[var]) {                                                                                  \
+		const auto var_e = mData.mInt1D[var];                                                                 \
+		PR_OPT_LOOP                                                                                           \
+		for (size_t i = 0; i < entry_count; ++i) {                                                            \
+			const auto& entry = entries[i];                                                                   \
+			ALL_RAY_CHECK;                                                                                    \
+			const Point2i sp		 = entry.Position + filterSize;                                           \
+			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
+			const float blend		 = 1.0f / (sampleCount);                                                  \
+			var_e->blendFragment(sp, 0, val, blend);                                                          \
+		}                                                                                                     \
+	}
+
+#define BLEND_1D_LPE(var, val)                                                                                \
+	for (auto pair : mData.mLPE_1D[var]) {                                                                    \
+		PR_OPT_LOOP                                                                                           \
+		for (size_t i = 0; i < entry_count; ++i) {                                                            \
+			const auto& entry = entries[i];                                                                   \
+			ALL_RAY_CHECK;                                                                                    \
+			const LightPathView path = LightPathView(entry.Path);                                             \
+			if (!pair.first.match(path))                                                                      \
+				continue;                                                                                     \
+			const Point2i sp		 = entry.Position + filterSize;                                           \
+			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
+			const float blend		 = 1.0f / (sampleCount);                                                  \
+			pair.second->blendFragment(sp, 0, val, blend);                                                    \
+		}                                                                                                     \
+	}
+
+#define BLEND_3D(var, val)                                                                                    \
+	if (mData.mInt3D[var]) {                                                                                  \
+		const auto var_e = mData.mInt3D[var];                                                                 \
+		PR_OPT_LOOP                                                                                           \
+		for (size_t i = 0; i < entry_count; ++i) {                                                            \
+			const auto& entry = entries[i];                                                                   \
+			ALL_RAY_CHECK;                                                                                    \
+			const Point2i sp		 = entry.Position + filterSize;                                           \
+			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
+			const float blend		 = 1.0f / (sampleCount);                                                  \
+			const Vector3f v		 = val;                                                                   \
+			PR_UNROLL_LOOP(3)                                                                                 \
+			for (Size1i k = 0; k < 3; ++k)                                                                    \
+				var_e->blendFragment(sp, k, v(k), blend);                                                     \
+		}                                                                                                     \
+	}
+
+#define BLEND_3D_LPE(var, val)                                                                                \
+	for (auto pair : mData.mLPE_1D[var]) {                                                                    \
+		PR_OPT_LOOP                                                                                           \
+		for (size_t i = 0; i < entry_count; ++i) {                                                            \
+			const auto& entry = entries[i];                                                                   \
+			ALL_RAY_CHECK;                                                                                    \
+			const LightPathView path = LightPathView(entry.Path);                                             \
+			if (!pair.first.match(path))                                                                      \
+				continue;                                                                                     \
+			const Point2i sp		 = entry.Position + filterSize;                                           \
+			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
+			const float blend		 = 1.0f / (sampleCount);                                                  \
+			const Vector3f v		 = val;                                                                   \
+			PR_UNROLL_LOOP(3)                                                                                 \
+			for (Size1i k = 0; k < 3; ++k)                                                                    \
+				pair.second->blendFragment(sp, k, v(k), blend);                                               \
+		}                                                                                                     \
+	}
+
 void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entries, size_t entry_count)
 {
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
 
-	const auto blend1D = [&](const Point2i& ip, AOV1D var, float val, float blend) {
-		if (mData.mInt1D[var])
-			mData.mInt1D[var]->blendFragment(ip, 0, val, blend);
-	};
-
-	const auto blend1D_LPE = [&](const Point2i& ip, AOV1D var, float val, float blend, const LightPathView& path) {
-		for (auto pair : mData.mLPE_1D[var]) {
-			if (pair.first.match(path)) {
-				pair.second->blendFragment(ip, 0, val, blend);
-			}
-		}
-	};
-
-	const auto blend3D = [&](const Point2i& ip, AOV3D var, const Vector3f& val, float blend) {
-		if (mData.mInt3D[var])
-			for (Size1i i = 0; i < 3; ++i)
-				mData.mInt3D[var]->blendFragment(ip, i, val(i), blend);
-	};
-
-	const auto blend3D_LPE = [&](const Point2i& ip, AOV3D var, const Vector3f& val, float blend, const LightPathView& path) {
-		for (auto pair : mData.mLPE_3D[var]) {
-			if (pair.first.match(path)) {
-				for (Size1i i = 0; i < 3; ++i)
-					pair.second->blendFragment(ip, i, val(i), blend);
-			}
-		}
-	};
-
+	// Increase sample count
 	PR_OPT_LOOP
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
-
-#ifndef PR_ALL_RAYS_CONTRIBUTE
-		if (entry.SP.Ray.IterationDepth != 0)
-			continue;
-#endif
-
-		const Point2i sp	= entry.Position + filterSize;
-		uint32& sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0);
-		sampleCount += 1;
-
-		const float blend = 1.0f / (sampleCount);
-
-		blend3D(sp, AOV_Position, entry.SP.P, blend);
-		blend3D(sp, AOV_Normal, entry.SP.N, blend);
-		blend3D(sp, AOV_NormalG, entry.SP.Geometry.N, blend);
-		blend3D(sp, AOV_Tangent, entry.SP.Nx, blend);
-		blend3D(sp, AOV_Bitangent, entry.SP.Ny, blend);
-		blend3D(sp, AOV_View, entry.SP.Ray.Direction, blend);
-		blend3D(sp, AOV_UVW, entry.SP.Geometry.UVW, blend);
-		blend3D(sp, AOV_DPDT, entry.SP.Geometry.dPdT, blend);
-
-		blend1D(sp, AOV_Time, entry.SP.Ray.Time, blend);
-		blend1D(sp, AOV_Depth, std::sqrt(entry.SP.Depth2), blend);
-
-		blend1D(sp, AOV_EntityID, entry.SP.EntityID, blend);
-		blend1D(sp, AOV_MaterialID, entry.SP.Geometry.MaterialID, blend);
-		blend1D(sp, AOV_EmissionID, entry.SP.Geometry.EmissionID, blend);
-		blend1D(sp, AOV_DisplaceID, entry.SP.Geometry.DisplaceID, blend);
+		const Point2i sp  = entry.Position + filterSize;
+		mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0) += 1;
 	}
 
-	if (mHasNonSpecLPE) {
-		PR_OPT_LOOP
-		for (size_t i = 0; i < entry_count; ++i) {
-			const auto& entry = entries[i];
+	// Handle optional AOVs
+	BLEND_1D(AOV_Time, entry.SP.Ray.Time);
+	BLEND_1D(AOV_Depth, std::sqrt(entry.SP.Depth2));
 
-#ifndef PR_ALL_RAYS_CONTRIBUTE
-			if (entry.SP.Ray.IterationDepth != 0)
-				continue;
-#endif
+	BLEND_1D(AOV_EntityID, entry.SP.EntityID);
+	BLEND_1D(AOV_MaterialID, entry.SP.Geometry.MaterialID);
+	BLEND_1D(AOV_EmissionID, entry.SP.Geometry.EmissionID);
+	BLEND_1D(AOV_DisplaceID, entry.SP.Geometry.DisplaceID);
 
-			const Point2i sp		 = entry.Position + filterSize;
-			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0);
-			const float blend		 = 1.0f / (sampleCount);
+	BLEND_3D(AOV_Position, entry.SP.P);
+	BLEND_3D(AOV_Normal, entry.SP.N);
+	BLEND_3D(AOV_NormalG, entry.SP.Geometry.N);
+	BLEND_3D(AOV_Tangent, entry.SP.Nx);
+	BLEND_3D(AOV_Bitangent, entry.SP.Ny);
+	BLEND_3D(AOV_View, entry.SP.Ray.Direction);
+	BLEND_3D(AOV_UVW, entry.SP.Geometry.UVW);
+	BLEND_3D(AOV_DPDT, entry.SP.Geometry.dPdT);
 
-			const LightPathView path = LightPathView(entry.Path);
+	// Check if there are any LPEs at all
+	if (!mHasNonSpecLPE)
+		return;
 
-			blend3D_LPE(sp, AOV_Position, entry.SP.P, blend, path);
-			blend3D_LPE(sp, AOV_Normal, entry.SP.N, blend, path);
-			blend3D_LPE(sp, AOV_NormalG, entry.SP.Geometry.N, blend, path);
-			blend3D_LPE(sp, AOV_Tangent, entry.SP.Nx, blend, path);
-			blend3D_LPE(sp, AOV_Bitangent, entry.SP.Ny, blend, path);
-			blend3D_LPE(sp, AOV_View, entry.SP.Ray.Direction, blend, path);
-			blend3D_LPE(sp, AOV_UVW, entry.SP.Geometry.UVW, blend, path);
-			blend3D_LPE(sp, AOV_DPDT, entry.SP.Geometry.dPdT, blend, path);
+	// Handle optional LPE AOVs
+	BLEND_1D_LPE(AOV_Time, entry.SP.Ray.Time);
+	BLEND_1D_LPE(AOV_Depth, std::sqrt(entry.SP.Depth2));
 
-			blend1D_LPE(sp, AOV_Time, entry.SP.Ray.Time, blend, path);
-			blend1D_LPE(sp, AOV_Depth, std::sqrt(entry.SP.Depth2), blend, path);
+	BLEND_1D_LPE(AOV_EntityID, entry.SP.EntityID);
+	BLEND_1D_LPE(AOV_MaterialID, entry.SP.Geometry.MaterialID);
+	BLEND_1D_LPE(AOV_EmissionID, entry.SP.Geometry.EmissionID);
+	BLEND_1D_LPE(AOV_DisplaceID, entry.SP.Geometry.DisplaceID);
 
-			blend1D_LPE(sp, AOV_EntityID, entry.SP.EntityID, blend, path);
-			blend1D_LPE(sp, AOV_MaterialID, entry.SP.Geometry.MaterialID, blend, path);
-			blend1D_LPE(sp, AOV_EmissionID, entry.SP.Geometry.EmissionID, blend, path);
-			blend1D_LPE(sp, AOV_DisplaceID, entry.SP.Geometry.DisplaceID, blend, path);
-		}
-	}
+	BLEND_3D_LPE(AOV_Position, entry.SP.P);
+	BLEND_3D_LPE(AOV_Normal, entry.SP.N);
+	BLEND_3D_LPE(AOV_NormalG, entry.SP.Geometry.N);
+	BLEND_3D_LPE(AOV_Tangent, entry.SP.Nx);
+	BLEND_3D_LPE(AOV_Bitangent, entry.SP.Ny);
+	BLEND_3D_LPE(AOV_View, entry.SP.Ray.Direction);
+	BLEND_3D_LPE(AOV_UVW, entry.SP.Geometry.UVW);
+	BLEND_3D_LPE(AOV_DPDT, entry.SP.Geometry.dPdT);
 }
 
 void FrameBufferBucket::commitFeedbacks(const OutputFeedbackEntry* entries, size_t entry_count)

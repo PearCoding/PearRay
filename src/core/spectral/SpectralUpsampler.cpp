@@ -64,15 +64,6 @@ static int find_interval(float* values, int size_, float x)
 	return std::min(left, last_interval);
 }
 
-static inline float pr_fma(float a, float b, float c)
-{
-#if defined(__FMA__)
-	return fmaf(a, b, c);
-#else
-	return a * b + c;
-#endif
-}
-
 void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems)
 {
 	PR_ASSERT(mInternal->Data, "Expected valid spectral mapper");
@@ -87,6 +78,7 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 	for (size_t i = 0; i < elems; ++i) {
 		// Determine largest entry
 		int largest_entry = 0;
+		PR_UNROLL_LOOP(2)
 		for (int j = 1; j < 3; ++j)
 			if (arr[largest_entry][i] < arr[j][i])
 				largest_entry = j;
@@ -111,13 +103,14 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 		float z0 = 1.0f - z1;
 
 		// Lookup
+		PR_UNROLL_LOOP(COEFFS_N)
 		for (int j = 0; j < COEFFS_N; ++j) {
-			coeffs[j] = pr_fma(pr_fma(pr_fma(mInternal->Data[off], x0, mInternal->Data[off + dx] * x1), y0,
-									  pr_fma(mInternal->Data[off + dy], x0, mInternal->Data[off + dx + dy] * x1) * y1),
-							   z0,
-							   pr_fma(pr_fma(mInternal->Data[off + dz], x0, mInternal->Data[off + dx + dz] * x1), y0,
-									  pr_fma(mInternal->Data[off + dy + dz], x0, mInternal->Data[off + dx + dy + dz] * x1) * y1)
-								   * z1);
+			coeffs[j] = std::fma(std::fma(std::fma(mInternal->Data[off], x0, mInternal->Data[off + dx] * x1), y0,
+										  std::fma(mInternal->Data[off + dy], x0, mInternal->Data[off + dx + dy] * x1) * y1),
+								 z0,
+								 std::fma(std::fma(mInternal->Data[off + dz], x0, mInternal->Data[off + dx + dz] * x1), y0,
+										  std::fma(mInternal->Data[off + dy + dz], x0, mInternal->Data[off + dx + dy + dz] * x1) * y1)
+									 * z1);
 			++off;
 		}
 
@@ -131,9 +124,9 @@ void SpectralUpsampler::compute(const float* a, const float* b, const float* c, 
 {
 	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
-		const float x  = pr_fma(pr_fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
-		const float y  = 1.0f / std::sqrt(pr_fma(x, x, 1.0f));
-		out_weights[i] = pr_fma(0.5f * x, y, 0.5f);
+		const float x  = std::fma(std::fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
+		const float y  = 1.0f / std::sqrt(std::fma(x, x, 1.0f));
+		out_weights[i] = std::fma(0.5f * x, y, 0.5f);
 	}
 }
 
@@ -141,9 +134,9 @@ void SpectralUpsampler::computeSingle(float a, float b, float c, const float* wa
 {
 	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
-		const float x  = pr_fma(pr_fma(a, wavelengths[i], b), wavelengths[i], c);
-		const float y  = 1.0f / std::sqrt(pr_fma(x, x, 1.0f));
-		out_weights[i] = pr_fma(0.5f * x, y, 0.5f);
+		const float x  = std::fma(std::fma(a, wavelengths[i], b), wavelengths[i], c);
+		const float y  = 1.0f / std::sqrt(std::fma(x, x, 1.0f));
+		out_weights[i] = std::fma(0.5f * x, y, 0.5f);
 	}
 }
 } // namespace PR

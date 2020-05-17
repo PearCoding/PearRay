@@ -4,11 +4,11 @@
 
 namespace PR {
 using CIETriplet						= Eigen::Array<float, 3, 1>;
-constexpr int PR_CIE_SAMPLE_COUNT		= 81;
+constexpr int PR_CIE_SAMPLE_COUNT		= 95;
 constexpr float PR_CIE_WAVELENGTH_START = 360;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
-constexpr float PR_CIE_WAVELENGTH_DELTA = 5;
-constexpr float PR_CIE_Y_SUM			= 2.137133e+01;
+constexpr float PR_CIE_WAVELENGTH_DELTA = (PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START) / (PR_CIE_SAMPLE_COUNT - 1);
+constexpr float PR_CIE_Y_SUM			= 21.3714078505f;
 
 class PR_LIB_CORE CIE {
 public:
@@ -28,20 +28,14 @@ public:
 
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k) {
-			float f = (std::max(PR_CIE_WAVELENGTH_START, wavelength[k]) - PR_CIE_WAVELENGTH_START) / PR_CIE_WAVELENGTH_DELTA;
+			const float f = (std::max(PR_CIE_WAVELENGTH_START, wavelength[k]) - PR_CIE_WAVELENGTH_START) / PR_CIE_WAVELENGTH_DELTA;
 
-			float ft;
-			int index = std::max(0, std::min<int>(PR_CIE_SAMPLE_COUNT - 1, std::modf(f, &ft)));
+			const int index = std::max(0, std::min<int>(PR_CIE_SAMPLE_COUNT - 2, f));
+			const float t	= f - index;
 
-			if (index == PR_CIE_SAMPLE_COUNT - 1) {
-				xyz[0] += weight[k] * NM_TO_X[index];
-				xyz[1] += weight[k] * NM_TO_Y[index];
-				xyz[2] += weight[k] * NM_TO_Z[index];
-			} else {
-				xyz[0] += weight[k] * (NM_TO_X[index] * ft + NM_TO_X[index + 1] * (1 - ft));
-				xyz[1] += weight[k] * (NM_TO_Y[index] * ft + NM_TO_Y[index + 1] * (1 - ft));
-				xyz[2] += weight[k] * (NM_TO_Z[index] * ft + NM_TO_Z[index + 1] * (1 - ft));
-			}
+			xyz[0] += weight[k] * (NM_TO_X[index] * (1 - t) + NM_TO_X[index + 1] * t);
+			xyz[1] += weight[k] * (NM_TO_Y[index] * (1 - t) + NM_TO_Y[index + 1] * t);
+			xyz[2] += weight[k] * (NM_TO_Z[index] * (1 - t) + NM_TO_Z[index + 1] * t);
 		}
 	}
 

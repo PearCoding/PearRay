@@ -3,5 +3,8 @@
 #include "spectral/SpectralUpsampler.h"
 
 namespace PR {
-PR_LIB_LOADER std::shared_ptr<SpectralUpsampler> loadDefaultSpectralUpsampler();
-}
+class PR_LIB_LOADER DefaultSRGB {
+public:
+	static std::shared_ptr<SpectralUpsampler> loadSpectralUpsampler();
+};
+} // namespace PR

@@ -57,7 +57,7 @@ Environment::Environment(const std::wstring& workdir,
 	, mOutputSpecification(workdir)
 {
 	mTextureSystem = OIIO::TextureSystem::create();
-	mDefaultSpectralUpsampler = loadDefaultSpectralUpsampler();
+	mDefaultSpectralUpsampler = DefaultSRGB::loadSpectralUpsampler();
 
 	if (useStandardLib) {
 		//Defaults

@@ -8,7 +8,7 @@ extern const unsigned int srgb_coeff_size;
 #endif
 
 namespace PR {
-std::shared_ptr<SpectralUpsampler> loadDefaultSpectralUpsampler()
+std::shared_ptr<SpectralUpsampler> DefaultSRGB::loadSpectralUpsampler()
 {
 #ifdef PR_OS_LINUX
 	BufferSerializer serializer;

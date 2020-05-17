@@ -47,6 +47,7 @@ PUSH_TEST(curve curve.cpp)
 PUSH_TEST(quadric quadric.cpp)
 PUSH_TEST(parameter parameter.cpp USES_LOADER)
 PUSH_TEST(memory memory.cpp)
+PUSH_TEST(upsampler upsampler.cpp USES_LOADER)
 
 if(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)
