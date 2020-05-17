@@ -9,6 +9,7 @@ constexpr float PR_CIE_WAVELENGTH_START = 360;
 constexpr float PR_CIE_WAVELENGTH_END	= 830;
 constexpr float PR_CIE_WAVELENGTH_DELTA = (PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START) / (PR_CIE_SAMPLE_COUNT - 1);
 constexpr float PR_CIE_Y_SUM			= 21.3714078505f;
+constexpr float PR_CIE_NORM				= 1.0f / PR_CIE_Y_SUM;
 
 class PR_LIB_CORE CIE {
 public:
@@ -37,6 +38,8 @@ public:
 			xyz[1] += weight[k] * (NM_TO_Y[index] * (1 - t) + NM_TO_Y[index + 1] * t);
 			xyz[2] += weight[k] * (NM_TO_Z[index] * (1 - t) + NM_TO_Z[index + 1] * t);
 		}
+
+		xyz *= PR_CIE_NORM;
 	}
 
 private:
