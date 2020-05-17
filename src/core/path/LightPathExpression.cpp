@@ -34,4 +34,9 @@ bool LightPathExpression::match(const LightPath& path) const
 {
 	return mAutomaton->match(path);
 }
+
+bool LightPathExpression::match(const LightPathView& path) const
+{
+	return mAutomaton->match(path);
+}
 } // namespace PR

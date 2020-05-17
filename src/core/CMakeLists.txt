@@ -6,13 +6,13 @@ set(PR_Src
   buffer/ColorBuffer.h
   buffer/Feedback.h
   buffer/FrameBuffer.h
-  buffer/OutputBuffer.cpp
-  buffer/OutputBuffer.h
-  buffer/OutputBufferBucket.cpp
-  buffer/OutputBufferBucket.h
-  buffer/OutputBufferData.cpp
-  buffer/OutputBufferData.h
-  buffer/OutputBufferData.inl
+  buffer/FrameBufferSystem.cpp
+  buffer/FrameBufferSystem.h
+  buffer/FrameBufferBucket.cpp
+  buffer/FrameBufferBucket.h
+  buffer/FrameBufferContainer.cpp
+  buffer/FrameBufferContainer.h
+  buffer/FrameBufferContainer.inl
   cache/ICachable.h
   cache/Cache.h
   cache/Cache.cpp
@@ -38,6 +38,7 @@ set(PR_Src
   entity/ITransformable.inl
   emission/IEmission.cpp
   emission/IEmission.h
+  filter/FilterCache.h
   filter/IFilter.h
   filter/IFilterFactory.h
   geometry/BoundingBox.cpp
@@ -93,6 +94,9 @@ set(PR_Src
   mesh/TriMeshPIOff.h
   mesh/TriMeshWT.cpp
   mesh/TriMeshWT.h
+  output/OutputQueue.cpp
+  output/OutputQueue.h
+  output/OutputQueue.inl
   path/LightPath.cpp
   path/LightPath.h
   path/LightPath.inl
@@ -103,6 +107,7 @@ set(PR_Src
   path/LightPathManager.cpp
   path/LightPathManager.h
   path/LightPathToken.h
+  path/LightPathView.h
   path/LPE_Automaton.cpp
   path/LPE_Automaton.h
   path/LPE_Parser.cpp
@@ -157,7 +162,8 @@ set(PR_Src
   serialization/Serializer.cpp
   serialization/Serializer.inl
   spectral/Blackbody.h
-  spectral/cie_coeffs.inl
+  spectral/CIE.cpp
+  spectral/CIE.h
   spectral/ParametricBlob.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h

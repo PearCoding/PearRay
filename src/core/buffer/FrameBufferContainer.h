@@ -21,13 +21,13 @@ class LightPath;
  * 1D       -> 1D float data
  * Counter  -> 1D uint32 data
  */
-class PR_LIB_CORE OutputBufferData {
-	friend class OutputBuffer;
-	friend class OutputBufferBucket;
+class PR_LIB_CORE FrameBufferContainer {
+	friend class FrameBufferSystem;
+	friend class FrameBufferBucket;
 
 public:
-	OutputBufferData(const Size2i& size, Size1i specChannels);
-	~OutputBufferData();
+	FrameBufferContainer(const Size2i& size, Size1i specChannels);
+	~FrameBufferContainer();
 
 	void clear(bool force = false);
 
@@ -102,4 +102,4 @@ private:
 };
 } // namespace PR
 
-#include "OutputBufferData.inl"
+#include "FrameBufferContainer.inl"

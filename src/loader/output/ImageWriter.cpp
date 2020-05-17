@@ -1,6 +1,6 @@
 #include "ImageWriter.h"
 #include "Logger.h"
-#include "buffer/OutputBuffer.h"
+#include "buffer/FrameBufferSystem.h"
 #include "config/Build.h"
 #include "renderer/RenderContext.h"
 #include "spectral/SpectralFile.h"
@@ -111,7 +111,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	if (!out)
 		return false;
 
-	const OutputBufferData& data = mRenderer->output()->data();
+	const FrameBufferContainer& data = mRenderer->output()->data();
 
 	// Write content
 	float* line = new float[channelCount * viewSize.Width];

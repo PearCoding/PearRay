@@ -1,18 +1,18 @@
-#include "OutputBufferData.h"
+#include "FrameBufferContainer.h"
 
 namespace PR {
-OutputBufferData::OutputBufferData(const Size2i& size, Size1i specChannels)
+FrameBufferContainer::FrameBufferContainer(const Size2i& size, Size1i specChannels)
 	: mSpectral(new FrameBufferFloat(std::max<Size1i>(3, specChannels), size, 0.0f))
 {
 	mIntCounter[AOV_SampleCount] = std::make_shared<FrameBufferUInt32>(1, size, 0);
 	mIntCounter[AOV_Feedback]	= std::make_shared<FrameBufferUInt32>(1, size, 0);
 }
 
-OutputBufferData::~OutputBufferData()
+FrameBufferContainer::~FrameBufferContainer()
 {
 }
 
-void OutputBufferData::clear(bool force)
+void FrameBufferContainer::clear(bool force)
 {
 	mSpectral->clear(force);
 
@@ -53,22 +53,22 @@ void OutputBufferData::clear(bool force)
 		p.second->clear(force);
 }
 
-std::shared_ptr<FrameBufferFloat> OutputBufferData::createSpectralBuffer() const
+std::shared_ptr<FrameBufferFloat> FrameBufferContainer::createSpectralBuffer() const
 {
 	return std::make_shared<FrameBufferFloat>(mSpectral->channels(), mSpectral->size(), 0.0f);
 }
 
-std::shared_ptr<FrameBufferFloat> OutputBufferData::create3DBuffer() const
+std::shared_ptr<FrameBufferFloat> FrameBufferContainer::create3DBuffer() const
 {
 	return std::make_shared<FrameBufferFloat>(3, mSpectral->size(), 0.0f);
 }
 
-std::shared_ptr<FrameBufferFloat> OutputBufferData::create1DBuffer() const
+std::shared_ptr<FrameBufferFloat> FrameBufferContainer::create1DBuffer() const
 {
 	return std::make_shared<FrameBufferFloat>(1, mSpectral->size(), 0.0f);
 }
 
-std::shared_ptr<FrameBufferUInt32> OutputBufferData::createCounterBuffer() const
+std::shared_ptr<FrameBufferUInt32> FrameBufferContainer::createCounterBuffer() const
 {
 	return std::make_shared<FrameBufferUInt32>(1, mSpectral->size(), 0);
 }

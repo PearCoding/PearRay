@@ -87,23 +87,6 @@ bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 	return true;
 }
 
-bool Automaton::match(const LightPath& path) const
-{
-	bool success;
-
-	size_t currentState = mStartingState;
-	for (size_t i = 0; i < path.currentSize(); ++i) {
-		size_t ns = nextState(currentState, path.token(i), success);
-
-		//PR_LOG(L_INFO) << currentState << " -> <" << path.token(i).Type << "," << path.token(i).Event << "> -> " << ns << std::endl;
-		currentState = ns;
-		if (!success)
-			return false;
-	}
-
-	return mSB_IsFinal[currentState];
-}
-
 size_t Automaton::nextState(size_t currentState, const LightPathToken& token, bool& success) const
 {
 	success		 = false;

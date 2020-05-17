@@ -38,9 +38,9 @@ constexpr float SHADOW_RAY_MIN = 0.00001f;
 constexpr float SHADOW_RAY_MAX = std::numeric_limits<float>::infinity();
 constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
 constexpr float BOUNCE_RAY_MAX = std::numeric_limits<float>::infinity();
-class IntDirectIntance : public IIntegratorInstance {
+class IntDirectInstance : public IIntegratorInstance {
 public:
-	explicit IntDirectIntance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
+	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
 		: mPipeline(ctx)
 		, mLightSampleCount(lightSamples)
 		, mMaxRayDepth(maxRayDepth)
@@ -48,7 +48,7 @@ public:
 	{
 	}
 
-	virtual ~IntDirectIntance() = default;
+	virtual ~IntDirectInstance() = default;
 
 	SpectralBlob infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
 							   LightPathToken& token,
@@ -467,7 +467,7 @@ public:
 
 	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		return std::make_shared<IntDirectIntance>(ctx, mLightSampleCount, mMaxRayDepth, mMSIEnabled);
+		return std::make_shared<IntDirectInstance>(ctx, mLightSampleCount, mMaxRayDepth, mMSIEnabled);
 	}
 
 	inline void enableMSI(bool b) { mMSIEnabled = b; }

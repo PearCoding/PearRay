@@ -1,4 +1,4 @@
-#include "buffer/OutputBuffer.h"
+#include "buffer/FrameBufferSystem.h"
 #include "entity/IEntity.h"
 #include "integrator/IIntegrator.h"
 #include "renderer/RenderContext.h"

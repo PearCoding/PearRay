@@ -2,17 +2,35 @@
 
 #include "LPE_RegExpr.h"
 #include "LightPath.h"
+#include "LightPathView.h"
 
 namespace PR {
 namespace LPE {
 class RegExpr;
 class Automaton {
 public:
-	Automaton()  = default;
+	Automaton()	 = default;
 	~Automaton() = default;
 
 	bool build(const std::shared_ptr<RegExpr>& expr);
-	bool match(const LightPath& path) const;
+
+	template <typename Path>
+	inline bool match(const Path& path) const
+	{
+		bool success;
+
+		size_t currentState = mStartingState;
+		for (size_t i = 0; i < path.currentSize(); ++i) {
+			size_t ns = nextState(currentState, path.token(i), success);
+
+			//PR_LOG(L_INFO) << currentState << " -> <" << path.token(i).Type << "," << path.token(i).Event << "> -> " << ns << std::endl;
+			currentState = ns;
+			if (!success)
+				return false;
+		}
+
+		return mSB_IsFinal[currentState];
+	}
 
 	std::string dumpTable() const;
 

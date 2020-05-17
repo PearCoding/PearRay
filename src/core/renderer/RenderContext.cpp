@@ -5,7 +5,7 @@
 #include "RenderTile.h"
 #include "RenderTileMap.h"
 #include "RenderTileSession.h"
-#include "buffer/OutputBuffer.h"
+#include "buffer/FrameBufferSystem.h"
 #include "camera/ICamera.h"
 #include "entity/IEntity.h"
 #include "infinitelight/IInfiniteLight.h"
@@ -38,7 +38,7 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	PR_ASSERT(mScene, "Scene can not be NULL!");
 	reset();
 
-	mOutputMap = std::make_unique<OutputBuffer>(
+	mOutputMap = std::make_unique<FrameBufferSystem>(
 		settings.createPixelFilter(),
 		viewSize, 3); // TODO: Should be encapsulated by an output device
 }

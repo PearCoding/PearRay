@@ -2,9 +2,9 @@
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
-#include "buffer/OutputBuffer.h"
-#include "buffer/OutputBufferBucket.h"
+#include "buffer/FrameBufferBucket.h"
 #include "material/IMaterial.h"
+#include "output/OutputQueue.h"
 #include "scene/Scene.h"
 #include "shader/ShadingPoint.h"
 
@@ -12,17 +12,19 @@ namespace PR {
 RenderTileSession::RenderTileSession()
 	: mThread(0)
 	, mTile(nullptr)
-	, mBucket()
+	, mOutputQueue()
 {
 }
 
 RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
-									 const std::shared_ptr<OutputBufferBucket>& bucket)
+									 const std::shared_ptr<OutputQueue>& queue,
+									 const std::shared_ptr<FrameBufferBucket>& bucket)
 	: mThread(thread)
 	, mTile(tile)
+	, mOutputQueue(queue)
 	, mBucket(bucket)
 {
-	bucket->shrinkView(mTile->viewSize());
+	bucket->shrinkView(tile->viewSize());
 }
 
 RenderTileSession::~RenderTileSession()
@@ -106,8 +108,10 @@ void RenderTileSession::pushSpectralFragment(const SpectralBlob& spec, const Ray
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);
-	mBucket->pushSpectralFragment(coords, spec * ray.Weight,
-								  ray.WavelengthNM, ray.Flags & RF_Monochrome, path);
+	mOutputQueue->pushSpectralFragment(coords, spec * ray.Weight,
+									   ray.WavelengthNM, ray.Flags & RF_Monochrome, path);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
 void RenderTileSession::pushSPFragment(const ShadingPoint& pt,
@@ -115,14 +119,18 @@ void RenderTileSession::pushSPFragment(const ShadingPoint& pt,
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(pt.Ray.PixelIndex);
-	mBucket->pushSPFragment(coords, pt, path);
+	mOutputQueue->pushSPFragment(coords, pt, path);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
 void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) const
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);
-	mBucket->pushFeedbackFragment(coords, feedback);
+	mOutputQueue->pushFeedbackFragment(coords, feedback);
+	if (mOutputQueue->isReadyToCommit())
+		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
 IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const

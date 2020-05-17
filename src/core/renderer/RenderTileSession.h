@@ -2,7 +2,6 @@
 
 #include "Random.h"
 #include "buffer/Feedback.h"
-#include "buffer/OutputBuffer.h"
 #include "entity/IEntity.h"
 #include "geometry/GeometryPoint.h"
 #include "ray/RayPackage.h"
@@ -21,12 +20,15 @@ class IMaterial;
 class IEmission;
 class ShadingPoint;
 class LightPath;
+class OutputQueue;
+class FrameBufferBucket;
 
 class PR_LIB_CORE RenderTileSession {
 public:
 	RenderTileSession(); // Dummy session!
 	RenderTileSession(uint32 threadIndex, RenderTile* tile,
-					  const std::shared_ptr<OutputBufferBucket>& bucket);
+					  const std::shared_ptr<OutputQueue>& queue,
+					  const std::shared_ptr<FrameBufferBucket>& bucket);
 	~RenderTileSession();
 
 	inline uint32 threadID() const
@@ -53,6 +55,7 @@ public:
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
 	IEntity* pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const;
+
 private:
 	Point2i localCoordinates(Point1i pixelIndex) const;
 
@@ -60,6 +63,7 @@ private:
 
 	uint32 mThread;
 	RenderTile* mTile;
-	std::shared_ptr<OutputBufferBucket> mBucket;
+	std::shared_ptr<OutputQueue> mOutputQueue;
+	std::shared_ptr<FrameBufferBucket> mBucket;
 };
 } // namespace PR

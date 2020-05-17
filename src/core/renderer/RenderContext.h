@@ -14,7 +14,7 @@ class HitStream;
 class IEntity;
 class IIntegrator;
 class IMaterial;
-class OutputBuffer;
+class FrameBufferSystem;
 class RayStream;
 class RenderTileSession;
 class RenderThread;
@@ -68,7 +68,7 @@ public:
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
 
-	inline std::shared_ptr<OutputBuffer> output() const { return mOutputMap; }
+	inline std::shared_ptr<FrameBufferSystem> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
 
 protected:
@@ -83,7 +83,7 @@ private:
 	const Size2i mViewSize;
 
 	std::shared_ptr<Scene> mScene;
-	std::shared_ptr<OutputBuffer> mOutputMap;
+	std::shared_ptr<FrameBufferSystem> mOutputMap;
 
 	std::vector<std::shared_ptr<IEntity>> mLights;
 	float mEmissiveSurfaceArea;

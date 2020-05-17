@@ -1,24 +1,38 @@
-#include "OutputBuffer.h"
+#include "FrameOutputDevice.h"
 #include "Feedback.h"
-#include "OutputBufferBucket.h"
+#include "FrameBufferBucket.h"
 #include "filter/IFilter.h"
 #include "shader/ShadingPoint.h"
 
 namespace PR {
-OutputBuffer::OutputBuffer(const std::shared_ptr<IFilter>& filter,
-						   const Size2i& size, Size1i specChannels)
-	: mFilter(filter)
-	, mData(size, specChannels)
+FrameOutputDevice::FrameOutputDevice(Size1i specChannels)
+	: mSpectralChannels(specChannels)
 {
 }
 
-OutputBuffer::~OutputBuffer()
+FrameOutputDevice::~FrameOutputDevice()
 {
 }
 
-std::shared_ptr<OutputBufferBucket> OutputBuffer::createBucket(const Size2i& size) const
+void FrameOutputDevice::commitSpectrals(const OutputCommitInformation& info, const OutputSpectralEntry* entries, size_t entrycount)
 {
-	std::shared_ptr<OutputBufferBucket> bucket = std::make_shared<OutputBufferBucket>(
+}
+
+void FrameOutputDevice::commitShadingPoints(const OutputCommitInformation& info, const OutputShadingPointEntry* entries, size_t entrycount)
+{
+}
+
+void FrameOutputDevice::commitFeedbacks(const OutputCommitInformation& info, const OutputFeedbackEntry* entries, size_t entrycount)
+{
+}
+
+void FrameOutputDevice::onStart(RenderContext* ctx);
+void FrameOutputDevice::onNextIteration();
+void FrameOutputDevice::onStop();
+
+std::shared_ptr<FrameBufferBucket> FrameOutputDevice::createBucket(const Size2i& size) const
+{
+	std::shared_ptr<FrameBufferBucket> bucket = std::make_shared<FrameBufferBucket>(
 		mFilter, size,
 		mData.getInternalChannel_Spectral()->channels());
 
@@ -59,8 +73,8 @@ std::shared_ptr<OutputBufferBucket> OutputBuffer::createBucket(const Size2i& siz
 	return bucket;
 }
 
-void OutputBuffer::mergeBucket(const Point2i& p,
-							   const std::shared_ptr<OutputBufferBucket>& bucket)
+void FrameOutputDevice::mergeBucket(const Point2i& p,
+									const std::shared_ptr<FrameBufferBucket>& bucket)
 {
 	std::lock_guard<std::mutex> guard(mMergeMutex);
 

@@ -1,7 +1,7 @@
 #include "OutputSpecification.h"
 #include "Logger.h"
 #include "arch/FileLock.h"
-#include "buffer/OutputBuffer.h"
+#include "buffer/FrameBufferSystem.h"
 #include "renderer/RenderContext.h"
 
 #include <boost/filesystem.hpp>
@@ -65,7 +65,7 @@ void OutputSpecification::setup(const std::shared_ptr<RenderContext>& renderer)
 		init(renderer);
 
 	mImageWriter.init(renderer);
-	OutputBufferData& data = renderer->output()->data();
+	FrameBufferContainer& data = renderer->output()->data();
 
 	for (File& file : mFiles) {
 		for (IM_ChannelSetting3D& cs3d : file.Settings3D) {
@@ -387,7 +387,7 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
 	}
 
-	const OutputBufferData& data = renderer->output()->data();
+	const FrameBufferContainer& data = renderer->output()->data();
 	for (const FileSpectral& f : mSpectralFiles) {
 		auto file = outputDir / (f.Name + ".spec");
 

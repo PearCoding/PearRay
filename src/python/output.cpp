@@ -1,4 +1,4 @@
-#include "buffer/OutputBuffer.h"
+#include "buffer/FrameBufferSystem.h"
 
 #include "pypearray.h"
 #include <pybind11/numpy.h>
@@ -51,11 +51,11 @@ void setup_output(py::module& m)
 		.def("fill", &FrameBufferFloat::fill)
 		.def_property_readonly("channels", &FrameBufferFloat::channels);
 
-	// Hiding OutputBufferData
+	// Hiding FrameBufferContainer
 	// TODO: Add whole interface
-	auto scope = py::class_<OutputBuffer, std::shared_ptr<OutputBuffer>>(m, "OutputBuffer");
-	scope.def("clear", &OutputBuffer::clear)
-		.def_property_readonly("spectral", [](const OutputBuffer& buffer) { return buffer.data().getInternalChannel_Spectral(); });
+	auto scope = py::class_<FrameBufferSystem, std::shared_ptr<FrameBufferSystem>>(m, "FrameBufferSystem");
+	scope.def("clear", &FrameBufferSystem::clear)
+		.def_property_readonly("spectral", [](const FrameBufferSystem& buffer) { return buffer.data().getInternalChannel_Spectral(); });
 
 	py::enum_<AOV3D>(scope, "AOV3D")
 		.value("POSITION", AOV_Position)

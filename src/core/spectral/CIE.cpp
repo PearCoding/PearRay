@@ -1,10 +1,8 @@
-constexpr int SAMPLE_COUNT		 = 81;
-constexpr float WAVELENGTH_START = 360;
-constexpr float WAVELENGTH_END	 = 830;
-constexpr float WAVELENGTH_DELTA = 5;
+#include "CIE.h"
 
+namespace PR {
 // clang-format off
-static const float NM_TO_X[SAMPLE_COUNT] = {
+const float CIE::NM_TO_X[PR_CIE_SAMPLE_COUNT] = {
 	1.368000e-03f, 2.236000e-03f, 4.243000e-03f, 7.650000e-03f, 1.431000e-02f,
 	2.319000e-02f, 4.351000e-02f, 7.763000e-02f, 1.343800e-01f, 2.147700e-01f,
 	2.839000e-01f, 3.285000e-01f, 3.482800e-01f, 3.480600e-01f, 3.362000e-01f,
@@ -24,7 +22,7 @@ static const float NM_TO_X[SAMPLE_COUNT] = {
 	4.150994e-05f,
 };
 
-static const float NM_TO_Y[SAMPLE_COUNT] = {
+const float CIE::NM_TO_Y[PR_CIE_SAMPLE_COUNT] = {
 	3.900000e-05f, 6.400000e-05f, 1.200000e-04f, 2.170000e-04f, 3.960000e-04f,
 	6.400000e-04f, 1.210000e-03f, 2.180000e-03f, 4.000000e-03f, 7.300000e-03f,
 	1.160000e-02f, 1.684000e-02f, 2.300000e-02f, 2.980000e-02f, 3.800000e-02f,
@@ -44,7 +42,7 @@ static const float NM_TO_Y[SAMPLE_COUNT] = {
 	1.499000e-05f,
 };
 
-static const float NM_TO_Z[SAMPLE_COUNT] = {
+const float CIE::NM_TO_Z[PR_CIE_SAMPLE_COUNT] = {
 	6.450001e-03f, 1.054999e-02f, 2.005001e-02f, 3.621000e-02f, 6.785001e-02f,
 	1.102000e-01f, 2.074000e-01f, 3.713000e-01f, 6.456000e-01f, 1.039050e+00f,
 	1.385600e+00f, 1.622960e+00f, 1.747060e+00f, 1.782600e+00f, 1.772110e+00f,
@@ -64,5 +62,4 @@ static const float NM_TO_Z[SAMPLE_COUNT] = {
 	0,
 };
 // clang-format on
-
-constexpr float Y_SUM = 2.137133e+01;
+} // namespace PR

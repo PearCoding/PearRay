@@ -34,7 +34,7 @@ ParametricBlob SpectralParser::getSpectrum(SpectralUpsampler* upsampler, const D
 			if (grp.anonymousCount() == PR_PARAMETRIC_BLOB_SIZE
 				&& grp.isAllAnonymousNumber()) {
 				for (size_t i = 0; i < PR_PARAMETRIC_BLOB_SIZE; ++i)
-					blob[i] = grp.at(i).getNumber();
+					input[i] = grp.at(i).getNumber();
 			}
 
 			upsampler->prepare(&input(0), &input(1), &input(2), &blob(0), &blob(1), &blob(2), 1);

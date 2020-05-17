@@ -4,7 +4,7 @@
 
 namespace PR {
 
-constexpr size_t PR_PARAMETRIC_BLOB_SIZE = 4;
+constexpr size_t PR_PARAMETRIC_BLOB_SIZE = 3;
 
 template <typename T>
 using ParametricBlobBase = Eigen::Array<T, PR_PARAMETRIC_BLOB_SIZE, 1>;

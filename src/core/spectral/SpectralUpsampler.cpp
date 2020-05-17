@@ -2,7 +2,6 @@
 #include "serialization/Serializer.h"
 
 namespace PR {
-#include "cie_coeffs.inl"
 
 constexpr int COEFFS_N = 3; // Has to be 3 all the time!
 struct _SpectralUpsamplerInternal {
