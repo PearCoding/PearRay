@@ -70,11 +70,19 @@ set(PR_Src
   shader/MapShadingSocket.h)
 
 if(NOT WIN32)
+  # For non Windows (prob. only Linux) systems we use assembler to embed srgb.coeff
   enable_language(ASM)
   set(RC embed/srgb.s)
 endif()
 
 add_library(pr_lib_loader ${PR_Src} ${RC})
+
+if(WIN32)
+  # This is not a satisfying solution, as srgb.coeff is quite large and each exe requires one build.
+  # A solution would be to use a custom dll, but this would enforce the dll to ship along...
+  # and then we could just ship srgb.coeff along...
+  target_sources(pr_lib_loader PUBLIC embed/srgb.rc )
+endif()
 if(NOT WIN32)
   target_link_libraries(pr_lib_loader PUBLIC ${CMAKE_DL_LIBS})
 endif()
