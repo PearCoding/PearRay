@@ -66,6 +66,7 @@ public:
 	inline ISampler* aaSampler() const { return mAASampler.get(); }
 	inline ISampler* lensSampler() const { return mLensSampler.get(); }
 	inline ISampler* timeSampler() const { return mTimeSampler.get(); }
+	inline ISampler* spectralSampler() const { return mSpectralSampler.get(); }
 
 	inline const RenderTileStatistics& statistics() const { return mContext.Statistics; }
 	inline RenderTileStatistics& statistics() { return mContext.Statistics; }
@@ -91,6 +92,7 @@ private:
 	std::shared_ptr<ISampler> mAASampler;
 	std::shared_ptr<ISampler> mLensSampler;
 	std::shared_ptr<ISampler> mTimeSampler;
+	std::shared_ptr<ISampler> mSpectralSampler;
 
 	uint32 mAASampleCount;
 	uint32 mLensSampleCount;

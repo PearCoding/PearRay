@@ -3,13 +3,12 @@
 	:renderWidth 1000
 	:renderHeight 1000
 	:camera 'Camera'
-	:spectral_domain [:range [400 750], :sample_count 4]
 	; Settings
 	(integrator
 		:type 'DIRECT'
 		:max_ray_depth 1
 		:light_sampe_count 1
-		:msi false
+		:msi true
 	)
 	(sampler
 		:slot 'aa'
@@ -23,6 +22,11 @@
 	)
 	(sampler
 		:slot 'time'
+		:type 'MULTI_JITTER'
+		:sample_count 1
+	)
+	(sampler
+		:slot 'spectral'
 		:type 'MULTI_JITTER'
 		:sample_count 1
 	)

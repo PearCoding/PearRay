@@ -14,7 +14,6 @@ RenderSettings::RenderSettings()
 	, sortHits(false)
 	, spectralStart(360)
 	, spectralEnd(760)
-	, spectralSampleCount(1)
 	, filmWidth(1920)
 	, filmHeight(1080)
 	, cropMinX(0)
@@ -41,6 +40,11 @@ std::shared_ptr<ISampler> RenderSettings::createLensSampler(Random& random) cons
 std::shared_ptr<ISampler> RenderSettings::createTimeSampler(Random& random) const
 {
 	return timeSamplerFactory ? timeSamplerFactory->createInstance(random) : nullptr;
+}
+
+std::shared_ptr<ISampler> RenderSettings::createSpectralSampler(Random& random) const
+{
+	return spectralSamplerFactory ? spectralSamplerFactory->createInstance(random) : nullptr;
 }
 
 std::shared_ptr<IFilter> RenderSettings::createPixelFilter() const

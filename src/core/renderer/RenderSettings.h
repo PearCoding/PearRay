@@ -31,7 +31,6 @@ public:
 
 	float spectralStart;
 	float spectralEnd;
-	uint32 spectralSampleCount;
 
 	// Film entries
 	uint32 filmWidth;
@@ -66,6 +65,7 @@ public:
 	std::shared_ptr<ISamplerFactory> aaSamplerFactory;
 	std::shared_ptr<ISamplerFactory> lensSamplerFactory;
 	std::shared_ptr<ISamplerFactory> timeSamplerFactory;
+	std::shared_ptr<ISamplerFactory> spectralSamplerFactory;
 
 	std::shared_ptr<IFilterFactory> pixelFilterFactory;
 	std::shared_ptr<IIntegratorFactory> integratorFactory;
@@ -74,6 +74,7 @@ public:
 	std::shared_ptr<ISampler> createAASampler(Random& random) const;
 	std::shared_ptr<ISampler> createLensSampler(Random& random) const;
 	std::shared_ptr<ISampler> createTimeSampler(Random& random) const;
+	std::shared_ptr<ISampler> createSpectralSampler(Random& random) const;
 	std::shared_ptr<IFilter> createPixelFilter() const;
 	std::shared_ptr<IIntegrator> createIntegrator() const;
 };

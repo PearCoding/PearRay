@@ -30,14 +30,15 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 
-	mAASampler	 = mRenderContext->settings().createAASampler(mRandom);
-	mLensSampler = mRenderContext->settings().createLensSampler(mRandom);
-	mTimeSampler = mRenderContext->settings().createTimeSampler(mRandom);
+	mAASampler		 = mRenderContext->settings().createAASampler(mRandom);
+	mLensSampler	 = mRenderContext->settings().createLensSampler(mRandom);
+	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
+	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
 
 	mAASampleCount		 = mAASampler->maxSamples();
 	mLensSampleCount	 = mLensSampler->maxSamples();
 	mTimeSampleCount	 = mTimeSampler->maxSamples();
-	mSpectralSampleCount = mRenderContext->settings().spectralSampleCount; // Spectral samples are traited special
+	mSpectralSampleCount = mSpectralSampler->maxSamples();
 	mMaxPixelSamples *= mAASampleCount * mLensSampleCount * mTimeSampleCount * mSpectralSampleCount;
 
 	switch (mRenderContext->settings().timeMappingMode) {
@@ -80,7 +81,6 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	++mContext.PixelSamplesRendered;
 
 	const uint32 specsample = sample % mSpectralSampleCount;
-	PR_UNUSED(specsample);
 	sample /= mSpectralSampleCount;
 	const uint32 timesample = sample % mTimeSampleCount;
 	sample /= mTimeSampleCount;
@@ -103,8 +103,8 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	cameraSample.Weight		= mWeight_Cache;
 
 	// Sample wavelength
-	float start					 = mRandom.getFloat() * mSpectralSpan; // Wavelength inside the span
-	cameraSample.WavelengthNM(0) = start + mSpectralStart;			   // Hero wavelength
+	float start					 = mSpectralSampler->generate1D(specsample) * mSpectralSpan; // Wavelength inside the span
+	cameraSample.WavelengthNM(0) = start + mSpectralStart;									 // Hero wavelength
 	for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 		cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
 

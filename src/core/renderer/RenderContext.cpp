@@ -115,7 +115,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  InfLights:       " << mScene->infiniteLights().size() << std::endl
 				   << "  Emissive Area:   " << mEmissiveSurfaceArea << std::endl
 				   << "  Scene Extent:    " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
-				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]/" << PR_SPECTRAL_BLOB_SIZE << "x" << mRenderSettings.spectralSampleCount << std::endl;
+				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
 
 	// Start
 	mIntegrator->onStart();

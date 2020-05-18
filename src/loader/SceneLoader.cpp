@@ -103,23 +103,6 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			if (renderHeightD.type() == DL::DT_Integer)
 				env->renderSettings().filmHeight = renderHeightD.getInt();
 
-			if (spectralDomainD.type() == DL::DT_Group) {
-				DL::DataGroup specDom = spectralDomainD.getGroup();
-				DL::Data rangeD		  = specDom.getFromKey("range");
-				DL::Data sampleCountD = specDom.getFromKey("sample_count");
-
-				if (rangeD.type() == DL::DT_Group) {
-					DL::DataGroup range = rangeD.getGroup();
-					if (range.anonymousCount() == 2 && range.isAllAnonymousNumber()) {
-						env->renderSettings().spectralStart = std::min(range.at(0).getNumber(), range.at(1).getNumber());
-						env->renderSettings().spectralEnd	= std::max(range.at(0).getNumber(), range.at(1).getNumber());
-					}
-				}
-
-				if (sampleCountD.type() == DL::DT_Integer)
-					env->renderSettings().spectralSampleCount = sampleCountD.getInt();
-			}
-
 			if (cropD.type() == DL::DT_Group) {
 				DL::DataGroup crop = cropD.getGroup();
 				if (crop.anonymousCount() == 4 && crop.isAllAnonymousNumber()) {
@@ -249,6 +232,20 @@ void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 			PR_LOG(L_WARNING) << "[Loader] Time sampler already selected. Replacing it " << std::endl;
 
 		ctx.Env->renderSettings().timeSamplerFactory = filter;
+	} else if (slot == "spectral" || slot == "spectrum" || slot == "s") {
+		if (ctx.Env->renderSettings().spectralSamplerFactory)
+			PR_LOG(L_WARNING) << "[Loader] Spectral sampler already selected. Replacing it " << std::endl;
+
+		DL::Data rangeD = group.getFromKey("range");
+		if (rangeD.type() == DL::DT_Group) {
+			DL::DataGroup range = rangeD.getGroup();
+			if (range.anonymousCount() == 2 && range.isAllAnonymousNumber()) {
+				ctx.Env->renderSettings().spectralStart = std::min(range.at(0).getNumber(), range.at(1).getNumber());
+				ctx.Env->renderSettings().spectralEnd	= std::max(range.at(0).getNumber(), range.at(1).getNumber());
+			}
+		}
+
+		ctx.Env->renderSettings().spectralSamplerFactory = filter;
 	} else {
 		PR_LOG(L_ERROR) << "[Loader] Unknown sampler slot " << slot << std::endl;
 	}
