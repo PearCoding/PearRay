@@ -45,14 +45,6 @@ SpectralBlob ImageMapSocket::eval(const MapSocketCoord& ctx) const
 	return value;
 }
 
-float ImageMapSocket::relativeLuminance(const MapSocketCoord& ctx) const
-{
-	// TODO
-	SpectralBlob value;
-	lookup(ctx, value);
-	return value(0);
-}
-
 void ImageMapSocket::lookup(const MapSocketCoord& ctx, SpectralBlob& rgb) const
 {
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");

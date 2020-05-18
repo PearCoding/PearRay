@@ -11,7 +11,6 @@ public:
 				   const OIIO::TextureOpt& options,
 				   const std::string& filename);
 	SpectralBlob eval(const MapSocketCoord& ctx) const override;
-	float relativeLuminance(const MapSocketCoord& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 

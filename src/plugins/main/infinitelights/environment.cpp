@@ -290,10 +290,11 @@ public:
 				float sinTheta = std::sin(PR_PI * (y + 0.5f) / recSize(1));
 
 				MapSocketCoord coord;
-				coord.UV  = Vector2f(u, v);
-				coord.dUV = filterSize;
+				coord.UV		   = Vector2f(u, v);
+				coord.dUV		   = filterSize;
+				coord.WavelengthNM = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test
 
-				const float val = sinTheta * rad->relativeLuminance(coord);
+				const float val = sinTheta * rad->eval(coord).maxCoeff();
 				return (val <= PR_EPSILON) ? 0.0f : val;
 			});
 		}

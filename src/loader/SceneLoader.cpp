@@ -85,9 +85,10 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
 			return nullptr;
 		} else {
-			DL::Data renderWidthD  = top.getFromKey("renderWidth");
-			DL::Data renderHeightD = top.getFromKey("renderHeight");
-			DL::Data cropD		   = top.getFromKey("crop");
+			DL::Data renderWidthD	 = top.getFromKey("renderWidth");
+			DL::Data renderHeightD	 = top.getFromKey("renderHeight");
+			DL::Data cropD			 = top.getFromKey("crop");
+			DL::Data spectralDomainD = top.getFromKey("spectral_domain");
 
 			std::shared_ptr<Environment> env;
 			try {
@@ -101,6 +102,23 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 
 			if (renderHeightD.type() == DL::DT_Integer)
 				env->renderSettings().filmHeight = renderHeightD.getInt();
+
+			if (spectralDomainD.type() == DL::DT_Group) {
+				DL::DataGroup specDom = spectralDomainD.getGroup();
+				DL::Data rangeD		  = specDom.getFromKey("range");
+				DL::Data sampleCountD = specDom.getFromKey("sample_count");
+
+				if (rangeD.type() == DL::DT_Group) {
+					DL::DataGroup range = rangeD.getGroup();
+					if (range.anonymousCount() == 2 && range.isAllAnonymousNumber()) {
+						env->renderSettings().spectralStart = std::min(range.at(0).getNumber(), range.at(1).getNumber());
+						env->renderSettings().spectralEnd	= std::max(range.at(0).getNumber(), range.at(1).getNumber());
+					}
+				}
+
+				if (sampleCountD.type() == DL::DT_Integer)
+					env->renderSettings().spectralSampleCount = sampleCountD.getInt();
+			}
 
 			if (cropD.type() == DL::DT_Group) {
 				DL::DataGroup crop = cropD.getGroup();
@@ -881,6 +899,14 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group)
 					params.addParameter(entry.key(), param);
 				} else {
 					PR_LOG(L_ERROR) << "[Loader] Invalid texture parameter" << std::endl;
+				}
+			} else if (grp.id() == "illuminant") {
+				if (grp.anonymousCount() == 1 && grp.at(0).type() == DL::DT_String) {
+					Parameter param = Parameter::fromString(grp.at(0).getString());
+					param.assignFlags(PF_Illuminant);
+					params.addParameter(entry.key(), param);
+				} else {
+					PR_LOG(L_ERROR) << "[Loader] Invalid illuminant parameter" << std::endl;
 				}
 			} else {
 				PR_LOG(L_ERROR) << "[Loader] Invalid parameter group type: " << grp.id() << std::endl;

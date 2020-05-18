@@ -69,8 +69,10 @@ public:
 
 	void sampleDiffusePath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
 	{
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-		out.Weight   = mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
+		float pdf_s;
+		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
+		out.PDF_S	 = pdf_s;
+		out.Weight	 = mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
 		out.Type	 = MST_DiffuseReflection;
 	}
 
@@ -115,11 +117,11 @@ public:
 			out.PDF_S			  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
-		Vector3f H   = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny,
+		Vector3f H	 = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny,
 												 Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi));
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
 		out.Type	 = MST_SpecularReflection;
-		out.Weight   = mSpecularity->eval(in.Point) * out.PDF_S * std::abs(out.Outgoing.dot(in.Point.N));
+		out.Weight	 = mSpecularity->eval(in.Point) * out.PDF_S * std::abs(out.Outgoing.dot(in.Point.N));
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

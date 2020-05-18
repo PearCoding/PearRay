@@ -43,7 +43,7 @@ SpectralUpsampler::~SpectralUpsampler()
 		delete[] mInternal->Data;
 }
 
-static int find_interval(float* values, int size_, float x)
+static int find_interval(const float* values, int size_, float x)
 {
 	int left		  = 0;
 	int last_interval = size_ - 2;
@@ -73,6 +73,9 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 	const uint32 dy		= COEFFS_N * res;
 	const uint32 dz		= COEFFS_N * res * res;
 
+	const float* a_scale = mInternal->Scale;
+	const float* a_data	 = mInternal->Data;
+
 	float coeffs[COEFFS_N];
 	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
@@ -92,51 +95,39 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 		// Bilinearly interpolate
 		uint32 xi  = std::min((uint32)x, res - 2);
 		uint32 yi  = std::min((uint32)y, res - 2);
-		uint32 zi  = find_interval(mInternal->Scale, res, z);
+		uint32 zi  = find_interval(a_scale, res, z);
 		uint32 off = (((largest_entry * res + zi) * res + yi) * res + xi) * COEFFS_N;
 
 		float x1 = x - xi;
 		float x0 = 1.0f - x1;
 		float y1 = y - yi;
 		float y0 = 1.0f - y1;
-		float z1 = (z - mInternal->Scale[zi]) / (mInternal->Scale[zi + 1] - mInternal->Scale[zi]);
+		float z1 = (z - a_scale[zi]) / (a_scale[zi + 1] - a_scale[zi]);
 		float z0 = 1.0f - z1;
 
 		// Lookup
 		PR_UNROLL_LOOP(COEFFS_N)
 		for (int j = 0; j < COEFFS_N; ++j) {
-			coeffs[j] = std::fma(std::fma(std::fma(mInternal->Data[off], x0, mInternal->Data[off + dx] * x1), y0,
-										  std::fma(mInternal->Data[off + dy], x0, mInternal->Data[off + dx + dy] * x1) * y1),
-								 z0,
-								 std::fma(std::fma(mInternal->Data[off + dz], x0, mInternal->Data[off + dx + dz] * x1), y0,
-										  std::fma(mInternal->Data[off + dy + dz], x0, mInternal->Data[off + dx + dy + dz] * x1) * y1)
-									 * z1);
+			coeffs[j] = ((a_data[off] * x0
+						  + a_data[off + dx] * x1)
+							 * y0
+						 + (a_data[off + dy] * x0
+							+ a_data[off + dy + dx] * x1)
+							   * y1)
+							* z0
+						+ ((a_data[off + dz] * x0
+							+ a_data[off + dz + dx] * x1)
+							   * y0
+						   + (a_data[off + dz + dy] * x0
+							  + a_data[off + dz + dy + dx] * x1)
+								 * y1)
+							  * z1;
 			++off;
 		}
 
 		out_a[i] = coeffs[0];
 		out_b[i] = coeffs[1];
 		out_c[i] = coeffs[2];
-	}
-}
-
-void SpectralUpsampler::compute(const float* a, const float* b, const float* c, const float* wavelengths, float* out_weights, size_t elems)
-{
-	PR_OPT_LOOP
-	for (size_t i = 0; i < elems; ++i) {
-		const float x  = std::fma(std::fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
-		const float y  = 1.0f / std::sqrt(std::fma(x, x, 1.0f));
-		out_weights[i] = std::fma(0.5f * x, y, 0.5f);
-	}
-}
-
-void SpectralUpsampler::computeSingle(float a, float b, float c, const float* wavelengths, float* out_weights, size_t elems)
-{
-	PR_OPT_LOOP
-	for (size_t i = 0; i < elems; ++i) {
-		const float x  = std::fma(std::fma(a, wavelengths[i], b), wavelengths[i], c);
-		const float y  = 1.0f / std::sqrt(std::fma(x, x, 1.0f));
-		out_weights[i] = std::fma(0.5f * x, y, 0.5f);
 	}
 }
 } // namespace PR

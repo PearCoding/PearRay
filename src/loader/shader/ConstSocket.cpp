@@ -36,12 +36,6 @@ SpectralBlob ConstSpectralShadingSocket::eval(const ShadingPoint& ctx) const
 	return SpectralUpsampler::compute(mValue, ctx.Ray.WavelengthNM);
 }
 
-float ConstSpectralShadingSocket::relativeLuminance(const ShadingPoint&) const
-{
-	// TODO?
-	return mValue(0);
-}
-
 Vector2i ConstSpectralShadingSocket::queryRecommendedSize() const
 {
 	return Vector2i(1, 1);
@@ -65,12 +59,6 @@ ConstSpectralMapSocket::ConstSpectralMapSocket(const ParametricBlob& f)
 SpectralBlob ConstSpectralMapSocket::eval(const MapSocketCoord& ctx) const
 {
 	return SpectralUpsampler::compute(mValue, ctx.WavelengthNM);
-}
-
-float ConstSpectralMapSocket::relativeLuminance(const MapSocketCoord&) const
-{
-	// TODO
-	return mValue(0);
 }
 
 Vector2i ConstSpectralMapSocket::queryRecommendedSize() const

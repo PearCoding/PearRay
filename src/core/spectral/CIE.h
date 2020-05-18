@@ -29,9 +29,8 @@ public:
 
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k) {
-			const float f = (std::max(PR_CIE_WAVELENGTH_START, wavelength[k]) - PR_CIE_WAVELENGTH_START) / PR_CIE_WAVELENGTH_DELTA;
-
-			const int index = std::max(0, std::min<int>(PR_CIE_SAMPLE_COUNT - 2, f));
+			const float f	= std::max(0.0f, (wavelength[k] - PR_CIE_WAVELENGTH_START) / PR_CIE_WAVELENGTH_DELTA);
+			const int index = std::min<int>(PR_CIE_SAMPLE_COUNT - 2, f);
 			const float t	= f - index;
 
 			xyz[0] += weight[k] * (NM_TO_X[index] * (1 - t) + NM_TO_X[index + 1] * t);
@@ -39,7 +38,7 @@ public:
 			xyz[2] += weight[k] * (NM_TO_Z[index] * (1 - t) + NM_TO_Z[index + 1] * t);
 		}
 
-		xyz *= PR_CIE_NORM;
+		//xyz *= PR_CIE_NORM;
 	}
 
 private:

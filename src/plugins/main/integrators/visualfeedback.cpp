@@ -182,7 +182,7 @@ public:
 					grp.material()->eval(eval_in, eval_out, session);
 
 					const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
-					const float relPDFDiff = std::abs(samp_out.PDF_S - eval_out.PDF_S);
+					const float relPDFDiff = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum();
 
 					radiance = SpectralBlob{ 1 - weightDiff, 1 - relPDFDiff, 1, 1 };
 				}

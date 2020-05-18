@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "DefaultSRGB.h"
 #include "serialization/FileSerializer.h"
 #include "spectral/SpectralUpsampler.h"
 
@@ -78,13 +79,8 @@ bool ProgramSettings::parse(int argc, char** argv)
 		return false;
 	}
 
-	if (!vm.count("lookup")) {
-		std::cout << "No lookup file given!" << std::endl;
-		return false;
-	}
-
-	LookupFile = vm["lookup"].as<std::string>();
-	if (!bf::exists(LookupFile)) {
+	LookupFile = vm.count("lookup") ? vm["lookup"].as<std::string>() : std::string();
+	if (!LookupFile.empty() && !bf::exists(LookupFile)) {
 		std::cout << "Couldn't find file '" << LookupFile << "'" << std::endl;
 		return false;
 	}
@@ -169,12 +165,17 @@ int main(int argc, char** argv)
 	out_data.resize(in_data.size());
 
 	try {
-		PR::FileSerializer serializer;
-		if (serializer.open(options.LookupFile.generic_wstring(), true)) {
-			std::cerr << "Error: Could not open " << options.LookupFile << std::endl;
-			return EXIT_FAILURE;
+		std::shared_ptr<PR::SpectralUpsampler> upsampler;
+		if (options.LookupFile.empty()) {
+			upsampler = PR::DefaultSRGB::loadSpectralUpsampler();
+		} else {
+			PR::FileSerializer serializer;
+			if (serializer.open(options.LookupFile.generic_wstring(), true)) {
+				std::cerr << "Error: Could not open " << options.LookupFile << std::endl;
+				return EXIT_FAILURE;
+			}
+			upsampler = std::make_shared<PR::SpectralUpsampler>(serializer);
 		}
-		PR::SpectralUpsampler upsampler(serializer);
 
 		std::vector<float> r_buffer(width);
 		std::vector<float> g_buffer(width);
@@ -195,7 +196,7 @@ int main(int argc, char** argv)
 				b_buffer[j] = in[j * 3 + 2];
 			}
 
-			upsampler.prepare(&r_buffer[0], &g_buffer[0], &b_buffer[0], &oa_buffer[0], &ob_buffer[0], &oc_buffer[0], width);
+			upsampler->prepare(&r_buffer[0], &g_buffer[0], &b_buffer[0], &oa_buffer[0], &ob_buffer[0], &oc_buffer[0], width);
 
 			PR_OPT_LOOP
 			for (int j = 0; j < width; ++j) {

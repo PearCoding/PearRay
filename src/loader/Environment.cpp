@@ -25,6 +25,7 @@
 #include "sampler/SamplerManager.h"
 #include "scene/Scene.h"
 #include "shader/ConstSocket.h"
+#include "shader/IlluminantSocket.h"
 #include "shader/MapShadingSocket.h"
 
 #include "DefaultSRGB.h"
@@ -56,7 +57,7 @@ Environment::Environment(const std::wstring& workdir,
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
-	mTextureSystem = OIIO::TextureSystem::create();
+	mTextureSystem			  = OIIO::TextureSystem::create();
 	mDefaultSpectralUpsampler = DefaultSRGB::loadSpectralUpsampler();
 
 	if (useStandardLib) {
@@ -373,6 +374,11 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 				if (socket)
 					return std::make_shared<MapShadingSocket>(socket);
 			}
+		} else if (parameter.flags() & PF_Illuminant) {
+			std::string tname = parameter.getString("");
+
+			if (tname == "D65")
+				return std::make_shared<MapShadingSocket>(std::make_shared<D65Illuminant>(1.0f));
 		} else {
 			std::string sname = parameter.getString("");
 
@@ -445,6 +451,11 @@ std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
 				if (socket)
 					return socket;
 			}
+		} else if (parameter.flags() & PF_Illuminant) {
+			std::string tname = parameter.getString("");
+
+			if (tname == "D65")
+				return std::make_shared<D65Illuminant>(1.0f);
 		} else {
 			std::string sname = parameter.getString("");
 

@@ -14,7 +14,7 @@ struct PR_LIB_CORE MaterialEvalInput {
 
 struct PR_LIB_CORE MaterialEvalOutput {
 	SpectralBlob Weight;
-	float PDF_S;
+	SpectralBlob PDF_S;
 	MaterialScatteringType Type;
 };
 
@@ -27,7 +27,7 @@ struct PR_LIB_CORE MaterialSampleInput {
 struct PR_LIB_CORE MaterialSampleOutput {
 	Vector3f Outgoing;
 	SpectralBlob Weight;
-	float PDF_S;
+	SpectralBlob PDF_S;
 	MaterialScatteringType Type;
 };
 } // namespace PR

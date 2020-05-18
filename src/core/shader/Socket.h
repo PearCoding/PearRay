@@ -30,7 +30,6 @@ public:
 	virtual ~SpectralSocket() = default;
 
 	virtual SpectralBlobBase<T> eval(const M& ctx) const = 0;
-	virtual T relativeLuminance(const M& ctx) const		 = 0;
 	virtual Vector2i queryRecommendedSize() const		 = 0;
 	virtual std::string dumpInformation() const			 = 0;
 };

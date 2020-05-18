@@ -20,22 +20,22 @@ constexpr size_t WIDTH		 = 200;
 constexpr size_t HEIGHT		 = 200;
 
 constexpr float THETA_D = PR_PI / WIDTH;
-constexpr float PHI_D   = 2 * PR_PI / HEIGHT;
+constexpr float PHI_D	= 2 * PR_PI / HEIGHT;
 
 static ShadingPoint standardSP(const Vector3f& V = Vector3f(0, 0, -1))
 {
 	ShadingPoint spt;
-	spt.Geometry.N	= Vector3f(0, 0, 1);
-	spt.Geometry.Nx   = Vector3f(1, 0, 0);
-	spt.Geometry.Ny   = Vector3f(0, 1, 0);
-	spt.Geometry.P	= Vector3f(0, 0, 0);
+	spt.Geometry.N	  = Vector3f(0, 0, 1);
+	spt.Geometry.Nx	  = Vector3f(1, 0, 0);
+	spt.Geometry.Ny	  = Vector3f(0, 1, 0);
+	spt.Geometry.P	  = Vector3f(0, 0, 0);
 	spt.Geometry.UVW  = Vector3f(0.5f, 0.5f, 0);
 	spt.N			  = spt.Geometry.N;
 	spt.Nx			  = spt.Geometry.Nx;
 	spt.Ny			  = spt.Geometry.Ny;
 	spt.P			  = spt.Geometry.P;
 	spt.Ray.Direction = V.normalized();
-	spt.Ray.Origin	= Vector3f(0, 0, 1);
+	spt.Ray.Origin	  = Vector3f(0, 0, 1);
 	spt.NdotV		  = spt.Ray.Direction.dot(spt.N);
 	spt.Depth2		  = 1;
 	return spt;
@@ -47,12 +47,12 @@ static void handle_material_eval_case(const std::string& name,
 	ShadingPoint spt = standardSP();
 
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
-	std::vector<float> pdf(WIDTH * HEIGHT);
+	std::vector<float> pdf(WIDTH * HEIGHT * 3);
 	float sum = 0.0f;
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
 			float theta = THETA_D * x - 0.5f * PR_PI;
-			float phi   = PHI_D * y;
+			float phi	= PHI_D * y;
 
 			const Vector3f L = Spherical::cartesian(theta, phi);
 
@@ -63,7 +63,9 @@ static void handle_material_eval_case(const std::string& name,
 			MaterialEvalOutput out;
 			material->eval(in, out, RenderTileSession());
 
-			pdf[y * WIDTH + x]			   = out.PDF_S;
+			pdf[y * WIDTH * 3 + x * 3 + 0] = out.PDF_S[0];
+			pdf[y * WIDTH * 3 + x * 3 + 1] = out.PDF_S[1];
+			pdf[y * WIDTH * 3 + x * 3 + 2] = out.PDF_S[2];
 			rgb[y * WIDTH * 3 + x * 3 + 0] = out.Weight[0];
 			rgb[y * WIDTH * 3 + x * 3 + 1] = out.Weight[1];
 			rgb[y * WIDTH * 3 + x * 3 + 2] = out.Weight[2];
@@ -77,7 +79,7 @@ static void handle_material_eval_case(const std::string& name,
 		std::cout << "WARNING: Not energy conserving!" << std::endl;
 
 	save_image(DIR + name + ".exr", WIDTH, HEIGHT, rgb);
-	save_gray(DIR + name + "_pdf.exr", WIDTH, HEIGHT, pdf);
+	save_image(DIR + name + "_pdf.exr", WIDTH, HEIGHT, pdf);
 }
 
 static void handle_material_sample_case(const std::string& name,
@@ -86,17 +88,19 @@ static void handle_material_sample_case(const std::string& name,
 	ShadingPoint spt = standardSP();
 
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
-	std::vector<float> pdf(WIDTH * HEIGHT);
+	std::vector<float> pdf(WIDTH * HEIGHT * 3);
 	std::vector<float> dir(WIDTH * HEIGHT);
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
 			MaterialSampleInput in;
 			in.Point = spt;
-			in.RND   = Vector2f(x / (float)WIDTH, y / (float)HEIGHT);
+			in.RND	 = Vector2f(x / (float)WIDTH, y / (float)HEIGHT);
 			MaterialSampleOutput out;
 			material->sample(in, out, RenderTileSession());
 
-			pdf[y * WIDTH + x]			   = out.PDF_S;
+			pdf[y * WIDTH * 3 + x * 3 + 0] = out.PDF_S[0];
+			pdf[y * WIDTH * 3 + x * 3 + 1] = out.PDF_S[1];
+			pdf[y * WIDTH * 3 + x * 3 + 2] = out.PDF_S[2];
 			rgb[y * WIDTH * 3 + x * 3 + 0] = out.Weight[0];
 			rgb[y * WIDTH * 3 + x * 3 + 1] = out.Weight[1];
 			rgb[y * WIDTH * 3 + x * 3 + 2] = out.Weight[2];
@@ -113,7 +117,7 @@ static void handle_material_sample_case(const std::string& name,
 	}
 
 	save_image(DIR + name + ".exr", WIDTH, HEIGHT, rgb);
-	save_gray(DIR + name + "_pdf.exr", WIDTH, HEIGHT, pdf);
+	save_image(DIR + name + "_pdf.exr", WIDTH, HEIGHT, pdf);
 	save_normalized_gray(DIR + name + "_dir.exr", WIDTH, HEIGHT, dir);
 }
 

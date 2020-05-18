@@ -10,15 +10,35 @@ inline float balance_term(uint32 n1, float pdf1, uint32 n2, float pdf2)
 	return n1 * pdf1 / (n1 * pdf1 + n2 * pdf2);
 }
 
+template <typename Derived1, typename Derived2>
+inline float balance_term(uint32 n1, const Eigen::ArrayBase<Derived1>& pdf1, uint32 n2, const Eigen::ArrayBase<Derived2>& pdf2)
+{
+	return n1 * pdf1 / (n1 * pdf1 + n2 * pdf2);
+}
+
 inline float power_term(uint32 n1, float pdf1, uint32 n2, float pdf2)
 {
 	const float t1 = n1 * pdf1, t2 = n2 * pdf2;
 	return (t1 * t1) / (t1 * t1 + t2 * t2);
 }
 
+template <typename Derived1, typename Derived2>
+inline float power_term(uint32 n1, const Eigen::ArrayBase<Derived1>& pdf1, uint32 n2, const Eigen::ArrayBase<Derived2>& pdf2)
+{
+	const auto t1 = n1 * pdf1, t2 = n2 * pdf2;
+	return (t1.squared()) / (t1.squared() + t2.squared());
+}
+
 inline float power_term(uint32 n1, float pdf1, uint32 n2, float pdf2, float beta)
 {
 	const float t1 = std::pow(n1 * pdf1, beta), t2 = std::pow(n2 * pdf2, beta);
+	return (t1) / (t1 + t2);
+}
+
+template <typename Derived1, typename Derived2>
+inline float power_term(uint32 n1, const Eigen::ArrayBase<Derived1>& pdf1, uint32 n2, const Eigen::ArrayBase<Derived2>& pdf2, float beta)
+{
+	const auto t1 = std::pow(n1 * pdf1, beta), t2 = std::pow(n2 * pdf2, beta);
 	return (t1) / (t1 + t2);
 }
 

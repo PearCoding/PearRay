@@ -3,7 +3,7 @@
 	:renderWidth 1000
 	:renderHeight 1000
 	:camera 'Camera'
-	:spectrum 'srgb'
+	:spectral_domain [:range [400 750], :sample_count 4]
 	; Settings
 	(integrator
 		:type 'DIRECT'
@@ -61,19 +61,10 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-2.5,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Background
-	(spectrum
-		:name 'background_color'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
-	(spectrum
-		:name 'background_radiance'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
 	(light
 		:name 'background'
 		:type 'env'
-		:radiance 'background_radiance'
-		:background 'background_color'
+		:radiance (illuminant "D65")
 		:factor 1.000000
 	)
 	; Lights

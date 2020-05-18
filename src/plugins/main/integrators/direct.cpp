@@ -88,8 +88,9 @@ public:
 					material->eval(in, out, session);
 					token = LightPathToken(out.Type);
 
-					msiL = allowMSI ? MSI(1, outL.PDF_S, 1, out.PDF_S) : 1.0f;
-					LiL	 = outL.Weight * out.Weight / outL.PDF_S;
+					const float sum_pdfs = out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
+					msiL				 = allowMSI ? MSI(1, outL.PDF_S, 1, sum_pdfs) : 1.0f;
+					LiL					 = outL.Weight * out.Weight / outL.PDF_S;
 				}
 			}
 		}
@@ -106,7 +107,9 @@ public:
 			material->sample(inS, outS, session);
 			token = LightPathToken(outS.Type);
 
-			if (outS.PDF_S > PR_EPSILON
+			const float sum_pdfs = outS.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
+
+			if (outS.PDF_S[0] > PR_EPSILON
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
@@ -118,7 +121,7 @@ public:
 					InfiniteLightEvalOutput outL;
 					infLight->eval(inL, outL, session);
 
-					msiS = MSI(1, outL.PDF_S, 1, outS.PDF_S);
+					msiS = MSI(1, outL.PDF_S, 1, sum_pdfs);
 					LiS	 = outL.Weight * outS.Weight / outS.PDF_S;
 				}
 			}
@@ -157,7 +160,7 @@ public:
 			out.PDF_S = 1;
 
 		//const float NdotL = out.Outgoing.dot(spt.N);
-		if (out.PDF_S > PR_EPSILON
+		if (out.PDF_S[0] > PR_EPSILON
 			&& spt.Ray.IterationDepth + 1 < mMaxRayDepth
 			&& session.tile()->random().getFloat() <= scatProb) {
 			Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
@@ -253,9 +256,10 @@ public:
 					MaterialEvalOutput out;
 					material->eval(in, out, session);
 
-					const float pdfS = IS::toSolidAngle(pdfA, sqrD, cosO);
-					msiL			 = mMSIEnabled ? MSI(1, pdfS, 1, out.PDF_S) : 1.0f;
-					LiL				 = outL.Weight * out.Weight / pdfA;
+					const float pdfS	 = IS::toSolidAngle(pdfA, sqrD, cosO);
+					const float sum_pdfs = out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
+					msiL				 = mMSIEnabled ? MSI(1, pdfS, 1, sum_pdfs) : 1.0f;
+					LiL					 = outL.Weight * out.Weight / pdfA;
 				}
 			}
 		}
@@ -272,9 +276,7 @@ public:
 			material->sample(inS, outS, session);
 			token = LightPathToken(outS.Type);
 
-			if (outS.PDF_S > PR_EPSILON
-				&& !outS.Weight.isZero()) {
-
+			if (!outS.Weight.isZero()) {
 				// Trace shadow ray
 				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 				ShadowHit shadowHit = session.traceShadowRay(shadow);
@@ -298,8 +300,10 @@ public:
 							1 / light->surfaceArea(),
 							(shadow.Origin - nlightPt.P).squaredNorm(),
 							std::abs(shadow.Direction.dot(nlightPt.N)));
-						msiS = MSI(1, pdfS, 1, outS.PDF_S);
-						LiS	 = outL.Weight * outS.Weight / outS.PDF_S;
+
+						const float sum_pdfs = outS.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
+						msiS				 = MSI(1, pdfS, 1, sum_pdfs);
+						LiS					 = outL.Weight * outS.Weight / outS.PDF_S;
 					}
 				}
 			}

@@ -18,7 +18,6 @@ class PR_LIB_LOADER ConstSpectralShadingSocket : public FloatSpectralShadingSock
 public:
 	explicit ConstSpectralShadingSocket(const ParametricBlob& f);
 	SpectralBlob eval(const ShadingPoint& ctx) const override;
-	float relativeLuminance(const ShadingPoint& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
@@ -30,7 +29,6 @@ class PR_LIB_LOADER ConstSpectralMapSocket : public FloatSpectralMapSocket {
 public:
 	explicit ConstSpectralMapSocket(const ParametricBlob& f);
 	SpectralBlob eval(const MapSocketCoord& ctx) const override;
-	float relativeLuminance(const MapSocketCoord& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 

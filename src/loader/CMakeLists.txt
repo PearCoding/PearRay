@@ -64,6 +64,8 @@ set(PR_Src
   sampler/SamplerManager.h
   shader/ConstSocket.cpp
   shader/ConstSocket.h
+  shader/IlluminantSocket.cpp
+  shader/IlluminantSocket.h
   shader/ImageMapSocket.cpp
   shader/ImageMapSocket.h
   shader/MapShadingSocket.cpp

@@ -65,8 +65,7 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	mTimeAlpha *= f;
 	mTimeBeta *= f;
 
-	// Does not include spectral contribution
-	mWeight_Cache = 1.0f / (mTimeSampleCount * mLensSampleCount * mAASampleCount);
+	mWeight_Cache = 1.0f / (mTimeSampleCount * mLensSampleCount * mAASampleCount * mSpectralSampleCount);
 }
 
 RenderTile::~RenderTile()
@@ -104,11 +103,10 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	cameraSample.Weight		= mWeight_Cache;
 
 	// Sample wavelength
-	float start					 = mRandom.getFloat() * mSpectralSpan + mSpectralStart;
-	cameraSample.WavelengthNM(0) = start; // Hero wavelength
-	PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
+	float start					 = mRandom.getFloat() * mSpectralSpan; // Wavelength inside the span
+	cameraSample.WavelengthNM(0) = start + mSpectralStart;			   // Hero wavelength
 	for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-		cameraSample.WavelengthNM(i) = start + std::fmod(i * mSpectralDelta, mSpectralSpan);
+		cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
 
 	return mCamera->constructRay(cameraSample);
 }

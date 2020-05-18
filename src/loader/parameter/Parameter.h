@@ -5,8 +5,9 @@
 
 namespace PR {
 enum ParameterFlags {
-	PF_Node	= 0x1,
-	PF_Texture = 0x2
+	PF_Node		  = 0x1,
+	PF_Texture	  = 0x2,
+	PF_Illuminant = 0x4
 };
 enum ParameterType : uint8 {
 	PT_Invalid = 0,

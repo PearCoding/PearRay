@@ -114,12 +114,12 @@ public:
 	{
 		// This is fixed by definition
 		static float F0 = 0.04f; // IOR 1.5
-		static float R  = 0.25f;
+		static float R	= 0.25f;
 
-		float D  = Microfacet::ndf_ggx(NdotH, mix(0.1f, 0.001f, gloss));
+		float D	 = Microfacet::ndf_ggx(NdotH, mix(0.1f, 0.001f, gloss));
 		float hk = Fresnel::schlick_term(HdotL);
-		float F  = mix(F0, 1.0f, hk);
-		float G  = Microfacet::g_1_smith(NdotL, R) * Microfacet::g_1_smith(-point.NdotV, R);
+		float F	 = mix(F0, 1.0f, hk);
+		float G	 = Microfacet::g_1_smith(NdotL, R) * Microfacet::g_1_smith(-point.NdotV, R);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return R * D * F * G;
@@ -172,7 +172,7 @@ public:
 											 VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
 											 roughness, anisotropic);
 		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH) : 0.0f;
-		SpectralBlob shTerm   = sheenTerm(sheen * csheen, HdotL);
+		SpectralBlob shTerm	  = sheenTerm(sheen * csheen, HdotL);
 
 		return (PR_1_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
 			   + specTerm
@@ -184,10 +184,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		SpectralBlob base	= mBaseColor->eval(in.Point);
-		float lum			 = mBaseColor->relativeLuminance(in.Point);
+		SpectralBlob base	 = mBaseColor->eval(in.Point);
+		float lum			 = base.maxCoeff();
 		float subsurface	 = mSubsurface->eval(in.Point);
-		float anisotropic	= mAnisotropic->eval(in.Point);
+		float anisotropic	 = mAnisotropic->eval(in.Point);
 		float roughness		 = std::max(0.01f, mRoughness->eval(in.Point));
 		float metallic		 = mMetallic->eval(in.Point);
 		float spec			 = mSpecular->eval(in.Point);
@@ -205,7 +205,7 @@ public:
 		float aspect = std::sqrt(1 - anisotropic * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	= Microfacet::pdf_ggx(in.NdotL, ax, ay); // Use NdotH instead of NdotL!
+		out.PDF_S	 = Microfacet::pdf_ggx(in.NdotL, ax, ay); // Use NdotH instead of NdotL!
 
 		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -219,9 +219,12 @@ public:
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		Vector3f nV  = Tangent::toTangentSpace<float>(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
-		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, out.PDF_S);
-		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, out.PDF_S);
+		Vector3f nV = Tangent::toTangentSpace<float>(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
+
+		float pdf_s;
+		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, pdf_s);
+		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
+		out.PDF_S = pdf_s;
 
 		const float refInvPdf = 2 * std::max(0.0f, out.Outgoing.dot(nV));
 		if (refInvPdf > PR_EPSILON)
@@ -246,10 +249,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		SpectralBlob base	= mBaseColor->eval(in.Point);
-		float lum			 = mBaseColor->relativeLuminance(in.Point);
+		SpectralBlob base	 = mBaseColor->eval(in.Point);
+		float lum			 = base.maxCoeff();
 		float subsurface	 = mSubsurface->eval(in.Point);
-		float anisotropic	= mAnisotropic->eval(in.Point);
+		float anisotropic	 = mAnisotropic->eval(in.Point);
 		float roughness		 = mRoughness->eval(in.Point);
 		float metallic		 = mMetallic->eval(in.Point);
 		float spec			 = mSpecular->eval(in.Point);

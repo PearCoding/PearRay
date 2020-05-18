@@ -17,14 +17,32 @@ public:
 	~SpectralUpsampler();
 
 	void prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems);
-	static void compute(const float* a, const float* b, const float* c, const float* wavelengths, float* out_weights, size_t elems);
-	static void computeSingle(float a, float b, float c, const float* wavelengths, float* out_weights, size_t elems);
+
+	inline static void compute(const float* a, const float* b, const float* c, const float* wavelengths, float* out_weights, size_t elems)
+	{
+		PR_OPT_LOOP
+		for (size_t i = 0; i < elems; ++i) {
+			const float x  = std::fma(std::fma(a[i], wavelengths[i], b[i]), wavelengths[i], c[i]);
+			const float y  = 1.0f / std::sqrt(std::fma(x, x, 1.0f));
+			out_weights[i] = std::fma(0.5f * x, y, 0.5f);
+		}
+	}
+
+	inline static void computeSingle(float a, float b, float c, const float* wavelengths, float* out_weights, size_t elems)
+	{
+		PR_OPT_LOOP
+		for (size_t i = 0; i < elems; ++i) {
+			const float x  = std::fma(std::fma(a, wavelengths[i], b), wavelengths[i], c);
+			const float y  = 1.0f / std::sqrt(std::fma(x, x, 1.0f));
+			out_weights[i] = std::fma(0.5f * x, y, 0.5f);
+		}
+	}
 
 	inline static SpectralBlob compute(const ParametricBlob& p, const SpectralBlob& in)
 	{
-		SpectralBlob blob;
-		computeSingle(p(0), p(1), p(2), in.data(), blob.data(), PR_SPECTRAL_BLOB_SIZE);
-		return blob;
+		const SpectralBlob x = (p(0) * in + p(1)) * in + p(2);
+		const SpectralBlob y = (x.square() + 1.0f).rsqrt();
+		return (0.5f * x * y + 0.5f);
 	}
 
 private:

@@ -103,26 +103,30 @@ public:
 	{
 	}
 
-	float fresnelTerm(const ShadingPoint& point) const
+	SpectralBlob fresnelTerm(const ShadingPoint& point) const
 	{
 		// TODO: Add branching!
-		const float ior = mIOR->eval(point).maxCoeff();
+		const SpectralBlob ior = mIOR->eval(point);
+		SpectralBlob out;
 
 		switch (mFresnelMode) {
 		default:
 		case FM_Dielectric: {
-			float n1 = 1;
-			float n2 = ior;
+			SpectralBlob n1 = SpectralBlob::Ones();
+			SpectralBlob n2 = ior;
 			if (point.Flags & SPF_Inside)
 				std::swap(n1, n2);
-			return Fresnel::dielectric(-point.NdotV, n1, n2);
-		}
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				out[i] = Fresnel::dielectric(-point.NdotV, n1(i), n2(i));
+		} break;
 		case FM_Conductor: {
-			float a = mConductorAbsorption->eval(point);
+			const float a = mConductorAbsorption->eval(point);
 
-			return Fresnel::conductor(-point.NdotV, ior, a);
-		};
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				out[i] = Fresnel::conductor(-point.NdotV, ior(i), a);
+		} break;
 		}
+		return out;
 	}
 
 	float evalSpec(const ShadingPoint& point, const Vector3f& L, float NdotL, float& pdf) const
@@ -197,16 +201,17 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		float F = fresnelTerm(in.Point);
+		SpectralBlob F = fresnelTerm(in.Point);
 
 		SpectralBlob Diff = SpectralBlob::Zero();
-		if (mFresnelMode != FM_Conductor && F < 1) {
-			Diff = PR_1_PI * mAlbedo->eval(in.Point);
-		}
+		if (mFresnelMode != FM_Conductor)
+			Diff = (F < 1).select(PR_1_PI * mAlbedo->eval(in.Point), 0.0f);
 
 		SpectralBlob Spec = SpectralBlob::Zero();
-		if (F > PR_EPSILON && -in.NdotL * in.Point.NdotV > PR_EPSILON) {
-			Spec = mSpecularity->eval(in.Point) * evalSpec(in.Point, in.Outgoing, in.NdotL, out.PDF_S);
+		if (-in.NdotL * in.Point.NdotV > PR_EPSILON) {
+			float pdf_s;
+			Spec	  = mSpecularity->eval(in.Point) * evalSpec(in.Point, in.Outgoing, in.NdotL, pdf_s);
+			out.PDF_S = SpectralBlob(pdf_s);
 		}
 
 		out.PDF_S  = PR_1_PI * (1 - F) + out.PDF_S * F;
@@ -217,9 +222,11 @@ public:
 
 	void sampleDiffusePath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out) const
 	{
-		out.Outgoing = Projection::cos_hemi(u, v, out.PDF_S);
+		float pdf_s;
+		out.Outgoing = Projection::cos_hemi(u, v, pdf_s);
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
-		out.Weight   = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
+		out.PDF_S	 = SpectralBlob(pdf_s);
+		out.Weight	 = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
 		out.Type	 = MST_DiffuseReflection;
 	}
 
@@ -228,35 +235,37 @@ public:
 		float m1 = mRoughnessX->eval(in.Point);
 		m1 *= m1;
 
+		float pdf_s;
 		Vector3f O;
 		switch (mDistributionMode) {
 		case DM_Blinn:
-			O = Microfacet::sample_ndf_blinn(u, v, m1, out.PDF_S);
+			O = Microfacet::sample_ndf_blinn(u, v, m1, pdf_s);
 			break;
 		default:
 		case DM_Beckmann:
-			O = Microfacet::sample_ndf_beckmann(u, v, m1, out.PDF_S);
+			O = Microfacet::sample_ndf_beckmann(u, v, m1, pdf_s);
 			break;
 		case DM_GGX:
 			if (mRoughnessX == mRoughnessY) {
-				O = Microfacet::sample_ndf_ggx(u, v, m1, out.PDF_S);
+				O = Microfacet::sample_ndf_ggx(u, v, m1, pdf_s);
 			} else {
 				float m2 = mRoughnessY->eval(in.Point);
 				m2 *= m2;
-				O = Microfacet::sample_ndf_ggx(u, v, m1, m2, out.PDF_S);
+				O = Microfacet::sample_ndf_ggx(u, v, m1, m2, pdf_s);
 			}
 			break;
 		}
 
-		Vector3f H   = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, O);
+		Vector3f H	 = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, O);
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
-		float NdotL  = std::abs(in.Point.N.dot(out.Outgoing));
+		float NdotL	 = std::abs(in.Point.N.dot(out.Outgoing));
 		if (NdotL > PR_EPSILON)
-			out.PDF_S = std::min(std::max(out.PDF_S / (-4 * NdotL * in.Point.NdotV), 0.0f), 1.0f);
+			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Point.NdotV), 0.0f), 1.0f);
 		else
-			out.PDF_S = 0;
+			pdf_s = 0;
 
-		out.Type = MST_SpecularReflection;
+		out.Type  = MST_SpecularReflection;
+		out.PDF_S = SpectralBlob(pdf_s);
 
 		float _ignore;
 		out.Weight = mSpecularity->eval(in.Point) * evalSpec(in.Point, out.Outgoing, NdotL, _ignore) * NdotL;
@@ -267,19 +276,20 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		float F = fresnelTerm(in.Point);
+		SpectralBlob F	 = fresnelTerm(in.Point);
+		float decision_f = F[0];
 
-		if (in.RND[0] <= F) {
-			sampleSpecularPath(in, in.RND[0] / F, in.RND[1], out);
-			out.PDF_S *= F;
+		if (in.RND[0] <= decision_f) {
+			sampleSpecularPath(in, in.RND[0] / decision_f, in.RND[1], out);
+			out.PDF_S *= decision_f;
 			out.Type = MST_SpecularReflection;
 		} else if (mFresnelMode == FM_Conductor) {
 			// Absorb
 			out.Weight = 0.0f;
 			out.PDF_S  = 0.0f;
 		} else {
-			sampleDiffusePath(in, (in.RND[0] - F) / (1 - F), in.RND[1], out);
-			out.PDF_S *= 1.0f - F;
+			sampleDiffusePath(in, (in.RND[0] - decision_f) / (1 - decision_f), in.RND[1], out);
+			out.PDF_S *= 1.0f - decision_f;
 			out.Type = MST_DiffuseReflection;
 		}
 
