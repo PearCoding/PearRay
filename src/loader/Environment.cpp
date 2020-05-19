@@ -226,119 +226,14 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 
 	std::shared_ptr<RenderFactory> fct = std::make_shared<RenderFactory>(scene);
 
-	setupDefaultSampler();
-	if (!mRenderSettings.aaSamplerFactory || !mRenderSettings.lensSamplerFactory || !mRenderSettings.timeSamplerFactory)
+	if (!mSamplerManager->createDefaultsIfNecessary(this))
 		return nullptr;
 
-	setupDefaultFilter();
-	if (!mRenderSettings.pixelFilterFactory)
+	if (!mFilterManager->createDefaultsIfNecessary(this))
 		return nullptr;
 
 	fct->settings() = mRenderSettings;
 	return fct;
-}
-
-void Environment::setupDefaultSampler()
-{
-	constexpr uint64 DEF_AA_SC	 = 128;
-	constexpr uint64 DEF_LENS_SC = 1;
-	constexpr uint64 DEF_TIME_SC = 1;
-
-	if (!mRenderSettings.aaSamplerFactory) {
-		PR_LOG(L_WARNING) << "No AA sampler selected. Using sobol sampler" << std::endl;
-		auto plugin = mSamplerManager->getFactory("sobol");
-		if (!plugin) {
-			PR_LOG(L_ERROR) << "No sobol sampler found" << std::endl;
-			return;
-		}
-
-		ParameterGroup params;
-		params.addParameter("sample_count", Parameter::fromUInt(DEF_AA_SC));
-
-		SceneLoadContext ctx;
-		ctx.Env		   = this;
-		ctx.Parameters = params;
-
-		mRenderSettings.aaSamplerFactory = plugin->create(mSamplerManager->nextID(), ctx);
-		mSamplerManager->addObject(mRenderSettings.aaSamplerFactory);
-		if (!mRenderSettings.aaSamplerFactory) {
-			PR_LOG(L_ERROR) << "Could not create sobol sampler" << std::endl;
-			return;
-		}
-	}
-
-	if (!mRenderSettings.lensSamplerFactory) {
-		PR_LOG(L_WARNING) << "No lens sampler selected. Using sobol sampler" << std::endl;
-		auto plugin = mSamplerManager->getFactory("sobol");
-		if (!plugin) {
-			PR_LOG(L_ERROR) << "No sobol sampler found" << std::endl;
-			return;
-		}
-
-		ParameterGroup params;
-		params.addParameter("sample_count", Parameter::fromUInt(DEF_TIME_SC));
-
-		SceneLoadContext ctx;
-		ctx.Env		   = this;
-		ctx.Parameters = params;
-
-		mRenderSettings.lensSamplerFactory = plugin->create(mSamplerManager->nextID(), ctx);
-		mSamplerManager->addObject(mRenderSettings.lensSamplerFactory);
-		if (!mRenderSettings.lensSamplerFactory) {
-			PR_LOG(L_ERROR) << "Could not create sobol sampler" << std::endl;
-			return;
-		}
-	}
-
-	if (!mRenderSettings.timeSamplerFactory) {
-		PR_LOG(L_WARNING) << "No time sampler selected. Using sobol sampler" << std::endl;
-		auto plugin = mSamplerManager->getFactory("sobol");
-		if (!plugin) {
-			PR_LOG(L_ERROR) << "No sobol sampler found" << std::endl;
-			return;
-		}
-
-		ParameterGroup params;
-		params.addParameter("sample_count", Parameter::fromUInt(DEF_LENS_SC));
-
-		SceneLoadContext ctx;
-		ctx.Env		   = this;
-		ctx.Parameters = params;
-
-		mRenderSettings.timeSamplerFactory = plugin->create(mSamplerManager->nextID(), ctx);
-		mSamplerManager->addObject(mRenderSettings.timeSamplerFactory);
-		if (!mRenderSettings.timeSamplerFactory) {
-			PR_LOG(L_ERROR) << "Could not create sobol sampler" << std::endl;
-			return;
-		}
-	}
-}
-
-void Environment::setupDefaultFilter()
-{
-	constexpr int DEF_R = 1;
-	if (!mRenderSettings.pixelFilterFactory) {
-		PR_LOG(L_WARNING) << "No pixel filter selected. Creating mitchell filter" << std::endl;
-		auto plugin = mFilterManager->getFactory("mitchell");
-		if (!plugin) {
-			PR_LOG(L_ERROR) << "No mitchell filter found" << std::endl;
-			return;
-		}
-
-		ParameterGroup params;
-		params.addParameter("radius", Parameter::fromInt(DEF_R));
-
-		SceneLoadContext ctx;
-		ctx.Env		   = this;
-		ctx.Parameters = params;
-
-		mRenderSettings.pixelFilterFactory = plugin->create(mFilterManager->nextID(), ctx);
-		mFilterManager->addObject(mRenderSettings.pixelFilterFactory);
-		if (!mRenderSettings.pixelFilterFactory) {
-			PR_LOG(L_ERROR) << "Could not create mitchell filter" << std::endl;
-			return;
-		}
-	}
 }
 
 /* Allows input of:

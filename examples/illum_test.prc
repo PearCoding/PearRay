@@ -3,7 +3,6 @@
 	:renderWidth 1000
 	:renderHeight 1000
 	:camera 'Camera'
-	:spectrum 'srgb'
 	; Settings
 	(integrator
 		:type 'DIRECT'

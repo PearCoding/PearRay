@@ -4,7 +4,6 @@
 	:renderWidth 1920
 	:renderHeight 1080
 	:camera 'Camera'
-	:spectrum 'srgb'
 	; Settings
 	(integrator
 		:type 'DIRECT'
@@ -15,17 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 256
-	)
-	(sampler
-		:slot 'lens'
-		:type 'MULTI_JITTER'
-		:sample_count 1
-	)
-	(sampler
-		:slot 'time'
-		:type 'MULTI_JITTER'
-		:sample_count 1
+		:sample_count 32
 	)
 	(filter
 		:slot 'pixel'
@@ -81,14 +70,10 @@
 	)
 	; Lights
 	; Light Light
-	(spectrum
-		:name 'Light_color'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
 	(emission
 		:name 'Light_em'
 		:type 'standard'
-		:radiance 'Light_color'
+		:radiance (illuminant "D65")
 	)
 	(entity
 		:name 'Light'
@@ -101,14 +86,10 @@
 		:transform [-0.29086464643478394,-0.7711008191108704,0.5663931965827942,11.076245307922363,0.9551711678504944,-0.1998833566904068,0.21839119493961334,1.0054539442062378,-0.05518905818462372,0.6045247316360474,0.7946722507476807,13.903861999511719,0.0,0.0,0.0,1.0]
 	)
 	; Light Light.001
-	(spectrum
-		:name 'Light.001_color'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
 	(emission
 		:name 'Light.001_em'
 		:type 'standard'
-		:radiance 'Light.001_color'
+		:radiance (illuminant "D65")
 	)
 	(entity
 		:name 'Light.001'
@@ -121,14 +102,10 @@
 		:transform [0.8901517987251282,-0.33074700832366943,0.31342655420303345,4.076245307922363,0.45230957865715027,0.7246766686439514,-0.5198651552200317,-9.994545936584473,-0.05518905818462372,0.6045247316360474,0.7946722507476807,13.903861999511719,0.0,0.0,0.0,1.0]
 	)
 	; Light Light.002
-	(spectrum
-		:name 'Light.002_color'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
 	(emission
 		:name 'Light.002_em'
 		:type 'standard'
-		:radiance 'Light.002_color'
+		:radiance (illuminant "D65")
 	)
 	(entity
 		:name 'Light.002'

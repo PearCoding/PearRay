@@ -19,6 +19,9 @@
 
 #include "Logger.h"
 
+// Define this to let all rays regardless of depth contribute to SP AOVs, else only camera rays are considered
+//#define PR_ALL_RAYS_CONTRIBUTE_SP
+
 #define MSI(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
 /* Based on Path Integral formulation: (here length k)
@@ -329,7 +332,12 @@ public:
 		if (!entity->isLight() && !material)
 			return;
 
+#ifndef PR_ALL_RAYS_CONTRIBUTE_SP
+		if (spt.Ray.IterationDepth == 0)
+			session.pushSPFragment(spt, path);
+#else
 		session.pushSPFragment(spt, path);
+#endif
 
 		// Only consider camera rays, as everything else produces too much noise
 		if (entity->isLight()

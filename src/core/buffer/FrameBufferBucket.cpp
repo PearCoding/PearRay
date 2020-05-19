@@ -5,9 +5,6 @@
 #include "path/LightPathView.h"
 #include "spectral/CIE.h"
 
-// Uncomment this to allow all rays to contribute to AOVs outside spectrals
-//#define PR_ALL_RAYS_CONTRIBUTE
-
 namespace PR {
 FrameBufferBucket::FrameBufferBucket(const std::shared_ptr<IFilter>& filter,
 									 const Size2i& size, Size1i specChannels)
@@ -132,27 +129,16 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 	}
 }
 
-#ifndef PR_ALL_RAYS_CONTRIBUTE
-#define ALL_RAY_CHECK                     \
-	if (entry.SP.Ray.IterationDepth != 0) \
-	continue
-#else
-#define ALL_RAY_CHECK \
-	do {              \
-	} while (false)
-#endif
-
 #define BLEND_1D(var, val)                                                                                    \
 	if (mData.mInt1D[var]) {                                                                                  \
 		const auto var_e = mData.mInt1D[var];                                                                 \
 		PR_OPT_LOOP                                                                                           \
 		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry = entries[i];                                                                   \
-			ALL_RAY_CHECK;                                                                                    \
+			const auto& entry		 = entries[i];                                                            \
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			var_e->blendFragment(sp, 0, val, blend);                                                          \
+			var_e->blendFragment(sp, 0, entry.SP.Ray.Weight[0] * (val), blend);                               \
 		}                                                                                                     \
 	}
 
@@ -160,15 +146,14 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 	for (auto pair : mData.mLPE_1D[var]) {                                                                    \
 		PR_OPT_LOOP                                                                                           \
 		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry = entries[i];                                                                   \
-			ALL_RAY_CHECK;                                                                                    \
+			const auto& entry		 = entries[i];                                                            \
 			const LightPathView path = LightPathView(entry.Path);                                             \
 			if (!pair.first.match(path))                                                                      \
 				continue;                                                                                     \
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			pair.second->blendFragment(sp, 0, val, blend);                                                    \
+			pair.second->blendFragment(sp, 0, entry.SP.Ray.Weight[0] * (val), blend);                         \
 		}                                                                                                     \
 	}
 
@@ -177,12 +162,11 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		const auto var_e = mData.mInt3D[var];                                                                 \
 		PR_OPT_LOOP                                                                                           \
 		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry = entries[i];                                                                   \
-			ALL_RAY_CHECK;                                                                                    \
+			const auto& entry		 = entries[i];                                                            \
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector3f v		 = val;                                                                   \
+			const Vector3f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
 			PR_UNROLL_LOOP(3)                                                                                 \
 			for (Size1i k = 0; k < 3; ++k)                                                                    \
 				var_e->blendFragment(sp, k, v(k), blend);                                                     \
@@ -193,15 +177,14 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 	for (auto pair : mData.mLPE_1D[var]) {                                                                    \
 		PR_OPT_LOOP                                                                                           \
 		for (size_t i = 0; i < entry_count; ++i) {                                                            \
-			const auto& entry = entries[i];                                                                   \
-			ALL_RAY_CHECK;                                                                                    \
+			const auto& entry		 = entries[i];                                                            \
 			const LightPathView path = LightPathView(entry.Path);                                             \
 			if (!pair.first.match(path))                                                                      \
 				continue;                                                                                     \
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector3f v		 = val;                                                                   \
+			const Vector3f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
 			PR_UNROLL_LOOP(3)                                                                                 \
 			for (Size1i k = 0; k < 3; ++k)                                                                    \
 				pair.second->blendFragment(sp, k, v(k), blend);                                               \

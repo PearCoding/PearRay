@@ -2,7 +2,6 @@
 	:name 'example_mesh'
 	:renderWidth 1000
 	:renderHeight 1000
-	:spectrum 'srgb'
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'

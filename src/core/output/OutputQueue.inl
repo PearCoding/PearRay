@@ -38,7 +38,7 @@ inline const uint32* OutputQueue::pushPath(const LightPath& path)
 inline bool OutputQueue::isReadyToCommit() const
 {
 	return mSpectralIt >= mTriggerThreshold
-		   || mSpectralIt >= mTriggerThreshold
+		   || mSPIt >= mTriggerThreshold
 		   || mFeedbackIt >= mTriggerThreshold
 		   || mLightPathData.usedMemory() >= mMemTriggerThreshold;
 }

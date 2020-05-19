@@ -4,7 +4,6 @@
 	:name '_from_blender'
 	:renderWidth 1920
 	:renderHeight 1080
-	:spectrum 'srgb'
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
@@ -46,14 +45,10 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,-4.371138828673793e-08,-1.0,-5.050459384918213,0.0,1.0,-4.371138828673793e-08,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Light Area
-	(spectrum
-		:name 'Area_color'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
 	(emission
 		:name 'Area_em'
 		:type 'standard'
-		:radiance 'Area_color'
+		:radiance (illuminant "D65")
 	)
 	(entity
 		:name 'Area'

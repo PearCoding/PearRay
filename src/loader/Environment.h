@@ -130,9 +130,6 @@ public:
 private:
 	void loadPlugins(const std::wstring& basedir);
 
-	void setupDefaultSampler();
-	void setupDefaultFilter();
-
 	std::wstring mWorkingDir;
 	RenderSettings mRenderSettings;
 
