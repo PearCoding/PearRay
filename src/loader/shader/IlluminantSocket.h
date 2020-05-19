@@ -22,15 +22,35 @@ private:
 	const float mWavelengthDelta;
 };
 
-class PR_LIB_LOADER D65Illuminant : public IlluminantSpectralMapSocket {
-public:
-	explicit D65Illuminant(float power=1.0f);
+#define _ILLUMINANT(Prefix)                                                       \
+	class PR_LIB_LOADER Prefix##Illuminant : public IlluminantSpectralMapSocket { \
+	public:                                                                       \
+		explicit Prefix##Illuminant(float power = 1.0f);                          \
+		SpectralBlob eval(const MapSocketCoord& ctx) const override;              \
+		std::string dumpInformation() const override;                             \
+                                                                                  \
+	private:                                                                      \
+		float mPower;                                                             \
+	};
 
-	SpectralBlob eval(const MapSocketCoord& ctx) const override;
-	std::string dumpInformation() const override;
+_ILLUMINANT(D65)
+_ILLUMINANT(D50)
+_ILLUMINANT(D55)
+_ILLUMINANT(D75)
+_ILLUMINANT(A)
+_ILLUMINANT(C)
+_ILLUMINANT(F1)
+_ILLUMINANT(F2)
+_ILLUMINANT(F3)
+_ILLUMINANT(F4)
+_ILLUMINANT(F5)
+_ILLUMINANT(F6)
+_ILLUMINANT(F7)
+_ILLUMINANT(F8)
+_ILLUMINANT(F9)
+_ILLUMINANT(F10)
+_ILLUMINANT(F11)
+_ILLUMINANT(F12)
 
-	private:
-	float mPower;
-};
-
+#undef _ILLUMINANT
 } // namespace PR

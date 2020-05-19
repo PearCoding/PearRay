@@ -41,55 +41,45 @@ std::string IlluminantSpectralMapSocket::dumpInformation() const
 }
 
 /////////////////////////////////////
+#include "IlluminantData.inl"
 
-constexpr size_t D65_SampleCount	   = 107;
-constexpr float D65_WavelengthStart	   = 300.0f;
-constexpr float D65_WavelengthEnd	   = 830.0f;
-static float D65_data[D65_SampleCount] = {
-	0.000341f, 0.016643f, 0.032945f, 0.117652f,
-	0.20236f, 0.286447f, 0.370535f, 0.385011f,
-	0.399488f, 0.424302f, 0.449117f, 0.45775f,
-	0.466383f, 0.493637f, 0.520891f, 0.510323f,
-	0.499755f, 0.523118f, 0.546482f, 0.687015f,
-	0.827549f, 0.871204f, 0.91486f, 0.924589f,
-	0.934318f, 0.90057f, 0.866823f, 0.957736f,
-	1.04865f, 1.10936f, 1.17008f, 1.1741f,
-	1.17812f, 1.16336f, 1.14861f, 1.15392f,
-	1.15923f, 1.12367f, 1.08811f, 1.09082f,
-	1.09354f, 1.08578f, 1.07802f, 1.06296f,
-	1.0479f, 1.06239f, 1.07689f, 1.06047f,
-	1.04405f, 1.04225f, 1.04046f, 1.02023f,
-	1.0f, 0.981671f, 0.963342f, 0.960611f,
-	0.95788f, 0.922368f, 0.886856f, 0.893459f,
-	0.900062f, 0.898026f, 0.895991f, 0.886489f,
-	0.876987f, 0.854936f, 0.832886f, 0.834939f,
-	0.836992f, 0.81863f, 0.800268f, 0.801207f,
-	0.802146f, 0.812462f, 0.822778f, 0.80281f,
-	0.782842f, 0.740027f, 0.697213f, 0.706652f,
-	0.716091f, 0.72979f, 0.74349f, 0.679765f,
-	0.61604f, 0.657448f, 0.698856f, 0.724863f,
-	0.75087f, 0.693398f, 0.635927f, 0.550054f,
-	0.464182f, 0.566118f, 0.668054f, 0.650941f,
-	0.633828f, 0.638434f, 0.64304f, 0.618779f,
-	0.594519f, 0.557054f, 0.51959f, 0.546998f,
-	0.574406f, 0.588765f, 0.603125f
-};
+#define _ILLUMINANT_DEC(Prefix, Samples, Start, End)                            \
+	Prefix##Illuminant::Prefix##Illuminant(float power)                         \
+		: IlluminantSpectralMapSocket(Prefix##_data, Samples, Start, End)       \
+		, mPower(power)                                                         \
+	{                                                                           \
+	}                                                                           \
+	SpectralBlob Prefix##Illuminant::eval(const MapSocketCoord& ctx) const      \
+	{                                                                           \
+		return IlluminantSpectralMapSocket::eval(ctx) * mPower;                 \
+	}                                                                           \
+	std::string Prefix##Illuminant::dumpInformation() const                     \
+	{                                                                           \
+		std::stringstream sstream;                                              \
+		sstream << "Illuminant " PR_STRINGIFY(Prefix) " (P: " << mPower << ")"; \
+		return sstream.str();                                                   \
+	}
 
-D65Illuminant::D65Illuminant(float power)
-	: IlluminantSpectralMapSocket(D65_data, D65_SampleCount, D65_WavelengthStart, D65_WavelengthEnd)
-	, mPower(power)
-{
-}
+#define _ILLUMINANT_DEC_C(Prefix) _ILLUMINANT_DEC(Prefix, CIE_SampleCount, CIE_WavelengthStart, CIE_WavelengthEnd)
+#define _ILLUMINANT_DEC_F(Prefix) _ILLUMINANT_DEC(Prefix, CIE_F_SampleCount, CIE_F_WavelengthStart, CIE_F_WavelengthEnd)
 
-SpectralBlob D65Illuminant::eval(const MapSocketCoord& ctx) const
-{
-	return IlluminantSpectralMapSocket::eval(ctx) * mPower;
-}
+_ILLUMINANT_DEC_C(D65)
+_ILLUMINANT_DEC_C(D50)
+_ILLUMINANT_DEC_C(D55)
+_ILLUMINANT_DEC_C(D75)
+_ILLUMINANT_DEC_C(A)
+_ILLUMINANT_DEC_C(C)
 
-std::string D65Illuminant::dumpInformation() const
-{
-	std::stringstream sstream;
-	sstream << "Illuminant D65 (P: " << mPower << ")";
-	return sstream.str();
-}
+_ILLUMINANT_DEC_F(F1)
+_ILLUMINANT_DEC_F(F2)
+_ILLUMINANT_DEC_F(F3)
+_ILLUMINANT_DEC_F(F4)
+_ILLUMINANT_DEC_F(F5)
+_ILLUMINANT_DEC_F(F6)
+_ILLUMINANT_DEC_F(F7)
+_ILLUMINANT_DEC_F(F8)
+_ILLUMINANT_DEC_F(F9)
+_ILLUMINANT_DEC_F(F10)
+_ILLUMINANT_DEC_F(F11)
+_ILLUMINANT_DEC_F(F12)
 } // namespace PR

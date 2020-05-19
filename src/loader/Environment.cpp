@@ -247,6 +247,49 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 	return lookupSpectralShadingSocket(parameter, ParametricBlob(def));
 }
 
+// Restructure this to tables
+static std::shared_ptr<IlluminantSpectralMapSocket> createIlluminant(const std::string& type, float power)
+{
+	if (type == "D65")
+		return std::make_shared<D65Illuminant>(power);
+	else if (type == "D55")
+		return std::make_shared<D55Illuminant>(power);
+	else if (type == "D50")
+		return std::make_shared<D50Illuminant>(power);
+	else if (type == "D75")
+		return std::make_shared<D75Illuminant>(power);
+	else if (type == "A")
+		return std::make_shared<AIlluminant>(power);
+	else if (type == "C")
+		return std::make_shared<CIlluminant>(power);
+	else if (type == "F1")
+		return std::make_shared<F1Illuminant>(power);
+	else if (type == "F2")
+		return std::make_shared<F2Illuminant>(power);
+	else if (type == "F3")
+		return std::make_shared<F3Illuminant>(power);
+	else if (type == "F4")
+		return std::make_shared<F4Illuminant>(power);
+	else if (type == "F5")
+		return std::make_shared<F5Illuminant>(power);
+	else if (type == "F6")
+		return std::make_shared<F6Illuminant>(power);
+	else if (type == "F7")
+		return std::make_shared<F7Illuminant>(power);
+	else if (type == "F8")
+		return std::make_shared<F8Illuminant>(power);
+	else if (type == "F9")
+		return std::make_shared<F9Illuminant>(power);
+	else if (type == "F10")
+		return std::make_shared<F10Illuminant>(power);
+	else if (type == "F11")
+		return std::make_shared<F11Illuminant>(power);
+	else if (type == "F12")
+		return std::make_shared<F12Illuminant>(power);
+
+	return nullptr;
+}
+
 std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
 	const Parameter& parameter, const ParametricBlob& def) const
 {
@@ -271,9 +314,9 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 			}
 		} else if (parameter.flags() & PF_Illuminant) {
 			std::string tname = parameter.getString("");
-
-			if (tname == "D65")
-				return std::make_shared<MapShadingSocket>(std::make_shared<D65Illuminant>(1.0f));
+			auto illuminant	  = createIlluminant(tname, 1.0f);
+			if (illuminant)
+				return std::make_shared<MapShadingSocket>(illuminant);
 		} else {
 			std::string sname = parameter.getString("");
 
@@ -348,9 +391,9 @@ std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
 			}
 		} else if (parameter.flags() & PF_Illuminant) {
 			std::string tname = parameter.getString("");
-
-			if (tname == "D65")
-				return std::make_shared<D65Illuminant>(1.0f);
+			auto illuminant	  = createIlluminant(tname, 1.0f);
+			if (illuminant)
+				return illuminant;
 		} else {
 			std::string sname = parameter.getString("");
 
