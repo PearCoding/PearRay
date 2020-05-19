@@ -41,7 +41,9 @@ private:
 	std::unique_ptr<RayStream> mReadRayStream;
 	std::unique_ptr<HitStream> mHitStream;
 
-	Point2i mCurrentPixelPos;
+	uint64 mCurrentVirtualPixelIndex;
+	uint64 mCurrentPixelIndex;
+	uint64 mMaxPixelCount;
 };
 } // namespace PR
 

@@ -7,7 +7,8 @@ namespace PR {
 enum TileMode {
 	TM_LINEAR = 0,
 	TM_TILE,
-	TM_SPIRAL
+	TM_SPIRAL,
+	TM_ZORDER
 };
 
 enum TimeMappingMode {

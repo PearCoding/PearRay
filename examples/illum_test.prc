@@ -26,6 +26,11 @@
 		:type 'MULTI_JITTER'
 		:sample_count 1
 	)
+	(sampler
+		:slot 'spectral'
+		:type 'MULTI_JITTER'
+		:sample_count 1
+	)
 	(filter
 		:slot 'pixel'
 		:type 'BLOCK'
@@ -61,14 +66,10 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,-3.141592,0.0,0.0,0.0,1.0]
 	)
 	; Background
-	(spectrum
-		:name 'background_radiance'
-		:data (illum 1.000000 1.000000 1.000000)
-	)
 	(light
 		:name 'background'
 		:type 'env'
-		:radiance 'background_radiance'
+		:radiance (illuminant "D65")
 		:background 'black'
 		:factor 1.000000
 	)

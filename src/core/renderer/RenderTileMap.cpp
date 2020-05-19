@@ -2,6 +2,7 @@
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "math/Bits.h"
 #include "math/Generator.h"
 
 #include "Logger.h"
@@ -102,6 +103,25 @@ void RenderTileMap::init(const RenderContext& context, uint32 rtx, uint32 rty, T
 			}
 		}
 	} break;
+	case TM_ZORDER: {
+		uint64 i = 0;
+		int32 c	 = 0;
+		while (c < tx * ty) {
+			uint32 x, y;
+			morton_2_xy(i, x, y);
+			++i;
+			if (x >= (uint32)tx || y >= (uint32)ty)
+				continue;
+
+			++c;
+			Point1i sx = x * mMaxTileSize.Width;
+			Point1i sy = y * mMaxTileSize.Height;
+
+			if (sx < context.viewSize().Width - 1
+				&& sy < context.viewSize().Height - 1)
+				addTile(sx, sy);
+		}
+	}
 	}
 }
 
