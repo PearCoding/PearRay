@@ -28,7 +28,7 @@
 	(sampler
 		:slot 'spectral'
 		:type 'MULTI_JITTER'
-		:sample_count 1
+		:sample_count 4
 	)
 	(filter
 		:slot 'pixel'

@@ -186,8 +186,14 @@ set(PR_Src
   trace/ShadowHit.h
 )
 
+if(${CMAKE_VERSION} VERSION_LESS 3.15)
+  set(_BOOST_HEADERS Boost::boost)
+else()
+  set(_BOOST_HEADERS Boost::headers)
+endif()
+
 add_library(pr_lib_core ${PR_Src})
-target_link_libraries(pr_lib_core PUBLIC pr_lib_base TBB::tbb)
+target_link_libraries(pr_lib_core PUBLIC pr_lib_base ${_BOOST_HEADERS} Boost::filesystem TBB::tbb)
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_core PUBLIC PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 if(NOT BUILD_SHARED_LIBS)

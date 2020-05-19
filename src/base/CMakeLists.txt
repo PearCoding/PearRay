@@ -48,18 +48,12 @@ set(PR_Src
   memory/MemoryStack.inl
 )
 
-if(${CMAKE_VERSION} VERSION_LESS 3.15)
-  set(_BOOST_HEADERS Boost::boost)
-else()
-  set(_BOOST_HEADERS Boost::headers)
-endif()
-
 add_library(pr_lib_base ${PR_Src})
 add_dependencies(pr_lib_base prhwinfo)
 if(NOT WIN32)
   target_link_libraries(pr_lib_base PUBLIC Threads::Threads)
 endif()
-target_link_libraries(pr_lib_base PUBLIC ${_BOOST_HEADERS} Boost::filesystem Eigen3::Eigen)
+target_link_libraries(pr_lib_base PUBLIC Eigen3::Eigen)
 target_include_directories(pr_lib_base PUBLIC PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 set_target_properties(pr_lib_base PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(pr_lib_base PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")

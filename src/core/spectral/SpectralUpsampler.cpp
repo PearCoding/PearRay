@@ -50,8 +50,8 @@ static int find_interval(const float* values, int size_, float x)
 	int size		  = last_interval;
 
 	while (size > 0) {
-		int half   = size >> 1,
-			middle = left + half + 1;
+		int half   = size >> 1;
+		int middle = left + half + 1;
 
 		if (values[middle] < x) {
 			left = middle;
@@ -64,14 +64,16 @@ static int find_interval(const float* values, int size_, float x)
 	return std::min(left, last_interval);
 }
 
+constexpr float ZERO_A = 0;
+constexpr float ZERO_B = 0;
+constexpr float ZERO_C = -50.0f; // -500 is also possible and is closer to zero, but -50 is sufficient for floats
 void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems)
 {
 	PR_ASSERT(mInternal->Data, "Expected valid spectral mapper");
-	const float* arr[3] = { r, g, b };
-	const uint32 res	= mInternal->Resolution - 1;
-	const uint32 dx		= COEFFS_N;
-	const uint32 dy		= COEFFS_N * res;
-	const uint32 dz		= COEFFS_N * res * res;
+	const uint32 res = mInternal->Resolution;
+	const uint32 dx	 = COEFFS_N;
+	const uint32 dy	 = COEFFS_N * res;
+	const uint32 dz	 = COEFFS_N * res * res;
 
 	const float* a_scale = mInternal->Scale;
 	const float* a_data	 = mInternal->Data;
@@ -79,18 +81,28 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 	float coeffs[COEFFS_N];
 	PR_OPT_LOOP
 	for (size_t i = 0; i < elems; ++i) {
+		const float rgb[3] = { r[i], g[i], b[i] };
+
+		// Handle special case when rgb is zero
+		if (rgb[0] <= PR_EPSILON && rgb[1] <= PR_EPSILON && rgb[2] <= PR_EPSILON) {
+			out_a[i] = ZERO_A;
+			out_b[i] = ZERO_B;
+			out_c[i] = ZERO_C;
+			continue;
+		}
+
 		// Determine largest entry
 		int largest_entry = 0;
 		PR_UNROLL_LOOP(2)
 		for (int j = 1; j < 3; ++j)
-			if (arr[largest_entry][i] < arr[j][i])
+			if (rgb[largest_entry] <= rgb[j])
 				largest_entry = j;
 
 		// Rescale
-		float z		= arr[largest_entry][i];
+		float z		= rgb[largest_entry];
 		float scale = (res - 1) / z;
-		float x		= arr[(largest_entry + 1) % 3][i] * scale;
-		float y		= arr[(largest_entry + 2) % 3][i] * scale;
+		float x		= rgb[(largest_entry + 1) % 3] * scale;
+		float y		= rgb[(largest_entry + 2) % 3] * scale;
 
 		// Bilinearly interpolate
 		uint32 xi  = std::min((uint32)x, res - 2);

@@ -10,7 +10,7 @@ class Serializer;
 // In Computer Graphics Forum (Proceedings of Eurographics) 38(2).
 //
 // Files with coefficents can be generated based on the paper and the tool found in the supplemental material
-// (TODO) Embed at least the sRGB file
+// A special case is rgb (0,0,0) which was not handled in the original paper. We set a,b=0 and c=-50 to approximate a zero spectrum
 class PR_LIB_CORE SpectralUpsampler {
 public:
 	explicit SpectralUpsampler(Serializer& serializer);
@@ -42,7 +42,7 @@ public:
 	{
 		const SpectralBlob x = (p(0) * in + p(1)) * in + p(2);
 		const SpectralBlob y = (x.square() + 1.0f).rsqrt();
-		return (0.5f * x * y + 0.5f);
+		return 0.5f * x * y + 0.5f;
 	}
 
 private:
