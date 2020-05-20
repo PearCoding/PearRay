@@ -164,6 +164,8 @@ set(PR_Src
   spectral/Blackbody.h
   spectral/CIE.cpp
   spectral/CIE.h
+  spectral/EquidistantSpectrum.h
+  spectral/EquidistantSpectrum.inl
   spectral/ParametricBlob.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h

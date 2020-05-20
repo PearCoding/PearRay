@@ -248,7 +248,7 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
 }
 
 // Restructure this to tables
-static std::shared_ptr<IlluminantSpectralMapSocket> createIlluminant(const std::string& type, float power)
+static std::shared_ptr<FloatSpectralMapSocket> createIlluminant(const std::string& type, float power)
 {
 	if (type == "D65")
 		return std::make_shared<D65Illuminant>(power);

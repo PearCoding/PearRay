@@ -5,6 +5,12 @@
 
 namespace PR {
 class RenderTileSession;
+
+enum MaterialFlags {
+	MF_DeltaDistribution = 0x1,
+	MF_SpectralVarying	 = 0x2
+};
+
 class PR_LIB_CORE IMaterial : public IObject {
 public:
 	IMaterial(uint32 id);
@@ -25,7 +31,10 @@ public:
 	*/
 	virtual void sample(const MaterialSampleInput& in, MaterialSampleOutput& out, const RenderTileSession& session) const = 0;
 
-	virtual bool hasDeltaDistribution() const { return false; }
+	virtual int flags() const { return 0; }
+
+	inline bool hasDeltaDistribution() const { return this->flags() & MF_DeltaDistribution; }
+	inline bool isSpectralVarying() const { return this->flags() & MF_SpectralVarying; }
 
 	inline bool canBeShaded() const;
 	inline void enableShading(bool b);

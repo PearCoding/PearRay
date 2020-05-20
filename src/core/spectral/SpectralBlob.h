@@ -10,6 +10,8 @@ template <typename T>
 using SpectralBlobBase = Eigen::Array<T, PR_SPECTRAL_BLOB_SIZE, 1>;
 
 using SpectralBlob = SpectralBlobBase<float>;
-//using SpectralBlobV = SpectralBlobBase<vfloat>;
 
+namespace SpectralBlobUtils {
+inline auto HeroOnly() { return SpectralBlob(1, 0, 0, 0); }
+} // namespace SpectralBlobUtils
 } // namespace PR

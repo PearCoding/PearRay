@@ -38,6 +38,8 @@ public:
 	const std::vector<std::shared_ptr<IMaterial>>& materials() const { return mMaterials; }
 	const std::vector<std::shared_ptr<IEmission>>& emissions() const { return mEmissions; }
 	const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
+	const std::vector<std::shared_ptr<IInfiniteLight>>& deltaInfiniteLights() const { return mDeltaInfLights; }
+	const std::vector<std::shared_ptr<IInfiniteLight>>& nonDeltaInfiniteLights() const { return mNonDeltaInfLights; }
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
@@ -63,6 +65,8 @@ private:
 	std::vector<std::shared_ptr<IMaterial>> mMaterials;
 	std::vector<std::shared_ptr<IEmission>> mEmissions;
 	std::vector<std::shared_ptr<IInfiniteLight>> mInfLights;
+	std::vector<std::shared_ptr<IInfiniteLight>> mDeltaInfLights;
+	std::vector<std::shared_ptr<IInfiniteLight>> mNonDeltaInfLights;
 
 	std::unique_ptr<class kdTreeCollider> mKDTree;
 	BoundingBox mBoundingBox;

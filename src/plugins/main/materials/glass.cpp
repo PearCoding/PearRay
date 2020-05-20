@@ -37,13 +37,13 @@ public:
 	{
 	}
 
-	bool hasDeltaDistribution() const override { return true; }
+	int flags() const override { return MF_DeltaDistribution | MF_SpectralVarying; }
 
 	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
 	{
 		const auto ior = mIOR->eval(spt);
-		float n1	   = 1;
-		float n2	   = ior.maxCoeff();
+		float n1 = 1;
+		float n2 = ior[0];
 		if (spt.Flags & SPF_Inside)
 			std::swap(n1, n2);
 
@@ -57,7 +57,7 @@ public:
 		PR_PROFILE_THIS;
 
 		out.Weight = mSpecularity->eval(in.Point);
-		out.PDF_S  = std::numeric_limits<float>::infinity();
+		out.PDF_S  = 1;
 
 		if (in.NdotL < 0)
 			out.Type = MST_SpecularTransmission;
@@ -97,7 +97,7 @@ public:
 			}
 		}
 
-		out.PDF_S = std::numeric_limits<float>::infinity();
+		out.PDF_S = 1;
 	}
 
 	std::string dumpInformation() const override

@@ -73,6 +73,15 @@ void Scene::beforeRender(RenderContext* ctx)
 		o->beforeRender(ctx);
 	for (auto o : mEntities)
 		o->beforeRender(ctx);
+
+	mDeltaInfLights.clear();
+	mNonDeltaInfLights.clear();
+	for (auto o : mInfLights) {
+		if (o->hasDeltaDistribution())
+			mDeltaInfLights.push_back(o);
+		else
+			mNonDeltaInfLights.push_back(o);
+	}
 }
 
 void Scene::afterRender(RenderContext* ctx)

@@ -876,10 +876,10 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group)
 					for (size_t i = 0; i < grp.anonymousCount(); ++i)
 						arr[i] = grp.at(i).getInt();
 					params.addParameter(entry.key(), Parameter::fromIntArray(arr));
-				} else if (grp.isAllAnonymousOfType(DL::DT_Float)) {
+				} else if (grp.isAllAnonymousNumber()) {
 					std::vector<float> arr(grp.anonymousCount());
 					for (size_t i = 0; i < grp.anonymousCount(); ++i)
-						arr[i] = grp.at(i).getFloat();
+						arr[i] = grp.at(i).getNumber();
 					params.addParameter(entry.key(), Parameter::fromNumberArray(arr));
 				} else if (grp.isAllAnonymousOfType(DL::DT_String)) {
 					std::vector<std::string> arr(grp.anonymousCount());

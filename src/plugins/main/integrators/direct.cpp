@@ -159,50 +159,52 @@ public:
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
+		if (out.PDF_S[0] <= PR_EPSILON
+			|| spt.Ray.IterationDepth + 1 >= mMaxRayDepth
+			|| session.tile()->random().getFloat() > scatProb)
+			return;
+
+		Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+
 		if (material->hasDeltaDistribution())
-			out.PDF_S = 1;
+			next.Weight *= out.Weight / scatProb;
+		else
+			next.Weight *= out.Weight / (scatProb * out.PDF_S[0]); // The sampling is only done by the hero wavelength
 
-		//const float NdotL = out.Outgoing.dot(spt.N);
-		if (out.PDF_S[0] > PR_EPSILON
-			&& spt.Ray.IterationDepth + 1 < mMaxRayDepth
-			&& session.tile()->random().getFloat() <= scatProb) {
-			Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
-			next.Weight *= out.Weight / (scatProb * out.PDF_S);
+		if (material->isSpectralVarying())
+			next.Flags |= RF_Monochrome;
 
-			if (!next.Weight.isZero()) {
-				path.addToken(LightPathToken(out.Type)); // (1)
+		if (PR_UNLIKELY(next.Weight.isZero()))
+			return;
 
-				GeometryPoint npt;
-				IEntity* nentity;
-				IMaterial* nmaterial;
-				if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
-					ShadingPoint spt2;
-					spt2.setByIdentity(next, npt);
-					eval(session, path, spt2, nentity, nmaterial);
-				} else {
-					session.tile()->statistics().addBackgroundHitCount();
-					infLightHandled = true;
+		path.addToken(LightPathToken(out.Type)); // (1)
 
-					path.addToken(LightPathToken::Background());
-					for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-						if (light->hasDeltaDistribution())
-							continue;
+		GeometryPoint npt;
+		IEntity* nentity;
+		IMaterial* nmaterial;
+		if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
+			ShadingPoint spt2;
+			spt2.setByIdentity(next, npt);
+			eval(session, path, spt2, nentity, nmaterial);
+		} else {
+			session.tile()->statistics().addBackgroundHitCount();
+			infLightHandled = true;
 
-						// Only the ray is fixed (Should be handled better!)
-						InfiniteLightEvalInput lin;
-						lin.Point.Ray	= next;
-						lin.Point.Flags = SPF_Background;
-						InfiniteLightEvalOutput lout;
-						light->eval(lin, lout, session);
+			path.addToken(LightPathToken::Background());
+			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
+				// Only the ray is fixed (Should be handled better!)
+				InfiniteLightEvalInput lin;
+				lin.Point.Ray	= next;
+				lin.Point.Flags = SPF_Background;
+				InfiniteLightEvalOutput lout;
+				light->eval(lin, lout, session);
 
-						session.pushSpectralFragment(lout.Weight, next, path);
-					}
-					path.popToken();
-				}
-
-				path.popToken(); // (1)
+				session.pushSpectralFragment(lout.Weight, next, path);
 			}
+			path.popToken();
 		}
+
+		path.popToken(); // (1)
 	}
 
 	SpectralBlob directLight(RenderTileSession& session, const ShadingPoint& spt,
@@ -370,36 +372,36 @@ public:
 		bool infLightHandled;
 		scatterLight(session, path, spt, material, infLightHandled);
 
-		if (!material->hasDeltaDistribution()) {
-			// Direct Light
-			const float factor = 1.0f / mLightSampleCount;
-			for (size_t i = 0; i < mLightSampleCount; ++i) {
-				LightPathToken token;
-				SpectralBlob radiance = factor * directLight(session, spt, token, material);
+		if (material->hasDeltaDistribution())
+			return;
 
-				if (!radiance.isZero()) {
-					path.addToken(token);
-					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(radiance, spt.Ray, path);
-					path.popToken(2);
-				}
+		// Direct Light
+		const float factor = 1.0f / mLightSampleCount;
+		for (size_t i = 0; i < mLightSampleCount; ++i) {
+			LightPathToken token;
+			SpectralBlob radiance = factor * directLight(session, spt, token, material);
+
+			if (!radiance.isZero()) {
+				path.addToken(token);
+				path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+				session.pushSpectralFragment(radiance, spt.Ray, path);
+				path.popToken(2);
 			}
+		}
 
-			// Infinite Lights
-			for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-				if (infLightHandled && !light->hasDeltaDistribution()) // Already handled in scatter equation
-					continue;
+		// Infinite Lights
+		for (auto light : // Already handled in scatter equation
+			 infLightHandled ? session.tile()->context()->scene()->deltaInfiniteLights()
+							 : session.tile()->context()->scene()->infiniteLights()) {
+			LightPathToken token;
+			SpectralBlob radiance = infiniteLight(session, spt, token,
+												  light.get(), material);
 
-				LightPathToken token;
-				SpectralBlob radiance = infiniteLight(session, spt, token,
-													  light.get(), material);
-
-				if (!radiance.isZero()) {
-					path.addToken(token);
-					path.addToken(LightPathToken::Background());
-					session.pushSpectralFragment(radiance, spt.Ray, path);
-					path.popToken(2);
-				}
+			if (!radiance.isZero()) {
+				path.addToken(token);
+				path.addToken(LightPathToken::Background());
+				session.pushSpectralFragment(radiance, spt.Ray, path);
+				path.popToken(2);
 			}
 		}
 	}
@@ -425,10 +427,7 @@ public:
 		PR_PROFILE_THIS;
 		LightPath cb = LightPath::createCB();
 		session.tile()->statistics().addBackgroundHitCount(sg.size());
-		for (auto light : session.tile()->context()->scene()->infiniteLights()) {
-			if (light->hasDeltaDistribution())
-				continue;
-
+		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 			// Only the ray is fixed (Should be handled better!)
 			for (size_t i = 0; i < sg.size(); ++i) {
 				InfiniteLightEvalInput in;
@@ -464,7 +463,7 @@ private:
 	const size_t mLightSampleCount;
 	const size_t mMaxRayDepth;
 	bool mMSIEnabled;
-};
+}; // namespace PR
 
 class IntDirect : public IIntegrator {
 public:
