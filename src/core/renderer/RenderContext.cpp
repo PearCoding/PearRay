@@ -67,6 +67,11 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 {
 	PR_PROFILE_THIS;
 
+	// Force flush to zero for denormal/subnormal values 
+#if defined(PR_USE_HW_FEATURE_SSE2)
+    _mm_setcsr(_mm_getcsr() | (_MM_FLUSH_ZERO_ON | _MM_DENORMALS_ZERO_ON));
+#endif
+
 	reset();
 
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
