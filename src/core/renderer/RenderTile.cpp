@@ -88,18 +88,11 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	sample /= mLensSampleCount;
 	const uint32 aasample = sample;
 
-	Point2f AA = mAASampler->generate2D(aasample);
-	AA += mRenderContext->viewOffset().cast<float>() - Point2f(0.5f, 0.5f);
-
-	Point2f Lens = mLensSampler->generate2D(lenssample);
-
-	float Time = mTimeAlpha * mTimeSampler->generate1D(timesample) + mTimeBeta;
-
 	CameraSample cameraSample;
 	cameraSample.SensorSize = mImageSize;
-	cameraSample.Pixel		= p.cast<float>() + AA;
-	cameraSample.Lens		= Lens;
-	cameraSample.Time		= Time;
+	cameraSample.Pixel		= (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(aasample).array() - Point2f(0.5f, 0.5f);
+	cameraSample.Lens		= mLensSampler->generate2D(lenssample);
+	cameraSample.Time		= mTimeAlpha * mTimeSampler->generate1D(timesample) + mTimeBeta;
 	cameraSample.Weight		= mWeight_Cache;
 
 	// Sample wavelength
