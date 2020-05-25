@@ -1,3 +1,4 @@
+#include <array>
 #include <fstream>
 #include <iostream>
 
@@ -15,96 +16,78 @@
 #include <intrin.h>
 #endif
 
+enum CPUID_Mode {
+	CM_1_EDX = 0,
+	CM_1_ECX,
+	CM_7_0_EBX,
+	CM_7_0_ECX,
+	CM_7_0_EDX,
+	CM_7_1_EAX,
+	CM_80000001_EDX,
+	CM_80000001_ECX,
+	_CM_COUNT
+};
+
+struct SearchEntry {
+	const char* Name;
+	CPUID_Mode Mode;
+	uint32_t Bit;
+};
+
 constexpr uint32_t bit(uint32_t i) { return 1 << i; }
 
-// (1)
-// EAX
-constexpr uint32_t MMX_F  = bit(23);
-constexpr uint32_t SSE_F  = bit(25);
-constexpr uint32_t SSE2_F = bit(26);
-// ECX
-constexpr uint32_t SSE3_F	= bit(0);
-constexpr uint32_t SSSE3_F	= bit(9);
-constexpr uint32_t FMA_F	= bit(12);
-constexpr uint32_t SSE41_F	= bit(19);
-constexpr uint32_t SSE42_F	= bit(20);
-constexpr uint32_t POPCNT_F = bit(23);
-constexpr uint32_t AVX_F	= bit(28);
+template <typename V, typename... T>
+constexpr auto array_of(T&&... t)
+	-> std::array<V, sizeof...(T)>
+{
+	return { { std::forward<T>(t)... } };
+}
 
-// (7) (0)
-// EBX
-constexpr uint32_t BMI1_F		= bit(3);
-constexpr uint32_t HLE_F		= bit(4);
-constexpr uint32_t AVX2_F		= bit(5);
-constexpr uint32_t BMI2_F		= bit(8);
-constexpr uint32_t RTM_F		= bit(11);
-constexpr uint32_t AVX512F_F	= bit(16);
-constexpr uint32_t AVX512DQ_F	= bit(17);
-constexpr uint32_t AVX512IFMA_F = bit(21);
-constexpr uint32_t AVX512PF_F	= bit(26);
-constexpr uint32_t AVX512ER_F	= bit(27);
-constexpr uint32_t AVX512CD_F	= bit(28);
-constexpr uint32_t AVX512BW_F	= bit(30);
-constexpr uint32_t AVX512VL_F	= bit(31);
-// ECX
-constexpr uint32_t AVX512VBMI_F		 = bit(1);
-constexpr uint32_t AVX512VBMI2_F	 = bit(6);
-constexpr uint32_t AVX512VNNI_F		 = bit(11);
-constexpr uint32_t AVX512BITALG_F	 = bit(12);
-constexpr uint32_t AVX512VPOPCNTDQ_F = bit(14);
-// EDX
-constexpr uint32_t AVX5124VNNIW_F = bit(2);
-constexpr uint32_t AVX5124FMAPS_F = bit(3);
+static const auto Entries = array_of<SearchEntry>(
+	SearchEntry{ "MMX", CM_1_EDX, bit(23) },
+	SearchEntry{ "SSE", CM_1_EDX, bit(25) },
+	SearchEntry{ "SSE2", CM_1_EDX, bit(26) },
+	//-------
+	SearchEntry{ "SSE3", CM_1_ECX, bit(0) },
+	SearchEntry{ "SSSE3", CM_1_ECX, bit(9) },
+	SearchEntry{ "FMA", CM_1_ECX, bit(12) },
+	SearchEntry{ "SSE4_1", CM_1_ECX, bit(19) },
+	SearchEntry{ "SSE4_2", CM_1_ECX, bit(20) },
+	SearchEntry{ "POPCNT", CM_1_ECX, bit(23) },
+	SearchEntry{ "AVX", CM_1_ECX, bit(28) },
+	//-------
+	SearchEntry{ "BMI1", CM_7_0_EBX, bit(3) },
+	SearchEntry{ "HLE", CM_7_0_EBX, bit(4) },
+	SearchEntry{ "AVX2", CM_7_0_EBX, bit(5) },
+	SearchEntry{ "BMI2", CM_7_0_EBX, bit(8) },
+	SearchEntry{ "RTM", CM_7_0_EBX, bit(11) },
+	SearchEntry{ "AVX512F", CM_7_0_EBX, bit(16) },
+	SearchEntry{ "AVX512DQ", CM_7_0_EBX, bit(17) },
+	SearchEntry{ "AVX512IFMA", CM_7_0_EBX, bit(21) },
+	SearchEntry{ "AVX512PF", CM_7_0_EBX, bit(26) },
+	SearchEntry{ "AVX512ER", CM_7_0_EBX, bit(27) },
+	SearchEntry{ "AVX512CD", CM_7_0_EBX, bit(28) },
+	SearchEntry{ "AVX512BW", CM_7_0_EBX, bit(30) },
+	SearchEntry{ "AVX512VL", CM_7_0_EBX, bit(31) },
+	//-------
+	SearchEntry{ "AVX512VBMI", CM_7_0_ECX, bit(1) },
+	SearchEntry{ "AVX512VBMI2", CM_7_0_ECX, bit(6) },
+	SearchEntry{ "AVX512VNNI", CM_7_0_ECX, bit(11) },
+	SearchEntry{ "AVX512BITALG", CM_7_0_ECX, bit(12) },
+	SearchEntry{ "AVX512VPOPCNTDQ", CM_7_0_ECX, bit(14) },
+	//-------
+	SearchEntry{ "AVX5124VNNIW", CM_7_0_EDX, bit(2) },
+	SearchEntry{ "AVX5124FMAPS", CM_7_0_EDX, bit(3) },
+	//-------
+	SearchEntry{ "AVX512BF16", CM_7_1_EAX, bit(5) },
+	//-------
+	SearchEntry{ "RDTSCP", CM_80000001_EDX, bit(27) },
+	//-------
+	SearchEntry{ "ABM", CM_80000001_EDX, bit(5) },
+	SearchEntry{ "FMA4", CM_80000001_EDX, bit(16) },
+	SearchEntry{ "TBM", CM_80000001_EDX, bit(21) });
 
-// (7) (1)
-constexpr uint32_t AVX512BF16_F = bit(5);
-
-// (0x80000001)
-// ECX
-constexpr uint32_t ABM_F  = bit(5);
-constexpr uint32_t FMA4_F = bit(16);
-constexpr uint32_t TBM_F  = bit(21);
-
-struct RequestedFeatures {
-	bool MMX			 = false;
-	bool SSE			 = false;
-	bool SSE2			 = false;
-	bool SSE3			 = false;
-	bool SSSE3			 = false;
-	bool SSE41			 = false;
-	bool SSE42			 = false;
-	bool AVX			 = false;
-	bool AVX2			 = false;
-	bool AVX512F		 = false;
-	bool AVX512DQ		 = false;
-	bool AVX512IFMA		 = false;
-	bool AVX512PF		 = false;
-	bool AVX512ER		 = false;
-	bool AVX512CD		 = false;
-	bool AVX512BW		 = false;
-	bool AVX512VL		 = false;
-	bool AVX512VBMI		 = false;
-	bool AVX512VBMI2	 = false;
-	bool AVX512VNNI		 = false;
-	bool AVX512BITALG	 = false;
-	bool AVX512VPOPCNTDQ = false;
-	bool AVX5124VNNIW	 = false;
-	bool AVX5124FMAPS	 = false;
-	bool AVX512BF16		 = false;
-
-	// Transactional Synchronization
-	bool HLE = false;
-	bool RTM = false;
-
-	// Other useful features
-	bool FMA	= false;
-	bool FMA4	= false;
-	bool POPCNT = false;
-	bool BMI1	= false;
-	bool BMI2	= false;
-	bool ABM	= false;
-	bool TBM	= false;
-};
+using ResultVector = std::array<bool, Entries.size()>;
 
 struct CPUIDOut {
 	uint32_t EAX;
@@ -149,46 +132,39 @@ inline CPUIDOut i_cpuid(uint32_t eax, uint32_t ecx)
 #endif
 }
 
-static void printFeatures(const RequestedFeatures& features)
+static void checkByBits(CPUID_Mode mode, uint32_t bits, ResultVector& results)
 {
-	std::cout << std::boolalpha
-			  << "MMX: " << features.MMX << std::endl
-			  << "SSE: " << features.SSE << std::endl
-			  << "SSE2: " << features.SSE2 << std::endl
-			  << "SSE3: " << features.SSE3 << std::endl
-			  << "SSSE3: " << features.SSSE3 << std::endl
-			  << "SSE4_1: " << features.SSE41 << std::endl
-			  << "SSE4_2: " << features.SSE42 << std::endl
-			  << "AVX: " << features.AVX << std::endl
-			  << "AVX2: " << features.AVX2 << std::endl
-			  << "AVX512F: " << features.AVX512F << std::endl
-			  << "AVX512DQ: " << features.AVX512DQ << std::endl
-			  << "AVX512IFMA: " << features.AVX512IFMA << std::endl
-			  << "AVX512PF: " << features.AVX512PF << std::endl
-			  << "AVX512ER: " << features.AVX512ER << std::endl
-			  << "AVX512CD: " << features.AVX512CD << std::endl
-			  << "AVX512BW: " << features.AVX512BW << std::endl
-			  << "AVX512VL: " << features.AVX512VL << std::endl
-			  << "AVX512VBMI: " << features.AVX512VBMI << std::endl
-			  << "AVX512VBMI2: " << features.AVX512VBMI2 << std::endl
-			  << "AVX512VNNI: " << features.AVX512VNNI << std::endl
-			  << "AVX512BITALG: " << features.AVX512BITALG << std::endl
-			  << "AVX512VPOPCNTDQ: " << features.AVX512VPOPCNTDQ << std::endl
-			  << "AVX512VNNIW: " << features.AVX5124VNNIW << std::endl
-			  << "AVX5124FMAPS: " << features.AVX5124FMAPS << std::endl
-			  << "AVX512BF16: " << features.AVX512BF16 << std::endl
-			  << "HLE: " << features.HLE << std::endl
-			  << "RTM: " << features.RTM << std::endl
-			  << "FMA: " << features.FMA << std::endl
-			  << "FMA4: " << features.FMA4 << std::endl
-			  << "POPCNT: " << features.POPCNT << std::endl
-			  << "BMI1: " << features.BMI1 << std::endl
-			  << "BMI2: " << features.BMI2 << std::endl
-			  << "ABM: " << features.ABM << std::endl
-			  << "TBM: " << features.TBM << std::endl;
+	for (size_t i = 0; i < Entries.size(); ++i) {
+		if (Entries[i].Mode == mode)
+			results[i] = Entries[i].Bit & bits;
+	}
 }
 
-static void printHeader(const char* filename, const RequestedFeatures& features)
+static bool has80000001()
+{
+	uint32_t highestExtF = i_cpuid(0x80000000).EAX;
+	return highestExtF >= 0x80000001;
+}
+
+using CheckFunction												 = void (*)(ResultVector& vector);
+static const std::array<CheckFunction, _CM_COUNT> CheckFunctions = {
+	[](ResultVector& results) { checkByBits(CM_1_EDX, i_cpuid(1).EDX, results); },
+	[](ResultVector& results) { checkByBits(CM_1_ECX, i_cpuid(1).ECX, results); },
+	[](ResultVector& results) { checkByBits(CM_7_0_EBX, i_cpuid(7, 0).EBX, results); },
+	[](ResultVector& results) { checkByBits(CM_7_0_ECX, i_cpuid(7, 0).ECX, results); },
+	[](ResultVector& results) { checkByBits(CM_7_0_EDX, i_cpuid(7, 0).EDX, results); },
+	[](ResultVector& results) { checkByBits(CM_7_1_EAX, i_cpuid(7, 1).EAX, results); },
+	[](ResultVector& results) { if(has80000001()) checkByBits(CM_80000001_ECX, i_cpuid(0x80000001).ECX, results); },
+	[](ResultVector& results) { if(has80000001()) checkByBits(CM_80000001_EDX, i_cpuid(0x80000001).EDX, results); }
+};
+
+static void printFeatures(const ResultVector& features)
+{
+	for (size_t i = 0; i < features.size(); ++i)
+		std::cout << Entries[i].Name << ": " << std::boolalpha << features[i] << std::endl;
+}
+
+static void printHeader(const char* filename, const ResultVector& features)
 {
 	std::ofstream stream(filename);
 
@@ -203,105 +179,22 @@ static void printHeader(const char* filename, const RequestedFeatures& features)
 	stream << "/* File generated by prhwinfo */" << std::endl
 		   << std::endl;
 
-	p("MMX", features.MMX);
-	p("SSE", features.SSE);
-	p("SSE2", features.SSE2);
-	p("SSE3", features.SSE3);
-	p("SSSE3", features.SSSE3);
-	p("SSE4_1", features.SSE41);
-	p("SSE4_2", features.SSE42);
-	p("AVX", features.AVX);
-	p("AVX2", features.AVX2);
-	p("AVX512F", features.AVX512F);
-	p("AVX512DQ", features.AVX512DQ);
-	p("AVX512IFMA", features.AVX512IFMA);
-	p("AVX512PF", features.AVX512PF);
-	p("AVX512ER", features.AVX512ER);
-	p("AVX512CD", features.AVX512CD);
-	p("AVX512BW", features.AVX512BW);
-	p("AVX512VL", features.AVX512VL);
-	p("AVX512VBMI", features.AVX512VBMI);
-	p("AVX512VBMI2", features.AVX512VBMI2);
-	p("AVX512VNNI", features.AVX512VNNI);
-	p("AVX512BITALG", features.AVX512BITALG);
-	p("AVX512VPOPCNTDQ", features.AVX512VPOPCNTDQ);
-	p("AVX5124VNNIW", features.AVX5124VNNIW);
-	p("AVX5124FMAPS", features.AVX5124FMAPS);
-	p("AVX512BF16", features.AVX512BF16);
-	p("HLE", features.HLE);
-	p("RTM", features.RTM);
-	p("FMA", features.FMA);
-	p("FMA4", features.FMA4);
-	p("POPCNT", features.POPCNT);
-	p("BMI1", features.BMI1);
-	p("BMI2", features.BMI2);
-	p("ABM", features.ABM);
-	p("TBM", features.TBM);
+	for (size_t i = 0; i < features.size(); ++i)
+		p(Entries[i].Name, features[i]);
 }
 
-static RequestedFeatures detectFeatures()
+static ResultVector detectFeatures()
 {
-	RequestedFeatures features;
+	ResultVector features;
+	for (int i = 0; i < _CM_COUNT; ++i)
+		CheckFunctions[i](features);
 
-	// Processor Info and Feature Bits
-	CPUIDOut c1	  = i_cpuid(1);
-	features.MMX  = c1.EDX & MMX_F;
-	features.SSE  = c1.EDX & SSE_F;
-	features.SSE2 = c1.EDX & SSE2_F;
-
-	features.SSE3	= c1.ECX & SSE3_F;
-	features.SSSE3	= c1.ECX & SSSE3_F;
-	features.SSE41	= c1.ECX & SSE41_F;
-	features.SSE42	= c1.ECX & SSE42_F;
-	features.AVX	= c1.ECX & AVX_F;
-	features.FMA	= c1.ECX & FMA_F;
-	features.POPCNT = c1.ECX & POPCNT_F;
-
-	// Extended Features
-	CPUIDOut c70		= i_cpuid(7, 0);
-	features.AVX2		= c70.EBX & AVX2_F;
-	features.AVX512F	= c70.EBX & AVX512F_F;
-	features.AVX512DQ	= c70.EBX & AVX512DQ_F;
-	features.AVX512IFMA = c70.EBX & AVX512IFMA_F;
-	features.AVX512PF	= c70.EBX & AVX512PF_F;
-	features.AVX512ER	= c70.EBX & AVX512ER_F;
-	features.AVX512CD	= c70.EBX & AVX512CD_F;
-	features.AVX512BW	= c70.EBX & AVX512BW_F;
-	features.AVX512VL	= c70.EBX & AVX512VL_F;
-	features.BMI1		= c70.EBX & BMI1_F;
-	features.BMI2		= c70.EBX & BMI2_F;
-
-	features.AVX512VBMI		 = c70.ECX & AVX512VBMI_F;
-	features.AVX512VBMI2	 = c70.ECX & AVX512VBMI2_F;
-	features.AVX512VNNI		 = c70.ECX & AVX512VNNI_F;
-	features.AVX512BITALG	 = c70.ECX & AVX512BITALG_F;
-	features.AVX512VPOPCNTDQ = c70.ECX & AVX512VPOPCNTDQ_F;
-
-	features.AVX5124VNNIW = c70.EDX & AVX5124VNNIW_F;
-	features.AVX5124FMAPS = c70.EDX & AVX5124FMAPS_F;
-
-	features.HLE = c70.EBX & HLE_F;
-	features.RTM = c70.EBX & RTM_F;
-
-	// Extended Features 2
-	CPUIDOut c71		= i_cpuid(7, 1);
-	features.AVX512BF16 = c71.EBX & AVX512BF16_F;
-
-	// Highest extension bit
-	uint32_t highestExtF = i_cpuid(0x80000000).EAX;
-
-	if (highestExtF >= 0x80000001) {
-		CPUIDOut cE1  = i_cpuid(0x80000001);
-		features.FMA4 = cE1.ECX & FMA4_F;
-		features.ABM  = cE1.ECX & ABM_F;
-		features.TBM  = cE1.ECX & TBM_F;
-	}
 	return features;
 }
 
 int main(int argc, char** argv)
 {
-	RequestedFeatures features = detectFeatures();
+	ResultVector features = detectFeatures();
 	printFeatures(features);
 	if (argc >= 3) {
 		if (argv[1] == std::string("--header"))
