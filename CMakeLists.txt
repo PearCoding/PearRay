@@ -5,8 +5,8 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
 endif()
 
 project(PearRay
-	VERSION 0.12
-	DESCRIPTION "Experimental raytracer")
+	VERSION 0.13
+	DESCRIPTION "Experimental high accurate spectral path and ray tracer")
 
 set(PR_PLUGIN_VERSION "1.0")
 
