@@ -5,7 +5,12 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 32
+	  :sample_count 1
+	)
+	(sampler
+	  :slot 'spectral'
+	  :type 'random'
+	  :sample_count 8
 	)
 	(filter 
 	  :slot 'pixel'
@@ -13,7 +18,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'ao'
+	  :type 'direct'
 	  :sample_count 32
 	)
 	; Outputs
@@ -58,6 +63,11 @@
 		0,0,1,0,
 		0,0,0,1]
 	)
+	(light
+		:name 'env'
+		:type 'env'
+		:radiance (illuminant 'D65')
+	)
 	; Entity Sphere
 	(entity
 		:name 'Sphere'
@@ -88,7 +98,8 @@
 	)
 	(material
 		:name 'Material'
-		:type 'diffuse'
-		:albedo 'Material_diffuse_color'
+		:type 'glass'
+		:index 1.55
+		:specular 'Material_diffuse_color'
 	)
 )

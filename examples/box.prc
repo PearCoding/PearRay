@@ -6,6 +6,11 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
+	  :sample_count 4
+	)
+	(sampler
+	  :slot 'spectral'
+	  :type 'random'
 	  :sample_count 8
 	)
 	(filter 
@@ -14,7 +19,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'debug'
+	  :type 'direct'
 	  :max_ray_depth 4
 	  :light_sample_count 1
 	  :msi true
@@ -151,9 +156,18 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,2.0,0.0,0.0,0.0,1.0]
 	)
 	; Materials
+	;(spectrum
+	;	:name 'Glass_ior'
+	;	:type 'file'
+	;	:data (refl 1.000000 1.000000 1.000000)
+	;)
+	;(color
+	;	:name 'Glass_specular_color'
+	;	:data (rgb 1 1 1)
+	;)
 	(spectrum
 		:name 'Glass_specular_color'
-		:data (refl 1.000000 1.000000 1.000000)
+		:data (refl 1 1 1)
 	)
 	(material
 		:name 'Glass'
