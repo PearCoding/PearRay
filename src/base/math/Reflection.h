@@ -117,5 +117,42 @@ inline Vector3f halfway(const Vector3f& V, const Vector3f& L)
 {
 	return (L - V).normalized();
 }
+
+/**
+* @brief Returns the (squared) refractive index based on the sellmeier equation  
+* @param lambda_nm Wavelength in nano meters
+* @param B1 B1 coefficient
+* @param B2 B2 coefficient
+* @param B3 B3 coefficient
+* @param C1 C1 coefficient given in squared micro meters
+* @param C2 C2 coefficient given in squared micro meters
+* @param C3 C3 coefficient given in squared micro meters
+* @return Squared refractive index
+*/
+inline float sellmeier2(float lambda_nm, float B1, float B2, float B3, float C1, float C2, float C3)
+{
+	float lambda_qm	 = lambda_nm / 1000;
+	float lambda_qm2 = lambda_qm * lambda_qm;
+	return 1
+		   + B1 * lambda_qm2 / (lambda_qm2 - C1)
+		   + B2 * lambda_qm2 / (lambda_qm2 - C2)
+		   + B3 * lambda_qm2 / (lambda_qm2 - C3);
+}
+
+/**
+* @brief Returns the refractive index based on the sellmeier equation  
+* @param lambda_nm Wavelength in nano meters
+* @param B1 B1 coefficient
+* @param B2 B2 coefficient
+* @param B3 B3 coefficient
+* @param C1 C1 coefficient given in squared micro meters
+* @param C2 C2 coefficient given in squared micro meters
+* @param C3 C3 coefficient given in squared micro meters
+* @return Refractive index
+*/
+inline float sellmeier(float lambda_nm, float B1, float B2, float B3, float C1, float C2, float C3)
+{
+	return std::sqrt(sellmeier2(lambda_nm, B1, B2, B3, C1, C2, C3));
+}
 } // namespace Reflection
 } // namespace PR

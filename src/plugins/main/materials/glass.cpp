@@ -41,9 +41,12 @@ public:
 
 	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
 	{
-		const auto ior = mIOR->eval(spt);
+		// TODO
+		//const auto ior = mIOR->eval(spt);
 		float n1 = 1;
-		float n2 = ior[0];
+		//float n2 = ior[0];
+		// https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
+		float n2 = Reflection::sellmeier(spt.Ray.WavelengthNM[0], 1.03961212, 0.231792344, 1.01046945, 0.00600069867, 0.0200179144, 103.560653);
 		if (spt.Flags & SPF_Inside)
 			std::swap(n1, n2);
 
