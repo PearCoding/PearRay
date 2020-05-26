@@ -7,14 +7,19 @@
 	; Settings
 	(integrator
 		:type 'DIRECT'
-		:max_ray_depth 32
+		:max_ray_depth 24
 		:light_sampe_count 1
 		:msi true
 	)
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 32
+		:sample_count 8
+	)
+	(sampler
+		:slot 'spectral'
+		:type 'RANDOM'
+		:sample_count 4
 	)
 	(filter
 		:slot 'pixel'

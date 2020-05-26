@@ -119,6 +119,35 @@ inline Vector3f halfway(const Vector3f& V, const Vector3f& L)
 }
 
 /**
+* @brief Returns the refractive index based on the simple cauchy equation  
+* @param lambda_nm Wavelength in nano meters
+* @param A A base coefficient
+* @param B B coefficient given in squared micro meters
+* @return Refractive index
+*/
+inline float cauchy(float lambda_nm, float A, float B)
+{
+	const float lambda_qm  = lambda_nm / 1000;
+	const float lambda_qm2 = lambda_qm * lambda_qm;
+	return A + B / lambda_qm2;
+}
+
+/**
+* @brief Returns the refractive index based on the basic cauchy equation  
+* @param lambda_nm Wavelength in nano meters
+* @param A A base coefficient
+* @param B B coefficient given in squared micro meters
+* @param C C coefficient given in quadrupled micro meters
+* @return Refractive index
+*/
+inline float cauchy(float lambda_nm, float A, float B, float C)
+{
+	const float lambda_qm  = lambda_nm / 1000;
+	const float lambda_qm2 = lambda_qm * lambda_qm;
+	return A + B / lambda_qm2 + C / (lambda_qm2 * lambda_qm2);
+}
+
+/**
 * @brief Returns the (squared) refractive index based on the sellmeier equation  
 * @param lambda_nm Wavelength in nano meters
 * @param B1 B1 coefficient
@@ -153,6 +182,38 @@ inline float sellmeier2(float lambda_nm, float B1, float B2, float B3, float C1,
 inline float sellmeier(float lambda_nm, float B1, float B2, float B3, float C1, float C2, float C3)
 {
 	return std::sqrt(sellmeier2(lambda_nm, B1, B2, B3, C1, C2, C3));
+}
+
+/**
+* @brief Returns the (squared) refractive index based on the polynom equation n^2=A+B1*l^2+B2*l^4+C1/l^2+C2/l^4
+* @param lambda_nm Wavelength in nano meters
+* @param A A base coefficient
+* @param B1 B1 coefficient given in inverse squared micro meters
+* @param B2 B2 coefficient given in inverse quadrupled micro meters
+* @param C1 C1 coefficient given in squared micro meters
+* @param C2 C2 coefficient given in quadrupled micro meters
+* @return Squared refractive index
+*/
+inline float poly2(float lambda_nm, float A, float B1, float B2, float C1, float C2)
+{
+	float lambda_qm	 = lambda_nm / 1000;
+	float lambda_qm2 = lambda_qm * lambda_qm;
+	return A + B1 * lambda_qm2 + B2 * lambda_qm2 * lambda_qm2 + C1 / lambda_qm2 + C2 / (lambda_qm2 * lambda_qm2);
+}
+
+/**
+* @brief Returns the refractive index based on the polynom equation n^2=A+B1*l^2+B2*l^4+C1/l^2+C2/l^4
+* @param lambda_nm Wavelength in nano meters
+* @param A A base coefficient
+* @param B1 B1 coefficient given in inverse squared micro meters
+* @param B2 B2 coefficient given in inverse quadrupled micro meters
+* @param C1 C1 coefficient given in squared micro meters
+* @param C2 C2 coefficient given in quadrupled micro meters
+* @return Refractive index
+*/
+inline float poly(float lambda_nm, float A, float B1, float B2, float C1, float C2)
+{
+	return std::sqrt(poly2(lambda_nm, A, B1, B2, C1, C2));
 }
 } // namespace Reflection
 } // namespace PR
