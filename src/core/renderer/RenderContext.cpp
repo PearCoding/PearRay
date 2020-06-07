@@ -24,6 +24,7 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 	: mIndex(index)
 	, mViewOffset(viewOffset)
 	, mViewSize(viewSize)
+	, mMaxIterationCount(settings.maxSampleCount())
 	, mScene(scene)
 	, mOutputMap()
 	, mEmissiveSurfaceArea(0.0f)
@@ -67,9 +68,9 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 {
 	PR_PROFILE_THIS;
 
-	// Force flush to zero for denormal/subnormal values 
+	// Force flush to zero for denormal/subnormal values
 #if defined(PR_USE_HW_FEATURE_SSE2)
-    _mm_setcsr(_mm_getcsr() | (_MM_FLUSH_ZERO_ON | _MM_DENORMALS_ZERO_ON));
+	_mm_setcsr(_mm_getcsr() | (_MM_FLUSH_ZERO_ON | _MM_DENORMALS_ZERO_ON));
 #endif
 
 	reset();
@@ -120,10 +121,13 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 				   << "  InfLights:       " << mScene->infiniteLights().size() << std::endl
 				   << "  Emissive Area:   " << mEmissiveSurfaceArea << std::endl
 				   << "  Scene Extent:    " << mScene->boundingBox().width() << " x " << mScene->boundingBox().height() << " x " << mScene->boundingBox().depth() << std::endl
-				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl;
+				   << "  Spectral Domain: [" << mRenderSettings.spectralStart << ", " << mRenderSettings.spectralEnd << "]" << std::endl
+				   << "  Max Iterations:  " << mMaxIterationCount << std::endl;
 
 	// Start
 	mIntegrator->onStart();
+	if (mIterationCallback)
+		mIterationCallback(mIncrementalCurrentIteration);
 	PR_LOG(L_INFO) << "Starting threads." << std::endl;
 	for (RenderThread* thread : mThreads)
 		thread->start();
@@ -201,39 +205,43 @@ RenderTile* RenderContext::getNextTile()
 {
 	PR_PROFILE_THIS;
 
-	RenderTile* tile = nullptr;
-	if (mRenderSettings.useAdaptiveTiling) {
-		// Try till we find a tile or all samples of this iteration are already rendered
-		while (tile == nullptr && !mTileMap->allFinished()) {
-			tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
-			if (tile == nullptr) {
-				std::unique_lock<std::mutex> lk(mIterationMutex);
-				++mThreadsWaitingForIteration;
+	const auto threadCount = threads();
 
-				if (mThreadsWaitingForIteration == threads()) {
+	RenderTile* tile		  = nullptr;
+	bool breakBecauseFinished = false;
+
+	// Try till we find a tile or all samples of this iteration are already rendered
+	while (tile == nullptr) {
+		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
+		if (tile == nullptr) {
+			std::unique_lock<std::mutex> lk(mIterationMutex);
+			++mThreadsWaitingForIteration;
+
+			if (mThreadsWaitingForIteration == threadCount) {
+				if (mRenderSettings.useAdaptiveTiling)
 					optimizeTileMap();
-					++mIncrementalCurrentIteration;
-					mThreadsWaitingForIteration = 0;
-					lk.unlock();
-
-					mIterationCondition.notify_all();
-				} else {
-					mIterationCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForIteration == 0 || mTileMap->allFinished(); });
-					lk.unlock();
-				}
-			}
-		}
-
-		mIterationCondition.notify_all();
-	} else {
-		std::lock_guard<std::mutex> guard(mTileMutex);
-		// Try till we find a tile or all samples of this iteration are already rendered
-		while (tile == nullptr && !mTileMap->allFinished()) {
-			tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
-			if (tile == nullptr) {
 				++mIncrementalCurrentIteration;
+				if (mIterationCallback)
+					mIterationCallback(mIncrementalCurrentIteration - 1);
+				mThreadsWaitingForIteration = 0;
+				lk.unlock();
+
+				mIterationCondition.notify_all();
+			} else {
+				mIterationCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForIteration == 0; });
+				lk.unlock();
 			}
 		}
+
+		if (mTileMap->allFinished()) {
+			breakBecauseFinished = true;
+			break;
+		}
+	}
+
+	if (breakBecauseFinished) {
+		mThreadsWaitingForIteration = 0;
+		mIterationCondition.notify_all();
 	}
 
 	return tile;
@@ -272,4 +280,5 @@ RenderStatus RenderContext::status() const
 
 	return status;
 }
+
 } // namespace PR

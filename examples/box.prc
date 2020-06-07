@@ -11,7 +11,7 @@
 	(sampler
 	  :slot 'spectral'
 	  :type 'random'
-	  :sample_count 8
+	  :sample_count 2
 	)
 	(filter 
 	  :slot 'pixel'
@@ -34,13 +34,13 @@
 			:gamma 'none'
 			:mapper 'none'
 		)
-		(channel :type 'depth')
-		(channel :type 'n')
-		(channel :type 'uvw')
-		(channel :type 'ng')
-		(channel :type 'nx')
-		(channel :type 'ny')
-		(channel :type 'feedback')
+		;(channel :type 'depth')
+		;(channel :type 'n')
+		;(channel :type 'uvw')
+		;(channel :type 'ng')
+		;(channel :type 'nx')
+		;(channel :type 'ny')
+		;(channel :type 'feedback')
 	)
 	; Camera
 	(camera

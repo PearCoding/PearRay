@@ -1,6 +1,7 @@
 #include "RenderSettings.h"
 #include "filter/IFilterFactory.h"
 #include "integrator/IIntegratorFactory.h"
+#include "sampler/ISampler.h"
 #include "sampler/ISamplerFactory.h"
 
 namespace PR {
@@ -55,5 +56,15 @@ std::shared_ptr<IFilter> RenderSettings::createPixelFilter() const
 std::shared_ptr<IIntegrator> RenderSettings::createIntegrator() const
 {
 	return integratorFactory ? integratorFactory->createInstance() : nullptr;
+}
+
+uint32 RenderSettings::maxSampleCount() const
+{
+	// Create temporary samplers to calculate the max iterations
+	Random rnd(42);
+	return createAASampler(rnd)->maxSamples()
+		   * createLensSampler(rnd)->maxSamples()
+		   * createTimeSampler(rnd)->maxSamples()
+		   * createSpectralSampler(rnd)->maxSamples();
 }
 } // namespace PR

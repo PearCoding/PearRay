@@ -39,7 +39,8 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	mLensSampleCount	 = mLensSampler->maxSamples();
 	mTimeSampleCount	 = mTimeSampler->maxSamples();
 	mSpectralSampleCount = mSpectralSampler->maxSamples();
-	mMaxPixelSamples *= mAASampleCount * mLensSampleCount * mTimeSampleCount * mSpectralSampleCount;
+	mMaxIterationCount	 = mAASampleCount * mLensSampleCount * mTimeSampleCount * mSpectralSampleCount;
+	mMaxPixelSamples *= mMaxIterationCount;
 
 	switch (mRenderContext->settings().timeMappingMode) {
 	default:

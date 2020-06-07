@@ -77,5 +77,7 @@ public:
 	std::shared_ptr<ISampler> createSpectralSampler(Random& random) const;
 	std::shared_ptr<IFilter> createPixelFilter() const;
 	std::shared_ptr<IIntegrator> createIntegrator() const;
+	
+	uint32 maxSampleCount() const;
 };
 } // namespace PR

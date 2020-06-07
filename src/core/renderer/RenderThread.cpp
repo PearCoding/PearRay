@@ -47,7 +47,7 @@ void RenderThread::main()
 
 		bucket->clear(true);
 		integrator->onTile(session);
-		if (shouldStop())
+		if (PR_UNLIKELY(shouldStop()))
 			break;
 		queue->commitAndFlush(bucket.get());
 		mRenderer->output()->mergeBucket(mTile->start(), bucket);

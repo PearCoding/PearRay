@@ -58,6 +58,7 @@ public:
 	inline uint32 maxPixelSamples() const { return mMaxPixelSamples; }
 	inline uint32 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
 	inline uint32 iterationCount() const { return mContext.IterationCount; }
+	inline uint32 maxIterationCount() const { return mMaxIterationCount; }
 
 	std::pair<RenderTile*, RenderTile*> split(int dim) const;
 
@@ -83,6 +84,7 @@ private:
 	const Size2i mViewSize;
 	const Size2i mImageSize;
 	uint32 mMaxPixelSamples;
+	uint32 mMaxIterationCount;
 
 	RenderTileContext mContext;
 	std::chrono::high_resolution_clock::time_point mWorkStart;

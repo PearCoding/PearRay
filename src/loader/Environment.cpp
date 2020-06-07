@@ -115,9 +115,9 @@ void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 	mOutputSpecification.setup(renderer);
 }
 
-void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, bool force) const
+void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
-	mOutputSpecification.save(renderer, toneMapper, force);
+	mOutputSpecification.save(renderer, toneMapper, options);
 }
 
 void Environment::loadPlugins(const std::wstring& basedir)

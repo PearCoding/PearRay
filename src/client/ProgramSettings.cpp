@@ -39,12 +39,22 @@ po::options_description setup_cmd_options()
 		("pluginpath", po::value<std::string>(), "Additional plugin path")
 	;
 
+	po::options_description time_d("Time");
+	time_d.add_options()
+		("max-time", po::value<PR::uint32>()->default_value(0),
+			"Maximum time in seconds to spend on image regardless of given sample parameters. 0 disables it.")
+		("force-time-stop",
+			"Force the execution to stop after reaching maximum time regardless of finished iterations.")
+	;
+
 	po::options_description image_d("Image");
 	image_d.add_options()
 		("img-update", po::value<PR::uint32>()->default_value(0),
-			"Update interval in seconds where image will be saved. 0 disables it.")
-		("img-ext", po::value<std::string>()->default_value("png"),
-			"File extension for image output. Has to be a type supported by OpenImageIO.")
+			"Update interval in seconds where image will be periodically saved. 0 disables it.")
+		("img-iteration-update", po::value<PR::uint32>()->default_value(0),
+			"Update interval in iterations where image will be periodically saved. 0 disables it.")
+		("img-use-tags",
+			"Use tags _n to make sure no image produced in the session is replaced by the following one.")
 	;
 
 	po::options_description thread_d("Threading[*]");
@@ -80,6 +90,7 @@ po::options_description setup_cmd_options()
 
 	po::options_description all_d("Allowed options");
 	all_d.add(general_d);
+	all_d.add(time_d);
 	all_d.add(image_d);
 	all_d.add(thread_d);
 	all_d.add(scene_d);
@@ -176,9 +187,14 @@ bool ProgramSettings::parse(int argc, char** argv)
 	Profile = false;
 #endif
 
+	// Timing
+	MaxTime		 = vm["max-time"].as<PR::uint32>();
+	MaxTimeForce = (vm.count("force-time-stop") != 0);
+
 	// Image
-	ImgUpdate = vm["img-update"].as<PR::uint32>();
-	ImgExt	  = vm["img-ext"].as<std::string>();
+	ImgUpdate		   = vm["img-update"].as<PR::uint32>();
+	ImgUpdateIteration = vm["img-iteration-update"].as<PR::uint32>();
+	ImgUseTags		   = (vm.count("img-use-tags") != 0);
 
 	// Thread
 	if (vm.count("rtx"))

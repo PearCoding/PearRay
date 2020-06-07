@@ -49,7 +49,6 @@ void OutputSpecification::deinit()
 {
 	mImageWriter.deinit();
 	mFiles.clear();
-	mSpectralFiles.clear();
 
 	mRunLock.reset();
 	mOutputLock.reset();
@@ -283,9 +282,9 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 
 					if (type == "rgb" || type == "color") {
 						IM_ChannelSettingSpec spec;
-						spec.TCM	  = tcm;
-						spec.LPE_S	  = lpe;
-						spec.LPE	  = -1;
+						spec.TCM   = tcm;
+						spec.LPE_S = lpe;
+						spec.LPE   = -1;
 
 						if (!lpe.empty())
 							spec.Name = spec.Name + "[" + lpe + "]";
@@ -335,36 +334,16 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 			}
 
 			mFiles.push_back(file);
-		} else if (entry.id() == "output_spectral") {
-			DL::Data nameD	   = entry.getFromKey("name");
-			DL::Data compressD = entry.getFromKey("compress");
-			DL::Data lpeD	   = entry.getFromKey("lpe");
-			if (nameD.type() == DL::DT_String) {
-				FileSpectral spec;
-				spec.Name	  = nameD.getString();
-				spec.Compress = compressD.type() == DL::DT_Bool ? compressD.getBool() : true;
-				spec.LPE_S	  = "";
-				spec.LPE	  = -1;
-
-				if (lpeD.type() == DL::DT_String) {
-					spec.LPE_S = lpeD.getString();
-					if (!spec.LPE_S.empty() && !LightPathExpression(spec.LPE_S).isValid()) {
-						PR_LOG(L_ERROR) << "Invalid LPE " << spec.LPE_S << ". Skipping spectral file" << std::endl;
-						spec.LPE_S = "";
-					}
-				}
-				mSpectralFiles.push_back(spec);
-			}
 		}
 	}
 }
 
 void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
-							   ToneMapper& toneMapper, bool force) const
+							   ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
 	boost::filesystem::path path = mWorkingDir;
 
-	if (!force && !mOutputLock->lock())
+	if (!options.Force && !mOutputLock->lock())
 		return;
 
 	std::wstring resultDir = L"/results";
@@ -378,27 +357,13 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 	boost::filesystem::create_directory(outputDir); // Doesn't matter if it works or not
 
 	for (const File& f : mFiles) {
-		auto file = outputDir / (f.Name + ".exr");
+		auto file = outputDir / (f.Name + options.NameSuffix + ".exr");
 		if (!mImageWriter.save(toneMapper, file.generic_wstring(),
-							   f.SettingsSpectral, f.Settings1D, f.SettingsCounter, f.Settings3D))
+							   f.SettingsSpectral, f.Settings1D, f.SettingsCounter, f.Settings3D,
+							   options.Image))
 			PR_LOG(L_ERROR) << "Couldn't save image file " << file << std::endl;
 
-		if (force)
-			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
-	}
-
-	const FrameBufferContainer& data = renderer->output()->data();
-	for (const FileSpectral& f : mSpectralFiles) {
-		auto file = outputDir / (f.Name + ".spec");
-
-		auto channel = data.getInternalChannel_Spectral();
-		if (f.LPE >= 0)
-			channel = data.getLPEChannel_Spectral(f.LPE);
-
-		if (!mImageWriter.save_spectral(file.generic_wstring(), channel, f.Compress))
-			PR_LOG(L_ERROR) << "Couldn't save spectral file " << file << std::endl;
-
-		if (force)
+		if (options.Force)
 			PR_LOG(L_INFO) << "Saved file " << file << std::endl;
 	}
 

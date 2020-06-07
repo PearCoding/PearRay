@@ -3,8 +3,7 @@
 #include "PR_Config.h"
 #include <boost/filesystem.hpp>
 
-class ProgramSettings
-{
+class ProgramSettings {
 public:
 	boost::filesystem::path InputFile;
 	boost::filesystem::path OutputDir;
@@ -18,20 +17,25 @@ public:
 
 	bool Profile;
 
+	// Timing
+	PR::uint32 MaxTime; // In seconds for equal time measurements
+	bool MaxTimeForce;	// Force to stop iteration and do not wait for iteration end
+
 	// Image
 	PR::uint32 ImgUpdate; // In seconds
-	std::string ImgExt;
+	PR::uint32 ImgUpdateIteration;
+	bool ImgUseTags;
 
 	// Threading
 	PR::uint32 ThreadCount;
 	bool AdaptiveTiling;
-	bool SortHits; 
+	bool SortHits;
 	PR::uint32 RenderTileXCount;
 	PR::uint32 RenderTileYCount;
 	PR::uint32 ImageTileXCount;
 	PR::uint32 ImageTileYCount;
 
 	PR::uint32 CacheMode;
-	
+
 	bool parse(int argc, char** argv);
 };

@@ -5,6 +5,7 @@
 #include "RenderTileStatistics.h"
 
 #include <condition_variable>
+#include <functional>
 #include <list>
 #include <mutex>
 #include <vector>
@@ -21,6 +22,8 @@ class RenderThread;
 class RenderTile;
 class RenderTileMap;
 class Scene;
+
+using RenderIterationCallback = std::function<void(uint32)>;
 
 class PR_LIB_CORE RenderContext {
 	friend class RenderThread;
@@ -67,9 +70,14 @@ public:
 
 	RenderTileStatistics statistics() const;
 	RenderStatus status() const;
+	inline uint32 maxIterationCount() const { return mMaxIterationCount; }
 
 	inline std::shared_ptr<FrameBufferSystem> output() const { return mOutputMap; }
 	inline std::shared_ptr<Scene> scene() const { return mScene; }
+
+	// Set a callback called each start of iteration. The internal state of the callee is undefined
+	inline void setIterationCallback(const RenderIterationCallback& clb) { mIterationCallback = clb; }
+	inline RenderIterationCallback iterationCallback() const { return mIterationCallback; }
 
 protected:
 	RenderTile* getNextTile();
@@ -81,6 +89,7 @@ private:
 	const uint32 mIndex;
 	const Point2i mViewOffset;
 	const Size2i mViewSize;
+	const uint32 mMaxIterationCount;
 
 	std::shared_ptr<Scene> mScene;
 	std::shared_ptr<FrameBufferSystem> mOutputMap;
@@ -102,5 +111,7 @@ private:
 
 	std::shared_ptr<IIntegrator> mIntegrator;
 	bool mShouldStop;
+
+	RenderIterationCallback mIterationCallback;
 };
 } // namespace PR

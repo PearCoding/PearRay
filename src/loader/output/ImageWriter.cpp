@@ -52,7 +52,8 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 					   const std::vector<IM_ChannelSettingSpec>& chSpec,
 					   const std::vector<IM_ChannelSetting1D>& ch1d,
 					   const std::vector<IM_ChannelSettingCounter>& chcounter,
-					   const std::vector<IM_ChannelSetting3D>& ch3d) const
+					   const std::vector<IM_ChannelSetting3D>& ch3d,
+					   const IM_SaveOptions& options) const
 {
 	if (!mRenderer)
 		return false;
@@ -104,6 +105,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	const std::string versionStr = Build::getVersionString();
 	spec.attribute("Software", "PearRay " + versionStr);
 	spec.attribute("IPTC:ProgramVersion", versionStr);
+	if (options.WriteMeta) {
+		spec.attribute("PearRay:IterationCount", options.IterationMeta);
+		spec.attribute("PearRay:TimeSpent", (uint32)options.TimeMeta);
+	}
 
 	const std::string utfFilename = boost::filesystem::path(file).generic_string();
 	// Create file
@@ -126,6 +131,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 
 	out->open(utfFilename, spec);
 	for (Size1i y = 0; y < viewSize.Height; ++y) {
+		PR_OPT_LOOP
 		for (Size1i x = 0; x < viewSize.Width; ++x) {
 			size_t id		= x * channelCount;
 			const Point2i p = Point2i(x, y);
@@ -142,6 +148,10 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 				toneMapper.setColorMode(sett.TCM);
 				toneMapper.map(&ptr[y * channel->heightPitch() + x * channel->widthPitch()],
 							   &line[id], 3, 1); // RGB
+
+				line[id] *= options.SpectralFactor;
+				line[id + 1] *= options.SpectralFactor;
+				line[id + 2] *= options.SpectralFactor;
 
 				id += 3;
 			}
@@ -198,22 +208,6 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 	OIIO::ImageOutput::destroy(out);
 #endif
 
-	return true;
-}
-
-bool ImageWriter::save_spectral(const std::wstring& file,
-								const std::shared_ptr<FrameBufferFloat>& spec,
-								bool compress) const
-{
-	if (!spec || !mRenderer)
-		return false;
-
-	// TODO
-	PR_UNUSED(file);
-	PR_UNUSED(compress);
-	/*SpectralFile specFile(mRenderer->spectrumDescriptor(),
-						  mRenderer->viewSize().Width, mRenderer->viewSize().Height, spec->ptr(), false);
-	specFile.save(file, compress);*/
 	return true;
 }
 } // namespace PR

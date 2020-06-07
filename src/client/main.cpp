@@ -117,6 +117,43 @@ int main(int argc, char** argv)
 			PR_LOG(L_ERROR) << "Unable to create renderer!" << std::endl;
 			return -5;
 		}
+		const auto maxIterationCount = renderer->maxIterationCount();
+
+		std::atomic<bool> softStop(false); // Stop after iteration end
+
+		uint32 imgIterCounter  = 0;
+		uint32 fullIterCounter = 0;
+		auto start			   = sc::high_resolution_clock::now();
+
+		const auto saveImg = [&]() {
+			OutputSaveOptions output_options;
+
+			output_options.Image.IterationMeta	= fullIterCounter;
+			output_options.Image.TimeMeta		= sc::duration_cast<sc::seconds>(sc::high_resolution_clock::now() - start).count();
+			output_options.Image.WriteMeta		= true;
+			output_options.Image.SpectralFactor = std::max(1.0f, maxIterationCount - fullIterCounter - 1.0f);
+
+			if (options.ImgUseTags) {
+				std::stringstream stream;
+				stream << "_i" << output_options.Image.IterationMeta << "_t" << output_options.Image.TimeMeta;
+				output_options.NameSuffix = stream.str();
+			}
+
+			env->save(renderer, toneMapper, output_options);
+		};
+
+		renderer->setIterationCallback([&](uint32 iter) {
+			if (softStop.exchange(false)) {
+				renderer->stop();
+			}
+
+			++fullIterCounter;
+			++imgIterCounter;
+			if (iter < maxIterationCount && options.ImgUpdateIteration > 0 && imgIterCounter >= options.ImgUpdateIteration) {
+				saveImg();
+				imgIterCounter = 0;
+			}
+		});
 
 		env->setup(renderer);
 
@@ -136,7 +173,6 @@ int main(int argc, char** argv)
 
 		renderer->start(options.RenderTileXCount, options.RenderTileYCount, options.ThreadCount);
 
-		auto start		= sc::high_resolution_clock::now();
 		auto start_prog = start;
 		auto start_img	= start;
 		while (!renderer->isFinished()) {
@@ -164,8 +200,16 @@ int main(int argc, char** argv)
 
 			auto span_img = sc::duration_cast<sc::seconds>(end - start_img);
 			if (options.ImgUpdate > 0 && span_img.count() >= options.ImgUpdate) {
-				env->save(renderer, toneMapper, false);
+				saveImg();
 				start_img = end;
+			}
+
+			auto span_full = sc::duration_cast<sc::seconds>(end - start);
+			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
+				if (options.MaxTimeForce)
+					renderer->stop();
+				else
+					softStop = true;
 			}
 		}
 		renderer->notifyEnd();
@@ -188,10 +232,15 @@ int main(int argc, char** argv)
 				std::cout << std::endl;
 
 			PR_LOG(L_INFO) << "Rendering took " << span.count() << " seconds" << std::endl;
-		}
 
-		// Save images
-		env->save(renderer, toneMapper, true);
+			// Save images
+			OutputSaveOptions output_options;
+			output_options.Image.IterationMeta = fullIterCounter;
+			output_options.Image.TimeMeta	   = span.count();
+			output_options.Image.WriteMeta	   = true;
+			// output_options.NameSuffix = ""; // (Do not make use of tags)
+			env->save(renderer, toneMapper, output_options);
+		}
 	}
 
 	env->outputSpecification().deinit();
