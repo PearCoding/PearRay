@@ -197,7 +197,9 @@ endif()
 add_library(pr_lib_core ${PR_Src})
 target_link_libraries(pr_lib_core PUBLIC pr_lib_base ${_BOOST_HEADERS} Boost::filesystem TBB::tbb)
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
-target_include_directories(pr_lib_core PUBLIC PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+target_include_directories(pr_lib_core PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  ../../external/pcg-cpp/include)
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(pr_lib_core PUBLIC "PR_LIB_CORE_STATIC")
   set_target_properties(pr_lib_core PROPERTIES POSITION_INDEPENDENT_CODE TRUE)

@@ -14,3 +14,6 @@
 	path = external/libsimdpp
 	url = git://github.com/PearCoding/libsimdpp.git
 	branch = master
+[submodule "external/pcg-cpp"]
+	path = external/pcg-cpp
+	url = git://github.com/imneme/pcg-cpp.git
