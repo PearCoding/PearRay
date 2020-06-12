@@ -1,4 +1,5 @@
 #include "RenderThread.h"
+#include "Platform.h"
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
@@ -30,6 +31,8 @@ void RenderThread::main()
 	std::stringstream namestream;
 	namestream << "Worker " << mThreadIndex;
 	PR_PROFILE_THREAD(namestream.str());
+
+	setupFloatingPointFlushBehaviour();
 
 	auto integrator					   = mRenderer->integrator()->createThreadInstance(mRenderer, mThreadIndex);
 	std::shared_ptr<OutputQueue> queue = std::make_shared<OutputQueue>(QUEUE_SIZE, QUEUE_THRESHOLD);

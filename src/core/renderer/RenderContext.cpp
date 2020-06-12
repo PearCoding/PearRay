@@ -1,5 +1,6 @@
 #include "RenderContext.h"
 #include "Logger.h"
+#include "Platform.h"
 #include "Profiler.h"
 #include "RenderThread.h"
 #include "RenderTile.h"
@@ -68,10 +69,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 {
 	PR_PROFILE_THIS;
 
-	// Force flush to zero for denormal/subnormal values
-#if defined(PR_USE_HW_FEATURE_SSE2)
-	_mm_setcsr(_mm_getcsr() | (_MM_FLUSH_ZERO_ON | _MM_DENORMALS_ZERO_ON));
-#endif
+	setupFloatingPointFlushBehaviour();
 
 	reset();
 
