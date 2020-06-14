@@ -12,11 +12,9 @@ set(PR_Src
   arch/FileLock.h
   config/Build.cpp
   config/Build.h
-  config/ColliderOptions.h.in
   config/Constants.inl
   config/HW_Switch.inl.in
   config/SIMD.inl
-  config/TriangleOptions.h.in
   config/Types.inl
   config/VectorGlue.inl
   config/Version.h.in

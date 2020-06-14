@@ -7,7 +7,7 @@ constexpr uint32 PR_INVALID_ID = std::numeric_limits<uint32>::max();
 #ifdef M_PI
 constexpr float PR_PI = static_cast<float>(M_PI);
 #else
-constexpr float PR_PI	= static_cast<float>(3.14159265358979323846);
+constexpr float PR_PI = static_cast<float>(3.14159265358979323846);
 #endif
 
 #ifdef M_1_PI

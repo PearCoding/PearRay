@@ -75,34 +75,7 @@ option(PR_DISABLE_HW_FEATURE_POPCNT 	"Disable POPCNT support" OFF)
 option(PR_DISABLE_HW_FEATURE_FMA4 		"Disable FMA4 support" OFF)
 option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 
-# Algorithm options
-option(PR_COLLIDER_FORCE_SINGLE_TRACE	"Force single ray tracing in every trace path" OFF)
 option(BUILD_SHARED_LIBS		"Build shared library" OFF)
-
-# Handle triangle intersection method
-function (ListToString result delim)
-    list(GET ARGV 2 temp)
-    math(EXPR N "${ARGC}-1")
-    foreach(IDX RANGE 3 ${N})
-        list(GET ARGV ${IDX} STR)
-        set(temp "${temp}${delim}${STR}")
-    endforeach()
-    set(${result} "${temp}" PARENT_SCOPE)
-endfunction(ListToString)
-
-set(_PR_TRI_OPTIONS "MT" "PI" "PI_MEM" "PI_OFF" "WT" "BW9" "BW12")
-ListToString(_PR_TRI_OPTIONS_OUT ", " ${_PR_TRI_OPTIONS})
-list(GET _PR_TRI_OPTIONS 0 _PR_TRI_OPTIONS_DEF)
-set(PR_TRIANGLE_INTERSECTION_METHOD "${_PR_TRI_OPTIONS_DEF}" CACHE STRING "One of ${_PR_TRI_OPTIONS_OUT} triangle intersection methods")
-set_property(CACHE PR_TRIANGLE_INTERSECTION_METHOD PROPERTY STRINGS ${_PR_TRI_OPTIONS})
-
-string(STRIP "${PR_TRIANGLE_INTERSECTION_METHOD}" _PR_TRIANGLE_INTERSECTION_METHOD_TMP)
-string(TOUPPER "${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}" _PR_TRIANGLE_INTERSECTION_METHOD_TMP)
-list(FIND _PR_TRI_OPTIONS "${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}" PR_TRIANGLE_INTERSECTION_METHOD_ID)
-if(${PR_TRIANGLE_INTERSECTION_METHOD_ID} LESS 0)
-	message(FATAL_ERROR "Invalid intersection method given. Must be one of ${_PR_TRI_OPTIONS_OUT}")
-endif()
-MESSAGE(STATUS "Using triangle intersection method: ${_PR_TRIANGLE_INTERSECTION_METHOD_TMP}")
 
 # Include packages
 set(CMAKE_INCLUDE_CURRENT_DIR			ON)
@@ -123,6 +96,7 @@ endif()
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(OpenImageIO REQUIRED)
+find_package(Embree REQUIRED)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
 # Optional
@@ -165,12 +139,10 @@ configure_file(src/base/PR_Config.h.in              ${CMAKE_CURRENT_BINARY_DIR}/
 configure_file(src/base/config/HW_Switch.inl.in     ${CMAKE_CURRENT_BINARY_DIR}/config/HW_Switch.inl)
 configure_file(src/base/config/Git.h.in             ${CMAKE_CURRENT_BINARY_DIR}/config/Git.h)
 configure_file(src/base/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/config/Version.h)
-configure_file(src/base/config/ColliderOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/ColliderOptions.h)
-configure_file(src/base/config/TriangleOptions.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/TriangleOptions.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
-			external/tinyobjloader external/libsimdpp
+			external/tinyobjloader
 			${OIIO_INCLUDE_DIR})
 
 # Extras

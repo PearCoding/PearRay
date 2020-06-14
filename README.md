@@ -14,9 +14,9 @@
 ![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)
 
-Experimental high accurate spectral path and ray tracer.
+Experimental high accurate spectral path and ray tracer for research and data acquisition.
 
-:exclamation: **This is experimental software. API changes regularly. Don't use it for big projects (yet)** :exclamation:
+:exclamation: **This is experimental software. API changes regularly** :exclamation:
 
 ![Example render by PearRay. Constructed with Blender 2.80](examples/complex.jpeg)
 
@@ -29,10 +29,11 @@ There is an open source (still experimental) blender integration addon available
 - Boost <http://www.boost.org/>
 - Eigen3 <http://eigen.tuxfamily.org>
 - tinyobjloader <https://github.com/syoyo/tinyobjloader> (submodule)
-- simdpp <https://github.com/p12tic/libsimdpp> (submodule)
 - DataLisp <https://github.com/PearCoding/DataLisp> (submodule)
+- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp> (submodule)
 - OpenImageIO <https://sites.google.com/site/openimageio/home>
-- Intel Threading Building Blocks <https://www.threadingbuildingblocks.org/>
+- Intel® Embree 3 <https://www.embree.org/>
+- Intel® Threading Building Blocks <https://www.threadingbuildingblocks.org/>
 
 ### Optional
 
