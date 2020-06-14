@@ -54,14 +54,6 @@ set(PR_Src
   geometry/Sphere.cpp
   geometry/Sphere.h
   geometry/Triangle.h
-  geometry/TriangleIntersection.h
-  geometry/TriangleIntersection_BW9.h
-  geometry/TriangleIntersection_BW12.h
-  geometry/TriangleIntersection_MT.h
-  geometry/TriangleIntersection_PI.h
-  geometry/TriangleIntersection_PI_Mem.h
-  geometry/TriangleIntersection_PI_Off.h
-  geometry/TriangleIntersection_WT.h
   infinitelight/IInfiniteLight.cpp
   infinitelight/IInfiniteLight.h
   integrator/IIntegrator.cpp
@@ -72,28 +64,10 @@ set(PR_Src
   material/IMaterial.inl
   material/MaterialData.h
   material/MaterialType.h
-  mesh/Mesh.cpp
-  mesh/Mesh.h
   mesh/MeshBase.cpp
   mesh/MeshBase.h
   mesh/MeshBase.inl
-  mesh/MeshFactory.cpp
-  mesh/MeshFactory.h
   mesh/MeshInfo.h
-  mesh/TriMeshBW9.cpp
-  mesh/TriMeshBW9.h
-  mesh/TriMeshBW12.cpp
-  mesh/TriMeshBW12.h
-  mesh/TriMeshMT.cpp
-  mesh/TriMeshMT.h
-  mesh/TriMeshPI.cpp
-  mesh/TriMeshPI.h
-  mesh/TriMeshPIMem.cpp
-  mesh/TriMeshPIMem.h
-  mesh/TriMeshPIOff.cpp
-  mesh/TriMeshPIOff.h
-  mesh/TriMeshWT.cpp
-  mesh/TriMeshWT.h
   output/OutputQueue.cpp
   output/OutputQueue.h
   output/OutputQueue.inl
