@@ -3,7 +3,7 @@
 #include "geometry/GeometryPoint.h"
 #include "math/Reflection.h"
 #include "math/Tangent.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
 enum ShaderPointFlags {

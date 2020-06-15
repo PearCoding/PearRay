@@ -85,7 +85,7 @@ public:
 		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 
@@ -191,7 +191,7 @@ private:
 		return mWidth(0) * (1 - t) + mWidth(1) * t;
 	}
 
-	bool recursiveCheck(const Ray& in, SingleCollisionOutput& out,
+	bool recursiveCheck(const Ray& in, HitPoint& out,
 						const T& curve,
 						float uMin, float uMax, size_t depth) const
 	{

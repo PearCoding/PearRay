@@ -5,11 +5,11 @@ bool Scene::traceSingleRay(const Ray& in, HitEntry& entry) const
 {
 	PR_PROFILE_THIS;
 
-	SingleCollisionOutput out;
+	/*HitPoint out;
 	mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
-			   SingleCollisionOutput& out2) {
+			   HitPoint& out2) {
 			const IEntity* entity = mEntities[index].get();
 			if (entity->visibilityFlags() & in2.Flags)
 				entity->checkCollision(in2, out2);
@@ -28,22 +28,25 @@ bool Scene::traceSingleRay(const Ray& in, HitEntry& entry) const
 		return true;
 	} else {
 		return false;
-	}
+	}*/
+
+	// TODO
+	PR_UNUSED(in);
+	PR_UNUSED(entry);
+	return false;
 }
 
 ShadowHit Scene::traceShadowRay(const Ray& in) const
 {
 	PR_PROFILE_THIS;
 
-	PR_ASSERT(mKDTree, "kdTree has to be valid");
-
-	SingleCollisionOutput out;
+	/*HitPoint out;
 	ShadowHit hit;
 
 	mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
-			   SingleCollisionOutput& out2) {
+			   HitPoint& out2) {
 			const IEntity* entity = mEntities[index].get();
 			if (entity->visibilityFlags() & in2.Flags)
 				entity->checkCollision(in2, out2);
@@ -55,23 +58,24 @@ ShadowHit Scene::traceShadowRay(const Ray& in) const
 	for (int i = 0; i < 3; ++i)
 		hit.Parameter[i] = out.Parameter[i];
 	hit.EntityID	= out.EntityID;
-	hit.PrimitiveID = out.FaceID;
+	hit.PrimitiveID = out.FaceID;*´
 
-	return hit;
+	return hit;*/
+
+	// TODO
+	PR_UNUSED(in);
+	return ShadowHit();
 }
 
 bool Scene::traceOcclusionRay(const Ray& in) const
 {
 	PR_PROFILE_THIS;
 
-	PR_ASSERT(mKDTree, "kdTree has to be valid");
-
-	SingleCollisionOutput out;
-
+	/*HitPoint out;
 	mKDTree->checkCollisionSingle(
 		in, out,
 		[this](const Ray& in2, uint64 index,
-			   SingleCollisionOutput& out2) {
+			   HitPoint& out2) {
 			const IEntity* entity = mEntities[index].get();
 			if (entity->visibilityFlags() & in2.Flags)
 				entity->checkCollision(in2, out2);
@@ -79,7 +83,11 @@ bool Scene::traceOcclusionRay(const Ray& in) const
 				out2.Successful = false;
 		},
 		true);
-	return out.Successful;
+	return out.Successful;*/
+
+	// TODO
+	PR_UNUSED(in);
+	return false;
 }
 
 } // namespace PR

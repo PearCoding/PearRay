@@ -123,7 +123,7 @@ PR_TEST("Intersects Left")
 	Ray ray(Vector3f(-2, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -137,7 +137,7 @@ PR_TEST("Intersects Right Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -151,7 +151,7 @@ PR_TEST("Intersects Right")
 	Ray ray(Vector3f(2, 0, 0),
 			Vector3f(-1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -165,7 +165,7 @@ PR_TEST("Intersects Front")
 	Ray ray(Vector3f(0, 0, -2),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -179,7 +179,7 @@ PR_TEST("Intersects Back Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -193,7 +193,7 @@ PR_TEST("Intersects Back")
 	Ray ray(Vector3f(0, 0, 2),
 			Vector3f(0, 0, -1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -207,7 +207,7 @@ PR_TEST("Intersects Bottom")
 	Ray ray(Vector3f(0, -2, 0),
 			Vector3f(0, 1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -221,7 +221,7 @@ PR_TEST("Intersects Top Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(0, 1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -235,7 +235,7 @@ PR_TEST("Intersects Top")
 	Ray ray(Vector3f(0, 2, 0),
 			Vector3f(0, -1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -250,7 +250,7 @@ PR_TEST("Intersects Complex")
 	Ray ray(Vector3f(1, 2, 0),
 			Vector3f(-1, -1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_TRUE(s.HitDistance < std::numeric_limits<float>::infinity());
 

@@ -29,8 +29,6 @@ public:
 								const Vector3t<T>& p2,
 								const Vector3t<T>& p3)
 	{
-		using namespace simdpp;
-
 		const auto e12 = p2 - p1;
 		const auto e13 = p3 - p1;
 		return 0.5f * e12.cross(e13).norm();

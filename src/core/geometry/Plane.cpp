@@ -1,5 +1,5 @@
 #include "Plane.h"
-#include "CollisionData.h"
+#include "trace/HitPoint.h"
 
 namespace PR {
 constexpr float EPSILON_BOUND = 0.0001f;
@@ -87,9 +87,9 @@ bool Plane::contains(const Vector3f& point) const
 	return false;
 }
 
-void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
+void Plane::intersects(const Ray& in, HitPoint& out) const
 {
-	out.Successful = false;
+	out.resetSuccessful();
 
 	float ln = in.Direction.dot(mNormal_Cache);
 	float pn = (mPosition - in.Origin).dot(mNormal_Cache);
@@ -106,34 +106,11 @@ void Plane::intersects(const Ray& in, SingleCollisionOutput& out) const
 			if (out.Parameter[0] >= 0 && out.Parameter[0] <= 1
 				&& out.Parameter[1] >= 0 && out.Parameter[1] <= 1) {
 				out.HitDistance = t;
-				out.Successful	= true;
+				out.makeSuccessful();
 				return;
 			}
 		}
 	}
-}
-
-void Plane::intersects(const RayPackage& in, CollisionOutput& out) const
-{
-	using namespace simdpp;
-
-	const Vector3fv NV = promote(mNormal_Cache);
-	const Vector3fv PV = promote(mPosition);
-
-	vfloat ln = in.Direction.dot(NV);
-	vfloat pn = (PV - in.Origin).dot(NV);
-
-	out.HitDistance = pn / ln;
-
-	Vector3fv p = in.t(out.HitDistance) - PV;
-
-	out.Parameter[0] = p.dot(promote(mXAxis)) * mInvXLenSqr_Cache;
-	out.Parameter[1] = p.dot(promote(mYAxis)) * mInvYLenSqr_Cache;
-
-	out.Successful = (out.Parameter[0] >= 0) & (out.Parameter[0] <= 1)
-					 & (out.Parameter[1] >= 0) & (out.Parameter[1] <= 1)
-					 & (in.isInsideRange(out.HitDistance))
-					 & (abs(ln) > PR_EPSILON);
 }
 
 Vector2f Plane::project(const Vector3f& point) const
@@ -144,11 +121,4 @@ Vector2f Plane::project(const Vector3f& point) const
 		mYAxis.dot(p) * mInvYLenSqr_Cache);
 }
 
-Vector2fv Plane::project(const Vector3fv& point) const
-{
-	Vector3fv p = point - promote(mPosition);
-	return Vector2fv(
-		promote(mXAxis).dot(p) * mInvXLenSqr_Cache,
-		promote(mYAxis).dot(p) * mInvYLenSqr_Cache);
-}
 } // namespace PR

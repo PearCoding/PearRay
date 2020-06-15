@@ -45,26 +45,6 @@ inline void frame_frisvad(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
 	}
 }
 
-inline void frame_frisvad(const Vector3fv& N, Vector3fv& Nx, Vector3fv& Ny)
-{
-	const vfloat N_ONE = vfloat(-1);
-	const vfloat ZERO  = vfloat(0);
-
-	bfloat mask = N(2) < vfloat(-PR_FRAME_FRISVAD_EPS);
-
-	const vfloat a = 1.0f / (1.0f + N(2));
-	const vfloat b = -N(0) * N(1) * a;
-
-	Nx = Vector3fv(
-		blend(ZERO, 1.0f - N(0) * N(0) * a, mask),
-		blend(N_ONE, b, mask),
-		blend(ZERO, -N(0), mask));
-	Ny = Vector3fv(
-		blend(N_ONE, b, mask),
-		blend(ZERO, 1.0f - N(1) * N(1) * a, mask),
-		blend(ZERO, -N(1), mask));
-}
-
 /* Tom Duff, James Burgess, Per Christensen, Christophe Hery, Andrew Kensler, Max Liani, and Ryusuke Villemin,
  * Building an Orthonormal Basis, Revisited, Journal of Computer Graphics Techniques (JCGT), vol. 6, no. 1, 1-8, 2017
  * http://jcgt.org/published/0006/01/01/
@@ -76,15 +56,6 @@ inline void frame_duff(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
 	const float b	 = N(0) * N(1) * a;
 	Nx				 = Vector3f(1.0f + sign * N(0) * N(0) * a, sign * b, -sign * N(0));
 	Ny				 = Vector3f(b, sign + N(1) * N(1) * a, -N(1));
-}
-
-inline void frame_duff(const Vector3fv& N, Vector3fv& Nx, Vector3fv& Ny)
-{
-	const vfloat sign = blend(vfloat(1), vfloat(-1), N(2) >= vfloat(0));
-	const vfloat a	  = -1.0f / (sign + N(2));
-	const vfloat b	  = N(0) * N(1) * a;
-	Nx				  = Vector3fv(1.0f + sign * N(0) * N(0) * a, sign * b, -sign * N(0));
-	Ny				  = Vector3fv(b, sign + N(1) * N(1) * a, -N(1));
 }
 
 template <typename T>

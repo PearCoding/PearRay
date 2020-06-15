@@ -22,12 +22,6 @@ set(PR_Src
   camera/ICamera.h
   container/IndexSort.h
   container/Interval.h
-  container/kdTreeBuilder.cpp
-  container/kdTreeBuilder.h
-  container/kdTreeBuilderNaive.cpp
-  container/kdTreeBuilderNaive.h
-  container/kdTreeCollider.cpp
-  container/kdTreeCollider.h
   container/QuickSort.h
   container/RadixSort.h
   entity/IEntity.cpp
@@ -89,7 +83,7 @@ set(PR_Src
   path/LPE_RegExpr.cpp
   path/LPE_RegExpr.h
   path/LPE_RegState.h
-  ray/RayPackage.h
+  ray/Ray.h
   ray/RayStream.cpp
   ray/RayStream.h
   renderer/RenderContext.cpp
@@ -157,6 +151,7 @@ set(PR_Src
   thread/Thread.h
   thread/Thread.inl
   trace/HitEntry.h
+  trace/HitPoint.h
   trace/HitStream.cpp
   trace/HitStream.h
   trace/ShadowHit.h

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Random.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 #include "renderer/RenderTileStatistics.h"
 
 #include <atomic>

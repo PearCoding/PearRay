@@ -88,13 +88,13 @@ public:
 		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		out.Successful = false;
+		out.resetSuccessful();
 		auto range	   = localBoundingBox().intersectsRange(in_local);
 		if (range.Entry < 0)
 			range.Entry = 0;
@@ -108,7 +108,7 @@ public:
 			if (t <= range.Exit) {
 				out.Parameter	= in_local.t(t);
 				out.HitDistance = t;
-				out.Successful	= true;
+				out.makeSuccessful();
 			}
 		}
 

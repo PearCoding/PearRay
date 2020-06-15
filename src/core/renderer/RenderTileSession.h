@@ -4,7 +4,7 @@
 #include "buffer/Feedback.h"
 #include "entity/IEntity.h"
 #include "geometry/GeometryPoint.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 #include "ray/RayStream.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"

@@ -80,7 +80,7 @@ PR_TEST("Intersects")
 	Ray ray(Vector3f(-2, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	sphere.intersects(ray, s);
 	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
@@ -92,7 +92,7 @@ PR_TEST("Intersects Behind")
 	Ray ray(Vector3f(-2, 0, 0),
 			Vector3f(-2, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	sphere.intersects(ray, s);
 	PR_CHECK_FALSE(s.Successful);
 }
@@ -103,7 +103,7 @@ PR_TEST("Intersects Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	sphere.intersects(ray, s);
 	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);

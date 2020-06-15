@@ -68,7 +68,7 @@ PR_TEST("Intersects 1")
 	Ray ray(Vector3f(0.5, 0.5, -1),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	plane.intersects(ray, s);
 
 	PR_CHECK_TRUE(s.Successful);
@@ -84,7 +84,7 @@ PR_TEST("Intersects 2")
 	Ray ray(Vector3f(0.5, 0.5, -1),
 			Vector3f(0, 1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	plane.intersects(ray, s);
 	PR_CHECK_FALSE(s.Successful);
 }
@@ -95,7 +95,7 @@ PR_TEST("Intersects 3")
 	Ray ray(Vector3f(5, 5, -1),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	plane.intersects(ray, s);
 
 	PR_CHECK_TRUE(s.Successful);
@@ -110,7 +110,7 @@ PR_TEST("Intersects 4")
 	Ray ray(Vector3f(5, 10, -1),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	plane.intersects(ray, s);
 
 	PR_CHECK_TRUE(s.Successful);

@@ -1,5 +1,5 @@
 #include "BoundingBox.h"
-#include "CollisionData.h"
+#include "trace/HitPoint.h"
 #include "Plane.h"
 
 namespace PR {
@@ -43,7 +43,7 @@ void BoundingBox::inflate(float eps, bool maxDir)
 	}
 }
 
-void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
+void BoundingBox::intersects(const Ray& in, HitPoint& out) const
 {
 	out.HitDistance		  = std::numeric_limits<float>::infinity();
 	const Vector3f invDir = in.Direction.cwiseInverse();
@@ -65,28 +65,6 @@ void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 		else if (in.isInsideRange(exit))
 			out.HitDistance = exit;
 	}
-}
-
-void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
-{
-	const Vector3fv invDir = in.Direction.cwiseInverse();
-
-	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
-	vfloat exit	 = vfloat(std::numeric_limits<float>::infinity());
-
-	for (int i = 0; i < 3; ++i) {
-		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		entry = max(min(vmin, vmax), entry);
-		exit  = min(max(vmin, vmax), exit);
-	}
-
-	const simdpp::float32v inf = simdpp::make_float(std::numeric_limits<float>::infinity());
-	out.HitDistance			   = simdpp::blend(exit, entry, entry < 0);
-	out.HitDistance			   = simdpp::blend(out.HitDistance,
-									   simdpp::blend(exit, inf, (exit >= entry) & in.isInsideRange(exit)),
-									   (exit >= entry) & in.isInsideRange(out.HitDistance));
 }
 
 BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
@@ -114,37 +92,6 @@ BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 	r.Entry		 = std::max(in.MinT, r.Entry);
 	r.Exit		 = std::min(in.MaxT, r.Exit);
 	r.Successful = (r.Exit >= r.Entry && in.isInsideRange(r.Exit));
-
-	return r;
-}
-
-BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& in) const
-{
-	using namespace simdpp;
-
-	BoundingBox::IntersectionRangeV r;
-	const Vector3fv invDir = in.Direction.cwiseInverse();
-
-	// Leading loop part
-	{
-		const vfloat vmin = (lowerBound()(0) - in.Origin[0]) * invDir[0];
-		const vfloat vmax = (upperBound()(0) - in.Origin[0]) * invDir[0];
-		r.Entry			  = min(vmin, vmax);
-		r.Exit			  = max(vmin, vmax);
-	}
-
-	PR_UNROLL_LOOP(2)
-	for (int i = 1; i < 3; ++i) {
-		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		r.Entry = max(min(vmin, vmax), r.Entry);
-		r.Exit	= min(max(vmin, vmax), r.Exit);
-	}
-
-	r.Entry		 = max(in.MinT, r.Entry);
-	r.Exit		 = min(in.MaxT, r.Exit);
-	r.Successful = (r.Exit >= r.Entry) & in.isInsideRange(r.Exit);
 
 	return r;
 }

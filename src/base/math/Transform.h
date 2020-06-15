@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "SIMD.h"
 
 namespace PR {
 
@@ -27,29 +26,6 @@ inline Vector3f safePosition(const Vector3f& pos,
 			posOff[i] = nextFloatUp(posOff[i]);
 		else if (offset[i] < 0)
 			posOff[i] = nextFloatDown(posOff[i]);
-	}
-	return posOff;
-}
-
-inline Vector3fv safePosition(const Vector3fv& pos,
-							  const Vector3fv& dir,
-							  const Vector3fv& N)
-{
-	vfloat d		 = (N.cwiseAbs() * vfloat(RayOffsetEpsilon)).sum();
-	Vector3fv offset = d * N;
-
-	bfloat neg		 = dir.dot(N) < 0;
-	offset[0]		 = blend(-offset[0], offset[0], neg);
-	offset[1]		 = blend(-offset[1], offset[1], neg);
-	offset[2]		 = blend(-offset[2], offset[2], neg);
-	Vector3fv posOff = pos + offset;
-
-	for (int i = 0; i < 3; ++i) {
-		vfloat add = foreach_assign_v(posOff[i], [&](float val) { return nextFloatUp(val); });
-		vfloat sub = foreach_assign_v(posOff[i], [&](float val) { return nextFloatDown(val); });
-		posOff[i]  = blend(add,
-						   blend(sub, posOff[i], offset[i] < 0),
-						   offset[i] > 0);
 	}
 	return posOff;
 }

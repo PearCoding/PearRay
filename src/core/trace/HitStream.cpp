@@ -13,7 +13,7 @@
 namespace PR {
 
 HitStream::HitStream(size_t size)
-	: mSize(size + size % PR_SIMD_BANDWIDTH)
+	: mSize(size)
 	, mCurrentPos(0)
 {
 	mRayID.reserve(mSize);

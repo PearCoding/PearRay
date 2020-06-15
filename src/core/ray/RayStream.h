@@ -1,8 +1,9 @@
 #pragma once
 
 #include "math/Compression.h"
-#include "math/SIMD.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
+
+#include <vector>
 
 namespace PR {
 class RayStream;
@@ -20,8 +21,7 @@ public:
 	RayGroup& operator=(RayGroup&&) = default;
 
 	inline Ray getRay(size_t id) const;
-	inline RayPackage getRayPackage(size_t id) const;
-
+	
 	inline size_t offset() const { return mOffset; }
 	inline size_t size() const { return mSize; }
 	inline bool isCoherent() const { return mCoherent; }
@@ -49,8 +49,7 @@ public:
 
 	void addRay(const Ray& ray);
 	Ray getRay(size_t id) const;
-	RayPackage getRayPackage(size_t id) const;
-
+	
 	void reset();
 	RayGroup getNextGroup();
 
@@ -91,9 +90,4 @@ inline Ray RayGroup::getRay(size_t id) const
 	return mStream->getRay(id + mOffset);
 }
 
-inline RayPackage RayGroup::getRayPackage(size_t id) const
-{
-	PR_ASSERT(id < mSize, "Invalid access!");
-	return mStream->getRayPackage(id + mOffset);
-}
 } // namespace PR

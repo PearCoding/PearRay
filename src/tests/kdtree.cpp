@@ -242,7 +242,7 @@ PR_TEST("Single Intersection")
 	in.Direction[2] = -1;
 	in.cache();
 
-	SingleCollisionOutput out;
+	HitPoint out;
 	mesh->checkCollision(in, out);
 
 	// Left triangle
@@ -284,7 +284,7 @@ PR_TEST("Single Intersection Overlap")
 	in.Direction = Vector3f(0, 0, -1);
 	in.cache();
 
-	SingleCollisionOutput out;
+	HitPoint out;
 	mesh->checkCollision(in, out);
 
 	PR_CHECK_TRUE(out.Successful);

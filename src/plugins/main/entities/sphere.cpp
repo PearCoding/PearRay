@@ -92,7 +92,7 @@ public:
 		out.MaterialID  = simdpp::make_uint(mMaterialID);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 

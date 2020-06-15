@@ -9,7 +9,7 @@ enum EntityVisibilityFlag : uint8 {
 	EVF_Light  = 0x2,
 	EVF_Bounce = 0x4,
 	EVF_Shadow = 0x8,
-	EVF_All	= EVF_Camera | EVF_Light | EVF_Bounce | EVF_Shadow
+	EVF_All	   = EVF_Camera | EVF_Light | EVF_Bounce | EVF_Shadow
 };
 
 struct GeometryPoint;
@@ -40,8 +40,7 @@ public:
 
 	virtual BoundingBox localBoundingBox() const = 0;
 
-	virtual void checkCollision(const Ray& in, SingleCollisionOutput& out) const  = 0;
-	virtual void checkCollision(const RayPackage& in, CollisionOutput& out) const = 0;
+	virtual void checkCollision(const Ray& in, HitPoint& out) const = 0;
 
 	virtual Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
 											  uint32& faceID, float& pdf) const = 0;

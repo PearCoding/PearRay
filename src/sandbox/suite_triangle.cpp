@@ -2,7 +2,7 @@
 #include "Profiler.h"
 #include "geometry/TriangleIntersection.h"
 #include "image_io.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 #include <array>
 #include <boost/filesystem.hpp>

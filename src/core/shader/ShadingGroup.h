@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ShadingGroupBlock.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
 class RenderTile;

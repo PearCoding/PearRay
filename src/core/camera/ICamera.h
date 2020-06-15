@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entity/ITransformable.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
 struct PR_LIB_CORE CameraSample {

@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Profiler.h"
-#include "config/ColliderOptions.h"
-#include "container/kdTreeCollider.h"
 #include "entity/IEntity.h"
 #include "geometry/BoundingBox.h"
 #include "math/Compression.h"
@@ -30,8 +28,7 @@ public:
 		  const std::vector<std::shared_ptr<IEntity>>& entities,
 		  const std::vector<std::shared_ptr<IMaterial>>& materials,
 		  const std::vector<std::shared_ptr<IEmission>>& emissions,
-		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
-		  const std::wstring& cntFile);
+		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights);
 	virtual ~Scene();
 
 	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
@@ -57,9 +54,6 @@ private:
 	inline void traceCoherentRays(const RayGroup& grp, HitStream& hits) const;
 	inline void traceIncoherentRays(const RayGroup& grp, HitStream& hits) const;
 
-	void buildTree(const std::wstring& file);
-	void loadTree(const std::wstring& file);
-
 	std::shared_ptr<ICamera> mActiveCamera;
 	std::vector<std::shared_ptr<IEntity>> mEntities;
 	std::vector<std::shared_ptr<IMaterial>> mMaterials;
@@ -68,7 +62,6 @@ private:
 	std::vector<std::shared_ptr<IInfiniteLight>> mDeltaInfLights;
 	std::vector<std::shared_ptr<IInfiniteLight>> mNonDeltaInfLights;
 
-	std::unique_ptr<class kdTreeCollider> mKDTree;
 	BoundingBox mBoundingBox;
 };
 } // namespace PR

@@ -25,7 +25,7 @@ RayGroup::RayGroup(const RayStream* stream, size_t offset, size_t size, bool coh
 /////////////////////////////////////////////////////////
 
 RayStream::RayStream(size_t raycount)
-	: mSize(raycount + raycount % PR_SIMD_BANDWIDTH)
+	: mSize(raycount)
 	, mCurrentReadPos(0)
 	, mCurrentWritePos(0)
 {
@@ -151,55 +151,6 @@ Ray RayStream::getRay(size_t id) const
 		ray.Weight[k] = mWeight[k][id];
 	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		ray.WavelengthNM[k] = mWavelengthNM[k][id];
-
-	ray.normalize();
-
-	return ray;
-}
-
-RayPackage RayStream::getRayPackage(size_t id) const
-{
-	PR_PROFILE_THIS;
-
-	RayPackage ray;
-	load_from_container_linear(ray.Origin[0], mOrigin[0], id);
-	load_from_container_linear(ray.Origin[1], mOrigin[1], id);
-	load_from_container_linear(ray.Origin[2], mOrigin[2], id);
-
-#ifdef PR_COMPRESS_RAY_DIR
-	PR_SIMD_ALIGN float dir[3][PR_SIMD_BANDWIDTH];
-	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k) {
-		from_oct(
-			from_snorm16(Direction[0][id + k]),
-			from_snorm16(Direction[1][id + k]),
-			dir[0][k], dir[1][k], dir[2][k]);
-	}
-
-	ray.Direction = Vector3fv(simdpp::load(&dir[0][0]),
-							  simdpp::load(&dir[1][0]),
-							  simdpp::load(&dir[2][0]));
-#else
-	load_from_container_linear(ray.Direction[0], mDirection[0], id);
-	load_from_container_linear(ray.Direction[1], mDirection[1], id);
-	load_from_container_linear(ray.Direction[2], mDirection[2], id);
-#endif
-
-	load_from_container_linear(ray.IterationDepth, mIterationDepth, id);
-	load_from_container_linear(ray.PixelIndex, mPixelIndex, id);
-
-	PR_SIMD_ALIGN float t[PR_SIMD_BANDWIDTH];
-	for (size_t k = 0; k < PR_SIMD_BANDWIDTH; ++k)
-		t[k] = from_unorm16(mTime[id + k]);
-	ray.Time = simdpp::load(&t[0]);
-
-	load_from_container_linear(ray.Flags, mFlags, id);
-
-	load_from_container_linear(ray.MinT, mMinT, id);
-	load_from_container_linear(ray.MaxT, mMaxT, id);
-	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
-		load_from_container_linear(ray.Weight[k], mWeight[k], id);
-	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
-		load_from_container_linear(ray.WavelengthNM[k], mWavelengthNM[k], id);
 
 	ray.normalize();
 
