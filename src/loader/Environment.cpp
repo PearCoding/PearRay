@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Platform.h"
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
 #include "cache/Cache.h"
@@ -199,6 +200,8 @@ std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 
 std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 {
+	setupFloatingPointFlushBehaviour();
+
 	auto entities  = mEntityManager->getAll();
 	auto materials = mMaterialManager->getAll();
 	auto emissions = mEmissionManager->getAll();
@@ -210,11 +213,18 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 		return nullptr;
 	}
 
-	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
-														   entities,
-														   materials,
-														   emissions,
-														   inflights);
+	std::shared_ptr<Scene> scene;
+	try {
+		scene = std::make_shared<Scene>(activeCamera,
+										entities,
+										materials,
+										emissions,
+										inflights);
+	} catch (const std::exception& e) {
+		PR_LOG(L_ERROR) << e.what() << std::endl;
+		return nullptr;
+	}
+
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;
 		return nullptr;

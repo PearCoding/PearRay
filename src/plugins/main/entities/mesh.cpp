@@ -67,32 +67,39 @@ public:
 
 	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_TRIANGLE);
+		RTCGeometry geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_TRIANGLE);
+
+		// TODO: Make sure the internal mesh buffer is proper aligned at the end
+		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mMesh->vertices().data(), 0, sizeof(float) * 3, mMesh->vertices().size() / 3);
+		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, mMesh->indices().data(), 0, sizeof(uint32) * 3, mMesh->indices().size() / 3);
+		rtcCommitGeometry(geom);
+
 		return GeometryRepr(geom);
 	}
 
-	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
 	{
 		PR_PROFILE_THIS;
 		SplitSample2D split(rnd, 0, mMesh->faceCount());
-		faceID = split.integral1();
+		uint32 faceID = split.integral1();
 
 		Face face = mMesh->getFace(faceID);
-		pdf		  = 1.0f / (mMesh->faceCount() * face.surfaceArea());
+		float pdf = 1.0f / (mMesh->faceCount() * face.surfaceArea());
 
-		return Vector3f(split.uniform1(), split.uniform2(), 0);
+		Vector2f uv = Vector2f(split.uniform1(), split.uniform2());
+
+		return EntityRandomPoint(face.interpolateVertices(uv), uv, faceID, pdf);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32 faceID, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
 		// Local
 		Vector2f uv;
-		Face face = mMesh->getFace(faceID);
-		face.interpolate(Vector2f(parameter[0], parameter[1]), pt.P, pt.N, uv);
+		Face face = mMesh->getFace(query.PrimitiveID);
+		face.interpolate(Vector2f(query.UV[0], query.UV[1]), pt.P, pt.N, uv);
 
 		if (mMesh->features() & MF_HAS_UV) // Could be amortized by two types of mesh entities!
 			face.tangentFromUV(pt.N, pt.Nx, pt.Ny);

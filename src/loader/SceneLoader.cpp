@@ -719,11 +719,6 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 		mesh->triangulate();
 	}
 
-	bool useCache	   = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount());
-	DL::Data useCacheD = group.getFromKey("cache");
-	if (useCacheD.type() == DL::DT_Bool)
-		useCache = useCacheD.getBool();
-
 	ctx.Env->addMesh(name, std::move(mesh));
 }
 

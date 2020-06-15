@@ -1,5 +1,5 @@
 #include "geometry/Plane.h"
-#include "geometry/CollisionData.h"
+#include "trace/HitPoint.h"
 
 #include "Test.h"
 
@@ -71,7 +71,7 @@ PR_TEST("Intersects 1")
 	HitPoint s;
 	plane.intersects(ray, s);
 
-	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_TRUE(s.isSuccessful());
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
@@ -86,7 +86,7 @@ PR_TEST("Intersects 2")
 
 	HitPoint s;
 	plane.intersects(ray, s);
-	PR_CHECK_FALSE(s.Successful);
+	PR_CHECK_FALSE(s.isSuccessful());
 }
 
 PR_TEST("Intersects 3")
@@ -98,7 +98,7 @@ PR_TEST("Intersects 3")
 	HitPoint s;
 	plane.intersects(ray, s);
 
-	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_TRUE(s.isSuccessful());
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
@@ -113,33 +113,10 @@ PR_TEST("Intersects 4")
 	HitPoint s;
 	plane.intersects(ray, s);
 
-	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_TRUE(s.isSuccessful());
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1.0f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[0], 0.5f);
 	PR_CHECK_NEARLY_EQ(s.Parameter[1], 0.5f);
-}
-
-PR_TEST("Intersects [Package]")
-{
-	using namespace simdpp;
-	Plane plane(Vector3f(0, 0, 0), Vector3f(1, 0, 0), Vector3f(0, 1, 0));
-	RayPackage rays(Vector3fv(make_float(0.5f, 0.5f, 5, 5),
-							  make_float(0.5f, 0.5f, 5, 10),
-							  make_float(-1, -1, -1, -1)),
-					Vector3fv(make_float(0, 0, 0, 0),
-							  make_float(0, 1, 0, 0),
-							  make_float(1, 0, 1, 1)));
-
-	CollisionOutput s;
-	plane.intersects(rays, s);
-
-	PR_CHECK_TRUE(extract<0>(s.Successful));
-	PR_CHECK_NEARLY_EQ(extract<0>(s.HitDistance), 1.0f);
-	PR_CHECK_NEARLY_EQ(extract<0>(s.Parameter[0]), 0.5f);
-	PR_CHECK_NEARLY_EQ(extract<0>(s.Parameter[1]), 0.5f);
-	PR_CHECK_FALSE(extract<1>(s.Successful));
-	PR_CHECK_FALSE(extract<2>(s.Successful));
-	PR_CHECK_FALSE(extract<3>(s.Successful));
 }
 
 PR_END_TESTCASE()

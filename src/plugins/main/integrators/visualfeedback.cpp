@@ -129,7 +129,7 @@ public:
 					radiance *= weight;
 				break;
 			case VFM_ColoredPrimitiveID:
-				radiance = sRandomColors[spt.PrimID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.PrimitiveID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
@@ -167,19 +167,20 @@ public:
 					radiance = SpectralBlob{ originalNdotV, 0, 0, 1 };
 			} break;
 			case VFM_ValidateMaterial: {
-				if (grp.material()) {
+				IMaterial* mat = session.getMaterial(spt.Geometry.MaterialID);
+				if (mat) {
 					MaterialSampleInput samp_in;
 					samp_in.Point = spt;
 					samp_in.RND	  = random.get2D();
 					MaterialSampleOutput samp_out;
-					grp.material()->sample(samp_in, samp_out, session);
+					mat->sample(samp_in, samp_out, session);
 
 					MaterialEvalInput eval_in;
 					eval_in.Point	 = spt;
 					eval_in.Outgoing = samp_out.Outgoing;
 					eval_in.NdotL	 = spt.N.dot(eval_in.Outgoing);
 					MaterialEvalOutput eval_out;
-					grp.material()->eval(eval_in, eval_out, session);
+					mat->eval(eval_in, eval_out, session);
 
 					const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
 					const float relPDFDiff = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum();

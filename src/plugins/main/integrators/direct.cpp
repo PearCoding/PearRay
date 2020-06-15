@@ -79,9 +79,9 @@ public:
 
 			if (outL.PDF_S > PR_EPSILON) {
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, outL.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-				ShadowHit shadowHit = session.traceShadowRay(shadow);
-				if (!shadowHit.Successful) {
+				const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+				bool hitAnything = session.traceOcclusionRay(shadow);
+				if (!hitAnything) {
 					// Evaluate surface
 					MaterialEvalInput in;
 					in.Point	= spt;
@@ -116,9 +116,9 @@ public:
 				&& !outS.Weight.isZero()) {
 
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-				ShadowHit shadowHit = session.traceShadowRay(shadow);
-				if (!shadowHit.Successful) {
+				const Ray shadow = spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+				bool hitAnything = session.traceOcclusionRay(shadow);
+				if (!hitAnything) {
 					InfiniteLightEvalInput inL;
 					inL.Point = spt;
 					InfiniteLightEvalOutput outL;
@@ -242,10 +242,11 @@ public:
 				&& pdfA >= PR_EPSILON) {
 
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, L, spt.N, RF_Shadow, BOUNCE_RAY_MIN, std::sqrt(sqrD) + 0.0005f);
-				ShadowHit shadowHit = session.traceShadowRay(shadow);
+				const float distance = std::sqrt(sqrD);
+				const Ray shadow	 = spt.Ray.next(spt.P, L, spt.N, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+				bool shadowHit		 = session.traceShadowRay(shadow, distance, light->id());
 
-				if (shadowHit.Successful && shadowHit.EntityID == light->id()) {
+				if (shadowHit) {
 					// Evaluate light
 					LightEvalInput inL;
 					inL.Entity = light;
@@ -283,20 +284,18 @@ public:
 
 			if (!outS.Weight.isZero()) {
 				// Trace shadow ray
-				const Ray shadow	= spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
-				ShadowHit shadowHit = session.traceShadowRay(shadow);
-				if (shadowHit.Successful
-					&& shadowHit.EntityID == light->id()) {
-					// Retrive geometry information from the new point
-					GeometryPoint nlightPt;
-					light->provideGeometryPoint(
-						shadow.Direction, shadowHit.PrimitiveID,
-						Vector3f(shadowHit.Parameter[0], shadowHit.Parameter[1], shadowHit.Parameter[2]), nlightPt);
+				const Ray shadow = spt.Ray.next(spt.P, outS.Outgoing, spt.N, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 
+				GeometryPoint nlightPt;
+				IEntity* nlight;
+				IMaterial* nmaterial;
+				bool hit = session.traceBounceRay(shadow, nlightPt, nlight, nmaterial);
+				PR_UNUSED(nmaterial);
+				if (hit && nlight->isLight()) {
 					if (std::abs(shadow.Direction.dot(nlightPt.N)) > PR_EPSILON) {
 						// Evaluate light
 						LightEvalInput inL;
-						inL.Entity = light;
+						inL.Entity = nlight;
 						inL.Point.setByIdentity(shadow, nlightPt);
 						LightEvalOutput outL;
 						ems->eval(inL, outL, session);
@@ -417,7 +416,8 @@ public:
 		for (size_t i = 0; i < sg.size(); ++i) {
 			ShadingPoint spt;
 			sg.computeShadingPoint(i, spt);
-			eval(session, path, spt, sg.entity(), sg.material());
+
+			eval(session, path, spt, sg.entity(), session.getMaterial(spt.Geometry.MaterialID));
 			PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");
 		}
 	}

@@ -23,9 +23,9 @@ RayGroup::RayGroup(const RayStream* stream, size_t offset, size_t size, bool coh
 }
 
 /////////////////////////////////////////////////////////
-
+constexpr size_t MAX_BANDWIDTH = 16; // AVX512
 RayStream::RayStream(size_t raycount)
-	: mSize(raycount)
+	: mSize(raycount + raycount % MAX_BANDWIDTH)
 	, mCurrentReadPos(0)
 	, mCurrentWritePos(0)
 {
@@ -70,11 +70,11 @@ void RayStream::addRay(const Ray& ray)
 #endif
 
 	mIterationDepth[mCurrentWritePos] = ray.IterationDepth;
-	mPixelIndex[mCurrentWritePos] = ray.PixelIndex;
-	mTime[mCurrentWritePos] = to_unorm16(ray.Time);
-	mMinT[mCurrentWritePos] = ray.MinT;
-	mMaxT[mCurrentWritePos] = ray.MaxT;
-	mFlags[mCurrentWritePos] = ray.Flags;
+	mPixelIndex[mCurrentWritePos]	  = ray.PixelIndex;
+	mTime[mCurrentWritePos]			  = to_unorm16(ray.Time);
+	mMinT[mCurrentWritePos]			  = ray.MinT;
+	mMaxT[mCurrentWritePos]			  = ray.MaxT;
+	mFlags[mCurrentWritePos]		  = ray.Flags;
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 		mWeight[i][mCurrentWritePos] = ray.Weight(i);
 

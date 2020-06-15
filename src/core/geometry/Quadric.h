@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/SIMD.h"
+#include "PR_Config.h"
 
 #include <Eigen/Eigenvalues>
 #include <array>
@@ -26,15 +26,14 @@ public:
 			t**2*a + t*b + c = 0
 	*/
 	template <typename T>
-	inline static typename VectorTemplate<T>::bool_t intersect(
+	inline static bool intersect(
 		const ParameterArray& parameters,
 		const Vector3t<T>& origin,
 		const Vector3t<T>& direction,
 		T& t)
 	{
-		typedef typename VectorTemplate<T>::bool_t BOOL;
 		static const T INT_EPS = T(1e-6f);
-		static const T INF = T(std::numeric_limits<float>::infinity());
+		static const T INF	   = T(std::numeric_limits<float>::infinity());
 
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -56,19 +55,19 @@ public:
 			  + D * origin[0] * origin[1] + E * origin[0] * origin[2] + F * origin[1] * origin[2]
 			  + G * origin[0] + H * origin[1] + I * origin[2] + J;
 
-		BOOL linear  = abs(a) < PR_EPSILON;
+		bool linear	 = abs(a) < PR_EPSILON;
 		T lin		 = -c / b;
-		T discrim	= b * b - 4 * a * c;
-		BOOL invalid = discrim < 0;
+		T discrim	 = b * b - 4 * a * c;
+		bool invalid = discrim < 0;
 		discrim		 = sqrt(discrim);
 		T qu1		 = (-b - discrim) / (2 * a);
 		T qu2		 = (-b + discrim) / (2 * a);
-		BOOL behind  = qu1 < INT_EPS;
-		T qu		 = blend(qu2, qu1, behind);
+		bool behind	 = qu1 < INT_EPS;
+		T qu		 = behind ? qu2 : qu1;
 
-		t	 = blend(lin, blend(INF, qu, invalid), linear);
+		t = linear ? lin : (invalid ? INF : qu);
 
-		return b_and(t < INF, (t > INT_EPS));
+		return t < INF && (t > INT_EPS);
 	}
 
 	template <typename T>

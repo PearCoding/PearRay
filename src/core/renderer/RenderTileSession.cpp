@@ -65,20 +65,25 @@ bool RenderTileSession::traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntit
 	if (!entity)
 		return false;
 
-	material = getMaterial(entry.MaterialID);
+	EntityGeometryQueryPoint query;
+	query.PrimitiveID = entry.PrimitiveID;
+	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[0]);
+	query.View		  = ray.Direction;
+	query.Position	  = ray.t(entry.Parameter.z());
 
-	entity->provideGeometryPoint(ray.Direction, entry.PrimitiveID,
-								 Vector3f(entry.Parameter[0], entry.Parameter[1], entry.Parameter[2]), pt);
+	entity->provideGeometryPoint(query, pt);
+
+	material = getMaterial(pt.MaterialID);
 
 	return true;
 }
 
-ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
+bool RenderTileSession::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
 {
 	PR_PROFILE_THIS;
 
 	mTile->statistics().addShadowRayCount();
-	return mTile->context()->scene()->traceShadowRay(ray);
+	return mTile->context()->scene()->traceShadowRay(ray, distance, entity_id);
 }
 
 bool RenderTileSession::traceOcclusionRay(const Ray& ray) const
@@ -148,12 +153,15 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 
 	IEntity* light = lights.at(pick).get();
 
-	float pdf2	   = 0;
-	uint32 faceID  = 0;
-	Vector3f param = light->pickRandomParameterPoint(view, mTile->random().get2D(), faceID, pdf2);
+	EntityRandomPoint rnd_p = light->pickRandomParameterPoint(view, mTile->random().get2D());
 
-	light->provideGeometryPoint(view, faceID, param, pt);
-	pdf *= pdf2;
+	EntityGeometryQueryPoint query;
+	query.PrimitiveID = rnd_p.PrimitiveID;
+	query.UV		  = rnd_p.UV;
+	query.View		  = view;
+	query.Position	  = rnd_p.Position;
+	light->provideGeometryPoint(query, pt);
+	pdf *= rnd_p.PDF_A;
 
 	return light;
 }

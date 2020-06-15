@@ -40,6 +40,7 @@ set(PR_Src
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
+  memory/AlignedAllocator.h
   memory/MemoryPool.h
   memory/MemoryPool.inl
   memory/MemoryStack.h

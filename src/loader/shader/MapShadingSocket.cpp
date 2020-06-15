@@ -12,7 +12,7 @@ SpectralBlob MapShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	MapSocketCoord coord;
 	coord.UV	= Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);
-	coord.Face  = ctx.PrimID;
+	coord.Face  = ctx.PrimitiveID;
 	coord.WavelengthNM = ctx.Ray.WavelengthNM;
 
 	return mMap->eval(coord);

@@ -11,7 +11,6 @@
 #include "renderer/RenderTileStatistics.h"
 #include "scene/Scene.h"
 #include "trace/HitStream.h"
-#include "trace/ShadowHit.h"
 
 namespace PR {
 
@@ -46,7 +45,7 @@ public:
 	IEmission* getEmission(uint32 id) const;
 
 	bool traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
-	ShadowHit traceShadowRay(const Ray& ray) const;
+	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 
 	void pushSpectralFragment(const SpectralBlob& spec, const Ray& ray,

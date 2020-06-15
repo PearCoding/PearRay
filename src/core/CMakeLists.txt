@@ -121,7 +121,6 @@ set(PR_Src
   sampler/SplitSample.h
   scene/Scene.cpp
   scene/Scene.h
-  scene/Scene.inl
   serialization/BufferSerializer.h
   serialization/BufferSerializer.cpp
   serialization/FileSerializer.h
@@ -155,7 +154,6 @@ set(PR_Src
   trace/HitPoint.h
   trace/HitStream.cpp
   trace/HitStream.h
-  trace/ShadowHit.h
 )
 
 if(${CMAKE_VERSION} VERSION_LESS 3.15)

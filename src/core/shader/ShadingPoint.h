@@ -34,7 +34,7 @@ public:
 	float NdotV;
 
 	uint32 EntityID;
-	uint32 PrimID;
+	uint32 PrimitiveID;
 
 	// Set shading terms without transformation
 	inline void setByIdentity(const PR::Ray& ray, const GeometryPoint& pt)

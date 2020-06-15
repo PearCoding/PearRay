@@ -10,7 +10,7 @@
 	(sampler
 	  :slot 'spectral'
 	  :type 'random'
-	  :sample_count 8
+	  :sample_count 1
 	)
 	(filter 
 	  :slot 'pixel'
@@ -18,7 +18,7 @@
 	  :radius 1
 	)
 	(integrator 
-	  :type 'direct'
+	  :type 'ao'
 	  :sample_count 32
 	)
 	; Outputs

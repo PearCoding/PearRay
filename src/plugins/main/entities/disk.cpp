@@ -64,27 +64,41 @@ public:
 
 	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_DISC_POINT);
+		const Vector3f center = transform() * Vector3f(0, 0, 0);
+		const Vector3f norm	  = normalMatrix() * mDisk.normal();
+
+		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_ORIENTED_DISC_POINT);
+
+		float* vertices = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, sizeof(float) * 4, 1);
+		vertices[0]		= center.x();
+		vertices[1]		= center.y();
+		vertices[2]		= center.z();
+		vertices[3]		= mDisk.radius(); // TODO: Not affected by the transform?
+
+		float* normal = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_NORMAL, 0, RTC_FORMAT_FLOAT3, sizeof(float) * 3, 1);
+		normal[0]	  = norm.x();
+		normal[1]	  = norm.y();
+		normal[2]	  = norm.z();
+
+		rtcCommitGeometry(geom);
 		return GeometryRepr(geom);
 	}
 
-	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
 	{
-		pdf	   = mPDF_Cache;
-		faceID = 0;
-		return Vector3f(rnd(0), rnd(1), 0);
+		return EntityRandomPoint(transform() * mDisk.surfacePoint(rnd(0), rnd(1)),
+								 rnd, 0, mPDF_Cache);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		float u = parameter[0];
-		float v = parameter[1];
+		float u = query.UV[0];
+		float v = query.UV[1];
 
-		pt.P = transform() * mDisk.surfacePoint(u, v);
+		pt.P = query.Position;
 		pt.N = normalMatrix() * mDisk.normal();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);

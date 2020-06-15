@@ -16,6 +16,29 @@ struct GeometryPoint;
 struct GeometryRepr;
 struct GeometryDev;
 
+struct PR_LIB_CORE EntityGeometryQueryPoint {
+	Vector3f View;
+	Vector3f Position;
+	Vector2f UV;
+	uint32 PrimitiveID;
+	uint32 _padding;
+};
+
+struct PR_LIB_CORE EntityRandomPoint {
+	Vector3f Position;
+	Vector2f UV;
+	uint32 PrimitiveID;
+	float PDF_A; // Area
+
+	inline EntityRandomPoint(const Vector3f& p, const Vector2f& uv, uint32 primid, float pdf)
+		: Position(p)
+		, UV(uv)
+		, PrimitiveID(primid)
+		, PDF_A(pdf)
+	{
+	}
+};
+
 class PR_LIB_CORE IEntity : public ITransformable {
 public:
 	IEntity(uint32 id, const std::string& name);
@@ -45,11 +68,8 @@ public:
 
 	virtual GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const = 0;
 
-	virtual Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
-											  uint32& faceID, float& pdf) const = 0;
-	virtual void provideGeometryPoint(const Vector3f& view,
-									  uint32 faceID, const Vector3f& parameter,
-									  GeometryPoint& pt) const					= 0;
+	virtual EntityRandomPoint pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd) const = 0;
+	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const	= 0;
 
 	// IObject
 	virtual void beforeSceneBuild() override;

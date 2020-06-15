@@ -80,16 +80,22 @@ public:
 
 	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
+		const Vector3f center = transform() * Vector3f(0, 0, 0);
+
 		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_SPHERE_POINT);
+
+		float* vertices = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, sizeof(float) * 4, 1);
+		vertices[0]		= center.x();
+		vertices[1]		= center.y();
+		vertices[2]		= center.z();
+		vertices[3]		= mSphere.radius(); // TODO: Not affected by the transform?
+
+		rtcCommitGeometry(geom);
 		return GeometryRepr(geom);
 	}
 
-	Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd) const override
 	{
-		pdf	   = mPDF_Cache;
-		faceID = 0;
-
 		Vector2f uv = rnd;
 		if (mOptimizeSampling) {
 			Vector3f kv = invTransform().linear() * view;
@@ -99,24 +105,25 @@ public:
 				uv = Spherical::uv_from_normal(Vector3f(-n));
 		}
 
-		return Vector3f(uv(0), uv(1), 0);
+		return EntityRandomPoint(transform() * mSphere.surfacePoint(uv(0), uv(1)),
+								 uv, 0, mPDF_Cache);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		pt.P = transform() * mSphere.surfacePoint(parameter[0], parameter[1]);
-		pt.N = normalMatrix() * mSphere.normalPoint(parameter[0], parameter[1]);
+		pt.P = query.Position;
+		pt.N = (pt.P - transform() * Vector3f(0, 0, 0)).normalized();
 		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
-
-		pt.UVW		  = parameter;
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		const Vector2f uv = Spherical::uv_from_normal(pt.N);
+		pt.UVW			  = Vector3f(uv(0), uv(1), 0);
+		pt.MaterialID	  = mMaterialID;
+		pt.EmissionID	  = mLightID;
+		pt.DisplaceID	  = 0;
 	}
 
 	inline void optimizeSampling(bool b) { mOptimizeSampling = b; }

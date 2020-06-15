@@ -64,28 +64,44 @@ public:
 
 	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_QUAD);
+		auto geom	= rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_QUAD);
+		auto assign = [](float* v, const Vector3f& p) {
+			v[0] = p[0];
+			v[1] = p[1];
+			v[2] = p[2];
+		};
 
+		float* vertices = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, sizeof(float) * 3, 4);
+		assign(&vertices[0], transform() * mPlane.position());
+		assign(&vertices[3], transform() * (mPlane.position() + mPlane.yAxis()));
+		assign(&vertices[6], transform() * (mPlane.position() + mPlane.yAxis() + mPlane.xAxis()));
+		assign(&vertices[9], transform() * (mPlane.position() + mPlane.xAxis()));
+
+		uint32* inds = (uint32*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, sizeof(uint32) * 4, 1);
+		inds[0]		 = 0;
+		inds[1]		 = 1;
+		inds[2]		 = 2;
+		inds[3]		 = 3;
+
+		rtcCommitGeometry(geom);
 		return GeometryRepr(geom);
 	}
 
-	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
 	{
-		pdf	   = mPDF_Cache;
-		faceID = 0;
-		return Vector3f(rnd(0), rnd(1), 0);
+		return EntityRandomPoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
+								 rnd, 0, mPDF_Cache);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		float u = parameter[0];
-		float v = parameter[1];
+		float u = query.UV[0];
+		float v = query.UV[1];
 
-		pt.P  = transform() * mPlane.surfacePoint(u, v);
+		pt.P  = query.Position;
 		pt.N  = normalMatrix() * mPlane.normal();
 		pt.Nx = normalMatrix() * mPlane.xAxis();
 		pt.Ny = normalMatrix() * mPlane.yAxis();

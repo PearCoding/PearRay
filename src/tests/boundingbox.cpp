@@ -1,6 +1,6 @@
 #include "geometry/BoundingBox.h"
-#include "geometry/CollisionData.h"
 #include "geometry/Plane.h"
+#include "trace/HitPoint.h"
 
 #include "Test.h"
 
@@ -269,26 +269,6 @@ PR_TEST("Intersects Range")
 	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_EQ(s.Entry, 1);
 	PR_CHECK_EQ(s.Exit, 3);
-}
-
-PR_TEST("Intersects Package")
-{
-	using namespace simdpp;
-
-	BoundingBox box(2, 2, 2);
-	RayPackage ray(Vector3fv(make_float(1, 0, 0, 0),
-							 make_float(2, 2, 0, 0),
-							 make_float(0, 0, 2, 0)),
-				   Vector3fv(make_float(-1, 0, 0, 1),
-							 make_float(-1, -1, 0, 0),
-							 make_float(0, 0, 1, 0)));
-
-	CollisionOutput out;
-	box.intersects(ray, out);
-	PR_CHECK_LESS(extract<0>(out.HitDistance), std::numeric_limits<float>::infinity());
-	PR_CHECK_NEARLY_EQ(extract<1>(out.HitDistance), 1);
-	PR_CHECK_EQ(extract<2>(out.HitDistance), std::numeric_limits<float>::infinity());
-	PR_CHECK_NEARLY_EQ(extract<3>(out.HitDistance), 1);
 }
 
 PR_TEST("Face Front")
