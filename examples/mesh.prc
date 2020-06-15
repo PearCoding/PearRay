@@ -5,7 +5,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 32
+	  :sample_count 1
 	)
 	(filter 
 	  :slot 'pixel'

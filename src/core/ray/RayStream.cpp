@@ -57,6 +57,7 @@ void RayStream::addRay(const Ray& ray)
 	//PR_ASSERT(!isFull(), "Check before adding!");
 	// TODO: Add dynamic sizing
 
+	PR_OPT_LOOP
 	for (int i = 0; i < 3; ++i)
 		mOrigin[i][mCurrentWritePos] = ray.Origin[i];
 
@@ -65,6 +66,7 @@ void RayStream::addRay(const Ray& ray)
 	for (int i = 0; i < 2; ++i)
 		mDirection[i][mCurrentWritePos] = n(i);
 #else
+	PR_OPT_LOOP
 	for (int i = 0; i < 3; ++i)
 		mDirection[i][mCurrentWritePos] = ray.Direction[i];
 #endif
@@ -75,9 +77,12 @@ void RayStream::addRay(const Ray& ray)
 	mMinT[mCurrentWritePos]			  = ray.MinT;
 	mMaxT[mCurrentWritePos]			  = ray.MaxT;
 	mFlags[mCurrentWritePos]		  = ray.Flags;
+
+	PR_OPT_LOOP
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 		mWeight[i][mCurrentWritePos] = ray.Weight(i);
 
+	PR_OPT_LOOP
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 		mWavelengthNM[i][mCurrentWritePos] = ray.WavelengthNM(i);
 
@@ -106,9 +111,9 @@ RayGroup RayStream::getNextGroup()
 }
 
 #ifdef PR_COMPRESS_RAY_DIR
-#define COMPRES_MEM 2 * sizeof(snorm16)
+#define COMPRES_MEM (2 * sizeof(snorm16))
 #else
-#define COMPRES_MEM 3 * sizeof(float)
+#define COMPRES_MEM (3 * sizeof(float))
 #endif
 
 size_t RayStream::getMemoryUsage() const
@@ -147,8 +152,12 @@ Ray RayStream::getRay(size_t id) const
 	ray.Flags		   = mFlags[id];
 	ray.MinT		   = mMinT[id];
 	ray.MaxT		   = mMaxT[id];
+
+	PR_OPT_LOOP
 	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		ray.Weight[k] = mWeight[k][id];
+
+	PR_OPT_LOOP
 	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 		ray.WavelengthNM[k] = mWavelengthNM[k][id];
 

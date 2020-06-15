@@ -13,7 +13,7 @@
 namespace PR {
 
 HitStream::HitStream(size_t size)
-	: mSize(size)
+	: mSize(size + size % 16) // Safety offset
 	, mCurrentPos(0)
 {
 	mRayID.reserve(mSize);
@@ -82,7 +82,7 @@ void HitStream::setup(bool sort)
 				  0, currentSize() - 1, mask);
 #else
 		quickSort(mEntityID.data(), op,
-				  0, currentSize()- 1);
+				  0, currentSize() - 1);
 #endif
 	}
 
@@ -109,9 +109,9 @@ ShadingGroupBlock HitStream::getNextGroup()
 
 	PR_ASSERT(hasNextGroup(), "Never call when not available");
 	ShadingGroupBlock grp;
-	grp.Stream	   = this;
-	grp.EntityID   = mEntityID[mCurrentPos];
-	grp.Start	   = mCurrentPos;
+	grp.Stream	 = this;
+	grp.EntityID = mEntityID[mCurrentPos];
+	grp.Start	 = mCurrentPos;
 
 	while (mCurrentPos < currentSize()
 		   && mEntityID[mCurrentPos] == grp.EntityID) {

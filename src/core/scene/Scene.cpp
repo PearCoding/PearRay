@@ -105,7 +105,7 @@ struct SceneInternal {
 	inline SceneInternal()
 	{
 #if 1 //defined(PR_DEBUG)
-		Device = rtcNewDevice("verbose=3");
+		Device = rtcNewDevice("verbose=1");
 #else
 		Device = rtcNewDevice(nullptr);
 #endif
@@ -156,6 +156,8 @@ void Scene::setupScene()
 							   Vector3f(bounds.upper_x, bounds.upper_y, bounds.upper_z));
 }
 
+constexpr unsigned int MASK_ALL = 0xFFFFFFF;
+constexpr int VALID_ALL			= 0xFF;
 inline static void assignRay(const Ray& ray, RTCRay& rray)
 {
 	rray.org_x = ray.Origin[0];
@@ -168,6 +170,7 @@ inline static void assignRay(const Ray& ray, RTCRay& rray)
 	rray.tfar  = ray.MaxT;
 	rray.tnear = ray.MinT;
 	rray.time  = ray.Time;
+	rray.mask  = MASK_ALL;
 }
 
 void Scene::traceRays(RayStream& rays, HitStream& hits) const
@@ -180,8 +183,10 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 	auto scene = mInternal->Scene;
 	RTCIntersectContext ctx;
 	RTCRayHit16 rhits;
+
+	PR_ALIGN(64)
 	int valids[PACKAGE_SIZE];
-	std::fill_n(valids, PACKAGE_SIZE, -1); // All are valid
+	std::fill_n(valids, PACKAGE_SIZE, VALID_ALL); // All are valid
 
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
@@ -197,6 +202,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 				rhits.hit.geomID[k] = RTC_INVALID_GEOMETRY_ID;
 				rhits.ray.flags[k]	= 0;
 				rhits.ray.id[k]		= k;
+				rhits.ray.mask[k]	= MASK_ALL;
 			}
 
 			grp.copyOriginXRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.org_x);

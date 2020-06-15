@@ -67,7 +67,7 @@ bool RenderTileSession::traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntit
 
 	EntityGeometryQueryPoint query;
 	query.PrimitiveID = entry.PrimitiveID;
-	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[0]);
+	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
 	query.View		  = ray.Direction;
 	query.Position	  = ray.t(entry.Parameter.z());
 
