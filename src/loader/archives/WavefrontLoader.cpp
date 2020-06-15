@@ -5,7 +5,6 @@
 #include "SceneLoadContext.h"
 #include "cache/Cache.h"
 #include "mesh/MeshBase.h"
-#include "mesh/MeshFactory.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -106,8 +105,7 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 			PR_LOG(L_ERROR) << "Mesh " << name << " already in use." << std::endl;
 
 		mesh->triangulate();
-		bool useCache = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount(), static_cast<CacheMode>(mCacheMode));
-		ctx.Env->addMesh(name, MeshFactory::create(name, std::move(mesh), ctx.Env->cache(), useCache));
+		ctx.Env->addMesh(name, std::move(mesh));
 		PR_LOG(L_DEBUG) << "Added mesh " << name << std::endl;
 	}
 }

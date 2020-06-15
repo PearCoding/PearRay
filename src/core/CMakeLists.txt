@@ -24,6 +24,7 @@ set(PR_Src
   container/Interval.h
   container/QuickSort.h
   container/RadixSort.h
+  entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h
   entity/IEntity.inl
@@ -164,7 +165,7 @@ else()
 endif()
 
 add_library(pr_lib_core ${PR_Src})
-target_link_libraries(pr_lib_core PUBLIC pr_lib_base ${_BOOST_HEADERS} Boost::filesystem TBB::tbb)
+target_link_libraries(pr_lib_core PUBLIC pr_lib_base ${_BOOST_HEADERS} Boost::filesystem TBB::tbb Embree::Embree)
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_core PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

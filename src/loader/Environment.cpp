@@ -15,7 +15,6 @@
 #include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
-#include "mesh/Mesh.h"
 #include "parameter/Parameter.h"
 
 #include "plugin/PluginManager.h"
@@ -211,14 +210,11 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 		return nullptr;
 	}
 
-	std::wstring scene_cnt = mResourceManager->requestFile("scene", "global", ".cnt");
-
 	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
 														   entities,
 														   materials,
 														   emissions,
-														   inflights,
-														   scene_cnt);
+														   inflights);
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;
 		return nullptr;

@@ -3,13 +3,13 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-
 
 namespace PR {
 
@@ -62,40 +62,16 @@ public:
 		return mDisk.toBoundingBox();
 	}
 
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
+	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-
-		mDisk.intersects(in_local, out);
-
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= simdpp::make_uint(id());
-		out.FaceID		= simdpp::make_uint(0);
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
-	}
-
-	void checkCollision(const Ray& in, HitPoint& out) const override
-	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-
-		mDisk.intersects(in_local, out);
-
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.FaceID		= 0;
-		out.MaterialID  = mMaterialID;
+		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_DISC_POINT);
+		return GeometryRepr(geom);
 	}
 
 	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
 									  uint32& faceID, float& pdf) const override
 	{
-		pdf	= mPDF_Cache;
+		pdf	   = mPDF_Cache;
 		faceID = 0;
 		return Vector3f(rnd(0), rnd(1), 0);
 	}

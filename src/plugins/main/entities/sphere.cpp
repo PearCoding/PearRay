@@ -3,15 +3,15 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "geometry/CollisionData.h"
 #include "geometry/GeometryPoint.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
-
 
 namespace PR {
 constexpr float P = 1.6075f;
@@ -78,44 +78,22 @@ public:
 						   Vector3f(-mSphere.radius(), -mSphere.radius(), -mSphere.radius()));
 	}
 
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
+	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mSphere.intersects(in_local, out);
-
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= simdpp::make_uint(id());
-		out.FaceID		= simdpp::make_uint(0);
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
-	}
-
-	void checkCollision(const Ray& in, HitPoint& out) const override
-	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mSphere.intersects(in_local, out);
-
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.FaceID		= 0;
-		out.MaterialID  = mMaterialID;
+		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_SPHERE_POINT);
+		return GeometryRepr(geom);
 	}
 
 	Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
 									  uint32& faceID, float& pdf) const override
 	{
-		pdf	= mPDF_Cache;
+		pdf	   = mPDF_Cache;
 		faceID = 0;
 
 		Vector2f uv = rnd;
 		if (mOptimizeSampling) {
 			Vector3f kv = invTransform().linear() * view;
-			Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
+			Vector3f n	= mSphere.normalPoint(rnd(0), rnd(1));
 
 			if (kv.dot(n) > PR_EPSILON)
 				uv = Spherical::uv_from_normal(Vector3f(-n));

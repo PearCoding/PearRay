@@ -22,7 +22,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "material/MaterialManager.h"
-#include "mesh/MeshFactory.h"
+#include "mesh/MeshBase.h"
 
 #include "parser/CurveParser.h"
 #include "parser/MathParser.h"
@@ -724,7 +724,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 	if (useCacheD.type() == DL::DT_Bool)
 		useCache = useCacheD.getBool();
 
-	ctx.Env->addMesh(name, MeshFactory::create(name, std::move(mesh), ctx.Env->cache(), useCache));
+	ctx.Env->addMesh(name, std::move(mesh));
 }
 
 void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)

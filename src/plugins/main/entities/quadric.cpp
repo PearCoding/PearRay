@@ -13,6 +13,8 @@
 
 #include <array>
 
+// TODO: Change to new geometry representation
+
 namespace PR {
 
 class QuadricEntity : public IEntity {

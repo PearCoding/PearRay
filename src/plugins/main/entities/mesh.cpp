@@ -1,4 +1,3 @@
-#include "mesh/Mesh.h"
 #include "Environment.h"
 #include "Logger.h"
 #include "Profiler.h"
@@ -6,12 +5,14 @@
 #include "SceneLoadContext.h"
 #include "cache/ISerializeCachable.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
-#include "mesh/MeshFactory.h"
+#include "mesh/MeshBase.h"
+#include "sampler/SplitSample.h"
 
 #include <boost/filesystem.hpp>
 
@@ -22,19 +23,17 @@ public:
 	ENTITY_CLASS
 
 	MeshEntity(uint32 id, const std::string& name,
-			   const std::shared_ptr<Mesh>& mesh,
+			   const std::shared_ptr<MeshBase>& mesh,
 			   const std::vector<uint32>& materials,
 			   int32 lightID)
 		: IEntity(id, name)
 		, mLightID(lightID)
 		, mMaterials(materials)
 		, mMesh(mesh)
-		, mUseCache(false)
+		, mBoundingBox(mesh->constructBoundingBox())
 	{
 	}
 	virtual ~MeshEntity() {}
-
-	inline void useCache(bool b) { mUseCache = b; }
 
 	std::string type() const override
 	{
@@ -48,66 +47,41 @@ public:
 
 	float surfaceArea(uint32 id) const override
 	{
-		return mMesh->surfaceArea(id);
+		return mMesh->surfaceArea(id, Eigen::Affine3f::Identity());
 	}
 
 	bool isCollidable() const override
 	{
-		return mMesh->isCollidable();
+		return true;
 	}
 
 	float collisionCost() const override
 	{
-		return mMesh->collisionCost();
+		return (float)mMesh->faceCount();
 	}
 
 	BoundingBox localBoundingBox() const override
 	{
-		return mMesh->localBoundingBox();
+		return mBoundingBox;
 	}
 
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
+	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh->checkCollision(in_local, out);
-
-		// out.FaceID is set inside mesh
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= simdpp::make_uint(id());
-
-		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i) {
-			uint32 id	   = extract(i, out.MaterialID);
-			out.MaterialID = insert(i, out.MaterialID,
-									id < mMaterials.size()
-										? mMaterials.at(id)
-										: 0);
-		}
-	}
-
-	void checkCollision(const Ray& in, HitPoint& out) const override
-	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh->checkCollision(in_local, out);
-
-		// out.FaceID is set inside mesh
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.MaterialID	= out.MaterialID < mMaterials.size()
-							 ? mMaterials.at(out.MaterialID)
-							 : 0;
+		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_TRIANGLE);
+		return GeometryRepr(geom);
 	}
 
 	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
 									  uint32& faceID, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
-		return mMesh->pickRandomParameterPoint(rnd, faceID, pdf);
+		SplitSample2D split(rnd, 0, mMesh->faceCount());
+		faceID = split.integral1();
+
+		Face face = mMesh->getFace(faceID);
+		pdf		  = 1.0f / (mMesh->faceCount() * face.surfaceArea());
+
+		return Vector3f(split.uniform1(), split.uniform2(), 0);
 	}
 
 	void provideGeometryPoint(const Vector3f&, uint32 faceID, const Vector3f& parameter,
@@ -115,7 +89,17 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		mMesh->provideGeometryPoint(faceID, parameter, pt);
+		// Local
+		Vector2f uv;
+		Face face = mMesh->getFace(faceID);
+		face.interpolate(Vector2f(parameter[0], parameter[1]), pt.P, pt.N, uv);
+
+		if (mMesh->features() & MF_HAS_UV) // Could be amortized by two types of mesh entities!
+			face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+		else
+			Tangent::frame(pt.N, pt.Nx, pt.Ny);
+
+		pt.UVW = Vector3f(uv(0), uv(1), 0);
 
 		// Global
 		pt.P  = transform() * pt.P;
@@ -133,10 +117,10 @@ public:
 	}
 
 private:
-	int32 mLightID;
+	const int32 mLightID;
 	std::vector<uint32> mMaterials;
-	std::shared_ptr<Mesh> mMesh;
-	bool mUseCache;
+	std::shared_ptr<MeshBase> mMesh;
+	const BoundingBox mBoundingBox;
 };
 
 class MeshEntityPlugin : public IEntityPlugin {

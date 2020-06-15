@@ -14,7 +14,7 @@
 namespace PR {
 class IEmission;
 class IMaterial;
-class Mesh;
+class MeshBase;
 class PluginManager;
 class MaterialManager;
 class EmissionManager;
@@ -77,9 +77,9 @@ public:
 	inline void addMaterial(const std::string& name, const std::shared_ptr<IMaterial>& mat);
 	inline size_t materialCount() const;
 
-	inline std::shared_ptr<Mesh> getMesh(const std::string& name) const;
+	inline std::shared_ptr<MeshBase> getMesh(const std::string& name) const;
 	inline bool hasMesh(const std::string& name) const;
-	inline void addMesh(const std::string& name, const std::shared_ptr<Mesh>& m);
+	inline void addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m);
 
 	inline void addShadingSocket(const std::string& name,
 								 const ShadingSocketVariantPtr& output);
@@ -152,7 +152,7 @@ private:
 	std::map<std::string, ParametricBlob> mSpectrums;
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
-	std::map<std::string, std::shared_ptr<Mesh>> mMeshes;
+	std::map<std::string, std::shared_ptr<MeshBase>> mMeshes;
 	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSockets;
 	std::map<std::string, std::shared_ptr<FloatSpectralMapSocket>> mNamedMapSockets;
 

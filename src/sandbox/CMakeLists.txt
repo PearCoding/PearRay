@@ -7,8 +7,7 @@ set(PR_Main_Src
   suite_principled.cpp
   suite_projection.cpp
   suite_random.cpp
-  suite_spectral.cpp
-  suite_triangle.cpp)
+  suite_spectral.cpp)
 set(PR_Src ${PR_Main_Src}
 )
 

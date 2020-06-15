@@ -13,8 +13,9 @@
 
 #include <boost/filesystem.hpp>
 
-namespace PR {
+// TODO: Change to new geometry representation
 
+namespace PR {
 template <typename T>
 class CurveEntity : public IEntity {
 public:

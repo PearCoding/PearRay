@@ -71,7 +71,7 @@ inline size_t Environment::materialCount() const
 	return mMaterials.size();
 }
 
-inline std::shared_ptr<Mesh> Environment::getMesh(const std::string& name) const
+inline std::shared_ptr<MeshBase> Environment::getMesh(const std::string& name) const
 {
 	return hasMesh(name) ? mMeshes.at(name) : nullptr;
 }
@@ -81,7 +81,7 @@ inline bool Environment::hasMesh(const std::string& name) const
 	return mMeshes.count(name) != 0;
 }
 
-inline void Environment::addMesh(const std::string& name, const std::shared_ptr<Mesh>& m)
+inline void Environment::addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m)
 {
 	PR_ASSERT(m, "Given mesh has to be valid");
 	PR_ASSERT(!hasMesh(name), "Given name should be unique");

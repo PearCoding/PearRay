@@ -13,6 +13,8 @@
 
 #include "sampler/SplitSample.h"
 
+// TODO: Change to new geometry representation
+
 namespace PR {
 
 class ConeEntity : public IEntity {

@@ -13,6 +13,9 @@ enum EntityVisibilityFlag : uint8 {
 };
 
 struct GeometryPoint;
+struct GeometryRepr;
+struct GeometryDev;
+
 class PR_LIB_CORE IEntity : public ITransformable {
 public:
 	IEntity(uint32 id, const std::string& name);
@@ -40,7 +43,7 @@ public:
 
 	virtual BoundingBox localBoundingBox() const = 0;
 
-	virtual void checkCollision(const Ray& in, HitPoint& out) const = 0;
+	virtual GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const = 0;
 
 	virtual Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
 											  uint32& faceID, float& pdf) const = 0;
