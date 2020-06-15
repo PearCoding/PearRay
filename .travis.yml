@@ -16,6 +16,7 @@ addons:
       - libopenexr-dev
       - libtbb-dev
       - libopenimageio-dev
+      - libembree-dev
       - python3.6-dev
       - python3.6-venv
       - python3-numpy
