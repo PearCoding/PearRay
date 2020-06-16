@@ -14,6 +14,9 @@
 #include <boost/filesystem.hpp>
 #include <fstream>
 
+// Seems slower than the default offset variant
+//#define PR_USE_FILTER_SHADOW
+
 namespace PR {
 Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 			 const std::vector<std::shared_ptr<IEntity>>& entities,
@@ -104,7 +107,7 @@ struct SceneInternal {
 
 	inline SceneInternal()
 	{
-#if 1 //defined(PR_DEBUG)
+#if defined(PR_DEBUG)
 		Device = rtcNewDevice("verbose=1");
 #else
 		Device = rtcNewDevice(nullptr);
@@ -120,6 +123,11 @@ struct SceneInternal {
 			PR_LOG(L_ERROR) << "[Embree3] Embree without point geometry (like sphere) support is not suitable for PearRay" << std::endl;
 		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_USER_GEOMETRY_SUPPORTED))
 			PR_LOG(L_ERROR) << "[Embree3] Embree without user geometry support is not suitable for PearRay" << std::endl;
+
+#ifdef PR_USE_FILTER_SHADOW
+		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_FILTER_FUNCTION_SUPPORTED))
+			PR_LOG(L_ERROR) << "[Embree3] Embree without filter function support is not suitable for PearRay" << std::endl;
+#endif
 
 		Scene = rtcNewScene(Device);
 	}
@@ -141,7 +149,7 @@ void Scene::setupScene()
 		rtcReleaseGeometry(repr); // No longer needed
 	}
 
-	rtcSetSceneFlags(mInternal->Scene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST);
+	rtcSetSceneFlags(mInternal->Scene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
 	rtcSetSceneBuildQuality(mInternal->Scene, RTC_BUILD_QUALITY_HIGH);
 	rtcCommitScene(mInternal->Scene);
 
@@ -199,10 +207,11 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 		for (size_t i = 0; i < cells; ++i) {
 			PR_OPT_LOOP
 			for (size_t k = 0; k < PACKAGE_SIZE; ++k) {
-				rhits.hit.geomID[k] = RTC_INVALID_GEOMETRY_ID;
-				rhits.ray.flags[k]	= 0;
-				rhits.ray.id[k]		= k;
-				rhits.ray.mask[k]	= MASK_ALL;
+				rhits.hit.geomID[k]	   = RTC_INVALID_GEOMETRY_ID;
+				rhits.hit.instID[0][k] = RTC_INVALID_GEOMETRY_ID;
+				rhits.ray.flags[k]	   = 0;
+				rhits.ray.id[k]		   = k;
+				rhits.ray.mask[k]	   = MASK_ALL;
 			}
 
 			grp.copyOriginXRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.org_x);
@@ -220,10 +229,11 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 			PR_OPT_LOOP
 			for (size_t k = 0; k < PACKAGE_SIZE; ++k) {
 				const bool good = rhits.hit.geomID[k] != RTC_INVALID_GEOMETRY_ID;
+				const auto id	= rhits.hit.instID[0][k] != RTC_INVALID_GEOMETRY_ID ? rhits.hit.instID[0][k] : rhits.hit.geomID[k];
 
 				HitEntry entry;
 				entry.Flags		  = good ? HF_SUCCESSFUL : 0;
-				entry.EntityID	  = good ? rhits.hit.geomID[k] : PR_INVALID_ID;
+				entry.EntityID	  = good ? id : PR_INVALID_ID;
 				entry.PrimitiveID = rhits.hit.primID[k];
 				entry.RayID		  = grp.offset() + i * PACKAGE_SIZE + rhits.ray.id[k];
 				entry.Parameter	  = Vector3f(rhits.hit.u[k], rhits.hit.v[k], rhits.ray.tfar[k]);
@@ -240,9 +250,11 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 			rtcIntersect1(mInternal->Scene, &ctx, &rhit);
 
 			const bool good = rhit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
+			const auto id	= rhit.hit.instID[0] != RTC_INVALID_GEOMETRY_ID ? rhit.hit.instID[0] : rhit.hit.geomID;
+
 			HitEntry entry;
 			entry.Flags		  = good ? HF_SUCCESSFUL : 0;
-			entry.EntityID	  = good ? rhit.hit.geomID : PR_INVALID_ID;
+			entry.EntityID	  = good ? id : PR_INVALID_ID;
 			entry.PrimitiveID = rhit.hit.primID;
 			entry.RayID		  = grp.offset() + k;
 			entry.Parameter	  = Vector3f(rhit.hit.u, rhit.hit.v, rhit.ray.tfar);
@@ -266,7 +278,7 @@ bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 	if (rhit.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
 		return false;
 	} else {
-		entry.EntityID	  = rhit.hit.geomID;
+		entry.EntityID	  = rhit.hit.instID[0] != RTC_INVALID_GEOMETRY_ID ? rhit.hit.instID[0] : rhit.hit.geomID;
 		entry.PrimitiveID = rhit.hit.primID;
 		entry.RayID		  = 0;
 		entry.Flags		  = HF_SUCCESSFUL;
@@ -275,20 +287,53 @@ bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 	}
 }
 
+struct IntersectContextShadow {
+	RTCIntersectContext Original;
+	// Original
+	uint32 IgnoreID;
+};
+static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
+{
+	/* avoid crashing when debug visualizations are used */
+	if (args->context == nullptr)
+		return;
+
+	int* valid							  = args->valid;
+	const IntersectContextShadow* context = (const IntersectContextShadow*)args->context;
+	RTCHitN* hits						  = (RTCHitN*)args->hit;
+	const auto N						  = args->N;
+
+	const uint32 id_ignore = context->IgnoreID;
+	for (uint32 i = 0; i < N; ++i) {
+		/* ignore inactive rays */
+		if (valid[i] != VALID_ALL)
+			continue;
+
+		auto geom = RTCHitN_geomID(hits, N, i);
+		if (geom == id_ignore)
+			valid[i] = 0;
+	}
+}
+
 bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
 {
-	// TODO: Better use a mask to filter out entity and check for any hits
-	PR_UNUSED(entity_id);
-
-	RTCIntersectContext ctx;
-	rtcInitIntersectContext(&ctx);
-	ctx.flags = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
-
 	RTCRay rray;
 	assignRay(ray, rray);
-	rray.tfar = distance - 0.0001f;
 
-	rtcOccluded1(mInternal->Scene, &ctx, &rray);
+	IntersectContextShadow ctx;
+	rtcInitIntersectContext(&ctx.Original);
+	ctx.Original.flags = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
+
+#ifdef PR_USE_FILTER_SHADOW
+	ctx.Original.filter = embree_intersectionFilter;
+	ctx.IgnoreID		= entity_id;
+	PR_UNUSED(distance);
+#else
+	rray.tfar = distance - 0.0001f;
+	PR_UNUSED(entity_id);
+#endif
+
+	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
 
 	return rray.tfar != -std::numeric_limits<float>::infinity();
 }

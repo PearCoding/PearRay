@@ -54,6 +54,7 @@ public:
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
 	IEntity* pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const;
+	float pickRandomLightPDF(const Vector3f& view, IEntity* light) const;
 
 private:
 	Point2i localCoordinates(Point1i pixelIndex) const;

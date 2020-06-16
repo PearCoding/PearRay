@@ -165,4 +165,14 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 
 	return light;
 }
+
+float RenderTileSession::pickRandomLightPDF(const Vector3f& view, IEntity* light) const
+{
+	PR_UNUSED(view);
+	const auto& lights = mTile->context()->lights();
+	if (lights.empty())
+		return 0.0f;
+
+	return 1.0f / (lights.size() * light->surfaceArea());
+}
 } // namespace PR

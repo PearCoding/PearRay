@@ -69,6 +69,7 @@ private:
 	bool mWasGenerated;
 };
 
+template <bool HasUV>
 class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -144,22 +145,45 @@ public:
 		return EntityRandomPoint(face.interpolateVertices(uv), uv, faceID, pdf);
 	}
 
+	// UV variant
+	template <bool UV = HasUV>
+	inline typename std::enable_if<UV, void>::type
+	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
+						  GeometryPoint& pt) const
+	{
+		Vector2f uv;
+		Face face = mMesh->base()->getFace(query.PrimitiveID);
+		face.interpolate(Vector2f(query.UV[0], query.UV[1]), pt.P, pt.N, uv);
+
+		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+		pt.UVW = Vector3f(uv(0), uv(1), 0);
+
+		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
+	}
+
+	// Non UV variant
+	template <bool UV = HasUV>
+	inline typename std::enable_if<!UV, void>::type
+	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
+						  GeometryPoint& pt) const
+	{
+		Vector2f uv;
+		Face face = mMesh->base()->getFace(query.PrimitiveID);
+		face.interpolate(Vector2f(query.UV[0], query.UV[1]), pt.P, pt.N, uv);
+
+		Tangent::frame(pt.N, pt.Nx, pt.Ny);
+		pt.UVW = Vector3f(query.UV(0), query.UV(1), 0);
+
+		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
+	}
+
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
 		// Local
-		Vector2f uv;
-		Face face = mMesh->base()->getFace(query.PrimitiveID);
-		face.interpolate(Vector2f(query.UV[0], query.UV[1]), pt.P, pt.N, uv);
-
-		if (mMesh->base()->features() & MF_HAS_UV) // Could be amortized by two types of mesh entities!
-			face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
-		else
-			Tangent::frame(pt.N, pt.Nx, pt.Ny);
-
-		pt.UVW = Vector3f(uv(0), uv(1), 0);
+		provideGeometryPoint2(query, pt);
 
 		// Global
 		pt.P  = transform() * pt.P;
@@ -171,7 +195,6 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.MaterialID = pt.MaterialID;
 		pt.EmissionID = mLightID;
 		pt.DisplaceID = 0;
 	}
@@ -221,9 +244,14 @@ public:
 				mOriginalMesh[mesh.get()] = mesh_p;
 			}
 
-			return std::make_shared<MeshEntity>(id, name,
-												mesh_p,
-												materials, emsID);
+			if (mesh->features() & MF_HAS_UV)
+				return std::make_shared<MeshEntity<true>>(id, name,
+														  mesh_p,
+														  materials, emsID);
+			else
+				return std::make_shared<MeshEntity<false>>(id, name,
+														   mesh_p,
+														   materials, emsID);
 		}
 	}
 
