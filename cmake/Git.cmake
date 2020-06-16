@@ -25,7 +25,8 @@ OUTPUT_STRIP_TRAILING_WHITESPACE
 option(GIT_SUBMODULE "Check submodules during build" ON)
 if(GIT_SUBMODULE)
     message(STATUS "Submodule update")
-    execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+    # Check always if a --recursive is really needed. All dependencies do not require them (yet)!
+    execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     RESULT_VARIABLE GIT_SUBMOD_RESULT)
     if(NOT GIT_SUBMOD_RESULT EQUAL "0")
