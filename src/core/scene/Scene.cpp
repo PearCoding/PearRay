@@ -15,7 +15,7 @@
 #include <fstream>
 
 // Seems slower than the default offset variant
-//#define PR_USE_FILTER_SHADOW
+#define PR_USE_FILTER_SHADOW
 
 namespace PR {
 Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
@@ -149,7 +149,12 @@ void Scene::setupScene()
 		rtcReleaseGeometry(repr); // No longer needed
 	}
 
-	rtcSetSceneFlags(mInternal->Scene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+	RTCSceneFlags flags = RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST;
+#ifdef PR_USE_FILTER_SHADOW
+	flags = flags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION;
+#endif
+
+	rtcSetSceneFlags(mInternal->Scene, flags);
 	rtcSetSceneBuildQuality(mInternal->Scene, RTC_BUILD_QUALITY_HIGH);
 	rtcCommitScene(mInternal->Scene);
 
@@ -165,7 +170,7 @@ void Scene::setupScene()
 }
 
 constexpr unsigned int MASK_ALL = 0xFFFFFFF;
-constexpr int VALID_ALL			= 0xFF;
+constexpr int VALID_ALL			= -1; //0xFF;
 inline static void assignRay(const Ray& ray, RTCRay& rray)
 {
 	rray.org_x = ray.Origin[0];
@@ -294,12 +299,16 @@ struct IntersectContextShadow {
 	// Original
 	uint32 IgnoreID;
 };
+static_assert(std::is_pod<IntersectContextShadow>::value, "Expect IntersectContextShadow structure to be a POD");
+
 #ifdef PR_USE_FILTER_SHADOW
 static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
 {
 	/* avoid crashing when debug visualizations are used */
 	if (args->context == nullptr)
 		return;
+
+	PR_ASSERT(args->N == 1, "Expect shadow intersection filter to be called by one ray only");
 
 	int* valid							  = args->valid;
 	const IntersectContextShadow* context = (const IntersectContextShadow*)args->context;
@@ -345,7 +354,7 @@ bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) con
 
 	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
 
-	return rray.tfar != -std::numeric_limits<float>::infinity();
+	return rray.tfar > PR_EPSILON;
 }
 
 bool Scene::traceOcclusionRay(const Ray& ray) const
@@ -359,6 +368,6 @@ bool Scene::traceOcclusionRay(const Ray& ray) const
 
 	rtcOccluded1(mInternal->Scene, &ctx, &rray);
 
-	return rray.tfar > PR_EPSILON; // RTCRay.tfar is set to -inf if hit anything
+	return rray.tfar < 0; // RTCRay.tfar is set to -inf if hit anything
 }
 } // namespace PR

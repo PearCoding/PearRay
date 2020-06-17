@@ -59,7 +59,7 @@ private:
 		rtcAttachGeometry(mScene, geom);
 		rtcReleaseGeometry(geom);
 
-		rtcSetSceneFlags(mScene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST);
+		rtcSetSceneFlags(mScene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
 		rtcSetSceneBuildQuality(mScene, RTC_BUILD_QUALITY_HIGH);
 		rtcCommitScene(mScene);
 	}
@@ -189,7 +189,7 @@ public:
 		provideGeometryPoint2(query, pt);
 
 		// Global
-		pt.P  = query.Position; //transform() * pt.P;
+		pt.P  = query.Position;
 		pt.N  = normalMatrix() * pt.N;
 		pt.Nx = normalMatrix() * pt.Nx;
 		pt.Ny = normalMatrix() * pt.Ny;

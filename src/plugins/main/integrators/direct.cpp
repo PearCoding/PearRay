@@ -37,7 +37,7 @@
  * p_(xi) is the pdf with respect to the solid angle (not projected solid angle!)
  */
 namespace PR {
-constexpr float SHADOW_RAY_MIN = 0.00001f;
+constexpr float SHADOW_RAY_MIN = 0.0001f;
 constexpr float SHADOW_RAY_MAX = std::numeric_limits<float>::infinity();
 constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
 constexpr float BOUNCE_RAY_MAX = std::numeric_limits<float>::infinity();
@@ -128,8 +128,10 @@ public:
 			return SpectralBlob::Zero();
 
 		// Trace shadow ray
+		const float NdotL	 = L.dot(spt.N);
 		const float distance = std::sqrt(sqrD);
-		const Ray shadow	 = spt.Ray.next(spt.P, L, spt.N, RF_Shadow, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+		const Vector3f oN	 = NdotL < 0 ? -spt.N : spt.N; // Offset normal used for safe positioning
+		const Ray shadow	 = spt.Ray.next(spt.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
 		bool shadowHit		 = session.traceShadowRay(shadow, distance, light->id());
 
 		if (!shadowHit)
@@ -146,7 +148,7 @@ public:
 		MaterialEvalInput in;
 		in.Point	= spt;
 		in.Outgoing = L;
-		in.NdotL	= L.dot(spt.N);
+		in.NdotL	= NdotL;
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
