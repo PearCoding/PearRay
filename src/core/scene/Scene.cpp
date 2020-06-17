@@ -199,8 +199,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
 
-		rtcInitIntersectContext(&ctx);
-		ctx.flags = grp.isCoherent() ? RTC_INTERSECT_CONTEXT_FLAG_COHERENT : RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
+		const RTCIntersectContextFlags flags = grp.isCoherent() ? RTC_INTERSECT_CONTEXT_FLAG_COHERENT : RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
 
 		// Split group into cells of max 16 rays each
 		const size_t cells = grp.size() / PACKAGE_SIZE;
@@ -224,6 +223,8 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 			grp.copyMinTRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.tnear);
 			grp.copyTimeRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.time);
 
+			rtcInitIntersectContext(&ctx);
+			ctx.flags = flags;
 			rtcIntersect16(valids, scene, &ctx, &rhits);
 
 			PR_OPT_LOOP
@@ -232,7 +233,6 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 				const auto id	= rhits.hit.instID[0][k] != RTC_INVALID_GEOMETRY_ID ? rhits.hit.instID[0][k] : rhits.hit.geomID[k];
 
 				HitEntry entry;
-				entry.Flags		  = good ? HF_SUCCESSFUL : 0;
 				entry.EntityID	  = good ? id : PR_INVALID_ID;
 				entry.PrimitiveID = rhits.hit.primID[k];
 				entry.RayID		  = grp.offset() + i * PACKAGE_SIZE + rhits.ray.id[k];
@@ -245,15 +245,17 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 		for (size_t k = cells * PACKAGE_SIZE; k < grp.size(); ++k) {
 			RTCRayHit rhit;
 			assignRay(grp.getRay(k), rhit.ray);
-			rhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+			rhit.hit.geomID	   = RTC_INVALID_GEOMETRY_ID;
+			rhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
+			rtcInitIntersectContext(&ctx);
+			ctx.flags = flags;
 			rtcIntersect1(mInternal->Scene, &ctx, &rhit);
 
 			const bool good = rhit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
 			const auto id	= rhit.hit.instID[0] != RTC_INVALID_GEOMETRY_ID ? rhit.hit.instID[0] : rhit.hit.geomID;
 
 			HitEntry entry;
-			entry.Flags		  = good ? HF_SUCCESSFUL : 0;
 			entry.EntityID	  = good ? id : PR_INVALID_ID;
 			entry.PrimitiveID = rhit.hit.primID;
 			entry.RayID		  = grp.offset() + k;
@@ -271,7 +273,8 @@ bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 
 	RTCRayHit rhit;
 	assignRay(ray, rhit.ray);
-	rhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+	rhit.hit.geomID	   = RTC_INVALID_GEOMETRY_ID;
+	rhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
 	rtcIntersect1(mInternal->Scene, &ctx, &rhit);
 
@@ -281,7 +284,6 @@ bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 		entry.EntityID	  = rhit.hit.instID[0] != RTC_INVALID_GEOMETRY_ID ? rhit.hit.instID[0] : rhit.hit.geomID;
 		entry.PrimitiveID = rhit.hit.primID;
 		entry.RayID		  = 0;
-		entry.Flags		  = HF_SUCCESSFUL;
 		entry.Parameter	  = Vector3f(rhit.hit.u, rhit.hit.v, rhit.ray.tfar);
 		return true;
 	}
@@ -292,6 +294,7 @@ struct IntersectContextShadow {
 	// Original
 	uint32 IgnoreID;
 };
+#ifdef PR_USE_FILTER_SHADOW
 static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
 {
 	/* avoid crashing when debug visualizations are used */
@@ -309,11 +312,18 @@ static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
 		if (valid[i] != VALID_ALL)
 			continue;
 
+		auto inst = RTCHitN_instID(hits, N, i, 0);
+		if (inst == id_ignore) {
+			valid[i] = 0;
+			continue;
+		}
+
 		auto geom = RTCHitN_geomID(hits, N, i);
 		if (geom == id_ignore)
 			valid[i] = 0;
 	}
 }
+#endif
 
 bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
 {
@@ -349,6 +359,6 @@ bool Scene::traceOcclusionRay(const Ray& ray) const
 
 	rtcOccluded1(mInternal->Scene, &ctx, &rray);
 
-	return rray.tfar == -std::numeric_limits<float>::infinity(); // RTCRay.tfar is set to -inf if hit anything
+	return rray.tfar > PR_EPSILON; // RTCRay.tfar is set to -inf if hit anything
 }
 } // namespace PR

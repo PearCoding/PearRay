@@ -62,38 +62,39 @@ public:
 
 		const bool allowMSI = mMSIEnabled && !infLight->hasDeltaDistribution();
 
-		// (1) Sample light
-		{
-			InfiniteLightSampleInput inL;
-			inL.Point = spt;
-			inL.RND	  = session.tile()->random().get2D();
-			InfiniteLightSampleOutput outL;
-			infLight->sample(inL, outL, session);
+		// Sample light
+		InfiniteLightSampleInput inL;
+		inL.Point = spt;
+		inL.RND	  = session.tile()->random().get2D();
+		InfiniteLightSampleOutput outL;
+		infLight->sample(inL, outL, session);
 
-			if (infLight->hasDeltaDistribution())
-				outL.PDF_S = 1;
+		if (infLight->hasDeltaDistribution())
+			outL.PDF_S = 1;
 
-			if (outL.PDF_S > PR_EPSILON) {
-				// Trace shadow ray
-				const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-				bool hitAnything = session.traceOcclusionRay(shadow);
-				if (!hitAnything) {
-					// Evaluate surface
-					MaterialEvalInput in;
-					in.Point	= spt;
-					in.Outgoing = outL.Outgoing;
-					in.NdotL	= outL.Outgoing.dot(spt.N);
-					MaterialEvalOutput out;
-					material->eval(in, out, session);
-					token = LightPathToken(out.Type);
+		// An unlikely event, but a zero pdf has to be catched before blowing up other parts
+		if (PR_UNLIKELY(outL.PDF_S <= PR_EPSILON))
+			return SpectralBlob::Zero();
 
-					const float sum_pdfs = out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
-					const float msiL	 = allowMSI ? MSI(1, outL.PDF_S, 1, sum_pdfs) : 1.0f;
-					return msiL * outL.Weight * out.Weight / outL.PDF_S;
-				}
-			}
-		}
-		return SpectralBlob::Zero();
+		// Trace shadow ray
+		const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+		bool hitAnything = session.traceOcclusionRay(shadow);
+		if (hitAnything) // If we hit anything before the light/background, the light path is occluded
+			return SpectralBlob::Zero();
+
+		// Evaluate surface
+		MaterialEvalInput in;
+		in.Point	= spt;
+		in.Outgoing = outL.Outgoing;
+		in.NdotL	= outL.Outgoing.dot(spt.N);
+		MaterialEvalOutput out;
+		material->eval(in, out, session);
+		token = LightPathToken(out.Type);
+
+		// Calculate hero msi pdf
+		const float sum_pdfs = out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
+		const float msiL	 = allowMSI ? MSI(1, outL.PDF_S, 1, sum_pdfs) : 1.0f;
+		return msiL * outL.Weight * out.Weight / outL.PDF_S;
 	}
 
 	// Estimate direct (finite) light
@@ -106,7 +107,7 @@ public:
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
-		IEntity* light = session.pickRandomLight(spt.N, lightPt, pdfA);
+		IEntity* light = session.pickRandomLight(spt.N, spt.EntityID, lightPt, pdfA);
 		if (PR_UNLIKELY(!light))
 			return SpectralBlob::Zero();
 
@@ -120,12 +121,10 @@ public:
 		Vector3f L		 = (lightPt.P - spt.P);
 		const float sqrD = L.squaredNorm();
 		L.normalize();
-		const float cosO  = std::max(0.0f, -L.dot(lightPt.N));
-		const float cosI  = std::max(0.0f, L.dot(spt.N));
-		const float cgeom = cosO / sqrD; // Geometric term without cosI (as it is included in the material evaluation)
-		const float C	  = cgeom / pdfA;
+		const float cosO = std::max(0.0f, -L.dot(lightPt.N));  // Only frontside
+		const float pdfS = IS::toSolidAngle(pdfA, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
 
-		if (cosI <= PR_EPSILON || C <= PR_EPSILON || pdfA <= PR_EPSILON || sqrD <= PR_EPSILON)
+		if (cosO <= PR_EPSILON || PR_UNLIKELY(pdfS <= PR_EPSILON))
 			return SpectralBlob::Zero();
 
 		// Trace shadow ray
@@ -147,18 +146,19 @@ public:
 		MaterialEvalInput in;
 		in.Point	= spt;
 		in.Outgoing = L;
-		in.NdotL	= cosI;
+		in.NdotL	= L.dot(spt.N);
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
+		token = LightPathToken(out.Type);
 
+		float factor = 0;
 		if (mMSIEnabled) {
-			const float pdfS	 = IS::toSolidAngle(pdfA, sqrD, cosO);
 			const float sum_pdfs = out.PDF_S.sum();
-			const float msiL	 = MSI(mLightSampleCount, pdfS, 1, sum_pdfs);
-			return outL.Weight * out.Weight * (C * msiL);
+			factor				 = MSI(mLightSampleCount, pdfS, 1, sum_pdfs) / pdfS;
 		} else {
-			return outL.Weight * out.Weight * C;
+			factor = 1.0f / pdfS;
 		}
+		return outL.Weight * out.Weight * factor;
 	}
 
 	// Estimate indirect light
@@ -207,21 +207,24 @@ public:
 
 		// Trace bounce ray
 		GeometryPoint npt;
-		IEntity* nentity;
+		IEntity* nentity = nullptr;
 		IMaterial* nmaterial;
 		if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
 			ShadingPoint spt2;
 			spt2.setByIdentity(next, npt);
-			const float aNdotV = std::max(0.0f, -spt2.NdotV);
+			const float aNdotV = std::abs(spt2.NdotV);
 
 			// Giveup if bad
-			if (PR_UNLIKELY(aNdotV <= PR_EPSILON || spt2.Depth2 <= PR_EPSILON)) {
+			if (PR_UNLIKELY(aNdotV <= PR_EPSILON)) {
 				path.popToken();
 				return;
 			}
 
-			// If we hit a light, apply the lighting to current path (Emissive Term)
-			if (nentity->isLight()) {
+			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
+			if (nentity->isLight()
+				//&& next.Direction.dot(spt2.Geometry.N) < -PR_EPSILON // Check if frontside
+				&& nentity->id() != spt.EntityID		  // Check if not self
+				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) { // Check if not too close
 				IEmission* ems = session.getEmission(spt2.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
 					// Evaluate light
@@ -234,9 +237,9 @@ public:
 					const float msiL = allowMSI
 										   ? MSI(
 											   1, out.PDF_S[0],
-											   mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, nentity), spt2.Depth2, aNdotV))
+											   mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.EntityID, nentity), spt2.Depth2, aNdotV))
 										   : 1.0f;
-					SpectralBlob radiance = msiL * outL.Weight * aNdotV / spt2.Depth2; // cos(NxL)/pdf(...) is already inside next.Weight
+					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
 					session.pushSpectralFragment(radiance, next, path);
@@ -272,6 +275,7 @@ public:
 			   const ShadingPoint& spt,
 			   IEntity* entity, IMaterial* material)
 	{
+		PR_UNUSED(entity);
 		// Early drop out for invalid splashes
 		if (PR_UNLIKELY(!material))
 			return;
@@ -295,12 +299,13 @@ public:
 			LightPathToken token;
 			SpectralBlob radiance = factor * directLight(session, spt, token, material);
 
-			if (!radiance.isZero()) {
-				path.addToken(token);
-				path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-				session.pushSpectralFragment(radiance, spt.Ray, path);
-				path.popToken(2);
-			}
+			if (radiance.isZero())
+				continue;
+
+			path.addToken(token);
+			path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
+			session.pushSpectralFragment(radiance, spt.Ray, path);
+			path.popToken(2);
 		}
 
 		// Infinite Lights
@@ -311,12 +316,13 @@ public:
 			SpectralBlob radiance = infiniteLight(session, spt, token,
 												  light.get(), material);
 
-			if (!radiance.isZero()) {
-				path.addToken(token);
-				path.addToken(LightPathToken::Background());
-				session.pushSpectralFragment(radiance, spt.Ray, path);
-				path.popToken(2);
-			}
+			if (!radiance.isZero())
+				continue;
+
+			path.addToken(token);
+			path.addToken(LightPathToken::Background());
+			session.pushSpectralFragment(radiance, spt.Ray, path);
+			path.popToken(2);
 		}
 	}
 
@@ -330,7 +336,7 @@ public:
 		session.tile()->statistics().addEntityHitCount();
 
 		// Early drop out for invalid splashes
-		if (!entity->isLight() && !material)
+		if (!entity->isLight() && PR_UNLIKELY(!material))
 			return;
 
 #ifndef PR_ALL_RAYS_CONTRIBUTE_SP
@@ -338,11 +344,9 @@ public:
 #endif
 
 		// Only consider camera rays, as everything else produces too much noise
-		if (entity->isLight()
-			&& spt.Ray.IterationDepth == 0
-			&& spt.Depth2 > PR_EPSILON) {
+		if (entity->isLight()) {
 			IEmission* ems = session.getEmission(spt.Geometry.EmissionID);
-			if (ems) {
+			if (PR_LIKELY(ems)) {
 				// Evaluate light
 				LightEvalInput inL;
 				inL.Entity = entity;
@@ -350,10 +354,10 @@ public:
 				LightEvalOutput outL;
 				ems->eval(inL, outL, session);
 
-				const float prevGEOM  = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
-				SpectralBlob radiance = outL.Weight * prevGEOM;
+				const float geom	  = /*std::abs(spt.NdotV) * std::abs(spt.Ray.NdotL)*/ 1 /* spt.Depth2*/;
+				SpectralBlob radiance = outL.Weight * geom;
 
-				if (!radiance.isZero()) {
+				if (PR_LIKELY(!radiance.isZero())) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
 					session.pushSpectralFragment(radiance, spt.Ray, path);
 					path.popToken();

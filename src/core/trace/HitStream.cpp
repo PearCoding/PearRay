@@ -21,7 +21,6 @@ HitStream::HitStream(size_t size)
 	mPrimitiveID.reserve(mSize);
 	for (int i = 0; i < 3; ++i)
 		mParameter[i].reserve(mSize);
-	mFlags.reserve(mSize);
 }
 
 HitStream::~HitStream()
@@ -39,7 +38,6 @@ void HitStream::add(const HitEntry& entry)
 	mPrimitiveID.emplace_back(entry.PrimitiveID);
 	for (int i = 0; i < 3; ++i)
 		mParameter[i].emplace_back(entry.Parameter[i]);
-	mFlags.emplace_back(entry.Flags);
 }
 
 HitEntry HitStream::get(size_t index) const
@@ -47,7 +45,6 @@ HitEntry HitStream::get(size_t index) const
 	PR_PROFILE_THIS;
 
 	HitEntry entry;
-	entry.Flags		  = mFlags[index];
 	entry.RayID		  = mRayID[index];
 	entry.EntityID	  = mEntityID[index];
 	entry.PrimitiveID = mPrimitiveID[index];
@@ -73,7 +70,6 @@ void HitStream::setup(bool sort)
 			std::swap(mPrimitiveID[a], mPrimitiveID[b]);
 			for (int i = 0; i < 3; ++i)
 				std::swap(mParameter[i][a], mParameter[i][b]);
-			std::swap(mFlags[a], mFlags[b]);
 		};
 
 #ifdef PR_USE_RADIXSORT
@@ -98,7 +94,6 @@ void HitStream::reset()
 	mPrimitiveID.clear();
 	for (int i = 0; i < 3; ++i)
 		mParameter[i].clear();
-	mFlags.clear();
 
 	mCurrentPos = 0;
 }
@@ -125,7 +120,7 @@ ShadingGroupBlock HitStream::getNextGroup()
 
 size_t HitStream::getMemoryUsage() const
 {
-	return mSize * (4 * sizeof(uint32) + 2 * sizeof(float) + sizeof(uint8));
+	return mSize * (3 * sizeof(uint32) + 3 * sizeof(float));
 }
 
 } // namespace PR

@@ -53,8 +53,8 @@ public:
 	void pushSPFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
-	IEntity* pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const;
-	float pickRandomLightPDF(const Vector3f& view, IEntity* light) const;
+	IEntity* pickRandomLight(const Vector3f& view, uint32 ignore_id, GeometryPoint& pt, float& pdf) const;
+	float pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const;
 
 private:
 	Point2i localCoordinates(Point1i pixelIndex) const;

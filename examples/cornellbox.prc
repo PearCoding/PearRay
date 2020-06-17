@@ -7,9 +7,9 @@
 	; Settings
 	(integrator
 		:type 'DIRECT'
-		:max_ray_depth 8
+		:max_ray_depth 16
 		:light_sampe_count 1
-		:msi true
+		:msi false
 	)
 	(sampler
 		:slot 'aa'
@@ -21,7 +21,7 @@
 		:name 'image'
 		(channel
 			:type 'color'
-			:color 'xyz'
+			:color 'srgb'
 		)
 		(channel :type 'depth')
 		(channel :type 'n')

@@ -138,7 +138,7 @@ void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) co
 		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
-IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const
+IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_id, GeometryPoint& pt, float& pdf) const
 {
 	PR_PROFILE_THIS;
 
@@ -152,6 +152,24 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 	pdf			= 1.0f / lights.size();
 
 	IEntity* light = lights.at(pick).get();
+	if (light->id() == ignore_id) {
+		if (lights.size() == 1) { // The light we have to ignore is the only light available
+			pdf = 0;
+			return nullptr;
+		}
+
+		size_t pick2 = mTile->random().get32(0, (uint32)lights.size() - 1);
+		pdf			 = 1.0f / (lights.size() - 1);
+
+		// We use a trick to ignore the one pick we already had
+		// [========P+++++++++]
+		if (pick2 < pick)
+			pick = pick2;
+		else
+			pick = pick2 + 1;
+
+		light = lights.at(pick).get();
+	}
 
 	EntityRandomPoint rnd_p = light->pickRandomParameterPoint(view, mTile->random().get2D());
 
@@ -166,12 +184,23 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 	return light;
 }
 
-float RenderTileSession::pickRandomLightPDF(const Vector3f& view, IEntity* light) const
+constexpr size_t PR_LARGE_LIGHT_THRESHOLD = 1000;
+float RenderTileSession::pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const
 {
 	PR_UNUSED(view);
+	PR_ASSERT(light->id() != ignore_id, "Picked light can not be the one ignored!");
+
 	const auto& lights = mTile->context()->lights();
 	if (lights.empty())
 		return 0.0f;
+
+	// TODO: Maybe have an approximation for large amounts of lights?
+	if (lights.size() < PR_LARGE_LIGHT_THRESHOLD) {
+		for (const auto& l : lights) {
+			if (l->id() == ignore_id)
+				return 1.0f / ((lights.size() - 1) * light->surfaceArea());
+		}
+	}
 
 	return 1.0f / (lights.size() * light->surfaceArea());
 }
