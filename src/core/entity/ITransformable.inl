@@ -51,6 +51,11 @@ inline const ITransformable::Transform& ITransformable::invTransform() const
 	return mInvTransformCache;
 }
 
+inline float ITransformable::volumeScalefactor() const
+{
+	return mJacobianDeterminant;
+}
+
 inline const Eigen::Matrix3f& ITransformable::normalMatrix() const
 {
 	return mNormalMatrixCache;

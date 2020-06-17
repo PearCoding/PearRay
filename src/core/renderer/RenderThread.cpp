@@ -38,11 +38,11 @@ void RenderThread::main()
 	std::shared_ptr<OutputQueue> queue = std::make_shared<OutputQueue>(QUEUE_SIZE, QUEUE_THRESHOLD);
 	auto bucket						   = mRenderer->output()->createBucket(mRenderer->maxTileSize());
 
-	mTile = nullptr;
-	mTile = mRenderer->getNextTile();
-
 	integrator->onStart();
-	while (mTile && !shouldStop()) {
+	for (mTile = mRenderer->getNextTile();
+		 mTile && !shouldStop();
+		 mTile = mRenderer->getNextTile()) {
+
 		RenderTileSession session(mThreadIndex, mTile, queue, bucket);
 
 		mTile->incIteration();
@@ -50,14 +50,14 @@ void RenderThread::main()
 
 		bucket->clear(true);
 		integrator->onTile(session);
-		if (PR_UNLIKELY(shouldStop()))
+		if (PR_UNLIKELY(shouldStop())) {
+			mTile->release();
 			break;
+		}
 		queue->commitAndFlush(bucket.get());
 		mRenderer->output()->mergeBucket(mTile->start(), bucket);
 
 		mTile->release();
-		mTile = nullptr;
-		mTile = mRenderer->getNextTile();
 	}
 	integrator->onEnd();
 }

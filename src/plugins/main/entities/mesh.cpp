@@ -99,7 +99,7 @@ public:
 
 	float surfaceArea(uint32 id) const override
 	{
-		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity());
+		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity()) * volumeScalefactor();
 	}
 
 	bool isCollidable() const override
@@ -138,11 +138,11 @@ public:
 		uint32 faceID = split.integral1();
 
 		Face face = mMesh->base()->getFace(faceID);
-		float pdf = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea());
+		float pdf = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea() * volumeScalefactor());
 
 		Vector2f uv = Vector2f(split.uniform1(), split.uniform2());
 
-		return EntityRandomPoint(face.interpolateVertices(uv), uv, faceID, pdf);
+		return EntityRandomPoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf);
 	}
 
 	// UV variant
@@ -151,9 +151,11 @@ public:
 	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
 						  GeometryPoint& pt) const
 	{
-		Vector2f uv;
-		Face face = mMesh->base()->getFace(query.PrimitiveID);
-		face.interpolate(Vector2f(query.UV[0], query.UV[1]), pt.P, pt.N, uv);
+		// pt.P is not populated, as we will use the query position directly
+
+		Face face	= mMesh->base()->getFace(query.PrimitiveID);
+		pt.N		= face.interpolateNormals(query.UV);
+		Vector2f uv = face.interpolateUVs(query.UV);
 
 		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
 		pt.UVW = Vector3f(uv(0), uv(1), 0);
@@ -167,9 +169,10 @@ public:
 	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
 						  GeometryPoint& pt) const
 	{
-		Vector2f uv;
+		// pt.P is not populated, as we will use the query position directly
+
 		Face face = mMesh->base()->getFace(query.PrimitiveID);
-		face.interpolate(Vector2f(query.UV[0], query.UV[1]), pt.P, pt.N, uv);
+		pt.N	  = face.interpolateNormals(query.UV);
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 		pt.UVW = Vector3f(query.UV(0), query.UV(1), 0);
@@ -186,7 +189,7 @@ public:
 		provideGeometryPoint2(query, pt);
 
 		// Global
-		pt.P  = transform() * pt.P;
+		pt.P  = query.Position; //transform() * pt.P;
 		pt.N  = normalMatrix() * pt.N;
 		pt.Nx = normalMatrix() * pt.Nx;
 		pt.Ny = normalMatrix() * pt.Ny;
