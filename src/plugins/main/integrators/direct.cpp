@@ -223,7 +223,8 @@ public:
 			}
 
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
-			if (nentity->isLight()
+			if (allowMSI
+				&& nentity->isLight()
 				&& next.Direction.dot(spt2.Geometry.N) < -PR_EPSILON // Check if frontside
 				&& nentity->id() != spt.Geometry.EntityID			 // Check if not self
 				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {			 // Check if not too close
@@ -236,11 +237,9 @@ public:
 					LightEvalOutput outL;
 					ems->eval(inL, outL, session);
 
-					const float msiL = allowMSI
-										   ? MSI(
-											   1, out.PDF_S[0],
-											   mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.Geometry.EntityID, nentity), spt2.Depth2, aNdotV))
-										   : 1.0f;
+					const float msiL = MSI(
+						1, out.PDF_S[0],
+						mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.Geometry.EntityID, nentity), spt2.Depth2, aNdotV));
 					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));

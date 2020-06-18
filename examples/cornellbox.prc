@@ -9,12 +9,12 @@
 		:type 'DIRECT'
 		:max_ray_depth 16
 		:light_sampe_count 1
-		:msi true
+		:msi false
 	)
 	(sampler
 		:slot 'aa'
 		:type 'MULTI_JITTER'
-		:sample_count 256
+		:sample_count 4
 	)
 	; Outputs
 	(output
