@@ -107,7 +107,7 @@ public:
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
-		IEntity* light = session.pickRandomLight(spt.N, spt.EntityID, lightPt, pdfA);
+		IEntity* light = session.pickRandomLight(spt.N, spt.Geometry.EntityID, lightPt, pdfA);
 		if (PR_UNLIKELY(!light))
 			return SpectralBlob::Zero();
 
@@ -224,9 +224,9 @@ public:
 
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
 			if (nentity->isLight()
-				//&& next.Direction.dot(spt2.Geometry.N) < -PR_EPSILON // Check if frontside
-				&& nentity->id() != spt.EntityID		  // Check if not self
-				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) { // Check if not too close
+				&& next.Direction.dot(spt2.Geometry.N) < -PR_EPSILON // Check if frontside
+				&& nentity->id() != spt.Geometry.EntityID			 // Check if not self
+				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {			 // Check if not too close
 				IEmission* ems = session.getEmission(spt2.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
 					// Evaluate light
@@ -239,7 +239,7 @@ public:
 					const float msiL = allowMSI
 										   ? MSI(
 											   1, out.PDF_S[0],
-											   mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.EntityID, nentity), spt2.Depth2, aNdotV))
+											   mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.Geometry.EntityID, nentity), spt2.Depth2, aNdotV))
 										   : 1.0f;
 					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 

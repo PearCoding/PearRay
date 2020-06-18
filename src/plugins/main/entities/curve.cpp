@@ -156,9 +156,11 @@ public:
 
 		pt.UVW = Vector3f(u, v, 0.0f);
 
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 	void beforeSceneBuild() override

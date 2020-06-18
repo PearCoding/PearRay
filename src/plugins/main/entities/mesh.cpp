@@ -198,8 +198,10 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 private:

@@ -46,9 +46,6 @@ public:
 
 	bool isRenderable() const override;
 
-	inline size_t containerID() const;
-	inline void setContainerID(size_t id);
-
 	inline uint8 visibilityFlags() const;
 	inline void setVisibilityFlags(uint8 flags);
 
@@ -75,7 +72,6 @@ public:
 	virtual void beforeSceneBuild() override;
 
 private:
-	size_t mContainerID; // To which (latest) container node it belongs
 	uint8 mVisibilityFlags;
 	BoundingBox calcWorldBoundingBox() const;
 	BoundingBox mWorldBoundingBox_Cache;

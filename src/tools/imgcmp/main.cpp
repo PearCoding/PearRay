@@ -107,6 +107,11 @@ bool read_input(const std::string& filename, std::vector<float>& data, int& widt
 	return true;
 }
 
+static inline float to_db(float f)
+{
+	return 10 * std::log10(f);
+}
+
 struct PerChannelStats {
 	float Min		 = std::numeric_limits<float>::infinity();
 	float MinRef	 = std::numeric_limits<float>::infinity();
@@ -232,7 +237,7 @@ int main(int argc, char** argv)
 		stat.MeanSqrRef *= AVG_FACTOR;
 		stat.MSE *= AVG_FACTOR;
 
-		stat.PSNR = 20 * std::log10(stat.MaxRef) - 10 * std::log10(stat.MSE);
+		stat.PSNR = stat.MaxRef * stat.MaxRef / stat.MSE;
 
 		// Calculate variance stats
 		for (int i = 0; i < width1 * height1; ++i) {
@@ -251,9 +256,9 @@ int main(int argc, char** argv)
 		stat.VarianceRef *= AVG_FACTOR;
 		stat.VarianceDiff *= AVG_FACTOR;
 
-		stat.SNR	 = 10 * std::log10(stat.Mean / std::sqrt(stat.Variance));
-		stat.SNRRef	 = 10 * std::log10(stat.MeanRef / std::sqrt(stat.VarianceRef));
-		stat.SNRDiff = 10 * std::log10(stat.MeanDiff / std::sqrt(stat.VarianceDiff));
+		stat.SNR	 = stat.Mean / std::sqrt(stat.Variance);
+		stat.SNRRef	 = stat.MeanRef / std::sqrt(stat.VarianceRef);
+		stat.SNRDiff = stat.MeanDiff / std::sqrt(stat.VarianceDiff);
 		stat.SNT	 = (stat.Mean - stat.MeanRef) / (std::sqrt(stat.Variance) - std::sqrt(stat.VarianceRef));
 	}
 
@@ -273,10 +278,10 @@ int main(int argc, char** argv)
 		std::cout << "  -[MaxDiff     ] = " << stat.MaxDiff << std::endl;
 		std::cout << "  -[MeanDiff    ] = " << stat.MeanDiff << std::endl;
 		std::cout << "  -[MSE         ] = " << stat.MSE << std::endl;
-		std::cout << "  -[PSNR        ] = " << stat.PSNR << " dB" << std::endl;
-		std::cout << "  -[SNR         ] = " << stat.SNR << " dB" << std::endl;
-		std::cout << "  -[SNRRef      ] = " << stat.SNRRef << " dB" << std::endl;
-		std::cout << "  -[SNRDiff     ] = " << stat.SNRDiff << " dB" << std::endl;
+		std::cout << "  -[PSNR        ] = " << stat.PSNR << " [" << to_db(stat.PSNR) << " dB]" << std::endl;
+		std::cout << "  -[SNR         ] = " << stat.SNR << " [" << to_db(stat.SNR) << " dB]" << std::endl;
+		std::cout << "  -[SNRRef      ] = " << stat.SNRRef << " [" << to_db(stat.SNRRef) << " dB]" << std::endl;
+		std::cout << "  -[SNRDiff     ] = " << stat.SNRDiff << " [" << to_db(stat.SNRDiff) << " dB]" << std::endl;
 		std::cout << "  -[SNT         ] = " << stat.SNT << std::endl;
 		std::cout << "  -[Variance    ] = " << stat.Variance << std::endl;
 		std::cout << "  -[VarianceRef ] = " << stat.VarianceRef << std::endl;

@@ -70,21 +70,27 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		const auto& entry = entries[i];
 
 		const Point2i rp  = entry.Position + filterSize;
-		const bool isMono = entry.Flags & OSEF_Mono;
+		//const bool isMono = entry.Flags & OSEF_Mono;
 
 		SpectralBlob real_weight = entry.Weight;
-		Size1i channels			 = PR_SPECTRAL_BLOB_SIZE;
-		if (PR_UNLIKELY(isMono)) {
+		Size1i w_channels			 = 0;
+		for(size_t k = 0; k <PR_SPECTRAL_BLOB_SIZE; ++k) {
+			if(entry.Weight[k] > PR_EPSILON)
+				++w_channels;
+		}
+
+		real_weight *= w_channels/(float)PR_SPECTRAL_BLOB_SIZE;
+		/*if (PR_UNLIKELY(isMono)) {
 			channels = 1;
 			real_weight *= SpectralBlobUtils::HeroOnly() * PR_SPECTRAL_BLOB_SIZE;
-		}
+		}*/
 
 		// Check for valid samples
 		bool isInf	   = false;
 		bool isNaN	   = false;
 		bool isNeg	   = false;
 		bool isInvalid = false;
-		for (Size1i k = 0; k < channels && !isInvalid; ++k) {
+		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE && !isInvalid; ++k) {
 			isInf	  = std::isinf(real_weight[k]);
 			isNaN	  = std::isnan(real_weight[k]);
 			isNeg	  = real_weight[k] < 0;
@@ -209,7 +215,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	BLEND_1D(AOV_Time, entry.SP.Ray.Time);
 	BLEND_1D(AOV_Depth, std::sqrt(entry.SP.Depth2));
 
-	BLEND_1D(AOV_EntityID, entry.SP.EntityID);
+	BLEND_1D(AOV_EntityID, entry.SP.Geometry.EntityID);
 	BLEND_1D(AOV_MaterialID, entry.SP.Geometry.MaterialID);
 	BLEND_1D(AOV_EmissionID, entry.SP.Geometry.EmissionID);
 	BLEND_1D(AOV_DisplaceID, entry.SP.Geometry.DisplaceID);
@@ -231,7 +237,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	BLEND_1D_LPE(AOV_Time, entry.SP.Ray.Time);
 	BLEND_1D_LPE(AOV_Depth, std::sqrt(entry.SP.Depth2));
 
-	BLEND_1D_LPE(AOV_EntityID, entry.SP.EntityID);
+	BLEND_1D_LPE(AOV_EntityID, entry.SP.Geometry.EntityID);
 	BLEND_1D_LPE(AOV_MaterialID, entry.SP.Geometry.MaterialID);
 	BLEND_1D_LPE(AOV_EmissionID, entry.SP.Geometry.EmissionID);
 	BLEND_1D_LPE(AOV_DisplaceID, entry.SP.Geometry.DisplaceID);

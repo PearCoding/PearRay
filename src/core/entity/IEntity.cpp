@@ -4,7 +4,6 @@
 namespace PR {
 IEntity::IEntity(uint32 id, const std::string& name)
 	: ITransformable(id, name)
-	, mContainerID(0)
 	, mVisibilityFlags(EVF_All)
 {
 }
@@ -57,7 +56,6 @@ std::string IEntity::dumpInformation() const
 		   << "    IsBounceVisible:  " << ((visibilityFlags() & EVF_Bounce) ? "true" : "false") << std::endl
 		   << "    IsShadowVisible:  " << ((visibilityFlags() & EVF_Shadow) ? "true" : "false") << std::endl
 		   << "    CollisionCost: " << collisionCost() << std::endl
-		   << "    ContainerID:   " << containerID() << std::endl
 		   << "    SurfaceArea:   " << surfaceArea() << std::endl
 		   << "    BBVolume:      " << worldBoundingBox().volume() << std::endl;
 	;

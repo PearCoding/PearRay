@@ -33,9 +33,6 @@ public:
 	float Depth2;
 	float NdotV;
 
-	uint32 EntityID;
-	uint32 PrimitiveID;
-
 	// Set shading terms without transformation
 	inline void setByIdentity(const PR::Ray& ray, const GeometryPoint& pt)
 	{

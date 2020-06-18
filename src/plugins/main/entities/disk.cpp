@@ -107,10 +107,12 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.UVW		  = Vector3f(u, v, 0);
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.UVW		   = Vector3f(u, v, 0);
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 	void beforeSceneBuild() override

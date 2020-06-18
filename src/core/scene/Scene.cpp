@@ -15,7 +15,8 @@
 #include <fstream>
 
 // Seems slower than the default offset variant
-#define PR_USE_FILTER_SHADOW
+// FIXME: This has a bug, where direct lighting does not detect shadows
+//#define PR_USE_FILTER_SHADOW
 
 namespace PR {
 Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
@@ -354,7 +355,7 @@ bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) con
 
 	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
 
-	return rray.tfar > PR_EPSILON;
+	return rray.tfar != -std::numeric_limits<float>::infinity();
 }
 
 bool Scene::traceOcclusionRay(const Ray& ray) const
@@ -368,6 +369,6 @@ bool Scene::traceOcclusionRay(const Ray& ray) const
 
 	rtcOccluded1(mInternal->Scene, &ctx, &rray);
 
-	return rray.tfar < 0; // RTCRay.tfar is set to -inf if hit anything
+	return rray.tfar == -std::numeric_limits<float>::infinity(); // RTCRay.tfar is set to -inf if hit anything
 }
 } // namespace PR

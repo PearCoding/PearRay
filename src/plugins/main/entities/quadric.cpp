@@ -97,7 +97,7 @@ public:
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
 		out.resetSuccessful();
-		auto range	   = localBoundingBox().intersectsRange(in_local);
+		auto range = localBoundingBox().intersectsRange(in_local);
 		if (range.Entry < 0)
 			range.Entry = 0;
 
@@ -152,9 +152,11 @@ public:
 			pt.UVW(1) /= pt.UVW(2);
 			pt.UVW(2) = 0;
 		}
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 private:

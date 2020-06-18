@@ -26,7 +26,6 @@ enum VisualFeedbackMode {
 	VFM_ColoredDisplaceID,
 	VFM_ColoredPrimitiveID,
 	VFM_ColoredRayID,
-	VFM_ColoredContainerID,
 	VFM_RayDirection,
 	VFM_Parameter,
 	VFM_Inside,
@@ -44,7 +43,6 @@ static struct {
 	{ "colored_displace_id", VFM_ColoredDisplaceID },
 	{ "colored_primitive_id", VFM_ColoredPrimitiveID },
 	{ "colored_ray_id", VFM_ColoredRayID },
-	{ "colored_container_id", VFM_ColoredContainerID },
 	{ "ray_direction", VFM_RayDirection },
 	{ "parameter", VFM_Parameter },
 	{ "inside", VFM_Inside },
@@ -109,7 +107,7 @@ public:
 			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.NdotV);
 			switch (mMode) {
 			case VFM_ColoredEntityID:
-				radiance = sRandomColors[spt.EntityID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Geometry.EntityID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
@@ -129,17 +127,12 @@ public:
 					radiance *= weight;
 				break;
 			case VFM_ColoredPrimitiveID:
-				radiance = sRandomColors[spt.PrimitiveID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Geometry.PrimitiveID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredRayID:
 				radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
-				if (mApplyDot)
-					radiance *= weight;
-				break;
-			case VFM_ColoredContainerID:
-				radiance = sRandomColors[grp.entity()->containerID() % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
