@@ -32,5 +32,19 @@ public:
 		const auto e13 = p3 - p1;
 		return 0.5f * e12.cross(e13).norm();
 	}
+
+	// Based on "A Low-Distortion Map Between Triangle and Square" by Eric Heitz
+	// and https://pharr.org/matt/blog/2019/03/13/triangle-sampling-1.5.html
+	// Expects uniform values [0,1)^2 and maps them to the barycentric domain
+	inline static Vector2f sample(const Vector2f& uniform)
+	{
+		if (uniform(1) > uniform(0)) {
+			float x = uniform(0) / 2;
+			return Vector2f(x, uniform(1) - x);
+		} else {
+			float y = uniform(1) / 2;
+			return Vector2f(uniform(0) - y, y);
+		}
+	}
 };
 } // namespace PR

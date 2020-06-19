@@ -140,7 +140,7 @@ public:
 		Face face = mMesh->base()->getFace(faceID);
 		float pdf = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea() * volumeScalefactor());
 
-		Vector2f uv = Vector2f(split.uniform1(), split.uniform2());
+		Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
 
 		return EntityRandomPoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf);
 	}
