@@ -1,6 +1,6 @@
 #include "BoundingBox.h"
-#include "trace/HitPoint.h"
 #include "Plane.h"
+#include "trace/HitPoint.h"
 
 namespace PR {
 BoundingBox::BoundingBox()
@@ -47,15 +47,14 @@ void BoundingBox::intersects(const Ray& in, HitPoint& out) const
 {
 	out.HitDistance		  = std::numeric_limits<float>::infinity();
 	const Vector3f invDir = in.Direction.cwiseInverse();
+	const Vector3f vmin	  = invDir.cwiseProduct(lowerBound() - in.Origin);
+	const Vector3f vmax	  = invDir.cwiseProduct(upperBound() - in.Origin);
 
 	float entry = -std::numeric_limits<float>::infinity();
 	float exit	= std::numeric_limits<float>::infinity();
 	for (int i = 0; i < 3; ++i) {
-		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		entry = std::max(std::min(vmin, vmax), entry);
-		exit  = std::min(std::max(vmin, vmax), exit);
+		entry = std::max(std::min(vmin[i], vmax[i]), entry);
+		exit  = std::min(std::max(vmin[i], vmax[i]), exit);
 	}
 
 	float minE = entry <= 0 ? exit : entry;
@@ -71,22 +70,15 @@ BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 {
 	BoundingBox::IntersectionRange r;
 	const Vector3f invDir = in.Direction.cwiseInverse();
+	const Vector3f vmin	  = invDir.cwiseProduct(lowerBound() - in.Origin);
+	const Vector3f vmax	  = invDir.cwiseProduct(upperBound() - in.Origin);
 
-	// Leading loop part
-	{
-		const float vmin = (lowerBound()(0) - in.Origin[0]) * invDir[0];
-		const float vmax = (upperBound()(0) - in.Origin[0]) * invDir[0];
-		r.Entry			 = std::min(vmin, vmax);
-		r.Exit			 = std::max(vmin, vmax);
-	}
-
+	r.Entry = std::min(vmin[0], vmax[0]);
+	r.Exit	= std::max(vmin[0], vmax[0]);
 	PR_UNROLL_LOOP(2)
 	for (int i = 1; i < 3; ++i) {
-		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		r.Entry = std::max(std::min(vmin, vmax), r.Entry);
-		r.Exit	= std::min(std::max(vmin, vmax), r.Exit);
+		r.Entry = std::max(std::min(vmin[i], vmax[i]), r.Entry);
+		r.Exit	= std::min(std::max(vmin[i], vmax[i]), r.Exit);
 	}
 
 	r.Entry		 = std::max(in.MinT, r.Entry);

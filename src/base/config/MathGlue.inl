@@ -19,7 +19,8 @@ typename std::enable_if<std::is_floating_point<T>::value, T>::type
 sumProd(T a, T b, T c, T d)
 {
 	// TODO: Find a better way
-	return diffProd<T>(a, b, -c, d);
+	//return diffProd<T>(a, b, -c, d);
+	return std::fma(a, b, c * d);
 }
 
 } // namespace PR

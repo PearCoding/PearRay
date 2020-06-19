@@ -27,7 +27,6 @@ set(PR_Src
   math/Compression.h
   math/Fresnel.h
   math/Generator.h
-  math/HemiMap.h
   math/ImportanceSampling.h
   math/Microfacet.h
   math/Projection.h

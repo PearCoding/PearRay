@@ -9,7 +9,7 @@ Disk::Disk(float radius)
 
 bool Disk::contains(const Vector3f& point) const
 {
-	float r2 = point(0) * point(0) + point(1) * point(1);
+	float r2 = sumProd(point(0), point(0), point(1), point(1));
 	return r2 <= mRadius * mRadius;
 }
 
@@ -25,7 +25,7 @@ void Disk::intersects(const Ray& in, HitPoint& out) const
 
 	const Vector3f p = in.t(t);
 
-	float r2 = p(0) * p(0) + p(1) * p(1);
+	float r2 = sumProd(p(0), p(0), p(1), p(1));
 	if (r2 > mRadius * mRadius)
 		return;
 
@@ -39,7 +39,7 @@ void Disk::intersects(const Ray& in, HitPoint& out) const
 
 Vector2f Disk::project(const Vector3f& point) const
 {
-	float r = sqrt(point(0) * point(0) + point(1) * point(1)) / mRadius;
+	float r = sqrt(sumProd(point(0), point(0), point(1), point(1))) / mRadius;
 
 	return Vector2f(
 		0.5f * (atan2(point(1), point(0)) * PR_1_PI + 1),
