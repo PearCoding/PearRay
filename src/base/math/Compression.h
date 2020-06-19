@@ -96,7 +96,7 @@ inline void from_oct(float ix, float iy, float& ox, float& oy, float& oz)
 	}
 
 	// Norm
-	const float a = std::sqrt(ox * ox + oy * oy + oz * oz);
+	const float a = std::sqrt(std::fma(ox, ox, std::fma(oy, oy, oz * oz)));
 	ox /= a;
 	oy /= a;
 	oz /= a;

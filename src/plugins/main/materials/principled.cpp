@@ -219,7 +219,7 @@ public:
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		Vector3f nV = Tangent::toTangentSpace<float>(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
+		Vector3f nV = Tangent::toTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
 
 		float pdf_s;
 		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, pdf_s);

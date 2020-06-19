@@ -30,29 +30,21 @@ inline Vector3f safePosition(const Vector3f& pos,
 	return posOff;
 }
 
-template <typename T>
-inline Vector3t<T> applyVector(const Eigen::Ref<const Eigen::Matrix3f>& m, const Vector3t<T>& p)
+inline Vector3f applyVector(const Eigen::Ref<const Eigen::Matrix3f>& m, const Vector3f& p)
 {
-	T b1 = m(0, 0) * p(0) + m(0, 1) * p(1) + m(0, 2) * p(2);
-	T b2 = m(1, 0) * p(0) + m(1, 1) * p(1) + m(1, 2) * p(2);
-	T b3 = m(2, 0) * p(0) + m(2, 1) * p(1) + m(2, 2) * p(2);
-	return Vector3t<T>(b1, b2, b3);
+	return m * p;
 }
 
-template <typename T>
-inline Vector3t<T> applyAffine(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3t<T>& p)
+inline Vector3f applyAffine(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3f& p)
 {
-	T b1 = m(0, 0) * p(0) + m(0, 1) * p(1) + m(0, 2) * p(2) + m(0, 3);
-	T b2 = m(1, 0) * p(0) + m(1, 1) * p(1) + m(1, 2) * p(2) + m(1, 3);
-	T b3 = m(2, 0) * p(0) + m(2, 1) * p(1) + m(2, 2) * p(2) + m(2, 3);
-	return Vector3t<T>(b1, b2, b3);
+	return m.block<3, 3>(0, 0) * p + m.block<3, 1>(0, 3);
 }
 
-template <typename T>
-inline Vector3t<T> apply(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3t<T>& p)
+inline Vector3f apply(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3f& p)
 {
-	Vector3t<T> b = applyAffine(m, p);
-	return b / (m(3, 0) * p(0) + m(3, 1) * p(1) + m(3, 2) * p(2) + m(3, 3));
+	Vector3f b	= applyAffine(m, p);
+	float denom = m.block<1, 3>(3, 0).dot(p) + m(3, 3);
+	return b / denom;
 }
 
 inline Eigen::Matrix3f orthogonalMatrix(const Vector3f& c0, const Vector3f& c1, const Vector3f& c2)

@@ -7,7 +7,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 8
+	  :sample_count 4
 	)
 	(sampler 
 	  :slot 'spectral'

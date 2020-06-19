@@ -10,10 +10,10 @@ inline float dielectric(float NdotV, float NdotT, float n1, float n2)
 	/*if(NdotV*NdotT <= PR_EPSILON)
 			return 1;*/
 
-	const float para = (n1 * NdotV - n2 * NdotT) / (n1 * NdotV + n2 * NdotT);
-	const float perp = (n1 * NdotT - n2 * NdotV) / (n1 * NdotT + n2 * NdotV);
+	const float para = diffProd(n1, NdotV, n2, NdotT) / sumProd(n1, NdotV, n2, NdotT);
+	const float perp = diffProd(n1, NdotT, n2, NdotV) / sumProd(n1, NdotT, n2, NdotV);
 
-	return (para * para + perp * perp) / 2.0f;
+	return sumProd(para, para, perp, perp) / 2.0f;
 }
 
 inline float dielectric(float NdotV, float n1, float n2)
@@ -33,14 +33,14 @@ inline float conductor(float dot, float n, float k)
 		return 1;
 
 	const float dot2 = dot * dot;
-	const float f	= (n * n + k * k);
-	const float d1   = f * dot2;
-	const float d2   = 2 * n * dot;
+	const float f	 = sumProd(n, n, k, k);
+	const float d1	 = f * dot2;
+	const float d2	 = 2 * n * dot;
 
 	const float para = (d1 - d2) / (d1 + d2);
 	const float perp = (f - d2 + dot2) / (f + d2 + dot2);
 
-	const float R = (para * para + perp * perp) / 2;
+	const float R = sumProd(para, para, perp, perp) / 2;
 	return std::min(std::max(R, 0.0f), 1.0f);
 }
 

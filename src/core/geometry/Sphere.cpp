@@ -73,7 +73,7 @@ void Sphere::combine(const Sphere& other)
 
 Vector3f Sphere::normalPoint(float u, float v) const
 {
-	return Spherical::cartesian_from_uv<float>(u, v);
+	return Spherical::cartesian_from_uv(u, v);
 }
 
 Vector3f Sphere::surfacePoint(float u, float v) const

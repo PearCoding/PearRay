@@ -171,5 +171,6 @@ private:                                           \
 #include "config/SIMD.inl"
 #include "config/Types.inl"
 #include "config/Constants.inl"
+#include "config/MathGlue.inl"
 #include "config/VectorGlue.inl"
 // clang-format on

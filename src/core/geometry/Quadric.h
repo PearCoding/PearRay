@@ -28,8 +28,8 @@ public:
 	template <typename T>
 	inline static bool intersect(
 		const ParameterArray& parameters,
-		const Vector3t<T>& origin,
-		const Vector3t<T>& direction,
+		const Vector3f& origin,
+		const Vector3f& direction,
 		T& t)
 	{
 		static const T INT_EPS = T(1e-6f);
@@ -73,7 +73,7 @@ public:
 	template <typename T>
 	inline static T eval(
 		const ParameterArray& parameters,
-		const Vector3t<T>& xyz)
+		const Vector3f& xyz)
 	{
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -92,9 +92,9 @@ public:
 	}
 
 	template <typename T>
-	inline static Vector3t<T> gradient(
+	inline static Vector3f gradient(
 		const ParameterArray& parameters,
-		const Vector3t<T>& xyz)
+		const Vector3f& xyz)
 	{
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -107,7 +107,7 @@ public:
 		const float I = parameters[8];
 		//const float J = parameters[9];
 
-		Vector3t<T> N;
+		Vector3f N;
 		N(0) = 2 * A * xyz(0) + D * xyz(1) + E * xyz(2) + G;
 		N(1) = D * xyz(0) + 2 * B * xyz(1) + F * xyz(2) + H;
 		N(2) = E * xyz(0) + F * xyz(1) + 2 * C * xyz(2) + I;
@@ -115,11 +115,11 @@ public:
 	}
 
 	template <typename T>
-	inline static Vector3t<T> normal(
+	inline static Vector3f normal(
 		const ParameterArray& parameters,
-		const Vector3t<T>& xyz)
+		const Vector3f& xyz)
 	{
-		Vector3t<T> N = gradient(parameters, xyz);
+		Vector3f N = gradient(parameters, xyz);
 		T norm		  = N.norm();
 		return N / norm;
 	}

@@ -24,10 +24,9 @@ public:
 		return v1 * uv(0) + v2 * uv(1) + v0 * (1 - uv(0) - uv(1));
 	}
 
-	template <typename T>
-	inline static T surfaceArea(const Vector3t<T>& p1,
-								const Vector3t<T>& p2,
-								const Vector3t<T>& p3)
+	inline static float surfaceArea(const Vector3f& p1,
+									const Vector3f& p2,
+									const Vector3f& p3)
 	{
 		const auto e12 = p2 - p1;
 		const auto e13 = p3 - p1;

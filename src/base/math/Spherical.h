@@ -16,35 +16,31 @@ inline Vector2f uv_from_normal(const Vector3f& N)
 	return Vector2f(u, v);
 }
 
-template <typename T>
-inline Vector2t<T> uv_from_point(const Vector3t<T>& V)
+inline Vector2f uv_from_point(const Vector3f& V)
 {
-	return uv_from_normal(Vector3t<T>(V / V.norm()));
+	return uv_from_normal(V.normalized());
 }
 
 // theta [0, PI]
 // phi [0, 2*PI]
-template <typename T>
-inline Vector3t<T> cartesian(const T& thSin, const T& thCos, const T& phSin, const T& phCos)
+inline Vector3f cartesian(float thSin, float thCos, float phSin, float phCos)
 {
-	return Vector3t<T>(thSin * phCos,
-					   thSin * phSin,
-					   thCos);
+	return Vector3f(thSin * phCos,
+					thSin * phSin,
+					thCos);
 }
 
-template <typename T>
-inline Vector3t<T> cartesian(const T& theta, const T& phi)
+inline Vector3f cartesian(float theta, float phi)
 {
-	return cartesian<T>(sin(theta), cos(theta),
-						sin(phi), cos(phi));
+	return cartesian(sin(theta), cos(theta),
+					 sin(phi), cos(phi));
 }
 
 // u,v [0, 1]
-template <typename T>
-inline Vector3t<T> cartesian_from_uv(const T& u, const T& v)
+inline Vector3f cartesian_from_uv(float u, float v)
 {
-	return cartesian<T>(v * PR_PI,
-						u * 2 * PR_PI);
+	return cartesian(v * PR_PI,
+					 u * 2 * PR_PI);
 }
 
 } // namespace Spherical
