@@ -1,18 +1,14 @@
 #include <boost/filesystem.hpp>
-#include <boost/program_options/cmdline.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/positional_options.hpp>
-#include <boost/program_options/variables_map.hpp>
 #include <cctype>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#include <cxxopts.hpp>
+
 #include <OpenImageIO/imageio.h>
 
-namespace po = boost::program_options;
 namespace bf = boost::filesystem;
 
 class ProgramSettings {
@@ -28,58 +24,54 @@ public:
 
 bool ProgramSettings::parse(int argc, char** argv)
 {
-	po::options_description all_d("Allowed Options");
-
-	// clang-format off
-    all_d.add_options()
-		("help,h", "Produce this help message")
-		("verbose,v", "Print detailed information")
-		("input,i", po::value<std::string>(), "Input file")
-		("reference,r", po::value<std::string>(), "Reference file")
-		;
-	// clang-format on
-
-	po::positional_options_description p;
-	p.add("input", 1).add("reference", 1);
-
-	po::variables_map vm;
 	try {
-		po::store(po::command_line_parser(argc, argv).options(all_d).positional(p).run(), vm);
-		po::notify(vm);
-	} catch (const std::exception& e) {
+		cxxopts::Options options("prcmp", "Compare two images and calculate multiple statistics");
+
+		// clang-format off
+		options.add_options()
+			("h,help", "Produce this help message")
+			("v,verbose", "Print detailed information")
+			("i,input", "Input file", cxxopts::value<std::string>())
+			("r,reference", "Reference file", cxxopts::value<std::string>())
+		;
+		// clang-format on
+		options.parse_positional({ "input", "reference" });
+
+		auto vm = options.parse(argc, argv);
+
+		// Handle help
+		if (vm.count("help")) {
+			std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
+					  << std::endl;
+			std::cout << options.help() << std::endl;
+			exit(0);
+		}
+
+		// Handle version
+		if (!vm.count("input") || !vm.count("reference")) {
+			std::cout << "No input or reference given!" << std::endl;
+			return false;
+		}
+
+		// Input file
+		InputFile = vm["input"].as<std::string>();
+		if (!bf::exists(InputFile)) {
+			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
+			return false;
+		}
+
+		// Reference file
+		ReferenceFile = vm["reference"].as<std::string>();
+		if (!bf::exists(ReferenceFile)) {
+			std::cout << "Couldn't find file '" << ReferenceFile << "'" << std::endl;
+			return false;
+		}
+
+		IsVerbose = (vm.count("verbose") != 0);
+	} catch (const cxxopts::OptionException& e) {
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;
 	}
-
-	// Handle help
-	if (vm.count("help")) {
-		std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
-				  << std::endl;
-		std::cout << all_d << std::endl;
-		exit(0);
-	}
-
-	// Handle version
-	if (!vm.count("input") || !vm.count("reference")) {
-		std::cout << "No input or reference given!" << std::endl;
-		return false;
-	}
-
-	// Input file
-	InputFile = vm["input"].as<std::string>();
-	if (!bf::exists(InputFile)) {
-		std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
-		return false;
-	}
-
-	// Reference file
-	ReferenceFile = vm["reference"].as<std::string>();
-	if (!bf::exists(ReferenceFile)) {
-		std::cout << "Couldn't find file '" << ReferenceFile << "'" << std::endl;
-		return false;
-	}
-
-	IsVerbose = (vm.count("verbose") != 0);
 
 	return true;
 }

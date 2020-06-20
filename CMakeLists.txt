@@ -87,7 +87,7 @@ if(NOT WIN32)
 	find_package(Threads REQUIRED)
 endif()
 
-find_package(Boost 1.45 COMPONENTS filesystem system program_options REQUIRED)
+find_package(Boost 1.45 COMPONENTS filesystem system REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
 
 if(PR_WITH_DIAGNOSTIC)
@@ -142,7 +142,7 @@ configure_file(src/base/config/Version.h.in         ${CMAKE_CURRENT_BINARY_DIR}/
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
 			external/DataLisp/src ${CMAKE_CURRENT_BINARY_DIR}/external/DataLisp
-			external/tinyobjloader
+			external/tinyobjloader external/cxxopts/include
 			${OIIO_INCLUDE_DIR})
 
 # Extras

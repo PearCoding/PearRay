@@ -28,9 +28,6 @@ There is an open source (still experimental) blender integration addon available
 
 - Boost <http://www.boost.org/>
 - Eigen3 <http://eigen.tuxfamily.org>
-- tinyobjloader <https://github.com/syoyo/tinyobjloader> (submodule)
-- DataLisp <https://github.com/PearCoding/DataLisp> (submodule)
-- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp> (submodule)
 - OpenImageIO <https://sites.google.com/site/openimageio/home>
 - Intel® Embree 3 <https://www.embree.org/>
 - Intel® Threading Building Blocks <https://www.threadingbuildingblocks.org/>
@@ -38,8 +35,14 @@ There is an open source (still experimental) blender integration addon available
 ### Optional
 
 - OpenSubdiv <https://github.com/PixarAnimationStudios/OpenSubdiv>
-- OSL <https://github.com/imageworks/OpenShadingLanguage>
 - Qt <https://www.qt.io/>
+
+### Submodules
+
+- tinyobjloader <https://github.com/syoyo/tinyobjloader> (submodule)
+- DataLisp <https://github.com/PearCoding/DataLisp> (submodule)
+- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp> (submodule)
+- cxxopts <https://github.com/jarro2783/cxxopts> (submodule)
 - pybind11 <https://github.com/pybind/pybind11> (submodule)
 
 ## Wiki

@@ -1,9 +1,4 @@
 #include <boost/filesystem.hpp>
-#include <boost/program_options/cmdline.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/positional_options.hpp>
-#include <boost/program_options/variables_map.hpp>
 #include <cctype>
 #include <cmath>
 #include <fstream>
@@ -11,10 +6,10 @@
 #include <sstream>
 
 #include <OpenImageIO/imageio.h>
+#include <cxxopts.hpp>
 
 #define USE_MEDIAN_FOR_LUMINANCE_ESTIMATION
 
-namespace po = boost::program_options;
 namespace bf = boost::filesystem;
 
 class ProgramSettings {
@@ -33,66 +28,62 @@ public:
 
 bool ProgramSettings::parse(int argc, char** argv)
 {
-	po::options_description all_d("Allowed Options");
-
-	// clang-format off
-    all_d.add_options()
-		("help,h", "Produce this help message")
-		("quiet,q", "Do not print messages into console")
-		("verbose,v", "Print detailed information")
-		("input,i", po::value<std::string>(), "Input file")
-		("output,o", po::value<std::string>(), "Output file")
-		("correct-input", "Gamma correct the input image")
-		("linear", "Output will be in linear sRGB space")
-		("clamp", "Clamp output components inside [0,1]")
-		;
-	// clang-format on
-
-	po::positional_options_description p;
-	p.add("input", 1).add("output", 1);
-
-	po::variables_map vm;
 	try {
-		po::store(po::command_line_parser(argc, argv).options(all_d).positional(p).run(), vm);
-		po::notify(vm);
-	} catch (const std::exception& e) {
+		cxxopts::Options options("prtonemap", "Apply tonemapping to an image");
+
+		// clang-format off
+		options.add_options()
+			("h,help", "Produce this help message")
+			("q,quiet", "Do not print messages into console")
+			("v,verbose", "Print detailed information")
+			("i,input", "Input file", cxxopts::value<std::string>())
+			("o,output", "Output file", cxxopts::value<std::string>())
+			("correct-input", "Gamma correct the input image")
+			("linear", "Output will be in linear sRGB space")
+			("clamp", "Clamp output components inside [0,1]")
+		;
+		// clang-format on
+		options.parse_positional({ "input", "output" });
+
+		auto vm = options.parse(argc, argv);
+
+		// Handle help
+		if (vm.count("help")) {
+			std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
+					  << std::endl;
+			std::cout << options.help() << std::endl;
+			exit(0);
+		}
+
+		// Handle version
+		if (!vm.count("input")) {
+			std::cout << "No input given!" << std::endl;
+			return false;
+		}
+
+		// Input file 1
+		InputFile = vm["input"].as<std::string>();
+		if (!bf::exists(InputFile)) {
+			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
+			return false;
+		}
+
+		// Output file
+		if (!vm.count("output")) {
+			std::cout << "No output given!" << std::endl;
+			return false;
+		}
+		OutputFile = vm["output"].as<std::string>();
+
+		IsVerbose	   = (vm.count("verbose") != 0);
+		IsQuiet		   = (vm.count("quiet") != 0);
+		InputIsLinear  = (vm.count("correct-input") == 0);
+		OutputIsLinear = (vm.count("linear") != 0);
+		ClampOutput	   = (vm.count("clamp") != 0);
+	} catch (const cxxopts::OptionException& e) {
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;
 	}
-
-	// Handle help
-	if (vm.count("help")) {
-		std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
-				  << std::endl;
-		std::cout << all_d << std::endl;
-		exit(0);
-	}
-
-	// Handle version
-	if (!vm.count("input")) {
-		std::cout << "No input given!" << std::endl;
-		return false;
-	}
-
-	// Input file 1
-	InputFile = vm["input"].as<std::string>();
-	if (!bf::exists(InputFile)) {
-		std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
-		return false;
-	}
-
-	// Output file
-	if (!vm.count("output")) {
-		std::cout << "No output given!" << std::endl;
-		return false;
-	}
-	OutputFile = vm["output"].as<std::string>();
-
-	IsVerbose	   = (vm.count("verbose") != 0);
-	IsQuiet		   = (vm.count("quiet") != 0);
-	InputIsLinear  = (vm.count("correct-input") == 0);
-	OutputIsLinear = (vm.count("linear") != 0);
-	ClampOutput	   = (vm.count("clamp") != 0);
 
 	return true;
 }

@@ -1,9 +1,4 @@
 #include <boost/filesystem.hpp>
-#include <boost/program_options/cmdline.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/positional_options.hpp>
-#include <boost/program_options/variables_map.hpp>
 #include <cctype>
 #include <cmath>
 #include <fstream>
@@ -11,10 +6,10 @@
 #include <sstream>
 
 #include <OpenImageIO/imageio.h>
+#include <cxxopts.hpp>
 
 #include "PR_Config.h"
 
-namespace po = boost::program_options;
 namespace bf = boost::filesystem;
 
 class ProgramSettings {
@@ -31,69 +26,65 @@ public:
 
 bool ProgramSettings::parse(int argc, char** argv)
 {
-	po::options_description all_d("Allowed Options");
-
-	// clang-format off
-    all_d.add_options()
-		("help,h", "Produce this help message")
-		("quiet,q", "Do not print messages into console")
-		("verbose,v", "Print detailed information")
-		("input1", po::value<std::string>(), "Input1 file")
-		("input2", po::value<std::string>(), "Input2 file")
-		("output,o", po::value<std::string>(), "Output file")
-		;
-	// clang-format on
-
-	po::positional_options_description p;
-	p.add("input1", 1).add("input2", 1).add("output", 1);
-
-	po::variables_map vm;
 	try {
-		po::store(po::command_line_parser(argc, argv).options(all_d).positional(p).run(), vm);
-		po::notify(vm);
-	} catch (const std::exception& e) {
+		cxxopts::Options options("prdiff", "Compute absolute difference per channel between two images");
+
+		// clang-format off
+		options.add_options()
+			("h,help", "Produce this help message")
+			("q,quiet", "Do not print messages into console")
+			("v,verbose", "Print detailed information")
+			("input1", "Input1 file", cxxopts::value<std::string>())
+			("input2", "Input2 file", cxxopts::value<std::string>())
+			("o,output", "Output file", cxxopts::value<std::string>())
+		;
+		// clang-format on
+
+		options.parse_positional({ "input1", "input2", "output" });
+
+		auto vm = options.parse(argc, argv);
+
+		// Handle help
+		if (vm.count("help")) {
+			std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
+					  << std::endl;
+			std::cout << options.help() << std::endl;
+			exit(0);
+		}
+
+		// Handle version
+		if (!vm.count("input1") || !vm.count("input2")) {
+			std::cout << "No input given!" << std::endl;
+			return false;
+		}
+
+		// Input file 1
+		InputFile1 = vm["input1"].as<std::string>();
+		if (!bf::exists(InputFile1)) {
+			std::cout << "Couldn't find file '" << InputFile1 << "'" << std::endl;
+			return false;
+		}
+
+		// Input file 2
+		InputFile2 = vm["input2"].as<std::string>();
+		if (!bf::exists(InputFile2)) {
+			std::cout << "Couldn't find file '" << InputFile2 << "'" << std::endl;
+			return false;
+		}
+
+		// Output file
+		if (!vm.count("output")) {
+			std::cout << "No output given!" << std::endl;
+			return false;
+		}
+		OutputFile = vm["output"].as<std::string>();
+
+		IsVerbose = (vm.count("verbose") != 0);
+		IsQuiet	  = (vm.count("quiet") != 0);
+	} catch (const cxxopts::OptionException& e) {
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;
 	}
-
-	// Handle help
-	if (vm.count("help")) {
-		std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
-				  << std::endl;
-		std::cout << all_d << std::endl;
-		exit(0);
-	}
-
-	// Handle version
-	if (!vm.count("input1") || !vm.count("input2")) {
-		std::cout << "No input given!" << std::endl;
-		return false;
-	}
-
-	// Input file 1
-	InputFile1 = vm["input1"].as<std::string>();
-	if (!bf::exists(InputFile1)) {
-		std::cout << "Couldn't find file '" << InputFile1 << "'" << std::endl;
-		return false;
-	}
-
-	// Input file 2
-	InputFile2 = vm["input2"].as<std::string>();
-	if (!bf::exists(InputFile2)) {
-		std::cout << "Couldn't find file '" << InputFile2 << "'" << std::endl;
-		return false;
-	}
-
-	// Output file
-	if (!vm.count("output")) {
-		std::cout << "No output given!" << std::endl;
-		return false;
-	}
-	OutputFile = vm["output"].as<std::string>();
-
-	IsVerbose = (vm.count("verbose") != 0);
-	IsQuiet	  = (vm.count("quiet") != 0);
-
 	return true;
 }
 

@@ -13,3 +13,6 @@
 [submodule "external/pcg-cpp"]
 	path = external/pcg-cpp
 	url = git://github.com/imneme/pcg-cpp.git
+[submodule "external/cxxopts"]
+	path = external/cxxopts
+	url = git://github.com/jarro2783/cxxopts.git
