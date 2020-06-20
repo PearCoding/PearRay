@@ -36,7 +36,8 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
-#include <boost/regex.hpp>
+
+#include <regex>
 
 namespace PR {
 Environment::Environment(const std::wstring& workdir,
@@ -126,9 +127,9 @@ void Environment::loadPlugins(const std::wstring& basedir)
 	mPluginManager->loadEmbeddedPlugins();
 
 #ifdef PR_DEBUG
-	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
+	static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
 #else
-	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)");
+	static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)");
 #endif
 
 	// Load dlls
@@ -143,8 +144,8 @@ void Environment::loadPlugins(const std::wstring& basedir)
 		if (ext != L".so" && ext != L".dll")
 			continue;
 
-		boost::wsmatch what;
-		if (boost::regex_match(filename, what, e)) {
+		std::wsmatch what;
+		if (std::regex_match(filename, what, e)) {
 #ifndef PR_DEBUG
 			// Ignore debug builds
 			if (filename.substr(filename.size() - 2, 2) == L"_d")

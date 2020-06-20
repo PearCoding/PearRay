@@ -91,7 +91,7 @@ if(NOT WIN32)
 endif()
 target_link_libraries(pr_lib_loader
   PUBLIC
-    pr_lib_core Boost::regex
+    pr_lib_core
   PRIVATE
     datalisp OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Util
 )

@@ -87,7 +87,7 @@ if(NOT WIN32)
 	find_package(Threads REQUIRED)
 endif()
 
-find_package(Boost 1.45 COMPONENTS filesystem system program_options regex REQUIRED)
+find_package(Boost 1.45 COMPONENTS filesystem system program_options REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
 
 if(PR_WITH_DIAGNOSTIC)
