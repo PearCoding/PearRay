@@ -23,10 +23,7 @@ addons:
       - python-virtualenv
       - python-numpy
       - ninja-build
-cache: 
-  ccache
-  directories:
-  - $HOME/embree3
+cache: ccache
 env:
   global:
     - CXXFLAGS="-Wall -Wextra -march=native"
@@ -48,7 +45,8 @@ jobs:
 before_script:
   - $CXX --version
   - cmake --version
-  - if [ ! -d $HOME/embree3 ]; then wget https://github.com/embree/embree/releases/download/v3.10.0/embree-3.10.0.x86_64.linux.tar.gz; tar -xf embree-3.10.0.x86_64.linux.tar.gz -C $HOME/embree3; fi
+  - wget https://github.com/embree/embree/releases/download/v3.10.0/embree-3.10.0.x86_64.linux.tar.gz
+  - tar -xf embree-3.10.0.x86_64.linux.tar.gz -C $HOME/embree3
   - mkdir build
   - cd build
   - if [ $USE_COVERAGE == ON ]; then lcov --directory . --zerocounters; fi
