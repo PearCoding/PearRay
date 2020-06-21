@@ -3,6 +3,8 @@ dist: bionic
 addons:
   apt:
     update: true
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
       - lcov
       - qtbase5-dev
@@ -23,7 +25,10 @@ addons:
       - python-virtualenv
       - python-numpy
       - ninja-build
+      - g++-9
 cache: ccache
+before_install:
+    - eval "CC=gcc-9 && CXX=g++-9"
 env:
   global:
     - CXXFLAGS="-Wall -Wextra -march=native"
