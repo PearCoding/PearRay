@@ -1,4 +1,4 @@
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <cctype>
 #include <cmath>
 #include <fstream>
@@ -10,12 +10,12 @@
 
 #define USE_MEDIAN_FOR_LUMINANCE_ESTIMATION
 
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 class ProgramSettings {
 public:
-	bf::path InputFile;
-	bf::path OutputFile;
+	sf::path InputFile;
+	sf::path OutputFile;
 
 	bool IsVerbose;
 	bool IsQuiet;
@@ -63,7 +63,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Input file 1
 		InputFile = vm["input"].as<std::string>();
-		if (!bf::exists(InputFile)) {
+		if (!sf::exists(InputFile)) {
 			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
 			return false;
 		}

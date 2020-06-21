@@ -100,8 +100,8 @@ template <typename Socket>
 inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& name) const
 {
 	try {
-		return boost::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
-	} catch (const boost::bad_get&) {
+		return std::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
+	} catch (const std::bad_variant_access&) {
 		return std::shared_ptr<Socket>();
 	}
 }

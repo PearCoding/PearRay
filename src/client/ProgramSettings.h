@@ -1,13 +1,14 @@
 #pragma once
 
 #include "PR_Config.h"
-#include <boost/filesystem.hpp>
+
+#include <filesystem>
 
 class ProgramSettings {
 public:
-	boost::filesystem::path InputFile;
-	boost::filesystem::path OutputDir;
-	boost::filesystem::path PluginPath;
+	std::filesystem::path InputFile;
+	std::filesystem::path OutputDir;
+	std::filesystem::path PluginPath;
 
 	bool IsVerbose;
 	bool IsQuiet;

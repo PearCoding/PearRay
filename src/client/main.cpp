@@ -10,14 +10,14 @@
 #include "renderer/RenderTileStatistics.h"
 #include "spectral/ToneMapper.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <thread>
 
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 namespace sc = std::chrono;
 
 using namespace PR;
@@ -52,11 +52,11 @@ int main(int argc, char** argv)
 #else
 	sstream << "pr_" << t << ".log";
 #endif
-	const bf::path logFile = options.OutputDir / sstream.str();
+	const sf::path logFile = options.OutputDir / sstream.str();
 
 	// If the plugin path is empty, use the current working directory
 	if (options.PluginPath.empty()) {
-		options.PluginPath = bf::current_path().string();
+		options.PluginPath = sf::current_path().string();
 	}
 
 	std::shared_ptr<FileLogListener> fileLogListener = std::make_shared<FileLogListener>();
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
 
 	if (options.Profile) {
 		Profiler::stop();
-		const bf::path profFile = options.OutputDir / "pr_profile.prof";
+		const sf::path profFile = options.OutputDir / "pr_profile.prof";
 		if (!Profiler::dumpToFile(profFile.generic_wstring()))
 			PR_LOG(L_ERROR) << "Could not write profile data to " << profFile << std::endl;
 	}

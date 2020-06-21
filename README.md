@@ -7,9 +7,9 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/48a91c3c277d4aa4ae76ff940e4bcf07)](https://www.codacy.com/app/PearCoding/PearRay?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=PearCoding/PearRay&amp;utm_campaign=Badge_Grade)\
 ![CMake 3.9](https://img.shields.io/badge/CMake-3.9+-green.svg)
 ![Language](https://img.shields.io/badge/language-c++-blue.svg)
-![C++ Standard](https://img.shields.io/badge/std-c++14-blue.svg)
-![GCC 5](https://img.shields.io/badge/GCC-5+-blue.svg)
-![Clang 3.4](https://img.shields.io/badge/Clang-3.4+-blue.svg)
+![C++ Standard](https://img.shields.io/badge/std-c++17-blue.svg)
+![GCC 7](https://img.shields.io/badge/GCC-7+-blue.svg)
+![Clang 4](https://img.shields.io/badge/Clang-4+-blue.svg)
 ![Language](https://img.shields.io/badge/language-Python-orange.svg)
 ![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)
@@ -26,7 +26,6 @@ There is an open source (still experimental) blender integration addon available
 
 ## Dependencies
 
-- Boost <http://www.boost.org/>
 - Eigen3 <http://eigen.tuxfamily.org>
 - OpenImageIO <https://sites.google.com/site/openimageio/home>
 - Intel® Embree 3 <https://www.embree.org/>

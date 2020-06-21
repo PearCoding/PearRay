@@ -11,7 +11,7 @@
 #include "math/Projection.h"
 #include "math/Transform.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 // TODO: Change to new geometry representation
 

@@ -1,4 +1,4 @@
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <cctype>
 #include <cmath>
 #include <fstream>
@@ -10,13 +10,13 @@
 
 #include "PR_Config.h"
 
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 class ProgramSettings {
 public:
-	bf::path InputFile1;
-	bf::path InputFile2;
-	bf::path OutputFile;
+	sf::path InputFile1;
+	sf::path InputFile2;
+	sf::path OutputFile;
 
 	bool IsVerbose;
 	bool IsQuiet;
@@ -60,14 +60,14 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Input file 1
 		InputFile1 = vm["input1"].as<std::string>();
-		if (!bf::exists(InputFile1)) {
+		if (!sf::exists(InputFile1)) {
 			std::cout << "Couldn't find file '" << InputFile1 << "'" << std::endl;
 			return false;
 		}
 
 		// Input file 2
 		InputFile2 = vm["input2"].as<std::string>();
-		if (!bf::exists(InputFile2)) {
+		if (!sf::exists(InputFile2)) {
 			std::cout << "Couldn't find file '" << InputFile2 << "'" << std::endl;
 			return false;
 		}

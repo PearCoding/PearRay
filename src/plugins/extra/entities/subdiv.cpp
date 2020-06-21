@@ -11,7 +11,7 @@
 #include "material/IMaterial.h"
 #include "mesh/MeshFactory.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <cctype>
 
 #include <opensubdiv/far/stencilTableFactory.h>

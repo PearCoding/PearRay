@@ -1,6 +1,6 @@
 #include "Cache.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace PR {
 Cache::Cache(const std::wstring& workDir)
@@ -9,7 +9,7 @@ Cache::Cache(const std::wstring& workDir)
 	, mMode(CM_Auto)
 	, mCurrentMemoryUsage(0)
 {
-	boost::filesystem::create_directories(mCacheDir);
+	std::filesystem::create_directories(mCacheDir);
 }
 
 Cache::~Cache()

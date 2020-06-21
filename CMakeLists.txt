@@ -87,7 +87,7 @@ if(NOT WIN32)
 	find_package(Threads REQUIRED)
 endif()
 
-find_package(Boost 1.45 COMPONENTS filesystem system REQUIRED)
+find_package(Filesystem REQUIRED)
 link_directories(${Boost_LIBRARY_DIRS})
 
 if(PR_WITH_DIAGNOSTIC)
@@ -114,12 +114,6 @@ if(PR_WITH_PYTHON)
 	add_subdirectory(external/pybind11)
 	set(PR_HAS_PYTHON_API ON)
 endif()
-
-# Due to problems with OpenEXR and C++17 we still use C++14 (Aug 2018)
-# (Mai 2020) Update: OpenEXR works now, but Travis has an old version. So keeping it C++14 
-# set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT PR_WITH_ASSERTS)
 	add_definitions(-DDL_NO_ASSERTS -DPR_NO_ASSERTS)

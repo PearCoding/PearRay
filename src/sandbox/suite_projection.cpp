@@ -2,15 +2,15 @@
 
 #include "math/Projection.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 
 using namespace PR;
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 void suite_projection()
 {
-    bf::create_directory("results/projection");
+    sf::create_directory("results/projection");
 
     std::ofstream outfile("results/projection/cos_hemi.cvs");
 

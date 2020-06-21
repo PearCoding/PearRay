@@ -34,9 +34,7 @@
 
 #include <OpenImageIO/texture.h>
 
-#include <boost/filesystem.hpp>
-#include <boost/range/iterator_range.hpp>
-
+#include <filesystem>
 #include <regex>
 
 namespace PR {
@@ -133,9 +131,8 @@ void Environment::loadPlugins(const std::wstring& basedir)
 #endif
 
 	// Load dlls
-	for (auto& entry :
-		 boost::make_iterator_range(boost::filesystem::directory_iterator(basedir), {})) {
-		if (!boost::filesystem::is_regular_file(entry))
+	for (auto& entry : std::filesystem::directory_iterator(basedir)) {
+		if (!std::filesystem::is_regular_file(entry))
 			continue;
 
 		const std::wstring filename = entry.path().stem().generic_wstring();

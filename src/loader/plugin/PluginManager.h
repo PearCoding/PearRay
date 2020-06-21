@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Plugin.h"
-#include <boost/dll.hpp>
+#include "arch/SharedLibrary.h"
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -33,7 +34,7 @@ private:
 	struct PluginLibPair {
 		std::shared_ptr<IPlugin> Plugin;
 		std::wstring Path;
-		boost::dll::shared_library Library;
+		SharedLibrary Library;
 
 		~PluginLibPair()
 		{

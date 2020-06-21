@@ -1,4 +1,4 @@
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <cctype>
 #include <cmath>
 #include <fstream>
@@ -7,12 +7,12 @@
 
 #include <cxxopts.hpp>
 
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 class ProgramSettings {
 public:
-	boost::filesystem::path InputFile;
-	boost::filesystem::path OutputDir;
+	sf::path InputFile;
+	sf::path OutputDir;
 
 	bool IsVerbose;
 	bool IsQuiet;
@@ -61,29 +61,29 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Input file
 		InputFile = vm["input"].as<std::string>();
-		if (!bf::exists(InputFile)) {
+		if (!sf::exists(InputFile)) {
 			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
 			return false;
 		}
 
 		// Setup output directory
 		if (vm.count("output")) {
-			const bf::path relativePath = vm["output"].as<std::string>();
-			if (!bf::exists(relativePath)) {
-				if (!bf::create_directory(relativePath)) {
+			const sf::path relativePath = vm["output"].as<std::string>();
+			if (!sf::exists(relativePath)) {
+				if (!sf::create_directory(relativePath)) {
 					std::cout << "Couldn't create directory '" << relativePath << "'" << std::endl;
 					return false;
 				}
 			}
 
-			const bf::path directoryPath = relativePath.is_relative() ? bf::canonical(relativePath, bf::current_path()) : relativePath;
-			if (!bf::is_directory(directoryPath)) {
+			const sf::path directoryPath = relativePath.is_relative() ? sf::canonical(relativePath) : relativePath;
+			if (!sf::is_directory(directoryPath)) {
 				std::cout << "Invalid output path given." << std::endl;
 				return false;
 			}
 			OutputDir = directoryPath;
 		} else {
-			OutputDir = bf::path(InputFile).parent_path();
+			OutputDir = sf::path(InputFile).parent_path();
 		}
 
 		IsVerbose		   = (vm.count("verbose") != 0);
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 	}
 
 	// Check if input is too small
-	size_t inputsizekb = bf::file_size(options.InputFile) / 1024;
+	size_t inputsizekb = sf::file_size(options.InputFile) / 1024;
 	if (inputsizekb < options.MinSizeKb) {
 		if (!options.IsQuiet)
 			std::cout << "Input too small" << std::endl;
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 
 			if (!options.IsQuiet && options.IsVerbose)
 				std::cout << "Creating backup " << backup_path << std::endl;
-			bf::rename(options.InputFile, backup_path);
+			sf::rename(options.InputFile, backup_path);
 		}
 
 		if (!options.IsQuiet && options.IsVerbose)

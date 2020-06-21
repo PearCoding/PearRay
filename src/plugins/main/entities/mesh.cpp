@@ -14,7 +14,7 @@
 #include "mesh/MeshBase.h"
 #include "sampler/SplitSample.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace PR {
 

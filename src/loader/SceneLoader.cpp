@@ -34,7 +34,7 @@
 #include "DataLisp.h"
 
 #include <Eigen/SVD>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -821,7 +821,7 @@ void SceneLoader::addInclude(const DL::DataGroup& group, SceneLoadContext& ctx)
 void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 {
 	PR_LOG(L_DEBUG) << "[Loader] Including " << path << std::endl;
-	const std::wstring wpath = boost::filesystem::path(path).generic_wstring();
+	const std::wstring wpath = std::filesystem::path(path).generic_wstring();
 	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), wpath) != ctx.FileStack.end()) {
 		PR_LOG(L_ERROR) << "[Loader] Include file " << path << " already included! " << std::endl;
 		return;

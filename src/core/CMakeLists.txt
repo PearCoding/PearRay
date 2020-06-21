@@ -156,14 +156,8 @@ set(PR_Src
   trace/HitStream.h
 )
 
-if(${CMAKE_VERSION} VERSION_LESS 3.15)
-  set(_BOOST_HEADERS Boost::boost)
-else()
-  set(_BOOST_HEADERS Boost::headers)
-endif()
-
 add_library(pr_lib_core ${PR_Src})
-target_link_libraries(pr_lib_core PUBLIC pr_lib_base ${_BOOST_HEADERS} Boost::filesystem TBB::tbb Embree::Embree)
+target_link_libraries(pr_lib_core PUBLIC pr_lib_base std::filesystem TBB::tbb Embree::Embree)
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_core PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

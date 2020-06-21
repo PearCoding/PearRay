@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace PR;
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 constexpr PR::uint32 DEF_THREAD_COUNT  = 0;
 constexpr PR::uint32 DEF_THREAD_TILE_X = 8;
@@ -83,7 +83,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Input file
 		InputFile = vm["input"].as<std::string>();
-		if (!bf::exists(InputFile)) {
+		if (!sf::exists(InputFile)) {
 			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
 			return false;
 		}
@@ -92,7 +92,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		if (vm.count("pluginpath")) {
 			PluginPath = vm["pluginpath"].as<std::string>();
 
-			if (!bf::is_directory(PluginPath)) {
+			if (!sf::is_directory(PluginPath)) {
 				std::cout << "Given plugin path '" << PluginPath
 						  << "' is not a valid directory" << std::endl;
 				return false;
@@ -100,16 +100,16 @@ bool ProgramSettings::parse(int argc, char** argv)
 		}
 
 		// Setup output directory
-		const bf::path relativePath = vm["output"].as<std::string>();
-		if (!bf::exists(relativePath)) {
-			if (!bf::create_directory(relativePath)) {
+		const sf::path relativePath = vm["output"].as<std::string>();
+		if (!sf::exists(relativePath)) {
+			if (!sf::create_directory(relativePath)) {
 				std::cout << "Couldn't create directory '" << relativePath << "'" << std::endl;
 				return false;
 			}
 		}
 
-		const bf::path directoryPath = relativePath.is_relative() ? bf::canonical(relativePath, bf::current_path()) : relativePath;
-		if (!bf::is_directory(directoryPath)) {
+		const sf::path directoryPath = relativePath.is_relative() ? sf::canonical(relativePath) : relativePath;
+		if (!sf::is_directory(directoryPath)) {
 			std::cout << "Invalid output path given." << std::endl;
 			return false;
 		}

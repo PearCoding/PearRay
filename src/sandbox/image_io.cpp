@@ -4,12 +4,12 @@
 #include "spectral/RGBConverter.h"
 
 #include <OpenImageIO/imageio.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
 OIIO_NAMESPACE_USING
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 namespace PR {
 void save_normalized_gray(const std::string& path, size_t xres, size_t yres, const std::vector<float>& data)

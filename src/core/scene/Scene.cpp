@@ -11,7 +11,7 @@
 
 #include "Logger.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 
 // Seems slower than the default offset variant

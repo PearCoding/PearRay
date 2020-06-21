@@ -4,7 +4,7 @@
 #include "buffer/FrameBufferSystem.h"
 #include "renderer/RenderContext.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <sstream>
 
 #include "DataLisp.h"
@@ -30,7 +30,7 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	std::wstring outputlock = LOCK_OUT_FILE_NAME;
 
 	if (context && !mWorkingDir.empty()) {
-		auto workDir = boost::filesystem::canonical(mWorkingDir);
+		auto workDir = std::filesystem::canonical(mWorkingDir);
 		mWorkingDir	 = workDir.generic_wstring();
 
 		runlock	   = (workDir / runlock).generic_wstring();
@@ -42,7 +42,7 @@ void OutputSpecification::init(const std::shared_ptr<RenderContext>& context)
 	mInit		= true;
 
 	if (!mRunLock->lock())
-		PR_LOG(L_ERROR) << "Couldn't create lock " << boost::filesystem::path(runlock) << std::endl;
+		PR_LOG(L_ERROR) << "Couldn't create lock " << std::filesystem::path(runlock) << std::endl;
 }
 
 void OutputSpecification::deinit()
@@ -341,12 +341,12 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 							   ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
-	boost::filesystem::path path = mWorkingDir;
+	std::filesystem::path path = mWorkingDir;
 
 	if (!options.Force && !mOutputLock->lock())
 		return;
 
-	std::wstring resultDir = L"/results";
+	std::wstring resultDir = L"results";
 	if (renderer->index() > 0) {
 		std::wstringstream stream;
 		stream << resultDir << L"_" << renderer->index();
@@ -354,7 +354,7 @@ void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
 	}
 
 	const auto outputDir = path / resultDir;
-	boost::filesystem::create_directory(outputDir); // Doesn't matter if it works or not
+	std::filesystem::create_directory(outputDir); // Doesn't matter if it works or not
 
 	for (const File& f : mFiles) {
 		auto file = outputDir / (f.Name + options.NameSuffix + ".exr");

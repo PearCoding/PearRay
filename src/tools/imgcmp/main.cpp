@@ -1,4 +1,4 @@
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <cctype>
 #include <cmath>
 #include <fstream>
@@ -9,12 +9,12 @@
 
 #include <OpenImageIO/imageio.h>
 
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 class ProgramSettings {
 public:
-	bf::path InputFile;
-	bf::path ReferenceFile;
+	sf::path InputFile;
+	sf::path ReferenceFile;
 
 	bool IsVerbose;
 	bool IsQuiet;
@@ -55,14 +55,14 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		// Input file
 		InputFile = vm["input"].as<std::string>();
-		if (!bf::exists(InputFile)) {
+		if (!sf::exists(InputFile)) {
 			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
 			return false;
 		}
 
 		// Reference file
 		ReferenceFile = vm["reference"].as<std::string>();
-		if (!bf::exists(ReferenceFile)) {
+		if (!sf::exists(ReferenceFile)) {
 			std::cout << "Couldn't find file '" << ReferenceFile << "'" << std::endl;
 			return false;
 		}

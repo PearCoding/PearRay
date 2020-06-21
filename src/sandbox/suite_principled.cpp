@@ -3,10 +3,10 @@
 
 #include "math/Microfacet.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 using namespace PR;
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 constexpr size_t IRES = 500;
 
@@ -67,7 +67,7 @@ void produce_vndf_image(const std::string& path, const Vector3f& V, float alpha_
 
 void suite_principled()
 {
-	bf::create_directory("results/principled");
+	sf::create_directory("results/principled");
 
 	produce_vndf_image("results/principled/n_x0_0_y0_0", Vector3f(0, 0, 1), 0.0f, 0.0f);
 	produce_vndf_image("results/principled/n_x0_5_y0_5", Vector3f(0, 0, 1), 0.5f, 0.5f);

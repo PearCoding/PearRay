@@ -16,8 +16,6 @@
 
 #include "Logger.h"
 
-#include <boost/algorithm/string/predicate.hpp>
-
 namespace PR {
 enum VisualFeedbackMode {
 	VFM_ColoredEntityID,
@@ -243,9 +241,12 @@ public:
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
 		std::string modeS		= mParams.getString("mode", "");
+		std::transform(modeS.begin(), modeS.end(), modeS.begin(),
+			[](unsigned char c){ return std::tolower(c); });
+
 		VisualFeedbackMode mode = VFM_Parameter;
 		for (int i = 0; _mode[i].Name; ++i) {
-			if (boost::iequals(_mode[i].Name, modeS)) {
+			if (_mode[i].Name == modeS) {
 				mode = _mode[i].Mode;
 				break;
 			}

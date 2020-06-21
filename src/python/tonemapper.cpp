@@ -1,7 +1,6 @@
 #include "spectral/ToneMapper.h"
 #include "buffer/ColorBuffer.h"
 #include "buffer/FrameBuffer.h"
-#include "spectral/SpectralFile.h"
 
 #include "pypearray.h"
 #include <pybind11/numpy.h>

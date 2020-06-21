@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace PR {
 OIIO::TextureOpt::Wrap parseWrap(const std::string& name)
@@ -142,7 +142,7 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		return;
 	}
 
-	if (!boost::filesystem::exists(filename) || !boost::filesystem::is_regular_file(filename)) {
+	if (!std::filesystem::exists(filename) || !std::filesystem::is_regular_file(filename)) {
 		PR_LOG(L_ERROR) << "No valid file fount for texture " << name << " at " << filename << std::endl;
 		return;
 	}

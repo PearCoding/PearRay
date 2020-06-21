@@ -5,8 +5,7 @@
 #include "shader/Socket.h"
 #include "spectral/ParametricBlob.h"
 
-#include <boost/variant.hpp>
-
+#include <variant>
 #include <list>
 #include <map>
 #include <utility>
@@ -31,7 +30,7 @@ class Cache;
 class Parameter;
 class SpectralUpsampler;
 
-using ShadingSocketVariantPtr = boost::variant<
+using ShadingSocketVariantPtr = std::variant<
 	std::shared_ptr<FloatScalarShadingSocket>,
 	std::shared_ptr<FloatSpectralShadingSocket>,
 	std::shared_ptr<FloatVectorShadingSocket>>;
