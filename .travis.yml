@@ -46,11 +46,12 @@ before_script:
   - $CXX --version
   - cmake --version
   - wget https://github.com/embree/embree/releases/download/v3.10.0/embree-3.10.0.x86_64.linux.tar.gz
-  - tar -xf embree-3.10.0.x86_64.linux.tar.gz -C $HOME/embree3
+  - mkdir -p embree3
+  - tar -xf embree-3.10.0.x86_64.linux.tar.gz -C embree3
   - mkdir build
   - cd build
   - if [ $USE_COVERAGE == ON ]; then lcov --directory . --zerocounters; fi
-  - cmake -G "Ninja" -DEmbree_DIR="$HOME/embree3/" -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON -DPR_EMBED_PLUGINS=$EMBED_PLUGINS ..
+  - cmake -G "Ninja" -DEmbree_DIR="embree3/" -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON -DPR_EMBED_PLUGINS=$EMBED_PLUGINS ..
 script:
   - ninja
 after_success:
