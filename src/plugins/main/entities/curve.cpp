@@ -11,10 +11,11 @@
 #include "math/Projection.h"
 #include "math/Transform.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
+
+// TODO: Change to new geometry representation
 
 namespace PR {
-
 template <typename T>
 class CurveEntity : public IEntity {
 public:
@@ -85,7 +86,7 @@ public:
 		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 
@@ -155,9 +156,11 @@ public:
 
 		pt.UVW = Vector3f(u, v, 0.0f);
 
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 	void beforeSceneBuild() override
@@ -191,7 +194,7 @@ private:
 		return mWidth(0) * (1 - t) + mWidth(1) * t;
 	}
 
-	bool recursiveCheck(const Ray& in, SingleCollisionOutput& out,
+	bool recursiveCheck(const Ray& in, HitPoint& out,
 						const T& curve,
 						float uMin, float uMax, size_t depth) const
 	{

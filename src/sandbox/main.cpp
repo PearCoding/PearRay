@@ -3,14 +3,14 @@
 #include "Profiler.h"
 #include "ProgramSettings.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 namespace sc = std::chrono;
 using namespace PR;
 
@@ -21,7 +21,6 @@ extern void suite_projection();
 extern void suite_spectral();
 extern void suite_random();
 extern void suite_material();
-extern void suite_triangle();
 
 struct Suite {
 	const char* Name;
@@ -34,7 +33,6 @@ Suite suites[] = {
 	{ "random", suite_random },
 	{ "spectral", suite_spectral },
 	{ "material", suite_material },
-	{ "triangle", suite_triangle },
 	{ nullptr, nullptr }
 };
 
@@ -68,7 +66,7 @@ int main(int argc, char** argv)
 #else
 	sstream << "pr_sandbox_" << t << ".log";
 #endif
-	const bf::path logFile = sstream.str();
+	const sf::path logFile = sstream.str();
 
 	std::shared_ptr<FileLogListener> fileLogListener = std::make_shared<FileLogListener>();
 	fileLogListener->open(logFile.string());
@@ -84,8 +82,8 @@ int main(int argc, char** argv)
 	}
 
 	// Create results directory
-	if (!bf::exists("results") || !bf::is_directory("results"))
-		bf::create_directory("results");
+	if (!sf::exists("results") || !sf::is_directory("results"))
+		sf::create_directory("results");
 
 	SuiteCallback callback = nullptr;
 	for (int i = 0; suites[i].Name; ++i) {
@@ -108,10 +106,10 @@ int main(int argc, char** argv)
 
 	if (!options.NoProfiling) {
 		Profiler::stop();
-		const bf::path profFile = "pr_profile.prof";
+		const sf::path profFile = "pr_profile.prof";
 		if (!Profiler::dumpToFile(profFile.generic_wstring()))
 			PR_LOG(L_ERROR) << "Could not write profile data to " << profFile << std::endl;
-		const bf::path profJSONFile = "pr_profile.json";
+		const sf::path profJSONFile = "pr_profile.json";
 		if (!Profiler::dumpToJSON(profJSONFile.generic_wstring()))
 			PR_LOG(L_ERROR) << "Could not write profile data to " << profJSONFile << std::endl;
 	}

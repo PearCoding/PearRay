@@ -1,28 +1,21 @@
 language: cpp
-dist: bionic
+dist: focal
 addons:
   apt:
-    update: true
     packages:
       - lcov
       - qtbase5-dev
       - libqt5charts5-dev
-      - libboost-filesystem-dev
-      - libboost-program-options-dev
-      - libboost-system-dev
-      - libboost-iostreams-dev
-      - libboost-thread-dev
       - libeigen3-dev
-      - libopenexr-dev
       - libtbb-dev
       - libopenimageio-dev
-      - python3.6-dev
-      - python3.6-venv
+      - libembree-dev
+      - python3.8-dev
+      - python3.8-venv
       - python3-numpy
-      - python2.7-dev
-      - python-virtualenv
       - python-numpy
       - ninja-build
+      - clang-8
 cache: ccache
 env:
   global:
@@ -31,17 +24,13 @@ jobs:
   fast_finish: true
   include:
     - compiler: gcc
-      env: USE_COVERAGE=ON PYTHON=3.6 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=ON PYTHON=3.8 EMBED_PLUGINS=OFF
     - compiler: gcc
-      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=ON
-    - compiler: gcc
-      env: USE_COVERAGE=OFF PYTHON=2.7 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=OFF CC=clang-8 CXX=clang++-8
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=ON
-    - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=2.7 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON CC=clang-8 CXX=clang++-8
 before_script:
   - $CXX --version
   - cmake --version

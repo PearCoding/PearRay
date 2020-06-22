@@ -3,12 +3,12 @@
 
 #include "spectral/RGBConverter.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
 using namespace PR;
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 static float maxE = 0;
 static float minE = std::numeric_limits<float>::infinity();
@@ -41,7 +41,7 @@ static void handle_color(float r, float g, float b, std::ofstream& log)
 
 void suite_spectral()
 {
-	bf::create_directory("results/spectral");
+	sf::create_directory("results/spectral");
 
 	std::ofstream log("results/spectral/errors.log");
 

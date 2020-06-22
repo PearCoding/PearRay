@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include "Platform.h"
 #include "ResourceManager.h"
 #include "SceneLoadContext.h"
 #include "cache/Cache.h"
@@ -15,7 +16,6 @@
 #include "integrator/IntegratorManager.h"
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
-#include "mesh/Mesh.h"
 #include "parameter/Parameter.h"
 
 #include "plugin/PluginManager.h"
@@ -34,9 +34,8 @@
 
 #include <OpenImageIO/texture.h>
 
-#include <boost/filesystem.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <boost/regex.hpp>
+#include <filesystem>
+#include <regex>
 
 namespace PR {
 Environment::Environment(const std::wstring& workdir,
@@ -126,15 +125,14 @@ void Environment::loadPlugins(const std::wstring& basedir)
 	mPluginManager->loadEmbeddedPlugins();
 
 #ifdef PR_DEBUG
-	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
+	static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
 #else
-	static const boost::wregex e(L"(lib)?pr_pl_([\\w_]+)");
+	static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)");
 #endif
 
 	// Load dlls
-	for (auto& entry :
-		 boost::make_iterator_range(boost::filesystem::directory_iterator(basedir), {})) {
-		if (!boost::filesystem::is_regular_file(entry))
+	for (auto& entry : std::filesystem::directory_iterator(basedir)) {
+		if (!std::filesystem::is_regular_file(entry))
 			continue;
 
 		const std::wstring filename = entry.path().stem().generic_wstring();
@@ -143,8 +141,8 @@ void Environment::loadPlugins(const std::wstring& basedir)
 		if (ext != L".so" && ext != L".dll")
 			continue;
 
-		boost::wsmatch what;
-		if (boost::regex_match(filename, what, e)) {
+		std::wsmatch what;
+		if (std::regex_match(filename, what, e)) {
 #ifndef PR_DEBUG
 			// Ignore debug builds
 			if (filename.substr(filename.size() - 2, 2) == L"_d")
@@ -200,6 +198,8 @@ std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 
 std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 {
+	setupFloatingPointFlushBehaviour();
+
 	auto entities  = mEntityManager->getAll();
 	auto materials = mMaterialManager->getAll();
 	auto emissions = mEmissionManager->getAll();
@@ -211,14 +211,18 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 		return nullptr;
 	}
 
-	std::wstring scene_cnt = mResourceManager->requestFile("scene", "global", ".cnt");
+	std::shared_ptr<Scene> scene;
+	try {
+		scene = std::make_shared<Scene>(activeCamera,
+										entities,
+										materials,
+										emissions,
+										inflights);
+	} catch (const std::exception& e) {
+		PR_LOG(L_ERROR) << e.what() << std::endl;
+		return nullptr;
+	}
 
-	std::shared_ptr<Scene> scene = std::make_shared<Scene>(activeCamera,
-														   entities,
-														   materials,
-														   emissions,
-														   inflights,
-														   scene_cnt);
 	if (!scene) {
 		PR_LOG(L_ERROR) << "Could not create scene!" << std::endl;
 		return nullptr;

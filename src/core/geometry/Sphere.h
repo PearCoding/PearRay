@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
-struct SingleCollisionOutput;
+struct HitPoint;
 struct CollisionOutput;
 
 /* Origin based sphere */
@@ -33,15 +33,13 @@ public:
 	Vector3f surfacePoint(float u, float v) const;
 
 	Vector2f project(const Vector3f& p) const;
-	Vector2fv project(const Vector3fv& p) const;
 
 	inline bool contains(const Vector3f& point) const
 	{
 		return point.squaredNorm() <= mRadius * mRadius;
 	}
 
-	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
-	void intersects(const RayPackage& in, CollisionOutput& out) const;
+	void intersects(const Ray& ray, HitPoint& out) const;
 
 	void combine(const Vector3f& point);
 	void combine(const Sphere& other);

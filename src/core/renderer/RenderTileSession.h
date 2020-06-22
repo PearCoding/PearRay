@@ -4,14 +4,13 @@
 #include "buffer/Feedback.h"
 #include "entity/IEntity.h"
 #include "geometry/GeometryPoint.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 #include "ray/RayStream.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileStatistics.h"
 #include "scene/Scene.h"
 #include "trace/HitStream.h"
-#include "trace/ShadowHit.h"
 
 namespace PR {
 
@@ -46,7 +45,7 @@ public:
 	IEmission* getEmission(uint32 id) const;
 
 	bool traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
-	ShadowHit traceShadowRay(const Ray& ray) const;
+	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 
 	void pushSpectralFragment(const SpectralBlob& spec, const Ray& ray,
@@ -54,7 +53,8 @@ public:
 	void pushSPFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
-	IEntity* pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const;
+	IEntity* pickRandomLight(const Vector3f& view, uint32 ignore_id, GeometryPoint& pt, float& pdf) const;
+	float pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const;
 
 private:
 	Point2i localCoordinates(Point1i pixelIndex) const;

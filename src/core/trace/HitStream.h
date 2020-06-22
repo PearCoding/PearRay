@@ -37,11 +37,9 @@ public:
 
 private:
 	std::vector<uint32> mRayID;
-	std::vector<uint32> mMaterialID;
 	std::vector<uint32> mEntityID;
 	std::vector<uint32> mPrimitiveID;
 	std::vector<float> mParameter[3];
-	std::vector<uint8> mFlags;
 
 	size_t mSize;
 	size_t mCurrentPos;

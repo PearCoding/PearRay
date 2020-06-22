@@ -41,11 +41,9 @@ public:
 
 	bool contains(const Vector3f& point) const;
 
-	void intersects(const Ray& ray, SingleCollisionOutput& out) const;
-	void intersects(const RayPackage& in, CollisionOutput& out) const;
+	void intersects(const Ray& ray, HitPoint& out) const;
 
 	Vector2f project(const Vector3f& point) const;
-	Vector2fv project(const Vector3fv& point) const;
 
 	inline BoundingBox toBoundingBox() const
 	{

@@ -1,8 +1,10 @@
 #include "PluginManager.h"
 #include "Logger.h"
 
+#include <filesystem>
+
 namespace PR {
-constexpr static const char* PR_PLUGIN_ENV_VAR	= "PR_PLUGIN_PATH";
+constexpr static const char* PR_PLUGIN_ENV_VAR	  = "PR_PLUGIN_PATH";
 constexpr static char PR_PLUGIN_ENV_VAR_SEPERATOR = ':';
 
 PluginManager::PluginManager(const std::wstring& pluginDir)
@@ -12,19 +14,18 @@ PluginManager::PluginManager(const std::wstring& pluginDir)
 
 bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
 {
-	auto load = [](const boost::filesystem::path& p) -> boost::dll::shared_library {
+	auto load = [](const std::filesystem::path& p) -> SharedLibrary {
 		try {
 			PR_LOG(L_DEBUG) << "Trying to load plugin " << p << std::endl;
-			return boost::dll::shared_library(p,
-											  boost::dll::load_mode::append_decorations);
-		} catch (const boost::system::system_error& e) {
+			return SharedLibrary(p.generic_wstring());
+		} catch (const std::exception& e) {
 			PR_LOG(L_DEBUG) << "Error loading plugin " << p << ": " << e.what() << std::endl;
-			return boost::dll::shared_library();
+			return SharedLibrary();
 		}
 	};
 
-	const boost::filesystem::path op = path;
-	auto lib						 = load(op);
+	const std::filesystem::path op = path;
+	auto lib					   = load(op);
 
 	// 1 Fallback -> Use plugin directory for parent directory
 	if (!lib && !op.is_absolute() && useFallbacks && !mPluginDir.empty()) {
@@ -50,11 +51,10 @@ bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
 		return false;
 	}
 
-	PluginInterface* ptr = nullptr;
-	try {
-		ptr = &lib.get<PluginInterface>(PR_DOUBLEQUOTE(PR_PLUGIN_API_INTERFACE_NAME_CORE));
-	} catch (const boost::system::system_error& e) {
-		PR_LOG(L_DEBUG) << "Internal error: " << e.what() << std::endl;
+	PluginInterface* ptr = reinterpret_cast<PluginInterface*>(lib.symbol(PR_DOUBLEQUOTE(PR_PLUGIN_API_INTERFACE_NAME_CORE)));
+	if (!ptr) {
+		PR_LOG(L_ERROR) << "Could not find plugin interface for " << op << std::endl;
+		return false;
 	}
 
 	if (!loadInterface(op.generic_string(), ptr))
@@ -71,7 +71,7 @@ bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
 std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, bool useFallbacks)
 {
 #ifdef PR_DEBUG
-	boost::filesystem::path p = path;
+	std::filesystem::path p = path;
 	if (!tryLoad(path, useFallbacks)) {
 		std::wstring rel_name = p.stem().generic_wstring();
 		size_t pos			  = rel_name.find_last_of(L"_d");
@@ -80,7 +80,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, bool useF
 
 		rel_name.erase(pos, 2);
 
-		boost::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
+		std::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
 		if (!tryLoad(release_path.generic_wstring(), useFallbacks)) {
 			return nullptr;
 		} else {
@@ -146,7 +146,7 @@ void PluginManager::loadEmbeddedPlugins()
 			auto plugin = std::shared_ptr<IPlugin>(ptr->InitFunction());
 			mLibraries.emplace(
 				std::make_pair(ptr->PluginName,
-							   PluginLibPair{ plugin, L"", boost::dll::shared_library() }));
+							   PluginLibPair{ plugin, L"", SharedLibrary() }));
 		}
 	}
 }
@@ -186,9 +186,8 @@ std::vector<std::shared_ptr<IPlugin>> PluginManager::plugins() const
 	std::vector<std::shared_ptr<IPlugin>> list;
 	list.reserve(mLibraries.size());
 
-	for (const auto& p : mLibraries) {
+	for (const auto& p : mLibraries)
 		list.push_back(p.second.Plugin);
-	}
 	return list;
 }
 } // namespace PR

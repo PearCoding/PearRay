@@ -1,6 +1,6 @@
 #include "geometry/Sphere.h"
-#include "geometry/CollisionData.h"
 #include "geometry/Plane.h"
+#include "trace/HitPoint.h"
 
 #include "math/Spherical.h"
 
@@ -80,9 +80,9 @@ PR_TEST("Intersects")
 	Ray ray(Vector3f(-2, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	sphere.intersects(ray, s);
-	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_TRUE(s.isSuccessful());
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
 }
 
@@ -92,9 +92,9 @@ PR_TEST("Intersects Behind")
 	Ray ray(Vector3f(-2, 0, 0),
 			Vector3f(-2, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	sphere.intersects(ray, s);
-	PR_CHECK_FALSE(s.Successful);
+	PR_CHECK_FALSE(s.isSuccessful());
 }
 
 PR_TEST("Intersects Inside")
@@ -103,33 +103,11 @@ PR_TEST("Intersects Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	sphere.intersects(ray, s);
-	PR_CHECK_TRUE(s.Successful);
+	PR_CHECK_TRUE(s.isSuccessful());
 	PR_CHECK_NEARLY_EQ(s.HitDistance, 1);
 }
-
-PR_TEST("Intersects [Package]")
-{
-	Sphere sphere(1);
-	RayPackage rays(Vector3fv(simdpp::make_float(-2, -2, -2, -2),
-							  simdpp::make_float(0, 0, 0, 0),
-							  simdpp::make_float(0, 0, 0, 0)),
-					Vector3fv(simdpp::make_float(1, 1, -1, 0),
-							  simdpp::make_float(0, 0, 0, 1),
-							  simdpp::make_float(0, 0, 0, 0)));
-
-	CollisionOutput s;
-	sphere.intersects(rays, s);
-
-	PR_CHECK_TRUE(extract<0>(s.Successful));
-	PR_CHECK_NEARLY_EQ(extract<0>(s.HitDistance), 1);
-	PR_CHECK_TRUE(extract<1>(s.Successful));
-	PR_CHECK_NEARLY_EQ(extract<1>(s.HitDistance), 1);
-	PR_CHECK_FALSE(extract<2>(s.Successful));
-	PR_CHECK_FALSE(extract<3>(s.Successful));
-}
-
 PR_END_TESTCASE()
 
 // MAIN

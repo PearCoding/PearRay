@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/SIMD.h"
+#include "PR_Config.h"
 
 /**
  * Available random algorithms

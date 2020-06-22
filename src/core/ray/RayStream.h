@@ -1,8 +1,10 @@
 #pragma once
 
 #include "math/Compression.h"
-#include "math/SIMD.h"
-#include "ray/RayPackage.h"
+#include "memory/AlignedAllocator.h"
+#include "ray/Ray.h"
+
+#include <vector>
 
 namespace PR {
 class RayStream;
@@ -16,11 +18,28 @@ public:
 	~RayGroup()				  = default;
 	RayGroup(const RayGroup&) = default;
 	RayGroup(RayGroup&&)	  = default;
-	RayGroup& operator=(const RayGroup&) = default;
-	RayGroup& operator=(RayGroup&&) = default;
 
 	inline Ray getRay(size_t id) const;
-	inline RayPackage getRayPackage(size_t id) const;
+	inline size_t copyOriginX(size_t offset, size_t size, float* dst) const;
+	inline size_t copyOriginY(size_t offset, size_t size, float* dst) const;
+	inline size_t copyOriginZ(size_t offset, size_t size, float* dst) const;
+	inline size_t copyDirectionX(size_t offset, size_t size, float* dst) const;
+	inline size_t copyDirectionY(size_t offset, size_t size, float* dst) const;
+	inline size_t copyDirectionZ(size_t offset, size_t size, float* dst) const;
+	inline size_t copyMaxT(size_t offset, size_t size, float* dst) const;
+	inline size_t copyMinT(size_t offset, size_t size, float* dst) const;
+	inline size_t copyTime(size_t offset, size_t size, float* dst) const;
+
+	// The raw variants assume valid range
+	inline void copyOriginXRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyOriginYRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyOriginZRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyDirectionXRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyDirectionYRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyDirectionZRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyMaxTRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyMinTRaw(size_t offset, size_t size, float* dst) const;
+	inline void copyTimeRaw(size_t offset, size_t size, float* dst) const;
 
 	inline size_t offset() const { return mOffset; }
 	inline size_t size() const { return mSize; }
@@ -35,6 +54,11 @@ private:
 };
 
 class PR_LIB_CORE RayStream {
+	friend class RayGroup;
+
+	template <typename T>
+	using AlignedVector = std::vector<T, AlignedAllocator<T, 64>>;
+
 public:
 	explicit RayStream(size_t size);
 	virtual ~RayStream();
@@ -49,7 +73,6 @@ public:
 
 	void addRay(const Ray& ray);
 	Ray getRay(size_t id) const;
-	RayPackage getRayPackage(size_t id) const;
 
 	void reset();
 	RayGroup getNextGroup();
@@ -59,26 +82,26 @@ public:
 
 private: // Some vectors are not aligned, due to required preprocessing
 	/* SoA style */
-	std::vector<float> mOrigin[3];
+	AlignedVector<float> mOrigin[3];
 
-#ifdef PR_COMPRESS_RAY_DIR
+#if 0 //def PR_COMPRESS_RAY_DIR
 	// OCD Compressed normals
 	std::vector<snorm16> mDirection[2];
 #else
-	std::vector<float> mDirection[3];
+	AlignedVector<float> mDirection[3];
 #endif
 
-	std::vector<uint32> mPixelIndex;
+	AlignedVector<uint32> mPixelIndex;
 
 	// TODO: Ray Differentials
-	std::vector<uint16> mIterationDepth;
-	std::vector<unorm16> mTime;
-	std::vector<uint8> mFlags;
+	AlignedVector<uint16> mIterationDepth;
+	AlignedVector<unorm16> mTime;
+	AlignedVector<uint8> mFlags;
 
-	std::vector<float> mMinT;
-	std::vector<float> mMaxT;
-	std::vector<float> mWeight[PR_SPECTRAL_BLOB_SIZE];
-	std::vector<float> mWavelengthNM[PR_SPECTRAL_BLOB_SIZE];
+	AlignedVector<float> mMinT;
+	AlignedVector<float> mMaxT;
+	AlignedVector<float> mWeight[PR_SPECTRAL_BLOB_SIZE];
+	AlignedVector<float> mWavelengthNM[PR_SPECTRAL_BLOB_SIZE];
 
 	size_t mSize;
 	size_t mCurrentReadPos;
@@ -91,9 +114,114 @@ inline Ray RayGroup::getRay(size_t id) const
 	return mStream->getRay(id + mOffset);
 }
 
-inline RayPackage RayGroup::getRayPackage(size_t id) const
+inline size_t RayGroup::copyOriginX(size_t offset, size_t size, float* dst) const
 {
-	PR_ASSERT(id < mSize, "Invalid access!");
-	return mStream->getRayPackage(id + mOffset);
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyOriginXRaw(offset, actualsize, dst);
+	return actualsize;
 }
+
+inline size_t RayGroup::copyOriginY(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyOriginYRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyOriginZ(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyOriginZRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyDirectionX(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyDirectionXRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyDirectionY(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyDirectionYRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyDirectionZ(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyDirectionZRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyMaxT(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyMaxTRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyMinT(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyMinTRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+inline size_t RayGroup::copyTime(size_t offset, size_t size, float* dst) const
+{
+	size_t actualsize = std::min(offset + size, mSize) - offset;
+	copyTimeRaw(offset, actualsize, dst);
+	return actualsize;
+}
+
+//////////////
+inline void RayGroup::copyOriginXRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mOrigin[0][offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyOriginYRaw(size_t offset, size_t size, float* dst) const
+{
+
+	std::memcpy(dst, &mStream->mOrigin[1][offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyOriginZRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mOrigin[2][offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyDirectionXRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mDirection[0][offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyDirectionYRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mDirection[1][offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyDirectionZRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mDirection[2][offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyMaxTRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mMaxT[offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyMinTRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mMinT[offset + mOffset], size * sizeof(float));
+}
+
+inline void RayGroup::copyTimeRaw(size_t offset, size_t size, float* dst) const
+{
+	std::memcpy(dst, &mStream->mTime[offset + mOffset], size * sizeof(float));
+}
+
 } // namespace PR

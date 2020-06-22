@@ -3,7 +3,7 @@
 #include "geometry/GeometryPoint.h"
 #include "math/Reflection.h"
 #include "math/Tangent.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
 enum ShaderPointFlags {
@@ -32,9 +32,6 @@ public:
 	uint32 Flags;
 	float Depth2;
 	float NdotV;
-
-	uint32 EntityID;
-	uint32 PrimID;
 
 	// Set shading terms without transformation
 	inline void setByIdentity(const PR::Ray& ray, const GeometryPoint& pt)

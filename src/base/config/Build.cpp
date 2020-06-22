@@ -1,8 +1,6 @@
 #include "Build.h"
 #include "Profiler.h"
-#include "config/ColliderOptions.h"
 #include "config/Git.h"
-#include "config/TriangleOptions.h"
 #include "config/Version.h"
 
 #include <sstream>
@@ -196,11 +194,6 @@ std::string getBuildString()
 		   << "} [Features:<" << getFeatureSet()
 		   << ">; Asserts: " << hasAsserts
 		   << "; Profile: " << hasProfiler
-		   << "; PackN: " << PR_SIMD_BANDWIDTH
-		   << "; TriIntM: " << PR_TRIANGLE_INTERSECTION_METHOD_NAME
-#ifdef PR_COLLIDER_FORCE_SINGLE_TRACE
-		   << "; SINGLE TRACE ONLY"
-#endif
 		   << "]";
 	return stream.str();
 }

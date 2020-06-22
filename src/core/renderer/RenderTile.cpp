@@ -107,7 +107,7 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 
 bool RenderTile::accuire()
 {
-	if (!mWorking.exchange(true)) {
+	if (!isFinished() && !mWorking.exchange(true)) {
 		mWorkStart = std::chrono::high_resolution_clock::now();
 		return true;
 	} else {

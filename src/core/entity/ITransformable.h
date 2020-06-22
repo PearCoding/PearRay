@@ -38,6 +38,7 @@ public:
 	inline void setTransform(const Transform& transform);
 	inline const Transform& transform() const;
 	inline const Transform& invTransform() const;
+	inline float volumeScalefactor() const;
 
 	/* Matrix to be used by normals */
 	inline const Eigen::Matrix3f& normalMatrix() const;
@@ -56,6 +57,7 @@ private:
 	Transform mTransform;
 
 	void cache();
+	float mJacobianDeterminant;
 	Transform mInvTransformCache;
 	Eigen::Matrix3f mNormalMatrixCache;
 	Eigen::Matrix3f mInvNormalMatrixCache;

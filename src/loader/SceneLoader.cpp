@@ -22,7 +22,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "material/MaterialManager.h"
-#include "mesh/MeshFactory.h"
+#include "mesh/MeshBase.h"
 
 #include "parser/CurveParser.h"
 #include "parser/MathParser.h"
@@ -34,7 +34,7 @@
 #include "DataLisp.h"
 
 #include <Eigen/SVD>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -719,12 +719,7 @@ void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 		mesh->triangulate();
 	}
 
-	bool useCache	   = ctx.Env->cache()->shouldCacheMesh(mesh->nodeCount());
-	DL::Data useCacheD = group.getFromKey("cache");
-	if (useCacheD.type() == DL::DT_Bool)
-		useCache = useCacheD.getBool();
-
-	ctx.Env->addMesh(name, MeshFactory::create(name, std::move(mesh), ctx.Env->cache(), useCache));
+	ctx.Env->addMesh(name, std::move(mesh));
 }
 
 void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)
@@ -826,7 +821,7 @@ void SceneLoader::addInclude(const DL::DataGroup& group, SceneLoadContext& ctx)
 void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 {
 	PR_LOG(L_DEBUG) << "[Loader] Including " << path << std::endl;
-	const std::wstring wpath = boost::filesystem::path(path).generic_wstring();
+	const std::wstring wpath = std::filesystem::path(path).generic_wstring();
 	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), wpath) != ctx.FileStack.end()) {
 		PR_LOG(L_ERROR) << "[Loader] Include file " << path << " already included! " << std::endl;
 		return;

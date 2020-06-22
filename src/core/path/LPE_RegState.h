@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LightPathToken.h"
-#include <boost/functional/hash.hpp>
+#include "math/Hash.h"
 #include <unordered_map>
 #include <unordered_set>
 
@@ -99,16 +99,18 @@ struct Token {
 	}
 };
 
-inline std::size_t hash_value(const Token& k)
-{
-	std::size_t s = 0;
-	boost::hash_combine(s, k.Type);
-	boost::hash_combine(s, k.Event);
-	boost::hash_combine(s, k.Label);
-	return s;
-}
+struct TokenHash {
+	std::size_t operator()(Token const& k) const noexcept
+	{
+		std::size_t s = 0;
+		hash_combine(s, k.Type);
+		hash_combine(s, k.Event);
+		hash_combine(s, k.Label);
+		return s;
+	}
+};
 
-typedef std::unordered_set<Token, boost::hash<Token>> TokenSet;
+typedef std::unordered_set<Token, TokenHash> TokenSet;
 
 struct Transition {
 	std::shared_ptr<class RegState> To;

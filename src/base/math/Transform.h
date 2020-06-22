@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PR_Config.h"
-#include "SIMD.h"
 
 namespace PR {
 
@@ -31,52 +30,21 @@ inline Vector3f safePosition(const Vector3f& pos,
 	return posOff;
 }
 
-inline Vector3fv safePosition(const Vector3fv& pos,
-							  const Vector3fv& dir,
-							  const Vector3fv& N)
+inline Vector3f applyVector(const Eigen::Ref<const Eigen::Matrix3f>& m, const Vector3f& p)
 {
-	vfloat d		 = (N.cwiseAbs() * vfloat(RayOffsetEpsilon)).sum();
-	Vector3fv offset = d * N;
-
-	bfloat neg		 = dir.dot(N) < 0;
-	offset[0]		 = blend(-offset[0], offset[0], neg);
-	offset[1]		 = blend(-offset[1], offset[1], neg);
-	offset[2]		 = blend(-offset[2], offset[2], neg);
-	Vector3fv posOff = pos + offset;
-
-	for (int i = 0; i < 3; ++i) {
-		vfloat add = foreach_assign_v(posOff[i], [&](float val) { return nextFloatUp(val); });
-		vfloat sub = foreach_assign_v(posOff[i], [&](float val) { return nextFloatDown(val); });
-		posOff[i]  = blend(add,
-						   blend(sub, posOff[i], offset[i] < 0),
-						   offset[i] > 0);
-	}
-	return posOff;
+	return m * p;
 }
 
-template <typename T>
-inline Vector3t<T> applyVector(const Eigen::Ref<const Eigen::Matrix3f>& m, const Vector3t<T>& p)
+inline Vector3f applyAffine(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3f& p)
 {
-	T b1 = m(0, 0) * p(0) + m(0, 1) * p(1) + m(0, 2) * p(2);
-	T b2 = m(1, 0) * p(0) + m(1, 1) * p(1) + m(1, 2) * p(2);
-	T b3 = m(2, 0) * p(0) + m(2, 1) * p(1) + m(2, 2) * p(2);
-	return Vector3t<T>(b1, b2, b3);
+	return m.block<3, 3>(0, 0) * p + m.block<3, 1>(0, 3);
 }
 
-template <typename T>
-inline Vector3t<T> applyAffine(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3t<T>& p)
+inline Vector3f apply(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3f& p)
 {
-	T b1 = m(0, 0) * p(0) + m(0, 1) * p(1) + m(0, 2) * p(2) + m(0, 3);
-	T b2 = m(1, 0) * p(0) + m(1, 1) * p(1) + m(1, 2) * p(2) + m(1, 3);
-	T b3 = m(2, 0) * p(0) + m(2, 1) * p(1) + m(2, 2) * p(2) + m(2, 3);
-	return Vector3t<T>(b1, b2, b3);
-}
-
-template <typename T>
-inline Vector3t<T> apply(const Eigen::Ref<const Eigen::Matrix4f>& m, const Vector3t<T>& p)
-{
-	Vector3t<T> b = applyAffine(m, p);
-	return b / (m(3, 0) * p(0) + m(3, 1) * p(1) + m(3, 2) * p(2) + m(3, 3));
+	Vector3f b	= applyAffine(m, p);
+	float denom = m.block<1, 3>(3, 0).dot(p) + m(3, 3);
+	return b / denom;
 }
 
 inline Eigen::Matrix3f orthogonalMatrix(const Vector3f& c0, const Vector3f& c1, const Vector3f& c2)

@@ -2,7 +2,7 @@
 #include "geometry/Face.h"
 #include "geometry/Plane.h"
 #include "geometry/Sphere.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 #include "pypearray.h"
 

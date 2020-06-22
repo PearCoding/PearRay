@@ -16,8 +16,6 @@
 
 #include "Logger.h"
 
-#include <boost/algorithm/string/predicate.hpp>
-
 namespace PR {
 enum VisualFeedbackMode {
 	VFM_ColoredEntityID,
@@ -26,7 +24,6 @@ enum VisualFeedbackMode {
 	VFM_ColoredDisplaceID,
 	VFM_ColoredPrimitiveID,
 	VFM_ColoredRayID,
-	VFM_ColoredContainerID,
 	VFM_RayDirection,
 	VFM_Parameter,
 	VFM_Inside,
@@ -44,7 +41,6 @@ static struct {
 	{ "colored_displace_id", VFM_ColoredDisplaceID },
 	{ "colored_primitive_id", VFM_ColoredPrimitiveID },
 	{ "colored_ray_id", VFM_ColoredRayID },
-	{ "colored_container_id", VFM_ColoredContainerID },
 	{ "ray_direction", VFM_RayDirection },
 	{ "parameter", VFM_Parameter },
 	{ "inside", VFM_Inside },
@@ -109,7 +105,7 @@ public:
 			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.NdotV);
 			switch (mMode) {
 			case VFM_ColoredEntityID:
-				radiance = sRandomColors[spt.EntityID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Geometry.EntityID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
@@ -129,17 +125,12 @@ public:
 					radiance *= weight;
 				break;
 			case VFM_ColoredPrimitiveID:
-				radiance = sRandomColors[spt.PrimID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Geometry.PrimitiveID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredRayID:
 				radiance = sRandomColors[hitEntry.RayID % RANDOM_COLOR_COUNT];
-				if (mApplyDot)
-					radiance *= weight;
-				break;
-			case VFM_ColoredContainerID:
-				radiance = sRandomColors[grp.entity()->containerID() % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
@@ -167,19 +158,20 @@ public:
 					radiance = SpectralBlob{ originalNdotV, 0, 0, 1 };
 			} break;
 			case VFM_ValidateMaterial: {
-				if (grp.material()) {
+				IMaterial* mat = session.getMaterial(spt.Geometry.MaterialID);
+				if (mat) {
 					MaterialSampleInput samp_in;
 					samp_in.Point = spt;
 					samp_in.RND	  = random.get2D();
 					MaterialSampleOutput samp_out;
-					grp.material()->sample(samp_in, samp_out, session);
+					mat->sample(samp_in, samp_out, session);
 
 					MaterialEvalInput eval_in;
 					eval_in.Point	 = spt;
 					eval_in.Outgoing = samp_out.Outgoing;
 					eval_in.NdotL	 = spt.N.dot(eval_in.Outgoing);
 					MaterialEvalOutput eval_out;
-					grp.material()->eval(eval_in, eval_out, session);
+					mat->eval(eval_in, eval_out, session);
 
 					const float weightDiff = (samp_out.Weight - eval_out.Weight).cwiseAbs().sum();
 					const float relPDFDiff = (samp_out.PDF_S - eval_out.PDF_S).cwiseAbs().sum();
@@ -249,9 +241,12 @@ public:
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
 		std::string modeS		= mParams.getString("mode", "");
+		std::transform(modeS.begin(), modeS.end(), modeS.begin(),
+			[](unsigned char c){ return std::tolower(c); });
+
 		VisualFeedbackMode mode = VFM_Parameter;
 		for (int i = 0; _mode[i].Name; ++i) {
-			if (boost::iequals(_mode[i].Name, modeS)) {
+			if (_mode[i].Name == modeS) {
 				mode = _mode[i].Mode;
 				break;
 			}

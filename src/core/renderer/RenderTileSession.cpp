@@ -65,20 +65,25 @@ bool RenderTileSession::traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntit
 	if (!entity)
 		return false;
 
-	material = getMaterial(entry.MaterialID);
+	EntityGeometryQueryPoint query;
+	query.PrimitiveID = entry.PrimitiveID;
+	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
+	query.View		  = ray.Direction;
+	query.Position	  = ray.t(entry.Parameter.z());
 
-	entity->provideGeometryPoint(ray.Direction, entry.PrimitiveID,
-								 Vector3f(entry.Parameter[0], entry.Parameter[1], entry.Parameter[2]), pt);
+	entity->provideGeometryPoint(query, pt);
+
+	material = getMaterial(pt.MaterialID);
 
 	return true;
 }
 
-ShadowHit RenderTileSession::traceShadowRay(const Ray& ray) const
+bool RenderTileSession::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
 {
 	PR_PROFILE_THIS;
 
 	mTile->statistics().addShadowRayCount();
-	return mTile->context()->scene()->traceShadowRay(ray);
+	return mTile->context()->scene()->traceShadowRay(ray, distance, entity_id);
 }
 
 bool RenderTileSession::traceOcclusionRay(const Ray& ray) const
@@ -133,7 +138,7 @@ void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) co
 		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
-IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint& pt, float& pdf) const
+IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_id, GeometryPoint& pt, float& pdf) const
 {
 	PR_PROFILE_THIS;
 
@@ -147,14 +152,56 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, GeometryPoint&
 	pdf			= 1.0f / lights.size();
 
 	IEntity* light = lights.at(pick).get();
+	if (light->id() == ignore_id) {
+		if (lights.size() == 1) { // The light we have to ignore is the only light available
+			pdf = 0;
+			return nullptr;
+		}
 
-	float pdf2	   = 0;
-	uint32 faceID  = 0;
-	Vector3f param = light->pickRandomParameterPoint(view, mTile->random().get2D(), faceID, pdf2);
+		size_t pick2 = mTile->random().get32(0, (uint32)lights.size() - 1);
+		pdf			 = 1.0f / (lights.size() - 1);
 
-	light->provideGeometryPoint(view, faceID, param, pt);
-	pdf *= pdf2;
+		// We use a trick to ignore the one pick we already had
+		// [========P+++++++++]
+		if (pick2 < pick)
+			pick = pick2;
+		else
+			pick = pick2 + 1;
+
+		light = lights.at(pick).get();
+	}
+
+	EntityRandomPoint rnd_p = light->pickRandomParameterPoint(view, mTile->random().get2D());
+
+	EntityGeometryQueryPoint query;
+	query.PrimitiveID = rnd_p.PrimitiveID;
+	query.UV		  = rnd_p.UV;
+	query.View		  = view;
+	query.Position	  = rnd_p.Position;
+	light->provideGeometryPoint(query, pt);
+	pdf *= rnd_p.PDF_A;
 
 	return light;
+}
+
+constexpr size_t PR_LARGE_LIGHT_THRESHOLD = 1000;
+float RenderTileSession::pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const
+{
+	PR_UNUSED(view);
+	PR_ASSERT(light->id() != ignore_id, "Picked light can not be the one ignored!");
+
+	const auto& lights = mTile->context()->lights();
+	if (lights.empty())
+		return 0.0f;
+
+	// TODO: Maybe have an approximation for large amounts of lights?
+	if (lights.size() < PR_LARGE_LIGHT_THRESHOLD) {
+		for (const auto& l : lights) {
+			if (l->id() == ignore_id)
+				return 1.0f / ((lights.size() - 1) * light->surfaceArea());
+		}
+	}
+
+	return 1.0f / (lights.size() * light->surfaceArea());
 }
 } // namespace PR

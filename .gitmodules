@@ -10,10 +10,9 @@
 	path = external/DataLisp
 	url = git://github.com/PearCoding/DataLisp.git
 	branch = master
-[submodule "external/libsimdpp"]
-	path = external/libsimdpp
-	url = git://github.com/PearCoding/libsimdpp.git
-	branch = master
 [submodule "external/pcg-cpp"]
 	path = external/pcg-cpp
 	url = git://github.com/imneme/pcg-cpp.git
+[submodule "external/cxxopts"]
+	path = external/cxxopts
+	url = git://github.com/jarro2783/cxxopts.git

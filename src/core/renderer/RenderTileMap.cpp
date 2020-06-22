@@ -131,7 +131,7 @@ RenderTile* RenderTileMap::getNextTile(uint32 maxIter)
 
 	Mutex::scoped_lock lock(mMutex, false);
 	for (auto tile : mTileMap)
-		if (tile && tile->iterationCount() < maxIter && !tile->isFinished())
+		if (tile && tile->iterationCount() < maxIter)
 			if (tile->accuire())
 				return tile;
 

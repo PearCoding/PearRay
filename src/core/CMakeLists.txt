@@ -22,14 +22,9 @@ set(PR_Src
   camera/ICamera.h
   container/IndexSort.h
   container/Interval.h
-  container/kdTreeBuilder.cpp
-  container/kdTreeBuilder.h
-  container/kdTreeBuilderNaive.cpp
-  container/kdTreeBuilderNaive.h
-  container/kdTreeCollider.cpp
-  container/kdTreeCollider.h
   container/QuickSort.h
   container/RadixSort.h
+  entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h
   entity/IEntity.inl
@@ -54,14 +49,6 @@ set(PR_Src
   geometry/Sphere.cpp
   geometry/Sphere.h
   geometry/Triangle.h
-  geometry/TriangleIntersection.h
-  geometry/TriangleIntersection_BW9.h
-  geometry/TriangleIntersection_BW12.h
-  geometry/TriangleIntersection_MT.h
-  geometry/TriangleIntersection_PI.h
-  geometry/TriangleIntersection_PI_Mem.h
-  geometry/TriangleIntersection_PI_Off.h
-  geometry/TriangleIntersection_WT.h
   infinitelight/IInfiniteLight.cpp
   infinitelight/IInfiniteLight.h
   integrator/IIntegrator.cpp
@@ -72,28 +59,10 @@ set(PR_Src
   material/IMaterial.inl
   material/MaterialData.h
   material/MaterialType.h
-  mesh/Mesh.cpp
-  mesh/Mesh.h
   mesh/MeshBase.cpp
   mesh/MeshBase.h
   mesh/MeshBase.inl
-  mesh/MeshFactory.cpp
-  mesh/MeshFactory.h
   mesh/MeshInfo.h
-  mesh/TriMeshBW9.cpp
-  mesh/TriMeshBW9.h
-  mesh/TriMeshBW12.cpp
-  mesh/TriMeshBW12.h
-  mesh/TriMeshMT.cpp
-  mesh/TriMeshMT.h
-  mesh/TriMeshPI.cpp
-  mesh/TriMeshPI.h
-  mesh/TriMeshPIMem.cpp
-  mesh/TriMeshPIMem.h
-  mesh/TriMeshPIOff.cpp
-  mesh/TriMeshPIOff.h
-  mesh/TriMeshWT.cpp
-  mesh/TriMeshWT.h
   output/OutputQueue.cpp
   output/OutputQueue.h
   output/OutputQueue.inl
@@ -115,7 +84,7 @@ set(PR_Src
   path/LPE_RegExpr.cpp
   path/LPE_RegExpr.h
   path/LPE_RegState.h
-  ray/RayPackage.h
+  ray/Ray.h
   ray/RayStream.cpp
   ray/RayStream.h
   renderer/RenderContext.cpp
@@ -152,7 +121,6 @@ set(PR_Src
   sampler/SplitSample.h
   scene/Scene.cpp
   scene/Scene.h
-  scene/Scene.inl
   serialization/BufferSerializer.h
   serialization/BufferSerializer.cpp
   serialization/FileSerializer.h
@@ -183,19 +151,13 @@ set(PR_Src
   thread/Thread.h
   thread/Thread.inl
   trace/HitEntry.h
+  trace/HitPoint.h
   trace/HitStream.cpp
   trace/HitStream.h
-  trace/ShadowHit.h
 )
 
-if(${CMAKE_VERSION} VERSION_LESS 3.15)
-  set(_BOOST_HEADERS Boost::boost)
-else()
-  set(_BOOST_HEADERS Boost::headers)
-endif()
-
 add_library(pr_lib_core ${PR_Src})
-target_link_libraries(pr_lib_core PUBLIC pr_lib_base ${_BOOST_HEADERS} Boost::filesystem TBB::tbb)
+target_link_libraries(pr_lib_core PUBLIC pr_lib_base std::filesystem TBB::tbb Embree::Embree)
 set_target_properties(pr_lib_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 target_include_directories(pr_lib_core PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

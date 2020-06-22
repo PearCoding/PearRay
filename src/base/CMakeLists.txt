@@ -10,13 +10,13 @@ set(PR_Src
   Variant.h
   arch/FileLock.cpp
   arch/FileLock.h
+  arch/SharedLibrary.cpp
+  arch/SharedLibrary.h
   config/Build.cpp
   config/Build.h
-  config/ColliderOptions.h.in
   config/Constants.inl
   config/HW_Switch.inl.in
   config/SIMD.inl
-  config/TriangleOptions.h.in
   config/Types.inl
   config/VectorGlue.inl
   config/Version.h.in
@@ -26,10 +26,11 @@ set(PR_Src
   log/FileLogListener.cpp
   log/FileLogListener.h
   log/LogListener.h
+  math/Bits.h
   math/Compression.h
   math/Fresnel.h
   math/Generator.h
-  math/HemiMap.h
+  math/Hash.h
   math/ImportanceSampling.h
   math/Microfacet.h
   math/Projection.h
@@ -42,6 +43,7 @@ set(PR_Src
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
+  memory/AlignedAllocator.h
   memory/MemoryPool.h
   memory/MemoryPool.inl
   memory/MemoryStack.h
@@ -53,9 +55,10 @@ add_dependencies(pr_lib_base prhwinfo)
 if(NOT WIN32)
   target_link_libraries(pr_lib_base PUBLIC Threads::Threads)
 endif()
-target_link_libraries(pr_lib_base PUBLIC Eigen3::Eigen)
+target_link_libraries(pr_lib_base PUBLIC Eigen3::Eigen PRIVATE ${CMAKE_DL_LIBS})
 target_include_directories(pr_lib_base PUBLIC PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 set_target_properties(pr_lib_base PROPERTIES CXX_VISIBILITY_PRESET hidden)
+target_compile_features(pr_lib_base PUBLIC cxx_std_17)
 target_compile_definitions(pr_lib_base PUBLIC "$<$<CONFIG:Debug>:PR_DEBUG>")
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(pr_lib_base PUBLIC "PR_LIB_BASE_STATIC")

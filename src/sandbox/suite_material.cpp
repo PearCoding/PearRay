@@ -9,12 +9,12 @@
 #include "renderer/RenderTileSession.h"
 #include "shader/ShadingPoint.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
 using namespace PR;
-namespace bf				 = boost::filesystem;
+namespace sf				 = std::filesystem;
 static const std::string DIR = "results/material/";
 constexpr size_t WIDTH		 = 200;
 constexpr size_t HEIGHT		 = 200;
@@ -246,7 +246,7 @@ static MAT_FUNC s_funcs[] = {
 
 void suite_material()
 {
-	bf::create_directory(DIR);
+	sf::create_directory(DIR);
 
 	Environment env(L"./", L"./", true);
 	for (int i = 0; s_funcs[i]; ++i)

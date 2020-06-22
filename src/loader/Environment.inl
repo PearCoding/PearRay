@@ -24,7 +24,7 @@ inline bool Environment::hasSpectrum(const std::string& name) const
 
 inline void Environment::addSpectrum(const std::string& name, const ParametricBlob& spec)
 {
-	mSpectrums.insert(std::make_pair(name, spec));
+	mSpectrums.emplace(name, spec);
 }
 
 inline std::shared_ptr<IEmission> Environment::getEmission(const std::string& name) const
@@ -41,7 +41,7 @@ inline void Environment::addEmission(const std::string& name, const std::shared_
 {
 	PR_ASSERT(mat, "Given emission has to be valid");
 	PR_ASSERT(!hasEmission(name), "Given name should be unique");
-	mEmissions[name] = mat;
+	mEmissions.emplace(name, mat);
 }
 
 inline size_t Environment::emissionCount() const
@@ -63,7 +63,7 @@ inline void Environment::addMaterial(const std::string& name, const std::shared_
 {
 	PR_ASSERT(mat, "Given material has to be valid");
 	PR_ASSERT(!hasMaterial(name), "Given name should be unique");
-	mMaterials[name] = mat;
+	mMaterials.emplace(name, mat);
 }
 
 inline size_t Environment::materialCount() const
@@ -71,7 +71,7 @@ inline size_t Environment::materialCount() const
 	return mMaterials.size();
 }
 
-inline std::shared_ptr<Mesh> Environment::getMesh(const std::string& name) const
+inline std::shared_ptr<MeshBase> Environment::getMesh(const std::string& name) const
 {
 	return hasMesh(name) ? mMeshes.at(name) : nullptr;
 }
@@ -81,28 +81,27 @@ inline bool Environment::hasMesh(const std::string& name) const
 	return mMeshes.count(name) != 0;
 }
 
-inline void Environment::addMesh(const std::string& name, const std::shared_ptr<Mesh>& m)
+inline void Environment::addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m)
 {
 	PR_ASSERT(m, "Given mesh has to be valid");
 	PR_ASSERT(!hasMesh(name), "Given name should be unique");
-	mMeshes[name] = m;
+	mMeshes.emplace(name, m);
 }
 
 inline void Environment::addShadingSocket(const std::string& name,
 										  const ShadingSocketVariantPtr& output)
 {
-	//PR_ASSERT(output, "Given output has to be valid");
 	PR_ASSERT(!hasShadingSocket(name), "Given name should be unique");
-	mNamedShadingSockets[name] = output;
+	mNamedShadingSockets.emplace(name, output);// Skip default constructor
 }
 
 template <typename Socket>
 inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& name) const
 {
 	try {
-		return boost::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
-	} catch (const boost::bad_get&) {
-		return std::shared_ptr<Socket>();
+		return std::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
+	} catch (const std::bad_variant_access&) {
+		return nullptr;
 	}
 }
 
@@ -132,7 +131,7 @@ inline void Environment::addMapSocket(const std::string& name,
 									  const std::shared_ptr<FloatSpectralMapSocket>& m)
 {
 	PR_ASSERT(!hasMapSocket(name), "Given name should be unique");
-	mNamedMapSockets[name] = m;
+	mNamedMapSockets.emplace(name, m);
 }
 
 inline void* Environment::textureSystem() { return mTextureSystem; }

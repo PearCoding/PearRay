@@ -46,6 +46,7 @@ void ITransformable::beforeSceneBuild()
 
 void ITransformable::cache()
 {
+	mJacobianDeterminant = std::abs(mTransform.linear().determinant());
 	mInvTransformCache	= mTransform.inverse();
 	mNormalMatrixCache	= mTransform.linear().inverse().transpose();
 	mInvNormalMatrixCache = mNormalMatrixCache.inverse();

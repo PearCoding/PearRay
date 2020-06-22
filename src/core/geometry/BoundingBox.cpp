@@ -1,6 +1,6 @@
 #include "BoundingBox.h"
-#include "CollisionData.h"
 #include "Plane.h"
+#include "trace/HitPoint.h"
 
 namespace PR {
 BoundingBox::BoundingBox()
@@ -43,19 +43,18 @@ void BoundingBox::inflate(float eps, bool maxDir)
 	}
 }
 
-void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
+void BoundingBox::intersects(const Ray& in, HitPoint& out) const
 {
 	out.HitDistance		  = std::numeric_limits<float>::infinity();
 	const Vector3f invDir = in.Direction.cwiseInverse();
+	const Vector3f vmin	  = invDir.cwiseProduct(lowerBound() - in.Origin);
+	const Vector3f vmax	  = invDir.cwiseProduct(upperBound() - in.Origin);
 
 	float entry = -std::numeric_limits<float>::infinity();
 	float exit	= std::numeric_limits<float>::infinity();
 	for (int i = 0; i < 3; ++i) {
-		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		entry = std::max(std::min(vmin, vmax), entry);
-		exit  = std::min(std::max(vmin, vmax), exit);
+		entry = std::max(std::min(vmin[i], vmax[i]), entry);
+		exit  = std::min(std::max(vmin[i], vmax[i]), exit);
 	}
 
 	float minE = entry <= 0 ? exit : entry;
@@ -67,84 +66,24 @@ void BoundingBox::intersects(const Ray& in, SingleCollisionOutput& out) const
 	}
 }
 
-void BoundingBox::intersects(const RayPackage& in, CollisionOutput& out) const
-{
-	const Vector3fv invDir = in.Direction.cwiseInverse();
-
-	vfloat entry = vfloat(-std::numeric_limits<float>::infinity());
-	vfloat exit	 = vfloat(std::numeric_limits<float>::infinity());
-
-	for (int i = 0; i < 3; ++i) {
-		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		entry = max(min(vmin, vmax), entry);
-		exit  = min(max(vmin, vmax), exit);
-	}
-
-	const simdpp::float32v inf = simdpp::make_float(std::numeric_limits<float>::infinity());
-	out.HitDistance			   = simdpp::blend(exit, entry, entry < 0);
-	out.HitDistance			   = simdpp::blend(out.HitDistance,
-									   simdpp::blend(exit, inf, (exit >= entry) & in.isInsideRange(exit)),
-									   (exit >= entry) & in.isInsideRange(out.HitDistance));
-}
-
 BoundingBox::IntersectionRange BoundingBox::intersectsRange(const Ray& in) const
 {
 	BoundingBox::IntersectionRange r;
 	const Vector3f invDir = in.Direction.cwiseInverse();
+	const Vector3f vmin	  = invDir.cwiseProduct(lowerBound() - in.Origin);
+	const Vector3f vmax	  = invDir.cwiseProduct(upperBound() - in.Origin);
 
-	// Leading loop part
-	{
-		const float vmin = (lowerBound()(0) - in.Origin[0]) * invDir[0];
-		const float vmax = (upperBound()(0) - in.Origin[0]) * invDir[0];
-		r.Entry			 = std::min(vmin, vmax);
-		r.Exit			 = std::max(vmin, vmax);
-	}
-
+	r.Entry = std::min(vmin[0], vmax[0]);
+	r.Exit	= std::max(vmin[0], vmax[0]);
 	PR_UNROLL_LOOP(2)
 	for (int i = 1; i < 3; ++i) {
-		const float vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const float vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		r.Entry = std::max(std::min(vmin, vmax), r.Entry);
-		r.Exit	= std::min(std::max(vmin, vmax), r.Exit);
+		r.Entry = std::max(std::min(vmin[i], vmax[i]), r.Entry);
+		r.Exit	= std::min(std::max(vmin[i], vmax[i]), r.Exit);
 	}
 
 	r.Entry		 = std::max(in.MinT, r.Entry);
 	r.Exit		 = std::min(in.MaxT, r.Exit);
 	r.Successful = (r.Exit >= r.Entry && in.isInsideRange(r.Exit));
-
-	return r;
-}
-
-BoundingBox::IntersectionRangeV BoundingBox::intersectsRange(const RayPackage& in) const
-{
-	using namespace simdpp;
-
-	BoundingBox::IntersectionRangeV r;
-	const Vector3fv invDir = in.Direction.cwiseInverse();
-
-	// Leading loop part
-	{
-		const vfloat vmin = (lowerBound()(0) - in.Origin[0]) * invDir[0];
-		const vfloat vmax = (upperBound()(0) - in.Origin[0]) * invDir[0];
-		r.Entry			  = min(vmin, vmax);
-		r.Exit			  = max(vmin, vmax);
-	}
-
-	PR_UNROLL_LOOP(2)
-	for (int i = 1; i < 3; ++i) {
-		const vfloat vmin = (lowerBound()(i) - in.Origin[i]) * invDir[i];
-		const vfloat vmax = (upperBound()(i) - in.Origin[i]) * invDir[i];
-
-		r.Entry = max(min(vmin, vmax), r.Entry);
-		r.Exit	= min(max(vmin, vmax), r.Exit);
-	}
-
-	r.Entry		 = max(in.MinT, r.Entry);
-	r.Exit		 = min(in.MaxT, r.Exit);
-	r.Successful = (r.Exit >= r.Entry) & in.isInsideRange(r.Exit);
 
 	return r;
 }

@@ -1,6 +1,6 @@
 #include "geometry/BoundingBox.h"
-#include "geometry/CollisionData.h"
 #include "geometry/Plane.h"
+#include "trace/HitPoint.h"
 
 #include "Test.h"
 
@@ -123,7 +123,7 @@ PR_TEST("Intersects Left")
 	Ray ray(Vector3f(-2, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -137,7 +137,7 @@ PR_TEST("Intersects Right Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -151,7 +151,7 @@ PR_TEST("Intersects Right")
 	Ray ray(Vector3f(2, 0, 0),
 			Vector3f(-1, 0, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -165,7 +165,7 @@ PR_TEST("Intersects Front")
 	Ray ray(Vector3f(0, 0, -2),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -179,7 +179,7 @@ PR_TEST("Intersects Back Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(0, 0, 1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -193,7 +193,7 @@ PR_TEST("Intersects Back")
 	Ray ray(Vector3f(0, 0, 2),
 			Vector3f(0, 0, -1));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -207,7 +207,7 @@ PR_TEST("Intersects Bottom")
 	Ray ray(Vector3f(0, -2, 0),
 			Vector3f(0, 1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -221,7 +221,7 @@ PR_TEST("Intersects Top Inside")
 	Ray ray(Vector3f(0, 0, 0),
 			Vector3f(0, 1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -235,7 +235,7 @@ PR_TEST("Intersects Top")
 	Ray ray(Vector3f(0, 2, 0),
 			Vector3f(0, -1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_EQ(s.HitDistance, 1);
 
@@ -250,7 +250,7 @@ PR_TEST("Intersects Complex")
 	Ray ray(Vector3f(1, 2, 0),
 			Vector3f(-1, -1, 0));
 
-	SingleCollisionOutput s;
+	HitPoint s;
 	box.intersects(ray, s);
 	PR_CHECK_TRUE(s.HitDistance < std::numeric_limits<float>::infinity());
 
@@ -269,26 +269,6 @@ PR_TEST("Intersects Range")
 	PR_CHECK_TRUE(s.Successful);
 	PR_CHECK_EQ(s.Entry, 1);
 	PR_CHECK_EQ(s.Exit, 3);
-}
-
-PR_TEST("Intersects Package")
-{
-	using namespace simdpp;
-
-	BoundingBox box(2, 2, 2);
-	RayPackage ray(Vector3fv(make_float(1, 0, 0, 0),
-							 make_float(2, 2, 0, 0),
-							 make_float(0, 0, 2, 0)),
-				   Vector3fv(make_float(-1, 0, 0, 1),
-							 make_float(-1, -1, 0, 0),
-							 make_float(0, 0, 1, 0)));
-
-	CollisionOutput out;
-	box.intersects(ray, out);
-	PR_CHECK_LESS(extract<0>(out.HitDistance), std::numeric_limits<float>::infinity());
-	PR_CHECK_NEARLY_EQ(extract<1>(out.HitDistance), 1);
-	PR_CHECK_EQ(extract<2>(out.HitDistance), std::numeric_limits<float>::infinity());
-	PR_CHECK_NEARLY_EQ(extract<3>(out.HitDistance), 1);
 }
 
 PR_TEST("Face Front")

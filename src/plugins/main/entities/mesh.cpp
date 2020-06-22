@@ -1,4 +1,3 @@
-#include "mesh/Mesh.h"
 #include "Environment.h"
 #include "Logger.h"
 #include "Profiler.h"
@@ -6,17 +5,71 @@
 #include "SceneLoadContext.h"
 #include "cache/ISerializeCachable.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
-#include "mesh/MeshFactory.h"
+#include "mesh/MeshBase.h"
+#include "sampler/SplitSample.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace PR {
 
+class Mesh {
+public:
+	Mesh(const std::shared_ptr<MeshBase>& mesh)
+		: mBase(mesh)
+		, mWasGenerated(false)
+	{
+	}
+
+	~Mesh()
+	{
+		rtcReleaseScene(mScene);
+	}
+
+	RTCScene generate(const RTCDevice& dev)
+	{
+		if (!mWasGenerated) {
+			setupOriginal(dev);
+			mWasGenerated = true;
+		}
+
+		return mScene;
+	}
+
+	inline MeshBase* base() const { return mBase.get(); }
+	inline RTCScene scene() const { return mScene; }
+
+private:
+	inline void setupOriginal(const RTCDevice& dev)
+	{
+		RTCGeometry geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_TRIANGLE);
+
+		// TODO: Make sure the internal mesh buffer is proper aligned at the end
+		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, mBase->vertices().data(), 0, sizeof(float) * 3, mBase->vertices().size() / 3);
+		rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT3, mBase->indices().data(), 0, sizeof(uint32) * 3, mBase->indices().size() / 3);
+		rtcCommitGeometry(geom);
+
+		mScene = rtcNewScene(dev);
+
+		rtcAttachGeometry(mScene, geom);
+		rtcReleaseGeometry(geom);
+
+		rtcSetSceneFlags(mScene, RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION);
+		rtcSetSceneBuildQuality(mScene, RTC_BUILD_QUALITY_HIGH);
+		rtcCommitScene(mScene);
+	}
+
+	RTCScene mScene;
+	std::shared_ptr<MeshBase> mBase;
+	bool mWasGenerated;
+};
+
+template <bool HasUV>
 class MeshEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -29,12 +82,10 @@ public:
 		, mLightID(lightID)
 		, mMaterials(materials)
 		, mMesh(mesh)
-		, mUseCache(false)
+		, mBoundingBox(mesh->base()->constructBoundingBox())
 	{
 	}
 	virtual ~MeshEntity() {}
-
-	inline void useCache(bool b) { mUseCache = b; }
 
 	std::string type() const override
 	{
@@ -48,77 +99,97 @@ public:
 
 	float surfaceArea(uint32 id) const override
 	{
-		return mMesh->surfaceArea(id);
+		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity()) * volumeScalefactor();
 	}
 
 	bool isCollidable() const override
 	{
-		return mMesh->isCollidable();
+		return true;
 	}
 
 	float collisionCost() const override
 	{
-		return mMesh->collisionCost();
+		return (float)mMesh->base()->faceCount();
 	}
 
 	BoundingBox localBoundingBox() const override
 	{
-		return mMesh->localBoundingBox();
+		return mBoundingBox;
 	}
 
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
+	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
+	{
+		RTCScene original = mMesh->generate(dev);
+
+		RTCGeometry geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_INSTANCE);
+		rtcSetGeometryInstancedScene(geom, original);
+
+		const auto M = transform();
+		rtcSetGeometryTransform(geom, 0, RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR, M.data());
+		rtcCommitGeometry(geom);
+
+		return GeometryRepr(geom);
+	}
+
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
 	{
 		PR_PROFILE_THIS;
+		SplitSample2D split(rnd, 0, mMesh->base()->faceCount());
+		uint32 faceID = split.integral1();
 
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh->checkCollision(in_local, out);
+		Face face = mMesh->base()->getFace(faceID);
+		float pdf = 1.0f / (mMesh->base()->faceCount() * face.surfaceArea() * volumeScalefactor());
 
-		// out.FaceID is set inside mesh
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= simdpp::make_uint(id());
+		Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
 
-		for (size_t i = 0; i < PR_SIMD_BANDWIDTH; ++i) {
-			uint32 id	   = extract(i, out.MaterialID);
-			out.MaterialID = insert(i, out.MaterialID,
-									id < mMaterials.size()
-										? mMaterials.at(id)
-										: 0);
-		}
+		return EntityRandomPoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	// UV variant
+	template <bool UV = HasUV>
+	inline typename std::enable_if<UV, void>::type
+	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
+						  GeometryPoint& pt) const
 	{
-		PR_PROFILE_THIS;
+		// pt.P is not populated, as we will use the query position directly
 
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mMesh->checkCollision(in_local, out);
+		Face face	= mMesh->base()->getFace(query.PrimitiveID);
+		pt.N		= face.interpolateNormals(query.UV);
+		Vector2f uv = face.interpolateUVs(query.UV);
 
-		// out.FaceID is set inside mesh
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.MaterialID	= out.MaterialID < mMaterials.size()
-							 ? mMaterials.at(out.MaterialID)
-							 : 0;
+		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
+		pt.UVW = Vector3f(uv(0), uv(1), 0);
+
+		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
 
-	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
+	// Non UV variant
+	template <bool UV = HasUV>
+	inline typename std::enable_if<!UV, void>::type
+	provideGeometryPoint2(const EntityGeometryQueryPoint& query,
+						  GeometryPoint& pt) const
 	{
-		PR_PROFILE_THIS;
-		return mMesh->pickRandomParameterPoint(rnd, faceID, pdf);
+		// pt.P is not populated, as we will use the query position directly
+
+		Face face = mMesh->base()->getFace(query.PrimitiveID);
+		pt.N	  = face.interpolateNormals(query.UV);
+
+		Tangent::frame(pt.N, pt.Nx, pt.Ny);
+		pt.UVW = Vector3f(query.UV(0), query.UV(1), 0);
+
+		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32 faceID, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		mMesh->provideGeometryPoint(faceID, parameter, pt);
+		// Local
+		provideGeometryPoint2(query, pt);
 
 		// Global
-		pt.P  = transform() * pt.P;
+		pt.P  = query.Position;
 		pt.N  = normalMatrix() * pt.N;
 		pt.Nx = normalMatrix() * pt.Nx;
 		pt.Ny = normalMatrix() * pt.Ny;
@@ -127,20 +198,23 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.MaterialID = pt.MaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 private:
-	int32 mLightID;
+	const int32 mLightID;
 	std::vector<uint32> mMaterials;
 	std::shared_ptr<Mesh> mMesh;
-	bool mUseCache;
+	const BoundingBox mBoundingBox;
 };
 
 class MeshEntityPlugin : public IEntityPlugin {
 public:
+	std::unordered_map<MeshBase*, std::shared_ptr<Mesh>> mOriginalMesh;
+
 	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
@@ -167,9 +241,22 @@ public:
 			return nullptr;
 		else {
 			auto mesh = ctx.Env->getMesh(mesh_name);
-			return std::make_shared<MeshEntity>(id, name,
-												mesh,
-												materials, emsID);
+			std::shared_ptr<Mesh> mesh_p;
+			if (mOriginalMesh.count(mesh.get()) > 0) {
+				mesh_p = mOriginalMesh.at(mesh.get());
+			} else {
+				mesh_p					  = std::make_shared<Mesh>(mesh);
+				mOriginalMesh[mesh.get()] = mesh_p;
+			}
+
+			if (mesh->features() & MF_HAS_UV)
+				return std::make_shared<MeshEntity<true>>(id, name,
+														  mesh_p,
+														  materials, emsID);
+			else
+				return std::make_shared<MeshEntity<false>>(id, name,
+														   mesh_p,
+														   materials, emsID);
 		}
 	}
 

@@ -1,11 +1,10 @@
 #pragma once
 
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
 class Plane;
-struct SingleCollisionOutput;
-struct CollisionOutput;
+struct HitPoint;
 
 /**
  * A axis aligned bounding box (AABB)
@@ -111,8 +110,7 @@ public:
 		return (mUpperBound.array() <= point.array()).all() && (mLowerBound.array() >= point.array()).all();
 	}
 
-	void intersects(const Ray& in, SingleCollisionOutput& out) const;
-	void intersects(const RayPackage& in, CollisionOutput& out) const;
+	void intersects(const Ray& in, HitPoint& out) const;
 
 	struct IntersectionRange {
 		bool Successful;
@@ -120,13 +118,6 @@ public:
 		float Exit;
 	};
 	IntersectionRange intersectsRange(const Ray& ray) const;
-
-	struct IntersectionRangeV {
-		bfloat Successful;
-		vfloat Entry;
-		vfloat Exit;
-	};
-	IntersectionRangeV intersectsRange(const RayPackage& in) const;
 
 	FaceSide getIntersectionSide(const Vector3f& intersection) const;
 

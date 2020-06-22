@@ -1,24 +1,18 @@
-#include <boost/filesystem.hpp>
-#include <boost/program_options/cmdline.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/positional_options.hpp>
-#include <boost/program_options/variables_map.hpp>
+#include <filesystem>
 #include <cctype>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-namespace po = boost::program_options;
-namespace bf = boost::filesystem;
+#include <cxxopts.hpp>
 
-constexpr size_t DEF_MIN_SIZE_KB = 1024 * 64; // 64 Mb
+namespace sf = std::filesystem;
 
 class ProgramSettings {
 public:
-	boost::filesystem::path InputFile;
-	boost::filesystem::path OutputDir;
+	sf::path InputFile;
+	sf::path OutputDir;
 
 	bool IsVerbose;
 	bool IsQuiet;
@@ -32,80 +26,76 @@ public:
 
 bool ProgramSettings::parse(int argc, char** argv)
 {
-	po::options_description all_d("Allowed Options");
-
-	// clang-format off
-    all_d.add_options()
-		("help,h", "Produce this help message")
-		("quiet,q", "Do not print messages into console")
-		("verbose,v", "Print detailed information")
-		("input,i", po::value<std::string>(), "Input file")
-		("output,o", po::value<std::string>(), "Output directory")
-		("overwrite,f", "Overwrite input file")
-		("no-include", "Do not generate file with includes")
-		("size,s", po::value<size_t>()->default_value(DEF_MIN_SIZE_KB), "Minimum size of generated chunks. If input is smaller, nothing will be done")
-	;
-	// clang-format on
-
-	po::positional_options_description p;
-	p.add("input", 1).add("output", 2);
-
-	po::variables_map vm;
 	try {
-		po::store(po::command_line_parser(argc, argv).options(all_d).positional(p).run(), vm);
-		po::notify(vm);
-	} catch (const std::exception& e) {
+		cxxopts::Options options("prsplitprc", "Splits one prc file into multiple smaller ones");
+
+		// clang-format off
+		options.add_options()
+			("h,help", "Produce this help message")
+			("q,quiet", "Do not print messages into console")
+			("v,verbose", "Print detailed information")
+			("i,input", "Input file", cxxopts::value<std::string>())
+			("o,output", "Output directory", cxxopts::value<std::string>())
+			("f,overwrite", "Overwrite input file")
+			("no-include", "Do not generate file with includes")
+			("s,size", "Minimum size of generated chunks. If input is smaller, nothing will be done", cxxopts::value<size_t>()->default_value("65536"))
+		;
+		// clang-format on
+		options.parse_positional({ "input", "output" });
+
+		auto vm = options.parse(argc, argv);
+
+		// Handle help
+		if (vm.count("help")) {
+			std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
+					  << std::endl;
+			std::cout << options.help() << std::endl;
+			exit(0);
+		}
+
+		// Handle version
+		if (!vm.count("input")) {
+			std::cout << "No input given!" << std::endl;
+			return false;
+		}
+
+		// Input file
+		InputFile = vm["input"].as<std::string>();
+		if (!sf::exists(InputFile)) {
+			std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
+			return false;
+		}
+
+		// Setup output directory
+		if (vm.count("output")) {
+			const sf::path relativePath = vm["output"].as<std::string>();
+			if (!sf::exists(relativePath)) {
+				if (!sf::create_directory(relativePath)) {
+					std::cout << "Couldn't create directory '" << relativePath << "'" << std::endl;
+					return false;
+				}
+			}
+
+			const sf::path directoryPath = relativePath.is_relative() ? sf::canonical(relativePath) : relativePath;
+			if (!sf::is_directory(directoryPath)) {
+				std::cout << "Invalid output path given." << std::endl;
+				return false;
+			}
+			OutputDir = directoryPath;
+		} else {
+			OutputDir = sf::path(InputFile).parent_path();
+		}
+
+		IsVerbose		   = (vm.count("verbose") != 0);
+		IsQuiet			   = (vm.count("quiet") != 0);
+		OverwriteInput	   = (vm.count("overwrite") != 0);
+		NoIncludeGenerator = (vm.count("no-include") != 0);
+
+		MinSizeKb = vm["size"].as<size_t>();
+	} catch (const cxxopts::OptionException& e) {
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
 		return false;
 	}
-
-	// Handle help
-	if (vm.count("help")) {
-		std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
-				  << std::endl;
-		std::cout << all_d << std::endl;
-		exit(0);
-	}
-
-	// Handle version
-	if (!vm.count("input")) {
-		std::cout << "No input given!" << std::endl;
-		return false;
-	}
-
-	// Input file
-	InputFile = vm["input"].as<std::string>();
-	if (!bf::exists(InputFile)) {
-		std::cout << "Couldn't find file '" << InputFile << "'" << std::endl;
-		return false;
-	}
-
-	// Setup output directory
-	if (vm.count("output")) {
-		const bf::path relativePath = vm["output"].as<std::string>();
-		if (!bf::exists(relativePath)) {
-			if (!bf::create_directory(relativePath)) {
-				std::cout << "Couldn't create directory '" << relativePath << "'" << std::endl;
-				return false;
-			}
-		}
-
-		const bf::path directoryPath = relativePath.is_relative() ? bf::canonical(relativePath, bf::current_path()) : relativePath;
-		if (!bf::is_directory(directoryPath)) {
-			std::cout << "Invalid output path given." << std::endl;
-			return false;
-		}
-		OutputDir = directoryPath;
-	} else {
-		OutputDir = bf::path(InputFile).parent_path();
-	}
-
-	IsVerbose		   = (vm.count("verbose") != 0);
-	IsQuiet			   = (vm.count("quiet") != 0);
-	OverwriteInput	 = (vm.count("overwrite") != 0);
-	NoIncludeGenerator = (vm.count("no-include") != 0);
-
-	MinSizeKb = vm["size"].as<size_t>();
 
 	return true;
 }
@@ -125,7 +115,7 @@ int main(int argc, char** argv)
 	}
 
 	// Check if input is too small
-	size_t inputsizekb = bf::file_size(options.InputFile) / 1024;
+	size_t inputsizekb = sf::file_size(options.InputFile) / 1024;
 	if (inputsizekb < options.MinSizeKb) {
 		if (!options.IsQuiet)
 			std::cout << "Input too small" << std::endl;
@@ -137,7 +127,7 @@ int main(int argc, char** argv)
 		std::cout << "Maximum of " << expectedFiles << " files to be generated" << std::endl;
 
 	const std::string basename = options.InputFile.stem().generic_string();
-	const std::string ext	  = options.InputFile.extension().generic_string();
+	const std::string ext	   = options.InputFile.extension().generic_string();
 
 	// Init
 	auto get_output_path = [&](size_t c) {
@@ -217,7 +207,7 @@ int main(int argc, char** argv)
 
 			if (!options.IsQuiet && options.IsVerbose)
 				std::cout << "Creating backup " << backup_path << std::endl;
-			bf::rename(options.InputFile, backup_path);
+			sf::rename(options.InputFile, backup_path);
 		}
 
 		if (!options.IsQuiet && options.IsVerbose)

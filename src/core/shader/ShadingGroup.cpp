@@ -9,23 +9,15 @@ ShadingGroup::ShadingGroup(const ShadingGroupBlock& blck, const StreamPipeline* 
 	: mBlock(blck)
 	, mPipeline(pipeline)
 	, mEntity(nullptr)
-	, mMaterial(nullptr)
 {
 	PR_PROFILE_THIS;
 
-	mEntity	  = session.getEntity(blck.EntityID);
-	mMaterial = session.getMaterial(blck.MaterialID);
-
-	if (mMaterial)
-		mMaterial->startGroup(blck.size(), session);
+	mEntity = session.getEntity(blck.EntityID);
 }
 
 ShadingGroup::~ShadingGroup()
 {
 	PR_PROFILE_THIS;
-
-	if (mMaterial)
-		mMaterial->endGroup();
 }
 
 void ShadingGroup::extractHitEntry(size_t i, HitEntry& entry) const
@@ -43,7 +35,13 @@ void ShadingGroup::extractGeometryPoint(size_t i, GeometryPoint& pt) const
 {
 	auto entry = mBlock.Stream->get(mBlock.Start + i);
 	auto ray   = mPipeline->getTracedRay(entry.RayID);
-	mEntity->provideGeometryPoint(ray.Direction, entry.PrimitiveID, entry.Parameter, pt);
+
+	EntityGeometryQueryPoint query;
+	query.View		  = ray.Direction;
+	query.Position	  = ray.t(entry.Parameter.z());
+	query.PrimitiveID = entry.PrimitiveID;
+	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
+	mEntity->provideGeometryPoint(query, pt);
 }
 
 void ShadingGroup::computeShadingPoint(size_t i, ShadingPoint& spt) const
@@ -51,7 +49,13 @@ void ShadingGroup::computeShadingPoint(size_t i, ShadingPoint& spt) const
 	auto entry = mBlock.Stream->get(mBlock.Start + i);
 
 	spt.Ray = mPipeline->getTracedRay(entry.RayID);
-	mEntity->provideGeometryPoint(spt.Ray.Direction, entry.PrimitiveID, entry.Parameter, spt.Geometry);
+
+	EntityGeometryQueryPoint query;
+	query.View		  = spt.Ray.Direction;
+	query.Position	  = spt.Ray.t(entry.Parameter.z());
+	query.PrimitiveID = entry.PrimitiveID;
+	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
+	mEntity->provideGeometryPoint(query, spt.Geometry);
 	spt.setByIdentity(spt.Ray, spt.Geometry);
 }
 } // namespace PR

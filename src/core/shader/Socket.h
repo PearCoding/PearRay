@@ -48,7 +48,7 @@ public:
 	VectorShadingSocket()		   = default;
 	virtual ~VectorShadingSocket() = default;
 
-	virtual Vector3t<T> eval(const ShadingPoint& ctx) const = 0;
+	virtual Vector3f eval(const ShadingPoint& ctx) const = 0;
 	virtual std::string dumpInformation() const				= 0;
 };
 

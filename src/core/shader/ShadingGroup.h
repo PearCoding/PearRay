@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ShadingGroupBlock.h"
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 
 namespace PR {
 class RenderTile;
@@ -18,11 +18,10 @@ public:
 	ShadingGroup(const ShadingGroupBlock& blck, const StreamPipeline* pipeline, const RenderTileSession& session);
 	~ShadingGroup();
 
-	inline bool isBackground() { return mBlock.MaterialID == PR_INVALID_ID; }
+	inline bool isBackground() { return mBlock.EntityID == PR_INVALID_ID; }
 	inline size_t size() const { return mBlock.size(); }
 
 	inline IEntity* entity() const { return mEntity; }
-	inline IMaterial* material() const { return mMaterial; }
 
 	// Single (slow) access interface
 	void extractHitEntry(size_t i, HitEntry& entry) const;
@@ -36,7 +35,6 @@ private:
 
 	// Constructed entries
 	IEntity* mEntity;
-	IMaterial* mMaterial;
 };
 
 } // namespace PR

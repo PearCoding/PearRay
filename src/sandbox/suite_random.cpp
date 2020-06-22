@@ -2,12 +2,12 @@
 #include "Random.h"
 
 #include <OpenImageIO/imageio.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <sstream>
 
 OIIO_NAMESPACE_USING
 using namespace PR;
-namespace bf = boost::filesystem;
+namespace sf = std::filesystem;
 
 constexpr uint64 ITERATIONS = 10000000;
 void rnd_seed(uint64 seed)
@@ -80,7 +80,7 @@ void rnd_seed(uint64 seed)
 
 void suite_random()
 {
-	bf::create_directory("results/random");
+	sf::create_directory("results/random");
 
 	rnd_seed(0);
 	rnd_seed(42);

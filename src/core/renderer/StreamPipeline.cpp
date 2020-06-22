@@ -89,6 +89,7 @@ void StreamPipeline::fillWithCameraRays()
 			break;
 
 		uint32 x, y;
+
 		morton_2_xy(mCurrentVirtualPixelIndex, x, y);
 		++mCurrentVirtualPixelIndex;
 

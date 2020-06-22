@@ -11,7 +11,7 @@
 #include "material/IMaterial.h"
 #include "mesh/MeshFactory.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <cctype>
 
 #include <opensubdiv/far/stencilTableFactory.h>
@@ -95,7 +95,7 @@ public:
 		}
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 

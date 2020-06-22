@@ -4,7 +4,7 @@
 #include "camera/ICamera.h"
 #include "camera/ICameraPlugin.h"
 
-#include "ray/RayPackage.h"
+#include "ray/Ray.h"
 #include "renderer/RenderContext.h"
 
 namespace PR {

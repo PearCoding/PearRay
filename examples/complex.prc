@@ -14,12 +14,12 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 8
+		:sample_count 4
 	)
 	(sampler
 		:slot 'spectral'
 		:type 'RANDOM'
-		:sample_count 4
+		:sample_count 2
 	)
 	(filter
 		:slot 'pixel'

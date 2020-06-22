@@ -1,12 +1,10 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "math/Hash.h"
 
 #include <array>
 #include <queue>
 #include <unordered_set>
-
-#include <boost/functional/hash/hash.hpp>
 
 /* This classes here really need C++XX Coroutine feature */
 namespace PR {
@@ -76,11 +74,10 @@ public:
 	}
 
 private:
-	class PointHash {
-	public:
-		size_t operator()(const point_type& s) const
+	struct PointHash {
+		inline size_t operator()(const point_type& s) const
 		{
-			return boost::hash_range(s.begin(), s.end());
+			return hash_range(s.begin(), s.end());
 		}
 	};
 

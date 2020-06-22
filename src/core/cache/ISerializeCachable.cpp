@@ -3,14 +3,14 @@
 #include "Logger.h"
 #include "serialization/FileSerializer.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace PR {
 ISerializeCachable::ISerializeCachable(const std::string& name,
 									   const std::shared_ptr<Cache>& cache,
 									   bool useCache)
 	: mName(name)
-	, mCacheFileNoExt((boost::filesystem::path(cache->cacheDir()) / mName).generic_wstring())
+	, mCacheFileNoExt((std::filesystem::path(cache->cacheDir()) / mName).generic_wstring())
 	, mMemoryUsage(0)
 	, mIsLoaded(true)
 	, mAccessCount(0)

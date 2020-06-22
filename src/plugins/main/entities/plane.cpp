@@ -3,13 +3,13 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "geometry/CollisionData.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
-
 
 namespace PR {
 
@@ -62,53 +62,46 @@ public:
 		return mPlane.toBoundingBox();
 	}
 
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
+	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		PR_PROFILE_THIS;
+		auto geom	= rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_QUAD);
+		auto assign = [](float* v, const Vector3f& p) {
+			v[0] = p[0];
+			v[1] = p[1];
+			v[2] = p[2];
+		};
 
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
+		float* vertices = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT3, sizeof(float) * 3, 4);
+		assign(&vertices[0], transform() * mPlane.position());
+		assign(&vertices[3], transform() * (mPlane.position() + mPlane.yAxis()));
+		assign(&vertices[6], transform() * (mPlane.position() + mPlane.yAxis() + mPlane.xAxis()));
+		assign(&vertices[9], transform() * (mPlane.position() + mPlane.xAxis()));
 
-		mPlane.intersects(in_local, out);
+		uint32* inds = (uint32*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT4, sizeof(uint32) * 4, 1);
+		inds[0]		 = 0;
+		inds[1]		 = 1;
+		inds[2]		 = 2;
+		inds[3]		 = 3;
 
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= simdpp::make_uint(id());
-		out.FaceID		= simdpp::make_uint(0);
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
+		rtcCommitGeometry(geom);
+		return GeometryRepr(geom);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
 	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-
-		mPlane.intersects(in_local, out);
-
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.FaceID		= 0;
-		out.MaterialID  = mMaterialID;
+		return EntityRandomPoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
+								 rnd, 0, mPDF_Cache);
 	}
 
-	Vector3f pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
-	{
-		pdf	= mPDF_Cache;
-		faceID = 0;
-		return Vector3f(rnd(0), rnd(1), 0);
-	}
-
-	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		float u = parameter[0];
-		float v = parameter[1];
+		float u = query.UV[0];
+		float v = query.UV[1];
 
-		pt.P  = transform() * mPlane.surfacePoint(u, v);
+		pt.P  = query.Position;
 		pt.N  = normalMatrix() * mPlane.normal();
 		pt.Nx = normalMatrix() * mPlane.xAxis();
 		pt.Ny = normalMatrix() * mPlane.yAxis();
@@ -117,10 +110,12 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.UVW		  = Vector3f(u, v, 0);
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.UVW		   = Vector3f(u, v, 0);
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 	inline void centerOn()
@@ -151,8 +146,8 @@ public:
 		const ParameterGroup& params = ctx.Parameters;
 
 		std::string name = params.getString("name", "__unnamed__");
-		Vector3f xAxis   = params.getVector3f("x_axis", Vector3f(1, 0, 0));
-		Vector3f yAxis   = params.getVector3f("y_axis", Vector3f(0, 1, 0));
+		Vector3f xAxis	 = params.getVector3f("x_axis", Vector3f(1, 0, 0));
+		Vector3f yAxis	 = params.getVector3f("y_axis", Vector3f(0, 1, 0));
 		float width		 = params.getNumber("width", 1);
 		float height	 = params.getNumber("height", 1);
 

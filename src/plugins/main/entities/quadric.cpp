@@ -13,6 +13,8 @@
 
 #include <array>
 
+// TODO: Change to new geometry representation
+
 namespace PR {
 
 class QuadricEntity : public IEntity {
@@ -88,14 +90,14 @@ public:
 		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 
 		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
 
-		out.Successful = false;
-		auto range	   = localBoundingBox().intersectsRange(in_local);
+		out.resetSuccessful();
+		auto range = localBoundingBox().intersectsRange(in_local);
 		if (range.Entry < 0)
 			range.Entry = 0;
 
@@ -108,7 +110,7 @@ public:
 			if (t <= range.Exit) {
 				out.Parameter	= in_local.t(t);
 				out.HitDistance = t;
-				out.Successful	= true;
+				out.makeSuccessful();
 			}
 		}
 
@@ -150,9 +152,11 @@ public:
 			pt.UVW(1) /= pt.UVW(2);
 			pt.UVW(2) = 0;
 		}
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 private:

@@ -7,7 +7,12 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 32
+	  :sample_count 4
+	)
+	(sampler 
+	  :slot 'spectral'
+	  :type 'random'
+	  :sample_count 2
 	)
 	(filter 
 	  :slot 'pixel'
@@ -16,7 +21,7 @@
 	)
 	(integrator 
 	  :type 'direct'
-	  :max_ray_depth 4
+	  :max_ray_depth 16
 	  :light_sample_count 1
 	  :msi true
 	)
@@ -26,9 +31,14 @@
 		(channel
 			:type 'color'
 			:color 'xyz'
-			:gamma 'none'
-			:mapper 'none'
 		)
+		(channel :type 'depth')
+		(channel :type 'n')
+		(channel :type 'uvw')
+		(channel :type 'ng')
+		(channel :type 'nx')
+		(channel :type 'ny')
+		(channel :type 'feedback')
 	)
 	; Camera
 	(camera

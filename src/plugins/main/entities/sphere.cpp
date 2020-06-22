@@ -3,15 +3,15 @@
 #include "Profiler.h"
 #include "SceneLoadContext.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
-#include "geometry/CollisionData.h"
 #include "geometry/GeometryPoint.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
-
 
 namespace PR {
 constexpr float P = 1.6075f;
@@ -78,67 +78,54 @@ public:
 						   Vector3f(-mSphere.radius(), -mSphere.radius(), -mSphere.radius()));
 	}
 
-	void checkCollision(const RayPackage& in, CollisionOutput& out) const override
+	GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const override
 	{
-		PR_PROFILE_THIS;
+		const Vector3f center = transform() * Vector3f(0, 0, 0);
 
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mSphere.intersects(in_local, out);
+		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_SPHERE_POINT);
 
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= simdpp::make_uint(id());
-		out.FaceID		= simdpp::make_uint(0);
-		out.MaterialID  = simdpp::make_uint(mMaterialID);
+		float* vertices = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, sizeof(float) * 4, 1);
+		vertices[0]		= center.x();
+		vertices[1]		= center.y();
+		vertices[2]		= center.z();
+		vertices[3]		= mSphere.radius(); // TODO: Not affected by the transform?
+
+		rtcCommitGeometry(geom);
+		return GeometryRepr(geom);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	EntityRandomPoint pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd) const override
 	{
-		PR_PROFILE_THIS;
-
-		auto in_local = in.transformAffine(invTransform().matrix(), invTransform().linear());
-		mSphere.intersects(in_local, out);
-
-		out.HitDistance = in_local.transformDistance(out.HitDistance,
-													   transform().linear());
-		out.EntityID	= id();
-		out.FaceID		= 0;
-		out.MaterialID  = mMaterialID;
-	}
-
-	Vector3f pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd,
-									  uint32& faceID, float& pdf) const override
-	{
-		pdf	= mPDF_Cache;
-		faceID = 0;
-
 		Vector2f uv = rnd;
 		if (mOptimizeSampling) {
 			Vector3f kv = invTransform().linear() * view;
-			Vector3f n  = mSphere.normalPoint(rnd(0), rnd(1));
+			Vector3f n	= mSphere.normalPoint(rnd(0), rnd(1));
 
 			if (kv.dot(n) > PR_EPSILON)
 				uv = Spherical::uv_from_normal(Vector3f(-n));
 		}
 
-		return Vector3f(uv(0), uv(1), 0);
+		return EntityRandomPoint(transform() * mSphere.surfacePoint(uv(0), uv(1)),
+								 uv, 0, mPDF_Cache);
 	}
 
-	void provideGeometryPoint(const Vector3f&, uint32, const Vector3f& parameter,
+	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
 	{
 		PR_PROFILE_THIS;
 
-		pt.P = transform() * mSphere.surfacePoint(parameter[0], parameter[1]);
-		pt.N = normalMatrix() * mSphere.normalPoint(parameter[0], parameter[1]);
+		pt.P = query.Position;
+		pt.N = (pt.P - transform() * Vector3f(0, 0, 0)).normalized();
 		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
-
-		pt.UVW		  = parameter;
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		const Vector2f uv = Spherical::uv_from_normal(pt.N);
+		pt.UVW			  = Vector3f(uv(0), uv(1), 0);
+		pt.EntityID		  = id();
+		pt.PrimitiveID	  = query.PrimitiveID;
+		pt.MaterialID	  = mMaterialID;
+		pt.EmissionID	  = mLightID;
+		pt.DisplaceID	  = 0;
 	}
 
 	inline void optimizeSampling(bool b) { mOptimizeSampling = b; }

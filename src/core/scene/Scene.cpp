@@ -1,9 +1,9 @@
 #include "Scene.h"
 #include "Platform.h"
 #include "camera/ICamera.h"
-#include "container/kdTreeBuilder.h"
-#include "container/kdTreeBuilderNaive.h"
 #include "emission/IEmission.h"
+#include "entity/GeometryDev.h"
+#include "entity/GeometryRepr.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "material/IMaterial.h"
 #include "renderer/RenderContext.h"
@@ -11,24 +11,24 @@
 
 #include "Logger.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <fstream>
 
-#define BUILDER kdTreeBuilder
+// Seems slower than the default offset variant
+// FIXME: This has a bug, where direct lighting does not detect shadows
+//#define PR_USE_FILTER_SHADOW
 
 namespace PR {
 Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 			 const std::vector<std::shared_ptr<IEntity>>& entities,
 			 const std::vector<std::shared_ptr<IMaterial>>& materials,
 			 const std::vector<std::shared_ptr<IEmission>>& emissions,
-			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
-			 const std::wstring& cntFile)
+			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights)
 	: mActiveCamera(activeCamera)
 	, mEntities(entities)
 	, mMaterials(materials)
 	, mEmissions(emissions)
 	, mInfLights(infLights)
-	, mKDTree(nullptr)
 {
 	PR_LOG(L_DEBUG) << "Setup before scene build..." << std::endl;
 	mActiveCamera->beforeSceneBuild();
@@ -41,9 +41,7 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 	for (auto o : mEntities)
 		o->beforeSceneBuild();
 
-	PR_LOG(L_DEBUG) << "Starting to build global space-partitioning structure " << boost::filesystem::path(cntFile) << std::endl;
-	buildTree(cntFile);
-	loadTree(cntFile);
+	setupScene();
 
 	PR_LOG(L_DEBUG) << "Setup after scene build..." << std::endl;
 	mActiveCamera->afterSceneBuild(this);
@@ -99,166 +97,278 @@ void Scene::afterRender(RenderContext* ctx)
 		o->afterRender(ctx);
 }
 
-void Scene::buildTree(const std::wstring& file)
+static void embree_error_function(void* /*userPtr*/, RTCError /*code*/, const char* str)
 {
-	PR_PROFILE_THIS;
-
-	size_t count = mEntities.size();
-	PR_LOG(L_INFO) << count << " Entities" << std::endl;
-
-	BUILDER builder(
-		this,
-		[](void* data, size_t index) { return reinterpret_cast<Scene*>(data)->mEntities[index]->worldBoundingBox(); },
-		[](void* data, size_t index) {
-			return reinterpret_cast<Scene*>(data)->mEntities[index]->collisionCost();
-		},
-		[](void* data, size_t index, size_t id) {
-			reinterpret_cast<Scene*>(data)->mEntities[index]->setContainerID(id);
-		});
-	builder.setCostElementWise(true);
-	builder.build(count);
-
-	FileSerializer serializer(file, false);
-	if (!serializer.isValid()) {
-		PR_LOG(L_ERROR) << "Could not open " << boost::filesystem::path(file) << " to write scene cnt" << std::endl;
-		return;
-	}
-	builder.save(serializer);
+	PR_LOG(L_ERROR) << "[Embree3] " << str << std::endl;
 }
 
-void Scene::loadTree(const std::wstring& file)
-{
-	PR_PROFILE_THIS;
+struct SceneInternal {
+	RTCDevice Device;
+	RTCScene Scene;
 
-	mKDTree.reset(new kdTreeCollider);
+	inline SceneInternal()
+	{
+#if defined(PR_DEBUG)
+		Device = rtcNewDevice("verbose=1");
+#else
+		Device = rtcNewDevice(nullptr);
+#endif
+		rtcSetDeviceErrorFunction(Device, embree_error_function, nullptr);
 
-	FileSerializer serializer(file, true);
-	if (!serializer.isValid()) {
-		PR_LOG(L_ERROR) << "Could not open " << boost::filesystem::path(file) << " to read scene cnt" << std::endl;
-		return;
+		if (rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_BACKFACE_CULLING_ENABLED))
+			PR_LOG(L_WARNING) << "[Embree3] Backface culling is enabled. PearRay may behave strange" << std::endl;
+
+		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_TRIANGLE_GEOMETRY_SUPPORTED))
+			PR_LOG(L_ERROR) << "[Embree3] Embree without triangle support is not suitable for PearRay" << std::endl;
+		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_POINT_GEOMETRY_SUPPORTED))
+			PR_LOG(L_ERROR) << "[Embree3] Embree without point geometry (like sphere) support is not suitable for PearRay" << std::endl;
+		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_USER_GEOMETRY_SUPPORTED))
+			PR_LOG(L_ERROR) << "[Embree3] Embree without user geometry support is not suitable for PearRay" << std::endl;
+
+#ifdef PR_USE_FILTER_SHADOW
+		if (!rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_FILTER_FUNCTION_SUPPORTED))
+			PR_LOG(L_ERROR) << "[Embree3] Embree without filter function support is not suitable for PearRay" << std::endl;
+#endif
+
+		Scene = rtcNewScene(Device);
 	}
 
-	mKDTree->load(serializer);
-	if (!mKDTree->isEmpty())
-		mBoundingBox = mKDTree->boundingBox();
+	inline ~SceneInternal()
+	{
+		rtcReleaseScene(Scene);
+		rtcReleaseDevice(Device);
+	}
+};
+
+void Scene::setupScene()
+{
+	mInternal = std::make_unique<SceneInternal>();
+
+	for (auto o : mEntities) {
+		auto repr = o->constructGeometryRepresentation(GeometryDev(mInternal->Device));
+		rtcAttachGeometryByID(mInternal->Scene, repr, o->id());
+		rtcReleaseGeometry(repr); // No longer needed
+	}
+
+	RTCSceneFlags flags = RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST;
+#ifdef PR_USE_FILTER_SHADOW
+	flags = flags | RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION;
+#endif
+
+	rtcSetSceneFlags(mInternal->Scene, flags);
+	rtcSetSceneBuildQuality(mInternal->Scene, RTC_BUILD_QUALITY_HIGH);
+	rtcCommitScene(mInternal->Scene);
+
+	if (rtcGetDeviceError(mInternal->Device) != RTC_ERROR_NONE) {
+		throw std::runtime_error("Could not build scene");
+	}
+
+	// Extract scene boundary
+	RTCBounds bounds;
+	rtcGetSceneBounds(mInternal->Scene, &bounds);
+	mBoundingBox = BoundingBox(Vector3f(bounds.lower_x, bounds.lower_y, bounds.lower_z),
+							   Vector3f(bounds.upper_x, bounds.upper_y, bounds.upper_z));
+}
+
+constexpr unsigned int MASK_ALL = 0xFFFFFFF;
+constexpr int VALID_ALL			= -1; //0xFF;
+inline static void assignRay(const Ray& ray, RTCRay& rray)
+{
+	rray.org_x = ray.Origin[0];
+	rray.org_y = ray.Origin[1];
+	rray.org_z = ray.Origin[2];
+	rray.dir_x = ray.Direction[0];
+	rray.dir_y = ray.Direction[1];
+	rray.dir_z = ray.Direction[2];
+	rray.flags = 0;
+	rray.tfar  = ray.MaxT;
+	rray.tnear = ray.MinT;
+	rray.time  = ray.Time;
+	rray.mask  = MASK_ALL;
 }
 
 void Scene::traceRays(RayStream& rays, HitStream& hits) const
 {
-	PR_ASSERT(mKDTree, "kdTree has to be valid");
+	constexpr size_t PACKAGE_SIZE = 16;
 
 	// Split stream into specific groups
 	hits.reset();
+
+	auto scene = mInternal->Scene;
+	RTCIntersectContext ctx;
+	RTCRayHit16 rhits;
+
+	PR_ALIGN(64)
+	int valids[PACKAGE_SIZE];
+	std::fill_n(valids, PACKAGE_SIZE, VALID_ALL); // All are valid
+
 	while (rays.hasNextGroup()) {
 		RayGroup grp = rays.getNextGroup();
 
-		if (grp.isCoherent())
-			traceCoherentRays(grp, hits);
-		else
-			traceIncoherentRays(grp, hits);
+		const RTCIntersectContextFlags flags = grp.isCoherent() ? RTC_INTERSECT_CONTEXT_FLAG_COHERENT : RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
+
+		// Split group into cells of max 16 rays each
+		const size_t cells = grp.size() / PACKAGE_SIZE;
+		for (size_t i = 0; i < cells; ++i) {
+			PR_OPT_LOOP
+			for (size_t k = 0; k < PACKAGE_SIZE; ++k) {
+				rhits.hit.geomID[k]	   = RTC_INVALID_GEOMETRY_ID;
+				rhits.hit.instID[0][k] = RTC_INVALID_GEOMETRY_ID;
+				rhits.ray.flags[k]	   = 0;
+				rhits.ray.id[k]		   = k;
+				rhits.ray.mask[k]	   = MASK_ALL;
+			}
+
+			grp.copyOriginXRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.org_x);
+			grp.copyOriginYRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.org_y);
+			grp.copyOriginZRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.org_z);
+			grp.copyDirectionXRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.dir_x);
+			grp.copyDirectionYRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.dir_y);
+			grp.copyDirectionZRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.dir_z);
+			grp.copyMaxTRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.tfar);
+			grp.copyMinTRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.tnear);
+			grp.copyTimeRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.time);
+
+			rtcInitIntersectContext(&ctx);
+			ctx.flags = flags;
+			rtcIntersect16(valids, scene, &ctx, &rhits);
+
+			PR_OPT_LOOP
+			for (size_t k = 0; k < PACKAGE_SIZE; ++k) {
+				const bool good = rhits.hit.geomID[k] != RTC_INVALID_GEOMETRY_ID;
+				const auto id	= rhits.hit.instID[0][k] != RTC_INVALID_GEOMETRY_ID ? rhits.hit.instID[0][k] : rhits.hit.geomID[k];
+
+				HitEntry entry;
+				entry.EntityID	  = good ? id : PR_INVALID_ID;
+				entry.PrimitiveID = rhits.hit.primID[k];
+				entry.RayID		  = grp.offset() + i * PACKAGE_SIZE + rhits.ray.id[k];
+				entry.Parameter	  = Vector3f(rhits.hit.u[k], rhits.hit.v[k], rhits.ray.tfar[k]);
+				hits.add(entry);
+			}
+		}
+
+		// Trace remaining rays which did not fit into a 16 package cell
+		for (size_t k = cells * PACKAGE_SIZE; k < grp.size(); ++k) {
+			RTCRayHit rhit;
+			assignRay(grp.getRay(k), rhit.ray);
+			rhit.hit.geomID	   = RTC_INVALID_GEOMETRY_ID;
+			rhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+			rtcInitIntersectContext(&ctx);
+			ctx.flags = flags;
+			rtcIntersect1(mInternal->Scene, &ctx, &rhit);
+
+			const bool good = rhit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
+			const auto id	= rhit.hit.instID[0] != RTC_INVALID_GEOMETRY_ID ? rhit.hit.instID[0] : rhit.hit.geomID;
+
+			HitEntry entry;
+			entry.EntityID	  = good ? id : PR_INVALID_ID;
+			entry.PrimitiveID = rhit.hit.primID;
+			entry.RayID		  = grp.offset() + k;
+			entry.Parameter	  = Vector3f(rhit.hit.u, rhit.hit.v, rhit.ray.tfar);
+			hits.add(entry);
+		}
 	}
 }
 
-template <uint32 K>
-inline void _sceneCheckHit(const RayGroup& grp,
-						   uint32 off, const CollisionOutput& out,
-						   HitStream& hits)
+bool Scene::traceSingleRay(const Ray& ray, HitEntry& entry) const
 {
-	const uint32 id = off + K;
-	if (id >= grp.size()) // Ignore bad tails
+	RTCIntersectContext ctx;
+	rtcInitIntersectContext(&ctx);
+	ctx.flags = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
+
+	RTCRayHit rhit;
+	assignRay(ray, rhit.ray);
+	rhit.hit.geomID	   = RTC_INVALID_GEOMETRY_ID;
+	rhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+	rtcIntersect1(mInternal->Scene, &ctx, &rhit);
+
+	if (rhit.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
+		return false;
+	} else {
+		entry.EntityID	  = rhit.hit.instID[0] != RTC_INVALID_GEOMETRY_ID ? rhit.hit.instID[0] : rhit.hit.geomID;
+		entry.PrimitiveID = rhit.hit.primID;
+		entry.RayID		  = 0;
+		entry.Parameter	  = Vector3f(rhit.hit.u, rhit.hit.v, rhit.ray.tfar);
+		return true;
+	}
+}
+
+struct IntersectContextShadow {
+	RTCIntersectContext Original;
+	// Original
+	uint32 IgnoreID;
+};
+static_assert(std::is_pod<IntersectContextShadow>::value, "Expect IntersectContextShadow structure to be a POD");
+
+#ifdef PR_USE_FILTER_SHADOW
+static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
+{
+	/* avoid crashing when debug visualizations are used */
+	if (args->context == nullptr)
 		return;
 
-	bool successful = simdpp::extract<K>(simdpp::bit_cast<vuint32::Base>(out.Successful));
+	PR_ASSERT(args->N == 1, "Expect shadow intersection filter to be called by one ray only");
 
-	HitEntry entry;
-	entry.RayID		  = id + grp.offset();
-	entry.MaterialID  = successful ? simdpp::extract<K>(out.MaterialID) : PR_INVALID_ID;
-	entry.EntityID	  = successful ? simdpp::extract<K>(out.EntityID) : PR_INVALID_ID;
-	entry.PrimitiveID = successful ? simdpp::extract<K>(out.FaceID) : PR_INVALID_ID;
-	for (int i = 0; i < 3; ++i)
-		entry.Parameter[i] = simdpp::extract<K>(out.Parameter[i]);
-	entry.Flags = simdpp::extract<K>(out.Flags);
+	int* valid							  = args->valid;
+	const IntersectContextShadow* context = (const IntersectContextShadow*)args->context;
+	RTCHitN* hits						  = (RTCHitN*)args->hit;
+	const auto N						  = args->N;
 
-	PR_ASSERT(!hits.isFull(), "Unbalanced hit and ray stream size!");
-	hits.add(entry);
-}
+	const uint32 id_ignore = context->IgnoreID;
+	for (uint32 i = 0; i < N; ++i) {
+		/* ignore inactive rays */
+		if (valid[i] != VALID_ALL)
+			continue;
 
-template <uint32 C>
-class _sceneCheckHitCallee {
-public:
-	inline void operator()(const RayGroup& grp,
-						   uint32 off, const CollisionOutput& out,
-						   HitStream& hits)
-	{
-		_sceneCheckHit<C - 1>(grp, off, out, hits);
-		_sceneCheckHitCallee<C - 1>()(grp, off, out, hits);
-	}
-};
+		auto inst = RTCHitN_instID(hits, N, i, 0);
+		if (inst == id_ignore) {
+			valid[i] = 0;
+			continue;
+		}
 
-template <>
-class _sceneCheckHitCallee<0> {
-public:
-	inline void operator()(const RayGroup&,
-						   uint32, const CollisionOutput&,
-						   HitStream&)
-	{
-	}
-};
-
-void Scene::traceCoherentRays(const RayGroup& grp, HitStream& hits) const
-{
-	PR_PROFILE_THIS;
-
-	RayPackage in;
-	CollisionOutput out;
-
-	// In some cases the group size will be not a multiply of the simd bandwith.
-	// The internal stream is always a multiply therefore garbage may be traced
-	// but no internal data will be corrupted.
-	for (size_t i = 0;
-		 i < grp.size();
-		 i += PR_SIMD_BANDWIDTH) {
-		in = grp.getRayPackage(i);
-
-		// Check for collisions
-		mKDTree->checkCollisionCoherent(
-			in, out,
-			[this](const RayPackage& in2, uint64 index,
-				   CollisionOutput& out2) {
-				const IEntity* entity = mEntities[index].get();
-				entity->checkCollision(in2, out2);
-				out2.Successful = out2.Successful & ((vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
-			});
-
-		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits);
+		auto geom = RTCHitN_geomID(hits, N, i);
+		if (geom == id_ignore)
+			valid[i] = 0;
 	}
 }
+#endif
 
-void Scene::traceIncoherentRays(const RayGroup& grp, HitStream& hits) const
+bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const
 {
-	PR_PROFILE_THIS;
-	RayPackage in;
-	CollisionOutput out;
+	RTCRay rray;
+	assignRay(ray, rray);
 
-	// In some cases the group size will be not a multiply of the simd bandwith.
-	// The internal stream is always a multiply therefore garbage may be traced
-	// but no internal data will be corrupted.
-	for (size_t i = 0;
-		 i < grp.size();
-		 i += PR_SIMD_BANDWIDTH) {
-		in = grp.getRayPackage(i);
+	IntersectContextShadow ctx;
+	rtcInitIntersectContext(&ctx.Original);
+	ctx.Original.flags = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
 
-		// Check for collisions
-		mKDTree->checkCollisionIncoherent(
-			in, out,
-			[this](const RayPackage& in2, uint64 index,
-				   CollisionOutput& out2) {
-				const IEntity* entity = mEntities[index].get();
-				entity->checkCollision(in2, out2);
-				out2.Successful = out2.Successful & ((vuint32(entity->visibilityFlags()) & in2.Flags) != vuint32(0));
-			});
+#ifdef PR_USE_FILTER_SHADOW
+	ctx.Original.filter = embree_intersectionFilter;
+	ctx.IgnoreID		= entity_id;
+	PR_UNUSED(distance);
+#else
+	rray.tfar = distance - 0.0001f;
+	PR_UNUSED(entity_id);
+#endif
 
-		_sceneCheckHitCallee<PR_SIMD_BANDWIDTH>()(grp, i, out, hits);
-	}
+	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
+
+	return rray.tfar != -std::numeric_limits<float>::infinity();
+}
+
+bool Scene::traceOcclusionRay(const Ray& ray) const
+{
+	RTCIntersectContext ctx;
+	rtcInitIntersectContext(&ctx);
+	ctx.flags = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
+
+	RTCRay rray;
+	assignRay(ray, rray);
+
+	rtcOccluded1(mInternal->Scene, &ctx, &rray);
+
+	return rray.tfar == -std::numeric_limits<float>::infinity(); // RTCRay.tfar is set to -inf if hit anything
 }
 } // namespace PR

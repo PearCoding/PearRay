@@ -13,6 +13,8 @@
 
 #include "sampler/SplitSample.h"
 
+// TODO: Change to new geometry representation
+
 namespace PR {
 
 class ConeEntity : public IEntity {
@@ -106,7 +108,7 @@ public:
 		out.MaterialID	= simdpp::make_uint(mMaterialID);
 	}
 
-	void checkCollision(const Ray& in, SingleCollisionOutput& out) const override
+	void checkCollision(const Ray& in, HitPoint& out) const override
 	{
 		PR_PROFILE_THIS;
 
@@ -185,9 +187,11 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.MaterialID = mMaterialID;
-		pt.EmissionID = mLightID;
-		pt.DisplaceID = 0;
+		pt.EntityID	   = id();
+		pt.PrimitiveID = query.PrimitiveID;
+		pt.MaterialID  = mMaterialID;
+		pt.EmissionID  = mLightID;
+		pt.DisplaceID  = 0;
 	}
 
 	void beforeSceneBuild() override

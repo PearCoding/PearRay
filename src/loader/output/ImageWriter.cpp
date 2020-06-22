@@ -3,10 +3,9 @@
 #include "buffer/FrameBufferSystem.h"
 #include "config/Build.h"
 #include "renderer/RenderContext.h"
-#include "spectral/SpectralFile.h"
 
 #include <OpenImageIO/imageio.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace PR {
 ImageWriter::ImageWriter()
@@ -110,7 +109,7 @@ bool ImageWriter::save(ToneMapper& toneMapper, const std::wstring& file,
 		spec.attribute("PearRay:TimeSpent", (uint32)options.TimeMeta);
 	}
 
-	const std::string utfFilename = boost::filesystem::path(file).generic_string();
+	const std::string utfFilename = std::filesystem::path(file).generic_string();
 	// Create file
 	auto out = OIIO::ImageOutput::create(utfFilename);
 	if (!out)
