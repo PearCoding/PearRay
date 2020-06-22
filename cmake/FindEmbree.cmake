@@ -10,9 +10,9 @@ if(EMBREE_FOUND)
   return()
 endif()
 
-SET(Embree_FOUND FALSE)
-SET(Embree_INCLUDE_DIRS)
-SET(Embree_LIBRARIES)
+SET(EMBREE_FOUND FALSE)
+SET(EMBREE_INCLUDE_DIRS)
+SET(EMBREE_LIBRARIES)
 
 set(_def_search_paths
   ~/Library/Frameworks
@@ -23,129 +23,148 @@ set(_def_search_paths
   /usr
   "${CMAKE_LIBRARY_PATH}"
   "${EMBREE_DIR}"
-  "${Embree_DIR}"
+  "${EMBREE_DIR}"
 )
 
-find_path(Embree_INCLUDE_DIR embree3/rtcore.h
+find_path(EMBREE_INCLUDE_DIR embree3/rtcore.h
   HINTS
-    ENV Embree_HOME EMBREE_HOME
+    ENV EMBREE_HOME EMBREE_HOME
   PATH_SUFFIXES include/ local/include/
   PATHS ${_def_search_paths}
 )
 
-get_filename_component(_Embree_ROOT_DIR ${Embree_INCLUDE_DIR} DIRECTORY)
+get_filename_component(_EMBREE_ROOT_DIR ${EMBREE_INCLUDE_DIR} DIRECTORY)
 
 # Extract the version
-if(Embree_INCLUDE_DIR)
-  set(Embree_INCLUDE_DIRS "${Embree_INCLUDE_DIR}")
+if(EMBREE_INCLUDE_DIR)
+  set(EMBREE_INCLUDE_DIRS "${EMBREE_INCLUDE_DIR}")
 
-  file(READ "${Embree_INCLUDE_DIRS}/embree3/rtcore_config.h" _version_file)
+  file(READ "${EMBREE_INCLUDE_DIRS}/embree3/rtcore_config.h" _version_file)
   string(REGEX REPLACE ".*#define RTC_VERSION_MAJOR ([0-9]+).*" "\\1"
-      Embree_VERSION_MAJOR "${_version_file}")
+      EMBREE_VERSION_MAJOR "${_version_file}")
   string(REGEX REPLACE ".*#define RTC_VERSION_MINOR ([0-9]+).*" "\\1"
-      Embree_VERSION_MINOR "${_version_file}")
+      EMBREE_VERSION_MINOR "${_version_file}")
   string(REGEX REPLACE ".*#define RTC_VERSION_PATCH ([0-9]+).*" "\\1"
-      Embree_VERSION_PATCH "${_version_file}")
-  set(Embree_VERSION "${Embree_VERSION_MAJOR}.${Embree_VERSION_MINOR}.${Embree_VERSION_PATCH}")
+      EMBREE_VERSION_PATCH "${_version_file}")
+  set(EMBREE_VERSION "${EMBREE_VERSION_MAJOR}.${EMBREE_VERSION_MINOR}.${EMBREE_VERSION_PATCH}")
 endif()
 
-function(_Embree_FIND_LIB setname)
+function(_EMBREE_FIND_LIB setname)
   find_library(${setname}
     NAMES ${ARGN}
     HINTS
-      ENV Embree_HOME EMBREE_HOME
+      ENV EMBREE_HOME EMBREE_HOME
     PATH_SUFFIXES lib
-    PATHS ${_def_search_paths} "${_Embree_ROOT_DIR}"
+    PATHS ${_def_search_paths} "${_EMBREE_ROOT_DIR}"
   )
 endfunction()
 
 # Allowed components
-set(_Embree_COMPONENTS
+set(_EMBREE_COMPONENTS
   Embree
 )
 
-set(_Embree_Embree_DEPS )
-set(_Embree_Embree_LIBNAMES embree3)
+set(_EMBREE_Embree_DEPS )
+set(_EMBREE_Embree_LIBNAMES embree3)
 
 # If COMPONENTS are not given, set it to default
-if(NOT Embree_FIND_COMPONENTS)
-  set(Embree_FIND_COMPONENTS ${_Embree_COMPONENTS})
+if(NOT EMBREE_FIND_COMPONENTS)
+  set(EMBREE_FIND_COMPONENTS ${_EMBREE_COMPONENTS})
 endif()
 
-foreach(component ${Embree_FIND_COMPONENTS})
-  if(NOT ${component} IN_LIST _Embree_COMPONENTS)
+foreach(component ${EMBREE_FIND_COMPONENTS})
+  if(NOT ${component} IN_LIST _EMBREE_COMPONENTS)
     message(ERROR "Unknown component ${component}")
   endif()
 
   set(_release_names )
   set(_debug_names )
-  foreach(_n ${_Embree_${component}_LIBNAMES})
+  foreach(_n ${_EMBREE_${component}_LIBNAMES})
     set(_release_names ${_release_names} "${_n}")
     set(_debug_names ${_debug_names} "${_n}d" "${_n}_d")
   endforeach(_n)
 
-  _Embree_FIND_LIB(Embree_${component}_LIBRARY_RELEASE ${_release_names})
-  if(Embree_${component}_LIBRARY_RELEASE)
-    _Embree_FIND_LIB(Embree_${component}_LIBRARY_DEBUG ${_debug_names} ${_release_names})
-    if(NOT Embree_${component}_LIBRARY_DEBUG)
-      set(Embree_${component}_LIBRARY_DEBUG "${Embree_${component}_LIBRARY_RELEASE}")
+  _EMBREE_FIND_LIB(EMBREE_${component}_LIBRARY_RELEASE ${_release_names})
+  if(EMBREE_${component}_LIBRARY_RELEASE)
+    _EMBREE_FIND_LIB(EMBREE_${component}_LIBRARY_DEBUG ${_debug_names} ${_release_names})
+    if(NOT EMBREE_${component}_LIBRARY_DEBUG)
+      set(EMBREE_${component}_LIBRARY_DEBUG "${EMBREE_${component}_LIBRARY_RELEASE}")
     endif()
 
-    if(NOT "${Embree_${component}_LIBRARY_RELEASE}" STREQUAL "${Embree_${component}_LIBRARY_DEBUG}")
-      set(Embree_${component}_LIBRARY
-        optimized "${Embree_${component}_LIBRARY_RELEASE}" debug "${Embree_${component}_LIBRARY_DEBUG}")
+    if(NOT "${EMBREE_${component}_LIBRARY_RELEASE}" STREQUAL "${EMBREE_${component}_LIBRARY_DEBUG}")
+      set(EMBREE_${component}_LIBRARY
+        optimized "${EMBREE_${component}_LIBRARY_RELEASE}" debug "${EMBREE_${component}_LIBRARY_DEBUG}")
     else()
-      set(Embree_${component}_LIBRARY "${Embree_${component}_LIBRARY_RELEASE}")
+      set(EMBREE_${component}_LIBRARY "${EMBREE_${component}_LIBRARY_RELEASE}")
     endif()
 
-    if(Embree_${component}_LIBRARY AND EXISTS "${Embree_${component}_LIBRARY}")
-      set(Embree_${component}_FOUND TRUE)
+    if(EMBREE_${component}_LIBRARY AND EXISTS "${EMBREE_${component}_LIBRARY}")
+      set(EMBREE_${component}_FOUND TRUE)
     endif()
 
-    set(Embree_LIBRARIES ${Embree_LIBRARIES} ${Embree_${component}_LIBRARY})
+    set(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ${EMBREE_${component}_LIBRARY})
   endif()
 
-  mark_as_advanced(Embree_${component}_LIBRARY_RELEASE Embree_${component}_LIBRARY_DEBUG)
+  mark_as_advanced(EMBREE_${component}_LIBRARY_RELEASE EMBREE_${component}_LIBRARY_DEBUG)
 endforeach(component)
 
 # Setup targets
-foreach(component ${Embree_FIND_COMPONENTS})
-  if(Embree_${component}_FOUND)
+foreach(component ${EMBREE_FIND_COMPONENTS})
+  if(EMBREE_${component}_FOUND)
     set(_deps )
 
-    foreach(dependency ${_Embree_${component}_DEPS})
+    foreach(dependency ${_EMBREE_${component}_DEPS})
       set(_deps ${_deps} Embree::${component})
     endforeach(dependency)
 
     add_library(Embree::${component} SHARED IMPORTED)
     set_target_properties(Embree::${component} PROPERTIES
-      IMPORTED_LOCATION_RELEASE         "${Embree_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_MINSIZEREL      "${Embree_${component}_LIBRARY_RELEASE}"
-      IMPORTED_LOCATION_RELWITHDEBINFO  "${Embree_${component}_LIBRARY_DEBUG}"
-      IMPORTED_LOCATION_DEBUG           "${Embree_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_RELEASE         "${EMBREE_${component}_LIBRARY_RELEASE}"
+      IMPORTED_LOCATION_MINSIZEREL      "${EMBREE_${component}_LIBRARY_RELEASE}"
+      IMPORTED_LOCATION_RELWITHDEBINFO  "${EMBREE_${component}_LIBRARY_DEBUG}"
+      IMPORTED_LOCATION_DEBUG           "${EMBREE_${component}_LIBRARY_DEBUG}"
       ## TODO: Set this to a proper value (on windows -> dll)
-      IMPORTED_IMPLIB_RELEASE           "${Embree_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_MINSIZEREL        "${Embree_${component}_LIBRARY_RELEASE}"
-      IMPORTED_IMPLIB_RELWITHDEBINFO    "${Embree_${component}_LIBRARY_DEBUG}"
-      IMPORTED_IMPLIB_DEBUG             "${Embree_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_RELEASE           "${EMBREE_${component}_LIBRARY_RELEASE}"
+      IMPORTED_IMPLIB_MINSIZEREL        "${EMBREE_${component}_LIBRARY_RELEASE}"
+      IMPORTED_IMPLIB_RELWITHDEBINFO    "${EMBREE_${component}_LIBRARY_DEBUG}"
+      IMPORTED_IMPLIB_DEBUG             "${EMBREE_${component}_LIBRARY_DEBUG}"
       INTERFACE_LINK_LIBRARIES          "${_deps}"
-      INTERFACE_INCLUDE_DIRECTORIES     "${Embree_INCLUDE_DIRS}"
+      INTERFACE_INCLUDE_DIRECTORIES     "${EMBREE_INCLUDE_DIRS}"
     )
   endif()
 endforeach(component)
 
-if (Embree_INCLUDE_DIRS AND Embree_LIBRARIES)
-	set(Embree_FOUND TRUE)
+if (EMBREE_INCLUDE_DIRS AND EMBREE_LIBRARIES)
+	set(EMBREE_FOUND TRUE)
 endif()
 
-if(Embree_FOUND AND NOT Embree_FIND_QUIETLY)
-  message(STATUS "Embree version: ${Embree_VERSION}")
+if(NOT EMBREE_FOUND)
+  find_package(Embree QUIET NO_MODULE)
+  add_library(Embree::Embree SHARED IMPORTED)
+
+  set_target_properties(Embree::Embree PROPERTIES
+    IMPORTED_LOCATION_RELEASE         "${EMBREE_LIBRARY}"
+    IMPORTED_LOCATION_MINSIZEREL      "${EMBREE_LIBRARY}"
+    IMPORTED_LOCATION_RELWITHDEBINFO  "${EMBREE_LIBRARY}"
+    IMPORTED_LOCATION_DEBUG           "${EMBREE_LIBRARY}"
+    IMPORTED_IMPLIB_RELEASE           "${EMBREE_LIBRARY}"
+    IMPORTED_IMPLIB_MINSIZEREL        "${EMBREE_LIBRARY}"
+    IMPORTED_IMPLIB_RELWITHDEBINFO    "${EMBREE_LIBRARY}"
+    IMPORTED_IMPLIB_DEBUG             "${EMBREE_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES     "${EMBREE_INCLUDE_DIRS}"
+  )
 endif()
+
+if(EMBREE_FOUND AND NOT EMBREE_FIND_QUIETLY)
+  message(STATUS "Embree version: ${EMBREE_VERSION}")
+endif()
+
+set(Embree_FOUND ${EMBREE_FOUND})
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Embree
-  VERSION_VAR Embree_VERSION
-  REQUIRED_VARS Embree_LIBRARIES Embree_INCLUDE_DIRS
+find_package_handle_standard_args(EMBREE
+  VERSION_VAR EMBREE_VERSION
+  REQUIRED_VARS EMBREE_LIBRARIES EMBREE_INCLUDE_DIRS
   HANDLE_COMPONENTS)
 
-mark_as_advanced(Embree_INCLUDE_DIR)
+mark_as_advanced(EMBREE_INCLUDE_DIR)
