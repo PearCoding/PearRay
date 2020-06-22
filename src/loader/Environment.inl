@@ -91,9 +91,8 @@ inline void Environment::addMesh(const std::string& name, const std::shared_ptr<
 inline void Environment::addShadingSocket(const std::string& name,
 										  const ShadingSocketVariantPtr& output)
 {
-	//PR_ASSERT(output, "Given output has to be valid");
 	PR_ASSERT(!hasShadingSocket(name), "Given name should be unique");
-	mNamedShadingSockets[name] = output;
+	mNamedShadingSockets.emplace(name, output);// Skip default constructor
 }
 
 template <typename Socket>
@@ -102,7 +101,7 @@ inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& 
 	try {
 		return std::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
 	} catch (const std::bad_variant_access&) {
-		return std::shared_ptr<Socket>();
+		return nullptr;
 	}
 }
 

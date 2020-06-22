@@ -181,7 +181,7 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 	}
 
 #define BLEND_3D_LPE(var, val)                                                                                \
-	for (auto pair : mData.mLPE_1D[var]) {                                                                    \
+	for (auto pair : mData.mLPE_3D[var]) {                                                                    \
 		PR_OPT_LOOP                                                                                           \
 		for (size_t i = 0; i < entry_count; ++i) {                                                            \
 			const auto& entry		 = entries[i];                                                            \

@@ -15,6 +15,6 @@ public:
 	inline operator bool() const { return mInternal != nullptr; }
 
 private:
-	std::shared_ptr<class SharedLibraryInternal> mInternal;
+	std::shared_ptr<struct SharedLibraryInternal> mInternal;
 };
 } // namespace PR
