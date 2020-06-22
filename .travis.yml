@@ -3,32 +3,22 @@ dist: focal
 addons:
   apt:
     update: true
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
       - lcov
       - qtbase5-dev
       - libqt5charts5-dev
-      - libboost-filesystem-dev
-      - libboost-program-options-dev
-      - libboost-system-dev
-      - libboost-iostreams-dev
-      - libboost-thread-dev
       - libeigen3-dev
-      - libopenexr-dev
       - libtbb-dev
       - libopenimageio-dev
-      - python3.6-dev
-      - python3.6-venv
+      - libembree-dev
+      - python3.8-dev
+      - python3.8-venv
       - python3-numpy
       - python2.7-dev
       - python-virtualenv
       - python-numpy
       - ninja-build
-      - g++-9
 cache: ccache
-before_install:
-    - eval "CC=gcc-9 && CXX=g++-9"
 env:
   global:
     - CXXFLAGS="-Wall -Wextra -march=native"
@@ -36,27 +26,24 @@ jobs:
   fast_finish: true
   include:
     - compiler: gcc
-      env: USE_COVERAGE=ON PYTHON=3.6 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=ON PYTHON=3.8 EMBED_PLUGINS=OFF
     - compiler: gcc
-      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=ON
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON
     - compiler: gcc
       env: USE_COVERAGE=OFF PYTHON=2.7 EMBED_PLUGINS=OFF
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=OFF
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.6 EMBED_PLUGINS=ON
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON
     - compiler: clang
       env: USE_COVERAGE=OFF PYTHON=2.7 EMBED_PLUGINS=OFF
 before_script:
   - $CXX --version
   - cmake --version
-  - wget https://github.com/embree/embree/releases/download/v3.10.0/embree-3.10.0.x86_64.linux.tar.gz
-  - mkdir -p $HOME/embree3
-  - tar -xf embree-3.10.0.x86_64.linux.tar.gz -C $HOME/embree3
   - mkdir build
   - cd build
   - if [ $USE_COVERAGE == ON ]; then lcov --directory . --zerocounters; fi
-  - cmake -G "Ninja" -DEmbree_DIR="$HOME/embree3/embree-3.10.0.x86_64.linux/" -DEMBREE_DIR="$HOME/embree3/embree-3.10.0.x86_64.linux/" -Dembree_DIR="$HOME/embree3/embree-3.10.0.x86_64.linux/" -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON -DPR_EMBED_PLUGINS=$EMBED_PLUGINS ..
+  - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Debug -DPR_USE_LTO=OFF -DPR_GENERATE_COVERAGE=$USE_COVERAGE -DPYBIND11_PYTHON_VERSION=$PYTHON -DPR_EMBED_PLUGINS=$EMBED_PLUGINS ..
 script:
   - ninja
 after_success:
