@@ -157,7 +157,7 @@ endif()
 set(Embree_FOUND ${EMBREE_FOUND})
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(EMBREE
+find_package_handle_standard_args(Embree
   VERSION_VAR EMBREE_VERSION
   REQUIRED_VARS EMBREE_LIBRARIES EMBREE_INCLUDE_DIRS
   HANDLE_COMPONENTS)
