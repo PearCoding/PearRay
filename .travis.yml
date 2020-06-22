@@ -2,7 +2,6 @@ language: cpp
 dist: focal
 addons:
   apt:
-    update: true
     packages:
       - lcov
       - qtbase5-dev

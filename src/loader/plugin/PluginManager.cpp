@@ -71,7 +71,7 @@ bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
 std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, bool useFallbacks)
 {
 #ifdef PR_DEBUG
-	std::path p = path;
+	std::filesystem::path p = path;
 	if (!tryLoad(path, useFallbacks)) {
 		std::wstring rel_name = p.stem().generic_wstring();
 		size_t pos			  = rel_name.find_last_of(L"_d");
@@ -80,7 +80,7 @@ std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, bool useF
 
 		rel_name.erase(pos, 2);
 
-		std::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
+		std::filesystem::path release_path = p.parent_path() / (rel_name + p.extension().generic_wstring());
 		if (!tryLoad(release_path.generic_wstring(), useFallbacks)) {
 			return nullptr;
 		} else {
