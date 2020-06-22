@@ -9,7 +9,7 @@
 ![Language](https://img.shields.io/badge/language-c++-blue.svg)
 ![C++ Standard](https://img.shields.io/badge/std-c++17-blue.svg)
 ![GCC 7](https://img.shields.io/badge/GCC-7+-blue.svg)
-![Clang 4](https://img.shields.io/badge/Clang-4+-blue.svg)
+![Clang 8](https://img.shields.io/badge/Clang-8+-blue.svg)
 ![Language](https://img.shields.io/badge/language-Python-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)
 
