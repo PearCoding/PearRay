@@ -31,7 +31,6 @@ class Parameter;
 class SpectralUpsampler;
 
 using ShadingSocketVariantPtr = std::variant<
-	std::monostate,
 	std::shared_ptr<FloatScalarShadingSocket>,
 	std::shared_ptr<FloatSpectralShadingSocket>,
 	std::shared_ptr<FloatVectorShadingSocket>>;

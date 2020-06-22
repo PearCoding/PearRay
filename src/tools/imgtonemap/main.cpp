@@ -213,12 +213,12 @@ static inline void srgb_to_xyY(float r, float g, float b, float& x, float& y, fl
 	}
 }
 
-static inline float reinhard(float L)
+[[maybe_unused]] static inline float reinhard(float L)
 {
 	return L / (1.0f + L);
 }
 
-static inline float reinhard_modified(float L)
+[[maybe_unused]] static inline float reinhard_modified(float L)
 {
 	constexpr float WhitePoint = 4.0f;
 	return (L * (1.0f + L / (WhitePoint * WhitePoint))) / (1.0f + L);

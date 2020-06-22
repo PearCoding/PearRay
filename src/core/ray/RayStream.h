@@ -18,8 +18,6 @@ public:
 	~RayGroup()				  = default;
 	RayGroup(const RayGroup&) = default;
 	RayGroup(RayGroup&&)	  = default;
-	RayGroup& operator=(const RayGroup&) = default;
-	RayGroup& operator=(RayGroup&&) = default;
 
 	inline Ray getRay(size_t id) const;
 	inline size_t copyOriginX(size_t offset, size_t size, float* dst) const;

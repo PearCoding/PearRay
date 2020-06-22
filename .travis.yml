@@ -27,9 +27,21 @@ jobs:
     - compiler: gcc
       env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=OFF
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=OFF CC=clang-8 CXX=clang++-8
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-focal-8
+          packages:
+            - clang-8
     - compiler: clang
-      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON
+      env: USE_COVERAGE=OFF PYTHON=3.8 EMBED_PLUGINS=ON CC=clang-8 CXX=clang++-8
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-focal-8
+          packages:
+            - clang-8
 before_script:
   - $CXX --version
   - cmake --version

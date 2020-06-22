@@ -86,9 +86,6 @@ if(WIN32)
   # and then we could just ship srgb.coeff along...
   target_sources(pr_lib_loader PUBLIC embed/srgb.rc )
 endif()
-if(NOT WIN32)
-  target_link_libraries(pr_lib_loader PUBLIC ${CMAKE_DL_LIBS})
-endif()
 target_link_libraries(pr_lib_loader
   PUBLIC
     pr_lib_core

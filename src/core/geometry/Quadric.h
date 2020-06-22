@@ -25,15 +25,14 @@ public:
 		<=>
 			t**2*a + t*b + c = 0
 	*/
-	template <typename T>
 	inline static bool intersect(
 		const ParameterArray& parameters,
 		const Vector3f& origin,
 		const Vector3f& direction,
-		T& t)
+		float& t)
 	{
-		static const T INT_EPS = T(1e-6f);
-		static const T INF	   = T(std::numeric_limits<float>::infinity());
+		constexpr float INT_EPS = 1e-6f;
+		constexpr float INF		= std::numeric_limits<float>::infinity();
 
 		const float A = parameters[0];
 		const float B = parameters[1];
@@ -46,32 +45,31 @@ public:
 		const float I = parameters[8];
 		const float J = parameters[9];
 
-		T a = A * direction[0] * direction[0] + B * direction[1] * direction[1] + C * direction[2] * direction[2]
-			  + D * direction[0] * direction[1] + E * direction[0] * direction[2] + F * direction[1] * direction[2];
-		T b = 2 * A * origin[0] * direction[0] + 2 * B * origin[1] * direction[1] + 2 * C * origin[2] * direction[2]
-			  + D * (origin[0] * direction[1] + origin[1] * direction[0]) + E * (origin[0] * direction[2] + origin[2] * direction[0]) + F * (origin[1] * direction[2] + origin[2] * direction[1])
-			  + G * direction[0] + H * direction[1] + I * direction[2];
-		T c = A * origin[0] * origin[0] + B * origin[1] * origin[1] + C * origin[2] * origin[2]
-			  + D * origin[0] * origin[1] + E * origin[0] * origin[2] + F * origin[1] * origin[2]
-			  + G * origin[0] + H * origin[1] + I * origin[2] + J;
+		float a = A * direction[0] * direction[0] + B * direction[1] * direction[1] + C * direction[2] * direction[2]
+				  + D * direction[0] * direction[1] + E * direction[0] * direction[2] + F * direction[1] * direction[2];
+		float b = 2 * A * origin[0] * direction[0] + 2 * B * origin[1] * direction[1] + 2 * C * origin[2] * direction[2]
+				  + D * (origin[0] * direction[1] + origin[1] * direction[0]) + E * (origin[0] * direction[2] + origin[2] * direction[0]) + F * (origin[1] * direction[2] + origin[2] * direction[1])
+				  + G * direction[0] + H * direction[1] + I * direction[2];
+		float c = A * origin[0] * origin[0] + B * origin[1] * origin[1] + C * origin[2] * origin[2]
+				  + D * origin[0] * origin[1] + E * origin[0] * origin[2] + F * origin[1] * origin[2]
+				  + G * origin[0] + H * origin[1] + I * origin[2] + J;
 
-		bool linear	 = abs(a) < PR_EPSILON;
-		T lin		 = -c / b;
-		T discrim	 = b * b - 4 * a * c;
-		bool invalid = discrim < 0;
-		discrim		 = sqrt(discrim);
-		T qu1		 = (-b - discrim) / (2 * a);
-		T qu2		 = (-b + discrim) / (2 * a);
-		bool behind	 = qu1 < INT_EPS;
-		T qu		 = behind ? qu2 : qu1;
+		bool linear	  = abs(a) < PR_EPSILON;
+		float lin	  = -c / b;
+		float discrim = b * b - 4 * a * c;
+		bool invalid  = discrim < 0;
+		discrim		  = sqrt(discrim);
+		float qu1	  = (-b - discrim) / (2 * a);
+		float qu2	  = (-b + discrim) / (2 * a);
+		bool behind	  = qu1 < INT_EPS;
+		float qu	  = behind ? qu2 : qu1;
 
 		t = linear ? lin : (invalid ? INF : qu);
 
 		return t < INF && (t > INT_EPS);
 	}
 
-	template <typename T>
-	inline static T eval(
+	inline static float eval(
 		const ParameterArray& parameters,
 		const Vector3f& xyz)
 	{
@@ -91,7 +89,6 @@ public:
 			   + G * xyz(0) + H * xyz(1) + I * xyz(2) + J;
 	}
 
-	template <typename T>
 	inline static Vector3f gradient(
 		const ParameterArray& parameters,
 		const Vector3f& xyz)
@@ -114,13 +111,12 @@ public:
 		return N;
 	}
 
-	template <typename T>
 	inline static Vector3f normal(
 		const ParameterArray& parameters,
 		const Vector3f& xyz)
 	{
 		Vector3f N = gradient(parameters, xyz);
-		T norm		  = N.norm();
+		float norm = N.norm();
 		return N / norm;
 	}
 

@@ -24,7 +24,7 @@ inline bool Environment::hasSpectrum(const std::string& name) const
 
 inline void Environment::addSpectrum(const std::string& name, const ParametricBlob& spec)
 {
-	mSpectrums.insert(std::make_pair(name, spec));
+	mSpectrums.emplace(name, spec);
 }
 
 inline std::shared_ptr<IEmission> Environment::getEmission(const std::string& name) const
@@ -41,7 +41,7 @@ inline void Environment::addEmission(const std::string& name, const std::shared_
 {
 	PR_ASSERT(mat, "Given emission has to be valid");
 	PR_ASSERT(!hasEmission(name), "Given name should be unique");
-	mEmissions[name] = mat;
+	mEmissions.emplace(name, mat);
 }
 
 inline size_t Environment::emissionCount() const
@@ -63,7 +63,7 @@ inline void Environment::addMaterial(const std::string& name, const std::shared_
 {
 	PR_ASSERT(mat, "Given material has to be valid");
 	PR_ASSERT(!hasMaterial(name), "Given name should be unique");
-	mMaterials[name] = mat;
+	mMaterials.emplace(name, mat);
 }
 
 inline size_t Environment::materialCount() const
@@ -85,7 +85,7 @@ inline void Environment::addMesh(const std::string& name, const std::shared_ptr<
 {
 	PR_ASSERT(m, "Given mesh has to be valid");
 	PR_ASSERT(!hasMesh(name), "Given name should be unique");
-	mMeshes[name] = m;
+	mMeshes.emplace(name, m);
 }
 
 inline void Environment::addShadingSocket(const std::string& name,
@@ -131,7 +131,7 @@ inline void Environment::addMapSocket(const std::string& name,
 									  const std::shared_ptr<FloatSpectralMapSocket>& m)
 {
 	PR_ASSERT(!hasMapSocket(name), "Given name should be unique");
-	mNamedMapSockets[name] = m;
+	mNamedMapSockets.emplace(name, m);
 }
 
 inline void* Environment::textureSystem() { return mTextureSystem; }

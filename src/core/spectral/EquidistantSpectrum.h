@@ -42,9 +42,6 @@ public:
 	EquidistantSpectrum(const EquidistantSpectrum& other) = default;
 	EquidistantSpectrum(EquidistantSpectrum&& other)	  = default;
 
-	EquidistantSpectrum& operator=(const EquidistantSpectrum& other) = default;
-	EquidistantSpectrum& operator=(EquidistantSpectrum&& other) = default;
-
 	inline float at(size_t index) const;
 	inline float& at(size_t index);
 	inline float operator[](size_t index) const;
