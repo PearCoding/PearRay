@@ -11,7 +11,6 @@
 ![GCC 7](https://img.shields.io/badge/GCC-7+-blue.svg)
 ![Clang 4](https://img.shields.io/badge/Clang-4+-blue.svg)
 ![Language](https://img.shields.io/badge/language-Python-orange.svg)
-![Python](https://img.shields.io/badge/Python-2.7+-orange.svg)
 ![Python](https://img.shields.io/badge/Python-3.5+-orange.svg)
 
 Experimental high accurate spectral path and ray tracer for research and data acquisition.
