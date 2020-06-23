@@ -6,13 +6,12 @@
 #include "math/Projection.h"
 #include "math/Tangent.h"
 
-
 namespace PR {
 class DistantLight : public IInfiniteLight {
 public:
 	DistantLight(uint32 id, const std::string& name,
 				 const Vector3f& direction,
-				 const std::shared_ptr<FloatSpectralShadingSocket>& spec)
+				 const std::shared_ptr<FloatSpectralMapSocket>& spec)
 		: IInfiniteLight(id, name)
 		, mDirection(direction)
 		, mRadiance(spec)
@@ -24,16 +23,24 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = PR_PI * mRadiance->eval(in.Point);
+		MapSocketCoord coord;
+		coord.UV		   = Vector2f::Zero();
+		coord.WavelengthNM = in.Ray.WavelengthNM;
+
+		out.Weight = PR_PI * mRadiance->eval(coord);
 		out.PDF_S  = std::numeric_limits<float>::infinity();
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Weight   = PR_PI * mRadiance->eval(in.Point);
+		MapSocketCoord coord;
+		coord.UV		   = Vector2f::Zero();
+		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+
+		out.Weight	 = PR_PI * mRadiance->eval(coord);
 		out.Outgoing = mDirection_Cache;
-		out.PDF_S	= std::numeric_limits<float>::infinity();
+		out.PDF_S	 = std::numeric_limits<float>::infinity();
 	}
 
 	std::string dumpInformation() const override
@@ -59,7 +66,7 @@ public:
 
 private:
 	Vector3f mDirection;
-	std::shared_ptr<FloatSpectralShadingSocket> mRadiance;
+	std::shared_ptr<FloatSpectralMapSocket> mRadiance;
 	Vector3f mDirection_Cache;
 };
 
@@ -69,11 +76,11 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 
-		const std::string name   = params.getString("name", "__unknown");
+		const std::string name	 = params.getString("name", "__unknown");
 		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
 		return std::make_shared<DistantLight>(id, name, direction,
-											  ctx.Env->lookupSpectralShadingSocket(params.getParameter("radiance"), 1));
+											  ctx.Env->lookupSpectralMapSocket(params.getParameter("radiance"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

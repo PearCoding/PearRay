@@ -92,9 +92,9 @@ public:
 		token = LightPathToken(out.Type);
 
 		// Calculate hero msi pdf
-		const float sum_pdfs = out.PDF_S.sum() / PR_SPECTRAL_BLOB_SIZE;
+		const float sum_pdfs = out.PDF_S.sum();
 		const float msiL	 = allowMSI ? MSI(1, outL.PDF_S, 1, sum_pdfs) : 1.0f;
-		return msiL * outL.Weight * out.Weight / outL.PDF_S;
+		return outL.Weight * out.Weight * (msiL / outL.PDF_S);
 	}
 
 	// Estimate direct (finite) light
@@ -257,8 +257,8 @@ public:
 			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 				// Only the ray is fixed (Should be handled better!)
 				InfiniteLightEvalInput lin;
-				lin.Point.Ray	= next;
-				lin.Point.Flags = SPF_Background;
+				lin.Point = &spt;
+				lin.Ray	  = next;
 				InfiniteLightEvalOutput lout;
 				light->eval(lin, lout, session);
 
@@ -395,12 +395,12 @@ public:
 			// Only the ray is fixed (Should be handled better!)
 			for (size_t i = 0; i < sg.size(); ++i) {
 				InfiniteLightEvalInput in;
-				sg.extractRay(i, in.Point.Ray);
-				in.Point.Flags = SPF_Background;
+				sg.extractRay(i, in.Ray);
+				in.Point = nullptr;
 				InfiniteLightEvalOutput out;
 				light->eval(in, out, session);
 
-				session.pushSpectralFragment(out.Weight, in.Point.Ray, cb);
+				session.pushSpectralFragment(out.Weight, in.Ray, cb);
 			}
 		}
 	}

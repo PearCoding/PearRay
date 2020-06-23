@@ -37,16 +37,16 @@ public:
 	inline void evalSD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
 		MapSocketCoord coord;
-		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
 		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		coord.WavelengthNM = in.Ray.WavelengthNM;
 
-		if (in.Point.Ray.IterationDepth == 0)
+		if (in.Ray.IterationDepth == 0)
 			out.Weight = mBackground->eval(coord);
 		else
-			out.Weight = mRadiance->eval(coord);
+			out.Weight = mRadianceFactor * mRadiance->eval(coord);
 
 		const float sinTheta = std::sin(coord.UV(1) * PR_PI);
 		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
@@ -56,30 +56,30 @@ public:
 	inline void evalS(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
 		MapSocketCoord coord;
-		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
 		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		coord.WavelengthNM = in.Ray.WavelengthNM;
 
-		if (in.Point.Ray.IterationDepth == 0)
+		if (in.Ray.IterationDepth == 0)
 			out.Weight = mBackground->eval(coord);
 		else
-			out.Weight = mRadiance->eval(coord);
+			out.Weight = mRadianceFactor * mRadiance->eval(coord);
 
-		out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
+		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->N.dot(dir))) : 1.0f;
 	}
 
 	inline void evalD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
 		MapSocketCoord coord;
-		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
 		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		coord.WavelengthNM = in.Ray.WavelengthNM;
 
-		out.Weight = mRadiance->eval(coord);
+		out.Weight = mRadianceFactor * mRadiance->eval(coord);
 
 		const float sinTheta = std::sin(coord.UV(1) * PR_PI);
 		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
@@ -89,15 +89,15 @@ public:
 	inline void evalN(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
 		MapSocketCoord coord;
-		Vector3f dir = mInvTransform * in.Point.Ray.Direction;
+		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
 		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
+		coord.WavelengthNM = in.Ray.WavelengthNM;
 
-		out.Weight = mRadiance->eval(coord);
+		out.Weight = mRadianceFactor * mRadiance->eval(coord);
 
-		out.PDF_S = Projection::cos_hemi_pdf(std::abs(in.Point.N.dot(dir)));
+		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->N.dot(dir))) : 1.0f;
 	}
 
 	inline void sampleD(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
@@ -264,17 +264,25 @@ public:
 		const std::string name = params.getString("name", "__unknown");
 		const float factor	   = std::max(0.0000001f, params.getNumber("factor", 1.0f));
 
-		auto rad		 = ctx.Env->lookupSpectralMapSocket(params.getParameter("radiance"), 1);
+		auto radP		 = params.getParameter("radiance");
 		auto backgroundP = params.getParameter("background");
+
+		std::shared_ptr<FloatSpectralMapSocket> radiance;
 		std::shared_ptr<FloatSpectralMapSocket> background;
-		if (backgroundP.type() != PT_String)
-			background = rad;
-		else
+		if (radP.isValid() && backgroundP.isValid()) {
+			radiance   = ctx.Env->lookupSpectralMapSocket(radP, 1);
 			background = ctx.Env->lookupSpectralMapSocket(backgroundP, 1);
+		} else if (radP.isValid()) {
+			radiance   = ctx.Env->lookupSpectralMapSocket(radP, 1);
+			background = radiance;
+		} else {
+			background = ctx.Env->lookupSpectralMapSocket(backgroundP, 1);
+			radiance   = background;
+		}
 
 		Eigen::Matrix3f trans = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
-		Vector2i recSize = rad->queryRecommendedSize();
+		Vector2i recSize = radiance->queryRecommendedSize();
 		std::shared_ptr<Distribution2D> dist;
 		if (recSize(0) > 1 && recSize(1) > 1) {
 			dist = std::make_shared<Distribution2D>(recSize(0), recSize(1));
@@ -294,21 +302,21 @@ public:
 				coord.dUV		   = filterSize;
 				coord.WavelengthNM = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test
 
-				const float val = sinTheta * rad->eval(coord).maxCoeff();
+				const float val = sinTheta * radiance->eval(coord).maxCoeff();
 				return (val <= PR_EPSILON) ? 0.0f : val;
 			});
 		}
 
 		if (dist) {
-			if (rad == background)
-				return std::make_shared<EnvironmentDLight>(id, name, rad, dist, factor, trans);
+			if (radiance == background)
+				return std::make_shared<EnvironmentDLight>(id, name, radiance, dist, factor, trans);
 			else
-				return std::make_shared<EnvironmentSDLight>(id, name, rad, background, dist, factor, trans);
+				return std::make_shared<EnvironmentSDLight>(id, name, radiance, background, dist, factor, trans);
 		} else {
-			if (rad == background)
-				return std::make_shared<EnvironmentNLight>(id, name, rad, factor, trans);
+			if (radiance == background)
+				return std::make_shared<EnvironmentNLight>(id, name, radiance, factor, trans);
 			else
-				return std::make_shared<EnvironmentSLight>(id, name, rad, background, factor, trans);
+				return std::make_shared<EnvironmentSLight>(id, name, radiance, background, factor, trans);
 		}
 	}
 

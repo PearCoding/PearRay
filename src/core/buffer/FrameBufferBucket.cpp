@@ -70,27 +70,28 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		const auto& entry = entries[i];
 
 		const Point2i rp  = entry.Position + filterSize;
-		//const bool isMono = entry.Flags & OSEF_Mono;
+		const bool isMono = entry.Flags & OSEF_Mono;
 
 		SpectralBlob real_weight = entry.Weight;
-		Size1i w_channels			 = 0;
+		/*Size1i w_channels			 = 0;
 		for(size_t k = 0; k <PR_SPECTRAL_BLOB_SIZE; ++k) {
 			if(entry.Weight[k] > PR_EPSILON)
 				++w_channels;
-		}
+		}*/
 
-		real_weight *= w_channels/(float)PR_SPECTRAL_BLOB_SIZE;
-		/*if (PR_UNLIKELY(isMono)) {
+		//real_weight *= w_channels/(float)PR_SPECTRAL_BLOB_SIZE;
+		size_t channels = PR_SPECTRAL_BLOB_SIZE;
+		if (PR_UNLIKELY(isMono)) {
 			channels = 1;
 			real_weight *= SpectralBlobUtils::HeroOnly() * PR_SPECTRAL_BLOB_SIZE;
-		}*/
+		}
 
 		// Check for valid samples
 		bool isInf	   = false;
 		bool isNaN	   = false;
 		bool isNeg	   = false;
 		bool isInvalid = false;
-		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE && !isInvalid; ++k) {
+		for (size_t k = 0; k < channels && !isInvalid; ++k) {
 			isInf	  = std::isinf(real_weight[k]);
 			isNaN	  = std::isnan(real_weight[k]);
 			isNeg	  = real_weight[k] < 0;

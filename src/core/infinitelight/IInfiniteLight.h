@@ -5,7 +5,8 @@
 
 namespace PR {
 struct PR_LIB_CORE InfiniteLightEvalInput {
-	ShadingPoint Point;
+	const ShadingPoint* Point = nullptr; // Can be null if called not from a surface
+	PR::Ray Ray;
 };
 
 struct PR_LIB_CORE InfiniteLightEvalOutput {
