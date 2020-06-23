@@ -107,12 +107,12 @@ struct SceneInternal {
 	RTCScene Scene;
 
 	inline SceneInternal()
-	{
 #if defined(PR_DEBUG)
-		Device = rtcNewDevice("verbose=1");
+		: Device(rtcNewDevice("verbose=1"))
 #else
-		Device = rtcNewDevice(nullptr);
+		: Device(rtcNewDevice(nullptr))
 #endif
+	{
 		rtcSetDeviceErrorFunction(Device, embree_error_function, nullptr);
 
 		if (rtcGetDeviceProperty(Device, RTC_DEVICE_PROPERTY_BACKFACE_CULLING_ENABLED))
@@ -312,8 +312,8 @@ static void embree_intersectionFilter(const RTCFilterFunctionNArguments* args)
 	PR_ASSERT(args->N == 1, "Expect shadow intersection filter to be called by one ray only");
 
 	int* valid							  = args->valid;
-	const IntersectContextShadow* context = (const IntersectContextShadow*)args->context;
-	RTCHitN* hits						  = (RTCHitN*)args->hit;
+	const IntersectContextShadow* context = reinterpret_cast<const IntersectContextShadow*>(args->context);
+	RTCHitN* hits						  = args->hit;
 	const auto N						  = args->N;
 
 	const uint32 id_ignore = context->IgnoreID;

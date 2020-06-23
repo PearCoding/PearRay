@@ -19,18 +19,21 @@ struct SharedLibraryInternal {
 	HINSTANCE Handle;
 #endif
 
-	SharedLibraryInternal(const std::string& path)
-	{
 #ifdef PR_OS_LINUX
-		Handle = dlopen(path.c_str(), RTLD_LAZY);
+	explicit SharedLibraryInternal(const std::string& path)
+		: Handle(dlopen(path.c_str(), RTLD_LAZY))
+	{
 		if (!Handle)
 			throw std::runtime_error(dlerror());
+	}
 #elif PR_OS_WINDOWS
-		Handle = LoadLibraryA(path.c_str());
+	explicit SharedLibraryInternal(const std::string& path)
+		: Handle(LoadLibraryA(path.c_str()))
+	{
 		if (!Handle) // TODO: Better use GetLastError()
 			throw std::runtime_error("Could not load library");
-#endif
 	}
+#endif
 
 	~SharedLibraryInternal()
 	{

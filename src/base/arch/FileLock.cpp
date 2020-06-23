@@ -1,6 +1,6 @@
 #include "FileLock.h"
-#include "Platform.h"
 #include "Logger.h"
+#include "Platform.h"
 
 #ifndef PR_OS_WINDOWS
 #include <fcntl.h>
@@ -62,11 +62,11 @@ bool FileLock::lock()
 
 void FileLock::unlock()
 {
-	const auto path = encodePath(mInternal->Filename);
 #ifndef PR_OS_WINDOWS
 	if (mInternal->Handle < 0)
 		return;
 
+	const auto path = encodePath(mInternal->Filename);
 	remove(path.c_str());
 	close(mInternal->Handle);
 	mInternal->Handle = -1;
