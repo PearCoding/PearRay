@@ -17,7 +17,9 @@ public:
 	bool IsVerbose;
 	bool IsQuiet;
 	bool InputIsLinear;
+	bool InputIsXYZ;
 	bool OutputIsLinear;
+	bool OutputIsXYZ;
 	bool ClampOutput;
 
 	bool parse(int argc, char** argv);
@@ -35,8 +37,10 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("v,verbose", "Print detailed information")
 			("i,input", "Input file", cxxopts::value<std::string>())
 			("o,output", "Output file", cxxopts::value<std::string>())
-			("correct-input", "Gamma correct the input image")
+			("xyz-input", "Input is in linear CIE XYZ space")
+			("adjust-input", "Gamma correct the input image")
 			("linear", "Output will be in linear sRGB space")
+			("xyz", "Output will be in linear CIE XYZ space")
 			("clamp", "Clamp output components inside [0,1]")
 		;
 		// clang-format on
@@ -74,8 +78,10 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 		IsVerbose	   = (vm.count("verbose") != 0);
 		IsQuiet		   = (vm.count("quiet") != 0);
-		InputIsLinear  = (vm.count("correct-input") == 0);
+		InputIsLinear  = (vm.count("adjust-input") == 0);
+		InputIsXYZ	   = (vm.count("xyz-input") == 0);
 		OutputIsLinear = (vm.count("linear") != 0);
+		OutputIsXYZ	   = (vm.count("xyz") != 0);
 		ClampOutput	   = (vm.count("clamp") != 0);
 	} catch (const cxxopts::OptionException& e) {
 		std::cout << "Error while parsing commandline: " << e.what() << std::endl;
@@ -194,6 +200,33 @@ static inline void xyY_to_srgb(float x, float y, float Y, float& r, float& g, fl
 	}
 }
 
+static inline void xyz_to_xyY(float r, float g, float b, float& x, float& y, float& Y)
+{
+	const auto n = r + g + b;
+	if (n != 0) {
+		Y = g;
+		x = r / n;
+		y = g / n;
+	} else {
+		Y = 0;
+		x = 0;
+		y = 0;
+	}
+}
+
+static inline void xyY_to_xyz(float x, float y, float Y, float& r, float& g, float& b)
+{
+	if (y == 0) {
+		r = 0;
+		g = 0;
+		b = 0;
+	} else {
+		r = x * Y / y;
+		g = Y;
+		b = (1 - x - y) * Y / y;
+	}
+}
+
 static inline void srgb_to_xyY(float r, float g, float b, float& x, float& y, float& Y)
 {
 	float z;
@@ -238,17 +271,33 @@ int main(int argc, char** argv)
 	if (!read_input(options.InputFile.generic_string(), in_data, info))
 		return EXIT_FAILURE;
 
-	if (!options.InputIsLinear) {
+	if (!options.InputIsXYZ) {
+		if (!options.InputIsLinear) {
+			for (size_t i = 0; i < info.Width * info.Height; ++i) {
+				float& R = in_data[i * info.Channels + info.RStride];
+				float& G = in_data[i * info.Channels + info.GStride];
+				float& B = in_data[i * info.Channels + info.BStride];
+
+				R = srgb_to_linear(R);
+				G = srgb_to_linear(G);
+				B = srgb_to_linear(B);
+			}
+		}
+
 		for (size_t i = 0; i < info.Width * info.Height; ++i) {
 			float& R = in_data[i * info.Channels + info.RStride];
 			float& G = in_data[i * info.Channels + info.GStride];
 			float& B = in_data[i * info.Channels + info.BStride];
 
-			R = srgb_to_linear(R);
-			G = srgb_to_linear(G);
-			B = srgb_to_linear(B);
+			float X, Y, Z;
+			srgb_to_xyz(R, G, B, X, Y, Z);
+			R = X;
+			G = Y;
+			B = Z;
 		}
 	}
+
+	// Input is in CIE XYZ
 
 	float max_luminance = 0;
 #ifdef USE_MEDIAN_FOR_LUMINANCE_ESTIMATION
@@ -270,7 +319,7 @@ int main(int argc, char** argv)
 					auto b = in_data[(iy * info.Width + ix) * 3 + 2];
 
 					float x, y, Y;
-					srgb_to_xyY(r, g, b, x, y, Y);
+					xyz_to_xyY(r, g, b, x, y, Y);
 					window[i] = Y;
 					++i;
 				}
@@ -288,7 +337,7 @@ int main(int argc, char** argv)
 		const float B = in_data[i * info.Channels + info.BStride];
 
 		float x, y, Y;
-		srgb_to_xyY(R, G, B, x, y, Y);
+		xyz_to_xyY(R, G, B, x, y, Y);
 		max_luminance = std::max(max_luminance, Y);
 	}
 #endif
@@ -307,16 +356,30 @@ int main(int argc, char** argv)
 			float& b	  = out_data[i * 3 + 2];
 
 			float x, y, Y;
-			srgb_to_xyY(R, G, B, x, y, Y);
+			xyz_to_xyY(R, G, B, x, y, Y);
 
 			const float L = Y / max_luminance;
-			xyY_to_srgb(x, y, reinhard_modified(L), r, g, b);
+			xyY_to_xyz(x, y, reinhard_modified(L), r, g, b);
 		}
 
-		if (!options.OutputIsLinear) {
-			for (size_t i = 0; i < info.Width * info.Height * 3; ++i) {
-				float& c = out_data[i];
-				c		 = srgb_from_linear(c);
+		if (!options.OutputIsXYZ) {
+			for (size_t i = 0; i < info.Width * info.Height; ++i) {
+				float& X = out_data[i * 3 + 0];
+				float& Y = out_data[i * 3 + 1];
+				float& Z = out_data[i * 3 + 2];
+
+				float R, G, B;
+				xyz_to_srgb(X, Y, Z, R, G, B);
+				X = R;
+				Y = G;
+				Z = B;
+			}
+
+			if (!options.OutputIsLinear) {
+				for (size_t i = 0; i < info.Width * info.Height * 3; ++i) {
+					float& c = out_data[i];
+					c		 = srgb_from_linear(c);
+				}
 			}
 		}
 
