@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 4
+		:sample_count 16
 	)
 	(sampler
 		:slot 'spectral'
@@ -58,20 +58,12 @@
 		:transform [0.6859206557273865,-0.32401347160339355,0.6515582203865051,21.767061233520508,0.7276763319969177,0.305420845746994,-0.6141703724861145,-21.046981811523438,0.0,0.8953956365585327,0.44527140259742737,18.041887283325195,0.0,0.0,0.0,1.0]
 	)
 	; Background
-	(spectrum
-		:name '_blender_world_env_background_spec'
-		:data (illum 0.014350 0.037133 0.050876)
-	)
-	(spectrum
-		:name '_blender_world_env_radiance_spec'
-		:data (illum 0.014350 0.037133 0.050876)
-	)
 	(light
-		:name '_blender_world_background_env'
+		:name 'background'
 		:type 'env'
-		:radiance '_blender_world_env_radiance_spec'
-		:background '_blender_world_env_background_spec'
-		:factor 1.000000
+		:radiance (illuminant "D65")
+		:background (illuminant "D65")
+		:factor 0.318309952
 	)
 	; Lights
 	; Light Light

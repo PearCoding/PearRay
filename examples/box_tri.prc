@@ -39,6 +39,10 @@
 		(channel :type 'nx')
 		(channel :type 'ny')
 		(channel :type 'feedback')
+		(channel :type 'color', :color 'xyz', :lpe 'CS.*L')
+		(channel :type 'color', :color 'xyz', :lpe 'CD.*L')
+		(channel :type 'color', :color 'xyz', :lpe 'CDS.*L')
+		(channel :type 'color', :color 'xyz', :lpe 'C(DS+)+.*L')
 	)
 	; Camera
 	(camera

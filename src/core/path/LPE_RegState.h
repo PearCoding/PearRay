@@ -36,28 +36,6 @@ struct Token {
 		return !(*this == other);
 	}
 
-	// This is a context sensitive match
-	// in contrast to == which is raw equal
-	inline bool match(const Token& other) const
-	{
-		if (Type != '.' && other.Type != '.' && Type != other.Type)
-			return false;
-		else if (other.Type == '.'
-				 && !(Type == '.' || Type == 'R' || Type == 'T'))
-			return false;
-		else if (Type == '.'
-				 && !(other.Type == '.' || other.Type == 'R' || other.Type == 'T'))
-			return false;
-
-		if (Event != '.' && other.Event != '.' && Event != other.Event)
-			return false;
-
-		if (!Label.empty() && !other.Label.empty() && Label != other.Label)
-			return false;
-
-		return true;
-	}
-
 	inline bool match(ScatteringType t, ScatteringEvent e) const
 	{
 		return match(t) && match(e);
@@ -69,10 +47,11 @@ struct Token {
 		case 'C':
 			return t == ST_CAMERA;
 		case 'E':
-		case 'L':
 			return t == ST_EMISSIVE;
 		case 'B':
 			return t == ST_BACKGROUND;
+		case 'L':
+			return t == ST_EMISSIVE || t == ST_BACKGROUND;
 		case 'R':
 			return t == ST_REFLECTION;
 		case 'T':

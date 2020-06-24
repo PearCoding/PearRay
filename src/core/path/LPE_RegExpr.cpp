@@ -13,14 +13,6 @@ namespace LPE {
 */
 RegExpr::RegExpr()
 {
-	/*static const char* TYPES  = ".ERTBL";
-	static const char* EVENTS = ".DS";
-
-	for (uint32 i = 0; TYPES[i]; ++i) {
-		for (uint32 j = 0; EVENTS[j]; ++j) {
-			mInputSet.insert(Token(TYPES[i], EVENTS[j]));
-		}
-	}*/
 }
 
 void RegExpr::push(const Token& token)
@@ -500,13 +492,19 @@ std::string RegExpr::dumpTableToDot(const FSATable& tbl)
 			stream << currentID << "\t->\t" << childID;
 			stream << "\t[label=\"";
 
+			bool first = true;
 			for (const auto& k : t.Tokens) {
+				if(!first)
+					stream << ",";
+				else
+					first = false;
+
 				if (k.isEmpty()) {
-					stream << "e,";
+					stream << "e";
 				} else if (k.Label.empty()) {
-					stream << "<" << k.Type << "," << k.Event << ">,";
+					stream << "<" << k.Type << "," << k.Event << ">";
 				} else {
-					stream << "<" << k.Type << "," << k.Event << ",'" << k.Label << "'>,";
+					stream << "<" << k.Type << "," << k.Event << ",'" << k.Label << "'>";
 				}
 			}
 			stream << "\"];" << std::endl;

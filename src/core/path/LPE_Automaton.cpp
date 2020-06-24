@@ -38,9 +38,9 @@ bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 
 		for (uint32 t = 0; t < _ST_COUNT; ++t) {
 			for (uint32 e = 0; e < _SE_COUNT; ++e) {
-				const size_t index   = INSIDE_BLOCK_INDEX(id, t, e);
+				const size_t index	 = INSIDE_BLOCK_INDEX(id, t, e);
 				const size_t lblAddr = mLB_LabelIndices.size();
-				bool foundLabeled	= false;
+				bool foundLabeled	 = false;
 				bool foundEmpty		 = false;
 				for (const auto& trans : s->transitions()) {
 					uint32 nextID = ids[trans.To];
@@ -61,11 +61,8 @@ bool Automaton::build(const std::shared_ptr<RegExpr>& expr)
 							|| !k.Label.empty())
 							continue;
 
-						//PR_ASSERT(!foundEmpty, "Only one possible");
-						if (foundEmpty) {
-							PR_LOG(L_ERROR) << "LPE Error: Expression is ambiguous!" << std::endl;
-							return false;
-						}
+						if (foundEmpty)
+							continue;
 
 						mIB_EmptyNextState[index] = nextID;
 						foundEmpty				  = true;
@@ -115,6 +112,8 @@ size_t Automaton::nextState(size_t currentState, const LightPathToken& token, bo
 }
 
 // Debug
+const char _st_char[_ST_COUNT] = { 'C', 'E', 'T', 'R', 'B' };
+const char _se_char[_SE_COUNT] = { 'D', 'S', 'N' };
 std::string Automaton::dumpTable() const
 {
 	std::stringstream stream;
@@ -128,7 +127,7 @@ std::string Automaton::dumpTable() const
 
 		for (uint32 t = 0; t < _ST_COUNT; ++t) {
 			for (uint32 e = 0; e < _SE_COUNT; ++e) {
-				stream << "  " << t << ", " << e;
+				stream << "  " << _st_char[t] << ", " << _se_char[e];
 
 				size_t index = INSIDE_BLOCK_INDEX(i, t, e);
 				if (!mIB_Allowed[index]) {

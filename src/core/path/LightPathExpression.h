@@ -21,6 +21,10 @@ public:
 
 	inline bool isValid() const { return mAutomaton != nullptr; }
 
+	std::string dumpTable() const;
+
+	static std::string generateTableString(const std::string& expr); 
+	static std::string generateDotString(const std::string& expr); 
 private:
 	std::shared_ptr<LPE::Automaton> mAutomaton;
 };
