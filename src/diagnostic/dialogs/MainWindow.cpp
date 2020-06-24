@@ -2,7 +2,6 @@
 #include "EXRWindow.h"
 #include "ProfWindow.h"
 #include "SceneWindow.h"
-#include "SpecWindow.h"
 
 #include <fstream>
 
@@ -133,13 +132,6 @@ void MainWindow::openFile(const QString& file)
 		mCurrentSceneWindow->openRDMPFile(file);
 	} else if (info.suffix() == "exr") {
 		EXRWindow* w	   = new EXRWindow(ui.mdiArea);
-		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
-
-		win->setWindowIcon(QIcon(":/image_icon"));
-		w->show();
-		w->openFile(file);
-	} else if (info.suffix() == "spec") {
-		SpecWindow* w	  = new SpecWindow(ui.mdiArea);
 		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
 		win->setWindowIcon(QIcon(":/image_icon"));

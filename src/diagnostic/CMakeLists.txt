@@ -15,11 +15,9 @@ set(Src
   dialogs/MainWindow.cpp
   dialogs/ProfWindow.cpp
   dialogs/SceneWindow.cpp
-  dialogs/SpecWindow.cpp
   io/EXRFile.cpp
   io/ImageBufferView.cpp
   io/ProfFile.cpp
-  io/SpecFile.cpp
   prof/ProfTreeItem.cpp
   prof/ProfTreeModel.cpp
   properties/ColorProperty.cpp
@@ -48,11 +46,9 @@ set(Hdr
   dialogs/MainWindow.h
   dialogs/ProfWindow.h
   dialogs/SceneWindow.h
-  dialogs/SpecWindow.h
   io/EXRFile.h
   io/ImageBufferView.h
   io/ProfFile.h
-  io/SpecFile.h
   mapper/ToneMapper.h
   prof/ProfTreeItem.h
   prof/ProfTreeModel.h

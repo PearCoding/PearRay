@@ -7,7 +7,7 @@ class ToneMapper;
 // TODO: Split this into channel count specific classes!
 class ImageBufferView {
 public:
-	virtual const QString& name() const					  = 0;
+	virtual QString viewName() const					  = 0;
 	virtual int width() const							  = 0;
 	virtual int height() const							  = 0;
 	virtual int channelCount() const					  = 0;

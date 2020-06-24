@@ -5,10 +5,11 @@
 #include <QDebug>
 #include <QFile>
 
-EXRLayer::EXRLayer(const QString& name, int channels,
+EXRLayer::EXRLayer(const QString& name, const QString& lpe, int channels,
 				   int width, int height)
 	: ImageBufferView()
 	, mName(name)
+	, mLPE(lpe)
 	, mData((int)channels)
 	, mChannelNames((int)channels)
 	, mWidth(width)
@@ -42,29 +43,33 @@ EXRFile::~EXRFile()
 {
 }
 
-static QString escapeString(const QString& str)
+static void splitChannelLPE(const QString& str, QString& lpe, QString& remainder)
 {
 	int s = str.indexOf('[');
 	int e = str.lastIndexOf(']');
 
-	if (s < 0 || e < 0)
-		return str;
-	else {
-		QString tmp = str;
-		tmp.remove(s, e - s + 1);
-		return tmp;
+	if (s < 0 || e < 0) {
+		lpe		  = "";
+		remainder = str;
+	} else {
+		lpe		  = str.mid(s + 1, e - s - 1); // Skip [ and ]
+		remainder = str;
+		remainder.remove(s, e - s + 1);
 	}
 }
 
-static void splitChannelString(const QString& str, QString& parent, QString& child)
+static void splitChannelString(const QString& str, QString& parent, QString& lpe, QString& child)
 {
-	int it = str.indexOf('.');
+	QString tmp;
+	splitChannelLPE(str, lpe, tmp);
+
+	int it = tmp.indexOf('.');
 	if (it < 0) {
-		parent = str;
-		child  = str;
+		parent = "";
+		child  = tmp;
 	} else {
-		parent = str.left(it);
-		child  = str.right(str.size() - it);
+		parent = tmp.left(it);
+		child  = tmp.right(tmp.size() - it - 1);
 	}
 }
 
@@ -90,18 +95,22 @@ bool EXRFile::open(const QString& filename)
 	auto channels		 = spec.channelnames;
 	auto channel_formats = spec.channelformats;
 
-	QMap<QString, QList<QPair<QString, int>>> layerMap;
+	using LayerKey	 = QPair<QString, QString>;
+	using LayerValue = QPair<QString, int>;
+	QMap<LayerKey, QList<LayerValue>> layerMap;
 	int counter = 0;
 	for (auto it = channels.begin(); it != channels.end(); ++it) {
-		const QString escaped_name = escapeString(QString::fromStdString(*it));
-		QString parent, child;
-		if (escaped_name == "R" || escaped_name == "G" || escaped_name == "B") {
-			parent = SPEC_NAME;
-			child  = escaped_name;
-		} else {
-			splitChannelString(escaped_name, parent, child);
+		QString parent, child, lpe;
+		splitChannelString(QString::fromStdString(*it), parent, lpe, child);
+
+		if (parent.isEmpty()) {
+			if (child == "R" || child == "G" || child == "B")
+				parent = SPEC_NAME;
+			else
+				parent = child;
 		}
-		layerMap[parent] << qMakePair(child, counter);
+
+		layerMap[qMakePair(parent, lpe)] << qMakePair(child, counter);
 		++counter;
 	}
 
@@ -111,7 +120,7 @@ bool EXRFile::open(const QString& filename)
 	// Iterate through each layer and load them separately
 	for (auto it = layerMap.constBegin(); it != layerMap.constEnd(); ++it) {
 		std::shared_ptr<EXRLayer> layer = std::make_shared<EXRLayer>(
-			it.key(), it.value().size(),
+			it.key().first, it.key().second, it.value().size(),
 			mWidth, mHeight);
 
 		int nc = 0;

@@ -30,7 +30,7 @@ void EXRWindow::openFile(const QString& str)
 
 		ui.layerList->clear();
 		for (auto layer : mFile->layers()) {
-			ui.layerList->addItem(layer->name());
+			ui.layerList->addItem(layer->viewName());
 		}
 
 		if (!mFile->layers().empty())

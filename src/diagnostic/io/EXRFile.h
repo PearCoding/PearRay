@@ -7,13 +7,20 @@
 
 class EXRLayer : public ImageBufferView {
 public:
-	EXRLayer(const QString& name, int channels, int width, int height);
+	EXRLayer(const QString& name, const QString& lpe, int channels, int width, int height);
 	virtual ~EXRLayer();
 
 	inline QVector<QVector<float>>& data() { return mData; }
 	inline QVector<QString>& channelNames() { return mChannelNames; }
 
-	const QString& name() const override { return mName; }
+	QString viewName() const override
+	{
+		if (mLPE.isEmpty())
+			return mName;
+		else
+			return mName + " [" + mLPE + "]";
+	}
+
 	int width() const override { return mWidth; }
 	int height() const override { return mHeight; }
 	int channelCount() const override { return mChannelNames.size(); }
@@ -29,6 +36,7 @@ public:
 
 private:
 	QString mName;
+	QString mLPE;
 	QVector<QVector<float>> mData;
 	QVector<QString> mChannelNames;
 
