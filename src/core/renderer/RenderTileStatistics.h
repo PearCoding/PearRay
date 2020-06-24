@@ -32,6 +32,9 @@ public:
 	inline void addBackgroundHitCount(uint64 i = 1) { mBackgroundHitCount += i; }
 	inline uint64 backgroundHitCount() const { return mBackgroundHitCount; }
 
+	inline void addDepthCount(uint64 i = 1) { mDepthCount += i; }
+	inline uint64 depthCount() const { return mDepthCount; }
+
 	RenderTileStatistics half() const;
 
 private:
@@ -42,5 +45,6 @@ private:
 	uint64 mPixelSampleCount;
 	uint64 mEntityHitCount;
 	uint64 mBackgroundHitCount;
+	uint64 mDepthCount;
 };
 } // namespace PR

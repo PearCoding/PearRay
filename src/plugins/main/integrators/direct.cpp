@@ -283,6 +283,8 @@ public:
 
 		PR_PROFILE_THIS;
 
+		session.tile()->statistics().addEntityHitCount();
+		session.tile()->statistics().addDepthCount();
 #ifdef PR_ALL_RAYS_CONTRIBUTE_SP
 		session.pushSPFragment(spt, path);
 #endif
@@ -334,8 +336,6 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		session.tile()->statistics().addEntityHitCount();
-
 		// Early drop out for invalid splashes
 		if (!entity->isLight() && PR_UNLIKELY(!material))
 			return;
@@ -377,6 +377,8 @@ public:
 		LightPath path(maxPathSize);
 		path.addToken(LightPathToken::Camera());
 
+		session.tile()->statistics().addDepthCount(sg.size());
+		session.tile()->statistics().addEntityHitCount(sg.size());
 		for (size_t i = 0; i < sg.size(); ++i) {
 			ShadingPoint spt;
 			sg.computeShadingPoint(i, spt);
@@ -390,6 +392,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 		LightPath cb = LightPath::createCB();
+		session.tile()->statistics().addDepthCount(sg.size());
 		session.tile()->statistics().addBackgroundHitCount(sg.size());
 		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 			// Only the ray is fixed (Should be handled better!)

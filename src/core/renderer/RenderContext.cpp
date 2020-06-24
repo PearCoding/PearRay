@@ -275,6 +275,7 @@ RenderStatus RenderContext::status() const
 	status.setField("global.pixel_sample_count", s.pixelSampleCount());
 	status.setField("global.entity_hit_count", s.entityHitCount());
 	status.setField("global.background_hit_count", s.backgroundHitCount());
+	status.setField("global.depth_count", s.depthCount());
 
 	return status;
 }

@@ -33,6 +33,7 @@ public:
 		LightPath stdPath = LightPath::createCDL(1);
 
 		session.tile()->statistics().addEntityHitCount(grp.size());
+		session.tile()->statistics().addDepthCount(grp.size());
 		for (size_t i = 0; i < grp.size(); ++i) {
 			ShadingPoint spt;
 			grp.computeShadingPoint(i, spt);

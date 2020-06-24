@@ -196,6 +196,7 @@ public:
 			mPipeline.runPipeline();
 			while (mPipeline.hasShadingGroup()) {
 				auto sg = mPipeline.popShadingGroup(session);
+				session.tile()->statistics().addDepthCount(sg.size());
 				if (sg.isBackground())
 					session.tile()->statistics().addBackgroundHitCount(sg.size());
 				else
@@ -240,9 +241,9 @@ public:
 
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
-		std::string modeS		= mParams.getString("mode", "");
+		std::string modeS = mParams.getString("mode", "");
 		std::transform(modeS.begin(), modeS.end(), modeS.begin(),
-			[](unsigned char c){ return std::tolower(c); });
+					   [](unsigned char c) { return std::tolower(c); });
 
 		VisualFeedbackMode mode = VFM_Parameter;
 		for (int i = 0; _mode[i].Name; ++i) {

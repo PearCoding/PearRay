@@ -35,6 +35,50 @@ void printStatus(const RenderStatus& status)
 			  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();
 }
 
+void printStatistics(const RenderStatus& status)
+{
+	auto& out = PR_LOG(L_INFO);
+	out << "Statistics:" << std::endl;
+
+	const auto raycount	  = status.getField("global.ray_count").getUInt();
+	const auto pixelcount = status.getField("global.pixel_sample_count").getUInt();
+
+	out << "  Ray Count:       " << std::setw(OUTPUT_FIELD_SIZE) << raycount << std::endl;
+	out << "    Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl;
+	out << "    Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl;
+	out << "    Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl;
+	out << "    Shadow share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl;
+	out << "  Pixel Count:     " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl;
+	out << "  Entity Hits:     " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl;
+	out << "  Background Hits: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl;
+	out << "  Mean Ray Depth:  " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl;
+}
+
+std::string timestr(uint64 sec)
+{
+	if (sec == 0)
+		return " <1s";
+
+	std::stringstream sstream;
+
+	uint64 s = sec % 60;
+	sec /= 60;
+	uint64 m = sec % 60;
+	sec /= 60;
+	uint64 h = sec;
+
+	if (h > 0)
+		sstream << h << "h ";
+
+	if (m > 0)
+		sstream << m << "m ";
+
+	if (s > 0)
+		sstream << s << "s ";
+
+	return sstream.str();
+}
+
 constexpr uint32 PROFILE_SAMPLE_RATE = 10;
 int main(int argc, char** argv)
 {
@@ -86,7 +130,7 @@ int main(int argc, char** argv)
 
 	if (!env) {
 		if (!options.IsQuiet)
-			std::cout << "Error while parsing input." << std::endl;
+			PR_LOG(L_ERROR) << "Error while parsing input." << std::endl;
 
 		return -2;
 	}
@@ -98,7 +142,7 @@ int main(int argc, char** argv)
 	auto renderFactory = env->createRenderFactory();
 	if (!renderFactory) {
 		if (!options.IsQuiet)
-			std::cout << "Error: Couldn't setup render factory." << std::endl;
+			PR_LOG(L_ERROR) << "Error: Couldn't setup render factory." << std::endl;
 
 		return -4;
 	}
@@ -178,8 +222,11 @@ int main(int argc, char** argv)
 		while (!renderer->isFinished()) {
 			std::this_thread::sleep_for(sc::seconds(1));
 
-			auto end	   = sc::high_resolution_clock::now();
-			auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
+			const auto end		 = sc::high_resolution_clock::now();
+			const auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
+			const auto span_full = sc::duration_cast<sc::seconds>(end - start);
+			const auto span_img	 = sc::duration_cast<sc::seconds>(end - start_img);
+
 			if (options.ShowProgress > 0 && span_prog.count() >= options.ShowProgress) {
 				RenderStatus status = renderer->status();
 
@@ -189,6 +236,8 @@ int main(int argc, char** argv)
 				std::cout << std::setw(OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed
 						  << status.percentage() * 100 << "%";
 				printStatus(status);
+				std::cout << " | RT: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(span_full.count())
+						  << " ETA: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(span_full.count() * ((1 - status.percentage()) / status.percentage()));
 
 				if (options.NoPrettyConsole)
 					std::cout << std::endl;
@@ -198,13 +247,11 @@ int main(int argc, char** argv)
 				start_prog = end;
 			}
 
-			auto span_img = sc::duration_cast<sc::seconds>(end - start_img);
 			if (options.ImgUpdate > 0 && span_img.count() >= options.ImgUpdate) {
 				saveImg();
 				start_img = end;
 			}
 
-			auto span_full = sc::duration_cast<sc::seconds>(end - start);
 			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
 				if (options.MaxTimeForce)
 					renderer->stop();
@@ -212,26 +259,19 @@ int main(int argc, char** argv)
 					softStop = true;
 			}
 		}
-		renderer->notifyEnd();
 
-		// Final status
 		if (options.ShowProgress > 0) {
 			if (!options.NoPrettyConsole)
 				std::cout << "\r";
-
-			RenderStatus status = renderer->status();
-			std::cout << "Final";
-			printStatus(status);
+			std::cout << "Done" << std::setw(64) << " " << std::endl;
 		}
 
+		renderer->notifyEnd();
+
 		{
-			auto end  = sc::high_resolution_clock::now();
-			auto span = sc::duration_cast<sc::seconds>(end - start);
-
-			if (!options.IsQuiet && options.ShowProgress && span.count() >= 1)
-				std::cout << std::endl;
-
-			PR_LOG(L_INFO) << "Rendering took " << span.count() << " seconds" << std::endl;
+			const auto end	= sc::high_resolution_clock::now();
+			const auto span = sc::duration_cast<sc::seconds>(end - start);
+			PR_LOG(L_INFO) << "Rendering took " << timestr(span.count()) << std::endl;
 
 			// Save images
 			OutputSaveOptions output_options;
@@ -240,6 +280,11 @@ int main(int argc, char** argv)
 			output_options.Image.WriteMeta	   = true;
 			// output_options.NameSuffix = ""; // (Do not make use of tags)
 			env->save(renderer, toneMapper, output_options);
+		}
+
+		// Print Statisticss
+		if (!options.IsQuiet) {
+			printStatistics(renderer->status());
 		}
 	}
 

@@ -9,6 +9,7 @@ RenderTileStatistics::RenderTileStatistics()
 	, mPixelSampleCount(0)
 	, mEntityHitCount(0)
 	, mBackgroundHitCount(0)
+	, mDepthCount(0)
 {
 }
 
@@ -21,6 +22,7 @@ RenderTileStatistics& RenderTileStatistics::operator+=(const RenderTileStatistic
 	mPixelSampleCount += other.mPixelSampleCount;
 	mEntityHitCount += other.mEntityHitCount;
 	mBackgroundHitCount += other.mBackgroundHitCount;
+	mDepthCount += other.mDepthCount;
 
 	return *this;
 }
@@ -35,6 +37,7 @@ RenderTileStatistics RenderTileStatistics::half() const
 	other.mPixelSampleCount /= 2;
 	other.mEntityHitCount /= 2;
 	other.mBackgroundHitCount /= 2;
+	other.mDepthCount /= 2;
 
 	return other;
 }
