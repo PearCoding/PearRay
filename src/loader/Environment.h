@@ -2,7 +2,7 @@
 
 #include "output/OutputSpecification.h"
 #include "renderer/RenderSettings.h"
-#include "shader/Node.h"
+#include "shader/INode.h"
 #include "spectral/ParametricBlob.h"
 
 #include <list>
@@ -11,29 +11,25 @@
 #include <variant>
 
 namespace PR {
-class IEmission;
-class IMaterial;
-class MeshBase;
-class PluginManager;
-class MaterialManager;
+class Cache;
+class CameraManager;
 class EmissionManager;
 class EntityManager;
-class CameraManager;
+class FilterManager;
+class IEmission;
+class IIntegrator;
+class IMaterial;
 class InfiniteLightManager;
 class IntegratorManager;
-class FilterManager;
-class SamplerManager;
-class IIntegrator;
+class MaterialManager;
+class MeshBase;
+class NodeManager;
+class Parameter;
+class PluginManager;
 class RenderFactory;
 class ResourceManager;
-class Cache;
-class Parameter;
+class SamplerManager;
 class SpectralUpsampler;
-
-using NodeVariantPtr = std::variant<
-	std::shared_ptr<FloatScalarNode>,
-	std::shared_ptr<FloatSpectralNode>,
-	std::shared_ptr<FloatVectorNode>>;
 
 class PR_LIB_LOADER BadRenderEnvironment : public std::exception {
 public:
@@ -60,6 +56,7 @@ public:
 	inline std::shared_ptr<FilterManager> filterManager() const;
 	inline std::shared_ptr<SamplerManager> samplerManager() const;
 	inline std::shared_ptr<ResourceManager> resourceManager() const;
+	inline std::shared_ptr<NodeManager> nodeManager() const;
 	inline std::shared_ptr<Cache> cache() const;
 
 	inline ParametricBlob getSpectrum(const std::string& name) const;
@@ -80,8 +77,8 @@ public:
 	inline bool hasMesh(const std::string& name) const;
 	inline void addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m);
 
-	inline void addNode(const std::string& name,
-								 const NodeVariantPtr& output);
+	inline void addNode(const std::string& name, const std::shared_ptr<INode>& output);
+	inline std::shared_ptr<INode> getRawNode(const std::string& name) const;
 	template <typename Socket>
 	inline std::shared_ptr<Socket> getNode(const std::string& name) const;
 	inline bool hasNode(const std::string& name) const;
@@ -117,6 +114,9 @@ public:
 
 private:
 	void loadPlugins(const std::wstring& basedir);
+	inline void getNode(const std::string& name, std::shared_ptr<FloatScalarNode>& node) const;
+	inline void getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node) const;
+	inline void getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node) const;
 
 	std::wstring mWorkingDir;
 	RenderSettings mRenderSettings;
@@ -132,6 +132,7 @@ private:
 	std::shared_ptr<FilterManager> mFilterManager;
 	std::shared_ptr<SamplerManager> mSamplerManager;
 	std::shared_ptr<ResourceManager> mResourceManager;
+	std::shared_ptr<NodeManager> mNodeManager;
 
 	std::shared_ptr<SpectralUpsampler> mDefaultSpectralUpsampler;
 
@@ -142,8 +143,7 @@ private:
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<MeshBase>> mMeshes;
 
-	std::vector<NodeVariantPtr> mNodes;
-	std::map<std::string, NodeVariantPtr> mNamedNodes;
+	std::map<std::string, std::shared_ptr<INode>> mNamedNodes;
 
 	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;

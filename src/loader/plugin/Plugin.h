@@ -23,7 +23,8 @@ enum PluginType {
 	PT_INFINITELIGHT,
 	PT_INTEGRATOR,
 	PT_FILTER,
-	PT_SAMPLER
+	PT_SAMPLER,
+	PT_NODE
 };
 
 class PR_LIB_LOADER IPlugin {

@@ -143,7 +143,7 @@ set(PR_Src
   spectral/SpectralUpsampler.h
   spectral/ToneMapper.cpp
   spectral/ToneMapper.h
-  shader/Node.h
+  shader/INode.h
   shader/ShadingContext.h
   shader/ShadingGroup.cpp
   shader/ShadingGroup.h

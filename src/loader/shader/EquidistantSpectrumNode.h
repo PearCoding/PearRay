@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shader/Node.h"
+#include "shader/INode.h"
 #include "spectral/EquidistantSpectrum.h"
 #include "spectral/ParametricBlob.h"
 

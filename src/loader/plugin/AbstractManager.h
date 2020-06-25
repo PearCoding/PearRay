@@ -23,6 +23,7 @@ public:
 	}
 
 	inline std::shared_ptr<OBJ> getObject(uint32 id) const { return mObjects[id]; }
+	inline bool hasObject(uint32 id) const { return id < mObjects.size(); }
 	inline const std::vector<std::shared_ptr<OBJ>>& getAll() const { return mObjects; }
 	inline size_t size() const { return mObjects.size(); }
 

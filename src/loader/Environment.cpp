@@ -17,6 +17,7 @@
 #include "material/IMaterial.h"
 #include "material/MaterialManager.h"
 #include "parameter/Parameter.h"
+#include "shader/NodeManager.h"
 
 #include "plugin/PluginManager.h"
 #include "renderer/RenderFactory.h"
@@ -50,6 +51,7 @@ Environment::Environment(const std::wstring& workdir,
 	, mFilterManager(std::make_shared<FilterManager>())
 	, mSamplerManager(std::make_shared<SamplerManager>())
 	, mResourceManager(std::make_shared<ResourceManager>(workdir))
+	, mNodeManager(std::make_shared<NodeManager>())
 	, mCache(std::make_shared<Cache>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
@@ -178,6 +180,9 @@ void Environment::loadPlugins(const std::wstring& basedir)
 		case PT_SAMPLER:
 			mSamplerManager->addFactory(std::dynamic_pointer_cast<ISamplerPlugin>(plugin));
 			break;
+		case PT_NODE:
+			mNodeManager->addFactory(std::dynamic_pointer_cast<INodePlugin>(plugin));
+			break;
 		default:
 			break;
 		}
@@ -264,12 +269,10 @@ std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 			return std::make_shared<ConstSpectralNode>(ParametricBlob(parameter.getNumber(0.0f)));
 	case PT_Reference: {
 		uint64 refid = parameter.getReference();
-		if (refid != P_INVALID_REFERENCE && refid < mNodes.size()) {
-			try {
-				return std::get<std::shared_ptr<FloatSpectralNode>>(mNodes[refid]);
-			} catch (const std::bad_variant_access&) {
-				// Ignore
-			}
+		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid)) {
+			auto node = mNodeManager->getObject(refid);
+			if(node->type() == NT_FloatSpectral)
+				return std::reinterpret_pointer_cast<FloatSpectralNode>(node);
 		}
 		return std::make_shared<ConstSpectralNode>(def);
 	}
@@ -306,12 +309,10 @@ std::shared_ptr<FloatScalarNode> Environment::lookupScalarNode(
 			return std::make_shared<ConstScalarNode>(parameter.getNumber(def));
 	case PT_Reference: {
 		uint64 refid = parameter.getReference();
-		if (refid != P_INVALID_REFERENCE && refid < mNodes.size()) {
-			try {
-				return std::get<std::shared_ptr<FloatScalarNode>>(mNodes[refid]);
-			} catch (const std::bad_variant_access&) {
-				// Ignore
-			}
+		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid)) {
+			auto node = mNodeManager->getObject(refid);
+			if(node->type() == NT_FloatScalar)
+				return std::reinterpret_pointer_cast<FloatScalarNode>(node);
 		}
 		return std::make_shared<ConstScalarNode>(def);
 	}

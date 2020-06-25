@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shader/Node.h"
+#include "shader/INode.h"
 
 namespace DL {
 class Data;

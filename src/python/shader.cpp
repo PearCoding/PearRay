@@ -1,5 +1,5 @@
 #include "material/IMaterial.h"
-#include "shader/Node.h"
+#include "shader/INode.h"
 
 // Implementations
 #include "shader/ConstNode.h"

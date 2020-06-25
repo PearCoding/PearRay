@@ -1,11 +1,11 @@
 #pragma once
 
-#include "shader/Node.h"
+#include "shader/INode.h"
 
 #include <OpenImageIO/texture.h>
 
 namespace PR {
-class PR_LIB_LOADER ImageNode : public PR::FloatSpectralNode {
+class PR_LIB_LOADER ImageNode : public FloatSpectralNode {
 public:
 	ImageNode(OIIO::TextureSystem* tsys,
 				   const OIIO::TextureOpt& options,

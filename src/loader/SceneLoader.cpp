@@ -23,6 +23,7 @@
 #include "material/IMaterialPlugin.h"
 #include "material/MaterialManager.h"
 #include "mesh/MeshBase.h"
+#include "shader/NodeManager.h"
 
 #include "parser/CurveParser.h"
 #include "parser/MathParser.h"
@@ -152,8 +153,10 @@ void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Sce
 			addFilter(entry, ctx);
 		else if (entry.id() == "integrator")
 			addIntegrator(entry, ctx);
-		else if (entry.id() == "texture")
+		else if (entry.id() == "texture") // Just a sophisticated node
 			addTexture(entry, ctx);
+		else if (entry.id() == "node")
+			addNode(entry, ctx);
 		else if (entry.id() == "mesh")
 			addMesh(entry, ctx);
 		else if (entry.id() == "graph" || entry.id() == "embed")
@@ -682,6 +685,78 @@ void SceneLoader::addTexture(const DL::DataGroup& group, SceneLoadContext& ctx)
 	parser.parse(ctx.Env, name, group); // Will be added to ctx here
 }
 
+void SceneLoader::addNode(const DL::DataGroup& group, SceneLoadContext& ctx)
+{
+	auto manag		= ctx.Env->nodeManager();
+	const uint32 id = manag->nextID();
+
+	DL::Data nameD = group.getFromKey("name");
+	DL::Data typeD = group.getFromKey("type");
+
+	std::string name;
+	std::string type;
+
+	if (nameD.type() == DL::DT_String) {
+		name = nameD.getString();
+	} else {
+		PR_LOG(L_ERROR) << "[Loader] No node name set" << std::endl;
+		return;
+	}
+
+	if (ctx.Env->hasNode(name)) {
+		PR_LOG(L_ERROR) << "[Loader] Node name already set" << std::endl;
+		return;
+	}
+
+	if (typeD.type() == DL::DT_String) {
+		type = typeD.getString();
+		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+	} else {
+		PR_LOG(L_ERROR) << "[Loader] No node type set" << std::endl;
+		return;
+	}
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "[Loader] Unknown node type " << type << std::endl;
+		return;
+	}
+
+	ctx.Parameters = populateObjectParameters(group, ctx);
+	auto node	   = fac->create(id, ctx);
+	if (!node) {
+		PR_LOG(L_ERROR) << "[Loader] Could not create node of type " << type << std::endl;
+		return;
+	}
+
+	ctx.Env->addNode(name, node);
+	manag->addObject(node);
+}
+
+// Assume node from the groups id
+uint32 SceneLoader::addNodeInline(const DL::DataGroup& group, SceneLoadContext& ctx)
+{
+	auto manag		= ctx.Env->nodeManager();
+	const uint32 id = manag->nextID();
+
+	std::string type = group.id();
+
+	auto fac = manag->getFactory(type);
+	if (!fac) {
+		PR_LOG(L_ERROR) << "[Loader] Unknown node type " << type << std::endl;
+		return P_INVALID_REFERENCE;
+	}
+
+	ctx.Parameters = populateObjectParameters(group, ctx);
+	auto node	   = fac->create(id, ctx);
+	if (!node) {
+		PR_LOG(L_ERROR) << "[Loader] Could not create node of type " << type << std::endl;
+		return P_INVALID_REFERENCE;
+	}
+
+	return manag->addObject(node);
+}
+
 void SceneLoader::addMesh(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	DL::Data nameD = group.getFromKey("name");
@@ -900,24 +975,34 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group,
 
 Parameter SceneLoader::unpackShadingNetwork(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
-	// TODO: Make it adaptable
-	PR_UNUSED(ctx);
 	if (group.id() == "texture") {
 		if (group.anonymousCount() == 1 && group.at(0).type() == DL::DT_String) {
-			Parameter param = Parameter::fromString(group.at(0).getString());
-			return param;
+			auto node = ctx.Env->getRawNode(group.at(0).getString());
+			if (node) {
+				uint32 id = ctx.Env->nodeManager()->addObject(node);
+				return Parameter::fromReference(id);
+			} else {
+				PR_LOG(L_ERROR) << "[Loader] Unknown texture " << group.at(0).getString() << std::endl;
+			}
 		} else {
 			PR_LOG(L_ERROR) << "[Loader] Invalid texture parameter" << std::endl;
 		}
-	} else if (group.id() == "illuminant") {
+	} else if (group.id() == "node") {
 		if (group.anonymousCount() == 1 && group.at(0).type() == DL::DT_String) {
-			Parameter param = Parameter::fromString(group.at(0).getString());
-			return param;
+			auto node = ctx.Env->getRawNode(group.at(0).getString());
+			if (node) {
+				uint32 id = ctx.Env->nodeManager()->addObject(node);
+				return Parameter::fromReference(id);
+			} else {
+				PR_LOG(L_ERROR) << "[Loader] Unknown node " << group.at(0).getString() << std::endl;
+			}
 		} else {
-			PR_LOG(L_ERROR) << "[Loader] Invalid illuminant parameter" << std::endl;
+			PR_LOG(L_ERROR) << "[Loader] Invalid node parameter" << std::endl;
 		}
 	} else {
-		PR_LOG(L_ERROR) << "[Loader] Invalid parameter group type: " << group.id() << std::endl;
+		uint32 id = addNodeInline(group, ctx);
+		if (id != P_INVALID_REFERENCE)
+			return Parameter::fromReference(id);
 	}
 	return Parameter();
 }

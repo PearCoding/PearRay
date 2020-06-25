@@ -14,7 +14,7 @@ enum ParameterType : uint8 {
 	PT_Reference // Uses uint
 };
 
-constexpr uint64 P_INVALID_REFERENCE = (uint64)-1;
+constexpr uint32 P_INVALID_REFERENCE = (uint32)-1;
 
 class PR_LIB_LOADER Parameter final {
 public:

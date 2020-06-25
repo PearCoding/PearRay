@@ -1,0 +1,1 @@
+PR_ADD_PLUGIN(nod_illuminant CPP IlluminantNode.cpp)

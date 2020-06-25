@@ -64,11 +64,12 @@ set(PR_Src
   sampler/SamplerManager.h
   shader/ConstNode.cpp
   shader/ConstNode.h
-  shader/IlluminantData.inl
-  shader/IlluminantNode.cpp
-  shader/IlluminantNode.h
+  shader/EquidistantSpectrumNode.h
   shader/ImageNode.cpp
   shader/ImageNode.h
+  shader/INodePlugin.h
+  shader/NodeManager.cpp
+  shader/NodeManager.h
   )
 
 if(NOT WIN32)

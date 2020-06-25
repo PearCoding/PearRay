@@ -50,6 +50,8 @@ private:
 	static void addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addInclude(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static void addMesh(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static void addNode(const DL::DataGroup& group, SceneLoadContext& ctx);
+	static uint32 addNodeInline(const DL::DataGroup& group, SceneLoadContext& ctx);
 
 	static ParameterGroup populateObjectParameters(const DL::DataGroup& group, SceneLoadContext& ctx);
 	static Parameter unpackShadingNetwork(const DL::DataGroup& group, SceneLoadContext& ctx);

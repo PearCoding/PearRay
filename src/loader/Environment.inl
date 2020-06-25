@@ -10,6 +10,7 @@ inline std::shared_ptr<IntegratorManager> Environment::integratorManager() const
 inline std::shared_ptr<FilterManager> Environment::filterManager() const { return mFilterManager; }
 inline std::shared_ptr<SamplerManager> Environment::samplerManager() const { return mSamplerManager; }
 inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { return mResourceManager; }
+inline std::shared_ptr<NodeManager> Environment::nodeManager() const { return mNodeManager; }
 inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 
 inline ParametricBlob Environment::getSpectrum(const std::string& name) const
@@ -88,21 +89,53 @@ inline void Environment::addMesh(const std::string& name, const std::shared_ptr<
 	mMeshes.emplace(name, m);
 }
 
-inline void Environment::addNode(const std::string& name,
-										  const NodeVariantPtr& output)
+inline void Environment::addNode(const std::string& name, const std::shared_ptr<INode>& output)
 {
 	PR_ASSERT(!hasNode(name), "Given name should be unique");
-	mNamedNodes.emplace(name, output);// Skip default constructor
+	mNamedNodes.emplace(name, output); // Skip default constructor
+}
+
+inline std::shared_ptr<INode> Environment::getRawNode(const std::string& name) const
+{
+	if (hasNode(name))
+		return mNamedNodes.at(name);
+	else
+		return nullptr;
 }
 
 template <typename Socket>
 inline std::shared_ptr<Socket> Environment::getNode(const std::string& name) const
 {
-	try {
-		return std::get<std::shared_ptr<Socket>>(mNamedNodes.at(name));
-	} catch (const std::bad_variant_access&) {
-		return nullptr;
-	}
+	std::shared_ptr<Socket> node;
+	getNode(name, node);
+	return node;
+}
+
+inline void Environment::getNode(const std::string& name, std::shared_ptr<FloatScalarNode>& node2) const
+{
+	auto node = mNamedNodes.at(name);
+	if (node->type() == NT_FloatScalar)
+		node2 = std::reinterpret_pointer_cast<FloatScalarNode>(node);
+	else
+		node2 = nullptr;
+}
+
+inline void Environment::getNode(const std::string& name, std::shared_ptr<FloatSpectralNode>& node2) const
+{
+	auto node = mNamedNodes.at(name);
+	if (node->type() == NT_FloatSpectral)
+		node2 = std::reinterpret_pointer_cast<FloatSpectralNode>(node);
+	else
+		node2 = nullptr;
+}
+
+inline void Environment::getNode(const std::string& name, std::shared_ptr<FloatVectorNode>& node2) const
+{
+	auto node = mNamedNodes.at(name);
+	if (node->type() == NT_FloatVector)
+		node2 = std::reinterpret_pointer_cast<FloatVectorNode>(node);
+	else
+		node2 = nullptr;
 }
 
 inline bool Environment::hasNode(const std::string& name) const
