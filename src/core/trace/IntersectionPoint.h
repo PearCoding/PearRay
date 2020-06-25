@@ -6,12 +6,12 @@
 #include "ray/Ray.h"
 
 namespace PR {
-enum ShaderPointFlags {
-	SPF_Inside	 = 0x1,
-	SPF_IsMedium = 0x2
+enum IntersectionPointFlags {
+	IPF_Inside	 = 0x1,
+	IPF_IsMedium = 0x2
 };
 
-class PR_LIB_CORE ShadingSurfacePoint {
+class PR_LIB_CORE SurfaceIntersectionPoint {
 public:
 	GeometryPoint Geometry;
 	Vector3f P; // Position after displacement
@@ -25,7 +25,7 @@ public:
 	float NdotV;
 };
 
-class PR_LIB_CORE ShadingMediumPoint {
+class PR_LIB_CORE MediumIntersectionPoint {
 public:
 	uint32 MediumID;
 };
@@ -35,12 +35,12 @@ Shading context
 - Depending on the function not all fields are reasonable filled.
 - View dependent!
 */
-class PR_LIB_CORE ShadingPoint {
+class PR_LIB_CORE IntersectionPoint {
 public:
 	Vector3f P;
 	//union {
-	ShadingSurfacePoint Surface;
-	ShadingMediumPoint Medium;
+	SurfaceIntersectionPoint Surface;
+	MediumIntersectionPoint Medium;
 	//};
 	PR::Ray Ray;
 
@@ -61,10 +61,10 @@ public:
 		Surface.N	  = pt.N;
 		Surface.Nx	  = pt.Nx;
 		Surface.Ny	  = pt.Ny;
-		if (Reflection::is_inside(Surface.NdotV)) {
+		if (Reflection::is_inside_global(Surface.NdotV)) {
 			Tangent::invert_frame(Surface.N, Surface.Nx, Surface.Ny);
 			Surface.NdotV = -Surface.NdotV;
-			Flags |= SPF_Inside;
+			Flags |= IPF_Inside;
 		}
 	}
 
@@ -74,11 +74,11 @@ public:
 		P				= p;
 		Ray				= ray;
 		Depth2			= (ray.Origin - P).squaredNorm();
-		Flags			= SPF_IsMedium;
+		Flags			= IPF_IsMedium;
 		Medium.MediumID = mediumID;
 	}
 
-	inline bool isAtMedium() const { return Flags & SPF_IsMedium; }
+	inline bool isAtMedium() const { return Flags & IPF_IsMedium; }
 	inline bool isAtSurface() const { return !isAtMedium(); }
 };
 } // namespace PR

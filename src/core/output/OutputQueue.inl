@@ -10,9 +10,9 @@ inline void OutputQueue::pushSpectralFragment(const Point2i& p, const SpectralBl
 	++mSpectralIt;
 }
 
-inline void OutputQueue::pushSPFragment(const Point2i& p, const ShadingPoint& pt, const LightPath& path)
+inline void OutputQueue::pushSPFragment(const Point2i& p, const IntersectionPoint& pt, const LightPath& path)
 {
-	PR_ASSERT(mSPIt < mSPEntries.size(), "ShadingPoint entries are exhausted");
+	PR_ASSERT(mSPIt < mSPEntries.size(), "IntersectionPoint entries are exhausted");
 	const uint32* pathEntry = pushPath(path);
 	mSPEntries[mSPIt]		= OutputShadingPointEntry{ p, pt, pathEntry };
 	++mSPIt;

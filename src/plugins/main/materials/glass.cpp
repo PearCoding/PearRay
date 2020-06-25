@@ -17,8 +17,8 @@ namespace PR {
 class GlassMaterial : public IMaterial {
 public:
 	GlassMaterial(uint32 id,
-				  const std::shared_ptr<FloatSpectralShadingSocket>& alb,
-				  const std::shared_ptr<FloatSpectralShadingSocket>& ior,
+				  const std::shared_ptr<FloatSpectralNode>& alb,
+				  const std::shared_ptr<FloatSpectralNode>& ior,
 				  bool thin)
 		: IMaterial(id)
 		, mSpecularity(alb)
@@ -39,19 +39,19 @@ public:
 
 	int flags() const override { return MF_DeltaDistribution | MF_SpectralVarying; }
 
-	inline float fresnelTerm(const ShadingPoint& spt, float& eta) const
+	inline float fresnelTerm(const MaterialSampleContext& spt, float& eta) const
 	{
 		// TODO
 		//const auto ior = mIOR->eval(spt);
 		float n1 = 1;
 		//float n2 = ior[0];
 		// https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
-		float n2 = Reflection::sellmeier(spt.Ray.WavelengthNM[0], 1.03961212, 0.231792344, 1.01046945, 0.00600069867, 0.0200179144, 103.560653);
-		if (spt.Flags & SPF_Inside)
+		float n2 = Reflection::sellmeier(spt.WavelengthNM[0], 1.03961212, 0.231792344, 1.01046945, 0.00600069867, 0.0200179144, 103.560653);
+		if (spt.IsInside)
 			std::swap(n1, n2);
 
 		eta = n1 / n2;
-		return Fresnel::dielectric(-spt.Surface.NdotV, n1, n2);
+		return Fresnel::dielectric(spt.NdotV(), n1, n2);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -59,10 +59,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mSpecularity->eval(in.Point);
+		out.Weight = mSpecularity->eval(ShadingContext::fromMC(in.Context));
 		out.PDF_S  = 1;
 
-		if (in.NdotL < 0)
+		if (in.Context.NdotL() < 0)
 			out.Type = MST_SpecularTransmission;
 		else
 			out.Type = MST_SpecularReflection;
@@ -73,18 +73,17 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		PR_ASSERT(in.Point.isAtSurface(), "Expect intersection to be at surface");
+		auto sc = ShadingContext::fromMC(in.Context);
 
 		float eta;
-		const float F = fresnelTerm(in.Point, eta);
-		out.Weight	  = mSpecularity->eval(in.Point); // The weight is independent of the fresnel term
+		const float F = fresnelTerm(in.Context, eta);
+		out.Weight	  = mSpecularity->eval(sc); // The weight is independent of the fresnel term
 
 		if (in.RND[0] <= F) {
 			out.Type	 = MST_SpecularReflection;
-			out.Outgoing = Reflection::reflect(in.Point.Surface.NdotV, in.Point.Surface.N,
-											   in.Point.Ray.Direction);
+			out.L = Reflection::reflect(in.Context.V);
 		} else {
-			const float NdotT = Reflection::refraction_angle(in.Point.Surface.NdotV, eta);
+			const float NdotT = Reflection::refraction_angle(in.Context.NdotV(), eta);
 
 			if (NdotT < 0) { // TOTAL REFLECTION
 				if (mThin) { // Ignore
@@ -93,12 +92,11 @@ public:
 					return;
 				} else {
 					out.Type	 = MST_SpecularReflection;
-					out.Outgoing = Reflection::reflect(-in.Point.Surface.NdotV, -in.Point.Surface.N, in.Point.Ray.Direction);
+					out.L = Reflection::reflect(in.Context.V);
 				}
 			} else {
 				out.Type	 = MST_SpecularTransmission;
-				out.Outgoing = Reflection::refract(eta, in.Point.Surface.NdotV, NdotT,
-												   in.Point.Surface.N, in.Point.Ray.Direction);
+				out.L = Reflection::refract(eta, NdotT, in.Context.V);
 			}
 		}
 
@@ -118,8 +116,8 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mSpecularity;
-	std::shared_ptr<FloatSpectralShadingSocket> mIOR;
+	std::shared_ptr<FloatSpectralNode> mSpecularity;
+	std::shared_ptr<FloatSpectralNode> mIOR;
 	bool mThin;
 };
 
@@ -129,8 +127,8 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<GlassMaterial>(id,
-											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1),
-											   ctx.Env->lookupSpectralShadingSocket(params.getParameter("index"), 1.55f),
+											   ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1),
+											   ctx.Env->lookupSpectralNode(params.getParameter("index"), 1.55f),
 											   params.getBool("thin", false));
 	}
 

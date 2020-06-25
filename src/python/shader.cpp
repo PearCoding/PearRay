@@ -1,9 +1,9 @@
 #include "material/IMaterial.h"
-#include "shader/Socket.h"
+#include "shader/Node.h"
 
 // Implementations
-#include "shader/ConstSocket.h"
-#include "shader/ImageMapSocket.h"
+#include "shader/ConstNode.h"
+#include "shader/ImageNode.h"
 
 #include "pypearray.h"
 
@@ -13,29 +13,29 @@ namespace PRPY {
 PR_NO_SANITIZE_ADDRESS
 void setup_shader(py::module& m)
 {
-	py::class_<FloatScalarShadingSocket, std::shared_ptr<FloatScalarShadingSocket>>(m, "FloatScalarShadingSocket");
+	py::class_<FloatScalarNode, std::shared_ptr<FloatScalarNode>>(m, "FloatScalarNode");
 
-	py::class_<FloatSpectralShadingSocket, std::shared_ptr<FloatSpectralShadingSocket>>(m, "FloatSpectralShadingSocket");
+	py::class_<FloatSpectralNode, std::shared_ptr<FloatSpectralNode>>(m, "FloatSpectralNode");
 
-	py::class_<FloatVectorShadingSocket, std::shared_ptr<FloatVectorShadingSocket>>(m, "FloatVectorShadingSocket");
+	py::class_<FloatVectorNode, std::shared_ptr<FloatVectorNode>>(m, "FloatVectorNode");
 
 	// Implementations
-	py::class_<ConstScalarShadingSocket, FloatScalarShadingSocket, std::shared_ptr<ConstScalarShadingSocket>>(m, "ConstScalarShadingSocket")
+	py::class_<ConstScalarNode, FloatScalarNode, std::shared_ptr<ConstScalarNode>>(m, "ConstScalarNode")
 		.def(py::init<float>());
 
-	py::class_<ConstSpectralShadingSocket, FloatSpectralShadingSocket, std::shared_ptr<ConstSpectralShadingSocket>>(m, "ConstSpectralShadingSocket")
+	py::class_<ConstSpectralNode, FloatSpectralNode, std::shared_ptr<ConstSpectralNode>>(m, "ConstSpectralNode")
 		.def(py::init<const ParametricBlob&>());
 
-	py::class_<ConstVectorShadingSocket, FloatVectorShadingSocket, std::shared_ptr<ConstVectorShadingSocket>>(m, "ConstVectorShadingSocket")
+	py::class_<ConstVectorNode, FloatVectorNode, std::shared_ptr<ConstVectorNode>>(m, "ConstVectorNode")
 		.def(py::init<const Vector3f&>());
 
-	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarShadingSocket >
+	// py::class_<ImageScalarOutput, std::shared_ptr<ImageScalarOutput>, py::bases<ScalarNode >
 	//     ("ImageScalarOutput", py::init<float>())
 	// ;
-	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectralShadingSocket >
+	// py::class_<ImageSpectralOutput, std::shared_ptr<ImageSpectralOutput>, py::bases<SpectralNode >
 	//     ("ImageSpectralOutput", py::init<const PR::Spectrum&>())
 	// ;
-	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorShadingSocket >
+	// py::class_<ImageVectorOutput, std::shared_ptr<ImageVectorOutput>, py::bases<VectorNode >
 	//     ("ImageVectorOutput", py::init<const Vector3f&>())
 	// ;
 }

@@ -88,50 +88,32 @@ inline void Environment::addMesh(const std::string& name, const std::shared_ptr<
 	mMeshes.emplace(name, m);
 }
 
-inline void Environment::addShadingSocket(const std::string& name,
-										  const ShadingSocketVariantPtr& output)
+inline void Environment::addNode(const std::string& name,
+										  const NodeVariantPtr& output)
 {
-	PR_ASSERT(!hasShadingSocket(name), "Given name should be unique");
-	mNamedShadingSockets.emplace(name, output);// Skip default constructor
+	PR_ASSERT(!hasNode(name), "Given name should be unique");
+	mNamedNodes.emplace(name, output);// Skip default constructor
 }
 
 template <typename Socket>
-inline std::shared_ptr<Socket> Environment::getShadingSocket(const std::string& name) const
+inline std::shared_ptr<Socket> Environment::getNode(const std::string& name) const
 {
 	try {
-		return std::get<std::shared_ptr<Socket>>(mNamedShadingSockets.at(name));
+		return std::get<std::shared_ptr<Socket>>(mNamedNodes.at(name));
 	} catch (const std::bad_variant_access&) {
 		return nullptr;
 	}
 }
 
-inline bool Environment::hasShadingSocket(const std::string& name) const
+inline bool Environment::hasNode(const std::string& name) const
 {
-	return mNamedShadingSockets.count(name) != 0;
+	return mNamedNodes.count(name) != 0;
 }
 
 template <typename Socket>
-inline bool Environment::isShadingSocket(const std::string& name) const
+inline bool Environment::isNode(const std::string& name) const
 {
-	return hasShadingSocket(name) && getShadingSocket<Socket>(name);
-}
-
-inline std::shared_ptr<FloatSpectralMapSocket> Environment::getMapSocket(
-	const std::string& name) const
-{
-	return mNamedMapSockets.at(name);
-}
-
-inline bool Environment::hasMapSocket(const std::string& name) const
-{
-	return mNamedMapSockets.count(name) != 0;
-}
-
-inline void Environment::addMapSocket(const std::string& name,
-									  const std::shared_ptr<FloatSpectralMapSocket>& m)
-{
-	PR_ASSERT(!hasMapSocket(name), "Given name should be unique");
-	mNamedMapSockets.emplace(name, m);
+	return hasNode(name) && getNode<Socket>(name);
 }
 
 inline void* Environment::textureSystem() { return mTextureSystem; }

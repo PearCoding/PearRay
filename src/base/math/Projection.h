@@ -52,7 +52,7 @@ inline float hemi_pdf()
 }
 
 // Cosine weighted
-// Orientation +Z
+// Orientation +Z (shading space)
 inline Vector3f cos_hemi(float u1, float u2, float& pdf)
 {
 	const float cosPhi = std::sqrt(u1);

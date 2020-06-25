@@ -62,15 +62,14 @@ set(PR_Src
   sampler/ISamplerPlugin.h
   sampler/SamplerManager.cpp
   sampler/SamplerManager.h
-  shader/ConstSocket.cpp
-  shader/ConstSocket.h
+  shader/ConstNode.cpp
+  shader/ConstNode.h
   shader/IlluminantData.inl
-  shader/IlluminantSocket.cpp
-  shader/IlluminantSocket.h
-  shader/ImageMapSocket.cpp
-  shader/ImageMapSocket.h
-  shader/MapShadingSocket.cpp
-  shader/MapShadingSocket.h)
+  shader/IlluminantNode.cpp
+  shader/IlluminantNode.h
+  shader/ImageNode.cpp
+  shader/ImageNode.h
+  )
 
 if(NOT WIN32)
   # For non Windows (prob. only Linux) systems we use assembler to embed srgb.coeff

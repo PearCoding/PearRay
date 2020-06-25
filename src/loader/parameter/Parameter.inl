@@ -1,26 +1,21 @@
 // IWYU pragma: private, include "parameter/Parameter.h"
 namespace PR {
 inline Parameter::Parameter()
-	: mFlags(0)
-	, mType(PT_Invalid)
+	: mType(PT_Invalid)
 {
 }
 
-inline Parameter::Parameter(uint8 f, ParameterType t, const std::vector<ParameterData>& dt)
-	: mFlags(f)
-	, mType(t)
+inline Parameter::Parameter(ParameterType t, const std::vector<ParameterData>& dt)
+	: mType(t)
 	, mData(dt)
 {
 }
 
 inline bool Parameter::isValid() const { return !mData.empty(); }
+inline bool Parameter::isReference() const { return mData.size() == 1 && mType == PT_Reference; }
 inline bool Parameter::isArray() const { return mData.size() > 1 && mType != PT_Invalid; }
 
 inline size_t Parameter::arraySize() const { return mData.size(); }
-
-inline uint8 Parameter::flags() const { return mFlags; }
-inline void Parameter::setFlags(uint8 f) { mFlags = f; }
-inline void Parameter::assignFlags(uint8 f) { mFlags |= f; }
 
 inline ParameterType Parameter::type() const { return mType; }
 
@@ -32,6 +27,13 @@ inline uint64 Parameter::getExactUInt(uint64 def) const { return getExactUInt(0,
 inline float Parameter::getNumber(float def) const { return getNumber(0, def); }
 inline float Parameter::getExactNumber(float def) const { return getExactNumber(0, def); }
 inline std::string Parameter::getString(const std::string& def) const { return getString(0, def); }
+inline uint64 Parameter::getReference(uint64 def) const
+{
+	if(isReference())
+		return mData[0].UInt;
+	else
+		return def;
+}
 
 inline bool Parameter::getBool(size_t ind, bool def) const
 {

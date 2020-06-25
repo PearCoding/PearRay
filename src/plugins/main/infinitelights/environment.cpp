@@ -6,6 +6,7 @@
 #include "math/Projection.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
+#include "shader/ShadingContext.h"
 
 #include "sampler/Distribution2D.h"
 
@@ -19,8 +20,8 @@ namespace PR {
 class EnvironmentLightBase : public IInfiniteLight {
 public:
 	EnvironmentLightBase(uint32 id, const std::string& name,
-						 const std::shared_ptr<FloatSpectralMapSocket>& spec,
-						 const std::shared_ptr<FloatSpectralMapSocket>& background,
+						 const std::shared_ptr<FloatSpectralNode>& spec,
+						 const std::shared_ptr<FloatSpectralNode>& background,
 						 const std::shared_ptr<Distribution2D>& distribution,
 						 float factor,
 						 const Eigen::Matrix3f& trans)
@@ -36,26 +37,26 @@ public:
 
 	inline void evalSD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
-		MapSocketCoord coord;
+		ShadingContext ctx;
 		Vector3f dir = mInvTransform * in.Ray.Direction;
 
-		coord.UV		   = Spherical::uv_from_normal(dir);
-		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Ray.WavelengthNM;
+		ctx.UV			 = Spherical::uv_from_normal(dir);
+		ctx.UV(1)		 = 1 - ctx.UV(1);
+		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
 		if (in.Ray.IterationDepth == 0)
-			out.Weight = mBackground->eval(coord);
+			out.Weight = mBackground->eval(ctx);
 		else
-			out.Weight = mRadianceFactor * mRadiance->eval(coord);
+			out.Weight = mRadianceFactor * mRadiance->eval(ctx);
 
-		const float sinTheta = std::sin(coord.UV(1) * PR_PI);
+		const float sinTheta = std::sin(ctx.UV(1) * PR_PI);
 		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 	}
 
 	inline void evalS(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
-		MapSocketCoord coord;
+		ShadingContext coord;
 		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
@@ -72,7 +73,7 @@ public:
 
 	inline void evalD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
-		MapSocketCoord coord;
+		ShadingContext coord;
 		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
@@ -88,7 +89,7 @@ public:
 
 	inline void evalN(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
 	{
-		MapSocketCoord coord;
+		ShadingContext coord;
 		Vector3f dir = mInvTransform * in.Ray.Direction;
 
 		coord.UV		   = Spherical::uv_from_normal(dir);
@@ -106,7 +107,7 @@ public:
 		out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
 		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
-		MapSocketCoord coord;
+		ShadingContext coord;
 		coord.UV		   = uv;
 		coord.UV(1)		   = 1 - coord.UV(1);
 		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
@@ -122,7 +123,7 @@ public:
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
 		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
-		MapSocketCoord coord;
+		ShadingContext coord;
 		coord.UV		   = in.RND;
 		coord.UV(1)		   = 1 - coord.UV(1);
 		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
@@ -152,8 +153,8 @@ private:
 
 	// Radiance is used for sampling, background is used when a ray hits the background
 	// Most of the time both are the same
-	const std::shared_ptr<FloatSpectralMapSocket> mRadiance;
-	const std::shared_ptr<FloatSpectralMapSocket> mBackground;
+	const std::shared_ptr<FloatSpectralNode> mRadiance;
+	const std::shared_ptr<FloatSpectralNode> mBackground;
 	const float mRadianceFactor;
 	const Eigen::Matrix3f mTransform;
 	const Eigen::Matrix3f mInvTransform;
@@ -162,8 +163,8 @@ private:
 class EnvironmentSDLight : public EnvironmentLightBase {
 public:
 	EnvironmentSDLight(uint32 id, const std::string& name,
-					   const std::shared_ptr<FloatSpectralMapSocket>& spec,
-					   const std::shared_ptr<FloatSpectralMapSocket>& background,
+					   const std::shared_ptr<FloatSpectralNode>& spec,
+					   const std::shared_ptr<FloatSpectralNode>& background,
 					   const std::shared_ptr<Distribution2D>& dist,
 					   float factor,
 					   const Eigen::Matrix3f& trans)
@@ -187,8 +188,8 @@ public:
 class EnvironmentSLight : public EnvironmentLightBase {
 public:
 	EnvironmentSLight(uint32 id, const std::string& name,
-					  const std::shared_ptr<FloatSpectralMapSocket>& spec,
-					  const std::shared_ptr<FloatSpectralMapSocket>& background,
+					  const std::shared_ptr<FloatSpectralNode>& spec,
+					  const std::shared_ptr<FloatSpectralNode>& background,
 					  float factor,
 					  const Eigen::Matrix3f& trans)
 		: EnvironmentLightBase(id, name, spec, background, nullptr, factor, trans)
@@ -211,7 +212,7 @@ public:
 class EnvironmentDLight : public EnvironmentLightBase {
 public:
 	EnvironmentDLight(uint32 id, const std::string& name,
-					  const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					  const std::shared_ptr<FloatSpectralNode>& spec,
 					  const std::shared_ptr<Distribution2D>& dist,
 					  float factor,
 					  const Eigen::Matrix3f& trans)
@@ -235,7 +236,7 @@ public:
 class EnvironmentNLight : public EnvironmentLightBase {
 public:
 	EnvironmentNLight(uint32 id, const std::string& name,
-					  const std::shared_ptr<FloatSpectralMapSocket>& spec,
+					  const std::shared_ptr<FloatSpectralNode>& spec,
 					  float factor,
 					  const Eigen::Matrix3f& trans)
 		: EnvironmentLightBase(id, name, spec, spec, nullptr, factor, trans)
@@ -267,16 +268,16 @@ public:
 		auto radP		 = params.getParameter("radiance");
 		auto backgroundP = params.getParameter("background");
 
-		std::shared_ptr<FloatSpectralMapSocket> radiance;
-		std::shared_ptr<FloatSpectralMapSocket> background;
+		std::shared_ptr<FloatSpectralNode> radiance;
+		std::shared_ptr<FloatSpectralNode> background;
 		if (radP.isValid() && backgroundP.isValid()) {
-			radiance   = ctx.Env->lookupSpectralMapSocket(radP, 1);
-			background = ctx.Env->lookupSpectralMapSocket(backgroundP, 1);
+			radiance   = ctx.Env->lookupSpectralNode(radP, 1);
+			background = ctx.Env->lookupSpectralNode(backgroundP, 1);
 		} else if (radP.isValid()) {
-			radiance   = ctx.Env->lookupSpectralMapSocket(radP, 1);
+			radiance   = ctx.Env->lookupSpectralNode(radP, 1);
 			background = radiance;
 		} else {
-			background = ctx.Env->lookupSpectralMapSocket(backgroundP, 1);
+			background = ctx.Env->lookupSpectralNode(backgroundP, 1);
 			radiance   = background;
 		}
 
@@ -297,7 +298,7 @@ public:
 
 				float sinTheta = std::sin(PR_PI * (y + 0.5f) / recSize(1));
 
-				MapSocketCoord coord;
+				ShadingContext coord;
 				coord.UV		   = Vector2f(u, v);
 				coord.dUV		   = filterSize;
 				coord.WavelengthNM = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test

@@ -1,21 +1,21 @@
 #pragma once
 
-#include "shader/Socket.h"
+#include "shader/Node.h"
 
 #include <OpenImageIO/texture.h>
 
 namespace PR {
-class PR_LIB_LOADER ImageMapSocket : public PR::FloatSpectralMapSocket {
+class PR_LIB_LOADER ImageNode : public PR::FloatSpectralNode {
 public:
-	ImageMapSocket(OIIO::TextureSystem* tsys,
+	ImageNode(OIIO::TextureSystem* tsys,
 				   const OIIO::TextureOpt& options,
 				   const std::string& filename);
-	SpectralBlob eval(const MapSocketCoord& ctx) const override;
+	SpectralBlob eval(const ShadingContext& ctx) const override;
 	Vector2i queryRecommendedSize() const override;
 	std::string dumpInformation() const override;
 
 private:
-	void lookup(const MapSocketCoord& x, SpectralBlob& rgb) const;
+	void lookup(const ShadingContext& x, SpectralBlob& rgb) const;
 
 	OIIO::ustring mFilename;
 	void* mHandle;

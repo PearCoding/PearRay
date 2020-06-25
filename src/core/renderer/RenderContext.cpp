@@ -15,7 +15,7 @@
 #include "math/Projection.h"
 #include "math/Reflection.h"
 #include "scene/Scene.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size2i& viewSize,

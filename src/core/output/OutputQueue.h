@@ -15,7 +15,7 @@ public:
 
 	inline void pushSpectralFragment(const Point2i& p, const SpectralBlob& spec,
 									 const SpectralBlob& wavelengths, bool isMono, const LightPath& path);
-	inline void pushSPFragment(const Point2i& p, const ShadingPoint& pt, const LightPath& path);
+	inline void pushSPFragment(const Point2i& p, const IntersectionPoint& pt, const LightPath& path);
 	inline void pushFeedbackFragment(const Point2i& p, uint32 feedback);
 
 	inline bool isReadyToCommit() const;

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "entity/ITransformable.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 struct PR_LIB_CORE InfiniteLightEvalInput {
-	const ShadingPoint* Point = nullptr; // Can be null if called not from a surface
+	const IntersectionPoint* Point = nullptr; // Can be null if not called from a surface
 	PR::Ray Ray;
 };
 
@@ -15,7 +15,7 @@ struct PR_LIB_CORE InfiniteLightEvalOutput {
 };
 
 struct PR_LIB_CORE InfiniteLightSampleInput {
-	ShadingPoint Point;
+	IntersectionPoint Point;
 	Vector2f RND;
 };
 

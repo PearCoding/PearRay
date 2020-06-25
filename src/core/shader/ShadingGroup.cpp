@@ -44,7 +44,7 @@ void ShadingGroup::extractGeometryPoint(size_t i, GeometryPoint& pt) const
 	mEntity->provideGeometryPoint(query, pt);
 }
 
-void ShadingGroup::computeShadingPoint(size_t i, ShadingPoint& spt) const
+void ShadingGroup::computeShadingPoint(size_t i, IntersectionPoint& spt) const
 {
 	auto entry = mBlock.Stream->get(mBlock.Start + i);
 

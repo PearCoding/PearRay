@@ -14,8 +14,8 @@ struct PR_LIB_CORE GeometryPoint {
 	Vector3f Ny;
 
 	// 2D surface parameters
-	Vector3f UVW;
-	Vector3f dUVW; // Pixel footprint
+	Vector2f UV;
+	Vector2f dUV; // Pixel footprint
 
 	uint32 EntityID;
 	uint32 PrimitiveID;

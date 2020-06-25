@@ -17,7 +17,7 @@ namespace PR {
 class RenderTile;
 class IMaterial;
 class IEmission;
-class ShadingPoint;
+class IntersectionPoint;
 class LightPath;
 class OutputQueue;
 class FrameBufferBucket;
@@ -50,7 +50,7 @@ public:
 
 	void pushSpectralFragment(const SpectralBlob& spec, const Ray& ray,
 							  const LightPath& path) const;
-	void pushSPFragment(const ShadingPoint& pt, const LightPath& path) const;
+	void pushSPFragment(const IntersectionPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
 	IEntity* pickRandomLight(const Vector3f& view, uint32 ignore_id, const Vector3f& rnd, Vector3f& pos, GeometryPoint& pt, float& pdf) const;

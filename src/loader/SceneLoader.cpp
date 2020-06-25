@@ -209,7 +209,7 @@ void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto filter	   = fac->create(id, ctx);
 	if (!filter) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create sampler of type " << type << std::endl;
@@ -281,7 +281,7 @@ void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto filter	   = fac->create(id, ctx);
 	if (!filter) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create filter of type " << type << std::endl;
@@ -320,7 +320,7 @@ void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ct
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto intgr	   = fac->create(id, ctx);
 	if (!intgr) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create integrator of type " << type << std::endl;
@@ -429,7 +429,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto entity	   = fac->create(id, ctx);
 	if (!entity) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create entity of type " << type << std::endl;
@@ -502,7 +502,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto camera	   = fac->create(id, ctx);
 	if (!camera) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create camera of type " << type << std::endl;
@@ -537,7 +537,7 @@ void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto light	   = fac->create(id, ctx);
 	if (!light) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create light of type " << type << std::endl;
@@ -589,7 +589,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto emission  = fac->create(id, ctx);
 	if (!emission) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create emission of type " << type << std::endl;
@@ -642,7 +642,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	ctx.Parameters = populateObjectParameters(group);
+	ctx.Parameters = populateObjectParameters(group, ctx);
 	auto mat	   = fac->create(id, ctx);
 	if (!mat) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create material of type " << type << std::endl;
@@ -841,7 +841,7 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 	ctx.FileStack.pop_back();
 }
 
-ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group)
+ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	ParameterGroup params;
 	for (const auto& entry : group.getNamedEntries()) {
@@ -884,24 +884,10 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group)
 				} else {
 					PR_LOG(L_ERROR) << "[Loader] Array inner type mismatch" << std::endl;
 				}
-			} else if (grp.id() == "texture") {
-				if (grp.anonymousCount() == 1 && grp.at(0).type() == DL::DT_String) {
-					Parameter param = Parameter::fromString(grp.at(0).getString());
-					param.assignFlags(PF_Texture);
-					params.addParameter(entry.key(), param);
-				} else {
-					PR_LOG(L_ERROR) << "[Loader] Invalid texture parameter" << std::endl;
-				}
-			} else if (grp.id() == "illuminant") {
-				if (grp.anonymousCount() == 1 && grp.at(0).type() == DL::DT_String) {
-					Parameter param = Parameter::fromString(grp.at(0).getString());
-					param.assignFlags(PF_Illuminant);
-					params.addParameter(entry.key(), param);
-				} else {
-					PR_LOG(L_ERROR) << "[Loader] Invalid illuminant parameter" << std::endl;
-				}
 			} else {
-				PR_LOG(L_ERROR) << "[Loader] Invalid parameter group type: " << grp.id() << std::endl;
+				Parameter param = unpackShadingNetwork(grp, ctx);
+				if (param.isValid())
+					params.addParameter(entry.key(), param);
 			}
 		} break;
 		default:
@@ -910,5 +896,29 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group)
 		}
 	}
 	return params;
+}
+
+Parameter SceneLoader::unpackShadingNetwork(const DL::DataGroup& group, SceneLoadContext& ctx)
+{
+	// TODO: Make it adaptable
+	PR_UNUSED(ctx);
+	if (group.id() == "texture") {
+		if (group.anonymousCount() == 1 && group.at(0).type() == DL::DT_String) {
+			Parameter param = Parameter::fromString(group.at(0).getString());
+			return param;
+		} else {
+			PR_LOG(L_ERROR) << "[Loader] Invalid texture parameter" << std::endl;
+		}
+	} else if (group.id() == "illuminant") {
+		if (group.anonymousCount() == 1 && group.at(0).type() == DL::DT_String) {
+			Parameter param = Parameter::fromString(group.at(0).getString());
+			return param;
+		} else {
+			PR_LOG(L_ERROR) << "[Loader] Invalid illuminant parameter" << std::endl;
+		}
+	} else {
+		PR_LOG(L_ERROR) << "[Loader] Invalid parameter group type: " << group.id() << std::endl;
+	}
+	return Parameter();
 }
 } // namespace PR

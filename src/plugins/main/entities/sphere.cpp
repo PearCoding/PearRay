@@ -119,7 +119,7 @@ public:
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 		const Vector2f uv = Spherical::uv_from_normal(pt.N);
-		pt.UVW			  = Vector3f(uv(0), uv(1), 0);
+		pt.UV			  = uv;
 		pt.EntityID		  = id();
 		pt.PrimitiveID	  = query.PrimitiveID;
 		pt.MaterialID	  = mMaterialID;

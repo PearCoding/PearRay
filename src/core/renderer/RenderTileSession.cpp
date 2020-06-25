@@ -7,7 +7,7 @@
 #include "output/OutputQueue.h"
 #include "sampler/SplitSample.h"
 #include "scene/Scene.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 RenderTileSession::RenderTileSession()
@@ -121,7 +121,7 @@ void RenderTileSession::pushSpectralFragment(const SpectralBlob& spec, const Ray
 		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
-void RenderTileSession::pushSPFragment(const ShadingPoint& pt,
+void RenderTileSession::pushSPFragment(const IntersectionPoint& pt,
 									   const LightPath& path) const
 {
 	PR_PROFILE_THIS;

@@ -24,17 +24,17 @@ namespace PR {
 class PrincipledMaterial : public IMaterial {
 public:
 	PrincipledMaterial(uint32 id,
-					   const std::shared_ptr<FloatSpectralShadingSocket>& baseColor,
-					   const std::shared_ptr<FloatScalarShadingSocket>& spec,
-					   const std::shared_ptr<FloatScalarShadingSocket>& specTint,
-					   const std::shared_ptr<FloatScalarShadingSocket>& roughness,
-					   const std::shared_ptr<FloatScalarShadingSocket>& anisotropic,
-					   const std::shared_ptr<FloatScalarShadingSocket>& subsurface,
-					   const std::shared_ptr<FloatScalarShadingSocket>& metallic,
-					   const std::shared_ptr<FloatScalarShadingSocket>& sheen,
-					   const std::shared_ptr<FloatScalarShadingSocket>& sheenTint,
-					   const std::shared_ptr<FloatScalarShadingSocket>& clearcoat,
-					   const std::shared_ptr<FloatScalarShadingSocket>& clearcoatGloss)
+					   const std::shared_ptr<FloatSpectralNode>& baseColor,
+					   const std::shared_ptr<FloatScalarNode>& spec,
+					   const std::shared_ptr<FloatScalarNode>& specTint,
+					   const std::shared_ptr<FloatScalarNode>& roughness,
+					   const std::shared_ptr<FloatScalarNode>& anisotropic,
+					   const std::shared_ptr<FloatScalarNode>& subsurface,
+					   const std::shared_ptr<FloatScalarNode>& metallic,
+					   const std::shared_ptr<FloatScalarNode>& sheen,
+					   const std::shared_ptr<FloatScalarNode>& sheenTint,
+					   const std::shared_ptr<FloatScalarNode>& clearcoat,
+					   const std::shared_ptr<FloatScalarNode>& clearcoatGloss)
 		: IMaterial(id)
 		, mBaseColor(baseColor)
 		, mSpecular(spec)
@@ -66,60 +66,58 @@ public:
 		return (1 - t) * v0 + t * v1;
 	}
 
-	inline float diffuseTerm(const ShadingPoint& point, float NdotL, float HdotL, float roughness) const
+	inline float diffuseTerm(const MaterialEvalContext& ctx, float HdotL, float roughness) const
 	{
 		float fd90 = 0.5f + 2 * HdotL * HdotL * roughness;
-		float lk   = Fresnel::schlick_term(NdotL);
-		float vk   = Fresnel::schlick_term(-point.Surface.NdotV);
+		float lk   = Fresnel::schlick_term(ctx.NdotL());
+		float vk   = Fresnel::schlick_term(ctx.NdotV());
 
 		return mix(1.0f, fd90, lk) * mix(1.0f, fd90, vk);
 	}
 
 	// Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
-	inline float subsurfaceTerm(const ShadingPoint& point, float NdotL, float HdotL, float roughness) const
+	inline float subsurfaceTerm(const MaterialEvalContext& ctx, float HdotL, float roughness) const
 	{
 		float fss90 = HdotL * HdotL * roughness;
-		float lk	= Fresnel::schlick_term(NdotL);
-		float vk	= Fresnel::schlick_term(-point.Surface.NdotV);
+		float lk	= Fresnel::schlick_term(ctx.NdotL());
+		float vk	= Fresnel::schlick_term(ctx.NdotV());
 
 		float fss = mix(1.0f, fss90, lk) * mix(1.0f, fss90, vk);
 
-		const float f = NdotL - point.Surface.NdotV;
+		const float f = ctx.NdotL() + ctx.NdotV();
 		if (std::abs(f) < PR_EPSILON)
 			return 0.0f;
 		else
 			return 1.25f * (fss * (1.0f / f - 0.5f) + 0.5f);
 	}
 
-	inline SpectralBlob specularTerm(const ShadingPoint& point, const SpectralBlob& spec,
-									 float VdotX, float VdotY,
-									 float NdotL, float LdotX, float LdotY,
-									 float HdotL, float NdotH, float HdotX, float HdotY,
-									 float roughness, float aniso) const
+	inline SpectralBlob specularTerm(const MaterialEvalContext& ctx, const SpectralBlob& spec,
+									 float HdotL, float roughness, float aniso) const
 	{
 		float aspect = std::sqrt(1 - aniso * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		float D		   = Microfacet::ndf_ggx(NdotH, HdotX, HdotY, ax, ay);
+		float D		   = Microfacet::ndf_ggx(ctx.NdotH(), ctx.XdotH(), ctx.YdotH(), ax, ay);
 		float hk	   = Fresnel::schlick_term(HdotL);
 		SpectralBlob F = mix<SpectralBlob>(spec, SpectralBlob::Ones(), hk);
-		float G		   = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.Surface.NdotV, VdotX, VdotY, ax, ay);
+		float G		   = Microfacet::g_1_smith(ctx.NdotL(), ctx.XdotL(), ctx.YdotL(), ax, ay)
+				  * Microfacet::g_1_smith(ctx.NdotV(), ctx.XdotV(), ctx.YdotV(), ax, ay);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return D * F * G;
 	}
 
-	inline float clearcoatTerm(const ShadingPoint& point, float gloss, float NdotL, float HdotL, float NdotH) const
+	inline float clearcoatTerm(const MaterialEvalContext& ctx, float gloss, float HdotL) const
 	{
 		// This is fixed by definition
 		static float F0 = 0.04f; // IOR 1.5
 		static float R	= 0.25f;
 
-		float D	 = Microfacet::ndf_ggx(NdotH, mix(0.1f, 0.001f, gloss));
+		float D	 = Microfacet::ndf_ggx(ctx.NdotH(), mix(0.1f, 0.001f, gloss));
 		float hk = Fresnel::schlick_term(HdotL);
 		float F	 = mix(F0, 1.0f, hk);
-		float G	 = Microfacet::g_1_smith(NdotL, R) * Microfacet::g_1_smith(-point.Surface.NdotV, R);
+		float G	 = Microfacet::g_1_smith(ctx.NdotL(), R) * Microfacet::g_1_smith(ctx.NdotV(), R);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return R * D * F * G;
@@ -131,7 +129,7 @@ public:
 		return hk * sheen;
 	}
 
-	SpectralBlob evalBRDF(const ShadingPoint& point, const Vector3f& L,
+	SpectralBlob evalBRDF(const MaterialEvalContext& ctx,
 						  const SpectralBlob& base,
 						  float lum,
 						  float subsurface,
@@ -145,17 +143,7 @@ public:
 						  float clearcoat,
 						  float clearcoatGloss) const
 	{
-		const float VdotX = -point.Surface.Nx.dot(point.Ray.Direction);
-		const float VdotY = -point.Surface.Ny.dot(point.Ray.Direction);
-		const float NdotL = point.Surface.N.dot(L);
-		const float LdotX = point.Surface.Nx.dot(L);
-		const float LdotY = point.Surface.Ny.dot(L);
-
-		const Eigen::Vector3f H = Reflection::halfway(point.Ray.Direction, L);
-		const float NdotH		= point.Surface.N.dot(H);
-		const float HdotL		= L.dot(H);
-		const float HdotX		= point.Surface.Nx.dot(H);
-		const float HdotY		= point.Surface.Ny.dot(H);
+		const float HdotL = ctx.L.dot(ctx.H);
 
 		const SpectralBlob tint = lum > PR_EPSILON
 									  ? SpectralBlob(base / lum)
@@ -166,12 +154,10 @@ public:
 			metallic);
 		const SpectralBlob csheen = mix<SpectralBlob>(SpectralBlob::Ones(), tint, sheenTint);
 
-		float diffTerm		  = diffuseTerm(point, NdotL, HdotL, roughness);
-		float ssTerm		  = subsurface > PR_EPSILON ? subsurfaceTerm(point, NdotL, HdotL, roughness) : 0.0f;
-		SpectralBlob specTerm = specularTerm(point, cspec,
-											 VdotX, VdotY, NdotL, LdotX, LdotY, HdotL, NdotH, HdotX, HdotY,
-											 roughness, anisotropic);
-		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(point, clearcoatGloss, NdotL, HdotL, NdotH) : 0.0f;
+		float diffTerm		  = diffuseTerm(ctx, HdotL, roughness);
+		float ssTerm		  = subsurface > PR_EPSILON ? subsurfaceTerm(ctx, HdotL, roughness) : 0.0f;
+		SpectralBlob specTerm = specularTerm(ctx, cspec, HdotL, roughness, anisotropic);
+		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(ctx, clearcoatGloss, HdotL) : 0.0f;
 		SpectralBlob shTerm	  = sheenTerm(sheen * csheen, HdotL);
 
 		return (PR_1_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
@@ -184,28 +170,28 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		SpectralBlob base	 = mBaseColor->eval(in.Point);
+		ShadingContext sctx	 = ShadingContext::fromMC(in.Context);
+		SpectralBlob base	 = mBaseColor->eval(sctx);
 		float lum			 = base.maxCoeff();
-		float subsurface	 = mSubsurface->eval(in.Point);
-		float anisotropic	 = mAnisotropic->eval(in.Point);
-		float roughness		 = std::max(0.01f, mRoughness->eval(in.Point));
-		float metallic		 = mMetallic->eval(in.Point);
-		float spec			 = mSpecular->eval(in.Point);
-		float specTint		 = mSpecularTint->eval(in.Point);
-		float sheen			 = mSheen->eval(in.Point);
-		float sheenTint		 = mSheenTint->eval(in.Point);
-		float clearcoat		 = mClearcoat->eval(in.Point);
-		float clearcoatGloss = mClearcoatGloss->eval(in.Point);
+		float subsurface	 = mSubsurface->eval(sctx);
+		float anisotropic	 = mAnisotropic->eval(sctx);
+		float roughness		 = std::max(0.01f, mRoughness->eval(sctx));
+		float metallic		 = mMetallic->eval(sctx);
+		float spec			 = mSpecular->eval(sctx);
+		float specTint		 = mSpecularTint->eval(sctx);
+		float sheen			 = mSheen->eval(sctx);
+		float sheenTint		 = mSheenTint->eval(sctx);
+		float clearcoat		 = mClearcoat->eval(sctx);
+		float clearcoatGloss = mClearcoatGloss->eval(sctx);
 
-		out.Weight = evalBRDF(in.Point, in.Outgoing,
-							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
+		out.Weight = evalBRDF(in.Context, base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
-					 * std::abs(in.NdotL);
+					 * std::abs(in.Context.NdotL());
 
 		float aspect = std::sqrt(1 - anisotropic * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	 = Microfacet::pdf_ggx(in.NdotL, ax, ay); // Use NdotH instead of NdotL!
+		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.NdotL(), ax, ay); // Use NdotH instead of NdotL!
 
 		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -219,28 +205,25 @@ public:
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		Vector3f nV = Tangent::toTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, -in.Point.Ray.Direction);
-
 		float pdf_s;
-		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, pdf_s);
+		out.L = Microfacet::sample_ggx_vndf(u, v, in.Context.V, ax, ay, pdf_s);
 		//out.Outgoing = Microfacet::sample_ndf_ggx(u, v, ax, ay, pdf_s);
 		out.PDF_S = pdf_s;
 
-		const float refInvPdf = 2 * std::max(0.0f, out.Outgoing.dot(nV));
+		const float refInvPdf = 2 * std::max(0.0f, out.L.dot(in.Context.V));
 		if (refInvPdf > PR_EPSILON)
 			out.PDF_S /= refInvPdf;
 		else
 			out.PDF_S = 0.0f; // Drop sample
 
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
-		if (out.Outgoing.dot(in.Point.Surface.N) <= PR_EPSILON)
+		if (out.L[2] <= PR_EPSILON)
 			out.PDF_S = 0;
 
 		// Reflect incoming ray by the calculated half vector
-		out.Outgoing = Reflection::reflect(out.Outgoing.dot(in.Point.Ray.Direction), out.Outgoing, in.Point.Ray.Direction);
-		out.Outgoing.normalize();
+		out.L = Reflection::reflect(in.Context.V, out.L);
+		out.L.normalize();
 
-		if (out.Outgoing.dot(in.Point.Surface.N) <= PR_EPSILON)
+		if (out.L[2] <= PR_EPSILON)
 			out.PDF_S = 0;
 	}
 
@@ -249,18 +232,19 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		SpectralBlob base	 = mBaseColor->eval(in.Point);
+		ShadingContext sctx	 = ShadingContext::fromMC(in.Context);
+		SpectralBlob base	 = mBaseColor->eval(sctx);
 		float lum			 = base.maxCoeff();
-		float subsurface	 = mSubsurface->eval(in.Point);
-		float anisotropic	 = mAnisotropic->eval(in.Point);
-		float roughness		 = mRoughness->eval(in.Point);
-		float metallic		 = mMetallic->eval(in.Point);
-		float spec			 = mSpecular->eval(in.Point);
-		float specTint		 = mSpecularTint->eval(in.Point);
-		float sheen			 = mSheen->eval(in.Point);
-		float sheenTint		 = mSheenTint->eval(in.Point);
-		float clearcoat		 = mClearcoat->eval(in.Point);
-		float clearcoatGloss = mClearcoatGloss->eval(in.Point);
+		float subsurface	 = mSubsurface->eval(sctx);
+		float anisotropic	 = mAnisotropic->eval(sctx);
+		float roughness		 = mRoughness->eval(sctx);
+		float metallic		 = mMetallic->eval(sctx);
+		float spec			 = mSpecular->eval(sctx);
+		float specTint		 = mSpecularTint->eval(sctx);
+		float sheen			 = mSheen->eval(sctx);
+		float sheenTint		 = mSheenTint->eval(sctx);
+		float clearcoat		 = mClearcoat->eval(sctx);
+		float clearcoatGloss = mClearcoatGloss->eval(sctx);
 
 		sampleSpecularPath(in, in.RND[0] /* / weight*/, in.RND[1], out, roughness, anisotropic);
 
@@ -269,10 +253,10 @@ public:
 		else
 			out.Type = MST_SpecularReflection;
 
-		out.Weight = evalBRDF(in.Point, out.Outgoing,
+		out.Weight = evalBRDF(in.Context.expand(out.L),
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
-					 * std::abs(in.Point.Surface.N.dot(out.Outgoing));
+					 * std::abs(out.L[2]);
 	}
 
 	std::string dumpInformation() const override
@@ -297,17 +281,17 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mBaseColor;
-	std::shared_ptr<FloatScalarShadingSocket> mSpecular;
-	std::shared_ptr<FloatScalarShadingSocket> mSpecularTint;
-	std::shared_ptr<FloatScalarShadingSocket> mRoughness;
-	std::shared_ptr<FloatScalarShadingSocket> mAnisotropic;
-	std::shared_ptr<FloatScalarShadingSocket> mSubsurface;
-	std::shared_ptr<FloatScalarShadingSocket> mMetallic;
-	std::shared_ptr<FloatScalarShadingSocket> mSheen;
-	std::shared_ptr<FloatScalarShadingSocket> mSheenTint;
-	std::shared_ptr<FloatScalarShadingSocket> mClearcoat;
-	std::shared_ptr<FloatScalarShadingSocket> mClearcoatGloss;
+	std::shared_ptr<FloatSpectralNode> mBaseColor;
+	std::shared_ptr<FloatScalarNode> mSpecular;
+	std::shared_ptr<FloatScalarNode> mSpecularTint;
+	std::shared_ptr<FloatScalarNode> mRoughness;
+	std::shared_ptr<FloatScalarNode> mAnisotropic;
+	std::shared_ptr<FloatScalarNode> mSubsurface;
+	std::shared_ptr<FloatScalarNode> mMetallic;
+	std::shared_ptr<FloatScalarNode> mSheen;
+	std::shared_ptr<FloatScalarNode> mSheenTint;
+	std::shared_ptr<FloatScalarNode> mClearcoat;
+	std::shared_ptr<FloatScalarNode> mClearcoatGloss;
 }; // namespace PR
 
 class PrincipledMaterialPlugin : public IMaterialPlugin {
@@ -316,17 +300,17 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<PrincipledMaterial>(id,
-													ctx.Env->lookupSpectralShadingSocket(params.getParameter("base_color"), 0.8f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("specular"), 0.5f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("specular_tint"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness"), 0.5f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("anisotropic"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("subsurface"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("metallic"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("sheen"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("sheen_tint"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("clearcoat"), 0.0f),
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("clearcoat_gloss"), 0.0f));
+													ctx.Env->lookupSpectralNode(params.getParameter("base_color"), 0.8f),
+													ctx.Env->lookupScalarNode(params.getParameter("specular"), 0.5f),
+													ctx.Env->lookupScalarNode(params.getParameter("specular_tint"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("roughness"), 0.5f),
+													ctx.Env->lookupScalarNode(params.getParameter("anisotropic"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("subsurface"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("metallic"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("sheen"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("sheen_tint"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("clearcoat"), 0.0f),
+													ctx.Env->lookupScalarNode(params.getParameter("clearcoat_gloss"), 0.0f));
 	}
 
 	const std::vector<std::string>& getNames() const

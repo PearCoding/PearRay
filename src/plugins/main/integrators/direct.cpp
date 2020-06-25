@@ -16,7 +16,7 @@
 #include "renderer/RenderTileSession.h"
 #include "renderer/StreamPipeline.h"
 #include "sampler/SampleArray.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 #include "Logger.h"
 
@@ -56,7 +56,7 @@ public:
 	virtual ~IntDirectInstance() = default;
 
 	// Estimate direct (infinite) light
-	SpectralBlob infiniteLight(RenderTileSession& session, const ShadingPoint& spt,
+	SpectralBlob infiniteLight(RenderTileSession& session, const IntersectionPoint& spt,
 							   LightPathToken& token,
 							   IInfiniteLight* infLight, IMaterial* material)
 	{
@@ -85,10 +85,7 @@ public:
 			return SpectralBlob::Zero();
 
 		// Evaluate surface
-		MaterialEvalInput in;
-		in.Point	= spt;
-		in.Outgoing = outL.Outgoing;
-		in.NdotL	= outL.Outgoing.dot(spt.Surface.N);
+		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, shadow.Direction) };
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
@@ -100,7 +97,7 @@ public:
 	}
 
 	// Estimate direct (finite) light
-	SpectralBlob directLight(RenderTileSession& session, const ShadingPoint& spt,
+	SpectralBlob directLight(RenderTileSession& session, const IntersectionPoint& spt,
 							 LightPathToken& token,
 							 IMaterial* material)
 	{
@@ -148,10 +145,7 @@ public:
 		ems->eval(inL, outL, session);
 
 		// Evaluate surface
-		MaterialEvalInput in;
-		in.Point	= spt;
-		in.Outgoing = L;
-		in.NdotL	= NdotL;
+		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L) };
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
@@ -168,7 +162,7 @@ public:
 
 	// Estimate indirect light
 	void scatterLight(RenderTileSession& session, LightPath& path,
-					  const ShadingPoint& spt,
+					  const IntersectionPoint& spt,
 					  IMaterial* material, bool& infLightHandled)
 	{
 		PR_PROFILE_THIS;
@@ -182,9 +176,7 @@ public:
 		const float scatProb = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
 
 		// Sample BxDF
-		MaterialSampleInput in;
-		in.Point = spt;
-		in.RND	 = mSampler.next2D();
+		MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), mSampler.next2D() };
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
@@ -196,7 +188,7 @@ public:
 			return;
 
 		// Construct next ray
-		Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.Surface.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+		Ray next = spt.Ray.next(spt.P, out.globalL(spt), spt.Surface.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 		if (material->hasDeltaDistribution())
 			next.Weight *= out.Weight / scatProb;
 		else
@@ -216,7 +208,7 @@ public:
 		IEntity* nentity = nullptr;
 		IMaterial* nmaterial;
 		if (session.traceBounceRay(next, npos, npt, nentity, nmaterial)) {
-			ShadingPoint spt2;
+			IntersectionPoint spt2;
 			spt2.setForSurface(next, npos, npt);
 			const float aNdotV = std::abs(spt2.Surface.NdotV);
 
@@ -277,7 +269,7 @@ public:
 
 	// Every camera vertex
 	void evalN(RenderTileSession& session, LightPath& path,
-			   const ShadingPoint& spt,
+			   const IntersectionPoint& spt,
 			   IEntity* entity, IMaterial* material)
 	{
 		PR_UNUSED(entity);
@@ -335,7 +327,7 @@ public:
 
 	// First camera vertex
 	void eval0(RenderTileSession& session, LightPath& path,
-			   const ShadingPoint& spt,
+			   const IntersectionPoint& spt,
 			   IEntity* entity, IMaterial* material)
 	{
 		PR_PROFILE_THIS;
@@ -385,7 +377,7 @@ public:
 		session.tile()->statistics().addEntityHitCount(sg.size());
 
 		for (size_t i = 0; i < sg.size(); ++i) {
-			ShadingPoint spt;
+			IntersectionPoint spt;
 			sg.computeShadingPoint(i, spt);
 			mSampler.reset(session.tile()->random());
 

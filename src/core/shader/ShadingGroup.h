@@ -10,7 +10,7 @@ class StreamPipeline;
 class IEntity;
 class IMaterial;
 struct GeometryPoint;
-class ShadingPoint;
+class IntersectionPoint;
 struct HitEntry;
 
 class PR_LIB_CORE ShadingGroup {
@@ -27,7 +27,7 @@ public:
 	void extractHitEntry(size_t i, HitEntry& entry) const;
 	void extractRay(size_t i, Ray& ray) const;
 	void extractGeometryPoint(size_t i, GeometryPoint& pt) const;
-	void computeShadingPoint(size_t i, ShadingPoint& spt) const;
+	void computeShadingPoint(size_t i, IntersectionPoint& spt) const;
 
 private:
 	ShadingGroupBlock mBlock;

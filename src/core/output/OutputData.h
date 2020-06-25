@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 #include "spectral/SpectralBlob.h"
 
 namespace PR {
@@ -18,7 +18,7 @@ struct PR_LIB_CORE OutputSpectralEntry {
 
 struct PR_LIB_CORE OutputShadingPointEntry {
 	Point2i Position;
-	ShadingPoint SP;
+	IntersectionPoint SP;
 	const uint32* Path;
 };
 

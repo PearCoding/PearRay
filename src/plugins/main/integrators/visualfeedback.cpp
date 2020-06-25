@@ -12,7 +12,7 @@
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
 #include "renderer/StreamPipeline.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 #include "Logger.h"
 
@@ -96,7 +96,7 @@ public:
 		Random random(42);
 		session.tile()->statistics().addEntityHitCount(grp.size());
 		for (size_t i = 0; i < grp.size(); ++i) {
-			ShadingPoint spt;
+			IntersectionPoint spt;
 			grp.computeShadingPoint(i, spt);
 			HitEntry hitEntry;
 			grp.extractHitEntry(i, hitEntry);
@@ -146,7 +146,7 @@ public:
 					radiance *= weight;
 				break;
 			case VFM_Inside:
-				radiance = (spt.Flags & SPF_Inside) ? TrueColor : FalseColor;
+				radiance = (spt.Flags & IPF_Inside) ? TrueColor : FalseColor;
 				if (mApplyDot)
 					radiance *= weight;
 				break;
@@ -160,16 +160,11 @@ public:
 			case VFM_ValidateMaterial: {
 				IMaterial* mat = session.getMaterial(spt.Surface.Geometry.MaterialID);
 				if (mat) {
-					MaterialSampleInput samp_in;
-					samp_in.Point = spt;
-					samp_in.RND	  = random.get2D();
+					MaterialSampleInput samp_in{MaterialSampleContext::fromIP(spt), random.get2D()};
 					MaterialSampleOutput samp_out;
 					mat->sample(samp_in, samp_out, session);
 
-					MaterialEvalInput eval_in;
-					eval_in.Point	 = spt;
-					eval_in.Outgoing = samp_out.Outgoing;
-					eval_in.NdotL	 = spt.Surface.N.dot(eval_in.Outgoing);
+					MaterialEvalInput eval_in{MaterialEvalContext::fromIP(spt, samp_out.globalL(spt))};
 					MaterialEvalOutput eval_out;
 					mat->eval(eval_in, eval_out, session);
 

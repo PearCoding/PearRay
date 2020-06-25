@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 namespace PR {
-class ShadingPoint;
+class IntersectionPoint;
 class LightPath;
 
 /* Three types of channel provider:

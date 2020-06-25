@@ -106,7 +106,7 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.UVW		   = Vector3f(u, v, 0);
+		pt.UV		   = Vector2f(u, v);
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;
 		pt.MaterialID  = mMaterialID;

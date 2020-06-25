@@ -7,14 +7,13 @@
 #include "math/Tangent.h"
 #include "renderer/RenderContext.h"
 
-
 #include <sstream>
 
 namespace PR {
 
 class LambertMaterial : public IMaterial {
 public:
-	LambertMaterial(uint32 id, const std::shared_ptr<FloatSpectralShadingSocket>& alb)
+	LambertMaterial(uint32 id, const std::shared_ptr<FloatSpectralNode>& alb)
 		: IMaterial(id)
 		, mAlbedo(alb)
 	{
@@ -35,8 +34,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const float dot = std::max(0.0f, in.NdotL);
-		out.Weight		= mAlbedo->eval(in.Point) * dot * PR_1_PI;
+		const float dot = std::max(0.0f, in.Context.NdotL());
+		out.Weight		= mAlbedo->eval(ShadingContext::fromMC(in.Context)) * dot * PR_1_PI;
 		out.PDF_S		= Projection::cos_hemi_pdf(dot);
 		out.Type		= MST_DiffuseReflection;
 	}
@@ -47,10 +46,9 @@ public:
 		PR_PROFILE_THIS;
 
 		float pdf;
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
+		out.L = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
 
-		out.Weight = mAlbedo->eval(in.Point) * std::max(0.0f, in.Point.Surface.N.dot(out.Outgoing)) * PR_1_PI;
+		out.Weight = mAlbedo->eval(ShadingContext::fromMC(in.Context)) * out.L(2) * PR_1_PI;
 		out.Type   = MST_DiffuseReflection;
 		out.PDF_S  = pdf;
 	}
@@ -67,7 +65,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mAlbedo;
+	std::shared_ptr<FloatSpectralNode> mAlbedo;
 };
 
 class LambertMaterialPlugin : public IMaterialPlugin {
@@ -75,7 +73,7 @@ public:
 	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
-		return std::make_shared<LambertMaterial>(id, ctx.Env->lookupSpectralShadingSocket(params.getParameter("albedo"), 1));
+		return std::make_shared<LambertMaterial>(id, ctx.Env->lookupSpectralNode(params.getParameter("albedo"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const

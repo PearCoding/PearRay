@@ -17,11 +17,11 @@ namespace PR {
 class WardMaterial : public IMaterial {
 public:
 	WardMaterial(uint32 id,
-				 const std::shared_ptr<FloatSpectralShadingSocket>& alb,
-				 const std::shared_ptr<FloatSpectralShadingSocket>& spec,
-				 const std::shared_ptr<FloatScalarShadingSocket>& reflectivity,
-				 const std::shared_ptr<FloatScalarShadingSocket>& roughnessX,
-				 const std::shared_ptr<FloatScalarShadingSocket>& roughnessY)
+				 const std::shared_ptr<FloatSpectralNode>& alb,
+				 const std::shared_ptr<FloatSpectralNode>& spec,
+				 const std::shared_ptr<FloatScalarNode>& reflectivity,
+				 const std::shared_ptr<FloatScalarNode>& roughnessX,
+				 const std::shared_ptr<FloatScalarNode>& roughnessY)
 		: IMaterial(id)
 		, mAlbedo(alb)
 		, mSpecularity(spec)
@@ -46,40 +46,36 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const Vector3f H = Reflection::halfway(in.Point.Ray.Direction, in.Outgoing);
-
-		const float NdotH = in.Point.Surface.N.dot(H);
-		const float HdotX = in.Point.Surface.Nx.dot(H);
-		const float HdotY = in.Point.Surface.Ny.dot(H);
+		ShadingContext sctx = ShadingContext::fromMC(in.Context);
 
 		float spec = std::min(1.0f,
-							  Microfacet::ward(mRoughnessX->eval(in.Point),
-											   mRoughnessY->eval(in.Point),
-											   -in.Point.Surface.NdotV, in.NdotL, NdotH,
-											   HdotX, HdotY));
+							  Microfacet::ward(mRoughnessX->eval(sctx),
+											   mRoughnessY->eval(sctx),
+											   in.Context.NdotV(), in.Context.NdotL(), in.Context.NdotH(),
+											   in.Context.XdotH(), in.Context.YdotH()));
 
-		const float refl = mReflectivity->eval(in.Point);
-		out.Weight		 = mAlbedo->eval(in.Point) * (1 - refl) + spec * mSpecularity->eval(in.Point) * refl;
-		out.Weight *= std::abs(in.NdotL);
+		const float refl = mReflectivity->eval(sctx);
+		out.Weight		 = mAlbedo->eval(sctx) * (1 - refl) + spec * mSpecularity->eval(sctx) * refl;
+		out.Weight *= std::abs(in.Context.NdotL());
 
-		out.PDF_S = std::min(std::max(Projection::cos_hemi_pdf(in.NdotL) * (1 - refl) + spec * refl, 0.0f), 1.0f);
+		out.PDF_S = std::min(std::max(Projection::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
 
 		out.Type = MST_DiffuseReflection;
 	}
 
-	void sampleDiffusePath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
+	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
 		float pdf_s;
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
+		out.L = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
 		out.PDF_S	 = pdf_s;
-		out.Weight	 = mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.Surface.N));
+		out.Weight	 = mAlbedo->eval(sctx) * std::abs(out.L[2]);
 		out.Type	 = MST_DiffuseReflection;
 	}
 
-	void sampleSpecularPath(const MaterialSampleInput& in, MaterialSampleOutput& out) const
+	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
-		const float m1 = mRoughnessX->eval(in.Point);
-		const float m2 = mRoughnessY->eval(in.Point);
+		const float m1 = mRoughnessX->eval(sctx);
+		const float m2 = mRoughnessY->eval(sctx);
 
 		float cosTheta, sinTheta;			 // V samples
 		float cosPhi, sinPhi;				 // U samples
@@ -117,11 +113,10 @@ public:
 			out.PDF_S			  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
-		Vector3f H	 = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny,
-												 Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi));
-		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
+		Vector3f H	 = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
+		out.L = Reflection::reflect(in.Context.V, H);
 		out.Type	 = MST_SpecularReflection;
-		out.Weight	 = mSpecularity->eval(in.Point) * out.PDF_S * std::abs(out.Outgoing.dot(in.Point.Surface.N));
+		out.Weight	 = mSpecularity->eval(sctx) * out.PDF_S * std::abs(out.L[2]);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -129,17 +124,16 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const float refl = mReflectivity->eval(in.Point);
+		ShadingContext sctx = ShadingContext::fromMC(in.Context);
+		const float refl	= mReflectivity->eval(sctx);
 
 		if (in.RND[0] <= refl) {
-			sampleSpecularPath(in, out);
+			sampleSpecularPath(in, sctx, out);
 			out.PDF_S /= refl;
 		} else {
-			sampleDiffusePath(in, out);
+			sampleDiffusePath(in, sctx, out);
 			out.PDF_S /= 1.0f - refl;
 		}
-
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 	}
 
 	std::string dumpInformation() const override
@@ -158,11 +152,11 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mAlbedo;
-	std::shared_ptr<FloatSpectralShadingSocket> mSpecularity;
-	std::shared_ptr<FloatScalarShadingSocket> mReflectivity;
-	std::shared_ptr<FloatScalarShadingSocket> mRoughnessX;
-	std::shared_ptr<FloatScalarShadingSocket> mRoughnessY;
+	std::shared_ptr<FloatSpectralNode> mAlbedo;
+	std::shared_ptr<FloatSpectralNode> mSpecularity;
+	std::shared_ptr<FloatScalarNode> mReflectivity;
+	std::shared_ptr<FloatScalarNode> mRoughnessX;
+	std::shared_ptr<FloatScalarNode> mRoughnessY;
 };
 
 class WardMaterialPlugin : public IMaterialPlugin {
@@ -171,22 +165,22 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 
-		std::shared_ptr<FloatScalarShadingSocket> roughnessX;
-		std::shared_ptr<FloatScalarShadingSocket> roughnessY;
+		std::shared_ptr<FloatScalarNode> roughnessX;
+		std::shared_ptr<FloatScalarNode> roughnessY;
 		const auto roughnessP = params.getParameter("roughness");
 
 		if (roughnessP.isValid()) {
-			roughnessX = ctx.Env->lookupScalarShadingSocket(roughnessP, 0.5f);
+			roughnessX = ctx.Env->lookupScalarNode(roughnessP, 0.5f);
 			roughnessY = roughnessX;
 		} else {
-			roughnessX = ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness_x"), 0.5f);
-			roughnessY = ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness_y"), 0.5f);
+			roughnessX = ctx.Env->lookupScalarNode(params.getParameter("roughness_x"), 0.5f);
+			roughnessY = ctx.Env->lookupScalarNode(params.getParameter("roughness_y"), 0.5f);
 		}
 
 		return std::make_shared<WardMaterial>(id,
-											  ctx.Env->lookupSpectralShadingSocket(params.getParameter("albedo"), 1),
-											  ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1),
-											  ctx.Env->lookupScalarShadingSocket(params.getParameter("reflectivity"), 1),
+											  ctx.Env->lookupSpectralNode(params.getParameter("albedo"), 1),
+											  ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1),
+											  ctx.Env->lookupScalarNode(params.getParameter("reflectivity"), 1),
 											  roughnessX, roughnessY);
 	}
 

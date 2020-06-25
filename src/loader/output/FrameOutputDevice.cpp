@@ -2,7 +2,7 @@
 #include "Feedback.h"
 #include "FrameBufferBucket.h"
 #include "filter/IFilter.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 FrameOutputDevice::FrameOutputDevice(Size1i specChannels)

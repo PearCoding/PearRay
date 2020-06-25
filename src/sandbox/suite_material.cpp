@@ -7,7 +7,7 @@
 #include "math/Spherical.h"
 
 #include "renderer/RenderTileSession.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 #include <filesystem>
 #include <fstream>
@@ -22,29 +22,29 @@ constexpr size_t HEIGHT		 = 200;
 constexpr float THETA_D = PR_PI / WIDTH;
 constexpr float PHI_D	= 2 * PR_PI / HEIGHT;
 
-static ShadingPoint standardSP(const Vector3f& V = Vector3f(0, 0, -1))
+static IntersectionPoint standardSP(const Vector3f& V = Vector3f(0, 0, -1))
 {
-	ShadingPoint spt;
-	spt.Surface.Geometry.N	 = Vector3f(0, 0, 1);
-	spt.Surface.Geometry.Nx	 = Vector3f(1, 0, 0);
-	spt.Surface.Geometry.Ny	 = Vector3f(0, 1, 0);
-	spt.P					 = Vector3f(0, 0, 0);
-	spt.Surface.Geometry.UVW = Vector3f(0.5f, 0.5f, 0);
-	spt.Surface.N			 = spt.Surface.Geometry.N;
-	spt.Surface.Nx			 = spt.Surface.Geometry.Nx;
-	spt.Surface.Ny			 = spt.Surface.Geometry.Ny;
-	spt.Surface.P			 = spt.P;
-	spt.Ray.Direction		 = V.normalized();
-	spt.Ray.Origin			 = Vector3f(0, 0, 1);
-	spt.Surface.NdotV		 = spt.Ray.Direction.dot(spt.Surface.N);
-	spt.Depth2				 = 1;
+	IntersectionPoint spt;
+	spt.Surface.Geometry.N	= Vector3f(0, 0, 1);
+	spt.Surface.Geometry.Nx = Vector3f(1, 0, 0);
+	spt.Surface.Geometry.Ny = Vector3f(0, 1, 0);
+	spt.P					= Vector3f(0, 0, 0);
+	spt.Surface.Geometry.UV = Vector2f(0.5f, 0.5f);
+	spt.Surface.N			= spt.Surface.Geometry.N;
+	spt.Surface.Nx			= spt.Surface.Geometry.Nx;
+	spt.Surface.Ny			= spt.Surface.Geometry.Ny;
+	spt.Surface.P			= spt.P;
+	spt.Ray.Direction		= V.normalized();
+	spt.Ray.Origin			= Vector3f(0, 0, 1);
+	spt.Surface.NdotV		= spt.Ray.Direction.dot(spt.Surface.N);
+	spt.Depth2				= 1;
 	return spt;
 }
 
 static void handle_material_eval_case(const std::string& name,
 									  const std::shared_ptr<IMaterial>& material)
 {
-	ShadingPoint spt = standardSP();
+	IntersectionPoint spt = standardSP();
 
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
 	std::vector<float> pdf(WIDTH * HEIGHT * 3);
@@ -56,10 +56,7 @@ static void handle_material_eval_case(const std::string& name,
 
 			const Vector3f L = Spherical::cartesian(theta, phi);
 
-			MaterialEvalInput in;
-			in.Outgoing = L;
-			in.NdotL	= std::abs(L.dot(spt.Surface.N));
-			in.Point	= spt;
+			MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L) };
 			MaterialEvalOutput out;
 			material->eval(in, out, RenderTileSession());
 
@@ -85,16 +82,14 @@ static void handle_material_eval_case(const std::string& name,
 static void handle_material_sample_case(const std::string& name,
 										const std::shared_ptr<IMaterial>& material)
 {
-	ShadingPoint spt = standardSP();
+	IntersectionPoint spt = standardSP();
 
 	std::vector<float> rgb(WIDTH * HEIGHT * 3);
 	std::vector<float> pdf(WIDTH * HEIGHT * 3);
 	std::vector<float> dir(WIDTH * HEIGHT);
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
-			MaterialSampleInput in;
-			in.Point = spt;
-			in.RND	 = Vector2f(x / (float)WIDTH, y / (float)HEIGHT);
+			MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), Vector2f(x / (float)WIDTH, y / (float)HEIGHT) };
 			MaterialSampleOutput out;
 			material->sample(in, out, RenderTileSession());
 
@@ -107,10 +102,10 @@ static void handle_material_sample_case(const std::string& name,
 
 			size_t dx = std::max<int>(0,
 									  std::min<int>(WIDTH - 1,
-													(0.5f * out.Outgoing.x() + 0.5f) * WIDTH));
+													(0.5f * out.L.x() + 0.5f) * WIDTH));
 			size_t dy = std::max<int>(0,
 									  std::min<int>(HEIGHT - 1,
-													(0.5f * out.Outgoing.y() + 0.5f) * HEIGHT));
+													(0.5f * out.L.y() + 0.5f) * HEIGHT));
 
 			dir[dy * WIDTH + dx] += 1;
 		}

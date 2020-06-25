@@ -143,14 +143,15 @@ set(PR_Src
   spectral/SpectralUpsampler.h
   spectral/ToneMapper.cpp
   spectral/ToneMapper.h
+  shader/Node.h
+  shader/ShadingContext.h
   shader/ShadingGroup.cpp
   shader/ShadingGroup.h
   shader/ShadingGroupBlock.h
-  shader/ShadingPoint.h
-  shader/Socket.h
   thread/Thread.cpp
   thread/Thread.h
   thread/Thread.inl
+  trace/IntersectionPoint.h
   trace/HitEntry.h
   trace/HitPoint.h
   trace/HitStream.cpp

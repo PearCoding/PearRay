@@ -4,19 +4,17 @@
 #include <vector>
 
 namespace PR {
-enum ParameterFlags {
-	PF_Node		  = 0x1,
-	PF_Texture	  = 0x2,
-	PF_Illuminant = 0x4
-};
 enum ParameterType : uint8 {
 	PT_Invalid = 0,
 	PT_Bool,
 	PT_Int,
 	PT_UInt,
 	PT_Number,
-	PT_String
+	PT_String,
+	PT_Reference // Uses uint
 };
+
+constexpr uint64 P_INVALID_REFERENCE = (uint64)-1;
 
 class PR_LIB_LOADER Parameter final {
 public:
@@ -33,6 +31,7 @@ public:
 	static Parameter fromUInt(uint64 v);
 	static Parameter fromNumber(float v);
 	static Parameter fromString(const std::string& v);
+	static Parameter fromReference(uint64 id);
 
 	static Parameter fromBoolArray(const std::vector<bool>& v);
 	static Parameter fromIntArray(const std::vector<int64> v);
@@ -41,12 +40,9 @@ public:
 	static Parameter fromStringArray(const std::vector<std::string>& v);
 
 	inline bool isValid() const;
+	inline bool isReference() const;
 	inline bool isArray() const;
 	inline size_t arraySize() const;
-
-	inline uint8 flags() const;
-	inline void setFlags(uint8 f);
-	inline void assignFlags(uint8 f);
 
 	inline ParameterType type() const;
 
@@ -58,6 +54,7 @@ public:
 	inline float getNumber(float def) const;
 	inline float getExactNumber(float def) const;
 	inline std::string getString(const std::string& def) const;
+	inline uint64 getReference(uint64 def = P_INVALID_REFERENCE) const;
 
 	inline bool getBool(size_t ind, bool def) const;
 	inline int64 getInt(size_t ind, int64 def) const;
@@ -87,9 +84,8 @@ private:
 			float Number;
 		};
 	};
-	inline Parameter(uint8 f, ParameterType t, const std::vector<ParameterData>& dt);
+	inline Parameter(ParameterType t, const std::vector<ParameterData>& dt);
 
-	uint8 mFlags;
 	ParameterType mType;
 	std::vector<ParameterData> mData;
 };

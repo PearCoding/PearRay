@@ -1,15 +1,13 @@
 #pragma once
 
+#include "MaterialContext.h"
 #include "MaterialType.h"
-#include "shader/ShadingPoint.h"
 
 namespace PR {
 
 // Evaluation
 struct PR_LIB_CORE MaterialEvalInput {
-	ShadingPoint Point;
-	float NdotL;
-	Vector3f Outgoing;
+	MaterialEvalContext Context;
 };
 
 struct PR_LIB_CORE MaterialEvalOutput {
@@ -20,14 +18,20 @@ struct PR_LIB_CORE MaterialEvalOutput {
 
 // Sampling
 struct PR_LIB_CORE MaterialSampleInput {
-	ShadingPoint Point;
+	MaterialSampleContext Context;
 	Vector2f RND;
 };
 
 struct PR_LIB_CORE MaterialSampleOutput {
-	Vector3f Outgoing;
+	Vector3f L;
+
 	SpectralBlob Weight;
 	SpectralBlob PDF_S;
 	MaterialScatteringType Type;
+
+	inline Vector3f globalL(const IntersectionPoint& ip) const
+	{
+		return Tangent::fromTangentSpace(ip.Surface.N, ip.Surface.Nx, ip.Surface.Ny, L);
+	}
 };
 } // namespace PR

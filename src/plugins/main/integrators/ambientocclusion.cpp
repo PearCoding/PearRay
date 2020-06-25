@@ -11,7 +11,7 @@
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
 #include "renderer/StreamPipeline.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 #include "Logger.h"
 
@@ -35,7 +35,7 @@ public:
 		session.tile()->statistics().addEntityHitCount(grp.size());
 		session.tile()->statistics().addDepthCount(grp.size());
 		for (size_t i = 0; i < grp.size(); ++i) {
-			ShadingPoint spt;
+			IntersectionPoint spt;
 			grp.computeShadingPoint(i, spt);
 
 			size_t occlusions = 0;

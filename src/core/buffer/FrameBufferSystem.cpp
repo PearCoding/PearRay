@@ -2,7 +2,7 @@
 #include "Feedback.h"
 #include "FrameBufferBucket.h"
 #include "filter/IFilter.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 FrameBufferSystem::FrameBufferSystem(const std::shared_ptr<IFilter>& filter,

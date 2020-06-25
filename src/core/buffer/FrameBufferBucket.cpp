@@ -165,6 +165,41 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		}                                                                                                     \
 	}
 
+// Actually 3d by ignoring last channel
+#define BLEND_2D(var, val)                                                                                    \
+	if (mData.mInt3D[var]) {                                                                                  \
+		const auto var_e = mData.mInt3D[var];                                                                 \
+		PR_OPT_LOOP                                                                                           \
+		for (size_t i = 0; i < entry_count; ++i) {                                                            \
+			const auto& entry		 = entries[i];                                                            \
+			const Point2i sp		 = entry.Position + filterSize;                                           \
+			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
+			const float blend		 = 1.0f / (sampleCount);                                                  \
+			const Vector2f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
+			PR_UNROLL_LOOP(2)                                                                                 \
+			for (Size1i k = 0; k < 2; ++k)                                                                    \
+				var_e->blendFragment(sp, k, v(k), blend);                                                     \
+		}                                                                                                     \
+	}
+
+#define BLEND_2D_LPE(var, val)                                                                                \
+	for (auto pair : mData.mLPE_3D[var]) {                                                                    \
+		PR_OPT_LOOP                                                                                           \
+		for (size_t i = 0; i < entry_count; ++i) {                                                            \
+			const auto& entry		 = entries[i];                                                            \
+			const LightPathView path = LightPathView(entry.Path);                                             \
+			if (!pair.first.match(path))                                                                      \
+				continue;                                                                                     \
+			const Point2i sp		 = entry.Position + filterSize;                                           \
+			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
+			const float blend		 = 1.0f / (sampleCount);                                                  \
+			const Vector2f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
+			PR_UNROLL_LOOP(2)                                                                                 \
+			for (Size1i k = 0; k < 2; ++k)                                                                    \
+				pair.second->blendFragment(sp, k, v(k), blend);                                               \
+		}                                                                                                     \
+	}
+
 #define BLEND_3D(var, val)                                                                                    \
 	if (mData.mInt3D[var]) {                                                                                  \
 		const auto var_e = mData.mInt3D[var];                                                                 \
@@ -229,7 +264,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	BLEND_3D(AOV_NormalG, entry.SP.Surface.Geometry.N);
 	BLEND_3D(AOV_Tangent, entry.SP.Surface.Nx);
 	BLEND_3D(AOV_Bitangent, entry.SP.Surface.Ny);
-	BLEND_3D(AOV_UVW, entry.SP.Surface.Geometry.UVW);
+	BLEND_2D(AOV_UVW, entry.SP.Surface.Geometry.UV);
 	// Check if there are any LPEs at all
 	if (!mHasNonSpecLPE)
 		return;
@@ -249,7 +284,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	BLEND_3D_LPE(AOV_NormalG, entry.SP.Surface.Geometry.N);
 	BLEND_3D_LPE(AOV_Tangent, entry.SP.Surface.Nx);
 	BLEND_3D_LPE(AOV_Bitangent, entry.SP.Surface.Ny);
-	BLEND_3D_LPE(AOV_UVW, entry.SP.Surface.Geometry.UVW);
+	BLEND_2D_LPE(AOV_UVW, entry.SP.Surface.Geometry.UV);
 }
 
 void FrameBufferBucket::commitFeedbacks(const OutputFeedbackEntry* entries, size_t entry_count)

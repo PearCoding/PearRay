@@ -1,13 +1,13 @@
-#include "ImageMapSocket.h"
+#include "ImageNode.h"
 #include "spectral/SpectralUpsampler.h"
 
 #include "Logger.h"
 
 namespace PR {
-ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
+ImageNode::ImageNode(OIIO::TextureSystem* tsys,
 							   const OIIO::TextureOpt& options,
 							   const std::string& filename)
-	: FloatSpectralMapSocket()
+	: FloatSpectralNode()
 	, mFilename(filename)
 	, mTextureOptions(options)
 	, mTextureSystem(tsys)
@@ -38,14 +38,14 @@ ImageMapSocket::ImageMapSocket(OIIO::TextureSystem* tsys,
 	}
 }
 
-SpectralBlob ImageMapSocket::eval(const MapSocketCoord& ctx) const
+SpectralBlob ImageNode::eval(const ShadingContext& ctx) const
 {
 	SpectralBlob value;
 	lookup(ctx, value);
 	return value;
 }
 
-void ImageMapSocket::lookup(const MapSocketCoord& ctx, SpectralBlob& rgb) const
+void ImageNode::lookup(const ShadingContext& ctx, SpectralBlob& rgb) const
 {
 	PR_ASSERT(mTextureSystem, "Given texture system has to be valid");
 
@@ -68,7 +68,7 @@ void ImageMapSocket::lookup(const MapSocketCoord& ctx, SpectralBlob& rgb) const
 	rgb = SpectralUpsampler::compute(value, ctx.WavelengthNM);
 }
 
-Vector2i ImageMapSocket::queryRecommendedSize() const
+Vector2i ImageNode::queryRecommendedSize() const
 {
 	const OIIO::ImageSpec* spec = mTextureSystem->imagespec(mFilename);
 	if (spec) {
@@ -78,7 +78,7 @@ Vector2i ImageMapSocket::queryRecommendedSize() const
 	}
 }
 
-std::string ImageMapSocket::dumpInformation() const
+std::string ImageNode::dumpInformation() const
 {
 	std::stringstream stream;
 	stream << mFilename;

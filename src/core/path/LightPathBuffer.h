@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LightPath.h"
-#include "shader/ShadingPoint.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 enum LightPathBufferEntryFlags : uint32 {

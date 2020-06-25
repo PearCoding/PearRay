@@ -9,7 +9,7 @@
 namespace PR {
 class DiffuseEmission : public IEmission {
 public:
-	DiffuseEmission(uint32 id, const std::shared_ptr<FloatSpectralShadingSocket>& spec)
+	DiffuseEmission(uint32 id, const std::shared_ptr<FloatSpectralNode>& spec)
 		: IEmission(id)
 		, mRadiance(spec)
 	{
@@ -19,11 +19,11 @@ public:
 	void eval(const LightEvalInput& in, LightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = mRadiance->eval(in.Point);
+		out.Weight = mRadiance->eval(ShadingContext::fromIP(in.Point));
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mRadiance;
+	std::shared_ptr<FloatSpectralNode> mRadiance;
 };
 
 class DiffuseEmissionPlugin : public IEmissionPlugin {
@@ -31,7 +31,7 @@ public:
 	std::shared_ptr<IEmission> create(uint32 id, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<DiffuseEmission>(id,
-												 ctx.Env->lookupSpectralShadingSocket(ctx.Parameters.getParameter("radiance"), 1));
+												 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("radiance"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

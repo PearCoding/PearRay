@@ -14,7 +14,7 @@ namespace PR {
 
 class MirrorMaterial : public IMaterial {
 public:
-	MirrorMaterial(uint32 id, const std::shared_ptr<FloatSpectralShadingSocket>& alb)
+	MirrorMaterial(uint32 id, const std::shared_ptr<FloatSpectralNode>& alb)
 		: IMaterial(id)
 		, mSpecularity(alb)
 	{
@@ -37,7 +37,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mSpecularity->eval(in.Point);
+		out.Weight = mSpecularity->eval(ShadingContext::fromMC(in.Context));
 		out.PDF_S  = 1;
 		out.Type   = MST_SpecularReflection;
 	}
@@ -47,10 +47,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight	 = mSpecularity->eval(in.Point);
+		out.Weight	 = mSpecularity->eval(ShadingContext::fromMC(in.Context));
 		out.Type	 = MST_SpecularReflection;
 		out.PDF_S	 = 1;
-		out.Outgoing = Reflection::reflect(in.Point.Surface.NdotV, in.Point.Surface.N, in.Point.Ray.Direction);
+		out.L = Reflection::reflect(in.Context.V);
 	}
 
 	std::string dumpInformation() const override
@@ -65,7 +65,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mSpecularity;
+	std::shared_ptr<FloatSpectralNode> mSpecularity;
 };
 
 class MirrorMaterialPlugin : public IMaterialPlugin {
@@ -73,7 +73,7 @@ public:
 	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
-		return std::make_shared<MirrorMaterial>(id, ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1));
+		return std::make_shared<MirrorMaterial>(id, ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const

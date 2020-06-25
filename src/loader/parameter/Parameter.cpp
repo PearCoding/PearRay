@@ -6,35 +6,42 @@ namespace PR {
 {
 	ParameterData data;
 	data.Bool = v;
-	return Parameter(0, PT_Bool, { data });
+	return Parameter(PT_Bool, { data });
 }
 
  Parameter Parameter::fromInt(int64 v)
 {
 	ParameterData data;
 	data.Int = v;
-	return Parameter(0, PT_Int, { data });
+	return Parameter(PT_Int, { data });
 }
 
  Parameter Parameter::fromUInt(uint64 v)
 {
 	ParameterData data;
 	data.UInt = v;
-	return Parameter(0, PT_UInt, { data });
+	return Parameter(PT_UInt, { data });
 }
 
  Parameter Parameter::fromNumber(float v)
 {
 	ParameterData data;
 	data.Number = v;
-	return Parameter(0, PT_Number, { data });
+	return Parameter(PT_Number, { data });
 }
 
  Parameter Parameter::fromString(const std::string& v)
 {
 	ParameterData data;
 	data.String = v;
-	return Parameter(0, PT_String, { data });
+	return Parameter(PT_String, { data });
+}
+
+ Parameter Parameter::fromReference(uint64 v)
+{
+	ParameterData data;
+	data.UInt = v;
+	return Parameter(PT_Reference, { data });
 }
 
  Parameter Parameter::fromBoolArray(const std::vector<bool>& v)
@@ -46,7 +53,7 @@ namespace PR {
 		p.Bool = b;
 		data.emplace_back(p);
 	}
-	return Parameter(0, PT_Bool, data);
+	return Parameter(PT_Bool, data);
 }
 
  Parameter Parameter::fromIntArray(const std::vector<int64> v)
@@ -58,7 +65,7 @@ namespace PR {
 		p.Int = b;
 		data.emplace_back(p);
 	}
-	return Parameter(0, PT_Int, data);
+	return Parameter(PT_Int, data);
 }
 
  Parameter Parameter::fromUIntArray(const std::vector<uint64> v)
@@ -70,7 +77,7 @@ namespace PR {
 		p.UInt = b;
 		data.emplace_back(p);
 	}
-	return Parameter(0, PT_UInt, data);
+	return Parameter(PT_UInt, data);
 }
 
  Parameter Parameter::fromNumberArray(const std::vector<float> v)
@@ -82,7 +89,7 @@ namespace PR {
 		p.Number = b;
 		data.emplace_back(p);
 	}
-	return Parameter(0, PT_Number, data);
+	return Parameter(PT_Number, data);
 }
 
  Parameter Parameter::fromStringArray(const std::vector<std::string>& v)
@@ -94,7 +101,7 @@ namespace PR {
 		p.String = b;
 		data.emplace_back(p);
 	}
-	return Parameter(0, PT_String, data);
+	return Parameter(PT_String, data);
 }
 
 } // namespace PR

@@ -2,19 +2,19 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "MathParser.h"
-#include "shader/ConstSocket.h"
+#include "shader/ConstNode.h"
 
 #include "DataLisp.h"
 
 namespace PR {
 
-std::shared_ptr<FloatSpectralShadingSocket> SocketParser::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
+std::shared_ptr<FloatSpectralNode> SocketParser::getSpectralOutput(Environment* env, const DL::Data& dataD, bool allowScalar)
 {
 	if (allowScalar && dataD.isNumber()) {
-		return std::make_shared<ConstSpectralShadingSocket>(ParametricBlob(dataD.getNumber()));
+		return std::make_shared<ConstSpectralNode>(ParametricBlob(dataD.getNumber()));
 	} else if (dataD.type() == DL::DT_String) {
 		if (env->hasSpectrum(dataD.getString()))
-			return std::make_shared<ConstSpectralShadingSocket>(env->getSpectrum(dataD.getString()));
+			return std::make_shared<ConstSpectralNode>(env->getSpectrum(dataD.getString()));
 		else
 			PR_LOG(L_WARNING) << "Couldn't find spectrum " << dataD.getString() << " for material" << std::endl;
 	} else if (dataD.type() == DL::DT_Group) {
@@ -23,8 +23,8 @@ std::shared_ptr<FloatSpectralShadingSocket> SocketParser::getSpectralOutput(Envi
 		if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
 			DL::Data nameD = dataD.getGroup().at(0);
 			if (nameD.type() == DL::DT_String) {
-				if (env->isShadingSocket<FloatSpectralShadingSocket>(nameD.getString()))
-					return env->getShadingSocket<FloatSpectralShadingSocket>(nameD.getString());
+				if (env->isNode<FloatSpectralNode>(nameD.getString()))
+					return env->getNode<FloatSpectralNode>(nameD.getString());
 				else
 					PR_LOG(L_WARNING) << "Unknown spectral texture " << nameD.getString() << "." << std::endl;
 			}
@@ -38,18 +38,18 @@ std::shared_ptr<FloatSpectralShadingSocket> SocketParser::getSpectralOutput(Envi
 	return nullptr;
 }
 
-std::shared_ptr<FloatScalarShadingSocket> SocketParser::getScalarOutput(Environment* env, const DL::Data& dataD)
+std::shared_ptr<FloatScalarNode> SocketParser::getScalarOutput(Environment* env, const DL::Data& dataD)
 {
 	if (dataD.isNumber()) {
-		return std::make_shared<ConstScalarShadingSocket>(dataD.getNumber());
+		return std::make_shared<ConstScalarNode>(dataD.getNumber());
 	} else if (dataD.type() == DL::DT_Group) {
 		std::string name = dataD.getGroup().id();
 
 		if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
 			DL::Data nameD = dataD.getGroup().at(0);
 			if (nameD.type() == DL::DT_String) {
-				if (env->isShadingSocket<FloatScalarShadingSocket>(nameD.getString()))
-					return env->getShadingSocket<FloatScalarShadingSocket>(nameD.getString());
+				if (env->isNode<FloatScalarNode>(nameD.getString()))
+					return env->getNode<FloatScalarNode>(nameD.getString());
 				else
 					PR_LOG(L_WARNING) << "Unknown scalar texture " << nameD.getString() << "." << std::endl;
 			}
@@ -63,7 +63,7 @@ std::shared_ptr<FloatScalarShadingSocket> SocketParser::getScalarOutput(Environm
 	return nullptr;
 }
 
-std::shared_ptr<FloatVectorShadingSocket> SocketParser::getVectorOutput(Environment* env, const DL::Data& dataD)
+std::shared_ptr<FloatVectorNode> SocketParser::getVectorOutput(Environment* env, const DL::Data& dataD)
 {
 	if (dataD.type() == DL::DT_Group) {
 		if (dataD.getGroup().isArray()) {
@@ -71,7 +71,7 @@ std::shared_ptr<FloatVectorShadingSocket> SocketParser::getVectorOutput(Environm
 			const auto vec = MathParser::getVector(dataD.getGroup(), ok);
 
 			if (ok) {
-				return std::make_shared<ConstVectorShadingSocket>(vec);
+				return std::make_shared<ConstVectorNode>(vec);
 			} else {
 				PR_LOG(L_WARNING) << "Invalid vector entry." << std::endl;
 			}
@@ -81,8 +81,8 @@ std::shared_ptr<FloatVectorShadingSocket> SocketParser::getVectorOutput(Environm
 			if ((name == "tex" || name == "texture") && dataD.getGroup().anonymousCount() == 1) {
 				DL::Data nameD = dataD.getGroup().at(0);
 				if (nameD.type() == DL::DT_String) {
-					if (env->isShadingSocket<FloatVectorShadingSocket>(nameD.getString()))
-						return env->getShadingSocket<FloatVectorShadingSocket>(nameD.getString());
+					if (env->isNode<FloatVectorNode>(nameD.getString()))
+						return env->getNode<FloatVectorNode>(nameD.getString());
 					else
 						PR_LOG(L_WARNING) << "Unknown vector texture " << nameD.getString() << std::endl;
 				}

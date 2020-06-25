@@ -2,13 +2,13 @@
 
 #include "output/OutputSpecification.h"
 #include "renderer/RenderSettings.h"
-#include "shader/Socket.h"
+#include "shader/Node.h"
 #include "spectral/ParametricBlob.h"
 
-#include <variant>
 #include <list>
 #include <map>
 #include <utility>
+#include <variant>
 
 namespace PR {
 class IEmission;
@@ -30,10 +30,10 @@ class Cache;
 class Parameter;
 class SpectralUpsampler;
 
-using ShadingSocketVariantPtr = std::variant<
-	std::shared_ptr<FloatScalarShadingSocket>,
-	std::shared_ptr<FloatSpectralShadingSocket>,
-	std::shared_ptr<FloatVectorShadingSocket>>;
+using NodeVariantPtr = std::variant<
+	std::shared_ptr<FloatScalarNode>,
+	std::shared_ptr<FloatSpectralNode>,
+	std::shared_ptr<FloatVectorNode>>;
 
 class PR_LIB_LOADER BadRenderEnvironment : public std::exception {
 public:
@@ -80,32 +80,21 @@ public:
 	inline bool hasMesh(const std::string& name) const;
 	inline void addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m);
 
-	inline void addShadingSocket(const std::string& name,
-								 const ShadingSocketVariantPtr& output);
+	inline void addNode(const std::string& name,
+								 const NodeVariantPtr& output);
 	template <typename Socket>
-	inline std::shared_ptr<Socket> getShadingSocket(const std::string& name) const;
-	inline bool hasShadingSocket(const std::string& name) const;
+	inline std::shared_ptr<Socket> getNode(const std::string& name) const;
+	inline bool hasNode(const std::string& name) const;
 	template <typename Socket>
-	inline bool isShadingSocket(const std::string& name) const;
-
-	inline std::shared_ptr<FloatSpectralMapSocket> getMapSocket(const std::string& name) const;
-	inline bool hasMapSocket(const std::string& name) const;
-	inline void addMapSocket(const std::string& name, const std::shared_ptr<FloatSpectralMapSocket>& m);
+	inline bool isNode(const std::string& name) const;
 
 	// Lookup functions for easier access
-	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
+	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
 		const Parameter& parameter, float def = 1) const;
-	std::shared_ptr<FloatSpectralShadingSocket> lookupSpectralShadingSocket(
+	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
 		const Parameter& parameter, const ParametricBlob& def) const;
-	std::shared_ptr<FloatScalarShadingSocket> lookupScalarShadingSocket(
+	std::shared_ptr<FloatScalarNode> lookupScalarNode(
 		const Parameter& parameter, float def = 1) const;
-
-	std::shared_ptr<FloatSpectralMapSocket> lookupSpectralMapSocket(
-		const Parameter& parameter,
-		float def = 1) const;
-	std::shared_ptr<FloatSpectralMapSocket> lookupSpectralMapSocket(
-		const Parameter& parameter,
-		const ParametricBlob& def) const;
 
 	inline void* textureSystem();
 
@@ -152,8 +141,9 @@ private:
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<MeshBase>> mMeshes;
-	std::map<std::string, ShadingSocketVariantPtr> mNamedShadingSockets;
-	std::map<std::string, std::shared_ptr<FloatSpectralMapSocket>> mNamedMapSockets;
+
+	std::vector<NodeVariantPtr> mNodes;
+	std::map<std::string, NodeVariantPtr> mNamedNodes;
 
 	void* mTextureSystem;
 	OutputSpecification mOutputSpecification;

@@ -3,7 +3,7 @@
 #include "Logger.h"
 #include "SceneLoader.h"
 
-#include "shader/ImageMapSocket.h"
+#include "shader/ImageNode.h"
 
 #include "DataLisp.h"
 
@@ -160,16 +160,16 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		|| type == "grayscale"
 		|| type == "color"
 		|| type == "spectral") {
-		if (env->hasMapSocket(name)) {
+		if (env->hasNode(name)) {
 			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
 
 		// TODO: Prepare image and cache it out if necessary!
-		auto output = std::make_shared<ImageMapSocket>(
+		auto output = std::make_shared<ImageNode>(
 			(OIIO::TextureSystem*)env->textureSystem(),
 			opts, filename);
-		env->addMapSocket(name, output);
+		env->addNode(name, output);
 	} else {
 		PR_LOG(L_ERROR) << "No known type given for texture " << name << std::endl;
 		return;

@@ -16,8 +16,8 @@ namespace PR {
 class OrenNayarMaterial : public IMaterial {
 public:
 	OrenNayarMaterial(uint32 id,
-					  const std::shared_ptr<FloatSpectralShadingSocket>& alb,
-					  const std::shared_ptr<FloatScalarShadingSocket>& rough)
+					  const std::shared_ptr<FloatSpectralNode>& alb,
+					  const std::shared_ptr<FloatScalarNode>& rough)
 		: IMaterial(id)
 		, mAlbedo(alb)
 		, mRoughness(rough)
@@ -35,16 +35,17 @@ public:
 	}
 
 	// https://mimosa-pudica.net/improved-oren-nayar.html
-	inline SpectralBlob calc(const Vector3f& L, float NdotL, const ShadingPoint& spt) const
+	inline SpectralBlob calc(const Vector3f& L, float NdotL, const MaterialSampleContext& ctx) const
 	{
-		float roughness = mRoughness->eval(spt);
+		auto sc			= ShadingContext::fromMC(ctx);
+		float roughness = mRoughness->eval(sc);
 		roughness *= roughness;
 
-		SpectralBlob weight = mAlbedo->eval(spt);
+		SpectralBlob weight = mAlbedo->eval(sc);
 
 		if (roughness > PR_EPSILON) {
-			const float s = NdotL * spt.Surface.NdotV - L.dot(spt.Ray.Direction);
-			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, -spt.Surface.NdotV);
+			const float s = -NdotL * ctx.NdotV() + ctx.V.dot(L);
+			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, ctx.NdotV());
 
 			const SpectralBlob A = SpectralBlob::Ones() * (1 - 0.5f * roughness / (roughness + 0.33f))
 								   + 0.17f * weight * roughness / (roughness + 0.13f);
@@ -60,9 +61,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = calc(in.Outgoing, std::abs(in.NdotL), in.Point);
-		out.Type   = MST_DiffuseReflection;
-		out.PDF_S  = Projection::cos_hemi_pdf(std::abs(in.NdotL));
+		const float dot = std::max(0.0f, in.Context.NdotL());
+		out.Weight		= calc(in.Context.L, dot, in.Context);
+		out.Type		= MST_DiffuseReflection;
+		out.PDF_S		= Projection::cos_hemi_pdf(dot);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -71,13 +73,12 @@ public:
 		PR_PROFILE_THIS;
 
 		float pdf;
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
+		out.L = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
 
-		float NdotL = std::abs(out.Outgoing.dot(in.Point.Surface.N));
-		out.Weight  = calc(out.Outgoing, NdotL, in.Point);
+		float NdotL = std::max(0.0f, out.L(2));
+		out.Weight	= calc(out.L, NdotL, in.Context);
 		out.Type	= MST_DiffuseReflection;
-		out.PDF_S   = pdf;
+		out.PDF_S	= pdf;
 	}
 
 	std::string dumpInformation() const override
@@ -93,8 +94,8 @@ public:
 	}
 
 private:
-	std::shared_ptr<FloatSpectralShadingSocket> mAlbedo;
-	std::shared_ptr<FloatScalarShadingSocket> mRoughness;
+	std::shared_ptr<FloatSpectralNode> mAlbedo;
+	std::shared_ptr<FloatScalarNode> mRoughness;
 };
 
 class OrenNayarMaterialPlugin : public IMaterialPlugin {
@@ -103,8 +104,8 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<OrenNayarMaterial>(id,
-												   ctx.Env->lookupSpectralShadingSocket(params.getParameter("albedo"), 1),
-												   ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness"), 0.5f));
+												   ctx.Env->lookupSpectralNode(params.getParameter("albedo"), 1),
+												   ctx.Env->lookupScalarNode(params.getParameter("roughness"), 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -74,12 +74,12 @@ public:
 					   FresnelMode fresnelMode,
 					   DistributionMode distributionMode,
 					   GeometricMode geometryMode,
-					   const std::shared_ptr<FloatSpectralShadingSocket>& alb,
-					   const std::shared_ptr<FloatSpectralShadingSocket>& spec,
-					   const std::shared_ptr<FloatSpectralShadingSocket>& ior,
-					   const std::shared_ptr<FloatScalarShadingSocket>& roughnessX,
-					   const std::shared_ptr<FloatScalarShadingSocket>& roughnessY,
-					   const std::shared_ptr<FloatScalarShadingSocket>& conductorAbsorption)
+					   const std::shared_ptr<FloatSpectralNode>& alb,
+					   const std::shared_ptr<FloatSpectralNode>& spec,
+					   const std::shared_ptr<FloatSpectralNode>& ior,
+					   const std::shared_ptr<FloatScalarNode>& roughnessX,
+					   const std::shared_ptr<FloatScalarNode>& roughnessY,
+					   const std::shared_ptr<FloatScalarNode>& conductorAbsorption)
 		: IMaterial(id)
 		, mFresnelMode(fresnelMode)
 		, mDistributionMode(distributionMode)
@@ -103,10 +103,10 @@ public:
 	{
 	}
 
-	SpectralBlob fresnelTerm(const ShadingPoint& point) const
+	SpectralBlob fresnelTerm(const MaterialSampleContext& ctx, const ShadingContext& sctx) const
 	{
 		// TODO: Add branching!
-		const SpectralBlob ior = mIOR->eval(point);
+		const SpectralBlob ior = mIOR->eval(sctx);
 		SpectralBlob out;
 
 		switch (mFresnelMode) {
@@ -114,86 +114,78 @@ public:
 		case FM_Dielectric: {
 			SpectralBlob n1 = SpectralBlob::Ones();
 			SpectralBlob n2 = ior;
-			if (point.Flags & SPF_Inside)
+			if (ctx.IsInside)
 				std::swap(n1, n2);
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out[i] = Fresnel::dielectric(-point.Surface.NdotV, n1(i), n2(i));
+				out[i] = Fresnel::dielectric(ctx.NdotV(), n1(i), n2(i));
 		} break;
 		case FM_Conductor: {
-			const float a = mConductorAbsorption->eval(point);
+			const float a = mConductorAbsorption->eval(sctx);
 
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out[i] = Fresnel::conductor(-point.Surface.NdotV, ior(i), a);
+				out[i] = Fresnel::conductor(ctx.NdotV(), ior(i), a);
 		} break;
 		}
 		return out;
 	}
 
-	float evalSpec(const ShadingPoint& point, const Vector3f& L, float NdotL, float& pdf) const
+	float evalSpec(const MaterialEvalContext& ctx, const ShadingContext& sctx, float& pdf) const
 	{
-		const Eigen::Vector3f H = Reflection::halfway(point.Ray.Direction, L);
-		const float NdotH		= point.Surface.N.dot(H);
-		const float NdotV		= -point.Surface.NdotV;
-
-		if (NdotH <= PR_EPSILON
-			|| NdotV <= PR_EPSILON
-			|| NdotL <= PR_EPSILON) {
+		if (ctx.NdotH() <= PR_EPSILON
+			|| ctx.NdotV() <= PR_EPSILON
+			|| ctx.NdotL() <= PR_EPSILON) {
 			pdf = 0;
 			return 0.0f;
 		}
 
-		float m1 = mRoughnessX->eval(point);
+		float m1 = mRoughnessX->eval(sctx);
 		m1 *= m1;
 
 		float G;
 		switch (mGeometricMode) {
 		case GM_Implicit:
-			G = Microfacet::g_implicit(NdotV, NdotL);
+			G = Microfacet::g_implicit(ctx.NdotV(), ctx.NdotL());
 			break;
 		case GM_Neumann:
-			G = Microfacet::g_neumann(NdotV, NdotL);
+			G = Microfacet::g_neumann(ctx.NdotV(), ctx.NdotL());
 			break;
 		default:
 		case GM_CookTorrance:
-			G = Microfacet::g_cook_torrance(NdotV, NdotL, NdotH, -point.Ray.Direction.dot(H));
+			G = Microfacet::g_cook_torrance(ctx.NdotV(), ctx.NdotL(), ctx.NdotH(), ctx.H.dot(ctx.V));
 			break;
 		case GM_Kelemen:
-			G = Microfacet::g_kelemen(NdotV, NdotL, -point.Ray.Direction.dot(H));
+			G = Microfacet::g_kelemen(ctx.NdotV(), ctx.NdotL(), ctx.H.dot(ctx.V));
 			break;
 		case GM_Schlick:
-			G = Microfacet::g_1_schlick(NdotV, m1) * Microfacet::g_1_schlick(NdotL, m1);
+			G = Microfacet::g_1_schlick(ctx.NdotV(), m1) * Microfacet::g_1_schlick(ctx.NdotL(), m1);
 			break;
 		case GM_Walter:
-			G = Microfacet::g_1_walter(NdotV, m1) * Microfacet::g_1_walter(NdotL, m1);
+			G = Microfacet::g_1_walter(ctx.NdotV(), m1) * Microfacet::g_1_walter(ctx.NdotL(), m1);
 			break;
 		}
 
 		float D;
 		switch (mDistributionMode) {
 		case DM_Blinn:
-			D = Microfacet::ndf_blinn(NdotH, m1);
+			D = Microfacet::ndf_blinn(ctx.NdotH(), m1);
 			break;
 		case DM_Beckmann:
-			D = Microfacet::ndf_beckmann(NdotH, m1);
+			D = Microfacet::ndf_beckmann(ctx.NdotH(), m1);
 			break;
 		default:
 		case DM_GGX:
 			if (mRoughnessX == mRoughnessY) {
-				D = Microfacet::ndf_ggx(NdotH, m1);
+				D = Microfacet::ndf_ggx(ctx.NdotH(), m1);
 			} else {
-				float m2 = mRoughnessY->eval(point);
+				float m2 = mRoughnessY->eval(sctx);
 				m2 *= m2;
-
-				const float XdotH = std::abs(point.Surface.Nx.dot(H));
-				const float YdotH = std::abs(point.Surface.Ny.dot(H));
-
-				D = Microfacet::ndf_ggx(NdotH, XdotH, YdotH, m1, m2);
+				D = Microfacet::ndf_ggx(ctx.NdotH(), ctx.XdotH(), ctx.YdotH(), m1, m2);
 			}
 			break;
 		}
 
-		pdf = 0.25f * D / (NdotV * NdotL);
-		return (0.25f * D * G) / (NdotV * NdotL);
+		pdf = 0.25f * D / (ctx.NdotH() * ctx.NdotL());
+		return (0.25f * D * G) / (ctx.NdotH() * ctx.NdotL());
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -201,38 +193,38 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		SpectralBlob F = fresnelTerm(in.Point);
+		auto sctx	   = ShadingContext::fromMC(in.Context);
+		SpectralBlob F = fresnelTerm(in.Context, sctx);
 
 		SpectralBlob Diff = SpectralBlob::Zero();
 		if (mFresnelMode != FM_Conductor)
-			Diff = (F < 1).select(PR_1_PI * mAlbedo->eval(in.Point), 0.0f);
+			Diff = (F < 1).select(PR_1_PI * mAlbedo->eval(sctx), 0.0f);
 
 		SpectralBlob Spec = SpectralBlob::Zero();
-		if (-in.NdotL * in.Point.Surface.NdotV > PR_EPSILON) {
+		if (in.Context.NdotL() * in.Context.NdotV() > PR_EPSILON) {
 			float pdf_s;
-			Spec	  = mSpecularity->eval(in.Point) * evalSpec(in.Point, in.Outgoing, in.NdotL, pdf_s);
+			Spec	  = mSpecularity->eval(sctx) * evalSpec(in.Context, sctx, pdf_s);
 			out.PDF_S = SpectralBlob(pdf_s);
 		}
 
 		out.PDF_S  = PR_1_PI * (1 - F) + out.PDF_S * F;
 		out.Weight = Diff * (1 - F) + Spec * F;
-		out.Weight *= std::abs(in.NdotL);
+		out.Weight *= std::abs(in.Context.NdotL());
 		out.Type = MST_DiffuseReflection;
 	}
 
-	void sampleDiffusePath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out) const
+	void sampleDiffusePath(const MaterialSampleInput&, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
 	{
 		float pdf_s;
-		out.Outgoing = Projection::cos_hemi(u, v, pdf_s);
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
+		out.L = Projection::cos_hemi(u, v, pdf_s);
 		out.PDF_S	 = SpectralBlob(pdf_s);
-		out.Weight	 = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.Surface.N));
+		out.Weight	 = PR_1_PI * mAlbedo->eval(sctx) * out.L[2];
 		out.Type	 = MST_DiffuseReflection;
 	}
 
-	void sampleSpecularPath(const MaterialSampleInput& in, float u, float v, MaterialSampleOutput& out) const
+	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
 	{
-		float m1 = mRoughnessX->eval(in.Point);
+		float m1 = mRoughnessX->eval(sctx);
 		m1 *= m1;
 
 		float pdf_s;
@@ -249,18 +241,17 @@ public:
 			if (mRoughnessX == mRoughnessY) {
 				O = Microfacet::sample_ndf_ggx(u, v, m1, pdf_s);
 			} else {
-				float m2 = mRoughnessY->eval(in.Point);
+				float m2 = mRoughnessY->eval(sctx);
 				m2 *= m2;
 				O = Microfacet::sample_ndf_ggx(u, v, m1, m2, pdf_s);
 			}
 			break;
 		}
 
-		Vector3f H	 = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, O);
-		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
-		float NdotL	 = std::abs(in.Point.Surface.N.dot(out.Outgoing));
+		out.L = Reflection::reflect(in.Context.V, O);
+		float NdotL	 = out.L[2];
 		if (NdotL > PR_EPSILON)
-			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Point.Surface.NdotV), 0.0f), 1.0f);
+			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Context.NdotV()), 0.0f), 1.0f);
 		else
 			pdf_s = 0;
 
@@ -268,7 +259,7 @@ public:
 		out.PDF_S = SpectralBlob(pdf_s);
 
 		float _ignore;
-		out.Weight = mSpecularity->eval(in.Point) * evalSpec(in.Point, out.Outgoing, NdotL, _ignore) * NdotL;
+		out.Weight = mSpecularity->eval(sctx) * evalSpec(in.Context.expand(out.L), sctx, _ignore) * NdotL;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -276,11 +267,12 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		SpectralBlob F	 = fresnelTerm(in.Point);
+		auto sctx		 = ShadingContext::fromMC(in.Context);
+		SpectralBlob F	 = fresnelTerm(in.Context, sctx);
 		float decision_f = F[0];
 
 		if (in.RND[0] <= decision_f) {
-			sampleSpecularPath(in, in.RND[0] / decision_f, in.RND[1], out);
+			sampleSpecularPath(in, sctx, in.RND[0] / decision_f, in.RND[1], out);
 			out.PDF_S *= decision_f;
 			out.Type = MST_SpecularReflection;
 		} else if (mFresnelMode == FM_Conductor) {
@@ -288,13 +280,13 @@ public:
 			out.Weight = 0.0f;
 			out.PDF_S  = 0.0f;
 		} else {
-			sampleDiffusePath(in, (in.RND[0] - decision_f) / (1 - decision_f), in.RND[1], out);
+			sampleDiffusePath(in, sctx, (in.RND[0] - decision_f) / (1 - decision_f), in.RND[1], out);
 			out.PDF_S *= 1.0f - decision_f;
 			out.Type = MST_DiffuseReflection;
 		}
 
 		// No translucent
-		if (out.Outgoing.dot(in.Point.Surface.N) < PR_EPSILON)
+		if (out.L[2] < PR_EPSILON)
 			out.PDF_S = 0;
 	}
 
@@ -343,12 +335,12 @@ private:
 	FresnelMode mFresnelMode;
 	DistributionMode mDistributionMode;
 	GeometricMode mGeometricMode;
-	std::shared_ptr<FloatSpectralShadingSocket> mAlbedo;
-	std::shared_ptr<FloatSpectralShadingSocket> mSpecularity;
-	std::shared_ptr<FloatSpectralShadingSocket> mIOR;
-	std::shared_ptr<FloatScalarShadingSocket> mRoughnessX;
-	std::shared_ptr<FloatScalarShadingSocket> mRoughnessY;
-	std::shared_ptr<FloatScalarShadingSocket> mConductorAbsorption;
+	std::shared_ptr<FloatSpectralNode> mAlbedo;
+	std::shared_ptr<FloatSpectralNode> mSpecularity;
+	std::shared_ptr<FloatSpectralNode> mIOR;
+	std::shared_ptr<FloatScalarNode> mRoughnessX;
+	std::shared_ptr<FloatScalarNode> mRoughnessY;
+	std::shared_ptr<FloatScalarNode> mConductorAbsorption;
 }; // namespace PR
 
 class MicrofacetMaterialPlugin : public IMaterialPlugin {
@@ -361,16 +353,16 @@ public:
 		const std::string gMStr = params.getString("geometric_mode", "");
 		const std::string dMStr = params.getString("distribution_mode", "");
 
-		std::shared_ptr<FloatScalarShadingSocket> roughnessX;
-		std::shared_ptr<FloatScalarShadingSocket> roughnessY;
+		std::shared_ptr<FloatScalarNode> roughnessX;
+		std::shared_ptr<FloatScalarNode> roughnessY;
 		const auto roughnessP = params.getParameter("roughness");
 
 		if (roughnessP.isValid()) {
-			roughnessX = ctx.Env->lookupScalarShadingSocket(roughnessP, 0.5f);
+			roughnessX = ctx.Env->lookupScalarNode(roughnessP, 0.5f);
 			roughnessY = roughnessX;
 		} else {
-			roughnessX = ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness_x"), 0.5f);
-			roughnessY = ctx.Env->lookupScalarShadingSocket(params.getParameter("roughness_y"), 0.5f);
+			roughnessX = ctx.Env->lookupScalarNode(params.getParameter("roughness_x"), 0.5f);
+			roughnessY = ctx.Env->lookupScalarNode(params.getParameter("roughness_y"), 0.5f);
 		}
 
 		FresnelMode fm		= FM_Dielectric;
@@ -397,11 +389,11 @@ public:
 
 		return std::make_shared<MicrofacetMaterial>(id,
 													fm, dm, gm,
-													ctx.Env->lookupSpectralShadingSocket(params.getParameter("albedo"), 1),
-													ctx.Env->lookupSpectralShadingSocket(params.getParameter("specularity"), 1),
-													ctx.Env->lookupSpectralShadingSocket(params.getParameter("index"), 1.55f),
+													ctx.Env->lookupSpectralNode(params.getParameter("albedo"), 1),
+													ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1),
+													ctx.Env->lookupSpectralNode(params.getParameter("index"), 1.55f),
 													roughnessX, roughnessY,
-													ctx.Env->lookupScalarShadingSocket(params.getParameter("conductor_absorption"), 0.5f));
+													ctx.Env->lookupScalarNode(params.getParameter("conductor_absorption"), 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

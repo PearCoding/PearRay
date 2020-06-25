@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shader/Socket.h"
+#include "shader/Node.h"
 #include "spectral/EquidistantSpectrum.h"
 #include "spectral/ParametricBlob.h"
 
@@ -8,14 +8,14 @@
 
 namespace PR {
 template <typename T>
-class PR_LIB_LOADER EquidistantSpectrumBaseMapSocket : public FloatSpectralMapSocket {
+class PR_LIB_LOADER EquidistantSpectrumBaseNode : public FloatSpectralNode {
 public:
-	inline EquidistantSpectrumBaseMapSocket(const T& spec)
+	inline EquidistantSpectrumBaseNode(const T& spec)
 		: mSpectrum(spec)
 	{
 	}
 
-	inline virtual SpectralBlob eval(const MapSocketCoord& ctx) const override
+	inline virtual SpectralBlob eval(const ShadingContext& ctx) const override
 	{
 		SpectralBlob blob;
 
@@ -38,7 +38,7 @@ private:
 	T mSpectrum;
 };
 
-using EquidistantSpectrumMapSocket	   = EquidistantSpectrumBaseMapSocket<EquidistantSpectrum>;
-using EquidistantSpectrumViewMapSocket = EquidistantSpectrumBaseMapSocket<EquidistantSpectrumView>;
+using EquidistantSpectrumNode	   = EquidistantSpectrumBaseNode<EquidistantSpectrum>;
+using EquidistantSpectrumViewNode = EquidistantSpectrumBaseNode<EquidistantSpectrumView>;
 
 } // namespace PR

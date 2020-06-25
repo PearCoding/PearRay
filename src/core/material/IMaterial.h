@@ -23,11 +23,13 @@ public:
 
 	/*
 		Evaluate the BxDF based on incident and outgoing direction and point information.
+		The calculation is in shading space.
 	*/
 	virtual void eval(const MaterialEvalInput& in, MaterialEvalOutput& out, const RenderTileSession& session) const = 0;
 
 	/*
 		Sample a direction and evaluate.
+		The calculation and output is in shading space.
 	*/
 	virtual void sample(const MaterialSampleInput& in, MaterialSampleOutput& out, const RenderTileSession& session) const = 0;
 

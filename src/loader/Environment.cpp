@@ -24,9 +24,7 @@
 #include "sampler/ISamplerPlugin.h"
 #include "sampler/SamplerManager.h"
 #include "scene/Scene.h"
-#include "shader/ConstSocket.h"
-#include "shader/IlluminantSocket.h"
-#include "shader/MapShadingSocket.h"
+#include "shader/ConstNode.h"
 
 #include "DefaultSRGB.h"
 
@@ -245,89 +243,47 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
  SPECTRUM_NAME
  SOCKET_NAME
 */
-std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
+std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 	const Parameter& parameter, float def) const
 {
-	return lookupSpectralShadingSocket(parameter, ParametricBlob(def));
+	return lookupSpectralNode(parameter, ParametricBlob(def));
 }
 
-// Restructure this to tables
-static std::shared_ptr<FloatSpectralMapSocket> createIlluminant(const std::string& type, float power)
-{
-	if (type == "D65")
-		return std::make_shared<D65Illuminant>(power);
-	else if (type == "D55")
-		return std::make_shared<D55Illuminant>(power);
-	else if (type == "D50")
-		return std::make_shared<D50Illuminant>(power);
-	else if (type == "D75")
-		return std::make_shared<D75Illuminant>(power);
-	else if (type == "A")
-		return std::make_shared<AIlluminant>(power);
-	else if (type == "C")
-		return std::make_shared<CIlluminant>(power);
-	else if (type == "F1")
-		return std::make_shared<F1Illuminant>(power);
-	else if (type == "F2")
-		return std::make_shared<F2Illuminant>(power);
-	else if (type == "F3")
-		return std::make_shared<F3Illuminant>(power);
-	else if (type == "F4")
-		return std::make_shared<F4Illuminant>(power);
-	else if (type == "F5")
-		return std::make_shared<F5Illuminant>(power);
-	else if (type == "F6")
-		return std::make_shared<F6Illuminant>(power);
-	else if (type == "F7")
-		return std::make_shared<F7Illuminant>(power);
-	else if (type == "F8")
-		return std::make_shared<F8Illuminant>(power);
-	else if (type == "F9")
-		return std::make_shared<F9Illuminant>(power);
-	else if (type == "F10")
-		return std::make_shared<F10Illuminant>(power);
-	else if (type == "F11")
-		return std::make_shared<F11Illuminant>(power);
-	else if (type == "F12")
-		return std::make_shared<F12Illuminant>(power);
-
-	return nullptr;
-}
-
-std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSocket(
+std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 	const Parameter& parameter, const ParametricBlob& def) const
 {
 	switch (parameter.type()) {
 	default:
-		return std::make_shared<ConstSpectralShadingSocket>(def);
+		return std::make_shared<ConstSpectralNode>(def);
 	case PT_Int:
 	case PT_UInt:
 	case PT_Number:
 		if (parameter.isArray())
-			return std::make_shared<ConstSpectralShadingSocket>(def);
+			return std::make_shared<ConstSpectralNode>(def);
 		else
-			return std::make_shared<ConstSpectralShadingSocket>(ParametricBlob(parameter.getNumber(0.0f)));
-	case PT_String:
-		if (parameter.flags() & PF_Texture) {
-			std::string tname = parameter.getString("");
-
-			if (hasMapSocket(tname)) {
-				auto socket = getMapSocket(tname);
-				if (socket)
-					return std::make_shared<MapShadingSocket>(socket);
+			return std::make_shared<ConstSpectralNode>(ParametricBlob(parameter.getNumber(0.0f)));
+	case PT_Reference: {
+		uint64 refid = parameter.getReference();
+		if (refid != P_INVALID_REFERENCE && refid < mNodes.size()) {
+			try {
+				return std::get<std::shared_ptr<FloatSpectralNode>>(mNodes[refid]);
+			} catch (const std::bad_variant_access&) {
+				// Ignore
 			}
-		} else if (parameter.flags() & PF_Illuminant) {
-			std::string tname = parameter.getString("");
-			auto illuminant	  = createIlluminant(tname, 1.0f);
-			if (illuminant)
-				return std::make_shared<MapShadingSocket>(illuminant);
-		} else {
-			std::string sname = parameter.getString("");
-
-			if (hasSpectrum(sname))
-				return std::make_shared<ConstSpectralShadingSocket>(getSpectrum(sname));
 		}
-		return std::make_shared<ConstSpectralShadingSocket>(def);
+		return std::make_shared<ConstSpectralNode>(def);
+	}
+	case PT_String: {
+		std::string name = parameter.getString("");
+
+		if (hasNode(name)) {
+			auto socket = getNode<FloatSpectralNode>(name);
+			if (socket)
+				return socket;
+		} else if (hasSpectrum(name))
+			return std::make_shared<ConstSpectralNode>(getSpectrum(name));
+	}
+		return std::make_shared<ConstSpectralNode>(def);
 	}
 }
 
@@ -335,76 +291,41 @@ std::shared_ptr<FloatSpectralShadingSocket> Environment::lookupSpectralShadingSo
  FLOAT
  SOCKET_NAME
 */
-std::shared_ptr<FloatScalarShadingSocket> Environment::lookupScalarShadingSocket(
+std::shared_ptr<FloatScalarNode> Environment::lookupScalarNode(
 	const Parameter& parameter, float def) const
 {
 	switch (parameter.type()) {
 	default:
-		return std::make_shared<ConstScalarShadingSocket>(def);
+		return std::make_shared<ConstScalarNode>(def);
 	case PT_Int:
 	case PT_UInt:
 	case PT_Number:
 		if (parameter.isArray())
-			return std::make_shared<ConstScalarShadingSocket>(def);
+			return std::make_shared<ConstScalarNode>(def);
 		else
-			return std::make_shared<ConstScalarShadingSocket>(parameter.getNumber(def));
-	case PT_String:
-		if (parameter.flags() & PF_Node) {
-			std::string tname = parameter.getString("");
-
-			if (hasShadingSocket(tname)) {
-				auto socket = getShadingSocket<FloatScalarShadingSocket>(tname);
-				if (socket)
-					return socket;
+			return std::make_shared<ConstScalarNode>(parameter.getNumber(def));
+	case PT_Reference: {
+		uint64 refid = parameter.getReference();
+		if (refid != P_INVALID_REFERENCE && refid < mNodes.size()) {
+			try {
+				return std::get<std::shared_ptr<FloatScalarNode>>(mNodes[refid]);
+			} catch (const std::bad_variant_access&) {
+				// Ignore
 			}
 		}
-		return std::make_shared<ConstScalarShadingSocket>(def);
+		return std::make_shared<ConstScalarNode>(def);
+	}
+	case PT_String: {
+		std::string name = parameter.getString("");
+
+		if (hasNode(name)) {
+			auto socket = getNode<FloatScalarNode>(name);
+			if (socket)
+				return socket;
+		}
+	}
+		return std::make_shared<ConstScalarNode>(def);
 	}
 }
 
-///////////////////
-std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
-	const Parameter& parameter,
-	float def) const
-{
-	return lookupSpectralMapSocket(parameter, ParametricBlob(def));
-}
-
-std::shared_ptr<FloatSpectralMapSocket> Environment::lookupSpectralMapSocket(
-	const Parameter& parameter,
-	const ParametricBlob& def) const
-{
-	switch (parameter.type()) {
-	default:
-		return std::make_shared<ConstSpectralMapSocket>(def);
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
-		if (parameter.isArray())
-			return std::make_shared<ConstSpectralMapSocket>(def);
-		else
-			return std::make_shared<ConstSpectralMapSocket>(ParametricBlob(parameter.getNumber(0.0f)));
-	case PT_String:
-		if (parameter.flags() & PF_Texture) {
-			std::string tname = parameter.getString("");
-
-			if (hasMapSocket(tname)) {
-				auto socket = getMapSocket(tname);
-				if (socket)
-					return socket;
-			}
-		} else if (parameter.flags() & PF_Illuminant) {
-			std::string tname = parameter.getString("");
-			auto illuminant	  = createIlluminant(tname, 1.0f);
-			if (illuminant)
-				return illuminant;
-		} else {
-			std::string sname = parameter.getString("");
-
-			if (hasSpectrum(sname))
-				return std::make_shared<ConstSpectralMapSocket>(getSpectrum(sname));
-		}
-		return std::make_shared<ConstSpectralMapSocket>(def);
-	}
-}
 } // namespace PR

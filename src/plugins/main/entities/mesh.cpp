@@ -158,7 +158,7 @@ public:
 		Vector2f uv = face.interpolateUVs(query.UV);
 
 		face.tangentFromUV(pt.N, pt.Nx, pt.Ny);
-		pt.UVW = Vector3f(uv(0), uv(1), 0);
+		pt.UV = uv;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
@@ -175,7 +175,7 @@ public:
 		pt.N	  = face.interpolateNormals(query.UV);
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
-		pt.UVW = Vector3f(query.UV(0), query.UV(1), 0);
+		pt.UV = query.UV;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;
 	}
