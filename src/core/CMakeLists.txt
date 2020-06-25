@@ -118,6 +118,7 @@ set(PR_Src
   sampler/Distribution2D.h
   sampler/ISampler.h
   sampler/ISamplerFactory.h
+  sampler/SampleArray.h
   sampler/SplitSample.h
   scene/Scene.cpp
   scene/Scene.h

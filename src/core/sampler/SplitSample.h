@@ -3,24 +3,37 @@
 #include "PR_Config.h"
 
 namespace PR {
+class PR_LIB_CORE SplitSample1D {
+public:
+	inline SplitSample1D(float u,
+						 size_t start, size_t end)
+	{
+		PR_ASSERT(start < end, "Expect end to be bigger then start");
+
+		float k;
+		size_t s = end - start;
+		mU		 = std::modf(u * s, &k);
+		mI		 = std::min<uint32>(static_cast<uint32>(k), end - 1);
+	}
+
+	~SplitSample1D() = default;
+
+	inline float uniform() const { return mU; }
+	inline uint32 integral() const { return mI; }
+
+private:
+	float mU;
+	uint32 mI;
+};
+
 class PR_LIB_CORE SplitSample2D {
 public:
 	inline SplitSample2D(const Vector2f& u,
 						 size_t start1, size_t end1,
 						 size_t start2, size_t end2)
+		: mS1(u(0), start1, end1)
+		, mS2(u(1), start2, end2)
 	{
-		PR_ASSERT(start1 < end1, "Expect end to be bigger then start");
-		PR_ASSERT(start2 < end2, "Expect end to be bigger then start");
-
-		float k;
-
-		size_t s = end1 - start1;
-		mU1		 = std::modf(u(0) * s, &k);
-		mI1		 = std::min<uint32>(static_cast<uint32>(k), end1 - 1);
-
-		s   = end2 - start2;
-		mU2 = std::modf(u(1) * s, &k);
-		mI2 = std::min<uint32>(static_cast<uint32>(k), end2 - 1);
 	}
 
 	inline SplitSample2D(const Vector2f& u,
@@ -31,15 +44,13 @@ public:
 
 	~SplitSample2D() = default;
 
-	inline float uniform1() const { return mU1; }
-	inline float uniform2() const { return mU2; }
-	inline uint32 integral1() const { return mI1; }
-	inline uint32 integral2() const { return mI2; }
+	inline float uniform1() const { return mS1.uniform(); }
+	inline float uniform2() const { return mS2.uniform(); }
+	inline uint32 integral1() const { return mS1.integral(); }
+	inline uint32 integral2() const { return mS2.integral(); }
 
 private:
-	float mU1;
-	float mU2;
-	uint32 mI1;
-	uint32 mI2;
+	SplitSample1D mS1;
+	SplitSample1D mS2;
 };
 } // namespace PR

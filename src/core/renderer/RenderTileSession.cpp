@@ -5,6 +5,7 @@
 #include "buffer/FrameBufferBucket.h"
 #include "material/IMaterial.h"
 #include "output/OutputQueue.h"
+#include "sampler/SplitSample.h"
 #include "scene/Scene.h"
 #include "shader/ShadingPoint.h"
 
@@ -138,7 +139,7 @@ void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) co
 		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
-IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_id, GeometryPoint& pt, float& pdf) const
+IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_id, const Vector3f& rnd, GeometryPoint& pt, float& pdf) const
 {
 	PR_PROFILE_THIS;
 
@@ -148,7 +149,8 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_
 		return nullptr;
 	}
 
-	size_t pick = mTile->random().get32(0, (uint32)lights.size());
+	SplitSample1D pickS(rnd(0), 0, lights.size());
+	uint32 pick = pickS.integral();
 	pdf			= 1.0f / lights.size();
 
 	IEntity* light = lights.at(pick).get();
@@ -158,7 +160,7 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_
 			return nullptr;
 		}
 
-		size_t pick2 = mTile->random().get32(0, (uint32)lights.size() - 1);
+		uint32 pick2 = std::min<uint32>(lights.size() - 2, pickS.uniform() * (lights.size() - 1));
 		pdf			 = 1.0f / (lights.size() - 1);
 
 		// We use a trick to ignore the one pick we already had
@@ -171,7 +173,7 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_
 		light = lights.at(pick).get();
 	}
 
-	EntityRandomPoint rnd_p = light->pickRandomParameterPoint(view, mTile->random().get2D());
+	EntityRandomPoint rnd_p = light->pickRandomParameterPoint(view, Vector2f(rnd(1), rnd(2)));
 
 	EntityGeometryQueryPoint query;
 	query.PrimitiveID = rnd_p.PrimitiveID;

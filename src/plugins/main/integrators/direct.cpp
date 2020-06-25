@@ -15,6 +15,7 @@
 #include "renderer/RenderTile.h"
 #include "renderer/RenderTileSession.h"
 #include "renderer/StreamPipeline.h"
+#include "sampler/SampleArray.h"
 #include "shader/ShadingPoint.h"
 
 #include "Logger.h"
@@ -45,6 +46,7 @@ class IntDirectInstance : public IIntegratorInstance {
 public:
 	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
 		: mPipeline(ctx)
+		, mSampler((maxRayDepth + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
 		, mLightSampleCount(lightSamples)
 		, mMaxRayDepth(maxRayDepth)
 		, mMSIEnabled(msi)
@@ -65,7 +67,7 @@ public:
 		// Sample light
 		InfiniteLightSampleInput inL;
 		inL.Point = spt;
-		inL.RND	  = session.tile()->random().get2D();
+		inL.RND	  = mSampler.next2D();
 		InfiniteLightSampleOutput outL;
 		infLight->sample(inL, outL, session);
 
@@ -107,7 +109,7 @@ public:
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
-		IEntity* light = session.pickRandomLight(spt.N, spt.Geometry.EntityID, lightPt, pdfA);
+		IEntity* light = session.pickRandomLight(spt.N, spt.Geometry.EntityID, mSampler.next3D(), lightPt, pdfA);
 		if (PR_UNLIKELY(!light))
 			return SpectralBlob::Zero();
 
@@ -166,8 +168,7 @@ public:
 	// Estimate indirect light
 	void scatterLight(RenderTileSession& session, LightPath& path,
 					  const ShadingPoint& spt,
-					  IMaterial* material,
-					  bool& infLightHandled)
+					  IMaterial* material, bool& infLightHandled)
 	{
 		PR_PROFILE_THIS;
 
@@ -182,14 +183,15 @@ public:
 		// Sample BxDF
 		MaterialSampleInput in;
 		in.Point = spt;
-		in.RND	 = session.tile()->random().get2D();
+		in.RND	 = mSampler.next2D();
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
 		// Russian Roulette
+		const float roussian_prob = mSampler.next1D();
 		if (PR_UNLIKELY(out.PDF_S[0] <= PR_EPSILON)
 			|| spt.Ray.IterationDepth + 1 >= mMaxRayDepth
-			|| session.tile()->random().getFloat() > scatProb)
+			|| roussian_prob > scatProb)
 			return;
 
 		// Construct next ray
@@ -379,9 +381,11 @@ public:
 
 		session.tile()->statistics().addDepthCount(sg.size());
 		session.tile()->statistics().addEntityHitCount(sg.size());
+
 		for (size_t i = 0; i < sg.size(); ++i) {
 			ShadingPoint spt;
 			sg.computeShadingPoint(i, spt);
+			mSampler.reset(session.tile()->random());
 
 			eval0(session, path, spt, sg.entity(), session.getMaterial(spt.Geometry.MaterialID));
 			PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");
@@ -427,6 +431,7 @@ public:
 
 private:
 	StreamPipeline mPipeline;
+	SampleArray mSampler;
 	const size_t mLightSampleCount;
 	const size_t mMaxRayDepth;
 	const bool mMSIEnabled;
