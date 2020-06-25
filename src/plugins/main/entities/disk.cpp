@@ -98,7 +98,6 @@ public:
 		float u = query.UV[0];
 		float v = query.UV[1];
 
-		pt.P = query.Position;
 		pt.N = normalMatrix() * mDisk.normal();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);

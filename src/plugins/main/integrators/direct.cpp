@@ -79,7 +79,7 @@ public:
 			return SpectralBlob::Zero();
 
 		// Trace shadow ray
-		const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+		const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
 		bool hitAnything = session.traceOcclusionRay(shadow);
 		if (hitAnything) // If we hit anything before the light/background, the light path is occluded
 			return SpectralBlob::Zero();
@@ -88,7 +88,7 @@ public:
 		MaterialEvalInput in;
 		in.Point	= spt;
 		in.Outgoing = outL.Outgoing;
-		in.NdotL	= outL.Outgoing.dot(spt.N);
+		in.NdotL	= outL.Outgoing.dot(spt.Surface.N);
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
@@ -109,7 +109,8 @@ public:
 		// Pick light and point
 		float pdfA;
 		GeometryPoint lightPt;
-		IEntity* light = session.pickRandomLight(spt.N, spt.Geometry.EntityID, mSampler.next3D(), lightPt, pdfA);
+		Vector3f lightPos;
+		IEntity* light = session.pickRandomLight(spt.Surface.N, spt.Surface.Geometry.EntityID, mSampler.next3D(), lightPos, lightPt, pdfA);
 		if (PR_UNLIKELY(!light))
 			return SpectralBlob::Zero();
 
@@ -120,7 +121,7 @@ public:
 		}
 
 		// Sample light
-		Vector3f L		 = (lightPt.P - spt.P);
+		Vector3f L		 = (lightPos - spt.P);
 		const float sqrD = L.squaredNorm();
 		L.normalize();
 		const float cosO = std::max(0.0f, -L.dot(lightPt.N));  // Only frontside
@@ -130,9 +131,9 @@ public:
 			return SpectralBlob::Zero();
 
 		// Trace shadow ray
-		const float NdotL	 = L.dot(spt.N);
+		const float NdotL	 = L.dot(spt.Surface.N);
 		const float distance = std::sqrt(sqrD);
-		const Vector3f oN	 = NdotL < 0 ? -spt.N : spt.N; // Offset normal used for safe positioning
+		const Vector3f oN	 = NdotL < 0 ? -spt.Surface.N : spt.Surface.N; // Offset normal used for safe positioning
 		const Ray shadow	 = spt.Ray.next(spt.P, L, oN, RF_Shadow, SHADOW_RAY_MIN, distance);
 		bool shadowHit		 = session.traceShadowRay(shadow, distance, light->id());
 
@@ -142,7 +143,7 @@ public:
 		// Evaluate light
 		LightEvalInput inL;
 		inL.Entity = light;
-		inL.Point.setByIdentity(shadow, lightPt);
+		inL.Point.setForSurface(shadow, lightPos, lightPt);
 		LightEvalOutput outL;
 		ems->eval(inL, outL, session);
 
@@ -195,7 +196,7 @@ public:
 			return;
 
 		// Construct next ray
-		Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
+		Ray next = spt.Ray.next(spt.P, out.Outgoing, spt.Surface.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 		if (material->hasDeltaDistribution())
 			next.Weight *= out.Weight / scatProb;
 		else
@@ -211,12 +212,13 @@ public:
 
 		// Trace bounce ray
 		GeometryPoint npt;
+		Vector3f npos;
 		IEntity* nentity = nullptr;
 		IMaterial* nmaterial;
-		if (session.traceBounceRay(next, npt, nentity, nmaterial)) {
+		if (session.traceBounceRay(next, npos, npt, nentity, nmaterial)) {
 			ShadingPoint spt2;
-			spt2.setByIdentity(next, npt);
-			const float aNdotV = std::abs(spt2.NdotV);
+			spt2.setForSurface(next, npos, npt);
+			const float aNdotV = std::abs(spt2.Surface.NdotV);
 
 			// Giveup if bad
 			if (PR_UNLIKELY(aNdotV <= PR_EPSILON)) {
@@ -227,10 +229,10 @@ public:
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
 			if (allowMSI
 				&& nentity->isLight()
-				&& next.Direction.dot(spt2.Geometry.N) < -PR_EPSILON // Check if frontside
-				&& nentity->id() != spt.Geometry.EntityID			 // Check if not self
-				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {			 // Check if not too close
-				IEmission* ems = session.getEmission(spt2.Geometry.EmissionID);
+				&& next.Direction.dot(spt2.Surface.Geometry.N) < -PR_EPSILON // Check if frontside
+				&& nentity->id() != spt.Surface.Geometry.EntityID			 // Check if not self
+				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {					 // Check if not too close
+				IEmission* ems = session.getEmission(spt2.Surface.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
 					// Evaluate light
 					LightEvalInput inL;
@@ -241,7 +243,7 @@ public:
 
 					const float msiL = MSI(
 						1, out.PDF_S[0],
-						mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.Geometry.EntityID, nentity), spt2.Depth2, aNdotV));
+						mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.Surface.Geometry.EntityID, nentity), spt2.Depth2, aNdotV));
 					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
@@ -348,7 +350,7 @@ public:
 
 		// Only consider camera rays, as everything else produces too much noise
 		if (entity->isLight()) {
-			IEmission* ems = session.getEmission(spt.Geometry.EmissionID);
+			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
 				// Evaluate light
 				LightEvalInput inL;
@@ -387,7 +389,7 @@ public:
 			sg.computeShadingPoint(i, spt);
 			mSampler.reset(session.tile()->random());
 
-			eval0(session, path, spt, sg.entity(), session.getMaterial(spt.Geometry.MaterialID));
+			eval0(session, path, spt, sg.entity(), session.getMaterial(spt.Surface.Geometry.MaterialID));
 			PR_ASSERT(path.currentSize() == 1, "Add/Pop count does not match!");
 		}
 	}

@@ -199,6 +199,7 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		}                                                                                                     \
 	}
 
+// TODO: Ignore medium shadingpoint entries
 void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entries, size_t entry_count)
 {
 	const int32 filterRadius = mFilter.radius();
@@ -216,20 +217,19 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	BLEND_1D(AOV_Time, entry.SP.Ray.Time);
 	BLEND_1D(AOV_Depth, std::sqrt(entry.SP.Depth2));
 
-	BLEND_1D(AOV_EntityID, entry.SP.Geometry.EntityID);
-	BLEND_1D(AOV_MaterialID, entry.SP.Geometry.MaterialID);
-	BLEND_1D(AOV_EmissionID, entry.SP.Geometry.EmissionID);
-	BLEND_1D(AOV_DisplaceID, entry.SP.Geometry.DisplaceID);
-
 	BLEND_3D(AOV_Position, entry.SP.P);
-	BLEND_3D(AOV_Normal, entry.SP.N);
-	BLEND_3D(AOV_NormalG, entry.SP.Geometry.N);
-	BLEND_3D(AOV_Tangent, entry.SP.Nx);
-	BLEND_3D(AOV_Bitangent, entry.SP.Ny);
 	BLEND_3D(AOV_View, entry.SP.Ray.Direction);
-	BLEND_3D(AOV_UVW, entry.SP.Geometry.UVW);
-	BLEND_3D(AOV_DPDT, entry.SP.Geometry.dPdT);
 
+	BLEND_1D(AOV_EntityID, entry.SP.Surface.Geometry.EntityID);
+	BLEND_1D(AOV_MaterialID, entry.SP.Surface.Geometry.MaterialID);
+	BLEND_1D(AOV_EmissionID, entry.SP.Surface.Geometry.EmissionID);
+	BLEND_1D(AOV_DisplaceID, entry.SP.Surface.Geometry.DisplaceID);
+
+	BLEND_3D(AOV_Normal, entry.SP.Surface.N);
+	BLEND_3D(AOV_NormalG, entry.SP.Surface.Geometry.N);
+	BLEND_3D(AOV_Tangent, entry.SP.Surface.Nx);
+	BLEND_3D(AOV_Bitangent, entry.SP.Surface.Ny);
+	BLEND_3D(AOV_UVW, entry.SP.Surface.Geometry.UVW);
 	// Check if there are any LPEs at all
 	if (!mHasNonSpecLPE)
 		return;
@@ -237,20 +237,19 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	// Handle optional LPE AOVs
 	BLEND_1D_LPE(AOV_Time, entry.SP.Ray.Time);
 	BLEND_1D_LPE(AOV_Depth, std::sqrt(entry.SP.Depth2));
-
-	BLEND_1D_LPE(AOV_EntityID, entry.SP.Geometry.EntityID);
-	BLEND_1D_LPE(AOV_MaterialID, entry.SP.Geometry.MaterialID);
-	BLEND_1D_LPE(AOV_EmissionID, entry.SP.Geometry.EmissionID);
-	BLEND_1D_LPE(AOV_DisplaceID, entry.SP.Geometry.DisplaceID);
-
 	BLEND_3D_LPE(AOV_Position, entry.SP.P);
-	BLEND_3D_LPE(AOV_Normal, entry.SP.N);
-	BLEND_3D_LPE(AOV_NormalG, entry.SP.Geometry.N);
-	BLEND_3D_LPE(AOV_Tangent, entry.SP.Nx);
-	BLEND_3D_LPE(AOV_Bitangent, entry.SP.Ny);
 	BLEND_3D_LPE(AOV_View, entry.SP.Ray.Direction);
-	BLEND_3D_LPE(AOV_UVW, entry.SP.Geometry.UVW);
-	BLEND_3D_LPE(AOV_DPDT, entry.SP.Geometry.dPdT);
+
+	BLEND_1D_LPE(AOV_EntityID, entry.SP.Surface.Geometry.EntityID);
+	BLEND_1D_LPE(AOV_MaterialID, entry.SP.Surface.Geometry.MaterialID);
+	BLEND_1D_LPE(AOV_EmissionID, entry.SP.Surface.Geometry.EmissionID);
+	BLEND_1D_LPE(AOV_DisplaceID, entry.SP.Surface.Geometry.DisplaceID);
+
+	BLEND_3D_LPE(AOV_Normal, entry.SP.Surface.N);
+	BLEND_3D_LPE(AOV_NormalG, entry.SP.Surface.Geometry.N);
+	BLEND_3D_LPE(AOV_Tangent, entry.SP.Surface.Nx);
+	BLEND_3D_LPE(AOV_Bitangent, entry.SP.Surface.Ny);
+	BLEND_3D_LPE(AOV_UVW, entry.SP.Surface.Geometry.UVW);
 }
 
 void FrameBufferBucket::commitFeedbacks(const OutputFeedbackEntry* entries, size_t entry_count)

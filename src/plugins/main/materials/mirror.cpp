@@ -50,7 +50,7 @@ public:
 		out.Weight	 = mSpecularity->eval(in.Point);
 		out.Type	 = MST_SpecularReflection;
 		out.PDF_S	 = 1;
-		out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N, in.Point.Ray.Direction);
+		out.Outgoing = Reflection::reflect(in.Point.Surface.NdotV, in.Point.Surface.N, in.Point.Ray.Direction);
 	}
 
 	std::string dumpInformation() const override

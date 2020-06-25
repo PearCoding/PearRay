@@ -43,8 +43,8 @@ public:
 		SpectralBlob weight = mAlbedo->eval(spt);
 
 		if (roughness > PR_EPSILON) {
-			const float s = NdotL * spt.NdotV - L.dot(spt.Ray.Direction);
-			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, -spt.NdotV);
+			const float s = NdotL * spt.Surface.NdotV - L.dot(spt.Ray.Direction);
+			const float t = s < PR_EPSILON ? 1.0f : std::max(NdotL, -spt.Surface.NdotV);
 
 			const SpectralBlob A = SpectralBlob::Ones() * (1 - 0.5f * roughness / (roughness + 0.33f))
 								   + 0.17f * weight * roughness / (roughness + 0.13f);
@@ -72,9 +72,9 @@ public:
 
 		float pdf;
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
-		float NdotL = std::abs(out.Outgoing.dot(in.Point.N));
+		float NdotL = std::abs(out.Outgoing.dot(in.Point.Surface.N));
 		out.Weight  = calc(out.Outgoing, NdotL, in.Point);
 		out.Type	= MST_DiffuseReflection;
 		out.PDF_S   = pdf;

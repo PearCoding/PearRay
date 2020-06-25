@@ -44,7 +44,7 @@ public:
 	IMaterial* getMaterial(uint32 id) const;
 	IEmission* getEmission(uint32 id) const;
 
-	bool traceBounceRay(const Ray& ray, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
+	bool traceBounceRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 
@@ -53,7 +53,7 @@ public:
 	void pushSPFragment(const ShadingPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
-	IEntity* pickRandomLight(const Vector3f& view, uint32 ignore_id, const Vector3f& rnd, GeometryPoint& pt, float& pdf) const;
+	IEntity* pickRandomLight(const Vector3f& view, uint32 ignore_id, const Vector3f& rnd, Vector3f& pos, GeometryPoint& pt, float& pdf) const;
 	float pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const;
 
 private:

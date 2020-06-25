@@ -11,8 +11,8 @@ MapShadingSocket::MapShadingSocket(const std::shared_ptr<FloatSpectralMapSocket>
 SpectralBlob MapShadingSocket::eval(const ShadingPoint& ctx) const
 {
 	MapSocketCoord coord;
-	coord.UV		   = Vector2f(ctx.Geometry.UVW[0], ctx.Geometry.UVW[1]);
-	coord.Face		   = ctx.Geometry.PrimitiveID;
+	coord.UV		   = Vector2f(ctx.Surface.Geometry.UVW[0], ctx.Surface.Geometry.UVW[1]);
+	coord.Face		   = ctx.Surface.Geometry.PrimitiveID;
 	coord.WavelengthNM = ctx.Ray.WavelengthNM;
 
 	return mMap->eval(coord);

@@ -43,10 +43,10 @@ public:
 			for (size_t i = 0; i < mSampleCount; ++i) {
 				Vector2f rnd  = random.get2D();
 				Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
-				Vector3f ndir = Tangent::fromTangentSpace(spt.N, spt.Nx, spt.Ny,
+				Vector3f ndir = Tangent::fromTangentSpace(spt.Surface.N, spt.Surface.Nx, spt.Surface.Ny,
 														  dir);
 
-				const Ray n = spt.Ray.next(spt.Geometry.P, ndir, spt.N, UsedRayType, PR_EPSILON, spt.Ray.MaxT);
+				const Ray n = spt.Ray.next(spt.P, ndir, spt.Surface.N, UsedRayType, PR_EPSILON, spt.Ray.MaxT);
 
 				if (session.traceOcclusionRay(n))
 					++occlusions;

@@ -9,7 +9,6 @@ enum AOV3D {
 	AOV_Bitangent,
 	AOV_View,
 	AOV_UVW,
-	AOV_DPDT,
 
 	AOV_3D_COUNT
 };

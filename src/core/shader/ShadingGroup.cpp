@@ -55,7 +55,7 @@ void ShadingGroup::computeShadingPoint(size_t i, ShadingPoint& spt) const
 	query.Position	  = spt.Ray.t(entry.Parameter.z());
 	query.PrimitiveID = entry.PrimitiveID;
 	query.UV		  = Vector2f(entry.Parameter[0], entry.Parameter[1]);
-	mEntity->provideGeometryPoint(query, spt.Geometry);
-	spt.setByIdentity(spt.Ray, spt.Geometry);
+	mEntity->provideGeometryPoint(query, spt.Surface.Geometry);
+	spt.setForSurface(spt.Ray, query.Position, spt.Surface.Geometry);
 }
 } // namespace PR

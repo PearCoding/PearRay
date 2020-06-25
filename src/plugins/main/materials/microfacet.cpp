@@ -117,13 +117,13 @@ public:
 			if (point.Flags & SPF_Inside)
 				std::swap(n1, n2);
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out[i] = Fresnel::dielectric(-point.NdotV, n1(i), n2(i));
+				out[i] = Fresnel::dielectric(-point.Surface.NdotV, n1(i), n2(i));
 		} break;
 		case FM_Conductor: {
 			const float a = mConductorAbsorption->eval(point);
 
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out[i] = Fresnel::conductor(-point.NdotV, ior(i), a);
+				out[i] = Fresnel::conductor(-point.Surface.NdotV, ior(i), a);
 		} break;
 		}
 		return out;
@@ -132,8 +132,8 @@ public:
 	float evalSpec(const ShadingPoint& point, const Vector3f& L, float NdotL, float& pdf) const
 	{
 		const Eigen::Vector3f H = Reflection::halfway(point.Ray.Direction, L);
-		const float NdotH		= point.N.dot(H);
-		const float NdotV		= -point.NdotV;
+		const float NdotH		= point.Surface.N.dot(H);
+		const float NdotV		= -point.Surface.NdotV;
 
 		if (NdotH <= PR_EPSILON
 			|| NdotV <= PR_EPSILON
@@ -184,8 +184,8 @@ public:
 				float m2 = mRoughnessY->eval(point);
 				m2 *= m2;
 
-				const float XdotH = std::abs(point.Nx.dot(H));
-				const float YdotH = std::abs(point.Ny.dot(H));
+				const float XdotH = std::abs(point.Surface.Nx.dot(H));
+				const float YdotH = std::abs(point.Surface.Ny.dot(H));
 
 				D = Microfacet::ndf_ggx(NdotH, XdotH, YdotH, m1, m2);
 			}
@@ -208,7 +208,7 @@ public:
 			Diff = (F < 1).select(PR_1_PI * mAlbedo->eval(in.Point), 0.0f);
 
 		SpectralBlob Spec = SpectralBlob::Zero();
-		if (-in.NdotL * in.Point.NdotV > PR_EPSILON) {
+		if (-in.NdotL * in.Point.Surface.NdotV > PR_EPSILON) {
 			float pdf_s;
 			Spec	  = mSpecularity->eval(in.Point) * evalSpec(in.Point, in.Outgoing, in.NdotL, pdf_s);
 			out.PDF_S = SpectralBlob(pdf_s);
@@ -224,9 +224,9 @@ public:
 	{
 		float pdf_s;
 		out.Outgoing = Projection::cos_hemi(u, v, pdf_s);
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 		out.PDF_S	 = SpectralBlob(pdf_s);
-		out.Weight	 = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
+		out.Weight	 = PR_1_PI * mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.Surface.N));
 		out.Type	 = MST_DiffuseReflection;
 	}
 
@@ -256,11 +256,11 @@ public:
 			break;
 		}
 
-		Vector3f H	 = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, O);
+		Vector3f H	 = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, O);
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
-		float NdotL	 = std::abs(in.Point.N.dot(out.Outgoing));
+		float NdotL	 = std::abs(in.Point.Surface.N.dot(out.Outgoing));
 		if (NdotL > PR_EPSILON)
-			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Point.NdotV), 0.0f), 1.0f);
+			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Point.Surface.NdotV), 0.0f), 1.0f);
 		else
 			pdf_s = 0;
 
@@ -294,7 +294,7 @@ public:
 		}
 
 		// No translucent
-		if (out.Outgoing.dot(in.Point.N) < PR_EPSILON)
+		if (out.Outgoing.dot(in.Point.Surface.N) < PR_EPSILON)
 			out.PDF_S = 0;
 	}
 

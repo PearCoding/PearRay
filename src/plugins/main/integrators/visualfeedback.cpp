@@ -102,30 +102,30 @@ public:
 			grp.extractHitEntry(i, hitEntry);
 
 			SpectralBlob radiance = SpectralBlob::Zero();
-			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.NdotV);
+			SpectralBlob weight	  = SpectralBlob::Ones() * abs(spt.Surface.NdotV);
 			switch (mMode) {
 			case VFM_ColoredEntityID:
-				radiance = sRandomColors[spt.Geometry.EntityID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Surface.Geometry.EntityID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredMaterialID:
-				radiance = sRandomColors[spt.Geometry.MaterialID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Surface.Geometry.MaterialID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredEmissionID:
-				radiance = sRandomColors[spt.Geometry.EmissionID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Surface.Geometry.EmissionID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredDisplaceID:
-				radiance = sRandomColors[spt.Geometry.DisplaceID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Surface.Geometry.DisplaceID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
 			case VFM_ColoredPrimitiveID:
-				radiance = sRandomColors[spt.Geometry.PrimitiveID % RANDOM_COLOR_COUNT];
+				radiance = sRandomColors[spt.Surface.Geometry.PrimitiveID % RANDOM_COLOR_COUNT];
 				if (mApplyDot)
 					radiance *= weight;
 				break;
@@ -151,14 +151,14 @@ public:
 					radiance *= weight;
 				break;
 			case VFM_NdotV: {
-				const float originalNdotV = spt.Ray.Direction.dot(spt.Geometry.N);
+				const float originalNdotV = spt.Ray.Direction.dot(spt.Surface.Geometry.N);
 				if (originalNdotV < 0)
 					radiance = SpectralBlob{ 0, -originalNdotV, 0, 1 };
 				else
 					radiance = SpectralBlob{ originalNdotV, 0, 0, 1 };
 			} break;
 			case VFM_ValidateMaterial: {
-				IMaterial* mat = session.getMaterial(spt.Geometry.MaterialID);
+				IMaterial* mat = session.getMaterial(spt.Surface.Geometry.MaterialID);
 				if (mat) {
 					MaterialSampleInput samp_in;
 					samp_in.Point = spt;
@@ -169,7 +169,7 @@ public:
 					MaterialEvalInput eval_in;
 					eval_in.Point	 = spt;
 					eval_in.Outgoing = samp_out.Outgoing;
-					eval_in.NdotL	 = spt.N.dot(eval_in.Outgoing);
+					eval_in.NdotL	 = spt.Surface.N.dot(eval_in.Outgoing);
 					MaterialEvalOutput eval_out;
 					mat->eval(eval_in, eval_out, session);
 

@@ -51,7 +51,7 @@ public:
 			std::swap(n1, n2);
 
 		eta = n1 / n2;
-		return Fresnel::dielectric(-spt.NdotV, n1, n2);
+		return Fresnel::dielectric(-spt.Surface.NdotV, n1, n2);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -73,16 +73,18 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		PR_ASSERT(in.Point.isAtSurface(), "Expect intersection to be at surface");
+
 		float eta;
 		const float F = fresnelTerm(in.Point, eta);
 		out.Weight	  = mSpecularity->eval(in.Point); // The weight is independent of the fresnel term
 
 		if (in.RND[0] <= F) {
 			out.Type	 = MST_SpecularReflection;
-			out.Outgoing = Reflection::reflect(in.Point.NdotV, in.Point.N,
+			out.Outgoing = Reflection::reflect(in.Point.Surface.NdotV, in.Point.Surface.N,
 											   in.Point.Ray.Direction);
 		} else {
-			const float NdotT = Reflection::refraction_angle(in.Point.NdotV, eta);
+			const float NdotT = Reflection::refraction_angle(in.Point.Surface.NdotV, eta);
 
 			if (NdotT < 0) { // TOTAL REFLECTION
 				if (mThin) { // Ignore
@@ -91,12 +93,12 @@ public:
 					return;
 				} else {
 					out.Type	 = MST_SpecularReflection;
-					out.Outgoing = Reflection::reflect(-in.Point.NdotV, -in.Point.N, in.Point.Ray.Direction);
+					out.Outgoing = Reflection::reflect(-in.Point.Surface.NdotV, -in.Point.Surface.N, in.Point.Ray.Direction);
 				}
 			} else {
 				out.Type	 = MST_SpecularTransmission;
-				out.Outgoing = Reflection::refract(eta, in.Point.NdotV, NdotT,
-												   in.Point.N, in.Point.Ray.Direction);
+				out.Outgoing = Reflection::refract(eta, in.Point.Surface.NdotV, NdotT,
+												   in.Point.Surface.N, in.Point.Ray.Direction);
 			}
 		}
 

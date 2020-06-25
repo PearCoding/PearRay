@@ -70,7 +70,7 @@ public:
 	{
 		float fd90 = 0.5f + 2 * HdotL * HdotL * roughness;
 		float lk   = Fresnel::schlick_term(NdotL);
-		float vk   = Fresnel::schlick_term(-point.NdotV);
+		float vk   = Fresnel::schlick_term(-point.Surface.NdotV);
 
 		return mix(1.0f, fd90, lk) * mix(1.0f, fd90, vk);
 	}
@@ -80,11 +80,11 @@ public:
 	{
 		float fss90 = HdotL * HdotL * roughness;
 		float lk	= Fresnel::schlick_term(NdotL);
-		float vk	= Fresnel::schlick_term(-point.NdotV);
+		float vk	= Fresnel::schlick_term(-point.Surface.NdotV);
 
 		float fss = mix(1.0f, fss90, lk) * mix(1.0f, fss90, vk);
 
-		const float f = NdotL - point.NdotV;
+		const float f = NdotL - point.Surface.NdotV;
 		if (std::abs(f) < PR_EPSILON)
 			return 0.0f;
 		else
@@ -104,7 +104,7 @@ public:
 		float D		   = Microfacet::ndf_ggx(NdotH, HdotX, HdotY, ax, ay);
 		float hk	   = Fresnel::schlick_term(HdotL);
 		SpectralBlob F = mix<SpectralBlob>(spec, SpectralBlob::Ones(), hk);
-		float G		   = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.NdotV, VdotX, VdotY, ax, ay);
+		float G		   = Microfacet::g_1_smith(NdotL, LdotX, LdotY, ax, ay) * Microfacet::g_1_smith(-point.Surface.NdotV, VdotX, VdotY, ax, ay);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return D * F * G;
@@ -119,7 +119,7 @@ public:
 		float D	 = Microfacet::ndf_ggx(NdotH, mix(0.1f, 0.001f, gloss));
 		float hk = Fresnel::schlick_term(HdotL);
 		float F	 = mix(F0, 1.0f, hk);
-		float G	 = Microfacet::g_1_smith(NdotL, R) * Microfacet::g_1_smith(-point.NdotV, R);
+		float G	 = Microfacet::g_1_smith(NdotL, R) * Microfacet::g_1_smith(-point.Surface.NdotV, R);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return R * D * F * G;
@@ -145,17 +145,17 @@ public:
 						  float clearcoat,
 						  float clearcoatGloss) const
 	{
-		const float VdotX = -point.Nx.dot(point.Ray.Direction);
-		const float VdotY = -point.Ny.dot(point.Ray.Direction);
-		const float NdotL = point.N.dot(L);
-		const float LdotX = point.Nx.dot(L);
-		const float LdotY = point.Ny.dot(L);
+		const float VdotX = -point.Surface.Nx.dot(point.Ray.Direction);
+		const float VdotY = -point.Surface.Ny.dot(point.Ray.Direction);
+		const float NdotL = point.Surface.N.dot(L);
+		const float LdotX = point.Surface.Nx.dot(L);
+		const float LdotY = point.Surface.Ny.dot(L);
 
 		const Eigen::Vector3f H = Reflection::halfway(point.Ray.Direction, L);
-		const float NdotH		= point.N.dot(H);
+		const float NdotH		= point.Surface.N.dot(H);
 		const float HdotL		= L.dot(H);
-		const float HdotX		= point.Nx.dot(H);
-		const float HdotY		= point.Ny.dot(H);
+		const float HdotX		= point.Surface.Nx.dot(H);
+		const float HdotY		= point.Surface.Ny.dot(H);
 
 		const SpectralBlob tint = lum > PR_EPSILON
 									  ? SpectralBlob(base / lum)
@@ -219,7 +219,7 @@ public:
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		Vector3f nV = Tangent::toTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, -in.Point.Ray.Direction);
+		Vector3f nV = Tangent::toTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, -in.Point.Ray.Direction);
 
 		float pdf_s;
 		out.Outgoing = Microfacet::sample_ggx_vndf(u, v, nV, ax, ay, pdf_s);
@@ -232,15 +232,15 @@ public:
 		else
 			out.PDF_S = 0.0f; // Drop sample
 
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
-		if (out.Outgoing.dot(in.Point.N) <= PR_EPSILON)
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
+		if (out.Outgoing.dot(in.Point.Surface.N) <= PR_EPSILON)
 			out.PDF_S = 0;
 
 		// Reflect incoming ray by the calculated half vector
 		out.Outgoing = Reflection::reflect(out.Outgoing.dot(in.Point.Ray.Direction), out.Outgoing, in.Point.Ray.Direction);
 		out.Outgoing.normalize();
 
-		if (out.Outgoing.dot(in.Point.N) <= PR_EPSILON)
+		if (out.Outgoing.dot(in.Point.Surface.N) <= PR_EPSILON)
 			out.PDF_S = 0;
 	}
 
@@ -272,7 +272,7 @@ public:
 		out.Weight = evalBRDF(in.Point, out.Outgoing,
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
-					 * std::abs(in.Point.N.dot(out.Outgoing));
+					 * std::abs(in.Point.Surface.N.dot(out.Outgoing));
 	}
 
 	std::string dumpInformation() const override

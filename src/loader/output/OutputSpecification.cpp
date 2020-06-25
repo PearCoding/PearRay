@@ -172,9 +172,6 @@ static struct {
 	{ "uvw", AOV_UVW },
 	{ "uv", AOV_UVW },
 	{ "tex", AOV_UVW },
-	{ "velocity", AOV_DPDT },
-	{ "movement", AOV_DPDT },
-	{ "dpdt", AOV_DPDT },
 	{ nullptr, AOV_3D_COUNT },
 };
 

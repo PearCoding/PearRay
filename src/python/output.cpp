@@ -64,8 +64,7 @@ void setup_output(py::module& m)
 		.value("TANGENT", AOV_Tangent)
 		.value("BINORMAL", AOV_Bitangent)
 		.value("VIEW", AOV_View)
-		.value("UVW", AOV_UVW)
-		.value("DPDT", AOV_DPDT);
+		.value("UVW", AOV_UVW);
 
 	py::enum_<AOV1D>(scope, "AOV1D")
 		.value("DEPTH", AOV_Depth)

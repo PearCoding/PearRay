@@ -101,7 +101,6 @@ public:
 		float u = query.UV[0];
 		float v = query.UV[1];
 
-		pt.P  = query.Position;
 		pt.N  = normalMatrix() * mPlane.normal();
 		pt.Nx = normalMatrix() * mPlane.xAxis();
 		pt.Ny = normalMatrix() * mPlane.yAxis();

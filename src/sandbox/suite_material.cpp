@@ -25,19 +25,19 @@ constexpr float PHI_D	= 2 * PR_PI / HEIGHT;
 static ShadingPoint standardSP(const Vector3f& V = Vector3f(0, 0, -1))
 {
 	ShadingPoint spt;
-	spt.Geometry.N	  = Vector3f(0, 0, 1);
-	spt.Geometry.Nx	  = Vector3f(1, 0, 0);
-	spt.Geometry.Ny	  = Vector3f(0, 1, 0);
-	spt.Geometry.P	  = Vector3f(0, 0, 0);
-	spt.Geometry.UVW  = Vector3f(0.5f, 0.5f, 0);
-	spt.N			  = spt.Geometry.N;
-	spt.Nx			  = spt.Geometry.Nx;
-	spt.Ny			  = spt.Geometry.Ny;
-	spt.P			  = spt.Geometry.P;
-	spt.Ray.Direction = V.normalized();
-	spt.Ray.Origin	  = Vector3f(0, 0, 1);
-	spt.NdotV		  = spt.Ray.Direction.dot(spt.N);
-	spt.Depth2		  = 1;
+	spt.Surface.Geometry.N	 = Vector3f(0, 0, 1);
+	spt.Surface.Geometry.Nx	 = Vector3f(1, 0, 0);
+	spt.Surface.Geometry.Ny	 = Vector3f(0, 1, 0);
+	spt.P					 = Vector3f(0, 0, 0);
+	spt.Surface.Geometry.UVW = Vector3f(0.5f, 0.5f, 0);
+	spt.Surface.N			 = spt.Surface.Geometry.N;
+	spt.Surface.Nx			 = spt.Surface.Geometry.Nx;
+	spt.Surface.Ny			 = spt.Surface.Geometry.Ny;
+	spt.Surface.P			 = spt.P;
+	spt.Ray.Direction		 = V.normalized();
+	spt.Ray.Origin			 = Vector3f(0, 0, 1);
+	spt.Surface.NdotV		 = spt.Ray.Direction.dot(spt.Surface.N);
+	spt.Depth2				 = 1;
 	return spt;
 }
 
@@ -58,7 +58,7 @@ static void handle_material_eval_case(const std::string& name,
 
 			MaterialEvalInput in;
 			in.Outgoing = L;
-			in.NdotL	= std::abs(L.dot(spt.N));
+			in.NdotL	= std::abs(L.dot(spt.Surface.N));
 			in.Point	= spt;
 			MaterialEvalOutput out;
 			material->eval(in, out, RenderTileSession());

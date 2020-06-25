@@ -8,12 +8,7 @@ Geometry context (SOA)
 - View independent!
 */
 struct PR_LIB_CORE GeometryPoint {
-	// Point of sample
-	Vector3f P;
-	Vector3f dPdT; // Velocity of P
-
 	Vector3f N;
-
 	// Normal Tangent Frame
 	Vector3f Nx;
 	Vector3f Ny;

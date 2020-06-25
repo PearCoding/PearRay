@@ -48,14 +48,14 @@ public:
 
 		const Vector3f H = Reflection::halfway(in.Point.Ray.Direction, in.Outgoing);
 
-		const float NdotH = in.Point.N.dot(H);
-		const float HdotX = in.Point.Nx.dot(H);
-		const float HdotY = in.Point.Ny.dot(H);
+		const float NdotH = in.Point.Surface.N.dot(H);
+		const float HdotX = in.Point.Surface.Nx.dot(H);
+		const float HdotY = in.Point.Surface.Ny.dot(H);
 
 		float spec = std::min(1.0f,
 							  Microfacet::ward(mRoughnessX->eval(in.Point),
 											   mRoughnessY->eval(in.Point),
-											   -in.Point.NdotV, in.NdotL, NdotH,
+											   -in.Point.Surface.NdotV, in.NdotL, NdotH,
 											   HdotX, HdotY));
 
 		const float refl = mReflectivity->eval(in.Point);
@@ -72,7 +72,7 @@ public:
 		float pdf_s;
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
 		out.PDF_S	 = pdf_s;
-		out.Weight	 = mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.N));
+		out.Weight	 = mAlbedo->eval(in.Point) * std::abs(out.Outgoing.dot(in.Point.Surface.N));
 		out.Type	 = MST_DiffuseReflection;
 	}
 
@@ -117,11 +117,11 @@ public:
 			out.PDF_S			  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
-		Vector3f H	 = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny,
+		Vector3f H	 = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny,
 												 Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi));
 		out.Outgoing = Reflection::reflect(H.dot(in.Point.Ray.Direction), H, in.Point.Ray.Direction);
 		out.Type	 = MST_SpecularReflection;
-		out.Weight	 = mSpecularity->eval(in.Point) * out.PDF_S * std::abs(out.Outgoing.dot(in.Point.N));
+		out.Weight	 = mSpecularity->eval(in.Point) * out.PDF_S * std::abs(out.Outgoing.dot(in.Point.Surface.N));
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -139,7 +139,7 @@ public:
 			out.PDF_S /= 1.0f - refl;
 		}
 
-		out.Outgoing = Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 	}
 
 	std::string dumpInformation() const override

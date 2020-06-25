@@ -67,7 +67,7 @@ public:
 		else
 			out.Weight = mRadianceFactor * mRadiance->eval(coord);
 
-		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->N.dot(dir))) : 1.0f;
+		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
 	}
 
 	inline void evalD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
@@ -97,14 +97,14 @@ public:
 
 		out.Weight = mRadianceFactor * mRadiance->eval(coord);
 
-		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->N.dot(dir))) : 1.0f;
+		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
 	}
 
 	inline void sampleD(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
 	{
 		Vector2f uv	 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
 		out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
-		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
 		MapSocketCoord coord;
 		coord.UV		   = uv;
@@ -120,7 +120,7 @@ public:
 	inline void sampleN(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
 	{
 		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.N, in.Point.Nx, in.Point.Ny, out.Outgoing);
+		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
 		MapSocketCoord coord;
 		coord.UV		   = in.RND;

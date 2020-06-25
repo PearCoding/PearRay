@@ -189,7 +189,6 @@ public:
 		provideGeometryPoint2(query, pt);
 
 		// Global
-		pt.P  = query.Position;
 		pt.N  = normalMatrix() * pt.N;
 		pt.Nx = normalMatrix() * pt.Nx;
 		pt.Ny = normalMatrix() * pt.Ny;
