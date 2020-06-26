@@ -13,21 +13,6 @@ inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { r
 inline std::shared_ptr<NodeManager> Environment::nodeManager() const { return mNodeManager; }
 inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 
-inline ParametricBlob Environment::getSpectrum(const std::string& name) const
-{
-	return mSpectrums.at(name);
-}
-
-inline bool Environment::hasSpectrum(const std::string& name) const
-{
-	return mSpectrums.count(name) != 0;
-}
-
-inline void Environment::addSpectrum(const std::string& name, const ParametricBlob& spec)
-{
-	mSpectrums.emplace(name, spec);
-}
-
 inline std::shared_ptr<IEmission> Environment::getEmission(const std::string& name) const
 {
 	return hasEmission(name) ? mEmissions.at(name) : nullptr;

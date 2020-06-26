@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
+#include "shader/ConstNode.h"
 #include "shader/EquidistantSpectrumNode.h"
 #include "shader/INodePlugin.h"
 
@@ -97,6 +98,8 @@ public:
 			return std::make_shared<AIlluminant>();
 		else if (illum == "c")
 			return std::make_shared<CIlluminant>();
+		else if (illum == "e")
+			return std::make_shared<ConstSpectralNode>(SpectralBlob::Ones());
 		else if (illum == "f1")
 			return std::make_shared<F1Illuminant>();
 		else if (illum == "f2")

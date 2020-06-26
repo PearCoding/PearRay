@@ -21,6 +21,7 @@ void ToneMapper::map(const float* xyzIn, float* rgbOut, size_t outElems, size_t 
 		if (outElems == 3) {
 			memcpy(rgbOut, xyzIn, sizeof(float) * pixelCount * 3);
 		} else {
+			PR_OPT_LOOP
 			for (size_t i = 0; i < pixelCount; ++i) {
 				rgbOut[i * outElems + 0] = xyzIn[i * IElems + 0];
 				rgbOut[i * outElems + 1] = xyzIn[i * IElems + 1];

@@ -79,8 +79,8 @@ public:
 			return SpectralBlob::Zero();
 
 		// Trace shadow ray
-		const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-		bool hitAnything = session.traceOcclusionRay(shadow);
+		const Ray shadow  = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+		bool hitAnything  = session.traceOcclusionRay(shadow);
 		if (hitAnything) // If we hit anything before the light/background, the light path is occluded
 			return SpectralBlob::Zero();
 
@@ -315,7 +315,7 @@ public:
 			SpectralBlob radiance = infiniteLight(session, spt, token,
 												  light.get(), material);
 
-			if (!radiance.isZero())
+			if (radiance.isZero())
 				continue;
 
 			path.addToken(token);

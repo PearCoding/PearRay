@@ -47,7 +47,7 @@ void printStatistics(const RenderStatus& status)
 	out << "    Camera Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.camera_ray_count").getUInt() / (double)raycount << " %" << std::endl;
 	out << "    Light Share:   " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.light_ray_count").getUInt() / (double)raycount << " %" << std::endl;
 	out << "    Bounce Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.bounce_ray_count").getUInt() / (double)raycount << " %" << std::endl;
-	out << "    Shadow share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl;
+	out << "    Shadow Share:  " << std::setw(OUTPUT_FIELD_SIZE) << 100 * status.getField("global.shadow_ray_count").getUInt() / (double)raycount << " %" << std::endl;
 	out << "  Pixel Count:     " << std::setw(OUTPUT_FIELD_SIZE) << pixelcount << std::endl;
 	out << "  Entity Hits:     " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt() << std::endl;
 	out << "  Background Hits: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt() << std::endl;

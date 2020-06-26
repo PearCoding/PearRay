@@ -79,7 +79,6 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 				++w_channels;
 		}*/
 
-		//real_weight *= w_channels/(float)PR_SPECTRAL_BLOB_SIZE;
 		size_t channels = PR_SPECTRAL_BLOB_SIZE;
 		if (PR_UNLIKELY(isMono)) {
 			channels = 1;
@@ -109,6 +108,8 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		// Map to CIE XYZ
 		CIETriplet triplet;
 		CIE::eval(real_weight, entry.Wavelengths, triplet);
+		triplet /= channels;
+
 		const LightPathView path = LightPathView(entry.Path);
 
 		// Apply for each filter area

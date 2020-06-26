@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spectral/ParametricBlob.h"
+#include "PR_Config.h"
 
 namespace DL {
 class Data;
@@ -8,8 +8,9 @@ class Data;
 
 namespace PR {
 class SpectralUpsampler;
+class FloatSpectralNode;
 class SpectralParser {
 public:
-	static ParametricBlob getSpectrum(SpectralUpsampler* upsampler, const DL::Data& data);
+	static std::shared_ptr<FloatSpectralNode> getSpectrum(SpectralUpsampler* upsampler, const DL::Data& data);
 };
 } // namespace PR

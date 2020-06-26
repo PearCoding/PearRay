@@ -17,25 +17,25 @@ namespace PR {
 // -> Split
 // -> None
 
-class EnvironmentLightBase : public IInfiniteLight {
+template <bool UseDistribution, bool UseSplit>
+class EnvironmentLight : public IInfiniteLight {
 public:
-	EnvironmentLightBase(uint32 id, const std::string& name,
-						 const std::shared_ptr<FloatSpectralNode>& spec,
-						 const std::shared_ptr<FloatSpectralNode>& background,
-						 const std::shared_ptr<Distribution2D>& distribution,
-						 float factor,
-						 const Eigen::Matrix3f& trans)
+	EnvironmentLight(uint32 id, const std::string& name,
+					 const std::shared_ptr<FloatSpectralNode>& spec,
+					 const std::shared_ptr<FloatSpectralNode>& background,
+					 const std::shared_ptr<Distribution2D>& distribution,
+					 const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mDistribution(distribution)
 		, mRadiance(spec)
 		, mBackground(background)
-		, mRadianceFactor(factor)
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
 	{
 	}
 
-	inline void evalSD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
 	{
 		ShadingContext ctx;
 		Vector3f dir = mInvTransform * in.Ray.Direction;
@@ -44,90 +44,46 @@ public:
 		ctx.UV(1)		 = 1 - ctx.UV(1);
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
-		if (in.Ray.IterationDepth == 0)
-			out.Weight = mBackground->eval(ctx);
-		else
-			out.Weight = mRadianceFactor * mRadiance->eval(ctx);
+		if constexpr (UseSplit) {
+			if (in.Ray.IterationDepth == 0)
+				out.Weight = mBackground->eval(ctx);
+			else
+				out.Weight = mRadiance->eval(ctx);
+		} else {
+			out.Weight = mRadiance->eval(ctx);
+		}
 
-		const float sinTheta = std::sin(ctx.UV(1) * PR_PI);
-		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+		if constexpr (UseDistribution) {
+			const float sinTheta = std::sin(ctx.UV(1) * PR_PI);
+			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
+			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+		} else {
+			out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
+		}
 	}
 
-	inline void evalS(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
+	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
+				const RenderTileSession&) const override
 	{
-		ShadingContext coord;
-		Vector3f dir = mInvTransform * in.Ray.Direction;
+		Vector2f uv;
+		if constexpr (UseDistribution) {
+			uv			 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
+			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
 
-		coord.UV		   = Spherical::uv_from_normal(dir);
-		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Ray.WavelengthNM;
-
-		if (in.Ray.IterationDepth == 0)
-			out.Weight = mBackground->eval(coord);
-		else
-			out.Weight = mRadianceFactor * mRadiance->eval(coord);
-
-		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
-	}
-
-	inline void evalD(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
-	{
-		ShadingContext coord;
-		Vector3f dir = mInvTransform * in.Ray.Direction;
-
-		coord.UV		   = Spherical::uv_from_normal(dir);
-		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Ray.WavelengthNM;
-
-		out.Weight = mRadianceFactor * mRadiance->eval(coord);
-
-		const float sinTheta = std::sin(coord.UV(1) * PR_PI);
-		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
-	}
-
-	inline void evalN(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out) const
-	{
-		ShadingContext coord;
-		Vector3f dir = mInvTransform * in.Ray.Direction;
-
-		coord.UV		   = Spherical::uv_from_normal(dir);
-		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Ray.WavelengthNM;
-
-		out.Weight = mRadianceFactor * mRadiance->eval(coord);
-
-		out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
-	}
-
-	inline void sampleD(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
-	{
-		Vector2f uv	 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
-		out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
+			const float sinTheta = std::sin((1 - uv(1)) * PR_PI);
+			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
+			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
+		} else {
+			uv			 = in.RND;
+			out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
+		}
 		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
 		ShadingContext coord;
 		coord.UV		   = uv;
 		coord.UV(1)		   = 1 - coord.UV(1);
 		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
-		out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
-
-		const float sinTheta = std::sin((1 - uv(1)) * PR_PI);
-		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
-	}
-
-	inline void sampleN(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out) const
-	{
-		out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
-		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
-
-		ShadingContext coord;
-		coord.UV		   = in.RND;
-		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
-		out.Weight		   = mRadianceFactor * mRadiance->eval(coord);
+		out.Weight		   = mRadiance->eval(coord);
 	}
 
 	std::string dumpInformation() const override
@@ -135,10 +91,9 @@ public:
 		std::stringstream stream;
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
-			   << "  <EnvironmentDSLight>:" << std::endl
+			   << "  <EnvironmentLight>:" << std::endl
 			   << "    Radiance:     " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
-			   << "    Background:   " << (mBackground ? mBackground->dumpInformation() : "NONE") << std::endl
-			   << "    Factor:       " << mRadianceFactor << std::endl;
+			   << "    Background:   " << (mBackground ? mBackground->dumpInformation() : "NONE") << std::endl;
 		if (mDistribution) {
 			stream << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl;
 		} else {
@@ -155,105 +110,8 @@ private:
 	// Most of the time both are the same
 	const std::shared_ptr<FloatSpectralNode> mRadiance;
 	const std::shared_ptr<FloatSpectralNode> mBackground;
-	const float mRadianceFactor;
 	const Eigen::Matrix3f mTransform;
 	const Eigen::Matrix3f mInvTransform;
-};
-
-class EnvironmentSDLight : public EnvironmentLightBase {
-public:
-	EnvironmentSDLight(uint32 id, const std::string& name,
-					   const std::shared_ptr<FloatSpectralNode>& spec,
-					   const std::shared_ptr<FloatSpectralNode>& background,
-					   const std::shared_ptr<Distribution2D>& dist,
-					   float factor,
-					   const Eigen::Matrix3f& trans)
-		: EnvironmentLightBase(id, name, spec, background, dist, factor, trans)
-	{
-	}
-
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
-			  const RenderTileSession&) const override
-	{
-		evalSD(in, out);
-	}
-
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
-	{
-		sampleD(in, out);
-	}
-};
-
-class EnvironmentSLight : public EnvironmentLightBase {
-public:
-	EnvironmentSLight(uint32 id, const std::string& name,
-					  const std::shared_ptr<FloatSpectralNode>& spec,
-					  const std::shared_ptr<FloatSpectralNode>& background,
-					  float factor,
-					  const Eigen::Matrix3f& trans)
-		: EnvironmentLightBase(id, name, spec, background, nullptr, factor, trans)
-	{
-	}
-
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
-			  const RenderTileSession&) const override
-	{
-		evalS(in, out);
-	}
-
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
-	{
-		sampleN(in, out);
-	}
-};
-
-class EnvironmentDLight : public EnvironmentLightBase {
-public:
-	EnvironmentDLight(uint32 id, const std::string& name,
-					  const std::shared_ptr<FloatSpectralNode>& spec,
-					  const std::shared_ptr<Distribution2D>& dist,
-					  float factor,
-					  const Eigen::Matrix3f& trans)
-		: EnvironmentLightBase(id, name, spec, spec, dist, factor, trans)
-	{
-	}
-
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
-			  const RenderTileSession&) const override
-	{
-		evalD(in, out);
-	}
-
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
-	{
-		sampleD(in, out);
-	}
-};
-
-class EnvironmentNLight : public EnvironmentLightBase {
-public:
-	EnvironmentNLight(uint32 id, const std::string& name,
-					  const std::shared_ptr<FloatSpectralNode>& spec,
-					  float factor,
-					  const Eigen::Matrix3f& trans)
-		: EnvironmentLightBase(id, name, spec, spec, nullptr, factor, trans)
-	{
-	}
-
-	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
-			  const RenderTileSession&) const override
-	{
-		evalN(in, out);
-	}
-
-	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
-				const RenderTileSession&) const override
-	{
-		sampleN(in, out);
-	}
 };
 
 class EnvironmentLightFactory : public IInfiniteLightPlugin {
@@ -263,7 +121,6 @@ public:
 		const ParameterGroup& params = ctx.Parameters;
 
 		const std::string name = params.getString("name", "__unknown");
-		const float factor	   = std::max(0.0000001f, params.getNumber("factor", 1.0f));
 
 		auto radP		 = params.getParameter("radiance");
 		auto backgroundP = params.getParameter("background");
@@ -310,14 +167,14 @@ public:
 
 		if (dist) {
 			if (radiance == background)
-				return std::make_shared<EnvironmentDLight>(id, name, radiance, dist, factor, trans);
+				return std::make_shared<EnvironmentLight<true, false>>(id, name, radiance, background, dist, trans);
 			else
-				return std::make_shared<EnvironmentSDLight>(id, name, radiance, background, dist, factor, trans);
+				return std::make_shared<EnvironmentLight<true, true>>(id, name, radiance, background, dist, trans);
 		} else {
 			if (radiance == background)
-				return std::make_shared<EnvironmentNLight>(id, name, radiance, factor, trans);
+				return std::make_shared<EnvironmentLight<false, false>>(id, name, radiance, background, dist, trans);
 			else
-				return std::make_shared<EnvironmentSLight>(id, name, radiance, background, factor, trans);
+				return std::make_shared<EnvironmentLight<false, true>>(id, name, radiance, background, dist, trans);
 		}
 	}
 

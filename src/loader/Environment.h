@@ -59,10 +59,6 @@ public:
 	inline std::shared_ptr<NodeManager> nodeManager() const;
 	inline std::shared_ptr<Cache> cache() const;
 
-	inline ParametricBlob getSpectrum(const std::string& name) const;
-	inline bool hasSpectrum(const std::string& name) const;
-	inline void addSpectrum(const std::string& name, const ParametricBlob& spec);
-
 	inline std::shared_ptr<IEmission> getEmission(const std::string& name) const;
 	inline bool hasEmission(const std::string& name) const;
 	inline void addEmission(const std::string& name, const std::shared_ptr<IEmission>& mat);
@@ -138,7 +134,6 @@ private:
 
 	std::shared_ptr<Cache> mCache;
 
-	std::map<std::string, ParametricBlob> mSpectrums;
 	std::map<std::string, std::shared_ptr<IEmission>> mEmissions;
 	std::map<std::string, std::shared_ptr<IMaterial>> mMaterials;
 	std::map<std::string, std::shared_ptr<MeshBase>> mMeshes;

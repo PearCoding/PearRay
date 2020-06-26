@@ -64,9 +64,15 @@ static int find_interval(const float* values, int size_, float x)
 	return std::min(left, last_interval);
 }
 
+// Note: Due to std::fma and IEC 60559 the case (+-)Inf*0 is NaN and we can not use (+-)Inf for the c terms
+constexpr float EPS	   = 0.0001f;
 constexpr float ZERO_A = 0;
 constexpr float ZERO_B = 0;
-constexpr float ZERO_C = -50.0f; // -500 is also possible and is closer to zero, but -50 is sufficient for floats
+constexpr float ZERO_C = -500.0f; // -500 is also possible and is closer to zero, but -50 is sufficient for floats
+constexpr float ONE_A  = 0;
+constexpr float ONE_B  = 0;
+constexpr float ONE_C  = 5000000.0f;
+
 void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems)
 {
 	PR_ASSERT(mInternal->Data, "Expected valid spectral mapper");
@@ -84,10 +90,15 @@ void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, 
 		const float rgb[3] = { r[i], g[i], b[i] };
 
 		// Handle special case when rgb is zero
-		if (rgb[0] <= PR_EPSILON && rgb[1] <= PR_EPSILON && rgb[2] <= PR_EPSILON) {
+		if (rgb[0] <= EPS && rgb[1] <= EPS && rgb[2] <= EPS) {
 			out_a[i] = ZERO_A;
 			out_b[i] = ZERO_B;
 			out_c[i] = ZERO_C;
+			continue;
+		} else if (1 - rgb[0] <= EPS && 1 - rgb[1] <= EPS && 1 - rgb[2] <= EPS) {
+			out_a[i] = ONE_A;
+			out_b[i] = ONE_B;
+			out_c[i] = ONE_C;
 			continue;
 		}
 

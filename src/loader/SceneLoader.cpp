@@ -145,7 +145,7 @@ void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Sce
 
 	// Independent information
 	for (const DL::DataGroup& entry : groups) {
-		if (entry.id() == "spectrum")
+		if (entry.id() == "spectrum") // Just a sophisticated node
 			addSpectrum(entry, ctx);
 		else if (entry.id() == "sampler")
 			addSampler(entry, ctx);
@@ -810,14 +810,14 @@ void SceneLoader::addSpectrum(const DL::DataGroup& group, SceneLoadContext& ctx)
 		return;
 	}
 
-	if (ctx.Env->hasSpectrum(name)) {
+	if (ctx.Env->hasNode(name)) {
 		PR_LOG(L_ERROR) << "[Loader] Spectrum name already set" << std::endl;
 		return;
 	}
 
 	// TODO
 	const auto spec = SpectralParser::getSpectrum(ctx.Env->defaultSpectralUpsampler().get(), dataD);
-	ctx.Env->addSpectrum(name, spec);
+	ctx.Env->addNode(name, spec);
 }
 
 void SceneLoader::addSubGraph(const DL::DataGroup& group, SceneLoadContext& ctx)
@@ -971,7 +971,7 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group,
 			break;
 		}
 	}
-	
+
 	// Positional parameters
 	for (const auto& entry : group.getAnonymousEntries()) {
 		switch (entry.type()) {

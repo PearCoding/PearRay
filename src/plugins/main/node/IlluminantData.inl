@@ -39,6 +39,8 @@ static float D65_data[CIE_SampleCount] = {
 	0.594519f, 0.557054f, 0.51959f, 0.546998f,
 	0.574406f, 0.588765f, 0.603125f
 };
+//static const float D65_Sum = 81.945769f;
+
 /////// A
 static float A_data[CIE_SampleCount] = {
 	0.00930483f, 0.0112821f, 0.0135769f, 0.0162219f,

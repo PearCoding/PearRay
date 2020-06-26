@@ -77,9 +77,9 @@ PR_TEST("RGB 0.1 0.3 0.8")
 PR_TEST("RGB 1.0 1.0 1.0")
 {
 	constexpr float RGB[3]							= { 1.0f, 1.0f, 1.0f };
-	constexpr float COEFFS[3]						= { 0.001685f, -2.276728f, 807.041931f };
+	constexpr float COEFFS[3]						= { 0.0f, 0.0f, 5e6f };
 	constexpr std::array<float, 5> TEST_WAVELENGTHS = { 532, 615, 346, 720, 416 };
-	constexpr std::array<float, 5> TEST_RESULTS		= { 0.999953f, 0.999871f, 0.999995f, 0.999852f, 0.999989f };
+	constexpr std::array<float, 5> TEST_RESULTS		= { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 
 	auto upsampler = DefaultSRGB::loadSpectralUpsampler();
 
@@ -99,7 +99,7 @@ PR_TEST("RGB 1.0 1.0 1.0")
 PR_TEST("RGB 0.0 0.0 0.0")
 {
 	constexpr float RGB[3]							= { 0.0f, 0.0f, 0.0f };
-	constexpr float COEFFS[3]						= { 0.0f, 0.0f, -50.0f };
+	constexpr float COEFFS[3]						= { 0.0f, 0.0f, -500.0f };
 	constexpr std::array<float, 5> TEST_WAVELENGTHS = { 532, 615, 346, 720, 416 };
 	constexpr std::array<float, 5> TEST_RESULTS		= { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 

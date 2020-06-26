@@ -65,7 +65,7 @@ Environment::Environment(const std::wstring& workdir,
 		auto addColor = [&](const std::string& name, float r, float g, float b) {
 			ParametricBlob params;
 			mDefaultSpectralUpsampler->prepare(&r, &g, &b, &params[0], &params[1], &params[2], 1);
-			mSpectrums.insert(std::make_pair(name, params));
+			mNamedNodes.insert(std::make_pair(name, std::make_shared<ParametricSpectralNode>(params)));
 		};
 
 		addColor("black", 0, 0, 0);
@@ -104,6 +104,10 @@ void Environment::dumpInformation() const
 					   << p->dumpInformation() << std::endl;
 
 	for (auto p : mMaterials)
+		PR_LOG(L_INFO) << p.first << ":" << std::endl
+					   << p.second->dumpInformation() << std::endl;
+
+	for (auto p : mNamedNodes)
 		PR_LOG(L_INFO) << p.first << ":" << std::endl
 					   << p.second->dumpInformation() << std::endl;
 }
@@ -285,8 +289,7 @@ std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 			auto socket = getNode<FloatSpectralNode>(name);
 			if (socket)
 				return socket;
-		} else if (hasSpectrum(name))
-			return std::make_shared<ParametricSpectralNode>(getSpectrum(name));
+		}
 	}
 		return std::make_shared<ConstSpectralNode>(def);
 	}

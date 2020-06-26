@@ -36,6 +36,18 @@ private:
 	const ParametricBlob mValue;
 };
 
+class PR_LIB_LOADER ParametricScaledSpectralNode : public FloatSpectralNode {
+public:
+	ParametricScaledSpectralNode(const ParametricBlob& f, float power);
+	SpectralBlob eval(const ShadingContext& ctx) const override;
+	Vector2i queryRecommendedSize() const override;
+	std::string dumpInformation() const override;
+
+private:
+	const ParametricBlob mValue;
+	const float mPower;
+};
+
 class PR_LIB_LOADER SplatSpectralNode : public FloatSpectralNode {
 public:
 	explicit SplatSpectralNode(const std::shared_ptr<FloatScalarNode>& f);

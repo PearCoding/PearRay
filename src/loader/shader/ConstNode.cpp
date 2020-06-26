@@ -74,6 +74,32 @@ std::string ParametricSpectralNode::dumpInformation() const
 
 /////////////////////////////////////
 
+ParametricScaledSpectralNode::ParametricScaledSpectralNode(const ParametricBlob& f, float power)
+	: FloatSpectralNode()
+	, mValue(f)
+	, mPower(power)
+{
+}
+
+SpectralBlob ParametricScaledSpectralNode::eval(const ShadingContext& ctx) const
+{
+	return SpectralUpsampler::compute(mValue, ctx.WavelengthNM) * mPower;
+}
+
+Vector2i ParametricScaledSpectralNode::queryRecommendedSize() const
+{
+	return Vector2i(1, 1);
+}
+
+std::string ParametricScaledSpectralNode::dumpInformation() const
+{
+	std::stringstream sstream;
+	sstream << mValue << "x" << mPower;
+	return sstream.str();
+}
+
+/////////////////////////////////////
+
 SplatSpectralNode::SplatSpectralNode(const std::shared_ptr<FloatScalarNode>& f)
 	: FloatSpectralNode()
 	, mValue(f)

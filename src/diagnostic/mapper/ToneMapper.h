@@ -14,8 +14,8 @@ public:
 		: mMin(0.0f)
 		, mMax(1.0f)
 		, mIsAbsolute(false)
-		, mTripletFormatFrom(CF_XYZ)
-		, mTripletFormatTo(CF_XYZ)
+		, mTripletFormatSrc(CF_XYZ)
+		, mTripletFormatDst(CF_XYZ)
 		, mGamma(-1)
 	{
 	}
@@ -27,46 +27,56 @@ public:
 
 	inline void setTripletFormat(ColorFormat formatFrom, ColorFormat formatTo)
 	{
-		mTripletFormatFrom = formatFrom;
-		mTripletFormatTo   = formatTo;
+		mTripletFormatSrc = formatFrom;
+		mTripletFormatDst = formatTo;
 	}
 
 	inline void setGamma(float gamma) { mGamma = gamma; }
 
 	inline void formatOnlyTriplet(float x, float y, float z, float& r, float& g, float& b) const
 	{
-		if (mTripletFormatFrom == mTripletFormatTo) {
+		if (mTripletFormatSrc == mTripletFormatDst) {
 			r = x;
 			g = y;
 			b = z;
 		} else {
 			float tx, ty, tz;
-			formatTriplet(mTripletFormatFrom, x, y, z, tx, ty, tz);
-			formatTriplet(mTripletFormatTo, tx, ty, tz, r, g, b);
+			formatTripletToXYZ(mTripletFormatSrc, x, y, z, tx, ty, tz);
+			formatTripletFromXYZ(mTripletFormatDst, tx, ty, tz, r, g, b);
 		}
 	}
 
 	inline void mapTriplet(float x, float y, float z, float& r, float& g, float& b) const
 	{
-		if (mTripletFormatFrom == mTripletFormatTo) {
-			r = x;
-			g = y;
-			b = z;
-		} else {
-			float tx, ty, tz;
-			formatTriplet(mTripletFormatFrom, x, y, z, tx, ty, tz);
-			formatTriplet(mTripletFormatTo, tx, ty, tz, r, g, b);
-		}
-
+		formatOnlyTriplet(x, y, z, r, g, b);
 		r = clamp(applyGamma(clamp(map(r))));
 		g = clamp(applyGamma(clamp(map(g))));
 		b = clamp(applyGamma(clamp(map(b))));
 	}
 
 private:
-	void formatTriplet(ColorFormat format,
-					   float x, float y, float z,
-					   float& r, float& g, float& b) const
+	void formatTripletToXYZ(ColorFormat format,
+							float r, float g, float b,
+							float& x, float& y, float& z) const
+	{
+		switch (format) {
+		default:
+		case CF_XYZ:
+			x = r;
+			y = g;
+			z = b;
+			break;
+		case CF_SRGB:
+			x = 4.123908e-01f * r + 3.575843e-01f * g + 1.804808e-01f * b;
+			y = 2.126390e-01f * r + 7.151687e-01f * g + 7.219232e-02f * b;
+			z = 1.933082e-02f * r + 1.191948e-01f * g + 9.505322e-01f * b;
+			break;
+		}
+	}
+
+	void formatTripletFromXYZ(ColorFormat format,
+							  float x, float y, float z,
+							  float& r, float& g, float& b) const
 	{
 		switch (format) {
 		default:
@@ -86,8 +96,9 @@ private:
 	inline float map(float val) const
 	{
 		if (mIsAbsolute) {
+			float min = std::max(0.0f, mMin);
 			float max = std::max(std::abs(mMin), std::abs(mMax));
-			return std::min(std::abs(val), max) / max;
+			return std::min(std::max(min, std::abs(val)) - min, max) / (max - min);
 		} else {
 			return std::abs((std::min(mMax, std::max(mMin, val)) - mMin) / (mMax - mMin));
 		}
@@ -103,7 +114,7 @@ private:
 	float mMin;
 	float mMax;
 	bool mIsAbsolute;
-	ColorFormat mTripletFormatFrom;
-	ColorFormat mTripletFormatTo;
+	ColorFormat mTripletFormatSrc;
+	ColorFormat mTripletFormatDst;
 	float mGamma;
 };

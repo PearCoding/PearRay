@@ -87,7 +87,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 	}
 
 	if (mEmissiveSurfaceArea < PR_EPSILON)
-		mEmissiveSurfaceArea = 1;
+		mEmissiveSurfaceArea = 0.0f;
 
 	/* Setup threads */
 	uint32 threadCount = Thread::hardwareThreadCount();
