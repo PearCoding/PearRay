@@ -58,8 +58,8 @@ public:
 		return ray;
 	}
 
-	void constructRay(float nx, float ny,
-					  Vector3f& o, Vector3f& d) const
+	inline void constructRay(float nx, float ny,
+							 Vector3f& o, Vector3f& d) const
 	{
 		o = transform().translation() + mRight_Cache * nx + mUp_Cache * ny;
 		d = mDirection_Cache;

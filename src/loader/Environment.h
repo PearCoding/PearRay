@@ -89,7 +89,7 @@ public:
 	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
 		const Parameter& parameter, float def = 1) const;
 	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
-		const Parameter& parameter, const ParametricBlob& def) const;
+		const Parameter& parameter, const SpectralBlob& def) const;
 	std::shared_ptr<FloatScalarNode> lookupScalarNode(
 		const Parameter& parameter, float def = 1) const;
 

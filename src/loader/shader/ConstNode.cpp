@@ -24,15 +24,15 @@ std::string ConstScalarNode::dumpInformation() const
 
 /////////////////////////////////////
 
-ConstSpectralNode::ConstSpectralNode(const ParametricBlob& f)
+ConstSpectralNode::ConstSpectralNode(const SpectralBlob& f)
 	: FloatSpectralNode()
 	, mValue(f)
 {
 }
 
-SpectralBlob ConstSpectralNode::eval(const ShadingContext& ctx) const
+SpectralBlob ConstSpectralNode::eval(const ShadingContext&) const
 {
-	return SpectralUpsampler::compute(mValue, ctx.WavelengthNM);
+	return mValue;
 }
 
 Vector2i ConstSpectralNode::queryRecommendedSize() const
@@ -44,6 +44,56 @@ std::string ConstSpectralNode::dumpInformation() const
 {
 	std::stringstream sstream;
 	sstream << mValue;
+	return sstream.str();
+}
+
+/////////////////////////////////////
+
+ParametricSpectralNode::ParametricSpectralNode(const ParametricBlob& f)
+	: FloatSpectralNode()
+	, mValue(f)
+{
+}
+
+SpectralBlob ParametricSpectralNode::eval(const ShadingContext& ctx) const
+{
+	return SpectralUpsampler::compute(mValue, ctx.WavelengthNM);
+}
+
+Vector2i ParametricSpectralNode::queryRecommendedSize() const
+{
+	return Vector2i(1, 1);
+}
+
+std::string ParametricSpectralNode::dumpInformation() const
+{
+	std::stringstream sstream;
+	sstream << mValue;
+	return sstream.str();
+}
+
+/////////////////////////////////////
+
+SplatSpectralNode::SplatSpectralNode(const std::shared_ptr<FloatScalarNode>& f)
+	: FloatSpectralNode()
+	, mValue(f)
+{
+}
+
+SpectralBlob SplatSpectralNode::eval(const ShadingContext& ctx) const
+{
+	return SpectralBlob(mValue->eval(ctx));
+}
+
+Vector2i SplatSpectralNode::queryRecommendedSize() const
+{
+	return Vector2i(1, 1);
+}
+
+std::string SplatSpectralNode::dumpInformation() const
+{
+	std::stringstream sstream;
+	sstream << mValue->dumpInformation();
 	return sstream.str();
 }
 

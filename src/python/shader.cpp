@@ -24,7 +24,7 @@ void setup_shader(py::module& m)
 		.def(py::init<float>());
 
 	py::class_<ConstSpectralNode, FloatSpectralNode, std::shared_ptr<ConstSpectralNode>>(m, "ConstSpectralNode")
-		.def(py::init<const ParametricBlob&>());
+		.def(py::init<const SpectralBlob&>());
 
 	py::class_<ConstVectorNode, FloatVectorNode, std::shared_ptr<ConstVectorNode>>(m, "ConstVectorNode")
 		.def(py::init<const Vector3f&>());

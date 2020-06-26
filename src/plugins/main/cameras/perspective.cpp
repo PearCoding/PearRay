@@ -62,9 +62,9 @@ public:
 		return ray;
 	}
 
-	void constructRay(float nx, float ny,
-					  float r1, float r2,
-					  Vector3f& o, Vector3f& d) const
+	inline void constructRay(float nx, float ny,
+							 float r1, float r2,
+							 Vector3f& o, Vector3f& d) const
 	{
 		o = transform().translation();
 		d = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
@@ -97,20 +97,18 @@ public:
 						<< " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
 
 		// No depth of field
-		if constexpr (HasDOF) {
+		if constexpr (!HasDOF) {
 			mFocalDistance_Cache   = mDirection_Cache;
 			mXApertureRadius_Cache = Vector3f(0, 0, 0);
 			mYApertureRadius_Cache = Vector3f(0, 0, 0);
 			mRight_Cache *= 0.5f * mWidth;
 			mUp_Cache *= 0.5f * mHeight;
-			mHasDOF_Cache = false;
 		} else {
 			mFocalDistance_Cache   = mDirection_Cache * (mFStop + 1);
 			mXApertureRadius_Cache = mRight_Cache * mApertureRadius;
 			mYApertureRadius_Cache = mUp_Cache * mApertureRadius;
 			mRight_Cache *= 0.5f * mWidth * (mFStop + 1);
 			mUp_Cache *= 0.5f * mHeight * (mFStop + 1);
-			mHasDOF_Cache = true;
 
 			PR_LOG(L_DEBUG) << "    FocalDistance" << PR_FMT_MAT(mFocalDistance_Cache)
 							<< " XAperature" << PR_FMT_MAT(mXApertureRadius_Cache)
@@ -137,7 +135,6 @@ private:
 	Vector3f mRight_Cache;
 	Vector3f mUp_Cache;
 
-	bool mHasDOF_Cache;
 	Vector3f mFocalDistance_Cache;
 	Vector3f mXApertureRadius_Cache;
 	Vector3f mYApertureRadius_Cache;

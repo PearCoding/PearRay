@@ -79,7 +79,10 @@ class IlluminantPlugin : public INodePlugin {
 public:
 	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		std::string illum = ctx.Parameters.getString("spectrum", "D65");
+		std::string illum = ctx.Parameters.getString("spectrum", "");
+		if (illum.empty())
+			illum = ctx.Parameters.getString(0, "D65");
+
 		std::transform(illum.begin(), illum.end(), illum.begin(), [](char c) { return std::tolower(c); });
 
 		if (illum == "d65")

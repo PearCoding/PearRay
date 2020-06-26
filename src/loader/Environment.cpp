@@ -251,11 +251,11 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 	const Parameter& parameter, float def) const
 {
-	return lookupSpectralNode(parameter, ParametricBlob(def));
+	return lookupSpectralNode(parameter, SpectralBlob(def));
 }
 
 std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
-	const Parameter& parameter, const ParametricBlob& def) const
+	const Parameter& parameter, const SpectralBlob& def) const
 {
 	switch (parameter.type()) {
 	default:
@@ -266,13 +266,15 @@ std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 		if (parameter.isArray())
 			return std::make_shared<ConstSpectralNode>(def);
 		else
-			return std::make_shared<ConstSpectralNode>(ParametricBlob(parameter.getNumber(0.0f)));
+			return std::make_shared<ConstSpectralNode>(SpectralBlob(parameter.getNumber(0.0f)));
 	case PT_Reference: {
 		uint64 refid = parameter.getReference();
 		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid)) {
 			auto node = mNodeManager->getObject(refid);
-			if(node->type() == NT_FloatSpectral)
+			if (node->type() == NT_FloatSpectral)
 				return std::reinterpret_pointer_cast<FloatSpectralNode>(node);
+			else if (node->type() == NT_FloatScalar)
+				return std::make_shared<SplatSpectralNode>(std::reinterpret_pointer_cast<FloatScalarNode>(node));
 		}
 		return std::make_shared<ConstSpectralNode>(def);
 	}
@@ -284,7 +286,7 @@ std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 			if (socket)
 				return socket;
 		} else if (hasSpectrum(name))
-			return std::make_shared<ConstSpectralNode>(getSpectrum(name));
+			return std::make_shared<ParametricSpectralNode>(getSpectrum(name));
 	}
 		return std::make_shared<ConstSpectralNode>(def);
 	}
@@ -311,7 +313,7 @@ std::shared_ptr<FloatScalarNode> Environment::lookupScalarNode(
 		uint64 refid = parameter.getReference();
 		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid)) {
 			auto node = mNodeManager->getObject(refid);
-			if(node->type() == NT_FloatScalar)
+			if (node->type() == NT_FloatScalar)
 				return std::reinterpret_pointer_cast<FloatScalarNode>(node);
 		}
 		return std::make_shared<ConstScalarNode>(def);
