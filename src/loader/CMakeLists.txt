@@ -45,8 +45,6 @@ set(PR_Src
   parser/MathParser.h
   parser/MeshParser.cpp
   parser/MeshParser.h
-  parser/SocketParser.cpp
-  parser/SocketParser.h
   parser/SpectralParser.cpp
   parser/SpectralParser.h
   parser/TextureParser.cpp
