@@ -20,10 +20,6 @@ set(PR_Src
   cache/ISerializeCachable.cpp
   camera/ICamera.cpp
   camera/ICamera.h
-  container/IndexSort.h
-  container/Interval.h
-  container/QuickSort.h
-  container/RadixSort.h
   entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h
@@ -112,8 +108,8 @@ set(PR_Src
   renderer/StreamPipeline.cpp
   renderer/StreamPipeline.h
   renderer/StreamPipeline.inl
-  sampler/Distribution1D.cpp
   sampler/Distribution1D.h
+  sampler/Distribution1D.inl
   sampler/Distribution2D.cpp
   sampler/Distribution2D.h
   sampler/ISampler.h

@@ -20,6 +20,10 @@ set(PR_Src
   config/Types.inl
   config/VectorGlue.inl
   config/Version.h.in
+  container/IndexSort.h
+  container/Interval.h
+  container/QuickSort.h
+  container/RadixSort.h
   curve/Curve.h
   log/ConsoleLogListener.cpp
   log/ConsoleLogListener.h

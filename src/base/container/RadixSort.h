@@ -10,7 +10,7 @@ namespace PR {
  * https://rosettacode.org/wiki/Sorting_algorithms/Radix_sort#C.2B.2B
  */
 template <typename VT, typename S>
-inline PR_LIB_CORE void _radixSort(VT* visitor, S swapper, size_t begin, size_t end, VT mask)
+inline PR_LIB_BASE void _radixSort(VT* visitor, S swapper, size_t begin, size_t end, VT mask)
 {
 	if (begin >= end || mask == 0)
 		return;

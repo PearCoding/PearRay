@@ -4,6 +4,14 @@
 #include "camera/ICamera.h"
 #include "sampler/ISampler.h"
 #include "scene/Scene.h"
+#include "spectral/CIE.h"
+
+//#define PR_SAMPLE_BY_CIE_Y
+#define PR_SAMPLE_BY_CIE_XYZ
+
+#if defined(PR_SAMPLE_BY_CIE_Y) || defined(PR_SAMPLE_BY_CIE_XYZ)
+#define PR_SAMPLE_BY_CIE
+#endif
 
 namespace PR {
 RenderTile::RenderTile(const Point2i& start, const Point2i& end,
@@ -96,11 +104,29 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	cameraSample.Time		= mTimeAlpha * mTimeSampler->generate1D(timesample) + mTimeBeta;
 	cameraSample.Weight		= mWeight_Cache;
 
-	// Sample wavelength
-	float start					 = mSpectralSampler->generate1D(specsample) * mSpectralSpan; // Wavelength inside the span
-	cameraSample.WavelengthNM(0) = start + mSpectralStart;									 // Hero wavelength
-	for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-		cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
+// Sample wavelength
+#if defined(PR_SAMPLE_BY_CIE)
+	if (mSpectralStart == PR_CIE_WAVELENGTH_START && mSpectralEnd == PR_CIE_WAVELENGTH_END) {
+		float u = mSpectralSampler->generate1D(specsample);
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+			float pdf;
+#ifdef PR_SAMPLE_BY_CIE_Y
+			cameraSample.WavelengthNM(i) = CIE::sample_y(k, pdf);
+#else
+			cameraSample.WavelengthNM(i) = CIE::sample_xyz(k, pdf);
+#endif
+			cameraSample.Weight(i) /= pdf;
+		}
+	} else {
+#endif
+		float start					 = mSpectralSampler->generate1D(specsample) * mSpectralSpan; // Wavelength inside the span
+		cameraSample.WavelengthNM(0) = start + mSpectralStart;									 // Hero wavelength
+		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
+#if defined(PR_SAMPLE_BY_CIE)
+	}
+#endif
 
 	return mCamera->constructRay(cameraSample);
 }

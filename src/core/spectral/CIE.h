@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SpectralBlob.h"
+#include "sampler/Distribution1D.h"
 
 namespace PR {
 using CIETriplet						= Eigen::Array<float, 3, 1>;
@@ -44,9 +45,26 @@ public:
 		//xyz *= PR_CIE_NORM;
 	}
 
+	static inline float sample_y(float u, float& pdf)
+	{
+		const float v = Distribution1D::sampleContinuous(u, pdf, CDF_Y_INTEGRAL, CDF_Y, PR_CIE_SAMPLE_COUNT + 1);
+		return v * (PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START) + PR_CIE_WAVELENGTH_START;
+	}
+
+	static inline float sample_xyz(float u, float& pdf)
+	{
+		const float v = Distribution1D::sampleContinuous(u, pdf, CDF_SUM_INTEGRAL, CDF_SUM, PR_CIE_SAMPLE_COUNT + 1);
+		return v * (PR_CIE_WAVELENGTH_END - PR_CIE_WAVELENGTH_START) + PR_CIE_WAVELENGTH_START;
+	}
+
 private:
 	static const float NM_TO_X[];
 	static const float NM_TO_Y[];
 	static const float NM_TO_Z[];
+
+	static const float CDF_SUM[];
+	static const float CDF_SUM_INTEGRAL;
+	static const float CDF_Y[];
+	static const float CDF_Y_INTEGRAL;
 };
 } // namespace PR

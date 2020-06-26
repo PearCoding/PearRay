@@ -10,7 +10,7 @@ struct PR_LIB_CORE CameraSample {
 	Point2f Lens;
 	uint32 PixelIndex;
 	float Time;
-	float Weight;
+	SpectralBlob Weight;
 	SpectralBlob WavelengthNM;
 };
 

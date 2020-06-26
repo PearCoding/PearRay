@@ -8,26 +8,11 @@
 		:type 'DIRECT'
 		:max_ray_depth 1
 		:light_sampe_count 1
-		:msi true
+		:msi false
 	)
 	(sampler
 		:slot 'aa'
 		:type 'UNIFORM'
-		:sample_count 32
-	)
-	(sampler
-		:slot 'lens'
-		:type 'MULTI_JITTER'
-		:sample_count 1
-	)
-	(sampler
-		:slot 'time'
-		:type 'MULTI_JITTER'
-		:sample_count 1
-	)
-	(sampler
-		:slot 'spectral'
-		:type 'MULTI_JITTER'
 		:sample_count 1
 	)
 	(filter
@@ -35,18 +20,15 @@
 		:type 'BLOCK'
 		:radius 0
 	)
+	(sampler
+		:slot 'spectral'
+		:type 'mjitt'
+		:sample_count 16
+	)
 	; Outputs
 	(output
 		:name 'image'
-		(channel
-			:type 'color'
-			:color 'xyz'
-			:gamma 'none'
-			:mapper 'none'
-		)
-		(channel
-			:type 'feedback'
-		)
+		(channel :type 'color' :color 'xyz' )
 	)
 	; Camera
 	(camera
@@ -55,8 +37,6 @@
 		:width 0.720000
 		:height 0.720000
 		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
 		:localDirection [0,0,-1]
 		:localUp [0,-1,0]
 		:localRight [1,0,0]
@@ -69,7 +49,6 @@
 		:name 'background'
 		:type 'env'
 		:radiance (illuminant "D65")
-		:factor 1.000000
 	)
 	; Lights
 	; Primitives
@@ -103,14 +82,10 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,0.0,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Materials
-	(spectrum
-		:name 'Blue_diffuse_color'
-		:data (refl 0.000000 0.000000 1.000000)
-	)
 	(material
 		:name 'Blue'
 		:type 'diffuse'
-		:albedo 'Blue_diffuse_color'
+		:albedo 'blue'
 	)
 	(spectrum
 		:name 'Border_diffuse_color'
@@ -130,14 +105,10 @@
 		:type 'diffuse'
 		:albedo 'Brown_diffuse_color'
 	)
-	(spectrum
-		:name 'Cyan_diffuse_color'
-		:data (refl 0.000000 1.000000 1.000000)
-	)
 	(material
 		:name 'Cyan'
 		:type 'diffuse'
-		:albedo 'Cyan_diffuse_color'
+		:albedo 'cyan'
 	)
 	(spectrum
 		:name 'DarkMagenta_diffuse_color'
@@ -148,14 +119,10 @@
 		:type 'diffuse'
 		:albedo 'DarkMagenta_diffuse_color'
 	)
-	(spectrum
-		:name 'Green_diffuse_color'
-		:data (refl 0.000000 1.000000 0.000000)
-	)
 	(material
 		:name 'Green'
 		:type 'diffuse'
-		:albedo 'Green_diffuse_color'
+		:albedo 'green'
 	)
 	(spectrum
 		:name 'GreenCyan_diffuse_color'
@@ -166,40 +133,24 @@
 		:type 'diffuse'
 		:albedo 'GreenCyan_diffuse_color'
 	)
-	(spectrum
-		:name 'Magenta_diffuse_color'
-		:data (refl 1.000000 0.000000 1.000000)
-	)
 	(material
 		:name 'Magenta'
 		:type 'diffuse'
-		:albedo 'Magenta_diffuse_color'
-	)
-	(spectrum
-		:name 'Red_diffuse_color'
-		:data (refl 1.000000 0.000000 0.000000)
+		:albedo 'magenta'
 	)
 	(material
 		:name 'Red'
 		:type 'diffuse'
-		:albedo 'Red_diffuse_color'
-	)
-	(spectrum
-		:name 'White_diffuse_color'
-		:data (refl 1.000000 1.000000 1.000000)
+		:albedo 'red'
 	)
 	(material
 		:name 'White'
 		:type 'diffuse'
-		:albedo 'White_diffuse_color'
-	)
-	(spectrum
-		:name 'Yellow_diffuse_color'
-		:data (refl 1.000000 1.000000 0.000000)
+		:albedo 'white'
 	)
 	(material
 		:name 'Yellow'
 		:type 'diffuse'
-		:albedo 'Yellow_diffuse_color'
+		:albedo 'yellow'
 	)
 )

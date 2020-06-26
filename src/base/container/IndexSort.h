@@ -9,7 +9,7 @@ namespace PR {
  * connected containers.
  */
 template <typename SwapF, typename T>
-inline PR_LIB_CORE void sortByIndex(SwapF swapF, std::vector<T>& index)
+inline PR_LIB_BASE void sortByIndex(SwapF swapF, std::vector<T>& index)
 {
 	for (size_t i = 0; i < index.size(); ++i) {
 		while (index[i] != index[index[i]]) {

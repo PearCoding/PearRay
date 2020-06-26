@@ -1,13 +1,13 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "container/Interval.h"
 
 #include <vector>
 namespace PR {
 /* Piecewise 1D distribution */
 class PR_LIB_CORE Distribution1D {
 public:
-	Distribution1D(size_t size);
+	inline explicit Distribution1D(size_t size);
 
 	inline size_t size() const { return mValues.size(); }
 	inline float integral() const { return mIntegral; }
@@ -21,17 +21,25 @@ public:
 		setup();
 	}
 
-	float sampleContinuous(float u, float& pdf, size_t* offset = nullptr) const;
-	float continuousPdf(float u, size_t* offset = nullptr) const;
+	inline float sampleContinuous(float u, float& pdf, size_t* offset = nullptr) const;
+	inline float continuousPdf(float u, size_t* offset = nullptr) const;
 
-	size_t sampleDiscrete(float u, float& pdf) const;
-	float discretePdf(float u) const;
+	inline size_t sampleDiscrete(float u, float& pdf) const;
+	inline float discretePdf(float u) const;
+
+	// The given CDF is assumed to be normalized such that its last entry is exactly 1
+	inline static float sampleContinuous(float u, float& pdf,
+										 float cdf_integral, const float* cdf, size_t size);
+	inline static size_t sampleDiscrete(float u, float& pdf,
+										float cdf_integral, const float* cdf, size_t size);
 
 private:
-	void setup();
+	inline void setup();
 
 	std::vector<float> mValues;
 	std::vector<float> mCDF;
 	float mIntegral;
 };
 } // namespace PR
+
+#include "Distribution1D.inl"
