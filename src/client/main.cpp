@@ -263,7 +263,7 @@ int main(int argc, char** argv)
 		if (options.ShowProgress > 0) {
 			if (!options.NoPrettyConsole)
 				std::cout << "\r";
-			std::cout << "Done" << std::setw(64) << " " << std::endl;
+			std::cout << "Done" << std::setw(120) << " " << std::endl;
 		}
 
 		renderer->notifyEnd();

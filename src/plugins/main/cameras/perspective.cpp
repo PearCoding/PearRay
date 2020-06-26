@@ -11,59 +11,35 @@ namespace PR {
 constexpr float NEAR_DEFAULT = 0.000001f;
 constexpr float FAR_DEFAULT	 = std::numeric_limits<float>::infinity();
 
-class StandardCamera : public ICamera {
+template <bool HasDOF>
+class PerspectiveCamera : public ICamera {
 public:
 	ENTITY_CLASS
 
-	StandardCamera(uint32 id, const std::string& name)
+	PerspectiveCamera(uint32 id, const std::string& name,
+					  float w, float h, float fstop, float apert, float nearT, float farT,
+					  const Vector3f& ld, const Vector3f& lr, const Vector3f& lu)
 		: ICamera(id, name)
-		, mWidth(1)
-		, mHeight(1)
-		, mFStop(0)
-		, mApertureRadius(0.05f)
-		, mNearT(NEAR_DEFAULT)
-		, mFarT(FAR_DEFAULT)
-		, mLocalDirection(0, 0, 1)
-		, mLocalRight(1, 0, 0)
-		, mLocalUp(0, 1, 0)
-		, mHasDOF_Cache(false)
+		, mWidth(w)
+		, mHeight(h)
+		, mFStop(fstop)
+		, mApertureRadius(apert)
+		, mNearT(nearT)
+		, mFarT(farT)
+		, mLocalDirection(ld)
+		, mLocalRight(lr)
+		, mLocalUp(lu)
 	{
 	}
 
-	virtual ~StandardCamera()
+	virtual ~PerspectiveCamera()
 	{
 	}
 
 	std::string type() const override
 	{
-		return "standard_camera";
+		return "perspective";
 	}
-
-	void setWithAngle(float foh, float fov)
-	{
-		mWidth	= 2 * std::tan(foh / 2);
-		mHeight = 2 * std::tan(fov / 2);
-	}
-
-	void setWithSize(float width, float height)
-	{
-		mWidth	= width;
-		mHeight = height;
-	}
-
-	void setWidth(float w) { mWidth = w; }
-	void setHeight(float h) { mHeight = h; }
-
-	void setNear(float v) { mNearT = v; }
-	void setFar(float v) { mFarT = v; }
-
-	void setFStop(float f) { mFStop = f; }
-
-	void setLocalDirection(const Vector3f& d) { mLocalDirection = d; }
-	void setLocalRight(const Vector3f& d) { mLocalRight = d; }
-	void setLocalUp(const Vector3f& d) { mLocalUp = d; }
-
-	void setApertureRadius(float f) { mApertureRadius = f; }
 
 	Ray constructRay(const CameraSample& sample) const override
 	{
@@ -93,7 +69,7 @@ public:
 		o = transform().translation();
 		d = mRight_Cache * nx + mUp_Cache * ny + mFocalDistance_Cache;
 
-		if (mHasDOF_Cache) {
+		if constexpr (HasDOF) {
 			const float t = 2 * PR_PI * r1;
 			float s		  = std::sin(t);
 			float c		  = std::cos(t);
@@ -116,12 +92,12 @@ public:
 		mRight_Cache	 = (normalMatrix() * mLocalRight).normalized();
 		mUp_Cache		 = (normalMatrix() * mLocalUp).normalized();
 
-		PR_LOG(L_INFO) << name() << ": Dir" << PR_FMT_MAT(mDirection_Cache)
-					   << " Right" << PR_FMT_MAT(mRight_Cache)
-					   << " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
+		PR_LOG(L_DEBUG) << name() << ": Dir" << PR_FMT_MAT(mDirection_Cache)
+						<< " Right" << PR_FMT_MAT(mRight_Cache)
+						<< " Up" << PR_FMT_MAT(mUp_Cache) << std::endl;
 
 		// No depth of field
-		if (std::abs(mFStop) <= PR_EPSILON || mApertureRadius <= PR_EPSILON) {
+		if constexpr (HasDOF) {
 			mFocalDistance_Cache   = mDirection_Cache;
 			mXApertureRadius_Cache = Vector3f(0, 0, 0);
 			mYApertureRadius_Cache = Vector3f(0, 0, 0);
@@ -136,25 +112,25 @@ public:
 			mUp_Cache *= 0.5f * mHeight * (mFStop + 1);
 			mHasDOF_Cache = true;
 
-			PR_LOG(L_INFO) << "    FocalDistance" << PR_FMT_MAT(mFocalDistance_Cache)
-						   << " XAperature" << PR_FMT_MAT(mXApertureRadius_Cache)
-						   << " YAperature" << PR_FMT_MAT(mYApertureRadius_Cache) << std::endl;
+			PR_LOG(L_DEBUG) << "    FocalDistance" << PR_FMT_MAT(mFocalDistance_Cache)
+							<< " XAperature" << PR_FMT_MAT(mXApertureRadius_Cache)
+							<< " YAperature" << PR_FMT_MAT(mYApertureRadius_Cache) << std::endl;
 		}
 	}
 
 private:
-	float mWidth;
-	float mHeight;
+	const float mWidth;
+	const float mHeight;
 
-	float mFStop;
-	float mApertureRadius;
+	const float mFStop;
+	const float mApertureRadius;
 
-	float mNearT;
-	float mFarT;
+	const float mNearT;
+	const float mFarT;
 
-	Vector3f mLocalDirection;
-	Vector3f mLocalRight;
-	Vector3f mLocalUp;
+	const Vector3f mLocalDirection;
+	const Vector3f mLocalRight;
+	const Vector3f mLocalUp;
 
 	// Cache:
 	Vector3f mDirection_Cache;
@@ -167,33 +143,35 @@ private:
 	Vector3f mYApertureRadius_Cache;
 };
 
-class StandardICameraPlugin : public ICameraPlugin {
+class PerspectiveCameraPlugin : public ICameraPlugin {
 public:
 	std::shared_ptr<ICamera> create(uint32 id, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		std::string name			 = params.getString("name", "__unnamed__");
 
-		auto cam = std::make_shared<StandardCamera>(id, name);
+		const float apr	  = params.getNumber("apertureRadius", 0.05f);
+		const float fstop = params.getNumber("fstop", 0);
+		const Vector3f ld = params.getVector3f("localDirection", Vector3f(0, 0, 1));
+		const Vector3f lu = params.getVector3f("localUp", Vector3f(0, 1, 0));
+		const Vector3f lr = params.getVector3f("localRight", Vector3f(1, 0, 0));
 
-		cam->setLocalDirection(params.getVector3f("localDirection", Vector3f(0, 0, 1)));
-		cam->setLocalUp(params.getVector3f("localUp", Vector3f(0, 1, 0)));
-		cam->setLocalRight(params.getVector3f("localRight", Vector3f(1, 0, 0)));
+		const float w  = params.getNumber("width", 1);
+		const float h  = params.getNumber("height", 1);
+		const float nT = params.getNumber("near", NEAR_DEFAULT);
+		const float fT = params.getNumber("far", FAR_DEFAULT);
 
-		cam->setWidth(params.getNumber("width", 1));
-		cam->setHeight(params.getNumber("height", 1));
-		cam->setNear(params.getNumber("near", NEAR_DEFAULT));
-		cam->setFar(params.getNumber("far", FAR_DEFAULT));
+		const bool hasDOF = apr > PR_EPSILON && fstop > PR_EPSILON;
 
-		cam->setApertureRadius(params.getNumber("apertureRadius", 1));
-		cam->setFStop(params.getNumber("fstop", 0));
-
-		return cam;
+		if (hasDOF)
+			return std::make_shared<PerspectiveCamera<true>>(id, name, w, h, fstop, apr, nT, fT, ld, lr, lu);
+		else
+			return std::make_shared<PerspectiveCamera<false>>(id, name, w, h, fstop, apr, nT, fT, ld, lr, lu);
 	}
 
 	const std::vector<std::string>& getNames() const
 	{
-		static std::vector<std::string> names({ "standard_camera", "standard", "default" });
+		static std::vector<std::string> names({ "standard_camera", "standard", "default", "perspective" });
 		return names;
 	}
 
@@ -204,4 +182,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::StandardICameraPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::PerspectiveCameraPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
