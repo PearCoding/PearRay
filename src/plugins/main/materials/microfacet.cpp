@@ -345,7 +345,7 @@ private:
 
 class MicrofacetMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
 

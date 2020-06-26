@@ -52,7 +52,7 @@ private:
 
 class UniformSamplerPlugin : public ISamplerPlugin {
 public:
-	std::shared_ptr<ISamplerFactory> create(uint32, const SceneLoadContext& ctx) override
+	std::shared_ptr<ISamplerFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<UniformSamplerFactory>(ctx.Parameters);
 	}

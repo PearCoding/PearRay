@@ -258,7 +258,7 @@ public:
 
 class EnvironmentLightFactory : public IInfiniteLightPlugin {
 public:
-	std::shared_ptr<IInfiniteLight> create(uint32 id, const SceneLoadContext& ctx) override
+	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.Parameters;
 

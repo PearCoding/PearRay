@@ -31,7 +31,7 @@ bool SamplerManager::createDefaultsIfNecessary(Environment* env)
 		SceneLoadContext ctx;
 		ctx.Env = env;
 		ctx.Parameters.addParameter("sample_count", Parameter::fromInt(sample_count));
-		auto obj = fac->create(id, ctx);
+		auto obj = fac->create(id, type, ctx);
 		if (obj)
 			this->addObject(obj);
 		return obj;

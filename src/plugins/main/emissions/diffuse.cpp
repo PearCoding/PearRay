@@ -28,7 +28,7 @@ private:
 
 class DiffuseEmissionPlugin : public IEmissionPlugin {
 public:
-	std::shared_ptr<IEmission> create(uint32 id, const SceneLoadContext& ctx) override
+	std::shared_ptr<IEmission> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<DiffuseEmission>(id,
 												 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("radiance"), 1));

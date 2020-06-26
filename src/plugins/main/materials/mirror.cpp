@@ -70,7 +70,7 @@ private:
 
 class MirrorMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<MirrorMaterial>(id, ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1));

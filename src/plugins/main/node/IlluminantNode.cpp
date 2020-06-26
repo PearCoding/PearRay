@@ -1,3 +1,4 @@
+#include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
 #include "shader/EquidistantSpectrumNode.h"
@@ -7,12 +8,9 @@ namespace PR {
 #define _ILLUMINANT(Prefix)                                          \
 	class Prefix##Illuminant : public EquidistantSpectrumViewNode {  \
 	public:                                                          \
-		explicit Prefix##Illuminant(float power = 1.0f);             \
+		explicit Prefix##Illuminant();                               \
 		SpectralBlob eval(const ShadingContext& ctx) const override; \
 		std::string dumpInformation() const override;                \
-                                                                     \
-	private:                                                         \
-		float mPower;                                                \
 	};
 
 _ILLUMINANT(D65)
@@ -39,19 +37,18 @@ _ILLUMINANT(F12)
 #include "IlluminantData.inl"
 
 #define _ILLUMINANT_DEC(Prefix, Samples, Start, End)                                               \
-	Prefix##Illuminant::Prefix##Illuminant(float power)                                            \
+	Prefix##Illuminant::Prefix##Illuminant()                                                       \
 		: EquidistantSpectrumViewNode(EquidistantSpectrumView(Prefix##_data, Samples, Start, End)) \
-		, mPower(power)                                                                            \
 	{                                                                                              \
 	}                                                                                              \
 	SpectralBlob Prefix##Illuminant::eval(const ShadingContext& ctx) const                         \
 	{                                                                                              \
-		return EquidistantSpectrumViewNode::eval(ctx) * mPower;                                    \
+		return EquidistantSpectrumViewNode::eval(ctx);                                             \
 	}                                                                                              \
 	std::string Prefix##Illuminant::dumpInformation() const                                        \
 	{                                                                                              \
 		std::stringstream sstream;                                                                 \
-		sstream << "Illuminant " PR_STRINGIFY(Prefix) " (P: " << mPower << ")";                    \
+		sstream << "Illuminant " PR_STRINGIFY(Prefix);                                             \
 		return sstream.str();                                                                      \
 	}
 
@@ -80,48 +77,47 @@ _ILLUMINANT_DEC_F(F12)
 
 class IlluminantPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		float power		  = ctx.Parameters.getNumber("power", 1.0f);
 		std::string illum = ctx.Parameters.getString("spectrum", "D65");
 		std::transform(illum.begin(), illum.end(), illum.begin(), [](char c) { return std::tolower(c); });
 
 		if (illum == "d65")
-			return std::make_shared<D65Illuminant>(power);
+			return std::make_shared<D65Illuminant>();
 		else if (illum == "d50")
-			return std::make_shared<D50Illuminant>(power);
+			return std::make_shared<D50Illuminant>();
 		else if (illum == "d55")
-			return std::make_shared<D55Illuminant>(power);
+			return std::make_shared<D55Illuminant>();
 		else if (illum == "d75")
-			return std::make_shared<D75Illuminant>(power);
+			return std::make_shared<D75Illuminant>();
 		else if (illum == "a")
-			return std::make_shared<AIlluminant>(power);
+			return std::make_shared<AIlluminant>();
 		else if (illum == "c")
-			return std::make_shared<CIlluminant>(power);
+			return std::make_shared<CIlluminant>();
 		else if (illum == "f1")
-			return std::make_shared<F1Illuminant>(power);
+			return std::make_shared<F1Illuminant>();
 		else if (illum == "f2")
-			return std::make_shared<F2Illuminant>(power);
+			return std::make_shared<F2Illuminant>();
 		else if (illum == "f3")
-			return std::make_shared<F3Illuminant>(power);
+			return std::make_shared<F3Illuminant>();
 		else if (illum == "f4")
-			return std::make_shared<F4Illuminant>(power);
+			return std::make_shared<F4Illuminant>();
 		else if (illum == "f5")
-			return std::make_shared<F5Illuminant>(power);
+			return std::make_shared<F5Illuminant>();
 		else if (illum == "f6")
-			return std::make_shared<F6Illuminant>(power);
+			return std::make_shared<F6Illuminant>();
 		else if (illum == "f7")
-			return std::make_shared<F7Illuminant>(power);
+			return std::make_shared<F7Illuminant>();
 		else if (illum == "f8")
-			return std::make_shared<F8Illuminant>(power);
+			return std::make_shared<F8Illuminant>();
 		else if (illum == "f9")
-			return std::make_shared<F9Illuminant>(power);
+			return std::make_shared<F9Illuminant>();
 		else if (illum == "f10")
-			return std::make_shared<F10Illuminant>(power);
+			return std::make_shared<F10Illuminant>();
 		else if (illum == "f11")
-			return std::make_shared<F11Illuminant>(power);
+			return std::make_shared<F11Illuminant>();
 		else if (illum == "f12")
-			return std::make_shared<F12Illuminant>(power);
+			return std::make_shared<F12Illuminant>();
 		else {
 			PR_LOG(L_ERROR) << "Unknown illuminant spectrum " << illum << std::endl;
 			return nullptr;

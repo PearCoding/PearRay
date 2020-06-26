@@ -139,7 +139,7 @@ static void mat_lambert(Environment& env)
 	ParameterGroup params;
 	params.addParameter("albedo", Parameter::fromString("white"));
 	ctx.Parameters = params;
-	auto mat	   = fac->create(id, ctx);
+	auto mat	   = fac->create(id, "lambert", ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate lambert material!" << std::endl;
 		return;
@@ -161,7 +161,7 @@ static void mat_orennayar(Environment& env)
 	params.addParameter("albedo", Parameter::fromString("white"));
 	{
 		params.addParameter("roughness", Parameter::fromNumber(1.0f));
-		auto mat = fac->create(id, ctx);
+		auto mat = fac->create(id, "orennayar", ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -170,7 +170,7 @@ static void mat_orennayar(Environment& env)
 	}
 	{
 		params.addParameter("roughness", Parameter::fromNumber(0.5f));
-		auto mat = fac->create(id, ctx);
+		auto mat = fac->create(id, "orennayar", ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -179,7 +179,7 @@ static void mat_orennayar(Environment& env)
 	}
 	{
 		params.addParameter("roughness", Parameter::fromNumber(0.0f));
-		auto mat = fac->create(id, ctx);
+		auto mat = fac->create(id, "orennayar", ctx);
 		if (!mat) {
 			std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 			return;
@@ -204,7 +204,7 @@ static void mat_principled_p(Environment& env, float roughness, float specular)
 	params.addParameter("roughness", Parameter::fromNumber(roughness));
 	params.addParameter("specular", Parameter::fromNumber(specular));
 
-	auto mat = fac->create(id, ctx);
+	auto mat = fac->create(id, "principled", ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate orennayar material!" << std::endl;
 		return;

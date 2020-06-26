@@ -213,7 +213,7 @@ void SceneLoader::addSampler(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto filter	   = fac->create(id, ctx);
+	auto filter	   = fac->create(id, type, ctx);
 	if (!filter) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create sampler of type " << type << std::endl;
 		return;
@@ -285,7 +285,7 @@ void SceneLoader::addFilter(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto filter	   = fac->create(id, ctx);
+	auto filter	   = fac->create(id, type, ctx);
 	if (!filter) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create filter of type " << type << std::endl;
 		return;
@@ -324,7 +324,7 @@ void SceneLoader::addIntegrator(const DL::DataGroup& group, SceneLoadContext& ct
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto intgr	   = fac->create(id, ctx);
+	auto intgr	   = fac->create(id, type, ctx);
 	if (!intgr) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create integrator of type " << type << std::endl;
 		return;
@@ -433,7 +433,7 @@ void SceneLoader::addEntity(const DL::DataGroup& group,
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto entity	   = fac->create(id, ctx);
+	auto entity	   = fac->create(id, type, ctx);
 	if (!entity) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create entity of type " << type << std::endl;
 		return;
@@ -506,7 +506,7 @@ void SceneLoader::addCamera(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto camera	   = fac->create(id, ctx);
+	auto camera	   = fac->create(id, type, ctx);
 	if (!camera) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create camera of type " << type << std::endl;
 		return;
@@ -541,7 +541,7 @@ void SceneLoader::addLight(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto light	   = fac->create(id, ctx);
+	auto light	   = fac->create(id, type, ctx);
 	if (!light) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create light of type " << type << std::endl;
 		return;
@@ -593,7 +593,7 @@ void SceneLoader::addEmission(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto emission  = fac->create(id, ctx);
+	auto emission  = fac->create(id, type, ctx);
 	if (!emission) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create emission of type " << type << std::endl;
 		return;
@@ -646,7 +646,7 @@ void SceneLoader::addMaterial(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto mat	   = fac->create(id, ctx);
+	auto mat	   = fac->create(id, type, ctx);
 	if (!mat) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create material of type " << type << std::endl;
 		return;
@@ -723,7 +723,7 @@ void SceneLoader::addNode(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto node	   = fac->create(id, ctx);
+	auto node	   = fac->create(id, type, ctx);
 	if (!node) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create node of type " << type << std::endl;
 		return;
@@ -748,7 +748,7 @@ uint32 SceneLoader::addNodeInline(const DL::DataGroup& group, SceneLoadContext& 
 	}
 
 	ctx.Parameters = populateObjectParameters(group, ctx);
-	auto node	   = fac->create(id, ctx);
+	auto node	   = fac->create(id, type, ctx);
 	if (!node) {
 		PR_LOG(L_ERROR) << "[Loader] Could not create node of type " << type << std::endl;
 		return P_INVALID_REFERENCE;
@@ -919,6 +919,7 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group, SceneLoadContext& ctx)
 {
 	ParameterGroup params;
+	// Named parameters
 	for (const auto& entry : group.getNamedEntries()) {
 		switch (entry.type()) {
 		case DL::DT_Integer:
@@ -963,6 +964,59 @@ ParameterGroup SceneLoader::populateObjectParameters(const DL::DataGroup& group,
 				Parameter param = unpackShadingNetwork(grp, ctx);
 				if (param.isValid())
 					params.addParameter(entry.key(), param);
+			}
+		} break;
+		default:
+			PR_LOG(L_ERROR) << "[Loader] Invalid parameter entry value." << std::endl;
+			break;
+		}
+	}
+	
+	// Positional parameters
+	for (const auto& entry : group.getAnonymousEntries()) {
+		switch (entry.type()) {
+		case DL::DT_Integer:
+			params.addParameter(Parameter::fromInt(entry.getInt()));
+			break;
+		case DL::DT_Float:
+			params.addParameter(Parameter::fromNumber(entry.getNumber()));
+			break;
+		case DL::DT_Bool:
+			params.addParameter(Parameter::fromBool(entry.getBool()));
+			break;
+		case DL::DT_String:
+			params.addParameter(Parameter::fromString(entry.getString()));
+			break;
+		case DL::DT_Group: {
+			DL::DataGroup grp = entry.getGroup();
+			if (grp.isArray()) {
+				if (grp.isAllAnonymousOfType(DL::DT_Bool)) {
+					std::vector<bool> arr(grp.anonymousCount());
+					for (size_t i = 0; i < grp.anonymousCount(); ++i)
+						arr[i] = grp.at(i).getBool();
+					params.addParameter(Parameter::fromBoolArray(arr));
+				} else if (grp.isAllAnonymousOfType(DL::DT_Integer)) {
+					std::vector<int64> arr(grp.anonymousCount());
+					for (size_t i = 0; i < grp.anonymousCount(); ++i)
+						arr[i] = grp.at(i).getInt();
+					params.addParameter(Parameter::fromIntArray(arr));
+				} else if (grp.isAllAnonymousNumber()) {
+					std::vector<float> arr(grp.anonymousCount());
+					for (size_t i = 0; i < grp.anonymousCount(); ++i)
+						arr[i] = grp.at(i).getNumber();
+					params.addParameter(Parameter::fromNumberArray(arr));
+				} else if (grp.isAllAnonymousOfType(DL::DT_String)) {
+					std::vector<std::string> arr(grp.anonymousCount());
+					for (size_t i = 0; i < grp.anonymousCount(); ++i)
+						arr[i] = grp.at(i).getString();
+					params.addParameter(Parameter::fromStringArray(arr));
+				} else {
+					PR_LOG(L_ERROR) << "[Loader] Array inner type mismatch" << std::endl;
+				}
+			} else {
+				Parameter param = unpackShadingNetwork(grp, ctx);
+				if (param.isValid())
+					params.addParameter(param);
 			}
 		} break;
 		default:

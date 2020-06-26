@@ -462,7 +462,7 @@ public:
 		return refineMesh;
 	}
 
-	std::shared_ptr<IEntity> create(uint32 id, const SceneLoadContext& ctx)
+	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
 		const ParameterGroup& params = ctx.Parameters;
 
