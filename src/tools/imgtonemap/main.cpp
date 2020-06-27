@@ -79,7 +79,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		IsVerbose	   = (vm.count("verbose") != 0);
 		IsQuiet		   = (vm.count("quiet") != 0);
 		InputIsLinear  = (vm.count("adjust-input") == 0);
-		InputIsXYZ	   = (vm.count("xyz-input") == 0);
+		InputIsXYZ	   = (vm.count("xyz-input") != 0);
 		OutputIsLinear = (vm.count("linear") != 0);
 		OutputIsXYZ	   = (vm.count("xyz") != 0);
 		ClampOutput	   = (vm.count("clamp") != 0);
