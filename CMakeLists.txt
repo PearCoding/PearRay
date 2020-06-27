@@ -57,8 +57,12 @@ option(PR_BUILD_DOCUMENTATION 	"Build documentation with doxygen." ON)
 option(PR_USE_LTO 				"Use linked time optimization if available." ON)
 option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds only." OFF)
 option(PR_USE_CCACHE 			"Use ccache if available." ON)
+
 # march should be default, as we use simdpp
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
+
+option(PR_EXTRA_OPENSUBDIV		"Try to build extra OpenSubDiv plugin" ON)
+option(PR_EXTRA_SEEXPR			"Try to build extra SeExpr plugin" ON)
 
 # Hardware feature switches
 option(PR_DISABLE_HW_FEATURE_SSE3 		"Disable SSE3 support" OFF)
@@ -78,17 +82,11 @@ option(PR_DISABLE_HW_FEATURE_FMA 		"Disable FMA3 support" OFF)
 option(BUILD_SHARED_LIBS		"Build shared library" OFF)
 
 # Include packages
-set(CMAKE_INCLUDE_CURRENT_DIR			ON)
-set(CMAKE_FIND_PACKAGE_PREFER_CONFIG	ON)
-set(Boost_USE_MULTITHREADED				ON)
-#set(Boost_VERBOSE						ON)
-
 if(NOT WIN32)
 	find_package(Threads REQUIRED)
 endif()
 
 find_package(Filesystem REQUIRED)
-link_directories(${Boost_LIBRARY_DIRS})
 
 if(PR_WITH_DIAGNOSTIC)
 	find_package(Qt5 COMPONENTS Core Widgets Charts REQUIRED)
@@ -104,7 +102,13 @@ if(PR_USE_CCACHE)
 	include(CCache)
 endif()
 
-find_package(OpenSubdiv COMPONENTS CPU)
+if(PR_EXTRA_OPENSUBDIV)
+	find_package(OpenSubdiv COMPONENTS CPU)
+endif()
+
+if(PR_EXTRA_SEEXPR)
+	find_package(SeExpr2)
+endif()
 
 #DEFINITIONS AND FLAGS
 link_directories(${CMAKE_CURRENT_BINARY_DIR} ${Boost_LIBRARY_DIRS})

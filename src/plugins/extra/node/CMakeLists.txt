@@ -1,0 +1,5 @@
+if(SeExpr2_FOUND)
+    PR_ADD_PLUGIN(nod_expr CPP ExprNode.cpp LIBRARIES SeExpr2::SeExpr2)
+else()
+    message(WARNING "Skipping SeExpr2 based expression node.")
+endif()

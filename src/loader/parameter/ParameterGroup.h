@@ -15,6 +15,9 @@ public:
 	ParameterGroup(ParameterGroup&&) = default;
 	ParameterGroup& operator=(ParameterGroup&&) = default;
 
+	inline const std::unordered_map<std::string, Parameter>& parameters() const;
+	inline const std::vector<Parameter>& positionalParameters() const;
+
 	// Named parameters
 	inline void addParameter(const std::string& name, const Parameter& param);
 	inline bool hasParameter(const std::string& name) const;
@@ -88,6 +91,7 @@ public:
 	inline Vector3f getVector3f(size_t index, const Vector3f& def) const;
 	inline Eigen::Matrix3f getMatrix3f(size_t index, const Eigen::Matrix3f& def) const;
 	inline Eigen::Matrix4f getMatrix4f(size_t index, const Eigen::Matrix4f& def) const;
+
 private:
 	std::unordered_map<std::string, Parameter> mParameters;
 	std::vector<Parameter> mPositionalParameters;
