@@ -82,6 +82,7 @@ public:
 	inline bool isNode(const std::string& name) const;
 
 	// Lookup functions for easier access
+	std::shared_ptr<INode> lookupRawNode(const Parameter& parameter) const;
 	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
 		const Parameter& parameter, float def = 1) const;
 	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(

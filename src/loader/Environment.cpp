@@ -252,6 +252,39 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
  SPECTRUM_NAME
  SOCKET_NAME
 */
+std::shared_ptr<INode> Environment::lookupRawNode(const Parameter& parameter) const
+{
+	switch (parameter.type()) {
+	default:
+		return nullptr;
+	case PT_Int:
+	case PT_UInt:
+	case PT_Number:
+		if (parameter.isArray()) {
+			if (parameter.arraySize() == 2)
+				return std::make_shared<ConstVectorNode>(
+					Vector3f(parameter.getNumber(0, 0.0f), parameter.getNumber(1, 0.0f), 0.0f));
+			else if (parameter.arraySize() == 3)
+				return std::make_shared<ConstVectorNode>(
+					Vector3f(parameter.getNumber(0, 0.0f), parameter.getNumber(1, 0.0f), parameter.getNumber(2, 0.0f)));
+		} else {
+			return std::make_shared<ConstScalarNode>(parameter.getNumber(0.0f));
+		}
+		break;
+	case PT_Reference: {
+		uint64 refid = parameter.getReference();
+		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid))
+			return mNodeManager->getObject(refid);
+	} break;
+	case PT_String: {
+		std::string name = parameter.getString("");
+		if (hasNode(name))
+			return getRawNode(name);
+	} break;
+	}
+	return nullptr;
+}
+
 std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
 	const Parameter& parameter, float def) const
 {
