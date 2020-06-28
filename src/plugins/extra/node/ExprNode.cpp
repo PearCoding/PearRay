@@ -1,166 +1,200 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
+#include "renderer/RenderContext.h"
 #include "shader/INodePlugin.h"
 
 #include <SeExpr2/ExprFunc.h>
 #include <SeExpr2/Expression.h>
+#include <SeExpr2/VarBlock.h>
 #include <SeExpr2/Vec.h>
 
 #include <fstream>
+#include <regex>
 
 namespace PR {
-constexpr char POSITION_VARIABLE[]	 = "p";
+constexpr char POSITION_VARIABLE[]	 = "P";
 constexpr char WAVELENGTH_VARIABLE[] = "w";
-constexpr char TEXTURE_VARIABLE[]	 = "uv";
+constexpr char TEXTURE_U_VARIABLE[]	 = "u";
+constexpr char TEXTURE_V_VARIABLE[]	 = "v";
 
-struct ScalarVariable : public SeExpr2::ExprVarRef {
-	ScalarVariable(bool isConst)
-		: SeExpr2::ExprVarRef(isConst ? SeExpr2::ExprType().FP(1).Constant()
-									  : SeExpr2::ExprType().FP(1).Varying())
-		, Value{ 0 }
+static inline bool usesVariable(const std::string& expr, const std::string& var)
+{
+	return std::regex_search(expr, std::regex("\\b" + var + "\\b"));
+}
+
+struct ExpressionContainer {
+	SeExpr2::Expression Expr;
+	SeExpr2::VarBlockCreator Creator;
+	std::vector<SeExpr2::VarBlock> VarBlocks;
+
+	std::vector<std::pair<int, std::shared_ptr<FloatScalarNode>>> ScalarNodes;
+	std::vector<std::pair<int, std::pair<SpectralBlob, std::shared_ptr<FloatSpectralNode>>>> SpectralNodes;
+	std::vector<std::pair<int, std::shared_ptr<FloatVectorNode>>> VectorNodes;
+	std::vector<std::pair<int, float>> NumberConstants;
+	std::vector<std::pair<int, Vector3f>> VectorConstants;
+
+	int PositionVariable   = -1;
+	int WavelengthVariable = -1;
+	int TextureUVariable   = -1;
+	int TextureVVariable   = -1;
+
+	inline ExpressionContainer(const std::string& str, bool isVec)
+		: Expr(str)
 	{
+		Expr.setDesiredReturnType(SeExpr2::TypeVec(isVec ? 3 : 1));
+		Expr.setVarBlockCreator(&Creator);
+
+		// Setup standard variables
+		if (usesVariable(str, POSITION_VARIABLE))
+			PositionVariable = Creator.registerVariable(POSITION_VARIABLE,
+														SeExpr2::ExprType().FP(3).Varying());
+		if (usesVariable(str, TEXTURE_U_VARIABLE))
+			TextureUVariable = Creator.registerVariable(TEXTURE_U_VARIABLE,
+														SeExpr2::ExprType().FP(1).Varying());
+		if (usesVariable(str, TEXTURE_V_VARIABLE))
+			TextureVVariable = Creator.registerVariable(TEXTURE_V_VARIABLE,
+														SeExpr2::ExprType().FP(1).Varying());
+		if (usesVariable(str, WAVELENGTH_VARIABLE))
+			WavelengthVariable = Creator.registerVariable(WAVELENGTH_VARIABLE,
+														  SeExpr2::ExprType().FP(1).Varying());
 	}
 
-	float Value;
-
-	void eval(double* result) { result[0] = Value; }
-	void eval(const char**) { PR_ASSERT(false, "eval on string not implemented!"); }
-};
-
-struct SpectralVariable : public SeExpr2::ExprVarRef {
-	SpectralVariable(bool isConst)
-		: SeExpr2::ExprVarRef(isConst ? SeExpr2::ExprType().FP(1).Constant()
-									  : SeExpr2::ExprType().FP(1).Varying())
-		, Value(SpectralBlob::Zero())
-		, CurrentEntry(0)
+	inline void updateConstants(SeExpr2::VarBlock* block) const
 	{
-	}
+		for (const auto& entry : NumberConstants)
+			*block->Pointer(entry.first) = entry.second;
 
-	SpectralBlob Value;
-	int CurrentEntry;
-
-	void eval(double* result) { result[0] = Value(CurrentEntry); }
-	void eval(const char**) { PR_ASSERT(false, "eval on string not implemented!"); }
-};
-
-struct VectorVariable : public SeExpr2::ExprVarRef {
-	VectorVariable(int d, bool isConst)
-		: SeExpr2::ExprVarRef(isConst ? SeExpr2::ExprType().FP(d).Constant()
-									  : SeExpr2::ExprType().FP(d).Varying())
-		, Value{ 0, 0, 0 }
-		, Dim(d)
-	{
-		PR_ASSERT(d > 0 && d <= 3, "Expected valid dimension");
-	}
-
-	float Value[3];
-	const int Dim;
-
-	void eval(double* result)
-	{
-		for (int i = 0; i < Dim; ++i)
-			result[i] = Value[i];
-	}
-
-	void eval(const char**) { PR_ASSERT(false, "eval on string not implemented!"); }
-};
-
-class PrExpression : public SeExpr2::Expression {
-public:
-	PrExpression(const std::string& expr, bool isVec)
-		: SeExpr2::Expression(expr, SeExpr2::ExprType().FP(isVec ? 3 : 1))
-	{
-	}
-
-	PrExpression(PrExpression&& other) = default;
-
-	std::unordered_map<ScalarVariable*, std::shared_ptr<FloatScalarNode>> ScalarNodes;
-	std::unordered_map<SpectralVariable*, std::shared_ptr<FloatSpectralNode>> SpectralNodes;
-	std::unordered_map<VectorVariable*, std::shared_ptr<FloatVectorNode>> VectorNodes;
-
-	mutable std::unordered_map<std::string, std::unique_ptr<ScalarVariable>> ScalarVariableReferences;
-	mutable std::unordered_map<std::string, std::unique_ptr<SpectralVariable>> SpectralVariableReferences;
-	mutable std::unordered_map<std::string, std::unique_ptr<VectorVariable>> VectorVariableReferences;
-
-	mutable std::unique_ptr<VectorVariable> PositionVariable;
-	mutable std::unique_ptr<VectorVariable> TextureVariable;
-	mutable std::unique_ptr<SpectralVariable> WavelengthVariable;
-
-	SeExpr2::ExprVarRef* resolveVar(const std::string& name) const
-	{
-		if (POSITION_VARIABLE == name)
-			return PositionVariable.get();
-		else if (TEXTURE_VARIABLE == name)
-			return TextureVariable.get();
-		else if (WAVELENGTH_VARIABLE == name)
-			return WavelengthVariable.get();
-		else {
-			const auto i1 = ScalarVariableReferences.find(name);
-			if (i1 != ScalarVariableReferences.end())
-				return i1->second.get();
-
-			const auto i2 = SpectralVariableReferences.find(name);
-			if (i2 != SpectralVariableReferences.end())
-				return i2->second.get();
-
-			const auto i3 = VectorVariableReferences.find(name);
-			if (i3 != VectorVariableReferences.end())
-				return i3->second.get();
-			return nullptr;
+		for (const auto& entry : VectorConstants) {
+			Vector3f var = entry.second;
+			auto* ptr	 = block->Pointer(entry.first);
+			ptr[0]		 = var(0);
+			ptr[1]		 = var(1);
+			ptr[2]		 = var(2);
 		}
 	}
+
+	inline void setupThreadData(size_t thread_count)
+	{
+		for (size_t i = 0; i < thread_count; ++i) {
+			SeExpr2::VarBlock block = Creator.create(true);
+			updateConstants(&block);
+			VarBlocks.push_back(std::move(block));
+		}
+	}
+
+	inline void updateVaryings(const ShadingContext& ctx)
+	{
+		auto* varblock = &VarBlocks[ctx.ThreadIndex];
+
+		for (const auto& entry : ScalarNodes)
+			*varblock->Pointer(entry.first) = entry.second->eval(ctx);
+
+		for (auto& entry : SpectralNodes)
+			entry.second.first = entry.second.second->eval(ctx);
+
+		for (const auto& entry : VectorNodes) {
+			Vector3f var = entry.second->eval(ctx);
+			auto* ptr	 = varblock->Pointer(entry.first);
+			ptr[0]		 = var(0);
+			ptr[1]		 = var(1);
+			ptr[2]		 = var(2);
+		}
+
+		/*if (PositionVariable >= 0) {
+			auto* ptr = VarBlock->Pointer(PositionVariable);
+			ptr[0]	  = ctx.Position[0];
+			ptr[1]	  = ctx.Position[1];
+			ptr[2]	  = ctx.Position[2];
+		}*/
+
+		if (TextureUVariable >= 0)
+			*varblock->Pointer(TextureUVariable) = ctx.UV(0);
+
+		if (TextureVVariable >= 0)
+			*varblock->Pointer(TextureVVariable) = ctx.UV(1);
+	}
+
+	inline void updateSpectralVaryings(size_t i, const ShadingContext& ctx)
+	{
+		auto* varblock = &VarBlocks[ctx.ThreadIndex];
+		for (auto& entry : SpectralNodes)
+			*varblock->Pointer(entry.first) = entry.second.first[i];
+
+		if (WavelengthVariable >= 0)
+			*varblock->Pointer(WavelengthVariable) = ctx.WavelengthNM[i];
+	}
+
+	inline void registerConstant(const std::string& name, float constant)
+	{
+		int handle = Creator.registerVariable(name, SeExpr2::ExprType().FP(1).Constant());
+		NumberConstants.emplace_back(handle, constant);
+	}
+
+	inline void registerConstant(const std::string& name, const Vector3f& constant)
+	{
+		int handle = Creator.registerVariable(name, SeExpr2::ExprType().FP(3).Constant());
+		VectorConstants.emplace_back(handle, constant);
+	}
+
+	inline void registerVarying(const std::string& name, const std::shared_ptr<FloatScalarNode>& node)
+	{
+		int handle = Creator.registerVariable(name, SeExpr2::ExprType().FP(1).Varying());
+		ScalarNodes.emplace_back(handle, node);
+	}
+
+	inline void registerVarying(const std::string& name, const std::shared_ptr<FloatSpectralNode>& node)
+	{
+		int handle = Creator.registerVariable(name, SeExpr2::ExprType().FP(1).Varying());
+		SpectralNodes.emplace_back(handle, std::make_pair(SpectralBlob(), node));
+	}
+
+	inline void registerVarying(const std::string& name, const std::shared_ptr<FloatVectorNode>& node)
+	{
+		int handle = Creator.registerVariable(name, SeExpr2::ExprType().FP(3).Varying());
+		VectorNodes.emplace_back(handle, node);
+	}
+
+	inline bool isSpectralVarying() const
+	{
+		return WavelengthVariable >= 0 || !SpectralNodes.empty();
+	}
 };
-
-// No Spectrals
-inline static void updateBasicNodes(const ShadingContext& ctx, const std::shared_ptr<PrExpression>& expr)
-{
-	for (auto entry : expr->ScalarNodes)
-		entry.first->Value = entry.second->eval(ctx);
-
-	for (auto entry : expr->VectorNodes) {
-		auto vec			  = entry.second->eval(ctx);
-		entry.first->Value[0] = vec(0);
-		entry.first->Value[1] = vec(1);
-		entry.first->Value[2] = vec(2);
-	}
-
-	if (expr->TextureVariable) {
-		expr->TextureVariable->Value[0] = ctx.UV[0];
-		expr->TextureVariable->Value[1] = ctx.UV[1];
-	}
-}
 
 class ScalarExpressionNode : public FloatScalarNode {
 public:
-	explicit ScalarExpressionNode(const std::shared_ptr<PrExpression>& expr)
+	explicit ScalarExpressionNode(const std::shared_ptr<ExpressionContainer>& expr)
 		: mExpr(expr)
 	{
 	}
 
 	float eval(const ShadingContext& ctx) const override
 	{
-		// Update nodes
-		updateBasicNodes(ctx, mExpr);
-
-		const double* result = mExpr->evalFP();
+		mExpr->updateVaryings(ctx);
+		const double* result = mExpr->Expr.evalFP(&mExpr->VarBlocks[ctx.ThreadIndex]);
 		return result[0];
+	}
+
+	void beforeRender(RenderContext* ctx) override
+	{
+		FloatScalarNode::beforeRender(ctx);
+		mExpr->setupThreadData(ctx->threads());
 	}
 
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
-		sstream << "Scalar Expression (" << mExpr->getExpr() << ")";
+		sstream << "Scalar Expression (" << mExpr->Expr.getExpr() << ")";
 		return sstream.str();
 	}
 
 private:
-	std::shared_ptr<PrExpression> mExpr;
+	mutable std::shared_ptr<ExpressionContainer> mExpr;
 };
 
 class SpectralExpressionNode : public FloatSpectralNode {
 public:
-	explicit SpectralExpressionNode(const std::shared_ptr<PrExpression>& expr)
+	explicit SpectralExpressionNode(const std::shared_ptr<ExpressionContainer>& expr)
 		: mExpr(expr)
 	{
 	}
@@ -168,26 +202,14 @@ public:
 	// TODO: Better way?
 	SpectralBlob eval(const ShadingContext& ctx) const override
 	{
-		// Update nodes
-		updateBasicNodes(ctx, mExpr);
-
-		// Update spectral nodes
-		for (auto entry : mExpr->SpectralNodes)
-			entry.first->Value = entry.second->eval(ctx);
-
-		if (mExpr->WavelengthVariable)
-			mExpr->WavelengthVariable->Value = ctx.WavelengthNM;
+		mExpr->updateVaryings(ctx);
 
 		// Calculate each wavelength (not really the best solution)
 		SpectralBlob output;
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			for (auto entry : mExpr->SpectralNodes)
-				entry.first->CurrentEntry = i;
+			mExpr->updateSpectralVaryings(i, ctx);
 
-			if (mExpr->WavelengthVariable)
-				mExpr->WavelengthVariable->CurrentEntry = i;
-
-			const double* result = mExpr->evalFP();
+			const double* result = mExpr->Expr.evalFP(&mExpr->VarBlocks[ctx.ThreadIndex]);
 			output[i]			 = result[0];
 		}
 		return output;
@@ -199,42 +221,52 @@ public:
 		return Vector2i(1, 1);
 	}
 
+	void beforeRender(RenderContext* ctx) override
+	{
+		FloatSpectralNode::beforeRender(ctx);
+		mExpr->setupThreadData(ctx->threads());
+	}
+
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
-		sstream << "Spectral Expression (" << mExpr->getExpr() << ")";
+		sstream << "Spectral Expression (" << mExpr->Expr.getExpr() << ")";
 		return sstream.str();
 	}
 
 private:
-	std::shared_ptr<PrExpression> mExpr;
+	mutable std::shared_ptr<ExpressionContainer> mExpr;
 };
 
 class VectorExpressionNode : public FloatVectorNode {
 public:
-	explicit VectorExpressionNode(const std::shared_ptr<PrExpression>& expr)
+	explicit VectorExpressionNode(const std::shared_ptr<ExpressionContainer>& expr)
 		: mExpr(expr)
 	{
 	}
 
 	Vector3f eval(const ShadingContext& ctx) const override
 	{
-		// Update nodes
-		updateBasicNodes(ctx, mExpr);
-
-		const double* result = mExpr->evalFP();
+		mExpr->updateVaryings(ctx);
+		const double* result = mExpr->Expr.evalFP(&mExpr->VarBlocks[ctx.ThreadIndex]);
 		return Vector3f(result[0], result[1], result[2]);
+	}
+
+	void beforeRender(RenderContext* ctx) override
+	{
+		FloatVectorNode::beforeRender(ctx);
+		mExpr->setupThreadData(ctx->threads());
 	}
 
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
-		sstream << "Vector3f Expression (" << mExpr->getExpr() << ")";
+		sstream << "Vector3f Expression (" << mExpr->Expr.getExpr() << ")";
 		return sstream.str();
 	}
 
 private:
-	std::shared_ptr<PrExpression> mExpr;
+	mutable std::shared_ptr<ExpressionContainer> mExpr;
 };
 
 class ExpressionPlugin : public INodePlugin {
@@ -260,7 +292,7 @@ public:
 		}
 
 		const bool isVec = (type_name == "vexpr" || type_name == "fvexpr");
-		auto expr		 = std::make_shared<PrExpression>(expr_str, isVec);
+		auto expr		 = std::make_shared<ExpressionContainer>(expr_str, isVec);
 
 		// Setup user variables
 		for (const auto& entry : ctx.Parameters.parameters()) {
@@ -269,66 +301,45 @@ public:
 			switch (param.type()) {
 			case PT_Invalid:
 				continue;
-			case PT_Bool: {
-				std::unique_ptr<ScalarVariable> constant	= std::make_unique<ScalarVariable>(true);
-				constant->Value								= param.getBool(false) ? 1.0f : 0.0f;
-				expr->ScalarVariableReferences[entry.first] = std::move(constant);
-			} break;
+			case PT_Bool:
+				expr->registerConstant(entry.first, param.getBool(false) ? 1.0f : 0.0f);
+				break;
 			case PT_Int:
 			case PT_UInt:
-			case PT_Number: {
-				std::unique_ptr<ScalarVariable> constant	= std::make_unique<ScalarVariable>(true);
-				constant->Value								= param.getNumber(0.0f);
-				expr->ScalarVariableReferences[entry.first] = std::move(constant);
-			} break;
+			case PT_Number:
+				expr->registerConstant(entry.first, param.getNumber(0.0f));
+				break;
 			case PT_String:
 			case PT_Reference: {
 				auto node = ctx.Env->lookupRawNode(param);
 				switch (node->type()) {
-				case NT_FloatScalar: {
-					auto var									= std::make_unique<ScalarVariable>(false);
-					expr->ScalarNodes[var.get()]				= std::reinterpret_pointer_cast<FloatScalarNode>(node);
-					expr->ScalarVariableReferences[entry.first] = std::move(var);
-				} break;
-				case NT_FloatSpectral: {
-					auto var									  = std::make_unique<SpectralVariable>(false);
-					expr->SpectralNodes[var.get()]				  = std::reinterpret_pointer_cast<FloatSpectralNode>(node);
-					expr->SpectralVariableReferences[entry.first] = std::move(var);
-				} break;
-				case NT_FloatVector: {
-					auto var									= std::make_unique<VectorVariable>(3, false);
-					expr->VectorNodes[var.get()]				= std::reinterpret_pointer_cast<FloatVectorNode>(node);
-					expr->VectorVariableReferences[entry.first] = std::move(var);
-				} break;
+				case NT_FloatScalar:
+					expr->registerVarying(entry.first, std::reinterpret_pointer_cast<FloatScalarNode>(node));
+					break;
+				case NT_FloatSpectral:
+					expr->registerVarying(entry.first, std::reinterpret_pointer_cast<FloatSpectralNode>(node));
+					break;
+				case NT_FloatVector:
+					expr->registerVarying(entry.first, std::reinterpret_pointer_cast<FloatVectorNode>(node));
+					break;
 				}
 			} break;
 			}
 		}
 
-		// Setup standard variables
-		if (expr->usesVar(POSITION_VARIABLE))
-			expr->PositionVariable = std::make_unique<VectorVariable>(3, false);
-		if (expr->usesVar(TEXTURE_VARIABLE))
-			expr->TextureVariable = std::make_unique<VectorVariable>(2, false);
-		if (expr->usesVar(WAVELENGTH_VARIABLE))
-			expr->WavelengthVariable = std::make_unique<SpectralVariable>(false);
-
-		// const bool isSpatialVarying	 = expr->PositionVariable || expr->TextureVariable;
-		const bool isSpectralVarying = (expr->WavelengthVariable != nullptr) || !expr->SpectralVariableReferences.empty();
-
-		if (!expr->isValid()) {
-			PR_LOG(L_ERROR) << "[SeExpr2] Parsing Error: " << expr->parseError() << std::endl;
+		if (!expr->Expr.isValid()) {
+			PR_LOG(L_ERROR) << "[SeExpr2] Parsing Error: " << expr->Expr.parseError() << std::endl;
 			return nullptr;
 		}
 
-		if (isSpectralVarying && isVec) {
+		if (expr->isSpectralVarying() && isVec) {
 			PR_LOG(L_ERROR) << "[SeExpr2] A spectral varying expression can not be combined with a vector expression" << std::endl;
 			return nullptr;
 		}
 
 		if (isVec) {
 			return std::make_shared<VectorExpressionNode>(expr);
-		} else if (isSpectralVarying) {
+		} else if (expr->isSpectralVarying()) {
 			return std::make_shared<SpectralExpressionNode>(expr);
 		} else {
 			return std::make_shared<ScalarExpressionNode>(expr);
