@@ -56,7 +56,7 @@ static void handle_material_eval_case(const std::string& name,
 
 			const Vector3f L = Spherical::cartesian(theta, phi);
 
-			MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L) };
+			MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L), ShadingContext::fromIP(0, spt) };
 			MaterialEvalOutput out;
 			material->eval(in, out, RenderTileSession());
 
@@ -89,7 +89,7 @@ static void handle_material_sample_case(const std::string& name,
 	std::vector<float> dir(WIDTH * HEIGHT);
 	for (size_t y = 0; y < HEIGHT; ++y) {
 		for (size_t x = 0; x < WIDTH; ++x) {
-			MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), Vector2f(x / (float)WIDTH, y / (float)HEIGHT) };
+			MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), ShadingContext::fromIP(0, spt), Vector2f(x / (float)WIDTH, y / (float)HEIGHT) };
 			MaterialSampleOutput out;
 			material->sample(in, out, RenderTileSession());
 

@@ -170,7 +170,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ShadingContext sctx	 = ShadingContext::fromMC(in.Context);
+		const auto& sctx	 = in.ShadingContext;
 		SpectralBlob base	 = mBaseColor->eval(sctx);
 		float lum			 = base.maxCoeff();
 		float subsurface	 = mSubsurface->eval(sctx);
@@ -232,7 +232,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ShadingContext sctx	 = ShadingContext::fromMC(in.Context);
+		const auto& sctx	 = in.ShadingContext;
 		SpectralBlob base	 = mBaseColor->eval(sctx);
 		float lum			 = base.maxCoeff();
 		float subsurface	 = mSubsurface->eval(sctx);

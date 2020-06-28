@@ -5,7 +5,6 @@
 #include "entity/IEntity.h"
 #include "math/Projection.h"
 
-
 namespace PR {
 class DiffuseEmission : public IEmission {
 public:
@@ -19,7 +18,7 @@ public:
 	void eval(const LightEvalInput& in, LightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
-		out.Weight = mRadiance->eval(ShadingContext::fromIP(in.Point));
+		out.Weight = mRadiance->eval(in.ShadingContext);
 	}
 
 private:

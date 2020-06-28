@@ -80,5 +80,19 @@ public:
 
 	inline bool isAtMedium() const { return Flags & IPF_IsMedium; }
 	inline bool isAtSurface() const { return !isAtMedium(); }
+
+	static inline IntersectionPoint forSurface(const PR::Ray& ray, const Vector3f& p, const GeometryPoint& pt)
+	{
+		IntersectionPoint ip;
+		ip.setForSurface(ray, p, pt);
+		return ip;
+	}
+
+	static inline IntersectionPoint forMedium(const PR::Ray& ray, const Vector3f& p, uint32 mediumID)
+	{
+		IntersectionPoint ip;
+		ip.setForMedium(ray, p, mediumID);
+		return ip;
+	}
 };
 } // namespace PR

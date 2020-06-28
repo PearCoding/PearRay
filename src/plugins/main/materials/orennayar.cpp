@@ -35,13 +35,12 @@ public:
 	}
 
 	// https://mimosa-pudica.net/improved-oren-nayar.html
-	inline SpectralBlob calc(const Vector3f& L, float NdotL, const MaterialSampleContext& ctx) const
+	inline SpectralBlob calc(const Vector3f& L, float NdotL, const MaterialSampleContext& ctx, const ShadingContext& sctx) const
 	{
-		auto sc			= ShadingContext::fromMC(ctx);
-		float roughness = mRoughness->eval(sc);
+		float roughness = mRoughness->eval(sctx);
 		roughness *= roughness;
 
-		SpectralBlob weight = mAlbedo->eval(sc);
+		SpectralBlob weight = mAlbedo->eval(sctx);
 
 		if (roughness > PR_EPSILON) {
 			const float s = -NdotL * ctx.NdotV() + ctx.V.dot(L);
@@ -62,7 +61,7 @@ public:
 		PR_PROFILE_THIS;
 
 		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.Weight		= calc(in.Context.L, dot, in.Context);
+		out.Weight		= calc(in.Context.L, dot, in.Context, in.ShadingContext);
 		out.Type		= MST_DiffuseReflection;
 		out.PDF_S		= Projection::cos_hemi_pdf(dot);
 	}
@@ -76,7 +75,7 @@ public:
 		out.L = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
 
 		float NdotL = std::max(0.0f, out.L(2));
-		out.Weight	= calc(out.L, NdotL, in.Context);
+		out.Weight	= calc(out.L, NdotL, in.Context, in.ShadingContext);
 		out.Type	= MST_DiffuseReflection;
 		out.PDF_S	= pdf;
 	}

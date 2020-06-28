@@ -46,7 +46,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ShadingContext sctx = ShadingContext::fromMC(in.Context);
+		const auto& sctx = in.ShadingContext;
 
 		float spec = std::min(1.0f,
 							  Microfacet::ward(mRoughnessX->eval(sctx),
@@ -66,10 +66,10 @@ public:
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
 		float pdf_s;
-		out.L = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
-		out.PDF_S	 = pdf_s;
-		out.Weight	 = mAlbedo->eval(sctx) * std::abs(out.L[2]);
-		out.Type	 = MST_DiffuseReflection;
+		out.L	   = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
+		out.PDF_S  = pdf_s;
+		out.Weight = mAlbedo->eval(sctx) * std::abs(out.L[2]);
+		out.Type   = MST_DiffuseReflection;
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
@@ -113,10 +113,10 @@ public:
 			out.PDF_S			  = tu / tb * std::exp(-tz * (1 - cosTheta2) / (cosTheta2));
 		}
 
-		Vector3f H	 = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
-		out.L = Reflection::reflect(in.Context.V, H);
-		out.Type	 = MST_SpecularReflection;
-		out.Weight	 = mSpecularity->eval(sctx) * out.PDF_S * std::abs(out.L[2]);
+		Vector3f H = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
+		out.L	   = Reflection::reflect(in.Context.V, H);
+		out.Type   = MST_SpecularReflection;
+		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::abs(out.L[2]);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -124,8 +124,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		ShadingContext sctx = ShadingContext::fromMC(in.Context);
-		const float refl	= mReflectivity->eval(sctx);
+		const auto& sctx = in.ShadingContext;
+		const float refl = mReflectivity->eval(sctx);
 
 		if (in.RND[0] <= refl) {
 			sampleSpecularPath(in, sctx, out);

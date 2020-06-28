@@ -2,12 +2,14 @@
 
 #include "MaterialContext.h"
 #include "MaterialType.h"
+#include "shader/ShadingContext.h"
 
 namespace PR {
 
 // Evaluation
 struct PR_LIB_CORE MaterialEvalInput {
 	MaterialEvalContext Context;
+	PR::ShadingContext ShadingContext;
 };
 
 struct PR_LIB_CORE MaterialEvalOutput {
@@ -19,6 +21,7 @@ struct PR_LIB_CORE MaterialEvalOutput {
 // Sampling
 struct PR_LIB_CORE MaterialSampleInput {
 	MaterialSampleContext Context;
+	PR::ShadingContext ShadingContext;
 	Vector2f RND;
 };
 

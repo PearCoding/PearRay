@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IObject.h"
-#include "trace/IntersectionPoint.h"
+#include "shader/ShadingContext.h"
 #include <memory>
 
 namespace PR {
@@ -9,7 +9,7 @@ class RenderTileSession;
 
 // Evaluation
 struct PR_LIB_CORE LightEvalInput {
-	IntersectionPoint Point;
+	PR::ShadingContext ShadingContext;
 	class IEntity* Entity;
 };
 

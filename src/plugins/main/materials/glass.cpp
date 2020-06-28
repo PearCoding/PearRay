@@ -59,7 +59,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mSpecularity->eval(ShadingContext::fromMC(in.Context));
+		out.Weight = mSpecularity->eval(in.ShadingContext);
 		out.PDF_S  = 1;
 
 		if (in.Context.NdotL() < 0)
@@ -73,11 +73,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		auto sc = ShadingContext::fromMC(in.Context);
-
 		float eta;
 		const float F = fresnelTerm(in.Context, eta);
-		out.Weight	  = mSpecularity->eval(sc); // The weight is independent of the fresnel term
+		out.Weight	  = mSpecularity->eval(in.ShadingContext); // The weight is independent of the fresnel term
 
 		if (in.RND[0] <= F) {
 			out.Type	 = MST_SpecularReflection;

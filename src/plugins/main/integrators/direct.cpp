@@ -79,13 +79,13 @@ public:
 			return SpectralBlob::Zero();
 
 		// Trace shadow ray
-		const Ray shadow  = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-		bool hitAnything  = session.traceOcclusionRay(shadow);
+		const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+		bool hitAnything = session.traceOcclusionRay(shadow);
 		if (hitAnything) // If we hit anything before the light/background, the light path is occluded
 			return SpectralBlob::Zero();
 
 		// Evaluate surface
-		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, shadow.Direction) };
+		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, shadow.Direction), ShadingContext::fromIP(session.threadID(), spt) };
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
@@ -139,13 +139,13 @@ public:
 
 		// Evaluate light
 		LightEvalInput inL;
-		inL.Entity = light;
-		inL.Point.setForSurface(shadow, lightPos, lightPt);
+		inL.Entity		   = light;
+		inL.ShadingContext = ShadingContext::fromIP(session.threadID(), IntersectionPoint::forSurface(shadow, lightPos, lightPt));
 		LightEvalOutput outL;
 		ems->eval(inL, outL, session);
 
 		// Evaluate surface
-		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L) };
+		MaterialEvalInput in{ MaterialEvalContext::fromIP(spt, L), ShadingContext::fromIP(session.threadID(), spt) };
 		MaterialEvalOutput out;
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
@@ -176,7 +176,7 @@ public:
 		const float scatProb = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
 
 		// Sample BxDF
-		MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), mSampler.next2D() };
+		MaterialSampleInput in{ MaterialSampleContext::fromIP(spt), ShadingContext::fromIP(session.threadID(), spt), mSampler.next2D() };
 		MaterialSampleOutput out;
 		material->sample(in, out, session);
 
@@ -228,8 +228,8 @@ public:
 				if (PR_LIKELY(ems)) {
 					// Evaluate light
 					LightEvalInput inL;
-					inL.Entity = nentity;
-					inL.Point  = spt2;
+					inL.Entity		   = nentity;
+					inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt2);
 					LightEvalOutput outL;
 					ems->eval(inL, outL, session);
 
@@ -346,8 +346,8 @@ public:
 			if (PR_LIKELY(ems)) {
 				// Evaluate light
 				LightEvalInput inL;
-				inL.Entity = entity;
-				inL.Point  = spt;
+				inL.Entity		   = entity;
+				inL.ShadingContext = ShadingContext::fromIP(session.threadID(), spt);
 				LightEvalOutput outL;
 				ems->eval(inL, outL, session);
 

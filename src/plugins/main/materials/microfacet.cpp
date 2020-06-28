@@ -193,8 +193,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		auto sctx	   = ShadingContext::fromMC(in.Context);
-		SpectralBlob F = fresnelTerm(in.Context, sctx);
+		const auto& sctx = in.ShadingContext;
+		SpectralBlob F	 = fresnelTerm(in.Context, sctx);
 
 		SpectralBlob Diff = SpectralBlob::Zero();
 		if (mFresnelMode != FM_Conductor)
@@ -216,10 +216,10 @@ public:
 	void sampleDiffusePath(const MaterialSampleInput&, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
 	{
 		float pdf_s;
-		out.L = Projection::cos_hemi(u, v, pdf_s);
-		out.PDF_S	 = SpectralBlob(pdf_s);
-		out.Weight	 = PR_1_PI * mAlbedo->eval(sctx) * out.L[2];
-		out.Type	 = MST_DiffuseReflection;
+		out.L	   = Projection::cos_hemi(u, v, pdf_s);
+		out.PDF_S  = SpectralBlob(pdf_s);
+		out.Weight = PR_1_PI * mAlbedo->eval(sctx) * out.L[2];
+		out.Type   = MST_DiffuseReflection;
 	}
 
 	void sampleSpecularPath(const MaterialSampleInput& in, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
@@ -248,8 +248,8 @@ public:
 			break;
 		}
 
-		out.L = Reflection::reflect(in.Context.V, O);
-		float NdotL	 = out.L[2];
+		out.L		= Reflection::reflect(in.Context.V, O);
+		float NdotL = out.L[2];
 		if (NdotL > PR_EPSILON)
 			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Context.NdotV()), 0.0f), 1.0f);
 		else
@@ -267,7 +267,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		auto sctx		 = ShadingContext::fromMC(in.Context);
+		const auto& sctx = in.ShadingContext;
 		SpectralBlob F	 = fresnelTerm(in.Context, sctx);
 		float decision_f = F[0];
 

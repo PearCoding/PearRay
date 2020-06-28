@@ -37,7 +37,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight = mSpecularity->eval(ShadingContext::fromMC(in.Context));
+		out.Weight = mSpecularity->eval(in.ShadingContext);
 		out.PDF_S  = 1;
 		out.Type   = MST_SpecularReflection;
 	}
@@ -47,7 +47,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.Weight	 = mSpecularity->eval(ShadingContext::fromMC(in.Context));
+		out.Weight	 = mSpecularity->eval(in.ShadingContext);
 		out.Type	 = MST_SpecularReflection;
 		out.PDF_S	 = 1;
 		out.L = Reflection::reflect(in.Context.V);
