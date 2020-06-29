@@ -75,8 +75,6 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 
 	PR_ASSERT(mOutputMap, "Output Map must be already created!");
 
-	mScene->beforeRender(this);
-
 	/* Setup entities */
 	mEmissiveSurfaceArea = 0.0f;
 	for (auto entity : mScene->entities()) {
@@ -100,6 +98,9 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 		RenderThread* thread = new RenderThread(i, this);
 		mThreads.push_back(thread);
 	}
+
+	// Call all interested objects after thread count is fixed
+	mScene->beforeRender(this);
 
 	mTileMap = std::make_unique<RenderTileMap>();
 	mTileMap->init(*this, rtx, rty, mRenderSettings.tileMode);

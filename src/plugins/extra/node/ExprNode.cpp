@@ -14,7 +14,7 @@
 
 namespace PR {
 constexpr char POSITION_VARIABLE[]	 = "P";
-constexpr char WAVELENGTH_VARIABLE[] = "w";
+constexpr char WAVELENGTH_VARIABLE[] = "w";// TODO: Better identifier?
 constexpr char TEXTURE_U_VARIABLE[]	 = "u";
 constexpr char TEXTURE_V_VARIABLE[]	 = "v";
 
@@ -27,6 +27,7 @@ struct ExpressionContainer {
 	SeExpr2::Expression Expr;
 	SeExpr2::VarBlockCreator Creator;
 	std::vector<SeExpr2::VarBlock> VarBlocks;
+	std::vector<std::vector<double>> VarData;
 
 	std::vector<std::pair<int, std::shared_ptr<FloatScalarNode>>> ScalarNodes;
 	std::vector<std::pair<int, std::pair<SpectralBlob, std::shared_ptr<FloatSpectralNode>>>> SpectralNodes;
@@ -78,13 +79,63 @@ struct ExpressionContainer {
 	{
 		for (size_t i = 0; i < thread_count; ++i) {
 			SeExpr2::VarBlock block = Creator.create(true);
+			setupVarData(&block);
 			updateConstants(&block);
 			VarBlocks.push_back(std::move(block));
 		}
 	}
 
+	inline void setupVarData(SeExpr2::VarBlock* block)
+	{
+		// Calculate entry count
+		size_t entries = 0;
+		if (PositionVariable >= 0)
+			entries += 3;
+		if (TextureUVariable >= 0)
+			entries += 1;
+		if (TextureVVariable >= 0)
+			entries += 1;
+		if (WavelengthVariable >= 0)
+			entries += 1;
+		entries += NumberConstants.size();
+		entries += 3 * VectorConstants.size();
+		entries += ScalarNodes.size();
+		entries += SpectralNodes.size();
+		entries += 3 * VectorNodes.size();
+
+		// Setup data
+		VarData.emplace_back(entries);
+		std::vector<double>& data = VarData.back();
+
+		// Connect pointers to slots given by the handles (which are just array indices)
+		if (PositionVariable >= 0)
+			block->Pointer(PositionVariable) = &data[PositionVariable];
+		if (TextureUVariable >= 0)
+			block->Pointer(TextureUVariable) = &data[TextureUVariable];
+		if (TextureVVariable >= 0)
+			block->Pointer(TextureVVariable) = &data[TextureVVariable];
+		if (WavelengthVariable >= 0)
+			block->Pointer(WavelengthVariable) = &data[WavelengthVariable];
+
+		for (const auto& entry : NumberConstants)
+			block->Pointer(entry.first) = &data[entry.first];
+
+		for (const auto& entry : VectorConstants)
+			block->Pointer(entry.first) = &data[entry.first];
+
+		for (const auto& entry : ScalarNodes)
+			block->Pointer(entry.first) = &data[entry.first];
+
+		for (const auto& entry : SpectralNodes)
+			block->Pointer(entry.first) = &data[entry.first];
+
+		for (const auto& entry : VectorNodes)
+			block->Pointer(entry.first) = &data[entry.first];
+	}
+
 	inline void updateVaryings(const ShadingContext& ctx)
 	{
+		PR_ASSERT(ctx.ThreadIndex < VarBlocks.size(), "Invalid thread index");
 		auto* varblock = &VarBlocks[ctx.ThreadIndex];
 
 		for (const auto& entry : ScalarNodes)
@@ -117,6 +168,8 @@ struct ExpressionContainer {
 
 	inline void updateSpectralVaryings(size_t i, const ShadingContext& ctx)
 	{
+		PR_ASSERT(ctx.ThreadIndex < VarBlocks.size(), "Invalid thread index");
+
 		auto* varblock = &VarBlocks[ctx.ThreadIndex];
 		for (auto& entry : SpectralNodes)
 			*varblock->Pointer(entry.first) = entry.second.first[i];

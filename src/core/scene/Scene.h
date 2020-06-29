@@ -16,6 +16,7 @@ class IEntity;
 class IMaterial;
 class IEmission;
 class IInfiniteLight;
+class INode;
 class RenderContext;
 
 class RayStream;
@@ -27,7 +28,8 @@ public:
 		  const std::vector<std::shared_ptr<IEntity>>& entities,
 		  const std::vector<std::shared_ptr<IMaterial>>& materials,
 		  const std::vector<std::shared_ptr<IEmission>>& emissions,
-		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights);
+		  const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
+		  const std::vector<std::shared_ptr<INode>>& nodes);
 	virtual ~Scene();
 
 	const std::vector<std::shared_ptr<IEntity>>& entities() const { return mEntities; }
@@ -36,6 +38,7 @@ public:
 	const std::vector<std::shared_ptr<IInfiniteLight>>& infiniteLights() const { return mInfLights; }
 	const std::vector<std::shared_ptr<IInfiniteLight>>& deltaInfiniteLights() const { return mDeltaInfLights; }
 	const std::vector<std::shared_ptr<IInfiniteLight>>& nonDeltaInfiniteLights() const { return mNonDeltaInfLights; }
+	const std::vector<std::shared_ptr<INode>>& nodes() const { return mNodes; }
 
 	std::shared_ptr<ICamera> activeCamera() const { return mActiveCamera; }
 
@@ -59,6 +62,7 @@ private:
 	std::vector<std::shared_ptr<IInfiniteLight>> mInfLights;
 	std::vector<std::shared_ptr<IInfiniteLight>> mDeltaInfLights;
 	std::vector<std::shared_ptr<IInfiniteLight>> mNonDeltaInfLights;
+	std::vector<std::shared_ptr<INode>> mNodes;
 
 	std::unique_ptr<struct SceneInternal> mInternal;
 	BoundingBox mBoundingBox;

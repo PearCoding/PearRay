@@ -8,6 +8,7 @@
 #include "material/IMaterial.h"
 #include "renderer/RenderContext.h"
 #include "serialization/FileSerializer.h"
+#include "shader/INode.h"
 
 #include "Logger.h"
 
@@ -23,12 +24,14 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 			 const std::vector<std::shared_ptr<IEntity>>& entities,
 			 const std::vector<std::shared_ptr<IMaterial>>& materials,
 			 const std::vector<std::shared_ptr<IEmission>>& emissions,
-			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights)
+			 const std::vector<std::shared_ptr<IInfiniteLight>>& infLights,
+			 const std::vector<std::shared_ptr<INode>>& nodes)
 	: mActiveCamera(activeCamera)
 	, mEntities(entities)
 	, mMaterials(materials)
 	, mEmissions(emissions)
 	, mInfLights(infLights)
+	, mNodes(nodes)
 {
 	PR_LOG(L_DEBUG) << "Setup before scene build..." << std::endl;
 	mActiveCamera->beforeSceneBuild();
@@ -40,11 +43,15 @@ Scene::Scene(const std::shared_ptr<ICamera>& activeCamera,
 		o->beforeSceneBuild();
 	for (auto o : mEntities)
 		o->beforeSceneBuild();
+	for (auto o : mNodes)
+		o->beforeSceneBuild();
 
 	setupScene();
 
 	PR_LOG(L_DEBUG) << "Setup after scene build..." << std::endl;
 	mActiveCamera->afterSceneBuild(this);
+	for (auto o : mNodes)
+		o->afterSceneBuild(this);
 	for (auto o : mEmissions)
 		o->afterSceneBuild(this);
 	for (auto o : mInfLights)
@@ -71,6 +78,8 @@ void Scene::beforeRender(RenderContext* ctx)
 		o->beforeRender(ctx);
 	for (auto o : mEntities)
 		o->beforeRender(ctx);
+	for (auto o : mNodes)
+		o->beforeRender(ctx);
 
 	mDeltaInfLights.clear();
 	mNonDeltaInfLights.clear();
@@ -94,6 +103,8 @@ void Scene::afterRender(RenderContext* ctx)
 	for (auto o : mMaterials)
 		o->afterRender(ctx);
 	for (auto o : mEntities)
+		o->afterRender(ctx);
+	for (auto o : mNodes)
 		o->afterRender(ctx);
 }
 

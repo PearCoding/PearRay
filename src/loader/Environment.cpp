@@ -207,10 +207,11 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 {
 	setupFloatingPointFlushBehaviour();
 
-	auto entities  = mEntityManager->getAll();
-	auto materials = mMaterialManager->getAll();
-	auto emissions = mEmissionManager->getAll();
-	auto inflights = mInfiniteLightManager->getAll();
+	const auto& entities  = mEntityManager->getAll();
+	const auto& materials = mMaterialManager->getAll();
+	const auto& emissions = mEmissionManager->getAll();
+	const auto& inflights = mInfiniteLightManager->getAll();
+	const auto& nodes	  = mNodeManager->getAll();
 
 	std::shared_ptr<ICamera> activeCamera = mCameraManager->getActiveCamera();
 	if (!activeCamera) {
@@ -224,7 +225,8 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 										entities,
 										materials,
 										emissions,
-										inflights);
+										inflights,
+										nodes);
 	} catch (const std::exception& e) {
 		PR_LOG(L_ERROR) << e.what() << std::endl;
 		return nullptr;
