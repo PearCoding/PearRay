@@ -14,12 +14,12 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 16
+		:sample_count 32
 	)
 	(sampler
 		:slot 'spectral'
-		:type 'RANDOM'
-		:sample_count 2
+		:type 'MJITT'
+		:sample_count 8
 	)
 	(filter
 		:slot 'pixel'
@@ -29,13 +29,7 @@
 	; Outputs
 	(output
 		:name 'image'
-		(channel
-			:type 'color'
-			:color 'xyz'
-			:gamma 'none'
-			:mapper 'none'
-		)
-		(channel :type 'depth' )
+		(channel :type 'color', :color 'xyz')
 		(channel :type 'n' )
 		(channel :type 'uvw' )
 		(channel :type 'ng' )
@@ -58,12 +52,14 @@
 		:transform [0.6859206557273865,-0.32401347160339355,0.6515582203865051,21.767061233520508,0.7276763319969177,0.305420845746994,-0.6141703724861145,-21.046981811523438,0.0,0.8953956365585327,0.44527140259742737,18.041887283325195,0.0,0.0,0.0,1.0]
 	)
 	; Background
+	(spectrum
+		:name 'background'
+		:data (illum 0.14350 0.37133 0.50876)
+	)
 	(light
 		:name 'background'
 		:type 'env'
-		:radiance (illuminant "D65")
-		:background (illuminant "D65")
-		:factor 0.318309952
+		:radiance (smul (illuminant "D65") "background")
 	)
 	; Lights
 	; Light Light
