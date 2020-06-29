@@ -45,6 +45,7 @@ public:
 	inline size_t arraySize() const;
 
 	inline ParameterType type() const;
+	inline bool canBeNumber() const;
 
 	inline bool getBool(bool def) const;
 	inline int64 getInt(int64 def) const;

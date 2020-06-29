@@ -108,7 +108,7 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 		// Map to CIE XYZ
 		CIETriplet triplet;
 		CIE::eval(real_weight, entry.Wavelengths, triplet);
-		//triplet /= channels;
+		triplet *= PR_SPECTRAL_BLOB_SIZE / (float)channels;
 
 		const LightPathView path = LightPathView(entry.Path);
 

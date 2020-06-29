@@ -18,6 +18,7 @@ inline bool Parameter::isArray() const { return mData.size() > 1 && mType != PT_
 inline size_t Parameter::arraySize() const { return mData.size(); }
 
 inline ParameterType Parameter::type() const { return mType; }
+inline bool Parameter::canBeNumber() const { return mType == PT_Int || mType == PT_UInt || mType == PT_Number; }
 
 inline bool Parameter::getBool(bool def) const { return getBool(0, def); }
 inline int64 Parameter::getInt(int64 def) const { return getInt(0, def); }
@@ -29,7 +30,7 @@ inline float Parameter::getExactNumber(float def) const { return getExactNumber(
 inline std::string Parameter::getString(const std::string& def) const { return getString(0, def); }
 inline uint64 Parameter::getReference(uint64 def) const
 {
-	if(isReference())
+	if (isReference())
 		return mData[0].UInt;
 	else
 		return def;

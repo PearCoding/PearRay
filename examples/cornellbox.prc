@@ -14,22 +14,12 @@
 	(sampler
 		:slot 'aa'
 		:type 'MULTI_JITTER'
-		:sample_count 256
+		:sample_count 4
 	)
 	; Outputs
 	(output
 		:name 'image'
-		(channel
-			:type 'color'
-			:color 'srgb'
-		)
-		(channel :type 'depth')
-		(channel :type 'n')
-		(channel :type 'uvw')
-		(channel :type 'ng')
-		(channel :type 'nx')
-		(channel :type 'ny')
-		(channel :type 'feedback')
+		(channel :type 'color' :color 'xyz' )
 	)
 	; Camera
 	(camera
@@ -48,10 +38,14 @@
 		:transform [1.0,0.0,0.0,0.0,0.0,0.0,-1.0,-3.93462872505188,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0]
 	)
 	; Lights
+	(spectrum
+		:name 'light_color'
+		:data (illum 17 12 4)
+	)
 	(emission
 		:name 'light_em'
 		:type 'standard'
-		:radiance (illuminant "D65")
+		:radiance (smul (illuminant "D65") 'light_color')
 	)
 	; Meshes
 	(mesh

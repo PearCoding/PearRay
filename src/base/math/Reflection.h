@@ -134,10 +134,11 @@ inline Vector3f halfway(const Vector3f& V, const Vector3f& L)
 * @param B B coefficient given in squared micro meters
 * @return Refractive index
 */
-inline float cauchy(float lambda_nm, float A, float B)
+template <typename T1, typename T2>
+inline T1 cauchy(const T1& lambda_nm, const T2& A, const T2& B)
 {
-	const float lambda_qm  = lambda_nm / 1000;
-	const float lambda_qm2 = lambda_qm * lambda_qm;
+	const T1 lambda_qm	= lambda_nm / 1000;
+	const T1 lambda_qm2 = lambda_qm * lambda_qm;
 	return A + B / lambda_qm2;
 }
 
@@ -149,10 +150,11 @@ inline float cauchy(float lambda_nm, float A, float B)
 * @param C C coefficient given in quadrupled micro meters
 * @return Refractive index
 */
-inline float cauchy(float lambda_nm, float A, float B, float C)
+template <typename T1, typename T2>
+inline T1 cauchy(const T1& lambda_nm, const T2& A, const T2& B, const T2& C)
 {
-	const float lambda_qm  = lambda_nm / 1000;
-	const float lambda_qm2 = lambda_qm * lambda_qm;
+	const T1 lambda_qm	= lambda_nm / 1000;
+	const T1 lambda_qm2 = lambda_qm * lambda_qm;
 	return A + B / lambda_qm2 + C / (lambda_qm2 * lambda_qm2);
 }
 
@@ -167,10 +169,11 @@ inline float cauchy(float lambda_nm, float A, float B, float C)
 * @param C3 C3 coefficient given in squared micro meters
 * @return Squared refractive index
 */
-inline float sellmeier2(float lambda_nm, float B1, float B2, float B3, float C1, float C2, float C3)
+template <typename T1, typename T2>
+inline T1 sellmeier2(const T1& lambda_nm, const T2& B1, const T2& B2, const T2& B3, const T2& C1, const T2& C2, const T2& C3)
 {
-	float lambda_qm	 = lambda_nm / 1000;
-	float lambda_qm2 = lambda_qm * lambda_qm;
+	T1 lambda_qm  = lambda_nm / 1000;
+	T1 lambda_qm2 = lambda_qm * lambda_qm;
 	return 1
 		   + B1 * lambda_qm2 / (lambda_qm2 - C1)
 		   + B2 * lambda_qm2 / (lambda_qm2 - C2)
@@ -203,10 +206,11 @@ inline float sellmeier(float lambda_nm, float B1, float B2, float B3, float C1, 
 * @param C2 C2 coefficient given in quadrupled micro meters
 * @return Squared refractive index
 */
-inline float poly2(float lambda_nm, float A, float B1, float B2, float C1, float C2)
+template <typename T1, typename T2>
+inline T1 poly2(const T1& lambda_nm, const T2& A, const T2& B1, const T2& B2, const T2& C1, const T2& C2)
 {
-	float lambda_qm	 = lambda_nm / 1000;
-	float lambda_qm2 = lambda_qm * lambda_qm;
+	T1 lambda_qm  = lambda_nm / 1000;
+	T1 lambda_qm2 = lambda_qm * lambda_qm;
 	return A + B1 * lambda_qm2 + B2 * lambda_qm2 * lambda_qm2 + C1 / lambda_qm2 + C2 / (lambda_qm2 * lambda_qm2);
 }
 
