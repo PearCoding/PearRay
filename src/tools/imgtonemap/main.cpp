@@ -189,17 +189,6 @@ static inline void srgb_to_xyz(float r, float g, float b, float& x, float& y, fl
 	z = 0.0193339f * r + 0.1191920f * g + 0.9503041f * b;
 }
 
-static inline void xyY_to_srgb(float x, float y, float Y, float& r, float& g, float& b)
-{
-	if (y == 0) {
-		r = 0;
-		g = 0;
-		b = 0;
-	} else {
-		xyz_to_srgb(x * Y / y, Y, (1 - x - y) * Y / y, r, g, b);
-	}
-}
-
 static inline void xyz_to_xyY(float r, float g, float b, float& x, float& y, float& Y)
 {
 	const auto n = r + g + b;
@@ -224,22 +213,6 @@ static inline void xyY_to_xyz(float x, float y, float Y, float& r, float& g, flo
 		r = x * Y / y;
 		g = Y;
 		b = (1 - x - y) * Y / y;
-	}
-}
-
-static inline void srgb_to_xyY(float r, float g, float b, float& x, float& y, float& Y)
-{
-	float z;
-	srgb_to_xyz(r, g, b, x, y, z);
-	const auto n = x + y + z;
-	if (n != 0) {
-		Y = y;
-		x /= n;
-		y /= n;
-	} else {
-		Y = 0;
-		x = 0;
-		y = 0;
 	}
 }
 
