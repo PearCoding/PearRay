@@ -744,7 +744,7 @@
 		:name 'Water'
 		:type 'glass'
 		:specularity 'Water_specular_color'
-		:index 1.330000
+		:index (sellmeier_index 5.666959820e-1 1.731900098e-1 2.095951857e-2 5.084151894e-3 1.818488474e-2 2.625439472e-2) 
 		:thin true
 	)
 )
