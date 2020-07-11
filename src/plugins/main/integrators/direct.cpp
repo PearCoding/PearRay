@@ -107,7 +107,8 @@ public:
 		float pdfA;
 		GeometryPoint lightPt;
 		Vector3f lightPos;
-		IEntity* light = session.pickRandomLight(spt.Surface.N, spt.Surface.Geometry.EntityID, mSampler.next3D(), lightPos, lightPt, pdfA);
+		EntitySamplingInfo sampleInfo = {spt.Surface.P, spt.Surface.N};
+		IEntity* light = session.sampleLight(sampleInfo, spt.Surface.Geometry.EntityID, mSampler.next3D(), lightPos, lightPt, pdfA);
 		if (PR_UNLIKELY(!light))
 			return SpectralBlob::Zero();
 
@@ -235,7 +236,7 @@ public:
 
 					const float msiL = MSI(
 						1, out.PDF_S[0],
-						mLightSampleCount, IS::toSolidAngle(session.pickRandomLightPDF(next.Direction, spt.Surface.Geometry.EntityID, nentity), spt2.Depth2, aNdotV));
+						mLightSampleCount, IS::toSolidAngle(session.sampleLightPDF(EntitySamplingInfo{spt.Surface.P, spt.Surface.N}, spt.Surface.Geometry.EntityID, nentity), spt2.Depth2, aNdotV));
 					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));

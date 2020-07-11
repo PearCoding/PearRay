@@ -94,20 +94,27 @@ public:
 		return GeometryRepr(geom);
 	}
 
-	EntityRandomPoint pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd) const override
+	EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const override
 	{
-		Vector2f uv = rnd;
-		if (mOptimizeSampling) {
-			Vector3f kv = invTransform().linear() * view;
-			Vector3f n	= mSphere.normalPoint(rnd(0), rnd(1));
+		Vector3f n = mSphere.normalPoint(rnd(0), rnd(1));
+		Vector3f local_o = (invTransform() * info.Origin).normalized();
 
-			if (kv.dot(n) > PR_EPSILON)
-				uv = Spherical::uv_from_normal(Vector3f(-n));
-		}
+		if (local_o.dot(n) < -PR_EPSILON)
+			n = -n;
 
-		return EntityRandomPoint(transform() * mSphere.surfacePoint(uv(0), uv(1)),
-								 uv, 0, mPDF_Cache);
+		return EntitySamplePoint(transform() * (mSphere.radius()*n),
+								 Spherical::uv_from_normal(n), 0, 2*mPDF_Cache);
 	}
+
+	float sampleParameterPointPDF(const EntitySamplingInfo&) const override { return 2*mPDF_Cache; }
+
+	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
+	{
+		return EntitySamplePoint(transform() * mSphere.surfacePoint(rnd(0), rnd(1)),
+								 rnd, 0, mPDF_Cache);
+	}
+
+	float sampleParameterPointPDF() const override { return mPDF_Cache; }
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
@@ -135,11 +142,6 @@ public:
 		const float area = surfaceArea(0);
 
 		mPDF_Cache = area > PR_EPSILON ? 1.0f / area : 0;
-
-		// We only consider view side of the sphere,
-		// therefore only half of the surface is considered in sampling.
-		if (mOptimizeSampling)
-			mPDF_Cache /= 2;
 	}
 
 private:

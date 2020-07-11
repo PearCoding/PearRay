@@ -131,7 +131,8 @@ public:
 		return GeometryRepr(geom);
 	}
 
-	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
+	// TODO: Better sampling pdf for sampleParameterPointPDF
+	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		PR_PROFILE_THIS;
 		SplitSample2D split(rnd, 0, mMesh->base()->faceCount());
@@ -142,7 +143,7 @@ public:
 
 		Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
 
-		return EntityRandomPoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf);
+		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf);
 	}
 
 	// UV variant

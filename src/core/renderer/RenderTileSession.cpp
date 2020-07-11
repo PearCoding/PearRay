@@ -140,8 +140,8 @@ void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) co
 		mOutputQueue->commitAndFlush(mBucket.get());
 }
 
-IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_id, const Vector3f& rnd,
-											Vector3f& pos, GeometryPoint& pt, float& pdf) const
+IEntity* RenderTileSession::sampleLight(const EntitySamplingInfo& info, uint32 ignore_id, const Vector3f& rnd,
+										Vector3f& pos, GeometryPoint& pt, float& pdf) const
 {
 	PR_PROFILE_THIS;
 
@@ -175,12 +175,12 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_
 		light = lights.at(pick).get();
 	}
 
-	EntityRandomPoint rnd_p = light->pickRandomParameterPoint(view, Vector2f(rnd(1), rnd(2)));
+	EntitySamplePoint rnd_p = light->sampleParameterPoint(info, Vector2f(rnd(1), rnd(2)));
 
 	EntityGeometryQueryPoint query;
 	query.PrimitiveID = rnd_p.PrimitiveID;
 	query.UV		  = rnd_p.UV;
-	query.View		  = view;
+	query.View		  = (rnd_p.Position - info.Origin).normalized();
 	query.Position	  = rnd_p.Position;
 	light->provideGeometryPoint(query, pt);
 
@@ -191,9 +191,8 @@ IEntity* RenderTileSession::pickRandomLight(const Vector3f& view, uint32 ignore_
 }
 
 constexpr size_t PR_LARGE_LIGHT_THRESHOLD = 1000;
-float RenderTileSession::pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const
+float RenderTileSession::sampleLightPDF(const EntitySamplingInfo& info, uint32 ignore_id, IEntity* light) const
 {
-	PR_UNUSED(view);
 	PR_ASSERT(light->id() != ignore_id, "Picked light can not be the one ignored!");
 
 	const auto& lights = mTile->context()->lights();
@@ -204,10 +203,10 @@ float RenderTileSession::pickRandomLightPDF(const Vector3f& view, uint32 ignore_
 	if (lights.size() < PR_LARGE_LIGHT_THRESHOLD) {
 		for (const auto& l : lights) {
 			if (l->id() == ignore_id)
-				return 1.0f / ((lights.size() - 1) * light->surfaceArea());
+				return light->sampleParameterPointPDF(info) / (lights.size() - 1.0f);
 		}
 	}
 
-	return 1.0f / (lights.size() * light->surfaceArea());
+	return light->sampleParameterPointPDF(info) / (float)lights.size();
 }
 } // namespace PR

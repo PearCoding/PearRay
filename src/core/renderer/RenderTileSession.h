@@ -53,8 +53,9 @@ public:
 	void pushSPFragment(const IntersectionPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;
 
-	IEntity* pickRandomLight(const Vector3f& view, uint32 ignore_id, const Vector3f& rnd, Vector3f& pos, GeometryPoint& pt, float& pdf) const;
-	float pickRandomLightPDF(const Vector3f& view, uint32 ignore_id, IEntity* light) const;
+	IEntity* sampleLight(const EntitySamplingInfo& info, uint32 ignore_id, const Vector3f& rnd, Vector3f& pos, GeometryPoint& pt, float& pdf) const;
+	// FIXME: This is incomplete, as the resulting position is not taken into account
+	float sampleLightPDF(const EntitySamplingInfo& info, uint32 ignore_id, IEntity* light) const;
 
 private:
 	Point2i localCoordinates(Point1i pixelIndex) const;

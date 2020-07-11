@@ -87,11 +87,13 @@ public:
 		return GeometryRepr(geom);
 	}
 
-	EntityRandomPoint pickRandomParameterPoint(const Vector3f&, const Vector2f& rnd) const override
+	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
-		return EntityRandomPoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
+		return EntitySamplePoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
 								 rnd, 0, mPDF_Cache);
 	}
+
+	float sampleParameterPointPDF() const override { return mPDF_Cache; }
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override

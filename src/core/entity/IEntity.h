@@ -24,19 +24,25 @@ struct PR_LIB_CORE EntityGeometryQueryPoint {
 	uint32 _padding;
 };
 
-struct PR_LIB_CORE EntityRandomPoint {
+struct PR_LIB_CORE EntitySamplePoint {
 	Vector3f Position;
 	Vector2f UV;
 	uint32 PrimitiveID;
 	float PDF_A; // Area
 
-	inline EntityRandomPoint(const Vector3f& p, const Vector2f& uv, uint32 primid, float pdf)
+	inline EntitySamplePoint(const Vector3f& p, const Vector2f& uv, uint32 primid, float pdf)
 		: Position(p)
 		, UV(uv)
 		, PrimitiveID(primid)
 		, PDF_A(pdf)
 	{
 	}
+};
+
+// Extra information useful for sampling
+struct PR_LIB_CORE EntitySamplingInfo {
+	Vector3f Origin;// Of surface point looking at entity
+	Vector3f Normal;// Of surface point looking at entity
 };
 
 class PR_LIB_CORE IEntity : public ITransformable {
@@ -65,7 +71,23 @@ public:
 
 	virtual GeometryRepr constructGeometryRepresentation(const GeometryDev& dev) const = 0;
 
-	virtual EntityRandomPoint pickRandomParameterPoint(const Vector3f& view, const Vector2f& rnd) const = 0;
+	/// Sampling a point for NEE or similar where another surface is used as an observable point
+	/// The default implementation just ignores the extra information
+	virtual EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const {
+		PR_UNUSED(info);
+		return sampleParameterPoint(rnd);
+	}
+	virtual float sampleParameterPointPDF(const EntitySamplingInfo& info) const { 
+		PR_UNUSED(info);
+		return this->sampleParameterPointPDF();
+	}
+
+	// Sampling a point on the entity without any additional information
+	virtual EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const = 0;
+	virtual float sampleParameterPointPDF() const { 
+		return 1.0f/this->surfaceArea();
+	}
+	
 	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const	= 0;
 
 	// IObject
