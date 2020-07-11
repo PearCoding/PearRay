@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace PR {
-static float halton(uint32 index, uint32 base)
+static inline float halton(uint32 index, uint32 base)
 {
 	float result = 0;
 	float f		 = 1;
@@ -25,18 +25,19 @@ static float halton(uint32 index, uint32 base)
 class HaltonSampler : public ISampler {
 public:
 	HaltonSampler(uint32 samples,
-				  uint32 baseX, uint32 baseY)
+				  uint32 baseX, uint32 baseY, uint32 burnin)
 		: ISampler(samples)
 		, mBaseXSamples(samples)
 		, mBaseYSamples(samples)
 		, mBaseX(baseX)
 		, mBaseY(baseY)
+		, mBurnin(burnin)
 	{
 		PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");
 
 		for (uint32 i = 0; i < samples; ++i) {
-			mBaseXSamples[i] = halton(i, mBaseX);
-			mBaseYSamples[i] = halton(i, mBaseY);
+			mBaseXSamples[i] = halton(i + burnin, mBaseX);
+			mBaseYSamples[i] = halton(i + burnin, mBaseY);
 		}
 	}
 
@@ -47,7 +48,7 @@ public:
 		if (index < maxSamples())
 			return mBaseXSamples[index % maxSamples()];
 		else // To allow adaptive methods with higher samples
-			return halton(index, mBaseX);
+			return halton(index + mBurnin, mBaseX);
 	}
 
 	Vector2f generate2D(uint32 index)
@@ -55,8 +56,8 @@ public:
 		if (index < maxSamples())
 			return Vector2f(mBaseXSamples[index % maxSamples()], mBaseYSamples[index % maxSamples()]);
 		else // To allow adaptive methods with higher samples
-			return Vector2f(halton(index, mBaseX),
-							halton(index, mBaseY));
+			return Vector2f(halton(index + mBurnin, mBaseX),
+							halton(index + mBurnin, mBaseY));
 	}
 
 private:
@@ -65,6 +66,55 @@ private:
 
 	const uint32 mBaseX;
 	const uint32 mBaseY;
+	const uint32 mBurnin;
+};
+
+// Same as halton but one dimension (in our case dim 2) being uniform.
+// This sequence is not progressive! It falls back to being a halton sequence after the promised sample count is exceeded.
+constexpr uint32 HAMMERSLEY_EVASIVE_BASE_Y = 47;
+class HammersleySampler : public ISampler {
+public:
+	HammersleySampler(uint32 samples,
+					  uint32 baseX, uint32 burnin)
+		: ISampler(samples)
+		, mBaseXSamples(samples)
+		, mBaseYSamples(samples)
+		, mBaseX(baseX)
+		, mBurnin(burnin)
+	{
+		PR_ASSERT(samples > 0, "Given sample count has to be greater than 0");
+
+		for (uint32 i = 0; i < samples; ++i) {
+			mBaseXSamples[i] = halton(i + burnin, mBaseX);
+			mBaseYSamples[i] = (1 + 2.0f * i) / (2.0f * samples);
+		}
+	}
+
+	virtual ~HammersleySampler() = default;
+
+	float generate1D(uint32 index)
+	{
+		if (index < maxSamples())
+			return mBaseXSamples[index % maxSamples()];
+		else // To allow adaptive methods with higher samples
+			return halton(index + mBurnin, mBaseX);
+	}
+
+	Vector2f generate2D(uint32 index)
+	{
+		if (index < maxSamples())
+			return Vector2f(mBaseXSamples[index % maxSamples()], mBaseYSamples[index % maxSamples()]);
+		else // To allow adaptive methods with higher samples (which is invalid for the hammersley sequence)
+			return Vector2f(halton(index + mBurnin, mBaseX),
+							halton(index + mBurnin, HAMMERSLEY_EVASIVE_BASE_Y));
+	}
+
+private:
+	std::vector<float> mBaseXSamples;
+	std::vector<float> mBaseYSamples;
+
+	const uint32 mBaseX;
+	const uint32 mBurnin;
 };
 
 class HaltonSamplerFactory : public ISamplerFactory {
@@ -79,7 +129,27 @@ public:
 		uint32 samples = (uint32)mParams.getUInt("sample_count", 128);
 		uint32 baseX   = (uint32)mParams.getUInt("base_x", 13);
 		uint32 baseY   = (uint32)mParams.getUInt("base_y", 47);
-		return std::make_shared<HaltonSampler>(samples, baseX, baseY);
+		uint32 burnin  = (uint32)mParams.getUInt("burnin", std::max(baseX, baseY));
+		return std::make_shared<HaltonSampler>(samples, baseX, baseY, burnin);
+	}
+
+private:
+	ParameterGroup mParams;
+};
+
+class HammersleySamplerFactory : public ISamplerFactory {
+public:
+	explicit HammersleySamplerFactory(const ParameterGroup& params)
+		: mParams(params)
+	{
+	}
+
+	std::shared_ptr<ISampler> createInstance(Random&) const override
+	{
+		uint32 samples = (uint32)mParams.getUInt("sample_count", 128);
+		uint32 baseX   = (uint32)mParams.getUInt("base_x", 13);
+		uint32 burnin  = (uint32)mParams.getUInt("burnin", baseX);
+		return std::make_shared<HammersleySampler>(samples, baseX, burnin);
 	}
 
 private:
@@ -88,14 +158,17 @@ private:
 
 class HaltonSamplerPlugin : public ISamplerPlugin {
 public:
-	std::shared_ptr<ISamplerFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
+	std::shared_ptr<ISamplerFactory> create(uint32, const std::string& name, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<HaltonSamplerFactory>(ctx.Parameters);
+		if (name == "halton")
+			return std::make_shared<HaltonSamplerFactory>(ctx.Parameters);
+		else
+			return std::make_shared<HammersleySamplerFactory>(ctx.Parameters);
 	}
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "halton" });
+		const static std::vector<std::string> names({ "halton", "hammersley" });
 		return names;
 	}
 

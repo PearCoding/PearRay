@@ -6,7 +6,7 @@
 	:renderHeight 1080
 	(sampler 
 	  :slot 'aa'
-	  :type 'sobol'
+	  :type 'halton'
 	  :sample_count 4
 	)
 	(sampler 
