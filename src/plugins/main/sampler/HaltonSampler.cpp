@@ -86,7 +86,7 @@ public:
 
 		for (uint32 i = 0; i < samples; ++i) {
 			mBaseXSamples[i] = halton(i + burnin, mBaseX);
-			mBaseYSamples[i] = (1 + 2.0f * i) / (2.0f * samples);
+			mBaseYSamples[i] = (0.5f + i) / samples;
 		}
 	}
 
@@ -124,13 +124,17 @@ public:
 	{
 	}
 
-	std::shared_ptr<ISampler> createInstance(Random&) const override
+	uint32 requestedSampleCount() const override
 	{
-		uint32 samples = (uint32)mParams.getUInt("sample_count", 128);
-		uint32 baseX   = (uint32)mParams.getUInt("base_x", 13);
-		uint32 baseY   = (uint32)mParams.getUInt("base_y", 47);
-		uint32 burnin  = (uint32)mParams.getUInt("burnin", std::max(baseX, baseY));
-		return std::make_shared<HaltonSampler>(samples, baseX, baseY, burnin);
+		return mParams.getUInt("sample_count", 128);
+	}
+
+	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
+	{
+		uint32 baseX  = (uint32)mParams.getUInt("base_x", 13);
+		uint32 baseY  = (uint32)mParams.getUInt("base_y", 47);
+		uint32 burnin = (uint32)mParams.getUInt("burnin", std::max(baseX, baseY));
+		return std::make_shared<HaltonSampler>(sample_count, baseX, baseY, burnin);
 	}
 
 private:
@@ -144,12 +148,16 @@ public:
 	{
 	}
 
-	std::shared_ptr<ISampler> createInstance(Random&) const override
+	uint32 requestedSampleCount() const override
 	{
-		uint32 samples = (uint32)mParams.getUInt("sample_count", 128);
+		return mParams.getUInt("sample_count", 128);
+	}
+
+	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
+	{
 		uint32 baseX   = (uint32)mParams.getUInt("base_x", 13);
 		uint32 burnin  = (uint32)mParams.getUInt("burnin", baseX);
-		return std::make_shared<HammersleySampler>(samples, baseX, burnin);
+		return std::make_shared<HammersleySampler>(sample_count, baseX, burnin);
 	}
 
 private:

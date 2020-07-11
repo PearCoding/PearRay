@@ -96,11 +96,6 @@ private:
 	std::shared_ptr<ISampler> mTimeSampler;
 	std::shared_ptr<ISampler> mSpectralSampler;
 
-	uint32 mAASampleCount;
-	uint32 mLensSampleCount;
-	uint32 mTimeSampleCount;
-	uint32 mSpectralSampleCount;
-
 	// Spectral cache
 	float mSpectralStart;
 	float mSpectralEnd;

@@ -90,10 +90,14 @@ public:
 	{
 	}
 
-	std::shared_ptr<ISampler> createInstance(Random& rnd) const override
+	uint32 requestedSampleCount() const override
 	{
-		uint32 samples = (uint32)mParams.getUInt("sample_count", 128);
-		return std::make_shared<SobolSampler>(rnd, samples);
+		return mParams.getUInt("sample_count", 128);
+	}
+
+	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random& rnd) const override
+	{
+		return std::make_shared<SobolSampler>(rnd, sample_count);
 	}
 
 private:

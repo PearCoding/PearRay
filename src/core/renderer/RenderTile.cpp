@@ -29,25 +29,19 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	, mAASampler(nullptr)
 	, mLensSampler(nullptr)
 	, mTimeSampler(nullptr)
-	, mAASampleCount(0)
-	, mLensSampleCount(0)
-	, mTimeSampleCount(0)
-	, mSpectralSampleCount(0)
 	, mRenderContext(&context)
 	, mCamera(context.scene()->activeCamera().get())
 {
 	PR_ASSERT(mViewSize.isValid(), "Invalid tile size");
 
+	// Even while each sampler has his own number of requested samples...
+	// each sampler deals with the combination of all requested samples
 	mAASampler		 = mRenderContext->settings().createAASampler(mRandom);
 	mLensSampler	 = mRenderContext->settings().createLensSampler(mRandom);
 	mTimeSampler	 = mRenderContext->settings().createTimeSampler(mRandom);
 	mSpectralSampler = mRenderContext->settings().createSpectralSampler(mRandom);
 
-	mAASampleCount		 = mAASampler->maxSamples();
-	mLensSampleCount	 = mLensSampler->maxSamples();
-	mTimeSampleCount	 = mTimeSampler->maxSamples();
-	mSpectralSampleCount = mSpectralSampler->maxSamples();
-	mMaxIterationCount	 = mAASampleCount * mLensSampleCount * mTimeSampleCount * mSpectralSampleCount;
+	mMaxIterationCount = mRenderContext->settings().maxSampleCount();
 	mMaxPixelSamples *= mMaxIterationCount;
 
 	switch (mRenderContext->settings().timeMappingMode) {
@@ -75,13 +69,16 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	mTimeAlpha *= f;
 	mTimeBeta *= f;
 
-	mWeight_Cache = 1.0f / (mTimeSampleCount * mLensSampleCount * mAASampleCount * mSpectralSampleCount);
+	mWeight_Cache = 1.0f / mMaxIterationCount;
 }
 
 RenderTile::~RenderTile()
 {
 }
 
+/* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
+ * This may sometimes good, but also bad... more investigations required...
+ */ 
 Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 {
 	PR_PROFILE_THIS;
@@ -89,25 +86,17 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	statistics().addPixelSampleCount();
 	++mContext.PixelSamplesRendered;
 
-	const uint32 specsample = sample % mSpectralSampleCount;
-	sample /= mSpectralSampleCount;
-	const uint32 timesample = sample % mTimeSampleCount;
-	sample /= mTimeSampleCount;
-	const uint32 lenssample = sample % mLensSampleCount;
-	sample /= mLensSampleCount;
-	const uint32 aasample = sample;
-
 	CameraSample cameraSample;
 	cameraSample.SensorSize = mImageSize;
-	cameraSample.Pixel		= (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(aasample).array() - Point2f(0.5f, 0.5f);
-	cameraSample.Lens		= mLensSampler->generate2D(lenssample);
-	cameraSample.Time		= mTimeAlpha * mTimeSampler->generate1D(timesample) + mTimeBeta;
+	cameraSample.Pixel		= (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(sample).array() - Point2f(0.5f, 0.5f);
+	cameraSample.Lens		= mLensSampler->generate2D(sample);
+	cameraSample.Time		= mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
 	cameraSample.Weight		= mWeight_Cache;
 
 // Sample wavelength
 #if defined(PR_SAMPLE_BY_CIE)
 	if (mSpectralStart == PR_CIE_WAVELENGTH_START && mSpectralEnd == PR_CIE_WAVELENGTH_END) {
-		float u = mSpectralSampler->generate1D(specsample);
+		float u = mSpectralSampler->generate1D(sample);
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 			float pdf;
@@ -120,8 +109,8 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 		}
 	} else {
 #endif
-		float start					 = mSpectralSampler->generate1D(specsample) * mSpectralSpan; // Wavelength inside the span
-		cameraSample.WavelengthNM(0) = start + mSpectralStart;									 // Hero wavelength
+		float start					 = mSpectralSampler->generate1D(sample) * mSpectralSpan; // Wavelength inside the span
+		cameraSample.WavelengthNM(0) = start + mSpectralStart;								 // Hero wavelength
 		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
 #if defined(PR_SAMPLE_BY_CIE)

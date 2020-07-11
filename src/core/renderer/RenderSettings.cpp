@@ -30,22 +30,22 @@ RenderSettings::~RenderSettings()
 
 std::shared_ptr<ISampler> RenderSettings::createAASampler(Random& random) const
 {
-	return aaSamplerFactory ? aaSamplerFactory->createInstance(random) : nullptr;
+	return aaSamplerFactory ? aaSamplerFactory->createInstance(maxSampleCount(), random) : nullptr;
 }
 
 std::shared_ptr<ISampler> RenderSettings::createLensSampler(Random& random) const
 {
-	return lensSamplerFactory ? lensSamplerFactory->createInstance(random) : nullptr;
+	return lensSamplerFactory ? lensSamplerFactory->createInstance(maxSampleCount(), random) : nullptr;
 }
 
 std::shared_ptr<ISampler> RenderSettings::createTimeSampler(Random& random) const
 {
-	return timeSamplerFactory ? timeSamplerFactory->createInstance(random) : nullptr;
+	return timeSamplerFactory ? timeSamplerFactory->createInstance(maxSampleCount(), random) : nullptr;
 }
 
 std::shared_ptr<ISampler> RenderSettings::createSpectralSampler(Random& random) const
 {
-	return spectralSamplerFactory ? spectralSamplerFactory->createInstance(random) : nullptr;
+	return spectralSamplerFactory ? spectralSamplerFactory->createInstance(maxSampleCount(), random) : nullptr;
 }
 
 std::shared_ptr<IFilter> RenderSettings::createPixelFilter() const
@@ -60,11 +60,10 @@ std::shared_ptr<IIntegrator> RenderSettings::createIntegrator() const
 
 uint32 RenderSettings::maxSampleCount() const
 {
-	// Create temporary samplers to calculate the max iterations
-	Random rnd(42);
-	return createAASampler(rnd)->maxSamples()
-		   * createLensSampler(rnd)->maxSamples()
-		   * createTimeSampler(rnd)->maxSamples()
-		   * createSpectralSampler(rnd)->maxSamples();
+	PR_ASSERT(aaSamplerFactory && lensSamplerFactory && timeSamplerFactory && spectralSamplerFactory, "Expect all samplers to be constructed");
+	return aaSamplerFactory->requestedSampleCount()
+		   * lensSamplerFactory->requestedSampleCount()
+		   * timeSamplerFactory->requestedSampleCount()
+		   * spectralSamplerFactory->requestedSampleCount();
 }
 } // namespace PR

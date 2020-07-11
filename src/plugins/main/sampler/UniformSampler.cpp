@@ -40,10 +40,14 @@ public:
 	{
 	}
 
-	std::shared_ptr<ISampler> createInstance(Random&) const override
+	uint32 requestedSampleCount() const override
 	{
-		uint32 samples = (uint32)mParams.getUInt("sample_count", 128);
-		return std::make_shared<UniformSampler>(samples);
+		return mParams.getUInt("sample_count", 128);
+	}
+
+	std::shared_ptr<ISampler> createInstance(uint32 sample_count, Random&) const override
+	{
+		return std::make_shared<UniformSampler>(sample_count);
 	}
 
 private:
