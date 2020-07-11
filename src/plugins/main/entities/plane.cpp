@@ -13,6 +13,7 @@
 
 namespace PR {
 
+#define PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 class PlaneEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -22,6 +23,10 @@ public:
 				int32 matID, int32 lightID)
 		: IEntity(id, name)
 		, mPlane(Vector3f(0, 0, 0), xAxis, yAxis)
+		, mEx(xAxis.normalized())
+		, mEy(yAxis.normalized())
+		, mWidth(xAxis.norm())
+		, mHeight(yAxis.norm())
 		, mMaterialID(matID)
 		, mLightID(lightID)
 		, mPDF_Cache(0.0f)
@@ -87,6 +92,100 @@ public:
 		return GeometryRepr(geom);
 	}
 
+// Ureña, C., Fajardo, M. and King, A. (2013),
+// An Area‐Preserving Parametrization for Spherical Rectangles.
+// Computer Graphics Forum, 32: 59-66. doi:10.1111/cgf.12151
+#ifdef PR_USE_SPHERICAL_RECTANGLE_SAMPLING
+	struct SphericalQuad {
+		Vector3f o, n;
+		float z0;
+		float x0, y0;
+		float x1, y1;
+		double b0, b1, k;
+		double S;
+	};
+	inline SphericalQuad computeSQ(const Vector3f& o) const
+	{
+		SphericalQuad sq;
+		sq.o			 = invTransform() * o;
+		const Vector3f d = mPlane.position() - sq.o;
+		sq.x0			 = d.dot(mEx);
+		sq.y0			 = d.dot(mEy);
+		sq.z0			 = d.dot(mPlane.normal());
+		sq.x1			 = sq.x0 + mWidth;
+		sq.y1			 = sq.y0 + mHeight;
+
+		sq.n = mPlane.normal();
+		if (sq.z0 > 0.0f) {
+			sq.z0 = -sq.z0;
+			sq.n  = -sq.n;
+		}
+
+		// create vectors to four vertices
+		const Vector3f v[2][2] = {
+			{ Vector3f(sq.x0, sq.y0, sq.z0), Vector3f(sq.x0, sq.y1, sq.z0) },
+			{ Vector3f(sq.x1, sq.y0, sq.z0), Vector3f(sq.x1, sq.y1, sq.z0) }
+		};
+
+		// compute normals to edges
+		const Vector3f k[4] = {
+			v[0][0].cross(v[1][0]).normalized(),
+			v[1][0].cross(v[1][1]).normalized(),
+			v[1][1].cross(v[0][1]).normalized(),
+			v[0][1].cross(v[0][0]).normalized()
+		};
+
+		// compute internal angles (gamma_i)
+		const float g[4] = {
+			std::acos(-k[0].dot(k[1])),
+			std::acos(-k[1].dot(k[2])),
+			std::acos(-k[2].dot(k[3])),
+			std::acos(-k[3].dot(k[0]))
+		};
+
+		// compute predefined constants
+		sq.b0 = k[0](2);
+		sq.b1 = k[2](2);
+		sq.k  = 2 * PR_PI - g[2] - g[3];
+		sq.S  = g[0] + g[1] - sq.k;
+
+		return sq;
+	}
+
+	EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const override
+	{
+		const auto sq = computeSQ(info.Origin);
+		auto safeSqrt = [](double x) {
+			return std::sqrt(std::max(x, 0.0));
+		};
+
+		// 1. compute ’cu’
+		const double au = rnd(0) * sq.S + sq.k;
+		const double fu = (std::cos(au) * sq.b0 - sq.b1) / std::sin(au);
+		const double cu = std::copysign(1.0, fu) / safeSqrt(fu * fu + sq.b0 * sq.b0);
+
+		// 2. compute ’xu’
+		const double xu = -(cu * sq.z0) / safeSqrt(1.0 - cu * cu);
+
+		// 3. compute ’yv’
+		const double d  = std::sqrt(xu * xu + sq.z0 * sq.z0);
+		const double h0 = sq.y0 / std::sqrt(d * d + sq.y0 * sq.y0);
+		const double h1 = sq.y1 / std::sqrt(d * d + sq.y1 * sq.y1);
+		const double hv = h0 + rnd(1) * (h1 - h0);
+		const double yv = hv * d / safeSqrt(1.0 - hv * hv);
+
+		// 4. transform (xu,yv,z0) to entity local coords
+		const Vector3f p = sq.o + xu * mEx + yv * mEy + sq.z0 * sq.n;
+
+		return EntitySamplePoint(transform() * p, mPlane.project(p), 0, 1.0 / sq.S);
+	}
+
+	float sampleParameterPointPDF(const EntitySamplingInfo& info) const override
+	{
+		return 1.0 / computeSQ(info.Origin).S;
+	}
+#endif //PR_USE_SPHERICAL_RECTANGLE_SAMPLING
+
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		return EntitySamplePoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
@@ -134,8 +233,14 @@ public:
 
 private:
 	Plane mPlane;
-	int32 mMaterialID;
-	int32 mLightID;
+
+	const Vector3f mEx;
+	const Vector3f mEy;
+	const float mWidth;
+	const float mHeight;
+
+	const int32 mMaterialID;
+	const int32 mLightID;
 
 	float mPDF_Cache;
 };
