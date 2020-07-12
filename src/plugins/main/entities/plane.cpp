@@ -22,7 +22,7 @@ public:
 				const Vector3f& xAxis, const Vector3f& yAxis,
 				int32 matID, int32 lightID)
 		: IEntity(id, name)
-		, mPlane(Vector3f(0, 0, 0), xAxis, yAxis)
+		, mPlane(Vector3f::Zero(), xAxis, yAxis)
 		, mEx(xAxis.normalized())
 		, mEy(yAxis.normalized())
 		, mWidth(xAxis.norm())
@@ -101,88 +101,84 @@ public:
 		float z0;
 		float x0, y0;
 		float x1, y1;
-		double b0, b1, k;
-		double S;
+		float b0, b1, k;
+		float S;
 	};
 	inline SphericalQuad computeSQ(const Vector3f& o) const
 	{
 		SphericalQuad sq;
-		sq.o			 = invTransform() * o;
+		sq.o			 = o;
+		sq.n			 = mPlane.normal();
 		const Vector3f d = mPlane.position() - sq.o;
 		sq.x0			 = d.dot(mEx);
 		sq.y0			 = d.dot(mEy);
-		sq.z0			 = d.dot(mPlane.normal());
+		sq.z0			 = d.dot(sq.n);
 		sq.x1			 = sq.x0 + mWidth;
 		sq.y1			 = sq.y0 + mHeight;
 
-		sq.n = mPlane.normal();
 		if (sq.z0 > 0.0f) {
 			sq.z0 = -sq.z0;
 			sq.n  = -sq.n;
 		}
 
 		// create vectors to four vertices
-		const Vector3f v[2][2] = {
-			{ Vector3f(sq.x0, sq.y0, sq.z0), Vector3f(sq.x0, sq.y1, sq.z0) },
-			{ Vector3f(sq.x1, sq.y0, sq.z0), Vector3f(sq.x1, sq.y1, sq.z0) }
-		};
+		const Vector3f v00 = Vector3f(sq.x0, sq.y0, sq.z0);
+		const Vector3f v01 = Vector3f(sq.x0, sq.y1, sq.z0);
+		const Vector3f v10 = Vector3f(sq.x1, sq.y0, sq.z0);
+		const Vector3f v11 = Vector3f(sq.x1, sq.y1, sq.z0);
 
 		// compute normals to edges
-		const Vector3f k[4] = {
-			v[0][0].cross(v[1][0]).normalized(),
-			v[1][0].cross(v[1][1]).normalized(),
-			v[1][1].cross(v[0][1]).normalized(),
-			v[0][1].cross(v[0][0]).normalized()
-		};
+		const Vector3f n0 = v00.cross(v10).normalized();
+		const Vector3f n1 = v10.cross(v11).normalized();
+		const Vector3f n2 = v11.cross(v01).normalized();
+		const Vector3f n3 = v01.cross(v00).normalized();
 
 		// compute internal angles (gamma_i)
-		const float g[4] = {
-			std::acos(-k[0].dot(k[1])),
-			std::acos(-k[1].dot(k[2])),
-			std::acos(-k[2].dot(k[3])),
-			std::acos(-k[3].dot(k[0]))
-		};
+		const float g0 = std::acos(-n0.dot(n1));
+		const float g1 = std::acos(-n1.dot(n2));
+		const float g2 = std::acos(-n2.dot(n3));
+		const float g3 = std::acos(-n3.dot(n0));
 
 		// compute predefined constants
-		sq.b0 = k[0](2);
-		sq.b1 = k[2](2);
-		sq.k  = 2 * PR_PI - g[2] - g[3];
-		sq.S  = g[0] + g[1] - sq.k;
+		sq.b0 = n0.z();
+		sq.b1 = n2.z();
+		sq.k  = 2 * PR_PI - g2 - g3;
+		sq.S  = g0 + g1 - sq.k;
 
 		return sq;
 	}
 
 	EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const override
 	{
-		const auto sq = computeSQ(info.Origin);
-		auto safeSqrt = [](double x) {
-			return std::sqrt(std::max(x, 0.0));
-		};
+		const SphericalQuad sq = computeSQ(invTransform() * info.Origin);
 
 		// 1. compute ’cu’
-		const double au = rnd(0) * sq.S + sq.k;
-		const double fu = (std::cos(au) * sq.b0 - sq.b1) / std::sin(au);
-		const double cu = std::copysign(1.0, fu) / safeSqrt(fu * fu + sq.b0 * sq.b0);
+		const float au = std::fma(rnd(0), sq.S, sq.k);
+		const float fu = std::fma(std::cos(au), sq.b0, -sq.b1) / std::sin(au);
+		const float cu = std::min(1.0f, std::max(-1.0f,
+												 std::copysign(1.0f, fu) / std::sqrt(sumProd(fu, fu, sq.b0, sq.b0))));
 
 		// 2. compute ’xu’
-		const double xu = -(cu * sq.z0) / safeSqrt(1.0 - cu * cu);
+		const float xu = std::min(sq.x1, std::max(sq.x0,
+												  -(cu * sq.z0) / std::sqrt(std::fma(-cu, cu, 1.0f))));
 
 		// 3. compute ’yv’
-		const double d  = std::sqrt(xu * xu + sq.z0 * sq.z0);
-		const double h0 = sq.y0 / std::sqrt(d * d + sq.y0 * sq.y0);
-		const double h1 = sq.y1 / std::sqrt(d * d + sq.y1 * sq.y1);
-		const double hv = h0 + rnd(1) * (h1 - h0);
-		const double yv = hv * d / safeSqrt(1.0 - hv * hv);
+		const float d	= std::sqrt(sumProd(xu, xu, sq.z0, sq.z0));
+		const float h0	= sq.y0 / std::sqrt(sumProd(d, d, sq.y0, sq.y0));
+		const float h1	= sq.y1 / std::sqrt(sumProd(d, d, sq.y1, sq.y1));
+		const float hv	= std::fma(rnd(1), h1 - h0, h0);
+		const float hv2 = hv * hv;
+		const float yv	= (hv2 < 1.0f - PR_EPSILON) ? (hv * d) / std::sqrt(1.0f - hv2) : sq.y1;
 
 		// 4. transform (xu,yv,z0) to entity local coords
 		const Vector3f p = sq.o + xu * mEx + yv * mEy + sq.z0 * sq.n;
 
-		return EntitySamplePoint(transform() * p, mPlane.project(p), 0, 1.0 / sq.S);
+		return EntitySamplePoint(transform() * p, mPlane.project(p), 0, 1.0f / (sq.S /* mTransformJacobian*/));
 	}
 
 	float sampleParameterPointPDF(const EntitySamplingInfo& info) const override
 	{
-		return 1.0 / computeSQ(info.Origin).S;
+		return 1.0f / (computeSQ(invTransform() * info.Origin).S /* mTransformJacobian*/);
 	}
 #endif //PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 
@@ -199,9 +195,6 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		float u = query.UV[0];
-		float v = query.UV[1];
-
 		pt.N  = normalMatrix() * mPlane.normal();
 		pt.Nx = normalMatrix() * mPlane.xAxis();
 		pt.Ny = normalMatrix() * mPlane.yAxis();
@@ -210,9 +203,9 @@ public:
 		pt.Nx.normalize();
 		pt.Ny.normalize();
 
-		pt.UV		   = Vector2f(u, v);
+		pt.UV		   = query.UV;
 		pt.EntityID	   = id();
-		pt.PrimitiveID = query.PrimitiveID;
+		pt.PrimitiveID = 0;
 		pt.MaterialID  = mMaterialID;
 		pt.EmissionID  = mLightID;
 		pt.DisplaceID  = 0;
@@ -228,7 +221,8 @@ public:
 		IEntity::beforeSceneBuild();
 
 		const float area = surfaceArea(0);
-		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
+		//mTransformJacobian = (transform().linear() * mPlane.xAxis()).cross(transform().linear() * mPlane.yAxis()).norm();
+		mPDF_Cache = (area > PR_EPSILON ? 1.0f / (area /* mTransformJacobian*/) : 0);
 	}
 
 private:
@@ -242,8 +236,9 @@ private:
 	const int32 mMaterialID;
 	const int32 mLightID;
 
+	//float mTransformJacobian;
 	float mPDF_Cache;
-};
+}; // namespace PR
 
 class PlaneEntityPlugin : public IEntityPlugin {
 public:

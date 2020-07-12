@@ -32,7 +32,7 @@ void RenderThread::main()
 	namestream << "Worker " << mThreadIndex;
 	PR_PROFILE_THREAD(namestream.str());
 
-	setupFloatingPointFlushBehaviour();
+	setupFloatingPointEnvironment();
 
 	auto integrator					   = mRenderer->integrator()->createThreadInstance(mRenderer, mThreadIndex);
 	std::shared_ptr<OutputQueue> queue = std::make_shared<OutputQueue>(QUEUE_SIZE, QUEUE_THRESHOLD);

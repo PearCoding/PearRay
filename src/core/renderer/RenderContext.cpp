@@ -69,7 +69,7 @@ void RenderContext::start(uint32 rtx, uint32 rty, int32 threads)
 {
 	PR_PROFILE_THIS;
 
-	setupFloatingPointFlushBehaviour();
+	setupFloatingPointEnvironment();
 
 	reset();
 

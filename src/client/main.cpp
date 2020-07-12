@@ -282,7 +282,7 @@ int main(int argc, char** argv)
 			env->save(renderer, toneMapper, output_options);
 		}
 
-		// Print Statisticss
+		// Print Statistics
 		if (!options.IsQuiet) {
 			printStatistics(renderer->status());
 		}

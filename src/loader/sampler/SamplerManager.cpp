@@ -16,7 +16,7 @@ bool SamplerManager::createDefaultsIfNecessary(Environment* env)
 	constexpr uint64 DEF_AA_SC	 = 128;
 	constexpr uint64 DEF_LENS_SC = 1;
 	constexpr uint64 DEF_TIME_SC = 1;
-	constexpr uint64 DEF_SPEC_SC = 4;
+	constexpr uint64 DEF_SPEC_SC = 1;
 
 	auto createAndAdd = [&](const char* type, int sample_count) -> std::shared_ptr<ISamplerFactory> {
 		auto fac = this->getFactory(type);

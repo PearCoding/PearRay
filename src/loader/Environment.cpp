@@ -205,7 +205,7 @@ std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const
 
 std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 {
-	setupFloatingPointFlushBehaviour();
+	setupFloatingPointEnvironment();
 
 	const auto& entities  = mEntityManager->getAll();
 	const auto& materials = mMaterialManager->getAll();
