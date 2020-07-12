@@ -84,11 +84,17 @@ public:
 
 		auto geom = rtcNewGeometry(dev, RTC_GEOMETRY_TYPE_SPHERE_POINT);
 
+		// TODO: Allow ellipsoid?
+		const float scale = (transform().linear().col(0).norm()
+							 + transform().linear().col(1).norm()
+							 + transform().linear().col(2).norm())
+							/ 3.0f;
+
 		float* vertices = (float*)rtcSetNewGeometryBuffer(geom, RTC_BUFFER_TYPE_VERTEX, 0, RTC_FORMAT_FLOAT4, sizeof(float) * 4, 1);
 		vertices[0]		= center.x();
 		vertices[1]		= center.y();
 		vertices[2]		= center.z();
-		vertices[3]		= mSphere.radius(); // TODO: Not affected by the transform?
+		vertices[3]		= mSphere.radius() * scale;
 
 		rtcCommitGeometry(geom);
 		return GeometryRepr(geom);
@@ -96,25 +102,28 @@ public:
 
 	EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const override
 	{
-		Vector3f n = mSphere.normalPoint(rnd(0), rnd(1));
+		Vector3f n		 = mSphere.normalPoint(rnd(0), rnd(1));
 		Vector3f local_o = (invTransform() * info.Origin).normalized();
 
 		if (local_o.dot(n) < -PR_EPSILON)
 			n = -n;
 
-		return EntitySamplePoint(transform() * (mSphere.radius()*n),
-								 Spherical::uv_from_normal(n), 0, 2*mPDF_Cache);
+		return EntitySamplePoint(transform() * (mSphere.radius() * n),
+								 Spherical::uv_from_normal(n), 0, EntitySamplePDF{ 2 * mPDF_Cache, true });
 	}
 
-	float sampleParameterPointPDF(const EntitySamplingInfo&) const override { return 2*mPDF_Cache; }
+	EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo&) const override { return EntitySamplePDF{ 2 * mPDF_Cache, true }; }
 
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		return EntitySamplePoint(transform() * mSphere.surfacePoint(rnd(0), rnd(1)),
-								 rnd, 0, mPDF_Cache);
+								 rnd, 0, EntitySamplePDF{ mPDF_Cache, true });
 	}
 
-	float sampleParameterPointPDF() const override { return mPDF_Cache; }
+	EntitySamplePDF sampleParameterPointPDF() const override
+	{
+		return EntitySamplePDF{ mPDF_Cache, true };
+	}
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
@@ -128,7 +137,7 @@ public:
 		const Vector2f uv = Spherical::uv_from_normal(pt.N);
 		pt.UV			  = uv;
 		pt.EntityID		  = id();
-		pt.PrimitiveID	  = query.PrimitiveID;
+		pt.PrimitiveID	  = 0;
 		pt.MaterialID	  = mMaterialID;
 		pt.EmissionID	  = mLightID;
 		pt.DisplaceID	  = 0;
@@ -140,8 +149,7 @@ public:
 		IEntity::beforeSceneBuild();
 
 		const float area = surfaceArea(0);
-
-		mPDF_Cache = area > PR_EPSILON ? 1.0f / area : 0;
+		mPDF_Cache		 = area > PR_EPSILON ? 1.0f / area : 0;
 	}
 
 private:

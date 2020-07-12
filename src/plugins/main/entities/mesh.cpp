@@ -143,7 +143,7 @@ public:
 
 		Vector2f uv = Triangle::sample(Vector2f(split.uniform1(), split.uniform2()));
 
-		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, pdf);
+		return EntitySamplePoint(transform() * face.interpolateVertices(uv), uv, faceID, EntitySamplePDF{pdf, true});
 	}
 
 	// UV variant

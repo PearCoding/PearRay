@@ -29,13 +29,13 @@ inline float power_term(uint32 n1, float pdf1, uint32 n2, float pdf2, float beta
  */
 inline float toArea(float pdf_solidangle, float dist_sqr, float abs_cosine)
 {
-	PR_ASSERT(abs_cosine >= 0, "absolute_cosine has to be greater or equal 0");
+	PR_ASSERT(abs_cosine >= 0.0f, "absolute_cosine has to be greater or equal 0");
 	return pdf_solidangle * abs_cosine / dist_sqr;
 }
 
 inline float toSolidAngle(float pdf_area, float dist_sqr, float abs_cosine)
 {
-	PR_ASSERT(abs_cosine >= 0, "absolute_cosine has to be greater or equal 0");
+	PR_ASSERT(abs_cosine >= 0.0f, "absolute_cosine has to be greater or equal 0");
 	return pdf_area * dist_sqr / abs_cosine;
 }
 } // namespace IS

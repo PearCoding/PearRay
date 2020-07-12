@@ -16,6 +16,11 @@ struct GeometryPoint;
 struct GeometryRepr;
 struct GeometryDev;
 
+struct EntitySamplePDF {
+	float Value;
+	bool IsArea;
+};
+
 struct PR_LIB_CORE EntityGeometryQueryPoint {
 	Vector3f View;
 	Vector3f Position;
@@ -28,21 +33,21 @@ struct PR_LIB_CORE EntitySamplePoint {
 	Vector3f Position;
 	Vector2f UV;
 	uint32 PrimitiveID;
-	float PDF_A; // Area
+	EntitySamplePDF PDF;
 
-	inline EntitySamplePoint(const Vector3f& p, const Vector2f& uv, uint32 primid, float pdf)
+	inline EntitySamplePoint(const Vector3f& p, const Vector2f& uv, uint32 primid, const EntitySamplePDF& pdf)
 		: Position(p)
 		, UV(uv)
 		, PrimitiveID(primid)
-		, PDF_A(pdf)
+		, PDF(pdf)
 	{
 	}
 };
 
 // Extra information useful for sampling
 struct PR_LIB_CORE EntitySamplingInfo {
-	Vector3f Origin;// Of surface point looking at entity
-	Vector3f Normal;// Of surface point looking at entity
+	Vector3f Origin; // Of surface point looking at entity
+	Vector3f Normal; // Of surface point looking at entity
 };
 
 class PR_LIB_CORE IEntity : public ITransformable {
@@ -73,22 +78,25 @@ public:
 
 	/// Sampling a point for NEE or similar where another surface is used as an observable point
 	/// The default implementation just ignores the extra information
-	virtual EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const {
+	virtual EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const
+	{
 		PR_UNUSED(info);
 		return sampleParameterPoint(rnd);
 	}
-	virtual float sampleParameterPointPDF(const EntitySamplingInfo& info) const { 
+	virtual EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo& info) const
+	{
 		PR_UNUSED(info);
 		return this->sampleParameterPointPDF();
 	}
 
 	// Sampling a point on the entity without any additional information
 	virtual EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const = 0;
-	virtual float sampleParameterPointPDF() const { 
-		return 1.0f/this->surfaceArea();
+	virtual EntitySamplePDF sampleParameterPointPDF() const
+	{
+		return EntitySamplePDF{ 1.0f / this->surfaceArea(), true };
 	}
-	
-	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const	= 0;
+
+	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const = 0;
 
 	// IObject
 	virtual void beforeSceneBuild() override;

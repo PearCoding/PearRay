@@ -8,6 +8,7 @@
 #include "entity/IEntity.h"
 #include "entity/IEntityPlugin.h"
 #include "material/IMaterial.h"
+#include "math/ImportanceSampling.h"
 #include "math/Projection.h"
 #include "math/Tangent.h"
 
@@ -150,7 +151,8 @@ public:
 
 	EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const override
 	{
-		const SphericalQuad sq = computeSQ(invTransform() * info.Origin);
+		const Vector3f lo	   = invTransform() * info.Origin;
+		const SphericalQuad sq = computeSQ(lo);
 
 		// 1. compute ’cu’
 		const float au = std::fma(rnd(0), sq.S, sq.k);
@@ -173,22 +175,22 @@ public:
 		// 4. transform (xu,yv,z0) to entity local coords
 		const Vector3f p = sq.o + xu * mEx + yv * mEy + sq.z0 * sq.n;
 
-		return EntitySamplePoint(transform() * p, mPlane.project(p), 0, 1.0f / (sq.S /* mTransformJacobian*/));
+		return EntitySamplePoint(transform() * p, mPlane.project(p), 0, EntitySamplePDF{ 1 / (sq.S * mTransformJacobian), false });
 	}
 
-	float sampleParameterPointPDF(const EntitySamplingInfo& info) const override
+	EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo& info) const override
 	{
-		return 1.0f / (computeSQ(invTransform() * info.Origin).S /* mTransformJacobian*/);
+		return EntitySamplePDF{ 1.0f / (computeSQ(invTransform() * info.Origin).S * mTransformJacobian), false };
 	}
 #endif //PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 
 	EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const override
 	{
 		return EntitySamplePoint(transform() * mPlane.surfacePoint(rnd(0), rnd(1)),
-								 rnd, 0, mPDF_Cache);
+								 rnd, 0, EntitySamplePDF{ mPDF_Cache, true });
 	}
 
-	float sampleParameterPointPDF() const override { return mPDF_Cache; }
+	EntitySamplePDF sampleParameterPointPDF() const override { return EntitySamplePDF{ mPDF_Cache, true }; }
 
 	void provideGeometryPoint(const EntityGeometryQueryPoint& query,
 							  GeometryPoint& pt) const override
@@ -220,9 +222,9 @@ public:
 	{
 		IEntity::beforeSceneBuild();
 
-		const float area = surfaceArea(0);
-		//mTransformJacobian = (transform().linear() * mPlane.xAxis()).cross(transform().linear() * mPlane.yAxis()).norm();
-		mPDF_Cache = (area > PR_EPSILON ? 1.0f / (area /* mTransformJacobian*/) : 0);
+		const float area   = surfaceArea(0);
+		mTransformJacobian = (transform().linear() * mPlane.xAxis()).cross(transform().linear() * mPlane.yAxis()).norm();
+		mPDF_Cache		   = (area > PR_EPSILON ? 1.0f / (area * mTransformJacobian) : 0);
 	}
 
 private:
@@ -236,7 +238,7 @@ private:
 	const int32 mMaterialID;
 	const int32 mLightID;
 
-	//float mTransformJacobian;
+	float mTransformJacobian; // The transformable given volumescalefactor is only valid for voluminous objects, a plane is none of them
 	float mPDF_Cache;
 }; // namespace PR
 

@@ -104,11 +104,13 @@ public:
 		PR_PROFILE_THIS;
 
 		// Pick light and point
-		float pdfA;
+		EntitySamplePDF entityPdf;
 		GeometryPoint lightPt;
 		Vector3f lightPos;
-		EntitySamplingInfo sampleInfo = {spt.Surface.P, spt.Surface.N};
-		IEntity* light = session.sampleLight(sampleInfo, spt.Surface.Geometry.EntityID, mSampler.next3D(), lightPos, lightPt, pdfA);
+		EntitySamplingInfo sampleInfo = { spt.Surface.P, spt.Surface.N };
+
+		IEntity* light = session.sampleLight(sampleInfo, spt.Surface.Geometry.EntityID, mSampler.next3D(),
+											 lightPos, lightPt, entityPdf);
 		if (PR_UNLIKELY(!light))
 			return SpectralBlob::Zero();
 
@@ -122,8 +124,10 @@ public:
 		Vector3f L		 = (lightPos - spt.P);
 		const float sqrD = L.squaredNorm();
 		L.normalize();
-		const float cosO = std::max(0.0f, -L.dot(lightPt.N));  // Only frontside
-		const float pdfS = IS::toSolidAngle(pdfA, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
+		const float cosO = std::max(0.0f, -L.dot(lightPt.N)); // Only frontside
+		float pdfS		 = entityPdf.Value;
+		if (entityPdf.IsArea)
+			pdfS = IS::toSolidAngle(pdfS, sqrD, cosO); // The whole integration is in solid angle domain -> Map into it
 
 		if (cosO <= PR_EPSILON || PR_UNLIKELY(pdfS <= PR_EPSILON))
 			return SpectralBlob::Zero();
@@ -234,9 +238,11 @@ public:
 					LightEvalOutput outL;
 					ems->eval(inL, outL, session);
 
+					const auto pdfL	 = session.sampleLightPDF(EntitySamplingInfo{ spt.Surface.P, spt.Surface.N },
+															  spt.Surface.Geometry.EntityID, nentity);
 					const float msiL = MSI(
 						1, out.PDF_S[0],
-						mLightSampleCount, IS::toSolidAngle(session.sampleLightPDF(EntitySamplingInfo{spt.Surface.P, spt.Surface.N}, spt.Surface.Geometry.EntityID, nentity), spt2.Depth2, aNdotV));
+						mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
 					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));

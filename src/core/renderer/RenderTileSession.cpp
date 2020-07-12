@@ -141,29 +141,29 @@ void RenderTileSession::pushFeedbackFragment(uint32 feedback, const Ray& ray) co
 }
 
 IEntity* RenderTileSession::sampleLight(const EntitySamplingInfo& info, uint32 ignore_id, const Vector3f& rnd,
-										Vector3f& pos, GeometryPoint& pt, float& pdf) const
+										Vector3f& pos, GeometryPoint& pt, EntitySamplePDF& pdf) const
 {
 	PR_PROFILE_THIS;
 
 	const auto& lights = mTile->context()->lights();
 	if (lights.empty()) {
-		pdf = 0;
+		pdf = EntitySamplePDF{ 0, true };
 		return nullptr;
 	}
 
 	SplitSample1D pickS(rnd(0), 0, lights.size());
-	uint32 pick = pickS.integral();
-	pdf			= 1.0f / lights.size();
+	uint32 pick	   = pickS.integral();
+	float pick_pdf = 1.0f / lights.size();
 
 	IEntity* light = lights.at(pick).get();
 	if (light->id() == ignore_id) {
 		if (lights.size() == 1) { // The light we have to ignore is the only light available
-			pdf = 0;
+			pdf = EntitySamplePDF{ 0, true };
 			return nullptr;
 		}
 
 		uint32 pick2 = std::min<uint32>(lights.size() - 2, pickS.uniform() * (lights.size() - 1));
-		pdf			 = 1.0f / (lights.size() - 1);
+		pick_pdf	 = 1.0f / (lights.size() - 1);
 
 		// We use a trick to ignore the one pick we already had
 		// [========P+++++++++]
@@ -184,29 +184,32 @@ IEntity* RenderTileSession::sampleLight(const EntitySamplingInfo& info, uint32 i
 	query.Position	  = rnd_p.Position;
 	light->provideGeometryPoint(query, pt);
 
-	pdf *= rnd_p.PDF_A;
+	pdf = EntitySamplePDF{ pick_pdf * rnd_p.PDF.Value, rnd_p.PDF.IsArea };
 	pos = query.Position;
 
 	return light;
 }
 
 constexpr size_t PR_LARGE_LIGHT_THRESHOLD = 1000;
-float RenderTileSession::sampleLightPDF(const EntitySamplingInfo& info, uint32 ignore_id, IEntity* light) const
+EntitySamplePDF RenderTileSession::sampleLightPDF(const EntitySamplingInfo& info, uint32 ignore_id, IEntity* light) const
 {
 	PR_ASSERT(light->id() != ignore_id, "Picked light can not be the one ignored!");
 
 	const auto& lights = mTile->context()->lights();
 	if (lights.empty())
-		return 0.0f;
+		return EntitySamplePDF{ 0, true };
 
 	// TODO: Maybe have an approximation for large amounts of lights?
 	if (lights.size() < PR_LARGE_LIGHT_THRESHOLD) {
 		for (const auto& l : lights) {
-			if (l->id() == ignore_id)
-				return light->sampleParameterPointPDF(info) / (lights.size() - 1.0f);
+			if (l->id() == ignore_id) {
+				const auto pdf = light->sampleParameterPointPDF(info);
+				return EntitySamplePDF{ pdf.Value / (lights.size() - 1.0f), pdf.IsArea };
+			}
 		}
 	}
 
-	return light->sampleParameterPointPDF(info) / (float)lights.size();
+	const auto pdf = light->sampleParameterPointPDF(info);
+	return EntitySamplePDF{ pdf.Value / (float)lights.size(), pdf.IsArea };
 }
 } // namespace PR
