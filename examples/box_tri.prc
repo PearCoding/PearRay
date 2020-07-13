@@ -12,7 +12,7 @@
 	(sampler 
 	  :slot 'spectral'
 	  :type 'random'
-	  :sample_count 2
+	  :sample_count 1
 	)
 	(filter 
 	  :slot 'pixel'
@@ -32,17 +32,7 @@
 			:type 'color'
 			:color 'xyz'
 		)
-		(channel :type 'depth')
-		(channel :type 'n')
-		(channel :type 'uvw')
-		(channel :type 'ng')
-		(channel :type 'nx')
-		(channel :type 'ny')
 		(channel :type 'feedback')
-		(channel :type 'color', :color 'xyz', :lpe 'CS.*L')
-		(channel :type 'color', :color 'xyz', :lpe 'CD.*L')
-		(channel :type 'color', :color 'xyz', :lpe 'CDS.*L')
-		(channel :type 'color', :color 'xyz', :lpe 'C(DS+)+.*L')
 	)
 	; Camera
 	(camera

@@ -15,12 +15,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 256
-	)
-	(sampler
-		:slot 'spectral'
-		:type 'MJITT'
-		:sample_count 16
+		:sample_count 8
 	)
 	; Outputs
 	(output
