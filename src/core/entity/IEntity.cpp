@@ -49,15 +49,15 @@ std::string IEntity::dumpInformation() const
 	std::stringstream stream;
 	stream << ITransformable::dumpInformation()
 		   << "  <IEntity>: " << std::endl
-		   << "    IsLight:       " << (isLight() ? "true" : "false") << std::endl
-		   << "    IsCollidable:  " << (isCollidable() ? "true" : "false") << std::endl
+		   << "    IsLight:          " << (isLight() ? "true" : "false") << std::endl
+		   << "    IsCollidable:     " << (isCollidable() ? "true" : "false") << std::endl
 		   << "    IsCameraVisible:  " << ((visibilityFlags() & EVF_Camera) ? "true" : "false") << std::endl
-		   << "    IsLightVisible:  " << ((visibilityFlags() & EVF_Light) ? "true" : "false") << std::endl
+		   << "    IsLightVisible:   " << ((visibilityFlags() & EVF_Light) ? "true" : "false") << std::endl
 		   << "    IsBounceVisible:  " << ((visibilityFlags() & EVF_Bounce) ? "true" : "false") << std::endl
 		   << "    IsShadowVisible:  " << ((visibilityFlags() & EVF_Shadow) ? "true" : "false") << std::endl
-		   << "    CollisionCost: " << collisionCost() << std::endl
-		   << "    SurfaceArea:   " << surfaceArea() << std::endl
-		   << "    BBVolume:      " << worldBoundingBox().volume() << std::endl;
+		   << "    CollisionCost:    " << collisionCost() << std::endl
+		   << "    LocalSurfaceArea: " << localSurfaceArea() << std::endl
+		   << "    BBVolume:         " << worldBoundingBox().volume() << std::endl;
 	;
 
 	return stream.str();

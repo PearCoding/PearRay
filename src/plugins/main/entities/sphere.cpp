@@ -42,7 +42,15 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 id) const override
+	float localSurfaceArea(uint32 id) const override
+	{
+		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+			return mSphere.surfaceArea();
+		else
+			return 0;
+	}
+
+	float worldSurfaceArea(uint32 id) const override
 	{
 		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID) {
 			Eigen::Matrix3f sca;
@@ -148,7 +156,7 @@ public:
 	{
 		IEntity::beforeSceneBuild();
 
-		const float area = surfaceArea(0);
+		const float area = localSurfaceArea(0);
 		mPDF_Cache		 = area > PR_EPSILON ? 1.0f / area : 0;
 	}
 

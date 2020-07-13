@@ -44,7 +44,7 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 /*id*/) const override
+	float localSurfaceArea(uint32 /*id*/) const override
 	{
 		// TODO
 		return 0;

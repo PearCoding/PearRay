@@ -69,8 +69,9 @@ public:
 	virtual std::string dumpInformation() const override;
 
 	// Mandatory Interface
-	virtual bool isLight() const						   = 0;
-	virtual float surfaceArea(uint32 materialID = 0) const = 0;
+	virtual bool isLight() const								= 0;
+	virtual float localSurfaceArea(uint32 materialID = 0) const = 0;
+	virtual float worldSurfaceArea(uint32 materialID = 0) const { return volumeScalefactor() * localSurfaceArea(materialID); }
 
 	virtual BoundingBox localBoundingBox() const = 0;
 
@@ -93,7 +94,7 @@ public:
 	virtual EntitySamplePoint sampleParameterPoint(const Vector2f& rnd) const = 0;
 	virtual EntitySamplePDF sampleParameterPointPDF() const
 	{
-		return EntitySamplePDF{ 1.0f / this->surfaceArea(), true };
+		return EntitySamplePDF{ 1.0f / this->localSurfaceArea(), true };
 	}
 
 	virtual void provideGeometryPoint(const EntityGeometryQueryPoint& query, GeometryPoint& pt) const = 0;

@@ -13,7 +13,7 @@
 	)
 	(sampler
 		:slot 'aa'
-		:type 'MULTI_JITTER'
+		:type 'halton'
 		:sample_count 8
 	)
 	(filter
@@ -120,11 +120,11 @@
 	(material
 		:name 'SphereLeft'
 		:type 'diffuse'
-		:specularity 'SphereLeft_diffuse_color'
+		:albedo 'SphereLeft_diffuse_color'
 	)
 	(spectrum
 		:name 'SphereRight_diffuse_color'
-		:data (refl 1.000000 1.000000 1.000000)
+		:data (refl 1.000000 0.500000 0.000000)
 	)
 	(material
 		:name 'SphereRight'

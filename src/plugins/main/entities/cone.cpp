@@ -46,13 +46,13 @@ public:
 	}
 
 	// TODO: Local surface -> Global surface
-	float surfaceArea(uint32 id) const override
+	float localSurfaceArea(uint32 id) const override
 	{
 		constexpr float K = 150.0f / 360;
 		const float L2	  = mHeight * mHeight + mDisk.radius() * mDisk.radius();
 
 		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
-			return mDisk.surfaceArea() + K * PR_PI * L2;
+			return mDisk.localSurfaceArea() + K * PR_PI * L2;
 		else
 			return 0;
 	}
@@ -198,7 +198,7 @@ public:
 	{
 		IEntity::beforeSceneBuild();
 
-		const float area = surfaceArea(0);
+		const float area = localSurfaceArea(0);
 		mPDF_Cache		 = (area > PR_EPSILON ? 1.0f / area : 0);
 	}
 

@@ -97,9 +97,9 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 id) const override
+	float localSurfaceArea(uint32 id) const override
 	{
-		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity()) * volumeScalefactor();
+		return mMesh->base()->surfaceArea(id, Eigen::Affine3f::Identity());
 	}
 
 	bool isCollidable() const override

@@ -231,7 +231,7 @@ int main(int argc, char** argv)
 				RenderStatus status = renderer->status();
 
 				if (!options.NoPrettyConsole)
-					std::cout << "\r";
+					std::cout << "\33[2K\r";
 
 				std::cout << std::setw(OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed
 						  << status.percentage() * 100 << "%";

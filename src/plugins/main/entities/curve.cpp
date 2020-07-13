@@ -46,7 +46,7 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 /*id*/) const override
+	float localSurfaceArea(uint32 /*id*/) const override
 	{
 		return mApproxSurfaceArea;
 	}
@@ -129,7 +129,7 @@ public:
 									  uint32& /*faceID*/, float& pdf) const override
 	{
 		PR_PROFILE_THIS;
-		pdf = 1 / surfaceArea(0);
+		pdf = 1 / localSurfaceArea(0);
 		return Vector3f(rnd(0), rnd(1), 0);
 	}
 

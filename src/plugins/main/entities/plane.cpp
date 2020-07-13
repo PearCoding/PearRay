@@ -14,7 +14,7 @@
 
 namespace PR {
 
-#define PR_USE_SPHERICAL_RECTANGLE_SAMPLING
+//#define PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 class PlaneEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -45,10 +45,18 @@ public:
 		return mLightID >= 0;
 	}
 
-	float surfaceArea(uint32 id) const override
+	float localSurfaceArea(uint32 id) const override
 	{
 		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
 			return mPlane.surfaceArea();
+		else
+			return 0;
+	}
+
+	float worldSurfaceArea(uint32 id) const override
+	{
+		if (id == 0 || mMaterialID < 0 || id == (uint32)mMaterialID)
+			return (transform().linear() * mPlane.xAxis()).norm() * (transform().linear() * mPlane.yAxis()).norm();
 		else
 			return 0;
 	}
@@ -222,9 +230,11 @@ public:
 	{
 		IEntity::beforeSceneBuild();
 
-		const float area   = surfaceArea(0);
-		mTransformJacobian = (transform().linear() * mPlane.xAxis()).cross(transform().linear() * mPlane.yAxis()).norm();
-		mPDF_Cache		   = (area > PR_EPSILON ? 1.0f / (area * mTransformJacobian) : 0);
+		const float larea = localSurfaceArea(0);
+		const float garea = worldSurfaceArea(0);
+
+		mTransformJacobian = larea / garea;
+		mPDF_Cache		   = (garea > PR_EPSILON ? 1.0f / garea : 0);
 	}
 
 private:
