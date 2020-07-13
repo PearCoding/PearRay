@@ -36,13 +36,13 @@ public:
 	// It may be a bug in Eigen or somewhere in my own code.
 	typedef Eigen::Transform<float, 3, Eigen::Affine, Eigen::DontAlign> Transform;
 	inline void setTransform(const Transform& transform);
-	inline const Transform& transform() const;
-	inline const Transform& invTransform() const;
+	inline Transform transform() const;
+	inline Transform invTransform() const;
 	inline float volumeScalefactor() const;
 
 	/* Matrix to be used by normals */
-	inline const Eigen::Matrix3f& normalMatrix() const;
-	inline const Eigen::Matrix3f& invNormalMatrix() const;
+	inline Eigen::Matrix3f normalMatrix() const;
+	inline Eigen::Matrix3f invNormalMatrix() const;
 
 	virtual std::string dumpInformation() const;
 

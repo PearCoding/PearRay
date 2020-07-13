@@ -166,7 +166,7 @@ void ColorButton::mouseMoveEvent(QMouseEvent *e)
 		QMimeData *data = new QMimeData;
 		data->setColorData(color());
 		drag->setMimeData(data);
-		drag->start(Qt::CopyAction);
+		drag->exec(Qt::CopyAction);
 	}
 }
 

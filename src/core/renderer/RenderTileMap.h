@@ -16,7 +16,7 @@ public:
 	~RenderTileMap();
 
 	inline size_t tileCount() const { return mTileMap.size(); }
-	inline const Size2i& maxTileSize() const { return mMaxTileSize; }
+	inline Size2i maxTileSize() const { return mMaxTileSize; }
 
 	void init(const RenderContext& context, uint32 rtx, uint32 rty, TileMode mode);
 

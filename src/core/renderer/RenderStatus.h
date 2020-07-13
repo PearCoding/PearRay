@@ -16,7 +16,7 @@ public:
 
 	void setField(const std::string& unique_name, const Variant& f);
 	bool hasField(const std::string& unique_name) const;
-	const Variant& getField(const std::string& unique_name) const;
+	Variant getField(const std::string& unique_name) const;
 
 	map_t::const_iterator begin() const;
 	map_t::const_iterator end() const;

@@ -80,7 +80,7 @@ QTreeWidgetItem* PropertyView::setupItem(QTreeWidgetItem* item, IProperty* prope
 
 	if (property->isHeader()) {
 		item->setFirstColumnSpanned(true);
-		item->setTextColor(0, QColor(255, 255, 255));
+		item->setForeground(0, QColor(255, 255, 255));
 
 		QFont f = item->font(0);
 		f.setBold(true);

@@ -26,7 +26,7 @@ bool RenderStatus::hasField(const std::string& unique_name) const
 	return mFields.count(unique_name) != 0;
 }
 
-const Variant& RenderStatus::getField(const std::string& unique_name) const
+Variant RenderStatus::getField(const std::string& unique_name) const
 {
 	PR_ASSERT(hasField(unique_name), "Couldn't return status field due to missing entry.");
 	return mFields.at(unique_name);

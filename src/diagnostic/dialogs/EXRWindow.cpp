@@ -29,12 +29,11 @@ void EXRWindow::openFile(const QString& str)
 		ui.sizeLabel->setText(QString("%1x%2").arg(mFile->width()).arg(mFile->height()));
 
 		ui.layerList->clear();
-		for (auto layer : mFile->layers()) {
+		for (auto layer : mFile->layers())
 			ui.layerList->addItem(layer->viewName());
-		}
 
 		if (!mFile->layers().empty())
-			ui.layerList->setItemSelected(ui.layerList->item(0), true);
+			ui.layerList->setCurrentRow(0);
 
 		setWindowTitle(QString("[EXR] %1").arg(str));
 	}

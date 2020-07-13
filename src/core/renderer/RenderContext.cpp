@@ -147,7 +147,7 @@ size_t RenderContext::tileCount() const
 	return mTileMap->tileCount();
 }
 
-const Size2i& RenderContext::maxTileSize() const
+Size2i RenderContext::maxTileSize() const
 {
 	return mTileMap->maxTileSize();
 }

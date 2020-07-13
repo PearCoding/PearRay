@@ -54,7 +54,7 @@ inline size_t LightPath::currentSize() const
 	return mCurrentPos;
 }
 
-const LightPathToken& LightPath::token(int index) const
+LightPathToken LightPath::token(int index) const
 {
 	return mTokens[index];
 }

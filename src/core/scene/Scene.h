@@ -47,7 +47,7 @@ public:
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 
-	inline const BoundingBox& boundingBox() const { return mBoundingBox; }
+	inline BoundingBox boundingBox() const { return mBoundingBox; }
 
 	void beforeRender(RenderContext* ctx);
 	void afterRender(RenderContext* ctx);

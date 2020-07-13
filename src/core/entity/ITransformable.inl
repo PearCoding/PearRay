@@ -41,12 +41,12 @@ inline void ITransformable::setTransform(const Transform& transform)
 	cache();
 }
 
-inline const ITransformable::Transform& ITransformable::transform() const
+inline ITransformable::Transform ITransformable::transform() const
 {
 	return mTransform;
 }
 
-inline const ITransformable::Transform& ITransformable::invTransform() const
+inline ITransformable::Transform ITransformable::invTransform() const
 {
 	return mInvTransformCache;
 }
@@ -56,12 +56,12 @@ inline float ITransformable::volumeScalefactor() const
 	return mJacobianDeterminant;
 }
 
-inline const Eigen::Matrix3f& ITransformable::normalMatrix() const
+inline Eigen::Matrix3f ITransformable::normalMatrix() const
 {
 	return mNormalMatrixCache;
 }
 
-inline const Eigen::Matrix3f& ITransformable::invNormalMatrix() const
+inline Eigen::Matrix3f ITransformable::invNormalMatrix() const
 {
 	return mInvNormalMatrixCache;
 }

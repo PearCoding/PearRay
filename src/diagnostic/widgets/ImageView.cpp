@@ -8,7 +8,7 @@
 #include <QMenu>
 
 constexpr int BAR_HEIGHT = 20;
-constexpr int BAR_POS_W  = 100;
+constexpr int BAR_POS_W	 = 100;
 constexpr int MIN_S		 = 400;
 
 constexpr float PAN_W  = 0.4f;
@@ -26,9 +26,6 @@ ImageView::ImageView(QWidget* parent)
 	setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(this, SIGNAL(customContextMenuRequested(const QPoint&)),
 			this, SLOT(showContextMenu(const QPoint&)));
-
-	connect(&mSignalMapper, SIGNAL(mapped(QObject*)),
-			this, SLOT(onContextMenuClick(QObject*)));
 
 	setMouseTracking(true);
 }
@@ -157,7 +154,7 @@ void ImageView::resizeEvent(QResizeEvent* event)
 
 	// Background
 	const int gx = (mBackground.width() / (2 * GRID_S) + 1);
-	const int gy	= (mBackground.height() - BAR_HEIGHT) / GRID_S + 1;
+	const int gy = (mBackground.height() - BAR_HEIGHT) / GRID_S + 1;
 
 	painter.setPen(Qt::NoPen);
 	for (int y = 0; y < gy; ++y) {
@@ -238,9 +235,7 @@ void ImageView::showContextMenu(const QPoint& p)
 			action->setChecked(mChannelMask & (1 << i));
 			action->setData(QVariant::fromValue(i));
 
-			connect(action, SIGNAL(triggered()), &mSignalMapper, SLOT(map()));
-
-			mSignalMapper.setMapping(action, action);
+			connect(action, &QAction::triggered, [&]() { this->onContextMenuClick(this->sender()); });
 			contextMenu.addAction(action);
 		}
 	} else {
@@ -250,9 +245,8 @@ void ImageView::showContextMenu(const QPoint& p)
 				this);
 			action->setData(QVariant::fromValue(i));
 
-			connect(action, SIGNAL(triggered()), &mSignalMapper, SLOT(map()));
+			connect(action, &QAction::triggered, [&]() { this->onContextMenuClick(this->sender()); });
 
-			mSignalMapper.setMapping(action, action);
 			contextMenu.addAction(action);
 		}
 	}

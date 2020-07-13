@@ -59,6 +59,4 @@ private:
 
 	std::shared_ptr<ImageBufferView> mView;
 	ToneMapper mMapper;
-
-	QSignalMapper mSignalMapper;
 };

@@ -27,8 +27,6 @@ class PR_LIB_CORE Random {
 private:
 #if PR_RANDOM_ALGORITHM == 0
 	std::default_random_engine mGenerator;
-	std::uniform_real_distribution<float> mDistributionFloat;
-	std::uniform_real_distribution<double> mDistributionDouble;
 	std::uniform_int_distribution<uint32> mDistributionUInt32;
 	std::uniform_int_distribution<uint64> mDistributionUInt64;
 #elif PR_RANDOM_ALGORITHM == 1
@@ -41,8 +39,6 @@ private:
 	uint64 mState;
 #elif PR_RANDOM_ALGORITHM == 3
 	pcg32_fast mGenerator;
-	std::uniform_real_distribution<float> mDistributionFloat;
-	std::uniform_real_distribution<double> mDistributionDouble;
 	std::uniform_int_distribution<uint32> mDistributionUInt32;
 	std::uniform_int_distribution<uint64> mDistributionUInt64;
 #else
@@ -54,8 +50,6 @@ public:
 		:
 #if PR_RANDOM_ALGORITHM == 0
 		mGenerator(seed)
-		, mDistributionFloat()	//[0,1)
-		, mDistributionDouble() //[0,1)
 		, mDistributionUInt32()
 		, mDistributionUInt64()
 #elif PR_RANDOM_ALGORITHM == 1
@@ -66,8 +60,6 @@ public:
 		mState(seed)
 #elif PR_RANDOM_ALGORITHM == 3
 		mGenerator(seed)
-		, mDistributionFloat()	//[0,1)
-		, mDistributionDouble() //[0,1)
 		, mDistributionUInt32()
 		, mDistributionUInt64()
 #endif
@@ -135,23 +127,29 @@ public:
 #endif
 	}
 
+	// This trick is borrowed from Alex, who borrowed it from Mitsuba, which borrowed it from MTGP:
+	// We generate a random number in [1,2) and subtract 1 from it.
+
 	inline float getFloat() //[0, 1)
 	{
-#if PR_RANDOM_ALGORITHM == 0 || PR_RANDOM_ALGORITHM == 3
-		return mDistributionFloat(mGenerator);
-#elif PR_RANDOM_ALGORITHM == 1 || PR_RANDOM_ALGORITHM == 2
-		//return get32() * 2.328306436538696e-10f;
-		return get32() / static_cast<float>(std::numeric_limits<uint32>::max());
-#endif
+		union {
+			uint32_t u;
+			float f;
+		} x;
+
+		x.u = (get32() >> 9) | 0x3F800000U;
+		return x.f - 1.0f;
 	}
 
 	inline double getDouble() //[0, 1)
 	{
-#if PR_RANDOM_ALGORITHM == 0 || PR_RANDOM_ALGORITHM == 3
-		return mDistributionDouble(mGenerator);
-#elif PR_RANDOM_ALGORITHM == 1 || PR_RANDOM_ALGORITHM == 2
-		return get64() / static_cast<double>(std::numeric_limits<uint64>::max());
-#endif
+		union {
+			uint64_t u;
+			double f;
+		} x;
+
+		x.u = (get64() >> 12) | 0x3FF0000000000000ULL;
+		return x.f - 1.0;
 	}
 
 	inline Vector2f get2D()

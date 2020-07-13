@@ -31,11 +31,11 @@ public:
 	BoundingBox& operator=(const BoundingBox& other) = default;
 	BoundingBox& operator=(BoundingBox&& other) = default;
 
-	inline const Vector3f& upperBound() const { return mUpperBound; }
+	inline Vector3f upperBound() const { return mUpperBound; }
 	inline Vector3f& upperBound() { return mUpperBound; }
 	inline void setUpperBound(const Vector3f& bound) { mUpperBound = bound; }
 
-	inline const Vector3f& lowerBound() const { return mLowerBound; }
+	inline Vector3f lowerBound() const { return mLowerBound; }
 	inline Vector3f& lowerBound() { return mLowerBound; }
 	inline void setLowerBound(const Vector3f& bound) { mLowerBound = bound; }
 

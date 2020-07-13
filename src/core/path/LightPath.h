@@ -15,7 +15,7 @@ public:
 	LightPath& operator=(const LightPath& other) = default;
 	LightPath& operator=(LightPath&& other) = default;
 
-	inline const LightPathToken& token(int index) const;
+	inline LightPathToken token(int index) const;
 
 	inline void addToken(const LightPathToken& token);
 	inline void addToken(LightPathToken&& token);

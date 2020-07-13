@@ -78,6 +78,9 @@ public:
 
 			o += e;
 			d -= e;
+		} else {
+			PR_UNUSED(r1);
+			PR_UNUSED(r2);
 		}
 
 		d.normalize();

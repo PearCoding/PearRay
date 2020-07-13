@@ -25,16 +25,13 @@ signals:
 
 private slots:
 	void propertyWasDestroyed(IProperty* prop);
-	void propertyWasChanged(QObject* obj);
-	void propertyStructureWasChanged(QObject* obj);
-	void valueWasChanged(QObject* obj);
+	void propertyWasChanged(IProperty* obj);
+	void propertyStructureWasChanged(IProperty* obj);
+	void valueWasChanged(IProperty* obj);
 
 private:
 	void rec_add(IProperty* property);
 
 	QList<IProperty*> mAllProperties;
 	QList<IProperty*> mTopProperties;
-	QSignalMapper mPropertyChangedMapper;
-	QSignalMapper mPropertyStructureChangedMapper;
-	QSignalMapper mValueChangedMapper;
 };

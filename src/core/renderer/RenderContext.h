@@ -38,11 +38,11 @@ public:
 	virtual ~RenderContext();
 
 	inline uint32 index() const { return mIndex; }
-	inline const Point2i viewOffset() const { return mViewOffset; }
-	inline const Size2i& viewSize() const { return mViewSize; }
+	inline Point2i viewOffset() const { return mViewOffset; }
+	inline Size2i viewSize() const { return mViewSize; }
 
 	size_t tileCount() const;
-	const Size2i& maxTileSize() const;
+	Size2i maxTileSize() const;
 
 	// rtx and rty are the initial render tiles
 	// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads

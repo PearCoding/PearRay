@@ -43,7 +43,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("t,threads", "Amount of threads used for processing. Set 0 for automatic detection.", cxxopts::value<PR::uint32>())
 			("rtx", "Amount of horizontal tiles used in threading", cxxopts::value<PR::uint32>())
 			("rty", "Amount of vertical tiles used in threading", cxxopts::value<PR::uint32>())
-			("no-adaptive-tiling", "Disable adaptive tiling used for better thread workload balance. Will improve performance of uniform scenes and makes reproducibility possible")
+			("adaptive-tiling", "Enable adaptive tiling used for better thread workload balance. Will improve performance of complex scenes but makes reproducibility of results impossible")
 			("no-hit-sorting", "Disable sorting of hits to improve cache coherence")
 
 			("itx", "Amount of horizontal image tiles used in rendering", cxxopts::value<PR::uint32>())
@@ -152,7 +152,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		else if (!vm.count("config"))
 			ThreadCount = DEF_THREAD_COUNT;
 
-		AdaptiveTiling = (vm.count("no-adaptive-tiling") == 0);
+		AdaptiveTiling = (vm.count("adaptive-tiling") != 0);
 		SortHits	   = (vm.count("no-hit-sorting") == 0);
 
 		if (vm.count("itx"))

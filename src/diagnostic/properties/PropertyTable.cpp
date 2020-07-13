@@ -2,9 +2,6 @@
 
 PropertyTable::PropertyTable()
 {
-	connect(&mPropertyChangedMapper, SIGNAL(mapped(QObject*)), this, SLOT(propertyWasChanged(QObject*)));
-	connect(&mPropertyStructureChangedMapper, SIGNAL(mapped(QObject*)), this, SLOT(propertyStructureWasChanged(QObject*)));
-	connect(&mValueChangedMapper, SIGNAL(mapped(QObject*)), this, SLOT(valueWasChanged(QObject*)));
 }
 
 PropertyTable::~PropertyTable()
@@ -24,39 +21,32 @@ void PropertyTable::add(IProperty* property)
 
 void PropertyTable::rec_add(IProperty* property)
 {
-	if (mAllProperties.contains(property)) {
+	if (mAllProperties.contains(property))
 		return;
-	}
 
 	mAllProperties.append(property);
 
-	connect(property, SIGNAL(propertyDestroyed(IProperty*)), this, SLOT(propertyWasDestroyed(IProperty*)));
-	connect(property, SIGNAL(propertyChanged()), &mPropertyChangedMapper, SLOT(map()));
-	connect(property, SIGNAL(propertyStructureChanged()), &mPropertyStructureChangedMapper, SLOT(map()));
-	connect(property, SIGNAL(valueChanged()), &mValueChangedMapper, SLOT(map()));
+	connect(property, &IProperty::propertyDestroyed, [this](IProperty* property) { this->propertyWasDestroyed(property); });
+	connect(property, &IProperty::propertyChanged, [this]() { this->propertyChanged((IProperty*)this->sender()); });
+	connect(property, &IProperty::propertyStructureChanged, [this]() { this->propertyStructureChanged((IProperty*)this->sender()); });
+	connect(property, &IProperty::valueChanged, [this]() { this->valueChanged((IProperty*)this->sender()); });
 
-	foreach (IProperty* child, property->childs()) {
+	foreach (IProperty* child, property->childs())
 		rec_add(child);
-	}
 }
 
 void PropertyTable::remove(IProperty* property)
 {
-	if (!mAllProperties.contains(property)) {
+	if (!mAllProperties.contains(property))
 		return;
-	}
 
 	mTopProperties.removeOne(property);
 	mAllProperties.removeOne(property);
 
-	disconnect(property, SIGNAL(propertyDestroyed(IProperty*)), this, SLOT(propertyWasDestroyed(IProperty*)));
-	disconnect(property, SIGNAL(propertyChanged()), &mPropertyChangedMapper, SLOT(map()));
-	disconnect(property, SIGNAL(propertyStructureChanged()), &mPropertyStructureChangedMapper, SLOT(map()));
-	disconnect(property, SIGNAL(valueChanged()), &mValueChangedMapper, SLOT(map()));
+	disconnect(property);
 
-	foreach (IProperty* child, property->childs()) {
+	foreach (IProperty* child, property->childs())
 		remove(child);
-	}
 }
 
 QList<IProperty*> PropertyTable::allProperties() const
@@ -75,17 +65,17 @@ void PropertyTable::propertyWasDestroyed(IProperty* prop)
 	remove(prop);
 }
 
-void PropertyTable::propertyWasChanged(QObject* obj)
+void PropertyTable::propertyWasChanged(IProperty* obj)
 {
-	emit propertyChanged(static_cast<IProperty*>(obj));
+	emit propertyChanged(obj);
 }
 
-void PropertyTable::propertyStructureWasChanged(QObject* obj)
+void PropertyTable::propertyStructureWasChanged(IProperty* obj)
 {
-	emit propertyStructureChanged(static_cast<IProperty*>(obj));
+	emit propertyStructureChanged(obj);
 }
 
-void PropertyTable::valueWasChanged(QObject* obj)
+void PropertyTable::valueWasChanged(IProperty* obj)
 {
-	emit valueChanged(static_cast<IProperty*>(obj));
+	emit valueChanged(obj);
 }
