@@ -2,11 +2,15 @@
 
 #include "PR_Config.h"
 
+#include <atomic>
+
 namespace PR {
 class PR_LIB_CORE RenderTileStatistics {
 public:
 	RenderTileStatistics();
+	RenderTileStatistics(const RenderTileStatistics& other);
 
+	RenderTileStatistics& operator=(const RenderTileStatistics& other);
 	RenderTileStatistics& operator+=(const RenderTileStatistics& other);
 
 	inline uint64 rayCount() const { return cameraRayCount() + lightRayCount() + bounceRayCount() + shadowRayCount(); }
@@ -38,13 +42,13 @@ public:
 	RenderTileStatistics half() const;
 
 private:
-	uint64 mCameraRayCount;
-	uint64 mLightRayCount;
-	uint64 mBounceRayCount;
-	uint64 mShadowRayCount;
-	uint64 mPixelSampleCount;
-	uint64 mEntityHitCount;
-	uint64 mBackgroundHitCount;
-	uint64 mDepthCount;
+	std::atomic<uint64> mCameraRayCount;
+	std::atomic<uint64> mLightRayCount;
+	std::atomic<uint64> mBounceRayCount;
+	std::atomic<uint64> mShadowRayCount;
+	std::atomic<uint64> mPixelSampleCount;
+	std::atomic<uint64> mEntityHitCount;
+	std::atomic<uint64> mBackgroundHitCount;
+	std::atomic<uint64> mDepthCount;
 };
 } // namespace PR

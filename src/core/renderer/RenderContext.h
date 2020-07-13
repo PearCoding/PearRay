@@ -9,6 +9,7 @@
 #include <list>
 #include <mutex>
 #include <vector>
+#include <atomic>
 
 namespace PR {
 class HitStream;
@@ -102,9 +103,9 @@ private:
 
 	std::mutex mIterationMutex;
 	std::condition_variable mIterationCondition;
-	uint32 mThreadsWaitingForIteration;
+	std::atomic<uint32> mThreadsWaitingForIteration;
 
-	uint32 mIncrementalCurrentIteration;
+	std::atomic<uint32> mIncrementalCurrentIteration;
 	std::list<RenderThread*> mThreads;
 
 	const RenderSettings mRenderSettings;

@@ -24,25 +24,38 @@ RayGroup::RayGroup(const RayStream* stream, size_t offset, size_t size, bool coh
 
 /////////////////////////////////////////////////////////
 constexpr size_t MAX_BANDWIDTH = 16; // AVX512
+constexpr size_t ALIGNMENT	   = 64;
+template <typename T>
+inline size_t padSize(size_t size)
+{
+	return size + size % (ALIGNMENT / sizeof(T));
+}
+
 RayStream::RayStream(size_t raycount)
 	: mSize(raycount + raycount % MAX_BANDWIDTH)
 	, mCurrentReadPos(0)
 	, mCurrentWritePos(0)
 {
 	for (int i = 0; i < 3; ++i)
-		mOrigin[i].resize(mSize);
-	for (int i = 0; i < DIR_C_S; ++i)
-		mDirection[i].resize(mSize);
+		mOrigin[i].resize(padSize<float>(mSize));
 
-	mPixelIndex.resize(mSize);
-	mIterationDepth.resize(mSize);
-	mTime.resize(mSize);
-	mMinT.resize(mSize);
-	mMaxT.resize(mSize);
+#if 0 //def PR_COMPRESS_RAY_DIR
+	for (int i = 0; i < DIR_C_S; ++i)
+		mDirection[i].resize(padSize<snorm16>(mSize));
+#else
+	for (int i = 0; i < DIR_C_S; ++i)
+		mDirection[i].resize(padSize<float>(mSize));
+#endif
+
+	mPixelIndex.resize(padSize<uint32>(mSize));
+	mIterationDepth.resize(padSize<uint16>(mSize));
+	mTime.resize(padSize<unorm16>(mSize));
+	mMinT.resize(padSize<float>(mSize));
+	mMaxT.resize(padSize<float>(mSize));
 	mFlags.resize(mSize);
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-		mWeight[i].resize(mSize);
-		mWavelengthNM[i].resize(mSize);
+		mWeight[i].resize(padSize<float>(mSize));
+		mWavelengthNM[i].resize(padSize<float>(mSize));
 	}
 }
 

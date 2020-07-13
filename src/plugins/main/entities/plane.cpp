@@ -14,7 +14,7 @@
 
 namespace PR {
 
-//#define PR_USE_SPHERICAL_RECTANGLE_SAMPLING
+#define PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 class PlaneEntity : public IEntity {
 public:
 	ENTITY_CLASS
@@ -24,12 +24,9 @@ public:
 				int32 matID, int32 lightID)
 		: IEntity(id, name)
 		, mPlane(Vector3f::Zero(), xAxis, yAxis)
-		, mEx(xAxis.normalized())
-		, mEy(yAxis.normalized())
-		, mWidth(xAxis.norm())
-		, mHeight(yAxis.norm())
 		, mMaterialID(matID)
 		, mLightID(lightID)
+		, mTransformJacobian(0.0f)
 		, mPDF_Cache(0.0f)
 	{
 	}
@@ -117,8 +114,8 @@ public:
 	{
 		SphericalQuad sq;
 		sq.o			 = o;
-		sq.n			 = mPlane.normal();
-		const Vector3f d = mPlane.position() - sq.o;
+		sq.n			 = mEz;
+		const Vector3f d = mS - sq.o;
 		sq.x0			 = d.dot(mEx);
 		sq.y0			 = d.dot(mEy);
 		sq.z0			 = d.dot(sq.n);
@@ -159,8 +156,7 @@ public:
 
 	EntitySamplePoint sampleParameterPoint(const EntitySamplingInfo& info, const Vector2f& rnd) const override
 	{
-		const Vector3f lo	   = invTransform() * info.Origin;
-		const SphericalQuad sq = computeSQ(lo);
+		const SphericalQuad sq = computeSQ(info.Origin);
 
 		// 1. compute ’cu’
 		const float au = std::fma(rnd(0), sq.S, sq.k);
@@ -183,12 +179,12 @@ public:
 		// 4. transform (xu,yv,z0) to entity local coords
 		const Vector3f p = sq.o + xu * mEx + yv * mEy + sq.z0 * sq.n;
 
-		return EntitySamplePoint(transform() * p, mPlane.project(p), 0, EntitySamplePDF{ 1 / (sq.S * mTransformJacobian), false });
+		return EntitySamplePoint(p, mPlane.project(invTransform() * p), 0, EntitySamplePDF{ 1 / std::abs(sq.S), false });
 	}
 
 	EntitySamplePDF sampleParameterPointPDF(const EntitySamplingInfo& info) const override
 	{
-		return EntitySamplePDF{ 1.0f / (computeSQ(invTransform() * info.Origin).S * mTransformJacobian), false };
+		return EntitySamplePDF{ 1.0f / std::abs(computeSQ(info.Origin).S), false };
 	}
 #endif //PR_USE_SPHERICAL_RECTANGLE_SAMPLING
 
@@ -205,13 +201,9 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		pt.N  = normalMatrix() * mPlane.normal();
-		pt.Nx = normalMatrix() * mPlane.xAxis();
-		pt.Ny = normalMatrix() * mPlane.yAxis();
-
-		pt.N.normalize();
-		pt.Nx.normalize();
-		pt.Ny.normalize();
+		pt.N  = mEz;
+		pt.Nx = mEx;
+		pt.Ny = mEy;
 
 		pt.UV		   = query.UV;
 		pt.EntityID	   = id();
@@ -230,20 +222,30 @@ public:
 	{
 		IEntity::beforeSceneBuild();
 
-		const float larea = localSurfaceArea(0);
-		const float garea = worldSurfaceArea(0);
+		mS		= transform() * mPlane.position();
+		mEx		= transform().linear() * mPlane.xAxis();
+		mEy		= transform().linear() * mPlane.yAxis();
+		mEz		= normalMatrix() * mPlane.normal();
+		mWidth	= mEx.norm();
+		mHeight = mEy.norm();
 
-		mTransformJacobian = larea / garea;
-		mPDF_Cache		   = (garea > PR_EPSILON ? 1.0f / garea : 0);
+		mEx.normalize();
+		mEy.normalize();
+		mEz.normalize();
+
+		const float garea = worldSurfaceArea(0);
+		mPDF_Cache		  = (garea > PR_EPSILON ? 1.0f / garea : 0);
 	}
 
 private:
 	Plane mPlane;
 
-	const Vector3f mEx;
-	const Vector3f mEy;
-	const float mWidth;
-	const float mHeight;
+	Vector3f mS;
+	Vector3f mEx;
+	Vector3f mEy;
+	Vector3f mEz;
+	float mWidth;
+	float mHeight;
 
 	const int32 mMaterialID;
 	const int32 mLightID;

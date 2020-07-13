@@ -2,6 +2,8 @@
 
 #include "PR_Config.h"
 
+#include <atomic>
+
 namespace PR {
 class PR_LIB_CORE RenderThreadStatistics {
 public:
@@ -11,6 +13,6 @@ public:
 	inline uint64 tileCount() const { return mTileCount; }
 
 private:
-	uint64 mTileCount;
+	std::atomic<uint64> mTileCount;
 };
 } // namespace PR

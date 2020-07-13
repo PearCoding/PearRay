@@ -96,7 +96,7 @@ private: // Some vectors are not aligned, due to required preprocessing
 	// TODO: Ray Differentials
 	AlignedVector<uint16> mIterationDepth;
 	AlignedVector<unorm16> mTime;
-	AlignedVector<uint8> mFlags;
+	std::vector<uint8> mFlags;
 
 	AlignedVector<float> mMinT;
 	AlignedVector<float> mMaxT;

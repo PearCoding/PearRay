@@ -13,6 +13,31 @@ RenderTileStatistics::RenderTileStatistics()
 {
 }
 
+RenderTileStatistics::RenderTileStatistics(const RenderTileStatistics& other)
+	: mCameraRayCount(other.mCameraRayCount.load())
+	, mLightRayCount(other.mLightRayCount.load())
+	, mBounceRayCount(other.mBounceRayCount.load())
+	, mShadowRayCount(other.mShadowRayCount.load())
+	, mPixelSampleCount(other.mPixelSampleCount.load())
+	, mEntityHitCount(other.mEntityHitCount.load())
+	, mBackgroundHitCount(other.mBackgroundHitCount.load())
+	, mDepthCount(other.mDepthCount.load())
+{
+}
+
+RenderTileStatistics& RenderTileStatistics::operator=(const RenderTileStatistics& other)
+{
+	mCameraRayCount		= other.mCameraRayCount.load();
+	mLightRayCount		= other.mLightRayCount.load();
+	mBounceRayCount		= other.mBounceRayCount.load();
+	mShadowRayCount		= other.mShadowRayCount.load();
+	mPixelSampleCount	= other.mPixelSampleCount.load();
+	mEntityHitCount		= other.mEntityHitCount.load();
+	mBackgroundHitCount = other.mBackgroundHitCount.load();
+	mDepthCount			= other.mDepthCount.load();
+	return *this;
+}
+
 RenderTileStatistics& RenderTileStatistics::operator+=(const RenderTileStatistics& other)
 {
 	mCameraRayCount += other.mCameraRayCount;
@@ -30,14 +55,14 @@ RenderTileStatistics& RenderTileStatistics::operator+=(const RenderTileStatistic
 RenderTileStatistics RenderTileStatistics::half() const
 {
 	RenderTileStatistics other = *this;
-	other.mCameraRayCount /= 2;
-	other.mLightRayCount /= 2;
-	other.mBounceRayCount /= 2;
-	other.mShadowRayCount /= 2;
-	other.mPixelSampleCount /= 2;
-	other.mEntityHitCount /= 2;
-	other.mBackgroundHitCount /= 2;
-	other.mDepthCount /= 2;
+	other.mCameraRayCount	   = other.mCameraRayCount.load() / 2;
+	other.mLightRayCount	   = other.mLightRayCount.load() / 2;
+	other.mBounceRayCount	   = other.mBounceRayCount.load() / 2;
+	other.mShadowRayCount	   = other.mShadowRayCount.load() / 2;
+	other.mPixelSampleCount	   = other.mPixelSampleCount.load() / 2;
+	other.mEntityHitCount	   = other.mEntityHitCount.load() / 2;
+	other.mBackgroundHitCount  = other.mBackgroundHitCount.load() / 2;
+	other.mDepthCount		   = other.mDepthCount.load() / 2;
 
 	return other;
 }
