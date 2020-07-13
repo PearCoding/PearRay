@@ -13,8 +13,8 @@
 	)
 	(sampler
 		:slot 'aa'
-		:type 'halton'
-		:sample_count 8
+		:type 'HALTON'
+		:sample_count 512
 	)
 	(filter
 		:slot 'pixel'

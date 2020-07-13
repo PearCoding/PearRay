@@ -107,7 +107,7 @@ public:
 		EntitySamplePDF entityPdf;
 		GeometryPoint lightPt;
 		Vector3f lightPos;
-		EntitySamplingInfo sampleInfo = { spt.Surface.P, spt.Surface.N };
+		EntitySamplingInfo sampleInfo = { spt.P, spt.Surface.N };
 
 		IEntity* light = session.sampleLight(sampleInfo, spt.Surface.Geometry.EntityID, mSampler.next3D(),
 											 lightPos, lightPt, entityPdf);
@@ -238,7 +238,7 @@ public:
 					LightEvalOutput outL;
 					ems->eval(inL, outL, session);
 
-					const auto pdfL	 = session.sampleLightPDF(EntitySamplingInfo{ spt.Surface.P, spt.Surface.N },
+					const auto pdfL	 = session.sampleLightPDF(EntitySamplingInfo{ spt.P, spt.Surface.N },
 															  spt.Surface.Geometry.EntityID, nentity);
 					const float msiL = MSI(
 						1, out.PDF_S[0],

@@ -57,6 +57,8 @@ public:
 		Depth2			 = (ray.Origin - P).squaredNorm();
 		Flags			 = 0;
 
+		// TODO: Displacement?
+		Surface.P	  = p;
 		Surface.NdotV = ray.Direction.dot(pt.N);
 		Surface.N	  = pt.N;
 		Surface.Nx	  = pt.Nx;
