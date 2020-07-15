@@ -9,7 +9,7 @@ class FrameBufferBucket;
 class PR_LIB_CORE FrameBufferSystem {
 public:
 	explicit FrameBufferSystem(const std::shared_ptr<IFilter>& filter,
-						  const Size2i& size, Size1i specChannels);
+						  const Size2i& size, Size1i specChannels, bool monotonic);
 	~FrameBufferSystem();
 
 	inline FrameBufferContainer& data() { return mData; }
@@ -21,7 +21,9 @@ public:
 	void mergeBucket(const Point2i& p, const std::shared_ptr<FrameBufferBucket>& bucket);
 
 private:
-	std::shared_ptr<IFilter> mFilter;
+	const std::shared_ptr<IFilter> mFilter;
+	const bool mMonotonic;
+	
 	FrameBufferContainer mData;
 	std::mutex mMergeMutex;
 };

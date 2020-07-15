@@ -380,8 +380,8 @@ class Operator:
 
         filename = os.path.splitext(
             os.path.basename(op.parameters["filename"]))[0]
-        self.w.write(":renderWidth %i" % op.parameters["xresolution"])
-        self.w.write(":renderHeight %i" % op.parameters["yresolution"])
+        self.w.write(":render_width %i" % op.parameters["xresolution"])
+        self.w.write(":render_height %i" % op.parameters["yresolution"])
         self.w.write("(output")
         self.w.goIn()
         self.w.write(":name '%s'" % filename)

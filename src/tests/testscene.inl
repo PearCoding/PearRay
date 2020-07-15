@@ -1,8 +1,8 @@
 R"(
 (scene
 	:name 'project'
-	:renderWidth 100
-	:renderHeight 100
+	:render_width 100
+	:render_height 100
 	:camera 'Camera'
 	(output
 		:name 'image'

@@ -31,6 +31,7 @@ public:
 
 	float spectralStart;
 	float spectralEnd;
+	bool spectralMono;
 
 	// Film entries
 	uint32 filmWidth;

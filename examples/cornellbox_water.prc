@@ -2,8 +2,8 @@
 ; at 2020-06-29 15:28:04.515229
 (scene
 	:name '_from_blender'
-	:renderWidth 1000
-	:renderHeight 1000
+	:render_width 1000
+	:render_height 1000
 	:camera 'Camera'
 	; Settings
 	(integrator

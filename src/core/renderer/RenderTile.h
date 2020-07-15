@@ -97,10 +97,11 @@ private:
 	std::shared_ptr<ISampler> mSpectralSampler;
 
 	// Spectral cache
-	float mSpectralStart;
-	float mSpectralEnd;
-	float mSpectralSpan;
-	float mSpectralDelta;
+	const float mSpectralStart;
+	const float mSpectralEnd;
+	const float mSpectralSpan;
+	const float mSpectralDelta;
+	const bool mSpectralMonotonic;
 
 	// t = t'*alpha + beta
 	float mTimeAlpha;

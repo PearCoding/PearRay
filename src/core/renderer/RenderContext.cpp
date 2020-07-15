@@ -42,7 +42,7 @@ RenderContext::RenderContext(uint32 index, const Point2i& viewOffset, const Size
 
 	mOutputMap = std::make_unique<FrameBufferSystem>(
 		settings.createPixelFilter(),
-		viewSize, 3); // TODO: Should be encapsulated by an output device
+		viewSize, 3, settings.spectralMono); // TODO: Should be encapsulated by an output device
 }
 
 RenderContext::~RenderContext()

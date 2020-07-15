@@ -17,7 +17,7 @@ class PR_LIB_CORE FrameBufferBucket {
 
 public:
 	explicit FrameBufferBucket(const std::shared_ptr<IFilter>& filter,
-							   const Size2i& size, Size1i specChannels);
+							   const Size2i& size, Size1i specChannels, bool monotonic);
 	~FrameBufferBucket();
 
 	inline const FrameBufferContainer& data() const { return mData; }
@@ -40,9 +40,13 @@ protected:
 	inline FrameBufferContainer& data() { return mData; }
 
 private:
+	void commitSpectralsXYZ(const OutputSpectralEntry* entries, size_t entrycount);
+	void commitSpectralsMono(const OutputSpectralEntry* entries, size_t entrycount);
+
 	const FilterCache mFilter;
 	const Size2i mOriginalSize;
 	const Size2i mExtendedSize;
+	const bool mMonotonic;
 	Size2i mViewSize;
 	Size2i mExtendedViewSize;
 

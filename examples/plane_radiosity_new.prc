@@ -1,32 +1,15 @@
 (scene
 	:name 'radiosity_test'
-	:render_width 1000
-	:render_height 1000
-	:spectral_domain 520
 
 	(integrator 
 	  :type 'direct'
-	  :max_ray_depth 1
+	  :max_ray_depth 0
 	  :light_sample_count 1
 	  :msi false
 	)
-	(sampler 
-	  :slot 'aa'
-	  :type 'hammersley'
-	  :sample_count 32
-	)
-	(filter 
-	  :slot 'pixel'
-	  :type 'mitchell'
-	  :radius 0
-	)
-	; Outputs
-	(output
-		:name 'image'
-		(channel :type 'color' :color 'xyz' )
-	)
-	; Camera
-	(camera
+
+	; New sensor/camera interface
+	(sensor 
 		:name 'Camera'
 		:type 'orthographic'
 
@@ -36,6 +19,20 @@
 		:localUp [0,1,0]
 		:localRight [1,0,0]
 		:transform [1.0,0.0,0.0,0.0, 0.0,1.0,0.0,0.0, 0.0,0.0,1.0,1.0, 0.0,0.0,0.0,1.0]
+
+		:spectral_range 520 ; Set wavelength to monotonic 520nm
+		; :spectral_range [320 780]
+
+		:film_width 1000
+		:film_height 1000
+
+		:aa_sampler (sampler :type 'hammersley' :sample_count 512 )
+		:pixel_filter (filter :slot 'pixel' :type 'mitchell' :radius 0)
+
+		(output
+			:name 'image'	
+			(channel :type 'color' :color 'monotonic' ) ; Will ignore all other wavelength channels except the hero channel
+		)
 	)
 
 	; Light Area

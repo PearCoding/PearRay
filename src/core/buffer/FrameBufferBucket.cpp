@@ -7,10 +7,11 @@
 
 namespace PR {
 FrameBufferBucket::FrameBufferBucket(const std::shared_ptr<IFilter>& filter,
-									 const Size2i& size, Size1i specChannels)
+									 const Size2i& size, Size1i specChannels, bool monotonic)
 	: mFilter(filter.get())
 	, mOriginalSize(size)
 	, mExtendedSize(mOriginalSize.Width + 2 * mFilter.radius(), mOriginalSize.Height + 2 * mFilter.radius())
+	, mMonotonic(monotonic)
 	, mViewSize(mOriginalSize)
 	, mExtendedViewSize(mExtendedSize)
 	, mData(mExtendedSize, specChannels)
@@ -61,6 +62,14 @@ void FrameBufferBucket::cache()
 }
 
 void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size_t entry_count)
+{
+	if (mMonotonic)
+		commitSpectralsMono(entries, entry_count);
+	else
+		commitSpectralsXYZ(entries, entry_count);
+}
+
+void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, size_t entry_count)
 {
 	const int32 filterRadius = mFilter.radius();
 	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
@@ -131,6 +140,61 @@ void FrameBufferBucket::commitSpectrals(const OutputSpectralEntry* entries, size
 						PR_UNROLL_LOOP(3)
 						for (Size1i k = 0; k < 3; ++k)
 							pair.second->getFragment(sp, k) += weightedRad[k];
+					}
+				}
+			}
+		}
+	}
+}
+
+void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, size_t entry_count)
+{
+	const int32 filterRadius = mFilter.radius();
+	const Size2i filterSize	 = Size2i(filterRadius, filterRadius);
+
+	PR_OPT_LOOP
+	for (size_t i = 0; i < entry_count; ++i) {
+		const auto& entry = entries[i];
+
+		const Point2i rp = entry.Position + filterSize;
+
+		float weight = entry.Weight[0];
+
+		// Check for valid samples
+		const bool isInf	 = std::isinf(weight);
+		const bool isNaN	 = std::isnan(weight);
+		const bool isNeg	 = weight < 0.0f;
+		const bool isInvalid = isInf | isNaN | isNeg;
+		if (PR_UNLIKELY(isInvalid)) {
+			const uint32 feedback = (isNaN ? OF_NaN : 0)
+									| (isInf ? OF_Infinite : 0)
+									| (isNeg ? OF_Negative : 0);
+
+			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(rp, 0) |= feedback;
+			continue;
+		}
+
+		const LightPathView path = LightPathView(entry.Path);
+
+		// Apply for each filter area
+		const Point2i start = Point2i::Zero().cwiseMax(rp - filterSize);
+		const Point2i end	= (extendedViewSize() - Point2i(1, 1)).cwiseMin(rp + filterSize);
+		for (Point1i py = start(1); py <= end(1); ++py) {
+			for (Point1i px = start(0); px <= end(0); ++px) {
+				const Point2i sp		 = Point2i(px, py);
+				const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
+				const float weightedRad	 = filterWeight * weight;
+
+				PR_UNROLL_LOOP(3)
+				for (Size1i k = 0; k < 3; ++k)
+					mData.getInternalChannel_Spectral()->getFragment(sp, k) += weightedRad;
+
+				// LPE
+				for (auto pair : mData.mLPE_Spectral) {
+					if (pair.first.match(path)) {
+						PR_UNROLL_LOOP(3)
+						for (Size1i k = 0; k < 3; ++k)
+							pair.second->getFragment(sp, k) += weightedRad;
 					}
 				}
 			}

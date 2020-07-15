@@ -1,7 +1,7 @@
 (scene
 	:name 'box_test_scene'
-	:renderWidth 1920
-	:renderHeight 1080
+	:render_width 1920
+	:render_height 1080
 
 	(sampler 
 	  :slot 'aa'

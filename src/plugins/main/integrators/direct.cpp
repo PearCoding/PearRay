@@ -188,7 +188,7 @@ public:
 		// Russian Roulette
 		const float roussian_prob = mSampler.next1D();
 		if (PR_UNLIKELY(out.PDF_S[0] <= PR_EPSILON)
-			|| spt.Ray.IterationDepth + 1 >= mMaxRayDepth
+			|| spt.Ray.IterationDepth + 1 > mMaxRayDepth
 			|| roussian_prob > scatProb)
 			return;
 

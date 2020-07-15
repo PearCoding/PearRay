@@ -26,9 +26,11 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	, mWorkStart()
 	, mLastWorkTime()
 	, mRandom(context.settings().seed + (start(0) ^ start(1)))
-	, mAASampler(nullptr)
-	, mLensSampler(nullptr)
-	, mTimeSampler(nullptr)
+	, mSpectralStart(context.settings().spectralStart)
+	, mSpectralEnd(context.settings().spectralEnd)
+	, mSpectralSpan(mSpectralEnd - mSpectralStart)
+	, mSpectralDelta(mSpectralSpan / PR_SPECTRAL_BLOB_SIZE)
+	, mSpectralMonotonic(context.settings().spectralMono)
 	, mRenderContext(&context)
 	, mCamera(context.scene()->activeCamera().get())
 {
@@ -60,11 +62,6 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 		break;
 	}
 
-	mSpectralStart = mRenderContext->settings().spectralStart;
-	mSpectralEnd   = mRenderContext->settings().spectralEnd;
-	mSpectralSpan  = mSpectralEnd - mSpectralStart;
-	mSpectralDelta = mSpectralSpan / PR_SPECTRAL_BLOB_SIZE;
-
 	const float f = mRenderContext->settings().timeScale;
 	mTimeAlpha *= f;
 	mTimeBeta *= f;
@@ -78,7 +75,7 @@ RenderTile::~RenderTile()
 
 /* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
  * This may sometimes good, but also bad... more investigations required...
- */ 
+ */
 Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 {
 	PR_PROFILE_THIS;
@@ -93,29 +90,33 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 	cameraSample.Time		= mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
 	cameraSample.Weight		= mWeight_Cache;
 
-// Sample wavelength
-#if defined(PR_SAMPLE_BY_CIE)
-	if (mSpectralStart == PR_CIE_WAVELENGTH_START && mSpectralEnd == PR_CIE_WAVELENGTH_END) {
-		float u = mSpectralSampler->generate1D(sample);
-		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
-			float pdf;
-#ifdef PR_SAMPLE_BY_CIE_Y
-			cameraSample.WavelengthNM(i) = CIE::sample_y(k, pdf);
-#else
-			cameraSample.WavelengthNM(i) = CIE::sample_xyz(k, pdf);
-#endif
-			cameraSample.Weight(i) /= pdf;
-		}
+	// Sample wavelength
+	if (mSpectralMonotonic) {
+		cameraSample.WavelengthNM = SpectralBlob(mSpectralStart);
 	} else {
-#endif
-		float start					 = mSpectralSampler->generate1D(sample) * mSpectralSpan; // Wavelength inside the span
-		cameraSample.WavelengthNM(0) = start + mSpectralStart;								 // Hero wavelength
-		for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
 #if defined(PR_SAMPLE_BY_CIE)
-	}
+		if (mSpectralStart == PR_CIE_WAVELENGTH_START && mSpectralEnd == PR_CIE_WAVELENGTH_END) {
+			float u = mSpectralSampler->generate1D(sample);
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+				float pdf;
+#ifdef PR_SAMPLE_BY_CIE_Y
+				cameraSample.WavelengthNM(i) = CIE::sample_y(k, pdf);
+#else
+				cameraSample.WavelengthNM(i) = CIE::sample_xyz(k, pdf);
 #endif
+				cameraSample.Weight(i) /= pdf;
+			}
+		} else {
+#endif
+			float start					 = mSpectralSampler->generate1D(sample) * mSpectralSpan; // Wavelength inside the span
+			cameraSample.WavelengthNM(0) = start + mSpectralStart;								 // Hero wavelength
+			for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+				cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
+#if defined(PR_SAMPLE_BY_CIE)
+		}
+#endif
+	}
 
 	return mCamera->constructRay(cameraSample);
 }

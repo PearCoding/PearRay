@@ -2,8 +2,8 @@
 ; at 2019-12-21 15:25:07.025171
 (scene
 	:name '_from_blender'
-	:renderWidth 1920
-	:renderHeight 1080
+	:render_width 1920
+	:render_height 1080
 	(sampler 
 	  :slot 'aa'
 	  :type 'halton'

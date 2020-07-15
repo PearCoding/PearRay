@@ -6,8 +6,9 @@
 
 namespace PR {
 FrameBufferSystem::FrameBufferSystem(const std::shared_ptr<IFilter>& filter,
-						   const Size2i& size, Size1i specChannels)
+						   const Size2i& size, Size1i specChannels, bool monotonic)
 	: mFilter(filter)
+	, mMonotonic(monotonic)
 	, mData(size, specChannels)
 {
 }
@@ -20,7 +21,7 @@ std::shared_ptr<FrameBufferBucket> FrameBufferSystem::createBucket(const Size2i&
 {
 	std::shared_ptr<FrameBufferBucket> bucket = std::make_shared<FrameBufferBucket>(
 		mFilter, size,
-		mData.getInternalChannel_Spectral()->channels());
+		mData.getInternalChannel_Spectral()->channels(), mMonotonic);
 
 	// Internals
 	for (int i = 0; i < AOV_3D_COUNT; ++i)

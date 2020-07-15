@@ -86,8 +86,8 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 			PR_LOG(L_ERROR) << "DataLisp file does not contain valid top entry" << std::endl;
 			return nullptr;
 		} else {
-			DL::Data renderWidthD	 = top.getFromKey("renderWidth");
-			DL::Data renderHeightD	 = top.getFromKey("renderHeight");
+			DL::Data renderWidthD	 = top.getFromKey("render_width");
+			DL::Data renderHeightD	 = top.getFromKey("render_height");
 			DL::Data cropD			 = top.getFromKey("crop");
 			DL::Data spectralDomainD = top.getFromKey("spectral_domain");
 
@@ -111,6 +111,23 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 					env->renderSettings().cropMaxX = crop.at(1).getNumber();
 					env->renderSettings().cropMinY = crop.at(2).getNumber();
 					env->renderSettings().cropMaxY = crop.at(3).getNumber();
+				}
+			}
+
+			if (spectralDomainD.isNumber()) {
+				env->renderSettings().spectralStart = spectralDomainD.getNumber();
+				env->renderSettings().spectralEnd	= env->renderSettings().spectralStart;
+				env->renderSettings().spectralMono	= true;
+			} else if (spectralDomainD.type() == DL::DT_Group) {
+				const DL::DataGroup sd = spectralDomainD.getGroup();
+				if (sd.anonymousCount() == 2 && sd.isAllAnonymousNumber()) {
+					env->renderSettings().spectralStart = sd.at(0).getNumber();
+					env->renderSettings().spectralEnd	= sd.at(1).getNumber();
+
+					if (env->renderSettings().spectralEnd < env->renderSettings().spectralStart)
+						std::swap(env->renderSettings().spectralStart, env->renderSettings().spectralEnd);
+
+					env->renderSettings().spectralMono = env->renderSettings().spectralStart == env->renderSettings().spectralEnd;
 				}
 			}
 

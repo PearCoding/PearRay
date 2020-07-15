@@ -1,7 +1,7 @@
 (scene
 	:name 'example_sphere'
-	:renderWidth 1000
-	:renderHeight 1000
+	:render_width 1000
+	:render_height 1000
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'

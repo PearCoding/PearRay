@@ -1,8 +1,8 @@
 ; Original CornellBox converted to PearRay format
 (scene
 	:name '_from_blender'
-	:renderWidth 1000
-	:renderHeight 1000
+	:render_width 1000
+	:render_height 1000
 	:camera 'Camera'
 	; Settings
 	(integrator
