@@ -1,7 +1,7 @@
 #pragma once
 
-#include "trace/IntersectionPoint.h"
 #include "spectral/SpectralBlob.h"
+#include "trace/IntersectionPoint.h"
 
 namespace PR {
 enum OutputSpectralEntryFlags {
@@ -11,6 +11,7 @@ enum OutputSpectralEntryFlags {
 struct PR_LIB_CORE OutputSpectralEntry {
 	Point2i Position;
 	SpectralBlob Weight;
+	SpectralBlob Radiance;
 	SpectralBlob Wavelengths;
 	uint32 Flags;
 	const uint32* Path;

@@ -81,7 +81,7 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 		const Point2i rp  = entry.Position + filterSize;
 		const bool isMono = entry.Flags & OSEF_Mono;
 
-		SpectralBlob real_weight = entry.Weight;
+		SpectralBlob real_weight = entry.Weight * entry.Radiance;
 		/*Size1i w_channels			 = 0;
 		for(size_t k = 0; k <PR_SPECTRAL_BLOB_SIZE; ++k) {
 			if(entry.Weight[k] > PR_EPSILON)
@@ -158,7 +158,7 @@ void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, 
 
 		const Point2i rp = entry.Position + filterSize;
 
-		float weight = entry.Weight[0];
+		float weight = entry.Weight[0] * entry.Radiance[0];
 
 		// Check for valid samples
 		const bool isInf	 = std::isinf(weight);

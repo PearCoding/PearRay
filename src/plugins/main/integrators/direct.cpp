@@ -243,10 +243,10 @@ public:
 					const float msiL = MSI(
 						1, out.PDF_S[0],
 						mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
-					SpectralBlob radiance = msiL * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
+					SpectralBlob radiance = outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(radiance, next, path);
+					session.pushSpectralFragment(SpectralBlob(msiL), radiance, next, path);
 					path.popToken();
 				}
 			}
@@ -266,7 +266,7 @@ public:
 				light->eval(lin, lout, session);
 
 				const float msiL = allowMSI ? MSI(1, out.PDF_S[0], 1, lout.PDF_S) : 1.0f;
-				session.pushSpectralFragment(lout.Weight * msiL, next, path);
+				session.pushSpectralFragment(SpectralBlob(msiL), lout.Weight, next, path);
 			}
 			path.popToken();
 		}
@@ -303,14 +303,14 @@ public:
 		const float factor = 1.0f / mLightSampleCount;
 		for (size_t i = 0; i < mLightSampleCount; ++i) {
 			LightPathToken token;
-			SpectralBlob radiance = factor * directLight(session, spt, token, material);
+			SpectralBlob radiance = directLight(session, spt, token, material);
 
 			if (radiance.isZero())
 				continue;
 
 			path.addToken(token);
 			path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-			session.pushSpectralFragment(radiance, spt.Ray, path);
+			session.pushSpectralFragment(SpectralBlob(factor), radiance, spt.Ray, path);
 			path.popToken(2);
 		}
 
@@ -327,7 +327,7 @@ public:
 
 			path.addToken(token);
 			path.addToken(LightPathToken::Background());
-			session.pushSpectralFragment(radiance, spt.Ray, path);
+			session.pushSpectralFragment(SpectralBlob::Ones(), radiance, spt.Ray, path);
 			path.popToken(2);
 		}
 	}
@@ -363,7 +363,7 @@ public:
 
 				if (PR_LIKELY(!radiance.isZero())) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(radiance, spt.Ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), radiance, spt.Ray, path);
 					path.popToken();
 				}
 			}
@@ -408,7 +408,7 @@ public:
 				InfiniteLightEvalOutput out;
 				light->eval(in, out, session);
 
-				session.pushSpectralFragment(out.Weight, in.Ray, cb);
+				session.pushSpectralFragment(SpectralBlob::Ones(), out.Weight, in.Ray, cb);
 			}
 		}
 	}

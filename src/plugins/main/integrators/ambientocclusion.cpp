@@ -53,10 +53,10 @@ public:
 			}
 
 			SpectralBlob radiance = SpectralBlob::Ones();
-			radiance *= 1.0f - occlusions / (float)mSampleCount;
+			SpectralBlob weight	  = SpectralBlob(1.0f - occlusions / (float)mSampleCount);
 
 			session.pushSPFragment(spt, stdPath);
-			session.pushSpectralFragment(radiance, spt.Ray, stdPath);
+			session.pushSpectralFragment(weight, radiance, spt.Ray, stdPath);
 		}
 	}
 

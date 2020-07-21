@@ -48,7 +48,7 @@ public:
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
 	bool traceOcclusionRay(const Ray& ray) const;
 
-	void pushSpectralFragment(const SpectralBlob& spec, const Ray& ray,
+	void pushSpectralFragment(const SpectralBlob& weight, const SpectralBlob& spec, const Ray& ray,
 							  const LightPath& path) const;
 	void pushSPFragment(const IntersectionPoint& pt, const LightPath& path) const;
 	void pushFeedbackFragment(uint32 feedback, const Ray& ray) const;

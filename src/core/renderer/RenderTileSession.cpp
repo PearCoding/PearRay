@@ -110,12 +110,12 @@ Point2i RenderTileSession::localCoordinates(Point1i pixelIndex) const
 	return Point2i(gpx, gpy) - mTile->start();
 }
 
-void RenderTileSession::pushSpectralFragment(const SpectralBlob& spec, const Ray& ray,
+void RenderTileSession::pushSpectralFragment(const SpectralBlob& weight, const SpectralBlob& spec, const Ray& ray,
 											 const LightPath& path) const
 {
 	PR_PROFILE_THIS;
 	auto coords = localCoordinates(ray.PixelIndex);
-	mOutputQueue->pushSpectralFragment(coords, spec * ray.Weight,
+	mOutputQueue->pushSpectralFragment(coords, weight * ray.Weight, spec,
 									   ray.WavelengthNM, ray.Flags & RF_Monochrome, path);
 	if (mOutputQueue->isReadyToCommit())
 		mOutputQueue->commitAndFlush(mBucket.get());

@@ -160,11 +160,11 @@ public:
 			case VFM_ValidateMaterial: {
 				IMaterial* mat = session.getMaterial(spt.Surface.Geometry.MaterialID);
 				if (mat) {
-					MaterialSampleInput samp_in{MaterialSampleContext::fromIP(spt), ShadingContext::fromIP(session.threadID(), spt), random.get2D()};
+					MaterialSampleInput samp_in{ MaterialSampleContext::fromIP(spt), ShadingContext::fromIP(session.threadID(), spt), random.get2D() };
 					MaterialSampleOutput samp_out;
 					mat->sample(samp_in, samp_out, session);
 
-					MaterialEvalInput eval_in{MaterialEvalContext::fromIP(spt, samp_out.globalL(spt)), ShadingContext::fromIP(session.threadID(), spt)};
+					MaterialEvalInput eval_in{ MaterialEvalContext::fromIP(spt, samp_out.globalL(spt)), ShadingContext::fromIP(session.threadID(), spt) };
 					MaterialEvalOutput eval_out;
 					mat->eval(eval_in, eval_out, session);
 
@@ -177,7 +177,7 @@ public:
 			}
 
 			session.pushSPFragment(spt, stdPath);
-			session.pushSpectralFragment(radiance, spt.Ray, stdPath);
+			session.pushSpectralFragment(SpectralBlob::Ones(), radiance, spt.Ray, stdPath);
 		}
 	}
 
