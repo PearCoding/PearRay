@@ -1,3 +1,5 @@
 if(OpenSubdiv_FOUND)
     PR_ADD_PLUGIN(ent_subdiv CPP subdiv.cpp LIBRARIES OpenSubdiv::CPU)
+elseif(PR_EXTRA_OPENSUBDIV)
+    message(WARNING "Skipping OpenSubdiv based plugin.")
 endif()
