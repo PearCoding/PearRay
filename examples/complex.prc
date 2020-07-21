@@ -7,29 +7,24 @@
 	; Settings
 	(integrator
 		:type 'DIRECT'
-		:max_ray_depth 24
+		:max_ray_depth 64
 		:light_sampe_count 1
 		:msi true
 	)
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 32
-	)
-	(sampler
-		:slot 'spectral'
-		:type 'MJITT'
-		:sample_count 8
+		:sample_count 1024
 	)
 	(filter
 		:slot 'pixel'
 		:type 'MITCHELL'
-		:radius 1
+		:radius 2
 	)
 	; Outputs
 	(output
 		:name 'image'
-		(channel :type 'color', :color 'xyz')
+		(channel :type 'color', :color 'srgb')
 		(channel :type 'n' )
 		(channel :type 'uvw' )
 		(channel :type 'ng' )
@@ -61,54 +56,11 @@
 		:type 'env'
 		:radiance (smul (illuminant "D65") "background")
 	)
-	; Lights
-	; Light Light
-	(emission
-		:name 'Light_em'
-		:type 'standard'
-		:radiance (illuminant "D65")
-	)
-	(entity
-		:name 'Light'
-		:type 'plane'
-		:centering true
-		:width 1.000000
-		:height -1.000000
-		:emission 'Light_em'
-		:camera_visible false
-		:transform [-0.29086464643478394,-0.7711008191108704,0.5663931965827942,11.076245307922363,0.9551711678504944,-0.1998833566904068,0.21839119493961334,1.0054539442062378,-0.05518905818462372,0.6045247316360474,0.7946722507476807,13.903861999511719,0.0,0.0,0.0,1.0]
-	)
-	; Light Light.001
-	(emission
-		:name 'Light.001_em'
-		:type 'standard'
-		:radiance (illuminant "D65")
-	)
-	(entity
-		:name 'Light.001'
-		:type 'plane'
-		:centering true
-		:width 1.000000
-		:height -1.000000
-		:emission 'Light.001_em'
-		:camera_visible false
-		:transform [0.8901517987251282,-0.33074700832366943,0.31342655420303345,4.076245307922363,0.45230957865715027,0.7246766686439514,-0.5198651552200317,-9.994545936584473,-0.05518905818462372,0.6045247316360474,0.7946722507476807,13.903861999511719,0.0,0.0,0.0,1.0]
-	)
-	; Light Light.002
-	(emission
-		:name 'Light.002_em'
-		:type 'standard'
-		:radiance (illuminant "D65")
-	)
-	(entity
-		:name 'Light.002'
-		:type 'plane'
-		:centering true
-		:width 1.000000
-		:height -1.000000
-		:emission 'Light.002_em'
-		:camera_visible false
-		:transform [0.5447392463684082,-0.6487736701965332,0.5313679575920105,9.076245307922363,0.8367875218391418,0.4622148275375366,-0.29350313544273376,-5.994545936584473,-0.05518905818462372,0.6045247912406921,0.7946722507476807,13.903861999511719,0.0,0.0,0.0,1.0]
+	(light
+		:name 'sun'
+		:type 'distant'
+		:direction [0.707106781,0,-0.707106781]
+		:radiance (smul (illuminant "D65") 5)
 	)
 	; Primitives
 	(entity
@@ -671,36 +623,25 @@
 	; Materials
 	(spectrum
 		:name 'Material_diffuse_color'
-		:data (refl 0.800000 0.525250 0.171813)
+		:data (refl 1.000000 0.525250 0.171813)
 	)
 	(material
 		:name 'Material'
 		:type 'diffuse'
 		:albedo 'Material_diffuse_color'
 	)
-	(spectrum
-		:name 'Material.001_specular_color'
-		:data (refl 1.000000 1.000000 1.000000)
-	)
 	(material
 		:name 'Material.001'
 		:type 'glass'
-		:specularity 'Material.001_specular_color'
-		:index 1.550000
-	)
-	(spectrum
-		:name 'Material.002_specular_color'
-		:data (refl 1.000000 1.000000 1.000000)
+		:index (lookup_index "bk7")
 	)
 	(material
 		:name 'Material.002'
 		:type 'mirror'
-		:specularity 'Material.002_specular_color'
-		:index 1.550000
 	)
 	(spectrum
 		:name 'Material.003_diffuse_color'
-		:data (refl 0.800000 0.174027 0.035058)
+		:data (refl 1.000000 0.174027 0.035058)
 	)
 	(material
 		:name 'Material.003'
@@ -743,8 +684,7 @@
 	(material
 		:name 'Water'
 		:type 'glass'
-		:specularity 'Water_specular_color'
+		;:specularity 'Water_specular_color'
 		:index (sellmeier_index 5.666959820e-1 1.731900098e-1 2.095951857e-2 5.084151894e-3 1.818488474e-2 2.625439472e-2) 
-		:thin true
 	)
 )

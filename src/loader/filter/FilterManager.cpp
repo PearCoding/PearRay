@@ -38,7 +38,7 @@ bool FilterManager::createDefaultsIfNecessary(Environment* env)
 
 	// Add if necessary
 	if (!settings.pixelFilterFactory) {
-		PR_LOG(L_WARNING) << "No pixel filter selected. Using mitchell filter with radius " << DEF_R << std::endl;
+		//PR_LOG(L_WARNING) << "No pixel filter selected. Using mitchell filter with radius " << DEF_R << std::endl;
 		settings.pixelFilterFactory = createAndAdd("mitchell", DEF_R);
 	}
 

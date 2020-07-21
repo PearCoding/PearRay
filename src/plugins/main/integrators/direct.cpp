@@ -38,7 +38,7 @@
  * p_(xi) is the pdf with respect to the solid angle (not projected solid angle!)
  */
 namespace PR {
-using Contribution					   = std::pair<SpectralBlob, float>;// [Radiance, Probability/Weight]
+using Contribution					   = std::pair<SpectralBlob, float>; // [Radiance, Probability/Weight]
 const static Contribution ZERO_CONTRIB = std::make_pair(SpectralBlob::Zero(), 0.0f);
 
 constexpr float SHADOW_RAY_MIN = 0.0001f;
@@ -211,6 +211,8 @@ public:
 
 		path.addToken(LightPathToken(out.Type)); // (1)
 
+		const SpectralBlob weighted_throughput = throughput * out.Weight;
+
 		// Trace bounce ray
 		GeometryPoint npt;
 		Vector3f npos;
@@ -247,7 +249,7 @@ public:
 					const float msiL = MSI(
 						1, out.PDF_S[0],
 						mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
-					SpectralBlob radiance = throughput * out.Weight * outL.Weight; // cos(NxL)/pdf(...) is already inside next.Weight
+					SpectralBlob radiance = weighted_throughput * outL.Weight;
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
 					session.pushSpectralFragment(SpectralBlob(msiL), radiance, next, path);
@@ -255,7 +257,7 @@ public:
 				}
 			}
 
-			evalN(session, path, spt2, throughput * out.Weight, nentity, nmaterial);
+			evalN(session, path, spt2, weighted_throughput, nentity, nmaterial);
 		} else {
 			session.tile()->statistics().addBackgroundHitCount();
 			infLightHandled = true;
@@ -270,7 +272,7 @@ public:
 				light->eval(lin, lout, session);
 
 				const float msiL = allowMSI ? MSI(1, out.PDF_S[0], 1, lout.PDF_S) : 1.0f;
-				session.pushSpectralFragment(SpectralBlob(msiL), throughput * lout.Weight, next, path);
+				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Weight, next, path);
 			}
 			path.popToken();
 		}

@@ -293,6 +293,17 @@ public:
 																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(2)),
 																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(3)),
 																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(4)));
+		} else if (type_name == "lookup_index") {
+			auto name = ctx.Parameters.getParameter(0).getString("bk7");
+			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
+			if (name == "bk7") {
+				// https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
+				return std::make_shared<SellmeierIndexNode<float>>(1.03961212f, 0.231792344f, 1.01046945f, 0.00600069867f, 0.0200179144f, 103.560653f);
+			} else {
+				PR_LOG(L_ERROR) << "Unknown lookup name " << name << std::endl;
+				return nullptr;
+			}
 		} else {
 			PR_ASSERT(false, "ReflectiveNode plugin does not handle all offered types of operations!");
 			return nullptr;
@@ -301,7 +312,7 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "cauchy_index", "sellmeier_index", "sellmeier2_index", "poly_index", "poly2_index" });
+		const static std::vector<std::string> names({ "cauchy_index", "sellmeier_index", "sellmeier2_index", "poly_index", "poly2_index", "lookup_index" });
 		return names;
 	}
 

@@ -6,12 +6,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 4
-	)
-	(sampler
-	  :slot 'spectral'
-	  :type 'random'
-	  :sample_count 2
+	  :sample_count 1024
 	)
 	(filter 
 	  :slot 'pixel'
@@ -20,10 +15,9 @@
 	)
 	(integrator 
 	  :type 'direct'
-	  :max_ray_depth 4
+	  :max_ray_depth 64
 	  :light_sample_count 1
 	  :msi true
-	  :mode "validate_material"
 	)
 	; Outputs
 	(output

@@ -44,17 +44,17 @@ bool SamplerManager::createDefaultsIfNecessary(Environment* env)
 	}
 
 	if (!settings.lensSamplerFactory) {
-		PR_LOG(L_WARNING) << "No lens sampler selected. Using halton sampler with sample count " << DEF_LENS_SC << std::endl;
+		//PR_LOG(L_WARNING) << "No lens sampler selected. Using halton sampler with sample count " << DEF_LENS_SC << std::endl;
 		settings.lensSamplerFactory = createAndAdd("halton", DEF_LENS_SC);
 	}
 
 	if (!settings.timeSamplerFactory) {
-		PR_LOG(L_WARNING) << "No time sampler selected. Using multi jittered sampler with sample count " << DEF_TIME_SC << std::endl;
+		//PR_LOG(L_WARNING) << "No time sampler selected. Using multi jittered sampler with sample count " << DEF_TIME_SC << std::endl;
 		settings.timeSamplerFactory = createAndAdd("mjitt", DEF_TIME_SC);
 	}
 
 	if (!settings.spectralSamplerFactory) {
-		PR_LOG(L_WARNING) << "No spectral sampler selected. Using multi jittered sampler with sample count " << DEF_SPEC_SC << std::endl;
+		//PR_LOG(L_WARNING) << "No spectral sampler selected. Using multi jittered sampler with sample count " << DEF_SPEC_SC << std::endl;
 		settings.spectralSamplerFactory = createAndAdd("mjitt", DEF_SPEC_SC);
 	}
 
