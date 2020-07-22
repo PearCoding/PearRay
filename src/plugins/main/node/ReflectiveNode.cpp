@@ -12,57 +12,44 @@ inline SpectralBlob teval(const ShadingContext& ctx, const std::shared_ptr<Float
 inline std::string tdump(float a) { return std::to_string(a); }
 inline std::string tdump(const std::shared_ptr<FloatSpectralNode>& a) { return a->dumpInformation(); }
 
-template <typename T>
-class Cauchy2IndexNode : public FloatSpectralNode {
+template <typename T, size_t N>
+class CauchyIndexNode : public FloatSpectralNode {
 public:
-	explicit Cauchy2IndexNode(const T& a, const T& b)
-		: mA(a)
-		, mB(b)
-	{
-	}
-
-	SpectralBlob eval(const ShadingContext& ctx) const override { return Reflection::cauchy(ctx.WavelengthNM, teval(ctx, mA), teval(ctx, mB)); }
-	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
-	std::string dumpInformation() const override
-	{
-		std::stringstream sstream;
-		sstream << "CauchyIndex (" << tdump(mA) << ", " << tdump(mB) << ")";
-		return sstream.str();
-	}
-
-private:
-	const T mA;
-	const T mB;
-};
-
-template <typename T>
-class Cauchy3IndexNode : public FloatSpectralNode {
-public:
-	explicit Cauchy3IndexNode(const T& a, const T& b, const T& c)
-		: mA(a)
-		, mB(b)
-		, mC(c)
+	explicit CauchyIndexNode(const std::array<T, N>& cs)
+		: mCs(cs)
 	{
 	}
 
 	SpectralBlob eval(const ShadingContext& ctx) const override
 	{
-		return Reflection::cauchy(ctx.WavelengthNM, teval(ctx, mA), teval(ctx, mB), teval(ctx, mC));
+		using RetType = decltype(teval(ctx, mCs[0]));
+		std::array<RetType, N> cs;
+		PR_OPT_LOOP
+		for (size_t i = 0; i < N; ++i)
+			cs[i] = teval(ctx, mCs[i]);
+		return Reflection::cauchy<SpectralBlob, RetType>(ctx.WavelengthNM, cs.data(), N);
 	}
 
 	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
-		sstream << "CauchyIndex (" << tdump(mA) << ", " << tdump(mB) << ", " << tdump(mC) << ")";
+		sstream << "CauchyIndex (";
+		for (size_t i = 0; i < N - 1; ++i)
+			sstream << tdump(mCs[i]) << ", ";
+		sstream << tdump(mCs[N - 1]) << ")";
 		return sstream.str();
 	}
 
 private:
-	const T mA;
-	const T mB;
-	const T mC;
+	const std::array<T, N> mCs;
 };
+
+template <typename T, size_t N>
+inline std::shared_ptr<CauchyIndexNode<T, N>> create_cauchy_index(const std::array<T, N>& cs)
+{
+	return std::make_shared<CauchyIndexNode<T, N>>(cs);
+}
 
 template <typename T, size_t N>
 class SellmeierSqrIndexNode : public FloatSpectralNode {
@@ -238,6 +225,23 @@ static struct {
 };
 
 using ParamNode = std::shared_ptr<FloatSpectralNode>;
+
+template <size_t N>
+std::shared_ptr<FloatSpectralNode> createCauchyIndex(const SceneLoadContext& ctx, bool allNumber)
+{
+	if (allNumber) {
+		std::array<float, N> cs;
+		for (size_t i = 0; i < N; ++i)
+			cs[i] = ctx.Parameters.getParameter(i).getNumber(0.0f);
+		return create_cauchy_index(cs);
+	} else {
+		std::array<ParamNode, N> cs;
+		for (size_t i = 0; i < N; ++i)
+			cs[i] = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(i));
+		return create_cauchy_index(cs);
+	}
+}
+
 template <bool isSquared, size_t N>
 std::shared_ptr<FloatSpectralNode> createSellmeierIndex(const SceneLoadContext& ctx, bool allNumber)
 {
@@ -279,22 +283,22 @@ public:
 		}
 
 		if (type_name == "cauchy_index") {
-			if (allNumber) {
-				if (ctx.Parameters.positionalParameters().size() == 3)
-					return std::make_shared<Cauchy3IndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
-																	 ctx.Parameters.getParameter(1).getNumber(0.0f),
-																	 ctx.Parameters.getParameter(2).getNumber(0.0f));
-				else
-					return std::make_shared<Cauchy2IndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
-																	 ctx.Parameters.getParameter(1).getNumber(0.0f));
-			} else {
-				if (ctx.Parameters.positionalParameters().size() == 3)
-					return std::make_shared<Cauchy3IndexNode<ParamNode>>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-																		 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)),
-																		 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(2)));
-				else
-					return std::make_shared<Cauchy2IndexNode<ParamNode>>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-																		 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			size_t N = ctx.Parameters.positionalParameters().size(); // Glue between runtime and template
+			switch (N) {
+			case 0:
+			case 1:
+				return createCauchyIndex<1>(ctx, allNumber);
+			case 2:
+				return createCauchyIndex<2>(ctx, allNumber);
+			case 3:
+				return createCauchyIndex<3>(ctx, allNumber);
+			case 4:
+				return createCauchyIndex<4>(ctx, allNumber);
+			case 5:
+				return createCauchyIndex<5>(ctx, allNumber);
+			default:
+			case 6:
+				return createCauchyIndex<6>(ctx, allNumber);
 			}
 		} else if (type_name == "sellmeier_index") {
 			size_t N = ctx.Parameters.positionalParameters().size() / 2; // Glue between runtime and template

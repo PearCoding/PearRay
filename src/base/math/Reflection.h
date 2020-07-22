@@ -128,34 +128,26 @@ inline Vector3f halfway(const Vector3f& V, const Vector3f& L)
 /////////////////////////////////////////////
 
 /**
-* @brief Returns the refractive index based on the simple cauchy equation  
-* @param lambda_nm Wavelength in nano meters
-* @param A A base coefficient
-* @param B B coefficient given in squared micro meters
-* @return Refractive index
-*/
-template <typename T1, typename T2>
-inline T1 cauchy(const T1& lambda_nm, const T2& A, const T2& B)
-{
-	const T1 lambda_qm	= lambda_nm / 1000;
-	const T1 lambda_qm2 = lambda_qm * lambda_qm;
-	return A + B / lambda_qm2;
-}
-
-/**
 * @brief Returns the refractive index based on the basic cauchy equation  
 * @param lambda_nm Wavelength in nano meters
-* @param A A base coefficient
-* @param B B coefficient given in squared micro meters
-* @param C C coefficient given in quadrupled micro meters
+* @param Cs Coefficients
+* @param n Amount of coefficients
 * @return Refractive index
 */
 template <typename T1, typename T2>
-inline T1 cauchy(const T1& lambda_nm, const T2& A, const T2& B, const T2& C)
+inline T1 cauchy(const T1& lambda_nm, const T2* Cs, size_t n)
 {
 	const T1 lambda_qm	= lambda_nm / 1000;
 	const T1 lambda_qm2 = lambda_qm * lambda_qm;
-	return A + B / lambda_qm2 + C / (lambda_qm2 * lambda_qm2);
+	const T1 inv_l		= 1 / lambda_qm2;
+	T1 denom			= inv_l;
+	T1 value			= T1(Cs[0]);
+	PR_OPT_LOOP
+	for (size_t i = 1; i < n; ++i) {
+		value += Cs[i] * denom;
+		denom *= inv_l;
+	}
+	return value;
 }
 
 /**
@@ -172,6 +164,7 @@ inline T1 sellmeier2(const T1& lambda_nm, const T2* Bs, const T2* Cs, size_t n)
 	T1 lambda_qm  = lambda_nm / 1000;
 	T1 lambda_qm2 = lambda_qm * lambda_qm;
 	T1 value	  = T1(1);
+	PR_OPT_LOOP
 	for (size_t i = 0; i < n; ++i)
 		value += Bs[i] * lambda_qm2 / (lambda_qm2 - Cs[i]);
 	return value;
