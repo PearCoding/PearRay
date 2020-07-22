@@ -6,12 +6,12 @@ RenderStatus::RenderStatus()
 {
 }
 
-void RenderStatus::setPercentage(float f)
+void RenderStatus::setPercentage(double f)
 {
 	mPercentage = f;
 }
 
-float RenderStatus::percentage() const
+double RenderStatus::percentage() const
 {
 	return mPercentage;
 }

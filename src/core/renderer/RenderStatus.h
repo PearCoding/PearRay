@@ -11,8 +11,8 @@ public:
 
 	RenderStatus();
 
-	void setPercentage(float f);
-	float percentage() const;
+	void setPercentage(double f);
+	double percentage() const;
 
 	void setField(const std::string& unique_name, const Variant& f);
 	bool hasField(const std::string& unique_name) const;
@@ -22,7 +22,7 @@ public:
 	map_t::const_iterator end() const;
 
 private:
-	float mPercentage;
+	double mPercentage;
 	std::unordered_map<std::string, Variant> mFields;
 };
 }

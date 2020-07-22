@@ -87,7 +87,7 @@ void EXRWindow::exportImage()
 												loc.isEmpty()
 													? QDir::currentPath()
 													: loc.last(),
-												tr("Images (*.png *.xpm *.jpg)"));
+												tr("Images (*.png *.xpm *.jpg *.ppm)"));
 
 	if (!file.isEmpty()) {
 		ui.imageWidget->exportImage(file);

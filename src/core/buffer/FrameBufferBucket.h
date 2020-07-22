@@ -42,11 +42,14 @@ protected:
 private:
 	void commitSpectralsXYZ(const OutputSpectralEntry* entries, size_t entrycount);
 	void commitSpectralsMono(const OutputSpectralEntry* entries, size_t entrycount);
+	void commitSpectralsXYZNoFilter(const OutputSpectralEntry* entries, size_t entrycount);
+	void commitSpectralsMonoNoFilter(const OutputSpectralEntry* entries, size_t entrycount);
 
 	const FilterCache mFilter;
 	const Size2i mOriginalSize;
 	const Size2i mExtendedSize;
 	const bool mMonotonic;
+	const bool mHasFilter;
 	Size2i mViewSize;
 	Size2i mExtendedViewSize;
 

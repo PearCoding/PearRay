@@ -28,7 +28,7 @@ public:
 	void reset();
 
 	RenderTileStatistics statistics() const;
-	float percentage() const;
+	double percentage() const;
 
 private:
 	void clearMap();

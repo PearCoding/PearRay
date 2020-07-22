@@ -9,7 +9,7 @@
 
 namespace PR {
 struct PR_LIB_CORE RenderTileContext {
-	std::atomic<uint32> PixelSamplesRendered;
+	std::atomic<uint64> PixelSamplesRendered;
 	std::atomic<uint32> IterationCount;
 	RenderTileStatistics Statistics;
 
@@ -54,9 +54,9 @@ public:
 	inline const Size2i& viewSize() const { return mViewSize; }
 	inline const Size2i& imageSize() const { return mImageSize; }
 
-	inline bool isFinished() const { return mContext.PixelSamplesRendered >= mMaxPixelSamples; }
-	inline uint32 maxPixelSamples() const { return mMaxPixelSamples; }
-	inline uint32 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
+	inline bool isFinished() const { return mContext.IterationCount >= mMaxIterationCount; }
+	inline uint64 maxPixelSamples() const { return mMaxPixelSamples; }
+	inline uint64 pixelSamplesRendered() const { return mContext.PixelSamplesRendered; }
 	inline uint32 iterationCount() const { return mContext.IterationCount; }
 	inline uint32 maxIterationCount() const { return mMaxIterationCount; }
 
@@ -83,7 +83,7 @@ private:
 	const Point2i mEnd;
 	const Size2i mViewSize;
 	const Size2i mImageSize;
-	uint32 mMaxPixelSamples;
+	uint64 mMaxPixelSamples;
 	uint32 mMaxIterationCount;
 
 	RenderTileContext mContext;

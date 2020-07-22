@@ -14,22 +14,20 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 2048
+		:sample_count 1024
 	)
 	(filter
 		:slot 'pixel'
 		:type 'MITCHELL'
-		:radius 2
+		:radius 0
 	)
 	; Outputs
 	(output
 		:name 'image'
 		(channel :type 'color', :color 'srgb')
+		(channel :type 'color', :color 'srgb', :lpe 'CS*DL')
 		(channel :type 'n' )
-		(channel :type 'uvw' )
 		(channel :type 'ng' )
-		(channel :type 'nx' )
-		(channel :type 'ny' )
 		(channel :type 'feedback' )
 	)
 	; Camera

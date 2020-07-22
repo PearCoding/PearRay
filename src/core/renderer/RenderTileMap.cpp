@@ -160,22 +160,22 @@ RenderTileStatistics RenderTileMap::statistics() const
 	return s;
 }
 
-float RenderTileMap::percentage() const
+double RenderTileMap::percentage() const
 {
 	PR_PROFILE_THIS;
 
 	Mutex::scoped_lock lock(mMutex, false);
-	uint32 maxSamples	   = 0;
-	uint32 samplesRendered = 0;
+	uint64 maxSamples	   = 0;
+	uint64 samplesRendered = 0;
 	for (auto tile : mTileMap) {
 		maxSamples += tile->maxPixelSamples();
 		samplesRendered += tile->pixelSamplesRendered();
 	}
 
 	if (maxSamples == 0)
-		return 1.0f;
+		return 1.0;
 	else
-		return samplesRendered / (float)maxSamples;
+		return samplesRendered / (double)maxSamples;
 }
 
 void RenderTileMap::reset()

@@ -475,7 +475,7 @@ public:
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
 		size_t lightsamples = (size_t)mParams.getUInt("light_sample_count", 1);
-		size_t maxraydepth	= (size_t)mParams.getUInt("max_ray_depth", 4);
+		size_t maxraydepth	= (size_t)mParams.getUInt("max_ray_depth", 64);
 
 		auto obj = std::make_shared<IntDirect>(lightsamples, maxraydepth, mParams.getBool("msi", true));
 		return obj;
