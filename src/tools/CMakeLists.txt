@@ -1,5 +1,6 @@
-add_subdirectory(splitprc)
 add_subdirectory(img2coeff)
-add_subdirectory(imgdiff)
 add_subdirectory(imgcmp)
+add_subdirectory(imgdiff)
+add_subdirectory(imgsplit)
 add_subdirectory(imgtonemap)
+add_subdirectory(splitprc)
