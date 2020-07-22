@@ -64,78 +64,93 @@ private:
 	const T mC;
 };
 
-template <typename T>
+template <typename T, size_t N>
 class SellmeierSqrIndexNode : public FloatSpectralNode {
 public:
-	explicit SellmeierSqrIndexNode(const T& b1, const T& b2, const T& b3, const T& c1, const T& c2, const T& c3)
-		: mB1(b1)
-		, mB2(b2)
-		, mB3(b3)
-		, mC1(c1)
-		, mC2(c2)
-		, mC3(c3)
+	explicit SellmeierSqrIndexNode(const std::array<T, N>& bs, const std::array<T, N>& cs)
+		: mBs(bs)
+		, mCs(cs)
 	{
 	}
 
 	SpectralBlob eval(const ShadingContext& ctx) const override
 	{
-		return Reflection::sellmeier2(ctx.WavelengthNM,
-									  teval(ctx, mB1), teval(ctx, mB2), teval(ctx, mB3),
-									  teval(ctx, mC1), teval(ctx, mC2), teval(ctx, mC3));
+		using RetType = decltype(teval(ctx, mBs[0]));
+		std::array<RetType, N> bs;
+		std::array<RetType, N> cs;
+		PR_OPT_LOOP
+		for (size_t i = 0; i < N; ++i) {
+			bs[i] = teval(ctx, mBs[i]);
+			cs[i] = teval(ctx, mCs[i]);
+		}
+		return Reflection::sellmeier2<SpectralBlob, RetType>(ctx.WavelengthNM, bs.data(), cs.data(), N);
 	}
+
 	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
-		sstream << "SquaredSellmeierIndex (" << tdump(mB1) << ", " << tdump(mB2) << ", " << tdump(mB3) << ", " << tdump(mC1) << ", " << tdump(mC2) << ", " << tdump(mC3) << ")";
+		sstream << "SquaredSellmeierIndex (";
+		for (size_t i = 0; i < N; ++i)
+			sstream << "[" << tdump(mBs[i]) << "," << tdump(mCs[i]) << "]";
+		sstream << ")";
 		return sstream.str();
 	}
 
 private:
-	const T mB1;
-	const T mB2;
-	const T mB3;
-	const T mC1;
-	const T mC2;
-	const T mC3;
+	const std::array<T, N> mBs;
+	const std::array<T, N> mCs;
 };
 
-template <typename T>
+template <typename T, size_t N>
+inline std::shared_ptr<SellmeierSqrIndexNode<T, N>> create_squared_sellmeier_index(const std::array<T, N>& bs, const std::array<T, N>& cs)
+{
+	return std::make_shared<SellmeierSqrIndexNode<T, N>>(bs, cs);
+}
+
+template <typename T, size_t N>
 class SellmeierIndexNode : public FloatSpectralNode {
 public:
-	explicit SellmeierIndexNode(const T& b1, const T& b2, const T& b3, const T& c1, const T& c2, const T& c3)
-		: mB1(b1)
-		, mB2(b2)
-		, mB3(b3)
-		, mC1(c1)
-		, mC2(c2)
-		, mC3(c3)
+	explicit SellmeierIndexNode(const std::array<T, N>& bs, const std::array<T, N>& cs)
+		: mBs(bs)
+		, mCs(cs)
 	{
 	}
 
 	SpectralBlob eval(const ShadingContext& ctx) const override
 	{
-		return Reflection::sellmeier2(ctx.WavelengthNM,
-									  teval(ctx, mB1), teval(ctx, mB2), teval(ctx, mB3),
-									  teval(ctx, mC1), teval(ctx, mC2), teval(ctx, mC3))
-			.cwiseSqrt();
+		using RetType = decltype(teval(ctx, mBs[0]));
+		std::array<RetType, N> bs;
+		std::array<RetType, N> cs;
+		PR_OPT_LOOP
+		for (size_t i = 0; i < N; ++i) {
+			bs[i] = teval(ctx, mBs[i]);
+			cs[i] = teval(ctx, mCs[i]);
+		}
+		return Reflection::sellmeier2<SpectralBlob, RetType>(ctx.WavelengthNM, bs.data(), cs.data(), N).cwiseSqrt();
 	}
+
 	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
 	std::string dumpInformation() const override
 	{
 		std::stringstream sstream;
-		sstream << "SellmeierIndex (" << tdump(mB1) << ", " << tdump(mB2) << ", " << tdump(mB3) << ", " << tdump(mC1) << ", " << tdump(mC2) << ", " << tdump(mC3) << ")";
+		sstream << "SellmeierIndex (";
+		for (size_t i = 0; i < N; ++i)
+			sstream << "[" << tdump(mBs[i]) << "," << tdump(mCs[i]) << "]";
+		sstream << ")";
 		return sstream.str();
 	}
 
 private:
-	const T mB1;
-	const T mB2;
-	const T mB3;
-	const T mC1;
-	const T mC2;
-	const T mC3;
+	const std::array<T, N> mBs;
+	const std::array<T, N> mCs;
 };
+
+template <typename T, size_t N>
+inline std::shared_ptr<SellmeierIndexNode<T, N>> create_sellmeier_index(const std::array<T, N>& bs, const std::array<T, N>& cs)
+{
+	return std::make_shared<SellmeierIndexNode<T, N>>(bs, cs);
+}
 
 template <typename T>
 class PolySqrIndexNode : public FloatSpectralNode {
@@ -206,7 +221,51 @@ private:
 	const T mC2;
 };
 
+// https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
+static const auto BK7 = create_sellmeier_index<float, 3>({ 1.03961212f, 0.231792344f, 1.01046945f }, { 0.00600069867f, 0.0200179144f, 103.560653f });
+// https://refractiveindex.info/?shelf=main&book=H2O&page=Daimon-20.0C
+static const auto H2O = create_sellmeier_index<float, 4>({ 5.684027565e-1f, 1.726177391e-1f, 2.086189578e-2f, 1.130748688e-1f },
+														 { 5.101829712e-3f, 1.821153936e-2f, 2.620722293e-2f, 1.069792721e1f });
+static struct {
+	const char* Name;
+	std::shared_ptr<FloatSpectralNode> Node;
+} _lookups[] = {
+	{ "bk7", BK7 },
+	{ "glass", BK7 },
+	{ "h2o", H2O },
+	{ "water", H2O },
+	{ nullptr, nullptr }
+};
+
 using ParamNode = std::shared_ptr<FloatSpectralNode>;
+template <bool isSquared, size_t N>
+std::shared_ptr<FloatSpectralNode> createSellmeierIndex(const SceneLoadContext& ctx, bool allNumber)
+{
+	if (allNumber) {
+		std::array<float, N> bs;
+		std::array<float, N> cs;
+		for (size_t i = 0; i < N; ++i)
+			bs[i] = ctx.Parameters.getParameter(i).getNumber(0.0f);
+		for (size_t i = 0; i < N; ++i)
+			cs[i] = ctx.Parameters.getParameter(i + N).getNumber(0.0f);
+		if constexpr (isSquared)
+			return create_squared_sellmeier_index(bs, cs);
+		else
+			return create_sellmeier_index(bs, cs);
+	} else {
+		std::array<ParamNode, N> bs;
+		std::array<ParamNode, N> cs;
+		for (size_t i = 0; i < N; ++i)
+			bs[i] = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(i));
+		for (size_t i = 0; i < N; ++i)
+			cs[i] = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(i + N));
+		if constexpr (isSquared)
+			return create_squared_sellmeier_index(bs, cs);
+		else
+			return create_sellmeier_index(bs, cs);
+	}
+}
+
 class ReflectivePlugin : public INodePlugin {
 public:
 	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
@@ -238,35 +297,41 @@ public:
 																		 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
 			}
 		} else if (type_name == "sellmeier_index") {
-			if (allNumber)
-				return std::make_shared<SellmeierIndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
-																   ctx.Parameters.getParameter(1).getNumber(0.0f),
-																   ctx.Parameters.getParameter(2).getNumber(0.0f),
-																   ctx.Parameters.getParameter(3).getNumber(0.0f),
-																   ctx.Parameters.getParameter(4).getNumber(0.0f),
-																   ctx.Parameters.getParameter(5).getNumber(0.0f));
-			else
-				return std::make_shared<SellmeierIndexNode<ParamNode>>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-																	   ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)),
-																	   ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(2)),
-																	   ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(3)),
-																	   ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(4)),
-																	   ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(5)));
+			size_t N = ctx.Parameters.positionalParameters().size() / 2; // Glue between runtime and template
+			switch (N) {
+			case 0:
+			case 1:
+				return createSellmeierIndex<false, 1>(ctx, allNumber);
+			case 2:
+				return createSellmeierIndex<false, 2>(ctx, allNumber);
+			case 3:
+				return createSellmeierIndex<false, 3>(ctx, allNumber);
+			case 4:
+				return createSellmeierIndex<false, 4>(ctx, allNumber);
+			case 5:
+				return createSellmeierIndex<false, 5>(ctx, allNumber);
+			default:
+			case 6:
+				return createSellmeierIndex<false, 6>(ctx, allNumber);
+			}
 		} else if (type_name == "sellmeier2_index") {
-			if (allNumber)
-				return std::make_shared<SellmeierSqrIndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
-																	  ctx.Parameters.getParameter(1).getNumber(0.0f),
-																	  ctx.Parameters.getParameter(2).getNumber(0.0f),
-																	  ctx.Parameters.getParameter(3).getNumber(0.0f),
-																	  ctx.Parameters.getParameter(4).getNumber(0.0f),
-																	  ctx.Parameters.getParameter(5).getNumber(0.0f));
-			else
-				return std::make_shared<SellmeierSqrIndexNode<ParamNode>>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-																		  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)),
-																		  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(2)),
-																		  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(3)),
-																		  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(4)),
-																		  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(5)));
+			size_t N = ctx.Parameters.positionalParameters().size() / 2; // Glue between runtime and template
+			switch (N) {
+			case 0:
+			case 1:
+				return createSellmeierIndex<true, 1>(ctx, allNumber);
+			case 2:
+				return createSellmeierIndex<true, 2>(ctx, allNumber);
+			case 3:
+				return createSellmeierIndex<true, 3>(ctx, allNumber);
+			case 4:
+				return createSellmeierIndex<true, 4>(ctx, allNumber);
+			case 5:
+				return createSellmeierIndex<true, 5>(ctx, allNumber);
+			default:
+			case 6:
+				return createSellmeierIndex<true, 6>(ctx, allNumber);
+			}
 		} else if (type_name == "poly_index") {
 			if (allNumber)
 				return std::make_shared<PolyIndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
@@ -297,13 +362,13 @@ public:
 			auto name = ctx.Parameters.getParameter(0).getString("bk7");
 			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-			if (name == "bk7") {
-				// https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
-				return std::make_shared<SellmeierIndexNode<float>>(1.03961212f, 0.231792344f, 1.01046945f, 0.00600069867f, 0.0200179144f, 103.560653f);
-			} else {
-				PR_LOG(L_ERROR) << "Unknown lookup name " << name << std::endl;
-				return nullptr;
+			for (int i = 0; _lookups[i].Name; ++i) {
+				if (_lookups[i].Name == name)
+					return _lookups[i].Node;
 			}
+
+			PR_LOG(L_ERROR) << "Unknown lookup name " << name << std::endl;
+			return nullptr;
 		} else {
 			PR_ASSERT(false, "ReflectiveNode plugin does not handle all offered types of operations!");
 			return nullptr;

@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 1024
+		:sample_count 2048
 	)
 	(filter
 		:slot 'pixel'
@@ -614,7 +614,7 @@
 	(entity
 		:name 'Cube'
 		:type 'mesh'
-		:materials 'Water'
+		:materials 'Liquid'
 		:mesh 'Cube'
 		:transform [10.899998664855957,0.0,0.0,1.0,0.0,10.899998664855957,0.0,0.0,0.0,0.0,7.032114028930664,6.719893455505371,0.0,0.0,0.0,1.0]
 	)
@@ -677,14 +677,9 @@
 		:clearcoat 0.000000
 		:clearcoat_gloss 0.000000
 	)
-	(spectrum
-		:name 'Water_specular_color'
-		:data (refl 0.464621 0.670320 1.000000)
-	)
 	(material
-		:name 'Water'
+		:name 'Liquid'
 		:type 'glass'
-		;:specularity 'Water_specular_color'
-		:index (sellmeier_index 5.666959820e-1 1.731900098e-1 2.095951857e-2 5.084151894e-3 1.818488474e-2 2.625439472e-2) 
+		:index (lookup_index "water")
 	)
 )

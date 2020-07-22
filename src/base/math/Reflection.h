@@ -161,39 +161,34 @@ inline T1 cauchy(const T1& lambda_nm, const T2& A, const T2& B, const T2& C)
 /**
 * @brief Returns the (squared) refractive index based on the sellmeier equation  
 * @param lambda_nm Wavelength in nano meters
-* @param B1 B1 coefficient
-* @param B2 B2 coefficient
-* @param B3 B3 coefficient
-* @param C1 C1 coefficient given in squared micro meters
-* @param C2 C2 coefficient given in squared micro meters
-* @param C3 C3 coefficient given in squared micro meters
+* @param Bs B coefficients N times
+* @param Cs C coefficients given in squared micro meters N times
+* @param n Amount of coefficients (pairs) given
 * @return Squared refractive index
 */
 template <typename T1, typename T2>
-inline T1 sellmeier2(const T1& lambda_nm, const T2& B1, const T2& B2, const T2& B3, const T2& C1, const T2& C2, const T2& C3)
+inline T1 sellmeier2(const T1& lambda_nm, const T2* Bs, const T2* Cs, size_t n)
 {
 	T1 lambda_qm  = lambda_nm / 1000;
 	T1 lambda_qm2 = lambda_qm * lambda_qm;
-	return 1
-		   + B1 * lambda_qm2 / (lambda_qm2 - C1)
-		   + B2 * lambda_qm2 / (lambda_qm2 - C2)
-		   + B3 * lambda_qm2 / (lambda_qm2 - C3);
+	T1 value	  = T1(1);
+	for (size_t i = 0; i < n; ++i)
+		value += Bs[i] * lambda_qm2 / (lambda_qm2 - Cs[i]);
+	return value;
 }
 
 /**
 * @brief Returns the refractive index based on the sellmeier equation  
 * @param lambda_nm Wavelength in nano meters
-* @param B1 B1 coefficient
-* @param B2 B2 coefficient
-* @param B3 B3 coefficient
-* @param C1 C1 coefficient given in squared micro meters
-* @param C2 C2 coefficient given in squared micro meters
-* @param C3 C3 coefficient given in squared micro meters
+* @param Bs B coefficients N times
+* @param Cs C coefficients given in squared micro meters N times
+* @param n Amount of coefficients given
 * @return Refractive index
 */
-inline float sellmeier(float lambda_nm, float B1, float B2, float B3, float C1, float C2, float C3)
+template <typename T1, typename T2>
+inline T1 sellmeier(const T1& lambda_nm, const T2* Bs, const T2* Cs, size_t n)
 {
-	return std::sqrt(sellmeier2(lambda_nm, B1, B2, B3, C1, C2, C3));
+	return std::sqrt(sellmeier2<T1, T2>(lambda_nm, Bs, Cs, n));
 }
 
 /**
