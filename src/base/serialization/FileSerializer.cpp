@@ -58,24 +58,24 @@ bool FileSerializer::isValid() const
 	return mInternal && mInternal->File.is_open();
 }
 
-void FileSerializer::writeRaw(const uint8* data, size_t elems, size_t elemSize)
+size_t FileSerializer::writeRaw(const uint8* data, size_t size)
 {
 	PR_ASSERT(isValid(), "Trying to write into a close buffer!");
 	PR_ASSERT(!isReadMode(), "Trying to write into a read serializer!");
 
-	const size_t size = elems * elemSize;
 	mInternal->MemoryFootprint += size;
 	mInternal->File.write(reinterpret_cast<const char*>(data), size);
+	return size;
 }
 
-void FileSerializer::readRaw(uint8* data, size_t elems, size_t elemSize)
+size_t FileSerializer::readRaw(uint8* data, size_t size)
 {
 	PR_ASSERT(isValid(), "Trying to read from a close buffer!");
 	PR_ASSERT(isReadMode(), "Trying to read from a write serializer!");
 
-	const size_t size = elems * elemSize;
 	mInternal->MemoryFootprint += size;
 	mInternal->File.read(reinterpret_cast<char*>(data), size);
+	return size;// TODO: Really??
 }
 
 } // namespace PR

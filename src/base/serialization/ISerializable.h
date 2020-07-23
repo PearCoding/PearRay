@@ -4,7 +4,7 @@
 
 namespace PR {
 class Serializer;
-class PR_LIB_CORE ISerializable {
+class PR_LIB_BASE ISerializable {
 public:
 	virtual void serialize(Serializer& serializer) = 0;
 };

@@ -1,6 +1,6 @@
 #include "DefaultSRGB.h"
 #include "Logger.h"
-#include "serialization/BufferSerializer.h"
+#include "serialization/MemorySerializer.h"
 
 #if defined(PR_OS_LINUX)
 extern const unsigned char srgb_coeff_data[];
@@ -38,7 +38,7 @@ namespace PR {
 std::shared_ptr<SpectralUpsampler> DefaultSRGB::loadSpectralUpsampler()
 {
 #if defined(PR_OS_LINUX)
-	BufferSerializer serializer;
+	MemorySerializer serializer;
 	serializer.open(const_cast<uint8*>(srgb_coeff_data), (size_t)srgb_coeff_size, true);
 	return std::make_shared<SpectralUpsampler>(serializer);
 #elif defined(PR_OS_WINDOWS)	
@@ -63,7 +63,7 @@ std::shared_ptr<SpectralUpsampler> DefaultSRGB::loadSpectralUpsampler()
 		return nullptr;
 	}
 
-	BufferSerializer serializer;
+	MemorySerializer serializer;
 	serializer.open(data, size, true);
 	return std::make_shared<SpectralUpsampler>(serializer);
 #else

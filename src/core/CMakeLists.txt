@@ -118,14 +118,6 @@ set(PR_Src
   sampler/SplitSample.h
   scene/Scene.cpp
   scene/Scene.h
-  serialization/BufferSerializer.h
-  serialization/BufferSerializer.cpp
-  serialization/FileSerializer.h
-  serialization/FileSerializer.cpp
-  serialization/ISerializable.h
-  serialization/Serializer.h
-  serialization/Serializer.cpp
-  serialization/Serializer.inl
   spectral/Blackbody.h
   spectral/CIE.cpp
   spectral/CIE.h

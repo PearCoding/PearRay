@@ -27,6 +27,9 @@ public:
 	PR::uint32 ImgUpdateIteration;
 	bool ImgUseTags;
 
+	// Network
+	PR::int16 ListenNetwork; // Port to listen, -1 no networking
+
 	// Threading
 	PR::uint32 ThreadCount;
 	bool AdaptiveTiling;

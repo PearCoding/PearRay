@@ -30,6 +30,10 @@ set(PR_Src
   log/FileLogListener.cpp
   log/FileLogListener.h
   log/LogListener.h
+  network/Socket.cpp
+  network/Socket.h
+  network/SocketImplLinux.inl
+  network/SocketImplWindows.inl
   math/Bits.h
   math/Compression.h
   math/Fresnel.h
@@ -52,6 +56,20 @@ set(PR_Src
   memory/MemoryPool.inl
   memory/MemoryStack.h
   memory/MemoryStack.inl
+  serialization/BufferedNetworkSerializer.h
+  serialization/BufferedNetworkSerializer.cpp
+  serialization/BufferSerializer.h
+  serialization/BufferSerializer.cpp
+  serialization/FileSerializer.h
+  serialization/FileSerializer.cpp
+  serialization/ISerializable.h
+  serialization/MemorySerializer.h
+  serialization/MemorySerializer.cpp
+  serialization/NetworkSerializer.h
+  serialization/NetworkSerializer.cpp
+  serialization/Serializer.h
+  serialization/Serializer.cpp
+  serialization/Serializer.inl
 )
 
 add_library(pr_lib_base ${PR_Src})

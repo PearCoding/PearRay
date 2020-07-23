@@ -37,7 +37,7 @@ inline PR_LIB_BASE void _radixSort(VT* visitor, S swapper, size_t begin, size_t 
 }
 
 template <typename VT, typename S>
-inline PR_LIB_CORE void radixSort(VT* visitor, S swapper, size_t first, size_t last, VT mask)
+inline PR_LIB_BASE void radixSort(VT* visitor, S swapper, size_t first, size_t last, VT mask)
 {
 	_radixSort(visitor, swapper, first, last + 1, mask);
 }

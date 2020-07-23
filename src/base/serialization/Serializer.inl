@@ -3,6 +3,17 @@
 namespace PR {
 inline bool Serializer::isReadMode() const { return mReadMode; }
 
+inline void Serializer::writeRawLooped(const uint8* data, size_t size)
+{
+	size_t total = 0;
+	while (total < size) {
+		size_t written = writeRaw(data + total, size - total);
+		if (written == 0)
+			return; // ERROR??
+		total += written;
+	}
+}
+
 inline void Serializer::write(bool v)
 {
 	uint8 tmp = v ? 1 : 0;
@@ -12,35 +23,35 @@ inline void Serializer::write(bool v)
 inline void Serializer::write(int8 v) { write((uint8)v); }
 inline void Serializer::write(uint8 v)
 {
-	writeRaw(&v, 1, sizeof(uint8));
+	writeRaw(&v, sizeof(uint8));
 }
 
 inline void Serializer::write(int16 v) { write((uint16)v); }
 inline void Serializer::write(uint16 v)
 {
-	writeRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(uint16));
+	writeRawLooped(reinterpret_cast<uint8*>(&v), sizeof(uint16));
 }
 
 inline void Serializer::write(int32 v) { write((uint32)v); }
 inline void Serializer::write(uint32 v)
 {
-	writeRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(uint32));
+	writeRawLooped(reinterpret_cast<uint8*>(&v), sizeof(uint32));
 }
 
 inline void Serializer::write(int64 v) { write((uint64)v); }
 inline void Serializer::write(uint64 v)
 {
-	writeRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(uint64));
+	writeRawLooped(reinterpret_cast<uint8*>(&v), sizeof(uint64));
 }
 
 inline void Serializer::write(float v)
 {
-	writeRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(float));
+	writeRawLooped(reinterpret_cast<uint8*>(&v), sizeof(float));
 }
 
 inline void Serializer::write(double v)
 {
-	writeRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(double));
+	writeRawLooped(reinterpret_cast<uint8*>(&v), sizeof(double));
 }
 
 inline void Serializer::write(const std::string& v)
@@ -66,8 +77,8 @@ inline std::enable_if_t<is_trivial_serializable<T>::value, void>
 Serializer::write(const std::vector<T, Alloc>& vec)
 {
 	write((uint64)vec.size());
-	writeRaw(reinterpret_cast<const uint8*>(vec.data()),
-			 vec.size(), sizeof(T));
+	writeRawLooped(reinterpret_cast<const uint8*>(vec.data()),
+				   vec.size() * sizeof(T));
 }
 
 template <typename T, typename Alloc>
@@ -105,6 +116,17 @@ inline void Serializer::write(const ISerializable& v)
 
 //////////////////////////////////////////////////////////
 
+inline void Serializer::readRawLooped(uint8* data, size_t size)
+{
+	size_t total = 0;
+	while (total < size) {
+		size_t read = readRaw(data + total, size - total);
+		if (read == 0)
+			return; // ERROR??
+		total += read;
+	}
+}
+
 inline void Serializer::read(bool& v)
 {
 	uint8 tmp;
@@ -121,7 +143,7 @@ inline void Serializer::read(int8& v)
 
 inline void Serializer::read(uint8& v)
 {
-	readRaw(&v, 1, sizeof(uint8));
+	readRaw(&v, sizeof(uint8));
 }
 
 inline void Serializer::read(int16& v)
@@ -133,7 +155,7 @@ inline void Serializer::read(int16& v)
 
 inline void Serializer::read(uint16& v)
 {
-	readRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(uint16));
+	readRawLooped(reinterpret_cast<uint8*>(&v), sizeof(uint16));
 }
 
 inline void Serializer::read(int32& v)
@@ -145,7 +167,7 @@ inline void Serializer::read(int32& v)
 
 inline void Serializer::read(uint32& v)
 {
-	readRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(uint32));
+	readRawLooped(reinterpret_cast<uint8*>(&v), sizeof(uint32));
 }
 
 inline void Serializer::read(int64& v)
@@ -157,17 +179,17 @@ inline void Serializer::read(int64& v)
 
 inline void Serializer::read(uint64& v)
 {
-	readRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(uint64));
+	readRawLooped(reinterpret_cast<uint8*>(&v), sizeof(uint64));
 }
 
 inline void Serializer::read(float& v)
 {
-	readRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(float));
+	readRawLooped(reinterpret_cast<uint8*>(&v), sizeof(float));
 }
 
 inline void Serializer::read(double& v)
 {
-	readRaw(reinterpret_cast<uint8*>(&v), 1, sizeof(double));
+	readRawLooped(reinterpret_cast<uint8*>(&v), sizeof(double));
 }
 
 inline void Serializer::read(std::string& v)
@@ -204,7 +226,7 @@ Serializer::read(std::vector<T, Alloc>& vec)
 	uint64 size;
 	read(size);
 	vec.resize(size);
-	readRaw(reinterpret_cast<uint8*>(vec.data()), vec.size(), sizeof(T));
+	readRawLooped(reinterpret_cast<uint8*>(vec.data()), vec.size() * sizeof(T));
 }
 
 template <typename T, typename Alloc>

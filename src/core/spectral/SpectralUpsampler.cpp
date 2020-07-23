@@ -18,7 +18,7 @@ SpectralUpsampler::SpectralUpsampler(Serializer& serializer)
 	mInternal->Data		  = nullptr;
 
 	char header[4];
-	serializer.readRaw(reinterpret_cast<uint8*>(header), 4, sizeof(char));
+	serializer.readRaw(reinterpret_cast<uint8*>(header), 4 * sizeof(char));
 
 	if (memcmp(header, "SPEC", 4) != 0)
 		throw std::runtime_error("Given spectral coefficients file is invalid");
@@ -29,10 +29,10 @@ SpectralUpsampler::SpectralUpsampler(Serializer& serializer)
 	const size_t size_data	= mInternal->Resolution * mInternal->Resolution * mInternal->Resolution * 3 * COEFFS_N;
 
 	mInternal->Scale = new float[size_scale];
-	serializer.readRaw(reinterpret_cast<uint8*>(mInternal->Scale), size_scale, sizeof(float));
+	serializer.readRaw(reinterpret_cast<uint8*>(mInternal->Scale), size_scale * sizeof(float));
 
 	mInternal->Data = new float[size_data];
-	serializer.readRaw(reinterpret_cast<uint8*>(mInternal->Data), size_data, sizeof(float));
+	serializer.readRaw(reinterpret_cast<uint8*>(mInternal->Data), size_data * sizeof(float));
 }
 
 SpectralUpsampler::~SpectralUpsampler()

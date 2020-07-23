@@ -17,7 +17,7 @@ using is_trivial_serializable = std::integral_constant<
 
 /* Major reason for own serialization class is the 'non' use of templates in the members. */
 class SerializerInternal;
-class PR_LIB_CORE Serializer {
+class PR_LIB_BASE Serializer {
 	PR_CLASS_NON_COPYABLE(Serializer);
 
 public:
@@ -79,12 +79,14 @@ public:
 	inline void read(Eigen::Matrix<Scalar, Rows, Cols, Options>& v);
 
 	// Interface
-	virtual bool isValid() const											= 0;
-	virtual void writeRaw(const uint8* data, size_t elems, size_t elemSize) = 0;
-	virtual void readRaw(uint8* data, size_t elems, size_t elemSize)		= 0;
+	virtual bool isValid() const							= 0;
+	virtual size_t writeRaw(const uint8* data, size_t size) = 0;
+	virtual size_t readRaw(uint8* data, size_t size)		= 0;
 
 protected:
 	inline void setReadMode(bool b) { mReadMode = b; };
+	inline void writeRawLooped(const uint8* data, size_t size);
+	inline void readRawLooped(uint8* data, size_t size);
 
 private:
 	bool mReadMode;

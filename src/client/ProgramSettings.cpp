@@ -40,6 +40,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("img-iteration-update", "Update interval in iterations where image will be periodically saved. 0 disables it.", cxxopts::value<PR::uint32>()->default_value("0"))
 			("img-use-tags", "Use tags _n to make sure no image produced in the session is replaced by the following one.")
 
+			("no-network", "Disable network support for clients")
+			("network-port", "Set port to listen on", cxxopts::value<PR::uint16>()->default_value("4217"))
+
 			("t,threads", "Amount of threads used for processing. Set 0 for automatic detection.", cxxopts::value<PR::uint32>())
 			("rtx", "Amount of horizontal tiles used in threading", cxxopts::value<PR::uint32>())
 			("rty", "Amount of vertical tiles used in threading", cxxopts::value<PR::uint32>())
@@ -135,6 +138,12 @@ bool ProgramSettings::parse(int argc, char** argv)
 		ImgUpdate		   = vm["img-update"].as<PR::uint32>();
 		ImgUpdateIteration = vm["img-iteration-update"].as<PR::uint32>();
 		ImgUseTags		   = (vm.count("img-use-tags") != 0);
+
+		// Network
+		if (vm.count("no-network"))
+			ListenNetwork = -1;
+		else
+			ListenNetwork = vm["network-port"].as<PR::uint32>();
 
 		// Thread
 		if (vm.count("rtx"))

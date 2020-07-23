@@ -3,7 +3,7 @@
 #include "Serializer.h"
 
 namespace PR {
-class PR_LIB_CORE FileSerializer : public Serializer {
+class PR_LIB_BASE FileSerializer : public Serializer {
 	PR_CLASS_NON_COPYABLE(FileSerializer);
 
 public:
@@ -18,8 +18,8 @@ public:
 
 	// Interface
 	virtual bool isValid() const override;
-	virtual void writeRaw(const uint8* data, size_t elems, size_t elemSize) override;
-	virtual void readRaw(uint8* data, size_t elems, size_t elemSize) override;
+	virtual size_t writeRaw(const uint8* data, size_t size) override;
+	virtual size_t readRaw(uint8* data, size_t size) override;
 
 private:
 	std::unique_ptr<struct FileSerializerInternal> mInternal;
