@@ -45,7 +45,7 @@ PUSH_TEST(parameter parameter.cpp USES_LOADER)
 PUSH_TEST(memory memory.cpp)
 PUSH_TEST(upsampler upsampler.cpp USES_LOADER)
 PUSH_TEST(bits bits.cpp)
-PUSH_TEST(network network.cpp)
+PUSH_TEST(network network.cpp NO_ADD)
 
 if(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)
