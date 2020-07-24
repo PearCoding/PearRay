@@ -29,11 +29,7 @@ public:
 		ShadingContext ctx;
 		Vector3f dir = in.Ray.Direction;
 
-		ctx.UV			 = Spherical::uv_from_normal(dir);
-		ctx.UV(1)		 = 1 - ctx.UV(1);
-		ctx.WavelengthNM = in.Ray.WavelengthNM;
-
-		out.Weight = radiance(ctx.WavelengthNM, ctx.UV);
+		out.Weight = radiance(in.Ray.WavelengthNM, Spherical::uv_from_normal(dir));
 
 		const float sinTheta = std::sin(ctx.UV(1) * PR_PI);
 		const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
@@ -51,12 +47,7 @@ public:
 		out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
 
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
-
-		ShadingContext coord;
-		coord.UV		   = uv;
-		coord.UV(1)		   = 1 - coord.UV(1);
-		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
-		out.Weight		   = radiance(coord.WavelengthNM, coord.UV);
+		out.Weight	 = radiance(in.Point.Ray.WavelengthNM, uv);
 	}
 
 	std::string dumpInformation() const override
@@ -77,20 +68,16 @@ private:
 
 		const Vector2f filterSize(1.0f / mModel.phiCount(), 1.0f / mModel.thetaCount());
 
-		PR_LOG(L_INFO) << "Generating 2d environment ("<< mDistribution->width() << "x" << mDistribution->height() << ") of " << name() << std::endl;
+		PR_LOG(L_INFO) << "Generating 2d environment (" << mDistribution->width() << "x" << mDistribution->height() << ") of " << name() << std::endl;
 
+		const SpectralBlob WVLS = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test
 		mDistribution->generate([&](size_t x, size_t y) {
-			float u = x / (float)mModel.phiCount();
-			float v = 1 - y / (float)mModel.thetaCount();
+			float u = x / (float)(mModel.phiCount() - 1);
+			float v = y / (float)(mModel.thetaCount() - 1);
 
 			float sinTheta = std::sin(PR_PI * (y + 0.5f) / mModel.thetaCount());
 
-			ShadingContext coord;
-			coord.UV		   = Vector2f(u, v);
-			coord.dUV		   = filterSize;
-			coord.WavelengthNM = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test
-
-			const float val = sinTheta * radiance(coord.WavelengthNM, coord.UV).maxCoeff();
+			const float val = sinTheta * radiance(WVLS, Vector2f(u, v)).maxCoeff();
 			return (val <= PR_EPSILON) ? 0.0f : val;
 		});
 	}

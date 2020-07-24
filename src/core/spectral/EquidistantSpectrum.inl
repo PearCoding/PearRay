@@ -12,6 +12,7 @@ inline EquidistantSpectrumBase::EquidistantSpectrumBase(size_t sample_count, flo
 inline size_t EquidistantSpectrumBase::sampleCount() const { return mSampleCount; }
 inline float EquidistantSpectrumBase::wavelengthStart() const { return mWavelengthStart; }
 inline float EquidistantSpectrumBase::wavelengthEnd() const { return mWavelengthEnd; }
+inline float EquidistantSpectrumBase::delta() const { return (mWavelengthEnd - mWavelengthStart) / (mSampleCount - 1); }
 
 ///////////////////////////////
 

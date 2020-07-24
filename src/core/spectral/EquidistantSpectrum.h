@@ -10,6 +10,7 @@ public:
 	inline size_t sampleCount() const;
 	inline float wavelengthStart() const;
 	inline float wavelengthEnd() const;
+	inline float delta() const;
 
 protected:
 	const size_t mSampleCount;

@@ -18,28 +18,29 @@ namespace PR {
 constexpr float SUN_WAVELENGTH_START	= 360.0f;
 constexpr float SUN_WAVELENGTH_END		= 760.0f;
 constexpr size_t SUN_WAVELENGTH_SAMPLES = 64;
-constexpr float SUN_VIS_RADIUS			= 0.5358f;
+constexpr float SUN_VIS_RADIUS			= PR_DEG2RAD * 0.5358f * 0.5f; // Given in angular radius
 
 class SunLight : public IInfiniteLight {
 public:
-	SunLight(uint32 id, const std::string& name, const Vector3f& dir, float turbidity, float radius)
+	SunLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
-		, mDirection(dir.normalized())
-		, mDisk(PR_DEG2RAD * SUN_VIS_RADIUS * 0.5f * radius) // TODO: Radius should not be incalculated here
-		, mCosTheta(std::abs(std::cos(mDisk.radius())))
-		, mSolidAngle(2 * PR_PI * (1 - std::cos(mDisk.radius())))
+		, mEA(ea)
+		, mDirection(ea.toDirection().normalized())
+		, mDisk(std::abs(std::tan(SUN_VIS_RADIUS)) * radius)
+		, mCosTheta(1 / std::sqrt(1 + mDisk.radius() * mDisk.radius()))
+		, mSolidAngle(2 * PR_PI * (1 - mCosTheta))
+		, mPDF(1 / mSolidAngle)
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 
-		const float theta = mDisk.radius();
-
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
-			mSpectrum[i] = computeSunRadiance(SUN_WAVELENGTH_START + (SUN_WAVELENGTH_END - SUN_WAVELENGTH_START) * i / (SUN_WAVELENGTH_SAMPLES - 1.0f),
-											  theta, turbidity)
-						   * mSolidAngle;
+			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
+											  mEA.Elevation, turbidity)
+						    * scale;
 	}
 
+	bool hasDeltaDistribution() const override { return mDisk.radius() <= PR_EPSILON; }
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
@@ -48,24 +49,24 @@ public:
 			out.Weight = SpectralBlob::Zero();
 			out.PDF_S  = 0;
 		} else {
+			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 				out.Weight[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
 
-			out.PDF_S = 1 / mSolidAngle;
+			out.PDF_S = mPDF;
 		}
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Outgoing	   = Tangent::fromTangentSpace(mDirection, mDx, mDy,
-												   (mDisk.surfacePoint(in.RND(0), in.RND(1)) + Vector3f(0, 0, 1)).normalized());
-		//const float cosine = std::abs(out.Outgoing.dot(mDirection));
+		out.Outgoing = Tangent::fromTangentSpace(mDirection, mDx, mDy,
+												 (mDisk.surfacePoint(in.RND(0), std::sqrt(in.RND(1))) + Vector3f(0, 0, 1)).normalized());
+		out.PDF_S	 = mPDF;
 
+		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Weight[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
-
-		out.PDF_S = 1 / mSolidAngle;
 	}
 
 	std::string dumpInformation() const override
@@ -74,19 +75,75 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SunLight>:" << std::endl
+			   << "    Elevation: " << mEA.Elevation << std::endl
+			   << "    Azimuth:   " << mEA.Azimuth << std::endl
 			   << "    Direction: " << PR_FMT_MAT(mDirection) << std::endl
-			   << "    Radius: " << mDisk.radius() << std::endl;
+			   << "    Radius:    " << mDisk.radius() << std::endl;
 		return stream.str();
 	}
 
 private:
 	EquidistantSpectrum mSpectrum;
-	Vector3f mDirection;
+	const ElevationAzimuth mEA;
+	const Vector3f mDirection;
 	Vector3f mDx;
 	Vector3f mDy;
-	Disk mDisk;
-	float mCosTheta;
-	float mSolidAngle;
+	const Disk mDisk;
+	const float mCosTheta;
+	const float mSolidAngle;
+	const float mPDF;
+};
+
+class SunDeltaLight : public IInfiniteLight {
+public:
+	SunDeltaLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale)
+		: IInfiniteLight(id, name)
+		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
+		, mEA(ea)
+		, mDirection(ea.toDirection().normalized())
+		, mSolidAngle(2 * PR_PI * (1 - std::cos(SUN_VIS_RADIUS)))
+	{
+		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
+			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
+											  mEA.Elevation, turbidity)
+						   * mSolidAngle * scale;
+	}
+
+	bool hasDeltaDistribution() const override { return true; }
+	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
+			  const RenderTileSession&) const override
+	{
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			out.Weight[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
+		out.PDF_S = std::numeric_limits<float>::infinity();
+	}
+
+	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
+				const RenderTileSession&) const override
+	{
+		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
+			out.Weight[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
+		out.Outgoing = mDirection;
+		out.PDF_S	 = std::numeric_limits<float>::infinity();
+	}
+
+	std::string dumpInformation() const override
+	{
+		std::stringstream stream;
+
+		stream << std::boolalpha << IInfiniteLight::dumpInformation()
+			   << "  <SunDeltaLight>:" << std::endl
+			   << "    Elevation: " << mEA.Elevation << std::endl
+			   << "    Azimuth:   " << mEA.Azimuth << std::endl
+			   << "    Direction: " << PR_FMT_MAT(mDirection) << std::endl;
+		return stream.str();
+	}
+
+private:
+	EquidistantSpectrum mSpectrum;
+	const ElevationAzimuth mEA;
+	const Vector3f mDirection;
+	const float mSolidAngle;
 };
 
 class SunLightFactory : public IInfiniteLightPlugin {
@@ -98,10 +155,15 @@ public:
 		const std::string name = params.getString("name", "__unknown");
 
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
-		PR_LOG(L_INFO) << "Sun: " << sunEA.Elevation << " " << sunEA.Azimuth << std::endl;
-		const Vector3f dir = sunEA.toDirection();
+		const float radius	   = ctx.Parameters.getNumber("radius", 1.0f);
 
-		return std::make_shared<SunLight>(id, name, dir, ctx.Parameters.getNumber("turbidity", 3.0f), ctx.Parameters.getNumber("radius", 1.0f));
+		if (radius <= PR_EPSILON)
+			return std::make_shared<SunDeltaLight>(id, name, sunEA,
+												   ctx.Parameters.getNumber("turbidity", 3.0f), ctx.Parameters.getNumber("scale", 1.0f));
+		else
+			return std::make_shared<SunLight>(id, name, sunEA,
+											  ctx.Parameters.getNumber("turbidity", 3.0f), radius,
+											  ctx.Parameters.getNumber("scale", 1.0f));
 	}
 
 	const std::vector<std::string>& getNames() const override
