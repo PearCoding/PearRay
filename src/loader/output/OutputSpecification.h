@@ -32,7 +32,7 @@ public:
 	void setup(const std::shared_ptr<RenderContext>& renderer);
 
 	void parse(Environment* env, const std::vector<DL::DataGroup>& groups);
-	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const;
+	void save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const;
 
 private:
 	bool mInit;

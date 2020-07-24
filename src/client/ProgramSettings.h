@@ -4,6 +4,7 @@
 
 #include <filesystem>
 
+namespace PR {
 class ProgramSettings {
 public:
 	std::filesystem::path InputFile;
@@ -43,3 +44,4 @@ public:
 
 	bool parse(int argc, char** argv);
 };
+}

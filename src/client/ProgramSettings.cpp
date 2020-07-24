@@ -6,7 +6,7 @@
 #include <cxxopts.hpp>
 #include <iostream>
 
-using namespace PR;
+namespace PR {
 namespace sf = std::filesystem;
 
 constexpr PR::uint32 DEF_THREAD_COUNT  = 0;
@@ -143,7 +143,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		if (vm.count("no-network"))
 			ListenNetwork = -1;
 		else
-			ListenNetwork = vm["network-port"].as<PR::uint32>();
+			ListenNetwork = vm["network-port"].as<PR::uint16>();
 
 		// Thread
 		if (vm.count("rtx"))
@@ -182,3 +182,4 @@ bool ProgramSettings::parse(int argc, char** argv)
 
 	return true;
 }
+} // namespace PR

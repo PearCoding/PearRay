@@ -3,12 +3,16 @@
 #include "Profiler.h"
 #include "ProgramSettings.h"
 #include "SceneLoader.h"
+#include "Utils.h"
 #include "config/Build.h"
 #include "log/FileLogListener.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderFactory.h"
 #include "renderer/RenderTileStatistics.h"
 #include "spectral/ToneMapper.h"
+
+#include "ImageUpdateObserver.h"
+#include "StatusObserver.h"
 
 #include <filesystem>
 
@@ -23,17 +27,6 @@ namespace sc = std::chrono;
 using namespace PR;
 
 constexpr int OUTPUT_FIELD_SIZE = 8;
-
-void printStatus(const RenderStatus& status)
-{
-	if (status.hasField("int.feedback"))
-		std::cout << "( " << status.getField("int.feedback").getString() << ")";
-
-	std::cout << " | S: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.pixel_sample_count").getUInt()
-			  << " R: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.ray_count").getUInt()
-			  << " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
-			  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();
-}
 
 void printStatistics(const RenderStatus& status)
 {
@@ -54,37 +47,12 @@ void printStatistics(const RenderStatus& status)
 	out << "  Mean Ray Depth:  " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.depth_count").getUInt() / (double)pixelcount << std::endl;
 }
 
-std::string timestr(uint64 sec)
-{
-	if (sec == 0)
-		return " <1s";
-
-	std::stringstream sstream;
-
-	uint64 s = sec % 60;
-	sec /= 60;
-	uint64 m = sec % 60;
-	sec /= 60;
-	uint64 h = sec;
-
-	if (h > 0)
-		sstream << h << "h ";
-
-	if (m > 0)
-		sstream << m << "m ";
-
-	if (s > 0)
-		sstream << s << "s ";
-
-	return sstream.str();
-}
-
 constexpr uint32 PROFILE_SAMPLE_RATE = 10;
 int main(int argc, char** argv)
 {
 	ProgramSettings options;
 	if (!options.parse(argc, argv))
-		return -1;
+		return EXIT_FAILURE;
 
 	if (options.Profile)
 		Profiler::start(PROFILE_SAMPLE_RATE);
@@ -99,10 +67,10 @@ int main(int argc, char** argv)
 	const sf::path logFile = options.OutputDir / sstream.str();
 
 	// If the plugin path is empty, use the current working directory
-	if (options.PluginPath.empty()) {
+	if (options.PluginPath.empty())
 		options.PluginPath = sf::current_path().string();
-	}
 
+	// Setup log
 	std::shared_ptr<FileLogListener> fileLogListener = std::make_shared<FileLogListener>();
 	fileLogListener->open(logFile.string());
 	PR_LOGGER.addListener(fileLogListener);
@@ -120,6 +88,7 @@ int main(int argc, char** argv)
 					   << ")" << std::endl;
 	}
 
+	// Load scene
 	SceneLoader::LoadOptions opts;
 	opts.WorkingDir					 = options.OutputDir.generic_wstring();
 	opts.PluginPath					 = options.PluginPath.generic_wstring();
@@ -129,22 +98,27 @@ int main(int argc, char** argv)
 		opts);
 
 	if (!env) {
-		if (!options.IsQuiet)
-			PR_LOG(L_ERROR) << "Error while parsing input." << std::endl;
+		PR_LOG(L_ERROR) << "Error while parsing input." << std::endl;
 
-		return -2;
+		return EXIT_FAILURE;
 	}
 
 	env->renderSettings().useAdaptiveTiling = options.AdaptiveTiling;
 	env->renderSettings().sortHits			= options.SortHits;
 
+	// Initialize observers
+	std::vector<std::unique_ptr<IProgressObserver>> observers;
+	if (options.ImgUpdate > 0 || options.ImgUpdateIteration > 0)
+		observers.push_back(std::make_unique<ImageUpdateObserver>(env.get()));
+	if (options.ShowProgress > 0)
+		observers.push_back(std::make_unique<StatusObserver>());
+
 	// Setup renderFactory
 	auto renderFactory = env->createRenderFactory();
 	if (!renderFactory) {
-		if (!options.IsQuiet)
-			PR_LOG(L_ERROR) << "Error: Couldn't setup render factory." << std::endl;
+		PR_LOG(L_ERROR) << "Could not setup render factory." << std::endl;
 
-		return -4;
+		return EXIT_FAILURE;
 	}
 
 	auto integrator = env->createSelectedIntegrator();
@@ -159,46 +133,13 @@ int main(int argc, char** argv)
 
 		if (!renderer) {
 			PR_LOG(L_ERROR) << "Unable to create renderer!" << std::endl;
-			return -5;
+			return EXIT_FAILURE;
 		}
-		const auto maxIterationCount = renderer->maxIterationCount();
 
 		std::atomic<bool> softStop(false); // Stop after iteration end
 
-		uint32 imgIterCounter  = 0;
-		uint32 fullIterCounter = 0;
-		auto start			   = sc::high_resolution_clock::now();
-
-		const auto saveImg = [&]() {
-			OutputSaveOptions output_options;
-
-			output_options.Image.IterationMeta	= fullIterCounter;
-			output_options.Image.TimeMeta		= sc::duration_cast<sc::seconds>(sc::high_resolution_clock::now() - start).count();
-			output_options.Image.WriteMeta		= true;
-			output_options.Image.SpectralFactor = std::max(1.0f, maxIterationCount - fullIterCounter - 1.0f);
-
-			if (options.ImgUseTags) {
-				std::stringstream stream;
-				stream << "_i" << output_options.Image.IterationMeta << "_t" << output_options.Image.TimeMeta;
-				output_options.NameSuffix = stream.str();
-			}
-
-			env->save(renderer, toneMapper, output_options);
-		};
-
-		renderer->setIterationCallback([&](uint32 iter) {
-			if (softStop.exchange(false)) {
-				renderer->stop();
-			}
-
-			++fullIterCounter;
-			++imgIterCounter;
-			if (iter < maxIterationCount && options.ImgUpdateIteration > 0 && imgIterCounter >= options.ImgUpdateIteration) {
-				saveImg();
-				imgIterCounter = 0;
-			}
-		});
-
+		// Make sure output is configured for output
+		// TODO: This is bad design -> Encapsulate rendercontext dependent parts
 		env->setup(renderer);
 
 		if (options.ImageTileXCount * options.ImageTileYCount == 1) {
@@ -212,45 +153,35 @@ int main(int argc, char** argv)
 		if (options.ShowInformation)
 			env->dumpInformation();
 
-		if (options.ShowProgress)
-			std::cout << "preprocess" << std::endl;
+		// Status variables
+		uint32 fullIterCounter = 0;
+		auto start			   = sc::high_resolution_clock::now();
+
+		// Setup observers
+		for (const auto& obs : observers)
+			obs->begin(renderer.get(), options);
+
+		// Setup iteration callback
+		renderer->setIterationCallback([&](uint32) {
+			if (softStop.exchange(false))
+				renderer->stop();
+
+			++fullIterCounter;
+
+			for (const auto& obs : observers)
+				obs->onIteration(UpdateInfo{ start, fullIterCounter });
+		});
 
 		renderer->start(options.RenderTileXCount, options.RenderTileYCount, options.ThreadCount);
 
-		auto start_prog = start;
-		auto start_img	= start;
 		while (!renderer->isFinished()) {
-			std::this_thread::sleep_for(sc::seconds(1));
+			std::this_thread::sleep_for(sc::milliseconds(500));
 
 			const auto end		 = sc::high_resolution_clock::now();
-			const auto span_prog = sc::duration_cast<sc::seconds>(end - start_prog);
 			const auto span_full = sc::duration_cast<sc::seconds>(end - start);
-			const auto span_img	 = sc::duration_cast<sc::seconds>(end - start_img);
 
-			if (options.ShowProgress > 0 && span_prog.count() >= options.ShowProgress) {
-				RenderStatus status = renderer->status();
-
-				if (!options.NoPrettyConsole)
-					std::cout << "\33[2K\r";
-
-				std::cout << std::setw(OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed
-						  << status.percentage() * 100 << "%";
-				printStatus(status);
-				std::cout << " | RT: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(span_full.count())
-						  << " ETA: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(span_full.count() * ((1 - status.percentage()) / status.percentage()));
-
-				if (options.NoPrettyConsole)
-					std::cout << std::endl;
-				else
-					std::cout << std::flush;
-
-				start_prog = end;
-			}
-
-			if (options.ImgUpdate > 0 && span_img.count() >= options.ImgUpdate) {
-				saveImg();
-				start_img = end;
-			}
+			for (const auto& obs : observers)
+				obs->update(UpdateInfo{ start, fullIterCounter });
 
 			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
 				if (options.MaxTimeForce)
@@ -260,11 +191,8 @@ int main(int argc, char** argv)
 			}
 		}
 
-		if (options.ShowProgress > 0) {
-			if (!options.NoPrettyConsole)
-				std::cout << "\r";
-			std::cout << "Done" << std::setw(120) << " " << std::endl;
-		}
+		for (const auto& obs : observers)
+			obs->end();
 
 		renderer->notifyEnd();
 
@@ -279,15 +207,15 @@ int main(int argc, char** argv)
 			output_options.Image.TimeMeta	   = span.count();
 			output_options.Image.WriteMeta	   = true;
 			// output_options.NameSuffix = ""; // (Do not make use of tags)
-			env->save(renderer, toneMapper, output_options);
+			env->save(renderer.get(), toneMapper, output_options);
 		}
 
 		// Print Statistics
-		if (!options.IsQuiet) {
+		if (!options.IsQuiet)
 			printStatistics(renderer->status());
-		}
 	}
 
+	observers.clear();
 	env->outputSpecification().deinit();
 
 	if (options.Profile) {
@@ -297,5 +225,5 @@ int main(int argc, char** argv)
 			PR_LOG(L_ERROR) << "Could not write profile data to " << profFile << std::endl;
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
 }

@@ -118,7 +118,7 @@ void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 	mOutputSpecification.setup(renderer);
 }
 
-void Environment::save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const
+void Environment::save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
 	mOutputSpecification.save(renderer, toneMapper, options);
 }

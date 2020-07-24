@@ -102,7 +102,7 @@ public:
 	void dumpInformation() const;
 
 	void setup(const std::shared_ptr<RenderContext>& renderer);
-	void save(const std::shared_ptr<RenderContext>& renderer, ToneMapper& toneMapper, const OutputSaveOptions& options = OutputSaveOptions()) const;
+	void save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options = OutputSaveOptions()) const;
 
 	std::shared_ptr<IIntegrator> createSelectedIntegrator() const;
 	std::shared_ptr<RenderFactory> createRenderFactory();

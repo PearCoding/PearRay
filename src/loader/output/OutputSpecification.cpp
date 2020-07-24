@@ -335,7 +335,7 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 	}
 }
 
-void OutputSpecification::save(const std::shared_ptr<RenderContext>& renderer,
+void OutputSpecification::save(RenderContext* renderer,
 							   ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
 	std::filesystem::path path = mWorkingDir;

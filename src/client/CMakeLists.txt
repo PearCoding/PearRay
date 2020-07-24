@@ -1,16 +1,17 @@
-set(PR_Main_Src
-  main.cpp
-  ProgramSettings.cpp)
-set(PR_Src ${PR_Main_Src}
-)
-
-set(PR_Main_Hdr
+set(Src
   EnumOption.h
-  ProgramSettings.h)
-set(PR_Hdr ${PR_Main_Hdr}
+  ImageUpdateObserver.cpp
+  ImageUpdateObserver.h
+  IProgressObserver.h
+  main.cpp
+  ProgramSettings.cpp
+  ProgramSettings.h
+  StatusObserver.cpp
+  StatusObserver.h
+  Utils.h
 )
 
-add_executable(pearray ${PR_Src} ${PR_Hdr})
+add_executable(pearray ${Src})
 target_link_libraries(pearray PRIVATE pr_lib_loader)
 add_lto(pearray)
 strip_binary(pearray)
