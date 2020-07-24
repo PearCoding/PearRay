@@ -5,7 +5,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'sobol'
-	  :sample_count 512
+	  :sample_count 16
 	)
 	(filter 
 	  :slot 'pixel'
@@ -45,7 +45,7 @@
 	(light
 		:name 'env'
 		:type 'env'
-		:radiance (sky)
+		:radiance (sky :turbidity 8)
 	)
 	; Entity Sphere
 	(entity
