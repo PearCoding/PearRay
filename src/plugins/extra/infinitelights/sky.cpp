@@ -20,6 +20,7 @@ public:
 		, mDistribution()
 		, mModel(model)
 	{
+		buildDistribution();
 	}
 
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
@@ -69,13 +70,14 @@ public:
 		return stream.str();
 	}
 
-	void buildDistribution()
+private:
+	inline void buildDistribution()
 	{
 		mDistribution = std::make_shared<Distribution2D>(mModel.phiCount(), mModel.thetaCount());
 
 		const Vector2f filterSize(1.0f / mModel.phiCount(), 1.0f / mModel.thetaCount());
 
-		PR_LOG(L_INFO) << "Generating 2d environment distribution of " << name() << std::endl;
+		PR_LOG(L_INFO) << "Generating 2d environment ("<< mDistribution->width() << "x" << mDistribution->height() << ") of " << name() << std::endl;
 
 		mDistribution->generate([&](size_t x, size_t y) {
 			float u = x / (float)mModel.phiCount();
@@ -93,7 +95,6 @@ public:
 		});
 	}
 
-private:
 	inline SpectralBlob radiance(const SpectralBlob& wvls, const Vector2f& uv) const
 	{
 		SpectralBlob blob;

@@ -148,7 +148,7 @@ public:
 
 			const Vector2f filterSize(1.0f / recSize(0), 1.0f / recSize(1));
 
-			PR_LOG(L_INFO) << "Generating 2d environment distribution of " << name << std::endl;
+			PR_LOG(L_INFO) << "Generating 2d environment (" << dist->width() << "x" << dist->height() << ") distribution of " << name << std::endl;
 
 			dist->generate([&](size_t x, size_t y) {
 				float u = x / (float)recSize(0);

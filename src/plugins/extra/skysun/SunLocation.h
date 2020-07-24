@@ -21,6 +21,16 @@ struct ElevationAzimuth {
 			ea.Azimuth += 2 * PR_PI;
 		return ea;
 	}
+
+	inline Vector3f toDirection() const
+	{
+		float sinTheta = std::sin(Elevation);
+		float cosTheta = std::cos(Elevation);
+		float sinPhi   = std::sin(Azimuth);
+		float cosPhi   = std::cos(Azimuth);
+
+		return Vector3f(sinPhi * sinTheta, cosTheta, -cosPhi * sinTheta);
+	}
 };
 
 // Default is Saarbruecken 2020.05.06 12:00:00 (midday)

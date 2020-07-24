@@ -42,10 +42,17 @@
 		0,0,1,0,
 		0,0,0,1]
 	)
+	;(light
+	;	:name 'sky'
+	;	:type 'sky'
+;		:turbidity 8
+;		:hour 8
+;	)
 	(light
-		:name 'env'
-		:type 'sky'
+		:name 'sun'
+		:type 'sun'
 		:turbidity 8
+		:hour 8
 	)
 	; Entity Sphere
 	(entity
