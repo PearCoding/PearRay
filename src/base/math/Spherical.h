@@ -5,15 +5,19 @@
 namespace PR {
 namespace Spherical {
 
+inline Vector2f from_direction(const Vector3f& D)
+{
+	float x		= (D(0) == 0 && D(1) == 0) ? 1e-5f : D(0);
+	float phi	= atan2(D(1), x);
+	phi			= phi < 0 ? phi + 2 * PR_PI : phi; // We want phi to be [0,2pi] not [-pi,pi]
+	float theta = acos(D(2));
+	return Vector2f(theta, phi);
+}
+
 inline Vector2f uv_from_normal(const Vector3f& N)
 {
-	float x = (N(0) == 0 && N(1) == 0) ? 1e-5f : N(0);
-	float u = atan2(N(1), x) * PR_1_PI;
-	u		= u < 0 ? u + 2 : u;
-	u /= 2;
-
-	float v = acos(N(2)) * PR_1_PI;
-	return Vector2f(u, v);
+	Vector2f tp = from_direction(N) * PR_1_PI;
+	return Vector2f(tp(1) / 2, tp(0));
 }
 
 inline Vector2f uv_from_point(const Vector3f& V)

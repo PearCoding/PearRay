@@ -122,8 +122,9 @@ public:
 
 		const std::string name = params.getString("name", "__unknown");
 
-		auto radP		 = params.getParameter("radiance");
-		auto backgroundP = params.getParameter("background");
+		auto radP			 = params.getParameter("radiance");
+		auto backgroundP	 = params.getParameter("background");
+		const bool allowDist = params.getBool("distribution", true);
 
 		std::shared_ptr<FloatSpectralNode> radiance;
 		std::shared_ptr<FloatSpectralNode> background;
@@ -142,7 +143,7 @@ public:
 
 		Vector2i recSize = radiance->queryRecommendedSize();
 		std::shared_ptr<Distribution2D> dist;
-		if (recSize(0) > 1 && recSize(1) > 1) {
+		if (allowDist && recSize(0) > 1 && recSize(1) > 1) {
 			dist = std::make_shared<Distribution2D>(recSize(0), recSize(1));
 
 			const Vector2f filterSize(1.0f / recSize(0), 1.0f / recSize(1));

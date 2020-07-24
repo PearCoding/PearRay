@@ -1,4 +1,6 @@
 set(PR_Src
+  DebugIO.cpp
+  DebugIO.h
   DefaultSRGB.cpp
   DefaultSRGB.h
   ResourceManager.cpp

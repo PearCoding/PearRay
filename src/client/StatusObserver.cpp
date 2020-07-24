@@ -20,7 +20,7 @@ void StatusObserver::begin(RenderContext* renderContext, const ProgramSettings& 
 	PR_ASSERT(renderContext, "Invalid render context");
 	mRenderContext		= renderContext;
 	mBeautify			= !settings.NoPrettyConsole;
-	mUpdateCycleSeconds = settings.ImgUpdate;
+	mUpdateCycleSeconds = settings.ShowProgress;
 
 	mLastUpdate = std::chrono::high_resolution_clock::now();
 
@@ -37,11 +37,12 @@ void StatusObserver::end()
 	std::cout << "Done" << std::setw(120) << " " << std::endl;
 }
 
-void StatusObserver::update(const UpdateInfo&)
+void StatusObserver::update(const UpdateInfo& info)
 {
 	PR_ASSERT(mRenderContext, "Invalid render context");
-	const auto now		= std::chrono::high_resolution_clock::now();
-	const auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - mLastUpdate);
+	const auto now			= std::chrono::high_resolution_clock::now();
+	const auto duration		= std::chrono::duration_cast<std::chrono::seconds>(now - mLastUpdate);
+	const auto fullDuration = std::chrono::duration_cast<std::chrono::seconds>(now - info.Start);
 
 	if ((uint64)duration.count() >= mUpdateCycleSeconds) {
 		RenderStatus status = mRenderContext->status();
@@ -60,8 +61,8 @@ void StatusObserver::update(const UpdateInfo&)
 				  << " EH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.entity_hit_count").getUInt()
 				  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();
 
-		std::cout << " | RT: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(duration.count())
-				  << " ETA: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(duration.count() * ((1 - status.percentage()) / status.percentage()));
+		std::cout << " | RT: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(fullDuration.count())
+				  << " ETA: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(fullDuration.count() * ((1 - status.percentage()) / status.percentage()));
 
 		if (!mBeautify)
 			std::cout << std::endl;

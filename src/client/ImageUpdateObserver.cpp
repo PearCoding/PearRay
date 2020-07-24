@@ -13,6 +13,7 @@ ImageUpdateObserver::ImageUpdateObserver(Environment* environment)
 	, mUseTags(false)
 	, mMaxIterationCount(0)
 {
+	PR_ASSERT(mEnvironment, "Invalid environment");
 }
 
 ImageUpdateObserver::~ImageUpdateObserver()
@@ -21,6 +22,7 @@ ImageUpdateObserver::~ImageUpdateObserver()
 
 void ImageUpdateObserver::begin(RenderContext* renderContext, const ProgramSettings& settings)
 {
+	PR_ASSERT(renderContext, "Invalid render context");
 	mRenderContext		 = renderContext;
 	mUseTags			 = settings.ImgUseTags;
 	mIterationCount		 = 0;
@@ -57,6 +59,9 @@ void ImageUpdateObserver::onIteration(const UpdateInfo& info)
 
 void ImageUpdateObserver::save(const UpdateInfo& info)
 {
+	PR_ASSERT(mRenderContext, "Invalid render context");
+	PR_ASSERT(mEnvironment, "Invalid environment");
+
 	OutputSaveOptions output_options;
 
 	output_options.Image.IterationMeta	= info.CurrentIteration;
