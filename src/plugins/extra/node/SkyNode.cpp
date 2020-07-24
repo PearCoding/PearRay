@@ -9,6 +9,7 @@
 #include "skysun/SunLocation.h"
 
 namespace PR {
+// Sky texture!
 class SkyNode : public FloatSpectralNode {
 public:
 	explicit SkyNode(const SkyModel& model)
@@ -46,23 +47,20 @@ private:
 	const SkyModel mModel;
 };
 
-class SkySunPlugin : public INodePlugin {
+class SkyPlugin : public INodePlugin {
 public:
-	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
+	std::shared_ptr<INode> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		auto ground_albedo = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.2f);
+		auto ground_albedo	   = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.2f);
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
 		PR_LOG(L_INFO) << "Sun: " << sunEA.Elevation << " " << sunEA.Azimuth << std::endl;
 
-		if (type_name == "sky") {
-			return std::make_shared<SkyNode>(SkyModel(ground_albedo, sunEA, ctx.Parameters));
-		}// TODO: Add sun and composition model!
-		return nullptr;
+		return std::make_shared<SkyNode>(SkyModel(ground_albedo, sunEA, ctx.Parameters));
 	}
 
 	const std::vector<std::string>& getNames() const override
 	{
-		const static std::vector<std::string> names({ "sky", "sun", "skysun" });
+		const static std::vector<std::string> names({ "sky" });
 		return names;
 	}
 
@@ -73,4 +71,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::SkySunPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::SkyPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

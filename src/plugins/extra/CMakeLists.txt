@@ -4,6 +4,8 @@ add_library(pr_lib_skysun STATIC
     skysun/SkySunConfig.h
     skysun/SunLocation.cpp
     skysun/SunLocation.h
+    skysun/SunRadiance.cpp
+    skysun/SunRadiance.h
     skysun/skymodel/ArHosekSkyModel.cpp
     skysun/skymodel/ArHosekSkyModel.h
     skysun/skymodel/ArHosekSkyModelData_CIEXYZ.h
@@ -14,4 +16,5 @@ target_include_directories(pr_lib_skysun PUBLIC $<BUILD_INTERFACE:${CMAKE_CURREN
 set_property(TARGET pr_lib_skysun PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(entities)
+add_subdirectory(infinitelights)
 add_subdirectory(node)

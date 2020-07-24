@@ -84,7 +84,7 @@ public:
 
 	const std::vector<std::string>& getNames() const override
 	{
-		static std::vector<std::string> names({ "sun", "distant", "direction" });
+		static std::vector<std::string> names({ "distant", "direction" });
 		return names;
 	}
 

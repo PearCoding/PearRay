@@ -44,8 +44,8 @@
 	)
 	(light
 		:name 'env'
-		:type 'env'
-		:radiance (sky :turbidity 8)
+		:type 'sky'
+		:turbidity 8
 	)
 	; Entity Sphere
 	(entity

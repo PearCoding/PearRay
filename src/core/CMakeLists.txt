@@ -123,6 +123,8 @@ set(PR_Src
   spectral/CIE.h
   spectral/EquidistantSpectrum.h
   spectral/EquidistantSpectrum.inl
+  spectral/OrderedSpectrum.h
+  spectral/OrderedSpectrum.inl
   spectral/ParametricBlob.h
   spectral/RGBConverter.cpp
   spectral/RGBConverter.h
