@@ -4,7 +4,7 @@
 #include "integrator/IIntegrator.h"
 #include "integrator/IIntegratorFactory.h"
 #include "integrator/IIntegratorPlugin.h"
-#include "math/Projection.h"
+#include "math/Sampling.h"
 #include "math/Tangent.h"
 
 #include "path/LightPath.h"
@@ -42,7 +42,7 @@ public:
 			float pdf;
 			for (size_t i = 0; i < mSampleCount; ++i) {
 				Vector2f rnd  = random.get2D();
-				Vector3f dir  = Projection::hemi(rnd(0), rnd(1), pdf);
+				Vector3f dir  = Sampling::hemi(rnd(0), rnd(1), pdf);
 				Vector3f ndir = Tangent::fromTangentSpace(spt.Surface.N, spt.Surface.Nx, spt.Surface.Ny,
 														  dir);
 

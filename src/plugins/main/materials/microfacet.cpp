@@ -5,8 +5,8 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
-#include "math/Projection.h"
 #include "math/Reflection.h"
+#include "math/Sampling.h"
 #include "math/Spherical.h"
 
 #include "renderer/RenderContext.h"
@@ -216,7 +216,7 @@ public:
 	void sampleDiffusePath(const MaterialSampleInput&, const ShadingContext& sctx, float u, float v, MaterialSampleOutput& out) const
 	{
 		float pdf_s;
-		out.L	   = Projection::cos_hemi(u, v, pdf_s);
+		out.L	   = Sampling::cos_hemi(u, v, pdf_s);
 		out.PDF_S  = SpectralBlob(pdf_s);
 		out.Weight = PR_1_PI * mAlbedo->eval(sctx) * out.L[2];
 		out.Type   = MST_DiffuseReflection;

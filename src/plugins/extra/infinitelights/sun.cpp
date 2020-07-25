@@ -5,7 +5,7 @@
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
 #include "math/ImportanceSampling.h"
-#include "math/Projection.h"
+#include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
 #include "shader/ShadingContext.h"
@@ -27,8 +27,8 @@ public:
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
 		, mDirection(ea.toDirection().normalized())
-		, mDisk(std::abs(std::tan(SUN_VIS_RADIUS)) * radius)
-		, mCosTheta(1 / std::sqrt(1 + mDisk.radius() * mDisk.radius()))
+		, mRadius(std::abs(std::tan(SUN_VIS_RADIUS)) * radius)
+		, mCosTheta(1 / std::sqrt(1 + mRadius * mRadius))
 		, mSolidAngle(2 * PR_PI * (1 - mCosTheta))
 		, mPDF(1 / mSolidAngle)
 	{
@@ -37,10 +37,9 @@ public:
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
 											  mEA.Elevation, turbidity)
-						    * scale;
+						   * scale;
 	}
 
-	bool hasDeltaDistribution() const override { return mDisk.radius() <= PR_EPSILON; }
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
@@ -60,9 +59,9 @@ public:
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		out.Outgoing = Tangent::fromTangentSpace(mDirection, mDx, mDy,
-												 (mDisk.surfacePoint(in.RND(0), std::sqrt(in.RND(1))) + Vector3f(0, 0, 1)).normalized());
-		out.PDF_S	 = mPDF;
+		const Vector2f uv = mRadius * Sampling::concentric_disk(in.RND(0), in.RND(1));
+		out.Outgoing	  = (mDirection + mDx * uv(0) + mDy * uv(1)).normalized();
+		out.PDF_S		  = mPDF;
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
@@ -78,7 +77,7 @@ public:
 			   << "    Elevation: " << mEA.Elevation << std::endl
 			   << "    Azimuth:   " << mEA.Azimuth << std::endl
 			   << "    Direction: " << PR_FMT_MAT(mDirection) << std::endl
-			   << "    Radius:    " << mDisk.radius() << std::endl;
+			   << "    Radius:    " << mRadius << std::endl;
 		return stream.str();
 	}
 
@@ -88,7 +87,7 @@ private:
 	const Vector3f mDirection;
 	Vector3f mDx;
 	Vector3f mDy;
-	const Disk mDisk;
+	const float mRadius;
 	const float mCosTheta;
 	const float mSolidAngle;
 	const float mPDF;

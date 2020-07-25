@@ -44,6 +44,7 @@ set(PR_Src
   math/Projection.h
   math/ProjectionMap.h
   math/Reflection.h
+  math/Sampling.h
   math/SIMath.h
   math/SIMathConstants.h
   math/SIMathStd.h

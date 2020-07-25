@@ -3,7 +3,7 @@
 #include "SceneLoadContext.h"
 #include "infinitelight/IInfiniteLight.h"
 #include "infinitelight/IInfiniteLightPlugin.h"
-#include "math/Projection.h"
+#include "math/Sampling.h"
 #include "math/Spherical.h"
 #include "math/Tangent.h"
 #include "shader/ShadingContext.h"
@@ -58,7 +58,7 @@ public:
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
-			out.PDF_S = in.Point ? Projection::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
+			out.PDF_S = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
 		}
 	}
 
@@ -75,7 +75,7 @@ public:
 			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
 		} else {
 			uv			 = in.RND;
-			out.Outgoing = Projection::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
+			out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
 		}
 		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 

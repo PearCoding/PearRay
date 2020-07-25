@@ -3,7 +3,7 @@
 #include "SceneLoadContext.h"
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
-#include "math/Projection.h"
+#include "math/Sampling.h"
 #include "math/Tangent.h"
 #include "renderer/RenderContext.h"
 
@@ -36,7 +36,7 @@ public:
 
 		const float dot = std::max(0.0f, in.Context.NdotL());
 		out.Weight		= mAlbedo->eval(in.ShadingContext) * dot * PR_1_PI;
-		out.PDF_S		= Projection::cos_hemi_pdf(dot);
+		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 		out.Type		= MST_DiffuseReflection;
 	}
 
@@ -46,7 +46,7 @@ public:
 		PR_PROFILE_THIS;
 
 		float pdf;
-		out.L = Projection::cos_hemi(in.RND[0], in.RND[1], pdf);
+		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1], pdf);
 
 		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_1_PI;
 		out.Type   = MST_DiffuseReflection;

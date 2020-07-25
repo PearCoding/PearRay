@@ -4,8 +4,8 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Microfacet.h"
-#include "math/Projection.h"
 #include "math/Reflection.h"
+#include "math/Sampling.h"
 #include "math/Spherical.h"
 
 #include "renderer/RenderContext.h"
@@ -58,7 +58,7 @@ public:
 		out.Weight		 = mAlbedo->eval(sctx) * (1 - refl) + spec * mSpecularity->eval(sctx) * refl;
 		out.Weight *= std::abs(in.Context.NdotL());
 
-		out.PDF_S = std::min(std::max(Projection::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
+		out.PDF_S = std::min(std::max(Sampling::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
 
 		out.Type = MST_DiffuseReflection;
 	}
@@ -66,7 +66,7 @@ public:
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
 		float pdf_s;
-		out.L	   = Projection::cos_hemi(in.RND[0], in.RND[1], pdf_s);
+		out.L	   = Sampling::cos_hemi(in.RND[0], in.RND[1], pdf_s);
 		out.PDF_S  = pdf_s;
 		out.Weight = mAlbedo->eval(sctx) * std::abs(out.L[2]);
 		out.Type   = MST_DiffuseReflection;
