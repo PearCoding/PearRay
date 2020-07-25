@@ -14,13 +14,16 @@
 namespace PR {
 SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, const ElevationAzimuth& sunEA, const ParameterGroup& params)
 {
-	mPhiCount	= params.getInt("phi_resolution", RES_PHI);
-	mThetaCount = params.getInt("theta_resolution", RES_THETA);
+	mAzimuthCount	= params.getInt("azimuth_resolution", RES_AZ);
+	mElevationCount = params.getInt("elevation_resolution", RES_EL);
 
-	const float solar_elevation		  = 0.5f * PR_PI - sunEA.Elevation;
+	const float solar_elevation		  = PR_PI * 0.5f - sunEA.Elevation;
 	const float atmospheric_turbidity = params.getNumber("turbidity", 3.0f);
 
-	mData.resize(mPhiCount * mThetaCount * AR_SPECTRAL_BANDS);
+	const float sun_se = std::sin(sunEA.Elevation);
+	const float sun_ce = std::cos(sunEA.Elevation);
+
+	mData.resize(mElevationCount * mAzimuthCount * AR_SPECTRAL_BANDS);
 	for (size_t k = 0; k < AR_SPECTRAL_BANDS; ++k) {
 		float wavelength = AR_SPECTRAL_START + k * AR_SPECTRAL_DELTA;
 		// Evaluate albedo for particular wavelength -> Does not support textures etc
@@ -32,31 +35,25 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 		auto* state = arhosekskymodelstate_alloc_init(solar_elevation, atmospheric_turbidity, albedo);
 		auto body	= [&](const tbb::blocked_range2d<size_t, size_t>& r) {
 			  for (size_t y = r.rows().begin(); y != r.rows().end(); ++y) {
-				  const float theta = PR_PI * y / (float)(mThetaCount - 1);
-				  if (theta >= PR_PI / 2) {
-					  for (size_t x = r.cols().begin(); x != r.cols().end(); ++x) {
-						  mData[y * mPhiCount * AR_SPECTRAL_BANDS + x * AR_SPECTRAL_BANDS + k] = 0;
-					  }
-				  } else {
-					  for (size_t x = r.cols().begin(); x != r.cols().end(); ++x) {
-						  const float phi = 2 * PR_PI * x / (float)(mPhiCount - 1);
+				  const float elevation = ELEVATION_RANGE * y / (float)mElevationCount;
+				  const float se		= std::sin(elevation);
+				  const float ce		= std::cos(elevation);
+				  for (size_t x = r.cols().begin(); x != r.cols().end(); ++x) {
+					  const float azimuth = AZIMUTH_RANGE * x / (float)mAzimuthCount;
 
-						  ElevationAzimuth ea = ElevationAzimuth::fromThetaPhi(theta, phi);
-						  float cosGamma	  = std::cos(ea.Elevation) * std::cos(sunEA.Elevation)
-										   + std::sin(ea.Elevation) * std::sin(sunEA.Elevation) * std::cos(ea.Azimuth - sunEA.Azimuth);
-						  float gamma	 = std::acos(std::min(1.0f, std::max(-1.0f, cosGamma)));
-						  float radiance = arhosekskymodel_radiance(state, theta, gamma, wavelength + 0.005f /*Make sure the correct bin is choosen*/);
+					  float cosGamma = ce * sun_ce + se * sun_se * std::cos(azimuth - sunEA.Azimuth);
+					  float gamma	 = std::acos(std::min(1.0f, std::max(-1.0f, cosGamma)));
+					  float radiance = arhosekskymodel_radiance(state, elevation, gamma, wavelength + 0.005f /*Make sure the correct bin is choosen*/);
 
-						  mData[y * mPhiCount * AR_SPECTRAL_BANDS + x * AR_SPECTRAL_BANDS + k] = std::max(0.0f, radiance);
-					  }
+					  mData[y * mAzimuthCount * AR_SPECTRAL_BANDS + x * AR_SPECTRAL_BANDS + k] = std::max(0.0f, radiance);
 				  }
 			  }
 		};
-		tbb::parallel_for(tbb::blocked_range2d<size_t, size_t>(0, mThetaCount, 0, mPhiCount), body);
+		tbb::parallel_for(tbb::blocked_range2d<size_t, size_t>(0, mElevationCount, 0, mAzimuthCount), body);
 
 		arhosekskymodelstate_free(state);
 	}
 
-	Debug::saveImage("sky.exr", mData.data(), mPhiCount, mThetaCount, AR_SPECTRAL_BANDS);
+	Debug::saveImage("sky.exr", mData.data(), mAzimuthCount, mElevationCount, AR_SPECTRAL_BANDS);
 }
 } // namespace PR

@@ -3,5 +3,3 @@ if(SeExpr2_FOUND)
 elseif(PR_EXTRA_SEEXPR)
     message(WARNING "Skipping SeExpr2 based expression node.")
 endif()
-
-PR_ADD_PLUGIN(nod_sky CPP SkyNode.cpp LIBRARIES pr_lib_skysun)

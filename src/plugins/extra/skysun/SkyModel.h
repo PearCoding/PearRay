@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ElevationAzimuth.h"
 #include "SkySunConfig.h"
 
 namespace PR {
@@ -10,20 +11,20 @@ class SkyModel {
 public:
 	SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, const ElevationAzimuth& sunEA, const ParameterGroup& params);
 
-	inline size_t phiCount() const { return mPhiCount; }
-	inline size_t thetaCount() const { return mThetaCount; }
+	inline size_t azimuthCount() const { return mAzimuthCount; }
+	inline size_t elevationCount() const { return mElevationCount; }
 
-	inline float radiance(int wvl_band, float u, float v) const
+	inline float radiance(int wvl_band, const ElevationAzimuth& ea) const
 	{
-		int x = std::max(0, std::min<int>(mPhiCount - 1, int(u * mPhiCount)));
-		int y = std::max(0, std::min<int>(mThetaCount - 1, int(v * mThetaCount)));
-		return mData[y * mPhiCount * AR_SPECTRAL_BANDS + x * AR_SPECTRAL_BANDS + wvl_band];
+		int az_in = std::max(0, std::min<int>(mAzimuthCount - 1, int(ea.Azimuth / AZIMUTH_RANGE * mAzimuthCount)));
+		int el_in = std::max(0, std::min<int>(mElevationCount - 1, int(ea.Elevation / ELEVATION_RANGE * mElevationCount)));
+		return mData[el_in * mAzimuthCount * AR_SPECTRAL_BANDS + az_in * AR_SPECTRAL_BANDS + wvl_band];
 	}
 
 private:
 	std::vector<float> mData;
 
-	size_t mPhiCount;
-	size_t mThetaCount;
+	size_t mAzimuthCount;
+	size_t mElevationCount;
 };
 } // namespace PR

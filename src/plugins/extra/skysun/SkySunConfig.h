@@ -8,6 +8,6 @@ constexpr float AR_SPECTRAL_DELTA  = 40;
 constexpr float AR_SPECTRAL_START  = 320;
 constexpr float AR_SPECTRAL_END	   = AR_SPECTRAL_START + AR_SPECTRAL_BANDS * AR_SPECTRAL_DELTA;
 
-constexpr size_t RES_PHI   = 512;
-constexpr size_t RES_THETA = 512;
+constexpr size_t RES_AZ = 512;
+constexpr size_t RES_EL = 512;
 } // namespace PR

@@ -1,37 +1,8 @@
 #pragma once
 
-#include "PR_Config.h"
+#include "ElevationAzimuth.h"
 
 namespace PR {
-struct ElevationAzimuth {
-	float Elevation;
-	float Azimuth;
-
-	inline static ElevationAzimuth fromThetaPhi(float theta, float phi)
-	{
-		auto ea = ElevationAzimuth{ std::asin(std::sin(phi) * std::sin(theta)), std::atan(std::cos(phi) * std::tan(theta)) };
-		if (ea.Azimuth < 0)
-			ea.Azimuth += 2 * PR_PI;
-		return ea;
-	}
-	inline static ElevationAzimuth fromDirection(const Vector3f& direction)
-	{
-		auto ea = ElevationAzimuth{ std::acos(direction(1)), std::atan2(direction(0), -direction(2)) };
-		if (ea.Azimuth < 0)
-			ea.Azimuth += 2 * PR_PI;
-		return ea;
-	}
-
-	inline Vector3f toDirection() const
-	{
-		float sinTheta = std::sin(Elevation);
-		float cosTheta = std::cos(Elevation);
-		float sinPhi   = std::sin(Azimuth);
-		float cosPhi   = std::cos(Azimuth);
-
-		return Vector3f(sinPhi * sinTheta, cosTheta, -cosPhi * sinTheta);
-	}
-};
 
 // Default is Saarbruecken 2020.05.06 12:00:00 (midday)
 struct TimePoint {

@@ -1,4 +1,5 @@
 add_library(pr_lib_skysun STATIC 
+    skysun/ElevationAzimuth.h
     skysun/SkyModel.cpp
     skysun/SkyModel.h
     skysun/SkySunConfig.h
