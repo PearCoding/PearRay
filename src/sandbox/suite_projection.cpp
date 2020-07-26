@@ -1,6 +1,6 @@
 #include "Logger.h"
 
-#include "math/Projection.h"
+#include "math/Sampling.h"
 
 #include <filesystem>
 #include <fstream>
@@ -28,7 +28,7 @@ void suite_projection()
             for(int k = 0; k < 10; ++k)
             {
                 float pdf;
-                Projection::cos_hemi(u1,u2,k,pdf);
+                Sampling::cos_hemi(u1,u2,k,pdf);
                 outfile << " " << pdf;
             }
             outfile << std::endl;

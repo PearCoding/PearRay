@@ -34,8 +34,8 @@ public:
 			out.PDF_S  = 0;
 		} else {
 			out.Weight		  = radiance(in.Ray.WavelengthNM, ea);
-			const float sinF  = std::sin(ea.Elevation);
-			const float denom = 2 * PR_PI * PR_PI * sinF;
+			const float f	  = std::cos(ea.Elevation);
+			const float denom = 2 * PR_PI * PR_PI * f;
 			out.PDF_S		  = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		}
 	}
@@ -46,8 +46,8 @@ public:
 		Vector2f uv			= mDistribution->sampleContinuous(in.RND, out.PDF_S);
 		ElevationAzimuth ea = ElevationAzimuth{ ELEVATION_RANGE * uv(1), AZIMUTH_RANGE * uv(0) };
 		out.Outgoing		= mTransform * ea.toDirection();
-		const float sinF	= std::sin(ea.Elevation);
-		const float denom	= 2 * PR_PI * PR_PI * sinF;
+		const float f		= std::cos(ea.Elevation);
+		const float denom	= 2 * PR_PI * PR_PI * f;
 		out.PDF_S			= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
@@ -79,9 +79,9 @@ private:
 			const float azimuth	  = AZIMUTH_RANGE * x / (float)(mModel.azimuthCount() - 1);
 			const float elevation = ELEVATION_RANGE * y / (float)(mModel.elevationCount() - 1);
 
-			const float sinF = std::sin(elevation);
+			const float f = std::cos(elevation);
 
-			const float val = sinF * radiance(WVLS, ElevationAzimuth{ elevation, azimuth }).maxCoeff();
+			const float val = f * radiance(WVLS, ElevationAzimuth{ elevation, azimuth }).maxCoeff();
 			return (val <= PR_EPSILON) ? 0.0f : val;
 		});
 	}
@@ -118,7 +118,7 @@ public:
 
 		auto ground_albedo	   = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.2f);
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
-		PR_LOG(L_INFO) << "Sun: " << sunEA.Elevation << " " << sunEA.Azimuth << std::endl;
+		PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
 		return std::make_shared<SkyLight>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), trans);
 	}

@@ -22,5 +22,10 @@ public:
 	virtual ~ICamera();
 
 	virtual Ray constructRay(const CameraSample& sample) const = 0;
+
+	// This frame should be used as default initializer if applicable
+	const static Vector3f DefaultDirection;
+	const static Vector3f DefaultUp;
+	const static Vector3f DefaultRight;
 };
 } // namespace PR

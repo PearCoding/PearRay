@@ -27,7 +27,7 @@ R"(
 		:fstop 0.000000
 		:apertureRadius 0.500000
 		:localDirection [0,0,-1]
-		:localUp [0,-1,0]
+		:localUp [0,1,0]
 		:localRight [1,0,0]
 		:position [0.000000,-2.000000,0.000000]
 		:rotation (euler 90.0000,0.0000,0.0000)

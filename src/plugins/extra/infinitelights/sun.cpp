@@ -74,8 +74,8 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SunLight>:" << std::endl
-			   << "    Elevation: " << mEA.Elevation << std::endl
-			   << "    Azimuth:   " << mEA.Azimuth << std::endl
+			   << "    Elevation: " << PR_RAD2DEG * mEA.Elevation << "°" << std::endl
+			   << "    Azimuth:   " << PR_RAD2DEG * mEA.Azimuth << "°" << std::endl
 			   << "    Direction: " << PR_FMT_MAT(mDirection) << std::endl
 			   << "    Radius:    " << mRadius << std::endl;
 		return stream.str();

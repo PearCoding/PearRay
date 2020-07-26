@@ -17,7 +17,7 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 	mAzimuthCount	= params.getInt("azimuth_resolution", RES_AZ);
 	mElevationCount = params.getInt("elevation_resolution", RES_EL);
 
-	const float solar_elevation		  = PR_PI * 0.5f - sunEA.Elevation;
+	const float solar_elevation		  = sunEA.Elevation;
 	const float atmospheric_turbidity = params.getNumber("turbidity", 3.0f);
 
 	const float sun_se = std::sin(sunEA.Elevation);

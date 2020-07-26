@@ -36,7 +36,7 @@
 		:fstop 0.000000
 		:apertureRadius 0.500000
 		:localDirection [0,0,-1]
-		:localUp [0,-1,0]
+		:localUp [0,1,0]
 		:localRight [1,0,0]
 		:near 0.100000
 		:far 100.000000

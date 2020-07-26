@@ -48,7 +48,7 @@ public:
 		const float ny = sample.Pixel[1] / sample.SensorSize.Height; // [0,1]
 
 		Ray ray;
-		constructRay(nx, ny, ray.Origin, ray.Direction);
+		constructRay(nx, 1 - ny, ray.Origin, ray.Direction);
 
 		ray.WavelengthNM = sample.WavelengthNM;
 		ray.Weight		 = sample.Weight;
@@ -65,9 +65,16 @@ public:
 	inline void constructRay(float nx, float ny,
 							 Vector3f& o, Vector3f& d) const
 	{
-		o			 = transform().translation();
-		Vector3f dir = Spherical::cartesian(mThetaStart + ny * (mThetaEnd - mThetaStart), mPhiStart + nx * (mPhiEnd - mPhiStart));
-		d			 = Tangent::fromTangentSpace(mDirection_Cache, mRight_Cache, mUp_Cache, dir);
+		o				  = transform().translation();
+		const float theta = mThetaStart + ny * (mThetaEnd - mThetaStart);
+		const float phi	  = mPhiStart + nx * (mPhiEnd - mPhiStart);
+
+		const float sT = std::sin(theta);
+		const float cT = std::cos(theta);
+		const float sP = std::sin(phi);
+		const float cP = std::cos(phi);
+		d			   = Tangent::fromTangentSpace(mUp_Cache, mRight_Cache, mDirection_Cache,
+									   Vector3f(sP * cT, cP * cT, sT));
 	}
 
 	// Cache
@@ -117,9 +124,9 @@ public:
 												 params.getNumber("phi_end", PR_PI),
 												 params.getNumber("near", NEAR_DEFAULT),
 												 params.getNumber("far", FAR_DEFAULT),
-												 params.getVector3f("localDirection", Vector3f(0, 0, 1)),
-												 params.getVector3f("localRight", Vector3f(1, 0, 0)),
-												 params.getVector3f("localUp", Vector3f(0, 1, 0)));
+												 params.getVector3f("localDirection", ICamera::DefaultDirection),
+												 params.getVector3f("localRight", ICamera::DefaultRight),
+												 params.getVector3f("localUp", ICamera::DefaultUp));
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -20,38 +20,28 @@
 	(output
 		:name 'image'
 		(channel :type 'color' :color 'srgb')
-		(channel :type 'ng')
-		(channel :type 'nx')
-		(channel :type 'ny')
-		(channel :type 'uv')
 	)
 	; Camera
+	;(camera
+	;	:name 'Camera'
+	;	:type 'standard'
+	;	:width 1
+	;	:height 1
+	;)
 	(camera
 		:name 'Camera'
-		:type 'standard'
-		:width 1
-		:height 1
-		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
-		:localDirection [0,0,-1]
-		:localUp [0,-1,0]
-		:localRight [1,0,0]
-		:transform [1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1]
+		:type 'spherical'
 	)
 	(light
 		:name 'sky'
 		:type 'sky'
-		:turbidity 8
+		:turbidity 3
 		:hour 8
 	)
 	(light
 		:name 'sun'
 		:type 'sun'
-		:turbidity 8
+		:turbidity 3
 		:radius 8
 		:hour 8
 	)
@@ -61,22 +51,16 @@
 		:type 'sphere'
 		:material 'Sphere'
 		:radius 1.5
-		:transform [1,0,0,0,
-		0,1,0,0,
-		0,0,1,-4,
-		0,0,0,1]
+		:position [0,4,0]
 	)
 	; Entity Plane
 	(entity
 		:name 'Ground'
 		:type 'plane'
 		:material 'Ground'
-		:x_axis [8,0,0]
-		:y_axis [0,0,-8]
-		:transform [1,0,0,-4,
-		0,1,0,-0.85,
-		0,0,1,1,
-		0,0,0,1]
+		:x_axis [200,0,0]
+		:y_axis [0,100,0]
+		:position [-100,0,-0.85]
 	)
 	; Materials
 	(material

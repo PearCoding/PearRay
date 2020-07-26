@@ -44,7 +44,7 @@ public:
 		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.Height - 0.5f);
 
 		Ray ray;
-		constructRay(nx, ny, ray.Origin, ray.Direction);
+		constructRay(nx, -ny, ray.Origin, ray.Direction);
 
 		ray.WavelengthNM = sample.WavelengthNM;
 		ray.Weight		 = sample.Weight;
@@ -108,9 +108,9 @@ public:
 											 params.getNumber("height", 1),
 											 params.getNumber("near", NEAR_DEFAULT),
 											 params.getNumber("far", FAR_DEFAULT),
-											 params.getVector3f("localDirection", Vector3f(0, 0, 1)),
-											 params.getVector3f("localRight", Vector3f(1, 0, 0)),
-											 params.getVector3f("localUp", Vector3f(0, 1, 0)));
+											 params.getVector3f("localDirection", ICamera::DefaultDirection),
+											 params.getVector3f("localRight", ICamera::DefaultRight),
+											 params.getVector3f("localUp", ICamera::DefaultUp));
 	}
 
 	const std::vector<std::string>& getNames() const

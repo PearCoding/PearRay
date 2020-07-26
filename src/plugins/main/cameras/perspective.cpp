@@ -47,7 +47,7 @@ public:
 		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.Height - 0.5f);
 
 		Ray ray;
-		constructRay(nx, ny, sample.Lens[0], sample.Lens[1],
+		constructRay(nx, -ny, sample.Lens[0], sample.Lens[1],
 					 ray.Origin, ray.Direction);
 
 		ray.WavelengthNM = sample.WavelengthNM;
@@ -152,9 +152,9 @@ public:
 
 		const float apr	  = params.getNumber("apertureRadius", 0.05f);
 		const float fstop = params.getNumber("fstop", 0);
-		const Vector3f ld = params.getVector3f("localDirection", Vector3f(0, 0, 1));
-		const Vector3f lu = params.getVector3f("localUp", Vector3f(0, 1, 0));
-		const Vector3f lr = params.getVector3f("localRight", Vector3f(1, 0, 0));
+		const Vector3f ld = params.getVector3f("localDirection", ICamera::DefaultDirection);
+		const Vector3f lr = params.getVector3f("localRight", ICamera::DefaultRight);
+		const Vector3f lu = params.getVector3f("localUp", ICamera::DefaultUp);
 
 		const float w  = params.getNumber("width", 1);
 		const float h  = params.getNumber("height", 1);

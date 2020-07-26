@@ -62,7 +62,7 @@ ElevationAzimuth computeSunEA(const TimePoint& timepoint, const MapLocation& loc
 		dX							= std::cos(eclipticLongitude);
 		rightAscension				= std::atan2(dY, dX);
 		if (rightAscension < 0.0)
-			rightAscension += 2 * M_PI;
+			rightAscension += 2 * PR_PI;
 		declination = std::asin(std::sin(eclipticObliquity) * sinEclipticLongitude);
 	}
 
