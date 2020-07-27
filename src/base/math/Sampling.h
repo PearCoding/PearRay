@@ -93,7 +93,7 @@ inline Vector2f triangle(float u1, float u2)
 }
 
 // Uniform
-inline Vector2f concentric_disk(float u1, float u2)
+inline Vector2f concentric_disk_rtheta(float u1, float u2)
 {
 	Vector2f off = 2.0f * Vector2f(u1, u2) - Vector2f(1, 1);
 	if (off(0) == 0 && off(1) == 0)
@@ -107,8 +107,31 @@ inline Vector2f concentric_disk(float u1, float u2)
 		r	  = off(1);
 		theta = 2 * PR_PI - 4 * PR_PI * (off(0) / off(1));
 	}
-	
-	return r * Vector2f(std::cos(theta), std::sin(theta));
+
+	return Vector2f(r, theta);
 }
+
+inline Vector2f concentric_disk(float u1, float u2)
+{
+	Vector2f rtheta = concentric_disk_rtheta(u1, u2);
+	return rtheta(0) * Vector2f(std::cos(rtheta(1)), std::sin(rtheta(1)));
+}
+
+// Uniform cone
+// Orientation +Z (shading space)
+inline Vector3f uniform_cone(float u1, float u2, float cos_theta_max)
+{
+	float cosTheta = (1 - u1) + u1 * cos_theta_max;
+	float sinTheta = std::sqrt(std::max(0.0f, 1 - cosTheta * cosTheta));
+	float phi	   = 2 * PR_PI * u2;
+	return Vector3f(std::cos(phi) * sinTheta, std::sin(phi) * sinTheta, cosTheta);
+}
+
+// In solid angle
+inline float uniform_cone_pdf(float cos_theta_max)
+{
+	return 1.0f / diffProd<float>(2, PR_PI, 2 * PR_PI, cos_theta_max);
+}
+
 } // namespace Sampling
 } // namespace PR

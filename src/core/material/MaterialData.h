@@ -34,7 +34,7 @@ struct PR_LIB_CORE MaterialSampleOutput {
 
 	inline Vector3f globalL(const IntersectionPoint& ip) const
 	{
-		return Tangent::fromTangentSpace(ip.Surface.N, ip.Surface.Nx, ip.Surface.Ny, L);
+		return Tangent::fromTangentSpace(ip.Surface.N, ip.Surface.Nx, ip.Surface.Ny, L).normalized();
 	}
 };
 } // namespace PR

@@ -74,17 +74,17 @@ public:
 		InfiniteLightSampleOutput outL;
 		infLight->sample(inL, outL, session);
 
-		if (infLight->hasDeltaDistribution())
-			outL.PDF_S = 1;
-
 		// An unlikely event, but a zero pdf has to be catched before blowing up other parts
 		if (PR_UNLIKELY(outL.PDF_S <= PR_EPSILON))
 			return ZERO_CONTRIB;
 
+		if (infLight->hasDeltaDistribution())
+			outL.PDF_S = 1;
+
 		// Trace shadow ray
-		const Ray shadow = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
-		bool hitAnything = session.traceOcclusionRay(shadow);
-		if (hitAnything) // If we hit anything before the light/background, the light path is occluded
+		const Ray shadow  = spt.Ray.next(spt.P, outL.Outgoing, spt.Surface.N, RF_Shadow, SHADOW_RAY_MIN, SHADOW_RAY_MAX);
+		bool hitSomething = session.traceOcclusionRay(shadow);
+		if (hitSomething) // If we hit something before the light/background, the light path is occluded
 			return ZERO_CONTRIB;
 
 		// Evaluate surface
@@ -260,17 +260,19 @@ public:
 			evalN(session, path, spt2, weighted_throughput, nentity, nmaterial);
 		} else {
 			session.tile()->statistics().addBackgroundHitCount();
-			infLightHandled = true;
 
 			path.addToken(LightPathToken::Background());
 			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
-				// Only the ray is fixed (Should be handled better!)
 				InfiniteLightEvalInput lin;
 				lin.Point = &spt;
 				lin.Ray	  = next;
 				InfiniteLightEvalOutput lout;
 				light->eval(lin, lout, session);
 
+				if (lout.PDF_S <= PR_EPSILON)
+					continue;
+
+				infLightHandled	 = true;
 				const float msiL = allowMSI ? MSI(1, out.PDF_S[0], 1, lout.PDF_S) : 1.0f;
 				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Weight, next, path);
 			}
@@ -405,13 +407,15 @@ public:
 		session.tile()->statistics().addDepthCount(sg.size());
 		session.tile()->statistics().addBackgroundHitCount(sg.size());
 		for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
-			// Only the ray is fixed (Should be handled better!)
 			for (size_t i = 0; i < sg.size(); ++i) {
 				InfiniteLightEvalInput in;
 				sg.extractRay(i, in.Ray);
 				in.Point = nullptr;
 				InfiniteLightEvalOutput out;
 				light->eval(in, out, session);
+
+				if (out.PDF_S <= PR_EPSILON)
+					continue;
 
 				session.pushSpectralFragment(SpectralBlob::Ones(), out.Weight, in.Ray, cb);
 			}

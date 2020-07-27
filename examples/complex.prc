@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 128
+		:sample_count 16
 	)
 	(filter
 		:slot 'pixel'
@@ -36,9 +36,6 @@
 		:type 'standard'
 		:width 0.720000
 		:height 0.405000
-		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
 		:localDirection [0,0,-1]
 		:localUp [0,1,0]
 		:localRight [1,0,0]
@@ -56,7 +53,7 @@
 		:name 'sun'
 		:type 'sun'
 		:turbidity 3
-		:radius 4
+		:radius 1
 		:hour 16
 	)
 	; Primitives
@@ -620,7 +617,7 @@
 	; Materials
 	(spectrum
 		:name 'Material_diffuse_color'
-		:data (refl 1.000000 0.525250 0.171813)
+		:data (refl 0.95 0.525250 0.171813)
 	)
 	(material
 		:name 'Material'
@@ -638,45 +635,46 @@
 	)
 	(spectrum
 		:name 'Material.003_diffuse_color'
-		:data (refl 1.000000 0.174027 0.035058)
+		:data (refl 0.95 0.174027 0.035058)
 	)
 	(material
 		:name 'Material.003'
 		:type 'principled'
 		:base_color 'Material.003_diffuse_color'
-		:roughness 0.400000
-		:subsurface 0.000000
-		:metallic 0.300000
-		:anisotropic 0.000000
-		:specular 0.500000
-		:specular_tint 0.000000
-		:sheen 0.000000
-		:sheen_tint 0.000000
-		:clearcoat 0.000000
-		:clearcoat_gloss 0.000000
+		:roughness 0.4
+		:subsurface 0.0
+		:metallic 0.3
+		:anisotropic 0.0
+		:specular 0.5
+		:specular_tint 0.0
+		:sheen 0.0
+		:sheen_tint 0.0
+		:clearcoat 0.0
+		:clearcoat_gloss 0.0
 	)
 	(spectrum
 		:name 'Material.004_diffuse_color'
-		:data (refl 0.603827 0.603827 0.603827)
+		:data (refl 0.6 0.6 0.6)
 	)
 	(material
 		:name 'Material.004'
 		:type 'principled'
 		:base_color 'Material.004_diffuse_color'
-		:roughness 0.200000
-		:subsurface 0.000000
-		:metallic 0.600000
-		:anisotropic 0.300000
-		:specular 0.500000
-		:specular_tint 0.000000
-		:sheen 0.000000
-		:sheen_tint 0.000000
-		:clearcoat 0.000000
-		:clearcoat_gloss 0.000000
+		:roughness 0.2
+		:subsurface 0.0
+		:metallic 0.6
+		:anisotropic 0.3
+		:specular 0.5
+		:specular_tint 0.0
+		:sheen 0.0
+		:sheen_tint 0.0
+		:clearcoat 0.0
+		:clearcoat_gloss 0.0
 	)
 	(material
 		:name 'Liquid'
 		:type 'glass'
 		:index (lookup_index "water")
+		:specularity 0.98
 	)
 )

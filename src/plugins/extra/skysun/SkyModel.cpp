@@ -20,8 +20,8 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 	const float solar_elevation		  = PR_PI / 2 - sunEA.Elevation;
 	const float atmospheric_turbidity = params.getNumber("turbidity", 3.0f);
 
-	const float sun_se = std::sin(sunEA.Elevation);
-	const float sun_ce = std::cos(sunEA.Elevation);
+	const float sun_se = std::sin(solar_elevation);
+	const float sun_ce = std::cos(solar_elevation);
 
 	mData.resize(mElevationCount * mAzimuthCount * AR_SPECTRAL_BANDS);
 	for (size_t k = 0; k < AR_SPECTRAL_BANDS; ++k) {
@@ -54,6 +54,8 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 		arhosekskymodelstate_free(state);
 	}
 
+#if 0
 	Debug::saveImage("sky.exr", mData.data(), mAzimuthCount, mElevationCount, AR_SPECTRAL_BANDS);
+#endif
 }
 } // namespace PR

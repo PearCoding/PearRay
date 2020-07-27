@@ -13,6 +13,12 @@ void saveImage(const std::string& path, const float* data, size_t width, size_t 
 	spec.attribute("Software", "PearRay " + versionStr);
 	spec.attribute("IPTC:ProgramVersion", versionStr);
 
+	if (channels > 3) {
+		spec.channelnames.resize(channels);
+		for (size_t i = 0; i < channels; ++i)
+			spec.channelnames[i] = "Value_" + std::to_string(i + 1);
+	}
+
 	auto out = OIIO::ImageOutput::create(path);
 	if (!out)
 		return;
