@@ -17,7 +17,7 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 	mAzimuthCount	= params.getInt("azimuth_resolution", RES_AZ);
 	mElevationCount = params.getInt("elevation_resolution", RES_EL);
 
-	const float solar_elevation		  = sunEA.Elevation;
+	const float solar_elevation		  = PR_PI / 2 - sunEA.Elevation;
 	const float atmospheric_turbidity = params.getNumber("turbidity", 3.0f);
 
 	const float sun_se = std::sin(sunEA.Elevation);
@@ -35,15 +35,15 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 		auto* state = arhosekskymodelstate_alloc_init(solar_elevation, atmospheric_turbidity, albedo);
 		auto body	= [&](const tbb::blocked_range2d<size_t, size_t>& r) {
 			  for (size_t y = r.rows().begin(); y != r.rows().end(); ++y) {
-				  const float elevation = ELEVATION_RANGE * y / (float)mElevationCount;
-				  const float se		= std::sin(elevation);
-				  const float ce		= std::cos(elevation);
+				  const float theta = PR_PI / 2 - ELEVATION_RANGE * y / (float)mElevationCount;
+				  const float st	= std::sin(theta);
+				  const float ct	= std::cos(theta);
 				  for (size_t x = r.cols().begin(); x != r.cols().end(); ++x) {
 					  const float azimuth = AZIMUTH_RANGE * x / (float)mAzimuthCount;
 
-					  float cosGamma = ce * sun_ce + se * sun_se * std::cos(azimuth - sunEA.Azimuth);
+					  float cosGamma = ct * sun_ce + st * sun_se * std::cos(azimuth - sunEA.Azimuth);
 					  float gamma	 = std::acos(std::min(1.0f, std::max(-1.0f, cosGamma)));
-					  float radiance = arhosekskymodel_radiance(state, elevation, gamma, wavelength + 0.005f /*Make sure the correct bin is choosen*/);
+					  float radiance = arhosekskymodel_radiance(state, theta, gamma, wavelength + 0.005f /*Make sure the correct bin is choosen*/);
 
 					  mData[y * mAzimuthCount * AR_SPECTRAL_BANDS + x * AR_SPECTRAL_BANDS + k] = std::max(0.0f, radiance);
 				  }

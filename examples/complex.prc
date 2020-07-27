@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 1024
+		:sample_count 128
 	)
 	(filter
 		:slot 'pixel'
@@ -45,20 +45,19 @@
 		:transform [0.6859206557273865,-0.32401347160339355,0.6515582203865051,21.767061233520508,0.7276763319969177,0.305420845746994,-0.6141703724861145,-21.046981811523438,0.0,0.8953956365585327,0.44527140259742737,18.041887283325195,0.0,0.0,0.0,1.0]
 	)
 	; Background
-	(spectrum
-		:name 'background'
-		:data (illum 0.14350 0.37133 0.50876)
-	)
 	(light
-		:name 'background'
-		:type 'env'
-		:radiance (smul (illuminant "D65") "background")
+		:name 'sky'
+		:type 'sky'
+		:turbidity 3
+		:albedo 0.40 ; Sandy environment
+		:hour 16
 	)
 	(light
 		:name 'sun'
-		:type 'distant'
-		:direction [0.707106781,0,-0.707106781]
-		:radiance (smul (illuminant "D65") 5)
+		:type 'sun'
+		:turbidity 3
+		:radius 4
+		:hour 16
 	)
 	; Primitives
 	(entity

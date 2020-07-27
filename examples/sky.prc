@@ -36,14 +36,12 @@
 		:name 'sky'
 		:type 'sky'
 		:turbidity 3
-		:hour 8
 	)
 	(light
 		:name 'sun'
 		:type 'sun'
 		:turbidity 3
-		:radius 8
-		:hour 8
+		:radius 1
 	)
 	; Entity Sphere
 	(entity

@@ -96,7 +96,7 @@ ElevationAzimuth computeSunEA(const TimePoint& timepoint, const MapLocation& loc
 		elevation += (EARTH_MEAN_RADIUS / ASTRONOMICAL_UNIT) * std::sin(elevation);
 	}
 
-	return ElevationAzimuth{ (float)elevation, (float)azimuth };
+	return ElevationAzimuth{ PR_PI / 2 - (float)elevation, (float)azimuth };
 }
 
 ElevationAzimuth computeSunEA(const ParameterGroup& params)

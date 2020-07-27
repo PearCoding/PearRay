@@ -36,7 +36,7 @@ public:
 
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
-											  mEA.Elevation, turbidity)
+											  mEA.theta(), turbidity)
 						   * scale;
 	}
 
@@ -104,7 +104,7 @@ public:
 	{
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
-											  mEA.Elevation, turbidity)
+											  mEA.theta(), turbidity)
 						   * mSolidAngle * scale;
 	}
 

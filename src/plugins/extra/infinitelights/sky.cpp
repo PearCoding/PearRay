@@ -33,10 +33,12 @@ public:
 			out.Weight = SpectralBlob::Zero();
 			out.PDF_S  = 0;
 		} else {
-			out.Weight		  = radiance(in.Ray.WavelengthNM, ea);
+			out.Weight = radiance(in.Ray.WavelengthNM, ea);
+			out.PDF_S  = mDistribution->continuousPdf(
+				 Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
 			const float f	  = std::cos(ea.Elevation);
 			const float denom = 2 * PR_PI * PR_PI * f;
-			out.PDF_S		  = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		}
 	}
 
@@ -48,7 +50,7 @@ public:
 		out.Outgoing		= mTransform * ea.toDirection();
 		const float f		= std::cos(ea.Elevation);
 		const float denom	= 2 * PR_PI * PR_PI * f;
-		out.PDF_S			= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 		out.Weight	 = radiance(in.Point.Ray.WavelengthNM, ea);
@@ -70,19 +72,17 @@ private:
 	{
 		mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), mModel.elevationCount());
 
-		const Vector2f filterSize(1.0f / mModel.azimuthCount(), 1.0f / mModel.elevationCount());
-
 		PR_LOG(L_INFO) << "Generating 2d environment (" << mDistribution->width() << "x" << mDistribution->height() << ") of " << name() << std::endl;
 
 		const SpectralBlob WVLS = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test
 		mDistribution->generate([&](size_t x, size_t y) {
-			const float azimuth	  = AZIMUTH_RANGE * x / (float)(mModel.azimuthCount() - 1);
-			const float elevation = ELEVATION_RANGE * y / (float)(mModel.elevationCount() - 1);
+			const float azimuth	  = AZIMUTH_RANGE * x / (float)mModel.azimuthCount();
+			const float elevation = ELEVATION_RANGE * y / (float)mModel.elevationCount();
 
 			const float f = std::cos(elevation);
 
 			const float val = f * radiance(WVLS, ElevationAzimuth{ elevation, azimuth }).maxCoeff();
-			return (val <= PR_EPSILON) ? 0.0f : val;
+			return std::max(0.0f, val);
 		});
 	}
 
@@ -91,9 +91,10 @@ private:
 		SpectralBlob blob;
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-			const float f	= std::min<float>(AR_SPECTRAL_BANDS - 2, std::max(0.0f, (wvls[i] - AR_SPECTRAL_START) / AR_SPECTRAL_DELTA));
-			const int index = f;
-			const float t	= f - index;
+			const float af	= std::max(0.0f, (wvls[i] - AR_SPECTRAL_START) / AR_SPECTRAL_DELTA);
+			const int index = std::min<float>(AR_SPECTRAL_BANDS - 2, af);
+			const float t	= std::min<float>(AR_SPECTRAL_BANDS - 1, af) - index;
+			PR_ASSERT(t >= 0.0f && t <= 1.0f, "t must be between 0 and 1");
 
 			float radiance = mModel.radiance(index, ea) * (1 - t) + mModel.radiance(index + 1, ea) * t;
 			blob[i]		   = radiance;
@@ -116,9 +117,9 @@ public:
 		const std::string name = params.getString("name", "__unknown");
 		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
-		auto ground_albedo	   = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.2f);
+		auto ground_albedo	   = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.15f);
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
-		PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
+		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
 		return std::make_shared<SkyLight>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), trans);
 	}

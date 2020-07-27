@@ -5,6 +5,7 @@
 namespace PR {
 
 // Default is Saarbruecken 2020.05.06 12:00:00 (midday)
+// which results in Elevation: 52.87 Azimuth: 143.27
 struct TimePoint {
 	int Year	  = 2020;
 	int Month	  = 5;

@@ -85,9 +85,9 @@ inline float* EquidistantSpectrum::data() { return mRef->Data; }
 
 inline float EquidistantSpectrum::lookup(float wavelength) const
 {
-	const float f	= std::min<float>(mSampleCount - 2, std::max(0.0f, (wavelength - mWavelengthStart) / mWavelengthDelta));
-	const int index = f;
-	const float t	= f - index;
+	const float af	= std::max(0.0f, (wavelength - mWavelengthStart) / mWavelengthDelta);
+	const int index = std::min<float>(mSampleCount - 2, af);
+	const float t	= std::min<float>(mSampleCount - 1, af) - index;
 
 	return mRef->Data[index] * (1 - t) + mRef->Data[index + 1] * t;
 }
