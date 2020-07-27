@@ -10,14 +10,14 @@ inline Vector3f fromTangentSpace(const Vector3f& N,
 								 const Vector3f& Nx, const Vector3f& Ny,
 								 const Vector3f& V)
 {
-	return N * V(2) + Ny * V(1) + Nx * V(0);
+	return (N * V(2) + Ny * V(1) + Nx * V(0)).normalized();
 }
 
 inline Vector3f toTangentSpace(const Vector3f& N,
 							   const Vector3f& Nx, const Vector3f& Ny,
 							   const Vector3f& V)
 {
-	return Vector3f(Nx(2), Ny(2), N(2)) * V(2) + Vector3f(Nx(1), Ny(1), N(1)) * V(1) + Vector3f(Nx(0), Ny(0), N(0)) * V(0);
+	return (Vector3f(Nx(2), Ny(2), N(2)) * V(2) + Vector3f(Nx(1), Ny(1), N(1)) * V(1) + Vector3f(Nx(0), Ny(0), N(0)) * V(0)).normalized();
 }
 
 // N Orientation Z+

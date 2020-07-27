@@ -58,7 +58,7 @@ public:
 				const RenderTileSession&) const override
 	{
 		const Vector3f dir = Sampling::uniform_cone(in.RND(0), in.RND(1), mCosTheta);
-		out.Outgoing	   = Tangent::fromTangentSpace(mDirection, mDx, mDy, dir).normalized();
+		out.Outgoing	   = Tangent::fromTangentSpace(mDirection, mDx, mDy, dir);
 		out.PDF_S		   = mPDF;
 
 		PR_OPT_LOOP
