@@ -30,6 +30,8 @@ set(PR_Src
   log/FileLogListener.cpp
   log/FileLogListener.h
   log/LogListener.h
+  network/Protocol.cpp
+  network/Protocol.h
   network/Socket.cpp
   network/Socket.h
   network/SocketImplLinux.inl

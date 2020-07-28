@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "ProgramSettings.h"
 #include "buffer/FrameBufferSystem.h"
+#include "network/Protocol.h"
 #include "network/Socket.h"
 #include "renderer/RenderContext.h"
 #include "serialization/BufferedNetworkSerializer.h"
@@ -9,51 +10,32 @@
 #include <thread>
 
 namespace PR {
-enum IncomingType {
-	IT_STATUSREQUEST = 0,
-	IT_IMAGEREQUEST	 = 1,
-	IT_STOPREQUEST	 = 2
-};
-enum OutgoingType {
-	OT_STATUSRESPONSE = 0,
-	OT_IMAGERESPONSE  = 1
-};
-/* Protocol definition 
- * Incoming
- * [uint8] Type { 0-> StatusRequest, 1-> ImageRequest, 2-> StopRequest }
- * 
- * Outgoing
- * [uint8] Type { 0-> StatusResponse, 1-> ImageResponse }
- * 
- * <Status>
- * [double] Percentage
- * [uint32] CurrentIteration
- * ... TODO ...
- * 
- * <Image>
- * [uint32] Width
- * [uint32] Height
- * [uint32] Format {0-> CIE XYZ, 1-> RGB} (Always triplet)
- * [float*Width*Height*3] Data
- */
-void handle_status(NetworkObserver* observer, Serializer& out);
-void handle_image(NetworkObserver* observer, Serializer& out);
+bool handle_ping(Serializer& out)
+{
+	return Protocol::writeHeader(out, PT_PingResponse);
+}
+
+bool handle_status(NetworkObserver* observer, Serializer& out);
+bool handle_image(NetworkObserver* observer, Serializer& out);
 bool handle_protocol(NetworkObserver* observer, BufferedNetworkSerializer& in, BufferedNetworkSerializer& out)
 {
-	uint8 in_type;
-	in | in_type;
-	PR_LOG(L_INFO) << "Incoming protocol type " << (int)in_type << std::endl;
-	if (!in.isValid()) // Probably closed
+	ProtocolType in_type;
+	if (Protocol::readHeader(in, in_type))
 		return false;
+	PR_LOG(L_INFO) << "Incoming protocol type " << (int)in_type << std::endl;
 
+	bool good = false;
 	switch (in_type) {
-	case IT_STATUSREQUEST:
-		handle_status(observer, out);
+	case PT_PingRequest:
+		good = handle_ping(out);
 		break;
-	case IT_IMAGEREQUEST:
-		handle_image(observer, out);
+	case PT_StatusRequest:
+		good = handle_status(observer, out);
 		break;
-	case IT_STOPREQUEST:
+	case PT_ImageRequest:
+		good = handle_image(observer, out);
+		break;
+	case PT_StopRequest:
 		observer->context()->stop();
 		return false; // We can stop the client after this request
 	default:
@@ -61,34 +43,45 @@ bool handle_protocol(NetworkObserver* observer, BufferedNetworkSerializer& in, B
 		return false;
 	}
 
+	if (!good)
+		return false;
+
 	out.flush();
 	return out.isValid();
 }
 
-void handle_status(NetworkObserver* observer, Serializer& out)
+bool handle_status(NetworkObserver* observer, Serializer& out)
 {
-	RenderStatus status		= observer->context()->status();
-	uint32 currentIteration = observer->currentIteration();
+	RenderStatus status = observer->context()->status();
 
-	out.write((uint8)OT_STATUSRESPONSE);
-	out.write(status.percentage());
-	out.write(currentIteration);
+	ProtocolStatus out_status;
+	out_status.Percentage = status.percentage();
+	out_status.Iteration  = observer->currentIteration();
+
+	if (Protocol::writeHeader(out, PT_StatusResponse))
+		return Protocol::writeStatus(out, out_status);
+	else
+		return false;
 }
 
-void handle_image(NetworkObserver* observer, Serializer& out)
+bool handle_image(NetworkObserver* observer, Serializer& out)
 {
 	auto context = observer->context();
 	auto channel = context->output()->data().getInternalChannel_Spectral();
 
 	PR_ASSERT(channel->channels() == 3, "Expect spectral channel to have 3 channels"); // TODO: This may change in the future
 
-	out.write((uint8)OT_IMAGERESPONSE);
-	out.write((uint32)channel->width());
-	out.write((uint32)channel->height());
-	out.write((uint32)0);
+	ProtocolImage out_img;
+	out_img.Width  = channel->width();
+	out_img.Height = channel->height();
+	out_img.Type   = 0;
 
-	size_t size = channel->size().area() * 3 * sizeof(float);
-	out.writeRaw(reinterpret_cast<const uint8*>(channel->ptr()), size);
+	size_t size = channel->size().area() * 3;
+
+	if (Protocol::writeHeader(out, PT_ImageResponse))
+		return Protocol::writeImage(out, out_img, channel->ptr(), size);
+	else
+		return false;
 }
 
 // Server - Client

@@ -4,6 +4,7 @@
 
 #include <cxxopts.hpp>
 
+#include "network/Protocol.h"
 #include "network/Socket.h"
 #include "serialization/NetworkSerializer.h"
 #include <OpenImageIO/imageio.h>
@@ -11,6 +12,7 @@
 namespace sf = std::filesystem;
 using namespace PR;
 
+static bool sQuit		   = false;
 static Socket* sConnection = nullptr;
 void connect(const std::string& ip, uint16 port)
 {
@@ -213,20 +215,58 @@ bool ensureConnection()
 
 void handle_stop(const Arguments&)
 {
-	if(!ensureConnection())
+	if (!ensureConnection())
 		return;
 
-	NetworkSerializer serializer(sConnection, false);
-	serializer.write(uint8(2));
+	NetworkSerializer out(sConnection, false);
+	Protocol::writeHeader(out, PT_StopRequest);
+}
+
+void handle_ping(const Arguments&)
+{
+	if (!ensureConnection())
+		return;
+
+	NetworkSerializer out(sConnection, false);
+	Protocol::writeHeader(out, PT_PingRequest);
+
+	NetworkSerializer in(sConnection, true);
+	ProtocolType type;
+	if (!Protocol::readHeader(in, type)) {
+		std::cout << "Could not get protocol header" << std::endl;
+	} else {
+		if (type == PT_PingResponse)
+			std::cout << "Successful" << std::endl;
+		else
+			std::cout << "Got unexpected response " << type << std::endl;
+	}
 }
 
 void handle_status(const Arguments&)
 {
-	if(!ensureConnection())
+	if (!ensureConnection())
 		return;
 
-	NetworkSerializer serializer(sConnection, false);
-	serializer.write(uint8(0));
+	NetworkSerializer out(sConnection, false);
+	Protocol::writeHeader(out, PT_StatusRequest);
+
+	NetworkSerializer in(sConnection, true);
+	ProtocolType type;
+	if (!Protocol::readHeader(in, type)) {
+		std::cout << "Could not get protocol header" << std::endl;
+	} else {
+		if (type == PT_StatusRequest) {
+			ProtocolStatus status;
+			Protocol::readStatus(in, status);
+			std::cout << status.Percentage << "% " << status.Iteration << std::endl;
+		} else
+			std::cout << "Got unexpected response " << type << std::endl;
+	}
+}
+
+void handle_quit(const Arguments&)
+{
+	sQuit = true;
 }
 
 void handle_help(const Arguments&);
@@ -240,9 +280,12 @@ struct {
 	{ "connect", "Connect to a running PearRay session", handle_connect },
 	{ "disconnect", "Disconnect from a running PearRay session", handle_disconnect },
 	{ "session", "Display information about current session", handle_session },
+	{ "ping", "Ping current session to stop", handle_ping },
 	{ "stop", "Request current session to stop", handle_stop },
-	{ "status", "Request status information about current session", nullptr },
+	{ "status", "Request status information about current session", handle_status },
 	{ "save", "Request image from current session and save it to disk", nullptr },
+	{ "quit", "Exit program", handle_quit },
+	{ "exit", "Exit program", handle_quit },
 	{ nullptr, nullptr, nullptr }
 };
 
@@ -304,7 +347,7 @@ int main(int argc, char** argv)
 	if (!options.Ip.empty())
 		connect(options.Ip, options.Port);
 
-	bool stop = false;
+	sQuit = false;
 	do {
 		std::cout << ">> ";
 
@@ -312,11 +355,8 @@ int main(int argc, char** argv)
 		std::getline(std::cin, line);
 		trim(line);
 
-		if (line == "exit")
-			stop = true;
-		else if (!line.empty())
-			handle_line(line);
-	} while (!stop);
+		handle_line(line);
+	} while (!sQuit);
 
 	disconnect();
 
