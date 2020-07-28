@@ -13,6 +13,7 @@ public:
 	virtual ~BufferedNetworkSerializer();
 
 	inline Socket* socket() const { return mNetwork.socket(); }
+	inline bool hasData() const { return mNetwork.hasData(); }
 
 private:
 	NetworkSerializer mNetwork;

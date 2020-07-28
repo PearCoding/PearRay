@@ -12,6 +12,7 @@
 #include "spectral/ToneMapper.h"
 
 #include "ImageUpdateObserver.h"
+#include "NetworkObserver.h"
 #include "StatusObserver.h"
 
 #include <filesystem>
@@ -112,6 +113,8 @@ int main(int argc, char** argv)
 		observers.push_back(std::make_unique<ImageUpdateObserver>(env.get()));
 	if (options.ShowProgress > 0)
 		observers.push_back(std::make_unique<StatusObserver>());
+	if (options.ListenNetwork > 0)
+		observers.push_back(std::make_unique<NetworkObserver>());
 
 	// Setup renderFactory
 	auto renderFactory = env->createRenderFactory();

@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 4096
+		:sample_count 32
 	)
 	(filter
 		:slot 'pixel'

@@ -4,6 +4,8 @@ set(Src
   ImageUpdateObserver.h
   IProgressObserver.h
   main.cpp
+  NetworkObserver.cpp
+  NetworkObserver.h
   ProgramSettings.cpp
   ProgramSettings.h
   StatusObserver.cpp

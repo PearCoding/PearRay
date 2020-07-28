@@ -17,6 +17,7 @@ public:
 
 	bool IsListening  = false;
 	bool IsConnection = false;
+	bool IsConnected  = false;
 	bool IsIp6		  = false;
 
 	// Ip4
@@ -25,20 +26,21 @@ public:
 		sockaddr_in addr;
 		memset(&addr, 0, sizeof(addr));
 
-		addr.sin_family = AF_INET;
-		addr.sin_port	= htons(port);
 		if (!getAddressFromString4(ip, addr)) {
 			PR_LOG(L_ERROR) << "Couldn't convert ip address: " << getErrorString() << std::endl;
 			return false;
 		}
+		addr.sin_family = AF_INET;
+		addr.sin_port	= htons(port);
 
-		int error = ::connect(Socket, (sockaddr*)&addr, sizeof(sockaddr));
+		int error = ::connect(Socket, (sockaddr*)&addr, sizeof(addr));
 
 		if (isSocketError(error))
 			return false;
 
-		IP	 = ip;
-		Port = port;
+		IP			= ip;
+		Port		= port;
+		IsConnected = true;
 		return true;
 	}
 
@@ -51,7 +53,7 @@ public:
 		addr.sin_port		 = htons(port);
 		addr.sin_addr.s_addr = INADDR_ANY;
 
-		int error = ::bind(Socket, (sockaddr*)&addr, sizeof(sockaddr));
+		int error = ::bind(Socket, (sockaddr*)&addr, sizeof(addr));
 
 		if (isSocketError(error))
 			return false;
@@ -84,20 +86,21 @@ public:
 		sockaddr_in6 addr;
 		memset(&addr, 0, sizeof(addr));
 
-		addr.sin6_family = AF_INET;
-		addr.sin6_port	 = htons(port);
 		if (!getAddressFromString6(ip, addr)) {
 			PR_LOG(L_ERROR) << "Couldn't convert ip address: " << getErrorString() << std::endl;
 			return false;
 		}
+		addr.sin6_family = AF_INET6;
+		addr.sin6_port	 = htons(port);
 
-		int error = ::connect(Socket, (sockaddr*)&addr, sizeof(sockaddr));
+		int error = ::connect(Socket, (sockaddr*)&addr, sizeof(addr));
 
 		if (isSocketError(error))
 			return false;
 
-		IP	 = ip;
-		Port = port;
+		IP			= ip;
+		Port		= port;
+		IsConnected = true;
 		return true;
 	}
 
@@ -110,7 +113,7 @@ public:
 		addr.sin6_port	 = htons(port);
 		addr.sin6_addr	 = in6addr_any;
 
-		int error = ::bind(Socket, (sockaddr*)&addr, sizeof(sockaddr));
+		int error = ::bind(Socket, (sockaddr*)&addr, sizeof(addr));
 
 		if (isSocketError(error))
 			return false;
@@ -157,7 +160,7 @@ Socket::Socket()
 #endif
 
 		socket = ::socket(AF_INET, SOCK_STREAM, 0);
-		checkSocket(socket);
+		checkSocketAndErrorCode(socket);
 		mInternal->IsIp6 = false;
 #if !defined(PR_NO_IPV6)
 	}
@@ -174,7 +177,19 @@ Socket::Socket(bool)
 
 Socket::~Socket()
 {
-	closeSocket(mInternal->Socket);
+	if (mInternal)
+		closeSocket(mInternal->Socket);
+}
+
+Socket::Socket(Socket&& other)
+	: mInternal(std::move(other.mInternal))
+{
+}
+
+Socket& Socket::operator=(Socket&& other)
+{
+	mInternal = std::move(other.mInternal);
+	return *this;
 }
 
 bool Socket::connect(uint16 port, const std::string& ip)
@@ -229,6 +244,38 @@ Socket Socket::accept()
 	return acceptedSocket;
 }
 
+bool Socket::hasData() const
+{
+	fd_set readableSet;
+	FD_ZERO(&readableSet);
+	FD_SET(mInternal->Socket, &readableSet);
+
+	int error = ::select(mInternal->Socket + 1, &readableSet, nullptr, nullptr, nullptr);
+
+	if (isSocketError(error))
+		return false;
+
+	return FD_ISSET(mInternal->Socket, &readableSet);
+}
+
+bool Socket::hasData(float timeout_s) const
+{
+	fd_set readableSet;
+	FD_ZERO(&readableSet);
+	FD_SET(mInternal->Socket, &readableSet);
+
+	timeval tout;
+	tout.tv_sec	 = (int)timeout_s;
+	tout.tv_usec = (timeout_s - (int)timeout_s) * 1000000;
+
+	int error = ::select(mInternal->Socket + 1, &readableSet, nullptr, nullptr, &tout);
+
+	if (isSocketError(error))
+		return false;
+
+	return error > 0 && FD_ISSET(mInternal->Socket, &readableSet);
+}
+
 bool Socket::send(const char* data, size_t len)
 {
 	size_t total = 0;
@@ -277,6 +324,7 @@ size_t Socket::receiveAtMost(char* data, size_t len, bool* ok)
 bool Socket::isValid() const { return checkSocket(mInternal->Socket); }
 bool Socket::isListening() const { return mInternal->IsListening; }
 bool Socket::isConnection() const { return mInternal->IsConnection; }
+bool Socket::isConnected() const { return mInternal->IsConnection || mInternal->IsConnected; }
 
 std::string Socket::ip() const { return mInternal->IP; }
 uint16 Socket::port() const { return mInternal->Port; }

@@ -7,6 +7,7 @@
 #include <OpenImageIO/imageio.h>
 
 namespace sf = std::filesystem;
+bool read_input(const std::string& filename, std::vector<float>& data, int& width, int& height, std::vector<std::string>& channel_names);
 
 enum CropMode {
 	CM_None = 0,
@@ -33,6 +34,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		// clang-format off
 		options.add_options()
 			("h,help", "Produce this help message")
+			("l,list", "List all available channels and exit")
 			("v,verbose", "Print detailed information")
 			("c,channels", "List of channels to split if available", cxxopts::value<std::vector<std::string>>())
 			("i,input", "Input file", cxxopts::value<std::string>())
@@ -48,6 +50,25 @@ bool ProgramSettings::parse(int argc, char** argv)
 			std::cout << "See Wiki for more information:\n  https://github.com/PearCoding/PearRay/wiki\n"
 					  << std::endl;
 			std::cout << options.help() << std::endl;
+			exit(EXIT_SUCCESS);
+		}
+
+		if (vm.count("list")) {
+			if (!vm.count("input")) {
+				std::cerr << "Error: No input given!" << std::endl;
+				return false;
+			}
+
+			std::vector<std::string> channel_names;
+			std::vector<float> in_data;
+			int width = 0, height = 0;
+			bool res = read_input(vm["input"].as<std::string>(), in_data, width, height, channel_names);
+			if (!res)
+				return false;
+
+			for (size_t i = 0; i < channel_names.size(); ++i)
+				std::cout << channel_names[i] << std::endl;
+
 			exit(EXIT_SUCCESS);
 		}
 

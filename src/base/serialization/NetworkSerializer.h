@@ -14,6 +14,7 @@ public:
 
 	void setSocket(Socket* socket, bool readmode);
 	inline Socket* socket() const { return mSocket; }
+	bool hasData() const;
 
 	// Interface
 	virtual bool isValid() const override;

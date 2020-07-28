@@ -90,6 +90,6 @@ set(GenFiles ${Hdr_Moc} ${Fms_Hdr} ${Res_Rcc})
 SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_executable(prdiag ${Src} ${Hdr} ${GenFiles})
-target_link_libraries(prdiag PRIVATE Qt5::Widgets Qt5::Charts OpenImageIO::OpenImageIO TBB::tbb)
+target_link_libraries(prdiag PRIVATE pr_lib_base Qt5::Widgets Qt5::Charts OpenImageIO::OpenImageIO TBB::tbb)
 add_lto(prdiag)
 strip_binary(prdiag)

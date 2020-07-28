@@ -27,10 +27,8 @@ void NetworkSerializer::setSocket(Socket* socket, bool readmode)
 	setReadMode(readmode);
 }
 
-bool NetworkSerializer::isValid() const
-{
-	return mSocket != nullptr;
-}
+bool NetworkSerializer::isValid() const { return mSocket != nullptr; }
+bool NetworkSerializer::hasData() const { return isValid() && mSocket->hasData(); }
 
 size_t NetworkSerializer::writeRaw(const uint8* data, size_t size)
 {
@@ -50,6 +48,8 @@ size_t NetworkSerializer::readRaw(uint8* data, size_t size)
 	size_t read = mSocket->receiveAtMost((char*)data, size, &ok);
 	if (!ok)
 		PR_LOG(L_ERROR) << "Could not read from socket." << std::endl;
+	else if (read == 0) // Closed
+		mSocket = nullptr;
 
 	return read;
 }

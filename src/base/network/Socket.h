@@ -8,8 +8,8 @@ public:
 	Socket();
 	virtual ~Socket();
 
-	Socket(Socket&& other) = default;
-	Socket& operator=(Socket&& other) = default;
+	Socket(Socket&& other);
+	Socket& operator=(Socket&& other);
 
 	// Client
 	bool connect(uint16 port, const std::string& ip);
@@ -18,6 +18,10 @@ public:
 	bool bind(uint16 port);
 	bool listen(int32 maxClients = -1);
 	Socket accept();
+
+	bool hasData() const;
+	bool hasData(float timeout_s) const;
+	inline bool hasIncomingConnection(float timeout_s) const { return hasData(timeout_s); }
 
 	// IO
 	bool send(const char* data, size_t len);
@@ -28,6 +32,7 @@ public:
 	bool isValid() const;
 	bool isListening() const;
 	bool isConnection() const;
+	bool isConnected() const;
 
 	std::string ip() const;
 	uint16 port() const;
