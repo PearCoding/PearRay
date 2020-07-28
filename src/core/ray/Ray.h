@@ -21,7 +21,7 @@ struct PR_LIB_CORE Ray {
 	Vector3f Direction = Vector3f::Zero();
 
 	float MinT				  = PR_EPSILON;
-	float MaxT				  = std::numeric_limits<float>::infinity();
+	float MaxT				  = PR_INF;
 	SpectralBlob Weight		  = SpectralBlob::Zero();
 	SpectralBlob WavelengthNM = SpectralBlob::Zero(); // Hero Quartett, first entry is hero wavelength
 	float Time				  = 0;

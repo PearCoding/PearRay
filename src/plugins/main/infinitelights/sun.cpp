@@ -32,6 +32,7 @@ public:
 	{
 		Tangent::frame(mDirection, mDx, mDy);
 
+		scale /= (radius * radius); // Compensate for different radii
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
 			mSpectrum[i] = computeSunRadiance(mSpectrum.wavelengthStart() + i * mSpectrum.delta(),
 											  mEA.theta(), turbidity)
@@ -42,6 +43,8 @@ public:
 			  const RenderTileSession&) const override
 	{
 		const float cosine = std::max(0.0f, in.Ray.Direction.dot(mDirection));
+		PR_ASSERT(cosine >= 0.0f && cosine <= 1.0f, "cosine must be between 0 and 1");
+
 		if (cosine < mCosTheta) {
 			out.Weight = SpectralBlob::Zero();
 			out.PDF_S  = 0;
@@ -109,7 +112,7 @@ public:
 	{
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Weight[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
-		out.PDF_S = std::numeric_limits<float>::infinity();
+		out.PDF_S = PR_INF;
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
@@ -118,7 +121,7 @@ public:
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Weight[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
 		out.Outgoing = mDirection;
-		out.PDF_S	 = std::numeric_limits<float>::infinity();
+		out.PDF_S	 = PR_INF;
 	}
 
 	std::string dumpInformation() const override
@@ -127,8 +130,8 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SunDeltaLight>:" << std::endl
-			   << "    Elevation: " << mEA.Elevation << std::endl
-			   << "    Azimuth:   " << mEA.Azimuth << std::endl
+			   << "    Elevation: " << PR_RAD2DEG * mEA.Elevation << "°" << std::endl
+			   << "    Azimuth:   " << PR_RAD2DEG * mEA.Azimuth << "°" << std::endl
 			   << "    Direction: " << PR_FMT_MAT(mDirection) << std::endl;
 		return stream.str();
 	}

@@ -17,7 +17,7 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 	mAzimuthCount	= params.getInt("azimuth_resolution", RES_AZ);
 	mElevationCount = params.getInt("elevation_resolution", RES_EL);
 
-	const float solar_elevation		  = PR_PI / 2 - sunEA.Elevation;
+	const float solar_elevation		  = PR_PI_2 - sunEA.Elevation;
 	const float atmospheric_turbidity = params.getNumber("turbidity", 3.0f);
 
 	const float sun_se = std::sin(solar_elevation);
@@ -35,7 +35,7 @@ SkyModel::SkyModel(const std::shared_ptr<FloatSpectralNode>& ground_albedo, cons
 		auto* state = arhosekskymodelstate_alloc_init(solar_elevation, atmospheric_turbidity, albedo);
 		auto body	= [&](const tbb::blocked_range2d<size_t, size_t>& r) {
 			  for (size_t y = r.rows().begin(); y != r.rows().end(); ++y) {
-				  const float theta = PR_PI / 2 - ELEVATION_RANGE * y / (float)mElevationCount;
+				  const float theta = PR_PI_2 - ELEVATION_RANGE * y / (float)mElevationCount;
 				  const float st	= std::sin(theta);
 				  const float ct	= std::cos(theta);
 				  for (size_t x = r.cols().begin(); x != r.cols().end(); ++x) {

@@ -366,7 +366,7 @@ bool Scene::traceShadowRay(const Ray& ray, float distance, uint32 entity_id) con
 
 	rtcOccluded1(mInternal->Scene, (RTCIntersectContext*)&ctx, &rray);
 
-	return rray.tfar != -std::numeric_limits<float>::infinity();
+	return rray.tfar != -PR_INF;
 }
 
 bool Scene::traceOcclusionRay(const Ray& ray) const
@@ -380,6 +380,6 @@ bool Scene::traceOcclusionRay(const Ray& ray) const
 
 	rtcOccluded1(mInternal->Scene, &ctx, &rray);
 
-	return rray.tfar == -std::numeric_limits<float>::infinity(); // RTCRay.tfar is set to -inf if hit anything
+	return rray.tfar == -PR_INF; // RTCRay.tfar is set to -inf if hit anything
 }
 } // namespace PR

@@ -9,7 +9,7 @@ enum HitPointFlags {
 };
 
 struct PR_LIB_CORE HitPoint {
-	float HitDistance  = std::numeric_limits<float>::infinity();
+	float HitDistance  = PR_INF;
 	uint32 MaterialID  = 0;
 	uint32 EntityID	   = 0;
 	uint32 FaceID	   = 0;

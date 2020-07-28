@@ -209,7 +209,7 @@ private:
 		box.expand(width / 2);
 
 		box.intersects(Ray(Vector3f(0, 0, -1), Vector3f(0, 0, 1)), out);
-		if (out.HitDistance == std::numeric_limits<float>::infinity())
+		if (out.HitDistance == PR_INF)
 			return false;
 
 		if (depth > 0) {

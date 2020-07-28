@@ -28,7 +28,7 @@ public:
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
 		out.Weight = PR_PI * mRadiance->eval(ctx);
-		out.PDF_S  = std::numeric_limits<float>::infinity();
+		out.PDF_S  = PR_INF;
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
@@ -39,7 +39,7 @@ public:
 
 		out.Weight	 = PR_PI * mRadiance->eval(ctx);
 		out.Outgoing = mDirection_Cache;
-		out.PDF_S	 = std::numeric_limits<float>::infinity();
+		out.PDF_S	 = PR_INF;
 	}
 
 	std::string dumpInformation() const override

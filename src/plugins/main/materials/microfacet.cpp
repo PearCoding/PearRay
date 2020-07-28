@@ -198,7 +198,7 @@ public:
 
 		SpectralBlob Diff = SpectralBlob::Zero();
 		if (mFresnelMode != FM_Conductor)
-			Diff = (F < 1).select(PR_1_PI * mAlbedo->eval(sctx), 0.0f);
+			Diff = (F < 1).select(PR_INV_PI * mAlbedo->eval(sctx), 0.0f);
 
 		SpectralBlob Spec = SpectralBlob::Zero();
 		if (in.Context.NdotL() * in.Context.NdotV() > PR_EPSILON) {
@@ -207,7 +207,7 @@ public:
 			out.PDF_S = SpectralBlob(pdf_s);
 		}
 
-		out.PDF_S  = PR_1_PI * (1 - F) + out.PDF_S * F;
+		out.PDF_S  = PR_INV_PI * (1 - F) + out.PDF_S * F;
 		out.Weight = Diff * (1 - F) + Spec * F;
 		out.Weight *= std::abs(in.Context.NdotL());
 		out.Type = MST_DiffuseReflection;
@@ -218,7 +218,7 @@ public:
 		float pdf_s;
 		out.L	   = Sampling::cos_hemi(u, v, pdf_s);
 		out.PDF_S  = SpectralBlob(pdf_s);
-		out.Weight = PR_1_PI * mAlbedo->eval(sctx) * out.L[2];
+		out.Weight = PR_INV_PI * mAlbedo->eval(sctx) * out.L[2];
 		out.Type   = MST_DiffuseReflection;
 	}
 

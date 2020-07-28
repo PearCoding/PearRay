@@ -27,7 +27,7 @@ public:
 	}
 
 private:
-	inline static float sinc(float x) { return PR_1_PI * std::sin(PR_PI * x) / x; }
+	inline static float sinc(float x) { return PR_INV_PI * std::sin(PR_PI * x) / x; }
 	void cache()
 	{
 		const int halfSize = mRadius + 1;

@@ -9,7 +9,7 @@
 
 namespace PR {
 constexpr float NEAR_DEFAULT = 0.000001f;
-constexpr float FAR_DEFAULT	 = std::numeric_limits<float>::infinity();
+constexpr float FAR_DEFAULT	 = PR_INF;
 
 class OrthoCamera : public ICamera {
 public:

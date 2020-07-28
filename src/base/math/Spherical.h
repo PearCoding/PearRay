@@ -16,7 +16,7 @@ inline Vector2f from_direction(const Vector3f& D)
 
 inline Vector2f uv_from_normal(const Vector3f& N)
 {
-	Vector2f tp = from_direction(N) * PR_1_PI;
+	Vector2f tp = from_direction(N) * PR_INV_PI;
 	return Vector2f(tp(1) / 2, tp(0));
 }
 

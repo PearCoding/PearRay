@@ -33,7 +33,7 @@ inline float g_cook_torrance(float NdotV, float NdotL, float NdotH, float VdotH)
 
 inline float g_1_schlick(float NdotK, float roughness)
 {
-	const float k = roughness * std::sqrt(PR_1_PI * 2.0f);
+	const float k = roughness * std::sqrt(PR_INV_PI * 2.0f);
 	return NdotK / std::fma(NdotK, 1 - k, k);
 }
 
@@ -81,13 +81,13 @@ inline float ndf_beckmann(float NdotH, float roughness)
 {
 	const float k = NdotH * NdotH;
 	const float m = roughness * roughness;
-	return PR_1_PI * std::exp((k - 1.0f) / (k * m)) / (k * k * m);
+	return PR_INV_PI * std::exp((k - 1.0f) / (k * m)) / (k * k * m);
 }
 
 inline float ndf_blinn(float NdotH, float roughness)
 {
 	const float alpha2 = 1.0f / (roughness * roughness);
-	return std::pow(NdotH, 2.0f * alpha2 - 2.0f) * alpha2 * PR_1_PI;
+	return std::pow(NdotH, 2.0f * alpha2 - 2.0f) * alpha2 * PR_INV_PI;
 }
 
 inline float ndf_ggx(float NdotH, float roughness)
@@ -100,7 +100,7 @@ inline float ndf_ggx(float NdotH, float roughness)
 	if (inv_t2 <= PR_EPSILON)
 		return 0.0f;
 	else
-		return alpha2 * PR_1_PI / inv_t2;
+		return alpha2 * PR_INV_PI / inv_t2;
 }
 
 inline float ndf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, float roughnessY)
@@ -112,7 +112,7 @@ inline float ndf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, fl
 	if (denom <= PR_EPSILON)
 		return 0.0f;
 	else
-		return PR_1_PI / denom;
+		return PR_INV_PI / denom;
 }
 
 ////////////////////////////////
@@ -130,7 +130,7 @@ inline Vector3f sample_ndf_beckmann(float u0, float u1, float roughness, float& 
 	if (roughness <= PR_EPSILON)
 		pdf = 1;
 	else
-		pdf = PR_1_PI / (roughness * roughness * cosTheta * cosTheta * cosTheta) * (1 - u1);
+		pdf = PR_INV_PI / (roughness * roughness * cosTheta * cosTheta * cosTheta) * (1 - u1);
 
 	return Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 }
@@ -138,7 +138,7 @@ inline Vector3f sample_ndf_beckmann(float u0, float u1, float roughness, float& 
 inline float pdf_beckmann(float NdotH, float roughness)
 {
 	const float m = roughness * roughness;
-	return PR_1_PI / (NdotH * NdotH * NdotH * m);
+	return PR_INV_PI / (NdotH * NdotH * NdotH * m);
 }
 
 inline Vector3f sample_ndf_blinn(float u0, float u1, float roughness, float& pdf)
@@ -180,13 +180,13 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughness, float& pdf)
 	cosPhi		 = std::cos(2 * PR_PI * u0);
 
 	float s = 1 + t2 / alpha2;
-	pdf		= PR_1_PI / (alpha2 * cosTheta * cosTheta * cosTheta * s * s);
+	pdf		= PR_INV_PI / (alpha2 * cosTheta * cosTheta * cosTheta * s * s);
 	return Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 }
 
 inline float pdf_ggx(float NdotH, float roughness)
 {
-	return PR_1_PI / (roughness * roughness * NdotH * NdotH * NdotH * 4);
+	return PR_INV_PI / (roughness * roughness * NdotH * NdotH * NdotH * 4);
 }
 
 inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float roughnessY, float& pdf)
@@ -206,13 +206,13 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float rough
 	sinTheta	 = std::sqrt(1 - cosTheta * cosTheta);
 
 	float s = 1 + t2 / alpha2;
-	pdf		= PR_1_PI / (roughnessX * roughnessY * cosTheta * cosTheta * cosTheta * s * s);
+	pdf		= PR_INV_PI / (roughnessX * roughnessY * cosTheta * cosTheta * cosTheta * s * s);
 	return Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 }
 
 inline float pdf_ggx(float NdotH, float roughnessX, float roughnessY)
 {
-	return PR_1_PI / (roughnessX * roughnessY * NdotH * NdotH * NdotH * 4);
+	return PR_INV_PI / (roughnessX * roughnessY * NdotH * NdotH * NdotH * 4);
 }
 
 // Based on:

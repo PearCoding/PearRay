@@ -11,14 +11,14 @@ inline Vector3f sphere(float u1, float u2, float& pdf)
 	const float sinTheta = std::sqrt(std::max(0.0f, 1.0f - z * z));
 	const float phi		 = 2 * PR_PI * u2;
 
-	pdf = PR_1_PI * 0.25f;
+	pdf = PR_INV_PI * 0.25f;
 
 	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), z);
 }
 
 inline float sphere_pdf()
 {
-	return PR_1_PI * 0.25f;
+	return PR_INV_PI * 0.25f;
 }
 
 // Orientation +Z
@@ -27,14 +27,14 @@ inline Vector3f hemi(float u1, float u2, float& pdf)
 	float sinTheta = std::sqrt(std::max(0.0f, 1.0f - u1 * u1));
 	float phi	   = 2 * PR_PI * u2;
 
-	pdf = PR_1_PI * 0.5f;
+	pdf = PR_INV_PI * 0.5f;
 
 	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), u1);
 }
 
 inline float hemi_pdf()
 {
-	return PR_1_PI * 0.5f;
+	return PR_INV_PI * 0.5f;
 }
 
 // Cosine weighted
@@ -51,7 +51,7 @@ inline Vector3f cos_hemi(float u1, float u2, float& pdf)
 	const float x = sinPhi * thCos;
 	const float y = sinPhi * thSin;
 
-	pdf = cosPhi * PR_1_PI;
+	pdf = cosPhi * PR_INV_PI;
 
 	return Vector3f(x, y, cosPhi);
 }
@@ -69,19 +69,19 @@ inline Vector3f cos_hemi(float u1, float u2, float m, float& pdf)
 	const float x = sinPhi * thCos * norm;
 	const float y = sinPhi * thSin * norm;
 
-	pdf = (m + 1.0f) * std::pow(cosPhi, m) * 0.5f * PR_1_PI;
+	pdf = (m + 1.0f) * std::pow(cosPhi, m) * PR_INV_2_PI;
 
 	return Vector3f(x, y, cosPhi * norm);
 }
 
 inline float cos_hemi_pdf(float NdotL)
 {
-	return NdotL * PR_1_PI;
+	return NdotL * PR_INV_PI;
 }
 
 inline float cos_hemi_pdf(float NdotL, float m)
 {
-	return (m + 1.0f) * std::pow(NdotL, m) * 0.5f * PR_1_PI;
+	return (m + 1.0f) * std::pow(NdotL, m) * PR_INV_2_PI;
 }
 
 // Uniform
@@ -121,8 +121,8 @@ inline Vector2f concentric_disk(float u1, float u2)
 // Orientation +Z (shading space)
 inline Vector3f uniform_cone(float u1, float u2, float cos_theta_max)
 {
-	float cosTheta = (1 - u1) + u1 * cos_theta_max;
-	float sinTheta = std::sqrt(std::max(0.0f, 1 - cosTheta * cosTheta));
+	float cosTheta = std::fma(u1, cos_theta_max, 1 - u1); // Lerp between cos_theta_max and 1
+	float sinTheta = std::sqrt(std::max(0.0f, diffProd<float>(1, 1, cosTheta, cosTheta)));
 	float phi	   = 2 * PR_PI * u2;
 	return Vector3f(std::cos(phi) * sinTheta, std::sin(phi) * sinTheta, cosTheta);
 }
@@ -130,7 +130,7 @@ inline Vector3f uniform_cone(float u1, float u2, float cos_theta_max)
 // In solid angle
 inline float uniform_cone_pdf(float cos_theta_max)
 {
-	return 1.0f / diffProd<float>(2, PR_PI, 2 * PR_PI, cos_theta_max);
+	return PR_INV_2_PI / (1 - cos_theta_max);
 }
 
 } // namespace Sampling

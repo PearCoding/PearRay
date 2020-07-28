@@ -11,7 +11,7 @@ using namespace PR;
 namespace sf = std::filesystem;
 
 static float maxE = 0;
-static float minE = std::numeric_limits<float>::infinity();
+static float minE = PR_INF;
 
 static void handle_color(float r, float g, float b, std::ofstream& log)
 {
@@ -46,7 +46,7 @@ void suite_spectral()
 	std::ofstream log("results/spectral/errors.log");
 
 	maxE = 0;
-	minE = std::numeric_limits<float>::infinity();
+	minE = PR_INF;
 
 	constexpr size_t count = 11;
 	constexpr float step   = 1.0f / (count - 1);

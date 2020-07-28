@@ -26,16 +26,16 @@ public:
 
 	inline void setProbability(float theta, float phi, float value)
 	{
-		uint32 i = std::min<float>(std::max<float>(theta * PR_1_PI, 0), 1) * mResTheta;
-		uint32 j = std::min<float>(std::max<float>(phi * 0.5 * PR_1_PI, 0), 1) * mResPhi;
+		uint32 i = std::min<float>(std::max<float>(theta * PR_INV_PI, 0), 1) * mResTheta;
+		uint32 j = std::min<float>(std::max<float>(phi * 0.5 * PR_INV_PI, 0), 1) * mResPhi;
 
 		setProbabilityWithIndex(i, j, value);
 	}
 
 	inline float probability(float theta, float phi) const
 	{
-		uint32 i = std::min<float>(std::max<float>(theta * PR_1_PI, 0), 1) * mResTheta;
-		uint32 j = std::min<float>(std::max<float>(phi * 0.5 * PR_1_PI, 0), 1) * mResPhi;
+		uint32 i = std::min<float>(std::max<float>(theta * PR_INV_PI, 0), 1) * mResTheta;
+		uint32 j = std::min<float>(std::max<float>(phi * 0.5 * PR_INV_PI, 0), 1) * mResPhi;
 
 		return probabilityWithIndex(i, j);
 	}
@@ -48,7 +48,7 @@ public:
 	inline void setup()
 	{
 		mProj.rebound();
-		mProj.scale(PR_1_PI * 0.25f);
+		mProj.scale(PR_INV_PI * 0.25f);
 		mProj.setup();
 	}
 

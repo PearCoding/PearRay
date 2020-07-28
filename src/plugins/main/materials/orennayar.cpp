@@ -52,7 +52,7 @@ public:
 			weight *= A + SpectralBlob::Ones() * (B * s / t);
 		}
 
-		return weight * PR_1_PI * std::abs(NdotL);
+		return weight * PR_INV_PI * std::abs(NdotL);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,

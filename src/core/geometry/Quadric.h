@@ -32,7 +32,7 @@ public:
 		float& t)
 	{
 		constexpr float INT_EPS = 1e-6f;
-		constexpr float INF		= std::numeric_limits<float>::infinity();
+		constexpr float INF		= PR_INF;
 
 		const float A = parameters[0];
 		const float B = parameters[1];

@@ -160,7 +160,7 @@ public:
 		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(ctx, clearcoatGloss, HdotL) : 0.0f;
 		SpectralBlob shTerm	  = sheenTerm(sheen * csheen, HdotL);
 
-		return (PR_1_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
+		return (PR_INV_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
 			   + specTerm
 			   + SpectralBlob(ccTerm) * clearcoat;
 	}

@@ -42,9 +42,9 @@ using Contribution					   = std::pair<SpectralBlob, float>; // [Radiance, Probab
 const static Contribution ZERO_CONTRIB = std::make_pair(SpectralBlob::Zero(), 0.0f);
 
 constexpr float SHADOW_RAY_MIN = 0.0001f;
-constexpr float SHADOW_RAY_MAX = std::numeric_limits<float>::infinity();
+constexpr float SHADOW_RAY_MAX = PR_INF;
 constexpr float BOUNCE_RAY_MIN = SHADOW_RAY_MIN;
-constexpr float BOUNCE_RAY_MAX = std::numeric_limits<float>::infinity();
+constexpr float BOUNCE_RAY_MAX = PR_INF;
 class IntDirectInstance : public IIntegratorInstance {
 public:
 	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
@@ -171,11 +171,10 @@ public:
 	// Estimate indirect light
 	void scatterLight(RenderTileSession& session, LightPath& path,
 					  const IntersectionPoint& spt, const SpectralBlob& throughput,
-					  IMaterial* material, bool& infLightHandled)
+					  IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
-		infLightHandled		= false;
 		const bool allowMSI = mMSIEnabled && !material->hasDeltaDistribution();
 
 		constexpr int MIN_DEPTH			= 4; //Minimum level of depth after which russian roulette will apply
@@ -261,6 +260,9 @@ public:
 		} else {
 			session.tile()->statistics().addBackgroundHitCount();
 
+			// Theoretical question: If a non-delta light is hit, why try to sample them afterwards in evalN?
+			// A solution to prevent double count (if necessary) is to use a list of lights hit in the following loop
+			// Afterwards in evalN only sample lights not in the list
 			path.addToken(LightPathToken::Background());
 			for (auto light : session.tile()->context()->scene()->nonDeltaInfiniteLights()) {
 				InfiniteLightEvalInput lin;
@@ -272,7 +274,6 @@ public:
 				if (lout.PDF_S <= PR_EPSILON)
 					continue;
 
-				infLightHandled	 = true;
 				const float msiL = allowMSI ? MSI(1, out.PDF_S[0], 1, lout.PDF_S) : 1.0f;
 				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Weight, next, path);
 			}
@@ -301,8 +302,7 @@ public:
 #endif
 
 		// Scatter Light
-		bool infLightHandled;
-		scatterLight(session, path, spt, throughput, material, infLightHandled);
+		scatterLight(session, path, spt, throughput, material);
 
 		if (material->hasDeltaDistribution())
 			return;
@@ -323,9 +323,7 @@ public:
 		}
 
 		// Infinite Lights
-		for (auto light : // Already handled in scatter equation
-			 infLightHandled ? session.tile()->context()->scene()->deltaInfiniteLights()
-							 : session.tile()->context()->scene()->infiniteLights()) {
+		for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 			LightPathToken token;
 			const auto pair = infiniteLight(session, spt, token, light.get(), material);
 

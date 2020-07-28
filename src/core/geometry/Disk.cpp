@@ -42,7 +42,7 @@ Vector2f Disk::project(const Vector3f& point) const
 	float r = sqrt(sumProd(point(0), point(0), point(1), point(1))) / mRadius;
 
 	return Vector2f(
-		0.5f * (atan2(point(1), point(0)) * PR_1_PI + 1),
+		0.5f * (atan2(point(1), point(0)) * PR_INV_PI + 1),
 		r);
 }
 

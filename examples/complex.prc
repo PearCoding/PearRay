@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 4
+		:sample_count 64
 	)
 	(filter
 		:slot 'pixel'
@@ -53,7 +53,7 @@
 		:name 'sun'
 		:type 'sun'
 		:turbidity 3
-		:radius 1
+		:radius 4
 		:hour 16
 	)
 	; Primitives

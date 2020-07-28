@@ -11,7 +11,7 @@
 
 namespace PR {
 constexpr float NEAR_DEFAULT = 0.000001f;
-constexpr float FAR_DEFAULT	 = std::numeric_limits<float>::infinity();
+constexpr float FAR_DEFAULT	 = PR_INF;
 
 class SphericalCamera : public ICamera {
 public:
@@ -119,7 +119,7 @@ public:
 
 		return std::make_shared<SphericalCamera>(id, name,
 												 params.getNumber("theta_start", 0.0f),
-												 params.getNumber("theta_end", PR_PI / 2),
+												 params.getNumber("theta_end", PR_PI_2),
 												 params.getNumber("phi_start", -PR_PI),
 												 params.getNumber("phi_end", PR_PI),
 												 params.getNumber("near", NEAR_DEFAULT),

@@ -35,7 +35,7 @@ public:
 		PR_PROFILE_THIS;
 
 		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.Weight		= mAlbedo->eval(in.ShadingContext) * dot * PR_1_PI;
+		out.Weight		= mAlbedo->eval(in.ShadingContext) * dot * PR_INV_PI;
 		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
 		out.Type		= MST_DiffuseReflection;
 	}
@@ -48,7 +48,7 @@ public:
 		float pdf;
 		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1], pdf);
 
-		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_1_PI;
+		out.Weight = mAlbedo->eval(in.ShadingContext) * out.L(2) * PR_INV_PI;
 		out.Type   = MST_DiffuseReflection;
 		out.PDF_S  = pdf;
 	}

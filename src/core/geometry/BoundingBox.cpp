@@ -4,8 +4,8 @@
 
 namespace PR {
 BoundingBox::BoundingBox()
-	: mUpperBound(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity())
-	, mLowerBound(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity())
+	: mUpperBound(-PR_INF, -PR_INF, -PR_INF)
+	, mLowerBound(PR_INF, PR_INF, PR_INF)
 {
 }
 
@@ -45,13 +45,13 @@ void BoundingBox::inflate(float eps, bool maxDir)
 
 void BoundingBox::intersects(const Ray& in, HitPoint& out) const
 {
-	out.HitDistance		  = std::numeric_limits<float>::infinity();
+	out.HitDistance		  = PR_INF;
 	const Vector3f invDir = in.Direction.cwiseInverse();
 	const Vector3f vmin	  = invDir.cwiseProduct(lowerBound() - in.Origin);
 	const Vector3f vmax	  = invDir.cwiseProduct(upperBound() - in.Origin);
 
-	float entry = -std::numeric_limits<float>::infinity();
-	float exit	= std::numeric_limits<float>::infinity();
+	float entry = -PR_INF;
+	float exit	= PR_INF;
 	for (int i = 0; i < 3; ++i) {
 		entry = std::max(std::min(vmin[i], vmax[i]), entry);
 		exit  = std::min(std::max(vmin[i], vmax[i]), exit);

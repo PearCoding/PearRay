@@ -252,7 +252,7 @@ PR_TEST("Intersects Complex")
 
 	HitPoint s;
 	box.intersects(ray, s);
-	PR_CHECK_TRUE(s.HitDistance < std::numeric_limits<float>::infinity());
+	PR_CHECK_TRUE(s.HitDistance < PR_INF);
 
 	Vector3f p = ray.t(s.HitDistance);
 	PR_CHECK_NEARLY_EQ(p, point);
