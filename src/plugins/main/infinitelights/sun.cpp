@@ -43,7 +43,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		const float cosine = std::max(0.0f, in.Ray.Direction.dot(mDirection));
-		PR_ASSERT(cosine >= 0.0f && cosine <= 1.0f, "cosine must be between 0 and 1");
+		//PR_ASSERT(cosine >= 0.0f && cosine <= 1.0f, "cosine must be between 0 and 1");
 
 		if (cosine < mCosTheta) {
 			out.Weight = SpectralBlob::Zero();
