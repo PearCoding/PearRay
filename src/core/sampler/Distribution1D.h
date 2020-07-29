@@ -28,10 +28,9 @@ public:
 	inline float discretePdf(float u) const;
 
 	// The given CDF is assumed to be normalized such that its last entry is exactly 1
-	inline static float sampleContinuous(float u, float& pdf,
-										 float cdf_integral, const float* cdf, size_t size);
-	inline static size_t sampleDiscrete(float u, float& pdf,
-										float cdf_integral, const float* cdf, size_t size);
+	inline static float sampleContinuous(float u, float& pdf, const float* cdf, size_t size);
+	inline static float continuousPdf(float u, const float* cdf, size_t size);
+	inline static size_t sampleDiscrete(float u, float& pdf, const float* cdf, size_t size);
 
 private:
 	inline void setup();

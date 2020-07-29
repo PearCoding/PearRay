@@ -3,6 +3,7 @@
 #include "integrator/IIntegratorFactory.h"
 #include "sampler/ISampler.h"
 #include "sampler/ISamplerFactory.h"
+#include "spectral/CIE.h"
 
 namespace PR {
 RenderSettings::RenderSettings()
@@ -13,8 +14,8 @@ RenderSettings::RenderSettings()
 	, tileMode(TM_ZORDER)
 	, useAdaptiveTiling(true)
 	, sortHits(false)
-	, spectralStart(360)
-	, spectralEnd(760)
+	, spectralStart(PR_CIE_WAVELENGTH_START)
+	, spectralEnd(PR_CIE_WAVELENGTH_END)
 	, spectralMono(false)
 	, filmWidth(1920)
 	, filmHeight(1080)

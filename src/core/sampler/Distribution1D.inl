@@ -46,7 +46,7 @@ inline float Distribution1D::sampleContinuous(float u, float& pdf, size_t* offse
 	return (off + du) / size();
 }
 
-inline float Distribution1D::sampleContinuous(float u, float& pdf, float cdf_integral, const float* cdf, size_t size)
+inline float Distribution1D::sampleContinuous(float u, float& pdf, const float* cdf, size_t size)
 {
 	size_t off = Interval::binary_search(size, [&](int index) {
 		return cdf[index] <= u;
@@ -57,9 +57,9 @@ inline float Distribution1D::sampleContinuous(float u, float& pdf, float cdf_int
 	if (k > PR_EPSILON)
 		du /= k;
 
-	pdf = k / cdf_integral;
+	pdf = k * (size - 1);
 
-	return (off + du) / size;
+	return (off + du) / (size - 1);
 }
 
 inline float Distribution1D::continuousPdf(float u, size_t* offset) const
@@ -73,6 +73,16 @@ inline float Distribution1D::continuousPdf(float u, size_t* offset) const
 	return mValues[off] / mIntegral;
 }
 
+inline float Distribution1D::continuousPdf(float u, const float* cdf, size_t size)
+{
+	size_t off = Interval::binary_search(size, [&](int index) {
+		return cdf[index] <= u;
+	});
+
+	float k = cdf[off + 1] - cdf[off];
+	return k * (size - 1);
+}
+
 inline size_t Distribution1D::sampleDiscrete(float u, float& pdf) const
 {
 	size_t off = Interval::binary_search(mCDF.size(), [&](int index) {
@@ -84,14 +94,14 @@ inline size_t Distribution1D::sampleDiscrete(float u, float& pdf) const
 	return off;
 }
 
-inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, float cdf_integral, const float* cdf, size_t size)
+inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, const float* cdf, size_t size)
 {
 	size_t off = Interval::binary_search(size, [&](int index) {
 		return cdf[index] <= u;
 	});
 
 	const float value = off == 0 ? 0.0f : cdf[off + 1] - cdf[off];
-	pdf				  = value / (cdf_integral * size);
+	pdf				  = value / (size - 1);
 	return off;
 }
 
