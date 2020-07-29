@@ -1,8 +1,11 @@
 #include "Socket.h"
 #include "Logger.h"
 
+#include <atomic>
 #include <chrono>
 #include <thread>
+
+#include <signal.h>
 
 #ifdef PR_OS_WINDOWS
 #include "SocketImplWindows.inl"
@@ -146,11 +149,13 @@ public:
 Socket::Socket()
 	: mInternal(new SocketInternal())
 {
-#ifdef PR_OS_WINDOWS
 	static std::atomic<bool> sInitialized = false;
-	if (!sInitialized.exchange(true))
+	if (!sInitialized.exchange(true)) {
+		signal(SIGPIPE, SIG_IGN);
+#ifdef PR_OS_WINDOWS
 		initNetwork(); // We should close the network support but why bother?
 #endif
+	}
 
 	socket_t socket;
 #if !defined(PR_NO_IPV6)
@@ -281,11 +286,12 @@ bool Socket::send(const char* data, size_t len)
 	size_t total = 0;
 
 	while (total < len) {
-		int ret = ::send(mInternal->Socket, data + total, len - total, 0);
+		int ret = ::send(mInternal->Socket, data + total, len - total, MSG_NOSIGNAL);
 
-		if (isSocketError(ret))
+		if (isSocketError(ret)) {
+			mInternal->IsOpen = false;
 			return false;
-		else if (ret == 0) // Give other side time to catch up
+		} else if (ret == 0) // Give other side time to catch up
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
 		total += ret;
@@ -300,9 +306,10 @@ bool Socket::receive(char* data, size_t len)
 
 	while (total < len) {
 		int ret = ::recv(mInternal->Socket, data, len, 0);
-		if (isSocketError(ret))
+		if (isSocketError(ret)) {
+			mInternal->IsOpen = false;
 			return false;
-		else if (ret == 0) {
+		} else if (ret == 0) {
 			mInternal->IsOpen = false;
 			return false; // Really false?
 		}
@@ -319,6 +326,7 @@ size_t Socket::receiveAtMost(char* data, size_t len, bool* ok)
 	if (isSocketError(ret)) {
 		if (ok)
 			*ok = false;
+		mInternal->IsOpen = false;
 		return 0;
 	}
 

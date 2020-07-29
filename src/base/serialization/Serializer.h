@@ -38,6 +38,7 @@ public:
 	inline void write(uint64 v);
 	inline void write(float v);
 	inline void write(double v);
+	inline void write(const char* v);
 	inline void write(const std::string& v);
 	inline void write(const std::wstring& v);
 	inline void write(const ISerializable& v);

@@ -54,13 +54,17 @@ inline void Serializer::write(double v)
 	writeRawLooped(reinterpret_cast<uint8*>(&v), sizeof(double));
 }
 
-inline void Serializer::write(const std::string& v)
+inline void Serializer::write(const char* v)
 {
-	const char* data = v.c_str();
-	for (size_t i = 0; data[i]; ++i) {
-		write((uint8)data[i]);
+	for (size_t i = 0; v[i]; ++i) {
+		write((uint8)v[i]);
 	}
 	write((uint8)0);
+}
+
+inline void Serializer::write(const std::string& v)
+{
+	write(v.c_str());
 }
 
 inline void Serializer::write(const std::wstring& v)

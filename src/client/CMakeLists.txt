@@ -10,6 +10,8 @@ set(Src
   ProgramSettings.h
   StatusObserver.cpp
   StatusObserver.h
+  TevObserver.cpp
+  TevObserver.h
   Utils.h
 )
 

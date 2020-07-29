@@ -14,34 +14,39 @@ public:
 	bool IsVerbose;
 	bool IsQuiet;
 	bool NoPrettyConsole;
-	PR::uint32 ShowProgress; // In seconds
+	uint32 ShowProgress; // In seconds
 	bool ShowInformation;
 
 	bool Profile;
 
 	// Timing
-	PR::uint32 MaxTime; // In seconds for equal time measurements
-	bool MaxTimeForce;	// Force to stop iteration and do not wait for iteration end
+	uint32 MaxTime;	   // In seconds for equal time measurements
+	bool MaxTimeForce; // Force to stop iteration and do not wait for iteration end
 
 	// Image
-	PR::uint32 ImgUpdate; // In seconds
-	PR::uint32 ImgUpdateIteration;
+	uint32 ImgUpdate; // In seconds
+	uint32 ImgUpdateIteration;
 	bool ImgUseTags;
 
+	// Tev Image
+	uint32 TevUpdate; // In seconds
+	uint16 TevPort;
+	std::string TevIp;
+
 	// Network
-	PR::int16 ListenNetwork; // Port to listen, -1 no networking
+	int16 ListenNetwork; // Port to listen, -1 no networking
 
 	// Threading
-	PR::uint32 ThreadCount;
+	uint32 ThreadCount;
 	bool AdaptiveTiling;
 	bool SortHits;
-	PR::uint32 RenderTileXCount;
-	PR::uint32 RenderTileYCount;
-	PR::uint32 ImageTileXCount;
-	PR::uint32 ImageTileYCount;
+	uint32 RenderTileXCount;
+	uint32 RenderTileYCount;
+	uint32 ImageTileXCount;
+	uint32 ImageTileYCount;
 
-	PR::uint32 CacheMode;
+	uint32 CacheMode;
 
 	bool parse(int argc, char** argv);
 };
-}
+} // namespace PR

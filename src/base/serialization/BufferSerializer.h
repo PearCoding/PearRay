@@ -11,7 +11,9 @@ public:
 	BufferSerializer(Serializer* source, size_t bufferSize = 1024);
 	virtual ~BufferSerializer();
 
+	void resize(size_t newSize);
 	inline size_t maxSize() const { return mBuffer.size(); }
+	inline size_t currentUsed() const { return mIt; }
 
 	void flush();
 

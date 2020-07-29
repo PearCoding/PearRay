@@ -14,6 +14,7 @@
 #include "ImageUpdateObserver.h"
 #include "NetworkObserver.h"
 #include "StatusObserver.h"
+#include "TevObserver.h"
 
 #include <filesystem>
 
@@ -100,7 +101,6 @@ int main(int argc, char** argv)
 
 	if (!env) {
 		PR_LOG(L_ERROR) << "Error while parsing input." << std::endl;
-
 		return EXIT_FAILURE;
 	}
 
@@ -115,6 +115,8 @@ int main(int argc, char** argv)
 		observers.push_back(std::make_unique<StatusObserver>());
 	if (options.ListenNetwork > 0)
 		observers.push_back(std::make_unique<NetworkObserver>());
+	if (options.TevUpdate > 0)
+		observers.push_back(std::make_unique<TevObserver>());
 
 	// Setup renderFactory
 	auto renderFactory = env->createRenderFactory();

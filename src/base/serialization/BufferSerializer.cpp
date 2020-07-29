@@ -23,13 +23,18 @@ BufferSerializer::~BufferSerializer()
 {
 }
 
+void BufferSerializer::resize(size_t newSize)
+{
+	mBuffer.resize(newSize);
+	mIt			 = 0;
+	mAvailableIt = 0;
+}
+
 void BufferSerializer::reset(Serializer* source, size_t bufferSize)
 {
 	mSource = source;
-	mBuffer.resize(bufferSize);
-	mIt			 = 0;
-	mAvailableIt = 0;
 	setReadMode(source->isReadMode());
+	resize(bufferSize);
 }
 
 bool BufferSerializer::isValid() const

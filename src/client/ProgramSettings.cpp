@@ -9,9 +9,9 @@
 namespace PR {
 namespace sf = std::filesystem;
 
-constexpr PR::uint32 DEF_THREAD_COUNT  = 0;
-constexpr PR::uint32 DEF_THREAD_TILE_X = 8;
-constexpr PR::uint32 DEF_THREAD_TILE_Y = 8;
+constexpr uint32 DEF_THREAD_COUNT  = 0;
+constexpr uint32 DEF_THREAD_TILE_X = 8;
+constexpr uint32 DEF_THREAD_TILE_Y = 8;
 
 bool ProgramSettings::parse(int argc, char** argv)
 {
@@ -26,31 +26,36 @@ bool ProgramSettings::parse(int argc, char** argv)
 			("version", "Show version and exit")
 			("v,verbose", "Print detailed information into log file (and perhabs into console)")
 			("P,profile", "Profile execution and dump results into a file")
-			("p,progress", "Show progress (regardless if quiet or not)", cxxopts::value<PR::uint32>()->implicit_value("1"))
+			("p,progress", "Show progress (regardless if quiet or not)", cxxopts::value<uint32>()->implicit_value("1"))
 			("I,information", "Print additional scene information into log file (and perhabs into console)")
 
 			("i,input", "Input file", cxxopts::value<std::string>())
 			("o,output", "Output directory", cxxopts::value<std::string>()->default_value("./scene"))
 			("pluginpath", "Additional plugin path", cxxopts::value<std::string>())
 
-			("max-time", "Maximum time in seconds to spend on image regardless of given sample parameters. 0 disables it.", cxxopts::value<PR::uint32>()->default_value("0"))
+			("max-time", "Maximum time in seconds to spend on image regardless of given sample parameters. 0 disables it.", cxxopts::value<uint32>()->default_value("0"))
 			("force-time-stop", "Force the execution to stop after reaching maximum time regardless of finished iterations.")
 
-			("img-update", "Update interval in seconds where image will be periodically saved. 0 disables it.", cxxopts::value<PR::uint32>()->default_value("0"))
-			("img-iteration-update", "Update interval in iterations where image will be periodically saved. 0 disables it.", cxxopts::value<PR::uint32>()->default_value("0"))
+			("img-update", "Update interval in seconds where image will be periodically saved. 0 disables it.", cxxopts::value<uint32>()->default_value("0"))
+			("img-iteration-update", "Update interval in iterations where image will be periodically saved. 0 disables it.", cxxopts::value<uint32>()->default_value("0"))
 			("img-use-tags", "Use tags _n to make sure no image produced in the session is replaced by the following one.")
 
 			("no-network", "Disable network support for clients")
-			("network-port", "Set port to listen on", cxxopts::value<PR::uint16>()->default_value("4217"))
+			("network-port", "Set port to listen on", cxxopts::value<uint16>()->default_value("4217"))
 
-			("t,threads", "Amount of threads used for processing. Set 0 for automatic detection.", cxxopts::value<PR::uint32>())
-			("rtx", "Amount of horizontal tiles used in threading", cxxopts::value<PR::uint32>())
-			("rty", "Amount of vertical tiles used in threading", cxxopts::value<PR::uint32>())
+			("tev", "Enable tev connection")
+			("tev-update", "Update interval in seconds for tev", cxxopts::value<uint32>()->default_value("1"))
+			("tev-port", "Set port to connect to Tev", cxxopts::value<uint16>()->default_value("14158"))
+			("tev-ip", "Set ip to connect to Tev", cxxopts::value<std::string>()->default_value("localhost"))
+
+			("t,threads", "Amount of threads used for processing. Set 0 for automatic detection.", cxxopts::value<uint32>())
+			("rtx", "Amount of horizontal tiles used in threading", cxxopts::value<uint32>())
+			("rty", "Amount of vertical tiles used in threading", cxxopts::value<uint32>())
 			("adaptive-tiling", "Enable adaptive tiling used for better thread workload balance. Will improve performance of complex scenes but makes reproducibility of results impossible")
 			("no-hit-sorting", "Disable sorting of hits to improve cache coherence")
 
-			("itx", "Amount of horizontal image tiles used in rendering", cxxopts::value<PR::uint32>())
-			("ity", "Amount of vertical image tiles used in rendering", cxxopts::value<PR::uint32>())
+			("itx", "Amount of horizontal image tiles used in rendering", cxxopts::value<uint32>())
+			("ity", "Amount of vertical image tiles used in rendering", cxxopts::value<uint32>())
 
 			("force-cache", "Use cache for everything")
 			("no-cache", "Do not use cache")
@@ -121,7 +126,7 @@ bool ProgramSettings::parse(int argc, char** argv)
 		IsVerbose		= (vm.count("verbose") != 0);
 		IsQuiet			= (vm.count("quiet") != 0);
 		NoPrettyConsole = (vm.count("no-pretty-console") != 0);
-		ShowProgress	= vm.count("progress") ? vm["progress"].as<PR::uint32>() : 0;
+		ShowProgress	= vm.count("progress") ? vm["progress"].as<uint32>() : 0;
 		ShowInformation = (vm.count("information") != 0);
 
 #ifdef PR_WITH_PROFILER
@@ -131,33 +136,44 @@ bool ProgramSettings::parse(int argc, char** argv)
 #endif
 
 		// Timing
-		MaxTime		 = vm["max-time"].as<PR::uint32>();
+		MaxTime		 = vm["max-time"].as<uint32>();
 		MaxTimeForce = (vm.count("force-time-stop") != 0);
 
 		// Image
-		ImgUpdate		   = vm["img-update"].as<PR::uint32>();
-		ImgUpdateIteration = vm["img-iteration-update"].as<PR::uint32>();
+		ImgUpdate		   = vm["img-update"].as<uint32>();
+		ImgUpdateIteration = vm["img-iteration-update"].as<uint32>();
 		ImgUseTags		   = (vm.count("img-use-tags") != 0);
+
+		// Tev Image
+		if (vm.count("tev")) {
+			TevUpdate = vm["tev-update"].as<uint32>();
+			TevPort	  = vm["tev-port"].as<uint16>();
+			TevIp	  = vm["tev-ip"].as<std::string>();
+		} else {
+			TevUpdate = 0;
+			TevPort	  = 0;
+			TevIp	  = "";
+		}
 
 		// Network
 		if (vm.count("no-network"))
 			ListenNetwork = -1;
 		else
-			ListenNetwork = vm["network-port"].as<PR::uint16>();
+			ListenNetwork = vm["network-port"].as<uint16>();
 
 		// Thread
 		if (vm.count("rtx"))
-			RenderTileXCount = vm["rtx"].as<PR::uint32>();
+			RenderTileXCount = vm["rtx"].as<uint32>();
 		else if (!vm.count("config"))
 			RenderTileXCount = DEF_THREAD_TILE_X;
 
 		if (vm.count("rty"))
-			RenderTileYCount = vm["rty"].as<PR::uint32>();
+			RenderTileYCount = vm["rty"].as<uint32>();
 		else if (!vm.count("config"))
 			RenderTileYCount = DEF_THREAD_TILE_Y;
 
 		if (vm.count("threads"))
-			ThreadCount = vm["threads"].as<PR::uint32>();
+			ThreadCount = vm["threads"].as<uint32>();
 		else if (!vm.count("config"))
 			ThreadCount = DEF_THREAD_COUNT;
 
@@ -165,9 +181,9 @@ bool ProgramSettings::parse(int argc, char** argv)
 		SortHits	   = (vm.count("no-hit-sorting") == 0);
 
 		if (vm.count("itx"))
-			ImageTileXCount = std::max<uint32>(1, vm["itx"].as<PR::uint32>());
+			ImageTileXCount = std::max<uint32>(1, vm["itx"].as<uint32>());
 		if (vm.count("ity"))
-			ImageTileYCount = std::max<uint32>(1, vm["ity"].as<PR::uint32>());
+			ImageTileYCount = std::max<uint32>(1, vm["ity"].as<uint32>());
 
 		if (vm.count("no-cache"))
 			CacheMode = CM_None;
