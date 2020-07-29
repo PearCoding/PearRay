@@ -96,11 +96,8 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 				++w_channels;
 		}*/
 
-		size_t channels = PR_SPECTRAL_BLOB_SIZE;
-		if (PR_UNLIKELY(isMono)) {
-			channels = 1;
-			real_weight *= SpectralBlobUtils::HeroOnly() * PR_SPECTRAL_BLOB_SIZE;
-		}
+		const size_t channels = PR_UNLIKELY(isMono) ? 1 : PR_SPECTRAL_BLOB_SIZE;
+		real_weight /= channels;
 
 		// Check for valid samples
 		bool isInf	   = false;
@@ -171,11 +168,8 @@ void FrameBufferBucket::commitSpectralsXYZNoFilter(const OutputSpectralEntry* en
 				++w_channels;
 		}*/
 
-		size_t channels = PR_SPECTRAL_BLOB_SIZE;
-		if (PR_UNLIKELY(isMono)) {
-			channels = 1;
-			real_weight *= SpectralBlobUtils::HeroOnly() * PR_SPECTRAL_BLOB_SIZE;
-		}
+		const size_t channels = PR_UNLIKELY(isMono) ? 1 : PR_SPECTRAL_BLOB_SIZE;
+		real_weight /= channels;
 
 		// Check for valid samples
 		bool isInf	   = false;
@@ -228,9 +222,8 @@ void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, 
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i rp = entry.Position + filterSize;
-
-		float weight = entry.Weight[0] * entry.Radiance[0];
+		const Point2i rp   = entry.Position + filterSize;
+		const float weight = entry.Weight[0] * entry.Radiance[0];
 
 		// Check for valid samples
 		const bool isInf	 = std::isinf(weight);
@@ -280,9 +273,8 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i sp = entry.Position;
-
-		float weight = entry.Weight[0] * entry.Radiance[0];
+		const Point2i sp   = entry.Position;
+		const float weight = entry.Weight[0] * entry.Radiance[0];
 
 		// Check for valid samples
 		const bool isInf	 = std::isinf(weight);
