@@ -15,8 +15,7 @@ public:
 	bool connect(uint16 port, const std::string& ip);
 
 	// Server
-	bool bind(uint16 port);
-	bool listen(int32 maxClients = -1);
+	bool bindAndListen(uint16 port, int32 maxClients = -1);
 	Socket accept();
 
 	bool hasData() const;
@@ -30,9 +29,8 @@ public:
 
 	// Properties
 	bool isValid() const;
-	bool isListening() const;
-	bool isConnection() const;
-	bool isConnected() const;
+	bool isClientConnection() const;
+	bool isOpen() const;
 
 	std::string ip() const;
 	uint16 port() const;

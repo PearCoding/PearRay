@@ -50,6 +50,14 @@ public:
 	void start();
 
 	/**
+		* @brief Request to stop the running thread, but will not wait for it
+		*
+		* @warning A thread implementation should use shouldStop() to determine if a stop is needed.<br />There is no stop by the operating system himself!
+		* @see shouldStop()
+		*/
+	inline void requestStop();
+
+	/**
 		* @brief Stop the running thread.
 		*
 		* @warning A thread implementation should use shouldStop() to determine if a stop is needed.<br />There is no stop by the operating system himself!
@@ -87,13 +95,11 @@ protected:
 
 private:
 	static std::atomic<uint32> sThreadCount;
-	//static std::mutex sGeneralThreadMutex;
 
 	std::atomic<_State> mState;
 	std::thread* mThread;
 
-	bool mShouldStop;
-	//mutable std::mutex mThreadMutex;
+	std::atomic<bool> mShouldStop;
 };
 }
 

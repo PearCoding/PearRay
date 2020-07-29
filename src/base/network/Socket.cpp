@@ -1,6 +1,9 @@
 #include "Socket.h"
 #include "Logger.h"
 
+#include <chrono>
+#include <thread>
+
 #ifdef PR_OS_WINDOWS
 #include "SocketImplWindows.inl"
 #else
@@ -15,10 +18,9 @@ public:
 	std::string IP	= "127.0.0.1";
 	uint16 Port		= 0;
 
-	bool IsListening  = false;
-	bool IsConnection = false;
-	bool IsConnected  = false;
-	bool IsIp6		  = false;
+	bool IsClientConnection = false;
+	bool IsOpen				= false;
+	bool IsIp6				= false;
 
 	// Ip4
 	inline bool connect4(uint16 port, const std::string& ip)
@@ -38,9 +40,8 @@ public:
 		if (isSocketError(error))
 			return false;
 
-		IP			= ip;
-		Port		= port;
-		IsConnected = true;
+		IP	 = ip;
+		Port = port;
 		return true;
 	}
 
@@ -77,6 +78,7 @@ public:
 		IP	   = getStringFromAddress4(addr);
 		Port   = ntohs(addr.sin_port);
 		IsIp6  = false;
+		IsOpen = true;
 		return true;
 	}
 
@@ -98,9 +100,8 @@ public:
 		if (isSocketError(error))
 			return false;
 
-		IP			= ip;
-		Port		= port;
-		IsConnected = true;
+		IP	 = ip;
+		Port = port;
 		return true;
 	}
 
@@ -137,6 +138,7 @@ public:
 		IP	   = getStringFromAddress6(addr);
 		Port   = ntohs(addr.sin6_port);
 		IsIp6  = true;
+		IsOpen = true;
 		return true;
 	}
 };
@@ -172,7 +174,7 @@ Socket::Socket(bool)
 	: mInternal(new SocketInternal())
 {
 	// Do nothing
-	mInternal->IsConnection = true;
+	mInternal->IsClientConnection = true;
 }
 
 Socket::~Socket()
@@ -199,41 +201,39 @@ bool Socket::connect(uint16 port, const std::string& ip)
 			PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
 			return mInternal->connect4(port, ip);
 		}
-		return true;
 	} else {
-		return mInternal->connect4(port, ip);
+		if (!mInternal->connect4(port, ip))
+			return false;
 	}
+
+	mInternal->IsOpen = true;
+	return true;
 }
 
-bool Socket::bind(uint16 port)
+bool Socket::bindAndListen(uint16 port, int32 maxClients)
 {
+	int max = maxClients < 0 ? SOMAXCONN : maxClients;
 	if (mInternal->IsIp6) {
 		if (!mInternal->bind6(port)) {
 			PR_LOG(L_WARNING) << "No IPv6 support" << std::endl;
 			return mInternal->bind4(port);
 		}
-		return true;
 	} else {
-		return mInternal->bind4(port);
+		if (!mInternal->bind4(port))
+			return false;
 	}
-}
-
-bool Socket::listen(int32 maxClients)
-{
-	int max = maxClients < 0 ? SOMAXCONN : maxClients;
 
 	int error = ::listen(mInternal->Socket, max);
 
 	if (isSocketError(error))
 		return false;
 
-	mInternal->IsListening = true;
+	mInternal->IsOpen = true;
 	return true;
 }
 
 Socket Socket::accept()
 {
-	PR_ASSERT(mInternal->IsListening, "Trying to accept on a non-listening socket");
 	Socket acceptedSocket(true);
 	if (mInternal->IsIp6) {
 		if (!acceptedSocket.mInternal->accept6(mInternal->Socket))
@@ -285,6 +285,8 @@ bool Socket::send(const char* data, size_t len)
 
 		if (isSocketError(ret))
 			return false;
+		else if (ret == 0) // Give other side time to catch up
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
 		total += ret;
 	}
@@ -300,6 +302,10 @@ bool Socket::receive(char* data, size_t len)
 		int ret = ::recv(mInternal->Socket, data, len, 0);
 		if (isSocketError(ret))
 			return false;
+		else if (ret == 0) {
+			mInternal->IsOpen = false;
+			return false; // Really false?
+		}
 
 		total += ret;
 	}
@@ -316,15 +322,17 @@ size_t Socket::receiveAtMost(char* data, size_t len, bool* ok)
 		return 0;
 	}
 
+	if (ret == 0)
+		mInternal->IsOpen = false;
+
 	if (ok)
 		*ok = true;
 	return (size_t)ret;
 }
 
 bool Socket::isValid() const { return checkSocket(mInternal->Socket); }
-bool Socket::isListening() const { return mInternal->IsListening; }
-bool Socket::isConnection() const { return mInternal->IsConnection; }
-bool Socket::isConnected() const { return mInternal->IsConnection || mInternal->IsConnected; }
+bool Socket::isClientConnection() const { return mInternal->IsClientConnection; }
+bool Socket::isOpen() const { return mInternal->IsOpen; }
 
 std::string Socket::ip() const { return mInternal->IP; }
 uint16 Socket::port() const { return mInternal->Port; }

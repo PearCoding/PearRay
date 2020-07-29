@@ -23,14 +23,14 @@ namespace PR {
  */
 
 enum ProtocolType : uint8 {
-	PT_PingRequest	  = 0x0, // Dataless
-	PT_PingResponse	  = 0x1, // Dataless
-	PT_InfoRequest	  = 0x2, // TODO
-	PT_InfoResponse	  = 0x3, // TODO
-	PT_StopRequest	  = 0x4, // Dataless
-	PT_StatusRequest  = 0x10,
+	PT_PingRequest	  = 0x0,  // Dataless
+	PT_PingResponse	  = 0x1,  // Dataless
+	PT_InfoRequest	  = 0x2,  // TODO
+	PT_InfoResponse	  = 0x3,  // TODO
+	PT_StopRequest	  = 0x4,  // Dataless
+	PT_StatusRequest  = 0x10, // Dataless
 	PT_StatusResponse = 0x11,
-	PT_ImageRequest	  = 0x12,
+	PT_ImageRequest	  = 0x12, // Dataless
 	PT_ImageResponse  = 0x13,
 
 	PT_MAX,

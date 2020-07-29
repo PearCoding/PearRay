@@ -13,9 +13,7 @@ static const char DATA[] = "HELLO";
 static void server()
 {
 	Socket socket;
-	if (!socket.bind(PORT))
-		return;
-	if (!socket.listen(1))
+	if (!socket.bindAndListen(PORT, 1))
 		return;
 
 	Socket client = socket.accept();
@@ -41,21 +39,19 @@ PR_TEST("Client")
 {
 	Socket socket;
 	PR_CHECK_TRUE(socket.isValid());
-	PR_CHECK_FALSE(socket.isConnection());
+	PR_CHECK_FALSE(socket.isClientConnection());
 	bool result = socket.connect(PORT, "localhost");
 	PR_CHECK_FALSE(result);
-	PR_CHECK_FALSE(socket.isListening());
+	PR_CHECK_FALSE(socket.isOpen());
 }
 PR_TEST("Server")
 {
 	Socket socket;
 	PR_CHECK_TRUE(socket.isValid());
-	PR_CHECK_FALSE(socket.isConnection());
-	bool result = socket.bind(PORT);
+	PR_CHECK_FALSE(socket.isClientConnection());
+	bool result = socket.bindAndListen(PORT, 0);
 	PR_CHECK_TRUE(result);
-	result = socket.listen(0);
-	PR_CHECK_TRUE(result);
-	PR_CHECK_TRUE(socket.isListening());
+	PR_CHECK_TRUE(socket.isOpen());
 }
 PR_TEST("Client-Server")
 {

@@ -51,7 +51,7 @@ void StatusObserver::update(const UpdateInfo& info)
 			std::cout << REMOVE_LAST_LINE;
 
 		std::cout << std::setw(OUTPUT_FIELD_SIZE) << std::setprecision(4) << std::fixed
-				  << status.percentage() * 100 << "%";
+				  << status.percentage() << "%";
 
 		if (status.hasField("int.feedback"))
 			std::cout << "( " << status.getField("int.feedback").getString() << ")";
@@ -62,7 +62,7 @@ void StatusObserver::update(const UpdateInfo& info)
 				  << " BH: " << std::setw(OUTPUT_FIELD_SIZE) << status.getField("global.background_hit_count").getUInt();
 
 		std::cout << " | RT: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(fullDuration.count())
-				  << " ETA: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(fullDuration.count() * ((1 - status.percentage()) / status.percentage()));
+				  << " ETA: " << std::setw(OUTPUT_FIELD_SIZE) << timestr(fullDuration.count() * ((100 - status.percentage()) / status.percentage()));
 
 		if (!mBeautify)
 			std::cout << std::endl;

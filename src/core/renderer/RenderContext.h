@@ -4,12 +4,12 @@
 #include "RenderStatus.h"
 #include "RenderTileStatistics.h"
 
+#include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <list>
 #include <mutex>
 #include <vector>
-#include <atomic>
 
 namespace PR {
 class HitStream;
@@ -48,7 +48,8 @@ public:
 	// rtx and rty are the initial render tiles
 	// thread == 0 -> Automatic, thread < 0 -> MaxThreads - k threads, thread > 0 -> k threads
 	void start(uint32 rtx, uint32 rty, int32 threads = 0);
-	void stop();
+	void requestStop(); // Request a stop but do not wait
+	void stop();		// Request a stop and wait
 	void notifyEnd();
 
 	inline bool isStopping() const { return mShouldStop; }

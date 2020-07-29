@@ -20,9 +20,10 @@ bool handle_image(NetworkObserver* observer, Serializer& out);
 bool handle_protocol(NetworkObserver* observer, BufferedNetworkSerializer& in, BufferedNetworkSerializer& out)
 {
 	ProtocolType in_type;
-	if (Protocol::readHeader(in, in_type))
+	if (!Protocol::readHeader(in, in_type))
 		return false;
-	PR_LOG(L_INFO) << "Incoming protocol type " << (int)in_type << std::endl;
+
+	PR_LOG(L_DEBUG) << "Incoming protocol type " << (int)in_type << std::endl;
 
 	bool good = false;
 	switch (in_type) {
@@ -36,7 +37,8 @@ bool handle_protocol(NetworkObserver* observer, BufferedNetworkSerializer& in, B
 		good = handle_image(observer, out);
 		break;
 	case PT_StopRequest:
-		observer->context()->stop();
+		PR_LOG(L_INFO) << "Stop request by client" << std::endl;
+		observer->context()->requestStop();
 		return false; // We can stop the client after this request
 	default:
 		PR_LOG(L_ERROR) << "Invalid incoming protocol type " << (int)in_type << std::endl;
@@ -95,7 +97,13 @@ public:
 	{
 	}
 
-	~NetworkClient() = default;
+	~NetworkClient()
+	{
+		if (mRunning)
+			stop();
+		else if (mThread.joinable())
+			mThread.join();
+	}
 
 	void start();
 	void stop()
@@ -105,6 +113,8 @@ public:
 			mThread.join();
 		}
 	}
+
+	inline bool isRunning() const { return mRunning; }
 
 	const Socket& socket() const { return mSocket; }
 
@@ -123,24 +133,34 @@ public:
 	{
 	}
 
-	~NetworkServer() = default;
+	~NetworkServer()
+	{
+		stopAllClients();
+	}
 
 	void start()
 	{
 		mRunning = true;
 
 		auto thread_func = [this]() {
-			mSocket.bind(mPort);
-			mSocket.listen();
+			if (!mSocket.bindAndListen(mPort)) {
+				mRunning = false;
+				return;
+			}
+
 			PR_LOG(L_INFO) << "Started server on " << mSocket.ip() << ":" << mSocket.port() << std::endl;
 
 			while (mRunning) {
 				if (mSocket.hasIncomingConnection(TimeOut)) {
 					auto client = mSocket.accept();
-					if (client.isValid() && client.isConnection())
+					if (client.isValid() && client.isOpen())
 						addClient(std::move(client));
+				} else {
+					cleanupClients();
 				}
 			}
+
+			stopAllClients();
 		};
 
 		mThread = std::thread(thread_func);
@@ -149,45 +169,42 @@ public:
 	void stop()
 	{
 		mRunning = false;
-
-		mMutex.lock();
-		while (!mClients.empty()) {
-			auto client = std::move(mClients.back());
-			mClients.pop_back();
-			mMutex.unlock();
-			client->stop();
-			mMutex.lock();
-		}
-		mMutex.unlock();
-
 		mThread.join();
 	}
 
+	inline NetworkObserver* observer() const { return mObserver; }
+
+protected:
+	// Called ONLY from the server thread
 	void addClient(Socket&& socket)
 	{
 		PR_LOG(L_INFO) << "Connected to " << socket.ip() << ":" << socket.port() << std::endl;
 		auto client = std::make_unique<NetworkClient>(std::move(socket), this);
 		client->start();
 
-		mMutex.lock();
 		mClients.push_back(std::move(client));
-		mMutex.unlock();
 	}
 
-	void removeClient(NetworkClient* client)
+	// Called ONLY from the server thread
+	void cleanupClients()
 	{
-		PR_LOG(L_INFO) << "Disconnected from " << client->socket().ip() << ":" << client->socket().port() << std::endl;
-		mMutex.lock();
-		for (size_t i = 0; i < mClients.size(); ++i) {
-			if (mClients[i].get() == client) {
-				mClients.erase(mClients.begin() + i);
-				break;
+		for (auto it = mClients.begin(); it != mClients.end();) {
+			if (!(*it)->isRunning()) {
+				PR_LOG(L_INFO) << "Disconnected from " << (*it)->socket().ip() << ":" << (*it)->socket().port() << std::endl;
+				it = mClients.erase(it);
+			} else {
+				++it;
 			}
 		}
-		mMutex.unlock();
 	}
 
-	inline NetworkObserver* observer() const { return mObserver; }
+	// Called ONLY from the server thread / and at deconstruction
+	void stopAllClients()
+	{
+		for (size_t i = 0; i < mClients.size(); i++)
+			mClients[i]->stop();
+		mClients.clear();
+	}
 
 private:
 	NetworkObserver* mObserver;
@@ -207,7 +224,7 @@ void NetworkClient::start()
 
 	auto thread_func = [this]() {
 		BufferedNetworkSerializer in(&mSocket, true);
-		BufferedNetworkSerializer out(&mSocket, true);
+		BufferedNetworkSerializer out(&mSocket, false);
 		while (mRunning) {
 			if (mSocket.hasData(TimeOut)) {
 				if (!handle_protocol(mServer->observer(), in, out))
@@ -215,8 +232,7 @@ void NetworkClient::start()
 			}
 			std::this_thread::yield();
 		}
-
-		mServer->removeClient(this);
+		mRunning = false;
 	};
 
 	mThread = std::thread(thread_func);

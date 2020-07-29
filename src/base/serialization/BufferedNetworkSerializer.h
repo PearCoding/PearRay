@@ -12,6 +12,7 @@ public:
 	BufferedNetworkSerializer(Socket* socket, bool readmode, size_t bufferSize = 4096);
 	virtual ~BufferedNetworkSerializer();
 
+	void setSocket(Socket* socket, bool readmode);
 	inline Socket* socket() const { return mNetwork.socket(); }
 	inline bool hasData() const { return mNetwork.hasData(); }
 

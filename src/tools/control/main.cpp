@@ -6,35 +6,50 @@
 
 #include "network/Protocol.h"
 #include "network/Socket.h"
-#include "serialization/NetworkSerializer.h"
+#include "serialization/BufferedNetworkSerializer.h"
 #include <OpenImageIO/imageio.h>
 
 namespace sf = std::filesystem;
 using namespace PR;
 
-static bool sQuit		   = false;
-static Socket* sConnection = nullptr;
-void connect(const std::string& ip, uint16 port)
-{
-	if (sConnection && sConnection->isConnected())
-		std::cout << "Already connected" << std::endl;
-	else {
-		if (!sConnection)
-			sConnection = new Socket();
-		std::cout << "Trying to connect to " << ip << ":" << port << std::endl;
-		if (!sConnection->connect(port, ip)) {
-			delete sConnection;
-			sConnection = nullptr;
+struct Connection {
+	::Socket* Socket = nullptr;
+	BufferedNetworkSerializer In;
+	BufferedNetworkSerializer Out;
+	std::vector<float> ImageBuffer;
+
+	~Connection() { disconnect(); }
+	inline void connect(const std::string& ip, uint16 port)
+	{
+		if (Socket && Socket->isOpen())
+			std::cout << "Already connected" << std::endl;
+		else {
+			if (Socket)
+				delete Socket;
+			Socket = new ::Socket();
+			std::cout << "Trying to connect to " << ip << ":" << port << std::endl;
+			if (!Socket->connect(port, ip)) {
+				delete Socket;
+				Socket = nullptr;
+			} else {
+				In.setSocket(Socket, true);
+				Out.setSocket(Socket, false);
+			}
 		}
 	}
-}
 
-void disconnect()
-{
-	if (sConnection)
-		delete sConnection;
-	sConnection = nullptr;
-}
+	inline void disconnect()
+	{
+		if (Socket)
+			delete Socket;
+		Socket = nullptr;
+	}
+
+	inline bool isOpen() { return Socket && Socket->isOpen(); }
+};
+
+static bool sQuit = false;
+static Connection sConnection;
 
 class ProgramSettings {
 public:
@@ -181,36 +196,42 @@ void handle_connect(const Arguments& args)
 	if (args.size() == 2) {
 		auto it = args[1].find_last_of(':');
 		if (it == std::string::npos) {
-			connect(args[1], 4217);
+			sConnection.connect(args[1], 4217);
 		} else {
 			std::string ip	 = args[1].substr(0, it);
 			std::string port = args[1].substr(it + 1);
-			connect(ip, std::stoi(port));
+			sConnection.connect(ip, std::stoi(port));
 		}
 	} else {
-		connect(args[1], std::stoi(args[2]));
+		sConnection.connect(args[1], std::stoi(args[2]));
 	}
 }
 
 void handle_disconnect(const Arguments&)
 {
-	disconnect();
+	sConnection.disconnect();
 }
 
 void handle_session(const Arguments&)
 {
-	if (sConnection && sConnection->isConnected())
-		std::cout << "Connected to " << sConnection->ip() << ":" << sConnection->port() << std::endl;
+	if (sConnection.isOpen())
+		std::cout << "Connected to " << sConnection.Socket->ip() << ":" << sConnection.Socket->port() << std::endl;
 	else
 		std::cout << "Not connected" << std::endl;
 }
 
 bool ensureConnection()
 {
-	if (sConnection && sConnection->isConnected())
+	if (sConnection.isOpen())
 		return true;
 	std::cout << "Not connected" << std::endl;
 	return false;
+}
+
+void notifyDisonnection()
+{
+	if (!sConnection.isOpen())
+		std::cout << "Disconnected" << std::endl;
 }
 
 void handle_stop(const Arguments&)
@@ -218,8 +239,8 @@ void handle_stop(const Arguments&)
 	if (!ensureConnection())
 		return;
 
-	NetworkSerializer out(sConnection, false);
-	Protocol::writeHeader(out, PT_StopRequest);
+	Protocol::writeHeader(sConnection.Out, PT_StopRequest);
+	sConnection.Out.flush();
 }
 
 void handle_ping(const Arguments&)
@@ -227,19 +248,21 @@ void handle_ping(const Arguments&)
 	if (!ensureConnection())
 		return;
 
-	NetworkSerializer out(sConnection, false);
-	Protocol::writeHeader(out, PT_PingRequest);
+	auto start = std::chrono::high_resolution_clock::now();
+	Protocol::writeHeader(sConnection.Out, PT_PingRequest);
+	sConnection.Out.flush();
 
-	NetworkSerializer in(sConnection, true);
 	ProtocolType type;
-	if (!Protocol::readHeader(in, type)) {
+	if (!Protocol::readHeader(sConnection.In, type)) {
 		std::cout << "Could not get protocol header" << std::endl;
 	} else {
+		auto end = std::chrono::high_resolution_clock::now();
 		if (type == PT_PingResponse)
-			std::cout << "Successful" << std::endl;
+			std::cout << "Successful [" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms]" << std::endl;
 		else
 			std::cout << "Got unexpected response " << type << std::endl;
 	}
+	notifyDisonnection();
 }
 
 void handle_status(const Arguments&)
@@ -247,21 +270,61 @@ void handle_status(const Arguments&)
 	if (!ensureConnection())
 		return;
 
-	NetworkSerializer out(sConnection, false);
-	Protocol::writeHeader(out, PT_StatusRequest);
+	Protocol::writeHeader(sConnection.Out, PT_StatusRequest);
+	sConnection.Out.flush();
 
-	NetworkSerializer in(sConnection, true);
 	ProtocolType type;
-	if (!Protocol::readHeader(in, type)) {
+	if (!Protocol::readHeader(sConnection.In, type)) {
 		std::cout << "Could not get protocol header" << std::endl;
 	} else {
-		if (type == PT_StatusRequest) {
+		if (type == PT_StatusResponse) {
 			ProtocolStatus status;
-			Protocol::readStatus(in, status);
+			Protocol::readStatus(sConnection.In, status);
 			std::cout << status.Percentage << "% " << status.Iteration << std::endl;
 		} else
 			std::cout << "Got unexpected response " << type << std::endl;
 	}
+	notifyDisonnection();
+}
+
+void handle_save(const Arguments& args)
+{
+	if (!ensureConnection())
+		return;
+
+	Protocol::writeHeader(sConnection.Out, PT_ImageRequest);
+	sConnection.Out.flush();
+
+	ProtocolType type;
+	if (!Protocol::readHeader(sConnection.In, type)) {
+		std::cout << "Could not get protocol header" << std::endl;
+	} else {
+		if (type == PT_ImageResponse) {
+			ProtocolImage image;
+			if (!Protocol::readImageHeader(sConnection.In, image)) {
+				std::cout << "Could not get image header" << std::endl;
+			} else {
+				size_t requestedSize = image.Width * image.Height * 3;
+				if (sConnection.ImageBuffer.size() < requestedSize)
+					sConnection.ImageBuffer.resize(requestedSize);
+
+				if (!Protocol::readImageData(sConnection.In, image, sConnection.ImageBuffer.data(), sConnection.ImageBuffer.size())) {
+					std::cout << "Could not get image data" << std::endl;
+				} else {
+					std::string filename = "image.exr";
+					if (args.size() > 1)
+						filename = args[1];
+
+					if (write_output(filename, sConnection.ImageBuffer, image.Width, image.Height))
+						std::cout << "Save image to file " << filename << std::endl;
+					else
+						std::cout << "Could not save image to file " << filename << std::endl;
+				}
+			}
+		} else
+			std::cout << "Got unexpected response " << type << std::endl;
+	}
+	notifyDisonnection();
 }
 
 void handle_quit(const Arguments&)
@@ -283,7 +346,7 @@ struct {
 	{ "ping", "Ping current session to stop", handle_ping },
 	{ "stop", "Request current session to stop", handle_stop },
 	{ "status", "Request status information about current session", handle_status },
-	{ "save", "Request image from current session and save it to disk", nullptr },
+	{ "save", "Request image from current session and save it to disk", handle_save },
 	{ "quit", "Exit program", handle_quit },
 	{ "exit", "Exit program", handle_quit },
 	{ nullptr, nullptr, nullptr }
@@ -345,7 +408,7 @@ int main(int argc, char** argv)
 	}
 
 	if (!options.Ip.empty())
-		connect(options.Ip, options.Port);
+		sConnection.connect(options.Ip, options.Port);
 
 	sQuit = false;
 	do {
@@ -358,7 +421,7 @@ int main(int argc, char** argv)
 		handle_line(line);
 	} while (!sQuit);
 
-	disconnect();
+	sConnection.disconnect();
 
 	return EXIT_SUCCESS;
 }

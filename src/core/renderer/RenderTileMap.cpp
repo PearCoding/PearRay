@@ -173,9 +173,9 @@ double RenderTileMap::percentage() const
 	}
 
 	if (maxSamples == 0)
-		return 1.0;
+		return 100.0;
 	else
-		return samplesRendered / (double)maxSamples;
+		return 100 * samplesRendered / (double)maxSamples;
 }
 
 void RenderTileMap::reset()

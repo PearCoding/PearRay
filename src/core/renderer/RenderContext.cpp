@@ -183,21 +183,37 @@ void RenderContext::waitForFinish()
 {
 	PR_PROFILE_THIS;
 
-	while (!isFinished())
-		std::this_thread::yield();
+	/*while (!isFinished())
+		std::this_thread::yield();*/
+	
+	// Wait for all threads to stop
+	for (RenderThread* thread : mThreads)
+		thread->join();
+}
+
+void RenderContext::requestStop()
+{
+	PR_PROFILE_THIS;
+
+	mShouldStop = true;
+
+	// Request all threads to stop
+	for (RenderThread* thread : mThreads)
+		thread->requestStop();
+
+	// Make sure threads are not inside conditions
+	mIterationCondition.notify_all();
 }
 
 void RenderContext::stop()
 {
 	PR_PROFILE_THIS;
 
-	mShouldStop = true;
+	requestStop();
 
+	// Wait for all threads to stop
 	for (RenderThread* thread : mThreads)
-		thread->stop();
-
-	// Make sure threads are not inside conditions
-	mIterationCondition.notify_all();
+		thread->join();
 }
 
 RenderTile* RenderContext::getNextTile()
@@ -277,6 +293,7 @@ RenderStatus RenderContext::status() const
 	status.setField("global.entity_hit_count", s.entityHitCount());
 	status.setField("global.background_hit_count", s.backgroundHitCount());
 	status.setField("global.depth_count", s.depthCount());
+	status.setField("global.iteration_count", (uint64)mIncrementalCurrentIteration.load());
 
 	return status;
 }

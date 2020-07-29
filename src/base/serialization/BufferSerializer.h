@@ -22,12 +22,13 @@ public:
 
 protected:
 	void reset(Serializer* source, size_t bufferSize);
+
 private:
 	void fetch();
 
 	Serializer* mSource;
 	std::vector<uint8> mBuffer;
 	size_t mIt;
-	size_t mBufferIt;
+	size_t mAvailableIt; // Iterator showing available data, which is the whole buffer in case of write-mode all the time. This is only useful in read-mode
 };
 } // namespace PR

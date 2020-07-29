@@ -37,7 +37,7 @@ void StreamPipeline::reset(RenderTile* tile)
 
 bool StreamPipeline::isFinished() const
 {
-	if (!mTile)
+	if (!mTile || mContext->isStopping())
 		return true;
 
 	if (mCurrentPixelIndex < mMaxPixelCount)

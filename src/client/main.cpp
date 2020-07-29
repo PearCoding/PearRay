@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 		// Setup iteration callback
 		renderer->setIterationCallback([&](uint32) {
 			if (softStop.exchange(false))
-				renderer->stop();
+				renderer->requestStop();
 
 			++fullIterCounter;
 
@@ -188,10 +188,13 @@ int main(int argc, char** argv)
 
 			if (options.MaxTime > 0 && span_full.count() >= options.MaxTime) {
 				if (options.MaxTimeForce)
-					renderer->stop();
+					renderer->requestStop();
 				else
 					softStop = true;
 			}
+
+			if (renderer->isStopping())
+				renderer->waitForFinish();
 		}
 
 		for (const auto& obs : observers)
