@@ -54,8 +54,8 @@ bool SamplerManager::createDefaultsIfNecessary(Environment* env)
 	}
 
 	if (!settings.spectralSamplerFactory) {
-		//PR_LOG(L_WARNING) << "No spectral sampler selected. Using multi jittered sampler with sample count " << DEF_SPEC_SC << std::endl;
-		settings.spectralSamplerFactory = createAndAdd("mjitt", DEF_SPEC_SC);
+		//PR_LOG(L_WARNING) << "No spectral sampler selected. Using random sampler with sample count " << DEF_SPEC_SC << std::endl;
+		settings.spectralSamplerFactory = createAndAdd("random", DEF_SPEC_SC);
 	}
 
 	// Check again

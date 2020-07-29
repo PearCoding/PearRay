@@ -82,7 +82,6 @@ void TevObserver::onIteration(const UpdateInfo&)
 	// Nothing
 }
 
-// Tev protocol
 // uint32 		MessageSize
 // uint8 		Type = 4
 // String 		Name
