@@ -8,7 +8,7 @@
 	  :type 'direct'
 	  :max_ray_depth 1
 	  :light_sample_count 1
-	  :msi false
+	  :msi true
 	)
 	(sampler 
 	  :slot 'aa'
