@@ -213,6 +213,8 @@ static const auto BK7 = create_sellmeier_index<float, 3>({ 1.03961212f, 0.231792
 // https://refractiveindex.info/?shelf=main&book=H2O&page=Daimon-20.0C
 static const auto H2O = create_sellmeier_index<float, 4>({ 5.684027565e-1f, 1.726177391e-1f, 2.086189578e-2f, 1.130748688e-1f },
 														 { 5.101829712e-3f, 1.821153936e-2f, 2.620722293e-2f, 1.069792721e1f });
+// https://refractiveindex.info/?shelf=main&book=C&page=Peter
+static const auto DIA = create_sellmeier_index<float, 2>({ 0.3306f, 4.3356f }, { 0.030625f, 0.011236f });
 static struct {
 	const char* Name;
 	std::shared_ptr<FloatSpectralNode> Node;
@@ -221,6 +223,7 @@ static struct {
 	{ "glass", BK7 },
 	{ "h2o", H2O },
 	{ "water", H2O },
+	{ "diamond", DIA },
 	{ nullptr, nullptr }
 };
 

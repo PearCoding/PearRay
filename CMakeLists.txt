@@ -63,6 +63,7 @@ option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
 
 option(PR_EXTRA_OPENSUBDIV		"Try to build extra OpenSubDiv plugin" ON)
 option(PR_EXTRA_SEEXPR			"Try to build extra SeExpr plugin" ON)
+option(PR_EXTRA_RGL_BRDF 		"Download BRDF Loader by RGL-EPFL and build rgl-measured material plugin ." ON)
 
 # Hardware feature switches
 option(PR_DISABLE_HW_FEATURE_SSE3 		"Disable SSE3 support" OFF)

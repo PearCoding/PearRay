@@ -4,8 +4,9 @@ set(_target_prefix pr_pl_)
 set_property(GLOBAL PROPERTY _pr_embedded_plugins )
 set_property(GLOBAL PROPERTY _pr_embedded_plugins_src )
 set_property(GLOBAL PROPERTY _pr_embedded_plugins_libs )
+set_property(GLOBAL PROPERTY _pr_embedded_plugins_includes )
 function(PR_ADD_PLUGIN NAME)
-  cmake_parse_arguments(_args "" "" "CPP;LIBRARIES" ${ARGN})
+  cmake_parse_arguments(_args "" "" "CPP;LIBRARIES;INCLUDES" ${ARGN})
   set(TARGET ${_target_prefix}${NAME})
 
   if(PR_EMBED_PLUGINS)
@@ -26,6 +27,10 @@ function(PR_ADD_PLUGIN NAME)
     list(APPEND _embedded_plugins_libs "${_args_LIBRARIES}")
     set_property(GLOBAL PROPERTY _pr_embedded_plugins_libs "${_embedded_plugins_libs}" )
 
+    get_property(_embedded_plugins_includes GLOBAL PROPERTY _pr_embedded_plugins_includes)
+    list(APPEND _embedded_plugins_includes "${_args_INCLUDES}")
+    set_property(GLOBAL PROPERTY _pr_embedded_plugins_includes "${_embedded_plugins_includes}" )
+
     get_property(_embedded_plugins GLOBAL PROPERTY _pr_embedded_plugins)
     list(APPEND _embedded_plugins "${NAME}")
     set_property(GLOBAL PROPERTY _pr_embedded_plugins "${_embedded_plugins}" )
@@ -36,6 +41,10 @@ function(PR_ADD_PLUGIN NAME)
 
     if(_args_LIBRARIES)
       target_link_libraries(${TARGET} PRIVATE ${_args_LIBRARIES})
+    endif()
+
+    if(_args_INCLUDES)
+      target_include_directories(${TARGET} PRIVATE ${_args_INCLUDES})
     endif()
 
     target_compile_definitions(${TARGET} PRIVATE
