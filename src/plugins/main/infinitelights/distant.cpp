@@ -24,6 +24,8 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_ASSERT(false, "eval() for delta lights should never be called!");
+		
 		ShadingContext ctx;
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 

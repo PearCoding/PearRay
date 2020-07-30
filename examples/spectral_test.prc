@@ -3,6 +3,8 @@
 	:render_width 1000
 	:render_height 1000
 	:camera 'Camera'
+	:spectral_domain 520
+
 	; Settings
 	(integrator
 		:type 'DIRECT'
@@ -14,11 +16,6 @@
 		:slot 'aa'
 		:type 'hammersley'
 		:sample_count 32
-	)
-	(sampler
-		:slot 'spectral'
-		:type 'mjitt'
-		:sample_count 1
 	)
 	(filter
 		:slot 'pixel'
@@ -39,13 +36,13 @@
 		:localDirection [0,0,1]
 		:localUp [0,1,0]
 		:localRight [1,0,0]
-		:position [0,0,-1.00005]
+		:position [0,0,-1]
 	)
 	; Background
 	(light
 		:name 'background'
 		:type 'env'
-		:radiance (illuminant "D65")
+		:radiance 1
 	)
 	; Lights
 	; Primitives
@@ -59,6 +56,6 @@
 	(material
 		:name 'Diffuse'
 		:type 'diffuse'
-		:albedo "white"
+		:albedo 1
 	)
 )

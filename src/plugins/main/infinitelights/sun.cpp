@@ -22,11 +22,11 @@ constexpr float SUN_VIS_RADIUS			= PR_DEG2RAD * 0.5358f * 0.5f; // Given in angu
 
 class SunLight : public IInfiniteLight {
 public:
-	SunLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale)
+	SunLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float radius, float scale, const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
-		, mDirection(ea.toDirection().normalized())
+		, mDirection(trans * ea.toDirection().normalized())
 		, mCosTheta(std::cos(SUN_VIS_RADIUS * radius))
 		, mPDF(Sampling::uniform_cone_pdf(mCosTheta))
 	{
@@ -93,11 +93,11 @@ private:
 
 class SunDeltaLight : public IInfiniteLight {
 public:
-	SunDeltaLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale)
+	SunDeltaLight(uint32 id, const std::string& name, const ElevationAzimuth& ea, float turbidity, float scale, const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mSpectrum(SUN_WAVELENGTH_SAMPLES, SUN_WAVELENGTH_START, SUN_WAVELENGTH_END)
 		, mEA(ea)
-		, mDirection(ea.toDirection().normalized())
+		, mDirection(trans * ea.toDirection().normalized())
 	{
 		const float solid_angle = 2 * PR_PI * (1 - std::cos(SUN_VIS_RADIUS));
 		for (size_t i = 0; i < mSpectrum.sampleCount(); ++i)
@@ -110,6 +110,8 @@ public:
 	void eval(const InfiniteLightEvalInput& in, InfiniteLightEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
+		PR_ASSERT(false, "eval() for delta lights should never be called!");
+
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 			out.Weight[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
 		out.PDF_S = PR_INF;
@@ -149,6 +151,7 @@ public:
 		const ParameterGroup& params = ctx.Parameters;
 
 		const std::string name = params.getString("name", "__unknown");
+		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
 		const float radius	   = ctx.Parameters.getNumber("radius", 1.0f);
@@ -156,10 +159,10 @@ public:
 		const float scale	   = ctx.Parameters.getNumber("scale", 1.0f);
 
 		if (radius <= PR_EPSILON)
-			return std::make_shared<SunDeltaLight>(id, name, sunEA, turbidity, scale);
+			return std::make_shared<SunDeltaLight>(id, name, sunEA, turbidity, scale, trans);
 		else
 			return std::make_shared<SunLight>(id, name, sunEA,
-											  turbidity, radius, scale);
+											  turbidity, radius, scale, trans);
 	}
 
 	const std::vector<std::string>& getNames() const override

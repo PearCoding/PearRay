@@ -50,10 +50,12 @@ public:
 	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
 		: mPipeline(ctx)
 		, mSampler((maxRayDepth + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
+		, mInfLightCount(ctx->scene()->infiniteLights().size())
 		, mLightSampleCount(lightSamples)
 		, mMaxRayDepth(maxRayDepth)
 		, mMSIEnabled(msi)
 	{
+		mInfLightHandled.resize(maxRayDepth * mInfLightCount, false);
 	}
 
 	virtual ~IntDirectInstance() = default;
@@ -261,7 +263,7 @@ public:
 		} else {
 			session.tile()->statistics().addBackgroundHitCount();
 
-			// Theoretical question: If a non-delta light is hit, why try to sample them afterwards in evalN?
+			// Theoretical question: If a non-delta light is hit, why try to sample them afterwards in evalN? -> Answer: You shall not!
 			// A solution to prevent double count (if necessary) is to use a list of lights hit in the following loop
 			// Afterwards in evalN only sample lights not in the list
 			path.addToken(LightPathToken::Background());
@@ -274,6 +276,8 @@ public:
 
 				if (lout.PDF_S <= PR_EPSILON)
 					continue;
+
+				mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + light->id()] = true;
 
 				const float msiL = allowMSI ? MSI(1, out.PDF_S[0], 1, lout.PDF_S) : 1.0f;
 				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Weight, next, path);
@@ -302,6 +306,10 @@ public:
 		session.pushSPFragment(spt, path);
 #endif
 
+		// Cleanup from previous calls
+		for (size_t i = 0; i < mInfLightCount; ++i)
+			mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + i] = false;
+
 		// Scatter Light
 		scatterLight(session, path, spt, throughput, material);
 
@@ -326,6 +334,9 @@ public:
 		// Infinite Lights
 		// 1 sample per inf-light
 		for (auto light : session.tile()->context()->scene()->infiniteLights()) {
+			if (mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + light->id()]) // Skip if already handled
+				continue;
+
 			LightPathToken token;
 			const auto pair = infiniteLight(session, spt, token, light.get(), material);
 
@@ -442,6 +453,8 @@ public:
 private:
 	StreamPipeline mPipeline;
 	SampleArray mSampler;
+	std::vector<bool> mInfLightHandled;
+	const size_t mInfLightCount;
 	const size_t mLightSampleCount;
 	const size_t mMaxRayDepth;
 	const bool mMSIEnabled;
