@@ -13,19 +13,17 @@
 
 namespace PR {
 
-template <bool HasTransmissionColor>
+template <bool HasTransmissionColor, bool IsThin>
 class GlassMaterial : public IMaterial {
 public:
 	GlassMaterial(uint32 id,
 				  const std::shared_ptr<FloatSpectralNode>& spec,
 				  const std::shared_ptr<FloatSpectralNode>& trans,
-				  const std::shared_ptr<FloatSpectralNode>& ior,
-				  bool thin)
+				  const std::shared_ptr<FloatSpectralNode>& ior)
 		: IMaterial(id)
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
-		, mThin(thin)
 	{
 	}
 
@@ -100,31 +98,29 @@ public:
 		const float F = fresnelTermHero(in.Context, in.ShadingContext, eta);
 
 		out.Weight = mSpecularity->eval(in.ShadingContext); // The weight is independent of the fresnel term
-		SpectralBlob trans;
-		if constexpr (HasTransmissionColor)
-			trans = mTransmission->eval(in.ShadingContext);
 
 		if (in.RND[0] <= F) {
 			out.Type = MST_SpecularReflection;
 			out.L	 = Reflection::reflect(in.Context.V);
 		} else {
-			const float NdotT = Reflection::refraction_angle(in.Context.NdotV(), eta);
+			if constexpr (IsThin) {
+				out.Type = MST_SpecularTransmission;
+				out.L	 = in.Context.V;
+				if constexpr (HasTransmissionColor)
+					out.Weight = mTransmission->eval(in.ShadingContext);
+			} else {
+				const float NdotT = Reflection::refraction_angle(in.Context.NdotV(), eta);
 
-			if (NdotT < 0) { // TOTAL REFLECTION
-				if (mThin) { // Ignore
-					out.PDF_S  = 0;
-					out.Weight = SpectralBlob::Zero();
-					return;
-				} else {
+				if (NdotT < 0) { // TOTAL REFLECTION
 					out.Type = MST_SpecularReflection;
 					out.L	 = Reflection::reflect(in.Context.V);
-				}
-			} else {
-				out.Type = MST_SpecularTransmission;
-				out.L	 = Reflection::refract(eta, NdotT, in.Context.V);
+				} else {
+					out.Type = MST_SpecularTransmission;
+					out.L	 = Reflection::refract(eta, NdotT, in.Context.V);
 
-				if constexpr (HasTransmissionColor)
-					out.Weight = trans;
+					if constexpr (HasTransmissionColor)
+						out.Weight = mTransmission->eval(in.ShadingContext);
+				}
 			}
 		}
 
@@ -137,12 +133,14 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <GlassMaterial>:" << std::endl
-			   << "    Specularity: " << mSpecularity->dumpInformation() << std::endl;
+			   << "    Specularity:  " << mSpecularity->dumpInformation() << std::endl;
 
 		if constexpr (HasTransmissionColor)
 			stream << "    Transmission: " << mTransmission->dumpInformation() << std::endl;
 
-		stream << "    IOR: " << mIOR->dumpInformation() << std::endl;
+		stream << "    IOR:          " << mIOR->dumpInformation() << std::endl;
+		if constexpr (IsThin)
+			stream << "    IsThin:       true" << std::endl;
 
 		return stream.str();
 	}
@@ -151,27 +149,33 @@ private:
 	std::shared_ptr<FloatSpectralNode> mSpecularity;
 	std::shared_ptr<FloatSpectralNode> mTransmission;
 	std::shared_ptr<FloatSpectralNode> mIOR;
-	bool mThin;
 };
+
+template <bool HasTransmissionColor, bool IsThin>
+static std::shared_ptr<IMaterial> createMaterial(uint32 id, const SceneLoadContext& ctx)
+{
+	return std::make_shared<GlassMaterial<HasTransmissionColor, IsThin>>(
+		id,
+		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("specularity"), 1),
+		HasTransmissionColor ? ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("transmission"), 1) : nullptr,
+		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("index"), 1.55f));
+}
 
 class GlassMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
-
-		if (ctx.Parameters.hasParameter("transmission"))
-			return std::make_shared<GlassMaterial<true>>(id,
-														 ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1),
-														 ctx.Env->lookupSpectralNode(params.getParameter("transmission"), 1),
-														 ctx.Env->lookupSpectralNode(params.getParameter("index"), 1.55f),
-														 params.getBool("thin", false));
-		else
-			return std::make_shared<GlassMaterial<false>>(id,
-														  ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1),
-														  nullptr,
-														  ctx.Env->lookupSpectralNode(params.getParameter("index"), 1.55f),
-														  params.getBool("thin", false));
+		if (ctx.Parameters.hasParameter("transmission")) {
+			if (ctx.Parameters.getBool("thin", false))
+				return createMaterial<true, true>(id, ctx);
+			else
+				return createMaterial<true, false>(id, ctx);
+		} else {
+			if (ctx.Parameters.getBool("thin", false))
+				return createMaterial<false, true>(id, ctx);
+			else
+				return createMaterial<false, false>(id, ctx);
+		}
 	}
 
 	const std::vector<std::string>& getNames() const
