@@ -28,7 +28,7 @@
 	; Outputs
 	(output
 		:name 'image'
-		(channel :type 'color' :color 'xyz' )
+		(channel :type 'color' :color 'srgb' )
 	)
 	; Camera
 	(camera
@@ -50,6 +50,12 @@
 		:type 'env'
 		:radiance (illuminant "D65")
 	)
+	;(light
+	;	:name 'background'
+	;	:type 'distant'
+	;	:direction [0,1,0]
+	;	:irradiance (smul (illuminant "D65") 3.141592)
+	;)
 	; Lights
 	; Primitives
 	; Meshes

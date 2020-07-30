@@ -14,7 +14,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'SOBOL'
-		:sample_count 1024
+		:sample_count 4096
 	)
 	(sampler
 		:slot 'spectral'
@@ -50,6 +50,7 @@
 	(light
 		:name 'sky'
 		:type 'sky'
+		:scale 2
 		:turbidity 3
 		:albedo 0.40 ; Sandy environment
 		:hour 16
@@ -57,6 +58,7 @@
 	(light
 		:name 'sun'
 		:type 'sun'
+		:scale 2
 		:turbidity 3
 		:radius 4
 		:hour 16
@@ -622,7 +624,7 @@
 	; Materials
 	(spectrum
 		:name 'Material_diffuse_color'
-		:data (refl 0.95 0.525250 0.171813)
+		:data (refl 0.98 0.525250 0.171813)
 	)
 	(material
 		:name 'Material'
@@ -640,7 +642,7 @@
 	)
 	(spectrum
 		:name 'Material.003_diffuse_color'
-		:data (refl 0.95 0.174027 0.035058)
+		:data (refl 0.98 0.174027 0.035058)
 	)
 	(material
 		:name 'Material.003'
@@ -659,7 +661,7 @@
 	)
 	(spectrum
 		:name 'Material.004_diffuse_color'
-		:data (refl 0.6 0.6 0.6)
+		:data (refl 0.8 0.8 0.8)
 	)
 	(material
 		:name 'Material.004'
@@ -680,6 +682,6 @@
 		:name 'Liquid'
 		:type 'glass'
 		:index (lookup_index "water")
-		:specularity 0.98
+		:specularity 0.99
 	)
 )

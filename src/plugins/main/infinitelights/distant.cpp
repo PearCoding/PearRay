@@ -15,7 +15,7 @@ public:
 				 const std::shared_ptr<FloatSpectralNode>& spec)
 		: IInfiniteLight(id, name)
 		, mDirection(direction)
-		, mRadiance(spec)
+		, mIrradiance(spec)
 	{
 	}
 
@@ -27,7 +27,7 @@ public:
 		ShadingContext ctx;
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
-		out.Weight = PR_PI * mRadiance->eval(ctx);
+		out.Weight = mIrradiance->eval(ctx);
 		out.PDF_S  = PR_INF;
 	}
 
@@ -37,7 +37,7 @@ public:
 		ShadingContext ctx;
 		ctx.WavelengthNM = in.Point.Ray.WavelengthNM;
 
-		out.Weight	 = PR_PI * mRadiance->eval(ctx);
+		out.Weight	 = mIrradiance->eval(ctx);
 		out.Outgoing = mDirection_Cache;
 		out.PDF_S	 = PR_INF;
 	}
@@ -48,9 +48,8 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <DistantLight>:" << std::endl
-			   << "    Radiance: " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
-			   << "    LocalDirection: " << PR_FMT_MAT(mDirection) << std::endl
-			   << "    GlobalDirection: " << PR_FMT_MAT(mDirection_Cache) << std::endl;
+			   << "    Irradiance: " << (mIrradiance ? mIrradiance->dumpInformation() : "NONE") << std::endl
+			   << "    Direction:  " << PR_FMT_MAT(mDirection) << std::endl;
 
 		return stream.str();
 	}
@@ -65,7 +64,7 @@ public:
 
 private:
 	Vector3f mDirection;
-	std::shared_ptr<FloatSpectralNode> mRadiance;
+	std::shared_ptr<FloatSpectralNode> mIrradiance;
 	Vector3f mDirection_Cache;
 };
 
@@ -79,7 +78,7 @@ public:
 		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
 		return std::make_shared<DistantLight>(id, name, direction,
-											  ctx.Env->lookupSpectralNode(params.getParameter("radiance"), 1));
+											  ctx.Env->lookupSpectralNode(params.getParameter("irradiance"), 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

@@ -15,10 +15,11 @@
 namespace PR {
 class SkyLight : public IInfiniteLight {
 public:
-	SkyLight(uint32 id, const std::string& name, const SkyModel& model, const Eigen::Matrix3f& trans)
+	SkyLight(uint32 id, const std::string& name, const SkyModel& model, float scale, const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mDistribution()
 		, mModel(model)
+		, mScale(scale)
 		, mTransform(trans)
 		, mInvTransform(trans.inverse())
 	{
@@ -62,6 +63,7 @@ public:
 
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SkyLight>:" << std::endl
+			   << "    Scale:        " << mScale << std::endl
 			   << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl;
 		// TODO
 		return stream.str();
@@ -97,13 +99,14 @@ private:
 			PR_ASSERT(t >= 0.0f && t <= 1.0f, "t must be between 0 and 1");
 
 			float radiance = mModel.radiance(index, ea) * (1 - t) + mModel.radiance(index + 1, ea) * t;
-			blob[i]		   = radiance;
+			blob[i]		   = mScale * radiance;
 		}
 		return blob;
 	}
 
 	std::shared_ptr<Distribution2D> mDistribution;
 	const SkyModel mModel;
+	const float mScale;
 	const Eigen::Matrix3f mTransform;
 	const Eigen::Matrix3f mInvTransform;
 };
@@ -117,11 +120,12 @@ public:
 		const std::string name = params.getString("name", "__unknown");
 		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
+		const float scale	   = ctx.Parameters.getNumber("scale", 1.0f);
 		auto ground_albedo	   = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.15f);
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
-		return std::make_shared<SkyLight>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), trans);
+		return std::make_shared<SkyLight>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), scale, trans);
 	}
 
 	const std::vector<std::string>& getNames() const override

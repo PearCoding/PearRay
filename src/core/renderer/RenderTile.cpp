@@ -97,6 +97,7 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 #if defined(PR_SAMPLE_BY_CIE)
 		if (mSpectralStart == PR_CIE_WAVELENGTH_START && mSpectralEnd == PR_CIE_WAVELENGTH_END) {
 			float u = mSpectralSampler->generate1D(sample);
+			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
 				const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
 				float pdf;
@@ -111,6 +112,7 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 #endif
 			float start					 = mSpectralSampler->generate1D(sample) * mSpectralSpan; // Wavelength inside the span
 			cameraSample.WavelengthNM(0) = start + mSpectralStart;								 // Hero wavelength
+			PR_OPT_LOOP
 			for (size_t i = 1; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 				cameraSample.WavelengthNM(i) = mSpectralStart + std::fmod(start + i * mSpectralDelta, mSpectralSpan);
 #if defined(PR_SAMPLE_BY_CIE)

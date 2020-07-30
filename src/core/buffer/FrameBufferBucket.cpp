@@ -86,30 +86,18 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i rp  = entry.Position + filterSize;
-		const bool isMono = entry.Flags & OSEF_Mono;
+		const Point2i rp		   = entry.Position + filterSize;
+		const bool isMono		   = entry.Flags & OSEF_Mono;
+		const size_t channels	   = isMono ? 1 : PR_SPECTRAL_BLOB_SIZE;
+		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance / channels;
 
-		SpectralBlob real_weight = entry.Weight * entry.Radiance;
-		/*Size1i w_channels			 = 0;
-		for(size_t k = 0; k <PR_SPECTRAL_BLOB_SIZE; ++k) {
-			if(entry.Weight[k] > PR_EPSILON)
-				++w_channels;
-		}*/
-
-		const size_t channels = PR_UNLIKELY(isMono) ? 1 : PR_SPECTRAL_BLOB_SIZE;
-		real_weight /= channels;
-
+#ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
-		bool isInf	   = false;
-		bool isNaN	   = false;
-		bool isNeg	   = false;
-		bool isInvalid = false;
-		for (size_t k = 0; k < channels && !isInvalid; ++k) {
-			isInf	  = std::isinf(real_weight[k]);
-			isNaN	  = std::isnan(real_weight[k]);
-			isNeg	  = real_weight[k] < 0;
-			isInvalid = isInf || isNaN || isNeg;
-		}
+		const bool isInf	 = contrib.isInf().any();
+		const bool isNaN	 = contrib.isNaN().any();
+		const bool isNeg	 = (contrib < 0.0f).any();
+		const bool isInvalid = isInf | isNaN | isNeg;
 		if (PR_UNLIKELY(isInvalid)) {
 			const uint32 feedback = (isNaN ? OF_NaN : 0)
 									| (isInf ? OF_Infinite : 0)
@@ -118,11 +106,10 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(rp, 0) |= feedback;
 			continue;
 		}
+#endif
 
 		// Map to CIE XYZ
-		CIETriplet triplet;
-		CIE::eval(real_weight, entry.Wavelengths, triplet);
-		triplet *= PR_SPECTRAL_BLOB_SIZE / (float)channels;
+		const CIETriplet triplet = CIE::eval(contrib, entry.Wavelengths);
 
 		const LightPathView path = LightPathView(entry.Path);
 
@@ -158,30 +145,18 @@ void FrameBufferBucket::commitSpectralsXYZNoFilter(const OutputSpectralEntry* en
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i sp  = entry.Position;
-		const bool isMono = entry.Flags & OSEF_Mono;
+		const Point2i sp		   = entry.Position;
+		const bool isMono		   = entry.Flags & OSEF_Mono;
+		const size_t channels	   = isMono ? 1 : PR_SPECTRAL_BLOB_SIZE;
+		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
+		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance / channels;
 
-		SpectralBlob real_weight = entry.Weight * entry.Radiance;
-		/*Size1i w_channels			 = 0;
-		for(size_t k = 0; k <PR_SPECTRAL_BLOB_SIZE; ++k) {
-			if(entry.Weight[k] > PR_EPSILON)
-				++w_channels;
-		}*/
-
-		const size_t channels = PR_UNLIKELY(isMono) ? 1 : PR_SPECTRAL_BLOB_SIZE;
-		real_weight /= channels;
-
+#ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
-		bool isInf	   = false;
-		bool isNaN	   = false;
-		bool isNeg	   = false;
-		bool isInvalid = false;
-		for (size_t k = 0; k < channels && !isInvalid; ++k) {
-			isInf	  = std::isinf(real_weight[k]);
-			isNaN	  = std::isnan(real_weight[k]);
-			isNeg	  = real_weight[k] < 0;
-			isInvalid = isInf || isNaN || isNeg;
-		}
+		const bool isInf	 = contrib.isInf().any();
+		const bool isNaN	 = contrib.isNaN().any();
+		const bool isNeg	 = (contrib < 0.0f).any();
+		const bool isInvalid = isInf | isNaN | isNeg;
 		if (PR_UNLIKELY(isInvalid)) {
 			const uint32 feedback = (isNaN ? OF_NaN : 0)
 									| (isInf ? OF_Infinite : 0)
@@ -190,11 +165,10 @@ void FrameBufferBucket::commitSpectralsXYZNoFilter(const OutputSpectralEntry* en
 			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(sp, 0) |= feedback;
 			continue;
 		}
+#endif
 
 		// Map to CIE XYZ
-		CIETriplet triplet;
-		CIE::eval(real_weight, entry.Wavelengths, triplet);
-		triplet *= PR_SPECTRAL_BLOB_SIZE / (float)channels;
+		const CIETriplet triplet = CIE::eval(contrib, entry.Wavelengths);
 
 		const LightPathView path = LightPathView(entry.Path);
 
@@ -222,13 +196,14 @@ void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, 
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i rp   = entry.Position + filterSize;
-		const float weight = entry.Weight[0] * entry.Radiance[0];
+		const Point2i rp	= entry.Position + filterSize;
+		const float contrib = entry.Weight[0] * entry.Radiance[0];
 
+#ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
-		const bool isInf	 = std::isinf(weight);
-		const bool isNaN	 = std::isnan(weight);
-		const bool isNeg	 = weight < 0.0f;
+		const bool isInf	 = std::isinf(contrib);
+		const bool isNaN	 = std::isnan(contrib);
+		const bool isNeg	 = contrib < 0.0f;
 		const bool isInvalid = isInf | isNaN | isNeg;
 		if (PR_UNLIKELY(isInvalid)) {
 			const uint32 feedback = (isNaN ? OF_NaN : 0)
@@ -238,6 +213,7 @@ void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, 
 			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(rp, 0) |= feedback;
 			continue;
 		}
+#endif
 
 		const LightPathView path = LightPathView(entry.Path);
 
@@ -248,7 +224,7 @@ void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, 
 			for (Point1i px = start(0); px <= end(0); ++px) {
 				const Point2i sp		 = Point2i(px, py);
 				const float filterWeight = mFilter.evalWeight(sp(0) - rp(0), sp(1) - rp(1));
-				const float weightedRad	 = filterWeight * weight;
+				const float weightedRad	 = filterWeight * contrib;
 
 				PR_UNROLL_LOOP(3)
 				for (Size1i k = 0; k < 3; ++k)
@@ -273,13 +249,14 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 	for (size_t i = 0; i < entry_count; ++i) {
 		const auto& entry = entries[i];
 
-		const Point2i sp   = entry.Position;
-		const float weight = entry.Weight[0] * entry.Radiance[0];
+		const Point2i sp	= entry.Position;
+		const float contrib = entry.Weight[0] * entry.Radiance[0];
 
+#ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
-		const bool isInf	 = std::isinf(weight);
-		const bool isNaN	 = std::isnan(weight);
-		const bool isNeg	 = weight < 0.0f;
+		const bool isInf	 = std::isinf(contrib);
+		const bool isNaN	 = std::isnan(contrib);
+		const bool isNeg	 = contrib < 0.0f;
 		const bool isInvalid = isInf | isNaN | isNeg;
 		if (PR_UNLIKELY(isInvalid)) {
 			const uint32 feedback = (isNaN ? OF_NaN : 0)
@@ -289,19 +266,20 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			mData.getInternalChannel_Counter(AOV_Feedback)->getFragment(sp, 0) |= feedback;
 			continue;
 		}
+#endif
 
 		const LightPathView path = LightPathView(entry.Path);
 
 		PR_UNROLL_LOOP(3)
 		for (Size1i k = 0; k < 3; ++k)
-			mData.getInternalChannel_Spectral()->getFragment(sp, k) += weight;
+			mData.getInternalChannel_Spectral()->getFragment(sp, k) += contrib;
 
 		// LPE
 		for (auto pair : mData.mLPE_Spectral) {
 			if (pair.first.match(path)) {
 				PR_UNROLL_LOOP(3)
 				for (Size1i k = 0; k < 3; ++k)
-					pair.second->getFragment(sp, k) += weight;
+					pair.second->getFragment(sp, k) += contrib;
 			}
 		}
 	}

@@ -21,16 +21,15 @@ public:
 	{
 		PR_OPT_LOOP
 		for (size_t i = 0; i < entry_count; ++i)
-			eval(weights[i], wavelengths[i], xyz[i]);
+			xyz[i] = eval(weights[i], wavelengths[i]);
 	}
 
-	static inline void eval(const SpectralBlob& weight, const SpectralBlob& wavelength,
-							CIETriplet& xyz)
+	static inline CIETriplet eval(const SpectralBlob& weight, const SpectralBlob& wavelength)
 	{
 		static const EquidistantSpectrumView CIE_X(NM_TO_X, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
 		static const EquidistantSpectrumView CIE_Y(NM_TO_Y, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
 		static const EquidistantSpectrumView CIE_Z(NM_TO_Z, PR_CIE_SAMPLE_COUNT, PR_CIE_WAVELENGTH_START, PR_CIE_WAVELENGTH_END);
-		xyz = CIETriplet::Zero();
+		CIETriplet xyz = CIETriplet::Zero();
 
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
@@ -44,7 +43,7 @@ public:
 		for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
 			xyz[2] += weight[k] * CIE_Z.lookup(wavelength[k]);
 
-		//xyz *= PR_CIE_NORM;
+		return xyz;
 	}
 
 	static inline float eval_y(float wavelength)

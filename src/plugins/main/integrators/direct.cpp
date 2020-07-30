@@ -181,6 +181,7 @@ public:
 		constexpr float DEPTH_DROP_RATE = 0.90f;
 
 		// Russian Roulette
+		// TODO: Add adjoint russian roulette (and maybe splitting)
 		const float roussian_prob = mSampler.next1D();
 		const float scatProb	  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
 		if (spt.Ray.IterationDepth + 1 > mMaxRayDepth
@@ -323,6 +324,7 @@ public:
 		}
 
 		// Infinite Lights
+		// 1 sample per inf-light
 		for (auto light : session.tile()->context()->scene()->infiniteLights()) {
 			LightPathToken token;
 			const auto pair = infiniteLight(session, spt, token, light.get(), material);

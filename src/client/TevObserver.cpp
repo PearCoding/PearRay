@@ -58,6 +58,9 @@ void TevObserver::begin(RenderContext* renderContext, const ProgramSettings& set
 
 void TevObserver::end()
 {
+	if (mConnection->Con.isOpen())
+		updateImageProtocol(1);
+
 	mConnection.reset();
 }
 
@@ -132,6 +135,8 @@ void TevObserver::updateImageProtocol(float scale)
 	const size_t tx = channel->width() / UPDATE_TILE_SIZE + 1;
 	const size_t ty = channel->height() / UPDATE_TILE_SIZE + 1;
 
+	const bool monotonic = mRenderContext->settings().spectralMono;
+
 	// TODO: Better way?
 	for (size_t i = 0; i < ty; ++i) {
 		size_t sy = i * UPDATE_TILE_SIZE;
@@ -150,18 +155,29 @@ void TevObserver::updateImageProtocol(float scale)
 				continue;
 
 			// Copy to seperate channels and map to sRGB
-			PR_OPT_LOOP
-			for (size_t iy = 0; iy < h; ++iy) {
-				for (size_t ix = 0; ix < w; ++ix) {
-					const auto p  = Point2i(sx + ix, sy + iy);
-					const float x = scale * channel->getFragment(p, 0);
-					const float y = scale * channel->getFragment(p, 1);
-					const float z = scale * channel->getFragment(p, 2);
-					float r, g, b;
-					RGBConverter::fromXYZ(x, y, z, r, g, b);
-					mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 0 + iy * w + ix] = r;
-					mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 1 + iy * w + ix] = g;
-					mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 2 + iy * w + ix] = b;
+			if (!monotonic) {
+				PR_OPT_LOOP
+				for (size_t iy = 0; iy < h; ++iy) {
+					for (size_t ix = 0; ix < w; ++ix) {
+						const auto p  = Point2i(sx + ix, sy + iy);
+						const float x = scale * channel->getFragment(p, 0);
+						const float y = scale * channel->getFragment(p, 1);
+						const float z = scale * channel->getFragment(p, 2);
+						float r, g, b;
+						RGBConverter::fromXYZ(x, y, z, r, g, b);
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 0 + iy * w + ix] = r;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 1 + iy * w + ix] = g;
+						mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * 2 + iy * w + ix] = b;
+					}
+				}
+			} else {
+				PR_OPT_LOOP
+				for (size_t iy = 0; iy < h; ++iy) {
+					for (size_t ix = 0; ix < w; ++ix) {
+						const auto p = Point2i(sx + ix, sy + iy);
+						for (size_t k = 0; k < CHANNEL_COUNT; ++k)
+							mConnection->Data[UPDATE_TILE_SIZE * UPDATE_TILE_SIZE * k + iy * w + ix] = scale * channel->getFragment(p, k);
+					}
 				}
 			}
 
