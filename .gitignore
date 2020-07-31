@@ -34,15 +34,13 @@
 # Directories
 build*
 res
-.vscode
 
 # Sandbox/Script output
 *.raw
 
 # Working on it... Still broken
 tools/spectrum
-/.vs
-/CMakeSettings.json
+CMakeSettings.json
 
 # Ignore measured BSDF files as they have to be acquired manually
 examples/*.bsdf
