@@ -14,12 +14,12 @@
 	(sampler
 		:slot 'aa'
 		:type 'MULTI_JITTER'
-		:sample_count 4
+		:sample_count 1024
 	)
 	; Outputs
 	(output
 		:name 'image'
-		(channel :type 'color' :color 'xyz' )
+		(channel :type 'color' :color 'srgb' )
 	)
 	; Camera
 	(camera
@@ -27,9 +27,6 @@
 		:type 'standard'
 		:width 0.720000
 		:height 0.720000
-		:zoom 1.000000
-		:fstop 0.000000
-		:apertureRadius 0.500000
 		:localDirection [0,0,-1]
 		:localUp [0,1,0]
 		:localRight [1,0,0]

@@ -53,9 +53,10 @@ public:
 		}
 
 		if constexpr (UseDistribution) {
+			out.PDF_S			 = mDistribution->continuousPdf(ctx.UV);
 			const float sinTheta = std::sin(ctx.UV(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
 			out.PDF_S = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
 		}
@@ -71,7 +72,7 @@ public:
 
 			const float sinTheta = std::sin(uv(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
-			out.PDF_S			 = (denom <= PR_EPSILON) ? 0.0f : out.PDF_S / denom;
+			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1 / denom;
 		} else {
 			uv			 = in.RND;
 			out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);

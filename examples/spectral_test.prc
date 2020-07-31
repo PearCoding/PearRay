@@ -8,7 +8,7 @@
 	; Settings
 	(integrator
 		:type 'DIRECT'
-		:max_ray_depth 1
+		:max_ray_depth 2
 		:light_sampe_count 1
 		:msi true
 	)
@@ -36,7 +36,7 @@
 		:localDirection [0,0,1]
 		:localUp [0,1,0]
 		:localRight [1,0,0]
-		:position [0,0,-1]
+		:position [0,0,-1.0005]
 	)
 	; Background
 	(light

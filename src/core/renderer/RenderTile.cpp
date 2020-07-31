@@ -7,7 +7,7 @@
 #include "spectral/CIE.h"
 
 //#define PR_SAMPLE_BY_CIE_Y
-//#define PR_SAMPLE_BY_CIE_XYZ
+#define PR_SAMPLE_BY_CIE_XYZ
 
 #if defined(PR_SAMPLE_BY_CIE_Y) || defined(PR_SAMPLE_BY_CIE_XYZ)
 #define PR_SAMPLE_BY_CIE
@@ -67,7 +67,7 @@ RenderTile::RenderTile(const Point2i& start, const Point2i& end,
 	mTimeBeta *= f;
 
 	mWeight_Cache = 1.0f / mMaxIterationCount;
-	if(!mRenderContext->settings().spectralMono)// TODO: Really???
+	if (!mRenderContext->settings().spectralMono) // TODO: Really???
 		mWeight_Cache *= PR_SPECTRAL_BLOB_SIZE;
 }
 
@@ -122,7 +122,12 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 #endif
 	}
 
-	return mCamera->constructRay(cameraSample);
+	Ray ray = mCamera->constructRay(cameraSample);
+	if (mSpectralMonotonic) {
+		ray.Flags |= RF_Monochrome;
+		ray.Weight *= SpectralBlobUtils::HeroOnly();
+	}
+	return ray;
 }
 
 bool RenderTile::accuire()

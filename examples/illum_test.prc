@@ -6,18 +6,18 @@
 	; Settings
 	(integrator
 		:type 'DIRECT'
-		:max_ray_depth 1
+		:max_ray_depth 2
 		:light_sampe_count 1
 		:msi true
 	)
 	(sampler
 		:slot 'aa'
 		:type 'hammersley'
-		:sample_count 32
+		:sample_count 64
 	)
 	(sampler
 		:slot 'spectral'
-		:type 'mjitt'
+		:type 'random'
 		:sample_count 1
 	)
 	(filter

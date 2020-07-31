@@ -50,7 +50,6 @@
 	(light
 		:name 'sky'
 		:type 'sky'
-		:scale 2
 		:turbidity 3
 		:albedo 0.40 ; Sandy environment
 		:hour 16
@@ -58,7 +57,6 @@
 	(light
 		:name 'sun'
 		:type 'sun'
-		:scale 2
 		:turbidity 3
 		:radius 4
 		:hour 16

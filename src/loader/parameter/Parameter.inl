@@ -79,11 +79,11 @@ inline uint64 Parameter::getUInt(size_t ind, uint64 def) const
 		default:
 			return def;
 		case PT_Int:
-			return static_cast<uint64>(mData[ind].Int);
+			return mData[ind].Int >= 0 ? static_cast<uint64>(mData[ind].Int) : def;
 		case PT_UInt:
 			return mData[ind].UInt;
 		case PT_Number:
-			return static_cast<uint64>(mData[ind].Number);
+			return mData[ind].Number >= 0 ? static_cast<uint64>(mData[ind].Number) : def;
 		}
 	}
 }
