@@ -177,7 +177,7 @@
 		:name 'Glass'
 		:type 'glass'
 		:specularity 'Glass_specular_color'
-		:index 1.550000
+		:index (lookup_index "bk7")
 	)
 	(spectrum
 		:name 'Material_diffuse_color'

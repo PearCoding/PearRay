@@ -14,9 +14,9 @@
 namespace PR {
 
 template <bool HasTransmissionColor, bool IsThin>
-class GlassMaterial : public IMaterial {
+class DielectricMaterial : public IMaterial {
 public:
-	GlassMaterial(uint32 id,
+	DielectricMaterial(uint32 id,
 				  const std::shared_ptr<FloatSpectralNode>& spec,
 				  const std::shared_ptr<FloatSpectralNode>& trans,
 				  const std::shared_ptr<FloatSpectralNode>& ior)
@@ -27,7 +27,7 @@ public:
 	{
 	}
 
-	virtual ~GlassMaterial() = default;
+	virtual ~DielectricMaterial() = default;
 
 	void startGroup(size_t, const RenderTileSession&) override
 	{
@@ -37,7 +37,7 @@ public:
 	{
 	}
 
-	int flags() const override { return MF_DeltaDistribution | MF_SpectralVarying; }
+	int flags() const override { return MF_DeltaDistribution | (IsThin ? 0 : MF_SpectralVarying); }
 
 	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, const ShadingContext& sctx) const
 	{
@@ -132,7 +132,7 @@ public:
 		std::stringstream stream;
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
-			   << "  <GlassMaterial>:" << std::endl
+			   << "  <DielectricMaterial>:" << std::endl
 			   << "    Specularity:  " << mSpecularity->dumpInformation() << std::endl;
 
 		if constexpr (HasTransmissionColor)
@@ -154,14 +154,14 @@ private:
 template <bool HasTransmissionColor, bool IsThin>
 static std::shared_ptr<IMaterial> createMaterial(uint32 id, const SceneLoadContext& ctx)
 {
-	return std::make_shared<GlassMaterial<HasTransmissionColor, IsThin>>(
+	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin>>(
 		id,
 		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("specularity"), 1),
 		HasTransmissionColor ? ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("transmission"), 1) : nullptr,
 		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("index"), 1.55f));
 }
 
-class GlassMaterialPlugin : public IMaterialPlugin {
+class DielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
@@ -180,7 +180,7 @@ public:
 
 	const std::vector<std::string>& getNames() const
 	{
-		const static std::vector<std::string> names({ "glass" });
+		const static std::vector<std::string> names({ "glass", "dielectric" });
 		return names;
 	}
 
@@ -191,4 +191,4 @@ public:
 };
 } // namespace PR
 
-PR_PLUGIN_INIT(PR::GlassMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)
+PR_PLUGIN_INIT(PR::DielectricMaterialPlugin, _PR_PLUGIN_NAME, PR_PLUGIN_VERSION)

@@ -8,7 +8,7 @@ class RenderTileSession;
 
 enum MaterialFlags {
 	MF_DeltaDistribution = 0x1,
-	MF_SpectralVarying	 = 0x2
+	MF_SpectralVarying	 = 0x2 // The sampled direction (not the weight) is different for each wavelength
 };
 
 class PR_LIB_CORE IMaterial : public IObject {
