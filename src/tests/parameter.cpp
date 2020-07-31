@@ -35,7 +35,7 @@ PR_TEST("Parameter [Int]")
 	PR_CHECK_EQ(parameter.arraySize(), 1);
 	PR_CHECK_FALSE(parameter.getBool(false));
 	PR_CHECK_EQ(parameter.getInt(0), -42);
-	PR_CHECK_EQ(parameter.getUInt(0), static_cast<uint64>(-42));
+	PR_CHECK_EQ(parameter.getUInt(0), 0);
 	PR_CHECK_EQ(parameter.getExactUInt(0), 0);
 }
 PR_TEST("Parameter [UInt]")

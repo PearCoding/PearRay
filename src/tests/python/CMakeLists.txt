@@ -18,3 +18,4 @@ ENDFUNCTION(PUSH_PY_TEST)
 
 PUSH_PY_TEST(entity)
 PUSH_PY_TEST(direct)
+PUSH_PY_TEST(whitefurnance)

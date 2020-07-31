@@ -42,71 +42,73 @@ TESTDIR = ""
 IMGSIZE = 200
 SCENESTR = """
 (scene
-	:name 'direct_test'
-	:render_width {size}
-	:render_height {size}
-	:spectral_domain 520
+    :name 'direct_test'
+    :render_width {size}
+    :render_height {size}
+    :spectral_domain 520
 
-	(integrator
-	  :type 'direct'
-	  :max_ray_depth 1
-	  :light_sample_count 1
-	  :msi {msi}
-	)
-	(sampler
-	  :slot 'aa'
-	  :type 'hammersley'
-	  :sample_count 64
-	)
-	(filter
-	  :slot 'pixel'
-	  :type 'mitchell'
-	  :radius 0
-	)
-	; Outputs
-	(output
-		:name 'image'
-		(channel :type 'color' :color 'xyz' )
-	)
-	; Camera
-	(camera
-		:name 'Camera'
-		:type 'orthographic'
-		:localDirection [0, 0,-1]
-		:localUp [0, 1, 0]
-		:localRight [1, 0, 0]
-		:position [0, 0, 1]
-	)
+    (integrator
+      :type 'direct'
+      :max_ray_depth 1
+      :light_sample_count 1
+      :msi {msi}
+    )
+    (sampler
+      :slot 'aa'
+      :type 'hammersley'
+      :sample_count 64
+    )
+    (filter
+      :slot 'pixel'
+      :type 'mitchell'
+      :radius 0
+    )
+    ; Outputs
+    (output
+        :name 'image'
+        (channel :type 'color' :color 'xyz' )
+    )
+    ; Camera
+    (camera
+        :name 'Camera'
+        :type 'orthographic'
+        :localDirection [0, 0,-1]
+        :localUp [0, 1, 0]
+        :localRight [1, 0, 0]
+        :position [0, 0, 1]
+    )
 
-	; Light Area
-	(emission
-		:name 'Area_em'
-		:type 'diffuse'
-		:radiance (illuminant "E")
-	)
-	(entity
-		:name 'Area'
-		:type 'plane'
-		:centering true
-		:width 1
-		:height -1
-		:emission 'Area_em'
-		:position [0, 0, 2]
-	)
-	; Pure diffuse object
-	(material
-		:name 'Diffuse'
-		:type 'diffuse'
-		:albedo 1
-	)
-	(entity
-		:name 'Plane'
-		:type 'plane'
-		:centering true
-		:material 'Diffuse'
-	)
+    ; Light Area
+    (emission
+        :name 'Area_em'
+        :type 'diffuse'
+        :radiance (illuminant "E")
+    )
+    (entity
+        :name 'Area'
+        :type 'plane'
+        :centering true
+        :width 1
+        :height -1
+        :emission 'Area_em'
+        :position [0, 0, 2]
+    )
+    ; Pure diffuse object
+    (material
+        :name 'Diffuse'
+        :type 'diffuse'
+        :albedo 1
+    )
+    (entity
+        :name 'Plane'
+        :type 'plane'
+        :centering true
+        :material 'Diffuse'
+    )
 )
 """
+
+POINTS = [[0.50, 0.50], [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]]
 
 
 # Test result to analtically calculated result
@@ -127,25 +129,20 @@ class TestDirect(unittest.TestCase):
 
         return ctx.output.spectral
 
-    def checkAt(self, img, fx, fy):
-        res = img.getFragment([int(IMGSIZE*fx), int(IMGSIZE*fy)], 0)
-        self.assertAlmostEqual(res, analytical([fx, fy]), places=3)
+    def checkAt(self, img, points):
+        for i in range(len(points)):
+            res = img.getFragment(
+                [int(IMGSIZE*points[i][0]), int(IMGSIZE*points[i][1])], 0)
+            expected = analytical(points[i])
+            self.assertAlmostEqual(res, expected, places=3)
 
     def test_nonmsi(self):
         img = self.render(SCENESTR.format(msi="false", size=IMGSIZE))
-        self.checkAt(img, 0.50, 0.50)
-        self.checkAt(img, 0.25, 0.25)
-        self.checkAt(img, 0.75, 0.25)
-        self.checkAt(img, 0.25, 0.75)
-        self.checkAt(img, 0.75, 0.75)
+        self.checkAt(img, POINTS)
 
     def test_msi(self):
         img = self.render(SCENESTR.format(msi="true", size=IMGSIZE))
-        self.checkAt(img, 0.50, 0.50)
-        self.checkAt(img, 0.25, 0.25)
-        self.checkAt(img, 0.75, 0.25)
-        self.checkAt(img, 0.25, 0.75)
-        self.checkAt(img, 0.75, 0.75)
+        self.checkAt(img, POINTS)
 
 
 def runTest(pr):
