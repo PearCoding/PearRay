@@ -1,7 +1,7 @@
 (scene
 	:name 'illum_test'
-	:render_width 1000
-	:render_height 1000
+	:render_width 100
+	:render_height 100
 	:camera 'Camera'
 	; Settings
 	(integrator
@@ -13,7 +13,7 @@
 	(sampler
 		:slot 'aa'
 		:type 'hammersley'
-		:sample_count 64
+		:sample_count 1024
 	)
 	(sampler
 		:slot 'spectral'

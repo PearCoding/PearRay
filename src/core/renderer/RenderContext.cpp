@@ -185,7 +185,7 @@ void RenderContext::waitForFinish()
 
 	/*while (!isFinished())
 		std::this_thread::yield();*/
-	
+
 	// Wait for all threads to stop
 	for (RenderThread* thread : mThreads)
 		thread->join();
@@ -225,14 +225,14 @@ RenderTile* RenderContext::getNextTile()
 	RenderTile* tile		  = nullptr;
 	bool breakBecauseFinished = false;
 
-	// Try till we find a tile or all samples of this iteration are already rendered
+	// Try till we find a tile to render
 	while (tile == nullptr) {
 		tile = mTileMap->getNextTile(mIncrementalCurrentIteration);
-		if (tile == nullptr) {
+		if (tile == nullptr) { // If no tile on this iteration was found sync all threads
 			std::unique_lock<std::mutex> lk(mIterationMutex);
 			++mThreadsWaitingForIteration;
 
-			if (mThreadsWaitingForIteration == threadCount) {
+			if (mThreadsWaitingForIteration == threadCount) { // The last thread arriving here has the honor to call optional callbacks and initiate the next iteration
 				if (mRenderSettings.useAdaptiveTiling)
 					optimizeTileMap();
 				++mIncrementalCurrentIteration;
@@ -242,8 +242,10 @@ RenderTile* RenderContext::getNextTile()
 				lk.unlock();
 
 				mIterationCondition.notify_all();
-			} else {
-				mIterationCondition.wait(lk, [this] { return mShouldStop || mThreadsWaitingForIteration == 0; });
+			} else { // Wait for the last thread
+				const uint32 callee_iter = mIncrementalCurrentIteration;
+				mIterationCondition.wait(lk, [&] { return mShouldStop
+														  || callee_iter < mIncrementalCurrentIteration; });
 				lk.unlock();
 			}
 		}

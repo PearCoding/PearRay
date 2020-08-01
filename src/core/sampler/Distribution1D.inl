@@ -113,4 +113,22 @@ inline float Distribution1D::discretePdf(float u) const
 
 	return mValues[off] / (mIntegral * size());
 }
+
+template <size_t N>
+inline float Distribution1D::sampleContinuous(float u, float& pdf, const StaticCDF<N>& cdf)
+{
+	return sampleContinuous(u, pdf, cdf.data(), N + 1);
+}
+
+template <size_t N>
+inline float Distribution1D::continuousPdf(float u, const StaticCDF<N>& cdf)
+{
+	return continuousPdf(u, cdf.data(), N + 1);
+}
+
+template <size_t N>
+inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, const StaticCDF<N>& cdf)
+{
+	return sampleDiscrete(u, pdf, cdf.data(), N + 1);
+}
 } // namespace PR

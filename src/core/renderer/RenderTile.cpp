@@ -110,6 +110,19 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 #endif
 				cameraSample.Weight(i) /= pdf;
 			}
+		} else if (mSpectralStart == PR_VISIBLE_WAVELENGTH_START && mSpectralEnd == PR_VISIBLE_WAVELENGTH_END) {
+			float u = mSpectralSampler->generate1D(sample);
+			PR_OPT_LOOP
+			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
+				const float k = std::fmod(u + i / (float)PR_SPECTRAL_BLOB_SIZE, 1.0f);
+				float pdf;
+#ifdef PR_SAMPLE_BY_CIE_Y
+				cameraSample.WavelengthNM(i) = CIE::sample_vis_y(k, pdf);
+#else
+				cameraSample.WavelengthNM(i) = CIE::sample_vis_xyz(k, pdf);
+#endif
+				cameraSample.Weight(i) /= pdf;
+			}
 		} else {
 #endif
 			float start					 = mSpectralSampler->generate1D(sample) * mSpectralSpan; // Wavelength inside the span

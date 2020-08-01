@@ -88,9 +88,8 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 
 		const Point2i rp		   = entry.Position + filterSize;
 		const bool isMono		   = entry.Flags & OSEF_Mono;
-		const size_t channels	   = isMono ? 1 : PR_SPECTRAL_BLOB_SIZE;
-		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
-		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance / channels;
+		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob(1.0f / PR_SPECTRAL_BLOB_SIZE);
+		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance;
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -147,9 +146,8 @@ void FrameBufferBucket::commitSpectralsXYZNoFilter(const OutputSpectralEntry* en
 
 		const Point2i sp		   = entry.Position;
 		const bool isMono		   = entry.Flags & OSEF_Mono;
-		const size_t channels	   = isMono ? 1 : PR_SPECTRAL_BLOB_SIZE;
-		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob::Ones();
-		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance / channels;
+		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob(1.0f / PR_SPECTRAL_BLOB_SIZE);
+		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance;
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
