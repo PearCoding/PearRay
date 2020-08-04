@@ -56,6 +56,8 @@ public:
 			return;
 
 		// Convert RGB to Parametric space (and double to float)
+		mData.resize(MerlSampleCount);
+		PR_OPT_LOOP
 		for (uint32 halfThetaI = 0; halfThetaI < HalfThetaCount; ++halfThetaI) {
 			for (uint32 diffThetaI = 0; diffThetaI < DiffThetaCount; ++diffThetaI) {
 				for (uint32 diffPhiI = 0; diffPhiI < DiffPhiCount; ++diffPhiI) {
@@ -63,9 +65,9 @@ public:
 										 + DiffPhiCount * diffThetaI
 										 + DiffPhiCount * DiffThetaCount * halfThetaI;
 
-					float r = std::max(0.0, rgb_samples[sampleIndex * 3 + 0]) * SCALE_R;
-					float g = std::max(0.0, rgb_samples[sampleIndex * 3 + 1]) * SCALE_G;
-					float b = std::max(0.0, rgb_samples[sampleIndex * 3 + 2]) * SCALE_B;
+					const float r = std::max(0.0, rgb_samples[sampleIndex + 0 * MerlSampleCount]) * SCALE_R;
+					const float g = std::max(0.0, rgb_samples[sampleIndex + 1 * MerlSampleCount]) * SCALE_G;
+					const float b = std::max(0.0, rgb_samples[sampleIndex + 2 * MerlSampleCount]) * SCALE_B;
 
 					ParametricBlob blob;
 					upsampler->prepare(&r, &g, &b, &blob(0), &blob(1), &blob(2), 1);
@@ -88,19 +90,21 @@ public:
 		if (theta_d < 1e-3f) {
 			phi_d = std::atan2(-L(1), L(0)); // phi_h
 		} else if (theta_h > 1e-3f) {
+			/*Vector3f u, v;
+			Tangent::frame(H, u, v);*/
 			// use Gram-Schmidt orthonormalization to find diff basis vectors
 			Vector3f u = -(Vector3f(0, 0, 1) - H(2) * H).normalized();
 			Vector3f v = H.cross(u);
 			phi_d	   = std::atan2(L.dot(v), L.dot(u));
 		} else {
-			theta_h = 0;
+			theta_h = 0.0f;
 		}
 
-		if (phi_d < 0)
+		if (phi_d < 0.0f)
 			phi_d += PR_PI;
 
-		uint32 halfThetaI = theta_h <= 0.0f ? 0 : std::min<uint32>(HalfThetaCount - 1, std::max<int>(0, std::sqrt(theta_h * 2.0f * PR_INV_PI) * HalfThetaCount));
-		uint32 diffThetaI = std::min<uint32>(DiffThetaCount - 1, std::max<int>(0, theta_d * 2.0 * PR_INV_PI * DiffThetaCount));
+		uint32 halfThetaI = theta_h <= 0.0f ? 0 : std::min<uint32>(HalfThetaCount - 1, std::sqrt(theta_h * 2.0f * PR_INV_PI) * HalfThetaCount);
+		uint32 diffThetaI = std::min<uint32>(DiffThetaCount - 1, std::max<int>(0, theta_d * 2.0f * PR_INV_PI * DiffThetaCount));
 		uint32 diffPhiI	  = std::min<uint32>(DiffPhiCount - 1, std::max<int>(0, phi_d * PR_INV_PI * DiffPhiCount));
 
 		uint32 sampleIndex = diffPhiI
@@ -113,7 +117,7 @@ public:
 
 private:
 	const std::string mFilename;
-	std::array<ParametricBlob, MerlSampleCount> mData;
+	std::vector<ParametricBlob, Eigen::aligned_allocator<ParametricBlob>> mData;
 	bool mGood;
 };
 
@@ -180,7 +184,7 @@ private:
 
 class MerlMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
-	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
+	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		MerlMeasurement measurement(ctx.Env->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
@@ -193,13 +197,13 @@ public:
 			return nullptr;
 	}
 
-	const std::vector<std::string>& getNames() const
+	const std::vector<std::string>& getNames() const override
 	{
 		const static std::vector<std::string> names({ "merl", "merl_measured", "merl-measured" });
 		return names;
 	}
 
-	bool init()
+	bool init() override
 	{
 		return true;
 	}

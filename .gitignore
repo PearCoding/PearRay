@@ -44,3 +44,4 @@ CMakeSettings.json
 
 # Ignore measured BSDF files as they have to be acquired manually
 examples/*.bsdf
+examples/*.binary

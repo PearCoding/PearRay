@@ -152,6 +152,30 @@
             ]
         },
         {
+            "name": "MERL",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pearray",
+            "args": [
+                "${workspaceFolder}/examples/merl_measured.prc",
+                "--tev",
+                "-p",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "CornellBox",
             "type": "cppdbg",
             "request": "launch",
