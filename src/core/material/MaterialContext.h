@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/Spherical.h"
 #include "trace/IntersectionPoint.h"
 
 namespace PR {
@@ -53,8 +54,13 @@ public:
 	inline float XdotH() const { return H(0); }
 	inline float YdotH() const { return H(1); }
 
-	//inline float HdotV() const { return 0; /* TODO*/ }
-	//inline float HdotL() const { return HdotV(); }
+	inline float HdotV() const { return V.dot(H); }
+	inline float HdotL() const { return HdotV(); }
+
+	inline Vector2f computeViewAngles() const { return Spherical::from_direction(V); }
+	inline Vector2f computeLightAngles() const { return Spherical::from_direction(L); }
+	inline Vector2f computeHalfAngles() const { return Spherical::from_direction(H); }
+	//inline Vector2f computeDiffAngles() const { return Vector2f::Zero(); }
 
 	inline static MaterialEvalContext fromIP(const IntersectionPoint& sp, const Vector3f& gL)
 	{

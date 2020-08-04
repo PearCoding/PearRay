@@ -1,5 +1,6 @@
 PR_ADD_PLUGIN(mat_dielectric CPP dielectric.cpp)
 PR_ADD_PLUGIN(mat_lambert CPP lambert.cpp)
+PR_ADD_PLUGIN(mat_merl_measured CPP merl_measured.cpp)
 PR_ADD_PLUGIN(mat_microfacet CPP microfacet.cpp)
 PR_ADD_PLUGIN(mat_mirror CPP mirror.cpp)
 PR_ADD_PLUGIN(mat_orennayar CPP orennayar.cpp)
