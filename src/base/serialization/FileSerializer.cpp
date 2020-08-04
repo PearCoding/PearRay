@@ -15,7 +15,7 @@ FileSerializer::FileSerializer()
 {
 }
 
-FileSerializer::FileSerializer(const std::wstring& path, bool readmode)
+FileSerializer::FileSerializer(const std::filesystem::path& path, bool readmode)
 	: Serializer(readmode)
 	, mInternal(std::make_unique<FileSerializerInternal>())
 {
@@ -32,13 +32,13 @@ size_t FileSerializer::memoryFootprint() const
 	return mInternal->MemoryFootprint;
 }
 
-bool FileSerializer::open(const std::wstring& path, bool readmode)
+bool FileSerializer::open(const std::filesystem::path& path, bool readmode)
 {
 	if (mInternal->File.is_open())
 		return false;
 
 	auto flags = (readmode ? std::ios_base::in : std::ios_base::out) | std::ios_base::binary;
-	mInternal->File.open(encodePath(path), flags);
+	mInternal->File.open(path.c_str(), flags);
 	if (!mInternal->File)
 		return false;
 

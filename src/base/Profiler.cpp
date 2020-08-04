@@ -252,7 +252,7 @@ static void writeDesc(std::ofstream& stream, const EntryDescription& desc)
 	writeStr(stream, desc.Category);
 }
 
-bool dumpToFile(const std::wstring& filename)
+bool dumpToFile(const std::filesystem::path& filename)
 {
 	std::lock_guard<std::mutex> guard(sThreadMutex);
 
@@ -277,7 +277,7 @@ bool dumpToFile(const std::wstring& filename)
 		}
 	}
 
-	std::ofstream stream(encodePath(filename), std::ios::out | std::ios::binary);
+	std::ofstream stream(filename.c_str(), std::ios::out | std::ios::binary);
 	if (!stream)
 		return false;
 
@@ -372,7 +372,7 @@ static void writeDescJSON(std::ostream& stream, const EntryDescription& desc)
 	stream << "}";
 }
 
-bool dumpToJSON(const std::wstring& filename)
+bool dumpToJSON(const std::filesystem::path& filename)
 {
 	std::lock_guard<std::mutex> guard(sThreadMutex);
 
@@ -397,7 +397,7 @@ bool dumpToJSON(const std::wstring& filename)
 		}
 	}
 
-	std::ofstream stream(encodePath(filename), std::ios::out);
+	std::ofstream stream(filename.c_str(), std::ios::out);
 	if (!stream)
 		return false;
 

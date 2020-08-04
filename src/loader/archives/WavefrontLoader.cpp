@@ -22,7 +22,7 @@ WavefrontLoader::~WavefrontLoader()
 {
 }
 
-void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
+void WavefrontLoader::load(const std::filesystem::path& file, const SceneLoadContext& ctx)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -31,7 +31,7 @@ void WavefrontLoader::load(const std::wstring& file, const SceneLoadContext& ctx
 	std::string err;
 
 	std::ifstream stream;
-	stream.open(encodePath(file), std::ios::in);
+	stream.open(file.c_str(), std::ios::in);
 	if (!stream) {
 		PR_LOG(L_ERROR) << "Wavefront file: Could not open file" << std::endl;
 	}

@@ -17,7 +17,7 @@
 
 namespace PR {
 struct FileLockInternal {
-	std::wstring Filename;
+	std::filesystem::path Filename;
 
 #ifndef PR_OS_WINDOWS
 	int Handle;
@@ -26,7 +26,7 @@ struct FileLockInternal {
 #endif
 };
 
-FileLock::FileLock(const std::wstring& filepath)
+FileLock::FileLock(const std::filesystem::path& filepath)
 	: mInternal(new FileLockInternal())
 {
 	mInternal->Filename = filepath;
@@ -44,10 +44,10 @@ FileLock::~FileLock()
 
 bool FileLock::lock()
 {
-	const auto path = encodePath(mInternal->Filename);
+	const auto path = mInternal->Filename.c_str();
 #ifndef PR_OS_WINDOWS
 	mode_t m		  = umask(0);
-	mInternal->Handle = open(path.c_str(), O_RDWR | O_CREAT, 0666);
+	mInternal->Handle = open(path, O_RDWR | O_CREAT, 0666);
 	umask(m);
 	if (mInternal->Handle >= 0 && flock(mInternal->Handle, LOCK_EX | LOCK_NB) < 0) {
 		close(mInternal->Handle);
@@ -55,7 +55,7 @@ bool FileLock::lock()
 	}
 	return mInternal->Handle >= 0;
 #else
-	mInternal->Handle = CreateFileW(path.c_str(), GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+	mInternal->Handle = CreateFileW(path, GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
 	return (mInternal->Handle != INVALID_HANDLE_VALUE);
 #endif
 }
@@ -66,8 +66,8 @@ void FileLock::unlock()
 	if (mInternal->Handle < 0)
 		return;
 
-	const auto path = encodePath(mInternal->Filename);
-	remove(path.c_str());
+	const auto path = mInternal->Filename.c_str();
+	remove(path);
 	close(mInternal->Handle);
 	mInternal->Handle = -1;
 #else

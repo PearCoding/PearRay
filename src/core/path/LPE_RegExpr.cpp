@@ -494,7 +494,7 @@ std::string RegExpr::dumpTableToDot(const FSATable& tbl)
 
 			bool first = true;
 			for (const auto& k : t.Tokens) {
-				if(!first)
+				if (!first)
 					stream << ",";
 				else
 					first = false;
@@ -515,10 +515,10 @@ std::string RegExpr::dumpTableToDot(const FSATable& tbl)
 	return stream.str();
 }
 
-void RegExpr::saveTableToDot(const std::string& filename, const FSATable& tbl)
+void RegExpr::saveTableToDot(const std::filesystem::path& filename, const FSATable& tbl)
 {
 	std::ofstream dotFile;
-	dotFile.open(encodePath(filename));
+	dotFile.open(filename.c_str());
 	dotFile << RegExpr::dumpTableToDot(tbl);
 	dotFile.close();
 }

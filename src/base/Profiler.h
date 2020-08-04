@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <filesystem>
 
 namespace PR {
 namespace Profiler {
@@ -45,8 +46,8 @@ PR_LIB_BASE InternalTimeCounter registerTimeCounter(const EntryDescription* desc
 void PR_LIB_BASE start(uint32 samplesPerSecond, int32 networkPort = -1);
 void PR_LIB_BASE stop();
 
-bool PR_LIB_BASE dumpToFile(const std::wstring& filename);
-bool PR_LIB_BASE dumpToJSON(const std::wstring& filename);
+bool PR_LIB_BASE dumpToFile(const std::filesystem::path& filename);
+bool PR_LIB_BASE dumpToJSON(const std::filesystem::path& filename);
 
 // Event structure
 class PR_LIB_BASE EventScope {

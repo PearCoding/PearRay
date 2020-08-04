@@ -40,9 +40,9 @@
 #include <sstream>
 
 namespace PR {
-std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::wstring& path, const LoadOptions& opts)
+std::shared_ptr<Environment> SceneLoader::loadFromFile(const std::filesystem::path& path, const LoadOptions& opts)
 {
-	std::ifstream stream(encodePath(path));
+	std::ifstream stream(path.c_str());
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
 	DL::DataContainer container;
@@ -913,13 +913,13 @@ void SceneLoader::addInclude(const DL::DataGroup& group, SceneLoadContext& ctx)
 void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 {
 	PR_LOG(L_DEBUG) << "[Loader] Including " << path << std::endl;
-	const std::wstring wpath = std::filesystem::path(path).generic_wstring();
-	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), wpath) != ctx.FileStack.end()) {
+	std::filesystem::path stdpath = path;
+	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), stdpath) != ctx.FileStack.end()) {
 		PR_LOG(L_ERROR) << "[Loader] Include file " << path << " already included! " << std::endl;
 		return;
 	}
 
-	std::ifstream stream(encodePath(path));
+	std::ifstream stream(stdpath.c_str());
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
 	DL::DataContainer container;
@@ -927,7 +927,7 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 	dataLisp.parse(&stream);
 	dataLisp.build(container);
 
-	ctx.FileStack.push_back(wpath);
+	ctx.FileStack.push_back(stdpath);
 	setupEnvironment(container.getTopGroups(), ctx);
 	PR_ASSERT(ctx.FileStack.size() >= 1, "Invalid push/pop count");
 	ctx.FileStack.pop_back();

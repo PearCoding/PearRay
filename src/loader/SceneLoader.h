@@ -2,6 +2,7 @@
 
 #include "SceneLoadContext.h"
 
+#include <filesystem>
 #include <map>
 #include <string>
 
@@ -26,7 +27,7 @@ public:
 		uint32 CacheMode;
 	};
 
-	static std::shared_ptr<Environment> loadFromFile(const std::wstring& path, const LoadOptions& opts);
+	static std::shared_ptr<Environment> loadFromFile(const std::filesystem::path& path, const LoadOptions& opts);
 	static std::shared_ptr<Environment> loadFromString(const std::string& source, const LoadOptions& opts);
 
 private:

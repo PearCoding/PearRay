@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SubGraphLoader.h"
-#include <map>
 
 namespace PR {
 class PR_LIB_LOADER WavefrontLoader : public SubGraphLoader {
@@ -13,7 +12,7 @@ public:
 	inline void flipNormal(bool b) { mFlipNormal = b; }
 	inline void setCacheMode(int cm) { mCacheMode = cm; }
 
-	void load(const std::wstring& file, const SceneLoadContext& ctx) override;
+	void load(const std::filesystem::path& file, const SceneLoadContext& ctx) override;
 
 private:
 	std::string mName;

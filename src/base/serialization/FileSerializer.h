@@ -2,16 +2,18 @@
 
 #include "Serializer.h"
 
+#include <filesystem>
+
 namespace PR {
 class PR_LIB_BASE FileSerializer : public Serializer {
 	PR_CLASS_NON_COPYABLE(FileSerializer);
 
 public:
 	FileSerializer();
-	FileSerializer(const std::wstring& path, bool readmode);
+	FileSerializer(const std::filesystem::path& path, bool readmode);
 	virtual ~FileSerializer();
 
-	bool open(const std::wstring& path, bool readmode);
+	bool open(const std::filesystem::path& path, bool readmode);
 	void close();
 
 	size_t memoryFootprint() const;

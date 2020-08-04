@@ -4,6 +4,7 @@
 #include "memory/AlignedAllocator.h"
 #include "ray/Ray.h"
 
+#include <filesystem>
 #include <vector>
 
 namespace PR {
@@ -78,7 +79,7 @@ public:
 	RayGroup getNextGroup();
 
 	size_t getMemoryUsage() const;
-	void dump(const std::string& file) const;
+	void dump(const std::filesystem::path& file) const;
 
 private: // Some vectors are not aligned, due to required preprocessing
 	/* SoA style */

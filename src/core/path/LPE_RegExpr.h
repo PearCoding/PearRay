@@ -2,6 +2,7 @@
 
 #include "LPE_RegState.h"
 #include <deque>
+#include <filesystem>
 #include <set>
 #include <stack>
 #include <unordered_set>
@@ -34,7 +35,7 @@ public:
 
 	static std::string dumpTable(const FSATable& tbl);
 	static std::string dumpTableToDot(const FSATable& tbl);
-	static void saveTableToDot(const std::string& filename, const FSATable& tbl);
+	static void saveTableToDot(const std::filesystem::path& filename, const FSATable& tbl);
 
 	inline bool isValid() const { return mOperandStack.size() == 1; }
 

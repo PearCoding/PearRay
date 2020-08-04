@@ -180,10 +180,10 @@ Ray RayStream::getRay(size_t id) const
 }
 
 // Utility function
-void RayStream::dump(const std::string& file) const
+void RayStream::dump(const std::filesystem::path& file) const
 {
 	std::ofstream stream;
-	stream.open(encodePath(file), std::ios::out | std::ios::binary);
+	stream.open(file.c_str(), std::ios::out | std::ios::binary);
 	if (!stream)
 		return;
 

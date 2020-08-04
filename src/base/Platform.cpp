@@ -6,7 +6,7 @@
 #endif
 
 namespace PR {
-#ifdef PR_OS_WINDOWS
+/*#ifdef PR_OS_WINDOWS
 std::wstring encodePath(const std::wstring& path)
 {
 	return path;
@@ -32,5 +32,5 @@ std::string encodePath(const std::string& path)
 {
 	return path;
 }
-#endif
+#endif*/
 }

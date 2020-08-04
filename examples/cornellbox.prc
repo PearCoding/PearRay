@@ -1,19 +1,19 @@
 ; Original CornellBox converted to PearRay format
 (scene
-	:name '_from_blender'
+	:name 'cornellbox'
 	:render_width 1000
 	:render_height 1000
 	:camera 'Camera'
 	; Settings
 	(integrator
-		:type 'DIRECT'
+		:type 'direct'
 		:max_ray_depth 16
 		:light_sampe_count 1
 		:msi true
 	)
 	(sampler
 		:slot 'aa'
-		:type 'MULTI_JITTER'
+		:type 'mjitt'
 		:sample_count 1024
 	)
 	; Outputs

@@ -2,11 +2,13 @@
 
 #include "PR_Config.h"
 
+#include <filesystem>
+
 namespace PR {
 /// Locked file to ensure only one raytracers works on one scene
 class PR_LIB_BASE FileLock final {
 public:
-	FileLock(const std::wstring& filepath);
+	FileLock(const std::filesystem::path& filepath);
 	~FileLock();
 
     bool lock();

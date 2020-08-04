@@ -52,7 +52,7 @@ struct Header {
 	int NZElem			  = -1;
 	int UElem			  = -1;
 	int VElem			  = -1;
-	int VertexPropCount   = 0;
+	int VertexPropCount	  = 0;
 	int IndElem			  = -1;
 	bool SwitchEndianness = false;
 
@@ -233,9 +233,9 @@ static inline bool isAllowedVertIndType(const std::string& str)
 		   || str == "uint";
 }
 
-void PlyLoader::load(const std::wstring& file, const SceneLoadContext& ctx)
+void PlyLoader::load(const std::filesystem::path& file, const SceneLoadContext& ctx)
 {
-	std::fstream stream(encodePath(file), std::ios::in | std::ios::binary);
+	std::fstream stream(file.c_str(), std::ios::in | std::ios::binary);
 	if (!stream)
 		return;
 
