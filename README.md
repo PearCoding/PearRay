@@ -37,11 +37,12 @@ There is an open source (still experimental) blender integration addon available
 
 ### Submodules
 
-- tinyobjloader <https://github.com/syoyo/tinyobjloader> (submodule)
-- DataLisp <https://github.com/PearCoding/DataLisp> (submodule)
-- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp> (submodule)
-- cxxopts <https://github.com/jarro2783/cxxopts> (submodule)
-- pybind11 <https://github.com/pybind/pybind11> (submodule)
+- cxxopts <https://github.com/jarro2783/cxxopts>
+- DataLisp <https://github.com/PearCoding/DataLisp>
+- PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp>
+- pugixml <https://github.com/zeux/pugixml>
+- pybind11 <https://github.com/pybind/pybind11>
+- tinyobjloader <https://github.com/syoyo/tinyobjloader>
 
 ## Wiki
 

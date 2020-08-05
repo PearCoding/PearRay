@@ -1,4 +1,5 @@
 PR_ADD_PLUGIN(mat_dielectric CPP dielectric.cpp)
+PR_ADD_PLUGIN(mat_klems_measured CPP klems_measured.cpp LIBRARIES pr_pugixml)
 PR_ADD_PLUGIN(mat_lambert CPP lambert.cpp)
 PR_ADD_PLUGIN(mat_merl_measured CPP merl_measured.cpp)
 PR_ADD_PLUGIN(mat_microfacet CPP microfacet.cpp)

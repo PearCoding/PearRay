@@ -185,6 +185,14 @@ if(WIN32)
 	endif()
 endif()
 
+# External XML
+add_library(pr_pugixml STATIC
+	external/pugixml/src/pugixml.cpp
+	external/pugixml/src/pugixml.hpp
+	external/pugixml/src/pugiconfig.hpp)
+target_include_directories(pr_pugixml PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external/pugixml/src>)
+set_property(TARGET pr_pugixml PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 # Libraries
 add_subdirectory(src/base)
 add_subdirectory(src/core)
