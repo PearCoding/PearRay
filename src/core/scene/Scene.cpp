@@ -209,7 +209,7 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 	RTCIntersectContext ctx;
 	RTCRayHit16 rhits;
 
-	PR_ALIGN(64)
+	alignas(64)
 	int valids[PACKAGE_SIZE];
 	std::fill_n(valids, PACKAGE_SIZE, VALID_ALL); // All are valid
 

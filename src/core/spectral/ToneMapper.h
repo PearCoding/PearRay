@@ -18,7 +18,7 @@ public:
 	ToneMapper();
 
 	/// Maps xyz buffer to rgb buffer. XYZ buffer is of size pixelCount*3, rgb is pixelCount*outElems
-	void map(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelCount) const;
+	void map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, size_t outElems, size_t pixelCount) const;
 
 	// Not thread safe!
 	inline ToneColorMode colorMode() const { return mColorMode; }

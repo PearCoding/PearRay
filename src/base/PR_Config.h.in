@@ -54,7 +54,6 @@
 #endif
 #endif
 
-#define PR_ALIGN(x) alignas(x)
 // clang-format off
 #define PR_UNUSED(expr) do { (void)(expr); } while (false)
 #define PR_NOOP do {} while(false)
@@ -77,6 +76,8 @@
 #define PR_UNLIKELY(x) (x)
 #define PR_MAYBE_UNUSED
 #endif
+
+#define PR_RESTRICT __restrict
 
 #ifndef PR_NO_ASSERTS
 #include <assert.h>

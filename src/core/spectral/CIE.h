@@ -27,7 +27,7 @@ static_assert(PR_CIE_WAVELENGTH_START <= PR_VISIBLE_WAVELENGTH_START
 
 class PR_LIB_CORE CIE {
 public:
-	static inline void eval(const SpectralBlob* const weights, const SpectralBlob* const wavelengths,
+	static inline void eval(const SpectralBlob* PR_RESTRICT const weights, const SpectralBlob* PR_RESTRICT const wavelengths,
 							CIETriplet* xyz,
 							size_t entry_count)
 	{

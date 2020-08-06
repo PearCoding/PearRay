@@ -8,10 +8,11 @@ ToneMapper::ToneMapper()
 {
 }
 
-void ToneMapper::map(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelCount) const
+void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, size_t outElems, size_t pixelCount) const
 {
 	constexpr size_t IElems = 3;
 	PR_ASSERT(outElems >= 3, "Expected atleast an RGB buffer");
+	PR_ASSERT(xyzIn != rgbOut, "Inplace tonemapping is not supported");
 
 	switch (mColorMode) {
 	case TCM_SRGB:

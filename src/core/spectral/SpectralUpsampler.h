@@ -16,9 +16,11 @@ public:
 	explicit SpectralUpsampler(Serializer& serializer);
 	~SpectralUpsampler();
 
-	void prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems);
+	void prepare(const float* PR_RESTRICT r, const float* PR_RESTRICT g, const float* PR_RESTRICT b,
+				 float* PR_RESTRICT out_a, float* PR_RESTRICT out_b, float* PR_RESTRICT out_c, size_t elems);
 
-	inline static void compute(const float* a, const float* b, const float* c, const float* wavelengths, float* out_weights, size_t elems)
+	inline static void compute(const float* PR_RESTRICT a, const float* PR_RESTRICT b, const float* PR_RESTRICT c,
+							   const float* PR_RESTRICT wavelengths, float* PR_RESTRICT out_weights, size_t elems)
 	{
 		PR_OPT_LOOP
 		for (size_t i = 0; i < elems; ++i) {
@@ -28,7 +30,8 @@ public:
 		}
 	}
 
-	inline static void computeSingle(float a, float b, float c, const float* wavelengths, float* out_weights, size_t elems)
+	inline static void computeSingle(float a, float b, float c,
+									 const float* PR_RESTRICT wavelengths, float* PR_RESTRICT out_weights, size_t elems)
 	{
 		PR_OPT_LOOP
 		for (size_t i = 0; i < elems; ++i) {

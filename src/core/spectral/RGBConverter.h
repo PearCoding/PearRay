@@ -18,7 +18,7 @@ public:
 	static void fromXYZ(float x, float y, float z, float& r, float& g, float& b);
 
 	/// Input buffer has to be of size pixelcount*3, output buffer of pixelcount*outElems
-	static void fromXYZ(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelcount);
+	static void fromXYZ(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, size_t outElems, size_t pixelcount);
 
 	static float luminance(float r, float g, float b);
 	static void gamma(float& x, float& y, float& z);

@@ -6,7 +6,7 @@ namespace PR {
 // The wavelength has to be ordered
 class PR_LIB_CORE OrderedSpectrumView {
 public:
-	inline OrderedSpectrumView(const float* data, const float* wavelengths, size_t sample_count);
+	inline OrderedSpectrumView(const float* PR_RESTRICT data, const float* PR_RESTRICT wavelengths, size_t sample_count);
 	~OrderedSpectrumView() = default;
 
 	inline const float* data() const { return mData; }
@@ -19,8 +19,8 @@ public:
 	inline float wavelengtEnd() const { return mWavelengths[mSampleCount - 1]; }
 
 private:
-	const float* mData;
-	const float* mWavelengths;
+	const float* PR_RESTRICT mData;
+	const float* PR_RESTRICT mWavelengths;
 	const size_t mSampleCount;
 };
 // TODO: Owning variant

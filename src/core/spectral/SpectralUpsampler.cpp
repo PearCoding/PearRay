@@ -73,7 +73,8 @@ constexpr float ONE_A  = 0;
 constexpr float ONE_B  = 0;
 constexpr float ONE_C  = 5000000.0f;
 
-void SpectralUpsampler::prepare(const float* r, const float* g, const float* b, float* out_a, float* out_b, float* out_c, size_t elems)
+void SpectralUpsampler::prepare(const float* PR_RESTRICT r, const float* PR_RESTRICT g, const float* PR_RESTRICT b,
+								float* PR_RESTRICT out_a, float* PR_RESTRICT out_b, float* PR_RESTRICT out_c, size_t elems)
 {
 	PR_ASSERT(mInternal->Data, "Expected valid spectral mapper");
 	const uint32 res = mInternal->Resolution;

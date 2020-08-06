@@ -23,9 +23,10 @@ void RGBConverter::fromXYZ(float x, float y, float z, float& r, float& g, float&
 	b = std::max(0.0f, b);
 }
 
-void RGBConverter::fromXYZ(const float* xyzIn, float* rgbOut, size_t outElems, size_t pixelcount)
+void RGBConverter::fromXYZ(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, size_t outElems, size_t pixelcount)
 {
 	PR_ASSERT(outElems >= 3, "Expected atleast an RGB buffer");
+	PR_ASSERT(xyzIn != rgbOut, "Inplace transform from xyz to rgb not supported");
 	PR_OPT_LOOP
 	for (size_t i = 0; i < pixelcount; ++i)
 		fromXYZ(xyzIn[i * 3 + 0], xyzIn[i * 3 + 1], xyzIn[i * 3 + 2], rgbOut[i * outElems + 0], rgbOut[i * outElems + 1], rgbOut[i * outElems + 2]);
