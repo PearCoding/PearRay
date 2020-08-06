@@ -13,9 +13,14 @@
 #include "skysun/SunLocation.h"
 
 namespace PR {
+// std::cos(ea.Elevation) has to be replaced by std::sin(ea.Elevation)??
+constexpr float GROUND_PENALTY = 0.001f; // Scale down ground albedo in distribution to make sure mostly the sky is sampled
+
+template <bool ExtendToGround>
 class SkyLight : public IInfiniteLight {
 public:
-	SkyLight(uint32 id, const std::string& name, const SkyModel& model, float scale, const Eigen::Matrix3f& trans)
+	SkyLight(uint32 id, const std::string& name, const SkyModel& model,
+			 float scale, const Eigen::Matrix3f& trans)
 		: IInfiniteLight(id, name)
 		, mDistribution()
 		, mModel(model)
@@ -30,27 +35,44 @@ public:
 			  const RenderTileSession&) const override
 	{
 		auto ea = ElevationAzimuth::fromDirection(mInvTransform * in.Ray.Direction);
-		if (ea.Elevation < 0) {
-			out.Weight = SpectralBlob::Zero();
-			out.PDF_S  = 0;
-		} else {
+
+		if constexpr (ExtendToGround) {
 			out.Weight = radiance(in.Ray.WavelengthNM, ea);
 			out.PDF_S  = mDistribution->continuousPdf(
-				 Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
+				 Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / (2 * ELEVATION_RANGE) + 0.5f));
 			const float f	  = std::cos(ea.Elevation);
 			const float denom = 2 * PR_PI * PR_PI * f;
 			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+		} else {
+			if (ea.Elevation < 0) {
+				out.Weight = SpectralBlob::Zero();
+				out.PDF_S  = 0;
+			} else {
+				out.Weight = radiance(in.Ray.WavelengthNM, ea);
+				out.PDF_S  = mDistribution->continuousPdf(
+					 Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
+				const float f	  = std::cos(ea.Elevation);
+				const float denom = 2 * PR_PI * PR_PI * f;
+				out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
+			}
 		}
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
-		Vector2f uv			= mDistribution->sampleContinuous(in.RND, out.PDF_S);
-		ElevationAzimuth ea = ElevationAzimuth{ ELEVATION_RANGE * uv(1), AZIMUTH_RANGE * uv(0) };
-		out.Outgoing		= mTransform * ea.toDirection();
-		const float f		= std::cos(ea.Elevation);
-		const float denom	= 2 * PR_PI * PR_PI * f;
+		Vector2f uv = mDistribution->sampleContinuous(in.RND, out.PDF_S);
+		ElevationAzimuth ea;
+
+		if constexpr (ExtendToGround) {
+			ea = ElevationAzimuth{ 2 * ELEVATION_RANGE * (uv(1) - 0.5f), AZIMUTH_RANGE * uv(0) };
+		} else {
+			ea = ElevationAzimuth{ ELEVATION_RANGE * uv(1), AZIMUTH_RANGE * uv(0) };
+		}
+
+		out.Outgoing	  = mTransform * ea.toDirection();
+		const float f	  = std::cos(ea.Elevation);
+		const float denom = 2 * PR_PI * PR_PI * f;
 		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
@@ -64,7 +86,8 @@ public:
 		stream << std::boolalpha << IInfiniteLight::dumpInformation()
 			   << "  <SkyLight>:" << std::endl
 			   << "    Scale:        " << mScale << std::endl
-			   << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl;
+			   << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl
+			   << "    Extended:     " << (ExtendToGround ? "true" : "false") << std::endl;
 		// TODO
 		return stream.str();
 	}
@@ -72,24 +95,42 @@ public:
 private:
 	inline void buildDistribution()
 	{
-		mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), mModel.elevationCount());
+		if constexpr (ExtendToGround) {
+			mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), 2 * mModel.elevationCount());
+		} else {
+			mDistribution = std::make_shared<Distribution2D>(mModel.azimuthCount(), mModel.elevationCount());
+		}
 
 		PR_LOG(L_INFO) << "Generating 2d environment (" << mDistribution->width() << "x" << mDistribution->height() << ") of " << name() << std::endl;
 
 		const SpectralBlob WVLS = SpectralBlob(560.0f, 540.0f, 400.0f, 600.0f); // Preset of wavelengths to test
 		mDistribution->generate([&](size_t x, size_t y) {
-			const float azimuth	  = AZIMUTH_RANGE * x / (float)mModel.azimuthCount();
-			const float elevation = ELEVATION_RANGE * y / (float)mModel.elevationCount();
+			const float azimuth = AZIMUTH_RANGE * x / (float)mModel.azimuthCount();
+			float elevation;
+			if constexpr (ExtendToGround) {
+				elevation = (2 * ELEVATION_RANGE) * (y / (float)(2 * mModel.elevationCount()) - 0.5f);
+			} else {
+				elevation = ELEVATION_RANGE * y / (float)mModel.elevationCount();
+			}
 
-			const float f = std::cos(elevation);
+			const float f	= std::cos(elevation);
+			const float val = std::max(0.0f, f * radiance(WVLS, ElevationAzimuth{ elevation, azimuth }).maxCoeff());
 
-			const float val = f * radiance(WVLS, ElevationAzimuth{ elevation, azimuth }).maxCoeff();
-			return std::max(0.0f, val);
+			if constexpr (ExtendToGround) {
+				if (elevation < 0.0f)
+					return val * GROUND_PENALTY;
+				else
+					return val;
+			} else {
+				return val;
+			}
 		});
 	}
 
 	inline SpectralBlob radiance(const SpectralBlob& wvls, const ElevationAzimuth& ea) const
 	{
+		// If ea.Elevation is below zero it will be clamped to 0 in the model
+
 		SpectralBlob blob;
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
@@ -105,6 +146,7 @@ private:
 	}
 
 	std::shared_ptr<Distribution2D> mDistribution;
+	const std::shared_ptr<FloatSpectralNode> mGround;
 	const SkyModel mModel;
 	const float mScale;
 	const Eigen::Matrix3f mTransform;
@@ -125,7 +167,10 @@ public:
 		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
-		return std::make_shared<SkyLight>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), scale, trans);
+		if (params.getBool("extend", true))
+			return std::make_shared<SkyLight<true>>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), scale, trans);
+		else
+			return std::make_shared<SkyLight<false>>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), scale, trans);
 	}
 
 	const std::vector<std::string>& getNames() const override

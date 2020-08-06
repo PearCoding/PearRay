@@ -31,11 +31,13 @@
 	(camera
 		:name 'Camera'
 		:type 'spherical'
+		:theta_start -1.570796
 	)
 	(light
 		:name 'sky'
 		:type 'sky'
 		:turbidity 3
+		:extend true
 	)
 	(light
 		:name 'sun'
@@ -52,23 +54,23 @@
 		:position [0,4,0]
 	)
 	; Entity Plane
-	(entity
-		:name 'Ground'
-		:type 'plane'
-		:material 'Ground'
-		:x_axis [200,0,0]
-		:y_axis [0,100,0]
-		:position [-100,0,-0.85]
-	)
+	;(entity
+	;	:name 'Ground'
+	;	:type 'plane'
+	;	:material 'Ground'
+	;	:x_axis [200,0,0]
+	;	:y_axis [0,100,0]
+	;	:position [-100,0,-0.85]
+	;)
 	; Materials
 	(material
 		:name 'Sphere'
 		:type 'glass'
 		:index (lookup_index "bk7")
 	)
-	(material
-		:name 'Ground'
-		:type 'diffuse'
-		:albedo 1
-	)
+	;(material
+	;	:name 'Ground'
+	;	:type 'diffuse'
+	;	:albedo 1
+	;)
 )
