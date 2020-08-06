@@ -132,14 +132,6 @@ public:
 
 	virtual ~MerlMeasuredMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{

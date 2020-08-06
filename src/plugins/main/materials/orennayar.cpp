@@ -26,14 +26,6 @@ public:
 
 	virtual ~OrenNayarMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	// https://mimosa-pudica.net/improved-oren-nayar.html
 	inline SpectralBlob calc(const Vector3f& L, float NdotL, const MaterialSampleContext& ctx, const ShadingContext& sctx) const
 	{

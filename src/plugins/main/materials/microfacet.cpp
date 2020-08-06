@@ -95,14 +95,6 @@ public:
 
 	virtual ~MicrofacetMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	SpectralBlob fresnelTerm(const MaterialSampleContext& ctx, const ShadingContext& sctx) const
 	{
 		// TODO: Add branching!

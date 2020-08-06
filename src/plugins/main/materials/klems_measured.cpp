@@ -86,8 +86,8 @@ public:
 
 	float eval(const Vector3f& V, const Vector3f& L) const
 	{
-		const Vector2f in  = Spherical::from_direction(V);
-		const Vector2f out = Spherical::from_direction(L);
+		const Vector2f in  = Spherical::from_direction(L); // The light is incoming, not the view/eye
+		const Vector2f out = Spherical::from_direction(V);
 		const int row	   = mRowBasis->indexOf(std::abs(out(0)), out(1));
 		const int col	   = mColumnBasis->indexOf(std::abs(in(0)), in(1));
 
@@ -282,20 +282,11 @@ public:
 
 	virtual ~KlemsMeasuredMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
 			  const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
 
-		//const float dot = std::max(0.0f, in.Context.NdotL());
 		const bool inside	  = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
 		const bool refraction = in.Context.L(2) < 0.0f;
 		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction);
@@ -307,7 +298,6 @@ public:
 				const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-
 		float pdf;
 		out.L = Sampling::sphere(in.RND[0], in.RND[1], pdf);
 

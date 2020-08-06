@@ -18,8 +18,12 @@ public:
 
 	inline uint32 id() const;
 
-	virtual void startGroup(size_t size, const RenderTileSession& session) = 0;
-	virtual void endGroup()												   = 0;
+	virtual void startGroup(size_t size, const RenderTileSession& session)
+	{
+		PR_UNUSED(size);
+		PR_UNUSED(session);
+	}
+	virtual void endGroup() {}
 
 	/*
 		Evaluate the BxDF based on incident and outgoing direction and point information.

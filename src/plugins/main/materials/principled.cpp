@@ -52,14 +52,6 @@ public:
 
 	virtual ~PrincipledMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	template <typename T>
 	static inline T mix(const T& v0, const T& v1, float t)
 	{

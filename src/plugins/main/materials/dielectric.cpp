@@ -29,14 +29,6 @@ public:
 
 	virtual ~DielectricMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	int flags() const override { return MF_DeltaDistribution | (IsThin ? 0 : MF_SpectralVarying); }
 
 	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, const ShadingContext& sctx) const
@@ -105,7 +97,7 @@ public:
 		} else {
 			if constexpr (IsThin) {
 				out.Type = MST_SpecularTransmission;
-				out.L	 = in.Context.V;
+				out.L	 = -in.Context.V;
 				if constexpr (HasTransmissionColor)
 					out.Weight = mTransmission->eval(in.ShadingContext);
 			} else {

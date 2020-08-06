@@ -22,14 +22,6 @@ public:
 
 	virtual ~MirrorMaterial() = default;
 
-	void startGroup(size_t, const RenderTileSession&) override
-	{
-	}
-
-	void endGroup() override
-	{
-	}
-
 	int flags() const override { return MF_DeltaDistribution; }
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
