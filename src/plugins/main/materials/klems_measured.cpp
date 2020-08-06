@@ -16,6 +16,8 @@
 #include <pugixml.hpp>
 
 namespace PR {
+// Information about format etc is available at https://windows.lbl.gov/tools/window/documentation
+
 class KlemsBasis {
 public:
 	struct ThetaBasis {
@@ -73,6 +75,32 @@ private:
 };
 
 using KlemsMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
+class KlemsComponent {
+public:
+	inline KlemsComponent(const std::shared_ptr<KlemsBasis>& row, const std::shared_ptr<KlemsBasis>& column)
+		: mRowBasis(row)
+		, mColumnBasis(column)
+		, mMatrix(row->entryCount(), column->entryCount())
+	{
+	}
+
+	float eval(const Vector3f& V, const Vector3f& L) const
+	{
+		const Vector2f in  = Spherical::from_direction(V);
+		const Vector2f out = Spherical::from_direction(L);
+		const int row	   = mRowBasis->indexOf(std::abs(out(0)), out(1));
+		const int col	   = mColumnBasis->indexOf(std::abs(in(0)), in(1));
+
+		return mMatrix(row, col);
+	}
+
+	inline KlemsMatrix& matrix() { return mMatrix; }
+
+private:
+	std::shared_ptr<KlemsBasis> mRowBasis;
+	std::shared_ptr<KlemsBasis> mColumnBasis;
+	KlemsMatrix mMatrix;
+};
 
 class KlemsMeasurement {
 public:
@@ -109,28 +137,38 @@ public:
 			return;
 		}
 
-		const auto anglebasis = datadefinition.child("AngleBasis");
-		if (!anglebasis) {
-			PR_LOG(L_ERROR) << "Could not parse " << filename << ": No AngleBasis tag" << std::endl;
-			return;
-		}
-
-		// Extract basis information
-		for (const auto& child : anglebasis.children("AngleBasisBlock")) {
-			KlemsBasis::ThetaBasis basis;
-
-			const auto bounds = child.child("ThetaBounds");
-			basis.LowerTheta  = PR_DEG2RAD * bounds.child("LowerTheta").text().as_float(0);
-			basis.UpperTheta  = PR_DEG2RAD * bounds.child("UpperTheta").text().as_float(0);
-			basis.PhiCount	  = child.child("nPhis").text().as_uint(0);
-			if (!basis.isValid()) {
-				PR_LOG(L_ERROR) << "Could not parse " << filename << ": Invalid AngleBasisBlock given" << std::endl;
+		std::unordered_map<std::string, std::shared_ptr<KlemsBasis>> allbasis;
+		for (const auto& anglebasis : datadefinition.children("AngleBasis")) {
+			const char* name = anglebasis.child_value("AngleBasisName");
+			if (!name) {
+				PR_LOG(L_ERROR) << "Could not parse " << filename << ": AngleBasis has no name" << std::endl;
 				return;
 			}
 
-			mBasis.addBasis(basis);
+			// Extract basis information
+			std::shared_ptr<KlemsBasis> fullbasis = std::make_shared<KlemsBasis>();
+			for (const auto& child : anglebasis.children("AngleBasisBlock")) {
+				KlemsBasis::ThetaBasis basis;
+
+				const auto bounds = child.child("ThetaBounds");
+				basis.LowerTheta  = PR_DEG2RAD * bounds.child("LowerTheta").text().as_float(0);
+				basis.UpperTheta  = PR_DEG2RAD * bounds.child("UpperTheta").text().as_float(0);
+				basis.PhiCount	  = child.child("nPhis").text().as_uint(0);
+				if (!basis.isValid()) {
+					PR_LOG(L_ERROR) << "Could not parse " << filename << ": Invalid AngleBasisBlock given" << std::endl;
+					return;
+				}
+
+				fullbasis->addBasis(basis);
+			}
+			fullbasis->setup();
+			allbasis[name] = std::move(fullbasis);
 		}
-		mBasis.setup();
+
+		if (allbasis.empty()) {
+			PR_LOG(L_ERROR) << "Could not parse " << filename << ": No basis given" << std::endl;
+			return;
+		}
 
 		// Extract wavelengths
 		for (const auto& data : layer.children("WavelengthData")) {
@@ -140,43 +178,53 @@ public:
 				return;
 			}
 
-			// Select correct component
-			const std::string direction = block.child_value("WavelengthDataDirection");
-			KlemsMatrix* matrix			= &mReflectionFront;
-			if (direction.find("Transmission Front") != std::string::npos)
-				matrix = &mTransmissionFront;
-			if (direction.find("Reflection Back") != std::string::npos)
-				matrix = &mReflectionBack;
-			if (direction.find("Transmission Back") != std::string::npos)
-				matrix = &mTransmissionBack;
+			// Connect angle basis
+			const char* columnBasisName = block.child_value("ColumnAngleBasis");
+			const char* rowBasisName	= block.child_value("RowAngleBasis");
+			if (!columnBasisName || !rowBasisName) {
+				PR_LOG(L_ERROR) << "Could not parse " << filename << ": WavelengthDataBlock has no column or row basis given" << std::endl;
+				return;
+			}
 
-			*matrix = KlemsMatrix(mBasis.entryCount(), mBasis.entryCount());
+			std::shared_ptr<KlemsBasis> columnBasis;
+			std::shared_ptr<KlemsBasis> rowBasis;
+			if (allbasis.count(columnBasisName))
+				columnBasis = allbasis.at(columnBasisName);
+			if (allbasis.count(rowBasisName))
+				rowBasis = allbasis.at(rowBasisName);
+			if (!columnBasis || !rowBasis) {
+				PR_LOG(L_ERROR) << "Could not parse " << filename << ": WavelengthDataBlock has no known column or row basis given" << std::endl;
+				return;
+			}
+
+			// Setup component
+			std::shared_ptr<KlemsComponent> component = std::make_shared<KlemsComponent>(rowBasis, columnBasis);
 
 			// Parse list of floats
 			const char* scat_str = block.child_value("ScatteringData");
 			char* end			 = nullptr;
 			Eigen::Index ind	 = 0;
-			while (ind < matrix->size()) {
-				const Eigen::Index row = ind / mBasis.entryCount(); //nin
-				const Eigen::Index col = ind % mBasis.entryCount(); //nout
-				(*matrix)(row, col)	   = std::strtof(scat_str, &end);
+			while (ind < component->matrix().size()) {
+				const Eigen::Index row		  = ind / rowBasis->entryCount();	 //Outgoing direction
+				const Eigen::Index col		  = ind % columnBasis->entryCount(); //Incoming direction
+				component->matrix()(row, col) = std::strtof(scat_str, &end);
 				if (scat_str == end)
 					break;
 				scat_str = end;
 				++ind;
 			}
+
+			// Select correct component
+			const std::string direction = block.child_value("WavelengthDataDirection");
+			if (direction == "Transmission Front")
+				mTransmissionFront = component;
+			else if (direction == "Reflection Back")
+				mReflectionBack = component;
+			else if (direction == "Transmission Back")
+				mTransmissionBack = component;
+			else
+				mReflectionFront = component;
 		}
-
-		// Make sure all data is present
-		if (mReflectionBack.rows() == 0)
-			mReflectionBack = mReflectionFront;
-		if (mReflectionFront.rows() == 0)
-			mReflectionFront = mReflectionBack;
-
-		if (mTransmissionBack.rows() == 0)
-			mTransmissionBack = mTransmissionFront;
-		if (mTransmissionFront.rows() == 0)
-			mTransmissionFront = mTransmissionBack;
 
 		mGood = true;
 	}
@@ -186,34 +234,40 @@ public:
 
 	float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
-		const Vector2f in  = Spherical::from_direction(V);
-		const Vector2f out = Spherical::from_direction(L);
-		const int row	   = mBasis.indexOf(std::abs(in(0)), in(1));
-		const int col	   = mBasis.indexOf(std::abs(out(0)), out(1));
-
 		if (!inside) {
-			if (!transmission) {
-				return mReflectionFront(row, col);
-			} else {
-				return mTransmissionFront(row, col);
-			}
+			if (!transmission)
+				return mReflectionFront ? mReflectionFront->eval(V, L) : 0;
+			else
+				return mTransmissionFront ? mTransmissionFront->eval(V, L) : 0;
 		} else {
-			if (!transmission) {
-				return mReflectionBack(row, col);
-			} else {
-				return mTransmissionBack(row, col);
-			}
+			if (!transmission)
+				return mReflectionBack ? mReflectionBack->eval(V, L) : 0;
+			else
+				return mTransmissionBack ? mTransmissionBack->eval(V, L) : 0;
 		}
+	}
+
+	inline void ensureFrontBack()
+	{
+		// Make sure all data is present
+		if (!mReflectionBack)
+			mReflectionBack = mReflectionFront;
+		if (!mReflectionFront)
+			mReflectionFront = mReflectionBack;
+
+		if (!mTransmissionBack)
+			mTransmissionBack = mTransmissionFront;
+		if (!mTransmissionFront)
+			mTransmissionFront = mTransmissionBack;
 	}
 
 private:
 	const std::string mFilename;
 	bool mGood;
-	KlemsBasis mBasis; // Currently only one basis is supported
-	KlemsMatrix mReflectionFront;
-	KlemsMatrix mTransmissionFront;
-	KlemsMatrix mReflectionBack;
-	KlemsMatrix mTransmissionBack;
+	std::shared_ptr<KlemsComponent> mReflectionFront;
+	std::shared_ptr<KlemsComponent> mTransmissionFront;
+	std::shared_ptr<KlemsComponent> mReflectionBack;
+	std::shared_ptr<KlemsComponent> mTransmissionBack;
 };
 
 class KlemsMeasuredMaterial : public IMaterial {
@@ -242,10 +296,11 @@ public:
 		PR_PROFILE_THIS;
 
 		//const float dot = std::max(0.0f, in.Context.NdotL());
-		const bool inside = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
-		out.Weight		  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, in.Context.L(2) < 0.0f);
-		out.PDF_S		  = Sampling::sphere_pdf();
-		out.Type		  = MST_DiffuseReflection;
+		const bool inside	  = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
+		const bool refraction = in.Context.L(2) < 0.0f;
+		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction);
+		out.PDF_S			  = Sampling::sphere_pdf();
+		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -256,11 +311,12 @@ public:
 		float pdf;
 		out.L = Sampling::sphere(in.RND[0], in.RND[1], pdf);
 
-		auto ectx		  = in.Context.expand(out.L);
-		const bool inside = mSwapSide ? !ectx.IsInside : ectx.IsInside;
-		out.Weight		  = mTint->eval(in.ShadingContext) * mMeasurement.eval(ectx.V, ectx.L, inside, ectx.L(2) < 0.0f);
-		out.Type		  = MST_DiffuseReflection;
-		out.PDF_S		  = pdf;
+		auto ectx			  = in.Context.expand(out.L);
+		const bool inside	  = mSwapSide ? !ectx.IsInside : ectx.IsInside;
+		const bool refraction = ectx.L(2) < 0.0f;
+		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(ectx.V, ectx.L, inside, refraction);
+		out.PDF_S			  = pdf;
+		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}
 
 	std::string dumpInformation() const override
@@ -270,7 +326,7 @@ public:
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <KlemsMeasuredMaterial>:" << std::endl
 			   << "    Filename: " << mMeasurement.filename() << std::endl
-			   << "    Tint:     " << mTint << std::endl
+			   << "    Tint:     " << mTint->dumpInformation() << std::endl
 			   << "    SwapSide: " << (mSwapSide ? "true" : "false") << std::endl;
 
 		return stream.str();
@@ -288,6 +344,9 @@ public:
 	{
 		const ParameterGroup& params = ctx.Parameters;
 		KlemsMeasurement measurement(ctx.Env->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
+
+		if (params.getBool("both_sides", true))
+			measurement.ensureFrontBack();
 
 		if (measurement.isValid())
 			return std::make_shared<KlemsMeasuredMaterial>(id,
