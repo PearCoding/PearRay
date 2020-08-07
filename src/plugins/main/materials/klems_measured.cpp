@@ -16,11 +16,19 @@
 #include <pugixml.hpp>
 
 namespace PR {
-// Information about format etc is available at https://windows.lbl.gov/tools/window/documentation
+/*static inline constexpr float cap_area(float theta_low, float theta_high, float phi_low, float phi_high)
+{
+	return (phi_high - phi_low) * (std::cos(theta_low) - std::cos(theta_high));
+}*/
+
+//#define FILTER_KLEMS 5
 
 class KlemsBasis {
 public:
+	using MultiIndex = std::pair<int, int>;
+
 	struct ThetaBasis {
+		float CenterTheta;
 		float LowerTheta;
 		float UpperTheta;
 		size_t PhiCount;
@@ -57,15 +65,53 @@ public:
 	}
 
 	inline size_t entryCount() const { return mEntryCount; }
-	inline int indexOf(float theta, float phi) const
+	inline MultiIndex multiIndexOf(float theta, float phi) const
 	{
+		// Mirror at the xy plane if necessary
+		if (theta < 0) {
+			theta = -theta;
+			phi += PR_PI;
+			if (phi > 2 * PR_PI)
+				phi -= 2 * PR_PI;
+		}
+
 		int i = Interval::binary_search(mThetaBasis.size(), [&](size_t index) {
 			return mThetaBasis[index].LowerTheta <= theta;
 		});
 
 		int j = mThetaBasis[i].getPhiIndex(phi);
 
-		return mThetaLinearOffset[i] + j;
+		return MultiIndex{ i, j };
+	}
+
+	// Indexing with theta and phi index offset
+	inline MultiIndex multiIndexOf(float theta, float phi, int dti, int dpi) const
+	{
+		const MultiIndex ij = multiIndexOf(theta, phi);
+		return MultiIndex{ (ij.first + dti) % mThetaBasis.size(), (ij.second + dpi) % mThetaBasis[ij.first].PhiCount };
+	}
+
+	inline int linearizeMultiIndex(const MultiIndex& mi) const
+	{
+		return mThetaLinearOffset[mi.first] + mi.second;
+	}
+
+	inline int indexOf(float theta, float phi) const
+	{
+		return linearizeMultiIndex(multiIndexOf(theta, phi));
+	}
+
+	inline int indexOf(float theta, float phi, int dti, int dpi) const
+	{
+		return linearizeMultiIndex(multiIndexOf(theta, phi, dti, dpi));
+	}
+
+	Vector2f center(const MultiIndex& mi) const
+	{
+		Vector2f tp;
+		tp[0] = mThetaBasis[mi.first].CenterTheta;
+		tp[1] = 2 * PR_PI * (mi.second + 0.5f) / mThetaBasis[mi.first].PhiCount;
+		return tp;
 	}
 
 private:
@@ -73,6 +119,11 @@ private:
 	std::vector<size_t> mThetaLinearOffset;
 	size_t mEntryCount;
 };
+
+static inline float distanceSpherical(const Vector2f& tp1, const Vector2f& tp2)
+{
+	return PR_SQRT2 * std::sqrt(1 + std::cos(tp1(0)) * std::cos(tp2(0)) - std::sin(tp1(0)) * std::sin(tp2(0)) * std::cos(tp1(1) - tp2(1)));
+}
 
 using KlemsMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 class KlemsComponent {
@@ -88,10 +139,37 @@ public:
 	{
 		const Vector2f in  = Spherical::from_direction(L); // The light is incoming, not the view/eye
 		const Vector2f out = Spherical::from_direction(V);
-		const int row	   = mRowBasis->indexOf(std::abs(out(0)), out(1));
-		const int col	   = mColumnBasis->indexOf(std::abs(in(0)), in(1));
+		const int row	   = mRowBasis->indexOf(out(0), out(1));
+
+#ifndef FILTER_KLEMS
+		const int col = mColumnBasis->indexOf(in(0), in(1));
 
 		return mMatrix(row, col);
+#else
+		constexpr float SIGMA				   = 10 * PR_INV_PI;
+		constexpr float NORM				   = 1 / (2 * PR_PI * SIGMA * SIGMA);
+#if FILTER_KLEMS == 5
+		constexpr int FILTER_COUNT			   = 5;
+		static const int THETA_D[FILTER_COUNT] = { 0, -1, 1, 0, 0 };
+		static const int PHI_D[FILTER_COUNT]   = { 0, 0, 0, -1, 1 };
+#else
+		constexpr int FILTER_COUNT			   = 9;
+		static const int THETA_D[FILTER_COUNT] = { 0, -1, 1, 0, 0, -1, -1, 1, 1 };
+		static const int PHI_D[FILTER_COUNT]   = { 0, 0, 0, -1, 1, -1, 1, -1, 1 };
+#endif
+
+		float weight = 0.0f;
+		PR_UNROLL_LOOP(FILTER_COUNT)
+		for (int i = 0; i < FILTER_COUNT; ++i) {
+			const auto col_mi = mColumnBasis->multiIndexOf(in(0), in(1), THETA_D[i], PHI_D[i]);
+			const int col	  = mColumnBasis->linearizeMultiIndex(col_mi);
+			const auto center = mColumnBasis->center(col_mi);
+			const float dist  = distanceSpherical(center, out);
+
+			weight += mMatrix(row, col) * std::exp(-dist * dist / (2 * SIGMA * SIGMA)) * NORM;
+		}
+		return weight;
+#endif
 	}
 
 	inline KlemsMatrix& matrix() { return mMatrix; }
@@ -109,6 +187,7 @@ public:
 		, mGood(false)
 	{
 		PR_ASSERT(upsampler, "Expected valid upsampler");
+		// Information about format etc is available at https://windows.lbl.gov/tools/window/documentation
 
 		// Read Radiance based klems BSDF xml document
 		pugi::xml_document doc;
@@ -154,6 +233,13 @@ public:
 				basis.LowerTheta  = PR_DEG2RAD * bounds.child("LowerTheta").text().as_float(0);
 				basis.UpperTheta  = PR_DEG2RAD * bounds.child("UpperTheta").text().as_float(0);
 				basis.PhiCount	  = child.child("nPhis").text().as_uint(0);
+
+				const auto theta = child.child("Theta");
+				if (theta)
+					basis.CenterTheta = theta.text().as_float(0);
+				else
+					basis.CenterTheta = (basis.UpperTheta + basis.LowerTheta) / 2;
+
 				if (!basis.isValid()) {
 					PR_LOG(L_ERROR) << "Could not parse " << filename << ": Invalid AngleBasisBlock given" << std::endl;
 					return;
@@ -172,6 +258,10 @@ public:
 
 		// Extract wavelengths
 		for (const auto& data : layer.children("WavelengthData")) {
+			const char* type = data.child_value("Wavelength");
+			if (!type || strcmp(type, "Visible") != 0) // Skip entries for non-visible wavelengths
+				continue;
+
 			const auto block = data.child("WavelengthDataBlock");
 			if (!block) {
 				PR_LOG(L_ERROR) << "Could not parse " << filename << ": No WavelengthDataBlock given" << std::endl;
@@ -234,16 +324,19 @@ public:
 
 	float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
+		// Mirror along the xy plane
+		const auto mirror = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
+
 		if (!inside) {
 			if (!transmission)
-				return mReflectionFront ? mReflectionFront->eval(V, L) : 0;
+				return mReflectionFront ? mReflectionFront->eval(V, mirror(L)) : 0;
 			else
-				return mTransmissionFront ? mTransmissionFront->eval(V, L) : 0;
+				return mTransmissionFront ? mTransmissionFront->eval(V, mirror(L)) : 0;
 		} else {
 			if (!transmission)
-				return mReflectionBack ? mReflectionBack->eval(V, L) : 0;
+				return mReflectionBack ? mReflectionBack->eval(V, mirror(L)) : 0;
 			else
-				return mTransmissionBack ? mTransmissionBack->eval(V, L) : 0;
+				return mTransmissionBack ? mTransmissionBack->eval(V, mirror(L)) : 0;
 		}
 	}
 
@@ -260,6 +353,10 @@ public:
 		if (!mTransmissionFront)
 			mTransmissionFront = mTransmissionBack;
 	}
+
+	inline bool hasReflection() const { return mReflectionFront || mReflectionBack; }
+	inline bool hasTransmission() const { return mTransmissionFront || mTransmissionBack; }
+	inline bool hasBothRT() const { return hasReflection() && hasTransmission(); }
 
 private:
 	const std::string mFilename;
@@ -290,8 +387,12 @@ public:
 		const bool inside	  = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
 		const bool refraction = in.Context.L(2) < 0.0f;
 		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction);
-		out.PDF_S			  = Sampling::sphere_pdf();
-		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
+		out.PDF_S			  = mMeasurement.hasBothRT()
+						? Sampling::sphere_pdf()
+						: ((mMeasurement.hasTransmission() && refraction) || (mMeasurement.hasReflection() && !refraction)
+							   ? Sampling::hemi_pdf()
+							   : 0);
+		out.Type = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -299,7 +400,14 @@ public:
 	{
 		PR_PROFILE_THIS;
 		float pdf;
-		out.L = Sampling::sphere(in.RND[0], in.RND[1], pdf);
+
+		if (mMeasurement.hasBothRT())
+			out.L = Sampling::sphere(in.RND[0], in.RND[1], pdf);
+		else if (mMeasurement.hasTransmission()) {
+			out.L	 = Sampling::hemi(in.RND[0], in.RND[1], pdf);
+			out.L(2) = -out.L(2);
+		} else
+			out.L = Sampling::hemi(in.RND[0], in.RND[1], pdf);
 
 		auto ectx			  = in.Context.expand(out.L);
 		const bool inside	  = mSwapSide ? !ectx.IsInside : ectx.IsInside;
