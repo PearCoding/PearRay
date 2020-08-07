@@ -21,7 +21,7 @@ namespace PR {
 	return (phi_high - phi_low) * (std::cos(theta_low) - std::cos(theta_high));
 }*/
 
-//#define FILTER_KLEMS 5
+#define FILTER_KLEMS 5
 
 class KlemsBasis {
 public:
@@ -110,7 +110,7 @@ public:
 	{
 		Vector2f tp;
 		tp[0] = mThetaBasis[mi.first].CenterTheta;
-		tp[1] = 2 * PR_PI * (mi.second + 0.5f) / mThetaBasis[mi.first].PhiCount;
+		tp[1] = 2 * PR_PI * mi.second / (float)mThetaBasis[mi.first].PhiCount;
 		return tp;
 	}
 
