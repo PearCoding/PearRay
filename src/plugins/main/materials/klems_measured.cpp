@@ -96,6 +96,15 @@ public:
 		return mThetaLinearOffset[mi.first] + mi.second;
 	}
 
+	inline MultiIndex multiIndexFromLinear(size_t i) const
+	{
+		int i1 = Interval::binary_search(mThetaLinearOffset.size(), [&](size_t index) {
+			return mThetaLinearOffset[index] <= i;
+		});
+
+		return MultiIndex{ i1, i - mThetaLinearOffset[i1] };
+	}
+
 	inline int indexOf(float theta, float phi) const
 	{
 		return linearizeMultiIndex(multiIndexOf(theta, phi));
@@ -112,6 +121,27 @@ public:
 		tp[0] = mThetaBasis[mi.first].CenterTheta;
 		tp[1] = 2 * PR_PI * mi.second / (float)mThetaBasis[mi.first].PhiCount;
 		return tp;
+	}
+
+	float theta(size_t linear_i) const
+	{
+		return mThetaBasis[multiIndexFromLinear(linear_i).first].CenterTheta;
+	}
+
+	// Also called lambda in some publications
+	float projectedSolidAngle(const MultiIndex& mi) const
+	{
+		const auto& tb	= mThetaBasis[mi.first];
+		const float ta1 = std::cos(tb.UpperTheta);
+		const float ta2 = std::cos(tb.LowerTheta);
+		const float ta	= ta2 * ta2 - ta1 * ta1;
+		const float pa	= 2 * PR_PI / (float)tb.PhiCount;
+		return 0.5f * ta * pa;
+	}
+
+	float projectedSolidAngle(size_t linear_i) const
+	{
+		return projectedSolidAngle(multiIndexFromLinear(linear_i));
 	}
 
 private:
@@ -298,14 +328,26 @@ public:
 			const char* scat_str = block.child_value("ScatteringData");
 			char* end			 = nullptr;
 			Eigen::Index ind	 = 0;
-			while (ind < component->matrix().size()) {
-				const Eigen::Index row		  = ind / columnBasis->entryCount();	 //Outgoing direction
-				const Eigen::Index col		  = ind % columnBasis->entryCount(); //Incoming direction
-				component->matrix()(row, col) = std::strtof(scat_str, &end) / 100.0f;
+			while (ind < component->matrix().size() && *scat_str) {
+				const float value = std::strtof(scat_str, &end);
+				if (scat_str == end && value == 0) {
+					scat_str = scat_str + 1; // Skip entry
+					continue;
+				}
+				const Eigen::Index row = ind / columnBasis->entryCount(); //Outgoing direction
+				const Eigen::Index col = ind % columnBasis->entryCount(); //Incoming direction
+
+				const float factor			  = columnBasis->projectedSolidAngle(col);
+				component->matrix()(row, col) = value * factor;
+				++ind;
 				if (scat_str == end)
 					break;
 				scat_str = end;
-				++ind;
+			}
+
+			if (ind != component->matrix().size()) {
+				PR_LOG(L_ERROR) << "Could not parse " << filename << ": Given scattered data is not of length " << component->matrix().size() << std::endl;
+				return;
 			}
 
 			// Select correct component
