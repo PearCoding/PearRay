@@ -21,7 +21,7 @@ namespace PR {
 	return (phi_high - phi_low) * (std::cos(theta_low) - std::cos(theta_high));
 }*/
 
-#define FILTER_KLEMS 5
+//#define FILTER_KLEMS 5
 
 class KlemsBasis {
 public:
@@ -137,9 +137,13 @@ public:
 
 	float eval(const Vector3f& V, const Vector3f& L) const
 	{
-		const Vector2f in  = Spherical::from_direction(L); // The light is incoming, not the view/eye
-		const Vector2f out = Spherical::from_direction(V);
-		const int row	   = mRowBasis->indexOf(out(0), out(1));
+		const Vector2f in = Spherical::from_direction(L); // The light is incoming, not the view/eye
+		Vector2f out	  = Spherical::from_direction(V);
+		out(1) += PR_PI;
+		if (out(1) >= 2 * PR_PI)
+			out(1) -= 2 * PR_PI;
+
+		const int row = mRowBasis->indexOf(out(0), out(1));
 
 #ifndef FILTER_KLEMS
 		const int col = mColumnBasis->indexOf(in(0), in(1));
@@ -236,7 +240,7 @@ public:
 
 				const auto theta = child.child("Theta");
 				if (theta)
-					basis.CenterTheta = theta.text().as_float(0);
+					basis.CenterTheta = PR_DEG2RAD * theta.text().as_float(0);
 				else
 					basis.CenterTheta = (basis.UpperTheta + basis.LowerTheta) / 2;
 
@@ -295,9 +299,9 @@ public:
 			char* end			 = nullptr;
 			Eigen::Index ind	 = 0;
 			while (ind < component->matrix().size()) {
-				const Eigen::Index row		  = ind / rowBasis->entryCount();	 //Outgoing direction
+				const Eigen::Index row		  = ind / columnBasis->entryCount();	 //Outgoing direction
 				const Eigen::Index col		  = ind % columnBasis->entryCount(); //Incoming direction
-				component->matrix()(row, col) = std::strtof(scat_str, &end);
+				component->matrix()(row, col) = std::strtof(scat_str, &end) / 100.0f;
 				if (scat_str == end)
 					break;
 				scat_str = end;
@@ -325,18 +329,18 @@ public:
 	float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
 		// Mirror along the xy plane
-		const auto mirror = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
+		//const auto mirror = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
 
 		if (!inside) {
 			if (!transmission)
-				return mReflectionFront ? mReflectionFront->eval(V, mirror(L)) : 0;
+				return mReflectionFront ? mReflectionFront->eval(V, L) : 0;
 			else
-				return mTransmissionFront ? mTransmissionFront->eval(V, mirror(L)) : 0;
+				return mTransmissionFront ? mTransmissionFront->eval(V, L) : 0;
 		} else {
 			if (!transmission)
-				return mReflectionBack ? mReflectionBack->eval(V, mirror(L)) : 0;
+				return mReflectionBack ? mReflectionBack->eval(V, L) : 0;
 			else
-				return mTransmissionBack ? mTransmissionBack->eval(V, mirror(L)) : 0;
+				return mTransmissionBack ? mTransmissionBack->eval(V, L) : 0;
 		}
 	}
 
@@ -401,13 +405,14 @@ public:
 		PR_PROFILE_THIS;
 		float pdf;
 
-		if (mMeasurement.hasBothRT())
+		if (mMeasurement.hasBothRT()) {
 			out.L = Sampling::sphere(in.RND[0], in.RND[1], pdf);
-		else if (mMeasurement.hasTransmission()) {
+		} else if (mMeasurement.hasTransmission()) {
 			out.L	 = Sampling::hemi(in.RND[0], in.RND[1], pdf);
 			out.L(2) = -out.L(2);
-		} else
+		} else {
 			out.L = Sampling::hemi(in.RND[0], in.RND[1], pdf);
+		}
 
 		auto ectx			  = in.Context.expand(out.L);
 		const bool inside	  = mSwapSide ? !ectx.IsInside : ectx.IsInside;
