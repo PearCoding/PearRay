@@ -8,7 +8,7 @@ namespace Reflection {
 // as opposed to the outgoing view vector in shading space!
 
 /**
-* @param NdotV dot product between normal and incident view vector (global space)
+* @param gNdotV dot product between normal and incident view vector (global space)
 */
 inline bool is_inside_global(float gNdotV)
 {
@@ -16,7 +16,7 @@ inline bool is_inside_global(float gNdotV)
 }
 
 /**
-* @param NdotV dot product between normal and incident view vector
+* @param gNdotV dot product between normal and incident view vector
 * @param N Normal of the surface point.
 */
 inline Vector3f faceforward_global(float gNdotV, const Vector3f& N)

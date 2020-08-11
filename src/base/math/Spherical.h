@@ -14,6 +14,12 @@ inline Vector2f from_direction(const Vector3f& D)
 	return Vector2f(theta, phi);
 }
 
+inline Vector2f from_direction_hemi(const Vector3f& D)
+{
+	Vector2f tp = from_direction(D);
+	return (tp(0) < 0.0f) ? Vector2f(-tp(0), tp(1)) : tp;
+}
+
 inline Vector2f uv_from_normal(const Vector3f& N)
 {
 	Vector2f tp = from_direction(N) * PR_INV_PI;

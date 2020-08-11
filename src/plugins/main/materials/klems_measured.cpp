@@ -9,19 +9,32 @@
 #include "math/Spherical.h"
 #include "math/Tangent.h"
 #include "renderer/RenderContext.h"
+#include "sampler/Distribution1D.h"
+#include "sampler/SplitSample.h"
 #include "spectral/SpectralUpsampler.h"
 
 #include <sstream>
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
 
 #include <pugixml.hpp>
 
 namespace PR {
-/*static inline constexpr float cap_area(float theta_low, float theta_high, float phi_low, float phi_high)
+static inline constexpr float projSA(float theta_low, float theta_high, float phi_low, float phi_high)
 {
-	return (phi_high - phi_low) * (std::cos(theta_low) - std::cos(theta_high));
-}*/
+	const float ta1 = std::cos(theta_high);
+	const float ta2 = std::cos(theta_low);
+	return 0.5f * (ta2 * ta2 - ta1 * ta1) * (phi_high - phi_low);
+}
 
 //#define FILTER_KLEMS 5
+
+const auto bi = [](const Vector3f& v) { return -v; };
+const auto bo = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
+const auto fi = [](const Vector3f& v) { return Vector3f(-v[0], -v[1], v[2]); };
+const auto fo = [](const Vector3f& v) { return v; };
+// Our sampling space flips implicitly to the inside configuration and has to be considered when working with the Klems basis
+const auto warp_inside = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
 
 class KlemsBasis {
 public:
@@ -67,14 +80,6 @@ public:
 	inline size_t entryCount() const { return mEntryCount; }
 	inline MultiIndex multiIndexOf(float theta, float phi) const
 	{
-		// Mirror at the xy plane if necessary
-		if (theta < 0) {
-			theta = -theta;
-			phi += PR_PI;
-			if (phi > 2 * PR_PI)
-				phi -= 2 * PR_PI;
-		}
-
 		int i = Interval::binary_search(mThetaBasis.size(), [&](size_t index) {
 			return mThetaBasis[index].LowerTheta <= theta;
 		});
@@ -123,20 +128,32 @@ public:
 		return tp;
 	}
 
+	float pdf(float theta, const MultiIndex& mi) const
+	{
+		const float area = projSA(mThetaBasis[mi.first].LowerTheta, mThetaBasis[mi.first].UpperTheta, 2 * PR_PI * mi.second / (float)mThetaBasis[mi.first].PhiCount, 2 * PR_PI * (mi.second + 1) / (float)mThetaBasis[mi.first].PhiCount);
+		const float cos	 = std::cos(theta);
+		return 1 / (area * cos);
+	}
+
+	Vector2f sample(const Vector2f& uv, const MultiIndex& mi, float& pdf) const
+	{
+		Vector2f tp;
+		tp[0] = mThetaBasis[mi.first].LowerTheta * (1 - uv[0]) + mThetaBasis[mi.first].UpperTheta * uv[0];
+		tp[1] = 2 * PR_PI * (mi.second + uv[1]) / (float)mThetaBasis[mi.first].PhiCount;
+		pdf	  = this->pdf(tp[0], mi);
+		return tp;
+	}
+
 	float theta(size_t linear_i) const
 	{
 		return mThetaBasis[multiIndexFromLinear(linear_i).first].CenterTheta;
 	}
 
-	// Also called lambda in some publications
+	// Also called lambda in some publications [Also called area or lambda]
 	float projectedSolidAngle(const MultiIndex& mi) const
 	{
-		const auto& tb	= mThetaBasis[mi.first];
-		const float ta1 = std::cos(tb.UpperTheta);
-		const float ta2 = std::cos(tb.LowerTheta);
-		const float ta	= ta2 * ta2 - ta1 * ta1;
-		const float pa	= 2 * PR_PI / (float)tb.PhiCount;
-		return 0.5f * ta * pa;
+		const auto& tb = mThetaBasis[mi.first];
+		return projSA(tb.LowerTheta, tb.UpperTheta, 0, 2 * PR_PI / (float)tb.PhiCount);
 	}
 
 	float projectedSolidAngle(size_t linear_i) const
@@ -165,21 +182,11 @@ public:
 	{
 	}
 
-	float eval(const Vector3f& V, const Vector3f& L) const
+	float eval(size_t row, size_t column) const
 	{
-		const Vector2f in = Spherical::from_direction(L); // The light is incoming, not the view/eye
-		Vector2f out	  = Spherical::from_direction(V);
-		out(1) += PR_PI;
-		if (out(1) >= 2 * PR_PI)
-			out(1) -= 2 * PR_PI;
-
-		const int row = mRowBasis->indexOf(out(0), out(1));
-
 #ifndef FILTER_KLEMS
-		const int col = mColumnBasis->indexOf(in(0), in(1));
-
-		return mMatrix(row, col);
-#else
+		return mMatrix(row, column);
+#else // TODO
 		constexpr float SIGMA				   = 10 * PR_INV_PI;
 		constexpr float NORM				   = 1 / (2 * PR_PI * SIGMA * SIGMA);
 #if FILTER_KLEMS == 5
@@ -206,12 +213,62 @@ public:
 #endif
 	}
 
+	// Adapted to Front Outgoing
+	float eval(const Vector3f& iV, const Vector3f& oV) const
+	{
+		const Vector2f in  = Spherical::from_direction_hemi(iV);
+		const Vector2f out = Spherical::from_direction_hemi(oV);
+		const int row	   = mRowBasis->indexOf(out(0), out(1));
+		const int col	   = mColumnBasis->indexOf(in(0), in(1));
+		return eval(row, col);
+	}
+
+	float pdf(const Vector3f& iV, const Vector3f& oV) const
+	{
+		const Vector2f in  = Spherical::from_direction_hemi(iV);
+		const Vector2f out = Spherical::from_direction_hemi(oV);
+		const int row	   = mRowBasis->indexOf(out(0), out(1));
+		const int col	   = mColumnBasis->indexOf(in(0), in(1));
+		return mColumnCDF[row].discretePdf(mMatrix(row, col) / mColumnCDF[row].integral()) * mColumnBasis->pdf(in(0), mColumnBasis->multiIndexFromLinear(col));
+	}
+
+	Vector3f sampleIncident(const Vector2f& uv, const Vector3f& oV, float& pdf, float& weight) const
+	{
+		const Vector2f out = Spherical::from_direction_hemi(oV);
+		const int row	   = mRowBasis->indexOf(out(0), out(1));
+		const size_t col   = mColumnCDF[row].sampleDiscrete(uv[0], pdf);
+		weight			   = eval(row, col);
+		float pdf2;
+		const Vector2f in = mColumnBasis->sample(Vector2f(uv[0] / (1 - pdf), uv[1]), mColumnBasis->multiIndexFromLinear(col), pdf2);
+		pdf *= pdf2;
+		return Spherical::cartesian(in(0), in(1));
+	}
+
 	inline KlemsMatrix& matrix() { return mMatrix; }
+
+	inline void transpose()
+	{
+		mMatrix.transposeInPlace();
+		std::swap(mRowBasis, mColumnBasis);
+		if (!mColumnCDF.empty())
+			buildCDF();
+	}
+
+	inline void buildCDF()
+	{
+		mColumnCDF.resize(mRowBasis->entryCount(), Distribution1D(mColumnBasis->entryCount()));
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, mColumnCDF.size()),
+						  [&](const tbb::blocked_range<size_t>& r) {
+							  for (size_t row = r.begin(); row != r.end(); ++row)
+								  mColumnCDF[row].generate([&](size_t i) { return mMatrix(row, i); });
+						  });
+	}
 
 private:
 	std::shared_ptr<KlemsBasis> mRowBasis;
 	std::shared_ptr<KlemsBasis> mColumnBasis;
 	KlemsMatrix mMatrix;
+	std::vector<Distribution1D> mColumnCDF;
 };
 
 class KlemsMeasurement {
@@ -245,7 +302,8 @@ public:
 		}
 
 		std::string type = datadefinition.child_value("IncidentDataStructure");
-		if (type != "Columns") {
+		bool rowBased	 = type == "Rows";
+		if (!rowBased && type != "Columns") {
 			PR_LOG(L_ERROR) << "Could not parse " << filename << ": Expected IncidentDataStructure of 'Columns' but got '" << type << "' instead" << std::endl;
 			return;
 		}
@@ -337,8 +395,7 @@ public:
 				const Eigen::Index row = ind / columnBasis->entryCount(); //Outgoing direction
 				const Eigen::Index col = ind % columnBasis->entryCount(); //Incoming direction
 
-				const float factor			  = columnBasis->projectedSolidAngle(col);
-				component->matrix()(row, col) = value * factor;
+				component->matrix()(row, col) = value;
 				++ind;
 				if (scat_str == end)
 					break;
@@ -349,6 +406,11 @@ public:
 				PR_LOG(L_ERROR) << "Could not parse " << filename << ": Given scattered data is not of length " << component->matrix().size() << std::endl;
 				return;
 			}
+
+			if (rowBased)
+				component->transpose();
+
+			component->buildCDF();
 
 			// Select correct component
 			const std::string direction = block.child_value("WavelengthDataDirection");
@@ -370,20 +432,56 @@ public:
 
 	float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
-		// Mirror along the xy plane
-		//const auto mirror = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
-
+		const Vector3f iV = L;
+		const Vector3f oV = V;
 		if (!inside) {
 			if (!transmission)
-				return mReflectionFront ? mReflectionFront->eval(V, L) : 0;
+				return mReflectionFront ? mReflectionFront->eval(fi(iV), fo(oV)) : 0;
 			else
-				return mTransmissionFront ? mTransmissionFront->eval(V, L) : 0;
+				return mTransmissionFront ? mTransmissionFront->eval(fi(iV), bo(oV)) : 0;
 		} else {
 			if (!transmission)
-				return mReflectionBack ? mReflectionBack->eval(V, L) : 0;
+				return mReflectionBack ? mReflectionBack->eval(warp_inside(bi(iV)), warp_inside(bo(oV))) : 0;
 			else
-				return mTransmissionBack ? mTransmissionBack->eval(V, L) : 0;
+				return mTransmissionBack ? mTransmissionBack->eval(warp_inside(bi(iV)), warp_inside(fo(oV))) : 0;
 		}
+	}
+
+	float pdf(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
+	{
+		const Vector3f iV = L;
+		const Vector3f oV = V;
+		if (!inside) {
+			if (!transmission)
+				return mReflectionFront ? mReflectionFront->pdf(fi(iV), fo(oV)) : 0;
+			else
+				return mTransmissionFront ? mTransmissionFront->pdf(fi(iV), bo(oV)) : 0;
+		} else {
+			if (!transmission)
+				return mReflectionBack ? mReflectionBack->pdf(warp_inside(bi(iV)), warp_inside(bo(oV))) : 0;
+			else
+				return mTransmissionBack ? mTransmissionBack->pdf(warp_inside(bi(iV)), warp_inside(fo(oV))) : 0;
+		}
+	}
+
+	Vector3f sampleIncident(const Vector2f& u, const Vector3f& V, bool inside, bool transmission, float& pdf, float& weight) const
+	{
+		const Vector3f oV = V;
+
+		pdf	   = 0;
+		weight = 0;
+		if (!inside) {
+			if (!transmission && mReflectionFront)
+				return fi(mReflectionFront->sampleIncident(u, fo(oV), pdf, weight));
+			else if (mTransmissionFront)
+				return fi(mTransmissionFront->sampleIncident(u, bo(oV), pdf, weight));
+		} else {
+			if (!transmission && mReflectionBack)
+				return warp_inside(bi(mReflectionBack->sampleIncident(u, warp_inside(bo(oV)), pdf, weight)));
+			else if (mTransmissionBack)
+				return warp_inside(bi(mTransmissionBack->sampleIncident(u, warp_inside(fo(oV)), pdf, weight)));
+		}
+		return Vector3f::Zero();
 	}
 
 	inline void ensureFrontBack()
@@ -432,34 +530,33 @@ public:
 
 		const bool inside	  = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
 		const bool refraction = in.Context.L(2) < 0.0f;
-		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction);
-		out.PDF_S			  = mMeasurement.hasBothRT()
-						? Sampling::sphere_pdf()
-						: ((mMeasurement.hasTransmission() && refraction) || (mMeasurement.hasReflection() && !refraction)
-							   ? Sampling::hemi_pdf()
-							   : 0);
-		out.Type = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
+		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction) * std::abs(in.Context.NdotL());
+		out.PDF_S			  = (mMeasurement.hasBothRT() ? 0.5f : 1) * mMeasurement.pdf(in.Context.V, in.Context.L, inside, refraction);
+		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
 				const RenderTileSession&) const override
 	{
 		PR_PROFILE_THIS;
-		float pdf;
 
+		const bool inside = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
+
+		float pdf;
+		float weight;
 		if (mMeasurement.hasBothRT()) {
-			out.L = Sampling::sphere(in.RND[0], in.RND[1], pdf);
+			SplitSample1D sample(in.RND[0], 0, 2);
+			out.L = mMeasurement.sampleIncident(Vector2f(sample.uniform(), in.RND[1]), in.Context.V, inside, (sample.integral() != 1), pdf, weight);
+			pdf /= 2;
 		} else if (mMeasurement.hasTransmission()) {
-			out.L	 = Sampling::hemi(in.RND[0], in.RND[1], pdf);
-			out.L(2) = -out.L(2);
+			out.L = mMeasurement.sampleIncident(in.RND, in.Context.V, inside, true, pdf, weight);
 		} else {
-			out.L = Sampling::hemi(in.RND[0], in.RND[1], pdf);
+			out.L = mMeasurement.sampleIncident(in.RND, in.Context.V, inside, false, pdf, weight);
 		}
 
 		auto ectx			  = in.Context.expand(out.L);
-		const bool inside	  = mSwapSide ? !ectx.IsInside : ectx.IsInside;
 		const bool refraction = ectx.L(2) < 0.0f;
-		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(ectx.V, ectx.L, inside, refraction);
+		out.Weight			  = mTint->eval(in.ShadingContext) * weight * std::abs(ectx.NdotL());
 		out.PDF_S			  = pdf;
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}
