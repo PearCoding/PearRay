@@ -83,13 +83,19 @@ inline float Distribution1D::continuousPdf(float u, const float* cdf, size_t siz
 	return k * (size - 1);
 }
 
-inline size_t Distribution1D::sampleDiscrete(float u, float& pdf) const
+inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, float* remainder) const
 {
 	size_t off = Interval::binary_search(mCDF.size(), [&](int index) {
 		return mCDF[index] <= u;
 	});
 
 	pdf = mValues[off] / (mIntegral * size());
+	if (remainder) {
+		*remainder = u - mCDF[off];
+		float k	   = mCDF[off + 1] - mCDF[off];
+		if (k > PR_EPSILON)
+			*remainder /= k;
+	}
 
 	return off;
 }
@@ -105,13 +111,18 @@ inline size_t Distribution1D::sampleDiscrete(float u, float& pdf, const float* c
 	return off;
 }
 
+inline float Distribution1D::discretePdfForBin(size_t bin) const
+{
+	return mValues[bin] / (mIntegral * size());
+}
+
 inline float Distribution1D::discretePdf(float u) const
 {
 	size_t off = Interval::binary_search(mCDF.size(), [&](int index) {
 		return mCDF[index] <= u;
 	});
 
-	return mValues[off] / (mIntegral * size());
+	return discretePdfForBin(off);
 }
 
 template <size_t N>

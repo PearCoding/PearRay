@@ -29,12 +29,10 @@ static inline constexpr float projSA(float theta_low, float theta_high, float ph
 
 //#define FILTER_KLEMS 5
 
-const auto bi = [](const Vector3f& v) { return -v; };
-const auto bo = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
-const auto fi = [](const Vector3f& v) { return Vector3f(-v[0], -v[1], v[2]); };
-const auto fo = [](const Vector3f& v) { return v; };
 // Our sampling space flips implicitly to the inside configuration and has to be considered when working with the Klems basis
-const auto warp_inside = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
+// therefor the opposite funtions fi and bi are not needed
+const auto fo = [](const Vector3f& v) { return v; };
+const auto bo = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
 
 class KlemsBasis {
 public:
@@ -89,13 +87,6 @@ public:
 		return MultiIndex{ i, j };
 	}
 
-	// Indexing with theta and phi index offset
-	inline MultiIndex multiIndexOf(float theta, float phi, int dti, int dpi) const
-	{
-		const MultiIndex ij = multiIndexOf(theta, phi);
-		return MultiIndex{ (ij.first + dti) % mThetaBasis.size(), (ij.second + dpi) % mThetaBasis[ij.first].PhiCount };
-	}
-
 	inline int linearizeMultiIndex(const MultiIndex& mi) const
 	{
 		return mThetaLinearOffset[mi.first] + mi.second;
@@ -107,6 +98,7 @@ public:
 			return mThetaLinearOffset[index] <= i;
 		});
 
+		PR_ASSERT(i >= mThetaLinearOffset[i1], "Invalid use of linear offset array together with binary search");
 		return MultiIndex{ i1, i - mThetaLinearOffset[i1] };
 	}
 
@@ -115,12 +107,7 @@ public:
 		return linearizeMultiIndex(multiIndexOf(theta, phi));
 	}
 
-	inline int indexOf(float theta, float phi, int dti, int dpi) const
-	{
-		return linearizeMultiIndex(multiIndexOf(theta, phi, dti, dpi));
-	}
-
-	Vector2f center(const MultiIndex& mi) const
+	inline Vector2f center(const MultiIndex& mi) const
 	{
 		Vector2f tp;
 		tp[0] = mThetaBasis[mi.first].CenterTheta;
@@ -128,35 +115,28 @@ public:
 		return tp;
 	}
 
-	float pdf(float theta, const MultiIndex& mi) const
+	inline float pdf(const MultiIndex& mi) const
 	{
-		const float area = projSA(mThetaBasis[mi.first].LowerTheta, mThetaBasis[mi.first].UpperTheta, 2 * PR_PI * mi.second / (float)mThetaBasis[mi.first].PhiCount, 2 * PR_PI * (mi.second + 1) / (float)mThetaBasis[mi.first].PhiCount);
-		const float cos	 = std::cos(theta);
-		return 1 / (area * cos);
+		return 1 / projectedSolidAngle(mi);
 	}
 
-	Vector2f sample(const Vector2f& uv, const MultiIndex& mi, float& pdf) const
+	inline Vector2f sample(const Vector2f& uv, const MultiIndex& mi, float& pdf) const
 	{
 		Vector2f tp;
 		tp[0] = mThetaBasis[mi.first].LowerTheta * (1 - uv[0]) + mThetaBasis[mi.first].UpperTheta * uv[0];
 		tp[1] = 2 * PR_PI * (mi.second + uv[1]) / (float)mThetaBasis[mi.first].PhiCount;
-		pdf	  = this->pdf(tp[0], mi);
+		pdf	  = this->pdf(mi);
 		return tp;
 	}
 
-	float theta(size_t linear_i) const
-	{
-		return mThetaBasis[multiIndexFromLinear(linear_i).first].CenterTheta;
-	}
-
-	// Also called lambda in some publications [Also called area or lambda]
-	float projectedSolidAngle(const MultiIndex& mi) const
+	// Also called lambda or area in some publications
+	inline float projectedSolidAngle(const MultiIndex& mi) const
 	{
 		const auto& tb = mThetaBasis[mi.first];
 		return projSA(tb.LowerTheta, tb.UpperTheta, 0, 2 * PR_PI / (float)tb.PhiCount);
 	}
 
-	float projectedSolidAngle(size_t linear_i) const
+	inline float projectedSolidAngle(size_t linear_i) const
 	{
 		return projectedSolidAngle(multiIndexFromLinear(linear_i));
 	}
@@ -166,11 +146,6 @@ private:
 	std::vector<size_t> mThetaLinearOffset;
 	size_t mEntryCount;
 };
-
-static inline float distanceSpherical(const Vector2f& tp1, const Vector2f& tp2)
-{
-	return PR_SQRT2 * std::sqrt(1 + std::cos(tp1(0)) * std::cos(tp2(0)) - std::sin(tp1(0)) * std::sin(tp2(0)) * std::cos(tp1(1) - tp2(1)));
-}
 
 using KlemsMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 class KlemsComponent {
@@ -182,69 +157,71 @@ public:
 	{
 	}
 
-	float eval(size_t row, size_t column) const
+	inline float eval(size_t row, size_t column, const Vector2f& col_angles) const
 	{
 #ifndef FILTER_KLEMS
+		PR_UNUSED(col_angles);
 		return mMatrix(row, column);
-#else // TODO
-		constexpr float SIGMA				   = 10 * PR_INV_PI;
-		constexpr float NORM				   = 1 / (2 * PR_PI * SIGMA * SIGMA);
-#if FILTER_KLEMS == 5
-		constexpr int FILTER_COUNT			   = 5;
-		static const int THETA_D[FILTER_COUNT] = { 0, -1, 1, 0, 0 };
-		static const int PHI_D[FILTER_COUNT]   = { 0, 0, 0, -1, 1 };
 #else
-		constexpr int FILTER_COUNT			   = 9;
-		static const int THETA_D[FILTER_COUNT] = { 0, -1, 1, 0, 0, -1, -1, 1, 1 };
-		static const int PHI_D[FILTER_COUNT]   = { 0, 0, 0, -1, 1, -1, 1, -1, 1 };
-#endif
+		constexpr float FILTER_THETA_R = 5 * PR_DEG2RAD;
+		constexpr float CENTER_WEIGHT  = 0.5f;
+		constexpr int FILTER_COUNT	   = FILTER_KLEMS;
+		constexpr float FILTER_PHI_D   = 2 * PR_PI / (FILTER_COUNT - 1);
+		constexpr float WEIGHT_F	   = (1 - CENTER_WEIGHT) / (FILTER_COUNT - 1);
 
-		float weight = 0.0f;
+		float weight = mMatrix(row, column) * CENTER_WEIGHT;
 		PR_UNROLL_LOOP(FILTER_COUNT)
-		for (int i = 0; i < FILTER_COUNT; ++i) {
-			const auto col_mi = mColumnBasis->multiIndexOf(in(0), in(1), THETA_D[i], PHI_D[i]);
-			const int col	  = mColumnBasis->linearizeMultiIndex(col_mi);
-			const auto center = mColumnBasis->center(col_mi);
-			const float dist  = distanceSpherical(center, out);
+		for (int i = 1; i < FILTER_COUNT; ++i) {
+			Vector2f angles = col_angles + Vector2f(-FILTER_THETA_R, (i - 1) * FILTER_PHI_D);
+			if (angles(0) < 0)
+				angles(0) = -angles(0);
+			if (angles(1) > 2 * PR_PI)
+				angles(1) -= 2 * PR_PI;
 
-			weight += mMatrix(row, col) * std::exp(-dist * dist / (2 * SIGMA * SIGMA)) * NORM;
+			const int col = mColumnBasis->indexOf(angles(0), angles(1));
+
+			weight += mMatrix(row, col) * WEIGHT_F;
 		}
 		return weight;
 #endif
 	}
 
 	// Adapted to Front Outgoing
-	float eval(const Vector3f& iV, const Vector3f& oV) const
+	inline float eval(const Vector3f& iV, const Vector3f& oV) const
 	{
 		const Vector2f in  = Spherical::from_direction_hemi(iV);
 		const Vector2f out = Spherical::from_direction_hemi(oV);
 		const int row	   = mRowBasis->indexOf(out(0), out(1));
 		const int col	   = mColumnBasis->indexOf(in(0), in(1));
-		return eval(row, col);
+		return eval(row, col, in);
 	}
 
-	float pdf(const Vector3f& iV, const Vector3f& oV) const
+	inline float pdf(const Vector3f& iV, const Vector3f& oV) const
 	{
 		const Vector2f in  = Spherical::from_direction_hemi(iV);
 		const Vector2f out = Spherical::from_direction_hemi(oV);
 		const int row	   = mRowBasis->indexOf(out(0), out(1));
 		const int col	   = mColumnBasis->indexOf(in(0), in(1));
-		return mColumnCDF[row].discretePdf(mMatrix(row, col) / mColumnCDF[row].integral()) * mColumnBasis->pdf(in(0), mColumnBasis->multiIndexFromLinear(col));
+		return mColumnCDF[row].discretePdfForBin(col) * mColumnBasis->pdf(mColumnBasis->multiIndexFromLinear(col));
 	}
 
-	Vector3f sampleIncident(const Vector2f& uv, const Vector3f& oV, float& pdf, float& weight) const
+	inline Vector3f sample(const Vector2f& uv, const Vector3f& oV, float& pdf, float& weight) const
 	{
 		const Vector2f out = Spherical::from_direction_hemi(oV);
 		const int row	   = mRowBasis->indexOf(out(0), out(1));
-		const size_t col   = mColumnCDF[row].sampleDiscrete(uv[0], pdf);
-		weight			   = eval(row, col);
+
+		float u;
+		const size_t col = mColumnCDF[row].sampleDiscrete(uv[0], pdf, &u);
+
 		float pdf2;
-		const Vector2f in = mColumnBasis->sample(Vector2f(uv[0] / (1 - pdf), uv[1]), mColumnBasis->multiIndexFromLinear(col), pdf2);
+		const Vector2f in = mColumnBasis->sample(Vector2f(u, uv[1]), mColumnBasis->multiIndexFromLinear(col), pdf2);
 		pdf *= pdf2;
+		weight = eval(row, col, in);
 		return Spherical::cartesian(in(0), in(1));
 	}
 
 	inline KlemsMatrix& matrix() { return mMatrix; }
+	inline size_t size() const { return mMatrix.size(); }
 
 	inline void transpose()
 	{
@@ -264,11 +241,124 @@ public:
 						  });
 	}
 
+	inline std::shared_ptr<KlemsBasis> row() const { return mRowBasis; }
+	inline std::shared_ptr<KlemsBasis> column() const { return mColumnBasis; }
+
 private:
 	std::shared_ptr<KlemsBasis> mRowBasis;
 	std::shared_ptr<KlemsBasis> mColumnBasis;
 	KlemsMatrix mMatrix;
 	std::vector<Distribution1D> mColumnCDF;
+};
+
+// Reflection Transmission Pair
+class KlemsComponentRTPair {
+public:
+	inline KlemsComponentRTPair(const std::shared_ptr<KlemsComponent>& reflection, const std::shared_ptr<KlemsComponent>& transmission)
+		: mReflection(reflection)
+		, mTransmission(transmission)
+	{
+		calcReflectivity();
+	}
+
+	inline float eval(const Vector3f& V, const Vector3f& L, bool transmission) const
+	{
+		const Vector3f iV = L;
+		const Vector3f oV = V;
+		if (!transmission)
+			return mReflection ? mReflection->eval(fo(iV), fo(oV)) : 0;
+		else
+			return mTransmission ? mTransmission->eval(bo(iV), fo(oV)) : 0;
+	}
+
+	inline float pdf(const Vector3f& V, const Vector3f& L, bool transmission) const
+	{
+		const Vector3f iV = L;
+		const Vector3f oV = V;
+
+		float pdf2 = 1.0f;
+		if (mTransmission && mReflection) {
+			const Vector2f out = Spherical::from_direction_hemi(fo(oV));
+			const size_t row   = mReflection->row()->indexOf(out(0), out(1));
+			PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
+			float refl = mReflectivity[row];
+			if (!transmission)
+				pdf2 = refl;
+			else
+				pdf2 = 1 - refl;
+		}
+
+		if (!transmission)
+			return mReflection ? mReflection->pdf(fo(iV), fo(oV)) * pdf2 : 0;
+		else
+			return mTransmission ? mTransmission->pdf(bo(iV), fo(oV)) * pdf2 : 0;
+	}
+
+	inline Vector3f sample(const Vector2f& u, const Vector3f& V, float& pdf, float& weight) const
+	{
+		const Vector3f oV = V;
+
+		bool do_reflection = false;
+		Vector2f u2		   = u;
+		float pdf2		   = 1.0f;
+		if (!mTransmission && mReflection) {
+			do_reflection = true;
+		} else if (mTransmission && !mReflection) {
+			do_reflection = false;
+		} else if (mTransmission && mReflection) {
+			const Vector2f out = Spherical::from_direction_hemi(fo(oV));
+			const size_t row   = mReflection->row()->indexOf(out(0), out(1));
+			PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
+			float refl = mReflectivity[row];
+			if (u[0] < refl) {
+				do_reflection = true;
+				u2[0] /= refl;
+				pdf2 = refl;
+			} else {
+				do_reflection = false;
+				u2[0] /= 1 - refl;
+				pdf2 = 1 - refl;
+			}
+		} else { // Nothing present!
+			pdf	   = 0;
+			weight = 0;
+			return Vector3f::Zero();
+		}
+
+		Vector3f L;
+		if (do_reflection)
+			L = fo(mReflection->sample(u2, fo(oV), pdf, weight));
+		else
+			L = bo(mTransmission->sample(u2, fo(oV), pdf, weight));
+		pdf *= pdf2;
+		return L;
+	}
+
+private:
+	inline void calcReflectivity()
+	{
+		if (mReflection && mTransmission) {
+			PR_ASSERT(mReflection->row()->entryCount() == mTransmission->row()->entryCount(), "Only computable if both components are of same size");
+			mReflectivity.resize(mReflection->row()->entryCount());
+			const auto rm = mReflection->matrix().rowwise().sum().eval();
+			const auto tm = mTransmission->matrix().rowwise().sum().eval();
+			PR_OPT_LOOP
+			for (size_t i = 0; i < mReflectivity.size(); ++i) {
+				const float r = rm[i];
+				const float t = tm[i];
+
+				const float n = r + t;
+				if (PR_UNLIKELY(n == 0))
+					mReflectivity[i] = 1;
+				else
+					mReflectivity[i] = r / n;
+			}
+		}
+	}
+
+	std::vector<float> mReflectivity; // For each outgoing patch
+	std::shared_ptr<KlemsComponent> mReflection;
+	std::shared_ptr<KlemsComponent> mTransmission;
 };
 
 class KlemsMeasurement {
@@ -304,7 +394,7 @@ public:
 		std::string type = datadefinition.child_value("IncidentDataStructure");
 		bool rowBased	 = type == "Rows";
 		if (!rowBased && type != "Columns") {
-			PR_LOG(L_ERROR) << "Could not parse " << filename << ": Expected IncidentDataStructure of 'Columns' but got '" << type << "' instead" << std::endl;
+			PR_LOG(L_ERROR) << "Could not parse " << filename << ": Expected IncidentDataStructure of 'Columns' or 'Rows' but got '" << type << "' instead" << std::endl;
 			return;
 		}
 
@@ -348,6 +438,10 @@ public:
 			return;
 		}
 
+		std::shared_ptr<KlemsComponent> reflectionFront;
+		std::shared_ptr<KlemsComponent> transmissionFront;
+		std::shared_ptr<KlemsComponent> reflectionBack;
+		std::shared_ptr<KlemsComponent> transmissionBack;
 		// Extract wavelengths
 		for (const auto& data : layer.children("WavelengthData")) {
 			const char* type = data.child_value("Wavelength");
@@ -415,100 +509,73 @@ public:
 			// Select correct component
 			const std::string direction = block.child_value("WavelengthDataDirection");
 			if (direction == "Transmission Front")
-				mTransmissionFront = component;
+				transmissionFront = component;
 			else if (direction == "Reflection Back")
-				mReflectionBack = component;
+				reflectionBack = component;
 			else if (direction == "Transmission Back")
-				mTransmissionBack = component;
+				transmissionBack = component;
 			else
-				mReflectionFront = component;
+				reflectionFront = component;
 		}
+
+		if (reflectionFront || transmissionFront)
+			mFront = std::make_shared<KlemsComponentRTPair>(reflectionFront, transmissionFront);
+		if (reflectionBack || transmissionBack)
+			mBack = std::make_shared<KlemsComponentRTPair>(reflectionBack, transmissionBack);
 
 		mGood = true;
 	}
 
-	std::string filename() const { return mFilename; }
-	bool isValid() const { return mGood; }
+	inline std::string filename() const { return mFilename; }
+	inline bool isValid() const { return mGood; }
 
-	float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
+	inline float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
-		const Vector3f iV = L;
-		const Vector3f oV = V;
-		if (!inside) {
-			if (!transmission)
-				return mReflectionFront ? mReflectionFront->eval(fi(iV), fo(oV)) : 0;
-			else
-				return mTransmissionFront ? mTransmissionFront->eval(fi(iV), bo(oV)) : 0;
-		} else {
-			if (!transmission)
-				return mReflectionBack ? mReflectionBack->eval(warp_inside(bi(iV)), warp_inside(bo(oV))) : 0;
-			else
-				return mTransmissionBack ? mTransmissionBack->eval(warp_inside(bi(iV)), warp_inside(fo(oV))) : 0;
-		}
+		if (!inside && mFront)
+			return mFront->eval(L, V, transmission);
+		else if (mBack)
+			return mBack->eval(L, V, transmission);
+		else
+			return 0.0f;
 	}
 
-	float pdf(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
+	inline float pdf(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
-		const Vector3f iV = L;
-		const Vector3f oV = V;
-		if (!inside) {
-			if (!transmission)
-				return mReflectionFront ? mReflectionFront->pdf(fi(iV), fo(oV)) : 0;
-			else
-				return mTransmissionFront ? mTransmissionFront->pdf(fi(iV), bo(oV)) : 0;
-		} else {
-			if (!transmission)
-				return mReflectionBack ? mReflectionBack->pdf(warp_inside(bi(iV)), warp_inside(bo(oV))) : 0;
-			else
-				return mTransmissionBack ? mTransmissionBack->pdf(warp_inside(bi(iV)), warp_inside(fo(oV))) : 0;
-		}
+		if (!inside && mFront)
+			return mFront->pdf(L, V, transmission);
+		else if (mBack)
+			return mBack->pdf(L, V, transmission);
+		else
+			return 0.0f;
 	}
 
-	Vector3f sampleIncident(const Vector2f& u, const Vector3f& V, bool inside, bool transmission, float& pdf, float& weight) const
+	inline Vector3f sample(const Vector2f& u, const Vector3f& V, bool inside, float& pdf, float& weight) const
 	{
-		const Vector3f oV = V;
-
-		pdf	   = 0;
-		weight = 0;
-		if (!inside) {
-			if (!transmission && mReflectionFront)
-				return fi(mReflectionFront->sampleIncident(u, fo(oV), pdf, weight));
-			else if (mTransmissionFront)
-				return fi(mTransmissionFront->sampleIncident(u, bo(oV), pdf, weight));
-		} else {
-			if (!transmission && mReflectionBack)
-				return warp_inside(bi(mReflectionBack->sampleIncident(u, warp_inside(bo(oV)), pdf, weight)));
-			else if (mTransmissionBack)
-				return warp_inside(bi(mTransmissionBack->sampleIncident(u, warp_inside(fo(oV)), pdf, weight)));
+		if (!inside && mFront)
+			return mFront->sample(u, V, pdf, weight);
+		else if (mBack)
+			return mBack->sample(u, V, pdf, weight);
+		else {
+			pdf	   = 0;
+			weight = 0;
+			return Vector3f::Zero();
 		}
-		return Vector3f::Zero();
 	}
 
 	inline void ensureFrontBack()
 	{
 		// Make sure all data is present
-		if (!mReflectionBack)
-			mReflectionBack = mReflectionFront;
-		if (!mReflectionFront)
-			mReflectionFront = mReflectionBack;
-
-		if (!mTransmissionBack)
-			mTransmissionBack = mTransmissionFront;
-		if (!mTransmissionFront)
-			mTransmissionFront = mTransmissionBack;
+		if (!mFront)
+			mFront = mBack;
+		if (!mBack)
+			mBack = mFront;
 	}
-
-	inline bool hasReflection() const { return mReflectionFront || mReflectionBack; }
-	inline bool hasTransmission() const { return mTransmissionFront || mTransmissionBack; }
-	inline bool hasBothRT() const { return hasReflection() && hasTransmission(); }
 
 private:
 	const std::string mFilename;
 	bool mGood;
-	std::shared_ptr<KlemsComponent> mReflectionFront;
-	std::shared_ptr<KlemsComponent> mTransmissionFront;
-	std::shared_ptr<KlemsComponent> mReflectionBack;
-	std::shared_ptr<KlemsComponent> mTransmissionBack;
+	std::shared_ptr<KlemsComponentRTPair> mFront;
+	std::shared_ptr<KlemsComponentRTPair> mBack;
 };
 
 class KlemsMeasuredMaterial : public IMaterial {
@@ -530,8 +597,8 @@ public:
 
 		const bool inside	  = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
 		const bool refraction = in.Context.L(2) < 0.0f;
-		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction) * std::abs(in.Context.NdotL());
-		out.PDF_S			  = (mMeasurement.hasBothRT() ? 0.5f : 1) * mMeasurement.pdf(in.Context.V, in.Context.L, inside, refraction);
+		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction) /* std::abs(in.Context.NdotL())*/;
+		out.PDF_S			  = mMeasurement.pdf(in.Context.V, in.Context.L, inside, refraction);
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}
 
@@ -544,19 +611,11 @@ public:
 
 		float pdf;
 		float weight;
-		if (mMeasurement.hasBothRT()) {
-			SplitSample1D sample(in.RND[0], 0, 2);
-			out.L = mMeasurement.sampleIncident(Vector2f(sample.uniform(), in.RND[1]), in.Context.V, inside, (sample.integral() != 1), pdf, weight);
-			pdf /= 2;
-		} else if (mMeasurement.hasTransmission()) {
-			out.L = mMeasurement.sampleIncident(in.RND, in.Context.V, inside, true, pdf, weight);
-		} else {
-			out.L = mMeasurement.sampleIncident(in.RND, in.Context.V, inside, false, pdf, weight);
-		}
+		out.L = mMeasurement.sample(in.RND, in.Context.V, inside, pdf, weight);
 
 		auto ectx			  = in.Context.expand(out.L);
 		const bool refraction = ectx.L(2) < 0.0f;
-		out.Weight			  = mTint->eval(in.ShadingContext) * weight * std::abs(ectx.NdotL());
+		out.Weight			  = mTint->eval(in.ShadingContext) * weight /* std::abs(ectx.NdotL())*/;
 		out.PDF_S			  = pdf;
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
 	}

@@ -67,7 +67,8 @@ public:
 	inline float sampleContinuous(float u, float& pdf, size_t* offset = nullptr) const;
 	inline float continuousPdf(float u, size_t* offset = nullptr) const;
 
-	inline size_t sampleDiscrete(float u, float& pdf) const;
+	inline size_t sampleDiscrete(float u, float& pdf, float* remainder = nullptr) const;
+	inline float discretePdfForBin(size_t bin) const;
 	inline float discretePdf(float u) const;
 
 	// The given CDF is assumed to be normalized such that its last entry is exactly 1

@@ -53,5 +53,11 @@ inline Vector3f cartesian_from_uv(float u, float v)
 					 u * 2 * PR_PI);
 }
 
+// Calculate distance between two points given as a theta and phi pair on the spherical surface
+inline float distance(const Vector2f& tp1, const Vector2f& tp2)
+{
+	return PR_SQRT2 * std::sqrt(1 + std::cos(tp1(0)) * std::cos(tp2(0)) - std::sin(tp1(0)) * std::sin(tp2(0)) * std::cos(tp1(1) - tp2(1)));
+}
+
 } // namespace Spherical
 } // namespace PR
