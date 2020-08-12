@@ -7,11 +7,9 @@
 #include "material/IMaterialPlugin.h"
 #include "math/Sampling.h"
 #include "math/Spherical.h"
-#include "math/Tangent.h"
 #include "renderer/RenderContext.h"
 #include "sampler/Distribution1D.h"
 #include "sampler/SplitSample.h"
-#include "spectral/SpectralUpsampler.h"
 
 #include <sstream>
 #include <tbb/blocked_range.h>
@@ -361,13 +359,23 @@ private:
 	std::shared_ptr<KlemsComponent> mTransmission;
 };
 
+enum AllowedComponents {
+	AC_FrontReflection	 = 0x1,
+	AC_FrontTransmission = 0x2,
+	AC_BackReflection	 = 0x4,
+	AC_BackTransmission	 = 0x8,
+	AC_FrontAll			 = AC_FrontReflection | AC_FrontTransmission,
+	AC_BackAll			 = AC_BackReflection | AC_BackTransmission,
+	AC_ReflectionAll	 = AC_FrontReflection | AC_BackReflection,
+	AC_TransmissionAll	 = AC_FrontTransmission | AC_BackTransmission,
+	AC_All				 = AC_FrontAll | AC_BackAll
+};
 class KlemsMeasurement {
 public:
-	KlemsMeasurement(SpectralUpsampler* upsampler, const std::string& filename)
+	KlemsMeasurement(const std::string& filename, int allowedComponents)
 		: mFilename(filename)
 		, mGood(false)
 	{
-		PR_ASSERT(upsampler, "Expected valid upsampler");
 		// Information about format etc is available at https://windows.lbl.gov/tools/window/documentation
 
 		// Read Radiance based klems BSDF xml document
@@ -508,13 +516,13 @@ public:
 
 			// Select correct component
 			const std::string direction = block.child_value("WavelengthDataDirection");
-			if (direction == "Transmission Front")
+			if (direction == "Transmission Front" && (allowedComponents & AC_FrontTransmission))
 				transmissionFront = component;
-			else if (direction == "Reflection Back")
+			else if (direction == "Reflection Back" && (allowedComponents & AC_BackReflection))
 				reflectionBack = component;
-			else if (direction == "Transmission Back")
+			else if (direction == "Transmission Back" && (allowedComponents & AC_BackTransmission))
 				transmissionBack = component;
-			else
+			else if (allowedComponents & AC_FrontReflection)
 				reflectionFront = component;
 		}
 
@@ -644,9 +652,30 @@ public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
 		const ParameterGroup& params = ctx.Parameters;
-		KlemsMeasurement measurement(ctx.Env->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
+		int allowedComponents		 = AC_All;
+		if (params.getBool("no_front_reflection", false))
+			allowedComponents &= ~AC_FrontReflection;
+		if (params.getBool("no_front_transmission", false))
+			allowedComponents &= ~AC_FrontTransmission;
+		if (params.getBool("no_back_reflection", false))
+			allowedComponents &= ~AC_BackReflection;
+		if (params.getBool("no_back_transmission", false))
+			allowedComponents &= ~AC_BackTransmission;
+		if (params.getBool("no_front", false))
+			allowedComponents &= ~AC_FrontAll;
+		if (params.getBool("no_back", false))
+			allowedComponents &= ~AC_BackAll;
+		if (params.getBool("no_reflection", false))
+			allowedComponents &= ~AC_ReflectionAll;
+		if (params.getBool("no_transmission", false))
+			allowedComponents &= ~AC_TransmissionAll;
 
-		if (params.getBool("both_sides", true))
+		if (allowedComponents == 0)
+			PR_LOG(L_WARNING) << "No allowed components in the Klems BSDF, therefor it will be black. Are you sure you want this?" << std::endl;
+
+		KlemsMeasurement measurement(ctx.escapePath(params.getString("filename", "")), allowedComponents);
+
+		if (params.getBool("both_sides", allowedComponents == AC_All))
 			measurement.ensureFrontBack();
 
 		if (measurement.isValid())
