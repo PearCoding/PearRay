@@ -308,7 +308,7 @@ public:
 			const size_t row   = mReflection->row()->indexOf(out(0), out(1));
 			PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
 			float refl = mReflectivity[row];
-			if (u[0] < refl) {
+			if (u[0] <= refl) {
 				do_reflection = true;
 				u2[0] /= refl;
 				pdf2 = refl;
@@ -346,8 +346,8 @@ private:
 				const float t = tm[i];
 
 				const float n = r + t;
-				if (PR_UNLIKELY(n == 0))
-					mReflectivity[i] = 1;
+				if (PR_UNLIKELY(n <= PR_EPSILON))
+					mReflectivity[i] = r >= t ? 1.0f : 0.0f;
 				else
 					mReflectivity[i] = r / n;
 			}
