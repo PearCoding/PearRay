@@ -5,6 +5,7 @@
 namespace PR {
 ToneMapper::ToneMapper()
 	: mColorMode(TCM_SRGB)
+	, mScale(1.0f)
 {
 }
 
@@ -17,7 +18,7 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, 
 	switch (mColorMode) {
 	case TCM_SRGB:
 		RGBConverter::fromXYZ(xyzIn, rgbOut, outElems, pixelCount);
-		return;
+		break;
 	case TCM_XYZ:
 		if (outElems == 3) {
 			memcpy(rgbOut, xyzIn, sizeof(float) * pixelCount * 3);
@@ -29,7 +30,7 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, 
 				rgbOut[i * outElems + 2] = xyzIn[i * IElems + 2];
 			}
 		}
-		return;
+		break;
 	case TCM_XYZ_NORM:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < pixelCount; ++i) {
@@ -42,7 +43,7 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, 
 			rgbOut[i * outElems + 1] *= F;
 			rgbOut[i * outElems + 2] *= F;
 		}
-		return;
+		break;
 	case TCM_LUMINANCE:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < pixelCount; ++i) {
@@ -51,7 +52,16 @@ void ToneMapper::map(const float* PR_RESTRICT xyzIn, float* PR_RESTRICT rgbOut, 
 			rgbOut[i * outElems + 1] = Y;
 			rgbOut[i * outElems + 2] = Y;
 		}
-		return;
+		break;
+	}
+
+	if (mScale != 1) {
+		PR_OPT_LOOP
+		for (size_t i = 0; i < pixelCount; ++i) {
+			rgbOut[i * outElems + 0] *= mScale;
+			rgbOut[i * outElems + 1] *= mScale;
+			rgbOut[i * outElems + 2] *= mScale;
+		}
 	}
 }
 } // namespace PR

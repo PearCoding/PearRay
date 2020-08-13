@@ -102,7 +102,8 @@ void setup_tonemapper(py::module& m)
 				mem,
 				free_when_done);
 		})
-		.def_property("colorMode", &ToneMapper::colorMode, &ToneMapper::setColorMode);
+		.def_property("colorMode", &ToneMapper::colorMode, &ToneMapper::setColorMode)
+		.def_property("scale", &ToneMapper::scale, &ToneMapper::setScale);
 
 	py::enum_<ToneColorMode>(m, "ToneColorMode")
 		.value("SRGB", TCM_SRGB)

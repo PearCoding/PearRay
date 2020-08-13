@@ -24,7 +24,11 @@ public:
 	inline ToneColorMode colorMode() const { return mColorMode; }
 	inline void setColorMode(ToneColorMode mode) { mColorMode = mode; }
 
+	inline float scale() const { return mScale; }
+	inline void setScale(float s) { mScale = s; }
+
 private:
 	ToneColorMode mColorMode;
+	float mScale;
 };
 } // namespace PR

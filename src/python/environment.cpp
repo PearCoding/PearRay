@@ -14,6 +14,12 @@ namespace PRPY {
 PR_NO_SANITIZE_ADDRESS
 void setup_environment(py::module& m)
 {
+	py::class_<OutputSaveOptions>(m, "OutputSaveOptions")
+		.def(py::init<>())
+		.def_readwrite("NameSuffix", &OutputSaveOptions::NameSuffix)
+		//.def_readwrite("Image", &OutputSaveOptions::Image) /* TODO */
+		.def_readwrite("Force", &OutputSaveOptions::Force);
+
 	py::class_<Environment, std::shared_ptr<Environment>>(m, "Environment")
 		.def(py::init<std::wstring, std::wstring>())
 		.def("getMaterial", &Environment::getMaterial)
@@ -29,14 +35,17 @@ void setup_environment(py::module& m)
 		.def("save", &Environment::save)
 		.def("createSelectedIntegrator", &Environment::createSelectedIntegrator)
 		.def("createRenderFactory", &Environment::createRenderFactory)
-		.def_property("renderSettings",
-					  [](Environment& env) { return env.renderSettings(); },
-					  [](Environment& env, const RenderSettings& st) { env.renderSettings() = st; },
-					  py::return_value_policy::reference_internal);
+		.def_property(
+			"renderSettings",
+			[](Environment& env) { return env.renderSettings(); },
+			[](Environment& env, const RenderSettings& st) { env.renderSettings() = st; },
+			py::return_value_policy::reference_internal);
 
 	auto sl = py::class_<SceneLoader>(m, "SceneLoader")
 				  .def_static("loadFromString", &SceneLoader::loadFromString)
-				  .def_static("loadFromFile", &SceneLoader::loadFromFile);
+				  .def_static("loadFromFile", [](const std::wstring& path, const SceneLoader::LoadOptions& opts) {
+					  return SceneLoader::loadFromFile(path, opts);
+				  });
 
 	py::class_<SceneLoader::LoadOptions>(sl, "LoadOptions")
 		.def(py::init<>())
