@@ -33,10 +33,7 @@ Vector2f disc2square(const Vector2f& ds)
 /// Calculates radius [0, 1) phi[0, 2PI) coordinates from square coordinates
 Vector2f square2rphi(const Vector2f& sq)
 {
-	if (std::abs(sq(0)) >= std::abs(sq(1)))
-		return Vector2f(std::abs(sq(0)), PR_PI * sq(1) / (4 * sq(0)));
-	else
-		return Vector2f(std::abs(sq(1)), PR_PI / 2 - PR_PI * sq(0) / (4 * sq(1)));
+	return Vector2f(0, 0); // TODO
 }
 
 /// Calculates square coordinates from radius [0, 1) phi[0, 2PI) coordinates
