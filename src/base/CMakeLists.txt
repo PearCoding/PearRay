@@ -22,6 +22,10 @@ set(PR_Src
   config/Version.h.in
   container/IndexSort.h
   container/Interval.h
+  container/NTree.h
+  container/NTree.inl
+  container/NTreeBuilder.h
+  container/NTreeBuilder.inl
   container/QuickSort.h
   container/RadixSort.h
   curve/Curve.h
