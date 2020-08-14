@@ -42,6 +42,7 @@ set(PR_Src
   network/SocketImplWindows.inl
   math/Bits.h
   math/Compression.h
+  math/Concentric.h
   math/Fresnel.h
   math/Generator.h
   math/Hash.h

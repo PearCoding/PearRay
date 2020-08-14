@@ -92,31 +92,6 @@ inline Vector2f triangle(float u1, float u2)
 	return u1 < u2 ? Vector2f(u1, u2 - u1) : Vector2f(u2, u1 - u2);
 }
 
-// Uniform
-inline Vector2f concentric_disk_rtheta(float u1, float u2)
-{
-	Vector2f off = 2.0f * Vector2f(u1, u2) - Vector2f(1, 1);
-	if (off(0) == 0 && off(1) == 0)
-		return Vector2f::Zero();
-
-	float theta, r;
-	if (std::abs(off(0)) > std::abs(off(1))) {
-		r	  = off(0);
-		theta = 4 * PR_PI * (off(1) / off(0));
-	} else {
-		r	  = off(1);
-		theta = 2 * PR_PI - 4 * PR_PI * (off(0) / off(1));
-	}
-
-	return Vector2f(r, theta);
-}
-
-inline Vector2f concentric_disk(float u1, float u2)
-{
-	Vector2f rtheta = concentric_disk_rtheta(u1, u2);
-	return rtheta(0) * Vector2f(std::cos(rtheta(1)), std::sin(rtheta(1)));
-}
-
 // Uniform cone
 // Orientation +Z (shading space)
 inline Vector3f uniform_cone(float u1, float u2, float cos_theta_max)
