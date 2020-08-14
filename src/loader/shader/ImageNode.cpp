@@ -24,7 +24,7 @@ ImageNode::ImageNode(OIIO::TextureSystem* tsys,
 	if (!spec) {
 		PR_LOG(L_FATAL) << "Couldn't lookup texture specification of image " << mFilename << std::endl;
 	} else {
-		if (spec->get_string_attribute("oiio.ColorSpace") != "PRParametric")
+		if (spec->get_string_attribute("oiio:ColorSpace") != "PRParametric")
 			PR_LOG(L_WARNING) << "Image " << mFilename << " is not parametric " << std::endl;
 
 		const OIIO::ImageIOParameter* ptex = spec->find_attribute("ptex:meshType", OIIO::TypeDesc::STRING);

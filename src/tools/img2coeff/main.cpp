@@ -122,7 +122,7 @@ bool write_output(const std::string& filename, const std::vector<float>& data, i
 	spec.channelnames.push_back("coeff.A");
 	spec.channelnames.push_back("coeff.B");
 	spec.channelnames.push_back("coeff.C");
-	spec.attribute("oiio:ColorSpace", "Custom");
+	spec.attribute("oiio:ColorSpace", "PRParametric");
 	spec.attribute("Software", "PearRay img2coeff tool");
 
 	out->open(filename, spec);

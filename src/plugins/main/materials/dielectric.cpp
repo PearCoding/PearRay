@@ -29,7 +29,7 @@ public:
 
 	virtual ~DielectricMaterial() = default;
 
-	int flags() const override { return MF_DeltaDistribution | (IsThin ? 0 : MF_SpectralVarying); }
+	int flags() const override { return MF_DeltaDistribution | MF_SpectralVarying; }
 
 	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, const ShadingContext& sctx) const
 	{

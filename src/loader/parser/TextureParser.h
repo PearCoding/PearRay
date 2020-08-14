@@ -9,11 +9,10 @@ class DataGroup;
 }
 
 namespace PR {
-class Environment;
+class SceneLoadContext;
 class SceneLoader;
 class PR_LIB_LOADER TextureParser {
 public:
-	void parse(Environment* env,
-			   const std::string& name, const DL::DataGroup& group) const;
+	void parse(const SceneLoadContext& ctx, const std::string& name, const DL::DataGroup& group) const;
 };
 } // namespace PR

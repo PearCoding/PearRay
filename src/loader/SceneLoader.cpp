@@ -699,7 +699,7 @@ void SceneLoader::addTexture(const DL::DataGroup& group, SceneLoadContext& ctx)
 	}
 
 	TextureParser parser;
-	parser.parse(ctx.Env, name, group); // Will be added to ctx here
+	parser.parse(ctx, name, group); // Will be added to ctx here
 }
 
 void SceneLoader::addNode(const DL::DataGroup& group, SceneLoadContext& ctx)

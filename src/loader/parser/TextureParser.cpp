@@ -52,10 +52,13 @@ OIIO::TextureOpt::InterpMode parseInterpolation(const std::string& name)
 		return OIIO::TextureOpt::InterpSmartBicubic;
 }
 
-void TextureParser::parse(Environment* env, const std::string& name, const DL::DataGroup& group) const
+void TextureParser::parse(const SceneLoadContext& ctx, const std::string& name, const DL::DataGroup& group) const
 {
 	DL::Data filenameD = group.getFromKey("file");
-	DL::Data typeD	 = group.getFromKey("type");
+	if (!filenameD.isValid())
+		filenameD = group.getFromKey("filename");
+
+	DL::Data typeD = group.getFromKey("type");
 	//DL::Data dimD = group.getFromKey("dimension");
 	DL::Data wrapModeD			= group.getFromKey("wrap");
 	DL::Data mipModeD			= group.getFromKey("mip");
@@ -105,7 +108,7 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 	}
 
 	if (blurD.isNumber()) {
-		float f	= blurD.getNumber();
+		float f	   = blurD.getNumber();
 		opts.sblur = f;
 		opts.tblur = f;
 		opts.rblur = f;
@@ -134,16 +137,16 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		opts.anisotropic = static_cast<int>(anisoD.getInt());
 	}
 
-	std::string filename;
+	std::filesystem::path filename;
 	if (filenameD.type() == DL::DT_String) {
-		filename = filenameD.getString();
+		filename = ctx.escapePath(filenameD.getString());
 	} else {
 		PR_LOG(L_ERROR) << "No valid filename given for texture " << name << std::endl;
 		return;
 	}
 
 	if (!std::filesystem::exists(filename) || !std::filesystem::is_regular_file(filename)) {
-		PR_LOG(L_ERROR) << "No valid file fount for texture " << name << " at " << filename << std::endl;
+		PR_LOG(L_ERROR) << "No valid file found for texture " << name << " at " << filename << std::endl;
 		return;
 	}
 
@@ -152,24 +155,24 @@ void TextureParser::parse(Environment* env, const std::string& name, const DL::D
 		type = typeD.getString();
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 	} else {
-		PR_LOG(L_ERROR) << "No valid type given for texture " << name << std::endl;
-		return;
+		PR_LOG(L_WARNING) << "No valid type given for texture " << name << ": Assuming color" << std::endl;
+		type = "color";
 	}
 
 	if (type == "scalar"
 		|| type == "grayscale"
 		|| type == "color"
 		|| type == "spectral") {
-		if (env->hasNode(name)) {
+		if (ctx.Env->hasNode(name)) {
 			PR_LOG(L_ERROR) << "Texture " << name << " already exists" << std::endl;
 			return;
 		}
 
 		// TODO: Prepare image and cache it out if necessary!
 		auto output = std::make_shared<ImageNode>(
-			(OIIO::TextureSystem*)env->textureSystem(),
+			(OIIO::TextureSystem*)ctx.Env->textureSystem(),
 			opts, filename);
-		env->addNode(name, output);
+		ctx.Env->addNode(name, output);
 	} else {
 		PR_LOG(L_ERROR) << "No known type given for texture " << name << std::endl;
 		return;
