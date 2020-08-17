@@ -57,9 +57,8 @@ public:
 
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
-		float pdf_s;
-		out.L	   = Sampling::cos_hemi(in.RND[0], in.RND[1], pdf_s);
-		out.PDF_S  = pdf_s;
+		out.L	   = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 		out.Weight = mAlbedo->eval(sctx) * std::abs(out.L[2]);
 		out.Type   = MST_DiffuseReflection;
 	}

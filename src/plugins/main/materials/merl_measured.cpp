@@ -148,13 +148,12 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		float pdf;
-		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1], pdf);
+		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 
 		auto ectx  = in.Context.expand(out.L);
 		out.Weight = mTint->eval(in.ShadingContext) * mMeasurement.eval(ectx.H, ectx.L, ectx.WavelengthNM);
 		out.Type   = MST_DiffuseReflection;
-		out.PDF_S  = pdf;
+		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 	}
 
 	std::string dumpInformation() const override

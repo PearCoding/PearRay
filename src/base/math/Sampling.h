@@ -5,15 +5,13 @@
 namespace PR {
 namespace Sampling {
 // Uniform [0, 1]
-inline Vector3f sphere(float u1, float u2, float& pdf)
+inline Vector3f sphere(float u1, float u2)
 {
-	const float z		 = 1 - 2 * u1;
-	const float sinTheta = std::sqrt(std::max(0.0f, 1.0f - z * z));
+	const float cosTheta = 1 - 2 * u1;
+	const float sinTheta = std::sqrt(std::max(0.0f, 1.0f - cosTheta * cosTheta));
 	const float phi		 = 2 * PR_PI * u2;
 
-	pdf = PR_INV_PI * 0.25f;
-
-	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), z);
+	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
 }
 
 inline float sphere_pdf()
@@ -22,12 +20,10 @@ inline float sphere_pdf()
 }
 
 // Orientation +Z
-inline Vector3f hemi(float u1, float u2, float& pdf)
+inline Vector3f hemi(float u1, float u2)
 {
 	float sinTheta = std::sqrt(std::max(0.0f, 1.0f - u1 * u1));
 	float phi	   = 2 * PR_PI * u2;
-
-	pdf = PR_INV_PI * 0.5f;
 
 	return Vector3f(sinTheta * std::cos(phi), sinTheta * std::sin(phi), u1);
 }
@@ -39,7 +35,7 @@ inline float hemi_pdf()
 
 // Cosine weighted
 // Orientation +Z (shading space)
-inline Vector3f cos_hemi(float u1, float u2, float& pdf)
+inline Vector3f cos_hemi(float u1, float u2)
 {
 	const float cosPhi = std::sqrt(u1);
 	const float sinPhi = std::sqrt(1 - u1); // Faster?
@@ -51,12 +47,17 @@ inline Vector3f cos_hemi(float u1, float u2, float& pdf)
 	const float x = sinPhi * thCos;
 	const float y = sinPhi * thSin;
 
-	pdf = cosPhi * PR_INV_PI;
-
 	return Vector3f(x, y, cosPhi);
 }
 
-inline Vector3f cos_hemi(float u1, float u2, float m, float& pdf)
+inline float cos_hemi_pdf(float NdotL)
+{
+	return NdotL * PR_INV_PI;
+}
+
+// Power cosine weighted
+// Orientation +Z (shading space)
+inline Vector3f cos_hemi(float u1, float u2, float m)
 {
 	const float cosPhi = std::pow(u1, 1 / (m + 1.0f));
 	const float sinPhi = std::sqrt(1 - cosPhi * cosPhi);
@@ -69,14 +70,7 @@ inline Vector3f cos_hemi(float u1, float u2, float m, float& pdf)
 	const float x = sinPhi * thCos * norm;
 	const float y = sinPhi * thSin * norm;
 
-	pdf = (m + 1.0f) * std::pow(cosPhi, m) * PR_INV_2_PI;
-
 	return Vector3f(x, y, cosPhi * norm);
-}
-
-inline float cos_hemi_pdf(float NdotL)
-{
-	return NdotL * PR_INV_PI;
 }
 
 inline float cos_hemi_pdf(float NdotL, float m)
@@ -85,11 +79,19 @@ inline float cos_hemi_pdf(float NdotL, float m)
 }
 
 // Uniform
+// Sample barycentric point on the unit triangle
 // Returns barycentric coordinates
 inline Vector2f triangle(float u1, float u2)
 {
 	// Simplex method
 	return u1 < u2 ? Vector2f(u1, u2 - u1) : Vector2f(u2, u1 - u2);
+}
+
+// Return the pdf based on area sampling of the unit triangle (A=1/2)
+inline float triangle_pdf()
+{
+	constexpr float A = 0.5f;
+	return 1 / A;
 }
 
 // Uniform cone

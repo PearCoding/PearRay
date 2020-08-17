@@ -39,10 +39,9 @@ public:
 			grp.computeShadingPoint(i, spt);
 
 			size_t occlusions = 0;
-			float pdf;
 			for (size_t i = 0; i < mSampleCount; ++i) {
 				Vector2f rnd  = random.get2D();
-				Vector3f dir  = Sampling::hemi(rnd(0), rnd(1), pdf);
+				Vector3f dir  = Sampling::hemi(rnd(0), rnd(1));
 				Vector3f ndir = Tangent::fromTangentSpace(spt.Surface.N, spt.Surface.Nx, spt.Surface.Ny,
 														  dir);
 
