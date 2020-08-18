@@ -370,7 +370,8 @@ double art_blackbody_dd_value(
     double  value;
     
     value =   ( c1 / ( pow( lambda, 5.0 ) ) )
-            * ( 1.0 / ( exp( c2 / ( lambda * temperature ) ) - 1.0 ) );
+              * ( 1.0 / expm1( c2 / ( lambda * temperature ) ) );
+//            * ( 1.0 / ( exp( c2 / ( lambda * temperature ) ) - 1.0 ) );
 
     return value;
 }

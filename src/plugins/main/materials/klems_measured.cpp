@@ -36,6 +36,8 @@ class KlemsBasis {
 public:
 	using MultiIndex = std::pair<int, int>;
 
+	KlemsBasis() = default;
+
 	struct ThetaBasis {
 		float CenterTheta;
 		float LowerTheta;
@@ -142,7 +144,7 @@ public:
 private:
 	std::vector<ThetaBasis> mThetaBasis;
 	std::vector<size_t> mThetaLinearOffset;
-	size_t mEntryCount;
+	size_t mEntryCount = 0;
 };
 
 using KlemsMatrix = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
