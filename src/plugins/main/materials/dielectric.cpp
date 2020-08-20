@@ -68,7 +68,12 @@ public:
 			SpectralBlob spec  = mSpecularity->eval(in.ShadingContext);
 			SpectralBlob trans = mTransmission->eval(in.ShadingContext);
 			SpectralBlob F	   = fresnelTerm(in.Context, in.ShadingContext);
-			out.Weight		   = spec * F + trans * (1 - F);
+			if constexpr (IsThin) {
+				// Account for scattering between interfaces
+				F += (F < 1.0f).select((1 - F) * F / (F + 1), 0);
+			}
+
+			out.Weight = spec * F + trans * (1 - F);
 		} else {
 			out.Weight = mSpecularity->eval(in.ShadingContext);
 		}
@@ -87,7 +92,12 @@ public:
 		PR_PROFILE_THIS;
 
 		float eta;
-		const float F = fresnelTermHero(in.Context, in.ShadingContext, eta);
+		float F = fresnelTermHero(in.Context, in.ShadingContext, eta);
+		if constexpr (IsThin) {
+			// Account for scattering between interfaces
+			if (F < 1.0f)
+				F += (1 - F) * F / (F + 1);
+		}
 
 		out.Weight = mSpecularity->eval(in.ShadingContext); // The weight is independent of the fresnel term
 
