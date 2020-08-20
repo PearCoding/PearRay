@@ -48,15 +48,16 @@ constexpr float BOUNCE_RAY_MAX = PR_INF;
 
 class IntDirectInstance : public IIntegratorInstance {
 public:
-	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepth, bool msi)
+	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool msi)
 		: mPipeline(ctx)
-		, mSampler((maxRayDepth + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
+		, mSampler((maxRayDepthHard + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
 		, mInfLightCount(ctx->scene()->infiniteLights().size())
 		, mLightSampleCount(lightSamples)
-		, mMaxRayDepth(maxRayDepth)
+		, mMaxRayDepthSoft(maxRayDepthSoft)
+		, mMaxRayDepthHard(maxRayDepthHard)
 		, mMSIEnabled(msi)
 	{
-		mInfLightHandled.resize(maxRayDepth * mInfLightCount, false);
+		mInfLightHandled.resize(maxRayDepthHard * mInfLightCount, false);
 	}
 
 	virtual ~IntDirectInstance() = default;
@@ -180,14 +181,13 @@ public:
 
 		const bool allowMSI = mMSIEnabled && !material->hasDeltaDistribution();
 
-		constexpr int MIN_DEPTH			= 4; //Minimum level of depth after which russian roulette will apply
 		constexpr float DEPTH_DROP_RATE = 0.90f;
 
 		// Russian Roulette
 		// TODO: Add adjoint russian roulette (and maybe splitting)
 		const float roussian_prob = mSampler.next1D();
-		const float scatProb	  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - MIN_DEPTH));
-		if (spt.Ray.IterationDepth + 1 >= mMaxRayDepth
+		const float scatProb	  = std::min<float>(1.0f, pow(DEPTH_DROP_RATE, (int)spt.Ray.IterationDepth - (int)mMaxRayDepthSoft));
+		if (spt.Ray.IterationDepth + 1 >= mMaxRayDepthHard
 			|| roussian_prob > scatProb)
 			return false;
 
@@ -397,7 +397,7 @@ public:
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)
 	{
 		PR_PROFILE_THIS;
-		const size_t maxPathSize = mMaxRayDepth + 2;
+		const size_t maxPathSize = mMaxRayDepthHard + 2;
 
 		LightPath path(maxPathSize);
 		path.addToken(LightPathToken::Camera());
@@ -460,15 +460,17 @@ private:
 	std::vector<bool> mInfLightHandled;
 	const size_t mInfLightCount;
 	const size_t mLightSampleCount;
-	const size_t mMaxRayDepth;
+	const size_t mMaxRayDepthSoft;
+	const size_t mMaxRayDepthHard;
 	const bool mMSIEnabled;
 };
 
 class IntDirect : public IIntegrator {
 public:
-	explicit IntDirect(size_t lightSamples, size_t maxRayDepth, bool msi)
+	explicit IntDirect(size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool msi)
 		: mLightSampleCount(lightSamples)
-		, mMaxRayDepth(maxRayDepth)
+		, mMaxRayDepthSoft(maxRayDepthSoft)
+		, mMaxRayDepthHard(maxRayDepthHard)
 		, mMSIEnabled(msi)
 	{
 	}
@@ -477,12 +479,13 @@ public:
 
 	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		return std::make_shared<IntDirectInstance>(ctx, mLightSampleCount, mMaxRayDepth, mMSIEnabled);
+		return std::make_shared<IntDirectInstance>(ctx, mLightSampleCount, mMaxRayDepthSoft, mMaxRayDepthHard, mMSIEnabled);
 	}
 
 private:
 	const size_t mLightSampleCount;
-	const size_t mMaxRayDepth;
+	const size_t mMaxRayDepthSoft;
+	const size_t mMaxRayDepthHard;
 	const bool mMSIEnabled;
 };
 
@@ -491,18 +494,20 @@ public:
 	explicit IntDirectFactory(const ParameterGroup& params)
 	{
 		mLightSampleCount = (size_t)params.getUInt("light_sample_count", 1);
-		mMaxRayDepth	  = (size_t)params.getUInt("max_ray_depth", 64);
+		mMaxRayDepthHard  = (size_t)params.getUInt("max_ray_depth", 64);
+		mMaxRayDepthSoft  = std::min(mMaxRayDepthHard, (size_t)params.getUInt("soft_max_ray_depth", 4));
 		mMSIEnabled		  = params.getBool("msi", true);
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
-		return std::make_shared<IntDirect>(mLightSampleCount, mMaxRayDepth, mMSIEnabled);
+		return std::make_shared<IntDirect>(mLightSampleCount, mMaxRayDepthSoft, mMaxRayDepthHard, mMSIEnabled);
 	}
 
 private:
 	size_t mLightSampleCount;
-	size_t mMaxRayDepth;
+	size_t mMaxRayDepthSoft;
+	size_t mMaxRayDepthHard;
 	bool mMSIEnabled;
 };
 

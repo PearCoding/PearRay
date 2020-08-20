@@ -13,13 +13,13 @@
 
 namespace PR {
 
-template <bool HasTransmissionColor, bool IsThin>
+template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
 class DielectricMaterial : public IMaterial {
 public:
 	DielectricMaterial(uint32 id,
-				  const std::shared_ptr<FloatSpectralNode>& spec,
-				  const std::shared_ptr<FloatSpectralNode>& trans,
-				  const std::shared_ptr<FloatSpectralNode>& ior)
+					   const std::shared_ptr<FloatSpectralNode>& spec,
+					   const std::shared_ptr<FloatSpectralNode>& trans,
+					   const std::shared_ptr<FloatSpectralNode>& ior)
 		: IMaterial(id)
 		, mSpecularity(spec)
 		, mTransmission(trans)
@@ -29,7 +29,7 @@ public:
 
 	virtual ~DielectricMaterial() = default;
 
-	int flags() const override { return MF_DeltaDistribution | MF_SpectralVarying; }
+	int flags() const override { return MF_DeltaDistribution | (SpectralVarying ? MF_SpectralVarying : 0); }
 
 	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, const ShadingContext& sctx) const
 	{
@@ -125,14 +125,16 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <DielectricMaterial>:" << std::endl
-			   << "    Specularity:  " << mSpecularity->dumpInformation() << std::endl;
+			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl;
 
 		if constexpr (HasTransmissionColor)
-			stream << "    Transmission: " << mTransmission->dumpInformation() << std::endl;
+			stream << "    Transmission:     " << mTransmission->dumpInformation() << std::endl;
 
-		stream << "    IOR:          " << mIOR->dumpInformation() << std::endl;
+		stream << "    IOR:             " << mIOR->dumpInformation() << std::endl;
 		if constexpr (IsThin)
-			stream << "    IsThin:       true" << std::endl;
+			stream << "    IsThin:          true" << std::endl;
+		if constexpr (IsThin)
+			stream << "    SpectralVarying: true" << std::endl;
 
 		return stream.str();
 	}
@@ -143,10 +145,10 @@ private:
 	std::shared_ptr<FloatSpectralNode> mIOR;
 };
 
-template <bool HasTransmissionColor, bool IsThin>
+template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial(uint32 id, const SceneLoadContext& ctx)
 {
-	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin>>(
+	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin, SpectralVarying>>(
 		id,
 		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("specularity"), 1),
 		HasTransmissionColor ? ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("transmission"), 1) : nullptr,
@@ -157,16 +159,34 @@ class DielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		if (ctx.Parameters.hasParameter("transmission")) {
-			if (ctx.Parameters.getBool("thin", false))
-				return createMaterial<true, true>(id, ctx);
-			else
-				return createMaterial<true, false>(id, ctx);
+		const bool spectralVarying = ctx.Parameters.getBool("spectral_varying", true);
+		const bool hasTransmission = ctx.Parameters.hasParameter("transmission");
+		const bool isThin		   = ctx.Parameters.getBool("thin", false);
+
+		if (spectralVarying) {
+			if (hasTransmission) {
+				if (isThin)
+					return createMaterial<true, true, true>(id, ctx);
+				else
+					return createMaterial<true, false, true>(id, ctx);
+			} else {
+				if (isThin)
+					return createMaterial<false, true, true>(id, ctx);
+				else
+					return createMaterial<false, false, true>(id, ctx);
+			}
 		} else {
-			if (ctx.Parameters.getBool("thin", false))
-				return createMaterial<false, true>(id, ctx);
-			else
-				return createMaterial<false, false>(id, ctx);
+			if (hasTransmission) {
+				if (isThin)
+					return createMaterial<true, true, false>(id, ctx);
+				else
+					return createMaterial<true, false, false>(id, ctx);
+			} else {
+				if (isThin)
+					return createMaterial<false, true, false>(id, ctx);
+				else
+					return createMaterial<false, false, false>(id, ctx);
+			}
 		}
 	}
 
