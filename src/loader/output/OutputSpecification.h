@@ -31,7 +31,7 @@ public:
 
 	void setup(const std::shared_ptr<RenderContext>& renderer);
 
-	void parse(Environment* env, const std::vector<DL::DataGroup>& groups);
+	void parse(Environment* env, const DL::DataGroup& group);
 	void save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const;
 
 private:

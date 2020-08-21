@@ -149,27 +149,19 @@ std::shared_ptr<Environment> SceneLoader::createEnvironment(const std::vector<DL
 
 void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, SceneLoadContext& ctx)
 {
-	// Output information
-	ctx.Env->outputSpecification().parse(ctx.Env, groups);
-
-	// Includees
 	for (const DL::DataGroup& entry : groups) {
-		if (entry.id() == "scene") {
+		if (entry.id() == "scene")
 			PR_LOG(L_ERROR) << "[Loader] Invalid inner scene entry" << std::endl;
-		} else if (entry.id() == "include")
+		else if (entry.id() == "include")
 			addInclude(entry, ctx);
-	}
-
-	// Independent information
-	for (const DL::DataGroup& entry : groups) {
-		if (entry.id() == "spectrum") // Just a sophisticated node
-			addSpectrum(entry, ctx);
 		else if (entry.id() == "sampler")
 			addSampler(entry, ctx);
 		else if (entry.id() == "filter")
 			addFilter(entry, ctx);
 		else if (entry.id() == "integrator")
 			addIntegrator(entry, ctx);
+		else if (entry.id() == "spectrum") // Just a sophisticated node
+			addSpectrum(entry, ctx);
 		else if (entry.id() == "texture") // Just a sophisticated node
 			addTexture(entry, ctx);
 		else if (entry.id() == "node")
@@ -178,24 +170,18 @@ void SceneLoader::setupEnvironment(const std::vector<DL::DataGroup>& groups, Sce
 			addMesh(entry, ctx);
 		else if (entry.id() == "graph" || entry.id() == "embed")
 			addSubGraph(entry, ctx);
-	}
-
-	// Now semi-dependent information
-	for (const DL::DataGroup& entry : groups) {
-		if (entry.id() == "material")
+		else if (entry.id() == "material")
 			addMaterial(entry, ctx);
 		else if (entry.id() == "emission")
 			addEmission(entry, ctx);
-	}
-
-	// Now entities and lights
-	for (const DL::DataGroup& entry : groups) {
-		if (entry.id() == "entity")
+		else if (entry.id() == "entity")
 			addEntity(entry, nullptr, ctx);
 		else if (entry.id() == "light")
 			addLight(entry, ctx);
 		else if (entry.id() == "camera")
 			addCamera(entry, ctx);
+		else if (entry.id() == "output")
+			ctx.Env->outputSpecification().parse(ctx.Env, entry);
 	}
 }
 
@@ -912,14 +898,14 @@ void SceneLoader::addInclude(const DL::DataGroup& group, SceneLoadContext& ctx)
 
 void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 {
-	PR_LOG(L_DEBUG) << "[Loader] Including " << path << std::endl;
-	std::filesystem::path stdpath = path;
-	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), stdpath) != ctx.FileStack.end()) {
-		PR_LOG(L_ERROR) << "[Loader] Include file " << path << " already included! " << std::endl;
+	std::filesystem::path real_path = ctx.escapePath(path);
+	PR_LOG(L_DEBUG) << "[Loader] Including " << real_path << std::endl;
+	if (std::find(ctx.FileStack.begin(), ctx.FileStack.end(), real_path) != ctx.FileStack.end()) {
+		PR_LOG(L_ERROR) << "[Loader] Include file " << real_path << " already included! " << std::endl;
 		return;
 	}
 
-	std::ifstream stream(stdpath.c_str());
+	std::ifstream stream(real_path.c_str());
 	DL::SourceLogger logger;
 	DL::DataLisp dataLisp(&logger);
 	DL::DataContainer container;
@@ -927,7 +913,12 @@ void SceneLoader::include(const std::string& path, SceneLoadContext& ctx)
 	dataLisp.parse(&stream);
 	dataLisp.build(container);
 
-	ctx.FileStack.push_back(stdpath);
+	if (container.getTopGroups().empty()) {
+		PR_LOG(L_WARNING) << "[Loader] Include file " << real_path << " is empty! " << std::endl;
+		return;
+	}
+
+	ctx.FileStack.push_back(real_path);
 	setupEnvironment(container.getTopGroups(), ctx);
 	PR_ASSERT(ctx.FileStack.size() >= 1, "Invalid push/pop count");
 	ctx.FileStack.pop_back();

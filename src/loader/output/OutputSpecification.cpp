@@ -229,110 +229,109 @@ std::string variableToString(AOV3D var)
 	return "UNKNOWN";
 }
 
-void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& groups)
+void OutputSpecification::parse(Environment*, const DL::DataGroup& entry)
 {
-	for (const auto& entry : groups) {
-		if (entry.id() == "output") {
-			DL::Data nameD = entry.getFromKey("name");
-			if (nameD.type() != DL::DT_String)
+	PR_ASSERT(entry.id() == "output", "Can only be of tag 'output'");
+	DL::Data nameD = entry.getFromKey("name");
+	if (nameD.type() != DL::DT_String) {
+		PR_LOG(L_ERROR) << "No name given for output" << std::endl;
+		return;
+	}
+
+	File file;
+	file.Name = nameD.getString();
+
+	for (size_t i = 0; i < entry.anonymousCount(); ++i) {
+		DL::Data channelD = entry.at(i);
+
+		if (channelD.type() == DL::DT_Group
+			&& channelD.getGroup().id() == "channel") {
+			DL::DataGroup channel = channelD.getGroup();
+			DL::Data typeD		  = channel.getFromKey("type");
+			DL::Data colorD		  = channel.getFromKey("color");
+			DL::Data lpeD		  = channel.getFromKey("lpe");
+
+			if (typeD.type() != DL::DT_String)
 				continue;
 
-			File file;
-			file.Name = nameD.getString();
+			std::string type = typeD.getString();
+			std::transform(type.begin(), type.end(), type.begin(), ::tolower);
 
-			for (size_t i = 0; i < entry.anonymousCount(); ++i) {
-				DL::Data channelD = entry.at(i);
+			ToneColorMode tcm = TCM_SRGB;
+			if (colorD.type() == DL::DT_String) {
+				std::string color = colorD.getString();
+				std::transform(color.begin(), color.end(), color.begin(), ::tolower);
+				if (color == "xyz")
+					tcm = TCM_XYZ;
+				else if (color == "norm_xyz")
+					tcm = TCM_XYZ_NORM;
+				else if (color == "lum" || color == "luminance" || color == "gray")
+					tcm = TCM_LUMINANCE;
+			}
 
-				if (channelD.type() == DL::DT_Group
-					&& channelD.getGroup().id() == "channel") {
-					DL::DataGroup channel = channelD.getGroup();
-					DL::Data typeD		  = channel.getFromKey("type");
-					DL::Data colorD		  = channel.getFromKey("color");
-					DL::Data lpeD		  = channel.getFromKey("lpe");
-
-					if (typeD.type() != DL::DT_String)
-						continue;
-
-					std::string type = typeD.getString();
-					std::transform(type.begin(), type.end(), type.begin(), ::tolower);
-
-					ToneColorMode tcm = TCM_SRGB;
-					if (colorD.type() == DL::DT_String) {
-						std::string color = colorD.getString();
-						std::transform(color.begin(), color.end(), color.begin(), ::tolower);
-						if (color == "xyz")
-							tcm = TCM_XYZ;
-						else if (color == "norm_xyz")
-							tcm = TCM_XYZ_NORM;
-						else if (color == "lum" || color == "luminance" || color == "gray")
-							tcm = TCM_LUMINANCE;
-					}
-
-					std::string lpe = "";
-					if (lpeD.type() == DL::DT_String) {
-						lpe = lpeD.getString();
-						if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
-							PR_LOG(L_ERROR) << "Invalid LPE '" << lpe << "'. Skipping entry" << std::endl;
-							lpe = "";
-						}
-					}
-
-					if (type == "rgb" || type == "color") {
-						IM_ChannelSettingSpec spec;
-						spec.TCM   = tcm;
-						spec.LPE_S = lpe;
-						spec.LPE   = -1;
-
-						if (!lpe.empty())
-							spec.Name = spec.Name + "[" + lpe + "]";
-						file.SettingsSpectral.push_back(spec);
-					} else {
-						AOV3D var3D			  = typeToVariable3D(type);
-						AOV1D var1D			  = typeToVariable1D(type);
-						AOVCounter varCounter = typeToVariableCounter(type);
-
-						if (var3D != AOV_3D_COUNT) {
-							IM_ChannelSetting3D spec;
-							spec.Variable = var3D;
-							spec.LPE_S	  = lpe;
-							spec.LPE	  = -1;
-
-							std::string name = variableToString(var3D);
-							if (!lpe.empty())
-								name = name + "[" + lpe + "]";
-							spec.Name[0] = name + ".x";
-							spec.Name[1] = name + ".y";
-							spec.Name[2] = name + ".z";
-
-							file.Settings3D.push_back(spec);
-						} else if (var1D != AOV_1D_COUNT) {
-							IM_ChannelSetting1D spec;
-							spec.Variable = var1D;
-							spec.LPE_S	  = lpe;
-							spec.LPE	  = -1;
-							spec.Name	  = variableToString(var1D);
-							if (!lpe.empty())
-								spec.Name = spec.Name + "[" + lpe + "]";
-							file.Settings1D.push_back(spec);
-						} else if (varCounter != AOV_COUNTER_COUNT) {
-							IM_ChannelSettingCounter spec;
-							spec.Variable = varCounter;
-							spec.LPE_S	  = lpe;
-							spec.LPE	  = -1;
-							spec.Name	  = variableToString(varCounter);
-							if (!lpe.empty())
-								spec.Name = spec.Name + "[" + lpe + "]";
-							file.SettingsCounter.push_back(spec);
-						} else {
-							PR_LOG(L_ERROR) << "Unknown channel type " << type;
-						}
-					}
+			std::string lpe = "";
+			if (lpeD.type() == DL::DT_String) {
+				lpe = lpeD.getString();
+				if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
+					PR_LOG(L_ERROR) << "Invalid LPE '" << lpe << "'. Skipping entry" << std::endl;
+					lpe = "";
 				}
 			}
 
-			mFiles.push_back(file);
+			if (type == "rgb" || type == "color") {
+				IM_ChannelSettingSpec spec;
+				spec.TCM   = tcm;
+				spec.LPE_S = lpe;
+				spec.LPE   = -1;
+
+				if (!lpe.empty())
+					spec.Name = spec.Name + "[" + lpe + "]";
+				file.SettingsSpectral.push_back(spec);
+			} else {
+				AOV3D var3D			  = typeToVariable3D(type);
+				AOV1D var1D			  = typeToVariable1D(type);
+				AOVCounter varCounter = typeToVariableCounter(type);
+
+				if (var3D != AOV_3D_COUNT) {
+					IM_ChannelSetting3D spec;
+					spec.Variable = var3D;
+					spec.LPE_S	  = lpe;
+					spec.LPE	  = -1;
+
+					std::string name = variableToString(var3D);
+					if (!lpe.empty())
+						name = name + "[" + lpe + "]";
+					spec.Name[0] = name + ".x";
+					spec.Name[1] = name + ".y";
+					spec.Name[2] = name + ".z";
+
+					file.Settings3D.push_back(spec);
+				} else if (var1D != AOV_1D_COUNT) {
+					IM_ChannelSetting1D spec;
+					spec.Variable = var1D;
+					spec.LPE_S	  = lpe;
+					spec.LPE	  = -1;
+					spec.Name	  = variableToString(var1D);
+					if (!lpe.empty())
+						spec.Name = spec.Name + "[" + lpe + "]";
+					file.Settings1D.push_back(spec);
+				} else if (varCounter != AOV_COUNTER_COUNT) {
+					IM_ChannelSettingCounter spec;
+					spec.Variable = varCounter;
+					spec.LPE_S	  = lpe;
+					spec.LPE	  = -1;
+					spec.Name	  = variableToString(varCounter);
+					if (!lpe.empty())
+						spec.Name = spec.Name + "[" + lpe + "]";
+					file.SettingsCounter.push_back(spec);
+				} else {
+					PR_LOG(L_ERROR) << "Unknown channel type " << type;
+				}
+			}
 		}
 	}
+
+	mFiles.push_back(file);
 }
 
 void OutputSpecification::save(RenderContext* renderer,
