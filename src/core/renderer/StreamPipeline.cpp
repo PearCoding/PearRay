@@ -99,10 +99,11 @@ void StreamPipeline::fillWithCameraRays()
 
 		const Point2i p = Point2i(x, y) + mTile->start();
 
-		Ray ray		   = mTile->constructCameraRay(p, iterCount);
-		ray.PixelIndex = p(1) * slice + p(0);
-
-		enqueueCameraRay(ray);
+		std::optional<Ray> ray = mTile->constructCameraRay(p, iterCount);
+		if (ray.has_value()) {
+			ray.value().PixelIndex = p(1) * slice + p(0);
+			enqueueCameraRay(ray.value());
+		}
 		++mCurrentPixelIndex;
 	}
 }

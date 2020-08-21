@@ -42,7 +42,7 @@ public:
 		return "spherical";
 	}
 
-	Ray constructRay(const CameraSample& sample) const override
+	std::optional<Ray> constructRay(const CameraSample& sample) const override
 	{
 		const float nx = sample.Pixel[0] / sample.SensorSize.Width;	 // [0,1]
 		const float ny = sample.Pixel[1] / sample.SensorSize.Height; // [0,1]

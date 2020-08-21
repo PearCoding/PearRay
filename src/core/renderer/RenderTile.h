@@ -43,7 +43,7 @@ public:
 		mContext.IterationCount		  = 0;
 	}
 
-	Ray constructCameraRay(const Point2i& p, uint32 sample);
+	std::optional<Ray> constructCameraRay(const Point2i& p, uint32 sample);
 
 	inline bool isWorking() const { return mWorking; }
 	bool accuire();

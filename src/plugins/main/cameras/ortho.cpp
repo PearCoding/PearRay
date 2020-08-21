@@ -38,7 +38,7 @@ public:
 		return "orthographic";
 	}
 
-	Ray constructRay(const CameraSample& sample) const override
+	std::optional<Ray> constructRay(const CameraSample& sample) const override
 	{
 		const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.Width - 0.5f);
 		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.Height - 0.5f);

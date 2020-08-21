@@ -21,7 +21,7 @@ public:
 	ICamera(uint32 id, const std::string& name);
 	virtual ~ICamera();
 
-	virtual Ray constructRay(const CameraSample& sample) const = 0;
+	virtual std::optional<Ray> constructRay(const CameraSample& sample) const = 0;
 
 	// This frame should be used as default initializer if applicable
 	const static Vector3f DefaultDirection;

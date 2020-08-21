@@ -78,7 +78,7 @@ RenderTile::~RenderTile()
 /* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
  * This may sometimes good, but also bad... more investigations required...
  */
-Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
+std::optional<Ray> RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 {
 	PR_PROFILE_THIS;
 
@@ -135,10 +135,10 @@ Ray RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 #endif
 	}
 
-	Ray ray = mCamera->constructRay(cameraSample);
-	if (mSpectralMonotonic) {
-		ray.Flags |= RF_Monochrome;
-		ray.Weight *= SpectralBlobUtils::HeroOnly();
+	std::optional<Ray> ray = mCamera->constructRay(cameraSample);
+	if (ray.has_value() && mSpectralMonotonic) {
+		ray.value().Flags |= RF_Monochrome;
+		ray.value().Weight *= SpectralBlobUtils::HeroOnly();
 	}
 	return ray;
 }
