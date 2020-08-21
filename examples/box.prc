@@ -65,6 +65,81 @@
 		:emission 'Area_em'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,1.9618895053863525,0.0,0.0,0.0,1.0]
 	)
+	; Materials
+	;(spectrum
+	;	:name 'Glass_ior'
+	;	:type 'file'
+	;	:data (refl 1.000000 1.000000 1.000000)
+	;)
+	;(color
+	;	:name 'Glass_specular_color'
+	;	:data (rgb 1 1 1)
+	;)
+	(spectrum
+		:name 'Glass_specular_color'
+		:data (refl 1 1 1)
+	)
+	(material
+		:name 'Glass'
+		:type 'glass'
+		:specularity 'Glass_specular_color'
+		:index 1.550000
+	)
+	(spectrum
+		:name 'Material_diffuse_color'
+		:data (refl 1.000000 1.000000 1.000000)
+	)
+	(material
+		:name 'Material'
+		:type 'diffuse'
+		:albedo 'Material_diffuse_color'
+	)
+	(spectrum
+		:name 'Material.001_diffuse_color'
+		:data (refl 0.000000 0.000000 1.000000)
+	)
+	(material
+		:name 'Material.001'
+		:type 'diffuse'
+		:albedo 'Material.001_diffuse_color'
+	)
+	(spectrum
+		:name 'Material.002_diffuse_color'
+		:data (refl 1.000000 0.000000 0.000000)
+	)
+	(material
+		:name 'Material.002'
+		:type 'diffuse'
+		:albedo 'Material.002_diffuse_color'
+	)
+	(spectrum
+		:name 'Material.003_diffuse_color'
+		:data (refl 0.000000 1.000000 0.000000)
+	)
+	(material
+		:name 'Material.003'
+		:type 'diffuse'
+		:albedo 'Material.003_diffuse_color'
+	)
+	(spectrum
+		:name 'Material.004_diffuse_color'
+		:data (refl 1.000000 0.500000 0.000000)
+	)
+	(material
+		:name 'Material.004'
+		:type 'diffuse'
+		:albedo 'Material.004_diffuse_color'
+	)
+	(spectrum
+		:name 'Mirror_specular_color'
+		:data (refl 1.000000 1.000000 1.000000)
+	)
+	(material
+		:name 'Mirror'
+		:type 'mirror'
+		:specularity 'Mirror_specular_color'
+		:index 1.550000
+	)
 	; Primitives
 	(entity
 		:name 'Cone'
@@ -148,81 +223,6 @@
 		:materials 'Material'
 		:mesh 'Plane'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,2.0,0.0,0.0,0.0,1.0]
-	)
-	; Materials
-	;(spectrum
-	;	:name 'Glass_ior'
-	;	:type 'file'
-	;	:data (refl 1.000000 1.000000 1.000000)
-	;)
-	;(color
-	;	:name 'Glass_specular_color'
-	;	:data (rgb 1 1 1)
-	;)
-	(spectrum
-		:name 'Glass_specular_color'
-		:data (refl 1 1 1)
-	)
-	(material
-		:name 'Glass'
-		:type 'glass'
-		:specularity 'Glass_specular_color'
-		:index 1.550000
-	)
-	(spectrum
-		:name 'Material_diffuse_color'
-		:data (refl 1.000000 1.000000 1.000000)
-	)
-	(material
-		:name 'Material'
-		:type 'diffuse'
-		:albedo 'Material_diffuse_color'
-	)
-	(spectrum
-		:name 'Material.001_diffuse_color'
-		:data (refl 0.000000 0.000000 1.000000)
-	)
-	(material
-		:name 'Material.001'
-		:type 'diffuse'
-		:albedo 'Material.001_diffuse_color'
-	)
-	(spectrum
-		:name 'Material.002_diffuse_color'
-		:data (refl 1.000000 0.000000 0.000000)
-	)
-	(material
-		:name 'Material.002'
-		:type 'diffuse'
-		:albedo 'Material.002_diffuse_color'
-	)
-	(spectrum
-		:name 'Material.003_diffuse_color'
-		:data (refl 0.000000 1.000000 0.000000)
-	)
-	(material
-		:name 'Material.003'
-		:type 'diffuse'
-		:albedo 'Material.003_diffuse_color'
-	)
-	(spectrum
-		:name 'Material.004_diffuse_color'
-		:data (refl 1.000000 0.500000 0.000000)
-	)
-	(material
-		:name 'Material.004'
-		:type 'diffuse'
-		:albedo 'Material.004_diffuse_color'
-	)
-	(spectrum
-		:name 'Mirror_specular_color'
-		:data (refl 1.000000 1.000000 1.000000)
-	)
-	(material
-		:name 'Mirror'
-		:type 'mirror'
-		:specularity 'Mirror_specular_color'
-		:index 1.550000
 	)
 )
 

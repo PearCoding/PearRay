@@ -44,6 +44,27 @@
 		:turbidity 3
 		:radius 4
 	)
+	; Materials
+	(material
+		:name 'Material1'
+		:type 'rgl_measured'
+		:filename "vch_silk_blue_spec.bsdf"
+	)
+	(material
+		:name 'Material2'
+		:type 'rgl_measured'
+		:filename "chm_orange_spec.bsdf"
+	)
+	(material
+		:name 'Material3'
+		:type 'rgl_measured'
+		:filename "cc_amber_citrine_spec.bsdf"
+	)
+	(material
+		:name 'Ground'
+		:type 'diffuse'
+		:albedo 0.95
+	)
 	; Entity Sphere
 	(entity
 		:name 'Sphere1'
@@ -74,26 +95,5 @@
 		:x_axis [200,0,0]
 		:y_axis [0,100,0]
 		:position [-100,0,-1.85]
-	)
-	; Materials
-	(material
-		:name 'Material1'
-		:type 'rgl_measured'
-		:filename "vch_silk_blue_spec.bsdf"
-	)
-	(material
-		:name 'Material2'
-		:type 'rgl_measured'
-		:filename "chm_orange_spec.bsdf"
-	)
-	(material
-		:name 'Material3'
-		:type 'rgl_measured'
-		:filename "cc_amber_citrine_spec.bsdf"
-	)
-	(material
-		:name 'Ground'
-		:type 'diffuse'
-		:albedo 0.95
 	)
 )

@@ -58,29 +58,6 @@
 		0,0,1,0,
 		0,0,0,1]
 	)
-	; Entity Mesh
-	(entity
-		:name 'Mesh'
-		:type 'mesh'
-		:materials 'Material'
-		:mesh 'Cube'
-		:transform [0.7071,0,0.7071,0,
-		0,1,0,0,
-		-0.7071,0,0.7071,-4,
-		0,0,0,1]
-	)
-	; Entity Plane
-	(entity
-		:name 'Ground'
-		:type 'plane'
-		:material 'Material'
-		:x_axis [8,0,0]
-		:y_axis [0,0,-8]
-		:transform [1,0,0,-4,
-		0,1,0,-0.85,
-		0,0,1,1,
-		0,0,0,1]
-	)
 	; Materials
 	(spectrum
 		:name 'Material_diffuse_color'
@@ -105,5 +82,28 @@
 		(faces
 			[0, 1, 2], [0, 2, 3], [4, 5, 6], [4, 6, 7], [8, 9, 10], [8, 10, 11], [12, 13, 14], [12, 14, 15], [16, 17, 18], [16, 18, 19], [20, 21, 22], [20, 22, 23]
 		)
+	)
+	; Entity Mesh
+	(entity
+		:name 'Mesh'
+		:type 'mesh'
+		:materials 'Material'
+		:mesh 'Cube'
+		:transform [0.7071,0,0.7071,0,
+		0,1,0,0,
+		-0.7071,0,0.7071,-4,
+		0,0,0,1]
+	)
+	; Entity Plane
+	(entity
+		:name 'Ground'
+		:type 'plane'
+		:material 'Material'
+		:x_axis [8,0,0]
+		:y_axis [0,0,-8]
+		:transform [1,0,0,-4,
+		0,1,0,-0.85,
+		0,0,1,1,
+		0,0,0,1]
 	)
 )

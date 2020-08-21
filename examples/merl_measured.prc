@@ -44,6 +44,27 @@
 		:turbidity 3
 		:radius 4
 	)
+	; Materials
+	(material
+		:name 'Material1'
+		:type 'merl_measured'
+		:filename "blue-fabric.binary"
+	)
+	(material
+		:name 'Material2'
+		:type 'merl_measured'
+		:filename "orange-paint.binary"
+	)
+	(material
+		:name 'Material3'
+		:type 'merl_measured'
+		:filename "gold-metallic-paint.binary"
+	)
+	(material
+		:name 'Ground'
+		:type 'diffuse'
+		:albedo 0.95
+	)
 	; Entity Sphere
 	(entity
 		:name 'Sphere1'
@@ -74,26 +95,5 @@
 		:x_axis [200,0,0]
 		:y_axis [0,100,0]
 		:position [-100,0,-1.85]
-	)
-	; Materials
-	(material
-		:name 'Material1'
-		:type 'merl_measured'
-		:filename "blue-fabric.binary"
-	)
-	(material
-		:name 'Material2'
-		:type 'merl_measured'
-		:filename "orange-paint.binary"
-	)
-	(material
-		:name 'Material3'
-		:type 'merl_measured'
-		:filename "gold-metallic-paint.binary"
-	)
-	(material
-		:name 'Ground'
-		:type 'diffuse'
-		:albedo 0.95
 	)
 )

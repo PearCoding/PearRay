@@ -68,6 +68,17 @@
 		:type 'env'
 		:radiance (illuminant 'D65')
 	)
+	; Materials
+	(spectrum
+		:name 'Material_diffuse_color'
+		:data (refl 0 0.800000 0.800000)
+	)
+	(material
+		:name 'Material'
+		:type 'glass'
+		:index 1.55
+		:specular 'Material_diffuse_color'
+	)
 	; Entity Sphere
 	(entity
 		:name 'Sphere'
@@ -90,16 +101,5 @@
 		0,1,0,-0.85,
 		0,0,1,1,
 		0,0,0,1]
-	)
-	; Materials
-	(spectrum
-		:name 'Material_diffuse_color'
-		:data (refl 0 0.800000 0.800000)
-	)
-	(material
-		:name 'Material'
-		:type 'glass'
-		:index 1.55
-		:specular 'Material_diffuse_color'
 	)
 )

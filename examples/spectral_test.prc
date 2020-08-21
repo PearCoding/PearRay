@@ -45,17 +45,17 @@
 		:radiance 1
 	)
 	; Lights
+	; Materials
+	(material
+		:name 'Diffuse'
+		:type 'diffuse'
+		:albedo 1
+	)
 	; Primitives
 	(entity
 		:type "sphere"
 		:name "Unit Sphere"
 		:radius 1
 		:material "Diffuse"
-	)
-	; Materials
-	(material
-		:name 'Diffuse'
-		:type 'diffuse'
-		:albedo 1
 	)
 )

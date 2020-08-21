@@ -60,6 +60,36 @@
 		:camera_visible false
 		:transform [1.0,0.0,0.0,0.0,0.0,-4.371138828673793e-08,-1.0,-1.0,0.0,1.0,-4.371138828673793e-08,0.25,0.0,0.0,0.0,1.0]
 	)
+	; Curves
+	; Particle Systems
+	; Materials
+	(spectrum
+		:name 'Floor_diffuse_color'
+		:data (refl 0.800000 0.800000 0.800000)
+	)
+	(material
+		:name 'Floor'
+		:type 'diffuse'
+		:albedo 'Floor_diffuse_color'
+	)
+	(spectrum
+		:name 'SphereLeft_diffuse_color'
+		:data (refl 0.000000 0.5000000 1.000000)
+	)
+	(material
+		:name 'SphereLeft'
+		:type 'diffuse'
+		:albedo 'SphereLeft_diffuse_color'
+	)
+	(spectrum
+		:name 'SphereRight_diffuse_color'
+		:data (refl 1.000000 0.500000 0.000000)
+	)
+	(material
+		:name 'SphereRight'
+		:type 'diffuse'
+		:albedo 'SphereRight_diffuse_color'
+	)
 	; Primitives
 	(entity
 		:name 'Sphere'
@@ -100,35 +130,5 @@
 		:materials 'Floor'
 		:mesh 'Plane'
 		:transform [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
-	)
-	; Curves
-	; Particle Systems
-	; Materials
-	(spectrum
-		:name 'Floor_diffuse_color'
-		:data (refl 0.800000 0.800000 0.800000)
-	)
-	(material
-		:name 'Floor'
-		:type 'diffuse'
-		:albedo 'Floor_diffuse_color'
-	)
-	(spectrum
-		:name 'SphereLeft_diffuse_color'
-		:data (refl 0.000000 0.5000000 1.000000)
-	)
-	(material
-		:name 'SphereLeft'
-		:type 'diffuse'
-		:albedo 'SphereLeft_diffuse_color'
-	)
-	(spectrum
-		:name 'SphereRight_diffuse_color'
-		:data (refl 1.000000 0.500000 0.000000)
-	)
-	(material
-		:name 'SphereRight'
-		:type 'diffuse'
-		:albedo 'SphereRight_diffuse_color'
 	)
 )

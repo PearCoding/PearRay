@@ -48,17 +48,17 @@
 		:radiance (illuminant "D65")
 	)
 	; Lights
+	; Materials
+	(material
+		:name 'Diffuse'
+		:type 'diffuse'
+		:albedo "white"
+	)
 	; Primitives
 	(entity
 		:type "sphere"
 		:name "Unit Sphere"
 		:radius 1
 		:material "Diffuse"
-	)
-	; Materials
-	(material
-		:name 'Diffuse'
-		:type 'diffuse'
-		:albedo "white"
 	)
 )

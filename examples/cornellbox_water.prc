@@ -48,6 +48,86 @@
 		:type 'standard'
 		:radiance (smul (illuminant "D65") 'light_color')
 	)
+	; Curves
+	; Particle Systems
+	; Materials
+	(spectrum
+		:name 'backWall_diffuse_color'
+		:data (refl 0.725000 0.710000 0.680000)
+	)
+	(material
+		:name 'backWall'
+		:type 'diffuse'
+		:albedo 'backWall_diffuse_color'
+	)
+	(spectrum
+		:name 'ceiling_diffuse_color'
+		:data (refl 0.725000 0.710000 0.680000)
+	)
+	(material
+		:name 'ceiling'
+		:type 'diffuse'
+		:albedo 'ceiling_diffuse_color'
+	)
+	(spectrum
+		:name 'floor_diffuse_color'
+		:data (refl 0.725000 0.710000 0.680000)
+	)
+	(material
+		:name 'floor'
+		:type 'diffuse'
+		:albedo 'floor_diffuse_color'
+	)
+	(spectrum
+		:name 'leftWall_diffuse_color'
+		:data (refl 0.630000 0.065000 0.050000)
+	)
+	(material
+		:name 'leftWall'
+		:type 'diffuse'
+		:albedo 'leftWall_diffuse_color'
+	)
+	(spectrum
+		:name 'light_diffuse_color'
+		:data (refl 0.780000 0.780000 0.780000)
+	)
+	(material
+		:name 'light'
+		:type 'diffuse'
+		:albedo 'light_diffuse_color'
+	)
+	(spectrum
+		:name 'rightWall_diffuse_color'
+		:data (refl 0.140000 0.450000 0.091000)
+	)
+	(material
+		:name 'rightWall'
+		:type 'diffuse'
+		:albedo 'rightWall_diffuse_color'
+	)
+	(spectrum
+		:name 'shortBox_diffuse_color'
+		:data (refl 0.725000 0.710000 0.680000)
+	)
+	(material
+		:name 'shortBox'
+		:type 'diffuse'
+		:albedo 'shortBox_diffuse_color'
+	)
+	(spectrum
+		:name 'tallBox_diffuse_color'
+		:data (refl 0.725000 0.710000 0.680000)
+	)
+	(material
+		:name 'tallBox'
+		:type 'diffuse'
+		:albedo 'tallBox_diffuse_color'
+	)
+	(material
+		:name 'Water'
+		:type 'glass'
+		:index (sellmeier_index 5.666959820e-1 1.731900098e-1 2.095951857e-2 5.084151894e-3 1.818488474e-2 2.625439472e-2)
+	)
 	; Meshes
 	(mesh
 		:name 'CornellBox-Original'
@@ -242,85 +322,5 @@
 		:materials 'Water'
 		:mesh 'Plane'
 		:transform [0.020261313766241074,0.0,0.0,-0.00985913909971714,0.0,0.020207379013299942,0.0,0.031084470450878143,0.0,0.0,0.045066915452480316,1.5536060333251953,0.0,0.0,0.0,1.0]
-	)
-	; Curves
-	; Particle Systems
-	; Materials
-	(spectrum
-		:name 'backWall_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
-	)
-	(material
-		:name 'backWall'
-		:type 'diffuse'
-		:albedo 'backWall_diffuse_color'
-	)
-	(spectrum
-		:name 'ceiling_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
-	)
-	(material
-		:name 'ceiling'
-		:type 'diffuse'
-		:albedo 'ceiling_diffuse_color'
-	)
-	(spectrum
-		:name 'floor_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
-	)
-	(material
-		:name 'floor'
-		:type 'diffuse'
-		:albedo 'floor_diffuse_color'
-	)
-	(spectrum
-		:name 'leftWall_diffuse_color'
-		:data (refl 0.630000 0.065000 0.050000)
-	)
-	(material
-		:name 'leftWall'
-		:type 'diffuse'
-		:albedo 'leftWall_diffuse_color'
-	)
-	(spectrum
-		:name 'light_diffuse_color'
-		:data (refl 0.780000 0.780000 0.780000)
-	)
-	(material
-		:name 'light'
-		:type 'diffuse'
-		:albedo 'light_diffuse_color'
-	)
-	(spectrum
-		:name 'rightWall_diffuse_color'
-		:data (refl 0.140000 0.450000 0.091000)
-	)
-	(material
-		:name 'rightWall'
-		:type 'diffuse'
-		:albedo 'rightWall_diffuse_color'
-	)
-	(spectrum
-		:name 'shortBox_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
-	)
-	(material
-		:name 'shortBox'
-		:type 'diffuse'
-		:albedo 'shortBox_diffuse_color'
-	)
-	(spectrum
-		:name 'tallBox_diffuse_color'
-		:data (refl 0.725000 0.710000 0.680000)
-	)
-	(material
-		:name 'tallBox'
-		:type 'diffuse'
-		:albedo 'tallBox_diffuse_color'
-	)
-	(material
-		:name 'Water'
-		:type 'glass'
-		:index (sellmeier_index 5.666959820e-1 1.731900098e-1 2.095951857e-2 5.084151894e-3 1.818488474e-2 2.625439472e-2)
 	)
 )

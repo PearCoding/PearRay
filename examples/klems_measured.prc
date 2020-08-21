@@ -11,7 +11,7 @@
 	(sampler 
 	  :slot 'aa'
 	  :type 'hammersley'
-	  :sample_count 128
+	  :sample_count 1024
 	)
 	(filter 
 	  :slot 'pixel'
@@ -32,15 +32,38 @@
 		:type 'standard'
 	)
 	(light
-		:name 'sky'
-		:type 'sky'
-		:turbidity 3
+		:name 'background'
+		:type 'env'
+		:radiance (illuminant "d65")
 	)
-	(light
-		:name 'sun'
-		:type 'sun'
-		:turbidity 3
-		:radius 4
+	;(light
+	;	:name 'sky'
+	;	:type 'sky'
+	;	:turbidity 3
+	;)
+	;(light
+	;	:name 'sun'
+	;	:type 'sun'
+	;	:turbidity 3
+	;	:radius 4
+	;)
+	; Materials
+	(material
+		:name 'Material1'
+		:type 'klems_measured'
+		:filename "CS-TBK7-12_112916.xml"
+		:swap_side false
+	)
+	;(material
+	;	:name 'Material1'
+	;	:type 'glass'
+	;	:index (lookup_index "bk7")
+	;	:thin true
+	;)
+	(material
+		:name 'Ground'
+		:type 'diffuse'
+		:albedo 0.95
 	)
 	; Entity Sphere
 	(entity
@@ -59,17 +82,5 @@
 		:x_axis [200,0,0]
 		:y_axis [0,100,0]
 		:position [-100,0,-1.85]
-	)
-	; Materials
-	(material
-		:name 'Material1'
-		:type 'klems_measured'
-		:filename "aerc6216_kf.xml"
-		:swap_side true
-	)
-	(material
-		:name 'Ground'
-		:type 'diffuse'
-		:albedo 0.95
 	)
 )

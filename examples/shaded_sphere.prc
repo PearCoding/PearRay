@@ -43,6 +43,20 @@
 		:type 'env'
 		:radiance (illuminant 'D65')
 	)
+	; Materials
+	(spectrum
+		:name 'color1'
+		:data (refl 0.0 0.8 0.8)
+	)
+	(spectrum
+		:name 'color2'
+		:data (refl 0.8 0.8 0.0)
+	)
+	(material
+		:name 'Material'
+		:type 'diffuse'
+		:albedo (expr 'mix(c1,c2,(cos(64*u*PI)*sin(32*v*PI))^2)' :c1 'color1' :c2 'color2')
+	)
 	; Entity Sphere
 	(entity
 		:name 'Sphere'
@@ -65,19 +79,5 @@
 		0,1,0,-0.85,
 		0,0,1,1,
 		0,0,0,1]
-	)
-	; Materials
-	(spectrum
-		:name 'color1'
-		:data (refl 0.0 0.8 0.8)
-	)
-	(spectrum
-		:name 'color2'
-		:data (refl 0.8 0.8 0.0)
-	)
-	(material
-		:name 'Material'
-		:type 'diffuse'
-		:albedo (expr 'mix(c1,c2,(cos(64*u*PI)*sin(32*v*PI))^2)' :c1 'color1' :c2 'color2')
 	)
 )
