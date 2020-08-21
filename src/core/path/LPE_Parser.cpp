@@ -79,7 +79,7 @@ void Parser::gr_expr(RegExpr& expr)
 {
 	gr_term(expr);
 
-	while (!isEOS() && current() != ')') {
+	while (!isEOS() && !mError && current() != ')') {
 		gr_term(expr);
 		expr.doConcat();
 	}
@@ -92,6 +92,8 @@ void Parser::gr_term(RegExpr& expr)
 		|| current() == 'E'
 		|| current() == 'L'
 		|| current() == 'B'
+		|| current() == 'R'
+		|| current() == 'T'
 		|| current() == '.'
 		|| current() == '<') {
 		gr_token(expr);
@@ -103,8 +105,8 @@ void Parser::gr_term(RegExpr& expr)
 		gr_orgroup(expr);
 		gr_op(expr);
 	} else {
+		PR_LOG(L_ERROR) << "LPE Syntax Error[" << mPosition << "]: Expected one valid token or a group but got '" << current() << "' instead" << std::endl;
 		mError = true;
-		// TODO: Error
 	}
 }
 
@@ -132,7 +134,7 @@ void Parser::gr_orgroup(RegExpr& expr)
 
 	RegExpr other;
 	gr_term(other);
-	while (!isEOS() && current() != ']') {
+	while (!isEOS() && !mError && current() != ']') {
 		gr_term(other);
 		other.doUnion();
 	}
@@ -174,7 +176,13 @@ void Parser::gr_token(RegExpr& expr)
 	} else if (current() == '.') {
 		accept('.');
 		expr.push(Token('.', '.'));
-	} else if (current() == '<') {
+	} else if (current() == 'R') {
+		accept('R');
+		expr.push(Token('R', '.'));
+	} else if (current() == 'T') {
+		accept('T');
+		expr.push(Token('T', '.'));
+	}else if (current() == '<') {
 		accept('<');
 		char t; // Type
 		if (current() == 'E') {
@@ -201,6 +209,10 @@ void Parser::gr_token(RegExpr& expr)
 			return;
 		}
 
+		// A colon between entries is optional
+		if (current() == ',')
+			accept(',');
+
 		char e; // Event
 		if (current() == 'D') {
 			accept('D');
@@ -218,12 +230,17 @@ void Parser::gr_token(RegExpr& expr)
 		}
 
 		std::string lbl = "";
-		if (current() == '"') {
+		if (current() == '"' || current() == ',') {
+			if (current() == ',')
+				accept(',');
 			lbl = gr_string();
 		}
 		accept('>');
 
 		expr.push(Token(t, e, lbl));
+	} else {
+		PR_LOG(L_ERROR) << "LPE Syntax Error[" << mPosition << "]: Unknown token " << current() << std::endl;
+		mError = true;
 	}
 }
 
@@ -261,7 +278,7 @@ std::string Parser::gr_string()
 {
 	std::string str = "";
 	accept('"');
-	while (!isEOS() && current() != '"') {
+	while (!isEOS() && !mError && current() != '"') {
 		str += current();
 		accept(current());
 	}
@@ -272,7 +289,7 @@ std::string Parser::gr_string()
 uint32 Parser::gr_integer()
 {
 	std::string number = "";
-	while (!isEOS() && std::isdigit(current())) {
+	while (!isEOS() && !mError && std::isdigit(current())) {
 		number += current();
 		accept(current());
 	}

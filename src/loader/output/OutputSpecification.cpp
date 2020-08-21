@@ -272,7 +272,7 @@ void OutputSpecification::parse(Environment*, const std::vector<DL::DataGroup>& 
 					if (lpeD.type() == DL::DT_String) {
 						lpe = lpeD.getString();
 						if (!lpe.empty() && !LightPathExpression(lpe).isValid()) {
-							PR_LOG(L_ERROR) << "Invalid LPE " << lpe << ". Skipping entry" << std::endl;
+							PR_LOG(L_ERROR) << "Invalid LPE '" << lpe << "'. Skipping entry" << std::endl;
 							lpe = "";
 						}
 					}
