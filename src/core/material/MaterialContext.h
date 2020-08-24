@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/ShadingVector.h"
 #include "math/Spherical.h"
 #include "trace/IntersectionPoint.h"
 
@@ -10,8 +11,8 @@ class MaterialEvalContext;
 // The normal is oriented as (0,0,1)
 class PR_LIB_CORE MaterialSampleContext {
 public:
-	Vector3f P; // Global space
-	Vector3f V; // Outgoing (NOT INCIDENT) view vector in shading space
+	Vector3f P;		 // Global space
+	ShadingVector V; // Outgoing (NOT INCIDENT) view vector in shading space
 	Vector2f UV;
 	uint32 PrimitiveID; // Useful for PTex
 	SpectralBlob WavelengthNM;
@@ -41,10 +42,11 @@ public:
 
 class PR_LIB_CORE MaterialEvalContext : public MaterialSampleContext {
 public:
-	Vector3f L; // Outgoing light vector in shading space
-	Vector3f H; // Shading space
+	ShadingVector L; // Outgoing light vector in shading space
+	ShadingVector H; // Shading space
 
-	inline void calcH() { H = (V + L).normalized(); }
+	// FIXME: This is the reflective half vector! What if refractive?
+	inline void calcH() { H = ((Vector3f)V + (Vector3f)L).normalized(); }
 
 	inline float NdotL() const { return L(2); }
 	inline float XdotL() const { return L(0); }
@@ -55,7 +57,7 @@ public:
 	inline float YdotH() const { return H(1); }
 
 	inline float HdotV() const { return V.dot(H); }
-	inline float HdotL() const { return HdotV(); }
+	inline float HdotL() const { return L.dot(H); }
 
 	inline Vector2f computeViewAngles() const { return Spherical::from_direction(V); }
 	inline Vector2f computeLightAngles() const { return Spherical::from_direction(L); }

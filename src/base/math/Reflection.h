@@ -69,6 +69,22 @@ inline Vector3f reflect(const Vector3f& V, const Vector3f& N)
 }
 
 /**
+* @brief Refracts the ray based on the eta parameter (eta = n1/n2) and previously calculated NdotT (Angle between a custom normal and refracted ray)
+*
+* @param eta Index ratio (n1/n2) between the two mediums.
+* @param NdotT Angle between N and the result of this function
+* @param NdotV Angle between N and V
+* @param V Unit vector pointing FROM the surface point in shading space.
+* @param N Unit vector pointing FROM the surface point in shading space corresponding to a custom normal.
+* @return Unit vector pointing FROM the surface point outwards in shading space.
+*/
+inline Vector3f refract(float eta, float NdotT, float NdotV,
+						const Vector3f& V, const Vector3f& N)
+{
+	return (-V * eta + (eta * NdotV - NdotT) * N).normalized();
+}
+
+/**
 * @brief Refracts the ray based on the eta parameter (eta = n1/n2) and previously calculated NdotT (Angle between Normal and refracted ray)
 *
 * @param eta Index ratio (n1/n2) between the two mediums.

@@ -26,7 +26,7 @@ struct PR_LIB_CORE MaterialSampleInput {
 };
 
 struct PR_LIB_CORE MaterialSampleOutput {
-	Vector3f L;
+	ShadingVector L;
 
 	SpectralBlob Weight;
 	SpectralBlob PDF_S;

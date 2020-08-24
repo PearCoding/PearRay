@@ -183,7 +183,7 @@ public:
 		float aspect = std::sqrt(1 - anisotropic * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.NdotL(), ax, ay); // Use NdotH instead of NdotL!
+		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.NdotL(), in.Context.XdotL(), in.Context.YdotL(), ax, ay); // Use NdotH instead of NdotL!
 
 		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -212,8 +212,7 @@ public:
 			out.PDF_S = 0;
 
 		// Reflect incoming ray by the calculated half vector
-		out.L = Reflection::reflect(in.Context.V, out.L);
-		out.L.normalize();
+		out.L = Reflection::reflect(in.Context.V, out.L).normalized();
 
 		if (out.L[2] <= PR_EPSILON)
 			out.PDF_S = 0;

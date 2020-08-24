@@ -52,6 +52,7 @@ set(PR_Src
   math/ProjectionMap.h
   math/Reflection.h
   math/Sampling.h
+  math/ShadingVector.h
   math/SIMath.h
   math/SIMathConstants.h
   math/SIMathStd.h

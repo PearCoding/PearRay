@@ -186,7 +186,7 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughness, float& pdf)
 
 inline float pdf_ggx(float NdotH, float roughness)
 {
-	return PR_INV_PI / (roughness * roughness * NdotH * NdotH * NdotH * 4);
+	return ndf_ggx(NdotH, roughness) * NdotH;
 }
 
 inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float roughnessY, float& pdf)
@@ -210,9 +210,9 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float rough
 	return Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 }
 
-inline float pdf_ggx(float NdotH, float roughnessX, float roughnessY)
+inline float pdf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, float roughnessY)
 {
-	return PR_INV_PI / (roughnessX * roughnessY * NdotH * NdotH * NdotH * 4);
+	return ndf_ggx(NdotH, HdotX, HdotY, roughnessX, roughnessY) * NdotH; // TODO: Validate?
 }
 
 // Based on:

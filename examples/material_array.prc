@@ -40,13 +40,19 @@
 	; Materials
 	(material
 		:name 'Material1'
-		:type 'glass'
+		:type 'roughglass'
+		:roughness 0.5
+		:specularity 1
+		:transmission 0
 		:index (lookup_index "bk7")
 	)
 	(material
 		:name 'Material2'
-		:type 'glass'
-		:index (lookup_index "water")
+		:type 'microfacet'
+		:index (lookup_index "bk7")
+		:roughness 0.5
+		:specularity 1
+		:albedo 0
 	)
 	(material
 		:name 'Material3'
