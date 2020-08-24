@@ -56,9 +56,8 @@ inline Vector3f reflect(const Vector3f& V)
 }
 
 /**
-* @brief Reflects the outgoing viewing vector through the a normal.
+* @brief Reflects the outgoing viewing vector through a user given normal.
 * L = 2(N*V)N - V
-* As we are in shading space this simplifies to (-V0, -V1, V2)
 * 
 * @param N Unit vector pointing FROM the surface point in shading space.
 * @param V Unit vector pointing FROM the surface point in shading space.

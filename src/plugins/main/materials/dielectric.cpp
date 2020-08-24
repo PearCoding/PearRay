@@ -4,6 +4,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
+#include "math/Microfacet.h"
 #include "math/Projection.h"
 #include "math/Reflection.h"
 
@@ -13,25 +14,29 @@
 
 namespace PR {
 
-template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
+template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying, bool HasRoughness, bool HasAnisoRoughness>
 class DielectricMaterial : public IMaterial {
 public:
 	DielectricMaterial(uint32 id,
 					   const std::shared_ptr<FloatSpectralNode>& spec,
 					   const std::shared_ptr<FloatSpectralNode>& trans,
-					   const std::shared_ptr<FloatSpectralNode>& ior)
+					   const std::shared_ptr<FloatSpectralNode>& ior,
+					   const std::shared_ptr<FloatScalarNode>& roughnessX,
+					   const std::shared_ptr<FloatScalarNode>& roughnessY)
 		: IMaterial(id)
 		, mSpecularity(spec)
 		, mTransmission(trans)
 		, mIOR(ior)
+		, mRoughnessX(roughnessX)
+		, mRoughnessY(roughnessY)
 	{
 	}
 
 	virtual ~DielectricMaterial() = default;
 
-	int flags() const override { return MF_DeltaDistribution | (SpectralVarying ? MF_SpectralVarying : 0); }
+	int flags() const override { return (HasRoughness ? 0 : MF_DeltaDistribution) | (SpectralVarying ? MF_SpectralVarying : 0); }
 
-	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, const ShadingContext& sctx) const
+	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, float dot, const ShadingContext& sctx) const
 	{
 		SpectralBlob n1 = SpectralBlob::Ones();
 		SpectralBlob n2 = mIOR->eval(sctx);
@@ -42,11 +47,11 @@ public:
 		SpectralBlob res;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			res[i] = Fresnel::dielectric(spt.NdotV(), n1[i], n2[i]);
+			res[i] = Fresnel::dielectric(dot, n1[i], n2[i]);
 		return res;
 	}
 
-	inline float fresnelTermHero(const MaterialSampleContext& spt, const ShadingContext& sctx, float& eta) const
+	inline float fresnelTermHero(const MaterialSampleContext& spt, float dot, const ShadingContext& sctx, float& eta) const
 	{
 		SpectralBlob n1 = SpectralBlob::Ones();
 		SpectralBlob n2 = mIOR->eval(sctx);
@@ -56,7 +61,7 @@ public:
 
 		eta = n1[0] / n2[0];
 
-		return Fresnel::dielectric(spt.NdotV(), n1[0], n2[0]);
+		return Fresnel::dielectric(dot, n1[0], n2[0]);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -67,7 +72,7 @@ public:
 		if constexpr (HasTransmissionColor) {
 			SpectralBlob spec  = mSpecularity->eval(in.ShadingContext);
 			SpectralBlob trans = mTransmission->eval(in.ShadingContext);
-			SpectralBlob F	   = fresnelTerm(in.Context, in.ShadingContext);
+			SpectralBlob F	   = fresnelTerm(in.Context, HasRoughness ? in.Context.HdotV() : in.Context.NdotV(), in.ShadingContext);
 			if constexpr (IsThin) {
 				// Account for scattering between interfaces
 				F += (F < 1.0f).select((1 - F) * F / (F + 1), 0);
@@ -78,7 +83,12 @@ public:
 			out.Weight = mSpecularity->eval(in.ShadingContext);
 		}
 
-		out.PDF_S = 1;
+		if constexpr (HasRoughness && !HasAnisoRoughness)
+			out.PDF_S = Microfacet::pdf_ggx(in.Context.NdotH(), mRoughnessX->eval(in.ShadingContext));
+		else if constexpr (HasRoughness && HasAnisoRoughness)
+			out.PDF_S = Microfacet::pdf_ggx(in.Context.NdotH(), mRoughnessX->eval(in.ShadingContext), mRoughnessY->eval(in.ShadingContext));
+		else
+			out.PDF_S = 1;
 
 		if (in.Context.NdotL() < 0)
 			out.Type = MST_SpecularTransmission;
@@ -91,42 +101,69 @@ public:
 	{
 		PR_PROFILE_THIS;
 
+		// FIXME: Just a bad hack
+		float u1 = int(in.RND[0] * 100) / 100.0f;
+		float u2 = in.RND[0] * 100 - int(in.RND[0] * 100);
+
+		float pdf = 1;
+		[[maybe_unused]] Vector3f H;
+		if constexpr (HasRoughness && HasAnisoRoughness)
+			H = Microfacet::sample_ndf_ggx(u1, in.RND[1], mRoughnessX->eval(in.ShadingContext), mRoughnessY->eval(in.ShadingContext), pdf);
+		else if constexpr (HasRoughness && !HasAnisoRoughness)
+			H = Microfacet::sample_ndf_ggx(u1, in.RND[1], mRoughnessX->eval(in.ShadingContext), pdf);
+		out.PDF_S = pdf;
+
 		float eta;
-		float F = fresnelTermHero(in.Context, in.ShadingContext, eta);
+		float F = fresnelTermHero(in.Context, HasRoughness ? in.Context.V.dot(H) : in.Context.NdotV(), in.ShadingContext, eta);
 		if constexpr (IsThin) {
 			// Account for scattering between interfaces
 			if (F < 1.0f)
 				F += (1 - F) * F / (F + 1);
 		}
 
-		out.Weight = mSpecularity->eval(in.ShadingContext); // The weight is independent of the fresnel term
-
-		if (in.RND[0] <= F) {
+		if (u2 <= F) {
 			out.Type = MST_SpecularReflection;
-			out.L	 = Reflection::reflect(in.Context.V);
+			if constexpr (HasRoughness)
+				out.L = Reflection::reflect(in.Context.V, H);
+			else
+				out.L = Reflection::reflect(in.Context.V);
 		} else {
 			if constexpr (IsThin) {
 				out.Type = MST_SpecularTransmission;
 				out.L	 = -in.Context.V;
-				if constexpr (HasTransmissionColor)
-					out.Weight = mTransmission->eval(in.ShadingContext);
 			} else {
-				const float NdotT = Reflection::refraction_angle(in.Context.NdotV(), eta);
+				if constexpr (HasRoughness) {
+					const float HdotT = Reflection::refraction_angle(in.Context.V.dot(H), eta);
 
-				if (NdotT < 0) { // TOTAL REFLECTION
-					out.Type = MST_SpecularReflection;
-					out.L	 = Reflection::reflect(in.Context.V);
+					if (HdotT < 0) { // TOTAL REFLECTION
+						out.Type = MST_SpecularReflection;
+						out.L	 = Reflection::reflect(in.Context.V, H);
+					} else {
+						out.Type = MST_SpecularTransmission;
+						out.L	 = Reflection::refract(eta, HdotT, in.Context.V);
+					}
 				} else {
-					out.Type = MST_SpecularTransmission;
-					out.L	 = Reflection::refract(eta, NdotT, in.Context.V);
+					const float NdotT = Reflection::refraction_angle(in.Context.NdotV(), eta);
 
-					if constexpr (HasTransmissionColor)
-						out.Weight = mTransmission->eval(in.ShadingContext);
+					if (NdotT < 0) { // TOTAL REFLECTION
+						out.Type = MST_SpecularReflection;
+						out.L	 = Reflection::reflect(in.Context.V);
+					} else {
+						out.Type = MST_SpecularTransmission;
+						out.L	 = Reflection::refract(eta, NdotT, in.Context.V);
+					}
 				}
 			}
 		}
-
-		out.PDF_S = 1;
+		// The weight is independent of the fresnel term
+		if constexpr (HasTransmissionColor) {
+			if (out.Type == MST_SpecularReflection)
+				out.Weight = mSpecularity->eval(in.ShadingContext);
+			else
+				out.Weight = mTransmission->eval(in.ShadingContext);
+		} else {
+			out.Weight = mSpecularity->eval(in.ShadingContext);
+		}
 	}
 
 	std::string dumpInformation() const override
@@ -143,9 +180,12 @@ public:
 		stream << "    IOR:             " << mIOR->dumpInformation() << std::endl;
 		if constexpr (IsThin)
 			stream << "    IsThin:          true" << std::endl;
-		if constexpr (IsThin)
+		if constexpr (SpectralVarying)
 			stream << "    SpectralVarying: true" << std::endl;
-
+		if constexpr (HasRoughness) {
+			stream << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl;
+			stream << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl;
+		}
 		return stream.str();
 	}
 
@@ -153,51 +193,94 @@ private:
 	std::shared_ptr<FloatSpectralNode> mSpecularity;
 	std::shared_ptr<FloatSpectralNode> mTransmission;
 	std::shared_ptr<FloatSpectralNode> mIOR;
+	std::shared_ptr<FloatScalarNode> mRoughnessX;
+	std::shared_ptr<FloatScalarNode> mRoughnessY;
 };
 
-template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
-static std::shared_ptr<IMaterial> createMaterial(uint32 id, const SceneLoadContext& ctx)
+// System of function which probably could be simplified with template meta programming
+template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying, bool HasRoughness, bool HasAnisoRoughness>
+static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadContext& ctx)
 {
-	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin, SpectralVarying>>(
+	std::shared_ptr<FloatScalarNode> rx;
+	std::shared_ptr<FloatScalarNode> ry;
+
+	if constexpr (HasRoughness) {
+		if (ctx.Parameters.hasParameter("roughness_x"))
+			rx = ctx.Env->lookupScalarNode(ctx.Parameters.getParameter("roughness_x"), 0);
+		else
+			rx = ctx.Env->lookupScalarNode(ctx.Parameters.getParameter("roughness"), 0);
+
+		if constexpr (HasAnisoRoughness)
+			ry = ctx.Env->lookupScalarNode(ctx.Parameters.getParameter("roughness_y"), 0);
+	}
+
+	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin, SpectralVarying, HasRoughness, HasAnisoRoughness>>(
 		id,
 		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("specularity"), 1),
 		HasTransmissionColor ? ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("transmission"), 1) : nullptr,
-		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("index"), 1.55f));
+		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("index"), 1.55f),
+		rx, ry);
+}
+
+template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying, bool HasRoughness>
+static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadContext& ctx)
+{
+	if constexpr (HasRoughness) {
+		const bool roughness_y = ctx.Parameters.hasParameter("roughness_y");
+		if (roughness_y)
+			return createMaterial1<HasTransmissionColor, IsThin, SpectralVarying, HasRoughness, true>(id, ctx);
+		else
+			return createMaterial1<HasTransmissionColor, IsThin, SpectralVarying, HasRoughness, false>(id, ctx);
+	} else {
+		return createMaterial1<HasTransmissionColor, IsThin, SpectralVarying, false, false>(id, ctx);
+	}
+}
+
+template <bool HasTransmissionColor, bool IsThin, bool SpectralVarying>
+static std::shared_ptr<IMaterial> createMaterial3(uint32 id, const SceneLoadContext& ctx)
+{
+	const bool roughness   = ctx.Parameters.hasParameter("roughness");
+	const bool roughness_x = ctx.Parameters.hasParameter("roughness_x");
+	if (roughness || roughness_x)
+		return createMaterial2<HasTransmissionColor, IsThin, SpectralVarying, true>(id, ctx);
+	else
+		return createMaterial2<HasTransmissionColor, IsThin, SpectralVarying, false>(id, ctx);
+}
+
+template <bool HasTransmissionColor, bool IsThin>
+static std::shared_ptr<IMaterial> createMaterial4(uint32 id, const SceneLoadContext& ctx)
+{
+	const bool spectralVarying = ctx.Parameters.getBool("spectral_varying", true);
+	if (spectralVarying)
+		return createMaterial3<HasTransmissionColor, IsThin, true>(id, ctx);
+	else
+		return createMaterial3<HasTransmissionColor, IsThin, false>(id, ctx);
+}
+
+template <bool HasTransmissionColor>
+static std::shared_ptr<IMaterial> createMaterial5(uint32 id, const SceneLoadContext& ctx)
+{
+	const bool isThin = ctx.Parameters.getBool("thin", false);
+	if (isThin)
+		return createMaterial4<HasTransmissionColor, true>(id, ctx);
+	else
+		return createMaterial4<HasTransmissionColor, false>(id, ctx);
+}
+
+static std::shared_ptr<IMaterial> createMaterial6(uint32 id, const SceneLoadContext& ctx)
+{
+	const bool hasTransmission = ctx.Parameters.hasParameter("transmission");
+	if (hasTransmission)
+		return createMaterial5<true>(id, ctx);
+	else
+		return createMaterial5<false>(id, ctx);
 }
 
 class DielectricMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const bool spectralVarying = ctx.Parameters.getBool("spectral_varying", true);
-		const bool hasTransmission = ctx.Parameters.hasParameter("transmission");
-		const bool isThin		   = ctx.Parameters.getBool("thin", false);
-
-		if (spectralVarying) {
-			if (hasTransmission) {
-				if (isThin)
-					return createMaterial<true, true, true>(id, ctx);
-				else
-					return createMaterial<true, false, true>(id, ctx);
-			} else {
-				if (isThin)
-					return createMaterial<false, true, true>(id, ctx);
-				else
-					return createMaterial<false, false, true>(id, ctx);
-			}
-		} else {
-			if (hasTransmission) {
-				if (isThin)
-					return createMaterial<true, true, false>(id, ctx);
-				else
-					return createMaterial<true, false, false>(id, ctx);
-			} else {
-				if (isThin)
-					return createMaterial<false, true, false>(id, ctx);
-				else
-					return createMaterial<false, false, false>(id, ctx);
-			}
-		}
+		return createMaterial6(id, ctx);
 	}
 
 	const std::vector<std::string>& getNames() const
