@@ -13,7 +13,7 @@
 #include "integrator/IIntegrator.h"
 #include "material/IMaterial.h"
 #include "math/Projection.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 #include "scene/Scene.h"
 #include "trace/IntersectionPoint.h"
 

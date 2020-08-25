@@ -251,7 +251,7 @@ private:
 	std::vector<Distribution1D> mColumnCDF;
 };
 
-// Reflection Transmission Pair
+// Scattering Transmission Pair
 class KlemsComponentRTPair {
 public:
 	inline KlemsComponentRTPair(const std::shared_ptr<KlemsComponent>& reflection, const std::shared_ptr<KlemsComponent>& transmission)
@@ -520,7 +520,7 @@ public:
 			const std::string direction = block.child_value("WavelengthDataDirection");
 			if (direction == "Transmission Front" && (allowedComponents & AC_FrontTransmission))
 				transmissionFront = component;
-			else if (direction == "Reflection Back" && (allowedComponents & AC_BackReflection))
+			else if (direction == "Scattering Back" && (allowedComponents & AC_BackReflection))
 				reflectionBack = component;
 			else if (direction == "Transmission Back" && (allowedComponents & AC_BackTransmission))
 				transmissionBack = component;

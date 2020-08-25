@@ -3,7 +3,7 @@
 #include "PR_Config.h"
 
 namespace PR {
-namespace Reflection {
+namespace Scattering {
 // Every function with a _global suffix is only useable in global space where the view vector is incident,
 // as opposed to the outgoing view vector in shading space!
 
@@ -135,9 +135,19 @@ inline Vector3f refract(float eta, const Vector3f& V)
 
 /////////////////////////////////////////////
 
-inline Vector3f halfway(const Vector3f& V, const Vector3f& L)
+inline Vector3f halfway_reflection(const Vector3f& V, const Vector3f& L)
 {
 	return (V + L).normalized();
+}
+
+inline Vector3f halfway_transmission(float inv_eta, const Vector3f& V, const Vector3f& L)
+{
+	return -(V + inv_eta * L).normalized();
+}
+
+inline Vector3f halfway_transmission(float n1, const Vector3f& V, float n2, const Vector3f& L)
+{
+	return halfway_transmission(n2 / n1, V, L);
 }
 
 /////////////////////////////////////////////
@@ -231,5 +241,5 @@ inline float poly(float lambda_nm, float A, float B1, float B2, float C1, float 
 {
 	return std::sqrt(poly2(lambda_nm, A, B1, B2, C1, C2));
 }
-} // namespace Reflection
+} // namespace Scattering
 } // namespace PR

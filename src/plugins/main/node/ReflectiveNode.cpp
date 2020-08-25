@@ -1,7 +1,7 @@
 #include "Environment.h"
 #include "Logger.h"
 #include "SceneLoadContext.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 #include "shader/INodePlugin.h"
 
 namespace PR {
@@ -27,7 +27,7 @@ public:
 		PR_OPT_LOOP
 		for (size_t i = 0; i < N; ++i)
 			cs[i] = teval(ctx, mCs[i]);
-		return Reflection::cauchy<SpectralBlob, RetType>(ctx.WavelengthNM, cs.data(), N);
+		return Scattering::cauchy<SpectralBlob, RetType>(ctx.WavelengthNM, cs.data(), N);
 	}
 
 	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
@@ -70,7 +70,7 @@ public:
 			bs[i] = teval(ctx, mBs[i]);
 			cs[i] = teval(ctx, mCs[i]);
 		}
-		return Reflection::sellmeier2<SpectralBlob, RetType>(ctx.WavelengthNM, bs.data(), cs.data(), N);
+		return Scattering::sellmeier2<SpectralBlob, RetType>(ctx.WavelengthNM, bs.data(), cs.data(), N);
 	}
 
 	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
@@ -114,7 +114,7 @@ public:
 			bs[i] = teval(ctx, mBs[i]);
 			cs[i] = teval(ctx, mCs[i]);
 		}
-		return Reflection::sellmeier2<SpectralBlob, RetType>(ctx.WavelengthNM, bs.data(), cs.data(), N).cwiseSqrt();
+		return Scattering::sellmeier2<SpectralBlob, RetType>(ctx.WavelengthNM, bs.data(), cs.data(), N).cwiseSqrt();
 	}
 
 	Vector2i queryRecommendedSize() const override { return Vector2i(1, 1); }
@@ -153,7 +153,7 @@ public:
 
 	SpectralBlob eval(const ShadingContext& ctx) const override
 	{
-		return Reflection::poly2(ctx.WavelengthNM, teval(ctx, mA),
+		return Scattering::poly2(ctx.WavelengthNM, teval(ctx, mA),
 								 teval(ctx, mB1), teval(ctx, mB2),
 								 teval(ctx, mC1), teval(ctx, mC2));
 	}
@@ -187,7 +187,7 @@ public:
 
 	SpectralBlob eval(const ShadingContext& ctx) const override
 	{
-		return Reflection::poly2(ctx.WavelengthNM, teval(ctx, mA),
+		return Scattering::poly2(ctx.WavelengthNM, teval(ctx, mA),
 								 teval(ctx, mB1), teval(ctx, mB2),
 								 teval(ctx, mC1), teval(ctx, mC2))
 			.cwiseSqrt();

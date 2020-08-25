@@ -1,6 +1,6 @@
 #include "Test.h"
 #include "math/Microfacet.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 
 using namespace PR;
 
@@ -11,12 +11,12 @@ using namespace PR;
 #endif
 
 PR_BEGIN_TESTCASE(BRDF)
-PR_TEST("Reflection")
+PR_TEST("Scattering")
 {
 	auto N = Vector3f(0, 1, 0);
 	auto V = Vector3f(1, -1, 0).normalized();
 
-	auto R = Reflection::reflect(-V, N);
+	auto R = Scattering::reflect(-V, N);
 
 	PR_CHECK_NEARLY_EQ(R, Vector3f(V(0), -V(1), V(2)));
 }
@@ -27,7 +27,7 @@ PR_TEST("Reflection")
 	auto N = Vector3f(0, 1, 0);
 	auto V = Vector3f(1, -1, 0).normalized();
 
-	auto R = Reflection::refract(0.9f, -V.dot(N), -V);
+	auto R = Scattering::refract(0.9f, -V.dot(N), -V);
 
 	PR_CHECK_NEARLY_EQ(R, Vector3f(0.636396f, -0.771362f, 0));
 }*/
@@ -37,10 +37,10 @@ PR_TEST("Is Inside")
 	auto N = Vector3f(0, 1, 0);
 
 	auto V1 = Vector3f(-1, 1, 0).normalized();
-	PR_CHECK_TRUE(Reflection::is_inside_global(V1.dot(N)));
+	PR_CHECK_TRUE(Scattering::is_inside_global(V1.dot(N)));
 
 	auto V2 = Vector3f(-1, -1, 0).normalized();
-	PR_CHECK_FALSE(Reflection::is_inside_global(V2.dot(N)));
+	PR_CHECK_FALSE(Scattering::is_inside_global(V2.dot(N)));
 }
 
 PR_TEST("Face Forward")
@@ -48,10 +48,10 @@ PR_TEST("Face Forward")
 	auto N = Vector3f(0, 1, 0);
 
 	auto V1 = Vector3f(-1, 1, 0).normalized();
-	PR_CHECK_NEARLY_EQ(Reflection::faceforward_global(V1.dot(N), N), Vector3f(0, -1, 0));
+	PR_CHECK_NEARLY_EQ(Scattering::faceforward_global(V1.dot(N), N), Vector3f(0, -1, 0));
 
 	auto V2 = Vector3f(-1, -1, 0).normalized();
-	PR_CHECK_NEARLY_EQ(Reflection::faceforward_global(V2.dot(N), N), N);
+	PR_CHECK_NEARLY_EQ(Scattering::faceforward_global(V2.dot(N), N), N);
 }
 
 PR_TEST("Blinn NDF")

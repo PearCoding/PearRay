@@ -4,8 +4,8 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Microfacet.h"
-#include "math/Reflection.h"
 #include "math/Sampling.h"
+#include "math/Scattering.h"
 #include "math/Spherical.h"
 
 #include "renderer/RenderContext.h"
@@ -40,11 +40,12 @@ public:
 
 		const auto& sctx = in.ShadingContext;
 
+		ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
 		float spec = std::min(1.0f,
 							  Microfacet::ward(mRoughnessX->eval(sctx),
 											   mRoughnessY->eval(sctx),
-											   in.Context.NdotV(), in.Context.NdotL(), in.Context.NdotH(),
-											   in.Context.XdotH(), in.Context.YdotH()));
+											   in.Context.NdotV(), in.Context.NdotL(),
+											   H.cosTheta(), H.sinPhi(), H.cosPhi()));
 
 		const float refl = mReflectivity->eval(sctx);
 		out.Weight		 = mAlbedo->eval(sctx) * (1 - refl) + spec * mSpecularity->eval(sctx) * refl;
@@ -105,7 +106,7 @@ public:
 		}
 
 		Vector3f H = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
-		out.L	   = Reflection::reflect(in.Context.V, H);
+		out.L	   = Scattering::reflect(in.Context.V, H);
 		out.Type   = MST_SpecularReflection;
 		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::abs(out.L[2]);
 	}

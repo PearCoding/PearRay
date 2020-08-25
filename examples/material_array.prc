@@ -43,7 +43,7 @@
 		:type 'roughglass'
 		:roughness 0.5
 		:specularity 1
-		:transmission 0
+		:spectral_varying false
 		:index (lookup_index "bk7")
 	)
 	(material

@@ -6,13 +6,39 @@
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
 #include "math/Projection.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 
 #include "renderer/RenderContext.h"
 
 #include <sstream>
 
 namespace PR {
+
+/* Refraction based microfacets
+ * Reflection:
+ *   F*D*G*(V.H*L.H)/(V.N*L.N)*K
+ *   K = 1/(4*(V.H)^2) // Jacobian
+ * 
+ * Notice: Due to law of reflection it is V.H = L.H => (V.H*L.H)/(V.H)^2 = 1
+ * but for compliance with the refraction brach this is not optimized
+ *
+ * Refraction:
+ *   (1-F)*D*G*(V.H*L.H)/(V.N*L.N)*K
+ *   K = n2^2 /(n1*(V.H)+n2*(L.H))^2 // Jacobian
+ * 
+ * To be precise the jacobian is already multiplied by 1/(V.H)
+ * and the whole BSDF is multiplied by |L.N| therefore the L.N in the denominator disappears
+ */
+
+#define SQUARE_ROUGHNESS
+inline static float adaptR(float r)
+{
+#ifdef SQUARE_ROUGHNESS
+	return r * r;
+#else
+	return r;
+#endif
+}
 
 // TODO: Roughness + Thin
 template <bool HasTransmissionColor, bool SpectralVarying, bool HasAnisoRoughness>
@@ -65,36 +91,34 @@ public:
 		return Fresnel::dielectric(dot, n1[0], n2[0]);
 	}
 
-	inline float evalGD(const Vector3f& H, const Vector3f& V, const Vector3f& L, const ShadingContext& sctx, float& pdf) const
+	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
 	{
-		const float absNdotH = std::abs(H(2));
-		const float absNdotV = std::abs(V(2));
-		const float absNdotL = std::abs(L(2));
+		const float absNdotH = H.cosTheta();
+		const float absNdotV = V(2);
 
+		PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
 		if (absNdotH <= PR_EPSILON
-			|| absNdotV <= PR_EPSILON
-			|| absNdotL <= PR_EPSILON) {
+			|| absNdotV <= PR_EPSILON) {
 			pdf = 0;
 			return 0.0f;
 		}
 
-		float m1 = mRoughnessX->eval(sctx);
-		m1 *= m1;
+		const float m1 = adaptR(mRoughnessX->eval(sctx));
 
 		float G;
 		float D;
 		if constexpr (!HasAnisoRoughness) {
 			D = Microfacet::ndf_ggx(absNdotH, m1);
-			G = Microfacet::g_1_smith(absNdotV, m1) * Microfacet::g_1_smith(absNdotL, m1);
+			G = Microfacet::g_1_smith(V, m1) * Microfacet::g_1_smith(L, m1);
 		} else {
-			float m2 = mRoughnessY->eval(sctx);
-			m2 *= m2;
-			D = Microfacet::ndf_ggx(absNdotH, H(0), H(1), m1, m2);
-			G = Microfacet::g_1_smith(absNdotV, V(0), V(1), m1, m2) * Microfacet::g_1_smith(absNdotL, L(0), L(1), m1, m2);
+			const float m2 = adaptR(mRoughnessY->eval(sctx));
+			D			   = Microfacet::ndf_ggx(H, m1, m2);
+			G			   = Microfacet::g_1_smith(V, m1, m2) * Microfacet::g_1_smith(L, m1, m2);
 		}
 
-		pdf = D * absNdotH;
-		return G * D;
+		const float factor = std::abs(H.dot(V) * H.dot(L)) / absNdotV; // NdotL multiplied out
+		pdf				   = std::abs(D * absNdotH);
+		return std::abs(G * D * factor);
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -102,16 +126,19 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		if (in.Context.V.sameHemisphere(in.Context.L)) { // Reflection
-			out.Type	= MST_SpecularReflection;
-			float HdotV = in.Context.HdotV();
+		if (in.Context.V.sameHemisphere(in.Context.L)) { // Scattering
+			out.Type		  = MST_SpecularReflection;
+			ShadingVector H	  = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+			const float HdotV = H.dot(in.Context.V);
 			PR_ASSERT(HdotV >= 0.0f, "HdotV must be positive");
 
 			float pdf;
-			float gd	   = evalGD(in.Context.H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+			float gd	   = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
 			SpectralBlob F = fresnelTerm(in.Context, HdotV, in.ShadingContext);
-			out.Weight	   = mSpecularity->eval(in.ShadingContext) * F * (gd / (4 * in.Context.NdotV()));
-			out.PDF_S	   = F * pdf / (4 * in.Context.HdotL());
+
+			float jacobian = 1 / (4 * HdotV * HdotV);
+			out.Weight	   = mSpecularity->eval(in.ShadingContext) * F * (gd * jacobian);
+			out.PDF_S	   = F * pdf * jacobian;
 		} else {
 			SpectralBlob weight = HasTransmissionColor ? mTransmission->eval(in.ShadingContext) : mSpecularity->eval(in.ShadingContext);
 
@@ -121,27 +148,27 @@ public:
 			if (in.Context.IsInside)
 				std::swap(n1, n2);
 
-			SpectralBlob eta = n1 / n2;
+			SpectralBlob inv_eta = n2 / n1;
 
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-				Vector3f H = ((Vector3f)in.Context.V + (Vector3f)in.Context.L * eta[i]).normalized();
-				if (in.Context.IsInside)
-					H = -H;
-
+				Vector3f H = Scattering::halfway_transmission(n1[i], in.Context.V, n2[i], in.Context.L);
 				if (H(2) < 0)
 					H = -H;
 
-				float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
+				float HdotV = H.dot((Vector3f)in.Context.V);
 				float HdotL = H.dot((Vector3f)in.Context.L);
-				float denom = HdotV + eta[i] * HdotL;
 
 				float pdf;
-				float gd = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
-				float F	 = Fresnel::dielectric(HdotV, n1[i], n2[i]);
+				float gd	   = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
+				float F		   = Fresnel::dielectric(HdotV, n1[i], n2[i]);
+				float denom	   = HdotV + inv_eta[i] * HdotL;
+				float jacobian = inv_eta[i] * inv_eta[i] / (denom * denom);
 
-				// Deaccount for solid angle compression (see mitsuba & pbrt) when non-radiance mode is evaluated
-				out.Weight[i] = (1 - F) * weight[i] * gd * HdotV * HdotL / (std::abs(in.Context.NdotV()) * denom * denom);
-				out.PDF_S[i]  = (1 - F) * pdf * eta[i] * eta[i] * HdotL / (denom * denom);
+				// TODO: Deaccount for solid angle compression (see mitsuba & pbrt) when non-radiance mode is evaluated
+				float factor = HdotL < 0 ? 1 / inv_eta[i] : inv_eta[i];
+
+				out.Weight[i] = (1 - F) * weight[i] * gd * jacobian * factor * factor;
+				out.PDF_S[i]  = (1 - F) * pdf * jacobian;
 			}
 		}
 	}
@@ -153,13 +180,12 @@ public:
 		float u1 = int(in.RND[0] * 100) / 100.0f;
 		float u2 = in.RND[0] * 100 - int(in.RND[0] * 100);
 
-		float m1 = mRoughnessX->eval(in.ShadingContext);
-		m1 *= m1;
-		float pdf = 1;
+		// Sample microfacet normal
+		const float m1 = adaptR(mRoughnessX->eval(in.ShadingContext));
+		float pdf	   = 1;
 		Vector3f H;
 		if constexpr (HasAnisoRoughness) {
-			float m2 = mRoughnessY->eval(in.ShadingContext);
-			m2 *= m2;
+			const float m2 = adaptR(mRoughnessY->eval(in.ShadingContext));
 			if (m1 > PR_EPSILON && m2 > PR_EPSILON)
 				H = Microfacet::sample_ndf_ggx(u2, in.RND[1], m1, m2, pdf);
 			else
@@ -172,30 +198,36 @@ public:
 		}
 		out.PDF_S = pdf;
 
-		const float HdotV = std::abs(H.dot((Vector3f)in.Context.V));
+		// Evaluate D*G*(V.H*L.H)/(V.N) but ignore pdf
+		float _pdf;
+		const float gd = evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf);
+
+		const float HdotV = H.dot((Vector3f)in.Context.V);
 		float HdotL;
 
+		// Calculate Fresnel term
 		float eta;
-		float F = fresnelTermHero(in.Context, HdotV, in.ShadingContext, eta);
+		const float F = fresnelTermHero(in.Context, HdotV, in.ShadingContext, eta);
 
 		if (u1 <= F) {
-			out.PDF_S *= F;
 			out.Type = MST_SpecularReflection;
-			out.L	 = Reflection::reflect(in.Context.V, H);
+			out.L	 = Scattering::reflect(in.Context.V, H);
 			HdotL	 = HdotV;
+
 			if (out.L(2) <= PR_EPSILON) { // Side check
 				out.Weight = SpectralBlob::Zero();
 				out.PDF_S  = 0;
 				return;
 			} else
 				out.Weight = mSpecularity->eval(in.ShadingContext);
+
+			out.PDF_S *= F;
 		} else {
-			out.PDF_S *= 1 - F;
-			HdotL = Reflection::refraction_angle(HdotV, eta);
+			HdotL = Scattering::refraction_angle(HdotV, eta);
 
 			if (HdotL < 0) { // TOTAL REFLECTION
 				out.Type = MST_SpecularReflection;
-				out.L	 = Reflection::reflect(in.Context.V, H);
+				out.L	 = Scattering::reflect(in.Context.V, H);
 				HdotL	 = HdotV;
 				if (out.L(2) <= PR_EPSILON) { // Side check
 					out.Weight = SpectralBlob::Zero();
@@ -205,7 +237,7 @@ public:
 					out.Weight = mSpecularity->eval(in.ShadingContext);
 			} else {
 				out.Type = MST_SpecularTransmission;
-				out.L	 = Reflection::refract(eta, HdotL, HdotV, in.Context.V, H);
+				out.L	 = Scattering::refract(eta, HdotL, HdotV, in.Context.V, H);
 				if (out.L(2) >= PR_EPSILON) { // Side check
 					out.Weight = SpectralBlob::Zero();
 					out.PDF_S  = 0;
@@ -217,18 +249,22 @@ public:
 						out.Weight = mSpecularity->eval(in.ShadingContext);
 				}
 			}
+
+			out.PDF_S *= 1 - F;
 		}
 
-		float _pdf;
-		const float gd = std::abs(evalGD(H, in.Context.V, out.L, in.ShadingContext, _pdf));
-		out.Weight *= gd * HdotV / (pdf * std::abs(in.Context.NdotV()));
-
+		// Apply jacobian based on actual direction
 		if (out.Type == MST_SpecularReflection) {
-			out.PDF_S /= 4 * HdotL;
+			float jacobian = 1 / (4 * HdotV * HdotV);
+			out.Weight *= gd * jacobian;
+			out.PDF_S *= jacobian;
 		} else {
-			float denom = HdotV + eta * HdotL;
-			out.Weight *= eta * eta;
-			out.PDF_S *= eta * eta * HdotL / (denom * denom);
+			float inv_eta  = 1 / eta;
+			float denom	   = HdotV + inv_eta * HdotL;
+			float jacobian = inv_eta * inv_eta / (denom * denom);
+			float factor   = HdotL < 0 ? eta : inv_eta;
+			out.Weight *= gd * jacobian * factor * factor;
+			out.PDF_S *= jacobian;
 		}
 	}
 

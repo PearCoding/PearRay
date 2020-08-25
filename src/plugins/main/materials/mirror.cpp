@@ -4,7 +4,7 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Projection.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 
 #include "renderer/RenderContext.h"
 
@@ -42,7 +42,7 @@ public:
 		out.Weight	 = mSpecularity->eval(in.ShadingContext);
 		out.Type	 = MST_SpecularReflection;
 		out.PDF_S	 = 1;
-		out.L = Reflection::reflect(in.Context.V);
+		out.L = Scattering::reflect(in.Context.V);
 	}
 
 	std::string dumpInformation() const override

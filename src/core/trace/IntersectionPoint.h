@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geometry/GeometryPoint.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 #include "math/Tangent.h"
 #include "ray/Ray.h"
 
@@ -63,7 +63,7 @@ public:
 		Surface.N	  = pt.N;
 		Surface.Nx	  = pt.Nx;
 		Surface.Ny	  = pt.Ny;
-		if (Reflection::is_inside_global(Surface.NdotV)) {
+		if (Scattering::is_inside_global(Surface.NdotV)) {
 			Tangent::invert_frame(Surface.N, Surface.Nx, Surface.Ny);
 			Surface.NdotV = -Surface.NdotV;
 			Flags |= IPF_Inside;

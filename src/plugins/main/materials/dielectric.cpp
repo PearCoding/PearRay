@@ -5,7 +5,7 @@
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
 #include "math/Projection.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 
 #include "renderer/RenderContext.h"
 
@@ -71,20 +71,20 @@ public:
 
 		if (in.RND[0] <= F) {
 			out.Type = MST_SpecularReflection;
-			out.L	 = Reflection::reflect(in.Context.V);
+			out.L	 = Scattering::reflect(in.Context.V);
 		} else {
 			if constexpr (IsThin) {
 				out.Type = MST_SpecularTransmission;
 				out.L	 = -in.Context.V;
 			} else {
-				const float NdotT = Reflection::refraction_angle(in.Context.NdotV(), eta);
+				const float NdotT = Scattering::refraction_angle(in.Context.NdotV(), eta);
 
 				if (NdotT < 0) { // TOTAL REFLECTION
 					out.Type = MST_SpecularReflection;
-					out.L	 = Reflection::reflect(in.Context.V);
+					out.L	 = Scattering::reflect(in.Context.V);
 				} else {
 					out.Type = MST_SpecularTransmission;
-					out.L	 = Reflection::refract(eta, NdotT, in.Context.V);
+					out.L	 = Scattering::refract(eta, NdotT, in.Context.V);
 				}
 			}
 		}

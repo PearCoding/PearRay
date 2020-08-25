@@ -33,33 +33,33 @@ public:
 	inline float absCosTheta() const { return std::abs(cosTheta()); }
 
 	inline float sinTheta() const { return std::sqrt(sin2Theta()); } // Costly
-	inline float sin2Theta() const { return std::max(0.0f, 1 - cosTheta()); }
+	inline float sin2Theta() const { return std::max(0.0f, 1 - cos2Theta()); }
 
-	inline float tanTheta() const { return sinTheta() / cosTheta(); }
+	inline float tanTheta() const { return sinTheta() / cosTheta(); } // Costly
 	inline float tan2Theta() const { return sin2Theta() / cos2Theta(); }
 
 	inline float cosPhi() const
 	{
 		float v = sinTheta();
-		return sinTheta() < PR_EPSILON ? 0 : std::max(-1.0f, std::min(1.0f, mVector.x() / v));
+		return v < PR_EPSILON ? 0 : std::max(-1.0f, std::min(1.0f, mVector.x() / v));
 	}
 
 	inline float sinPhi() const
 	{
 		float v = sinTheta();
-		return sinTheta() < PR_EPSILON ? 0 : std::max(-1.0f, std::min(1.0f, mVector.y() / v));
+		return v < PR_EPSILON ? 0 : std::max(-1.0f, std::min(1.0f, mVector.y() / v));
 	}
 
 	inline float cos2Phi() const
 	{
-		float v = cosPhi();
-		return v * v;
+		float v = sin2Theta();
+		return v < PR_EPSILON ? 0 : std::min(1.0f, mVector.x() * mVector.x() / v);
 	}
 
 	inline float sin2Phi() const
 	{
-		float v = sinPhi();
-		return v * v;
+		float v = sin2Theta();
+		return v < PR_EPSILON ? 0 : std::min(1.0f, mVector.y() * mVector.y() / v);
 	}
 
 	inline float cosDiffPhi(const ShadingVector& other) const

@@ -50,8 +50,8 @@ set(PR_Src
   math/Microfacet.h
   math/Projection.h
   math/ProjectionMap.h
-  math/Reflection.h
   math/Sampling.h
+  math/Scattering.h
   math/ShadingVector.h
   math/SIMath.h
   math/SIMathConstants.h

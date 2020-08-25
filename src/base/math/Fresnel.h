@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Reflection.h"
+#include "Scattering.h"
 
 namespace PR {
 namespace Fresnel {
@@ -19,7 +19,7 @@ inline float dielectric(float NdotV, float NdotT, float n1, float n2)
 inline float dielectric(float NdotV, float n1, float n2)
 {
 	// Snells Law
-	const float NdotT = Reflection::refraction_angle(NdotV, n1 / n2);
+	const float NdotT = Scattering::refraction_angle(NdotV, n1 / n2);
 
 	if (NdotT < 0)
 		return 1;

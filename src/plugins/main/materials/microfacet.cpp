@@ -5,8 +5,8 @@
 #include "material/IMaterial.h"
 #include "material/IMaterialPlugin.h"
 #include "math/Fresnel.h"
-#include "math/Reflection.h"
 #include "math/Sampling.h"
+#include "math/Scattering.h"
 #include "math/Spherical.h"
 
 #include "renderer/RenderContext.h"
@@ -121,9 +121,9 @@ public:
 		return out;
 	}
 
-	float evalSpec(const MaterialEvalContext& ctx, const ShadingContext& sctx, float& pdf) const
+	float evalSpec(const MaterialEvalContext& ctx, const ShadingVector& H, const ShadingContext& sctx, float& pdf) const
 	{
-		if (ctx.NdotH() <= PR_EPSILON
+		if (H.cosTheta() <= PR_EPSILON
 			|| ctx.NdotV() <= PR_EPSILON
 			|| ctx.NdotL() <= PR_EPSILON) {
 			pdf = 0;
@@ -143,7 +143,7 @@ public:
 			break;
 		default:
 		case GM_CookTorrance:
-			G = Microfacet::g_cook_torrance(ctx.NdotV(), ctx.NdotL(), ctx.NdotH(), ctx.H.dot(ctx.V));
+			G = Microfacet::g_cook_torrance(ctx.NdotV(), ctx.NdotL(), H.cosTheta(), ctx.H.dot(ctx.V));
 			break;
 		case GM_Kelemen:
 			G = Microfacet::g_kelemen(ctx.NdotV(), ctx.NdotL(), ctx.H.dot(ctx.V));
@@ -159,25 +159,25 @@ public:
 		float D;
 		switch (mDistributionMode) {
 		case DM_Blinn:
-			D = Microfacet::ndf_blinn(ctx.NdotH(), m1);
+			D = Microfacet::ndf_blinn(H.cosTheta(), m1);
 			break;
 		case DM_Beckmann:
-			D = Microfacet::ndf_beckmann(ctx.NdotH(), m1);
+			D = Microfacet::ndf_beckmann(H.cosTheta(), m1);
 			break;
 		default:
 		case DM_GGX:
 			if (mRoughnessX == mRoughnessY) {
-				D = Microfacet::ndf_ggx(ctx.NdotH(), m1);
+				D = Microfacet::ndf_ggx(H.cosTheta(), m1);
 			} else {
 				float m2 = mRoughnessY->eval(sctx);
 				m2 *= m2;
-				D = Microfacet::ndf_ggx(ctx.NdotH(), ctx.XdotH(), ctx.YdotH(), m1, m2);
+				D = Microfacet::ndf_ggx(H, m1, m2);
 			}
 			break;
 		}
 
-		pdf = 0.25f * D / (ctx.NdotH() * ctx.NdotL());
-		return (0.25f * D * G) / (ctx.NdotH() * ctx.NdotL());
+		pdf = 0.25f * D / (H.cosTheta() * ctx.NdotL());
+		return (0.25f * D * G) / (H.cosTheta() * ctx.NdotL());
 	}
 
 	void eval(const MaterialEvalInput& in, MaterialEvalOutput& out,
@@ -195,8 +195,9 @@ public:
 		SpectralBlob Spec = SpectralBlob::Zero();
 		if (in.Context.NdotL() * in.Context.NdotV() > PR_EPSILON) {
 			float pdf_s;
-			Spec	  = mSpecularity->eval(sctx) * evalSpec(in.Context, sctx, pdf_s);
-			out.PDF_S = SpectralBlob(pdf_s);
+			Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+			Spec	   = mSpecularity->eval(sctx) * evalSpec(in.Context, H, sctx, pdf_s);
+			out.PDF_S  = SpectralBlob(pdf_s);
 		}
 
 		out.PDF_S  = PR_INV_PI * (1 - F) + out.PDF_S * F;
@@ -239,7 +240,7 @@ public:
 			break;
 		}
 
-		out.L		= Reflection::reflect(in.Context.V, O);
+		out.L		= Scattering::reflect(in.Context.V, O);
 		float NdotL = out.L[2];
 		if (NdotL > PR_EPSILON)
 			pdf_s = std::min(std::max(pdf_s / (-4 * NdotL * in.Context.NdotV()), 0.0f), 1.0f);
@@ -250,7 +251,7 @@ public:
 		out.PDF_S = SpectralBlob(pdf_s);
 
 		float _ignore;
-		out.Weight = mSpecularity->eval(sctx) * evalSpec(in.Context.expand(out.L), sctx, _ignore) * NdotL;
+		out.Weight = mSpecularity->eval(sctx) * evalSpec(in.Context.expand(out.L), O, sctx, _ignore) * NdotL;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,

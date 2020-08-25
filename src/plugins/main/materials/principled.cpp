@@ -6,7 +6,7 @@
 #include "math/Fresnel.h"
 #include "math/Microfacet.h"
 #include "math/Projection.h"
-#include "math/Reflection.h"
+#include "math/Scattering.h"
 #include "math/Spherical.h"
 
 #include "renderer/RenderContext.h"
@@ -83,33 +83,33 @@ public:
 			return 1.25f * (fss * (1.0f / f - 0.5f) + 0.5f);
 	}
 
-	inline SpectralBlob specularTerm(const MaterialEvalContext& ctx, const SpectralBlob& spec,
-									 float HdotL, float roughness, float aniso) const
+	inline SpectralBlob specularTerm(const MaterialEvalContext& ctx, const ShadingVector& H, const SpectralBlob& spec,
+									 float roughness, float aniso) const
 	{
 		float aspect = std::sqrt(1 - aniso * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
 
-		float D		   = Microfacet::ndf_ggx(ctx.NdotH(), ctx.XdotH(), ctx.YdotH(), ax, ay);
-		float hk	   = Fresnel::schlick_term(HdotL);
+		float D		   = Microfacet::ndf_ggx(H, ax, ay);
+		float hk	   = Fresnel::schlick_term(H.dot(ctx.L));
 		SpectralBlob F = mix<SpectralBlob>(spec, SpectralBlob::Ones(), hk);
-		float G		   = Microfacet::g_1_smith(ctx.NdotL(), ctx.XdotL(), ctx.YdotL(), ax, ay)
-				  * Microfacet::g_1_smith(ctx.NdotV(), ctx.XdotV(), ctx.YdotV(), ax, ay);
+		float G		   = Microfacet::g_1_smith_opt(ctx.NdotL(), ctx.XdotL(), ctx.YdotL(), ax, ay)
+				  * Microfacet::g_1_smith_opt(ctx.NdotV(), ctx.XdotV(), ctx.YdotV(), ax, ay);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return D * F * G;
 	}
 
-	inline float clearcoatTerm(const MaterialEvalContext& ctx, float gloss, float HdotL) const
+	inline float clearcoatTerm(const MaterialEvalContext& ctx, const ShadingVector& H, float gloss) const
 	{
 		// This is fixed by definition
 		static float F0 = 0.04f; // IOR 1.5
 		static float R	= 0.25f;
 
-		float D	 = Microfacet::ndf_ggx(ctx.NdotH(), mix(0.1f, 0.001f, gloss));
-		float hk = Fresnel::schlick_term(HdotL);
+		float D	 = Microfacet::ndf_ggx(H.cosTheta(), mix(0.1f, 0.001f, gloss));
+		float hk = Fresnel::schlick_term(H.dot(ctx.L));
 		float F	 = mix(F0, 1.0f, hk);
-		float G	 = Microfacet::g_1_smith(ctx.NdotL(), R) * Microfacet::g_1_smith(ctx.NdotV(), R);
+		float G	 = Microfacet::g_1_smith_opt(ctx.NdotL(), R) * Microfacet::g_1_smith_opt(ctx.NdotV(), R);
 
 		// 1/(4*NdotV*NdotL) already multiplied out
 		return R * D * F * G;
@@ -122,6 +122,7 @@ public:
 	}
 
 	SpectralBlob evalBRDF(const MaterialEvalContext& ctx,
+						  const ShadingVector& H,
 						  const SpectralBlob& base,
 						  float lum,
 						  float subsurface,
@@ -135,8 +136,6 @@ public:
 						  float clearcoat,
 						  float clearcoatGloss) const
 	{
-		const float HdotL = ctx.L.dot(ctx.H);
-
 		const SpectralBlob tint = lum > PR_EPSILON
 									  ? SpectralBlob(base / lum)
 									  : SpectralBlob::Zero();
@@ -146,10 +145,11 @@ public:
 			metallic);
 		const SpectralBlob csheen = mix<SpectralBlob>(SpectralBlob::Ones(), tint, sheenTint);
 
+		const float HdotL	  = H.dot(ctx.L);
 		float diffTerm		  = diffuseTerm(ctx, HdotL, roughness);
 		float ssTerm		  = subsurface > PR_EPSILON ? subsurfaceTerm(ctx, HdotL, roughness) : 0.0f;
-		SpectralBlob specTerm = specularTerm(ctx, cspec, HdotL, roughness, anisotropic);
-		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(ctx, clearcoatGloss, HdotL) : 0.0f;
+		SpectralBlob specTerm = specularTerm(ctx, H, cspec, roughness, anisotropic);
+		float ccTerm		  = clearcoat > PR_EPSILON ? clearcoatTerm(ctx, H, clearcoatGloss) : 0.0f;
 		SpectralBlob shTerm	  = sheenTerm(sheen * csheen, HdotL);
 
 		return (PR_INV_PI * mix(diffTerm, ssTerm, subsurface) * base + shTerm) * (1 - metallic)
@@ -176,14 +176,15 @@ public:
 		float clearcoat		 = mClearcoat->eval(sctx);
 		float clearcoatGloss = mClearcoatGloss->eval(sctx);
 
-		out.Weight = evalBRDF(in.Context, base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
+		out.Weight = evalBRDF(in.Context, Scattering::halfway_reflection(in.Context.V, in.Context.L),
+							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(in.Context.NdotL());
 
 		float aspect = std::sqrt(1 - anisotropic * 0.9f);
 		float ax	 = std::max(0.001f, roughness * roughness / aspect);
 		float ay	 = std::max(0.001f, roughness * roughness * aspect);
-		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.NdotL(), in.Context.XdotL(), in.Context.YdotL(), ax, ay); // Use NdotH instead of NdotL!
+		out.PDF_S	 = Microfacet::pdf_ggx(in.Context.L, ax, ay); // FIXME: Use NdotH instead of NdotL!
 
 		if (roughness < 0.5f)
 			out.Type = MST_DiffuseReflection;
@@ -212,7 +213,7 @@ public:
 			out.PDF_S = 0;
 
 		// Reflect incoming ray by the calculated half vector
-		out.L = Reflection::reflect(in.Context.V, out.L).normalized();
+		out.L = Scattering::reflect(in.Context.V, out.L).normalized();
 
 		if (out.L[2] <= PR_EPSILON)
 			out.PDF_S = 0;
@@ -245,6 +246,7 @@ public:
 			out.Type = MST_SpecularReflection;
 
 		out.Weight = evalBRDF(in.Context.expand(out.L),
+							  Scattering::halfway_reflection(in.Context.V, out.L),
 							  base, lum, subsurface, anisotropic, roughness, metallic, spec, specTint,
 							  sheen, sheenTint, clearcoat, clearcoatGloss)
 					 * std::abs(out.L[2]);

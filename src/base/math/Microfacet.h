@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/ShadingVector.h"
 #include "math/Spherical.h"
 
 namespace PR {
@@ -46,7 +47,7 @@ inline float g_1_walter(float NdotK, float roughness)
 }
 
 // 1/(4*NdotV*NdotL) already multiplied out
-inline float g_1_smith(float NdotK, float roughness)
+inline float g_1_smith_opt(float NdotK, float roughness)
 {
 	const float a = roughness * roughness;
 	const float b = NdotK * NdotK;
@@ -54,7 +55,7 @@ inline float g_1_smith(float NdotK, float roughness)
 }
 
 // 1/(4*NdotV*NdotL) already multiplied out
-inline float g_1_smith(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
+inline float g_1_smith_opt(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
 {
 	const float kx = KdotX * roughnessX;
 	const float ky = KdotY * roughnessY;
@@ -67,10 +68,30 @@ inline float g_1_smith(float NdotK, float KdotX, float KdotY, float roughnessX, 
 		return 1.0f / denom;
 }
 
-// Not optimized
-inline float g_1_smith_nopt(float NdotK, float KdotX, float KdotY, float roughnessX, float roughnessY)
+// 1/(4*NdotV*NdotL) is not multiplied in
+inline float g_1_smith(const ShadingVector& K, float roughness)
 {
-	return 2 * NdotK * g_1_smith(NdotK, KdotX, KdotY, roughnessX, roughnessY);
+	const float a = roughness * roughness;
+	const float b = K.tan2Theta();
+
+	const float denom = 1 + std::sqrt(1 + a * b);
+	if (denom <= PR_EPSILON)
+		return 0.0f;
+	else
+		return 2.0f / denom;
+}
+
+inline float g_1_smith(const ShadingVector& K, float roughnessX, float roughnessY)
+{
+	const float ax2 = K.sin2Phi() * roughnessX * roughnessX;
+	const float ay2 = K.cos2Phi() * roughnessY * roughnessY;
+	const float b	= K.tan2Theta();
+
+	const float denom = 1 + std::sqrt(1 + (ax2 + ay2) * b);
+	if (denom <= PR_EPSILON)
+		return 0.0f;
+	else
+		return 2.0f / denom;
 }
 
 /////////////////////////////////
@@ -103,11 +124,11 @@ inline float ndf_ggx(float NdotH, float roughness)
 		return alpha2 * PR_INV_PI / inv_t2;
 }
 
-inline float ndf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, float roughnessY)
+inline float ndf_ggx(const ShadingVector& H, float roughnessX, float roughnessY)
 {
-	const float t = HdotX * HdotX / (roughnessX * roughnessX)
-					+ HdotY * HdotY / (roughnessY * roughnessY)
-					+ NdotH * NdotH;
+	const float t = H.sin2Phi() / (roughnessX * roughnessX)
+					+ H.cos2Phi() / (roughnessY * roughnessY)
+					+ H.cos2Theta();
 	const float denom = roughnessX * roughnessY * t * t;
 	if (denom <= PR_EPSILON)
 		return 0.0f;
@@ -210,21 +231,20 @@ inline Vector3f sample_ndf_ggx(float u0, float u1, float roughnessX, float rough
 	return Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 }
 
-inline float pdf_ggx(float NdotH, float HdotX, float HdotY, float roughnessX, float roughnessY)
+inline float pdf_ggx(const ShadingVector& H, float roughnessX, float roughnessY)
 {
-	return ndf_ggx(NdotH, HdotX, HdotY, roughnessX, roughnessY) * NdotH; // TODO: Validate?
+	return ndf_ggx(H, roughnessX, roughnessY) * H.cosTheta();
 }
 
 // Based on:
 // Journal of Computer Graphics Techniques Vol. 7, No. 4, 2018 http://jcgt.org.
 // Sampling the GGX Distribution of Visible Normals. Eric Heitz
 
-inline float pdf_ggx_vndf(float NdotV, float VdotX, float VdotY,
-						  float VdotH, float NdotH, float HdotX, float HdotY,
+inline float pdf_ggx_vndf(const ShadingVector& V, const ShadingVector& H,
 						  float roughnessX, float roughnessY)
 {
-	const float Dv = g_1_smith_nopt(NdotV, VdotX, VdotY, roughnessX, roughnessY) * VdotH * ndf_ggx(NdotH, HdotX, HdotY, roughnessX, roughnessY);
-	return Dv / NdotV;
+	const float Dv = g_1_smith(V, roughnessX, roughnessY) * V.dot(H) * ndf_ggx(H, roughnessX, roughnessY);
+	return Dv / V.cosTheta();
 }
 
 // nV is in sample space!
@@ -254,8 +274,7 @@ inline Vector3f sample_ggx_vndf(float u0, float u1,
 	// Section 3.4: transforming the normal back to the ellipsoid configuration
 	Vector3f H = Vector3f(roughnessX * Nh(0), roughnessY * Nh(1), std::max(0.0f, Nh(2))).normalized();
 
-	pdf = pdf_ggx_vndf(nV(2), nV(0), nV(1), std::max(0.0f, nV.dot(H)),
-					   H(2), H(0), H(1), roughnessX, roughnessY);
+	pdf = pdf_ggx_vndf(nV, H, roughnessX, roughnessY);
 	return H;
 }
 
