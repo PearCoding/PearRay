@@ -15,6 +15,7 @@
 	)
 	(integrator 
 	  :type 'direct'
+	  :max_ray_depth 64
 	)
 	; Outputs
 	(output
@@ -41,18 +42,19 @@
 	(material
 		:name 'Material1'
 		:type 'roughglass'
-		:roughness 0.5
+		:roughness 0.0
 		:specularity 1
+		:transmission 1
 		:spectral_varying false
 		:index (lookup_index "bk7")
 	)
 	(material
 		:name 'Material2'
-		:type 'microfacet'
-		:index (lookup_index "bk7")
-		:roughness 0.5
+		:type 'glass'
 		:specularity 1
-		:albedo 0
+		:transmission 1
+		:spectral_varying false
+		:index (lookup_index "bk7")
 	)
 	(material
 		:name 'Material3'

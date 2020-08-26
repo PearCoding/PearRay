@@ -75,10 +75,7 @@ inline float g_1_smith(const ShadingVector& K, float roughness)
 	const float b = K.tan2Theta();
 
 	const float denom = 1 + std::sqrt(1 + a * b);
-	if (denom <= PR_EPSILON)
-		return 0.0f;
-	else
-		return 2.0f / denom;
+	return 2.0f / denom;
 }
 
 inline float g_1_smith(const ShadingVector& K, float roughnessX, float roughnessY)
@@ -88,10 +85,7 @@ inline float g_1_smith(const ShadingVector& K, float roughnessX, float roughness
 	const float b	= K.tan2Theta();
 
 	const float denom = 1 + std::sqrt(1 + (ax2 + ay2) * b);
-	if (denom <= PR_EPSILON)
-		return 0.0f;
-	else
-		return 2.0f / denom;
+	return 2.0f / denom;
 }
 
 /////////////////////////////////

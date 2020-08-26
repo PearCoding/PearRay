@@ -25,7 +25,7 @@ PR_TEST("Halfway Transmission")
 	Vector3f H = Scattering::halfway_transmission(n1, V, n2, L);
 
 	float refA = Scattering::refraction_angle(H.dot(V), eta);
-	PR_CHECK_NEARLY_EQ(refA, std::abs(H.dot(L)));// TODO: -1??
+	PR_CHECK_NEARLY_EQ(refA, -H.dot(L));
 
 	Vector3f L2 = Scattering::refract(eta, refA, H.dot(V), V, H);
 	PR_CHECK_NEARLY_EQ(L2, L);
