@@ -528,10 +528,20 @@ public:
 				reflectionFront = component;
 		}
 
-		if (reflectionFront || transmissionFront)
-			mFront = std::make_shared<KlemsComponentRTPair>(reflectionFront, transmissionFront);
-		if (reflectionBack || transmissionBack)
-			mBack = std::make_shared<KlemsComponentRTPair>(reflectionBack, transmissionBack);
+		// Make sure both transmission parts are equal if not specified otherwise
+		if (!transmissionBack)
+			transmissionBack = transmissionFront;
+		if (!transmissionFront)
+			transmissionFront = transmissionBack;
+
+		mFront = std::make_shared<KlemsComponentRTPair>(reflectionFront, transmissionFront);
+		mBack  = std::make_shared<KlemsComponentRTPair>(reflectionBack, transmissionBack);
+
+		if (!reflectionFront && !reflectionBack && !transmissionFront && !transmissionBack) {
+			PR_LOG(L_ERROR) << "Could not parse " << filename << ": No valid data found" << std::endl;
+			mGood = false;
+			return;
+		}
 
 		mGood = true;
 	}
@@ -541,44 +551,26 @@ public:
 
 	inline float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
-		if (!inside && mFront)
+		if (!inside)
 			return mFront->eval(L, V, transmission);
-		else if (mBack)
-			return mBack->eval(L, V, transmission);
 		else
-			return 0.0f;
+			return mBack->eval(L, V, transmission);
 	}
 
 	inline float pdf(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
 	{
-		if (!inside && mFront)
+		if (!inside)
 			return mFront->pdf(L, V, transmission);
-		else if (mBack)
-			return mBack->pdf(L, V, transmission);
 		else
-			return 0.0f;
+			return mBack->pdf(L, V, transmission);
 	}
 
 	inline Vector3f sample(const Vector2f& u, const Vector3f& V, bool inside, float& pdf, float& weight) const
 	{
-		if (!inside && mFront)
+		if (!inside)
 			return mFront->sample(u, V, pdf, weight);
-		else if (mBack)
+		else
 			return mBack->sample(u, V, pdf, weight);
-		else {
-			pdf	   = 0;
-			weight = 0;
-			return Vector3f::Zero();
-		}
-	}
-
-	inline void ensureFrontBack()
-	{
-		// Make sure all data is present
-		if (!mFront)
-			mFront = mBack;
-		if (!mBack)
-			mBack = mFront;
 	}
 
 private:
@@ -676,9 +668,6 @@ public:
 			PR_LOG(L_WARNING) << "No allowed components in the Klems BSDF, therefor it will be black. Are you sure you want this?" << std::endl;
 
 		KlemsMeasurement measurement(ctx.escapePath(params.getString("filename", "")), allowedComponents);
-
-		if (params.getBool("both_sides", allowedComponents == AC_All))
-			measurement.ensureFrontBack();
 
 		if (measurement.isValid())
 			return std::make_shared<KlemsMeasuredMaterial>(id,

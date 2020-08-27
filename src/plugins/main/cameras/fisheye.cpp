@@ -22,6 +22,7 @@ enum MapType {
 
 // A fisheye camera with equirectangular mapping
 // Therefore it is just a sophisticated spherical camera with fix phi and parametric theta
+template <bool ClipRange>
 class FisheyeCamera : public ICamera {
 public:
 	ENTITY_CLASS
@@ -81,8 +82,10 @@ public:
 		const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.Width - 0.5f) / xaspect;
 		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.Height - 0.5f) / yaspect;
 
-		if (nx * nx + ny * ny > 1)
-			return std::optional<Ray>();
+		if constexpr (ClipRange) {
+			if (nx * nx + ny * ny > 1)
+				return std::optional<Ray>();
+		}
 
 		Ray ray;
 		constructRay(nx, -ny, ray.Origin, ray.Direction);
@@ -146,29 +149,38 @@ private:
 	Vector3f mUp_Cache;
 };
 
+template <bool ClipRange>
+static inline std::shared_ptr<ICamera> createCamera(uint32 id, const ParameterGroup& params)
+{
+	std::string name	   = params.getString("name", "__unnamed__");
+	std::string mapTypeStr = params.getString("map", "circular");
+	std::transform(mapTypeStr.begin(), mapTypeStr.end(), mapTypeStr.begin(), ::tolower);
+
+	MapType mapType = MT_Circular;
+	if (mapTypeStr == "cropped")
+		mapType = MT_Cropped;
+	else if (mapTypeStr == "full")
+		mapType = MT_Full;
+
+	return std::make_shared<FisheyeCamera<ClipRange>>(id, name,
+													  params.getNumber("fov", 180.0f * PR_DEG2RAD),
+													  params.getNumber("near", NEAR_DEFAULT),
+													  params.getNumber("far", FAR_DEFAULT),
+													  params.getVector3f("localDirection", ICamera::DefaultDirection),
+													  params.getVector3f("localRight", ICamera::DefaultRight),
+													  params.getVector3f("localUp", ICamera::DefaultUp),
+													  mapType);
+}
+
 class FisheyeCameraPlugin : public ICameraPlugin {
 public:
 	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
-		std::string name			 = params.getString("name", "__unnamed__");
-		std::string mapTypeStr		 = params.getString("map", "circular");
-		std::transform(mapTypeStr.begin(), mapTypeStr.end(), mapTypeStr.begin(), ::tolower);
-
-		MapType mapType = MT_Circular;
-		if (mapTypeStr == "cropped")
-			mapType = MT_Cropped;
-		else if (mapTypeStr == "full")
-			mapType = MT_Full;
-
-		return std::make_shared<FisheyeCamera>(id, name,
-											   params.getNumber("fov", 180.0f * PR_DEG2RAD),
-											   params.getNumber("near", NEAR_DEFAULT),
-											   params.getNumber("far", FAR_DEFAULT),
-											   params.getVector3f("localDirection", ICamera::DefaultDirection),
-											   params.getVector3f("localRight", ICamera::DefaultRight),
-											   params.getVector3f("localUp", ICamera::DefaultUp),
-											   mapType);
+		bool clip_range = ctx.Parameters.getBool("clip_range", true);
+		if (clip_range)
+			return createCamera<true>(id, ctx.Parameters);
+		else
+			return createCamera<false>(id, ctx.Parameters);
 	}
 
 	const std::vector<std::string>& getNames() const
