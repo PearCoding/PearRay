@@ -35,9 +35,11 @@
 	)
 	(light
 		:name 'sky'
-		:type 'sky'
+		:type 'cloudy_sky'
 		:turbidity 3
 		:extend true
+
+		:zenith (illuminant "D65")
 	)
 	(light
 		:name 'sun'

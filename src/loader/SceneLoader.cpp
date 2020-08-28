@@ -1061,6 +1061,16 @@ Parameter SceneLoader::unpackShadingNetwork(const DL::DataGroup& group, SceneLoa
 		} else {
 			PR_LOG(L_ERROR) << "[Loader] Invalid node parameter" << std::endl;
 		}
+	} else if (group.id() == "deg2rad") { // TODO: A custom plugin based approach would be great
+		if (group.anonymousCount() == 1 && group.at(0).isNumber())
+			return Parameter::fromNumber(group.at(0).getNumber() * PR_DEG2RAD);
+		else
+			PR_LOG(L_ERROR) << "[Loader] Invalid node parameter" << std::endl;
+	} else if (group.id() == "rad2deg") {
+		if (group.anonymousCount() == 1 && group.at(0).isNumber())
+			return Parameter::fromNumber(group.at(0).getNumber() * PR_RAD2DEG);
+		else
+			PR_LOG(L_ERROR) << "[Loader] Invalid node parameter" << std::endl;
 	} else {
 		uint32 id = addNodeInline(group, ctx);
 		if (id != P_INVALID_REFERENCE)

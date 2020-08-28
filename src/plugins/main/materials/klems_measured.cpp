@@ -543,6 +543,9 @@ public:
 			return;
 		}
 
+		if (!transmissionFront && !transmissionBack)
+			PR_LOG(L_WARNING) << "While parsing " << filename << ": No transmission data found" << std::endl;
+
 		mGood = true;
 	}
 
