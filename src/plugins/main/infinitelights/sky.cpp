@@ -37,20 +37,20 @@ public:
 		auto ea = ElevationAzimuth::fromDirection(mInvTransform * in.Ray.Direction);
 
 		if constexpr (ExtendToGround) {
-			out.Weight = radiance(in.Ray.WavelengthNM, ea);
-			out.PDF_S  = mDistribution->continuousPdf(
-				 Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / (2 * ELEVATION_RANGE) + 0.5f));
+			out.Radiance = radiance(in.Ray.WavelengthNM, ea);
+			out.PDF_S	 = mDistribution->continuousPdf(
+				   Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / (2 * ELEVATION_RANGE) + 0.5f));
 			const float f	  = std::cos(ea.Elevation);
 			const float denom = 2 * PR_PI * PR_PI * f;
 			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
 			if (ea.Elevation < 0) {
-				out.Weight = SpectralBlob::Zero();
-				out.PDF_S  = 0;
+				out.Radiance = SpectralBlob::Zero();
+				out.PDF_S	 = 0;
 			} else {
-				out.Weight = radiance(in.Ray.WavelengthNM, ea);
-				out.PDF_S  = mDistribution->continuousPdf(
-					 Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
+				out.Radiance = radiance(in.Ray.WavelengthNM, ea);
+				out.PDF_S	 = mDistribution->continuousPdf(
+					   Vector2f(ea.Azimuth / AZIMUTH_RANGE, ea.Elevation / ELEVATION_RANGE));
 				const float f	  = std::cos(ea.Elevation);
 				const float denom = 2 * PR_PI * PR_PI * f;
 				out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
@@ -76,7 +76,7 @@ public:
 		out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 
 		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
-		out.Weight	 = radiance(in.Point.Ray.WavelengthNM, ea);
+		out.Radiance = radiance(in.Point.Ray.WavelengthNM, ea);
 	}
 
 	std::string dumpInformation() const override

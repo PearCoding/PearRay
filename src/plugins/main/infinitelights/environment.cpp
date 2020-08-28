@@ -45,11 +45,11 @@ public:
 
 		if constexpr (UseSplit) {
 			if (in.Ray.IterationDepth == 0)
-				out.Weight = mBackground->eval(ctx);
+				out.Radiance = mBackground->eval(ctx);
 			else
-				out.Weight = mRadiance->eval(ctx);
+				out.Radiance = mRadiance->eval(ctx);
 		} else {
-			out.Weight = mRadiance->eval(ctx);
+			out.Radiance = mRadiance->eval(ctx);
 		}
 
 		if constexpr (UseDistribution) {
@@ -82,7 +82,7 @@ public:
 		ShadingContext coord;
 		coord.UV		   = uv;
 		coord.WavelengthNM = in.Point.Ray.WavelengthNM;
-		out.Weight		   = mRadiance->eval(coord);
+		out.Radiance	   = mRadiance->eval(coord);
 	}
 
 	std::string dumpInformation() const override

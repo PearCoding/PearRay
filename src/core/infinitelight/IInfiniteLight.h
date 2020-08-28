@@ -10,7 +10,7 @@ struct PR_LIB_CORE InfiniteLightEvalInput {
 };
 
 struct PR_LIB_CORE InfiniteLightEvalOutput {
-	SpectralBlob Weight;
+	SpectralBlob Radiance;
 	float PDF_S;
 };
 
@@ -20,7 +20,7 @@ struct PR_LIB_CORE InfiniteLightSampleInput {
 };
 
 struct PR_LIB_CORE InfiniteLightSampleOutput {
-	SpectralBlob Weight;
+	SpectralBlob Radiance;
 	float PDF_S;
 	Vector3f Outgoing;
 };

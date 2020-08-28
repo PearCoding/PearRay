@@ -46,12 +46,12 @@ public:
 		//PR_ASSERT(cosine >= 0.0f && cosine <= 1.0f, "cosine must be between 0 and 1");
 
 		if (cosine < mCosTheta) {
-			out.Weight = SpectralBlob::Zero();
-			out.PDF_S  = 0;
+			out.Radiance = SpectralBlob::Zero();
+			out.PDF_S	 = 0;
 		} else {
 			PR_OPT_LOOP
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out.Weight[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
+				out.Radiance[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
 
 			out.PDF_S = mPDF;
 		}
@@ -66,7 +66,7 @@ public:
 
 		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Weight[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
+			out.Radiance[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
 	}
 
 	std::string dumpInformation() const override
@@ -112,16 +112,18 @@ public:
 	{
 		PR_ASSERT(false, "eval() for delta lights should never be called!");
 
+		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Weight[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
+			out.Radiance[i] = mSpectrum.lookup(in.Ray.WavelengthNM[i]);
 		out.PDF_S = PR_INF;
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
 				const RenderTileSession&) const override
 	{
+		PR_OPT_LOOP
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			out.Weight[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
+			out.Radiance[i] = mSpectrum.lookup(in.Point.Ray.WavelengthNM[i]);
 		out.Outgoing = mDirection;
 		out.PDF_S	 = PR_INF;
 	}

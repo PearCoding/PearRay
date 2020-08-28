@@ -25,12 +25,12 @@ public:
 			  const RenderTileSession&) const override
 	{
 		PR_ASSERT(false, "eval() for delta lights should never be called!");
-		
+
 		ShadingContext ctx;
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
-		out.Weight = mIrradiance->eval(ctx);
-		out.PDF_S  = PR_INF;
+		out.Radiance = mIrradiance->eval(ctx);
+		out.PDF_S	 = PR_INF;
 	}
 
 	void sample(const InfiniteLightSampleInput& in, InfiniteLightSampleOutput& out,
@@ -39,7 +39,7 @@ public:
 		ShadingContext ctx;
 		ctx.WavelengthNM = in.Point.Ray.WavelengthNM;
 
-		out.Weight	 = mIrradiance->eval(ctx);
+		out.Radiance = mIrradiance->eval(ctx); // As there is only one direction (delta), irradiance is equal to radiance
 		out.Outgoing = mDirection_Cache;
 		out.PDF_S	 = PR_INF;
 	}

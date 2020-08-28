@@ -100,7 +100,7 @@ public:
 		// Calculate hero msi pdf
 		const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
 		const float msiL   = allowMSI ? MSI(1, outL.PDF_S, 1, matPDF) : 1.0f;
-		return std::make_pair(outL.Weight * out.Weight, msiL / outL.PDF_S);
+		return std::make_pair(outL.Radiance * out.Weight, msiL / outL.PDF_S);
 	}
 
 	// Estimate direct (finite) light
@@ -286,7 +286,7 @@ public:
 
 				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
 				const float msiL   = allowMSI ? MSI(1, matPDF, 1, lout.PDF_S) : 1.0f;
-				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Weight, next, path);
+				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Radiance, next, path);
 			}
 			path.popToken();
 		}
@@ -432,7 +432,7 @@ public:
 				if (out.PDF_S <= PR_EPSILON)
 					continue;
 
-				session.pushSpectralFragment(SpectralBlob::Ones(), out.Weight, in.Ray, cb);
+				session.pushSpectralFragment(SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
 			}
 		}
 	}
