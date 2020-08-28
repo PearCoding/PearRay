@@ -25,6 +25,23 @@ inline Vector3f faceforward_global(float gNdotV, const Vector3f& N)
 }
 
 ////////////////////////////////////////////////
+/**
+* @param V Outgoing vector
+* @param N Normal to faceforward with.
+*/
+inline Vector3f faceforward(const Vector3f& V, const Vector3f& N)
+{
+	return V.dot(N) < 0 ? -V : V;
+}
+
+/**
+* Optimized version in shading space
+* @param V Outgoing vector
+*/
+inline Vector3f faceforward(const Vector3f& V)
+{
+	return V(2) < 0 ? -V : V;
+}
 
 /**
 * @brief Returns angle between normal and refracted ray based on the Snell's law.

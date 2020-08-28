@@ -137,10 +137,11 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const float dot = std::max(0.0f, in.Context.NdotL());
-		out.Weight		= mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.H, in.Context.L, in.Context.WavelengthNM);
-		out.PDF_S		= Sampling::cos_hemi_pdf(dot);
-		out.Type		= MST_DiffuseReflection;
+		const Vector3f H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
+		const float dot	 = std::max(0.0f, in.Context.NdotL());
+		out.Weight		 = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, in.Context.L, in.Context.WavelengthNM);
+		out.PDF_S		 = Sampling::cos_hemi_pdf(dot);
+		out.Type		 = MST_DiffuseReflection;
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -148,10 +149,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		out.L = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		out.L			 = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+		const Vector3f H = Scattering::halfway_reflection(in.Context.V, out.L);
 
-		auto ectx  = in.Context.expand(out.L);
-		out.Weight = mTint->eval(in.ShadingContext) * mMeasurement.eval(ectx.H, ectx.L, ectx.WavelengthNM);
+		out.Weight = mTint->eval(in.ShadingContext) * mMeasurement.eval(H, out.L, in.Context.WavelengthNM);
 		out.Type   = MST_DiffuseReflection;
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
 	}

@@ -16,7 +16,6 @@ public:
 	Vector2f UV;
 	uint32 PrimitiveID; // Useful for PTex
 	SpectralBlob WavelengthNM;
-	bool IsInside;
 
 	inline float NdotV() const { return V(2); }
 	inline float XdotV() const { return V(0); }
@@ -32,7 +31,6 @@ public:
 		ctx.UV			 = sp.Surface.Geometry.UV;
 		ctx.PrimitiveID	 = sp.Surface.Geometry.PrimitiveID;
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
-		ctx.IsInside	 = sp.Flags & IPF_Inside;
 
 		return ctx;
 	}
@@ -43,7 +41,6 @@ public:
 class PR_LIB_CORE MaterialEvalContext : public MaterialSampleContext {
 public:
 	ShadingVector L; // Outgoing light vector in shading space
-	ShadingVector H; // Shading space
 
 	inline float NdotL() const { return L(2); }
 	inline float XdotL() const { return L(0); }
@@ -63,7 +60,6 @@ public:
 		ctx.WavelengthNM = sp.Ray.WavelengthNM;
 		ctx.V			 = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, -sp.Ray.Direction);
 		ctx.L			 = Tangent::toTangentSpace(sp.Surface.N, sp.Surface.Nx, sp.Surface.Ny, gL);
-		ctx.IsInside	 = sp.Flags & IPF_Inside;
 
 		return ctx;
 	}

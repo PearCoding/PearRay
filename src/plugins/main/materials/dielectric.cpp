@@ -31,17 +31,17 @@ public:
 
 	int flags() const override { return MF_DeltaDistribution | (SpectralVarying ? MF_SpectralVarying : 0); }
 
-	inline float fresnelTermHero(const MaterialSampleContext& spt, float dot, const ShadingContext& sctx, float& eta) const
+	inline float fresnelTermHero(float dot, const ShadingContext& sctx, float& eta) const
 	{
 		SpectralBlob n1 = SpectralBlob::Ones();
 		SpectralBlob n2 = mIOR->eval(sctx);
 
-		if (spt.IsInside)
+		if (dot < 0)
 			std::swap(n1, n2);
 
 		eta = n1[0] / n2[0];
 
-		return Fresnel::dielectric(dot, n1[0], n2[0]);
+		return Fresnel::dielectric(std::abs(dot), n1[0], n2[0]);
 	}
 
 	void eval(const MaterialEvalInput&, MaterialEvalOutput& out,
@@ -61,7 +61,7 @@ public:
 		out.PDF_S = 1;
 
 		float eta;
-		float F = fresnelTermHero(in.Context, in.Context.NdotV(), in.ShadingContext, eta);
+		float F = fresnelTermHero(in.Context.NdotV(), in.ShadingContext, eta);
 
 		if constexpr (IsThin) {
 			// Account for scattering between interfaces
@@ -77,14 +77,16 @@ public:
 				out.Type = MST_SpecularTransmission;
 				out.L	 = -in.Context.V;
 			} else {
-				const float NdotT = Scattering::refraction_angle(in.Context.NdotV(), eta);
+				const float NdotT = Scattering::refraction_angle(std::abs(in.Context.NdotV()), eta);
 
 				if (NdotT < 0) { // TOTAL REFLECTION
 					out.Type = MST_SpecularReflection;
 					out.L	 = Scattering::reflect(in.Context.V);
 				} else {
 					out.Type = MST_SpecularTransmission;
-					out.L	 = Scattering::refract(eta, NdotT, in.Context.V);
+					out.L	 = Scattering::refract(eta, NdotT, Scattering::faceforward(in.Context.V));
+					if (in.Context.NdotV() < 0)
+						out.L = -out.L;
 				}
 			}
 		}

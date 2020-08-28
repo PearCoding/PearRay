@@ -65,31 +65,31 @@ public:
 
 	int flags() const override { return (SpectralVarying ? MF_SpectralVarying : 0); }
 
-	inline SpectralBlob fresnelTerm(const MaterialSampleContext& spt, float dot, const ShadingContext& sctx) const
+	inline SpectralBlob fresnelTerm(float dot, const ShadingContext& sctx) const
 	{
 		SpectralBlob n1 = SpectralBlob::Ones();
 		SpectralBlob n2 = mIOR->eval(sctx);
 
-		if (spt.IsInside)
+		if (dot < 0)
 			std::swap(n1, n2);
 
 		SpectralBlob res;
 		PR_UNROLL_LOOP(PR_SPECTRAL_BLOB_SIZE)
 		for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-			res[i] = Fresnel::dielectric(dot, n1[i], n2[i]);
+			res[i] = Fresnel::dielectric(std::abs(dot), n1[i], n2[i]);
 		return res;
 	}
 
-	inline float fresnelTermHero(const MaterialSampleContext& spt, float dot, const ShadingContext& sctx, float& eta, float& NdotT) const
+	inline float fresnelTermHero(float dot, const ShadingContext& sctx, float& eta, float& NdotT) const
 	{
 		SpectralBlob n1 = SpectralBlob::Ones();
 		SpectralBlob n2 = mIOR->eval(sctx);
 
-		if (spt.IsInside)
+		if (dot < 0)
 			std::swap(n1, n2);
 
 		eta	  = n1[0] / n2[0]; // See top note
-		NdotT = Scattering::refraction_angle(dot, eta);
+		NdotT = Scattering::refraction_angle(std::abs(dot), eta);
 
 		return Fresnel::dielectric(dot, NdotT, n1[0], n2[0]);
 	}
@@ -145,7 +145,7 @@ public:
 
 			float pdf;
 			const float gd		 = evalGD(H, in.Context.V, in.Context.L, in.ShadingContext, pdf);
-			const SpectralBlob F = fresnelTerm(in.Context, HdotV, in.ShadingContext);
+			const SpectralBlob F = fresnelTerm(HdotV, in.ShadingContext);
 
 			const float jacobian = 1 / (4 * HdotV * HdotV);
 			out.Weight			 = mSpecularity->eval(in.ShadingContext) * F * (gd * jacobian);
@@ -156,7 +156,7 @@ public:
 			SpectralBlob n1 = SpectralBlob::Ones();
 			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
 
-			if (in.Context.IsInside)
+			if (!in.Context.V.sameHemisphere(in.Context.L))
 				std::swap(n1, n2);
 
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
@@ -222,7 +222,7 @@ public:
 		// Calculate Fresnel term
 		float eta;
 		float HdotT;
-		const float F			   = fresnelTermHero(in.Context, HdotV, in.ShadingContext, eta, HdotT);
+		const float F			   = fresnelTermHero(HdotV, in.ShadingContext, eta, HdotT);
 		const bool totalReflection = HdotT < 0;
 
 		// Breach out for two cases

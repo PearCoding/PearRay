@@ -7,7 +7,7 @@
 
 namespace PR {
 enum IntersectionPointFlags {
-	IPF_Inside	 = 0x1,
+	//IPF_Inside	 = 0x1,
 	IPF_IsMedium = 0x2
 };
 
@@ -63,11 +63,6 @@ public:
 		Surface.N	  = pt.N;
 		Surface.Nx	  = pt.Nx;
 		Surface.Ny	  = pt.Ny;
-		if (Scattering::is_inside_global(Surface.NdotV)) {
-			Tangent::invert_frame(Surface.N, Surface.Nx, Surface.Ny);
-			Surface.NdotV = -Surface.NdotV;
-			Flags |= IPF_Inside;
-		}
 	}
 
 	// Set shading for medium

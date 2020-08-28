@@ -106,16 +106,16 @@ public:
 		case FM_Dielectric: {
 			SpectralBlob n1 = SpectralBlob::Ones();
 			SpectralBlob n2 = ior;
-			if (ctx.IsInside)
+			if (ctx.NdotV() < 0)
 				std::swap(n1, n2);
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out[i] = Fresnel::dielectric(ctx.NdotV(), n1(i), n2(i));
+				out[i] = Fresnel::dielectric(std::abs(ctx.NdotV()), n1(i), n2(i));
 		} break;
 		case FM_Conductor: {
 			const float a = mConductorAbsorption->eval(sctx);
 
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-				out[i] = Fresnel::conductor(ctx.NdotV(), ior(i), a);
+				out[i] = Fresnel::conductor(std::abs(ctx.NdotV()), ior(i), a);
 		} break;
 		}
 		return out;
@@ -143,10 +143,10 @@ public:
 			break;
 		default:
 		case GM_CookTorrance:
-			G = Microfacet::g_cook_torrance(ctx.NdotV(), ctx.NdotL(), H.cosTheta(), ctx.H.dot(ctx.V));
+			G = Microfacet::g_cook_torrance(ctx.NdotV(), ctx.NdotL(), H.cosTheta(), H.dot(ctx.V));
 			break;
 		case GM_Kelemen:
-			G = Microfacet::g_kelemen(ctx.NdotV(), ctx.NdotL(), ctx.H.dot(ctx.V));
+			G = Microfacet::g_kelemen(ctx.NdotV(), ctx.NdotL(), H.dot(ctx.V));
 			break;
 		case GM_Schlick:
 			G = Microfacet::g_1_schlick(ctx.NdotV(), m1) * Microfacet::g_1_schlick(ctx.NdotL(), m1);

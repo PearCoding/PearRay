@@ -146,7 +146,7 @@ public:
 					radiance *= weight;
 				break;
 			case VFM_Inside:
-				radiance = (spt.Flags & IPF_Inside) ? TrueColor : FalseColor;
+				radiance = Scattering::is_inside_global(spt.Surface.NdotV) ? TrueColor : FalseColor;
 				if (mApplyDot)
 					radiance *= weight;
 				break;
