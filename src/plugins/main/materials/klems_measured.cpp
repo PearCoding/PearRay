@@ -30,7 +30,9 @@ static inline constexpr float projSA(float theta_low, float theta_high, float ph
 // Our sampling space flips implicitly to the inside configuration and has to be considered when working with the Klems basis
 // therefor the opposite funtions fi and bi are not needed
 const auto fo = [](const Vector3f& v) { return v; };
+const auto fi = [](const Vector3f& v) { return Vector3f(-v[0], -v[1], v[2]); };
 const auto bo = [](const Vector3f& v) { return Vector3f(v[0], v[1], -v[2]); };
+const auto bi = [](const Vector3f& v) { return -v; };
 
 class KlemsBasis {
 public:
@@ -261,43 +263,45 @@ public:
 		calcReflectivity();
 	}
 
-	inline float eval(const Vector3f& V, const Vector3f& L, bool transmission) const
+	inline float evalReflection(const Vector3f& out, const Vector3f& in) const
 	{
-		const Vector3f iV = L;
-		const Vector3f oV = V;
-		if (!transmission)
-			return mReflection ? mReflection->eval(fo(iV), fo(oV)) : 0;
-		else
-			return mTransmission ? mTransmission->eval(bo(iV), fo(oV)) : 0;
+		return mReflection ? mReflection->eval(in, out) : 0;
 	}
 
-	inline float pdf(const Vector3f& V, const Vector3f& L, bool transmission) const
+	inline float evalTransmission(const Vector3f& out, const Vector3f& in) const
 	{
-		const Vector3f iV = L;
-		const Vector3f oV = V;
+		return mTransmission ? mTransmission->eval(in, out) : 0;
+	}
 
+	inline float pdfReflectivity(const Vector3f& out) const
+	{
+		PR_ASSERT(mTransmission && mReflection, "No reflectivity calculated");
+		const Vector2f outA = Spherical::from_direction_hemi(out);
+		const size_t row	= mReflection->row()->indexOf(outA(0), outA(1));
+		PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
+		return mReflectivity[row];
+	}
+
+	inline float pdfReflection(const Vector3f& out, const Vector3f& in) const
+	{
 		float pdf2 = 1.0f;
-		if (mTransmission && mReflection) {
-			const Vector2f out = Spherical::from_direction_hemi(fo(oV));
-			const size_t row   = mReflection->row()->indexOf(out(0), out(1));
-			PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
-			float refl = mReflectivity[row];
-			if (!transmission)
-				pdf2 = refl;
-			else
-				pdf2 = 1 - refl;
-		}
+		if (mTransmission && mReflection)
+			pdf2 = pdfReflectivity(out);
 
-		if (!transmission)
-			return mReflection ? mReflection->pdf(fo(iV), fo(oV)) * pdf2 : 0;
-		else
-			return mTransmission ? mTransmission->pdf(bo(iV), fo(oV)) * pdf2 : 0;
+		return mReflection ? mReflection->pdf(in, out) * pdf2 : 0;
 	}
 
-	inline Vector3f sample(const Vector2f& u, const Vector3f& V, float& pdf, float& weight) const
+	inline float pdfTransmission(const Vector3f& out, const Vector3f& in) const
 	{
-		const Vector3f oV = V;
+		float pdf2 = 1.0f;
+		if (mTransmission && mReflection)
+			pdf2 = 1 - pdfReflectivity(out);
 
+		return mTransmission ? mTransmission->pdf(in, out) * pdf2 : 0;
+	}
+
+	inline Vector3f sample(const Vector2f& u, const Vector3f& out, float& pdf, float& weight) const
+	{
 		bool do_reflection = false;
 		Vector2f u2		   = u;
 		float pdf2		   = 1.0f;
@@ -306,10 +310,7 @@ public:
 		} else if (mTransmission && !mReflection) {
 			do_reflection = false;
 		} else if (mTransmission && mReflection) {
-			const Vector2f out = Spherical::from_direction_hemi(fo(oV));
-			const size_t row   = mReflection->row()->indexOf(out(0), out(1));
-			PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
-			float refl = mReflectivity[row];
+			const float refl = pdfReflectivity(out);
 			if (u[0] <= refl) {
 				do_reflection = true;
 				u2[0] /= refl;
@@ -327,9 +328,9 @@ public:
 
 		Vector3f L;
 		if (do_reflection)
-			L = fo(mReflection->sample(u2, fo(oV), pdf, weight));
+			L = fi(mReflection->sample(u2, out, pdf, weight));
 		else
-			L = bo(mTransmission->sample(u2, fo(oV), pdf, weight));
+			L = bi(mTransmission->sample(u2, out, pdf, weight));
 		pdf *= pdf2;
 		return L;
 	}
@@ -552,28 +553,42 @@ public:
 	inline std::string filename() const { return mFilename; }
 	inline bool isValid() const { return mGood; }
 
-	inline float eval(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
+	inline float eval(const Vector3f& out, const Vector3f& in) const
 	{
-		if (!inside)
-			return mFront->eval(L, V, transmission);
+		const bool outFront = out(2) > 0;
+		const bool inFront	= in(2) > 0;
+
+		if (inFront && outFront)
+			return mFront->evalReflection(fo(out), fi(in));
+		else if (!inFront && !outFront)
+			return mBack->evalReflection(bo(out), bi(in));
+		else if (inFront)
+			return mFront->evalTransmission(bo(out), fi(in));
 		else
-			return mBack->eval(L, V, transmission);
+			return mBack->evalTransmission(fo(out), bi(in));
 	}
 
-	inline float pdf(const Vector3f& V, const Vector3f& L, bool inside, bool transmission) const
+	inline float pdf(const Vector3f& out, const Vector3f& in) const
 	{
-		if (!inside)
-			return mFront->pdf(L, V, transmission);
+		const bool outFront = out(2) > 0;
+		const bool inFront	= in(2) > 0;
+
+		if (inFront && outFront)
+			return mFront->pdfReflection(fo(out), fi(in));
+		else if (!inFront && !outFront)
+			return mBack->pdfReflection(bo(out), bi(in));
+		else if (inFront)
+			return mFront->pdfTransmission(bo(out), fi(in));
 		else
-			return mBack->pdf(L, V, transmission);
+			return mBack->pdfTransmission(fo(out), bi(in));
 	}
 
-	inline Vector3f sample(const Vector2f& u, const Vector3f& V, bool inside, float& pdf, float& weight) const
+	inline Vector3f sample(const Vector2f& u, const Vector3f& out, float& pdf, float& weight) const
 	{
-		if (!inside)
-			return mFront->sample(u, V, pdf, weight);
+		if (out(2) >= 0)
+			return mFront->sample(u, out, pdf, weight);
 		else
-			return mBack->sample(u, V, pdf, weight);
+			return -mBack->sample(u, out, pdf, weight);
 	}
 
 private:
@@ -583,14 +598,25 @@ private:
 	std::shared_ptr<KlemsComponentRTPair> mBack;
 };
 
+template <bool SwapSide, bool HasTint>
 class KlemsMeasuredMaterial : public IMaterial {
 public:
-	KlemsMeasuredMaterial(uint32 id, const KlemsMeasurement& measurement, const std::shared_ptr<FloatSpectralNode>& tint, bool swapside)
+	KlemsMeasuredMaterial(uint32 id, const KlemsMeasurement& measurement, const std::shared_ptr<FloatSpectralNode>& tint)
 		: IMaterial(id)
 		, mMeasurement(measurement)
 		, mTint(tint)
-		, mSwapSide(swapside)
 	{
+
+		// Ignore this... works only with aerc
+		// FIXME: It seems like o and i are swapped in the implementation
+		Vector3f o = Vector3f(0, 0, 1).normalized();
+		Vector3f i = Vector3f(0, 1, 1).normalized();
+		float a1   = mMeasurement.eval(o, i);		  // 4.933000e-02
+		float a2   = mMeasurement.eval(o, bi(i));	  // 6.322000e-03
+		float a3   = mMeasurement.eval(bi(o), i);	  // 1.003000e-02
+		float a4   = mMeasurement.eval(bi(o), bi(i)); // 0
+
+		PR_LOG(L_INFO) << "M> " << a1 << " " << a2 << " " << a3 << " " << a4 << std::endl;
 	}
 
 	virtual ~KlemsMeasuredMaterial() = default;
@@ -600,11 +626,21 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const bool inside	  = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
-		const bool refraction = in.Context.L(2) < 0.0f;
-		out.Weight			  = mTint->eval(in.ShadingContext) * mMeasurement.eval(in.Context.V, in.Context.L, inside, refraction) /* std::abs(in.Context.NdotL())*/;
-		out.PDF_S			  = mMeasurement.pdf(in.Context.V, in.Context.L, inside, refraction);
+		Vector3f oV = in.Context.V;
+		Vector3f iV = in.Context.L;
+
+		if constexpr (SwapSide) {
+			oV = -oV;
+			iV = -iV;
+		}
+
+		const bool refraction = !in.Context.V.sameHemisphere(in.Context.L);
+		out.Weight			  = mMeasurement.eval(oV, iV) /* std::abs(in.Context.NdotL())*/;
+		out.PDF_S			  = mMeasurement.pdf(oV, iV);
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
+
+		if constexpr (HasTint)
+			out.Weight *= mTint->eval(in.ShadingContext);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -612,17 +648,21 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const bool inside = mSwapSide ? !in.Context.IsInside : in.Context.IsInside;
-
 		float pdf;
 		float weight;
-		out.L = mMeasurement.sample(in.RND, in.Context.V, inside, pdf, weight);
 
-		auto ectx			  = in.Context.expand(out.L);
-		const bool refraction = ectx.L(2) < 0.0f;
-		out.Weight			  = mTint->eval(in.ShadingContext) * weight /* std::abs(ectx.NdotL())*/;
+		if constexpr (SwapSide)
+			out.L = (Vector3f)-mMeasurement.sample(in.RND, -in.Context.V, pdf, weight);
+		else
+			out.L = mMeasurement.sample(in.RND, in.Context.V, pdf, weight);
+
+		const bool refraction = !in.Context.V.sameHemisphere(out.L);
+		out.Weight			  = weight /* std::abs(ectx.NdotL())*/;
 		out.PDF_S			  = pdf;
 		out.Type			  = refraction ? MST_DiffuseTransmission : MST_DiffuseReflection;
+
+		if constexpr (HasTint)
+			out.Weight *= mTint->eval(in.ShadingContext);
 	}
 
 	std::string dumpInformation() const override
@@ -632,8 +672,8 @@ public:
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <KlemsMeasuredMaterial>:" << std::endl
 			   << "    Filename: " << mMeasurement.filename() << std::endl
-			   << "    Tint:     " << mTint->dumpInformation() << std::endl
-			   << "    SwapSide: " << (mSwapSide ? "true" : "false") << std::endl;
+			   << "    Tint:     " << (HasTint ? mTint->dumpInformation() : "None") << std::endl
+			   << "    SwapSide: " << (SwapSide ? "true" : "false") << std::endl;
 
 		return stream.str();
 	}
@@ -641,7 +681,6 @@ public:
 private:
 	const KlemsMeasurement mMeasurement;
 	const std::shared_ptr<FloatSpectralNode> mTint;
-	const bool mSwapSide;
 };
 
 class KlemsMeasuredMaterialPlugin : public IMaterialPlugin {
@@ -671,14 +710,23 @@ public:
 			PR_LOG(L_WARNING) << "No allowed components in the Klems BSDF, therefor it will be black. Are you sure you want this?" << std::endl;
 
 		KlemsMeasurement measurement(ctx.escapePath(params.getString("filename", "")), allowedComponents);
+		const bool swapSide = params.getBool("swap_side", false);
 
-		if (measurement.isValid())
-			return std::make_shared<KlemsMeasuredMaterial>(id,
-														   measurement,
-														   ctx.Env->lookupSpectralNode(params.getParameter("tint"), 1),
-														   params.getBool("swap_side", false));
-		else
-			return nullptr;
+		if (measurement.isValid()) {
+			if (params.hasParameter("tint")) {
+				auto tint = ctx.Env->lookupSpectralNode(params.getParameter("tint"), 1);
+				if (swapSide)
+					return std::make_shared<KlemsMeasuredMaterial<true, true>>(id, measurement, tint);
+				else
+					return std::make_shared<KlemsMeasuredMaterial<false, true>>(id, measurement, tint);
+			} else {
+				if (swapSide)
+					return std::make_shared<KlemsMeasuredMaterial<true, false>>(id, measurement, nullptr);
+				else
+					return std::make_shared<KlemsMeasuredMaterial<false, false>>(id, measurement, nullptr);
+			}
+		}
+		return nullptr;
 	}
 
 	const std::vector<std::string>& getNames() const override
