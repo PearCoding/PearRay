@@ -219,9 +219,8 @@ if(PR_WITH_CLIENT)
 endif()
 
 if(${Qt5Widgets_FOUND})
-	if(PR_WITH_DIAGNOSTIC)
-		add_subdirectory(src/diagnostic)
-	endif()
+	add_subdirectory(src/ui)
+	set(PR_HAS_UI ON)
 endif()
 
 if(PR_WITH_EXTRA_TOOLS)
