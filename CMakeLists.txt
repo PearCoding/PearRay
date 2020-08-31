@@ -44,25 +44,24 @@ option(PR_WITH_ASSERTS 			"Compile with asserts on. Disable only in deployment c
 option(PR_WITH_PYTHON 			"Compile with python API (using pybind11)." ON)
 option(PR_WITH_CLIENT 			"Compile commandline client. Strongly recommended!" ON)
 option(PR_WITH_MAIN_PLUGINS 	"Compile main plugins. Recommended!" ON)
-option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins." ON)
+option(PR_WITH_EXTRA_PLUGINS 	"Compile extra plugins which in general require extra dependencies." ON)
 option(PR_EMBED_PLUGINS			"Embed plugins into utility library" ON)
-option(PR_WITH_DIAGNOSTIC 		"Compile the additional PearRayDiagnostic Viewer based on the QT library. Useful if no exr viewer is available" ON)
 option(PR_WITH_PROFILER 		"Compile with internal profiler." ON)
-option(PR_WITH_EXTRA_TOOLS		"Compile extra small tools." ON)
+option(PR_WITH_EXTRA_TOOLS		"Compile supplementary tools." ON)
 option(PR_BUILD_TESTS 			"Build tests." ON)
 option(PR_BUILD_TESTS_PYTHON 	"Build tests for the python API. Requires PR_BUILD_TESTS to be ON" ON)
 option(PR_COMPRESS_SPEC_FILES 	"Compress spectral files with boost::zlib" ON)
 option(PR_GENERATE_COVERAGE 	"Generate coverage for debug builds - Currently only supported with the GCC compiler." OFF)
 option(PR_BUILD_DOCUMENTATION 	"Build documentation with doxygen." ON)
 option(PR_USE_LTO 				"Use linked time optimization if available." ON)
-option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds only." OFF)
+option(PR_USE_LTO_ONLY_RELEASE 	"Use linked time optimization on release builds only." ON)
 option(PR_USE_CCACHE 			"Use ccache if available." ON)
 
 # march should be default, as we use simdpp
 option(PR_OPTIMIZE_FOR_NATIVE	"Build with -march=native if possible" ON)
 
-option(PR_EXTRA_OPENSUBDIV		"Try to build extra OpenSubDiv plugin" ON)
-option(PR_EXTRA_SEEXPR			"Try to build extra SeExpr plugin" ON)
+option(PR_EXTRA_OPENSUBDIV		"Build extra OpenSubDiv plugin" ON)
+option(PR_EXTRA_SEEXPR			"Build extra SeExpr plugin" ON)
 option(PR_EXTRA_RGL_BRDF 		"Download BRDF Loader by RGL-EPFL and build rgl-measured material plugin ." ON)
 
 # Hardware feature switches
@@ -220,7 +219,6 @@ endif()
 
 if(${Qt5Widgets_FOUND})
 	add_subdirectory(src/ui)
-	set(PR_HAS_UI ON)
 endif()
 
 if(PR_WITH_EXTRA_TOOLS)
