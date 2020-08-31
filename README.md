@@ -40,9 +40,13 @@ There is an open source (still experimental) blender integration addon available
 - cxxopts <https://github.com/jarro2783/cxxopts>
 - DataLisp <https://github.com/PearCoding/DataLisp>
 - PCG Random Number Generation, C++ Edition <https://github.com/imneme/pcg-cpp>
-- pugixml <https://github.com/zeux/pugixml>
 - pybind11 <https://github.com/pybind/pybind11>
 - tinyobjloader <https://github.com/syoyo/tinyobjloader>
+
+### Other
+
+- pugixml <https://github.com/zeux/pugixml> (daylight plugins)
+- brdf-loader <https://github.com/rgl-epfl/brdf-loader> (rgl-epfl measured material plugin)
 
 ## Wiki
 

@@ -1,4 +1,9 @@
 include(ExternalProject)
+include(FetchContent)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
 
 if(PR_EXTRA_RGL_BRDF)
     ExternalProject_Add(rgl_brdf_download
@@ -13,13 +18,12 @@ if(PR_EXTRA_RGL_BRDF)
 endif()
 
 if(PR_EXTRA_DAYLIGHT)
-ExternalProject_Add(pugixml_download
-    GIT_REPOSITORY   git@github:zeux/pugixml.git
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    LOG_DOWNLOAD ON
-)
-ExternalProject_Get_Property(pugixml_download source_dir)
-    PR_ADD_PLUGIN(mat_klems_measured CPP klems_measured.cpp LIBRARIES pr_extra_pugixml)
+    FetchContent_Declare(pugixml
+        GIT_REPOSITORY  git@github.com:zeux/pugixml.git
+        GIT_TAG         v1.10
+        GIT_SHALLOW     ON
+        LOG_DOWNLOAD    ON
+    )
+    FetchContent_MakeAvailable(pugixml)
+    PR_ADD_PLUGIN(mat_klems_measured CPP klems_measured.cpp LIBRARIES pugixml)
 endif()
