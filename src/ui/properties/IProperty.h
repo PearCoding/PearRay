@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVector>
 
 #include "PR_Config.h"
 
