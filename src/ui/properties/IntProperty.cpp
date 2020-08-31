@@ -5,7 +5,6 @@
 namespace PRUI {
 IntProperty::IntProperty()
 	: IProperty()
-	, mSpinBox(nullptr)
 	, mOldValue(0)
 	, mValue(0)
 	, mMaxValue(100000)
@@ -37,31 +36,28 @@ void IntProperty::save()
 
 QWidget* IntProperty::editorWidget(QWidget* parent)
 {
-	if (!mSpinBox) {
-		mSpinBox = new QSpinBox(parent);
+	auto editor = new QSpinBox(parent);
 
-		mSpinBox->setEnabled(isEnabled());
-		mSpinBox->setReadOnly(isReadOnly());
-		mSpinBox->setValue(mValue);
-		mSpinBox->setMaximum(mMaxValue);
-		mSpinBox->setMinimum(mMinValue);
-		mSpinBox->setSingleStep(mStepSize);
+	editor->setEnabled(isEnabled());
+	editor->setReadOnly(isReadOnly());
+	editor->setValue(mValue);
+	editor->setMaximum(mMaxValue);
+	editor->setMinimum(mMinValue);
+	editor->setSingleStep(mStepSize);
 
-		connect(mSpinBox, SIGNAL(valueChanged(int)), this, SLOT(spinBoxChanged(int)));
-	}
+	connect(editor, SIGNAL(valueChanged(int)), this, SLOT(spinBoxChanged(int)));
 
-	return mSpinBox;
+	return editor;
 }
 
 void IntProperty::spinBoxChanged(int val)
 {
 	mValue = val;
 
-	if (mValue != mOldValue && !isModified()) {
+	if (mValue != mOldValue && !isModified())
 		setModified(true);
-	} else if (mValue == mOldValue && isModified()) {
+	else if (mValue == mOldValue && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
 }
@@ -70,17 +66,12 @@ void IntProperty::setValue(int val)
 {
 	mValue = qMax(mMinValue, qMin(mMaxValue, val));
 
-	if (mValue != mOldValue && !isModified()) {
+	if (mValue != mOldValue && !isModified())
 		setModified(true);
-	} else if (mValue == mOldValue && isModified()) {
+	else if (mValue == mOldValue && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
-
-	if (mSpinBox) {
-		mSpinBox->setValue(mValue);
-	}
 }
 
 int IntProperty::value() const
@@ -91,12 +82,10 @@ int IntProperty::value() const
 void IntProperty::setDefaultValue(int val)
 {
 	mOldValue = qMax(mMinValue, qMin(mMaxValue, val));
-
-	if (mValue != mOldValue && !isModified()) {
+	if (mValue != mOldValue && !isModified())
 		setModified(true);
-	} else if (mValue == mOldValue && isModified()) {
+	else if (mValue == mOldValue && isModified())
 		setModified(false);
-	}
 }
 
 int IntProperty::defaultValue() const
@@ -122,27 +111,15 @@ int IntProperty::stepSize() const
 void IntProperty::setMaxValue(int i)
 {
 	mMaxValue = i;
-
-	if (mSpinBox) {
-		mSpinBox->setMaximum(i);
-	}
 }
 
 void IntProperty::setMinValue(int i)
 {
 	mMinValue = i;
-
-	if (mSpinBox) {
-		mSpinBox->setMinimum(i);
-	}
 }
 
 void IntProperty::setStepSize(int i)
 {
 	mStepSize = i;
-
-	if (mSpinBox) {
-		mSpinBox->setSingleStep(i);
-	}
 }
-}
+} // namespace PRUI

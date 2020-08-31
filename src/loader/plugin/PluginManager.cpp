@@ -1,18 +1,16 @@
 #include "PluginManager.h"
 #include "Logger.h"
 
-#include <filesystem>
-
 namespace PR {
 constexpr static const char* PR_PLUGIN_ENV_VAR	  = "PR_PLUGIN_PATH";
 constexpr static char PR_PLUGIN_ENV_VAR_SEPERATOR = ':';
 
-PluginManager::PluginManager(const std::wstring& pluginDir)
+PluginManager::PluginManager(const std::filesystem::path& pluginDir)
 	: mPluginDir(pluginDir)
 {
 }
 
-bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
+bool PluginManager::tryLoad(const std::filesystem::path& path, bool useFallbacks)
 {
 	auto load = [](const std::filesystem::path& p) -> SharedLibrary {
 		try {
@@ -68,7 +66,7 @@ bool PluginManager::tryLoad(const std::wstring& path, bool useFallbacks)
 	return true;
 }
 
-std::shared_ptr<IPlugin> PluginManager::load(const std::wstring& path, bool useFallbacks)
+std::shared_ptr<IPlugin> PluginManager::load(const std::filesystem::path& path, bool useFallbacks)
 {
 #ifdef PR_DEBUG
 	std::filesystem::path p = path;
@@ -120,7 +118,7 @@ std::shared_ptr<IPlugin> PluginManager::get(const std::string& name) const
 		return nullptr;
 }
 
-std::shared_ptr<IPlugin> PluginManager::getFromPath(const std::wstring& path) const
+std::shared_ptr<IPlugin> PluginManager::getFromPath(const std::filesystem::path& path) const
 {
 	for (const auto& p : mLibraries) {
 		if (p.second.Path == path)

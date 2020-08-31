@@ -40,24 +40,14 @@ namespace PR {
 Environment::Environment(const std::wstring& workdir,
 						 const std::wstring& plugdir,
 						 bool useStandardLib)
-	: mWorkingDir(workdir)
-	, mPluginManager(std::make_shared<PluginManager>(plugdir))
-	, mMaterialManager(std::make_shared<MaterialManager>())
-	, mEntityManager(std::make_shared<EntityManager>())
-	, mCameraManager(std::make_shared<CameraManager>())
-	, mEmissionManager(std::make_shared<EmissionManager>())
-	, mInfiniteLightManager(std::make_shared<InfiniteLightManager>())
-	, mIntegratorManager(std::make_shared<IntegratorManager>())
-	, mFilterManager(std::make_shared<FilterManager>())
-	, mSamplerManager(std::make_shared<SamplerManager>())
+	: QueryEnvironment(plugdir)
+	, mWorkingDir(workdir)
 	, mResourceManager(std::make_shared<ResourceManager>(workdir))
-	, mNodeManager(std::make_shared<NodeManager>())
 	, mCache(std::make_shared<Cache>(workdir))
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
 	mTextureSystem			  = OIIO::TextureSystem::create();
-	mDefaultSpectralUpsampler = DefaultSRGB::loadSpectralUpsampler();
 
 	if (useStandardLib) {
 		//Defaults
@@ -80,8 +70,6 @@ Environment::Environment(const std::wstring& workdir,
 		addColor("lightGray", 0.666f, 0.666f, 0.666f);
 		addColor("darkGray", 0.333f, 0.333f, 0.333f);
 	}
-
-	loadPlugins(plugdir);
 }
 
 Environment::~Environment()
@@ -121,76 +109,6 @@ void Environment::setup(const std::shared_ptr<RenderContext>& renderer)
 void Environment::save(RenderContext* renderer, ToneMapper& toneMapper, const OutputSaveOptions& options) const
 {
 	mOutputSpecification.save(renderer, toneMapper, options);
-}
-
-void Environment::loadPlugins(const std::wstring& basedir)
-{
-	// First load possible embedded plugins
-	mPluginManager->loadEmbeddedPlugins();
-
-#ifdef PR_DEBUG
-	static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)_d");
-#else
-	static const std::wregex e(L"(lib)?pr_pl_([\\w_]+)");
-#endif
-
-	// Load dlls
-	for (auto& entry : std::filesystem::directory_iterator(basedir)) {
-		if (!std::filesystem::is_regular_file(entry))
-			continue;
-
-		const std::wstring filename = entry.path().stem().generic_wstring();
-		const std::wstring ext		= entry.path().extension().generic_wstring();
-
-		if (ext != L".so" && ext != L".dll")
-			continue;
-
-		std::wsmatch what;
-		if (std::regex_match(filename, what, e)) {
-#ifndef PR_DEBUG
-			// Ignore debug builds
-			if (filename.substr(filename.size() - 2, 2) == L"_d")
-				continue;
-#endif
-
-			mPluginManager->load(entry.path().generic_wstring());
-		}
-	}
-
-	// Load into respective managers
-	for (auto plugin : mPluginManager->plugins()) {
-		switch (plugin->type()) {
-		case PT_INTEGRATOR:
-			mIntegratorManager->addFactory(std::dynamic_pointer_cast<IIntegratorPlugin>(plugin));
-			break;
-		case PT_CAMERA:
-			mCameraManager->addFactory(std::dynamic_pointer_cast<ICameraPlugin>(plugin));
-			break;
-		case PT_MATERIAL:
-			mMaterialManager->addFactory(std::dynamic_pointer_cast<IMaterialPlugin>(plugin));
-			break;
-		case PT_EMISSION:
-			mEmissionManager->addFactory(std::dynamic_pointer_cast<IEmissionPlugin>(plugin));
-			break;
-		case PT_INFINITELIGHT:
-			mInfiniteLightManager->addFactory(std::dynamic_pointer_cast<IInfiniteLightPlugin>(plugin));
-			break;
-		case PT_ENTITY:
-			mEntityManager->addFactory(std::dynamic_pointer_cast<IEntityPlugin>(plugin));
-			break;
-		case PT_FILTER:
-			mFilterManager->addFactory(std::dynamic_pointer_cast<IFilterPlugin>(plugin));
-			break;
-		case PT_SAMPLER:
-			mSamplerManager->addFactory(std::dynamic_pointer_cast<ISamplerPlugin>(plugin));
-			break;
-		case PT_NODE:
-			mNodeManager->addFactory(std::dynamic_pointer_cast<INodePlugin>(plugin));
-			break;
-		default:
-			break;
-		}
-	}
 }
 
 std::shared_ptr<IIntegrator> Environment::createSelectedIntegrator() const

@@ -2,7 +2,6 @@
 
 #include "IProperty.h"
 
-class QSpinBox;
 namespace PRUI {
 class PR_LIB_UI IntProperty : public IProperty {
 	Q_OBJECT
@@ -33,7 +32,6 @@ private slots:
 	void spinBoxChanged(int val);
 
 private:
-	QSpinBox* mSpinBox;
 	int mOldValue;
 	int mValue;
 

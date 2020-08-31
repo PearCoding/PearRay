@@ -7,17 +7,17 @@
 #include "IProperty.h"
 
 namespace PRUI {
-class PR_LIB_UI PropertyTable : public QObject {
+class PR_LIB_UI PropertyContainer : public QObject {
 	Q_OBJECT
 public:
-	PropertyTable();
-	~PropertyTable();
+	PropertyContainer();
+	~PropertyContainer();
 
 	void add(IProperty* property);
 	void remove(IProperty* property);
 
-	QList<IProperty*> topProperties() const;
-	QList<IProperty*> allProperties() const;
+	const QVector<IProperty*>& topProperties() const;
+	const QVector<IProperty*>& allProperties() const;
 
 signals:
 	void propertyChanged(IProperty* prop);
@@ -33,7 +33,7 @@ private slots:
 private:
 	void rec_add(IProperty* property);
 
-	QList<IProperty*> mAllProperties;
-	QList<IProperty*> mTopProperties;
+	QVector<IProperty*> mAllProperties;
+	QVector<IProperty*> mTopProperties;
 };
 }

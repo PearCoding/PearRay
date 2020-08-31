@@ -5,7 +5,6 @@
 #include <QVariant>
 #include <QVector>
 
-class QComboBox;
 namespace PRUI {
 class PR_LIB_UI SelectionProperty : public IProperty {
 	Q_OBJECT
@@ -31,7 +30,6 @@ private slots:
 	void comboChanged(int i);
 
 private:
-	QComboBox* mWidget;
 	int mDefaultIndex;
 	int mIndex;
 

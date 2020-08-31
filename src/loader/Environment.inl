@@ -1,16 +1,6 @@
 namespace PR {
 
-inline std::shared_ptr<PluginManager> Environment::pluginManager() const { return mPluginManager; }
-inline std::shared_ptr<MaterialManager> Environment::materialManager() const { return mMaterialManager; }
-inline std::shared_ptr<EntityManager> Environment::entityManager() const { return mEntityManager; }
-inline std::shared_ptr<CameraManager> Environment::cameraManager() const { return mCameraManager; }
-inline std::shared_ptr<EmissionManager> Environment::emissionManager() const { return mEmissionManager; }
-inline std::shared_ptr<InfiniteLightManager> Environment::infiniteLightManager() const { return mInfiniteLightManager; }
-inline std::shared_ptr<IntegratorManager> Environment::integratorManager() const { return mIntegratorManager; }
-inline std::shared_ptr<FilterManager> Environment::filterManager() const { return mFilterManager; }
-inline std::shared_ptr<SamplerManager> Environment::samplerManager() const { return mSamplerManager; }
 inline std::shared_ptr<ResourceManager> Environment::resourceManager() const { return mResourceManager; }
-inline std::shared_ptr<NodeManager> Environment::nodeManager() const { return mNodeManager; }
 inline std::shared_ptr<Cache> Environment::cache() const { return mCache; }
 
 inline std::shared_ptr<IEmission> Environment::getEmission(const std::string& name) const

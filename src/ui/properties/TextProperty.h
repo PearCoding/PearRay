@@ -2,7 +2,6 @@
 
 #include "IProperty.h"
 
-class QLineEdit;
 namespace PRUI {
 class PR_LIB_UI TextProperty : public IProperty {
 	Q_OBJECT
@@ -25,7 +24,6 @@ private slots:
 	void lineChanged(const QString& str);
 
 private:
-	QLineEdit* mWidget;
 	QString mDefaultText;
 	QString mText;
 };

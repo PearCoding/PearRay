@@ -1,26 +1,25 @@
-#include "PropertyTable.h"
+#include "PropertyContainer.h"
 
 namespace PRUI {
-PropertyTable::PropertyTable()
+PropertyContainer::PropertyContainer()
 {
 }
 
-PropertyTable::~PropertyTable()
+PropertyContainer::~PropertyContainer()
 {
 }
 
-void PropertyTable::add(IProperty* property)
+void PropertyContainer::add(IProperty* property)
 {
-	if (mAllProperties.contains(property)) {
+	if (mAllProperties.contains(property))
 		return;
-	}
 
 	mTopProperties.append(property);
 
 	rec_add(property);
 }
 
-void PropertyTable::rec_add(IProperty* property)
+void PropertyContainer::rec_add(IProperty* property)
 {
 	if (mAllProperties.contains(property))
 		return;
@@ -32,11 +31,11 @@ void PropertyTable::rec_add(IProperty* property)
 	connect(property, &IProperty::propertyStructureChanged, [this]() { this->propertyStructureChanged((IProperty*)this->sender()); });
 	connect(property, &IProperty::valueChanged, [this]() { this->valueChanged((IProperty*)this->sender()); });
 
-	foreach (IProperty* child, property->childs())
+	for (IProperty* child : property->children())
 		rec_add(child);
 }
 
-void PropertyTable::remove(IProperty* property)
+void PropertyContainer::remove(IProperty* property)
 {
 	if (!mAllProperties.contains(property))
 		return;
@@ -46,37 +45,37 @@ void PropertyTable::remove(IProperty* property)
 
 	disconnect(property);
 
-	foreach (IProperty* child, property->childs())
+	for (IProperty* child : property->children())
 		remove(child);
 }
 
-QList<IProperty*> PropertyTable::allProperties() const
+const QVector<IProperty*>& PropertyContainer::allProperties() const
 {
 	return mAllProperties;
 }
 
-QList<IProperty*> PropertyTable::topProperties() const
+const QVector<IProperty*>& PropertyContainer::topProperties() const
 {
 	return mTopProperties;
 }
 
-void PropertyTable::propertyWasDestroyed(IProperty* prop)
+void PropertyContainer::propertyWasDestroyed(IProperty* prop)
 {
 	Q_ASSERT(prop);
 	remove(prop);
 }
 
-void PropertyTable::propertyWasChanged(IProperty* obj)
+void PropertyContainer::propertyWasChanged(IProperty* obj)
 {
 	emit propertyChanged(obj);
 }
 
-void PropertyTable::propertyStructureWasChanged(IProperty* obj)
+void PropertyContainer::propertyStructureWasChanged(IProperty* obj)
 {
 	emit propertyStructureChanged(obj);
 }
 
-void PropertyTable::valueWasChanged(IProperty* obj)
+void PropertyContainer::valueWasChanged(IProperty* obj)
 {
 	emit valueChanged(obj);
 }

@@ -6,7 +6,6 @@
 namespace PRUI {
 ColorProperty::ColorProperty()
 	: IProperty()
-	, mWidget(nullptr)
 	, mDefaultColor(Qt::white)
 	, mColor(Qt::white)
 {
@@ -59,17 +58,15 @@ void ColorProperty::save()
 
 QWidget* ColorProperty::editorWidget(QWidget* parent)
 {
-	if (!mWidget) {
-		mWidget = new ColorButton(parent);
+	auto widget = new ColorButton(parent);
 
-		mWidget->setEnabled(isEnabled());
-		mWidget->setColor(mColor);
-		mWidget->setFlat(true);
+	widget->setEnabled(isEnabled());
+	widget->setColor(mColor);
+	widget->setFlat(true);
 
-		connect(mWidget, SIGNAL(colorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
-	}
+	connect(widget, SIGNAL(colorChanged(const QColor&)), this, SLOT(colorChanged(const QColor&)));
 
-	return mWidget;
+	return widget;
 }
 
 void ColorProperty::colorChanged(const QColor& val)
@@ -99,12 +96,6 @@ void ColorProperty::setColor(const QColor& val)
 	mGreenProperty->blockSignals(false);
 	mBlueProperty->blockSignals(false);
 
-	if (mWidget) {
-		mWidget->blockSignals(true);
-		mWidget->setColor(mColor);
-		mWidget->blockSignals(false);
-	}
-
 	emit valueChanged();
 }
 
@@ -117,11 +108,10 @@ void ColorProperty::setDefaultColor(const QColor& val)
 {
 	mDefaultColor = val;
 
-	if (mColor != mDefaultColor && !isModified()) {
+	if (mColor != mDefaultColor && !isModified())
 		setModified(true);
-	} else if (mColor == mDefaultColor && isModified()) {
+	else if (mColor == mDefaultColor && isModified())
 		setModified(false);
-	}
 }
 
 QColor ColorProperty::defaultColor() const
@@ -133,4 +123,4 @@ void ColorProperty::dataChanged()
 {
 	setColor(QColor(mRedProperty->value(), mGreenProperty->value(), mBlueProperty->value()));
 }
-}
+} // namespace PRUI

@@ -8,6 +8,9 @@ set(PR_Src
   Environment.cpp
   Environment.h
   Environment.inl
+  QueryEnvironment.cpp
+  QueryEnvironment.h
+  QueryEnvironment.inl
   SceneLoadContext.h
   SceneLoader.cpp
   SceneLoader.h

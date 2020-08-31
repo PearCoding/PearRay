@@ -2,7 +2,6 @@
 
 #include "IProperty.h"
 
-class QDoubleSpinBox;
 namespace PRUI {
 class PR_LIB_UI DoubleProperty : public IProperty {
 	Q_OBJECT
@@ -35,7 +34,6 @@ private slots:
 	void spinBoxChanged(double val);
 
 private:
-	QDoubleSpinBox* mSpinBox;
 	double mOldValue;
 	double mValue;
 

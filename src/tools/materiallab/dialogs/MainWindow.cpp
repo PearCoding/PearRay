@@ -1,19 +1,21 @@
 #include "MainWindow.h"
+#include "MaterialWindow.h"
 
 #include <fstream>
 
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QDebug>
 #include <QDesktopServices>
 #include <QFileDialog>
-#include <QImageWriter>
+#include <QInputDialog>
 #include <QMdiSubWindow>
 #include <QMessageBox>
 #include <QSettings>
 
+#include "QueryEnvironment.h"
 #include "config/Version.h"
-
-constexpr int MAX_LAST_FILES = 10;
+#include "material/MaterialManager.h"
 
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
@@ -24,8 +26,11 @@ MainWindow::MainWindow(QWidget* parent)
 	connect(ui.actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 	connect(ui.actionWebsite, SIGNAL(triggered()), this, SLOT(openWebsite()));
 	connect(ui.actionQuit, SIGNAL(triggered()), this, SLOT(close()));
+	connect(ui.actionNew_Inspection, SIGNAL(triggered()), this, SLOT(newInspection()));
 
 	readSettings();
+
+	mEnv = std::make_unique<PR::QueryEnvironment>(L""); // TODO: Allow parameters to change
 }
 
 MainWindow::~MainWindow()
@@ -80,4 +85,29 @@ void MainWindow::about()
 void MainWindow::openWebsite()
 {
 	QDesktopServices::openUrl(QUrl("http://pearcoding.eu/projects/pearray"));
+}
+
+void MainWindow::newInspection()
+{
+	QStringList materialnames;
+	const auto manager = mEnv->materialManager();
+
+	for (auto& entry : manager->factoryMap())
+		materialnames.append(QString::fromStdString(entry.first));
+
+	materialnames.sort();
+
+	bool ok;
+	QString item = QInputDialog::getItem(this, tr("Select material"), "", materialnames, 0, false, &ok);
+	if (ok && !item.isEmpty()) {
+		auto factory = manager->getFactory(item.toStdString());
+		if (!factory)
+			return;
+
+		MaterialWindow* w  = new MaterialWindow(item, factory.get(), ui.mdiArea);
+		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
+
+		win->setWindowIcon(QIcon(":/image_icon"));
+		w->show();
+	}
 }

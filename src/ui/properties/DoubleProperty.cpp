@@ -5,7 +5,6 @@
 namespace PRUI {
 DoubleProperty::DoubleProperty()
 	: IProperty()
-	, mSpinBox(nullptr)
 	, mOldValue(0)
 	, mValue(0)
 	, mMaxValue(100000)
@@ -38,32 +37,29 @@ void DoubleProperty::save()
 
 QWidget* DoubleProperty::editorWidget(QWidget* parent)
 {
-	if (!mSpinBox) {
-		mSpinBox = new QDoubleSpinBox(parent);
+	auto editor = new QDoubleSpinBox(parent);
 
-		mSpinBox->setEnabled(isEnabled());
-		mSpinBox->setReadOnly(isReadOnly());
-		mSpinBox->setValue(mValue);
-		mSpinBox->setMaximum(mMaxValue);
-		mSpinBox->setMinimum(mMinValue);
-		mSpinBox->setSingleStep(mStepSize);
-		mSpinBox->setDecimals(mDecimals);
+	editor->setEnabled(isEnabled());
+	editor->setReadOnly(isReadOnly());
+	editor->setValue(mValue);
+	editor->setMaximum(mMaxValue);
+	editor->setMinimum(mMinValue);
+	editor->setSingleStep(mStepSize);
+	editor->setDecimals(mDecimals);
 
-		connect(mSpinBox, SIGNAL(valueChanged(double)), this, SLOT(spinBoxChanged(double)));
-	}
+	connect(editor, SIGNAL(valueChanged(double)), this, SLOT(spinBoxChanged(double)));
 
-	return mSpinBox;
+	return editor;
 }
 
 void DoubleProperty::spinBoxChanged(double val)
 {
 	mValue = val;
 
-	if (mValue != mOldValue && !isModified()) {
+	if (mValue != mOldValue && !isModified())
 		setModified(true);
-	} else if (mValue == mOldValue && isModified()) {
+	else if (mValue == mOldValue && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
 }
@@ -72,17 +68,12 @@ void DoubleProperty::setValue(double val)
 {
 	mValue = qMax(mMinValue, qMin(mMaxValue, val));
 
-	if (mValue != mOldValue && !isModified()) {
+	if (mValue != mOldValue && !isModified())
 		setModified(true);
-	} else if (mValue == mOldValue && isModified()) {
+	else if (mValue == mOldValue && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
-
-	if (mSpinBox) {
-		mSpinBox->setValue(mValue);
-	}
 }
 
 double DoubleProperty::value() const
@@ -94,11 +85,10 @@ void DoubleProperty::setDefaultValue(double val)
 {
 	mOldValue = qMax(mMinValue, qMin(mMaxValue, val));
 
-	if (mValue != mOldValue && !isModified()) {
+	if (mValue != mOldValue && !isModified())
 		setModified(true);
-	} else if (mValue == mOldValue && isModified()) {
+	else if (mValue == mOldValue && isModified())
 		setModified(false);
-	}
 }
 
 double DoubleProperty::defaultValue() const
@@ -129,36 +119,20 @@ int DoubleProperty::decimals() const
 void DoubleProperty::setMaxValue(double i)
 {
 	mMaxValue = i;
-
-	if (mSpinBox) {
-		mSpinBox->setMaximum(i);
-	}
 }
 
 void DoubleProperty::setMinValue(double i)
 {
 	mMinValue = i;
-
-	if (mSpinBox) {
-		mSpinBox->setMinimum(i);
-	}
 }
 
 void DoubleProperty::setStepSize(double i)
 {
 	mStepSize = i;
-
-	if (mSpinBox) {
-		mSpinBox->setSingleStep(i);
-	}
 }
 
 void DoubleProperty::setDecimals(int i)
 {
 	mDecimals = i;
-
-	if (mSpinBox) {
-		mSpinBox->setDecimals(i);
-	}
 }
-}
+} // namespace PRUI

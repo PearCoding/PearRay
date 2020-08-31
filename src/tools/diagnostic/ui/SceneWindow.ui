@@ -40,7 +40,7 @@
  <customwidgets>
   <customwidget>
    <class>PRUI::PropertyView</class>
-   <extends>QTreeWidget</extends>
+   <extends>QTreeView</extends>
    <header>widgets/PropertyView.h</header>
   </customwidget>
   <customwidget>

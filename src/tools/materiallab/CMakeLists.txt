@@ -9,13 +9,16 @@ endif()
 
 set(Src
   main.cpp
-  dialogs/MainWindow.cpp)
+  dialogs/MainWindow.cpp
+  dialogs/MaterialWindow.cpp)
 
 set(Hdr
-  dialogs/MainWindow.h)
+  dialogs/MainWindow.h
+  dialogs/MaterialWindow.h)
 
 set(Fms
-  ui/MainWindow.ui)
+  ui/MainWindow.ui
+  ui/MaterialWindow.ui)
 
 set(Res
   ../../ui/resources/icons.qrc)

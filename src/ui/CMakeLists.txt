@@ -9,12 +9,15 @@ set(Src
   3d/OrbitCamera.cpp
   io/EXRFile.cpp
   io/ImageBufferView.cpp
+  properties/BoolProperty.cpp
   properties/ColorProperty.cpp
   properties/DoubleProperty.cpp
   properties/GroupProperty.cpp
   properties/IntProperty.cpp
   properties/IProperty.cpp
-  properties/PropertyTable.cpp
+  properties/PropertyContainer.cpp
+  properties/PropertyItemDelegate.cpp
+  properties/PropertyTreeModel.cpp
   properties/SelectionProperty.cpp
   properties/TextProperty.cpp
   widgets/ColorButton.cpp
@@ -31,12 +34,15 @@ set(Hdr
   io/EXRFile.h
   io/ImageBufferView.h
   mapper/ToneMapper.h
+  properties/BoolProperty.h
   properties/ColorProperty.h
   properties/DoubleProperty.h
   properties/GroupProperty.h
   properties/IntProperty.h
   properties/IProperty.h
-  properties/PropertyTable.h
+  properties/PropertyContainer.h
+  properties/PropertyItemDelegate.h
+  properties/PropertyTreeModel.h
   properties/SelectionProperty.h
   properties/TextProperty.h
   widgets/ColorButton.h
@@ -57,7 +63,7 @@ SOURCE_GROUP("Generated Files" FILES ${GenFiles})
 
 add_library(pr_lib_ui ${Src} ${Hdr} ${GenFiles})
 target_link_libraries(pr_lib_ui 
-  PUBLIC pr_lib_base Qt5::Widgets 
+  PUBLIC pr_lib_loader Qt5::Widgets 
   PRIVATE OpenImageIO::OpenImageIO TBB::tbb)
 target_include_directories(pr_lib_ui PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 if(NOT BUILD_SHARED_LIBS)

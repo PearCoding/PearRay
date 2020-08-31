@@ -7,6 +7,7 @@ IProperty::IProperty()
 	, mIsEnabled(true)
 	, mIsModified(false)
 	, mIsHeader(false)
+	, mParent(nullptr)
 {
 }
 
@@ -107,6 +108,7 @@ void IProperty::addChild(IProperty* property)
 {
 	Q_ASSERT(property);
 	mChilds.append(property);
+	property->setParent(this);
 	emit propertyStructureChanged();
 }
 
@@ -114,11 +116,20 @@ void IProperty::removeChild(IProperty* property)
 {
 	Q_ASSERT(property);
 	mChilds.removeAll(property);
+	property->setParent(nullptr);
 	emit propertyStructureChanged();
 }
 
-QList<IProperty*> IProperty::childs() const
+IProperty* IProperty::child(int i) const
+{
+	if (i < 0 || i >= mChilds.size())
+		return nullptr;
+	else
+		return mChilds[i];
+}
+
+const QVector<IProperty*>& IProperty::children() const
 {
 	return mChilds;
 }
-}
+} // namespace PRUI

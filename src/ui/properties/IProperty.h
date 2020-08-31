@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QList>
 #include <QObject>
 #include <QString>
 
 #include "PR_Config.h"
 
 namespace PRUI {
+// TODO: Make sure parent child relationship is maintained
 class PR_LIB_UI IProperty : public QObject {
 	Q_OBJECT
 public:
@@ -33,7 +33,10 @@ public:
 
 	void addChild(IProperty* property);
 	void removeChild(IProperty* property);
-	QList<IProperty*> childs() const;
+	IProperty* child(int i) const;
+	const QVector<IProperty*>& children() const;
+
+	inline IProperty* parent() const { return mParent; }
 
 	virtual QString valueText() const = 0;
 
@@ -58,6 +61,8 @@ signals:
 	void valueChanged();
 
 private:
+	inline void setParent(IProperty* p) { mParent = p; }
+
 	QString mToolTip;
 	QString mStatusTip;
 	QString mWhatsThis;
@@ -67,6 +72,7 @@ private:
 	bool mIsModified;
 	bool mIsHeader;
 
-	QList<IProperty*> mChilds;
+	IProperty* mParent;
+	QVector<IProperty*> mChilds;
 };
 }

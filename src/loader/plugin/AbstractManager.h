@@ -10,6 +10,9 @@ namespace PR {
 template <class OBJ, class FAC>
 class PR_LIB_LOADER AbstractManager {
 public:
+	using ObjectList = std::vector<std::shared_ptr<OBJ>>;
+	using FactoryMap = std::map<std::string, std::shared_ptr<FAC>>;
+
 	AbstractManager()		   = default;
 	virtual ~AbstractManager() = default;
 
@@ -24,7 +27,7 @@ public:
 
 	inline std::shared_ptr<OBJ> getObject(uint32 id) const { return mObjects[id]; }
 	inline bool hasObject(uint32 id) const { return id < mObjects.size(); }
-	inline const std::vector<std::shared_ptr<OBJ>>& getAll() const { return mObjects; }
+	inline const ObjectList& getAll() const { return mObjects; }
 	inline size_t size() const { return mObjects.size(); }
 
 	void addFactory(const std::shared_ptr<FAC>& ptr)
@@ -54,8 +57,10 @@ public:
 		}
 	}
 
+	inline const FactoryMap& factoryMap() const { return mFactories; }
+
 protected:
-	std::vector<std::shared_ptr<OBJ>> mObjects;
-	std::map<std::string, std::shared_ptr<FAC>> mFactories;
+	ObjectList mObjects;
+	FactoryMap mFactories;
 };
 } // namespace PR

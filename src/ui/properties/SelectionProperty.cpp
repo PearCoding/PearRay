@@ -5,7 +5,6 @@
 namespace PRUI {
 SelectionProperty::SelectionProperty()
 	: IProperty()
-	, mWidget(nullptr)
 	, mDefaultIndex(0)
 	, mIndex(0)
 {
@@ -34,33 +33,28 @@ void SelectionProperty::save()
 
 QWidget* SelectionProperty::editorWidget(QWidget* parent)
 {
-	if (!mWidget) {
-		mWidget = new QComboBox(parent);
+	auto editor = new QComboBox(parent);
 
-		mWidget->setEnabled(isEnabled());
+	editor->setEnabled(isEnabled());
 
-		typedef QPair<QString, QVariant> VData;
-		foreach (VData pair, mData) {
-			mWidget->addItem(pair.first, pair.second);
-		}
+	typedef QPair<QString, QVariant> VData;
+	for (VData pair : mData)
+		editor->addItem(pair.first, pair.second);
 
-		mWidget->setCurrentIndex(mIndex);
+	editor->setCurrentIndex(mIndex);
 
-		connect(mWidget, SIGNAL(currentIndexChanged(int)), this, SLOT(comboChanged(int)));
-	}
-
-	return mWidget;
+	connect(editor, SIGNAL(currentIndexChanged(int)), this, SLOT(comboChanged(int)));
+	return editor;
 }
 
 void SelectionProperty::comboChanged(int val)
 {
 	mIndex = val;
 
-	if (mIndex != mDefaultIndex && !isModified()) {
+	if (mIndex != mDefaultIndex && !isModified())
 		setModified(true);
-	} else if (mIndex == mDefaultIndex && isModified()) {
+	else if (mIndex == mDefaultIndex && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
 }
@@ -69,17 +63,12 @@ void SelectionProperty::setIndex(int val)
 {
 	mIndex = val;
 
-	if (mIndex != mDefaultIndex && !isModified()) {
+	if (mIndex != mDefaultIndex && !isModified())
 		setModified(true);
-	} else if (mIndex == mDefaultIndex && isModified()) {
+	else if (mIndex == mDefaultIndex && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
-
-	if (mWidget) {
-		mWidget->setCurrentIndex(mIndex);
-	}
 }
 
 int SelectionProperty::index() const
@@ -91,11 +80,10 @@ void SelectionProperty::setDefaultIndex(int val)
 {
 	mDefaultIndex = val;
 
-	if (mIndex != mDefaultIndex && !isModified()) {
+	if (mIndex != mDefaultIndex && !isModified())
 		setModified(true);
-	} else if (mIndex == mDefaultIndex && isModified()) {
+	else if (mIndex == mDefaultIndex && isModified())
 		setModified(false);
-	}
 }
 
 int SelectionProperty::defaultIndex() const
@@ -106,18 +94,10 @@ int SelectionProperty::defaultIndex() const
 void SelectionProperty::addItem(const QString& text, const QVariant& userData)
 {
 	mData.append(QPair<QString, QVariant>(text, userData));
-
-	if (mWidget) {
-		mWidget->addItem(text, userData);
-	}
 }
 
 void SelectionProperty::removeItem(int index)
 {
 	mData.removeAt(index);
-
-	if (mWidget) {
-		mWidget->removeItem(index);
-	}
 }
-}
+} // namespace PRUI

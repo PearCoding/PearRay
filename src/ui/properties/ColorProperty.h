@@ -5,7 +5,6 @@
 #include <QColor>
 
 namespace PRUI {
-class ColorButton;
 class IntProperty;
 class PR_LIB_UI ColorProperty : public IProperty {
 	Q_OBJECT
@@ -29,7 +28,6 @@ private slots:
 	void dataChanged();
 
 private:
-	ColorButton* mWidget;
 	QColor mDefaultColor;
 	QColor mColor;
 

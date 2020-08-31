@@ -5,7 +5,6 @@
 namespace PRUI {
 TextProperty::TextProperty()
 	: IProperty()
-	, mWidget(nullptr)
 	, mDefaultText()
 	, mText()
 {
@@ -34,28 +33,25 @@ void TextProperty::save()
 
 QWidget* TextProperty::editorWidget(QWidget* parent)
 {
-	if (!mWidget) {
-		mWidget = new QLineEdit(parent);
+	auto editor = new QLineEdit(parent);
 
-		mWidget->setEnabled(isEnabled());
-		mWidget->setReadOnly(isReadOnly());
-		mWidget->setText(mText);
+	editor->setEnabled(isEnabled());
+	editor->setReadOnly(isReadOnly());
+	editor->setText(mText);
 
-		connect(mWidget, SIGNAL(textEdited(const QString&)), this, SLOT(lineChanged(const QString&)));
-	}
+	connect(editor, SIGNAL(textEdited(const QString&)), this, SLOT(lineChanged(const QString&)));
 
-	return mWidget;
+	return editor;
 }
 
 void TextProperty::lineChanged(const QString& val)
 {
 	mText = val;
 
-	if (mText != mDefaultText && !isModified()) {
+	if (mText != mDefaultText && !isModified())
 		setModified(true);
-	} else if (mText == mDefaultText && isModified()) {
+	else if (mText == mDefaultText && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
 }
@@ -64,17 +60,12 @@ void TextProperty::setText(const QString& val)
 {
 	mText = val;
 
-	if (mText != mDefaultText && !isModified()) {
+	if (mText != mDefaultText && !isModified())
 		setModified(true);
-	} else if (mText == mDefaultText && isModified()) {
+	else if (mText == mDefaultText && isModified())
 		setModified(false);
-	}
 
 	emit valueChanged();
-
-	if (mWidget) {
-		mWidget->setText(mText);
-	}
 }
 
 QString TextProperty::text() const
@@ -86,15 +77,14 @@ void TextProperty::setDefaultText(const QString& val)
 {
 	mDefaultText = val;
 
-	if (mText != mDefaultText && !isModified()) {
+	if (mText != mDefaultText && !isModified())
 		setModified(true);
-	} else if (mText == mDefaultText && isModified()) {
+	else if (mText == mDefaultText && isModified())
 		setModified(false);
-	}
 }
 
 QString TextProperty::defaultText() const
 {
 	return mDefaultText;
 }
-}
+} // namespace PRUI

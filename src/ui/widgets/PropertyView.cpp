@@ -1,5 +1,7 @@
 #include "PropertyView.h"
-#include "properties/PropertyTable.h"
+#include "properties/PropertyContainer.h"
+#include "properties/PropertyItemDelegate.h"
+#include "properties/PropertyTreeModel.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -8,18 +10,15 @@
 
 namespace PRUI {
 PropertyView::PropertyView(QWidget* parent)
-	: QTreeWidget(parent)
-	, mProperties(nullptr)
+	: QTreeView(parent)
+	, mModel(nullptr)
+	, mDelegate(new PropertyItemDelegate(this))
 {
-	setColumnCount(2);
 	setAlternatingRowColors(true);
 	setRootIsDecorated(true);
 	setSelectionMode(QAbstractItemView::NoSelection);
 	setFocusPolicy(Qt::NoFocus);
-
-	QStringList headerList;
-	headerList << tr("Property") << tr("Value");
-	setHeaderLabels(headerList);
+	setItemDelegate(mDelegate);
 
 	QPalette p(palette());
 	p.setColor(QPalette::AlternateBase, QColor(255, 255, 200));
@@ -34,89 +33,36 @@ PropertyView::~PropertyView()
 {
 }
 
-void PropertyView::setPropertyTable(PropertyTable* table)
+void PropertyView::setPropertyContainer(PropertyContainer* table)
 {
-	if (mProperties) {
-		reset();
-	}
+	PropertyTreeModel* oldmodel = mModel;
 
-	mProperties = table;
+	mModel = new PropertyTreeModel(table);
+	setModel(mModel);
 
-	if (mProperties) {
-		foreach (IProperty* prop, mProperties->topProperties()) {
-			QTreeWidgetItem* item = new QTreeWidgetItem(this);
-			setupItem(item, prop);
-			mMapper.insert(item, prop);
-
-			addChildItems(item, prop);
-		}
-	}
+	if (oldmodel)
+		delete oldmodel;
 }
 
-void PropertyView::addChildItems(QTreeWidgetItem* parent, IProperty* property)
+PropertyContainer* PropertyView::propertyContainer() const
 {
-	foreach (IProperty* prop, property->childs()) {
-		QTreeWidgetItem* item = new QTreeWidgetItem(parent);
-		setupItem(item, prop);
-		parent->addChild(item);
-		mMapper.insert(item, prop);
-
-		addChildItems(item, prop);
-	}
+	return mModel->container();
 }
 
-QTreeWidgetItem* PropertyView::setupItem(QTreeWidgetItem* item, IProperty* property)
+void PropertyView::addProperty(IProperty* property)
 {
-	item->setDisabled(!property->isEnabled());
-	item->setText(0, property->propertyName());
-
-	item->setStatusTip(0, property->statusTip());
-	item->setStatusTip(1, property->statusTip());
-
-	item->setToolTip(0, property->toolTip());
-	item->setToolTip(1, property->toolTip());
-
-	item->setWhatsThis(0, property->whatsThis());
-	item->setWhatsThis(1, property->whatsThis());
-
-	if (property->isHeader()) {
-		item->setFirstColumnSpanned(true);
-		item->setForeground(0, QColor(255, 255, 255));
-
-		QFont f = item->font(0);
-		f.setBold(true);
-		f.setPointSizeF(f.pointSizeF() * 1.1f);
-		item->setFont(0, f);
-	} else {
-		QWidget* editor = property->editorWidget(this);
-		if (editor) {
-			setItemWidget(item, 1, editor);
-		} else {
-			item->setText(1, property->valueText());
-		}
-	}
-
-	return item;
-}
-
-PropertyTable* PropertyView::propertyTable() const
-{
-	return mProperties;
-}
-
-void PropertyView::reset()
-{
-	mProperties = nullptr;
-	clear();
+	mModel->addProperty(property);
 }
 
 void PropertyView::drawRow(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	QTreeWidgetItem* item = itemFromIndex(index);
-	IProperty* property   = mMapper[item];
+	if (!mModel || !index.isValid()) {
+		QTreeView::drawRow(painter, option, index);
+		return;
+	}
 
-	if (property->isHeader()) //Group
-	{
+	IProperty* property = static_cast<IProperty*>(index.internalPointer());
+	if (property->isHeader()) { //Group
 		painter->save();
 		painter->setBrush(QColor(180, 180, 180));
 		painter->setPen(Qt::NoPen);
@@ -127,11 +73,10 @@ void PropertyView::drawRow(QPainter* painter, const QStyleOptionViewItem& option
 		const_cast<PropertyView*>(this)->setAlternatingRowColors(false);
 	}
 
-	QTreeWidget::drawRow(painter, option, index);
+	QTreeView::drawRow(painter, option, index);
 
-	if (property->isHeader()) {
+	if (property->isHeader())
 		const_cast<PropertyView*>(this)->setAlternatingRowColors(true);
-	}
 
 	painter->save();
 	painter->setPen(QPen(Qt::gray));
@@ -141,10 +86,12 @@ void PropertyView::drawRow(QPainter* painter, const QStyleOptionViewItem& option
 
 void PropertyView::drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const
 {
-	QTreeWidget::drawBranches(painter, rect, index);
+	QTreeView::drawBranches(painter, rect, index);
 
-	QTreeWidgetItem* item = itemFromIndex(index);
-	IProperty* property   = mMapper[item];
+	if (!mModel || !index.isValid())
+		return;
+
+	IProperty* property = static_cast<IProperty*>(index.internalPointer());
 	if (!property->isHeader()) {
 		painter->save();
 		painter->setPen(QPen(Qt::gray));
@@ -152,4 +99,4 @@ void PropertyView::drawBranches(QPainter* painter, const QRect& rect, const QMod
 		painter->restore();
 	}
 }
-}
+} // namespace PRUI
