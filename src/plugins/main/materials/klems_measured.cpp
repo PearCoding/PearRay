@@ -263,44 +263,44 @@ public:
 		calcReflectivity();
 	}
 
-	inline float evalReflection(const Vector3f& out, const Vector3f& in) const
+	inline float evalReflection(const Vector3f& in, const Vector3f& out) const
 	{
 		return mReflection ? mReflection->eval(in, out) : 0;
 	}
 
-	inline float evalTransmission(const Vector3f& out, const Vector3f& in) const
+	inline float evalTransmission(const Vector3f& in, const Vector3f& out) const
 	{
 		return mTransmission ? mTransmission->eval(in, out) : 0;
 	}
 
-	inline float pdfReflectivity(const Vector3f& out) const
+	inline float pdfReflectivity(const Vector3f& in) const
 	{
 		PR_ASSERT(mTransmission && mReflection, "No reflectivity calculated");
-		const Vector2f outA = Spherical::from_direction_hemi(out);
-		const size_t row	= mReflection->row()->indexOf(outA(0), outA(1));
+		const Vector2f inA = Spherical::from_direction_hemi(in);
+		const size_t row	= mReflection->row()->indexOf(inA(0), inA(1));
 		PR_ASSERT(row < mReflectivity.size(), "Invalid row index");
 		return mReflectivity[row];
 	}
 
-	inline float pdfReflection(const Vector3f& out, const Vector3f& in) const
+	inline float pdfReflection(const Vector3f& in, const Vector3f& out) const
 	{
 		float pdf2 = 1.0f;
 		if (mTransmission && mReflection)
-			pdf2 = pdfReflectivity(out);
+			pdf2 = pdfReflectivity(in);
 
 		return mReflection ? mReflection->pdf(in, out) * pdf2 : 0;
 	}
 
-	inline float pdfTransmission(const Vector3f& out, const Vector3f& in) const
+	inline float pdfTransmission(const Vector3f& in, const Vector3f& out) const
 	{
 		float pdf2 = 1.0f;
 		if (mTransmission && mReflection)
-			pdf2 = 1 - pdfReflectivity(out);
+			pdf2 = 1 - pdfReflectivity(in);
 
 		return mTransmission ? mTransmission->pdf(in, out) * pdf2 : 0;
 	}
 
-	inline Vector3f sample(const Vector2f& u, const Vector3f& out, float& pdf, float& weight) const
+	inline Vector3f sample(const Vector2f& u, const Vector3f& in, float& pdf, float& weight) const
 	{
 		bool do_reflection = false;
 		Vector2f u2		   = u;
@@ -310,7 +310,7 @@ public:
 		} else if (mTransmission && !mReflection) {
 			do_reflection = false;
 		} else if (mTransmission && mReflection) {
-			const float refl = pdfReflectivity(out);
+			const float refl = pdfReflectivity(in);
 			if (u[0] <= refl) {
 				do_reflection = true;
 				u2[0] /= refl;
@@ -328,9 +328,9 @@ public:
 
 		Vector3f L;
 		if (do_reflection)
-			L = fi(mReflection->sample(u2, out, pdf, weight));
+			L = fi(mReflection->sample(u2, in, pdf, weight));
 		else
-			L = bi(mTransmission->sample(u2, out, pdf, weight));
+			L = bi(mTransmission->sample(u2, in, pdf, weight));
 		pdf *= pdf2;
 		return L;
 	}
@@ -553,42 +553,42 @@ public:
 	inline std::string filename() const { return mFilename; }
 	inline bool isValid() const { return mGood; }
 
-	inline float eval(const Vector3f& out, const Vector3f& in) const
+	inline float eval(const Vector3f& in, const Vector3f& out) const
 	{
 		const bool outFront = out(2) > 0;
 		const bool inFront	= in(2) > 0;
 
 		if (inFront && outFront)
-			return mFront->evalReflection(fo(out), fi(in));
+			return mFront->evalReflection(fi(in), fo(out));
 		else if (!inFront && !outFront)
-			return mBack->evalReflection(bo(out), bi(in));
+			return mBack->evalReflection(bi(in), bo(out));
 		else if (inFront)
-			return mFront->evalTransmission(bo(out), fi(in));
+			return mFront->evalTransmission(fi(in), bo(out));
 		else
-			return mBack->evalTransmission(fo(out), bi(in));
+			return mBack->evalTransmission(bi(in), fo(out));
 	}
 
-	inline float pdf(const Vector3f& out, const Vector3f& in) const
+	inline float pdf(const Vector3f& in, const Vector3f& out) const
 	{
 		const bool outFront = out(2) > 0;
 		const bool inFront	= in(2) > 0;
 
 		if (inFront && outFront)
-			return mFront->pdfReflection(fo(out), fi(in));
+			return mFront->pdfReflection(fi(in), fo(out));
 		else if (!inFront && !outFront)
-			return mBack->pdfReflection(bo(out), bi(in));
+			return mBack->pdfReflection(bi(in), bo(out));
 		else if (inFront)
-			return mFront->pdfTransmission(bo(out), fi(in));
+			return mFront->pdfTransmission(fi(in), bo(out));
 		else
-			return mBack->pdfTransmission(fo(out), bi(in));
+			return mBack->pdfTransmission(bi(in), fo(out));
 	}
 
-	inline Vector3f sample(const Vector2f& u, const Vector3f& out, float& pdf, float& weight) const
+	inline Vector3f sample(const Vector2f& u, const Vector3f& in, float& pdf, float& weight) const
 	{
-		if (out(2) >= 0)
-			return mFront->sample(u, out, pdf, weight);
+		if (in(2) >= 0)
+			return mFront->sample(u, in, pdf, weight);
 		else
-			return -mBack->sample(u, out, pdf, weight);
+			return -mBack->sample(u, -in, pdf, weight);
 	}
 
 private:
@@ -607,16 +607,16 @@ public:
 		, mTint(tint)
 	{
 
+#if 0
 		// Ignore this... works only with aerc
-		// FIXME: It seems like o and i are swapped in the implementation
-		Vector3f o = Vector3f(0, 0, 1).normalized();
-		Vector3f i = Vector3f(0, 1, 1).normalized();
-		float a1   = mMeasurement.eval(o, i);		  // 4.933000e-02
-		float a2   = mMeasurement.eval(o, bi(i));	  // 6.322000e-03
-		float a3   = mMeasurement.eval(bi(o), i);	  // 1.003000e-02
-		float a4   = mMeasurement.eval(bi(o), bi(i)); // 0
-
+		Vector3f i = Vector3f(0, 0, 1).normalized();
+		Vector3f o = Vector3f(0, 1, 1).normalized();
+		float a1   = mMeasurement.eval(i, o);		  // 4.933000e-02
+		float a2   = mMeasurement.eval(bi(i), o);	  // 6.322000e-03
+		float a3   = mMeasurement.eval(i, bo(o));	  // 1.003000e-02
+		float a4   = mMeasurement.eval(bi(i), bo(o)); // 0
 		PR_LOG(L_INFO) << "M> " << a1 << " " << a2 << " " << a3 << " " << a4 << std::endl;
+#endif
 	}
 
 	virtual ~KlemsMeasuredMaterial() = default;
