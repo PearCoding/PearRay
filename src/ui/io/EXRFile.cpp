@@ -5,7 +5,8 @@
 #include <QDebug>
 #include <QFile>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 EXRLayer::EXRLayer(const QString& name, const QString& lpe, int channels,
 				   int width, int height)
 	: ImageBufferView()
@@ -163,4 +164,5 @@ bool EXRFile::open(const QString& filename)
 		layer->ensureRightOrder();
 	return true;
 }
-}
+} // namespace UI
+} // namespace PR

@@ -152,6 +152,9 @@ public:
 	}
 
 	Plane getFace(FaceSide side) const;
+    Vector3f corner(int n) const;
+
+	static void triangulateIndices(const std::array<uint32, 8>& ids, std::vector<uint32>& indices);
 
 private:
 	Vector3f mUpperBound;

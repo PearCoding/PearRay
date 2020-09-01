@@ -4,7 +4,8 @@
 
 #include "PR_Config.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class ToneMapper;
 
 // TODO: Split this into channel count specific classes!
@@ -25,4 +26,5 @@ public:
 	void getMappedMinMax(float& min, float& max, const ToneMapper& mapper) const;
 	void getMinMaxOfChannel(float& min, float& max, int channel) const;
 };
-}
+} // namespace UI
+} // namespace PR

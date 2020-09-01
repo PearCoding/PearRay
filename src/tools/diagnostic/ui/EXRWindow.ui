@@ -34,7 +34,7 @@
      <property name="childrenCollapsible">
       <bool>false</bool>
      </property>
-     <widget class="PRUI::ImageView" name="imageWidget" native="true">
+     <widget class="PR::UI::ImageView" name="imageWidget" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -139,7 +139,7 @@
         </widget>
        </item>
        <item>
-        <widget class="PRUI::ToneMapperEditor" name="toneMapperEditor" native="true">
+        <widget class="PR::UI::ToneMapperEditor" name="toneMapperEditor" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -205,13 +205,13 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PRUI::ImageView</class>
+   <class>PR::UI::ImageView</class>
    <extends>QWidget</extends>
    <header>widgets/ImageView.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PRUI::ToneMapperEditor</class>
+   <class>PR::UI::ToneMapperEditor</class>
    <extends>QWidget</extends>
    <header>widgets/ToneMapperEditor.h</header>
    <container>1</container>

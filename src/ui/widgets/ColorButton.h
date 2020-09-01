@@ -4,7 +4,8 @@
 
 #include "PR_Config.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI ColorButton : public QPushButton {
 	Q_OBJECT
 
@@ -43,4 +44,5 @@ private:
 	bool mMousePressed;
 	bool mIsFlat;
 };
-}
+} // namespace UI
+} // namespace PR

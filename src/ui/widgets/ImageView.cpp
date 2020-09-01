@@ -7,7 +7,8 @@
 
 #include <QMenu>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 constexpr int BAR_HEIGHT = 20;
 constexpr int BAR_POS_W	 = 100;
 constexpr int MIN_S		 = 400;
@@ -314,4 +315,5 @@ QString ImageView::valueAt(const QPoint& pixel) const
 
 	return str;
 }
-}
+} // namespace UI
+} // namespace PR

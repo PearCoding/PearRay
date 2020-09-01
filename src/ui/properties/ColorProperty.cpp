@@ -3,7 +3,8 @@
 
 #include "widgets/ColorButton.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 ColorProperty::ColorProperty()
 	: IProperty()
 	, mDefaultColor(Qt::white)
@@ -123,4 +124,5 @@ void ColorProperty::dataChanged()
 {
 	setColor(QColor(mRedProperty->value(), mGreenProperty->value(), mBlueProperty->value()));
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

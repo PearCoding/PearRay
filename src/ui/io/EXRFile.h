@@ -5,7 +5,8 @@
 
 #include <memory>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI EXRLayer : public ImageBufferView {
 public:
 	EXRLayer(const QString& name, const QString& lpe, int channels, int width, int height);
@@ -62,4 +63,5 @@ private:
 	int mHeight;
 	QVector<std::shared_ptr<EXRLayer>> mLayers;
 };
-}
+} // namespace UI
+} // namespace PR

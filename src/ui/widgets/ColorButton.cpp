@@ -1,20 +1,23 @@
 #include "ColorButton.h"
 
 #include <QApplication>
-#include <QtEvents>
 #include <QColorDialog>
-#include <QPainter>
+#include <QDrag>
 #include <QMimeData>
+#include <QPainter>
 #include <QStyle>
 #include <QStyleOption>
-#include <QDrag>
+#include <QtEvents>
 
 #define PS_COLOR_BUTTON_PADDING (4)
 
-namespace PRUI {
-ColorButton::ColorButton(QWidget *parent) :
-	QPushButton(parent), mColor(Qt::black), mMousePressed(false),
-	mIsFlat(false)
+namespace PR {
+namespace UI {
+ColorButton::ColorButton(QWidget* parent)
+	: QPushButton(parent)
+	, mColor(Qt::black)
+	, mMousePressed(false)
+	, mIsFlat(false)
 {
 	setAcceptDrops(true);
 	connect(this, SIGNAL(clicked()), SLOT(changeColor()));
@@ -40,7 +43,7 @@ const QColor& ColorButton::color() const
 	return mColor;
 }
 
-void ColorButton::setColor(const QColor &c)
+void ColorButton::setColor(const QColor& c)
 {
 	mColor = c;
 	update();
@@ -49,8 +52,7 @@ void ColorButton::setColor(const QColor &c)
 void ColorButton::changeColor()
 {
 	QColor c = QColorDialog::getColor(mColor, qApp->activeWindow());
-	if (c.isValid())
-	{
+	if (c.isValid()) {
 		setColor(c);
 		emit colorChanged(color());
 	}
@@ -66,21 +68,18 @@ QSize ColorButton::minimumSizeHint() const
 	return QSize(80, 25);
 }
 
-void ColorButton::drawButton(QPainter *p)
+void ColorButton::drawButton(QPainter* p)
 {
 	QStyleOptionButton buttonOptions;
 	buttonOptions.init(this);
 	buttonOptions.features = QStyleOptionButton::None;
-	buttonOptions.rect = rect();
-	buttonOptions.palette = palette();
-	buttonOptions.state = (isDown() ? QStyle::State_Sunken : QStyle::State_Raised);
+	buttonOptions.rect	   = rect();
+	buttonOptions.palette  = palette();
+	buttonOptions.state	   = (isDown() ? QStyle::State_Sunken : QStyle::State_Raised);
 
-	if (!mIsFlat)
-	{
+	if (!mIsFlat) {
 		style()->drawPrimitive(QStyle::PE_PanelButtonBevel, &buttonOptions, p, this);
-	}
-	else
-	{
+	} else {
 		style()->drawPrimitive(QStyle::PE_FrameDefaultButton, &buttonOptions, p, this);
 	}
 
@@ -91,45 +90,40 @@ void ColorButton::drawButton(QPainter *p)
 	QStyleOptionFocusRect frectOptions;
 	frectOptions.init(this);
 	frectOptions.rect = style()->subElementRect(QStyle::SE_PushButtonFocusRect, &buttonOptions, this);
-	if (hasFocus())
-	{
+	if (hasFocus()) {
 		style()->drawPrimitive(QStyle::PE_FrameFocusRect, &frectOptions, p, this);
 	}
 }
 
-void ColorButton::drawButtonLabel(QPainter *p)
+void ColorButton::drawButtonLabel(QPainter* p)
 {
-	QPalette::ColorGroup cg =
-		(isEnabled() ? (hasFocus() ? QPalette::Active : QPalette::Inactive) : QPalette::Disabled);
+	QPalette::ColorGroup cg = (isEnabled() ? (hasFocus() ? QPalette::Active : QPalette::Inactive) : QPalette::Disabled);
 	p->setPen(palette().color(cg, QPalette::ButtonText));
 	p->setBrush(mColor);
 	p->drawRect(PS_COLOR_BUTTON_PADDING, PS_COLOR_BUTTON_PADDING,
-		width() - PS_COLOR_BUTTON_PADDING * 2 - 1, height() - PS_COLOR_BUTTON_PADDING * 2 - 1);
+				width() - PS_COLOR_BUTTON_PADDING * 2 - 1, height() - PS_COLOR_BUTTON_PADDING * 2 - 1);
 }
 
-void ColorButton::dragEnterEvent(QDragEnterEvent *e)
+void ColorButton::dragEnterEvent(QDragEnterEvent* e)
 {
-	if (!e->mimeData()->hasColor())
-	{
+	if (!e->mimeData()->hasColor()) {
 		e->ignore();
 		return;
 	}
 }
 
-void ColorButton::dragMoveEvent(QDragMoveEvent *e)
+void ColorButton::dragMoveEvent(QDragMoveEvent* e)
 {
-	if (!e->mimeData()->hasColor())
-	{
+	if (!e->mimeData()->hasColor()) {
 		e->ignore();
 		return;
 	}
 	e->accept();
 }
 
-void ColorButton::dropEvent(QDropEvent *e)
+void ColorButton::dropEvent(QDropEvent* e)
 {
-	if (!e->mimeData()->hasColor())
-	{
+	if (!e->mimeData()->hasColor()) {
 		e->ignore();
 		return;
 	}
@@ -139,41 +133,40 @@ void ColorButton::dropEvent(QDropEvent *e)
 	emit colorChanged(color());
 }
 
-void ColorButton::mousePressEvent(QMouseEvent *e)
+void ColorButton::mousePressEvent(QMouseEvent* e)
 {
-	mPressPos = e->pos();
+	mPressPos	  = e->pos();
 	mMousePressed = true;
 	QPushButton::mousePressEvent(e);
 }
 
-void ColorButton::mouseReleaseEvent(QMouseEvent *e)
+void ColorButton::mouseReleaseEvent(QMouseEvent* e)
 {
 	mMousePressed = false;
 	QPushButton::mouseReleaseEvent(e);
 }
 
-void ColorButton::mouseMoveEvent(QMouseEvent *e)
+void ColorButton::mouseMoveEvent(QMouseEvent* e)
 {
-	if (!mMousePressed)
-	{
+	if (!mMousePressed) {
 		return;
 	}
 
-	if ((mPressPos - e->pos()).manhattanLength() > QApplication::startDragDistance())
-	{
+	if ((mPressPos - e->pos()).manhattanLength() > QApplication::startDragDistance()) {
 		mMousePressed = false;
 		setDown(false);
-		QDrag *drag = new QDrag(this);
-		QMimeData *data = new QMimeData;
+		QDrag* drag		= new QDrag(this);
+		QMimeData* data = new QMimeData;
 		data->setColorData(color());
 		drag->setMimeData(data);
 		drag->exec(Qt::CopyAction);
 	}
 }
 
-void ColorButton::paintEvent(QPaintEvent *)
+void ColorButton::paintEvent(QPaintEvent*)
 {
 	QPainter p(this);
 	drawButton(&p);
 }
-}
+} // namespace UI
+} // namespace PR

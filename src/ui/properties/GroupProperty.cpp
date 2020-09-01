@@ -1,6 +1,7 @@
 #include "GroupProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 GroupProperty::GroupProperty()
 	: IProperty()
 {
@@ -31,4 +32,5 @@ QWidget* GroupProperty::editorWidget(QWidget* parent)
 	Q_UNUSED(parent);
 	return nullptr;
 }
-}
+} // namespace UI
+} // namespace PR

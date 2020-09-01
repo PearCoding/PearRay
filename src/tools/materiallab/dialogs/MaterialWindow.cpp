@@ -10,18 +10,20 @@
 #include "properties/PropertyContainer.h"
 #include "properties/TextProperty.h"
 
-#include "3d/GraphicObject.h"
+#include "3d/entities/GraphicEntity.h"
 
 #include <QInputDialog>
 #include <QMessageBox>
 
 #include <fstream>
 
+using namespace PR;
+
 MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* factory, QWidget* parent)
 	: QWidget(parent)
 	, mTypeName(typeName)
 	, mFactory(factory)
-	, mProperties(new PRUI::PropertyContainer())
+	, mProperties(new PR::UI::PropertyContainer())
 {
 	PR_ASSERT(mFactory, "Expected valid factory");
 
@@ -41,7 +43,8 @@ MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* fac
 
 	ui.propertyView->setPropertyContainer(mProperties);
 
-	ui.sceneView->addAxis();
+	ui.sceneView->enableAntialiasing();
+	ui.sceneView->enableExtraEntities();
 
 	populateInfo();
 }
@@ -60,13 +63,13 @@ void MaterialWindow::addProperty()
 
 	if (ok && !item.isEmpty()) {
 		if (item == "String")
-			ui.propertyView->addProperty(new PRUI::TextProperty());
+			ui.propertyView->addProperty(new PR::UI::TextProperty());
 		else if (item == "Bool")
-			ui.propertyView->addProperty(new PRUI::BoolProperty());
+			ui.propertyView->addProperty(new PR::UI::BoolProperty());
 		else if (item == "Integer")
-			ui.propertyView->addProperty(new PRUI::IntProperty());
+			ui.propertyView->addProperty(new PR::UI::IntProperty());
 		else
-			ui.propertyView->addProperty(new PRUI::DoubleProperty());
+			ui.propertyView->addProperty(new PR::UI::DoubleProperty());
 	}
 }
 
@@ -74,13 +77,13 @@ void MaterialWindow::createMaterial()
 {
 	PR::SceneLoadContext ctx;
 	for (auto prop : mProperties->topProperties()) {
-		if (auto* p = dynamic_cast<PRUI::TextProperty*>(prop))
+		if (auto* p = dynamic_cast<PR::UI::TextProperty*>(prop))
 			ctx.parameters().addParameter(p->propertyName().toStdString(), PR::Parameter::fromString(p->text().toStdString()));
-		else if (auto* p = dynamic_cast<PRUI::BoolProperty*>(prop))
+		else if (auto* p = dynamic_cast<PR::UI::BoolProperty*>(prop))
 			ctx.parameters().addParameter(p->propertyName().toStdString(), PR::Parameter::fromBool(p->value()));
-		else if (auto* p = dynamic_cast<PRUI::IntProperty*>(prop))
+		else if (auto* p = dynamic_cast<PR::UI::IntProperty*>(prop))
 			ctx.parameters().addParameter(p->propertyName().toStdString(), PR::Parameter::fromInt(p->value()));
-		else if (auto* p = dynamic_cast<PRUI::DoubleProperty*>(prop))
+		else if (auto* p = dynamic_cast<PR::UI::DoubleProperty*>(prop))
 			ctx.parameters().addParameter(p->propertyName().toStdString(), PR::Parameter::fromNumber(p->value()));
 	}
 
@@ -115,43 +118,44 @@ static inline T lerp(const T& a, const T& b, float t)
 }
 
 // t in [0,1]
-static inline QVector3D colormap(float t)
+static inline Vector3f colormap(float t)
 {
 	if (t >= 0.5f)
-		return lerp(QVector3D(0, 1, 0), QVector3D(1, 0, 0), (t - 0.5f) * 2);
+		return lerp(Vector3f(0, 1, 0), Vector3f(1, 0, 0), (t - 0.5f) * 2);
 	else
-		return lerp(QVector3D(0, 0, 1), QVector3D(0, 1, 0), t * 2);
+		return lerp(Vector3f(0, 0, 1), Vector3f(0, 1, 0), t * 2);
 }
 
 void MaterialWindow::buildGraphicObjects()
 {
 	if (!mBRDFObject) {
-		mBRDFObject = std::make_shared<PRUI::GraphicObject>(true);
+		/*mBRDFObject = std::make_shared<PR::UI::GraphicObject>(true);
 		mBRDFObject->setDrawMode(GL_TRIANGLES);
-		ui.sceneView->addGraphicObject(mBRDFObject);
+		ui.sceneView->addGraphicObject(mBRDFObject);*/
 	}
 
 	buildGraphicObject(mBRDFObject.get(), false);
 
 	if (!mBTDFObject) {
-		mBTDFObject = std::make_shared<PRUI::GraphicObject>(true);
+		/*mBTDFObject = std::make_shared<PR::UI::GraphicObject>(true);
 		mBTDFObject->setDrawMode(GL_TRIANGLES);
-		ui.sceneView->addGraphicObject(mBTDFObject);
+		ui.sceneView->addGraphicObject(mBTDFObject);*/
 	}
 
 	buildGraphicObject(mBTDFObject.get(), true);
 }
 
-void MaterialWindow::buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg)
+void MaterialWindow::buildGraphicObject(PR::UI::GraphicEntity* bxdf, bool neg)
 {
-	bxdf->clear();
-
+	PR_UNUSED(bxdf);
+	PR_UNUSED(neg);
+#if 0
 	constexpr int Nradius = 32;
 	constexpr int Nphi	  = 96;
 	constexpr float R	  = 1.0f;
 
 	float maxValue = 0;
-	bxdf->vertices().reserve((Nradius + 1) * (Nphi + 1));
+	//bxdf->vertices().reserve((Nradius + 1) * (Nphi + 1));
 	//bxdf->normals().resize(Nx * Ny);
 	for (int j = 0; j <= Nradius; ++j) {
 		for (int i = 0; i <= Nphi; ++i) {
@@ -161,7 +165,7 @@ void MaterialWindow::buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg)
 			float x = r * std::cos(phi);
 			float y = r * std::sin(phi);
 
-			QVector3D D = QVector3D(x, y, std::sqrt(1 - r * r));
+			Vector3f D = Vector3f(x, y, std::sqrt(1 - r * r));
 			if (neg)
 				D = -D;
 
@@ -170,17 +174,17 @@ void MaterialWindow::buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg)
 				val = 0;
 			maxValue = std::max(maxValue, val);
 
-			bxdf->vertices().push_back(val * D);
+			//bxdf->vertices().push_back(val * D);
 		}
 	}
 
 	// Color
-	bxdf->colors().reserve((Nradius + 1) * (Nphi + 1));
+	//bxdf->colors().reserve((Nradius + 1) * (Nphi + 1));
 	for (int j = 0; j <= Nradius; ++j) {
 		for (int i = 0; i <= Nphi; ++i) {
 			int ind = j * (Nphi + 1) + i;
 
-			float val = bxdf->vertices()[ind].length();
+			float val = 0;//bxdf->vertices()[ind].length();
 			if (maxValue < 1)
 				val /= maxValue;
 
@@ -189,25 +193,26 @@ void MaterialWindow::buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg)
 			else
 				val = (val / maxValue) * 0.5f + 0.5f;
 
-			bxdf->colors().push_back(colormap(val));
+			//bxdf->colors().push_back(colormap(val));
 		}
 	}
 
 	// Renormalize z
-	for (auto& v : bxdf->vertices())
-		v *= R / maxValue;
+	/*for (auto& v : bxdf->vertices())
+		v *= R / maxValue;*/
 
 	// Indices
-	bxdf->indices().reserve(Nradius * Nphi * 3 * 2);
+	//bxdf->indices().reserve(Nradius * Nphi * 3 * 2);
 	for (int j = 0; j < Nradius; ++j) {
 		for (int i = 0; i < Nphi; ++i) {
 			unsigned int row1 = j * (Nphi + 1);
 			unsigned int row2 = (j + 1) * (Nphi + 1);
 
-			bxdf->indices().append({ row1 + i, row1 + i + 1, row2 + i + 1 }); // Triangle 1
-			bxdf->indices().append({ row1 + i, row2 + i + 1, row2 + i });	  // Triangle 2
+			//bxdf->indices().append({ row1 + i, row1 + i + 1, row2 + i + 1 }); // Triangle 1
+			//bxdf->indices().append({ row1 + i, row2 + i + 1, row2 + i });	  // Triangle 2
 		}
 	}
+#endif
 
 #if 0
 	if (neg)
@@ -222,28 +227,28 @@ void MaterialWindow::buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg)
 #endif
 }
 
-float MaterialWindow::evalBSDF(const QVector3D& d) const
+float MaterialWindow::evalBSDF(const Vector3f& d) const
 {
-	constexpr bool VIsInput		  = true;
-	static const PR::Vector3f Out = PR::Vector3f(0, 1, 1).normalized();
+	constexpr bool VIsInput	  = true;
+	static const Vector3f Out = Vector3f(0, 1, 1).normalized();
 
-	PR::RenderTileSession session; // Empty session
-	PR::MaterialEvalInput in;
+	RenderTileSession session; // Empty session
+	MaterialEvalInput in;
 
-	in.Context.V = PR::Vector3f(d.x(), d.y(), d.z());
+	in.Context.V = d;
 	in.Context.L = Out;
 
 	if (!VIsInput)
 		std::swap(in.Context.V, in.Context.L);
 
-	in.Context.P			= PR::Vector3f::Zero();
-	in.Context.UV			= PR::Vector2f::Zero();
+	in.Context.P			= Vector3f::Zero();
+	in.Context.UV			= Vector2f::Zero();
 	in.Context.PrimitiveID	= 0;
-	in.Context.WavelengthNM = PR::SpectralBlob(510);
+	in.Context.WavelengthNM = SpectralBlob(510);
 
-	in.ShadingContext = PR::ShadingContext::fromMC(0, in.Context);
+	in.ShadingContext = ShadingContext::fromMC(0, in.Context);
 
-	PR::MaterialEvalOutput out;
+	MaterialEvalOutput out;
 	mMaterial->eval(in, out, session);
 	return out.Weight[0];
 }

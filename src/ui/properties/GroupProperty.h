@@ -2,7 +2,8 @@
 
 #include "IProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI GroupProperty : public IProperty {
 	Q_OBJECT
 public:
@@ -14,4 +15,5 @@ public:
 	void save();
 	QWidget* editorWidget(QWidget* parent);
 };
-}
+} // namespace UI
+} // namespace PR

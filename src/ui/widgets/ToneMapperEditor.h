@@ -4,9 +4,10 @@
 
 #include "PR_Config.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 namespace Ui {
-	class ToneMapperEditorClass;
+class ToneMapperEditorClass;
 }
 class ToneMapper;
 class PR_LIB_UI ToneMapperEditor : public QWidget {
@@ -32,4 +33,5 @@ private slots:
 private:
 	Ui::ToneMapperEditorClass* ui;
 };
-}
+} // namespace UI
+} // namespace PR

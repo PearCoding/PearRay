@@ -54,6 +54,8 @@ public:
 
 	BoundingBox toLocalBoundingBox() const;
 
+	static void triangulateIndices(const std::array<uint32, 4>& ids, std::vector<uint32>& indices);
+
 private:
 	void recache();
 

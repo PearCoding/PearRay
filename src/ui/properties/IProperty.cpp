@@ -1,6 +1,7 @@
 #include "IProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 IProperty::IProperty()
 	: QObject()
 	, mIsReadOnly(false)
@@ -132,4 +133,5 @@ const QVector<IProperty*>& IProperty::children() const
 {
 	return mChilds;
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

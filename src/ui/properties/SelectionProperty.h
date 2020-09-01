@@ -5,7 +5,8 @@
 #include <QVariant>
 #include <QVector>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI SelectionProperty : public IProperty {
 	Q_OBJECT
 public:
@@ -35,4 +36,5 @@ private:
 
 	QVector<QPair<QString, QVariant>> mData;
 };
-}
+} // namespace UI
+} // namespace PR

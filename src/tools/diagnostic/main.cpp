@@ -56,13 +56,8 @@ int main(int argc, char** argv)
 
 	if (!parser.positionalArguments().empty()) {
 		QFileInfo info(parser.positionalArguments().first());
-		if (info.exists()) {
-			if (info.isFile()) {
-				w.openFile(info.filePath());
-			} else if (info.isDir()) {
-				w.openRDMPDir(info.filePath());
-			}
-		}
+		if (info.exists())
+			w.openFile(info.filePath());
 	}
 
 	w.raise();

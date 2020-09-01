@@ -6,7 +6,8 @@
 
 #include "IProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI PropertyContainer : public QObject {
 	Q_OBJECT
 public:
@@ -36,4 +37,5 @@ private:
 	QVector<IProperty*> mAllProperties;
 	QVector<IProperty*> mTopProperties;
 };
-}
+} // namespace UI
+} // namespace PR

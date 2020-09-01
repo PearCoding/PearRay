@@ -5,7 +5,8 @@
 
 #include "PR_Config.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 enum ColorFormat {
 	CF_XYZ = 0,
 	CF_SRGB
@@ -122,4 +123,5 @@ private:
 	ColorFormat mTripletFormatDst;
 	float mGamma;
 };
-}
+} // namespace UI
+} // namespace PR

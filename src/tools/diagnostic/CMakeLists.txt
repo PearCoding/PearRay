@@ -10,7 +10,6 @@ set(Src
   dialogs/EXRWindow.cpp
   dialogs/MainWindow.cpp
   dialogs/ProfWindow.cpp
-  dialogs/SceneWindow.cpp
   io/ProfFile.cpp
   prof/ProfTreeItem.cpp
   prof/ProfTreeModel.cpp
@@ -22,7 +21,6 @@ set(Hdr
   dialogs/EXRWindow.h
   dialogs/MainWindow.h
   dialogs/ProfWindow.h
-  dialogs/SceneWindow.h
   io/ProfFile.h
   prof/ProfTreeItem.h
   prof/ProfTreeModel.h
@@ -33,7 +31,6 @@ set(Fms
   ui/EXRWindow.ui
   ui/MainWindow.ui
   ui/ProfWindow.ui
-  ui/SceneWindow.ui
   ui/SpecWindow.ui)
 
 set(Res

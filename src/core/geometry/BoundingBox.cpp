@@ -167,4 +167,41 @@ void BoundingBox::combine(const BoundingBox& other)
 	combine(other.lowerBound());
 	combine(other.upperBound());
 }
+
+Vector3f BoundingBox::corner(int n) const
+{
+	switch (n) {
+	default:
+	case 0:
+		return lowerBound();
+	case 1:
+		return Vector3f(upperBound().x(), lowerBound().y(), lowerBound().z());
+	case 2:
+		return Vector3f(lowerBound().x(), upperBound().y(), lowerBound().z());
+	case 3:
+		return Vector3f(upperBound().x(), upperBound().y(), lowerBound().z());
+	case 4:
+		return Vector3f(lowerBound().x(), lowerBound().y(), upperBound().z());
+	case 5:
+		return Vector3f(upperBound().x(), lowerBound().y(), upperBound().z());
+	case 6:
+		return Vector3f(lowerBound().x(), upperBound().y(), upperBound().z());
+	case 7:
+		return upperBound();
+	}
+}
+
+static std::array<int, 4> INDICES[6] = {
+	{ 1, 0, 2, 3 }, // Bottom
+	{ 3, 7, 5, 1 }, // Right
+	{ 7, 6, 4, 5 }, // Top
+	{ 2, 0, 4, 6 }, // Left
+	{ 6, 7, 3, 2 }, // Back
+	{ 0, 1, 5, 4 }, // Front
+};
+void BoundingBox::triangulateIndices(const std::array<uint32, 8>& corners, std::vector<uint32>& indices)
+{
+	for (int i = 0; i < 6; ++i)
+		Plane::triangulateIndices({ corners[INDICES[i][0]], corners[INDICES[i][1]], corners[INDICES[i][2]], corners[INDICES[i][3]] }, indices);
+}
 } // namespace PR

@@ -2,9 +2,11 @@
 #include "mapper/ToneMapper.h"
 #include "ui_ToneMapperEditor.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 ToneMapperEditor::ToneMapperEditor(QWidget* parent)
-	: QWidget(parent), ui(new Ui::ToneMapperEditorClass)
+	: QWidget(parent)
+	, ui(new Ui::ToneMapperEditorClass)
 {
 	ui->setupUi(this);
 
@@ -75,11 +77,12 @@ void ToneMapperEditor::fitButtonPushed()
 void ToneMapperEditor::valueChanged()
 {
 	ui->rangeLabel->setText(QString("{%1, %2} -> {%3, %4}")
-							   .arg(ui->rangeSlider->minValue())
-							   .arg(ui->rangeSlider->maxValue())
-							   .arg(ui->rangeSlider->leftValue())
-							   .arg(ui->rangeSlider->rightValue()));
+								.arg(ui->rangeSlider->minValue())
+								.arg(ui->rangeSlider->maxValue())
+								.arg(ui->rangeSlider->leftValue())
+								.arg(ui->rangeSlider->rightValue()));
 
 	emit changed();
 }
-}
+} // namespace UI
+} // namespace PR

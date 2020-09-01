@@ -6,7 +6,8 @@
 
 #include "PR_Config.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 // TODO: Make sure parent child relationship is maintained
 class PR_LIB_UI IProperty : public QObject {
 	Q_OBJECT
@@ -76,4 +77,5 @@ private:
 	IProperty* mParent;
 	QVector<IProperty*> mChilds;
 };
-}
+} // namespace UI
+} // namespace PR

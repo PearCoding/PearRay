@@ -1,7 +1,6 @@
 #include "MainWindow.h"
 #include "EXRWindow.h"
 #include "ProfWindow.h"
-#include "SceneWindow.h"
 
 #include <fstream>
 
@@ -21,7 +20,6 @@ constexpr int MAX_LAST_FILES = 10;
 
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
-	, mCurrentSceneWindow(nullptr)
 {
 	ui.setupUi(this);
 
@@ -60,11 +58,9 @@ void MainWindow::readSettings()
 						   docLoc.isEmpty() ? QDir::homePath() : docLoc.last())
 				   .toString();
 	mLastFiles = settings.value("last_files").toStringList();
-	mLastDirs  = settings.value("last_dirs").toStringList();
 	settings.endGroup();
 
 	updateRecentFiles();
-	updateRecentDirs();
 }
 
 void MainWindow::writeSettings()
@@ -76,7 +72,6 @@ void MainWindow::writeSettings()
 	settings.setValue("state", saveState());
 	settings.setValue("last_dir", mLastDir);
 	settings.setValue("last_files", mLastFiles);
-	settings.setValue("last_dirs", mLastDirs);
 	settings.endGroup();
 }
 
@@ -92,28 +87,6 @@ void MainWindow::openFile()
 	}
 }
 
-void MainWindow::openRDMPDir()
-{
-	const QStringList docLoc = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-
-	if (mLastDir.isEmpty()) {
-		mLastDir = docLoc.isEmpty() ? QDir::currentPath() : docLoc.last();
-	}
-
-	QString dir = QFileDialog::getExistingDirectory(this, tr("Open RDMP Directory"),
-													mLastDir);
-
-	if (!dir.isEmpty()) {
-		QApplication::processEvents();
-		openRDMPDir(dir);
-
-		QDir d2 = QDir(dir);
-		if (d2.cdUp()) {
-			mLastDir = d2.path();
-		}
-	}
-}
-
 void MainWindow::openFile(const QString& file)
 {
 	QFileInfo info(file);
@@ -124,13 +97,7 @@ void MainWindow::openFile(const QString& file)
 	}
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
-	if (info.suffix() == "cnt") {
-		setupSceneWindow();
-		mCurrentSceneWindow->openCNTFile(file);
-	} else if (info.suffix() == "rdmp") {
-		setupSceneWindow();
-		mCurrentSceneWindow->openRDMPFile(file);
-	} else if (info.suffix() == "exr") {
+	if (info.suffix() == "exr") {
 		EXRWindow* w	   = new EXRWindow(ui.mdiArea);
 		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
 
@@ -148,15 +115,6 @@ void MainWindow::openFile(const QString& file)
 
 	addToRecentFiles(file);
 
-	QApplication::restoreOverrideCursor();
-}
-
-void MainWindow::openRDMPDir(const QString& dir)
-{
-	QApplication::setOverrideCursor(Qt::WaitCursor);
-	setupSceneWindow();
-	mCurrentSceneWindow->openRDMPDir(dir);
-	addToRecentDirs(dir);
 	QApplication::restoreOverrideCursor();
 }
 
@@ -182,17 +140,6 @@ void MainWindow::openWebsite()
 	QDesktopServices::openUrl(QUrl("http://pearcoding.eu/projects/pearray"));
 }
 
-void MainWindow::setupSceneWindow()
-{
-	if (!mCurrentSceneWindow) {
-		mCurrentSceneWindow = new SceneWindow(ui.mdiArea);
-		QMdiSubWindow* win  = ui.mdiArea->addSubWindow(mCurrentSceneWindow);
-
-		win->setWindowIcon(QIcon(":/scene_icon"));
-		mCurrentSceneWindow->show();
-	}
-}
-
 void MainWindow::setupRecentMenu()
 {
 	ui.menuRecentFiles->clear();
@@ -204,15 +151,6 @@ void MainWindow::setupRecentMenu()
 
 		ui.menuRecentFiles->addAction(action);
 		mLastFileActions.append(action);
-	}
-	ui.menuRecentFiles->addSection(tr("Directories"));
-	for (int i = 0; i < MAX_LAST_FILES; ++i) {
-		QAction* action = new QAction("");
-		connect(action, &QAction::triggered,
-				this, &MainWindow::openRecentDir);
-
-		ui.menuRecentFiles->addAction(action);
-		mLastDirActions.append(action);
 	}
 }
 
@@ -242,44 +180,10 @@ void MainWindow::updateRecentFiles()
 	}
 }
 
-void MainWindow::addToRecentDirs(const QString& path)
-{
-	mLastDir = QFileInfo(path).dir().path();
-
-	if (mLastDirs.contains(path))
-		mLastDirs.removeAll(path);
-
-	mLastDirs.push_front(path);
-	if (mLastDirs.size() > MAX_LAST_FILES)
-		mLastDirs.pop_back();
-
-	updateRecentDirs();
-}
-
-void MainWindow::updateRecentDirs()
-{
-	for (int i = 0; i < MAX_LAST_FILES; ++i) {
-		if (i < mLastDirs.size()) {
-			mLastDirActions[i]->setText(mLastDirs.at(i));
-			mLastDirActions[i]->setVisible(true);
-		} else {
-			mLastDirActions[i]->setVisible(false);
-		}
-	}
-}
-
 void MainWindow::openRecentFile()
 {
 	QAction* action = qobject_cast<QAction*>(sender());
 	if (!action)
 		return;
 	openFile(action->text());
-}
-
-void MainWindow::openRecentDir()
-{
-	QAction* action = qobject_cast<QAction*>(sender());
-	if (!action)
-		return;
-	openRDMPDir(action->text());
 }

@@ -6,7 +6,8 @@
 
 #include <cmath>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 RangeSlider::RangeSlider(QWidget* parent)
 	: RangeSlider(0, 1, parent)
 {
@@ -28,10 +29,10 @@ RangeSlider::~RangeSlider()
 {
 }
 
-constexpr int BAR_H	= 20;
+constexpr int BAR_H	   = 20;
 constexpr int KNOB_W   = 10;
 constexpr int BORDER_W = 5;
-constexpr int MIN_W	= BORDER_W * 2 + KNOB_W * 2;
+constexpr int MIN_W	   = BORDER_W * 2 + KNOB_W * 2;
 
 RangeSlider::DrawStyle RangeSlider::calculateStyle() const
 {
@@ -65,7 +66,7 @@ QSize RangeSlider::sizeHint() const
 void RangeSlider::setLeftValue(float f)
 {
 	float old = mLeft;
-	mLeft	 = qMax(mMin, qMin(mRight, f));
+	mLeft	  = qMax(mMin, qMin(mRight, f));
 	if (old != mLeft)
 		emit leftValueChanged(mLeft);
 }
@@ -73,7 +74,7 @@ void RangeSlider::setLeftValue(float f)
 void RangeSlider::setRightValue(float f)
 {
 	float old = mRight;
-	mRight	= qMin(mMax, qMax(mLeft, f));
+	mRight	  = qMin(mMax, qMax(mLeft, f));
 	if (old != mRight)
 		emit rightValueChanged(mRight);
 }
@@ -105,7 +106,7 @@ constexpr QRgb SLIDE_P = qRgb(27, 91, 148);
 void RangeSlider::paintEvent(QPaintEvent* event)
 {
 	Q_UNUSED(event);
-	int h	  = height();
+	int h		  = height();
 	DrawStyle sty = calculateStyle();
 
 	QPainter painter(this);
@@ -209,4 +210,5 @@ void RangeSlider::pan(int dx)
 		repaint();
 	}
 }
-}
+} // namespace UI
+} // namespace PR

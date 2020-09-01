@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PRUI::ToneMapperEditorClass</class>
- <widget class="QWidget" name="PRUI::ToneMapperEditorClass">
+ <class>PR::UI::ToneMapperEditorClass</class>
+ <widget class="QWidget" name="PR::UI::ToneMapperEditorClass">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -115,7 +115,7 @@
        </widget>
       </item>
       <item>
-       <widget class="PRUI::RangeSlider" name="rangeSlider" native="true"/>
+       <widget class="PR::UI::RangeSlider" name="rangeSlider" native="true"/>
       </item>
       <item>
        <widget class="QWidget" name="widget_3" native="true">
@@ -208,7 +208,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PRUI::RangeSlider</class>
+   <class>PR::UI::RangeSlider</class>
    <extends>QWidget</extends>
    <header>widgets/RangeSlider.h</header>
    <container>1</container>

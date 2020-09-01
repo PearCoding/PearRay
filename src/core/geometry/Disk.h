@@ -47,6 +47,9 @@ public:
 		return box;
 	}
 
+	static void triangulate(const Vector3f& center, float radius, uint32 sectionCount, std::vector<float>& indices);
+	static void triangulateIndices(uint32 centerID, uint32 sectionCount, std::vector<uint32>& indices, uint32 off = 1);
+
 private:
 	float mRadius;
 };

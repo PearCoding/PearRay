@@ -19,7 +19,7 @@
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <widget class="PRUI::View3DWidget" name="sceneView">
+     <widget class="PR::UI::View3DWidget" name="sceneView">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>10</horstretch>
@@ -140,7 +140,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="PRUI::PropertyView" name="propertyView"/>
+            <widget class="PR::UI::PropertyView" name="propertyView"/>
            </item>
            <item>
             <widget class="QWidget" name="widget_2" native="true">
@@ -199,12 +199,12 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PRUI::View3DWidget</class>
+   <class>PR::UI::View3DWidget</class>
    <extends>QOpenGLWidget</extends>
    <header>widgets/View3DWidget.h</header>
   </customwidget>
   <customwidget>
-   <class>PRUI::PropertyView</class>
+   <class>PR::UI::PropertyView</class>
    <extends>QTreeView</extends>
    <header>widgets/PropertyView.h</header>
   </customwidget>

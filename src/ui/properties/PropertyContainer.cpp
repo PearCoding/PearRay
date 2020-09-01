@@ -1,6 +1,7 @@
 #include "PropertyContainer.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 PropertyContainer::PropertyContainer()
 {
 }
@@ -79,4 +80,5 @@ void PropertyContainer::valueWasChanged(IProperty* obj)
 {
 	emit valueChanged(obj);
 }
-}
+} // namespace UI
+} // namespace PR

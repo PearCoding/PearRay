@@ -2,7 +2,8 @@
 
 #include "IProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI IntProperty : public IProperty {
 	Q_OBJECT
 public:
@@ -39,4 +40,5 @@ private:
 	int mMinValue;
 	int mStepSize;
 };
-}
+} // namespace UI
+} // namespace PR

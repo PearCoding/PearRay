@@ -10,10 +10,12 @@ class IMaterialPlugin;
 class IMaterial;
 } // namespace PR
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PropertyContainer;
-class GraphicObject;
-} // namespace PRUI
+class GraphicEntity;
+} // namespace UI
+} // namespace PR
 
 class MaterialWindow : public QWidget {
 	Q_OBJECT
@@ -29,16 +31,16 @@ private slots:
 private:
 	void populateInfo();
 	void buildGraphicObjects();
-	void buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg);
-	float evalBSDF(const QVector3D& d) const;
+	void buildGraphicObject(PR::UI::GraphicEntity* bxdf, bool neg);
+	float evalBSDF(const PR::Vector3f& d) const;
 
 	Ui::MaterialWindowClass ui;
 	const QString mTypeName;
 	PR::IMaterialPlugin* mFactory;
-	PRUI::PropertyContainer* mProperties;
+	PR::UI::PropertyContainer* mProperties;
 
 	std::shared_ptr<PR::IMaterial> mMaterial;
 
-	std::shared_ptr<PRUI::GraphicObject> mBRDFObject;
-	std::shared_ptr<PRUI::GraphicObject> mBTDFObject;
+	std::shared_ptr<PR::UI::GraphicEntity> mBRDFObject;
+	std::shared_ptr<PR::UI::GraphicEntity> mBTDFObject;
 };

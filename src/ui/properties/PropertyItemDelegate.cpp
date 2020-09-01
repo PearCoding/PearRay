@@ -3,7 +3,8 @@
 
 #include <QLineEdit>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 PropertyItemDelegate::PropertyItemDelegate(QObject* parent)
 	: QStyledItemDelegate(parent)
 {
@@ -68,4 +69,5 @@ void PropertyItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOpt
 	editor->setGeometry(option.rect);
 }
 
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

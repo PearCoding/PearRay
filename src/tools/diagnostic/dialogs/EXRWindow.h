@@ -5,9 +5,11 @@
 
 #include <memory>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class EXRFile;
 }
+} // namespace PR
 
 class EXRWindow : public QWidget {
 	Q_OBJECT
@@ -29,5 +31,5 @@ private:
 
 	Ui::EXRWindowClass ui;
 
-	std::unique_ptr<PRUI::EXRFile> mFile;
+	std::unique_ptr<PR::UI::EXRFile> mFile;
 };

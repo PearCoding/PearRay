@@ -4,7 +4,8 @@
 
 #include <QColor>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class IntProperty;
 class PR_LIB_UI ColorProperty : public IProperty {
 	Q_OBJECT
@@ -35,4 +36,5 @@ private:
 	IntProperty* mGreenProperty;
 	IntProperty* mBlueProperty;
 };
-}
+} // namespace UI
+} // namespace PR

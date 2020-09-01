@@ -2,7 +2,8 @@
 
 #include "IProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI TextProperty : public IProperty {
 	Q_OBJECT
 public:
@@ -27,4 +28,5 @@ private:
 	QString mDefaultText;
 	QString mText;
 };
-}
+} // namespace UI
+} // namespace PR

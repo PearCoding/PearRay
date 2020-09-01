@@ -1,4 +1,5 @@
 #include "Plane.h"
+#include "Triangle.h"
 #include "trace/HitPoint.h"
 
 namespace PR {
@@ -121,4 +122,9 @@ Vector2f Plane::project(const Vector3f& point) const
 		mYAxis.dot(p) * mInvYLenSqr_Cache);
 }
 
+void Plane::triangulateIndices(const std::array<uint32, 4>& ids, std::vector<uint32>& indices)
+{
+	Triangle::triangulateIndices({ ids[0], ids[1], ids[2] }, indices);
+	Triangle::triangulateIndices({ ids[0], ids[2], ids[3] }, indices);
+}
 } // namespace PR

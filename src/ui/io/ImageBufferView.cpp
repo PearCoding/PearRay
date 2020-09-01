@@ -6,7 +6,8 @@
 #include "tbb/parallel_for.h"
 #endif
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 static QImage::Format channelToFormat(int channelCount)
 {
 	switch (channelCount) {
@@ -176,4 +177,5 @@ void ImageBufferView::getMinMaxOfChannel(float& min, float& max, int channel) co
 		}
 	}
 }
-}
+} // namespace UI
+} // namespace PR

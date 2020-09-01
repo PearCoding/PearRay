@@ -16,7 +16,7 @@ EXRWindow::EXRWindow(QWidget* parent)
 	connect(ui.toneMapperEditor, SIGNAL(changed()), this, SLOT(updateMapper()));
 	connect(ui.toneMapperEditor, SIGNAL(formatChanged()), this, SLOT(updateMapperFormat()));
 
-	mFile = std::make_unique<PRUI::EXRFile>();
+	mFile = std::make_unique<PR::UI::EXRFile>();
 }
 
 EXRWindow::~EXRWindow()

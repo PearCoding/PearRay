@@ -1,4 +1,5 @@
 #include "Sphere.h"
+#include "Plane.h"
 #include "trace/HitPoint.h"
 
 #include "math/Spherical.h"
@@ -84,5 +85,53 @@ Vector3f Sphere::surfacePoint(float u, float v) const
 Vector2f Sphere::project(const Vector3f& p) const
 {
 	return Spherical::uv_from_point(p);
+}
+
+void Sphere::triangulate(const Vector3f& center, float radius, uint32 stacks, uint32 slices, std::vector<float>& vertices)
+{
+	const uint32 count = slices * stacks;
+	vertices.reserve(count * 3);
+
+	float drho	 = 3.141592f / (float)stacks;
+	float dtheta = 2 * 3.141592f / (float)slices;
+
+	auto add = [&](const Vector3f& v) {vertices.push_back(v[0]); vertices.push_back(v[1]); vertices.push_back(v[2]); };
+
+	for (uint32 i = 0; i < stacks; ++i) {
+		float rho  = (float)i * drho;
+		float srho = (float)(sin(rho));
+		float crho = (float)(cos(rho));
+
+		for (uint32 j = 0; j < slices; ++j) {
+			float theta	 = (j == slices) ? 0.0f : j * dtheta;
+			float stheta = (float)(-sin(theta));
+			float ctheta = (float)(cos(theta));
+
+			float x = stheta * srho;
+			float y = ctheta * srho;
+			float z = crho;
+			add(Vector3f(x, y, z) * radius + center);
+		}
+	}
+}
+
+void Sphere::triangulateIndices(uint32 stacks, uint32 slices, std::vector<uint32>& indices, uint32 off)
+{
+	using Index = uint32;
+
+	for (Index i = 0; i < stacks; ++i) {
+		const Index currSliceOff = i * slices;
+		const Index nextSliceOff = i + 1 < stacks ? (i + 1) * slices : 0;
+
+		for (Index j = 0; j < slices; ++j) {
+			const Index nextJ = j + 1 < slices ? j + 1 : 0;
+			const Index id0	  = currSliceOff + j;
+			const Index id1	  = currSliceOff + nextJ;
+			const Index id2	  = nextSliceOff + j;
+			const Index id3	  = nextSliceOff + nextJ;
+
+			Plane::triangulateIndices({ id2 + off, id3 + off, id1 + off, id0 + off }, indices);
+		}
+	}
 }
 } // namespace PR

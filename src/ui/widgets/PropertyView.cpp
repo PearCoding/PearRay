@@ -8,7 +8,8 @@
 #include <QHeaderView>
 #include <QPainter>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 PropertyView::PropertyView(QWidget* parent)
 	: QTreeView(parent)
 	, mModel(nullptr)
@@ -99,4 +100,5 @@ void PropertyView::drawBranches(QPainter* painter, const QRect& rect, const QMod
 		painter->restore();
 	}
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

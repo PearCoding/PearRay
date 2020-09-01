@@ -3,7 +3,8 @@
 #include "PR_Config.h"
 #include <QAbstractItemModel>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class IProperty;
 class PropertyContainer;
 class PR_LIB_UI PropertyTreeModel : public QAbstractItemModel {
@@ -29,4 +30,5 @@ public:
 private:
 	PropertyContainer* mContainer;
 };
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

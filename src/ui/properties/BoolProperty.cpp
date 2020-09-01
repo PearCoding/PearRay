@@ -2,7 +2,8 @@
 
 #include <QCheckBox>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 BoolProperty::BoolProperty()
 	: IProperty()
 	, mOldValue(false)
@@ -85,4 +86,5 @@ bool BoolProperty::defaultValue() const
 {
 	return mOldValue;
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

@@ -3,7 +3,8 @@
 #include "PR_Config.h"
 #include <QStyledItemDelegate>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI PropertyItemDelegate : public QStyledItemDelegate {
 public:
 	PropertyItemDelegate(QObject* parent = nullptr);
@@ -19,4 +20,5 @@ public:
 	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option,
 							  const QModelIndex& index) const override;
 };
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

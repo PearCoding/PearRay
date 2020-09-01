@@ -4,7 +4,8 @@
 
 #include "PR_Config.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class IProperty;
 class PropertyContainer;
 class PropertyItemDelegate;
@@ -28,4 +29,5 @@ private:
 	PropertyTreeModel* mModel;
 	PropertyItemDelegate* mDelegate;
 };
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

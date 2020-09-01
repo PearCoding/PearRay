@@ -34,6 +34,10 @@ set(PR_Src
   filter/IFilterFactory.h
   geometry/BoundingBox.cpp
   geometry/BoundingBox.h
+  geometry/Cone.cpp
+  geometry/Cone.h
+  geometry/Cylinder.cpp
+  geometry/Cylinder.h
   geometry/Disk.cpp
   geometry/Disk.h
   geometry/Face.h

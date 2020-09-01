@@ -2,7 +2,8 @@
 
 #include "IProperty.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI BoolProperty : public IProperty {
 	Q_OBJECT
 public:
@@ -27,4 +28,5 @@ private:
 	bool mOldValue;
 	bool mValue;
 };
-}
+} // namespace UI
+} // namespace PR

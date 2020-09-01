@@ -364,7 +364,7 @@ public:
 				break;
 			case PT_String:
 			case PT_Reference: {
-				auto node = ctx.Env->lookupRawNode(param);
+				auto node = ctx.lookupRawNode(param);
 				switch (node->type()) {
 				case NT_FloatScalar:
 					expr->registerVarying(entry.first, std::reinterpret_pointer_cast<FloatScalarNode>(node));

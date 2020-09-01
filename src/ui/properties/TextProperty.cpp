@@ -2,7 +2,8 @@
 
 #include <QLineEdit>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 TextProperty::TextProperty()
 	: IProperty()
 	, mDefaultText()
@@ -87,4 +88,5 @@ QString TextProperty::defaultText() const
 {
 	return mDefaultText;
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

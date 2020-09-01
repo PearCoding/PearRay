@@ -2,7 +2,8 @@
 
 #include <QComboBox>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 SelectionProperty::SelectionProperty()
 	: IProperty()
 	, mDefaultIndex(0)
@@ -100,4 +101,5 @@ void SelectionProperty::removeItem(int index)
 {
 	mData.removeAt(index);
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

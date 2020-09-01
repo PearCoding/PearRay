@@ -2,7 +2,8 @@
 
 #include <QSpinBox>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 IntProperty::IntProperty()
 	: IProperty()
 	, mOldValue(0)
@@ -122,4 +123,5 @@ void IntProperty::setStepSize(int i)
 {
 	mStepSize = i;
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

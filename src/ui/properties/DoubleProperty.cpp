@@ -2,7 +2,8 @@
 
 #include <QDoubleSpinBox>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 DoubleProperty::DoubleProperty()
 	: IProperty()
 	, mOldValue(0)
@@ -135,4 +136,5 @@ void DoubleProperty::setDecimals(int i)
 {
 	mDecimals = i;
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

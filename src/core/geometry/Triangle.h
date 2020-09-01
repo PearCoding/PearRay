@@ -46,5 +46,12 @@ public:
 			return Vector2f(uniform(0) - y, y);
 		}
 	}
+
+	inline static void triangulateIndices(const std::array<uint32, 3>& ids, std::vector<uint32>& indices)
+	{
+		indices.push_back(ids[0]);
+		indices.push_back(ids[1]);
+		indices.push_back(ids[2]);
+	}
 };
 } // namespace PR

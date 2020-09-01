@@ -1,9 +1,10 @@
 #pragma once
 
-#include <QWidget>
 #include "PR_Config.h"
+#include <QWidget>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class PR_LIB_UI RangeSlider : public QWidget {
 	Q_OBJECT
 public:
@@ -61,4 +62,5 @@ private:
 	int mLastX;
 	int mPickDelta;
 };
-}
+} // namespace UI
+} // namespace PR

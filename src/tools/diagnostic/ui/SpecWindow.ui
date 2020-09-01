@@ -167,13 +167,13 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PRUI::ImageView</class>
+   <class>PR::UI::ImageView</class>
    <extends>QWidget</extends>
    <header>widgets/ImageView.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PRUI::ToneMapperEditor</class>
+   <class>PR::UI::ToneMapperEditor</class>
    <extends>QWidget</extends>
    <header>widgets/ToneMapperEditor.h</header>
    <container>1</container>

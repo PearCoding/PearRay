@@ -2,7 +2,8 @@
 #include "IProperty.h"
 #include "PropertyContainer.h"
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 PropertyTreeModel::PropertyTreeModel(PropertyContainer* cnt)
 	: mContainer(cnt)
 {
@@ -159,4 +160,5 @@ void PropertyTreeModel::addProperty(IProperty* property)
 	mContainer->add(property);
 	endInsertRows();
 }
-} // namespace PRUI
+} // namespace UI
+} // namespace PR

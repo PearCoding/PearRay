@@ -6,7 +6,8 @@
 #include <QWidget>
 #include <memory>
 
-namespace PRUI {
+namespace PR {
+namespace UI {
 class ImageBufferView;
 class PR_LIB_UI ImageView : public QWidget {
 	Q_OBJECT
@@ -61,4 +62,5 @@ private:
 	std::shared_ptr<ImageBufferView> mView;
 	ToneMapper mMapper;
 };
-}
+} // namespace UI
+} // namespace PR
