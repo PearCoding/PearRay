@@ -217,7 +217,7 @@ public:
 
 	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		std::string name	  = params.getString("name", "__unnamed__");
 		std::string mesh_name = params.getString("mesh", "");
@@ -226,21 +226,21 @@ public:
 
 		std::vector<uint32> materials;
 		for (std::string n : matNames) {
-			std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(n);
+			std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(n);
 			if (mat)
 				materials.push_back(mat->id());
 		}
 
 		std::string emsName			   = params.getString("emission", "");
 		int32 emsID					   = -1;
-		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
+		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();
 
-		if (!ctx.Env->hasMesh(mesh_name))
+		if (!ctx.environment()->hasMesh(mesh_name))
 			return nullptr;
 		else {
-			auto mesh = ctx.Env->getMesh(mesh_name);
+			auto mesh = ctx.environment()->getMesh(mesh_name);
 			std::shared_ptr<Mesh> mesh_p;
 			if (mOriginalMesh.count(mesh.get()) > 0) {
 				mesh_p = mOriginalMesh.at(mesh.get());

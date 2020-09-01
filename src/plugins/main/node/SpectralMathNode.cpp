@@ -88,27 +88,27 @@ public:
 	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		if (type_name == "sadd") {
-			return std::make_shared<AddSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-													 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<AddSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+													 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "ssub") {
-			return std::make_shared<SubSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-													 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<SubSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+													 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "smul") {
-			return std::make_shared<MulSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-													 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<MulSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+													 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "sdiv") {
-			return std::make_shared<DivSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-													 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<DivSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+													 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "sneg") {
-			return std::make_shared<NegSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<NegSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "sabs") {
-			return std::make_shared<AbsSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<AbsSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "smax") {
-			return std::make_shared<MaxSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-													 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<MaxSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+													 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "smin") {
-			return std::make_shared<MinSpectralMath>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-													 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<MinSpectralMath>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+													 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)));
 		} else {
 			PR_ASSERT(false, "SpectralMathNode plugin does not handle all offered types of operations!");
 			return nullptr;

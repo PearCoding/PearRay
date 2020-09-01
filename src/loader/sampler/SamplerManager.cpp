@@ -26,9 +26,8 @@ bool SamplerManager::createDefaultsIfNecessary(Environment* env)
 
 		const uint32 id = this->nextID();
 
-		SceneLoadContext ctx;
-		ctx.Env = env;
-		ctx.Parameters.addParameter("sample_count", Parameter::fromInt(sample_count));
+		SceneLoadContext ctx(env);
+		ctx.parameters().addParameter("sample_count", Parameter::fromInt(sample_count));
 		auto obj = fac->create(id, type, ctx);
 		if (obj)
 			this->addObject(obj);

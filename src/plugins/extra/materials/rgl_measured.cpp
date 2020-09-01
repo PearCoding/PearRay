@@ -111,10 +111,10 @@ class RGLMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 		return std::make_shared<RGLMeasuredMaterial>(id,
 													 ctx.escapePath(params.getString("filename", "")),
-													 ctx.Env->lookupSpectralNode(params.getParameter("tint"), 1));
+													 ctx.lookupSpectralNode("tint", 1));
 	}
 
 	const std::vector<std::string>& getNames() const

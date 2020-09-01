@@ -63,8 +63,7 @@ class LambertMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
-		return std::make_shared<LambertMaterial>(id, ctx.Env->lookupSpectralNode(params.getParameter("albedo"), 1));
+		return std::make_shared<LambertMaterial>(id, ctx.lookupSpectralNode("albedo", 1));
 	}
 
 	const std::vector<std::string>& getNames() const

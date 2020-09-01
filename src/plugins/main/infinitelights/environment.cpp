@@ -117,7 +117,7 @@ class EnvironmentLightFactory : public IInfiniteLightPlugin {
 public:
 	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name = params.getString("name", "__unknown");
 
@@ -128,13 +128,13 @@ public:
 		std::shared_ptr<FloatSpectralNode> radiance;
 		std::shared_ptr<FloatSpectralNode> background;
 		if (radP.isValid() && backgroundP.isValid()) {
-			radiance   = ctx.Env->lookupSpectralNode(radP, 1);
-			background = ctx.Env->lookupSpectralNode(backgroundP, 1);
+			radiance   = ctx.lookupSpectralNode(radP, 1);
+			background = ctx.lookupSpectralNode(backgroundP, 1);
 		} else if (radP.isValid()) {
-			radiance   = ctx.Env->lookupSpectralNode(radP, 1);
+			radiance   = ctx.lookupSpectralNode(radP, 1);
 			background = radiance;
 		} else {
-			background = ctx.Env->lookupSpectralNode(backgroundP, 1);
+			background = ctx.lookupSpectralNode(backgroundP, 1);
 			radiance   = background;
 		}
 

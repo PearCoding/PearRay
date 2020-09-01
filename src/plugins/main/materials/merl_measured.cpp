@@ -178,13 +178,13 @@ class MerlMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
-		const ParameterGroup& params = ctx.Parameters;
-		MerlMeasurement measurement(ctx.Env->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
+		const ParameterGroup& params = ctx.parameters();
+		MerlMeasurement measurement(ctx.environment()->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
 
 		if (measurement.isValid())
 			return std::make_shared<MerlMeasuredMaterial>(id,
 														  measurement,
-														  ctx.Env->lookupSpectralNode(params.getParameter("tint"), 1));
+														  ctx.lookupSpectralNode("tint", 1));
 		else
 			return nullptr;
 	}

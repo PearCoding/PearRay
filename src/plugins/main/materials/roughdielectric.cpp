@@ -302,30 +302,30 @@ static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadCont
 	std::shared_ptr<FloatScalarNode> rx;
 	std::shared_ptr<FloatScalarNode> ry;
 
-	if (ctx.Parameters.hasParameter("roughness_x"))
-		rx = ctx.Env->lookupScalarNode(ctx.Parameters.getParameter("roughness_x"), 0);
+	if (ctx.parameters().hasParameter("roughness_x"))
+		rx = ctx.lookupScalarNode("roughness_x", 0);
 	else
-		rx = ctx.Env->lookupScalarNode(ctx.Parameters.getParameter("roughness"), 0);
+		rx = ctx.lookupScalarNode("roughness", 0);
 
 	if constexpr (HasAnisoRoughness)
-		ry = ctx.Env->lookupScalarNode(ctx.Parameters.getParameter("roughness_y"), 0);
+		ry = ctx.lookupScalarNode("roughness_y", 0);
 
-	auto spec  = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("specularity"), 1);
+	auto spec  = ctx.lookupSpectralNode("specularity", 1);
 	auto trans = spec;
-	if (ctx.Parameters.hasParameter("transmission"))
-		trans = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("transmission"), 1);
+	if (ctx.parameters().hasParameter("transmission"))
+		trans = ctx.lookupSpectralNode("transmission", 1);
 
 	return std::make_shared<RoughDielectricMaterial<SpectralVarying, HasAnisoRoughness>>(
 		id,
 		spec, trans,
-		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("index"), 1.55f),
+		ctx.lookupSpectralNode("index", 1.55f),
 		rx, ry);
 }
 
 template <bool SpectralVarying>
 static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadContext& ctx)
 {
-	const bool roughness_y = ctx.Parameters.hasParameter("roughness_y");
+	const bool roughness_y = ctx.parameters().hasParameter("roughness_y");
 	if (roughness_y)
 		return createMaterial1<SpectralVarying, true>(id, ctx);
 	else
@@ -334,7 +334,7 @@ static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadCont
 
 static std::shared_ptr<IMaterial> createMaterial3(uint32 id, const SceneLoadContext& ctx)
 {
-	const bool spectralVarying = ctx.Parameters.getBool("spectral_varying", true);
+	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", true);
 	if (spectralVarying)
 		return createMaterial2<true>(id, ctx);
 	else

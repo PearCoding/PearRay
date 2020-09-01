@@ -150,15 +150,15 @@ class SunLightFactory : public IInfiniteLightPlugin {
 public:
 	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name = params.getString("name", "__unknown");
 		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
-		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
-		const float radius	   = ctx.Parameters.getNumber("radius", 1.0f);
-		const float turbidity  = ctx.Parameters.getNumber("turbidity", 3.0f);
-		const float scale	   = ctx.Parameters.getNumber("scale", 1.0f);
+		ElevationAzimuth sunEA = computeSunEA(ctx.parameters());
+		const float radius	   = ctx.parameters().getNumber("radius", 1.0f);
+		const float turbidity  = ctx.parameters().getNumber("turbidity", 3.0f);
+		const float scale	   = ctx.parameters().getNumber("scale", 1.0f);
 
 		if (radius <= PR_EPSILON)
 			return std::make_shared<SunDeltaLight>(id, name, sunEA, turbidity, scale, trans);

@@ -84,7 +84,7 @@ class TriangleFilterPlugin : public IFilterPlugin {
 public:
 	std::shared_ptr<IFilterFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<TriangleFilterFactory>(ctx.Parameters);
+		return std::make_shared<TriangleFilterFactory>(ctx.parameters());
 	}
 
 	const std::vector<std::string>& getNames() const override

@@ -134,56 +134,56 @@ public:
 	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		if (type_name == "add") {
-			return std::make_shared<AddMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											 ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<AddMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											 ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "sub" || type_name == "subtract") {
-			return std::make_shared<SubMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											 ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<SubMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											 ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "mul" || type_name == "multiply") {
-			return std::make_shared<MulMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											 ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<MulMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											 ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "div" || type_name == "divide") {
-			return std::make_shared<DivMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											 ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<DivMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											 ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "neg" || type_name == "negate") {
-			return std::make_shared<NegMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<NegMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "sin") {
-			return std::make_shared<SinMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<SinMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "cos") {
-			return std::make_shared<CosMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<CosMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "tan") {
-			return std::make_shared<TanMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<TanMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "asin") {
-			return std::make_shared<ASinMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<ASinMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "acos") {
-			return std::make_shared<ACosMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<ACosMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "atan") {
-			return std::make_shared<ATanMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<ATanMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "exp") {
-			return std::make_shared<ExpMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<ExpMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "log") {
-			return std::make_shared<LogMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<LogMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "abs") {
-			return std::make_shared<AbsMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<AbsMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "sqrt") {
-			return std::make_shared<SqrtMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<SqrtMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "cbrt") {
-			return std::make_shared<CbrtMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<CbrtMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "floor") {
-			return std::make_shared<FloorMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<FloorMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "ceil") {
-			return std::make_shared<CeilMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<CeilMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "round") {
-			return std::make_shared<RoundMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)));
+			return std::make_shared<RoundMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)));
 		} else if (type_name == "atan2") {
-			return std::make_shared<ATan2Math>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											   ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<ATan2Math>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											   ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "max") {
-			return std::make_shared<MaxMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											 ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<MaxMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											 ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else if (type_name == "min") {
-			return std::make_shared<MinMath>(ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(0)),
-											 ctx.Env->lookupScalarNode(ctx.Parameters.getParameter(1)));
+			return std::make_shared<MinMath>(ctx.lookupScalarNode(ctx.parameters().getParameter(0)),
+											 ctx.lookupScalarNode(ctx.parameters().getParameter(1)));
 		} else {
 			PR_ASSERT(false, "ScalarMathNode plugin does not handle all offered types of operations!");
 			return nullptr;

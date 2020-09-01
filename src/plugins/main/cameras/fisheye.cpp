@@ -176,11 +176,11 @@ class FisheyeCameraPlugin : public ICameraPlugin {
 public:
 	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		bool clip_range = ctx.Parameters.getBool("clip_range", true);
+		bool clip_range = ctx.parameters().getBool("clip_range", true);
 		if (clip_range)
-			return createCamera<true>(id, ctx.Parameters);
+			return createCamera<true>(id, ctx.parameters());
 		else
-			return createCamera<false>(id, ctx.Parameters);
+			return createCamera<false>(id, ctx.parameters());
 	}
 
 	const std::vector<std::string>& getNames() const

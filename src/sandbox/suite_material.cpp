@@ -129,8 +129,7 @@ static void handle_material_case(const std::string& name,
 // Specific materials
 static void mat_lambert(Environment& env)
 {
-	SceneLoadContext ctx;
-	ctx.Env = &env;
+	SceneLoadContext ctx(&env);
 
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
@@ -138,7 +137,7 @@ static void mat_lambert(Environment& env)
 
 	ParameterGroup params;
 	params.addParameter("albedo", Parameter::fromString("white"));
-	ctx.Parameters = params;
+	ctx.parameters() = params;
 	auto mat	   = fac->create(id, "lambert", ctx);
 	if (!mat) {
 		std::cout << "ERROR: Can not instantiate lambert material!" << std::endl;
@@ -149,15 +148,14 @@ static void mat_lambert(Environment& env)
 
 static void mat_orennayar(Environment& env)
 {
-	SceneLoadContext ctx;
-	ctx.Env = &env;
+	SceneLoadContext ctx(&env);
 
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
 	auto fac		= manag->getFactory("orennayar");
 
 	ParameterGroup params;
-	ctx.Parameters = params;
+	ctx.parameters() = params;
 	params.addParameter("albedo", Parameter::fromString("white"));
 	{
 		params.addParameter("roughness", Parameter::fromNumber(1.0f));
@@ -190,15 +188,14 @@ static void mat_orennayar(Environment& env)
 
 static void mat_principled_p(Environment& env, float roughness, float specular)
 {
-	SceneLoadContext ctx;
-	ctx.Env = &env;
+	SceneLoadContext ctx(&env);
 
 	auto manag		= env.materialManager();
 	const uint32 id = manag->nextID();
 	auto fac		= manag->getFactory("principled");
 
 	ParameterGroup params;
-	ctx.Parameters = params;
+	ctx.parameters() = params;
 
 	params.addParameter("base", Parameter::fromString("white"));
 	params.addParameter("roughness", Parameter::fromNumber(roughness));

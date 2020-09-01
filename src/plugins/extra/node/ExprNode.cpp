@@ -328,13 +328,13 @@ public:
 	{
 		std::string expr_str;
 		if (type_name == "expr" || type_name == "vexpr") {
-			expr_str = ctx.Parameters.getString("expression", "");
+			expr_str = ctx.parameters().getString("expression", "");
 			if (expr_str.empty())
-				expr_str = ctx.Parameters.getString(0, "");
+				expr_str = ctx.parameters().getString(0, "");
 		} else {
-			std::string path = ctx.Parameters.getString("file", "");
+			std::string path = ctx.parameters().getString("file", "");
 			if (path.empty())
-				path = ctx.Parameters.getString(0, "");
+				path = ctx.parameters().getString(0, "");
 
 			std::ifstream stream(path, std::ios::in);
 			if (!stream.good()) {
@@ -348,7 +348,7 @@ public:
 		auto expr		 = std::make_shared<ExpressionContainer>(expr_str, isVec);
 
 		// Setup user variables
-		for (const auto& entry : ctx.Parameters.parameters()) {
+		for (const auto& entry : ctx.parameters().parameters()) {
 			const auto& param = entry.second;
 
 			switch (param.type()) {

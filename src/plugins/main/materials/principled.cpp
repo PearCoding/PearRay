@@ -291,19 +291,18 @@ class PrincipledMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
 		return std::make_shared<PrincipledMaterial>(id,
-													ctx.Env->lookupSpectralNode(params.getParameter("base_color"), 0.8f),
-													ctx.Env->lookupScalarNode(params.getParameter("specular"), 0.5f),
-													ctx.Env->lookupScalarNode(params.getParameter("specular_tint"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("roughness"), 0.5f),
-													ctx.Env->lookupScalarNode(params.getParameter("anisotropic"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("subsurface"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("metallic"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("sheen"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("sheen_tint"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("clearcoat"), 0.0f),
-													ctx.Env->lookupScalarNode(params.getParameter("clearcoat_gloss"), 0.0f));
+													ctx.lookupSpectralNode("base_color", 0.8f),
+													ctx.lookupScalarNode("specular", 0.5f),
+													ctx.lookupScalarNode("specular_tint", 0.0f),
+													ctx.lookupScalarNode("roughness", 0.5f),
+													ctx.lookupScalarNode("anisotropic", 0.0f),
+													ctx.lookupScalarNode("subsurface", 0.0f),
+													ctx.lookupScalarNode("metallic", 0.0f),
+													ctx.lookupScalarNode("sheen", 0.0f),
+													ctx.lookupScalarNode("sheen_tint", 0.0f),
+													ctx.lookupScalarNode("clearcoat", 0.0f),
+													ctx.lookupScalarNode("clearcoat_gloss", 0.0f));
 	}
 
 	const std::vector<std::string>& getNames() const

@@ -15,11 +15,13 @@ public:
 	virtual ~View3DWidget();
 
 	void addGraphicObject(const std::shared_ptr<GraphicObject>& obj);
+	void removeGraphicObject(const std::shared_ptr<GraphicObject>& obj);
 
 	void clear();
 	void rebuild();
 
 	void addAxis();
+	void removeAxis();
 
 protected:
 	void initializeGL() override;
@@ -37,6 +39,7 @@ private:
 	};
 
 	QVector<std::shared_ptr<GraphicObject>> mObjects;
+	std::shared_ptr<GraphicObject> mAxis;
 
 	QMatrix4x4 mProjection;
 

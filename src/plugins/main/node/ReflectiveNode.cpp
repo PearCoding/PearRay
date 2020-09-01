@@ -235,12 +235,12 @@ std::shared_ptr<FloatSpectralNode> createCauchyIndex(const SceneLoadContext& ctx
 	if (allNumber) {
 		std::array<float, N> cs;
 		for (size_t i = 0; i < N; ++i)
-			cs[i] = ctx.Parameters.getParameter(i).getNumber(0.0f);
+			cs[i] = ctx.parameters().getParameter(i).getNumber(0.0f);
 		return create_cauchy_index(cs);
 	} else {
 		std::array<ParamNode, N> cs;
 		for (size_t i = 0; i < N; ++i)
-			cs[i] = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(i));
+			cs[i] = ctx.lookupSpectralNode(ctx.parameters().getParameter(i));
 		return create_cauchy_index(cs);
 	}
 }
@@ -252,9 +252,9 @@ std::shared_ptr<FloatSpectralNode> createSellmeierIndex(const SceneLoadContext& 
 		std::array<float, N> bs;
 		std::array<float, N> cs;
 		for (size_t i = 0; i < N; ++i)
-			bs[i] = ctx.Parameters.getParameter(i).getNumber(0.0f);
+			bs[i] = ctx.parameters().getParameter(i).getNumber(0.0f);
 		for (size_t i = 0; i < N; ++i)
-			cs[i] = ctx.Parameters.getParameter(i + N).getNumber(0.0f);
+			cs[i] = ctx.parameters().getParameter(i + N).getNumber(0.0f);
 		if constexpr (isSquared)
 			return create_squared_sellmeier_index(bs, cs);
 		else
@@ -263,9 +263,9 @@ std::shared_ptr<FloatSpectralNode> createSellmeierIndex(const SceneLoadContext& 
 		std::array<ParamNode, N> bs;
 		std::array<ParamNode, N> cs;
 		for (size_t i = 0; i < N; ++i)
-			bs[i] = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(i));
+			bs[i] = ctx.lookupSpectralNode(ctx.parameters().getParameter(i));
 		for (size_t i = 0; i < N; ++i)
-			cs[i] = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(i + N));
+			cs[i] = ctx.lookupSpectralNode(ctx.parameters().getParameter(i + N));
 		if constexpr (isSquared)
 			return create_squared_sellmeier_index(bs, cs);
 		else
@@ -278,7 +278,7 @@ public:
 	std::shared_ptr<INode> create(uint32, const std::string& type_name, const SceneLoadContext& ctx) override
 	{
 		bool allNumber = true;
-		for (const auto& param : ctx.Parameters.positionalParameters()) {
+		for (const auto& param : ctx.parameters().positionalParameters()) {
 			if (!param.canBeNumber()) {
 				allNumber = false;
 				break;
@@ -286,7 +286,7 @@ public:
 		}
 
 		if (type_name == "cauchy_index") {
-			size_t N = ctx.Parameters.positionalParameters().size(); // Glue between runtime and template
+			size_t N = ctx.parameters().positionalParameters().size(); // Glue between runtime and template
 			switch (N) {
 			case 0:
 			case 1:
@@ -304,7 +304,7 @@ public:
 				return createCauchyIndex<6>(ctx, allNumber);
 			}
 		} else if (type_name == "sellmeier_index") {
-			size_t N = ctx.Parameters.positionalParameters().size() / 2; // Glue between runtime and template
+			size_t N = ctx.parameters().positionalParameters().size() / 2; // Glue between runtime and template
 			switch (N) {
 			case 0:
 			case 1:
@@ -322,7 +322,7 @@ public:
 				return createSellmeierIndex<false, 6>(ctx, allNumber);
 			}
 		} else if (type_name == "sellmeier2_index") {
-			size_t N = ctx.Parameters.positionalParameters().size() / 2; // Glue between runtime and template
+			size_t N = ctx.parameters().positionalParameters().size() / 2; // Glue between runtime and template
 			switch (N) {
 			case 0:
 			case 1:
@@ -341,32 +341,32 @@ public:
 			}
 		} else if (type_name == "poly_index") {
 			if (allNumber)
-				return std::make_shared<PolyIndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
-															  ctx.Parameters.getParameter(1).getNumber(0.0f),
-															  ctx.Parameters.getParameter(2).getNumber(0.0f),
-															  ctx.Parameters.getParameter(3).getNumber(0.0f),
-															  ctx.Parameters.getParameter(4).getNumber(0.0f));
+				return std::make_shared<PolyIndexNode<float>>(ctx.parameters().getParameter(0).getNumber(0.0f),
+															  ctx.parameters().getParameter(1).getNumber(0.0f),
+															  ctx.parameters().getParameter(2).getNumber(0.0f),
+															  ctx.parameters().getParameter(3).getNumber(0.0f),
+															  ctx.parameters().getParameter(4).getNumber(0.0f));
 			else
-				return std::make_shared<PolyIndexNode<ParamNode>>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-																  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)),
-																  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(2)),
-																  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(3)),
-																  ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(4)));
+				return std::make_shared<PolyIndexNode<ParamNode>>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+																  ctx.lookupSpectralNode(ctx.parameters().getParameter(1)),
+																  ctx.lookupSpectralNode(ctx.parameters().getParameter(2)),
+																  ctx.lookupSpectralNode(ctx.parameters().getParameter(3)),
+																  ctx.lookupSpectralNode(ctx.parameters().getParameter(4)));
 		} else if (type_name == "poly2_index") {
 			if (allNumber)
-				return std::make_shared<PolySqrIndexNode<float>>(ctx.Parameters.getParameter(0).getNumber(0.0f),
-																 ctx.Parameters.getParameter(1).getNumber(0.0f),
-																 ctx.Parameters.getParameter(2).getNumber(0.0f),
-																 ctx.Parameters.getParameter(3).getNumber(0.0f),
-																 ctx.Parameters.getParameter(4).getNumber(0.0f));
+				return std::make_shared<PolySqrIndexNode<float>>(ctx.parameters().getParameter(0).getNumber(0.0f),
+																 ctx.parameters().getParameter(1).getNumber(0.0f),
+																 ctx.parameters().getParameter(2).getNumber(0.0f),
+																 ctx.parameters().getParameter(3).getNumber(0.0f),
+																 ctx.parameters().getParameter(4).getNumber(0.0f));
 			else
-				return std::make_shared<PolySqrIndexNode<ParamNode>>(ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(0)),
-																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(1)),
-																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(2)),
-																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(3)),
-																	 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter(4)));
+				return std::make_shared<PolySqrIndexNode<ParamNode>>(ctx.lookupSpectralNode(ctx.parameters().getParameter(0)),
+																	 ctx.lookupSpectralNode(ctx.parameters().getParameter(1)),
+																	 ctx.lookupSpectralNode(ctx.parameters().getParameter(2)),
+																	 ctx.lookupSpectralNode(ctx.parameters().getParameter(3)),
+																	 ctx.lookupSpectralNode(ctx.parameters().getParameter(4)));
 		} else if (type_name == "lookup_index") {
-			auto name = ctx.Parameters.getParameter(0).getString("bk7");
+			auto name = ctx.parameters().getParameter(0).getString("bk7");
 			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
 			for (int i = 0; _lookups[i].Name; ++i) {

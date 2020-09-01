@@ -121,7 +121,7 @@ class IntAOFactoryFactory : public IIntegratorPlugin {
 public:
 	std::shared_ptr<IIntegratorFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<IntAOFactory>(ctx.Parameters);
+		return std::make_shared<IntAOFactory>(ctx.parameters());
 	}
 
 	const std::vector<std::string>& getNames() const override

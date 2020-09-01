@@ -58,7 +58,7 @@ class UniformSamplerPlugin : public ISamplerPlugin {
 public:
 	std::shared_ptr<ISamplerFactory> create(uint32, const std::string&, const SceneLoadContext& ctx) override
 	{
-		return std::make_shared<UniformSamplerFactory>(ctx.Parameters);
+		return std::make_shared<UniformSamplerFactory>(ctx.parameters());
 	}
 
 	const std::vector<std::string>& getNames() const override

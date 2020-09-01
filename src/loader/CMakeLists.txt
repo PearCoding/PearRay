@@ -11,6 +11,7 @@ set(PR_Src
   QueryEnvironment.cpp
   QueryEnvironment.h
   QueryEnvironment.inl
+  SceneLoadContext.cpp
   SceneLoadContext.h
   SceneLoader.cpp
   SceneLoader.h

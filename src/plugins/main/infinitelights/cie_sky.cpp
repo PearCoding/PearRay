@@ -97,19 +97,19 @@ class CIESkyLightFactory : public IInfiniteLightPlugin {
 public:
 	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string& type, const SceneLoadContext& ctx) override
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name		= params.getString("name", "__unknown");
 		const Eigen::Matrix3f trans = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
-		const auto zenithTint		= ctx.Env->lookupSpectralNode(params.getParameter("zenith"), 1.0f);
+		const auto zenithTint		= ctx.lookupSpectralNode("zenith", 1.0f);
 
 		std::shared_ptr<FloatSpectralNode> groundTint;
 		if (params.hasParameter("ground_tint"))
-			groundTint = ctx.Env->lookupSpectralNode(params.getParameter("ground_tint"), 0.0f);
+			groundTint = ctx.lookupSpectralNode("ground_tint", 0.0f);
 		else
 			groundTint = zenithTint;
 
-		const auto groundBrightness = ctx.Env->lookupScalarNode(params.getParameter("ground_brightness"), 0.2f);
+		const auto groundBrightness = ctx.lookupScalarNode("ground_brightness", 0.2f);
 
 		if (type == "uniform_sky")
 			return std::make_shared<CIESimpleSkyLight<false>>(id, name, zenithTint, groundTint, groundBrightness, trans);

@@ -339,7 +339,7 @@ class MicrofacetMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		const std::string fMStr = params.getString("fresnel_mode", "");
 		const std::string gMStr = params.getString("geometric_mode", "");
@@ -350,11 +350,11 @@ public:
 		const auto roughnessP = params.getParameter("roughness");
 
 		if (roughnessP.isValid()) {
-			roughnessX = ctx.Env->lookupScalarNode(roughnessP, 0.5f);
+			roughnessX = ctx.lookupScalarNode(roughnessP, 0.5f);
 			roughnessY = roughnessX;
 		} else {
-			roughnessX = ctx.Env->lookupScalarNode(params.getParameter("roughness_x"), 0.5f);
-			roughnessY = ctx.Env->lookupScalarNode(params.getParameter("roughness_y"), 0.5f);
+			roughnessX = ctx.lookupScalarNode("roughness_x", 0.5f);
+			roughnessY = ctx.lookupScalarNode("roughness_y", 0.5f);
 		}
 
 		FresnelMode fm		= FM_Dielectric;
@@ -381,11 +381,11 @@ public:
 
 		return std::make_shared<MicrofacetMaterial>(id,
 													fm, dm, gm,
-													ctx.Env->lookupSpectralNode(params.getParameter("albedo"), 1),
-													ctx.Env->lookupSpectralNode(params.getParameter("specularity"), 1),
-													ctx.Env->lookupSpectralNode(params.getParameter("index"), 1.55f),
+													ctx.lookupSpectralNode("albedo", 1),
+													ctx.lookupSpectralNode("specularity", 1),
+													ctx.lookupSpectralNode("index", 1.55f),
 													roughnessX, roughnessY,
-													ctx.Env->lookupScalarNode(params.getParameter("conductor_absorption"), 0.5f));
+													ctx.lookupScalarNode("conductor_absorption", 0.5f));
 	}
 
 	const std::vector<std::string>& getNames() const

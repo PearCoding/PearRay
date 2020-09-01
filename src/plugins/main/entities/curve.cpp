@@ -279,7 +279,7 @@ class CurveEntityPlugin : public IEntityPlugin {
 public:
 	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 		uint32 degree				 = (uint32)std::max(1, (int)params.getInt("degree", 3));
 

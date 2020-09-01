@@ -1,6 +1,10 @@
 include(ExternalProject)
 include(FetchContent)
 
+if(CMAKE_COMPILER_IS_GNUCXX)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
+
 if(PR_EXTRA_RGL_BRDF)
     ExternalProject_Add(rgl_brdf_download
         GIT_REPOSITORY    git@github.com:rgl-epfl/brdf-loader.git
@@ -16,14 +20,13 @@ endif()
 if(PR_EXTRA_DAYLIGHT)
     FetchContent_Declare(pugixml
         GIT_REPOSITORY  git@github.com:zeux/pugixml.git
-        GIT_SHALLOW     ON
     )
 
-    set(pugixml_BUILD_TESTS OFF)
-    set(pugixml_BUILD_SHARED_AND_STATIC_LIBS OFF)
-    set(pugixml_BUILD_SHARED_LIBS OFF)
-    set(pugixml_USE_POSTFIX ON)
+    set(BUILD_TESTS OFF)
+    set(BUILD_SHARED_AND_STATIC_LIBS OFF)
+    set(BUILD_SHARED_LIBS OFF)
+    set(USE_POSTFIX ON)
     FetchContent_MakeAvailable(pugixml)
 
-    PR_ADD_PLUGIN(mat_klems_measured CPP klems_measured.cpp LIBRARIES pugixml::static)
+    PR_ADD_PLUGIN(mat_klems_measured CPP klems_measured.cpp LIBRARIES pugixml)
 endif()

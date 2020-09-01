@@ -28,7 +28,7 @@ void GraphicObject::clear()
 
 void GraphicObject::rebuild()
 {
-	if(!mProgram)
+	if (!mProgram)
 		initializeGL();
 
 	// VAO
@@ -131,13 +131,13 @@ void GraphicObject::initializeGL()
 
 void GraphicObject::paintGL(const QMatrix4x4& worldView)
 {
-	if (!mVAO)
-		return;
-
-	QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
-
 	if (mVertices.empty())
 		return;
+
+	if (!mVAO)
+		rebuild();
+
+	QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
 
 	mProgram->bind();
 	mVAO->bind();
@@ -148,4 +148,4 @@ void GraphicObject::paintGL(const QMatrix4x4& worldView)
 
 	mProgram->release();
 }
-}
+} // namespace PRUI

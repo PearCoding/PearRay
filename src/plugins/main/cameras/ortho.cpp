@@ -100,7 +100,7 @@ class OrthoCameraPlugin : public ICameraPlugin {
 public:
 	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 
 		return std::make_shared<OrthoCamera>(id, name,

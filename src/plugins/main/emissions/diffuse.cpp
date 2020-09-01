@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<IEmission> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
 		return std::make_shared<DiffuseEmission>(id,
-												 ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("radiance"), 1));
+												 ctx.lookupSpectralNode("radiance", 1));
 	}
 
 	const std::vector<std::string>& getNames() const override

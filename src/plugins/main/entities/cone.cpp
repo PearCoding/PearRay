@@ -230,7 +230,7 @@ class ConeEntityPlugin : public IEntityPlugin {
 public:
 	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		std::string name = params.getString("name", "__unnamed__cone__");
 		float radius	 = params.getNumber("radius", 1);

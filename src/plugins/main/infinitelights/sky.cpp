@@ -157,20 +157,20 @@ class SkyLightFactory : public IInfiniteLightPlugin {
 public:
 	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name = params.getString("name", "__unknown");
 		Eigen::Matrix3f trans  = params.getMatrix3f("orientation", Eigen::Matrix3f::Identity());
 
-		const float scale	   = ctx.Parameters.getNumber("scale", 1.0f);
-		auto ground_albedo	   = ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("albedo"), 0.15f);
-		ElevationAzimuth sunEA = computeSunEA(ctx.Parameters);
+		const float scale	   = ctx.parameters().getNumber("scale", 1.0f);
+		auto ground_albedo	   = ctx.lookupSpectralNode("albedo", 0.15f);
+		ElevationAzimuth sunEA = computeSunEA(ctx.parameters());
 		//PR_LOG(L_INFO) << "Sun: " << PR_RAD2DEG * sunEA.Elevation << "° " << PR_RAD2DEG * sunEA.Azimuth << "°" << std::endl;
 
 		if (params.getBool("extend", true))
-			return std::make_shared<SkyLight<true>>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), scale, trans);
+			return std::make_shared<SkyLight<true>>(id, name, SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
 		else
-			return std::make_shared<SkyLight<false>>(id, name, SkyModel(ground_albedo, sunEA, ctx.Parameters), scale, trans);
+			return std::make_shared<SkyLight<false>>(id, name, SkyModel(ground_albedo, sunEA, ctx.parameters()), scale, trans);
 	}
 
 	const std::vector<std::string>& getNames() const override

@@ -147,7 +147,7 @@ class PerspectiveCameraPlugin : public ICameraPlugin {
 public:
 	std::shared_ptr<ICamera> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 		std::string name			 = params.getString("name", "__unnamed__");
 
 		const float apr	  = params.getNumber("apertureRadius", 0.05f);

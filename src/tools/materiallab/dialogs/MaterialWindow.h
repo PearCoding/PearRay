@@ -12,7 +12,8 @@ class IMaterial;
 
 namespace PRUI {
 class PropertyContainer;
-}
+class GraphicObject;
+} // namespace PRUI
 
 class MaterialWindow : public QWidget {
 	Q_OBJECT
@@ -27,6 +28,9 @@ private slots:
 
 private:
 	void populateInfo();
+	void buildGraphicObjects();
+	void buildGraphicObject(PRUI::GraphicObject* bxdf, bool neg);
+	float evalBSDF(const QVector3D& d) const;
 
 	Ui::MaterialWindowClass ui;
 	const QString mTypeName;
@@ -34,4 +38,7 @@ private:
 	PRUI::PropertyContainer* mProperties;
 
 	std::shared_ptr<PR::IMaterial> mMaterial;
+
+	std::shared_ptr<PRUI::GraphicObject> mBRDFObject;
+	std::shared_ptr<PRUI::GraphicObject> mBTDFObject;
 };

@@ -235,6 +235,9 @@ static inline bool isAllowedVertIndType(const std::string& str)
 
 void PlyLoader::load(const std::filesystem::path& file, const SceneLoadContext& ctx)
 {
+	if (!ctx.hasEnvironment())
+		return;
+
 	std::fstream stream(file.c_str(), std::ios::in | std::ios::binary);
 	if (!stream)
 		return;
@@ -327,7 +330,7 @@ void PlyLoader::load(const std::filesystem::path& file, const SceneLoadContext& 
 
 	if (cnt) {
 		cnt->triangulate();
-		ctx.Env->addMesh(mName, std::move(cnt));
+		ctx.environment()->addMesh(mName, std::move(cnt));
 	}
 }
 } // namespace PR

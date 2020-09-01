@@ -133,15 +133,15 @@ static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadCont
 {
 	return std::make_shared<DielectricMaterial<HasTransmissionColor, IsThin, SpectralVarying>>(
 		id,
-		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("specularity"), 1),
-		HasTransmissionColor ? ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("transmission"), 1) : nullptr,
-		ctx.Env->lookupSpectralNode(ctx.Parameters.getParameter("index"), 1.55f));
+		ctx.lookupSpectralNode("specularity", 1),
+		HasTransmissionColor ? ctx.lookupSpectralNode("transmission", 1) : nullptr,
+		ctx.lookupSpectralNode("index", 1.55f));
 }
 
 template <bool HasTransmissionColor, bool IsThin>
 static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadContext& ctx)
 {
-	const bool spectralVarying = ctx.Parameters.getBool("spectral_varying", true);
+	const bool spectralVarying = ctx.parameters().getBool("spectral_varying", true);
 	if (spectralVarying)
 		return createMaterial1<HasTransmissionColor, IsThin, true>(id, ctx);
 	else
@@ -151,7 +151,7 @@ static std::shared_ptr<IMaterial> createMaterial2(uint32 id, const SceneLoadCont
 template <bool HasTransmissionColor>
 static std::shared_ptr<IMaterial> createMaterial3(uint32 id, const SceneLoadContext& ctx)
 {
-	const bool isThin = ctx.Parameters.getBool("thin", false);
+	const bool isThin = ctx.parameters().getBool("thin", false);
 	if (isThin)
 		return createMaterial2<HasTransmissionColor, true>(id, ctx);
 	else
@@ -160,7 +160,7 @@ static std::shared_ptr<IMaterial> createMaterial3(uint32 id, const SceneLoadCont
 
 static std::shared_ptr<IMaterial> createMaterial4(uint32 id, const SceneLoadContext& ctx)
 {
-	const bool hasTransmission = ctx.Parameters.hasParameter("transmission");
+	const bool hasTransmission = ctx.parameters().hasParameter("transmission");
 	if (hasTransmission)
 		return createMaterial3<true>(id, ctx);
 	else

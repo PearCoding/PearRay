@@ -22,6 +22,12 @@ void View3DWidget::addGraphicObject(const std::shared_ptr<GraphicObject>& obj)
 		mObjects.append(obj);
 }
 
+void View3DWidget::removeGraphicObject(const std::shared_ptr<GraphicObject>& obj)
+{
+	if (obj)
+		mObjects.removeOne(obj);
+}
+
 void View3DWidget::clear()
 {
 	for (auto obj : mObjects)
@@ -52,21 +58,23 @@ void View3DWidget::paintGL()
 {
 	QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
 	f->glEnable(GL_DEPTH_TEST);
+	f->glClearColor(0.28f, 0.40f, 0.62f, 1);
 	f->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	const QMatrix4x4 WV = mProjection * mCamera.getViewMatrix();
 	for (auto obj : mObjects)
 		obj->paintGL(WV);
+	if (mAxis)
+		mAxis->paintGL(WV);
 }
 
 void View3DWidget::resizeGL(int w, int h)
 {
-	QOpenGLFunctions* f		= QOpenGLContext::currentContext()->functions();
-	const qreal retinaScale = devicePixelRatio();
+	QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
 
-	f->glViewport(0, 0, w * retinaScale, h * retinaScale);
+	f->glViewport(0, 0, w, h);
 	mProjection.setToIdentity();
-	mProjection.perspective(60.0f, retinaScale, 0.1f, 10000.0f);
+	mProjection.perspective(60.0f, h > w ? h / (float)w : w / (float)h, 0.1f, 10000.0f);
 }
 
 void View3DWidget::mousePressEvent(QMouseEvent* event)
@@ -87,16 +95,16 @@ void View3DWidget::mouseMoveEvent(QMouseEvent* event)
 {
 	if (mLastMode == IM_ROTATE && event->buttons() & Qt::LeftButton) {
 		QPointF delta = event->globalPos() - mLastPoint;
-		mLastPoint	= event->globalPos();
+		mLastPoint	  = event->globalPos();
 
-		QQuaternion dt = QQuaternion::fromEulerAngles(delta.y() * RS, delta.x() * RS, 0);
+		QQuaternion dt = QQuaternion::fromEulerAngles(-delta.y() * RS, delta.x() * RS, 0);
 		mCamera.setRotation(mCamera.rotation() * dt);
 
 		update();
 		event->accept();
 	} else if (mLastMode == IM_PAN && event->buttons() & Qt::MiddleButton) {
 		QPointF delta = event->globalPos() - mLastPoint;
-		mLastPoint	= event->globalPos();
+		mLastPoint	  = event->globalPos();
 
 		mCamera.pan(delta * 0.001f);
 
@@ -121,29 +129,35 @@ void View3DWidget::wheelEvent(QWheelEvent* event)
 
 void View3DWidget::addAxis()
 {
-	std::shared_ptr<GraphicObject> axis = std::make_shared<GraphicObject>(true);
+	if (mAxis)
+		return;
 
-	axis->vertices().resize(6);
-	axis->colors().resize(6);
-	axis->indices().resize(6);
+	mAxis = std::make_shared<GraphicObject>(true);
 
-	axis->vertices()[0] = QVector3D(0, 0, 0);
-	axis->vertices()[1] = QVector3D(1, 0, 0);
-	axis->vertices()[2] = QVector3D(0, 0, 0);
-	axis->vertices()[3] = QVector3D(0, 1, 0);
-	axis->vertices()[4] = QVector3D(0, 0, 0);
-	axis->vertices()[5] = QVector3D(0, 0, 1);
+	mAxis->vertices().resize(6);
+	mAxis->colors().resize(6);
+	mAxis->indices().resize(6);
 
-	axis->colors()[0] = QVector3D(1, 0, 0);
-	axis->colors()[1] = QVector3D(1, 0, 0);
-	axis->colors()[2] = QVector3D(0, 1, 0);
-	axis->colors()[3] = QVector3D(0, 1, 0);
-	axis->colors()[4] = QVector3D(0, 0, 1);
-	axis->colors()[5] = QVector3D(0, 0, 1);
+	mAxis->vertices()[0] = QVector3D(0, 0, 0);
+	mAxis->vertices()[1] = QVector3D(1, 0, 0);
+	mAxis->vertices()[2] = QVector3D(0, 0, 0);
+	mAxis->vertices()[3] = QVector3D(0, 1, 0);
+	mAxis->vertices()[4] = QVector3D(0, 0, 0);
+	mAxis->vertices()[5] = QVector3D(0, 0, 1);
+
+	mAxis->colors()[0] = QVector3D(1, 0, 0);
+	mAxis->colors()[1] = QVector3D(1, 0, 0);
+	mAxis->colors()[2] = QVector3D(0, 1, 0);
+	mAxis->colors()[3] = QVector3D(0, 1, 0);
+	mAxis->colors()[4] = QVector3D(0, 0, 1);
+	mAxis->colors()[5] = QVector3D(0, 0, 1);
 
 	for (int i = 0; i < 6; ++i)
-		axis->indices()[i] = i;
+		mAxis->indices()[i] = i;
+}
 
-	addGraphicObject(axis);
+void View3DWidget::removeAxis()
+{
+	mAxis.reset();
 }
-}
+} // namespace PRUI

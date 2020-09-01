@@ -25,9 +25,8 @@ bool FilterManager::createDefaultsIfNecessary(Environment* env)
 
 		const uint32 id = this->nextID();
 
-		SceneLoadContext ctx;
-		ctx.Env = env;
-		ctx.Parameters.addParameter("radius", Parameter::fromInt(radius));
+		SceneLoadContext ctx(env);
+		ctx.parameters().addParameter("radius", Parameter::fromInt(radius));
 		auto obj = fac->create(id, type, ctx);
 		if (obj)
 			this->addObject(obj);

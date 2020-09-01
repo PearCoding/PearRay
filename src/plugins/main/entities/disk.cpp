@@ -133,7 +133,7 @@ class DiskEntityPlugin : public IEntityPlugin {
 public:
 	std::shared_ptr<IEntity> create(uint32 id, const std::string&, const SceneLoadContext& ctx)
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		std::string name = params.getString("name", "__unnamed__");
 		float radius	 = params.getNumber("radius", 1);
@@ -142,12 +142,12 @@ public:
 		std::string matName = params.getString("material", "");
 
 		int32 matID					   = -1;
-		std::shared_ptr<IMaterial> mat = ctx.Env->getMaterial(matName);
+		std::shared_ptr<IMaterial> mat = ctx.environment()->getMaterial(matName);
 		if (mat)
 			matID = mat->id();
 
 		int32 emsID					   = -1;
-		std::shared_ptr<IEmission> ems = ctx.Env->getEmission(emsName);
+		std::shared_ptr<IEmission> ems = ctx.environment()->getEmission(emsName);
 		if (ems)
 			emsID = ems->id();
 

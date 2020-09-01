@@ -16,7 +16,7 @@ void OrbitCamera::pan(const QPointF& delta)
 	QVector3D up, right;
 	constructFrame(up, right);
 
-	QQuaternion q = QQuaternion::fromAxisAndAngle(QVector3D(0, 1, 0), -delta.x() * 180)
+	QQuaternion q = QQuaternion::fromAxisAndAngle(QVector3D(0, 0, 1), -delta.x() * 180)
 					* QQuaternion::fromAxisAndAngle(QVector3D(1, 0, 0), -delta.y() * 180);
 
 	QVector3D dir = mLookAt - position();

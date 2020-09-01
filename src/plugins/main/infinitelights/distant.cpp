@@ -74,13 +74,13 @@ class DistantLightFactory : public IInfiniteLightPlugin {
 public:
 	std::shared_ptr<IInfiniteLight> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
-		const ParameterGroup& params = ctx.Parameters;
+		const ParameterGroup& params = ctx.parameters();
 
 		const std::string name	 = params.getString("name", "__unknown");
 		const Vector3f direction = params.getVector3f("direction", Vector3f(0, 0, 1));
 
 		return std::make_shared<DistantLight>(id, name, direction,
-											  ctx.Env->lookupSpectralNode(params.getParameter("irradiance"), 1));
+											  ctx.lookupSpectralNode("irradiance", 1));
 	}
 
 	const std::vector<std::string>& getNames() const override
