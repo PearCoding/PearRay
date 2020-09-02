@@ -34,13 +34,6 @@ MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* fac
 
 	ui.setupUi(this);
 
-	// Read only checkboxes
-	ui.deltaCB->setAttribute(Qt::WA_TransparentForMouseEvents);
-	ui.deltaCB->setFocusPolicy(Qt::NoFocus);
-
-	ui.spectralCB->setAttribute(Qt::WA_TransparentForMouseEvents);
-	ui.spectralCB->setFocusPolicy(Qt::NoFocus);
-
 	connect(ui.addPropertyButton, &QPushButton::clicked, this, &MaterialWindow::addProperty);
 	connect(ui.createButton, &QPushButton::clicked, this, &MaterialWindow::createMaterial);
 	connect(ui.sunThetaSlider, &QSlider::valueChanged, this, &MaterialWindow::controlChanged);
@@ -134,10 +127,6 @@ void MaterialWindow::createMaterial()
 							  tr("Could not create material of type %1:\nFactory rejected creation. Creation for query environments is probably not supported.").arg(mTypeName));
 		return;
 	}
-
-	const int flags = mMaterial->flags();
-	ui.deltaCB->setChecked(flags & PR::MF_DeltaDistribution);
-	ui.spectralCB->setChecked(flags & PR::MF_SpectralVarying);
 
 	const std::string info = mMaterial->dumpInformation();
 	ui.dumpTextView->setPlainText(QString::fromStdString(info));

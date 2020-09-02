@@ -279,8 +279,6 @@ public:
 			   << "    Transmission:     " << mTransmission->dumpInformation() << std::endl;
 
 		stream << "    IOR:             " << mIOR->dumpInformation() << std::endl;
-		if constexpr (SpectralVarying)
-			stream << "    SpectralVarying: true" << std::endl;
 		stream << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl;
 		stream << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl;
 

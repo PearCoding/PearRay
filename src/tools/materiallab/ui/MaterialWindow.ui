@@ -331,20 +331,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="spectralCB">
-            <property name="text">
-             <string>Spectral Varying</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="deltaCB">
-            <property name="text">
-             <string>Delta</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QGroupBox" name="groupBox_3">
             <property name="title">
              <string>Names:</string>
