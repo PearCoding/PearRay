@@ -22,8 +22,8 @@ public:
 
 	inline void rebuild() { setupBuffer(); }
 
-	void setWireframe(bool wireframe);
-	inline bool isWireframe() const { return mWireframe; }
+	void enableNormalization(bool b);
+	inline bool hasNormalization() const { return mNormalize; }
 
 private:
 	void setupBuffer();
@@ -32,7 +32,7 @@ private:
 	int mNRadius;
 	int mNPhi;
 
-	bool mWireframe;
+	bool mNormalize;
 };
 } // namespace UI
 } // namespace PR

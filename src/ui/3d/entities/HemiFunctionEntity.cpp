@@ -3,6 +3,9 @@
 #include "3d/shader/ColorShader.h"
 #include "HemiFunctionEntity.h"
 
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
+
 namespace PR {
 namespace UI {
 HemiFunctionEntity::HemiFunctionEntity(const Function& function, int nradius, int nphi)
@@ -10,7 +13,7 @@ HemiFunctionEntity::HemiFunctionEntity(const Function& function, int nradius, in
 	, mFunction(function)
 	, mNRadius(nradius)
 	, mNPhi(nphi)
-	, mWireframe(false)
+	, mNormalize(true)
 {
 	setupBuffer();
 	setTwoSided(true);
@@ -25,25 +28,21 @@ HemiFunctionEntity::~HemiFunctionEntity()
 void HemiFunctionEntity::setRadiusCount(int nradius)
 {
 	mNRadius = nradius;
-	setupBuffer();
 }
 
 void HemiFunctionEntity::setPhiCount(int nphi)
 {
 	mNPhi = nphi;
-	setupBuffer();
 }
 
 void HemiFunctionEntity::setFunction(const Function& f)
 {
 	mFunction = f;
-	setupBuffer();
 }
 
-void HemiFunctionEntity::setWireframe(bool wireframe)
+void HemiFunctionEntity::enableNormalization(bool b)
 {
-	mWireframe = wireframe;
-	setDrawMode(wireframe ? GL_LINES : GL_TRIANGLES);
+	mNormalize = b;
 }
 
 template <typename T>
@@ -63,32 +62,43 @@ static inline Vector3f colormap(float t)
 
 void HemiFunctionEntity::setupBuffer()
 {
-	float maxValue = 0;
-
 	//////////////// Vertices
 	std::vector<float> vertices;
+	vertices.resize((mNRadius + 1) * mNPhi * 3);
 
-	const auto appendV = [&](const Vector3f& p0) {
-		vertices.push_back(p0[0]);
-		vertices.push_back(p0[1]);
-		vertices.push_back(p0[2]);
-	};
+	tbb::parallel_for(
+		tbb::blocked_range<int>(0, mNRadius + 1),
+		[&](const tbb::blocked_range<int>& r) {
+			const int sy = r.begin();
+			const int ey = r.end();
+			for (int j = sy; j < ey; ++j) {
+				for (int i = 0; i < mNPhi; ++i) {
+					float r	  = std::sqrt(j / (float)mNRadius);
+					float phi = 2 * PR::PR_PI * (i / (float)mNPhi);
 
-	vertices.reserve((mNRadius + 1) * mNPhi * 3);
+					float x = r * std::cos(phi);
+					float y = r * std::sin(phi);
+
+					const Vector3f D = Vector3f(x, y, std::sqrt(1 - r * r));
+					float val		 = mFunction(D);
+					if (!std::isfinite(val))
+						val = 0;
+
+					int ind				  = j * mNPhi + i;
+					vertices[ind * 3 + 0] = val * D(0);
+					vertices[ind * 3 + 1] = val * D(1);
+					vertices[ind * 3 + 2] = val * D(2);
+				}
+			}
+		});
+
+	//////////////// Extract maximum value
+	float maxValue = 0;
 	for (int j = 0; j <= mNRadius; ++j) {
 		for (int i = 0; i < mNPhi; ++i) {
-			float r	  = std::sqrt(j / (float)mNRadius);
-			float phi = 2 * PR::PR_PI * (i / (float)mNPhi);
-
-			float x = r * std::cos(phi);
-			float y = r * std::sin(phi);
-
-			const Vector3f D = Vector3f(x, y, std::sqrt(1 - r * r));
-			float val		 = mFunction(D);
-			if (!std::isfinite(val))
-				val = 0;
-			maxValue = std::max(maxValue, val);
-			appendV(val * D);
+			int ind	   = j * mNPhi + i;
+			Vector3f v = Vector3f(vertices[ind * 3], vertices[ind * 3 + 1], vertices[ind * 3 + 2]);
+			maxValue   = std::max(maxValue, v.norm());
 		}
 	}
 
@@ -121,8 +131,9 @@ void HemiFunctionEntity::setupBuffer()
 	}
 
 	///////////////////// Renormalize z
-	for (auto& v : vertices)
-		v /= maxValue;
+	if (mNormalize)
+		for (auto& v : vertices)
+			v /= maxValue;
 
 	///////////////////// Indices
 	std::vector<uint32> indices;

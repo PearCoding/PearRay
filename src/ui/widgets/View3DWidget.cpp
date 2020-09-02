@@ -69,7 +69,10 @@ View3DWidget::View3DWidget(QWidget* parent)
 
 	// Try to update with a fixed FPS
 	QTimer* timer = new QTimer(this);
-	connect(timer, &QTimer::timeout, [this]() { this->update(); });
+	connect(timer, &QTimer::timeout, [this]() {
+		if (this->isVisible())
+			this->update();
+	});
 	timer->start(1000 / FPS);
 
 	setCamera(Camera()); // Update extra entity transform

@@ -1,4 +1,5 @@
 #include "ConstNode.h"
+#include "PrettyPrint.h"
 #include "spectral/SpectralUpsampler.h"
 
 #include <sstream>
@@ -43,7 +44,7 @@ Vector2i ConstSpectralNode::queryRecommendedSize() const
 std::string ConstSpectralNode::dumpInformation() const
 {
 	std::stringstream sstream;
-	sstream << mValue;
+	sstream << PR_FMT_MAT(mValue);
 	return sstream.str();
 }
 
@@ -68,7 +69,7 @@ Vector2i ParametricSpectralNode::queryRecommendedSize() const
 std::string ParametricSpectralNode::dumpInformation() const
 {
 	std::stringstream sstream;
-	sstream << mValue;
+	sstream << PR_FMT_MAT(mValue);
 	return sstream.str();
 }
 
@@ -94,7 +95,7 @@ Vector2i ParametricScaledSpectralNode::queryRecommendedSize() const
 std::string ParametricScaledSpectralNode::dumpInformation() const
 {
 	std::stringstream sstream;
-	sstream << mValue << "x" << mPower;
+	sstream << PR_FMT_MAT(mValue) << "x" << mPower;
 	return sstream.str();
 }
 

@@ -2,6 +2,7 @@
 
 #include "ui_MaterialWindow.h"
 #include <QWidget>
+#include <QTimer>
 
 #include <memory>
 
@@ -10,6 +11,7 @@ class IMaterialPlugin;
 class IMaterial;
 namespace UI {
 class PropertyContainer;
+class GraphicEntity;
 class HemiFunctionEntity;
 class InstanceEntity;
 } // namespace UI
@@ -26,6 +28,9 @@ private slots:
 	void addProperty();
 	void createMaterial();
 
+	void controlChanged();
+	void displayChanged();
+	void animationHandler();
 private:
 	void populateInfo();
 	void buildGraphicObjects();
@@ -38,8 +43,12 @@ private:
 
 	std::shared_ptr<PR::IMaterial> mMaterial;
 
+	std::shared_ptr<PR::UI::GraphicEntity> mLightSource;
+
 	std::shared_ptr<PR::UI::HemiFunctionEntity> mBRDFObject;
 	std::shared_ptr<PR::UI::InstanceEntity> mBRDFObjectOutline;
 	std::shared_ptr<PR::UI::HemiFunctionEntity> mBTDFObject;
 	std::shared_ptr<PR::UI::InstanceEntity> mBTDFObjectOutline;
+
+	QTimer mAnimationTimer;
 };

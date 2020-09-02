@@ -12,6 +12,8 @@
 
 #include "3d/entities/HemiFunctionEntity.h"
 #include "3d/entities/InstanceEntity.h"
+#include "3d/entities/SphereEntity.h"
+#include "3d/shader/ColorShader.h"
 #include "3d/shader/WireframeShader.h"
 
 #include <QInputDialog>
@@ -19,6 +21,9 @@
 
 using namespace PR;
 
+constexpr float SUN_R = 0.1f;
+constexpr float SUN_D = 4.0f;
+constexpr int ANIM_MS = 200;
 MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* factory, QWidget* parent)
 	: QWidget(parent)
 	, mTypeName(typeName)
@@ -38,6 +43,24 @@ MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* fac
 
 	connect(ui.addPropertyButton, &QPushButton::clicked, this, &MaterialWindow::addProperty);
 	connect(ui.createButton, &QPushButton::clicked, this, &MaterialWindow::createMaterial);
+	connect(ui.sunThetaSlider, &QSlider::valueChanged, this, &MaterialWindow::controlChanged);
+	connect(ui.sunPhiSlider, &QSlider::valueChanged, this, &MaterialWindow::controlChanged);
+	connect(ui.wavelengthSlider, &QSlider::valueChanged, this, &MaterialWindow::controlChanged);
+	connect(ui.swapCB, &QCheckBox::stateChanged, this, &MaterialWindow::controlChanged);
+	connect(ui.ndotlCB, &QCheckBox::stateChanged, this, &MaterialWindow::controlChanged);
+	connect(ui.normCB, &QCheckBox::stateChanged, this, &MaterialWindow::controlChanged);
+
+	connect(ui.wireframeCB, &QCheckBox::stateChanged, this, &MaterialWindow::displayChanged);
+
+	mAnimationTimer.setInterval(ANIM_MS);
+	connect(&mAnimationTimer, &QTimer::timeout, this, &MaterialWindow::animationHandler);
+
+	connect(ui.animButton, &QPushButton::clicked, [this]() {
+		if (ui.animButton->isChecked())
+			mAnimationTimer.start();
+		else
+			mAnimationTimer.stop();
+	});
 
 	setWindowTitle(mTypeName);
 
@@ -45,6 +68,12 @@ MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* fac
 
 	ui.sceneView->enableAntialiasing();
 	ui.sceneView->enableExtraEntities();
+
+	// Setup light source
+	mLightSource = std::make_shared<PR::UI::SphereEntity>(SUN_R);
+	mLightSource->setShader(std::make_shared<PR::UI::ColorShader>(Vector4f(0.8f, 0.9f, 0, 1)));
+	ui.sceneView->addEntity(mLightSource, PR::UI::VL_Overlay1);
+	controlChanged();
 
 	populateInfo();
 }
@@ -98,9 +127,12 @@ void MaterialWindow::createMaterial()
 		return;
 	}
 
-	int flags = mMaterial->flags();
+	const int flags = mMaterial->flags();
 	ui.deltaCB->setChecked(flags & PR::MF_DeltaDistribution);
 	ui.spectralCB->setChecked(flags & PR::MF_SpectralVarying);
+
+	const std::string info = mMaterial->dumpInformation();
+	ui.dumpTextView->setPlainText(QString::fromStdString(info));
 
 	buildGraphicObjects();
 }
@@ -113,10 +145,41 @@ void MaterialWindow::populateInfo()
 	ui.namesView->addItems(names);
 }
 
+void MaterialWindow::controlChanged()
+{
+	float theta		 = ui.sunThetaSlider->value() * PR::PR_DEG2RAD;
+	float phi		 = ui.sunPhiSlider->value() * PR::PR_DEG2RAD;
+	const Vector3f L = PR::Spherical::cartesian(theta, phi);
+
+	ui.lDisplay->setText(QString("[%1, %2, %3]").arg(L.x(), 4, 'f', 4).arg(L.y(), 4, 'f', 4).arg(L.z(), 4, 'f', 4));
+	mLightSource->setTranslation(SUN_D * L);
+
+	if (mMaterial)
+		buildGraphicObjects();
+}
+
+void MaterialWindow::displayChanged()
+{
+	if (mBRDFObjectOutline) {
+		mBRDFObjectOutline->show(ui.wireframeCB->isChecked());
+		mBTDFObjectOutline->show(ui.wireframeCB->isChecked());
+	}
+}
+
+void MaterialWindow::animationHandler()
+{
+	int theta = ui.sunThetaSlider->value();
+	int phi	  = ui.sunPhiSlider->value();
+
+	ui.sunThetaSlider->setValue((theta + 1) % 180);
+	ui.sunPhiSlider->setValue((phi + 2) % 360);
+}
+
 void MaterialWindow::buildGraphicObjects()
 {
 	if (!mBRDFObject) {
 		mBRDFObject = std::make_shared<PR::UI::HemiFunctionEntity>([this](const Vector3f& D) { return evalBSDF(D); });
+		mBRDFObject->enableNormalization(ui.normCB->isChecked());
 		ui.sceneView->addEntity(mBRDFObject);
 
 		// Wireframe
@@ -124,12 +187,14 @@ void MaterialWindow::buildGraphicObjects()
 		mBRDFObjectOutline->setShader(std::make_shared<PR::UI::WireframeShader>(Vector4f(0.2f, 0.2f, 0.2f, 0.4f)));
 		ui.sceneView->addEntity(mBRDFObjectOutline, PR::UI::VL_Overlay1);
 	} else {
+		mBRDFObject->enableNormalization(ui.normCB->isChecked());
 		mBRDFObject->rebuild();
 	}
 
 	if (!mBTDFObject) {
 		mBTDFObject = std::make_shared<PR::UI::HemiFunctionEntity>([this](const Vector3f& D) { return evalBSDF(-D); });
 		mBTDFObject->setScale(Vector3f(1.0f, 1.0f, -1.0f));
+		mBTDFObject->enableNormalization(ui.normCB->isChecked());
 		ui.sceneView->addEntity(mBTDFObject);
 
 		// Wireframe
@@ -137,6 +202,7 @@ void MaterialWindow::buildGraphicObjects()
 		mBTDFObjectOutline->setShader(std::make_shared<PR::UI::WireframeShader>(Vector4f(0.2f, 0.2f, 0.2f, 0.4f)));
 		ui.sceneView->addEntity(mBTDFObjectOutline, PR::UI::VL_Overlay1);
 	} else {
+		mBTDFObject->enableNormalization(ui.normCB->isChecked());
 		mBTDFObject->rebuild();
 	}
 
@@ -145,26 +211,30 @@ void MaterialWindow::buildGraphicObjects()
 
 float MaterialWindow::evalBSDF(const Vector3f& d) const
 {
-	constexpr bool VIsInput	  = true;
-	static const Vector3f Out = Vector3f(0, 1, 1).normalized();
-
 	RenderTileSession session; // Empty session
 	MaterialEvalInput in;
 
 	in.Context.V = d;
-	in.Context.L = Out;
 
-	if (!VIsInput)
+	// Mirror x & y for some reasons...
+	in.Context.L = mLightSource->translation().normalized().cwiseProduct(Vector3f(-1, -1, 1)).eval();
+
+	if (ui.swapCB->isChecked())
 		std::swap(in.Context.V, in.Context.L);
 
 	in.Context.P			= Vector3f::Zero();
 	in.Context.UV			= Vector2f::Zero();
 	in.Context.PrimitiveID	= 0;
-	in.Context.WavelengthNM = SpectralBlob(510);
+	in.Context.WavelengthNM = SpectralBlob((float)ui.wavelengthSlider->value());
 
 	in.ShadingContext = ShadingContext::fromMC(0, in.Context);
 
 	MaterialEvalOutput out;
 	mMaterial->eval(in, out, session);
-	return out.Weight[0];
+
+	const float ndotl = std::abs(in.Context.L(2));
+	if (ui.ndotlCB->isChecked() || ndotl <= PR_EPSILON)
+		return out.Weight[0];
+	else
+		return out.Weight[0] / ndotl;
 }
