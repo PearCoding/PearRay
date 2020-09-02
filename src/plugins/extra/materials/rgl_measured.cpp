@@ -81,7 +81,7 @@ public:
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <RGLMeasuredMaterial>:" << std::endl
 			   << "    Filename: " << mFilename << std::endl
-			   << "    Tint:     " << mTint << std::endl;
+			   << "    Tint:     " << mTint->dumpInformation() << std::endl;
 
 		return stream.str();
 	}

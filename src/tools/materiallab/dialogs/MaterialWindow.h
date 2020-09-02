@@ -31,7 +31,10 @@ private slots:
 	void controlChanged();
 	void displayChanged();
 	void animationHandler();
+
 private:
+	PR::Vector3f generateL() const;
+
 	void populateInfo();
 	void buildGraphicObjects();
 	float evalBSDF(const PR::Vector3f& d) const;

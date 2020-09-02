@@ -309,6 +309,8 @@ static std::shared_ptr<IMaterial> createMaterial1(uint32 id, const SceneLoadCont
 
 	if constexpr (HasAnisoRoughness)
 		ry = ctx.lookupScalarNode("roughness_y", 0);
+	else
+		ry = rx;
 
 	auto spec  = ctx.lookupSpectralNode("specularity", 1);
 	auto trans = spec;

@@ -51,6 +51,8 @@ MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* fac
 	connect(ui.normCB, &QCheckBox::stateChanged, this, &MaterialWindow::controlChanged);
 
 	connect(ui.wireframeCB, &QCheckBox::stateChanged, this, &MaterialWindow::displayChanged);
+	connect(ui.brdfCB, &QCheckBox::stateChanged, this, &MaterialWindow::displayChanged);
+	connect(ui.btdfCB, &QCheckBox::stateChanged, this, &MaterialWindow::displayChanged);
 
 	mAnimationTimer.setInterval(ANIM_MS);
 	connect(&mAnimationTimer, &QTimer::timeout, this, &MaterialWindow::animationHandler);
@@ -127,6 +129,12 @@ void MaterialWindow::createMaterial()
 		return;
 	}
 
+	if (!mMaterial) {
+		QMessageBox::critical(this, tr("Could not create material"),
+							  tr("Could not create material of type %1:\nFactory rejected creation. Creation for query environments is probably not supported.").arg(mTypeName));
+		return;
+	}
+
 	const int flags = mMaterial->flags();
 	ui.deltaCB->setChecked(flags & PR::MF_DeltaDistribution);
 	ui.spectralCB->setChecked(flags & PR::MF_SpectralVarying);
@@ -150,9 +158,10 @@ void MaterialWindow::controlChanged()
 	float theta		 = ui.sunThetaSlider->value() * PR::PR_DEG2RAD;
 	float phi		 = ui.sunPhiSlider->value() * PR::PR_DEG2RAD;
 	const Vector3f L = PR::Spherical::cartesian(theta, phi);
-
-	ui.lDisplay->setText(QString("[%1, %2, %3]").arg(L.x(), 4, 'f', 4).arg(L.y(), 4, 'f', 4).arg(L.z(), 4, 'f', 4));
 	mLightSource->setTranslation(SUN_D * L);
+
+	const Vector3f mL = generateL();
+	ui.lDisplay->setText(QString("[%1, %2, %3]").arg(mL.x(), 4, 'f', 4).arg(mL.y(), 4, 'f', 4).arg(mL.z(), 4, 'f', 4));
 
 	if (mMaterial)
 		buildGraphicObjects();
@@ -160,10 +169,13 @@ void MaterialWindow::controlChanged()
 
 void MaterialWindow::displayChanged()
 {
-	if (mBRDFObjectOutline) {
-		mBRDFObjectOutline->show(ui.wireframeCB->isChecked());
-		mBTDFObjectOutline->show(ui.wireframeCB->isChecked());
-	}
+	if (!mBRDFObject)
+		return;
+
+	mBRDFObject->show(ui.brdfCB->isChecked());
+	mBRDFObjectOutline->show(ui.wireframeCB->isChecked() && ui.brdfCB->isChecked());
+	mBTDFObject->show(ui.btdfCB->isChecked());
+	mBTDFObjectOutline->show(ui.wireframeCB->isChecked() && ui.btdfCB->isChecked());
 }
 
 void MaterialWindow::animationHandler()
@@ -172,7 +184,7 @@ void MaterialWindow::animationHandler()
 	int phi	  = ui.sunPhiSlider->value();
 
 	ui.sunThetaSlider->setValue((theta + 1) % 180);
-	ui.sunPhiSlider->setValue((phi + 2) % 360);
+	ui.sunPhiSlider->setValue((phi + 3) % 360);
 }
 
 void MaterialWindow::buildGraphicObjects()
@@ -209,15 +221,18 @@ void MaterialWindow::buildGraphicObjects()
 	ui.createButton->setText(tr("Update"));
 }
 
+Vector3f MaterialWindow::generateL() const
+{
+	return mLightSource->translation().normalized();
+}
+
 float MaterialWindow::evalBSDF(const Vector3f& d) const
 {
 	RenderTileSession session; // Empty session
 	MaterialEvalInput in;
 
 	in.Context.V = d;
-
-	// Mirror x & y for some reasons...
-	in.Context.L = mLightSource->translation().normalized().cwiseProduct(Vector3f(-1, -1, 1)).eval();
+	in.Context.L = generateL();
 
 	if (ui.swapCB->isChecked())
 		std::swap(in.Context.V, in.Context.L);

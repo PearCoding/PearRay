@@ -178,6 +178,10 @@ class MerlMeasuredMaterialPlugin : public IMaterialPlugin {
 public:
 	std::shared_ptr<IMaterial> create(uint32 id, const std::string&, const SceneLoadContext& ctx) override
 	{
+		// Can not create a material without a functioning environment
+		if (!ctx.hasEnvironment())
+			return nullptr;
+
 		const ParameterGroup& params = ctx.parameters();
 		MerlMeasurement measurement(ctx.environment()->defaultSpectralUpsampler().get(), ctx.escapePath(params.getString("filename", "")));
 
