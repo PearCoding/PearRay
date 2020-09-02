@@ -119,7 +119,7 @@ private:
 	std::array<QVector<std::shared_ptr<GraphicEntity>>, _VL_COUNT> mEntities;
 
 	// Speed of roation on mouse drag
-	float mRotationSpeed = 0.3f;
+	float mRotationSpeed = 0.3f * PR_DEG2RAD;
 
 	// Speed for dragging the camera around
 	float mMoveSpeed = 1.0f;
