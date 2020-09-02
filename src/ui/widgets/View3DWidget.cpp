@@ -551,7 +551,7 @@ void View3DWidget::handleMoveUpdate(bool shift, const QPointF& localPos)
 		};
 
 		float alpha = -mRotationSpeed * feedbackCurve(localPos.x() - mStartMousePos.x()) * (localPos.x() - mLastMousePos.x());
-		float beta	= mRotationSpeed * feedbackCurve(localPos.y() - mStartMousePos.y()) * (localPos.y() - mLastMousePos.y());
+		float beta	= -mRotationSpeed * feedbackCurve(localPos.y() - mStartMousePos.y()) * (localPos.y() - mLastMousePos.y());
 		mCamera.rotate(alpha, beta);
 
 		update();

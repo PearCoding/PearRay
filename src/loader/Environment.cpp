@@ -47,7 +47,7 @@ Environment::Environment(const std::wstring& workdir,
 	, mTextureSystem(nullptr)
 	, mOutputSpecification(workdir)
 {
-	mTextureSystem			  = OIIO::TextureSystem::create();
+	mTextureSystem = OIIO::TextureSystem::create();
 
 	if (useStandardLib) {
 		//Defaults
@@ -167,124 +167,12 @@ std::shared_ptr<RenderFactory> Environment::createRenderFactory()
 	return fct;
 }
 
-/* Allows input of:
- FLOAT
- SPECTRUM_NAME
- SOCKET_NAME
-*/
-std::shared_ptr<INode> Environment::lookupRawNode(const Parameter& parameter) const
+std::shared_ptr<INode> Environment::getRawNode(uint64 refid) const
 {
-	switch (parameter.type()) {
-	default:
+	if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid))
+		return mNodeManager->getObject(refid);
+	else
 		return nullptr;
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
-		if (parameter.isArray()) {
-			if (parameter.arraySize() == 2)
-				return std::make_shared<ConstVectorNode>(
-					Vector3f(parameter.getNumber(0, 0.0f), parameter.getNumber(1, 0.0f), 0.0f));
-			else if (parameter.arraySize() == 3)
-				return std::make_shared<ConstVectorNode>(
-					Vector3f(parameter.getNumber(0, 0.0f), parameter.getNumber(1, 0.0f), parameter.getNumber(2, 0.0f)));
-		} else {
-			return std::make_shared<ConstScalarNode>(parameter.getNumber(0.0f));
-		}
-		break;
-	case PT_Reference: {
-		uint64 refid = parameter.getReference();
-		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid))
-			return mNodeManager->getObject(refid);
-	} break;
-	case PT_String: {
-		std::string name = parameter.getString("");
-		if (hasNode(name))
-			return getRawNode(name);
-	} break;
-	}
-	return nullptr;
-}
-
-std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
-	const Parameter& parameter, float def) const
-{
-	return lookupSpectralNode(parameter, SpectralBlob(def));
-}
-
-std::shared_ptr<FloatSpectralNode> Environment::lookupSpectralNode(
-	const Parameter& parameter, const SpectralBlob& def) const
-{
-	switch (parameter.type()) {
-	default:
-		return std::make_shared<ConstSpectralNode>(def);
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
-		if (parameter.isArray())
-			return std::make_shared<ConstSpectralNode>(def);
-		else
-			return std::make_shared<ConstSpectralNode>(SpectralBlob(parameter.getNumber(0.0f)));
-	case PT_Reference: {
-		uint64 refid = parameter.getReference();
-		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid)) {
-			auto node = mNodeManager->getObject(refid);
-			if (node->type() == NT_FloatSpectral)
-				return std::reinterpret_pointer_cast<FloatSpectralNode>(node);
-			else if (node->type() == NT_FloatScalar)
-				return std::make_shared<SplatSpectralNode>(std::reinterpret_pointer_cast<FloatScalarNode>(node));
-		}
-		return std::make_shared<ConstSpectralNode>(def);
-	}
-	case PT_String: {
-		std::string name = parameter.getString("");
-
-		if (hasNode(name)) {
-			auto socket = getNode<FloatSpectralNode>(name);
-			if (socket)
-				return socket;
-		}
-	}
-		return std::make_shared<ConstSpectralNode>(def);
-	}
-}
-
-/* Allows input of:
- FLOAT
- SOCKET_NAME
-*/
-std::shared_ptr<FloatScalarNode> Environment::lookupScalarNode(
-	const Parameter& parameter, float def) const
-{
-	switch (parameter.type()) {
-	default:
-		return std::make_shared<ConstScalarNode>(def);
-	case PT_Int:
-	case PT_UInt:
-	case PT_Number:
-		if (parameter.isArray())
-			return std::make_shared<ConstScalarNode>(def);
-		else
-			return std::make_shared<ConstScalarNode>(parameter.getNumber(def));
-	case PT_Reference: {
-		uint64 refid = parameter.getReference();
-		if (refid != P_INVALID_REFERENCE && mNodeManager->hasObject(refid)) {
-			auto node = mNodeManager->getObject(refid);
-			if (node->type() == NT_FloatScalar)
-				return std::reinterpret_pointer_cast<FloatScalarNode>(node);
-		}
-		return std::make_shared<ConstScalarNode>(def);
-	}
-	case PT_String: {
-		std::string name = parameter.getString("");
-
-		if (hasNode(name)) {
-			auto socket = getNode<FloatScalarNode>(name);
-			if (socket)
-				return socket;
-		}
-	}
-		return std::make_shared<ConstScalarNode>(def);
-	}
 }
 
 } // namespace PR

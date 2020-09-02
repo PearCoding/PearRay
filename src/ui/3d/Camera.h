@@ -6,8 +6,8 @@ namespace PR {
 namespace UI {
 /// 3D orthogonal frame/base
 struct PR_LIB_UI Frame {
-	Vector3f Front = Vector3f(0, 0, 1);
-	Vector3f Up	   = Vector3f(0, 1, 0);
+	Vector3f Front = Vector3f(0, 1, 0);
+	Vector3f Up	   = Vector3f(0, 0, 1);
 	Vector3f Right = Vector3f(1, 0, 0);
 
 	inline Frame() = default;
@@ -21,15 +21,9 @@ struct PR_LIB_UI Frame {
 	inline Matrix3f matrix() const
 	{
 		Matrix3f mat;
-		mat(0, 0) = Right(0);
-		mat(1, 0) = Right(1);
-		mat(2, 0) = Right(2);
-		mat(0, 1) = Up(0);
-		mat(1, 1) = Up(1);
-		mat(2, 1) = Up(2);
-		mat(0, 2) = Front(0);
-		mat(1, 2) = Front(1);
-		mat(2, 2) = Front(2);
+		mat.col(0) = Right;
+		mat.col(1) = Up;
+		mat.col(2) = Front;
 		return mat;
 	}
 };

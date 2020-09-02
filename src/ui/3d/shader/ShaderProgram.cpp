@@ -16,6 +16,14 @@ ShaderProgram::ShaderProgram(const std::string& vertexShader, const std::string&
 	mFragmentShader = fragmentShader;
 }
 
+ShaderProgram::ShaderProgram(const std::string& vertexShader, const std::string& geometryShader, const std::string& fragmentShader)
+	: ShaderProgram()
+{
+	mVertexShader	= vertexShader;
+	mGeometryShader = geometryShader;
+	mFragmentShader = fragmentShader;
+}
+
 ShaderProgram::~ShaderProgram()
 {
 	if (isCreated())
@@ -98,6 +106,26 @@ bool ShaderProgram::link()
 		return false;
 	}
 
+	int g_handle = -1;
+	if (!mGeometryShader.empty()) {
+		g_handle = glCreateShader(GL_GEOMETRY_SHADER);
+		GL_CHECK_PREV(glCreateShader);
+
+		const char* g_src = mGeometryShader.c_str();
+		int g_len		  = mGeometryShader.size();
+		PR_ASSERT(g_len > 0, "empty geometry shader given but not detected");
+
+		GL_CHECK(glShaderSource(g_handle, 1, &g_src, &g_len));
+		GL_CHECK(glCompileShader(g_handle));
+		GL_CHECK(glGetShaderiv(g_handle, GL_COMPILE_STATUS, &status));
+		if (status != GL_TRUE) {
+			mLastLog = retriveShaderLog(g_handle);
+			GL_CHECK(glDeleteShader(v_handle));
+			GL_CHECK(glDeleteShader(g_handle));
+			return false;
+		}
+	}
+
 	// Fragment
 	int f_handle = glCreateShader(GL_FRAGMENT_SHADER);
 	GL_CHECK_PREV(glCreateShader);
@@ -106,6 +134,8 @@ bool ShaderProgram::link()
 	int f_len		  = mFragmentShader.size();
 	if (f_len <= 0) {
 		GL_CHECK(glDeleteShader(v_handle));
+		if (g_handle >= 0)
+			GL_CHECK(glDeleteShader(g_handle));
 		GL_CHECK(glDeleteShader(f_handle));
 		mLastLog = "No fragment shader given";
 		return false;
@@ -117,15 +147,21 @@ bool ShaderProgram::link()
 	if (status != GL_TRUE) {
 		mLastLog = retriveShaderLog(f_handle);
 		GL_CHECK(glDeleteShader(v_handle));
+		if (g_handle >= 0)
+			GL_CHECK(glDeleteShader(g_handle));
 		GL_CHECK(glDeleteShader(f_handle));
 		return false;
 	}
 
 	GL_CHECK(glAttachShader(mProgram, v_handle));
+	if (g_handle >= 0)
+		GL_CHECK(glAttachShader(mProgram, g_handle));
 	GL_CHECK(glAttachShader(mProgram, f_handle));
 	GL_CHECK(glLinkProgram(mProgram));
 
 	GL_CHECK(glDeleteShader(v_handle));
+	if (g_handle >= 0)
+		GL_CHECK(glDeleteShader(g_handle));
 	GL_CHECK(glDeleteShader(f_handle));
 
 	GL_CHECK(glGetProgramiv(mProgram, GL_LINK_STATUS, &status));

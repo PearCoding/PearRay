@@ -54,21 +54,13 @@ public:
 	inline void addMesh(const std::string& name, const std::shared_ptr<MeshBase>& m);
 
 	inline void addNode(const std::string& name, const std::shared_ptr<INode>& output);
+	std::shared_ptr<INode> getRawNode(uint64 id) const;
 	inline std::shared_ptr<INode> getRawNode(const std::string& name) const;
 	template <typename Socket>
 	inline std::shared_ptr<Socket> getNode(const std::string& name) const;
 	inline bool hasNode(const std::string& name) const;
 	template <typename Socket>
 	inline bool isNode(const std::string& name) const;
-
-	// Lookup functions for easier access
-	std::shared_ptr<INode> lookupRawNode(const Parameter& parameter) const;
-	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
-		const Parameter& parameter, float def = 1) const;
-	std::shared_ptr<FloatSpectralNode> lookupSpectralNode(
-		const Parameter& parameter, const SpectralBlob& def) const;
-	std::shared_ptr<FloatScalarNode> lookupScalarNode(
-		const Parameter& parameter, float def = 1) const;
 
 	inline void* textureSystem();
 

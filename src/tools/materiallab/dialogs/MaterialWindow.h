@@ -10,7 +10,8 @@ class IMaterialPlugin;
 class IMaterial;
 namespace UI {
 class PropertyContainer;
-class GraphicEntity;
+class HemiFunctionEntity;
+class InstanceEntity;
 } // namespace UI
 } // namespace PR
 
@@ -28,7 +29,6 @@ private slots:
 private:
 	void populateInfo();
 	void buildGraphicObjects();
-	void buildGraphicObject(PR::UI::GraphicEntity* bxdf, bool neg);
 	float evalBSDF(const PR::Vector3f& d) const;
 
 	Ui::MaterialWindowClass ui;
@@ -38,6 +38,8 @@ private:
 
 	std::shared_ptr<PR::IMaterial> mMaterial;
 
-	std::shared_ptr<PR::UI::GraphicEntity> mBRDFObject;
-	std::shared_ptr<PR::UI::GraphicEntity> mBTDFObject;
+	std::shared_ptr<PR::UI::HemiFunctionEntity> mBRDFObject;
+	std::shared_ptr<PR::UI::InstanceEntity> mBRDFObjectOutline;
+	std::shared_ptr<PR::UI::HemiFunctionEntity> mBTDFObject;
+	std::shared_ptr<PR::UI::InstanceEntity> mBTDFObjectOutline;
 };

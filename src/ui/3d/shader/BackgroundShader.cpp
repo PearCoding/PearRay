@@ -26,7 +26,7 @@ static const char* fragmentShaderSource = PRUI_SHADER_HEADER
 
 BackgroundShader::BackgroundShader()
 	: Shader(vertexShaderSource, fragmentShaderSource)
-	, mColorStart(0.5f, 0.5f, 0.5f, 1)
+	, mColorStart(0.6f, 0.7f, 0.8f, 1)
 	, mColorEnd(0.05f, 0.05f, 0.05f, 1)
 {
 }

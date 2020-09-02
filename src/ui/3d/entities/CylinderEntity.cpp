@@ -12,7 +12,7 @@ CylinderEntity::CylinderEntity(float height, float topRadius, float bottomRadius
 	, mSectionCount(16)
 {
 	setupGeometry();
-	setShader(std::make_shared<ColorShader>(Vector4f(0.5f, 0.5f, 0.5f, 1)));
+	setShader(std::make_shared<ColorShader>(Vector4f(0.75f, 0.75f, 0.75f, 1)));
 }
 
 CylinderEntity::~CylinderEntity()

@@ -23,6 +23,14 @@ Shader::Shader(const std::string& vertexShader, const std::string& fragmentShade
 	mFragmentShader = fragmentShader;
 }
 
+Shader::Shader(const std::string& vertexShader, const std::string& geometryShader, const std::string& fragmentShader)
+	: Shader()
+{
+	mVertexShader	= vertexShader;
+	mGeometryShader = geometryShader;
+	mFragmentShader = fragmentShader;
+}
+
 void Shader::create()
 {
 	if (!mInitialized)
@@ -63,6 +71,8 @@ void Shader::initialize()
 	mProgram = std::make_unique<ShaderProgram>();
 
 	mProgram->addVertexShader(mVertexShader);
+	if (!mGeometryShader.empty())
+		mProgram->addGeometryShader(mGeometryShader);
 	mProgram->addFragmentShader(mFragmentShader);
 	if (!mProgram->link()) {
 		PR_LOG(L_ERROR) << "GLSL: " << mProgram->log() << std::endl;

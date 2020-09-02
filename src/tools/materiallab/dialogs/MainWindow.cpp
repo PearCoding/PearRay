@@ -98,7 +98,7 @@ void MainWindow::newInspection()
 	materialnames.sort();
 
 	bool ok;
-	QString item = QInputDialog::getItem(this, tr("Select material"), "", materialnames, 0, false, &ok);
+	QString item = QInputDialog::getItem(this, tr("Select material"), tr("Material:"), materialnames, 0, false, &ok);
 	if (ok && !item.isEmpty()) {
 		auto factory = manager->getFactory(item.toStdString());
 		if (!factory)

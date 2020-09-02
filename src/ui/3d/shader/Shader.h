@@ -16,6 +16,7 @@ class PR_LIB_UI Shader {
 public:
 	Shader();
 	Shader(const std::string& vertexShader, const std::string& fragmentShader);
+	Shader(const std::string& vertexShader, const std::string& geometryShader, const std::string& fragmentShader);
 	virtual ~Shader();
 
 	inline bool isValid() const { return mProgram != nullptr; }
@@ -62,6 +63,7 @@ private:
 	int mMatrixUniform;
 
 	std::string mVertexShader;
+	std::string mGeometryShader;
 	std::string mFragmentShader;
 };
 } // namespace UI

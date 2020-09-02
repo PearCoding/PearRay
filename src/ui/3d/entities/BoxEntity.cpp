@@ -8,7 +8,7 @@ BoxEntity::BoxEntity(const BoundingBox& aabb)
 	, mAABB(aabb)
 {
 	setupBuffer();
-	setShader(std::make_shared<ColorShader>(Vector4f(0.5f, 0.5f, 0.5f, 1)));
+	setShader(std::make_shared<ColorShader>(Vector4f(0.75f, 0.75f, 0.75f, 1)));
 }
 
 BoxEntity::~BoxEntity()

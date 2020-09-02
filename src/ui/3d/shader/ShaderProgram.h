@@ -9,9 +9,11 @@ class PR_LIB_UI ShaderProgram {
 public:
 	ShaderProgram();
 	ShaderProgram(const std::string& vertexShader, const std::string& fragmentShader);
+	ShaderProgram(const std::string& vertexShader, const std::string& geometryShader, const std::string& fragmentShader);
 	virtual ~ShaderProgram();
 
 	inline void addVertexShader(const std::string& str) { mVertexShader = str; }
+	inline void addGeometryShader(const std::string& str) { mGeometryShader = str; }
 	inline void addFragmentShader(const std::string& str) { mFragmentShader = str; }
 	bool create();
 	bool link();
@@ -44,6 +46,7 @@ public:
 
 private:
 	std::string mVertexShader;
+	std::string mGeometryShader;
 	std::string mFragmentShader;
 
 	bool mLinked;

@@ -14,6 +14,8 @@ set(Src
   3d/entities/DiskEntity.cpp
   3d/entities/GraphicEntity.cpp
   3d/entities/GridEntity.cpp
+  3d/entities/HemiFunctionEntity.cpp
+  3d/entities/InstanceEntity.cpp
   3d/entities/MeshEntity.cpp
   3d/entities/ScreenSpaceEntity.cpp
   3d/entities/SphereEntity.cpp
@@ -23,6 +25,7 @@ set(Src
   3d/shader/GoochShader.cpp
   3d/shader/Shader.cpp
   3d/shader/ShaderProgram.cpp
+  3d/shader/WireframeShader.cpp
   io/EXRFile.cpp
   io/ImageBufferView.cpp
   properties/BoolProperty.cpp
@@ -57,6 +60,8 @@ set(Hdr
   3d/entities/DiskEntity.h
   3d/entities/GraphicEntity.h
   3d/entities/GridEntity.h
+  3d/entities/HemiFunctionEntity.h
+  3d/entities/InstanceEntity.h
   3d/entities/MeshEntity.h
   3d/entities/ScreenSpaceEntity.h
   3d/entities/SphereEntity.h
@@ -66,6 +71,7 @@ set(Hdr
   3d/shader/GoochShader.h
   3d/shader/Shader.h
   3d/shader/ShaderProgram.h
+  3d/shader/WireframeShader.h
   io/EXRFile.h
   io/ImageBufferView.h
   mapper/ToneMapper.h
