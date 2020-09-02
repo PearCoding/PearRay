@@ -10,9 +10,7 @@ Axis3DEntity::Axis3DEntity(float edgeLength)
 	, mEdgeLength(edgeLength)
 {
 	setupBuffer();
-
-	std::shared_ptr<ColorShader> shader = std::make_shared<ColorShader>();
-	setShader(shader);
+	setShader(std::make_shared<ColorShader>());
 }
 
 Axis3DEntity::~Axis3DEntity()

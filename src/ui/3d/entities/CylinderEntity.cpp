@@ -12,11 +12,7 @@ CylinderEntity::CylinderEntity(float height, float topRadius, float bottomRadius
 	, mSectionCount(16)
 {
 	setupGeometry();
-
-	std::shared_ptr<ColorShader> shader = std::make_shared<ColorShader>();
-	shader->setColor(Vector4f(0.5f, 0.5f, 0.5f, 1));
-
-	setShader(shader);
+	setShader(std::make_shared<ColorShader>(Vector4f(0.5f, 0.5f, 0.5f, 1)));
 }
 
 CylinderEntity::~CylinderEntity()
@@ -41,7 +37,7 @@ void CylinderEntity::setBottomRadius(float r)
 	setupGeometry();
 }
 
-void CylinderEntity::setSectionCount(unsigned int c)
+void CylinderEntity::setSectionCount(uint32 c)
 {
 	mSectionCount = c;
 	setupGeometry();
@@ -50,7 +46,7 @@ void CylinderEntity::setSectionCount(unsigned int c)
 void CylinderEntity::setupGeometry()
 {
 	std::vector<float> vertices;
-	std::vector<unsigned int> indices;
+	std::vector<uint32> indices;
 
 	Cylinder::triangulate(Vector3f(0, 0, 0), Vector3f(0, 0, mHeight), mTopRadius, mBottomRadius, mSectionCount, vertices);
 	Cylinder::triangulateIndices(0, 1, mSectionCount, indices);

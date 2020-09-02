@@ -8,11 +8,7 @@ BoxEntity::BoxEntity(const BoundingBox& aabb)
 	, mAABB(aabb)
 {
 	setupBuffer();
-
-	std::shared_ptr<ColorShader> shader = std::make_shared<ColorShader>();
-	shader->setColor(Vector4f(0.5f, 0.5f, 0.5f, 1));
-
-	setShader(shader);
+	setShader(std::make_shared<ColorShader>(Vector4f(0.5f, 0.5f, 0.5f, 1)));
 }
 
 BoxEntity::~BoxEntity()
@@ -28,7 +24,7 @@ void BoxEntity::setAABB(const BoundingBox& o)
 void BoxEntity::setupBuffer()
 {
 	std::vector<float> vertices;
-	std::vector<unsigned int> indices;
+	std::vector<uint32> indices;
 
 	auto append = [&](const Vector3f& p0) {
 		vertices.push_back(p0[0]);

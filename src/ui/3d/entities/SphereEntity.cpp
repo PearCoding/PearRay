@@ -11,11 +11,7 @@ SphereEntity::SphereEntity(float radius)
 	, mSliceCount(32)
 {
 	setupGeometry();
-
-	std::shared_ptr<ColorShader> shader = std::make_shared<ColorShader>();
-	shader->setColor(Vector4f(0.5f, 0.5f, 0.5f, 1));
-
-	setShader(shader);
+	setShader(std::make_shared<ColorShader>(Vector4f(0.5f, 0.5f, 0.5f, 1)));
 }
 
 SphereEntity::~SphereEntity()
@@ -28,13 +24,13 @@ void SphereEntity::setRadius(float r)
 	setupGeometry();
 }
 
-void SphereEntity::setStackCount(unsigned int c)
+void SphereEntity::setStackCount(uint32 c)
 {
 	mStackCount = c;
 	setupGeometry();
 }
 
-void SphereEntity::setSliceCount(unsigned int c)
+void SphereEntity::setSliceCount(uint32 c)
 {
 	mSliceCount = c;
 	setupGeometry();
@@ -43,7 +39,7 @@ void SphereEntity::setSliceCount(unsigned int c)
 void SphereEntity::setupGeometry()
 {
 	std::vector<float> vertices;
-	std::vector<unsigned int> indices;
+	std::vector<uint32> indices;
 
 	Sphere::triangulate(Vector3f(0, 0, 0), mRadius, mStackCount, mSliceCount, vertices);
 	Sphere::triangulateIndices(mStackCount, mSliceCount, indices);

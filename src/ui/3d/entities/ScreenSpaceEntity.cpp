@@ -7,9 +7,7 @@ ScreenSpaceEntity::ScreenSpaceEntity()
 	: GraphicEntity()
 {
 	useProxyVertexSize(6);
-
-	std::shared_ptr<BackgroundShader> shader = std::make_shared<BackgroundShader>();
-	setShader(shader);
+	setShader(std::make_shared<BackgroundShader>());
 }
 
 ScreenSpaceEntity::~ScreenSpaceEntity()

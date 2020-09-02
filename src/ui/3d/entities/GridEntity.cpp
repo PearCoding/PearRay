@@ -11,11 +11,7 @@ GridEntity::GridEntity(int count, float wx, float wy)
 	, mGridCount(std::max(1, count))
 {
 	setupBuffer();
-
-	std::shared_ptr<ColorShader> shader = std::make_shared<ColorShader>();
-	shader->setColor(Vector4f(0.5f, 0.5f, 0.5f, 1));
-
-	setShader(shader);
+	setShader(std::make_shared<ColorShader>(Vector4f(0.5f, 0.5f, 0.5f, 1)));
 }
 
 GridEntity::~GridEntity()

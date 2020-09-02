@@ -8,9 +8,6 @@
 namespace PR {
 class IMaterialPlugin;
 class IMaterial;
-} // namespace PR
-
-namespace PR {
 namespace UI {
 class PropertyContainer;
 class GraphicEntity;

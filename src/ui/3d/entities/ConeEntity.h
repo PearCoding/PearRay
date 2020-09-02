@@ -15,15 +15,15 @@ public:
 	void setRadius(float h);
 	inline float radius() const { return mRadius; }
 
-	void setSectionCount(unsigned int count);
-	inline unsigned int sectionCount() const { return mSectionCount; }
+	void setSectionCount(uint32 count);
+	inline uint32 sectionCount() const { return mSectionCount; }
 
 private:
 	void setupGeometry();
 
 	float mHeight;
 	float mRadius;
-	unsigned int mSectionCount;
+	uint32 mSectionCount;
 };
 } // namespace UI
 } // namespace PR

@@ -14,14 +14,14 @@ public:
 
 	Vector3f normal() const;
 
-	void setSectionCount(unsigned int count);
-	inline unsigned int sectionCount() const { return mSectionCount; }
+	void setSectionCount(uint32 count);
+	inline uint32 sectionCount() const { return mSectionCount; }
 
 private:
 	void setupGeometry();
 
 	float mRadius;
-	unsigned int mSectionCount;
+	uint32 mSectionCount;
 };
 } // namespace UI
 } // namespace PR

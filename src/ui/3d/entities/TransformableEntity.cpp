@@ -5,7 +5,7 @@ namespace UI {
 /// Decomposing matrix representing transform of type T*R into it a translation vector and quaternion
 inline void decomposeMatrix(const Matrix4f& mat, Vector3f& translation, Quaternionf& rotation)
 {
-	translation = mat.col(3).block<3, 1>(0, 0);
+	translation = mat.block<3, 1>(0, 3);
 	rotation	= Quaternionf(mat.block<3, 3>(0, 0));
 	rotation.normalize();
 }
@@ -13,7 +13,7 @@ inline void decomposeMatrix(const Matrix4f& mat, Vector3f& translation, Quaterni
 /// Decomposing matrix representing transform of type T*R*S into it a translation vector, a quaternion and a scale vector
 inline void decomposeMatrix(const Matrix4f& mat, Vector3f& translation, Quaternionf& rotation, Vector3f& scale)
 {
-	translation = mat.col(3).block<3, 1>(0, 0);
+	translation = mat.block<3, 1>(0, 3);
 
 	Matrix3f RS = mat.block<3, 3>(0, 0);
 	scale[0]	= Vector3f(RS(0, 0), RS(1, 0), RS(2, 0)).norm();

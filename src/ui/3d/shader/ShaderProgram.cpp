@@ -178,7 +178,7 @@ void ShaderProgram::setUniformValue(int location, float v) { GL_CHECK(glUniform1
 void ShaderProgram::setUniformValue(int location, const Vector2f& v) { GL_CHECK(glUniform2f(location, v.x(), v.y())); }
 void ShaderProgram::setUniformValue(int location, const Vector3f& v) { GL_CHECK(glUniform3f(location, v.x(), v.y(), v.z())); }
 void ShaderProgram::setUniformValue(int location, const Vector4f& v) { GL_CHECK(glUniform4f(location, v.x(), v.y(), v.z(), v.w())); }
-void ShaderProgram::setUniformValue(int location, const Matrix3f& v) { GL_CHECK(glUniformMatrix3fv(location, 1, GL_TRUE, v.data())); }
-void ShaderProgram::setUniformValue(int location, const Matrix4f& v) { GL_CHECK(glUniformMatrix4fv(location, 1, GL_TRUE, v.data())); }
+void ShaderProgram::setUniformValue(int location, const Matrix3f& v) { GL_CHECK(glUniformMatrix3fv(location, 1, GL_FALSE, v.data())); }
+void ShaderProgram::setUniformValue(int location, const Matrix4f& v) { GL_CHECK(glUniformMatrix4fv(location, 1, GL_FALSE, v.data())); }
 } // namespace UI
 } // namespace PR

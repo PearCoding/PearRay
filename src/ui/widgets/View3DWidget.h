@@ -99,7 +99,6 @@ protected:
 	void leaveEvent(QEvent* event);
 
 private slots:
-	void refreshHandler();
 	void contextMenu(const QPoint& point);
 
 private:

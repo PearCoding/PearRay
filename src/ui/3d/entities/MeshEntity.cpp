@@ -18,7 +18,7 @@ MeshEntity::~MeshEntity()
 {
 }
 
-void MeshEntity::setMesh(const std::vector<float>& vertices, const std::vector<unsigned int>& indices, const std::vector<float>& normals)
+void MeshEntity::setMesh(const std::vector<float>& vertices, const std::vector<uint32>& indices, const std::vector<float>& normals)
 {
 	setVertices(vertices);
 	setIndices(indices);

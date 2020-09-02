@@ -30,7 +30,7 @@ public:
 	inline const std::vector<float>& normals() const { return mNormals; }
 	inline const std::vector<float>& colors() const { return mColors; }
 	inline const std::vector<float>& weights() const { return mWeights; }
-	inline const std::vector<unsigned int>& indices() const { return mIndices; }
+	inline const std::vector<uint32>& indices() const { return mIndices; }
 
 protected:
 	virtual void onBeforeRender();
@@ -40,7 +40,7 @@ protected:
 	inline std::vector<float>& rawNormals() { return mNormals; }
 	inline std::vector<float>& rawColors() { return mColors; }
 	inline std::vector<float>& rawWeights() { return mWeights; }
-	inline std::vector<unsigned int>& rawIndices() { return mIndices; }
+	inline std::vector<uint32>& rawIndices() { return mIndices; }
 
 	inline void setVertices(const std::vector<float>& v)
 	{
@@ -66,7 +66,7 @@ protected:
 		mRequireRebuild = true;
 	}
 
-	inline void setIndices(const std::vector<unsigned int>& v) { mIndices = v; }
+	inline void setIndices(const std::vector<uint32>& v) { mIndices = v; }
 	inline void setDrawMode(int mode) { mDrawMode = mode; }
 
 	inline void useProxyVertexSize(size_t i) { mProxyVertexSize = i; }
@@ -80,7 +80,7 @@ private:
 	std::vector<float> mNormals;  // 3D float attribute
 	std::vector<float> mColors;	  // 3D float attribute
 	std::vector<float> mWeights;  // 1D float attribute
-	std::vector<unsigned int> mIndices;
+	std::vector<uint32> mIndices;
 	int mDrawMode;
 	bool mTwoSided;
 
@@ -88,11 +88,11 @@ private:
 
 	bool mRequireRebuild;
 
-	unsigned int mVAO;
-	unsigned int mVBO_Vertices;
-	unsigned int mVBO_Normals;
-	unsigned int mVBO_Colors;
-	unsigned int mVBO_Weights;
+	uint32 mVAO;
+	uint32 mVBO_Vertices;
+	uint32 mVBO_Normals;
+	uint32 mVBO_Colors;
+	uint32 mVBO_Weights;
 };
 } // namespace UI
 }

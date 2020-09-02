@@ -9,7 +9,7 @@ public:
 	MeshEntity();
 	virtual ~MeshEntity();
 
-	void setMesh(const std::vector<float>& vertices, const std::vector<unsigned int>& indices, const std::vector<float>& normals);
+	void setMesh(const std::vector<float>& vertices, const std::vector<uint32>& indices, const std::vector<float>& normals);
 };
 } // namespace UI
 }

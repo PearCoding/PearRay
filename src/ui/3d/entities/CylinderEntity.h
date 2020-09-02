@@ -18,8 +18,8 @@ public:
 	void setTopRadius(float h);
 	inline float topRadius() const { return mTopRadius; }
 
-	void setSectionCount(unsigned int count);
-	inline unsigned int sectionCount() const { return mSectionCount; }
+	void setSectionCount(uint32 count);
+	inline uint32 sectionCount() const { return mSectionCount; }
 
 private:
 	void setupGeometry();
@@ -27,7 +27,7 @@ private:
 	float mHeight;
 	float mTopRadius;
 	float mBottomRadius;
-	unsigned int mSectionCount;
+	uint32 mSectionCount;
 };
 } // namespace UI
 } // namespace PR

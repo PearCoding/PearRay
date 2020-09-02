@@ -67,9 +67,9 @@ View3DWidget::View3DWidget(QWidget* parent)
 	setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(this, &View3DWidget::customContextMenuRequested, this, &View3DWidget::contextMenu);
 
-	// Try to update with 60 FPS
+	// Try to update with a fixed FPS
 	QTimer* timer = new QTimer(this);
-	connect(timer, &QTimer::timeout, this, &View3DWidget::refreshHandler);
+	connect(timer, &QTimer::timeout, [this]() { this->update(); });
 	timer->start(1000 / FPS);
 
 	setCamera(Camera()); // Update extra entity transform
@@ -80,11 +80,6 @@ View3DWidget::~View3DWidget()
 	makeCurrent(); // Make sure every call inside entities/shaders has a proper context
 	for (int i = 0; i < _VL_COUNT; ++i)
 		mEntities[i].clear();
-}
-
-void View3DWidget::refreshHandler()
-{
-	update();
 }
 
 void View3DWidget::setBackgroundSolidColor(const QColor& color)
@@ -306,7 +301,6 @@ void View3DWidget::paintGL()
 
 void View3DWidget::renderLayer(ViewLayer layer, const ShadingContext& sc)
 {
-	//if (!(mLayerFlags[layer] & VLF_UsePreviousDepth))
 	GL_CHECK(glClear(GL_DEPTH_BUFFER_BIT));
 
 	std::vector<std::shared_ptr<GraphicEntity>> transEnts;
@@ -553,7 +547,7 @@ void View3DWidget::handleMoveUpdate(bool shift, const QPointF& localPos)
 		}
 	} else {
 		auto feedbackCurve = [](float dist, float pivot = 20.0f) {
-			return std::min(1.0f, std::abs(dist) / pivot);
+			return std::min<float>(1.0f, std::abs(dist) / pivot);
 		};
 
 		float alpha = -mRotationSpeed * feedbackCurve(localPos.x() - mStartMousePos.x()) * (localPos.x() - mLastMousePos.x());

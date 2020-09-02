@@ -12,18 +12,18 @@ public:
 	void setRadius(float h);
 	inline float radius() const { return mRadius; }
 
-	void setStackCount(unsigned int count);
-	inline unsigned int stackCount() const { return mStackCount; }
+	void setStackCount(uint32 count);
+	inline uint32 stackCount() const { return mStackCount; }
 
-	void setSliceCount(unsigned int count);
-	inline unsigned int sliceCount() const { return mSliceCount; }
+	void setSliceCount(uint32 count);
+	inline uint32 sliceCount() const { return mSliceCount; }
 
 private:
 	void setupGeometry();
 
 	float mRadius;
-	unsigned int mStackCount;
-	unsigned int mSliceCount;
+	uint32 mStackCount;
+	uint32 mSliceCount;
 };
 } // namespace UI
 } // namespace PR

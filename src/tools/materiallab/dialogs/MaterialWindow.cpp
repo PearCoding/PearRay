@@ -205,8 +205,8 @@ void MaterialWindow::buildGraphicObject(PR::UI::GraphicEntity* bxdf, bool neg)
 	//bxdf->indices().reserve(Nradius * Nphi * 3 * 2);
 	for (int j = 0; j < Nradius; ++j) {
 		for (int i = 0; i < Nphi; ++i) {
-			unsigned int row1 = j * (Nphi + 1);
-			unsigned int row2 = (j + 1) * (Nphi + 1);
+			uint32 row1 = j * (Nphi + 1);
+			uint32 row2 = (j + 1) * (Nphi + 1);
 
 			//bxdf->indices().append({ row1 + i, row1 + i + 1, row2 + i + 1 }); // Triangle 1
 			//bxdf->indices().append({ row1 + i, row2 + i + 1, row2 + i });	  // Triangle 2

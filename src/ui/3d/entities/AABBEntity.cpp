@@ -10,11 +10,7 @@ AABBEntity::AABBEntity(const BoundingBox& aabb)
 	, mAABB(aabb)
 {
 	setupBuffer();
-
-	std::shared_ptr<ColorShader> shader = std::make_shared<ColorShader>();
-	shader->setColor(Vector4f(1, 0, 0, 1));
-
-	setShader(shader);
+	setShader(std::make_shared<ColorShader>(Vector4f(1, 0, 0, 1)));
 }
 
 AABBEntity::~AABBEntity()

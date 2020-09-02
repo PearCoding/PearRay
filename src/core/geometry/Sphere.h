@@ -58,8 +58,8 @@ public:
 		return tmp;
 	}
 
-    static void triangulate(const Vector3f& center, float radius, unsigned int stacks, unsigned int slices, std::vector<float>& vertices);
-    static void triangulateIndices(unsigned int stacks, unsigned int slices, std::vector<unsigned int>& indices, unsigned int off = 0);
+    static void triangulate(const Vector3f& center, float radius, uint32 stacks, uint32 slices, std::vector<float>& vertices);
+    static void triangulateIndices(uint32 stacks, uint32 slices, std::vector<uint32>& indices, uint32 off = 0);
 
 private:
 	float mRadius;
