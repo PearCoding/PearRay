@@ -50,7 +50,7 @@ struct PR_LIB_LOADER PluginInterface {
 
 #define PR_INTERNAL_PLUGIN_DEFINE_FACTORY(className, entityType, typeEnum)                                                          \
 	class entityType;                                                                                                               \
-	struct SceneLoadContext;                                                                                                        \
+	class SceneLoadContext;                                                                                                         \
 	class PR_LIB_LOADER className : public IPlugin {                                                                                \
 	public:                                                                                                                         \
 		className()																										 = default; \

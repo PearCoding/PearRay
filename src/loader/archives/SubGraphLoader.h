@@ -6,7 +6,7 @@
 
 namespace PR {
 
-struct SceneLoadContext;
+class SceneLoadContext;
 class PR_LIB_LOADER SubGraphLoader {
 public:
 	virtual void load(const std::filesystem::path& file, const SceneLoadContext& ctx) = 0;
