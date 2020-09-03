@@ -2,18 +2,18 @@
 
 #include "3d/shader/ColorShader.h"
 #include "HemiFunctionEntity.h"
+#include "math/Spherical.h"
 
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
 namespace PR {
 namespace UI {
-HemiFunctionEntity::HemiFunctionEntity(const Function& function, int nradius, int nphi)
+HemiFunctionEntity::HemiFunctionEntity(const Function& function, int ntheta, int nphi)
 	: GraphicEntity()
 	, mFunction(function)
-	, mNRadius(nradius)
+	, mNTheta(ntheta)
 	, mNPhi(nphi)
-	, mNormalize(true)
 {
 	setupBuffer();
 	setTwoSided(true);
@@ -23,26 +23,6 @@ HemiFunctionEntity::HemiFunctionEntity(const Function& function, int nradius, in
 
 HemiFunctionEntity::~HemiFunctionEntity()
 {
-}
-
-void HemiFunctionEntity::setRadiusCount(int nradius)
-{
-	mNRadius = nradius;
-}
-
-void HemiFunctionEntity::setPhiCount(int nphi)
-{
-	mNPhi = nphi;
-}
-
-void HemiFunctionEntity::setFunction(const Function& f)
-{
-	mFunction = f;
-}
-
-void HemiFunctionEntity::enableNormalization(bool b)
-{
-	mNormalize = b;
 }
 
 template <typename T>
@@ -64,23 +44,20 @@ void HemiFunctionEntity::setupBuffer()
 {
 	//////////////// Vertices
 	std::vector<float> vertices;
-	vertices.resize((mNRadius + 1) * mNPhi * 3);
+	vertices.resize((mNTheta + 1) * mNPhi * 3);
 
 	tbb::parallel_for(
-		tbb::blocked_range<int>(0, mNRadius + 1),
+		tbb::blocked_range<int>(0, mNTheta + 1),
 		[&](const tbb::blocked_range<int>& r) {
 			const int sy = r.begin();
 			const int ey = r.end();
 			for (int j = sy; j < ey; ++j) {
 				for (int i = 0; i < mNPhi; ++i) {
-					float r	  = std::sqrt(j / (float)mNRadius);
-					float phi = 2 * PR::PR_PI * (i / (float)mNPhi);
+					float theta = 0.5f * PR_PI * j / (float)mNTheta;
+					float phi	= 2 * PR_PI * (i / (float)mNPhi);
 
-					float x = r * std::cos(phi);
-					float y = r * std::sin(phi);
-
-					const Vector3f D = Vector3f(x, y, std::sqrt(1 - r * r));
-					float val		 = mFunction(D);
+					const Vector3f D = Spherical::cartesian(theta, phi);
+					float val		 = mFunction(theta, phi);
 					if (!std::isfinite(val))
 						val = 0;
 
@@ -92,16 +69,6 @@ void HemiFunctionEntity::setupBuffer()
 			}
 		});
 
-	//////////////// Extract maximum value
-	float maxValue = 0;
-	for (int j = 0; j <= mNRadius; ++j) {
-		for (int i = 0; i < mNPhi; ++i) {
-			int ind	   = j * mNPhi + i;
-			Vector3f v = Vector3f(vertices[ind * 3], vertices[ind * 3 + 1], vertices[ind * 3 + 2]);
-			maxValue   = std::max(maxValue, v.norm());
-		}
-	}
-
 	//////////////// Color
 	std::vector<float> colors;
 
@@ -112,33 +79,25 @@ void HemiFunctionEntity::setupBuffer()
 	};
 
 	colors.reserve(vertices.size());
-	for (int j = 0; j <= mNRadius; ++j) {
+	for (int j = 0; j <= mNTheta; ++j) {
 		for (int i = 0; i < mNPhi; ++i) {
 			int ind = j * mNPhi + i;
 
 			Vector3f v = Vector3f(vertices[ind * 3], vertices[ind * 3 + 1], vertices[ind * 3 + 2]);
 			float val  = v.norm();
-			if (maxValue < 1)
-				val /= maxValue;
-
 			if (val <= 1)
 				val *= 0.5f;
 			else
-				val = (val / maxValue) * 0.5f + 0.5f;
+				val = val * 0.5f + 0.5f;
 
 			appendC(colormap(val));
 		}
 	}
 
-	///////////////////// Renormalize z
-	if (mNormalize)
-		for (auto& v : vertices)
-			v /= maxValue;
-
 	///////////////////// Indices
 	std::vector<uint32> indices;
 
-	for (int j = 0; j < mNRadius; ++j) {
+	for (int j = 0; j < mNTheta; ++j) {
 		for (int i = 0; i < mNPhi; ++i) {
 			uint32 row1 = j * mNPhi;
 			uint32 row2 = (j + 1) * mNPhi;

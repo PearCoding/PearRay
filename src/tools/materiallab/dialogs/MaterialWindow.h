@@ -1,10 +1,12 @@
 #pragma once
 
 #include "ui_MaterialWindow.h"
-#include <QWidget>
 #include <QTimer>
+#include <QWidget>
 
 #include <memory>
+
+#include "MaterialCache.h"
 
 namespace PR {
 class IMaterialPlugin;
@@ -12,7 +14,7 @@ class IMaterial;
 namespace UI {
 class PropertyContainer;
 class GraphicEntity;
-class HemiFunctionEntity;
+class PointMapEntity;
 class InstanceEntity;
 } // namespace UI
 } // namespace PR
@@ -36,7 +38,10 @@ private:
 	PR::Vector3f generateL() const;
 
 	void populateInfo();
+	void calculateBSDF();
 	void buildGraphicObjects();
+	void buildBRDF();
+	void buildBTDF();
 	float evalBSDF(const PR::Vector3f& d) const;
 
 	Ui::MaterialWindowClass ui;
@@ -48,9 +53,12 @@ private:
 
 	std::shared_ptr<PR::UI::GraphicEntity> mLightSource;
 
-	std::shared_ptr<PR::UI::HemiFunctionEntity> mBRDFObject;
+	MaterialCache mBRDFCache;
+	MaterialCache mBTDFCache;
+
+	std::shared_ptr<PR::UI::PointMapEntity> mBRDFObject;
 	std::shared_ptr<PR::UI::InstanceEntity> mBRDFObjectOutline;
-	std::shared_ptr<PR::UI::HemiFunctionEntity> mBTDFObject;
+	std::shared_ptr<PR::UI::PointMapEntity> mBTDFObject;
 	std::shared_ptr<PR::UI::InstanceEntity> mBTDFObjectOutline;
 
 	QTimer mAnimationTimer;

@@ -7,22 +7,22 @@
 
 namespace PR {
 template <size_t D, typename T, typename UniformT>
-class NTreeBuilder;
+class NTreeStackBuilder;
 
-/// n-dimensional tree with fixed topology. The tree itself can be built by the corresponding builder
+/// n-dimensional tree with fixed topology and fixed pivots. The tree itself can be built by the corresponding builder
 template <size_t D, typename T, typename UniformT = float>
 class PR_LIB_BASE NTree {
-	friend class NTreeBuilder<D, T, UniformT>;
+	friend class NTreeStackBuilder<D, T, UniformT>;
 
 public:
-	using ValueType	  = T;
-	using UniformType = UniformT;
-	using Dimension	  = std::integral_constant<size_t, D>;
-	using NodeCount	  = std::integral_constant<size_t, (1 << D)>;
-	using Builder	  = NTreeBuilder<D, T, UniformT>;
+	using ValueType	   = T;
+	using UniformType  = UniformT;
+	using Dimension	   = std::integral_constant<size_t, D>;
+	using NodeCount	   = std::integral_constant<size_t, (1 << D)>;
+	using StackBuilder = NTreeStackBuilder<D, T, UniformT>;
+
 	template <typename T2>
-	using Index		   = std::array<T2, D>;
-	using LinearIndex  = size_t;
+	using Index		   = Eigen::Array<T2, D, 1, Eigen::DontAlign>;
 	using UniformIndex = Index<UniformT>; // All components are between 0 and 1
 
 	static_assert(D > 0, "Dimension has to be greater than zero");
@@ -35,23 +35,27 @@ public:
 
 	/// Returns value at the bucket given by the uniform index
 	inline T valueAt(const UniformIndex& idx) const;
-	//inline void insertAt(const UniformIndex& idx, const T& value); /* TODO */
+	inline void insertAt(const UniformIndex& idx, const T& value);
 
-	/// Returns linear index of the bucket given by the uniform index
-	inline LinearIndex indexAt(const UniformIndex& idx) const;
-	/// Returns value at the bucket given by a linear index previously calculated by indexAt
-	inline T valueAt(const LinearIndex& idx) const;
-	/// Replaces value at the bucket given by a linear index previously calculated by indexAt
-	inline void replaceAt(const LinearIndex& idx, const T& value);
+	inline T nearestValueAt(const UniformIndex& idx, UniformT maxRadius = std::numeric_limits<UniformT>::max()) const;
 
-	inline size_t totalNodeCount() const { return mLeafNodeCount + mBranchNodeCount; }
-	inline size_t leafNodeCount() const { return mLeafNodeCount; }
-	inline size_t branchNodeCount() const { return mBranchNodeCount; }
-	inline size_t maxDepth() const { return mMaxDepth; }
+	inline size_t totalNodeCount() const;
+	inline size_t leafNodeCount() const;
+	inline size_t branchNodeCount() const;
+	inline size_t maxDepth() const;
+
+	inline void clear();
+
+	template <typename Func>
+	inline void visit(const Func& func);
+
+	template <typename Func>
+	inline void visit(const Func& func) const;
+
+	template <typename Func>
+	inline void enumerate(const Func& func) const;
 
 private:
-	inline void bake();
-
 	class Node {
 	public:
 		Node()			= default;
@@ -64,9 +68,10 @@ private:
 
 	class LeafNode : public Node {
 	public:
-		inline LeafNode(const T& v)
+		inline LeafNode(const UniformIndex& idx, const T& v)
 			: Node()
 			, mValue(v)
+			, mIndex(idx)
 		{
 		}
 		virtual ~LeafNode() = default;
@@ -76,12 +81,16 @@ private:
 		inline T value() const { return mValue; }
 		inline T& value() { return mValue; }
 
+		inline UniformIndex index() const { return mIndex; }
+		inline UniformIndex& index() { return mIndex; }
+
 	private:
 		T mValue;
+		UniformIndex mIndex;
 	};
 
 	class BranchNode : public Node {
-		friend class NTreeBuilder<D, T, UniformT>;
+		friend class NTreeStackBuilder<D, T, UniformT>;
 
 	public:
 		inline BranchNode(const UniformIndex& pivot)
@@ -93,34 +102,37 @@ private:
 
 		bool isLeaf() const override { return false; }
 
-		NodePtr node(size_t index) const { return mNodes[index]; }
-		NodePtr& node(size_t index) { return mNodes[index]; }
+		inline NodePtr node(size_t index) const { return mNodes[index]; }
+		inline NodePtr& node(size_t index) { return mNodes[index]; }
 
-		inline void calculateTotalNodeCount();
-		inline size_t totalNodeCount() const { return mTotalNodeCount; }
+		inline UniformIndex pivot() const { return mPivot; }
 
 		inline T valueAt(const UniformIndex& idx) const;
-		inline LinearIndex indexAt(const UniformIndex& idx) const;
+		inline void insertAt(const UniformIndex& idx, const T& value, const UniformIndex& low, const UniformIndex& high);
+		inline T nearestValueAt(const UniformIndex& idx, UniformT& maxRadius) const;
 
-		inline T valueAt(const LinearIndex& idx) const;
-		inline void replaceAt(const LinearIndex& idx, const T& value);
+		inline size_t leafNodeCount() const;
+		inline size_t branchNodeCount() const;
+		inline size_t maxDepth() const;
 
-		inline void calculateStats(size_t depth, size_t& maxDepth, size_t& leafCount, size_t& branchCount);
+		template <typename Func>
+		inline void visit(const Func& func);
+
+		template <typename Func>
+		inline void visit(const Func& func) const;
+
+		template <typename Func>
+		inline void enumerate(const Func& func) const;
 
 	private:
 		inline size_t childIndexAt(const UniformIndex& idx) const;
-		inline size_t childIndexAt(const LinearIndex& idx, size_t& preNodeCount) const;
-		inline LinearIndex linearIndexUntill(size_t childIndex) const;
+		inline void adaptFor(const UniformIndex& idx, UniformIndex& low, UniformIndex& high) const;
 
 		std::array<NodePtr, NodeCount::value> mNodes;
-		size_t mTotalNodeCount = 0;
 		UniformIndex mPivot;
 	};
 
 	NodePtr mRoot;
-	size_t mLeafNodeCount	= 0;
-	size_t mBranchNodeCount = 0;
-	size_t mMaxDepth		= 0;
 };
 
 template <typename T>

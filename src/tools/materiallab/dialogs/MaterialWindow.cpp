@@ -10,11 +10,14 @@
 #include "properties/PropertyContainer.h"
 #include "properties/TextProperty.h"
 
-#include "3d/entities/HemiFunctionEntity.h"
 #include "3d/entities/InstanceEntity.h"
+#include "3d/entities/PointMapEntity.h"
 #include "3d/entities/SphereEntity.h"
 #include "3d/shader/ColorShader.h"
 #include "3d/shader/WireframeShader.h"
+
+#include "Random.h"
+#include "math/Sampling.h"
 
 #include <QInputDialog>
 #include <QMessageBox>
@@ -176,38 +179,88 @@ void MaterialWindow::animationHandler()
 	ui.sunPhiSlider->setValue((phi + 3) % 360);
 }
 
+void MaterialWindow::calculateBSDF()
+{
+	mBRDFCache.clear();
+	mBTDFCache.clear();
+
+	constexpr PR::uint64 SEED = 181; // 42th prime number
+	constexpr int ITRATIONS	  = 1000;
+	PR::Random rnd(SEED);
+
+	if (ui.brdfCB->isChecked()) {
+		for (int i = 0; i < ITRATIONS; ++i) {
+			const float theta = 0.5f * PR::PR_PI * rnd.getFloat();
+			const float phi	  = 2 * PR::PR_PI * rnd.getFloat();
+			const Vector3f D  = Spherical::cartesian(theta, phi);
+			const float val	  = evalBSDF(D);
+
+			mBRDFCache.addValue(theta, phi, val);
+		}
+
+		if (ui.normCB->isChecked())
+			mBRDFCache.normalizeMaximum();
+	}
+
+	if (ui.btdfCB->isChecked()) {
+		for (int i = 0; i < ITRATIONS; ++i) {
+			const float theta = 0.5f * PR::PR_PI * rnd.getFloat();
+			const float phi	  = 2 * PR::PR_PI * rnd.getFloat();
+			const Vector3f D  = Spherical::cartesian(theta, phi);
+			const float val	  = evalBSDF(-D);
+
+			mBTDFCache.addValue(theta, phi, val);
+		}
+
+		if (ui.normCB->isChecked())
+			mBTDFCache.normalizeMaximum();
+	}
+}
+
 void MaterialWindow::buildGraphicObjects()
 {
+	calculateBSDF();
+
 	if (!mBRDFObject) {
-		mBRDFObject = std::make_shared<PR::UI::HemiFunctionEntity>([this](const Vector3f& D) { return evalBSDF(D); });
-		mBRDFObject->enableNormalization(ui.normCB->isChecked());
+		mBRDFObject = std::make_shared<PR::UI::PointMapEntity>(PR::UI::PointMapEntity::MT_Spherical);
 		ui.sceneView->addEntity(mBRDFObject);
 
 		// Wireframe
 		mBRDFObjectOutline = std::make_shared<PR::UI::InstanceEntity>(mBRDFObject);
 		mBRDFObjectOutline->setShader(std::make_shared<PR::UI::WireframeShader>(Vector4f(0.2f, 0.2f, 0.2f, 0.4f)));
 		ui.sceneView->addEntity(mBRDFObjectOutline, PR::UI::VL_Overlay1);
-	} else {
-		mBRDFObject->enableNormalization(ui.normCB->isChecked());
-		mBRDFObject->rebuild();
 	}
+	buildBRDF();
 
 	if (!mBTDFObject) {
-		mBTDFObject = std::make_shared<PR::UI::HemiFunctionEntity>([this](const Vector3f& D) { return evalBSDF(-D); });
+		mBTDFObject = std::make_shared<PR::UI::PointMapEntity>(PR::UI::PointMapEntity::MT_Spherical);
 		mBTDFObject->setScale(Vector3f(1.0f, 1.0f, -1.0f));
-		mBTDFObject->enableNormalization(ui.normCB->isChecked());
 		ui.sceneView->addEntity(mBTDFObject);
 
 		// Wireframe
 		mBTDFObjectOutline = std::make_shared<PR::UI::InstanceEntity>(mBTDFObject);
 		mBTDFObjectOutline->setShader(std::make_shared<PR::UI::WireframeShader>(Vector4f(0.2f, 0.2f, 0.2f, 0.4f)));
 		ui.sceneView->addEntity(mBTDFObjectOutline, PR::UI::VL_Overlay1);
-	} else {
-		mBTDFObject->enableNormalization(ui.normCB->isChecked());
-		mBTDFObject->rebuild();
 	}
+	buildBTDF();
 
 	ui.createButton->setText(tr("Update"));
+}
+
+void MaterialWindow::buildBRDF()
+{
+	std::vector<Vector2f> points;
+	std::vector<float> values;
+	mBRDFCache.get(points, values);
+	mBRDFObject->build(points, values);
+}
+
+void MaterialWindow::buildBTDF()
+{
+	std::vector<Vector2f> points;
+	std::vector<float> values;
+	mBTDFCache.get(points, values);
+	mBTDFObject->build(points, values);
 }
 
 Vector3f MaterialWindow::generateL() const

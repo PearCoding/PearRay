@@ -1,8 +1,8 @@
-// IWYU pragma: private, include "NTreeBuilder.h"
+// IWYU pragma: private, include "NTreeStackBuilder.h"
 
 namespace PR {
 template <size_t D, typename T, typename UniformT>
-inline void NTreeBuilder<D, T, UniformT>::begin()
+inline void NTreeStackBuilder<D, T, UniformT>::begin()
 {
 	if (mStack.empty()) {
 		UniformIndex min, max, pivot;
@@ -13,7 +13,7 @@ inline void NTreeBuilder<D, T, UniformT>::begin()
 		}
 
 		mTree		 = std::make_shared<Tree>();
-		mTree->mRoot = std::make_unique<BranchNode>(pivot);
+		mTree->mRoot = std::make_unique<BranchNode>(UniformIndex(0.5));
 
 		mStack.push_back(Context{ reinterpret_cast<BranchNode*>(mTree->mRoot.get()), 0, min, max });
 	} else {
@@ -23,7 +23,7 @@ inline void NTreeBuilder<D, T, UniformT>::begin()
 		{ // Inner group to make sure ctx is handled properly, even while the deconstructor should never be called
 			auto& ctx = mStack.back();
 			PR_ASSERT(ctx.Child < NodeCount::value, "begin() called exceeding child count");
-
+			
 			// Calculate pivot for this new child from min and max
 			UniformIndex pivot;
 			for (size_t i = 0; i < D; ++i) {
@@ -43,21 +43,21 @@ inline void NTreeBuilder<D, T, UniformT>::begin()
 }
 
 template <size_t D, typename T, typename UniformT>
-inline void NTreeBuilder<D, T, UniformT>::value(const T& v)
+inline void NTreeStackBuilder<D, T, UniformT>::value(const T& v)
 {
 	if (mStack.empty()) {
 		mTree		 = std::make_shared<Tree>();
-		mTree->mRoot = std::make_unique<LeafNode>(v);
+		mTree->mRoot = std::make_unique<LeafNode>(UniformIndex(0.5), v);
 	} else {
 		auto& ctx = mStack.back();
 		PR_ASSERT(ctx.Child < NodeCount::value, "value() called exceeding child count");
-		ctx.Node->mNodes[ctx.Child] = std::make_unique<LeafNode>(v);
+		ctx.Node->mNodes[ctx.Child] = std::make_unique<LeafNode>((ctx.Min + ctx.Max) / 2, v);
 		ctx.Child += 1;
 	}
 }
 
 template <size_t D, typename T, typename UniformT>
-inline void NTreeBuilder<D, T, UniformT>::end()
+inline void NTreeStackBuilder<D, T, UniformT>::end()
 {
 	PR_ASSERT(mTree, "end() called before begin()");
 	PR_ASSERT(!mStack.empty(), "end() called while stack is empty");
@@ -66,13 +66,12 @@ inline void NTreeBuilder<D, T, UniformT>::end()
 }
 
 template <size_t D, typename T, typename UniformT>
-inline typename NTreeBuilder<D, T, UniformT>::TreePtr
-NTreeBuilder<D, T, UniformT>::build() const
+inline typename NTreeStackBuilder<D, T, UniformT>::TreePtr
+NTreeStackBuilder<D, T, UniformT>::build() const
 {
 	PR_ASSERT(mTree, "build() called before construction finished");
 	PR_ASSERT(mStack.empty(), "build() called before stack is empty");
-	
-	mTree->bake();
+
 	return mTree;
 }
 } // namespace PR

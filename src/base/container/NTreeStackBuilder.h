@@ -4,8 +4,10 @@
 #include <vector>
 
 namespace PR {
+
+/// Build a NTree with a stack driven approach
 template <size_t D, typename T, typename UniformT = float>
-class PR_LIB_BASE NTreeBuilder {
+class PR_LIB_BASE NTreeStackBuilder {
 public:
 	using Tree		= NTree<D, T, UniformT>;
 	using TreePtr	= std::shared_ptr<Tree>;
@@ -13,8 +15,8 @@ public:
 	using Dimension = std::integral_constant<size_t, D>;
 	using NodeCount = std::integral_constant<size_t, (1 << D)>;
 
-	NTreeBuilder()	= default;
-	~NTreeBuilder() = default;
+	NTreeStackBuilder()	= default;
+	~NTreeStackBuilder() = default;
 
 	inline void begin();
 	inline void value(const T& v);
@@ -39,4 +41,4 @@ private:
 
 } // namespace PR
 
-#include "NTreeBuilder.inl"
+#include "NTreeStackBuilder.inl"

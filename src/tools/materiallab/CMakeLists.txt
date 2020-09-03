@@ -9,10 +9,12 @@ endif()
 
 set(Src
   main.cpp
+  MaterialCache.cpp
   dialogs/MainWindow.cpp
   dialogs/MaterialWindow.cpp)
 
 set(Hdr
+  MaterialCache.h
   dialogs/MainWindow.h
   dialogs/MaterialWindow.h)
 

@@ -17,6 +17,7 @@ set(Src
   3d/entities/HemiFunctionEntity.cpp
   3d/entities/InstanceEntity.cpp
   3d/entities/MeshEntity.cpp
+  3d/entities/PointMapEntity.cpp
   3d/entities/ScreenSpaceEntity.cpp
   3d/entities/SphereEntity.cpp
   3d/entities/TransformableEntity.cpp
@@ -63,6 +64,7 @@ set(Hdr
   3d/entities/HemiFunctionEntity.h
   3d/entities/InstanceEntity.h
   3d/entities/MeshEntity.h
+  3d/entities/PointMapEntity.h
   3d/entities/ScreenSpaceEntity.h
   3d/entities/SphereEntity.h
   3d/entities/TransformableEntity.h

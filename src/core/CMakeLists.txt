@@ -20,6 +20,10 @@ set(PR_Src
   cache/ISerializeCachable.cpp
   camera/ICamera.cpp
   camera/ICamera.h
+  container/kdTreeBuilder.cpp
+  container/kdTreeBuilder.h
+  container/kdTreeBuilderNaive.cpp
+  container/kdTreeBuilderNaive.h
   entity/GeometryRepr.h
   entity/IEntity.cpp
   entity/IEntity.h

@@ -1,5 +1,5 @@
 #include "container/NTree.h"
-#include "container/NTreeBuilder.h"
+#include "container/NTreeStackBuilder.h"
 
 #include "Test.h"
 
@@ -9,7 +9,7 @@ PR_BEGIN_TESTCASE(NTree)
 PR_TEST("QuadTree D0")
 {
 	using V = QuadTree<float>::UniformIndex;
-	QuadTree<float>::Builder builder;
+	QuadTree<float>::StackBuilder builder;
 
 	builder.value(42);
 
@@ -23,7 +23,7 @@ PR_TEST("QuadTree D0")
 PR_TEST("QuadTree D1")
 {
 	using V = QuadTree<float>::UniformIndex;
-	QuadTree<float>::Builder builder;
+	QuadTree<float>::StackBuilder builder;
 
 	builder.begin();
 	builder.value(16); // [0.0,0.5]x[0.0,0.5]
@@ -45,7 +45,7 @@ PR_TEST("QuadTree D1")
 PR_TEST("QuadTree D2")
 {
 	using V = QuadTree<float>::UniformIndex;
-	QuadTree<float>::Builder builder;
+	QuadTree<float>::StackBuilder builder;
 
 	builder.begin();
 	builder.value(16);	// [0.0,0.5]x[0.0,0.5]
@@ -71,6 +71,35 @@ PR_TEST("QuadTree D2")
 	PR_CHECK_EQ(tree->valueAt(V{ 0.85f, 0.45f }), 404);
 	PR_CHECK_EQ(tree->valueAt(V{ 0.25f, 0.75f }), 48);
 	PR_CHECK_EQ(tree->valueAt(V{ 0.85f, 0.65f }), 64);
+}
+PR_TEST("QuadTree Dynamic")
+{
+	using V = QuadTree<float>::UniformIndex;
+	QuadTree<float> tree;
+
+	tree.insertAt(V{ 0.25f, 0.25f }, 16);
+
+	PR_CHECK_EQ(tree.maxDepth(), 0);
+	PR_CHECK_EQ(tree.leafNodeCount(), 1);
+	PR_CHECK_EQ(tree.branchNodeCount(), 0);
+	PR_CHECK_EQ(tree.valueAt(V{ 0.25f, 0.25f }), 16);
+	PR_CHECK_EQ(tree.valueAt(V{ 0.55f, 0.20f }), 16);
+}
+PR_TEST("QuadTree Dynamic 2")
+{
+	using V = QuadTree<float>::UniformIndex;
+	QuadTree<float> tree;
+
+	tree.insertAt(V{ 0.25f, 0.25f }, 16);
+	tree.insertAt(V{ 0.55f, 0.20f }, 101);
+	tree.insertAt(V{ 0.1f, 0.15f }, 42);
+
+	PR_CHECK_EQ(tree.maxDepth(), 2);
+	PR_CHECK_EQ(tree.leafNodeCount(), 3);
+	PR_CHECK_EQ(tree.branchNodeCount(), 2);
+	PR_CHECK_EQ(tree.valueAt(V{ 0.25f, 0.25f }), 16);
+	PR_CHECK_EQ(tree.valueAt(V{ 0.55f, 0.20f }), 101);
+	PR_CHECK_EQ(tree.valueAt(V{ 0.10f, 0.10f }), 42);
 }
 PR_END_TESTCASE()
 
