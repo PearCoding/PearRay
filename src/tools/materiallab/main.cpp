@@ -27,6 +27,7 @@ int main(int argc, char** argv)
 	parser.setApplicationDescription("PearRay Material Lab");
 	parser.addHelpOption();
 	parser.addVersionOption();
+	parser.addPositionalArgument("materials", QApplication::translate("main", "Material name"), "[materials...]");
 
 	parser.process(app);
 
@@ -41,5 +42,9 @@ int main(int argc, char** argv)
 	// Main Window
 	MainWindow w;
 	w.show();
+
+	for (const QString& item : parser.positionalArguments())
+		w.newInspection(item);
+
 	return app.exec();
 }

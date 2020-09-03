@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	parser.setApplicationDescription("PearRay diagnose tool");
 	parser.addHelpOption();
 	parser.addVersionOption();
-	parser.addPositionalArgument("input", QApplication::translate("main", "Input file or directory"));
+	parser.addPositionalArgument("input", QApplication::translate("main", "Input file"));
 
 	parser.process(app);
 

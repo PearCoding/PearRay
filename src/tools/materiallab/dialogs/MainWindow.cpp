@@ -99,15 +99,20 @@ void MainWindow::newInspection()
 
 	bool ok;
 	QString item = QInputDialog::getItem(this, tr("Select material"), tr("Material:"), materialnames, 0, false, &ok);
-	if (ok && !item.isEmpty()) {
-		auto factory = manager->getFactory(item.toStdString());
-		if (!factory)
-			return;
+	if (ok && !item.isEmpty())
+		newInspection(item);
+}
 
-		MaterialWindow* w  = new MaterialWindow(item, factory.get(), ui.mdiArea);
-		QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
+void MainWindow::newInspection(const QString& name)
+{
+	const auto manager = mEnv->materialManager();
+	auto factory	   = manager->getFactory(name.toStdString());
+	if (!factory)
+		return;
 
-		win->setWindowIcon(QIcon(":/image_icon"));
-		w->show();
-	}
+	MaterialWindow* w  = new MaterialWindow(name, factory.get(), ui.mdiArea);
+	QMdiSubWindow* win = ui.mdiArea->addSubWindow(w);
+
+	win->setWindowIcon(QIcon(":/image_icon"));
+	w->show();
 }

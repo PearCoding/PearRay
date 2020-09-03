@@ -17,6 +17,8 @@ public:
 	MainWindow(QWidget* parent = 0);
 	~MainWindow();
 
+	void newInspection(const QString& name);
+	
 protected:
 	void closeEvent(QCloseEvent* event);
 
