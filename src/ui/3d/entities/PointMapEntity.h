@@ -19,8 +19,12 @@ public:
 	inline void setMapType(MapType type) { mMapType = type; }
 	inline MapType mapType() const { return mMapType; }
 
+	inline void enableColor(bool b = true) { mPopulateColor = b; }
+	inline bool isColorEnabled() const { return mPopulateColor; }
+
 private:
 	MapType mMapType;
+	bool mPopulateColor;
 };
 } // namespace UI
 } // namespace PR

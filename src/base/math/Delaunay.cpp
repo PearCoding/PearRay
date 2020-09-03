@@ -38,6 +38,13 @@ struct PR_LIB_BASE InternalTriangle2D {
 					 + nv1 * (V0(0) - V2(0))
 					 + nv2 * (V1(0) - V0(0)))
 					/ (V0(1) * (V2(0) - V1(0)) + V1(1) * (V0(0) - V2(0)) + V2(1) * (V1(0) - V0(0)));
+
+		Circum /= 2;
+	}
+
+	inline bool contains(const Vector2f& p) const
+	{
+		return (p - Circum).squaredNorm() <= (V0 - Circum).squaredNorm();
 	}
 };
 
@@ -52,11 +59,6 @@ struct Edge2D {
 inline bool edgeEqual(const Edge2D& a, const Edge2D& b)
 {
 	return (a.V0 == b.V0 && a.V1 == b.V1) || (a.V0 == b.V1 && a.V1 == b.V0);
-}
-
-inline bool triCircumCircleContains(const InternalTriangle2D& t, const Vector2f& p)
-{
-	return (p - t.Circum).squaredNorm() <= (t.V0 - t.Circum).squaredNorm();
 }
 
 constexpr uint32 STP0_INDEX = std::numeric_limits<uint32>::max();
@@ -81,16 +83,17 @@ std::vector<Triangle> triangulate2D(const std::vector<Vector2f>& vertices)
 	const Vector2f stp2 = Vector2f(mid(0) + 25 * deltaMax, mid(1) - deltaMax);
 
 	// Start with the super triangle
-	std::vector<InternalTriangle2D, Eigen::aligned_allocator<InternalTriangle2D>> triangles;
+	std::vector<InternalTriangle2D> triangles;
 	triangles.push_back(InternalTriangle2D(stp0, stp1, stp2, STP0_INDEX, STP1_INDEX, STP2_INDEX));
 
+	std::vector<Edge2D> edges; // temporary
 	for (size_t i = 0; i < vertices.size(); ++i) {
 		const Vector2f p = vertices[i];
 
 		// Construct polygon
-		std::vector<Edge2D, Eigen::aligned_allocator<Edge2D>> edges;
+		edges.clear();
 		for (auto& t : triangles) {
-			if (triCircumCircleContains(t, p)) {
+			if (t.contains(p)) {
 				t.Bad = true;
 				edges.push_back(Edge2D{ t.V0, t.V1, t.IV0, t.IV1, false });
 				edges.push_back(Edge2D{ t.V1, t.V2, t.IV1, t.IV2, false });

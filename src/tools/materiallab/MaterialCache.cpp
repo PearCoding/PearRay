@@ -47,7 +47,7 @@ float MaterialCache::integral() const
 void MaterialCache::get(std::vector<PR::Vector2f>& points, std::vector<float>& values)
 {
 	mData.enumerate([&](const Tree::UniformIndex& idx, float val) {
-		points.push_back(idx.matrix());
+		points.push_back(PR::Vector2f(PR::PR_PI * idx(0), 2 * PR::PR_PI * idx(1)));
 		values.push_back(val);
 	});
 }

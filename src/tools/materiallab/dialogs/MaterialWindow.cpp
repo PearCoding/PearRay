@@ -185,7 +185,7 @@ void MaterialWindow::calculateBSDF()
 	mBTDFCache.clear();
 
 	constexpr PR::uint64 SEED = 181; // 42th prime number
-	constexpr int ITRATIONS	  = 1000;
+	constexpr int ITRATIONS	  = 10000;
 	PR::Random rnd(SEED);
 
 	if (ui.brdfCB->isChecked()) {

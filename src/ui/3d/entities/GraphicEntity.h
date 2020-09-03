@@ -48,9 +48,21 @@ protected:
 		mRequireRebuild = true;
 	}
 
+	inline void commitVertices(std::vector<float>&& v)
+	{
+		mVertices		= std::move(v);
+		mRequireRebuild = true;
+	}
+
 	inline void setNormals(const std::vector<float>& v)
 	{
 		mNormals		= v;
+		mRequireRebuild = true;
+	}
+
+	inline void commitNormals(std::vector<float>&& v)
+	{
+		mNormals		= std::move(v);
 		mRequireRebuild = true;
 	}
 
@@ -60,13 +72,26 @@ protected:
 		mRequireRebuild = true;
 	}
 
+	inline void commitColors(std::vector<float>&& v)
+	{
+		mColors			= std::move(v);
+		mRequireRebuild = true;
+	}
+
 	inline void setWeights(const std::vector<float>& v)
 	{
 		mWeights		= v;
 		mRequireRebuild = true;
 	}
 
+	inline void commitWeights(std::vector<float>&& v)
+	{
+		mWeights		= std::move(v);
+		mRequireRebuild = true;
+	}
+
 	inline void setIndices(const std::vector<uint32>& v) { mIndices = v; }
+	inline void commitIndices(std::vector<uint32>&& v) { mIndices = std::move(v); }
 	inline void setDrawMode(int mode) { mDrawMode = mode; }
 
 	inline void useProxyVertexSize(size_t i) { mProxyVertexSize = i; }
