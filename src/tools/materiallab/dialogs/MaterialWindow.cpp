@@ -187,12 +187,8 @@ void MaterialWindow::calculateBSDF()
 
 	const auto pipeline = [this](auto calc) {
 		constexpr PR::uint64 SEED = 181; // 42th prime number
-		constexpr int ITRATIONS	  = 20000;
+		constexpr int ITRATIONS	  = 2000;
 		PR::Random rnd(SEED);
-
-		// Initial stitches
-		for (int i = 0; i < STITCH_COUNT; ++i)
-			calc(0.5f * PR::PR_PI * i / (float)(STITCH_COUNT - 1), 0);
 
 		// Sample step
 		for (int i = 0; i < ITRATIONS; ++i) {
@@ -200,10 +196,6 @@ void MaterialWindow::calculateBSDF()
 			const float phi	  = 2 * PR::PR_PI * rnd.getFloat();
 			calc(theta, phi);
 		}
-
-		// Last stitches
-		for (int i = 0; i < STITCH_COUNT; ++i)
-			calc(0.5f * PR::PR_PI * i / (float)(STITCH_COUNT - 1), 2 * PR::PR_PI);
 	};
 
 	if (ui.brdfCB->isChecked()) {

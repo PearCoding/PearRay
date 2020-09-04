@@ -49,23 +49,27 @@ void PointMapEntity::build(const std::vector<Vector2f>& points, const std::vecto
 	vertices.reserve(points.size() * 3);
 	auto add = [&](const Vector3f& v) {vertices.push_back(v[0]); vertices.push_back(v[1]); vertices.push_back(v[2]); };
 
+	std::vector<Triangulation::Triangle> triangles;
 	switch (mMapType) {
 	case MapType::MT_Z:
-		for (size_t i = 0; i < points.size(); ++i) {
+		for (size_t i = 0; i < points.size(); ++i)
 			add(Vector3f(points[i](0), points[i](1), values[i]));
-		}
+		triangles = Triangulation::triangulate2D(points);
 		break;
-	case MapType::MT_Spherical:
+	case MapType::MT_Spherical: {
 		for (size_t i = 0; i < points.size(); ++i) {
 			const Vector3f D = Spherical::cartesian(points[i](0), points[i](1));
 			add(values[i] * D);
 		}
-		break;
+		std::vector<Vector3f> vpts; // TODO: Get rid of this temporary vector
+		vpts.reserve(points.size());
+		for (size_t i = 0; i < points.size(); ++i)
+			vpts.push_back(Vector3f(vertices[i * 3 + 0], vertices[i * 3 + 1], vertices[i * 3 + 2]));
+		triangles = Triangulation::triangulate3D(vpts);
+	} break;
 	}
 
 	//////////////////// Indices
-	// TODO: Better use 3d triangulation hull!
-	auto triangles = Triangulation::triangulate2D(points);
 	if (triangles.empty()) // Backoff if no triangles could be generated (less than 3 points)
 		return;
 
