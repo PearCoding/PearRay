@@ -2,8 +2,8 @@
 
 #include "3d/shader/ColorShader.h"
 #include "PointMapEntity.h"
-#include "math/Delaunay.h"
 #include "math/Spherical.h"
+#include "math/Triangulation.h"
 
 namespace PR {
 namespace UI {
@@ -40,6 +40,10 @@ void PointMapEntity::build(const std::vector<Vector2f>& points, const std::vecto
 {
 	PR_ASSERT(points.size() == values.size(), "Expected points and values to be of same size");
 
+	// We need at least three points for a soup of triangles
+	if (points.size() < 3)
+		return;
+
 	//////////////////// Vertices
 	std::vector<float> vertices;
 	vertices.reserve(points.size() * 3);
@@ -60,7 +64,11 @@ void PointMapEntity::build(const std::vector<Vector2f>& points, const std::vecto
 	}
 
 	//////////////////// Indices
-	auto triangles = Delaunay::triangulate2D(points);
+	// TODO: Better use 3d triangulation hull!
+	auto triangles = Triangulation::triangulate2D(points);
+	if (triangles.empty()) // Backoff if no triangles could be generated (less than 3 points)
+		return;
+
 	std::vector<uint32> indices;
 	indices.reserve(triangles.size() * 3);
 	for (const auto& triangle : triangles) {

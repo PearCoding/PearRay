@@ -24,9 +24,10 @@
 
 using namespace PR;
 
-constexpr float SUN_R = 0.1f;
-constexpr float SUN_D = 4.0f;
-constexpr int ANIM_MS = 200;
+constexpr float SUN_R	   = 0.1f;
+constexpr float SUN_D	   = 4.0f;
+constexpr int ANIM_MS	   = 200;
+constexpr int STITCH_COUNT = 32;
 MaterialWindow::MaterialWindow(const QString& typeName, PR::IMaterialPlugin* factory, QWidget* parent)
 	: QWidget(parent)
 	, mTypeName(typeName)
@@ -184,33 +185,46 @@ void MaterialWindow::calculateBSDF()
 	mBRDFCache.clear();
 	mBTDFCache.clear();
 
-	constexpr PR::uint64 SEED = 181; // 42th prime number
-	constexpr int ITRATIONS	  = 10000;
-	PR::Random rnd(SEED);
+	const auto pipeline = [this](auto calc) {
+		constexpr PR::uint64 SEED = 181; // 42th prime number
+		constexpr int ITRATIONS	  = 20000;
+		PR::Random rnd(SEED);
 
-	if (ui.brdfCB->isChecked()) {
+		// Initial stitches
+		for (int i = 0; i < STITCH_COUNT; ++i)
+			calc(0.5f * PR::PR_PI * i / (float)(STITCH_COUNT - 1), 0);
+
+		// Sample step
 		for (int i = 0; i < ITRATIONS; ++i) {
 			const float theta = 0.5f * PR::PR_PI * rnd.getFloat();
 			const float phi	  = 2 * PR::PR_PI * rnd.getFloat();
-			const Vector3f D  = Spherical::cartesian(theta, phi);
-			const float val	  = evalBSDF(D);
+			calc(theta, phi);
+		}
+
+		// Last stitches
+		for (int i = 0; i < STITCH_COUNT; ++i)
+			calc(0.5f * PR::PR_PI * i / (float)(STITCH_COUNT - 1), 2 * PR::PR_PI);
+	};
+
+	if (ui.brdfCB->isChecked()) {
+		pipeline([this](float theta, float phi) {
+			const Vector3f D = Spherical::cartesian(theta, phi);
+			const float val	 = evalBSDF(D);
 
 			mBRDFCache.addValue(theta, phi, val);
-		}
+		});
 
 		if (ui.normCB->isChecked())
 			mBRDFCache.normalizeMaximum();
 	}
 
 	if (ui.btdfCB->isChecked()) {
-		for (int i = 0; i < ITRATIONS; ++i) {
-			const float theta = 0.5f * PR::PR_PI * rnd.getFloat();
-			const float phi	  = 2 * PR::PR_PI * rnd.getFloat();
-			const Vector3f D  = Spherical::cartesian(theta, phi);
-			const float val	  = evalBSDF(-D);
+		pipeline([this](float theta, float phi) {
+			const Vector3f D = Spherical::cartesian(theta, phi);
+			const float val	 = evalBSDF(-D);
 
 			mBTDFCache.addValue(theta, phi, val);
-		}
+		});
 
 		if (ui.normCB->isChecked())
 			mBTDFCache.normalizeMaximum();
@@ -247,11 +261,40 @@ void MaterialWindow::buildGraphicObjects()
 	ui.createButton->setText(tr("Update"));
 }
 
+inline static void cleanup(std::vector<Vector2f>& pts, std::vector<float>& vals)
+{
+	constexpr float EPS = 0.0001f;
+	auto it2			= vals.begin();
+	for (auto it = pts.begin(); it != pts.end();) {
+		bool needsCleanup = false;
+
+		auto cit2 = it2 + 1;
+		for (auto cit = it + 1; cit != pts.cend();) {
+			if ((*it - *cit).squaredNorm() < EPS) {
+				needsCleanup = true;
+				break;
+			}
+
+			++cit;
+			++cit2;
+		}
+
+		if (needsCleanup) {
+			it	= pts.erase(it);
+			it2 = vals.erase(it2);
+		} else {
+			++it;
+			++it2;
+		}
+	}
+}
+
 void MaterialWindow::buildBRDF()
 {
 	std::vector<Vector2f> points;
 	std::vector<float> values;
 	mBRDFCache.get(points, values);
+	cleanup(points, values);
 	mBRDFObject->build(points, values);
 }
 
@@ -260,6 +303,7 @@ void MaterialWindow::buildBTDF()
 	std::vector<Vector2f> points;
 	std::vector<float> values;
 	mBTDFCache.get(points, values);
+	cleanup(points, values);
 	mBTDFObject->build(points, values);
 }
 

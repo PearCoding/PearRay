@@ -43,8 +43,6 @@ set(PR_Src
   math/Bits.h
   math/Compression.h
   math/Concentric.h
-  math/Delaunay.cpp
-  math/Delaunay.h
   math/Fresnel.h
   math/Generator.h
   math/Hash.h
@@ -62,6 +60,9 @@ set(PR_Src
   math/SphereMap.h
   math/Spherical.h
   math/Tangent.h
+  math/Triangulation.h
+  math/Triangulation2D.cpp
+  math/Triangulation3D.cpp
   memory/AlignedAllocator.h
   memory/MemoryPool.h
   memory/MemoryPool.inl
