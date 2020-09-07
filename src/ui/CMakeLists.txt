@@ -14,6 +14,7 @@ set(Src
   3d/entities/DiskEntity.cpp
   3d/entities/GraphicEntity.cpp
   3d/entities/GridEntity.cpp
+  3d/entities/GridMapEntity.cpp
   3d/entities/HemiFunctionEntity.cpp
   3d/entities/InstanceEntity.cpp
   3d/entities/MeshEntity.cpp
@@ -61,6 +62,7 @@ set(Hdr
   3d/entities/DiskEntity.h
   3d/entities/GraphicEntity.h
   3d/entities/GridEntity.h
+  3d/entities/GridMapEntity.h
   3d/entities/HemiFunctionEntity.h
   3d/entities/InstanceEntity.h
   3d/entities/MeshEntity.h

@@ -11,7 +11,8 @@
 #include "properties/TextProperty.h"
 
 #include "3d/entities/InstanceEntity.h"
-#include "3d/entities/PointMapEntity.h"
+//#include "3d/entities/PointMapEntity.h"
+#include "3d/entities/GridMapEntity.h"
 #include "3d/entities/SphereEntity.h"
 #include "3d/shader/ColorShader.h"
 #include "3d/shader/WireframeShader.h"
@@ -180,15 +181,28 @@ void MaterialWindow::animationHandler()
 	ui.sunPhiSlider->setValue((phi + 3) % 360);
 }
 
+constexpr int THETA_COUNT = 64;
+constexpr int PHI_COUNT	  = 128;
+
 void MaterialWindow::calculateBSDF()
 {
 	mBRDFCache.clear();
 	mBTDFCache.clear();
 
 	const auto pipeline = [this](auto calc) {
+#if 0 /* Deterministic calculation instead */
 		constexpr PR::uint64 SEED = 181; // 42th prime number
-		constexpr int ITRATIONS	  = 2000;
+		constexpr int ITRATIONS	  = 5000;
 		PR::Random rnd(SEED);
+
+#if 1 /* Will be removed when 3d triangulation finally works */
+		constexpr int STICH_COUNT = 16;
+		for (int i = 0; i < STICH_COUNT; ++i) {
+			const float theta = 0.5f * PR::PR_PI * (i / (float(STICH_COUNT - 1)));
+			calc(theta, 0);
+			calc(theta, 2 * PR::PR_PI);
+		}
+#endif
 
 		// Sample step
 		for (int i = 0; i < ITRATIONS; ++i) {
@@ -196,6 +210,15 @@ void MaterialWindow::calculateBSDF()
 			const float phi	  = 2 * PR::PR_PI * rnd.getFloat();
 			calc(theta, phi);
 		}
+#else
+		for (int i = 0; i < THETA_COUNT; ++i) {
+			for (int j = 0; j < PHI_COUNT; ++j) {
+				const float theta = 0.5f * PR::PR_PI * i / float(THETA_COUNT - 1);
+				const float phi	  = 2 * PR::PR_PI * j / float(PHI_COUNT - 1);
+				calc(theta, phi);
+			}
+		}
+#endif
 	};
 
 	if (ui.brdfCB->isChecked()) {
@@ -203,11 +226,22 @@ void MaterialWindow::calculateBSDF()
 			const Vector3f D = Spherical::cartesian(theta, phi);
 			const float val	 = evalBSDF(D);
 
-			mBRDFCache.addValue(theta, phi, val);
+			//mBRDFCache.addValue(theta, phi, val);
+			mBRDFCache.emplace_back(val);
 		});
 
-		if (ui.normCB->isChecked())
+		if (ui.normCB->isChecked()) {
+#if 0
 			mBRDFCache.normalizeMaximum();
+#else
+			float m = *std::max_element(mBRDFCache.begin(), mBRDFCache.end());
+			if (std::abs(m) >= PR_EPSILON) {
+				float im = 1 / m;
+				for (auto& v : mBRDFCache)
+					v *= im;
+			}
+#endif
+		}
 	}
 
 	if (ui.btdfCB->isChecked()) {
@@ -215,11 +249,22 @@ void MaterialWindow::calculateBSDF()
 			const Vector3f D = Spherical::cartesian(theta, phi);
 			const float val	 = evalBSDF(-D);
 
-			mBTDFCache.addValue(theta, phi, val);
+			//mBTDFCache.addValue(theta, phi, val);
+			mBTDFCache.emplace_back(val);
 		});
 
-		if (ui.normCB->isChecked())
+		if (ui.normCB->isChecked()) {
+#if 0
 			mBTDFCache.normalizeMaximum();
+#else
+			float m = *std::max_element(mBTDFCache.begin(), mBTDFCache.end());
+			if (std::abs(m) >= PR_EPSILON) {
+				float im = 1 / m;
+				for (auto& v : mBTDFCache)
+					v *= im;
+			}
+#endif
+		}
 	}
 }
 
@@ -228,7 +273,8 @@ void MaterialWindow::buildGraphicObjects()
 	calculateBSDF();
 
 	if (!mBRDFObject) {
-		mBRDFObject = std::make_shared<PR::UI::PointMapEntity>(PR::UI::PointMapEntity::MT_Spherical);
+		//mBRDFObject = std::make_shared<PR::UI::PointMapEntity>(PR::UI::PointMapEntity::MT_Spherical);
+		mBRDFObject = std::make_shared<PR::UI::GridMapEntity>(PR::UI::GridMapEntity::MT_Spherical);
 		ui.sceneView->addEntity(mBRDFObject);
 
 		// Wireframe
@@ -239,7 +285,7 @@ void MaterialWindow::buildGraphicObjects()
 	buildBRDF();
 
 	if (!mBTDFObject) {
-		mBTDFObject = std::make_shared<PR::UI::PointMapEntity>(PR::UI::PointMapEntity::MT_Spherical);
+		mBTDFObject = std::make_shared<PR::UI::GridMapEntity>(PR::UI::GridMapEntity::MT_Spherical);
 		mBTDFObject->setScale(Vector3f(1.0f, 1.0f, -1.0f));
 		ui.sceneView->addEntity(mBTDFObject);
 
@@ -283,20 +329,28 @@ inline static void cleanup(std::vector<Vector2f>& pts, std::vector<float>& vals)
 
 void MaterialWindow::buildBRDF()
 {
+#if 0
 	std::vector<Vector2f> points;
 	std::vector<float> values;
 	mBRDFCache.get(points, values);
 	cleanup(points, values);
 	mBRDFObject->build(points, values);
+#else
+	mBRDFObject->build(PHI_COUNT, mBRDFCache);
+#endif
 }
 
 void MaterialWindow::buildBTDF()
 {
+#if 0
 	std::vector<Vector2f> points;
 	std::vector<float> values;
 	mBTDFCache.get(points, values);
 	cleanup(points, values);
 	mBTDFObject->build(points, values);
+#else
+	mBTDFObject->build(PHI_COUNT, mBTDFCache);
+#endif
 }
 
 Vector3f MaterialWindow::generateL() const

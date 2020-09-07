@@ -14,7 +14,8 @@ class IMaterial;
 namespace UI {
 class PropertyContainer;
 class GraphicEntity;
-class PointMapEntity;
+//class PointMapEntity;
+class GridMapEntity;
 class InstanceEntity;
 } // namespace UI
 } // namespace PR
@@ -53,12 +54,14 @@ private:
 
 	std::shared_ptr<PR::UI::GraphicEntity> mLightSource;
 
-	MaterialCache mBRDFCache;
-	MaterialCache mBTDFCache;
+	//MaterialCache mBRDFCache;
+	std::vector<float> mBRDFCache;
+	//MaterialCache mBTDFCache;
+	std::vector<float> mBTDFCache;
 
-	std::shared_ptr<PR::UI::PointMapEntity> mBRDFObject;
+	std::shared_ptr<PR::UI::GridMapEntity> mBRDFObject;
 	std::shared_ptr<PR::UI::InstanceEntity> mBRDFObjectOutline;
-	std::shared_ptr<PR::UI::PointMapEntity> mBTDFObject;
+	std::shared_ptr<PR::UI::GridMapEntity> mBTDFObject;
 	std::shared_ptr<PR::UI::InstanceEntity> mBTDFObjectOutline;
 
 	QTimer mAnimationTimer;

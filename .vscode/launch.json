@@ -578,6 +578,26 @@
             ]
         },
         {
+            "name": "pr_test_triangulation",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pr_test_triangulation",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "pr_test_memory",
             "type": "cppdbg",
             "request": "launch",

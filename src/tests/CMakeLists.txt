@@ -49,6 +49,7 @@ PUSH_TEST(network network.cpp NO_ADD)
 PUSH_TEST(ntree ntree.cpp)
 PUSH_TEST(concentric concentric.cpp)
 PUSH_TEST(scattering scattering.cpp)
+PUSH_TEST(triangulation triangulation.cpp)
 
 if(PR_HAS_PYTHON_API AND PR_BUILD_TESTS_PYTHON)
 	add_subdirectory(python)
