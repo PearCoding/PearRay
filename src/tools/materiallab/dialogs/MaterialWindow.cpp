@@ -274,7 +274,7 @@ void MaterialWindow::buildGraphicObjects()
 
 	if (!mBRDFObject) {
 		//mBRDFObject = std::make_shared<PR::UI::PointMapEntity>(PR::UI::PointMapEntity::MT_Spherical);
-		mBRDFObject = std::make_shared<PR::UI::GridMapEntity>(PR::UI::GridMapEntity::MT_Spherical);
+		mBRDFObject = std::make_shared<PR::UI::GridMapEntity>(PR::UI::GridMapEntity::MT_Hemi);
 		ui.sceneView->addEntity(mBRDFObject);
 
 		// Wireframe
@@ -285,7 +285,7 @@ void MaterialWindow::buildGraphicObjects()
 	buildBRDF();
 
 	if (!mBTDFObject) {
-		mBTDFObject = std::make_shared<PR::UI::GridMapEntity>(PR::UI::GridMapEntity::MT_Spherical);
+		mBTDFObject = std::make_shared<PR::UI::GridMapEntity>(PR::UI::GridMapEntity::MT_Hemi);
 		mBTDFObject->setScale(Vector3f(1.0f, 1.0f, -1.0f));
 		ui.sceneView->addEntity(mBTDFObject);
 

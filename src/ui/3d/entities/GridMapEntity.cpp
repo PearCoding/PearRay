@@ -53,9 +53,9 @@ void GridMapEntity::build(size_t slice, const std::vector<float>& values)
 	case MapType::MT_Z:
 		for (size_t j = 0; j < sy; ++j)
 			for (size_t i = 0; i < sx; ++i)
-				add(Vector3f(2 * i / float(sx - 1) - 1, 2 * j / float(sx - 1) - 1, values[j * sx + i]));
+				add(Vector3f(2 * i / float(sx - 1) - 1, 2 * j / float(sy - 1) - 1, values[j * sx + i]));
 		break;
-	case MapType::MT_Spherical: {
+	case MapType::MT_Hemi:
 		for (size_t j = 0; j < sy; ++j) {
 			for (size_t i = 0; i < sx; ++i) {
 				const float theta = 0.5f * PR_PI * j / float(sy - 1);
@@ -64,26 +64,35 @@ void GridMapEntity::build(size_t slice, const std::vector<float>& values)
 				add(values[j * sx + i] * D);
 			}
 		}
-	} break;
+		break;
+	case MapType::MT_Spherical:
+		for (size_t j = 0; j < sy; ++j) {
+			for (size_t i = 0; i < sx; ++i) {
+				const float theta = PR_PI * j / float(sy - 1);
+				const float phi	  = 2 * PR_PI * i / float(sx - 1);
+				const Vector3f D  = Spherical::cartesian(theta, phi);
+				add(values[j * sx + i] * D);
+			}
+		}
+		break;
 	}
 
 	//////////////////// Indices
 	std::vector<uint32> indices;
-	indices.reserve((sy * sx) * 3 * 2);
-	for (size_t j = 0; j < sy; ++j) {
-		for (size_t i = 0; i < sx; ++i) {
+	indices.reserve(((sy - 1) * (sx - 1)) * 3 * 2);
+	for (size_t j = 0; j < sy - 1; ++j) {
+		for (size_t i = 0; i < sx - 1; ++i) {
 			uint32 row1 = j * sx;
 			uint32 row2 = (j + 1) * sx;
-			uint32 ni	= (i + 1) % sx;
 
 			// Triangle 1
 			indices.push_back(row1 + i);
-			indices.push_back(row1 + ni);
-			indices.push_back(row2 + ni);
+			indices.push_back(row1 + i + 1);
+			indices.push_back(row2 + i + 1);
 
 			// Triangle 2
 			indices.push_back(row1 + i);
-			indices.push_back(row2 + ni);
+			indices.push_back(row2 + i + 1);
 			indices.push_back(row2 + i);
 		}
 	}
@@ -106,5 +115,5 @@ void GridMapEntity::build(size_t slice, const std::vector<float>& values)
 
 	requestRebuild();
 }
-} // namespace UI
+}
 } // namespace PR

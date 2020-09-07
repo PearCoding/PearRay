@@ -8,6 +8,7 @@ class PR_LIB_UI GridMapEntity : public GraphicEntity {
 public:
 	enum MapType {
 		MT_Z = 0,
+		MT_Hemi,
 		MT_Spherical
 	};
 
