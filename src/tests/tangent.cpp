@@ -9,7 +9,7 @@ PR_TEST("Frame 1")
 	auto N = Vector3f(0, 0, 1);
 
 	Vector3f Nx, Ny;
-	Tangent::frame(N, Nx, Ny);
+	Tangent::unnormalized_frame(N, Nx, Ny);
 
 	PR_CHECK_NEARLY_EQ(Nx, Vector3f(1, 0, 0));
 	PR_CHECK_NEARLY_EQ(Ny, Vector3f(0, 1, 0));
@@ -19,7 +19,7 @@ PR_TEST("Frame 2")
 	auto N = Vector3f(0, 1, 0);
 
 	Vector3f Nx, Ny;
-	Tangent::frame(N, Nx, Ny);
+	Tangent::unnormalized_frame(N, Nx, Ny);
 
 	PR_CHECK_NEARLY_EQ(Nx, Vector3f(1, 0, 0));
 	PR_CHECK_NEARLY_EQ(Ny, Vector3f(0, 0, -1));
@@ -29,7 +29,7 @@ PR_TEST("Frame Perpendicular")
 	auto N = Vector3f(0, 1, 0);
 
 	Vector3f Nx, Ny;
-	Tangent::frame(N, Nx, Ny);
+	Tangent::unnormalized_frame(N, Nx, Ny);
 
 	PR_CHECK_NEARLY_EQ(Nx.dot(N), 0);
 	PR_CHECK_NEARLY_EQ(Ny.dot(N), 0);
@@ -168,7 +168,7 @@ PR_TEST("Space Reversibility 2")
 {
 	auto N  = Vector3f(1, 1, 0).normalized();
 	Vector3f Nx, Ny;
-	Tangent::frame(N, Nx, Ny);
+	Tangent::unnormalized_frame(N, Nx, Ny);
 
 	auto V  = Vector3f(0, 1, 0);
 
@@ -195,7 +195,7 @@ PR_TEST("Space Reversibility 4")
 {
 	auto N  = Vector3f(1, 1, 0).normalized();
 	Vector3f Nx, Ny;
-	Tangent::frame(N, Nx, Ny);
+	Tangent::unnormalized_frame(N, Nx, Ny);
 
 	auto V  = Vector3f(0, 1, 0);
 

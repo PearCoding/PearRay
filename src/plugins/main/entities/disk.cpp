@@ -97,13 +97,8 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		pt.N = normalMatrix() * mDisk.normal();
-
+		pt.N = (normalMatrix() * mDisk.normal()).normalized();
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
-
-		pt.N.normalize();
-		pt.Nx.normalize();
-		pt.Ny.normalize();
 
 		pt.UV		   = query.UV;
 		pt.EntityID	   = id();

@@ -143,9 +143,6 @@ public:
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
-		pt.Nx.normalize();
-		pt.Ny.normalize();
-
 		pt.UVW = parameter.cwiseAbs();
 		if (pt.UVW(2) < PR_EPSILON) {
 			pt.UVW(0) /= pt.UVW(2);

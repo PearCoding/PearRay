@@ -38,9 +38,7 @@ public:
 			  const RenderTileSession&) const override
 	{
 		ShadingContext ctx;
-		Vector3f dir = mInvTransform * in.Ray.Direction;
-
-		ctx.UV			 = Spherical::uv_from_normal(dir);
+		ctx.UV			 = Spherical::uv_from_normal(mInvTransform * in.Ray.Direction);
 		ctx.WavelengthNM = in.Ray.WavelengthNM;
 
 		if constexpr (UseSplit) {
@@ -58,7 +56,7 @@ public:
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1.0f / denom;
 		} else {
-			out.PDF_S = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(dir))) : 1.0f;
+			out.PDF_S = in.Point ? Sampling::cos_hemi_pdf(std::abs(in.Point->Surface.N.dot(in.Ray.Direction))) : 1.0f;
 		}
 	}
 
@@ -68,16 +66,18 @@ public:
 		Vector2f uv;
 		if constexpr (UseDistribution) {
 			uv			 = mDistribution->sampleContinuous(in.RND, out.PDF_S);
-			out.Outgoing = Spherical::cartesian_from_uv(uv(0), uv(1));
+			out.Outgoing = mTransform * Spherical::cartesian_from_uv(uv(0), uv(1));
 
 			const float sinTheta = std::sin(uv(1) * PR_PI);
 			const float denom	 = 2 * PR_PI * PR_PI * sinTheta;
 			out.PDF_S *= (denom <= PR_EPSILON) ? 0.0f : 1 / denom;
 		} else {
 			uv			 = in.RND;
-			out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1], out.PDF_S);
+			out.Outgoing = Sampling::cos_hemi(in.RND[0], in.RND[1]);
+			out.PDF_S	 = Sampling::cos_hemi_pdf(out.Outgoing(2));
 		}
-		out.Outgoing = mTransform * Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
+
+		out.Outgoing = Tangent::fromTangentSpace(in.Point.Surface.N, in.Point.Surface.Nx, in.Point.Surface.Ny, out.Outgoing);
 
 		ShadingContext coord;
 		coord.UV		   = uv;
@@ -93,11 +93,10 @@ public:
 			   << "  <EnvironmentLight>:" << std::endl
 			   << "    Radiance:     " << (mRadiance ? mRadiance->dumpInformation() : "NONE") << std::endl
 			   << "    Background:   " << (mBackground ? mBackground->dumpInformation() : "NONE") << std::endl;
-		if (mDistribution) {
+		if (mDistribution)
 			stream << "    Distribution: " << mDistribution->width() << "x" << mDistribution->height() << std::endl;
-		} else {
+		else
 			stream << "    Distribution: NONE" << std::endl;
-		};
 
 		return stream.str();
 	}

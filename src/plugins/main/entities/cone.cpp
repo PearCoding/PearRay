@@ -181,11 +181,8 @@ public:
 			}
 		}
 
-		Tangent::frame(pt.N, pt.Nx, pt.Ny);
-
 		pt.N.normalize();
-		pt.Nx.normalize();
-		pt.Ny.normalize();
+		Tangent::frame(pt.N, pt.Nx, pt.Ny);
 
 		pt.EntityID	   = id();
 		pt.PrimitiveID = query.PrimitiveID;

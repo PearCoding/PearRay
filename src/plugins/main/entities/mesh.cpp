@@ -175,7 +175,7 @@ public:
 		Face face = mMesh->base()->getFace(query.PrimitiveID);
 		pt.N	  = face.interpolateNormals(query.UV);
 
-		Tangent::frame(pt.N, pt.Nx, pt.Ny);
+		Tangent::unnormalized_frame(pt.N, pt.Nx, pt.Ny);
 		pt.UV = query.UV;
 
 		pt.MaterialID = face.MaterialSlot < mMaterials.size() ? mMaterials.at(face.MaterialSlot) : PR_INVALID_ID;

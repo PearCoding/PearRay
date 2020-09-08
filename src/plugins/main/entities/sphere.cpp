@@ -142,6 +142,7 @@ public:
 		pt.N.normalize();
 
 		Tangent::frame(pt.N, pt.Nx, pt.Ny);
+
 		const Vector2f uv = Spherical::uv_from_normal(pt.N);
 		pt.UV			  = uv;
 		pt.EntityID		  = id();

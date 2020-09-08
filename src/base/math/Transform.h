@@ -21,6 +21,7 @@ inline Vector3f safePosition(const Vector3f& pos,
 		offset = -offset;
 	Vector3f posOff = pos + offset;
 
+	PR_OPT_LOOP
 	for (int i = 0; i < 3; ++i) {
 		if (offset[i] > 0)
 			posOff[i] = nextFloatUp(posOff[i]);

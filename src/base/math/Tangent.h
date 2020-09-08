@@ -56,13 +56,20 @@ inline void frame_duff(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
 	Ny				 = Vector3f(b, sign + N(1) * N(1) * a, -N(1));
 }
 
-inline void frame(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
+inline void unnormalized_frame(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
 {
 #ifdef PR_USE_ORTHOGONAL_FRAME_FRISVAD
 	return frame_frisvad(N, Nx, Ny);
 #else
 	return frame_duff(N, Nx, Ny);
 #endif
+}
+
+inline void frame(const Vector3f& N, Vector3f& Nx, Vector3f& Ny)
+{
+	unnormalized_frame(N, Nx, Ny);
+	Nx.normalize();
+	Ny.normalize();
 }
 
 inline void invert_frame(Vector3f& N, Vector3f& Nx, Vector3f& Ny)

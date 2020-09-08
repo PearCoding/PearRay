@@ -126,6 +126,31 @@
             ]
         },
         {
+            "name": "SpectralTest",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/bin/pearray",
+            "args": [
+                "-i",
+                "${workspaceFolder}/examples/spectral_test.prc",
+                "-v",
+                "-p"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "targetArchitecture": "x64",
+            "setupCommands": [
+                {
+                    "description": "Automatische Strukturierung und Einrückung für \"gdb\" aktivieren",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "CornellBox-Water",
             "type": "cppdbg",
             "request": "launch",
