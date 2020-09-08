@@ -39,28 +39,42 @@ public:
 		PR_PROFILE_THIS;
 
 		const auto& sctx = in.ShadingContext;
+		out.Type		 = MST_DiffuseReflection;
 
-		ShadingVector H = Scattering::halfway_reflection(in.Context.V, in.Context.L);
-		float spec = std::min(1.0f,
-							  Microfacet::ward(mRoughnessX->eval(sctx),
-											   mRoughnessY->eval(sctx),
-											   in.Context.NdotV(), in.Context.NdotL(),
-											   H.cosTheta(), H.sinPhi(), H.cosPhi()));
+		// Ward is only defined in the positive hemisphere
+		if (in.Context.NdotV() <= PR_EPSILON || in.Context.NdotL() <= PR_EPSILON) {
+			out.Weight = 0.0f;
+			out.PDF_S  = 0.0f;
+			return;
+		}
+
+		ShadingVector H = Scattering::faceforward(Scattering::halfway_reflection(in.Context.V, in.Context.L));
+
+		float spec;
+		if (mRoughnessX == mRoughnessY) {
+			spec = std::min(1.0f,
+							Microfacet::ward(mRoughnessX->eval(sctx),
+											 in.Context.NdotV(), in.Context.NdotL(), H.cosTheta()));
+		} else {
+			spec = std::min(1.0f,
+							Microfacet::ward(mRoughnessX->eval(sctx),
+											 mRoughnessY->eval(sctx),
+											 in.Context.NdotV(), in.Context.NdotL(),
+											 H.cosTheta(), H.sinPhi(), H.cosPhi()));
+		}
 
 		const float refl = mReflectivity->eval(sctx);
 		out.Weight		 = mAlbedo->eval(sctx) * (1 - refl) + spec * mSpecularity->eval(sctx) * refl;
-		out.Weight *= std::abs(in.Context.NdotL());
+		out.Weight *= std::max(0.0f, in.Context.NdotL());
 
 		out.PDF_S = std::min(std::max(Sampling::cos_hemi_pdf(in.Context.NdotL()) * (1 - refl) + spec * refl, 0.0f), 1.0f);
-
-		out.Type = MST_DiffuseReflection;
 	}
 
 	void sampleDiffusePath(const MaterialSampleInput& in, const ShadingContext& sctx, MaterialSampleOutput& out) const
 	{
 		out.L	   = Sampling::cos_hemi(in.RND[0], in.RND[1]);
 		out.PDF_S  = Sampling::cos_hemi_pdf(out.L(2));
-		out.Weight = mAlbedo->eval(sctx) * std::abs(out.L[2]);
+		out.Weight = mAlbedo->eval(sctx) * out.L[2];
 		out.Type   = MST_DiffuseReflection;
 	}
 
@@ -108,7 +122,7 @@ public:
 		Vector3f H = Spherical::cartesian(sinTheta, cosTheta, sinPhi, cosPhi);
 		out.L	   = Scattering::reflect(in.Context.V, H);
 		out.Type   = MST_SpecularReflection;
-		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::abs(out.L[2]);
+		out.Weight = mSpecularity->eval(sctx) * out.PDF_S * std::max(0.0f, out.L[2]);
 	}
 
 	void sample(const MaterialSampleInput& in, MaterialSampleOutput& out,
@@ -172,7 +186,7 @@ public:
 		return std::make_shared<WardMaterial>(id,
 											  ctx.lookupSpectralNode("albedo", 1),
 											  ctx.lookupSpectralNode("specularity", 1),
-											  ctx.lookupScalarNode("reflectivity", 1),
+											  ctx.lookupScalarNode("reflectivity", 0.5f),
 											  roughnessX, roughnessY);
 	}
 

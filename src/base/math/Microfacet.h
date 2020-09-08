@@ -275,16 +275,24 @@ inline Vector3f sample_ggx_vndf(float u0, float u1,
 //////////////////////////////
 // Other kinds
 
-/* Ward anisotropic distribution */
+/// Ward anisotropic distribution
+/// Ward brdf is only defined if NdotV and NdotL > 0
 inline float ward(float alphaX, float alphaY,
 				  float NdotV, float NdotL, float NdotH,
 				  float HdotX, float HdotY)
 {
 	const float kx = HdotX / alphaX;
 	const float ky = HdotY / alphaY;
-	return std::exp(-2 * sumProd(kx, kx, ky, ky) / (1 + NdotH))
-		   * std::sqrt(NdotL / NdotV)
-		   / (4 * PR_PI * alphaX * alphaY);
+	return std::exp(-2 * sumProd(kx, kx, ky, ky) / (1 + NdotH)) / (std::sqrt(NdotL * NdotV) * 4 * PR_PI * alphaX * alphaY);
+}
+
+/// Ward isotropic distribution
+/// Ward brdf is only defined if NdotV and NdotL > 0
+inline float ward(float alpha,
+				  float NdotV, float NdotL, float NdotH)
+{
+	const float k = alpha * alpha;
+	return std::exp(-2 / (k * (1 + NdotH))) / (std::sqrt(NdotL * NdotV) * 4 * PR_PI * k);
 }
 } // namespace Microfacet
 } // namespace PR
