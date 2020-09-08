@@ -97,9 +97,9 @@ public:
 	inline float evalGD(const ShadingVector& H, const ShadingVector& V, const ShadingVector& L, const ShadingContext& sctx, float& pdf) const
 	{
 		const float absNdotH = H.absCosTheta();
-		const float absNdotV = V(2);
+		const float absNdotV = V.absCosTheta();
 
-		PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
+		//PR_ASSERT(absNdotV >= 0, "By definition N.V has to be positive");
 		if (absNdotH <= PR_EPSILON
 			|| absNdotV <= PR_EPSILON) {
 			pdf = 0;
@@ -156,7 +156,7 @@ public:
 			SpectralBlob n1 = SpectralBlob::Ones();
 			SpectralBlob n2 = mIOR->eval(in.ShadingContext);
 
-			if (!in.Context.V.sameHemisphere(in.Context.L))
+			if (in.Context.V.cosTheta() < 0)
 				std::swap(n1, n2);
 
 			for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
@@ -275,12 +275,11 @@ public:
 
 		stream << std::boolalpha << IMaterial::dumpInformation()
 			   << "  <RoughDielectricMaterial>:" << std::endl
-			   << "    Specularity:     " << mSpecularity->dumpInformation() << std::endl
-			   << "    Transmission:     " << mTransmission->dumpInformation() << std::endl;
-
-		stream << "    IOR:             " << mIOR->dumpInformation() << std::endl;
-		stream << "    RoughnessX:      " << mRoughnessX->dumpInformation() << std::endl;
-		stream << "    RoughnessY:      " << mRoughnessY->dumpInformation() << std::endl;
+			   << "    Specularity:  " << mSpecularity->dumpInformation() << std::endl
+			   << "    Transmission: " << mTransmission->dumpInformation() << std::endl
+			   << "    IOR:          " << mIOR->dumpInformation() << std::endl
+			   << "    RoughnessX:   " << mRoughnessX->dumpInformation() << std::endl
+			   << "    RoughnessY:   " << mRoughnessY->dumpInformation() << std::endl;
 
 		return stream.str();
 	}

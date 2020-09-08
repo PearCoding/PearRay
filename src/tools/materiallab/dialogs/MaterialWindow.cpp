@@ -299,6 +299,12 @@ void MaterialWindow::buildGraphicObjects()
 	ui.createButton->setText(tr("Update"));
 }
 
+inline static void cleanup(std::vector<float>& vals)
+{
+	for (auto& v : vals)
+		v = std::isfinite(v) ? v : 0;
+}
+
 inline static void cleanup(std::vector<Vector2f>& pts, std::vector<float>& vals)
 {
 	constexpr float EPS = 0.0001f;
@@ -329,6 +335,7 @@ inline static void cleanup(std::vector<Vector2f>& pts, std::vector<float>& vals)
 
 void MaterialWindow::buildBRDF()
 {
+	cleanup(mBRDFCache);
 #if 0
 	std::vector<Vector2f> points;
 	std::vector<float> values;
@@ -342,6 +349,7 @@ void MaterialWindow::buildBRDF()
 
 void MaterialWindow::buildBTDF()
 {
+	cleanup(mBTDFCache);
 #if 0
 	std::vector<Vector2f> points;
 	std::vector<float> values;
