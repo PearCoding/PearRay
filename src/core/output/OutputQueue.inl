@@ -1,12 +1,12 @@
 // IWYU pragma: private, include "output/OutputQueue.h"
 
 namespace PR {
-inline void OutputQueue::pushSpectralFragment(const Point2i& p, const SpectralBlob& weight, const SpectralBlob& spec,
+inline void OutputQueue::pushSpectralFragment(const Point2i& p, const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
 											  const SpectralBlob& wavelengths, bool isMono, const LightPath& path)
 {
 	PR_ASSERT(mSpectralIt < mSpectralEntries.size(), "Spectral entries are exhausted");
 	const uint32* pathEntry		  = pushPath(path);
-	mSpectralEntries[mSpectralIt] = OutputSpectralEntry{ p, weight, spec, wavelengths, isMono ? (uint32)OSEF_Mono : 0, pathEntry };
+	mSpectralEntries[mSpectralIt] = OutputSpectralEntry{ p, mis, importance, radiance, wavelengths, isMono ? (uint32)OSEF_Mono : 0, pathEntry };
 	++mSpectralIt;
 }
 

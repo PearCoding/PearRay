@@ -23,7 +23,7 @@
 // Define this to let all rays regardless of depth contribute to SP AOVs, else only camera rays are considered
 //#define PR_ALL_RAYS_CONTRIBUTE_SP
 
-#define MSI(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
+#define MIS(n1, p1, n2, p2) IS::balance_term((n1), (p1), (n2), (p2))
 
 /* Based on Path Integral formulation: (here length k)
  * f(x) is the brdf. In our case a material already includes the cosine factor f(x)cos(N,x)
@@ -38,8 +38,12 @@
  * p_(xi) is the pdf with respect to the solid angle (not projected solid angle!)
  */
 namespace PR {
-using Contribution					   = std::pair<SpectralBlob, float>; // [Radiance, Probability/Weight]
-const static Contribution ZERO_CONTRIB = std::make_pair(SpectralBlob::Zero(), 0.0f);
+struct Contribution {
+	float MIS; // The system supports SpectralBlob MIS, but for path tracing intermediates float is sufficient
+	SpectralBlob Importance;
+	SpectralBlob Radiance;
+};
+const static Contribution ZERO_CONTRIB = Contribution{ 0.0f, SpectralBlob::Zero(), SpectralBlob::Zero() };
 
 constexpr float SHADOW_RAY_MIN = 0.0001f;
 constexpr float SHADOW_RAY_MAX = PR_INF;
@@ -48,14 +52,14 @@ constexpr float BOUNCE_RAY_MAX = PR_INF;
 
 class IntDirectInstance : public IIntegratorInstance {
 public:
-	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool msi)
+	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool mis)
 		: mPipeline(ctx)
 		, mSampler((maxRayDepthHard + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
 		, mInfLightCount(ctx->scene()->infiniteLights().size())
 		, mLightSampleCount(lightSamples)
 		, mMaxRayDepthSoft(maxRayDepthSoft)
 		, mMaxRayDepthHard(maxRayDepthHard)
-		, mMSIEnabled(msi)
+		, mMISEnabled(mis)
 	{
 		mInfLightHandled.resize(maxRayDepthHard * mInfLightCount, false);
 	}
@@ -69,7 +73,7 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		const bool allowMSI = mMSIEnabled && handleMSI && !infLight->hasDeltaDistribution();
+		const bool allowMIS = mMISEnabled && handleMSI && !infLight->hasDeltaDistribution();
 
 		// Sample light
 		InfiniteLightSampleInput inL;
@@ -97,10 +101,10 @@ public:
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
 
-		// Calculate hero msi pdf
+		// Calculate hero mis pdf
 		const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
-		const float msiL   = allowMSI ? MSI(1, outL.PDF_S, 1, matPDF) : 1.0f;
-		return std::make_pair(outL.Radiance * out.Weight, msiL / outL.PDF_S);
+		const float msiL   = allowMIS ? MIS(1, outL.PDF_S, 1, matPDF) : 1.0f;
+		return Contribution{ msiL, out.Weight / outL.PDF_S, outL.Radiance };
 	}
 
 	// Estimate direct (finite) light
@@ -162,24 +166,23 @@ public:
 		material->eval(in, out, session);
 		token = LightPathToken(out.Type);
 
-		float factor = 0;
-		if (mMSIEnabled && handleMSI) {
+		float mis = 1;
+		if (mMISEnabled && handleMSI) {
 			const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
-			factor			   = MSI(mLightSampleCount, pdfS, 1, matPDF) / pdfS;
-		} else
-			factor = 1.0f / pdfS;
+			mis				   = MIS(mLightSampleCount, pdfS, 1, matPDF);
+		}
 
-		return std::make_pair(outL.Weight * out.Weight, factor);
+		return Contribution{ mis, out.Weight / pdfS, outL.Weight };
 	}
 
 	// Estimate indirect light
 	bool scatterLight(RenderTileSession& session, LightPath& path,
-					  const IntersectionPoint& spt, const SpectralBlob& throughput,
+					  const IntersectionPoint& spt, float msi, const SpectralBlob& importance,
 					  IMaterial* material)
 	{
 		PR_PROFILE_THIS;
 
-		const bool allowMSI = mMSIEnabled && !material->hasDeltaDistribution();
+		const bool allowMIS = mMISEnabled && !material->hasDeltaDistribution();
 
 		constexpr float DEPTH_DROP_RATE = 0.90f;
 
@@ -215,7 +218,7 @@ public:
 		path.addToken(LightPathToken(out.Type)); // (1)
 		bool hasScattered = false;
 
-		const SpectralBlob weighted_throughput = throughput * out.Weight;
+		const SpectralBlob weighted_importance = importance * out.Weight;
 
 		// Trace bounce ray
 		GeometryPoint npt;
@@ -234,15 +237,16 @@ public:
 			}
 			hasScattered = true;
 
+			float next_mis = 1;
+
 			// If we hit a light from the frontside, apply the lighting to current path (Emissive Term)
-			if (allowMSI
+			if (allowMIS
 				&& nentity->isLight()
 				&& next.Direction.dot(spt2.Surface.Geometry.N) < -PR_EPSILON // Check if frontside
 				&& nentity->id() != spt.Surface.Geometry.EntityID			 // Check if not self
 				&& PR_LIKELY(spt2.Depth2 > PR_EPSILON)) {					 // Check if not too close
 				IEmission* ems = session.getEmission(spt2.Surface.Geometry.EmissionID);
 				if (PR_LIKELY(ems)) {
-
 					// Evaluate light
 					LightEvalInput inL;
 					inL.Entity		   = nentity;
@@ -250,20 +254,20 @@ public:
 					LightEvalOutput outL;
 					ems->eval(inL, outL, session);
 
-					const auto pdfL	 = session.sampleLightPDF(EntitySamplingInfo{ spt.Surface.P, spt.Surface.N },
-															  spt.Surface.Geometry.EntityID, nentity);
-					const float msiL = MSI(
-						1, out.PDF_S[0],
-						mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
-					SpectralBlob radiance = weighted_throughput * outL.Weight;
+					const auto pdfL = session.sampleLightPDF(EntitySamplingInfo{ spt.Surface.P, spt.Surface.N },
+															 spt.Surface.Geometry.EntityID, nentity);
+					next_mis		= MIS(
+						   1, out.PDF_S[0],
+						   mLightSampleCount, pdfL.IsArea ? IS::toSolidAngle(pdfL.Value, spt2.Depth2, aNdotV) : pdfL.Value);
 
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob(msiL), radiance, next, path);
+					session.pushSpectralFragment(SpectralBlob(next_mis * msi), weighted_importance, outL.Weight, next, path);
 					path.popToken();
 				}
 			}
 
-			evalN(session, path, spt2, weighted_throughput, nentity, nmaterial);
+			if (nmaterial)
+				evalN(session, path, spt2, msi * next_mis, weighted_importance, nentity, nmaterial);
 		} else {
 			session.tile()->statistics().addBackgroundHitCount();
 
@@ -281,12 +285,12 @@ public:
 				if (lout.PDF_S <= PR_EPSILON)
 					continue;
 
-				mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + light->id()] = !allowMSI;
+				mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + light->id()] = !allowMIS;
 				hasScattered															= true;
 
 				const float matPDF = (spt.Ray.Flags & RF_Monochrome) ? out.PDF_S[0] : out.PDF_S.sum();
-				const float msiL   = allowMSI ? MSI(1, matPDF, 1, lout.PDF_S) : 1.0f;
-				session.pushSpectralFragment(SpectralBlob(msiL), weighted_throughput * lout.Radiance, next, path);
+				const float msiL   = allowMIS ? MIS(1, matPDF, 1, lout.PDF_S) : 1.0f;
+				session.pushSpectralFragment(SpectralBlob(msiL * msi), weighted_importance, lout.Radiance, next, path);
 			}
 			path.popToken();
 		}
@@ -297,7 +301,7 @@ public:
 
 	// Every camera vertex
 	void evalN(RenderTileSession& session, LightPath& path,
-			   const IntersectionPoint& spt, const SpectralBlob& throughput,
+			   const IntersectionPoint& spt, float msi, const SpectralBlob& importance,
 			   IEntity* entity, IMaterial* material)
 	{
 		PR_UNUSED(entity);
@@ -318,7 +322,7 @@ public:
 			mInfLightHandled[spt.Ray.IterationDepth * mInfLightCount + i] = false;
 
 		// Scatter Light
-		bool hasScatterContrib = scatterLight(session, path, spt, throughput, material);
+		bool hasScatterContrib = scatterLight(session, path, spt, msi, importance, material);
 
 		if (material->hasDeltaDistribution())
 			return;
@@ -327,14 +331,14 @@ public:
 		const float factor = 1.0f / mLightSampleCount;
 		for (size_t i = 0; i < mLightSampleCount; ++i) {
 			LightPathToken token;
-			const auto pair = directLight(session, spt, token, material, hasScatterContrib);
+			const auto contrib = directLight(session, spt, token, material, hasScatterContrib);
 
-			if (pair.second <= PR_EPSILON)
+			if (contrib.MIS <= PR_EPSILON)
 				continue;
 
 			path.addToken(token);
 			path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-			session.pushSpectralFragment(SpectralBlob(factor * pair.second), throughput * pair.first, spt.Ray, path);
+			session.pushSpectralFragment(SpectralBlob(contrib.MIS * msi), factor * importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
 			path.popToken(2);
 		}
 
@@ -345,14 +349,14 @@ public:
 				continue;
 
 			LightPathToken token;
-			const auto pair = infiniteLight(session, spt, token, light.get(), material, hasScatterContrib);
+			const auto contrib = infiniteLight(session, spt, token, light.get(), material, hasScatterContrib);
 
-			if (pair.second <= PR_EPSILON)
+			if (contrib.MIS <= PR_EPSILON)
 				continue;
 
 			path.addToken(token);
 			path.addToken(LightPathToken::Background());
-			session.pushSpectralFragment(SpectralBlob(pair.second), throughput * pair.first, spt.Ray, path);
+			session.pushSpectralFragment(SpectralBlob(contrib.MIS * msi), factor * importance * contrib.Importance, contrib.Radiance, spt.Ray, path);
 			path.popToken(2);
 		}
 	}
@@ -372,7 +376,7 @@ public:
 		session.pushSPFragment(spt, path);
 #endif
 
-		// Only consider camera rays, as everything else is handled eventually by MSI
+		// Only consider camera rays, as everything else is handled eventually by MIS
 		if (entity->isLight()) {
 			IEmission* ems = session.getEmission(spt.Surface.Geometry.EmissionID);
 			if (PR_LIKELY(ems)) {
@@ -385,13 +389,13 @@ public:
 
 				if (PR_LIKELY(!outL.Weight.isZero())) {
 					path.addToken(LightPathToken(ST_EMISSIVE, SE_NONE));
-					session.pushSpectralFragment(SpectralBlob::Ones(), outL.Weight, spt.Ray, path);
+					session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), outL.Weight, spt.Ray, path);
 					path.popToken();
 				}
 			}
 		}
 
-		evalN(session, path, spt, SpectralBlob::Ones(), entity, material);
+		evalN(session, path, spt, 1, SpectralBlob::Ones(), entity, material);
 	}
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& sg)
@@ -432,7 +436,7 @@ public:
 				if (out.PDF_S <= PR_EPSILON)
 					continue;
 
-				session.pushSpectralFragment(SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
+				session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), out.Radiance, in.Ray, cb);
 			}
 		}
 	}
@@ -462,16 +466,16 @@ private:
 	const size_t mLightSampleCount;
 	const size_t mMaxRayDepthSoft;
 	const size_t mMaxRayDepthHard;
-	const bool mMSIEnabled;
+	const bool mMISEnabled;
 };
 
 class IntDirect : public IIntegrator {
 public:
-	explicit IntDirect(size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool msi)
+	explicit IntDirect(size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool mis)
 		: mLightSampleCount(lightSamples)
 		, mMaxRayDepthSoft(maxRayDepthSoft)
 		, mMaxRayDepthHard(maxRayDepthHard)
-		, mMSIEnabled(msi)
+		, mMISEnabled(mis)
 	{
 	}
 
@@ -479,14 +483,14 @@ public:
 
 	inline std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
 	{
-		return std::make_shared<IntDirectInstance>(ctx, mLightSampleCount, mMaxRayDepthSoft, mMaxRayDepthHard, mMSIEnabled);
+		return std::make_shared<IntDirectInstance>(ctx, mLightSampleCount, mMaxRayDepthSoft, mMaxRayDepthHard, mMISEnabled);
 	}
 
 private:
 	const size_t mLightSampleCount;
 	const size_t mMaxRayDepthSoft;
 	const size_t mMaxRayDepthHard;
-	const bool mMSIEnabled;
+	const bool mMISEnabled;
 };
 
 class IntDirectFactory : public IIntegratorFactory {
@@ -496,19 +500,19 @@ public:
 		mLightSampleCount = (size_t)params.getUInt("light_sample_count", 1);
 		mMaxRayDepthHard  = (size_t)params.getUInt("max_ray_depth", 64);
 		mMaxRayDepthSoft  = std::min(mMaxRayDepthHard, (size_t)params.getUInt("soft_max_ray_depth", 4));
-		mMSIEnabled		  = params.getBool("msi", true);
+		mMISEnabled		  = params.getBool("mis", true);
 	}
 
 	std::shared_ptr<IIntegrator> createInstance() const override
 	{
-		return std::make_shared<IntDirect>(mLightSampleCount, mMaxRayDepthSoft, mMaxRayDepthHard, mMSIEnabled);
+		return std::make_shared<IntDirect>(mLightSampleCount, mMaxRayDepthSoft, mMaxRayDepthHard, mMISEnabled);
 	}
 
 private:
 	size_t mLightSampleCount;
 	size_t mMaxRayDepthSoft;
 	size_t mMaxRayDepthHard;
-	bool mMSIEnabled;
+	bool mMISEnabled;
 };
 
 class IntDirectFactoryFactory : public IIntegratorPlugin {

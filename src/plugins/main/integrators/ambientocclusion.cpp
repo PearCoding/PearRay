@@ -29,8 +29,8 @@ public:
 
 	void handleShadingGroup(RenderTileSession& session, const ShadingGroup& grp)
 	{
-		Random& random	  = session.tile()->random();
-		LightPath stdPath = LightPath::createCDL(1);
+		Random& random			= session.tile()->random();
+		const LightPath stdPath = LightPath::createCDL(1);
 
 		session.tile()->statistics().addEntityHitCount(grp.size());
 		session.tile()->statistics().addDepthCount(grp.size());
@@ -40,10 +40,10 @@ public:
 
 			size_t occlusions = 0;
 			for (size_t i = 0; i < mSampleCount; ++i) {
-				Vector2f rnd  = random.get2D();
-				Vector3f dir  = Sampling::hemi(rnd(0), rnd(1));
-				Vector3f ndir = Tangent::fromTangentSpace(spt.Surface.N, spt.Surface.Nx, spt.Surface.Ny,
-														  dir);
+				const Vector2f rnd	= random.get2D();
+				const Vector3f dir	= Sampling::hemi(rnd(0), rnd(1));
+				const Vector3f ndir = Tangent::fromTangentSpace(spt.Surface.N, spt.Surface.Nx, spt.Surface.Ny,
+																dir);
 
 				const Ray n = spt.Ray.next(spt.P, ndir, spt.Surface.N, UsedRayType, PR_EPSILON, spt.Ray.MaxT);
 
@@ -51,11 +51,10 @@ public:
 					++occlusions;
 			}
 
-			SpectralBlob radiance = SpectralBlob::Ones();
-			SpectralBlob weight	  = SpectralBlob(1.0f - occlusions / (float)mSampleCount);
+			const SpectralBlob weight = SpectralBlob(1.0f - occlusions / (float)mSampleCount);
 
 			session.pushSPFragment(spt, stdPath);
-			session.pushSpectralFragment(weight, radiance, spt.Ray, stdPath);
+			session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), weight, spt.Ray, stdPath);
 		}
 	}
 

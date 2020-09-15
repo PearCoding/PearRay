@@ -177,7 +177,7 @@ public:
 			}
 
 			session.pushSPFragment(spt, stdPath);
-			session.pushSpectralFragment(SpectralBlob::Ones(), radiance, spt.Ray, stdPath);
+			session.pushSpectralFragment(SpectralBlob::Ones(), SpectralBlob::Ones(), radiance, spt.Ray, stdPath);
 		}
 	}
 

@@ -89,7 +89,7 @@ void FrameBufferBucket::commitSpectralsXYZ(const OutputSpectralEntry* entries, s
 		const Point2i rp		   = entry.Position + filterSize;
 		const bool isMono		   = entry.Flags & OSEF_Mono;
 		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob(1.0f / PR_SPECTRAL_BLOB_SIZE);
-		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance;
+		const SpectralBlob contrib = factor * entry.contribution();
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -147,7 +147,7 @@ void FrameBufferBucket::commitSpectralsXYZNoFilter(const OutputSpectralEntry* en
 		const Point2i sp		   = entry.Position;
 		const bool isMono		   = entry.Flags & OSEF_Mono;
 		const SpectralBlob factor  = isMono ? SpectralBlobUtils::HeroOnly() : SpectralBlob(1.0f / PR_SPECTRAL_BLOB_SIZE);
-		const SpectralBlob contrib = factor * entry.Weight * entry.Radiance;
+		const SpectralBlob contrib = factor * entry.contribution();
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -195,7 +195,7 @@ void FrameBufferBucket::commitSpectralsMono(const OutputSpectralEntry* entries, 
 		const auto& entry = entries[i];
 
 		const Point2i rp	= entry.Position + filterSize;
-		const float contrib = entry.Weight[0] * entry.Radiance[0];
+		const float contrib = entry.contribution(0);
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
@@ -248,7 +248,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 		const auto& entry = entries[i];
 
 		const Point2i sp	= entry.Position;
-		const float contrib = entry.Weight[0] * entry.Radiance[0];
+		const float contrib = entry.contribution(0);
 
 #ifndef PR_NO_SPECTRAL_CHECKS
 		// Check for valid samples
