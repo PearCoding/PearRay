@@ -19,9 +19,8 @@ namespace PR {
 constexpr RayFlags UsedRayType = RF_Bounce; // Do not use RF_Shadow, as most lights will be visible. We don't want that
 class IntAOInstance : public IIntegratorInstance {
 public:
-	explicit IntAOInstance(RenderContext* ctx, size_t sample_count)
-		: mPipeline(ctx)
-		, mSampleCount(sample_count)
+	explicit IntAOInstance(size_t sample_count)
+		: mSampleCount(sample_count)
 	{
 	}
 
@@ -62,12 +61,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		mPipeline.reset(session.tile());
-
-		while (!mPipeline.isFinished()) {
-			mPipeline.runPipeline();
-			while (mPipeline.hasShadingGroup()) {
-				auto sg = mPipeline.popShadingGroup(session);
+		while (!session.pipeline()->isFinished()) {
+			session.pipeline()->runPipeline();
+			while (session.pipeline()->hasShadingGroup()) {
+				auto sg = session.pipeline()->popShadingGroup(session);
 				if (sg.isBackground())
 					session.tile()->statistics().addBackgroundHitCount(sg.size());
 				else
@@ -77,7 +74,6 @@ public:
 	}
 
 private:
-	StreamPipeline mPipeline;
 	const size_t mSampleCount;
 };
 
@@ -90,9 +86,9 @@ public:
 
 	virtual ~IntAO() = default;
 
-	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
+	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext*, size_t) override
 	{
-		return std::make_shared<IntAOInstance>(ctx, mSampleCount);
+		return std::make_shared<IntAOInstance>(mSampleCount);
 	}
 
 private:

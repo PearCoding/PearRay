@@ -28,6 +28,7 @@ struct PR_LIB_CORE RenderTileContext {
 };
 
 class ICamera;
+struct CameraRay;
 class RenderContext;
 class ISampler;
 class PR_LIB_CORE RenderTile {
@@ -43,7 +44,7 @@ public:
 		mContext.IterationCount		  = 0;
 	}
 
-	std::optional<Ray> constructCameraRay(const Point2i& p, uint32 sample);
+	std::optional<CameraRay> constructCameraRay(const Point2i& p, uint32 sample);
 
 	inline bool isWorking() const { return mWorking; }
 	bool accuire();

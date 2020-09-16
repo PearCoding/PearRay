@@ -194,7 +194,6 @@ inline static void assignRay(const Ray& ray, RTCRay& rray)
 	rray.flags = 0;
 	rray.tfar  = ray.MaxT;
 	rray.tnear = ray.MinT;
-	rray.time  = ray.Time;
 	rray.mask  = MASK_ALL;
 }
 
@@ -213,8 +212,8 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 	int valids[PACKAGE_SIZE];
 	std::fill_n(valids, PACKAGE_SIZE, VALID_ALL); // All are valid
 
-	while (rays.hasNextGroup()) {
-		RayGroup grp = rays.getNextGroup();
+	while (rays.hasNextSpan()) {
+		RaySpan grp = rays.getNextSpan();
 
 		const RTCIntersectContextFlags flags = grp.isCoherent() ? RTC_INTERSECT_CONTEXT_FLAG_COHERENT : RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
 
@@ -238,7 +237,6 @@ void Scene::traceRays(RayStream& rays, HitStream& hits) const
 			grp.copyDirectionZRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.dir_z);
 			grp.copyMaxTRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.tfar);
 			grp.copyMinTRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.tnear);
-			grp.copyTimeRaw(i * PACKAGE_SIZE, PACKAGE_SIZE, rhits.ray.time);
 
 			rtcInitIntersectContext(&ctx);
 			ctx.flags = flags;

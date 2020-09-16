@@ -4,6 +4,7 @@
 #include "RenderContext.h"
 #include "RenderTile.h"
 #include "RenderTileSession.h"
+#include "StreamPipeline.h"
 #include "buffer/FrameBufferBucket.h"
 #include "buffer/FrameBufferSystem.h"
 #include "integrator/IIntegrator.h"
@@ -21,6 +22,12 @@ RenderThread::RenderThread(uint32 index, RenderContext* renderer)
 	, mTile(nullptr)
 {
 	PR_ASSERT(renderer, "RenderThread needs valid renderer");
+
+	mPipeline = std::make_unique<StreamPipeline>(renderer);
+}
+
+RenderThread::~RenderThread()
+{
 }
 
 constexpr size_t QUEUE_SIZE		 = 1024;
@@ -43,12 +50,13 @@ void RenderThread::main()
 		 mTile && !shouldStop();
 		 mTile = mRenderer->getNextTile()) {
 
-		RenderTileSession session(mThreadIndex, mTile, queue, bucket);
+		RenderTileSession session(mThreadIndex, mTile, pipeline(), queue, bucket);
 
 		mTile->incIteration();
 		mStatistics.addTileCount();
 
 		bucket->clear(true);
+		mPipeline->reset(mTile);
 		integrator->onTile(session);
 		if (PR_UNLIKELY(shouldStop())) {
 			mTile->release();

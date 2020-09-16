@@ -14,7 +14,7 @@ constexpr int DIR_C_S = 2;
 constexpr int DIR_C_S = 3;
 #endif
 
-RayGroup::RayGroup(const RayStream* stream, size_t offset, size_t size, bool coherent)
+RaySpan::RaySpan(const RayStream* stream, size_t offset, size_t size, bool coherent)
 	: mStream(stream)
 	, mOffset(offset)
 	, mSize(size)
@@ -49,14 +49,12 @@ RayStream::RayStream(size_t raycount)
 
 	mPixelIndex.resize(padSize<uint32>(mSize));
 	mIterationDepth.resize(padSize<uint16>(mSize));
-	mTime.resize(padSize<unorm16>(mSize));
 	mMinT.resize(padSize<float>(mSize));
 	mMaxT.resize(padSize<float>(mSize));
 	mFlags.resize(mSize);
-	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i) {
-		mWeight[i].resize(padSize<float>(mSize));
+	mGroupID.resize(mSize);
+	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
 		mWavelengthNM[i].resize(padSize<float>(mSize));
-	}
 }
 
 RayStream::~RayStream()
@@ -86,14 +84,10 @@ void RayStream::addRay(const Ray& ray)
 
 	mIterationDepth[mCurrentWritePos] = ray.IterationDepth;
 	mPixelIndex[mCurrentWritePos]	  = ray.PixelIndex;
-	mTime[mCurrentWritePos]			  = to_unorm16(ray.Time);
 	mMinT[mCurrentWritePos]			  = ray.MinT;
 	mMaxT[mCurrentWritePos]			  = ray.MaxT;
 	mFlags[mCurrentWritePos]		  = ray.Flags;
-
-	PR_OPT_LOOP
-	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
-		mWeight[i][mCurrentWritePos] = ray.Weight(i);
+	mGroupID[mCurrentWritePos]		  = ray.GroupID;
 
 	PR_OPT_LOOP
 	for (size_t i = 0; i < PR_SPECTRAL_BLOB_SIZE; ++i)
@@ -111,14 +105,14 @@ void RayStream::reset()
 /* A algorithm grouping rays together for coherent intersections
  * would give this function more meaning.
  */
-RayGroup RayStream::getNextGroup()
+RaySpan RayStream::getNextSpan()
 {
 	PR_PROFILE_THIS;
 
-	PR_ASSERT(hasNextGroup(), "Never call when not available");
+	PR_ASSERT(hasNextSpan(), "Never call when not available");
 
 	// TODO: Check coherence
-	RayGroup grp(this, 0, currentSize(), false);
+	RaySpan grp(this, 0, currentSize(), false);
 	mCurrentReadPos += grp.size();
 	return grp;
 }
@@ -161,14 +155,10 @@ Ray RayStream::getRay(size_t id) const
 
 	ray.IterationDepth = mIterationDepth[id];
 	ray.PixelIndex	   = mPixelIndex[id];
-	ray.Time		   = from_unorm16(mTime[id]);
 	ray.Flags		   = mFlags[id];
 	ray.MinT		   = mMinT[id];
 	ray.MaxT		   = mMaxT[id];
-
-	PR_OPT_LOOP
-	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)
-		ray.Weight[k] = mWeight[k][id];
+	ray.GroupID		   = mGroupID[id];
 
 	PR_OPT_LOOP
 	for (size_t k = 0; k < PR_SPECTRAL_BLOB_SIZE; ++k)

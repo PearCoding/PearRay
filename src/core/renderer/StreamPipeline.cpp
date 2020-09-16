@@ -2,20 +2,21 @@
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "camera/ICamera.h"
 #include "math/Bits.h"
 
 namespace PR {
 StreamPipeline::StreamPipeline(RenderContext* ctx)
 	: mContext(ctx)
 	, mTile(nullptr)
+	, mWriteRayStream(std::make_unique<RayStream>(ctx->settings().maxParallelRays))
+	, mReadRayStream(std::make_unique<RayStream>(ctx->settings().maxParallelRays))
+	, mHitStream(ctx->settings().maxParallelRays)
+	, mGroupContainer()
 	, mCurrentVirtualPixelIndex(0)
 	, mCurrentPixelIndex(0)
 	, mMaxPixelCount(0)
 {
-	const auto initialSize = ctx->settings().maxParallelRays;
-	mWriteRayStream		   = std::make_unique<RayStream>(initialSize);
-	mReadRayStream		   = std::make_unique<RayStream>(initialSize);
-	mHitStream			   = std::make_unique<HitStream>(initialSize);
 }
 
 StreamPipeline::~StreamPipeline()
@@ -32,7 +33,8 @@ void StreamPipeline::reset(RenderTile* tile)
 
 	mWriteRayStream->reset();
 	mReadRayStream->reset();
-	mHitStream->reset();
+	mHitStream.reset();
+	mGroupContainer.reset();
 }
 
 bool StreamPipeline::isFinished() const
@@ -65,17 +67,17 @@ void StreamPipeline::runPipeline()
 	mWriteRayStream->reset();
 
 	// Trace rays
-	mHitStream->reset();
+	mHitStream.reset();
 	mContext->scene()->traceRays(
 		*mReadRayStream,
-		*mHitStream);
+		mHitStream);
 
 	// Early exit
 	if (mContext->isStopping())
 		return;
 
 	// Setup hit stream
-	mHitStream->setup(mContext->settings().sortHits);
+	mHitStream.setup(mContext->settings().sortHits);
 }
 
 void StreamPipeline::fillWithCameraRays()
@@ -99,10 +101,31 @@ void StreamPipeline::fillWithCameraRays()
 
 		const Point2i p = Point2i(x, y) + mTile->start();
 
-		std::optional<Ray> ray = mTile->constructCameraRay(p, iterCount);
-		if (ray.has_value()) {
-			ray.value().PixelIndex = p(1) * slice + p(0);
-			enqueueCameraRay(ray.value());
+		std::optional<CameraRay> camera_ray = mTile->constructCameraRay(p, iterCount);
+		if (camera_ray.has_value()) {
+			uint32 grp_id;
+			{
+				RayGroup grp;
+				grp.Importance	  = camera_ray.value().Importance;
+				grp.WavelengthNM  = camera_ray.value().WavelengthNM;
+				grp.WavelengthPDF = camera_ray.value().WavelengthPDF;
+				grp.Time		  = camera_ray.value().Time;
+				grp.TimePDF		  = 1; // TODO: Support this?
+				grp_id			  = mGroupContainer.registerGroup(std::move(grp));
+			}
+
+			Ray ray;
+			ray.Origin		   = camera_ray.value().Origin;
+			ray.Direction	   = camera_ray.value().Direction;
+			ray.MaxT		   = camera_ray.value().MaxT;
+			ray.MinT		   = camera_ray.value().MinT;
+			ray.WavelengthNM   = camera_ray.value().WavelengthNM;
+			ray.IterationDepth = 0;
+			ray.GroupID		   = grp_id;
+			ray.PixelIndex	   = p(1) * slice + p(0);
+			ray.Flags		   = (camera_ray.value().IsMonochrome ? (uint32)RF_Monochrome : 0) | RF_Camera;
+
+			enqueueCameraRay(ray);
 		}
 		++mCurrentPixelIndex;
 	}

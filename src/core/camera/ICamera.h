@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entity/ITransformable.h"
-#include "ray/Ray.h"
+#include "spectral/SpectralBlob.h"
 
 namespace PR {
 struct PR_LIB_CORE CameraSample {
@@ -10,8 +10,23 @@ struct PR_LIB_CORE CameraSample {
 	Point2f Lens;
 	uint32 PixelIndex;
 	float Time;
-	SpectralBlob Weight;
+	SpectralBlob Importance;
 	SpectralBlob WavelengthNM;
+	SpectralBlob WavelengthPDF;
+};
+
+struct PR_LIB_CORE CameraRay {
+	Vector3f Origin	   = Vector3f::Zero();
+	Vector3f Direction = Vector3f::Zero();
+	float MinT		   = PR_EPSILON;
+	float MaxT		   = PR_INF;
+	bool IsMonochrome  = false;
+
+	// Optional camera ray adaptations, if zero or negative, previous camera sample will be used
+	SpectralBlob Importance	   = SpectralBlob::Zero();
+	SpectralBlob WavelengthNM  = SpectralBlob::Zero();
+	SpectralBlob WavelengthPDF = SpectralBlob::Zero();
+	float Time				   = 0;
 };
 
 class PR_LIB_CORE ICamera : public ITransformable {
@@ -21,7 +36,7 @@ public:
 	ICamera(uint32 id, const std::string& name);
 	virtual ~ICamera();
 
-	virtual std::optional<Ray> constructRay(const CameraSample& sample) const = 0;
+	virtual std::optional<CameraRay> constructRay(const CameraSample& sample) const = 0;
 
 	// This frame should be used as default initializer if applicable
 	const static Vector3f DefaultDirection;

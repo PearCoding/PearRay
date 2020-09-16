@@ -4,6 +4,7 @@
 #include "entity/IEntity.h"
 #include "geometry/GeometryPoint.h"
 #include "ray/Ray.h"
+#include "ray/RayGroupContainer.h"
 #include "ray/RayStream.h"
 #include "renderer/RenderContext.h"
 #include "renderer/RenderTile.h"
@@ -28,9 +29,10 @@ public:
 	inline void enqueueLightRay(const Ray& ray);
 
 	inline Ray getTracedRay(size_t id) const;
+	inline const RayGroup& getRayGroup(size_t id) const;
 
 	inline bool hasShadingGroup() const;
-	inline ShadingGroup popShadingGroup(const RenderTileSession& session) const;
+	inline ShadingGroup popShadingGroup(const RenderTileSession& session);
 
 private:
 	void fillWithCameraRays();
@@ -39,7 +41,8 @@ private:
 	RenderTile* mTile;
 	std::unique_ptr<RayStream> mWriteRayStream;
 	std::unique_ptr<RayStream> mReadRayStream;
-	std::unique_ptr<HitStream> mHitStream;
+	HitStream mHitStream;
+	RayGroupContainer mGroupContainer;
 
 	uint64 mCurrentVirtualPixelIndex;
 	uint64 mCurrentPixelIndex;

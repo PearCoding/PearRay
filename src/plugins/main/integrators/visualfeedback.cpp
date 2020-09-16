@@ -81,9 +81,8 @@ static const SpectralBlob FalseColor = SpectralBlob(1, 0, 0, 1);
 
 class IntVFInstance : public IIntegratorInstance {
 public:
-	explicit IntVFInstance(RenderContext* ctx, VisualFeedbackMode mode, bool applyDot)
-		: mPipeline(ctx)
-		, mMode(mode)
+	explicit IntVFInstance(VisualFeedbackMode mode, bool applyDot)
+		: mMode(mode)
 		, mApplyDot(applyDot)
 	{
 	}
@@ -185,12 +184,10 @@ public:
 	{
 		PR_PROFILE_THIS;
 
-		mPipeline.reset(session.tile());
-
-		while (!mPipeline.isFinished()) {
-			mPipeline.runPipeline();
-			while (mPipeline.hasShadingGroup()) {
-				auto sg = mPipeline.popShadingGroup(session);
+		while (!session.pipeline()->isFinished()) {
+			session.pipeline()->runPipeline();
+			while (session.pipeline()->hasShadingGroup()) {
+				auto sg = session.pipeline()->popShadingGroup(session);
 				session.tile()->statistics().addDepthCount(sg.size());
 				if (sg.isBackground())
 					session.tile()->statistics().addBackgroundHitCount(sg.size());
@@ -201,7 +198,6 @@ public:
 	}
 
 private:
-	StreamPipeline mPipeline;
 	const VisualFeedbackMode mMode;
 	const bool mApplyDot;
 };
@@ -217,9 +213,9 @@ public:
 
 	virtual ~IntVF() = default;
 
-	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext* ctx, size_t) override
+	std::shared_ptr<IIntegratorInstance> createThreadInstance(RenderContext*, size_t) override
 	{
-		return std::make_shared<IntVFInstance>(ctx, mMode, mApplyDot);
+		return std::make_shared<IntVFInstance>(mMode, mApplyDot);
 	}
 
 private:

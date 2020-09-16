@@ -14,7 +14,7 @@ public:
 	~OutputQueue();
 
 	inline void pushSpectralFragment(const Point2i& p, const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
-									 const SpectralBlob& wavelengths, bool isMono, const LightPath& path);
+									 const SpectralBlob& wavelengths, bool isMono, uint32 rayGroupID, const LightPath& path);
 	inline void pushSPFragment(const Point2i& p, const IntersectionPoint& pt, const LightPath& path);
 	inline void pushFeedbackFragment(const Point2i& p, uint32 feedback);
 

@@ -23,12 +23,17 @@ inline Ray StreamPipeline::getTracedRay(size_t id) const
 	return mReadRayStream->getRay(id);
 }
 
-inline bool StreamPipeline::hasShadingGroup() const { return mHitStream->hasNextGroup(); }
+inline const RayGroup& StreamPipeline::getRayGroup(size_t id) const
+{
+	return mGroupContainer.group(id);
+}
 
-inline ShadingGroup StreamPipeline::popShadingGroup(const RenderTileSession& session) const
+inline bool StreamPipeline::hasShadingGroup() const { return mHitStream.hasNextGroup(); }
+
+inline ShadingGroup StreamPipeline::popShadingGroup(const RenderTileSession& session)
 {
 	PR_ASSERT(hasShadingGroup(), "Trying to pop non existant shading group");
 
-	return ShadingGroup(mHitStream->getNextGroup(), this, session);
+	return ShadingGroup(mHitStream.getNextGroup(), this, session);
 }
 } // namespace PR

@@ -78,7 +78,7 @@ RenderTile::~RenderTile()
 /* Our sample approach gives each pixel in a single tile the SAME samples (except for random sampler)! 
  * This may sometimes good, but also bad... more investigations required...
  */
-std::optional<Ray> RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
+std::optional<CameraRay> RenderTile::constructCameraRay(const Point2i& p, uint32 sample)
 {
 	PR_PROFILE_THIS;
 
@@ -86,11 +86,12 @@ std::optional<Ray> RenderTile::constructCameraRay(const Point2i& p, uint32 sampl
 	++mContext.PixelSamplesRendered;
 
 	CameraSample cameraSample;
-	cameraSample.SensorSize = mImageSize;
-	cameraSample.Pixel		= (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(sample).array() - Point2f(0.5f, 0.5f);
-	cameraSample.Lens		= mLensSampler->generate2D(sample);
-	cameraSample.Time		= mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
-	cameraSample.Weight		= mWeight_Cache;
+	cameraSample.SensorSize	   = mImageSize;
+	cameraSample.Pixel		   = (p + mRenderContext->viewOffset()).cast<float>() + mAASampler->generate2D(sample).array() - Point2f(0.5f, 0.5f);
+	cameraSample.Lens		   = mLensSampler->generate2D(sample);
+	cameraSample.Time		   = mTimeAlpha * mTimeSampler->generate1D(sample) + mTimeBeta;
+	cameraSample.Importance	   = mWeight_Cache;
+	cameraSample.WavelengthPDF = 1;
 
 	// Sample wavelength
 	if (mSpectralMonotonic) {
@@ -108,7 +109,7 @@ std::optional<Ray> RenderTile::constructCameraRay(const Point2i& p, uint32 sampl
 #else
 				cameraSample.WavelengthNM(i) = CIE::sample_xyz(k, pdf);
 #endif
-				cameraSample.Weight(i) /= pdf;
+				cameraSample.WavelengthPDF(i) = pdf;
 			}
 		} else if (mSpectralStart == PR_VISIBLE_WAVELENGTH_START && mSpectralEnd == PR_VISIBLE_WAVELENGTH_END) {
 			float u = mSpectralSampler->generate1D(sample);
@@ -121,7 +122,7 @@ std::optional<Ray> RenderTile::constructCameraRay(const Point2i& p, uint32 sampl
 #else
 				cameraSample.WavelengthNM(i) = CIE::sample_vis_xyz(k, pdf);
 #endif
-				cameraSample.Weight(i) /= pdf;
+				cameraSample.WavelengthPDF(i) = pdf;
 			}
 		} else {
 #endif
@@ -135,11 +136,25 @@ std::optional<Ray> RenderTile::constructCameraRay(const Point2i& p, uint32 sampl
 #endif
 	}
 
-	std::optional<Ray> ray = mCamera->constructRay(cameraSample);
-	if (ray.has_value() && mSpectralMonotonic) {
-		ray.value().Flags |= RF_Monochrome;
-		ray.value().Weight *= SpectralBlobUtils::HeroOnly();
+	std::optional<CameraRay> ray = mCamera->constructRay(cameraSample);
+	if (PR_LIKELY(ray.has_value())) {
+		if (PR_LIKELY(ray.value().Importance.isZero()))
+			ray.value().Importance = cameraSample.Importance;
+		if (PR_LIKELY(ray.value().WavelengthNM.isZero()))
+			ray.value().WavelengthNM = cameraSample.WavelengthNM;
+		if (PR_LIKELY(ray.value().WavelengthPDF.isZero()))
+			ray.value().WavelengthPDF = cameraSample.WavelengthPDF;
+		if (PR_LIKELY(ray.value().Time <= 0.0f))
+			ray.value().Time = cameraSample.Time;
+
+		// Set monochrome by force if necessary
+		if (mSpectralMonotonic)
+			ray.value().IsMonochrome = true;
+
+		if (ray.value().IsMonochrome)
+			ray.value().Importance *= SpectralBlobUtils::HeroOnly();
 	}
+
 	return ray;
 }
 

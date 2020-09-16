@@ -14,35 +14,35 @@
 
 namespace PR {
 
-class RenderTile;
-class IMaterial;
+class FrameBufferBucket;
 class IEmission;
+class IMaterial;
 class IntersectionPoint;
 class LightPath;
 class OutputQueue;
-class FrameBufferBucket;
+class RayGroup;
+class RenderTile;
+class StreamPipeline;
 
 class PR_LIB_CORE RenderTileSession {
 public:
 	RenderTileSession(); // Dummy session!
-	RenderTileSession(uint32 threadIndex, RenderTile* tile,
+	RenderTileSession(uint32 threadIndex, RenderTile* tile, StreamPipeline* pipeline,
 					  const std::shared_ptr<OutputQueue>& queue,
 					  const std::shared_ptr<FrameBufferBucket>& bucket);
 	~RenderTileSession();
 
-	inline uint32 threadID() const
-	{
-		return mThread;
-	}
+	inline uint32 threadID() const { return mThread; }
 
-	inline RenderTile* tile() const
-	{
-		return mTile;
-	}
+	inline RenderTile* tile() const { return mTile; }
+	inline StreamPipeline* pipeline() const { return mPipeline; }
 
 	IEntity* getEntity(uint32 id) const;
 	IMaterial* getMaterial(uint32 id) const;
 	IEmission* getEmission(uint32 id) const;
+
+	inline const RayGroup& getRayGroup(const Ray& ray) const { return getRayGroup(ray.GroupID); }
+	const RayGroup& getRayGroup(uint32 id) const;
 
 	bool traceBounceRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const;
 	bool traceShadowRay(const Ray& ray, float distance, uint32 entity_id) const;
@@ -64,6 +64,7 @@ private:
 
 	uint32 mThread;
 	RenderTile* mTile;
+	StreamPipeline* mPipeline;
 	std::shared_ptr<OutputQueue> mOutputQueue;
 	std::shared_ptr<FrameBufferBucket> mBucket;
 };

@@ -53,8 +53,7 @@ constexpr float BOUNCE_RAY_MAX = PR_INF;
 class IntDirectInstance : public IIntegratorInstance {
 public:
 	explicit IntDirectInstance(RenderContext* ctx, size_t lightSamples, size_t maxRayDepthSoft, size_t maxRayDepthHard, bool mis)
-		: mPipeline(ctx)
-		, mSampler((maxRayDepthHard + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
+		: mSampler((maxRayDepthHard + 1) * (lightSamples * 3 + ctx->scene()->infiniteLights().size() * 2 + 3))
 		, mInfLightCount(ctx->scene()->infiniteLights().size())
 		, mLightSampleCount(lightSamples)
 		, mMaxRayDepthSoft(maxRayDepthSoft)
@@ -202,23 +201,25 @@ public:
 		if (PR_UNLIKELY(out.PDF_S[0] <= PR_EPSILON))
 			return false;
 
+		SpectralBlob next_importance = importance;
+
 		// Construct next ray
 		Ray next = spt.Ray.next(spt.P, out.globalL(spt), spt.Surface.N, RF_Bounce, BOUNCE_RAY_MIN, BOUNCE_RAY_MAX);
 		if (material->hasDeltaDistribution())
-			next.Weight /= scatProb;
+			next_importance /= scatProb;
 		else
-			next.Weight /= (scatProb * out.PDF_S[0]); // The sampling is only done by the hero wavelength
+			next_importance /= (scatProb * out.PDF_S[0]); // The sampling is only done by the hero wavelength
 
 		if (material->isSpectralVarying())
 			next.Flags |= RF_Monochrome;
 
-		if (PR_UNLIKELY(next.Weight.isZero()))
+		if (PR_UNLIKELY(next_importance.isZero()))
 			return false;
 
 		path.addToken(LightPathToken(out.Type)); // (1)
 		bool hasScattered = false;
 
-		const SpectralBlob weighted_importance = importance * out.Weight;
+		const SpectralBlob weighted_importance = next_importance * out.Weight;
 
 		// Trace bounce ray
 		GeometryPoint npt;
@@ -444,12 +445,10 @@ public:
 	void onTile(RenderTileSession& session) override
 	{
 		PR_PROFILE_THIS;
-		mPipeline.reset(session.tile());
-
-		while (!mPipeline.isFinished()) {
-			mPipeline.runPipeline();
-			while (mPipeline.hasShadingGroup()) {
-				auto sg = mPipeline.popShadingGroup(session);
+		while (!session.pipeline()->isFinished()) {
+			session.pipeline()->runPipeline();
+			while (session.pipeline()->hasShadingGroup()) {
+				auto sg = session.pipeline()->popShadingGroup(session);
 				if (sg.isBackground())
 					handleBackground(session, sg);
 				else
@@ -459,7 +458,6 @@ public:
 	}
 
 private:
-	StreamPipeline mPipeline;
 	SampleArray mSampler;
 	std::vector<bool> mInfLightHandled;
 	const size_t mInfLightCount;

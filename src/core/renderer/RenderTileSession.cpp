@@ -2,6 +2,7 @@
 #include "Profiler.h"
 #include "RenderContext.h"
 #include "RenderTile.h"
+#include "StreamPipeline.h"
 #include "buffer/FrameBufferBucket.h"
 #include "material/IMaterial.h"
 #include "output/OutputQueue.h"
@@ -13,15 +14,17 @@ namespace PR {
 RenderTileSession::RenderTileSession()
 	: mThread(0)
 	, mTile(nullptr)
+	, mPipeline(nullptr)
 	, mOutputQueue()
 {
 }
 
-RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile,
+RenderTileSession::RenderTileSession(uint32 thread, RenderTile* tile, StreamPipeline* pipeline,
 									 const std::shared_ptr<OutputQueue>& queue,
 									 const std::shared_ptr<FrameBufferBucket>& bucket)
 	: mThread(thread)
 	, mTile(tile)
+	, mPipeline(pipeline)
 	, mOutputQueue(queue)
 	, mBucket(bucket)
 {
@@ -51,6 +54,12 @@ IEmission* RenderTileSession::getEmission(uint32 id) const
 	return id < mTile->context()->scene()->emissions().size()
 			   ? mTile->context()->scene()->emissions()[id].get()
 			   : nullptr;
+}
+
+const RayGroup& RenderTileSession::getRayGroup(uint32 id) const
+{
+	PR_ASSERT(mPipeline, "Expected valid stream pipeline");
+	return mPipeline->getRayGroup(id);
 }
 
 bool RenderTileSession::traceBounceRay(const Ray& ray, Vector3f& pos, GeometryPoint& pt, IEntity*& entity, IMaterial*& material) const
@@ -114,9 +123,10 @@ void RenderTileSession::pushSpectralFragment(const SpectralBlob& mis, const Spec
 											 const Ray& ray, const LightPath& path) const
 {
 	PR_PROFILE_THIS;
-	auto coords = localCoordinates(ray.PixelIndex);
-	mOutputQueue->pushSpectralFragment(coords, mis, /*TODO: Remove ray.Weight*/ importance * ray.Weight, radiance,
-									   ray.WavelengthNM, ray.Flags & RF_Monochrome, path);
+	auto coords		= localCoordinates(ray.PixelIndex);
+	const auto& grp = getRayGroup(ray);
+	mOutputQueue->pushSpectralFragment(coords, mis, grp.Importance * importance / grp.WavelengthPDF, radiance,
+									   ray.WavelengthNM, ray.Flags & RF_Monochrome, ray.GroupID, path);
 	if (mOutputQueue->isReadyToCommit())
 		mOutputQueue->commitAndFlush(mBucket.get());
 }
@@ -190,7 +200,7 @@ IEntity* RenderTileSession::sampleLight(const EntitySamplingInfo& info, uint32 i
 	return light;
 }
 
-constexpr size_t PR_LARGE_LIGHT_THRESHOLD = 1000;
+constexpr size_t PR_LARGE_LIGHT_THRESHOLD = 100;
 EntitySamplePDF RenderTileSession::sampleLightPDF(const EntitySamplingInfo& info, uint32 ignore_id, IEntity* light) const
 {
 	PR_ASSERT(light->id() != ignore_id, "Picked light can not be the one ignored!");
@@ -199,7 +209,6 @@ EntitySamplePDF RenderTileSession::sampleLightPDF(const EntitySamplingInfo& info
 	if (lights.empty())
 		return EntitySamplePDF{ 0, true };
 
-	// TODO: Maybe have an approximation for large amounts of lights?
 	if (lights.size() < PR_LARGE_LIGHT_THRESHOLD) {
 		for (const auto& l : lights) {
 			if (l->id() == ignore_id) {

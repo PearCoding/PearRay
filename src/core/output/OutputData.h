@@ -15,6 +15,7 @@ struct PR_LIB_CORE OutputSpectralEntry {
 	SpectralBlob Radiance;
 	SpectralBlob Wavelengths;
 	uint32 Flags;
+	uint32 RayGroupID;
 	const uint32* Path;
 
 	inline SpectralBlob contribution() const { return MIS * Importance * Radiance; }

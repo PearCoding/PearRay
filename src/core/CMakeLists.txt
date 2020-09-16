@@ -89,6 +89,8 @@ set(PR_Src
   path/LPE_RegExpr.h
   path/LPE_RegState.h
   ray/Ray.h
+  ray/RayGroup.h
+  ray/RayGroupContainer.h
   ray/RayStream.cpp
   ray/RayStream.h
   renderer/RenderContext.cpp

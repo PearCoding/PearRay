@@ -2,11 +2,11 @@
 
 namespace PR {
 inline void OutputQueue::pushSpectralFragment(const Point2i& p, const SpectralBlob& mis, const SpectralBlob& importance, const SpectralBlob& radiance,
-											  const SpectralBlob& wavelengths, bool isMono, const LightPath& path)
+											  const SpectralBlob& wavelengths, bool isMono, uint32 rayGroupID, const LightPath& path)
 {
 	PR_ASSERT(mSpectralIt < mSpectralEntries.size(), "Spectral entries are exhausted");
 	const uint32* pathEntry		  = pushPath(path);
-	mSpectralEntries[mSpectralIt] = OutputSpectralEntry{ p, mis, importance, radiance, wavelengths, isMono ? (uint32)OSEF_Mono : 0, pathEntry };
+	mSpectralEntries[mSpectralIt] = OutputSpectralEntry{ p, mis, importance, radiance, wavelengths, isMono ? (uint32)OSEF_Mono : 0, rayGroupID, pathEntry };
 	++mSpectralIt;
 }
 

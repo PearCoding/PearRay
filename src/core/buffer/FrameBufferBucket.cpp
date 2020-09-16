@@ -292,7 +292,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			var_e->blendFragment(sp, 0, entry.SP.Ray.Weight[0] * (val), blend);                               \
+			var_e->blendFragment(sp, 0, val, blend);                                                          \
 		}                                                                                                     \
 	}
 
@@ -307,7 +307,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			pair.second->blendFragment(sp, 0, entry.SP.Ray.Weight[0] * (val), blend);                         \
+			pair.second->blendFragment(sp, 0, val, blend);                                                    \
 		}                                                                                                     \
 	}
 
@@ -321,7 +321,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector2f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
+			const Vector2f v		 = val;                                                                   \
 			PR_UNROLL_LOOP(2)                                                                                 \
 			for (Size1i k = 0; k < 2; ++k)                                                                    \
 				var_e->blendFragment(sp, k, v(k), blend);                                                     \
@@ -339,7 +339,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector2f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
+			const Vector2f v		 = val;                                                                   \
 			PR_UNROLL_LOOP(2)                                                                                 \
 			for (Size1i k = 0; k < 2; ++k)                                                                    \
 				pair.second->blendFragment(sp, k, v(k), blend);                                               \
@@ -355,7 +355,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector3f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
+			const Vector3f v		 = val;                                                                   \
 			PR_UNROLL_LOOP(3)                                                                                 \
 			for (Size1i k = 0; k < 3; ++k)                                                                    \
 				var_e->blendFragment(sp, k, v(k), blend);                                                     \
@@ -373,7 +373,7 @@ void FrameBufferBucket::commitSpectralsMonoNoFilter(const OutputSpectralEntry* e
 			const Point2i sp		 = entry.Position + filterSize;                                           \
 			const uint32 sampleCount = mData.getInternalChannel_Counter(AOV_SampleCount)->getFragment(sp, 0); \
 			const float blend		 = 1.0f / (sampleCount);                                                  \
-			const Vector3f v		 = entry.SP.Ray.Weight[0] * (val);                                        \
+			const Vector3f v		 = val;                                                                   \
 			PR_UNROLL_LOOP(3)                                                                                 \
 			for (Size1i k = 0; k < 3; ++k)                                                                    \
 				pair.second->blendFragment(sp, k, v(k), blend);                                               \
@@ -395,7 +395,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 	}
 
 	// Handle optional AOVs
-	BLEND_1D(AOV_Time, entry.SP.Ray.Time);
+	//BLEND_1D(AOV_Time, entry.SP.Ray.Time);
 	BLEND_1D(AOV_Depth, std::sqrt(entry.SP.Depth2));
 
 	BLEND_3D(AOV_Position, entry.SP.P);
@@ -416,7 +416,7 @@ void FrameBufferBucket::commitShadingPoints(const OutputShadingPointEntry* entri
 		return;
 
 	// Handle optional LPE AOVs
-	BLEND_1D_LPE(AOV_Time, entry.SP.Ray.Time);
+	//BLEND_1D_LPE(AOV_Time, entry.SP.Ray.Time);
 	BLEND_1D_LPE(AOV_Depth, std::sqrt(entry.SP.Depth2));
 	BLEND_3D_LPE(AOV_Position, entry.SP.P);
 	BLEND_3D_LPE(AOV_View, entry.SP.Ray.Direction);

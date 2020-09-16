@@ -38,22 +38,16 @@ public:
 		return "orthographic";
 	}
 
-	std::optional<Ray> constructRay(const CameraSample& sample) const override
+	std::optional<CameraRay> constructRay(const CameraSample& sample) const override
 	{
 		const float nx = 2 * (sample.Pixel[0] / sample.SensorSize.Width - 0.5f);
 		const float ny = 2 * (sample.Pixel[1] / sample.SensorSize.Height - 0.5f);
 
-		Ray ray;
+		CameraRay ray;
 		constructRay(nx, -ny, ray.Origin, ray.Direction);
 
-		ray.WavelengthNM = sample.WavelengthNM;
-		ray.Weight		 = sample.Weight;
-		ray.Time		 = sample.Time;
-		ray.Flags		 = RF_Camera;
-		ray.MinT		 = mNearT;
-		ray.MaxT		 = mFarT;
-
-		//ray.normalize();
+		ray.MinT = mNearT;
+		ray.MaxT = mFarT;
 
 		return ray;
 	}

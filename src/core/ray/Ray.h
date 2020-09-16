@@ -22,12 +22,11 @@ struct PR_LIB_CORE Ray {
 
 	float MinT				  = PR_EPSILON;
 	float MaxT				  = PR_INF;
-	SpectralBlob Weight		  = SpectralBlob::Zero();
 	SpectralBlob WavelengthNM = SpectralBlob::Zero(); // Hero Quartett, first entry is hero wavelength
-	float Time				  = 0;
 	uint32 IterationDepth	  = 0;
 	uint32 Flags			  = 0;
-	uint32 PixelIndex		  = 0;
+	uint32 PixelIndex		  = 0; // Tile local pixel index
+	uint32 GroupID			  = 0; // Group to corresponding ray group if available
 
 public:
 	Ray()				  = default;
