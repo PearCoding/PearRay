@@ -77,7 +77,6 @@ public:
 
 private:
 	struct ParameterData {
-		std::string String;
 		union {
 			bool Bool;
 			int64 Int;
@@ -89,6 +88,7 @@ private:
 
 	ParameterType mType;
 	std::vector<ParameterData> mData;
+	std::vector<std::string> mDataString;
 };
 
 } // namespace PR
